@@ -12,18 +12,14 @@ class Genome::Utility::ObjectWithTimestamps {
 };
 
 Genome::Utility::ObjectWithTimestamps->add_observer(callback => \&is_updated);
+Genome::Utility::ObjectWithTimestamps->add_observer(aspect => 'create',  callback => \&is_created);
 
-sub create {
-    my $class = shift;
-    my $self = $class->SUPER::create(@_);
-    eval {
+sub is_created {
+    my $self = shift;
+    unless ($self->created_at) {
         $self->created_at(UR::Context->current->now);
-    };
-    if(my $error = $@) {
-        $self->delete();
-        die($error);
     }
-    return $self;
+    return 1;
 }
 
 sub is_updated {

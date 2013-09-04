@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Config::AnalysisProject {
-    is => 'Genome::Utility::ObjectWithTimestamps',
+    is => ['Genome::Utility::ObjectWithTimestamps', 'Genome::Utility::ObjectWithCreatedBy'],
     id_generator => '-uuid',
     data_source => 'Genome::DataSource::GMSchema',
     table_name => 'config.analysis_project',
@@ -24,9 +24,6 @@ class Genome::Config::AnalysisProject {
         _configuration_set => {
             is => 'Genome::Config::Set',
             id_by => '_configuration_set_id',
-        },
-        created_by => {
-            is => 'Text',
         },
         _analysis_menu_item_id => {
             is => 'Text',
@@ -65,7 +62,6 @@ sub create {
     my $self = $class->SUPER::create(@_);
     eval {
         $self->_create_configuration_set();
-        $self->_populate_created_by();
         $self->_create_model_group();
     };
     if(my $error = $@) {
@@ -110,13 +106,6 @@ sub get_configuration_reader {
         ));
     }
     return $self->configuration_reader;
-}
-
-sub _populate_created_by {
-    my $self = shift;
-    unless ($self->created_by) {
-        $self->created_by(Genome::Sys->username);
-    }
 }
 
 sub _create_configuration_set {
