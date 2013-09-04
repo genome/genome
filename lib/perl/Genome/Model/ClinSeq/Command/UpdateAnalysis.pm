@@ -8,6 +8,7 @@ use Genome;
 use Genome::Model::ClinSeq;
 use Data::Dumper;
 use Term::ANSIColor qw(:constants);
+use Time::Piece;
 
 class Genome::Model::ClinSeq::Command::UpdateAnalysis {
     is => 'Command::V2',
@@ -1430,7 +1431,7 @@ sub create_ref_align_model{
   my $genotype_microarray_model_id = $self->get_genotype_microarray_model_id('-sample'=>$sample);
 
   #If genotype microarray data is available but a successful model is not, do not proceed with creation of reference alignment models
-  if ($sample->default_genotype_data && $genotype_microarray_model_id == 0){
+  if ($sample->default_genotype_data && $genotype_microarray_model_id eq "0"){
     $self->status_message("WARNING -> genotype microarray data was found but a model with the desired criteria could not be found");
     return;
   }
@@ -1643,14 +1644,19 @@ sub select_best_model{
 
   #If there is still no clear winner, rank according to highest id of model
   my $max_model_id = 0;
+  my $latest_date = "1900-01-01 00:00:00";
+  my $dateformat = "%Y-%m-%d %H:%M:%S";
+
   foreach my $m (keys %candidate_models){
     my $model = $candidate_models{$m}{model};
-    if ($model->id > $max_model_id){
-      $max_model_id = $model->id;
+    my $model_creation_date = $model->creation_date;
+    my $date1 = Time::Piece->strptime($latest_date, $dateformat);
+    my $date2 = Time::Piece->strptime($model_creation_date, $dateformat);
+    if ($date2 > $date1){
+      $latest_date = $model_creation_date;
       $best_model = $model;
     }
   }
-
   return $best_model;
 }
 
