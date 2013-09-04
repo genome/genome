@@ -15,8 +15,8 @@ require Genome::Utility::Test;
 use File::Temp;
 use Test::More;
 
-use_ok('Genome::Sample::Command::Import::Manager') or die;
-use_ok('Genome::Sample::Command::Import') or die;
+use_ok('Genome::InstrumentData::Command::Import::Manager') or die;
+use_ok('Genome::InstrumentData::Command::Import') or die;
 Genome::Sample::Command::Import::_create_import_command_for_config({
         nomenclature => 'TeSt',
         name_regexp => '(TeSt-\d+)\-\d\d',
@@ -47,7 +47,7 @@ sub Genome::Model::Ref::_execute_build { return 1; }
 my $pp = Genome::ProcessingProfile::Ref->create(id => -333, name => 'ref pp #1', aligner => 'bwa');
 ok($pp, 'create pp');
 
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::Sample::Command::Import::Manager', 'v3');
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import::Manager', 'v3');
 my $sample_name = 'TeSt-0000-00';
 my $source_files = 'original.bam';
 my $working_directory = File::Temp::tempdir(CLEANUP => 1);
@@ -57,7 +57,7 @@ my $config_yaml = $working_directory.'/config.yaml';
 Genome::Sys->create_symlink($test_dir.'/valid-import-pend/config.yaml', $config_yaml);
 
 # Do not make progress, just status
-my $manager = Genome::Sample::Command::Import::Manager->create(
+my $manager = Genome::InstrumentData::Command::Import::Manager->create(
     working_directory => $working_directory,
 );
 ok($manager, 'create manager');
@@ -76,7 +76,7 @@ is(
 );
 
 # Make progress: create sample, model and 'import' (it thinks it is importing b/c of the command used in the config file)
-$manager = Genome::Sample::Command::Import::Manager->create(
+$manager = Genome::InstrumentData::Command::Import::Manager->create(
     working_directory => $working_directory,
      launch_imports => 1,
 );
@@ -111,7 +111,7 @@ unlink($info_tsv, $config_yaml);
 Genome::Sys->create_symlink($test_dir.'/valid-build/info.tsv', $info_tsv);
 Genome::Sys->create_symlink($test_dir.'/valid-build/config.yaml', $config_yaml);
 
-$manager = Genome::Sample::Command::Import::Manager->create(
+$manager = Genome::InstrumentData::Command::Import::Manager->create(
     working_directory => $working_directory,
     start_builds => 1,
 );
@@ -125,7 +125,7 @@ ok($sample_hash->{build}, 'build created');
 is_deeply([$sample_hash->{model}->instrument_data], [$inst_data], 'model has instrument data assigned');
 
 # fail - no config file
-$manager = Genome::Sample::Command::Import::Manager->create(
+$manager = Genome::InstrumentData::Command::Import::Manager->create(
     working_directory => $test_dir.'/invalid-no-config-yaml',
 );
 ok($manager, 'create manager');
@@ -133,7 +133,7 @@ ok(!$manager->execute, 'execute');
 is($manager->error_message, "Property 'config_file': Config file does not exist! ".$manager->config_file, 'correct error');
 
 # fail - no config file
-$manager = Genome::Sample::Command::Import::Manager->create(
+$manager = Genome::InstrumentData::Command::Import::Manager->create(
     working_directory => $test_dir.'/invalid-no-info-file',
 );
 ok($manager, 'create manager');
@@ -141,7 +141,7 @@ ok(!$manager->execute, 'execute');
 is($manager->error_message, "Property 'info_file': Sample info file does not exist! ".$manager->info_file, 'correct error');
 
 # fail - no name column in csv
-$manager = Genome::Sample::Command::Import::Manager->create(
+$manager = Genome::InstrumentData::Command::Import::Manager->create(
     working_directory => $test_dir.'/invalid-no-name-column-in-info-file',
 );
 ok($manager, 'create manager');

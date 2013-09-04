@@ -1,4 +1,4 @@
-package Genome::Sample::Command::Import::Manager;
+package Genome::InstrumentData::Command::Import::Manager;
 
 use strict;
 use warnings;
@@ -11,7 +11,7 @@ use IO::File;
 use Switch;
 use YAML;
 
-class Genome::Sample::Command::Import::Manager {
+class Genome::InstrumentData::Command::Import::Manager {
     is => 'Command::V2',
     doc => 'Manage importing a group of samples including importing instrument data and creating and building models.',
     has => [
