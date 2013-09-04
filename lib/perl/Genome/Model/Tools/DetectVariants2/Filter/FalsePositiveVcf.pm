@@ -20,6 +20,23 @@ sub output_file_path {
     return $self->_temp_staging_directory . "/snvs.raw.gz";
 }
 
+sub input_file_path {
+    my $self = shift;
+
+    # FIXME Things need to be cleaned up here...
+    # We try to use the incoming snvs.hq file if it exists because of the refalign/normal pipelines
+    # But currently, phenotype correlation only produces vcfs and nothing else... so fall back to using the vcf if snvs.hq doesnt exist.
+    my $vcf_file = $self->input_directory . "/snvs.vcf.gz";
+    my $hq_file = $self->input_directory . "/snvs.hq";
+    if (-s $hq_file ) {
+        return $hq_file;
+    } elsif (-s $vcf_file) {
+        return $vcf_file;
+    } else {
+        die $self->error_message("Could not find $vcf_file or $hq_file");
+    }
+}
+
 ##########################################################################################
 # Capture filter for high-depth, lower-breadth datasets
 # Contact: Dan Koboldt (dkoboldt@genome.wustl.edu)
@@ -41,20 +58,7 @@ sub _filter_variants {
 
     #First, need to create a variant list file to use for generating the readcounts.
     # FIXME this will work after the polymuttdenovo filter, but not directly after polymutt due to the separate denovo and standard filenames
-
-    # FIXME Things need to be cleaned up here...
-    # We try to use the incoming snvs.hq file if it exists because of the refalign/normal pipelines
-    # But currently, phenotype correlation only produces vcfs and nothing else... so fall back to using the vcf if snvs.hq doesnt exist.
-    my $input_file;
-    my $vcf_file = $self->input_directory . "/snvs.vcf.gz";
-    my $hq_file = $self->input_directory . "/snvs.hq";
-    if (-s $hq_file ) {
-        $input_file = $hq_file;
-    } elsif (-s $vcf_file) {
-        $input_file = $vcf_file;
-    } else {
-        die $self->error_message("Could not find $vcf_file or $hq_file");
-    }
+    my $input_file = $self->input_file_path;
 
     ## Build temp file for positions where readcounts are needed ##
     #my $region_path = $self->_temp_scratch_directory."/regions";

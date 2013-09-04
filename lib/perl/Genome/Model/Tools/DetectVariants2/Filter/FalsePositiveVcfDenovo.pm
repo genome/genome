@@ -20,6 +20,11 @@ sub output_file_path {
     return $self->_temp_staging_directory . "/snvs.vcf.gz";
 }
 
+sub input_file_path {
+    my $self = shift;
+    return $self->input_directory . "/snvs.vcf.gz";
+}
+
 ##########################################################################################
 # Capture filter for high-depth, lower-breadth datasets
 # Contact: Dan Koboldt (dkoboldt@genome.wustl.edu)
@@ -41,7 +46,8 @@ sub _filter_variants {
 
     #First, need to create a variant list file to use for generating the readcounts.
     # FIXME this will work after the polymuttdenovo filter, but not directly after polymutt due to the separate denovo and standard filenames
-    my $input_file = $self->input_directory . "/snvs.vcf.gz";
+    my $input_file = $self->input_file_path;
+
     ## Build temp file for positions where readcounts are needed ##
     #my $region_path = $self->_temp_scratch_directory."/regions";
     my $region_path = $self->output_directory."/regions";
