@@ -3,6 +3,7 @@ use strict;
 use Genome;
 use IO::File;
 use warnings;
+use Genome::Model::Tools::Vcf::Helpers qw/convertIub/;
 
 
 class Genome::Model::Tools::Analysis::Coverage::BamReadcount{
@@ -158,26 +159,6 @@ sub execute {
 
     #--------------------------------------------------
     #convert iub bases to lists
-
-    sub convertIub{
-	my ($base) = @_;
-	#deal with cases like "A/T" or "C/T"
-	if ($base =~/\//){
-	    my @bases=split(/\//,$base);
-	    my %baseHash;
-	    foreach my $b (@bases){
-		my $res = convertIub($b);
-		my @bases2 = split(",",$res);
-		foreach my $b2 (@bases2){
-		    $baseHash{$b2} = 0;
-		}
-	    }
-	    return join(",",keys(%baseHash));
-	}
-
-    return join(',', Genome::Info::IUB->iub_to_bases($base)); #TODO: this is completely stupid.  make this not
-    };
-
 
     sub matchIub{
         my ($allele,$ref,$var) = @_;

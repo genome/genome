@@ -10,6 +10,7 @@ use Getopt::Long;
 use FileHandle;
 use List::MoreUtils qw(firstidx);
 use List::MoreUtils qw(uniq);
+use Genome::Model::Tools::Vcf::Helpers qw/genGT/;
 
 
 class Genome::Model::Tools::Vcf::VcfMakerSniperSomatic {
@@ -139,23 +140,6 @@ sub execute {                               # replace with real execution logic.
 ###########################################################################
 # subs
 
-    sub genGT{
-        my ($base, @alleles) = @_;
-        my @bases = Genome::Info::IUB->iub_to_bases($base);
-        if (@bases > 1){
-            my @pos;
-            push(@pos, (firstidx{ $_ eq $bases[0] } @alleles));
-            push(@pos, (firstidx{ $_ eq $bases[1] } @alleles));
-            return(join("/", sort(@pos)));
-        } else { #only one base
-            my @pos;
-            push(@pos, (firstidx{ $_ eq $bases[0] } @alleles));
-            push(@pos, (firstidx{ $_ eq $bases[0] } @alleles));
-            return(join("/", sort(@pos)));
-        }
-    }
-
-    #-------------------------
     #get preceding base using sniper faidx
     sub getPrecedingBase{
         my ($chr,$pos) = @_;

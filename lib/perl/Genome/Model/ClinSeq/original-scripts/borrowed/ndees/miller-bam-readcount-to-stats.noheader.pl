@@ -4,7 +4,7 @@ use warnings;
 use strict;
 use IO::File;
 use above 'Genome';
-use Genome::Info::IUB;
+use Genome::Model::Tools::Vcf::Helpers qw/convertIub/;
 
 # arg 0 = snps (5 col (chr, pos, pos, ref, var)
 # arg 1 = readcounts
@@ -23,27 +23,6 @@ while( my $line = $inFh->getline )
     $refHash{$fields[0] . "|" . $fields[1]} = $fields[3];
     $varHash{$fields[0] . "|" . $fields[1]} = $fields[4]
 }
-
-
-#convert weird bases to lists
-    sub convertIub{
-	my ($base) = @_;
-	#deal with cases like "A/T" or "C/T"
-	if ($base =~/\//){
-	    my @bases=split(/\//,$base);
-	    my %baseHash;
-	    foreach my $b (@bases){
-		my $res = convertIub($b);
-		my @bases2 = split(",",$res);
-		foreach my $b2 (@bases2){
-		    $baseHash{$b2} = 0;
-		}
-	    }
-	    return join(",",keys(%baseHash));
-	}
-
-    return join(',', Genome::Info::IUB->iub_to_bases($base)); #TODO: this is completely stupid.  make this not
-    };
 
 #
 sub matchIub{

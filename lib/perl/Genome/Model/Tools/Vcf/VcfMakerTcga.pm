@@ -12,6 +12,7 @@ use POSIX qw(log10);
 use POSIX qw(strftime);
 use List::MoreUtils qw(firstidx);
 use List::MoreUtils qw(uniq);
+use Genome::Model::Tools::Vcf::Helpers qw/convertIub genGT/;
 
 class Genome::Model::Tools::Vcf::VcfMakerTcga {
     is => 'Command',
@@ -148,42 +149,8 @@ sub execute {                               # replace with real execution logic.
 
 
 ###########################################################################
-    sub convertIub{
-	my ($base) = @_;
-	#deal with cases like "A/T" or "C/T"
-	if ($base =~/\//){
-	    my @bases=split(/\//,$base);
-	    my %baseHash;
-	    foreach my $b (@bases){
-		my $res = convertIub($b);
-		my @bases2 = split(",",$res);
-		foreach my $b2 (@bases2){
-		    $baseHash{$b2} = 0;
-		}
-	    }
-	    return join(",",keys(%baseHash));
-	}
 
-    return join(',', Genome::Info::IUB->iub_to_bases($base)); #TODO: this is completely stupid.  make this not
-    };
 
-#------------------------
-
-    sub genGT{
-	my ($base, @alleles) = @_;
-	my @bases = split(",",convertIub($base));
-	if (@bases > 1){
-	    my @pos;
-	    push(@pos, (firstidx{ $_ eq $bases[0] } @alleles));
-	    push(@pos, (firstidx{ $_ eq $bases[1] } @alleles));
-	    return(join("/", sort(@pos)));
-	} else { #only one base
-	    my @pos;
-	    push(@pos, (firstidx{ $_ eq $bases[0] } @alleles));
-	    push(@pos, (firstidx{ $_ eq $bases[0] } @alleles));
-	    return(join("/", sort(@pos)));
-	}
-    }
 
 #############################################################################
     sub print_header{
