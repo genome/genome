@@ -7,13 +7,15 @@ use Genome;
 use Workflow;
 use Workflow::Simple;
 use Carp;
+use Data::Dumper;
 use Genome::Utility::Vcf ('open_vcf_file', 'parse_vcf_line', 'deparse_vcf_line', 'get_vcf_header', 'get_samples_from_header');
 
 class Genome::Model::Tools::DetectVariants2::Filter::FalsePositiveVcf {
     is => 'Genome::Model::Tools::DetectVariants2::Filter',
     doc => "This module uses detailed readcount information from bam-readcounts to filter likely false positives",
+
     has_input => [
-    ## CAPTURE FILTER OPTIONS ##
+        ## CAPTURE FILTER OPTIONS ##
         'min_strandedness' => {
             type => 'String',
             default => '0.01',
@@ -73,6 +75,7 @@ class Genome::Model::Tools::DetectVariants2::Filter::FalsePositiveVcf {
             is_optional => 1,
             doc => 'Minimum length of a flanking homopolymer of same base to remove a variant',
         },
+
         ## WGS FILTER OPTIONS ##
         ## SHARED OPTIONS ##
         verbose => {
@@ -91,23 +94,23 @@ class Genome::Model::Tools::DetectVariants2::Filter::FalsePositiveVcf {
             is_optional => 1,
             doc => 'version of bam-readcount to use',
         },
-       bam_readcount_min_base_quality => {
-           is => 'Integer',
-           default => 15,
-           doc => 'The minimum base quality to require for bam-readcount',
-       },
-       _filters => {
-           is => 'HashRef',
-           is_optional => 1,
-           doc => 'The filter names and descriptions',
-       },
+        bam_readcount_min_base_quality => {
+            is => 'Integer',
+            default => 15,
+            doc => 'The minimum base quality to require for bam-readcount',
+        },
+        _filters => {
+            is => 'HashRef',
+            is_optional => 1,
+            doc => 'The filter names and descriptions',
+        },
     ],
-    has_param => [
-         lsf_resource => {
-             default_value => "-M 8000000 -R 'select[type==LINUX64 && mem>8000] rusage[mem=8000]'",
-         },
-     ],
 
+    has_param => [
+        lsf_resource => {
+            default_value => "-M 8000000 -R 'select[type==LINUX64 && mem>8000] rusage[mem=8000]'",
+        },
+    ],
 };
 
 sub help_synopsis {
