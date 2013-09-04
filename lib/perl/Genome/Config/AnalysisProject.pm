@@ -49,6 +49,11 @@ class Genome::Config::AnalysisProject {
             default_value => 'Pending',
             valid_values => ['Pending', 'Approved', 'In Progress', 'Completed', 'Archived'],
         },
+        subject_pairings => {
+            is_many => 1,
+            is => 'Genome::Config::AnalysisProject::SubjectPairing',
+            reverse_as => 'analysis_project',
+        }
     ],
     has_transient_optional => [
         configuration_reader => {
