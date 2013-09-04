@@ -140,7 +140,7 @@ sub filter_name { 'FalsePositiveVcf' };
 ##########################################################################################
 sub _filter_variants {
     my $self = shift;
-    $DB::single=1;
+
     unless ($self->bam_readcount_version) {
         die $self->error_message("Bam readcount version is not specified");
     }

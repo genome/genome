@@ -200,7 +200,7 @@ sub _filter_variants {
     }
     $output_fh->print(join("",@$header));
     my @sample_names = get_samples_from_header($header);
-    $DB::single = 1;
+
     ## Parse the variants file ##
     while(my $line = $input_fh->getline) {
         # FIXME should just pass in a single sample here instead of a whole line. Or a sample joined with a line to make a whole single sample vcf line?
