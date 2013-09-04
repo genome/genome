@@ -116,9 +116,11 @@ sub log_base {
     return log($value)/log($base);
 }
 
+sub resolve_bam_file { return shift->bam_file }
+
 sub execute {
     my $self     = 	shift;
-    my $bamfile  = 	$self->bam_file;
+    my $bamfile  = 	$self->resolve_bam_file;
     my $coverage = 	$self->coverage_stats_file;
     my $output 	 	=  $self->output_stats_file;
     my $cutoff 		= $self ->subcluster_min_mapzero;
