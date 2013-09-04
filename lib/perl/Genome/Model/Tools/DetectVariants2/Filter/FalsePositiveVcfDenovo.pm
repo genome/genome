@@ -188,7 +188,7 @@ sub filter_one_sample {
         #no data at this site, set FT to null
         #FIXME This breaks what little encapsulation we have started...
         if(!exists($parsed_vcf_line->{sample}{$sample_name}{FT})) {
-            $self->set_format_field($parsed_vcf_line,$sample_name,"DNFT",".");
+            $self->set_format_field($parsed_vcf_line, $sample_name, "DNFT", ".");
         }
         return;
     }

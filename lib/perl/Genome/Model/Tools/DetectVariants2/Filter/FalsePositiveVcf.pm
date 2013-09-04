@@ -208,11 +208,7 @@ sub filter_one_line {
 
 # Given a vcf line structure and a sample/readcount file, determine if that sample should be filtered
 sub filter_one_sample {
-    my $self = shift;
-    my $parsed_vcf_line = shift;
-    my $readcount_searcher_by_sample = shift;
-    my $stats = shift;
-    my $sample_name = shift;
+    my ($self, $parsed_vcf_line, $readcount_searcher_by_sample, $stats, $sample_name, $var) = @_;
 
     my $readcount_searcher = $readcount_searcher_by_sample->{$sample_name};
 
@@ -238,7 +234,7 @@ sub filter_one_sample {
         #no data at this site, set FT to null
         #FIXME This breaks what little encapsulation we have started...
         if(!exists($parsed_vcf_line->{sample}{$sample_name}{FT})) {
-            $self->set_format_field($parsed_vcf_line, $sample_name,"FT",".");
+            $self->set_format_field($parsed_vcf_line, $sample_name, "FT", ".");
         }
         return;
     }
@@ -263,7 +259,7 @@ sub filter_one_sample {
     # TODO var has some special logic from iubpac_to_base that prefers an allele in the case of het variants
 
     my $ref = uc($parsed_vcf_line->{reference});
-    my $var = $self->get_variant_for_sample($parsed_vcf_line->{alt}, $parsed_vcf_line->{sample}->{$sample_name}->{GT}, $parsed_vcf_line->{reference});
+    $var = $self->get_variant_for_sample($parsed_vcf_line->{alt}, $parsed_vcf_line->{sample}->{$sample_name}->{GT}, $parsed_vcf_line->{reference});
     unless(defined($var)) {
         #no variant reads here. Won't filter. Add FT tag of "PASS"
         $self->pass_sample($parsed_vcf_line, $sample_name);
