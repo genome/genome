@@ -210,9 +210,8 @@ sub filter_sample_format_tag {
     return 'FT';
 }
 
-# Given a vcf line structure and a sample/readcount file, determine if that sample should be filtered
-sub filter_one_sample {
-    my ($self, $parsed_vcf_line, $readcount_searcher_by_sample, $stats, $sample_name, $var) = @_;
+sub get_readcounts_from_vcf_line {
+    my ($self, $parsed_vcf_line, $readcount_searcher_by_sample, $sample_name) = @_;
 
     my $readcount_searcher = $readcount_searcher_by_sample->{$sample_name};
 
@@ -227,14 +226,11 @@ sub filter_one_sample {
         die $self->error_message("Could not get readcount searcher for sample $sample_name " . Data::Dumper::Dumper $readcount_searcher_by_sample);
     }
 
-    my $chrom = $parsed_vcf_line->{chromosome};
-    my $pos = $parsed_vcf_line->{position};
-
     #want to do this BEFORE anything else so we don't screw up the file parsing...
     my $readcounts;
     # FIXME this should get readcount lines until we have the correct chrom and pos matching our input line
     # FIXME no readcount output line is a valid output condition if there are no reads at all covering the position. Maybe bam-readcount should be fixed to not do this...
-    $readcounts = $readcount_searcher->($chrom,$pos);
+    $readcounts = $readcount_searcher->($parsed_vcf_line->{chromosome},$parsed_vcf_line->{position});
     unless($readcounts) {
         #no data at this site, set FT to null
         #FIXME This breaks what little encapsulation we have started...
@@ -245,6 +241,22 @@ sub filter_one_sample {
         }
         return;
     }
+
+    return $readcounts;
+}
+
+# Given a vcf line structure and a sample/readcount file, determine if that sample should be filtered
+sub filter_one_sample {
+    my ($self, $parsed_vcf_line, $readcount_searcher_by_sample, $stats, $sample_name, $var) = @_;
+
+    my $readcounts = $self->get_readcounts_from_vcf_line($parsed_vcf_line,
+        $readcount_searcher_by_sample, $sample_name);
+    unless ($readcounts) {
+        return;
+    }
+
+    my $chrom = $parsed_vcf_line->{chromosome};
+    my $pos = $parsed_vcf_line->{position};
 
     my $min_read_pos = $self->min_read_pos;
     my $max_read_pos = 1 - $min_read_pos;
