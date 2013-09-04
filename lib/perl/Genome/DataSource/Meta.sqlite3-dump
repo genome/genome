@@ -12,6 +12,7 @@ INSERT INTO "dd_fk_constraint" VALUES('Genome::DataSource::GMSchema','dgidb','dg
 INSERT INTO "dd_fk_constraint" VALUES('Genome::DataSource::GMSchema','config','config','analysis_menu_item','set','analysis_menu_config_set_fk','2013-08-07 16:25:04');
 INSERT INTO "dd_fk_constraint" VALUES('Genome::DataSource::GMSchema','config','config','analysis_project','analysis_menu_item','config_analysis_project_analysis_menu_item_fk','2013-08-07 16:25:04');
 INSERT INTO "dd_fk_constraint" VALUES('Genome::DataSource::GMSchema','config','config','analysis_project','set','config_analysis_project_configruation_set_fk','2013-08-07 16:25:04');
+INSERT INTO "dd_fk_constraint" VALUES('Genome::DataSource::GMSchema','config','model','analysis_project','model_group','analysis_project_model_group','2013-09-04 16:25:04');
 INSERT INTO "dd_fk_constraint" VALUES('Genome::DataSource::GMSchema','config','disk','set','allocation','config_set_allocation_fk','2013-08-07 16:25:04');
 INSERT INTO "dd_fk_constraint" VALUES('Genome::DataSource::GMSchema','instrument','instrument','data','fragment_library','data_library_id_fkey','2013-08-07 16:25:04');
 INSERT INTO "dd_fk_constraint" VALUES('Genome::DataSource::GMSchema','instrument','instrument','data_attribute','data','data_attribute_instrument_data_id_fkey','2013-08-07 16:25:04');
