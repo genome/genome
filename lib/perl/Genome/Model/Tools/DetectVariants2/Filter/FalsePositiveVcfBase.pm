@@ -394,4 +394,16 @@ sub convert_numeric_gt_to_alleles {
     return @alleles;
 }
 
+# Break the tie between more than one variant allele
+# FIXME This is arbitrary. A better way would be to test both and pass/fail each allele OR pass if either is ok
+sub prioritize_allele {
+    my $self = shift;
+    my $alleles = shift;
+
+    # Prioritization from old iupac_to_base is:  A > C > G > T ... so we can just alpha sort and everything is fine
+    my @sorted_alleles = sort (@$alleles);
+
+    return $sorted_alleles[0];
+}
+
 1;
