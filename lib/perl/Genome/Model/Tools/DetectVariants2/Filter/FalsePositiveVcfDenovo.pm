@@ -88,41 +88,6 @@ sub _filter_variants {
     return 1;
 }
 
-# This method scans the lines of the readcount file until the matching line is found
-sub make_buffered_rc_searcher {
-    my $fh = shift;
-    unless($fh) {
-        croak "Can't create buffered search from undefined file handle\n";
-    }
-    my $current_line;
-    return sub {
-        my ($chr, $pos) = @_;
-
-        unless($current_line) {
-            if($current_line = $fh->getline) {
-                chomp $current_line;
-            }
-            else {
-                return;
-            }
-        }
-
-        my ($rc_chr,$rc_pos) = split /\t/, $current_line;
-        if(($chr eq $rc_chr)&&($pos == $rc_pos)){
-            my $temp = $current_line;
-            $current_line = undef;
-            return $temp;
-        }
-        else {
-            #our line should be coming later
-            return;
-        }
-    }
-}
-
-
-
-
 #############################################################
 # Read_Counts_By_Allele - parse out readcount info for an allele
 #
