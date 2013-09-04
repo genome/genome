@@ -256,4 +256,11 @@ sub read_counts_by_allele {
     return("");
 }
 
+sub add_filter_to_vcf_header {
+    my ($self, $parsed_header, $filter_name, $filter_description) = @_;
+    my $column_header = pop @$parsed_header;
+    my $filter_line = qq{##FILTER=<ID=$filter_name,Description="$filter_description">\n};
+    push @$parsed_header, $filter_line, $column_header;
+}
+
 1;

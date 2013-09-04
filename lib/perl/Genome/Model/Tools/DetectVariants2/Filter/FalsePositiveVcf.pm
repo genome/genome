@@ -218,13 +218,6 @@ sub parse_vcf_header {
     return ($input_fh, \@header);
 }
 
-sub add_filter_to_vcf_header {
-    my ($self, $parsed_header, $filter_name, $filter_description) = @_;
-    my $column_header = pop @$parsed_header;
-    my $filter_line = qq{##FILTER=<ID=$filter_name,Description="$filter_description">\n};
-    push @$parsed_header, $filter_line, $column_header;
-}
-
 sub set_format_field {
     my ($self, $parsed_line, $sample, $format_tag, $format_value, %params) = @_;
     if(!exists($parsed_line->{sample}{$sample}{$format_tag})) {

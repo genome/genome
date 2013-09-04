@@ -137,15 +137,6 @@ sub parse_vcf_header {
     return ($input_fh, \@header);
 }
 
-sub add_filter_to_vcf_header {
-    my ($self, $parsed_header, $filter_name, $filter_description) = @_;
-    my $column_header = pop @$parsed_header;
-    my $filter_line = qq{##FILTER=<ID=$filter_name,Description="$filter_description">\n};
-    push @$parsed_header, $filter_line, $column_header;
-}
-
-
-
 # Given the header of a vcf, return an array of samples in the final header line
 #FIXME probably move this to a base class
 sub get_samples_from_header {
