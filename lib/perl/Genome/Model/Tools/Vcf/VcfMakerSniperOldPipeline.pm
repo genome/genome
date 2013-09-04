@@ -170,33 +170,10 @@ sub execute {                               # replace with real execution logic.
     my $analysis_profile = "samtools pileup and/or somatic-sniper";
 
 ###########################################################################
-    sub convertIub{
-        my ($base) = @_;
-        my %iub_codes;
-        $iub_codes{"A"}="A";
-        $iub_codes{"C"}="C";
-        $iub_codes{"G"}="G";
-        $iub_codes{"T"}="T";
-        $iub_codes{"U"}="T";
-        $iub_codes{"M"}="A,C";
-        $iub_codes{"R"}="A,G";
-        $iub_codes{"W"}="A,T";
-        $iub_codes{"S"}="C,G";
-        $iub_codes{"Y"}="C,T";
-        $iub_codes{"K"}="G,T";
-        $iub_codes{"V"}="A,C,G";
-        $iub_codes{"H"}="A,C,T";
-        $iub_codes{"D"}="A,G,T";
-        $iub_codes{"B"}="C,G,T";
-        $iub_codes{"N"}="G,A,T,C";
 
-        return $iub_codes{$base}
-    };
-
-#------------------------
     sub genGT{
         my ($base, @alleles) = @_;
-        my @bases = split(",",convertIub($base));
+        my @bases = Genome::Info::IUB->iub_to_bases($base);
         if (@bases > 1){
             my @pos;
             push(@pos, (firstidx{ $_ eq $bases[0] } @alleles));
@@ -332,7 +309,7 @@ sub execute {                               # replace with real execution logic.
         #get all the alleles together (necessary for the GT field)
         my @allAlleles = ($col[2]);
         my @varAlleles;
-        my @tmp = split(",",convertIub($col[3]));
+        my @tmp = Genome::Info::IUB->iub_to_bases($col[3]);
 
         #only add non-reference alleles to the alt field
         foreach my $alt (@tmp){
@@ -435,7 +412,7 @@ sub execute {                               # replace with real execution logic.
             @varAlleles = @tmp;
         }
 
-        my @tmp = split(",",convertIub($col[3]));
+        my @tmp = Genome::Info::IUB->iub_to_bases($col[3]);
         #only add non-reference alleles to the alt field
         foreach my $alt (@tmp){
             unless (grep $_ eq $alt, @allAlleles){
@@ -532,7 +509,7 @@ sub execute {                               # replace with real execution logic.
         #just replace anything from samtools with the presumably better sniper call.
         my @allAlleles = $col[2];
         my @varAlleles;
-        my @tmp = split(",",convertIub($col[3]));
+        my @tmp = Genome::Info::IUB->iub_to_bases($col[3]);
         #only add non-reference alleles to the alt field
         foreach my $alt (@tmp){
             unless ($alt eq $col[2]){
