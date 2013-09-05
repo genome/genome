@@ -15,7 +15,6 @@ package Genome::Model::SmallRna::Command::StatsGenerator;
 use strict;
 use warnings;
 
-use Data::Dumper;
 use Statistics::Descriptive;
 use Genome;
 
