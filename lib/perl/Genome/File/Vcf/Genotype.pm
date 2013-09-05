@@ -21,8 +21,12 @@ sub _parse {
     my $self = shift;
     confess "Attempted to parse null genotype" unless $self->{_gt};
 
-    my @alleles = grep { /[0-9]+/ } split(qr{/|}, $self->{_gt});
-    
+    my @alleles = split(/[\/\|]/, $self->{_gt});
+    for my $allele (@alleles) {
+        unless ($allele =~ /[(\d+).]/) {
+            confess "Non-numeric allele detected: $allele";
+        }
+    }
     $self->{_alleles} = \@alleles;
 
     $self->{_is_phased} = _is_phased($self->{_gt});
@@ -70,11 +74,12 @@ sub is_heterozygous {
 
 sub is_missing {
     my $self = shift;
-    my $num_alleles = scalar @{$self->{_alleles}};
-    if ($num_alleles <= 0) {
-        return 1;
-    }
-    return 0;
+    return grep {$_ =~ /\./} @{$self->{_alleles}};
+}
+
+sub ploidy {
+    my $self = shift;
+    return scalar @{$self->{_alleles}};
 }
 
 sub has_wildtype {

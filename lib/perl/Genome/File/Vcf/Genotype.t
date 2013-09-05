@@ -48,10 +48,21 @@ ok(!$missing->is_homozygous, "Missing is not homozygous");
 ok(!$missing->is_heterozygous, "Missing is not heterozygous");
 ok(!$missing->has_wildtype, "Missing is not wildtype");
 ok(!$missing->has_variant, "Missing is not variant");
+is($missing->ploidy, 1, "Missing is haploid");
 
 my $phased = Genome::File::Vcf::Genotype->new("A", \("T"), "0|0");
 ok($phased->is_phased, "Phased genotype is phased");
 my @alleles_from_phased = $phased->get_alleles;
 is_deeply(\@alleles_from_phased, [0,0], "Correctly got alleles from phased");
+is($phased->ploidy, 2, "Phased genotype is diploid");
+
+my $triploid = Genome::File::Vcf::Genotype->new("A", \("T"), "0/0/1");
+is($triploid->ploidy, 3, "Triploid genotype parsed ok");
+is_deeply([$triploid->get_alleles], [0, 0, 1], "Got triploid alleles correctly");
+
+eval {
+    my $non_numeric = Genome::File::Vcf::Genotype->new("A", \("T"), "A/C");
+};
+ok($@, "Non-numeric genotypes cause errors");
 
 done_testing;
