@@ -455,46 +455,6 @@ sub _get_readcount_line {
 }
 
 
-#############################################################
-# Read_Counts_By_Allele - parse out readcount info for an allele
-#
-#############################################################
-
-sub fails_homopolymer_check {
-    (my $self, my $reference, my $min_homopolymer, my $chrom, my $chr_start, my $chr_stop, my $ref, my $var) = @_;
-    $chr_start++; # Adjust for bed input format
-
-    ## Auto-pass large indels ##
-
-    my $indel_size = length($ref);
-    $indel_size = length($var) if(length($var) > $indel_size);
-
-    return(0) if($indel_size > 2);
-
-    ## Build strings of homopolymer bases ##
-    my $homoRef = $ref x $min_homopolymer;
-    my $homoVar = $var x $min_homopolymer;
-
-    ## Build a query string for the homopolymer check ##
-
-    my $query_string = "";
-
-    $query_string = $chrom . ":" . ($chr_start - $min_homopolymer) . "-" . ($chr_stop + $min_homopolymer);
-
-    my $samtools_path = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
-    my $sequence = `$samtools_path faidx $reference $query_string | grep -v \">\"`;
-    chomp($sequence);
-
-    if($sequence) {
-        if($sequence =~ $homoVar) { #$sequence =~ $homoRef || {
-            print join("\t", $chrom, $chr_start, $chr_stop, $ref, $var, "Homopolymer: $sequence") . "\n" if($self->verbose);
-            return($sequence);
-        }
-    }
-
-    return(0);
-}
-
 
 ##########################################################################################
 # WGS filter for uniform-depth, full-breadth datasets
@@ -613,6 +573,46 @@ sub _generate_standard_files {
     $lq_ofh->close;
 
     return 1;
+}
+
+#############################################################
+# Read_Counts_By_Allele - parse out readcount info for an allele
+#
+#############################################################
+
+sub fails_homopolymer_check {
+    my ($self, $reference, $min_homopolymer, $chrom, $start, $stop, $ref, $var) = @_;
+    $start++; # Adjust for bed input format
+
+    ## Auto-pass large indels ##
+
+    my $indel_size = length($ref);
+    $indel_size = length($var) if(length($var) > $indel_size);
+
+    return(0) if($indel_size > 2);
+
+    ## Build strings of homopolymer bases ##
+    my $homoRef = $ref x $min_homopolymer;
+    my $homoVar = $var x $min_homopolymer;
+
+    ## Build a query string for the homopolymer check ##
+
+    my $query_string = "";
+
+    $query_string = $chrom . ":" . ($start - $min_homopolymer) . "-" . ($stop + $min_homopolymer);
+
+    my $samtools_path = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
+    my $sequence = `$samtools_path faidx $reference $query_string | grep -v \">\"`;
+    chomp($sequence);
+
+    if($sequence) {
+        if($sequence =~ $homoVar) { #$sequence =~ $homoRef || {
+            print join("\t", $chrom, $start, $stop, $ref, $var, "Homopolymer: $sequence") . "\n" if($self->verbose);
+            return($sequence);
+        }
+    }
+
+    return(0);
 }
 
 1;

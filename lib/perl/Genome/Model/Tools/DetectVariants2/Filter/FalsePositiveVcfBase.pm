@@ -72,45 +72,6 @@ sub make_buffered_rc_searcher {
     }
 }
 
-#############################################################
-# Read_Counts_By_Allele - parse out readcount info for an allele
-#
-#############################################################
-
-sub fails_homopolymer_check {
-    (my $self, my $reference, my $min_homopolymer, my $chrom, my $start, my $stop, my $ref, my $var) = @_;
-
-    ## Auto-pass large indels ##
-
-    my $indel_size = length($ref);
-    $indel_size = length($var) if(length($var) > $indel_size);
-
-    return(0) if($indel_size > 2);
-
-    ## Build strings of homopolymer bases ##
-    my $homoRef = $ref x $min_homopolymer;
-    my $homoVar = $var x $min_homopolymer;
-
-    ## Build a query string for the homopolymer check ##
-
-    my $query_string = "";
-
-    $query_string = $chrom . ":" . ($start - $min_homopolymer) . "-" . ($stop + $min_homopolymer);
-
-    my $samtools_path = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
-    my $sequence = `$samtools_path faidx $reference $query_string | grep -v \">\"`;
-    chomp($sequence);
-
-    if($sequence) {
-        if($sequence =~ $homoVar) { #$sequence =~ $homoRef || {
-            print join("\t", $chrom, $start, $stop, $ref, $var, "Homopolymer: $sequence") . "\n" if($self->verbose);
-            return($sequence);
-        }
-    }
-
-    return(0);
-}
-
 sub add_filter_to_vcf_header {
     my ($self, $parsed_header, $filter_name, $filter_description) = @_;
     my $column_header = pop @$parsed_header;
@@ -834,6 +795,45 @@ sub _filter_variants {
     $self->_convert_to_standard_formats($self->output_file_path);
 
     return 1;
+}
+
+#############################################################
+# Read_Counts_By_Allele - parse out readcount info for an allele
+#
+#############################################################
+
+sub fails_homopolymer_check {
+    my ($self, $reference, $min_homopolymer, $chrom, $start, $stop, $ref, $var) = @_;
+
+    ## Auto-pass large indels ##
+
+    my $indel_size = length($ref);
+    $indel_size = length($var) if(length($var) > $indel_size);
+
+    return(0) if($indel_size > 2);
+
+    ## Build strings of homopolymer bases ##
+    my $homoRef = $ref x $min_homopolymer;
+    my $homoVar = $var x $min_homopolymer;
+
+    ## Build a query string for the homopolymer check ##
+
+    my $query_string = "";
+
+    $query_string = $chrom . ":" . ($start - $min_homopolymer) . "-" . ($stop + $min_homopolymer);
+
+    my $samtools_path = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
+    my $sequence = `$samtools_path faidx $reference $query_string | grep -v \">\"`;
+    chomp($sequence);
+
+    if($sequence) {
+        if($sequence =~ $homoVar) { #$sequence =~ $homoRef || {
+            print join("\t", $chrom, $start, $stop, $ref, $var, "Homopolymer: $sequence") . "\n" if($self->verbose);
+            return($sequence);
+        }
+    }
+
+    return(0);
 }
 
 1;
