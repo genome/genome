@@ -313,7 +313,7 @@ sub _get_chr_list {
     my $self = shift;
 
     if (not $self->chromosome) {
-        die "Chromosoome not set???!  Expected 'all', or a specific sequence name!";
+        die $self->error_message("Chromosoome not set!  Expected 'all', or a specific sequence name!");
     }
 
     my $tmp_idx_dir = File::Temp::tempdir(
