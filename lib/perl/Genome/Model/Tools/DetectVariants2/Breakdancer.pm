@@ -31,7 +31,6 @@ class Genome::Model::Tools::DetectVariants2::Breakdancer{
             is => 'Text',
             is_input => 1,
             is_optional => 1,
-            valid_values => [@FULL_CHR_LIST, 'all'],
             default_value => 'all',
         },
         version => {
