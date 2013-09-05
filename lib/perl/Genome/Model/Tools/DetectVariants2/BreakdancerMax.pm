@@ -209,7 +209,8 @@ sub run_breakdancer {
 
             my $op = Workflow::Operation->create(
                 name => sprintf('%s by chromosome', $self->class_name),
-                operation_type => Workflow::OperationType::Command->get('Genome::Model::Tools::DetectVariants2::BreakdancerMax'),
+                operation_type => Workflow::OperationType::Command->get(
+                    $self->class),
             );
 
             $op->parallel_by('chromosome');
