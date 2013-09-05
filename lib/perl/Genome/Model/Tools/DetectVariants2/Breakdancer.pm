@@ -181,6 +181,15 @@ sub run_config {
 }
 
 
+sub chr_list_when_missing_idxstats {
+    my $self = shift;
+    #FIXME Sometimes samtools idxstats does not get correct
+    #stats because of bam's bai file is not created by
+    #later samtools version (0.1.9 ?)
+    $self->warning_message("chr list from samtools idxstats is empty, using full chr list now");
+    return @FULL_CHR_LIST;
+}
+
 sub run_breakdancer {
     my $self = shift;
     my $bd_params = $self->_breakdancer_params || "";
@@ -227,11 +236,7 @@ sub run_breakdancer {
 
             my @chr_list = $self->_get_chr_list;
             if (scalar @chr_list == 0) {
-                #FIXME Sometimes samtools idxstats does not get correct
-                #stats because of bam's bai file is not created by
-                #later samtools version (0.1.9 ?)
-                $self->warning_message("chr list from samtools idxstats is empty, using full chr list now");
-                @chr_list = @FULL_CHR_LIST;
+                @chr_list = $self->chr_list_when_missing_idxstats;
             }
 
             $self->status_message('chromosome list is '.join ',', @chr_list);
@@ -315,6 +320,10 @@ sub run_breakdancer {
 
 sub _get_chr_list {
     my $self = shift;
+
+    if (not $self->chromosome) {
+        die $self->error_message("Chromosoome not set!  Expected 'all', or a specific sequence name!");
+    }
 
     my $tmp_idx_dir = File::Temp::tempdir(
         "Normal_bam_idxstats_XXXXX",

@@ -178,6 +178,11 @@ sub run_config {
 }
 
 
+sub chr_list_when_missing_idxstats {
+    my $self = shift;
+    die $self->error_message("chr list from samtools idxstats is empty, giving up");
+}
+
 sub run_breakdancer {
     my $self = shift;
     my $bd_params = $self->_breakdancer_params || "";
@@ -224,10 +229,7 @@ sub run_breakdancer {
 
             my @chr_list = $self->_get_chr_list;
             if (scalar @chr_list == 0) {
-                #FIXME Sometimes samtools idxstats does not get correct
-                #stats because of bam's bai file is not created by
-                #later samtools version (0.1.9 ?)
-                die $self->error_message("chr list from samtools idxstats is empty, using full chr list now");
+                @chr_list = $self->chr_list_when_missing_idxstats;
             }
 
             $self->status_message('chromosome list is '.join ',', @chr_list);
