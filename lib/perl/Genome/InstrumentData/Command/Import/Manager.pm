@@ -12,7 +12,7 @@ use YAML;
 
 class Genome::InstrumentData::Command::Import::Manager {
     is => 'Command::V2',
-    doc => 'Manage importing a group of samples including importing instrument data and creating and building models.',
+    doc => 'Manage importing sequence files into Genome',
     has => [
         working_directory => {
             is => 'Text',
@@ -41,11 +41,6 @@ class Genome::InstrumentData::Command::Import::Manager {
             calculate_from => 'working_directory',
             calculate => sub{ my $working_directory = shift; return $working_directory.'/config.yaml'; },
         },
-        status_file => {
-            calculate_from => 'working_directory',
-            calculate => sub{ my $working_directory = shift; return $working_directory.'/samples.status'; },
-            doc => 'File to write sample status.',
-        },
     ],
     has_optional_transient => [
         config => { is => 'Hash', },
@@ -54,6 +49,7 @@ class Genome::InstrumentData::Command::Import::Manager {
         model_params => { is => 'Hash' },
         instrument_data_import_command_format => { is => 'Text', },
         instrument_data_import_command_sample_name_cnt => { is => 'Number', },
+        status => { is => 'Text', },
     ],
 };
 
@@ -76,11 +72,18 @@ Sample Info File
   instrument_data    "i."
 HELP
 }
+
 sub execute {
     my $self = shift;
 
     my $load_samples = $self->_load_samples;
     return if not $load_samples;
+
+    my $load_instrument_data = $self->_load_instrument_data;
+    return if not $load_instrument_data;
+
+    my $load_models = $self->_load_models;
+    return if not $load_models;
 
     my $make_progress = $self->_make_progress;
     return if not $make_progress;
@@ -121,16 +124,6 @@ sub __errors__ {
             type => 'invalid',
             properties => [qw/ info_file /],
             desc => $load_info_error,
-        );
-        return @errors;
-    }
-
-    my $load_status_error = $self->_load_status_file;
-    if ( $load_status_error ) {
-        push @errors, UR::Object::Tag->create(
-            type => 'invalid',
-            properties => [qw/ status_file /],
-            desc => $load_status_error,
         );
         return @errors;
     }
@@ -241,39 +234,12 @@ sub _load_info_file {
     return;
 }
 
-sub _load_status_file {
-    my $self = shift;
-
-    my $status_file = $self->status_file;
-    if ( not -s $status_file ) { # ok
-        return;
-    }
-
-    my $reader = Genome::Utility::IO::SeparatedValueReader->create(
-        input => $status_file,
-        separator => "\t",
-    );
-    if ( not $reader ) {
-        return 'Failed to open status file! '.$status_file;
-    }
-
-    my %samples_by_name = map { $_->{name} => $_ } values %{$self->samples};
-    while ( my $status = $reader->next ) {
-        my $sample = $samples_by_name{ $status->{name} };
-        for my $attr (qw/ instrument_data model build /) {
-            $sample->{$attr.'_id'} = $status->{$attr} if defined $status->{$attr} and $status->{$attr} ne 'NA';
-        }
-    }
-
-    return;
-}
-
 sub _resolve_model_params {
     my $self = shift;
 
     my $config = $self->config;
     if ( not $config->{model} ) {
-        return 'No model info in config! '.$config;
+        return 1;
     }
 
     my %model_params;
@@ -338,15 +304,26 @@ sub _load_samples {
     my $self = shift;
 
     my $samples = $self->samples;
+    for my $sample ( values %$samples ) {
+        $sample->{sample} = Genome::Sample->get(name => $sample->{name});
+    }
+
+    $self->samples($samples);
+
+    return 1;
+}
+
+sub _load_instrument_data {
+    my $self = shift;
+
+    my $samples = $self->samples;
+
     my %instrument_data = map { $_->sample->name, $_ } Genome::InstrumentData::Imported->get(
         original_data_path => [ map { $_->{source_files} } values %$samples ],
         '-hint' => [qw/ attributes /],
     );
 
-    my $model_class = $self->model_class;
-    my $model_params = $self->model_params;
     for my $sample ( values %$samples ) {
-        # Inst Data
         my $instrument_data = $instrument_data{ $sample->{name} };
         $sample->{instrument_data} = $instrument_data;
         $sample->{instrument_data_file} = eval{
@@ -357,25 +334,44 @@ sub _load_samples {
             return $attribute->attribute_value if $attribute;
         };
 
-        # Sample
-        my $genome_sample = Genome::Sample->get(name => $sample->{name});
-        $sample->{sample} = $genome_sample;
-
-        # Model
-        if ( $genome_sample ) {
-            $model_params->{subject} = $genome_sample;
-            my $model = ( $sample->{model_id} )
-            ? $model_class->get( $sample->{model_id} )
-            : $model_class->get(%$model_params);
-            $sample->{model} = $model;
-            $sample->{build} = $model->latest_build if $model;
-        }
-
-        # Status
-        $self->set_sample_status($sample);
     }
 
     $self->samples($samples);
+
+    return 1;
+}
+
+sub _load_models {
+    my $self = shift;
+
+    return 1 if $self->model_params;
+
+    my $samples = $self->samples;
+    my $model_class = $self->model_class;
+    my $model_params = $self->model_params;
+    for my $sample ( values %$samples ) {
+        next if not $sample->{sample};
+
+        $model_params->{subject} = $sample->{sample};
+
+        my $model = $model_class->get(%$model_params);
+        next if not $model;
+
+        $sample->{model} = $model;
+        $sample->{build} = $model->latest_build;
+
+        my $instrument_data = $sample->{instrument_data};
+        next if not $instrument_data;
+
+        my $instrument_data_id = $instrument_data->id;
+        my @model_instrument_data = $model->instrument_data;
+        if ( not @model_instrument_data or not grep { $instrument_data_id eq $_ } map { $_->id } @model_instrument_data ) {
+            $model->add_instrument_data($instrument_data);
+        }
+    }
+
+    $self->samples($samples);
+
     return 1;
 }
 
@@ -470,18 +466,8 @@ sub _status {
         )."\n";
     }
 
-    my $status_file = $self->status_file;
-    unlink $status_file;
-    my $fh = eval{ Genome::Sys->open_file_for_writing($status_file); };
-    if ( not $fh ) {
-        $self->error_message($@) if $@;
-        $self->error_message("Failed to open status file! $status_file");
-        return;
-    }
-    $fh->print($status);
-    $fh->close;
-
-    print STDERR "$status\n\nSummary:\n".join("\n", map { sprintf('%-16s %s', $_, $totals{$_}) } sort { $a cmp $b } keys %totals)."\n";
+    print STDOUT "$status";
+    print STDERR "\nSummary:\n".join("\n", map { sprintf('%-16s %s', $_, $totals{$_}) } sort { $a cmp $b } keys %totals)."\n";
     return 1;
 }
 
@@ -545,7 +531,6 @@ sub _make_progress {
 
         # Model should have instrument data
         my $instrument_data = $sample->{instrument_data};
-            print Data::Dumper::Dumper($sample);
         if ( $instrument_data ) {
             my @model_instrument_data = $model->instrument_data;
             if ( not @model_instrument_data or not grep { $instrument_data->id eq $_ } map { $_->id } @model_instrument_data ) {

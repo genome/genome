@@ -43,7 +43,7 @@ Genome::Sys->create_symlink($test_dir.'/valid-import-needed/info.tsv', $info_tsv
 my $config_yaml = $working_directory.'/config.yaml';
 Genome::Sys->create_symlink($test_dir.'/valid-import-needed/config.yaml', $config_yaml);
 
-# Do not make progress, just status
+# Sample needed
 my $manager = Genome::InstrumentData::Command::Import::Manager->create(
     working_directory => $working_directory,
 );
@@ -54,7 +54,6 @@ ok($sample_hash, 'sample hash');
 is($sample_hash->{status}, 'sample_needed', 'sample hash status');
 is($sample_hash->{name}, $sample_name, 'sample hash sample name');
 ok(!$sample_hash->{sample}, 'sample hash sample');
-ok(-s $manager->status_file, 'status file created');
 
 # Define sample
 my $sample = Genome::Sample->__define__(
@@ -63,7 +62,7 @@ my $sample = Genome::Sample->__define__(
     nomenclature => 'TeSt',
 );
 
-# Import needed
+# Import needed, model is created
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
     working_directory => $working_directory,
 );
@@ -74,7 +73,6 @@ ok($sample_hash, 'sample hash');
 is($sample_hash->{status}, 'import_needed', 'sample hash status');
 is($sample_hash->{name}, $sample_name, 'sample hash sample name');
 is($sample_hash->{sample}, $sample, 'sample hash sample');
-ok(-s $manager->status_file, 'status file created');
 
 # Import command
 is(
@@ -97,9 +95,8 @@ ok($sample_hash, 'sample hash');
 is($sample_hash->{status}, 'import_pend', 'sample hash status');
 is($sample_hash->{name}, $sample_name, 'sample hash sample name');
 is($sample_hash->{sample}, $sample, 'sample hash sample');
-ok(-s $manager->status_file, 'status file created');
 
-# Make progress: create sample, model and 'import' (it thinks it is importing b/c of the command used in the config file)
+# Make progress: create model and 'import' (it thinks it is importing b/c of the command used in the config file)
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
     working_directory => $working_directory,
      launch_imports => 1,
@@ -146,6 +143,7 @@ ok($sample_hash, 'sample hash');
 is($sample_hash->{status}, 'build_needed', 'sample hash status');
 is_deeply([$sample_hash->{instrument_data}], [$inst_data], 'sample hash inst data');
 ok($sample_hash->{model}, 'sample hash model');
+            print Data::Dumper::Dumper($sample_hash);
 is_deeply([$sample_hash->{model}->instrument_data], [$inst_data], 'model has instrument data assigned');
 
 # fail - no config file
