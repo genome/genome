@@ -30,6 +30,11 @@ class Genome::Model::Tools::GenePredictor::Snap {
             default => '2010-07-28.2',
         },        
     ],
+    has_param => [
+        lsf_resource => {
+            default_value => "-M 80000000 -R 'select[type==LINUX64 && mem>80000] rusage[mem=80000]'",
+        }
+    ],
 };
 
 sub help_brief {
