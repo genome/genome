@@ -9,7 +9,7 @@ class Genome::Model::Command::SetDefault {
     is => ['Command'],
     has => [
         model           => { is => 'Genome::Model', id_by => 'model_id' },
-        model_id        => { is => 'Integer', doc => 'identifies the genome model by id', shell_args_position => 1 },
+        model_id        => { is => 'Text', doc => 'identifies the genome model by id', shell_args_position => 1 },
     ],
     has_optional => [
         clear           => { is => 'Boolean', default => '0', doc => 'Indicate the provided model should no longer be considered the default.' },

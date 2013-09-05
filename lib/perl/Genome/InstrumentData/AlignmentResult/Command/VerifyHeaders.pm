@@ -40,7 +40,7 @@ sub execute {
 
     my $spec = $self->alignment_spec;
     my @p = eval $spec;
-    my @a = sort { $b->id <=> $a->id } Genome::InstrumentData::AlignmentResult->get(@p);
+    my @a = sort { $b->id cmp $a->id } Genome::InstrumentData::AlignmentResult->get(@p);
 
     
 

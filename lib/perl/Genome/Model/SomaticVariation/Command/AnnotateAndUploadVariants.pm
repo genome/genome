@@ -9,7 +9,7 @@ class Genome::Model::SomaticVariation::Command::AnnotateAndUploadVariants{
     is => 'Genome::Command::Base',
     has =>[
         build_id => {
-            is => 'Integer',
+            is => 'Text',
             is_input => 1,
             is_output => 1,
             doc => 'build id of SomaticVariation model',
@@ -209,29 +209,6 @@ sub execute{
                 #Make a version of the annotation file without a header
                 `mv $final_output_file $final_output_file.header`;
                 `grep -v "^chromosome_name" $final_output_file.header > $final_output_file`;
-            }
-
-            #upload variants
-            my %upload_params = (
-                build_id => $self->build_id, 
-            );
-
-            $upload_params{variant_file} = $variant_file;
-            $upload_params{annotation_file} = $annotated_file;
-            $upload_params{output_file} = $uploaded_file;
-
-            my $upload_command = Genome::Model::Tools::Somatic::UploadVariants->create(%upload_params);
-            unless ($upload_command){
-                die $self->error_message("Failed to create upload command for $key. Params:\n". Data::Dumper::Dumper(\%upload_params));
-            }
-            #my $upload_rv = $upload_command->execute;
-            my $upload_rv =  1;  #TODO turn this on
-            my $upload_err = $@;
-            unless ($upload_rv){
-                die $self->error_message("Failed to execute upload command for $key (err: $upload_err). Params:\n".Dumper(\%upload_params));
-            }
-            unless(-s $upload_params{output_file} or 1){
-                die $self->error_message("No output from upload command for $key. Params:\n" . Data::Dumper::Dumper(\%upload_params));
             }
         }
         else{

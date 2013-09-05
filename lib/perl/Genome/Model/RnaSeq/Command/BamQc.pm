@@ -89,15 +89,14 @@ sub params_for_result {
 
     return (
         alignment_result_id => $alignment_result->id,
-        picard_version => $pp->picard_version || Genome::Model::Tools::Picard->default_picard_version,
-        samtools_version => $pp->samtools_version || Genome::Model::Tools::Sam->default_samtools_version,
-        #Genome::Model::Tools::Fastqc->default_fastqc_version; No idea why the class method doesn't work...
-        fastqc_version => $pp->fastqc_version || '0.10.0',
-        samstat_version => $pp->samstat_version || Genome::Model::Tools::SamStat::Base->default_samstat_version,
-        error_rate => $pp->calculate_error_rate || 0,
-        error_rate_pileup => $pp->use_error_rate_pileup || 0,
-        read_length => 1,
-        test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+        picard_version      => $pp->picard_version || Genome::Model::Tools::Picard->default_picard_version,
+        samtools_version    => $pp->samtools_version || Genome::Model::Tools::Sam->default_samtools_version,
+        fastqc_version      => $pp->fastqc_version || Genome::Model::Tools::Fastqc->default_fastqc_version,
+        samstat_version     => $pp->samstat_version || Genome::Model::Tools::SamStat::Base->default_samstat_version,
+        error_rate_version  => $pp->error_rate_version || Genome::Model::Tools::BioSamtools::ErrorRate->default_errorrate_version,
+        error_rate          => $pp->calculate_error_rate || 0,
+        read_length         => 1,
+        test_name           => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
     );
 }
 

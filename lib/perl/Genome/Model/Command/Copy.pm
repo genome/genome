@@ -270,7 +270,7 @@ sub params_from_param_strings {
         my @values = $value;
         my $data_type = $property->data_type;
         if (defined($data_type) and not grep { $data_type =~ /^$_$/i } (qw/ boolean integer number string text ur::value /) ) { # hacky...if u kno a better way...
-            my $filter = ( $value =~ /^$RE{num}{int}$/ ) ? 'id='.$value : $value;
+            my $filter = ( $value =~ /^$RE{num}{int}$/ || $value =~ /^[[:xdigit:]]{32}$/) ? 'id='.$value : $value;
             my $bx = eval { UR::BoolExpr->resolve_for_string($data_type, $filter); };
             if ( not $bx ) {
                 $class->error_message("Failed to create expression for $key ($data_type) from '$value'");

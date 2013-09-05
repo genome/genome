@@ -8,6 +8,8 @@ use Sys::Hostname;
 require File::Temp;
 use Test::More;
 
+Genome::Report::Email->silent();
+
 # use
 use_ok('Genome::Model::Build::Command::Start') or die;
 

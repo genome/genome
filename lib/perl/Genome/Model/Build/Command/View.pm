@@ -400,7 +400,7 @@ sub _display_workflow_child {
 
     if ($self->connectors || !$self->_is_connector($child->name)) {
         if($status eq 'failed' or $status eq 'crashed' or
-           $status eq 'running') {
+           $status eq 'running' or $status eq 'running*') {
             push(@{$failed_workflow_steps}, $child);
         }
         print $handle $self->_format_workflow_child_line($child->id, $status,

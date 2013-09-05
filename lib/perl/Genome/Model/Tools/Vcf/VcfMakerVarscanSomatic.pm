@@ -12,6 +12,7 @@ use POSIX qw(log10);
 use POSIX qw(strftime);
 use List::MoreUtils qw(firstidx);
 use List::MoreUtils qw(uniq);
+use Genome::Model::Tools::Vcf::Helpers qw/convertIub genGT/;
 
 class Genome::Model::Tools::Vcf::VcfMakerVarscanSomatic {
     is => 'Command',
@@ -134,71 +135,6 @@ sub execute {                               # replace with real execution logic.
 
 ###########################################################################
 # functions
-
-    #------------------------
-    #convert IUB bases to std bases (acgt)
-    sub convertIub{
-	my ($base) = @_;
-
-	#deal with cases like "A/T" or "C/W"
-	if ($base =~/\//){
-	    my @bases=split(/\//,$base);
-	    my %baseHash;
-	    foreach my $b (@bases){
-		my $res = convertIub($b);
-		my @bases2 = split(",",$res);
-		foreach my $b2 (@bases2){
-		    $baseHash{$b2} = 0;
-		}
-	    }
-	    return join(",",keys(%baseHash));
-	}
-
-	# use a lookup table to return the correct base
-	# there's a more efficient way than defining this
-	# every time, but meh.
-	my %iub_codes;
-	$iub_codes{"A"}="A";
-	$iub_codes{"C"}="C";
-	$iub_codes{"G"}="G";
-	$iub_codes{"T"}="T";
-	$iub_codes{"U"}="T";
-	$iub_codes{"M"}="A,C";
-	$iub_codes{"R"}="A,G";
-	$iub_codes{"W"}="A,T";
-	$iub_codes{"S"}="C,G";
-	$iub_codes{"Y"}="C,T";
-	$iub_codes{"K"}="G,T";
-	$iub_codes{"V"}="A,C,G";
-	$iub_codes{"H"}="A,C,T";
-	$iub_codes{"D"}="A,G,T";
-	$iub_codes{"B"}="C,G,T";
-	$iub_codes{"N"}="A,C,G,T";
-
-	return $iub_codes{$base}
-    }
-
-    #------------------------
-    # generate a GT line from a base and a list of all alleles at the position
-    sub genGT{
-	my ($base, @alleles) = @_;
-        #print "$base -- " . join("|",@alleles) . "\n";
-	my @bases = split(",",convertIub($base));
-	if (@bases > 1){
-	    my @pos;
-	    push(@pos, (firstidx{ $_ eq $bases[0] } @alleles));
-	    push(@pos, (firstidx{ $_ eq $bases[1] } @alleles));
-	    return(join("/", sort(@pos)));
-	} else { #only one base
-	    my @pos;
-	    push(@pos, (firstidx{ $_ eq $bases[0] } @alleles));
-	    push(@pos, (firstidx{ $_ eq $bases[0] } @alleles));
-	    return(join("/", sort(@pos)));
-	}
-    }
-
-
-#-------------------------
 
 #get preceding base using samtools faidx
 sub getPrecedingBase{

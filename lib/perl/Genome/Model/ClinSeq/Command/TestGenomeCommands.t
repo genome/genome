@@ -20,8 +20,6 @@ use Data::Dumper;
 use above "Genome";
 use Test::More tests => 61;
 
-#Test with GENOME_QUERY_POSTGRES=1 to use postgres database instead of Oracle
-
 #The following tests are expressed as system calls of what you would actually type at the command-line because that is the output we specifically wish to test
 
 #This test performs a series of tests that cover common analysis use cases for command line usage of Genome listers, etc.
@@ -35,7 +33,7 @@ my $temp_dir = Genome::Sys->create_temp_directory();
 ok($temp_dir, "created temp directory: $temp_dir");
 
 #Define the test where expected results are stored
-my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "Genome-Model-ClinSeq-Command-TestGenomeCommands/2013-07-25/";
+my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "Genome-Model-ClinSeq-Command-TestGenomeCommands/2013-08-20/";
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 #CLIN-SEQ UPDATE-ANALYSIS
@@ -122,6 +120,7 @@ for my $file (@files) {
         filters => [
             '^\*\*\*\*\* GENOME_DEV_MODE.*',
             '^Subroutine Genome::SoftwareResult::_resolve_lock_name redefined.*',
+            "^WARNING: Ignoring ineffective commit because AutoCommit is on\n",
         ],
         name => "compared $file",
     );

@@ -169,6 +169,9 @@ for my $i (1..2) {
 }
 is(@instrument_data, 2, 'create instrument data');
 
+my $data_sorter = Genome::InstrumentData::Solexa->__meta__->id_property_sorter;
+@instrument_data = sort $data_sorter @instrument_data;
+
 # compatible
 my @compatible_id = $model->compatible_instrument_data;
 is_deeply(
@@ -202,6 +205,8 @@ for my $i (1..2) {
         data_directory => $tmpdir.'/build'.$i,
     );
 }
+my $build_sorter = Genome::Model::Build->__meta__->id_property_sorter;
+@builds = sort $build_sorter @builds;
 
 is(@builds, 2, 'create builds');
 my @model_builds = $model->builds;

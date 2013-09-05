@@ -14,7 +14,7 @@ class Genome::Model::SomaticValidation::Command::PrepareIndelValidationInput {
             id_by => 'build_id',
         },
         build_id => {
-            is => 'Integer',
+            is => 'Text',
             is_input => 1,
             doc => 'build id of SomaticValidation model',
         },

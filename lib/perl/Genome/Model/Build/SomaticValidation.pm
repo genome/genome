@@ -195,15 +195,15 @@ sub calculate_estimated_kb_usage {
 
 sub regex_files_for_diff {
     return qw(
-        ^alignments/normal/\d+\.(bam.*)$
-        ^alignments/tumor/\d+\.(bam.*)$
-        sv/alignments/tumor/\d+\.(bam.*)$
-        sv/alignments/normal/\d+\.(bam.*)$
-        validation/large_indel/alignments/tumor/\d+\.(bam.*)$
-        validation/large_indel/alignments/normal/\d+\.(bam.*)$
-        coverage/(tumor|normal)/wingspan_(\d+)/\d+_(\w+)_STATS.t(sv|xt)
-        coverage/(tumor|normal)/\d+-(\w+)-wingspan_(\d+)-alignment_summary.tsv
-        coverage/(tumor|normal)/\d+-(\w+)-wingspan_(\d+)-alignment_summary-v2.tsv
+        ^alignments/normal/[[:xdigit:]]+\.(bam.*)$
+        ^alignments/tumor/[[:xdigit:]]+\.(bam.*)$
+        sv/alignments/tumor/[[:xdigit:]]+\.(bam.*)$
+        sv/alignments/normal/[[:xdigit:]]+\.(bam.*)$
+        validation/large_indel/alignments/tumor/[[:xdigit:]]+\.(bam.*)$
+        validation/large_indel/alignments/normal/[[:xdigit:]]+\.(bam.*)$
+        coverage/(tumor|normal)/wingspan_(\d+)/[[:xdigit:]]+_(\w+)_STATS.t(sv|xt)
+        coverage/(tumor|normal)/[[:xdigit:]]+-(\w+)-wingspan_(\d+)-alignment_summary.tsv
+        coverage/(tumor|normal)/[[:xdigit:]]+-(\w+)-wingspan_(\d+)-alignment_summary-v2.tsv
     );
 }
 
@@ -228,8 +228,8 @@ sub files_ignored_by_diff {
         sv/assembly_output\.csv\.index$
         cnv_graph\.pdf$
         pindel\.config$
-        variants/cnv/plot-cnv-[^/]+/\d+\.bam\.cnvseg$
-        variants/cnv/plot-cnv-[^/]+/\d+.bam.bamtocn$
+        variants/cnv/plot-cnv-[^/]+/[[:xdigit:]]+\.bam\.cnvseg$
+        variants/cnv/plot-cnv-[^/]+/[[:xdigit:]]+.bam.bamtocn$
         variants/indel/pindel-[^/]+/pindel-somatic-calls-[^/]+/pindel-read-support-[^/]+/indels.hq.read_support.bed$
         alignments/.*\.log$
         alignments/.*\.metrics$

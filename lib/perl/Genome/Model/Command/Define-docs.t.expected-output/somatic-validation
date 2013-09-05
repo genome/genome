@@ -1,6 +1,6 @@
 
 [4mUSAGE[0m
- [1mgenome model define somatic-validation[0m [--name=?] [--auto-assign-inst-data]
+ [1mgenome model define somatic-validation[0m [--name=?] [--auto-assign-inst-data] [--force]
     [--tumor-sample=?] [--normal-sample=?] [--sample-list-file=?] [--region-of-interest-set=?]
     [--processing-profile=?] [--groups=?[,?]] [DESIGN] [TARGET] [VARIANTS]
 
@@ -10,6 +10,9 @@
   [1mauto-assign-inst-data[0m
     Automatically assign instrument data using the cron 
     Default value 'true' if not specified
+  [1mforce[0m
+    force model creation to occur, even if samples don't match 
+    Default value 'false' (--noforce) if not specified
   [1mtumor-sample[0m
     If there are no variants, specify the "tumor" sample directly 
   [1mnormal-sample[0m

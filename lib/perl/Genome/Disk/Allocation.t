@@ -12,7 +12,7 @@ BEGIN {
 use above 'Genome';
 use Test::More;
 use File::Temp 'tempdir';
-use File::Slurp;
+use File::Slurp qw(read_file);
 use Filesys::Df qw();
 
 $| = 1;
@@ -171,6 +171,7 @@ for my $child (1..$children) {
         push @pids, $pid;
     }
     else {
+        srand(time ^ $pid);
         print "*** Spinning up child process $child, PID $$\n";
         my $volume = $volumes[$child % @volumes];
         do_race_lock($child, $group, $volume, $test_dir);
@@ -190,7 +191,7 @@ for my $child (1..$children) {
     ok(-e $log, 'found child process log file') or next;
 
     my @lines = read_file($log);
-    ok(@lines == 3, 'there are three lines of output in the log, create/reallocate/deallocate') || system("cat $log");
+    ok(@lines == 3, 'there are three lines of output in the log, create/reallocate/deallocate') || diag $log, "\n", @lines;
     for my $line (@lines) {
         chomp $line;
         ok($line =~ /SUCCESS/, "log indicates success: $line");
@@ -217,6 +218,9 @@ sub do_race_lock {
         CLEANUP => 1,
         UNLINK => 1,
     );
+
+    my $mount_path = $volume->mount_path;
+    $path =~ s/$mount_path//;
 
     # The volume/group objects still exist (they were created in the parent process), but they aren't in the
     # UR cache for the child process, which means that gets/loads will not find them. Overriding the

@@ -9,7 +9,7 @@ class Genome::DruggableGene::GeneNameGroup {
     is => 'UR::Object',
     table_name => 'dgidb.gene_name_group',
     schema_name => 'dgidb',
-    data_source => 'Genome::DataSource::Main',
+    data_source => 'Genome::DataSource::Dgidb',
 
     id_generator => '-uuid',
     id_by => [

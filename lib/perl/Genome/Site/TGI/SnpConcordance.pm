@@ -5,8 +5,8 @@ use warnings;
 use Genome;
 
 class Genome::Site::TGI::SnpConcordance {
-    table_name => 'GSC.SNP_CONCORDANCE',
-    data_source => 'Genome::DataSource::GMSchema',
+    table_name => 'SNP_CONCORDANCE',
+    data_source => 'Genome::DataSource::Dwrac',
     id_by => [
         creation_event_id => { is => 'Number' },
     ],

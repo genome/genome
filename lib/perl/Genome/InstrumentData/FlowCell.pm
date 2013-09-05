@@ -11,7 +11,7 @@ use Digest::MD5 qw(md5 md5_hex md5_base64);
 class Genome::InstrumentData::FlowCell {
     is => 'Genome::Searchable',
     type_name  => 'system flowcell',
-        table_name => 'GSC.flow_cell_illumina',
+        table_name => 'flow_cell_illumina',
             id_by      => [ flow_cell_id => { is => 'VARCHAR2', len => 15 }, ],
             has        => [
                 machine_name      => { is => 'VARCHAR2', len => 64 },
@@ -53,8 +53,7 @@ class Genome::InstrumentData::FlowCell {
                 }
 
             ],
-                schema_name => 'GMSchema',
-                    data_source => 'Genome::DataSource::GMSchema',
+                    data_source => 'Genome::DataSource::Dwrac',
                 };
 
 #            where   => [ flow_cell_id => '' ],

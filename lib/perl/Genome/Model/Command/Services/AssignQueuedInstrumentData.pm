@@ -16,10 +16,6 @@ class Genome::Model::Command::Services::AssignQueuedInstrumentData {
             default     => 200,
             doc         => 'Max # of instrument data to process in one invocation.',
         },
-        newest_first => {
-            is          => 'Boolean',
-            doc         => 'Process newest instrument data first.',
-        },
     ],
     has_transient => [
         _existing_models_with_existing_assignments => {
@@ -507,12 +503,11 @@ sub _load_instrument_data {
     $self->status_message('Found '.scalar(grep { $_->{_priority} > 0 } values %instrument_data)." previously attempted instrument data\n");
 
     $self->status_message('Filter instrument data we can process...');
-    my $sorter = ( $self->newest_first )
-    ? sub{ $a->{_priority} <=> $b->{_priority} or $a->id <=> $b->id } # oldest first, then failed
-    : sub{ $a->{_priority} <=> $b->{_priority} or $b->id <=> $a->id }; # newest first, then failed
+    # sort for determinism since data is in a hash
+    my $sorter = sub { $a->{_priority} <=> $b->{_priority} or Genome::InstrumentData->__meta__->id_property_sorter->($a, $b) };
     my @instrument_data_to_process;
     my $max_instrument_data_to_process = $self->max_instrument_data_to_process;
-    for my $instrument_data ( sort { $sorter->() } values %instrument_data ) {
+    for my $instrument_data ( sort $sorter values %instrument_data ) {
         last if @instrument_data_to_process >= $max_instrument_data_to_process;
         if ( not $self->_check_instrument_data($instrument_data) ){
             $self->_update_instrument_data_tgi_lims_status_to_failed($instrument_data);

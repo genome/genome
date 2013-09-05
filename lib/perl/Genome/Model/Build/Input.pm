@@ -5,12 +5,12 @@ use warnings;
 
 use Genome;
 class Genome::Model::Build::Input {
-    table_name => 'GENOME_MODEL_BUILD_INPUT',
+    table_name => 'model.build_input',
     type_name => 'genome model build input',
     id_by => [
         build_id => {
-            is => 'NUMBER',
-            len => 11,
+            is => 'VARCHAR2',
+            len => 64,
         },
         value_class_name => {
             is => 'VARCHAR2',
@@ -58,6 +58,10 @@ class Genome::Model::Build::Input {
         },
     ],
     has_optional => [
+        _build_value => {
+            is => 'Genome::Model::Build',
+            id_by => 'value_id',
+        },
         filter_desc => {
             is => 'Text',
             valid_values => [ "forward-only", "reverse-only", undef ],

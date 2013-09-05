@@ -15,7 +15,7 @@ our $TESTING_DISK_ALLOCATION = 0;
 
 class Genome::Disk::Allocation {
     is => 'Genome::Notable',
-    table_name => 'GENOME_DISK_ALLOCATION',
+    table_name => 'disk.allocation',
     id_by => [
         id => {
             is => 'Text',
@@ -1029,14 +1029,21 @@ sub _execute_system_command {
         $allocation = $class->$method(%params);
     }
     else {
-        # Serialize params hash, construct command, and execute
-        my $param_string = Genome::Utility::Text::hash_to_string(\%params);
-        my $includes = join(' ', map { qq{-I "$_"} } UR::Util::used_libs);
-        my $perl5opt = join(' ', @_execute_system_command_perl5opt);
-        my $cmd_template = '%s %s %s -e "%s->%s(%s); UR::Context->commit;"';
-        my $cmd = sprintf($cmd_template, "genome-perl", $includes, $perl5opt, $class, $method, $param_string);
+        # remove the parens if you DARE
+        my @includes = map { ( '-I' => $_ ) } UR::Util::used_libs;
 
-        unless (eval { system($cmd) } == 0) {
+        my $param_string = Genome::Utility::Text::hash_to_string(\%params, 'q');
+        my $perl_program_string = sprintf("%s->%s(%s); UR::Context->commit;",
+            $class, $method, $param_string);
+
+        my @cmd = (
+            'genome-perl',
+            @includes,
+            @_execute_system_command_perl5opt,
+            '-e',
+            $perl_program_string
+        );
+        unless (system(@cmd) == 0) {
             my $msg = "Could not perform allocation action!";
             if ($@) {
                 $msg .= " Error: $@";
@@ -1321,9 +1328,6 @@ sub _verify_no_child_allocations {
     my $data_source = $meta->data_source;
     my $owner       = $data_source->owner;
     my $query_string;
-
-    #POSTGRES TODO:  remove this little ugly hack when we go 100% postgres.
-    $data_source = Genome::DataSource::PGTest->get() if ($ENV{'GENOME_QUERY_POSTGRES'});
 
     if ($data_source->isa('UR::DataSource::Oracle')) {
         my $fq_table_name = join('.', $owner, $table_name);

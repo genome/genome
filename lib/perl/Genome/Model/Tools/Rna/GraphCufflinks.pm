@@ -13,7 +13,7 @@ class Genome::Model::Tools::Rna::GraphCufflinks {
     is => 'Command',
     has => [
     model_group => {
-        is => 'Integer',
+        is => 'Text',
         is_optional => 0,
         is_input => 1,
         doc => 'Model group to graph',

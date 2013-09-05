@@ -10,7 +10,7 @@ use Data::Dumper;
 use JSON::XS;
 
 class Genome::Nomenclature::Field {
-    table_name => 'GENOME_NOMENCLATURE_FIELD',
+    table_name => 'web.nomenclature_field',
     id_by => [
         id => {
             is => 'Text',

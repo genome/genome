@@ -1,4 +1,3 @@
-
 package Genome::Model::Tools::Capture::MutationsFromGroup;     # rename this when you give the module file a different name <--
 
 #####################################################################################################################################
@@ -19,6 +18,7 @@ use warnings;
 use FileHandle;
 
 use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
+use Genome::Model::Tools::Capture::Helpers qw/iupac_to_base sortByChrPos/;
 
 ## Declare global statistics hash ##
 
@@ -26,7 +26,7 @@ my %stats = ();
 
 
 class Genome::Model::Tools::Capture::MutationsFromGroup {
-	is => 'Command',                       
+	is => 'Genome::Model::Tools::Capture',                       
 	
 	has => [                                # specify the command's single-value properties (parameters) <--- 
 		group_id		=> { is => 'Text', doc => "ID of somatic-variation model group" , is_optional => 0},
@@ -142,7 +142,7 @@ sub execute {                               # replace with real execution logic.
 				my $tier1_snvs_file = "$build_dir/effects/snvs.hq.novel.tier1.v2.bed";				
 				my $tier1_snvs_annotation_file = "$build_dir/effects/snvs.hq.tier1.v1.annotated.top";
 				## Load Tier 1 ##
-				my %tier1_snvs = load_variants_from_bed($tier1_snvs_file);
+				my %tier1_snvs = $self->load_variants_from_bed($tier1_snvs_file);
 				
 				## Get Novel Indels file ##
 				my $novel_indels_file = "$build_dir/novel/indels.hq.novel.v2.bed";
@@ -150,7 +150,7 @@ sub execute {                               # replace with real execution logic.
 				my $tier1_indels_annotation_file = "$build_dir/effects/indels.hq.tier1.v1.annotated.top";
 
 				## Load Tier1 ##				
-				my %tier1_indels = load_variants_from_bed($tier1_indels_file);
+				my %tier1_indels = $self->load_variants_from_bed($tier1_indels_file);
 				
 				if(-e $novel_snvs_file)
 				{
@@ -207,7 +207,7 @@ sub execute {                               # replace with real execution logic.
 
 					if(-e $novel_indels_file)
 					{
-						my %novel_indels = load_variants_from_bed($novel_indels_file);
+						my %novel_indels = $self->load_variants_from_bed($novel_indels_file);
 						
 						
 						open(NOVELBED, ">$output_dir/indels.novel.bed") or die "Can't open outfile: $!\n";
@@ -218,7 +218,7 @@ sub execute {                               # replace with real execution logic.
 	
 						my %printed = ();
 	
-						foreach my $indel (sort byChrPos keys %novel_indels)
+						foreach my $indel (sortByChrPos(keys %novel_indels))
 						{
 							$num_indels++;
 							
@@ -324,7 +324,8 @@ sub load_file_to_string
 
 sub load_variants_from_bed
 {
-	my $FileName = shift(@_);
+    my $self = shift;
+	my $FileName = shift;
 
 	my $input = new FileHandle ($FileName);
 	my $lineCounter = 0;
@@ -374,82 +375,4 @@ sub load_variants_from_bed
 	return(%variants);
 }
 
-
-sub byChrPos
-{
-    (my $chrom_a, my $pos_a) = split(/\t/, $a);
-    (my $chrom_b, my $pos_b) = split(/\t/, $b);
-
-	$chrom_a =~ s/X/23/;
-	$chrom_a =~ s/Y/24/;
-	$chrom_a =~ s/MT/25/;
-	$chrom_a =~ s/M/25/;
-	$chrom_a =~ s/[^0-9]//g;
-
-	$chrom_b =~ s/X/23/;
-	$chrom_b =~ s/Y/24/;
-	$chrom_b =~ s/MT/25/;
-	$chrom_b =~ s/M/25/;
-	$chrom_b =~ s/[^0-9]//g;
-
-    $chrom_a <=> $chrom_b
-    or
-    $pos_a <=> $pos_b;
-    
-#    $chrom_a = 23 if($chrom_a =~ 'X');
-#    $chrom_a = 24 if($chrom_a =~ 'Y');
-    
-}
-
-
-
-#############################################################
-# ParseBlocks - takes input file and parses it
-#
-#############################################################
-
-sub iupac_to_base
-{
-	(my $allele1, my $allele2) = @_;
-	
-	return($allele2) if($allele2 eq "A" || $allele2 eq "C" || $allele2 eq "G" || $allele2 eq "T");
-	
-	if($allele2 eq "M")
-	{
-		return("C") if($allele1 eq "A");
-		return("A") if($allele1 eq "C");
-	}
-	elsif($allele2 eq "R")
-	{
-		return("G") if($allele1 eq "A");
-		return("A") if($allele1 eq "G");		
-	}
-	elsif($allele2 eq "W")
-	{
-		return("T") if($allele1 eq "A");
-		return("A") if($allele1 eq "T");		
-	}
-	elsif($allele2 eq "S")
-	{
-		return("C") if($allele1 eq "G");
-		return("G") if($allele1 eq "C");		
-	}
-	elsif($allele2 eq "Y")
-	{
-		return("C") if($allele1 eq "T");
-		return("T") if($allele1 eq "C");		
-	}
-	elsif($allele2 eq "K")
-	{
-		return("G") if($allele1 eq "T");
-		return("T") if($allele1 eq "G");				
-	}	
-	
-	return($allele2);
-}
-
-
-
-
 1;
-

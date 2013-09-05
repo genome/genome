@@ -23,13 +23,10 @@ EOS
 sub path_to_version_run_assembly {
     my $self = shift;
 
-    my $app_bin = $ENV{GENOME_SW} . '/454/'.$self->version.'/bin';
-    if( not -d $app_bin ) {
-        $app_bin = $ENV{GENOME_SW} . '/454/'.$self->version.'/applicationBin';
-    }
-    if( not -d $app_bin ) {
-        $self->error_message("Failed to find newbler bin/applicationBin");
-        return;
+    my $app_bin;
+    for my $bin( $self->possible_app_bin_names ) {
+        $app_bin = $ENV{GENOME_SW} . '/454/' . $self->version . "/$bin";
+        last if -d $app_bin;
     }
 
     my $assembler = $app_bin.'/runAssembly';
@@ -38,6 +35,14 @@ sub path_to_version_run_assembly {
         return;
     }
     return $assembler;
+}
+
+sub possible_app_bin_names {
+    return (qw/
+bin
+applicationBin
+applicationsBin
+/);
 }
 
 #< input fastq files >#

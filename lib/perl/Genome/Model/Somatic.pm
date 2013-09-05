@@ -85,7 +85,7 @@ class Genome::Model::Somatic {
             to => 'from_model',
         },
         tumor_model_id => {
-            is => 'Integer',
+            is => 'Text',
             via => 'tumor_model',
             to => 'id',
         },
@@ -101,7 +101,7 @@ class Genome::Model::Somatic {
             to => 'from_model',
         },
         normal_model_id => {
-            is => 'Integer',
+            is => 'Text',
             via => 'normal_model',
             to => 'id',
         },

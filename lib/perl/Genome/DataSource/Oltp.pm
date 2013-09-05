@@ -5,26 +5,16 @@ use warnings;
 use Genome;
 
 class Genome::DataSource::Oltp {
-    is => 'UR::DataSource::Oracle',
-    type_name => 'genome datasource oltp',
+    is => ['Genome::DataSource::OracleType', 'Genome::DataSource::CommonRDBMS'],
+    has_classwide_constant => [
+        server  => { default_value => 'gscprod' },
+        login   => { default_value => 'gscuser' },
+        auth    => { default_value => 'g_user' },
+        owner   => { default_value => 'GSC' },
+    ],
 };
 
-sub server {
-    'gscprod';
-}
-
-sub login {
-    'gscuser';
-}
-
-sub auth {
-    'g_user';
-}
-
-sub owner {
-    'gsc';
-}
-
+sub table_and_column_names_are_upper_case { 1; }
 
 1;
 

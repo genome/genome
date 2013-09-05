@@ -31,7 +31,6 @@ class Genome::Model::Tools::DetectVariants2::Breakdancer{
             is => 'Text',
             is_input => 1,
             is_optional => 1,
-            valid_values => [@FULL_CHR_LIST, 'all'],
             default_value => 'all',
         },
         version => {
@@ -71,7 +70,7 @@ class Genome::Model::Tools::DetectVariants2::Breakdancer{
             doc => 'Store the base output directory when using per-chromosome output dirs',
         },
     ],
-    has_param => [ 
+    has_param => [
         lsf_resource => {
             default_value => "-M 25000000 -R 'select[mem>25000] rusage[mem=25000]'",
         },
@@ -86,13 +85,18 @@ gmt detect-variants2 breakdancer -aligned-reads-input tumor.bam -control-aligned
 EOS
 }
 
-sub help_detail {                           
-    return <<EOS 
+sub help_detail {
+    return <<EOS
 This tool discovers structural variation.  It generates an appropriate configuration based on
 the input BAM files and then uses that configuration to run breakdancer.
 EOS
 }
 
+sub class_name {
+    my $self = shift;
+
+    return $self->class =~ m/.*::(.*)/;
+}
 
 sub _create_temp_directories {
     my $self = shift;
@@ -136,7 +140,7 @@ sub _resolve_output_directory {
 
 sub _detect_variants {
     my $self = shift;
-    
+
     $self->run_config;
     $self->run_breakdancer;
 
@@ -164,22 +168,32 @@ sub run_config {
             use_version => $self->version,
         );
 
-        $params{normal_bam} = $self->control_aligned_reads_input 
+        $params{normal_bam} = $self->control_aligned_reads_input
             if $self->control_aligned_reads_input;
 
         my $bam2cfg = Genome::Model::Tools::Breakdancer::BamToConfig->create(%params);
-       
+
         unless ($bam2cfg->execute) {
             $self->error_message("Failed to run bam2cfg");
             die;
         }
 
         $self->config_file($self->_config_staging_output);
-        $self->status_message('Breakdancer config is created ok');
+        $self->status_message(sprintf('%s config is created ok',
+                $self->class_name));
     }
     return 1;
 }
 
+
+sub chr_list_when_missing_idxstats {
+    my $self = shift;
+    #FIXME Sometimes samtools idxstats does not get correct
+    #stats because of bam's bai file is not created by
+    #later samtools version (0.1.9 ?)
+    $self->warning_message("chr list from samtools idxstats is empty, using full chr list now");
+    return @FULL_CHR_LIST;
+}
 
 sub run_breakdancer {
     my $self = shift;
@@ -198,10 +212,11 @@ sub run_breakdancer {
         my $chr = $self->chromosome;
         if ($chr eq 'all') {
             require Workflow::Simple;
-        
+
             my $op = Workflow::Operation->create(
-                name => 'Breakdancer by chromosome',
-                operation_type => Workflow::OperationType::Command->get('Genome::Model::Tools::DetectVariants2::Breakdancer'),
+                name => sprintf('%s by chromosome', $self->class_name),
+                operation_type => Workflow::OperationType::Command->get(
+                    $self->class),
             );
 
             $op->parallel_by('chromosome');
@@ -227,17 +242,13 @@ sub run_breakdancer {
 
             my @chr_list = $self->_get_chr_list;
             if (scalar @chr_list == 0) {
-                #FIXME Sometimes samtools idxstats does not get correct
-                #stats because of bam's bai file is not created by
-                #later samtools version (0.1.9 ?)
-                $self->warning_message("chr list from samtools idxstats is empty, using full chr list now"); 
-                @chr_list = @FULL_CHR_LIST;
+                @chr_list = $self->chr_list_when_missing_idxstats;
             }
 
             $self->status_message('chromosome list is '.join ',', @chr_list);
 
             my %params = (
-                aligned_reads_input         => $self->aligned_reads_input, 
+                aligned_reads_input         => $self->aligned_reads_input,
                 reference_build_id          => $self->reference_build_id,
                 output_directory            => $self->_temp_staging_directory,
                 config_file => $cfg_file,
@@ -269,7 +280,7 @@ sub run_breakdancer {
             return 1;
         }
         else {
-            $self->_sv_base_name($self->_sv_base_name . '.' . $chr); 
+            $self->_sv_base_name($self->_sv_base_name . '.' . $chr);
             $bd_params =~ s/\-o/\-o $chr/;
         }
     }
@@ -316,6 +327,10 @@ sub run_breakdancer {
 sub _get_chr_list {
     my $self = shift;
 
+    if (not $self->chromosome) {
+        die $self->error_message("Chromosoome not set!  Expected 'all', or a specific sequence name!");
+    }
+
     my $tmp_idx_dir = File::Temp::tempdir(
         "Normal_bam_idxstats_XXXXX",
         CLEANUP => 1,
@@ -334,9 +349,15 @@ sub _get_chr_list {
         die;
     }
 
-    my $map_chr_list = $idxstats->map_ref_list($tmp_idx_file);
-    my @chr_list; 
+    return $self->_get_chr_list_from_idx_file($idxstats, $tmp_idx_file);
+}
 
+sub _get_chr_list_from_idx_file {
+    my ($self, $idxstats, $idx_file) = @_;
+
+    my $map_chr_list = $idxstats->map_ref_list($idx_file);
+
+    my @chr_list;
     for my $chr (@FULL_CHR_LIST) {
         push @chr_list, $chr if grep{$chr eq $_}@$map_chr_list;
     }
@@ -358,7 +379,7 @@ sub has_version {
             return 1;
         }
     }
-    return 0;  
+    return 0;
 }
 
 sub params_for_detector_result {

@@ -43,6 +43,13 @@ is($base_recalibrator->recalibration_table_file, $base_recalibrator->output_dir.
 ok(-s $base_recalibrator->recalibration_table_file, 'recalibration table file exists');
 Genome::Utility::Test::compare_ok($base_recalibrator->recalibration_table_file, $result_data_dir.'/expected.bam.grp', 'recalibration table file matches');
 
+# Users
+my @bam_source_users = $bam_source->users;
+ok(@bam_source_users, 'add users to bam source');
+is_deeply([map { $_->label } @bam_source_users], ['bam source'], 'bam source users haver correct label');
+my @users = sort { $a->id <=> $b->id } map { $_->user } @bam_source_users;
+is_deeply(\@users, [$base_recalibrator], 'bam source is used by base recal result');
+
 # Allocation params
 is(
     $base_recalibrator->resolve_allocation_disk_group_name,

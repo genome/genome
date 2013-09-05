@@ -118,7 +118,7 @@ sub check_derived_from_links {
             desc => $@);
     }
 
-    if (defined $self->derived_from and $self->derived_from->id == $self->id) {
+    if (defined $self->derived_from and $self->derived_from->id eq $self->id) {
         push @tags, UR::Object::Tag->create(
             type => 'error',
             properties => ['derived_from'],
@@ -183,7 +183,7 @@ sub is_derived_from {
             $self->derived_from->__display_name__ . ", seen: " . join(',', keys %{$seen});
     }
 
-    return 1 if $build->id == $self->id;
+    return 1 if $build->id eq $self->id;
     return 0 if !defined $self->derived_from;
 
     # recurse
@@ -346,6 +346,8 @@ sub full_consensus_sam_index_path {
     unless (-e $idx_file) {
         my $sam_path = Genome::Model::Tools::Sam->path_for_samtools_version($sam_version);
         my $cmd      = $sam_path.' faidx '.$fa_file;
+        
+        $self->warning_message("no failx file at $idx_file!");
 
         my $lock = Genome::Sys->lock_resource(
             resource_lock => $data_dir.'/lock_for_faidx',
@@ -407,80 +409,78 @@ sub get_sequence_dictionary {
 
     if (-s $path) {
         return $path;
+    } 
+
+    $self->warning_message("No seqdict at path $path.  Creating...");
+
+    #lock seqdict dir here
+    my $lock = Genome::Sys->lock_resource(
+        resource_lock => $seqdict_dir_path."/lock_for_seqdict-$file_type",
+        max_try       => 2,
+    );
+
+    # if it couldn't get the lock after 2 tries, pop a message and keep trying as much as it takes
+    unless ($lock) {
+        $self->status_message("Couldn't get a lock after 2 tries, waiting some more...");
+        $lock = Genome::Sys->lock_resource(resource_lock => $seqdict_dir_path."/lock_for_seqdict-$file_type");
+        unless($lock) {
+            $self->error_message("Failed to lock resource: $seqdict_dir_path");
+            return;
+        }
+    }
+
+    $self->status_message("Failed to find sequence dictionary file at $path.  Generating one now...");
+    my $seqdict_dir = $self->data_directory."/seqdict/";
+    my $cd_rv =  Genome::Sys->create_directory($seqdict_dir);
+    if ($cd_rv ne $seqdict_dir) {
+        $self->error_message("Failed to to create sequence dictionary directory for $path. Quiting");
+        return;
+    }
+
+    my $append_ref = $self->append_to;
+    my $remap = $self->primary_consensus_path('fa.remap');
+
+    if ($append_ref and -s $remap) {
+        $self->status_message("Detected a remap file, and we're appending to another build. We'll skip sequence dictionary creation for the remap file and just copy the sequence dictionary from the reference build we're appending to.");
+        Genome::Sys->copy_file($append_ref->get_sequence_dictionary($file_type, $species, $picard_version), $path);
+
+        unless (Genome::Sys->unlock_resource(resource_lock => $lock)) {
+            $self->error_message("Failed to unlock resource: $lock");
+            return;
+        }
     } else {
+        #my $picard_path = "$ENV{GENOME_SW_LEGACY_JAVA}/samtools/picard-tools-1.04/";
+        my $uri = $self->sequence_uri;
+        if (!$uri) {
+            $self->warning_message("No sequence URI defined on this model!  Using generated default: " . $self->external_url);
+            $uri = $self->external_url;
+        }
+        my $ref_seq = $self->full_consensus_path('fa');
+        my $assembly_name = $self->assembly_name;
 
-        #lock seqdict dir here
-        my $lock = Genome::Sys->lock_resource(
-            resource_lock => $seqdict_dir_path."/lock_for_seqdict-$file_type",
-            max_try       => 2,
-        );
-
-        # if it couldn't get the lock after 2 tries, pop a message and keep trying as much as it takes
-        unless ($lock) {
-            $self->status_message("Couldn't get a lock after 2 tries, waiting some more...");
-            $lock = Genome::Sys->lock_resource(resource_lock => $seqdict_dir_path."/lock_for_seqdict-$file_type");
-            unless($lock) {
-                $self->error_message("Failed to lock resource: $seqdict_dir_path");
-                return;
-            }
+        # fall back to the build name if the assembly name came up short.
+        if (!$assembly_name) {
+            $assembly_name = $self->name;
         }
 
-        $self->status_message("Failed to find sequence dictionary file at $path.  Generating one now...");
-        my $seqdict_dir = $self->data_directory."/seqdict/";
-        my $cd_rv =  Genome::Sys->create_directory($seqdict_dir);
-        if ($cd_rv ne $seqdict_dir) {
-            $self->error_message("Failed to to create sequence dictionary directory for $path. Quiting");
+        my $create_seq_dict_cmd = "java -Xmx4g -XX:MaxPermSize=256m -cp $picard_path/CreateSequenceDictionary.jar net.sf.picard.sam.CreateSequenceDictionary R='$ref_seq' O='$path' URI='$uri' species='$species' genome_assembly='$assembly_name' TRUNCATE_NAMES_AT_WHITESPACE=true";
+
+        my $csd_rv = Genome::Sys->shellcmd(cmd=>$create_seq_dict_cmd);
+
+        unless (Genome::Sys->unlock_resource(resource_lock => $lock)) {
+            $self->error_message("Failed to unlock resource: $lock");
             return;
         }
 
-        my $append_ref = $self->append_to;
-        my $remap = $self->primary_consensus_path('fa.remap');
-
-        if ($append_ref and -s $remap) {
-            $self->status_message("Detected a remap file, and we're appending to another build. We'll skip sequence dictionary creation for the remap file and just copy the sequence dictionary from the reference build we're appending to.");
-            Genome::Sys->copy_file($append_ref->get_sequence_dictionary($file_type, $species, $picard_version), $path);
-
-            unless (Genome::Sys->unlock_resource(resource_lock => $lock)) {
-                $self->error_message("Failed to unlock resource: $lock");
-                return;
-            }
-        } else {
-            #my $picard_path = "$ENV{GENOME_SW_LEGACY_JAVA}/samtools/picard-tools-1.04/";
-            my $uri = $self->sequence_uri;
-            if (!$uri) {
-                $self->warning_message("No sequence URI defined on this model!  Using generated default: " . $self->external_url);
-                $uri = $self->external_url;
-            }
-            my $ref_seq = $self->full_consensus_path('fa');
-            my $assembly_name = $self->assembly_name;
-
-            # fall back to the build name if the assembly name came up short.
-            if (!$assembly_name) {
-                $assembly_name = $self->name;
-            }
-
-            my $create_seq_dict_cmd = "java -Xmx4g -XX:MaxPermSize=256m -cp $picard_path/CreateSequenceDictionary.jar net.sf.picard.sam.CreateSequenceDictionary R='$ref_seq' O='$path' URI='$uri' species='$species' genome_assembly='$assembly_name' TRUNCATE_NAMES_AT_WHITESPACE=true";
-
-            my $csd_rv = Genome::Sys->shellcmd(cmd=>$create_seq_dict_cmd);
-
-            unless (Genome::Sys->unlock_resource(resource_lock => $lock)) {
-                $self->error_message("Failed to unlock resource: $lock");
-                return;
-            }
-
-            if ($csd_rv ne 1) {
-                $self->error_message("Failed to to create sequence dictionary for $path. Quiting");
-                return;
-            }
+        if ($csd_rv ne 1) {
+            $self->error_message("Failed to to create sequence dictionary for $path. Quiting");
+            return;
         }
-
-        $self->reallocate;
-
-        return $path;
-
     }
 
-    return;
+    $self->reallocate;
+
+    return $path;
 }
 
 sub get_by_name {

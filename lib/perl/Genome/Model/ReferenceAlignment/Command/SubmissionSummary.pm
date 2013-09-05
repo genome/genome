@@ -94,7 +94,7 @@ sub execute {
 
         my @builds;
         for (@models) {
-            my ($latest_build) = sort {$b->id <=> $a->id} grep {$_->status eq 'Succeeded'} $_->builds;
+            my $latest_build = $_->last_succeeded_build;
             push @builds, $latest_build if $latest_build;
         }
 

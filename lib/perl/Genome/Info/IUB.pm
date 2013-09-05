@@ -42,6 +42,7 @@ my %iub_as_string = (
     V => 'ACG',
     N => 'ACGT',
 );
+
 our %string_as_iub = (
     'CG' => 'S',
     'GC' => 'S',

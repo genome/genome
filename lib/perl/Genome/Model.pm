@@ -9,7 +9,7 @@ use Carp;
 class Genome::Model {
     is => [ "Genome::Notable", "Genome::Searchable" ],
     subclass_description_preprocessor => __PACKAGE__ . '::_preprocess_subclass_description',
-    table_name => 'GENOME_MODEL',
+    table_name => 'model.model',
     is_abstract => 1,
     attributes_have => [
         is_param => {
@@ -39,11 +39,12 @@ class Genome::Model {
         },
     ],
     subclassify_by => 'subclass_name',
+    id_generator => '-uuid',
     id_by => [
         genome_model_id => {
             # TODO: change to just "id"
-            # And make the data type Text in preparation for UUIDs
-            is => 'Number',
+            is => 'Text',
+            len => 32,
             doc => 'the unique immutable system identifier for a model',
         },
     ],
@@ -98,6 +99,12 @@ class Genome::Model {
             # Switching from timestamp in Oracle simplifies querying.  Not sure about postgres.
             is => 'Timestamp',
             doc => 'the time at which the model was defined',
+        },
+        auto_build => {
+            is => 'Boolean',
+            doc => 'build automatically when input models rebuild',
+            # this is similar to auto_build_alignments, though that flag works on 
+            # new instrument data instead of input models
         },
         build_requested => {
             # TODO: this has limited tracking as to who/why the build was requested
@@ -155,6 +162,7 @@ class Genome::Model {
             is => 'Genome::Model::Build',
             reverse_as => 'model',
             doc => 'Versions of a model over time, with varying quantities of evidence',
+            where => [ -order_by => '-date_scheduled', ],
         },
         input_associations => {
             is => 'Genome::Model::Input',
@@ -332,9 +340,7 @@ sub _resolve_workflow_for_build {
         );
 
         my $logdir = $build->log_directory;
-        if ($logdir =~ /^\/gscmnt/) {
-            $opts{log_dir} = $logdir;
-        }
+        $opts{log_dir} = $logdir;
 
         my $workflow = Workflow::Model->create(%opts);
 
@@ -619,7 +625,7 @@ sub current_build {
     my $self = shift;
     my $build_iterator = $self->build_iterator(
         'status not like' => 'Abandoned',
-        '-order_by' => '-build_id',
+        '-order_by' => '-date_scheduled',
     );
     while (my $build = $build_iterator->next) {
         return $build if $build->is_current;
@@ -764,6 +770,30 @@ sub real_input_properties {
 # (eg, models that have this model as an input)
 sub _trigger_downstream_builds {
     my ($self, $build) = @_;
+    
+    my @downstream_models = $self->downstream_models;
+    for my $next_model (@downstream_models) {
+        my $latest_build = $next_model->latest_build;
+        if (my @found = $latest_build->input_associations(value_id => $build->id)) {
+            $self->status_message("Downstream model has build " . $latest_build->__display_name__ . ", which already uses this build.");
+            next;  
+        }
+        
+        unless ($next_model->can("auto_build")) {
+            $self->status_message("Downstream model " . $next_model->__display_name__ . " is has no auto-build method!  New builds should be started manually as needed.");
+            next;
+        }
+
+
+        unless ($next_model->auto_build) {
+            $self->status_message("Downstream model " . $next_model->__display_name__ . " is not set to auto-build.  New builds should be started manually as needed.");
+            next;
+        }
+
+        $self->status_message("Requesting rebuild of subsequent model " . $next_model->__display_name__ . ".");
+        $next_model->build_requested(1, 'auto build after completion of ' . $build->__display_name__); 
+    }
+
     return 1;
 }
 
@@ -872,38 +902,59 @@ sub _preprocess_subclass_description {
         }
 
         if (exists $prop_desc->{'is_input'} and $prop_desc->{'is_input'}) {
-
             my $assoc = $prop_name . '_association' . ($prop_desc->{is_many} ? 's' : '');
             next if $desc->{has}{$assoc};
 
             my @where_class;
+            my $prop_class;
             if (exists $prop_desc->{'data_type'} and $prop_desc->{'data_type'}) {
-                my $prop_class = UR::Object::Property->_convert_data_type_for_source_class_to_final_class(
+                $prop_class = UR::Object::Property->_convert_data_type_for_source_class_to_final_class(
                     $prop_desc->{'data_type'},
                     $class
                 );
 
-                if($prop_class->isa('UR::Value') and !$prop_class->isa('Genome::File::Base')) {
-                    push @where_class,
-                        value_class_name => $prop_class;
-                }
+                push @where_class,
+                    value_class_name => $prop_class;
             }
 
-            $desc->{has}{$assoc} = {
+            my $assoc_property_hash = {
                 property_name => $assoc,
                 implied_by => $prop_name,
                 is => 'Genome::Model::Input',
                 reverse_as => 'model',
-                where => [ name => $prop_name, @where_class ],
+                where => [ name => $prop_name ],
                 is_mutable => $prop_desc->{is_mutable},
                 is_optional => $prop_desc->{is_optional},
                 is_many => 1, #$prop_desc->{is_many},
             };
 
+            if($prop_class->isa('UR::Value') and !$prop_class->isa('Genome::File::Base')) {
+                push @{$assoc_property_hash->{where}}, @where_class;
+            }
+
+            $desc->{has}{$assoc} = $assoc_property_hash;
+
             %$prop_desc = (%$prop_desc,
                 via => $assoc,
                 to => $class->_resolve_to_for_prop_desc($prop_desc),
             );
+
+            #make a corresponding id property if one doesn't already exist
+            if (!$prop_desc->{is_many}) {
+                my $id_property = $prop_name . '_id';
+                if (!exists($desc->{has}{$id_property})) {
+                    $desc->{has}{$id_property} = {
+                        property_name => $id_property,
+                        implied_by => $prop_name,
+                        via => $assoc,
+                        to => 'value_id',
+                        where => \@where_class,
+                        is_mutable => $prop_desc->{is_mutable},
+                        is_optional => $prop_desc->{is_optional},
+                        is_many => 0,
+                    };
+                }
+            }
         }
 
     }
@@ -1025,5 +1076,9 @@ sub _extend_namespace_with_command_tree {
 # Only the methods actually used from Build.pm have been migrated.
 
 sub files_ignored_by_build_diff { () }
+
+#Does this model type require control/experimental (normal/tumor) pairing to work?
+#Used by Analysis Project configuration
+sub requires_pairing { return 0; }
 
 1;

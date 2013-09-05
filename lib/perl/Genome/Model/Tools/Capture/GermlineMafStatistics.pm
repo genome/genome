@@ -26,7 +26,7 @@ my %stats = ();
 my %stats2 = ();
 
 class Genome::Model::Tools::Capture::GermlineMafStatistics {
-	is => 'Command',                       
+	is => 'Genome::Model::Tools::Capture',                       
 	
 	has => [                                # specify the command's single-value properties (parameters) <--- 
 		maf_file	=> { is => 'Text', doc => "Maf File To Read (or space separated list of Maf files to merge then read" , is_optional => 0},
@@ -628,52 +628,6 @@ How many singletons are there per sample?
 #
 ################################################################################################
 
-
-#############################################################
-# IUPAC to base - convert IUPAC code to variant base
-#
-#############################################################
-
-sub iupac_to_base
-{
-	(my $allele1, my $allele2) = @_;
-	
-	return($allele2) if($allele2 eq "A" || $allele2 eq "C" || $allele2 eq "G" || $allele2 eq "T");
-	
-	if($allele2 eq "M")
-	{
-		return("C") if($allele1 eq "A");
-		return("A") if($allele1 eq "C");
-	}
-	elsif($allele2 eq "R")
-	{
-		return("G") if($allele1 eq "A");
-		return("A") if($allele1 eq "G");		
-	}
-	elsif($allele2 eq "W")
-	{
-		return("T") if($allele1 eq "A");
-		return("A") if($allele1 eq "T");		
-	}
-	elsif($allele2 eq "S")
-	{
-		return("C") if($allele1 eq "G");
-		return("G") if($allele1 eq "C");		
-	}
-	elsif($allele2 eq "Y")
-	{
-		return("C") if($allele1 eq "T");
-		return("T") if($allele1 eq "C");		
-	}
-	elsif($allele2 eq "K")
-	{
-		return("G") if($allele1 eq "T");
-		return("T") if($allele1 eq "G");				
-	}	
-	
-	return($allele2);
-}
-
 #############################################################
 # ParseBlocks - takes input file and parses it
 #
@@ -697,34 +651,6 @@ sub trv_to_mutation_type
 
 	warn "Unknown mutation type $trv_type\n";
 	return("Unknown");
-}
-
-
-################################################################################################
-# Execute - the main program logic
-#
-################################################################################################
-
-sub byChrPos
-{
-	my ($chrom_a, $pos_a) = split(/\t/, $a);
-	my ($chrom_b, $pos_b) = split(/\t/, $b);
-	
-	$chrom_a =~ s/X/23/;
-	$chrom_a =~ s/Y/24/;
-	$chrom_a =~ s/MT/25/;
-	$chrom_a =~ s/M/25/;
-	$chrom_a =~ s/[^0-9]//g;
-
-	$chrom_b =~ s/X/23/;
-	$chrom_b =~ s/Y/24/;
-	$chrom_b =~ s/MT/25/;
-	$chrom_b =~ s/M/25/;
-	$chrom_b =~ s/[^0-9]//g;
-
-	$chrom_a <=> $chrom_a
-	or
-	$pos_a <=> $pos_b;
 }
 
 1;

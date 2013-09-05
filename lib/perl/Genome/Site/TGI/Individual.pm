@@ -15,7 +15,7 @@ use Genome;
 
 class Genome::Site::TGI::Individual {
     is => 'UR::Object',
-    table_name => 'GSC.ORGANISM_INDIVIDUAL',
+    table_name => 'ORGANISM_INDIVIDUAL',
     id_by => [
         individual_id => { is => 'Number', len => 10, column_name => 'ORGANISM_ID' },
     ],
@@ -74,7 +74,7 @@ class Genome::Site::TGI::Individual {
             is_many => 1,
         },
     ],
-    data_source => 'Genome::DataSource::GMSchema',
+    data_source => 'Genome::DataSource::Dwrac',
 };
 
 sub __display_name__ {

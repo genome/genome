@@ -71,21 +71,40 @@ sub execute {
     $args{test_name} = $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef;
     $args{command} = $self;
 
+    $self->status_message("Searching for software result with args: " . Data::Dumper::Dumper(%args));
     my $result = $result_class->get_with_lock(%args);
     if ($result) {
         $self->status_message("Existing results found: " . $result->__display_name__);
         $self->software_result($result);
-        #_copy_outputs($result, $self);
     } else {
         $self->status_message("No existing software result found, creating one.");
         $result = $result_class->create(%args);
-        #_ensure_inputs_and_params_didnt_change_during_execution(); # TODO
         $self->status_message("New software result saved: " . $result->__display_name__);
-        #_copy_outputs($self, $result);
     }
 
     $self->_finalize($result);
     return 1;
+}
+
+sub shortcut {
+    my $self = shift;
+
+    $self->status_message("Attempting to shortcut.");
+    my $result_class = $self->class->result_class();
+    my %args = _params_and_inputs($self);
+    $args{test_name} = $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef;
+    $args{command} = $self;
+
+    my $result = $result_class->get_with_lock(%args);
+    if ($result) {
+        $self->status_message("Existing result found: " . $result->__display_name__);
+        $self->software_result($result);
+        $self->_finalize($result);
+        return 1;
+    } else {
+        $self->status_message("No existing software result found.  Shortcutting failed.");
+        return;
+    }
 }
 
 
@@ -111,49 +130,6 @@ sub _params_and_inputs {
     return %props;
 }
 
-# NEED TO WAIT FOR A TABLE TO BE MADE TO DO THIS STUFF PROPERLY
-#sub _copy_outputs {
-#    my ($source, $destination) = @_;
-#
-#    my %props = _copyable_properties($source, $destination);
-#    for my $name (keys %props) {
-#        my $meta = $source->__meta__->property($name);
-#        if ($meta->can('is_output') && $meta->is_output) {
-#            if ($meta->is_many) {
-#                my @values = $source->$name;
-#                $destination->$name(\@values);
-#            } else {
-#                $destination->$name($source->$name);
-#            }
-#        }
-#    }
-#}
-#
-#
-#our %DO_NOT_COPY = (
-#    id => 1,
-#    _lock_name => 1,
-#);
-#
-#sub _copyable_properties {
-#    my ($source, $destination) = @_;
-#    my %props;
-#    my $source_meta = $source->__meta__;
-#    my @source_properties = $source_meta->properties();
-#    for my $source_property (@source_properties) {
-#        my $name = $source_property->property_name;
-#        next if exists($DO_NOT_COPY{$name});
-#        if ($destination->can($name)) {
-#            if ($source_property->is_many) {
-#                $props{$name} = [ $source->$name ];
-#            }
-#            else {
-#                $props{$name} = $source->$name;
-#            }
-#        }
-#    }
-#    return %props;
-#}
 
 # === all magic below this point ====
 our %SOFTWARE_RESULT_TYPES = (
@@ -185,26 +161,6 @@ sub __extend_namespace__ {
         is => $base_class,
         has => [ %has ],
     };
-}
-
-
-sub _init_subclass {
-    my $subclass_name = shift;
-
-    my @problems;
-    my $meta = $subclass_name->__meta__;
-
-    my $result_version_meta = $meta->property("_software_result_version");
-    unless ($result_version_meta) {
-        push @problems, "$subclass_name should implement _software_result_version, typically with a default_value of '1'";
-    }
-
-    if (@problems) {
-        for (@problems) { $subclass_name->error_message($_)  }
-        die "error defining $subclass_name";
-    }
-
-    return 1;
 }
 
 

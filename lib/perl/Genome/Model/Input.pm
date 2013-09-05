@@ -8,7 +8,7 @@ use Genome;
 require Carp;
 
 class Genome::Model::Input {
-    table_name => 'GENOME_MODEL_INPUT',
+    table_name => 'model.model_input',
     type_name => 'genome model input',
     id_by => [
         value_class_name => {
@@ -20,8 +20,8 @@ class Genome::Model::Input {
             len => 1000,
         },
         model_id => {
-            is => 'NUMBER',
-            len => 11,
+            is => 'Text',
+            len => 32,
             is_deprecated => 1,
         },
         name => {

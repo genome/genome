@@ -6,7 +6,7 @@ use Genome;
 
 class Genome::Site::TGI::Library {
     is => 'Genome::Notable',
-    table_name => 'GSC.LIBRARY_SUMMARY',
+    table_name => 'LIBRARY_SUMMARY',
     id_by => [
         library_id => { 
             is => 'Number', 
@@ -74,7 +74,7 @@ class Genome::Site::TGI::Library {
             doc => 'ID of the sample\'s source' 
         },
     ],
-    data_source => 'Genome::DataSource::GMSchema',
+    data_source => 'Genome::DataSource::Dwrac',
 };
 
 sub __display_name__ {

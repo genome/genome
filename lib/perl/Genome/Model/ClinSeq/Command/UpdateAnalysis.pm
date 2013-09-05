@@ -8,6 +8,7 @@ use Genome;
 use Genome::Model::ClinSeq;
 use Data::Dumper;
 use Term::ANSIColor qw(:constants);
+use Time::Piece;
 
 class Genome::Model::ClinSeq::Command::UpdateAnalysis {
     is => 'Command::V2',
@@ -261,6 +262,14 @@ sub execute {
   #  - 2. a model exists that meets the criteria but it has not succeeded yet
   $self->status_message("\nEXAMINE MODELS");
 
+  #TODO: Are there suitable genotype microarray models in existence (If not, create)?  If so, what is the status?
+  #TODO: Refer to this subroutine for guidance: get_genotype_microarray_model_id
+  #TODO: Rework this logic to be more similar to the following steps.  Check for microarray models, create if they don't exist, return all matching models if they do
+  #TODO: Then feed these as inputs into the next step that checks ref-align models.  If there are multiple matching models get the 'best' one.
+  #TODO: If builds are underway, don't proceed to the next step.  If there is no microarray data proceed anyway.
+  #TODO: See docs for details: genome model define genotype-microarray --help
+
+
   #Are there suitable WGS reference alignment models in existence (If not, create)?  If so, what is the status?
   #- Are there tumor/normal DNA samples?
   #- Is there tumor/normal WGS instrument data? If so, is it all included in the existing model?
@@ -416,6 +425,7 @@ sub get_samples{
   }else{
     @samples = $individual->samples;
   }
+  @samples = sort { $a->name cmp $b->name } @samples;
   
   my $sample_count = scalar(@samples);
   $self->status_message("\nEXAMINE SAMPLES");
@@ -459,7 +469,7 @@ sub get_samples{
     #Make sure the individual specified matches that of every sample
     my $patient_id = $sample->patient->id;
     my $individual_id = $individual->id;
-    unless ($patient_id == $individual_id){
+    unless ($patient_id eq $individual_id){
       $self->error_message("ID of individual supplied by user ($individual_id) does not match that associated with a sample ($patient_id)");
       $sample_mismatch++;
     }
@@ -842,7 +852,7 @@ sub check_for_missing_and_excluded_data{
       foreach my $model_instrument_data (@model_instrument_data){
         my $mid = $model_instrument_data->id;
         foreach my $eid (@exclude_list){
-          if ($eid == $mid){
+          if ($eid eq $mid){
             $found_excluded_data++;
           }
         }
@@ -866,7 +876,7 @@ sub check_for_missing_and_excluded_data{
       my $match = 0;
       foreach my $model_instrument_data (@model_instrument_data){
         my $mid = $model_instrument_data->id;
-        $match = 1 if ($mid == $sid);
+        $match = 1 if ($mid eq $sid);
       }
       push(@missing_model_data, $sid) unless $match;
     }
@@ -906,7 +916,7 @@ sub check_for_missing_and_excluded_data{
         my $match = 0;
         foreach my $build_instrument_data (@build_instrument_data){
           my $mid = $build_instrument_data->id;
-          $match = 1 if ($mid == $sid);
+          $match = 1 if ($mid eq $sid);
         }
         push(@missing_build_data, $sid) unless $match;
       }
@@ -969,13 +979,14 @@ sub get_genotype_microarray_model_id{
         push @skipped, "No reference_sequence_build on microarray model " . $model->__display_name__;
         next;
     }
+    my $microarray_model_id = $model->id;
 
     #Make sure the genotype microarray model is on the specified version of the reference genome
-    next unless ($model->reference_sequence_build->id == $self->reference_sequence_build->id);
+    next unless ($model->reference_sequence_build->id eq $self->reference_sequence_build->id);
 
     #TODO: Make sure the genotype microarray model is using the specified version of dbSNP?  Skip this test for now...
     #if ($model->can("dbsnp_build")){
-    #  next unless ($model->dbsnp_build->id == $self->dbsnp_build->id);
+    #  next unless ($model->dbsnp_build->id eq $self->dbsnp_build->id);
     #}else{
     #  next;
     #}
@@ -1049,18 +1060,18 @@ sub check_ref_align_models{
   #Also make sure that all the instrument data of wgs or exome type is being used (exome can be exome+wgs lanes)
   foreach my $model (@models){
     next unless ($model->class eq "Genome::Model::ReferenceAlignment");
-    next unless ($model->processing_profile_id == $self->ref_align_pp->id);
-    next unless ($model->reference_sequence_build->id == $self->reference_sequence_build->id);
+    next unless ($model->processing_profile_id eq $self->ref_align_pp->id);
+    next unless ($model->reference_sequence_build->id eq $self->reference_sequence_build->id);
     if ($model->can("annotation_reference_build")){
       next unless ($model->annotation_reference_build);
-      next unless ($model->annotation_reference_build->id == $self->annotation_build->id);
+      next unless ($model->annotation_reference_build->id eq $self->annotation_build->id);
     }else{
       next;
     }
     if ($model->can("dbsnp_build")){
       my $dbsnp_build = $model->dbsnp_build;
       if ($dbsnp_build){
-        next unless ($dbsnp_build->id == $self->dbsnp_build->id);
+        next unless ($dbsnp_build->id eq $self->dbsnp_build->id);
       }else{
         next;
       }
@@ -1068,7 +1079,7 @@ sub check_ref_align_models{
       next;
     }
 
-    #Get genotype microarray model for this sample, and create if it does not already exist 
+    #Get genotype microarray model for this sample
     my $genotype_microarray_model_id = $self->get_genotype_microarray_model_id('-sample'=>$sample);
 
     #If genotype microarray data is available:
@@ -1076,7 +1087,7 @@ sub check_ref_align_models{
     #If it is defined, make sure it is the correct one
     if ($sample->default_genotype_data){
       next unless ($model->genotype_microarray_model);
-      next unless ($model->genotype_microarray_model->id == $genotype_microarray_model_id);
+      next unless ($model->genotype_microarray_model->id eq $genotype_microarray_model_id);
     }
 
     #Is this a WGS or an Exome model?
@@ -1169,9 +1180,9 @@ sub check_rnaseq_models{
   #Test for correct processing profile, reference sequence build, annotation build
   foreach my $model (@models){
     next unless ($model->class eq "Genome::Model::RnaSeq");
-    next unless ($model->processing_profile_id == $self->rnaseq_pp->id);
-    next unless ($model->reference_sequence_build->id == $self->reference_sequence_build->id);
-    next unless ($model->annotation_build->id == $self->annotation_build->id);
+    next unless ($model->processing_profile_id eq $self->rnaseq_pp->id);
+    next unless ($model->reference_sequence_build->id eq $self->reference_sequence_build->id);
+    next unless ($model->annotation_build->id eq $self->annotation_build->id);
     push (@final_models, $model);
     #$self->status_message("\t\tName: " . $model->name . " (" . $model->id . ")");
   }
@@ -1218,7 +1229,7 @@ sub check_de_models{
   #Test for correct processing profile and input models
   foreach my $model (@models){
     next unless ($model->class eq "Genome::Model::DifferentialExpression");
-    next unless ($model->processing_profile_id == $self->differential_expression_pp->id);
+    next unless ($model->processing_profile_id eq $self->differential_expression_pp->id);
     my $condition_model_ids_string = $model->condition_model_ids_string;
     my @groups = split(" ", $condition_model_ids_string);
     next unless (scalar(@groups) == 2);
@@ -1226,8 +1237,8 @@ sub check_de_models{
     my @group2_members = split(",", $groups[1]);
     next unless (scalar(@group1_members == 1) && scalar(@group2_members));
 
-    next unless ($group1_members[0] == $normal_rnaseq_model->id);
-    next unless ($group2_members[0] == $tumor_rnaseq_model->id);
+    next unless ($group1_members[0] eq $normal_rnaseq_model->id);
+    next unless ($group2_members[0] eq $tumor_rnaseq_model->id);
 
     #$self->status_message("\t\tName: " . $model->name . " (" . $model->id . ")");
     push (@final_models, $model);
@@ -1296,8 +1307,8 @@ sub check_somatic_variation_models{
   #Test for correct processing profile, annotation build
   foreach my $model (@existing_models){
     next unless ($model->class eq "Genome::Model::SomaticVariation");
-    next unless ($model->processing_profile_id == $somatic_variation_pp_id);
-    next unless ($model->annotation_build->id == $self->annotation_build->id);
+    next unless ($model->processing_profile_id eq $somatic_variation_pp_id);
+    next unless ($model->annotation_build->id eq $self->annotation_build->id);
     if ($ignore_models_bx and $ignore_models_bx->evaluate($model)) {
         $self->status_message("\t\tIgnore: " . $model->__display_name__);
         next;
@@ -1311,7 +1322,7 @@ sub check_somatic_variation_models{
 
     #Check for the correct version of previously discovered variants
     if ($model->can("previously_discovered_variations_build")){
-      next unless ($model->previously_discovered_variations_build->id == $self->previously_discovered_variations->id);
+      next unless ($model->previously_discovered_variations_build->id eq $self->previously_discovered_variations->id);
     }else{
       next;
     }
@@ -1320,12 +1331,12 @@ sub check_somatic_variation_models{
     my $tumor_model_id = $model->tumor_model->id;
     my $tumor_model_match = 0;
     foreach my $model (@tumor_ref_align_models){
-      $tumor_model_match = 1 if ($model->id == $tumor_model_id);
+      $tumor_model_match = 1 if ($model->id eq $tumor_model_id);
     }
     my $normal_model_id = $model->normal_model->id;
     my $normal_model_match = 0;
     foreach my $model (@normal_ref_align_models){
-      $normal_model_match = 1 if ($model->id == $normal_model_id);
+      $normal_model_match = 1 if ($model->id eq $normal_model_id);
     }
     next unless ($tumor_model_match && $normal_model_match);
 
@@ -1388,16 +1399,16 @@ sub check_somatic_input_builds{
       #There is at least one complete somatic build
       my $last_complete_tumor_build = $last_complete_somatic_build->tumor_build;
       my $last_complete_normal_build = $last_complete_somatic_build->normal_build;
-      if (($last_complete_tumor_build->id == $lc_tumor_build->id) && ($last_complete_normal_build->id == $lc_normal_build->id)){
+      if (($last_complete_tumor_build->id eq $lc_tumor_build->id) && ($last_complete_normal_build->id eq $lc_normal_build->id)){
         push(@final_models, $somatic_model);
-      }elsif(($latest_tumor_build->id == $lc_tumor_build->id) && ($latest_normal_build->id == $lc_normal_build->id)){
+      }elsif(($latest_tumor_build->id eq $lc_tumor_build->id) && ($latest_normal_build->id eq $lc_normal_build->id)){
         $self->status_message("WARNING -> latest build of somatic model $somatic_model_id is using the latest refalign builds but has the following status: " . $latest_somatic_build->status);
       }else{
         $self->status_message("WARNING -> latest build of somatic model: $somatic_model_id is not using the last complete builds of the underlying refalign models.  Run the following:");
         $self->status_message("genome model build start $somatic_model_id");
       }
     }elsif($latest_somatic_build && $lc_tumor_build && $lc_normal_build){
-      if(($latest_tumor_build->id == $lc_tumor_build->id) && ($latest_normal_build->id == $lc_normal_build->id)){
+      if(($latest_tumor_build->id eq $lc_tumor_build->id) && ($latest_normal_build->id eq $lc_normal_build->id)){
         $self->status_message("WARNING -> latest build of somatic model $somatic_model_id is using the latest refalign builds but has the following status: " . $latest_somatic_build->status);
       }else{
         $self->status_message("WARNING -> latest build of somatic model: $somatic_model_id is not using the last complete builds of the underlying refalign models.  Run the following:");
@@ -1425,12 +1436,12 @@ sub create_ref_align_model{
   }
   my $iids_list = join(",", @iids);
 
-  #Get genotype microarray model for this sample, and create if it does not already exist 
+  #Get genotype microarray model for this sample
   my $genotype_microarray_model_id = $self->get_genotype_microarray_model_id('-sample'=>$sample);
 
   #If genotype microarray data is available but a successful model is not, do not proceed with creation of reference alignment models
-  if ($sample->default_genotype_data && $genotype_microarray_model_id == 0){
-    $self->status_message("WARNING -> genotype microarray data was found but a model with the desired criteria could not be found");
+  if ($sample->default_genotype_data && $genotype_microarray_model_id eq "0"){
+    $self->status_message("WARNING -> genotype microarray data was found but a model with the desired criteria could not be found.  Check for issues with your existing microarray models");
     return;
   }
 
@@ -1642,14 +1653,19 @@ sub select_best_model{
 
   #If there is still no clear winner, rank according to highest id of model
   my $max_model_id = 0;
+  my $latest_date = "1900-01-01 00:00:00";
+  my $dateformat = "%Y-%m-%d %H:%M:%S";
+
   foreach my $m (keys %candidate_models){
     my $model = $candidate_models{$m}{model};
-    if ($model->id > $max_model_id){
-      $max_model_id = $model->id;
+    my $model_creation_date = $model->creation_date;
+    my $date1 = Time::Piece->strptime($latest_date, $dateformat);
+    my $date2 = Time::Piece->strptime($model_creation_date, $dateformat);
+    if ($date2 > $date1){
+      $latest_date = $model_creation_date;
       $best_model = $model;
     }
   }
-
   return $best_model;
 }
 
@@ -1794,19 +1810,19 @@ sub check_clinseq_models{
 
     #Only consider clin-seq models whose input models are using the correct processing profiles
     if ($current_wgs_model){
-      next unless ($current_wgs_model->processing_profile->id == $self->wgs_somatic_variation_pp->id);
+      next unless ($current_wgs_model->processing_profile->id eq $self->wgs_somatic_variation_pp->id);
     }
     if ($current_exome_model){
-      next unless ($current_exome_model->processing_profile->id == $self->exome_somatic_variation_pp->id);
+      next unless ($current_exome_model->processing_profile->id eq $self->exome_somatic_variation_pp->id);
     }
     if ($current_normal_rnaseq_model){
-      next unless ($current_normal_rnaseq_model->processing_profile->id == $self->rnaseq_pp->id);
+      next unless ($current_normal_rnaseq_model->processing_profile->id eq $self->rnaseq_pp->id);
     }
     if ($current_tumor_rnaseq_model){
-      next unless ($current_tumor_rnaseq_model->processing_profile->id == $self->rnaseq_pp->id);
+      next unless ($current_tumor_rnaseq_model->processing_profile->id eq $self->rnaseq_pp->id);
     }
     if ($current_de_model){
-      next unless ($current_de_model->processing_profile->id == $self->differential_expression_pp->id);
+      next unless ($current_de_model->processing_profile->id eq $self->differential_expression_pp->id);
     }
 
     #Only consider clin-seq models whose annotation inputs match the current defaults defined for the pipeline
@@ -1825,23 +1841,23 @@ sub check_clinseq_models{
     #If a 'best' model is defined, only compare against clinseq models that have a model of that type defined and skip if the actual model does not match
     if ($wgs_model){
       next unless $current_wgs_model;
-      next unless ($wgs_model->id == $current_wgs_model->id);
+      next unless ($wgs_model->id eq $current_wgs_model->id);
     }
     if ($exome_model){
       next unless $current_exome_model;
-      next unless ($exome_model->id == $current_exome_model->id);
+      next unless ($exome_model->id eq $current_exome_model->id);
     }
     if ($normal_rnaseq_model){
       next unless $current_normal_rnaseq_model;
-      next unless ($normal_rnaseq_model->id == $current_normal_rnaseq_model->id);
+      next unless ($normal_rnaseq_model->id eq $current_normal_rnaseq_model->id);
     }
     if ($tumor_rnaseq_model){
       next unless $current_tumor_rnaseq_model;
-      next unless ($tumor_rnaseq_model->id == $current_tumor_rnaseq_model->id);
+      next unless ($tumor_rnaseq_model->id eq $current_tumor_rnaseq_model->id);
     }
     if ($de_model){
       next unless $current_de_model;
-      next unless ($de_model->id == $current_de_model->id);
+      next unless ($de_model->id eq $current_de_model->id);
     }
     push(@final_models, $model);
   }
@@ -1959,7 +1975,7 @@ sub check_clinseq_inputs{
       my $wgs_build = $clinseq_build->wgs_build;
       my $lc_wgs_build = $wgs_model->last_complete_build;
       if ($lc_wgs_build){
-        unless ($lc_wgs_build->id == $wgs_build->id){
+        unless ($lc_wgs_build->id eq $wgs_build->id){
           $self->status_message("WARNING: last_complete_build of wgs model " . $wgs_model->id . " associated with clinseq model $clinseq_model_id is not being used.  Run the following:");
           $self->status_message("genome model build start $clinseq_model_id");
           $clinseq_inputs_ok = 0;
@@ -1976,7 +1992,7 @@ sub check_clinseq_inputs{
       my $exome_build = $clinseq_build->exome_build;
       my $lc_exome_build = $exome_model->last_complete_build;
       if ($lc_exome_build){
-        unless ($lc_exome_build->id == $exome_build->id){
+        unless ($lc_exome_build->id eq $exome_build->id){
           $self->status_message("WARNING: last_complete_build of exome model " . $exome_model->id . " associated with clinseq model $clinseq_model_id is not being used.  Run the following:");
           $self->status_message("genome model build start $clinseq_model_id");
           $clinseq_inputs_ok = 0;
@@ -1993,7 +2009,7 @@ sub check_clinseq_inputs{
       my $normal_rnaseq_build = $clinseq_build->normal_rnaseq_build;
       my $lc_normal_rnaseq_build = $normal_rnaseq_model->last_complete_build;
       if ($lc_normal_rnaseq_build){
-        unless ($lc_normal_rnaseq_build->id == $normal_rnaseq_build->id){
+        unless ($lc_normal_rnaseq_build->id eq $normal_rnaseq_build->id){
           $self->status_message("WARNING: last_complete_build of normal_rnaseq model " . $normal_rnaseq_model->id . " associated with clinseq model $clinseq_model_id is not being used.  Run the following:");
           $self->status_message("genome model build start $clinseq_model_id");
           $clinseq_inputs_ok = 0;
@@ -2010,7 +2026,7 @@ sub check_clinseq_inputs{
       my $tumor_rnaseq_build = $clinseq_build->tumor_rnaseq_build;
       my $lc_tumor_rnaseq_build = $tumor_rnaseq_model->last_complete_build;
       if ($lc_tumor_rnaseq_build){
-        unless ($lc_tumor_rnaseq_build->id == $tumor_rnaseq_build->id){
+        unless ($lc_tumor_rnaseq_build->id eq $tumor_rnaseq_build->id){
           $self->status_message("WARNING: last_complete_build of tumor_rnaseq model " . $tumor_rnaseq_model->id . " associated with clinseq model $clinseq_model_id is not being used.  Run the following:");
           $self->status_message("genome model build start $clinseq_model_id");
           $clinseq_inputs_ok = 0;
@@ -2027,7 +2043,7 @@ sub check_clinseq_inputs{
       my $de_build = $clinseq_build->de_build;
       my $lc_de_build = $de_model->last_complete_build;
       if ($lc_de_build){
-        unless ($lc_de_build->id == $de_build->id){
+        unless ($lc_de_build->id eq $de_build->id){
           $self->status_message("WARNING: last_complete_build of de model " . $de_model->id . " associated with clinseq model $clinseq_model_id is not being used.  Run the following:");
           $self->status_message("genome model build start $clinseq_model_id");
           $clinseq_inputs_ok = 0;

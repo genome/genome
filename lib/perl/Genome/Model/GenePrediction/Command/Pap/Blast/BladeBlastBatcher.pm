@@ -16,7 +16,7 @@ use Benchmark;
 use Carp 'confess';
 
 class Genome::Model::GenePrediction::Command::Pap::Blast::BladeBlastBatcher {
-    is => 'Command::V1',
+    is => 'Command::V2',
     has => [
         query_fasta_path => {
             is => 'Path',

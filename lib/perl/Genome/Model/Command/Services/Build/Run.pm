@@ -88,6 +88,12 @@ sub execute {
     my $self = shift;
 
     my $build = $self->build;
+    if ($ENV{WF_USE_FLOW}) {
+        $build->add_note(
+            header_text => 'run using flow',
+            body_text => '',
+        );
+    }
 
     my $xmlfile = $self->build->data_directory . '/build.xml';
 

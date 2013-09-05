@@ -19,6 +19,9 @@ use warnings;
 use FileHandle;
 
 use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
+use Genome::Model::Tools::Analysis::Helpers qw(
+    code_to_genotype_returning_code
+);
 
 my %genotypes = ();
 
@@ -171,7 +174,7 @@ sub execute {                               # replace with real execution logic.
 				{
 					$affecteds_with_genotype++;
 					(my $sample_call, my $sample_reads1, my $sample_reads2, my $sample_freq) = split(/\t/, $genotypes{$key});
-					$sample_call = code_to_genotype($sample_call);
+					$sample_call = code_to_genotype_returning_code($sample_call);
 					$sample_gt_counts{$sample_call}++;
 					$genotypes_by_sample{$affected_file} = $sample_call;
 				
@@ -462,36 +465,4 @@ sub match_to_band
 	return("chr" . $chrom);
 }
 
-
-sub code_to_genotype
-{
-	my $code = shift(@_);
-	
-	return("AA") if($code eq "A");
-	return("CC") if($code eq "C");
-	return("GG") if($code eq "G");
-	return("TT") if($code eq "T");
-
-	return("AC") if($code eq "M");
-	return("AG") if($code eq "R");
-	return("AT") if($code eq "W");
-	return("CG") if($code eq "S");
-	return("CT") if($code eq "Y");
-	return("GT") if($code eq "K");
-
-#	warn "Unrecognized ambiguity code $code!\n";
-#	return("NN");
-	return($code);
-}
-
-
-sub commify
-{
-	local($_) = shift;
-	1 while s/^(-?\d+)(\d{3})/$1,$2/;
-	return $_;
-}
-
-
 1;
-

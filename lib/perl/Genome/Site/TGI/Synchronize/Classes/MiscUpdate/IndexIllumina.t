@@ -103,7 +103,6 @@ sub _test {
     my $genome_property_name = Genome::Site::TGI::Synchronize::Classes::IndexIllumina->lims_property_name_to_genome_property_name(
         $subject_property_name
     );
-    print "G: $genome_property_name\n";
     my $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
         subject_class_name => 'test.index_illumina',
         subject_id => $solexa->id,
@@ -124,7 +123,6 @@ sub _test {
     ok($genome_entity, 'Got genome entity');
     is($genome_entity->class, $genome_class_name, 'Correct genome entity class name');
     is($genome_entity->id, $solexa->id, 'Correct genome entity id');
-    ok($misc_update->perform_update, 'Perform update');
 
     return $misc_update;
 }
@@ -133,6 +131,7 @@ sub _test_pass {
     my %params = @_;
 
     my $misc_update = _test(%params);
+    ok($misc_update->perform_update, 'Perform update succeeds for PASS');
     is($misc_update->result, 'PASS', 'Correct result after update');
     is(
         $misc_update->status, 
@@ -156,6 +155,7 @@ sub _test_skip {
     my %params = @_;
 
     my $misc_update = _test(%params);
+    ok(!$misc_update->perform_update, 'Perform update fails for SKIP');
     is($misc_update->result, 'SKIP', 'Correct result after update');
     is(
         $misc_update->status, 

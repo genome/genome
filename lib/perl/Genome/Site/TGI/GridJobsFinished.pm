@@ -6,7 +6,7 @@ use Genome;
 use POSIX;
 
 class Genome::Site::TGI::GridJobsFinished {
-    table_name => "GSC.GRID_JOBS_FINISHED",
+    table_name => "GRID_JOBS_FINISHED",
     id_by => [
         bjob_id => {
             is => 'Number',
@@ -324,7 +324,7 @@ class Genome::Site::TGI::GridJobsFinished {
             column_name => 'usergroup',
         },
     ],
-    data_source => 'Genome::DataSource::GMSchema',
+    data_source => 'Genome::DataSource::Dwrac',
 };
 
 sub cpu_instance_size {

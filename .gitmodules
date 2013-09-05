@@ -268,3 +268,9 @@
 [submodule "vendor/r-cran-normt3"]
 	path = vendor/r-cran-normt3
 	url = https://github.com/sakoht/r-cran-normt3.git
+[submodule "vendor/dindel"]
+	path = vendor/dindel
+	url = https://github.com/genome/dindel.git
+[submodule "vendor/circos"]
+	path = vendor/circos
+	url = https://github.com/genome-vendor/circos.git

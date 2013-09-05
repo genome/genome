@@ -6,9 +6,13 @@ use warnings;
 use Genome;
 class Genome::MiscNote {
     type_name => 'misc note',
-    table_name => 'MISC_NOTE',
+    table_name => 'subject.misc_note',
+    id_generator => '-uuid',
     id_by => [
-        id => { is => 'Number' },
+        id => {
+            is => 'Text',
+            len => 32,
+        },
     ],
     has => [
         subject_class_name => { is => 'Text' },

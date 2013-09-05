@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 class Genome::Site::TGI::MiscUpdate {
-    table_name => 'gsc.misc_update',
+    table_name => 'misc_update',
     id_by => [
         table_name => {
             is => 'TExt',
@@ -61,7 +61,7 @@ class Genome::Site::TGI::MiscUpdate {
             doc => 'the value to which old_value was changed' 
         },
     ],
-    data_source => 'Genome::DataSource::GMSchema',
+    data_source => 'Genome::DataSource::Dwrac',
     doc => 'The MISC_UPDATE table tracks changes to certain other tables in the gsc schema.'
 };
 

@@ -7,7 +7,7 @@ use Genome;
 
 class Genome::Site::TGI::FileStorage {
     is => 'UR::Object',
-    table_name => '(SELECT file_storage_id, file_name FROM gsc.file_storage@oltp) file_storage',
+    table_name => '(SELECT file_storage_id, file_name FROM gsc.file_storage) file_storage',
     id_by => [
         file_storage_id => {
             is => 'Number', len => '20',
@@ -33,7 +33,7 @@ class Genome::Site::TGI::FileStorage {
             },
         },
     ],
-    data_source => 'Genome::DataSource::GMSchema',
+    data_source => 'Genome::DataSource::Oltp',
 };
 
 1;

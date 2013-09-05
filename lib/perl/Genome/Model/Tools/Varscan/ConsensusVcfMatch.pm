@@ -27,11 +27,23 @@ class Genome::Model::Tools::Varscan::ConsensusVcfMatch {
             doc => '', #TODO: include some doc
         },
     ],
-    has_transient => [
-        stats => { is => 'Hash' },
-        target_indel_genotypes => { is => 'Hash' },
-        target_indels => { is => 'Hash' },
-        samples => { is => 'Hash' },
+    has_optional_transient => [
+        stats => {
+            is => 'Hash',
+            default_value => {}
+        },
+        target_indel_genotypes => {
+            is => 'Hash',
+            default_value => {}
+        },
+        target_indels => {
+            is => 'Hash',
+            default_value => {}
+        },
+        samples => {
+            is => 'Hash',
+            default_value => {}
+        },
     ],
 };
 
@@ -42,14 +54,21 @@ sub execute {
 
 	my $output_fh = Genome::Sys->open_file_for_writing($self->output_file);
 	my $output_cns_fh = Genome::Sys->open_file_for_writing($self->output_cns_file);
-    $output_fh->print(join(',', 'chrom', 'chr_start', 'chr_stop', 'ref', 'alt', 'obs_hom1', 'obs_het', 'obs_hom2', 'exp_hom1', 'exp_het', 'exp_hom2', 'chi_sum', 'original_fet', 'varscan_ref', 'varscan_het', 'varscan_hom', 'varscan_hwe'), "\n");
+    print $output_fh join("\t", 'chrom', 'chr_start', 'chr_stop', 'ref', 'alt', 'obs_hom1', 'obs_het', 'obs_hom2', 'exp_hom1', 'exp_het', 'exp_hom2', 'chi_sum', 'original_fet', 'varscan_ref', 'varscan_het', 'varscan_hom', 'varscan_hwe'), "\n";
 
     foreach my $key (keys %target_indels) {
         if($target_indels{$key}) {
             my @targetIndels = split(/\n/, $target_indels{$key});
             
             foreach my $target_indel (@targetIndels) {
-                my ($num_samples, $num_samples_missing, $num_samples_ref, $num_samples_var, $num_samples_het, $num_samples_hom, $num_samples_snp, $num_samples_other) = 0;
+                my $num_samples = 0;
+                my $num_samples_missing = 0;
+                my $num_samples_ref = 0;
+                my $num_samples_var = 0;
+                my $num_samples_het = 0;
+                my $num_samples_hom = 0;
+                my $num_samples_snp = 0;
+                my $num_samples_other = 0;
                 
                 foreach my $sample (sort keys %{$self->samples}) {
                     my $indel_key = join("\t", $sample, $target_indel);
@@ -57,7 +76,7 @@ sub execute {
                     if($self->target_indel_genotypes->{$indel_key}) {
                         my ($call, $cns, $reads1, $reads2, $var_freq) = split(/\:/, $self->target_indel_genotypes->{$indel_key});
                         
-                        $output_cns_fh->print(join("\t", $indel_key, $call, $cns, $reads1, $reads2, $var_freq) . "\n");
+                        print $output_cns_fh join("\t", $indel_key, $call, $cns, $reads1, $reads2, $var_freq) , "\n";
 
                         if($call eq "Het" || $call eq "Hom") {
                             $num_samples_var++;
@@ -92,7 +111,7 @@ sub execute {
                     my $hwe = $self->_get_hwe_p($num_samples_het, $num_samples_ref, $num_samples_hom);
 
                     print join("\t", $target_indel, $num_samples_ref, $num_samples_het, $num_samples_hom, $vaf, $hwe) . "\n";
-                    output_fh->print(join("\t", $target_indel, $num_samples, $num_samples_ref, $num_samples_het, $num_samples_hom, $hwe) . "\n");
+                    print $output_fh join("\t", $target_indel, $num_samples, $num_samples_ref, $num_samples_het, $num_samples_hom, $hwe) , "\n";
                 }
             }
         }
@@ -105,6 +124,7 @@ sub execute {
     foreach my $key (sort keys %stats) {
         print $stats{$key} . "\t$key\n";
     }
+    return 1;
 }
 
 sub _initialize {
@@ -171,7 +191,7 @@ sub _load_indels {
 
 sub _parse_sample_list {
     my $self = shift;
-    my $sample_cns_list_file => $self->sample_cns_list_file;
+    my $sample_cns_list_file = $self->sample_cns_list_file;
 	my %samples = ();
 	my $line_counter = 0;
 	my $fh = Genome::Sys->open_file_for_reading($sample_cns_list_file);

@@ -9,7 +9,7 @@ class Genome::Model::Tools::Convergence::GatherRefalignSummaryData{
     is => 'Command',
     has => [
         build_id => {
-            is => 'Integer',
+            is => 'Text',
             is_input => 1,
             doc => 'the build for which to gather the summary report data',
         },

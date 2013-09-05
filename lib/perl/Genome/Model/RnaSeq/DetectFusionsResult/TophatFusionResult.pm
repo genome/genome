@@ -20,7 +20,7 @@ class Genome::Model::RnaSeq::DetectFusionsResult::TophatFusionResult{
         #if this gets used, we'll want to revisit it
         known_fusions_result_id => {
             is_transient => 1,
-            is => "Integer",
+            is => 'Text',
             example_values => [121542754],
             doc => "id of the known fusions software result"
         },

@@ -140,6 +140,17 @@ class Genome::Model::SomaticValidation {
             via => 'target_region_set',
             to => 'name',
         },
+        experimental_subject => {
+            is => 'Genome::Sample',
+            via => '__self__',
+            to => 'tumor_sample'
+        },
+        control_subject => {
+            is => 'Genome::Sample',
+            via => '__self__',
+            to => 'normal_sample'
+        },
+
     ],
     has_transient_constant_optional => {
         sequencing_platform => {
@@ -267,5 +278,7 @@ sub default_single_bam_profile {
     return Genome::ProcessingProfile::SomaticValidation->get(
         name => 'Jun 2012 Single-Bam Validation (single-bam somatic)');
 }
+
+sub requires_pairing { return 1; }
 
 1;

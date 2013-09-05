@@ -20,13 +20,13 @@ use Date::Manip;
 class Genome::Model::Build {
     is => ['Genome::Notable','Genome::Searchable'],
     type_name => 'genome model build',
-    table_name => 'GENOME_MODEL_BUILD',
+    table_name => 'model.build',
     is_abstract => 1,
     subclassify_by => 'subclass_name',
     subclass_description_preprocessor => __PACKAGE__ . '::_preprocess_subclass_description',
     id_by => [
         # TODO: change to just "id"
-        build_id => { is => 'Number', },
+        build_id => { is => 'Text', len => 64 },
     ],
     attributes_have => [
         is_input    => { is => 'Boolean', is_optional => 1, },
@@ -104,6 +104,18 @@ class Genome::Model::Build {
             reverse_as => 'build',
             doc => 'Links between a build and its input values, including the specification of which input the value satisfies.'
         },
+        downstream_build_associations => {
+            is => 'Genome::Model::Build::Input',
+            reverse_as => '_build_value',
+            doc => 'links to models which use this model as an input', 
+        },
+        downstream_builds => {
+            is => 'Genome::Model::Build',
+            via => 'downstream_build_associations',
+            to => 'build',
+            doc => 'models which use this model as an input',
+        },
+
         instrument_data  => {
             is => 'Genome::InstrumentData',
             via => 'input_associations',
@@ -210,6 +222,8 @@ class Genome::Model::Build {
         master_event_status     => { via => 'the_master_event', to => 'event_status' },
 
         # we now use model/build inputs instead of links
+        # when these can be removed do
+        # see "downstream_builds" 
         from_build_links => { is => 'Genome::Model::Build::Link', reverse_as => 'to_build',
                               doc => 'bridge table entries where this is the \"to\" build(used to retrieve builds this build is \"from\")' },
         from_builds      => { is => 'Genome::Model::Build', via => 'from_build_links', to => 'from_build',
@@ -218,18 +232,10 @@ class Genome::Model::Build {
                               doc => 'bridge entries where this is the \"from\" build(used to retrieve builds builds this build is \"to\")' },
         to_builds        => { is => 'Genome::Model::Build', via => 'to_build_links', to => 'to_build',
                               doc => 'Genome builds this build contributes \"to\"' },
-        
-        
-        # this is part of a legacy database table into which variants were uploaded
-        # remove when possible
-        variants         => { 
-            is => 'Genome::Model::BuildVariant', 
-            reverse_as => 'build',
-            doc => 'variants linked to this build... currently only for Somatic builds but need this accessor for get_all_objects' 
-        },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
+    id_generator => '-uuid',
 };
 
 sub __display_name__ {
@@ -1742,7 +1748,7 @@ sub _abandon_events { # does not realloc
 
     my @events = do {
         no warnings;
-        sort { $b->id <=> $a->id || $b->id cmp $a->id } $self->events;
+        sort { $b->date_scheduled cmp $a->date_scheduled } $self->events;
     };
 
     for my $event ( @events ) {
@@ -1932,7 +1938,7 @@ sub get_all_objects {
             #}
     };
 
-    return map { $sorter->( $self->$_ ) } (qw(events inputs metrics from_build_links to_build_links variants));
+    return map { $sorter->( $self->$_ ) } (qw(events inputs metrics from_build_links to_build_links));
 }
 
 sub yaml_string {

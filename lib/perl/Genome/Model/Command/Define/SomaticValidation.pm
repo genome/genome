@@ -61,6 +61,11 @@ class Genome::Model::Command::Define::SomaticValidation {
             default => 1,
             doc => 'Automatically assign instrument data using the cron',
         },
+        force => {
+            is => 'Boolean',
+            default => 0,
+            doc => 'force model creation to occur, even if samples don\'t match',
+        },
     ],
     has_transient_optional_input => [
         reference_sequence_build => {
@@ -322,17 +327,19 @@ sub _resolve_subject_from_samples {
     my $subject;
     if($tumor_sample) {
         if($control_sample and $tumor_sample->source ne $control_sample->source) {
-            my $problem = 'Tumor (' . $tumor_sample->name . ') and control (' . $control_sample->name . ') samples do not appear to have come from the same individual.';
-            my $answer = $self->_ask_user_question(
-                $problem . ' Continue anyway?',
-                300,
-                "y.*|n.*",
-                "no",
-                "[y]es/[n]o",
-            );
-            unless($answer and $answer =~ /^y/) {
-                $self->error_message($problem);
-                return;
+            unless($self->force){
+                my $problem = 'Tumor (' . $tumor_sample->name . ') and control (' . $control_sample->name . ') samples do not appear to have come from the same individual.';
+                my $answer = $self->_ask_user_question(
+                    $problem . ' Continue anyway?',
+                    300,
+                    "y.*|n.*",
+                    "no",
+                    "[y]es/[n]o",
+                    );
+                unless($answer and $answer =~ /^y/) {
+                    $self->error_message($problem);
+                    return;
+                }
             }
         }
 

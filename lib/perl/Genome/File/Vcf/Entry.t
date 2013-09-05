@@ -3,6 +3,7 @@
 use above 'Genome';
 use Data::Dumper;
 use Test::More;
+use Genome::File::Vcf::Genotype;
 
 use strict;
 use warnings;
@@ -312,6 +313,23 @@ subtest "filter calls involving only certain alleles" => sub {
 
     my @expected_fields = ('1', 99, '.', 'CG', 'CA,C', '.', '.', '.', 'GT:DP:FT', '0/1:.:BAD', '0/0:.:BAD', '0/2');
     is($entry->to_string, join("\t", @expected_fields), "to_string");
+};
+
+subtest "get genotype for sample" => sub {
+    my @fields = ('1', 99, '.', 'CG', 'CA,C', '.', '.', '.', 'GT:DP:FT', '0/1', '0/0', '0/2');
+    my $entry_txt = join("\t", @fields);
+    my $entry = $pkg->new($header, $entry_txt);
+    ok($entry, "Created entry");
+
+    my @alternate_alleles = $entry->{alternate_alleles};
+    my $expected_genotype = Genome::File::Vcf::Genotype->new($entry->{reference_allele}, \@alternate_alleles, '0/1');
+    my $retreived_genotype = $entry->genotype_for_sample(0);
+    is_deeply($expected_genotype, $retreived_genotype, "The genotype for the first sample was created correctly");
+
+    eval {
+        my $non_genotype = $entry->genotype_for_sample(3);
+    };
+    ok($@, "Getting a genotype for an out-of-bounds sample index is an error");
 };
 
 done_testing();

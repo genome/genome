@@ -8,6 +8,7 @@ use Digest::MD5 qw(md5_hex);
 use Cwd;
 use File::Basename qw(fileparse);
 use Data::Dumper;
+use Date::Manip;
 use List::MoreUtils qw(uniq);
 
 use Carp;
@@ -18,11 +19,12 @@ use Genome::Utility::Instrumentation;
 
 class Genome::SoftwareResult {
     is_abstract => 1,
-    table_name => 'SOFTWARE_RESULT',
+    table_name => 'result.software_result',
     subclass_description_preprocessor => 'Genome::SoftwareResult::_expand_param_and_input_properties',
     subclassify_by => 'subclass_name',
+    id_generator => '-uuid',
     id_by => [
-        id => { is => 'Number', len => 20 },
+        id => { is => 'Text', len => 32 },
     ],
     attributes_have => [
         is_param => { is => 'Boolean', is_optional=>'1' },
@@ -730,7 +732,7 @@ sub delete {
     if (@users) {
         my $name = $self->__display_name__;
         die "Refusing to delete $class_name $name as it still has users:\n\t"
-            .join("\n\t", map { $_->user_class . "\t" . $_->user_id } @users);
+            .join("\n\t", map { $_->user_class_name . "\t" . $_->user_id } @users);
     }
 
     my @to_nuke = ($self->params, $self->inputs, $self->metrics);
@@ -992,5 +994,17 @@ sub descendents {
         return;
     }
 }
+
+sub best_guess_date {
+    my $self = shift;
+    my ($earliest_time) = sort map { $_->creation_time }
+        $self->disk_allocations;
+    return $earliest_time;
+}
+
+sub best_guess_date_numeric {
+    return UnixDate(shift->best_guess_date, "%s"); 
+}
+
 
 1;

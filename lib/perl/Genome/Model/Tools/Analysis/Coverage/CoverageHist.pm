@@ -112,10 +112,14 @@ sub execute {
 
     for my $i (0..(@covs-1)){        
         print $rfile 'par(mfrow=c(1,2))' . "\n";
-        print $rfile 'a = read.table("' . $covs[$i] . "\")\n";
+        print $rfile 'b = read.table("' . $covs[$i] . "\")\n";
+        print $rfile 'a = b[b$V13==1,]' . "\n";
         print $rfile 'hist(a$V6, breaks=seq(0,max(a$V6)+10,10),' . "col=\"darkgreen\",main=\"$headers[$i] Coverage of Target Regions\", ylab=\"Number of regions\", xlab=\"depth of coverage\")\n";
         print $rfile 'hist(a$V6, breaks=seq(0,max(a$V6)+10,10),' . "col=\"darkgreen\",main=\"$headers[$i] Coverage of Target Regions\", ylab=\"Number of regions\", xlab=\"depth of coverage\"," . 'xlim=c(0, sort(a$V6)[round(length(a$V6)*0.99)]))' . "\n";
         print $rfile "mtext(\"zoom to 99% of regions\")\n";
+        print $rfile 'print(paste("Median Coverage:",median(a$V6)))' . "\n";
+        print $rfile 'print(paste("Mean Coverage:",mean(a$V6)))' . "\n";
+
     }
     print $rfile "dev.off()\n";
     close($rfile);

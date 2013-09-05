@@ -17,6 +17,7 @@ use strict;
 use warnings;
 use FileHandle;
 use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
+use Genome::Model::Tools::Capture::Helpers 'iupac_to_base';;
 
 my %stats = ();
 
@@ -268,53 +269,4 @@ sub load_snp_calls
 	return 0;
 }
 
-
-#############################################################
-# ParseBlocks - takes input file and parses it
-#
-#############################################################
-
-sub iupac_to_base
-{
-	(my $allele1, my $allele2) = @_;
-	
-	return($allele2) if($allele2 eq "A" || $allele2 eq "C" || $allele2 eq "G" || $allele2 eq "T");
-	
-	if($allele2 eq "M")
-	{
-		return("C") if($allele1 eq "A");
-		return("A") if($allele1 eq "C");
-	}
-	elsif($allele2 eq "R")
-	{
-		return("G") if($allele1 eq "A");
-		return("A") if($allele1 eq "G");		
-	}
-	elsif($allele2 eq "W")
-	{
-		return("T") if($allele1 eq "A");
-		return("A") if($allele1 eq "T");		
-	}
-	elsif($allele2 eq "S")
-	{
-		return("C") if($allele1 eq "G");
-		return("G") if($allele1 eq "C");		
-	}
-	elsif($allele2 eq "Y")
-	{
-		return("C") if($allele1 eq "T");
-		return("T") if($allele1 eq "C");		
-	}
-	elsif($allele2 eq "K")
-	{
-		return("G") if($allele1 eq "T");
-		return("T") if($allele1 eq "G");				
-	}	
-	
-	return($allele2);
-}
-
-
-
 1;
-

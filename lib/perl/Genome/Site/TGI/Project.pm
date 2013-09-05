@@ -9,7 +9,7 @@ use Genome;
 class Genome::Site::TGI::Project {
     is => 'Genome::Searchable',
     id_properties => ['setup_project_id'],
-    table_name =>   "(SELECT * FROM setup_project\@oltp p JOIN setup\@oltp s ON setup_id = setup_project_id WHERE project_type != 'setup project finishing' AND setup_status != 'abandoned') project ",
+    table_name =>   "(SELECT * FROM setup_project p JOIN setup s ON setup_id = setup_project_id WHERE project_type != 'setup project finishing' AND setup_status != 'abandoned') project ",
     has => [
         
         # get these directly, since we can't join through any app objects
@@ -39,7 +39,7 @@ class Genome::Site::TGI::Project {
         internal_contact_name   => { is => 'Text', via => 'internal_contact', to => 'name' }, 
         internal_contact_email  => { is => 'Text', via => 'internal_contact', to => 'email' }, 
     ],
-    data_source => 'Genome::DataSource::GMSchema',
+    data_source => 'Genome::DataSource::Oltp',
 };
 
 1;

@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+
+set -o errexit
+set -o pipefail
+
+usage() {
+echo "usage: $0 [command]
+
+See --help for details."
+}
+
+man() {
+echo "
+NAME
+
+    $0 - setup Genome environment
+
+SYNOPSIS
+
+    $0 [command]
+
+DESCRIPTION
+
+    Setup an environment for Genome that will checkout the correct version of
+    the UR, Workflow, and configuration submodules as well as setup the shell
+    environment to use them and the correct Perl and Prove executables.
+
+EXAMPLES
+
+    $0 test-tracker prove --lsf --git
+
+    Wrap test-tracker to ensure the correct environment is used for running
+    tests.
+
+    $0
+
+    Open a new shell with the correct environment so you can run builds
+    manually.  Press <Ctrl>-D or type `logout` to return to original shell.
+"
+}
+
+case $1 in
+    "-h") usage; exit 0;;
+    "--help") man; exit 0;;
+esac
+
+GIT_DIR=$(git rev-parse --show-toplevel 2> /dev/null || true)
+
+if [ -z "${GIT_DIR}" ]; then
+    echo "ERROR: Make sure you are in a git repo!"
+    exit 128
+fi
+
+if [ ! -f "${GIT_DIR}/lib/perl/Genome.pm" ]; then
+    echo "ERROR: Make sure you are in a Genome workspace!"
+    exit 128
+fi
+
+export WORKSPACE="${GIT_DIR}"
+ORIG_PWD="${PWD}"
+cd "${WORKSPACE}"
+
+if [ -z "$GENOMECI_BASEDIR" ]; then
+    GENOMECI_BASEDIR=/gsc/scripts/opt/genome
+fi
+export GENOMECI_BASEDIR
+
+set -o nounset
+
+$GENOMECI_BASEDIR/bin/model-test-prep-multi '5.10'
+source $GENOMECI_BASEDIR/bin/model-test-env.sh "${WORKSPACE}"
+
+if [ -n "$BASH" -o -n "$ZSH_VERSION" ] ; then
+    hash -r 2>/dev/null
+fi
+
+cd "$ORIG_PWD"
+
+echo '' 1>&2
+echo "Perl: $(perl -e 'printf(qq(%vd\n), $^V)')" 1>&2
+echo "Prove: $(prove --version)" 1>&2
+echo "UR: $(wtf UR | head -n 1)" 1>&2
+echo "Workflow: $(wtf Workflow | head -n 1)" 1>&2
+echo "Genome: $(wtf Genome | head -n 1)" 1>&2
+echo '' 1>&2
+
+if [ -z "$GENOME_ENV" ]; then
+    GE_ENV_NAME="genome-env"
+fi
+
+unset PROMPT_COMMAND
+export PS1="($GE_ENV_NAME) \w $ "
+
+unset GE_ENV_NAME
+
+if [ $# -gt 0 ]; then
+    echo "$@"... 1>&2
+    exec "$@"
+else
+    if [ -n "$BASH" ]; then
+        echo 'Press <Ctrl>-D or type `logout` to return to normal environment.'
+        echo ''
+        exec bash --norc --noprofile
+    else
+        echo 'Only `bash` shells are supported at this time.'
+        exit 128
+    fi
+fi

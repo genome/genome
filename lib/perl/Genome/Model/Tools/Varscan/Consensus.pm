@@ -2,12 +2,12 @@
 package Genome::Model::Tools::Varscan::Consensus;     # rename this when you give the module file a different name <--
 
 #####################################################################################################################################
-# Varscan::Somatic	Runs Varscan somatic pipeline on Normal/Tumor BAM files
+# Genome::Model::Tools::Varscan::Consensus	Runs Varscan pileup2cns on the SAMtools mpileup output from one BAM file.
 #					
 #	AUTHOR:		Dan Koboldt (dkoboldt@genome.wustl.edu)
 #
 #	CREATED:	12/09/2009 by D.K.
-#	MODIFIED:	12/29/2009 by D.K.
+#	MODIFIED:	08/14/2013 by D.K.
 #
 #	NOTES:	
 #			
@@ -29,11 +29,6 @@ class Genome::Model::Tools::Varscan::Consensus {
             doc => "Path to BAM file",
             is_optional => 0,
         },
-        positions_file => {
-            is => 'Text',
-            doc => "Path to variant positions file",
-            is_optional => 0
-        },
         output_file => {
             is => 'Text',
             doc => "Path to output file",
@@ -41,17 +36,30 @@ class Genome::Model::Tools::Varscan::Consensus {
         },
         min_coverage => {
             is => 'Text',
-            doc => "Minimum base coverage to report readcounts [4]",
+            doc => "Minimum base coverage to report readcounts",
+	    default => 3,
             is_optional => 1,
         },
         min_avg_qual => {
             is => 'Text',
-            doc => "Minimum base quality to count a read [20]",
-            is_optional => 1,
+            doc => "Minimum base quality to count a read",
+	    default => 20,
+            is_optional => 0,
         },
         min_var_freq => {
             is => 'Text',
-            doc => "Minimum variant allele frequency to call a variant [0.20]",
+            doc => "Minimum variant allele frequency to call a variant",
+	    default => 0.20,
+            is_optional => 0,
+        },
+        output_vcf => {
+            is => 'Text',
+            doc => "If set to 1, tells VarScan to output in VCF format (rather than native CNS)",
+            is_optional => 1,
+        },
+        position_list_file => {
+            is => 'Text',
+            doc => "Optionally, provide a tab-delimited list of positions to be given to SAMtools with -l",
             is_optional => 1,
         },
         reference => {
@@ -66,13 +74,13 @@ class Genome::Model::Tools::Varscan::Consensus {
 sub sub_command_sort_position { 12 }
 
 sub help_brief {                            # keep this to just a few words <---
-    "Run the Varscan pileup2cns tool"                 
+    "Run VarScan consensus calling for one BAM file"                 
 }
 
 sub help_synopsis {
     return <<EOS
-Runs Varscan readcounts from BAM files
-EXAMPLE:	gmt varscan consensus --bam-file [sample.bam] --variants-file [variants.tsv] --output-file readcounts.txt ...
+Runs mpileup and then VarScan consensus calling (pileup2cns) on a single BAM file
+EXAMPLE:	gmt varscan consensus --bam-file sample.bam --reference reference.fa --output sample.bam.varScan.cns
 EOS
 }
 
@@ -94,23 +102,35 @@ sub execute {                               # replace with real execution logic.
 	## Get required parameters ##
 	my $bam_file = $self->bam_file;
 	my $reference = $self->reference;
-	my $positions_file = $self->positions_file;
 	my $output_file = $self->output_file;
 	
-	my $min_coverage = 4;
-	my $min_avg_qual = 20;
-	my $min_var_freq = 0.20;
-	
-	$min_coverage = $self->min_coverage if(defined($self->min_coverage));
-	$min_avg_qual = $self->min_avg_qual if(defined($self->min_avg_qual));
-	$min_var_freq = $self->min_var_freq if(defined($self->min_var_freq));
+	my $min_coverage = $self->min_coverage;
+	my $min_avg_qual = $self->min_avg_qual;
+	my $min_var_freq = $self->min_var_freq;
 
 	if(-e $bam_file)
 	{
 		## Prepare pileup commands ##
 		my $mpileup = $self->samtools_path . " mpileup -B -f $reference -q 10 $bam_file";
-#		my $varscan_path = Genome::Model::Tools::Varscan->path_for_version($self->version);
-		my $cmd = $self->java_command_line("pileup2cns <\($mpileup\) --min-coverage $min_coverage --min-var-freq $min_var_freq --min-avg-qual $min_avg_qual >$output_file");
+		
+		if($self->position_list_file)
+		{
+			$mpileup = $self->samtools_path . " mpileup -B -f $reference -q 10 -l " . $self->position_list_file . " " . $bam_file;
+		}
+		
+		
+		
+		my $cmd = "";
+		
+		if($self->output_vcf)
+		{
+			$cmd = $self->java_command_line("mpileup2cns <\($mpileup\) --min-coverage $min_coverage --min-var-freq $min_var_freq --min-avg-qual $min_avg_qual --output-vcf 1 >$output_file 2>/dev/null");			
+		}
+		else
+		{
+			$cmd = $self->java_command_line("pileup2cns <\($mpileup\) --min-coverage $min_coverage --min-var-freq $min_var_freq --min-avg-qual $min_avg_qual >$output_file 2>/dev/null");
+		}
+
 		system($cmd);
 	}
 	else

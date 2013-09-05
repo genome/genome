@@ -167,7 +167,7 @@ class Genome::Model::ReferenceAlignment {
         latest_build_event => {
             calculate_from => ['build_event_arrayref'],
             calculate => q|
-                my @e = sort { $a->id cmp $b->id } @$build_event_arrayref;
+                my @e = sort { $a->date_scheduled cmp $b->date_scheduled } @$build_event_arrayref;
                 my $e = $e[-1];
                 return $e;
             |,
@@ -334,7 +334,7 @@ sub default_genotype_model {
     my $sample = $self->subject;
     return unless $sample->isa('Genome::Sample');
 
-    my @genotype_models = sort { $a->id <=> $b->id } $sample->default_genotype_models;
+    my @genotype_models = sort { $a->creation_date cmp $b->creation_date } $sample->default_genotype_models;
     return unless @genotype_models;
 
     @genotype_models = grep { $_->reference_sequence_build->is_compatible_with($self->reference_sequence_build) } @genotype_models;

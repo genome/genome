@@ -7,7 +7,7 @@ use Genome;
 
 class Genome::InstrumentData {
     is => 'Genome::Notable',
-    table_name => 'INSTRUMENT_DATA',
+    table_name => 'instrument.data',
     is_abstract => 1,
     subclass_description_preprocessor => __PACKAGE__ . '::_preprocess_subclass_description',
     attributes_have => [
@@ -17,6 +17,7 @@ class Genome::InstrumentData {
         },
     ],
     subclassify_by => 'subclass_name',
+    id_generator => '-uuid',
     id_by => [
         id => {
             is => 'Text',
@@ -45,7 +46,7 @@ class Genome::InstrumentData {
             to => 'name',
         },
         sample_id => {
-            is => 'Integer',
+            is => 'Text',
             via => 'library',
         },
         sample => {
@@ -287,6 +288,12 @@ sub delete {
     return $self->SUPER::delete;
 }
 
+my @_AR_SUBCLASSES_TO_EXPUNGE = (
+    'Genome::InstrumentData::AlignmentResult::Merged',
+    'Genome::InstrumentData::AlignmentResult',
+    'Genome::InstrumentData::AlignmentResult::Tophat',
+);
+
 sub _expunge_assignments{
     my $self = shift;
     my $instrument_data_id = $self->id;
@@ -315,29 +322,26 @@ sub _expunge_assignments{
         push @models, $build->model;
     }
 
-    my @merged_results = Genome::InstrumentData::AlignmentResult::Merged->get(instrument_data_id => $self->id);
-    for my $merged_result (@merged_results) {
-        unless ($merged_result->delete) {
-            die $self->error_message("Could not remove instrument data " . $self->__display_name__ .
-                " because merged alignment result " . $merged_result->__display_name__ .
-                " that uses this instrument data could not be deleted!");
-        }
-    }
+    for my $ar_subclass_name (@_AR_SUBCLASSES_TO_EXPUNGE) {
+        my @alignment_results = $ar_subclass_name->get(
+            instrument_data_id => $self->id);
 
-    my @alignment_results = Genome::InstrumentData::AlignmentResult->get(instrument_data_id => $self->id);
-    for my $alignment_result (@alignment_results) {
-        unless($alignment_result->delete){
-            die $self->error_message("Could not remove instrument data " . $self->__display_name__ . " because it has " .
-            " an alignment result (" . $alignment_result->__display_name__ . ") that could not be deleted!");
-        }
-    }
+        for my $alignment_result (@alignment_results) {
+            for my $bamqc_result (Genome::InstrumentData::AlignmentResult::Merged::BamQc->get(alignment_result_id => $alignment_result->id)) {
+                unless ($bamqc_result->delete) {
+                    die $self->error_message(sprintf(
+                            "Failed to remove BamQc result (%s) for alignment result (%s)",
+                            $alignment_result->id, $bamqc_result->id));
+                }
+            }
 
-    my @tophat_alignment_results = Genome::InstrumentData::AlignmentResult::Tophat->get(instrument_data_id => $self->id);
-    for my $tophat_alignment_result (@tophat_alignment_results) {
-        unless($tophat_alignment_result->delete){
-            die $self->error_message("Could not remove instrument data " . $self->__display_name__ . " because it has " .
-            " a tophat alignment result (" . $tophat_alignment_result->__display_name__ . ") that could not be deleted!");
+            unless ($alignment_result->delete) {
+                die $self->error_message("Could not remove instrument data " . $self->__display_name__ .
+                    " because alignment result " . $alignment_result->__display_name__ .
+                    " that uses this instrument data could not be deleted!");
+            }
         }
+
     }
 
     return 1, %affected_users;
@@ -478,7 +482,10 @@ sub lane_qc_build {
     my $self = shift;
     my @qc_models = $self->lane_qc_models;
     return unless @qc_models;
-    my @builds = sort { $b->id <=> $a->id } map { $_->succeeded_builds } @qc_models;
+    # find the newest succeeded build
+    my @builds = sort { $b->date_scheduled cmp $a->date_scheduled }
+                 map { $_->succeeded_builds }
+                 @qc_models;
     return unless @builds;
     return $builds[0];
 }

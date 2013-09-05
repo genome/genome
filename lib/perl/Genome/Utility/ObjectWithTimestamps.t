@@ -19,10 +19,6 @@ use above "Genome";
 
 use_ok('Genome::Utility::ObjectWithTimestamps');
 
-my $base_obj = Genome::Utility::ObjectWithTimestamps->create();
-ok($base_obj->created_at, 'created_at should be automatically set the first time an object is created');
-
-
 my $inherited_obj = Genome::HasTimestamps->create(dummy_val => 6);
 ok($inherited_obj->created_at, 'created_at should be automatically set the first time an object is created');
 my $old_val = $inherited_obj->updated_at;

@@ -13,6 +13,8 @@ use above 'Genome';
 use Test::More;
 use File::Spec;
 
+Genome::Report::Email->silent();
+
 if(Genome::Config->arch_os() =~ '64') {
     plan tests => 27;
 } else {

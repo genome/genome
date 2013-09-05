@@ -76,7 +76,7 @@ FIRST_AVG_Q_BELOW_20        VARCHAR2 (7)                     {null} {null}   NOT
 =cut
 
 class Genome::Site::TGI::Synchronize::Classes::IndexIllumina {
-    table_name => <<EOS
+    table_name => <<'EOS'
         (
             select
                 --Index Illumina
@@ -127,6 +127,9 @@ class Genome::Site::TGI::Synchronize::Classes::IndexIllumina {
                 (case when r1.seq_id is not null then r2.filt_error_rate_avg else null end) rev_filt_error_rate_avg,
                 (case when r1.seq_id is not null then r2.filt_aligned_clusters_pct else null end) rev_filt_aligned_clusters_pct,
 
+                --Analysis Project
+                swo.analysis_project_id,
+
                 --Misc Paths
                 archive2.path archive_path,
                 gerald_bam.path bam_path,
@@ -135,29 +138,32 @@ class Genome::Site::TGI::Synchronize::Classes::IndexIllumina {
                 '/gscmnt/sata114/info/medseq/adaptor_sequences/solexa_adaptor_pcr_primer'
                     || (case when sam.sample_type = 'rna' then '_SMART' else '' end) adaptor_path
 
-                from GSC.index_illumina i
-                    join GSC.flow_cell_illumina fc on fc.flow_cell_id = i.flow_cell_id
-                    join GSC.read_illumina r2
+                from index_illumina i
+                    join flow_cell_illumina fc on fc.flow_cell_id = i.flow_cell_id
+                    join read_illumina r2
                         on i.seq_id = r2.ii_seq_id
                         and (
                             (fc.run_type = 'Paired End' and r2.read_number = 2)
                             or
                             (fc.run_type = 'Fragment' and r2.read_number = 1)
                         )
-                    left join GSC.seq_fs_path archive2 on archive2.seq_id = i.seq_id
+                    left join seq_fs_path archive2 on archive2.seq_id = i.seq_id
                         and archive2.data_type = 'illumina fastq tgz'
-                    left join GSC.seq_fs_path gerald_bam on gerald_bam.seq_id = i.seq_id
+                    left join seq_fs_path gerald_bam on gerald_bam.seq_id = i.seq_id
                         and gerald_bam.data_type = 'gerald bam'
-                    left join GSC.seq_fs_path collect_gc_bias on collect_gc_bias.seq_id = i.seq_id
+                    left join seq_fs_path collect_gc_bias on collect_gc_bias.seq_id = i.seq_id
                         and collect_gc_bias.data_type = 'collect gc bias'
-                    left join GSC.seq_fs_path fastqc on fastqc.seq_id = i.seq_id
+                    left join seq_fs_path fastqc on fastqc.seq_id = i.seq_id
                         and fastqc.data_type = 'fastqc'
-                    left join GSC.read_illumina r1
+                    left join read_illumina r1
                         on run_type = 'Paired End'
                         and r1.ii_seq_id = i.seq_id
                         and r1.read_number = 1
                     join GSC.library_summary lib on lib.library_id = i.library_id
                     join GSC.organism_sample sam on sam.organism_sample_id = lib.sample_id
+                    join GSC.woi_sequence_product wsp on wsp.seq_id = i.seq_id
+                    join work_order_item@oltp woi on wsp.woi_id = woi.woi_id
+                    join setup_work_order@oltp swo on swo.setup_wo_id = woi.setup_wo_id
         )
         index_illumina
 EOS
@@ -204,8 +210,9 @@ EOS
         rev_seq_id                      => { },
         fwd_filt_error_rate_avg         => { },
         rev_filt_error_rate_avg         => { },
+        analysis_project_id             => { },
     ],
-    data_source => 'Genome::DataSource::GMSchema',
+    data_source => 'Genome::DataSource::Dwrac',
 };
 
 # TODO Require rebuild?
@@ -233,6 +240,7 @@ sub properties_to_keep_updated {# 8
         old_fwd_filt_error_rate_avg
         old_rev_filt_aligned_clusters_pct
         old_fwd_filt_aligned_clusters_pct
+        analysis_project_id
         /);
 }
 

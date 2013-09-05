@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::FeatureList {
-    table_name => 'FEATURE_LIST',
+    table_name => 'model.feature_list',
     id_by => [
         id => {
             is => 'Text',
@@ -47,8 +47,8 @@ class Genome::FeatureList {
             doc => 'Provenance of this feature list. (e.g. Agilent)',
         },
         reference_id => {
-            is => 'NUMBER',
-            len => 10,
+            is => 'Text',
+            len => 32,
             doc => 'ID of the reference sequence build for which the features apply',
         },
         reference => {

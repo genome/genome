@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Site::TGI::SequenceTag {
-    table_name => 'GSC.SEQUENCE_TAG',
+    table_name => 'SEQUENCE_TAG',
     id_by => [
         stag_id => {
             is => 'Text', 
@@ -19,7 +19,7 @@ class Genome::Site::TGI::SequenceTag {
             column_name => 'REF_ID',
         },
     ],
-    data_source => 'Genome::DataSource::GMSchema',
+    data_source => 'Genome::DataSource::Dwrac',
 };
 
 1;

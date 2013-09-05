@@ -143,7 +143,7 @@ sub execute {                               # replace with real execution logic.
 			my $num_fragment = $num_reads - $num_paired;
 			
 			my $map_rate = my $dup_rate = "0.00%";
-			my $pct_fragment = my $pct_paired = "0.00%";
+			my $pct_fragment = my $pct_paired = my $pct_proper = "0.00%";
 			
 			if($num_reads)
 			{
@@ -151,6 +151,7 @@ sub execute {                               # replace with real execution logic.
 				$dup_rate = sprintf("%.2f", ($num_dups / $num_reads * 100)) . '%';
 				$pct_fragment = sprintf("%.2f", ($num_fragment / $num_reads * 100)) . '%';
 				$pct_paired = sprintf("%.2f", ($num_paired / $num_reads * 100)) . '%';
+				$pct_proper = sprintf("%.2f", ($pair_proper / $num_paired * 100)) . '%' if($num_paired > 0);
 			
 				$total_reads += $num_reads;
 				$total_mapped += $num_mapped;
@@ -171,13 +172,13 @@ sub execute {                               # replace with real execution logic.
 			{
 				my $est_gigabases = sprintf("%.2f", ($num_reads * $self->read_length / 1000000000));
 				$num_reads = commify($num_reads);
-				print "$local_filename\t$num_reads\t$pct_paired\t$pct_fragment\t$num_mapped\t$map_rate\t$num_dups\t$dup_rate\t$est_gigabases\n";						
+				print "$local_filename\t$num_reads\t$pct_paired\t$pct_fragment\t$num_mapped\t$map_rate\t$num_dups\t$dup_rate\t$pct_proper\t$est_gigabases\n";						
 				print OUTFILE "$local_filename\t$num_reads\t$pct_paired\t$pct_fragment\t$num_mapped\t$map_rate\t$num_dups\t$dup_rate\t$est_gigabases\n" if($self->output_file);
 			}
 			else
 			{
 				$num_reads = commify($num_reads);
-				print "$local_filename\t$num_reads\t$pct_paired\t$pct_fragment\t$num_mapped\t$map_rate\t$num_dups\t$dup_rate\n";
+				print "$local_filename\t$num_reads\t$pct_paired\t$pct_fragment\t$num_mapped\t$map_rate\t$num_dups\t$dup_rate\t$pct_proper\n";
 				print OUTFILE "$local_filename\t$num_reads\t$pct_paired\t$pct_fragment\t$num_mapped\t$map_rate\t$num_dups\t$dup_rate\n" if($self->output_file);
 			}
 

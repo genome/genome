@@ -5,8 +5,8 @@ use warnings;
 use Genome;
 
 class Genome::Site::TGI::IlluminaGenotyping {
-    table_name => 'GSC.ILLUMINA_GENOTYPING',
-    data_source => 'Genome::DataSource::GMSchema',
+    table_name => 'ILLUMINA_GENOTYPING',
+    data_source => 'Genome::DataSource::Dwrac',
     id_by => [
         seq_id => { is => 'Number' },
     ],

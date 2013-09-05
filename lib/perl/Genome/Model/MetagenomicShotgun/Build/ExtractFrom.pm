@@ -295,26 +295,13 @@ sub _extract_data_from_alignment_result{
 sub lock {
     my $self = shift;
     my @parts = @_;
-    my $resource_lock = join('/', $ENV{GENOME_LOCK_DIR}, @parts);
-    $self->status_message("Creating lock on $resource_lock...");
+    my $lock_key = join('_', @parts);
+    $self->debug_message("Creating lock on $lock_key...");
+    my $resource_lock = File::Spec->join($ENV{GENOME_LOCK_DIR}, $lock_key);
     my $lock = Genome::Sys->lock_resource(
         resource_lock => $resource_lock,
         max_try => 2,
     );
-    if ($lock) {
-        # Also get "new" lock.  Once code that only gets old lock is retired we
-        # can switch to using only the "new" lock.
-        my $lock_key = join('_', @parts);
-        my $new_resource_lock = File::Spec->join($ENV{GENOME_LOCK_DIR}, $lock_key);
-        my $new_lock = Genome::Sys->lock_resource(
-            resource_lock => $new_resource_lock,
-            max_try => 2,
-        );
-        unless ($new_lock) {
-            undef $lock;
-            Genome::Sys->unlock_resource(resource_lock => $resource_lock);
-        }
-    }
     return $lock;
 };
 

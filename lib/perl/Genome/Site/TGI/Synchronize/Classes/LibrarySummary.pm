@@ -15,7 +15,7 @@ SAMPLE_ID            NUMBER   (20)                    {null} NOT NULL ok
 
 class Genome::Site::TGI::Synchronize::Classes::LibrarySummary {
     is => 'UR::Object',
-    table_name => 'GSC.LIBRARY_SUMMARY',
+    table_name => 'LIBRARY_SUMMARY',
     id_by => [
         id                      => { is => 'Number', column_name => 'LIBRARY_ID', },
     ],
@@ -28,7 +28,7 @@ class Genome::Site::TGI::Synchronize::Classes::LibrarySummary {
         library_insert_size     => { is => 'Text', },
         original_insert_size    => { is => 'Text', },
     ],
-    data_source => 'Genome::DataSource::GMSchema',
+    data_source => 'Genome::DataSource::Dwrac',
 };
 
 sub properties_to_copy {# 6

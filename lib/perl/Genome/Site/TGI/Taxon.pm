@@ -5,7 +5,7 @@ use warnings;
 
 class Genome::Site::TGI::Taxon {
     is => 'Genome::Site::TGI::Measurable',
-    table_name => "GSC.organism_taxon",
+    table_name => "organism_taxon",
     id_by => [
         id         => { is => 'Number', len => 10, column_name => 'TAXON_ID' },
     ],
@@ -62,7 +62,7 @@ class Genome::Site::TGI::Taxon {
                                             doc =>  'all DNA/RNA extractions from associated individuals and population groups' },
     ],
     doc => 'a species, strain, or other taxonomic unit',
-    data_source => 'Genome::DataSource::GMSchema',
+    data_source => 'Genome::DataSource::Dwrac',
 };
 
 sub create {

@@ -5,7 +5,7 @@ use warnings;
 
 
 class Genome::Site::TGI::Synchronize::Classes::SampleAttribute {
-    table_name => 'GSC.SAMPLE_ATTRIBUTE',
+    table_name => 'SAMPLE_ATTRIBUTE',
     id_by => [
         organism_sample_id => {
             is => 'Number',
@@ -20,8 +20,7 @@ class Genome::Site::TGI::Synchronize::Classes::SampleAttribute {
             is => 'Text',
         },
     ],
-    schema_name => 'GMSchema',
-    data_source => 'Genome::DataSource::GMSchema',
+    data_source => 'Genome::DataSource::Dwrac',
 };
 
 1;

@@ -8,14 +8,18 @@ use YAML;
 use Genome;
 class Genome::Model::Event {
     is => 'Genome::Model::Command::BaseDeprecated',
-    table_name => 'GENOME_MODEL_EVENT',
+    table_name => 'model.event',
     is_abstract => 1,
     first_sub_classification_method_name => '_resolve_subclass_name',
     sub_classification_method_name => '_resolve_subclass_name',
     subclass_description_preprocessor => 'Genome::Model::Event::_preprocess_subclass_description',
     type_name => 'genome model event',
+    id_generator => '-uuid',
     id_by => [
-        genome_model_event_id => { is => 'Number' },
+        genome_model_event_id => {
+            is => 'Text',
+            len => 32,
+        },
     ],
     has => [
         model => {

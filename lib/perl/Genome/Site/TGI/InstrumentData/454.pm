@@ -38,10 +38,10 @@ class Genome::Site::TGI::InstrumentData::454 {
                 NUM_BASES,
                 NUM_READS,
                 INDEX_SEQUENCE
-            from GSC.run_region_454 r 
-            join GSC.region_index_454 ri on ri.region_id = r.region_id
-            join GSC.library_summary lib on lib.library_id = ri.library_id
-            join GSC.organism_sample s on s.organism_sample_id = lib.sample_id
+            from run_region_454 r
+            join region_index_454 ri on ri.region_id = r.region_id
+            join library_summary lib on lib.library_id = ri.library_id
+            join organism_sample s on s.organism_sample_id = lib.sample_id
         ) x454_detail
 EOS
     ,

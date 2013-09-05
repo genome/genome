@@ -30,7 +30,7 @@ class Genome::Model::GenotypeMicroarray::Command::CreateGoldSnpBed {
             shell_args_position => 3,
         },
         reference_id => {
-            is => 'Integer',
+            is => 'Text',
             is_optional => 1,
         },
         build_id => {
