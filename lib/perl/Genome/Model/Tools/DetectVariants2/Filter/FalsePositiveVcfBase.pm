@@ -797,11 +797,6 @@ sub _filter_variants {
     return 1;
 }
 
-#############################################################
-# Read_Counts_By_Allele - parse out readcount info for an allele
-#
-#############################################################
-
 sub fails_homopolymer_check {
     my ($self, $reference, $min_homopolymer, $chrom, $start, $stop, $ref, $var) = @_;
 

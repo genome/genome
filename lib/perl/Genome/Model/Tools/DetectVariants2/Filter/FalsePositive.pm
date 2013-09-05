@@ -575,11 +575,6 @@ sub _generate_standard_files {
     return 1;
 }
 
-#############################################################
-# Read_Counts_By_Allele - parse out readcount info for an allele
-#
-#############################################################
-
 sub fails_homopolymer_check {
     my ($self, $reference, $min_homopolymer, $chrom, $start, $stop, $ref, $var) = @_;
     $start++; # Adjust for bed input format
