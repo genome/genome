@@ -117,17 +117,6 @@ sub _detect_variants {
     return 1;
 }
 
-sub _dump_workflow {
-    my $self = shift;
-    my $workflow = shift;
-    my $xml = $workflow->save_to_xml;
-    my $xml_location = $self->output_directory."/workflow.xml";
-    my $xml_file = Genome::Sys->open_file_for_writing($xml_location);
-    print $xml_file $xml;
-    $xml_file->close;
-    #$workflow->as_png($self->output_directory."/workflow.png"); #currently commented out because blades do not all have the "dot" library to use graphviz
-}
-
 sub _create_temp_directories {
     my $self = shift;
     $self->_temp_staging_directory($self->output_directory);
@@ -136,7 +125,6 @@ sub _create_temp_directories {
 
     return $self->SUPER::_create_temp_directories(@_);
 }
-
 
 sub _generate_standard_files {
     my $self = shift;

@@ -76,5 +76,16 @@ sub chromosome_sort {
     return $rv;
 }
 
+sub _dump_workflow {
+    my $self = shift;
+    my $workflow = shift;
+    my $xml = $workflow->save_to_xml;
+    my $xml_location = $self->output_directory."/workflow.xml";
+    my $xml_file = Genome::Sys->open_file_for_writing($xml_location);
+    print $xml_file $xml;
+    $xml_file->close;
+    #$workflow->as_png($self->output_directory."/workflow.png"); #currently commented out because blades do not all have the "dot" library to use graphviz
+}
+
 1;
 
