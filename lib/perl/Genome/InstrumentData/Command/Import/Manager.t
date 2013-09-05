@@ -16,20 +16,6 @@ use File::Temp;
 use Test::More;
 
 use_ok('Genome::InstrumentData::Command::Import::Manager') or die;
-use_ok('Genome::InstrumentData::Command::Import') or die;
-Genome::Sample::Command::Import::_create_import_command_for_config({
-        nomenclature => 'TeSt',
-        name_regexp => '(TeSt-\d+)\-\d\d',
-        taxon_name => 'human',
-        #sample_attributes => [qw/ tissue_desc /],# tests array
-        #individual_attributes => { # tests hash
-        #    gender => { valid_values => [qw/ male female /], }, # tests getting meta from individual
-        #    individual_common_name => {
-        #        calculate_from => [qw/ _individual_name /],
-        #        calculate => sub{ my $_individual_name = shift; $_individual_name =~ s/^TEST\-//i; return $_individual_name; },
-        #    },
-        #},
-    });
 
 class Reference { has => [ name => {}, ], };
 my $ref = Reference->create(id => -333, name => 'reference-1');
@@ -47,14 +33,15 @@ sub Genome::Model::Ref::_execute_build { return 1; }
 my $pp = Genome::ProcessingProfile::Ref->create(id => -333, name => 'ref pp #1', aligner => 'bwa');
 ok($pp, 'create pp');
 
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import::Manager', 'v3');
 my $sample_name = 'TeSt-0000-00';
 my $source_files = 'original.bam';
+
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import::Manager', 'v1');
 my $working_directory = File::Temp::tempdir(CLEANUP => 1);
 my $info_tsv = $working_directory.'/info.tsv';
-Genome::Sys->create_symlink($test_dir.'/valid-import-pend/info.tsv', $info_tsv);
+Genome::Sys->create_symlink($test_dir.'/valid-import-needed/info.tsv', $info_tsv);
 my $config_yaml = $working_directory.'/config.yaml';
-Genome::Sys->create_symlink($test_dir.'/valid-import-pend/config.yaml', $config_yaml);
+Genome::Sys->create_symlink($test_dir.'/valid-import-needed/config.yaml', $config_yaml);
 
 # Do not make progress, just status
 my $manager = Genome::InstrumentData::Command::Import::Manager->create(
@@ -62,10 +49,31 @@ my $manager = Genome::InstrumentData::Command::Import::Manager->create(
 );
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');
-is($manager->namespace, 'Test', 'got namespace');
 my $sample_hash = eval{ $manager->samples->{$source_files}; };
 ok($sample_hash, 'sample hash');
 is($sample_hash->{status}, 'sample_needed', 'sample hash status');
+is($sample_hash->{name}, $sample_name, 'sample hash sample name');
+ok(!$sample_hash->{sample}, 'sample hash sample');
+ok(-s $manager->status_file, 'status file created');
+
+# Define sample
+my $sample = Genome::Sample->__define__(
+    id => -111,
+    name => $sample_name,
+    nomenclature => 'TeSt',
+);
+
+# Import needed
+$manager = Genome::InstrumentData::Command::Import::Manager->create(
+    working_directory => $working_directory,
+);
+ok($manager, 'create manager');
+ok($manager->execute, 'execute');
+$sample_hash = eval{ $manager->samples->{$source_files}; };
+ok($sample_hash, 'sample hash');
+is($sample_hash->{status}, 'import_needed', 'sample hash status');
+is($sample_hash->{name}, $sample_name, 'sample hash sample name');
+is($sample_hash->{sample}, $sample, 'sample hash sample');
 ok(-s $manager->status_file, 'status file created');
 
 # Import command
@@ -75,6 +83,22 @@ is(
     'inst data import command',
 );
 
+# Import pend
+unlink($info_tsv, $config_yaml);
+Genome::Sys->create_symlink($test_dir.'/valid-import-pend/info.tsv', $info_tsv);
+Genome::Sys->create_symlink($test_dir.'/valid-import-pend/config.yaml', $config_yaml);
+$manager = Genome::InstrumentData::Command::Import::Manager->create(
+    working_directory => $working_directory,
+);
+ok($manager, 'create manager');
+ok($manager->execute, 'execute');
+$sample_hash = eval{ $manager->samples->{$source_files}; };
+ok($sample_hash, 'sample hash');
+is($sample_hash->{status}, 'import_pend', 'sample hash status');
+is($sample_hash->{name}, $sample_name, 'sample hash sample name');
+is($sample_hash->{sample}, $sample, 'sample hash sample');
+ok(-s $manager->status_file, 'status file created');
+
 # Make progress: create sample, model and 'import' (it thinks it is importing b/c of the command used in the config file)
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
     working_directory => $working_directory,
@@ -82,10 +106,11 @@ $manager = Genome::InstrumentData::Command::Import::Manager->create(
 );
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');
-is($manager->namespace, 'Test', 'got namespace');
 $sample_hash = eval{ $manager->samples->{$source_files}; };
 ok($sample_hash, 'sample hash');
 is($sample_hash->{status}, 'import_pend', 'sample hash status');
+is($sample_hash->{name}, $sample_name, 'sample hash sample name');
+ok($sample_hash->{sample}, 'sample hash sample');
 ok($sample_hash->{model}, 'sample hash model');
 is($sample_hash->{job_status}, 'pend', 'sample hash job status');
 ok(!$sample_hash->{model}->auto_assign_inst_data, 'model auto_assign_inst_data is off');
@@ -96,14 +121,14 @@ ok(!$sample_hash->{build}, 'sample hash build');
 
 # Make progress: create inst data here, it should get assigned to the model and build should be requested
 my $inst_data = Genome::InstrumentData::Imported->__define__(
-    original_data_path => $sample_hash->{source_files},
-    sample => $sample_hash->{sample},
+    original_data_path => $source_files,
+    sample => $sample,
     subset_name => '1-XXXXXX',
     sequencing_platform => 'solexa',
     import_format => 'bam',
     description => 'import test',
 );
-$inst_data->add_attribute(attribute_label => 'bam_path', attribute_value => $manager->config_file);
+$inst_data->add_attribute(attribute_label => 'bam_path', attribute_value => $config_yaml); #point to an existing file
 $inst_data->add_attribute(attribute_label => 'read_count', attribute_value => 1000);
 $inst_data->add_attribute(attribute_label => 'read_length', attribute_value => 100);
 
@@ -145,6 +170,6 @@ $manager = Genome::InstrumentData::Command::Import::Manager->create(
 );
 ok($manager, 'create manager');
 ok(!$manager->execute, 'execute');
-is($manager->error_message, 'Property \'info_file\': No "name" column in sample info file! '.$manager->info_file, 'correct error');
+is($manager->error_message, 'Property \'info_file\': No "sample_name" column in sample info file! '.$manager->info_file, 'correct error');
 
 done_testing();

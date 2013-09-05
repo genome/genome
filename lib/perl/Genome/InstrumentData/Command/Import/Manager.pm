@@ -49,7 +49,6 @@ class Genome::InstrumentData::Command::Import::Manager {
     ],
     has_optional_transient => [
         config => { is => 'Hash', },
-        namespace => { is => 'Text', },
         samples => { is => 'Hash', },
         model_class => { is => 'Text' },
         model_params => { is => 'Hash' },
@@ -189,12 +188,6 @@ sub _load_config {
         return 'No nomenclature in config file! '.$config_file;
     }
 
-    my $namespace = Genome::Sample::Command::Import->namespace_for_nomenclature($nomenclature);
-    if ( not $namespace ) {
-        return "Could not get namespace from importer. Please ensure there is a config for the ".$nomenclature." nomenclature.";
-    }
-    $self->namespace($namespace);
-
     return;
 }
 
@@ -214,7 +207,7 @@ sub _load_info_file {
         return 'Failed to open sample info file! '.$info_file;
     }
 
-    my %headers_not_found = ( name => 1, source_files => 1, );
+    my %headers_not_found = ( sample_name => 1, source_files => 1, );
     for my $header ( @{$info_reader->headers} ) {
         delete $headers_not_found{$header};
     }
@@ -223,7 +216,6 @@ sub _load_info_file {
         return 'No '.join(' ', map { '"'.$_.'"' } keys %headers_not_found).' column in sample info file! '.$self->info_file;
     }
 
-    my @importer_property_names = Genome::Sample::Command::Import->importer_property_names_for_namespace($self->namespace);
     my %samples;
     while ( my $hash = $info_reader->next ) {
         my $source_files = delete $hash->{source_files};
@@ -231,32 +223,17 @@ sub _load_info_file {
             $self->error_message('Duplicate source files! '.$source_files);
             return;
         }
-        my $name = delete $hash->{name};
-        $samples{$source_files} = {
+        my $name = delete $hash->{sample_name};
+        my $sample = {
             name => $name,
             source_files => $source_files,
-            importer_params => { name => $name, },
+            instrument_data_attributes => [],
         };
-        my $sample = $samples{$source_files};
         $samples{$source_files} = $sample;
         for my $attr ( sort keys %$hash ) {
             my $value = $hash->{$attr};
             next if not defined $value or $value eq '';
-            if ( $attr =~ /^s\./ ) { # is sample/individual/inst data indicated?
-                push @{$sample->{importer_params}->{'sample_attributes'}}, $attr."='".$value."'";
-            }
-            if ( $attr =~ /^p\./ ) { # is sample/individual/inst data indicated?
-                push @{$sample->{importer_params}->{'individual_attributes'}}, $attr."='".$value."'";
-            }
-            elsif ( $attr =~ s/^i\.// ) { # inst data attr
-                push @{$sample->{'instrument_data_attributes'}}, $attr."='".$value."'";
-            }
-            elsif ( grep { $attr eq $_ } @importer_property_names ) { # is the attr specified in the importer?
-                $sample->{importer_params}->{$attr} = $value;
-            }
-            else { # assume sample attribute
-                push @{$sample->{importer_params}->{'sample_attributes'}}, $attr."='".$value."'";
-            }
+            push @{$sample->{'instrument_data_attributes'}}, $attr."='".$value."'";
         }
     }
     $self->samples(\%samples);
@@ -444,31 +421,6 @@ sub _set_job_status_to_samples {
     return 1;
 }
 
-sub _create_sample {
-    my ($self, $importer_params) = @_;
-
-    Carp::confess('No params to create sample!') if not $importer_params;
-
-    local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 0; # quiet the importer
-    my $importer_class_name = Genome::Sample::Command::Import->importer_class_name_for_namespace($self->namespace);
-    my $importer = $importer_class_name->create(%$importer_params);
-    if ( not $importer ) {
-        $self->error_message('Failed to create sample importer for sample! '.Data::Dumper::Dumper($importer_params));
-        return;
-    }
-    if ( not $importer->execute ) {
-        $self->error_message('Failed to execute sample importer for sample! '.Data::Dumper::Dumper($importer_params));
-        return;
-    }
-    my $sample = $importer->_sample;
-    if ( not $sample ) {
-        $self->error_message('Executed the importer successfully, but failed to create sample!');
-        return;
-    }
-
-    return $sample;
-}
-
 sub set_sample_status {
     my ($self, $sample) = @_;
 
@@ -576,10 +528,7 @@ sub _make_progress {
         # Create sample
         if ( not $sample->{sample} ) {
             $sample->{sample} = Genome::Sample->get(name => $sample->{name});
-            if ( not $sample->{sample} ) {
-                $sample->{sample} = $self->_create_sample($sample->{importer_params});
-                return if not $sample->{sample};
-            }
+            return if not $sample->{sample};
         }
 
         # Create model
