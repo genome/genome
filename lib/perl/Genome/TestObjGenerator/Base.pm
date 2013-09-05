@@ -3,6 +3,7 @@ package Genome::TestObjGenerator::Base;
 use strict;
 use warnings;
 use Genome;
+use Genome::TestObjGenerator::Util;
 
 sub fill_in_missing_params {
     my $self = shift;
