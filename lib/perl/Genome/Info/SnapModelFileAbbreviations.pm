@@ -37,6 +37,9 @@ my %model_files = (
     'spiralis_cegma_mod_intron_min30.hmm'   => 'sn_tscg30',
     'O_dentatum_10.0.ec.cg.mk2.hmm'         => 'sn_od10cgmkv2',
     'O_dentatum_10.0.cg.mk2.hmm'            => 'sn_od10mkv2',
+    'C_aethiops.hmm'			    => 'sn_vercgmk2',
+    'F_hepatica_v1.0.allpaths.pg.cgmk2.hmm' => 'sn_fh1cgmk2',
+    'F_hepatica_v1.0.allpaths.pg.mk2.hmm'   => 'sn_fh1mk2',
 );
 
 
