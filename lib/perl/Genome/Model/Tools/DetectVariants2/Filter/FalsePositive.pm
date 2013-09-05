@@ -9,7 +9,7 @@ class Genome::Model::Tools::DetectVariants2::Filter::FalsePositive {
     is => 'Genome::Model::Tools::DetectVariants2::Filter',
     doc => "This module uses detailed readcount information from bam-readcounts to filter likely false positives",
 
-    has => [
+    has_input => [
         ## CAPTURE FILTER OPTIONS ##
         'min_strandedness' => {
             type => 'String',
