@@ -13,7 +13,7 @@ class Genome::Sys::Node::Command::List {
             default_value => 'Genome::Sys::Node',
         },
         show => {
-            default_value => 'id,hostname,is_current,is_attached,desc,ftp_detail,nfs_detail'
+            default_value => 'id,hostname,is_current,is_attached,attached_via,desc,ftp_detail,nfs_detail,base_dir'
         },
     ],
     doc => 'list known Genome Modeling Systems'
