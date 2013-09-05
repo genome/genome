@@ -6,7 +6,6 @@ use warnings;
 use Genome;
 
 use Data::Dumper;
-use Genome::Sample::Command::Import;
 use IO::File;
 use Switch;
 use YAML;
@@ -30,11 +29,6 @@ class Genome::InstrumentData::Command::Import::Manager {
             is => 'Boolean',
             default_value => 0,
             doc => 'Launch instrument data imports.',
-        },
-        start_builds => {
-            is => 'Boolean',
-            default_value => 0,
-            doc => 'Start builds for successfully imported samples.',
         },
     ],
     has_optional_calculated => [
@@ -163,7 +157,7 @@ sub __errors__ {
     }
 
 
-    my @progress_methods = (qw/ launch_imports start_builds /);
+    my @progress_methods = (qw/ launch_imports /);
     if ( $self->make_progress ) {
         for my $method ( @progress_methods ) {
             $self->$method(1);
@@ -575,7 +569,7 @@ sub _make_progress {
     my $model_class = $self->model_class;
     my $model_params = $self->model_params;
     my $samples = $self->samples;
-    my (@samples_to_launch_imports, @samples_to_start_builds);
+    my @samples_to_launch_imports;
     for my $sample ( values %$samples ) {
         $self->set_sample_status($sample);
         next if $sample->{status} eq 'build_succeeded';
@@ -602,6 +596,7 @@ sub _make_progress {
 
         # Model should have instrument data
         my $instrument_data = $sample->{instrument_data};
+            print Data::Dumper::Dumper($sample);
         if ( $instrument_data ) {
             my @model_instrument_data = $model->instrument_data;
             if ( not @model_instrument_data or not grep { $instrument_data->id eq $_ } map { $_->id } @model_instrument_data ) {
@@ -625,27 +620,11 @@ sub _make_progress {
                 push @samples_to_launch_imports, $sample;
             }
         }
-
-        # Start builds
-        if ( $self->start_builds ) {
-            if ( $sample->{status} eq 'build_needed'
-                    or $sample->{status} eq 'build_failed'
-                    or $sample->{status} eq 'build_abandoned'
-                    or $sample->{status} eq 'build_unstartable'
-            ) {
-                push @samples_to_start_builds, $sample;
-            }
-        }
     }
 
     if ( @samples_to_launch_imports ) {
         my $launch_imports_ok = $self->_launch_instrument_data_import_for_samples(@samples_to_launch_imports);
         return if not $launch_imports_ok;
-    }
-
-    if ( @samples_to_start_builds ) {
-        my $start_builds_ok = $self->_start_builds_for_samples(@samples_to_start_builds);
-        return if not $start_builds_ok;
     }
 
     $self->samples($samples);
@@ -663,24 +642,6 @@ sub _launch_instrument_data_import_for_samples {
         next if not $rv;
         $self->error_message($@) if $@;
         $self->error_message('Failed to launch instrument data import command for sample! '.$sample->name);
-    }
-
-    return 1;
-}
-
-sub _start_builds_for_samples {
-    my ($self, @samples) = @_;
-
-    Carp::confess('No samples given to _start_builds_for_samples!') if not @samples;
-
-    my $start = Genome::Model::Build::Command::Start->execute(models => [ map { $_->{model} } @samples]);
-    return if not $start;
-
-    my @builds = $start->builds;
-    my %sample_names_and_builds = map  { $_->model->subject->name => $_ } @builds;
-
-    for my $sample ( @samples ) {
-        $sample->{build} = $sample_names_and_builds{ $sample->{name} };
     }
 
     return 1;

@@ -113,15 +113,14 @@ Genome::Sys->create_symlink($test_dir.'/valid-build/config.yaml', $config_yaml);
 
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
     working_directory => $working_directory,
-    start_builds => 1,
 );
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');
 $sample_hash = eval{ $manager->samples->{$source_files}; };
 ok($sample_hash, 'sample hash');
-is($sample_hash->{status}, 'build_scheduled', 'sample hash status');
+is($sample_hash->{status}, 'build_needed', 'sample hash status');
+is_deeply([$sample_hash->{instrument_data}], [$inst_data], 'sample hash inst data');
 ok($sample_hash->{model}, 'sample hash model');
-ok($sample_hash->{build}, 'build created');
 is_deeply([$sample_hash->{model}->instrument_data], [$inst_data], 'model has instrument data assigned');
 
 # fail - no config file
