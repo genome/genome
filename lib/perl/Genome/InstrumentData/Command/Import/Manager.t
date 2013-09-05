@@ -143,7 +143,6 @@ ok($sample_hash, 'sample hash');
 is($sample_hash->{status}, 'build_needed', 'sample hash status');
 is_deeply([$sample_hash->{instrument_data}], [$inst_data], 'sample hash inst data');
 ok($sample_hash->{model}, 'sample hash model');
-            print Data::Dumper::Dumper($sample_hash);
 is_deeply([$sample_hash->{model}->instrument_data], [$inst_data], 'model has instrument data assigned');
 
 # fail - no config file

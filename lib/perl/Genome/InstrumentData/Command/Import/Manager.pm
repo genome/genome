@@ -5,9 +5,7 @@ use warnings;
 
 use Genome;
 
-use Data::Dumper;
 use IO::File;
-use Switch;
 use YAML;
 
 class Genome::InstrumentData::Command::Import::Manager {
@@ -344,7 +342,7 @@ sub _load_instrument_data {
 sub _load_models {
     my $self = shift;
 
-    return 1 if $self->model_params;
+    return 1 if not $self->model_params;
 
     my $samples = $self->samples;
     my $model_class = $self->model_class;
@@ -355,6 +353,9 @@ sub _load_models {
         $model_params->{subject} = $sample->{sample};
 
         my $model = $model_class->get(%$model_params);
+        if ( not $model ) {
+            $model = $model_class->create(%$model_params);
+        }
         next if not $model;
 
         $sample->{model} = $model;
@@ -511,35 +512,6 @@ sub _make_progress {
     for my $sample ( values %$samples ) {
         $self->set_sample_status($sample);
         next if $sample->{status} eq 'build_succeeded';
-        # Create sample
-        if ( not $sample->{sample} ) {
-            $sample->{sample} = Genome::Sample->get(name => $sample->{name});
-            return if not $sample->{sample};
-        }
-
-        # Create model
-        my $model = $sample->{model};
-        if ( not $model ) {
-            $model_params->{subject} = $sample->{sample};
-            $model = $model_class->get(%$model_params);
-            if ( not $model ) {
-                $model = $model_class->create(%$model_params);
-                return if not $model;
-            }
-            $sample->{model} = $model;
-        }
-
-        # Model should have instrument data
-        my $instrument_data = $sample->{instrument_data};
-        if ( $instrument_data ) {
-            my @model_instrument_data = $model->instrument_data;
-            if ( not @model_instrument_data or not grep { $instrument_data->id eq $_ } map { $_->id } @model_instrument_data ) {
-                $model->add_instrument_data($instrument_data);
-            }
-            $sample->{build} = $model->latest_build;
-        }
-
-        $self->set_sample_status($sample);
 
         # Run import command
         if ( $self->launch_imports ) {
