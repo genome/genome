@@ -24,8 +24,6 @@ class Genome::Model::Tools::DetectVariants2::Filter::FalsePositiveVcfBase {
     ],
 };
 
-sub _variant_type { 'snvs' };
-
 sub filter_name { 'FalsePositiveVcf' };
 
 
