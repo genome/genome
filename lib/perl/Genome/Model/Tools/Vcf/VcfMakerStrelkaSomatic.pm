@@ -10,7 +10,7 @@ use Getopt::Long;
 use FileHandle;
 use List::MoreUtils qw(firstidx);
 use List::MoreUtils qw(uniq);
-use Genome::Model::Tools::Vcf::Helpers qw/genGT/;
+use Genome::Model::Tools::Vcf::Helpers qw/genGT order_chroms/;
 
 
 class Genome::Model::Tools::Vcf::VcfMakerStrelkaSomatic {
@@ -490,7 +490,7 @@ sub execute {                               # replace with real execution logic.
     else {
         chomp(my @chroms = `cut -f 1 $strelka_file | sort -n | uniq`);
 
-        my @complete_chrom_list = $self->order_chroms(@chroms);
+        my @complete_chrom_list = order_chroms(@chroms);
         for my $chrom (@complete_chrom_list) {
             $self->status_message("processing $chrom...");
             my %strelka_hash = strelkaRead($strelka_file, $chrom, $type, $self->standard_chroms);
@@ -508,21 +508,4 @@ sub execute {                               # replace with real execution logic.
     return 1;
 }
 
-sub order_chroms {
-    my $self = shift;
-    my @chroms = @_;
-    my @default_chroms = ( 1..22, "X", "Y", "MT");
-    my @duplicates; 
-    for (my $i=@chroms-1; $i >= 0; $i--) {
-        my $chr = $chroms[$i];
-        if (grep {$chr eq $_} @default_chroms) {
-           push @duplicates, $i;
-        }
-    }
-    for my $dup (@duplicates) {
-        splice(@chroms,$dup,1);
-    }
-
-    return (1..22, "X", "Y", "MT", @chroms);
-}
-
+1;

@@ -11,6 +11,7 @@ our @ISA = qw/Exporter/;
 our @EXPORT_OK = qw/
     convertIub
     genGT
+    order_chroms
 /;
 
 
@@ -48,6 +49,23 @@ sub genGT{
         push(@pos, (firstidx{ $_ eq $bases[0] } @alleles));
         return(join("/", sort(@pos)));
     }
+}
+
+sub order_chroms {
+    my @chroms = @_;
+    my @default_chroms = ( 1..22, "X", "Y", "MT");
+    my @duplicates;
+    for (my $i=@chroms-1; $i >= 0; $i--) {
+        my $chr = $chroms[$i];
+        if (grep {$chr eq $_} @default_chroms) {
+           push @duplicates, $i;
+        }
+    }
+    for my $dup (@duplicates) {
+        splice(@chroms,$dup,1);
+    }
+
+    return (1..22, "X", "Y", "MT", @chroms);
 }
 
 1;
