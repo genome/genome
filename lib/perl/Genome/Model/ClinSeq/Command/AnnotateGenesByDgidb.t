@@ -61,7 +61,7 @@ my $column_regex = '^'.$column_name.'[0-9]';
 $list = Genome::Model::ClinSeq::Command::AnnotateGenesByDgidb->convert($reader, $column_regex);
 is($list, "FLT3,KRAS", "List with two items converted correctly");
 
-my $test_dir = Genome::Utility::Test->data_dir_ok($class, 'v1') or die "data_dir of $class is not valid\n";
+my $test_dir = Genome::Utility::Test->data_dir_ok($class, 'v2') or die "data_dir of $class is not valid\n";
 my $test_tsv = $test_dir . '/test.indels.tsv';
 
 my $tmp_dir      = Genome::Sys->create_temp_directory;
@@ -80,7 +80,7 @@ ok($cmd->execute, 'command completed successfully');
 my $output_dir = $cmd->output_dir;
 is($output_dir, $tmp_test_tsv.'.dgidb', 'output dir named ok');
 
-for my $file_name qw(all_interactions expert_antineoplastic kinase_only) {
+for my $file_name qw(all_interactions.tsv expert_antineoplastic.tsv kinase_only.tsv) {
     my ($output_file, $expected) = map{$_ . "/$file_name"}($output_dir, $test_dir);
     compare_ok($output_file, $expected, 'output file created ok as expected');
 }

@@ -67,15 +67,15 @@ sub execute {
 
     my @parameter_sets = (
         {
-            output_file         => "$outdir_name/all_interactions"
+            output_file         => "$outdir_name/all_interactions.tsv"
         },
         {
-            output_file         => "$outdir_name/expert_antineoplastic",
+            output_file         => "$outdir_name/expert_antineoplastic.tsv",
             source_trust_levels => 'Expert curated',
             antineoplastic_only => 1,
         },
         {
-            output_file         => "$outdir_name/kinase_only",
+            output_file         => "$outdir_name/kinase_only.tsv",
             gene_categories     => 'KINASE',
         },
     );
