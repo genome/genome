@@ -22,12 +22,6 @@ class Genome::Model::Tools::DetectVariants2::Filter::FalsePositiveVcfBase {
             doc => 'The filter names and descriptions',
         },
     ],
-
-    has_param => [
-        lsf_resource => {
-            default_value => "-M 8000000 -R 'select[type==LINUX64 && mem>8000] rusage[mem=8000]'",
-        },
-    ],
 };
 
 sub help_synopsis {
