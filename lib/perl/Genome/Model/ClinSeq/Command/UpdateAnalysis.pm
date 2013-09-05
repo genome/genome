@@ -946,7 +946,7 @@ sub check_for_missing_and_excluded_data{
     my $model_id = $model->id;
     my $latest_build = $model->latest_build;
     unless ($latest_build->status eq "Succeeded"){
-      $self->status_message("WARNING -> Last build of Model: $model_id has a status of: " . $latest_build->status);
+      $self->status_message("\tWARNING -> Last build of Model: $model_id has a status of: " . $latest_build->status);
     }
   }
 
@@ -1056,6 +1056,12 @@ sub check_ref_align_models{
   my $model_count = scalar(@models);
   $self->status_message("\tStarting with " . $model_count . " models for this sample. Candidates that meet basic criteria:");
 
+  my $ignore_models_bx;
+  if (my $ignore_models_matching = $self->ignore_models_matching) {
+    $ignore_models_bx = UR::BoolExpr->resolve_for_string('Genome::Model::ReferenceAlignment',$ignore_models_matching);
+    $self->status_message("\tIgnoring models matching: $ignore_models_bx");
+  }
+
   #Test for correct processing profile, reference sequence build, annotation build, and dbsnp build
   #Also make sure that all the instrument data of wgs or exome type is being used (exome can be exome+wgs lanes)
   foreach my $model (@models){
@@ -1077,6 +1083,10 @@ sub check_ref_align_models{
       }
     }else{
       next;
+    }
+    if ($ignore_models_bx and $ignore_models_bx->evaluate($model)) {
+        $self->status_message("\t\tIgnore: " . $model->__display_name__);
+        next;
     }
 
     #Get genotype microarray model for this sample
