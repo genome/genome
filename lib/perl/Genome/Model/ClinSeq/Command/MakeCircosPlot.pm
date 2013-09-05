@@ -7,11 +7,6 @@ use Data::Dumper;
 # Written by Ben Ainscough and Scott Smith, based on prototype from Obi Griffith
 # See JIRA issue https://jira.gsc.wustl.edu/browse/TD-691
 
-# this next line lets things work until systems deploys circos 0.64 
-# remove this after this ticket is resolved: https://rt.gsc.wustl.edu/Ticket/Display.html?id=94903
-# also remove a similar line at the bottom of execute !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
-local $ENV{GENOME_SW} = '/gscuser/ssmith/fakeapp';
-
 class Genome::Model::ClinSeq::Command::MakeCircosPlot {
     is => 'Command::V2',
     has_input => [
@@ -89,10 +84,6 @@ sub execute {
     my $out_fh = Genome::Sys->open_file_for_writing("$output_directory/circos.conf");
     # ....
     $out_fh->close;
-
-    # this next line lets things work until systems deploys circos 0.64 
-    # remove this after this ticket is resolved: https://rt.gsc.wustl.edu/Ticket/Display.html?id=94903
-    local $ENV{GENOME_SW} = '/gscuser/ssmith/fakeapp';
 
     # run circos using the correct path for the specified version
     # errors will throw an exception
