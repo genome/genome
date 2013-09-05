@@ -624,18 +624,6 @@ sub fails_homopolymer_check {
     return(0);
 }
 
-
-##########################################################################################
-# WGS filter for uniform-depth, full-breadth datasets
-# Contact: Dave Larson (dlarson@genome.wustl.edu)
-##########################################################################################
-
-sub wgs_filter {
-    
-    
-}
-
-
 #############################################################
 # Readcount_Program - the path to BAM-readcounts
 #

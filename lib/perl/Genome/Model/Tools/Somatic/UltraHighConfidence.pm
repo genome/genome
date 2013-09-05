@@ -637,16 +637,6 @@ sub fails_homopolymer_check {
     return(0);
 }
 
-
-##########################################################################################
-# WGS filter for uniform-depth, full-breadth datasets
-# Contact: Dave Larson (dlarson@genome.wustl.edu)
-##########################################################################################
-
-sub wgs_filter {
-
-}
-
 #############################################################
 # Read_Counts_By_Allele - parse out readcount info for an allele
 #

@@ -463,18 +463,6 @@ sub _get_readcount_line {
     return;
 }
 
-
-
-##########################################################################################
-# WGS filter for uniform-depth, full-breadth datasets
-# Contact: Dave Larson (dlarson@genome.wustl.edu)
-##########################################################################################
-
-sub wgs_filter {
-
-
-}
-
 #############################################################
 # Read_Counts_By_Allele - parse out readcount info for an allele
 #
