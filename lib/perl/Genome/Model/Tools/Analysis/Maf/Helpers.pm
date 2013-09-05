@@ -96,7 +96,6 @@ sub load_aa_changes
 			foreach my $column (keys %column_index)
 			{
 				## Print out the columns as parsed ##
-				#print "$column_index{$column}\t$column\n";
 				$columns[$column_index{$column}] = $column;	## Save the column order ##
 			}
 		}
@@ -138,13 +137,6 @@ sub load_aa_changes
 			my $variant_key = join("\t", $chrom, $chr_start, $chr_stop, $ref_allele, $var_allele);
 
 			## Parse the gene name ##
-			
-#			my $gene = $record{'gene_name'};
-#			my $trv_type = $record{'trv_type'};
-#			my $c_position = $record{'c_position'};
-#			my $aa_change = $record{'amino_acid_change'};
-#			$c_position =~ s/c\.// if($c_position);
-#			$aa_change =~ s/p\.// if($aa_change);
 			my $gene = my $transcript_name = my $trv_type = my $c_position = my $aa_change = "";
 			my $aa_position = 0;
 			my $tx_start = my $tx_stop = 0;
@@ -325,9 +317,6 @@ sub load_aa_changes
 	print $stats->{'mutations_in_file'} . " mutations in file\n";
 	print $stats->{'num_with_annotation'} . " with annotation available\n";
 	print $stats->{'num_with_aa_pos'} . " with valid amino acid position(s)\n";
-#	print $stats->{'aa_position_inferred'} . " positions were inferred\n";
-#	print $stats->{'aa_position_only'} . " were notated but couldn't be inferred\n" if($stats->{'aa_position_only'});
-#	print $stats->{'aa_position_not_found'} . " positions couldn't be parsed due to missing info\n";
 
 	return(%mutated_positions);
 

@@ -1,23 +1,11 @@
-package Genome::Model::Tools::Analysis::Maf::Recurrence;     # rename this when you give the module file a different name <--
-
-#####################################################################################################################################
-# Recurrence - Perform a proximity analysis on mutations in the MAF file.
-#					
-#	AUTHOR:		Dan Koboldt (dkoboldt@watson.wustl.edu)
-#
-#	CREATED:	08/24/2010 by D.K.
-#	MODIFIED:	08/24/2010 by D.K.
-#
-#	NOTES:	
-#			
-#####################################################################################################################################
+package Genome::Model::Tools::Analysis::Maf::Recurrence;
 
 use strict;
 use warnings;
 
 use FileHandle;
 
-use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
+use Genome;
 use Genome::Model::Tools::Analysis::Maf::Helpers qw/getMutationSamples byGeneTranscript load_aa_changes load_annotation/;
 
 my %stats = ();
@@ -26,7 +14,7 @@ my $max_proximity = 0;
 class Genome::Model::Tools::Analysis::Maf::Recurrence {
 	is => 'Command',                       
 	
-	has => [                                # specify the command's single-value properties (parameters) <--- 
+	has => [
 		maf_file	=> { is => 'Text', doc => "Original MAF file" },
 		annotation_file	=> { is => 'Text', doc => "Full annotation for variants in MAF file" },
 		output_file	=> { is => 'Text', doc => "Output file for recurrence report", is_optional => 1 },
@@ -38,7 +26,7 @@ class Genome::Model::Tools::Analysis::Maf::Recurrence {
 
 sub sub_command_sort_position { 12 }
 
-sub help_brief {                            # keep this to just a few words <---
+sub help_brief {
     "Performs a recurrency analysis on mutations in a MAF file"                 
 }
 
@@ -49,19 +37,13 @@ EXAMPLE:	gt analysis maf proximity --maf-file original.maf --output-file proximi
 EOS
 }
 
-sub help_detail {                           # this is what the user will see with the longer version of help. <---
+sub help_detail {
     return <<EOS 
 
 EOS
 }
 
-
-################################################################################################
-# Execute - the main program logic
-#
-################################################################################################
-
-sub execute {                               # replace with real execution logic.
+sub execute {
 	my $self = shift;
 
 	## Get required parameters ##
@@ -189,4 +171,3 @@ sub execute {                               # replace with real execution logic.
 }
 
 1;
-
