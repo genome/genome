@@ -3,6 +3,7 @@ package Genome::File::Vcf::Genotype;
 use strict;
 use warnings;
 use Genome;
+use Carp qw/confess/;
 
 sub new {
     my ($class, $ref_allele, $alt_alleles, $gt) = @_;
@@ -18,14 +19,26 @@ sub new {
 
 sub _parse {
     my $self = shift;
-    my @alleles = split("/", $self->{_gt});
-    my $num_alleles = scalar @alleles;
-    for my $index (0..$num_alleles-1) {
-        unless ($alleles[$index] =~ /[0-9]+/) {
-            delete $alleles[$index];
-        }
-    }
+    confess "Attempted to parse null genotype" unless $self->{_gt};
+
+    my @alleles = grep { /[0-9]+/ } split(qr{/|}, $self->{_gt});
+    
     $self->{_alleles} = \@alleles;
+
+    $self->{_is_phased} = _is_phased($self->{_gt});
+}
+
+sub _is_phased {
+    my $gt = shift;
+    if ($gt =~ /\|/) {
+        return 1;
+    }
+    return 0;
+}
+
+sub is_phased {
+    my $self = shift;
+    return $self->{_is_phased};
 }
 
 sub is_homozygous {
@@ -64,11 +77,12 @@ sub is_missing {
     return 0;
 }
 
-sub is_wildtype {
+sub has_wildtype {
     my $self = shift;
     if ($self->is_missing) {
         return 0;
-    }for my $allele (@{$self->{_alleles}}) {
+    }
+    for my $allele (@{$self->{_alleles}}) {
         if ($allele == 0) {
             return 1;
         }
@@ -76,7 +90,7 @@ sub is_wildtype {
     return 0;
 }
 
-sub is_variant {
+sub has_variant {
     my $self = shift;
     if ($self->is_missing) {
         return 0;
@@ -88,10 +102,9 @@ sub is_variant {
     return 0;
 }
 
-sub get_allele_by_index {
+sub get_alleles {
     my $self = shift;
-    my $index = shift;
-    return $self->{_alleles}->[$index];
+    return @{$self->{_alleles}};
 }
 
 1;
