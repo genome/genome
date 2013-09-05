@@ -90,6 +90,11 @@ the input BAM files and then uses that configuration to run breakdancer.
 EOS
 }
 
+sub class_name {
+    my $self = shift;
+
+    return $self->class =~ m/.*::(.*)/;
+}
 
 sub _create_temp_directories {
     my $self = shift;
@@ -172,7 +177,8 @@ sub run_config {
         }
 
         $self->config_file($self->_config_staging_output);
-        $self->status_message('BreakdancerMax config is created ok');
+        $self->status_message(sprintf('%s config is created ok',
+                $self->class_name));
     }
     return 1;
 }
@@ -202,7 +208,7 @@ sub run_breakdancer {
             require Workflow::Simple;
 
             my $op = Workflow::Operation->create(
-                name => 'BreakdancerMax by chromosome',
+                name => sprintf('%s by chromosome', $self->class_name),
                 operation_type => Workflow::OperationType::Command->get('Genome::Model::Tools::DetectVariants2::BreakdancerMax'),
             );
 
