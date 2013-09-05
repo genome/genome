@@ -280,8 +280,6 @@ sub run_breakdancer {
 
     my $cmd = "$breakdancer_path " . $cfg_file . " " . $bd_params . " > "  . $self->_sv_staging_output;
 
-    #$cmd = "valgrind --leak-check=yes $cmd";
-
     $self->status_message("EXECUTING BREAKDANCER STEP: $cmd");
     my $return = Genome::Sys->shellcmd(
         cmd => $cmd,
