@@ -262,6 +262,14 @@ sub execute {
   #  - 2. a model exists that meets the criteria but it has not succeeded yet
   $self->status_message("\nEXAMINE MODELS");
 
+  #TODO: Are there suitable genotype microarray models in existence (If not, create)?  If so, what is the status?
+  #TODO: Refer to this subroutine for guidance: get_genotype_microarray_model_id
+  #TODO: Rework this logic to be more similar to the following steps.  Check for microarray models, create if they don't exist, return all matching models if they do
+  #TODO: Then feed these as inputs into the next step that checks ref-align models.  If there are multiple matching models get the 'best' one.
+  #TODO: If builds are underway, don't proceed to the next step.  If there is no microarray data proceed anyway.
+  #TODO: See docs for details: genome model define genotype-microarray --help
+
+
   #Are there suitable WGS reference alignment models in existence (If not, create)?  If so, what is the status?
   #- Are there tumor/normal DNA samples?
   #- Is there tumor/normal WGS instrument data? If so, is it all included in the existing model?
@@ -971,6 +979,7 @@ sub get_genotype_microarray_model_id{
         push @skipped, "No reference_sequence_build on microarray model " . $model->__display_name__;
         next;
     }
+    my $microarray_model_id = $model->id;
 
     #Make sure the genotype microarray model is on the specified version of the reference genome
     next unless ($model->reference_sequence_build->id eq $self->reference_sequence_build->id);
@@ -1070,7 +1079,7 @@ sub check_ref_align_models{
       next;
     }
 
-    #Get genotype microarray model for this sample, and create if it does not already exist 
+    #Get genotype microarray model for this sample
     my $genotype_microarray_model_id = $self->get_genotype_microarray_model_id('-sample'=>$sample);
 
     #If genotype microarray data is available:
@@ -1427,12 +1436,12 @@ sub create_ref_align_model{
   }
   my $iids_list = join(",", @iids);
 
-  #Get genotype microarray model for this sample, and create if it does not already exist 
+  #Get genotype microarray model for this sample
   my $genotype_microarray_model_id = $self->get_genotype_microarray_model_id('-sample'=>$sample);
 
   #If genotype microarray data is available but a successful model is not, do not proceed with creation of reference alignment models
   if ($sample->default_genotype_data && $genotype_microarray_model_id eq "0"){
-    $self->status_message("WARNING -> genotype microarray data was found but a model with the desired criteria could not be found");
+    $self->status_message("WARNING -> genotype microarray data was found but a model with the desired criteria could not be found.  Check for issues with your existing microarray models");
     return;
   }
 
