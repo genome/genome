@@ -71,26 +71,6 @@ Sample Info File
 HELP
 }
 
-sub execute {
-    my $self = shift;
-
-    my $load_samples = $self->_load_samples;
-    return if not $load_samples;
-
-    my $load_instrument_data = $self->_load_instrument_data;
-    return if not $load_instrument_data;
-
-    my $load_models = $self->_load_models;
-    return if not $load_models;
-
-    my $make_progress = $self->_make_progress;
-    return if not $make_progress;
-
-    $self->_status;
-
-    return 1;
-}
-
 sub __errors__ {
     my $self = shift;
 
@@ -296,6 +276,26 @@ sub _resolve_instrument_data_import_command {
     $self->instrument_data_import_command_format($cmd_format);
 
     return;
+}
+
+sub execute {
+    my $self = shift;
+
+    my $load_samples = $self->_load_samples;
+    return if not $load_samples;
+
+    my $load_instrument_data = $self->_load_instrument_data;
+    return if not $load_instrument_data;
+
+    my $load_models = $self->_load_models;
+    return if not $load_models;
+
+    my $make_progress = $self->_make_progress;
+    return if not $make_progress;
+
+    $self->_status;
+
+    return 1;
 }
 
 sub _load_samples {
