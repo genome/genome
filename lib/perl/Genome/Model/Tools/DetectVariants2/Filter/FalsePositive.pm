@@ -575,9 +575,13 @@ sub _generate_standard_files {
     return 1;
 }
 
+sub _start_position_offset {
+    return 1;
+}
+
 sub fails_homopolymer_check {
     my ($self, $reference, $min_homopolymer, $chrom, $start, $stop, $ref, $var) = @_;
-    $start++; # Adjust for bed input format
+    $start += $self->_start_position_offset;
 
     ## Auto-pass large indels ##
 

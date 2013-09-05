@@ -797,8 +797,13 @@ sub _filter_variants {
     return 1;
 }
 
+sub _start_position_offset {
+    return 0;
+}
+
 sub fails_homopolymer_check {
     my ($self, $reference, $min_homopolymer, $chrom, $start, $stop, $ref, $var) = @_;
+    $start += $self->_start_position_offset;
 
     ## Auto-pass large indels ##
 
