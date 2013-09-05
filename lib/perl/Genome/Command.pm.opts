@@ -5315,6 +5315,9 @@ $Genome::Command::OPTS_SPEC = [
       [
         'use-version=s',
         [
+          '0.48',
+          '0.51',
+          '0.54',
           '0.64'
         ],
         'build=s',
