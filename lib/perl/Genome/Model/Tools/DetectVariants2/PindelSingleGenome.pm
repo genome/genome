@@ -13,7 +13,7 @@ my $DEFAULT_VERSION = '0.2';
 my $PINDEL_COMMAND = 'pindel_64';
 
 class Genome::Model::Tools::DetectVariants2::PindelSingleGenome {
-    is => ['Genome::Model::Tools::DetectVariants2::Detector'],
+    is => ['Genome::Model::Tools::DetectVariants2::WorkflowDetectorBase'],
     doc => "Runs the pindel pipeline on the last complete build of a somatic model.",
     has => [
         chromosome_list => {
@@ -130,7 +130,6 @@ sub _generate_standard_files {
     my $staging_dir = $self->_temp_staging_directory;
     my $output_dir  = $self->output_directory;
     my @chrom_list = @{$self->chromosome_list};
-    my $test_chrom = $chrom_list[0];
     my $raw_output_file = $output_dir."/indels.hq";
     my @raw_inputs = map { $output_dir."/".$_."/indels.hq" } @chrom_list;
     my $cat_raw = Genome::Model::Tools::Cat->create( dest => $raw_output_file, source => \@raw_inputs);
