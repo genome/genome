@@ -8,8 +8,9 @@ use Genome;
 class Genome::Model::Tools::DetectVariants2::Filter::FalsePositive {
     is => 'Genome::Model::Tools::DetectVariants2::Filter',
     doc => "This module uses detailed readcount information from bam-readcounts to filter likely false positives",
+
     has => [
-    ## CAPTURE FILTER OPTIONS ##
+        ## CAPTURE FILTER OPTIONS ##
         'min_strandedness' => {
             type => 'String',
             default => '0.01',
@@ -69,6 +70,7 @@ class Genome::Model::Tools::DetectVariants2::Filter::FalsePositive {
             is_optional => 1,
             doc => 'Minimum length of a flanking homopolymer of same base to remove a variant',
         },
+
         ## WGS FILTER OPTIONS ##
         ## SHARED OPTIONS ##
         verbose => {
@@ -87,18 +89,18 @@ class Genome::Model::Tools::DetectVariants2::Filter::FalsePositive {
             is_optional => 1,
             doc => 'version of bam-readcount to use',
         },
-       bam_readcount_min_base_quality => {
-           is => 'Integer',
-           default => 15,
-           doc => 'The minimum base quality to require for bam-readcount',
-       },
+        bam_readcount_min_base_quality => {
+            is => 'Integer',
+            default => 15,
+            doc => 'The minimum base quality to require for bam-readcount',
+        },
     ],
+
     has_param => [
          lsf_resource => {
              default_value => "-M 8000000 -R 'select[type==LINUX64 && mem>8000] rusage[mem=8000]'",
          },
      ],
-
 };
 
 sub help_synopsis {
@@ -109,8 +111,8 @@ sub help_synopsis {
 EOS
 }
 
-sub help_detail {                           
-    return <<EOS 
+sub help_detail {
+    return <<EOS
 This module uses detailed readcount information from bam-readcounts to filter likely false positives.
 It is HIGHLY recommended that you use the default settings, which have been comprehensively vetted.
 Both capture and WGS projects now use the same filter and parameters.
@@ -147,7 +149,7 @@ sub _filter_variants {
     my $max_readlen_diff = $self->max_readlen_diff;
     my $min_var_dist_3 = $self->min_var_dist_3;
     my $max_var_mm_qualsum = $self->max_var_mm_qualsum if($self->max_var_mm_qualsum);
-    
+
 
     ## Reset counters ##
 
@@ -160,14 +162,14 @@ sub _filter_variants {
 
     my $hq_output_file = $self->_temp_staging_directory . "/snvs.hq.raw_filter";
     my $hq_fh = Genome::Sys->open_file_for_writing($hq_output_file);
-    
+
     ## Open the filtered output file ##
     my $lq_file = $self->_temp_staging_directory . "/snvs.lq.raw_filter";
     my $lq_fh = Genome::Sys->open_file_for_writing($lq_file);
 
     die $self->error_message('Unable to open temp output file '.$hq_output_file. ' for writing') unless $hq_fh;
     die $self->error_message('Unable to open temp output file '.$lq_file. ' for writing') unless $lq_fh;
-    
+
     #First, need to create a variant list file to use for generating the readcounts.
     my $input_file = $self->input_directory . "/snvs.hq.bed";
     unless (-s $input_file) {
@@ -214,7 +216,7 @@ sub _filter_variants {
 
     my $readcount_fh = Genome::Sys->open_file_for_reading($readcount_file);
 
-   
+
     ## Reopen file for parsing ##
     $input = Genome::Sys->open_file_for_reading($input_file);
 
@@ -261,7 +263,7 @@ sub _filter_variants {
             } else {
                 ## Run Readcounts ##
 
-                my $readcounts; 
+                my $readcounts;
                 unless($readcounts = $self->_get_readcount_line($readcount_fh, $chrom,$chr_start)){
                     die $self->error_message("Failed to find readcount data for: ".$chrom."\t".$chr_start);
                 }
@@ -500,8 +502,8 @@ sub fails_homopolymer_check {
 ##########################################################################################
 
 sub wgs_filter {
-    
-    
+
+
 }
 
 #############################################################
