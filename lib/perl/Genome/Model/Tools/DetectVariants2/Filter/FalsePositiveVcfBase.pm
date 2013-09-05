@@ -26,7 +26,6 @@ class Genome::Model::Tools::DetectVariants2::Filter::FalsePositiveVcfBase {
 
 sub filter_name { 'FalsePositiveVcf' };
 
-
 sub _get_readcount_line {
     my $self = shift;
     my ($readcount_fh,$chr,$pos) = @_;
