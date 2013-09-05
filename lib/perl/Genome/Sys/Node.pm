@@ -81,11 +81,15 @@ sub attach {
             next;
         }
 
+        my $mount_point = $self->_mount_point_for_protocol($protocol);
+        if (-e $mount_point) {
+            $self->warning_message("mount point $mount_point exists: already mounted?");
+            return 1;
+        }
+
         $self->$method();
         
-        my $mount_point = $self->_mount_point_for_protocol($protocol);
         my $base_dir_symlink = $self->base_dir;
-
         if (-e $base_dir_symlink) {
             rmdir $base_dir_symlink;
         }
@@ -110,13 +114,18 @@ sub attach {
 
 sub detach {
     my $self = shift;
-    my @protocols = @_;
-   
-    unless (@protocols) {
+    my $protocol = shift;
+
+    my @protocols;
+    if ($protocol) {
+        @protocols = ($protocol);
+    }
+    else {
         @protocols = $self->_supported_protocols();
     }
 
     my @errors;
+    my $count = 0;
     for my $protocol (@protocols) {
         my $mount_point = $self->_mount_point_for_protocol($protocol);
         unless (-e $mount_point) {
@@ -137,6 +146,8 @@ sub detach {
         if ($@) {
             push @errors, $@;
         }
+        $self->status_message("detached " . $self->id . " via " . $protocol);
+        $count++;
     }
    
     my $base_dir = $self->base_dir;
@@ -148,10 +159,19 @@ sub detach {
     }
 
     if (@errors) {
-        die join("\n",@errors);
+        die join("\n",@errors),"\n";
     }
     
-    return 1;
+    if ($count == 0) {
+        if ($protocol) {
+            $self->warning_message("GMS " . $self->id . " is not attached via " . $protocol);
+        }
+        else {
+            $self->warning_message("GMS " . $self->id . " is not attached");
+        }
+    }
+
+    return $count;
 }
 
 sub attached_via {
@@ -193,6 +213,8 @@ sub _mount_point_for_protocol {
     return $mount_point;
 }
 
+##
+
 sub _attach_ftp {
     my $self = shift;
     my $hostname = $self->hostname;
@@ -209,6 +231,28 @@ sub _attach_ftp {
 sub _detach_ftp {
     my $self = shift;
     my $mount_point = $self->_mount_point_for_protocol('ftp');
+    my $cmd = "fusermount -u '$mount_point'";
+    Genome::Sys->shellcmd(cmd => $cmd);
+}
+
+##
+
+sub _attach_http {
+    my $self = shift;
+    my $hostname = $self->hostname;
+    my $http_detail = $self->http_detail;
+    my $mount_point = $self->_mount_point_for_protocol('http');
+    unless (-d $mount_point) {
+        Genome::Sys->create_directory($mount_point);
+    }
+    my $cmd = "curlhttpfs 'http://$hostname/$http_detail' '$mount_point' -o tcp_nodelay,kernel_cache,direct_io";
+    Genome::Sys->shellcmd(cmd => $cmd);    
+
+}
+
+sub _detach_http {
+    my $self = shift;
+    my $mount_point = $self->_mount_point_for_protocol('http');
     my $cmd = "fusermount -u '$mount_point'";
     Genome::Sys->shellcmd(cmd => $cmd);
 }
