@@ -96,7 +96,7 @@ sub execute {                               # replace with real execution logic.
 		{
 			$stats{'samples_included'}++;
 			my $build_dir = $model->last_succeeded_build_directory;
-			my $variant_summary = $self->summarize_variants($subject_name, $build_dir, $self);
+			my $variant_summary = $self->summarize_variants($subject_name, $build_dir);
 
 			if($self->output_file)
 			{
@@ -147,7 +147,7 @@ sub execute {                               # replace with real execution logic.
 sub summarize_variants
 {
     my $self = shift;
-	my ($sample_name, $build_dir, $self) = @_;
+	my ($sample_name, $build_dir) = @_;
 
 	my %var_stats = ();
 	$var_stats{'num_snps'} = $var_stats{'num_snps_dbsnp'} = $var_stats{'dbsnp_concordance'} = $var_stats{'num_insertions'} = $var_stats{'num_deletions'} = 0;
