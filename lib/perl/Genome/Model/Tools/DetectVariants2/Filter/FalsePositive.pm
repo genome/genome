@@ -122,6 +122,32 @@ EOS
 
 sub _variant_type { 'snvs' };
 
+# Print out stats from a hashref
+sub print_stats {
+    my $self = shift;
+    my $stats = shift;
+    print $stats->{'num_variants'} . " variants\n";
+    print $stats->{'num_MT_sites_autopassed'} . " MT sites were auto-passed\n";
+    print $stats->{'num_random_sites_autopassed'} . " chrN_random sites were auto-passed\n" if($stats->{'num_random_sites_autopassed'});
+    print $stats->{'num_no_allele'} . " failed to determine variant allele\n";
+    print $stats->{'num_no_readcounts'} . " failed to get readcounts for variant allele\n";
+    print $stats->{'num_fail_pos'} . " had read position < " , $self->min_read_pos."\n";
+    print $stats->{'num_fail_strand'} . " had strandedness < " . $self->min_strandedness . "\n";
+    print $stats->{'num_fail_varcount'} . " had var_count < " . $self->min_var_count. "\n";
+    print $stats->{'num_fail_varfreq'} . " had var_freq < " . $self->min_var_freq . "\n";
+
+    print $stats->{'num_fail_mmqs'} . " had mismatch qualsum difference > " . $self->max_mm_qualsum_diff . "\n";
+    print $stats->{'num_fail_var_mmqs'} . " had variant MMQS > " . $self->max_var_mm_qualsum . "\n" if($stats->{'num_fail_var_mmqs'});
+    print $stats->{'num_fail_mapqual'} . " had mapping quality difference > " . $self->max_mapqual_diff . "\n";
+    print $stats->{'num_fail_readlen'} . " had read length difference > " . $self->max_readlen_diff . "\n";
+    print $stats->{'num_fail_dist3'} . " had var_distance_to_3' < " . $self->min_var_dist_3 . "\n";
+    print $stats->{'num_fail_homopolymer'} . " were in a homopolymer of " . $self->min_homopolymer . " or more bases\n";
+
+    print $stats->{'num_pass_filter'} . " passed the strand filter\n";
+
+    return 1;
+}
+
 ##########################################################################################
 # Capture filter for high-depth, lower-breadth datasets
 # Contact: Dan Koboldt (dkoboldt@genome.wustl.edu)
@@ -416,24 +442,7 @@ sub _filter_variants {
 
     $self->_generate_standard_files;
 
-    print $stats{'num_variants'} . " variants\n";
-    print $stats{'num_MT_sites_autopassed'} . " MT sites were auto-passed\n";
-    print $stats{'num_random_sites_autopassed'} . " chrN_random sites were auto-passed\n" if($stats{'num_random_sites_autopassed'});
-    print $stats{'num_no_allele'} . " failed to determine variant allele\n";
-    print $stats{'num_no_readcounts'} . " failed to get readcounts for variant allele\n";
-    print $stats{'num_fail_pos'} . " had read position < $min_read_pos\n";
-    print $stats{'num_fail_strand'} . " had strandedness < $min_strandedness\n";
-    print $stats{'num_fail_varcount'} . " had var_count < $min_var_count\n";
-    print $stats{'num_fail_varfreq'} . " had var_freq < $min_var_freq\n";
-
-    print $stats{'num_fail_mmqs'} . " had mismatch qualsum difference > $max_mm_qualsum_diff\n";
-    print $stats{'num_fail_var_mmqs'} . " had variant MMQS > $max_var_mm_qualsum\n" if($stats{'num_fail_var_mmqs'});
-    print $stats{'num_fail_mapqual'} . " had mapping quality difference > $max_mapqual_diff\n";
-    print $stats{'num_fail_readlen'} . " had read length difference > $max_readlen_diff\n";
-    print $stats{'num_fail_dist3'} . " had var_distance_to_3' < $min_var_dist_3\n";
-    print $stats{'num_fail_homopolymer'} . " were in a homopolymer of " . $self->min_homopolymer . " or more bases\n";
-
-    print $stats{'num_pass_filter'} . " passed the strand filter\n";
+    $self->print_stats(\%stats);
 
     return 1;
 }
