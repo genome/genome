@@ -350,9 +350,15 @@ sub _get_chr_list {
         die;
     }
 
-    my $map_chr_list = $idxstats->map_ref_list($tmp_idx_file);
-    my @chr_list;
+    return $self->_get_chr_list_from_idx_file($idxstats, $tmp_idx_file);
+}
 
+sub _get_chr_list_from_idx_file {
+    my ($self, $idxstats, $idx_file) = @_;
+
+    my $map_chr_list = $idxstats->map_ref_list($idx_file);
+
+    my @chr_list;
     for my $chr (@FULL_CHR_LIST) {
         push @chr_list, $chr if grep{$chr eq $_}@$map_chr_list;
     }

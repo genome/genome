@@ -343,17 +343,20 @@ sub _get_chr_list {
         die;
     }
 
-    my $map_chr_list = $idxstats->map_ref_list($tmp_idx_file);
+    return $self->_get_chr_list_from_idx_file($idxstats, $tmp_idx_file);
+}
+
+sub _get_chr_list_from_idx_file {
+    my ($self, $idxstats, $idx_file) = @_;
 
     if ($self->chromosome eq 'all') {
         # this is the _real_ <all>, since <all> is a legacy flag meaning only 1-22,X,Y,MT
-        # return (grep { $map_chr_list{$_} } @FULL_CHR_LIST);
-        return @$map_chr_list;
+        return @{$idxstats->map_ref_list($idx_file)};
     }
     else {
-        my %map_chr_list = map { $_ => 1 } @$map_chr_list;
+        my %map_chr_list = map { $_ => 1 } @{$idxstats->map_ref_list($idx_file)};
         if ($map_chr_list{$self->chromosome}) {
-            return ($self->chromosome);
+            return @{$self->chromosome};
         }
         else {
             die sprintf("Chromosome %s not found in BAM idxstats!",
