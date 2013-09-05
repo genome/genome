@@ -126,11 +126,11 @@ sub execute {
     my $output 	 	=  $self->output_stats_file;
     my $cutoff 		= $self->subcluster_min_mapzero;
     my $sub_output  = $self->output_subclusters_file;
-    my $flagstat_17_70 = $self->resolve_input_flagstat_file;
+    my $flagstat_input = $self->resolve_input_flagstat_file;
     my $flagstat_file= $bamfile.'.flagstat';
 
     ### OPENING FLAGSTAT FILE AND GETTING STATS###
-    my $flagstat_mapped_17_70 = $self->resolve_reads_mapped($flagstat_17_70);
+    my $flagstat_mapped_input = $self->resolve_reads_mapped($flagstat_input);
 
     ### OPENING BIN FLAGSTAT FILE AND GETTING STATS###
     my $flagstat_mapped = $self->resolve_reads_mapped($flagstat_file);
@@ -269,14 +269,14 @@ sub execute {
             my $min_mismatch     = $cluster_stats{mismatches}->min();
             my $max_mismatch     = $cluster_stats{mismatches}->max();
 
-            my $normalization_17_70 	= ($zenith_depth/$flagstat_mapped_17_70) * 1000000;
+            my $normalization_input 	= ($zenith_depth/$flagstat_mapped_input) * 1000000;
             my $normalization_bin 		= ($zenith_depth/$flagstat_mapped) * 1000000;
-            my $log_normalization_17_70 = log_base(2,$normalization_17_70);
+            my $log_normalization_input = log_base(2,$normalization_input);
             my $log_normalization_bin 	= log_base(2,$normalization_bin );
 
             #print $name."\t"."Positive=".$positive_strand."\t"."Negative=".$negative_strand."\n";
             print $output_fh
-                join("\t",$name,$chr,$start,$stop,$depth,$zenith_depth,$cluster_length,$positive_strand,$negative_strand,$log_normalization_17_70,$log_normalization_bin). "\t";
+                join("\t",$name,$chr,$start,$stop,$depth,$zenith_depth,$cluster_length,$positive_strand,$negative_strand,$log_normalization_input,$log_normalization_bin). "\t";
 
             ################## CALCULATING MISMATCH STATISTICS###
             my $totalMM = 0;
