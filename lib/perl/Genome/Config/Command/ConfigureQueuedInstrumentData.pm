@@ -34,25 +34,46 @@ sub execute {
     $self->_lock();
 
     my @instrument_data = $self->_get_instrument_data_to_process();
-    $self->status_message(sprintf('Found %s instrument data to process.', scalar(@instrument_data)));
+    $self->status_message(sprintf('Found %s instrument data to process.',
+            scalar(@instrument_data)));
 
     for my $current_inst_data (@instrument_data) {
-        my $analysis_project = $self->_get_analysis_project_for_instrument_data($current_inst_data);
-        my $config = $analysis_project->get_configuration_reader();
-        my $hashes = $self->_prepare_configuration_hashes_for_instrument_data($current_inst_data, $config);
-        for my $model_type (keys %$hashes) {
-            for my $model_instance (@{$hashes->{$model_type}}) {
-                my ($model, $created_new) = $self->_get_model_for_config_hash($model_type, $model_instance);
-                $self->status_message(sprintf('Model: %s %s for instrument data: %s.',
-                        $model->id, ($created_new ? ' created' : ' found'), $current_inst_data->id ));
-                my $success = $self->_assign_instrument_data_to_model($model, $current_inst_data, $created_new);
-                $self->_assign_model_to_analysis_project($analysis_project, $model);
-                $self->_mark_instrument_data_status($current_inst_data, $success);
+        eval {
+            my $analysis_project = $self->_get_analysis_project_for_instrument_data($current_inst_data);
+            my $config = $analysis_project->get_configuration_reader();
+            my $hashes = $self->_prepare_configuration_hashes_for_instrument_data($current_inst_data, $config);
+            while (my ($model_type, $model_hashes) = (each %$hashes)) {
+                if ($model_type->requires_pairing) {
+                    $model_hashes = $self->_process_paired_samples($analysis_project, $current_inst_data, $model_hashes);
+                }
+                $self->_process_models($analysis_project, $current_inst_data, $model_type, $model_hashes);
             }
-        }
+        };
+
+        my $error = $@;
+        $self->error_message($error) if $error;
+        $self->_mark_instrument_data_status($current_inst_data, !$error);
     }
 
     return 1;
+}
+
+sub _process_models {
+    my $self = shift;
+    my $analysis_project = shift;
+    my $instrument_data = shift;
+    my $model_type = shift;
+    my $model_list = shift;
+
+    for my $model_instance (@$model_list) {
+        my ($model, $created_new) = $self->_get_model_for_config_hash( $model_type, $model_instance);
+
+        $self->status_message(sprintf('Model: %s %s for instrument data: %s.',
+                $model->id, ($created_new ? 'created' : 'found'), $instrument_data->id ));
+
+        $self->_assign_instrument_data_to_model($model, $instrument_data, $created_new);
+        $self->_assign_model_to_analysis_project($analysis_project, $model);
+    }
 }
 
 sub _assign_instrument_data_to_model {
@@ -68,24 +89,23 @@ sub _assign_instrument_data_to_model {
 
     my $cmd = Genome::Model::Command::InstrumentData::Assign->create(%params_hash);
     unless ($cmd->execute()) {
-        $self->error_message('Failed to assign ' . $instrument_data->__display_name__ . ' to ' . $model->__display_name__);
-        return 0;
+        die(sprintf('Failed to assign %s to %s', $instrument_data->__display_name__,
+                $model->__display_name__));
     }
 
     $model->build_requested(1);
-    return 1;
 }
 
 sub _mark_instrument_data_status {
-    my ($self, $instrument_data, $success) = @_;
+    my ($self, $instrument_data, $error) = @_;
 
     $instrument_data->remove_attribute(attribute_label => 'tgi_lims_status');
     $instrument_data->remove_attribute(attribute_label => 'tgi_lims_fail_message');
 
-    if ($success) {
+    if (!$error) {
         $self->_mark_instrument_data_as_processed($instrument_data);
     } else {
-        $self->_mark_instrument_data_as_failed($instrument_data);
+        $self->_mark_instrument_data_as_failed($instrument_data, $error);
     }
 
     return 1;
@@ -104,7 +124,7 @@ sub _mark_instrument_data_as_processed {
 }
 
 sub _mark_instrument_data_as_failed {
-    my ($self, $instrument_data) = @_;
+    my ($self, $instrument_data, $error_message) = @_;
 
     my $fail_count_attr = $instrument_data->attributes(attribute_label => 'tgi_lims_fail_count');
     my $previous_count = 0;
@@ -125,7 +145,7 @@ sub _mark_instrument_data_as_failed {
 
     $instrument_data->add_attribute(
         attribute_label => 'tgi_lims_fail_message',
-        attribute_value => $self->error_message,
+        attribute_value => $error_message,
     );
 
     return 1;
@@ -143,13 +163,13 @@ sub _get_model_for_config_hash {
 }
 
 sub _prepare_configuration_hashes_for_instrument_data {
-    my ($self, $inst_data, $config_obj) = @_;
+    my ($self, $instrument_data, $config_obj) = @_;
     #TODO eventually this will need to support multiple references
     my $config_hash = $config_obj->get_config(
-        sequencing_platform => $inst_data->sequencing_platform,
-        domain              => _normalize_domain($inst_data->taxon->domain),
-        taxon               => _normalize_taxon($inst_data->species_name),
-        type                => _normalize_extraction_type($inst_data->sample->extraction_type),
+        sequencing_platform => $instrument_data->sequencing_platform,
+        domain              => _normalize_domain($instrument_data->taxon->domain),
+        taxon               => _normalize_taxon($instrument_data->species_name),
+        type                => _normalize_extraction_type($instrument_data->sample->extraction_type),
     );
     for my $model_type (keys %$config_hash) {
         if (ref $config_hash->{$model_type} ne 'ARRAY') {
@@ -160,12 +180,41 @@ sub _prepare_configuration_hashes_for_instrument_data {
             my $instrument_data_properties = delete $model_instance->{instrument_data_properties};
             if($instrument_data_properties) {
                 while((my $model_property, my $instrument_data_property) = each %$instrument_data_properties) {
-                    $model_instance->{$model_property} = $inst_data->$instrument_data_property;
+                    $model_instance->{$model_property} = $instrument_data->$instrument_data_property;
                 }
             }
         }
     }
     return $config_hash;
+}
+
+sub _process_paired_samples {
+    my ($self, $analysis_project, $instrument_data, $model_hashes) = @_;
+    die('Must provide an analysis project, a piece of instrument data and a config hash!')
+        unless($analysis_project && $instrument_data && $model_hashes);
+
+    my @subject_pairings = Genome::Config::AnalysisProject::SubjectPairing->get(
+        -or => [
+            [ analysis_project => $analysis_project, control_subject => $instrument_data->sample],
+            [ analysis_project => $analysis_project, experimental_subject => $instrument_data->sample]
+        ],
+        -hint => [ 'control_subject', 'experimental_subject'],
+    );
+
+    unless (@subject_pairings) {
+        die(sprintf('Found no pairing information for %s in project %s for a model type that requires pairing!',
+            $instrument_data->__display_name__,
+            $analysis_project->__display_name__));
+    }
+
+    return map {
+        my $pair = $_;
+        map { {
+          experimental_subject => $pair->experimental_subject,
+          control_subject => $pair->control_subject,
+          %$_
+        } } @$model_hashes
+    } @subject_pairings;
 }
 
 sub _get_instrument_data_to_process {
@@ -187,9 +236,10 @@ sub _get_analysis_project_for_instrument_data {
     my $instrument_data = shift;
     die('You must provide a single piece of instrument data!') unless $instrument_data;
 
-    my $analysis_project_id = $instrument_data->analysis_project_id;
+    my $analysis_project_id = $instrument_data->analysis_project_id
+        || die(sprintf("Instrument Data: %s doesn't have an analysis project!", $instrument_data->id));
     my $analysis_project = Genome::Config::AnalysisProject->get($analysis_project_id)
-        || die("$analysis_project_id doesn't seem to be a valid Genone::Config::AnalysisProject ID!");
+        || die(sprintf("Unable to find an analysis project for %s!", $instrument_data->id));
     return $analysis_project;
 }
 
@@ -197,7 +247,6 @@ sub _assign_model_to_analysis_project {
     my $self = shift;
     my $analysis_project = shift;
     my $model = shift;
-
     die('Must specify an anlysis project and a model!') unless $analysis_project && $model;
 
     return $analysis_project->model_group->assign_models($model);
