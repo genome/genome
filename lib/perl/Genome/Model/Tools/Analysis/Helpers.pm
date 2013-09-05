@@ -1,4 +1,4 @@
-package Genome::Model::Tools::Analysis;
+package Genome::Model::Tools::Analysis::Helpers;
 
 use strict;
 use warnings;
