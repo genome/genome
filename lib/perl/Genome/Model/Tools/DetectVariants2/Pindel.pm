@@ -101,7 +101,7 @@ sub _detect_variants {
     # Collect and set input parameters
     $input{chromosome_list} = $self->chromosome_list;
     $input{reference_build_id} = $refbuild_id;
-    $input{output_directory}  =  $self->output_directory;#$self->_temp_staging_directory;
+    $input{output_directory} = $self->output_directory;
     $input{version} = $self->version;
 
     $self->add_bams_to_input(\%input);

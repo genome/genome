@@ -86,8 +86,8 @@ sub _detect_variants {
     # Collect and set input parameters
     $input{chromosome_list} = $self->chromosome_list;
     $input{reference_build_fasta} = $reference_fasta;
-    $input{output_directory}  =  $self->output_directory;
-    $input{version}  =  $self->version;
+    $input{output_directory} = $self->output_directory;
+    $input{version} = $self->version;
 
     $self->add_bams_to_input(\%input);
 
