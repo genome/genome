@@ -79,6 +79,8 @@ sub library_id { '-13433' }
     }
 }
 
+sub aligner_params { '' }
+
 #
 # Gather up the reference sequences.
 #
@@ -87,7 +89,7 @@ sub library_id { '-13433' }
 sub execute {
     my $reference_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->create(
                                 aligner_name => aligner_name(),
-                                aligner_params => '',
+                                aligner_params => aligner_params(),
                                 aligner_version => aligner_version(),
                                 reference_build => reference_build());
     ok($reference_index, "generated reference index");
