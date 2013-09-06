@@ -1816,7 +1816,11 @@ sub check_clinseq_models{
   my $existing_model_count = scalar(@existing_models);
   $self->status_message("\tStarting with " . $existing_model_count . " clin-seq models for this individual. Candidates that meet basic criteria:");
 
-
+  #Create a hash of the samples specified by the user.  
+  my %target_samples;
+  foreach my $sample (@samples){
+    $target_samples{$sample->id}=1;
+  }
 
   #Make sure the 'best' input models of each type are being used
   foreach my $model (@existing_models){
@@ -1842,6 +1846,30 @@ sub check_clinseq_models{
     if ($current_de_model){
       next unless ($current_de_model->processing_profile->id eq $self->differential_expression_pp->id);
     }
+
+    #If any sample on any of the input models is not in the user supplied list of target samples, that clin-seq model is not valid
+    my %model_samples;
+    my $found_nonmatching_sample = 0;
+    if ($current_wgs_model){
+      $model_samples{$current_wgs_model->normal_model->subject->id}=1;
+      $model_samples{$current_wgs_model->tumor_model->subject->id}=1;
+    }
+    if ($current_exome_model){
+      $model_samples{$current_exome_model->normal_model->subject->id}=1;
+      $model_samples{$current_exome_model->tumor_model->subject->id}=1;
+    }
+    if ($current_normal_rnaseq_model){
+      $model_samples{$current_normal_rnaseq_model->subject->id}=1;
+    }
+    if ($current_tumor_rnaseq_model){
+      $model_samples{$current_tumor_rnaseq_model->subject->id}=1;
+    }
+    foreach my $current_sample_id (keys %model_samples){
+      unless ($target_samples{$current_sample_id}){
+        $found_nonmatching_sample = 1;
+      }
+    }
+    next if ($found_nonmatching_sample);
 
     #Only consider clin-seq models whose annotation inputs match the current defaults defined for the pipeline
     my $cancer_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("cancer_annotation_db")->default_value;
