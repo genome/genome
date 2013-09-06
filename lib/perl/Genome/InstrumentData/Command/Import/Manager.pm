@@ -309,6 +309,9 @@ sub execute {
     my $load_models = $self->_load_models;
     return if not $load_models;
 
+    my $load_sample_statuses = $self->_load_sample_statuses;
+    return if not $load_sample_statuses;
+
     my $make_progress = $self->_make_progress;
     return if not $make_progress;
 
@@ -395,7 +398,37 @@ sub _load_models {
     return 1;
 }
 
-sub _set_job_status_to_samples {
+sub _load_sample_statuses {
+    my $self = shift;
+
+    my $sample_job_statuses = $self->_load_sample_job_statuses;
+    return if not $sample_job_statuses;
+
+    my $get_status_for_sample = sub{
+        my $sample = shift;
+        return 'sample_needed' if not $sample->{sample};
+        return 'import_'.$sample->{job_status} if $sample->{job_status};
+        return 'import_needed' if not $sample->{instrument_data};
+        return 'import_failed' if not defined $sample->{instrument_data_file} or not -s $sample->{instrument_data_file};
+        return 'model_needed' if not $sample->{model};
+        return 'build_needed' if not $sample->{build};
+        return 'build_'.lc($sample->{build}->status);
+    };
+
+    my $samples = $self->samples;
+    for my $sample ( values %$samples ) {
+        $sample->{job_status} = $sample_job_statuses->{ $sample->{name} };
+        print Data::Dumper::Dumper([$get_status_for_sample->($sample)]);
+        $sample->{status} = $get_status_for_sample->($sample);
+        print Data::Dumper::Dumper([$sample]);
+    }
+
+    $self->samples($samples);
+
+    return 1;
+}
+
+sub _load_sample_job_statuses {
     my $self = shift;
 
     my $job_list_cmd = $self->config->{'job dispatch'}->{list}->{'command'};
@@ -416,35 +449,13 @@ sub _set_job_status_to_samples {
     return \%sample_job_statuses;
 }
 
-sub set_sample_status {
-    my ($self, $sample) = @_;
-
-    Carp::confess('No sample to set status!') if not $sample;
-    
-    $sample->{status} = eval{
-        return 'sample_needed' if not $sample->{sample};
-        return 'import_'.$sample->{job_status} if $sample->{job_status};
-        return 'import_needed' if not $sample->{instrument_data};
-        return 'import_failed' if not defined $sample->{instrument_data_file} or not -s $sample->{instrument_data_file};
-        return 'model_needed' if not $sample->{model};
-        return 'build_needed' if not $sample->{build};
-        return 'build_'.lc($sample->{build}->status);
-    };
-
-    return $sample->{status};
-}
-
 sub _status {
     my $self = shift;
-
-    my $set_job_status_to_samples = $self->_set_job_status_to_samples;
-    return if not $set_job_status_to_samples;
 
     my %totals;
     my $status = join("\t", (qw/ name status inst_data model build /))."\n";
     for my $sample ( sort { $a->{name} cmp $b->{name} } values %{$self->samples} ) {
         $totals{total}++;
-        $self->set_sample_status($sample);
         $totals{ $sample->{status} }++;
         $totals{build}++ if $sample->{status} =~ /^build/;
         my ($model_id, $build_id) = (qw/ NA NA /);
@@ -474,15 +485,11 @@ sub _make_progress {
 
     return 1 if not $self->make_progress;
 
-    my $set_job_status_to_samples = $self->_set_job_status_to_samples;
-    return if not $set_job_status_to_samples;
-
     my $model_class = $self->model_class;
     my $model_params = $self->model_params;
     my $samples = $self->samples;
     my @samples_to_launch_imports;
     for my $sample ( values %$samples ) {
-        $self->set_sample_status($sample);
         next if $sample->{status} eq 'build_succeeded';
 
         # Run import command
