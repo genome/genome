@@ -29,9 +29,6 @@ class Genome::Model::Tools::DetectVariants2::PindelSingleGenome {
         },
    ],
     has_transient_optional => [
-        _workflow_result => {
-            doc => 'Result of the workflow',
-        },
         _indel_output_dir => {
             is => 'String',
             doc => 'The location of the indels.hq.bed file',

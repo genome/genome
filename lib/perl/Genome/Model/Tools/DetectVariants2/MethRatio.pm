@@ -22,9 +22,6 @@ class Genome::Model::Tools::DetectVariants2::MethRatio {
         },
    ],
     has_transient_optional => [
-        _workflow_result => {
-            doc => 'Result of the workflow',
-        },
         _snv_output_dir => {
             is => 'String',
             doc => 'The location of the snvs.hq file',
