@@ -61,13 +61,7 @@ eval "use $alignment_result_class_name";
 #
 ###########################################################
 
-my $reference_model = Genome::Model::ImportedReferenceSequence->get(name => 'TEST-human');
-ok($reference_model, "got reference model");
-
-my $reference_build = $reference_model->build_by_version('1');
-ok($reference_build, "got reference build");
-
-my $reference_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->create(aligner_name=>$aligner_name, aligner_version=>$aligner_version, aligner_params=>undef, reference_build=>$reference_build);
+my $reference_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->create(aligner_name=>$aligner_name, aligner_version=>$aligner_version, aligner_params=>undef, reference_build=> reference_build());
 ok($reference_index, "generated reference index");
 
 # Uncomment this to create the dataset necessary for shorcutting to work
@@ -77,6 +71,21 @@ ok($reference_index, "generated reference index");
 test_shortcutting();
 test_alignment();
 test_alignment(force_fragment => 1);
+
+{
+    my $reference_build;
+    sub reference_build {
+        unless ($reference_build) {
+            my $reference_model = Genome::Model::ImportedReferenceSequence->get(name => 'TEST-human');
+            ok($reference_model, "got reference model");
+
+            $reference_build = $reference_model->build_by_version('1');
+            ok($reference_build, "got reference build");
+        }
+        return $reference_build;
+    }
+}
+
 
 sub test_alignment {
     my %p = @_;
@@ -91,7 +100,7 @@ sub test_alignment {
                                                        picard_version => $picard_version,
                                                        aligner_version => $aligner_version,
                                                        aligner_name => $aligner_name,
-                                                       reference_build => $reference_build, 
+                                                       reference_build => reference_build(),
                                                        %p,
                                                    );
 
@@ -136,7 +145,7 @@ sub test_shortcutting {
                  aligner_version=>$aligner_version,
                  samtools_version=>$samtools_version,
                  picard_version=>$picard_version,
-                 reference_build => $reference_build, 
+                 reference_build => reference_build(),
     );
     $alignment_result->lookup_hash($alignment_result->calculate_lookup_hash);
 
@@ -158,7 +167,7 @@ sub test_shortcutting {
                                                               aligner_version => $aligner_version,
                                                               samtools_version => $samtools_version,
                                                               picard_version => $picard_version,
-                                                              reference_build => $reference_build, 
+                                                              reference_build => reference_build(),
                                                           );
     ok(!$bad_alignment, "this should have returned undef, for attempting to create an alignment that is already created!");
     ok($alignment_result_class_name->error_message =~ m/already have one/, "the exception is what we expect to see");
@@ -174,7 +183,7 @@ sub test_shortcutting {
                                                               aligner_version => $aligner_version,
                                                               samtools_version => $samtools_version,
                                                               picard_version => $picard_version,
-                                                              reference_build => $reference_build, 
+                                                              reference_build => reference_build(),
                                                               );
     ok($alignment, "got an alignment object");
 
