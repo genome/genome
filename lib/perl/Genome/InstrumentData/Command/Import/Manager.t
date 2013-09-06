@@ -86,6 +86,7 @@ Genome::Sys->create_symlink($test_dir.'/valid-import-pend/info.tsv', $info_tsv);
 Genome::Sys->create_symlink($test_dir.'/valid-import-pend/config.yaml', $config_yaml);
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
     working_directory => $working_directory,
+    import_list_config => "echo $sample_name pend;1;2",
 );
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');

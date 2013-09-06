@@ -18,6 +18,11 @@ class Genome::InstrumentData::Command::Import::Manager {
         },
     ],
     has_optional => [
+    #import_launch_config => {
+        import_list_config => {
+            is => 'Text',
+            doc => 'Command and column positions for sample anme and status. Use format: cmd;sample_name_col_#;sub tatus_col_#',
+        },
         make_progress => { 
             is => 'Boolean',
             default_value => 0,
@@ -41,7 +46,10 @@ class Genome::InstrumentData::Command::Import::Manager {
         },
     ],
     has_optional_transient => [
-        config => { is => 'Hash', },
+        _import_list_command => { is => 'Text', },
+        _import_list_sample_name_column => { is => 'Text', },
+        _import_list_status_column => { is => 'Text', },
+        config => { is => 'Hash', default_value => {}, },
         samples => { is => 'Hash', },
         model_class => { is => 'Text' },
         model_params => { is => 'Hash' },
@@ -98,6 +106,25 @@ sub __errors__ {
         return @errors;
     }
 
+    my $import_list_config = $self->import_list_config;
+    if ( $import_list_config ) {
+        my %import_list_config;
+        @import_list_config{qw/ command sample_name_column status_column /} = split(';', $import_list_config);
+        for my $attr ( keys %import_list_config ) {
+            if ( not defined $import_list_config{$attr} ) {
+                push @errors, UR::Object::Tag->create(
+                    type => 'invalid',
+                    properties => [qw/ import_list_config /],
+                    desc => "Missing $attr in $import_list_config",
+                );
+                return @errors;
+            }
+            $import_list_config{$attr}-- if $attr =~ /col/;
+            my $method = '_import_list_'.$attr;
+            $self->$method( $import_list_config{$attr} );
+        }
+    }
+
     my $load_info_error = $self->_load_info_file;
     if ( $load_info_error ) {
         push @errors, UR::Object::Tag->create(
@@ -127,7 +154,6 @@ sub __errors__ {
         );
         return @errors;
     }
-
 
     my @progress_methods = (qw/ launch_imports /);
     if ( $self->make_progress ) {
@@ -163,21 +189,6 @@ sub _load_config {
 
     if ( not $self->config->{'job dispatch'} ) {
         return 'No job dispatch in config! '.YAML::Dump($config);
-    }
-
-    my $job_list_cmd = $self->config->{'job dispatch'}->{list}->{'command'};
-    if ( not $job_list_cmd ) {
-        return 'No job list "command" in config! '.YAML::Dump($config);
-    }
-
-    my $name_column = $self->config->{'job dispatch'}->{list}->{'name column'};
-    if ( not $name_column ) {
-        return 'No job list "name column" in config! '.YAML::Dump($config);
-    }
-
-    my $status_column = $self->config->{'job dispatch'}->{list}->{'status column'};
-    if ( not $status_column ) {
-        return 'No job list "status column" in config! '.YAML::Dump($config);
     }
 
     return;
@@ -378,7 +389,7 @@ sub _load_models {
         # only get/create model once inst data has been created
         next if not $sample->{instrument_data};
         # and has data file
-        next if not -s $sample->{instrument_data_file};
+        next if not $sample->{instrument_data_file} or not -s $sample->{instrument_data_file};
 
         # Only get model for these params and inst data
         $model_params->{subject} = $sample->{sample};
@@ -434,14 +445,16 @@ sub _load_sample_statuses {
 sub _load_sample_job_statuses {
     my $self = shift;
 
-    my $job_list_cmd = $self->config->{'job dispatch'}->{list}->{'command'};
-    my $name_column = $self->config->{'job dispatch'}->{list}->{'name column'};
-    $name_column--;
-    my $status_column = $self->config->{'job dispatch'}->{list}->{'status column'};
-    $status_column--;
-
+    my $job_list_cmd = $self->_import_list_command;
     $job_list_cmd .= ' 2>/dev/null |';
     my $fh = IO::File->new($job_list_cmd);
+    if ( not $fh ) {
+        $self->error_message('Failed to execute import list command! '.$job_list_cmd);
+        return;
+    }
+    
+    my $name_column = $self->_import_list_sample_name_column;
+    my $status_column = $self->_import_list_status_column;
     my %sample_job_statuses;
     while ( my $line = $fh->getline ) {
         chomp $line;
