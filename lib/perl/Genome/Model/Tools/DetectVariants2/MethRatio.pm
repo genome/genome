@@ -70,14 +70,33 @@ sub workflow_xml {
     return \*DATA;
 }
 
+sub variant_type {
+    return 'snv';
+}
+
+sub raw_output_file {
+    my $self = shift;
+    return $self->output_directory . "/" . $self->variant_type . "s.hq";
+}
+
+sub raw_inputs {
+    my $self = shift;
+
+    return map {$self->raw_input_for_chromosome($_)} @{$self->chromosome_list};
+}
+
+sub raw_input_for_chromosome {
+    my ($self, $chromosome) = @_;
+    return $self->output_directory . "/"
+        .  Genome::Utility::Text::sanitize_string_for_filesystem($chromosome)
+        . "/" . $self->variant_type . "s.hq";
+}
+
 sub _generate_standard_files {
     my $self = shift;
     my $staging_dir = $self->_temp_staging_directory;
-    my $output_dir  = $self->output_directory;
-    my $chrom_list = $self->chromosome_list;
-    my $raw_output_file = $output_dir."/snvs.hq";
-    my @raw_inputs = map { $output_dir."/".$_."/snvs.hq" } @$chrom_list;
-    my $cat_raw = Genome::Model::Tools::Cat->create( dest => $raw_output_file, source => \@raw_inputs);
+    my $cat_raw = Genome::Model::Tools::Cat->create(dest => $self->raw_output_file,
+        source => [$self->raw_inputs]);
     unless($cat_raw->execute){
         die $self->error_message("Cat command failed to execute.");
     }
