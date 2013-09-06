@@ -13,7 +13,7 @@ my $DEFAULT_VERSION = '0.2';
 my $PINDEL_COMMAND = 'pindel_64';
 
 class Genome::Model::Tools::DetectVariants2::PindelSingleGenome {
-    is => ['Genome::Model::Tools::DetectVariants2::Detector'],
+    is => ['Genome::Model::Tools::DetectVariants2::WorkflowDetectorBase'],
     doc => "Runs the pindel pipeline on the last complete build of a somatic model.",
     has => [
         chromosome_list => {
@@ -104,17 +104,6 @@ sub _detect_variants {
     return 1;
 }
 
-sub _dump_workflow {
-    my $self = shift;
-    my $workflow = shift;
-    my $xml = $workflow->save_to_xml;
-    my $xml_location = $self->output_directory."/workflow.xml";
-    my $xml_file = Genome::Sys->open_file_for_writing($xml_location);
-    print $xml_file $xml;
-    $xml_file->close;
-    #$workflow->as_png($self->output_directory."/workflow.png"); #currently commented out because blades do not all have the "dot" library to use graphviz
-}
-
 sub _create_temp_directories {
     my $self = shift;
     $self->_temp_staging_directory($self->output_directory);
@@ -130,7 +119,6 @@ sub _generate_standard_files {
     my $staging_dir = $self->_temp_staging_directory;
     my $output_dir  = $self->output_directory;
     my @chrom_list = @{$self->chromosome_list};
-    my $test_chrom = $chrom_list[0];
     my $raw_output_file = $output_dir."/indels.hq";
     my @raw_inputs = map { $output_dir."/".$_."/indels.hq" } @chrom_list;
     my $cat_raw = Genome::Model::Tools::Cat->create( dest => $raw_output_file, source => \@raw_inputs);
