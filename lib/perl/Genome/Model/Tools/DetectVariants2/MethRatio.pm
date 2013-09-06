@@ -162,8 +162,7 @@ sub default_chromosomes {
     my $refbuild = Genome::Model::Build::ReferenceSequence->get($self->reference_build_id);
     die unless $refbuild;
     my $chromosome_array_ref = $refbuild->chromosome_array_ref;
-    my @chromosome_list = sort Genome::Model::Tools::DetectVariants2::WorkflowDetectorBase::chromosome_sort @$chromosome_array_ref;
-    return @chromosome_list;
+    return $self->sort_chromosomes($refbuild->chromosome_array_ref);
 }
 
 sub default_chromosomes_as_string {
