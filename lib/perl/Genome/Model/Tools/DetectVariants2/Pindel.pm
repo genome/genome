@@ -89,14 +89,23 @@ sub workflow_xml {
     return \*DATA;
 }
 
+sub raw_output_file {
+    my $self = shift;
+    return $self->output_directory . "/indels.hq";
+}
+
+sub raw_inputs {
+    my $self = shift;
+
+
+    return map { $self->output_directory . "/" . Genome::Utility::Text::sanitize_string_for_filesystem($_) . "/indels.hq" } @{$self->chromosome_list};
+}
+
 sub _generate_standard_files {
     my $self = shift;
     my $staging_dir = $self->_temp_staging_directory;
-    my $output_dir  = $self->output_directory;
-    my @chrom_list = $self->default_chromosomes;
-    my $raw_output_file = $output_dir."/indels.hq";
-    my @raw_inputs = map { $output_dir."/".Genome::Utility::Text::sanitize_string_for_filesystem($_)."/indels.hq" } @chrom_list;
-    my $cat_raw = Genome::Model::Tools::Cat->create( dest => $raw_output_file, source => \@raw_inputs);
+    my $cat_raw = Genome::Model::Tools::Cat->create(dest => $self->raw_output_file,
+        source => [$self->raw_inputs]);
     unless($cat_raw->execute){
         die $self->error_message("Cat command failed to execute.");
     }
