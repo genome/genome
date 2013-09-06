@@ -58,8 +58,8 @@ sub _ensure_chromosome_list_set {
 sub set_output {
     my $self = shift;
 
-    unless ($self->indel_bed_output) { 
-        $self->indel_bed_output($self->_temp_staging_directory. '/indels.hq.bed'); 
+    unless ($self->indel_bed_output) {
+        $self->indel_bed_output($self->_temp_staging_directory. '/indels.hq.bed');
     }
 
     return;
@@ -90,7 +90,7 @@ sub _detect_variants {
 
     # Define a workflow from the static XML at the bottom of this module
     my $workflow = Workflow::Operation->create_from_xml(\*DATA);
-    
+
     # Validate the workflow
     my @errors = $workflow->validate;
     if (@errors) {
@@ -105,7 +105,7 @@ sub _detect_variants {
     $input{version} = $self->version;
 
     $self->add_bams_to_input(\%input);
-    
+
     $self->_dump_workflow($workflow);
 
     my $log_dir = $self->output_directory;

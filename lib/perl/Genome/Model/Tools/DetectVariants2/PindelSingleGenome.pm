@@ -41,14 +41,14 @@ class Genome::Model::Tools::DetectVariants2::PindelSingleGenome {
 
 sub _detect_variants {
     my $self = shift;
-    # Obtain normal and tumor bams and check them. Either from somatic model id or from direct specification. 
+    # Obtain normal and tumor bams and check them. Either from somatic model id or from direct specification.
     my ($build, $tumor_bam, $normal_bam);
     $tumor_bam = $self->aligned_reads_input;
 
 
     # Set default params
-    unless ($self->indel_bed_output) { 
-        $self->indel_bed_output($self->_temp_staging_directory. '/indels.hq.bed'); 
+    unless ($self->indel_bed_output) {
+        $self->indel_bed_output($self->_temp_staging_directory. '/indels.hq.bed');
     }
     my $refbuild_id = $self->reference_build_id;
     unless($refbuild_id){
@@ -60,7 +60,7 @@ sub _detect_variants {
 
     # Define a workflow from the static XML at the bottom of this module
     my $workflow = Workflow::Operation->create_from_xml(\*DATA);
-    
+
     # Validate the workflow
     my @errors = $workflow->validate;
     if (@errors) {
@@ -74,7 +74,7 @@ sub _detect_variants {
     $input{tumor_bam}=$self->aligned_reads_input;
     $input{output_directory} = $self->output_directory;#$self->_temp_staging_directory;
     $input{version}=$self->version;
-    
+
     $self->_dump_workflow($workflow);
 
     my $log_dir = $self->output_directory;

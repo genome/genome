@@ -41,7 +41,7 @@ sub _ensure_chromosome_list_set {
 sub set_output {
     my $self = shift;
 
-    unless ($self->snv_output) { 
+    unless ($self->snv_output) {
         $self->snv_output($self->_temp_staging_directory. '/snvs.hq');  #???
     }
 
@@ -75,7 +75,7 @@ sub _detect_variants {
 
     # Define a workflow from the static XML at the bottom of this module
     my $workflow = Workflow::Operation->create_from_xml(\*DATA);
-    
+
     # Validate the workflow
     my @errors = $workflow->validate;
     if (@errors) {
@@ -90,7 +90,7 @@ sub _detect_variants {
     $input{version}  =  $self->version;
 
     $self->add_bams_to_input(\%input);
-    
+
     $self->_dump_workflow($workflow);
 
     my $log_dir = $self->output_directory;
