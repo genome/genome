@@ -47,6 +47,9 @@ __cached_value_for(
 __cached_value_for(
     'samtools_version',
     sub { return Genome::Model::Tools::Sam->default_samtools_version });
+__cached_value_for(
+    'picard_version',
+    sub { return Genome::Model::Tools::Picard->default_picard_version });
 
 #
 # Configuration for the aligner name, etc
@@ -67,7 +70,6 @@ sub aligner_name { "rtg map" }
 ###############################################################################
 my $alignment_result_class_name = "Genome::InstrumentData::AlignmentResult::" . Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name(aligner_name());
 
-my $picard_version = Genome::Model::Tools::Picard->default_picard_version;
 
 my $FAKE_INSTRUMENT_DATA_ID=-123456;
 eval "use $alignment_result_class_name";
@@ -111,7 +113,7 @@ sub test_alignment {
     my $alignment = Genome::InstrumentData::AlignmentResult->create(
                                                        instrument_data_id => $instrument_data->id,
                                                        samtools_version => samtools_version(),
-                                                       picard_version => $picard_version,
+                                                       picard_version => picard_version(),
                                                        aligner_version => aligner_version(),
                                                        aligner_name => aligner_name(),
                                                        reference_build => reference_build(),
@@ -159,7 +161,7 @@ sub test_shortcutting {
                  aligner_name => aligner_name(),
                  aligner_version => aligner_version(),
                  samtools_version => samtools_version(),
-                 picard_version=>$picard_version,
+                 picard_version => picard_version(),
                  reference_build => reference_build(),
     );
     $alignment_result->lookup_hash($alignment_result->calculate_lookup_hash);
@@ -181,7 +183,7 @@ sub test_shortcutting {
                                                               aligner_name => aligner_name(),
                                                               aligner_version => aligner_version(),
                                                               samtools_version => samtools_version(),
-                                                              picard_version => $picard_version,
+                                                              picard_version => picard_version(),
                                                               reference_build => reference_build(),
                                                           );
     ok(!$bad_alignment, "this should have returned undef, for attempting to create an alignment that is already created!");
@@ -197,7 +199,7 @@ sub test_shortcutting {
                                                               aligner_name => aligner_name(),
                                                               aligner_version => aligner_version(),
                                                               samtools_version => samtools_version(),
-                                                              picard_version => $picard_version,
+                                                              picard_version => picard_version(),
                                                               reference_build => reference_build(),
                                                               );
     ok($alignment, "got an alignment object");
