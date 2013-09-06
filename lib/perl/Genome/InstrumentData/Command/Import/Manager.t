@@ -45,6 +45,7 @@ Genome::Sys->create_symlink($test_dir.'/valid-import-needed/config.yaml', $confi
 
 # Sample needed
 my $manager = Genome::InstrumentData::Command::Import::Manager->create(
+    source_files_tsv => $info_tsv,
     working_directory => $working_directory,
 );
 ok($manager, 'create manager');
@@ -67,6 +68,7 @@ my $sample = Genome::Sample->__define__(
 
 # Import needed
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
+    source_files_tsv => $info_tsv,
     working_directory => $working_directory,
 );
 ok($manager, 'create manager');
@@ -85,8 +87,10 @@ unlink($info_tsv, $config_yaml);
 Genome::Sys->create_symlink($test_dir.'/valid-import-pend/info.tsv', $info_tsv);
 Genome::Sys->create_symlink($test_dir.'/valid-import-pend/config.yaml', $config_yaml);
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
+    source_files_tsv => $info_tsv,
     working_directory => $working_directory,
     import_list_config => "echo $sample_name pend;1;2",
+    import_launch_config => "echo %{sample_name} LAUNCH!",
 );
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');
@@ -102,7 +106,7 @@ ok(!$sample_hash->{build}, 'sample hash build does not exist');
 
 is(
     $manager->_resolve_instrument_data_import_command_for_sample($sample_hash),
-    "echo $sample_name genome instrument-data import basic --sample name=$sample_name --source-files original.bam --import-source-name TeSt --instrument-data-properties lane='8'",
+    "echo $sample_name LAUNCH! genome instrument-data import basic --sample name=$sample_name --source-files original.bam --import-source-name TeSt --instrument-data-properties lane='8'",
     'inst data import command',
 );
 
@@ -123,6 +127,7 @@ Genome::Sys->create_symlink($test_dir.'/valid-build/info.tsv', $info_tsv);
 Genome::Sys->create_symlink($test_dir.'/valid-build/config.yaml', $config_yaml);
 
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
+    source_files_tsv => $info_tsv,
     working_directory => $working_directory,
 );
 ok($manager, 'create manager');
@@ -140,6 +145,7 @@ ok(!$sample_hash->{build}, 'sample hash build does not exist');
 $inst_data->add_attribute(attribute_label => 'bam_path', attribute_value => $config_yaml);
 
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
+    source_files_tsv => $info_tsv,
     working_directory => $working_directory,
 );
 ok($manager, 'create manager');
@@ -160,25 +166,19 @@ ok(!$sample_hash->{build}, 'sample hash build does not exist');
 # fail - no config file
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
     working_directory => $test_dir.'/invalid-no-config-yaml',
+    source_files_tsv => $test_dir.'/invalid-no-config-yaml/info.tsv',
 );
 ok($manager, 'create manager');
 ok(!$manager->execute, 'execute failed');
 is($manager->error_message, "Property 'config_file': Config file does not exist! ".$manager->config_file, 'correct error');
 
-# fail - no config file
-$manager = Genome::InstrumentData::Command::Import::Manager->create(
-    working_directory => $test_dir.'/invalid-no-info-file',
-);
-ok($manager, 'create manager');
-ok(!$manager->execute, 'execute failed');
-is($manager->error_message, "Property 'info_file': Sample info file does not exist! ".$manager->info_file, 'correct error');
-
 # fail - no name column in csv
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
     working_directory => $test_dir.'/invalid-no-name-column-in-info-file',
+    source_files_tsv => $test_dir.'/invalid-no-name-column-in-info-file/info.tsv',
 );
 ok($manager, 'create manager');
 ok(!$manager->execute, 'execute failed');
-is($manager->error_message, 'Property \'info_file\': No "sample_name" column in sample info file! '.$manager->info_file, 'correct error');
+is($manager->error_message, 'Property \'source_files_tsv\': No "sample_name" column in sample info file! '.$manager->source_files_tsv, 'correct error');
 
 done_testing();

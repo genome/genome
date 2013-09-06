@@ -12,13 +12,20 @@ class Genome::InstrumentData::Command::Import::Manager {
     is => 'Command::V2',
     doc => 'Manage importing sequence files into Genome',
     has => [
+        source_files_tsv => {
+            is => 'Text',
+            doc => 'Tab separated file of samples and attributes. See detailed help for more info.',
+        },
         working_directory => {
             is => 'Text',
             doc => 'Directory to read and write.',
         },
     ],
     has_optional => [
-    #import_launch_config => {
+        import_launch_config => {
+            is => 'Text',
+            doc => 'Command to use to launch imports. See detailed help for more info.',
+        },
         import_list_config => {
             is => 'Text',
             doc => 'Command and column positions for sample anme and status. Use format: cmd;sample_name_col_#;sub tatus_col_#',
@@ -35,11 +42,6 @@ class Genome::InstrumentData::Command::Import::Manager {
         },
     ],
     has_optional_calculated => [
-        info_file => {
-            calculate_from => 'working_directory',
-            calculate => sub{ my $working_directory = shift; return $working_directory.'/info.tsv'; },
-            doc => 'Tab separated file of samples and attributes. See additional help below.',
-        },
         config_file => {
             calculate_from => 'working_directory',
             calculate => sub{ my $working_directory = shift; return $working_directory.'/config.yaml'; },
@@ -49,11 +51,11 @@ class Genome::InstrumentData::Command::Import::Manager {
         _import_list_command => { is => 'Text', },
         _import_list_sample_name_column => { is => 'Text', },
         _import_list_status_column => { is => 'Text', },
+        _import_command_format => { is => 'Text', },
         config => { is => 'Hash', default_value => {}, },
         samples => { is => 'Hash', },
         model_class => { is => 'Text' },
         model_params => { is => 'Hash' },
-        instrument_data_import_command_format => { is => 'Text', },
         instrument_data_import_command_substitutions => { 
             is => 'Hash', 
             default_value => { map { $_ => qr/%{$_}/ } (qw/ sample_name /), },
@@ -125,11 +127,11 @@ sub __errors__ {
         }
     }
 
-    my $load_info_error = $self->_load_info_file;
+    my $load_info_error = $self->_load_source_files_tsv;
     if ( $load_info_error ) {
         push @errors, UR::Object::Tag->create(
             type => 'invalid',
-            properties => [qw/ info_file /],
+            properties => [qw/ source_files_tsv /],
             desc => $load_info_error,
         );
         return @errors;
@@ -182,32 +184,23 @@ sub _load_config {
     }
     $self->config($config);
 
-    my $nomenclature = $config->{sample}->{nomenclature};
-    if ( not $nomenclature ) {
-        return 'No nomenclature in config file! '.$config_file;
-    }
-
-    if ( not $self->config->{'job dispatch'} ) {
-        return 'No job dispatch in config! '.YAML::Dump($config);
-    }
-
     return;
 }
 
-sub _load_info_file {
+sub _load_source_files_tsv {
     my $self = shift;
 
-    my $info_file = $self->info_file;
-    if ( not -s $info_file ) {
-        return 'Sample info file does not exist! '.$info_file;
+    my $source_files_tsv = $self->source_files_tsv;
+    if ( not -s $source_files_tsv ) {
+        return 'Sample info file does not exist! '.$source_files_tsv;
     }
 
     my $info_reader = Genome::Utility::IO::SeparatedValueReader->create(
-        input => $info_file,
+        input => $source_files_tsv,
         separator => "\t",
     );
     if ( not $info_reader ) {
-        return 'Failed to open sample info file! '.$info_file;
+        return 'Failed to open sample info file! '.$source_files_tsv;
     }
 
     my %headers_not_found = ( sample_name => 1, source_files => 1, );
@@ -216,7 +209,7 @@ sub _load_info_file {
     }
 
     if ( %headers_not_found ) {
-        return 'No '.join(' ', map { '"'.$_.'"' } keys %headers_not_found).' column in sample info file! '.$self->info_file;
+        return 'No '.join(' ', map { '"'.$_.'"' } keys %headers_not_found).' column in sample info file! '.$self->source_files_tsv;
     }
 
     my %samples;
@@ -297,7 +290,7 @@ sub _resolve_model_params {
 sub _resolve_instrument_data_import_command {
     my $self = shift;
 
-    my $cmd_format = $self->config->{'job dispatch'}->{launch};
+    my $cmd_format = $self->import_launch_config;
     if ( $cmd_format ) {
         my $substitutions = $self->instrument_data_import_command_substitutions;
         my $sample_name_substitution = $substitutions->{sample_name};
@@ -310,7 +303,7 @@ sub _resolve_instrument_data_import_command {
     }
 
     $cmd_format .= 'genome instrument-data import basic --sample name=%{sample_name} --source-files %s --import-source-name %s%s',
-    $self->instrument_data_import_command_format($cmd_format);
+    $self->_import_command_format($cmd_format);
 
     return;
 }
@@ -342,6 +335,11 @@ sub _load_samples {
     my $samples = $self->samples;
     for my $sample ( values %$samples ) {
         $sample->{sample} = Genome::Sample->get(name => $sample->{sample_name});
+        next if not $sample->{sample};
+        if ( not $sample->{sample}->nomenclature ) {
+            $self->error_message('Sample does not have any nomenclature! '.$sample->{sample}->name);
+            return;
+        }
     }
 
     $self->samples($samples);
@@ -498,7 +496,7 @@ sub _resolve_instrument_data_import_command_for_sample {
 
     Carp::confess('No samples to resolved instrument data import command!') if not $sample;
 
-    my $cmd_format = $self->instrument_data_import_command_format;
+    my $cmd_format = $self->_import_command_format;
     my $substitutions = $self->instrument_data_import_command_substitutions;
     for my $name ( keys %$substitutions ) {
         my $value = $sample->{$name};
@@ -513,7 +511,7 @@ sub _resolve_instrument_data_import_command_for_sample {
     my $cmd .= sprintf(
         $cmd_format,
         $sample->{source_files},
-        $self->config->{sample}->{nomenclature},
+        $sample->{sample}->nomenclature,
         ( 
             $sample->{instrument_data_attributes}
             ? ' --instrument-data-properties '.join(',', @{$sample->{instrument_data_attributes}})
