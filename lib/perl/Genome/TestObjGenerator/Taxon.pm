@@ -1,4 +1,4 @@
-package Genome::TestObjGenerator::Sample;
+package Genome::TestObjGenerator::Taxon;
 use base qw(Genome::TestObjGenerator::Base);
 
 use strict;
@@ -9,11 +9,11 @@ my @required_params = ('name');
 
 sub generate_obj {
     my $self = shift;
-    return Genome::Sample->create(@_);
+    return Genome::Taxon->create(@_);
 }
 
 sub create_name {
-    return Genome::TestObjGenerator::Util::generate_name('sample_name');
+    return Genome::TestObjGenerator::Util::generate_name('taxon_name');
 }
 
 sub get_required_params {
