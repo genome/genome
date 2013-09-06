@@ -99,7 +99,7 @@ sub _strip_ignored_patterns {
     my ($lines, $patterns) = @_;
     return grep {
         my $x = $_;
-        !grep {$x =~ /$_/} @$patterns
+        !grep {$x =~ /$_/i} @$patterns
     } @$lines
 }
 
