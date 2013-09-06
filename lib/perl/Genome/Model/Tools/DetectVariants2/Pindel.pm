@@ -15,7 +15,7 @@ my $DEFAULT_VERSION = '0.2';
 my $PINDEL_COMMAND = 'pindel_64';
 
 class Genome::Model::Tools::DetectVariants2::Pindel {
-    is => ['Genome::Model::Tools::DetectVariants2::Detector'],
+    is => ['Genome::Model::Tools::DetectVariants2::WorkflowDetectorBase'],
     doc => "Runs the pindel pipeline on the last complete build of a somatic model.",
     has => [
         chromosome_list => {
@@ -117,17 +117,6 @@ sub _detect_variants {
     return 1;
 }
 
-sub _dump_workflow {
-    my $self = shift;
-    my $workflow = shift;
-    my $xml = $workflow->save_to_xml;
-    my $xml_location = $self->output_directory."/workflow.xml";
-    my $xml_file = Genome::Sys->open_file_for_writing($xml_location);
-    print $xml_file $xml;
-    $xml_file->close;
-    #$workflow->as_png($self->output_directory."/workflow.png"); #currently commented out because blades do not all have the "dot" library to use graphviz
-}
-
 sub _create_temp_directories {
     my $self = shift;
     $self->_temp_staging_directory($self->output_directory);
@@ -137,13 +126,11 @@ sub _create_temp_directories {
     return $self->SUPER::_create_temp_directories(@_);
 }
 
-
 sub _generate_standard_files {
     my $self = shift;
     my $staging_dir = $self->_temp_staging_directory;
     my $output_dir  = $self->output_directory;
     my @chrom_list = $self->default_chromosomes;
-    my $test_chrom = $chrom_list[0];
     my $raw_output_file = $output_dir."/indels.hq";
     my @raw_inputs = map { $output_dir."/".Genome::Utility::Text::sanitize_string_for_filesystem($_)."/indels.hq" } @chrom_list;
     my $cat_raw = Genome::Model::Tools::Cat->create( dest => $raw_output_file, source => \@raw_inputs);
@@ -181,55 +168,14 @@ sub has_version {
     return 0;
 }
 
-sub chromosome_sort {
-    # numeric sort if chrom starts with number
-    # alphabetic sort if chrom starts with non-number
-    # numeric before alphabetic
-    # Not perfect, NT_1 will sort the same as NT_100
-    my ($a_chrom) = $a =~ /^(\S+)/;
-    my ($b_chrom) = $b =~ /^(\S+)/;
-    ($a_chrom, $b_chrom) = (uc($a_chrom), uc($b_chrom));
-    my $a_is_numeric = ($a_chrom =~ /^\d+$/ ? 1 : 0);
-    my $b_is_numeric = ($b_chrom =~ /^\d+$/ ? 1 : 0);
 
-    my $rv;
-    if ($a_chrom eq $b_chrom) {
-        $rv = 0;
-    }
-    elsif ($a_is_numeric && $b_is_numeric) {
-        $rv = ($a_chrom <=> $b_chrom);
-    }
-    elsif ($a_is_numeric && !$b_is_numeric) {
-        $rv = -1;
-    }
-    elsif ($b_is_numeric && !$a_is_numeric) {
-        $rv = 1;
-    }
-    elsif ($a_chrom eq 'X') {
-        $rv = -1;
-    }
-    elsif ($b_chrom eq 'X') {
-        $rv = 1;
-    }
-    elsif ($a_chrom eq 'Y') {
-        $rv = -1;
-    }
-    elsif ($b_chrom eq 'Y') {
-        $rv = 1;
-    }
-    else {
-        $rv = ($a_chrom cmp $b_chrom);
-    }
-
-    return $rv;
-}
 
 sub default_chromosomes {
     my $self = shift;
     my $refbuild = Genome::Model::Build::ReferenceSequence->get($self->reference_build_id);
     die unless $refbuild;
     my $chromosome_array_ref = $refbuild->chromosome_array_ref;
-    my @chromosome_list = sort chromosome_sort @$chromosome_array_ref;
+    my @chromosome_list = sort Genome::Model::Tools::DetectVariants2::WorkflowDetectorBase::chromosome_sort @$chromosome_array_ref;
     return @chromosome_list;
 }
 
@@ -250,6 +196,7 @@ sub params_for_detector_result {
 
     return $params;
 }
+
 
 1;
 
