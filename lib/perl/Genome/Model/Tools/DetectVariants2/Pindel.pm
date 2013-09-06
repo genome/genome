@@ -89,6 +89,13 @@ sub workflow_xml {
     return \*DATA;
 }
 
+sub raw_input_for_chromosome {
+    my ($self, $chromosome) = @_;
+    return $self->output_directory . "/"
+        .  Genome::Utility::Text::sanitize_string_for_filesystem($chromosome)
+        . "/indels.hq";
+}
+
 sub raw_output_file {
     my $self = shift;
     return $self->output_directory . "/indels.hq";
@@ -97,8 +104,7 @@ sub raw_output_file {
 sub raw_inputs {
     my $self = shift;
 
-
-    return map { $self->output_directory . "/" . Genome::Utility::Text::sanitize_string_for_filesystem($_) . "/indels.hq" } @{$self->chromosome_list};
+    return map {$self->raw_input_for_chromosome($_)} @{$self->chromosome_list};
 }
 
 sub _generate_standard_files {
