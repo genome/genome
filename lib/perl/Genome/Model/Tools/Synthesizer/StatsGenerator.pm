@@ -8,7 +8,7 @@ use Genome;
 my $DEFAULT_CUTOFF = '2';
 
 class Genome::Model::Tools::Synthesizer::StatsGenerator {
-    is        => ['Genome::Model::Tools::Synthesizer::Base'],
+    is => 'Genome::Model::Tools::Synthesizer::Base',
     has_input => [
         coverage_stats_file => {
             is_output => 1,
