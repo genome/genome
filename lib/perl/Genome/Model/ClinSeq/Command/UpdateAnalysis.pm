@@ -1331,8 +1331,18 @@ sub check_somatic_variation_models{
     #}
 
     #Check for the correct version of previously discovered variants
-    if ($model->previously_discovered_variations_build){
-      next unless ($model->previously_discovered_variations_build->id eq $self->previously_discovered_variations->id);
+    my $got = $model->previously_discovered_variations_build;
+    my $expected = $self->previously_discovered_variations;
+    unless ($got){
+      $self->status_message("skipping " . $model->__display_name__ . " because it does not have previously discovered variants set");
+      next;
+    }
+    unless ($got->id eq $expected->id){
+      $self->status_message("\tskipping " . $model->__display_name__ . " because previously discovered variations build "
+        . $got->__display_name__ 
+        . " doesn't match expected " . $expected->__display_name__
+      );
+      next;
     }
     
     #Make sure one of the passing normal AND tumor reference alignment models are specified as inputs to the somatic variation model
