@@ -48,6 +48,11 @@ class Genome::InstrumentData::Command::Import::Manager {
         instrument_data_import_command_format => { is => 'Text', },
         instrument_data_import_command_sample_name_cnt => { is => 'Number', },
         status => { is => 'Text', },
+        instrument_data_import_command_substitutions => { 
+            is => 'Hash', 
+            #default_value => { map { $_ => qr/%{$_}/ } (qw/ sample_name /), },
+            default_value => { name => qr/%{sample_name}/, },
+        },
     ],
 };
 
@@ -280,18 +285,18 @@ sub _resolve_model_params {
 sub _resolve_instrument_data_import_command {
     my $self = shift;
 
-    my $cmd_format;
-    my @sample_name_replaces_in_command;
-    if ( $cmd_format = $self->config->{'job dispatch'}->{launch} ) {
-        @sample_name_replaces_in_command = $cmd_format =~ /\%s/g;
-        if ( not @sample_name_replaces_in_command ) {
-            return 'No "%s" in job dispatch config to replace with sample name! '.$cmd_format;
+    my $cmd_format = $self->config->{'job dispatch'}->{launch};
+    if ( $cmd_format ) {
+        my $substitutions = $self->instrument_data_import_command_substitutions;
+        my $sample_name_substitution = $substitutions->{name}; #FIXME
+        if ( $cmd_format !~ /$sample_name_substitution/ ) {
+            $self->error_message('No sample name substitutions (%{sample_name} in launch command! '.$cmd_format);
+            return;
         }
         $cmd_format .= ' ';
     }
-    $self->instrument_data_import_command_sample_name_cnt(scalar @sample_name_replaces_in_command);
 
-    $cmd_format .= 'genome instrument-data import basic --sample name=%s --source-files %s --import-source-name %s%s',
+    $cmd_format .= 'genome instrument-data import basic --sample name=%{sample_name} --source-files %s --import-source-name %s%s',
     $self->instrument_data_import_command_format($cmd_format);
 
     return;
@@ -478,14 +483,20 @@ sub _resolve_instrument_data_import_command_for_sample {
 
     Carp::confess('No samples to resolved instrument data import command!') if not $sample;
 
-    my $sample_name_cnt = $self->instrument_data_import_command_sample_name_cnt;
-    my @sample_name_replaces;
-    for (1..$sample_name_cnt) { push @sample_name_replaces, $sample->{name}; }
+    my $cmd_format = $self->instrument_data_import_command_format;
+    my $substitutions = $self->instrument_data_import_command_substitutions;
+    for my $name ( keys %$substitutions ) {
+        my $value = $sample->{$name};
+        if ( not defined $value ) {
+            $self->error_message("No value for attribute ($name) specified in launch import command. ".$self->instrument_data_import_command_format);
+            return;
+        }
+        my $pattern = $substitutions->{$name};
+        $cmd_format =~ s/$pattern/$value/g;
+    }
 
     my $cmd .= sprintf(
-        $self->instrument_data_import_command_format,
-        @sample_name_replaces,
-        $sample->{name},
+        $cmd_format,
         $sample->{source_files},
         $self->config->{sample}->{nomenclature},
         ( 
