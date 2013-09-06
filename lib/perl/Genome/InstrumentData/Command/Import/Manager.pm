@@ -315,9 +315,7 @@ sub execute {
     my $launch_imports = $self->_launch_imports;
     return if not $launch_imports;
 
-    $self->_status;
-
-    return 1;
+    return $self->_output_status;
 }
 
 sub _load_samples {
@@ -447,37 +445,6 @@ sub _load_sample_job_statuses {
     return \%sample_job_statuses;
 }
 
-sub _status {
-    my $self = shift;
-
-    my %totals;
-    my $status = join("\t", (qw/ name status inst_data model build /))."\n";
-    for my $sample ( sort { $a->{name} cmp $b->{name} } values %{$self->samples} ) {
-        $totals{total}++;
-        $totals{ $sample->{status} }++;
-        $totals{build}++ if $sample->{status} =~ /^build/;
-        my ($model_id, $build_id) = (qw/ NA NA /);
-        if ( $sample->{model} ) {
-            $model_id = $sample->{model}->id;
-            if ( $sample->{build} and $sample->{status} ne 'build_requested' ) {
-                $build_id = $sample->{build}->id;
-            }
-        }
-        $status .= join(
-            "\t",
-            $sample->{name},
-            $sample->{status}, 
-            ( $sample->{instrument_data} ? $sample->{instrument_data}->id : 'NA' ),
-            $model_id,
-            $build_id,
-        )."\n";
-    }
-
-    print STDOUT "$status";
-    print STDERR "\nSummary:\n".join("\n", map { sprintf('%-16s %s', $_, $totals{$_}) } sort { $a cmp $b } keys %totals)."\n";
-    return 1;
-}
-
 sub _launch_imports {
     my $self = shift;
 
@@ -529,6 +496,38 @@ sub _resolve_instrument_data_import_command_for_sample {
     );
 
     return $cmd;
+}
+
+sub _output_status {
+    my $self = shift;
+
+    my %totals;
+    my $status = join("\t", (qw/ name status inst_data model build /))."\n";
+    for my $sample ( sort { $a->{name} cmp $b->{name} } values %{$self->samples} ) {
+        $totals{total}++;
+        $totals{ $sample->{status} }++;
+        $totals{build}++ if $sample->{status} =~ /^build/;
+        my ($model_id, $build_id) = (qw/ NA NA /);
+        if ( $sample->{model} ) {
+            $model_id = $sample->{model}->id;
+            if ( $sample->{build} and $sample->{status} ne 'build_requested' ) {
+                $build_id = $sample->{build}->id;
+            }
+        }
+        $status .= join(
+            "\t",
+            $sample->{name},
+            $sample->{status}, 
+            ( $sample->{instrument_data} ? $sample->{instrument_data}->id : 'NA' ),
+            $model_id,
+            $build_id,
+        )."\n";
+    }
+
+    print STDOUT "$status";
+    print STDERR "\nSummary:\n".join("\n", map { sprintf('%-16s %s', $_, $totals{$_}) } sort { $a cmp $b } keys %totals)."\n";
+
+    return 1;
 }
 
 1;
