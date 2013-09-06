@@ -157,6 +157,7 @@ sub test_shortcutting {
     # some info about why we failed.  
     ####################################################
 
+    Genome::InstrumentData::AlignmentResult->dump_error_messages(0);  # supress error about duplicate object
     my $bad_alignment = Genome::InstrumentData::AlignmentResult->create(
                                                               instrument_data_id => $fake_instrument_data->id,
                                                               aligner_name => $self->aligner_name(),
@@ -167,6 +168,7 @@ sub test_shortcutting {
                                                           );
     ok(!$bad_alignment, "this should have returned undef, for attempting to create an alignment that is already created!");
     ok($alignment_result_class_name->error_message =~ m/already have one/, "the exception is what we expect to see");
+    Genome::InstrumentData::AlignmentResult->dump_error_messages(1);
 
 
     #
