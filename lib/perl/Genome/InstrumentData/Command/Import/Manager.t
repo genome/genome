@@ -12,7 +12,6 @@ use warnings;
 use above "Genome";
 use Data::Dumper;
 require Genome::Utility::Test;
-use File::Temp;
 use Test::More;
 
 use_ok('Genome::InstrumentData::Command::Import::Manager') or die;
@@ -37,14 +36,11 @@ my $sample_name = 'TeSt-0000-00';
 my $source_files = 'original.bam';
 
 my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import::Manager', 'v1');
-my $working_directory = File::Temp::tempdir(CLEANUP => 1);
-my $info_tsv = $working_directory.'/info.tsv';
-Genome::Sys->create_symlink($test_dir.'/valid-import-needed/info.tsv', $info_tsv);
 
 # Sample needed
+my $info_tsv = $test_dir.'/valid-build/info.tsv';
 my $manager = Genome::InstrumentData::Command::Import::Manager->create(
     source_files_tsv => $info_tsv,
-    working_directory => $working_directory,
 );
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');
@@ -67,7 +63,6 @@ my $sample = Genome::Sample->__define__(
 # Import needed
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
     source_files_tsv => $info_tsv,
-    working_directory => $working_directory,
 );
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');
@@ -81,11 +76,8 @@ ok(!$sample_hash->{model}, 'sample hash model does not exist');
 ok(!$sample_hash->{build}, 'sample hash build does not exist');
 
 # Import pend
-unlink($info_tsv);
-Genome::Sys->create_symlink($test_dir.'/valid-import-pend/info.tsv', $info_tsv);
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
     source_files_tsv => $info_tsv,
-    working_directory => $working_directory,
     import_list_config => "echo $sample_name pend;1;2",
     import_launch_config => "echo %{sample_name} LAUNCH!",
 );
@@ -119,13 +111,9 @@ my $inst_data = Genome::InstrumentData::Imported->__define__(
 $inst_data->add_attribute(attribute_label => 'read_count', attribute_value => 1000);
 $inst_data->add_attribute(attribute_label => 'read_length', attribute_value => 100);
 
-unlink($info_tsv);
-Genome::Sys->create_symlink($test_dir.'/valid-build/info.tsv', $info_tsv);
-
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
     source_files_tsv => $info_tsv,
     model_params => [qw/ processing_profile_id=-333 reference_id=-333 /],
-    working_directory => $working_directory,
 );
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');
@@ -144,7 +132,6 @@ $inst_data->add_attribute(attribute_label => 'bam_path', attribute_value => $tes
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
     source_files_tsv => $info_tsv,
     model_params => [qw/ processing_profile_id=-333 reference_id=-333 /],
-    working_directory => $working_directory,
 );
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');
@@ -163,7 +150,6 @@ ok(!$sample_hash->{build}, 'sample hash build does not exist');
 
 # fail - no name column in csv
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
-    working_directory => $test_dir.'/invalid-no-name-column-in-info-file',
     source_files_tsv => $test_dir.'/invalid-no-name-column-in-info-file/info.tsv',
 );
 ok($manager, 'create manager');
@@ -172,7 +158,6 @@ is($manager->error_message, 'Property \'source_files_tsv\': No "sample_name" col
 
 # fail - model params does not have a pp
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
-    working_directory => $test_dir.'/valid-build',
     source_files_tsv => $test_dir.'/valid-build/info.tsv',
     model_params => [qw/ reference_id=-333 /],
 );

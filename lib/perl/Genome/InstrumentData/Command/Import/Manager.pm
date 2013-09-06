@@ -16,10 +16,6 @@ class Genome::InstrumentData::Command::Import::Manager {
             is => 'Text',
             doc => 'Tab separated file of samples and attributes. See detailed help for more info.',
         },
-        working_directory => {
-            is => 'Text',
-            doc => 'Directory to read and write.',
-        },
     ],
     has_optional => [
         import_launch_config => {
@@ -86,15 +82,6 @@ sub __errors__ {
 
     my @errors = $self->SUPER::__errors__;
     return @errors if @errors;
-
-    if ( not -d $self->working_directory ) {
-        push @errors, UR::Object::Tag->create(
-            type => 'invalid',
-            properties => [qw/ working_directory /],
-            desc => 'Working directory does not exist or is not aq directory!',
-        );
-        return @errors;
-    }
 
     my $import_list_config = $self->import_list_config;
     if ( $import_list_config ) {
