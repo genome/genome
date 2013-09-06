@@ -42,6 +42,10 @@ __cached_value_for(
         ok($reference_build, "got reference build");
         return $reference_build;
     });
+__cached_value_for(
+    'samtools_version',
+    sub { return Genome::Model::Tools::Sam->default_samtools_version });
+
 
 #
 # Configuration for the aligner name, etc
@@ -65,7 +69,6 @@ sub aligner_name { "novocraft" }
 ###############################################################################
 my $alignment_result_class_name = "Genome::InstrumentData::AlignmentResult::" . Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name(aligner_name());
 
-my $samtools_version = Genome::Model::Tools::Sam->default_samtools_version;
 my $picard_version = Genome::Model::Tools::Picard->default_picard_version;
 
 my $FAKE_INSTRUMENT_DATA_ID=-123456;
@@ -110,7 +113,7 @@ sub test_alignment {
 
     my $alignment = Genome::InstrumentData::AlignmentResult->create(
                                                        instrument_data_id => $instrument_data->id,
-                                                       samtools_version => $samtools_version,
+                                                       samtools_version => samtools_version(),
                                                        picard_version => $picard_version,
                                                        aligner_version => aligner_version(),
                                                        aligner_name => aligner_name(),
@@ -158,7 +161,7 @@ sub test_shortcutting {
                  module_version => '12345',
                  aligner_name => aligner_name(),
                  aligner_version => aligner_version(),
-                 samtools_version=>$samtools_version,
+                 samtools_version => samtools_version(),
                  picard_version=>$picard_version,
                  reference_build => reference_build(),
     );
@@ -180,7 +183,7 @@ sub test_shortcutting {
                                                               instrument_data_id => $fake_instrument_data->id,
                                                               aligner_name => aligner_name(),
                                                               aligner_version => aligner_version(),
-                                                              samtools_version => $samtools_version,
+                                                              samtools_version => samtools_version(),
                                                               picard_version => $picard_version,
                                                               reference_build => reference_build(),
                                                           );
@@ -196,7 +199,7 @@ sub test_shortcutting {
                                                               instrument_data_id => $fake_instrument_data->id,
                                                               aligner_name => aligner_name(),
                                                               aligner_version => aligner_version(),
-                                                              samtools_version => $samtools_version,
+                                                              samtools_version => samtools_version(),
                                                               picard_version => $picard_version,
                                                               reference_build => reference_build(),
                                                               );
