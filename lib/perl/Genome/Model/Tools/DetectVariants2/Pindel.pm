@@ -55,6 +55,16 @@ sub _ensure_chromosome_list_set {
     return;
 }
 
+sub set_output {
+    my $self = shift;
+
+    unless ($self->indel_bed_output) { 
+        $self->indel_bed_output($self->_temp_staging_directory. '/indels.hq.bed'); 
+    }
+
+    return;
+}
+
 sub add_bams_to_input {
     my ($self, $input) = @_;
 
@@ -68,10 +78,8 @@ sub _detect_variants {
 
     $self->_ensure_chromosome_list_set;
 
-    # Set default params
-    unless ($self->indel_bed_output) { 
-        $self->indel_bed_output($self->_temp_staging_directory. '/indels.hq.bed'); 
-    }
+    $self->set_output;
+
     my $refbuild_id = $self->reference_build_id;
     unless($refbuild_id){
         die $self->error_message("Received no reference build id.");

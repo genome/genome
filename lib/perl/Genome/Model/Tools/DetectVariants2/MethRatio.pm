@@ -38,6 +38,16 @@ sub _ensure_chromosome_list_set {
     return;
 }
 
+sub set_output {
+    my $self = shift;
+
+    unless ($self->snv_output) { 
+        $self->snv_output($self->_temp_staging_directory. '/snvs.hq');  #???
+    }
+
+    return;
+}
+
 sub add_bams_to_input {
     my ($self, $input) = @_;
 
@@ -50,12 +60,8 @@ sub _detect_variants {
 
     $self->_ensure_chromosome_list_set;
 
-    # Set default params
-    unless ($self->snv_output) { 
-        $self->snv_output($self->_temp_staging_directory. '/snvs.hq');  #???
-    }
+    $self->set_output;
 
-    #get ref seq fasta
     my $refbuild_id = $self->reference_build_id;
     unless($refbuild_id){
         die $self->error_message("Received no reference build id.");
