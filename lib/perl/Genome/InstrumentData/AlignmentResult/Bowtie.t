@@ -72,7 +72,12 @@ sub aligner_name { "bowtie" }
 #
 ###############################################################################
 
-my $FAKE_INSTRUMENT_DATA_ID=-123456;
+{
+    my $FAKE_INSTRUMENT_DATA_ID = -123456;
+    sub next_fake_instrument_data_id {
+        return $FAKE_INSTRUMENT_DATA_ID--;
+    }
+}
 
 #
 # Gather up the reference sequences.
@@ -227,12 +232,13 @@ sub test_shortcutting {
 sub generate_fake_instrument_data {
 
     my $fastq_directory = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Align-Maq/test_sample_name';
+    my $fake_id = next_fake_instrument_data_id();
     my $instrument_data = Genome::InstrumentData::Solexa->create_mock(
-                                                                      id => $FAKE_INSTRUMENT_DATA_ID,
+                                                                      id => $fake_id,
                                                                       sequencing_platform => 'solexa',
                                                                       flow_cell_id => '12345',
                                                                       lane => '1',
-                                                                      seq_id => $FAKE_INSTRUMENT_DATA_ID,
+                                                                      seq_id => $fake_id,
                                                                       median_insert_size => '22',
                                                                       sample_name => 'test_sample_name',
                                                                       library_id => '-1234545',
@@ -257,8 +263,6 @@ sub generate_fake_instrument_data {
     $instrument_data->set_always('calculate_alignment_estimated_kb_usage',10000);
     $instrument_data->set_always('resolve_quality_converter','sol2sanger');
     $instrument_data->set_always('run_start_date_formatted','Fri Jul 10 00:00:00 CDT 2009');
-
-    $FAKE_INSTRUMENT_DATA_ID--;
 
     return $instrument_data;
 
