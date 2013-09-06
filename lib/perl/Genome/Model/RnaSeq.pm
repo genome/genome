@@ -22,6 +22,7 @@ class Genome::Model::RnaSeq {
         },
         target_region_set_name => {
             is => 'Text',
+            is_optional => 1,
             doc => 'limits the assignment of instrument data by default to only data with a matching TRSN'
         },
     ],
