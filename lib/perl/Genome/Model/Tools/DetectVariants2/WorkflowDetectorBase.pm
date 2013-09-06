@@ -187,6 +187,11 @@ sub raw_output_file {
     return $self->output_directory . "/" . $self->variant_type . "s.hq";
 }
 
+sub raw_inputs {
+    my $self = shift;
+
+    return map {$self->raw_input_for_chromosome($_)} @{$self->chromosome_list};
+}
 
 1;
 

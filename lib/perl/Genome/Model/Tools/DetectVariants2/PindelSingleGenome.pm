@@ -87,12 +87,6 @@ sub variant_type {
     return 'indel';
 }
 
-sub raw_inputs {
-    my $self = shift;
-
-    return map {$self->raw_input_for_chromosome($_)} @{$self->chromosome_list};
-}
-
 sub raw_input_for_chromosome {
     my ($self, $chromosome) = @_;
     return $self->output_directory . "/"
