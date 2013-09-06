@@ -29,14 +29,19 @@ class Genome::Model::Tools::DetectVariants2::MethRatio {
     ],
 };
 
+sub _ensure_chromosome_list_set {
+    my $self = shift;
+
+    unless ($self->chromosome_list) {
+        $self->chromosome_list($self->default_chromosomes);
+    }
+    return;
+}
+
 sub _detect_variants {
     my $self = shift;
 
-    # Set the chromosome_list if it is not already
-    unless ($self->chromosome_list) {
-        my @default_chromosomes = $self->default_chromosomes;
-        $self->chromosome_list(\@default_chromosomes);
-    }
+    $self->_ensure_chromosome_list_set;
 
     # Obtain bam and check it.
     my ($build, $bam_file);
@@ -119,6 +124,12 @@ sub _sort_detector_output {
 
 sub versions {
     return Genome::Model::Tools::Bsmap::MethRatioWorkflow->available_methratio_versions;
+}
+
+sub default_chromosome_list {
+    my $self = shift;
+
+    return $self->default_chromosomes;
 }
 
 sub default_chromosomes {
