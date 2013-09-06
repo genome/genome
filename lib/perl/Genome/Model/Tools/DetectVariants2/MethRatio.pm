@@ -15,11 +15,6 @@ class Genome::Model::Tools::DetectVariants2::MethRatio {
     is => ['Genome::Model::Tools::DetectVariants2::WorkflowDetectorBase'],
     doc => "Runs methyl counting script on a bsmap alignment model.",
     has => [
-        chromosome_list => {
-            is => 'ARRAY',
-            is_optional => 1,
-            doc => 'list of chromosomes to run on. This will run on a default set of chromosomes from the reference sequence if not set.',
-        },
    ],
     has_transient_optional => [
         _snv_output_dir => {

@@ -17,11 +17,6 @@ class Genome::Model::Tools::DetectVariants2::Pindel {
     is => ['Genome::Model::Tools::DetectVariants2::WorkflowDetectorBase'],
     doc => "Runs the pindel pipeline on the last complete build of a somatic model.",
     has => [
-        chromosome_list => {
-            is => 'ARRAY',
-            is_optional => 1,
-            doc => 'list of chromosomes to run on.',
-        },
         chr_mem_usage => {
             is => 'ARRAY',
             is_optional => 1,
