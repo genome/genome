@@ -91,11 +91,6 @@ sub variant_type {
     return 'indel';
 }
 
-sub raw_output_file {
-    my $self = shift;
-    return $self->output_directory . "/" . $self->variant_type . "s.hq";
-}
-
 sub raw_inputs {
     my $self = shift;
 

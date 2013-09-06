@@ -182,6 +182,11 @@ sub default_chromosomes {
     return $self->sort_chromosomes($refbuild->chromosome_array_ref);
 }
 
+sub raw_output_file {
+    my $self = shift;
+    return $self->output_directory . "/" . $self->variant_type . "s.hq";
+}
+
 
 1;
 
