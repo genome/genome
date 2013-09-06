@@ -117,5 +117,3 @@ sub filter_bam {
 };
 
 1;
-
-__END__
