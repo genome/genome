@@ -60,15 +60,6 @@ sub _detect_variants {
 
     $self->_ensure_chromosome_list_set;
 
-    # Obtain normal and tumor bams and check them. Either from somatic model id or from direct specification. 
-    my ($build, $tumor_bam, $normal_bam);
-    $tumor_bam = $self->aligned_reads_input;
-    $normal_bam = $self->control_aligned_reads_input if defined $self->control_aligned_reads_input;
-
-    #unless(defined($self->reference_sequence_input)){
-    #    $self->reference_sequence_input( Genome::Config::reference_sequence_directory() . '/NCBI-human-build36/all_sequences.fa' );
-    #}
-
     # Set default params
     unless ($self->indel_bed_output) { 
         $self->indel_bed_output($self->_temp_staging_directory. '/indels.hq.bed'); 
