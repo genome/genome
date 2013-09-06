@@ -18,6 +18,32 @@ BEGIN {
     use_ok('Genome::InstrumentData::Solexa');
 }
 
+__cached_value_for(
+    'expected_shortcut_path',
+    sub {
+        my $aligner_label   = aligner_name().aligner_version();
+        $aligner_label =~ s/\./\_/g;
+        return "/gscmnt/sata828/info/alignment_data/$aligner_label/TEST-human/test_run_name/4_-123456";
+    });
+__cached_value_for(
+    'aligner_version',
+    sub {
+        my $subclass_part = Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name(aligner_name());
+        my $aligner_tools_class_name = "Genome::Model::Tools::${subclass_part}";
+        return $aligner_tools_class_name->default_version;
+    });
+__cached_value_for(
+    'reference_build',
+    sub {
+        my $reference_model = Genome::Model::ImportedReferenceSequence->get(name => 'TEST-human');
+        ok($reference_model, "got reference model");
+
+        my $reference_build = $reference_model->build_by_version('1');
+        ok($reference_build, "got reference build");
+        return $reference_build;
+    });
+
+
 
 #
 # Configuration for the aligner name, etc
@@ -63,42 +89,19 @@ test_shortcutting();
 test_alignment();
 test_alignment(force_fragment => 1);
 
-{
-    my $expected_shortcut_path;
-    sub expected_shortcut_path {
-        unless ($expected_shortcut_path) {
-            my $aligner_label   = aligner_name().aligner_version();
-            $aligner_label =~ s/\./\_/g;
-            $expected_shortcut_path = "/gscmnt/sata828/info/alignment_data/$aligner_label/TEST-human/test_run_name/4_-123456";
-        }
-        return $expected_shortcut_path;
-    }
-}
+sub __cached_value_for {
+    my $value_name = shift;
+    my $resolver_sub = shift;
 
-{
-    my $aligner_version;
-    sub aligner_version {
-        unless ($aligner_version) {
-            my $subclass_part = Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name(aligner_name());
-            my $aligner_tools_class_name = "Genome::Model::Tools::${subclass_part}";
-            $aligner_version = $aligner_tools_class_name->default_version;
+    my $cached_value;
+    my $caching_sub = sub {
+        unless (defined $cached_value) {
+           $cached_value = $resolver_sub->();
         }
-        return $aligner_version;
-    }
-}
-
-{
-    my $reference_build;
-    sub reference_build {
-        unless ($reference_build) {
-            my $reference_model = Genome::Model::ImportedReferenceSequence->get(name => 'TEST-human');
-            ok($reference_model, "got reference model");
-
-            $reference_build = $reference_model->build_by_version('1');
-            ok($reference_build, "got reference build");
-        }
-        return $reference_build;
-    }
+        return $cached_value;
+    };
+    no strict 'refs';
+    *$value_name = $caching_sub;
 }
 
 
