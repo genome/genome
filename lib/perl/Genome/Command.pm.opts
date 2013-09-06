@@ -7270,8 +7270,6 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'annotation-build=s',
         undef,
-        'target-region-set-name=s',
-        'files',
         'add-to-projects=s@',
         undef,
         'instrument-data=s@',
@@ -7281,6 +7279,8 @@ $Genome::Command::OPTS_SPEC = [
         'groups=s@',
         undef,
         'model-name=s',
+        'files',
+        'target-region-set-name=s',
         'files',
         'help!',
         undef
