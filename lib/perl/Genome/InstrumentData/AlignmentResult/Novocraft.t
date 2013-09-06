@@ -44,11 +44,6 @@ my $alignment_result_class_name = "Genome::InstrumentData::AlignmentResult::" . 
 my $samtools_version = Genome::Model::Tools::Sam->default_samtools_version;
 my $picard_version = Genome::Model::Tools::Picard->default_picard_version;
 
-my $aligner_label   = aligner_name().aligner_version();
-$aligner_label =~ s/\./\_/g;
-
-my $expected_shortcut_path = "/gscmnt/sata828/info/alignment_data/$aligner_label/TEST-human/test_run_name/4_-123456",
-
 my $FAKE_INSTRUMENT_DATA_ID=-123456;
 eval "use $alignment_result_class_name";
 
@@ -66,6 +61,19 @@ my $temp_reference_index = Genome::Model::Build::ReferenceSequence::AlignerIndex
 test_shortcutting();
 test_alignment();
 test_alignment(force_fragment => 1);
+
+{
+    my $expected_shortcut_path;
+    sub expected_shortcut_path {
+        unless ($expected_shortcut_path) {
+            my $aligner_label   = aligner_name().aligner_version();
+            $aligner_label =~ s/\./\_/g;
+
+            $expected_shortcut_path = "/gscmnt/sata828/info/alignment_data/$aligner_label/TEST-human/test_run_name/4_-123456";
+        }
+        return $expected_shortcut_path;
+    }
+}
 
 {
     my $aligner_version;
@@ -119,6 +127,7 @@ sub test_alignment {
     if ($generate_shortcut) {
         print "*** Using this data to generate shortcut data! ***\n";
 
+        my $expected_shortcut_path = expected_shortcut_path();
         if (-d $expected_shortcut_path) {
             die "Expected shortcut path $expected_shortcut_path already exists, don't want to step on it";
         }
@@ -143,7 +152,7 @@ sub test_shortcutting {
 
     my $alignment_result = $alignment_result_class_name->__define__(
                  id => -8765432,
-                 output_dir => $expected_shortcut_path,
+                 output_dir => expected_shortcut_path(),
                  instrument_data_id => $fake_instrument_data->id,
                  subclass_name => $alignment_result_class_name,
                  module_version => '12345',
