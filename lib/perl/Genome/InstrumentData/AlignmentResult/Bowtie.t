@@ -39,14 +39,12 @@ sub aligner_name { "bowtie" }
 # Gather up versions for the tools used herein
 #
 ###############################################################################
-my $aligner_tools_class_name = "Genome::Model::Tools::" . Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name(aligner_name());
 my $alignment_result_class_name = "Genome::InstrumentData::AlignmentResult::" . Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name(aligner_name());
 
 my $samtools_version = Genome::Model::Tools::Sam->default_samtools_version;
 my $picard_version = Genome::Model::Tools::Picard->default_picard_version;
 
-my $aligner_version = $aligner_tools_class_name->default_version;
-my $aligner_label   = aligner_name().$aligner_version;
+my $aligner_label   = aligner_name().aligner_version();
 $aligner_label =~ s/\./\_/g;
 
 my $expected_shortcut_path = "/gscmnt/sata828/info/alignment_data/$aligner_label/TEST-human/test_run_name/4_-123456",
@@ -59,7 +57,7 @@ eval "use $alignment_result_class_name";
 #
 ###########################################################
 
-my $reference_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->create(aligner_name=> aligner_name(), aligner_version=>$aligner_version, aligner_params=>undef, reference_build=> reference_build());
+my $reference_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->create(aligner_name=> aligner_name(), aligner_version=> aligner_version(), aligner_params=>undef, reference_build=> reference_build());
 ok($reference_index, "generated reference index");
 
 # Uncomment this to create the dataset necessary for shorcutting to work
@@ -69,6 +67,18 @@ ok($reference_index, "generated reference index");
 test_shortcutting();
 test_alignment();
 test_alignment(force_fragment => 1);
+
+{
+    my $aligner_version;
+    sub aligner_version {
+        unless ($aligner_version) {
+            my $subclass_part = Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name(aligner_name());
+            my $aligner_tools_class_name = "Genome::Model::Tools::${subclass_part}";
+            $aligner_version = $aligner_tools_class_name->default_version;
+        }
+        return $aligner_version;
+    }
+}
 
 {
     my $reference_build;
@@ -96,7 +106,7 @@ sub test_alignment {
                                                        instrument_data_id => $instrument_data->id,
                                                        samtools_version => $samtools_version,
                                                        picard_version => $picard_version,
-                                                       aligner_version => $aligner_version,
+                                                       aligner_version => aligner_version(),
                                                        aligner_name => aligner_name(),
                                                        reference_build => reference_build(),
                                                        %p,
@@ -140,7 +150,7 @@ sub test_shortcutting {
                  subclass_name => $alignment_result_class_name,
                  module_version => '12345',
                  aligner_name => aligner_name(),
-                 aligner_version=>$aligner_version,
+                 aligner_version=> aligner_version(),
                  samtools_version=>$samtools_version,
                  picard_version=>$picard_version,
                  reference_build => reference_build(),
@@ -162,7 +172,7 @@ sub test_shortcutting {
     my $bad_alignment = Genome::InstrumentData::AlignmentResult->create(
                                                               instrument_data_id => $fake_instrument_data->id,
                                                               aligner_name => aligner_name(),
-                                                              aligner_version => $aligner_version,
+                                                              aligner_version => aligner_version(),
                                                               samtools_version => $samtools_version,
                                                               picard_version => $picard_version,
                                                               reference_build => reference_build(),
@@ -178,7 +188,7 @@ sub test_shortcutting {
     my $alignment = Genome::InstrumentData::AlignmentResult->get_with_lock(
                                                               instrument_data_id => $fake_instrument_data->id,
                                                               aligner_name => aligner_name(),
-                                                              aligner_version => $aligner_version,
+                                                              aligner_version => aligner_version(),
                                                               samtools_version => $samtools_version,
                                                               picard_version => $picard_version,
                                                               reference_build => reference_build(),
