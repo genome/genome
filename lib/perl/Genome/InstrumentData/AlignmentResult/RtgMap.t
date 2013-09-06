@@ -44,8 +44,6 @@ my $alignment_result_class_name = "Genome::InstrumentData::AlignmentResult::" . 
 my $samtools_version = Genome::Model::Tools::Sam->default_samtools_version;
 my $picard_version = Genome::Model::Tools::Picard->default_picard_version;
 
-my $aligner_version_method_name = sprintf("default_%s_version", aligner_name());
-
 my $aligner_version = $aligner_tools_class_name->default_rtg_version;
 my $aligner_label   = aligner_name().$aligner_version;
 $aligner_label =~ s/\.|\s/\_/g;
