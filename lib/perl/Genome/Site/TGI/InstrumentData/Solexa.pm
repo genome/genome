@@ -326,14 +326,7 @@ sub dump_to_file_system {
 }
 
 sub dump_illumina_fastq_files {
-    my $self = shift;
-
-    unless ($self->resolve_quality_converter eq 'sol2phred') {
-        $self->error_message("This instrument data is not natively Illumina formatted, cannot dump");
-        die $self->error_message;
-    }
-
-    return $self->_unprocessed_fastq_filenames(@_);
+    return Genome::InstrumentData::Solexa::dump_illumina_fastq_files(@_);
 }
 
 sub dump_solexa_fastq_files {
