@@ -51,9 +51,12 @@ ok($manager, 'create manager');
 ok($manager->execute, 'execute');
 my $sample_hash = eval{ $manager->samples->{$source_files}; };
 ok($sample_hash, 'sample hash');
-is($sample_hash->{status}, 'sample_needed', 'sample hash status');
+is($sample_hash->{status}, 'sample_needed', 'status is sample_needed');
 is($sample_hash->{name}, $sample_name, 'sample hash sample name');
-ok(!$sample_hash->{sample}, 'sample hash sample');
+ok(!$sample_hash->{sample}, 'sample hash sample does not exist');
+ok(!$sample_hash->{instrument_data}, 'sample hash instrument data does not exist');
+ok(!$sample_hash->{model}, 'sample hash model does not exist');
+ok(!$sample_hash->{build}, 'sample hash build does not exist');
 
 # Define sample
 my $sample = Genome::Sample->__define__(
@@ -62,7 +65,7 @@ my $sample = Genome::Sample->__define__(
     nomenclature => 'TeSt',
 );
 
-# Import needed, model is created
+# Import needed
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
     working_directory => $working_directory,
 );
@@ -70,16 +73,12 @@ ok($manager, 'create manager');
 ok($manager->execute, 'execute');
 $sample_hash = eval{ $manager->samples->{$source_files}; };
 ok($sample_hash, 'sample hash');
-is($sample_hash->{status}, 'import_needed', 'sample hash status');
+is($sample_hash->{status}, 'import_needed', 'status is import_needed');
 is($sample_hash->{name}, $sample_name, 'sample hash sample name');
 is($sample_hash->{sample}, $sample, 'sample hash sample');
-
-# Import command
-is(
-    $manager->_resolve_instrument_data_import_command_for_sample($sample_hash),
-    "echo $sample_name genome instrument-data import basic --sample name=$sample_name --source-files original.bam --import-source-name TeSt --instrument-data-properties lane='8'",
-    'inst data import command',
-);
+ok(!$sample_hash->{instrument_data}, 'sample hash instrument data does not exist');
+ok(!$sample_hash->{model}, 'sample hash model does not exist');
+ok(!$sample_hash->{build}, 'sample hash build does not exist');
 
 # Import pend
 unlink($info_tsv, $config_yaml);
@@ -92,31 +91,21 @@ ok($manager, 'create manager');
 ok($manager->execute, 'execute');
 $sample_hash = eval{ $manager->samples->{$source_files}; };
 ok($sample_hash, 'sample hash');
-is($sample_hash->{status}, 'import_pend', 'sample hash status');
+is($sample_hash->{status}, 'import_pend', 'status is import_pend');
+is($sample_hash->{job_status}, 'pend', 'sample hash job status');
 is($sample_hash->{name}, $sample_name, 'sample hash sample name');
 is($sample_hash->{sample}, $sample, 'sample hash sample');
+ok(!$sample_hash->{instrument_data}, 'sample hash instrument data does not exist');
+ok(!$sample_hash->{model}, 'sample hash model does not exist');
+ok(!$sample_hash->{build}, 'sample hash build does not exist');
 
-# Make progress: create model and 'import' (it thinks it is importing b/c of the command used in the config file)
-$manager = Genome::InstrumentData::Command::Import::Manager->create(
-    working_directory => $working_directory,
-     launch_imports => 1,
+is(
+    $manager->_resolve_instrument_data_import_command_for_sample($sample_hash),
+    "echo $sample_name genome instrument-data import basic --sample name=$sample_name --source-files original.bam --import-source-name TeSt --instrument-data-properties lane='8'",
+    'inst data import command',
 );
-ok($manager, 'create manager');
-ok($manager->execute, 'execute');
-$sample_hash = eval{ $manager->samples->{$source_files}; };
-ok($sample_hash, 'sample hash');
-is($sample_hash->{status}, 'import_pend', 'sample hash status');
-is($sample_hash->{name}, $sample_name, 'sample hash sample name');
-ok($sample_hash->{sample}, 'sample hash sample');
-ok($sample_hash->{model}, 'sample hash model');
-is($sample_hash->{job_status}, 'pend', 'sample hash job status');
-ok(!$sample_hash->{model}->auto_assign_inst_data, 'model auto_assign_inst_data is off');
-ok(!$sample_hash->{model}->auto_build_alignments, 'model auto_build_alignments is off');
-ok(!$sample_hash->{model}->build_requested, 'model build_requested is off');
-ok(!$sample_hash->{model}->instrument_data, 'model does not have instrument data assigned');
-ok(!$sample_hash->{build}, 'sample hash build');
 
-# Make progress: create inst data here, it should get assigned to the model and build should be requested
+# Unsuccessful import has left inst data entity, but no data file
 my $inst_data = Genome::InstrumentData::Imported->__define__(
     original_data_path => $source_files,
     sample => $sample,
@@ -125,7 +114,6 @@ my $inst_data = Genome::InstrumentData::Imported->__define__(
     import_format => 'bam',
     description => 'import test',
 );
-$inst_data->add_attribute(attribute_label => 'bam_path', attribute_value => $config_yaml); #point to an existing file
 $inst_data->add_attribute(attribute_label => 'read_count', attribute_value => 1000);
 $inst_data->add_attribute(attribute_label => 'read_length', attribute_value => 100);
 
@@ -140,10 +128,33 @@ ok($manager, 'create manager');
 ok($manager->execute, 'execute');
 $sample_hash = eval{ $manager->samples->{$source_files}; };
 ok($sample_hash, 'sample hash');
-is($sample_hash->{status}, 'build_needed', 'sample hash status');
-is_deeply([$sample_hash->{instrument_data}], [$inst_data], 'sample hash inst data');
+is($sample_hash->{status}, 'import_failed', 'status is import_failed');
+is($sample_hash->{name}, $sample_name, 'sample hash sample name');
+is($sample_hash->{sample}, $sample, 'sample hash sample');
+ok($sample_hash->{instrument_data}, 'sample hash instrument');
+ok(!$sample_hash->{model}, 'sample hash model does not exist');
+ok(!$sample_hash->{build}, 'sample hash build does not exist');
+
+# Successful import, point bam_path to existing file
+$inst_data->add_attribute(attribute_label => 'bam_path', attribute_value => $config_yaml);
+
+$manager = Genome::InstrumentData::Command::Import::Manager->create(
+    working_directory => $working_directory,
+);
+ok($manager, 'create manager');
+ok($manager->execute, 'execute');
+$sample_hash = eval{ $manager->samples->{$source_files}; };
+ok($sample_hash, 'sample hash');
+is($sample_hash->{status}, 'build_needed', 'status is build_needed');
+is($sample_hash->{name}, $sample_name, 'sample hash sample name');
+is($sample_hash->{sample}, $sample, 'sample hash sample');
+ok($sample_hash->{instrument_data}, 'sample hash instrument');
 ok($sample_hash->{model}, 'sample hash model');
 is_deeply([$sample_hash->{model}->instrument_data], [$inst_data], 'model has instrument data assigned');
+ok(!$sample_hash->{model}->auto_assign_inst_data, 'model auto_assign_inst_data is off');
+ok(!$sample_hash->{model}->auto_build_alignments, 'model auto_build_alignments is off');
+ok(!$sample_hash->{model}->build_requested, 'model build_requested is off');
+ok(!$sample_hash->{build}, 'sample hash build does not exist');
 
 # fail - no config file
 $manager = Genome::InstrumentData::Command::Import::Manager->create(

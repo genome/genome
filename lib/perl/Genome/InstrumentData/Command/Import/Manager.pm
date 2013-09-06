@@ -370,27 +370,27 @@ sub _load_models {
     my $model_class = $self->model_class;
     my $model_params = $self->model_params;
     for my $sample ( values %$samples ) {
-        next if not $sample->{sample};
+        # only get/create model once inst data has been created
+        next if not $sample->{instrument_data};
+        # and has data file
+        next if not -s $sample->{instrument_data_file};
 
+        # Only get model for these params and inst data
         $model_params->{subject} = $sample->{sample};
+        $model_params->{'instrument_data.id'} = $sample->{instrument_data}->id;
 
         my $model = $model_class->get(%$model_params);
         if ( not $model ) {
             $model = $model_class->create(%$model_params);
+            if ( not $model ) {
+                $self->error_message('Failed to create model for sample! '.$sample->{name});
+                return;
+            }
+            $model->add_instrument_data( $sample->{instrument_data} );
         }
-        next if not $model;
 
         $sample->{model} = $model;
         $sample->{build} = $model->latest_build;
-
-        my $instrument_data = $sample->{instrument_data};
-        next if not $instrument_data;
-
-        my $instrument_data_id = $instrument_data->id;
-        my @model_instrument_data = $model->instrument_data;
-        if ( not @model_instrument_data or not grep { $instrument_data_id eq $_ } map { $_->id } @model_instrument_data ) {
-            $model->add_instrument_data($instrument_data);
-        }
     }
 
     $self->samples($samples);
