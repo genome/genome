@@ -312,8 +312,8 @@ sub execute {
     my $load_sample_statuses = $self->_load_sample_statuses;
     return if not $load_sample_statuses;
 
-    my $make_progress = $self->_make_progress;
-    return if not $make_progress;
+    my $launch_imports = $self->_launch_imports;
+    return if not $launch_imports;
 
     $self->_status;
 
@@ -480,53 +480,29 @@ sub _status {
     return 1;
 }
 
-sub _make_progress {
+sub _launch_imports {
     my $self = shift;
 
-    return 1 if not $self->make_progress;
+    return 1 if not $self->launch_imports;
 
-    my $model_class = $self->model_class;
-    my $model_params = $self->model_params;
     my $samples = $self->samples;
-    my @samples_to_launch_imports;
     for my $sample ( values %$samples ) {
-        next if $sample->{status} eq 'build_succeeded';
+        next if not grep { $sample->{status} ne $_ } (qw/ import_needed import_failed /);
 
-        # Run import command
-        if ( $self->launch_imports ) {
-            if ( $sample->{status} eq 'import_needed' ) {
-                push @samples_to_launch_imports, $sample;
-            }
-            elsif ( $sample->{status} eq 'import_failed' ) {
-                if ( $sample->{instrument_data} ) {
-                    $sample->{instrument_data}->delete;
-                    $sample->{instrument_data} = undef;
-                }
-                push @samples_to_launch_imports, $sample;
-            }
+        if ( $sample->{status} eq 'import_failed' and $sample->{instrument_data} ) {
+            $sample->{instrument_data}->delete;
+            $sample->{instrument_data} = undef;
         }
-    }
 
-    if ( @samples_to_launch_imports ) {
-        my $launch_imports_ok = $self->_launch_instrument_data_import_for_samples(@samples_to_launch_imports);
-        return if not $launch_imports_ok;
-    }
-
-    $self->samples($samples);
-    return 1;
-}
-
-sub _launch_instrument_data_import_for_samples {
-    my ($self, @samples) = @_;
-
-    Carp::confess('No samples to _launch_instrument_data_import_for_samples!') if not @samples;
-
-    for my $sample ( @samples ) {
         my $cmd = $self->_resolve_instrument_data_import_command_for_sample($sample);
         my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
-        next if not $rv;
-        $self->error_message($@) if $@;
-        $self->error_message('Failed to launch instrument data import command for sample! '.$sample->name);
+        if ( not $rv ) {
+            $self->error_message($@) if $@;
+            $self->error_message('Failed to launch instrument data import command for sample! '.$sample->{name});
+            return;
+        }
+
+        $sample->{status} = 'import_pend';
     }
 
     return 1;
