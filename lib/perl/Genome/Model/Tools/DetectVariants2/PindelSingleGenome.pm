@@ -105,7 +105,6 @@ sub _create_temp_directories {
     return $self->SUPER::_create_temp_directories(@_);
 }
 
-
 sub _generate_standard_files {
     my $self = shift;
     my $staging_dir = $self->_temp_staging_directory;

@@ -95,7 +95,6 @@ sub _detect_variants {
     if(Workflow::Model->parent_workflow_log_dir) {
         $log_dir = Workflow::Model->parent_workflow_log_dir;
     }
-
     $workflow->log_dir($log_dir);
 
     # Launch workflow

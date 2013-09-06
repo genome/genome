@@ -76,7 +76,6 @@ sub _detect_variants {
     $input{output_directory}  =  $self->output_directory;
     $input{version}  =  $self->version;
     
-
     $self->_dump_workflow($workflow);
 
     my $log_dir = $self->output_directory;
