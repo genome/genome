@@ -2,8 +2,8 @@
 [4mUSAGE[0m
  [1mgenome model define rna-seq[0m [--auto-assign-inst-data] [--auto-build-alignments]
     --processing-profile=? --reference-sequence-build=? --annotation-build=?
-    --target-region-set-name=? [--add-to-projects=?[,?]] [--instrument-data=?[,?]] [--subject=?]
-    [--groups=?[,?]] [--model-name=?]
+    [--add-to-projects=?[,?]] [--instrument-data=?[,?]] [--subject=?] [--groups=?[,?]]
+    [--model-name=?] [--target-region-set-name=?]
 
 [4mSYNOPSIS[0m
   genome model define rna-seq \
@@ -18,8 +18,6 @@
     (undocumented) 
   [1mannotation-build[0m
     (undocumented) 
-  [1mtarget-region-set-name[0m
-    limits the assignment of instrument data by default to only data with a matching TRSN 
 
 [4mOPTIONAL INPUTS[0m
   [1madd-to-projects[0m
@@ -33,6 +31,8 @@
     Model groups to put the newly created model into 
   [1mmodel-name[0m
     User meaningful name for this model, a default is used if none is provided 
+  [1mtarget-region-set-name[0m
+    limits the assignment of instrument data by default to only data with a matching TRSN 
 
 [4mOPTIONAL PARAMS[0m
   [1mauto-assign-inst-data[0m
