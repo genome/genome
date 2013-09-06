@@ -39,27 +39,52 @@ class Genome::Model::Tools::DetectVariants2::PindelSingleGenome {
     ],
 };
 
-sub _detect_variants {
+sub _ensure_chromosome_list_set {
+}
+
+sub set_output {
     my $self = shift;
-    # Obtain normal and tumor bams and check them. Either from somatic model id or from direct specification.
-    my ($build, $tumor_bam, $normal_bam);
-    $tumor_bam = $self->aligned_reads_input;
 
-
-    # Set default params
     unless ($self->indel_bed_output) {
         $self->indel_bed_output($self->_temp_staging_directory. '/indels.hq.bed');
     }
+
+    return;
+}
+
+sub add_bams_to_input {
+    my ($self, $input) = @_;
+
+    $input->{tumor_bam} = $self->aligned_reads_input;
+
+    return;
+}
+
+sub get_reference {
+    my $self = shift;
+
     my $refbuild_id = $self->reference_build_id;
     unless($refbuild_id){
         die $self->error_message("Received no reference build id.");
     }
     print "refbuild_id = ".$refbuild_id."\n";
 
-    my %input;
+    return $refbuild_id;
+}
+
+sub workflow_xml {
+    return \*DATA;
+}
+
+sub _detect_variants {
+    my $self = shift;
+
+    $self->_ensure_chromosome_list_set;
+
+    $self->set_output;
 
     # Define a workflow from the static XML at the bottom of this module
-    my $workflow = Workflow::Operation->create_from_xml(\*DATA);
+    my $workflow = Workflow::Operation->create_from_xml($self->workflow_xml);
 
     # Validate the workflow
     my @errors = $workflow->validate;
@@ -68,12 +93,13 @@ sub _detect_variants {
         die "Errors validating workflow\n";
     }
 
-    # Collect and set input parameters
-    $input{chromosome_list}=$self->chromosome_list;
-    $input{reference_build_id}=$refbuild_id;
-    $input{tumor_bam}=$self->aligned_reads_input;
-    $input{output_directory} = $self->output_directory;#$self->_temp_staging_directory;
-    $input{version}=$self->version;
+    my %input;
+    $input{chromosome_list} = $self->chromosome_list;
+    $input{reference} = $self->get_reference;
+    $input{output_directory} = $self->output_directory;
+    $input{version} = $self->version;
+
+    $self->add_bams_to_input(\%input);
 
     $self->_dump_workflow($workflow);
 
@@ -126,7 +152,7 @@ __DATA__
   <link fromOperation="input connector" fromProperty="output_directory" toOperation="Pindel" toProperty="output_directory" />
   <link fromOperation="input connector" fromProperty="chromosome_list" toOperation="Pindel" toProperty="chromosome" />
   <link fromOperation="input connector" fromProperty="version" toOperation="Pindel" toProperty="version" />
-  <link fromOperation="input connector" fromProperty="reference_build_id" toOperation="Pindel" toProperty="reference_build_id" />
+  <link fromOperation="input connector" fromProperty="reference" toOperation="Pindel" toProperty="reference_build_id" />
 
   <link fromOperation="Pindel" fromProperty="output_directory" toOperation="output connector" toProperty="output" />
 
@@ -139,7 +165,7 @@ __DATA__
     <inputproperty isOptional="Y">output_directory</inputproperty>
     <inputproperty isOptional="Y">version</inputproperty>
     <inputproperty isOptional="Y">chromosome_list</inputproperty>
-    <inputproperty isOptional="Y">reference_build_id</inputproperty>
+    <inputproperty isOptional="Y">reference</inputproperty>
 
     <outputproperty>output</outputproperty>
   </operationtype>
