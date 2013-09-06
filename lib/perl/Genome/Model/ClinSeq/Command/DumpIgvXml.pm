@@ -182,7 +182,7 @@ sub execute {
     my $genome_build = "";
     my $gene_track_name = "";
     my $starting_locus = "";
-    if ($reference_genome_name eq 'GRCh37-lite-build37'){
+    if ($reference_genome_name=~/GRCh37\-lite\-build37/){ #Assumes that if name is "like" this you want b37
       $genome_build = "b37";
       $starting_locus = "12:25398182-25398361";
     }else{
