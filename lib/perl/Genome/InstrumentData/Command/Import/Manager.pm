@@ -46,12 +46,9 @@ class Genome::InstrumentData::Command::Import::Manager {
         model_class => { is => 'Text' },
         model_params => { is => 'Hash' },
         instrument_data_import_command_format => { is => 'Text', },
-        instrument_data_import_command_sample_name_cnt => { is => 'Number', },
-        status => { is => 'Text', },
         instrument_data_import_command_substitutions => { 
             is => 'Hash', 
-            #default_value => { map { $_ => qr/%{$_}/ } (qw/ sample_name /), },
-            default_value => { name => qr/%{sample_name}/, },
+            default_value => { map { $_ => qr/%{$_}/ } (qw/ sample_name /), },
         },
     ],
 };
@@ -218,9 +215,13 @@ sub _load_info_file {
             $self->error_message('Duplicate source files! '.$source_files);
             return;
         }
-        my $name = delete $hash->{sample_name};
+        my $sample_name = delete $hash->{sample_name};
+        if ( not $sample_name ) {
+            $self->error_message('No sample name in info file on line '.$info_reader->line_number.'!');
+            return;
+        }
         my $sample = {
-            name => $name,
+            sample_name => $sample_name,
             source_files => $source_files,
             instrument_data_attributes => [],
         };
@@ -288,12 +289,13 @@ sub _resolve_instrument_data_import_command {
     my $cmd_format = $self->config->{'job dispatch'}->{launch};
     if ( $cmd_format ) {
         my $substitutions = $self->instrument_data_import_command_substitutions;
-        my $sample_name_substitution = $substitutions->{name}; #FIXME
+        my $sample_name_substitution = $substitutions->{sample_name};
         if ( $cmd_format !~ /$sample_name_substitution/ ) {
             $self->error_message('No sample name substitutions (%{sample_name} in launch command! '.$cmd_format);
             return;
         }
         $cmd_format .= ' ';
+        # TODO rm unecessary subs
     }
 
     $cmd_format .= 'genome instrument-data import basic --sample name=%{sample_name} --source-files %s --import-source-name %s%s',
@@ -328,7 +330,7 @@ sub _load_samples {
 
     my $samples = $self->samples;
     for my $sample ( values %$samples ) {
-        $sample->{sample} = Genome::Sample->get(name => $sample->{name});
+        $sample->{sample} = Genome::Sample->get(name => $sample->{sample_name});
     }
 
     $self->samples($samples);
@@ -347,7 +349,7 @@ sub _load_instrument_data {
     );
 
     for my $sample ( values %$samples ) {
-        my $instrument_data = $instrument_data{ $sample->{name} };
+        my $instrument_data = $instrument_data{ $sample->{sample_name} };
         $sample->{instrument_data} = $instrument_data;
         $sample->{instrument_data_file} = eval{
             my $attribute = $instrument_data->attributes(attribute_label => 'bam_path');
@@ -386,7 +388,7 @@ sub _load_models {
         if ( not $model ) {
             $model = $model_class->create(%$model_params);
             if ( not $model ) {
-                $self->error_message('Failed to create model for sample! '.$sample->{name});
+                $self->error_message('Failed to create model for sample! '.$sample->{sample_name});
                 return;
             }
             $model->add_instrument_data( $sample->{instrument_data} );
@@ -420,7 +422,7 @@ sub _load_sample_statuses {
 
     my $samples = $self->samples;
     for my $sample ( values %$samples ) {
-        $sample->{job_status} = $sample_job_statuses->{ $sample->{name} };
+        $sample->{job_status} = $sample_job_statuses->{ $sample->{sample_name} };
         $sample->{status} = $get_status_for_sample->($sample);
     }
 
@@ -468,7 +470,7 @@ sub _launch_imports {
         my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
         if ( not $rv ) {
             $self->error_message($@) if $@;
-            $self->error_message('Failed to launch instrument data import command for sample! '.$sample->{name});
+            $self->error_message('Failed to launch instrument data import command for sample! '.$sample->{sample_name});
             return;
         }
 
@@ -514,7 +516,7 @@ sub _output_status {
 
     my %totals;
     my $status = join("\t", (qw/ name status inst_data model build /))."\n";
-    for my $sample ( sort { $a->{name} cmp $b->{name} } values %{$self->samples} ) {
+    for my $sample ( sort { $a->{sample_name} cmp $b->{sample_name} } values %{$self->samples} ) {
         $totals{total}++;
         $totals{ $sample->{status} }++;
         $totals{build}++ if $sample->{status} =~ /^build/;
@@ -527,7 +529,7 @@ sub _output_status {
         }
         $status .= join(
             "\t",
-            $sample->{name},
+            $sample->{sample_name},
             $sample->{status}, 
             ( $sample->{instrument_data} ? $sample->{instrument_data}->id : 'NA' ),
             $model_id,
