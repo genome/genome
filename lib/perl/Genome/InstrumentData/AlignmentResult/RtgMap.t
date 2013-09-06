@@ -60,7 +60,7 @@ execute();
 
 # this ought to match the name as seen in the processing profile
 sub aligner_name { "rtg map" }
-
+sub library_id { '144224' }
 
 # End aligner-specific configuration,
 # everything below here ought to be generic.
@@ -238,7 +238,7 @@ sub generate_fake_instrument_data {
                                                                       seq_id => $fake_id,
                                                                       median_insert_size => '22',
                                                                       sample_name => 'test_sample_name',
-                                                                      library_id => '144224',
+                                                                      library_id => library_id(),
                                                                       run_name => 'test_run_name',
                                                                       subset_name => 4,
                                                                       run_type => 'Paired End Read 2',
