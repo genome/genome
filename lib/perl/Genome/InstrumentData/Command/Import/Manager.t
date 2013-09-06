@@ -128,6 +128,7 @@ Genome::Sys->create_symlink($test_dir.'/valid-build/config.yaml', $config_yaml);
 
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
     source_files_tsv => $info_tsv,
+    model_params => [qw/ processing_profile_id=-333 reference_id=-333 /],
     working_directory => $working_directory,
 );
 ok($manager, 'create manager');
@@ -146,6 +147,7 @@ $inst_data->add_attribute(attribute_label => 'bam_path', attribute_value => $con
 
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
     source_files_tsv => $info_tsv,
+    model_params => [qw/ processing_profile_id=-333 reference_id=-333 /],
     working_directory => $working_directory,
 );
 ok($manager, 'create manager');
@@ -180,5 +182,15 @@ $manager = Genome::InstrumentData::Command::Import::Manager->create(
 ok($manager, 'create manager');
 ok(!$manager->execute, 'execute failed');
 is($manager->error_message, 'Property \'source_files_tsv\': No "sample_name" column in sample info file! '.$manager->source_files_tsv, 'correct error');
+
+# fail - model params does not have a pp
+$manager = Genome::InstrumentData::Command::Import::Manager->create(
+    working_directory => $test_dir.'/valid-build',
+    source_files_tsv => $test_dir.'/valid-build/info.tsv',
+    model_params => [qw/ reference_id=-333 /],
+);
+ok($manager, 'create manager');
+ok(!$manager->execute, 'execute failed');
+is($manager->error_message, "Property 'model_params': No processing profile id for model in config! reference_id=-333", 'correct error');
 
 done_testing();

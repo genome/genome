@@ -30,6 +30,11 @@ class Genome::InstrumentData::Command::Import::Manager {
             is => 'Text',
             doc => 'Command and column positions for sample anme and status. Use format: cmd;sample_name_col_#;sub tatus_col_#',
         },
+        model_params => {
+            is => 'Text',
+            is_many => 1,
+            doc => 'Parameters to use to create a model for the created instrument data. Give as comma separated key value pairs: param1=value1,param2=value2,... The model class will be derived fromm the processing profile.',
+        },
         make_progress => { 
             is => 'Boolean',
             default_value => 0,
@@ -52,10 +57,10 @@ class Genome::InstrumentData::Command::Import::Manager {
         _import_list_sample_name_column => { is => 'Text', },
         _import_list_status_column => { is => 'Text', },
         _import_command_format => { is => 'Text', },
+        _model_class => { is => 'Text' },
+        _model_params => { is => 'Hash' },
         config => { is => 'Hash', default_value => {}, },
         samples => { is => 'Hash', },
-        model_class => { is => 'Text' },
-        model_params => { is => 'Hash' },
         instrument_data_import_command_substitutions => { 
             is => 'Hash', 
             default_value => { map { $_ => qr/%{$_}/ } (qw/ sample_name /), },
@@ -141,7 +146,7 @@ sub __errors__ {
     if ( $model_params_error ) {
         push @errors, UR::Object::Tag->create(
             type => 'invalid',
-            properties => [qw/ config_file /],
+            properties => [qw/ model_params /],
             desc => $model_params_error,
         );
         return @errors;
@@ -244,18 +249,20 @@ sub _load_source_files_tsv {
 sub _resolve_model_params {
     my $self = shift;
 
-    my $config = $self->config;
-    if ( not $config->{model} ) {
-        return 1;
-    }
+    my @model_params = $self->model_params;
+    return if not @model_params;
 
     my %model_params;
-    for my $name ( keys %{$config->{model}} ) {
-        $model_params{$name} = $config->{model}->{$name};
+    for my $param ( @model_params ) {
+        my ($name, $value) = split('=', $param);
+        if ( not defined $value ) {
+            return "No value for model param $name!";
+        }
+        $model_params{$name} = $value;
     }
 
     if ( not $model_params{processing_profile_id} ) {
-        return 'No processing profile id for model in config! '.Data::Dumper::Dumper($config->{model});
+        return "No processing profile id for model in config! @model_params";
     }
     my $processing_profile_id = delete $model_params{processing_profile_id};
     $model_params{processing_profile} = Genome::ProcessingProfile->get($processing_profile_id);
@@ -281,8 +288,8 @@ sub _resolve_model_params {
         $model_params{$param_name} = $param_value;
     }
 
-    $self->model_class($model_class);
-    $self->model_params(\%model_params);
+    $self->_model_class($model_class);
+    $self->_model_params(\%model_params);
 
     return;
 }
@@ -378,11 +385,11 @@ sub _load_instrument_data {
 sub _load_models {
     my $self = shift;
 
-    return 1 if not $self->model_params;
+    my $model_params = $self->_model_params;
+    return 1 if not $model_params;
 
     my $samples = $self->samples;
-    my $model_class = $self->model_class;
-    my $model_params = $self->model_params;
+    my $model_class = $self->_model_class;
     for my $sample ( values %$samples ) {
         # only get/create model once inst data has been created
         next if not $sample->{instrument_data};
