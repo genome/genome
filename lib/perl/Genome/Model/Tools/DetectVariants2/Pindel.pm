@@ -8,7 +8,6 @@ use Workflow;
 use File::Copy;
 use Workflow::Simple;
 use Cwd;
-
 use Genome::Utility::Text;
 
 my $DEFAULT_VERSION = '0.2';
@@ -93,13 +92,6 @@ sub variant_type {
     return 'indel';
 }
 
-sub raw_input_for_chromosome {
-    my ($self, $chromosome) = @_;
-    return $self->output_directory . "/"
-        .  Genome::Utility::Text::sanitize_string_for_filesystem($chromosome)
-        . "/" . $self->variant_type . "s.hq";
-}
-
 sub raw_output_file {
     my $self = shift;
     return $self->output_directory . "/" . $self->variant_type . "s.hq";
@@ -111,6 +103,13 @@ sub raw_inputs {
     return map {$self->raw_input_for_chromosome($_)} @{$self->chromosome_list};
 }
 
+sub raw_input_for_chromosome {
+    my ($self, $chromosome) = @_;
+    return $self->output_directory . "/"
+        .  Genome::Utility::Text::sanitize_string_for_filesystem($chromosome)
+        . "/" . $self->variant_type . "s.hq";
+}
+
 sub _generate_standard_files {
     my $self = shift;
     my $staging_dir = $self->_temp_staging_directory;
@@ -120,11 +119,6 @@ sub _generate_standard_files {
         die $self->error_message("Cat command failed to execute.");
     }
     $self->SUPER::_generate_standard_files(@_);
-    return 1;
-}
-
-sub _sort_detector_output {
-    my $self = shift;
     return 1;
 }
 
@@ -158,6 +152,10 @@ sub params_for_detector_result {
     return $params;
 }
 
+sub _sort_detector_output {
+    my $self = shift;
+    return 1;
+}
 
 1;
 

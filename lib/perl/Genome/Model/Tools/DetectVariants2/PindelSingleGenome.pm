@@ -8,6 +8,7 @@ use Workflow;
 use File::Copy;
 use Workflow::Simple;
 use Cwd;
+use Genome::Utility::Text;
 
 my $DEFAULT_VERSION = '0.2';
 my $PINDEL_COMMAND = 'pindel_64';
@@ -40,6 +41,12 @@ class Genome::Model::Tools::DetectVariants2::PindelSingleGenome {
 };
 
 sub _ensure_chromosome_list_set {
+    my $self = shift;
+
+    unless ($self->chromosome_list) {
+        $self->chromosome_list($self->default_chromosomes);
+    }
+    return;
 }
 
 sub set_output {
@@ -76,14 +83,33 @@ sub workflow_xml {
     return \*DATA;
 }
 
+sub variant_type {
+    return 'indel';
+}
+
+sub raw_output_file {
+    my $self = shift;
+    return $self->output_directory . "/" . $self->variant_type . "s.hq";
+}
+
+sub raw_inputs {
+    my $self = shift;
+
+    return map {$self->raw_input_for_chromosome($_)} @{$self->chromosome_list};
+}
+
+sub raw_input_for_chromosome {
+    my ($self, $chromosome) = @_;
+    return $self->output_directory . "/"
+        .  Genome::Utility::Text::sanitize_string_for_filesystem($chromosome)
+        . "/" . $self->variant_type . "s.hq";
+}
+
 sub _generate_standard_files {
     my $self = shift;
     my $staging_dir = $self->_temp_staging_directory;
-    my $output_dir  = $self->output_directory;
-    my @chrom_list = @{$self->chromosome_list};
-    my $raw_output_file = $output_dir."/indels.hq";
-    my @raw_inputs = map { $output_dir."/".$_."/indels.hq" } @chrom_list;
-    my $cat_raw = Genome::Model::Tools::Cat->create( dest => $raw_output_file, source => \@raw_inputs);
+    my $cat_raw = Genome::Model::Tools::Cat->create(dest => $self->raw_output_file,
+        source => [$self->raw_inputs]);
     unless($cat_raw->execute){
         die $self->error_message("Cat command failed to execute.");
     }
@@ -93,6 +119,14 @@ sub _generate_standard_files {
 
 sub versions {
     return Genome::Model::Tools::Pindel::RunPindel->available_pindel_versions;
+}
+
+sub default_chromosomes {
+    my $self = shift;
+    my $refbuild = Genome::Model::Build::ReferenceSequence->get($self->reference_build_id);
+    die unless $refbuild;
+    my $chromosome_array_ref = $refbuild->chromosome_array_ref;
+    return $self->sort_chromosomes($refbuild->chromosome_array_ref);
 }
 
 1;
