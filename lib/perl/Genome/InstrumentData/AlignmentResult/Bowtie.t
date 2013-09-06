@@ -71,10 +71,8 @@ sub aligner_name { "bowtie" }
 # Gather up versions for the tools used herein
 #
 ###############################################################################
-my $alignment_result_class_name = "Genome::InstrumentData::AlignmentResult::" . Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name(aligner_name());
 
 my $FAKE_INSTRUMENT_DATA_ID=-123456;
-eval "use $alignment_result_class_name";
 
 #
 # Gather up the reference sequences.
@@ -156,6 +154,9 @@ sub test_alignment {
 sub test_shortcutting {
 
     my $fake_instrument_data = generate_fake_instrument_data();
+
+    my $alignment_result_class_name = "Genome::InstrumentData::AlignmentResult::" . Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name(aligner_name());
+    eval "use $alignment_result_class_name";
 
     my $alignment_result = $alignment_result_class_name->__define__(
                  id => -8765432,
