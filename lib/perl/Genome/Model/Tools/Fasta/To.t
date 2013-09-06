@@ -20,7 +20,7 @@ my $expected_fastq = $dir .'/test.fastq.ori';
 
 my $tmp_dir = File::Temp::tempdir(
     "FastaTo_XXXXXX", 
-    TEMPDIR => 1,
+    TMPDIR => 1,
     CLEANUP => 1,
 );
 

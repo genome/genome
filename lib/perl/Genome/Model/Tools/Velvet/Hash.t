@@ -21,7 +21,7 @@ my $test_file = 'test1.fa';
 
 my $tmp_dir   = File::Temp::tempdir(
     "VelvetHash_XXXXXX", 
-    TEMPDIR => 1,
+    TMPDIR => 1,
     CLEANUP => 1,
 );
 

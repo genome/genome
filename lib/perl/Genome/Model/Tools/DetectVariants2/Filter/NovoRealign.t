@@ -31,7 +31,7 @@ my $sv_file     = $test_input_dir . $file_name;
 
 my $tmp_base = File::Temp::tempdir(
     'Genome-Model-Tools-DetectVariants2-Filter-NovoRealign-XXXXX', 
-    TEMPDIR => 1,
+    TMPDIR => 1,
     CLEANUP => 1,
 );
 

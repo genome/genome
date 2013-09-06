@@ -16,7 +16,7 @@ my $base_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Fastq/Trimq2/Frag
 
 my $tmp_dir = File::Temp::tempdir(
     'Fastq-Trimq2-XXXXX', 
-    TEMPDIR => 1,
+    TMPDIR => 1,
     CLEANUP => 1
 );
 my $fastq_file = "$base_dir/test_fragment.fastq";

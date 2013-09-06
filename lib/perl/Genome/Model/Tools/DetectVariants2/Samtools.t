@@ -28,7 +28,7 @@ ok($ref_seq_build, 'human36 reference sequence build') or die;
 my $test_dir      = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-Samtools/';
 my $test_base_dir = File::Temp::tempdir(
     'DetectVariants2-SamtoolsXXXXX', 
-    TEMPDIR => 1,
+    TMPDIR => 1,
     CLEANUP => 1,
 );
 my @test_working_dirs = map{"$test_base_dir/output".$_}qw(1 2);

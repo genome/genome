@@ -23,7 +23,7 @@ my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sam-Coverage';
 
 my $tmp_dir  = File::Temp::tempdir(
     "Coverage_XXXXXX", 
-    TEMPDIR => 1,
+    TMPDIR => 1,
     CLEANUP => 1,
 );
 

@@ -21,7 +21,7 @@ my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sam-Pileup';
 
 my $tmp_dir  = File::Temp::tempdir(
     "BamToSam_XXXXXX", 
-    TEMPDIR => 1,
+    TMPDIR => 1,
     CLEANUP => 1,
 );
 

@@ -15,7 +15,7 @@ use above "Genome";
 my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Annotate-TranscriptVariantsParallel';
 my $test_output_dir = tempdir(
     '/Genome-Model-Tools-Annotate-TranscriptVariantsParallel-XXXXX',
-    TEMPDIR => 1,
+    TMPDIR => 1,
     CLEANUP => 1);
 chmod(0775,$test_output_dir);
 

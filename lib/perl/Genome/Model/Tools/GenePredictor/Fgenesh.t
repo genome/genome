@@ -16,7 +16,7 @@ BEGIN {
 }
 
 my $test_output_dir = tempdir('Genome-Model-Tools-GenePredictor-Fgenesh-XXXXXX',
-    TEMPDIR => 1,
+    TMPDIR => 1,
     CLEANUP => 1,
 );
 chmod(0755, $test_output_dir);

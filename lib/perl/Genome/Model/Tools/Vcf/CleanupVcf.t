@@ -21,7 +21,7 @@ diag("Test data located at: $test_data_directory");
 
 my $output_directory = File::Temp::tempdir(
     'Genome-Model-Tools-Vcf-CleanupVcf-XXXXX',
-    TEMPDIR => 1,
+    TMPDIR => 1,
     CLEANUP => 1
 );
 

@@ -13,7 +13,7 @@ my $input = $ENV{GENOME_TEST_INPUTS} . '/Genome-Tools-Sam-MarkDuplicates/sample.
 
 my $tmp_dir = File::Temp->newdir(
     "MarkDuplicates_XXXXX",
-    TEMPDIR => 1,
+    TMPDIR => 1,
     CLEANUP => 1
 );
 

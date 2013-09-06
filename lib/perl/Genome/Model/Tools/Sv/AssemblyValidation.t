@@ -30,7 +30,7 @@ my @expected_files = map{$test_input_dir . $_}@file_names;
 
 my $tmp_dir = File::Temp::tempdir(
     'Genome-Model-Tools-Sv-AssemblyValidation-XXXXX', 
-    TEMPDIR => 1,
+    TMPDIR => 1,
     CLEANUP => 1,
 );
 

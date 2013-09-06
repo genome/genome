@@ -15,7 +15,7 @@ BEGIN {
 
 my $test_dir = tempdir(
     'Genome-Model-Tools-Hgmi-Predict-XXXXXX',
-    TEMPDIR => 1,
+    TMPDIR => 1,
     CLEANUP => 1,
     UNLINK => 1,
 );

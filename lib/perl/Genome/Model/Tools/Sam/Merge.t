@@ -25,7 +25,7 @@ my $bam_index    = $dir. '/normal_tumor.tiny.bam.bai';
 
 my $out_1_dir = File::Temp::tempdir(
     "SamMerge1_XXXXXX",
-    TEMPDIR => 1,
+    TMPDIR => 1,
     CLEANUP => 1,
 );
 
@@ -49,7 +49,7 @@ ok(!-s $merged_file1.'.bai', 'Turn off .bai bam index generation');
 
 my $out_2_dir = File::Temp::tempdir(
     "SamMerge2_XXXXXX",
-    TEMPDIR => 1,
+    TMPDIR => 1,
     CLEANUP => 1,
 );
 my $merged_file2 = $out_2_dir.'/merged_2.bam';

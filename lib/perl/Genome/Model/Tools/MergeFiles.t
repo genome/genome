@@ -31,7 +31,7 @@ my $total_size = $fasta_1_size + $fasta_2_size;
 
 my $test_output_dir = File::Temp::tempdir(
     TEMPLATE => 'Model-Tools-MergeFiles-XXXXX',
-    TEMPDIR => 1,
+    TMPDIR => 1,
     CLEANUP => 1,
 );
 ok(-d $test_output_dir, "test output dir exists at $test_output_dir") or die;

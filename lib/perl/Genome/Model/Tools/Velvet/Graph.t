@@ -22,7 +22,7 @@ use_ok('Genome::Model::Tools::Velvet::Graph');
 # the temp dir
 my $test_dir = tempdir(
     'Genome-Model-Tools-Velvet-XXXXXX',
-    TEMPDIR => 1,
+    TMPDIR => 1,
     CLEANUP => 1,
 );
 my $dir = $test_dir.'/velvet_run';

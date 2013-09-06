@@ -13,7 +13,7 @@ BEGIN {
 }
 
 my $test_output_dir = tempdir('Genome-Model-Tools-GenePredictor-Trnascan-XXXXXX',
-    TEMPDIR => 1,
+    TMPDIR => 1,
     CLEANUP => 1,
 );
 chmod(0755, $test_output_dir);

@@ -12,7 +12,7 @@ ok (-e $variant_file);
 
 my $tmpdir = File::Temp::tempdir(
     TEMPLATE => 'Model-Tools-Annotate-LookupVariants-XXXXX',
-    TEMPDIR => 1,
+    TMPDIR => 1,
     CLEANUP => 1,
 );
 
