@@ -43,10 +43,6 @@ sub _detect_variants {
 
     $self->_ensure_chromosome_list_set;
 
-    # Obtain bam and check it.
-    my ($build, $bam_file);
-    $bam_file = $self->aligned_reads_input;
-
     # Set default params
     unless ($self->snv_output) { 
         $self->snv_output($self->_temp_staging_directory. '/snvs.hq');  #???
