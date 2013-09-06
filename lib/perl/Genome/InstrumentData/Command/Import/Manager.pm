@@ -46,12 +46,6 @@ class Genome::InstrumentData::Command::Import::Manager {
             doc => 'Launch instrument data imports.',
         },
     ],
-    has_optional_calculated => [
-        config_file => {
-            calculate_from => 'working_directory',
-            calculate => sub{ my $working_directory = shift; return $working_directory.'/config.yaml'; },
-        },
-    ],
     has_optional_transient => [
         _import_list_command => { is => 'Text', },
         _import_list_sample_name_column => { is => 'Text', },
@@ -59,7 +53,6 @@ class Genome::InstrumentData::Command::Import::Manager {
         _import_command_format => { is => 'Text', },
         _model_class => { is => 'Text' },
         _model_params => { is => 'Hash' },
-        config => { is => 'Hash', default_value => {}, },
         samples => { is => 'Hash', },
         instrument_data_import_command_substitutions => { 
             is => 'Hash', 
@@ -103,16 +96,6 @@ sub __errors__ {
         return @errors;
     }
 
-    my $config_error = $self->_load_config;
-    if ( $config_error ) {
-        push @errors, UR::Object::Tag->create(
-            type => 'invalid',
-            properties => [qw/ config_file /],
-            desc => $config_error,
-        );
-        return @errors;
-    }
-
     my $import_list_config = $self->import_list_config;
     if ( $import_list_config ) {
         my %import_list_config;
@@ -152,11 +135,11 @@ sub __errors__ {
         return @errors;
     }
 
-    my $import_cmd_error = $self->_resolve_instrument_data_import_command;
+    my $import_cmd_error = $self->_resolve_import_command;
     if ( $import_cmd_error ) {
         push @errors, UR::Object::Tag->create(
             type => 'invalid',
-            properties => [qw/ config_file /],
+            properties => [qw/ import_launch_config /],
             desc => $import_cmd_error,
         );
         return @errors;
@@ -171,23 +154,6 @@ sub __errors__ {
     elsif ( grep { $self->$_} @progress_methods ) {
         $self->make_progress(1);
     }
-
-    return;
-}
-
-sub _load_config {
-    my $self = shift;
-
-    my $config_file = $self->config_file;
-    if ( not -s $config_file ) {
-        return 'Config file does not exist! '.$config_file;
-    }
-
-    my $config = YAML::LoadFile($config_file);
-    if ( not $config ) {
-        return 'Failed to load config file! '.$config_file;
-    }
-    $self->config($config);
 
     return;
 }
@@ -262,7 +228,7 @@ sub _resolve_model_params {
     }
 
     if ( not $model_params{processing_profile_id} ) {
-        return "No processing profile id for model in config! @model_params";
+        return "No processing profile id for model in params! @model_params";
     }
     my $processing_profile_id = delete $model_params{processing_profile_id};
     $model_params{processing_profile} = Genome::ProcessingProfile->get($processing_profile_id);
@@ -294,7 +260,7 @@ sub _resolve_model_params {
     return;
 }
 
-sub _resolve_instrument_data_import_command {
+sub _resolve_import_command {
     my $self = shift;
 
     my $cmd_format = $self->import_launch_config;

@@ -40,8 +40,6 @@ my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Comma
 my $working_directory = File::Temp::tempdir(CLEANUP => 1);
 my $info_tsv = $working_directory.'/info.tsv';
 Genome::Sys->create_symlink($test_dir.'/valid-import-needed/info.tsv', $info_tsv);
-my $config_yaml = $working_directory.'/config.yaml';
-Genome::Sys->create_symlink($test_dir.'/valid-import-needed/config.yaml', $config_yaml);
 
 # Sample needed
 my $manager = Genome::InstrumentData::Command::Import::Manager->create(
@@ -83,9 +81,8 @@ ok(!$sample_hash->{model}, 'sample hash model does not exist');
 ok(!$sample_hash->{build}, 'sample hash build does not exist');
 
 # Import pend
-unlink($info_tsv, $config_yaml);
+unlink($info_tsv);
 Genome::Sys->create_symlink($test_dir.'/valid-import-pend/info.tsv', $info_tsv);
-Genome::Sys->create_symlink($test_dir.'/valid-import-pend/config.yaml', $config_yaml);
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
     source_files_tsv => $info_tsv,
     working_directory => $working_directory,
@@ -122,9 +119,8 @@ my $inst_data = Genome::InstrumentData::Imported->__define__(
 $inst_data->add_attribute(attribute_label => 'read_count', attribute_value => 1000);
 $inst_data->add_attribute(attribute_label => 'read_length', attribute_value => 100);
 
-unlink($info_tsv, $config_yaml);
+unlink($info_tsv);
 Genome::Sys->create_symlink($test_dir.'/valid-build/info.tsv', $info_tsv);
-Genome::Sys->create_symlink($test_dir.'/valid-build/config.yaml', $config_yaml);
 
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
     source_files_tsv => $info_tsv,
@@ -143,7 +139,7 @@ ok(!$sample_hash->{model}, 'sample hash model does not exist');
 ok(!$sample_hash->{build}, 'sample hash build does not exist');
 
 # Successful import, point bam_path to existing file
-$inst_data->add_attribute(attribute_label => 'bam_path', attribute_value => $config_yaml);
+$inst_data->add_attribute(attribute_label => 'bam_path', attribute_value => $test_dir.'/valid-build/info.tsv');
 
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
     source_files_tsv => $info_tsv,
@@ -165,15 +161,6 @@ ok(!$sample_hash->{model}->auto_build_alignments, 'model auto_build_alignments i
 ok(!$sample_hash->{model}->build_requested, 'model build_requested is off');
 ok(!$sample_hash->{build}, 'sample hash build does not exist');
 
-# fail - no config file
-$manager = Genome::InstrumentData::Command::Import::Manager->create(
-    working_directory => $test_dir.'/invalid-no-config-yaml',
-    source_files_tsv => $test_dir.'/invalid-no-config-yaml/info.tsv',
-);
-ok($manager, 'create manager');
-ok(!$manager->execute, 'execute failed');
-is($manager->error_message, "Property 'config_file': Config file does not exist! ".$manager->config_file, 'correct error');
-
 # fail - no name column in csv
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
     working_directory => $test_dir.'/invalid-no-name-column-in-info-file',
@@ -191,6 +178,6 @@ $manager = Genome::InstrumentData::Command::Import::Manager->create(
 );
 ok($manager, 'create manager');
 ok(!$manager->execute, 'execute failed');
-is($manager->error_message, "Property 'model_params': No processing profile id for model in config! reference_id=-333", 'correct error');
+is($manager->error_message, "Property 'model_params': No processing profile id for model in params! reference_id=-333", 'correct error');
 
 done_testing();
