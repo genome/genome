@@ -398,43 +398,22 @@ sub _load_models {
 sub _set_job_status_to_samples {
     my $self = shift;
 
-    my $samples = $self->samples;
-    Carp::confess('Need samples to load job status!') if not $samples;
-
-    return 1 if not $self->config->{'job dispatch'};
-
     my $job_list_cmd = $self->config->{'job dispatch'}->{list}->{'command'};
-    if ( not $job_list_cmd ) {
-        $self->error_message('No job list "command" in config! '.YAML::Dump($self->config));
-        return 1;
-    }
-
     my $name_column = $self->config->{'job dispatch'}->{list}->{'name column'};
-    if ( not $name_column ) {
-        $self->error_message('No job list "name column" in config! '.YAML::Dump($self->config));
-        return;
-    }
     $name_column--;
-
     my $status_column = $self->config->{'job dispatch'}->{list}->{'status column'};
-    if ( not $status_column ) {
-        $self->error_message('No job list "status column" in config! '.YAML::Dump($self->config));
-        return;
-    }
     $status_column--;
 
-    sleep 2;
-    my %samples_by_name = map { $_->{name} => $_ } values %$samples;
     $job_list_cmd .= ' 2>/dev/null |';
     my $fh = IO::File->new($job_list_cmd);
+    my %sample_job_statuses;
     while ( my $line = $fh->getline ) {
+        chomp $line;
         my @tokens = split(/\s+/, $line);
-        my $name = $tokens[ $name_column ];
-        next if not $samples_by_name{$name};
-        $samples_by_name{$name}->{job_status} = lc $tokens[ $status_column ];
+        $sample_job_statuses{ $tokens[$name_column] } = lc $tokens[$status_column];
     }
 
-    return 1;
+    return \%sample_job_statuses;
 }
 
 sub set_sample_status {
