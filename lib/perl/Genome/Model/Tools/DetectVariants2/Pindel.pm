@@ -125,14 +125,6 @@ sub versions {
     return Genome::Model::Tools::Pindel::RunPindel->available_pindel_versions;
 }
 
-sub default_chromosomes {
-    my $self = shift;
-    my $refbuild = Genome::Model::Build::ReferenceSequence->get($self->reference_build_id);
-    die unless $refbuild;
-    my $chromosome_array_ref = $refbuild->chromosome_array_ref;
-    return $self->sort_chromosomes($refbuild->chromosome_array_ref);
-}
-
 sub default_chromosomes_as_string {
     return join(',', $_[0]->default_chromosomes);
 }

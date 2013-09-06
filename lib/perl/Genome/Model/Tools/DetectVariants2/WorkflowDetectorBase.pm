@@ -174,5 +174,14 @@ sub _detect_variants {
     return 1;
 }
 
+sub default_chromosomes {
+    my $self = shift;
+    my $refbuild = Genome::Model::Build::ReferenceSequence->get($self->reference_build_id);
+    die unless $refbuild;
+    my $chromosome_array_ref = $refbuild->chromosome_array_ref;
+    return $self->sort_chromosomes($refbuild->chromosome_array_ref);
+}
+
+
 1;
 
