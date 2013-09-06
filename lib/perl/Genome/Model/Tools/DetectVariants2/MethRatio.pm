@@ -74,18 +74,6 @@ sub variant_type {
     return 'snv';
 }
 
-sub _generate_standard_files {
-    my $self = shift;
-    my $staging_dir = $self->_temp_staging_directory;
-    my $cat_raw = Genome::Model::Tools::Cat->create(dest => $self->raw_output_file,
-        source => [$self->raw_inputs]);
-    unless($cat_raw->execute){
-        die $self->error_message("Cat command failed to execute.");
-    }
-    $self->SUPER::_generate_standard_files(@_);
-    return 1;
-}
-
 sub _sort_detector_output {
     my $self = shift;
     return 1;
