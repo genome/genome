@@ -330,14 +330,7 @@ sub dump_illumina_fastq_files {
 }
 
 sub dump_solexa_fastq_files {
-    my $self = shift;
-
-    unless ($self->resolve_quality_converter eq 'sol2sanger') {
-        $self->error_message("This instrument data is not natively Solexa formatted, cannot dump");
-        die $self->error_message;
-    }
-
-    return $self->_unprocessed_fastq_filenames(@_);
+    return Genome::InstrumentData::Solexa::dump_solexa_fastq_files(@_);
 }
 
 sub dump_sanger_fastq_files {
