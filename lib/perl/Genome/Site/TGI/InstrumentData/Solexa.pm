@@ -276,21 +276,7 @@ sub _calculate_non_paired_end_kb_usage {
 }
 
 sub calculate_alignment_estimated_kb_usage {
-    my $self = shift;
-    # Different aligners will require different levels of overhead, so this should return
-    # approximately the total size of the instrument data files.
-    # In a FQ file, every read means 4 lines, 2 of length $self->read_length,
-    # and 2 of read identifier data. Therefore we can expect the total file size to be 
-    # about (($self->read_length + header_size) * $self->fwd_clusters)*2 / 1024
-    
-    # This is length of the id tag in the FQ file, it looks something like: @HWUSI-EAS712_6171L:2:1:1817:12676#TGACCC/1
-    my $HEADER_LENGTH = 45;
-    
-    if ($self->is_paired_end) {
-        return int $self->_calculate_paired_end_kb_usage($HEADER_LENGTH);
-    } else {
-        return int $self->_calculate_non_paired_end_kb_usage($HEADER_LENGTH);
-    }
+    return Genome::InstrumentData::Solexa::calculate_alignment_estimated_kb_usage(@_);
 }
 
 sub resolve_full_path {
