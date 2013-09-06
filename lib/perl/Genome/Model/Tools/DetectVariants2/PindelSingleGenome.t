@@ -32,20 +32,19 @@ my $normal = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-Pin
 my $tmpbase = File::Temp::tempdir('PindelSingleGenomeXXXXX', CLEANUP => 1, TMPDIR => 1);
 my $tmpdir = "$tmpbase/output";
 
-my $pindel_sg = Genome::Model::Tools::DetectVariants2::PindelSingleGenome->create(aligned_reads_input=>$tumor, 
-                                                                   reference_build_id => $refbuild_id,
-                                                                   output_directory => $tmpdir, 
-                                                                   version => '0.5',);
+my $pindel_sg = Genome::Model::Tools::DetectVariants2::PindelSingleGenome->create(
+    chromosome_list => [22],
+    aligned_reads_input=>$tumor, 
+    reference_build_id => $refbuild_id,
+    output_directory => $tmpdir, 
+    aligned_reads_sample => "TEST",
+    version => '0.5',
+);
 ok($pindel_sg, 'pindel command created');
 
 $ENV{NO_LSF}=1;
 
 $pindel_sg->dump_status_messages(1);
-done_testing();
-
-#TODO Re-enable the below when the test is cut down to reasonable run times. It's currently ~90 minutes. 
-# TODO limit the test run to one chromosome. 
-=cut
 
 my $rv = $pindel_sg->execute;
 is($rv, 1, 'Testing for successful execution.  Expecting 1.  Got: '.$rv);
