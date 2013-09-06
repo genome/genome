@@ -20,7 +20,7 @@ class Genome::InstrumentData::Command::Import::Manager {
     has_optional => [
         import_launch_config => {
             is => 'Text',
-            doc => 'Command to use to launch imports. See detailed help for more info.',
+            doc => 'Command to use to launch imports. If given, imports will be launched for source files needing import. See detailed help for more info.',
         },
         import_list_config => {
             is => 'Text',
@@ -30,16 +30,6 @@ class Genome::InstrumentData::Command::Import::Manager {
             is => 'Text',
             is_many => 1,
             doc => 'Parameters to use to create a model for the created instrument data. Give as comma separated key value pairs: param1=value1,param2=value2,... The model class will be derived fromm the processing profile.',
-        },
-        make_progress => { 
-            is => 'Boolean',
-            default_value => 0,
-            doc => 'Create samples, models, run imports and schedule builds.', 
-        },
-        launch_imports => {
-            is => 'Boolean',
-            default_value => 0,
-            doc => 'Launch instrument data imports.',
         },
     ],
     has_optional_transient => [
@@ -130,16 +120,6 @@ sub __errors__ {
             desc => $model_params_error,
         );
         return @errors;
-    }
-
-    my @progress_methods = (qw/ launch_imports /);
-    if ( $self->make_progress ) {
-        for my $method ( @progress_methods ) {
-            $self->$method(1);
-        }
-    }
-    elsif ( grep { $self->$_} @progress_methods ) {
-        $self->make_progress(1);
     }
 
     return;
@@ -426,7 +406,7 @@ sub _load_sample_job_statuses {
 sub _launch_imports {
     my $self = shift;
 
-    return 1 if not $self->launch_imports;
+    return 1 if not $self->import_launch_config;
 
     my $samples = $self->samples;
     for my $sample ( values %$samples ) {
