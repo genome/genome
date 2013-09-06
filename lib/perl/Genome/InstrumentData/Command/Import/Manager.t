@@ -150,7 +150,7 @@ $manager = Genome::InstrumentData::Command::Import::Manager->create(
     working_directory => $test_dir.'/invalid-no-config-yaml',
 );
 ok($manager, 'create manager');
-ok(!$manager->execute, 'execute');
+ok(!$manager->execute, 'execute failed');
 is($manager->error_message, "Property 'config_file': Config file does not exist! ".$manager->config_file, 'correct error');
 
 # fail - no config file
@@ -158,7 +158,7 @@ $manager = Genome::InstrumentData::Command::Import::Manager->create(
     working_directory => $test_dir.'/invalid-no-info-file',
 );
 ok($manager, 'create manager');
-ok(!$manager->execute, 'execute');
+ok(!$manager->execute, 'execute failed');
 is($manager->error_message, "Property 'info_file': Sample info file does not exist! ".$manager->info_file, 'correct error');
 
 # fail - no name column in csv
@@ -166,7 +166,7 @@ $manager = Genome::InstrumentData::Command::Import::Manager->create(
     working_directory => $test_dir.'/invalid-no-name-column-in-info-file',
 );
 ok($manager, 'create manager');
-ok(!$manager->execute, 'execute');
+ok(!$manager->execute, 'execute failed');
 is($manager->error_message, 'Property \'info_file\': No "sample_name" column in sample info file! '.$manager->info_file, 'correct error');
 
 done_testing();

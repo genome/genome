@@ -159,6 +159,25 @@ sub _load_config {
         return 'No nomenclature in config file! '.$config_file;
     }
 
+    if ( not $self->config->{'job dispatch'} ) {
+        return 'No job dispatch in config! '.YAML::Dump($config);
+    }
+
+    my $job_list_cmd = $self->config->{'job dispatch'}->{list}->{'command'};
+    if ( not $job_list_cmd ) {
+        return 'No job list "command" in config! '.YAML::Dump($config);
+    }
+
+    my $name_column = $self->config->{'job dispatch'}->{list}->{'name column'};
+    if ( not $name_column ) {
+        return 'No job list "name column" in config! '.YAML::Dump($config);
+    }
+
+    my $status_column = $self->config->{'job dispatch'}->{list}->{'status column'};
+    if ( not $status_column ) {
+        return 'No job list "status column" in config! '.YAML::Dump($config);
+    }
+
     return;
 }
 
@@ -428,8 +447,7 @@ sub set_sample_status {
         return 'import_'.$sample->{job_status} if $sample->{job_status};
         return 'import_needed' if not $sample->{instrument_data};
         return 'import_failed' if not defined $sample->{instrument_data_file} or not -s $sample->{instrument_data_file};
-        return 'model_needed' if $sample->{instrument_data} and not $sample->{model};
-        return 'build_requested' if $sample->{model}->build_requested;
+        return 'model_needed' if not $sample->{model};
         return 'build_needed' if not $sample->{build};
         return 'build_'.lc($sample->{build}->status);
     };
