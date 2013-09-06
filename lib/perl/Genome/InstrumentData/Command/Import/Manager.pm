@@ -490,31 +490,6 @@ sub _status {
     return 1;
 }
 
-sub _resolve_instrument_data_import_command_for_sample {
-    my ($self, $sample) = @_;
-
-    Carp::confess('No samples to resolved instrument data import command!') if not $sample;
-
-    my $sample_name_cnt = $self->instrument_data_import_command_sample_name_cnt;
-    my @sample_name_replaces;
-    for (1..$sample_name_cnt) { push @sample_name_replaces, $sample->{name}; }
-
-    my $cmd .= sprintf(
-        $self->instrument_data_import_command_format,
-        @sample_name_replaces,
-        $sample->{name},
-        $sample->{source_files},
-        $self->config->{sample}->{nomenclature},
-        ( 
-            $sample->{instrument_data_attributes}
-            ? ' --instrument-data-properties '.join(',', @{$sample->{instrument_data_attributes}})
-            : ''
-        ),
-    );
-
-    return $cmd;
-}
-
 sub _make_progress {
     my $self = shift;
 
@@ -569,6 +544,31 @@ sub _launch_instrument_data_import_for_samples {
     }
 
     return 1;
+}
+
+sub _resolve_instrument_data_import_command_for_sample {
+    my ($self, $sample) = @_;
+
+    Carp::confess('No samples to resolved instrument data import command!') if not $sample;
+
+    my $sample_name_cnt = $self->instrument_data_import_command_sample_name_cnt;
+    my @sample_name_replaces;
+    for (1..$sample_name_cnt) { push @sample_name_replaces, $sample->{name}; }
+
+    my $cmd .= sprintf(
+        $self->instrument_data_import_command_format,
+        @sample_name_replaces,
+        $sample->{name},
+        $sample->{source_files},
+        $self->config->{sample}->{nomenclature},
+        ( 
+            $sample->{instrument_data_attributes}
+            ? ' --instrument-data-properties '.join(',', @{$sample->{instrument_data_attributes}})
+            : ''
+        ),
+    );
+
+    return $cmd;
 }
 
 1;
