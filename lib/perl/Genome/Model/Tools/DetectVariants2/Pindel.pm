@@ -46,8 +46,20 @@ class Genome::Model::Tools::DetectVariants2::Pindel {
     ],
 };
 
+sub _ensure_chromosome_list_set {
+    my $self = shift;
+
+    if (!defined($self->chromosome_list)) {
+        $self->chromosome_list($self->default_chromosomes);
+    }
+    return;
+}
+
 sub _detect_variants {
     my $self = shift;
+
+    $self->_ensure_chromosome_list_set;
+
     # Obtain normal and tumor bams and check them. Either from somatic model id or from direct specification. 
     my ($build, $tumor_bam, $normal_bam);
     $tumor_bam = $self->aligned_reads_input;
@@ -79,10 +91,8 @@ sub _detect_variants {
         die "Errors validating workflow\n";
     }
 
-    my @chrom_list = $self->default_chromosomes;
-
     # Collect and set input parameters
-    $input{chromosome_list} = \@chrom_list;
+    $input{chromosome_list} = $self->chromosome_list;
     $input{reference_build_id} = $refbuild_id;
     $input{tumor_bam} = $self->aligned_reads_input;
     $input{normal_bam} = $self->control_aligned_reads_input if defined $self->control_aligned_reads_input;
