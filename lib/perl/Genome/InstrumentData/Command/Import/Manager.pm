@@ -418,9 +418,7 @@ sub _load_sample_statuses {
     my $samples = $self->samples;
     for my $sample ( values %$samples ) {
         $sample->{job_status} = $sample_job_statuses->{ $sample->{name} };
-        print Data::Dumper::Dumper([$get_status_for_sample->($sample)]);
         $sample->{status} = $get_status_for_sample->($sample);
-        print Data::Dumper::Dumper([$sample]);
     }
 
     $self->samples($samples);
