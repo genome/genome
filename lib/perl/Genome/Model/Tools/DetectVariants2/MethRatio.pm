@@ -122,11 +122,6 @@ sub _generate_standard_files {
     return 1;
 }
 
-sub _promote_staged_data {
-    my $self = shift;
-    return 1;
-}
-
 sub _sort_detector_output {
     my $self = shift;
     return 1;

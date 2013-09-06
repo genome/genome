@@ -98,5 +98,10 @@ sub _dump_workflow {
     #$workflow->as_png($self->output_directory."/workflow.png"); #currently commented out because blades do not all have the "dot" library to use graphviz
 }
 
+sub _promote_staged_data {
+    my $self = shift;
+    return 1;
+}
+
 1;
 
