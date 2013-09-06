@@ -18,38 +18,16 @@ BEGIN {
     use_ok('Genome::InstrumentData::Solexa');
 }
 
-__cached_value_for(
-    'expected_shortcut_path',
-    sub {
-        my $aligner_label = aligner_name().aligner_version();
-        $aligner_label =~ s/\./\_/g;
-        return "/gscmnt/sata828/info/alignment_data/$aligner_label/TEST-human/test_run_name/4_-123456";
-    });
-__cached_value_for(
-    'aligner_version',
-    sub {
-        my $subclass_part = Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name(aligner_name());
-        my $aligner_tools_class_name = "Genome::Model::Tools::${subclass_part}";
-        return $aligner_tools_class_name->default_version;
-    });
-__cached_value_for(
-    'reference_build',
-    sub {
-        my $reference_model = Genome::Model::ImportedReferenceSequence->get(name => 'TEST-human');
-        ok($reference_model, "got reference model");
+my $t = BowtieTest->new();
+$t->execute();
 
-        my $reference_build = $reference_model->build_by_version('1');
-        ok($reference_build, "got reference build");
-        return $reference_build;
-    });
-__cached_value_for(
-    'samtools_version',
-    sub { return Genome::Model::Tools::Sam->default_samtools_version });
-__cached_value_for(
-    'picard_version',
-    sub { return Genome::Model::Tools::Picard->default_picard_version });
+package BowtieTest;
+use Test::More;
 
-execute();
+sub new {
+    my $class = shift;
+    return bless {}, $class;
+}
 
 #
 # Configuration for the aligner name, etc
@@ -59,6 +37,53 @@ execute();
 # this ought to match the name as seen in the processing profile
 sub aligner_name { "bowtie" }
 sub library_id { '-1234545' }
+sub initial_fake_instrument_data_id { -123456 }
+sub aligner_params { undef }
+
+
+sub expected_shortcut_path {
+    my $self = shift;
+    $self->{expected_shortcut_path} ||= do {
+        my $aligner_label = $self->aligner_name() . $self->aligner_version();
+        $aligner_label =~ s/\./\_/g;
+        "/gscmnt/sata828/info/alignment_data/$aligner_label/TEST-human/test_run_name/4_-123456";
+    };
+}
+
+sub aligner_version {
+    my $self = shift;
+    $self->{aligner_version} ||= do {
+        my $subclass_part = Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name($self->aligner_name());
+        my $aligner_tools_class_name = "Genome::Model::Tools::${subclass_part}";
+        $aligner_tools_class_name->default_version;
+    };
+}
+
+sub reference_build {
+    my $self = shift;
+    $self->{reference_build} ||= do {
+        my $reference_model = Genome::Model::ImportedReferenceSequence->get(name => 'TEST-human');
+        ok($reference_model, "got reference model");
+
+        my $reference_build = $reference_model->build_by_version('1');
+        ok($reference_build, "got reference build");
+        $reference_build;
+    }
+}
+
+sub samtools_version {
+    my $self = shift;
+    $self->{samtools_version} ||= do {
+        Genome::Model::Tools::Sam->default_samtools_version
+    };
+}
+
+sub picard_version {
+    my $self = shift;
+    $self->{picard_version} ||= do {
+        Genome::Model::Tools::Picard->default_picard_version
+    };
+}
 
 
 # End aligner-specific configuration,
@@ -68,19 +93,14 @@ sub library_id { '-1234545' }
 # Finally, make sure an index for your aligner exists for the test sequence.
 # (You should test for that in your aligner code anyway)
 
-#
-# Gather up versions for the tools used herein
-#
-###############################################################################
-
-{
-    my $FAKE_INSTRUMENT_DATA_ID = -123456;
-    sub next_fake_instrument_data_id {
-        return $FAKE_INSTRUMENT_DATA_ID--;
-    }
+sub next_fake_instrument_data_id {
+    my $self = shift;
+    $self->{next_fake_id} = defined($self->{next_fake_id})
+                                ? $self->{next_fake_id} - 1
+                                : $self->initial_fake_instrument_data_id;
+    return $self->{next_fake_id};
 }
 
-sub aligner_params { undef }
 
 #
 # Gather up the reference sequences.
@@ -88,49 +108,37 @@ sub aligner_params { undef }
 ###########################################################
 
 sub execute {
+    my $self = shift;
+
     my $reference_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->create(
-                                aligner_name => aligner_name(),
-                                aligner_params => aligner_params(),
-                                aligner_version => aligner_version(),
-                                reference_build => reference_build());
+                                aligner_name => $self->aligner_name(),
+                                aligner_params => $self->aligner_params(),
+                                aligner_version => $self->aligner_version(),
+                                reference_build => $self->reference_build());
     ok($reference_index, "generated reference index");
 
     # Uncomment this to create the dataset necessary for shorcutting to work
-    #test_alignment(generate_shortcut_data => 1);
+    #$self->test_alignment(generate_shortcut_data => 1);
 
-    test_shortcutting();
-    test_alignment();
-    test_alignment(force_fragment => 1);
-}
-
-sub __cached_value_for {
-    my $value_name = shift;
-    my $resolver_sub = shift;
-
-    my $cached_value;
-    my $caching_sub = sub {
-        unless (defined $cached_value) {
-           $cached_value = $resolver_sub->();
-        }
-        return $cached_value;
-    };
-    no strict 'refs';
-    *$value_name = $caching_sub;
+    $self->test_shortcutting();
+    $self->test_alignment();
+    $self->test_alignment(force_fragment => 1);
 }
 
 sub test_alignment {
+    my $self = shift;
     my %p = @_;
     
     my $generate_shortcut = delete $p{generate_shortcut_data};
 
-    my $instrument_data = generate_fake_instrument_data();
+    my $instrument_data = $self->generate_fake_instrument_data();
     my $alignment = Genome::InstrumentData::AlignmentResult->create(
                                                        instrument_data_id => $instrument_data->id,
-                                                       samtools_version => samtools_version(),
-                                                       picard_version => picard_version(),
-                                                       aligner_version => aligner_version(),
-                                                       aligner_name => aligner_name(),
-                                                       reference_build => reference_build(),
+                                                       samtools_version => $self->samtools_version(),
+                                                       picard_version => $self->picard_version(),
+                                                       aligner_version => $self->aligner_version(),
+                                                       aligner_name => $self->aligner_name(),
+                                                       reference_build => $self->reference_build(),
                                                        %p,
                                                    );
 
@@ -143,7 +151,7 @@ sub test_alignment {
     if ($generate_shortcut) {
         print "*** Using this data to generate shortcut data! ***\n";
 
-        my $expected_shortcut_path = expected_shortcut_path();
+        my $expected_shortcut_path = $self->expected_shortcut_path();
         if (-d $expected_shortcut_path) {
             die "Expected shortcut path $expected_shortcut_path already exists, don't want to step on it";
         }
@@ -163,23 +171,24 @@ sub test_alignment {
 }
 
 sub test_shortcutting {
+    my $self = shift;
 
-    my $fake_instrument_data = generate_fake_instrument_data();
+    my $fake_instrument_data = $self->generate_fake_instrument_data();
 
-    my $alignment_result_class_name = "Genome::InstrumentData::AlignmentResult::" . Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name(aligner_name());
+    my $alignment_result_class_name = "Genome::InstrumentData::AlignmentResult::" . Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name($self->aligner_name());
     eval "use $alignment_result_class_name";
 
     my $alignment_result = $alignment_result_class_name->__define__(
                  id => -8765432,
-                 output_dir => expected_shortcut_path(),
+                 output_dir => $self->expected_shortcut_path(),
                  instrument_data_id => $fake_instrument_data->id,
                  subclass_name => $alignment_result_class_name,
                  module_version => '12345',
-                 aligner_name => aligner_name(),
-                 aligner_version => aligner_version(),
-                 samtools_version => samtools_version(),
-                 picard_version => picard_version(),
-                 reference_build => reference_build(),
+                 aligner_name => $self->aligner_name(),
+                 aligner_version => $self->aligner_version(),
+                 samtools_version => $self->samtools_version(),
+                 picard_version => $self->picard_version(),
+                 reference_build => $self->reference_build(),
     );
     $alignment_result->lookup_hash($alignment_result->calculate_lookup_hash);
 
@@ -197,11 +206,11 @@ sub test_shortcutting {
 
     my $bad_alignment = Genome::InstrumentData::AlignmentResult->create(
                                                               instrument_data_id => $fake_instrument_data->id,
-                                                              aligner_name => aligner_name(),
-                                                              aligner_version => aligner_version(),
-                                                              samtools_version => samtools_version(),
-                                                              picard_version => picard_version(),
-                                                              reference_build => reference_build(),
+                                                              aligner_name => $self->aligner_name(),
+                                                              aligner_version => $self->aligner_version(),
+                                                              samtools_version => $self->samtools_version(),
+                                                              picard_version => $self->picard_version(),
+                                                              reference_build => $self->reference_build(),
                                                           );
     ok(!$bad_alignment, "this should have returned undef, for attempting to create an alignment that is already created!");
     ok($alignment_result_class_name->error_message =~ m/already have one/, "the exception is what we expect to see");
@@ -213,11 +222,11 @@ sub test_shortcutting {
     #################################################
     my $alignment = Genome::InstrumentData::AlignmentResult->get_with_lock(
                                                               instrument_data_id => $fake_instrument_data->id,
-                                                              aligner_name => aligner_name(),
-                                                              aligner_version => aligner_version(),
-                                                              samtools_version => samtools_version(),
-                                                              picard_version => picard_version(),
-                                                              reference_build => reference_build(),
+                                                              aligner_name => $self->aligner_name(),
+                                                              aligner_version => $self->aligner_version(),
+                                                              samtools_version => $self->samtools_version(),
+                                                              picard_version => $self->picard_version(),
+                                                              reference_build => $self->reference_build(),
                                                               );
     ok($alignment, "got an alignment object");
 
@@ -236,9 +245,10 @@ sub test_shortcutting {
 
 
 sub generate_fake_instrument_data {
+    my $self = shift;
 
     my $fastq_directory = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Align-Maq/test_sample_name';
-    my $fake_id = next_fake_instrument_data_id();
+    my $fake_id = $self->next_fake_instrument_data_id();
     my $instrument_data = Genome::InstrumentData::Solexa->create_mock(
                                                                       id => $fake_id,
                                                                       sequencing_platform => 'solexa',
