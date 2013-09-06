@@ -144,22 +144,6 @@ sub versions {
     return Genome::Model::Tools::Pindel::RunPindel->available_pindel_versions;
 }
 
-sub has_version {
-    my $self = shift;
-    my $version = shift;
-    unless(defined($version)){
-        $version = $self->version;
-    }
-
-    for my $v ($self->versions){
-        if($v eq $version){
-            return 1;
-        }
-    }
-
-    return 0;
-}
-
 sub default_chromosomes {
     my $self = shift;
     my $refbuild = Genome::Model::Build::ReferenceSequence->get($self->reference_build_id);

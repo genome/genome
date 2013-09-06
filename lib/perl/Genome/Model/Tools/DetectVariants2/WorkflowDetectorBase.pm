@@ -103,5 +103,21 @@ sub _promote_staged_data {
     return 1;
 }
 
+sub has_version {
+    my $self = shift;
+    my $version = shift;
+    unless(defined($version)){
+        $version = $self->version;
+    }
+
+    for my $v ($self->versions){
+        if($v eq $version){
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 1;
 
