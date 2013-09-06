@@ -25,13 +25,18 @@ class Genome::Model::Tools::Mutect::MergeOutputFiles {
     ],
 };
 
-sub help_synopsis {
+sub help_brief {
     return <<"EOS"
+merge together mutect output files while respecting their headers
 EOS
 }
 
 sub help_detail {
     return <<"EOS"
+This tool is used to merge together output files from parallel runs of the main
+mutect tool. You should pass these output files in order or sort after merging.
+Headers from individual files are stripped out and a single header from the
+first file is passed forwards as the header.
 EOS
 }
 
@@ -50,6 +55,7 @@ sub execute {
             $has_header = 1;
         }
         else {
+            #skip the header of this file as we already have one
             $fh->getline;
             $fh->getline;
         }
