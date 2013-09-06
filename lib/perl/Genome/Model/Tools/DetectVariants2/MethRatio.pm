@@ -54,13 +54,8 @@ sub add_bams_to_input {
     $input->{bam_file} = $self->aligned_reads_input;
     return;
 }
-
-sub _detect_variants {
+sub get_reference {
     my $self = shift;
-
-    $self->_ensure_chromosome_list_set;
-
-    $self->set_output;
 
     my $refbuild_id = $self->reference_build_id;
     unless($refbuild_id){
@@ -68,10 +63,15 @@ sub _detect_variants {
     }
     print "refbuild_id = ".$refbuild_id."\n";
     my $ref_seq_build = Genome::Model::Build->get($refbuild_id);
-    my $reference_fasta = $ref_seq_build->full_consensus_path('fa');
+    return $ref_seq_build->full_consensus_path('fa');
+}
 
+sub _detect_variants {
+    my $self = shift;
 
-    my %input;
+    $self->_ensure_chromosome_list_set;
+
+    $self->set_output;
 
     # Define a workflow from the static XML at the bottom of this module
     my $workflow = Workflow::Operation->create_from_xml(\*DATA);
@@ -83,9 +83,9 @@ sub _detect_variants {
         die "Errors validating workflow\n";
     }
 
-    # Collect and set input parameters
+    my %input;
     $input{chromosome_list} = $self->chromosome_list;
-    $input{reference} = $reference_fasta;
+    $input{reference} = $self->get_reference;
     $input{output_directory} = $self->output_directory;
     $input{version} = $self->version;
 
