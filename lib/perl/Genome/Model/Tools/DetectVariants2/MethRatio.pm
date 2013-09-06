@@ -66,6 +66,10 @@ sub get_reference {
     return $ref_seq_build->full_consensus_path('fa');
 }
 
+sub workflow_xml {
+    return \*DATA;
+}
+
 sub _detect_variants {
     my $self = shift;
 
@@ -74,7 +78,7 @@ sub _detect_variants {
     $self->set_output;
 
     # Define a workflow from the static XML at the bottom of this module
-    my $workflow = Workflow::Operation->create_from_xml(\*DATA);
+    my $workflow = Workflow::Operation->create_from_xml($self->workflow_xml);
 
     # Validate the workflow
     my @errors = $workflow->validate;
