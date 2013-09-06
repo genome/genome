@@ -83,6 +83,16 @@ sub __errors__ {
     my @errors = $self->SUPER::__errors__;
     return @errors if @errors;
 
+    my $import_cmd_error = $self->_resolve_import_command;
+    if ( $import_cmd_error ) {
+        push @errors, UR::Object::Tag->create(
+            type => 'invalid',
+            properties => [qw/ import_launch_config /],
+            desc => $import_cmd_error,
+        );
+        return @errors;
+    }
+
     my $import_list_config = $self->import_list_config;
     if ( $import_list_config ) {
         my %import_list_config;
@@ -118,16 +128,6 @@ sub __errors__ {
             type => 'invalid',
             properties => [qw/ model_params /],
             desc => $model_params_error,
-        );
-        return @errors;
-    }
-
-    my $import_cmd_error = $self->_resolve_import_command;
-    if ( $import_cmd_error ) {
-        push @errors, UR::Object::Tag->create(
-            type => 'invalid',
-            properties => [qw/ import_launch_config /],
-            desc => $import_cmd_error,
         );
         return @errors;
     }
