@@ -51,6 +51,8 @@ __cached_value_for(
     'picard_version',
     sub { return Genome::Model::Tools::Picard->default_picard_version });
 
+execute();
+
 #
 # Configuration for the aligner name, etc
 #
@@ -81,15 +83,16 @@ sub aligner_name { "rtg map" }
 #
 ###########################################################
 
-my $temp_reference_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->create(reference_build => reference_build(), aligner_version => aligner_version(), aligner_name => aligner_name(), aligner_params=>'');
+sub execute {
+    my $temp_reference_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->create(reference_build => reference_build(), aligner_version => aligner_version(), aligner_name => aligner_name(), aligner_params=>'');
 
-# Uncomment this to create the dataset necessary for shorcutting to work
-#test_alignment(generate_shortcut_data => 1);
+    # Uncomment this to create the dataset necessary for shorcutting to work
+    #test_alignment(generate_shortcut_data => 1);
 
-
-test_shortcutting();
-test_alignment();
-test_alignment(force_fragment => 1);
+    test_shortcutting();
+    test_alignment();
+    test_alignment(force_fragment => 1);
+}
 
 sub __cached_value_for {
     my $value_name = shift;
