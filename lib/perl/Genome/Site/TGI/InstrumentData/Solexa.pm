@@ -268,29 +268,7 @@ sub __display_name__ {
 }
 
 sub _calculate_paired_end_kb_usage {
-    my $self = shift;
-    my $HEADER_LENGTH = shift;
-    $HEADER_LENGTH = $HEADER_LENGTH + 5; # Adding 5 accounts for newlines in the FQ file.
-    # If data is paired_end fwd_read_length, rev_read_length, fwd_clusters and rev_clusters
-    # should all be defined.
-    if (!defined($self->fwd_read_length) or $self->fwd_read_length <= 0) {
-        $self->error_message("Instrument data fwd_read_length is either undefined or less than 0.");
-        die;
-    } elsif (!defined($self->rev_read_length) or $self->rev_read_length <= 0) {
-        $self->error_message("Instrument data rev_read_length is either undefined or less than 0.");
-        die;
-    } elsif (!defined($self->fwd_clusters) or $self->fwd_clusters <= 0) {
-        $self->error_message("Instrument data fwd_clusters is either undefined or less than 0.");
-        die;
-    } elsif (!defined($self->rev_clusters) or $self->rev_clusters <= 0) {
-        $self->error_message("Instrument data rev_clusters is either undefined or less than 0.");
-        die;
-    }
-    
-    my $fwd = (($self->fwd_read_length + $HEADER_LENGTH) * $self->fwd_clusters)*2;
-    my $rev = (($self->rev_read_length + $HEADER_LENGTH) * $self->rev_clusters)*2;
-    my $total = ($fwd + $rev) / 1024.0;
-    return $total;
+    return Genome::InstrumentData::Solexa::_calculate_paired_end_kb_usage(@_);
 }
 
 sub _calculate_non_paired_end_kb_usage {
