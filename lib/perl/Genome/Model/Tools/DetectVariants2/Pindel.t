@@ -18,10 +18,6 @@ use Genome::SoftwareResult;
 my $archos = `uname -a`;
 if ($archos !~ /64/) {
     plan skip_all => "Must run from 64-bit machine";
-} else {
-    if(not $ENV{UR_RUN_LONG_TESTS}) {
-        plan skip_all => 'This test takes up to 10 minutes to run and thus is skipped.  Use `ur test run --long` to enable.';
-    }
 }
 
 use_ok('Genome::Model::Tools::DetectVariants2::Pindel');
@@ -51,6 +47,12 @@ ok($pindel->default_chromosomes_as_string =~ /^1,2,3,4,5,6,7,8,9,10,11,12,13,14,
 $ENV{NO_LSF}=1;
 
 $pindel->dump_status_messages(1);
+
+done_testing();
+
+#TODO Re-enable the below when the test is cut down to reasonable run times. It's currently ~90 minutes. 
+# TODO limit the test run to one chromosome. 
+=cut
 my $rv = $pindel->execute;
 is($rv, 1, 'Testing for successful execution.  Expecting 1.  Got: '.$rv);
 

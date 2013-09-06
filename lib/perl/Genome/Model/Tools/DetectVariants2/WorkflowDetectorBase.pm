@@ -4,6 +4,10 @@ use strict;
 use warnings;
 use Genome;
 
+require Exporter;
+our @ISA = qw(Exporter);
+our @EXPORT_OK = qw(chromosome_sort);
+
 class Genome::Model::Tools::DetectVariants2::WorkflowDetectorBase {
     doc => "A base class for detectors that run workflows",
     is_abstract => 1,
@@ -26,6 +30,13 @@ class Genome::Model::Tools::DetectVariants2::WorkflowDetectorBase {
         },
     ],
 };
+
+sub sort_chromosomes {
+    my $self = shift;
+    my $chromosome_array_ref = shift;
+    my @chromosome_list = sort {chromosome_sort()} @$chromosome_array_ref;
+    return @chromosome_list;
+}
 
 sub chromosome_sort {
     # numeric sort if chrom starts with number
