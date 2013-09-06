@@ -55,6 +55,14 @@ sub _ensure_chromosome_list_set {
     return;
 }
 
+sub add_bams_to_input {
+    my ($self, $input) = @_;
+
+    $input->{tumor_bam} = $self->aligned_reads_input;
+    $input->{normal_bam} = $self->control_aligned_reads_input if defined $self->control_aligned_reads_input;
+    return;
+}
+
 sub _detect_variants {
     my $self = shift;
 
@@ -85,10 +93,10 @@ sub _detect_variants {
     # Collect and set input parameters
     $input{chromosome_list} = $self->chromosome_list;
     $input{reference_build_id} = $refbuild_id;
-    $input{tumor_bam} = $self->aligned_reads_input;
-    $input{normal_bam} = $self->control_aligned_reads_input if defined $self->control_aligned_reads_input;
     $input{output_directory}  =  $self->output_directory;#$self->_temp_staging_directory;
     $input{version} = $self->version;
+
+    $self->add_bams_to_input(\%input);
     
     $self->_dump_workflow($workflow);
 
