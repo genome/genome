@@ -272,51 +272,7 @@ sub _calculate_paired_end_kb_usage {
 }
 
 sub _calculate_non_paired_end_kb_usage {
-    my $self = shift;
-    my $HEADER_LENGTH = shift;
-    $HEADER_LENGTH = $HEADER_LENGTH + 5; # adding 5 accounts for newlines in the FQ file.
-    # We will take the max of fwd_read_length or rev_read_length and the max of fwd_clusters and rev_clusters
-    # to make sure that even strange data won't cause overly low space allocation
-    # Get the max read length.
-    my $max_read_length;
-    if ( defined($self->read_length) and $self->read_length > 0 ) {
-        $max_read_length = $self->read_length;
-    } elsif ( defined($self->fwd_read_length) and defined($self->rev_read_length) ) {
-        if ( $self->fwd_read_length > $self->rev_read_length ) {
-            $max_read_length = $self->fwd_read_length;
-        } else {
-            $max_read_length = $self->rev_read_length;
-        }
-    } elsif ( defined($self->fwd_read_length) and $self->fwd_read_length > 0) {
-        $max_read_length = $self->fwd_read_length;
-    } elsif ( defined($self->rev_read_length) and $self->rev_read_length > 0) {
-        $max_read_length = $self->rev_read_length;
-    } else {
-        $self->error_message("No valid read length value found in instrument data");
-        die;
-    }
-    # Get the max cluster length.
-    my $max_clusters;
-    if ( defined($self->clusters) and $self->clusters > 0 ) {
-        $max_clusters = $self->clusters;
-    } elsif ( defined($self->fwd_clusters) and defined($self->rev_clusters) ) {
-        if ( $self->fwd_clusters > $self->rev_clusters ) {
-            $max_clusters = $self->fwd_clusters;
-        } else {
-            $max_clusters = $self->rev_clusters;
-        }
-    } elsif ( defined($self->fwd_clusters) and $self->fwd_clusters > 0) {
-        $max_clusters = $self->fwd_clusters;
-    } elsif ( defined($self->rev_clusters) and $self->rev_clusters > 0) {
-        $max_clusters = $self->rev_clusters;
-    } else {
-        $self->error_message("No valid number of clusters value found in instrument data");
-        die;
-    }
-    
-    my $total_b = (($max_read_length + $HEADER_LENGTH) * $max_clusters)*2;
-    my $total = $total_b / 1024.0;
-    return $total;
+    return Genome::InstrumentData::Solexa::_calculate_non_paired_end_kb_usage(@_);
 }
 
 sub calculate_alignment_estimated_kb_usage {
