@@ -193,5 +193,12 @@ sub raw_inputs {
     return map {$self->raw_input_for_chromosome($_)} @{$self->chromosome_list};
 }
 
+sub raw_input_for_chromosome {
+    my ($self, $chromosome) = @_;
+    return $self->output_directory . "/"
+        .  Genome::Utility::Text::sanitize_string_for_filesystem($chromosome)
+        . "/" . $self->variant_type . "s.hq";
+}
+
 1;
 

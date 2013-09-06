@@ -74,13 +74,6 @@ sub variant_type {
     return 'snv';
 }
 
-sub raw_input_for_chromosome {
-    my ($self, $chromosome) = @_;
-    return $self->output_directory . "/"
-        .  Genome::Utility::Text::sanitize_string_for_filesystem($chromosome)
-        . "/" . $self->variant_type . "s.hq";
-}
-
 sub _generate_standard_files {
     my $self = shift;
     my $staging_dir = $self->_temp_staging_directory;
