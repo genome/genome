@@ -37,11 +37,6 @@ class Genome::Model::Tools::DetectVariants2::PindelSingleGenome {
             doc => 'This is a hashref containing the amount of memory in MB to request for each chromosome job of pindel',
         },
     ],
-    has_param => [
-        lsf_queue => {
-            default_value => 'workflow'
-        },
-    ],
 };
 
 sub _detect_variants {

@@ -40,9 +40,6 @@ class Genome::Model::Tools::DetectVariants2::Pindel {
         },
     ],
     has_param => [
-        lsf_queue => {
-            default_value => 'long'
-        },
         lsf_resource => {
             default_value => "-M 25000000 -R 'select[mem>25000] rusage[mem=25000]'",
         },

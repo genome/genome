@@ -27,11 +27,6 @@ class Genome::Model::Tools::DetectVariants2::MethRatio {
             doc => 'The location of the snvs.hq file',
         },
     ],
-    has_param => [
-        lsf_queue => {
-            default_value => 'workflow'
-        },
-    ],
 };
 
 sub _detect_variants {
