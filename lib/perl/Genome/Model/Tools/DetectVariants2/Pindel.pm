@@ -89,16 +89,20 @@ sub workflow_xml {
     return \*DATA;
 }
 
+sub variant_type {
+    return 'indel';
+}
+
 sub raw_input_for_chromosome {
     my ($self, $chromosome) = @_;
     return $self->output_directory . "/"
         .  Genome::Utility::Text::sanitize_string_for_filesystem($chromosome)
-        . "/indels.hq";
+        . "/" . $self->variant_type . "s.hq";
 }
 
 sub raw_output_file {
     my $self = shift;
-    return $self->output_directory . "/indels.hq";
+    return $self->output_directory . "/" . $self->variant_type . "s.hq";
 }
 
 sub raw_inputs {
