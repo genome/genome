@@ -9,7 +9,7 @@ use above 'Genome';
 
 BEGIN {
     if (`uname -a` =~ /x86_64/) {
-        plan tests => 25;
+        plan tests => 26;
     } else {
         plan skip_all => 'Must run on a 64 bit machine';
     }
@@ -21,7 +21,7 @@ BEGIN {
 __cached_value_for(
     'expected_shortcut_path',
     sub {
-        my $aligner_label   = aligner_name().aligner_version();
+        my $aligner_label = aligner_name().aligner_version();
         $aligner_label =~ s/\./\_/g;
         return "/gscmnt/sata828/info/alignment_data/$aligner_label/TEST-human/test_run_name/4_-123456";
     });
@@ -85,7 +85,12 @@ sub library_id { '-13433' }
 ###########################################################
 
 sub execute {
-    my $temp_reference_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->create(reference_build => reference_build(), aligner_version => aligner_version(), aligner_name => aligner_name(), aligner_params=>'');
+    my $reference_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->create(
+                                aligner_name => aligner_name(),
+                                aligner_params => '',
+                                aligner_version => aligner_version(),
+                                reference_build => reference_build());
+    ok($reference_index, "generated reference index");
 
     # Uncomment this to create the dataset necessary for shorcutting to work
     #test_alignment(generate_shortcut_data => 1);
@@ -116,7 +121,6 @@ sub test_alignment {
     my $generate_shortcut = delete $p{generate_shortcut_data};
 
     my $instrument_data = generate_fake_instrument_data();
-
     my $alignment = Genome::InstrumentData::AlignmentResult->create(
                                                        instrument_data_id => $instrument_data->id,
                                                        samtools_version => samtools_version(),
@@ -161,6 +165,7 @@ sub test_shortcutting {
 
     my $alignment_result_class_name = "Genome::InstrumentData::AlignmentResult::" . Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name(aligner_name());
     eval "use $alignment_result_class_name";
+
     my $alignment_result = $alignment_result_class_name->__define__(
                  id => -8765432,
                  output_dir => expected_shortcut_path(),
@@ -251,6 +256,7 @@ sub generate_fake_instrument_data {
     my @in_fastq_files = glob($instrument_data->gerald_directory.'/*.txt');
     $instrument_data->set_list('dump_sanger_fastq_files',@in_fastq_files);
     $instrument_data->mock('dump_trimmed_fastq_files', sub {return Genome::InstrumentData::Solexa::dump_trimmed_fastq_files($instrument_data)});
+
     # fake out some properties on the instrument data
     isa_ok($instrument_data,'Genome::InstrumentData::Solexa');
     $instrument_data->set_always('sample_type','dna');

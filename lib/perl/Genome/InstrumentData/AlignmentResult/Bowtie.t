@@ -21,7 +21,7 @@ BEGIN {
 __cached_value_for(
     'expected_shortcut_path',
     sub {
-        my $aligner_label   = aligner_name().aligner_version();
+        my $aligner_label = aligner_name().aligner_version();
         $aligner_label =~ s/\./\_/g;
         return "/gscmnt/sata828/info/alignment_data/$aligner_label/TEST-human/test_run_name/4_-123456";
     });
@@ -86,7 +86,11 @@ sub library_id { '-1234545' }
 ###########################################################
 
 sub execute {
-    my $reference_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->create(aligner_name=> aligner_name(), aligner_version=> aligner_version(), aligner_params=>undef, reference_build=> reference_build());
+    my $reference_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->create(
+                                aligner_name => aligner_name(),
+                                aligner_params => undef,
+                                aligner_version => aligner_version(),
+                                reference_build => reference_build());
     ok($reference_index, "generated reference index");
 
     # Uncomment this to create the dataset necessary for shorcutting to work
@@ -112,14 +116,12 @@ sub __cached_value_for {
     *$value_name = $caching_sub;
 }
 
-
 sub test_alignment {
     my %p = @_;
     
     my $generate_shortcut = delete $p{generate_shortcut_data};
 
     my $instrument_data = generate_fake_instrument_data();
-
     my $alignment = Genome::InstrumentData::AlignmentResult->create(
                                                        instrument_data_id => $instrument_data->id,
                                                        samtools_version => samtools_version(),
@@ -136,10 +138,10 @@ sub test_alignment {
     ok(-d $dir, "result is a real directory");
     ok(-s $dir . "/all_sequences.bam", "result has a bam file");
 
-    my $expected_shortcut_path = expected_shortcut_path();
     if ($generate_shortcut) {
         print "*** Using this data to generate shortcut data! ***\n";
 
+        my $expected_shortcut_path = expected_shortcut_path();
         if (-d $expected_shortcut_path) {
             die "Expected shortcut path $expected_shortcut_path already exists, don't want to step on it";
         }
@@ -172,9 +174,9 @@ sub test_shortcutting {
                  subclass_name => $alignment_result_class_name,
                  module_version => '12345',
                  aligner_name => aligner_name(),
-                 aligner_version=> aligner_version(),
-                 samtools_version=> samtools_version(),
-                 picard_version=> picard_version(),
+                 aligner_version => aligner_version(),
+                 samtools_version => samtools_version(),
+                 picard_version => picard_version(),
                  reference_build => reference_build(),
     );
     $alignment_result->lookup_hash($alignment_result->calculate_lookup_hash);
@@ -212,7 +214,7 @@ sub test_shortcutting {
                                                               aligner_name => aligner_name(),
                                                               aligner_version => aligner_version(),
                                                               samtools_version => samtools_version(),
-                                                              picard_version =>  picard_version(),
+                                                              picard_version => picard_version(),
                                                               reference_build => reference_build(),
                                                               );
     ok($alignment, "got an alignment object");

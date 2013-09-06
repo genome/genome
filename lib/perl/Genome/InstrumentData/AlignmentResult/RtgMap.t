@@ -11,7 +11,7 @@ $ENV{'TEST_MODE'} = 1;
 BEGIN {
     plan skip_all => 'the license for the default version of RTG has expired and the new version requires code changes';
     if (`uname -a` =~ /x86_64/) {
-        plan tests => 25;
+        plan tests => 26;
     } else {
         plan skip_all => 'Must run on a 64 bit machine';
     }
@@ -24,9 +24,9 @@ BEGIN {
 __cached_value_for(
     'expected_shortcut_path',
     sub {
-        my $aligner_label   = aligner_name().aligner_version();
+        my $aligner_label = aligner_name().aligner_version();
         $aligner_label =~ s/\.|\s/\_/g;
-        return "/gscmnt/sata828/info/alignment_data/$aligner_label/TEST-human/test_run_name/4_-123456",
+        return "/gscmnt/sata828/info/alignment_data/$aligner_label/TEST-human/test_run_name/4_-123456";
     });
 __cached_value_for(
     'aligner_version',
@@ -84,7 +84,12 @@ sub library_id { '144224' }
 ###########################################################
 
 sub execute {
-    my $temp_reference_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->create(reference_build => reference_build(), aligner_version => aligner_version(), aligner_name => aligner_name(), aligner_params=>'');
+    my $reference_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->create(
+                                aligner_name => aligner_name(),
+                                aligner_params=>'',
+                                aligner_version => aligner_version(),
+                                reference_build => reference_build());
+    ok($reference_index, "generated reference index");
 
     # Uncomment this to create the dataset necessary for shorcutting to work
     #test_alignment(generate_shortcut_data => 1);
