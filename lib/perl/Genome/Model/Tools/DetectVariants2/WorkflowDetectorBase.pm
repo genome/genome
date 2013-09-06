@@ -212,5 +212,14 @@ sub _generate_standard_files {
     return 1;
 }
 
+sub _ensure_chromosome_list_set {
+    my $self = shift;
+
+    unless ($self->chromosome_list) {
+        $self->chromosome_list($self->default_chromosomes);
+    }
+    return;
+}
+
 1;
 
