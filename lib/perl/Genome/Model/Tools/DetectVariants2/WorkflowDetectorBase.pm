@@ -119,5 +119,14 @@ sub has_version {
     return 0;
 }
 
+sub _create_temp_directories {
+    my $self = shift;
+    $self->_temp_staging_directory($self->output_directory);
+    $self->_temp_scratch_directory($self->output_directory);
+    return 1;
+
+    return $self->SUPER::_create_temp_directories(@_);
+}
+
 1;
 
