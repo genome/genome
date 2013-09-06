@@ -127,13 +127,6 @@ sub filter_bam {
 		
 		
 };
-
-
-sub parse_file_into_hashref {
-    my $class = shift;
-    return Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref(@_);
-}
-
 	
 1;
 
