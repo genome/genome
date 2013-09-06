@@ -127,15 +127,18 @@ sub _sort_detector_output {
     return 1;
 }
 
+sub versions {
+    return Genome::Model::Tools::Bsmap::MethRatioWorkflow->available_methratio_versions;
+}
+
 sub has_version {
     my $self = shift;
     my $version = shift;
     unless(defined($version)){
         $version = $self->version;
     }
-    my @versions = Genome::Model::Tools::Bsmap::MethRatioWorkflow->available_methratio_versions;
 
-    for my $v (@versions){
+    for my $v ($self->versions){
         if($v eq $version){
             return 1;
         }

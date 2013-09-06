@@ -121,15 +121,18 @@ sub _generate_standard_files {
     return 1;
 }
 
+sub versions {
+    return Genome::Model::Tools::Pindel::RunPindel->available_pindel_versions;
+}
+
 sub has_version {
     my $self = shift;
     my $version = shift;
     unless(defined($version)){
         $version = $self->version;
     }
-    my @versions = Genome::Model::Tools::Pindel::RunPindel->available_pindel_versions;
 
-    for my $v (@versions){
+    for my $v ($self->versions){
         if($v eq $version){
             return 1;
         }
