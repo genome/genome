@@ -70,52 +70,6 @@ sub workflow_xml {
     return \*DATA;
 }
 
-sub _detect_variants {
-    my $self = shift;
-
-    $self->_ensure_chromosome_list_set;
-
-    $self->set_output;
-
-    # Define a workflow from the static XML at the bottom of this module
-    my $workflow = Workflow::Operation->create_from_xml($self->workflow_xml);
-
-    # Validate the workflow
-    my @errors = $workflow->validate;
-    if (@errors) {
-        $self->error_message(@errors);
-        die "Errors validating workflow\n";
-    }
-
-    my %input;
-    $input{chromosome_list} = $self->chromosome_list;
-    $input{reference} = $self->get_reference;
-    $input{output_directory} = $self->output_directory;
-    $input{version} = $self->version;
-
-    $self->add_bams_to_input(\%input);
-
-    $self->_dump_workflow($workflow);
-
-    my $log_dir = $self->output_directory;
-    if(Workflow::Model->parent_workflow_log_dir) {
-        $log_dir = Workflow::Model->parent_workflow_log_dir;
-    }
-    $workflow->log_dir($log_dir);
-
-    # Launch workflow
-    $self->status_message("Launching workflow now.");
-    my $result = Workflow::Simple::run_workflow_lsf( $workflow, %input);
-
-    # Collect and analyze results
-    unless($result){
-        die $self->error_message("Workflow did not return correctly.");
-    }
-    $self->_workflow_result($result);
-
-    return 1;
-}
-
 sub _generate_standard_files {
     my $self = shift;
     my $staging_dir = $self->_temp_staging_directory;
