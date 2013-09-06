@@ -31,7 +31,7 @@ sub convertIub{
         return join(",",keys(%baseHash));
     }
 
-    return join(',', Genome::Info::IUB->iub_to_bases($base)); #TODO: this is completely stupid.  make this not
+    return join(',', Genome::Info::IUB->rna_safe_iub_to_bases($base)); #TODO: this is completely stupid.  make this not
 }
 
 # generate a GT line from a base and a list of all alleles at the position

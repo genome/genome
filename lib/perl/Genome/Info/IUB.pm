@@ -24,6 +24,8 @@ my %iub_as_allele_array = (
     N => ['A','C','G','T'],
 );
 
+my %rna_safe_iub_as_allele_array = %iub_as_allele_array;
+$rna_safe_iub_as_allele_array{'U'} = 'T';
 
 my %iub_as_string = (
     A => 'AA',
@@ -196,10 +198,24 @@ sub iub_to_bases {
         $class = shift;
     }
    my ($iub) = @_;
-   my %bases = map {$_ => 1} @{$iub_as_allele_array{uc $iub}};
-   return sort keys %bases;
+   return _iub_to_bases(\%iub_as_allele_array, $iub);
 }
 
+sub rna_safe_iub_to_bases {
+    my $class;
+    if ((defined($_[0]))&&($_[0] eq __PACKAGE__)) {
+        $class = shift;
+    }
+   my ($iub) = @_;
+   return _iub_to_bases(\%rna_safe_iub_as_allele_array, $iub);
+}
+
+sub _iub_to_bases {
+   my %iub_as_array = %{shift(@_)};
+   my ($iub) = @_;
+   my %bases = map {$_ => 1} @{$iub_as_array{uc $iub}};
+   return sort keys %bases;
+}
 
 sub iub_to_string {
     my $base = pop;

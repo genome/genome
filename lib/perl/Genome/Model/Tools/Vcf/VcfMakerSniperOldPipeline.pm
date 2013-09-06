@@ -294,7 +294,7 @@ sub execute {                               # replace with real execution logic.
         #get all the alleles together (necessary for the GT field)
         my @allAlleles = ($col[2]);
         my @varAlleles;
-        my @tmp = Genome::Info::IUB->iub_to_bases($col[3]);
+        my @tmp = Genome::Info::IUB->rna_safe_iub_to_bases($col[3]);
 
         #only add non-reference alleles to the alt field
         foreach my $alt (@tmp){
@@ -397,7 +397,7 @@ sub execute {                               # replace with real execution logic.
             @varAlleles = @tmp;
         }
 
-        my @tmp = Genome::Info::IUB->iub_to_bases($col[3]);
+        my @tmp = Genome::Info::IUB->rna_safe_iub_to_bases($col[3]);
         #only add non-reference alleles to the alt field
         foreach my $alt (@tmp){
             unless (grep $_ eq $alt, @allAlleles){
@@ -494,7 +494,7 @@ sub execute {                               # replace with real execution logic.
         #just replace anything from samtools with the presumably better sniper call.
         my @allAlleles = $col[2];
         my @varAlleles;
-        my @tmp = Genome::Info::IUB->iub_to_bases($col[3]);
+        my @tmp = Genome::Info::IUB->rna_safe_iub_to_bases($col[3]);
         #only add non-reference alleles to the alt field
         foreach my $alt (@tmp){
             unless ($alt eq $col[2]){

@@ -1331,10 +1331,8 @@ sub check_somatic_variation_models{
     #}
 
     #Check for the correct version of previously discovered variants
-    if ($model->can("previously_discovered_variations_build")){
+    if ($model->previously_discovered_variations_build){
       next unless ($model->previously_discovered_variations_build->id eq $self->previously_discovered_variations->id);
-    }else{
-      next;
     }
     
     #Make sure one of the passing normal AND tumor reference alignment models are specified as inputs to the somatic variation model

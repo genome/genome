@@ -1,4 +1,3 @@
-
 package Genome::Model::Tools::Analysis::Maf::FrequencyDistribution;     # rename this when you give the module file a different name <--
 
 #####################################################################################################################################
