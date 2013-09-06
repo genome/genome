@@ -249,7 +249,7 @@ sub readVariantFile{
             #get all the alleles together (necessary for the GT field)
             my @allAlleles = $col[2];
             my @varAlleles;
-            my @tmp = Genome::Info::IUB->iub_to_bases($col[3]);
+            my @tmp = Genome::Info::IUB->rna_safe_iub_to_bases($col[3]);
 
             #only add non-reference alleles to the alt field
             foreach my $alt (@tmp){

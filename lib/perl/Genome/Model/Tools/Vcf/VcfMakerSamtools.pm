@@ -287,7 +287,7 @@ sub execute {                               # replace with real execution logic.
             $col[3] =~ s/[^ACGTN\-]/N/g;
             
             #get slash-sep ids for variant
-            my $altvar = join("/", Genome::Info::IUB->iub_to_bases($col[4]));
+            my $altvar = join("/", Genome::Info::IUB->rna_safe_iub_to_bases($col[4]));
             my $id = $chr . ":" . $col[1] . ":" . $col[2] . ":" . $col[3] . ":" . $altvar;
 
             #skip MT and NT chrs
@@ -303,7 +303,7 @@ sub execute {                               # replace with real execution logic.
                 #get all the alleles together (necessary for the GT field)
                 my @allAlleles = $col[3];
                 my @varAlleles;
-                my @tmp = Genome::Info::IUB->iub_to_bases($col[4]);
+                my @tmp = Genome::Info::IUB->rna_safe_iub_to_bases($col[4]);
                 
                 #only add non-reference alleles to the alt field
                 foreach my $alt (@tmp){
