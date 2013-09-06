@@ -100,7 +100,7 @@ sub _detect_variants {
 
     # Collect and set input parameters
     $input{chromosome_list} = $self->chromosome_list;
-    $input{reference_build_id} = $refbuild_id;
+    $input{reference} = $refbuild_id;
     $input{output_directory} = $self->output_directory;
     $input{version} = $self->version;
 
@@ -190,7 +190,7 @@ __DATA__
   <link fromOperation="input connector" fromProperty="output_directory" toOperation="Pindel" toProperty="output_directory" />
   <link fromOperation="input connector" fromProperty="chromosome_list" toOperation="Pindel" toProperty="chromosome" />
   <link fromOperation="input connector" fromProperty="version" toOperation="Pindel" toProperty="version" />
-  <link fromOperation="input connector" fromProperty="reference_build_id" toOperation="Pindel" toProperty="reference_build_id" />
+  <link fromOperation="input connector" fromProperty="reference" toOperation="Pindel" toProperty="reference_build_id" />
 
   <link fromOperation="Pindel" fromProperty="output_directory" toOperation="output connector" toProperty="output" />
 
@@ -204,7 +204,7 @@ __DATA__
     <inputproperty isOptional="Y">output_directory</inputproperty>
     <inputproperty isOptional="Y">version</inputproperty>
     <inputproperty isOptional="Y">chromosome_list</inputproperty>
-    <inputproperty isOptional="Y">reference_build_id</inputproperty>
+    <inputproperty isOptional="Y">reference</inputproperty>
 
     <outputproperty>output</outputproperty>
   </operationtype>

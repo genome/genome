@@ -85,7 +85,7 @@ sub _detect_variants {
 
     # Collect and set input parameters
     $input{chromosome_list} = $self->chromosome_list;
-    $input{reference_build_fasta} = $reference_fasta;
+    $input{reference} = $reference_fasta;
     $input{output_directory} = $self->output_directory;
     $input{version} = $self->version;
 
@@ -183,7 +183,7 @@ __DATA__
   <link fromOperation="input connector" fromProperty="bam_file" toOperation="MethRatio" toProperty="bam_file" />
   <link fromOperation="input connector" fromProperty="output_directory" toOperation="MethRatio" toProperty="output_directory" />
   <link fromOperation="input connector" fromProperty="chromosome_list" toOperation="MethRatio" toProperty="chromosome" />
-  <link fromOperation="input connector" fromProperty="reference_build_fasta" toOperation="MethRatio" toProperty="reference" />
+  <link fromOperation="input connector" fromProperty="reference" toOperation="MethRatio" toProperty="reference" />
   <link fromOperation="input connector" fromProperty="version" toOperation="MethRatio" toProperty="version" />
 
 
@@ -198,7 +198,7 @@ __DATA__
     <inputproperty isOptional="Y">output_directory</inputproperty>
     <inputproperty isOptional="Y">chromosome_list</inputproperty>
     <inputproperty isOptional="Y">version</inputproperty>
-    <inputproperty isOptional="Y">reference_build_fasta</inputproperty>
+    <inputproperty isOptional="Y">reference</inputproperty>
 
     <outputproperty>output</outputproperty>
   </operationtype>
