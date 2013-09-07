@@ -471,8 +471,7 @@ sub summary_xml_content {
 }
 
 sub run_identifier {
-    my $self = shift;
-    return $self->flow_cell_id;
+    return Genome::InstrumentData::Solexa::run_identifier(@_);
 }
 
 1;
