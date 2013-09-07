@@ -379,14 +379,7 @@ sub validate_fastq_directory {
 
 
 sub resolve_external_fastq_filenames {
-    my $self = shift;
-
-    my @fastq_pathnames;
-    my $fastq_pathname = $self->create_temp_file_path('fastq');
-    unless ($fastq_pathname) {
-        die "Failed to create temp file for fastq!";
-    }
-    return ($fastq_pathname);
+    return Genome::InstrumentData::Solexa::resolve_external_fastq_filenames(@_);
 }
 
 sub _calculate_total_read_count {
