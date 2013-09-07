@@ -374,29 +374,7 @@ sub dump_illumina_fastq_archive {
 }
 
 sub validate_fastq_directory {
-    my ($self, $dir, $dir_type) = @_;
-
-    my $msg_base = "$dir_type : $dir";
-
-    unless ($dir) {
-        $self->error_message("$msg_base is null");
-        return;
-    }
-
-    unless (-e $dir) {
-        $self->error_message("$msg_base not existing in file system");
-        return;
-    }
-
-    unless ($dir_type eq 'archive_path') {
-        my @files = glob("$dir/*"); #In scalar context, a glob functions as an iterator--we instead want to check the number of files
-        unless (scalar @files) {
-            $self->error_message("$msg_base is empty");
-            return;
-        }
-    }
-
-    return $dir;
+    return Genome::InstrumentData::Solexa::validate_fastq_directory(@_);
 }
 
 
