@@ -39,7 +39,7 @@ class Genome::InstrumentData::Command::Import::Manager {
         _import_command_format => { is => 'Text', },
         _model_class => { is => 'Text' },
         _model_params => { is => 'Hash' },
-        samples => { is => 'Hash', },
+        _imports => { is => 'Array', },
         instrument_data_import_command_substitutions => { 
             is => 'Hash', 
             default_value => { map { $_ => qr/%{$_}/ } (qw/ sample_name /), },
@@ -150,31 +150,33 @@ sub _load_source_files_tsv {
         return 'No '.join(' ', map { '"'.$_.'"' } keys %headers_not_found).' column in sample info file! '.$self->source_files_tsv;
     }
 
-    my %samples;
+    my @imports;
+    my %seen_source_files;
     while ( my $hash = $info_reader->next ) {
         my $source_files = delete $hash->{source_files};
-        if ( exists $samples{$source_files} ) {
+        if ( $seen_source_files{$source_files} ) {
             $self->error_message('Duplicate source files! '.$source_files);
             return;
         }
+        $seen_source_files{$source_files}++;
         my $sample_name = delete $hash->{sample_name};
         if ( not $sample_name ) {
             $self->error_message('No sample name in info file on line '.$info_reader->line_number.'!');
             return;
         }
-        my $sample = {
+        my $import = {
             sample_name => $sample_name,
             source_files => $source_files,
             instrument_data_attributes => [],
         };
-        $samples{$source_files} = $sample;
+        push @imports, $import;
         for my $attr ( sort keys %$hash ) {
             my $value = $hash->{$attr};
             next if not defined $value or $value eq '';
-            push @{$sample->{'instrument_data_attributes'}}, $attr."='".$value."'";
+            push @{$import->{'instrument_data_attributes'}}, $attr."='".$value."'";
         }
     }
-    $self->samples(\%samples);
+    $self->_imports(\@imports);
 
     return;
 }
@@ -272,8 +274,8 @@ sub execute {
 sub _load_samples {
     my $self = shift;
 
-    my $samples = $self->samples;
-    for my $sample ( values %$samples ) {
+    my $imports = $self->_imports;
+    for my $sample ( @$imports ) {
         $sample->{sample} = Genome::Sample->get(name => $sample->{sample_name});
         next if not $sample->{sample};
         if ( not $sample->{sample}->nomenclature ) {
@@ -282,7 +284,7 @@ sub _load_samples {
         }
     }
 
-    $self->samples($samples);
+    $self->_imports($imports);
 
     return 1;
 }
@@ -290,17 +292,17 @@ sub _load_samples {
 sub _load_instrument_data {
     my $self = shift;
 
-    my $samples = $self->samples;
+    my $imports = $self->_imports;
 
     my %instrument_data = map { $_->sample->name, $_ } Genome::InstrumentData::Imported->get(
-        original_data_path => [ map { $_->{source_files} } values %$samples ],
+        original_data_path => [ map { $_->{source_files} } @$imports ],
         '-hint' => [qw/ attributes /],
     );
 
-    for my $sample ( values %$samples ) {
-        my $instrument_data = $instrument_data{ $sample->{sample_name} };
-        $sample->{instrument_data} = $instrument_data;
-        $sample->{instrument_data_file} = eval{
+    for my $import ( @$imports ) {
+        my $instrument_data = $instrument_data{ $import->{sample_name} };
+        $import->{instrument_data} = $instrument_data;
+        $import->{instrument_data_file} = eval{
             my $attribute = $instrument_data->attributes(attribute_label => 'bam_path');
             if ( not $attribute ) {
                 $attribute = $instrument_data->attributes(attribute_label => 'archive_path');
@@ -310,7 +312,7 @@ sub _load_instrument_data {
 
     }
 
-    $self->samples($samples);
+    $self->_imports($imports);
 
     return 1;
 }
@@ -321,9 +323,9 @@ sub _load_models {
     my $model_params = $self->_model_params;
     return 1 if not $model_params;
 
-    my $samples = $self->samples;
+    my $imports = $self->_imports;
     my $model_class = $self->_model_class;
-    for my $sample ( values %$samples ) {
+    for my $sample ( @$imports ) {
         # only get/create model once inst data has been created
         next if not $sample->{instrument_data};
         # and has data file
@@ -347,7 +349,7 @@ sub _load_models {
         $sample->{build} = $model->latest_build;
     }
 
-    $self->samples($samples);
+    $self->_imports($imports);
 
     return 1;
 }
@@ -369,13 +371,13 @@ sub _load_sample_statuses {
         return 'build_'.lc($sample->{build}->status);
     };
 
-    my $samples = $self->samples;
-    for my $sample ( values %$samples ) {
+    my $imports = $self->_imports;
+    for my $sample ( @$imports ) {
         $sample->{job_status} = $sample_job_statuses->{ $sample->{sample_name} };
         $sample->{status} = $get_status_for_sample->($sample);
     }
 
-    $self->samples($samples);
+    $self->_imports($imports);
 
     return 1;
 }
@@ -408,8 +410,8 @@ sub _launch_imports {
 
     return 1 if not $self->import_launch_config;
 
-    my $samples = $self->samples;
-    for my $sample ( values %$samples ) {
+    my $imports = $self->_imports;
+    for my $sample ( @$imports ) {
         next if not grep { $sample->{status} ne $_ } (qw/ import_needed import_failed /);
 
         if ( $sample->{status} eq 'import_failed' and $sample->{instrument_data} ) {
@@ -467,7 +469,7 @@ sub _output_status {
 
     my %totals;
     my $status = join("\t", (qw/ name status inst_data model build /))."\n";
-    for my $sample ( sort { $a->{sample_name} cmp $b->{sample_name} } values %{$self->samples} ) {
+    for my $sample ( sort { $a->{sample_name} cmp $b->{sample_name} } @{$self->_imports} ) {
         $totals{total}++;
         $totals{ $sample->{status} }++;
         $totals{build}++ if $sample->{status} =~ /^build/;
