@@ -370,38 +370,7 @@ sub resolve_fastq_filenames {
 
 
 sub dump_illumina_fastq_archive {
-    my ($self, $dir) = @_;
-
-    my $archive = $self->archive_path;
-    $dir = Genome::Sys->base_temp_directory unless $dir;
-
-    #Prevent unarchiving multiple times during execution
-    #Hopefully nobody passes in a $dir expecting to overwrite another set of FASTQs coincidentally from the same lane number
-    my $already_dumped = 0;
-
-    if($self->is_paired_end) {
-        if (-s $dir . '/' . $self->read1_fastq_name and -s $dir . '/' . $self->read2_fastq_name) {
-            $already_dumped = 1;
-        }
-    }
-    else {
-        if (-s $dir . '/' . $self->fragment_fastq_name) {
-            $already_dumped = 1;
-        }
-    }
-
-    unless($already_dumped) {
-        my $cmd = "tar -xzf $archive --directory=$dir";
-        unless (Genome::Sys->shellcmd(
-            cmd => $cmd,
-            input_files => [$archive],
-        )) {
-            $self->error_message('Failed to run tar command '. $cmd);
-            return;
-            #die($self->error_message); Should try to get fastq from gerald_directory instead of dying
-        }
-    }
-    return $dir;
+    return Genome::InstrumentData::Solexa::dump_illumina_fastq_archive(@_);
 }
 
 sub validate_fastq_directory {
