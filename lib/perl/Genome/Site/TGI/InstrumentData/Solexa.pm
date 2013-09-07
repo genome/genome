@@ -94,7 +94,7 @@ class Genome::Site::TGI::InstrumentData::Solexa {
 
                 --s_rev.sd_above_insert_size,
                 i.sd_above_insert_size,
-                
+
                 --s_rev.sd_below_insert_size,
                 i.sd_below_insert_size,
 
@@ -375,11 +375,11 @@ sub resolve_fastq_filenames {
 
     my @illumina_output_paths;
     my @errors;
-    
+
     # First check the archive directory and second get the gerald directory
     for my $dir_type (qw(archive_path gerald_directory)) {
         $self->status_message("Now trying to get fastq from $dir_type for $desc");
-        
+
         my $directory = $self->$dir_type;
         $directory = $self->validate_fastq_directory($directory, $dir_type);
         next unless $directory;
@@ -396,10 +396,10 @@ sub resolve_fastq_filenames {
                 if (!$paired_end_as_fragment || $paired_end_as_fragment == 1) {
                     if (-e "$directory/" . $self->read1_fastq_name) {
                         push @illumina_output_paths, "$directory/" . $self->read1_fastq_name;
-                    } 
+                    }
                     elsif (-e "$directory/Temp/" . $self->read1_fastq_name) {
                         push @illumina_output_paths, "$directory/Temp/" . $self->read1_fastq_name;
-                    } 
+                    }
                     else {
                         die "No illumina forward data in directory for lane $lane! $directory";
                     }
@@ -407,28 +407,28 @@ sub resolve_fastq_filenames {
                 if (!$paired_end_as_fragment || $paired_end_as_fragment == 2) {
                     if (-e "$directory/" . $self->read2_fastq_name) {
                         push @illumina_output_paths, "$directory/" . $self->read2_fastq_name;
-                    } 
+                    }
                     elsif (-e "$directory/Temp/" . $self->read2_fastq_name) {
                         push @illumina_output_paths, "$directory/Temp/" . $self->read2_fastq_name;
-                    } 
+                    }
                     else {
                         die "No illumina reverse data in directory for lane $lane! $directory";
                     }
                 }
-            } 
+            }
             else {
                 if (-e "$directory/" . $self->fragment_fastq_name) {
                     push @illumina_output_paths, "$directory/" . $self->fragment_fastq_name;
-                } 
+                }
                 elsif (-e "$directory/Temp/" . $self->fragment_fastq_name) {
                     push @illumina_output_paths, "$directory/Temp/" . $self->fragment_fastq_name;
-                } 
+                }
                 else {
                     die "No fragment illumina data in directory for lane $lane! $directory";
                 }
             }
         };
-            
+
         push @errors, $@ if $@;
         last if @illumina_output_paths;
     }
@@ -450,12 +450,12 @@ sub dump_illumina_fastq_archive {
     #Prevent unarchiving multiple times during execution
     #Hopefully nobody passes in a $dir expecting to overwrite another set of FASTQs coincidentally from the same lane number
     my $already_dumped = 0;
-    
+
     if($self->is_paired_end) {
         if (-s $dir . '/' . $self->read1_fastq_name and -s $dir . '/' . $self->read2_fastq_name) {
             $already_dumped = 1;
         }
-    } 
+    }
     else {
         if (-s $dir . '/' . $self->fragment_fastq_name) {
             $already_dumped = 1;
@@ -478,9 +478,9 @@ sub dump_illumina_fastq_archive {
 
 sub validate_fastq_directory {
     my ($self, $dir, $dir_type) = @_;
-    
+
     my $msg_base = "$dir_type : $dir";
-    
+
     unless ($dir) {
         $self->error_message("$msg_base is null");
         return;
@@ -502,7 +502,7 @@ sub validate_fastq_directory {
     return $dir;
 }
 
-    
+
 sub resolve_external_fastq_filenames {
     my $self = shift;
 
