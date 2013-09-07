@@ -338,14 +338,7 @@ sub dump_sanger_fastq_files {
 }
 
 sub _unprocessed_fastq_filenames {
-    my $self = shift;
-    my @fastqs;
-    if ($self->is_external) {
-        @fastqs = $self->resolve_external_fastq_filenames(@_);
-    } else {
-        @fastqs = @{$self->resolve_fastq_filenames(@_)};
-    }
-    return @fastqs;
+    return Genome::InstrumentData::Solexa::_unprocessed_fastq_filenames(@_);
 }
 
 sub desc {
