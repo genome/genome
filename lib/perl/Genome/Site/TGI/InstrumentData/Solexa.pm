@@ -371,7 +371,7 @@ sub resolve_fastq_filenames {
 
     my %params = @_;
     my $paired_end_as_fragment = delete $params{'paired_end_as_fragment'};
-    my $requested_directory = delete $params{'directory'} || $self->base_temp_directory;
+    my $requested_directory = delete $params{'directory'} || Genome::Sys->base_temp_directory;
 
     my @illumina_output_paths;
     my @errors;
@@ -445,7 +445,7 @@ sub dump_illumina_fastq_archive {
     my ($self, $dir) = @_;
 
     my $archive = $self->archive_path;
-    $dir = $self->base_temp_directory unless $dir;
+    $dir = Genome::Sys->base_temp_directory unless $dir;
 
     #Prevent unarchiving multiple times during execution
     #Hopefully nobody passes in a $dir expecting to overwrite another set of FASTQs coincidentally from the same lane number
@@ -464,7 +464,7 @@ sub dump_illumina_fastq_archive {
 
     unless($already_dumped) {
         my $cmd = "tar -xzf $archive --directory=$dir";
-        unless ($self->shellcmd(
+        unless (Genome::Sys->shellcmd(
             cmd => $cmd,
             input_files => [$archive],
         )) {
