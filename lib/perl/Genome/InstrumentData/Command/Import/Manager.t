@@ -32,125 +32,139 @@ sub Genome::Model::Ref::_execute_build { return 1; }
 my $pp = Genome::ProcessingProfile::Ref->create(id => -333, name => 'ref pp #1', aligner => 'bwa');
 ok($pp, 'create pp');
 
-my $sample_name = 'TeSt-0000-00';
-my $source_files = 'original.bam';
-
 my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import::Manager', 'v1');
+my $source_files_tsv = $test_dir.'/info.tsv';
+my @source_files = (qw/ bam1 bam2 bam3 /);
 
 # Sample needed
-my $info_tsv = $test_dir.'/valid-build/info.tsv';
 my $manager = Genome::InstrumentData::Command::Import::Manager->create(
-    source_files_tsv => $info_tsv,
+    source_files_tsv => $source_files_tsv,
 );
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');
-my $sample_hash = eval{ $manager->samples->{$source_files}; };
-ok($sample_hash, 'sample hash');
-is($sample_hash->{status}, 'sample_needed', 'status is sample_needed');
-is($sample_hash->{sample_name}, $sample_name, 'sample hash sample name');
-ok(!$sample_hash->{sample}, 'sample hash sample does not exist');
-ok(!$sample_hash->{instrument_data}, 'sample hash instrument data does not exist');
-ok(!$sample_hash->{model}, 'sample hash model does not exist');
-ok(!$sample_hash->{build}, 'sample hash build does not exist');
 
-# Define sample
-my $sample = Genome::Sample->__define__(
-    id => -111,
-    name => $sample_name,
-    nomenclature => 'TeSt',
-);
+my $imports_aryref = $manager->_imports;
+is_deeply([ map { $_->{status} } @$imports_aryref ], [qw/ sample_needed sample_needed sample_needed /], 'imports aryref status');
+is_deeply([ map { $_->{sample_name} } @$imports_aryref ], [qw/ TeSt-0000-00 TeSt-0000-00 TeSt-0000-01 /], 'imports aryref sample_name');
+is_deeply([ map { $_->{source_files} } @$imports_aryref ], \@source_files, 'imports aryref source_files');
+is_deeply([ map { $_->{instrument_data_attributes} } @$imports_aryref ], [ ["lane=\'8\'"], ["lane=\'8\'"], ["lane=\'7\'"], ], 'imports aryref instrument_data_attributes');
+ok(!grep({ $_->{job_status} } @$imports_aryref), 'imports aryref does not have job_status');
+ok(!grep({ $_->{sample} } @$imports_aryref), 'imports aryref does not have sample');
+ok(!grep({ $_->{instrument_data} } @$imports_aryref), 'imports aryref does not have instrument_data');
+ok(!grep({ $_->{instrument_data_file} } @$imports_aryref), 'imports aryref does not have instrument_data_file');
+ok(!grep({ $_->{model} } @$imports_aryref), 'imports aryref does not have model');
+ok(!grep({ $_->{build} } @$imports_aryref), 'imports aryref does not have build');
+
+# Define samples
+my $base_sample_name = 'TeSt-0000-0';
+my @samples;
+for (0..1) { 
+    push @samples, Genome::Sample->__define__(
+        id => -111 + $_,
+        name => $base_sample_name.$_,
+        nomenclature => 'TeSt',
+    );
+}
+is(@samples, 2, 'define 2 samples');
 
 # Import needed
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
-    source_files_tsv => $info_tsv,
+    source_files_tsv => $source_files_tsv,
+    import_list_config => "printf %s NOTHING_TO_SEE_HERE;1;2",
 );
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');
-$sample_hash = eval{ $manager->samples->{$source_files}; };
-ok($sample_hash, 'sample hash');
-is($sample_hash->{status}, 'import_needed', 'status is import_needed');
-is($sample_hash->{sample_name}, $sample_name, 'sample hash sample name');
-is($sample_hash->{sample}, $sample, 'sample hash sample');
-ok(!$sample_hash->{instrument_data}, 'sample hash instrument data does not exist');
-ok(!$sample_hash->{model}, 'sample hash model does not exist');
-ok(!$sample_hash->{build}, 'sample hash build does not exist');
 
-# Import pend
+$imports_aryref = $manager->_imports;
+is_deeply([ map { $_->{status} } @$imports_aryref ], [qw/ import_needed import_needed import_needed /], 'imports aryref status');
+is_deeply([ map { $_->{sample} } @$imports_aryref ], [$samples[0], $samples[0], $samples[1]], 'imports aryref sample');
+ok(!grep({ $_->{job_status} } @$imports_aryref), 'imports aryref does not have job_status');
+ok(!grep({ $_->{instrument_data} } @$imports_aryref), 'imports aryref does not have instrument_data');
+ok(!grep({ $_->{instrument_data_file} } @$imports_aryref), 'imports aryref does not have instrument_data_file');
+ok(!grep({ $_->{model} } @$imports_aryref), 'imports aryref does not have model');
+ok(!grep({ $_->{build} } @$imports_aryref), 'imports aryref does not have build');
+
+# One has import running, others are needed
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
-    source_files_tsv => $info_tsv,
-    import_list_config => "echo $sample_name pend;1;2",
-    import_launch_config => "echo %{sample_name} LAUNCH!",
+    source_files_tsv => $source_files_tsv,
+    import_list_config => 'printf "%s %s\\n%s %s" TeSt-0000-00 pend TeSt-0000-01 run;1;2',
 );
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');
-$sample_hash = eval{ $manager->samples->{$source_files}; };
-ok($sample_hash, 'sample hash');
-is($sample_hash->{status}, 'import_pend', 'status is import_pend');
-is($sample_hash->{job_status}, 'pend', 'sample hash job status');
-is($sample_hash->{sample_name}, $sample_name, 'sample hash sample name');
-is($sample_hash->{sample}, $sample, 'sample hash sample');
-ok(!$sample_hash->{instrument_data}, 'sample hash instrument data does not exist');
-ok(!$sample_hash->{model}, 'sample hash model does not exist');
-ok(!$sample_hash->{build}, 'sample hash build does not exist');
 
-is(
-    $manager->_resolve_instrument_data_import_command_for_sample($sample_hash),
-    "echo $sample_name LAUNCH! genome instrument-data import basic --sample name=$sample_name --source-files original.bam --import-source-name TeSt --instrument-data-properties lane='8'",
-    'inst data import command',
-);
+$imports_aryref = $manager->_imports;
+is_deeply([ map { $_->{status} } @$imports_aryref ], [qw/ import_pend import_pend import_run /], 'imports aryref status');
+is_deeply([ map { $_->{job_status} } @$imports_aryref ], [qw/ pend pend run /], 'imports aryref job_status');
+ok(!grep({ $_->{instrument_data} } @$imports_aryref), 'imports aryref does not have instrument_data');
+ok(!grep({ $_->{instrument_data_file} } @$imports_aryref), 'imports aryref does not have instrument_data_file');
+ok(!grep({ $_->{model} } @$imports_aryref), 'imports aryref does not have model');
+ok(!grep({ $_->{build} } @$imports_aryref), 'imports aryref does not have build');
 
-# Unsuccessful import has left inst data entity, but no data file
-my $inst_data = Genome::InstrumentData::Imported->__define__(
-    original_data_path => $source_files,
-    sample => $sample,
-    subset_name => '1-XXXXXX',
-    sequencing_platform => 'solexa',
-    import_format => 'bam',
-    description => 'import test',
-);
-$inst_data->add_attribute(attribute_label => 'read_count', attribute_value => 1000);
-$inst_data->add_attribute(attribute_label => 'read_length', attribute_value => 100);
+# Unsuccessful import has left inst data entity, but no data files
+my @inst_data;
+for my $import_hashref ( @$imports_aryref ) {
+    my $inst_data = Genome::InstrumentData::Imported->__define__(
+        original_data_path => $import_hashref->{source_files},
+        sample => $import_hashref->{sample},
+        subset_name => '1-XXXXXX',
+        sequencing_platform => 'solexa',
+        import_format => 'bam',
+        description => 'import test',
+    );
+    push @inst_data, $inst_data;
+}
+is(@inst_data, 3, 'define 3 inst data');
 
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
-    source_files_tsv => $info_tsv,
+    source_files_tsv => $source_files_tsv,
+);
+ok($manager, 'create manager');
+ok($manager->execute, 'execute');
+
+$imports_aryref = $manager->_imports;
+is_deeply([ map { $_->{status} } @$imports_aryref ], [qw/ import_failed import_failed import_failed /], 'imports aryref status');
+is_deeply([ map { $_->{instrument_data} } @$imports_aryref ], \@inst_data, 'imports aryref instrument_data');
+ok(!grep({ $_->{job_status} } @$imports_aryref), 'imports aryref does not have job_status');
+ok(!grep({ $_->{instrument_data_file} } @$imports_aryref), 'imports aryref does not have instrument_data_file');
+ok(!grep({ $_->{model} } @$imports_aryref), 'imports aryref does not have model');
+ok(!grep({ $_->{build} } @$imports_aryref), 'imports aryref does not have build');
+
+# FIXME test launch config!
+#import_launch_config => "echo %{sample_name} LAUNCH!",
+
+# Fake successful imports by pointing bam_path to existing info.tsv, models needed
+for my $inst_data ( @inst_data ) { $inst_data->add_attribute(attribute_label => 'bam_path', attribute_value => $source_files_tsv); }
+$manager = Genome::InstrumentData::Command::Import::Manager->create(
+    source_files_tsv => $source_files_tsv,
+);
+ok($manager, 'create manager');
+ok($manager->execute, 'execute');
+
+$imports_aryref = $manager->_imports;
+is_deeply([ map { $_->{status} } @$imports_aryref ], [qw/ model_needed model_needed model_needed /], 'imports aryref status');
+is_deeply([ map { $_->{instrument_data} } @$imports_aryref ], \@inst_data, 'imports aryref instrument_data');
+is_deeply([ map { $_->{instrument_data_file} } @$imports_aryref ], [$source_files_tsv, $source_files_tsv, $source_files_tsv], 'imports aryref source_files');
+ok(!grep({ $_->{job_status} } @$imports_aryref), 'imports aryref does not have job_status');
+ok(!grep({ $_->{model} } @$imports_aryref), 'imports aryref does not have model');
+ok(!grep({ $_->{build} } @$imports_aryref), 'imports aryref does not have build');
+
+# Add model params to create models
+$manager = Genome::InstrumentData::Command::Import::Manager->create(
+    source_files_tsv => $source_files_tsv,
     model_params => [qw/ processing_profile_id=-333 reference_id=-333 /],
 );
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');
-$sample_hash = eval{ $manager->samples->{$source_files}; };
-ok($sample_hash, 'sample hash');
-is($sample_hash->{status}, 'import_failed', 'status is import_failed');
-is($sample_hash->{sample_name}, $sample_name, 'sample hash sample name');
-is($sample_hash->{sample}, $sample, 'sample hash sample');
-ok($sample_hash->{instrument_data}, 'sample hash instrument');
-ok(!$sample_hash->{model}, 'sample hash model does not exist');
-ok(!$sample_hash->{build}, 'sample hash build does not exist');
 
-# Successful import, point bam_path to existing file
-$inst_data->add_attribute(attribute_label => 'bam_path', attribute_value => $test_dir.'/valid-build/info.tsv');
-
-$manager = Genome::InstrumentData::Command::Import::Manager->create(
-    source_files_tsv => $info_tsv,
-    model_params => [qw/ processing_profile_id=-333 reference_id=-333 /],
-);
-ok($manager, 'create manager');
-ok($manager->execute, 'execute');
-$sample_hash = eval{ $manager->samples->{$source_files}; };
-ok($sample_hash, 'sample hash');
-is($sample_hash->{status}, 'build_needed', 'status is build_needed');
-is($sample_hash->{sample_name}, $sample_name, 'sample hash sample name');
-is($sample_hash->{sample}, $sample, 'sample hash sample');
-ok($sample_hash->{instrument_data}, 'sample hash instrument');
-ok($sample_hash->{model}, 'sample hash model');
-is_deeply([$sample_hash->{model}->instrument_data], [$inst_data], 'model has instrument data assigned');
-ok(!$sample_hash->{model}->auto_assign_inst_data, 'model auto_assign_inst_data is off');
-ok(!$sample_hash->{model}->auto_build_alignments, 'model auto_build_alignments is off');
-ok(!$sample_hash->{model}->build_requested, 'model build_requested is off');
-ok(!$sample_hash->{build}, 'sample hash build does not exist');
+$imports_aryref = $manager->_imports;
+is_deeply([ map { $_->{status} } @$imports_aryref ], [qw/ build_needed build_needed build_needed /], 'imports aryref status');
+is_deeply([ map { $_->{instrument_data} } @$imports_aryref ], \@inst_data, 'imports aryref instrument_data');
+is_deeply([ map { $_->{model}->subject } @$imports_aryref ], [$samples[0], $samples[0], $samples[1]], 'imports aryref model');
+ok(!grep({ $_->{build} } @$imports_aryref), 'imports aryref does not have build');
 
 # fail - no name column in csv
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
-    source_files_tsv => $test_dir.'/invalid-no-name-column-in-info-file/info.tsv',
+    source_files_tsv => $test_dir.'/invalid-no-sample-name-column.tsv',
 );
 ok($manager, 'create manager');
 ok(!$manager->execute, 'execute failed');
@@ -158,7 +172,7 @@ is($manager->error_message, 'Property \'source_files_tsv\': No "sample_name" col
 
 # fail - model params does not have a pp
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
-    source_files_tsv => $test_dir.'/valid-build/info.tsv',
+    source_files_tsv => $test_dir.'/info.tsv',
     model_params => [qw/ reference_id=-333 /],
 );
 ok($manager, 'create manager');
