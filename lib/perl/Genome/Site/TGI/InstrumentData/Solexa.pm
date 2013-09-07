@@ -383,19 +383,7 @@ sub resolve_external_fastq_filenames {
 }
 
 sub _calculate_total_read_count {
-    my $self = shift;
-
-    if($self->is_external) {
-        my $data_path_object = Genome::MiscAttribute->get(entity_id => $self->id, property_name=>'full_path');
-        my $data_path = $data_path_object->value;
-        my $lines = `wc -l $data_path`;
-        return $lines/4;
-    }
-    if ($self->clusters <= 0) {
-        die('Impossible value '. $self->clusters .' for clusters field for solexa lane '. $self->id);
-    }
-
-    return $self->clusters;
+    return Genome::InstrumentData::Solexa::_calculate_total_read_count(@_);
 }
 
 sub resolve_quality_converter {
