@@ -991,12 +991,13 @@ sub dump_illumina_fastq_archive {
             $already_dumped = 1;
         }
     }
+
     unless($already_dumped) {
         my $cmd = "tar -xzf $archive --directory=$dir";
         unless (Genome::Sys->shellcmd(
-                cmd => $cmd,
-                input_files => [$archive],
-            )) {
+            cmd => $cmd,
+            input_files => [$archive],
+        )) {
             $self->error_message('Failed to run tar command '. $cmd);
             return;
             #die($self->error_message); Should try to get fastq from gerald_directory instead of dying
