@@ -349,8 +349,7 @@ sub _unprocessed_fastq_filenames {
 }
 
 sub desc {
-    my $self = shift;
-    return $self->full_name .'('. $self->id .')';
+    return Genome::InstrumentData::Solexa::desc(@_);
 }
 
 sub read1_fastq_name {
