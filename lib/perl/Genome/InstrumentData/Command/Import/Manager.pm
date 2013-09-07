@@ -294,13 +294,13 @@ sub _load_instrument_data {
 
     my $imports = $self->_imports;
 
-    my %instrument_data = map { $_->sample->name, $_ } Genome::InstrumentData::Imported->get(
+    my %instrument_data = map { $_->original_data_path, $_ } Genome::InstrumentData::Imported->get(
         original_data_path => [ map { $_->{source_files} } @$imports ],
         '-hint' => [qw/ attributes /],
     );
 
     for my $import ( @$imports ) {
-        my $instrument_data = $instrument_data{ $import->{sample_name} };
+        my $instrument_data = $instrument_data{ $import->{source_files} };
         $import->{instrument_data} = $instrument_data;
         $import->{instrument_data_file} = eval{
             my $attribute = $instrument_data->attributes(attribute_label => 'bam_path');
