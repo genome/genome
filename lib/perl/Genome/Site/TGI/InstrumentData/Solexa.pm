@@ -361,10 +361,7 @@ sub read2_fastq_name {
 }
 
 sub fragment_fastq_name {
-    my $self = shift;
-    my $lane = $self->lane;
-
-    return "s_${lane}_sequence.txt";
+    return Genome::InstrumentData::Solexa::fragment_fastq_name(@_);
 }
 
 sub resolve_fastq_filenames {
