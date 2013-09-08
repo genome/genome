@@ -36,18 +36,20 @@ class Genome::Model::Tools::Mutect::ParallelWrapper {
     ],
 };
 
-sub help_synopsis {
+sub help_short {
     return <<"EOS"
+this makes running mutect in parallel easier for DV2
 EOS
 }
 
 sub help_detail {
     return <<"EOS"
-This command exists in order to facilitate parallelization of
-music's clinical correlation command. The output file will
-be named \$output_directory/\$variant_matrix.results.glm.tsv.
-This allows us to split a variant matrix into many parts and
-process them in parallel easily with Workflow.
+This command exists in order to facilitate parallelization of the mutect DV2
+module. The Genome::File::Fasta object manages chunking of the reference
+sequence and the chunk number determines which chunk will be run. This allows
+for easy construction of a parallel_by workflow. Files will be named by
+basename and chunk_num like \${basename}_{\$chunk_num}.out for the native
+format and \${basename}_{\$chunk_num}.vcf for the vcf output.
 EOS
 }
 
@@ -58,7 +60,6 @@ sub execute {
     $self->intervals($intervals);
     $self->output_file($self->basename . "_" . $self->chunk_num . ".out");
     $self->vcf($self->basename . "_" . $self->chunk_num . ".vcf");
-    #$self->coverage_file($self->basename . "_" . $self->chunk_num . ".wig");
     my $sub = $self->super_can('_execute_body');
     return $sub->($self, @_);
 };
