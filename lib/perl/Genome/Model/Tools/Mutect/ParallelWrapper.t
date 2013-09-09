@@ -22,10 +22,6 @@ if ($archos !~ /64/) {
 
 use_ok('Genome::Model::Tools::Mutect::ParallelWrapper');
 
-my $refbuild_id = 106942997;
-my $ref_seq_build = Genome::Model::Build::ImportedReferenceSequence->get($refbuild_id);
-ok($ref_seq_build, 'GRCh37-lite-build37 reference sequence build') or die;
-
 my $tumor =  $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Mutect-Parallel-Wrapper/tiny.tumor.bam";
 my $normal = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Mutect-Parallel-Wrapper/tiny.normal.bam";
 my $expected_out = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Mutect-Parallel-Wrapper/expected.out";
