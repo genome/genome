@@ -2,8 +2,8 @@ package Genome::Model::Tools::Music::Smg;
 
 use warnings;
 use strict;
+use Genome;
 use IO::File;
-use File::Temp;
 use Statistics::Descriptive;
 use Carp;
 use POSIX qw( WIFEXITED );
@@ -258,7 +258,8 @@ sub execute {
         }
         $inBmrModFh->close;
 
-        my $tmpFh = File::Temp->new() or die "Couldn't create a temp file. $!\n";
+        my $tmp_gene_mr_file = Genome::Sys->create_temp_file_path();
+        my $tmpFh = IO::File->new( $tmp_gene_mr_file, ">" ) or die "Temporary file could not be created. $!";
         my $inMrFh = IO::File->new( $gene_mr_file ) or die "Couldn't open $gene_mr_file. $!\n";
         while( my $line = $inMrFh->getline ) {
             if( $line =~ m/^#/ ) {
@@ -273,12 +274,12 @@ sub execute {
         $tmpFh->close;
         $inMrFh->close;
 
-        $gene_mr_file = $tmpFh->filename;
+        $gene_mr_file = $tmp_gene_mr_file;
     }
 
     # Create a temporary intermediate file to hold the p-values
-    my $pvalFh = File::Temp->new() or die "Couldn't create a temp file. $!";
-    my $pval_file = $pvalFh->filename;
+    my $pval_file = Genome::Sys->create_temp_file_path();
+    my $pvalFh = IO::File->new( $pval_file, ">" ) or die "Temporary file could not be created. $!";
 
     # Call R for Fisher combined test, Likelihood ratio test, and convolution test on each gene
     my $smg_cmd = "R --slave --args < " . __FILE__ . ".R $gene_mr_file $pval_file smg_test $processors $skip_low_mr_genes";
