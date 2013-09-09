@@ -1,10 +1,10 @@
-package Genome::Sys::Node::Command;
+package Genome::Sys::Gateway::Command;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::Sys::Node::Command {
+class Genome::Sys::Gateway::Command {
     is => 'Command::Tree',
     doc => 'work with other GMS',
 };

@@ -1,14 +1,14 @@
 #!/usr/bin/env genome-perl
 
-package Genome::Sys::Node::Command::Detach;
+package Genome::Sys::Gateway::Command::Detach;
 use strict;
 use warnings;
 use Genome;
 
-class Genome::Sys::Node::Command::Detach {
+class Genome::Sys::Gateway::Command::Detach {
     is => 'Command::V2',
     has_input => [
-        systems => { is => 'Genome::Sys::Node',
+        systems => { is => 'Genome::Sys::Gateway',
                     is_many => 1,
                     shell_args_position => 1,
                     doc => 'the system to detach'

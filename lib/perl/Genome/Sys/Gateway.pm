@@ -2,9 +2,9 @@ use strict;
 use warnings;
 use Genome;
 
-package Genome::Sys::Node;
+package Genome::Sys::Gateway;
 
-class Genome::Sys::Node {
+class Genome::Sys::Gateway {
     id_by => [
         id            => { is => 'Text', doc => 'the GMS system ID of the GMS in question' },
     ],

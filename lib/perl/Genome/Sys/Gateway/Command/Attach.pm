@@ -3,12 +3,12 @@ use strict;
 use warnings;
 use Genome;
 
-package Genome::Sys::Node::Command::Attach;
+package Genome::Sys::Gateway::Command::Attach;
 
-class Genome::Sys::Node::Command::Attach {
+class Genome::Sys::Gateway::Command::Attach {
     is => 'Command::V2',
     has_input => [
-        systems => { is => 'Genome::Sys::Node',
+        systems => { is => 'Genome::Sys::Gateway',
                     is_many => 1,
                     shell_args_position => 1,
                     doc => 'the system to attach'
@@ -29,11 +29,11 @@ class Genome::Sys::Node::Command::Attach {
 
 sub help_synopsis {
     return <<EOS
-genome sys node attach GMS1
-genome sys node attach GMS1 --protocol ftp
-genome sys node attach GMS1 --protocol http
-genome sys node attach GMS1 ABC123 XY1AB GMS2 --protocol nfs
-genome sys node attach GMS1 ABC123 XY1AB GMS2 --protocol ssh
+genome sys gateway attach GMS1
+genome sys gateway attach GMS1 --protocol ftp
+genome sys gateway attach GMS1 --protocol http
+genome sys gateway attach GMS1 ABC123 XY1AB GMS2 --protocol nfs
+genome sys gateway attach GMS1 ABC123 XY1AB GMS2 --protocol ssh
 EOS
 }
 
