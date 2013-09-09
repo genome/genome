@@ -265,6 +265,11 @@ sub add_to_dump_queue {
         }
     }
 
+    # TODO: this conditional logic stuff should really be broken out into methods on the class,
+    # with a standard API, instead of conditional logic.  The idea is still maturing and is 
+    # pretty green, though, so currently it helps to have it all in one place, where relationships
+    # can be seen easily.
+
     if ($obj->isa("Genome::Disk::Allocation")) {
         my $group = $obj->group;
         $self->add_to_dump_queue($group, $queue, $exclude, $sanitize_map) if $group;
@@ -333,8 +338,17 @@ sub add_to_dump_queue {
             for my $i (@i) {
                 my $dir = $i->output_dir;
                 next if $dir and $dir =~ /gscarchive/;
-                next unless $i->id == 117803766;        # TODO: make this smarter
+                next unless $i->id eq '117803766';        # TODO: make this smarter
                 $self->add_to_dump_queue($i, $queue, $exclude, $sanitize_map);
+            }
+            my @prev_builds = grep { $_->isa("Genome::Model::Build::ReferenceSequence") } values %{ $queue->{"Genome::Model::Build"} };
+            if (@prev_builds) {
+                $DB::single = 1;
+                my @converters1 = map { Genome::Model::Build::ReferenceSequence::Converter->get(source_reference_build => $obj, destination_reference_build => $_) } @prev_builds;
+                my @converters2 = map { Genome::Model::Build::ReferenceSequence::Converter->get(destination_reference_build => $obj, source_reference_build => $_) } @prev_builds;
+                for my $converter (@converters1, @converters2) {
+                    $self->add_to_dump_queue($converter, $queue, $exclude, $sanitize_map);
+                }
             }
         }
     }
@@ -371,6 +385,13 @@ sub add_to_dump_queue {
         }
         $self->add_to_dump_queue($n, $queue, $exclude, $sanitize_map) if ($n);
         $self->add_to_dump_queue($f, $queue, $exclude, $sanitize_map) if ($f);
+    }
+
+    if ($obj->isa("Genome::FeatureList")) {
+        my $reference_build = $obj->reference;
+        if ($reference_build) {
+            $self->add_to_dump_queue($reference_build, $queue, $exclude, $sanitize_map);
+        }
     }
 
     my $parent;
