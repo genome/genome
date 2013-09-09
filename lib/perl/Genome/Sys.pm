@@ -1283,6 +1283,7 @@ sub shellcmd {
     my $input_directories            = delete $params{input_directories};
     my $allow_failed_exit_code       = delete $params{allow_failed_exit_code};
     my $allow_zero_size_output_files = delete $params{allow_zero_size_output_files};
+    my $set_pipefail                 = delete $params{set_pipefail};
     my $allow_zero_size_input_files  = delete $params{allow_zero_size_input_files};
     my $skip_if_output_is_present    = delete $params{skip_if_output_is_present};
     my $redirect_stdout              = delete $params{redirect_stdout};
@@ -1291,6 +1292,7 @@ sub shellcmd {
         delete $params{dont_create_zero_size_files_for_missing_output};
     my $print_status_to_stderr       = delete $params{print_status_to_stderr};
 
+    $set_pipefail = 1 if not defined $set_pipefail;
     $print_status_to_stderr = 1 if not defined $print_status_to_stderr;
     $skip_if_output_is_present = 1 if not defined $skip_if_output_is_present;
     if (%params) {
@@ -1360,8 +1362,6 @@ sub shellcmd {
     else {
         $self->status_message("RUN: $cmd");
 
-        # Set -o pipefail ensures the command will fail if it contains pipes and intermediate pipes fail.
-        # Export SHELLOPTS ensures that if there are nested "bash -c"'s, each will inherit pipefail
         $t1 = time();
         my $system_retval;
         eval {
@@ -1378,7 +1378,15 @@ sub shellcmd {
                 if ($redirect_stderr) {
                     open(STDERR, '>', $redirect_stderr) || die "Can't redirect stderr to $redirect_stderr: $!";
                 }
-                $system_retval = system('bash', '-c', "set -o pipefail; export SHELLOPTS; $cmd");
+                # Set -o pipefail ensures the command will fail if it contains pipes and intermediate pipes fail.
+                # Export SHELLOPTS ensures that if there are nested "bash -c"'s, each will inherit pipefail
+                my $shellopts_part = 'export SHELLOPTS;';
+                if ($set_pipefail) {
+                    $shellopts_part = "set -o pipefail; $shellopts_part";
+                } else {
+                    $shellopts_part = "set +o pipefail; $shellopts_part";
+                }
+                $system_retval = system('bash', '-c', "$shellopts_part $cmd");
                 print STDOUT "\n"; # add a new line so that bad programs don't break TAP, etc.
         };
         my $exception = $@;
