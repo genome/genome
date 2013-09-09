@@ -6,7 +6,7 @@ use Genome;
 
 class Genome::Sys::Gateway::Command {
     is => 'Command::Tree',
-    doc => 'work with other GMS',
+    doc => 'work with gateways other Genome Modeling Systems',
 };
 
 1;
