@@ -9958,6 +9958,54 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>gateway',
+    [
+      '>detach',
+      [
+        'protocol=s',
+        'files',
+        'systems=s@',
+        undef,
+        'help!',
+        undef
+      ],
+      '>attach',
+      [
+        'protocol=s',
+        'files',
+        'systems=s@',
+        undef,
+        'help!',
+        undef
+      ],
+      '>list',
+      [
+        'show=s',
+        'files',
+        'style=s',
+        [
+          'text',
+          'csv',
+          'tsv',
+          'pretty',
+          'html',
+          'xml',
+          'newtext'
+        ],
+        'csv-delimiter=s',
+        'files',
+        'noheaders!',
+        undef,
+        'order-by=s',
+        'files',
+        'filter=s',
+        'files',
+        'help!',
+        undef
+      ],
+      'help!',
+      undef
+    ],
     '>services',
     [
       '>task-runner',
