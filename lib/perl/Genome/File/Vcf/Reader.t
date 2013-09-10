@@ -45,6 +45,38 @@ my $vcf_str = <<EOS;
 20\t1234567\tmicrosat1,foo\tGTC\tG,GTCT\t50\tPASS\tNS=3;DP=9;AA=G\tGT:GQ:DP\t0/1:35:4\t0/2:17:2\t1/1:40:3
 EOS
 
+subtest "peek" => sub {
+    my $vcf_fh = new IO::String($vcf_str);
+    my $reader = $pkg->fhopen($vcf_fh, "Test Vcf");
+
+    # Peek!
+    my $entry_peek = $reader->peek;
+    ok($entry_peek, 'Peeked at first entry');
+    is_deeply($entry_peek->{identifiers}, ['rs6054257'], 'Got the right entry');
+
+    # Peek again, make sure we still get the first thing
+    $entry_peek = $reader->peek;
+    is_deeply($entry_peek->{identifiers}, ['rs6054257'], 'Re-peek');
+
+    # Now take, advancing to the next entry. Make sure we get the right thing.
+    my $peek_str = $entry_peek->to_string;
+    my $entry = $reader->next;
+    is($entry->to_string, $peek_str, 'next returns peeked entry');
+
+    # Advance again, make sure we actually keep moving and don't get stuck.
+    $entry = $reader->next;
+    is($entry->{position}, 17330, 'Got the 2nd entry');
+
+    # Peek time!
+    $entry_peek = $reader->peek;
+    ok($entry_peek, 'Peeked at 3rd entry');
+    is($entry_peek->{position}, 1110696, 'Got the 3rd entry');
+
+    $peek_str = $entry_peek->to_string;
+    $entry = $reader->next;
+    is($entry->to_string, $peek_str, 'next returns peeked entry');
+};
+
 subtest "basic usage (filehandle via fhopen)" => sub {
     my $vcf_fh = new IO::String($vcf_str);
     my $reader = $pkg->fhopen($vcf_fh, "Test Vcf");

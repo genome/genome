@@ -109,7 +109,7 @@ sub next {
 
 sub peek {
     my $self = shift;
-    $self->{_cached_entry} = $self->next unless $self->{_cached_entry};
+    $self->{_cached_entry} = $self->next unless defined $self->{_cached_entry};
     return $self->{_cached_entry};
 }
 
