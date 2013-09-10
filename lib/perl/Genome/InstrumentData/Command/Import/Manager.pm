@@ -24,7 +24,7 @@ class Genome::InstrumentData::Command::Import::Manager {
         },
         import_list_config => {
             is => 'Text',
-            doc => 'Command and column positions for sample anme and status. Use format: cmd;sample_name_col_#;sub tatus_col_#',
+            doc => 'Command and column positions for sample anme and status. Use format: cmd;job_name_column_#;sub tatus_column_#',
         },
         model_params => {
             is => 'Text',
@@ -42,7 +42,7 @@ class Genome::InstrumentData::Command::Import::Manager {
         _imports => { is => 'Array', },
         instrument_data_import_command_substitutions => { 
             is => 'Hash', 
-            default_value => { map { $_ => qr/%{$_}/ } (qw/ sample_name /), },
+            default_value => { map { $_ => qr/%{$_}/ } (qw/ job_name sample_name /), },
         },
     ],
 };
@@ -235,13 +235,15 @@ sub _resolve_import_command {
     my $cmd_format = $self->import_launch_config;
     if ( $cmd_format ) {
         my $substitutions = $self->instrument_data_import_command_substitutions;
-        my $sample_name_substitution = $substitutions->{sample_name};
-        if ( $cmd_format !~ /$sample_name_substitution/ ) {
-            $self->error_message('No sample name substitutions (%{sample_name} in launch command! '.$cmd_format);
-            return;
+        for my $required_substitution (qw/ sample_name job_name / ) {
+            my $substitution = $substitutions->{$required_substitution};
+            if ( $cmd_format !~ /$substitution/ ) {
+                $self->error_message("No $required_substitution name substitutions (%{$required_substitution}) in launch command! $cmd_format");
+                return;
+            }
         }
         $cmd_format .= ' ';
-        # TODO rm unecessary subs
+        # TODO rm unecessary substitutions
     }
 
     $cmd_format .= 'genome instrument-data import basic --sample name=%{sample_name} --source-files %s --import-source-name %s%s',
@@ -275,13 +277,18 @@ sub _load_samples {
     my $self = shift;
 
     my $imports = $self->_imports;
-    for my $sample ( @$imports ) {
-        $sample->{sample} = Genome::Sample->get(name => $sample->{sample_name});
-        next if not $sample->{sample};
-        if ( not $sample->{sample}->nomenclature ) {
-            $self->error_message('Sample does not have any nomenclature! '.$sample->{sample}->name);
+    my %sample_names_seen;
+    for my $import ( @$imports ) {
+        $import->{sample} = Genome::Sample->get(name => $import->{sample_name});
+        next if not $import->{sample};
+        if ( not $import->{sample}->nomenclature ) {
+            $self->error_message('Sample does not have any nomenclature! '.$import->{sample}->name);
             return;
         }
+        my $sample_name = $import->{sample}->name;
+        $sample_names_seen{$sample_name}++;
+        $import->{job_name} = $sample_name;
+        $import->{job_name} .= '.'.$sample_names_seen{$sample_name} if $sample_names_seen{$sample_name} > 1;
     }
 
     $self->_imports($imports);
@@ -309,7 +316,6 @@ sub _load_instrument_data {
             }
             return $attribute->attribute_value if $attribute;
         };
-
     }
 
     $self->_imports($imports);
@@ -373,7 +379,7 @@ sub _load_sample_statuses {
 
     my $imports = $self->_imports;
     for my $sample ( @$imports ) {
-        $sample->{job_status} = $sample_job_statuses->{ $sample->{sample_name} };
+        $sample->{job_status} = $sample_job_statuses->{ $sample->{job_name} };
         $sample->{status} = $get_status_for_sample->($sample);
     }
 
