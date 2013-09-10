@@ -5,7 +5,13 @@ use warnings;
 
 use above 'Genome';
 use Test::More;
-use Genome::Utility::Test 'compare_ok';
+use File::Spec;
+# probably a better place for these than in Dindel...
+use Genome::Model::Tools::Dindel::TestHelpers qw(
+    get_test_dir
+    get_ref_fasta
+    compare_output_to_test_data
+);
 
 BEGIN {
     $ENV{UR_DBI_NO_COMMIT} = 1;
@@ -16,12 +22,16 @@ use_ok($class);
 
 my $VERSION = 1; # Bump this each time test data changes
 
-#my $ref_fasta = get_ref_fasta();
+my $ref_fasta = get_ref_fasta();
 
-my $test_dir = File::Spec->join(Genome::Utility::Test->data_dir($class), "v$VERSION");
-diag "Test data located at $test_dir\n";
+my $test_dir = get_test_dir($class, $VERSION);
 my $input_bam = File::Spec->join($test_dir, '134053361-region-limited.bam');
 ok(-s $input_bam, "Found input Bam file");
+
+my $output_directory = Genome::Sys->create_temp_directory();
+
+test_without_output_vcf();
+test_with_output_vcf();
 
 test_varscan_command();
 test_samtools_command();
@@ -29,6 +39,30 @@ test_output_vcf_string();
 test_input_files();
 
 done_testing();
+
+sub test_without_output_vcf {
+    my $output_file = File::Spec->join($output_directory, 'output.cns');
+    my $cmd = $class->create(
+        bam_file => $input_bam,
+        ref_fasta => $ref_fasta,
+        output_file => $output_file,
+    );
+    ok($cmd->execute(), 'Successfully, ran command');
+    compare_output_to_test_data($cmd->output_file, $output_directory, $test_dir);
+}
+
+sub test_with_output_vcf {
+    my $output_file = File::Spec->join($output_directory, 'output.vcf');
+    my $cmd = $class->create(
+        bam_file => $input_bam,
+        ref_fasta => $ref_fasta,
+        output_file => $output_file,
+        output_vcf => 1,
+        vcf_sample_name => 'vcf_sample_name',
+    );
+    ok($cmd->execute(), 'Successfully, ran command');
+    compare_output_to_test_data($cmd->output_file, $output_directory, $test_dir);
+}
 
 sub get_command {
     my %additional_params = @_;
