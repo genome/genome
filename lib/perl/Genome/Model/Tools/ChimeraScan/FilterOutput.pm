@@ -153,8 +153,7 @@ foreach my $gffile (glob $dir."*chimeras.bedpe"){
 
 # Print header
 print "Fusion\t5P\t3P\tTotal_Freq\tSpanning_Freq\tType\tScore\tSpan:Total\tMitel5P\tMitel3P\tKinase5P\tKinase3P\tCancer5P\tCancer3P\n"; #5'PartnersFreq\t3'PartnersFreq";
-for(my $x='0';$x<@samples;$x++){ print "\t$samples[$x]"; }
-print "\n";
+print join("\t", @samples)."\n";
 
 # Print output
 my @fusions = keys %GF;
