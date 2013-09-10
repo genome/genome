@@ -366,21 +366,21 @@ sub _load_sample_statuses {
     my $sample_job_statuses = $self->_load_sample_job_statuses;
     return if not $sample_job_statuses;
 
-    my $get_status_for_sample = sub{
-        my $sample = shift;
-        return 'sample_needed' if not $sample->{sample};
-        return 'import_'.$sample->{job_status} if $sample->{job_status};
-        return 'import_needed' if not $sample->{instrument_data};
-        return 'import_failed' if not defined $sample->{instrument_data_file} or not -s $sample->{instrument_data_file};
-        return 'model_needed' if not $sample->{model};
-        return 'build_needed' if not $sample->{build};
-        return 'build_'.lc($sample->{build}->status);
+    my $get_status_for_import = sub{
+        my $import = shift;
+        return 'sample_needed' if not $import->{sample};
+        return 'import_'.$import->{job_status} if $import->{job_status};
+        return 'import_needed' if not $import->{instrument_data};
+        return 'import_failed' if not defined $import->{instrument_data_file} or not -s $import->{instrument_data_file};
+        return 'model_needed' if not $import->{model};
+        return 'build_needed' if not $import->{build};
+        return 'build_'.lc($import->{build}->status);
     };
 
     my $imports = $self->_imports;
-    for my $sample ( @$imports ) {
-        $sample->{job_status} = $sample_job_statuses->{ $sample->{job_name} };
-        $sample->{status} = $get_status_for_sample->($sample);
+    for my $import ( @$imports ) {
+        $import->{job_status} = $sample_job_statuses->{ $import->{job_name} } if $import->{job_name};
+        $import->{status} = $get_status_for_import->($import);
     }
 
     $self->_imports($imports);
