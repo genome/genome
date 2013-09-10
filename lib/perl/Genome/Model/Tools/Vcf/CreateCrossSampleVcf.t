@@ -15,7 +15,7 @@ use Test::More;
 use Genome::Utility::Vcf "diff_vcf_file_vs_file";
 
 my $cmd_class = 'Genome::Model::Tools::Vcf::CreateCrossSampleVcf';
-my $sr_class = $cmd_class.'Result';
+my $sr_class = $cmd_class . '::Result';
 
 use_ok($cmd_class);
 use_ok($sr_class);

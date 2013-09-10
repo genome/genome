@@ -103,7 +103,7 @@ sub execute {
 
     Genome::Sys->create_directory($self->output_directory);
     my @builds = $self->_resolve_builds();
-    my $software_result = Genome::Model::Tools::Vcf::CreateCrossSampleVcfResult->get_or_create(
+    my $software_result = Genome::Model::Tools::Vcf::CreateCrossSampleVcf::Result->get_or_create(
             builds => \@builds,
             max_files_per_merge => $self->max_files_per_merge,
             variant_type => $self->variant_type,

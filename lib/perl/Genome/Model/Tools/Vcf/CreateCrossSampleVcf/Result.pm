@@ -1,11 +1,11 @@
-package Genome::Model::Tools::Vcf::CreateCrossSampleVcfResult;
+package Genome::Model::Tools::Vcf::CreateCrossSampleVcf::Result;
 
 use Genome;
 use strict;
 use warnings;
 use Carp;
 
-class Genome::Model::Tools::Vcf::CreateCrossSampleVcfResult {
+class Genome::Model::Tools::Vcf::CreateCrossSampleVcf::Result {
     is => 'Genome::SoftwareResult::DiskAllocationStaged',
 
     has_input => [
