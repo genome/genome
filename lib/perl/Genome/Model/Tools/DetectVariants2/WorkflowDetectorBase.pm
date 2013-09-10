@@ -21,7 +21,7 @@ class Genome::Model::Tools::DetectVariants2::WorkflowDetectorBase {
     ],
     has_param => [
         lsf_queue => {
-            default_value => 'long'
+            default_value => 'apipe'
         },
     ],
     has_transient_optional => [
