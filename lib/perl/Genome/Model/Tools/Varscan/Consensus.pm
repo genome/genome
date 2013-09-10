@@ -40,6 +40,10 @@ class Genome::Model::Tools::Varscan::Consensus {
             default => 0.20,
             doc => "Minimum variant allele frequency to call a variant",
         },
+        vcf_sample_name => {
+            is => 'Text',
+            doc => 'If set, and --output-vcf is set, this name will be used instead of Sample1',
+        },
         output_vcf => {
             is => 'Boolean',
             default => 0,
@@ -128,7 +132,11 @@ sub samtools_command {
 sub output_vcf_string {
     my $self = shift;
     if ($self->output_vcf) {
-        return '--output-vcf 1';
+        my $str = '--output-vcf 1';
+        if ($self->vcf_sample_name) {
+            $str .= sprintf(' --vcf-sample-list <(echo "%s")', $self->vcf_sample_name);
+        }
+        return $str;
     } else {
         return '';
     }

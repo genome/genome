@@ -64,6 +64,10 @@ sub test_output_vcf_string {
 
     $cmd = get_command(output_vcf => 1);
     is('--output-vcf 1', $cmd->output_vcf_string, 'Correct output from output_vcf_string with output_vcf => 1');
+
+    $cmd = get_command(output_vcf => 1, vcf_sample_name => 'vcf_sample_name');
+    is('--output-vcf 1 --vcf-sample-list <(echo "vcf_sample_name")', $cmd->output_vcf_string,
+        'Correct output with vcf_sample_name');
 }
 
 sub test_input_files {
