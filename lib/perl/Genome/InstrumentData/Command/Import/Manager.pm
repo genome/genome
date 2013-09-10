@@ -167,13 +167,13 @@ sub _load_source_files_tsv {
         my $import = {
             sample_name => $sample_name,
             source_files => $source_files,
-            instrument_data_attributes => [],
+            instrument_data_properties => [],
         };
         push @imports, $import;
         for my $attr ( sort keys %$hash ) {
             my $value = $hash->{$attr};
             next if not defined $value or $value eq '';
-            push @{$import->{'instrument_data_attributes'}}, $attr."='".$value."'";
+            push @{$import->{instrument_data_properties}}, $attr."='".$value."'";
         }
     }
     $self->_imports(\@imports);
@@ -461,8 +461,8 @@ sub _resolve_instrument_data_import_command_for_sample {
         $sample->{source_files},
         $sample->{sample}->nomenclature,
         ( 
-            $sample->{instrument_data_attributes}
-            ? ' --instrument-data-properties '.join(',', @{$sample->{instrument_data_attributes}})
+            @{$sample->{instrument_data_properties}}
+            ? ' --instrument-data-properties '.join(',', @{$sample->{instrument_data_properties}})
             : ''
         ),
     );
