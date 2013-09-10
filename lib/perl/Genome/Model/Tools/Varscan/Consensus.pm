@@ -25,45 +25,45 @@ class Genome::Model::Tools::Varscan::Consensus {
 
     has => [                                # specify the command's single-value properties (parameters) <---
         bam_file => {
-            is => 'Text',
+            is => 'Path',
             doc => "Path to BAM file",
             is_optional => 0,
         },
         output_file => {
-            is => 'Text',
+            is => 'Path',
             doc => "Path to output file",
             is_optional => 0,
         },
         min_coverage => {
-            is => 'Text',
+            is => 'Number',
             doc => "Minimum base coverage to report readcounts",
 	    default => 3,
             is_optional => 1,
         },
         min_avg_qual => {
-            is => 'Text',
+            is => 'Number',
             doc => "Minimum base quality to count a read",
 	    default => 20,
             is_optional => 0,
         },
         min_var_freq => {
-            is => 'Text',
+            is => 'Number',
             doc => "Minimum variant allele frequency to call a variant",
 	    default => 0.20,
             is_optional => 0,
         },
         output_vcf => {
-            is => 'Text',
+            is => 'Boolean',
             doc => "If set to 1, tells VarScan to output in VCF format (rather than native CNS)",
             is_optional => 1,
         },
         position_list_file => {
-            is => 'Text',
+            is => 'Path',
             doc => "Optionally, provide a tab-delimited list of positions to be given to SAMtools with -l",
             is_optional => 1,
         },
-        reference => {
-            is => 'Text',
+        ref_fasta => {
+            is => 'Path',
             doc => "Reference FASTA file for BAMs",
             is_optional => 0,
             example_values => ['/gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa'],
