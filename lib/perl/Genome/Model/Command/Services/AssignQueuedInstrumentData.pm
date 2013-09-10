@@ -1111,9 +1111,8 @@ sub request_builds {
     my $possibly_build = ($self->_existing_models_with_existing_assignments);
     for my $model (values %$possibly_build) {
         next if exists $models_to_build{$model->id}; #already added above
-        my @builds = $model->builds;
 
-        my $last_build = $builds[-1];
+        my $last_build = $model->latest_build;
 
         unless(defined $last_build) {
             #no builds--can't possibly have built with all data
