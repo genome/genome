@@ -110,6 +110,7 @@ sub execute {
         cmd => "$command > $output_file 2> /dev/null",
         input_files => [$bam, $reference, $region_file],
         output_files => [$output_file],
+        allow_zero_size_output_files => 1,
     );
     $self->status_message('Done running BAM Readcounts.');
 
