@@ -12,7 +12,7 @@
     <link fromOperation="input connector" fromProperty="ref_fasta" toOperation="GetCigarIndels" toProperty="ref_fasta" />
     <link fromOperation="input connector" fromProperty="output_directory" toOperation="GetCigarIndels" toProperty="output_directory" />
 
-    <link fromOperation="VcfToDindel" fromProperty="output_dindel_file" toOperation="MakeDindelWindows" toProperty="input_dindel_file" />
+    <link fromOperation="RealignCandidates" fromProperty="output_dindel_file" toOperation="MakeDindelWindows" toProperty="input_dindel_file" />
     <link fromOperation="input connector" fromProperty="output_directory" toOperation="MakeDindelWindows" toProperty="output_directory" />
 
     <link fromOperation="MakeDindelWindows" fromProperty="window_file" toOperation="AnalyzeWindowFile" toProperty="window_file" />
@@ -21,8 +21,8 @@
     <link fromOperation="input connector" fromProperty="ref_fasta" toOperation="AnalyzeWindowFile" toProperty="ref_fasta" />
     <link fromOperation="input connector" fromProperty="output_directory" toOperation="AnalyzeWindowFile" toProperty="output_directory" />
 
-    <link fromOperation="MakeDindelWindows" fromProperty="output_bam" toOperation="output connector" toProperty="output_bam" />
-    <link fromOperation="MakeDindelWindows" fromProperty="output_glf" toOperation="output connector" toProperty="output_glf" />
+    <link fromOperation="AnalyzeWindowFile" fromProperty="output_bam" toOperation="output connector" toProperty="output_bam" />
+    <link fromOperation="AnalyzeWindowFile" fromProperty="output_glf" toOperation="output connector" toProperty="output_glf" />
 
     <operation name="VcfToDindel">
         <operationtype commandClass="Genome::Model::Tools::Dindel::VcfToDindel" typeClass="Workflow::OperationType::Command" />

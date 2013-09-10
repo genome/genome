@@ -14,6 +14,9 @@ class Genome::Model::Tools::Dindel::RealignCandidates {
         ref_fasta => {
             is => 'Path',
         },
+        output_directory => {
+            is => 'Path',
+        },
     ],
     has_output => [
         output_dindel_file => {
