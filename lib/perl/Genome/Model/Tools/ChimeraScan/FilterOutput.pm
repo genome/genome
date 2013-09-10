@@ -167,11 +167,11 @@ for my $fusion (@fusions){
         print "$fusion\t$gene1\t$gene2";
 
         # Print all
-        for(my $j = '1'; $j < @samples + 5; $j++){ # Exclude first column and instead print actual sample frequency
+        for(my $j = '1'; $j <= 5; $j++){
             if($GF{$fusion}[$j] eq ''){
                 print "\t0";
-            }else{
-                my($s,$e)=split(/\:/,$GF{$fusion}[$j]);
+            }
+            else {
                 print "\t$GF{$fusion}[$j]";
             }
         }
