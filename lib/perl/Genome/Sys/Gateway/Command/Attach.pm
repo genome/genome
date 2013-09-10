@@ -20,7 +20,6 @@ class Genome::Sys::Gateway::Command::Attach {
                     },
         rsync      => { is => 'Boolean',
                       default_value => 0,
-                      is_transient => 1,  # remove when functional
                       doc => 'make a copy of the data for faster access'
                     },
     ],
@@ -43,7 +42,8 @@ Attaches the specified other GMS gateway to the current one.
 
 This means, if the system is named OTHER1, data will appear mounted at /opt/gms/OTHER1.
 
-Using the "copy" option 
+Using the "rsync" option will make a local copy of the attached data.  This can be 
+quite large, but will improve performance during analysis.
 EOS
 }
 
@@ -63,8 +63,12 @@ sub execute {
     if ($self->rsync) {
         # this is terrible to not do in parallel if there are multiple systems
         for my $sys ($self->systems) {
-            # this will automatically do the rsync before moving the symlink
-            $sys->rsync();
+            if (my $protocol = $sys->attached_via) {
+                $sys->rsync($protocol);
+            }
+            else {
+                $self->warning_message("skipping rsync of " . $self->__display_name__ . " because of errors attaching...\n");
+            }
         }
     }
     return !$failures;

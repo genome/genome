@@ -91,7 +91,7 @@ sub attach {
         
         my $base_dir_symlink = $self->base_dir;
         if (-e $base_dir_symlink) {
-            rmdir $base_dir_symlink;
+            unlink $base_dir_symlink;
         }
         Genome::Sys->create_symlink($mount_point, $base_dir_symlink);  
 
@@ -174,6 +174,46 @@ sub detach {
     return $count;
 }
 
+sub rsync {
+    my $self = shift;
+    my $protocol = shift; 
+
+    my $rsync_point = $self->_mount_point_for_protocol('rsync');
+
+    my $method = "_rsync_$protocol";
+    if ($self->can($method)) {
+        # custom protocol-specific implementation
+        $self->$method();
+    }
+    else {
+        # default implementation is to attach with the protocol, rsync, then detach
+        my $previously_attached_via = $self->attached_via;
+        $self->attach($protocol);
+        my $from = $self->_mount_point_for_protocol($protocol);
+        my $cmd = "rsync '$from/' '$rsync_point'";
+        Genome::Sys->shellcmd(cmd => $cmd);
+        if ($previously_attached_via and $previously_attached_via eq $protocol) {
+            $self->detach($protocol);
+        }
+    }
+
+    my $base_dir_symlink = $self->base_dir;
+    if (-e $base_dir_symlink) {
+        unlink $base_dir_symlink;
+    }
+    Genome::Sys->create_symlink($rsync_point, $base_dir_symlink);  
+
+    $self->status_message("copied " . $self->id . " locally");
+    return 1; 
+}
+
+sub _detach_rsync {
+    my $self = shift;
+    my $path = $self->_mount_point_for_protocol('rsync');
+    my $tmp = $path . ".$$";
+    rename $path, $tmp;
+}
+
 sub attached_via {
     my $self = shift;
     my $base_dir_symlink = $self->base_dir;
@@ -235,6 +275,24 @@ sub _detach_ftp {
     Genome::Sys->shellcmd(cmd => $cmd);
 }
 
+sub _rsync_ftp {
+    # rather than actually rsync, use an rsync-like FTP tool "lftp" to be more efficient
+    my $self = shift;
+    my $hostname = $self->hostname;
+    my $rcd = $self->ftp_detail;
+    my $port;
+    if ($rcd =~ s/^(\d+)://) {
+        $port = $1;
+    }
+    my $lcd = $self->_mount_point_for_protocol('rsync');
+    unless (-d $lcd) {
+        Genome::Sys->create_directory($lcd);
+    }
+    my $url = "ftp://$hostname";
+    my $cmd = qq| lftp -c "set ftp:list-options -a; open '$url'; lcd $lcd; cd $rcd; mirror --verbose --continue " |; 
+    Genome::Sys->shellcmd(cmd => $cmd);
+}
+
 ##
 
 sub _attach_http {
@@ -245,9 +303,9 @@ sub _attach_http {
     unless (-d $mount_point) {
         Genome::Sys->create_directory($mount_point);
     }
-    my $cmd = "curlhttpfs 'http://$hostname/$http_detail' '$mount_point' -o tcp_nodelay,kernel_cache,direct_io";
+    #my $cmd = "curlhttpfs 'http://$hostname/$http_detail' '$mount_point' -o tcp_nodelay,kernel_cache,direct_io";
+    my $cmd = "";
     Genome::Sys->shellcmd(cmd => $cmd);    
-
 }
 
 sub _detach_http {
