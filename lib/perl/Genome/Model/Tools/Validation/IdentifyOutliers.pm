@@ -59,12 +59,20 @@ class Genome::Model::Tools::Validation::IdentifyOutliers {
         #     doc => "minimum somatic confidence of Varscan to report the potential miscall", 
         #     default => 0.001
         # },
-        print_all => {
+        # print_all => {
+        #     is => 'Boolean', 
+        #     doc => 'print information on all sites regardless of cutoffs', 
+        #     default => 0,
+        #     is_optional => 1,
+        # },
+        
+        print_only_somatic => {
             is => 'Boolean', 
-            doc => 'print information on all sites regardless of cutoffs', 
+            doc => 'only print somatic sites, remove non-somatic', 
             default => 0,
             is_optional => 1,
-        },
+        }
+
         ],
 };
 
@@ -133,6 +141,13 @@ sub execute {
         my $max2_llr;
         my $max2_call;
         my $marginal_probability;
+        
+        #pass through long indels because we can't grab readcounts.
+        if($normal_ref eq "NA" || $normal_var eq "NA" || $tumor_ref eq "NA" || $tumor_var eq "NA"){
+            print OUTFILE $line . "\tSomatic\tNA\tNA\n";
+            next;
+        }
+        
 
         if($normal_ref + $normal_var > 0 && $tumor_ref + $tumor_var > 0) {
 
@@ -220,22 +235,40 @@ sub execute {
             #     (($varscan_call ne 'Somatic' && $varscan_call ne 'LOH')  && $max_call eq 'Somatic')) || 
             #    ($llr < $self->llr_cutoff && ($varscan_call eq 'Somatic')) || 
             #    $self->print_all) {
+            my $call = (defined $max_call ? $max_call : '-');
 
-            if(($llr < $self->llr_cutoff) || $self->print_all){
-                print LQFILE $line;
-                print LQFILE "\t" . (defined $max_call ? $max_call : '-');
-                print LQFILE "\t" . (defined $max_llr ? exp($max_llr-$marginal_probability) : '-');
-                print LQFILE "\t" . (defined $max_llr && defined $max2_llr ? $max_llr-$max2_llr : '-');
-                print LQFILE "\n";
+            if(($llr < $self->llr_cutoff)){
+                if(defined($self->lq_output_file)){
+                    if(($self->print_only_somatic && ($call eq "Somatic")) || !($self->print_only_somatic)){
+                        print LQFILE $line;
+                        print LQFILE "\t" . $call;
+                        print LQFILE "\t" . (defined $max_llr ? exp($max_llr-$marginal_probability) : '-');
+                        print LQFILE "\t" . (defined $max_llr && defined $max2_llr ? $max_llr-$max2_llr : '-');
+                        print LQFILE "\n";
+                    }
+                }
             } else {
-                print OUTFILE $line;
-                print OUTFILE "\t" . (defined $max_call ? $max_call : '-');
-                print OUTFILE "\t" . (defined $max_llr ? exp($max_llr-$marginal_probability) : '-');
-                print OUTFILE "\t" . (defined $max_llr && defined $max2_llr ? $max_llr-$max2_llr : '-');
-                print OUTFILE "\n";
+                if( ($self->print_only_somatic && ($call eq "Somatic")) || !($self->print_only_somatic)){
+                    print OUTFILE $line;
+                    print OUTFILE "\t" . $call;
+                    print OUTFILE "\t" . (defined $max_llr ? exp($max_llr-$marginal_probability) : '-');
+                    print OUTFILE "\t" . (defined $max_llr && defined $max2_llr ? $max_llr-$max2_llr : '-');
+                    print OUTFILE "\n";
+                }
             }
             
+        } else {
+            # if there are no reads in either the tumor or normal, we set it to Non-Somatic with low probability
+            # (no confidence if no reads)
+            if (defined($self->lq_output_file)){
+                unless($self->print_only_somatic){
+                    print LQFILE $line;
+                    print LQFILE "\tNotSomatic\t1\t0\n";
+                }
+            }
         }
+        
+
     }
     close(OUTFILE);
     if(defined($self->lq_output_file)){
