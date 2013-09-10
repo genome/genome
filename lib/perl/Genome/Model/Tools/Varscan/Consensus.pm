@@ -1,146 +1,158 @@
-package Genome::Model::Tools::Varscan::Consensus;     # rename this when you give the module file a different name <--
-
-#####################################################################################################################################
-# Genome::Model::Tools::Varscan::Consensus    Runs Varscan pileup2cns on the SAMtools mpileup output from one BAM file.
-#
-#    AUTHOR:        Dan Koboldt (dkoboldt@genome.wustl.edu)
-#
-#    CREATED:    12/09/2009 by D.K.
-#    MODIFIED:    08/14/2013 by D.K.
-#
-#    NOTES:
-#
-#####################################################################################################################################
+package Genome::Model::Tools::Varscan::Consensus;
 
 use strict;
 use warnings;
 
-use FileHandle;
-
-use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
+use above 'Genome';
 
 class Genome::Model::Tools::Varscan::Consensus {
     is => 'Genome::Model::Tools::Varscan',
 
-    has => [                                # specify the command's single-value properties (parameters) <---
+    has_input => [
         bam_file => {
             is => 'Path',
             doc => "Path to BAM file",
-            is_optional => 0,
         },
         output_file => {
             is => 'Path',
+            is_output => 1,
             doc => "Path to output file",
-            is_optional => 0,
         },
+        ref_fasta => {
+            is => 'Path',
+            example_values => ['/gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa'],
+            doc => "Reference FASTA file for BAMs",
+        },
+    ],
+    has_optional_input => [
         min_coverage => {
             is => 'Number',
+            default => 3,
             doc => "Minimum base coverage to report readcounts",
-        default => 3,
-            is_optional => 1,
         },
         min_avg_qual => {
             is => 'Number',
+            default => 20,
             doc => "Minimum base quality to count a read",
-        default => 20,
-            is_optional => 0,
         },
         min_var_freq => {
             is => 'Number',
+            default => 0.20,
             doc => "Minimum variant allele frequency to call a variant",
-        default => 0.20,
-            is_optional => 0,
         },
         output_vcf => {
             is => 'Boolean',
+            default => 0,
             doc => "If set to 1, tells VarScan to output in VCF format (rather than native CNS)",
-            is_optional => 1,
         },
         position_list_file => {
             is => 'Path',
             doc => "Optionally, provide a tab-delimited list of positions to be given to SAMtools with -l",
-            is_optional => 1,
-        },
-        ref_fasta => {
-            is => 'Path',
-            doc => "Reference FASTA file for BAMs",
-            is_optional => 0,
-            example_values => ['/gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa'],
         },
     ],
 };
 
 sub sub_command_sort_position { 12 }
 
-sub help_brief {                            # keep this to just a few words <---
+sub help_brief {
     "Run VarScan consensus calling for one BAM file"
 }
 
 sub help_synopsis {
     return <<EOS
 Runs mpileup and then VarScan consensus calling (pileup2cns) on a single BAM file
-EXAMPLE:    gmt varscan consensus --bam-file sample.bam --reference reference.fa --output sample.bam.varScan.cns
+EXAMPLE:    gmt varscan consensus --bam-file sample.bam --ref-fasta reference.fa --output sample.bam.varScan.cns
 EOS
 }
 
-sub help_detail {                           # this is what the user will see with the longer version of help. <---
+sub help_detail {
     return <<EOS
 
 EOS
 }
 
-
-################################################################################################
-# Execute - the main program logic
-#
-################################################################################################
-
-sub execute {                               # replace with real execution logic.
+sub execute {
     my $self = shift;
 
-    ## Get required parameters ##
-    my $bam_file = $self->bam_file;
-    my $reference = $self->reference;
-    my $output_file = $self->output_file;
+    Genome::Sys->shellcmd(
+        cmd => $self->cmd,
+        input_files => [
+            $self->input_files,
+        ],
+        output_files => [
+            $self->output_file,
+        ],
+    );
 
-    my $min_coverage = $self->min_coverage;
-    my $min_avg_qual = $self->min_avg_qual;
-    my $min_var_freq = $self->min_var_freq;
+    return 1;
+}
 
-    if(-e $bam_file)
-    {
-        ## Prepare pileup commands ##
-        my $mpileup = $self->samtools_path . " mpileup -B -f $reference -q 10 $bam_file";
+sub cmd {
+    my $self = shift;
 
-        if($self->position_list_file)
-        {
-            $mpileup = $self->samtools_path . " mpileup -B -f $reference -q 10 -l " . $self->position_list_file . " " . $bam_file;
-        }
+    my @cmd = (
+        $self->varscan_command, sprintf('<(%s)', $self->samtools_command),
+        '--min-coverage', $self->min_coverage,
+        '--min-var-freq', $self->min_var_freq,
+        '--min-avg-qual', $self->min_avg_qual,
+        $self->output_vcf_string,
+        sprintf("> %s 2>/dev/null", $self->output_file), # is it wise to throw away stderr?
+    );
+    return $self->java_command_line(join(' ', @cmd));
+}
 
-
-
-        my $cmd = "";
-
-        if($self->output_vcf)
-        {
-            $cmd = $self->java_command_line("mpileup2cns <\($mpileup\) --min-coverage $min_coverage --min-var-freq $min_var_freq --min-avg-qual $min_avg_qual --output-vcf 1 >$output_file 2>/dev/null");
-        }
-        else
-        {
-            $cmd = $self->java_command_line("pileup2cns <\($mpileup\) --min-coverage $min_coverage --min-var-freq $min_var_freq --min-avg-qual $min_avg_qual >$output_file 2>/dev/null");
-        }
-
-        system($cmd);
+sub varscan_command {
+    my $self = shift;
+    if ($self->output_vcf) {
+        return 'mpileup2cns';
+    } else {
+        return 'pileup2cns';
     }
-    else
-    {
-        die "Error: One of your BAM files doesn't exist!\n";
+}
+
+sub samtools_command {
+    my $self = shift;
+
+    my @cmd = (
+        $self->samtools_path,
+        'mpileup', '-B',
+        '-f', $self->ref_fasta,
+        '-q', '10',
+        $self->position_list_file_string,
+        $self->bam_file,
+    );
+
+    return join(' ', @cmd);
+}
+
+sub output_vcf_string {
+    my $self = shift;
+    if ($self->output_vcf) {
+        return '--output-vcf 1';
+    } else {
+        return '';
     }
+}
 
+sub position_list_file_string {
+    my $self = shift;
 
-    return 1;                               # exits 0 for true, exits 1 for false (retval/exit code mapping is overridable)
+    if($self->position_list_file) {
+        return '-l ' . $self->position_list_file;
+    } else {
+        return '';
+    }
+}
+
+sub input_files {
+    my $self = shift;
+
+    my @files = ($self->ref_fasta, $self->bam_file);
+    if ($self->position_list_file) {
+        push @files, $self->position_list_file;
+    }
+    return @files;
 }
 
 
 1;
-
