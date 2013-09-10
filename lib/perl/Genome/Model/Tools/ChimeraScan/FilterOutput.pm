@@ -4,6 +4,7 @@ use strict;
 #use diagnostics;
 use File::Basename qw(basename);
 
+my $TOO_MANY_FUSION_PARTNERS = 3;
 #### Include get options and usage
 #
 # (1) common 5' and 3' partners
@@ -133,7 +134,7 @@ foreach my $gffile (glob $dir."*chimeras.bedpe"){
 	    }
 	 
 
-	    if($FPPROM{$FP}[0] <= 3 && $TPPROM{$TP}[0] <= 3){ #filter out fusions where either gene is involved in many different fusions
+	    if($FPPROM{$FP}[0] <= $TOO_MANY_FUSION_PARTNERS && $TPPROM{$TP}[0] <= $TOO_MANY_FUSION_PARTNERS){
 		if($total_frag ne $span_frag){
 		    $GF{$fusion}[0]++;
 		    $GF{$fusion}[1]+=$total_frag;
@@ -213,14 +214,6 @@ for my $fusion (@fusions){
 	if($CANCER{$gene2}[0] ne ''){
 	    print "\tCAN3_".$gene2;   
 	}else{ print "\tNull"; }
-	
-	if($FPR{$gene1}[0] > '1'){
-	    print "\tFPR_".$FPR{$gene1}[0];
-	}else{ print "\tNull"; }
-	
-	if($TPR{$gene2}[0] > '1'){
-	    print "\tTPR_".$TPR{$gene2}[0];
-	}else{ print "\tNull"; } 
 	
 	print "\n";
 	
