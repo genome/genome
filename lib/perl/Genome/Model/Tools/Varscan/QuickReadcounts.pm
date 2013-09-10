@@ -143,18 +143,18 @@ sub execute {                               # replace with real execution logic.
 			close($input);
 
 			## Run Pileup Command ##
-			my $cmd = "samtools view -b -u -q 1 $bam_file $query_string | samtools mpileup -f $reference - >>$output_file.pileup";# - | $self->java_command_line("pileup2snp --min-coverage $min_coverage");
+			my $cmd = "samtools view -b -u -q 1 $bam_file $query_string | samtools mpileup -f $reference - >>$output_file.pileup";# - | $self->command_line("pileup2snp --min-coverage $min_coverage");
 			print "RUN $cmd\n";
 			system("$cmd");
 
 			## Run Limit Command ##
-			$cmd = $self->java_command_line("limit $output_file.pileup --positions-file $variants_file --output-file $output_file.pileup.roi");# - | pileup2snp --min-coverage $min_coverage";
+			$cmd = $self->command_line("limit $output_file.pileup --positions-file $variants_file --output-file $output_file.pileup.roi");# - | pileup2snp --min-coverage $min_coverage";
 			print "RUN $cmd\n";
 			system("$cmd");
 
 			## Run Varscan
 			
-			$cmd = $self->java_command_line("pileup2cns $output_file.pileup.roi --min-coverage $min_coverage >$output_file.pileup.roi.cns");
+			$cmd = $self->command_line("pileup2cns $output_file.pileup.roi --min-coverage $min_coverage >$output_file.pileup.roi.cns");
 			print "RUN $cmd\n";
 			system("$cmd");
 

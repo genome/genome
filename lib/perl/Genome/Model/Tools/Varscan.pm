@@ -69,10 +69,17 @@ sub java_command_line {
 
     my $path = $self->path_for_version($self->version);
     my $headers = $self->no_headers ? "--no-headers 1" : "";
-    my $command_line = 'bash -c "java -jar ' . $path . ' ' . $parameter_string . ' '.$headers.' "';
+    my $command_line = 'java -jar ' . $path . ' ' . $parameter_string . ' '.$headers;
 
     return $command_line;
 }
+
+sub command_line {
+    my $self = shift;
+    my $parameter_string = shift;
+    return sprintf('bash -c "%s "', $self->java_command_line($parameter_string));
+}
+
 
 sub path_for_version {
     my $class = shift;

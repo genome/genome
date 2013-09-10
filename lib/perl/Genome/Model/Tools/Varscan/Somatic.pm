@@ -168,12 +168,12 @@ sub execute {                               # replace with real execution logic.
         if($self->version eq "2.2.6" || $self->version eq "2.2.4") {
             my $normal_pileup = $self->pileup_command_for_reference_and_bam($reference, [$normal_bam]);
             my $tumor_pileup = $self->pileup_command_for_reference_and_bam($reference, [$tumor_bam]);
-            $cmd = $self->java_command_line(" somatic <\($normal_pileup\) <\($tumor_pileup\) $output --output-snp $output_snp --output-indel $output_indel $varscan_params");
+            $cmd = $self->command_line(" somatic <\($normal_pileup\) <\($tumor_pileup\) $output --output-snp $output_snp --output-indel $output_indel $varscan_params");
         }
         else {
             my $map_qual = 10;
             my $mpileup = $self->pileup_command_for_reference_and_bam($reference, [$normal_bam, $tumor_bam], $map_qual);
-            $cmd = $self->java_command_line(" somatic <\($mpileup\) --mpileup 1 --output-snp $output_snp --output-indel $output_indel $varscan_params");
+            $cmd = $self->command_line(" somatic <\($mpileup\) --mpileup 1 --output-snp $output_snp --output-indel $output_indel $varscan_params");
         }
 
 
@@ -190,7 +190,7 @@ sub execute {                               # replace with real execution logic.
 
         if(-e $output_snp && -e $output_indel)
         {
-            $cmd = $self->java_command_line("somaticFilter $output_snp --indel-file $output_indel --output-file $output_snp.filter");
+            $cmd = $self->command_line("somaticFilter $output_snp --indel-file $output_indel --output-file $output_snp.filter");
             print "Running $cmd\n";
             system($cmd);
 
