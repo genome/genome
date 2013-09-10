@@ -1,20 +1,30 @@
 #!/usr/bin/env genome-perl
 use above "Genome";
-use Test::More tests => 5;
-use Genome::Model::ClinSeq::TestData;
-my $models = Genome::Model::ClinSeq::TestData::load();
-my $m1id = 'b5d2ee5784e44a009886a0580f161b14';
-my $m2id = 'de208ec52aee41819cc813a4287be955';
+use Test::More;
+use Genome::Model::TestHelpers qw(
+    define_test_classes
+    create_test_sample
+    create_test_pp
+    create_test_model
+);
 
-my $m1 = Genome::Model->get($m1id);
+define_test_classes();
+my $sample = create_test_sample('test_sample');
+my $pp = create_test_pp('test_pp');
+
+my $first = create_test_model($sample, $pp, 'first_test_model');
+my $second = create_test_model($sample, $pp, 'second_test_model');
+
+my $m1 = Genome::Model->get($first);
 ok($m1, "got model 1");
 
-my $m2 = Genome::Model->get($m2id);
+my $m2 = Genome::Model->get($second);
 ok($m2, "got model 2");
 
 my $pair = Genome::Model::Pair->get(first => $m1, second => $m2);
-ok($pair, "got a pair for models $m1id and $m2id");
+ok($pair, "got a pair for models");
 
 is($pair->first, $m1, "first model is correct");
 is($pair->second, $m2, "second model is correct");
 
+done_testing();
