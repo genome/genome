@@ -97,7 +97,8 @@ foreach my $gffile (glob $dir."*chimeras.bedpe"){
 
         if(/^\#/){ # Bypass headers
             next;
-        }else{
+        }
+        else{
             my(@v)=split(/\t/);
             my $FP = $v[12];
             my $TP = $v[13];
@@ -114,7 +115,8 @@ foreach my $gffile (glob $dir."*chimeras.bedpe"){
 
         if(/^\#/){ # Bypass headers
             next;
-        }else{
+        }
+        else{
             my(@v)=split(/\t/);
             my $FP = $v[12];
             my $TP = $v[13];
