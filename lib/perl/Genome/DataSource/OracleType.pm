@@ -1,12 +1,26 @@
 package Genome::DataSource::OracleType;
 
 use Genome;
+use List::MoreUtils qw(any);
 
 # Parent class for datasources connecting to our Oracle DB
 
 class Genome::DataSource::OracleType {
-    is => 'UR::DataSource::Oracle',
+    is => [
+        'UR::DataSource::RDBMSRetriableOperations',
+        'UR::DataSource::Oracle',
+    ],
 };
+
+my @retriable_operations = (
+    qr(ORA-25408), # can not safely replay call
+    qr(ORA-03135), # connection lost contact
+    qr(ORA-03113), # end-of-file on communication channel
+);
+sub should_retry_operation_after_error {
+    my($self, $sql, $dbi_errstr) = @_;
+    return any { $dbi_errstr =~ /$_/ } @retriable_operations;
+}
 
 sub table_and_column_names_are_upper_case { 1; }
 
