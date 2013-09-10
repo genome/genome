@@ -32,11 +32,6 @@ class Genome::Model::Tools::DetectVariants2::Pindel {
             doc => 'This is a hashref containing the amount of memory in MB to request for each chromosome job of pindel',
         },
     ],
-    has_param => [
-        lsf_resource => {
-            default_value => "-M 25000000 -R 'select[mem>25000] rusage[mem=25000]'",
-        },
-    ],
 };
 
 sub set_output {
