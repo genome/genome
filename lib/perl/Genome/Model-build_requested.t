@@ -10,45 +10,17 @@ use warnings;
 
 use above "Genome";
 use Test::More;
-
-# Create test subclasses of model and processing profile that can be easily instantiated
-class Genome::Model::Test {
-    is => 'Genome::ModelDeprecated',
-};
-
-class Genome::ProcessingProfile::Test {
-    is => 'Genome::ProcessingProfile',
-};
-
-# Make test sample, processing profile, and model
-my $sample = Genome::Sample->create(
-    name => 'dummy test sample',
+use Genome::Model::TestHelpers qw(
+    define_test_classes
+    create_test_sample
+    create_test_pp
+    create_test_model
 );
-ok($sample, 'created test sample with id ' . $sample->id) or die;
 
-my $pp = Genome::ProcessingProfile::Test->create(
-    name => 'dummy processing profile',
-);
-ok($pp, 'created test processing profile') or die;
-
-my $model = Genome::Model::Test->create(
-    subject_id => $sample->id,
-    subject_class_name => $sample->class,
-    processing_profile_id => $pp->id,
-    name => 'test model',
-);
-ok($model, 'created test model') or die;
-
-$model->build_requested(1);
-is($model->build_requested, 1, 'build requested successfully set');
-{
-    my $count = count_notes(
-        notes => [$model->notes],
-        header_text => 'build_requested',
-        body_text => 'no reason given',
-    );
-    is($count, 1, 'found expected note');
-}
+define_test_classes();
+my $sample = create_test_sample('test_sample');
+my $pp = create_test_pp('test_pp');
+my $model = create_test_model($sample, $pp, 'test_model');
 
 $model->build_requested(0);
 is($model->build_requested, 0, 'unset build requested');
