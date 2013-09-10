@@ -9,7 +9,7 @@ use Carp qw/confess/;
 use strict;
 use warnings;
 
-our @ISA = qw(Genome::File::TypedStream);
+use base qw(Genome::File::TypedStream);
 
 sub _parse_header {
     my $self = shift;
