@@ -96,10 +96,14 @@ sub execute {
         return;
     }
 
-    $self->check_tcga_vcf;
-    $self->print_header;
-    $self->convert_file;
+    eval {
+        $self->check_tcga_vcf;
+        $self->print_header;
+        $self->convert_file;
+    };
+    my $error = $@;
     $self->close_filehandles;
+    die $error if $error;
 
     return 1;
 }
