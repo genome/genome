@@ -89,62 +89,62 @@ my $x = '5'; # Element in array
 foreach my $gffile (glob $dir."*chimeras.bedpe"){
     my($sample,$c,$file_ext) = split(/\./,basename $gffile);
     push @samples, $sample;
-    
+
     my(%FPPROM,%TPPROM);
     open(GF, "<$gffile" ) or die("Couldn't open GF file file $gffile \n");
     while(<GF>)  { 
-	chomp;
-	
-	if(/^\#/){ # Bypass headers
-	    next;
-	}else{
-	    my(@v)=split(/\t/);
-	    my $FP = $v[12];
-	    my $TP = $v[13];
-	    $FPPROM{$FP}[0]++;
-	    $TPPROM{$TP}[0]++;
-	}
+        chomp;
+
+        if(/^\#/){ # Bypass headers
+            next;
+        }else{
+            my(@v)=split(/\t/);
+            my $FP = $v[12];
+            my $TP = $v[13];
+            $FPPROM{$FP}[0]++;
+            $TPPROM{$TP}[0]++;
+        }
     }
     close(GF);
 
     #print "Processing $sample $gffile ...\n";
     open(GF, "<$gffile" ) or die("Couldn't open GF file file $gffile \n");
     while(<GF>)  { 
-	chomp;
-	
-	if(/^\#/){ # Bypass headers
-	    next;
-	}else{
-	    my(@v)=split(/\t/);
-	    my $FP = $v[12];
-	    my $TP = $v[13];
-	    
-	    my $score = $v[7];
-	    my $total_frag = $v[16];
-	    my $span_frag = $v[17];
-	    my $type = $v[14]; 
-	    
-	    if($FP eq $TP){ next; }
-	    
-	    my $fusion = $FP.':'.$TP;
+        chomp;
 
-	    
-	    if($v[21] =~ /AAAAAAAAAA/ || $v[21] =~ /TTTTTTTTTT/ || $v[21] =~ /GGGGGGGGGG/ || $v[21] =~ /CCCCCCCCCC/){
-		next;
-	    }
-	 
+        if(/^\#/){ # Bypass headers
+            next;
+        }else{
+            my(@v)=split(/\t/);
+            my $FP = $v[12];
+            my $TP = $v[13];
 
-	    if($FPPROM{$FP}[0] <= $TOO_MANY_FUSION_PARTNERS && $TPPROM{$TP}[0] <= $TOO_MANY_FUSION_PARTNERS){
-		if($total_frag ne $span_frag){
-		    $GF{$fusion}[0]++;
-		    $GF{$fusion}[1]+=$total_frag;
-		    $GF{$fusion}[2]+=$span_frag;
-		    $GF{$fusion}[3]=$type;
-		    $GF{$fusion}[4]+=$score;
-		    $GF{$fusion}[$x] = $span_frag.':'.$total_frag;
-		}
-	    }
-	}
+            my $score = $v[7];
+            my $total_frag = $v[16];
+            my $span_frag = $v[17];
+            my $type = $v[14]; 
+
+            if($FP eq $TP){ next; }
+
+            my $fusion = $FP.':'.$TP;
+
+
+            if($v[21] =~ /AAAAAAAAAA/ || $v[21] =~ /TTTTTTTTTT/ || $v[21] =~ /GGGGGGGGGG/ || $v[21] =~ /CCCCCCCCCC/){
+                next;
+            }
+
+
+            if($FPPROM{$FP}[0] <= $TOO_MANY_FUSION_PARTNERS && $TPPROM{$TP}[0] <= $TOO_MANY_FUSION_PARTNERS){
+                if($total_frag ne $span_frag){
+                    $GF{$fusion}[0]++;
+                    $GF{$fusion}[1]+=$total_frag;
+                    $GF{$fusion}[2]+=$span_frag;
+                    $GF{$fusion}[3]=$type;
+                    $GF{$fusion}[4]+=$score;
+                    $GF{$fusion}[$x] = $span_frag.':'.$total_frag;
+                }
+            }
+        }
     }
     close(GF);
     $x++;
@@ -158,63 +158,62 @@ print join("\t", @samples)."\n";
 # Print output
 my @fusions = keys %GF;
 for my $fusion (@fusions){
-    
     # Get count
     my $sample_freq = '0';
     my $total_freq = '0';
     for(my $j = '5'; $j < @samples + 5; $j++){ # Only check data columns
-	if($GF{$fusion}[$j] ne ''){
-	    $total_freq++;
-	    my($s,$e)=split(/\:/,$GF{$fusion}[$j]);
-	    
-	    if($s ne '0'){
-		    $sample_freq++;
-	    }
-	}
+        if($GF{$fusion}[$j] ne ''){
+            $total_freq++;
+            my($s,$e)=split(/\:/,$GF{$fusion}[$j]);
+
+            if($s ne '0'){
+                $sample_freq++;
+            }
+        }
     }
-    
+
     if( ($sample_freq eq '1' || $sample_freq eq '2') && $GF{$fusion}[1] >= '5' && $GF{$fusion}[2] >= '1'){
-	                                                                                                                                   
-	my($gene1,$gene2)=split(/\:/,$fusion); 
-	print "$fusion\t$gene1\t$gene2";
 
-	# Print all
-	for(my $j = '1'; $j < @samples + 5; $j++){ # Exclude first column and instead print actual sample frequency
-	    if($GF{$fusion}[$j] eq ''){
-		print "\t0";
-	    }else{
-		my($s,$e)=split(/\:/,$GF{$fusion}[$j]);
-		print "\t$GF{$fusion}[$j]";
-	    }
-	}
+        my($gene1,$gene2)=split(/\:/,$fusion); 
+        print "$fusion\t$gene1\t$gene2";
 
-	if($MITEL5P{$gene1}[0] ne ''){
-	    print "\tMITEL5_".$gene1;
-	}else{
-	    print "\tNull";
-	}
-	
-	if($MITEL3P{$gene2}[0] ne ''){
-	    print "\tMITEL3_".$gene2;
-	}else{ print "\tNull"; }
-	
-	if($KIN{$gene1}[0] ne ''){
-	    print "\tKIN5_".$gene1;
-	}else{ print "\tNull"; }
-	
-	if($KIN{$gene2}[0] ne ''){
-	    print "\tKIN3_".$gene2;
-	}else{ print "\tNull"; }
-	
-	if($CANCER{$gene1}[0] ne ''){
-	    print "\tCAN5_".$gene1;
-	}else{ print "\tNull"; }
-	
-	if($CANCER{$gene2}[0] ne ''){
-	    print "\tCAN3_".$gene2;   
-	}else{ print "\tNull"; }
-	
-	print "\n";
-	
+        # Print all
+        for(my $j = '1'; $j < @samples + 5; $j++){ # Exclude first column and instead print actual sample frequency
+            if($GF{$fusion}[$j] eq ''){
+                print "\t0";
+            }else{
+                my($s,$e)=split(/\:/,$GF{$fusion}[$j]);
+                print "\t$GF{$fusion}[$j]";
+            }
+        }
+
+        if($MITEL5P{$gene1}[0] ne ''){
+            print "\tMITEL5_".$gene1;
+        }else{
+            print "\tNull";
+        }
+
+        if($MITEL3P{$gene2}[0] ne ''){
+            print "\tMITEL3_".$gene2;
+        }else{ print "\tNull"; }
+
+        if($KIN{$gene1}[0] ne ''){
+            print "\tKIN5_".$gene1;
+        }else{ print "\tNull"; }
+
+        if($KIN{$gene2}[0] ne ''){
+            print "\tKIN3_".$gene2;
+        }else{ print "\tNull"; }
+
+        if($CANCER{$gene1}[0] ne ''){
+            print "\tCAN5_".$gene1;
+        }else{ print "\tNull"; }
+
+        if($CANCER{$gene2}[0] ne ''){
+            print "\tCAN3_".$gene2;   
+        }else{ print "\tNull"; }
+
+        print "\n";
+
     }
 }
