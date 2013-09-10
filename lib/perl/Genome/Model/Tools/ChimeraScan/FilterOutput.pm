@@ -5,6 +5,8 @@ use strict;
 use File::Basename qw(basename);
 
 my $TOO_MANY_FUSION_PARTNERS = 3;
+my $MIN_TOTAL_FRAGS = 5;
+my $MIN_SPANNING_FRAGS = 1;
 #### Include get options and usage
 #
 # (1) common 5' and 3' partners
@@ -151,18 +153,15 @@ for my $fusion (@fusions){
     # Get count
     my $sample_freq = '0';
     my $total_freq = '0';
-    for(my $j = '5'; $j < @samples + 5; $j++){ # Only check data columns
-        if($GF{$fusion}[$j] ne ''){
-            $total_freq++;
-            my($s,$e)=split(/\:/,$GF{$fusion}[$j]);
+    if($GF{$fusion}[5] ne ''){
+        $total_freq++;
 
-            if($s ne '0'){
-                $sample_freq++;
-            }
+        if($GF{$fusion}[2] ne '0'){
+            $sample_freq++;
         }
     }
 
-    if( ($sample_freq eq '1' || $sample_freq eq '2') && $GF{$fusion}[1] >= '5' && $GF{$fusion}[2] >= '1'){
+    if( ($sample_freq >= 1 and $sample_freq <= 2) && $GF{$fusion}[1] >= $MIN_TOTAL_FRAGS && $GF{$fusion}[2] >= $MIN_SPANNING_FRAGS){
 
         my($gene1,$gene2)=split(/\:/,$fusion); 
         print "$fusion\t$gene1\t$gene2";
