@@ -78,11 +78,6 @@ while(<C>){
 }
 close(C);
 
-
-
-
-
-
 my (%GF,%FPR,%TPR);
 my @samples;
 #
@@ -138,19 +133,14 @@ foreach my $gffile (glob $dir."*chimeras.bedpe"){
 	    }
 	 
 
-	    #print "$sample\t$fusion\t$FPPROM{$FP}[0]\t$TPPROM{$TP}[0]\n";
 	    if($FPPROM{$FP}[0] <= 3 && $TPPROM{$TP}[0] <= 3){ #filter out fusions where either gene is involved in many different fusions
-		#if($fusion =~ /CREB3/){ print "PASS\t$fusion\n"; }
 		if($total_frag ne $span_frag){
-#		if( ($total_frag > '30' && $total_frag ne $span_frag) || $total_frag <= '30'){
 		    $GF{$fusion}[0]++;
 		    $GF{$fusion}[1]+=$total_frag;
 		    $GF{$fusion}[2]+=$span_frag;
 		    $GF{$fusion}[3]=$type;
 		    $GF{$fusion}[4]+=$score;
 		    $GF{$fusion}[$x] = $span_frag.':'.$total_frag;
-		    #$FPR{$FP}[0]++;
-		    #$TPR{$TP}[0]++;
 		}
 	    }
 	}
@@ -159,7 +149,6 @@ foreach my $gffile (glob $dir."*chimeras.bedpe"){
     $x++;
 }
 
-#close(OUTFILE);
 
 # Print header
 print "Fusion\t5P\t3P\tTotal_Freq\tSpanning_Freq\tType\tScore\tSpan:Total\tMitel5P\tMitel3P\tKinase5P\tKinase3P\tCancer5P\tCancer3P\n"; #5'PartnersFreq\t3'PartnersFreq";
@@ -168,42 +157,37 @@ print "\n";
 
 # Print output
 my @fusions = keys %GF;
-for(my $i = '0'; $i < @fusions; $i++){
+for my $fusion (@fusions){
     
     # Get count
     my $sample_freq = '0';
     my $total_freq = '0';
     for(my $j = '5'; $j < @samples + 5; $j++){ # Only check data columns
-	if($GF{$fusions[$i]}[$j] ne ''){
+	if($GF{$fusion}[$j] ne ''){
 	    $total_freq++;
-	    my($s,$e)=split(/\:/,$GF{$fusions[$i]}[$j]);
+	    my($s,$e)=split(/\:/,$GF{$fusion}[$j]);
 	    
 	    if($s ne '0'){
-#		if($GF{$fusions[$i]}[1] >= '3' && $GF{$fusions[$i]}[2] >= '1'){
 		    $sample_freq++;
-#		}
 	    }
 	}
     }
     
-    #if($sample_freq eq '1' && $total_freq eq '1' && $GF{$fusions[$i]}[1] >= '2' && ($GF{$fusions[$i]}[1] ne $GF{$fusions[$i]}[2]) ){
-    if( ($sample_freq eq '1' || $sample_freq eq '2') && $GF{$fusions[$i]}[1] >= '5' && $GF{$fusions[$i]}[2] >= '1'){
+    if( ($sample_freq eq '1' || $sample_freq eq '2') && $GF{$fusion}[1] >= '5' && $GF{$fusion}[2] >= '1'){
 	                                                                                                                                   
-	my($gene1,$gene2)=split(/\:/,$fusions[$i]); 
-	print "$fusions[$i]\t$gene1\t$gene2";
+	my($gene1,$gene2)=split(/\:/,$fusion); 
+	print "$fusion\t$gene1\t$gene2";
 
 	# Print all
 	for(my $j = '1'; $j < @samples + 5; $j++){ # Exclude first column and instead print actual sample frequency
-	    if($GF{$fusions[$i]}[$j] eq ''){
+	    if($GF{$fusion}[$j] eq ''){
 		print "\t0";
 	    }else{
-		my($s,$e)=split(/\:/,$GF{$fusions[$i]}[$j]);
-		print "\t$GF{$fusions[$i]}[$j]";
+		my($s,$e)=split(/\:/,$GF{$fusion}[$j]);
+		print "\t$GF{$fusion}[$j]";
 	    }
 	}
 
-#$sample_freq\t$total_freq";
-       
 	if($MITEL5P{$gene1}[0] ne ''){
 	    print "\tMITEL5_".$gene1;
 	}else{
