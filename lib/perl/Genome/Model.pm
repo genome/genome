@@ -623,7 +623,7 @@ sub current_build {
     my $self = shift;
     my $build_iterator = $self->build_iterator(
         'status not like' => 'Abandoned',
-        '-order_by' => '-build_id',
+        '-order_by' => '-date_scheduled',  
     );
     while (my $build = $build_iterator->next) {
         return $build if $build->is_current;
