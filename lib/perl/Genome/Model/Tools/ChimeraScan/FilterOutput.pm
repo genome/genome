@@ -20,6 +20,7 @@ my $TOO_MANY_FUSION_PARTNERS = 3;
 #my $dir = '/gscmnt/gc6127/research/cmaher/Myeloma/MMY5/';
 #my $dir = '/gscmnt/gc6127/research/cmaher/ALL/ALL1/';
 my $dir = '/gscmnt/gc7001/info/model_data/2892653587/build139185824/fusions/';
+my $bedpe_file = "$dir/chimeras.bedpe";
 
 #my $outfile = '/gscmnt/gc5105/research/cmaher/LungCancer/17genomes/LUC9/cnv.bed';
 #open(OUTFILE, ">$outfile");
@@ -80,82 +81,69 @@ while(<C>){
 close(C);
 
 my (%GF,%FPR,%TPR);
-my @samples;
-#
-# Extract Recurrent
-#
-my $x = '5'; # Element in array
-#my $dir = '/gscmnt/gc5105/research/cmaher/LungCancer/17genomes/CSCAN/RESULTS/';
-foreach my $gffile (glob $dir."*chimeras.bedpe"){
-    my($sample,$c,$file_ext) = split(/\./,basename $gffile);
-    push @samples, $sample;
 
-    my(%FPPROM,%TPPROM);
-    open(GF, "<$gffile" ) or die("Couldn't open GF file file $gffile \n");
-    while(<GF>)  { 
-        chomp;
+my(%FPPROM,%TPPROM);
+open(GF, "<$bedpe_file" ) or die("Couldn't open GF file file $bedpe_file \n");
+while(<GF>)  { 
+    chomp;
 
-        if(/^\#/){ # Bypass headers
-            next;
-        }
-        else{
-            my(@v)=split(/\t/);
-            my $FP = $v[12];
-            my $TP = $v[13];
-            $FPPROM{$FP}[0]++;
-            $TPPROM{$TP}[0]++;
-        }
+    if(/^\#/){ # Bypass headers
+        next;
     }
-    close(GF);
-
-    #print "Processing $sample $gffile ...\n";
-    open(GF, "<$gffile" ) or die("Couldn't open GF file file $gffile \n");
-    while(<GF>)  { 
-        chomp;
-
-        if(/^\#/){ # Bypass headers
-            next;
-        }
-        else{
-            my(@v)=split(/\t/);
-            my $FP = $v[12];
-            my $TP = $v[13];
-
-            my $score = $v[7];
-            my $total_frag = $v[16];
-            my $span_frag = $v[17];
-            my $type = $v[14]; 
-
-            if($FP eq $TP){ next; }
-
-            my $fusion = $FP.':'.$TP;
-
-
-            if($v[21] =~ /AAAAAAAAAA/ || $v[21] =~ /TTTTTTTTTT/ || $v[21] =~ /GGGGGGGGGG/ || $v[21] =~ /CCCCCCCCCC/){
-                next;
-            }
-
-
-            if($FPPROM{$FP}[0] <= $TOO_MANY_FUSION_PARTNERS && $TPPROM{$TP}[0] <= $TOO_MANY_FUSION_PARTNERS){
-                if($total_frag ne $span_frag){
-                    $GF{$fusion}[0]++;
-                    $GF{$fusion}[1]+=$total_frag;
-                    $GF{$fusion}[2]+=$span_frag;
-                    $GF{$fusion}[3]=$type;
-                    $GF{$fusion}[4]+=$score;
-                    $GF{$fusion}[$x] = $span_frag.':'.$total_frag;
-                }
-            }
-        }
+    else{
+        my(@v)=split(/\t/);
+        my $FP = $v[12];
+        my $TP = $v[13];
+        $FPPROM{$FP}[0]++;
+        $TPPROM{$TP}[0]++;
     }
-    close(GF);
-    $x++;
 }
+close(GF);
+
+open(GF, "<$bedpe_file" ) or die("Couldn't open GF file file $bedpe_file \n");
+while(<GF>)  { 
+    chomp;
+
+    if(/^\#/){ # Bypass headers
+        next;
+    }
+    else{
+        my(@v)=split(/\t/);
+        my $FP = $v[12];
+        my $TP = $v[13];
+
+        my $score = $v[7];
+        my $total_frag = $v[16];
+        my $span_frag = $v[17];
+        my $type = $v[14]; 
+
+        if($FP eq $TP){ next; }
+
+        my $fusion = $FP.':'.$TP;
+
+
+        if($v[21] =~ /AAAAAAAAAA/ || $v[21] =~ /TTTTTTTTTT/ || $v[21] =~ /GGGGGGGGGG/ || $v[21] =~ /CCCCCCCCCC/){
+            next;
+        }
+
+
+        if($FPPROM{$FP}[0] <= $TOO_MANY_FUSION_PARTNERS && $TPPROM{$TP}[0] <= $TOO_MANY_FUSION_PARTNERS){
+            if($total_frag ne $span_frag){
+                $GF{$fusion}[0]++;
+                $GF{$fusion}[1]+=$total_frag;
+                $GF{$fusion}[2]+=$span_frag;
+                $GF{$fusion}[3]=$type;
+                $GF{$fusion}[4]+=$score;
+                $GF{$fusion}[5] = $span_frag.':'.$total_frag;
+            }
+        }
+    }
+}
+close(GF);
 
 
 # Print header
 print "Fusion\t5P\t3P\tTotal_Freq\tSpanning_Freq\tType\tScore\tSpan:Total\tMitel5P\tMitel3P\tKinase5P\tKinase3P\tCancer5P\tCancer3P\n"; #5'PartnersFreq\t3'PartnersFreq";
-print join("\t", @samples)."\n";
 
 # Print output
 my @fusions = keys %GF;
