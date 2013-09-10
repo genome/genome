@@ -1,16 +1,15 @@
-
 package Genome::Model::Tools::Varscan::Consensus;     # rename this when you give the module file a different name <--
 
 #####################################################################################################################################
-# Genome::Model::Tools::Varscan::Consensus	Runs Varscan pileup2cns on the SAMtools mpileup output from one BAM file.
-#					
-#	AUTHOR:		Dan Koboldt (dkoboldt@genome.wustl.edu)
+# Genome::Model::Tools::Varscan::Consensus    Runs Varscan pileup2cns on the SAMtools mpileup output from one BAM file.
 #
-#	CREATED:	12/09/2009 by D.K.
-#	MODIFIED:	08/14/2013 by D.K.
+#    AUTHOR:        Dan Koboldt (dkoboldt@genome.wustl.edu)
 #
-#	NOTES:	
-#			
+#    CREATED:    12/09/2009 by D.K.
+#    MODIFIED:    08/14/2013 by D.K.
+#
+#    NOTES:
+#
 #####################################################################################################################################
 
 use strict;
@@ -37,19 +36,19 @@ class Genome::Model::Tools::Varscan::Consensus {
         min_coverage => {
             is => 'Number',
             doc => "Minimum base coverage to report readcounts",
-	    default => 3,
+        default => 3,
             is_optional => 1,
         },
         min_avg_qual => {
             is => 'Number',
             doc => "Minimum base quality to count a read",
-	    default => 20,
+        default => 20,
             is_optional => 0,
         },
         min_var_freq => {
             is => 'Number',
             doc => "Minimum variant allele frequency to call a variant",
-	    default => 0.20,
+        default => 0.20,
             is_optional => 0,
         },
         output_vcf => {
@@ -74,18 +73,18 @@ class Genome::Model::Tools::Varscan::Consensus {
 sub sub_command_sort_position { 12 }
 
 sub help_brief {                            # keep this to just a few words <---
-    "Run VarScan consensus calling for one BAM file"                 
+    "Run VarScan consensus calling for one BAM file"
 }
 
 sub help_synopsis {
     return <<EOS
 Runs mpileup and then VarScan consensus calling (pileup2cns) on a single BAM file
-EXAMPLE:	gmt varscan consensus --bam-file sample.bam --reference reference.fa --output sample.bam.varScan.cns
+EXAMPLE:    gmt varscan consensus --bam-file sample.bam --reference reference.fa --output sample.bam.varScan.cns
 EOS
 }
 
 sub help_detail {                           # this is what the user will see with the longer version of help. <---
-    return <<EOS 
+    return <<EOS
 
 EOS
 }
@@ -97,49 +96,49 @@ EOS
 ################################################################################################
 
 sub execute {                               # replace with real execution logic.
-	my $self = shift;
+    my $self = shift;
 
-	## Get required parameters ##
-	my $bam_file = $self->bam_file;
-	my $reference = $self->reference;
-	my $output_file = $self->output_file;
-	
-	my $min_coverage = $self->min_coverage;
-	my $min_avg_qual = $self->min_avg_qual;
-	my $min_var_freq = $self->min_var_freq;
+    ## Get required parameters ##
+    my $bam_file = $self->bam_file;
+    my $reference = $self->reference;
+    my $output_file = $self->output_file;
 
-	if(-e $bam_file)
-	{
-		## Prepare pileup commands ##
-		my $mpileup = $self->samtools_path . " mpileup -B -f $reference -q 10 $bam_file";
-		
-		if($self->position_list_file)
-		{
-			$mpileup = $self->samtools_path . " mpileup -B -f $reference -q 10 -l " . $self->position_list_file . " " . $bam_file;
-		}
-		
-		
-		
-		my $cmd = "";
-		
-		if($self->output_vcf)
-		{
-			$cmd = $self->java_command_line("mpileup2cns <\($mpileup\) --min-coverage $min_coverage --min-var-freq $min_var_freq --min-avg-qual $min_avg_qual --output-vcf 1 >$output_file 2>/dev/null");			
-		}
-		else
-		{
-			$cmd = $self->java_command_line("pileup2cns <\($mpileup\) --min-coverage $min_coverage --min-var-freq $min_var_freq --min-avg-qual $min_avg_qual >$output_file 2>/dev/null");
-		}
+    my $min_coverage = $self->min_coverage;
+    my $min_avg_qual = $self->min_avg_qual;
+    my $min_var_freq = $self->min_var_freq;
 
-		system($cmd);
-	}
-	else
-	{
-		die "Error: One of your BAM files doesn't exist!\n";
-	}
-	
-	
-	return 1;                               # exits 0 for true, exits 1 for false (retval/exit code mapping is overridable)
+    if(-e $bam_file)
+    {
+        ## Prepare pileup commands ##
+        my $mpileup = $self->samtools_path . " mpileup -B -f $reference -q 10 $bam_file";
+
+        if($self->position_list_file)
+        {
+            $mpileup = $self->samtools_path . " mpileup -B -f $reference -q 10 -l " . $self->position_list_file . " " . $bam_file;
+        }
+
+
+
+        my $cmd = "";
+
+        if($self->output_vcf)
+        {
+            $cmd = $self->java_command_line("mpileup2cns <\($mpileup\) --min-coverage $min_coverage --min-var-freq $min_var_freq --min-avg-qual $min_avg_qual --output-vcf 1 >$output_file 2>/dev/null");
+        }
+        else
+        {
+            $cmd = $self->java_command_line("pileup2cns <\($mpileup\) --min-coverage $min_coverage --min-var-freq $min_var_freq --min-avg-qual $min_avg_qual >$output_file 2>/dev/null");
+        }
+
+        system($cmd);
+    }
+    else
+    {
+        die "Error: One of your BAM files doesn't exist!\n";
+    }
+
+
+    return 1;                               # exits 0 for true, exits 1 for false (retval/exit code mapping is overridable)
 }
 
 
