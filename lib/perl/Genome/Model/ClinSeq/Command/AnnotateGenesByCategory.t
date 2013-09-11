@@ -14,7 +14,7 @@ BEGIN {
 };
 
 use above "Genome";
-use Test::More tests=>9; #One per 'ok', 'is', etc. statement below
+use Test::More tests=>12;
 use Genome::Model::ClinSeq::Command::CreateMutationSpectrum;
 use Data::Dumper;
 
@@ -30,10 +30,14 @@ ok($temp_dir, "created temp directory: $temp_dir") or die;
 
 #Make a copy of the expected input file in the temp dir
 my $infile = $expected_output_dir . "example_input.tsv";
+my $infile2 = $expected_output_dir . "example_input2.tsv";
 ok (-e $infile, "Found example input file: $infile") or die;
 Genome::Sys->shellcmd(cmd => "cp $infile $temp_dir/");
+Genome::Sys->shellcmd(cmd => "cp $infile2 $temp_dir/");
 my $temp_infile = $temp_dir . "/example_input.tsv";
+my $temp_infile2 = $temp_dir . "/example_input2.tsv";
 ok (-e $temp_infile, "Found temp copy of example input file: $infile");
+ok (-e $temp_infile2, "Found temp copy of example input file: $infile2");
 
 #Check for GeneSymbolLists dir
 my $cancer_annotation_db = Genome::Db->get("tgi/cancer-annotation/human/build37-20130401.1");
@@ -55,6 +59,18 @@ my $log = IO::File->new(">$log_file");
 $log->print(join("\n", @output1));
 ok(-e $log_file, "Wrote message file from annotate-genes-by-category to a log file: $log_file");
 
+$annotate_genes_cmd = Genome::Model::ClinSeq::Command::AnnotateGenesByCategory->create(infile=>$temp_infile2, cancer_annotation_db => $cancer_annotation_db, gene_name_column=>'mapped_gene_name', gene_groups => "MelanomaDruggable");
+$annotate_genes_cmd->queue_status_messages(1);
+my $r2 = $annotate_genes_cmd->execute();
+is($r2, 1, 'Testing for successful execution.  Expecting 1.  Got: '.$r1);
+
+#Dump the output to a log file
+my @output2 = $annotate_genes_cmd->status_messages();
+my $log_file2 = $temp_dir . "/AnnotateGenesByCategory2.log.txt";
+my $log2 = IO::File->new(">$log_file2");
+$log2->print(join("\n", @output2));
+ok(-e $log_file2, "Wrote message file from annotate-genes-by-category to a log file: $log_file2");
+
 #The first time we run this we will need to save our initial result to diff against
 #Genome::Sys->shellcmd(cmd => "cp -r -L $temp_dir/* $expected_output_dir");
 
@@ -70,6 +86,4 @@ or do {
   Genome::Sys->shellcmd(cmd => "rm -fr /tmp/last-annotate-genes-by-category");
   Genome::Sys->shellcmd(cmd => "mv $temp_dir /tmp/last-annotate-genes-by-category");
 };
-
-
 

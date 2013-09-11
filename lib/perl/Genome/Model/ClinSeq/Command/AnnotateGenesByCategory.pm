@@ -20,7 +20,12 @@ class Genome::Model::ClinSeq::Command::AnnotateGenesByCategory {
         gene_name_column => {
             is => 'Text',
             doc => 'name of column containing gene names/symbols'
-        }
+        },
+        gene_groups => {
+            is => 'Text',
+            doc => 'name of list of gene groups to use',
+            default => "Default",
+        },
     ],
     has_output => [
         category_outfile => {
@@ -79,6 +84,14 @@ sub execute {
   my @symbol_list_names = sort {$master_list->{$a}->{order} <=> $master_list->{$b}->{order}} keys %{$master_list};
   my $gene_symbol_lists = &importGeneSymbolLists('-gene_symbol_lists_dir'=>$gene_symbol_lists_dir, '-symbol_list_names'=>\@symbol_list_names, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
 
+  my $sublists = $symbol_list_names->{sublists};
+  unless (defined($sublists->{$self->gene_groups})) {
+    $self->error_message("Could not find a gene sublist with the name ".$self->gene_groups);
+    return;
+  }
+
+  my $target_groups = $sublists->{$self->gene_groups}->{groups};
+  
   open (INFILE, "$infile") || die "\n\nCould not open input infile: $infile\n\n";
   my %data;
   my %cols;
@@ -111,16 +124,23 @@ sub execute {
 
   #Figure out the gene matches to the gene symbol lists
   #Test each gene name in this column against those in the list and add a column with the match status (i.e. is it a kinase, cancer gene, etc.)
+  my %member_list;
   foreach my $l (keys %data){
     my $gene_name = $data{$l}{gene_name};
-    foreach my $gene_symbol_type (keys %{$gene_symbol_lists}){
-      my $gene_symbols = $gene_symbol_lists->{$gene_symbol_type}->{symbols};
-      if ($gene_symbols->{$gene_name}){
-        $data{$l}{$gene_symbol_type} = 1;
-        $data{$l}{sum}++;
-      }else{
-        $data{$l}{$gene_symbol_type} = 0;
-      }
+    for my $group_name (sort {$target_groups->{$a}->{order} <=> $target_groups->{$b}->{order}} keys %{$target_groups}) {
+        my @group_members = @{$symbol_list_names->{master_group_list}->{$group_name}->{members}};
+        for my $member (@group_members) {
+            $member_list{$member} = 1;
+            my $gene_symbols = $gene_symbol_lists->{$member}->{symbols};
+            if ($gene_symbols->{$gene_name}){
+                unless ($data{$l}{$member}) {
+                    $data{$l}{$member} = 1;
+                    $data{$l}{sum}++;
+                }
+            }else{
+                $data{$l}{$member} = 0;
+            }
+        }
     }
   }
 
@@ -137,7 +157,7 @@ sub execute {
 
   #Print out a new file contain the extra columns
   open (OUT, ">$category_outfile") || die "\n\nCould not open output datafile: $category_outfile\n\n";
-  my @gene_symbol_list_names = sort {$gene_symbol_lists->{$a}->{order} <=> $gene_symbol_lists->{$b}->{order}} keys %{$gene_symbol_lists};
+  my @gene_symbol_list_names = sort {$gene_symbol_lists->{$a}->{order} <=> $gene_symbol_lists->{$b}->{order}} keys %member_list;
   my $gene_symbol_list_name_string = join("\t", @gene_symbol_list_names);
   print OUT "$header_line\t$gene_symbol_list_name_string\tgene_category_sum\n";
   foreach my $l (sort {$a <=> $b} keys %data){
