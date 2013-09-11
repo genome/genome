@@ -8337,19 +8337,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>validate',
-      [
-        'builds-can=s@',
-        'files',
-        'color!',
-        undef,
-        'debug!',
-        undef,
-        'builds=s@',
-        undef,
-        'help!',
-        undef
-      ],
       '>view',
       [
         'color!',
@@ -8869,19 +8856,6 @@ $Genome::Command::OPTS_SPEC = [
       'files',
       'text-to-append=s',
       'files',
-      'help!',
-      undef
-    ],
-    '>validate',
-    [
-      'color!',
-      undef,
-      'debug!',
-      undef,
-      'unique-subjects!',
-      undef,
-      'model-group=s',
-      undef,
       'help!',
       undef
     ],
