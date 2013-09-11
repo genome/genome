@@ -77,7 +77,7 @@ sub versions {
 }
 
 sub default_chromosomes_as_string {
-    return join(',', $_[0]->default_chromosomes);
+    return join(',', @{$_[0]->default_chromosomes});
 }
 
 sub params_for_detector_result {

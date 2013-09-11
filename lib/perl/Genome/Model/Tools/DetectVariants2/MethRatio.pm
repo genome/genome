@@ -76,7 +76,7 @@ sub default_chromosome_list {
 }
 
 sub default_chromosomes_as_string {
-    return join(',', $_[0]->default_chromosomes);
+    return join(',', @{$_[0]->default_chromosomes});
 }
 
 sub chromosome_list_as_string {

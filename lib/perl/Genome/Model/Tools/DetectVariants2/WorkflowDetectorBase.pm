@@ -35,7 +35,7 @@ sub sort_chromosomes {
     my $self = shift;
     my $chromosome_array_ref = shift;
     my @chromosome_list = sort {chromosome_sort()} @$chromosome_array_ref;
-    return @chromosome_list;
+    return \@chromosome_list;
 }
 
 sub chromosome_sort {
