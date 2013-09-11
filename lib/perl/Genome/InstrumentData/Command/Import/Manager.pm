@@ -10,17 +10,17 @@ use YAML;
 
 class Genome::InstrumentData::Command::Import::Manager {
     is => 'Command::V2',
-    doc => 'Manage importing sequence files into Genome',
+    doc => 'Manage importing sequence files into GMS',
     has => [
         source_files_tsv => {
             is => 'Text',
-            doc => 'Tab separated file of samples and attributes. See detailed help for more info.',
+            doc => 'Tab separated file of samples and attributes.',
         },
     ],
     has_optional => [
         import_launch_config => {
             is => 'Text',
-            doc => 'Command to use to launch imports. If given, imports will be launched for source files needing import. See detailed help for more info.',
+            doc => 'Command to use to launch imports. If given, imports will be launched for source files needing import.',
         },
         import_list_config => {
             is => 'Text',
@@ -49,21 +49,51 @@ class Genome::InstrumentData::Command::Import::Manager {
 
 sub help_detail {
     return <<HELP;
-Sample Info File
- This is a tab sparated file in the working directory named "info.tsv" with headers. 
+Manage running imports of instrument data into the GMS.
+
+Parameters
+
+Source Files TSV [source_files_tsv]
+ A TAB separarted file containing sample names, source files and instrument data attributes to import.
  
  Required Columns
-  "name"         The name should be dash (-) separated values of the nomenclature, indivdual id/name and sample id/name.
-  "source_files" Source files [bam, fastq, sra, etc] to import for the sample. Separate files by comma (,). 
- 
+  sample_name     Name of the sample. The sample and extlibs library must exist.
+  source_files    Source files [bam, fastq, sra, etc] to import for the sample. Separate files by comma (,). 
+
  Additional Columns
-  The columns are to specify attributes for sample, patient and instrument data. Prefix the
-  attribute name with the entity it is to be assigned to. Some attributes do not need to be
-  prefixed, like "gender" and "race", because they are known to go to a certain entity.
+  The columns are to specify attributes for instrument data. Attributes are skipped if they are empty for a particular instruemnt data.
+
+ Example
+sample_name source_files    flow_cell_id    lane    index_sequence
+Sample-01   sample-1.1.bam  XAXAXA 1   AATTGG
+Sample-01   sample-1.2.bam  XAXAXA 1   TTAACC
+Sample-02   http://fastqs.org/sample-2.fwd.fastq.gz,http://fastqs.org/sample-2.rev.fastq.gz  XYYYYX  2   GAACTT
+
+  This will look to run/check imports for 2 samples. Sample 1 has 2 source files [bams] to import. The second sample, Sample-02, has 2 fastqs to import. They will be downloaded, unzipped and converted to bam. In addition, the flow_cell_id, lane and index_sequence will be added to the respective instrument data as attributes.
+
+
+List Config [list_config]
+ This is the command to run to list running imports. Give the command, job name column number and status column number, separated by semicolons (;). The command will be run and parsed, expecting to find the job name and status. This is then used to determine the next course of action for each source file(s).
+
+ Example for LSF
+  This will run the bjobs command, looking for the job name in column 7 and status in column 3.
+
+  bjobs -w -g /me/mygroup;7;3
+
+
+Launch Config [launch_config]
+ To launch imports, give this command. Insert '%{job_name}' into the command so the manager can monitor status.
  
-  sample             "s."
-  patient/individual "p."
-  instrument_data    "i."
+ The import commands will be printed to the screen [on STDERR] if:
+  The config is not given
+  The config does not have a '%{job_name}' in it
+  The list config is not given
+
+ Example for LSF
+  Launch the job into group /me/mygroup logging to /users/me/logs/%{job_name}
+
+  bsub -J %{job_name} -g /me/mygroup -oo /users/me/logs/%{job_name}
+
 HELP
 }
 
