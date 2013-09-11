@@ -108,7 +108,11 @@ ok(!grep({ $_->{instrument_data_file} } @$imports_aryref), 'imports aryref does 
 ok(!grep({ $_->{model} } @$imports_aryref), 'imports aryref does not have model');
 ok(!grep({ $_->{build} } @$imports_aryref), 'imports aryref does not have build');
 
-# Unsuccessful import has left inst data entity, but no data files
+
+# FIXME test launch config!
+#import_launch_config => "echo %{sample_name} LAUNCH!",
+
+# Create inst data
 my @inst_data;
 for my $import_hashref ( @$imports_aryref ) {
     my $inst_data = Genome::InstrumentData::Imported->__define__(
@@ -119,29 +123,12 @@ for my $import_hashref ( @$imports_aryref ) {
         import_format => 'bam',
         description => 'import test',
     );
+    $inst_data->add_attribute(attribute_label => 'bam_path', attribute_value => $source_files_tsv);
     push @inst_data, $inst_data;
 }
 is(@inst_data, 3, 'define 3 inst data');
 
-$manager = Genome::InstrumentData::Command::Import::Manager->create(
-    source_files_tsv => $source_files_tsv,
-);
-ok($manager, 'create manager');
-ok($manager->execute, 'execute');
-
-$imports_aryref = $manager->_imports;
-is_deeply([ map { $_->{status} } @$imports_aryref ], [qw/ import_failed import_failed import_failed /], 'imports aryref status');
-is_deeply([ map { $_->{instrument_data} } @$imports_aryref ], \@inst_data, 'imports aryref instrument_data');
-ok(!grep({ $_->{job_status} } @$imports_aryref), 'imports aryref does not have job_status');
-ok(!grep({ $_->{instrument_data_file} } @$imports_aryref), 'imports aryref does not have instrument_data_file');
-ok(!grep({ $_->{model} } @$imports_aryref), 'imports aryref does not have model');
-ok(!grep({ $_->{build} } @$imports_aryref), 'imports aryref does not have build');
-
-# FIXME test launch config!
-#import_launch_config => "echo %{sample_name} LAUNCH!",
-
 # Fake successful imports by pointing bam_path to existing info.tsv, models needed
-for my $inst_data ( @inst_data ) { $inst_data->add_attribute(attribute_label => 'bam_path', attribute_value => $source_files_tsv); }
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
     source_files_tsv => $source_files_tsv,
 );

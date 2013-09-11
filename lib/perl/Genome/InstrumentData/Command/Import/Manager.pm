@@ -33,17 +33,17 @@ class Genome::InstrumentData::Command::Import::Manager {
         },
     ],
     has_optional_transient => [
+        _imports => { is => 'Array', },
         _list_command => { is => 'Text', },
         _list_job_name_column => { is => 'Text', },
         _list_status_column => { is => 'Text', },
         _launch_command_format => { is => 'Text', },
-        _model_class => { is => 'Text' },
-        _model_params => { is => 'Hash' },
-        _imports => { is => 'Array', },
-        instrument_data_import_command_substitutions => { 
+        _launch_command_substitutions => { 
             is => 'Hash', 
             default_value => { map { $_ => qr/%{$_}/ } (qw/ job_name sample_name /), },
         },
+        _model_class => { is => 'Text' },
+        _model_params => { is => 'Hash' },
     ],
 };
 
@@ -103,7 +103,7 @@ sub __errors__ {
     my @errors = $self->SUPER::__errors__;
     return @errors if @errors;
 
-    my $import_cmd_error = $self->_resolve_import_command;
+    my $import_cmd_error = $self->_resolve_launch_command;
     if ( $import_cmd_error ) {
         push @errors, UR::Object::Tag->create(
             type => 'invalid',
@@ -259,12 +259,12 @@ sub _resolve_model_params {
     return;
 }
 
-sub _resolve_import_command {
+sub _resolve_launch_command {
     my $self = shift;
 
     my $cmd_format = $self->launch_config;
     if ( $cmd_format ) {
-        my $substitutions = $self->instrument_data_import_command_substitutions;
+        my $substitutions = $self->_launch_command_substitutions;
         for my $required_substitution (qw/ job_name / ) {
             my $substitution = $substitutions->{$required_substitution};
             if ( $cmd_format !~ /$substitution/ ) {
@@ -401,7 +401,7 @@ sub _load_sample_statuses {
         return 'sample_needed' if not $import->{sample};
         return 'import_'.$import->{job_status} if $import->{job_status};
         return 'import_needed' if not $import->{instrument_data};
-        return 'import_failed' if not defined $import->{instrument_data_file} or not -s $import->{instrument_data_file};
+        return 'import_needed' if not defined $import->{instrument_data_file} or not -s $import->{instrument_data_file};
         return 'model_needed' if not $import->{model};
         return 'build_needed' if not $import->{build};
         return 'build_'.lc($import->{build}->status);
@@ -444,42 +444,48 @@ sub _load_sample_job_statuses {
 sub _launch_imports {
     my $self = shift;
 
-    return 1 if not $self->launch_config;
+    my $launch_sub;
+    if ( not $self->launch_config or not $self->list_config ) {
+        $launch_sub = sub{
+            my $import = shift;
+            my $cmd = $self->_resolve_launch_command_for_import($import);
+            print STDOUT "$cmd\n";
+        };
+    }
+    else {
+        $launch_sub = sub{
+            my $import = shift;
+            my $cmd = $self->_resolve_launch_command_for_import($import);
+            my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
+            if ( not $rv ) {
+                $self->error_message($@) if $@;
+                $self->error_message('Failed to launch instrument data import command!');
+                return;
+            }
+            $import->{status} = 'import_pend';
+        }
+    }
 
     my $imports = $self->_imports;
     for my $import ( @$imports ) {
-        next if not grep { $import->{status} ne $_ } (qw/ import_needed import_failed /);
-
-        if ( $import->{status} eq 'import_failed' and $import->{instrument_data} ) {
-            $import->{instrument_data}->delete;
-            $import->{instrument_data} = undef;
-        }
-
-        my $cmd = $self->_resolve_instrument_data_import_command_for_sample($import);
-        my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
-        if ( not $rv ) {
-            $self->error_message($@) if $@;
-            $self->error_message('Failed to launch instrument data import command for sample! '.$import->{sample_name});
-            return;
-        }
-
-        $import->{status} = 'import_pend';
+        next if $import->{status} ne 'import_needed';
+        $launch_sub->($import) or return;
     }
 
     return 1;
 }
 
-sub _resolve_instrument_data_import_command_for_import {
+sub _resolve_launch_command_for_import {
     my ($self, $import) = @_;
 
-    Carp::confess('No samples to resolved instrument data import command!') if not $import;
+    Carp::confess('No import to resolve launch command!') if not $import;
 
     my $cmd_format = $self->_launch_command_format;
-    my $substitutions = $self->instrument_data_import_command_substitutions;
+    my $substitutions = $self->_launch_command_substitutions;
     for my $name ( keys %$substitutions ) {
         my $value = $import->{$name};
         if ( not defined $value ) {
-            $self->error_message("No value for attribute ($name) specified in launch import command. ".$self->instrument_data_import_command_format);
+            $self->error_message("No value for attribute ($name) specified in launch import command. ".$self->launch_config);
             return;
         }
         my $pattern = $substitutions->{$name};
@@ -526,7 +532,7 @@ sub _output_status {
         )."\n";
     }
 
-    print STDOUT "$status";
+    print STDERR "$status";
     print STDERR "\nSummary:\n".join("\n", map { sprintf('%-16s %s', $_, $totals{$_}) } sort { $a cmp $b } keys %totals)."\n";
 
     return 1;
