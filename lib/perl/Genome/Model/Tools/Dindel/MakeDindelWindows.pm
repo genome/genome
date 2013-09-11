@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use File::Spec;
 
 class Genome::Model::Tools::Dindel::MakeDindelWindows {
     is => 'Genome::Model::Tools::Dindel::Base',
