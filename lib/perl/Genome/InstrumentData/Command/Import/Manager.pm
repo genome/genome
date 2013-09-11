@@ -6,7 +6,6 @@ use warnings;
 use Genome;
 
 use IO::File;
-use YAML;
 
 class Genome::InstrumentData::Command::Import::Manager {
     is => 'Command::V2',
@@ -90,7 +89,7 @@ DOC
 
 sub help_detail {
     return <<HELP;
-    Manage importing sequence files into GMS.
+Manage importing sequence files into GMS.
 HELP
 }
 
