@@ -180,7 +180,13 @@ sub _prepare_configuration_hashes_for_instrument_data {
             my $instrument_data_properties = delete $model_instance->{instrument_data_properties};
             if($instrument_data_properties) {
                 while((my $model_property, my $instrument_data_property) = each %$instrument_data_properties) {
-                    $model_instance->{$model_property} = $instrument_data->$instrument_data_property;
+                    if (ref $instrument_data_property eq 'ARRAY') {
+                        $model_instance->{$model_property} = [
+                            map { $instrument_data->$_ } @$instrument_data_property
+                        ];
+                    } else {
+                        $model_instance->{$model_property} = $instrument_data->$instrument_data_property;
+                    }
                 }
             }
         }
