@@ -18,11 +18,11 @@ class Genome::InstrumentData::Command::Import::Manager {
         },
     ],
     has_optional => [
-        import_launch_config => {
+        launch_config => {
             is => 'Text',
             doc => 'Command to use to launch imports. If given, imports will be launched for source files needing import.',
         },
-        import_list_config => {
+        list_config => {
             is => 'Text',
             doc => 'Command and column positions for sample anme and status. Use format: cmd;job_name_column_#;sub tatus_column_#',
         },
@@ -33,10 +33,10 @@ class Genome::InstrumentData::Command::Import::Manager {
         },
     ],
     has_optional_transient => [
-        _import_list_command => { is => 'Text', },
-        _import_list_sample_name_column => { is => 'Text', },
-        _import_list_status_column => { is => 'Text', },
-        _import_command_format => { is => 'Text', },
+        _list_command => { is => 'Text', },
+        _list_job_name_column => { is => 'Text', },
+        _list_status_column => { is => 'Text', },
+        _launch_command_format => { is => 'Text', },
         _model_class => { is => 'Text' },
         _model_params => { is => 'Hash' },
         _imports => { is => 'Array', },
@@ -107,28 +107,28 @@ sub __errors__ {
     if ( $import_cmd_error ) {
         push @errors, UR::Object::Tag->create(
             type => 'invalid',
-            properties => [qw/ import_launch_config /],
+            properties => [qw/ launch_config /],
             desc => $import_cmd_error,
         );
         return @errors;
     }
 
-    my $import_list_config = $self->import_list_config;
-    if ( $import_list_config ) {
-        my %import_list_config;
-        @import_list_config{qw/ command sample_name_column status_column /} = split(';', $import_list_config);
-        for my $attr ( keys %import_list_config ) {
-            if ( not defined $import_list_config{$attr} ) {
+    my $list_config = $self->list_config;
+    if ( $list_config ) {
+        my %list_config;
+        @list_config{qw/ command job_name_column status_column /} = split(';', $list_config);
+        for my $attr ( keys %list_config ) {
+            if ( not defined $list_config{$attr} ) {
                 push @errors, UR::Object::Tag->create(
                     type => 'invalid',
-                    properties => [qw/ import_list_config /],
-                    desc => "Missing $attr in $import_list_config",
+                    properties => [qw/ list_config /],
+                    desc => "Missing $attr in $list_config",
                 );
                 return @errors;
             }
-            $import_list_config{$attr}-- if $attr =~ /col/;
-            my $method = '_import_list_'.$attr;
-            $self->$method( $import_list_config{$attr} );
+            $list_config{$attr}-- if $attr =~ /col/;
+            my $method = '_list_'.$attr;
+            $self->$method( $list_config{$attr} );
         }
     }
 
@@ -262,7 +262,7 @@ sub _resolve_model_params {
 sub _resolve_import_command {
     my $self = shift;
 
-    my $cmd_format = $self->import_launch_config;
+    my $cmd_format = $self->launch_config;
     if ( $cmd_format ) {
         my $substitutions = $self->instrument_data_import_command_substitutions;
         for my $required_substitution (qw/ job_name / ) {
@@ -277,7 +277,7 @@ sub _resolve_import_command {
     }
 
     $cmd_format .= 'genome instrument-data import basic --sample name=%{sample_name} --source-files %s --import-source-name %s%s',
-    $self->_import_command_format($cmd_format);
+    $self->_launch_command_format($cmd_format);
 
     return;
 }
@@ -421,7 +421,7 @@ sub _load_sample_statuses {
 sub _load_sample_job_statuses {
     my $self = shift;
 
-    my $job_list_cmd = $self->_import_list_command;
+    my $job_list_cmd = $self->_list_command;
     $job_list_cmd .= ' 2>/dev/null |';
     my $fh = IO::File->new($job_list_cmd);
     if ( not $fh ) {
@@ -429,8 +429,8 @@ sub _load_sample_job_statuses {
         return;
     }
     
-    my $name_column = $self->_import_list_sample_name_column;
-    my $status_column = $self->_import_list_status_column;
+    my $name_column = $self->_list_job_name_column;
+    my $status_column = $self->_list_status_column;
     my %sample_job_statuses;
     while ( my $line = $fh->getline ) {
         chomp $line;
@@ -444,7 +444,7 @@ sub _load_sample_job_statuses {
 sub _launch_imports {
     my $self = shift;
 
-    return 1 if not $self->import_launch_config;
+    return 1 if not $self->launch_config;
 
     my $imports = $self->_imports;
     for my $import ( @$imports ) {
@@ -474,7 +474,7 @@ sub _resolve_instrument_data_import_command_for_import {
 
     Carp::confess('No samples to resolved instrument data import command!') if not $import;
 
-    my $cmd_format = $self->_import_command_format;
+    my $cmd_format = $self->_launch_command_format;
     my $substitutions = $self->instrument_data_import_command_substitutions;
     for my $name ( keys %$substitutions ) {
         my $value = $import->{$name};

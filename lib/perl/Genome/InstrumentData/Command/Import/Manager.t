@@ -73,7 +73,7 @@ is(@samples, 2, 'define 2 samples');
 # Import needed
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
     source_files_tsv => $source_files_tsv,
-    import_list_config => "printf %s NOTHING_TO_SEE_HERE;1;2",
+    list_config => "printf %s NOTHING_TO_SEE_HERE;1;2",
 );
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');
@@ -88,10 +88,14 @@ ok(!grep({ $_->{instrument_data_file} } @$imports_aryref), 'imports aryref does 
 ok(!grep({ $_->{model} } @$imports_aryref), 'imports aryref does not have model');
 ok(!grep({ $_->{build} } @$imports_aryref), 'imports aryref does not have build');
 
+is($manager->_list_command, 'printf %s NOTHING_TO_SEE_HERE', '_list_command');
+is($manager->_list_job_name_column, 0, '_list_job_name_column');
+is($manager->_list_status_column, 1, '_list_status_column');
+
 # One has import running, others are needed
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
     source_files_tsv => $source_files_tsv,
-    import_list_config => 'printf "%s %s\\n%s %s\\n%s %s" TeSt-0000-00 pend TeSt-0000-00.2 run TeSt-0000-01 run;1;2',
+    list_config => 'printf "%s %s\\n%s %s\\n%s %s" TeSt-0000-00 pend TeSt-0000-00.2 run TeSt-0000-01 run;1;2',
 );
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');
