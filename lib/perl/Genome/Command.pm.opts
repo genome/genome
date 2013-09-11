@@ -5665,6 +5665,8 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'gene-name-column=s',
         'files',
+        'gene-groups=s',
+        'files',
         'help!',
         undef
       ],
@@ -27557,6 +27559,8 @@ $Genome::Command::OPTS_SPEC = [
       '>pindel',
       [
         'lsf-queue=s',
+        'files',
+        'lsf-resource=s',
         'files',
         'output-directory=s',
         'files',
