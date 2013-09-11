@@ -17357,6 +17357,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
     [
       'lsf-queue=s',
       'files',
+      'lsf-resource=s',
+      'files',
       'output-directory=s',
       'files',
       'reference-build=s',
