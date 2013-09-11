@@ -289,7 +289,7 @@ sub _rsync_ftp {
         Genome::Sys->create_directory($lcd);
     }
     my $url = "ftp://$hostname";
-    my $cmd = qq| lftp -c "set ftp:list-options -a; open '$url'; lcd $lcd; cd $rcd; mirror --verbose --continue " |; 
+    my $cmd = qq| lftp -c "set ftp:list-options -a;set mirror:parallel-directories true;set ftp:use-mdtm false;set net:limit-rate 0; open '$url';lcd $lcd; cd $rcd; mirror --verbose --continue --use-cache" |;
     Genome::Sys->shellcmd(cmd => $cmd);
 }
 
