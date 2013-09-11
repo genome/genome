@@ -167,13 +167,13 @@ sub _load_source_files_tsv {
         my $import = {
             sample_name => $sample_name,
             source_files => $source_files,
-            instrument_data_properties => [],
+            instrument_data_attributes => [],
         };
         push @imports, $import;
         for my $attr ( sort keys %$hash ) {
             my $value = $hash->{$attr};
             next if not defined $value or $value eq '';
-            push @{$import->{instrument_data_properties}}, $attr."='".$value."'";
+            push @{$import->{instrument_data_attributes}}, $attr."='".$value."'";
         }
     }
     $self->_imports(\@imports);
@@ -331,28 +331,28 @@ sub _load_models {
 
     my $imports = $self->_imports;
     my $model_class = $self->_model_class;
-    for my $sample ( @$imports ) {
+    for my $import ( @$imports ) {
         # only get/create model once inst data has been created
-        next if not $sample->{instrument_data};
+        next if not $import->{instrument_data};
         # and has data file
-        next if not $sample->{instrument_data_file} or not -s $sample->{instrument_data_file};
+        next if not $import->{instrument_data_file} or not -s $import->{instrument_data_file};
 
         # Only get model for these params and inst data
-        $model_params->{subject} = $sample->{sample};
-        $model_params->{'instrument_data.id'} = $sample->{instrument_data}->id;
+        $model_params->{subject} = $import->{sample};
+        $model_params->{'instrument_data.id'} = $import->{instrument_data}->id;
 
         my $model = $model_class->get(%$model_params);
         if ( not $model ) {
             $model = $model_class->create(%$model_params);
             if ( not $model ) {
-                $self->error_message('Failed to create model for sample! '.$sample->{sample_name});
+                $self->error_message('Failed to create model for sample! '.$import->{sample_name});
                 return;
             }
-            $model->add_instrument_data( $sample->{instrument_data} );
+            $model->add_instrument_data( $import->{instrument_data} );
         }
 
-        $sample->{model} = $model;
-        $sample->{build} = $model->latest_build;
+        $import->{model} = $model;
+        $import->{build} = $model->latest_build;
     }
 
     $self->_imports($imports);
@@ -417,37 +417,37 @@ sub _launch_imports {
     return 1 if not $self->import_launch_config;
 
     my $imports = $self->_imports;
-    for my $sample ( @$imports ) {
-        next if not grep { $sample->{status} ne $_ } (qw/ import_needed import_failed /);
+    for my $import ( @$imports ) {
+        next if not grep { $import->{status} ne $_ } (qw/ import_needed import_failed /);
 
-        if ( $sample->{status} eq 'import_failed' and $sample->{instrument_data} ) {
-            $sample->{instrument_data}->delete;
-            $sample->{instrument_data} = undef;
+        if ( $import->{status} eq 'import_failed' and $import->{instrument_data} ) {
+            $import->{instrument_data}->delete;
+            $import->{instrument_data} = undef;
         }
 
-        my $cmd = $self->_resolve_instrument_data_import_command_for_sample($sample);
+        my $cmd = $self->_resolve_instrument_data_import_command_for_sample($import);
         my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
         if ( not $rv ) {
             $self->error_message($@) if $@;
-            $self->error_message('Failed to launch instrument data import command for sample! '.$sample->{sample_name});
+            $self->error_message('Failed to launch instrument data import command for sample! '.$import->{sample_name});
             return;
         }
 
-        $sample->{status} = 'import_pend';
+        $import->{status} = 'import_pend';
     }
 
     return 1;
 }
 
-sub _resolve_instrument_data_import_command_for_sample {
-    my ($self, $sample) = @_;
+sub _resolve_instrument_data_import_command_for_import {
+    my ($self, $import) = @_;
 
-    Carp::confess('No samples to resolved instrument data import command!') if not $sample;
+    Carp::confess('No samples to resolved instrument data import command!') if not $import;
 
     my $cmd_format = $self->_import_command_format;
     my $substitutions = $self->instrument_data_import_command_substitutions;
     for my $name ( keys %$substitutions ) {
-        my $value = $sample->{$name};
+        my $value = $import->{$name};
         if ( not defined $value ) {
             $self->error_message("No value for attribute ($name) specified in launch import command. ".$self->instrument_data_import_command_format);
             return;
@@ -458,11 +458,11 @@ sub _resolve_instrument_data_import_command_for_sample {
 
     my $cmd .= sprintf(
         $cmd_format,
-        $sample->{source_files},
-        $sample->{sample}->nomenclature,
+        $import->{source_files},
+        $import->{sample}->nomenclature,
         ( 
-            @{$sample->{instrument_data_properties}}
-            ? ' --instrument-data-properties '.join(',', @{$sample->{instrument_data_properties}})
+            @{$import->{instrument_data_attributes}}
+            ? ' --instrument-data-properties '.join(',', @{$import->{instrument_data_attributes}})
             : ''
         ),
     );
@@ -475,22 +475,22 @@ sub _output_status {
 
     my %totals;
     my $status = join("\t", (qw/ name status inst_data model build /))."\n";
-    for my $sample ( sort { $a->{sample_name} cmp $b->{sample_name} } @{$self->_imports} ) {
+    for my $import ( sort { $a->{sample_name} cmp $b->{sample_name} } @{$self->_imports} ) {
         $totals{total}++;
-        $totals{ $sample->{status} }++;
-        $totals{build}++ if $sample->{status} =~ /^build/;
+        $totals{ $import->{status} }++;
+        $totals{build}++ if $import->{status} =~ /^build/;
         my ($model_id, $build_id) = (qw/ NA NA /);
-        if ( $sample->{model} ) {
-            $model_id = $sample->{model}->id;
-            if ( $sample->{build} and $sample->{status} ne 'build_requested' ) {
-                $build_id = $sample->{build}->id;
+        if ( $import->{model} ) {
+            $model_id = $import->{model}->id;
+            if ( $import->{build} and $import->{status} ne 'build_requested' ) {
+                $build_id = $import->{build}->id;
             }
         }
         $status .= join(
             "\t",
-            $sample->{sample_name},
-            $sample->{status}, 
-            ( $sample->{instrument_data} ? $sample->{instrument_data}->id : 'NA' ),
+            $import->{sample_name},
+            $import->{status}, 
+            ( $import->{instrument_data} ? $import->{instrument_data}->id : 'NA' ),
             $model_id,
             $build_id,
         )."\n";
