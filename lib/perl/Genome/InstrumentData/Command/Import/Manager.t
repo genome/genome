@@ -110,7 +110,7 @@ ok(!grep({ $_->{build} } @$imports_aryref), 'imports aryref does not have build'
 
 
 # FIXME test launch config!
-#import_launch_config => "echo %{sample_name} LAUNCH!",
+#import_launch_config => "echo %{job_name} LAUNCH!",
 
 # Create inst data
 my @inst_data;
