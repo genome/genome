@@ -35,6 +35,7 @@ class Genome::Model::Tools::DetectVariants2::Pindel {
     has_param => [
         lsf_resource => {
             default_value => "-M 25000000 -R 'select[mem>25000] rusage[mem=25000]'",
+            doc => 'Despite this being a workflow server DV2 does indel normalization inline which means that this needs a lot of memory.'
         },
     ],
 };
