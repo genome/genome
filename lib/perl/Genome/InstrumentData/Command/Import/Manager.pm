@@ -14,17 +14,57 @@ class Genome::InstrumentData::Command::Import::Manager {
     has => [
         source_files_tsv => {
             is => 'Text',
-            doc => 'Tab separated file of samples and attributes.',
+            doc => <<DOC
+TAB separated file containing sample names, source files and instrument data attributes to import.
+ 
+Required Columns
+ sample_name     Name of the sample. The sample and extlibs library must exist.
+ source_files    Source files [bam, fastq, sra, etc] to import. Separate files by comma (,). 
+
+Additional Columns
+ The columns are to specify attributes for instrument data. Attributes are skipped if they are empty for a particular instruemnt data.
+
+Example
+
+This will look to run/check imports for 2 samples. Sample 1 has 2 source files [bams] to import. The second sample, Sample-02, has 2 fastqs to import. They will be downloaded, unzipped and converted to bam. In addition, the flow_cell_id, lane and index_sequence will be added to the respective instrument data as attributes.
+
+sample_name source_files    flow_cell_id    lane    index_sequence
+Sample-01   sample-1.1.bam  XAXAXA 1   AATTGG
+Sample-01   sample-1.2.bam  XAXAXA 1   TTAACC
+Sample-02   http://fastqs.org/sample-2.fwd.fastq.gz,http://fastqs.org/sample-2.rev.fastq.gz  XYYYYX  2   GAACTT
+DOC
+
         },
     ],
     has_optional => [
         launch_config => {
             is => 'Text',
-            doc => 'Command to use to launch imports. If given, imports will be launched for source files needing import.',
+            doc => <<DOC
+The command to run to list running imports. Give the command, job name column number and status column number, separated by semicolons (;). The command will be run and parsed, expecting to find the job name and status. This is then used to determine the next course of action for each source file(s).
+
+Example for LSF
+ This will run the bjobs command, looking for the job name in column 7 and status in column 3.
+
+ bjobs -w -g /me/mygroup;7;3
+            
+DOC
         },
         list_config => {
             is => 'Text',
-            doc => 'Command and column positions for sample anme and status. Use format: cmd;job_name_column_#;sub tatus_column_#',
+            doc => <<DOC
+Launch imports [if needed] using this command. Insert '%{job_name}' into the command so the manager can monitor status.
+ 
+The import commands will be printed to the screen [on STDERR] if:
+ launch config is not given
+ launch config does not have a '%{job_name}' in it
+ list config is not given
+
+Example for LSF
+ Launch the job into group /me/mygroup and logging to /users/me/logs/%{job_name}
+
+ bsub -J %{job_name} -g /me/mygroup -oo /users/me/logs/%{job_name}
+
+DOC
         },
         model_params => {
             is => 'Text',
@@ -38,6 +78,7 @@ class Genome::InstrumentData::Command::Import::Manager {
         _list_job_name_column => { is => 'Text', },
         _list_status_column => { is => 'Text', },
         _launch_command_format => { is => 'Text', },
+        _launch_command_has_job_name => { is => 'Boolean', default_value => 0, },
         _launch_command_substitutions => { 
             is => 'Hash', 
             default_value => { map { $_ => qr/%{$_}/ } (qw/ job_name sample_name /), },
@@ -49,51 +90,7 @@ class Genome::InstrumentData::Command::Import::Manager {
 
 sub help_detail {
     return <<HELP;
-Manage running imports of instrument data into the GMS.
-
-Parameters
-
-Source Files TSV [source_files_tsv]
- A TAB separarted file containing sample names, source files and instrument data attributes to import.
- 
- Required Columns
-  sample_name     Name of the sample. The sample and extlibs library must exist.
-  source_files    Source files [bam, fastq, sra, etc] to import for the sample. Separate files by comma (,). 
-
- Additional Columns
-  The columns are to specify attributes for instrument data. Attributes are skipped if they are empty for a particular instruemnt data.
-
- Example
-sample_name source_files    flow_cell_id    lane    index_sequence
-Sample-01   sample-1.1.bam  XAXAXA 1   AATTGG
-Sample-01   sample-1.2.bam  XAXAXA 1   TTAACC
-Sample-02   http://fastqs.org/sample-2.fwd.fastq.gz,http://fastqs.org/sample-2.rev.fastq.gz  XYYYYX  2   GAACTT
-
-  This will look to run/check imports for 2 samples. Sample 1 has 2 source files [bams] to import. The second sample, Sample-02, has 2 fastqs to import. They will be downloaded, unzipped and converted to bam. In addition, the flow_cell_id, lane and index_sequence will be added to the respective instrument data as attributes.
-
-
-List Config [list_config]
- This is the command to run to list running imports. Give the command, job name column number and status column number, separated by semicolons (;). The command will be run and parsed, expecting to find the job name and status. This is then used to determine the next course of action for each source file(s).
-
- Example for LSF
-  This will run the bjobs command, looking for the job name in column 7 and status in column 3.
-
-  bjobs -w -g /me/mygroup;7;3
-
-
-Launch Config [launch_config]
- To launch imports, give this command. Insert '%{job_name}' into the command so the manager can monitor status.
- 
- The import commands will be printed to the screen [on STDERR] if:
-  The config is not given
-  The config does not have a '%{job_name}' in it
-  The list config is not given
-
- Example for LSF
-  Launch the job into group /me/mygroup logging to /users/me/logs/%{job_name}
-
-  bsub -J %{job_name} -g /me/mygroup -oo /users/me/logs/%{job_name}
-
+    Manage importing sequence files into GMS.
 HELP
 }
 
@@ -265,15 +262,12 @@ sub _resolve_launch_command {
     my $cmd_format = $self->launch_config;
     if ( $cmd_format ) {
         my $substitutions = $self->_launch_command_substitutions;
-        for my $required_substitution (qw/ job_name / ) {
-            my $substitution = $substitutions->{$required_substitution};
-            if ( $cmd_format !~ /$substitution/ ) {
-                $self->error_message("No $required_substitution name substitutions (%{$required_substitution}) in launch command! $cmd_format");
-                return;
-            }
+        my $required_substitution = 'job_name';
+        my $substitution = $substitutions->{$required_substitution};
+        if ( $cmd_format =~ /$substitution/ ) {
+            $self->_launch_command_has_job_name(1);
         }
         $cmd_format .= ' ';
-        # TODO rm unecessary substitutions
     }
 
     $cmd_format .= 'genome instrument-data import basic --sample name=%{sample_name} --source-files %s --import-source-name %s%s',
@@ -445,7 +439,7 @@ sub _launch_imports {
     my $self = shift;
 
     my $launch_sub;
-    if ( not $self->launch_config or not $self->list_config ) {
+    if ( not $self->list_config or not $self->_launch_command_has_job_name or not $self->launch_config ) {
         $launch_sub = sub{
             my $import = shift;
             my $cmd = $self->_resolve_launch_command_for_import($import);
@@ -484,10 +478,7 @@ sub _resolve_launch_command_for_import {
     my $substitutions = $self->_launch_command_substitutions;
     for my $name ( keys %$substitutions ) {
         my $value = $import->{$name};
-        if ( not defined $value ) {
-            $self->error_message("No value for attribute ($name) specified in launch import command. ".$self->launch_config);
-            return;
-        }
+        next if not defined $value;
         my $pattern = $substitutions->{$name};
         $cmd_format =~ s/$pattern/$value/g;
     }
