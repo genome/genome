@@ -235,7 +235,7 @@ sub _resolve_import_command {
     my $cmd_format = $self->import_launch_config;
     if ( $cmd_format ) {
         my $substitutions = $self->instrument_data_import_command_substitutions;
-        for my $required_substitution (qw/ sample_name job_name / ) {
+        for my $required_substitution (qw/ job_name / ) {
             my $substitution = $substitutions->{$required_substitution};
             if ( $cmd_format !~ /$substitution/ ) {
                 $self->error_message("No $required_substitution name substitutions (%{$required_substitution}) in launch command! $cmd_format");
