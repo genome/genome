@@ -23513,6 +23513,21 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>get-sample-name',
+    [
+      'debug!',
+      undef,
+      'maximum-memory=s',
+      undef,
+      'sample-name=s',
+      'files',
+      'use-version=s',
+      undef,
+      'bam-file=s',
+      undef,
+      'help!',
+      undef
+    ],
     '>idxstats',
     [
       'bam-file=s',
