@@ -36,8 +36,6 @@ my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Comma
 my $source_files_tsv = $test_dir.'/info.tsv';
 my @source_files = (qw/ bam1 bam2 bam3 /);
 
-#ok(0, 'FIX DOCS!');
-
 # Sample needed
 my $manager = Genome::InstrumentData::Command::Import::Manager->create(
     source_files_tsv => $source_files_tsv,
@@ -109,9 +107,6 @@ ok(!grep({ $_->{model} } @$imports_aryref), 'imports aryref does not have model'
 ok(!grep({ $_->{build} } @$imports_aryref), 'imports aryref does not have build');
 
 
-# FIXME test launch config!
-#import_launch_config => "echo %{job_name} LAUNCH!",
-
 # Create inst data
 my @inst_data;
 for my $import_hashref ( @$imports_aryref ) {
@@ -131,6 +126,7 @@ is(@inst_data, 3, 'define 3 inst data');
 # Fake successful imports by pointing bam_path to existing info.tsv, models needed
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
     source_files_tsv => $source_files_tsv,
+    launch_config => "echo %{job_name} LAUNCH!", # successful imports, will not launch
 );
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');
@@ -142,6 +138,16 @@ is_deeply([ map { $_->{instrument_data_file} } @$imports_aryref ], [$source_file
 ok(!grep({ $_->{job_status} } @$imports_aryref), 'imports aryref does not have job_status');
 ok(!grep({ $_->{model} } @$imports_aryref), 'imports aryref does not have model');
 ok(!grep({ $_->{build} } @$imports_aryref), 'imports aryref does not have build');
+
+is_deeply(
+    [ map { $manager->_resolve_launch_command_for_import($_) } @$imports_aryref ],
+    [
+        "echo TeSt-0000-00 LAUNCH! genome instrument-data import basic --sample name=TeSt-0000-00 --source-files bam1 --import-source-name TeSt --instrument-data-properties lane='8'",
+        "echo TeSt-0000-00.2 LAUNCH! genome instrument-data import basic --sample name=TeSt-0000-00 --source-files bam2 --import-source-name TeSt --instrument-data-properties lane='8'",
+        "echo TeSt-0000-01 LAUNCH! genome instrument-data import basic --sample name=TeSt-0000-01 --source-files bam3 --import-source-name TeSt --instrument-data-properties lane='7'",
+     ],
+     'launch commands',
+);
 
 # Add model params to create models
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
