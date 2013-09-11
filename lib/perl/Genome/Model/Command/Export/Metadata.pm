@@ -463,7 +463,7 @@ sub add_to_dump_queue {
             my $alloc = UR::Object::create("Genome::Disk::Allocation",
                 disk_group_name => 'reads',
                 reallocation_time => UR::Time->now,
-                mount_path => "/opt/gms/fs/$disk",
+                mount_path => "/opt/gms/$genome_sys_id/fs/$disk",
                 group_subdirectory => $group,
                 allocation_path => $data,
                 owner_class_name => $obj->class,
