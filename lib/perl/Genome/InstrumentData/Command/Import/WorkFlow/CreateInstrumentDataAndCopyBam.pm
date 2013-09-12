@@ -37,6 +37,9 @@ class Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentDataAnd
         library => { is => 'Genome::Library', },
         kilobytes_requested => { is => 'Number', },
     ],
+    has_calculated => [
+        helpers => { calculate => q( Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get; ), },
+    ],
 };
 
 sub execute {
@@ -46,7 +49,7 @@ sub execute {
     my $library = $self->_resvolve_library;
     return if not $library;
 
-    my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
+    my $helpers = $self->helpers;
     my @instrument_data;
     my @bam_paths = $self->bam_paths;
     for my $bam_path ( @bam_paths ) {
@@ -114,26 +117,12 @@ sub _create_instrument_data_for_bam_path {
     Carp::confess('No bam path to create instrument data!') if not $bam_path;
     $self->status_message('Bam path: '.$bam_path);
 
-    my %additional_properties;
-    for my $name_value ( $self->instrument_data_properties ) {
-        my ($name, $value) = split('=', $name_value);
-        if ( not defined $value or $value eq '' ) {
-            $self->error_message('Failed to parse with instrument data property name/value! '.$name_value);
-            return;
-        }
-        if ( exists $additional_properties{$name} and $value ne $additional_properties{$name} ) {
-            $self->error_message(
-                "Multiple values for instrument data property! $name => ".join(', ', sort $value, $additional_properties{$name})
-            );
-            return;
-        }
-        $additional_properties{$name} = $value;
-    }
+    my $additional_properties = $self->helpers->key_value_pairs_to_hash( $self->instrument_data_properties );
+    return if not $additional_properties;
 
-    my $original_data_path = delete $additional_properties{original_data_path};
-    my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
+    my $original_data_path = delete $additional_properties->{original_data_path};
 
-    my $read_group_ids_from_bam = $helpers->load_read_groups_from_bam($bam_path);
+    my $read_group_ids_from_bam = $self->helpers->load_read_groups_from_bam($bam_path);
     return if not $read_group_ids_from_bam; # should only be one or 0
     if ( @$read_group_ids_from_bam > 1 ) {
         $self->error_message('More than one read group in bam! '.$bam_path);
@@ -146,7 +135,7 @@ sub _create_instrument_data_for_bam_path {
             $self->error_message('Multiple read groups in bam! '.$bam_path);
             return;
         }
-        $additional_properties{segment_id} = $read_group_ids_from_bam->[0];
+        $additional_properties->{segment_id} = $read_group_ids_from_bam->[0];
     }
 
     $self->status_message('Checking if source files were previously imported...');
@@ -178,9 +167,9 @@ sub _create_instrument_data_for_bam_path {
     }
     $self->status_message('Instrument data id: '.$instrument_data->id);
 
-    for my $name ( keys %additional_properties ) {
-        $self->status_message('Add attribute: '.$name.' => '.$additional_properties{$name});
-        $instrument_data->add_attribute(attribute_label => $name, attribute_value => $additional_properties{$name});
+    for my $name ( keys %$additional_properties ) {
+        $self->status_message('Add attribute: '.$name.' => '.$additional_properties->{$name});
+        $instrument_data->add_attribute(attribute_label => $name, attribute_value => $additional_properties->{$name});
     }
 
     my $bam_size = -s $bam_path;

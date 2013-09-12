@@ -479,5 +479,29 @@ sub load_read_count_from_line_count_path {
 }
 #<>#
 
+#<KEY VALUE PAIRS TO HASH>#
+sub key_value_pairs_to_hash {
+    my ($self, @key_value_pairs) = @_;
+
+    my %properties;
+    for my $key_value_pair ( @key_value_pairs ) {
+        my ($label, $value) = split('=', $key_value_pair);
+        if ( not defined $value or $value eq '' ) {
+            $self->error_message('Failed to parse with instrument data property label/value! '.$key_value_pair);
+            return;
+        }
+        if ( exists $properties{$label} and $value ne $properties{$label} ) {
+            $self->error_message(
+                "Multiple values for instrument data property! $label => ".join(', ', sort $value, $properties{$label})
+            );
+            return;
+        }
+        $properties{$label} = $value;
+    }
+
+    return \%properties;
+}
+#<>#
+
 1;
 

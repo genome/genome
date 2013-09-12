@@ -113,4 +113,17 @@ my $load_flagstat = $helpers->load_or_run_flagstat($bam_path); # loads
 is_deeply($load_flagstat, $run_flagstat, 'load flagstat');
 ok($helpers->validate_bam($bam_path), 'validate bam');
 
+# properties
+my $properties = $helpers->key_value_pairs_to_hash(qw/ sequencing_platform=solexa lane=2 flow_cell_id=XXXXXX /);
+is_deeply(
+    $properties,
+    { sequencing_platform => 'solexa', lane => 2, flow_cell_id => 'XXXXXX', },
+    'key value piars to hash',
+);
+$properties = $helpers->key_value_pairs_to_hash(qw/ sequencing_platform=solexa lane=2 lane=3 flow_cell_id=XXXXXX /);
+ok(!$properties, 'failed as expected to convert key value pairsr into hash with duplicate label');
+is($helpers->error_message, "Multiple values for instrument data property! lane => 2, 3", 'correct error');
+$properties = $helpers->key_value_pairs_to_hash(qw/ sequencing_platform=solexa lane= flow_cell_id=XXXXXX /);
+is($helpers->error_message, 'Failed to parse with instrument data property label/value! lane=', 'correct error');
+
 done_testing();
