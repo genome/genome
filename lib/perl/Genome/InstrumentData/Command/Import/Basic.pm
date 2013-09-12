@@ -46,6 +46,28 @@ class Genome::InstrumentData::Command::Import::Basic {
     ],
 };
 
+sub __errors__ { 
+    my $self = shift;
+
+    my @errors = $self->SUPER::__errors__;
+    return if @errors;
+
+    if ( $self->instrument_data_properties ) {
+        my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
+        my $properties = $helpers->key_value_pairs_to_hash( $self->instrument_data_properties );
+        if ( not $properties ) {
+            push @errors, UR::Object::Tag->create(
+                type => 'invalid',
+                properties => [qw/ instrument_data_properties /],
+                desc => $helpers->error_message,
+            );
+            return @errors;
+        }
+    }
+
+    return @errors;
+}
+
 sub execute {
     my $self = shift;
     $self->status_message('Import instrument data...');
