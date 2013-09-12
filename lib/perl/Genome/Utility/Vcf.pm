@@ -272,6 +272,10 @@ sub deparse_vcf_line {
 sub get_samples_from_header {
     my $header = shift;
 
+    unless (ref($header) eq "ARRAY") {
+        $header = [split("\n", $header)];
+    }
+
     my $sample_line = @$header[-1];
     chomp $sample_line;
     my @fields = split "\t", $sample_line;
