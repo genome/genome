@@ -155,8 +155,8 @@ sub _load_source_files_tsv {
     my $self = shift;
 
     my $source_files_tsv = $self->source_files_tsv;
-    if ( not -s $source_files_tsv ) {
-        return 'Sample info file does not exist! '.$source_files_tsv;
+    if ( not -f $source_files_tsv or not -s $source_files_tsv ) {
+        return 'Invalid source files tsv! '.$source_files_tsv;
     }
 
     my $info_reader = Genome::Utility::IO::SeparatedValueReader->create(
