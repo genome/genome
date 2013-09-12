@@ -15,7 +15,7 @@ sub get_required_params {
 }
 
 sub create_annotation_source {
-    return "test_annotation_source";
+    return Genome::TestObjGenerator::Util::generate_name("test_annotation_source");
 }
 
 1;
