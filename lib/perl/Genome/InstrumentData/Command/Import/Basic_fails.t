@@ -29,8 +29,7 @@ my $fail = Genome::InstrumentData::Command::Import::Basic->create(
     sample => $sample,
     source_files => [ 'blah.fastq' ],
     import_source_name => 'broad',
-    sequencing_platform => 'solexa',
-    instrument_data_properties => [qw/ lane=2 flow_cell_id=XXXXXX /],
+    instrument_data_properties => [qw/ sequencing_platform=solexa lane=2 flow_cell_id=XXXXXX /],
 );
 ok(!$fail->execute, 'Fails w/ invalid files');
 my $error = $fail->error_message;
@@ -40,8 +39,7 @@ $fail = Genome::InstrumentData::Command::Import::Basic->create(
     sample => $sample,
     source_files => [ 'blah' ],
     import_source_name => 'broad',
-    sequencing_platform => 'solexa',
-    instrument_data_properties => [qw/ lane=2 flow_cell_id=XXXXXX /],
+    instrument_data_properties => [qw/ sequencing_platform=solexa lane=2 flow_cell_id=XXXXXX /],
 );
 ok(!$fail->execute, 'Fails w/ no suffix');
 $error = $fail->error_message;
@@ -51,8 +49,7 @@ $fail = Genome::InstrumentData::Command::Import::Basic->create(
     sample => $sample,
     source_files => \@source_files,
     import_source_name => 'broad',
-    sequencing_platform => 'solexa',
-    instrument_data_properties => [qw/ lane= /],
+    instrument_data_properties => [qw/ sequencing_platform=solexa lane= flow_cell_id=XXXXXX /],
 );
 ok(!$fail->execute, 'Fails w/ invalid instrument_data_properties');
 $error = $fail->error_message;
@@ -62,8 +59,7 @@ $fail = Genome::InstrumentData::Command::Import::Basic->create(
     sample => $sample,
     source_files => \@source_files,
     import_source_name => 'broad',
-    sequencing_platform => 'solexa',
-    instrument_data_properties => [qw/ lane=2 lane=3 /],
+    instrument_data_properties => [qw/ sequencing_platform=solexa lane=2 lane=3 flow_cell_id=XXXXXX /],
 );
 ok(!$fail->execute, 'Fails w/ invalid instrument_data_properties');
 $error = $fail->error_message;
@@ -77,8 +73,7 @@ $fail = Genome::InstrumentData::Command::Import::Basic->create(
     sample => $sample,
     source_files => \@source_files,
     import_source_name => 'broad',
-    sequencing_platform => 'solexa',
-    instrument_data_properties => [qw/ lane=2 flow_cell_id=XXXXXX /],
+    instrument_data_properties => [qw/ sequencing_platform=solexa lane=2 flow_cell_id=XXXXXX /],
 );
 ok(!$fail->execute, "Failed to reimport");
 $error = $fail->error_message;

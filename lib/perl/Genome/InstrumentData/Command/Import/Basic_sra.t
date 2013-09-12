@@ -15,7 +15,7 @@ require File::Compare;
 require Genome::Utility::Test;
 use Test::More;
 
-use_ok('Genome::InstrumentData::Command::Import::New') or die;
+use_ok('Genome::InstrumentData::Command::Import::Basic') or die;
 
 my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import');
 my $source_sra = $test_dir.'/input.sra';
@@ -24,7 +24,7 @@ ok(-s $source_sra, 'source sra exists') or die;
 my $sample = Genome::Sample->create(name => '__TEST_SAMPLE__');
 ok($sample, 'Create sample');
 
-my $cmd = Genome::InstrumentData::Command::Import::New->create(
+my $cmd = Genome::InstrumentData::Command::Import::Basic->create(
     sample => $sample,
     source_files => [$source_sra],
     import_source_name => 'sra',

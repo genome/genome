@@ -1,4 +1,4 @@
-package Genome::InstrumentData::Command::Import::New;
+package Genome::InstrumentData::Command::Import::Basic;
 
 use strict;
 use warnings;
@@ -7,7 +7,7 @@ use Genome;
 
 use Workflow::Simple;
 
-class Genome::InstrumentData::Command::Import::New { 
+class Genome::InstrumentData::Command::Import::Basic { 
     is => 'Command::V2',
     has_input => [
         import_source_name => {

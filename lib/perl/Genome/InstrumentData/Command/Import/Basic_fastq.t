@@ -15,7 +15,7 @@ require Genome::Utility::Test;
 require File::Compare;
 use Test::More;
 
-use_ok('Genome::InstrumentData::Command::Import::New') or die;
+use_ok('Genome::InstrumentData::Command::Import::Basic') or die;
 
 my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import');
 my @source_files = (
@@ -28,7 +28,7 @@ my $sample = Genome::Sample->create(name => '__TEST_SAMPLE__');
 ok($sample, 'Create sample');
 
 # Success - fastq
-my $cmd = Genome::InstrumentData::Command::Import::New->create(
+my $cmd = Genome::InstrumentData::Command::Import::Basic->create(
     sample => $sample,
     source_files => \@source_files,
     import_source_name => 'broad',
