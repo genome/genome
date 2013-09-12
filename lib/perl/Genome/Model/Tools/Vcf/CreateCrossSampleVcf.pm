@@ -545,86 +545,60 @@ sub _region_limit_inputs {
             die $self->error_message("Could not create output directory for region_limiting at: ".$output_directory);
         }
     }
-    my %in_out;
-
-    my %inputs;
-    $inputs{joinx_version} = $self->joinx_version;
-
-    $inputs{region_bed_file} = $self->roi_file($reference_sequence_build);
-    $inputs{roi_name} = $self->roi_list->name;
-    $inputs{wingspan} = $self->wingspan;
-
-    my @inputs;
-    my $count=1;
-
-    #set up individualized input params and input values
-    for my $b (@builds){
-        my $sample = $b->model->subject->id;
-        my $vcf = $b->$accessor;
-        my $output = $output_directory."/".$self->variant_type.".".$sample.".region_limited.vcf.gz";
-        $in_out{$vcf} = $output;
-        push @inputs, ("input_vcf_".$count,"output_vcf_".$count);
-        $inputs{"input_vcf_".$count} = $vcf;
-        $inputs{"output_vcf_".$count} = $output;
-        push @answers, $output;
-        $count++;
-    }
 
     my $workflow = Workflow::Model->create(
-        name => 'Multi-Vcf Merge',
+        name => 'RegionLimitInputs',
         input_properties => [
+            "builds",
+            "variant_type",
+            "output_directory",
             "region_bed_file",
             "roi_name",
             "wingspan",
-            "joinx_version",
-            @inputs,
         ],
         output_properties => [
             'output',
         ],
     );
-
     $workflow->log_dir($output_directory);
 
-    #add individual region-limiting operations
-    for my $num (1..($count-1)){
-        my $region_limit_operation = $workflow->add_operation(
-            name => "region limiting ".$num,
-            operation_type => Workflow::OperationType::Command->get("Genome::Model::Tools::Vcf::RegionLimit"),
-        );
+    my %inputs = (
+        builds => [$self->builds],
+        variant_type => $self->variant_type,
+        output_directory => $output_directory,
+        region_bed_file => $self->roi_file($reference_sequence_build),
+        roi_name => $self->roi_list->name,
+        wingspan => $self->wingspan,
+    );
 
-        #link common properties
-        for my $prop ("region_bed_file","wingspan","roi_name"){
-            $workflow->add_link(
-                left_operation => $workflow->get_input_connector,
-                left_property => $prop,
-                right_operation => $region_limit_operation,
-                right_property => $prop,
-            );
-        }
 
-        #link individual inputs and outputs
+    my $region_limit_operation = $workflow->add_operation(
+        name => "RegionLimit",
+        operation_type => Workflow::OperationType::Command->get("Genome::Model::Tools::Vcf::CreateCrossSampleVcf::RegionLimitVcf"),
+    );
+    $region_limit_operation->parallel_by('build');
+
+    $workflow->add_link(
+        left_operation => $workflow->get_input_connector,
+        left_property => "builds",
+        right_operation => $region_limit_operation,
+        right_property => "build",
+    );
+    for my $prop (qw(variant_type output_directory region_bed_file roi_name wingspan)) {
         $workflow->add_link(
             left_operation => $workflow->get_input_connector,
-            left_property => "input_vcf_".$num,
+            left_property => $prop,
             right_operation => $region_limit_operation,
-            right_property => "vcf_file",
-        );
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => "output_vcf_".$num,
-            right_operation => $region_limit_operation,
-            right_property => "output_file",
-        );
-
-        #link to output
-        $workflow->add_link(
-            left_operation => $region_limit_operation,
-            left_property => "output_file",
-            right_operation => $workflow->get_output_connector,
-            right_property => "output",
+            right_property => $prop,
         );
     }
+
+    $workflow->add_link(
+        left_operation => $region_limit_operation,
+        left_property => "output_vcf",
+        right_operation => $workflow->get_output_connector,
+        right_property => "output",
+    );
 
     #validate workflow
     my @errors = $workflow->validate;
@@ -635,20 +609,21 @@ sub _region_limit_inputs {
     $self->_dump_workflow($workflow, $output_directory."/workflow.xml");
 
     $self->status_message("Now launching the region-limiting workflow.");
-    my $result = Workflow::Simple::run_workflow_lsf( $workflow, %inputs);
+    my $result = Workflow::Simple::run_workflow_lsf($workflow, %inputs);
+    my @output_files = @{$result->{'output'}};
 
-    unless($result){
+    unless(@output_files){
         $self->error_message( join("\n", map($_->name . ': ' . $_->error, @Workflow::Simple::ERROR)) );
         die $self->error_message("Workflow did not return correctly.");
     }
 
     #check output files to make sure they exist
-    if(my @error = grep{ not(-e $_)} @answers){
+    if(my @error = grep{ not(-e $_)} @output_files){
         die $self->error_message("The following region limit output files could not be found: ".join("\n",@error));
     }
 
     #return a list of the output files
-    return @answers;
+    return @output_files;
 }
 
 sub _generate_workflow {
