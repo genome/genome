@@ -8332,6 +8332,17 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'debug!',
         undef,
+        'reference-sequence=s@',
+        undef,
+        'status=s@',
+        [
+          'Succeeded',
+          'Failed',
+          'Scheduled',
+          'Abandoned',
+          'Running',
+          'Unstartable'
+        ],
         'builds=s@',
         undef,
         'help!',
@@ -8816,6 +8827,19 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>get-last-completed-builds',
+    [
+      'builds=s@',
+      undef,
+      'color!',
+      undef,
+      'debug!',
+      undef,
+      'model-group=s',
+      undef,
+      'help!',
+      undef
+    ],
     '>delete',
     [
       'color!',
@@ -8865,7 +8889,7 @@ $Genome::Command::OPTS_SPEC = [
       undef,
       'debug!',
       undef,
-      'unique-subjects!',
+      'distinct-subjects!',
       undef,
       'model-group=s',
       undef,
