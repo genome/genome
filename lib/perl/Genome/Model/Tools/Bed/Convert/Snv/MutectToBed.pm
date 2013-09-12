@@ -79,7 +79,7 @@ sub process_source {
             $entry{position},
             $entry{ref_allele},
             Genome::Info::IUB::iub_for_alleles($entry{ref_allele}, $entry{alt_allele}),
-            $entry{t_lod_fstar},
+            int($entry{t_lod_fstar} + 0.5),
             $entry{t_ref_count} + $entry{t_alt_count},
         ) if(!defined $judgement_string || $entry{judgement} eq $judgement_string);
     }
