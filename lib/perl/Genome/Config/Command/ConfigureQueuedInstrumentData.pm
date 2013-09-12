@@ -260,18 +260,20 @@ sub _assign_model_to_analysis_project {
 }
 
 sub _lock {
-    my $lock_var = $ENV{GENOME_LOCK_DIR} . '/genome_config_command_configure-queued-instrument-data/lock';
-    my $lock = Genome::Sys->lock_resource(resource_lock => $lock_var, max_try => 1);
+    unless ($ENV{UR_DBI_NO_COMMIT}) {
+        my $lock_var = $ENV{GENOME_LOCK_DIR} . '/genome_config_command_configure-queued-instrument-data/lock';
+        my $lock = Genome::Sys->lock_resource(resource_lock => $lock_var, max_try => 1);
 
-    die('Unable to acquire the lock! Is ConfigureQueuedInstrumentData already running or did it exit uncleanly?')
-        unless $lock;
+        die('Unable to acquire the lock! Is ConfigureQueuedInstrumentData already running or did it exit uncleanly?')
+            unless $lock;
 
-    UR::Context->current->add_observer(
-        aspect => 'commit',
-        callback => sub {
-            Genome::Sys->unlock_resource(resource_lock => $lock);
-        }
-    );
+        UR::Context->current->add_observer(
+            aspect => 'commit',
+            callback => sub {
+                Genome::Sys->unlock_resource(resource_lock => $lock);
+            }
+        );
+    }
 }
 
 #It's lame that these methods need to exist - is there a way to clean the data before it comes over?
