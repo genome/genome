@@ -6,6 +6,7 @@ use strict;
 use warnings;
 use Genome;
 use Genome::TestObjGenerator::ProcessingProfile::ImportedAnnotation;
+use Genome::TestObjGenerator::Taxon;
 
 my @required_params = ("subject");
 
@@ -21,7 +22,7 @@ sub create_processing_profile_id {
 }
 
 sub create_subject {
-    return Genome::Taxon->create(name => Genome::TestObjGenerator::Util::generate_name("test_taxon"));
+    return Genome::TestObjGenerator::Taxon->setup_object();
 }
 
 sub get_required_params {
