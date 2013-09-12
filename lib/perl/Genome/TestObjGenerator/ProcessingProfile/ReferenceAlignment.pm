@@ -4,7 +4,6 @@ use Genome::TestObjGenerator::ProcessingProfile;
 
 use strict;
 use warnings;
-use Genome;
 
 my @required_params = ("sequencing_platform", "dna_type", "read_aligner_name", "snv_detection_strategy");
 
@@ -24,13 +23,6 @@ sub create_snv_detection_strategy {
     return "samtools";
 }
 
-sub generate_obj {
-    my $self = shift;
-
-    my $p = Genome::ProcessingProfile::ReferenceAlignment->create(@_);
-    return $p;
-}
-
 sub get_required_params {
     my $class = shift;
     my $super = $class->SUPER::get_required_params;
@@ -39,4 +31,3 @@ sub get_required_params {
 }
 
 1;
-

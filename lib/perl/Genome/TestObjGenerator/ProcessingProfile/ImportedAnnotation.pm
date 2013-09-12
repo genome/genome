@@ -4,14 +4,8 @@ use Genome::TestObjGenerator::ProcessingProfile;
 
 use strict;
 use warnings;
-use Genome;
 
 my @required_params = ("annotation_source");
-
-sub generate_obj {
-    my $self = shift;
-    return Genome::ProcessingProfile::ImportedAnnotation->create(@_);
-}
 
 sub get_required_params {
     my $class = shift;
@@ -25,4 +19,3 @@ sub create_annotation_source {
 }
 
 1;
-
