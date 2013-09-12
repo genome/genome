@@ -363,6 +363,11 @@ sub _handle_snvs {
     my ($self, $builds, $accessor, $vcf_files, $reference_sequence_build,
             $samtools_version, $samtools_params) = @_;
     my @input_files = @{$vcf_files};
+    #create region limited vcfs to work on
+    if(defined($self->roi_list)){
+        @input_files = $self->_region_limit_inputs($accessor, $reference_sequence_build);
+    }
+
     my @builds = @{$builds};
 
     my %inputs;
@@ -395,13 +400,8 @@ sub _handle_snvs {
     }
 
     #create the workflow object
-    my $workflow = $self->_generate_workflow(\@builds, $samtools_version,
+    my $workflow = $self->_generate_workflow($samtools_version,
         $samtools_params);
-
-    #create region limited vcfs to work on
-    if(defined($self->roi_list)){
-        @input_files = $self->_region_limit_inputs($accessor, $reference_sequence_build);
-    }
 
     #set up inputs which are determined by the number of merge steps
     if(defined($self->max_files_per_merge) && ($self->max_files_per_merge < scalar(@builds))) {
@@ -533,18 +533,63 @@ sub _dump_workflow {
     #$workflow->as_png($self->output_directory."/workflow.png"); #currently commented out because blades do not all have the "dot" library to use graphviz
 }
 
-sub _region_limit_inputs {
-    my ($self, $accessor, $reference_sequence_build) = @_;
-    my @builds = $self->builds;
-
-    my @answers;
-    my $output_directory = $self->output_directory . "/region_limited_inputs";
+sub prepare_region_limited_output_directory {
+    my $self = shift;
+    my $output_directory = File::Spec->join($self->output_directory, "region_limited_inputs");
     unless(-d $output_directory){
         mkdir $output_directory;
         unless(-d $output_directory){
             die $self->error_message("Could not create output directory for region_limiting at: ".$output_directory);
         }
     }
+    return $output_directory;
+}
+
+sub _region_limit_inputs {
+    my ($self, $accessor, $reference_sequence_build) = @_;
+    my @builds = $self->builds;
+
+    my $output_directory = $self->prepare_region_limited_output_directory();
+
+    my $workflow = $self->get_region_limit_workflow();
+    $workflow->log_dir($output_directory);
+
+    #validate workflow
+    my @errors = $workflow->validate;
+    if (@errors) {
+        $self->error_message(@errors);
+        die "Errors validating region-limiting workflow\n";
+    }
+    $self->_dump_workflow($workflow, $output_directory."/workflow.xml");
+
+    $self->status_message("Now launching the region-limiting workflow.");
+    my %inputs = (
+        builds => [$self->builds],
+        variant_type => $self->variant_type,
+        output_directory => $output_directory,
+        region_bed_file => $self->roi_file($reference_sequence_build),
+        roi_name => $self->roi_list->name,
+        wingspan => $self->wingspan,
+    );
+    my $result = Workflow::Simple::run_workflow_lsf($workflow, %inputs);
+    my @output_files = @{$result->{'output'}};
+
+    unless(@output_files){
+        $self->error_message( join("\n", map($_->name . ': ' . $_->error, @Workflow::Simple::ERROR)) );
+        die $self->error_message("Workflow did not return correctly.");
+    }
+
+    #check output files to make sure they exist
+    if(my @error = grep{ not(-e $_)} @output_files){
+        die $self->error_message("The following region limit output files could not be found: ".join("\n",@error));
+    }
+
+    #return a list of the output files
+    return @output_files;
+}
+
+sub get_region_limit_workflow {
+    my $self = shift;
 
     my $workflow = Workflow::Model->create(
         name => 'RegionLimitInputs',
@@ -560,17 +605,6 @@ sub _region_limit_inputs {
             'output',
         ],
     );
-    $workflow->log_dir($output_directory);
-
-    my %inputs = (
-        builds => [$self->builds],
-        variant_type => $self->variant_type,
-        output_directory => $output_directory,
-        region_bed_file => $self->roi_file($reference_sequence_build),
-        roi_name => $self->roi_list->name,
-        wingspan => $self->wingspan,
-    );
-
 
     my $region_limit_operation = $workflow->add_operation(
         name => "RegionLimit",
@@ -600,34 +634,11 @@ sub _region_limit_inputs {
         right_property => "output",
     );
 
-    #validate workflow
-    my @errors = $workflow->validate;
-    if (@errors) {
-        $self->error_message(@errors);
-        die "Errors validating region-limiting workflow\n";
-    }
-    $self->_dump_workflow($workflow, $output_directory."/workflow.xml");
-
-    $self->status_message("Now launching the region-limiting workflow.");
-    my $result = Workflow::Simple::run_workflow_lsf($workflow, %inputs);
-    my @output_files = @{$result->{'output'}};
-
-    unless(@output_files){
-        $self->error_message( join("\n", map($_->name . ': ' . $_->error, @Workflow::Simple::ERROR)) );
-        die $self->error_message("Workflow did not return correctly.");
-    }
-
-    #check output files to make sure they exist
-    if(my @error = grep{ not(-e $_)} @output_files){
-        die $self->error_message("The following region limit output files could not be found: ".join("\n",@error));
-    }
-
-    #return a list of the output files
-    return @output_files;
+    return $workflow;
 }
 
 sub _generate_workflow {
-    my ($self, $build_array, $samtools_version, $samtools_params) = @_;
+    my ($self, $samtools_version, $samtools_params) = @_;
 
     my @builds = $self->builds;
     my $num_builds = scalar(@builds);
