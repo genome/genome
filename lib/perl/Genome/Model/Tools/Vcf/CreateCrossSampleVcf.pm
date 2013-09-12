@@ -500,42 +500,24 @@ sub _resolve_builds {
     my $self = shift;
     my @builds;
     if ($self->builds and not $self->model_group) {
-        my @not_succeeded = grep { $_->status ne 'Succeeded' } $self->builds;
-        if (@not_succeeded) {
-            die $self->error_message("Some builds are not successful: " . join(',', map { $_->id } @not_succeeded));
-        }
         @builds = $self->builds;
-    }
-    elsif ($self->model_group and not $self->builds) {
-        for my $model ($self->model_group->models) {
-            unless ($model->isa('Genome::Model::ReferenceAlignment')) {
-                die $self->error_message("Model " . $model->__display_name__ . " of model group " . $self->model_group->__display_name__ .
-                    " is not a reference alignment model, it's a " . $model->class);
-            }
-            my $build = $model->last_complete_build;
-            if ($build) {
-                push @builds, $build;
-            }
-            else {
-                die $self->error_message("Found no last complete build for model " . $model->__display_name__);
-            }
-        }
+    } elsif ($self->model_group and not $self->builds) {
+        @builds = Genome::ModelGroup::Command::GetLastCompletedBuilds->execute(
+            model_group => $self->model_group,
+        );
         $self->builds(\@builds);
     }
     else {
         die $self->error_message("Given both builds and model-groups or neither.");
     }
 
-    # Make sure there are no duplicate samples
-    my %subjects;
-    for my $build (@builds) {
-        my $subject_id = $build->model->subject->id;
-        if ($subjects{$subject_id}) {
-            die $self->error_message("Subject $subject_id occurs in more than one build. Please provide a list of builds or a model_group that contains no duplicate subjects.\n"
-                                     . "problems: build " . $subjects{$subject_id}->id . " (" .   $subjects{$subject_id}->model->id . ")" . " and " . $build->id . " (" . $build->model->id . ")" );
-        }
-        $subjects{$subject_id} = $build;
-    }
+    my $reference_sequence = ($builds[0])->reference_sequence_build;
+    Genome::Model::Build::Command::Validate->execute(
+        builds => \@builds,
+        builds_can => [qw(reference_sequence_build whole_rmdup_bam_file get_snvs_vcf get_indels_vcf)],
+        status => ['Succeeded'],
+        reference_sequence => [$reference_sequence],
+    );
 
     return @builds;
 }
