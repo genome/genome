@@ -49,9 +49,9 @@ sub _parse {
 
     my $last_field = min($#fields, $#ALL_FIELDS);
 
-    @{$self->{fields}}{@ALL_FIELDS[0..$last_field]} = @fields[0..$last_field];
+    @{$self}{@ALL_FIELDS[0..$last_field]} = @fields[0..$last_field];
     if ($#fields > $last_field) {
-        $self->{fields}{custom} = [ @fields[$last_field + 1 .. $#fields] ];
+        $self->{custom} = [ @fields[$last_field + 1 .. $#fields] ];
     }
 }
 
