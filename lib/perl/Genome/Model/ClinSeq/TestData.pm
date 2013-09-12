@@ -21,7 +21,7 @@ use Genome::Utility::Test;
 sub load {
     my %ids;
     #need a way to access the data
-    my $base_dir = $ENV{GENOME_TEST_INPUTS}."Genome-Model-ClinSeq-TestData/2013-07-30";
+    my $base_dir = $ENV{GENOME_TEST_INPUTS}."Genome-Model-ClinSeq-TestData/2013-09-12";
     
     $ENV{GENOME_DB} = "$base_dir/reference_annotations/";
     
