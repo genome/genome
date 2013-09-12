@@ -41,8 +41,11 @@ sub next {
     my $self = shift;
 
     my $line = $self->_file_handle->getline;
+    chomp($line);
     return unless $line;
-    return parse_vcf_line($line, [$self->sample_names]);
+    my $variant = parse_vcf_line($line, [$self->sample_names]);
+    $variant->{raw_line} = $line;
+    return $variant;
 }
 
 1;
