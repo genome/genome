@@ -52,7 +52,7 @@ sub execute {
 
         my $error = $@;
         $self->error_message($error) if $error;
-        $self->_mark_instrument_data_status($current_inst_data, !$error);
+        $self->_mark_instrument_data_status($current_inst_data, $error);
     }
 
     return 1;
@@ -102,10 +102,10 @@ sub _mark_instrument_data_status {
     $instrument_data->remove_attribute(attribute_label => 'tgi_lims_status');
     $instrument_data->remove_attribute(attribute_label => 'tgi_lims_fail_message');
 
-    if (!$error) {
-        $self->_mark_instrument_data_as_processed($instrument_data);
-    } else {
+    if ($error) {
         $self->_mark_instrument_data_as_failed($instrument_data, $error);
+    } else {
+        $self->_mark_instrument_data_as_processed($instrument_data);
     }
 
     return 1;
@@ -204,7 +204,6 @@ sub _process_paired_samples {
             [ analysis_project => $analysis_project, control_subject => $instrument_data->sample],
             [ analysis_project => $analysis_project, experimental_subject => $instrument_data->sample]
         ],
-        -hint => [ 'control_subject', 'experimental_subject'],
     );
 
     unless (@subject_pairings) {
@@ -213,14 +212,16 @@ sub _process_paired_samples {
             $analysis_project->__display_name__));
     }
 
-    return map {
+    return [ map {
         my $pair = $_;
         map { {
           experimental_subject => $pair->experimental_subject,
           control_subject => $pair->control_subject,
+          #TODO - this should be in config or on the pairing object
+          subject => $pair->experimental_subject->source,
           %$_
         } } @$model_hashes
-    } @subject_pairings;
+    } @subject_pairings ];
 }
 
 sub _get_instrument_data_to_process {
