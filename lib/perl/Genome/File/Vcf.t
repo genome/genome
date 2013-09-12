@@ -68,8 +68,8 @@ my %expected_variant = (
             MQ => 13,
             AD => 3,
         },
-    }
-
+    },
+    raw_line => "1	10001	.	A	.	.	.	.	GT:GQ:DP:BQ:MQ:AD	0/0:33:4:25:13:3",
 );
 is_deeply($variant, \%expected_variant, "variant matches");
 
