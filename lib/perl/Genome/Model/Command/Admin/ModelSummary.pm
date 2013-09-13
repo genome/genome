@@ -279,7 +279,7 @@ sub previous_build {
     my $build = shift;
 
     my $model = $build->model;
-    my @prior_builds = grep { $_->id < $build->id } $model->builds;
+    my @prior_builds = grep { $_->date_scheduled lt $build->scheduled } $model->builds;
 
     my $previous_build = @prior_builds ? $prior_builds[-1] : undef;
     return $previous_build;
