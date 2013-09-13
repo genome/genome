@@ -9,7 +9,7 @@ use Genome::TestObjGenerator::ProcessingProfile::SomaticVariation;
 use Genome::TestObjGenerator::Model::ImportedAnnotation;
 use Genome::TestObjGenerator::Build;
 
-my @required_params = ("normal_model", "tumor_model", "annotation_build");
+our @required_params = qw(normal_model tumor_model annotation_build);
 
 sub generate_obj {
     my $self = shift;
@@ -28,12 +28,4 @@ sub create_annotation_build {
     return $annotation_build;
 }
 
-sub get_required_params {
-    my $class = shift;
-    my $super = $class->SUPER::get_required_params;
-    my @all = (@$super, @required_params);
-    return \@all;
-}
-
 1;
-

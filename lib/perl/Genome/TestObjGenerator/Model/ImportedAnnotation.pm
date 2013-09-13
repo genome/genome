@@ -8,7 +8,7 @@ use Genome;
 use Genome::TestObjGenerator::ProcessingProfile::ImportedAnnotation;
 use Genome::TestObjGenerator::Taxon;
 
-my @required_params = ("subject");
+our @required_params = qw(subject);
 
 sub generate_obj {
     my $self = shift;
@@ -25,12 +25,4 @@ sub create_subject {
     return Genome::TestObjGenerator::Taxon->setup_object();
 }
 
-sub get_required_params {
-    my $class = shift;
-    my $super = $class->SUPER::get_required_params;
-    my @all = (@$super, @required_params);
-    return \@all;
-}
-
 1;
-

@@ -8,7 +8,7 @@ use Genome;
 
 use Genome::TestObjGenerator::ProcessingProfile::ImportedVariationList;
 
-my @required_params = ("subject");
+our @required_params = qw(subject);
 
 sub generate_obj {
     my $self = shift;
@@ -26,12 +26,4 @@ sub create_subject {
     return Genome::Sample->create(name => Genome::TestObjGenerator::Util::generate_name("test_subject"));
 }
 
-sub get_required_params {
-    my $class = shift;
-    my $super = $class->SUPER::get_required_params;
-    my @all = (@$super, @required_params);
-    return \@all;
-}
-
 1;
-

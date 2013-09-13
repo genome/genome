@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use Genome;
 
-my @required_params = ('name');
+our @required_params = qw(name);
 
 sub generate_obj {
     my $self = shift;
@@ -14,10 +14,6 @@ sub generate_obj {
 
 sub create_name {
     return Genome::TestObjGenerator::Util::generate_name('taxon_name');
-}
-
-sub get_required_params {
-    return \@required_params;
 }
 
 1;

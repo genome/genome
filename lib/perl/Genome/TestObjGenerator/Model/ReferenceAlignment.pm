@@ -9,7 +9,7 @@ use Genome::TestObjGenerator::ProcessingProfile::ReferenceAlignment;
 use Genome::TestObjGenerator::Model::ReferenceSequence;
 use Genome::TestObjGenerator::Build;
 
-my @required_params = ("reference_sequence_build", "subject_name", "subject_type");
+our @required_params = qw(reference_sequence_build subject_name subject_type);
 
 sub generate_obj {
     my $self = shift;
@@ -29,13 +29,6 @@ sub create_reference_sequence_build {
     return $b;
 }
 
-sub get_required_params {
-    my $class = shift;
-    my $super = $class->SUPER::get_required_params;
-    my @all = (@$super, @required_params);
-    return \@all;
-}
-
 sub create_subject_name {
     return Genome::TestObjGenerator::Util::generate_name("test_subject");
 }
@@ -43,5 +36,5 @@ sub create_subject_name {
 sub create_subject_type {
     return "sample_name";
 }
-1;
 
+1;

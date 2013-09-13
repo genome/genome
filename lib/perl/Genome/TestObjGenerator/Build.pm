@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use Genome;
 
-my @required_params = ("model_id", "data_directory");
+our @required_params = qw(model_id data_directory);
 
 sub generate_obj {
     my $self = shift;
@@ -17,10 +17,6 @@ sub generate_obj {
         _set_status_on_build($build, $status);
     }
     return $build;
-}
-
-sub get_required_params {
-    return \@required_params;
 }
 
 sub create_data_directory {
