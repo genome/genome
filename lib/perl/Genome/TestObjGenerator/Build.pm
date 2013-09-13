@@ -27,7 +27,7 @@ sub _set_status_on_build {
     my $build = shift;
     my $status = shift;
 
-    $build->the_master_event->event_status("Succeeded");
+    $build->the_master_event->event_status($status);
     $build->the_master_event->date_completed("2013-07-11 20:47:51");
 }
 
