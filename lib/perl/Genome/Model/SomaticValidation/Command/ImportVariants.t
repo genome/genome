@@ -19,7 +19,7 @@ my $temp_dir = File::Temp::tempdir('Model-Command-Define-SomaticValidation-XXXXX
 
 my @snv_files;
 for my $i (1..2) {
-    my $f = Genome::Sys->create_temp_file_path . '/TEST' . ($i % 2 + 1);
+    my $f = Genome::Sys->create_temp_file_path . '/TEST' . $i;
     Genome::Sys->create_directory($f);
     $f .= '/variants.snv.anno';
     my $d = Genome::Utility::Text::table_to_tab_string([
