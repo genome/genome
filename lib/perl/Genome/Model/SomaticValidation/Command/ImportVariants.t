@@ -24,20 +24,23 @@ for (@somvar_models) {
 
 my @snv_files;
 for my $i (1..2) {
-    my $f = Genome::Sys->create_temp_file_path . '/TEST' . $i;
+    my $individual_name = $somvar_models[$i - 1]->normal_model->subject->source->common_name;
+    my $f = Genome::Sys->create_temp_file_path . '/' . $individual_name;
     Genome::Sys->create_directory($f);
     $f .= '/variants.snv.anno';
     Genome::Sys->write_file($f, anno_data($i));
     push @snv_files, $f;
 }
+
+my $individual_name = $somvar_models[0]->normal_model->subject->source->common_name;
 for my $i (3) {
     my $f = Genome::Sys->create_temp_file_path . '/abc/def/TEST';
     Genome::Sys->create_directory($f);
-    $f .= '/TEST1.snv.anno';
+    $f .= "/$individual_name.snv.anno";
     Genome::Sys->write_file($f, anno_data($i));
     push @snv_files, $f;
 }
-my $indel_file = Genome::Sys->create_temp_file_path . '/TEST1';
+my $indel_file = Genome::Sys->create_temp_file_path . '/' . $individual_name;
 Genome::Sys->create_directory($indel_file);
 $indel_file .= '/variants.indel.anno';
 Genome::Sys->write_file($indel_file,
