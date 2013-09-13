@@ -190,90 +190,76 @@ is(scalar(@m_6), 12, 'created twelve models based on sample file');
 
 my $wm = $define_6->warning_message;
 ok($wm =~ /Sample specified as tumor fake_sample_2.*indicates it is a normal!/, 'produced desired warning about possible tumor/normal swap');
+
 # Create some test models with builds and all of their prerequisites
 sub setup_somatic_variation_build {
     my $i = shift;
-    my $test_profile = Genome::ProcessingProfile::ReferenceAlignment->create(
-        name => 'test_profile' . $i,
+
+    use Genome::TestObjGenerator::Build;
+    use Genome::TestObjGenerator::Individual;
+    use Genome::TestObjGenerator::Model::ReferenceAlignment;
+    use Genome::TestObjGenerator::Model::SomaticVariation;
+    use Genome::TestObjGenerator::Sample;
+    use Genome::TestObjGenerator::InstrumentData::Solexa;
+    use Genome::TestObjGenerator::ProcessingProfile::ReferenceAlignment;
+    use Genome::TestObjGenerator::ProcessingProfile::SomaticVariation;
+
+    my $test_profile = Genome::TestObjGenerator::ProcessingProfile::ReferenceAlignment->setup_object(
         sequencing_platform => 'solexa',
         dna_type => 'cdna',
         read_aligner_name => 'bwa',
-        snv_detection_strategy => 'samtools [--test ' . $i . ']',
+        snv_detection_strategy => 'samtools [--test ' . $i . ']', # to make each processing profile unique
     );
 
-    my $test_individual = Genome::Individual->create(
-        common_name => 'TEST' . $i,
-        name => 'test_individual' . $i,
-    );
+    my $test_individual = Genome::TestObjGenerator::Individual->setup_object();
 
-    my $test_sample = Genome::Sample->create(
-        name => 'test_subject' . $i,
+    my $test_sample = Genome::TestObjGenerator::Sample->setup_object(
         source_id => $test_individual->id,
     );
 
-    my $test_control_sample = Genome::Sample->create(
-        name => 'test_control_subject' . $i,
+    my $test_control_sample = Genome::TestObjGenerator::Sample->setup_object(
         source_id => $test_individual->id,
     );
 
-    my $test_instrument_data = Genome::InstrumentData::Solexa->create(
-    );
+    my $test_instrument_data = Genome::TestObjGenerator::InstrumentData::Solexa->setup_object();
 
-    my $reference_sequence_build = Genome::Model::Build::ReferenceSequence->get_by_name('NCBI-human-build36');
-
-    my $test_model = Genome::Model->create(
-        name => 'test_reference_aligment_model_TUMOR' . $i,
-        subject_name => 'test_subject' . $i,
-        subject_type => 'sample_name',
+    my $test_model = Genome::TestObjGenerator::Model::ReferenceAlignment->setup_object(
+        subject_name => $test_sample->name,
         processing_profile_id => $test_profile->id,
-        reference_sequence_build => $reference_sequence_build,
     );
 
     my $add_ok = $test_model->add_instrument_data($test_instrument_data);
 
-    my $test_build = Genome::Model::Build->create(
+    my $test_build = Genome::TestObjGenerator::Build->setup_object(
         model_id => $test_model->id,
-        data_directory => $temp_build_data_dir,
     );
 
-    my $test_model_two = Genome::Model->create(
-        name => 'test_reference_aligment_model_mock_NORMAL' . $i,
-        subject_name => 'test_control_subject' . $i,
-        subject_type => 'sample_name',
+    my $test_model_two = Genome::TestObjGenerator::Model::ReferenceAlignment->setup_object(
+        subject_name => $test_control_sample->name,
         processing_profile_id => $test_profile->id,
-        reference_sequence_build => $reference_sequence_build,
     );
 
     $add_ok = $test_model_two->add_instrument_data($test_instrument_data);
 
-    my $test_build_two = Genome::Model::Build->create(
+    my $test_build_two = Genome::TestObjGenerator::Build->setup_object(
         model_id => $test_model_two->id,
-        data_directory => $temp_build_data_dir,
     );
 
-    my $test_somvar_pp = Genome::ProcessingProfile::SomaticVariation->create(
-        name => 'test somvar pp' . $i,
+    my $test_somvar_pp = Genome::TestObjGenerator::ProcessingProfile::SomaticVariation->setup_object(
         snv_detection_strategy => 'samtools r599 [--test=' . $i . ']',
         tiering_version => 1,
     );
 
-    my $annotation_build = Genome::Model::Build::ImportedAnnotation->__define__(
-        model_id => (-1 - $i),
-    );
-
-    my $somvar_model = Genome::Model::SomaticVariation->create(
+    my $somvar_model = Genome::TestObjGenerator::Model::SomaticVariation->setup_object(
         tumor_model => $test_model,
         normal_model => $test_model_two,
-        name => 'test somvar model' . $i,
-        processing_profile => $test_somvar_pp,
-        annotation_build => $annotation_build,
+        processing_profile_id => $test_somvar_pp->id,
     );
 
-    my $somvar_build = Genome::Model::Build::SomaticVariation->__define__(
-        model_id => $somvar_model->id,
-        data_directory => $temp_build_data_dir,
+    my $somvar_build = Genome::TestObjGenerator::Build->setup_object(
         tumor_build => $test_build_two,
         normal_build => $test_build,
+        model_id => $somvar_model->id,
     );
 
     my $dir = ($temp_dir . '/' . 'fake_samtools_result' . $i);
@@ -308,7 +294,6 @@ sub setup_somatic_variation_build {
         id => (-3014 - $i),
     );
     $result2->lookup_hash($result2->calculate_lookup_hash());
-
 
     $result->add_user(user => $somvar_build, label => 'uses');
     $result2->add_user(user => $somvar_build, label => 'uses');
