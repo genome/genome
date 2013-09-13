@@ -22,22 +22,24 @@ for my $i (1..2) {
     my $f = Genome::Sys->create_temp_file_path . '/TEST' . ($i % 2 + 1);
     Genome::Sys->create_directory($f);
     $f .= '/variants.snv.anno';
-    Genome::Sys->write_file($f,
-        join("\t", 1, $i, $i, 'A', 'G', 'SNP'), "\n",
-        join("\t", 1, ($i+100), ($i+100), 'A', 'G', 'SNP'), "\n",
-        join("\t", 1, ($i+200), ($i+200), 'A', 'G', 'SNP'), "\n",
-    );
+    my $d = Genome::Utility::Text::table_to_tab_string([
+        [1 ,  $i      ,  $i      , 'A' , 'G' , 'SNP'],
+        [1 , ($i+100) , ($i+100) , 'A' , 'G' , 'SNP'],
+        [1 , ($i+200) , ($i+200) , 'A' , 'G' , 'SNP'],
+    ]);
+    Genome::Sys->write_file($f, $d);
     push @snv_files, $f;
 }
 for my $i (3) {
     my $f = Genome::Sys->create_temp_file_path . '/abc/def/TEST';
     Genome::Sys->create_directory($f);
     $f .= '/TEST1.snv.anno';
-    Genome::Sys->write_file($f,
-        join("\t", 1, $i, $i, 'A', 'G', 'SNP'), "\n",
-        join("\t", 1, ($i+100), ($i+100), 'A', 'G', 'SNP'), "\n",
-        join("\t", 1, ($i+200), ($i+200), 'A', 'G', 'SNP'), "\n",
-    );
+    my $d = Genome::Utility::Text::table_to_tab_string([
+        [1 ,  $i      ,  $i      , 'A' , 'G' , 'SNP'],
+        [1 , ($i+100) , ($i+100) , 'A' , 'G' , 'SNP'],
+        [1 , ($i+200) , ($i+200) , 'A' , 'G' , 'SNP'],
+    ]);
+    Genome::Sys->write_file($f, $d);
     push @snv_files, $f;
 }
 my $indel_file = Genome::Sys->create_temp_file_path . '/TEST1';
