@@ -22,24 +22,14 @@ for my $i (1..2) {
     my $f = Genome::Sys->create_temp_file_path . '/TEST' . $i;
     Genome::Sys->create_directory($f);
     $f .= '/variants.snv.anno';
-    my $d = Genome::Utility::Text::table_to_tab_string([
-        [1 ,  $i      ,  $i      , 'A' , 'G' , 'SNP'],
-        [1 , ($i+100) , ($i+100) , 'A' , 'G' , 'SNP'],
-        [1 , ($i+200) , ($i+200) , 'A' , 'G' , 'SNP'],
-    ]);
-    Genome::Sys->write_file($f, $d);
+    Genome::Sys->write_file($f, anno_data($i));
     push @snv_files, $f;
 }
 for my $i (3) {
     my $f = Genome::Sys->create_temp_file_path . '/abc/def/TEST';
     Genome::Sys->create_directory($f);
     $f .= '/TEST1.snv.anno';
-    my $d = Genome::Utility::Text::table_to_tab_string([
-        [1 ,  $i      ,  $i      , 'A' , 'G' , 'SNP'],
-        [1 , ($i+100) , ($i+100) , 'A' , 'G' , 'SNP'],
-        [1 , ($i+200) , ($i+200) , 'A' , 'G' , 'SNP'],
-    ]);
-    Genome::Sys->write_file($f, $d);
+    Genome::Sys->write_file($f, anno_data($i));
     push @snv_files, $f;
 }
 my $indel_file = Genome::Sys->create_temp_file_path . '/TEST1';
@@ -193,4 +183,16 @@ sub setup_somatic_variation_models {
     }
 
     return @somvar_models;
+}
+
+sub anno_data {
+    my $i = shift;
+
+    my $d = Genome::Utility::Text::table_to_tab_string([
+        [1 ,  $i      ,  $i      , 'A' , 'G' , 'SNP'],
+        [1 , ($i+100) , ($i+100) , 'A' , 'G' , 'SNP'],
+        [1 , ($i+200) , ($i+200) , 'A' , 'G' , 'SNP'],
+    ]);
+
+    return $d;
 }
