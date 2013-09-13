@@ -304,10 +304,7 @@ sub _load_samples {
     for my $import ( @$imports ) {
         $import->{sample} = Genome::Sample->get(name => $import->{sample_name});
         next if not $import->{sample};
-        if ( not $import->{sample}->nomenclature ) {
-            $self->error_message('Sample does not have any nomenclature! '.$import->{sample}->name);
-            return;
-        }
+        $import->{sample}->{nomenclature} = $import->{sample}->nomenclature // 'WUGC'; #FIXME
         my $sample_name = $import->{sample}->name;
         $sample_names_seen{$sample_name}++;
         $import->{job_name} = $sample_name;
@@ -485,7 +482,7 @@ sub _resolve_launch_command_for_import {
     my $cmd .= sprintf(
         $cmd_format,
         $import->{source_files},
-        $import->{sample}->nomenclature,
+        $import->{sample}->{nomenclature},
         ( 
             @{$import->{instrument_data_attributes}}
             ? ' --instrument-data-properties '.join(',', @{$import->{instrument_data_attributes}})
