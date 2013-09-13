@@ -33,6 +33,14 @@ my $joinx_version = "1.6";
 my @input_builds = map{ Genome::Model::Build->get($_)}
         (132916834, 132916881, 132916907);
 
+is(scalar(@input_builds), 3, "Got 3 input builds");
+
+my @models = map{$_->model} @input_builds;
+my $input_mg = Genome::ModelGroup->create(name => "test_mg", models => \@models);
+ok($input_mg, "Made a test model group");
+my @input_mg_models = $input_mg->models;
+is(scalar(@input_mg_models), 3, "3 models in the input model group");
+
 my $output_directory = Genome::Sys->create_temp_directory();
 
 #construct the FeatureList needed
@@ -47,7 +55,18 @@ my $roi_list = Genome::FeatureList->create(
 
 sub test_cmd {
     my $name = shift;
+    my $use_builds_instead_of_mg = shift;
     my %params = @_;
+
+    my %sr_params = %params;
+    delete $sr_params {model_group}; # model group is never a sr param, we use builds
+    if ($use_builds_instead_of_mg) {
+        delete $params{model_group};
+        print Data::Dumper::Dumper %params;
+    } else {
+        delete $params{builds};
+    }
+
     my $this_output_directory = join("/", $output_directory, $name);
     Genome::Sys->create_directory($this_output_directory);
     $params{output_directory} = $this_output_directory;
@@ -59,7 +78,6 @@ sub test_cmd {
     my $result = $cmd->final_result;
     ok(-s $result, "$name: result of CreateCrossSampleVcf, snvs.merged.vcf.gz exists");
 
-    my %sr_params = %params;
     delete $sr_params{'output_directory'};
     my $sr = $sr_class->get_with_lock(%sr_params);
     ok($sr, "$name: found software result for test1");
@@ -71,18 +89,21 @@ sub test_cmd {
 }
 
 my %params = (
-        builds => \@input_builds,
         max_files_per_merge => 2,
         variant_type => 'snvs',
         roi_list => $roi_list,
         wingspan => 500,
         allow_multiple_processing_profiles => undef,
         joinx_version => $joinx_version,
+        builds => \@input_builds,
+        model_group => $input_mg,
 );
 
-test_cmd("test_1", %params);
+my $use_builds_instead_of_mg = 0;
+test_cmd("test_1", $use_builds_instead_of_mg, %params);
 $params{max_files_per_merge} = undef;
-test_cmd("test_2", %params);
+$use_builds_instead_of_mg = 1;
+test_cmd("test_2", $use_builds_instead_of_mg, %params);
 
 
 done_testing();
