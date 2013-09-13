@@ -44,18 +44,18 @@ sub setup_test_build {
         dna_type => 'cdna',
         read_aligner_name => 'bwa',
         snv_detection_strategy => 'samtools',
-    ); 
+    );
     ok($test_profile, 'created test processing profile');
-    
+
     my $test_sample = Genome::Sample->create(
         name => 'test_subject',
     );
     ok($test_sample, 'created test sample');
-    
+
     my $test_instrument_data = Genome::InstrumentData::Solexa->create(
     );
     ok($test_instrument_data, 'created test instrument data');
-    
+
     my $reference_sequence_build = Genome::Model::Build::ImportedReferenceSequence->get(name => 'NCBI-human-build36');
     isa_ok($reference_sequence_build, 'Genome::Model::Build::ImportedReferenceSequence') or die;
 
@@ -68,15 +68,15 @@ sub setup_test_build {
     );
     ok($test_model, 'created test model');
     ok($test_model->add_instrument_data($test_instrument_data), 'added inst data');
-    
+
     #TODO Once we're using inputs, just use this line instead
     #ok($test_model->add_inst_data($test_instrument_data), 'assigned data to model');
-    
+
     my $test_build = Genome::Model::Build->create(
         model_id => $test_model->id,
         data_directory => TEST_DATA_DIR . '/build_dir',
     );
     ok($test_build, 'created test build');
-    
+
     return $test_build;
 }
