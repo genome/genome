@@ -7,19 +7,12 @@ use warnings;
 use Genome;
 use Genome::TestObjGenerator::ProcessingProfile::SomaticValidation;
 
-my @required_params = ("subject");
+our @required_params = qw(subject);
 
 sub generate_obj {
     my $self = shift;
     my $m = Genome::Model::SomaticValidation->create(@_);
     return $m;
-}
-
-sub get_required_params {
-    my $class = shift;
-    my $super = $class->SUPER::get_required_params;
-    my @all = (@$super, @required_params);
-    return \@all;
 }
 
 sub create_processing_profile_id {
@@ -32,4 +25,3 @@ sub create_subject {
 }
 
 1;
-

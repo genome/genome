@@ -2,6 +2,9 @@ package Genome::TestObjGenerator::Base;
 
 use strict;
 use warnings;
+
+use Class::ISA;
+
 use Genome;
 use Genome::TestObjGenerator::Util;
 
@@ -22,11 +25,19 @@ sub fill_in_missing_params {
 }
 
 sub get_required_params {
-    #override this method if your object has methods that are required
+    my $class = shift;
+    my @parents = grep { $_ ne __PACKAGE__ } Class::ISA::self_and_super_path($class);
+    my @params = map {
+        my $var = join('::', $_, 'required_params');
+        no strict 'refs';
+        @$var;
+    } @parents;
+    return \@params;
 }
 
+# generate_obj and an `our @required_params` are the API
 sub generate_obj {
-    die ("Abstract class - must override generate_obj");
+    die "Abstract class - must override generate_obj";
 }
 
 sub setup_object {
@@ -38,4 +49,3 @@ sub setup_object {
 }
 
 1;
-
