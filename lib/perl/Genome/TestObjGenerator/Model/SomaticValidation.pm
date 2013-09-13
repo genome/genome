@@ -68,6 +68,7 @@ sub setup_somatic_variation_build {
 
     my $test_build = Genome::TestObjGenerator::Build->setup_object(
         model_id => $test_model->id,
+        status => 'Succeeded',
     );
 
     my $test_model_two = Genome::TestObjGenerator::Model::ReferenceAlignment->setup_object(
@@ -79,6 +80,7 @@ sub setup_somatic_variation_build {
 
     my $test_build_two = Genome::TestObjGenerator::Build->setup_object(
         model_id => $test_model_two->id,
+        status => 'Succeeded',
     );
 
     my $test_somvar_pp = Genome::TestObjGenerator::ProcessingProfile::SomaticVariation->setup_object(
@@ -93,9 +95,8 @@ sub setup_somatic_variation_build {
     );
 
     my $somvar_build = Genome::TestObjGenerator::Build->setup_object(
-        tumor_build => $test_build_two,
-        normal_build => $test_build,
         model_id => $somvar_model->id,
+        status => 'Succeeded',
     );
 
     return $somvar_build;
