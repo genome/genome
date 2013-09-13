@@ -4,13 +4,11 @@ use strict;
 use warnings;
 use Genome;
 
-my $name_count = 0;
-
+my %count;
 sub generate_name {
     my $base_name = shift;
-    $name_count++;
-    return $base_name."_".$name_count; 
+    $count{$base_name}++;
+    return join('_', $base_name, $count{$base_name});
 }
 
 1;
-

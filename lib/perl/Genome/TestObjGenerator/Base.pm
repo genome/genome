@@ -30,11 +30,11 @@ sub generate_obj {
 }
 
 sub setup_object {
-    my $self = shift;
+    my $class = shift;
     my %params = @_;
 
-    my $filled_in_params = $self->fill_in_missing_params(%params);
-    return $self->generate_obj(%$filled_in_params);
+    my $filled_in_params = $class->fill_in_missing_params(%params);
+    return $class->generate_obj(%$filled_in_params);
 }
 
 1;
