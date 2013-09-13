@@ -502,9 +502,8 @@ sub _resolve_builds {
     if ($self->builds and not $self->model_group) {
         @builds = $self->builds;
     } elsif ($self->model_group and not $self->builds) {
-        @builds = Genome::ModelGroup::Command::GetLastCompletedBuilds->execute(
-            model_group => $self->model_group,
-        );
+        my $command = Genome::ModelGroup::Command::GetLastCompletedBuilds->execute(model_group => $self->model_group);
+        @builds = $command->builds;
         $self->builds(\@builds);
     }
     else {
