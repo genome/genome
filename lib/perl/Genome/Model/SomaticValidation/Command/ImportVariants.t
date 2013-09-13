@@ -17,6 +17,11 @@ use_ok('Genome::Model::SomaticValidation::Command::ImportVariants')
 my $temp_build_data_dir = File::Temp::tempdir('t_SomaticValidation_Build-XXXXX', CLEANUP => 1, TMPDIR => 1);
 my $temp_dir = File::Temp::tempdir('Model-Command-Define-SomaticValidation-XXXXX', CLEANUP => 1, TMPDIR => 1);
 
+my @somvar_models = &setup_somatic_variation_models();
+for (@somvar_models) {
+    isa_ok($_, 'Genome::Model::SomaticVariation', 'setup fake model');
+}
+
 my @snv_files;
 for my $i (1..2) {
     my $f = Genome::Sys->create_temp_file_path . '/TEST' . $i;
@@ -38,11 +43,6 @@ $indel_file .= '/variants.indel.anno';
 Genome::Sys->write_file($indel_file,
     join("\t", 2, 25, 29, 'CTCTT', '-', 'DEL'), "\n",
 );
-
-my @somvar_models = &setup_somatic_variation_models();
-for (@somvar_models) {
-    isa_ok($_, 'Genome::Model::SomaticVariation', 'setup fake model');
-}
 
 my $listing_file = Genome::Sys->create_temp_file_path;
 Genome::Sys->write_file($listing_file,
