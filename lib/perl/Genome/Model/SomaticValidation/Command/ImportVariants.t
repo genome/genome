@@ -179,11 +179,10 @@ sub setup_somatic_variation_models {
         );
         $result->lookup_hash($result->calculate_lookup_hash());
 
-        my $data = <<EOBED
-1	10003	10004	A/T
-2	8819	8820	A/G
-EOBED
-        ;
+        my $data = Genome::Utility::Text::table_to_tab_string([
+            [qw(1 10003 10004 A/T)],
+            [qw(2  8819  8820 A/G)],
+        ]);
         my $bed_file = $dir . '/snvs.hq.bed';
         Genome::Sys->write_file($bed_file, $data);
 

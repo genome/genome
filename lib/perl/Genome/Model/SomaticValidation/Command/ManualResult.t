@@ -9,6 +9,8 @@ BEGIN {
 };
 
 use above 'Genome';
+use Genome::Utility::Text;
+
 use Test::More tests => 8;
 
 use_ok('Genome::Model::SomaticValidation::Command::ManualResult');
@@ -20,10 +22,7 @@ my $temp_dir = File::Temp::tempdir('Model-Command-Define-SomaticValidation-XXXXX
 my $somatic_variation_build = &setup_somatic_variation_build;
 isa_ok($somatic_variation_build, 'Genome::Model::Build::SomaticVariation', 'setup test somatic variation build');
 
-my $data = <<EOBED
-1	10003	10004	A/T
-EOBED
-;
+my $data = Genome::Utility::Text::table_to_tab_string([[qw(1 10003 10004 A/T)]]);
 my $revised_bed_file = Genome::Sys->create_temp_file_path;
 Genome::Sys->write_file($revised_bed_file, $data);
 ok(-s $revised_bed_file, 'created a revised bed file');
@@ -139,11 +138,10 @@ sub setup_somatic_variation_build {
     );
     $result->lookup_hash($result->calculate_lookup_hash());
 
-    my $data = <<EOBED
-1	10003	10004	A/T
-2	8819	8820	A/G
-EOBED
-;
+    my $data = Genome::Utility::Text::table_to_tab_string([
+        [qw(1 10003 10004 A/T)],
+        [qw(2  8819  8820 A/G)],
+    ]);
     my $bed_file = $dir . '/snvs.hq.bed';
     Genome::Sys->write_file($bed_file, $data);
 
