@@ -9,6 +9,7 @@ BEGIN {
 };
 
 use above "Genome";
+use Genome::Utility::Text;
 use Test::More tests => 37;
 
 use Cwd;
@@ -287,18 +288,18 @@ sub setup_somatic_variation_build {
     $result->lookup_hash($result->calculate_lookup_hash());
 
     my $bed_file = $dir . '/snvs.hq.bed';
-    Genome::Sys->write_file($bed_file, <<EOBED
-1	10003	10004	A/T
-2	8819	8820	A/G
-EOBED
-    );
+    my $bed_text = Genome::Utility::Text::table_to_tab_string([
+        [qw(1 10003 10004 A/T)],
+        [qw(2  8819  8820 A/G)],
+    ]);
+    Genome::Sys->write_file($bed_file, $bed_text);
 
     my $detector_file = $dir . '/snvs.hq';
-  Genome::Sys->write_file($detector_file, <<SAMTOOLSFILE
-1	554426	C	G	5	5	0	2	G	'
-1	3704868	C	T	30	30	37	1	t	;
-SAMTOOLSFILE
-    );
+    my $detector_text = Genome::Utility::Text::table_to_tab_string([
+        [qw(1  554426 C G  5  5  0 2 G ')],
+        [qw(1 3704868 C T 30 30 37 1 t ;)],
+    ]);
+    Genome::Sys->write_file($detector_file, $detector_text);
 
     my $dir2 = ($temp_dir .'/' . 'fake_combine_result' . $i);
     Genome::Sys->create_directory($dir2);
