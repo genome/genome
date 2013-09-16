@@ -267,10 +267,19 @@ sub _decompress_allocation_tgzs {
         my $final_path = $tgz_path;
         $final_path =~ s|/fs-tgz/|/fs/|;
         $final_path =~ s|\+|\/|g;
-        $final_path =~ s|\.tgz$||;
-        Genome::Sys->make_path($final_path);
-        my $cmd = "tar -zxvf $tgz_path -C $final_path";
-        Genome::Sys->shellcmd(cmd => $cmd);
+        my $unzip = ($final_path =~ s|\.tgz$|| ? 1 : 0);
+        $DB::single = 1;
+        if ($unzip) {
+            Genome::Sys::make_path($final_path);
+            Genome::Sys::make_path($final_path) unless -d $final_path;
+            Genome::Sys->shellcmd(cmd => "tar -zxvf '$tgz_path' -C '$final_path'");
+        }
+        else {
+            my $dir = File::Basename::dirname($final_path);
+            my $file = File::Basename::basename($final_path);
+            Genome::Sys::make_path($dir);
+            Genome::Sys->shellcmd(cmd => "mv '$tgz_path' '$dir/$file'");
+        }
     }
 }
 
@@ -320,8 +329,10 @@ sub _rsync_ftp {
         cd $rcd; 
         mirror --verbose --continue --use-cache --exclude fs/" 
     |;
+    unlink "$lcd/fs-tgz/MANIFEST";
+    $cmd = 'echo';
     Genome::Sys->shellcmd(cmd => $cmd);
-    my @files = glob("$lcd/fs-tgz/*.tgz");
+    my @files = glob("$lcd/fs-tgz/*");
     $self->_decompress_allocation_tgzs(@files);
     return 1;
 }
