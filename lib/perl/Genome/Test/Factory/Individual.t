@@ -1,4 +1,3 @@
-
 #! /usr/bin/env genome-perl
 
 BEGIN {
@@ -10,13 +9,10 @@ use strict;
 use warnings;
 
 use above "Genome";
-use Test::More;
+use Test::More tests => 2;
+use Genome::Test::Factory::Test qw(test_setup_object);
 
 my $class = 'Genome::Test::Factory::Individual';
 use_ok($class);
 
-my $id = $class->setup_object();
-isa_ok($id, 'Genome::Individual', 'It generates an object of the correct class');
-
-done_testing();
-
+test_setup_object($class);
