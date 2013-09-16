@@ -253,6 +253,27 @@ sub _mount_point_for_protocol {
     return $mount_point;
 }
 
+sub _create_mount_point {
+    my $self = shift;
+    my $mount_point = shift;
+    Genome::Sys->create_directory($mount_point);
+    Genome::Sys->shellcmd(cmd => "chgrp genome $mount_point; chmod g+rwxs $mount_point");
+    return 1;
+}
+
+sub _decompress_allocation_tgzs {
+    my $self = shift;
+    for my $tgz_path (@_) {
+        my $final_path = $tgz_path;
+        $final_path =~ s|/fs-tgz/|/fs/|;
+        $final_path =~ s|\+|\/|g;
+        $final_path =~ s|\.tgz$||;
+        Genome::Sys->make_path($final_path);
+        my $cmd = "tar -zxvf $tgz_path -C $final_path";
+        Genome::Sys->shellcmd(cmd => $cmd);
+    }
+}
+
 ##
 
 sub _attach_ftp {
@@ -261,7 +282,7 @@ sub _attach_ftp {
     my $ftp_detail = $self->ftp_detail;
     my $mount_point = $self->_mount_point_for_protocol('ftp');
     unless (-d $mount_point) {
-        Genome::Sys->create_directory($mount_point);
+        $self->_create_mount_point($mount_point);
     }
     my $cmd = "curlftpfs 'ftp://$hostname/$ftp_detail' '$mount_point' -o tcp_nodelay,kernel_cache,direct_io";
     Genome::Sys->shellcmd(cmd => $cmd);    
@@ -286,11 +307,23 @@ sub _rsync_ftp {
     }
     my $lcd = $self->_mount_point_for_protocol('rsync');
     unless (-d $lcd) {
-        Genome::Sys->create_directory($lcd);
+        $self->_create_mount_point($lcd);
     }
     my $url = "ftp://$hostname";
-    my $cmd = qq| lftp -c "set ftp:list-options -a;set mirror:parallel-directories true;set ftp:use-mdtm false;set net:limit-rate 0; open '$url';lcd $lcd; cd $rcd; mirror --verbose --continue --use-cache" |;
+    my $cmd = qq|lftp -c "
+        set ftp:list-options -a;
+        set mirror:parallel-directories true;
+        set ftp:use-mdtm false;
+        set net:limit-rate 0; 
+        open '$url';
+        lcd $lcd/; 
+        cd $rcd; 
+        mirror --verbose --continue --use-cache --exclude fs/" 
+    |;
     Genome::Sys->shellcmd(cmd => $cmd);
+    my @files = glob("$lcd/fs-tgz/*.tgz");
+    $self->_decompress_allocation_tgzs(@files);
+    return 1;
 }
 
 ##
