@@ -341,10 +341,10 @@ subtest "get genotype for sample" => sub {
     my $entry = $pkg->new($header, $entry_txt);
     ok($entry, "Created entry");
 
-    my @alternate_alleles = $entry->{alternate_alleles};
+    my @alternate_alleles = @{$entry->{alternate_alleles}};
     my $expected_genotype = Genome::File::Vcf::Genotype->new($entry->{reference_allele}, \@alternate_alleles, '0/1');
     my $retreived_genotype = $entry->genotype_for_sample(0);
-    is_deeply($expected_genotype, $retreived_genotype, "The genotype for the first sample was created correctly");
+    is_deeply($retreived_genotype, $expected_genotype, "The genotype for the first sample was created correctly");
 
     eval {
         my $non_genotype = $entry->genotype_for_sample(3);

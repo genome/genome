@@ -703,12 +703,12 @@ sub filter_calls_involving_only {
 
 sub genotype_for_sample {
     my ($self, $sample_index) = @_;
-    my @vars = $self->{alternate_alleles};
+    my $alts = $self->{alternate_alleles};
     my $gt = $self->sample_field($sample_index, 'GT');
     unless ($gt) {
         confess "No sample for index $sample_index";
     }
-    return Genome::File::Vcf::Genotype->new($self->{reference_allele}, \@vars, $gt);
+    return Genome::File::Vcf::Genotype->new($self->{reference_allele}, $alts, $gt);
 }
 
 =item C<to_string>
