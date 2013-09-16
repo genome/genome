@@ -141,7 +141,8 @@ sub _parse {
     $self->{info_fields} = undef; # we parse them lazily later
 
     $self->{reference_allele} = $fields[REF];
-    $self->{alternate_alleles} = [split(',', $fields[ALT])];
+    my @alts = _parse_list($fields[ALT], ',');
+    $self->{alternate_alleles} = \@alts;
     $self->{quality} = $fields[QUAL] eq '.' ? undef : $fields[QUAL];
     $self->{_filter} = [_parse_list($fields[FILTER], ',')];
     $self->{_format} = [_parse_list($fields[FORMAT], ':')];

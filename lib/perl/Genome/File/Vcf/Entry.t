@@ -32,6 +32,26 @@ EOS
 my @lines = split("\n", $header_txt);
 my $header = Genome::File::Vcf::Header->create(lines => \@lines);
 
+subtest "null alternate alleles" => sub {
+    my @fields = (
+        '1',            # CHROM
+        10,             # POS
+        '.',            # ID
+        'A',            # REF
+        '.',            # ALT
+        '10.3',         # QUAL
+        'PASS',         # FILTER
+        'A=B;C=8,9;E',  # INFO
+        'GT:DP:FT',     # FORMAT
+        '0/1:12:x',   # FIRST_SAMPLE
+    );
+
+    my $entry_txt = join("\t", @fields);
+    my $entry = $pkg->new($header, $entry_txt);
+    is_deeply($entry->{alternate_alleles}, []);
+    is($entry->to_string, $entry_txt, 'to_string with null alternate alleles');
+};
+
 subtest "parse error: too many sample fields" => sub {
     my @fields = (
         '1',            # CHROM
