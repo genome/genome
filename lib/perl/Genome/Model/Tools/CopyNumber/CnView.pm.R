@@ -46,7 +46,7 @@ if (length(args) < 10){
 #############################################################################################################################################
 plotChrCNV = function(target_chr, direction){
   #Create plotting space
-  lay = layout(matrix(c(1,2,3,4), ncol=2, byrow=F), heights=c(0.6,2), widths=c(1,0.2), FALSE) #layout.show(lay)
+  lay = layout(matrix(c(1,2,3,4), ncol=2, byrow=F), heights=c(0.75,2), widths=c(1,0.3), FALSE) #layout.show(lay)
 
   #Plot 1 - Draw the ideogram at the top
   #Adjust margins -> c(bottom, left, top, right)
@@ -193,8 +193,8 @@ plotChrCNV = function(target_chr, direction){
   ideo_legend_cols = c("white","grey75","grey50","grey25","black","firebrick1","firebrick2","firebrick")
   ideo_legend_text = c("gneg","gpos25","gpos50","gpos75","gpos100","gvar","stalk","acen")
   plot.new()
-  #par(mar=c(0,0,0,0))
-  legend("bottomleft", col=ideo_legend_cols, pch=15, legend=ideo_legend_text, title="Giemsa staining", cex=0.9)
+  par(mar=c(0,0,0,0))
+  legend("center", col=ideo_legend_cols, pch=15, legend=ideo_legend_text, title="Giemsa staining", cex=0.9)
 
   #Plot 5 - Plot the legend for the gains
   if (direction == "gains"){
@@ -210,7 +210,7 @@ plotChrCNV = function(target_chr, direction){
                        "HMM Gain Segs")
     gain_legend_cols=c(gaincolor3, gaincolor2, gaincolor1, gaincolor4)
     gain_legend_title=paste("Gain (Windows = ", prettyNum(total_windows, big.mark=",", scientific=FALSE), ")", sep="")
-    legend("center", col=gain_legend_cols, pch=c(16,16,16,NA), lty=c(2,2,2,1), lwd=c(1,1,1,2), legend=gain_legend_text, title=gain_legend_title, cex=1)
+    legend("center", col=gain_legend_cols, pch=c(16,16,16,NA), lty=c(2,2,2,1), lwd=c(1,1,1,2), legend=gain_legend_text, title=gain_legend_title, cex=0.9)
   }
 
   #Plot 6 - Plot the legend for the losses
@@ -226,7 +226,7 @@ plotChrCNV = function(target_chr, direction){
                        "HMM Loss Segs")
     loss_legend_cols=c(losscolor1, losscolor2, losscolor3, losscolor4)
     loss_legend_title=paste("Loss (Windows = ", prettyNum(total_windows, big.mark=",", scientific=FALSE), ")", sep="")
-    legend("center", col=loss_legend_cols, pch=c(16,16,16,NA), lty=c(2,2,2,1), lwd=c(1,1,1,2), legend=loss_legend_text, title=loss_legend_title, cex=1)
+    legend("center", col=loss_legend_cols, pch=c(16,16,16,NA), lty=c(2,2,2,1), lwd=c(1,1,1,2), legend=loss_legend_text, title=loss_legend_title, cex=0.9)
   }
 }
 
@@ -459,6 +459,7 @@ if (length(which(cnvs[,"DIFF"] < hard_cap_lower)) > 0){
 #Reset values larger than 20 to be 20 (arbitrary - for display purposes).  Single outliers, usually false positives near the centromeres obscure the data by jacking up the scale...
 if (length(which(cnvs[,"DIFF"] > hard_cap_upper)) > 0){
   cnvs[which(cnvs[,"DIFF"] > hard_cap_upper),"DIFF"] = hard_cap_upper
+  segments[which(segments[,"Adjusted_CN_DIFF"] > hard_cap_upper),"Adjusted_CN_DIFF"] = hard_cap_upper
 }
 
 #TODO: Apply a further more aggressive hard-capping near centromeres where outliers in the gain direction are common?
