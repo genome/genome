@@ -71,7 +71,7 @@ ok($reconcile, 'Create reconcile command');
 @errors = $reconcile->__errors__;
 ok(!@errors, 'No errors for test date');
 
-$reconcile->_stop_at('2000-01-01 23:59:59'); # set stop at so we only do the updates for Jan 01 01
+$reconcile->_stop_at('2000-01-08 23:59:59'); # set stop at so we only do the updates for Jan 01 01
 diag('Check that the correct misc updates were retrieved');
 ok($reconcile->_load_misc_updates, 'load misc updates');
 is(@{$reconcile->_misc_updates}, 44, 'loaded 44 misc updates');
@@ -415,7 +415,7 @@ sub _define_misc_update_not_in_date_range {
         subject_id => -555,
         subject_property_name => 'name',
         editor_id => 'lims',
-        edit_date => '2001-02-02 00:00:'.sprintf('%02d', $cnt++), # must be diff year for now
+        edit_date => '2000-01-09 00:00:'.sprintf('%02d', $cnt++), # must be diff year for now
         old_value => '__TEST_SAMPLE__',
         new_value => 'OUT OF DATE RANGE',
         description => 'UPDATE',

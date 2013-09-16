@@ -13,7 +13,7 @@ class Genome::ModelGroup::Command::Validate {
             is => 'Genome::ModelGroup',
             doc => 'the model group to validate', 
         },
-        unique_subjects => {
+        distinct_subjects => {
             is => 'Boolean',
             is_optional => 1,
             doc => 'If true, make sure the models in this group have no duplicate subjects',
@@ -25,7 +25,7 @@ sub execute {
     my $self = shift;
 
     my $failed = 0;
-    if ($self->unique_subjects) {
+    if ($self->distinct_subjects) {
         $failed += $self->_has_duplicate_subjects;
     }
 

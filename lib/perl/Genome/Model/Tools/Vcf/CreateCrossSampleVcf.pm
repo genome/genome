@@ -363,6 +363,11 @@ sub _handle_snvs {
     my ($self, $builds, $accessor, $vcf_files, $reference_sequence_build,
             $samtools_version, $samtools_params) = @_;
     my @input_files = @{$vcf_files};
+    #create region limited vcfs to work on
+    if(defined($self->roi_list)){
+        @input_files = $self->_region_limit_inputs($accessor, $reference_sequence_build);
+    }
+
     my @builds = @{$builds};
 
     my %inputs;
@@ -395,13 +400,8 @@ sub _handle_snvs {
     }
 
     #create the workflow object
-    my $workflow = $self->_generate_workflow(\@builds, $samtools_version,
+    my $workflow = $self->_generate_workflow($samtools_version,
         $samtools_params);
-
-    #create region limited vcfs to work on
-    if(defined($self->roi_list)){
-        @input_files = $self->_region_limit_inputs($accessor, $reference_sequence_build);
-    }
 
     #set up inputs which are determined by the number of merge steps
     if(defined($self->max_files_per_merge) && ($self->max_files_per_merge < scalar(@builds))) {
@@ -500,42 +500,23 @@ sub _resolve_builds {
     my $self = shift;
     my @builds;
     if ($self->builds and not $self->model_group) {
-        my @not_succeeded = grep { $_->status ne 'Succeeded' } $self->builds;
-        if (@not_succeeded) {
-            die $self->error_message("Some builds are not successful: " . join(',', map { $_->id } @not_succeeded));
-        }
         @builds = $self->builds;
-    }
-    elsif ($self->model_group and not $self->builds) {
-        for my $model ($self->model_group->models) {
-            unless ($model->isa('Genome::Model::ReferenceAlignment')) {
-                die $self->error_message("Model " . $model->__display_name__ . " of model group " . $self->model_group->__display_name__ .
-                    " is not a reference alignment model, it's a " . $model->class);
-            }
-            my $build = $model->last_complete_build;
-            if ($build) {
-                push @builds, $build;
-            }
-            else {
-                die $self->error_message("Found no last complete build for model " . $model->__display_name__);
-            }
-        }
+    } elsif ($self->model_group and not $self->builds) {
+        my $command = Genome::ModelGroup::Command::GetLastCompletedBuilds->execute(model_group => $self->model_group);
+        @builds = $command->builds;
         $self->builds(\@builds);
     }
     else {
         die $self->error_message("Given both builds and model-groups or neither.");
     }
 
-    # Make sure there are no duplicate samples
-    my %subjects;
-    for my $build (@builds) {
-        my $subject_id = $build->model->subject->id;
-        if ($subjects{$subject_id}) {
-            die $self->error_message("Subject $subject_id occurs in more than one build. Please provide a list of builds or a model_group that contains no duplicate subjects.\n"
-                                     . "problems: build " . $subjects{$subject_id}->id . " (" .   $subjects{$subject_id}->model->id . ")" . " and " . $build->id . " (" . $build->model->id . ")" );
-        }
-        $subjects{$subject_id} = $build;
-    }
+    my $reference_sequence = ($builds[0])->reference_sequence_build;
+    Genome::Model::Build::Command::Validate->execute(
+        builds => \@builds,
+        builds_can => [qw(reference_sequence_build whole_rmdup_bam_file get_snvs_vcf get_indels_vcf)],
+        status => ['Succeeded'],
+        reference_sequence => [$reference_sequence],
+    );
 
     return @builds;
 }
@@ -551,98 +532,26 @@ sub _dump_workflow {
     #$workflow->as_png($self->output_directory."/workflow.png"); #currently commented out because blades do not all have the "dot" library to use graphviz
 }
 
-sub _region_limit_inputs {
-    my ($self, $accessor, $reference_sequence_build) = @_;
-    my @builds = $self->builds;
-
-    my @answers;
-    my $output_directory = $self->output_directory . "/region_limited_inputs";
+sub prepare_region_limited_output_directory {
+    my $self = shift;
+    my $output_directory = File::Spec->join($self->output_directory, "region_limited_inputs");
     unless(-d $output_directory){
         mkdir $output_directory;
         unless(-d $output_directory){
             die $self->error_message("Could not create output directory for region_limiting at: ".$output_directory);
         }
     }
-    my %in_out;
+    return $output_directory;
+}
 
-    my %inputs;
-    $inputs{joinx_version} = $self->joinx_version;
+sub _region_limit_inputs {
+    my ($self, $accessor, $reference_sequence_build) = @_;
+    my @builds = $self->builds;
 
-    $inputs{region_bed_file} = $self->roi_file($reference_sequence_build);
-    $inputs{roi_name} = $self->roi_list->name;
-    $inputs{wingspan} = $self->wingspan;
+    my $output_directory = $self->prepare_region_limited_output_directory();
 
-    my @inputs;
-    my $count=1;
-
-    #set up individualized input params and input values
-    for my $b (@builds){
-        my $sample = $b->model->subject->id;
-        my $vcf = $b->$accessor;
-        my $output = $output_directory."/".$self->variant_type.".".$sample.".region_limited.vcf.gz";
-        $in_out{$vcf} = $output;
-        push @inputs, ("input_vcf_".$count,"output_vcf_".$count);
-        $inputs{"input_vcf_".$count} = $vcf;
-        $inputs{"output_vcf_".$count} = $output;
-        push @answers, $output;
-        $count++;
-    }
-
-    my $workflow = Workflow::Model->create(
-        name => 'Multi-Vcf Merge',
-        input_properties => [
-            "region_bed_file",
-            "roi_name",
-            "wingspan",
-            "joinx_version",
-            @inputs,
-        ],
-        output_properties => [
-            'output',
-        ],
-    );
-
+    my $workflow = $self->get_region_limit_workflow();
     $workflow->log_dir($output_directory);
-
-    #add individual region-limiting operations
-    for my $num (1..($count-1)){
-        my $region_limit_operation = $workflow->add_operation(
-            name => "region limiting ".$num,
-            operation_type => Workflow::OperationType::Command->get("Genome::Model::Tools::Vcf::RegionLimit"),
-        );
-
-        #link common properties
-        for my $prop ("region_bed_file","wingspan","roi_name"){
-            $workflow->add_link(
-                left_operation => $workflow->get_input_connector,
-                left_property => $prop,
-                right_operation => $region_limit_operation,
-                right_property => $prop,
-            );
-        }
-
-        #link individual inputs and outputs
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => "input_vcf_".$num,
-            right_operation => $region_limit_operation,
-            right_property => "vcf_file",
-        );
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => "output_vcf_".$num,
-            right_operation => $region_limit_operation,
-            right_property => "output_file",
-        );
-
-        #link to output
-        $workflow->add_link(
-            left_operation => $region_limit_operation,
-            left_property => "output_file",
-            right_operation => $workflow->get_output_connector,
-            right_property => "output",
-        );
-    }
 
     #validate workflow
     my @errors = $workflow->validate;
@@ -653,24 +562,82 @@ sub _region_limit_inputs {
     $self->_dump_workflow($workflow, $output_directory."/workflow.xml");
 
     $self->status_message("Now launching the region-limiting workflow.");
-    my $result = Workflow::Simple::run_workflow_lsf( $workflow, %inputs);
+    my %inputs = (
+        builds => [$self->builds],
+        variant_type => $self->variant_type,
+        output_directory => $output_directory,
+        region_bed_file => $self->roi_file($reference_sequence_build),
+        roi_name => $self->roi_list->name,
+        wingspan => $self->wingspan,
+    );
+    my $result = Workflow::Simple::run_workflow_lsf($workflow, %inputs);
+    my @output_files = @{$result->{'output'}};
 
-    unless($result){
+    unless(@output_files){
         $self->error_message( join("\n", map($_->name . ': ' . $_->error, @Workflow::Simple::ERROR)) );
         die $self->error_message("Workflow did not return correctly.");
     }
 
     #check output files to make sure they exist
-    if(my @error = grep{ not(-e $_)} @answers){
+    if(my @error = grep{ not(-e $_)} @output_files){
         die $self->error_message("The following region limit output files could not be found: ".join("\n",@error));
     }
 
     #return a list of the output files
-    return @answers;
+    return @output_files;
+}
+
+sub get_region_limit_workflow {
+    my $self = shift;
+
+    my $workflow = Workflow::Model->create(
+        name => 'RegionLimitInputs',
+        input_properties => [
+            "builds",
+            "variant_type",
+            "output_directory",
+            "region_bed_file",
+            "roi_name",
+            "wingspan",
+        ],
+        output_properties => [
+            'output',
+        ],
+    );
+
+    my $region_limit_operation = $workflow->add_operation(
+        name => "RegionLimit",
+        operation_type => Workflow::OperationType::Command->get("Genome::Model::Tools::Vcf::CreateCrossSampleVcf::RegionLimitVcf"),
+    );
+    $region_limit_operation->parallel_by('build');
+
+    $workflow->add_link(
+        left_operation => $workflow->get_input_connector,
+        left_property => "builds",
+        right_operation => $region_limit_operation,
+        right_property => "build",
+    );
+    for my $prop (qw(variant_type output_directory region_bed_file roi_name wingspan)) {
+        $workflow->add_link(
+            left_operation => $workflow->get_input_connector,
+            left_property => $prop,
+            right_operation => $region_limit_operation,
+            right_property => $prop,
+        );
+    }
+
+    $workflow->add_link(
+        left_operation => $region_limit_operation,
+        left_property => "output_vcf",
+        right_operation => $workflow->get_output_connector,
+        right_property => "output",
+    );
+
+    return $workflow;
 }
 
 sub _generate_workflow {
-    my ($self, $build_array, $samtools_version, $samtools_params) = @_;
+    my ($self, $samtools_version, $samtools_params) = @_;
 
     my @builds = $self->builds;
     my $num_builds = scalar(@builds);

@@ -331,7 +331,7 @@ sub params_for_merged_alignment {
         my @align_reads_events = grep {$_->isa('Genome::Model::Event::Build::ReferenceAlignment::AlignReads')} $build->events;
         for my $i (0..$#inputs) {
             my $input = $inputs[$i];
-            my @alignment_events = grep {$_->instrument_data_id == $input->value->id} @align_reads_events;
+            my @alignment_events = grep {$_->instrument_data_id eq $input->value->id} @align_reads_events;
 
             #if multiple events, this is a chunked alignment
             if (@alignment_events > 1 or (@alignment_events == 1 and defined $alignment_events[0]->instrument_data_segment_id)) {

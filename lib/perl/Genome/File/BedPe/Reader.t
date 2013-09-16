@@ -37,7 +37,7 @@ subtest "peek" => sub {
 
     for my $i (0..$#standard_field_order) {
         my $f = $standard_field_order[$i];
-        is($entry_peek->{fields}{$f}, $i + 1, "Entry 1, field $f");
+        is($entry_peek->{$f}, $i + 1, "Entry 1, field $f");
     }
 };
 

@@ -141,7 +141,8 @@ sub _parse {
     $self->{info_fields} = undef; # we parse them lazily later
 
     $self->{reference_allele} = $fields[REF];
-    $self->{alternate_alleles} = [split(',', $fields[ALT])];
+    my @alts = _parse_list($fields[ALT], ',');
+    $self->{alternate_alleles} = \@alts;
     $self->{quality} = $fields[QUAL] eq '.' ? undef : $fields[QUAL];
     $self->{_filter} = [_parse_list($fields[FILTER], ',')];
     $self->{_format} = [_parse_list($fields[FORMAT], ':')];
@@ -702,12 +703,12 @@ sub filter_calls_involving_only {
 
 sub genotype_for_sample {
     my ($self, $sample_index) = @_;
-    my @vars = $self->{alternate_alleles};
+    my $alts = $self->{alternate_alleles};
     my $gt = $self->sample_field($sample_index, 'GT');
     unless ($gt) {
         confess "No sample for index $sample_index";
     }
-    return Genome::File::Vcf::Genotype->new($self->{reference_allele}, \@vars, $gt);
+    return Genome::File::Vcf::Genotype->new($self->{reference_allele}, $alts, $gt);
 }
 
 =item C<to_string>

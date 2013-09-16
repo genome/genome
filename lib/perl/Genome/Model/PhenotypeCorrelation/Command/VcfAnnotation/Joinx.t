@@ -10,8 +10,8 @@ use Test::More;
 
 use Genome::Utility::Test qw(compare_ok);
 use File::Basename qw/dirname/;
-use Genome::TestObjGenerator::Build;
-use Genome::TestObjGenerator::Model::ImportedVariationList;
+use Genome::Test::Factory::Build;
+use Genome::Test::Factory::Model::ImportedVariationList;
 use Genome::Utility::Vcf qw/diff_vcf_file_vs_file/;
 
 BEGIN {
@@ -30,7 +30,7 @@ my $output_file = join("/", $tmpdir, "output.vcf");
 
 sub setup_annotation_build {
     my ($source_name, $version, $file) = @_;
-    my $annotation_model = Genome::TestObjGenerator::Model::ImportedVariationList->setup_object(
+    my $annotation_model = Genome::Test::Factory::Model::ImportedVariationList->setup_object(
         name => "omg-fake-annotation-$source_name",
     );
     $annotation_model->source_name($source_name);
@@ -43,7 +43,7 @@ sub setup_annotation_build {
         variant_type => "snv"
         );
 
-    return Genome::TestObjGenerator::Build->setup_object(
+    return Genome::Test::Factory::Build->setup_object(
         model_id => $annotation_model->id,
         status => "Succeeded",
         version => $version,

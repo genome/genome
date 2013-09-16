@@ -3,30 +3,30 @@ package Genome::Model::Build::SomaticVariationTestGenerator;
 use strict;
 use warnings;
 use Genome;
-use Genome::TestObjGenerator::ProcessingProfile::ReferenceAlignment;
-use Genome::TestObjGenerator::Model::ReferenceAlignment;
-use Genome::TestObjGenerator::Model::SomaticVariation;
-use Genome::TestObjGenerator::Model::ImportedAnnotation;
-use Genome::TestObjGenerator::Model::ImportedVariationList;
-use Genome::TestObjGenerator::Build;
+use Genome::Test::Factory::ProcessingProfile::ReferenceAlignment;
+use Genome::Test::Factory::Model::ReferenceAlignment;
+use Genome::Test::Factory::Model::SomaticVariation;
+use Genome::Test::Factory::Model::ImportedAnnotation;
+use Genome::Test::Factory::Model::ImportedVariationList;
+use Genome::Test::Factory::Build;
 
 sub create_somatic_variation_model {
     
-    my $tumor_model = Genome::TestObjGenerator::Model::ReferenceAlignment->setup_object(subject_name => "test_subject");
-    my $normal_model = Genome::TestObjGenerator::Model::ReferenceAlignment->setup_object(processing_profile_id => $tumor_model->processing_profile->id, subject_name => $tumor_model->subject_name);
-    my $tumor_build = Genome::TestObjGenerator::Build->setup_object(
+    my $tumor_model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object(subject_name => "test_subject");
+    my $normal_model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object(processing_profile_id => $tumor_model->processing_profile->id, subject_name => $tumor_model->subject_name);
+    my $tumor_build = Genome::Test::Factory::Build->setup_object(
         model_id => $tumor_model->id, status => "Succeeded");
 
     my $reference_sequence_build = $normal_model->reference_sequence_build;
-    my $normal_build = Genome::TestObjGenerator::Build->setup_object(
+    my $normal_build = Genome::Test::Factory::Build->setup_object(
         model_id => $normal_model->id,
         status => "Succeeded",
     );
 
-    my $annotation_model = Genome::TestObjGenerator::Model::ImportedAnnotation->setup_object(name => "test_annotation_build");
-    my $annotation_build = Genome::TestObjGenerator::Build->setup_object(model_id => $annotation_model->id, version => "1", name => "test_annotation_build/1", status => "Succeeded");
+    my $annotation_model = Genome::Test::Factory::Model::ImportedAnnotation->setup_object(name => "test_annotation_build");
+    my $annotation_build = Genome::Test::Factory::Build->setup_object(model_id => $annotation_model->id, version => "1", name => "test_annotation_build/1", status => "Succeeded");
 
-    my $somvar_model = Genome::TestObjGenerator::Model::SomaticVariation->setup_object(normal_model => $normal_model, tumor_model => $tumor_model, annotation_build => $annotation_build, subject_name => $normal_model->subject_name, previously_discovered_variations => create_pdv_build());
+    my $somvar_model = Genome::Test::Factory::Model::SomaticVariation->setup_object(normal_model => $normal_model, tumor_model => $tumor_model, annotation_build => $annotation_build, subject_name => $normal_model->subject_name, previously_discovered_variations => create_pdv_build());
     return $somvar_model, $tumor_build, $normal_build;
 }
 
@@ -53,7 +53,7 @@ sub create_test_subjects {
 sub create_pdv_model {
     my ($reference_sequence_build) = @_;
 
-    my $pdv_model = Genome::TestObjGenerator::Model::ImportedVariationList->setup_object(name => "test imported-variation-list model");
+    my $pdv_model = Genome::Test::Factory::Model::ImportedVariationList->setup_object(name => "test imported-variation-list model");
     return $pdv_model;
 }
 
@@ -61,7 +61,7 @@ sub create_pdv_build {
     my ($reference_sequence_build) = @_;
 
     my $pdv_model = create_pdv_model();
-    my $pdv_build = Genome::TestObjGenerator::Build->setup_object(
+    my $pdv_build = Genome::Test::Factory::Build->setup_object(
         model_id => $pdv_model->id,
     );
     return $pdv_build;
@@ -89,7 +89,7 @@ sub setup_test_build {
     
     my ($somvar_model, $tumor_build, $normal_build) = create_somatic_variation_model();
 
-    my $somvar_build = Genome::TestObjGenerator::Build->setup_object(
+    my $somvar_build = Genome::Test::Factory::Build->setup_object(
         model_id => $somvar_model->id,
         data_directory => $data_dir,
     );
@@ -100,7 +100,7 @@ sub setup_test_build {
 sub setup_test_model {
     my ($somvar_model, $tumor_build, $normal_build) = create_somatic_variation_model();
 
-    my $somvar_build = Genome::TestObjGenerator::Build->setup_object(
+    my $somvar_build = Genome::Test::Factory::Build->setup_object(
         model_id => $somvar_model->id,
         tumor_build => $tumor_build,
         normal_build => $normal_build,

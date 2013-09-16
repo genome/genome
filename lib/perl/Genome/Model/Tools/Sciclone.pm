@@ -14,7 +14,7 @@ class Genome::Model::Tools::Sciclone {
     has => [
         variant_files => {
             is => 'Text',
-            doc => "comma separated list - files of validated variants with readcounts. 7-column Bam-readcount format - columns: Chr, Start, Ref, Var, RefReads, VarReads, VAF",
+            doc => "comma separated list of tab-delimited files - files of validated variants with readcounts. 7-column tab-delimited Bam-readcount format - columns: Chr, Start, Ref, Var, RefReads, VarReads, VAF. VAF must be expressed as a percentage in the range from 0 to 100.",
             is_optional => 0,
             is_input => 1 ,
         },
@@ -285,12 +285,14 @@ sub execute {
         my @cnFiles = split(",",$cn_files);
         my $i=0;
         for($i=0;$i<@cnFiles;$i++){
-            my $var = "cn$i";
-            push(@cnVars,$var);
-            # read in the file (and convert varscan, if necessary)
-            print $rfile "$var = " . 'read.table("' . $cnFiles[$i] .  '")' . "\n";
-            print $rfile "$var = $var" . '[,c(1,2,3,5)]' . "\n";
-        }
+	    if (-s $cnFiles[$i]) { # proceed if cn file is not empty
+		my $var = "cn$i";
+		push(@cnVars,$var);
+		# read in the file (and convert varscan, if necessary)
+		print $rfile "$var = " . 'read.table("' . $cnFiles[$i] .  '")' . "\n";
+		print $rfile "$var = $var" . '[,c(1,2,3,5)]' . "\n";
+	    }
+	}
     }
 
     my @regVars;
@@ -325,12 +327,33 @@ sub execute {
     $cmd = $cmd . ", sampleNames=c(" . $sampleNames . ")";
 
     if(defined($cn_files)){
-        $cmd = $cmd . ", copyNumberCalls=list(" . join(",",@cnVars) . ")";
+	my @cnFiles = split(",",$cn_files);
+        my $i=0;
+	my $good = 0; # count nonempty cnFiles
+	my $filecount = scalar(@cnFiles);
+        for($i=0;$i<@cnFiles;$i++){
+	    if (-s $cnFiles[$i]) { # proceed if all cn files are non-empty
+		$good++;
+	    }
+	}
+	if ($good == $filecount) {
+		$cmd = $cmd . ", copyNumberCalls=list(" . join(",",@cnVars) . ")";
+	}
     }
 
     
     if(defined($regions_to_exclude)){
-        $cmd = $cmd . ", regionsToExclude=list(" . join(",",@regVars) . ")";
+	my @regFiles =  split(",",$regions_to_exclude);
+        my $i=0;
+	my $good = 0; # count nonempty regFiles
+	my $filecount = scalar(@regFiles);
+        for($i=0;$i<@regFiles;$i++){
+            if(-s $regFiles[$i]){ # proceed if all reg files are non-empty
+		$good++;
+	    }
+	} if ($good == $filecount) {
+	    $cmd = $cmd . ", regionsToExclude=list(" . join(",",@regVars) . ")";
+	}
     }
 
     $cmd = $cmd . ", minimumDepth=$minimum_depth";

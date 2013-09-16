@@ -7,7 +7,7 @@ use above 'Genome';
 use Genome::Utility::Vcf ('diff_vcf_file_vs_file');
 use Test::More tests => 13;
 
-use_ok('Genome::Model::Tools::Vcf::Backfill');
+use_ok('Genome::Model::Tools::Vcf::TcgaSanitize');
 
 my $test_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Vcf-TcgaSanitize";
 my $input_dir = "$test_dir/input.v3";

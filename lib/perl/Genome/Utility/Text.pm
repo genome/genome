@@ -384,5 +384,19 @@ sub tree_to_string {
     return $result;
 }
 
-1;
+sub table_to_delim_string {
+    my ($delimiter, $array) = Params::Validate::validate_pos(
+        @_, { type => SCALAR },
+            { type => ARRAYREF },
+    );
 
+    return join("\n",
+        map { join($delimiter, @$_) } @$array
+    );
+}
+
+sub table_to_tab_string {
+    table_to_delim_string("\t", @_);
+}
+
+1;

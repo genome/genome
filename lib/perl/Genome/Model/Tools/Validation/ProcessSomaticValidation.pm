@@ -12,11 +12,6 @@ use File::Basename;
 class Genome::Model::Tools::Validation::ProcessSomaticValidation {
   is => 'Command',
   has_input => [
-      somatic_validation_model_id => {
-          is => 'Text',
-          doc => "ID of SomaticValidation model",
-      },
-
       output_dir => {
           is => 'Text',
           doc => "Directory where output will be stored (under a subdirectory with the sample name)",
@@ -25,6 +20,17 @@ class Genome::Model::Tools::Validation::ProcessSomaticValidation {
       ],
 
   has_optional_input => [
+      somatic_validation_model_id => {
+          is => 'Text',
+          doc => "ID of SomaticValidation model",
+          is_optional => 1,
+      },
+
+      somatic_validation_build_id => {
+          is => 'Text',
+          doc => "ID of SomaticValidation build",
+          is_optional => 1,
+      },
 
       tumor_only => {
           is => 'Boolean',
@@ -427,7 +433,6 @@ sub doAnnotation{
         `touch $file.anno`;
         return($file . ".anno");
     }
-
     my $anno_cmd = Genome::Model::Tools::Annotate::TranscriptVariants->create(
         variant_file => $file,
         output_file => $file . ".anno",
@@ -498,7 +503,6 @@ sub getReadcounts{
 ###############################################################################################################
 sub execute {
   my $self = shift;
-  my $somatic_validation_model_id = $self->somatic_validation_model_id;
   my $output_dir = $self->output_dir;
   $output_dir =~ s/(\/)+$//; # Remove trailing forward-slashes if any
 
@@ -506,15 +510,27 @@ sub execute {
       mkdir($output_dir);
   }
 
+  unless(defined($self->somatic_validation_build_id) || defined($self->somatic_validation_model_id)){
+      die("must specify either somatic-validation-build-id or somatic-validation-model-id");
+  }
+
   # Check on the input data before starting work
-  my $model = Genome::Model->get( $somatic_validation_model_id );
-  print STDERR "ERROR: Could not find a model with ID: $somatic_validation_model_id\n" unless( defined $model );
-  print STDERR "ERROR: Output directory not found: $output_dir\n" unless( -e $output_dir );
-  return undef unless( defined $model && -e $output_dir );
+  my $model;
+  my $build;
+  if(defined($self->somatic_validation_model_id)){
+      $model = Genome::Model->get( $self->somatic_validation_model_id );
+      print STDERR "ERROR: Could not find a model with ID: " . $self->somatic_validation_model_id . "\n" unless( defined $model );
+      print STDERR "ERROR: Output directory not found: $output_dir\n" unless( -e $output_dir );
+      return undef unless( defined $model && -e $output_dir );
+      $build = $model->last_succeeded_build;
+  } elsif(defined($self->somatic_validation_build_id)){
+      $build = Genome::Model::Build->get( $self->somatic_validation_build_id );
+      $model = $build->model;
+      print STDERR "ERROR: Could not find a model with ID: " . $self->somatic_validation_model_id . "\n" unless( defined $model );
+      print STDERR "ERROR: Output directory not found: $output_dir\n" unless( -e $output_dir );
+      return undef unless( defined $model && -e $output_dir );      
+  }
 
-
-  #grab the info from the model
-  my $build = $model->last_succeeded_build;
   unless( defined($build) ){
       print STDERR "WARNING: Model ", $model->id, "has no succeeded builds\n";
       return undef;

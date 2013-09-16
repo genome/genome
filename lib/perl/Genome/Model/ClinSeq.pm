@@ -68,7 +68,14 @@ class Genome::Model::ClinSeq {
               }
               return $final_name;
             |
-        }
+        },
+    ],
+    has => [
+        individual_common_name => {
+            via => '__self__',
+            to => 'expected_common_name',
+            doc => 'alias for benefit of Solr indexing',
+        },
     ],
     doc => 'clinical and discovery sequencing data analysis and convergence of RNASeq, WGS and exome capture data',
 };
