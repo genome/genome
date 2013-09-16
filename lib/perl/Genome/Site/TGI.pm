@@ -9,6 +9,7 @@ BEGIN {
     else {
         $ENV{GENOME_SYS_ID} = 'GMS1';
     }
+    $ENV{GENOME_ROOT} = "/gsc/scripts/opt/genome/gms-root/";
     $ENV{GENOME_HOME} = "/gsc/scripts/opt/genome/home/";
 
     if ($ENV{GENOME_DEV_MODE}) {
