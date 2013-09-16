@@ -97,10 +97,6 @@ EOS
 sub execute {
     my ($self) = @_;
 
-    if ($self->roi_list) {
-        $self->_check_roi_list;
-    }
-
     Genome::Sys->create_directory($self->output_directory);
     my @builds = $self->_resolve_builds();
     my $software_result = Genome::Model::Tools::Vcf::CreateCrossSampleVcf::Result->get_or_create(
@@ -144,21 +140,42 @@ sub _check_roi_list {
 
 sub generate_result {
     my ($self) = @_;
+    
+    my $builds = $self->_resolve_builds;
 
-    my @builds = $self->builds;
-    my $pp = $self->_check_build_processing_profiles(\@builds);
-    my ($samtools_version, $samtools_params) = $self->_get_samtools_version_and_params($pp);
+    $self->_validate_inputs($builds);
 
+    my $workflow = $self->_construct_workflow;
+
+    my $inputs = $self->_get_workflow_inputs($builds);
+
+    my $result = Workflow::Simple::run_workflow_lsf( $workflow, %$inputs);
+
+    return 1;
+}
+
+sub _validate_inputs {
+    my ($self, $builds) = @_;
+    my $pp = $self->_check_build_processing_profiles($builds);
     unless(-d $self->output_directory) {
         die $self->error_message("Unable to find output directory: " . $self->output_directory);
     }
 
-    my $num_builds = scalar(@builds);
-    my $accessor = sprintf("get_%s_vcf", $self->variant_type);
+    if ($self->roi_list) {
+        $self->_check_roi_list;
+    }
 
+    $self->_check_build_files($builds);
+
+    return 1;
+}
+
+sub _check_build_files {
+    my ($self, $builds) = @_;
 
     my (@builds_with_file, @builds_without_file, @vcf_files);
-    for my $build (@builds) {
+    my $accessor = $self->get_vcf_accessor;
+    for my $build (@$builds) {
         my $vcf_file = $build->$accessor;
         if (-s $vcf_file) {
             push @builds_with_file, $build->id;
@@ -168,6 +185,7 @@ sub generate_result {
         }
     }
 
+    my $num_builds = scalar(@$builds);
     unless( scalar(@builds_with_file) == $num_builds){
         die $self->error_message("The number of input builds ($num_builds) did not match the" .
             " number of vcf files found (" . scalar (@builds_with_file) . ").\n" .
@@ -176,17 +194,108 @@ sub generate_result {
             "Builds with missing or zero size file: " . join(",", @builds_without_file) . "\n"
         );
     }
+}
 
-    my $reference_sequence_build = $builds[0]->reference_sequence_build;
+sub _construct_workflow {
+    my ($self) = @_;
 
-    switch ($self->variant_type) {
-        case ('indels') { $self->_handle_indels(\@builds, \@vcf_files,
-                $reference_sequence_build); } #should care about region limiting...
-        case ('snvs') { $self->_handle_snvs(\@builds, $accessor, \@vcf_files,
-                $reference_sequence_build,
-                $samtools_version, $samtools_params); }
+    #Initialize workflow object
+    my $workflow = Workflow::Model->create(
+        name => 'Multi-Vcf Merge',
+        input_properties => [
+            "joinx_version",
+            "output_directory",
+            "final_output",
+            "merged_vcf",
+            "reference_sequence_path",
+            "merged_position_bed",
+            "use_bgzip",
+            "samtools_version",
+            "samtools_params",
+            "build_clumps",
+        ],
+        output_properties => [
+            'output',
+        ],
+    );
+    #set log directory
+    $workflow->log_dir($self->output_directory);
+
+    # Make initial merge operation, return it
+
+    if ($self->roi_list) {
+        $self->_add_region_limiting($workflow); #parallel by build_clumps
+        $self->_add_initial_merge($workflow); # one operation, build_clumps as input OR region_limiting outputs as input
+
+        # Make roi operation, return it
+
+        # Run method that takes the workflow, merge operation, left operation (input connector or roi operation), name of left property
+    } else {
+        $self->_add_initial_merge
     }
+
+    # Option 2: add_initial_merge says if(roi list) connect to roi outputs, otherwise connect to build clumps in input connector
+
+
     return 1;
+}
+
+sub _get_build_clump {
+    my ($self, $build) = @_;
+
+    my $accessor = $self->get_vcf_accessor;
+    my $sample = $build->model->subject->id;
+    my $dir = $self->output_directory . "/".$sample;
+
+    my $clump = Genome::Model::Tools::Vcf::CreateCrossSampleVcf::BuildClump->create(
+        backfilled_vcf      => $dir."/".$self->variant_type.".backfilled_for_".$self->variant_type.".vcf.gz",
+        bam_file            => $build->whole_rmdup_bam_file,
+        mpileup_output_file => $dir."/".$sample.".for_".$self->variant_type.".pileup.gz",
+        sample              => $sample,
+        vcf_file            => $build->$accessor,
+    );
+
+    #my $vcf_file = defined($self->roi_list) ? $self->output_directory."/region_limited_inputs/".$self->variant_type.".".$sample.".region_limited.vcf.gz" : $build->$accessor;
+
+    return $clump;
+}
+
+sub get_vcf_accessor {
+    my $self = shift;
+    return sprintf("get_%s_vcf", $self->variant_type);
+}
+
+sub _get_workflow_inputs {
+    my ($self, $builds) = @_;
+
+    my $reference_sequence_build = $builds->[0]->reference_sequence_build;
+    my $pp = $builds->[0]->processing_profile;
+    my $accessor = $self->get_vcf_accessor;
+    my ($samtools_version, $samtools_params) = $self->_get_samtools_version_and_params($pp);
+    my %inputs;
+    $inputs{joinx_version} = $self->joinx_version;
+    $inputs{output_directory} = $self->output_directory;
+    $inputs{final_output} = $self->output_directory."/".$self->variant_type.".merged.vcf.gz";
+    $inputs{merged_vcf} = $inputs{final_output};
+    $inputs{reference_sequence_path} = $reference_sequence_build->full_consensus_path('fa');
+    $inputs{merged_positions_bed} = $self->output_directory."/merged_positions.bed.gz";
+    $inputs{use_bgzip} = 1;
+    $inputs{samtools_version} = $samtools_version if defined $samtools_version;
+    $inputs{samtools_params} = $samtools_params if defined $samtools_params;
+
+    #populate the per-build inputs
+    my @clumps;
+    for my $build (@$builds){
+        my $sample = $build->model->subject->id;
+        my $dir = $self->output_directory . "/".$sample;
+        Genome::Sys->create_directory($dir);
+
+        my $clump = $self->_get_build_clump($build);
+        push @clumps, $clump;
+    }
+    $inputs{build_clumps} = \@clumps;
+
+    return \%inputs;
 }
 
 sub _handle_indels {
@@ -518,7 +627,7 @@ sub _resolve_builds {
         reference_sequence => [$reference_sequence],
     );
 
-    return @builds;
+    return \@builds;
 }
 
 sub _dump_workflow {
