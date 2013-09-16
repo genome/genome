@@ -7,8 +7,8 @@ BEGIN {
 
 
 use above 'Genome';
-use Genome::TestObjGenerator::Model::ReferenceAlignment;
-use Genome::TestObjGenerator::Build;
+use Genome::Test::Factory::Model::ReferenceAlignment;
+use Genome::Test::Factory::Build;
 use Test::More;
 use Data::Dumper;
 
@@ -20,8 +20,8 @@ my $pkg = 'Genome::Model';
 use_ok($pkg);
 
 
-my $model = Genome::TestObjGenerator::Model::ReferenceAlignment->setup_object();
-my @builds = map { Genome::TestObjGenerator::Build->setup_object(model_id => $_) } ($model->id) x 3;
+my $model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object();
+my @builds = map { Genome::Test::Factory::Build->setup_object(model_id => $_) } ($model->id) x 3;
 
 $builds[0]->creation_event->date_scheduled("2013-08-26 00:00:00");
 $builds[1]->creation_event->date_scheduled("2013-08-26 00:00:01");

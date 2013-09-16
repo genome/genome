@@ -195,9 +195,9 @@ ok($wm =~ /Sample specified as tumor fake_sample_2.*indicates it is a normal!/, 
 sub setup_somatic_variation_build {
     my $i = shift;
 
-    use Genome::TestObjGenerator::Model::SomaticValidation;
+    use Genome::Test::Factory::Model::SomaticValidation;
 
-    my $somvar_build = Genome::TestObjGenerator::Model::SomaticValidation->setup_somatic_variation_build();
+    my $somvar_build = Genome::Test::Factory::Model::SomaticValidation->setup_somatic_variation_build();
 
     my $dir = ($temp_dir . '/' . 'fake_samtools_result' . $i);
     Genome::Sys->create_directory($dir);
