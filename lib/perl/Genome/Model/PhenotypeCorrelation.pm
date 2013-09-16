@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Genome;
 use List::Util qw(reduce);
-use Genome::Utility::Vcf "open_vcf_file";
+use Genome::File::Vcf::Reader;
 use Math::Complex;
 use File::chdir;
 use File::Basename qw( fileparse );
@@ -939,19 +939,8 @@ sub glm_max_cols_per_file {
 
 sub _samples_from_vcf {
     my ($self) = @_;
-    my $fh = open_vcf_file($self->multisample_vcf);
-
-    my @samples;
-    while(my $line = $fh->getline) {
-        if($line =~ /^#CHROM/) {
-            chomp $line;
-            my @columns = split /\t/, $line;
-            splice @columns,0,9;
-            @samples = @columns;
-        }
-    }
-    close($fh);
-    return @samples;
+    my $reader = Genome::File::Vcf::Reader->new($self->multisample_vcf);
+    return $reader->header->sample_names;
 }
 
 sub _get_builds {
