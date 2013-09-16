@@ -8,6 +8,7 @@ use Workflow;
 use Workflow::Simple;
 use Carp;
 use Data::Dumper;
+use Genome::File::Vcf::Reader;
 use Genome::Utility::Vcf ('open_vcf_file', 'parse_vcf_line', 'deparse_vcf_line', 'get_vcf_header', 'get_samples_from_header');
 
 class Genome::Model::Tools::DetectVariants2::Filter::FalsePositiveVcf {
@@ -64,36 +65,32 @@ sub _convert_to_standard_formats {
         return 1;
     }
 
-    # Get the header
-    my ($header, $raw_fh) = get_vcf_header($raw_file);
-    my @header_array = split "\n", $header;
+    my $reader = Genome::File::Vcf::Reader->new($raw_file);
+    my $header = $reader->header;
 
     # Put header and only PASS variants in HQ file
     my $pass_snv_output_file = $self->_temp_staging_directory . "/snvs.hq";
     my $pass_fh = Genome::Sys->open_file_for_writing($pass_snv_output_file);
-    $pass_fh->print($header);
+    $pass_fh->print($header->to_string);
 
     # Put header and only non PASS variants in LQ file
     my $fail_snv_output_file = $self->_temp_staging_directory . "/snvs.lq";
     my $fail_fh = Genome::Sys->open_file_for_writing($fail_snv_output_file);
-    $fail_fh->print($header);
+    $fail_fh->print($header->to_string);
 
-    my @sample_names = get_samples_from_header(\@header_array);
-
-    while(my $line = $raw_fh->getline) {
-        my $parsed_line = parse_vcf_line($line, \@sample_names);
-
+    while(my $entry = $reader->next) {
         my $pass = 1;
-        for my $sample_name (@sample_names) {
-            unless ( $parsed_line->{sample}{$sample_name}{"FT"} eq 'PASS' or $parsed_line->{sample}{$sample_name}{"FT"} eq '.') {
+        for my $sample_index (0..$#{$header->sample_names}) {
+            my $ft_value = $entry->sample_field($sample_index, 'FT');
+            unless ($ft_value eq 'PASS' or $ft_value eq '.') {
                 $pass = 0;
             }
         }
 
         if ($pass) {
-            $pass_fh->print($line);
+            $pass_fh->print($entry->to_string);
         } else {
-            $fail_fh->print($line);
+            $fail_fh->print($entry->to_string);
         }
     }
 
