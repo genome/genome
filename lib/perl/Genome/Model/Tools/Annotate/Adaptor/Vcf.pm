@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use IO::File;
 use Genome;
-use Genome::Utility::Vcf "open_vcf_file";
+use Genome::File::Vcf::Reader;
 
 class Genome::Model::Tools::Annotate::Adaptor::Vcf {
     is => 'Genome::Model::Tools::Annotate',
@@ -68,19 +68,17 @@ sub execute {
         $output_fh = IO::Handle->new();
         $output_fh->fdopen(fileno(STDOUT),">");
     }
-    my $vcf_fh = open_vcf_file($self->vcf_file);
+    my $reader = Genome::File::Vcf::Reader->new($self->vcf_file);
 
-    my $line = $vcf_fh->getline;
-    while($line =~m/^#/) {
-        $line = $vcf_fh->getline;
-    }
-    do {
-        my ($chr, $pos, $id, $ref_base, $alt, undef) = split "\t", $line;
-        my @alts = split ",", $alt;
+    while (my $entry = $reader->next()) {
+        my $chr = $entry->{chrom};
+        my $pos = $entry->{position};
+        my $ref = $entry->{reference_allele};
+        my @alts = @{$entry->{alternate_alleles}};
         for my $var (@alts) {
-            $output_fh->print("$chr\t$pos\t$pos\t$ref_base\t$var\n");
+            $output_fh->print("$chr\t$pos\t$pos\t$ref\t$var\n");
         }
-    }while ($line = $vcf_fh->getline);
+    }
     return 1;
 }
 
