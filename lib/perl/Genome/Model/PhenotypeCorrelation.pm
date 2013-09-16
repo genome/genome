@@ -114,7 +114,7 @@ class Genome::Model::PhenotypeCorrelation {
             doc => 'the nhlbi esp build by which to annotate allele frequencies',
         },
         previous_variant_detection_results => {
-            is => 'Genome::File::Vcf',
+            is => 'Path',
             doc => 'path to a VCF of previous: skip variant detection and use this',
         },
         nomenclature => {
@@ -337,10 +337,10 @@ sub _execute_build {
 
     if ($build->previous_variant_detection_results) {
         #preserve a copy of the multisample VCF in the build directory
-        my ($path,$name,$vcf_type) = fileparse($build->previous_variant_detection_results->path,qr{\.vcf\.gz$},qr{\.vcf$});
+        my ($path,$name,$vcf_type) = fileparse($build->previous_variant_detection_results,qr{\.vcf\.gz$},qr{\.vcf$});
         my $copied_filename = $build->data_directory . "/previously_detected_variants" . $vcf_type;
-        $self->status_message("Copying build input: " . $build->previous_variant_detection_results->path . " to $copied_filename");
-        my $result = Genome::Sys->copy_file($self->previous_variant_detection_results->path, $copied_filename);
+        $self->status_message("Copying build input: " . $build->previous_variant_detection_results. " to $copied_filename");
+        my $result = Genome::Sys->copy_file($self->previous_variant_detection_results, $copied_filename);
         unless($result) {
             die $self->error_message("Failed to copy previous variant detection results to the build directory");
         }
