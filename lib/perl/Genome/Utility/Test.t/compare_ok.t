@@ -103,7 +103,6 @@ subtest 'compare_ok matches diff command' => sub {
 
     {
         test_out('not ok 1');
-        test_fail(+1);
         my $compare_ok = compare_ok($a_fn, $expected_fn, diag => 0);
         test_test('compare_ok ran on different files');
         my $diff    = (system(qq(diff -u "$expected_fn" "$a_fn" > /dev/null)) == 0 ? 1 : 0);
@@ -133,7 +132,6 @@ subtest 'compare_ok replace' => sub {
     $a_fh->close();
 
     test_out('not ok 1');
-    test_fail(+1);
     compare_ok($a_fn, $expected_fn, diag => 0);
     test_test('compare_ok failed without replace');
 

@@ -162,6 +162,8 @@ sub compare_ok {
 
     my $tb = __PACKAGE__->builder;
 
+    $tb->no_diag(!$o{diag});
+
     my(@iters,@filename);
     foreach my $file ( $file_1, $file_2 ) {
         push @filename, $file;
@@ -196,15 +198,14 @@ sub compare_ok {
             }
 
             # different
-            if($o{diag}) {
-                my($line1,$line2) = @lines[0,$i];
-                chomp($line1, $line2);
+            my($line1,$line2) = @lines[0,$i];
+            chomp($line1, $line2);
 
-                $tb->diag(sprintf("First diff:\n--- %s line %d\n+++ %s line %d\n-%s\n+%s\n",
-                        $filename[0], $iters[0]->('input_line_number'),
-                        $filename[$i], $iters[$i]->('input_line_number'),
-                        $line1, $line2));
-            }
+            $tb->diag(sprintf("First diff:\n--- %s line %d\n+++ %s line %d\n-%s\n+%s\n",
+                    $filename[0], $iters[0]->('input_line_number'),
+                    $filename[$i], $iters[$i]->('input_line_number'),
+                    $line1, $line2));
+
             $result = 0;
             last GET_LINE_FROM_FILES;
         }
