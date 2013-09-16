@@ -329,9 +329,9 @@ sub _rsync_ftp {
         cd $rcd; 
         mirror --verbose --continue --use-cache --exclude fs/" 
     |;
+    Genome::Sys->shellcmd(cmd => $cmd);
     my $manifest = "$lcd/fs-tgz/MANIFEST";
     unlink $manifest if $manifest;
-    Genome::Sys->shellcmd(cmd => $cmd);
     my @files = glob("$lcd/fs-tgz/*");
     $self->_decompress_allocation_tgzs(@files);
     return 1;
