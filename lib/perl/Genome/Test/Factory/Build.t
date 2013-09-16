@@ -10,19 +10,21 @@ use warnings;
 
 use above "Genome";
 use Test::More tests => 7;
+use Genome::Test::Factory::Test qw(test_setup_object);
 
-use_ok("Genome::Test::Factory::Build");
+my $class = 'Genome::Test::Factory::Build';
+use_ok($class);
 use_ok("Genome::Test::Factory::Model::ReferenceAlignment");
 
 my $m = Genome::Test::Factory::Model::ReferenceAlignment->setup_object();
 ok($m->isa("Genome::Model"), "Generated a model");
 
-my $b = Genome::Test::Factory::Build->setup_object(model_id => $m->id);
-ok($b->isa("Genome::Model::Build"), "Generated a build");
-
-my $b2 = Genome::Test::Factory::Build->setup_object(model_id => $m->id);
-ok($b2->isa("Genome::Model::Build"), "Generated a second build");
-
-my $b3 = Genome::Test::Factory::Build->setup_object(model_id => $m->id, status => "Succeeded");
-ok($b3->isa("Genome::Model::Build"), "Generated a third build");
+my $b1 = test_setup_object($class, setup_object_args => [model_id => $m->id]);
+my $b2 = test_setup_object($class, setup_object_args => [model_id => $m->id]);
+my $b3 = test_setup_object($class,
+    setup_object_args => [
+        model_id => $m->id,
+        status => 'Succeeded',
+    ]
+);
 is($b3->status, "Succeeded", "Third build is succeeded");
