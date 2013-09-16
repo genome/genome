@@ -70,7 +70,7 @@ ok($cmd->execute, 'executed importer command');
 my @results = $cmd->results;
 is(scalar(@results), 3, 'produced expected number of results');
 
-use Genome::TestObjGenerator::Model::SomaticValidation;
+use Genome::Test::Factory::Model::SomaticValidation;
 sub setup_somatic_variation_models {
     my $test_profile = Genome::ProcessingProfile::ReferenceAlignment->create(
         name => 'test_profile',
@@ -92,7 +92,7 @@ sub setup_somatic_variation_models {
 
     my @somvar_models;
     for(1..2) {
-        my $somvar_build = Genome::TestObjGenerator::Model::SomaticValidation->setup_somatic_variation_build();
+        my $somvar_build = Genome::Test::Factory::Model::SomaticValidation->setup_somatic_variation_build();
         my $somvar_model = $somvar_build->model;
         push @somvar_models, $somvar_model;
 

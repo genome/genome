@@ -29,7 +29,7 @@ sub test_build_inputs_dont_reference_model {
             'Build has previously_discovered_variations_build from model');
 
     my $pdv_build = $m->previously_discovered_variations;
-    my $pdv_build_2 = Genome::TestObjGenerator::Build->setup_object(model_id => $m->id);
+    my $pdv_build_2 = Genome::Test::Factory::Build->setup_object(model_id => $m->id);
 
     # change a model input
     $m->previously_discovered_variations($pdv_build_2);

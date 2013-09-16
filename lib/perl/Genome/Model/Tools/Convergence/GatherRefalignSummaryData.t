@@ -37,18 +37,18 @@ is_deeply($result_data, EXPECTED_DATA, 'Data returned matches expected result.')
 
 
 sub setup_test_build {
-    use Genome::TestObjGenerator::Model::ReferenceAlignment;
-    use Genome::TestObjGenerator::Build;
-    use Genome::TestObjGenerator::InstrumentData::Solexa;
+    use Genome::Test::Factory::Model::ReferenceAlignment;
+    use Genome::Test::Factory::Build;
+    use Genome::Test::Factory::InstrumentData::Solexa;
 
-    my $test_model = Genome::TestObjGenerator::Model::ReferenceAlignment->setup_object();
+    my $test_model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object();
 
-    my $test_instrument_data = Genome::TestObjGenerator::InstrumentData::Solexa->setup_object(
+    my $test_instrument_data = Genome::Test::Factory::InstrumentData::Solexa->setup_object(
         sample_id => $test_model->subject->id,
     );
     $test_model->add_instrument_data($test_instrument_data);
 
-    return Genome::TestObjGenerator::Build->setup_object(
+    return Genome::Test::Factory::Build->setup_object(
         model_id => $test_model->id,
         data_directory => TEST_DATA_DIR . '/build_dir',
     );

@@ -8,11 +8,11 @@ use Test::More;
 use above "Genome";
 use Carp::Always;
 
-use Genome::TestObjGenerator::InstrumentData::Solexa;
-use Genome::TestObjGenerator::AnalysisProject;
-use Genome::TestObjGenerator::Individual;
-use Genome::TestObjGenerator::Sample;
-use Genome::TestObjGenerator::Taxon;
+use Genome::Test::Factory::InstrumentData::Solexa;
+use Genome::Test::Factory::AnalysisProject;
+use Genome::Test::Factory::Individual;
+use Genome::Test::Factory::Sample;
+use Genome::Test::Factory::Taxon;
 
 no warnings qw(redefine);
 use UR::Context::Transaction;
@@ -65,7 +65,7 @@ assert_failed(@$data1[0], 'Found no pairing information');
 assert_failed(@$data2[0], 'Found no pairing information');
 
 #inst data with no ap
-my $inst_data_without_a_project = Genome::TestObjGenerator::InstrumentData::Solexa->setup_object();
+my $inst_data_without_a_project = Genome::Test::Factory::InstrumentData::Solexa->setup_object();
 build_and_run_cmd($inst_data_without_a_project);
 assert_failed($inst_data_without_a_project, "doesn't have an analysis project!");
 done_testing();
@@ -111,21 +111,21 @@ sub build_and_run_cmd {
 }
 
 sub generate_rna_seq_instrument_data {
-    my $taxon = Genome::TestObjGenerator::Taxon->setup_object(
+    my $taxon = Genome::Test::Factory::Taxon->setup_object(
         domain => 'eukaryota',
         name => 'homo sapien'
     );
 
-    my $source = Genome::TestObjGenerator::Individual->setup_object(
+    my $source = Genome::Test::Factory::Individual->setup_object(
         taxon => $taxon
     );
 
-    my $sample = Genome::TestObjGenerator::Sample->setup_object(
+    my $sample = Genome::Test::Factory::Sample->setup_object(
         extraction_type => 'genomic_dna',
         source => $source,
     );
 
-    my $inst_data = Genome::TestObjGenerator::InstrumentData::Solexa->setup_object(
+    my $inst_data = Genome::Test::Factory::InstrumentData::Solexa->setup_object(
         sample => $sample,
         fwd_read_length => 20,
         fwd_clusters => 10,
@@ -135,7 +135,7 @@ sub generate_rna_seq_instrument_data {
         run_type => 'Paired',
     );
 
-    my $ap = Genome::TestObjGenerator::AnalysisProject->setup_object(
+    my $ap = Genome::Test::Factory::AnalysisProject->setup_object(
         config_hash => {
             'Genome::Model::RnaSeq' => _rna_seq_config_hash()
         }
@@ -159,25 +159,25 @@ sub _rna_seq_config_hash {
 }
 
 sub _generate_som_val_instrument_data {
-    my $taxon = Genome::TestObjGenerator::Taxon->setup_object(
+    my $taxon = Genome::Test::Factory::Taxon->setup_object(
         domain => 'eukaryota',
         name => 'homo sapien'
     );
 
-    my $source = Genome::TestObjGenerator::Individual->setup_object(
+    my $source = Genome::Test::Factory::Individual->setup_object(
         taxon => $taxon
     );
 
-    my $sample_1 = Genome::TestObjGenerator::Sample->setup_object(
+    my $sample_1 = Genome::Test::Factory::Sample->setup_object(
         extraction_type => 'genomic_dna',
         source => $source,
     );
 
-    my $sample_2 = Genome::TestObjGenerator::Sample->setup_object(
+    my $sample_2 = Genome::Test::Factory::Sample->setup_object(
         extraction_type => 'genomic_dna',
         source => $source,
     );
-    my $inst_data_1 = Genome::TestObjGenerator::InstrumentData::Solexa->setup_object(
+    my $inst_data_1 = Genome::Test::Factory::InstrumentData::Solexa->setup_object(
         sample => $sample_1,
         fwd_read_length => 20,
         fwd_clusters => 10,
@@ -186,7 +186,7 @@ sub _generate_som_val_instrument_data {
         run_type => 'Paired',
     );
 
-    my $inst_data_2 = Genome::TestObjGenerator::InstrumentData::Solexa->setup_object(
+    my $inst_data_2 = Genome::Test::Factory::InstrumentData::Solexa->setup_object(
         sample => $sample_2,
         fwd_read_length => 20,
         fwd_clusters => 10,
@@ -195,7 +195,7 @@ sub _generate_som_val_instrument_data {
         run_type => 'Paired',
     );
 
-    my $ap = Genome::TestObjGenerator::AnalysisProject->setup_object(
+    my $ap = Genome::Test::Factory::AnalysisProject->setup_object(
         config_hash => {
             'Genome::Model::SomaticValidation' => _som_val_config_hash()
         }
