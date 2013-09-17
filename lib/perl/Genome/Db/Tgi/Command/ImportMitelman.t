@@ -21,7 +21,7 @@ my $output_dir = Genome::Sys->create_temp_directory;
 my $cmd = $class->create(data_url => $url, output_dir => $output_dir);
 ok($cmd->execute, "Import executed successfully");
 
-for my $output_file (qw(mitelman_five_prime mitelman_three_prime)) {
+for my $output_file (qw(MitelmanFivePrime.txt MitelmanThreePrime.txt)) {
     compare_ok("$output_dir/$output_file", "$data_dir/$output_file", "$output_file compares ok");
 }
 

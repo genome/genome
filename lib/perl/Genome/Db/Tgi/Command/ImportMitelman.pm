@@ -9,6 +9,7 @@ class Genome::Db::Tgi::Command::ImportMitelman {
     has => [
         data_url => {
             is => 'Text',
+            default => "ftp://ftp1.nci.nih.gov/pub/CGAP/mitelman.tar.gz",
         },
         output_dir => {
             is => 'Text',
@@ -46,8 +47,8 @@ sub execute {
         }
     }
 
-    my $five_prime_file = $self->output_dir."/mitelman_five_prime";
-    my $three_prime_file = $self->output_dir."/mitelman_three_prime";
+    my $five_prime_file = $self->output_dir."/MitelmanFivePrime.txt";
+    my $three_prime_file = $self->output_dir."/MitelmanThreePrime.txt";
     my $fp_out = Genome::Sys->open_file_for_writing($five_prime_file);
     my $tp_out = Genome::Sys->open_file_for_writing($three_prime_file);
     for my $gene (sort keys %fp) {
