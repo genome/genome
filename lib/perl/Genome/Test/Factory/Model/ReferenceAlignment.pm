@@ -4,12 +4,14 @@ use Genome::Test::Factory::Model;
 
 use strict;
 use warnings;
+
 use Genome;
 use Genome::Test::Factory::ProcessingProfile::ReferenceAlignment;
 use Genome::Test::Factory::Model::ReferenceSequence;
 use Genome::Test::Factory::Build;
+use Genome::Test::Factory::Sample;
 
-our @required_params = qw(reference_sequence_build subject_name subject_type);
+our @required_params = qw(reference_sequence_build subject_id);
 
 sub generate_obj {
     my $self = shift;
@@ -29,12 +31,9 @@ sub create_reference_sequence_build {
     return $b;
 }
 
-sub create_subject_name {
-    return Genome::Test::Factory::Util::generate_name("test_subject");
-}
-
-sub create_subject_type {
-    return "sample_name";
+sub create_subject_id {
+    my $subject = Genome::Test::Factory::Sample->setup_object();
+    return $subject->id;
 }
 
 1;

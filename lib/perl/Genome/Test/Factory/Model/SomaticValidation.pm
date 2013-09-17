@@ -60,7 +60,7 @@ sub setup_somatic_variation_build {
     my $test_instrument_data = Genome::Test::Factory::InstrumentData::Solexa->setup_object();
 
     my $test_model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object(
-        subject_name => $test_sample->name,
+        subject_id => $test_sample->id,
         processing_profile_id => $test_profile->id,
     );
 
@@ -72,7 +72,7 @@ sub setup_somatic_variation_build {
     );
 
     my $test_model_two = Genome::Test::Factory::Model::ReferenceAlignment->setup_object(
-        subject_name => $test_control_sample->name,
+        subject_id => $test_control_sample->id,
         processing_profile_id => $test_profile->id,
     );
 

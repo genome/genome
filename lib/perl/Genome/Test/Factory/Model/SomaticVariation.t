@@ -14,10 +14,10 @@ use Genome::Test::Factory::Model::ReferenceAlignment;
 
 use_ok("Genome::Test::Factory::Model::SomaticVariation");
 
-my $n = Genome::Test::Factory::Model::ReferenceAlignment->setup_object(subject_name => "test_subject");
-my $t = Genome::Test::Factory::Model::ReferenceAlignment->setup_object(subject_name => $n->subject_name, processing_profile_id => $n->processing_profile->id);
+my $n = Genome::Test::Factory::Model::ReferenceAlignment->setup_object();
+my $t = Genome::Test::Factory::Model::ReferenceAlignment->setup_object(subject_id => $n->subject_id, processing_profile_id => $n->processing_profile->id);
 
-my $m = Genome::Test::Factory::Model::SomaticVariation->setup_object(normal_model => $n, tumor_model => $t, );
+my $m = Genome::Test::Factory::Model::SomaticVariation->setup_object(normal_model => $n, tumor_model => $t);
 ok($m->isa("Genome::Model::SomaticVariation"), "Generated a somatic variation model");
 
 done_testing;

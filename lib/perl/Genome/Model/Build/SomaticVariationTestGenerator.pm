@@ -12,8 +12,8 @@ use Genome::Test::Factory::Build;
 
 sub create_somatic_variation_model {
     
-    my $tumor_model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object(subject_name => "test_subject");
-    my $normal_model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object(processing_profile_id => $tumor_model->processing_profile->id, subject_name => $tumor_model->subject_name);
+    my $tumor_model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object();
+    my $normal_model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object(processing_profile_id => $tumor_model->processing_profile->id, subject_id => $tumor_model->subject->id);
     my $tumor_build = Genome::Test::Factory::Build->setup_object(
         model_id => $tumor_model->id, status => "Succeeded");
 
@@ -26,7 +26,7 @@ sub create_somatic_variation_model {
     my $annotation_model = Genome::Test::Factory::Model::ImportedAnnotation->setup_object(name => "test_annotation_build");
     my $annotation_build = Genome::Test::Factory::Build->setup_object(model_id => $annotation_model->id, version => "1", name => "test_annotation_build/1", status => "Succeeded");
 
-    my $somvar_model = Genome::Test::Factory::Model::SomaticVariation->setup_object(normal_model => $normal_model, tumor_model => $tumor_model, annotation_build => $annotation_build, subject_name => $normal_model->subject_name, previously_discovered_variations => create_pdv_build());
+    my $somvar_model = Genome::Test::Factory::Model::SomaticVariation->setup_object(normal_model => $normal_model, tumor_model => $tumor_model, annotation_build => $annotation_build, subject_id => $normal_model->subject->id, previously_discovered_variations => create_pdv_build());
     return $somvar_model, $tumor_build, $normal_build;
 }
 

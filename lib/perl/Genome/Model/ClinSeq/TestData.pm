@@ -91,7 +91,7 @@ sub load {
         dbsnp_build => $dbsnp_build,
         annotation_reference_build => $annotation_build,
         processing_profile_id => $ref_align_pp->id,
-        subject_name => $normal_dna_sample->name,
+        subject_id => $normal_dna_sample->id,
     );
     $normal_model->add_instrument_data($normal_inst_data);
     $ids{NORMAL_REFALIGN_MODEL} = $normal_model->id;
@@ -101,7 +101,7 @@ sub load {
         dbsnp_build => $dbsnp_build,
         annotation_reference_build => $annotation_build,
         processing_profile_id => $ref_align_pp->id,
-        subject_name => $tumor_dna_sample->name,
+        subject_id => $tumor_dna_sample->id,
     );
     $tumor_model->add_instrument_data($tumor_inst_data);
     $ids{TUMOR_REFALIGN_MODEL} = $tumor_model->id;
@@ -109,8 +109,7 @@ sub load {
     my $wgs_pp = Genome::Test::Factory::ProcessingProfile::SomaticVariation->setup_object();
     $ids{WGS_PP} = $wgs_pp->id;
     my $wgs_model = Genome::Test::Factory::Model::SomaticVariation->setup_object(
-        subject_name => $tumor_model->subject->name,
-        subject_type => "sample_group",
+        subject_id => $tumor_model->subject->id,
         normal_model => $normal_model,
         tumor_model => $tumor_model,
         processing_profile_id => $wgs_pp->id,
@@ -128,7 +127,7 @@ sub load {
     my $rna_seq_pp = Genome::Test::Factory::ProcessingProfile::RnaSeq->setup_object();
     $ids{RNASEQ_PP} = $rna_seq_pp->id;
     my $rna_seq_model = Genome::Test::Factory::Model::RnaSeq->setup_object(
-        subject_name => $tumor_rna_sample->name,
+        subject_id => $tumor_rna_sample->id,
         processing_profile_id => $rna_seq_pp->id,
         annotation_build => $annotation_build,
         reference_sequence_build => $ref_seq_build,
