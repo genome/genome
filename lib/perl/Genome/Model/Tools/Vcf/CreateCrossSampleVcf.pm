@@ -151,6 +151,11 @@ sub generate_result {
 
     my $result = Workflow::Simple::run_workflow_lsf( $workflow, %$inputs);
 
+    unless($result){
+        $self->error_message( join("\n", map($_->name . ': ' . $_->error, @Workflow::Simple::ERROR)) );
+        die $self->error_message("Workflow did not return correctly.");
+    }
+
     return 1;
 }
 
@@ -203,6 +208,7 @@ sub _construct_workflow {
     my $workflow = Workflow::Model->create(
         name => 'Multi-Vcf Merge',
         input_properties => [
+        # FIXME replace with keys %inputs?
             "joinx_version",
             "output_directory",
             "final_output",
@@ -221,23 +227,100 @@ sub _construct_workflow {
     #set log directory
     $workflow->log_dir($self->output_directory);
 
+    #$workflow->parallel_by('build_clumps'); # FIXME this will work for _add_region_limiting and _add_work, but not for initial or final merge.
+
     # Make initial merge operation, return it
 
     if ($self->roi_list) {
         $self->_add_region_limiting($workflow); #parallel by build_clumps
-        $self->_add_initial_merge($workflow); # one operation, build_clumps as input OR region_limiting outputs as input
-
-        # Make roi operation, return it
-
-        # Run method that takes the workflow, merge operation, left operation (input connector or roi operation), name of left property
-    } else {
-        $self->_add_initial_merge
     }
 
-    # Option 2: add_initial_merge says if(roi list) connect to roi outputs, otherwise connect to build clumps in input connector
+    $self->_add_initial_merge($workflow); # one operation, build_clumps as input OR region_limiting outputs as input
 
+    # Option 1: region limiting returns an operation. We pass that op into add_initial_merge. It uses that as the left op. otherwise uses input connector.
+        # Only problem is the property name would have to be the same
+
+    # Option 2: add_initial_merge says if(roi list) connect to roi outputs, otherwise connect to build clumps in input connector
+        #my $vcf_file = defined($self->roi_list) ? $self->output_directory."/region_limited_inputs/".$self->variant_type.".".$sample.".region_limited.vcf.gz" : $build->$accessor;
+
+    $self->_add_work($workflow);
+
+    $self->_add_final_merge($workflow);
 
     return 1;
+}
+
+sub _add_initial_merge {
+    my ($self, $workflow) = @_;
+    return $workflow;
+}
+
+sub _add_final_merge {
+    my ($self, $workflow) = @_;
+    return $workflow;
+}
+
+sub _add_work {
+    my ($self, $workflow) = @_;
+    return $workflow;
+}
+
+sub _add_region_limiting {
+    my ($self, $workflow) = @_;
+
+    my $workflow = Workflow::Model->create(
+        name => 'RegionLimitInputs',
+        input_properties => [
+            "builds",
+            "variant_type",
+            "output_directory",
+            "region_bed_file",
+            "roi_name",
+            "wingspan",
+        ],
+        output_properties => [
+            'output',
+        ],
+    );
+
+    my $region_limit_operation = $workflow->add_operation(
+        name => "RegionLimit",
+        operation_type => Workflow::OperationType::Command->get("Genome::Model::Tools::Vcf::RegionLimit"),
+    );
+    $region_limit_operation->parallel_by('build');
+
+
+    #   output_file => $self->output_vcf, #my $filename = sprintf("%s.%s.region_limited.vcf.gz", $self->variant_type, $self->build->model->subject->id);
+    #   vcf_file => $self->vcf_file,
+
+    #   region_bed_file => $self->region_bed_file,
+    #   roi_name => $self->roi_name,
+    #   wingspan => $self->wingspan,
+
+    $workflow->add_link(
+        left_operation => $workflow->get_input_connector,
+        left_property => "builds",
+        right_operation => $region_limit_operation,
+        right_property => "build",
+    );
+    for my $prop (qw(variant_type output_directory region_bed_file roi_name wingspan)) {
+        $workflow->add_link(
+            left_operation => $workflow->get_input_connector,
+            left_property => $prop,
+            right_operation => $region_limit_operation,
+            right_property => $prop,
+        );
+    }
+
+#    $workflow->add_link(
+#        left_operation => $region_limit_operation,
+#        left_property => "output_vcf",
+#        right_operation => $workflow->get_output_connector,
+#        right_property => "output",
+#    );
+
+    return $workflow;
+}
 }
 
 sub _get_build_clump {
@@ -254,8 +337,6 @@ sub _get_build_clump {
         sample              => $sample,
         vcf_file            => $build->$accessor,
     );
-
-    #my $vcf_file = defined($self->roi_list) ? $self->output_directory."/region_limited_inputs/".$self->variant_type.".".$sample.".region_limited.vcf.gz" : $build->$accessor;
 
     return $clump;
 }
