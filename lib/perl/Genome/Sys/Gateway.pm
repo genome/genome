@@ -84,14 +84,17 @@ sub attach {
         my $mount_point = $self->_mount_point_for_protocol($protocol);
         my $already_mounted = 0;
         if (-e $mount_point) {
-            my $exit_code = system "df '$mount_point' | grep '$mount_point'";
+            my $sys_id = $self->id;
+            my $cmd = "df '$mount_point' | grep '$sys_id' | grep '$protocol'";
+            my $exit_code = system $cmd; 
             $exit_code /= 256;
             if ($exit_code == 0) {
+                # actually mounted
                 $self->warning_message("mount point $mount_point exists: already mounted?");
                 $already_mounted = 1; 
             }
             else {
-                # not mounted, empty dir
+                # not mounted, possibly cruft left from killed job
                 unlink $mount_point;
                 if (-e $mount_point) {
                     $self->warning_message("mount point $mount_point exists: failed to remove directory");
