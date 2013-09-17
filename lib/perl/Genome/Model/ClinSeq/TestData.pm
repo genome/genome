@@ -22,10 +22,10 @@ sub load {
     my %ids;
     #need a way to access the data
     my $base_dir = $ENV{GENOME_TEST_INPUTS}."Genome-Model-ClinSeq-TestData/2013-09-12";
-    
+
     $ENV{GENOME_DB} = "$base_dir/reference_annotations/";
-    
-    my $individual = Genome::Individual->create(common_name => "FAKE1", 
+
+    my $individual = Genome::Individual->create(common_name => "FAKE1",
         name => "test-clin-seq",
         gender => "unspecified",
         upn => "-353",
@@ -33,7 +33,7 @@ sub load {
     $ids{TEST_INDIVIDUAL_ID} = $individual->id;
 
 #Obtain a normal DNA sample
-    my $normal_dna_sample = Genome::Sample->create(source => $individual, 
+    my $normal_dna_sample = Genome::Sample->create(source => $individual,
         name => "clinseq-normal-dna",
         common_name => "normal",
         extraction_type => "genomic dna",
@@ -45,7 +45,7 @@ sub load {
     my $normal_inst_data = create_instrument_data_from_sample($normal_dna_sample);
 
 #Obtain a tumor DNA sample
-    my $tumor_dna_sample = Genome::Sample->create(source => $individual, 
+    my $tumor_dna_sample = Genome::Sample->create(source => $individual,
         name => "clinseq-tumor-dna",
         common_name => "met",
         extraction_type => "genomic dna",
@@ -57,7 +57,7 @@ sub load {
     my $tumor_inst_data = create_instrument_data_from_sample($tumor_dna_sample);
 
 #Obtain a tumor RNA sample
-    my $tumor_rna_sample = Genome::Sample->create(source => $individual, 
+    my $tumor_rna_sample = Genome::Sample->create(source => $individual,
         name => "clinseq_tumor_rna",
         common_name => "met",
         extraction_type => "rna",
@@ -109,10 +109,10 @@ sub load {
     my $wgs_pp = Genome::Test::Factory::ProcessingProfile::SomaticVariation->setup_object();
     $ids{WGS_PP} = $wgs_pp->id;
     my $wgs_model = Genome::Test::Factory::Model::SomaticVariation->setup_object(
-        subject_name => $tumor_model->subject->name, 
+        subject_name => $tumor_model->subject->name,
         subject_type => "sample_group",
-        normal_model => $normal_model, 
-        tumor_model => $tumor_model, 
+        normal_model => $normal_model,
+        tumor_model => $tumor_model,
         processing_profile_id => $wgs_pp->id,
         annotation_build => $annotation_build,
         previously_discovered_variations_build => $dbsnp_build,
