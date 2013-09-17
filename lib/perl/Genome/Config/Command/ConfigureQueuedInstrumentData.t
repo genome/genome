@@ -112,26 +112,7 @@ sub build_and_run_cmd {
 }
 
 sub generate_rna_seq_instrument_data {
-    my $taxon = Genome::Test::Factory::Taxon->setup_object(
-        domain => 'eukaryota',
-        name => 'homo sapien'
-    );
-
-    my $source = Genome::Test::Factory::Individual->setup_object(
-        taxon => $taxon
-    );
-
-    my $sample = Genome::Test::Factory::Sample->setup_object(
-        extraction_type => 'genomic_dna',
-        source => $source,
-    );
-
-    my $library = Genome::Test::Factory::Library->setup_object(
-        sample_id => $sample->id,
-    );
-
     my $inst_data = Genome::Test::Factory::InstrumentData::Solexa->setup_object(
-        library_id => $library->id,
         fwd_read_length => 20,
         fwd_clusters => 10,
         rev_read_length => 20,
