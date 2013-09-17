@@ -82,13 +82,37 @@ sub attach {
         }
 
         my $mount_point = $self->_mount_point_for_protocol($protocol);
+        my $already_mounted = 0;
         if (-e $mount_point) {
-            $self->warning_message("mount point $mount_point exists: already mounted?");
-            return 1;
+            my $exit_code = system "df '$mount_point' | grep '$mount_point'";
+            $exit_code /= 256;
+            if ($exit_code == 0) {
+                $self->warning_message("mount point $mount_point exists: already mounted?");
+                $already_mounted = 1; 
+            }
+            else {
+                # not mounted, empty dir
+                unlink $mount_point;
+                if (-e $mount_point) {
+                    $self->warning_message("mount point $mount_point exists: failed to remove directory");
+                }
+            }
         }
 
-        $self->$method();
-        
+        unless ($already_mounted) {
+            eval {
+                $self->$method();
+            };
+            if ($@) {
+                $self->error_message("Failed to mount vi $protocol: $@");
+                next;
+            }
+            unless (-e $mount_point) {
+                $self->status_message("...no $protocol support");
+                next;
+            }
+        }
+
         my $base_dir_symlink = $self->base_dir;
         if (-e $base_dir_symlink) {
             unlink $base_dir_symlink;
@@ -116,12 +140,34 @@ sub detach {
     my $self = shift;
     my $protocol = shift;
 
+    my $base_dir = $self->base_dir;
+
     my @protocols;
+    my $unlink;
     if ($protocol) {
         @protocols = ($protocol);
+        if (my $path = readlink $base_dir) {
+            my $path_protocol = $self->_protocol_for_mount_point($path);
+            if ($path_protocol eq $protocol) {
+                $unlink = 1;
+            }
+        }
     }
     else {
         @protocols = $self->_supported_protocols();
+        if (-l $base_dir) {
+            $unlink = 1;
+        }
+    }
+
+    if ($unlink) {
+        unlink $base_dir;
+        if (-e $base_dir) { 
+            $self->warning_message("failed to remove $base_dir: $!");
+        }
+        else {
+            $self->status_message("removed $base_dir");
+        }
     }
 
     my @errors;
@@ -150,7 +196,6 @@ sub detach {
         $count++;
     }
    
-    my $base_dir = $self->base_dir;
     if (-l $base_dir and not -e $base_dir) {
         unlink $base_dir;
         if (-l $base_dir) {
