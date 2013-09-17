@@ -33,7 +33,6 @@ sub execute {
 
     my $in = Genome::Utility::IO::SeparatedValueReader->create(
         input => $fusion_gene_list,
-        headers => [qw(MOLCLIN REFNO INVNO ORDERNO PREFIX GENE SUFFIX)],
         separator => "\t",
     );
 
