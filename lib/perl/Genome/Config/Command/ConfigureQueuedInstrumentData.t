@@ -11,6 +11,7 @@ use Carp::Always;
 use Genome::Test::Factory::InstrumentData::Solexa;
 use Genome::Test::Factory::AnalysisProject;
 use Genome::Test::Factory::Individual;
+use Genome::Test::Factory::Library;
 use Genome::Test::Factory::Sample;
 use Genome::Test::Factory::Taxon;
 
@@ -177,8 +178,17 @@ sub _generate_som_val_instrument_data {
         extraction_type => 'genomic_dna',
         source => $source,
     );
+
+    my $library_1 = Genome::Test::Factory::Library->setup_object(
+        sample_id => $sample_1->id,
+    );
+
+    my $library_2 = Genome::Test::Factory::Library->setup_object(
+        sample_id => $sample_2->id,
+    );
+
     my $inst_data_1 = Genome::Test::Factory::InstrumentData::Solexa->setup_object(
-        sample => $sample_1,
+        library_id => $library_1->id,
         fwd_read_length => 20,
         fwd_clusters => 10,
         rev_read_length => 20,
@@ -187,7 +197,7 @@ sub _generate_som_val_instrument_data {
     );
 
     my $inst_data_2 = Genome::Test::Factory::InstrumentData::Solexa->setup_object(
-        sample => $sample_2,
+        library_id => $library_2->id,
         fwd_read_length => 20,
         fwd_clusters => 10,
         rev_read_length => 20,
