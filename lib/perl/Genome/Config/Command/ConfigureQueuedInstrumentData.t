@@ -145,23 +145,13 @@ sub _rna_seq_config_hash {
 }
 
 sub _generate_som_val_instrument_data {
-    my $taxon = Genome::Test::Factory::Taxon->setup_object(
-        domain => 'eukaryota',
-        name => 'homo sapien'
-    );
-
-    my $source = Genome::Test::Factory::Individual->setup_object(
-        taxon => $taxon
-    );
-
     my $sample_1 = Genome::Test::Factory::Sample->setup_object(
         extraction_type => 'genomic_dna',
-        source => $source,
     );
 
     my $sample_2 = Genome::Test::Factory::Sample->setup_object(
         extraction_type => 'genomic_dna',
-        source => $source,
+        source_id => $sample_1->source->id,
     );
 
     my $library_1 = Genome::Test::Factory::Library->setup_object(
