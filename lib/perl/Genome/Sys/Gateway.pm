@@ -72,6 +72,7 @@ sub attach {
     }
     $self->debug_message("protocols to test @protocols_to_try");
 
+    my $sys_id = $self->id;
     my $is_already_attached_via = $self->attached_via;
 
     for my $protocol (@protocols_to_try) {
@@ -84,7 +85,6 @@ sub attach {
         my $mount_point = $self->_mount_point_for_protocol($protocol);
         my $already_mounted = 0;
         if (-e $mount_point) {
-            my $sys_id = $self->id;
             my $cmd = "df '$mount_point' | grep '$sys_id' | grep '$protocol'";
             my $exit_code = system $cmd; 
             $exit_code /= 256;
@@ -120,7 +120,8 @@ sub attach {
         if (-e $base_dir_symlink) {
             unlink $base_dir_symlink;
         }
-        Genome::Sys->create_symlink($mount_point, $base_dir_symlink);  
+
+        Genome::Sys->create_symlink(File::Basename::basename($mount_point), $base_dir_symlink);  
 
         if ($self->is_attached) {
             $self->status_message("attached " . $self->id . " via " . $protocol);
