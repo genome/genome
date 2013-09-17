@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use Genome;
 
-our @required_params = qw(name);
+our @required_params = qw(name domain);
 
 sub generate_obj {
     my $self = shift;
@@ -14,6 +14,10 @@ sub generate_obj {
 
 sub create_name {
     return Genome::Test::Factory::Util::generate_name('taxon_name');
+}
+
+sub create_domain {
+    return Genome::Test::Factory::Util::generate_name('domain');
 }
 
 1;
