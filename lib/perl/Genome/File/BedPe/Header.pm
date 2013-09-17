@@ -6,6 +6,8 @@ use warnings;
 sub new {
     my ($class, $lines) = @_;
 
+    $lines = [] unless defined $lines;
+
     my $self = {
         lines => $lines,
         custom_fields => [],
@@ -49,6 +51,12 @@ sub custom_field_index {
         return $self->{_custom_field_idx}{$field_name};
     }
     return;
+}
+
+sub to_string {
+    my $self = shift;
+
+    return join("\n", @{$self->{lines}});
 }
 
 1;

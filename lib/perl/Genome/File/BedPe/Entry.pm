@@ -2,7 +2,7 @@ package Genome::File::BedPe::Entry;
 
 use Genome;
 use Carp qw/confess/;
-use List::AllUtils qw/min/;
+use List::AllUtils qw/min first/;
 
 use strict;
 use warnings;
@@ -30,9 +30,7 @@ sub new {
     my $self = {
         header => $header,
         _line => $line,
-        fields => {
-            custom => [],
-        }
+        custom => [],
     };
 
     bless $self, $class;
@@ -66,6 +64,19 @@ sub validate {
             confess "in entry $self->{_line}: $f is not numeric";
         }
     }
+}
+
+sub to_string {
+    my $self = shift;
+    my $last_field = first { !defined $self->{$ALL_FIELDS[$_]} } 0..$#ALL_FIELDS;
+    if (!defined $last_field) {
+        $last_field = $#ALL_FIELDS;
+    }
+    else {
+        --$last_field;
+    }
+
+    return join("\t", @{$self}{@ALL_FIELDS[0..$last_field]}, @{$self->{custom}});
 }
 
 1;
