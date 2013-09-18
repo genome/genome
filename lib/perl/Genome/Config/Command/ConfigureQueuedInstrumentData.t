@@ -126,8 +126,12 @@ sub generate_rna_seq_instrument_data {
         source => $source,
     );
 
+    my $library = Genome::Test::Factory::Library->setup_object(
+        sample_id => $sample->id,
+    );
+
     my $inst_data = Genome::Test::Factory::InstrumentData::Solexa->setup_object(
-        sample => $sample,
+        library_id => $library->id,
         fwd_read_length => 20,
         fwd_clusters => 10,
         rev_read_length => 20,
