@@ -21,7 +21,6 @@ sub create_somatic_variation_model {
         status => "Succeeded",
     );
 
-    my $reference_sequence_build = $normal_model->reference_sequence_build;
     my $normal_build = Genome::Test::Factory::Build->setup_object(
         model_id => $normal_model->id,
         status => "Succeeded",
