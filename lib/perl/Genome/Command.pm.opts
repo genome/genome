@@ -453,6 +453,44 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>tgi',
+    [
+      '>import-mitelman',
+      [
+        'data-url=s',
+        'files',
+        'output-dir=s',
+        'files',
+        'debug!',
+        undef,
+        'help!',
+        undef
+      ],
+      '>import-from-dgidb-by-category',
+      [
+        'categories=s@',
+        'files',
+        'output-file=s',
+        'files',
+        'debug!',
+        undef,
+        'help!',
+        undef
+      ],
+      '>import-cancer-gene-census',
+      [
+        'data-url=s',
+        'files',
+        'output-file=s',
+        'files',
+        'debug!',
+        undef,
+        'help!',
+        undef
+      ],
+      'help!',
+      undef
+    ],
     '>genbank',
     [
       'help!',
@@ -17478,15 +17516,19 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'antineoplastic-only!',
         undef,
-        'source-trust-levels=s',
-        'files',
+        'debug!',
+        undef,
         'gene-categories=s',
-        'files',
-        'interaction-types=s',
         'files',
         'interaction-sources=s',
         'files',
+        'interaction-types=s',
+        'files',
         'output-file=s',
+        'files',
+        'output-hash-ref=s',
+        undef,
+        'source-trust-levels=s',
         'files',
         'help!',
         undef
