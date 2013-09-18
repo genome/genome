@@ -281,6 +281,11 @@ sub attached_via {
     }
 }
 
+sub _resolve_genome_root {
+    # TODO: Pull from master and get this from $ENV{GENOME_ROOT} 
+    return '/opt/gms';
+}
+
 sub _protocol_for_mount_point {
     my $self = shift;
     my $base_dir = shift;
@@ -290,11 +295,6 @@ sub _protocol_for_mount_point {
     }
     my ($protocol) = ($base_dir =~ /.([^\.]+$)/);
     return $protocol;
-}
-
-sub _resolve_genome_root {
-    # TODO: Pull from master and get this from $ENV{GENOME_ROOT} 
-    return '/opt/gms';
 }
 
 sub _mount_point_for_protocol {
@@ -316,6 +316,13 @@ sub _create_mount_point {
     Genome::Sys->create_directory($mount_point);
     Genome::Sys->shellcmd(cmd => "chgrp genome $mount_point; chmod g+rwxs $mount_point");
     return 1;
+}
+
+sub _is_mount_point {
+    my $self = shift;
+    my $path = shift;
+    my @matches = grep { /${path}$/ } `df $path`;
+    return (@matches ? (1) : ());  
 }
 
 sub _decompress_allocation_tgzs {
@@ -405,22 +412,28 @@ sub _attach_s3 {
     # so we first mount the bucket, then make a symlink for the gateway in question
 
     my $s3_bucket = $self->s3_detail;
-    my $bucket_mount_point = $self->_resolve_genome_root() . '/.' . $s3_bucket . '.s3bucket';
+    my $bucket_mount_point = $self->_s3_bucket_mount_point();
+    $DB::single = 1;
     unless (-d $bucket_mount_point) {
         Genome::Sys->create_directory($bucket_mount_point);
     }
-    if ($self->_is_mount_point) {
+    if ($self->_is_mount_point($bucket_mount_point)) {
         $self->status_message("s3 bucket $s3_bucket already mounted at $bucket_mount_point");  
     }
     else {
         my $uid = $<;
         my $gid = getgrnam("genome"); 
-        my $cmd = "s3fs $s3_bucket $bucket_mount_point -o uid=$uid,gid=$gid,use_cache=${s3_bucket}cache";
+        my $cmd = "s3fs $s3_bucket $bucket_mount_point -o uid=$uid,gid=$gid,use_rrs,use_cache=${bucket_mount_point}.cache";
         Genome::Sys->shellcmd(cmd => $cmd);
     }
     
     my $attachment_point = $self->_mount_point_for_protocol('s3');
     if (-l $attachment_point) {
+        my $target = readlink $attachment_point;
+        if ($target eq $attachment_point) {
+            $self->warning_message("already linked to attachment point $attachment_point");
+            return 1;
+        }
         unlink $attachment_point;
     }
     if (-e $attachment_point) {
@@ -432,19 +445,44 @@ sub _attach_s3 {
 
 sub _detach_s3 {
     my $self = shift;
-    my $mount_point = $self->_mount_point_for_protocol('http');
-    my $cmd = "fusermount -u '$mount_point'";
-    Genome::Sys->shellcmd(cmd => $cmd);
+    
+    my $attachment_point = $self->_mount_point_for_protocol('s3');
+    if (-e $attachment_point) {
+        unlink $attachment_point;
+        if (-e $attachment_point) {
+            $self->warning_message("failed to unlink $attachment_point: $?");
+        }
+    }
+    else {
+        $self->warning_message($self->id . ' is not attached!');
+    }
+    
+    my @links = glob($self->_resolve_genome_root() . "/.*.s3");
+    my @active_links;
+    my $s3_bucket = $self->s3_detail;
+    for my $link (@links) {
+        my $target = readlink $link;
+        my $bucket_dir = Cwd::abs_path("$target/..");
+        my $bucket_dirname = File::Basename::basename($bucket_dir);
+        if ($bucket_dirname eq ".$s3_bucket.s3bucket") {
+            push @active_links, $link;
+        }
+    }
+    if (@active_links) {
+        $self->warning_message("leaving s3 bucket $s3_bucket attached because of links from @active_links"); 
+    }
+    else {
+        my $mount_point = $self->_s3_bucket_mount_point();
+        my $cmd = "fusermount -u '$mount_point'";
+        Genome::Sys->shellcmd(cmd => $cmd);
+    }
 }
 
-sub _is_mount_point {
+sub _s3_bucket_mount_point {
     my $self = shift;
-    my $path = shift;
-    my $cmd = "df $path | grep /$path$/";
-    my $exit_code = system $cmd;
-    $exit_code /= 256;
-    # the exit code is 1 when grep fails to find the exact path
-    return !$exit_code;
+    my $s3_bucket = $self->s3_detail;
+    my $bucket_mount_point = $self->_resolve_genome_root() . '/.' . $s3_bucket . '.s3bucket';
+    return $bucket_mount_point;
 }
 
 1;
