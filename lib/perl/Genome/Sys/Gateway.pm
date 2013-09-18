@@ -440,7 +440,8 @@ sub _detach_s3 {
 sub _is_mount_point {
     my $self = shift;
     my $path = shift;
-    my $exit_code = system "df $path | grep /$path$/";
+    my $cmd = "df $path | grep /$path$/";
+    my $exit_code = system $cmd;
     $exit_code /= 256;
     # the exit code is 1 when grep fails to find the exact path
     return !$exit_code;
