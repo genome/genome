@@ -4,7 +4,6 @@ use Test::More;
 
 use Genome::Model::TestHelpers qw(
     create_test_sample
-    create_test_pp
 );
 
 BEGIN {
@@ -23,6 +22,7 @@ use_ok($class);
 test_builds_can();
 test_statuses();
 test_reference_sequences();
+test_processing_profile();
 
 done_testing();
 
@@ -64,6 +64,18 @@ sub test_reference_sequences {
 
     my $command_succeeds = $class->create(builds => [$build_can, $build_cant],
         reference_sequence => [$ref_seq1, $ref_seq2]);
+    ok($command_succeeds->execute, "Command succeeded");
+}
+
+sub test_processing_profile {
+    my $command_fails = $class->create(builds => [$build_can, $build_cant],
+        processing_profile => [$build_can->processing_profile]);
+    my $rv;
+    eval {$rv = $command_fails->execute};
+    ok($@ =~ m/One or more builds failed validation/, 'Command Failed as expected');
+
+    my $command_succeeds = $class->create(builds => [$build_can, $build_cant],
+        processing_profile => [$build_can->processing_profile, $build_cant->processing_profile]);
     ok($command_succeeds->execute, "Command succeeded");
 }
 
