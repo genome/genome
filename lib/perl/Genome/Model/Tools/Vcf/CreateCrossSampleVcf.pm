@@ -321,7 +321,6 @@ sub _add_region_limiting {
 
     return $workflow;
 }
-}
 
 sub _get_build_clump {
     my ($self, $build) = @_;
