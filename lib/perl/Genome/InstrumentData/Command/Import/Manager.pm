@@ -65,11 +65,6 @@ Example for LSF
 
 DOC
         },
-        model_params => {
-            is => 'Text',
-            is_many => 1,
-            doc => 'Parameters to use to create a model for the created instrument data. Give as comma separated key value pairs: param1=value1,param2=value2,... The model class will be derived fromm the processing profile.',
-        },
     ],
     has_optional_transient => [
         _imports => { is => 'Array', },
@@ -82,8 +77,6 @@ DOC
             is => 'Hash', 
             default_value => { map { $_ => qr/%{$_}/ } (qw/ job_name sample_name /), },
         },
-        _model_class => { is => 'Text' },
-        _model_params => { is => 'Hash' },
     ],
 };
 
@@ -134,16 +127,6 @@ sub __errors__ {
             type => 'invalid',
             properties => [qw/ source_files_tsv /],
             desc => $load_info_error,
-        );
-        return @errors;
-    }
-
-    my $model_params_error = $self->_resolve_model_params;
-    if ( $model_params_error ) {
-        push @errors, UR::Object::Tag->create(
-            type => 'invalid',
-            properties => [qw/ model_params /],
-            desc => $model_params_error,
         );
         return @errors;
     }
@@ -207,54 +190,6 @@ sub _load_source_files_tsv {
     return;
 }
 
-sub _resolve_model_params {
-    my $self = shift;
-
-    my @model_params = $self->model_params;
-    return if not @model_params;
-
-    my %model_params;
-    for my $param ( @model_params ) {
-        my ($name, $value) = split('=', $param);
-        if ( not defined $value ) {
-            return "No value for model param $name!";
-        }
-        $model_params{$name} = $value;
-    }
-
-    if ( not $model_params{processing_profile_id} ) {
-        return "No processing profile id for model in params! @model_params";
-    }
-    my $processing_profile_id = delete $model_params{processing_profile_id};
-    $model_params{processing_profile} = Genome::ProcessingProfile->get($processing_profile_id);
-    if ( not $model_params{processing_profile} ) { 
-        return 'Failed to get processing profile for id! '.$processing_profile_id;
-    }
-
-    my @processing_profile_class_parts = split('::', $model_params{processing_profile}->class);
-    my $model_class = join('::', $processing_profile_class_parts[0], 'Model', $processing_profile_class_parts[2]);
-    my $model_meta = $model_class->__meta__;
-    if ( not $model_meta ) {
-        return 'Failed to get model class meta! '.$model_class;
-    }
-
-    for my $param_name ( keys %model_params ) {
-        next if $param_name !~ s/_id$//;
-        my $param_value_id = delete $model_params{$param_name.'_id'};
-        my $param_property = $model_meta->property_meta_for_name($param_name);
-        return "Failed to get '$param_name' property from model class! ".$model_class if not $param_property;
-        my $param_value_class = $param_property->data_type;
-        my $param_value = $param_value_class->get($param_value_id);
-        return "Failed to get $param_value_class for id! $param_value_id" if not $param_value;
-        $model_params{$param_name} = $param_value;
-    }
-
-    $self->_model_class($model_class);
-    $self->_model_params(\%model_params);
-
-    return;
-}
-
 sub _resolve_launch_command {
     my $self = shift;
 
@@ -283,9 +218,6 @@ sub execute {
 
     my $load_instrument_data = $self->_load_instrument_data;
     return if not $load_instrument_data;
-
-    my $load_models = $self->_load_models;
-    return if not $load_models;
 
     my $load_sample_statuses = $self->_load_sample_statuses;
     return if not $load_sample_statuses;
@@ -343,43 +275,6 @@ sub _load_instrument_data {
     return 1;
 }
 
-sub _load_models {
-    my $self = shift;
-
-    my $model_params = $self->_model_params;
-    return 1 if not $model_params;
-
-    my $imports = $self->_imports;
-    my $model_class = $self->_model_class;
-    for my $import ( @$imports ) {
-        # only get/create model once inst data has been created
-        next if not $import->{instrument_data};
-        # and has data file
-        next if not $import->{instrument_data_file} or not -s $import->{instrument_data_file};
-
-        # Only get model for these params and inst data
-        $model_params->{subject} = $import->{sample};
-        $model_params->{'instrument_data.id'} = $import->{instrument_data}->id;
-
-        my $model = $model_class->get(%$model_params);
-        if ( not $model ) {
-            $model = $model_class->create(%$model_params);
-            if ( not $model ) {
-                $self->error_message('Failed to create model for sample! '.$import->{sample_name});
-                return;
-            }
-            $model->add_instrument_data( $import->{instrument_data} );
-        }
-
-        $import->{model} = $model;
-        $import->{build} = $model->latest_build;
-    }
-
-    $self->_imports($imports);
-
-    return 1;
-}
-
 sub _load_sample_statuses {
     my $self = shift;
 
@@ -388,13 +283,11 @@ sub _load_sample_statuses {
 
     my $get_status_for_import = sub{
         my $import = shift;
-        return 'sample_needed' if not $import->{sample};
-        return 'import_'.$import->{job_status} if $import->{job_status};
-        return 'import_needed' if not $import->{instrument_data};
-        return 'import_needed' if not defined $import->{instrument_data_file} or not -s $import->{instrument_data_file};
-        return 'model_needed' if not $import->{model};
-        return 'build_needed' if not $import->{build};
-        return 'build_'.lc($import->{build}->status);
+        return 'no_sample' if not $import->{sample};
+        return $import->{job_status} if $import->{job_status};
+        return 'needed' if not $import->{instrument_data};
+        return 'needed' if not defined $import->{instrument_data_file} or not -s $import->{instrument_data_file};
+        return 'success';
     };
 
     my $imports = $self->_imports;
@@ -452,13 +345,13 @@ sub _launch_imports {
                 $self->error_message('Failed to launch instrument data import command!');
                 return;
             }
-            $import->{status} = 'import_pend';
+            $import->{status} = 'pend';
         }
     }
 
     my $imports = $self->_imports;
     for my $import ( @$imports ) {
-        next if $import->{status} ne 'import_needed';
+        next if $import->{status} ne 'needed';
         $launch_sub->($import) or return;
     }
 
@@ -497,25 +390,15 @@ sub _output_status {
     my $self = shift;
 
     my %totals;
-    my $status = join("\t", (qw/ name status inst_data model build /))."\n";
+    my $status = join("\t", (qw/ name status inst_data /))."\n";
     for my $import ( sort { $a->{sample_name} cmp $b->{sample_name} } @{$self->_imports} ) {
         $totals{total}++;
         $totals{ $import->{status} }++;
-        $totals{build}++ if $import->{status} =~ /^build/;
-        my ($model_id, $build_id) = (qw/ NA NA /);
-        if ( $import->{model} ) {
-            $model_id = $import->{model}->id;
-            if ( $import->{build} and $import->{status} ne 'build_requested' ) {
-                $build_id = $import->{build}->id;
-            }
-        }
         $status .= join(
             "\t",
             $import->{sample_name},
             $import->{status}, 
             ( $import->{instrument_data} ? $import->{instrument_data}->id : 'NA' ),
-            $model_id,
-            $build_id,
         )."\n";
     }
 
