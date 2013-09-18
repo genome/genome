@@ -5,10 +5,7 @@ use warnings;
 
 use JSON;
 use Genome;
-use LWP::UserAgent;
-use HTTP::Request::Common;
 
-my $DOMAIN   = 'http://dgidb.genome.wustl.edu/';
 my $API_PATH = '/api/v1/interactions.json';
 
 my %OPTIONAL_PROPERTIES = (
@@ -36,7 +33,7 @@ my %OPTIONAL_PROPERTIES = (
 );
 
 class Genome::Model::Tools::Dgidb::QueryGene {
-    is  => 'Command::V2',
+    is  => 'Genome::Model::Tools::Dgidb::Base',
     has => [
         genes => {
             is  => 'Text',
@@ -90,8 +87,7 @@ sub execute {
         $params{$property} = $self->$property if $self->$property;
     }
 
-    my $ua   = LWP::UserAgent->new;
-    my $resp = $ua->request(POST $DOMAIN . $API_PATH, \%params);
+    my $resp = $self->post_request(\%params);
 
     if ($resp->is_success) {
         $self->write_output(decode_json($resp->content));
@@ -101,6 +97,10 @@ sub execute {
     }
 
     return 1;
+}
+
+sub get_api_path {
+    return $API_PATH;
 }
 
 
