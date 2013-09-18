@@ -10,7 +10,7 @@ use UR;
 my @_PROPERTY_NAMES = qw(
     backfilled_vcf
     bam_file
-    mpileup_output_file
+    pileup_output_file
     sample
     vcf_file
 );
