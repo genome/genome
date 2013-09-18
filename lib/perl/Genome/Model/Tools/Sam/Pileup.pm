@@ -85,7 +85,7 @@ sub execute {
 
     #set up the appropriate region/view files for the commmand
     if(defined($self->region_file)){
-        if($rf =~ m/.gz$/){
+        if(Genome::Sys->file_is_gzipped($rf)){
             $region_file = "-l <(zcat ".$rf." | awk \'BEGIN { OFS=\\\"\\t\\\"; }  { print \\\$1,\\\$2,\\\$2; }\')";
             $view_region_file = "-L <(zcat ".$vlf.")";
         }elsif (defined($rf)){
