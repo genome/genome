@@ -3,8 +3,9 @@ package Genome::Db::Tgi::Command::ImportFromDgidbByCategory;
 use strict;
 use warnings;
 use Genome;
+use JSON;
 
-my $API_PATH = "/api/v1/genes_by_category.json";
+my $API_PATH = "api/v1/genes_in_category.json";
 
 class Genome::Db::Tgi::Command::ImportFromDgidbByCategory {
     is => 'Genome::Model::Tools::Dgidb::Base',
@@ -27,7 +28,7 @@ sub execute {
     my %genes;
     for my $category ($self->categories) {
         my %params = (category => $category);
-        my $resp = $self->post_request(\%params);
+        my $resp = $self->get_request(\%params);
         if ($resp->is_success) {
             $self->append_response(decode_json($resp->content), \%genes);
         }
