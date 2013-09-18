@@ -35,6 +35,9 @@ my $reader = Genome::Utility::IO::SeparatedValueReader->create(
     separator => "\t",
 );
 
+my $resp = $cmd->get_response();
+ok($resp->is_success, "Got a successful response from dgidb");
+
 my @outputs;
 while (my $data = $reader->next) {
     push @outputs, $data;

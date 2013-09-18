@@ -80,14 +80,7 @@ EOS
 sub execute {
     my $self = shift;
 
-    my %params = (genes => $self->genes);
-    $params{drug_types} = 'antineoplastic' if $self->antineoplastic_only;
-
-    for my $property (keys %OPTIONAL_PROPERTIES) {
-        $params{$property} = $self->$property if $self->$property;
-    }
-
-    my $resp = $self->post_request(\%params);
+    my $resp = $self->get_response();
 
     if ($resp->is_success) {
         $self->write_output(decode_json($resp->content));
@@ -97,6 +90,18 @@ sub execute {
     }
 
     return 1;
+}
+
+sub get_response {
+    my $self = shift;
+    my %params = (genes => $self->genes);
+    $params{drug_types} = 'antineoplastic' if $self->antineoplastic_only;
+
+    for my $property (keys %OPTIONAL_PROPERTIES) {
+        $params{$property} = $self->$property if $self->$property;
+    }
+
+    return $self->post_request(\%params);
 }
 
 sub get_api_path {
