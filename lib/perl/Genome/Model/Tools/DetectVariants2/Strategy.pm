@@ -165,6 +165,40 @@ sub tree {
     return $self->{_tree};
 }
 
+sub get_detectors {
+    my $self = shift;
+
+    my $tree = $self->parse($self->id);
+    return $self->_get_detectors($tree);
+}
+
+sub _get_detectors {
+    my $self = shift;
+    my $tree = shift;
+
+    my @detectors;
+    if (ref($tree) eq 'ARRAY') {
+        for my $sub_tree (@$tree) {
+            my @other_detectors = $self->_get_detectors($sub_tree);
+            if (@other_detectors) {
+                push @detectors, @other_detectors;
+            }
+        }
+    } elsif (ref($tree) eq 'HASH') {
+        for my $key (keys(%$tree)) {
+            if ($key eq 'detector') {
+                push @detectors, $tree->{$key};
+            } else {
+                my @other_detectors = $self->_get_detectors($tree->{$key});
+                if (@other_detectors) {
+                    push @detectors, @other_detectors;
+                }
+            }
+        }
+    }
+    return @detectors;
+}
+
 sub _add_class_info {
     my ($self, $tree) = @_;
     my @keys = keys %$tree;
