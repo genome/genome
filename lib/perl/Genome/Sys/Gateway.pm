@@ -14,10 +14,11 @@ class Genome::Sys::Gateway {
     has_optional => [
         id_rsa_pub    => { is => 'Text' },
         desc          => { is => 'Text' },
-        ftp_detail    => { is => 'Number' },
-        http_detail   => { is => 'Number' },
-        ssh_detail    => { is => 'Number' },
-        nfs_detail    => { is => 'Number' },
+        ftp_detail    => { is => 'Text' },
+        http_detail   => { is => 'Text' },
+        ssh_detail    => { is => 'Text' },
+        nfs_detail    => { is => 'Text' },
+        s3_detail     => { is => 'Text' },
     ],
     has_calculated => [
         base_dir          => { is => 'FilesystemPath',
@@ -49,14 +50,14 @@ class Genome::Sys::Gateway {
         #uri => "file:$tmpdir/\$rank.dat[$name\t$serial]" }
         is => 'UR::DataSource::Filesystem',
         path  => $ENV{GENOME_HOME} . '/known-systems/$id.tsv',
-        columns => ['hostname','id_rsa_pub','desc','ftp_detail','http_detail','ssh_detail','nfs_detail'],
+        columns => ['hostname','id_rsa_pub','desc','ftp_detail','http_detail','ssh_detail','nfs_detail','s3_detail'],
         delimiter => "\t",
     },
 };
 
 sub _supported_protocols {
     my $self = shift;
-    return ('nfs','ssh','ftp','http');
+    return ('nfs','s3','ssh','ftp','http');
 }
 
 sub attach {
@@ -291,13 +292,20 @@ sub _protocol_for_mount_point {
     return $protocol;
 }
 
+sub _resolve_genome_root {
+    # TODO: Pull from master and get this from $ENV{GENOME_ROOT} 
+    return '/opt/gms';
+}
+
 sub _mount_point_for_protocol {
     my $self = shift;
     my $protocol = shift;
     die "no protocol specified!" unless $protocol;
     my $base_dir_symlink = $self->base_dir;
     my $mount_point = $base_dir_symlink;
-    $mount_point =~ s|/opt/gms/|/opt/gms/.|;
+    my $genome_root = $self->_resolve_genome_root();
+    $genome_root =~ s|/$||;
+    $mount_point =~ s|$genome_root/|$genome_root/.|;
     $mount_point .= '.' . $protocol;
     return $mount_point;
 }
@@ -388,24 +396,54 @@ sub _rsync_ftp {
 
 ##
 
-sub _attach_http {
+sub _attach_s3 {
     my $self = shift;
     my $hostname = $self->hostname;
-    my $http_detail = $self->http_detail;
-    my $mount_point = $self->_mount_point_for_protocol('http');
-    unless (-d $mount_point) {
-        Genome::Sys->create_directory($mount_point);
+
+    # s3fs mounts an entire bucket, not just one directory
+    # (if you figure that out adjust this code)
+    # so we first mount the bucket, then make a symlink for the gateway in question
+
+    my $s3_bucket = $self->s3_detail;
+    my $bucket_mount_point = $self->_resolve_genome_root() . '/.' . $s3_bucket . '.s3bucket';
+    unless (-d $bucket_mount_point) {
+        Genome::Sys->create_directory($bucket_mount_point);
     }
-    #my $cmd = "curlhttpfs 'http://$hostname/$http_detail' '$mount_point' -o tcp_nodelay,kernel_cache,direct_io";
-    my $cmd = "";
-    Genome::Sys->shellcmd(cmd => $cmd);    
+    if ($self->_is_mount_point) {
+        $self->status_message("s3 bucket $s3_bucket already mounted at $bucket_mount_point");  
+    }
+    else {
+        my $uid = $<;
+        my $gid = getgrnam("genome"); 
+        my $cmd = "s3fs $s3_bucket $bucket_mount_point -o uid=$uid,gid=$gid,use_cache=${s3_bucket}cache";
+        Genome::Sys->shellcmd(cmd => $cmd);
+    }
+    
+    my $attachment_point = $self->_mount_point_for_protocol('s3');
+    if (-l $attachment_point) {
+        unlink $attachment_point;
+    }
+    if (-e $attachment_point) {
+        die "path $attachment_point exists and is not a symlink that can be removed??";
+    }
+    my $sys_id = $self->id;
+    Genome::Sys->create_symlink("$bucket_mount_point/$sys_id",$attachment_point);  
 }
 
-sub _detach_http {
+sub _detach_s3 {
     my $self = shift;
     my $mount_point = $self->_mount_point_for_protocol('http');
     my $cmd = "fusermount -u '$mount_point'";
     Genome::Sys->shellcmd(cmd => $cmd);
+}
+
+sub _is_mount_point {
+    my $self = shift;
+    my $path = shift;
+    my $exit_code = system "df $path | grep /$path$/";
+    $exit_code /= 256;
+    # the exit code is 1 when grep fails to find the exact path
+    return !$exit_code;
 }
 
 1;
