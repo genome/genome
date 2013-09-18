@@ -12,15 +12,15 @@ use Genome::Test::Factory::Build;
 
 sub create_somatic_variation_model {
     my $tumor_model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object();
-    my $normal_model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object(
-        processing_profile_id => $tumor_model->processing_profile->id,
-        subject_id => $tumor_model->subject->id,
-    );
     my $tumor_build = Genome::Test::Factory::Build->setup_object(
         model_id => $tumor_model->id,
         status => "Succeeded",
     );
 
+    my $normal_model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object(
+        processing_profile_id => $tumor_model->processing_profile->id,
+        subject_id => $tumor_model->subject->id,
+    );
     my $normal_build = Genome::Test::Factory::Build->setup_object(
         model_id => $normal_model->id,
         status => "Succeeded",
