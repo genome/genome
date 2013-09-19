@@ -7,6 +7,7 @@ use strict;
 use warnings;
 
 use Carp;
+use File::Path qw(make_path);
 
 use base 'Exporter';
 our @EXPORT_OK = qw(create_directory revise_subject_for_ECs build_EC_index create_report_line generate_blast_reports);
