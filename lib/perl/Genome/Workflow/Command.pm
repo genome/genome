@@ -21,6 +21,16 @@ class Genome::Workflow::Command {
 # Inherited Methods
 # ------------------------------------------------------------------------------
 
+sub from_xml_element {
+    my ($class, $element) = @_;
+
+    my $command_class = $class->_get_command_class_from_xml_element($element);
+    return $class->create(
+        name => $element->getAttribute('name'),
+        command => $command_class,
+    );
+}
+
 sub input_properties {
     my $self = shift;
     return map {$_->property_name} $self->command->__meta__->properties(
@@ -83,6 +93,14 @@ sub _get_attribue_from_command {
     } else {
         return;
     }
+}
+
+sub _get_command_class_from_xml_element {
+    my ($class, $element) = @_;
+
+    my $nodes = $element->find('operationtype');
+    my $operation_type_element = $nodes->pop;
+    return $operation_type_element->getAttribute('commandClass');
 }
 
 

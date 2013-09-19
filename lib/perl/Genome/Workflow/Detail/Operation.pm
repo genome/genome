@@ -5,8 +5,10 @@ use warnings;
 
 use Genome;
 use Genome::Workflow::Detail::TypeMap;
-use Set::Scalar;
-use XML::LibXML;
+use IO::Scalar qw();
+use Set::Scalar qw();
+use XML::LibXML qw();
+use Carp qw(confess);
 
 
 class Genome::Workflow::Detail::Operation {
@@ -35,6 +37,19 @@ class Genome::Workflow::Detail::Operation {
 # Abstract methods
 # ------------------------------------------------------------------------------
 
+sub from_xml_element {
+    my ($class, $element) = @_;
+
+    # Prevent accidental recursion when subclasses don't override this method
+    unless ($class eq 'Genome::Workflow::Detail::Operation') {
+        confess $class->error_message(sprintf(
+                "from_xml_element not implemented in subclass %s", $class));
+    }
+
+    my $subclass = $class->_get_subclass_from_element($element);
+    return $subclass->from_xml_element($element);
+}
+
 sub input_properties {}
 sub output_properties {}
 sub operation_type_attributes {}
@@ -43,6 +58,26 @@ sub operation_type_attributes {}
 # ------------------------------------------------------------------------------
 # Public methods
 # ------------------------------------------------------------------------------
+
+sub from_xml {
+    my ($class, $xml) = @_;
+    my $fh = new IO::Scalar \$xml;
+
+    return $class->from_xml_file($fh);
+}
+
+sub from_xml_file {
+    my ($class, $fh) = @_;
+    my $doc = XML::LibXML->load_xml(IO => $fh);
+    return $class->from_xml_element($doc->documentElement);
+}
+
+sub from_xml_filename {
+    my ($class, $filename) = shift;
+
+    my $fh = Genome::Sys->open_file_for_reading($filename);
+    return $class->from_xml_file($fh);
+}
 
 sub is_input_property {
     my ($self, $property_name) = @_;
@@ -144,6 +179,14 @@ sub _add_property_xml_element {
     $element->addChild($inner_element);
 
     return;
+}
+
+sub _get_subclass_from_element {
+    my ($class, $element) = @_;
+    my $nodes = $element->find('operationtype');
+    my $operation_type_element = $nodes->pop;
+    return Genome::Workflow::Detail::TypeMap::class_from_type(
+        $operation_type_element->getAttribute('typeClass'));
 }
 
 1;

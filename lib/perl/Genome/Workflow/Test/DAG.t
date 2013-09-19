@@ -15,6 +15,8 @@ test_validate_unowned_operations();
 test_validate_required_inputs_provided();
 test_validate_no_conflicting_inputs();
 
+test_xml_round_trip();
+
 done_testing();
 
 
@@ -156,4 +158,14 @@ sub test_validate_no_conflicting_inputs {
     };
 
     ok($@, 'conflicting inputs not allowed in dag');
+}
+
+sub test_xml_round_trip {
+    my $xml = <<EOS;
+<?xml version="1.0"?>
+<operation name="top level" logDir="/tmp"><operationtype typeClass="Workflow::OperationType::Model"><inputproperty>some_external_input</inputproperty><outputproperty>some_external_output</outputproperty></operationtype><operation name="some op"><operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" lsfResource="-M 25000000 -R 'select[mem&gt;25000] rusage[mem=25000]'" commandClass="Genome::Workflow::Test::DummyCommand"><inputproperty>input</inputproperty><outputproperty>many_output</outputproperty><outputproperty>result</outputproperty><outputproperty>single_output</outputproperty></operationtype></operation><link leftOperation="input connector" leftProperty="some_external_input" rightOperation="some op" rightProperty="input"/><link leftOperation="some op" leftProperty="single_output" rightOperation="output connector" rightProperty="some_external_output"/></operation>
+EOS
+
+    my $dag = Genome::Workflow::DAG->from_xml($xml);
+    is($dag->get_xml, $xml, 'xml round trip');
 }

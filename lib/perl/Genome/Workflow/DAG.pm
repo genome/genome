@@ -73,10 +73,37 @@ sub connect_output {
     return;
 }
 
+sub operation_named {
+    my ($self, $name) = @_;
+
+    for my $op ($self->operations) {
+        if ($op->name eq $name) {
+            return $op
+        }
+    }
+
+    return;
+}
+
 
 # ------------------------------------------------------------------------------
 # Inherited Methods
 # ------------------------------------------------------------------------------
+
+sub from_xml_element {
+    my ($class, $element) = @_;
+
+    my $self = $class->create(
+        name => $element->getAttribute('name'),
+        log_dir => $element->getAttribute('logDir')
+    );
+
+    $self->_add_operations_from_xml_element($element);
+    $self->_add_links_from_xml_element($element);
+
+    return $self;
+}
+
 
 sub get_xml_element {
     my $self = shift;
@@ -122,6 +149,41 @@ sub validate {
 # ------------------------------------------------------------------------------
 # Private Methods
 # ------------------------------------------------------------------------------
+
+sub _add_operations_from_xml_element {
+    my ($self, $element) = @_;
+
+    my $nodelist = $element->find('operation');
+    for my $node ($nodelist->get_nodelist) {
+        my $op = Genome::Workflow::Detail::Operation->from_xml_element($node);
+        $self->add_operation($op);
+    }
+}
+
+sub _add_links_from_xml_element {
+    my ($self, $element) = @_;
+
+    my $nodelist = $element->find('link');
+    for my $node ($nodelist->get_nodelist) {
+        my $source_op = $self->operation_named(
+                $node->getAttribute('leftOperation'));
+        my $destination_op = $self->operation_named(
+                $node->getAttribute('rightOperation'));
+
+        my %link_params = (
+            source_property => $node->getAttribute('leftProperty'),
+            destination_property => $node->getAttribute('rightProperty'),
+        );
+        if (defined($source_op)) {
+            $link_params{source} = $source_op;
+        }
+        if (defined($destination_op)) {
+            $link_params{destination} = $destination_op;
+        }
+        my $link = Genome::Workflow::Link->create(%link_params);
+        $self->add_link($link);
+    }
+}
 
 sub _property_names_from_links {
     my ($self, $query_name, $property_holder) = @_;

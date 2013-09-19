@@ -14,6 +14,8 @@ test_invalid_parallel_by();
 
 test_validate_invalid_name();
 
+test_xml_round_trip();
+
 done_testing();
 
 
@@ -73,4 +75,14 @@ sub test_validate_invalid_name {
     };
 
     ok($@, 'invalid operation name fails to validate');
+}
+
+sub test_xml_round_trip {
+    my $xml = <<EOS;
+<?xml version="1.0"?>
+<operation name="some op"><operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" lsfResource="-M 25000000 -R 'select[mem&gt;25000] rusage[mem=25000]'" commandClass="Genome::Workflow::Test::DummyCommand"><inputproperty>input</inputproperty><outputproperty>many_output</outputproperty><outputproperty>result</outputproperty><outputproperty>single_output</outputproperty></operationtype></operation>
+EOS
+
+    my $op = Genome::Workflow::Command->from_xml($xml);
+    is($op->get_xml, $xml, 'xml round trip');
 }
