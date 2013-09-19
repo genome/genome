@@ -19,8 +19,9 @@ sub create_read_aligner_name {
     return "bwa";
 }
 
+my $n_create_snv_detection_strategy;
 sub create_snv_detection_strategy {
-    return "samtools";
+    return sprintf('samtools [ --test %d ]', ++$n_create_snv_detection_strategy);
 }
 
 1;
