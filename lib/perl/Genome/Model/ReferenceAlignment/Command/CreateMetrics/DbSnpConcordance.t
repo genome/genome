@@ -9,7 +9,7 @@ if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
 }
 else {
-    plan tests => 29;
+    plan tests => 28;
 }
 
 BEGIN {
@@ -78,11 +78,6 @@ sub setup_test_builds {
         indel_detection_strategy => '-test Genome/Model/Convergence.t',
     );
     ok($test_profile, 'created test processing profile');
-
-    my $test_sample = Genome::Sample->create(
-        name => 'test_subject',
-    );
-    ok($test_sample, 'created test sample');
 
     my $test_instrument_data = Genome::InstrumentData::Solexa->create(
     );
