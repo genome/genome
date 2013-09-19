@@ -79,6 +79,8 @@ sub test_dependent_cron_ref_align_init {
 
     my $genotype_data = Genome::InstrumentData::Imported->create(
         library => $library,
+        import_format => 'genotype file',
+        sequencing_platform => 'infinium',
     );
     isa_ok($genotype_data, 'Genome::InstrumentData::Imported', 'genotype data') or return;
 
