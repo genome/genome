@@ -8,8 +8,8 @@
     <link fromOperation="input connector" fromProperty="roi_name" toOperation="RegionLimitVcf" toProperty="roi_name" />
     <link fromOperation="input connector" fromProperty="wingspan" toOperation="RegionLimitVcf" toProperty="wingspan" />
     <link fromOperation="RegionLimitVcf" fromProperty="output_vcf" toOperation="InitialVcfMerge" toProperty="input_files" />
-    <operation name="RegionLimitVcf">
-        <operationtype commandClass="Genome::Model::Tools::Vcf::CreateCrossSampleVcf::RegionLimitVcf" typeClass="Workflow::OperationType::Command" parallel_by='build' />
+    <operation name="RegionLimitVcf" parallelBy='build'>
+        <operationtype commandClass="Genome::Model::Tools::Vcf::CreateCrossSampleVcf::RegionLimitVcf" typeClass="Workflow::OperationType::Command" />
     </operation>
 
     <!-- InitialVcfMerge -->
@@ -23,13 +23,19 @@
 
 
     <!-- SNVs only stuff -->
+    <link fromOperation="InitialVcfMerge" fromProperty="output_file" toOperation="CreateRegionFile" toProperty="segregating_sites_vcf_file" />
+    <link fromOperation="CreateRegionFile" fromProperty="region_file" toOperation="BackfillVcf" toProperty="region_file" />
     <operation name="CreateRegionFile">
         <operationtype commandClass="Genome::Model::Tools::Vcf::CreateCrossSampleVcf::CreateRegionFile" typeClass="Workflow::OperationType::Command" />
     </operation>
-    <link fromOperation="InitialVcfMerge" fromProperty="output_file" toOperation="CreateRegionFile" toProperty="segregating_sites_vcf_file" />
-    <link fromOperation="CreateRegionFile" fromProperty="region_file" toOperation="BackfillVcf" toProperty="region_file" />
 
-    <operation name="BackfillVcf">
+    <link fromOperation="input connector" fromProperty="build_clumps" toOperation="BackfillVcf" toProperty="build_clump" />
+    <link fromOperation="input connector" fromProperty="ref_fasta" toOperation="BackfillVcf" toProperty="ref_fasta" />
+    <link fromOperation="input connector" fromProperty="use_bgzip" toOperation="BackfillVcf" toProperty="use_bgzip" />
+    <link fromOperation="input connector" fromProperty="samtools_version" toOperation="BackfillVcf" toProperty="samtools_version" />
+    <link fromOperation="input connector" fromProperty="samtools_params" toOperation="BackfillVcf" toProperty="samtools_params" />
+    <link fromOperation="BackfillVcf" fromProperty="backfilled_vcf" toOperation="FinalVcfMerge" toProperty="input_files" />
+    <operation name="BackfillVcf" parallelBy='build_clump'>
         <!-- Pileup -->
         <link fromOperation="input connector" fromProperty="build_clump" toOperation="Pileup" toProperty="build_clump" />
         <link fromOperation="input connector" fromProperty="ref_fasta" toOperation="Pileup" toProperty="ref_fasta" />
@@ -51,7 +57,7 @@
             <operationtype commandClass="Genome::Model::Tools::Vcf::CreateCrossSampleVcf::Backfill" typeClass="Workflow::OperationType::Command" />
         </operation>
 
-        <operationtype typeClass="Workflow::OperationType::Model" parallel_by='build_clump'>
+        <operationtype typeClass="Workflow::OperationType::Model">
             <inputproperty>build_clump</inputproperty>
             <inputproperty>ref_fasta</inputproperty>
             <inputproperty>use_bgzip</inputproperty>
@@ -62,12 +68,6 @@
             <outputproperty>backfilled_vcf</outputproperty>
         </operationtype>
     </operation>
-    <link fromOperation="input connector" fromProperty="build_clumps" toOperation="BackfillVcf" toProperty="build_clump" />
-    <link fromOperation="input connector" fromProperty="ref_fasta" toOperation="BackfillVcf" toProperty="ref_fasta" />
-    <link fromOperation="input connector" fromProperty="use_bgzip" toOperation="BackfillVcf" toProperty="use_bgzip" />
-    <link fromOperation="input connector" fromProperty="samtools_version" toOperation="BackfillVcf" toProperty="samtools_version" />
-    <link fromOperation="input connector" fromProperty="samtools_params" toOperation="BackfillVcf" toProperty="samtools_params" />
-    <link fromOperation="BackfillVcf" fromProperty="backfilled_vcf" toOperation="FinalVcfMerge" toProperty="input_files" />
 
     <!-- FinalVcfMerge -->
     <link fromOperation="input connector" fromProperty="use_bgzip" toOperation="FinalVcfMerge" toProperty="use_bgzip" />
@@ -98,7 +98,6 @@
         <!-- BackfillVcf -->
         <inputproperty>build_clumps</inputproperty>
         <inputproperty>ref_fasta</inputproperty>
-        <inputproperty>use_bgzip</inputproperty>
         <inputproperty>samtools_version</inputproperty>
         <inputproperty>samtools_params</inputproperty>
 
