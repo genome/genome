@@ -16,7 +16,7 @@ class Genome::Model::Tools::Vcf::CreateCrossSampleVcf::DetermineVarscanOptions {
     has_calculated_output => [
         output_file => {
             is => 'Path',
-            calculate =>  q{ File::Spec->join($output_directory, "varscan_consensus.vcf") },
+            calculate =>  q{ File::Spec->join($output_directory, "varscan_consensus.vcf.gz") },
             calculate_from => ['output_directory'],
         },
         output_vcf => {

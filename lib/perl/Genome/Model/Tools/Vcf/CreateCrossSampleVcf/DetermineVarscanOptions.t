@@ -18,8 +18,9 @@ my $cmd = $class->create(
 
 ok($cmd->execute(), 'Successfully executed command');
 
-is(File::Spec->join('some_output_directory', 'varscan_consensus.vcf'),
-    $cmd->output_file, "output_file is as expected");
-is(1, $cmd->output_vcf, "output_vcf is as expected");
+is($cmd->output_file,
+    File::Spec->join('some_output_directory', 'varscan_consensus.vcf.gz'),
+    "output_file is as expected");
+is($cmd->output_vcf, 1, "output_vcf is as expected");
 
 done_testing();
