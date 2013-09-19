@@ -8,6 +8,7 @@ use Workflow;
 use Workflow::Simple;
 use Switch;
 use List::MoreUtils "each_array";
+use File::Spec;
 
 class Genome::Model::Tools::Vcf::CreateCrossSampleVcf {
     is => 'Command::V2',
@@ -24,11 +25,6 @@ class Genome::Model::Tools::Vcf::CreateCrossSampleVcf {
             require_user_verify => 0,
             is_optional => 1,
             doc => 'Model group from which last succeeded builds will be pulled',
-        },
-        output_directory => {
-            is => 'Text',
-            is_optional => 0,
-            doc => 'the directory where you want results stored',
         },
         max_files_per_merge => {
             is => 'Text',
@@ -61,6 +57,11 @@ class Genome::Model::Tools::Vcf::CreateCrossSampleVcf {
             doc => 'Joinx version to use in all joinx operations',
             default => '1.6',
         },
+        output_directory => {
+            is => 'Text',
+            is_optional => 0,
+            doc => 'the directory where you want results stored',
+        },
     ],
     has_optional => [
         software_result => {
@@ -81,6 +82,13 @@ class Genome::Model::Tools::Vcf::CreateCrossSampleVcf {
             doc => 'Number of operations',
         },
     ],
+    has_calculated_output => [
+        output_vcf => {
+            is => 'File',
+            calculate => q| File::Spec->join($output_directory, "$variant_type.merged.vcf.gz") |,
+            calculate_from => [qw(output_directory variant_type)],
+        },
+    ],
     doc => 'Create a combined vcf file for a model-group',
 };
 
@@ -97,10 +105,10 @@ EOS
 sub execute {
     my ($self) = @_;
 
-    Genome::Sys->create_directory($self->output_directory);
-    my @builds = $self->_resolve_builds();
+    $self->status_message("Resolving Builds...");
+    my $builds = $self->_resolve_builds();
     my $software_result = Genome::Model::Tools::Vcf::CreateCrossSampleVcf::Result->get_or_create(
-            builds => \@builds,
+            builds => $builds,
             max_files_per_merge => $self->max_files_per_merge,
             variant_type => $self->variant_type,
             roi_list => $self->roi_list,
@@ -118,6 +126,52 @@ sub execute {
                 sprintf("%s.merged.vcf.gz", $self->variant_type)));
     return 1;
 }
+
+sub generate_result {
+    my ($self) = @_;
+
+    $self->status_message("Resolving Builds...");
+    my $builds = $self->_resolve_builds;
+
+    $self->status_message("Validating Inputs...");
+    $self->_validate_inputs($builds);
+
+    $self->status_message("Constructing Workflow...");
+    my $workflow = $self->_construct_workflow;
+
+    $self->status_message("Getting Workflow Inputs...");
+    my $inputs = $self->_get_workflow_inputs($builds);
+
+    $self->status_message("Running Workflow...");
+    my $result = Workflow::Simple::run_workflow_lsf($workflow, %$inputs);
+
+    unless($result){
+        $self->error_message( join("\n", map($_->name . ': ' . $_->error, @Workflow::Simple::ERROR)) );
+        die $self->error_message("Workflow did not return correctly.");
+    }
+
+    return 1;
+}
+
+
+sub _resolve_builds {
+    my $self = shift;
+
+    my @builds;
+    if ($self->builds and not $self->model_group) {
+        @builds = $self->builds;
+    } elsif ($self->model_group and not $self->builds) {
+        my $command = Genome::ModelGroup::Command::GetLastCompletedBuilds->execute(model_group => $self->model_group);
+        @builds = $command->builds;
+        $self->builds(\@builds);
+    }
+    else {
+        die $self->error_message("Given both builds and model-groups or neither.");
+    }
+
+    return \@builds;
+}
+
 
 # Early detection for the common problem that the ROI reference_name is not set correctly
 sub _check_roi_list {
@@ -138,30 +192,10 @@ sub _check_roi_list {
     return 1;
 }
 
-sub generate_result {
-    my ($self) = @_;
-    
-    my $builds = $self->_resolve_builds;
-
-    $self->_validate_inputs($builds);
-
-    my $workflow = $self->_construct_workflow;
-
-    my $inputs = $self->_get_workflow_inputs($builds);
-
-    my $result = Workflow::Simple::run_workflow_lsf( $workflow, %$inputs);
-
-    unless($result){
-        $self->error_message( join("\n", map($_->name . ': ' . $_->error, @Workflow::Simple::ERROR)) );
-        die $self->error_message("Workflow did not return correctly.");
-    }
-
-    return 1;
-}
-
 sub _validate_inputs {
     my ($self, $builds) = @_;
-    my $pp = $self->_check_build_processing_profiles($builds);
+
+    Genome::Sys->create_directory($self->output_directory);
     unless(-d $self->output_directory) {
         die $self->error_message("Unable to find output directory: " . $self->output_directory);
     }
@@ -170,9 +204,30 @@ sub _validate_inputs {
         $self->_check_roi_list;
     }
 
-    $self->_check_build_files($builds);
+    $self->_validate_builds($builds);
 
     return 1;
+}
+
+sub _validate_builds {
+    my $self = shift;
+    my $builds = shift;
+
+    my $first_build = $builds->[0];
+    my $reference_sequence = $first_build->reference_sequence_build;
+    my $pp = $first_build->processing_profile;
+    my %validation_params = (
+        builds => $builds,
+        builds_can => [qw(reference_sequence_build whole_rmdup_bam_file get_snvs_vcf get_indels_vcf)],
+        status => ['Succeeded'],
+        reference_sequence => [$reference_sequence],
+    );
+    if (!$self->allow_multiple_processing_profiles) {
+        $validation_params{'processing_profile'} = [$pp];
+    }
+    Genome::Model::Build::Command::Validate->execute(%validation_params);
+
+    $self->_check_build_files($builds);
 }
 
 sub _check_build_files {
@@ -204,140 +259,24 @@ sub _check_build_files {
 sub _construct_workflow {
     my ($self) = @_;
 
-    #Initialize workflow object
-    my $workflow = Workflow::Model->create(
-        name => 'Multi-Vcf Merge',
-        input_properties => [
-        # FIXME replace with keys %inputs?
-            "joinx_version",
-            "output_directory",
-            "final_output",
-            "merged_vcf",
-            "reference_sequence_path",
-            "merged_position_bed",
-            "use_bgzip",
-            "samtools_version",
-            "samtools_params",
-            "build_clumps",
-        ],
-        output_properties => [
-            'output',
-        ],
-    );
-    #set log directory
+    my $xml_file;
+    if ($self->roi_list) {
+        if ($self->variant_type eq 'indels') {
+            $xml_file = "RegionLimitAndBackfillIndelVcf.xml";
+        } elsif ($self->variant_type eq 'snvs') {
+            $xml_file = "RegionLimitAndBackfillSnvVcf.xml";
+        }
+    } else {
+        $xml_file = '';
+    }
+
+    (my $base_dir = __FILE__) =~ s/\.pm$//;
+    my $xml = File::Spec->join($base_dir, $xml_file);
+
+    my $workflow = Workflow::Operation->create_from_xml($xml);
     $workflow->log_dir($self->output_directory);
 
-    #$workflow->parallel_by('build_clumps'); # FIXME this will work for _add_region_limiting and _add_work, but not for initial or final merge.
-
-    # Make initial merge operation, return it
-
-    if ($self->roi_list) {
-        $self->_add_region_limiting($workflow); #parallel by build_clumps
-    }
-
-    $self->_add_initial_merge($workflow); # one operation, build_clumps as input OR region_limiting outputs as input
-
-    # Option 1: region limiting returns an operation. We pass that op into add_initial_merge. It uses that as the left op. otherwise uses input connector.
-        # Only problem is the property name would have to be the same
-
-    # Option 2: add_initial_merge says if(roi list) connect to roi outputs, otherwise connect to build clumps in input connector
-        #my $vcf_file = defined($self->roi_list) ? $self->output_directory."/region_limited_inputs/".$self->variant_type.".".$sample.".region_limited.vcf.gz" : $build->$accessor;
-
-    $self->_add_work($workflow);
-
-    $self->_add_final_merge($workflow);
-
-    return 1;
-}
-
-sub _add_initial_merge {
-    my ($self, $workflow) = @_;
     return $workflow;
-}
-
-sub _add_final_merge {
-    my ($self, $workflow) = @_;
-    return $workflow;
-}
-
-sub _add_work {
-    my ($self, $workflow) = @_;
-    return $workflow;
-}
-
-sub _add_region_limiting {
-    my ($self, $workflow) = @_;
-
-    my $workflow = Workflow::Model->create(
-        name => 'RegionLimitInputs',
-        input_properties => [
-            "builds",
-            "variant_type",
-            "output_directory",
-            "region_bed_file",
-            "roi_name",
-            "wingspan",
-        ],
-        output_properties => [
-            'output',
-        ],
-    );
-
-    my $region_limit_operation = $workflow->add_operation(
-        name => "RegionLimit",
-        operation_type => Workflow::OperationType::Command->get("Genome::Model::Tools::Vcf::RegionLimit"),
-    );
-    $region_limit_operation->parallel_by('build');
-
-
-    #   output_file => $self->output_vcf, #my $filename = sprintf("%s.%s.region_limited.vcf.gz", $self->variant_type, $self->build->model->subject->id);
-    #   vcf_file => $self->vcf_file,
-
-    #   region_bed_file => $self->region_bed_file,
-    #   roi_name => $self->roi_name,
-    #   wingspan => $self->wingspan,
-
-    $workflow->add_link(
-        left_operation => $workflow->get_input_connector,
-        left_property => "builds",
-        right_operation => $region_limit_operation,
-        right_property => "build",
-    );
-    for my $prop (qw(variant_type output_directory region_bed_file roi_name wingspan)) {
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => $prop,
-            right_operation => $region_limit_operation,
-            right_property => $prop,
-        );
-    }
-
-#    $workflow->add_link(
-#        left_operation => $region_limit_operation,
-#        left_property => "output_vcf",
-#        right_operation => $workflow->get_output_connector,
-#        right_property => "output",
-#    );
-
-    return $workflow;
-}
-
-sub _get_build_clump {
-    my ($self, $build) = @_;
-
-    my $accessor = $self->get_vcf_accessor;
-    my $sample = $build->model->subject->id;
-    my $dir = $self->output_directory . "/".$sample;
-
-    my $clump = Genome::Model::Tools::Vcf::CreateCrossSampleVcf::BuildClump->create(
-        backfilled_vcf      => $dir."/".$self->variant_type.".backfilled_for_".$self->variant_type.".vcf.gz",
-        bam_file            => $build->whole_rmdup_bam_file,
-        mpileup_output_file => $dir."/".$sample.".for_".$self->variant_type.".pileup.gz",
-        sample              => $sample,
-        vcf_file            => $build->$accessor,
-    );
-
-    return $clump;
 }
 
 sub get_vcf_accessor {
@@ -349,23 +288,47 @@ sub _get_workflow_inputs {
     my ($self, $builds) = @_;
 
     my $reference_sequence_build = $builds->[0]->reference_sequence_build;
-    my $pp = $builds->[0]->processing_profile;
-    my $accessor = $self->get_vcf_accessor;
-    my ($samtools_version, $samtools_params) = $self->_get_samtools_version_and_params($pp);
-    my %inputs;
-    $inputs{joinx_version} = $self->joinx_version;
-    $inputs{output_directory} = $self->output_directory;
-    $inputs{final_output} = $self->output_directory."/".$self->variant_type.".merged.vcf.gz";
-    $inputs{merged_vcf} = $inputs{final_output};
-    $inputs{reference_sequence_path} = $reference_sequence_build->full_consensus_path('fa');
-    $inputs{merged_positions_bed} = $self->output_directory."/merged_positions.bed.gz";
-    $inputs{use_bgzip} = 1;
-    $inputs{samtools_version} = $samtools_version if defined $samtools_version;
-    $inputs{samtools_params} = $samtools_params if defined $samtools_params;
+    my $ref_fasta = $reference_sequence_build->full_consensus_path('fa');
 
-    #populate the per-build inputs
+    my $pp = $builds->[0]->processing_profile;
+    my ($samtools_version, $samtools_params) = $self->_get_samtools_version_and_params($pp->snv_detection_strategy);
+
+    my $region_limiting_output_directory = $self->prepare_region_limiting_output_directory();
+    my $vcf_merge_working_directory = $self->prepare_vcf_merge_working_directory();
+
+    my %inputs = (
+        # RegionLimitVcf
+        builds => $builds,
+        region_limiting_output_directory => $region_limiting_output_directory,
+        variant_type => $self->variant_type,
+        region_bed_file => $self->get_roi_file($reference_sequence_build),
+        roi_name => $self->roi_list->name,
+        wingspan => $self->wingspan,
+
+        # InitialVcfMerge
+        use_bgzip => 1,
+        joinx_version => $self->joinx_version,
+        vcf_merge_working_directory => $vcf_merge_working_directory,
+        segregating_sites_vcf_file => File::Spec->join($self->output_directory, 'segregating_sites.vcf'),
+
+        # BackfillVcf
+        build_clumps => $self->build_clumps,
+        ref_fasta => $ref_fasta,
+        samtools_version => $samtools_version,
+        samtools_params => $samtools_params,
+
+        # FinalVcfMerge
+        output_vcf => $self->output_vcf,
+    );
+
+    return \%inputs;
+}
+
+sub build_clumps {
+    my $self = shift;
+
     my @clumps;
-    for my $build (@$builds){
+    for my $build ($self->builds){
         my $sample = $build->model->subject->id;
         my $dir = $self->output_directory . "/".$sample;
         Genome::Sys->create_directory($dir);
@@ -373,151 +336,41 @@ sub _get_workflow_inputs {
         my $clump = $self->_get_build_clump($build);
         push @clumps, $clump;
     }
-    $inputs{build_clumps} = \@clumps;
-
-    return \%inputs;
+    return \@clumps;
 }
 
-sub _handle_indels {
-    my ($self, $builds, $indel_files, $reference_sequence_build) = @_;
-    my @builds = @{$builds};
-    my @indel_files = @{$indel_files};
-    my $joinx_path = Genome::Model::Tools::Joinx->joinx_path($self->joinx_version);
+sub _get_build_clump {
+    my ($self, $build) = @_;
 
-#    die "Indel code not implemented.";
-#    die "Cannot handle region_limiting indel files." if($region_limited);
+    my $sample = $build->model->subject->id;
+    my $dir = $self->output_directory . "/".$sample;
 
-    my %master_indels = ();
-    my $indel_vcf_header = "";
-    my $indel_vcf_format = "";
-    my @samples = ();
-    my @sample_names = ();
-    my $num_samples = @samples;
-    my %sample_indels = ();
+    my $clump = Genome::Model::Tools::Vcf::CreateCrossSampleVcf::BuildClump->create(
+        backfilled_vcf      => $dir."/".$self->variant_type.".backfilled.vcf.gz",
+        bam_file            => $build->whole_rmdup_bam_file,
+        pileup_output_file => $dir."/".$sample.".for_".$self->variant_type.".pileup.gz",
+        sample              => $sample,
+        vcf_file            => $self->_get_vcf_from_build($build),
+    );
 
-    ## DK's Edit to process indels ##
-    $self->status_message("Building Indel VCF...");
-    my $ea = each_array(@builds, @indel_files);
-    while( my ($build, $indel_file) = $ea->() ) {
-        my $sample = $build->model->subject->id;
-        my $sample_name = $build->model->subject->name;
-        push @samples, $sample;
-        push @sample_names, $sample_name;
-        $num_samples++;
-
-        ## Create output directory for this sample ##
-        my $dir = $self->output_directory . "/".$sample;
-        Genome::Sys->create_directory($dir);
-
-        ## Get the indel file ##
-        my $output_file = "$dir/normalized." . $self->variant_type . ".vcf";
-        $self->status_message("Normalizing $indel_file for $sample");
-        my $cmd = "$joinx_path vcf-normalize-indels -f " .
-                $reference_sequence_build->full_consensus_path('fa') .
-                " -i <(zcat $indel_file) -o $output_file";
-        if(-e $output_file) {
-            $self->status_message("Skipping $cmd...");
-        }
-        else {
-            $self->status_message("Running $cmd...");
-            system("bash -c \"$cmd\"");
-        }
-
-        ## Load output file ##
-        if (-e $output_file) {
-            $self->status_message("Loading indels from $output_file...");
-            my %indels = %{load_indel_vcf($output_file)};
-
-            for my $indel (keys %indels) {
-                if($indel eq 'header') {
-                    $indel_vcf_header = $indels{$indel};
-                }
-                elsif($indel eq 'format') {
-                    $indel_vcf_format = $indels{$indel};
-                }
-                else {
-                    $master_indels{$indel}++;
-                    my $sample_indel_key = join("\t", $indel, $sample);
-                    $sample_indels{$sample_indel_key} = $indels{$indel};
-                }
-            }
-        }
-    }
-
-    ## Open output file ##
-
-    my $out_filename = sprintf('%s/%s.merged.vcf', $self->output_directory, $self->variant_type);
-    my $OUTFILE = Genome::Sys->open_file_for_writing($out_filename);
-    print $OUTFILE "$indel_vcf_header\n";
-    print $OUTFILE "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT";
-    foreach my $sample_name (@sample_names)
-    {
-        print $OUTFILE "\t$sample_name";
-    }
-    print $OUTFILE "\n";
-
-    ## GO through all indels ##
-    my $total_indels = 0;
-    foreach my $indel (sort byChrPos keys %master_indels)
-    {
-#            my $indel_key = join("\t", $chrom, $position, $id, $ref, $alt);
-#           $indels{$indel_key} = join("\t", $qual, $filter, $info, $format, $genotype);
-        my ($chrom, $position, $id, $ref, $alt) = split(/\t/, $indel);
-
-        print $OUTFILE join("\t", $chrom, $position, $id, $ref, $alt, ".", ".", ".", $indel_vcf_format);
-
-        foreach my $sample (@samples)
-        {
-            my $sample_indel_key = join("\t", $indel, $sample);
-            if($sample_indels{$sample_indel_key})
-            {
-                print $OUTFILE "\t" . $sample_indels{$sample_indel_key};
-            }
-            else
-            {
-                print $OUTFILE "\t" . ".";
-            }
-        }
-
-        print $OUTFILE "\n";
-
-        $total_indels++;
-    }
-
-    close($OUTFILE);
-
-    ## Run VCF site filter ##
-    my $cmd = "$joinx_path vcf-site-filter -i " . $self->output_directory . "/" . $self->variant_type . ".merged.vcf  -o" . $self->output_directory . "/" . $self->variant_type . ".merged.pass.vcf -f 0.5";
-    system($cmd);
-    print "$total_indels total indels\n";
-
-    ## Compress the files ##
-    $cmd = "gzip " . $self->output_directory . "/" . $self->variant_type . ".merged.vcf";
-    system($cmd);
-    $cmd = "gzip " .$self->output_directory . "/" . $self->variant_type . ".merged.pass.vcf";
-    system($cmd);
-
-    sub byChrPos
-    {
-        my ($chrom_a, $pos_a) = split(/\t/, $a);
-        my ($chrom_b, $pos_b) = split(/\t/, $b);
-        $chrom_a =~ s/X/23/;
-        $chrom_a =~ s/Y/24/;
-        $chrom_a =~ s/MT/25/;
-        $chrom_a =~ s/[^0-9]//g;
-        $chrom_b =~ s/X/23/;
-        $chrom_b =~ s/Y/24/;
-        $chrom_b =~ s/MT/25/;
-        $chrom_b =~ s/[^0-9]//g;
-        $chrom_a <=> $chrom_b
-        or
-        $pos_a <=> $pos_b
-    }
-
-    return(1);
+    return $clump;
 }
 
-sub roi_file {
+sub _get_vcf_from_build {
+    my ($self, $build) = @_;
+
+    if ($self->roi_list) {
+        my $dir = $self->region_limiting_output_directory;
+        my $filename = sprintf("%s.%s.region_limited.vcf.gz",
+            $self->variant_type, $build->model->subject->id);
+        return File::Spec->join($dir, $filename);
+    } else {
+        my $accessor = $self->get_vcf_accessor;
+        return $build->$accessor;
+    }
+}
+
+sub get_roi_file {
     my ($self, $reference_sequence_build) = @_;
 
     my $roi_file;
@@ -548,862 +401,44 @@ sub roi_file {
     return $roi_file;
 }
 
-sub _handle_snvs {
-    my ($self, $builds, $accessor, $vcf_files, $reference_sequence_build,
-            $samtools_version, $samtools_params) = @_;
-    my @input_files = @{$vcf_files};
-    #create region limited vcfs to work on
-    if(defined($self->roi_list)){
-        @input_files = $self->_region_limit_inputs($accessor, $reference_sequence_build);
-    }
-
-    my @builds = @{$builds};
-
-    my %inputs;
-
-    $inputs{joinx_version} = $self->joinx_version;
-    $inputs{output_directory} = $self->output_directory;
-    $inputs{final_output} = $self->output_directory."/".$self->variant_type.".merged.vcf.gz";
-    $inputs{merged_vcf} = $inputs{final_output};
-    $inputs{reference_sequence_path} = $reference_sequence_build->full_consensus_path('fa');
-    $inputs{merged_positions_bed} = $self->output_directory."/merged_positions.bed.gz";
-    $inputs{use_bgzip} = 1;
-    $inputs{samtools_version} = $samtools_version if defined $samtools_version;
-    $inputs{samtools_params} = $samtools_params if defined $samtools_params;
-
-    #populate the per-build inputs
-    for my $build (@builds){
-        unless ($build->reference_sequence_build == $reference_sequence_build) {
-            die $self->error_message("Multiple reference sequence builds found for this model group between build " . $builds[0]->id . " and build " . $build->id);
-        }
-        my $sample = $build->model->subject->id;
-        my $dir = $self->output_directory . "/".$sample;
-        Genome::Sys->create_directory($dir);
-
-        #if region-limiting, set vcf_file as the region-limited file, otherwise use the input vcf
-        my $vcf_file = defined($self->roi_list) ? $self->output_directory."/region_limited_inputs/".$self->variant_type.".".$sample.".region_limited.vcf.gz" : $build->$accessor;
-        $inputs{$sample."_bam_file"} = $build->whole_rmdup_bam_file;
-        $inputs{$sample."_mpileup_output_file"} = $dir."/".$sample.".for_".$self->variant_type.".pileup.gz";
-        $inputs{$sample."_vcf_file"} = $vcf_file;
-        $inputs{$sample."_backfilled_vcf"} = $dir."/".$self->variant_type.".backfilled_for_".$self->variant_type.".vcf.gz";
-    }
-
-    #create the workflow object
-    my $workflow = $self->_generate_workflow($samtools_version,
-        $samtools_params);
-
-    #set up inputs which are determined by the number of merge steps
-    if(defined($self->max_files_per_merge) && ($self->max_files_per_merge < scalar(@builds))) {
-        #setup a tmp directory for the intermediate output of merging
-        my $tmp_dir = $self->output_directory."/tmp";
-        Genome::Sys->create_directory($tmp_dir);
-        my $submerge = $self->_submerged_position_beds;
-        my @submerges = @{$submerge};
-        my $input_num = 1;
-        my @input_list = @input_files;
-
-        #divide up input files into chunks for sub-merging operations
-        for my $sub_merge (@submerges){
-            $inputs{$sub_merge} = $tmp_dir."/".$sub_merge.".bed.gz";
-            my @local_input_list;
-            for (1..$self->max_files_per_merge){
-               unless(@input_list){
-                    last;
-                }
-                push @local_input_list, shift @input_list;
-            }
-            $inputs{"input_files_".$input_num} = \@local_input_list;
-            $inputs{"submerged_vcfs_".$input_num} = $tmp_dir."/submerged_vcfs_".$input_num.".vcf.gz";
-            $input_num++;
-        }
-    } else {
-        #if the max merge width was set, but not exceeded, run as normal
-        $inputs{input_files} = \@input_files;
-    }
-    my @errors = $workflow->validate;
-    if (@errors) {
-        $self->error_message(@errors);
-        die "Errors validating workflow\n";
-    }
-    $self->_dump_workflow($workflow);
-
-    $self->status_message("Now launching the vcf-merge workflow.");
-    my $result = Workflow::Simple::run_workflow_lsf( $workflow, %inputs);
-
-    unless($result){
-        $self->error_message( join("\n", map($_->name . ': ' . $_->error, @Workflow::Simple::ERROR)) );
-        die $self->error_message("Workflow did not return correctly.");
-    }
-    return $inputs{final_output};
-}
-
-sub _check_build_processing_profiles {
-    my ($self, $build_list) = @_;
-    my @builds = @{$build_list};
-
-    my $pp = $builds[0]->processing_profile;
-    my $pp_id = $pp->id;
-
-    unless($self->allow_multiple_processing_profiles){
-        # ensure that all builds share a processing_profile
-        for my $build (@builds){
-            unless($build->processing_profile->id == $pp_id){
-                die $self->error_message("Inputs do not have matching processing profiles!");
-            }
-        }
-    }
-    return $pp;
-}
-
-## Subroutine to load indels from a VCF file ##
-sub load_indel_vcf {
-    my ($filename) = @_;
-    my %indels = ();
-    my $input = Genome::Sys->open_file_for_reading($filename);
-    my $lineCounter = 0;
-    while (<$input>) {
-        chomp;
-        my $line = $_;
-        $lineCounter++;
-
-        if(substr($line, 0, 1) eq "#") {
-            ## Save header ##
-            if(substr($line, 0, 2) eq "##") {
-                $indels{'header'} .= "\n" if($indels{'header'});
-                $indels{'header'} .= $line;
-            }
-        }
-        else {
-            my ($chrom, $position, $id, $ref, $alt, $qual,
-                    $filter, $info, $format, $genotype) = split(/\t/, $line);
-            my $indel_key = join("\t", $chrom, $position, $id, $ref, $alt);
-            $indels{$indel_key} = $genotype;
-            $indels{'format'} = $format;
-        }
-    }
-
-    return \%indels;
-}
-
-sub _resolve_builds {
+sub prepare_vcf_merge_working_directory {
     my $self = shift;
-    my @builds;
-    if ($self->builds and not $self->model_group) {
-        @builds = $self->builds;
-    } elsif ($self->model_group and not $self->builds) {
-        my $command = Genome::ModelGroup::Command::GetLastCompletedBuilds->execute(model_group => $self->model_group);
-        @builds = $command->builds;
-        $self->builds(\@builds);
-    }
-    else {
-        die $self->error_message("Given both builds and model-groups or neither.");
-    }
-
-    my $reference_sequence = ($builds[0])->reference_sequence_build;
-    Genome::Model::Build::Command::Validate->execute(
-        builds => \@builds,
-        builds_can => [qw(reference_sequence_build whole_rmdup_bam_file get_snvs_vcf get_indels_vcf)],
-        status => ['Succeeded'],
-        reference_sequence => [$reference_sequence],
-    );
-
-    return \@builds;
+    my $dir = $self->vcf_merge_working_directory;
+    return Genome::Sys->create_directory($dir);
 }
 
-sub _dump_workflow {
+sub vcf_merge_working_directory {
     my $self = shift;
-    my $workflow = shift;
-    my $xml_location = shift || $self->output_directory."/workflow.xml";
-    my $xml = $workflow->save_to_xml;
-    my $xml_file = Genome::Sys->open_file_for_writing($xml_location);
-    print $xml_file $xml;
-    $xml_file->close;
-    #$workflow->as_png($self->output_directory."/workflow.png"); #currently commented out because blades do not all have the "dot" library to use graphviz
+    return File::Spec->join($self->output_directory, "vcf_merge_workspace");
 }
 
-sub prepare_region_limited_output_directory {
+sub prepare_region_limiting_output_directory {
     my $self = shift;
-    my $output_directory = File::Spec->join($self->output_directory, "region_limited_inputs");
-    unless(-d $output_directory){
-        mkdir $output_directory;
-        unless(-d $output_directory){
-            die $self->error_message("Could not create output directory for region_limiting at: ".$output_directory);
-        }
-    }
-    return $output_directory;
+    my $dir = $self->region_limiting_output_directory;
+    return Genome::Sys->create_directory($dir);
 }
 
-sub _region_limit_inputs {
-    my ($self, $accessor, $reference_sequence_build) = @_;
-    my @builds = $self->builds;
-
-    my $output_directory = $self->prepare_region_limited_output_directory();
-
-    my $workflow = $self->get_region_limit_workflow();
-    $workflow->log_dir($output_directory);
-
-    #validate workflow
-    my @errors = $workflow->validate;
-    if (@errors) {
-        $self->error_message(@errors);
-        die "Errors validating region-limiting workflow\n";
-    }
-    $self->_dump_workflow($workflow, $output_directory."/workflow.xml");
-
-    $self->status_message("Now launching the region-limiting workflow.");
-    my %inputs = (
-        builds => [$self->builds],
-        variant_type => $self->variant_type,
-        output_directory => $output_directory,
-        region_bed_file => $self->roi_file($reference_sequence_build),
-        roi_name => $self->roi_list->name,
-        wingspan => $self->wingspan,
-    );
-    my $result = Workflow::Simple::run_workflow_lsf($workflow, %inputs);
-    my @output_files = @{$result->{'output'}};
-
-    unless(@output_files){
-        $self->error_message( join("\n", map($_->name . ': ' . $_->error, @Workflow::Simple::ERROR)) );
-        die $self->error_message("Workflow did not return correctly.");
-    }
-
-    #check output files to make sure they exist
-    if(my @error = grep{ not(-e $_)} @output_files){
-        die $self->error_message("The following region limit output files could not be found: ".join("\n",@error));
-    }
-
-    #return a list of the output files
-    return @output_files;
-}
-
-sub get_region_limit_workflow {
+sub region_limiting_output_directory {
     my $self = shift;
-
-    my $workflow = Workflow::Model->create(
-        name => 'RegionLimitInputs',
-        input_properties => [
-            "builds",
-            "variant_type",
-            "output_directory",
-            "region_bed_file",
-            "roi_name",
-            "wingspan",
-        ],
-        output_properties => [
-            'output',
-        ],
-    );
-
-    my $region_limit_operation = $workflow->add_operation(
-        name => "RegionLimit",
-        operation_type => Workflow::OperationType::Command->get("Genome::Model::Tools::Vcf::CreateCrossSampleVcf::RegionLimitVcf"),
-    );
-    $region_limit_operation->parallel_by('build');
-
-    $workflow->add_link(
-        left_operation => $workflow->get_input_connector,
-        left_property => "builds",
-        right_operation => $region_limit_operation,
-        right_property => "build",
-    );
-    for my $prop (qw(variant_type output_directory region_bed_file roi_name wingspan)) {
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => $prop,
-            right_operation => $region_limit_operation,
-            right_property => $prop,
-        );
-    }
-
-    $workflow->add_link(
-        left_operation => $region_limit_operation,
-        left_property => "output_vcf",
-        right_operation => $workflow->get_output_connector,
-        right_property => "output",
-    );
-
-    return $workflow;
-}
-
-sub _generate_workflow {
-    my ($self, $samtools_version, $samtools_params) = @_;
-
-    my @builds = $self->builds;
-    my $num_builds = scalar(@builds);
-    my @inputs;
-
-    for my $build (@builds){
-        my $sample = $build->model->subject->id;
-        push @inputs, ($sample."_bam_file",
-            $sample."_mpileup_output_file",
-            $sample."_vcf_file",
-            $sample."_backfilled_vcf" );
-    }
-
-    my @merged_positions_beds;
-    my @submerged_vcfs;
-
-    #prepare sub-merge inputs, outputs, etc
-    if(defined($self->max_files_per_merge) && ($self->max_files_per_merge < $num_builds) ){
-        my $max_ops = $self->max_files_per_merge;
-        my $num_merge_ops = int($num_builds/$max_ops);
-        if($num_builds % $max_ops){
-            $num_merge_ops++;
-        }
-        $self->_max_ops($num_merge_ops);
-        for my $group (1..$num_merge_ops){
-            push @merged_positions_beds, "merged_positions_bed_".$group;
-            push @submerged_vcfs, "submerged_vcfs_".$group;
-            push @inputs, "input_files_".$group;
-            #push @inputs, "sub_merged_vcf_
-        }
-        push @inputs, @merged_positions_beds;
-        push @inputs, @submerged_vcfs;
-        $self->_submerged_position_beds(\@merged_positions_beds);
-    }
-    push @inputs, 'samtools_version';
-    push @inputs, 'samtools_params';
-
-    #Initialize workflow object
-    my $workflow = Workflow::Model->create(
-        name => 'Multi-Vcf Merge',
-        input_properties => [
-            'input_files',
-            'output_directory',
-            'merged_positions_bed',
-            'final_output',
-            'merged_vcf',
-            'use_bgzip',
-            'reference_sequence_path',
-            "joinx_version",
-            @inputs,
-        ],
-        output_properties => [
-            'output',
-        ],
-    );
-
-    #set log directory
-    $workflow->log_dir($self->output_directory);
-
-    #add vcf-merge-positions-only operation
-    my $merge_operation;
-
-    #if max_files_per_merge was set, consider creating sub-merge operations, else run with a single merge operation
-    if(defined($self->max_files_per_merge)){
-        $merge_operation = $self->_add_limited_position_merge(\$workflow,
-                $self->max_files_per_merge, scalar(@builds)) ;
-    } else {
-        $merge_operation = $self->_add_position_merge(\$workflow);
-    }
-
-    #add the mpileup and backfill operations
-    my $backfill_ops = $self->_add_mpileup_and_backfill(\$workflow, $merge_operation,
-        $samtools_version, $samtools_params);
-
-    #converge the outputs of backfill and set up the final merge
-    my $final_merge_op;
-    if(defined($self->max_files_per_merge)){
-        $final_merge_op = $self->_add_limited_final_merge(\$workflow,
-                $backfill_ops, scalar(@builds));
-    } else {
-        $final_merge_op = $self->_add_final_merge(\$workflow,
-                $backfill_ops, scalar(@builds));
-    }
-
-    #link the final merge to the output_connector
-    $workflow->add_link(
-        left_operation => $final_merge_op,
-        left_property => "output_file",
-        right_operation => $workflow->get_output_connector,
-        right_property => "output",
-    );
-
-    return $workflow;
-}
-
-sub _add_limited_position_merge {
-    my ($self, $workflow, $max_ops, $num_builds) = @_;
-    $workflow = $$workflow;
-
-    my $num_merge_ops = int($num_builds/$max_ops);
-    if($num_builds % $max_ops){
-        $num_merge_ops++;
-    }
-
-    my @merge_ops;
-    my $merge_op;
-    #if we have fewer inputs than max_ops, add one merge_op
-    if($num_builds <= $max_ops){
-        return $self->_add_position_merge(\$workflow);
-    # if the number of merge_ops is less than the max_ops, we only need one level of merge ops
-    } elsif ( int($num_builds / $max_ops) <= $max_ops) {
-        for my $group(1..$num_merge_ops){
-            push @merge_ops, $self->_add_position_merge(\$workflow,$group);
-        }
-        return $self->_merge_position_merges(\$workflow,\@merge_ops);
-    } else { #else we need multiple layers of merge ops
-        die $self->error_message("Given that: B = number of builds, MFPM = max-files-per-merge, you have caused this: B/MFPM < MFPM to evaluate as false\n We intend to support this condition soon though.");
-    }
-    return 1;
-}
-
-sub _add_position_merge {
-    my $self = shift;
-    my $workflow = shift;
-    $workflow = $$workflow;
-    my $op_number = shift;
-    my $op_name  = defined($op_number) ? "Merge Positions Group ".$op_number : "Merge Positions";
-    my $output_file_prop = defined($op_number) ? "merged_positions_bed_".$op_number : "merged_positions_bed";
-
-    my $op_class  = defined($op_number) ? "Genome::Model::Tools::Joinx::VcfMerge" : "Genome::Model::Tools::Joinx::VcfMergeForBackfill";
-    #create the merge operation object
-    my $merge_operation = $workflow->add_operation(
-        name => $op_name,
-        operation_type => Workflow::OperationType::Command->get($op_class),
-    );
-
-    #link the merged_positions_bed input to the output_file param
-    $workflow->add_link(
-        left_operation => $workflow->get_input_connector,
-        left_property => $output_file_prop,
-        right_operation => $merge_operation,
-        right_property => "output_file",
-    );
-
-    # Add a version param
-    $workflow->add_link(
-        left_operation => $workflow->get_input_connector,
-        left_property => "joinx_version",
-        right_operation => $merge_operation,
-        right_property => "use_version",
-    );
-
-    #link other input properties to merge operation
-
-    my $input_property = defined($op_number) ? "input_files_".$op_number : "input_files";
-
-    $workflow->add_link(
-        left_operation => $workflow->get_input_connector,
-        left_property => $input_property,
-        right_operation => $merge_operation,
-        right_property => "input_files",
-    );
-    $workflow->add_link(
-        left_operation => $workflow->get_input_connector,
-        left_property => "use_bgzip",
-        right_operation => $merge_operation,
-        right_property => "use_bgzip",
-    );
-
-    return $merge_operation;
-}
-
-sub _merge_position_merges {
-    my $self = shift;
-    my $workflow = shift;
-    $workflow = $$workflow;
-    my $merge_ops = shift;
-    my @merge_ops = @{$merge_ops};
-
-    my @input_properties;
-    my $num_merges = scalar(@merge_ops);
-    for my $num (1..$num_merges){
-        push @input_properties, $num."_of_".$num_merges."_merge_operation";
-    }
-
-    #create a converge operation to take the output of the position merge operations
-    # and merge them into a single input for the final position merge operation
-    my $converge_positions = $workflow->add_operation(
-        name => "converge positions",
-        operation_type => Workflow::OperationType::Converge->create(
-            input_properties => \@input_properties,
-            output_properties => [ qw|input_files| ],
-        ),
-    );
-
-    my $num = 1;
-    #link the backfill ops to the converge step
-    for my $merge_op (@merge_ops){
-        $workflow->add_link(
-            left_operation => $merge_op,
-            left_property => "output_file",
-            right_operation => $converge_positions,
-            right_property => $num."_of_".$num_merges."_merge_operation",
-        );
-        $num++;
-    }
-
-    #create the merge operation object
-    my $merge_operation = $workflow->add_operation(
-        name => "Final Union of Positions to Backfill",
-        operation_type => Workflow::OperationType::Command->get("Genome::Model::Tools::Joinx::VcfMergeForBackfill"),
-    );
-
-    # Add a version param
-    $workflow->add_link(
-        left_operation => $workflow->get_input_connector,
-        left_property => "joinx_version",
-        right_operation => $merge_operation,
-        right_property => "use_version",
-    );
-
-    #link the merged_positions_bed input to the output_file param
-    $workflow->add_link(
-        left_operation => $workflow->get_input_connector,
-        left_property => "merged_positions_bed",
-        right_operation => $merge_operation,
-        right_property => "output_file",
-    );
-    $workflow->add_link(
-        left_operation => $workflow->get_input_connector,
-        left_property => "use_bgzip",
-        right_operation => $merge_operation,
-        right_property => "use_bgzip",
-    );
-
-    $workflow->add_link(
-        left_operation => $converge_positions,
-        left_property => "input_files",
-        right_operation => $merge_operation,
-        right_property => "input_files",
-    );
-    return $merge_operation;
-}
-
-sub _add_mpileup_and_backfill {
-    my ($self, $workflow, $merge_operation, $samtools_version, $samtools_params) = @_;
-    $workflow = $$workflow; #de-reference workflow ref
-    my @builds = $self->builds;
-    my @backfill_ops;
-
-    #for each model, add an mpileup and backfill command
-    for my $build (@builds) {
-        my $sample = $build->model->subject->id;
-
-        #add mpileup operation
-        my $mpileup = $workflow->add_operation(
-            name => "mpileup ".$sample,
-            operation_type => Workflow::OperationType::Command->get("Genome::Model::Tools::Sam::Pileup"),
-        );
-
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => $sample."_bam_file",
-            right_operation => $mpileup,
-            right_property => "bam_file",
-        );
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => "reference_sequence_path",
-            right_operation => $mpileup,
-            right_property => "reference_sequence_path",
-        );
-        if(defined($samtools_version)){
-            $workflow->add_link(
-                left_operation => $workflow->get_input_connector,
-                left_property => "samtools_version",
-                right_operation => $mpileup,
-                right_property => "samtools_version",
-            );
-        }
-        if(defined($samtools_params)){
-            $workflow->add_link(
-                left_operation => $workflow->get_input_connector,
-                left_property => "samtools_params",
-                right_operation => $mpileup,
-                right_property => "samtools_params",
-            );
-        }
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => $sample."_mpileup_output_file",
-            right_operation => $mpileup,
-            right_property => "output_file",
-        );
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => "use_bgzip",
-            right_operation => $mpileup,
-            right_property => "use_bgzip",
-        );
-        $workflow->add_link(
-            left_operation => $merge_operation,
-            left_property => "output_file",
-            right_operation => $mpileup,
-            right_property => "region_file",
-        );
-
-        #add a backfill operation on to the mpileup op
-        my $backfill = $workflow->add_operation(
-            name => "backfill ".$sample,
-            operation_type => Workflow::OperationType::Command->get("Genome::Model::Tools::Vcf::Backfill"),
-        );
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => $sample."_vcf_file",
-            right_operation => $backfill,
-            right_property => "vcf_file",
-        );
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => $sample."_backfilled_vcf",
-            right_operation => $backfill,
-            right_property => "output_file",
-        );
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => "use_bgzip",
-            right_operation => $backfill,
-            right_property => "use_bgzip",
-        );
-        $workflow->add_link(
-            left_operation => $mpileup,
-            left_property => "output_file",
-            right_operation => $backfill,
-            right_property => "pileup_file",
-        );
-        $workflow->add_link(
-            left_operation => $merge_operation,
-            left_property => "output_file",
-            right_operation => $backfill,
-            right_property => "merged_positions_file",
-        );
-
-        push @backfill_ops, $backfill;
-    }
-
-    return \@backfill_ops;
-}
-
-sub _add_limited_final_merge {
-    my ($self, $workflow, $backfill_ops, $num_builds) = @_;
-    $workflow = $$workflow;
-    my @backfill_ops = @{ $backfill_ops };
-
-    my $max_ops = $self->max_files_per_merge;
-    my $num_merge_ops = int($num_builds/$max_ops);
-    if($num_builds % $max_ops){
-        $num_merge_ops++;
-    }
-    my @merge_ops;
-
-    #if we have fewer inputs than max_ops, add one merge_op
-    if($num_builds <= $max_ops){
-        return $self->_add_final_merge(\$workflow,
-                \@backfill_ops, $num_builds);
-    # if the number of merge_ops is less than the max_ops, we only need one level of merge ops
-    } elsif ( int($num_builds / $max_ops) <= $max_ops) {
-        for my $group(1..$num_merge_ops){
-            my @backfill_sub_ops;
-            for (1..$max_ops){
-                unless(scalar(@backfill_ops)){
-                    last;
-                }
-                push @backfill_sub_ops, shift @backfill_ops;
-            }
-            push @merge_ops, $self->_add_final_merge(\$workflow,
-                    \@backfill_sub_ops, $num_builds, $group);
-        }
-        return $self->_merge_vcf_merges(\$workflow,\@merge_ops);
-    } else { #else we need multiple layers of merge ops
-        die $self->error_message("Given that: B = number of builds, MFPM = max-files-per-merge, you have caused this: B/MFPM < MFPM to evaluate as false\n We intend to support this condition soon though.");
-    }
-    return 1;
-}
-
-sub _add_final_merge {
-    my ($self, $workflow, $backfill_ops, $num_builds, $op_number) = @_;
-    $workflow = $$workflow;
-
-    my @backfill_ops = @{ $backfill_ops };
-
-    my $op_name  = defined($op_number) ? "Final Merge Sub Group ".$op_number : "Final VCF Merge";
-    my $converge_name  = defined($op_number) ? "Final Merge Converge Sub Group ".$op_number : "Final VCF Converge Merge";
-
-    my $output_file_prop = defined($op_number) ? "submerged_vcfs_".$op_number : "merged_vcf";
-    if(defined($op_number)){
-        my @list;
-        if(defined($self->_submerged_vcfs)){
-            @list = @{ $self->_submerged_vcfs };
-            push @list, $output_file_prop;
-        } else {
-            @list = ($output_file_prop);
-        }
-        $self->_submerged_vcfs(\@list);
-    }
-    my @input_properties;
-
-    #get the number of builds being merged
-    my $count = defined($op_number) ? $self->max_files_per_merge : $num_builds;
-    for my $num (1..(scalar(@backfill_ops))){
-        push @input_properties, "vcf_".$num;
-    }
-
-    #create a converge operation to take the output of the backfill operations
-    # and merge them into a single input for the final merge operation
-    my $converge_vcfs = $workflow->add_operation(
-        name => $converge_name,
-        operation_type => Workflow::OperationType::Converge->create(
-            input_properties => \@input_properties,
-            output_properties => [ qw|vcf_files| ],
-        )
-    );
-
-    my $num = 1;
-    #link the backfill ops to the converge step
-    for my $backfill (@backfill_ops){
-        $workflow->add_link(
-            left_operation => $backfill,
-            left_property => "output_file",
-            right_operation => $converge_vcfs,
-            right_property => "vcf_".$num,
-        );
-        $num++;
-    }
-
-    #create the vcf-merge operation object
-    my $merge_operation = $workflow->add_operation(
-        name => $op_name,
-        operation_type => Workflow::OperationType::Command->get("Genome::Model::Tools::Joinx::VcfMerge"),
-    );
-
-    # Add a version param
-    $workflow->add_link(
-        left_operation => $workflow->get_input_connector,
-        left_property => "joinx_version",
-        right_operation => $merge_operation,
-        right_property => "use_version",
-    );
-
-    #link the merged_positions_bed input to the output_file param
-    $workflow->add_link(
-        left_operation => $workflow->get_input_connector,
-        left_property => $output_file_prop,
-        right_operation => $merge_operation,
-        right_property => "output_file",
-    );
-
-    #link other input properties to merge operation
-    $workflow->add_link(
-        left_operation => $workflow->get_input_connector,
-        left_property => "use_bgzip",
-        right_operation => $merge_operation,
-        right_property => "use_bgzip",
-    );
-
-    $workflow->add_link(
-        left_operation => $converge_vcfs,
-        left_property => "vcf_files",
-        right_operation => $merge_operation,
-        right_property => "input_files",
-    );
-
-    return $merge_operation;
-}
-
-sub _merge_vcf_merges {
-    my $self = shift;
-    my $workflow = shift;
-    $workflow = $$workflow;
-
-    my $merge_ops = shift;
-    my @merge_ops = @{$merge_ops};
-    my @input_properties;
-
-    my $num_merges = scalar(@merge_ops);
-    for my $n (1..$num_merges){
-        push @input_properties, $n."_of_".$num_merges."_vcf_merge_operation";
-    }
-
-    #create a converge operation to take the output of the backfill operations
-    # and merge them into a single input for the final merge operation
-    my $converge_vcfs = $workflow->add_operation(
-        name => "converge vcfs",
-        operation_type => Workflow::OperationType::Converge->create(
-            input_properties => \@input_properties,
-            output_properties => [ qw|vcf_files| ],
-        )
-    );
-
-    my $num = 1;
-
-    #link the backfill ops to the converge step
-    for my $vcf_merge (@merge_ops){
-        $workflow->add_link(
-            left_operation => $vcf_merge,
-            left_property => "output_file",
-            right_operation => $converge_vcfs,
-            right_property => $num."_of_".$num_merges."_vcf_merge_operation",
-        );
-        $num++;
-    }
-
-    #create the vcf-merge operation object
-    my $merge_operation = $workflow->add_operation(
-        name => "final_vcf_merge",
-        operation_type => Workflow::OperationType::Command->get("Genome::Model::Tools::Joinx::VcfMerge"),
-    );
-
-    # Add a version param
-    $workflow->add_link(
-        left_operation => $workflow->get_input_connector,
-        left_property => "joinx_version",
-        right_operation => $merge_operation,
-        right_property => "use_version",
-    );
-
-    #link the is_many vcf_files property of the converge operation
-    # to the is_many input_files property of the final merge operation
-    $workflow->add_link(
-        left_operation => $converge_vcfs,
-        left_property => "vcf_files",
-        right_operation => $merge_operation,
-        right_property => "input_files",
-    );
-
-    #link final_output property to define the merged-vcf's file name
-    $workflow->add_link(
-        left_operation => $workflow->get_input_connector,
-        left_property => "final_output",
-        right_operation => $merge_operation,
-        right_property => "output_file",
-    );
-
-    #link use_bgzip property
-    $workflow->add_link(
-        left_operation => $workflow->get_input_connector,
-        left_property => "use_bgzip",
-        right_operation => $merge_operation,
-        right_property => "use_bgzip",
-    );
-
-    return $merge_operation;
+    return File::Spec->join($self->output_directory, "region_limited_inputs");
 }
 
 sub _get_samtools_version_and_params {
-    my ($self, $pp) = @_;
+    my ($self, $strategy_str) = @_;
+
+    my $strategy = Genome::Model::Tools::DetectVariants2::Strategy->get($strategy_str);
+
+    my @detectors = $strategy->get_detectors();
     my ($version, $params);
-
-    my $snv_strat = $pp->snv_detection_strategy;
-
-    my @rest;
-    $snv_strat =~ m/samtools (.*) /;
-    ($version, @rest) = split /\s+/,$1;
-
-    if($rest[0] =~ m/filtered/){
-        $params = undef;
-    } else {
-        my @params;
-        for (@rest) {
-            if($_ =~ m/filtered/){
-                last;
+    for my $detector (@detectors) {
+        if ($detector->{name} eq 'samtools') {
+            if ($version) {
+                die "Multiple samtools steps found in strategy!";
+            } else {
+                $version = $detector->{version};
+                $params = $detector->{params};
             }
-            push @params, $_;
         }
-        $params = join(" ",@params);
-        $params =~ s/\[//;
-        $params =~ s/\]//;
     }
 
     return ($version, $params);
