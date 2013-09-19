@@ -64,7 +64,7 @@ sub setup_somatic_variation_build {
         processing_profile_id => $test_profile->id,
     );
 
-    my $add_ok = $test_model->add_instrument_data($test_instrument_data);
+    $test_model->add_instrument_data($test_instrument_data);
 
     my $test_build = Genome::Test::Factory::Build->setup_object(
         model_id => $test_model->id,
@@ -76,7 +76,7 @@ sub setup_somatic_variation_build {
         processing_profile_id => $test_profile->id,
     );
 
-    $add_ok = $test_model_two->add_instrument_data($test_instrument_data);
+    $test_model_two->add_instrument_data($test_instrument_data);
 
     my $test_build_two = Genome::Test::Factory::Build->setup_object(
         model_id => $test_model_two->id,
