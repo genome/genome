@@ -2,14 +2,19 @@ use strict;
 use warnings;
 
 use above 'Genome';
-
 use Test::More;
+
+use Genome::Test::Factory::Build;
+use Genome::Test::Factory::InstrumentData::Solexa;
+use Genome::Test::Factory::Model::ImportedVariationList;
+use Genome::Test::Factory::Model::ReferenceAlignment;
+
 
 if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
 }
 else {
-    plan tests => 28;
+    plan tests => 26;
 }
 
 BEGIN {
@@ -69,34 +74,14 @@ is(80, $results->{total_concordance}, '80% concordance');
 
 
 sub setup_test_builds {
-    my $test_profile = Genome::ProcessingProfile::ReferenceAlignment->create(
-        name => 'test_profile',
-        sequencing_platform => 'solexa',
-        dna_type => 'cdna',
-        read_aligner_name => 'bwa',
-        snv_detection_strategy => 'samtools',
-        indel_detection_strategy => '-test Genome/Model/Convergence.t',
-    );
-    ok($test_profile, 'created test processing profile');
-
-    my $test_instrument_data = Genome::InstrumentData::Solexa->create(
-    );
+    my $test_instrument_data = Genome::Test::Factory::InstrumentData::Solexa->setup_object();
     ok($test_instrument_data, 'created test instrument data');
 
-    my $reference_sequence_build = Genome::Model::Build::ImportedReferenceSequence->get(name => 'NCBI-human-build36');
-    isa_ok($reference_sequence_build, 'Genome::Model::Build::ImportedReferenceSequence') or die;
-
-    my $test_model = Genome::Model->create(
-        name => 'test_reference_aligment_model_mock',
-        subject_name => 'test_subject',
-        subject_type => 'sample_name',
-        processing_profile_id => $test_profile->id,
-        reference_sequence_build => $reference_sequence_build,
-    );
+    my $test_model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object();
     ok($test_model, 'created test model');
     ok($test_model->add_instrument_data($test_instrument_data), 'added inst data');
 
-    my $test_build = Genome::Model::Build->create(
+    my $test_build = Genome::Test::Factory::Build->setup_object(
         model_id => $test_model->id,
         data_directory => $tmpdir,
     );
@@ -121,12 +106,10 @@ sub setup_test_builds {
     print F $dbsnp_file_data;
     close(F);
 
-    my $dbsnp_pp = Genome::ProcessingProfile->get(name => "imported-variation-list");
-    my $dbsnp_model = Genome::Model::ImportedVariationList->create(
-        reference => $reference_sequence_build,
-        processing_profile => $dbsnp_pp,
-        subject_name => 'test_subject',
-        );
+    my $dbsnp_model = Genome::Test::Factory::Model::ImportedVariationList->setup_object(
+        reference => $test_model->reference_sequence_build,
+        subject_id => $test_model->subject->id
+    );
     ok($dbsnp_model, "created dbsnp model");
 
     my $result = Genome::Model::Tools::DetectVariants2::Result::Manual->create(
@@ -134,11 +117,14 @@ sub setup_test_builds {
         original_file_path => $dbsnp_file,
         format => 'bed',
         variant_type => 'snv',
-        reference_build => $reference_sequence_build,
+        reference_build => $test_model->reference_sequence_build,
     );
     ok($result, 'created test result');
 
-    my $dbsnp_build = Genome::Model::Build::ImportedVariationList->create(model => $dbsnp_model, snv_result => $result);
+    my $dbsnp_build = Genome::Test::Factory::Build->setup_object(
+        model_id => $dbsnp_model->id,
+        snv_result => $result,
+    );
     ok($dbsnp_build, "created dbsnp build");
 
     $test_build->model->dbsnp_build($dbsnp_build);
