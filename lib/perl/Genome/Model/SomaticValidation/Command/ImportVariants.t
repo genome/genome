@@ -71,6 +71,7 @@ my @results = $cmd->results;
 is(scalar(@results), 3, 'produced expected number of results');
 
 use Genome::Test::Factory::Model::SomaticValidation;
+use Genome::Test::Factory::Model::SomaticVariation;
 sub setup_somatic_variation_models {
     my $test_profile = Genome::ProcessingProfile::ReferenceAlignment->create(
         name => 'test_profile',
@@ -92,7 +93,8 @@ sub setup_somatic_variation_models {
 
     my @somvar_models;
     for(1..2) {
-        my $somvar_build = Genome::Test::Factory::Model::SomaticValidation->setup_somatic_variation_build();
+        # Why are SomaticValidation tests just using SomaticVariation models?
+        my $somvar_build = Genome::Test::Factory::Model::SomaticVariation->setup_somatic_variation_build();
         my $somvar_model = $somvar_build->model;
         push @somvar_models, $somvar_model;
 

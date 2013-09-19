@@ -196,8 +196,10 @@ sub setup_somatic_variation_build {
     my $i = shift;
 
     use Genome::Test::Factory::Model::SomaticValidation;
+    use Genome::Test::Factory::Model::SomaticVariation;
 
-    my $somvar_build = Genome::Test::Factory::Model::SomaticValidation->setup_somatic_variation_build();
+    # Why are SomaticValidation tests just using SomaticVariation models?
+    my $somvar_build = Genome::Test::Factory::Model::SomaticVariation->setup_somatic_variation_build();
 
     my $dir = ($temp_dir . '/' . 'fake_samtools_result' . $i);
     Genome::Sys->create_directory($dir);
