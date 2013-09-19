@@ -183,7 +183,6 @@ sub _validate_mandatory_inputs {
     my $self = shift;
 
     my $mandatory_inputs = $self->_get_mandatory_inputs;
-    # walk links and mark them off
     for my $link ($self->links) {
         my $ei = $self->_encode_input($link->destination_operation_name,
             $link->destination_property);
@@ -193,7 +192,11 @@ sub _validate_mandatory_inputs {
     }
 
     unless ($mandatory_inputs->is_empty) {
-        die 'blah';
+        die $self->error_message(sprintf(
+            "%d mandatory input(s) missing in DAG: %s",
+            $mandatory_inputs->size,
+            Data::Dumper::Dumper($mandatory_inputs->members)
+        ));
     }
 }
 
