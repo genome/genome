@@ -49,6 +49,11 @@ class Genome::Model::Tools::Varscan::Consensus {
             default => 0,
             doc => "If set to 1, tells VarScan to output in VCF format (rather than native CNS)",
         },
+        use_bgzip => {
+            is => 'Boolean',
+            doc => 'bgzips the output',
+            default => 0,
+        },
         position_list_file => {
             is => 'Path',
             doc => "Optionally, provide a tab-delimited list of positions to be given to SAMtools with -l",
@@ -100,9 +105,24 @@ sub cmd {
         '--min-var-freq', $self->min_var_freq,
         '--min-avg-qual', $self->min_avg_qual,
         $self->output_vcf_string,
-        sprintf("> %s 2>/dev/null", $self->output_file), # is it wise to throw away stderr?
+        $self->stderr,
+        $self->stdout,
     );
     return $self->java_command_line(join(' ', @cmd));
+}
+
+sub stderr {
+    my $self = shift;
+    return "2> /dev/null"; # is it wise to throw away stderr?
+}
+
+sub stdout {
+    my $self = shift;
+    if ($self->use_bgzip) {
+        return sprintf("| bgzip -c > %s ", $self->output_file);
+    } else {
+        return sprintf("> %s ", $self->output_file);
+    }
 }
 
 sub varscan_command {
