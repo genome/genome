@@ -31,9 +31,9 @@ class Genome::Model::Tools::Vcf::CreateCrossSampleVcf::Backfill {
 sub execute {
     my $self = shift;
 
-    $self->backfilled_vcf($self->build_clump->backfill_vcf);
+    $self->backfilled_vcf($self->build_clump->backfilled_vcf);
     my $cmd = Genome::Model::Tools::Vcf::Backfill->create(
-        output_file => $self->build_clump->backfill_vcf,
+        output_file => $self->build_clump->backfilled_vcf,
         merged_positions_file => $self->region_file,
         pileup_file => $self->pileup_file,
         vcf_file => $self->build_clump->vcf_file,
