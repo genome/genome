@@ -28,7 +28,7 @@ class Genome::Model::Tools::Vcf::CreateCrossSampleVcf {
         },
         max_files_per_merge => {
             is => 'Text',
-            is_optional => 1,
+            default => 200,
             doc => 'Set this to cause no more than N vcfs to be merged into a single operation at a time',
         },
         variant_type => {
@@ -137,10 +137,10 @@ sub generate_result {
     $self->_validate_inputs($builds);
 
     $self->status_message("Constructing Workflow...");
-    my $workflow = $self->_construct_workflow;
+    my ($workflow, $variant_type_specific_inputs) = $self->_construct_workflow;
 
     $self->status_message("Getting Workflow Inputs...");
-    my $inputs = $self->_get_workflow_inputs($builds);
+    my $inputs = $self->_get_workflow_inputs($builds, $variant_type_specific_inputs);
 
     $self->status_message("Running Workflow...");
     my $result = Workflow::Simple::run_workflow_lsf($workflow, %$inputs);
@@ -260,11 +260,14 @@ sub _construct_workflow {
     my ($self) = @_;
 
     my $xml_file;
+    my $variant_type_specific_inputs;
     if ($self->roi_list) {
         if ($self->variant_type eq 'indels') {
             $xml_file = "RegionLimitAndBackfillIndelVcf.xml";
+            $variant_type_specific_inputs = $self->get_indel_inputs;
         } elsif ($self->variant_type eq 'snvs') {
             $xml_file = "RegionLimitAndBackfillSnvVcf.xml";
+            $variant_type_specific_inputs = $self->get_snv_inputs;
         }
     } else {
         $xml_file = '';
@@ -276,7 +279,7 @@ sub _construct_workflow {
     my $workflow = Workflow::Operation->create_from_xml($xml);
     $workflow->log_dir($self->output_directory);
 
-    return $workflow;
+    return $workflow, $variant_type_specific_inputs;
 }
 
 sub get_vcf_accessor {
@@ -285,16 +288,12 @@ sub get_vcf_accessor {
 }
 
 sub _get_workflow_inputs {
-    my ($self, $builds) = @_;
+    my ($self, $builds, $variant_type_specific_inputs) = @_;
 
     my $reference_sequence_build = $builds->[0]->reference_sequence_build;
     my $ref_fasta = $reference_sequence_build->full_consensus_path('fa');
-
-    my $pp = $builds->[0]->processing_profile;
-    my ($samtools_version, $samtools_params) = $self->_get_samtools_version_and_params($pp->snv_detection_strategy);
-
     my $region_limiting_output_directory = $self->prepare_region_limiting_output_directory();
-    my $vcf_merge_working_directory = $self->prepare_vcf_merge_working_directory();
+    $self->prepare_vcf_merge_working_directories();
 
     my %inputs = (
         # RegionLimitVcf
@@ -308,19 +307,45 @@ sub _get_workflow_inputs {
         # InitialVcfMerge
         use_bgzip => 1,
         joinx_version => $self->joinx_version,
-        vcf_merge_working_directory => $vcf_merge_working_directory,
+        initial_vcf_merge_working_directory => $self->initial_vcf_merge_working_directory,
+        max_files_per_merge => $self->max_files_per_merge,
         segregating_sites_vcf_file => File::Spec->join($self->output_directory, 'segregating_sites.vcf'),
 
-        # BackfillVcf
-        build_clumps => $self->build_clumps,
+        # Backfill(Indel)Vcf
         ref_fasta => $ref_fasta,
-        samtools_version => $samtools_version,
-        samtools_params => $samtools_params,
+        %$variant_type_specific_inputs,
 
         # FinalVcfMerge
+        final_vcf_merge_working_directory => $self->final_vcf_merge_working_directory,
         output_vcf => $self->output_vcf,
     );
 
+    return \%inputs;
+}
+
+sub get_indel_inputs {
+    my $self = shift;
+
+    my @input_bams = map {$_->whole_rmdup_bam_file} $self->builds;
+    my %inputs = (
+        input_bams => \@input_bams,
+        output_directory => File::Spec->join($self->output_directory, 'indel_backfilling'),
+    );
+    return \%inputs;
+}
+
+sub get_snv_inputs {
+    my $self = shift;
+
+    my @builds = $self->builds;
+    my $pp = ($builds[0])->processing_profile;
+    my ($samtools_version, $samtools_params) = $self->_get_samtools_version_and_params($pp->snv_detection_strategy);
+
+    my %inputs = (
+        build_clumps => $self->build_clumps,
+        samtools_version => $samtools_version,
+        samtools_params => $samtools_params,
+    );
     return \%inputs;
 }
 
@@ -401,15 +426,20 @@ sub get_roi_file {
     return $roi_file;
 }
 
-sub prepare_vcf_merge_working_directory {
+sub prepare_vcf_merge_working_directories {
     my $self = shift;
-    my $dir = $self->vcf_merge_working_directory;
-    return Genome::Sys->create_directory($dir);
+    Genome::Sys->create_directory($self->initial_vcf_merge_working_directory);
+    Genome::Sys->create_directory($self->final_vcf_merge_working_directory);
 }
 
-sub vcf_merge_working_directory {
+sub initial_vcf_merge_working_directory {
     my $self = shift;
-    return File::Spec->join($self->output_directory, "vcf_merge_workspace");
+    return File::Spec->join($self->output_directory, "initial_vcf_merge_workspace");
+}
+
+sub final_vcf_merge_working_directory {
+    my $self = shift;
+    return File::Spec->join($self->output_directory, "final_vcf_merge_workspace");
 }
 
 sub prepare_region_limiting_output_directory {

@@ -16,7 +16,8 @@
     <link fromOperation="input connector" fromProperty="use_bgzip" toOperation="InitialVcfMerge" toProperty="use_bgzip" />
     <link fromOperation="input connector" fromProperty="joinx_version" toOperation="InitialVcfMerge" toProperty="use_version" />
     <link fromOperation="input connector" fromProperty="segregating_sites_vcf_file" toOperation="InitialVcfMerge" toProperty="output_file" />
-    <link fromOperation="input connector" fromProperty="vcf_merge_working_directory" toOperation="InitialVcfMerge" toProperty="working_directory" />
+    <link fromOperation="input connector" fromProperty="initial_vcf_merge_working_directory" toOperation="InitialVcfMerge" toProperty="working_directory" />
+    <link fromOperation="input connector" fromProperty="max_files_per_merge" toOperation="InitialVcfMerge" toProperty="max_files_per_merge" />
     <operation name="InitialVcfMerge">
         <operationtype commandClass="Genome::Model::Tools::Joinx::SafeVcfMerge" typeClass="Workflow::OperationType::Command" />
     </operation>
@@ -73,7 +74,8 @@
     <link fromOperation="input connector" fromProperty="use_bgzip" toOperation="FinalVcfMerge" toProperty="use_bgzip" />
     <link fromOperation="input connector" fromProperty="joinx_version" toOperation="FinalVcfMerge" toProperty="use_version" />
     <link fromOperation="input connector" fromProperty="output_vcf" toOperation="FinalVcfMerge" toProperty="output_file" />
-    <link fromOperation="input connector" fromProperty="vcf_merge_working_directory" toOperation="FinalVcfMerge" toProperty="working_directory" />
+    <link fromOperation="input connector" fromProperty="final_vcf_merge_working_directory" toOperation="FinalVcfMerge" toProperty="working_directory" />
+    <link fromOperation="input connector" fromProperty="max_files_per_merge" toOperation="FinalVcfMerge" toProperty="max_files_per_merge" />
     <link fromOperation="FinalVcfMerge" fromProperty="output_file" toOperation="output connector" toProperty="output_vcf" />
     <operation name="FinalVcfMerge">
         <operationtype commandClass="Genome::Model::Tools::Joinx::SafeVcfMerge" typeClass="Workflow::OperationType::Command" />
@@ -93,7 +95,8 @@
         <inputproperty>use_bgzip</inputproperty>
         <inputproperty>joinx_version</inputproperty>
         <inputproperty>segregating_sites_vcf_file</inputproperty>
-        <inputproperty>vcf_merge_working_directory</inputproperty>
+        <inputproperty>initial_vcf_merge_working_directory</inputproperty>
+        <inputproperty>max_files_per_merge</inputproperty>
 
         <!-- BackfillVcf -->
         <inputproperty>build_clumps</inputproperty>
@@ -102,6 +105,7 @@
         <inputproperty>samtools_params</inputproperty>
 
         <!-- FinalVcfMerge -->
+        <inputproperty>final_vcf_merge_working_directory</inputproperty>
         <inputproperty>output_vcf</inputproperty>
 
         <outputproperty>output_vcf</outputproperty>
