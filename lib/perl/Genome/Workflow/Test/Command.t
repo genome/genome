@@ -7,19 +7,7 @@ use Test::More;
 
 use_ok('Genome::Workflow::Command');
 
-test_typical_command();
-
-test_parallel_by();
-test_invalid_parallel_by();
-
-test_validate_invalid_name();
-
-test_xml_round_trip();
-
-done_testing();
-
-
-sub test_typical_command {
+subtest 'Typical Command' => sub {
     my $op = Genome::Workflow::Command->create(
         name => 'some op',
         command => 'Genome::Workflow::Test::DummyCommand'
@@ -31,9 +19,9 @@ sub test_typical_command {
 EOS
 
     is($op->get_xml, $expected_xml, 'typical command produces expected xml');
-}
+};
 
-sub test_parallel_by {
+subtest 'Parallel-By Command' => sub {
     my $op = Genome::Workflow::Command->create(
         name => 'some op',
         command => 'Genome::Workflow::Test::DummyCommand',
@@ -46,9 +34,9 @@ sub test_parallel_by {
 EOS
 
     is($op->get_xml, $expected_xml, 'parallelBy command produces expected xml');
-}
+};
 
-sub test_invalid_parallel_by {
+subtest 'Invalid Parallel-By Command' => sub {
     my $op = Genome::Workflow::Command->create(
         name => 'some op',
         command => 'Genome::Workflow::Test::DummyCommand',
@@ -61,9 +49,9 @@ sub test_invalid_parallel_by {
     };
 
     ok($@, "parallelBy on non input_property doesn't validate");
-}
+};
 
-sub test_validate_invalid_name {
+subtest 'Invalid Command Name' => sub {
     my $op = Genome::Workflow::Command->create(
         name => 'input connector',
         command => 'Genome::Workflow::Test::DummyCommand',
@@ -75,9 +63,9 @@ sub test_validate_invalid_name {
     };
 
     ok($@, 'invalid operation name fails to validate');
-}
+};
 
-sub test_xml_round_trip {
+subtest 'XML Round Trip' => sub {
     my $xml = <<EOS;
 <?xml version="1.0"?>
 <operation name="some op"><operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" lsfResource="-M 25000000 -R 'select[mem&gt;25000] rusage[mem=25000]'" commandClass="Genome::Workflow::Test::DummyCommand"><inputproperty>input</inputproperty><outputproperty>many_output</outputproperty><outputproperty>result</outputproperty><outputproperty>single_output</outputproperty></operationtype></operation>
@@ -85,4 +73,6 @@ EOS
 
     my $op = Genome::Workflow::Command->from_xml($xml);
     is($op->get_xml, $xml, 'xml round trip');
-}
+};
+
+done_testing();

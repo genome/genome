@@ -7,20 +7,7 @@ use Test::More;
 
 use_ok('Genome::Workflow::DAG');
 
-test_simple_dag();
-
-test_validate_invalid_name();
-test_validate_unique_operation_names();
-test_validate_unowned_operations();
-test_validate_required_inputs_provided();
-test_validate_no_conflicting_inputs();
-
-test_xml_round_trip();
-
-done_testing();
-
-
-sub test_simple_dag {
+subtest 'Simple DAG' => sub {
     my $dag = Genome::Workflow::DAG->create(
         name => 'top level',
         log_dir => '/tmp',
@@ -49,9 +36,9 @@ sub test_simple_dag {
 EOS
 
     is($dag->get_xml, $expected_xml, 'simple dag produces expected xml');
-}
+};
 
-sub test_validate_invalid_name {
+subtest 'Invalid DAG Name' => sub {
     my $dag = Genome::Workflow::DAG->create(name => 'input connector');
 
     eval {
@@ -60,9 +47,9 @@ sub test_validate_invalid_name {
     };
 
     ok($@, 'invalid operation name fails to validate');
-}
+};
 
-sub test_validate_unique_operation_names {
+subtest 'Non-Unique Operation Names' => sub {
     my $dag = Genome::Workflow::DAG->create(name => 'top level');
 
     my $op1 = Genome::Workflow::Command->create(
@@ -83,9 +70,9 @@ sub test_validate_unique_operation_names {
     };
 
     ok($@, 'duplicate operation names not allowed');
-}
+};
 
-sub test_validate_unowned_operations {
+subtest 'Unowned Operations' => sub {
     my $dag = Genome::Workflow::DAG->create(name => 'top level');
 
     my $owned_op = Genome::Workflow::Command->create(
@@ -112,9 +99,9 @@ sub test_validate_unowned_operations {
     };
 
     ok($@, 'unowned operations not allowed in dag links');
-}
+};
 
-sub test_validate_required_inputs_provided {
+subtest 'Mandatory Inputs' => sub {
     my $dag = Genome::Workflow::DAG->create(name => 'top level');
 
     my $op = Genome::Workflow::Command->create(
@@ -129,9 +116,9 @@ sub test_validate_required_inputs_provided {
     };
 
     ok($@, 'missing mandatory inputs not allowed in dag');
-}
+};
 
-sub test_validate_no_conflicting_inputs {
+subtest 'Conflicting Inputs' => sub {
     my $dag = Genome::Workflow::DAG->create(name => 'top level');
 
     my $op = Genome::Workflow::Command->create(
@@ -158,9 +145,9 @@ sub test_validate_no_conflicting_inputs {
     };
 
     ok($@, 'conflicting inputs not allowed in dag');
-}
+};
 
-sub test_xml_round_trip {
+subtest 'XML Round Trip' => sub {
     my $xml = <<EOS;
 <?xml version="1.0"?>
 <operation name="top level" logDir="/tmp"><operationtype typeClass="Workflow::OperationType::Model"><inputproperty>some_external_input</inputproperty><outputproperty>some_external_output</outputproperty></operationtype><operation name="some op"><operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" lsfResource="-M 25000000 -R 'select[mem&gt;25000] rusage[mem=25000]'" commandClass="Genome::Workflow::Test::DummyCommand"><inputproperty>input</inputproperty><outputproperty>many_output</outputproperty><outputproperty>result</outputproperty><outputproperty>single_output</outputproperty></operationtype></operation><link leftOperation="input connector" leftProperty="some_external_input" rightOperation="some op" rightProperty="input"/><link leftOperation="some op" leftProperty="single_output" rightOperation="output connector" rightProperty="some_external_output"/></operation>
@@ -168,4 +155,6 @@ EOS
 
     my $dag = Genome::Workflow::DAG->from_xml($xml);
     is($dag->get_xml, $xml, 'xml round trip');
-}
+};
+
+done_testing();

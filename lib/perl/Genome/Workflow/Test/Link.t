@@ -7,22 +7,7 @@ use Test::More;
 
 use_ok('Genome::Workflow::Link');
 
-test_typical_link();
-
-test_parallel_by_link();
-
-test_input_connector();
-test_output_connector();
-
-test_validate_operations_are_valid_type();
-test_validate_source_property();
-test_validate_destination_property();
-test_validate_parallel_by_source_is_many();
-
-done_testing();
-
-
-sub test_typical_link {
+subtest 'Typical Link' => sub {
     my $source_op = Genome::Workflow::Command->create(
         name => 'source op',
         command => 'Genome::Workflow::Test::DummyCommand'
@@ -39,9 +24,9 @@ sub test_typical_link {
 
     my $expected_xml = '<link leftOperation="source op" leftProperty="single_output" rightOperation="destination op" rightProperty="input"/>';
     is($link->get_xml, $expected_xml, 'typical link produces expected xml');
-}
+};
 
-sub test_parallel_by_link {
+subtest 'Parallel-By Link' => sub {
     my $source_op = Genome::Workflow::Command->create(
         name => 'source op',
         command => 'Genome::Workflow::Test::DummyCommand'
@@ -58,9 +43,9 @@ sub test_parallel_by_link {
     );
     my $expected_xml = '<link leftOperation="source op" leftProperty="many_output" rightOperation="destination op" rightProperty="input"/>';
     is($link->get_xml, $expected_xml, 'parallelBy link produces expected xml');
-}
+};
 
-sub test_input_connector {
+subtest 'Input Connector' => sub {
     my $destination_op = Genome::Workflow::Command->create(
         name => 'destination op',
         command => 'Genome::Workflow::Test::DummyCommand'
@@ -74,9 +59,9 @@ sub test_input_connector {
     my $expected_xml = '<link leftOperation="input connector" leftProperty="some_external_input" rightOperation="destination op" rightProperty="input"/>';
     is($link->get_xml, $expected_xml,
         'missing source operation uses input connector');
-}
+};
 
-sub test_output_connector {
+subtest 'Output Connector' => sub {
     my $source_op = Genome::Workflow::Command->create(
         name => 'source op',
         command => 'Genome::Workflow::Test::DummyCommand'
@@ -90,10 +75,10 @@ sub test_output_connector {
     my $expected_xml = '<link leftOperation="source op" leftProperty="single_output" rightOperation="output connector" rightProperty="some_external_output"/>';
     is($link->get_xml, $expected_xml,
         'missing destination operation uses output connector');
-}
+};
 
 
-sub test_validate_operations_are_valid_type {
+subtest 'Valid Operation Type' => sub {
     my $link_with_invalid_source = Genome::Workflow::Link->create(
         source => 'INVALID_OPERATION', source_property => 'foo',
         destination_property => 'bar'
@@ -113,9 +98,9 @@ sub test_validate_operations_are_valid_type {
         $link_with_invalid_destination->validate;
     };
     ok($@, 'invalid destination operation fails to validate');
-}
+};
 
-sub test_validate_source_property {
+subtest 'Source Property Valid' => sub {
     my $source_op = Genome::Workflow::Command->create(
         name => 'source op',
         command => 'Genome::Workflow::Test::DummyCommand'
@@ -130,9 +115,9 @@ sub test_validate_source_property {
         $link->validate;
     };
     ok($@, 'invalid source property fails to validate');
-}
+};
 
-sub test_validate_destination_property {
+subtest 'Destination Property Valid' => sub {
     my $destination_op = Genome::Workflow::Command->create(
         name => 'destination op',
         command => 'Genome::Workflow::Test::DummyCommand'
@@ -148,9 +133,9 @@ sub test_validate_destination_property {
         $link->validate;
     };
     ok($@, 'invalid destination property fails to validate');
-}
+};
 
-sub test_validate_parallel_by_source_is_many {
+subtest 'Parallel-By Data Source is_many' => sub {
     my $source_op = Genome::Workflow::Command->create(
         name => 'source op',
         command => 'Genome::Workflow::Test::DummyCommand'
@@ -172,4 +157,6 @@ sub test_validate_parallel_by_source_is_many {
     };
 
     ok($@, 'non is_many properties cannot be linked to parallelBy input');
-}
+};
+
+done_testing();
