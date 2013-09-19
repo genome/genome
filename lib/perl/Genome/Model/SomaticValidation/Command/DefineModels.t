@@ -11,6 +11,8 @@ BEGIN {
 use above 'Genome';
 use Test::More tests => 19;
 
+use Genome::Test::Factory::InstrumentData::Solexa;
+
 my $temp_build_data_dir = File::Temp::tempdir('t_SomaticValidation_Build-XXXXX', CLEANUP => 1, TMPDIR => 1);
 my $temp_dir = File::Temp::tempdir('Model-Command-Define-SomaticValidation-XXXXX', CLEANUP => 1, TMPDIR => 1);
 
@@ -154,8 +156,7 @@ sub setup_somatic_variation_models {
             source_id => $test_individual->id,
         );
 
-        my $test_instrument_data = Genome::InstrumentData::Solexa->create(
-        );
+        my $test_instrument_data = Genome::Test::Factory::InstrumentData::Solexa->setup_object();
 
         my $reference_sequence_build = Genome::Model::Build::ReferenceSequence->get_by_name('NCBI-human-build36');
 
