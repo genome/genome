@@ -26,13 +26,13 @@ subtest 'Simple DAG' => sub {
     );
     $dag->connect_output(
         output_property => 'some_external_output',
-        source_operation => $op,
+        source => $op,
         source_property => 'single_output',
     );
 
     my $expected_xml = <<EOS;
 <?xml version="1.0"?>
-<operation name="top level" logDir="/tmp"><operationtype typeClass="Workflow::OperationType::Model"><inputproperty>some_external_input</inputproperty><outputproperty>some_external_output</outputproperty></operationtype><operation name="some op"><operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" lsfResource="-M 25000000 -R 'select[mem&gt;25000] rusage[mem=25000]'" commandClass="Genome::Workflow::Test::DummyCommand"><inputproperty>input</inputproperty><outputproperty>many_output</outputproperty><outputproperty>result</outputproperty><outputproperty>single_output</outputproperty></operationtype></operation><link leftOperation="input connector" leftProperty="some_external_input" rightOperation="some op" rightProperty="input"/><link leftOperation="some op" leftProperty="single_output" rightOperation="output connector" rightProperty="some_external_output"/></operation>
+<operation name="top level" logDir="/tmp"><operationtype typeClass="Workflow::OperationType::Model"><inputproperty>some_external_input</inputproperty><outputproperty>some_external_output</outputproperty></operationtype><operation name="some op"><operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" lsfResource="-M 25000000 -R 'select[mem&gt;25000] rusage[mem=25000]'" commandClass="Genome::Workflow::Test::DummyCommand"><inputproperty>input</inputproperty><outputproperty>many_output</outputproperty><outputproperty>result</outputproperty><outputproperty>single_output</outputproperty></operationtype></operation><link fromOperation="input connector" fromProperty="some_external_input" toOperation="some op" toProperty="input"/><link fromOperation="some op" fromProperty="single_output" toOperation="output connector" toProperty="some_external_output"/></operation>
 EOS
 
     is($dag->get_xml, $expected_xml, 'simple dag produces expected xml');
@@ -150,7 +150,7 @@ subtest 'Conflicting Inputs' => sub {
 subtest 'XML Round Trip' => sub {
     my $xml = <<EOS;
 <?xml version="1.0"?>
-<operation name="top level" logDir="/tmp"><operationtype typeClass="Workflow::OperationType::Model"><inputproperty>some_external_input</inputproperty><outputproperty>some_external_output</outputproperty></operationtype><operation name="some op"><operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" lsfResource="-M 25000000 -R 'select[mem&gt;25000] rusage[mem=25000]'" commandClass="Genome::Workflow::Test::DummyCommand"><inputproperty>input</inputproperty><outputproperty>many_output</outputproperty><outputproperty>result</outputproperty><outputproperty>single_output</outputproperty></operationtype></operation><link leftOperation="input connector" leftProperty="some_external_input" rightOperation="some op" rightProperty="input"/><link leftOperation="some op" leftProperty="single_output" rightOperation="output connector" rightProperty="some_external_output"/></operation>
+<operation name="top level" logDir="/tmp"><operationtype typeClass="Workflow::OperationType::Model"><inputproperty>some_external_input</inputproperty><outputproperty>some_external_output</outputproperty></operationtype><operation name="some op"><operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" lsfResource="-M 25000000 -R 'select[mem&gt;25000] rusage[mem=25000]'" commandClass="Genome::Workflow::Test::DummyCommand"><inputproperty>input</inputproperty><outputproperty>many_output</outputproperty><outputproperty>result</outputproperty><outputproperty>single_output</outputproperty></operationtype></operation><link fromOperation="input connector" fromProperty="some_external_input" toOperation="some op" toProperty="input"/><link fromOperation="some op" fromProperty="single_output" toOperation="output connector" toProperty="some_external_output"/></operation>
 EOS
 
     my $dag = Genome::Workflow::DAG->from_xml($xml);

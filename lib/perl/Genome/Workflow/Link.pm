@@ -46,10 +46,10 @@ sub get_xml_element {
     $self->validate;
 
     my $element = XML::LibXML::Element->new('link');
-    $element->setAttribute('leftOperation', $self->source_operation_name);
-    $element->setAttribute('leftProperty', $self->source_property);
-    $element->setAttribute('rightOperation', $self->destination_operation_name);
-    $element->setAttribute('rightProperty', $self->destination_property);
+    $element->setAttribute('fromOperation', $self->source_operation_name);
+    $element->setAttribute('fromProperty', $self->source_property);
+    $element->setAttribute('toOperation', $self->destination_operation_name);
+    $element->setAttribute('toProperty', $self->destination_property);
 
     return $element;
 }

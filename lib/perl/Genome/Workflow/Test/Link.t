@@ -22,7 +22,7 @@ subtest 'Typical Link' => sub {
         destination => $destination_op, destination_property => 'input'
     );
 
-    my $expected_xml = '<link leftOperation="source op" leftProperty="single_output" rightOperation="destination op" rightProperty="input"/>';
+    my $expected_xml = '<link fromOperation="source op" fromProperty="single_output" toOperation="destination op" toProperty="input"/>';
     is($link->get_xml, $expected_xml, 'typical link produces expected xml');
 };
 
@@ -41,7 +41,7 @@ subtest 'Parallel-By Link' => sub {
         source => $source_op, source_property => 'many_output',
         destination => $destination_op, destination_property => 'input'
     );
-    my $expected_xml = '<link leftOperation="source op" leftProperty="many_output" rightOperation="destination op" rightProperty="input"/>';
+    my $expected_xml = '<link fromOperation="source op" fromProperty="many_output" toOperation="destination op" toProperty="input"/>';
     is($link->get_xml, $expected_xml, 'parallelBy link produces expected xml');
 };
 
@@ -56,7 +56,7 @@ subtest 'Input Connector' => sub {
         destination => $destination_op, destination_property => 'input'
     );
 
-    my $expected_xml = '<link leftOperation="input connector" leftProperty="some_external_input" rightOperation="destination op" rightProperty="input"/>';
+    my $expected_xml = '<link fromOperation="input connector" fromProperty="some_external_input" toOperation="destination op" toProperty="input"/>';
     is($link->get_xml, $expected_xml,
         'missing source operation uses input connector');
 };
@@ -72,7 +72,7 @@ subtest 'Output Connector' => sub {
         destination_property => 'some_external_output'
     );
 
-    my $expected_xml = '<link leftOperation="source op" leftProperty="single_output" rightOperation="output connector" rightProperty="some_external_output"/>';
+    my $expected_xml = '<link fromOperation="source op" fromProperty="single_output" toOperation="output connector" toProperty="some_external_output"/>';
     is($link->get_xml, $expected_xml,
         'missing destination operation uses output connector');
 };

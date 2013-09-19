@@ -60,13 +60,13 @@ sub connect_input {
 sub connect_output {
     my $self = shift;
     my %args = Params::Validate::validate(@_, {
-            source_operation => { type => Params::Validate::OBJECT },
+            source => { type => Params::Validate::OBJECT },
             source_property => { type => Params::Validate::SCALAR },
             output_property => { type => Params::Validate::SCALAR },
     });
 
     $self->add_link(Genome::Workflow::Link->create(
-        source => $args{source_operation},
+        source => $args{source},
         source_property => $args{source_property},
         destination_property => $args{output_property},
     ));
@@ -166,13 +166,13 @@ sub _add_links_from_xml_element {
     my $nodelist = $element->find('link');
     for my $node ($nodelist->get_nodelist) {
         my $source_op = $self->operation_named(
-                $node->getAttribute('leftOperation'));
+                $node->getAttribute('fromOperation'));
         my $destination_op = $self->operation_named(
-                $node->getAttribute('rightOperation'));
+                $node->getAttribute('toOperation'));
 
         my %link_params = (
-            source_property => $node->getAttribute('leftProperty'),
-            destination_property => $node->getAttribute('rightProperty'),
+            source_property => $node->getAttribute('fromProperty'),
+            destination_property => $node->getAttribute('toProperty'),
         );
         if (defined($source_op)) {
             $link_params{source} = $source_op;
