@@ -138,9 +138,11 @@ sub before_assemble {
         my @lib_ids = $self->resolve_attribute_for_instrument_data("library_id", 0, $sx_result->instrument_data);
         my $lib_id = join("-", @lib_ids);
         my $genomic_start = 0;
+        my $genomic_end = 0;
         my $lib_name = join("-", map{Genome::Library->get($_)->name} @lib_ids);
         if ($lib_name =~ /CHORI/) {
             $genomic_start = 2;
+            $genomic_end = 50;
         }
 
         $in_group = $in_group."\n".$self->data_directory."/".$sx_result->resolve_base_name_from_instrument_data($sx_result->instrument_data).".*.".$sx_result->output_file_suffix.",\t".$lib_name.",\t".$sx_result->id;
@@ -167,11 +169,11 @@ sub before_assemble {
             my $original_est_fragment_size = $self->resolve_average_for_attribute(attribute => "original_est_fragment_size", objects => [$sx_result->instrument_data]);
             if ($self->_sx_result_is_x($sx_result, "sloptig")) {
                 my $fragment_std_dev = $original_est_fragment_std_dev;
-                $in_libs = $in_libs."\n".$lib_name.",\tproject_name,\t".$species_name.",\tfragment,\t1,\t".$original_est_fragment_size.",\t".$fragment_std_dev.",\t,\t,\t".$orientation.",\t$genomic_start,\t0";
+                $in_libs = $in_libs."\n".$lib_name.",\tproject_name,\t".$species_name.",\tfragment,\t1,\t".$original_est_fragment_size.",\t".$fragment_std_dev.",\t,\t,\t".$orientation.",\t$genomic_start,\t$genomic_end";
             }
             elsif ($self->_sx_result_is_x($sx_result, "jumping")){
                 my $fragment_std_dev = $original_est_fragment_std_dev;
-                $in_libs = $in_libs."\n".$lib_name.",\tproject_name,\t".$species_name.",\tjumping,\t1,\t,\t,\t".$original_est_fragment_size.",\t".$fragment_std_dev.",\t".$orientation.",\t$genomic_start,\t0";
+                $in_libs = $in_libs."\n".$lib_name.",\tproject_name,\t".$species_name.",\tjumping,\t1,\t,\t,\t".$original_est_fragment_size.",\t".$fragment_std_dev.",\t".$orientation.",\t$genomic_start,\t$genomic_end";
             }
         }
         $libs_seen{$lib_id} = 1;
