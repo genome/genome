@@ -31,6 +31,7 @@ my %calc_covg_params = (
     test_name => "testing",
 );
 
+$DB::single = 1;
 my $calc_covg_result = Genome::Model::Build::SomaticVariation::CalcCovgResult->get_or_create(%calc_covg_params);
 isa_ok($calc_covg_result, 'Genome::Model::Build::SomaticVariation::CalcCovgResult', 'successful run');
 
@@ -46,108 +47,20 @@ ok(!$diff, 'returned file matches expected file')
 done_testing;
 
 sub setup_somatic_variation_build {
-    my $tumor_build_data_dir = Genome::Sys->create_temp_directory();
-    my $normal_build_data_dir = Genome::Sys->create_temp_directory();
-    my $sv_build_data_dir = Genome::Sys->create_temp_directory();
-    Genome::Sys->create_directory($tumor_build_data_dir."/alignments");
-    Genome::Sys->create_directory($normal_build_data_dir."/alignments");
+    use Genome::Test::Factory::Model::SomaticVariation;
+
+    my $sv_build = Genome::Test::Factory::Model::SomaticVariation->setup_somatic_variation_build();
+
+    $sv_build->tumor_build->subject->extraction_label('test_individual1');
+    $sv_build->normal_build->subject->extraction_label('test_individual2');
 
     # why are these normal/tumor backwards?
-    Genome::Sys->create_symlink("$base_dir/normal.bam", "$tumor_build_data_dir/alignments/normal_merged_rmdup.bam");
-    Genome::Sys->create_symlink("$base_dir/normal.bam.bai", "$tumor_build_data_dir/alignments/normal_merged_rmdup.bam.bai");
-    Genome::Sys->create_symlink("$base_dir/tumor.bam", "$normal_build_data_dir/alignments/tumor_merged_rmdup.bam");
-    Genome::Sys->create_symlink("$base_dir/tumor.bam.bai", "$normal_build_data_dir/alignments/tumor_merged_rmdup.bam.bai");
+    Genome::Sys->create_directory($sv_build->tumor_build->data_directory . "/alignments");
+    Genome::Sys->create_directory($sv_build->normal_build->data_directory . "/alignments");
+    Genome::Sys->create_symlink("$base_dir/normal.bam", $sv_build->tumor_build->data_directory . "/alignments/normal_merged_rmdup.bam");
+    Genome::Sys->create_symlink("$base_dir/normal.bam.bai", $sv_build->tumor_build->data_directory . "/alignments/normal_merged_rmdup.bam.bai");
+    Genome::Sys->create_symlink("$base_dir/tumor.bam", $sv_build->normal_build->data_directory . "/alignments/tumor_merged_rmdup.bam");
+    Genome::Sys->create_symlink("$base_dir/tumor.bam.bai", $sv_build->normal_build->data_directory . "/alignments/tumor_merged_rmdup.bam.bai");
 
-    my $test_profile = Genome::ProcessingProfile::ReferenceAlignment->create(
-        name => 'test_profile',
-        sequencing_platform => 'solexa',
-        dna_type => 'cdna',
-        read_aligner_name => 'bwa',
-        snv_detection_strategy => 'samtools',
-    );
-
-    my $test_somvar_pp = Genome::ProcessingProfile::SomaticVariation->create(
-        name => 'test somvar pp',
-        snv_detection_strategy => 'samtools r599 [--test=1]',
-        tiering_version => 1,
-    );
-
-    my $annotation_build = Genome::Model::Build::ImportedAnnotation->__define__(
-        model_id => '-1',
-    );
-
-    my $test_individual = Genome::Individual->create(
-        common_name => 'TEST',
-        name => 'test_individual',
-    );
-
-    my $test_sample = Genome::Sample->create(
-        name => 'test_subject',
-        source_id => $test_individual->id,
-        extraction_label => "test_individual1",
-    );
-
-    my $test_control_sample = Genome::Sample->create(
-        name => 'test_control_subject',
-        source_id => $test_individual->id,
-        extraction_label => "test_individual2",
-    );
-
-    my $test_instrument_data = Genome::InstrumentData::Solexa->create(
-    );
-
-    my $reference_sequence_build = Genome::Model::Build::ReferenceSequence->get_by_name('GRCh37-lite-build37');
-    my $test_model = Genome::Model->create(
-        name => 'test_reference_aligment_model_TUMOR',
-        subject_name => 'test_subject',
-        subject_type => 'sample_name',
-        processing_profile_id => $test_profile->id,
-        reference_sequence_build => $reference_sequence_build,
-    );
-
-    my $add_ok = $test_model->add_instrument_data($test_instrument_data);
-
-    my $test_build = Genome::Model::Build->create(
-        model_id => $test_model->id,
-        data_directory => $tumor_build_data_dir,
-    );
-
-    my $test_model_two = Genome::Model->create(
-        name => 'test_reference_aligment_model_mock_NORMAL',
-        subject_name => 'test_control_subject',
-        subject_type => 'sample_name',
-        processing_profile_id => $test_profile->id,
-        reference_sequence_build => $reference_sequence_build,
-    );
-
-    $add_ok = $test_model_two->add_instrument_data($test_instrument_data);
-
-    my $test_build_two = Genome::Model::Build->create(
-        model_id => $test_model_two->id,
-        data_directory => $normal_build_data_dir,
-    );
-
-    my $somvar_model = Genome::Model::SomaticVariation->create(
-        tumor_model => $test_model,
-        normal_model => $test_model_two,
-        name => 'test somvar model',
-        processing_profile => $test_somvar_pp,
-        annotation_build => $annotation_build,
-    );
-
-    my $somvar_build = Genome::Model::Build::SomaticVariation->__define__(
-        model_id => $somvar_model->id,
-        data_directory => $sv_build_data_dir,
-        tumor_build => $test_build_two,
-        normal_build => $test_build,
-    );
-    my $e = Genome::Model::Event::Build->__define__(
-        build_id => $somvar_build->id,
-        event_type => 'genome model build',
-        event_status => 'Succeeded',
-        model_id => $somvar_model->id,
-        date_completed => '1999-01-01 15:19:01',
-    );
-
-    return $somvar_build;
+    return $sv_build;
 }
