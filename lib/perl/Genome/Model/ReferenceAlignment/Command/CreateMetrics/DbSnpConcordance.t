@@ -8,7 +8,7 @@ use Test::More;
 if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
 }
-else { 
+else {
     plan tests => 29;
 }
 
@@ -76,18 +76,18 @@ sub setup_test_builds {
         read_aligner_name => 'bwa',
         snv_detection_strategy => 'samtools',
         indel_detection_strategy => '-test Genome/Model/Convergence.t',
-    ); 
+    );
     ok($test_profile, 'created test processing profile');
-    
+
     my $test_sample = Genome::Sample->create(
         name => 'test_subject',
     );
     ok($test_sample, 'created test sample');
-    
+
     my $test_instrument_data = Genome::InstrumentData::Solexa->create(
     );
     ok($test_instrument_data, 'created test instrument data');
-    
+
     my $reference_sequence_build = Genome::Model::Build::ImportedReferenceSequence->get(name => 'NCBI-human-build36');
     isa_ok($reference_sequence_build, 'Genome::Model::Build::ImportedReferenceSequence') or die;
 
@@ -100,15 +100,15 @@ sub setup_test_builds {
     );
     ok($test_model, 'created test model');
     ok($test_model->add_instrument_data($test_instrument_data), 'added inst data');
-    
-    my $test_build = Genome::Model::Build->create( 
+
+    my $test_build = Genome::Model::Build->create(
         model_id => $test_model->id,
         data_directory => $tmpdir,
     );
     ok($test_build, 'created test build');
-    
+
     $test_build->_verify_build_is_not_abandoned_and_set_status_to('Succeeded', 1);
-    
+
     is_deeply($test_model->last_complete_build, $test_build, 'last succeeded build is the test build');
 
     mkdir("$tmpdir/snp_related_metrics") || die "Failed to create snp_related_metrics directory";
