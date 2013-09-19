@@ -19,7 +19,7 @@ BEGIN {
 my $class = 'Genome::Model::Tools::Dindel::AnalyzeWindowFile';
 use_ok($class) || die;
 
-my $VERSION = 0; # Bump this each time tests data changes
+my $VERSION = 1; # Bump this each time tests data changes
 
 my $ref_fasta = get_ref_fasta();
 
@@ -48,7 +48,6 @@ ok($cmd->execute(), "Successfully ran command");
 test_bam_files_are_identical($expected_bam, $cmd->output_bam);
 compare_output_to_test_data($cmd->output_glf, $output_directory, $test_dir);
 compare_output_to_test_data($cmd->output_log, $output_directory, $test_dir);
-
 done_testing();
 
 sub bam_to_sam {
