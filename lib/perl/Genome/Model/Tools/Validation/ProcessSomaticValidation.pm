@@ -22,13 +22,19 @@ class Genome::Model::Tools::Validation::ProcessSomaticValidation {
   has_optional_input => [
       somatic_validation_model_id => {
           is => 'Text',
-          doc => "ID of SomaticValidation model",
+          doc => "ID of SomaticValidation model - either this or the --somatic-validation-build-id are required",
           is_optional => 1,
       },
 
       somatic_validation_build_id => {
           is => 'Text',
-          doc => "ID of SomaticValidation build",
+          doc => "ID of SomaticValidation build - either this or the --somatic-validation-model-id are required",
+          is_optional => 1,
+      },
+
+      somatic_variation_model_id => {
+          is => 'Text',
+          doc => "Optional. If provided, will create xml sessions for review that display both the original bams from this model along with the capture validation bams",
           is_optional => 1,
       },
 
@@ -960,16 +966,49 @@ sub execute {
       `rm -f $output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp`;
       annoFileToSlashedBedFile("$output_dir/$sample_name/snvs.indels.annotated.tier$tierstring","$output_dir/review/$sample_name.bed");
 
-      my $bam_files;
-      my $labels;
-      if($self->tumor_only){
-          $bam_files = $tumor_bam;
-          $labels = "tumor $sample_name";
-      } else {
-          $bam_files = join(",",($normal_bam,$tumor_bam));
-          $labels = join(",",("normal $sample_name","tumor $sample_name"));
+      my @bam_files;
+      my @labels;
+
+
+      #add bam files from som-var model, if specified
+      if(defined $self->somatic_variation_model_id){
+          my $var_model = Genome::Model->get( $self->somatic_variation_model_id );
+          if (!( defined $var_model )){
+              print STDERR "ERROR: Could not find a model with ID: " . $self->somatic_validation_model_id . "\n";
+          } else {
+              my $tvar_build = $var_model->tumor_model->last_succeeded_build;
+              my $nvar_build = $var_model->normal_model->last_succeeded_build;
+              if (!( defined $nvar_build ) || !(defined $tvar_build) ){
+                  print STDERR "ERROR: Could not find a succeeded refalign builds from model ID: " . $self->somatic_validation_model_id . "\n";
+              } else {                  
+                  my $tbam = $tvar_build->whole_rmdup_bam_file;
+                  my $nbam = $nvar_build->whole_rmdup_bam_file;
+                  
+                  if (!( -s $tbam && -s $nbam)){
+                      print STDERR "couldn't resolve bam files for somatic variation model";
+                  } else {
+                      
+                      push(@bam_files, $nbam);
+                      push(@bam_files, $tbam);
+                      push(@labels, "original normal $sample_name");
+                      push(@labels, "original tumor $sample_name");
+                  }
+              }
+          }
       }
 
+      
+     # add bam files from this model
+      if($self->tumor_only){
+          push(@bam_files, $tumor_bam);
+          push(@labels, "tumor $sample_name");
+      } else {
+          push(@bam_files, $normal_bam);
+          push(@bam_files, $tumor_bam);
+
+          push(@labels, "normal $sample_name");
+          push(@labels, "tumor $sample_name");
+      }
 
       my $igv_reference_name = "b37"; #default
       if(defined($self->igv_reference_name)){
@@ -978,17 +1017,18 @@ sub execute {
           print STDERR "WARNING: No IGV reference name supplied - defaulting to build 37\n";
       }
 
+
       #create the xml file for review
       my $dumpXML = Genome::Model::Tools::Analysis::DumpIgvXmlMulti->create(
-          bams => "$bam_files",
-          labels => "$labels",
+          bams => join(",",@bam_files),
+          labels => join(",",@labels),
           output_file => "$output_dir/review/$sample_name.xml",
           genome_name => $sample_name,
           review_bed_file => "$output_dir/review/$sample_name.bed",
           reference_name => $igv_reference_name,
           );
       unless ($dumpXML->execute) {
-          die "Failed to dump IGV xml for poorly covered sites.\n";
+          die "Failed to dump IGV xml.\n";
       }
 
       print STDERR "\n--------------------------------------------------------------------------------\n";
