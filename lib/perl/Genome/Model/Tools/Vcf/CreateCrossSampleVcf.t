@@ -101,7 +101,6 @@ my %params = (
 
 my $use_builds_instead_of_mg = 0;
 test_cmd("test_1", $use_builds_instead_of_mg, %params);
-$params{max_files_per_merge} = undef;
 $use_builds_instead_of_mg = 1;
 test_cmd("test_2", $use_builds_instead_of_mg, %params);
 
