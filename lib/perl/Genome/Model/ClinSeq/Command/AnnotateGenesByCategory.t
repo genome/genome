@@ -17,20 +17,21 @@ use above "Genome";
 use Test::More tests=>12;
 use Genome::Model::ClinSeq::Command::CreateMutationSpectrum;
 use Data::Dumper;
+use Genome::Utility::Test;
 
-use_ok('Genome::Model::ClinSeq::Command::AnnotateGenesByCategory') or die;
+my $class = 'Genome::Model::ClinSeq::Command::AnnotateGenesByCategory';
+use_ok($class) or die;
 
 #Define the test where expected results are stored
-my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "Genome-Model-ClinSeq-Command-AnnotateGenesByCategory/2013-02-26/";
-ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
+my $expected_output_dir = Genome::Utility::Test->data_dir_ok($class, "2013-02-26");
 
 #Create a temp dir for results
 my $temp_dir = Genome::Sys->create_temp_directory();
 ok($temp_dir, "created temp directory: $temp_dir") or die;
 
 #Make a copy of the expected input file in the temp dir
-my $infile = $expected_output_dir . "example_input.tsv";
-my $infile2 = $expected_output_dir . "example_input2.tsv";
+my $infile = $expected_output_dir . "/example_input.tsv";
+my $infile2 = $expected_output_dir . "/example_input2.tsv";
 ok (-e $infile, "Found example input file: $infile") or die;
 Genome::Sys->shellcmd(cmd => "cp $infile $temp_dir/");
 Genome::Sys->shellcmd(cmd => "cp $infile2 $temp_dir/");
@@ -47,7 +48,7 @@ ok (-e $gene_symbol_lists_dir && -d $gene_symbol_lists_dir, "Found gene symbol l
 #Create annotate-genes-by-category command and execute
 #genome model clin-seq annotate-genes-by-category --infile=example_input.tsv --gene-symbol-lists-dir=/gscmnt/sata132/techd/mgriffit/reference_annotations/GeneSymbolLists/  --gene-name-column='mapped_gene_name'
 
-my $annotate_genes_cmd = Genome::Model::ClinSeq::Command::AnnotateGenesByCategory->create(infile=>$temp_infile, cancer_annotation_db => $cancer_annotation_db, gene_name_column=>'mapped_gene_name');
+my $annotate_genes_cmd = Genome::Model::ClinSeq::Command::AnnotateGenesByCategory->create(infile=>$temp_infile, cancer_annotation_db => $cancer_annotation_db, gene_name_columns=>['mapped_gene_name']);
 $annotate_genes_cmd->queue_status_messages(1);
 my $r1 = $annotate_genes_cmd->execute();
 is($r1, 1, 'Testing for successful execution.  Expecting 1.  Got: '.$r1);
@@ -59,7 +60,7 @@ my $log = IO::File->new(">$log_file");
 $log->print(join("\n", @output1));
 ok(-e $log_file, "Wrote message file from annotate-genes-by-category to a log file: $log_file");
 
-$annotate_genes_cmd = Genome::Model::ClinSeq::Command::AnnotateGenesByCategory->create(infile=>$temp_infile2, cancer_annotation_db => $cancer_annotation_db, gene_name_column=>'mapped_gene_name', gene_groups => "MelanomaDruggable");
+$annotate_genes_cmd = Genome::Model::ClinSeq::Command::AnnotateGenesByCategory->create(infile=>$temp_infile2, cancer_annotation_db => $cancer_annotation_db, gene_name_columns=>['mapped_gene_name'], gene_groups => "MelanomaDruggable");
 $annotate_genes_cmd->queue_status_messages(1);
 my $r2 = $annotate_genes_cmd->execute();
 is($r2, 1, 'Testing for successful execution.  Expecting 1.  Got: '.$r1);
