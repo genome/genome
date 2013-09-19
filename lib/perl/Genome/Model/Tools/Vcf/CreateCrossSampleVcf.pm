@@ -309,7 +309,7 @@ sub _get_workflow_inputs {
         joinx_version => $self->joinx_version,
         initial_vcf_merge_working_directory => $self->initial_vcf_merge_working_directory,
         max_files_per_merge => $self->max_files_per_merge,
-        segregating_sites_vcf_file => File::Spec->join($self->output_directory, 'segregating_sites.vcf'),
+        segregating_sites_vcf_file => File::Spec->join($self->output_directory, 'segregating_sites.vcf.gz'),
 
         # Backfill(Indel)Vcf
         ref_fasta => $ref_fasta,
@@ -330,6 +330,7 @@ sub get_indel_inputs {
     my %inputs = (
         input_bams => \@input_bams,
         output_directory => File::Spec->join($self->output_directory, 'indel_backfilling'),
+        merge_samples => 1,
     );
     return \%inputs;
 }
