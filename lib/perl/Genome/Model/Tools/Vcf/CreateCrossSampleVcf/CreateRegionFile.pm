@@ -25,13 +25,14 @@ class Genome::Model::Tools::Vcf::CreateCrossSampleVcf::CreateRegionFile {
 sub execute {
     my $self = shift;
 
-    my $ofh = Genome::Sys->open_file_for_writing($self->region_file);
+    my $ofh = Genome::Sys->open_gzip_file_for_writing($self->region_file);
 
     my $reader = Genome::File::Vcf::Reader->new($self->segregating_sites_vcf_file);
     while (my $entry = $reader->next) {
-        my $alts = join(',', $entry->{alternate_alleles});
+        my $alts = join(',', @{$entry->{alternate_alleles}});
+        $alts = '.' unless $alts;
         $ofh->print( join("\t", $entry->{chrom}, $entry->{position},
-                                $entry->{position}, $alts) );
+                                $entry->{position}, $alts) . "\n");
     }
     $ofh->close();
 
