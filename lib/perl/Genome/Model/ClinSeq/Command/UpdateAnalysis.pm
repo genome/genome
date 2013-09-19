@@ -144,9 +144,13 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
               is => 'Text',
               doc => 'Instrument data to exclude from all consideration. Supply as a comma separated list of instrument data IDs. Supply a mix of dna and rna data if required.',
         },
+        skip_check_archived => {
+              is => 'Boolean',
+              doc => 'Check if builds are currently archived',
+        },
         check_archivable_status => {
               is => 'Boolean',
-              doc => 'Warn if builds are currently set to be archivable.  Even if false you will still be warned if something is already archived',
+              doc => 'Warn if builds are currently set to be *archivable*.  Even if false you will still be warned if something is already archived',
         },
         force => {
               is => 'Boolean',
@@ -530,17 +534,19 @@ sub display_inputs{
   $self->status_message("cosmic_annotation_db: " . $cosmic_annotation_db_id . " (" . $cosmic_annotation_db->data_directory . ")");
 
   #Make sure none of the basic input models/builds have been archived before proceeding...
-  if ($self->reference_sequence_build->is_archived){
-    $self->error_message("Reference sequencing build " . $self->reference_sequence_build->__display_name__ . " has been archived!");
-    exit 1;
-  }
-  if ($self->annotation_build->is_archived){
-    $self->error_message("Annotation build " . $self->annotation_build->name . " has been archived!");
-    exit 1;
-  }
-  if ($self->dbsnp_build->is_archived){
-    $self->error_message("dbSNP build " . $self->dbsnp_build->__display_name__ . " has been archived!");
-    exit 1;
+  unless ($self->skip_check_archived){
+    if ($self->reference_sequence_build->is_archived){
+      $self->error_message("Reference sequencing build " . $self->reference_sequence_build->__display_name__ . " has been archived!");
+      exit 1;
+    }
+    if ($self->annotation_build->is_archived){
+      $self->error_message("Annotation build " . $self->annotation_build->name . " has been archived!");
+      exit 1;
+    }
+    if ($self->dbsnp_build->is_archived){
+      $self->error_message("dbSNP build " . $self->dbsnp_build->__display_name__ . " has been archived!");
+      exit 1;
+    }
   }
 
   return;
@@ -1610,14 +1616,18 @@ sub create_somatic_variation_model{
 
   #Make sure neither of the input models/builds has been archived before proceeding...
   my $tumor_build = $best_tumor_model->last_succeeded_build;
-  if ($tumor_build->is_archived){
-    $self->status_message("\tWARNING -> Tumor build is currently archived. Run: bsub genome model build unarchive " . $tumor_build->id);
-    return;
+  unless ($self->skip_check_archived){
+    if ($tumor_build->is_archived){
+      $self->status_message("\tWARNING -> Tumor build is currently archived. Run: bsub genome model build unarchive " . $tumor_build->id);
+      return;
+    }
   }
   my $normal_build = $best_normal_model->last_succeeded_build;
-  if ($normal_build->is_archived){
-    $self->status_message("\tWARNING -> Normal build is currently archived. Run: bsub genome model build unarchive " . $normal_build->id);
-    return;
+  unless ($self->skip_check_archived){
+    if ($normal_build->is_archived){
+      $self->status_message("\tWARNING -> Normal build is currently archived. Run: bsub genome model build unarchive " . $normal_build->id);
+      return;
+    }
   }
   my @commands;
   push(@commands, "\n#Create a Somatic-Variation model as follows:");
@@ -1736,11 +1746,13 @@ sub check_models_status{
       my $build = $model->last_succeeded_build;
       if ($build){
         my $build_id = $build->id;
-        if ($build->is_archived){
-          $self->status_message("\tWARNING -> Successful build $build_id of model $model_id that meets desired criteria is currently archived! Consider running: bsub genome model build unarchive $build_id") unless $silent;
-        }elsif ($build->archivable){
-          if ($self->check_archivable_status){
-            $self->status_message("\tSuccessful build $build_id of model $model_id that meets desired criteria is currently archivable. Consider running: genome model build set-do-not-archive --reason='build needed for clin-seq model' $build_id") unless $silent;
+        unless ($self->skip_check_archived){
+          if ($build->is_archived){
+            $self->status_message("\tWARNING -> Successful build $build_id of model $model_id that meets desired criteria is currently archived! Consider running: bsub genome model build unarchive $build_id") unless $silent;
+          }elsif ($build->archivable){
+            if ($self->check_archivable_status){
+              $self->status_message("\tSuccessful build $build_id of model $model_id that meets desired criteria is currently archivable. Consider running: genome model build set-do-not-archive --reason='build needed for clin-seq model' $build_id") unless $silent;
+            }
           }
         }
       }
@@ -1967,9 +1979,11 @@ sub create_clinseq_model{
     next unless $model;
     my $build = $model->last_succeeded_build;
     if ($build){
-      if ($build->is_archived){
-        $ready = 0;
-        $self->status_message("\tWARNING -> Build is currently archived for model: " . $model->name . "\n\tRun: bsub genome model build unarchive " . $build->id);
+      unless ($self->skip_check_archived){
+        if ($build->is_archived){
+          $ready = 0;
+          $self->status_message("\tWARNING -> Build is currently archived for model: " . $model->name . "\n\tRun: bsub genome model build unarchive " . $build->id);
+        }
       }
     }else{
       $ready = 0;
