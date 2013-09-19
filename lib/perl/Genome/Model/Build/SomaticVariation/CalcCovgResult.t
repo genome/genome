@@ -46,16 +46,17 @@ ok(!$diff, 'returned file matches expected file')
 done_testing;
 
 sub setup_somatic_variation_build {
-    my $temp_build_data_dir1 = Genome::Sys->create_temp_directory();
-    my $temp_build_data_dir2 = Genome::Sys->create_temp_directory();
-    my $temp_build_data_dir3 = Genome::Sys->create_temp_directory();
-    Genome::Sys->create_directory($temp_build_data_dir1."/alignments");
-    Genome::Sys->create_directory($temp_build_data_dir2."/alignments");
+    my $tumor_build_data_dir = Genome::Sys->create_temp_directory();
+    my $normal_build_data_dir = Genome::Sys->create_temp_directory();
+    my $sv_build_data_dir = Genome::Sys->create_temp_directory();
+    Genome::Sys->create_directory($tumor_build_data_dir."/alignments");
+    Genome::Sys->create_directory($normal_build_data_dir."/alignments");
 
-    Genome::Sys->create_symlink("$base_dir/normal.bam", "$temp_build_data_dir1/alignments/normal_merged_rmdup.bam");
-    Genome::Sys->create_symlink("$base_dir/normal.bam.bai", "$temp_build_data_dir1/alignments/normal_merged_rmdup.bam.bai");
-    Genome::Sys->create_symlink("$base_dir/tumor.bam", "$temp_build_data_dir2/alignments/tumor_merged_rmdup.bam");
-    Genome::Sys->create_symlink("$base_dir/tumor.bam.bai", "$temp_build_data_dir2/alignments/tumor_merged_rmdup.bam.bai");
+    # why are these normal/tumor backwards?
+    Genome::Sys->create_symlink("$base_dir/normal.bam", "$tumor_build_data_dir/alignments/normal_merged_rmdup.bam");
+    Genome::Sys->create_symlink("$base_dir/normal.bam.bai", "$tumor_build_data_dir/alignments/normal_merged_rmdup.bam.bai");
+    Genome::Sys->create_symlink("$base_dir/tumor.bam", "$normal_build_data_dir/alignments/tumor_merged_rmdup.bam");
+    Genome::Sys->create_symlink("$base_dir/tumor.bam.bai", "$normal_build_data_dir/alignments/tumor_merged_rmdup.bam.bai");
 
     my $test_profile = Genome::ProcessingProfile::ReferenceAlignment->create(
         name => 'test_profile',
@@ -108,7 +109,7 @@ sub setup_somatic_variation_build {
 
     my $test_build = Genome::Model::Build->create(
         model_id => $test_model->id,
-        data_directory => $temp_build_data_dir1,
+        data_directory => $tumor_build_data_dir,
     );
 
     my $test_model_two = Genome::Model->create(
@@ -123,7 +124,7 @@ sub setup_somatic_variation_build {
 
     my $test_build_two = Genome::Model::Build->create(
         model_id => $test_model_two->id,
-        data_directory => $temp_build_data_dir2,
+        data_directory => $normal_build_data_dir,
     );
 
     my $somvar_model = Genome::Model::SomaticVariation->create(
@@ -136,7 +137,7 @@ sub setup_somatic_variation_build {
 
     my $somvar_build = Genome::Model::Build::SomaticVariation->__define__(
         model_id => $somvar_model->id,
-        data_directory => $temp_build_data_dir3,
+        data_directory => $sv_build_data_dir,
         tumor_build => $test_build_two,
         normal_build => $test_build,
     );
