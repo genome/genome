@@ -142,6 +142,14 @@ sub validate {
     $self->_validate_mandatory_inputs;
     $self->_validate_non_conflicting_inputs;
 
+    for my $op ($self->operations) {
+        $op->validate;
+    }
+
+    for my $link ($self->links) {
+        $link->validate;
+    }
+
     return;
 }
 

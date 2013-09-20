@@ -126,6 +126,8 @@ sub operation_type {
 sub get_xml {
     my $self = shift;
 
+    $self->validate;
+
     my $doc = XML::LibXML::Document->new();
     $doc->setDocumentElement($self->get_xml_element);
 
@@ -134,8 +136,6 @@ sub get_xml {
 
 sub get_xml_element {
     my $self = shift;
-
-    $self->validate;
 
     my $element = XML::LibXML::Element->new('operation');
     $element->setAttribute('name', $self->name);
