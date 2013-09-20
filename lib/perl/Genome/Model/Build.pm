@@ -787,37 +787,48 @@ sub symlinked_allocations {
     my $data_directory = $self->data_directory;
     return if not $data_directory or not -d $data_directory;
 
-    my %symlinks;
-    File::Find::find(
-        {
-            wanted => sub{
-                return if not -l $File::Find::name;
-                return if -d $File::Find::name;
-                $symlinks{$File::Find::name} = readlink($File::Find::name);
-            },
-            follow_fast => 1,
-            follow_skip => 2,
-        },
-        $data_directory,
-    );
+    # In some circumstances, this can get called (though all_allocations())
+    # many times.  NFS slowness would compound the problem and make this
+    # method way too slow.  We'll get the result the first time and cache
+    # the answer
+    unless ($self->{__symlinked_allocations}) {
 
-    my %allocations;
-    for my $symlink ( keys %symlinks ) {
-        my $target = $symlinks{$symlink};
-        my @tokens = split(m#/+#, $target);
-        my $allocation_path = join('/', @tokens[4..$#tokens]);
-        my @allocations = Genome::Disk::Allocation->get(allocation_path => $allocation_path);
-        next if not @allocations or @allocations > 1;
-        my $allocation = $allocations[0];
-        next if $allocations{$allocation->id};
-        UR::Context->reload($allocation); # this may have been loaded and unarchived earlier
-        $allocations{$allocation->id} = $allocation;
-        $allocation->{_symlink_name} = $symlink;
-        $allocation->{_target_name} = $target;
-        $allocation->{_target_exists} = ( -e $target ? 1 : 0 );
+        my %symlinks;
+        File::Find::find(
+            {
+                wanted => sub{
+                    return if not -l $File::Find::name;
+                    return if -d $File::Find::name;
+                    $symlinks{$File::Find::name} = readlink($File::Find::name);
+                },
+                follow_fast => 1,
+                follow_skip => 2,
+            },
+            $data_directory,
+        );
+
+        my %allocations;
+        for my $symlink ( keys %symlinks ) {
+            my $target = $symlinks{$symlink};
+            my @tokens = split(m#/+#, $target);
+            my $allocation_path = join('/', @tokens[4..$#tokens]);
+            my @allocations = Genome::Disk::Allocation->get(allocation_path => $allocation_path);
+            next if not @allocations or @allocations > 1;
+            my $allocation = $allocations[0];
+            next if $allocations{$allocation->id};
+            UR::Context->reload($allocation); # this may have been loaded and unarchived earlier
+            $allocations{$allocation->id} = $allocation;
+            $allocation->{_symlink_name} = $symlink;
+            $allocation->{_target_name} = $target;
+            $allocation->{_target_exists} = ( -e $target ? 1 : 0 );
+        }
+
+        my @allocs = values %allocations;
+        $self->{__symlinked_allocations} = \@allocs;
+        $self->{__symlinked_allocations_time} = time();
     }
 
-    return values %allocations;
+    return @{ $self->{__symlinked_allocations}};
 }
 
 sub input_builds {
