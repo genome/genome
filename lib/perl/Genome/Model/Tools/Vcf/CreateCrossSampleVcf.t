@@ -23,13 +23,13 @@ use_ok($sr_class);
 my $test_data_directory = join("/", $ENV{GENOME_TEST_INPUTS},
         "Genome-Model-Tools-Vcf-CreateCrossSampleVcf");
 diag("Test data located at: $test_data_directory");
-my $region_file = join("/", $test_data_directory, "input",
-        "2477F2D7AC5111E1874EF15E46F0A7A3_short.bed");
-my $region_file_content_hash = Genome::Sys->md5sum($region_file);
-my $expected_result = join("/", $test_data_directory, "expected_6",
-        "snvs.merged.vcf.gz");
+my $result_dir = File::Spec->join($test_data_directory, 'expected_7');
+sub get_expected_result {
+    my $variant_type = shift;
+    return File::Spec->join($result_dir, "$variant_type.merged.vcf.gz");
+}
 
-my $joinx_version = "1.6";
+my $joinx_version = "1.7";
 my @input_builds = map{ Genome::Model::Build->get($_)}
         (132916834, 132916881, 132916907);
 
@@ -43,15 +43,48 @@ is(scalar(@input_mg_models), 3, "3 models in the input model group");
 
 my $output_directory = Genome::Sys->create_temp_directory();
 
+
+my %params = (
+        max_files_per_merge => 2,
+        wingspan => 500,
+        allow_multiple_processing_profiles => undef,
+        joinx_version => $joinx_version,
+        builds => \@input_builds,
+        model_group => $input_mg,
+);
+
+my $use_builds_instead_of_mg = 0;
+$params{variant_type} = 'indels';
+$params{roi_list} = get_roi_list($test_data_directory, 'indel_short.bed');
+test_cmd("test_indels", $use_builds_instead_of_mg, %params);
+
+$params{variant_type} = 'snvs';
+$params{roi_list} = get_roi_list($test_data_directory, '2477F2D7AC5111E1874EF15E46F0A7A3_short.bed');
+test_cmd("test_snvs_model_group", $use_builds_instead_of_mg, %params);
+$use_builds_instead_of_mg = 1;
+test_cmd("test_snvs_builds", $use_builds_instead_of_mg, %params);
+
+done_testing();
+
+
 #construct the FeatureList needed
-my $roi_list = Genome::FeatureList->create(
-        name                => 'test feature-list',
+sub get_roi_list {
+    my $test_data_directory = shift;
+    my $region_bed = shift;
+
+    my $region_file = join("/", $test_data_directory, "input",
+        $region_bed);
+    my $region_file_content_hash = Genome::Sys->md5sum($region_file);
+    my $roi_list = Genome::FeatureList->create(
+        name                => "test feature-list $region_bed",
         format              => 'multi-tracked',
         content_type        => 'targeted',
         file_path           => $region_file,
         file_content_hash   => $region_file_content_hash,
         reference_id        => 108563338,
-);
+    );
+    return $roi_list;
+}
 
 sub test_cmd {
     my $name = shift;
@@ -76,33 +109,16 @@ sub test_cmd {
 
     ok($cmd->execute(), "$name: executed CreateCrossSampleVcf");
     my $result = $cmd->final_result;
-    ok(-s $result, "$name: result of CreateCrossSampleVcf, snvs.merged.vcf.gz exists");
+    ok(-s $result, "$name: result of CreateCrossSampleVcf: $result exists");
 
     delete $sr_params{'output_directory'};
     my $sr = $sr_class->get_with_lock(%sr_params);
     ok($sr, "$name: found software result for test1");
-    is($sr, $cmd->software_result, '$name: found software result via cmd for test1');
+    is($sr, $cmd->software_result, "$name: found software result via cmd for test1");
 
+    my $expected_result = get_expected_result($params{variant_type});
     my $diff = diff_vcf_file_vs_file($result, $expected_result);
-    ok(!$diff, '$name: output matched expected result')
+    ok(!$diff, "$name: output matched expected result: $expected_result")
         or diag("diff results:\n" . $diff);
 }
 
-my %params = (
-        max_files_per_merge => 2,
-        variant_type => 'snvs',
-        roi_list => $roi_list,
-        wingspan => 500,
-        allow_multiple_processing_profiles => undef,
-        joinx_version => $joinx_version,
-        builds => \@input_builds,
-        model_group => $input_mg,
-);
-
-my $use_builds_instead_of_mg = 0;
-test_cmd("test_1", $use_builds_instead_of_mg, %params);
-$use_builds_instead_of_mg = 1;
-test_cmd("test_2", $use_builds_instead_of_mg, %params);
-
-
-done_testing();
