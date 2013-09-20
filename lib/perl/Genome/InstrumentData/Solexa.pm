@@ -306,6 +306,23 @@ class Genome::InstrumentData::Solexa {
     ],
 };
 
+sub create {
+    my $class = shift;
+    my $self = $class->SUPER::create(@_);
+    return if not $self;
+    # some properties previously only on imported data are set here
+    for my $property_name (qw/import_format/) {
+        my $resolver_name = 'resolve_' . $property_name;
+        my $value = eval { $self->$resolver_name };
+        if ($@) {
+            $self->warning_message("Failed to resolve import_format for " . $self->__display_name__ . ": $@");
+            next;
+        }
+        $self->$property_name($value);
+    }
+    return $self;
+}
+
 sub __display_name__ {
     my $self = $_[0];
     my $sample = $self->sample;
@@ -1093,6 +1110,25 @@ sub resolve_quality_converter {
         return "sol2sanger";
     }
     return "sol2phred";
+}
+
+sub resolve_import_format {
+    my $self = shift;
+    if ($self->bam_path) {
+        return 'bam'
+    }
+    elsif ($self->native_qual_type eq 'solexa') {
+        return 'solexa fastq'
+    }
+    elsif ($self->native_qual_type eq 'illumina') {
+        return 'illumina fastq'
+    }
+    elsif ($self->native_qual_type eq 'sanger') {
+        return 'sanger fastq'
+    }
+    else {
+        die "cannot resolve import format: native qual type is " . $self->native_qual_type;
+    }
 }
 
 sub NEW_resolve_quality_converter {

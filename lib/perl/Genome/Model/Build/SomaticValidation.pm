@@ -147,24 +147,6 @@ sub post_allocation_initialization {
     return 1;
 }
 
-sub data_set_path {
-    my ($self, $dataset, $version, $file_format) = @_;
-    my $path;
-    
-    if ($version and $file_format) {
-        $version =~ s/^v//;
-        $path = $self->data_directory."/$dataset.v$version.$file_format";
-    }
-    elsif ($file_format) {
-        # example $b->data_set_path('alignments/tumor/','','flagstat')
-        my @paths = glob($self->data_directory."/$dataset".'*.'.$file_format);
-        return unless @paths == 1;
-        $path = $paths[0];
-    }
-    return $path if -e $path;
-    return;
-}
-
 sub tumor_bam {
     my $self = shift;
 

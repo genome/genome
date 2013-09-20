@@ -136,19 +136,6 @@ A stream based reader that splits each line by the given separator.  If no heade
 
 =head1 Usage
 
- use Genome::Utility::IO::SeparatedValueReader;
-
- my $reader = Genome::Utility::IO::SeparatedValueReader->new (
-    input => 'albums.txt', # REQ: file or object that can 'getline' and 'seek'
-    headers => [qw/ title artist /], # OPT; headers for the file
-    separator => '\t', # OPT; default is ','
-    is_regex => 1, # OPT: 'set this flag if your separator is a regular expression, otherwise the literal characters of the separator will be used'
- );
-
- while ( my $album = $reader->next ) {
-    print sprintf('%s by the famous %s', $album->{title}, $album->{artist}),"\n";
- }
-
 =head1 Methods 
 
 =head2 next

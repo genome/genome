@@ -228,6 +228,12 @@ sub reference_sequence_build {
     return $reference_sequence_build;
 }
 
+# TODO: this is now implemented in the base class, with a somewhat better chunk of code
+# pulled from SomaticValidation.  The new implementation, however, only returns a path
+# if there is actually a file there.  This implementation will return a path when 
+# there is no file, and is possibly being used to determine where to write a file
+# in the first place.  If we determine which one is right, this can be removed,
+# possibly with an update to the base class.
 sub data_set_path {
     my ($self, $dataset, $version, $file_format) = @_;
     my $path;

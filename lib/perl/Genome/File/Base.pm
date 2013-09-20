@@ -1,16 +1,14 @@
 package Genome::File::Base;
-
 use strict;
 use warnings;
 use Genome;
 
 class Genome::File::Base {
     is => 'UR::Value',
+    id_by => [
+        path => { is => 'FilesystemPath' }, 
+    ],
 };
-
-sub path {
-    return shift->id
-}
 
 sub open {
     my $self = shift;
