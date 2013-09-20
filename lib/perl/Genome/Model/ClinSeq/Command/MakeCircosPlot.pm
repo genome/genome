@@ -1,6 +1,7 @@
 package Genome::Model::ClinSeq::Command::MakeCircosPlot;
 use strict;
 use warnings;
+use Switch;
 use Genome; 
 use Data::Dumper;
 
@@ -23,7 +24,7 @@ class Genome::Model::ClinSeq::Command::MakeCircosPlot {
                                 default_value => '0.64',
                                 doc => 'the version of circos to use' },
     ],
-    doc => 'This script attempts to get read counts, frequencies and gene expression values for a series of genome positions',
+    doc => 'This module interfaces with the circos program to produce a circos plot for a clin-seq build.',
 };
 
 sub sub_command_category { 'pipeline' }
@@ -43,25 +44,560 @@ EOS
 
 sub execute {
     my $self = shift;
+    
+    my $hello =<<EOS;
+hello
+EOS
+
+	$hello.=<<EOS;
+World!
+EOS
+
+
     $self->warning_message("!!!!!!!!!!!!!!! This module is under development and does not run yet !!!!!!!!!!!!!!!!");
-   
-    # grap params from $self
+    
+    # grab params from $self
     my $build = $self->build;
     my $output_directory = $self->output_directory;
     $self->status_message("Running on build " . $build->__display_name__); 
     $self->status_message("Output directory is " . $self->output_directory);
+
+	#TODO Remove when done testing
+    #Remove circos.conf for testing purposes
+    system("yes| rm -r $output_directory");
 
     # initialize directories
     unless (-d $output_directory) {
         # this module has wrappers which do logging, throw exceptions, around regular tasks
         Genome::Sys->create_directory($output_directory);
     }
-
-    # example accessing data:
+	unless (-d "$output_directory/data"){
+		Genome::Sys->create_directory("$output_directory/data");
+	}
+	
+	unless (-d "$output_directory/raw"){
+		Genome::Sys->create_directory("$output_directory/raw");
+	}
     
+    
+    my $dataDir = $build->data_directory . "/" . $build->common_name;
+    
+    my $config =<<EOS;
+# Chromosome name, size and color definition
+karyotype = data/karyotype/karyotype.human.txt
+
+# The <ideogram> block defines the position, size, labels and other
+# properties of the segments on which data are drawn. These segments
+# are usually chromosomes, but can be any integer axis.
+
+<ideogram>
+
+<spacing>
+# Spacing between ideograms. Suffix "r" denotes a relative value. It
+# is relative to circle circumference (e.g. space is 0.5% of
+# circumference).
+default = 0.005r
+</spacing>
+
+# Ideogram position, thickness and fill. 
+#
+# Radial position within the image of the ideograms. This value is
+# usually relative ("r" suffix).
+radius           = 0.80r
+
+# Thickness of ideograms, which can be absolute (e.g. pixels, "p"
+# suffix) or relative ("r" suffix). When relative, it is a fraction of
+# image radius.
+thickness        = 20p
+
+# Ideograms can be drawn as filled, outlined, or both. When filled,
+# the color will be taken from the last field in the karyotype file,
+# or set by chromosomes_colors. Color names are discussed in
+# http://www.circos.ca/documentation/tutorials/configuration/configuration_files
+# When stroke_thickness=0p or if the parameter is missing, the ideogram is
+# has no outline and the value of stroke_color is not used.
+
+fill             = yes   # A
+stroke_color     = dgrey # B
+stroke_thickness = 2p    # B
+
+# Definition for ideogram labels.
+show_label       = yes
+# see etc/fonts.conf for list of font names
+label_font       = default 
+label_radius     = 1.15r
+label_size       = 30
+label_parallel   = yes
+
+#draw chromosome bands
+show_bands = yes
+fill_bands = yes
+band_transparency = 4
+
+</ideogram>
+
+##Define some tick marks
+#show_ticks          = yes
+#show_tick_labels    = yes
+
+#<ticks>
+#radius           = 1r
+#color            = black
+#thickness        = 2p
+
+## the tick label is derived by multiplying the tick position
+## by 'multiplier' and casting it in 'format':
+## sprintf(format,position*multiplier)
+#multiplier       = 1e-6
+
+## \%d   - integer
+## \%f   - float
+## \%.1f - float with one decimal
+## \%.2f - float with two decimals
+## for other formats, see http://perldoc.perl.org/functions/sprintf.html
+#format           = \%d
+
+#<tick>
+#spacing        = 5u
+#size           = 10p
+#</tick>
+
+#<tick>
+#spacing        = 25u
+#size           = 15p
+#show_label     = yes
+#label_size     = 20p
+#label_offset   = 10p
+#format         = \%d
+#</tick>
+
+#</ticks>
+EOS
+   
+    
+	#Gene hash is a union of all of the different genes in each file used for the gene annotations on the plot.
+    my %genes ;
+    
+    
+
+    
+    
+
+	
+	###Candidate Fusions
+	Genome::Sys->copy_file("$dataDir/sv/CandidateSvCodingFusions.tsv", "$output_directory/raw/CandidateSvCodingFusions.tsv");
+	my $candidate_fusions = Genome::Sys->read_file("$output_directory/raw/CandidateSvCodingFusions.tsv");
+	my $candidate_fusions_fh = Genome::Sys->open_file_for_writing("$output_directory/data/CandidateSvCodingFusions.txt");
+    while ($candidate_fusions =~ /(\S+)\s+(\S+)\s+chr(\S+):(\d+)-(\d+)\s+chr(\S+):(\d+)-(\d+)/g) {
+    	#TODO is using these coordinants accepatble?
+    	$genes{$1}="hs$3\t$4\t$5";
+    	$genes{$2}="hs$6\t$7\t$8";
+    	print $candidate_fusions_fh ("hs$3 $4 $5 hs$6 $7 $8\n");
+    }
+    $candidate_fusions_fh->close;
+    $config .=<<EOS;
+#FUSION DATA
+<links>
+<link>
+file          = $output_directory/data/CandidateSvCodingFusions.txt
+radius		= 0.50r
+bezier_radius = 0r
+color         = black_a1
+thickness     = 2
+</link>
+
+EOS
+    
+    ###Fusions
+    #TODO /gscmnt/gc8001/info/model_data/9761cf3dbb73452980890eaf0e8aadb0/buildf4af67af82b94727bb4ac30554503e4b/fusions/chimeras.bedpe.filtered.txt
+#    if(my $tumor_rnaseq_build = $build->tumor_rnaseq_build){
+#    	Genome::Sys->copy_file($tumor_rnaseq_build->data_directory."/fusions/chimeras.bedpe.filtered.txt", "$output_directory/raw/chimeras.bedpe.filtered.txt");
+#		my $fusions = Genome::Sys->read_file("$output_directory/raw/chimeras.bedpe.filtered.txt");
+#		my $fusions_fh = Genome::Sys->open_file_for_writing("$output_directory/data/chimeras.bedpe.filtered.txt");
+#   		while ($fusions =~ /(\S+)\s+(\S+)\s+chr(\S+):(\d+)-(\d+)\s+chr(\S+):(\d+)-(\d+)/g) {
+#    		$genes{$1}="hs$3 $4 $5";
+#    		$genes{$2}="hs$6 $7 $8";
+#    		print $fusions_fh ("hs$3 $4 $5 hs$6 $7 $8\n");
+#    	}
+#    	$fusions_fh->close;
+#		$config .=<<EOS;
+#Fusions RNAseq support
+#<link>
+#file          = $output_directory/data/chimeras.bedpe.filtered.txt
+#radius          = 0.50r
+#bezier_radius = 0r
+#color         = red_a1
+#thickness     = 2
+#</link>		
+#EOS
+#   }
+   
+   $config.=<<EOS;
+</links>
+
+EOS
+ 
+	$config.=<<EOS;
+	
+<plots>
+EOS
+
+   
+
+
+	###Deletions and Focal Amplifications
+	Genome::Sys->copy_file("$dataDir/clonality/cnaseq.cnvhmm", "$output_directory/raw/cnaseq.cnvhmm");
+    my $deletions_and_focal_amps = Genome::Sys->read_file("$output_directory/raw/cnaseq.cnvhmm");
+    my $deletions_fh = Genome::Sys->open_file_for_writing("$output_directory/data/deletions.txt");
+    my $focal_amps_fh = Genome::Sys->open_file_for_writing("$output_directory/data/focalAmps.txt");
+    while ($deletions_and_focal_amps =~ /(\S+)\s(\d+)\s(\d+)\s\d+\s\d+\s\d+\s(\S+)\s\d+\s(\S+)\s\S+\s(\S+)/g) {
+		
+		if($6 eq "Loss"){
+			my $loss;
+			if($4<$5){
+				$loss = $4-$5;
+			}else{
+				$loss = $5-$4;
+			}
+			#this is the max deletion threshold
+			if($loss>2){
+				$loss=2;
+			}
+			print $deletions_fh ("hs$1 $2 $3 $loss\n");
+		}else{
+			my $gain;
+			if($4>$5){
+				$gain = $4-$5;
+			}else{
+				$gain = $5-$4;
+			}
+			#this is the max amplification threshold
+			if($gain>6){
+				$gain=6;
+			}
+			print $focal_amps_fh ("hs$1 $2 $3 $gain\n");
+		}
+        
+    }
+    $deletions_fh->close;
+    $focal_amps_fh->close;
+    
+    $config .=<<EOS;
+
+#DELETIONS DATA
+<plot>
+# The type sets the format of the track.
+type = histogram
+file = $output_directory/data/deletions.txt
+min=-2
+max=2
+
+# The track is confined within r0/r1 radius limits. When using the
+# relative "r" suffix, the values are relative to the position of the ideogram.
+r1   = 0.65r
+r0   = 0.55r
+
+# Histograms can have both a fill and outline. The default outline is 1px thick black. 
+fill_color = blue 
+
+# To turn off default outline, set the outline thickness to zero. If
+# you want to permanently disable this default, edit
+# etc/tracks/histogram.conf in the Circos distribution.
+thickness = 0p
+
+# Do not join histogram bins that do not abut.
+extend_bin = no
+orientation = in
+
+#Draw background to highlight track
+<backgrounds>
+show  = yes
+<background>
+color = vvlgrey
+</background>
+</backgrounds>
+
+#Draw axes lines
+<axes>
+show = yes
+thickness = 1
+color     = lgrey
+<axis>
+spacing   = 0.1666666666r
+</axis>
+<axis>
+position   = 0.5r
+color      = black
+</axis>
+</axes>
+</plot>		
+
+#FOCAL AMPLIFICATIONS DATA
+<plot>
+# The type sets the format of the track.
+type = histogram
+file = $output_directory/data/focalAmps.txt
+min=-2
+max=2
+
+# The track is confined within r0/r1 radius limits. When using the
+# relative "r" suffix, the values are relative to the position of the ideogram.
+r1   = 0.65r
+r0   = 0.55r
+
+# Histograms can have both a fill and outline. The default outline is 1px thick black. 
+fill_color = red
+
+# To turn off default outline, set the outline thickness to zero. If
+# you want to permanently disable this default, edit
+# etc/tracks/histogram.conf in the Circos distribution.
+thickness = 0p
+
+# Do not join histogram bins that do not abut.
+extend_bin = no
+orientation = in
+
+</plot>
+EOS
+
+    ###Differential Expression
+    #TODO if there is a rnatumor and normal build plot the DE if not plot the overall expression  of the tumor
+    
+
+    Genome::Sys->copy_file("$dataDir/rnaseq/cufflinks_differential_expression/genes/case_vs_control.coding.hq.de.tsv", "$output_directory/raw/case_vs_control.coding.hq.de.tsv");   
+	my $diffExpression = Genome::Sys->read_file("$output_directory/raw/case_vs_control.coding.hq.de.tsv");
+	my $diffExpression_fh = Genome::Sys->open_file_for_writing("$output_directory/data/case_vs_control.coding.hq.de.txt");
+    while ($diffExpression =~ /ENS\w+\s(\w+)\s\S+\s\S+\s(\w+):(\d+)-(\d+)\s\S+\s\S+\s\S+\s\S+\s\S+\s\S+\s\S+\s\S+\s(\S+)/g) {
+    	$genes{$1}="hs$2\t$3\t$4";
+     	if($5>=2 || $5<=-2){
+     		print $diffExpression_fh ("hs$2 $3 $4 $5\n");
+     	}
+    }
+    $diffExpression_fh->close;    
+
+	$config.=<<EOS;
+
+#DIFFERENTIAL EXPRESSION DATA 
+<plot>
+# The type sets the format of the track.
+type = histogram
+file = $output_directory/data/case_vs_control.coding.hq.de.txt
+min=-10
+max=10 #Cap, otherwise outliers hide everything
+
+# The track is confined within r0/r1 radius limits. When using the
+# relative "r" suffix, the values are relative to the position of the ideogram.
+r1   = 0.80r
+r0   = 0.70r
+
+# Histograms can have both a fill and outline. The default outline is 1px thick black.
+fill_color = red
+
+# To turn off default outline, set the outline thickness to zero. If
+# you want to permanently disable this default, edit
+# etc/tracks/histogram.conf in the Circos distribution.
+thickness = 0p
+
+# Do not join histogram bins that do not abut.
+extend_bin = no
+orientation = in
+
+#Draw background to highlight track
+<backgrounds>
+show  = yes
+<background>
+color = vvlgrey
+</background>
+</backgrounds>
+
+#Draw axes lines
+<axes>
+show = yes
+thickness = 1
+color     = lgrey
+<axis>
+spacing   = 0.1r
+</axis>
+</axes>
+
+</plot>
+		
+
+
+EOS
+		
+
+    
+    ### Tier1 SNVs and INDELs
+	#decides which somatic variation model to use
+    my $wgs_build = $build->wgs_build;
+    my $exo_build = $build->exome_build;
+    my $som_var_data_dir;
+    if($wgs_build && $exo_build){
+    	$som_var_data_dir=$exo_build->data_directory."/effects";
+    }elsif($exo_build){
+    	$som_var_data_dir=$exo_build->data_directory."/effects";
+    }else{
+    	$som_var_data_dir=$exo_build->data_directory."/effects";
+    }
+    Genome::Sys->copy_file("$som_var_data_dir/snvs.hq.tier1.v1.annotated.top.header", "$output_directory/raw/snvs.hq.tier1.v1.annotated.top.header");
+    Genome::Sys->copy_file("$som_var_data_dir/indels.hq.tier1.v1.annotated.top.header", "$output_directory/raw/indels.hq.tier1.v1.annotated.top.header");
+    
+    #SNV
+	my $snv_file = Genome::Sys->read_file("$output_directory/raw/snvs.hq.tier1.v1.annotated.top.header");
+	my $snv_fh = Genome::Sys->open_file_for_writing("$output_directory/data/snvs.hq.tier1.v1.annotated.top.header.txt");
+    while ($snv_file =~ /(\S+)\s+(\d+)\s+(\d+)\s+\S+\s+\S+\s+\S+\s+(\S+)\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+(\S+)\s+.+/g) {
+        #TODO double check to see if this should be 0.5 in the third col every time
+        $genes{$4}="hs$1\t$2\t$3";
+        print $snv_fh "hs$1 $2 $3 0.5 ";
+        switch($5){
+        	case "nonsense"			{print $snv_fh "fill_color=red\n"}
+        	case "missense"			{print $snv_fh "fill_color=purple\n"}
+        	case "silent"			{print $snv_fh "fill_color=green\n"}
+        	case "splice_site"		{print $snv_fh "fill_color=blue\n"}
+        	case "rna"				{print $snv_fh "fill_color=yellow\n"}
+        	case "nonstop"			{print $snv_fh "fill_color=orange\n"}
+        }
+        
+    }
+    $snv_fh->close;
+	
+	#Indel
+	my $indel_file = Genome::Sys->read_file("$output_directory/raw/indels.hq.tier1.v1.annotated.top.header");
+	my $indel_fh = Genome::Sys->open_file_for_writing("$output_directory/data/indels.hq.tier1.v1.annotated.top.header.txt");
+    while ($indel_file =~ /(\S+)\s+(\d+)\s+(\d+)\s+\S+\s+\S+\s+\S+\s+(\S+)\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+(\S+)\s+.+/g) {
+       	#TODO double check to see if this should be 0.5 in the third col every time
+       	$genes{$4}="hs$1\t$2\t$3";
+        print $indel_fh "hs$1 $2 $3 0.5\n";
+    }
+    $indel_fh->close;
+    
+	$config .=<<EOS;
+#TIER 1 SNV DATA
+<plot>
+# The type sets the format of the track.
+type = histogram
+file = $output_directory/data/snvs.hq.tier1.v1.annotated.top.header.txt
+min=0
+max=0.5
+
+# The track is confined within r0/r1 radius limits. When using the
+# relative "r" suffix, the values are relative to the position of the ideogram.
+r1   = 0.95r
+r0   = 0.85r
+
+# Histograms can have both a fill and outline. The default outline is 1px thick black.
+#fill_color = blue  #color specified as option in data file
+
+# To turn off default outline, set the outline thickness to zero. If
+# you want to permanently disable this default, edit
+# etc/tracks/histogram.conf in the Circos distribution.
+thickness = 0p
+
+# Do not join histogram bins that do not abut.
+extend_bin = no
+orientation = out
+
+#Draw background to highlight track
+<backgrounds>
+show  = yes
+<background>
+color = vvlgrey
+</background>
+</backgrounds>
+</plot>
+
+
+
+#TIER 1 INDEL DATA
+<plot>
+# The type sets the format of the track.
+type = histogram
+file = $output_directory/data/indels.hq.tier1.v1.annotated.top.header.txt
+min=0
+max=0.5
+
+# The track is confined within r0/r1 radius limits. When using the
+# relative "r" suffix, the values are relative to the position of the ideogram.
+r1   = 0.95r
+r0   = 0.85r
+
+# Histograms can have both a fill and outline. The default outline is 1px thick black.
+fill_color = black
+
+# To turn off default outline, set the outline thickness to zero. If
+# you want to permanently disable this default, edit
+# etc/tracks/histogram.conf in the Circos distribution.
+thickness = 0p
+
+# Do not join histogram bins that do not abut.
+extend_bin = no
+orientation = out
+</plot>		
+EOS
+	###Gene List
+	#TODO union of all the gene lists from the different file types and annotate then present a given number
+	my $gene_fh = Genome::Sys->open_file_for_writing("$output_directory/raw/genes.txt");
+	print $gene_fh "chr\tstart\tend\tgene\n";
+	foreach my $gene(keys %genes){
+		print $gene_fh "$genes{$gene}\t$gene\n";
+	}
+	$gene_fh->close;
+	$config .=<<EOS;
+#GENE LABELS
+<plot>
+type  = text
+file  = $output_directory/data/genes.catanno.sorted.txt
+
+# Like with other tracks, text is limited to a radial range by setting
+# r0 and r1.
+#
+# Individual labels can be repositioned automatically with in a
+# position window to fit more labels, without overlap. This is an
+# advanced feature - see the 2D Track text tutorials.
+r1    = 1.1r
+r0    = 1.0r
+
+# For a list of fonts, see etc/fonts.conf in the Circos distribution.
+#label_font = light
+label_font = condensed
+label_size = 20p
+#label_rotate = yes
+
+# padding  - text margin in angular direction
+# rpadding - text margin in radial direction
+rpadding   = 5p
+
+# Short lines can be placed before the label to connect them to the
+# label's position. This is most useful when the labels are
+# rearranged.
+show_links     = yes
+link_dims      = 0p,2p,5p,2p,2p
+link_thickness = 2p
+link_color     = black
+
+#Turn on "snuggling" to allow more labels to fit
+label_snuggle         = yes
+max_snuggle_distance  = 1r
+snuggle_tolerance     = 0.25r
+snuggle_sampling      = 2
+snuggle_link_overlap_test = yes
+snuggle_link_overlap_tolerance = 2p
+snuggle_refine        = yes
+
+</plot>
+		
+EOS
+	Genome::Sys->shellcmd(cmd => "genome model clin-seq annotate-genes-by-category --infile=$output_directory/raw/genes.txt --cancer-annotation-db='tgi/cancer-annotation/human/build37-20130711.1' --gene-name-column='gene'");
+	#TODO Genome::Sys->shellcmd( doesnt work
+	system( "sort -rnk 102 $output_directory/raw/genes.catanno.txt|head -100 |cut -d \"\t\" -f 1-4  > $output_directory/data/genes.catanno.sorted.txt");
+
+=cut    
+	# example accessing data:
     # get an input from the build
     my $wgs_build = $build->wgs_build;
     
+    TODO add error checking
     # all inputs are optional, so test for it being there before using it
     if ($wgs_build) {
         $self->status_message("This clinseq build has WGS somatic data, build: " . $wgs_build->__display_name__);
@@ -79,19 +615,50 @@ sub execute {
 
     # get an input from an input
     my $wgs_tumor_refalign = $wgs_build->tumor_build;
+=cut
 
+
+    
+
+	$config.=<<EOS;
+
+</plots>
+
+################################################################
+# The remaining content is standard and required. It is imported from
+# default files in the Circos distribution.
+#
+# These should be present in every Circos configuration file and
+# overridden as required. To see the content of these files, 
+# look in etc/ in the Circos distribution.
+
+<image>
+# Included from Circos distribution.
+<<include etc/image.conf>>                
+</image>
+
+# RGB/HSV color definitions, color lists, location of fonts, fill patterns.
+# Included from Circos distribution.
+<<include etc/colors_fonts_patterns.conf>> 
+
+# Debugging, I/O an dother system parameters
+# Included from Circos distribution.
+<<include etc/housekeeping.conf>> 
+EOS
     ## write the config file to point to the new data files above
     my $out_fh = Genome::Sys->open_file_for_writing("$output_directory/circos.conf");
-    # ....
+    print $out_fh $config;
     $out_fh->close;
-
+    
     # run circos using the correct path for the specified version
     # errors will throw an exception
 
     my $path_to_circos_executable = Genome::Sys->sw_path("circos",$self->use_version);
     $self->status_message("using path $path_to_circos_executable");
-    #Genome::Sys->shellcmd(cmd => "cd $output_directory; $path_to_circos_executable -conf ./circos.conf");
-
+    Genome::Sys->shellcmd(cmd => "cd $output_directory; $path_to_circos_executable -conf ./circos.conf");
+    
+    
+    
     return 1;
 }
 
