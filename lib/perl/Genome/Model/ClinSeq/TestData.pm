@@ -4,20 +4,20 @@ use strict;
 use warnings;
 use Genome;
 
+use Genome::Test::Factory::Build;
 use Genome::Test::Factory::Library;
-use Genome::Test::Factory::ProcessingProfile::ReferenceAlignment;
-use Genome::Test::Factory::ProcessingProfile::SomaticVariation;
-use Genome::Test::Factory::ProcessingProfile::RnaSeq;
-use Genome::Test::Factory::ProcessingProfile::ClinSeq;
-use Genome::Test::Factory::ProcessingProfile::DifferentialExpression;
-use Genome::Test::Factory::Model::ReferenceAlignment;
-use Genome::Test::Factory::Model::SomaticVariation;
-use Genome::Test::Factory::Model::RnaSeq;
 use Genome::Test::Factory::Model::ClinSeq;
+use Genome::Test::Factory::Model::ImportedAnnotation;
 use Genome::Test::Factory::Model::ImportedReferenceSequence;
 use Genome::Test::Factory::Model::ImportedVariationList;
-use Genome::Test::Factory::Model::ImportedAnnotation;
-use Genome::Test::Factory::Build;
+use Genome::Test::Factory::Model::ReferenceAlignment;
+use Genome::Test::Factory::Model::RnaSeq;
+use Genome::Test::Factory::Model::SomaticVariation;
+use Genome::Test::Factory::ProcessingProfile::ClinSeq;
+use Genome::Test::Factory::ProcessingProfile::DifferentialExpression;
+use Genome::Test::Factory::ProcessingProfile::ReferenceAlignment;
+use Genome::Test::Factory::ProcessingProfile::RnaSeq;
+use Genome::Test::Factory::ProcessingProfile::SomaticVariation;
 use Genome::Utility::Test;
 
 sub load {
