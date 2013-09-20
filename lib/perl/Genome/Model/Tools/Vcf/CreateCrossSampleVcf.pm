@@ -55,7 +55,7 @@ class Genome::Model::Tools::Vcf::CreateCrossSampleVcf {
         joinx_version => {
             is => 'Text',
             doc => 'Joinx version to use in all joinx operations',
-            default => '1.6',
+            default => '1.7',
         },
         output_directory => {
             is => 'Text',
@@ -330,7 +330,7 @@ sub get_indel_inputs {
     my %inputs = (
         input_bams => \@input_bams,
         output_directory => File::Spec->join($self->output_directory, 'indel_backfilling'),
-        merge_samples => 1,
+        exact_pos => 1,
     );
     return \%inputs;
 }

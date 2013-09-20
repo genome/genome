@@ -132,7 +132,7 @@
     <link fromOperation="input connector" fromProperty="output_vcf" toOperation="FinalVcfMerge" toProperty="output_file" />
     <link fromOperation="input connector" fromProperty="final_vcf_merge_working_directory" toOperation="FinalVcfMerge" toProperty="working_directory" />
     <link fromOperation="input connector" fromProperty="max_files_per_merge" toOperation="FinalVcfMerge" toProperty="max_files_per_merge" />
-    <link fromOperation="input connector" fromProperty="merge_samples" toOperation="FinalVcfMerge" toProperty="merge_samples" />
+    <link fromOperation="input connector" fromProperty="exact_pos" toOperation="FinalVcfMerge" toProperty="exact_pos" />
     <link fromOperation="FinalVcfMerge" fromProperty="output_file" toOperation="output connector" toProperty="output_vcf" />
     <operation name="FinalVcfMerge">
         <operationtype commandClass="Genome::Model::Tools::Joinx::SafeVcfMerge" typeClass="Workflow::OperationType::Command" />
@@ -162,7 +162,7 @@
 
         <!-- FinalVcfMerge -->
         <inputproperty>final_vcf_merge_working_directory</inputproperty>
-        <inputproperty>merge_samples</inputproperty>
+        <inputproperty>exact_pos</inputproperty>
         <inputproperty>output_vcf</inputproperty>
 
         <outputproperty>output_vcf</outputproperty>
