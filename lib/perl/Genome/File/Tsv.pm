@@ -1,10 +1,10 @@
-package Genome::File::Xsv;
+package Genome::File::Tsv;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::File::Xsv {
+class Genome::File::Tsv {
     is => 'Genome::File::Base',
 };
 

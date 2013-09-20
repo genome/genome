@@ -10,4 +10,4 @@ use Test::More tests => 1;
 # had no '.t' file beside it.  Please remove this test if you believe it was
 # created unnecessarily.  This is a bare minimum test that just compiles Perl
 # and the UR class.
-use_ok('Genome::File::Xsv');
+use_ok('Genome::File::Tsv');
