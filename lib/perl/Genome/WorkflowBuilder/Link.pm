@@ -1,4 +1,4 @@
-package Genome::Workflow::Link;
+package Genome::WorkflowBuilder::Link;
 
 use strict;
 use warnings;
@@ -6,16 +6,16 @@ use warnings;
 use XML::LibXML qw();
 
 
-class Genome::Workflow::Link {
-    is => 'Genome::Workflow::Detail::Element',
+class Genome::WorkflowBuilder::Link {
+    is => 'Genome::WorkflowBuilder::Detail::Element',
 
     has_optional => [
         source => {
-            is => 'Genome::Workflow::Detail::Operation',
+            is => 'Genome::WorkflowBuilder::Detail::Operation',
         },
 
         destination => {
-            is => 'Genome::Workflow::Detail::Operation',
+            is => 'Genome::WorkflowBuilder::Detail::Operation',
         },
     ],
 
@@ -121,9 +121,9 @@ sub _validate_general_operation_type {
 
     if (defined($self->$property_name)) {
         unless ($self->$property_name->isa(
-                'Genome::Workflow::Detail::Operation')) {
+                'Genome::WorkflowBuilder::Detail::Operation')) {
             die $self->error_message(sprintf(
-                "Expected %s => Genome::Workflow::Detail::Operation, "
+                "Expected %s => Genome::WorkflowBuilder::Detail::Operation, "
                 . "got '%s' instead", $property_name, $self->$property_name));
         }
     }

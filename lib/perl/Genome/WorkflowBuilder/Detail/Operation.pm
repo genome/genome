@@ -1,10 +1,10 @@
-package Genome::Workflow::Detail::Operation;
+package Genome::WorkflowBuilder::Detail::Operation;
 
 use strict;
 use warnings;
 
 use Genome;
-use Genome::Workflow::Detail::TypeMap;
+use Genome::WorkflowBuilder::Detail::TypeMap;
 use IO::Scalar qw();
 use Set::Scalar qw();
 use XML::LibXML qw();
@@ -12,8 +12,8 @@ use Carp qw(confess);
 use Data::Dumper qw();
 
 
-class Genome::Workflow::Detail::Operation {
-    is => 'Genome::Workflow::Detail::Element',
+class Genome::WorkflowBuilder::Detail::Operation {
+    is => 'Genome::WorkflowBuilder::Detail::Element',
     is_abstract => 1,
 
     has => [
@@ -42,7 +42,7 @@ sub from_xml_element {
     my ($class, $element) = @_;
 
     # Prevent accidental recursion when subclasses don't override this method
-    unless ($class eq 'Genome::Workflow::Detail::Operation') {
+    unless ($class eq 'Genome::WorkflowBuilder::Detail::Operation') {
         confess $class->error_message(sprintf(
                 "from_xml_element not implemented in subclass %s", $class));
     }
@@ -115,7 +115,7 @@ sub is_many_property {
 sub operation_type {
     my $self = shift;
 
-    return Genome::Workflow::Detail::TypeMap::type_from_class($self->class);
+    return Genome::WorkflowBuilder::Detail::TypeMap::type_from_class($self->class);
 }
 
 
@@ -200,7 +200,7 @@ sub _get_subclass_from_element {
     my ($class, $element) = @_;
     my $nodes = $element->find('operationtype');
     my $operation_type_element = $nodes->pop;
-    return Genome::Workflow::Detail::TypeMap::class_from_type(
+    return Genome::WorkflowBuilder::Detail::TypeMap::class_from_type(
         $operation_type_element->getAttribute('typeClass'));
 }
 

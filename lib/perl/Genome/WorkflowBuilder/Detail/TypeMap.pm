@@ -1,11 +1,11 @@
-package Genome::Workflow::Detail::TypeMap;
+package Genome::WorkflowBuilder::Detail::TypeMap;
 
 use strict;
 use warnings;
 
 my %_CLASS_TO_TYPE_MAPPING = (
-    'Genome::Workflow::DAG' => 'Workflow::OperationType::Model',
-    'Genome::Workflow::Command' => 'Workflow::OperationType::Command',
+    'Genome::WorkflowBuilder::DAG' => 'Workflow::OperationType::Model',
+    'Genome::WorkflowBuilder::Command' => 'Workflow::OperationType::Command',
 );
 
 my %_TYPE_TO_CLASS_MAPPING;

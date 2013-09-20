@@ -1,4 +1,4 @@
-package Genome::Workflow::Command;
+package Genome::WorkflowBuilder::Command;
 
 use strict;
 use warnings;
@@ -6,8 +6,8 @@ use warnings;
 use Genome;
 
 
-class Genome::Workflow::Command {
-    is => 'Genome::Workflow::Detail::Operation',
+class Genome::WorkflowBuilder::Command {
+    is => 'Genome::WorkflowBuilder::Detail::Operation',
 
     has => [
         command => {

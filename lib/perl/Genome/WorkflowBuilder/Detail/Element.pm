@@ -1,4 +1,4 @@
-package Genome::Workflow::Detail::Element;
+package Genome::WorkflowBuilder::Detail::Element;
 
 use strict;
 use warnings;
@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 
-class Genome::Workflow::Detail::Element {
+class Genome::WorkflowBuilder::Detail::Element {
     is_abstract => 1,
 };
 

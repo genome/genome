@@ -5,19 +5,19 @@ use above 'Genome';
 use Test::More;
 
 
-use_ok('Genome::Workflow::Link');
+use_ok('Genome::WorkflowBuilder::Link');
 
 subtest 'Typical Link' => sub {
-    my $source_op = Genome::Workflow::Command->create(
+    my $source_op = Genome::WorkflowBuilder::Command->create(
         name => 'source op',
-        command => 'Genome::Workflow::Test::DummyCommand'
+        command => 'Genome::WorkflowBuilder::Test::DummyCommand'
     );
-    my $destination_op = Genome::Workflow::Command->create(
+    my $destination_op = Genome::WorkflowBuilder::Command->create(
         name => 'destination op',
-        command => 'Genome::Workflow::Test::DummyCommand'
+        command => 'Genome::WorkflowBuilder::Test::DummyCommand'
     );
 
-    my $link = Genome::Workflow::Link->create(
+    my $link = Genome::WorkflowBuilder::Link->create(
         source => $source_op, source_property => 'single_output',
         destination => $destination_op, destination_property => 'input'
     );
@@ -27,17 +27,17 @@ subtest 'Typical Link' => sub {
 };
 
 subtest 'Parallel-By Link' => sub {
-    my $source_op = Genome::Workflow::Command->create(
+    my $source_op = Genome::WorkflowBuilder::Command->create(
         name => 'source op',
-        command => 'Genome::Workflow::Test::DummyCommand'
+        command => 'Genome::WorkflowBuilder::Test::DummyCommand'
     );
-    my $destination_op = Genome::Workflow::Command->create(
+    my $destination_op = Genome::WorkflowBuilder::Command->create(
         name => 'destination op',
-        command => 'Genome::Workflow::Test::DummyCommand',
+        command => 'Genome::WorkflowBuilder::Test::DummyCommand',
         parallel_by => 'input',
     );
 
-    my $link = Genome::Workflow::Link->create(
+    my $link = Genome::WorkflowBuilder::Link->create(
         source => $source_op, source_property => 'many_output',
         destination => $destination_op, destination_property => 'input'
     );
@@ -46,12 +46,12 @@ subtest 'Parallel-By Link' => sub {
 };
 
 subtest 'Input Connector' => sub {
-    my $destination_op = Genome::Workflow::Command->create(
+    my $destination_op = Genome::WorkflowBuilder::Command->create(
         name => 'destination op',
-        command => 'Genome::Workflow::Test::DummyCommand'
+        command => 'Genome::WorkflowBuilder::Test::DummyCommand'
     );
 
-    my $link = Genome::Workflow::Link->create(
+    my $link = Genome::WorkflowBuilder::Link->create(
         source_property => 'some_external_input',
         destination => $destination_op, destination_property => 'input'
     );
@@ -62,12 +62,12 @@ subtest 'Input Connector' => sub {
 };
 
 subtest 'Output Connector' => sub {
-    my $source_op = Genome::Workflow::Command->create(
+    my $source_op = Genome::WorkflowBuilder::Command->create(
         name => 'source op',
-        command => 'Genome::Workflow::Test::DummyCommand'
+        command => 'Genome::WorkflowBuilder::Test::DummyCommand'
     );
 
-    my $link = Genome::Workflow::Link->create(
+    my $link = Genome::WorkflowBuilder::Link->create(
         source => $source_op, source_property => 'single_output',
         destination_property => 'some_external_output'
     );
@@ -79,7 +79,7 @@ subtest 'Output Connector' => sub {
 
 
 subtest 'Valid Operation Type' => sub {
-    my $link_with_invalid_source = Genome::Workflow::Link->create(
+    my $link_with_invalid_source = Genome::WorkflowBuilder::Link->create(
         source => 'INVALID_OPERATION', source_property => 'foo',
         destination_property => 'bar'
     );
@@ -89,7 +89,7 @@ subtest 'Valid Operation Type' => sub {
     };
     ok($@, 'invalid source operation fails to validate');
 
-    my $link_with_invalid_destination = Genome::Workflow::Link->create(
+    my $link_with_invalid_destination = Genome::WorkflowBuilder::Link->create(
         source_property => 'foo',
         destination => 'INVALID_OPERATION', destination_property => 'bar'
     );
@@ -101,12 +101,12 @@ subtest 'Valid Operation Type' => sub {
 };
 
 subtest 'Source Property Valid' => sub {
-    my $source_op = Genome::Workflow::Command->create(
+    my $source_op = Genome::WorkflowBuilder::Command->create(
         name => 'source op',
-        command => 'Genome::Workflow::Test::DummyCommand'
+        command => 'Genome::WorkflowBuilder::Test::DummyCommand'
     );
 
-    my $link = Genome::Workflow::Link->create(
+    my $link = Genome::WorkflowBuilder::Link->create(
         source => $source_op, source_property => 'invalid_property',
         destination_property => 'some_external_output');
 
@@ -118,12 +118,12 @@ subtest 'Source Property Valid' => sub {
 };
 
 subtest 'Destination Property Valid' => sub {
-    my $destination_op = Genome::Workflow::Command->create(
+    my $destination_op = Genome::WorkflowBuilder::Command->create(
         name => 'destination op',
-        command => 'Genome::Workflow::Test::DummyCommand'
+        command => 'Genome::WorkflowBuilder::Test::DummyCommand'
     );
 
-    my $link = Genome::Workflow::Link->create(
+    my $link = Genome::WorkflowBuilder::Link->create(
         source_property => 'some_external_input',
         destination => $destination_op,
         destination_property => 'invalid_property');
@@ -136,17 +136,17 @@ subtest 'Destination Property Valid' => sub {
 };
 
 subtest 'Parallel-By Data Source is_many' => sub {
-    my $source_op = Genome::Workflow::Command->create(
+    my $source_op = Genome::WorkflowBuilder::Command->create(
         name => 'source op',
-        command => 'Genome::Workflow::Test::DummyCommand'
+        command => 'Genome::WorkflowBuilder::Test::DummyCommand'
     );
-    my $destination_op = Genome::Workflow::Command->create(
+    my $destination_op = Genome::WorkflowBuilder::Command->create(
         name => 'destination op',
-        command => 'Genome::Workflow::Test::DummyCommand',
+        command => 'Genome::WorkflowBuilder::Test::DummyCommand',
         parallel_by => 'input',
     );
 
-    my $link = Genome::Workflow::Link->create(
+    my $link = Genome::WorkflowBuilder::Link->create(
         source => $source_op, source_property => 'single_output',
         destination => $destination_op, destination_property => 'input'
     );

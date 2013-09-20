@@ -1,4 +1,4 @@
-package Genome::Workflow::DAG;
+package Genome::WorkflowBuilder::DAG;
 
 use strict;
 use warnings;
@@ -9,17 +9,17 @@ use Set::Scalar qw();
 use JSON;
 
 
-class Genome::Workflow::DAG {
-    is => 'Genome::Workflow::Detail::Operation',
+class Genome::WorkflowBuilder::DAG {
+    is => 'Genome::WorkflowBuilder::Detail::Operation',
 
     has => [
         operations => {
-            is => 'Genome::Workflow',
+            is => 'Genome::WorkflowBuilder',
             is_many => 1,
         },
 
         links => {
-            is => 'Genome::Workflow::Link',
+            is => 'Genome::WorkflowBuilder::Link',
             is_many => 1,
         },
 
@@ -37,7 +37,7 @@ class Genome::Workflow::DAG {
 
 sub create_link {
     my $self = shift;
-    $self->add_link(Genome::Workflow::Link->create(@_));
+    $self->add_link(Genome::WorkflowBuilder::Link->create(@_));
     return;
 }
 
@@ -49,7 +49,7 @@ sub connect_input {
             destination_property => { type => Params::Validate::SCALAR },
     });
 
-    $self->add_link(Genome::Workflow::Link->create(
+    $self->add_link(Genome::WorkflowBuilder::Link->create(
         source_property => $args{input_property},
         destination => $args{destination},
         destination_property => $args{destination_property},
@@ -65,7 +65,7 @@ sub connect_output {
             output_property => { type => Params::Validate::SCALAR },
     });
 
-    $self->add_link(Genome::Workflow::Link->create(
+    $self->add_link(Genome::WorkflowBuilder::Link->create(
         source => $args{source},
         source_property => $args{source_property},
         destination_property => $args{output_property},
@@ -155,7 +155,7 @@ sub _add_operations_from_xml_element {
 
     my $nodelist = $element->find('operation');
     for my $node ($nodelist->get_nodelist) {
-        my $op = Genome::Workflow::Detail::Operation->from_xml_element($node);
+        my $op = Genome::WorkflowBuilder::Detail::Operation->from_xml_element($node);
         $self->add_operation($op);
     }
 }
@@ -180,7 +180,7 @@ sub _add_links_from_xml_element {
         if (defined($destination_op)) {
             $link_params{destination} = $destination_op;
         }
-        my $link = Genome::Workflow::Link->create(%link_params);
+        my $link = Genome::WorkflowBuilder::Link->create(%link_params);
         $self->add_link($link);
     }
 }

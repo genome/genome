@@ -1,5 +1,5 @@
-package Genome::Workflow::Test::DummyCommand;
-class Genome::Workflow::Test::DummyCommand {
+package Genome::WorkflowBuilder::Test::DummyCommand;
+class Genome::WorkflowBuilder::Test::DummyCommand {
     is => 'Command',
 
     has_input => ['input'],
