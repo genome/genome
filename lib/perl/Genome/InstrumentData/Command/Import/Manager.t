@@ -11,6 +11,7 @@ use warnings;
 
 use above "Genome";
 use Data::Dumper;
+require Digest::MD5;
 require Genome::Utility::Test;
 use Test::More;
 
@@ -61,7 +62,7 @@ ok($manager->execute, 'execute');
 $imports_aryref = $manager->_imports;
 is_deeply([ map { $_->{status} } @$imports_aryref ], [qw/ needed needed needed /], 'imports aryref status');
 is_deeply([ map { $_->{sample} } @$imports_aryref ], [$samples[0], $samples[0], $samples[1]], 'imports aryref sample');
-is_deeply([ map { $_->{job_name} } @$imports_aryref ], [qw/ TeSt-0000-00 TeSt-0000-00.2 TeSt-0000-01 /], 'imports aryref job_name');
+is_deeply([ map { $_->{job_name} } @$imports_aryref ], [qw/ TeSt-0000-00.1 TeSt-0000-00.2 TeSt-0000-01.1 /], 'imports aryref job_name');
 ok(!grep({ $_->{job_status} } @$imports_aryref), 'imports aryref does not have job_status');
 ok(!grep({ $_->{instrument_data} } @$imports_aryref), 'imports aryref does not have instrument_data');
 ok(!grep({ $_->{instrument_data_file} } @$imports_aryref), 'imports aryref does not have instrument_data_file');
@@ -73,7 +74,7 @@ is($manager->_list_status_column, 1, '_list_status_column');
 # One has import running, others are needed
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
     source_files_tsv => $source_files_tsv,
-    list_config => 'printf "%s %s\\n%s %s\\n%s %s" TeSt-0000-00 pend TeSt-0000-00.2 run TeSt-0000-01 run;1;2',
+    list_config => 'printf "%s %s\\n%s %s\\n%s %s" TeSt-0000-00.1 pend TeSt-0000-00.2 run TeSt-0000-01.1 run;1;2',
 );
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');
@@ -117,9 +118,9 @@ ok(!grep({ $_->{job_status} } @$imports_aryref), 'imports aryref does not have j
 is_deeply(
     [ map { $manager->_resolve_launch_command_for_import($_) } @$imports_aryref ],
     [
-        "echo TeSt-0000-00 LAUNCH! genome instrument-data import basic --sample name=TeSt-0000-00 --source-files bam1 --import-source-name TeSt --instrument-data-properties lane='8'",
+        "echo TeSt-0000-00.1 LAUNCH! genome instrument-data import basic --sample name=TeSt-0000-00 --source-files bam1 --import-source-name TeSt --instrument-data-properties lane='8'",
         "echo TeSt-0000-00.2 LAUNCH! genome instrument-data import basic --sample name=TeSt-0000-00 --source-files bam2 --import-source-name TeSt --instrument-data-properties lane='8'",
-        "echo TeSt-0000-01 LAUNCH! genome instrument-data import basic --sample name=TeSt-0000-01 --source-files bam3 --import-source-name TeSt --instrument-data-properties lane='7'",
+        "echo TeSt-0000-01.1 LAUNCH! genome instrument-data import basic --sample name=TeSt-0000-01 --source-files bam3 --import-source-name TeSt --instrument-data-properties lane='7'",
      ],
      'launch commands',
 );

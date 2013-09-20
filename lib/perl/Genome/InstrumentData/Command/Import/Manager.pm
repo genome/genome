@@ -238,9 +238,7 @@ sub _load_samples {
         next if not $import->{sample};
         $import->{sample}->{nomenclature} = $import->{sample}->nomenclature // 'WUGC'; #FIXME
         my $sample_name = $import->{sample}->name;
-        $sample_names_seen{$sample_name}++;
-        $import->{job_name} = $sample_name;
-        $import->{job_name} .= '.'.$sample_names_seen{$sample_name} if $sample_names_seen{$sample_name} > 1;
+        $import->{job_name} = $import->{sample_name}.'.'.++$sample_names_seen{$sample_name};
     }
 
     $self->_imports($imports);
