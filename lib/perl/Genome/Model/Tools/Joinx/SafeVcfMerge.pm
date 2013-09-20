@@ -32,6 +32,10 @@ class Genome::Model::Tools::Joinx::SafeVcfMerge {
 sub execute {
     my ($self) = @_;
 
+    if ($self->labeled_input_files) {
+        die "SafeVcfMerge does not support labeled-input-files feature";
+    }
+
     $self->status_message("Resolving command inputs");
     if($self->max_files_per_merge < 2) {
         my $max = $self->max_files_per_merge;
