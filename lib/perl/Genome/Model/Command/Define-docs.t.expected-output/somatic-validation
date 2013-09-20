@@ -10,9 +10,13 @@
   [1mauto-assign-inst-data[0m
     Automatically assign instrument data using the cron 
     Default value 'true' if not specified
+  [1mnoauto-assign-inst-data[0m
+    Make auto-assign-inst-data 'false' 
   [1mforce[0m
     force model creation to occur, even if samples don't match 
     Default value 'false' (--noforce) if not specified
+  [1mnoforce[0m
+    Make force 'false' 
   [1mtumor-sample[0m
     If there are no variants, specify the "tumor" sample directly 
   [1mnormal-sample[0m

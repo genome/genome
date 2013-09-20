@@ -43,6 +43,8 @@
     Default value 'cosmic/65.1' if not specified
   [1mforce[0m
     skip sanity checks on input models 
+  [1mnoforce[0m
+    Make force 'false' 
 
 [4mDESCRIPTION[0m
     The ClinSeq pipeline takes four models, each of which is optional, and produces data sets
