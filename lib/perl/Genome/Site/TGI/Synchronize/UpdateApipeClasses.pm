@@ -436,7 +436,7 @@ sub _create_organismindividual {
     return $self->_create_object($original_object, $new_object_class);
 }
 
-sub _create_taxon {
+sub _create_organismtaxon {
     my ($self, $original_object, $new_object_class) = @_;
     return $self->_create_object($original_object, $new_object_class);
 }

@@ -83,9 +83,13 @@ genome model define mutational-significance --model-name "Example Mutational Sig
   [1mauto-assign-inst-data[0m
     Assigning instrument data to the model is performed automatically 
     Default value 'false' (--noauto-assign-inst-data) if not specified
+  [1mnoauto-assign-inst-data[0m
+    Make auto-assign-inst-data 'false' 
   [1mauto-build-alignments[0m
     The building of the model is performed automatically 
     Default value 'true' if not specified
+  [1mnoauto-build-alignments[0m
+    Make auto-build-alignments 'false' 
 
 [4mDESCRIPTION[0m
     The mutational significance genome model represents analysis on a collection of somatic

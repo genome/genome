@@ -47,6 +47,8 @@ genome model define imported-reference-sequence --species-name=human --prefix=NC
   [1mskip-bases-files[0m
     If set, bases files for quick sequence/position look up will not be created.  Useful for
     importing files with a large number of sequences 
+  [1mnoskip-bases-files[0m
+    Make skip-bases-files 'false' 
   [1mon-warning[0m
     The action to take when emitting a warning.
     valid values:
@@ -64,6 +66,8 @@ genome model define imported-reference-sequence --species-name=human --prefix=NC
     Indicates if this reference could be rederived from other internal results or if it is an
     external import 
     Default value 'false' (--nois-rederivable) if not specified
+  [1mnois-rederivable[0m
+    Make is-rederivable 'false' 
   [1mbuild-name[0m
     human meaningful name of this build 
   [1msequence-uri[0m
@@ -71,6 +75,8 @@ genome model define imported-reference-sequence --species-name=human --prefix=NC
   [1muse-default-sequence-uri[0m
     Use a default generated URI for the BAM header. 
     Default value 'false' (--nouse-default-sequence-uri) if not specified
+  [1mnouse-default-sequence-uri[0m
+    Make use-default-sequence-uri 'false' 
   [1massembly-name[0m
     Assembly name to store in the SAM header.  Autoderived if not specified. 
   [1mdesc[0m
@@ -81,6 +87,8 @@ genome model define imported-reference-sequence --species-name=human --prefix=NC
     The source of the sequence, such as "NCBI".  May not have spaces. 
   [1mgenerate-sequence-uri[0m
     (undocumented) 
+  [1mnogenerate-sequence-uri[0m
+    Make generate-sequence-uri 'false' 
   [1mversion[0m
     The version number and/or description of the reference.  May not have spaces.  This may be, for
     example "37" or "37_human_contamination". 
@@ -93,9 +101,13 @@ genome model define imported-reference-sequence --species-name=human --prefix=NC
   [1mauto-assign-inst-data[0m
     Assigning instrument data to the model is performed automatically 
     Default value 'false' (--noauto-assign-inst-data) if not specified
+  [1mnoauto-assign-inst-data[0m
+    Make auto-assign-inst-data 'false' 
   [1mauto-build-alignments[0m
     The building of the model is performed automatically 
     Default value 'true' if not specified
+  [1mnoauto-build-alignments[0m
+    Make auto-build-alignments 'false' 
 
 [4mDESCRIPTION[0m
 

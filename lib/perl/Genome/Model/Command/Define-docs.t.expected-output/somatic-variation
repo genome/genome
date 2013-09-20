@@ -31,6 +31,8 @@ genome model define somatic-variation --tumor-model aml3-tumor1-v2 --normal-mode
     Allow creation of somatic variation models where --tumor_model and --normal_model do not have
     matching Genome::Individuals 
     Default value 'false' (--noforce) if not specified
+  [1mnoforce[0m
+    Make force 'false' 
   [1minstrument-data[0m
     Instrument data to be assigned to the model, can provide a query to resolve, a list of ids, etc 
   [1msubject[0m
@@ -52,9 +54,13 @@ genome model define somatic-variation --tumor-model aml3-tumor1-v2 --normal-mode
   [1mauto-assign-inst-data[0m
     Assigning instrument data to the model is performed automatically 
     Default value 'false' (--noauto-assign-inst-data) if not specified
+  [1mnoauto-assign-inst-data[0m
+    Make auto-assign-inst-data 'false' 
   [1mauto-build-alignments[0m
     The building of the model is performed automatically 
     Default value 'true' if not specified
+  [1mnoauto-build-alignments[0m
+    Make auto-build-alignments 'false' 
 
 [4mDESCRIPTION[0m
     This defines a new genome model representing the somatic analysis between a normal and tumor

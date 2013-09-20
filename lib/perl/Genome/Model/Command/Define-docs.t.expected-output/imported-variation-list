@@ -35,11 +35,15 @@
   [1mauto-assign-inst-data[0m
     Assigning instrument data to the model is performed automatically 
     Default value 'false' (--noauto-assign-inst-data) if not specified
+  [1mnoauto-assign-inst-data[0m
+    Make auto-assign-inst-data 'false' 
   [1msource-name[0m
     The name of the source of the imported variants (e.g., dbsnp, 1kg) 
   [1mauto-build-alignments[0m
     The building of the model is performed automatically 
     Default value 'true' if not specified
+  [1mnoauto-build-alignments[0m
+    Make auto-build-alignments 'false' 
   [1msnv-result[0m
     The result for snvs to import 
   [1mindel-result[0m

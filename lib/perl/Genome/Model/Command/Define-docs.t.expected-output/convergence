@@ -33,6 +33,8 @@ genome model define convergence
   [1mauto-assign-inst-data[0m
     Assigning instrument data to the model is performed automatically 
     Default value 'false' (--noauto-assign-inst-data) if not specified
+  [1mnoauto-assign-inst-data[0m
+    Make auto-assign-inst-data 'false' 
   [1mmodel-name[0m
     User meaningful name for this model (defaults to the model group name with "_convergence"
     appended 
@@ -44,6 +46,8 @@ genome model define convergence
   [1mauto-build-alignments[0m
     If true, new builds will automatically be launched when the underlying model group changes. 
     Default value 'true' if not specified
+  [1mnoauto-build-alignments[0m
+    Make auto-build-alignments 'false' 
 
 [4mDESCRIPTION[0m
     This defines a new genome model representing the harmonic convergence analysis for a group of

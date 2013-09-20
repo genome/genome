@@ -51,11 +51,15 @@
   [1mauto-assign-inst-data[0m
     Assigning instrument data to the model is performed automatically 
     Default value 'false' (--noauto-assign-inst-data) if not specified
+  [1mnoauto-assign-inst-data[0m
+    Make auto-assign-inst-data 'false' 
   [1msubject-name[0m
     The name of the subject of the model 
   [1mauto-build-alignments[0m
     The building of the model is performed automatically 
     Default value 'true' if not specified
+  [1mnoauto-build-alignments[0m
+    Make auto-build-alignments 'false' 
   [1mgenotype-microarray-model[0m
     ID or name of the genotype microarray model which will be used to obtain the gold snp and
     genotype files 
@@ -66,9 +70,13 @@
   [1mmerge-roi-set[0m
     A flag to merge the region_of_interest_set_name BED file before evaluating coverage. 
     Default value 'true' if not specified
+  [1mnomerge-roi-set[0m
+    Make merge-roi-set 'false' 
   [1mshort-roi-names[0m
     A flag to use short ROI names in the BED file used to evaluate coverage. 
     Default value 'true' if not specified
+  [1mnoshort-roi-names[0m
+    Make short-roi-names 'false' 
   [1mroi-track-name[0m
     If the ROI used is multi-tracked, select one of the tracks for use as the ROI.
     valid values:
