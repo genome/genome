@@ -3,6 +3,8 @@ package Genome::Model::ClinSeq::TestData;
 use strict;
 use warnings;
 use Genome;
+
+use Genome::Test::Factory::Library;
 use Genome::Test::Factory::ProcessingProfile::ReferenceAlignment;
 use Genome::Test::Factory::ProcessingProfile::SomaticVariation;
 use Genome::Test::Factory::ProcessingProfile::RnaSeq;
@@ -156,8 +158,9 @@ sub load {
 
 sub create_instrument_data_from_sample {
     my $sample = shift;
-    my $lib = Genome::Library->create(sample => $sample,
-                                     );
+    my $lib = Genome::Test::Factory::Library->setup_object(
+        sample_id => $sample->id,
+    );
     my $inst_data = Genome::InstrumentData::Solexa->create(library => $lib);
     return $inst_data;
 }
