@@ -9,7 +9,7 @@ use Test::More tests => 5;
 # we temporarily have it overridden to test against Obi's example
 #my $test_ids = Genome::Model::ClinSeq::TestData::load();
 #my $test_build_id = $test_ids->{CLINSEQ_BUILD};
-my $test_build_id = 142467783; ## temp override
+my $test_build_id = "aee9a31051754702a9c2835d63abc812"; ## temp override
 my $test_build = Genome::Model::Build->get($test_build_id);
 ok($test_build, "got test build $test_build_id");
 
