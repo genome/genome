@@ -21,6 +21,11 @@ class Genome::Model::Command::Remove {
             default_value => 0,
             doc => 'A boolean flag to force model delete.(default_value=0)',
         },
+        allow_model_with_builds => {
+            is => 'Boolean',
+            default_value => 0,
+            doc => 'By default this command will not remove a model with builds, as this destroys records of past processing that has been done.',
+        },
     ],
     doc => "delete a genome model, all of its builds, and logs",
 };
@@ -55,6 +60,12 @@ sub execute {
 
     for my $model (@models) {
         next if $model->isa("UR::DeletedRef");
+
+        my @b = $model->builds;
+        if(@b and not $self->allow_model_with_builds) {
+            $self->error_message('Refusing to delete a model with builds');
+            return;
+        }
 
         $self->status_message("Removing model " . $model->__display_name__);
         my $model_id = $model->id;
