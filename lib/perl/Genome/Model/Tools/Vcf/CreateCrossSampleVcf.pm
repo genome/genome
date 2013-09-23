@@ -14,7 +14,7 @@ class Genome::Model::Tools::Vcf::CreateCrossSampleVcf {
     is => 'Command::V2',
     has_input => [
         builds => {
-            is => 'Genome::Model::Build::ReferenceAlignment',
+            is => 'Genome::Model::Build',
             require_user_verify => 0,
             is_many => 1,
             is_optional => 1,

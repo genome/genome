@@ -10,7 +10,7 @@ class Genome::Model::Tools::Vcf::CreateCrossSampleVcf::Result {
 
     has_input => [
         builds => {
-            is => 'Genome::Model::Build::ReferenceAlignment',
+            is => 'Genome::Model::Build',
             is_many => 1,
         },
     ],
