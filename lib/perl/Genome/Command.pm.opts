@@ -2810,6 +2810,8 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>remove',
     [
+      'allow-model-with-builds!',
+      undef,
       'force-delete!',
       undef,
       'color!',
@@ -12868,6 +12870,8 @@ $Genome::Command::OPTS_SPEC = [
         'reference-name=s',
         'files',
         'review-description=s',
+        'files',
+        'roi=s',
         'files',
         'help!',
         undef
@@ -31271,6 +31275,8 @@ $Genome::Command::OPTS_SPEC = [
         'phase=s',
         'files',
         'platform=s',
+        'files',
+        'snv-anno-file-with-rsid=s',
         'files',
         'snv-annotation-file=s',
         'files',
