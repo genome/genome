@@ -34,6 +34,12 @@ class Genome::Model::Build::Command::Validate {
             is_optional => 1,
             doc => 'If set, builds must have one of these reference sequence builds',
         },
+        processing_profile => {
+            is => 'Genome::ProcessingProfile',
+            is_many => 1,
+            is_optional => 1,
+            doc => 'If set, builds must have one of these processing profiles.',
+        },
     ],
 };
 
@@ -49,6 +55,9 @@ sub execute {
     }
     if ($self->reference_sequence) {
         $failed += $self->_check_builds_reference_sequence;
+    }
+    if ($self->processing_profile) {
+        $failed += $self->_check_builds_processing_profile;
     }
 
 
@@ -86,6 +95,22 @@ sub _check_builds_status {
         unless (grep {$_ eq $build->status} @statuses) {
             $self->error_message(sprintf("Status %s not valid for build: %s (must be one of %s)",
                 $build->status, $build->id, join(', ', @statuses)));
+            $failed = 1;
+        }
+    }
+
+    return $failed;
+}
+
+sub _check_builds_processing_profile {
+    my $self = shift;
+
+    my $failed = 0;
+    my @processing_profiles = $self->processing_profile;
+    for my $build ($self->builds) {
+        unless (grep {$_->id eq $build->processing_profile->id} @processing_profiles) {
+            $self->error_message(sprintf("Processing profile: %s not valid for build: %s (must be one of %s)",
+                $build->processing_profile->name, $build->id, join(', ', map {$_->__display_name__} @processing_profiles)));
             $failed = 1;
         }
     }

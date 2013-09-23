@@ -5,7 +5,7 @@ use warnings;
 
 use Parse::RecDescent qw/RD_ERRORS RD_WARN RD_TRACE/;
 use Data::Dumper;
-use Test::More tests => 23;
+use Test::More tests => 30;
 use above 'Genome';
 
 #Parsing tests
@@ -133,4 +133,25 @@ for my $str (@expected_failures) {
         my @errs = $obj->__errors__;
         ok($obj->__errors__, 'object has errors as expected');
     };
+}
+
+test_get_detectors();
+
+sub test_get_detectors {
+    my $snv_detection_strategy = q(samtools r963 filtered by snp-filter v1 then false-positive v1 [--max-mm-qualsum-diff 100 --bam-readcount-version 0.4 --bam-readcount-min-base-quality 15] unique union varscan 2.2.9 [--min-coverage 3 --min-var-freq 0.20 --p-value 0.10 --strand-filter 1 --map-quality 10] filtered by false-positive v1 [--max-mm-qualsum-diff 100 --bam-readcount-version 0.4 --bam-readcount-min-base-quality 15]);
+    my $strategy = $strategy_class->get($snv_detection_strategy);
+    my @detectors = $strategy->get_detectors();
+    is(scalar(@detectors), 2, 'Found exactly two detectors');
+
+    for my $detector (@detectors) {
+        my $name = $detector->{name};
+        ok($name eq 'samtools' || $name eq 'varscan', "Found expected detector: $name") || die;
+        if ($detector->{name} eq 'samtools') {
+            is($detector->{params}, '', 'Found Samtools Params');
+            is($detector->{version}, 'r963', 'Found Samtools Version');
+        } elsif ($detector->{name} eq 'varscan') {
+            is($detector->{params}, '--min-coverage 3 --min-var-freq 0.20 --p-value 0.10 --strand-filter 1 --map-quality 10', 'Found Varscan Params');
+            is($detector->{version}, '2.2.9', 'Found Varscan Version');
+        }
+    }
 }

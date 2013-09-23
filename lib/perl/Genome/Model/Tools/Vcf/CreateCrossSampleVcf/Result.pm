@@ -10,7 +10,7 @@ class Genome::Model::Tools::Vcf::CreateCrossSampleVcf::Result {
 
     has_input => [
         builds => {
-            is => 'Genome::Model::Build::ReferenceAlignment',
+            is => 'Genome::Model::Build',
             is_many => 1,
         },
     ],
@@ -27,6 +27,7 @@ class Genome::Model::Tools::Vcf::CreateCrossSampleVcf::Result {
 sub _generate_result {
     my ($self, $staging_directory) = @_;
     my @builds = $self->builds;
+    # FIXME pass command in, as non-input and non-param but required.
     my $cmd = Genome::Model::Tools::Vcf::CreateCrossSampleVcf->create(
             builds => \@builds,
             output_directory => $staging_directory,

@@ -101,8 +101,8 @@ sub convert_sam_to_bam {
         sam_file => $reheadered_sam_file,
         keep_sam => 0,
         bam_file => $self->output_bam,
-        is_sorted => 0,
-        index_bam => 0,
+        is_sorted => 1,
+        index_bam => 1,
     );
 }
 

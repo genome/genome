@@ -32,6 +32,10 @@ class Genome::Model::Tools::Joinx::SafeVcfMerge {
 sub execute {
     my ($self) = @_;
 
+    if ($self->labeled_input_files) {
+        die "SafeVcfMerge does not support labeled-input-files feature";
+    }
+
     $self->status_message("Resolving command inputs");
     if($self->max_files_per_merge < 2) {
         my $max = $self->max_files_per_merge;
@@ -169,20 +173,35 @@ sub _resolve_workflow_log_dir {
     return _create_dir($base_path, "logs");
 }
 
+sub inherited_joinx_property_names {
+    my $self = shift;
+    my @vcf_merge_properties = Genome::Model::Tools::Joinx::VcfMerge->__meta__->properties;
+
+    # this excludes things from higher up the class heirarchy (such as UR::Object)
+    my @not_is_many = grep {!$_->is_many} @vcf_merge_properties;
+    my @joinx_properties = grep {$_->class_name =~ m/Joinx/} @not_is_many;
+    return map {$_->property_name} @joinx_properties;
+}
+
+sub _workflow_inputs {
+    my $self = shift;
+
+    my %workflow_inputs;
+    for my $inherited_property_name ($self->inherited_joinx_property_names) {
+        if (defined($self->$inherited_property_name) and $inherited_property_name ne 'output_file') {
+            $workflow_inputs{$inherited_property_name} = $self->$inherited_property_name;
+        }
+    }
+    return %workflow_inputs;
+}
+
 sub _generate_workflow {
     my ($self, $working_directory, $joinx_log_dir, $workflow_log_dir,
             $input_groups) = @_;
     my @input_groups = @{$input_groups};
 
-    my %workflow_inputs = (
-        sample_priority => $self->sample_priority,
-        clear_filters => $self->clear_filters,
-        merge_samples => $self->merge_samples,
-        ratio_filter => $self->ratio_filter,
-        use_bgzip => $self->use_bgzip,
-        max_files_per_merge => $self->max_files_per_merge,
-        use_version => $self->use_version,
-    );
+
+    my %workflow_inputs = $self->_workflow_inputs;
     my %common_workflow_inputs = %workflow_inputs;
     $workflow_inputs{final_output_file} = $self->output_file;
     $workflow_inputs{final_merge_working_directory} = join("/",
