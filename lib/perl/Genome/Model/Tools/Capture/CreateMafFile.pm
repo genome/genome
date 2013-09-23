@@ -28,6 +28,7 @@ class Genome::Model::Tools::Capture::CreateMafFile {
   has => [ # specify the command's single-value properties (parameters) <---
     snv_file  => { is => 'Text', doc => "File of SNVs to include", is_optional => 1 },
     snv_annotation_file => { is => 'Text', doc => "SNVs with WU annotations", is_optional => 1 },
+    snv_anno_file_with_rsid => {is => 'Text', doc => 'SNVs with annotations including rsid', is_optional => 1},
     indel_file  => { is => 'Text', doc => "File of Indels to include", is_optional => 1 },
     indel_annotation_file => { is => 'Text', doc => "Indels with WU annotations", is_optional => 1 },
     somatic_status => { is => 'Text', doc => "Predicted somatic status of variant (Germline/Somatic/LOH) [Somatic]", is_optional => 1 },
@@ -121,6 +122,10 @@ sub execute {                               # replace with real execution logic.
   ## Load the annotations ##
   if( $snv_annotation_file ) {
     my %annotations = load_annotations( $snv_annotation_file );
+    my %annotations_with_rsid;
+    if ($self->snv_anno_file_with_rsid) {
+        %annotations_with_rsid = load_annotations($self->snv_anno_file_with_rsid)
+    }
     my $input = new FileHandle ($snv_file);
     my $lineCounter = 0;
 
@@ -138,8 +143,9 @@ sub execute {                               # replace with real execution logic.
       my $chr_stop = $lineContents[2];
       my $ref = $lineContents[3];
       my $var = $lineContents[4];
+      my $gene_name = $lineContents[6];
       $var = code_to_var_allele($ref, $var) if($var ne "A" && $var ne "C" && $var ne "G" && $var ne "T");
-      my $key = "$chrom\t$chr_start\t$chr_stop\t$ref\t$var";
+      my $key = "$chrom\t$chr_start\t$chr_stop\t$ref\t$var\t$gene_name";
 
       if($annotations{$key})
       {
@@ -178,6 +184,9 @@ sub execute {                               # replace with real execution logic.
           }
         }
 
+        my @rsid_fields = split(/\t/, $annotations_with_rsid{$key});
+        my $rsid = $rsid_fields[24];
+
         my ( $var_type, $gene, $trv_type ) = split( /\t/, $annotations{$key} );
         my $annoline = $annotations{$key};
         $annoline =~ s/$var_type\t$gene\t$trv_type\t//;
@@ -185,7 +194,7 @@ sub execute {                               # replace with real execution logic.
         my $maf_line = "$gene\t0\t$center\t$genome_build\t$chrom\t$chr_start\t$chr_stop\t+\t";
         $maf_line .=  "$var_class\t$var_type\t$ref\t";
         $maf_line .=  "$tumor_allele1\t$tumor_allele2\t";
-        $maf_line .=  "\t\t"; #dbSNP
+        $maf_line .=  "$rsid\t\t"; #dbSNP
         $maf_line .=  "$tumor_sample\t$normal_sample\t$normal_allele1\t$normal_allele2\t";
         $maf_line .=  "\t\t\t\t"; # Validation alleles
         $maf_line .=  "Unknown\tUnknown\t$somatic_status\t";
@@ -225,6 +234,7 @@ sub execute {                               # replace with real execution logic.
       my $chr_stop = $lineContents[2];
       my $ref = $lineContents[3];
       my $var = $lineContents[4];
+      my $gene_name = $lineContents[6];
 
       if($var =~ '\/')
       {
@@ -235,7 +245,7 @@ sub execute {                               # replace with real execution logic.
       $ref = "-" if($ref eq "0");
       $var = "-" if($var eq "0");
 
-      my $key = "$chrom\t$chr_start\t$chr_stop\t$ref\t$var";
+      my $key = "$chrom\t$chr_start\t$chr_stop\t$ref\t$var\t$gene_name";
 
       if($annotations{$key})
       {
@@ -347,7 +357,7 @@ sub load_annotations
         my $var_type = $lineContents[5];
         my $gene_name = $lineContents[6];
         my $trv_type = $lineContents[13];
-        my $key = "$chrom\t$chr_start\t$chr_stop\t$ref\t$var";
+        my $key = "$chrom\t$chr_start\t$chr_stop\t$ref\t$var\t$gene_name";
         $annotations{$key} = "$var_type\t$gene_name\t$trv_type\t$line";
 
     }
