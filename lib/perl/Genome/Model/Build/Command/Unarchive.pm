@@ -68,7 +68,7 @@ sub _execute {
         }
 
         # Old builds may have allocations symlinked to the data dir, and they may are archived, or the link is broken
-        my @symlinked_allocations_that_need_unarchiving = grep { not $_->is_archived } $build->symlinked_allocations;
+        my @symlinked_allocations_that_need_unarchiving = grep { $_->is_archived } $build->symlinked_allocations;
         if ( @symlinked_allocations_that_need_unarchiving ) {
             $num_allocations += @symlinked_allocations_that_need_unarchiving;
             $self->status_message("Found ".@symlinked_allocations_that_need_unarchiving." archived symlinked allocations. Unarchiving...");
