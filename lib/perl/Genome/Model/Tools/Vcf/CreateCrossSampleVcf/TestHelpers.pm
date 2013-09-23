@@ -7,7 +7,8 @@ use above 'Genome';
 use Test::More;
 use File::Spec;
 use Genome::Utility::Test 'compare_ok';
-use Genome::Utility::Vcf "diff_vcf_file_vs_file";
+use Genome::File::Vcf::Reader;
+use Genome::File::Vcf::Differ;
 
 use Exporter 'import';
 
@@ -216,9 +217,9 @@ sub test_cmd {
     is($sr, $cmd->software_result, "found software result via cmd for test1");
 
     my $expected_result = get_expected_result($variant_type, $test_dir);
-    my $diff = diff_vcf_file_vs_file($result, $expected_result);
-    ok(!$diff, "output matched expected result: $expected_result")
-        or diag("diff results:\n" . $diff);
+
+    my $differ = Genome::File::Vcf::Differ->new($result, $expected_result);
+    is($differ->diff, undef, 'Found No differences');
 }
 
 sub get_expected_result {
