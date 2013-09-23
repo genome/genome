@@ -48,6 +48,11 @@ class Genome::Model::Tools::Analysis::DumpIgvXmlMulti {
         default => 'reference',
         doc => 'the name of the reference (in IGV) that the bams are aligned to. E.g. b37 for build 37 or reference for our internal build36',
     },
+    roi => {
+        is => 'Text',
+        is_optional => 1,
+        doc => 'A bed file with the regions of interest to load into the session',
+    },
     ]
 };
 
@@ -95,10 +100,24 @@ XML
 }
     $header .= "    </Resources>\n";
 
-
+#---- regions ----
+my $regions;
+    if ($self->roi) {
+        $regions = "<Regions>\n";
+        my $in = Genome::Sys->open_file_for_reading($self->roi);
+        while (my $line = <$in>) {
+            chomp $line;
+            my @fields = split(/\t/, $line);
+            $regions .= <<"XML";
+            <Region chromosome="$fields[0]" end="$fields[2]" start="$fields[1]"/>
+XML
+        }
+        $regions .= "</Regions>\n";
+    }
 #---- panels -----
 
     my $panels;
+
     for($i=0;$i<@bams;$i++){
         my $path = abs_path($bams[$i]);
         my $label = $labels[$i];
@@ -112,10 +131,9 @@ $panels .= <<"XML";
         <Track expand="true" fontSize="9" height="1000" id="$path" name="$label" showDataRange="true" visible="true">
             <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="10.0" minimum="0.0" type="LINEAR"/>
         </Track>
-    </Panel>
+   </Panel>
 XML
     }
-
 #---- panels -----
 my $features = <<"XML"; 
     <Panel height="60" name="FeaturePanel" width="1901">
@@ -126,7 +144,6 @@ my $features = <<"XML";
             <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="10.0" minimum="0.0" type="LINEAR"/>
         </Track>
     </Panel>
-</Session>
 XML
 
 
@@ -135,6 +152,11 @@ XML
     print OUTFILE $header;
     print OUTFILE $panels;
     print OUTFILE $features;
+    if ($regions) {
+        print OUTFILE $regions;
+    }
+    
+    print OUTFILE "</Session>\n";
     close(OUTFILE);
     
 return 1;
