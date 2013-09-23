@@ -25,7 +25,7 @@ my $reference_build = $gatk_test->reference_build;
 my %params = (
     version => 2.4,
     bam_source => $bam_source,
-    known_sites => $gatk_test->known_site,
+    known_sites => [$gatk_test->known_site],
 );
 
 # Shortcut [fails as expected]

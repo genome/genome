@@ -53,14 +53,14 @@ sub execute {
     my $self = shift;
     my $build = $self->build;
 
-    my $known_sites_input = $build->inputs(name => 'known_sites');
+    my @known_sites_inputs = $build->inputs(name => 'known_sites');
 
     my @instrument_data = $build->instrument_data;
     my $result = Genome::InstrumentData::Composite->get_or_create(
         inputs => {
             instrument_data => \@instrument_data,
             reference_sequence_build => $build->reference_sequence_build,
-            ($known_sites_input ? (known_sites => $known_sites_input->value) : ()),
+            (@known_sites_inputs ? (known_sites => [ map { $_->value } @known_sites_inputs ]) : ()),
         },
         strategy => $build->processing_profile->alignment_strategy,
         log_directory => $build->log_directory,

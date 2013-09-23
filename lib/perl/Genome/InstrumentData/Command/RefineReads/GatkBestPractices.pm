@@ -14,6 +14,8 @@ class Genome::InstrumentData::Command::RefineReads::GatkBestPractices {
     has => [
         version => { is => 'Text', },
         bam_source => { is => 'Genome::InstrumentData::AlignedBamResult', },
+    ],
+    has_many => [
         known_sites => { is => 'Genome::Model::Build::ImportedVariationList', },
     ],
     has_optional => [
@@ -116,10 +118,11 @@ sub _get_or_create_base_recalibrator_result {
 sub _common_params_for_gatk_results {
     my $self = shift;
 
+    my @known_sites = $self->known_sites;
     my %params = (
         version => $self->version,
         reference_build => $self->bam_source->reference_build,
-        known_sites => [$self->known_sites],
+        known_sites => \@known_sites,
     );
 
     return %params;

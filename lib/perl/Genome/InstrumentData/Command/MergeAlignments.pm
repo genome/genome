@@ -58,20 +58,15 @@ class Genome::InstrumentData::Command::MergeAlignments {
             is_optional => 1,
             doc => 'Params for the refiner to use',
         },
-        refiner_known_sites_id => {
+        refiner_known_sites_ids => {
             is => 'Text',
+            is_many => 1,
             is_optional => 1,
             doc => 'ID of the variant list to use for refinement',
         },
         samtools_version => {
             is => 'Text',
             doc => 'The version of Samtools to use when needed by mergers/deduplicators',
-        },
-    ],
-    has_optional => [
-        refiner_known_sites => {
-            is => 'Genome::Model::Build::ImportedVariationList',
-            id_by => 'refiner_known_sites_id',
         },
     ],
     has_optional_output => [
@@ -212,12 +207,12 @@ sub _process_refinement {
         return 1;
     }
 
-    my $known_sites = $self->refiner_known_sites;
-
+    my @known_sites_ids = $self->refiner_known_sites_ids;
+    my @known_sites = Genome::Model::Build::ImportedVariationList->get(id => \@known_sites_ids);
     my %params = (
         version => $self->refiner_version,
         params => $self->refiner_params,
-        known_sites => $known_sites,
+        known_sites => \@known_sites,
         bam_source => $merged_result
     );
 

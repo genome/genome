@@ -513,7 +513,7 @@ sub _general_workflow_input_properties {
 sub _merge_workflow_input_properties {
     my $self = shift;
 
-    return qw(merger_name merger_version merger_params duplication_handler_name duplication_handler_version duplication_handler_params refiner_name refiner_version refiner_params refiner_known_sites_id samtools_version);
+    return qw(merger_name merger_version merger_params duplication_handler_name duplication_handler_version duplication_handler_params refiner_name refiner_version refiner_params refiner_known_sites_ids samtools_version);
 }
 
 sub _index_workflow_input_properties {
@@ -655,7 +655,7 @@ sub _generate_merge_operations {
                     m_refiner_name => $next_op->{name},
                     m_refiner_params => $next_op->{params},
                     m_refiner_version => $next_op->{version},
-                    m_refiner_known_sites_id => ($self->inputs)->{$next_op->{known_sites}}->id
+                    m_refiner_known_sites_ids => [ map { $_->id } @{($self->inputs)->{$next_op->{known_sites}}} ],
                 );
             }
         }
@@ -734,8 +734,6 @@ sub _generate_master_workflow {
     my $api_version = shift;
 
     my ($input_properties_list, $output_properties_list) = $self->_inputs_and_outputs_for_master_workflow($index_operations, $object_workflows, $merge_operations);
-
-    $DB::single = 1;
 
     my $master_workflow = Workflow::Model->create(
         name => 'Master Alignment Dispatcher',
