@@ -1294,6 +1294,36 @@ sub getFilePathBase{
   return(\%fb);
 }
 
+sub resolve_reference_sequence_build {
+    my $clinseq_build = shift;
+    my ($wgs_somvar_build, $exome_somvar_build, $tumor_rnaseq_build, $normal_rnaseq_build, $wgs_normal_refalign_build, $wgs_tumor_refalign_build, $exome_normal_refalign_build, $exome_tumor_refalign_build);
+    $wgs_somvar_build = $clinseq_build->wgs_build;
+    $exome_somvar_build = $clinseq_build->exome_build;
+    $tumor_rnaseq_build = $clinseq_build->tumor_rnaseq_build;
+    $normal_rnaseq_build = $clinseq_build->normal_rnaseq_build;
+    $wgs_normal_refalign_build = $wgs_somvar_build->normal_build if ($wgs_somvar_build);
+    $wgs_tumor_refalign_build = $wgs_somvar_build->tumor_build if ($wgs_somvar_build);
+    $exome_normal_refalign_build = $exome_somvar_build->normal_build if ($exome_somvar_build);
+    $exome_tumor_refalign_build = $exome_somvar_build->tumor_build if ($exome_somvar_build);
+
+    my @input_builds = ($wgs_normal_refalign_build, $wgs_tumor_refalign_build, $wgs_somvar_build, $exome_normal_refalign_build, $exome_tumor_refalign_build, $exome_somvar_build, $tumor_rnaseq_build, $normal_rnaseq_build, $clinseq_build);
+
+    my %rb_names;
+    for my $build (@input_builds){
+      next unless $build;
+      my $m = $build->model;
+      if ($m->can("reference_sequence_build")){
+        my $rb = $m->reference_sequence_build;
+        my $rb_name = $rb->name;
+        $rb_names{$rb_name}= $rb;
+      }
+    }
+    my @rb_names = keys %rb_names;
+    if (scalar(@rb_names) > 1 || scalar(@rb_names) == 0){
+      die $clinseq_build->error_message("Did not find a single distinct Reference alignment build for ClinSeq build: ".$clinseq_build->id);
+    }
+    return $rb_names{$rb_names[0]};
+}
 
 1;
 

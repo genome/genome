@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 use Data::Dumper;
 use Term::ANSIColor qw(:constants);
+use Genome::Model::ClinSeq::Util;
 
 class Genome::Model::ClinSeq::Command::DumpIgvXml {
     is => 'Command::V2',
@@ -149,35 +150,9 @@ sub execute {
   foreach my $clinseq_build (@clinseq_builds){
     my $clinseq_build_id = $clinseq_build->id;
 
-    my ($wgs_somvar_build, $exome_somvar_build, $tumor_rnaseq_build, $normal_rnaseq_build, $wgs_normal_refalign_build, $wgs_tumor_refalign_build, $exome_normal_refalign_build, $exome_tumor_refalign_build);
-    $wgs_somvar_build = $clinseq_build->wgs_build;
-    $exome_somvar_build = $clinseq_build->exome_build;
-    $tumor_rnaseq_build = $clinseq_build->tumor_rnaseq_build;
-    $normal_rnaseq_build = $clinseq_build->normal_rnaseq_build;
-    $wgs_normal_refalign_build = $wgs_somvar_build->normal_build if ($wgs_somvar_build);
-    $wgs_tumor_refalign_build = $wgs_somvar_build->tumor_build if ($wgs_somvar_build);
-    $exome_normal_refalign_build = $exome_somvar_build->normal_build if ($exome_somvar_build);
-    $exome_tumor_refalign_build = $exome_somvar_build->tumor_build if ($exome_somvar_build);
+    my $reference_build = Genome::Model::ClinSeq::Util::resolve_reference_sequence_build($clinseq_build);
+    my $reference_genome_name = $reference_build->name;
 
-    #Gather all builds into a single array
-    my @input_builds = ($wgs_normal_refalign_build, $wgs_tumor_refalign_build, $wgs_somvar_build, $exome_normal_refalign_build, $exome_tumor_refalign_build, $exome_somvar_build, $tumor_rnaseq_build, $normal_rnaseq_build, $clinseq_build);
-
-    my %rb_names;
-    for my $build (@input_builds){
-      next unless $build;
-      my $m = $build->model;
-      if ($m->can("reference_sequence_build")){
-        my $rb = $m->reference_sequence_build;
-        my $rb_name = $rb->name;
-        $rb_names{$rb_name}=1;
-      }
-    }
-    my @rb_names = keys %rb_names;
-    if (scalar(@rb_names) > 1 || scalar(@rb_names) == 0){
-      die $self->error_message("Did not find a single distinct Reference alignment build for ClinSeq build: $clinseq_build_id");
-    }
-    my $reference_genome_name = $rb_names[0];
-    
     #Hardcoded list of allowed reference builds and their mappings to names used in IGV
     my $genome_build = "";
     my $gene_track_name = "";
