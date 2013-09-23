@@ -33,6 +33,8 @@ genome model remove subject_name=FOO
 EOS
 }
 
+sub _is_hidden_in_docs { return !Genome::Sys->current_user_is_admin }
+
 sub execute {
     my $self = shift;
 
