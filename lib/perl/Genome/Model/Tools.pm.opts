@@ -2576,6 +2576,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'files',
       'review-description=s',
       'files',
+      'roi=s',
+      'files',
       'help!',
       undef
     ],
@@ -20978,6 +20980,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'phase=s',
       'files',
       'platform=s',
+      'files',
+      'snv-anno-file-with-rsid=s',
       'files',
       'snv-annotation-file=s',
       'files',
