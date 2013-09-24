@@ -24258,6 +24258,28 @@ $Genome::Model::Tools::OPTS_SPEC = [
     'help!',
     undef
   ],
+  '>chimera-scan',
+  [
+    '>filter-output',
+    [
+      'bedpe-file=s',
+      'files',
+      'output-file=s',
+      'files',
+      'debug!',
+      undef,
+      'fusion-partner-limit=s',
+      undef,
+      'span-frag-limit=s',
+      undef,
+      'total-frag-limit=s',
+      undef,
+      'help!',
+      undef
+    ],
+    'help!',
+    undef
+  ],
   '>graph',
   [
     '>heatmap',
