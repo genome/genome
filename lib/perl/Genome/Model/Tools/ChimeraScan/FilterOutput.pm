@@ -44,11 +44,7 @@ sub execute {
     my $span_frag_limit      = $self->span_frag_limit;
     my $fusion_partner_limit = $self->fusion_partner_limit;
 
-    my $reader = Genome::File::BedPe::Reader->new($bedpe_file);
-    #my @bedpe_headers = $reader->header->standard_headers;
-
-    my @headers      = qw(Fusion 5P 3P Total_Frag Spanning_Frag Type Span:Total);
-    #my @all_headers  = (@bedpe_headers, @headers);
+    my @headers      = qw(Fusion 5P 3P Id_5p Id_3p Total_Frag Spanning_Frag Type Span:Total);
     my @bedpe_fields = @Genome::File::BedPe::Entry::ALL_FIELDS;
     $bedpe_fields[0] = '#'.$bedpe_fields[0];
     my @all_headers  = (@bedpe_fields, @headers);
@@ -59,11 +55,12 @@ sub execute {
         output    => $output_file,
     );
 
+    my $reader = Genome::File::BedPe::Reader->new($bedpe_file);
     my (%FP_ct, %TP_ct, %output);
     
     while (my $entry = $reader->next) {
         my $score = $entry->{score};
-        my ($FP, $TP, $type, $total_frag, $span_frag, $repeat) = map{$entry->{custom}->[$_]}qw(2 3 4 6 7 11);
+        my ($id_5p, $id_3p, $FP, $TP, $type, $total_frag, $span_frag, $repeat) = map{$entry->{custom}->[$_]}qw(0 1 2 3 4 6 7 11);
         $FP_ct{$FP}++;
         $TP_ct{$TP}++;
 
@@ -82,6 +79,8 @@ sub execute {
         $output{$fusion}->{score}      += $score;
         $output{$fusion}->{type}        = $type;
         $output{$fusion}->{span_total}  = $span_frag . ':' . $total_frag;
+        $output{$fusion}->{id_5p}       = $id_5p;
+        $output{$fusion}->{id_3p}       = $id_3p;
         $output{$fusion}->{bedpe_entry} = \%bedpe_content;
     }
 
@@ -112,9 +111,11 @@ sub execute {
                 $fusion,
                 $FP,
                 $TP,
+                $output{$fusion}->{id_5p} || 'NA',
+                $output{$fusion}->{id_3p} || 'NA',
                 $total_frag,
                 $span_frag,
-                $output{$fusion}->{type}  || 0,
+                $output{$fusion}->{type}  || 'NA',
                 $span_total,
             );
 
