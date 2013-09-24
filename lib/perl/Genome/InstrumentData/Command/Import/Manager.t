@@ -33,9 +33,10 @@ is_deeply([ map { $_->{status} } @$imports_aryref ], [qw/ no_sample no_sample no
 is_deeply([ map { $_->{sample_name} } @$imports_aryref ], [qw/ TeSt-0000-00 TeSt-0000-00 TeSt-0000-01 /], 'imports aryref sample_name');
 is_deeply([ map { $_->{source_files} } @$imports_aryref ], \@source_files, 'imports aryref source_files');
 is_deeply([ map { $_->{instrument_data_attributes} } @$imports_aryref ], [ ["lane=\'8\'"], ["lane=\'8\'"], ["lane=\'7\'"], ], 'imports aryref instrument_data_attributes');
-ok(!grep({ $_->{job_name} } @$imports_aryref), 'imports aryref does not have job_name');
+is_deeply([ map { $_->{job_name} } @$imports_aryref ], [qw/ TeSt-0000-00.1 TeSt-0000-00.2 TeSt-0000-01.1 /], 'imports aryref job_name');
 ok(!grep({ $_->{job_status} } @$imports_aryref), 'imports aryref does not have job_status');
 ok(!grep({ $_->{sample} } @$imports_aryref), 'imports aryref does not have sample');
+ok(!grep({ $_->{libraries} } @$imports_aryref), 'imports aryref does not have library');
 ok(!grep({ $_->{instrument_data} } @$imports_aryref), 'imports aryref does not have instrument_data');
 ok(!grep({ $_->{instrument_data_file} } @$imports_aryref), 'imports aryref does not have instrument_data_file');
 
@@ -51,6 +52,36 @@ for (0..1) {
 }
 is(@samples, 2, 'define 2 samples');
 
+# Library needed
+$manager = Genome::InstrumentData::Command::Import::Manager->create(
+    source_files_tsv => $source_files_tsv,
+);
+ok($manager, 'create manager');
+ok($manager->execute, 'execute');
+
+$imports_aryref = $manager->_imports;
+is_deeply([ map { $_->{status} } @$imports_aryref ], [qw/ no_library no_library no_library /], 'imports aryref status');
+is_deeply([ map { $_->{sample_name} } @$imports_aryref ], [qw/ TeSt-0000-00 TeSt-0000-00 TeSt-0000-01 /], 'imports aryref sample_name');
+is_deeply([ map { $_->{source_files} } @$imports_aryref ], \@source_files, 'imports aryref source_files');
+is_deeply([ map { $_->{instrument_data_attributes} } @$imports_aryref ], [ ["lane=\'8\'"], ["lane=\'8\'"], ["lane=\'7\'"], ], 'imports aryref instrument_data_attributes');
+is_deeply([ map { $_->{job_name} } @$imports_aryref ], [qw/ TeSt-0000-00.1 TeSt-0000-00.2 TeSt-0000-01.1 /], 'imports aryref job_name');
+is_deeply([ map { $_->{sample} } @$imports_aryref ], [$samples[0], $samples[0], $samples[1]], 'imports aryref sample');
+ok(!grep({ $_->{libraries} } @$imports_aryref), 'imports aryref does not have library');
+ok(!grep({ $_->{job_status} } @$imports_aryref), 'imports aryref does not have job_status');
+ok(!grep({ $_->{instrument_data} } @$imports_aryref), 'imports aryref does not have instrument_data');
+ok(!grep({ $_->{instrument_data_file} } @$imports_aryref), 'imports aryref does not have instrument_data_file');
+
+# Define libraries
+my @libraries;
+for (0..1) { 
+    push @libraries, Genome::Library->__define__(
+        id => -222 + $_,
+        name => $base_sample_name.$_.'-extlibs',
+        sample => $samples[$_]
+    );
+}
+is(@libraries, 2, 'define 2 libraries');
+
 # Import needed
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
     source_files_tsv => $source_files_tsv,
@@ -61,8 +92,7 @@ ok($manager->execute, 'execute');
 
 $imports_aryref = $manager->_imports;
 is_deeply([ map { $_->{status} } @$imports_aryref ], [qw/ needed needed needed /], 'imports aryref status');
-is_deeply([ map { $_->{sample} } @$imports_aryref ], [$samples[0], $samples[0], $samples[1]], 'imports aryref sample');
-is_deeply([ map { $_->{job_name} } @$imports_aryref ], [qw/ TeSt-0000-00.1 TeSt-0000-00.2 TeSt-0000-01.1 /], 'imports aryref job_name');
+is_deeply([ map { @{$_->{libraries}} } @$imports_aryref ], [$libraries[0], $libraries[0], $libraries[1]], 'imports aryref library');
 ok(!grep({ $_->{job_status} } @$imports_aryref), 'imports aryref does not have job_status');
 ok(!grep({ $_->{instrument_data} } @$imports_aryref), 'imports aryref does not have instrument_data');
 ok(!grep({ $_->{instrument_data_file} } @$imports_aryref), 'imports aryref does not have instrument_data_file');

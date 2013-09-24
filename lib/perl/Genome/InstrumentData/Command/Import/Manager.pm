@@ -234,11 +234,21 @@ sub _load_samples {
     my $imports = $self->_imports;
     my %sample_names_seen;
     for my $import ( @$imports ) {
-        $import->{sample} = Genome::Sample->get(name => $import->{sample_name});
+        # sample name, number and job name
+        my $sample_name = $import->{sample_name};
+        $import->{sample_number} = ++$sample_names_seen{$sample_name};
+        $import->{job_name} = $import->{sample_name}.'.'.$import->{sample_number};
+        # genome sample
+        $import->{sample} = Genome::Sample->get(name => $sample_name);
         next if not $import->{sample};
+        # nomenclature
         $import->{sample}->{nomenclature} = $import->{sample}->nomenclature // 'WUGC'; #FIXME
-        my $sample_name = $import->{sample}->name;
-        $import->{job_name} = $import->{sample_name}.'.'.++$sample_names_seen{$sample_name};
+        # library
+        my @libraries = Genome::Library->get( # TODO base on library
+            name => $sample_name.'-extlibs',
+            sample => $import->{sample},
+        );
+        $import->{libraries} = \@libraries if @libraries; 
     }
 
     $self->_imports($imports);
@@ -282,6 +292,8 @@ sub _load_sample_statuses {
     my $get_status_for_import = sub{
         my $import = shift;
         return 'no_sample' if not $import->{sample};
+        return 'no_library' if not $import->{libraries};
+        return 'too_many_libraries' if @{$import->{libraries}} > 1;
         return $import->{job_status} if $import->{job_status};
         return 'needed' if not $import->{instrument_data};
         return 'needed' if not defined $import->{instrument_data_file} or not -s $import->{instrument_data_file};
@@ -330,7 +342,7 @@ sub _launch_imports {
         $launch_sub = sub{
             my $import = shift;
             my $cmd = $self->_resolve_launch_command_for_import($import);
-            print STDOUT "$cmd\n";
+            print STDERR "$cmd\n";
         };
     }
     else {
@@ -387,20 +399,36 @@ sub _resolve_launch_command_for_import {
 sub _output_status {
     my $self = shift;
 
-    my %totals;
-    my $status = join("\t", (qw/ name status inst_data /))."\n";
+    my @status = ( ['name'], ['#'], ['status'], ['inst_data'], );
+    my ($i, @row, %totals);
     for my $import ( sort { $a->{sample_name} cmp $b->{sample_name} } @{$self->_imports} ) {
         $totals{total}++;
         $totals{ $import->{status} }++;
-        $status .= join(
-            "\t",
+        @row = (
             $import->{sample_name},
+            $import->{sample_number}, 
             $import->{status}, 
             ( $import->{instrument_data} ? $import->{instrument_data}->id : 'NA' ),
-        )."\n";
+        );
+        for ( $i = 0; $i < @row; $i++ ) {
+            push @{$status[$i]}, $row[$i];
+        }
     }
 
-    print STDERR "$status";
+    my @column_formats;
+    for ( $i = 0; $i < @status; $i++ ) {
+        my ($column_width) = sort { $b <=> $a } map { length($_) } @{$status[$i]};
+        $column_formats[$i] = '%-'.$column_width.'s';
+    }
+
+    my $format = join(' ', @column_formats)."\n";
+    my $status;
+    my $rownum = @{$status[0]};
+    for ( $i = 0; $i < $rownum; $i++ ) {
+        $status .= sprintf($format, map { $_->[$i] } @status);
+    }
+
+    printf STDOUT $status;
     print STDERR "\nSummary:\n".join("\n", map { sprintf('%-16s %s', $_, $totals{$_}) } sort { $a cmp $b } keys %totals)."\n";
 
     return 1;
