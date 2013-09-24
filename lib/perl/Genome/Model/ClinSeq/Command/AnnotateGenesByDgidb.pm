@@ -56,7 +56,10 @@ sub execute {
     );
 
     my $gene_list = __PACKAGE__->convert($reader, $gene_name_regex);
-    die $self->error_message("gene list is empty. check $infile") unless $gene_list;
+    unless ($gene_list) {
+        $self->warning_message("gene list is empty.  Will not annotate. Check $infile") unless $gene_list;
+        return 1;
+    }
 
     my ($outdir_name, $dir) = fileparse($infile);
     $outdir_name .= '.dgidb';
