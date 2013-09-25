@@ -32,9 +32,9 @@ ok($result, "execution succeeded");
 
 # verify results
 # any tests in the TODO block will still run, but will not count as "failure" in the harness
-TODO: {
-    local $TODO = "under development";
-    
+SKIP: {
+    skip "under development",1;
+
     my @differences = `diff $expected_output_dir $actual_output_dir`;
     is(scalar(@differences), 31, "only expected differences found: diff $expected_output_dir $actual_output_dir")
         or do {
