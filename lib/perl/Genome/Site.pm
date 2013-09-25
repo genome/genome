@@ -16,7 +16,7 @@ BEGIN {
     else {
         my @hwords = site_dirs();
         while (@hwords) {
-            my $pkg = 'Genome::Site::' . join("::", @hwords);
+            my $pkg = site_pkg(@hwords);
             local $SIG{__DIE__};
             local $SIG{__WARN__};
             eval "use $pkg";
@@ -32,6 +32,11 @@ BEGIN {
             }
         }
     }
+}
+
+sub site_pkg {
+    my @site_dirs = @_;
+    return join('::', 'Genome', 'Site', @site_dirs);
 }
 
 sub site_dirs {
