@@ -328,7 +328,7 @@ sub __display_name__ {
     my $sample = $self->sample;
     my($flow_cell_id, $subset_name, $id, $sample_display_name)
             = map { defined($_) ? $_ : '' }
-                    ( $self->flow_cell_id, $self->subset_name, $self->id, $sample->__display_name__);
+                    ( $self->flow_cell_id, $self->subset_name, $self->id, $sample && $sample->__display_name__);
     return $flow_cell_id . '/' . $subset_name . " (" . $id . ") for " . $sample_display_name;
 }
 
