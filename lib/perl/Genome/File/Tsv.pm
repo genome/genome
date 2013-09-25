@@ -5,11 +5,10 @@ use warnings;
 use Genome;
 
 class Genome::File::Tsv {
-    is => 'Genome::File::Base',
-    has_constant => [
-        separator => { default_value => "\t" }
-    ]
+    is => 'Genome::File::Xsv',
 };
+
+sub separator { "\t" }
 
 1;
 

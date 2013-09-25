@@ -5,10 +5,9 @@ use Genome;
 
 class Genome::File::Csv {
     is => 'Genome::File::Xsv',
-    has_constant => [
-        separator => { default_value => "," }
-    ]
 };
+
+sub separator { ',' }
 
 1;
 
