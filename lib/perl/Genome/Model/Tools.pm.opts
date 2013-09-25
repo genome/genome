@@ -7536,8 +7536,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
       undef,
       'processors=s',
       undef,
-      'tumor-purity=s',
-      undef,
       'tumor-samtools-file=s',
       'files',
       'help!',
