@@ -12,12 +12,12 @@ BEGIN {
         die $@ if $@;
     }
     else {
-        # look for a config module matching all or part of the hostname 
+        # look for a config module matching all or part of the hostname
         use Sys::Hostname;
         my $hostname = Sys::Hostname::hostname();
-        my @hwords = map { s/-/_/g; $_ } reverse split('\.',$hostname);
+        my @hwords = map { s/-/_/g; $_ } reverse split('\.', $hostname);
         while (@hwords) {
-            my $pkg = 'Genome::Site::' . join("::",@hwords);
+            my $pkg = 'Genome::Site::' . join("::", @hwords);
             local $SIG{__DIE__};
             local $SIG{__WARN__};
             eval "use $pkg";
@@ -49,8 +49,8 @@ Use the fully-qualified hostname to look up site-based configuration.
 
 =head1 AUTHORS
 
-This software is developed by the analysis and engineering teams at 
-The Genome Center at Washington Univiersity in St. Louis, with funding from 
+This software is developed by the analysis and engineering teams at
+The Genome Center at Washington Univiersity in St. Louis, with funding from
 the National Human Genome Research Institute.
 
 =head1 LICENSE
