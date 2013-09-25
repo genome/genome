@@ -3,6 +3,8 @@ package Genome::Site;
 use strict;
 use warnings;
 
+use Sys::Hostname qw(hostname);
+
 our $VERSION = $Genome::VERSION;
 
 BEGIN {
@@ -12,10 +14,7 @@ BEGIN {
         die $@ if $@;
     }
     else {
-        # look for a config module matching all or part of the hostname
-        use Sys::Hostname;
-        my $hostname = Sys::Hostname::hostname();
-        my @hwords = map { s/-/_/g; $_ } reverse split('\.', $hostname);
+        my @hwords = site_dirs();
         while (@hwords) {
             my $pkg = 'Genome::Site::' . join("::", @hwords);
             local $SIG{__DIE__};
@@ -33,6 +32,12 @@ BEGIN {
             }
         }
     }
+}
+
+sub site_dirs {
+    # look for a config module matching all or part of the hostname
+    my $hostname = hostname();
+    my @hwords = map { s/-/_/g; $_ } reverse split(/\./, $hostname);
 }
 
 1;
