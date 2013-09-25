@@ -1,6 +1,3 @@
-# review tmooney
-# @chrs is set to parameter value, but later overwritten by (1..22, 'X')?  Then later (1..22, 'X') hardcoded into loop.
-
 package Genome::Model::Tools::Somatic::BamToCna;
 
 ## This script analyzes a pair of tumor and normal bam files
