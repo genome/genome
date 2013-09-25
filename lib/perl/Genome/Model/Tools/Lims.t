@@ -4,10 +4,9 @@ use strict;
 use warnings;
 
 use above 'Genome';
-use Test::More tests => 1;
+use Test::More tests => 2;
 
-# This test was auto-generated because './Model/Tools/Lims.pm'
-# had no '.t' file beside it.  Please remove this test if you believe it was
-# created unnecessarily.  This is a bare minimum test that just compiles Perl
-# and the UR class.
 use_ok('Genome::Model::Tools::Lims');
+
+my $cmd = Genome::Model::Tools::Lims->create(args => ['--help']);
+ok($cmd->execute(), '`gmt lims --help` works');
