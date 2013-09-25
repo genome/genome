@@ -7,7 +7,7 @@ use Sys::Hostname qw(hostname);
 
 our $VERSION = $Genome::VERSION;
 
-BEGIN {
+sub import {
     if (my $config = $ENV{GENOME_CONFIG}) {
         # call the specified configuration module;
         eval "use $config";
@@ -43,6 +43,10 @@ sub site_dirs {
     # look for a config module matching all or part of the hostname
     my $hostname = hostname();
     my @hwords = map { s/-/_/g; $_ } reverse split(/\./, $hostname);
+}
+
+BEGIN {
+    import();
 }
 
 1;
