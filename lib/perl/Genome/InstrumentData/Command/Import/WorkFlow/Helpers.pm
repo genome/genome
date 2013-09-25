@@ -214,17 +214,17 @@ sub verify_adequate_disk_space_is_available_for_source_files {
     my ($self, %params) = @_;
     $self->status_message('Verify adequate disk space is available...');
 
-    my $tmp_dir = delete $params{tmp_dir};
-    Carp::confess('No tmp dir to verify adequate temp space is avaliable!') if not $tmp_dir;
-    $self->status_message("Tmp dir: $tmp_dir");
+    my $working_directory = delete $params{working_directory};
+    Carp::confess('No tmp dir to verify adequate temp space is avaliable!') if not $working_directory;
+    $self->status_message("Tmp dir: $working_directory");
     my $source_files = delete $params{source_files};
     $self->status_message("Source files: ".join(' ', @$source_files));
     Carp::confess('No source files to verify temp space!') if not $source_files;
 
-    my $df = eval{ Filesys::Df::df($tmp_dir); };
+    my $df = eval{ Filesys::Df::df($working_directory); };
     if( not $df ) {
         $self->error_message($@) if $@;
-        $self->error_message('Failed to get "df" for temp dir! '.$tmp_dir);
+        $self->error_message('Failed to get "df" for temp dir! '.$working_directory);
         return;
     }
     $self->status_message("Available Kb: ".$df->{bavail});
@@ -235,7 +235,7 @@ sub verify_adequate_disk_space_is_available_for_source_files {
 
     my $remaining_space = $df->{bavail} - $kb_required;
     if ( $remaining_space < 1024 ) { # 1 Mb
-        $self->error_message('There is not enough spqace in $tmp_dir to process source files!');
+        $self->error_message("There is not enough space in $working_directory to process source files!");
         return;
     }
 

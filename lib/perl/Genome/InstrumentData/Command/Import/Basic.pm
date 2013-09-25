@@ -148,7 +148,7 @@ sub _gather_inputs {
 
     my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
     my $space_available = $helpers->verify_adequate_disk_space_is_available_for_source_files(
-        tmp_dir => $tmp_dir,
+        working_directory => $tmp_dir,
         source_files => \@source_files,
     );
     return if not $space_available;
