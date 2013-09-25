@@ -9006,6 +9006,12 @@ $Genome::Command::OPTS_SPEC = [
       'files',
       'library-insert-size=s',
       'files',
+      'transcript-strand=s',
+      [
+        'unstranded',
+        'firststrand',
+        'secondstrand'
+      ],
       'help!',
       undef
     ],
