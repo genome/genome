@@ -10,6 +10,7 @@ LIBRARY_ID           NUMBER   (20)                    {null} NOT NULL ok [id]
 LIBRARY_INSERT_SIZE  VARCHAR2 (64)                    {null} {null}   ok
 ORIGINAL_INSERT_SIZE VARCHAR2 (64)                    {null} {null}   ok
 PROTOCOL             VARCHAR2 (64)                    {null} {null}   ok
+TRANSCRIPT_STRAND    VARCHAR2 (16)                    {null} {null}   ok
 SAMPLE_ID            NUMBER   (20)                    {null} NOT NULL ok
 =cut
 
@@ -27,6 +28,7 @@ class Genome::Site::TGI::Synchronize::Classes::LibrarySummary {
         protocol                => { is => 'Text', },
         library_insert_size     => { is => 'Text', },
         original_insert_size    => { is => 'Text', },
+        transcript_strand       => { is => 'Text', },
     ],
     data_source => 'Genome::DataSource::Dwrac',
 };
@@ -40,6 +42,7 @@ sub properties_to_keep_updated {# 3
         protocol
         library_insert_size
         original_insert_size
+        transcript_strand
         /);
 }
 

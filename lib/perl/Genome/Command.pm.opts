@@ -507,6 +507,17 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>import-vcf',
+      [
+        'output-file=s',
+        'files',
+        'urls=s@',
+        'files',
+        'debug!',
+        undef,
+        'help!',
+        undef
+      ],
       '>import',
       [
         'result-version=s',
@@ -6022,6 +6033,17 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'reference-coordinates=s',
         'files',
+        'help!',
+        undef
+      ],
+      '>import-cosmic-build',
+      [
+        'vcf-file-urls=s@',
+        'files',
+        'version=s',
+        'files',
+        'reference-sequence-build=s',
+        undef,
         'help!',
         undef
       ],
@@ -23784,6 +23806,8 @@ $Genome::Command::OPTS_SPEC = [
         'somatic-validation-model-id=s',
         'files',
         'somatic-variation-model-id=s',
+        'files',
+        'statuses-to-review=s',
         'files',
         'target-regions=s',
         'files',

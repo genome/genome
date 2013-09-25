@@ -383,6 +383,7 @@ INSERT INTO "dd_table_column" VALUES('Genome::DataSource::GMSchema','instrument'
 INSERT INTO "dd_table_column" VALUES('Genome::DataSource::GMSchema','instrument','fragment_library','library_insert_size','VARCHAR','64','Y','2013-08-07 16:25:12',NULL);
 INSERT INTO "dd_table_column" VALUES('Genome::DataSource::GMSchema','instrument','fragment_library','original_insert_size','VARCHAR','64','Y','2013-08-07 16:25:12',NULL);
 INSERT INTO "dd_table_column" VALUES('Genome::DataSource::GMSchema','instrument','fragment_library','protocol','VARCHAR','64','Y','2013-08-07 16:25:12',NULL);
+INSERT INTO "dd_table_column" VALUES('Genome::DataSource::GMSchema','instrument','fragment_library','transcript_strand','VARCHAR','16','Y','2013-08-07 16:25:12',NULL);
 INSERT INTO "dd_table_column" VALUES('Genome::DataSource::GMSchema','instrument','fragment_library','sample_id','VARCHAR','64','N','2013-08-07 16:25:12',NULL);
 INSERT INTO "dd_table_column" VALUES('Genome::DataSource::GMSchema','model','build','build_id','VARCHAR','64','N','2013-08-07 16:25:12',NULL);
 INSERT INTO "dd_table_column" VALUES('Genome::DataSource::GMSchema','model','build','data_directory','VARCHAR','1000','Y','2013-08-07 16:25:12',NULL);
