@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use above "Genome";
-use Test::More tests => 19;
+use Test::More tests => 20;
 use Genome::Model::Tools::Htseq::Count;
 
 $ENV{UR_DBI_NO_COMMIT} = 1;
@@ -34,6 +34,7 @@ else {
 
 my $a = Genome::InstrumentData::AlignmentResult->get(135770173);
 ok($a, "got alignment result " . $a->__display_name__);
+is($a->instrument_data->library->transcript_strand('unstranded'), 'unstranded', 'set transcript_strand on library');
 
 # The tool works with the alignment result output_dir by default
 # but will take a shortcut and use the scratch sorted BAM if it exists.

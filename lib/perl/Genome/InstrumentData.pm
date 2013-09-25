@@ -118,18 +118,6 @@ class Genome::InstrumentData {
             is_many => 0,
             where => [ attribute_label => 'analysis_project_id' ],
         },
-        #TODO: may want to make these immutable, but needed them for
-        #backfilling purposes
-        transcript_strand => {
-            is => 'Text',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            is_many => 0,
-            where => [ attribute_label => 'transcript_strand' ],
-            valid_values => [ "unstranded", "firststrand", "secondstrand" ],
-            doc => 'for some RNA protocols (encore complete rna-seq) reads will match transcript direction (firststrand), or match the opoosite strand (secondstrand), or be a mix (unstranded)',
-        },
         original_est_fragment_size => {
             is => 'Integer',
             via => 'attributes',
