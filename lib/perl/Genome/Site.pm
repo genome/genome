@@ -3,6 +3,7 @@ package Genome::Site;
 use strict;
 use warnings;
 
+use Carp qw(croak);
 use Sys::Hostname qw(hostname);
 
 our $VERSION = $Genome::VERSION;
@@ -17,10 +18,11 @@ sub import {
         my @hwords = site_dirs();
         while (@hwords) {
             my $pkg = site_pkg(@hwords);
+            my $filename = module_to_filename($pkg);
             local $SIG{__DIE__};
             local $SIG{__WARN__};
             eval "use $pkg";
-            if ($@ =~ /Can't locate/) {
+            if ($@ =~ /Can't locate $filename/) {
                 pop @hwords;
                 next;
             }
@@ -43,6 +45,15 @@ sub site_dirs {
     # look for a config module matching all or part of the hostname
     my $hostname = hostname();
     my @hwords = map { s/-/_/g; $_ } reverse split(/\./, $hostname);
+}
+
+sub module_to_filename {
+    my $module = shift;
+    unless ($module) {
+        croak 'must specify module';
+    }
+    my @path = split(/::/, $module);
+    my $filename = File::Spec->join(@path) . '.pm';
 }
 
 BEGIN {
