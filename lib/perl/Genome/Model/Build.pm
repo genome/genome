@@ -1747,8 +1747,7 @@ sub abandon {
         $self->reallocate;
     }
 
-    $self->_unregister_software_results
-        or return;
+    $self->_deactivate_software_results;
 
     my %add_note_args = (header_text => $header_text);
     $add_note_args{body_text} = $body_text if defined $body_text;
@@ -1756,6 +1755,12 @@ sub abandon {
 
     Genome::Search->queue_for_update($self->model);
 
+    return 1;
+}
+
+sub _deactivate_software_results {
+    my $self = shift;
+    map{$_->active(0)} Genome::SoftwareResult::User->get(user_class_name => $self->subclass_name, user_id => $self->id);
     return 1;
 }
 

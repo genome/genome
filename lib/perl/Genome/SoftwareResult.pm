@@ -729,13 +729,14 @@ sub delete {
 
     my $class_name = $self->class;
     my @users = $self->users;
-    if (@users) {
+    my @active_users = grep{$_->active} @users;
+    if (@active_users) {
         my $name = $self->__display_name__;
-        die "Refusing to delete $class_name $name as it still has users:\n\t"
-            .join("\n\t", map { $_->user_class_name . "\t" . $_->user_id } @users);
+        die "Refusing to delete $class_name $name as it still has active users:\n\t"
+            .join("\n\t", map { $_->user_class_name . "\t" . $_->user_id } @active_users);
     }
 
-    my @to_nuke = ($self->params, $self->inputs, $self->metrics);
+    my @to_nuke = ($self->params, $self->inputs, $self->metrics, @users);
 
     #If we use any other results, unregister ourselves as users
     push @to_nuke, Genome::SoftwareResult::User->get(user_class_name => $class_name, user_id => $self->id);
