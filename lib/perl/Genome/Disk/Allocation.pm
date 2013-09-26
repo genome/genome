@@ -212,7 +212,6 @@ sub create {
         }
     }
 
-
     return $self;
 }
 
@@ -328,7 +327,7 @@ sub _create {
     my $group_subdirectory = delete $params{group_subdirectory};
     my $kilobytes_used = delete $params{kilobytes_used} || 0;
     my $archive_after_time = delete $params{archive_after_time};
-    
+
     if (%params) {
         confess "Extra parameters detected: " . Data::Dumper::Dumper(\%params);
     }
@@ -413,7 +412,7 @@ sub _create {
         group_subdirectory           => $group_subdirectory,
         id                           => $id,
         creation_time                => UR::Context->current->now,
-        archive_after_time           => $archive_after_time,        
+        archive_after_time           => $archive_after_time,
     );
 
     # Make sure that we never attempt to create an allocation that has an absolute path that already exists. There are
