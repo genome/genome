@@ -3,25 +3,26 @@ package Genome::Site;
 use strict;
 use warnings;
 
+use Carp qw(croak);
+use Sys::Hostname qw(hostname);
+
 our $VERSION = $Genome::VERSION;
 
-BEGIN {
+sub import {
     if (my $config = $ENV{GENOME_CONFIG}) {
         # call the specified configuration module;
         eval "use $config";
         die $@ if $@;
     }
     else {
-        # look for a config module matching all or part of the hostname 
-        use Sys::Hostname;
-        my $hostname = Sys::Hostname::hostname();
-        my @hwords = map { s/-/_/g; $_ } reverse split('\.',$hostname);
+        my @hwords = site_dirs();
         while (@hwords) {
-            my $pkg = 'Genome::Site::' . join("::",@hwords);
+            my $pkg = site_pkg(@hwords);
+            my $filename = module_to_filename($pkg);
             local $SIG{__DIE__};
             local $SIG{__WARN__};
             eval "use $pkg";
-            if ($@ =~ /Can't locate/) {
+            if ($@ =~ /Can't locate $filename/) {
                 pop @hwords;
                 next;
             }
@@ -33,6 +34,30 @@ BEGIN {
             }
         }
     }
+}
+
+sub site_pkg {
+    my @site_dirs = @_;
+    return join('::', 'Genome', 'Site', @site_dirs);
+}
+
+sub site_dirs {
+    # look for a config module matching all or part of the hostname
+    my $hostname = hostname();
+    my @hwords = map { s/-/_/g; $_ } reverse split(/\./, $hostname);
+}
+
+sub module_to_filename {
+    my $module = shift;
+    unless ($module) {
+        croak 'must specify module';
+    }
+    my @path = split(/::/, $module);
+    my $filename = File::Spec->join(@path) . '.pm';
+}
+
+BEGIN {
+    import();
 }
 
 1;
@@ -49,8 +74,8 @@ Use the fully-qualified hostname to look up site-based configuration.
 
 =head1 AUTHORS
 
-This software is developed by the analysis and engineering teams at 
-The Genome Center at Washington Univiersity in St. Louis, with funding from 
+This software is developed by the analysis and engineering teams at
+The Genome Center at Washington Univiersity in St. Louis, with funding from
 the National Human Genome Research Institute.
 
 =head1 LICENSE
