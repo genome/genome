@@ -656,7 +656,7 @@ sub _move {
 
     # The shadow allocation is just a way of keeping track of our temporary
     # additional disk usage during the move.
-    my $shadow_allocation = $class->create(%creation_params);
+    my $shadow_allocation = $class->get_or_create(%creation_params);
 
     my $shadow_absolute_path = $shadow_allocation->absolute_path;
 
@@ -870,11 +870,7 @@ sub _unarchive {
 
     my %creation_params = $self->unarchive_shadow_params;
     # shadow_allocation ensures that we wont over allocate our destination volume
-    my $shadow_allocation = $class->create(%creation_params);
-    unless ($shadow_allocation) {
-        confess(sprintf("Failed to create shadow allocation from params %s",
-                Data::Dumper::Dumper(\%creation_params)));
-    }
+    my $shadow_allocation = $class->get_or_create(%creation_params);
 
     my $archive_path = $self->absolute_path;
     my $target_path = $shadow_allocation->absolute_path;
