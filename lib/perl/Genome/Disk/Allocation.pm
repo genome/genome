@@ -993,18 +993,21 @@ sub _unarchive {
     return 1;
 }
 
-# Locks the allocation, if lock is not manually released (it had better be!) it'll be automatically
-# cleaned up on program exit
+# Locks the allocation, if lock is not manually released (it had better be!)
+# it'll be automatically cleaned up on program exit
 sub get_lock {
     my ($class, $id, $tries) = @_;
     $tries ||= 60;
+
     my $allocation_lock = Genome::Sys->lock_resource(
         resource_lock => $ENV{GENOME_LOCK_DIR} . '/allocation/allocation_' . join('_', split(' ', $id)),
         max_try => $tries,
         block_sleep => 1,
     );
+
     # lock implies mutation so object should be reloaded
     $class->_reload_allocation($id);
+
     return $allocation_lock;
 }
 
