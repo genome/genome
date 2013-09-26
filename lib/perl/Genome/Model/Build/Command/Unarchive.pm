@@ -155,6 +155,7 @@ sub _bsub_unarchives {
             queue => 'long',
             cmd => \@cmd,
             log_file => "$log_file_dir/$allocation_id.out",
+            err_file => "$log_file_dir/$allocation_id.err",
             job_group => '/apipe/build-unarchive',
         );
         $job_to_allocation_mapping{$job_id} = $allocation_id;
