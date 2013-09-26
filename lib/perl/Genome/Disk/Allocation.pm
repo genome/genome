@@ -636,17 +636,7 @@ sub _move {
         confess "Extra parameters given to allocation move method: " . join(',', sort keys %params);
     }
 
-    # get allocation lock
-    my $allocation_lock = Genome::Disk::Allocation->get_lock($id);
-    unless ($allocation_lock) {
-        confess "Could not lock allocation with ID $id";
-    }
-    my $mode = $class->_retrieve_mode;
-    my $self = Genome::Disk::Allocation->$mode($id);
-    unless ($self) {
-        Genome::Sys->unlock_resource(resource_lock => $allocation_lock);
-        confess "Found no allocation with ID $id";
-    }
+    my ($self, $allocation_lock) = $class->get_with_lock($id);
 
     my $original_absolute_path = $self->absolute_path;
 
@@ -735,17 +725,7 @@ sub _archive {
         confess "Extra parameters given to allocation move method: " . join(',', sort keys %params);
     }
 
-    # Lock and load allocation object
-    my $allocation_lock = Genome::Disk::Allocation->get_lock($id);
-    unless ($allocation_lock) {
-        confess "Could not lock allocation with ID $id";
-    }
-    my $mode = $class->_retrieve_mode;
-    my $self = Genome::Disk::Allocation->$mode($id);
-    unless ($self) {
-        Genome::Sys->unlock_resource(resource_lock => $allocation_lock);
-        confess "Found no allocation with ID $id";
-    }
+    my ($self, $allocation_lock) = $class->get_with_lock($id);
 
     my $current_allocation_path = $self->absolute_path;
     my $archive_allocation_path = join('/', $self->volume->archive_mount_path, $self->group_subdirectory, $self->allocation_path);
@@ -878,17 +858,7 @@ sub _unarchive {
         confess "Extra parameters given to allocation unarchive method: " . join(',', sort keys %params);
     }
 
-    # Lock and load allocation object
-    my $allocation_lock = Genome::Disk::Allocation->get_lock($id);
-    unless ($allocation_lock) {
-        confess "Could not lock allocation with ID $id";
-    }
-    my $mode = $class->_retrieve_mode;
-    my $self = Genome::Disk::Allocation->$mode($id);
-    unless ($self) {
-        Genome::Sys->unlock_resource(resource_lock => $allocation_lock);
-        confess "Found no allocation with ID $id";
-    }
+    my ($self, $allocation_lock) = $class->get_with_lock($id);
 
     unless ($self->is_archived) {
         Genome::Sys->unlock_resource(resource_lock => $allocation_lock);
@@ -1009,6 +979,24 @@ sub get_lock {
     $class->_reload_allocation($id);
 
     return $allocation_lock;
+}
+
+sub get_with_lock {
+    my $class = shift;
+    my $id = shift;
+
+    my $lock = $class->get_lock($id);
+    unless ($lock) {
+        confess "Could not lock allocation with ID $id";
+    }
+    my $mode = $class->_retrieve_mode;
+    my $self = Genome::Disk::Allocation->$mode($id);
+    unless ($self) {
+        Genome::Sys->unlock_resource(resource_lock => $lock);
+        confess "Found no allocation with ID $id";
+    }
+
+    return ($self, $lock);
 }
 
 sub has_valid_owner {
