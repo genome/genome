@@ -6,9 +6,8 @@ use warnings;
 use Genome;
 use Genome::Utility::Instrumentation;
 
-use File::Copy::Recursive 'dircopy';
 use Carp 'confess';
-
+use File::Copy::Recursive 'dircopy';
 use List::Util 'shuffle';
 
 our $TESTING_DISK_ALLOCATION = 0;
