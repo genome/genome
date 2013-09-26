@@ -6,7 +6,8 @@ use warnings;
 use Genome;
 use Genome::Utility::Instrumentation;
 
-use Carp 'confess';
+use Carp qw(croak confess);
+use Digest::MD5 qw(md5_hex);
 use File::Copy::Recursive 'dircopy';
 use List::Util 'shuffle';
 
@@ -656,6 +657,7 @@ sub _move {
     # The shadow allocation is just a way of keeping track of our temporary
     # additional disk usage during the move.
     my $shadow_allocation = $class->create(%creation_params);
+
     my $shadow_absolute_path = $shadow_allocation->absolute_path;
 
     # copy files to shadow allocation
@@ -997,6 +999,47 @@ sub get_with_lock {
     }
 
     return ($self, $lock);
+}
+
+sub get_or_create {
+    my $class = shift;
+    my %params = @_;
+
+    my %create_extra_params;
+    if ($params{exclude_mount_path}) {
+        $create_extra_params{exclude_mount_path} = delete $params{exclude_mount_path};
+    }
+
+    unless ($params{allocation_path}) {
+        croak 'allocation_path is required for get_or_create';
+    }
+
+    my $md5_hex = md5_hex($params{allocation_path});;
+
+    my $path = File::Spec->join(
+        $ENV{GENOME_LOCK_DIR},
+        'allocation',
+        'allocation_path_' . $md5_hex,
+    );
+
+    my $lock = Genome::Sys->lock_resource(
+        resource_lock => $path,
+        wait_announce_interval => 600,
+    );
+
+    my $allocation = $class->get(%params);
+    unless ($allocation) {
+        $allocation = $class->create(%params, %create_extra_params);
+    }
+
+    Genome::Sys->unlock_resource(resource_lock => $lock);
+
+    unless ($allocation) {
+        croak sprintf("Failed to get_or_create allocation from params %s",
+                Data::Dumper::Dumper({%params, %create_extra_params}));
+    }
+
+    return $allocation;
 }
 
 sub has_valid_owner {
