@@ -184,8 +184,8 @@ sub create {
     Genome::Utility::Instrumentation::inc('disk.allocation.create');
 
     # TODO Switch from %params to BoolExpr and pass in BX to autogenerate_new_object_id
-    unless (exists $params{allocation_id}) {
-        $params{allocation_id} = $class->__meta__->autogenerate_new_object_id;
+    unless (exists $params{id}) {
+        $params{id} = $class->__meta__->autogenerate_new_object_id;
     }
 
     # If no commit is on, make a dummy volume to allocate to
@@ -316,7 +316,7 @@ sub _create {
     }
 
     # Make sure there aren't any extra params
-    my $id = delete $params{allocation_id};
+    my $id = delete $params{id};
     $id = $class->__meta__->autogenerate_new_object_id unless defined $id; # TODO autogenerate_new_object_id should technically receive a BoolExpr
     my $kilobytes_requested = delete $params{kilobytes_requested};
     my $owner_class_name = delete $params{owner_class_name};
@@ -511,7 +511,7 @@ sub _get_allocation_without_lock {
 
 sub _delete {
     my ($class, %params) = @_;
-    my $id = delete $params{allocation_id};
+    my $id = delete $params{id};
     confess "Require allocation ID!" unless defined $id;
     if (%params) {
         confess "Extra params found: " . Data::Dumper::Dumper(\%params);
@@ -537,7 +537,7 @@ sub _delete {
 
 sub _reallocate {
     my ($class, %params) = @_;
-    my $id = delete $params{allocation_id};
+    my $id = delete $params{id};
     confess "Require allocation ID!" unless defined $id;
     my $kilobytes_requested = delete $params{kilobytes_requested} || 0;
     my $allow_reallocate_with_move = delete $params{allow_reallocate_with_move};
@@ -628,7 +628,7 @@ sub move_shadow_params {
 
 sub _move {
     my ($class, %params) = @_;
-    my $id = delete $params{allocation_id};
+    my $id = delete $params{id};
 
     my $group_name = delete $params{disk_group_name};
     my $new_mount_path = delete $params{target_mount_path};
@@ -722,7 +722,7 @@ sub _move {
 
 sub _archive {
     my ($class, %params) = @_;
-    my $id = delete $params{allocation_id};
+    my $id = delete $params{id};
     if (%params) {
         confess "Extra parameters given to allocation move method: " . join(',', sort keys %params);
     }
@@ -854,7 +854,7 @@ sub unarchive_shadow_params {
 
 sub _unarchive {
     my ($class, %params) = @_;
-    my $id = delete $params{allocation_id};
+    my $id = delete $params{id};
     my $reason = delete $params{reason};
     if (%params) {
         confess "Extra parameters given to allocation unarchive method: " . join(',', sort keys %params);
@@ -1064,10 +1064,10 @@ our @_execute_system_command_perl5opt = '-MGenome';
 sub _execute_system_command {
     my ($class, $method, %params) = @_;
     if (ref($class)) {
-        $params{allocation_id} = $class->id;
+        $params{id} = $class->id;
         $class = ref($class);
     }
-    confess "Require allocation ID!" unless exists $params{allocation_id};
+    confess "Require allocation ID!" unless exists $params{id};
 
     my $allocation;
     if ($ENV{UR_DBI_NO_COMMIT}) {
@@ -1095,7 +1095,7 @@ sub _execute_system_command {
             }
             confess $msg;
         }
-        $allocation = $class->_reload_allocation($params{allocation_id});
+        $allocation = $class->_reload_allocation($params{id});
     }
 
 

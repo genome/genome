@@ -52,7 +52,7 @@ sub delete {
         #constraint error
         my $allocation = $self->allocation;
         if ($allocation) {
-            Genome::Disk::Allocation->_delete(allocation_id => $allocation->id);
+            Genome::Disk::Allocation->_delete(id => $allocation->id);
         }
     };
     if(my $error = $@) {
