@@ -159,6 +159,8 @@ sub files_ignored_by_diff {
         merge_valid
         prediction_valid
 
+        rrna_screen_bsub.+(?:err|out)
+
         README
     );
 }
