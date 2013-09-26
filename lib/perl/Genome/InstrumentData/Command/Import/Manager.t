@@ -24,6 +24,8 @@ my @source_files = (qw/ bam1 bam2 bam3 /);
 # Sample needed
 my $manager = Genome::InstrumentData::Command::Import::Manager->create(
     source_files_tsv => $source_files_tsv,
+    list_config => "printf %s NOTHING_TO_SEE_HERE;1;2",
+    launch_config => "echo %{job_name} LAUNCH!",
 );
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');
@@ -55,6 +57,8 @@ is(@samples, 2, 'define 2 samples');
 # Library needed
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
     source_files_tsv => $source_files_tsv,
+    list_config => "printf %s NOTHING_TO_SEE_HERE;1;2",
+    launch_config => "echo %{job_name} LAUNCH!",
 );
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');
@@ -105,6 +109,7 @@ is($manager->_list_status_column, 1, '_list_status_column');
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
     source_files_tsv => $source_files_tsv,
     list_config => 'printf "%s %s\\n%s %s\\n%s %s" TeSt-0000-00.1 pend TeSt-0000-00.2 run TeSt-0000-01.1 run;1;2',
+    launch_config => "echo %{job_name} LAUNCH!",
 );
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');
@@ -114,6 +119,15 @@ is_deeply([ map { $_->{status} } @$imports_aryref ], [qw/ pend run run /], 'impo
 is_deeply([ map { $_->{job_status} } @$imports_aryref ], [qw/ pend run run /], 'imports aryref job_status');
 ok(!grep({ $_->{instrument_data} } @$imports_aryref), 'imports aryref does not have instrument_data');
 ok(!grep({ $_->{instrument_data_file} } @$imports_aryref), 'imports aryref does not have instrument_data_file');
+
+# Print commands
+$manager = Genome::InstrumentData::Command::Import::Manager->create(
+    source_files_tsv => $source_files_tsv,
+    launch_config => "echo %{job_name} LAUNCH!", # successful imports, will not launch
+    show_import_commands => 1,
+);
+ok($manager, 'create manager');
+ok($manager->execute, 'execute');
 
 # Create inst data
 my @inst_data;
@@ -134,6 +148,7 @@ is(@inst_data, 3, 'define 3 inst data');
 # Fake successful imports by pointing bam_path to existing info.tsv
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
     source_files_tsv => $source_files_tsv,
+    list_config => "printf %s NOTHING_TO_SEE_HERE;1;2",
     launch_config => "echo %{job_name} LAUNCH!", # successful imports, will not launch
 );
 ok($manager, 'create manager');

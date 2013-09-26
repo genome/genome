@@ -65,6 +65,10 @@ Example for LSF
 
 DOC
         },
+        show_import_commands => {
+            is => 'Boolean',
+            doc => 'Show the import commands for source files that need to be imported *instead* of executing them.',
+        },
     ],
     has_optional_transient => [
         _imports => { is => 'Array', },
@@ -87,7 +91,7 @@ There are 3 potential outputs:
 
  WHAT            SENT TO  DESCRIPTION    
  Status          STDOUT   One for each sample/source files set.
- Import command  STDERR   Command to import the source files. Printed if the --show-import-command option is indicated.
+ Import command  STDERR   Command to import the source files. Printed if the --show-import-commands option is indicated.
  Stats           STDERR   Summary stats for statuses.
 
 Status Output
@@ -361,18 +365,29 @@ sub _load_sample_job_statuses {
 sub _launch_imports {
     my $self = shift;
 
-    my $launch_sub;
-    if ( not $self->list_config or not $self->_launch_command_has_job_name or not $self->launch_config ) {
-        $launch_sub = sub{
-            my $import = shift;
-            my $cmd = $self->_resolve_launch_command_for_import($import);
-            print STDERR "$cmd\n";
-        };
+    if ( not $self->show_import_commands ) {
+        # not printing commands, can they be launched?
+        if ( not $self->launch_config ) {
+            $self->warning_message('Cannot launch jobs because there is no launch config!');
+            return 1;
+        }
+        elsif ( not $self->list_config ) { 
+            $self->warning_message('Can not launch jobs because there is no list config!');
+            return 1;
+        }
+        elsif ( not $self->_launch_command_has_job_name ) {
+            $self->warning_message('Cannot launch jobs because there is no %{job_name} in launch config!');
+            return 1;
+        }
     }
-    else {
-        $launch_sub = sub{
-            my $import = shift;
-            my $cmd = $self->_resolve_launch_command_for_import($import);
+
+    my $launch_sub = sub{
+        my $import = shift;
+        my $cmd = $self->_resolve_launch_command_for_import($import);
+        if ( $self->show_import_commands ) {
+            print STDERR "$cmd\n";
+        }
+        else {
             my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
             if ( not $rv ) {
                 $self->error_message($@) if $@;
@@ -381,13 +396,14 @@ sub _launch_imports {
             }
             $import->{status} = 'pend';
         }
-    }
+    };
 
     my $imports = $self->_imports;
     for my $import ( @$imports ) {
         next if $import->{status} ne 'needed';
         $launch_sub->($import) or return;
     }
+    print STDERR "\n";
 
     return 1;
 }
