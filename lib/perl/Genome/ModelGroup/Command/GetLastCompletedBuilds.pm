@@ -14,6 +14,13 @@ class Genome::ModelGroup::Command::GetLastCompletedBuilds {
             doc => 'the model group from which to get builds', 
         },
     ],
+    has_optional_input => [
+        print_output => {
+            is => 'Boolean',
+            default => 0,
+            doc => "Print the list of build ids as they're found",
+        },
+    ],
     has_optional_output => [
         builds => {
             is_many => 1,
@@ -38,6 +45,9 @@ sub execute {
     }
     $self->builds(\@builds);
 
+    if ($self->print_output) {
+        $self->status_message(join("\n", map {$_->id} @builds));
+    }
     $self->status_message(scalar(@builds) . " build(s) found in model group " . $self->model_group->__display_name__);
 
     return @builds;
