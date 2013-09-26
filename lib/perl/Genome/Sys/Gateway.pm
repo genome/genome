@@ -424,7 +424,13 @@ sub _attach_s3 {
         my $uid = $<;
         my $gid = getgrnam("genome"); 
         my $cmd = "s3fs $s3_bucket $bucket_mount_point -o uid=$uid,gid=$gid,use_rrs,use_cache=${bucket_mount_point}.cache";
-        Genome::Sys->shellcmd(cmd => $cmd);
+        my $cmd_public = $cmd . ",public_bucket=1";
+        # try to mount it as a public bucket first
+        eval { Genome::Sys->shellcmd(cmd => $cmd_public); };
+        if ($@) {
+            # barring that just try a regular mount
+            Genome::Sys->shellcmd(cmd => $cmd);
+        }
     }
     
     my $attachment_point = $self->_mount_point_for_protocol('s3');
