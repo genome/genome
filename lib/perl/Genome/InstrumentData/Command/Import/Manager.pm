@@ -21,7 +21,7 @@ Required Columns
  source_files    Source files [bam, fastq, sra, etc] to import. Separate files by comma (,). 
 
 Additional Columns
- The columns are to specify attributes for instrument data. Attributes are skipped if they are empty for a particular instruemnt data.
+ The columns are to specify attributes for instrument data. Attributes are skipped if they are empty for a particular instrument data.
 
 Example
 
@@ -39,18 +39,6 @@ DOC
         launch_config => {
             is => 'Text',
             doc => <<DOC
-The command to run to list running imports. Give the command, job name column number and status column number, separated by semicolons (;). The command will be run and parsed, expecting to find the job name and status. This is then used to determine the next course of action for each source file(s).
-
-Example for LSF
- This will run the bjobs command, looking for the job name in column 7 and status in column 3.
-
- bjobs -w -g /me/mygroup;7;3
-            
-DOC
-        },
-        list_config => {
-            is => 'Text',
-            doc => <<DOC
 Launch imports [if needed] using this command. Insert '%{job_name}' into the command so the manager can monitor status.
  
 The import commands will be printed to the screen [on STDERR] if:
@@ -62,6 +50,18 @@ Example for LSF
  Launch the job into group /me/mygroup and logging to /users/me/logs/%{job_name}
 
  bsub -J %{job_name} -g /me/mygroup -oo /users/me/logs/%{job_name}
+
+DOC
+        },
+        list_config => {
+            is => 'Text',
+            doc => <<DOC
+The command to run to list running imports. Give the command, job name column number and status column number, separated by semicolons (;). The command will be run and parsed, expecting to find the job name and status. This is then used to determine the next course of action for each source file(s).
+
+Example for LSF
+ This will run the bjobs command, looking for the job name in column 7 and status in column 3.
+
+ bjobs -w -g /me/mygroup;7;3
 
 DOC
         },
@@ -82,7 +82,31 @@ DOC
 
 sub help_detail {
     return <<HELP;
-Manage importing sequence files into GMS.
+Outputs
+There are 3 potential outputs:
+
+ WHAT            SENT TO  DESCRIPTION    
+ Status          STDOUT   One for each sample/source files set.
+ Import command  STDERR   Command to import the source files. Printed if the --show-import-command option is indicated.
+ Stats           STDERR   Summary stats for statuses.
+
+Status Output
+ The status output is formatted so that the columns are lined up. A line is output for each sample name and source file set.
+
+ Example:
+
+ sample_name # status  inst_data
+ Sample-01   1 success 6c43929f065943a09f8ccc769e42c41d
+ Sample-01   2 run     NA
+ Sample-02   1 needed  NA
+
+ Column definitions:
+
+ sample_name  Name of the sample.
+ #            Since the sample name may be used more than once, this is the iteration as it appears in the source files tsv.
+ status       Import status - no_sample, no_library, needed, pend, run, success.
+ inst_data    Instrument data id.
+
 HELP
 }
 
@@ -399,7 +423,7 @@ sub _resolve_launch_command_for_import {
 sub _output_status {
     my $self = shift;
 
-    my @status = ( ['name'], ['#'], ['status'], ['inst_data'], );
+    my @status = ( ['sample_name'], ['#'], ['status'], ['inst_data'], );
     my ($i, @row, %totals);
     for my $import ( sort { $a->{sample_name} cmp $b->{sample_name} } @{$self->_imports} ) {
         $totals{total}++;
