@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Carp qw(croak);
+use File::Spec qw();
 use Sys::Hostname qw(hostname);
 
 our $VERSION = $Genome::VERSION;
