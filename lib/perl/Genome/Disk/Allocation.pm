@@ -610,6 +610,11 @@ sub _reallocate {
     return $succeeded;
 }
 
+sub move_shadow_path {
+    my $allocation_path = shift;
+    return sprintf("%s-move_allocation_destination", $allocation_path)
+}
+
 sub _move {
     my ($class, %params) = @_;
     my $id = delete $params{allocation_id};
@@ -643,8 +648,7 @@ sub _move {
         owner_class_name => "UR::Value",
         owner_id => "shadow_allocation",
         exclude_mount_path => $self->mount_path,
-        allocation_path => sprintf("%s-move_allocation_destination",
-            $self->allocation_path),
+        allocation_path => move_shadow_path($self->allocation_path),
     );
 
     # I think that it's dangerous to specify the new mount path, but this
@@ -848,6 +852,11 @@ sub _archive {
     return 1;
 }
 
+sub unarchive_shadow_path {
+    my $allocation_path = shift;
+    return sprintf("%s-unarchive_allocation_destination", $allocation_path);
+}
+
 sub _unarchive {
     my ($class, %params) = @_;
     my $id = delete $params{allocation_id};
@@ -879,8 +888,7 @@ sub _unarchive {
         kilobytes_requested => $self->kilobytes_requested,
         owner_class_name => "UR::Value",
         owner_id => "shadow_allocation",
-        allocation_path => sprintf("%s-unarchive_allocation_destination",
-            $self->allocation_path),
+        allocation_path => unarchive_shadow_path($self->allocation_path),
     );
     # shadow_allocation ensures that we wont over allocate our destination volume
     my $shadow_allocation = $class->create(%creation_params);
