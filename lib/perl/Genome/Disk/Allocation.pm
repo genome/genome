@@ -619,7 +619,6 @@ sub _move {
     my ($class, %params) = @_;
     my $id = delete $params{allocation_id};
 
-    my $kilobytes_requested = delete $params{kilobytes_requested};
     my $group_name = delete $params{disk_group_name};
     my $new_mount_path = delete $params{target_mount_path};
 
