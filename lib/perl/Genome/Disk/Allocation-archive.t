@@ -10,10 +10,14 @@ use warnings;
 
 use above "Genome";
 use Test::More;
+
 use File::Temp 'tempdir';
 use File::Basename qw(basename dirname);
 use File::Find;
 use File::Spec;
+
+use lib File::Spec->join(dirname(__FILE__), 'Allocation', 't-lib');
+use GenomeDiskAllocationCommon qw(create_test_volumes);
 
 use_ok('Genome::Disk::Allocation') or die;
 use_ok('Genome::Disk::Volume') or die;
