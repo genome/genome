@@ -615,6 +615,18 @@ sub move_shadow_path {
     return sprintf("%s-move_allocation_destination", $allocation_path)
 }
 
+sub move_shadow_params {
+    my $self = shift;
+    return (
+        disk_group_name => $self->disk_group_name,
+        kilobytes_requested => $self->kilobytes_requested,
+        owner_class_name => "UR::Value",
+        owner_id => "shadow_allocation",
+        exclude_mount_path => $self->mount_path,
+        allocation_path => move_shadow_path($self->allocation_path),
+    );
+}
+
 sub _move {
     my ($class, %params) = @_;
     my $id = delete $params{allocation_id};
@@ -641,14 +653,7 @@ sub _move {
     my $original_absolute_path = $self->absolute_path;
 
     # make shadow allocation
-    my %creation_params = (
-        disk_group_name => $self->disk_group_name,
-        kilobytes_requested => $self->kilobytes_requested,
-        owner_class_name => "UR::Value",
-        owner_id => "shadow_allocation",
-        exclude_mount_path => $self->mount_path,
-        allocation_path => move_shadow_path($self->allocation_path),
-    );
+    my %creation_params = $self->move_shadow_params;
 
     # I think that it's dangerous to specify the new mount path, but this
     # feature existed, so nnutter and I kept it during this refactor.
@@ -856,6 +861,17 @@ sub unarchive_shadow_path {
     return sprintf("%s-unarchive_allocation_destination", $allocation_path);
 }
 
+sub unarchive_shadow_params {
+    my $self = shift;
+    return (
+        disk_group_name => $self->disk_group_name,
+        kilobytes_requested => $self->kilobytes_requested,
+        owner_class_name => "UR::Value",
+        owner_id => "shadow_allocation",
+        allocation_path => unarchive_shadow_path($self->allocation_path),
+    );
+}
+
 sub _unarchive {
     my ($class, %params) = @_;
     my $id = delete $params{allocation_id};
@@ -882,13 +898,7 @@ sub _unarchive {
         return 1;
     }
 
-    my %creation_params = (
-        disk_group_name => $self->disk_group_name,
-        kilobytes_requested => $self->kilobytes_requested,
-        owner_class_name => "UR::Value",
-        owner_id => "shadow_allocation",
-        allocation_path => unarchive_shadow_path($self->allocation_path),
-    );
+    my %creation_params = $self->unarchive_shadow_params;
     # shadow_allocation ensures that we wont over allocate our destination volume
     my $shadow_allocation = $class->create(%creation_params);
     unless ($shadow_allocation) {
