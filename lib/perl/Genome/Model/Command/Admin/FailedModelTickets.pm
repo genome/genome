@@ -173,12 +173,14 @@ sub get_builds {
 
         #If the latest build of the model succeeds, ignore those old
         #failing ones that will be cleaned by admin "cleanup-succeeded".
-        next if $model->status eq 'Succeeded';
+        if ($model->status) {
+            next if $model->status eq 'Succeeded';
 
-        unless ($self->include_pending) {
-            next if $model->status eq 'Requested';
-            next if $model->status eq 'Scheduled';
-            next if $model->status eq 'Running';
+            unless ($self->include_pending) {
+                next if $model->status eq 'Requested';
+                next if $model->status eq 'Scheduled';
+                next if $model->status eq 'Running';
+            }
         }
 
         # only keep the most recently scheduled build
