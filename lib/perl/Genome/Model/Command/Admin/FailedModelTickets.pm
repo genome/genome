@@ -45,68 +45,12 @@ HELP
 sub execute {
     my $self = shift;
 
-    # Connect
-    my $rt = _login_sso();
-
-    # The call to $rt->search() below messed up the login credentials stored in the
-    # $rt session, making the loop at the bottom that retrieves tickets fail.
-    # Save a copy of the login credentials here so we can re-set them when it's
-    # time to get the ticket details
-    my $login_cookies = $rt->_cookie();
-
-    # Retrieve tickets -
-    $self->status_message('Looking for tickets...');
-    my @ticket_ids;
-    try {
-        @ticket_ids = $rt->search(
-            type => 'ticket',
-            query => "Queue = 'apipe-builds' AND ( Status = 'new' OR Status = 'open' )",
-
-        );
-    }
-    catch Exception::Class::Base with {
-        my $msg = shift;
-        if ( $msg eq 'Internal Server Error' ) {
-            die 'Incorrect username or password';
-        }
-        else {
-            die $msg->message;
-        }
-    };
-    $self->status_message('Found '.@ticket_ids.' tickets');
-
     my @events = $self->get_events();
     my %builds = $self->get_builds(@events);
 
-    # Go through tickets
-    my %tickets;
-
-    # re-set the login cookies that we saved away eariler
-    $rt->_ua->cookie_jar($login_cookies);
-    $self->status_message('Matching failed models and tickets...');
-    for my $ticket_id ( @ticket_ids ) {
-        my $ticket = eval {
-            RT::Client::REST::Ticket->new(
-                rt => $rt,
-                id => $ticket_id,
-            )->retrieve;
-        };
-        unless ($ticket) {
-            $self->error_message("Problem retrieving data for ticket $ticket_id: $@");
-            next;
-        }
-
-        my $transactions = $ticket->transactions;
-        my $transaction_iterator = $transactions->get_iterator;
-        while ( my $transaction = &$transaction_iterator ) {
-            my $content = $transaction->content;
-            for my $model_id ( keys %builds ) {
-                my $build_id = $builds{$model_id}->id;
-                next if $content !~ /$model_id/ and $content !~ /$build_id/;
-                delete $builds{$model_id};
-                push @{$tickets{$ticket_id.' '.$ticket->subject}}, $model_id;
-            }
-        }
+    my %tickets = $self->get_tickets(%builds);
+    for my $model_id (keys %tickets) {
+        delete $builds{$model_id};
     }
 
     # Consolidate errors
@@ -243,6 +187,74 @@ sub get_builds {
     }
     $self->status_message('Found '.keys(%builds).' models');
     return %builds;
+}
+
+sub get_tickets {
+    my $self = shift;
+    my %builds = %{(shift)};
+
+    # Connect
+    my $rt = _login_sso();
+
+    # The call to $rt->search() below messed up the login credentials stored in the
+    # $rt session, making the loop at the bottom that retrieves tickets fail.
+    # Save a copy of the login credentials here so we can re-set them when it's
+    # time to get the ticket details
+    my $login_cookies = $rt->_cookie();
+
+    # Retrieve tickets -
+    $self->status_message('Looking for tickets...');
+    my @ticket_ids;
+    try {
+        @ticket_ids = $rt->search(
+            type => 'ticket',
+            query => "Queue = 'apipe-builds' AND ( Status = 'new' OR Status = 'open' )",
+
+        );
+    }
+    catch Exception::Class::Base with {
+        my $msg = shift;
+        if ( $msg eq 'Internal Server Error' ) {
+            die 'Incorrect username or password';
+        }
+        else {
+            die $msg->message;
+        }
+    };
+    $self->status_message('Found '.@ticket_ids.' tickets');
+
+    # Go through tickets
+    my %tickets;
+
+    # re-set the login cookies that we saved away eariler
+    $rt->_ua->cookie_jar($login_cookies);
+    $self->status_message('Matching models and builds to tickets...');
+    for my $ticket_id ( @ticket_ids ) {
+        my $ticket = eval {
+            RT::Client::REST::Ticket->new(
+                rt => $rt,
+                id => $ticket_id,
+            )->retrieve;
+        };
+        unless ($ticket) {
+            $self->error_message("Problem retrieving data for ticket $ticket_id: $@");
+            next;
+        }
+
+        my $transactions = $ticket->transactions;
+        my $transaction_iterator = $transactions->get_iterator;
+        while ( my $transaction = &$transaction_iterator ) {
+            my $content = $transaction->content;
+            for my $model_id ( keys %builds ) {
+                my $build_id = $builds{$model_id}->id;
+                next if $content !~ /$model_id/ and $content !~ /$build_id/;
+                push @{$tickets{$ticket_id.' '.$ticket->subject}}, $model_id;
+            }
+        }
+    }
+
+    $self->status_message('Found '.scalar(values(%tickets)).' models mentioned in the tickets');
+    return %tickets;
 }
 
 sub _server {
