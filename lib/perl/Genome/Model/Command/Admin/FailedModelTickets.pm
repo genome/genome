@@ -76,26 +76,7 @@ sub execute {
     $self->status_message('Found '.@ticket_ids.' tickets');
 
     my @events = $self->get_events();
-    my %models_and_builds;
-    for my $event (@events) {
-        next if not $event->build_id;
-        my $build = Genome::Model::Build->get(id => $event->build_id, -hint => [qw/ model events /]);
-        my $model = $build->model;
-        #If the latest build of the model succeeds, ignore those old
-        #failing ones that will be cleaned by admin "cleanup-succeeded".
-        next if $model->status eq 'Succeeded';
-
-        unless ($self->include_pending) {
-            next if $model->status eq 'Requested';
-            next if $model->status eq 'Scheduled';
-            next if $model->status eq 'Running';
-        }
-
-        # only keep the most recently scheduled build
-        next if $models_and_builds{ $model->id } and $models_and_builds{ $model->id }->date_scheduled gt $build->date_scheduled;
-        $models_and_builds{ $model->id } = $build;
-    }
-    $self->status_message('Found '.keys(%models_and_builds).' models');
+    my %builds = $self->get_builds(@events);
 
     # Go through tickets
     my %tickets;
@@ -119,10 +100,10 @@ sub execute {
         my $transaction_iterator = $transactions->get_iterator;
         while ( my $transaction = &$transaction_iterator ) {
             my $content = $transaction->content;
-            for my $model_id ( keys %models_and_builds ) {
-                my $build_id = $models_and_builds{$model_id}->id;
+            for my $model_id ( keys %builds ) {
+                my $build_id = $builds{$model_id}->id;
                 next if $content !~ /$model_id/ and $content !~ /$build_id/;
-                delete $models_and_builds{$model_id};
+                delete $builds{$model_id};
                 push @{$tickets{$ticket_id.' '.$ticket->subject}}, $model_id;
             }
         }
@@ -134,7 +115,7 @@ sub execute {
     my %guessed_errors;
     my $models_with_errors = 0;
     my $models_with_guessed_errors = 0;
-    for my $build ( values %models_and_builds ) {
+    for my $build ( values %builds ) {
         my $key = 'Unknown';
         my $msg = 'Failure undetermined!';
         my $error = $self->_pick_optimal_error_log($build);
@@ -186,7 +167,7 @@ sub execute {
 
     # Report
     my $models_in_tickets = map { @{$tickets{$_}} }keys %tickets;
-    my $models_not_in_tickets = keys %models_and_builds;
+    my $models_not_in_tickets = keys %builds;
     $self->status_message('Models: '.($models_in_tickets+ $models_not_in_tickets));
     $self->status_message('Models in tickets: '.$models_in_tickets);
     $self->status_message('Models not in tickets: '.$models_not_in_tickets);
@@ -205,7 +186,7 @@ sub get_events {
     # Find cron models by failed build events
     my @events;
     if ($self->include_failed) {
-        $self->status_message('Looking for failed models...');
+        $self->status_message('Looking for failed model events...');
         @events = Genome::Model::Event->get(
             "event_status in" => ['Failed', 'Unstartable'],
             event_type => 'genome model build',
@@ -216,7 +197,7 @@ sub get_events {
 
     # Find cron models by unstartable build events
     if ($self->include_unstartable) {
-        $self->status_message('Looking for unstartable models...');
+        $self->status_message('Looking for unstartable model events...');
         my @unstartable_events = Genome::Model::Event->get(
             event_status => 'Unstartable',
             event_type => 'genome model build',
@@ -229,10 +210,41 @@ sub get_events {
     if (scalar(@events)) {
         return @events;
     } else {
-        $self->error_message('No failed or unstartable build events found!');
+        $self->error_message('No failed or unstartable events found!');
         die $self->error_message();
     }
 }
+
+sub get_builds {
+    my ($self, @events) = @_;
+
+    $self->status_message("Looking up Models and Builds from events...");
+
+    my %builds;
+    for my $event (@events) {
+        next if not $event->build_id;
+
+        my $build = Genome::Model::Build->get(id => $event->build_id, -hint => [qw/ model events /]);
+        my $model = $build->model;
+
+        #If the latest build of the model succeeds, ignore those old
+        #failing ones that will be cleaned by admin "cleanup-succeeded".
+        next if $model->status eq 'Succeeded';
+
+        unless ($self->include_pending) {
+            next if $model->status eq 'Requested';
+            next if $model->status eq 'Scheduled';
+            next if $model->status eq 'Running';
+        }
+
+        # only keep the most recently scheduled build
+        next if $builds{ $model->id } and $builds{ $model->id }->date_scheduled gt $build->date_scheduled;
+        $builds{ $model->id } = $build;
+    }
+    $self->status_message('Found '.keys(%builds).' models');
+    return %builds;
+}
+
 sub _server {
     return 'https://rt.gsc.wustl.edu/';
 }
