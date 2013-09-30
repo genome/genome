@@ -75,35 +75,9 @@ sub execute {
     };
     $self->status_message('Found '.@ticket_ids.' tickets');
 
-    # Find cron models by failed build events
-    my @events;
-    if ($self->include_failed) {
-        $self->status_message('Looking for failed models...');
-        @events = Genome::Model::Event->get(
-            event_status => 'Failed',
-            event_type => 'genome model build',
-            user_name => 'apipe-builder',
-            -hint => [qw/ build /],
-        );
-    }
-    # Find cron models by unstartable build events
-    my @unstartable_events;
-    if ($self->include_unstartable) {
-        $self->status_message('Looking for unstartable models...');
-        @unstartable_events = Genome::Model::Event->get(
-            event_status => 'Unstartable',
-            event_type => 'genome model build',
-            user_name => 'apipe-builder',
-            -hint => [qw/ build /],
-        );
-    }
-    if ( (not $self->include_unstartable or not @unstartable_events) and
-         (not $self->include_failed or not @events) ) {
-        $self->status_message('No failed or unstartable build events found!');
-        return 1;
-    }
+    my @events = $self->get_events();
     my %models_and_builds;
-    for my $event ( @events, @unstartable_events ) {
+    for my $event (@events) {
         next if not $event->build_id;
         my $build = Genome::Model::Build->get(id => $event->build_id, -hint => [qw/ model events /]);
         my $model = $build->model;
@@ -225,6 +199,40 @@ sub execute {
     return 1;
 }
 
+sub get_events {
+    my $self = shift;
+
+    # Find cron models by failed build events
+    my @events;
+    if ($self->include_failed) {
+        $self->status_message('Looking for failed models...');
+        @events = Genome::Model::Event->get(
+            "event_status in" => ['Failed', 'Unstartable'],
+            event_type => 'genome model build',
+            user_name => 'apipe-builder',
+            -hint => [qw/ build /],
+        );
+    }
+
+    # Find cron models by unstartable build events
+    if ($self->include_unstartable) {
+        $self->status_message('Looking for unstartable models...');
+        my @unstartable_events = Genome::Model::Event->get(
+            event_status => 'Unstartable',
+            event_type => 'genome model build',
+            user_name => 'apipe-builder',
+            -hint => [qw/ build /],
+        );
+        @events = (@events, @unstartable_events);
+    }
+
+    if (scalar(@events)) {
+        return @events;
+    } else {
+        $self->error_message('No failed or unstartable build events found!');
+        die $self->error_message();
+    }
+}
 sub _server {
     return 'https://rt.gsc.wustl.edu/';
 }
