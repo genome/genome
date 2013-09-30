@@ -117,7 +117,8 @@ sub execute {
             next if $model->status eq 'Running';
         }
 
-        next if $models_and_builds{ $model->id } and $models_and_builds{ $model->id }->id > $build->id;
+        # only keep the most recently scheduled build
+        next if $models_and_builds{ $model->id } and $models_and_builds{ $model->id }->date_scheduled gt $build->date_scheduled;
         $models_and_builds{ $model->id } = $build;
     }
     $self->status_message('Found '.keys(%models_and_builds).' models');
