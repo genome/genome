@@ -137,8 +137,8 @@ sub execute{
     }
 
     #Check GTF file
-    $gtf_file = `ls $annotation_data_dir/annotation_data/rna_annotation/*-all_sequences.gtf`;
-    chomp($gtf_file);
+    my $reference_id = $reference_sequence_build->id;
+    $gtf_file = glob("$annotation_data_dir/annotation_data/rna_annotation/$reference_id-all_sequences.gtf");
     unless (-e $gtf_file && -e $ideogram_file){
       $self->error_message("One or more of the following annotation files is missing:\ngtf_file = $gtf_file\nideogram_file = $ideogram_file");
       return;
