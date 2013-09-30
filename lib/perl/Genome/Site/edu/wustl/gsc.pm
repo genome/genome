@@ -1,6 +1,8 @@
 package Genome::Site::edu::wustl::gsc;
-use Genome::Site::TGI;
+# on the gms-pub branch, even an local TGI install does not use the legacy Site::TGI module
+#use Genome::Site::TGI;
 1;
+
 
 =pod
 
