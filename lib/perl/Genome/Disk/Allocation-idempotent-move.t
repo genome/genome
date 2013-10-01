@@ -8,7 +8,7 @@ use strict;
 use warnings;
 
 use above 'Genome';
-use Test::More tests => 10;
+use Test::More tests => 2;
 
 use Genome::Disk::Allocation;
 
@@ -17,7 +17,7 @@ use File::Basename qw(dirname);
 use lib File::Spec->join(dirname(__FILE__), 'Allocation', 't-lib');
 use GenomeDiskAllocationCommon qw(create_test_volumes);
 
-my @volumes = create_test_volumes(); # 9 tests
+my @volumes = create_test_volumes(2);
 
 subtest 'idempotent move' => sub {
     plan tests => 2;

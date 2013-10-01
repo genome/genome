@@ -25,7 +25,7 @@ use_ok('Genome::Disk::Volume') or die;
 use Genome::Disk::Allocation;
 #$Genome::Disk::Allocation::TESTING_DISK_ALLOCATION = 1;
 
-my @volumes = create_test_volumes();
+my @volumes = create_test_volumes(1);
 
 # Make test allocation
 my $allocation = Genome::Disk::Allocation->create(
