@@ -100,12 +100,6 @@ class Genome::Disk::Allocation {
         },
     ],
     has_optional => [
-        preserved => {
-            is => 'Boolean',
-            len => 1,
-            default_value => 0,
-            doc => 'If set, the allocation cannot be deallocated',
-        },
         archivable => {
             is => 'Boolean',
             len => 1,
@@ -273,25 +267,6 @@ sub is_archived {
 sub tar_path {
     my $self = shift;
     return join('/', $self->absolute_path, 'archive.tar');
-}
-
-sub preserved {
-    my ($self, $value, $reason) = @_;
-    if (@_ > 1) {
-        $reason ||= 'no reason given';
-        $self->add_note(
-            header_text => $value ? 'set to preserved' : 'set to unpreserved',
-            body_text => $reason,
-        );
-        if ($value) {
-            $self->_create_observer($self->_mark_read_only_closure($self->absolute_path));
-        }
-        else {
-            $self->_create_observer($self->_set_default_permissions_closure($self->absolute_path));
-        }
-        return $self->__preserved($value);
-    }
-    return $self->__preserved();
 }
 
 sub archivable {
@@ -525,10 +500,6 @@ sub _delete {
     }
 
     my $self = $class->get($id);
-    if ($self->preserved) {
-        confess sprintf("Allocation (%s) has been marked as preserved, cannot deallocate!",
-            $self->id);
-    }
 
     my $path = $self->absolute_path;
 
