@@ -635,7 +635,7 @@ sub _move {
 
     # The shadow allocation is just a way of keeping track of our temporary
     # additional disk usage during the move.
-    my $shadow_allocation = $class->get_or_create(%creation_params);
+    my $shadow_allocation = $class->shadow_get_or_create(%creation_params);
 
     my $shadow_absolute_path = $shadow_allocation->absolute_path;
 
@@ -849,7 +849,7 @@ sub _unarchive {
 
     my %creation_params = $self->unarchive_shadow_params;
     # shadow_allocation ensures that we wont over allocate our destination volume
-    my $shadow_allocation = $class->get_or_create(%creation_params);
+    my $shadow_allocation = $class->shadow_get_or_create(%creation_params);
 
     my $archive_path = $self->absolute_path;
     my $target_path = $shadow_allocation->absolute_path;
@@ -976,7 +976,7 @@ sub get_with_lock {
     return ($self, $lock);
 }
 
-sub get_or_create {
+sub shadow_get_or_create {
     my $class = shift;
     my %params = @_;
 
@@ -986,7 +986,7 @@ sub get_or_create {
     }
 
     unless ($params{allocation_path}) {
-        croak 'allocation_path is required for get_or_create';
+        croak 'allocation_path is required for shadow_get_or_create';
     }
 
     my $md5_hex = md5_hex($params{allocation_path});;
@@ -1010,7 +1010,7 @@ sub get_or_create {
     Genome::Sys->unlock_resource(resource_lock => $lock);
 
     unless ($allocation) {
-        croak sprintf("Failed to get_or_create allocation from params %s",
+        croak sprintf("Failed to shadow_get_or_create allocation from params %s",
                 Data::Dumper::Dumper({%params, %create_extra_params}));
     }
 
