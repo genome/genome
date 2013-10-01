@@ -274,15 +274,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>unpreserve',
-      [
-        'reason=s',
-        'files',
-        'allocations=s@',
-        undef,
-        'help!',
-        undef
-      ],
       '>reallocate',
       [
         'kilobytes-requested=s',
@@ -350,15 +341,6 @@ $Genome::Command::OPTS_SPEC = [
         undef
       ],
       '>set-archive',
-      [
-        'reason=s',
-        'files',
-        'allocations=s@',
-        undef,
-        'help!',
-        undef
-      ],
-      '>preserve',
       [
         'reason=s',
         'files',
