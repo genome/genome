@@ -156,7 +156,11 @@ sub _filter_variants {
 
     ## Reset counters ##
     
-    my %stats = ();
+    my %stats = (
+        num_fail_homopolymer => 0,
+        num_got_readcounts => 0,
+        num_fail_filter => 0,
+    );
     $stats{'num_variants'}  = $stats{'num_no_readcounts'} = $stats{'num_pass_filter'} = $stats{'num_no_allele'} = 0;
     $stats{'num_fail_varcount'} = $stats{'num_fail_varfreq'} = $stats{'num_fail_strand'} = $stats{'num_fail_pos'} = $stats{'num_fail_mmqs'} = $stats{'num_fail_mapqual'} = $stats{'num_fail_readlen'} = $stats{'num_fail_dist3'} = 0;
     $stats{'num_MT_sites_autopassed'} = 0;
