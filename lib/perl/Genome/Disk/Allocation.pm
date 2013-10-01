@@ -10,6 +10,7 @@ use Carp qw(croak confess);
 use Digest::MD5 qw(md5_hex);
 use File::Copy::Recursive 'dircopy';
 use List::Util 'shuffle';
+use DateTime;
 
 our $TESTING_DISK_ALLOCATION = 0;
 
@@ -91,10 +92,10 @@ class Genome::Disk::Allocation {
             len => 11,
             is_optional => 1,
         },
-        #TODO - this shouldn't be optional - backfill?
         archive_after_time => {
             is => 'DateTime',
             len => 11,
+            default_value => &_default_archive_after_time,
             is_optional => 1,
             doc => 'After this time, this allocation is subject to being archived'
         },
@@ -1508,6 +1509,10 @@ sub _commit_unless_testing {
     } else {
         return 1;
     }
+}
+
+sub _default_archive_after_time {
+    DateTime->now(time_zone => 'local')->add(years => 1)->strftime('%F %T');
 }
 
 1;
