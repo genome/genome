@@ -15,8 +15,8 @@ class Genome::Model::Tools::Music::Proximity {
     skip_non_coding => { is => 'Boolean', doc => "Skip non-coding mutations from the provided MAF file", is_optional => 1, default => 1 },
     skip_silent => { is => 'Boolean', doc => "Skip silent mutations from the provided MAF file", is_optional => 1, default => 1 },
   ],
-  has_output => [
-    output_file => {is => 'Text', doc => "TODO"},
+  has_optional_output => [
+    output_file => {is => 'Text', doc => "TODO" },
   ],
   doc => "Perform a proximity analysis on a list of mutations."
 };

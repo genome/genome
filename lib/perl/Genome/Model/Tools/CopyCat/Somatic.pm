@@ -105,6 +105,13 @@ class Genome::Model::Tools::CopyCat::Somatic{
         #     default => 0,
         #     doc => "save an r data file",
         # },
+
+        # tumor_purity => {
+        #     is => 'Number',
+        #     is_optional => 1,
+        #     default => 1,
+        #     doc => "estimated tumor purity fraction (between 0 and 1)",
+        # }
         ]
 };
 
@@ -223,7 +230,10 @@ sub execute {
     # if($self->output_single_sample){
     #     $output_single_sample="TRUE";
     # }
-
+    # my $purity=1;
+    # if(defined($self->tumor_purity)){
+    #     $purity = $self->tumor_purity;
+    # }
 
     #open the r file
     my $rf = open(my $RFILE, ">$output_directory/run.R") || die "Can't open R file for writing.\n";
@@ -246,7 +256,7 @@ sub execute {
 #    print $RFILE "                        outputSingleSample=$output_single_sample,\n";
     print $RFILE "                        normalSamtoolsFile=$normal_samtools_file,\n";
     print $RFILE "                        tumorSamtoolsFile=$tumor_samtools_file)\n";
-
+#    print $RFILE "                        purity=$purity)\n";
 
     #drop into the output directory to make running the R script easier
     my $cmd = "Rscript $output_directory/run.R";

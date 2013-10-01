@@ -39,7 +39,7 @@ sub execute {
         my $display_name = $allocation->__display_name__;
         my $transaction = UR::Context::Transaction->begin();
 
-        my $successful = Genome::Disk::Allocation->delete(allocation_id => $allocation->id);
+        my $successful = Genome::Disk::Allocation->delete(id => $allocation->id);
 
         if ($successful and $transaction->commit) {
             $self->status_message("Successfully deallocated ($display_name)");

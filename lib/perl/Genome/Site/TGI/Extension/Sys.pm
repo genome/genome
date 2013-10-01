@@ -55,6 +55,7 @@ sub bsub {
             queue => { default => 'long' },
             job_group => 0,
             log_file => 0,
+            err_file => 0,
         }
     );
 
@@ -64,6 +65,9 @@ sub bsub {
     }
     if ($args{log_file}) {
         push @bsub_cmd, '-o', $args{log_file};
+    }
+    if ($args{err_file}) {
+        push @bsub_cmd, '-e', $args{err_file};
     }
 
     my $bsub_output;

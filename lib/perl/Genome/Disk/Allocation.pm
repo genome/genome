@@ -6,9 +6,9 @@ use warnings;
 use Genome;
 use Genome::Utility::Instrumentation;
 
+use Carp qw(croak confess);
+use Digest::MD5 qw(md5_hex);
 use File::Copy::Recursive 'dircopy';
-use Carp 'confess';
-
 use List::Util 'shuffle';
 
 our $TESTING_DISK_ALLOCATION = 0;
@@ -66,6 +66,12 @@ class Genome::Disk::Allocation {
             len => 255,
             doc => 'The group specific subdirectory where space is allocated',
         },
+        status => {
+            is => 'Text',
+            valid_values => ['active', 'completed', 'purged', 'archived'],
+            doc => 'The current status of this allocation',
+            default_value => 'active',
+        },
         absolute_path => {
             calculate_from => [ 'mount_path', 'group_subdirectory', 'allocation_path' ],
             calculate => q( $self->_absolute_path($mount_path, $group_subdirectory, $allocation_path); ),
@@ -85,6 +91,7 @@ class Genome::Disk::Allocation {
             len => 11,
             is_optional => 1,
         },
+        #TODO - this shouldn't be optional - backfill?
         archive_after_time => {
             is => 'DateTime',
             len => 11,
@@ -184,8 +191,8 @@ sub create {
     Genome::Utility::Instrumentation::inc('disk.allocation.create');
 
     # TODO Switch from %params to BoolExpr and pass in BX to autogenerate_new_object_id
-    unless (exists $params{allocation_id}) {
-        $params{allocation_id} = $class->__meta__->autogenerate_new_object_id;
+    unless (exists $params{id}) {
+        $params{id} = $class->__meta__->autogenerate_new_object_id;
     }
 
     # If no commit is on, make a dummy volume to allocate to
@@ -212,7 +219,6 @@ sub create {
             $self->_log_change_for_rollback;
         }
     }
-
 
     return $self;
 }
@@ -317,7 +323,7 @@ sub _create {
     }
 
     # Make sure there aren't any extra params
-    my $id = delete $params{allocation_id};
+    my $id = delete $params{id};
     $id = $class->__meta__->autogenerate_new_object_id unless defined $id; # TODO autogenerate_new_object_id should technically receive a BoolExpr
     my $kilobytes_requested = delete $params{kilobytes_requested};
     my $owner_class_name = delete $params{owner_class_name};
@@ -329,7 +335,7 @@ sub _create {
     my $group_subdirectory = delete $params{group_subdirectory};
     my $kilobytes_used = delete $params{kilobytes_used} || 0;
     my $archive_after_time = delete $params{archive_after_time};
-    
+
     if (%params) {
         confess "Extra parameters detected: " . Data::Dumper::Dumper(\%params);
     }
@@ -414,7 +420,7 @@ sub _create {
         group_subdirectory           => $group_subdirectory,
         id                           => $id,
         creation_time                => UR::Context->current->now,
-        archive_after_time           => $archive_after_time,        
+        archive_after_time           => $archive_after_time,
     );
 
     # Make sure that we never attempt to create an allocation that has an absolute path that already exists. There are
@@ -512,7 +518,7 @@ sub _get_allocation_without_lock {
 
 sub _delete {
     my ($class, %params) = @_;
-    my $id = delete $params{allocation_id};
+    my $id = delete $params{id};
     confess "Require allocation ID!" unless defined $id;
     if (%params) {
         confess "Extra params found: " . Data::Dumper::Dumper(\%params);
@@ -538,7 +544,7 @@ sub _delete {
 
 sub _reallocate {
     my ($class, %params) = @_;
-    my $id = delete $params{allocation_id};
+    my $id = delete $params{id};
     confess "Require allocation ID!" unless defined $id;
     my $kilobytes_requested = delete $params{kilobytes_requested} || 0;
     my $allow_reallocate_with_move = delete $params{allow_reallocate_with_move};
@@ -610,11 +616,27 @@ sub _reallocate {
     return $succeeded;
 }
 
+sub move_shadow_path {
+    my $allocation_path = shift;
+    return sprintf("%s-move_allocation_destination", $allocation_path)
+}
+
+sub move_shadow_params {
+    my $self = shift;
+    return (
+        disk_group_name => $self->disk_group_name,
+        kilobytes_requested => $self->kilobytes_requested,
+        owner_class_name => "UR::Value",
+        owner_id => "shadow_allocation",
+        exclude_mount_path => $self->mount_path,
+        allocation_path => move_shadow_path($self->allocation_path),
+    );
+}
+
 sub _move {
     my ($class, %params) = @_;
-    my $id = delete $params{allocation_id};
+    my $id = delete $params{id};
 
-    my $kilobytes_requested = delete $params{kilobytes_requested};
     my $group_name = delete $params{disk_group_name};
     my $new_mount_path = delete $params{target_mount_path};
 
@@ -622,30 +644,12 @@ sub _move {
         confess "Extra parameters given to allocation move method: " . join(',', sort keys %params);
     }
 
-    # get allocation lock
-    my $allocation_lock = Genome::Disk::Allocation->get_lock($id);
-    unless ($allocation_lock) {
-        confess "Could not lock allocation with ID $id";
-    }
-    my $mode = $class->_retrieve_mode;
-    my $self = Genome::Disk::Allocation->$mode($id);
-    unless ($self) {
-        Genome::Sys->unlock_resource(resource_lock => $allocation_lock);
-        confess "Found no allocation with ID $id";
-    }
+    my ($self, $allocation_lock) = $class->get_with_lock($id);
 
     my $original_absolute_path = $self->absolute_path;
 
     # make shadow allocation
-    my %creation_params = (
-        disk_group_name => $self->disk_group_name,
-        kilobytes_requested => $self->kilobytes_requested,
-        owner_class_name => "UR::Value",
-        owner_id => "shadow_allocation",
-        exclude_mount_path => $self->mount_path,
-        allocation_path => sprintf("%s-move_allocation_destination",
-            $self->allocation_path),
-    );
+    my %creation_params = $self->move_shadow_params;
 
     # I think that it's dangerous to specify the new mount path, but this
     # feature existed, so nnutter and I kept it during this refactor.
@@ -659,7 +663,8 @@ sub _move {
 
     # The shadow allocation is just a way of keeping track of our temporary
     # additional disk usage during the move.
-    my $shadow_allocation = $class->create(%creation_params);
+    my $shadow_allocation = $class->get_or_create(%creation_params);
+
     my $shadow_absolute_path = $shadow_allocation->absolute_path;
 
     # copy files to shadow allocation
@@ -724,22 +729,12 @@ sub _move {
 
 sub _archive {
     my ($class, %params) = @_;
-    my $id = delete $params{allocation_id};
+    my $id = delete $params{id};
     if (%params) {
         confess "Extra parameters given to allocation move method: " . join(',', sort keys %params);
     }
 
-    # Lock and load allocation object
-    my $allocation_lock = Genome::Disk::Allocation->get_lock($id);
-    unless ($allocation_lock) {
-        confess "Could not lock allocation with ID $id";
-    }
-    my $mode = $class->_retrieve_mode;
-    my $self = Genome::Disk::Allocation->$mode($id);
-    unless ($self) {
-        Genome::Sys->unlock_resource(resource_lock => $allocation_lock);
-        confess "Found no allocation with ID $id";
-    }
+    my ($self, $allocation_lock) = $class->get_with_lock($id);
 
     my $current_allocation_path = $self->absolute_path;
     my $archive_allocation_path = join('/', $self->volume->archive_mount_path, $self->group_subdirectory, $self->allocation_path);
@@ -848,25 +843,31 @@ sub _archive {
     return 1;
 }
 
+sub unarchive_shadow_path {
+    my $allocation_path = shift;
+    return sprintf("%s-unarchive_allocation_destination", $allocation_path);
+}
+
+sub unarchive_shadow_params {
+    my $self = shift;
+    return (
+        disk_group_name => $self->disk_group_name,
+        kilobytes_requested => $self->kilobytes_requested,
+        owner_class_name => "UR::Value",
+        owner_id => "shadow_allocation",
+        allocation_path => unarchive_shadow_path($self->allocation_path),
+    );
+}
+
 sub _unarchive {
     my ($class, %params) = @_;
-    my $id = delete $params{allocation_id};
+    my $id = delete $params{id};
     my $reason = delete $params{reason};
     if (%params) {
         confess "Extra parameters given to allocation unarchive method: " . join(',', sort keys %params);
     }
 
-    # Lock and load allocation object
-    my $allocation_lock = Genome::Disk::Allocation->get_lock($id);
-    unless ($allocation_lock) {
-        confess "Could not lock allocation with ID $id";
-    }
-    my $mode = $class->_retrieve_mode;
-    my $self = Genome::Disk::Allocation->$mode($id);
-    unless ($self) {
-        Genome::Sys->unlock_resource(resource_lock => $allocation_lock);
-        confess "Found no allocation with ID $id";
-    }
+    my ($self, $allocation_lock) = $class->get_with_lock($id);
 
     unless ($self->is_archived) {
         Genome::Sys->unlock_resource(resource_lock => $allocation_lock);
@@ -874,20 +875,9 @@ sub _unarchive {
         return 1;
     }
 
-    my %creation_params = (
-        disk_group_name => $self->disk_group_name,
-        kilobytes_requested => $self->kilobytes_requested,
-        owner_class_name => "UR::Value",
-        owner_id => "shadow_allocation",
-        allocation_path => sprintf("%s-unarchive_allocation_destination",
-            $self->allocation_path),
-    );
+    my %creation_params = $self->unarchive_shadow_params;
     # shadow_allocation ensures that we wont over allocate our destination volume
-    my $shadow_allocation = $class->create(%creation_params);
-    unless ($shadow_allocation) {
-        confess(sprintf("Failed to create shadow allocation from params %s",
-                Data::Dumper::Dumper(\%creation_params)));
-    }
+    my $shadow_allocation = $class->get_or_create(%creation_params);
 
     my $archive_path = $self->absolute_path;
     my $target_path = $shadow_allocation->absolute_path;
@@ -978,19 +968,81 @@ sub _unarchive {
     return 1;
 }
 
-# Locks the allocation, if lock is not manually released (it had better be!) it'll be automatically
-# cleaned up on program exit
+# Locks the allocation, if lock is not manually released (it had better be!)
+# it'll be automatically cleaned up on program exit
 sub get_lock {
     my ($class, $id, $tries) = @_;
     $tries ||= 60;
+
     my $allocation_lock = Genome::Sys->lock_resource(
         resource_lock => $ENV{GENOME_LOCK_DIR} . '/allocation/allocation_' . join('_', split(' ', $id)),
         max_try => $tries,
         block_sleep => 1,
     );
+
     # lock implies mutation so object should be reloaded
     $class->_reload_allocation($id);
+
     return $allocation_lock;
+}
+
+sub get_with_lock {
+    my $class = shift;
+    my $id = shift;
+
+    my $lock = $class->get_lock($id);
+    unless ($lock) {
+        confess "Could not lock allocation with ID $id";
+    }
+    my $mode = $class->_retrieve_mode;
+    my $self = Genome::Disk::Allocation->$mode($id);
+    unless ($self) {
+        Genome::Sys->unlock_resource(resource_lock => $lock);
+        confess "Found no allocation with ID $id";
+    }
+
+    return ($self, $lock);
+}
+
+sub get_or_create {
+    my $class = shift;
+    my %params = @_;
+
+    my %create_extra_params;
+    if ($params{exclude_mount_path}) {
+        $create_extra_params{exclude_mount_path} = delete $params{exclude_mount_path};
+    }
+
+    unless ($params{allocation_path}) {
+        croak 'allocation_path is required for get_or_create';
+    }
+
+    my $md5_hex = md5_hex($params{allocation_path});;
+
+    my $path = File::Spec->join(
+        $ENV{GENOME_LOCK_DIR},
+        'allocation',
+        'allocation_path_' . $md5_hex,
+    );
+
+    my $lock = Genome::Sys->lock_resource(
+        resource_lock => $path,
+        wait_announce_interval => 600,
+    );
+
+    my $allocation = $class->get(%params);
+    unless ($allocation) {
+        $allocation = $class->create(%params, %create_extra_params);
+    }
+
+    Genome::Sys->unlock_resource(resource_lock => $lock);
+
+    unless ($allocation) {
+        croak sprintf("Failed to get_or_create allocation from params %s",
+                Data::Dumper::Dumper({%params, %create_extra_params}));
+    }
+
+    return $allocation;
 }
 
 sub has_valid_owner {
@@ -1019,10 +1071,10 @@ our @_execute_system_command_perl5opt = '-MGenome';
 sub _execute_system_command {
     my ($class, $method, %params) = @_;
     if (ref($class)) {
-        $params{allocation_id} = $class->id;
+        $params{id} = $class->id;
         $class = ref($class);
     }
-    confess "Require allocation ID!" unless exists $params{allocation_id};
+    confess "Require allocation ID!" unless exists $params{id};
 
     my $allocation;
     if ($ENV{UR_DBI_NO_COMMIT}) {
@@ -1050,7 +1102,7 @@ sub _execute_system_command {
             }
             confess $msg;
         }
-        $allocation = $class->_reload_allocation($params{allocation_id});
+        $allocation = $class->_reload_allocation($params{id});
     }
 
 

@@ -53,6 +53,12 @@ class Genome::Library {
             len => 64,
             doc => 'Protocol used to generate the library.',
         },
+        transcript_strand => {
+            is => 'Text',
+            len => 16,
+            doc => 'The strand targeted during RNA-seq prep.',
+            valid_values => [qw/ unstranded firststrand secondstrand /],
+        },
         taxon_id => {
             is => 'Number',
             via => 'sample',

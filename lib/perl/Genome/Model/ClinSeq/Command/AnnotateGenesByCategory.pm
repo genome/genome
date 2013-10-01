@@ -28,7 +28,7 @@ class Genome::Model::ClinSeq::Command::AnnotateGenesByCategory {
             default => "Default",
         },
     ],
-    has_output => [
+    has_optional_output => [
         category_outfile => {
             is => 'FilesystemPath',            
             doc => 'result file consisting of input file appended with gene category values',

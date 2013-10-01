@@ -19,15 +19,13 @@ class Genome::InstrumentData {
     subclassify_by => 'subclass_name',
     id_generator => '-uuid',
     id_by => [
-        id => {
-            is => 'Text',
-            len => 64,
-        },
+        id => { is => 'Text', len => 64, },
     ],
     has => [
         seq_id => {
             calculate_from => 'id',
             calculate => q( return $id ),
+            is_deprecated => 1,
         },
         subclass_name => {
             is => 'Text',
@@ -37,6 +35,27 @@ class Genome::InstrumentData {
             is => 'Text',
             len => 64,
         },
+        import_format => {
+            is => 'Text',
+            via => 'attributes',
+            to => 'attribute_value',
+            is_mutable => 1,
+            where => [ attribute_label => 'import_format' ],
+        },
+        import_source_name => {
+            is => 'Text',
+            via => 'attributes',
+            to => 'attribute_value',
+            is_mutable => 1,
+            where => [ attribute_label => 'import_source_name' ],
+        },
+        description => {
+            is => 'Text',
+            via => 'attributes',
+            to => 'attribute_value',
+            is_mutable => 1,
+            where => [ attribute_label => 'description' ],
+        },
         library => {
             is => 'Genome::Library',
             id_by => 'library_id',
@@ -44,6 +63,7 @@ class Genome::InstrumentData {
         library_name => {
             via => 'library',
             to => 'name',
+            is_deprecated => 1,
         },
         sample_id => {
             is => 'Text',
@@ -53,9 +73,19 @@ class Genome::InstrumentData {
             is => 'Genome::Sample',
             id_by => 'sample_id',
         },
+        individual => {
+            is => 'Genome::Individual',
+            via => 'sample',
+            to => 'patient',
+        },
+        taxon => {
+            is => 'Genome::Taxon',
+            via => 'sample'
+        },
         sample_name => {
             via => 'sample',
             to => 'name',
+            is_deprecated => 1,
         },
         models => {
             is => 'Genome::Model',
@@ -87,18 +117,6 @@ class Genome::InstrumentData {
             is_mutable => 1,
             is_many => 0,
             where => [ attribute_label => 'analysis_project_id' ],
-        },
-        #TODO: may want to make these immutable, but needed them for
-        #backfilling purposes
-        transcript_strand => {
-            is => 'Text',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            is_many => 0,
-            where => [ attribute_label => 'transcript_strand' ],
-            valid_values => [ "unstranded", "firststrand", "secondstrand" ],
-            doc => 'for some RNA protocols (encore complete rna-seq) reads will match transcript direction (firststrand), or match the opoosite strand (secondstrand), or be a mix (unstranded)',
         },
         original_est_fragment_size => {
             is => 'Integer',
@@ -512,3 +530,124 @@ sub __display_name__ {
 }
 
 1;
+
+__END__
+s:
+_sls_fwd_read_length
+_sls_read_length
+_sls_rev_read_length
+adaptor_path	attributes
+analysis_software_version	attributes
+archive_path	attributes
+bam_path	attributes
+clusters	attributes
+cycles
+fastqc_path	attributes
+filt_error_rate_avg
+flow_cell
+flow_cell_id	attributes
+fwd_clusters	attributes
+fwd_filt_aligned_clusters_pct	attributes
+fwd_filt_error_rate_avg
+fwd_kilobases_read	attributes
+fwd_read_length	attributes
+fwd_run_type	attributes
+fwd_seq_id	attributes
+gc_bias_path	attributes
+gerald_directory	attributes
+index_sequence	attributes
+is_external	attributes
+is_paired_end
+lane	attributes
+median_insert_size
+old_filt_error_rate_avg	attributes
+old_fwd_filt_error_rate_avg	attributes
+old_median_insert_size	attributes
+old_rev_filt_error_rate_avg	attributes
+old_sd_above_insert_size	attributes
+old_sd_below_insert_size	attributes
+project
+project_name	attributes
+read_1_pct_mismatch
+read_2_pct_mismatch
+read_count
+read_length	attributes
+rev_clusters	attributes
+rev_filt_aligned_clusters_pct	attributes
+rev_filt_error_rate_avg
+rev_kilobases_read	attributes
+rev_read_length	attributes
+rev_run_type	attributes
+rev_seq_id	attributes
+run_type	attributes
+sd_above_insert_size
+sd_below_insert_size
+sd_insert_size
+sequencing_platform
+short_name
+subclass_name
+target_region_set_name	attributes
+
+i:
+barcode	attributes
+base_count	attributes
+blacklisted_segments	attributes
+description	attributes
+fragment_count	attributes
+full_name
+fwd_read_length	attributes
+genotype_file	attributes
+import_date	attributes
+import_format	attributes
+import_source_name	attributes
+is_paired_end	attributes
+median_insert_size	attributes
+original_data_path	attributes
+read_count	attributes
+read_length	attributes
+reference_sequence_build
+reference_sequence_build_id	attributes
+rev_read_length	attributes
+sd_above_insert_size	attributes
+source	sample
+source_id	source
+source_name	source
+sra_accession	attributes
+sra_sample_id	attributes
+subclass_name
+target_region_set_name	attributes
+user_name	attributes
+
+f:
+_fasta_file
+_qual_file
+beads_loaded	attributes
+copies_per_bead	attributes
+fc_id	attributes
+incoming_dna_name	attributes
+index_sequence	attributes
+is_paired_end	attributes
+key_pass_wells	attributes
+predicted_recovery_beads	attributes
+read_count	attributes
+region_id	attributes
+region_number	attributes
+research_project	attributes
+sample_set	attributes
+sequencing_platform
+sff_file	attributes
+ss_id	attributes
+subclass_name
+supernatant_beads	attributes
+total_bases_read	attributes
+total_key_pass	attributes
+total_raw_wells	attributes
+total_reads	attributes
+
+g:
+disk_allocation
+read_count
+research_project	attributes
+sequencing_platform
+subclass_name
+

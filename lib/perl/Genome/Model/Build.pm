@@ -243,6 +243,24 @@ sub __display_name__ {
     return $self->id . ' of ' . $self->model->name;
 }
 
+sub data_set_path {
+    my ($self, $dataset, $version, $file_format) = @_;
+    my $path;
+    
+    if ($version and $file_format) {
+        $version =~ s/^v//;
+        $path = $self->data_directory."/$dataset.v$version.$file_format";
+    }
+    elsif ($file_format) {
+        # example $b->data_set_path('alignments/tumor/','','flagstat')
+        my @paths = glob($self->data_directory."/$dataset".'*.'.$file_format);
+        return unless @paths == 1;
+        $path = $paths[0];
+    }
+    return $path if -e $path;
+    return;
+}
+
 # TODO Remove this
 sub _resolve_subclass_name_by_sequencing_platform { # only temporary, subclass will soon be stored
     my $class = shift;
@@ -1729,8 +1747,7 @@ sub abandon {
         $self->reallocate;
     }
 
-    $self->_unregister_software_results
-        or return;
+    $self->_deactivate_software_results;
 
     my %add_note_args = (header_text => $header_text);
     $add_note_args{body_text} = $body_text if defined $body_text;
@@ -1738,6 +1755,12 @@ sub abandon {
 
     Genome::Search->queue_for_update($self->model);
 
+    return 1;
+}
+
+sub _deactivate_software_results {
+    my $self = shift;
+    map{$_->active(0)} Genome::SoftwareResult::User->get(user_class_name => $self->subclass_name, user_id => $self->id);
     return 1;
 }
 

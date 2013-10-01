@@ -16,7 +16,6 @@ class Genome::Model::Tools::Validation::ProcessSomaticValidation {
           is => 'Text',
           doc => "Directory where output will be stored (under a subdirectory with the sample name)",
       },
-
       ],
 
   has_optional_input => [
@@ -111,7 +110,6 @@ class Genome::Model::Tools::Validation::ProcessSomaticValidation {
           doc => "only keep calls within the target regions. These are pulled from the build if possible",
       },
 
-
       get_readcounts =>{
           is => 'Boolean',
           is_optional => 1,
@@ -143,8 +141,15 @@ class Genome::Model::Tools::Validation::ProcessSomaticValidation {
       tiers_to_review => {
           is => 'String',
           is_optional => 1,
-          doc => "comma-separated list of tiers to include in review. (e.g. 1,2,3 will create bed files with tier1, tier2, and tier3)",
-          default => 1,
+          doc => "comma-separated list of tiers to include in review. (e.g. 1,2,3 will create bed files with tier1, tier2, and tier3).  Anything other than 1,2,3,4 (all tiers) requires that the --add-tiers option be specified",
+          default => "1,2,3,4",
+      },
+
+      statuses_to_review => {
+          is => 'String',
+          is_optional => 1,
+          doc => "comma-separated list of statuses to include in review. Accepted values: [validated,newcall,nonvalidated]",
+          default => "validated,newcall",
       },
 
       create_archive => {
@@ -541,6 +546,32 @@ sub execute {
       print STDERR "WARNING: Model ", $model->id, "has no succeeded builds\n";
       return undef;
   }
+
+  #validate that the statuses are valid
+  my @statuses = split(",",$self->statuses_to_review);
+  foreach my $i (@statuses){
+      unless($i =~ /^newcall$|^validated$|^nonvalidated$/){
+          print STDERR "ERROR: status $i is not a valid status to review. Status must be one of [validated,nonvalidated,newcall]";
+          die();
+      }
+  }
+
+  #make sure specified tiers are valid and that if anything other than
+  # all (tiers 1,2,3,4) is specified, that add-tiers is on
+  my @tiers = split(",",$self->tiers_to_review);
+  my $tstring = "";  
+  foreach my $t (sort(@tiers)){
+      unless ($t =~/^[1234]$/){
+          print STDERR "ERROR: $t is not a valid tier to review. tiers-to-review should be a comma-separated list containing only [1,2,3,4]";
+          die();          
+      }
+      $tstring .= $t
+  }
+  if(($tstring ne "1234") && !($self->add_tiers)){
+      print STDERR "ERROR: if a combination of tiers-to-review other than 1,2,3,4 is specified, --add-tiers must be specified. (otherwise I don't know how to grab the tiers you want for review!";
+      die();          
+  }
+
 
   my $ref_seq_build_id = $model->reference_sequence_build->build_id;
   my $ref_seq_build = Genome::Model::Build->get($ref_seq_build_id);
@@ -962,9 +993,16 @@ sub execute {
       for my $i (@tiers){
           `grep -w tier$i $output_dir/$sample_name/snvs.indels.annotated >>$output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp`;
       }
+      
+      my @statuses = split(",",$self->statuses_to_review);
+      foreach my $i (@statuses){
+          `grep -w $i $output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp >>$output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp2`;
+      }
+
       `joinx sort -i $output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp >$output_dir/$sample_name/snvs.indels.annotated.tier$tierstring`;
+      annoFileToSlashedBedFile("$output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp2","$output_dir/review/$sample_name.bed");
       `rm -f $output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp`;
-      annoFileToSlashedBedFile("$output_dir/$sample_name/snvs.indels.annotated.tier$tierstring","$output_dir/review/$sample_name.bed");
+      `rm -f $output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp2`;
 
       my @bam_files;
       my @labels;

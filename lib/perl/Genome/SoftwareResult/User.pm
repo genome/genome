@@ -32,6 +32,11 @@ class Genome::SoftwareResult::User {
             id_by => 'user_id',
             id_class_by => 'user_class_name',
         },
+        active => {
+            is => 'BOOLEAN',
+            doc => 'Results actively being used should not be deleted',
+            default => 1,
+        },
         label => {  },
     ],
     schema_name => 'GMSchema',

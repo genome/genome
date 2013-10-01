@@ -35,27 +35,6 @@ class Genome::InstrumentData::Imported {
             is_mutable => 1,
             where => [ attribute_label => 'original_data_path' ],
         },
-        import_format => {
-            is => 'Text',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'import_format' ],
-        },
-        import_source_name => {
-            is => 'Text',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'import_source_name' ],
-        },
-        description => {
-            is => 'Text',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'description' ],
-        },
         read_count => {
             is => 'Number',
             via => 'attributes',

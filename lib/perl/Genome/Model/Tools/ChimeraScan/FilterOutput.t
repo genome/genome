@@ -15,7 +15,7 @@ use Genome::Utility::Test;
 my $class = "Genome::Model::Tools::ChimeraScan::FilterOutput";
 
 use_ok($class);
-my $data_dir = Genome::Utility::Test->data_dir_ok($class, "v2");
+my $data_dir = Genome::Utility::Test->data_dir_ok($class, "v4");
 my $in = $data_dir."/chimeras.bedpe";
 my $out = Genome::Sys->create_temp_file_path;
 my $expected = $data_dir."/expected.txt";
