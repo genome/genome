@@ -66,6 +66,12 @@ class Genome::Disk::Allocation {
             len => 255,
             doc => 'The group specific subdirectory where space is allocated',
         },
+        status => {
+            is => 'Text',
+            valid_values => ['active', 'completed', 'purged', 'archived'],
+            doc => 'The current status of this allocation',
+            default_value => 'active',
+        },
         absolute_path => {
             calculate_from => [ 'mount_path', 'group_subdirectory', 'allocation_path' ],
             calculate => q( $self->_absolute_path($mount_path, $group_subdirectory, $allocation_path); ),
@@ -85,6 +91,7 @@ class Genome::Disk::Allocation {
             len => 11,
             is_optional => 1,
         },
+        #TODO - this shouldn't be optional - backfill?
         archive_after_time => {
             is => 'DateTime',
             len => 11,
