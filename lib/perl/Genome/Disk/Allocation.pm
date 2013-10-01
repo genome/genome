@@ -981,8 +981,10 @@ sub shadow_get_or_create {
     my %params = @_;
 
     my %create_extra_params;
-    if ($params{exclude_mount_path}) {
-        $create_extra_params{exclude_mount_path} = delete $params{exclude_mount_path};
+    for my $param (qw(exclude_mount_path)) {
+        if ($params{$param}) {
+            $create_extra_params{$param} = delete $params{$param};
+        }
     }
 
     unless ($params{allocation_path}) {
