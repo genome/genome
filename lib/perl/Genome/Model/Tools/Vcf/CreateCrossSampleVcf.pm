@@ -84,6 +84,7 @@ class Genome::Model::Tools::Vcf::CreateCrossSampleVcf {
     ],
     has_calculated_output => [
         output_vcf => {
+            is_optional => 1,
             is => 'File',
             calculate => q| File::Spec->join($output_directory, "$variant_type.merged.vcf.gz") |,
             calculate_from => [qw(output_directory variant_type)],
