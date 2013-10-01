@@ -981,7 +981,7 @@ sub shadow_get_or_create {
     my %params = @_;
 
     my %create_extra_params;
-    for my $param (qw(exclude_mount_path)) {
+    for my $param (qw(exclude_mount_path kilobytes_requested)) {
         if ($params{$param}) {
             $create_extra_params{$param} = delete $params{$param};
         }
@@ -1005,7 +1005,13 @@ sub shadow_get_or_create {
     );
 
     my $allocation = $class->get(%params);
-    unless ($allocation) {
+    if ($allocation) {
+        if ($create_extra_params{kilobytes_requested}) {
+            $allocation->reallocate(
+                kilobytes_requested => $create_extra_params{kilobytes_requested},
+            );
+        }
+    } else {
         $allocation = $class->create(%params, %create_extra_params);
     }
 
