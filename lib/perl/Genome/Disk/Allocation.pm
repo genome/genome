@@ -908,7 +908,7 @@ sub _unarchive {
                     $shadow_allocation->absolute_path, $self->absolute_path)));
         }
         $self->_update_owner_for_move;
-        $self->archivable(0, 'allocation was unarchived'); # Wouldn't want this to be immediately re-archived... trolololol
+        $self->archive_after_time($self->_default_archive_after_time());
 
         if ($old_absolute_path ne $self->absolute_path) {
             _symlink($old_absolute_path, $self->absolute_path);

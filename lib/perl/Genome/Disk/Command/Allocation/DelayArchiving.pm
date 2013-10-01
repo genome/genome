@@ -1,10 +1,11 @@
-package Genome::Disk::Command::Allocation::SetDoNotArchive;
+package Genome::Disk::Command::Allocation::DelayArchiving;
 
 use strict;
 use warnings;
 use Genome;
+use DateTime;
 
-class Genome::Disk::Command::Allocation::SetDoNotArchive {
+class Genome::Disk::Command::Allocation::DelayArchiving {
     is => 'Command::V2',
     has_optional => [
         allocations => {
@@ -16,15 +17,12 @@ class Genome::Disk::Command::Allocation::SetDoNotArchive {
             is => 'Text',
             doc => 'comma delimited list of paths, an attempt will be made to resolve them to allocations',
         },
-        reason => {
-            is => 'Text',
-            doc => 'reason for wanting these allocations/paths to not be archived',
-        },
+        _duration_property_for_commands(),
     ],
 };
 
 sub help_detail { 
-    return 'Given allocations and paths are set so they cannot be archived. Any paths that are given are resolved ' .
+    return 'Archiving of the given allocations and paths is delayed by 3 months (or the value you specified). Any paths that are given are resolved ' .
         'to allocations if possible, otherwise a warning is emitted.';
 }
 sub help_brief { return 'given allocations and paths are marked so they cannot be archived' };
@@ -33,10 +31,9 @@ sub help_synopsis { return help_brief() . "\n" };
 sub execute {
     my $self = shift;
     for my $allocation ($self->_resolve_allocations_from_paths, $self->allocations) {
-        next if !$allocation->archivable;
-        $allocation->archivable(0, $self->reason);
+        next unless $allocation;
+        $allocation->archive_after_time($self->_resolve_date_from_months($self->duration));
     }
-    $self->status_message("Allocations can no longer be archived");
     return 1;
 }
 
@@ -68,6 +65,24 @@ sub _resolve_allocations_from_paths {
         $self->warning_message("No allocation found for path $path");
     }
     return @allocations;
+}
+
+sub _resolve_date_from_months {
+    my ($self, $months) = @_;
+    return DateTime->now(time_zone => 'local')
+        ->add(months => $months)
+        ->strftime('%F %T');
+}
+
+sub _duration_property_for_commands {
+    {
+        duration => {
+            is => 'Number',
+            default_value => 3,
+            doc => 'The number of months to delay archiving',
+            valid_values => [1..12],
+        }
+    }
 }
 
 1;
