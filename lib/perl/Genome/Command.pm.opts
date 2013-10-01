@@ -300,17 +300,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>set-do-not-archive',
-      [
-        'allocations=s@',
-        undef,
-        'paths=s',
-        'files',
-        'reason=s',
-        'files',
-        'help!',
-        undef
-      ],
       '>deallocate',
       [
         'allocations=s@',
@@ -340,12 +329,14 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>set-archive',
+      '>delay-archiving',
       [
-        'reason=s',
-        'files',
         'allocations=s@',
         undef,
+        'paths=s',
+        'files',
+        'HASH(0x5045d80)=s',
+        'files',
         'help!',
         undef
       ],
@@ -838,8 +829,6 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    'setdonotarchive',
-    undef,
     '>delete',
     [
       'projects=s@',
@@ -856,6 +845,8 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    'delayarchiving',
+    undef,
     '>update',
     [
       '>parts',
@@ -3330,15 +3321,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      'help!',
-      undef
-    ],
-    '>set-do-not-archive',
-    [
-      'reason=s',
-      'files',
-      'models=s@',
-      undef,
       'help!',
       undef
     ],
@@ -8279,6 +8261,15 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>delay-archiving',
+      [
+        'HASH(0x128f05d0)=s',
+        'files',
+        'builds=s@',
+        undef,
+        'help!',
+        undef
+      ],
       '>diff',
       [
         'new-build=s',
@@ -8375,24 +8366,6 @@ $Genome::Command::OPTS_SPEC = [
         'debug!',
         undef,
         'models=s@',
-        undef,
-        'help!',
-        undef
-      ],
-      '>set-archive',
-      [
-        'reason=s',
-        'files',
-        'builds=s@',
-        undef,
-        'help!',
-        undef
-      ],
-      '>set-do-not-archive',
-      [
-        'reason=s',
-        'files',
-        'builds=s@',
         undef,
         'help!',
         undef
@@ -8724,6 +8697,15 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>delay-archiving',
+    [
+      'HASH(0xbb9acc8)=s',
+      'files',
+      'models=s@',
+      undef,
+      'help!',
+      undef
+    ],
     '>update',
     [
       '>apipe-cron-status',
@@ -8810,15 +8792,6 @@ $Genome::Command::OPTS_SPEC = [
       'color!',
       undef,
       'debug!',
-      undef,
-      'help!',
-      undef
-    ],
-    '>set-do-not-archive',
-    [
-      'reason=s',
-      'files',
-      'model-groups=s@',
       undef,
       'help!',
       undef
@@ -9090,6 +9063,15 @@ $Genome::Command::OPTS_SPEC = [
       'debug!',
       undef,
       'model-group=s',
+      undef,
+      'help!',
+      undef
+    ],
+    '>delay-archiving',
+    [
+      'HASH(0x12f6f4a0)=s',
+      'files',
+      'model-groups=s@',
       undef,
       'help!',
       undef
