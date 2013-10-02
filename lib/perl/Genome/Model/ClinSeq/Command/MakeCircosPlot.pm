@@ -45,24 +45,28 @@ EOS
 sub execute {
     my $self = shift;
     
-    my $hello =<<EOS;
-hello
-EOS
-
-	$hello.=<<EOS;
-World!
-EOS
-
-
-    $self->warning_message("!!!!!!!!!!!!!!! This module is under development and does not run yet !!!!!!!!!!!!!!!!");
+	#TODO Determine what data types should be required to run this tool
+	#TODO code for wgs+exome and wgs+rna only
+	
+	
+	# grab params from $self
+	my $build = $self->build;
+	my $wgs_build = $build->wgs_build;
+	
+	unless($wgs_build){
+    	$self->status_message("There is no WGS build for this Clinseq build. This tool cannot be run");
+        return;
+    }
     
-    # grab params from $self
-    my $build = $self->build;
-    my $output_directory = $self->output_directory;
+
+	my $output_directory = $self->output_directory;
+
     $self->status_message("Running on build " . $build->__display_name__); 
     $self->status_message("Output directory is " . $self->output_directory);
 
-	#TODO Remove when done testing
+
+
+    #TODO Remove when done testing
     #Remove circos.conf for testing purposes
     system("yes| rm -r $output_directory");
 
@@ -71,17 +75,17 @@ EOS
         # this module has wrappers which do logging, throw exceptions, around regular tasks
         Genome::Sys->create_directory($output_directory);
     }
-	unless (-d "$output_directory/data"){
-		Genome::Sys->create_directory("$output_directory/data");
-	}
-	
-	unless (-d "$output_directory/raw"){
-		Genome::Sys->create_directory("$output_directory/raw");
-	}
-    
-    
+    unless (-d "$output_directory/data"){
+        Genome::Sys->create_directory("$output_directory/data");
+    }
+
+    unless (-d "$output_directory/raw"){
+        Genome::Sys->create_directory("$output_directory/raw");
+    }
+
+
     my $dataDir = $build->data_directory . "/" . $build->common_name;
-    
+
     my $config =<<EOS;
 # Chromosome name, size and color definition
 karyotype = data/karyotype/karyotype.human.txt
@@ -173,26 +177,20 @@ band_transparency = 4
 
 #</ticks>
 EOS
-   
-    
-	#Gene hash is a union of all of the different genes in each file used for the gene annotations on the plot.
+
+
+    #Gene hash is a union of all of the different genes in each file used for the gene annotations on the plot.
     my %genes ;
-    
-    
 
-    
-    
-
-	
-	###Candidate Fusions
-	Genome::Sys->copy_file("$dataDir/sv/CandidateSvCodingFusions.tsv", "$output_directory/raw/CandidateSvCodingFusions.tsv");
-	my $candidate_fusions = Genome::Sys->read_file("$output_directory/raw/CandidateSvCodingFusions.tsv");
-	my $candidate_fusions_fh = Genome::Sys->open_file_for_writing("$output_directory/data/CandidateSvCodingFusions.txt");
+    #TODO I am assuming that this comes from the WGS data. I am not sure on this, however if it does not the <links> tag needs to be brought out of the conf section here
+    ###Candidate Fusions
+    Genome::Sys->copy_file("$dataDir/sv/CandidateSvCodingFusions.tsv", "$output_directory/raw/CandidateSvCodingFusions.tsv");
+    my $candidate_fusions = Genome::Sys->read_file("$output_directory/raw/CandidateSvCodingFusions.tsv");
+    my $candidate_fusions_fh = Genome::Sys->open_file_for_writing("$output_directory/data/CandidateSvCodingFusions.txt");
     while ($candidate_fusions =~ /(\S+)\s+(\S+)\s+chr(\S+):(\d+)-(\d+)\s+chr(\S+):(\d+)-(\d+)/g) {
-    	#TODO is using these coordinants accepatble?
-    	$genes{$1}="hs$3\t$4\t$5";
-    	$genes{$2}="hs$6\t$7\t$8";
-    	print $candidate_fusions_fh ("hs$3 $4 $5 hs$6 $7 $8\n");
+        $genes{$1}="hs$3\t$4\t$5";
+        $genes{$2}="hs$6\t$7\t$8";
+        print $candidate_fusions_fh ("hs$3 $4 $5 hs$6 $7 $8\n");
     }
     $candidate_fusions_fh->close;
     $config .=<<EOS;
@@ -207,20 +205,20 @@ thickness     = 2
 </link>
 
 EOS
-    
-    ###Fusions
-    #TODO /gscmnt/gc8001/info/model_data/9761cf3dbb73452980890eaf0e8aadb0/buildf4af67af82b94727bb4ac30554503e4b/fusions/chimeras.bedpe.filtered.txt
-#    if(my $tumor_rnaseq_build = $build->tumor_rnaseq_build){
-#    	Genome::Sys->copy_file($tumor_rnaseq_build->data_directory."/fusions/chimeras.bedpe.filtered.txt", "$output_directory/raw/chimeras.bedpe.filtered.txt");
-#		my $fusions = Genome::Sys->read_file("$output_directory/raw/chimeras.bedpe.filtered.txt");
-#		my $fusions_fh = Genome::Sys->open_file_for_writing("$output_directory/data/chimeras.bedpe.filtered.txt");
+
+###Fusions
+#TODO /gscmnt/gc8001/info/model_data/9761cf3dbb73452980890eaf0e8aadb0/buildf4af67af82b94727bb4ac30554503e4b/fusions/chimeras.bedpe.filtered.txt
+#    	if(my $tumor_rnaseq_build = $build->tumor_rnaseq_build){
+#    		Genome::Sys->copy_file($tumor_rnaseq_build->data_directory."/fusions/chimeras.bedpe.filtered.txt", "$output_directory/raw/chimeras.bedpe.filtered.txt");
+#			my $fusions = Genome::Sys->read_file("$output_directory/raw/chimeras.bedpe.filtered.txt");
+#			my $fusions_fh = Genome::Sys->open_file_for_writing("$output_directory/data/chimeras.bedpe.filtered.txt");
 #   		while ($fusions =~ /(\S+)\s+(\S+)\s+chr(\S+):(\d+)-(\d+)\s+chr(\S+):(\d+)-(\d+)/g) {
-#    		$genes{$1}="hs$3 $4 $5";
-#    		$genes{$2}="hs$6 $7 $8";
-#    		print $fusions_fh ("hs$3 $4 $5 hs$6 $7 $8\n");
-#    	}
-#    	$fusions_fh->close;
-#		$config .=<<EOS;
+#    			$genes{$1}="hs$3 $4 $5";
+#    			$genes{$2}="hs$6 $7 $8";
+#    			print $fusions_fh ("hs$3 $4 $5 hs$6 $7 $8\n");
+#    		}
+#    		$fusions_fh->close;
+#			$config .=<<EOS;
 #Fusions RNAseq support
 #<link>
 #file          = $output_directory/data/chimeras.bedpe.filtered.txt
@@ -230,58 +228,58 @@ EOS
 #thickness     = 2
 #</link>		
 #EOS
-#   }
-   
-   $config.=<<EOS;
+#   	}
+
+    $config.=<<EOS;
 </links>
 
 EOS
- 
-	$config.=<<EOS;
-	
+
+    $config.=<<EOS;
+
 <plots>
 EOS
 
-   
 
 
-	###Deletions and Focal Amplifications
-	Genome::Sys->copy_file("$dataDir/clonality/cnaseq.cnvhmm", "$output_directory/raw/cnaseq.cnvhmm");
+
+    ###Deletions and Focal Amplifications
+    Genome::Sys->copy_file("$dataDir/clonality/cnaseq.cnvhmm", "$output_directory/raw/cnaseq.cnvhmm");
     my $deletions_and_focal_amps = Genome::Sys->read_file("$output_directory/raw/cnaseq.cnvhmm");
     my $deletions_fh = Genome::Sys->open_file_for_writing("$output_directory/data/deletions.txt");
     my $focal_amps_fh = Genome::Sys->open_file_for_writing("$output_directory/data/focalAmps.txt");
     while ($deletions_and_focal_amps =~ /(\S+)\s(\d+)\s(\d+)\s\d+\s\d+\s\d+\s(\S+)\s\d+\s(\S+)\s\S+\s(\S+)/g) {
-		
-		if($6 eq "Loss"){
-			my $loss;
-			if($4<$5){
-				$loss = $4-$5;
-			}else{
-				$loss = $5-$4;
-			}
-			#this is the max deletion threshold
-			if($loss>2){
-				$loss=2;
-			}
-			print $deletions_fh ("hs$1 $2 $3 $loss\n");
-		}else{
-			my $gain;
-			if($4>$5){
-				$gain = $4-$5;
-			}else{
-				$gain = $5-$4;
-			}
-			#this is the max amplification threshold
-			if($gain>6){
-				$gain=6;
-			}
-			print $focal_amps_fh ("hs$1 $2 $3 $gain\n");
-		}
-        
+    
+        if($6 eq "Loss"){
+            my $loss;
+            if($4<$5){
+                $loss = $4-$5;
+            }else{
+                $loss = $5-$4;
+            }
+            #this is the max deletion threshold
+            if($loss>2){
+                $loss=2;
+            }
+            print $deletions_fh ("hs$1 $2 $3 $loss\n");
+        }else{
+            my $gain;
+            if($4>$5){
+                $gain = $4-$5;
+            }else{
+                $gain = $5-$4;
+            }
+            #this is the max amplification threshold
+            if($gain>6){
+                $gain=6;
+            }
+            print $focal_amps_fh ("hs$1 $2 $3 $gain\n");
+        }
+    
     }
     $deletions_fh->close;
     $focal_amps_fh->close;
-    
+
     $config .=<<EOS;
 
 #DELETIONS DATA
@@ -289,7 +287,7 @@ EOS
 # The type sets the format of the track.
 type = histogram
 file = $output_directory/data/deletions.txt
-min=-2
+min=-1
 max=2
 
 # The track is confined within r0/r1 radius limits. When using the
@@ -307,7 +305,7 @@ thickness = 0p
 
 # Do not join histogram bins that do not abut.
 extend_bin = no
-orientation = in
+orientation = out
 
 #Draw background to highlight track
 <backgrounds>
@@ -326,7 +324,7 @@ color     = lgrey
 spacing   = 0.1666666666r
 </axis>
 <axis>
-position   = 0.5r
+position   = 0.333333333r
 color      = black
 </axis>
 </axes>
@@ -337,7 +335,7 @@ color      = black
 # The type sets the format of the track.
 type = histogram
 file = $output_directory/data/focalAmps.txt
-min=-2
+min=-1
 max=2
 
 # The track is confined within r0/r1 radius limits. When using the
@@ -355,33 +353,38 @@ thickness = 0p
 
 # Do not join histogram bins that do not abut.
 extend_bin = no
-orientation = in
+orientation = out
 
 </plot>
 EOS
 
     ###Differential Expression
-    #TODO if there is a rnatumor and normal build plot the DE if not plot the overall expression  of the tumor
-    
+    # Ditterential Expression data is only included if rnaseq builds are present for tumor and normal
+    # If not the rna expression is displayed in this track.
 
-    Genome::Sys->copy_file("$dataDir/rnaseq/cufflinks_differential_expression/genes/case_vs_control.coding.hq.de.tsv", "$output_directory/raw/case_vs_control.coding.hq.de.tsv");   
-	my $diffExpression = Genome::Sys->read_file("$output_directory/raw/case_vs_control.coding.hq.de.tsv");
-	my $diffExpression_fh = Genome::Sys->open_file_for_writing("$output_directory/data/case_vs_control.coding.hq.de.txt");
-    while ($diffExpression =~ /ENS\w+\s(\w+)\s\S+\s\S+\s(\w+):(\d+)-(\d+)\s\S+\s\S+\s\S+\s\S+\s\S+\s\S+\s\S+\s\S+\s(\S+)/g) {
-    	$genes{$1}="hs$2\t$3\t$4";
-     	if($5>=2 || $5<=-2){
-     		print $diffExpression_fh ("hs$2 $3 $4 $5\n");
-     	}
-    }
-    $diffExpression_fh->close;    
-
-	$config.=<<EOS;
+    if($build->normal_rnaseq_build){
+        Genome::Sys->copy_file("$dataDir/rnaseq/cufflinks_differential_expression/genes/case_vs_control.coding.hq.de.tsv", "$output_directory/raw/case_vs_control.coding.hq.de.tsv");   
+        my $diffExpression = Genome::Sys->read_file("$output_directory/raw/case_vs_control.coding.hq.de.tsv");
+        my $diffExpressionPositive_fh = Genome::Sys->open_file_for_writing("$output_directory/data/case_vs_control.coding.hq.de.positive.txt");
+        my $diffExpressionNegative_fh = Genome::Sys->open_file_for_writing("$output_directory/data/case_vs_control.coding.hq.de.negative.txt");
+        while ($diffExpression =~ /ENS\w+\s(\w+)\s\S+\s\S+\s(\w+):(\d+)-(\d+)\s\S+\s\S+\s\S+\s\S+\s\S+\s\S+\s\S+\s\S+\s(\S+)/g) {
+            $genes{$1}="hs$2\t$3\t$4";
+            if($5>=2){
+                print $diffExpressionPositive_fh ("hs$2 $3 $4 $5\n");
+            }elsif($5<=-2){
+            	print $diffExpressionNegative_fh ("hs$2 $3 $4 $5\n");
+            }
+        }
+        $diffExpressionPositive_fh->close;    
+		$diffExpressionNegative_fh->close;    
+		
+        $config.=<<EOS;
 
 #DIFFERENTIAL EXPRESSION DATA 
 <plot>
 # The type sets the format of the track.
 type = histogram
-file = $output_directory/data/case_vs_control.coding.hq.de.txt
+file = $output_directory/data/case_vs_control.coding.hq.de.positive.txt
 min=-10
 max=10 #Cap, otherwise outliers hide everything
 
@@ -400,7 +403,7 @@ thickness = 0p
 
 # Do not join histogram bins that do not abut.
 extend_bin = no
-orientation = in
+orientation = out
 
 #Draw background to highlight track
 <backgrounds>
@@ -421,63 +424,159 @@ spacing   = 0.1r
 </axes>
 
 </plot>
-		
+    
+<plot>
+# The type sets the format of the track.
+type = histogram
+file = $output_directory/data/case_vs_control.coding.hq.de.negative.txt
+min=-10
+max=10 #Cap, otherwise outliers hide everything
+
+# The track is confined within r0/r1 radius limits. When using the
+# relative "r" suffix, the values are relative to the position of the ideogram.
+r1   = 0.80r
+r0   = 0.70r
+
+# Histograms can have both a fill and outline. The default outline is 1px thick black.
+fill_color = blue
+
+# To turn off default outline, set the outline thickness to zero. If
+# you want to permanently disable this default, edit
+# etc/tracks/histogram.conf in the Circos distribution.
+thickness = 0p
+
+# Do not join histogram bins that do not abut.
+extend_bin = no
+orientation = out
+
+</plot>
+
+EOS
+    
+    }else{
+        my $tumor_rnaseq_build=$build->tumor_rnaseq_build;
+        Genome::Sys->copy_file("$dataDir/rnaseq/tumor/cufflinks_expression_absolute/genes/genes.fpkm.expsort.top1percent.tsv", "$output_directory/raw/genes.fpkm.expsort.top1percent.tsv");   
+        my $expression = Genome::Sys->read_file("$output_directory/raw/genes.fpkm.expsort.top1percent.tsv");
+        my $expression_fh = Genome::Sys->open_file_for_writing("$output_directory/data/genes.fpkm.expsort.top1percent.tsv");
+        while ($expression =~ /\w+\t(\w+)\t\w+\t\w+\t(\w+):(\d+)-(\d+)\t\w+\t\w+\t(\S+)/g) {
+            $genes{$1}="hs$2\t$3\t$4";
+            #if($5>=2 || $5<=-2){ Is this necessary
+                print $expression_fh ("hs$2 $3 $4 ".log($5)/log(2)."\n");
+            #}
+        }
+        $expression_fh->close;    
+
+        $config.=<<EOS;
+
+#RNA EXPRESSION DATA 
+<plot>
+# The type sets the format of the track.
+type = histogram
+file = $output_directory/data/genes.fpkm.expsort.top1percent.tsv
+min=0
+max=15 #Cap, otherwise outliers hide everything
+
+# The track is confined within r0/r1 radius limits. When using the
+# relative "r" suffix, the values are relative to the position of the ideogram.
+r1   = 0.80r
+r0   = 0.70r
+
+# Histograms can have both a fill and outline. The default outline is 1px thick black.
+fill_color = red
+
+# To turn off default outline, set the outline thickness to zero. If
+# you want to permanently disable this default, edit
+# etc/tracks/histogram.conf in the Circos distribution.
+thickness = 0p
+
+# Do not join histogram bins that do not abut.
+extend_bin = no
+orientation = out
+
+#Draw background to highlight track
+<backgrounds>
+show  = yes
+<background>
+color = vvlgrey
+</background>
+</backgrounds>
+
+#Draw axes lines
+<axes>
+show = yes
+thickness = 1
+color     = lgrey
+<axis>
+spacing   = 0.1r
+</axis>
+</axes>
+
+</plot>
+    
 
 
 EOS
-		
+    }
 
-    
     ### Tier1 SNVs and INDELs
-	#decides which somatic variation model to use
-    my $wgs_build = $build->wgs_build;
+    #decides which somatic variation model to use
+    #my $wgs_build = $build->wgs_build; #WGS build required at beginning of execute
     my $exo_build = $build->exome_build;
     my $som_var_data_dir;
     if($wgs_build && $exo_build){
-    	$som_var_data_dir=$exo_build->data_directory."/effects";
+        $som_var_data_dir=$exo_build->data_directory."/effects";
     }elsif($exo_build){
-    	$som_var_data_dir=$exo_build->data_directory."/effects";
+        $som_var_data_dir=$exo_build->data_directory."/effects";
     }else{
-    	$som_var_data_dir=$exo_build->data_directory."/effects";
+        $som_var_data_dir=$exo_build->data_directory."/effects";
     }
-    Genome::Sys->copy_file("$som_var_data_dir/snvs.hq.tier1.v1.annotated.top.header", "$output_directory/raw/snvs.hq.tier1.v1.annotated.top.header");
-    Genome::Sys->copy_file("$som_var_data_dir/indels.hq.tier1.v1.annotated.top.header", "$output_directory/raw/indels.hq.tier1.v1.annotated.top.header");
-    
+    Genome::Sys->copy_file("$som_var_data_dir/snvs.hq.tier1.v1.annotated.top", "$output_directory/raw/snvs.hq.tier1.v1.annotated.top");
+    Genome::Sys->copy_file("$som_var_data_dir/indels.hq.tier1.v1.annotated.top", "$output_directory/raw/indels.hq.tier1.v1.annotated.top");
+
     #SNV
-	my $snv_file = Genome::Sys->read_file("$output_directory/raw/snvs.hq.tier1.v1.annotated.top.header");
-	my $snv_fh = Genome::Sys->open_file_for_writing("$output_directory/data/snvs.hq.tier1.v1.annotated.top.header.txt");
+    my $snv_file = Genome::Sys->read_file("$output_directory/raw/snvs.hq.tier1.v1.annotated.top");
+    my $snv_fh = Genome::Sys->open_file_for_writing("$output_directory/data/snvs.hq.tier1.v1.annotated.top.txt");
     while ($snv_file =~ /(\S+)\s+(\d+)\s+(\d+)\s+\S+\s+\S+\s+\S+\s+(\S+)\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+(\S+)\s+.+/g) {
-        #TODO double check to see if this should be 0.5 in the third col every time
+    
         $genes{$4}="hs$1\t$2\t$3";
         print $snv_fh "hs$1 $2 $3 0.5 ";
         switch($5){
-        	case "nonsense"			{print $snv_fh "fill_color=red\n"}
-        	case "missense"			{print $snv_fh "fill_color=purple\n"}
-        	case "silent"			{print $snv_fh "fill_color=green\n"}
-        	case "splice_site"		{print $snv_fh "fill_color=blue\n"}
-        	case "rna"				{print $snv_fh "fill_color=yellow\n"}
-        	case "nonstop"			{print $snv_fh "fill_color=orange\n"}
+            case "nonsense"			{print $snv_fh "fill_color=goldenrod\n"}
+            case "missense"			{print $snv_fh "fill_color=blue\n"}
+            case "silent"			{print $snv_fh "fill_color=green\n"}
+            case "splice_site"		{print $snv_fh "fill_color=black\n"}
+            case "rna"				{print $snv_fh "fill_color=purple\n"}
+            case "nonstop"			{print $snv_fh "fill_color=black\n"}
         }
-        
+    
     }
     $snv_fh->close;
-	
-	#Indel
-	my $indel_file = Genome::Sys->read_file("$output_directory/raw/indels.hq.tier1.v1.annotated.top.header");
-	my $indel_fh = Genome::Sys->open_file_for_writing("$output_directory/data/indels.hq.tier1.v1.annotated.top.header.txt");
+
+    #Indel
+    my $indel_file = Genome::Sys->read_file("$output_directory/raw/indels.hq.tier1.v1.annotated.top");
+    my $indel_fh = Genome::Sys->open_file_for_writing("$output_directory/data/indels.hq.tier1.v1.annotated.top.txt");
     while ($indel_file =~ /(\S+)\s+(\d+)\s+(\d+)\s+\S+\s+\S+\s+\S+\s+(\S+)\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+(\S+)\s+.+/g) {
-       	#TODO double check to see if this should be 0.5 in the third col every time
-       	$genes{$4}="hs$1\t$2\t$3";
-        print $indel_fh "hs$1 $2 $3 0.5\n";
+    
+        $genes{$4}="hs$1\t$2\t$3";
+        print $indel_fh "hs$1 $2 $3 0.5 ";
+        switch($5){
+            case "in_frame_ins"			{print $indel_fh "fill_color=yellow\n"}
+            case "in_frame_del"			{print $indel_fh "fill_color=yellow\n"}
+            case "frame_shift_del"		{print $indel_fh "fill_color=teal\n"}
+            case "rna"					{print $indel_fh "fill_color=purple\n"}
+            case "frame_shift_ins"		{print $indel_fh "fill_color=red\n"}
+            case "splice_site_del"		{print $indel_fh "fill_color=black\n"}
+            case "splice_site_ins"		{print $indel_fh "fill_color=chocolate\n"}
+        }
     }
     $indel_fh->close;
-    
-	$config .=<<EOS;
+
+    $config .=<<EOS;
 #TIER 1 SNV DATA
 <plot>
 # The type sets the format of the track.
 type = histogram
-file = $output_directory/data/snvs.hq.tier1.v1.annotated.top.header.txt
+file = $output_directory/data/snvs.hq.tier1.v1.annotated.top.txt
 min=0
 max=0.5
 
@@ -513,7 +612,7 @@ color = vvlgrey
 <plot>
 # The type sets the format of the track.
 type = histogram
-file = $output_directory/data/indels.hq.tier1.v1.annotated.top.header.txt
+file = $output_directory/data/indels.hq.tier1.v1.annotated.top.txt
 min=0
 max=0.5
 
@@ -535,15 +634,14 @@ extend_bin = no
 orientation = out
 </plot>		
 EOS
-	###Gene List
-	#TODO union of all the gene lists from the different file types and annotate then present a given number
-	my $gene_fh = Genome::Sys->open_file_for_writing("$output_directory/raw/genes.txt");
-	print $gene_fh "chr\tstart\tend\tgene\n";
-	foreach my $gene(keys %genes){
-		print $gene_fh "$genes{$gene}\t$gene\n";
-	}
-	$gene_fh->close;
-	$config .=<<EOS;
+    ###Gene List
+    my $gene_fh = Genome::Sys->open_file_for_writing("$output_directory/raw/genes.txt");
+    print $gene_fh "chr\tstart\tend\tgene\n";
+    foreach my $gene(keys %genes){
+        print $gene_fh "$genes{$gene}\t$gene\n";
+    }
+    $gene_fh->close;
+    $config .=<<EOS;
 #GENE LABELS
 <plot>
 type  = text
@@ -586,26 +684,26 @@ snuggle_link_overlap_tolerance = 2p
 snuggle_refine        = yes
 
 </plot>
-		
+    
 EOS
-	Genome::Sys->shellcmd(cmd => "genome model clin-seq annotate-genes-by-category --infile=$output_directory/raw/genes.txt --cancer-annotation-db='tgi/cancer-annotation/human/build37-20130711.1' --gene-name-column='gene'");
-	#TODO Genome::Sys->shellcmd( doesnt work
-	system( "sort -rnk 102 $output_directory/raw/genes.catanno.txt|head -100 |cut -d \"\t\" -f 1-4  > $output_directory/data/genes.catanno.sorted.txt");
+    Genome::Sys->shellcmd(cmd => "genome model clin-seq annotate-genes-by-category --infile=$output_directory/raw/genes.txt --cancer-annotation-db='tgi/cancer-annotation/human/build37-20130711.1' --gene-name-column='gene'");
+    #TODO Genome::Sys->shellcmd( doesnt work
+    system( "sort -rnk 102 $output_directory/raw/genes.catanno.txt|head -100 |cut -d \"\t\" -f 1-4  > $output_directory/data/genes.catanno.sorted.txt");
 
 =cut    
-	# example accessing data:
+    # example accessing data:
     # get an input from the build
     my $wgs_build = $build->wgs_build;
-    
+
     TODO add error checking
     # all inputs are optional, so test for it being there before using it
     if ($wgs_build) {
         $self->status_message("This clinseq build has WGS somatic data, build: " . $wgs_build->__display_name__);
-       
+    
         # when you have a build, you can get the path for a file in the data directory through an API call
         my $wgs_somatic_snvs_tier1_path = $wgs_build->data_set_path('effects/snvs.hq.novel.tier1','2','bed');
         $self->status_message("WGS somatic variants are at $wgs_somatic_snvs_tier1_path");
-        
+    
         # the above is the same as the following, but the following circumvents the API
         #my $wgs_somatic_snvs_tier1_path = $wgs_build->data_directory . '/effects/snvs.hq.novel.tier1.v2.bed'; 
     }
@@ -618,11 +716,18 @@ EOS
 =cut
 
 
-    
 
-	$config.=<<EOS;
+
+    $config.=<<EOS;
 
 </plots>
+
+<colors>
+goldenrod = 218,165,32
+teal = 180,100,25
+chocolate = 210,105,30
+magenta = 300,100,50
+</colors>
 
 ################################################################
 # The remaining content is standard and required. It is imported from
@@ -649,16 +754,15 @@ EOS
     my $out_fh = Genome::Sys->open_file_for_writing("$output_directory/circos.conf");
     print $out_fh $config;
     $out_fh->close;
-    
+
     # run circos using the correct path for the specified version
     # errors will throw an exception
 
     my $path_to_circos_executable = Genome::Sys->sw_path("circos",$self->use_version);
     $self->status_message("using path $path_to_circos_executable");
     Genome::Sys->shellcmd(cmd => "cd $output_directory; $path_to_circos_executable -conf ./circos.conf");
-    
-    
-    
+
+
     return 1;
 }
 
