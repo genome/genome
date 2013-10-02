@@ -77,7 +77,7 @@ class Genome::Model::Tools::BamQc::Run {
         picard_maximum_memory => {
             is => 'Text',
             doc => 'The maximum amount of memory for Picard to use.  See gmt picard --help for details.',
-            default_value => '30',
+            default_value => '14',
         },
         picard_maximum_permgen_memory => {
             is => 'Text',
