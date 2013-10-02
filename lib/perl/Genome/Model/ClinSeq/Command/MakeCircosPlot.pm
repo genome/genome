@@ -532,7 +532,7 @@ EOS
     }elsif($exo_build){
         $som_var_data_dir=$exo_build->data_directory."/effects";
     }else{
-        $som_var_data_dir=$exo_build->data_directory."/effects";
+        $som_var_data_dir=$wgs_build->data_directory."/effects";
     }
     Genome::Sys->copy_file("$som_var_data_dir/snvs.hq.tier1.v1.annotated.top", "$output_directory/raw/snvs.hq.tier1.v1.annotated.top");
     Genome::Sys->copy_file("$som_var_data_dir/indels.hq.tier1.v1.annotated.top", "$output_directory/raw/indels.hq.tier1.v1.annotated.top");
