@@ -108,16 +108,21 @@ sub execute {
 
     $self->status_message("Resolving Builds...");
     my $builds = $self->_resolve_builds();
-    my $software_result = Genome::Model::Tools::Vcf::CreateCrossSampleVcf::Result->get_or_create(
-            builds => $builds,
-            max_files_per_merge => $self->max_files_per_merge,
-            variant_type => $self->variant_type,
-            roi_list => $self->roi_list,
-            wingspan => $self->wingspan,
-            allow_multiple_processing_profiles => $self->allow_multiple_processing_profiles,
-            joinx_version => $self->joinx_version,
-            test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+    my %params = (
+        builds => $builds,
+        max_files_per_merge => $self->max_files_per_merge,
+        variant_type => $self->variant_type,
+        roi_list => $self->roi_list,
+        wingspan => $self->wingspan,
+        allow_multiple_processing_profiles => $self->allow_multiple_processing_profiles,
+        joinx_version => $self->joinx_version,
+        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
     );
+    unless($self->roi_list){
+       delete $params{'roi_list'};
+       delete $params{'wingspan'};
+    }
+    my $software_result = Genome::Model::Tools::Vcf::CreateCrossSampleVcf::Result->get_or_create(%params);
     $self->status_message("Got or created software result with id "
         . $software_result->id . " (test_name='" . $software_result->test_name . "')");
     Genome::Sys->symlink_directory($software_result->output_dir,
@@ -138,10 +143,10 @@ sub generate_result {
     $self->_validate_inputs($builds);
 
     $self->status_message("Constructing Workflow...");
-    my ($workflow, $variant_type_specific_inputs) = $self->_construct_workflow;
+    my ($workflow, $variant_type_specific_inputs, $region_limiting_specific_inputs) = $self->_construct_workflow;
 
     $self->status_message("Getting Workflow Inputs...");
-    my $inputs = $self->_get_workflow_inputs($builds, $variant_type_specific_inputs);
+    my $inputs = $self->_get_workflow_inputs($builds, $variant_type_specific_inputs, $region_limiting_specific_inputs);
 
     $self->status_message("Running Workflow...");
     my $result = Workflow::Simple::run_workflow_lsf($workflow, %$inputs);
@@ -262,16 +267,25 @@ sub _construct_workflow {
 
     my $xml_file;
     my $variant_type_specific_inputs;
-    if ($self->roi_list) {
-        if ($self->variant_type eq 'indels') {
+    my $region_limiting_specific_inputs;
+    if ($self->variant_type eq 'indels') {
+        if ($self->roi_list){
             $xml_file = "RegionLimitAndBackfillIndelVcf.xml";
-            $variant_type_specific_inputs = $self->get_indel_inputs;
-        } elsif ($self->variant_type eq 'snvs') {
-            $xml_file = "RegionLimitAndBackfillSnvVcf.xml";
-            $variant_type_specific_inputs = $self->get_snv_inputs;
+            $region_limiting_specific_inputs = $self->_get_region_limiting_specific_inputs;
+        } else{
+            $xml_file = "MergeAndBackfillIndelVcf.xml";
+            $region_limiting_specific_inputs = $self->_get_non_region_limiting_specific_inputs;
         }
-    } else {
-        $xml_file = '';
+        $variant_type_specific_inputs = $self->get_indel_inputs;
+    } elsif ($self->variant_type eq 'snvs') {
+        if($self->roi_list){
+            $xml_file = "RegionLimitAndBackfillSnvVcf.xml";
+            $region_limiting_specific_inputs = $self->_get_region_limiting_specific_inputs;
+        } else{
+            $xml_file = "MergeAndBackfillSnvVcf.xml";
+            $region_limiting_specific_inputs = $self->_get_non_region_limiting_specific_inputs;
+        }
+        $variant_type_specific_inputs = $self->get_snv_inputs;
     }
 
     (my $base_dir = __FILE__) =~ s/\.pm$//;
@@ -280,7 +294,7 @@ sub _construct_workflow {
     my $workflow = Workflow::Operation->create_from_xml($xml);
     $workflow->log_dir($self->output_directory);
 
-    return $workflow, $variant_type_specific_inputs;
+    return $workflow, $variant_type_specific_inputs, $region_limiting_specific_inputs;
 }
 
 sub get_vcf_accessor {
@@ -289,22 +303,13 @@ sub get_vcf_accessor {
 }
 
 sub _get_workflow_inputs {
-    my ($self, $builds, $variant_type_specific_inputs) = @_;
+    my ($self, $builds, $variant_type_specific_inputs, $region_limiting_specific_inputs) = @_;
 
     my $reference_sequence_build = $builds->[0]->reference_sequence_build;
     my $ref_fasta = $reference_sequence_build->full_consensus_path('fa');
-    my $region_limiting_output_directory = $self->prepare_region_limiting_output_directory();
     $self->prepare_vcf_merge_working_directories();
 
     my %inputs = (
-        # RegionLimitVcf
-        builds => $builds,
-        region_limiting_output_directory => $region_limiting_output_directory,
-        variant_type => $self->variant_type,
-        region_bed_file => $self->get_roi_file($reference_sequence_build),
-        roi_name => $self->roi_list->name,
-        wingspan => $self->wingspan,
-
         # InitialVcfMerge
         use_bgzip => 1,
         joinx_version => $self->joinx_version,
@@ -314,7 +319,10 @@ sub _get_workflow_inputs {
 
         # Backfill(Indel)Vcf
         ref_fasta => $ref_fasta,
+
         %$variant_type_specific_inputs,
+
+        %$region_limiting_specific_inputs,
 
         # FinalVcfMerge
         final_vcf_merge_working_directory => $self->final_vcf_merge_working_directory,
@@ -349,6 +357,40 @@ sub get_snv_inputs {
         samtools_params => $samtools_params,
     );
     return \%inputs;
+}
+
+sub _get_non_region_limiting_specific_inputs {
+    my $self = shift;
+    my @vcf_files = $self->_get_vcf_files;
+    my %inputs = (
+            vcf_files => \@vcf_files,
+    );
+
+    return \%inputs
+}
+
+sub _get_region_limiting_specific_inputs {
+    my $self = shift;
+    my @builds = $self->builds;
+    my $region_limiting_output_directory = $self->prepare_region_limiting_output_directory();
+    my $reference_sequence_build = $builds[0]->reference_sequence_build;
+    my %inputs = (
+        variant_type => $self->variant_type,
+        builds => \@builds,
+        region_limiting_output_directory => $region_limiting_output_directory,
+        roi_name => $self->roi_list->name,
+        wingspan => $self->wingspan,
+        region_bed_file => $self->get_roi_file($reference_sequence_build),
+    );
+
+    return \%inputs;
+}
+
+sub _get_vcf_files {
+    my $self = shift;
+    my @builds = $self->builds;
+    my $accessor = $self->get_vcf_accessor;
+    return map{$_->$accessor} @builds;
 }
 
 sub build_clumps {

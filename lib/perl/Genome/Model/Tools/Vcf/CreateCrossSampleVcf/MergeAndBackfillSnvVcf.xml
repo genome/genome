@@ -1,0 +1,95 @@
+<?xml version='1.0' standalone='yes'?>
+<workflow name="MergeAndBackfillSnvVcf">
+    <!-- InitialVcfMerge -->
+    <link fromOperation="input connector" fromProperty='vcf_files' toOperation="InitialVcfMerge" toProperty="input_files" />
+    <link fromOperation="input connector" fromProperty="use_bgzip" toOperation="InitialVcfMerge" toProperty="use_bgzip" />
+    <link fromOperation="input connector" fromProperty="joinx_version" toOperation="InitialVcfMerge" toProperty="use_version" />
+    <link fromOperation="input connector" fromProperty="segregating_sites_vcf_file" toOperation="InitialVcfMerge" toProperty="output_file" />
+    <link fromOperation="input connector" fromProperty="initial_vcf_merge_working_directory" toOperation="InitialVcfMerge" toProperty="working_directory" />
+    <link fromOperation="input connector" fromProperty="max_files_per_merge" toOperation="InitialVcfMerge" toProperty="max_files_per_merge" />
+    <operation name="InitialVcfMerge">
+        <operationtype commandClass="Genome::Model::Tools::Joinx::SafeVcfMerge" typeClass="Workflow::OperationType::Command" />
+    </operation>
+
+
+    <!-- SNVs only stuff -->
+    <link fromOperation="InitialVcfMerge" fromProperty="output_file" toOperation="CreateRegionFile" toProperty="segregating_sites_vcf_file" />
+    <link fromOperation="CreateRegionFile" fromProperty="region_file" toOperation="BackfillVcf" toProperty="region_file" />
+    <operation name="CreateRegionFile">
+        <operationtype commandClass="Genome::Model::Tools::Vcf::CreateCrossSampleVcf::CreateRegionFile" typeClass="Workflow::OperationType::Command" />
+    </operation>
+
+    <link fromOperation="input connector" fromProperty="build_clumps" toOperation="BackfillVcf" toProperty="build_clump" />
+    <link fromOperation="input connector" fromProperty="ref_fasta" toOperation="BackfillVcf" toProperty="ref_fasta" />
+    <link fromOperation="input connector" fromProperty="use_bgzip" toOperation="BackfillVcf" toProperty="use_bgzip" />
+    <link fromOperation="input connector" fromProperty="samtools_version" toOperation="BackfillVcf" toProperty="samtools_version" />
+    <link fromOperation="input connector" fromProperty="samtools_params" toOperation="BackfillVcf" toProperty="samtools_params" />
+    <link fromOperation="BackfillVcf" fromProperty="backfilled_vcf" toOperation="FinalVcfMerge" toProperty="input_files" />
+    <operation name="BackfillVcf" parallelBy='build_clump'>
+        <!-- Pileup -->
+        <link fromOperation="input connector" fromProperty="build_clump" toOperation="Pileup" toProperty="build_clump" />
+        <link fromOperation="input connector" fromProperty="ref_fasta" toOperation="Pileup" toProperty="ref_fasta" />
+        <link fromOperation="input connector" fromProperty="use_bgzip" toOperation="Pileup" toProperty="use_bgzip" />
+        <link fromOperation="input connector" fromProperty="samtools_version" toOperation="Pileup" toProperty="samtools_version" />
+        <link fromOperation="input connector" fromProperty="samtools_params" toOperation="Pileup" toProperty="samtools_params" />
+        <link fromOperation="input connector" fromProperty="region_file" toOperation="Pileup" toProperty="region_file" />
+        <link fromOperation="Pileup" fromProperty="pileup_file" toOperation="Backfill" toProperty="pileup_file" />
+        <operation name="Pileup">
+            <operationtype commandClass="Genome::Model::Tools::Vcf::CreateCrossSampleVcf::Pileup" typeClass="Workflow::OperationType::Command" />
+        </operation>
+
+        <!-- Backfill -->
+        <link fromOperation="input connector" fromProperty="build_clump" toOperation="Backfill" toProperty="build_clump" />
+        <link fromOperation="input connector" fromProperty="use_bgzip" toOperation="Backfill" toProperty="use_bgzip" />
+        <link fromOperation="input connector" fromProperty="region_file" toOperation="Backfill" toProperty="region_file" />
+        <link fromOperation="Backfill" fromProperty="backfilled_vcf" toOperation="output connector" toProperty="backfilled_vcf" />
+        <operation name="Backfill">
+            <operationtype commandClass="Genome::Model::Tools::Vcf::CreateCrossSampleVcf::Backfill" typeClass="Workflow::OperationType::Command" />
+        </operation>
+
+        <operationtype typeClass="Workflow::OperationType::Model">
+            <inputproperty>build_clump</inputproperty>
+            <inputproperty>ref_fasta</inputproperty>
+            <inputproperty>use_bgzip</inputproperty>
+            <inputproperty>samtools_version</inputproperty>
+            <inputproperty>samtools_params</inputproperty>
+            <inputproperty>region_file</inputproperty>
+
+            <outputproperty>backfilled_vcf</outputproperty>
+        </operationtype>
+    </operation>
+
+    <!-- FinalVcfMerge -->
+    <link fromOperation="input connector" fromProperty="use_bgzip" toOperation="FinalVcfMerge" toProperty="use_bgzip" />
+    <link fromOperation="input connector" fromProperty="joinx_version" toOperation="FinalVcfMerge" toProperty="use_version" />
+    <link fromOperation="input connector" fromProperty="output_vcf" toOperation="FinalVcfMerge" toProperty="output_file" />
+    <link fromOperation="input connector" fromProperty="final_vcf_merge_working_directory" toOperation="FinalVcfMerge" toProperty="working_directory" />
+    <link fromOperation="input connector" fromProperty="max_files_per_merge" toOperation="FinalVcfMerge" toProperty="max_files_per_merge" />
+    <link fromOperation="FinalVcfMerge" fromProperty="output_file" toOperation="output connector" toProperty="output_vcf" />
+    <operation name="FinalVcfMerge">
+        <operationtype commandClass="Genome::Model::Tools::Joinx::SafeVcfMerge" typeClass="Workflow::OperationType::Command" />
+    </operation>
+
+
+    <operationtype typeClass="Workflow::OperationType::Model">
+        <!-- InitialVcfMerge -->
+        <inputproperty>vcf_files</inputproperty>
+        <inputproperty>use_bgzip</inputproperty>
+        <inputproperty>joinx_version</inputproperty>
+        <inputproperty>segregating_sites_vcf_file</inputproperty>
+        <inputproperty>initial_vcf_merge_working_directory</inputproperty>
+        <inputproperty>max_files_per_merge</inputproperty>
+
+        <!-- BackfillVcf -->
+        <inputproperty>build_clumps</inputproperty>
+        <inputproperty>ref_fasta</inputproperty>
+        <inputproperty>samtools_version</inputproperty>
+        <inputproperty>samtools_params</inputproperty>
+
+        <!-- FinalVcfMerge -->
+        <inputproperty>final_vcf_merge_working_directory</inputproperty>
+        <inputproperty>output_vcf</inputproperty>
+
+        <outputproperty>output_vcf</outputproperty>
+    </operationtype>
+</workflow>
