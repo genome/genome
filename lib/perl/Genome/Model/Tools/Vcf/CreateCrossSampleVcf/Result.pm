@@ -17,8 +17,8 @@ class Genome::Model::Tools::Vcf::CreateCrossSampleVcf::Result {
     has_param => [
         max_files_per_merge => { is => 'Text' },
         variant_type => { is => 'Text' },
-        roi_list => { is => 'Genome::FeatureList' },
-        wingspan => { is => 'Text' },
+        roi_list => { is => 'Genome::FeatureList', is_optional => 1 },
+        wingspan => { is => 'Text', is_optional => 1 },
         allow_multiple_processing_profiles => { is => 'Boolean' },
         joinx_version => { is => 'Text' },
     ],

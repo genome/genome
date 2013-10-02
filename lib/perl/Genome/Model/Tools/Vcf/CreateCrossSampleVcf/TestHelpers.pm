@@ -167,7 +167,7 @@ sub get_roi_list {
 }
 
 sub test_cmd {
-    my ($variant_type, $version, $use_mg) = @_;
+    my ($variant_type, $version, $use_mg, $no_region_limiting) = @_;
 
     my $class = 'Genome::Model::Tools::Vcf::CreateCrossSampleVcf';
     my $sr_class = $class . "::Result";
@@ -176,7 +176,8 @@ sub test_cmd {
 
     my $test_dir = get_test_dir($class, $version);
 
-    my $roi_list = get_roi_list($test_dir, 'roi.bed');
+    my $roi_list;
+    $roi_list = get_roi_list($test_dir, 'roi.bed') unless $no_region_limiting;
     my $joinx_version = "1.7";
     my @input_builds = create_test_builds($test_dir);
 
@@ -189,6 +190,12 @@ sub test_cmd {
             joinx_version => $joinx_version,
             builds => \@input_builds,
     );
+
+    if ($no_region_limiting){
+       delete $params{'roi_list'};
+       delete $params{'wingspan'};
+    }
+
     my %sr_params = %params;
 
     if ($use_mg) {
