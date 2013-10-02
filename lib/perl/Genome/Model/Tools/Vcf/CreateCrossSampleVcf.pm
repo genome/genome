@@ -267,23 +267,26 @@ sub _construct_workflow {
 
     my $xml_file;
     my $variant_type_specific_inputs;
+    my $region_limiting_specific_inputs;
     if ($self->variant_type eq 'indels') {
         if ($self->roi_list){
             $xml_file = "RegionLimitAndBackfillIndelVcf.xml";
+            $region_limiting_specific_inputs = $self->_get_region_limiting_specific_inputs;
         } else{
             $xml_file = "MergeAndBackfillIndelVcf.xml";
+            $region_limiting_specific_inputs = $self->_get_non_region_limiting_specific_inputs;
         }
         $variant_type_specific_inputs = $self->get_indel_inputs;
     } elsif ($self->variant_type eq 'snvs') {
         if($self->roi_list){
             $xml_file = "RegionLimitAndBackfillSnvVcf.xml";
+            $region_limiting_specific_inputs = $self->_get_region_limiting_specific_inputs;
         } else{
             $xml_file = "MergeAndBackfillSnvVcf.xml";
+            $region_limiting_specific_inputs = $self->_get_non_region_limiting_specific_inputs;
         }
         $variant_type_specific_inputs = $self->get_snv_inputs;
     }
-
-    my $region_limiting_specific_inputs = $self->get_region_limiting_specific_inputs;
 
     (my $base_dir = __FILE__) =~ s/\.pm$//;
     my $xml = File::Spec->join($base_dir, $xml_file);
@@ -356,28 +359,30 @@ sub get_snv_inputs {
     return \%inputs;
 }
 
-sub get_region_limiting_specific_inputs {
+sub _get_non_region_limiting_specific_inputs {
+    my $self = shift;
+    my @vcf_files = $self->_get_vcf_files;
+    my %inputs = (
+            vcf_files => \@vcf_files,
+    );
+
+    return \%inputs
+}
+
+sub _get_region_limiting_specific_inputs {
     my $self = shift;
     my @builds = $self->builds;
-    my %inputs;
+    my $region_limiting_output_directory = $self->prepare_region_limiting_output_directory();
+    my $reference_sequence_build = $builds[0]->reference_sequence_build;
+    my %inputs = (
+        variant_type => $self->variant_type,
+        builds => \@builds,
+        region_limiting_output_directory => $region_limiting_output_directory,
+        roi_name => $self->roi_list->name,
+        wingspan => $self->wingspan,
+        region_bed_file => $self->get_roi_file($reference_sequence_build),
+    );
 
-    if ($self->roi_list){
-        my $region_limiting_output_directory = $self->prepare_region_limiting_output_directory();
-        my $reference_sequence_build = $builds[0]->reference_sequence_build;
-        %inputs = (
-            variant_type => $self->variant_type,
-            builds => \@builds,
-            region_limiting_output_directory => $region_limiting_output_directory,
-            roi_name => $self->roi_list->name,
-            wingspan => $self->wingspan,
-            region_bed_file => $self->get_roi_file($reference_sequence_build),
-        );
-    }else {
-        my @vcf_files = $self->_get_vcf_files;
-        %inputs = (
-            vcf_files => \@vcf_files,
-        );
-    }
     return \%inputs;
 }
 
