@@ -357,9 +357,10 @@ orientation = out
 
 </plot>
 EOS
-
+	if($build->normal_rnaseq_build || $build->tumor_rnaseq_build){
+	
     ###Differential Expression
-    # Ditterential Expression data is only included if rnaseq builds are present for tumor and normal
+    # Differential Expression data is only included if rnaseq builds are present for tumor and normal
     # If not the rna expression is displayed in this track.
 
     if($build->normal_rnaseq_build){
@@ -517,7 +518,10 @@ spacing   = 0.1r
 
 EOS
     }
-
+	}else{
+		$self->status_message("There was no rna data for this build. This track will be empty");
+	}
+	
     ### Tier1 SNVs and INDELs
     #decides which somatic variation model to use
     #my $wgs_build = $build->wgs_build; #WGS build required at beginning of execute
@@ -726,7 +730,6 @@ EOS
 goldenrod = 218,165,32
 teal = 180,100,25
 chocolate = 210,105,30
-magenta = 300,100,50
 </colors>
 
 ################################################################
