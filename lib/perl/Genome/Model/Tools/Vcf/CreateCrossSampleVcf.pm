@@ -389,7 +389,8 @@ sub _get_region_limiting_specific_inputs {
 sub _get_vcf_files {
     my $self = shift;
     my @builds = $self->builds;
-    return map{$self->variant_type eq 'snvs' ? $_->get_snvs_vcf : $_->get_indels_vcf} @builds;
+    my $accessor = $self->get_vcf_accessor;
+    return map{$_->$accessor} @builds;
 }
 
 sub build_clumps {
