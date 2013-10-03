@@ -17,10 +17,8 @@ use Genome::SoftwareResult;
 
 if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
-} elsif(not $ENV{UR_RUN_LONG_TESTS}) {
+} elsif (not $ENV{UR_RUN_LONG_TESTS}) {
     plan skip_all => 'This test usually takes 2-3 minutes but can time out in jenkins.  Use `ur test run --long` to enable.';
-} else {
-    plan tests => 8;
 }
 
 # THIS TESTS THE CACHING. Caching refseq in /var/cache/tgi-san. We gotta link these files to a tmp dir for tests so they don't get copied
@@ -31,15 +29,6 @@ my $refseq_tmp_dir = File::Temp::tempdir(CLEANUP => 1);
 
 my $test_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-Dispatcher-multi-sample";
 my $pedigree_file = "$test_dir/DS10239.ped";
-#no warnings;
-*Genome::Model::Build::ReferenceSequence::local_cache_basedir = sub { return $refseq_tmp_dir; };
-*Genome::Model::Build::ReferenceSequence::copy_file = sub {
-    my ($build, $file, $dest) = @_;
-    symlink($file, $dest);
-    is(-s $file, -s $dest, 'linked '.$dest) or die;
-    return 1;
-};
-#use warnings;
 
 #Parsing tests
 my $det_class_base = 'Genome::Model::Tools::DetectVariants2';
