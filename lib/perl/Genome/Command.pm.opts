@@ -335,7 +335,7 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'paths=s',
         'files',
-        'HASH(0x49b9c10)=s',
+        'HASH(0x3dc6eb0)=s',
         'files',
         'help!',
         undef
@@ -8263,7 +8263,7 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>delay-archiving',
       [
-        'HASH(0x122bfcc8)=s',
+        'HASH(0x116cda98)=s',
         'files',
         'builds=s@',
         undef,
@@ -8699,7 +8699,7 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>delay-archiving',
     [
-      'HASH(0xb542d30)=s',
+      'HASH(0xa950ed0)=s',
       'files',
       'models=s@',
       undef,
@@ -9069,7 +9069,7 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>delay-archiving',
     [
-      'HASH(0x1293e5b0)=s',
+      'HASH(0x11d4c360)=s',
       'files',
       'model-groups=s@',
       undef,
@@ -34778,6 +34778,21 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>chimera-scan',
     [
+      '>intersect-sv',
+      [
+        'annotation-build-id=s',
+        'files',
+        'filtered-bedpe-file=s',
+        'files',
+        'output-file=s',
+        'files',
+        'sv-output-file=s',
+        'files',
+        'debug!',
+        undef,
+        'help!',
+        undef
+      ],
       '>filter-output',
       [
         'bedpe-file=s',
