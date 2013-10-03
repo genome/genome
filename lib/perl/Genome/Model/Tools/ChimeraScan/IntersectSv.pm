@@ -3,6 +3,8 @@ package Genome::Model::Tools::ChimeraScan::IntersectSv;
 use strict;
 use warnings;
 
+use Sort::Naturally;
+
 use Genome;
 use Genome::File::BedPe::Entry;
 use Genome::File::BedPe::Reader;
@@ -39,8 +41,9 @@ sub execute {
     my %fusion_transcripts;
 
     #gather chimera filter info
-    my @fusion_headers = qw(name chrom1 start1 end1 chrom2 start2 end2);
+    my @fusion_headers        = qw(name chrom1 start1 end1 chrom2 start2 end2);
     my @fusion_custom_headers = qw(fusion total_frag spanning_frag);
+    my @fusion_all_headers    = (@fusion_headers, @fusion_custom_headers);
 
     while (my $entry = $fusion_reader->next) {
         my ($id_5p, $id_3p) = map{$entry->{custom}->[$_]}qw(3 4);
@@ -77,7 +80,7 @@ sub execute {
         push @{$breakpoint_list{$chrB}}, \%hash unless $chrA eq $chrB;
     }
 
-    my @all_headers = (@sv_headers, @fusion_headers, @fusion_custom_headers);
+    my @all_headers = (@sv_headers, @fusion_all_headers);
 
     my $writer = Genome::Utility::IO::SeparatedValueWriter->create(
         headers   => \@all_headers,
@@ -88,83 +91,40 @@ sub execute {
     my $build = $self->annotation_build
         or die "failed to get annotation build ".$self->annotation_build_id;
 
-    for my $chr (keys %breakpoint_list) {
-        my $chr_breakpoint_list = $breakpoints_list{$chr};
+    my %keys;
+
+    for my $chr (nsort keys %breakpoint_list) {
+        my $chr_breakpoint_list = $breakpoint_list{$chr};
         my $transcript_iterator = $build->transcript_iterator(chrom_name => $chr);
         die "transcript iterator not defined for chr $chr" unless $transcript_iterator;
 
         while (my $transcript = $transcript_iterator->next) {
             my $transcript_name = $transcript->transcript_name; 
-            next unless $fusion_transcripts{$transcript_name};
+            my $fusion_item     = $fusion_transcripts{$transcript_name};
+            next unless $fusion_item;
+
             for my $item (@$chr_breakpoint_list) {
+                my $key = join '--', map{$item->{$_}}qw(chrA bpA chrB bpB event);
+                next if $keys{$key};
 
+                my $flag = 0;
+                if ($item->{chrA} eq $chr) {
+                    $flag++ if $transcript->within_transcript($item->{bpA});
+                }
+                if ($item->{chrB} eq $chr) {
+                    $flag++ if $transcript->within_transcript($item->{bpB});
+                }
 
-    my $reader = Genome::File::BedPe::Reader->new($bedpe_file);
-    my (%FP_ct, %TP_ct, %output);
-    
-    while (my $entry = $reader->next) {
-        my $score = $entry->{score};
-        my ($id_5p, $id_3p, $FP, $TP, $type, $total_frag, $span_frag, $repeat) = map{$entry->{custom}->[$_]}qw(0 1 2 3 4 6 7 11);
-        $FP_ct{$FP}++;
-        $TP_ct{$TP}++;
-
-        next if $FP eq $TP;
-        next if $repeat and $repeat =~ /AAAAAAAAAA|TTTTTTTTTT|GGGGGGGGGG|CCCCCCCCCC/;
-        next if $total_frag == $span_frag;
-
-        my $fusion = $FP . ':' . $TP;
-
-        my %bedpe_content;
-        @bedpe_content{@bedpe_fields} = map{$entry->{$_}}@bedpe_fields;
-        $bedpe_content{'#chrom1'}     = $entry->{chrom1};
-
-        $output{$fusion}->{total_frag} += $total_frag;
-        $output{$fusion}->{span_frag}  += $span_frag;
-        $output{$fusion}->{score}      += $score;
-        $output{$fusion}->{type}        = $type;
-        $output{$fusion}->{span_total}  = $span_frag . ':' . $total_frag;
-        $output{$fusion}->{id_5p}       = $id_5p;
-        $output{$fusion}->{id_3p}       = $id_3p;
-        $output{$fusion}->{bedpe_entry} = \%bedpe_content;
-    }
-
-    for my $fusion (sort keys %output) {
-        my ($FP, $TP) = split /\:/, $fusion;
-        next unless $FP_ct{$FP} <= $fusion_partner_limit and $TP_ct{$TP} <= $fusion_partner_limit;
-
-        my $total_frag  = $output{$fusion}->{total_frag};
-        my $span_frag   = $output{$fusion}->{span_frag};
-        my $span_total  = $output{$fusion}->{span_total};
-        my $bedpe_entry = $output{$fusion}->{bedpe_entry};
-
-        my $sample_freq = 0;
-        if ($span_total) {
-            my ($s) = $span_total =~ /^(\S+)\:/;
-            $sample_freq++ if $s != 0;
-        }
-
-        if (($sample_freq == 1 || $sample_freq == 2) 
-            and $total_frag >= $total_frag_limit
-            and $span_frag  >= $span_frag_limit)
-        {
-            
-            $bedpe_entry->{score} = $output{$fusion}->{score} || 0;
-
-            my %content;
-            @content{@headers} = (
-                $fusion,
-                $FP,
-                $TP,
-                $output{$fusion}->{id_5p} || 'NA',
-                $output{$fusion}->{id_3p} || 'NA',
-                $total_frag,
-                $span_frag,
-                $output{$fusion}->{type}  || 'NA',
-                $span_total,
-            );
-
-            %content = (%content, %$bedpe_entry);
-            $writer->write_one(\%content);
+                if ($flag) {
+                    $keys{$key} = 1;
+                    my %sv_info;
+                    @sv_info{@sv_headers} = map{$item->{$_}}@sv_headers;
+                    my %fusion_info;
+                    @fusion_info{@fusion_all_headers} = map{$fusion_item->{$_}}@fusion_all_headers;
+                    my %content = (%sv_info, %fusion_info);
+                    $writer->write_one(\%content);
+                }
+            }
         }
     }
 
