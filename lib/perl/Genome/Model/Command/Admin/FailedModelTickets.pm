@@ -15,7 +15,7 @@ require RT::Client::REST::Ticket;
 require WWW::Mechanize;
 
 class Genome::Model::Command::Admin::FailedModelTickets {
-    is => 'Command::V2',
+    is => 'Genome::Command::Base',
     doc => 'find failed cron models, check that they are in a ticket',
     has_input => [
         include_failed => {
@@ -48,78 +48,13 @@ sub execute {
     my @events = $self->get_events();
     my %builds = $self->get_builds(@events);
 
-    my %tickets = $self->get_tickets(%builds);
-    for my $model_id (keys %tickets) {
-        delete $builds{$model_id};
-    }
+    $self->remove_builds_in_tickets(\%builds);
 
-    # Consolidate errors
-    $self->status_message('Consolidating errors...');
-    my %build_errors;
-    my %guessed_errors;
-    my $models_with_errors = 0;
-    my $models_with_guessed_errors = 0;
-    for my $build ( values %builds ) {
-        my $key = 'Unknown';
-        my $msg = 'Failure undetermined!';
-        my $error = $self->_pick_optimal_error_log($build);
-        if ( $error
-                and
-            ( ($error->file and $error->line) or ($error->inferred_file and $error->inferred_line) )
-                and
-            ($error->message or $error->inferred_message)
-        ) {
-            if ( $error->file and $error->line ) {
-                $key = $error->file.' '.$error->line;
-            } elsif ( $error->inferred_file and $error->inferred_line ) {
-                $key = $error->inferred_file.' '.$error->inferred_line;
-            } else {
-                $key = 'unknown';
-            }
-
-            if ( $error->message ) {
-                $msg = $error->message;
-            } elsif ( $error->inferred_message ) {
-                $msg = $error->inferred_message;
-            } else {
-                $msg = 'unknown';
-            }
-
-            $models_with_errors++;
-        }
-        elsif ( my $guessed_error = $self->_guess_build_error($build) ) {
-            if ( not $guessed_errors{$guessed_error} ) {
-                $guessed_errors{$guessed_error} = scalar(keys %guessed_errors) + 1;
-            }
-            $key = "Unknown, best guess #".$guessed_errors{$guessed_error};
-            $msg = $guessed_error;
-            $models_with_guessed_errors++;
-        }
-        $build_errors{$key} = "File:\n$key\nExample error:\n$msg\nModel\t\tBuild\t\tType/Failed Stage:\n" if not $build_errors{$key};
-        my $type_name = $build->type_name;
-        $type_name =~ s/\s+/\-/g;
-        my %failed_events = map { $_->event_type => 1 } grep { $_->event_type ne 'genome model build' } $build->events('event_status in' => [qw/ Crashed Failed /]);
-        my $failed_event = (keys(%failed_events))[0] || '';
-        $failed_event =~ s/genome model build $type_name //;
-        if ($failed_event eq '') {
-            if ($build->status eq 'Unstartable') {
-                $failed_event = 'Unstartable';
-            }
-        }
-        $build_errors{$key} .= join("\t", $build->model_id, $build->id, $type_name.' '.$failed_event)."\n";
-    }
+    my $build_errors = $self->get_build_errors(%builds);
 
     # Report
-    my $models_in_tickets = map { @{$tickets{$_}} }keys %tickets;
-    my $models_not_in_tickets = keys %builds;
-    $self->status_message('Models: '.($models_in_tickets+ $models_not_in_tickets));
-    $self->status_message('Models in tickets: '.$models_in_tickets);
-    $self->status_message('Models not in tickets: '.$models_not_in_tickets);
-    $self->status_message('Models with error log: '.$models_with_errors);
-    $self->status_message('Models with guessed errors: '.$models_with_guessed_errors);
-    $self->status_message('Models with unknown failures: '.($models_not_in_tickets - $models_with_errors - $models_with_guessed_errors));
-    $self->status_message('Summarized errors: ');
-    $self->status_message(join("\n", map { $build_errors{$_} } sort keys %build_errors));
+    $self->status_message("\n\n");
+    $self->status_message(join("\n\n", map { $build_errors->{$_} } sort keys %$build_errors));
 
     return 1;
 }
@@ -132,7 +67,7 @@ sub get_events {
     if ($self->include_failed) {
         $self->status_message('Looking for failed model events...');
         @events = Genome::Model::Event->get(
-            "event_status in" => ['Failed', 'Unstartable'],
+            event_status => 'Failed',
             event_type => 'genome model build',
             user_name => 'apipe-builder',
             -hint => [qw/ build /],
@@ -164,22 +99,37 @@ sub get_builds {
 
     $self->status_message("Looking up Models and Builds from events...");
 
-    my %builds;
+    my @build_ids;
     for my $event (@events) {
         next if not $event->build_id;
+        push @build_ids, $event->build_id;
+    }
+    my @builds = Genome::Model::Build->get('id in' => \@build_ids, -hint => [qw(model_id events date_scheduled)]);
+    my @models = Genome::Model->get('id in' => [map {$_->model_id} @builds]);
+    $self->status_message(sprintf("Found %d builds from %d events in %d models",
+            scalar(@builds), scalar(@events), scalar(@models)));
 
-        my $build = Genome::Model::Build->get(id => $event->build_id, -hint => [qw/ model events /]);
+    # cache the model_status calculations (they're calculated and slowly)...
+    my %model_status;
+    for my $model (@models) {
+        $model_status{$model->id} = $model->status;
+    }
+
+    $self->status_message("Filtering down to latest build for each model...");
+    my %builds;
+    for my $build (@builds) {
         my $model = $build->model;
 
         #If the latest build of the model succeeds, ignore those old
         #failing ones that will be cleaned by admin "cleanup-succeeded".
-        if ($model->status) {
-            next if $model->status eq 'Succeeded';
+        my $model_status = $model_status{$model->id};
+        if ($model_status) {
+            next if $model_status eq 'Succeeded';
 
             unless ($self->include_pending) {
-                next if $model->status eq 'Requested';
-                next if $model->status eq 'Scheduled';
-                next if $model->status eq 'Running';
+                next if $model_status eq 'Requested';
+                next if $model_status eq 'Scheduled';
+                next if $model_status eq 'Running';
             }
         }
 
@@ -191,9 +141,93 @@ sub get_builds {
     return %builds;
 }
 
-sub get_tickets {
-    my $self = shift;
-    my %builds = %{(shift)};
+
+sub get_build_errors {
+    my ($self, %builds) = @_;
+
+    $self->status_message('Categorizing builds...');
+
+    my %build_errors;
+
+    for my $build ( values %builds ) {
+        my $cmd = Genome::Model::Build::Command::DetermineError->execute(
+            build => $build,
+            display_results => 0,
+        );
+
+        my $key = "Unknown Error";
+        my $header = join("\t", qw(Model Build Build-Class Date));
+        my $line = join("\t", $build->model_id, $build->id, $build->class, $cmd->error_date);
+        if ($cmd->error_type eq 'Unstartable') {
+            $key = $self->get_unstartable_key($cmd);
+        } elsif ($cmd->error_type eq 'Failed') {
+            $key = $self->get_failed_key($cmd);
+
+            # unstartable and unknown errors don't generally have a host.
+            $header = join("\t", qw(Model Build Build-Class Host Date));
+            $line = join("\t", $build->model_id, $build->id, $build->class, $cmd->error_host, $cmd->error_date);
+        }
+
+        unless ($build_errors{$key}) {
+            $build_errors{$key} = sprintf("%s: %s\n%s:\n%s\n\n%s\n",
+                $self->_color("Key:", "bold"), $key,
+                $self->_color("Example error:", "bold"), $cmd->error_text,
+                $header,
+            );
+        }
+        $build_errors{$key} .= $line . "\n";
+    }
+
+    return \%build_errors;
+}
+
+sub get_failed_key {
+    my ($self, $cmd) = @_;
+
+    if ($cmd->error_text =~ m/gscarchive/) {
+        return "Failed: Archived Data";
+    }
+    if ($cmd->error_source_line ne 'Unknown') {
+        (my $delocalized_file = $cmd->error_source_file) =~ s/^.*\/lib\/perl\///;
+        return sprintf("Failed: %s %s", $delocalized_file, $cmd->error_source_line);
+    } else {
+        # replace things that look like ids
+        (my $no_ids = $cmd->error_text) =~ s/[0-9a-f]{5,30}/<id>/g;
+
+        # replace things that look like paths
+        (my $no_ids_or_paths = $no_ids) =~ s/[a-zA-Z0-9.\-_]*[\/][a-zA-Z0-9.\-_\/]*/<path>/g;
+        return sprintf("Failed: %s", $no_ids_or_paths);
+    }
+}
+
+sub get_unstartable_key {
+    my ($self, $cmd) = @_;
+
+    my $text = $cmd->error_text;
+    my $information;
+    if ($text =~ m/Transaction error:/) {
+        ($information = $text) =~ s/.*problems on//;
+        if ($information =~ m/(.*?)\:(.*?)\:/) {
+            $information = "$1: $2";
+        }
+    }
+    if ($text =~ m/reason:/) {
+        ($information = $text) =~ s/.*reason://;
+        if ($information =~ m/(.*?)\sat\s/) {
+            $information = $1;
+        }
+    }
+    if ($text =~ m/validated for start!/) {
+        ($information = $text) =~ s/.*validated for start!//;
+        if ($information =~ m/(.*?)\:(.*?)\:/) {
+            $information = "$1: $2";
+        }
+    }
+    return sprintf("Unstartable: %s", $information);
+}
+
+sub remove_builds_in_tickets {
+    my ($self, $builds) = @_;
 
     # Connect
     my $rt = _login_sso();
@@ -210,7 +244,7 @@ sub get_tickets {
     try {
         @ticket_ids = $rt->search(
             type => 'ticket',
-            query => "Queue = 'apipe-builds' AND ( Status = 'new' OR Status = 'open' )",
+            query => "Queue = 'apipe-support' AND ( Status = 'new' OR Status = 'open' )",
 
         );
     }
@@ -223,7 +257,7 @@ sub get_tickets {
             die $msg->message;
         }
     };
-    $self->status_message('Found '.@ticket_ids.' tickets');
+    $self->status_message($self->_color('Tickets (new or open): ', 'bold').scalar(@ticket_ids));
 
     # Go through tickets
     my %tickets;
@@ -247,15 +281,28 @@ sub get_tickets {
         my $transaction_iterator = $transactions->get_iterator;
         while ( my $transaction = &$transaction_iterator ) {
             my $content = $transaction->content;
-            for my $model_id ( keys %builds ) {
-                my $build_id = $builds{$model_id}->id;
+            next unless $content;
+            for my $model_id ( keys %$builds ) {
+                my $build_id = $builds->{$model_id}->id;
                 next if $content !~ /$model_id/ and $content !~ /$build_id/;
                 push @{$tickets{$ticket_id.' '.$ticket->subject}}, $model_id;
             }
         }
     }
 
-    $self->status_message('Found '.scalar(values(%tickets)).' models mentioned in the tickets');
+    for my $model_id_list (values %tickets) {
+        for my $model_id (@$model_id_list) {
+            delete $builds->{$model_id};
+        }
+    }
+
+    my $models_in_tickets = map { @{$tickets{$_}} } keys %tickets;
+    my $models_not_in_tickets = keys %$builds;
+    $self->status_message($self->_color('Tickets mentioning models/builds: ', 'bold').scalar(values(%tickets)));
+    $self->status_message($self->_color('Models: ', 'bold').($models_in_tickets + $models_not_in_tickets));
+    $self->status_message($self->_color('Models in tickets: ', 'bold').$models_in_tickets);
+    $self->status_message($self->_color('Models not in tickets: ', 'bold').$models_not_in_tickets);
+
     return %tickets;
 }
 
@@ -291,93 +338,4 @@ sub _login_sso {
     return RT::Client::REST->new(server => _server(), _cookie =>  $mech->{cookie_jar});
 }
 
-sub _guess_build_error {
-    my ($self, $build) = @_;
-
-    if ($build->status eq 'Unstartable') {
-        return $self->_guess_build_error_from_notes($build);
-    }
-    else {
-        return $self->_guess_build_error_from_logs($build);
-    }
-}
-
-sub _guess_build_error_from_notes {
-    my ($self, $build) = @_;
-
-    my $error = "Unstartable unknown error";
-    my @notes = $build->notes;
-    if (not @notes) {
-        return $error;
-    }
-    my @unstartable_notes = grep {$_->header_text eq 'Unstartable'} @notes;
-    if (not @unstartable_notes) {
-        return $error;
-    }
-    my $note = $unstartable_notes[0];
-
-    my $text = $note->body_text;
-    if (not $text) {
-        return $error;
-    }
-
-    my @lines = split(/\n/, $text);
-
-    @lines = grep (/ERROR:\s+/, @lines);
-
-    my $line_count = scalar @lines;
-    if ($line_count == 0) {
-        return $error;
-    }
-
-    my %errors;
-    foreach my $line (@lines) {
-        my ($err) = (split(/ERROR:\s+/, $line))[1];
-        chomp $err;
-        $errors{$err} = 1;
-    }
-    return join("\n", sort keys %errors);
-}
-
-sub _guess_build_error_from_logs {
-    my ($self, $build) = @_;
-
-    my $data_directory = $build->data_directory;
-    my $log_directory = $data_directory.'/logs';
-    return unless -d $log_directory;
-    my %errors;
-    find(
-        sub{
-            return unless $_ =~ /\.err$/;
-            my @grep = (fgrep { /ERROR:\s+/ } $_ );
-            return if $grep[0]->{count} == 0;
-            for my $line ( values %{$grep[0]->{matches}} ) {
-                my ($err) = (split(/ERROR:\s+/, $line))[1];
-                chomp $err;
-                next if $err eq "Can't convert workflow errors to build errors";
-                next if $err eq 'relation "error_log_entry" does not exist';
-                next if $err =~ /current transaction is aborted/;
-                next if $err =~ /run_workflow_ls/;
-                $errors{$err} = 1;
-            }
-        },
-        $log_directory,
-    );
-
-    return join("\n", sort keys %errors);
-}
-
-sub _pick_optimal_error_log{
-    my $self = shift;
-    my $build = shift;
-    my @errors = Genome::Model::Build::ErrorLogEntry->get(build_id => $build->id);
-    my @optimal_errors = grep($_->file, @errors);
-    unless (@optimal_errors){
-        @optimal_errors = grep($_->inferred_file, @errors);
-    }
-    unless(@optimal_errors){
-        return 0;
-    }
-    return shift @optimal_errors;
-}
 1;
