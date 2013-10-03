@@ -24364,6 +24364,21 @@ $Genome::Model::Tools::OPTS_SPEC = [
   ],
   '>chimera-scan',
   [
+    '>intersect-sv',
+    [
+      'annotation-build-id=s',
+      'files',
+      'filtered-bedpe-file=s',
+      'files',
+      'output-file=s',
+      'files',
+      'sv-output-file=s',
+      'files',
+      'debug!',
+      undef,
+      'help!',
+      undef
+    ],
     '>filter-output',
     [
       'bedpe-file=s',
