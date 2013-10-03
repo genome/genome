@@ -138,7 +138,7 @@ sub parse_error_log {
 
     ($error_date, $error_host, my $date_removed_text) = get_error_date($file_text);
     if ($error_date) {
-        my $text = '(ERROR[\s\:]+.*?)';
+        my $text = '(ERROR[\s\:]+.{1,400}?)';
         my $file = 'at\s([^\s]*?\.pm)';
         my $line = 'line\s(\d+)';
         my $query = join('\s+', $text, $file, $line);
