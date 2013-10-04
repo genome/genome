@@ -1,10 +1,10 @@
-package Genome::Site::TGI::Synchronize::Classes::SetupProject; 
+package Genome::Site::TGI::Synchronize::Classes::LimsProject; 
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::Site::TGI::Synchronize::Classes::SetupProject {
+class Genome::Site::TGI::Synchronize::Classes::LimsProject {
     table_name => <<SQL
     (
         --Setup Research Project

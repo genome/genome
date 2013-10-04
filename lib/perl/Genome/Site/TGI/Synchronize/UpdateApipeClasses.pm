@@ -1,7 +1,5 @@
 package Genome::Site::TGI::Synchronize::UpdateApipeClasses;
 
-# TODO Lots of redundant code here that can be refactored away
-
 use strict;
 use warnings;
 
@@ -41,9 +39,9 @@ sub objects_to_sync {
         'Genome::Site::TGI::Synchronize::Classes::PopulationGroup' => 'Genome::PopulationGroup',
         'Genome::Site::TGI::Synchronize::Classes::OrganismSample' => 'Genome::Sample',
         'Genome::Site::TGI::Synchronize::Classes::LibrarySummary' => 'Genome::Library',
-        'Genome::Site::TGI::Synchronize::Classes::SetupProject' => 'Genome::Project',
-        'Genome::Site::TGI::Synchronize::Classes::SetupProjectSample' => 'Genome::Site::TGI::Synchronize::Classes::ProjectSample',
-        'Genome::Site::TGI::Synchronize::Classes::SetupProjectSequenceProduct' => 'Genome::Site::TGI::Synchronize::Classes::ProjectInstrumentData',
+        'Genome::Site::TGI::Synchronize::Classes::LimsProject' => 'Genome::Project',
+        'Genome::Site::TGI::Synchronize::Classes::LimsProjectSample' => 'Genome::Site::TGI::Synchronize::Classes::ProjectSample',
+        'Genome::Site::TGI::Synchronize::Classes::LimsProjectInstrumentData' => 'Genome::Site::TGI::Synchronize::Classes::ProjectInstrumentData',
         'Genome::Site::TGI::Synchronize::Classes::RegionIndex454' => 'Genome::InstrumentData::454',
         'Genome::Site::TGI::Synchronize::Classes::IndexIllumina' => 'Genome::InstrumentData::Solexa',
         'Genome::Site::TGI::Synchronize::Classes::Genotyping' => 'Genome::InstrumentData::Imported',
@@ -487,7 +485,7 @@ sub _create_populationgroup {
     return 1;
 }
 
-sub _create_setupproject {
+sub _create_limsproject {
     my ($self, $original_object, $new_object_class) = @_;
 
     my $object = eval { 
@@ -504,13 +502,13 @@ sub _create_setupproject {
     return 1;
 }
 
-sub _create_setupprojectsequenceproduct {
+sub _create_limsprojectinstrumentdata {
     my ($self, $original_object, $new_object_class) = @_;
 
     my $object = eval { 
         Genome::ProjectPart->create(
             project_id => $original_object->project_id, 
-            entity_id => $original_object->seq_id,
+            entity_id => $original_object->instrument_data_id,
             entity_class_name => 'Genome::InstrumentData',
             label => 'instrument_data',
         );
@@ -523,7 +521,7 @@ sub _create_setupprojectsequenceproduct {
     return 1;
 }
 
-sub _create_setupprojectsample {
+sub _create_limsprojectsample {
     my ($self, $original_object, $new_object_class) = @_;
 
     my $object = eval { 
