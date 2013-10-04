@@ -16550,6 +16550,20 @@ $Genome::Model::Tools::OPTS_SPEC = [
     'help!',
     undef
   ],
+  '>text',
+  [
+    '>model-to-text',
+    [
+      'model-id=s',
+      'files',
+      'debug!',
+      undef,
+      'help!',
+      undef
+    ],
+    'help!',
+    undef
+  ],
   '>detect-variants2',
   [
     '>polymutt',
