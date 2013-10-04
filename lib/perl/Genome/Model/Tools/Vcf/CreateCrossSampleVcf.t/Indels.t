@@ -15,7 +15,7 @@ BEGIN {
     $ENV{NO_LSF} = 1;
 };
 
-my $VERSION = 'indels-1';
+my $VERSION = 'indels-2';
 my $use_mg = 1;
 test_cmd('indels', $VERSION, $use_mg);
 
