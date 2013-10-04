@@ -1326,7 +1326,7 @@ sub _is_mc16s {
     my @projects = $self->_get_projects_for_instrument_data($instrument_data);
     return if not @projects;
 
-    my @setups = Genome::Site::TGI::Synchronize::Classes::SetupProject->get(id => [ map { $_->id } @projects ]);
+    my @setups = Genome::Site::TGI::Synchronize::Classes::LimsProject->get(id => [ map { $_->id } @projects ]);
     return if not @setups;
 
     foreach my $setup ( @setups ) {

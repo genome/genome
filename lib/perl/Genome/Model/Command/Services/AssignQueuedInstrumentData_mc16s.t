@@ -20,7 +20,7 @@ use_ok('Genome::Model::Command::Services::AssignQueuedInstrumentData') or die;
 my @projects;
 push @projects, Genome::Project->create(id => -111, name => '__TEST_PROJECT__');
 ok($projects[0], 'create project for research project');
-my $gsc_workorder = Genome::Site::TGI::Synchronize::Classes::SetupProject->__define__(id => -222, name => '__TEST_WORKORDER__', pipeline => '16s');
+my $gsc_workorder = Genome::Site::TGI::Synchronize::Classes::LimsProject->__define__(id => -222, name => '__TEST_WORKORDER__', pipeline => '16s');
 push @projects, Genome::Project->create(id => -222, name => '__TEST_WORKORDER__');
 ok($projects[1], 'create project for research project');
 # Model groups for projects
