@@ -69,7 +69,7 @@ class Genome::Disk::Allocation {
         },
         status => {
             is => 'Text',
-            valid_values => ['active', 'completed', 'purged', 'archived'],
+            valid_values => ['active', 'completed', 'purged', 'archived', 'invalid'],
             doc => 'The current status of this allocation',
             default_value => 'active',
         },
