@@ -72,7 +72,6 @@ sub execute {
     my @sv_headers = qw(chrA bpA chrB bpB event geneA ensemblIdA geneB ensemblIdB);
 
     while (my $line = $sv_reader->next) {
-        next unless $line->{event} =~ /^(CTX|DEL|INV|ITX)$/;
         my ($chrA, $chrB) = ($line->{chrA}, $line->{chrB});
         my %hash;
         @hash{@sv_headers} = map{$line->{$_}}@sv_headers;
