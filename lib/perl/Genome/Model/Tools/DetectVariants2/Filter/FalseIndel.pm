@@ -25,7 +25,6 @@ class Genome::Model::Tools::DetectVariants2::Filter::FalseIndel {
        },
        'min_good_coverage' => {
             type => 'String',
-            default => '20',
             is_optional => 1,
             doc => 'Minimum site coverage to apply var_freq, var_count, and strandedness filters',
        },
