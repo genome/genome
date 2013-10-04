@@ -1386,7 +1386,13 @@ sub shellcmd {
                 } else {
                     $shellopts_part = "set +o pipefail; $shellopts_part";
                 }
-                $system_retval = system('bash', '-c', "$shellopts_part $cmd");
+
+                {   # POE sets a handler to ignore SIG{PIPE}, that makes the
+                    # pipefail option useless.
+                    local $SIG{PIPE} = 'DEFAULT';
+                    $system_retval = system('bash', '-c', "$shellopts_part $cmd");
+                }
+
                 print STDOUT "\n"; # add a new line so that bad programs don't break TAP, etc.
         };
         my $exception = $@;
@@ -1406,7 +1412,9 @@ sub shellcmd {
             Carp::croak("COMMAND KILLED. Signal $signal, $withcore coredump: $cmd");
 
         } elsif ($child_exit_code != 0) {
-            if ($allow_failed_exit_code) {
+            if ($child_exit_code == 141) {
+                $self->error_message("SIGPIPE was recieved by command but IGNORED!");
+            } elsif ($allow_failed_exit_code) {
                 Carp::carp("TOLERATING Exit code $child_exit_code from: $cmd");
             } else {
                 Carp::croak("ERROR RUNNING COMMAND.  Exit code $child_exit_code from: $cmd\nSee the command's captured STDERR (if it exists) for more information");
