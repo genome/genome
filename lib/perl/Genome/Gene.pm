@@ -47,7 +47,7 @@ class Genome::Gene {
         transcripts => { 
             calculate_from => [qw/ id data_directory reference_build_id /],
             calculate => q|
-                Genome::Transcript->get(gene_id => $id,  data_directory => $data_directory);
+                Genome::Transcript->get(gene_id => $id,  data_directory => $data_directory, reference_build_id => $reference_build_id);
             |,
         },
         external_ids => { 
