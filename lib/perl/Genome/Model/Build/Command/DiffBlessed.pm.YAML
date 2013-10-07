@@ -13,6 +13,6 @@ apipe-test-reference-alignment-lane-qc: 139711625
 apipe-test-reference-alignment: 139778005
 apipe-test-somatic-validation-sv: 137282756
 apipe-test-somatic-validation: 139778000
-apipe-test-somatic-variation-short: 139777997
+apipe-test-somatic-variation-short: de1b2ad1b48844a4a291a2a1f8697374
 apipe-test-somatic-variation-sv-detection: 136692589
 apipe-test-somatic-variation: 139877037
