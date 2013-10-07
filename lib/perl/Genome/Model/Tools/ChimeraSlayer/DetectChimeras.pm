@@ -84,8 +84,7 @@ sub execute {
     $self->status_message("Run nastier...Done");
 
     # Check nastier output...
-    if ( not $nastier_params{output_file} ) {
-        # maybe this should be an error instead?
+    if ( not -s $nastier_params{output_file} ) {
         $self->status_message('Nastier ran successfully, but no alignments found. Cannot run chimera slayer. Exitting.');
         return 1;
     }
