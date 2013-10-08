@@ -34,6 +34,9 @@ class Genome::Site::TGI::Synchronize::UpdateApipeClasses {
 # it can lead to some attributes not being copied over.
 sub objects_to_sync {
     return (
+        'Genome::Site::TGI::Synchronize::Classes::LimsProject' => 'Genome::Project',
+    );
+    return (
         'Genome::Site::TGI::Synchronize::Classes::OrganismTaxon' => 'Genome::Taxon',
         'Genome::Site::TGI::Synchronize::Classes::OrganismIndividual' => 'Genome::Individual',
         'Genome::Site::TGI::Synchronize::Classes::PopulationGroup' => 'Genome::PopulationGroup',
@@ -116,7 +119,8 @@ sub execute {
 
     # Load instrument data successful pidfas.
     # We only sync instrument data the have a successful pidfa.
-    my $load_pidfas = $self->_load_successful_pidfas;
+    my $load_pidfas = 1;
+    #my $load_pidfas = $self->_load_successful_pidfas;
     if ( not $load_pidfas ) {
         $self->error_message('Failed to load instruemnt data successful pidfas!');
         return;
@@ -135,6 +139,8 @@ sub execute {
         $self->status_message('Found IDs to create: '.scalar(@{$ids_to_create}));
 
         if ( not $ids_to_create->is_empty ) {
+        my $start_transaction = UR::Context::Transaction->begin();
+
             $self->_create_genome_objects_for_lims_objects(
                 ids_to_create => $ids_to_create,
                 lims_class => $lims_class,
@@ -207,6 +213,7 @@ sub _create_genome_objects_for_lims_objects {
 
     my $create_method = $self->_resolve_create_method_for($lims_class);
     my $report = $self->_report;
+    my $transaction = UR::Context::Transaction->begin();
     $self->status_message('Create objects in Genome...');
     while ( my $lims_obj = $iterator->next ) {
         my $genome_obj = $self->$create_method($lims_obj, $genome_class);
@@ -221,6 +228,16 @@ sub _create_genome_objects_for_lims_objects {
     $self->status_message("Unloaded $unloaded objects...OK");
 
     $self->_report($report);
+
+    $self->status_message("Commit $genome_class...");
+    my $commit_ok = $transaction->commit;
+    if ( not $commit_ok ) {
+        $self->error_message( $transaction->error_message ) if $transaction->error_message;
+        $transaction->rollback;
+        Carp::confess( $self->error_message("Failed to commit $genome_class!") );
+
+    }
+    $self->status_message("Commit $genome_class...OK");
 
     return 1;
 }
