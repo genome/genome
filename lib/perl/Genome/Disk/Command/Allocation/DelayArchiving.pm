@@ -68,7 +68,7 @@ sub _resolve_allocations_from_paths {
 }
 
 sub _resolve_date_from_months {
-    my ($self, $months) = @_;
+    my ($class, $months) = @_;
     return DateTime->now(time_zone => 'local')
         ->add(months => $months)
         ->strftime('%F %T');

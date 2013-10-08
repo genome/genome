@@ -294,6 +294,10 @@ sub _create {
             push @missing_params, $param;
         }
     }
+    my @optional_params = map { $_ => delete $params{$_} }
+        grep { exists $params{$_} }
+        qw/ archive_after_time kilobytes_used/;
+
     if (@missing_params) {
         confess "Missing required params for allocation:\n" . join("\n", @missing_params);
     }
@@ -309,8 +313,6 @@ sub _create {
     my $mount_path = delete $params{mount_path};
     my $exclude_mount_path = delete $params{exclude_mount_path};
     my $group_subdirectory = delete $params{group_subdirectory};
-    my $kilobytes_used = delete $params{kilobytes_used} || 0;
-    my $archive_after_time = delete $params{archive_after_time};
 
     if (%params) {
         confess "Extra parameters detected: " . Data::Dumper::Dumper(\%params);
@@ -396,7 +398,7 @@ sub _create {
         group_subdirectory           => $group_subdirectory,
         id                           => $id,
         creation_time                => UR::Context->current->now,
-        archive_after_time           => $archive_after_time,
+        @optional_params,
     );
 
     # Make sure that we never attempt to create an allocation that has an absolute path that already exists. There are
@@ -908,7 +910,7 @@ sub _unarchive {
                     $shadow_allocation->absolute_path, $self->absolute_path)));
         }
         $self->_update_owner_for_move;
-        $self->archive_after_time($self->_default_archive_after_time());
+        $self->archive_after_time(Genome::Disk::Command::Allocation::DelayArchiving->_resolve_date_from_months(3));
 
         if ($old_absolute_path ne $self->absolute_path) {
             _symlink($old_absolute_path, $self->absolute_path);
