@@ -7,19 +7,19 @@ use Genome;
 class Genome::Site::TGI::Synchronize::Classes::LimsProject {
     table_name => <<SQL
     (
-        --Setup Research Project
-        select s.setup_id id, s.setup_name name, 'na' pipeline 
-        from setup_project p
-        join setup s on s.setup_id = p.setup_project_id
-        where p.project_type = 'setup project research'
-        and p.setup_project_id > 2570000
-        union all
-        --Setup Work Order
-        select wo.setup_wo_id id, s.setup_name name, wo.pipeline pipeline
-        from setup_work_order wo
-        join setup s on s.setup_id = wo.setup_wo_id
-        where wo.setup_wo_id > 2570000
-    ) setup_project
+		--Administration Project
+		select ap.project_id id, ap.project_name name, 'na' pipeline 
+		from administration_project ap
+		where ap.project_id > 2570000
+         and ap.status != 'abandoned'
+		union all
+		--Setup Work Order
+		select wo.setup_wo_id id, s.setup_name name, wo.pipeline pipeline
+		from setup s
+		join setup_work_order wo on wo.setup_wo_id = s.setup_id
+		where s.setup_id > 2570000
+		 and s.setup_status != 'abandoned'
+    ) lims_project
 SQL
     ,
     id_by => [
