@@ -7,6 +7,7 @@
     <link fromOperation="input connector" fromProperty="segregating_sites_vcf_file" toOperation="InitialVcfMerge" toProperty="output_file" />
     <link fromOperation="input connector" fromProperty="initial_vcf_merge_working_directory" toOperation="InitialVcfMerge" toProperty="working_directory" />
     <link fromOperation="input connector" fromProperty="max_files_per_merge" toOperation="InitialVcfMerge" toProperty="max_files_per_merge" />
+    <link fromOperation="input connector" fromProperty="exact_pos" toOperation="InitialVcfMerge" toProperty="exact_pos" />
     <operation name="InitialVcfMerge">
         <operationtype commandClass="Genome::Model::Tools::Joinx::SafeVcfMerge" typeClass="Workflow::OperationType::Command" />
     </operation>
@@ -136,6 +137,7 @@
         <inputproperty>segregating_sites_vcf_file</inputproperty>
         <inputproperty>initial_vcf_merge_working_directory</inputproperty>
         <inputproperty>max_files_per_merge</inputproperty>
+        <inputproperty>exact_pos</inputproperty>
 
         <!-- BackfillIndelVcf -->
         <inputproperty>input_bams</inputproperty>
@@ -144,7 +146,6 @@
 
         <!-- FinalVcfMerge -->
         <inputproperty>final_vcf_merge_working_directory</inputproperty>
-        <inputproperty>exact_pos</inputproperty>
         <inputproperty>output_vcf</inputproperty>
 
         <outputproperty>output_vcf</outputproperty>
