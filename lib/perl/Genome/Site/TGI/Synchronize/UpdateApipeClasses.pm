@@ -34,9 +34,6 @@ class Genome::Site::TGI::Synchronize::UpdateApipeClasses {
 # it can lead to some attributes not being copied over.
 sub objects_to_sync {
     return (
-        'Genome::Site::TGI::Synchronize::Classes::LimsProject' => 'Genome::Project',
-    );
-    return (
         'Genome::Site::TGI::Synchronize::Classes::OrganismTaxon' => 'Genome::Taxon',
         'Genome::Site::TGI::Synchronize::Classes::OrganismIndividual' => 'Genome::Individual',
         'Genome::Site::TGI::Synchronize::Classes::PopulationGroup' => 'Genome::PopulationGroup',
@@ -81,9 +78,8 @@ sub _suppress_status_messages {
 
 sub _lock_me {
     my $self = shift;
-    # An unlock observer is added at end of execute (not here) because
-    # this command periodically commits (which triggers the observer).
     return 1 if $ENV{UR_DBI_NO_COMMIT};
+    $self->status_message('Lock...');
     my $lock = Genome::Sys->lock_resource(
         resource_lock => $ENV{GENOME_LOCK_DIR} . '/synchronize-update-apipe-classes',
         max_try => 1,
@@ -92,6 +88,7 @@ sub _lock_me {
         $self->error_message("Could not lock sync cron!");
         return;
     }
+    $self->status_message('Lock: '.$lock);
     $self->_lock($lock);
     return 1;
 }
@@ -99,12 +96,9 @@ sub _lock_me {
 sub _unlock_me {
     my $self = shift;
     return 1 if $ENV{UR_DBI_NO_COMMIT};
-    UR::Context->current->add_observer(
-        aspect => 'commit',
-        callback => sub{
-            Genome::Sys->unlock_resource(resource_lock => $self->_lock);
-        }
-    );
+    return 1 if not $self->_lock;
+    $self->status_message('Unlock...');
+    eval{ Genome::Sys->unlock_resource(resource_lock => $self->_lock); };
     return 1;
 }
 
@@ -117,10 +111,8 @@ sub execute {
     # Suppress overly talkative classes
     $self->_suppress_status_messages;
 
-    # Load instrument data successful pidfas.
-    # We only sync instrument data the have a successful pidfa.
-    my $load_pidfas = 1;
-    #my $load_pidfas = $self->_load_successful_pidfas;
+    # Load instrument data successful pidfas. We only sync instrument data the have a successful pidfa.
+    my $load_pidfas = $self->_load_successful_pidfas;
     if ( not $load_pidfas ) {
         $self->error_message('Failed to load instruemnt data successful pidfas!');
         return;
