@@ -161,9 +161,9 @@ class Genome::Site::TGI::Synchronize::Classes::IndexIllumina {
                         and r1.read_number = 1
                     join GSC.library_summary lib on lib.library_id = i.library_id
                     join GSC.organism_sample sam on sam.organism_sample_id = lib.sample_id
-                    join GSC.woi_sequence_product wsp on wsp.seq_id = i.seq_id
-                    join work_order_item@oltp woi on wsp.woi_id = woi.woi_id
-                    join setup_work_order@oltp swo on swo.setup_wo_id = woi.setup_wo_id
+                    left join GSC.woi_sequence_product wsp on wsp.seq_id = i.seq_id
+                    left join work_order_item@oltp woi on wsp.woi_id = woi.woi_id
+                    left join setup_work_order@oltp swo on swo.setup_wo_id = woi.setup_wo_id
         )
         index_illumina
 EOS
