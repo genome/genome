@@ -63,7 +63,7 @@ sub execute {
 sub run_with_single_output {
     my ($self, @cmd) = @_;
 
-    push @cmd, '--numWindowsPerFile', 9_000_000;
+    push @cmd, '--numWindowsPerFile', 9_999_999; # author of .py hard-coded 10_000_000 as starting value.
     my $result = $self->run(@cmd);
 
     # ensure there is only one output.
