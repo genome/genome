@@ -99,6 +99,11 @@ class Genome::Disk::Allocation {
             is_optional => 1,
             doc => 'After this time, this allocation is subject to being archived'
         },
+        timeline_events => {
+            is_many => 1,
+            is => 'Genome::Timeline::Event::Allocation',
+            reverse_as => 'object',
+        },
     ],
     has_optional => [
         archivable => {
@@ -278,6 +283,8 @@ sub archivable {
             header_text => $value ? 'set to archivable' : 'set to unarchivable',
             body_text => $reason,
         );
+        my $event = $value ? 'unpreserved' : 'preserved';
+        Genome::Timeline::Event::Allocation->$event($reason, $self);
         return $self->__archivable($value);
     }
     return $self->__archivable;
@@ -439,6 +446,8 @@ sub _create {
         confess $error;
     }
 
+    Genome::Timeline::Event::Allocation->created('initial creation', $self);
+
     return $self;
 }
 
@@ -574,7 +583,13 @@ sub _reallocate {
         }
     }
 
-    unless ($succeeded) {
+    if ($succeeded) {
+        Genome::Timeline::Event::Allocation->reallocated(
+            "actual kb used: $kb_used",
+            $self,
+        );
+        _commit_unless_testing();
+    } else {
         # Rollback kilobytes_requested
         my $max_kilobytes_requested = List::Util::max($kb_used, $old_kb_requested);
         my $msg = $old_kb_requested == $max_kilobytes_requested ? 'Rolling back' : 'Setting';
@@ -686,6 +701,11 @@ sub _move {
     # This is here because certain objects (Build & SoftwareResult) don't
     # calculate their data_directories from their disk_allocations.
     $self->_update_owner_for_move;
+
+    Genome::Timeline::Event::Allocation->moved(
+        sprintf("moved from %s to %s", $original_absolute_path, $self->absolute_path),
+        $self,
+    );
 
     _symlink($self->absolute_path, $original_absolute_path);
 
@@ -803,6 +823,11 @@ sub _archive {
             $msg .= "\n\nWhile cleaning up archive tarball, encoutered error:\n$cleanup_error";
         }
         confess $msg;
+    } else {
+        Genome::Timeline::Event::Allocation->archived(
+            'archived',
+            $self,
+        )
     }
 
     # Never make filesystem changes if no commit is enabled
@@ -836,7 +861,7 @@ sub unarchive_shadow_params {
 sub _unarchive {
     my ($class, %params) = @_;
     my $id = delete $params{id};
-    my $reason = delete $params{reason};
+    my $reason = (delete $params{reason} || 'no reason given');
     if (%params) {
         confess "Extra parameters given to allocation unarchive method: " . join(',', sort keys %params);
     }
@@ -934,8 +959,9 @@ sub _unarchive {
     } else {
         $self->add_note(
             header_text => 'unarchived',
-            body_text => $reason || 'no reason given',
+            body_text => $reason,
         );
+        Genome::Timeline::Event::Allocation->unarchived($reason, $self);
     }
 
     $self->_cleanup_archive_directory($archive_path);
@@ -1495,6 +1521,24 @@ sub get_allocation_for_path {
     }
 
     return $allocation;
+}
+
+sub archive_after_time {
+    my $self = shift;
+
+    if (@_) {
+        my ($new_time) = @_;
+        my $old_time = $self->__archive_after_time();
+        my $event = ($old_time lt $new_time) ? 'strengthened' : 'weakened';
+
+        Genome::Timeline::Event::Allocation->$event(
+            sprintf('original time: %s - new time: %s', $old_time, $new_time),
+            $self,
+        );
+        return $self->__archive_after_time(@_);
+    } else {
+        return $self->__archive_after_time;
+    }
 }
 
 sub _symlink {
