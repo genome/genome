@@ -1,4 +1,4 @@
-package Genome::Model::Tools::Annotate::TranscriptVariants::Version3;
+package Genome::Model::Tools::Annotate::TranscriptVariants::Version4;
 
 use strict;
 use warnings;

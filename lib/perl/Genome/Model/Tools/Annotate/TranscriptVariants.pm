@@ -59,7 +59,7 @@ class Genome::Model::Tools::Annotate::TranscriptVariants {
             is => 'Text',
             default_value => __PACKAGE__->default_annotator_version,
             doc => 'Annotator version to use',
-            valid_values => [0,1,2,3],#__PACKAGE__->available_versions,
+            valid_values => [0..4],#__PACKAGE__->available_versions,
         },
         # IO Params
         _is_parallel => {
@@ -611,7 +611,7 @@ sub _main_annotation_loop {
             for my $variant_allele (@variant_alleles) {
                 # annotate variant with this allele
                 $variant->{variant} = $variant_allele;
-
+                $DB::single = 1;
                 my @transcripts = $annotator->$annotation_method(%$variant);
                 $self->_print_annotation($variant, \@transcripts);
             }
