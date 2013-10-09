@@ -300,9 +300,13 @@ sub _load_genotyopes {
         my %genotype;
         @genotype{@headers} = split(',', $line);
         # The id is from the snp mapping or the genotype's snp_name
-        $genotype{id} = ( $snp_id_mapping and $snp_id_mapping->{ $genotype{snp_name} } )
-        ? $snp_id_mapping->{ $genotype{snp_name} }
-        : $genotype{snp_name};
+        if($snp_id_mapping and exists $snp_id_mapping->{ $genotype{snp_name} }) {
+            $genotype{id} = $snp_id_mapping->{ $genotype{snp_name} };
+        } else {
+            $genotype{id} = $genotype{snp_name};
+            $genotype{id} =~ s/^(rs\d+)\D*$/$1/; #borrowed from GSC::Genotyping::normalize_to
+        }
+
         # Filter...
         for my $filter ( @$filters ) {
             next GENOTYPE if not $filter->filter(\%genotype);
