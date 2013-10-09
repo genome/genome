@@ -4986,7 +4986,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
         0,
         1,
         2,
-        3
+        3,
+        4
       ],
       'variant-bed-file=s',
       'files',
@@ -18140,7 +18141,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
           0,
           1,
           2,
-          3
+          3,
+          4
         ],
         'output=s',
         undef,
