@@ -8,8 +8,22 @@ use Test::More;
 use above "Genome";
 use Carp::Always;
 
-my $class = 'Genome::Timeline::Event';
+{
+    package Genome::IsTimelineEvent;
 
+    class Genome::IsTimelineEvent {
+        is => 'Genome::Timeline::Event'
+    };
+}
+
+my $class = 'Genome::Timeline::Event';
 use_ok($class);
+
+my $subclass_obj = Genome::IsTimelineEvent->create();
+my @properties = keys %{Genome::Timeline::Event->_object_properties};
+
+for my $property (@properties) {
+    ok($subclass_obj->can($property), "The preprocessor defines the $property property");
+}
 
 done_testing();

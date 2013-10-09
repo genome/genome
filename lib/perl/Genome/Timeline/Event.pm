@@ -11,32 +11,9 @@ class Genome::Timeline::Event {
     is_abstract => 1,
     id_generator => '-uuid',
     data_source => 'Genome::DataSource::GMSchema',
-    id_by => [
-        id => {
-            is => 'Text',
-            len => 64,
-        },
-    ],
-    has => [
-        object => {
-            is => 'UR::Object',
-            id_by => 'object_id',
-            id_class_by => 'object_class_name',
-        },
-        name => {
-            is => 'Text',
-        },
-        object_id => {
-            is => 'Text',
-        },
-        object_class_name => {
-            is => 'Text',
-        },
-        reason => {
-            is => 'Text',
-        },
-    ],
+    subclass_description_preprocessor => __PACKAGE__ . '::_preprocess_subclass_description',
 };
+
 
 sub _add {
     my $class = shift;
@@ -58,12 +35,53 @@ sub _properties_to_snapshot { die('Please provide a map of properties to be save
 sub _define_event_constructors {
     my ($class, $into, $values) = @_;
     for my $event_name (@$values) {
-        Sub::Install::install_sub({
+        Sub::Install::reinstall_sub({
                 into => $into,
                 as => $event_name,
                 code => sub { shift->_add($event_name, @_); }
         });
     }
+}
+
+sub _preprocess_subclass_description {
+    my ($class, $desc) = @_;
+    my $properties = _object_properties();
+    for my $property (keys %$properties) {
+        $desc->{has}{$property} = $properties->{$property};
+    }
+    $desc->{id_by} = _id_by();
+    return $desc;
+}
+
+sub _id_by {
+    return [
+        id => {
+            is => 'Text',
+            len => 64,
+        },
+    ];
+}
+
+sub _object_properties {
+    return {
+        object => {
+            is => 'UR::Object',
+            id_by => 'object_id',
+            id_class_by => 'object_class_name',
+        },
+        name => {
+            is => 'Text',
+        },
+        object_id => {
+            is => 'Text',
+        },
+        object_class_name => {
+            is => 'Text',
+        },
+        reason => {
+            is => 'Text',
+        },
+    };
 }
 
 1;

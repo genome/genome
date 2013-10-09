@@ -8,22 +8,17 @@ use Genome;
 class Genome::Timeline::Event::Allocation {
     is => 'Genome::Timeline::Event',
     table_name => 'timeline.allocation',
-    id_by => [
-        id => {
-            is => 'Text',
-            len => 64,
-        },
-    ],
     has => [
         object_class_name => {
             is_constant => 1,
             default_value => 'Genome::Disk::Allocation',
             valid_values => ['Genome::Disk::Allocation'],
         },
-        #allocation => {
-            #via => '__self__',
-            #to => 'object',
-        #},
+        allocation => {
+            id_by => 'object_id',
+            is => 'UR::Object',
+            id_class_by => 'object_class_name'
+        },
         kilobytes_requested => {
             is => 'Number',
         },
