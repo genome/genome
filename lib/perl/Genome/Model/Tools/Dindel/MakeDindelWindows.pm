@@ -18,7 +18,7 @@ class Genome::Model::Tools::Dindel::MakeDindelWindows {
         window_file => {
             is => 'Path',
             is_calculated => 1,
-            calculate =>  q{ $output_prefix . ".1.txt" },
+            calculate =>  q{ $output_prefix . ".txt" },
             calculate_from => ['output_prefix'],
         },
     ],
@@ -66,13 +66,11 @@ sub run_with_single_output {
     push @cmd, '--numWindowsPerFile', 9_000_000;
     my $result = $self->run(@cmd);
 
+    # ensure there is only one output.
     my @output_files = glob($self->output_prefix . "*");
-    if (scalar(@output_files) > 1) {
-        die sprintf("Found more than one output_file (%s) when only one should have been produced.",
-            scalar(@output_files));
-    } else {
-        return $result;
-    }
+    Genome::Sys->concatenate_files(\@output_files, $self->window_file);
+
+    return $result;
 }
 
 sub run {
@@ -81,9 +79,6 @@ sub run {
         cmd => \@cmd,
         input_files => [
             $self->input_dindel_file,
-        ],
-        output_files => [
-            $self->window_file,
         ],
     );
 }

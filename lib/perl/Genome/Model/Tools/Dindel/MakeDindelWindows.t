@@ -17,7 +17,7 @@ BEGIN {
 my $class = 'Genome::Model::Tools::Dindel::MakeDindelWindows';
 use_ok($class);
 
-my $VERSION = 0; # Bump this each time tests data changes
+my $VERSION = 1; # Bump this each time tests data changes
 
 my $test_dir = get_test_dir($class, $VERSION);
 
