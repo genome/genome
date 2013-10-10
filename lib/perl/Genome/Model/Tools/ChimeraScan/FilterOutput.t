@@ -15,12 +15,18 @@ use Genome::Utility::Test;
 my $class = "Genome::Model::Tools::ChimeraScan::FilterOutput";
 
 use_ok($class);
-my $data_dir = Genome::Utility::Test->data_dir_ok($class, "v4");
+my $data_dir = Genome::Utility::Test->data_dir_ok($class, "v5");
 my $in = $data_dir."/chimeras.bedpe";
 my $out = Genome::Sys->create_temp_file_path;
 my $expected = $data_dir."/expected.txt";
+my $annot_build_id = 124434505; # ensembl 67
 
-my $rt = $class->execute(bedpe_file => $in, output_file => $out);
+my $rt = $class->execute(
+    bedpe_file  => $in, 
+    output_file => $out,
+    annotation_build_id => $annot_build_id,
+);
+
 Genome::Utility::Test::compare_ok($out, $expected, "Output file was created as expected");
 
 done_testing;
