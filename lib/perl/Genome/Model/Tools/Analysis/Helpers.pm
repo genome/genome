@@ -16,10 +16,10 @@ our @EXPORT_OK = qw(
     sort_genotype
 );
 
-sub byBamOrder
+sub byBamOrder ($$)
 {
-    my ($chrom_a, $pos_a) = split(/\t/, $a);
-    my ($chrom_b, $pos_b) = split(/\t/, $b);
+    my ($chrom_a, $pos_a) = split(/\t/, $_[0]);
+    my ($chrom_b, $pos_b) = split(/\t/, $_[1]);
 
     $chrom_a =~ s/X/9\.1/;
     $chrom_a =~ s/Y/9\.2/;
