@@ -1413,8 +1413,9 @@ sub shellcmd {
 
         } elsif ($child_exit_code != 0) {
             if ($child_exit_code == 141) {
-                my $longmess = Carp::longmess("SIGPIPE was recieved by command but IGNORED! cmd: '$cmd'");
-                $self->error_message($longmess);
+                my ($package, $filename, $line) = caller(0);
+                my $msg = "SIGPIPE was recieved by command but IGNORED! cmd: '$cmd' in $package at $filename line $line";
+                $self->error_message($msg);
             } elsif ($allow_failed_exit_code) {
                 Carp::carp("TOLERATING Exit code $child_exit_code from: $cmd");
             } else {
