@@ -23,10 +23,10 @@ class Genome::Model::Tools::DetectVariants2::Filter::FalseIndel {
             is_optional => 1,
             doc => 'Minimum representation of variant allele on each strand',
        },
-       'min_good_coverage' => {
+       'min_coverage' => {
             type => 'String',
             is_optional => 1,
-            doc => 'Minimum site coverage to apply var_freq, var_count, and strandedness filters',
+            doc => 'Minimum site coverage to pass an indel.',
        },
        'min_var_freq' => {
             type => 'String',
@@ -137,6 +137,8 @@ sub _filter_variants {
     }
 
     my $min_homopolymer = $self->min_homopolymer;
+
+    my $min_coverage = $self->min_coverage;
 
     ## Determine the strandedness and read position thresholds ##
     
@@ -315,6 +317,7 @@ sub _filter_variants {
                     }
 
                     my $FilterResult = "";
+                    my $coverage = $ref_count + $var_count;
 
                     if($var_count && ($var_plus + $var_minus)) {
                         ## We must obtain variant read counts to proceed ##
@@ -322,8 +325,14 @@ sub _filter_variants {
 
                         my $readcount_info = join("\t", $var_allele, $var_count, $var_freq, $ref_pos, $var_pos, $ref_strandedness, $var_strandedness, $ref_mmqs, $var_mmqs, $mismatch_qualsum_diff);
 
+                        ## FAILURE 0: MINIMUM COVERAGE ##
+                        if ( defined $min_coverage and $coverage < $min_coverage ) {
+                            $FilterResult = "MinCoverage:$coverage<$min_coverage";
+                            $stats{'num_fail_min_quality'}++;
+                        }
+
                         ## FAILURE 1: READ POSITION ##
-                        if(($var_pos < $min_read_pos)) {
+                        elsif(($var_pos < $min_read_pos)) {
                             $FilterResult = "ReadPos<$min_read_pos";
                             $stats{'num_fail_pos'}++;
                         }
