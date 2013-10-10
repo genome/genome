@@ -515,6 +515,10 @@ sub _delete {
 
     my $path = $self->absolute_path;
 
+    for my $event ($self->timeline_events) {
+        $event->delete();
+    }
+
     $self->SUPER::delete;
 
     $class->_create_observer(
