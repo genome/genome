@@ -31,7 +31,7 @@ my $transcript = "$output_base/transcript";
 my $command = Genome::Model::Tools::Annotate::TranscriptVariants->create(
     variant_file => $input,
     output_file => $transcript,
-    reference_transcripts => "NCBI-human.ensembl/54_36p_v2",
+    reference_transcripts => "NCBI-human.ensembl/70_37_v5",
 );
 is($command->execute(),1, "executed transcript variants w/ return value of 1");
 
@@ -39,19 +39,22 @@ ok(-e $transcript, 'transcript output exists');
 
 unlink($transcript);
 
-my $command_reference_transcripts = Genome::Model::Tools::Annotate::TranscriptVariants->create(
-    reference_transcripts => "NCBI-human.ensembl/54_36p_v2",
-    variant_file => $input,
-    output_file => $transcript,
-);
-is($command_reference_transcripts->execute(),1, "executed transcript variants with reference transcripts w/ return value of 1");
-
 my $command_bed_file = Genome::Model::Tools::Annotate::TranscriptVariants->create(
-    reference_transcripts => "NCBI-human.ensembl/54_36p_v2",
+    reference_transcripts => "NCBI-human.ensembl/70_37_v5",
     variant_bed_file => $bed_input,
     output_file => $transcript,
 );
 is($command_bed_file->execute(),1, "executed transcript variants with bed file w/ return value of 1");
+
+my $iub_command = Genome::Model::Tools::Annotate::TranscriptVariants->create(
+    reference_transcripts=> "NCBI-human.combined-annotation/70_37_v5",
+    variant_file => $iub_input, 
+    output_file => $transcript,
+    use_version => 4,
+    accept_reference_IUB_codes => 1,
+);
+is($iub_command->execute(), 1, "exectuted transcript variants version 4 with variant containing IUB reference");
+
 
 my $iub_command = Genome::Model::Tools::Annotate::TranscriptVariants->create(
     reference_transcripts=> "NCBI-human.combined-annotation/54_36p_v2",
