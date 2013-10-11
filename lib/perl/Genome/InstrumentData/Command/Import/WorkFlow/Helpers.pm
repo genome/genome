@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 
 require Carp;
+require File::Basename;
 require File::Copy;
 require Filesys::Df;
 
@@ -187,23 +188,30 @@ sub source_file_format {
 
     Carp::confess('No source file to get format!') if not $source_file;
 
-    $source_file =~ s/\.gz$//;
-    my ($suffix) = $source_file =~ /\.(\w+)$/;
+    my $source_file_base_name = File::Basename::basename($source_file);
+    my @parts = split(/\./, $source_file_base_name);
+    my $suffix;
+    do {
+        $suffix = pop @parts;
+    } until not defined $suffix or ( $suffix !~ /t?gz/ and $suffix ne 'tar' );
+
     if ( not $suffix ) {
         $self->error_message("Failed to get suffix from source file! $source_file");
         return;
     }
 
     my %suffixes_to_original_format = (
-        txt => 'fastq',
         fastq => 'fastq',
         fq => 'fastq',
+        fasta => 'fasta',
+        fa => 'fasta',
+        fna => 'fasta',
         bam => 'bam',
         sra => 'sra',
     );
     my $format = $suffixes_to_original_format{$suffix};
     if ( not $format ) {
-        $self->error_message('Unrecognized suffix to import! '.$suffix);
+        $self->error_message('Unrecognized source file format! '.$source_file_base_name);
         return;
     }
 
