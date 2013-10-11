@@ -191,19 +191,28 @@ sub get_failed_key {
         (my $delocalized_file = $cmd->error_source_file) =~ s/^.*\/lib\/perl\///;
         return sprintf("Failed: %s %s", $delocalized_file, $cmd->error_source_line);
     } else {
-        # replace things that look like ids
-        (my $no_ids = $cmd->error_text) =~ s/[0-9a-f]{5,30}/<id>/g;
-
-        # replace things that look like paths
-        (my $no_ids_or_paths = $no_ids) =~ s/[a-zA-Z0-9.\-_]*[\/][a-zA-Z0-9.\-_\/]*/<path>/g;
-        return sprintf("Failed: %s", $no_ids_or_paths);
+        return sprintf("Failed: %s", remove_ids_and_paths($cmd->error_text));
     }
 }
+
+sub remove_ids_and_paths {
+    my $str = shift;
+    my $formatted_str = $str;
+
+    # replace things that look like paths
+    $formatted_str =~ s/[a-zA-Z0-9.\-_]*[\/][a-zA-Z0-9.\-_\/]*/<path>/g;
+
+    # replace things that look like ids
+    $formatted_str =~ s/[0-9a-f]{5,30}/<id>/g;
+
+    return $formatted_str;
+}
+
 
 sub get_unstartable_key {
     my ($self, $cmd) = @_;
 
-    my $text = $cmd->error_text;
+    my $text = remove_ids_and_paths($cmd->error_text);
     my $information;
     if ($text =~ m/Transaction error:/) {
         ($information = $text) =~ s/.*problems on//;
