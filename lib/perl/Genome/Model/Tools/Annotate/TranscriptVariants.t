@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use Data::Dumper;
-use Test::More tests => 10;
+use Test::More tests => 9;
 use File::Compare;
 use above "Genome";
 
@@ -47,20 +47,10 @@ my $command_bed_file = Genome::Model::Tools::Annotate::TranscriptVariants->creat
 is($command_bed_file->execute(),1, "executed transcript variants with bed file w/ return value of 1");
 
 my $iub_command = Genome::Model::Tools::Annotate::TranscriptVariants->create(
-    reference_transcripts=> "NCBI-human.combined-annotation/70_37_v5",
+    reference_transcripts=> "NCBI-human.ensembl/70_37_v5",
     variant_file => $iub_input, 
     output_file => $transcript,
     use_version => 4,
     accept_reference_IUB_codes => 1,
 );
-is($iub_command->execute(), 1, "exectuted transcript variants version 4 with variant containing IUB reference");
-
-
-my $iub_command = Genome::Model::Tools::Annotate::TranscriptVariants->create(
-    reference_transcripts=> "NCBI-human.combined-annotation/54_36p_v2",
-    variant_file => $iub_input, 
-    output_file => $transcript,
-    use_version => 2,
-    accept_reference_IUB_codes => 1,
-);
-is($iub_command->execute(), 1, "exectuted transcript variants version 2 with variant containing IUB reference");
+is($iub_command->execute(), 1, "executed transcript variants version 4 with variant containing IUB reference");
