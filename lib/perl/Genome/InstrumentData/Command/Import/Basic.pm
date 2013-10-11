@@ -46,6 +46,28 @@ class Genome::InstrumentData::Command::Import::Basic {
     ],
 };
 
+sub help_detail {
+    return <<HELP;
+    Import sequence files into GMS. All files will be converted to SAM format and stored as BAM.
+
+
+    Source Files 
+
+     Types      Notes
+     FASTQ      Can be remote and/or gzipped.
+     SAM [BAM]  Will be split by read group.
+     SRA        Aligned and unaligned reads will be dumped. SRAs are known to produce unreliable BAM files.
+
+
+     Instrument Data Properties
+      Indicate properties for the resulting instrument data entity. Give as comma separtated key=values pairs.
+
+      Examples:
+       flow_cell_id=AXXAX,index_sequence=AATTGGCC
+
+HELP
+}
+
 sub __errors__ { 
     my $self = shift;
 
