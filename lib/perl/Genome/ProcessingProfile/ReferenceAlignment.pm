@@ -33,7 +33,7 @@ class Genome::ProcessingProfile::ReferenceAlignment {
             doc => 'Version of the "annotate transcript-variants" tool to run during the annotation step',
             is_optional => 1,
             default_value => Genome::Model::Tools::Annotate::TranscriptVariants->default_annotator_version,
-            valid_values => [ 0,1,2,3],#Genome::Model::Tools::Annotate::TranscriptVariants->available_versions ],
+            valid_values => [ 0,1,2,3,4],#Genome::Model::Tools::Annotate::TranscriptVariants->available_versions ],
         },
         transcript_variant_annotator_filter => {
             doc => 'annotation-filter option to be used by the "annotate transcript-variants" tool run during the annotation step',
