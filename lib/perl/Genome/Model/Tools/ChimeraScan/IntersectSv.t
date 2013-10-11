@@ -15,7 +15,7 @@ use Genome::Utility::Test;
 my $class = "Genome::Model::Tools::ChimeraScan::IntersectSv";
 
 use_ok($class);
-my $data_dir   = Genome::Utility::Test->data_dir_ok($class, "v1");
+my $data_dir   = Genome::Utility::Test->data_dir_ok($class, "v2");
 my $bedpe_file = $data_dir.'/filtered.chimeras.bedpe';
 my $sv_file    = $data_dir.'/svs.hq.annotated';
 
