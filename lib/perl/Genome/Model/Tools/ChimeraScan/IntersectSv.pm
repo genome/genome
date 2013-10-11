@@ -44,9 +44,6 @@ sub execute {
         data_directory     => $annot_build->_annotation_data_directory,
     );
     my @cached_transcripts = Genome::Transcript->get(%params);
-    my @cached_egi = Genome::ExternalGeneId->get(%params, id_type => 'ensembl');
-
-    my $fusion_reader = Genome::File::BedPe::Reader->new($filtered_bedpe_file);
 
     #gather chimera filter info, chrom1 -> chrom5p, chrom2 -> chrom3p
     my @fusion_headers        = qw(name chrom1 start1 end1 chrom2 start2 end2);
@@ -54,6 +51,7 @@ sub execute {
     my @fusion_all_headers    = (@fusion_headers, @fusion_custom_headers);
 
     my (%fusion_gene_5p, %fusion_gene_3p);
+    my $fusion_reader = Genome::File::BedPe::Reader->new($filtered_bedpe_file);
 
     while (my $entry = $fusion_reader->next) {
         my ($id_5p, $id_3p) = map{$entry->{custom}->[$_]}qw(3 4);
@@ -142,34 +140,22 @@ sub execute {
 sub _get_genes {
     my ($self, $trans_ids, $params) = @_;
     my @id_info = split /,/, $trans_ids;
-    my %gene_ids;
+    my %gene_info;
    
     for my $id_info (@id_info) {
         my ($trans_id) = $id_info =~ /^(E\S+)\:/;
         if ($trans_id) {
             my $trans = Genome::Transcript->get(transcript_name => $trans_id, %$params);
             if ($trans) {
-                my $gene_id = $trans->gene_id;
-                if ($gene_id) {
-                    #my $gene_name = $gene->name('ensembl');
-                    my ($gene_id_obj) = Genome::ExternalGeneId->get(
-                        %$params,
-                        gene_id => $gene_id,
-                        id_type => 'ensembl',
-                    );
-                    if ($gene_id_obj) {
-                        my $name = $gene_id_obj->id_value;
-                        unless ($gene_ids{$name}) {
-                            my $gene = $trans->gene;
-                            $gene_ids{$name} = {
-                                name  => $name,
-                                start => $gene->gene_start,
-                                stop  => $gene->gene_stop,
-                            };
-                        }
-                    }
-                    else {
-                        $self->warning_message("Failed to get ensembl gene name from trans id: $trans_id");
+                my $gene = $trans->gene;
+                if ($gene) {
+                    my $gene_id = $trans->gene_id;
+                    unless ($gene_info{$gene_id}) {
+                        $gene_info{$gene_id} = {
+                            name  => $gene_id,
+                            start => $gene->gene_start,
+                            stop  => $gene->gene_stop,
+                        };
                     }
                 }
                 else {
@@ -184,7 +170,7 @@ sub _get_genes {
             $self->warning_message("Failed to get transcript id from $id_info");
         }
     }
-    return %gene_ids;
+    return %gene_info;
 }
 
 1;
