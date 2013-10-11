@@ -190,7 +190,7 @@ EOS
 }
 
 sub default_annotator_version {
-    return 2;
+    return 4;
 }
 
 sub help_detail {
