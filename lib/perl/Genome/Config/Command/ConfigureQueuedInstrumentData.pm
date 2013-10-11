@@ -42,7 +42,6 @@ sub execute {
             my $analysis_project = $self->_get_analysis_project_for_instrument_data($current_inst_data);
             my $config = $analysis_project->get_configuration_reader();
             my $hashes = $self->_prepare_configuration_hashes_for_instrument_data($current_inst_data, $config);
-            $DB::single=1;
             while (my ($model_type, $model_hashes) = (each %$hashes)) {
                 if ($model_type->requires_pairing) {
                     $model_hashes = $self->_process_paired_samples($analysis_project, $current_inst_data, $model_hashes);
@@ -67,7 +66,7 @@ sub _process_models {
     my $model_list = shift;
 
     for my $model_instance (@$model_list) {
-        my ($model, $created_new) = $self->_get_model_for_config_hash( $model_type, $model_instance);
+        my ($model, $created_new) = $self->_get_model_for_config_hash($model_type, $model_instance);
 
         $self->status_message(sprintf('Model: %s %s for instrument data: %s.',
                 $model->id, ($created_new ? 'created' : 'found'), $instrument_data->id ));
@@ -165,15 +164,14 @@ sub _get_model_for_config_hash {
 
 sub _prepare_configuration_hashes_for_instrument_data {
     my ($self, $instrument_data, $config_obj) = @_;
-    #TODO eventually this will need to support multiple references
-    $DB::single = 1;
+
     my $config_hash = $config_obj->get_config(
         sequencing_platform => $instrument_data->sequencing_platform,
         domain              => _normalize_domain($instrument_data->taxon->domain),
         taxon               => _normalize_taxon($instrument_data->species_name),
         type                => _normalize_extraction_type($instrument_data->sample->extraction_type),
     );
-    $DB::single = 1;
+
     for my $model_type (keys %$config_hash) {
         if (ref $config_hash->{$model_type} ne 'ARRAY') {
             $config_hash->{$model_type} = [$config_hash->{$model_type}];
