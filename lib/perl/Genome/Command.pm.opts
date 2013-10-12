@@ -335,7 +335,7 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'paths=s',
         'files',
-        'HASH(0x5076190)=s',
+        'HASH(0x47bf478)=s',
         'files',
         'help!',
         undef
@@ -8267,7 +8267,7 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>delay-archiving',
       [
-        'HASH(0x129372e0)=s',
+        'HASH(0x120d69b8)=s',
         'files',
         'builds=s@',
         undef,
@@ -8730,7 +8730,7 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>delay-archiving',
     [
-      'HASH(0xbbbde08)=s',
+      'HASH(0xb35ce78)=s',
       'files',
       'models=s@',
       undef,
@@ -9100,7 +9100,7 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>delay-archiving',
     [
-      'HASH(0x12ffa630)=s',
+      'HASH(0x1279a9d8)=s',
       'files',
       'model-groups=s@',
       undef,
@@ -34842,6 +34842,8 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>filter-output',
       [
+        'annotation-build-id=s',
+        'files',
         'bedpe-file=s',
         'files',
         'output-file=s',
