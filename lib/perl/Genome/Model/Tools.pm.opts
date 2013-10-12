@@ -24397,6 +24397,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
     ],
     '>filter-output',
     [
+      'annotation-build-id=s',
+      'files',
       'bedpe-file=s',
       'files',
       'output-file=s',
