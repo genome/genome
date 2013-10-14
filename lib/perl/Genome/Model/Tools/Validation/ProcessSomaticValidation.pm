@@ -44,6 +44,13 @@ class Genome::Model::Tools::Validation::ProcessSomaticValidation {
           doc => "Model only has tumor data",
       },
 
+      use_assembled_indels => {
+          is => 'Boolean',
+          is_optional => 1,
+          default => 1,
+          doc => 'Use the assembled indel calls from the build. Turning this off uses indels straight out of discovery',
+      },
+
       restrict_to_target_regions =>{
           is => 'Boolean',
           is_optional => 1,
@@ -644,17 +651,8 @@ sub execute {
   }
 
   
-  my $small_indel_file = "$build_dir/validation/small_indel/final_output";
-  unless( -e $small_indel_file ){
-      print STDERR "WARNING: realigned small indels not found (tumor only build?). Using raw calls from validation data\n";
-      $small_indel_file = "$build_dir/variants/indels.hq.bed";
-  }
-  my $large_indel_file = "$build_dir/validation/large_indel/combined_counts.csv.somatic.adapted";
-  unless( -e $large_indel_file ){
-      print STDERR "WARNING: realigned large indels not found (tumor only build?). Using raw calls from validation data\n";
-      $large_indel_file = "$build_dir/variants/indels.hq.bed";
-      print STDERR $large_indel_file . "\n";
-  }
+  my ($small_indel_file, $large_indel_file) = $self->indel_files( $build_dir );
+
   my $process_svs = $self->process_svs;
   my $sv_file = "$build_dir/validation/sv/assembly_output.csv.merged.readcounts.somatic.wgs_readcounts.somatic";
   if($process_svs){
@@ -1118,4 +1116,19 @@ sub execute {
   return 1;
 }
 
+sub indel_files {
+    my ($self, $build_dir) = @_;
+    my $small_indel_file = "$build_dir/validation/small_indel/final_output";
+    unless( -e $small_indel_file && $self->use_assembled_indels ){
+        print STDERR "WARNING: realigned small indels not found (tumor only build?) or not requested. Using raw calls from validation data\n";
+        $small_indel_file = "$build_dir/variants/indels.hq.bed";
+    }
+    my $large_indel_file = "$build_dir/validation/large_indel/combined_counts.csv.somatic.adapted";
+    unless( -e $large_indel_file && $self->use_assembled_indels ){
+        print STDERR "WARNING: realigned large indels not found (tumor only build?) or not requested. Using raw calls from validation data\n";
+        $large_indel_file = "$build_dir/variants/indels.hq.bed";
+        print STDERR $large_indel_file . "\n";
+    }
+    return ($small_indel_file,$large_indel_file);
+}
 1;
