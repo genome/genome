@@ -53,6 +53,12 @@ class Genome::Model::SomaticValidation {
             is => 'Text',
             doc => 'The detection to run on the control aligned reads for determining LOH',
         },
+        transcript_variant_annotator_version => {
+            doc => 'Version of the "annotate transcript-variants" tool to run during the annotation step',
+            is_optional => 1,
+            default_value => Genome::Model::Tools::Annotate::TranscriptVariants->default_annotator_version,
+            valid_values => [ 0,1,2,3,4 ],
+        },
         tiering_version => {
             is => 'Text',
             doc => 'version of tiering BED files to use (tiering is not performed if not specified)',
@@ -239,6 +245,7 @@ sub map_workflow_inputs {
 
     push @inputs,
         build_id => $build->id,
+        transcript_variant_annotator_version => $build->processing_profile->transcript_variant_annotator_version,
         tumor_mode => 'tumor',
         normal_mode => 'normal',
         ;
