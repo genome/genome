@@ -20,6 +20,10 @@ class Genome::Model::Tools::Validation::LongIndelsGenerateMergedAssemblies {
             is => 'String',
             doc => 'reference transcripts plus version to be used to annotate input indel file',
         },
+        transcript_variant_annotator_version => {
+            is => 'Number',
+            doc => 'Version of the "annotate transcript-variants" tool to run during the annotation step',
+        },
         normal_bam => {
             is => 'String',
         },
@@ -84,6 +88,7 @@ sub execute {
         output_file => $anno_output,
         annotation_filter => "top",
         variant_bed_file => $sort_output,
+        use_version => $self->transcript_variant_annotator_version,
         #variant_file => $sort_output,
         reference_transcripts => $self->reference_transcripts,
     );

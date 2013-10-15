@@ -99,12 +99,14 @@ sub execute {
 
     my $ref_seq_build = $self->build->reference_sequence_build;
     my $ref_seq_fasta = $ref_seq_build->full_consensus_path('fa');
+    my $annotator_version = $self->build->processing_profile->transcript_variant_annotator_version;
     my $tumor_bam = $self->build->tumor_bam;
     my $normal_bam = $self->build->normal_bam;
 
     my $cmd = Genome::Model::Tools::Validation::LongIndelsGenerateMergedAssemblies->create(
         long_indel_bed_file => $self->_long_indel_bed_file,
         output_dir => $output_directory,
+        transcript_variant_annotator_version => $annotator_version,
         reference_transcripts => $self->reference_transcripts,
         tumor_bam => $tumor_bam,
         normal_bam => $normal_bam,

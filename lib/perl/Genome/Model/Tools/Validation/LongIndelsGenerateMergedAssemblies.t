@@ -21,6 +21,7 @@ my $temp_dir = Genome::Sys->create_temp_directory;
 my $cmd = Genome::Model::Tools::Validation::LongIndelsGenerateMergedAssemblies->create(
     long_indel_bed_file => $base_dir."/large_indels.bed",
     output_dir => $temp_dir,
+    transcript_variant_annotator_version => 2,
     reference_transcripts => "NCBI-human.ensembl/67_37l_v2",
     tumor_bam => $base_dir."/tumor.bam",
     normal_bam => $base_dir."/normal.bam",
