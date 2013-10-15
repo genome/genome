@@ -4573,6 +4573,31 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>reannotate-transcript-variants',
+    [
+      'annotation-file=s',
+      'files',
+      'output-file=s',
+      'files',
+      'annotation-filter=s',
+      'files',
+      'debug!',
+      undef,
+      'no-headers!',
+      undef,
+      'reference-transcripts=s',
+      'files',
+      'use-version=s',
+      [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      'help!',
+      undef
+    ],
     '>reference-genome',
     [
       'output-file=s',
