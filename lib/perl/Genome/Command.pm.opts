@@ -335,7 +335,7 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'paths=s',
         'files',
-        'HASH(0x5969e48)=s',
+        'HASH(0x41abe28)=s',
         'files',
         'help!',
         undef
@@ -8269,7 +8269,7 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>delay-archiving',
       [
-        'HASH(0x132574b0)=s',
+        'HASH(0x11a997d8)=s',
         'files',
         'builds=s@',
         undef,
@@ -8732,7 +8732,7 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>delay-archiving',
     [
-      'HASH(0xc4dbfa8)=s',
+      'HASH(0xad1d6d8)=s',
       'files',
       'models=s@',
       undef,
@@ -9102,7 +9102,7 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>delay-archiving',
     [
-      'HASH(0x1391d528)=s',
+      'HASH(0x12160090)=s',
       'files',
       'model-groups=s@',
       undef,
@@ -23881,6 +23881,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'reference-transcripts=s',
         'files',
+        'transcript-variant-annotator-version=s',
+        undef,
         'normal-bam=s',
         'files',
         'tumor-bam=s',
@@ -24013,6 +24015,8 @@ $Genome::Command::OPTS_SPEC = [
         'tiers-to-review=s',
         'files',
         'tumor-only!',
+        undef,
+        'use-assembled-indels!',
         undef,
         'variant-list-is-one-based!',
         undef,
