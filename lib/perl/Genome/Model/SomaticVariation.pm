@@ -117,6 +117,18 @@ class Genome::Model::SomaticVariation {
             is_optional => 1,
         },
     ],
+    has_optional => [
+        experimental_subject => {
+            is => 'Genome::Sample',
+            via => 'tumor_model',
+            to => 'subject'
+        },
+        control_subject => {
+            is => 'Genome::Sample',
+            via => 'normal_model',
+            to => 'subject'
+        },
+    ],
 };
 
 sub help_synopsis_for_create_profile {
