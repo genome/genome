@@ -10,7 +10,7 @@ require File::Temp;
 use Test::More;
 
 use_ok('Genome::InstrumentData::Command::Import::WorkFlow::RetrieveSourcePath') or die;
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import') or die;
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v1') or die;
 
 my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
 my $source_path = $test_dir.'/input.bam';
@@ -21,7 +21,8 @@ my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::RetrieveSourcePath-
 ok($cmd, 'execute');
 my $destination_path = $cmd->destination_path;
 is($destination_path, $tmp_dir.'/input.bam', 'retrieved source path named correctly');
-ok(-s $destination_path, 'destination path exists');
+ok(-s $destination_path, 'destination source path exists');
+ok(-s $destination_path.'.md5-orig', 'destination md5 path exists');
 
 #print "$tmp_dir\n"; <STDIN>;
 done_testing();
