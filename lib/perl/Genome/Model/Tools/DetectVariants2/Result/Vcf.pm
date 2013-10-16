@@ -253,48 +253,17 @@ sub _remove_existing_vcf {
 sub unlink_existing_vcf {
     my $self = shift;
     my $file = shift;
-    if( not -l $file){
-        unless(-e $file){
-            next;
-        }
+    if( not -l $file and -e $file){
         die $self->error_message("vcf exists and is not a symlink. Refusing to remove it at :".$file);
     } else {
         my @vcf_results = Genome::Model::Tools::DetectVariants2::Result::Vcf->get(input_id => $self->input_id);
         my $vcf_version = Genome::Model::Tools::Vcf->get_vcf_version;
-        if(@vcf_results > 0){
-            for my $existing_result (@vcf_results) {
-                if($self->compare_vcf_versions($existing_result->vcf_version,$vcf_version)){
-                    die $self->error_message("Found an existing vcf result(" . $existing_result->id .
-                        ") with a greater vcf_version (".$existing_result->vcf_version.") than the one I wish to make (".$vcf_version.").");
-                }
-            }
-        }
         unless(unlink $file){
             die $self->error_message("Could not unlink vcf link at: ".$file);
         }
         $self->status_message("Unlinked vcf symlink.");
     }
     return 1;
-}
-
-
-sub compare_vcf_versions {
-    my $self = shift;
-    my $vcf_a = shift;
-    my $vcf_b = shift;
-
-    my ($vcf_a_is_int) = ( $vcf_a =~ m/^\d+$/ );
-    my ($vcf_b_is_int) = ( $vcf_b =~ m/^\d+$/ );
-    
-    if($vcf_a_is_int && $vcf_b_is_int){
-        return ($vcf_a > $vcf_b);
-    } elsif( $vcf_a_is_int) {
-        return 1;
-    } elsif( $vcf_b_is_int) {
-        return 0;
-    } else {
-        return ($vcf_a gt $vcf_b);
-    }
 }
 
 1;
