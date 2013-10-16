@@ -509,5 +509,84 @@ sub key_value_pairs_to_hash {
 }
 #<>#
 
+#<MD5>#
+sub load_or_run_md5 {
+    my ($self, $path, $md5_path) = @_;
+    $self->status_message('Load or run MD5...');
+
+    Carp::confess('No path given to run MD5!') if not $path;
+    Carp::confess('Path given to run MD5 on does not exist!') if not -s $path;
+
+    $md5_path ||= $path.'.md5';
+    my $md5;
+    if ( -s $md5_path ) {
+        $md5 = $self->load_md5($md5_path);
+    }
+    else {
+        $md5 = $self->run_md5($path, $md5_path);
+    }
+
+    return $md5;
+}
+
+sub run_md5 {
+    my ($self, $path, $md5_path) = @_;
+    $self->status_message('Run MD5...');
+
+    Carp::confess('No path given to run md5!') if not $path;
+    Carp::confess('Path given to run md5 does not exist!') if not -s $path;
+
+    $md5_path ||= $path.'.md5';
+    $self->status_message("Path: $path");
+    $self->status_message("MD5 path: $md5_path");
+    my $cmd = "md5sum $path > $md5_path";
+    my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
+    if ( not $rv or not -s $md5_path ) {
+        $self->error_message($@) if $@;
+        $self->error_message('Failed to run md5!');
+        return;
+    }
+
+    my $md5 = $self->load_md5($md5_path);
+    return if not $md5;
+
+    $self->status_message('Run MD5...done');
+    return $md5;
+}
+
+sub load_md5 {
+    my ($self, $md5_path) = @_;
+    $self->status_message('Load MD5...');
+
+    Carp::confess('No MD5 path to load!') if not $md5_path;
+
+    $self->status_message('MD5 path: '.$md5_path);
+    my $fh = Genome::Sys->open_file_for_reading($md5_path);
+    if ( not $fh ) {
+        $self->error_message('Failed to open MD5 path!');
+        return;
+    }
+
+    my $line = $fh->getline;
+    $fh->close;
+    if ( not $line ) {
+        $self->error_message('Failed to read line from MD5 path!');
+        return;
+    }
+    chomp $line;
+
+    my ($md5) = split(/\s+/, $line);
+    if ( not $md5 ) {
+        $self->error_message('Failed to get MD5 from line! '.$line);
+        return;
+    }
+
+    $self->status_message('MD5:'.$md5);
+
+    $self->status_message('Load MD5...done');
+    return $md5;
+}
+#<>#
+
 1;
 

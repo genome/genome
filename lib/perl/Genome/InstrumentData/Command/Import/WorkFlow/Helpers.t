@@ -125,6 +125,12 @@ my $load_flagstat = $helpers->load_or_run_flagstat($bam_path); # loads
 is_deeply($load_flagstat, $run_flagstat, 'load flagstat');
 ok($helpers->validate_bam($bam_path), 'validate bam');
 
+# md5
+my $run_md5 = $helpers->load_or_run_md5($bam_path); # runs
+ok($run_md5, 'run md5');
+my $load_md5 = $helpers->load_or_run_md5($bam_path); # loads
+is_deeply($load_md5, $run_md5, 'load md5');
+
 # properties
 my $properties = $helpers->key_value_pairs_to_hash(qw/ sequencing_platform=solexa lane=2 flow_cell_id=XXXXXX /);
 is_deeply(
