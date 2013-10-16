@@ -65,7 +65,7 @@ sub execute {
         variant_type => $self->variant_type,
         sample_id => $tumor_model->subject->id,
         control_sample_id => $normal_model->subject->id,
-        reference_build_id => $source_build->tumor_build->reference_sequence_build->id,
+        reference_build_id => $source_build->reference_sequence_build->id,
         original_file_path => $self->variant_file,
         description => $self->description,
         format => $self->format,
