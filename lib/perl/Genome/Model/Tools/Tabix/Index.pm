@@ -15,10 +15,6 @@ class Genome::Model::Tools::Tabix::Index {
         },
     ],
     has_optional_input => [
-        output_file => {
-            is => 'Text',
-            doc => 'The output file (defaults to stdout)',
-        },
         preset => {
             is => 'Text',
             doc => 'Use one of the preset file formats',
