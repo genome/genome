@@ -114,8 +114,11 @@ sub kilobytes_required_for_processing_of_source_files {
 
     my $kb_required = 0;
     for my $source_file ( @source_files ) {
-        my $size = $self->source_file_size($source_file);
-        return if not $size;
+        my $size = $self->file_size($source_file);
+        if ( not $size ) {
+            $self->error_message('Source file does have any size! '.$source_file);
+            return;
+        }
 
         my $format = $self->source_file_format($source_file);
         return if not $format;
@@ -131,10 +134,10 @@ sub kilobytes_required_for_processing_of_source_files {
     return $kb_required;
 }
 
-sub source_file_size {
+sub file_size {
     my ($self, $source_file) = @_;
 
-    Carp::confess('No source file to get size!') if not $source_file;
+    Carp::confess('No file to get size!') if not $source_file;
 
     my $size;
     if ( $source_file =~ /^http/ ) {
@@ -144,18 +147,13 @@ sub source_file_size {
         $size = -s $source_file;
     }
 
-    if ( not $size ) {
-        $self->error_message('Source file does have any size! '.$source_file);
-        return;
-    }
-
     return $size;
 }
 
 sub remote_file_size {
     my ($self, $remote_file) = @_;
 
-    Carp::confess('No remote file to get size in kb!') if not $remote_file;
+    Carp::confess('No remote file to get size!') if not $remote_file;
 
     my $wget_cmd = "wget --spider $remote_file 2>&1 |";
     my $fh = IO::File->new($wget_cmd);
