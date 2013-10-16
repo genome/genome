@@ -5,6 +5,9 @@ use warnings;
 
 use Genome;
 use Cwd;
+use Genome::Model::Tools::DetectVariants2::Utilities qw(
+    final_result_for_variant_type
+);
 
 class Genome::Model::SomaticValidation::Command::ManualResult {
     is => 'Command::V2',
@@ -51,10 +54,7 @@ sub execute {
     my $self = shift;
 
     my $source_build = $self->source_build;
-    my $previous_result;
-    if($source_build->can('final_result_for_variant_type')){
-        $previous_result = $source_build->final_result_for_variant_type($self->variant_type .'s');
-    }
+    my $previous_result = final_result_for_variant_type([$source_build->results], $self->variant_type . 's');
 
     my $tumor_model = $source_build->can('tumor_model')? $source_build->tumor_model : $source_build->model->tumor_model;
     my $normal_model = $source_build->can('normal_model')? $source_build->normal_model : $source_build->model->normal_model;

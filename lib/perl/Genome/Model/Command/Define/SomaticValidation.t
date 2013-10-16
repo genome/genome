@@ -11,6 +11,9 @@ BEGIN {
 use above "Genome";
 use Genome::Utility::Text;
 use Test::More tests => 37;
+use Genome::Model::Tools::DetectVariants2::Utilities qw(
+    final_result_for_variant_type
+);
 
 use Cwd;
 #use Carp::Always;
@@ -40,7 +43,7 @@ my $test_targets = Genome::FeatureList->create(
 );
 isa_ok($test_targets, 'Genome::FeatureList', 'created test feature-list');
 
-my $variants_1 = $somatic_variation_build->final_result_for_variant_type('snvs');
+my $variants_1 = final_result_for_variant_type([$somatic_variation_build->results], 'snvs');
 
 my $mg = Genome::ModelGroup->__define__( name => 'test for SomaticValidation.t');
 isa_ok($mg, 'Genome::ModelGroup', 'defined model-group');
@@ -94,7 +97,7 @@ is($indel_result->description, 'curated for testing purposes', 'found existing r
 
 
 my $somatic_variation_build2 = &setup_somatic_variation_build(2);
-my $variants_2 = $somatic_variation_build2->final_result_for_variant_type('snvs');
+my $variants_2 = final_result_for_variant_type([$somatic_variation_build2->results], 'snvs');
 my @params_for_define_3 = (
     design => $test_targets,
     target => $test_targets,

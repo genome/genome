@@ -4,6 +4,9 @@ use strict;
 use warnings;
 use Genome;
 use Data::Dumper;
+use Genome::Model::Tools::DetectVariants2::Utilities qw(
+    final_result_for_variant_type
+);
 
 class Genome::Model::SomaticVariation::Command::AnnotateAndUploadVariants{
     is => 'Genome::Command::Base',
@@ -267,7 +270,7 @@ sub execute{
     my $species_name = $build->subject->species_name;
     
     if ($build->sv_detection_strategy) {
-        my $sv_sr  = $build->final_result_for_variant_type('sv');
+        my $sv_sr  = final_result_for_variant_type([$build->results], 'sv');
         if ($sv_sr) {
             my $sv_dir = $sv_sr->output_dir;
             if ($sv_dir and -d $sv_dir) {
