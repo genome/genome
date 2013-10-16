@@ -118,6 +118,10 @@ class Genome::InstrumentData {
             is_many => 0,
             where => [ attribute_label => 'analysis_project_id' ],
         },
+        analysis_project => {
+            is => 'Genome::Config::AnalysisProject',
+            id_by => 'analysis_project_id',
+        },
         original_est_fragment_size => {
             is => 'Integer',
             via => 'attributes',
