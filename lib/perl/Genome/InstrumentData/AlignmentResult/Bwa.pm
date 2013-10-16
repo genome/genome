@@ -3,6 +3,7 @@ package Genome::InstrumentData::AlignmentResult::Bwa;
 use strict;
 use warnings;
 use File::Basename;
+use File::Spec qw();
 use Data::Dumper;
 use Carp qw/confess/;
 use Genome;
@@ -93,6 +94,11 @@ sub tmp_megabytes_estimated {
 
         my $bam_bytes = -s $bam_path;
         unless ($bam_bytes) {
+            $class->error_message('Debug info (INFOSYS-8991):');
+            my @path = File::Spec->splitdir($bam_path);
+            while (pop @path) {
+                system('ls', '-dlh', File::Spec->join(@path));
+            }
             die $class->error_message("Instrument Data " . $instrument_data->id  . " has BAM ($bam_path) but has no size!");
         }
 
