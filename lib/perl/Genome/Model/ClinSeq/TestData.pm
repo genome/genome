@@ -175,7 +175,9 @@ sub load {
             reference_sequence_build => $ref_seq_build,
         );
         $rna_seq_model->add_instrument_data($normal_rna_inst_data);
-        my $rna_seq_build = Genome::Test::Factory::Build->setup_object(model_id => $rna_seq_model->id, status => "Succeeded");
+        my $rna_seq_build = Genome::Test::Factory::Build->setup_object(model_id => $rna_seq_model->id, 
+                                                                        status => "Succeeded",
+                                                                        data_directory => "$base_dir/rnaseq_dir");
         $ids{RNASEQ_MODEL} = $rna_seq_model->id;
         $clinseq_model_params{normal_rnaseq_model} = $rna_seq_model;
     }
@@ -188,7 +190,9 @@ sub load {
         );
         $rna_seq_model->add_instrument_data($rna_inst_data);
         $ids{TUMOR_RNASEQ_MODEL} = $rna_seq_model->id;
-        my $rna_seq_build = Genome::Test::Factory::Build->setup_object(model_id => $ids{TUMOR_RNASEQ_MODEL}, status => 'Succeeded');
+        my $rna_seq_build = Genome::Test::Factory::Build->setup_object(model_id => $ids{TUMOR_RNASEQ_MODEL}, 
+                                                                        status => 'Succeeded',
+                                                                        data_directory => "$base_dir/tumor_rnaseq_dir");
         $clinseq_model_params{tumor_rnaseq_model} = $rna_seq_model;
     }
     my $diff_ex_pp = Genome::Test::Factory::ProcessingProfile::DifferentialExpression->setup_object;
@@ -203,6 +207,7 @@ sub load {
         my $diff_exp_build = Genome::Test::Factory::Build->setup_object(
             model_id => $ids{DIFFEXP_MODEL},
             status => "Succeeded",
+            data_directory => "$base_dir/de_dir",
         );
         $ids{DIFFEXP_BUILD} = $diff_exp_build->id;
         $clinseq_model_params{de_model} = $diff_exp_model;
@@ -215,7 +220,7 @@ sub load {
         processing_profile_id => $clin_seq_pp->id,
     );
     $ids{CLINSEQ_MODEL} = $clin_seq_model->id;
-    my $clin_seq_build = Genome::Test::Factory::Build->setup_object(model_id => $clin_seq_model->id, status => "Succeeded");
+    my $clin_seq_build = Genome::Test::Factory::Build->setup_object(model_id => $clin_seq_model->id, status => "Succeeded", data_directory => "$base_dir/clinseq_dir");
     $ids{CLINSEQ_BUILD} = $clin_seq_build->id;
     $ids{CANCER_ANNOT_PATH} = $clin_seq_build->cancer_annotation_db->data_directory;
     $ids{MISC_ANNOT_PATH} = $clin_seq_build->misc_annotation_db->data_directory;
