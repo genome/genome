@@ -710,16 +710,8 @@ sub create_default_models_and_assign_all_applicable_instrument_data {
             return;
         }
 
-        my %roi_sets = (
-            'WU-Space' => [
-            'NCBI-human.combined-annotation-58_37c_cds_exon_and_rna_merged_by_gene',
-            'NCBI-human.combined-annotation-54_36p_v2_CDSome_w_RNA',
-            ],
-            'TCGA-CDS' => [
-            'agilent_sureselect_exome_version_2_broad_refseq_cds_only_hs37',
-            'agilent sureselect exome version 2 broad refseq cds only',
-            ],
-        );
+        my %roi_sets = roi_sets();
+
         for my $roi_set (keys %roi_sets) {
             my $roi_set_names = $roi_sets{$roi_set};
             my $roi_set_name = $self->first_compatible_feature_list_name($reference_sequence_build, $roi_set_names);
@@ -956,6 +948,19 @@ sub assign_capture_inputs {
     return 1;
 }
 
+sub _get_name_ext_for_model {
+    my $self = shift;
+    my $model = shift;
+
+    my %roi_sets = roi_sets();
+    for my $ext (keys %roi_sets) {
+        my @roi_names = @{$roi_sets{$ext}};
+        for my $roi_name (@roi_names) {
+            return lc('.'.$ext) if $model->region_of_interest_set_name =~ /$roi_name/i;
+        }
+    }
+}
+
 sub add_model_to_default_projects {
     my $self = shift;
     my $model = shift;
@@ -963,7 +968,8 @@ sub add_model_to_default_projects {
 
     # Get projects associated with the instrument data
     my @projects = $self->_get_projects_for_instrument_data($instrument_data);
-    my ($ext) = $model->name =~ /(\.wu\-space|\.tcga-cds)$/;
+    my $ext = $self->_get_name_ext_for_model($model);
+
     if ( $ext ) { # Get the projects for these names, but with the ext
         @projects = map { $self->_get_or_create_project_by_name($_) } map { $_->name.$ext } @projects;
     }
@@ -997,10 +1003,10 @@ sub add_model_to_default_projects {
 
     # Get/create pooled sample projects
     if ( my $pooled_sample_name = $self->_resolve_pooled_sample_name_for_instrument_data($instrument_data) ) {
-        if ($model->name =~ /\.wu-space$/) {
+        if ($ext =~ /\.wu-space$/) {
             $pooled_sample_name .= ".wu-space";
         }
-        if ($model->name =~ /\.tcga-cds$/) {
+        if ($ext =~ /\.tcga-cds$/) {
             $pooled_sample_name .= ".tcga-cds";
         }
         my $pooled_sample_project = $self->_get_or_create_project_by_name($pooled_sample_name); # dies on fail
@@ -1336,6 +1342,19 @@ sub _is_mc16s {
     }
 
     return;
+}
+
+sub roi_sets {
+     return (
+        'WU-Space' => [
+        'NCBI-human.combined-annotation-58_37c_cds_exon_and_rna_merged_by_gene',
+        'NCBI-human.combined-annotation-54_36p_v2_CDSome_w_RNA',
+        ],
+        'TCGA-CDS' => [
+        'agilent_sureselect_exome_version_2_broad_refseq_cds_only_hs37',
+        'agilent sureselect exome version 2 broad refseq cds only',
+        ],
+    );
 }
 
 1;
