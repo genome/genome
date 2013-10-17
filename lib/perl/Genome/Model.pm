@@ -485,6 +485,7 @@ sub create {
         Carp::confess $reason || $@;
     }
 
+    $self->user_name(Genome::Sys->username) unless $self->user_name;
     unless ($self->name) {
         my $name = $self->default_model_name;
         if ($name) {
@@ -496,7 +497,6 @@ sub create {
         }
     }
 
-    $self->user_name(Genome::Sys->username) unless $self->user_name;
     $self->creation_date(UR::Context->now);
 
     $self->_verify_no_other_models_with_same_name_and_type_exist;
@@ -822,15 +822,11 @@ sub default_model_name {
 
     $name_template .= '%s%s';
 
-    my @parts;
-    push @parts, 'capture', $params{capture_target} if defined $params{capture_target};
-    push @parts, $params{roi} if defined $params{roi};
-    my @additional_parts = eval{ $self->_additional_parts_for_default_name(%params); };
+    my @parts = eval{ $self->_additional_parts_for_default_name(%params); };
     if ( $@ ) {
         $self->error_message("Failed to get addtional default name parts: $@");
         return;
     }
-    push @parts, @additional_parts if @additional_parts;
     $name_template .= '.'.join('.', @parts) if @parts;
 
     my $name = sprintf($name_template, '', '');

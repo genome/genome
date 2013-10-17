@@ -183,7 +183,9 @@ sub _prepare_configuration_hashes_for_instrument_data {
                 while((my $model_property, my $instrument_data_property) = each %$instrument_data_properties) {
                     if (ref $instrument_data_property eq 'ARRAY') {
                         $model_instance->{$model_property} = [
-                            map { $instrument_data->$_ } @$instrument_data_property
+                            grep { defined($_) }
+                            map { $instrument_data->$_ }
+                            @$instrument_data_property
                         ];
                     } else {
                         $model_instance->{$model_property} = $instrument_data->$instrument_data_property;

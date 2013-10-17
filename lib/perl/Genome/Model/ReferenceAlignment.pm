@@ -580,4 +580,25 @@ sub latest_build_bam_file {
     return $bam_file;
 }
 
+sub _additional_parts_for_default_name {
+    my $self = shift;
+    my @parts;
+
+    my @regions = $self->target_region_set_name;
+    push @parts, 'capture' if @regions;
+    push @parts , $self->region_of_interest_set_name if $self->region_of_interest_set_name;
+
+    return @parts;
+}
+
+sub default_model_name {
+    my $self = shift;
+
+    if ($self->is_lane_qc) {
+        return $self->default_lane_qc_model_name_for_instrument_data($self->instrument_data);
+    } else {
+        return $self->SUPER::default_model_name();
+    }
+}
+
 1;

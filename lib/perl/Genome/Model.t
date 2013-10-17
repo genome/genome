@@ -130,14 +130,6 @@ my $model = Genome::Model->create(
 ok($model, 'create model');
 is_deeply([$model->projects], [$project], 'add project to model');
 
-# name
-is($model->default_model_name, 'TEST-00.testy_mc_testerson', 'default model name');
-is(
-    $model->default_model_name(capture_target => 'glutius maximus', roi => 'poop'),
-    'TEST-00.testy_mc_testerson.capture.glutius maximus.poop',
-    'default model name w/ capture and roi',
-);
-
 # recreate fails
 $model_fail = eval {
     Genome::Model->create(
