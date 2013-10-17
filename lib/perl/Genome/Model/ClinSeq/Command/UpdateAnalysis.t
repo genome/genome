@@ -31,7 +31,8 @@ ok($temp_dir, "created temp directory: $temp_dir");
 
 #Load the test data
 my %ids = %{Genome::Model::ClinSeq::TestData->load(exclude_normal_rnaseq_model => 1,
-                                                   exclude_exome_model => 1)};
+                                                   exclude_exome_model => 1,
+                                                   exclude_de_model => 1)};
 my $individual = Genome::Individual->get($ids{TEST_INDIVIDUAL_ID});
 my $normal_dna_sample = Genome::Sample->get($ids{NORMAL_DNA_SAMPLE});
 my $tumor_dna_sample = Genome::Sample->get($ids{TUMOR_DNA_SAMPLE});

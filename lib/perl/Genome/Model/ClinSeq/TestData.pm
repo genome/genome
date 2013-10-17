@@ -7,6 +7,7 @@ use Genome;
 use Genome::Test::Factory::Build;
 use Genome::Test::Factory::Library;
 use Genome::Test::Factory::Model::ClinSeq;
+use Genome::Test::Factory::Model::DifferentialExpression;
 use Genome::Test::Factory::Model::ImportedAnnotation;
 use Genome::Test::Factory::Model::ImportedReferenceSequence;
 use Genome::Test::Factory::Model::ImportedVariationList;
@@ -190,9 +191,21 @@ sub load {
         my $rna_seq_build = Genome::Test::Factory::Build->setup_object(model_id => $ids{TUMOR_RNASEQ_MODEL}, status => 'Succeeded');
         $clinseq_model_params{tumor_rnaseq_model} = $rna_seq_model;
     }
-    unless ($params{exclude_diff_exp_model}) {
-        my $diff_ex_pp = Genome::Test::Factory::ProcessingProfile::DifferentialExpression->setup_object;
-        $ids{DIFFEXP_PP} = $diff_ex_pp->id;
+    my $diff_ex_pp = Genome::Test::Factory::ProcessingProfile::DifferentialExpression->setup_object;
+    $ids{DIFFEXP_PP} = $diff_ex_pp->id;
+    unless ($params{exclude_de_model}) {
+        my $diff_exp_model = Genome::Test::Factory::Model::DifferentialExpression->setup_differential_expression_model(
+            processing_profile_id => $ids{DIFFEXP_PP},
+            normal_model_id => $ids{RNASEQ_MODEL},
+            tumor_model_id => $ids{TUMOR_RNASEQ_MODEL},
+        );
+        $ids{DIFFEXP_MODEL} = $diff_exp_model->id;
+        my $diff_exp_build = Genome::Test::Factory::Build->setup_object(
+            model_id => $ids{DIFFEXP_MODEL},
+            status => "Succeeded",
+        );
+        $ids{DIFFEXP_BUILD} = $diff_exp_build->id;
+        $clinseq_model_params{de_model} = $diff_exp_model;
     }
     my $clin_seq_pp = Genome::Test::Factory::ProcessingProfile::ClinSeq->setup_object;
     $ids{CLINSEQ_PP} = $clin_seq_pp->id;
