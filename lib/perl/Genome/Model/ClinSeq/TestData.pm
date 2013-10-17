@@ -142,10 +142,25 @@ sub load {
         $ids{WGS_BUILD} = $wgs_build->id;
         $clinseq_model_params{wgs_model} = $wgs_model;
     }
+    my $exome_pp = Genome::Test::Factory::ProcessingProfile::SomaticVariation->setup_object(
+        snv_detection_strategy => "strelka 0.4.6.2 [isSkipDepthFilters = 0]");
+    $ids{EXOME_PP} = $exome_pp->id;
+
     unless ($params{exclude_exome_model}) {
-        my $exome_pp = Genome::Test::Factory::ProcessingProfile::SomaticVariation->setup_object(
-            snv_detection_strategy => "strelka 0.4.6.2 [isSkipDepthFilters = 0]");
-        $ids{EXOME_PP} = $exome_pp->id;
+            my $exome_model = Genome::Test::Factory::Model::SomaticVariation->setup_object(
+            subject_id => $tumor_model->subject->id,
+            normal_model => $normal_model,
+            tumor_model => $tumor_model,
+            processing_profile_id => $exome_pp->id,
+            annotation_build => $annotation_build,
+            previously_discovered_variations_build => $dbsnp_build,
+        );
+        $ids{EXOME_MODEL} = $exome_model->id;
+        my $exome_build = Genome::Test::Factory::Build->setup_object(model_id => $exome_model->id, status => 'Succeeded',
+            data_directory => $base_dir."/exome_som_var_dir",
+        );
+        $ids{EXOME_BUILD} = $exome_build->id;
+        $clinseq_model_params{exome_model} = $exome_model;
     }
 
     my $rna_seq_pp = Genome::Test::Factory::ProcessingProfile::RnaSeq->setup_object();
