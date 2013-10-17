@@ -13,40 +13,46 @@ class Genome::Model::Tools::DetectVariants2::CopyCatSomatic{
         tumor_window_dir => {
             type => 'String',
             is_optional => 0,
+            is_input => 1,
             doc => 'dir containing tumor window file',
         },
-
         normal_window_dir => {
             type => 'String',
             is_optional => 0,
+            is_input => 1,
             doc => 'dir containing normal window file',
         },
-
         per_library => {
             type => 'String',
             is_optional => 1,
+            is_input => 1,
             default => 1,
             doc => 'do per-library correction',
         },
-
         per_readlength => {
             type => 'String',
             is_optional => 1,
+            is_input => 1,
             default => 1,
             doc => 'do per-readlength correction',
         },
-        
         tumor_samtools_file => {
             type => 'String',
             is_optional => 1,
+            is_input => 1,
             default => "NULL",
             doc => 'path to tumor samtools file',
         },
-
         reference_build_id => {
             type => 'String',
             is_optional => 0,
             doc => 'reference build id',
+        },
+        annotation_directory => {
+            type => 'Path',
+            is_optional => 0,
+            is_input => 1,
+            doc => 'annotation data',
         },
         lsf_resource => {
             default_value => "-R 'rusage[mem=4000] select[type==LINUX64 && maxtmp>10000] span[hosts=1]' -M 4000000 -n 4",
@@ -58,17 +64,18 @@ class Genome::Model::Tools::DetectVariants2::CopyCatSomatic{
 sub _detect_variants {
     my $self = shift;
     
-    my $cmd = Genome::Model::Tools::CopyNumber::CopyCatSomatic->create( 
+    my $cmd = Genome::Model::Tools::CopyCat::Somatic->create( 
         tumor_window_file => $self->tumor_window_dir . "/readcounts.wind",
-        normal_window_file => $self->normal_window_file . "/readcounts.wind",
+        normal_window_file => $self->normal_window_dir . "/readcounts.wind",
         output_directory => $self->_temp_staging_directory,
         per_library => $self->per_library,
-        per_read_length => $self->per_read_length,
+        per_read_length => $self->per_readlength,
         processors => 4,
-        genome_build => reference_name(),
+        genome_build => $self->reference_name,
         tumor_samtools_file => $self->tumor_samtools_file,
+        annotation_directory => $self->annotation_directory,
         );
-    
+
     unless($cmd->execute){
         $self->error_message("Failed to run CopyCat command.");
         die $self->error_message;
