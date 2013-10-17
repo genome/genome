@@ -9,6 +9,7 @@ use strict;
 use warnings;
 
 use above "Genome";
+use Genome::Utility::Test qw(is_equal_set);
 
 require File::Temp;
 use Test::More;
@@ -197,12 +198,10 @@ for my $i (1..2) {
         data_directory => $tmpdir.'/build'.$i,
     );
 }
-my $build_sorter = sub { $b->date_scheduled cmp $a->date_scheduled };
-@builds = sort $build_sorter @builds;
 
 is(@builds, 2, 'create builds');
 my @model_builds = $model->builds;
-is_deeply(\@model_builds, \@builds, 'model builds');
+is_equal_set(\@model_builds, \@builds, 'model builds');
 
 # Fix the date_scheduled on the builds because completed_builds sorts by it
 my $time = time();
