@@ -13,53 +13,62 @@ use File::Spec;
 class Genome::Model::Tools::CopyCat::Somatic{
     is => 'Command',
     has => [        
-
         normal_window_file => {
-	    is => 'String',
-	    is_optional => 0,
-	    doc => 'normal window file to get reads from (output of gmt copy-number bam-window)',
-	},
-	tumor_window_file => {
-	    is => 'String',
-	    is_optional => 0,
-	    doc => 'tumor window file to get reads from (output of gmt copy-number bam-window)',
-	},
+            is => 'String',
+            is_optional => 0,
+            is_input => 1,
+            doc => 'normal window file to get reads from (output of gmt copy-number bam-window)',
+        },
+        tumor_window_file => {
+            is => 'String',
+            is_optional => 0,
+            is_input => 1,
+            doc => 'tumor window file to get reads from (output of gmt copy-number bam-window)',
+        },
         output_directory => {
             is => 'String',
             is_optional => 0,
+            is_input => 1,
+            is_output => 1,
             doc =>'path to the output directory',
         },
         annotation_directory => {
             is => 'String',
             is_optional => 0,
             example_values => ['/gscmnt/gc6122/info/medseq/annotations/copyCat/'],
+            is_input => 1,
             doc =>'path to the cn annotation directory',
         },
         per_library => {
             is => 'Boolean',
             is_optional => 1,
+            is_input => 1,
             default => 1,
             doc =>'do normalization on a per-library basis',
         },
         per_read_length => {
             is => 'Boolean',
             is_optional => 1,
+            is_input => 1,
             default => 1,
             doc =>'do normalization on a per-read-length basis',
         },
         genome_build => {
             is => 'String',
             is_optional => 0,
+            is_input => 1,
             doc =>'genome build - one of "36", "37", or "mm9"'
         },
         tumor_samtools_file => {
             is => 'String',
+            is_input => 1,
             is_optional => 1,
             doc =>'samtools file which will be used to find het snp sites and id copy-number neutral regions in tumor',
         },
         normal_samtools_file => {
             is => 'String',
             is_optional => 1,
+            is_input => 1,
             doc =>'samtools file which will be used to find het snp sites and id copy-number neutral regions in normal',
         },
         processors => {
@@ -236,7 +245,7 @@ sub execute {
     # }
 
     #open the r file
-    my $rf = open(my $RFILE, ">$output_directory/run.R") || die "Can't open R file for writing.\n";
+    open(my $RFILE, ">$output_directory/run.R") || die "Can't open R file for writing.\n";
     print $RFILE "library(copyCat)\n";
 
     print $RFILE "runPairedSampleAnalysis(annotationDirectory=\"$annotation_directory\",\n";
@@ -257,6 +266,8 @@ sub execute {
     print $RFILE "                        normalSamtoolsFile=$normal_samtools_file,\n";
     print $RFILE "                        tumorSamtoolsFile=$tumor_samtools_file)\n";
 #    print $RFILE "                        purity=$purity)\n";
+
+    close($RFILE);
 
     #drop into the output directory to make running the R script easier
     my $cmd = "Rscript $output_directory/run.R";

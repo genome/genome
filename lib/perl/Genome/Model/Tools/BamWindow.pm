@@ -13,6 +13,10 @@ class Genome::Model::Tools::BamWindow {
             default => '0.4',
             doc => 'Version of bam-window to run',
         },
+        options => {
+            is => 'Text',
+            doc => 'String of command line options to pass to bam-window.  Superseeds all other options',
+        },
         bam_file => {
             is => 'Path',
             doc => 'Bam file to window',
@@ -71,7 +75,10 @@ sub execute {
     my $base_cmd = "bam-window"; #TODO: choose this based on $self->version
     my $bam_file = $self->bam_file;
 
-    my $options_string = $self->_get_options_string;
+    my $options_string = $self->options;
+    unless($options_string){
+        $self->_get_options_string;
+    }
     my $output_file = $self->output_file;
 
     my $cmd = join(" ", $base_cmd, $bam_file, $options_string, " > $output_file");
