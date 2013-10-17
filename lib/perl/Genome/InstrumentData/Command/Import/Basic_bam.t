@@ -41,6 +41,7 @@ is($instrument_data->sequencing_platform, 'solexa', 'sequencing_platform correct
 is($instrument_data->is_paired_end, 1, 'is_paired_end correctly set');
 is($instrument_data->read_count, 256, 'read_count correctly set');
 is(eval{$instrument_data->attributes(attribute_label => 'segment_id')->attribute_value;}, 2883581797, 'segment_id correctly set');
+is(eval{$instrument_data->attributes(attribute_label => 'original_data_path_md5')->attribute_value;}, '940825168285c254b58c47399a3e1173', 'original_data_path_md5 correctly set');
 
 my $bam_path = $instrument_data->bam_path;
 ok(-s $bam_path, 'bam path exists');

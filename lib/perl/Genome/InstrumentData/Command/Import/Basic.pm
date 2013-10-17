@@ -41,8 +41,12 @@ class Genome::InstrumentData::Command::Import::Basic {
             doc => 'The instrument data entity to be imported.',
         },
     ],
-    has_transient_optional => [
-        original_format => { is => 'Text', }, # FIXME should we accept this on the command line?
+    has_optional_param => [
+        original_format => {
+            is => 'Text',
+            valid_values => [qw/ bam fastq sra /],
+            doc => 'The original format of the source files. Use if the format cannot be determined from the file extension.',
+        },
     ],
 };
 
@@ -54,7 +58,7 @@ sub help_detail {
     Source Files 
 
      Types      Notes
-     FASTQ      Can be remote and/or gzipped.
+     FASTQ      Can be remote, tar'd and/or gzipped.
      SAM [BAM]  Will be split by read group.
      SRA        Aligned and unaligned reads will be dumped. SRAs are known to produce unreliable BAM files.
 
@@ -114,7 +118,12 @@ sub execute {
 sub _resolve_original_format {
     my $self = shift;
     $self->status_message('Resolve original format...');
-    
+
+    if ( $self->original_format ) {
+        $self->status_message('Original format: '.$self->original_format);
+        return $self->original_format;
+    }
+
     my @source_files = $self->source_files;
     my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
     my %formats;
@@ -278,10 +287,20 @@ sub _build_workflow_to_import_bam {
         );
     }
 
+    my $verify_md5_op = $helper->add_operation_to_workflow($workflow, 'verify md5');
+    for my $property (qw/ working_directory source_path /) {
+        $workflow->add_link(
+            left_operation => $retrieve_source_path_op,
+            left_property => $property,
+            right_operation => $verify_md5_op,
+            right_property => $property,
+        );
+    }
+
     my $sort_bam_op = $helper->add_operation_to_workflow($workflow, 'sort bam');
     $workflow->add_link(
-        left_operation => $retrieve_source_path_op,
-        left_property => 'destination_path',
+        left_operation => $verify_md5_op,
+        left_property => 'source_path',
         right_operation => $sort_bam_op,
         right_property => 'unsorted_bam_path',
     );
@@ -308,6 +327,12 @@ sub _build_workflow_to_import_bam {
         left_property => 'read_group_bam_paths',
         right_operation => $create_instdata_and_copy_bam,
         right_property => 'bam_paths',
+    );
+    $workflow->add_link(
+        left_operation => $verify_md5_op,
+        left_property => 'source_path_md5',
+        right_operation => $create_instdata_and_copy_bam,
+        right_property => 'source_path_md5',
     );
     $create_instdata_and_copy_bam->parallel_by('bam_path');
 

@@ -25,12 +25,16 @@ class Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentDataAnd
             is_many => 1,
             doc => 'Name and value pairs to add to the instrument data. Separate name and value with an equals (=) and name/value pairs with a comma (,).',
         },
+        source_path_md5 => {
+            is => 'Text',
+            doc => 'The MD5 of the orginal data path.',
+        },
     ],
     has_output => [
         instrument_data => {
             is => 'Genome::InstrumentData',
             is_many => 1,
-            doc => 'The instrument data entities crreated.',
+            doc => 'The instrument data entities created.',
         },
     ],
     has_transient_optional => [
@@ -53,18 +57,22 @@ sub execute {
     my @instrument_data;
     my @bam_paths = $self->bam_paths;
     for my $bam_path ( @bam_paths ) {
+        # Create inst data
         my $instrument_data = $self->_create_instrument_data_for_bam_path($bam_path);
         return if not $instrument_data;
 
+        # Move bam
         my $final_bam_path = $instrument_data->data_directory.'/all_sequences.bam';
         my $move_ok = $helpers->move_file($bam_path, $final_bam_path);
         return if not $move_ok;
 
+        # Flagstat
         my $flagstat_path = $final_bam_path.'.flagstat';
         $self->status_message("Flagstat path: $flagstat_path");
         my $flagstat = $helpers->validate_bam($final_bam_path, $flagstat_path);
         return if not $flagstat;
 
+        # Attrs
         $instrument_data->add_attribute(attribute_label => 'bam_path', attribute_value => $final_bam_path);
         $instrument_data->add_attribute(attribute_label => 'read_count', attribute_value => $flagstat->{total_reads});
         $instrument_data->add_attribute(attribute_label => 'is_paired_end', attribute_value => $flagstat->{is_paired_end});
@@ -137,6 +145,8 @@ sub _create_instrument_data_for_bam_path {
         }
         $additional_properties->{segment_id} = $read_group_ids_from_bam->[0];
     }
+
+    $additional_properties->{original_data_path_md5} = $self->source_path_md5;
 
     $self->status_message('Checking if source files were previously imported...');
     my %properties = (
