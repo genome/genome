@@ -192,12 +192,12 @@ is_deeply(\@model_instrument_data, \@instrument_data, 'model instrument data via
 # create these in reverse order because of negative ids
 my @builds;
 for my $i (1..2) {
-    unshift @builds, Genome::Model::Build->create( 
+    unshift @builds, Genome::Model::Build->create(
         model => $model,
         data_directory => $tmpdir.'/build'.$i,
     );
 }
-my $build_sorter = Genome::Model::Build->__meta__->id_property_sorter;
+my $build_sorter = sub { $b->date_scheduled cmp $a->date_scheduled };
 @builds = sort $build_sorter @builds;
 
 is(@builds, 2, 'create builds');
