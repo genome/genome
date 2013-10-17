@@ -581,7 +581,7 @@ sub load_md5 {
         return;
     }
 
-    $self->status_message('MD5:'.$md5);
+    $self->status_message('MD5: '.$md5);
 
     $self->status_message('Load MD5...done');
     return $md5;
