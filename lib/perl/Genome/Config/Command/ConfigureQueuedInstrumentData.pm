@@ -81,7 +81,7 @@ sub _assign_instrument_data_to_model {
 
     #if a model is newly created, we want to assign all applicable instrument data to it
     my %params_hash = (model => $model);
-    if ($newly_created) {
+    if ($newly_created && $model->auto_assign_inst_data) {
         $params_hash{all} = 1;
     } else {
         $params_hash{instrument_data} = [$instrument_data];

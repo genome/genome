@@ -586,7 +586,7 @@ sub _additional_parts_for_default_name {
 
     my @regions = $self->target_region_set_name;
     push @parts, 'capture' if @regions;
-    push @parts , $self->region_of_interest_set_name if $self->region_of_interest_set_name;
+    push @parts, $self->region_of_interest_set_name if $self->region_of_interest_set_name;
 
     return @parts;
 }
