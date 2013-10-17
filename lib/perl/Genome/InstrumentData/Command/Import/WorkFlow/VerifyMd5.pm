@@ -20,10 +20,8 @@ class Genome::InstrumentData::Command::Import::WorkFlow::VerifyMd5 {
         },
     ],
     has_output => [
-        md5_path => {
-            calculate_from => [qw/ working_directory source_path_base_name /],
-            calculate => q( return $working_directory.'/'.$source_path_base_name.'.md5'; ),
-            doc => 'MD5 path.',
+        source_path_md5 => {
+            doc => 'MD5 of source path.',
         }, 
     ],
     has_optional_calculated => [
@@ -35,6 +33,11 @@ class Genome::InstrumentData::Command::Import::WorkFlow::VerifyMd5 {
             calculate_from => [qw/ working_directory source_path_base_name /],
             calculate => q( return $working_directory.'/'.$source_path_base_name.'.orig-md5'; ),
         },
+        md5_path => {
+            calculate_from => [qw/ working_directory source_path_base_name /],
+            calculate => q( return $working_directory.'/'.$source_path_base_name.'.md5'; ),
+            doc => 'MD5 path.',
+        }, 
     ],
     has_transient_optional => [
         original_md5 => { is => 'Text', },
@@ -53,6 +56,7 @@ sub execute {
     return if not $load_original_md5;
 
     my $original_md5 = $self->original_md5;
+    my $md5;
     if ( $original_md5 ) {
         my @instrument_data_attr = Genome::InstrumentDataAttribute->get(
             attribute_label => 'original_data_path_md5',
@@ -66,7 +70,7 @@ sub execute {
             return;
         }
 
-        my $md5 = $self->helpers->load_or_run_md5($self->source_path, $self->md5_path);
+        $md5 = $self->helpers->load_or_run_md5($self->source_path, $self->md5_path);
         return if not $md5;
 
         if ( $md5 ne $original_md5 ) {
@@ -75,9 +79,11 @@ sub execute {
         }
     }
     else {
-        my $md5 = $self->helpers->load_or_run_md5($self->source_path, $self->md5_path);
+        $md5 = $self->helpers->load_or_run_md5($self->source_path, $self->md5_path);
         return if not $md5;
     }
+
+    $self->source_path_md5($md5);
 
     return 1;
 }
