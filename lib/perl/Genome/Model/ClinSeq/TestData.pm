@@ -21,9 +21,10 @@ use Genome::Test::Factory::ProcessingProfile::SomaticVariation;
 use Genome::Utility::Test;
 
 sub load {
+    my $self = shift;
     my %params = @_;
     my %ids;
-    #need a way to access the data
+    #default base_dir
     my $base_dir = $ENV{GENOME_TEST_INPUTS}."Genome-Model-ClinSeq-TestData/2013-09-12";
 
     $ENV{GENOME_DB} = "$base_dir/reference_annotations/";
@@ -46,6 +47,19 @@ sub load {
     my $normal_dna_sample_id = $normal_dna_sample->id;
     $ids{NORMAL_DNA_SAMPLE} = $normal_dna_sample_id;
     my $normal_inst_data = create_instrument_data_from_sample($normal_dna_sample);
+
+#Obtain a normal RNA sample
+    my $normal_rna_sample = Genome::Sample->create(source => $individual,
+        name => "clinseq_normal_rna",
+        common_name => "normal",
+        extraction_type => "rna",
+        cell_type => "primary",
+        tissue_desc => "brain",
+    );
+    my $normal_rna_sample_id = $normal_rna_sample->id;
+    $ids{NORMAL_RNA_SAMPLE} = $normal_rna_sample_id;
+    my $normal_rna_inst_data = create_instrument_data_from_sample($normal_rna_sample);
+
 
 #Obtain a tumor DNA sample
     my $tumor_dna_sample = Genome::Sample->create(source => $individual,
@@ -133,9 +147,23 @@ sub load {
             snv_detection_strategy => "strelka 0.4.6.2 [isSkipDepthFilters = 0]");
         $ids{EXOME_PP} = $exome_pp->id;
     }
+
+    my $rna_seq_pp = Genome::Test::Factory::ProcessingProfile::RnaSeq->setup_object();
+    $ids{RNASEQ_PP} = $rna_seq_pp->id;
+
     unless ($params{exclude_normal_rnaseq_model}) {
-        my $rna_seq_pp = Genome::Test::Factory::ProcessingProfile::RnaSeq->setup_object();
-        $ids{RNASEQ_PP} = $rna_seq_pp->id;
+        my $rna_seq_model = Genome::Test::Factory::Model::RnaSeq->setup_object(
+            subject_id => $normal_rna_sample->id,
+            processing_profile_id => $rna_seq_pp->id,
+            annotation_build => $annotation_build,
+            reference_sequence_build => $ref_seq_build,
+        );
+        $rna_seq_model->add_instrument_data($normal_rna_inst_data);
+        my $rna_seq_build = Genome::Test::Factory::Build->setup_object(model_id => $rna_seq_model->id, status => "Succeeded");
+        $ids{RNASEQ_MODEL} = $rna_seq_model->id;
+        $clinseq_model_params{normal_rnaseq_model} = $rna_seq_model;
+    }
+    unless ($params{exclude_tumor_rna_seq_model}) {
         my $rna_seq_model = Genome::Test::Factory::Model::RnaSeq->setup_object(
             subject_id => $tumor_rna_sample->id,
             processing_profile_id => $rna_seq_pp->id,
@@ -143,12 +171,9 @@ sub load {
             reference_sequence_build => $ref_seq_build,
         );
         $rna_seq_model->add_instrument_data($rna_inst_data);
-        $ids{RNASEQ_MODEL} = $rna_seq_model->id;
-    }
-    unless ($params{exclude_tumor_rna_seq_model}) {
-        $ids{TUMOR_RNASEQ_MODEL} = $ids{RNASEQ_MODEL};
+        $ids{TUMOR_RNASEQ_MODEL} = $rna_seq_model->id;
         my $rna_seq_build = Genome::Test::Factory::Build->setup_object(model_id => $ids{TUMOR_RNASEQ_MODEL}, status => 'Succeeded');
-        $clinseq_model_params{tumor_rnaseq_model} = Genome::Model->get($ids{TUMOR_RNASEQ_MODEL});
+        $clinseq_model_params{tumor_rnaseq_model} = $rna_seq_model;
     }
     unless ($params{exclude_diff_exp_model}) {
         my $diff_ex_pp = Genome::Test::Factory::ProcessingProfile::DifferentialExpression->setup_object;

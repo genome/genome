@@ -22,7 +22,7 @@ use_ok('Genome::Model::ClinSeq::Command::UpdateAnalysis') or die;
 use_ok('Genome::Model::ClinSeq::TestData');
 
 #Define the test where expected results are stored
-my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-ClinSeq-Command-UpdateAnalysis/2013-09-13/";
+my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-ClinSeq-Command-UpdateAnalysis/2013-10-17/";
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 #Create a temp dir for results
@@ -30,7 +30,7 @@ my $temp_dir = Genome::Sys->create_temp_directory();
 ok($temp_dir, "created temp directory: $temp_dir");
 
 #Load the test data
-my %ids = %{Genome::Model::ClinSeq::TestData->load()};
+my %ids = %{Genome::Model::ClinSeq::TestData->load(exclude_normal_rnaseq_model => 1)};
 my $individual = Genome::Individual->get($ids{TEST_INDIVIDUAL_ID});
 my $normal_dna_sample = Genome::Sample->get($ids{NORMAL_DNA_SAMPLE});
 my $tumor_dna_sample = Genome::Sample->get($ids{TUMOR_DNA_SAMPLE});
