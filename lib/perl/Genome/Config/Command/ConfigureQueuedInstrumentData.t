@@ -27,6 +27,7 @@ use_ok($class);
 my ($rna_instrument_data, $model_types) = generate_rna_seq_instrument_data();
 build_and_run_cmd($rna_instrument_data);
 assert_succeeded($rna_instrument_data, $model_types);
+is($rna_instrument_data->models->auto_assign_inst_data, 1, 'it should default to setting auto assign inst data to 1');
 
 #existing model
 ($rna_instrument_data, $model_types) = generate_rna_seq_instrument_data();
@@ -34,10 +35,23 @@ my $config_hash = _rna_seq_config_hash();
 delete $config_hash->{instrument_data_properties};
 $config_hash->{subject} = $rna_instrument_data->sample;
 $config_hash->{target_region_set_name} = $rna_instrument_data->target_region_set_name;
+$config_hash->{auto_assign_inst_data} = 1;
 my $rna_model = Genome::Model::RnaSeq->create(%{$config_hash});
 build_and_run_cmd($rna_instrument_data);
 assert_succeeded($rna_instrument_data, $model_types);
-ok($rna_model->instrument_data->id eq $rna_instrument_data->id, 'it assigned the instrument data to the existing model');
+is($rna_model->instrument_data->id, $rna_instrument_data->id, 'it assigned the instrument data to the existing model');
+
+#existing model without auto assign inst data set
+($rna_instrument_data, $model_types) = generate_rna_seq_instrument_data();
+my $config_hash_no_auto_assign = _rna_seq_config_hash();
+delete $config_hash_no_auto_assign->{instrument_data_properties};
+$config_hash_no_auto_assign->{subject} = $rna_instrument_data->sample;
+$config_hash_no_auto_assign->{target_region_set_name} = $rna_instrument_data->target_region_set_name;
+$config_hash_no_auto_assign->{auto_assign_inst_data} = 0;
+my $rna_model_no_auto_assign = Genome::Model::RnaSeq->create(%{$config_hash_no_auto_assign});
+build_and_run_cmd($rna_instrument_data);
+assert_succeeded($rna_instrument_data, $model_types);
+is($rna_model_no_auto_assign->instrument_data, undef , 'it did not assign the instrument data to the existing model');
 
 #model with pairing
 my ($data1, $data2, $model_types_somval, $analysis_project) = _generate_som_val_instrument_data();

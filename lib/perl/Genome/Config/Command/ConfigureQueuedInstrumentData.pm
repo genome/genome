@@ -156,9 +156,15 @@ sub _get_model_for_config_hash {
     my $class_name = shift;
     my $config = shift;
 
-    my $m = $class_name->get(%$config);
+    my @extra_params = (auto_assign_inst_data => 1);
+
+    my @m = $class_name->get(@extra_params, %$config);
+
+    if (scalar(@m) > 1) {
+        die(sprintf("Sorry, but multiple identical models were found: %s", join(',', map { $_->id } @m)));
+    };
     #return the model, plus a 'boolean' value indicating if we created a new model
-    my @model_info =  $m ? ($m, 0) : ($class_name->create(%$config), 1);
+    my @model_info =  $m[0] ? ($m[0], 0) : ($class_name->create(@extra_params, %$config), 1);
     return wantarray ? @model_info : $model_info[0];
 }
 
