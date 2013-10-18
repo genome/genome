@@ -1618,14 +1618,14 @@ sub create_somatic_variation_model{
   my $tumor_build = $best_tumor_model->last_succeeded_build;
   unless ($self->skip_check_archived){
     if ($tumor_build->is_archived){
-      $self->status_message("\tWARNING -> Tumor build is currently archived. Run: bsub genome model build unarchive " . $tumor_build->id);
+      $self->status_message("\tWARNING -> Tumor build is currently archived. Run: bsub genome model build unarchive --lab=Mardis-Wilson " . $tumor_build->id);
       return;
     }
   }
   my $normal_build = $best_normal_model->last_succeeded_build;
   unless ($self->skip_check_archived){
     if ($normal_build->is_archived){
-      $self->status_message("\tWARNING -> Normal build is currently archived. Run: bsub genome model build unarchive " . $normal_build->id);
+      $self->status_message("\tWARNING -> Normal build is currently archived. Run: bsub genome model build unarchive --lab=Mardis-Wilson " . $normal_build->id);
       return;
     }
   }
@@ -1748,7 +1748,7 @@ sub check_models_status{
         my $build_id = $build->id;
         unless ($self->skip_check_archived){
           if ($build->is_archived){
-            $self->status_message("\tWARNING -> Successful build $build_id of model $model_id that meets desired criteria is currently archived! Consider running: bsub genome model build unarchive $build_id") unless $silent;
+            $self->status_message("\tWARNING -> Successful build $build_id of model $model_id that meets desired criteria is currently archived! Consider running: bsub genome model build unarchive --lab=Mardis-Wilson $build_id") unless $silent;
           }elsif ($build->archivable){
             if ($self->check_archivable_status){
               $self->status_message("\tSuccessful build $build_id of model $model_id that meets desired criteria is currently archivable. Consider running: genome model build set-do-not-archive --reason='build needed for clin-seq model' $build_id") unless $silent;
@@ -1982,7 +1982,7 @@ sub create_clinseq_model{
       unless ($self->skip_check_archived){
         if ($build->is_archived){
           $ready = 0;
-          $self->status_message("\tWARNING -> Build is currently archived for model: " . $model->name . "\n\tRun: bsub genome model build unarchive " . $build->id);
+          $self->status_message("\tWARNING -> Build is currently archived for model: " . $model->name . "\n\tRun: bsub genome model build unarchive --lab=Mardis-Wilson " . $build->id);
         }
       }
     }else{
