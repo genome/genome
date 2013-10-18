@@ -133,6 +133,7 @@ sub execute {
         $header_hash{$header_field} = $count;
         $count++;
     }
+    $self->debug_message("Looking at regulatory annotation file ".$self->regulatory_file);
     while (my $line = <$regulatory>) {
         chomp $line;
         my @fields = split /\t/, $line;
@@ -270,7 +271,7 @@ sub execute {
             }
             if (!$reg_db or ($reg_db and defined $var{regdb_score} and ($var{regdb_score} =~ /1/ or $var{regdb_score} =~ /2/))) { #only use regdb stuff
                 foreach my $annot (keys %annotations) {
-                    if ($annotations{$annot}->{sources} =~ /regulatory_/ or $self->include_ensembl_annot) {
+                    if (join(",", @{$annotations{$annot}->{sources}}) =~ /regulatory_/ or $self->include_ensembl_annot) {
                         $fields[6] = $annot;
                         $fields[21] = $annot;
                         $fields[22] = join(",", @{$annotations{$annot}->{sources}}, $var{regdb_score});
