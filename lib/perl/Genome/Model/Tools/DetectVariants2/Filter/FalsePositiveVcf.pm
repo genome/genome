@@ -80,7 +80,7 @@ sub _convert_to_standard_formats {
 
     while(my $entry = $reader->next) {
         my $pass = 1;
-        for my $sample_index (0..$#{$header->sample_names}) {
+        for (my $sample_index=0; $sample_index < scalar($header->sample_names); $sample_index++) {
             my $ft_value = $entry->sample_field($sample_index, 'FT');
             unless ($ft_value eq 'PASS' or $ft_value eq '.') {
                 $pass = 0;
