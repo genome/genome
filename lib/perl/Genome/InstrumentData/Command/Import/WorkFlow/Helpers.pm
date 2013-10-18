@@ -9,6 +9,7 @@ require Carp;
 require File::Basename;
 require File::Copy;
 require Filesys::Df;
+require LWP::Simple;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::Helpers { 
     is => 'UR::Singleton',
@@ -155,26 +156,12 @@ sub remote_file_size {
 
     Carp::confess('No remote file to get size!') if not $remote_file;
 
-    my $wget_cmd = "wget --spider $remote_file 2>&1 |";
-    my $fh = IO::File->new($wget_cmd);
-    my ($size, $exists);
-    while ( my $line = $fh->getline ) {
-        chomp $line;
-        if ( $line =~ /^Length: (\d+) / ) {
-            $size = $1;
-        }
-        elsif ( $line eq 'Remote file exists.' ) {
-            $exists = 1;
-        }
-    }
+    my %headers;
+    my @header_keys = (qw/ content_type document_length modified_time expires server /);
+    @headers{ @header_keys } = LWP::Simple::head($remote_file);
 
-    if ( not $exists ){
-        $self->error_message('Remote file does not exist! '.$remote_file);
-        return;
-    }
-
-    if ( not $size ){
-        $self->error_message('Remote file does have any size! '.$remote_file);
+    if ( not $headers{document_length} ){
+        $self->error_message('Remote file does not exist or does not have any size! '.$remote_file);
         return;
     }
 
