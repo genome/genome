@@ -28,6 +28,7 @@ class Genome::InstrumentData::Command::Import::WorkFlow::FastqsToBam {
     ],
     has_output => [ 
         bam_path => {
+            is => 'Text',
             calculate_from => [qw/ working_directory sample_name /],
             calculate => q( return $working_directory.'/'.$sample_name.'.bam'; ),
             doc => 'The path of the bam.',
@@ -42,8 +43,8 @@ sub execute {
     my $fastq_to_bam_ok = $self->_fastqs_to_bam;
     return if not $fastq_to_bam_ok;
 
-    my $verify_read_count_ok = $self->_verify_read_counts;
-    return if not $verify_read_count_ok;
+    my $verify_bam_ok = $self->_verify_bam;
+    return if not $verify_bam_ok;
 
     $self->status_message('Fastqs to bam...done');
     return 1;
@@ -76,27 +77,18 @@ sub _fastqs_to_bam {
     return 1;
 }
 
-sub _verify_read_counts {
+sub _verify_bam {
     my $self = shift;
-    $self->status_message('Verify read count...');
+    $self->status_message('Verify bam...');
 
     my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
-    my $counts = $helpers->load_read_count_for_fastq_paths($self->fastq_paths);
-    return if not $counts;
-    my $fastq_read_count = List::Util::sum(values %$counts);
 
     my $flagstat = $helpers->validate_bam($self->bam_path);
     return if not $flagstat;
 
     $self->status_message('Bam read count: '.$flagstat->{total_reads});
-    $self->status_message('Fastq read count: '.$fastq_read_count);
 
-    if ( $flagstat->{total_reads} != $fastq_read_count ) {
-        $self->error_message('Fastq and bam read counts do not match!');
-        return;
-    }
-
-    $self->status_message('Verify read count...done');
+    $self->status_message('Verify bam...done');
     return 1;
 }
 
