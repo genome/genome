@@ -7,7 +7,11 @@ use Test::More tests => 5;
 
 # this gets a canonical test build, and is set up to not really hit the db
 # we temporarily have it overridden to test against Obi's example
-#my $test_ids = Genome::Model::ClinSeq::TestData::load();
+my $base_dir= $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-ClinSeq-Command-MakeCircosPlot/2013-10-01";
+my $expected_output_dir = "$base_dir/expected-output";
+ok(-e $expected_output_dir, "expected output dir exists: $expected_output_dir");
+
+#my $test_ids = Genome::Model::ClinSeq::TestData::load(base_dir => "$base_dir/input_dir");
 #my $test_build_id = $test_ids->{CLINSEQ_BUILD};
 my $test_build_id = "aee9a31051754702a9c2835d63abc812"; ## temp override
 my $test_build = Genome::Model::Build->get($test_build_id);
@@ -16,8 +20,6 @@ ok($test_build, "got test build $test_build_id");
 # this directory lives under /gsc/var/cache/testsuite/data at TGI
 # it is also temporarily overridden for Obi's example
 #/gscmnt/gc13003/info/test_suite_data//Genome-Model-ClinSeq-Command-MakeCircosPlot/2013-10-01/expected-output
-my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-ClinSeq-Command-MakeCircosPlot/2013-10-01/expected-output";
-ok(-e $expected_output_dir, "expected output dir exists: $expected_output_dir");
 
 # make a temp directory for output
 my $actual_output_dir = Genome::Sys->create_temp_directory();
