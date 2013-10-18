@@ -194,7 +194,7 @@ sub _prepare_configuration_hashes_for_instrument_data {
                             @$instrument_data_property
                         ];
                     } else {
-                        $model_instance->{$model_property} = $instrument_data->$instrument_data_property;
+                        $model_instance->{$model_property} = $instrument_data->$instrument_data_property if defined($instrument_data->$instrument_data_property);
                     }
                 }
             }
