@@ -77,7 +77,7 @@ sub execute {
         die $self->error_message('--channel must be less than --channels');
     }
 
-    my $lock_resource = $ENV{GENOME_LOCK_DIR} . '/genome_model_services_builed_queued_models_' . $self->channel . '_' . $self->channels;
+    my $lock_resource = $ENV{GENOME_LOCK_DIR} . '/genome_model_services_build_queued_models_' . $self->channel . '_' . $self->channels;
 
     my $lock = Genome::Sys->lock_resource(resource_lock => $lock_resource, max_try => 1);
     unless ($lock) {
