@@ -14,15 +14,15 @@ my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Comma
 
 my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
 my $source_path = $test_dir.'/input.bam';
-my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::RetrieveSourcePath->execute(
+my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::RetrieveSourcePaths->execute(
     working_directory => $tmp_dir,
-    source_path => $source_path,
+    source_paths => [$source_path],
 );
 ok($cmd, 'execute');
-my $destination_path = $cmd->destination_path;
-is($destination_path, $tmp_dir.'/input.bam', 'destination path named correctly');
-ok(-s $destination_path, 'destination path exists');
-ok(-s $destination_path.'.md5-orig', 'destination md5 exists');
+my @destination_paths = $cmd->destination_paths;
+is_deeply(\@destination_paths, [$tmp_dir.'/input.bam'], 'destination paths named correctly');
+ok(-s $destination_paths[0], 'destination path exists');
+ok(-s $destination_paths[0].'.md5-orig', 'destination md5 exists');
 
 #print "$tmp_dir\n"; <STDIN>;
 done_testing();
