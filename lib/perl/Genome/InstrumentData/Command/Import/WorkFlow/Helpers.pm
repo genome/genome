@@ -201,16 +201,15 @@ sub remote_file_size {
 
     Carp::confess('No remote file to get size!') if not $remote_file;
 
-    my %headers;
-    my @header_keys = (qw/ content_type document_length modified_time expires server /);
-    @headers{ @header_keys } = LWP::Simple::head($remote_file);
-
-    if ( not $headers{document_length} ){
-        $self->error_message('Remote file does not exist or does not have any size! '.$remote_file);
+    my $agent = LWP::UserAgent->new;
+    my $response = $agent->head($remote_file);
+    if ( not $response->is_success ) {
+        $self->error_message($response->message) if $response->message;
+        $self->error_message('HEAD failed for remote file!');
         return;
     }
 
-    return $headers{document_length};
+    return $response->headers->content_length;
 }
 
 sub source_file_format {
