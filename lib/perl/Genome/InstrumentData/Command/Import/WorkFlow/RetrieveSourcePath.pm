@@ -51,20 +51,11 @@ sub execute {
     return 1;
 }
 
-sub _retrieve_path {
-    my ($self, $source_path, $destination_path) = @_;
-
-    $self->status_message('Source: '.$source_path);
-    $self->status_message('Destination: '.$destination_path);
-    my $copy_ok = $self->helpers->copy_file($source_path, $destination_path);
-    return $copy_ok
-}
-
 sub _retrieve_source_path {
     my $self = shift;
     $self->status_message('Retrieve source path...');
 
-    my $retrieve_ok = $self->_retrieve_path($self->source_path, $self->destination_path);
+    my $retrieve_ok = $self->helpers->retrieve_path($self->source_path, $self->destination_path);
     return if not $retrieve_ok;
     
     $self->status_message('Retrieve source path...done');
@@ -82,7 +73,7 @@ sub _retrieve_source_md5 {
         return 1;
     }
 
-    my $retrieve_ok = $self->_retrieve_path($md5_path, $self->destination_path.'.md5-orig');
+    my $retrieve_ok = $self->helpers->retrieve_path($md5_path, $self->destination_path.'.md5-orig');
     return if not $retrieve_ok;
 
     $self->status_message('Retrieve source MD5 path...done');
