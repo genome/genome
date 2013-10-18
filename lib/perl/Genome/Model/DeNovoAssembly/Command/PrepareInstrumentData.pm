@@ -272,7 +272,7 @@ sub _process_instrument_data {
     # Run
     my $sx_cmd = join(' | ', @sx_cmd_parts);
 
-    my $rv = eval{ Genome::Sys->shellcmd(cmd => $sx_cmd, set_pipefail => 0); };
+    my $rv = eval{ Genome::Sys->shellcmd(cmd => $sx_cmd); };
     if ( not $rv ) {
         $self->error_message('Failed to execute gmt sx command: '.$@);
         return;
