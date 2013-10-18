@@ -78,11 +78,24 @@ sub move_file {
     return 1;
 }
 
-sub copy_file {
+sub retrieve_file {
     my ($self, $from, $to) = @_;
 
-    $self->status_message('Copy file...');
-    my $from_sz = -s $from;
+    Carp::confess('No from path to retrieve file!') if not $from;
+    Carp::confess('No to path to retrieve file!') if not $to;
+
+    if ( $from =~ /^http/ ) {
+        return $self->_retrieve_remote_file($from, $to);
+    }
+    else {
+        return $self->_retrieve_local_file($from, $to);
+    }
+}
+
+sub _retrieve_local_file {
+    my ($self, $from, $to) = @_;
+    $self->status_message('Retrieve local file...');
+
     $self->status_message("From: $from");
     $self->status_message("To: $to");
     my $move_ok = File::Copy::copy($from, $to);
@@ -90,13 +103,45 @@ sub copy_file {
         $self->error_message('Copy failed!');
         return;
     }
+
+    my $from_sz = -s $from;
+    $self->status_message("From size: $from_sz");
     my $to_sz = -s $to;
+    $self->status_message("To size: $to_sz");
     if ( not $to_sz or $to_sz != $from_sz ) {
         $self->error_message("Copy succeeded, but destination size is diffeerent from original! $to_sz vs $from_sz");
         return;
     }
 
-    $self->status_message('Copy file...done');
+    $self->status_message('Retrieve local file...done');
+    return 1;
+}
+
+sub _retrieve_remote_file {
+    my ($self, $from, $to) = @_;
+    $self->status_message('Retrieve remote file...');
+
+    $self->status_message("From: $from");
+    $self->status_message("To: $to");
+
+    my $agent = LWP::UserAgent->new;
+    my $response = $agent->get($from, ':content_file' => $to);
+    if ( not $response->is_success ) {
+        $self->error_message($response->message) if $response->message;
+        $self->error_message('GET failed for remote file!');
+        return
+    }
+
+    my $from_sz = $response->headers->content_length;
+    $self->status_message("From size: $from_sz");
+    my $to_sz = -s $to;
+    $self->status_message("To size: $to_sz");
+    if ( not $to_sz or $to_sz != $from_sz ) {
+        $self->error_message("GET remote file succeeded, but destination size is different from original! $to_sz vs $from_sz");
+        return;
+    }
+
+    $self->status_message('Retrieve remote file...done');
     return 1;
 }
 #<>#
@@ -165,7 +210,7 @@ sub remote_file_size {
         return;
     }
 
-    return $size;
+    return $headers{document_length};
 }
 
 sub source_file_format {
