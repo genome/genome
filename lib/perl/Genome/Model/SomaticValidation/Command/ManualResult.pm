@@ -58,10 +58,8 @@ sub execute {
 
     $self->variant_file(Cwd::abs_path($self->variant_file));
 
-    my $manual_result = Genome::Model::Tools::DetectVariants2::Result::Manual->get_or_create(
+    my %params = (
         variant_type => $self->variant_type,
-        sample_id => $source_build->model->experimental_subject->id,
-        control_sample_id => $source_build->model->control_subject->id,
         reference_build_id => $source_build->reference_sequence_build->id,
         original_file_path => $self->variant_file,
         description => $self->description,
@@ -70,6 +68,16 @@ sub execute {
         test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
         source_build_id => $source_build->id,
     );
+
+    # allow tumor only or normal only models.
+    if ($source_build->model->experimental_subject) {
+        $params{sample_id} = $source_build->model->experimental_subject->id;
+    }
+    if ($source_build->model->control_subject) {
+        $params{control_sample_id} = $source_build->model->control_subject->id;
+    }
+
+    my $manual_result = Genome::Model::Tools::DetectVariants2::Result::Manual->get_or_create(%params);
 
     unless($manual_result) {
         die $self->error_message('Failed to generate new result for data.');
