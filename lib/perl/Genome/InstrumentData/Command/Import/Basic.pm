@@ -367,11 +367,21 @@ sub _build_workflow_to_import_sra {
         );
     }
 
+    my $verify_md5_op = $helper->add_operation_to_workflow($workflow, 'verify md5');
+    for my $property (qw/ working_directory source_path /) {
+        $workflow->add_link(
+            left_operation => $retrieve_source_path_op,
+            left_property => $property,
+            right_operation => $verify_md5_op,
+            right_property => $property,
+        );
+    }
+
     my $sra_to_bam_op = $helper->add_operation_to_workflow($workflow, 'sra to bam');
     for my $property_mapping ( [qw/ working_directory working_directory /], [qw/ destination_path sra_path /] ) {
         my ($left_property, $right_property) = @$property_mapping;
         $workflow->add_link(
-            left_operation => $retrieve_source_path_op,
+            left_operation => $retrieve_source_path_op,#$verify_md5_op,
             left_property => $left_property,
             right_operation => $sra_to_bam_op,
             right_property => $right_property,
@@ -408,6 +418,12 @@ sub _build_workflow_to_import_sra {
         left_property => 'read_group_bam_paths',
         right_operation => $create_instdata_and_copy_bam,
         right_property => 'bam_paths',
+    );
+    $workflow->add_link(
+        left_operation => $verify_md5_op,
+        left_property => 'source_path_md5',
+        right_operation => $create_instdata_and_copy_bam,
+        right_property => 'source_path_md5',
     );
     $create_instdata_and_copy_bam->parallel_by('bam_path');
 
