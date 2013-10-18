@@ -28,6 +28,10 @@ sub load {
     #default base_dir
     my $base_dir = $ENV{GENOME_TEST_INPUTS}."Genome-Model-ClinSeq-TestData/2013-09-12";
 
+    if ($params{base_dir}) {
+        $base_dir = delete $params{base_dir};
+    }
+
     $ENV{GENOME_DB} = "$base_dir/reference_annotations/";
 
     my $individual = Genome::Individual->create(common_name => "FAKE1",
