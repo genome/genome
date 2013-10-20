@@ -305,8 +305,8 @@ sub execute {
       #print "\n\nNORMAL: $gene1 $coords2 $transcript1\t\t$gene2 $coords2 $transcript2\tnormal count = $pairoscope_normal_reads\n$pairoscope_normal_cmd";
 
       #Clean-up the pairoscope temp files
-      system("rm -f $pairoscope_tmp_tumor_file");
-      system("rm -f $pairoscope_tmp_normal_file");
+      Genome::Sys->shellcmd(cmd => "rm -f $pairoscope_tmp_tumor_file");
+      Genome::Sys->shellcmd(cmd => "rm -f $pairoscope_tmp_normal_file");
     }
 
     #Print out a new file containing the extra annotation columns
