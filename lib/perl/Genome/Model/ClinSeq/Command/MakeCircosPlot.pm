@@ -657,35 +657,37 @@ orientation = out
 </plot>        
 EOS
     ###Gene List
-    my $gene_fh = Genome::Sys->open_file_for_writing("$output_directory/raw/genes-noAmpDel.txt");
+    my $gene_fh = Genome::Sys->open_file_for_writing("$output_directory/raw/genes_noAmpDel.txt");
     print $gene_fh "chr\tstart\tend\tgene\n";
     foreach my $gene(keys %genes_noAmpDel){
         print $gene_fh "$genes_noAmpDel{$gene}\t$gene\n";
     }
     $gene_fh->close;
 
-    Genome::Sys->shellcmd(cmd => "genome model clin-seq annotate-genes-by-category --infile=$output_directory/raw/genes-noAmpDel.txt --cancer-annotation-db='tgi/cancer-annotation/human/build37-20130711.1' --gene-name-column='gene'");
-    #TODO Genome::Sys->shellcmd( doesnt work
-    system( "sort -rnk 102 $output_directory/raw/genes-noAmpDel.catanno.txt|head -100 |cut -d \"\t\" -f 1-4  > $output_directory/data/genes-noAmpDel.catanno.sorted.txt");
+
+	my $annotate_genes_cmd1 = "genome model clin-seq annotate-genes-by-category --infile=$output_directory/raw/genes_noAmpDel.txt --cancer-annotation-db='tgi/cancer-annotation/human/build37-20130711.1' --gene-name-column='gene'";
+    Genome::Sys->shellcmd(cmd => $annotate_genes_cmd1);
+    my $sort_cmd1 = "sort -rnk 102 $output_directory/raw/genes_noAmpDel.catanno.txt|head -100 |cut -d \"\t\" -f 1-4  > $output_directory/data/genes_noAmpDel.catanno.sorted.txt";
+    Genome::Sys->shellcmd(cmd => $sort_cmd1);
 
 
-    my $geneAmpDel_fh = Genome::Sys->open_file_for_writing("$output_directory/raw/genes-AmpDel.txt");
+
+    my $geneAmpDel_fh = Genome::Sys->open_file_for_writing("$output_directory/raw/genes_AmpDel.txt");
     print $geneAmpDel_fh "chr\tstart\tend\tgene\n";
     foreach my $gene(keys %genes_AmpDel){
         print $geneAmpDel_fh "$genes_AmpDel{$gene}\t$gene\n";
     }
     $geneAmpDel_fh->close;
 
-    Genome::Sys->shellcmd(cmd => "genome model clin-seq annotate-genes-by-category --infile=$output_directory/raw/genes-AmpDel.txt --cancer-annotation-db='tgi/cancer-annotation/human/build37-20130711.1' --gene-name-column='gene'");
-    #TODO Genome::Sys->shellcmd( doesnt work
-    system( "sort -rnk 102 $output_directory/raw/genes-AmpDel.catanno.txt|head -100 |cut -d \"\t\" -f 1-4  > $output_directory/data/genes-AmpDel.catanno.sorted.txt");
-
+	my $annotate_genes_cmd1 = "genome model clin-seq annotate-genes-by-category --infile=$output_directory/raw/genes_AmpDel.txt --cancer-annotation-db='tgi/cancer-annotation/human/build37-20130711.1' --gene-name-column='gene'";
+    Genome::Sys->shellcmd(cmd => $annotate_genes_cmd1);
+    my $sort_cmd1 = "sort -rnk 102 $output_directory/raw/genes_AmpDel.catanno.txt|head -100 |cut -d \"\t\" -f 1-4  > $output_directory/data/genes_AmpDel.catanno.sorted.txt";
 
     $config .=<<EOS;
 #GENE LABELS
 <plot>
 type  = text
-file  = $output_directory/data/genes-noAmpDel.catanno.sorted.txt
+file  = $output_directory/data/genes_noAmpDel.catanno.sorted.txt
 
 # Like with other tracks, text is limited to a radial range by setting
 # r0 and r1.
@@ -727,10 +729,7 @@ snuggle_refine        = yes
     
 EOS
 
-my $annotate_genes_cmd1 = "genome model clin-seq annotate-genes-by-category --infile=$output_directory/raw/genes.txt --cancer-annotation-db='tgi/cancer-annotation/human/build37-20130711.1' --gene-name-column='gene'";
-    Genome::Sys->shellcmd(cmd => $annotate_genes_cmd1);
-    my $sort_cmd1 = "sort -nrk 102 $output_directory/raw/genes.catanno.txt | head -100 | cut -d \$\'\\t\' -f 1-4 > $output_directory/data/genes.catanno.sorted.txt";
-    Genome::Sys->shellcmd(cmd => $sort_cmd1);
+
 
 =cut    
     # example accessing data:
