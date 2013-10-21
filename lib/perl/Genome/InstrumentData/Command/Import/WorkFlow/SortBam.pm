@@ -20,6 +20,8 @@ class Genome::InstrumentData::Command::Import::WorkFlow::SortBam {
             calculate => q( return $sorted_bam_prefix.'.bam'; ),
             doc => 'The path of the sorted bam.',
         },
+    ],
+    has_optional_calculated => [
         sorted_bam_prefix => {
             is => 'Text',
             calculate_from => [qw/ unsorted_bam_path /],
