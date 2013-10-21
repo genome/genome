@@ -164,12 +164,6 @@ sub _gather_inputs {
 
     my @source_files = $self->source_files;
     push @instrument_data_properties, 'original_data_path='.join(',', $self->source_files);
-    my $source_path_alias = 'source_'.$self->original_format.'_path';
-    my $source_paths = $source_files[0];
-    if ( @source_files > 1 ) {
-        $source_path_alias .= 's';
-        $source_paths = \@source_files;
-    }
 
     my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
     if ( not $tmp_dir ) {
@@ -188,9 +182,7 @@ sub _gather_inputs {
         working_directory => $tmp_dir,
         sample => $self->sample,
         sample_name => $self->sample->name,
-        $source_path_alias => $source_paths,
-        source_path => $source_paths, # FIXME just have the one source path[s]
-        source_paths => $source_paths, # FIXME just have the one source path[s]
+        source_paths => \@source_files,
         instrument_data_properties => \@instrument_data_properties,
     );
     return { map { $_ => $possible_inputs{$_} } @{$workflow->operation_type->input_properties} };
@@ -322,21 +314,25 @@ sub _build_workflow_to_import_bam {
 
     my $workflow = Workflow::Model->create(
         name => 'Import Inst Data',
-        input_properties => [qw/ working_directory source_path sample instrument_data_properties /],
+        input_properties => [qw/ working_directory source_paths sample instrument_data_properties /],
         output_properties => [qw/ instrument_data /],
     );
 
     my $helper = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
 
     my $retrieve_source_path_op = $helper->add_operation_to_workflow($workflow, 'retrieve source path');
-    for my $property (qw/ working_directory source_path /) {
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => $property,
-            right_operation => $retrieve_source_path_op,
-            right_property => $property,
-        );
-    }
+    $workflow->add_link(
+        left_operation => $workflow->get_input_connector,
+        left_property => 'working_directory',
+        right_operation => $retrieve_source_path_op,
+        right_property => 'working_directory',
+    );
+    $workflow->add_link(
+        left_operation => $workflow->get_input_connector,
+        left_property => 'source_paths',
+        right_operation => $retrieve_source_path_op,
+        right_property => 'source_path',
+    );
 
     my $verify_md5_op = $helper->add_operation_to_workflow($workflow, 'verify md5');
     for my $property (qw/ working_directory source_path /) {
@@ -402,21 +398,25 @@ sub _build_workflow_to_import_sra {
 
     my $workflow = Workflow::Model->create(
         name => 'Import Inst Data',
-        input_properties => [qw/ working_directory source_path sample instrument_data_properties /],
+        input_properties => [qw/ working_directory source_paths sample instrument_data_properties /],
         output_properties => [qw/ instrument_data /],
     );
 
     my $helper = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
 
     my $retrieve_source_path_op = $helper->add_operation_to_workflow($workflow, 'retrieve source path');
-    for my $property (qw/ working_directory source_path /) {
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => $property,
-            right_operation => $retrieve_source_path_op,
-            right_property => $property,
-        );
-    }
+    $workflow->add_link(
+        left_operation => $workflow->get_input_connector,
+        left_property => 'working_directory',
+        right_operation => $retrieve_source_path_op,
+        right_property => 'working_directory',
+    );
+    $workflow->add_link(
+        left_operation => $workflow->get_input_connector,
+        left_property => 'source_paths',
+        right_operation => $retrieve_source_path_op,
+        right_property => 'source_path',
+    );
 
     my $verify_md5_op = $helper->add_operation_to_workflow($workflow, 'verify md5');
     for my $property (qw/ working_directory source_path /) {
