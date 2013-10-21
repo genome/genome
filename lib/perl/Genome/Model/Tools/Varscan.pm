@@ -40,7 +40,7 @@ class Genome::Model::Tools::Varscan {
             doc => 'Stop varscan from putting headers on its output files',
             default_value => '0',
         },
-        
+
     ],
 };
 
