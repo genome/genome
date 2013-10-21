@@ -17,22 +17,22 @@ use Test::More;
 
 use_ok('Genome::InstrumentData::Command::Import::Basic') or die;
 
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import');
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v1');
 my @source_files = (
-    $test_dir.'/input-1.txt.gz', 
-    $test_dir.'/input-2.fastq',
+    $test_dir.'/input.1.fastq.gz', 
+    $test_dir.'/input.2.fastq',
 );
 is(grep({ -s $_ } @source_files), 2, 'source fastqs exist');
 
 my $sample = Genome::Sample->create(name => '__TEST_SAMPLE__');
 ok($sample, 'Create sample');
 
-# Success - fastq
 my $cmd = Genome::InstrumentData::Command::Import::Basic->create(
     sample => $sample,
     source_files => \@source_files,
     import_source_name => 'broad',
     instrument_data_properties => [qw/ lane=2 flow_cell_id=XXXXXX /],
+    original_format => 'fastq',
 );
 ok($cmd, "create import command");
 ok($cmd->execute, "excute import command");
@@ -51,7 +51,8 @@ my $bam_path = $instrument_data->bam_path;
 ok(-s $bam_path, 'bam path exists');
 is($bam_path, $instrument_data->data_directory.'/all_sequences.bam', 'bam path correctly named');
 is(eval{$instrument_data->attributes(attribute_label => 'bam_path')->attribute_value}, $bam_path, 'set attributes bam path');
-is(File::Compare::compare($bam_path.'.flagstat', $test_dir.'/input.fastq.flagstat'), 0, 'flagstat matches');
+is(File::Compare::compare($bam_path, $test_dir.'/input.fastq.bam'), 0, 'bam matches');
+is(File::Compare::compare($bam_path.'.flagstat', $test_dir.'/input.fastq.bam.flagstat'), 0, 'flagstat matches');
 
 my $allocation = $instrument_data->allocations;
 ok($allocation, 'got allocation');

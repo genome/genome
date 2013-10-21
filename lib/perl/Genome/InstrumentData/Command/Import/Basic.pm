@@ -206,15 +206,19 @@ sub _build_workflow_to_import_fastq {
 
     my $helper = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
 
-    my $get_fastqs_op = $helper->add_operation_to_workflow($workflow, 'get fastqs');
-    for my $property (qw/ working_directory source_fastq_paths /) {
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => $property,
-            right_operation => $get_fastqs_op,
-            right_property => $property,
-        );
-    }
+    my $retrieve_source_path_op = $helper->add_operation_to_workflow($workflow, 'retrieve source paths');
+    $workflow->add_link(
+        left_operation => $workflow->get_input_connector,
+        left_property => 'working_directory',
+        right_operation => $retrieve_source_path_op,
+        right_property => 'working_directory',
+    );
+    $workflow->add_link(
+        left_operation => $workflow->get_input_connector,
+        left_property => 'source_fastq_paths',
+        right_operation => $retrieve_source_path_op,
+        right_property => 'source_paths',
+    );
 
     my $fastqs_to_bam_op = $helper->add_operation_to_workflow($workflow, 'fastqs to bam');
     for my $property (qw/ working_directory sample_name /) {
@@ -226,8 +230,8 @@ sub _build_workflow_to_import_fastq {
         );
     }
     $workflow->add_link(
-        left_operation => $get_fastqs_op,
-        left_property => 'fastq_paths',
+        left_operation => $retrieve_source_path_op,
+        left_property => 'destination_paths',
         right_operation => $fastqs_to_bam_op,
         right_property => 'fastq_paths',
     );
@@ -255,6 +259,15 @@ sub _build_workflow_to_import_fastq {
         right_operation => $create_instdata_and_copy_bam,
         right_property => 'bam_paths',
     );
+
+  $workflow->add_link(
+            left_operation => $workflow->get_input_connector,
+            left_property => 'sample_name',
+            right_operation => $create_instdata_and_copy_bam,
+            right_property => 'source_path_md5',
+        );
+
+
 
     $workflow->add_link(
         left_operation => $create_instdata_and_copy_bam,
