@@ -59,11 +59,12 @@ sub execute {
     for my $bam_path ( @bam_paths ) {
         # Create inst data
         my $instrument_data = $self->_create_instrument_data_for_bam_path($bam_path);
+    $DB::single=1;
         return if not $instrument_data;
 
         # Move bam
         my $final_bam_path = $instrument_data->data_directory.'/all_sequences.bam';
-        my $move_ok = $helpers->move_file($bam_path, $final_bam_path);
+        my $move_ok = $helpers->move_path($bam_path, $final_bam_path);
         return if not $move_ok;
 
         # Flagstat
