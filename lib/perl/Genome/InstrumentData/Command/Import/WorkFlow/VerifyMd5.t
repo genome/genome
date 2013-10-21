@@ -20,20 +20,20 @@ my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::VerifyMd5->execute(
     source_path => $source_path,
 );
 ok($cmd, 'execute');
-my $md5_path = $cmd->md5_path;
+my $md5_path = $cmd->source_md5_path;
 is($md5_path, $tmp_dir.'/input.bam.md5', 'md5 path named correctly');
 ok(-s $md5_path, 'md5 path exists');
 
 # Load MD5
 my $original_md5_path = $tmp_dir.'/'.$cmd->source_path_base_name.'.orig-md5';
-rename($cmd->md5_path, $original_md5_path);
+rename($cmd->source_md5_path, $original_md5_path);
 ok(-s $original_md5_path, 'renamed md5 to valid original md5 path');
 $cmd = Genome::InstrumentData::Command::Import::WorkFlow::VerifyMd5->execute(
     working_directory => $tmp_dir,
     source_path => $source_path,
 );
 ok($cmd, 'execute');
-$md5_path = $cmd->md5_path;
+$md5_path = $cmd->source_md5_path;
 is($md5_path, $tmp_dir.'/input.bam.md5', 'md5 path named correctly');
 ok(-s $md5_path, 'md5 path exists');
 
@@ -50,12 +50,12 @@ $cmd = Genome::InstrumentData::Command::Import::WorkFlow::VerifyMd5->execute(
     source_path => $source_path,
 );
 ok(!$cmd->result, 'execute');
-is($cmd->error_message, 'Intrument data was previously imported! Found existing instrument data with MD5 ($original_md5): -11', 'correct error');
+is($cmd->error_message, 'Instrument data was previously imported! Found existing instrument data with MD5 (940825168285c254b58c47399a3e1173): -11', 'correct error');
 
 # Invalid MD5
 unlink($original_md5_path);
-Genome::Sys->create_symlink($test_dir.'invalid.md5', $original_md5_path);
-ok(-s $original_md5_path, 'linked invalid original md5 path');
+Genome::Sys->create_symlink($test_dir.'/invalid.md5', $original_md5_path);
+ok(-s $original_md5_path, 'linked invalid original md5 path') or die;
 $cmd = Genome::InstrumentData::Command::Import::WorkFlow::VerifyMd5->execute(
     working_directory => $tmp_dir,
     source_path => $source_path,

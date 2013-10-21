@@ -20,8 +20,10 @@ class Genome::InstrumentData::Command::Import::WorkFlow::VerifyMd5 {
         },
     ],
     has_output => [
-        source_path_md5 => {
-            doc => 'MD5 of source path.',
+        source_md5_path => {
+            calculate_from => [qw/ working_directory source_path_base_name /],
+            calculate => q( return $working_directory.'/'.$source_path_base_name.'.md5'; ),
+            doc => 'Source MD5 path.',
         }, 
     ],
     has_optional_calculated => [
@@ -33,11 +35,6 @@ class Genome::InstrumentData::Command::Import::WorkFlow::VerifyMd5 {
             calculate_from => [qw/ working_directory source_path_base_name /],
             calculate => q( return $working_directory.'/'.$source_path_base_name.'.orig-md5'; ),
         },
-        md5_path => {
-            calculate_from => [qw/ working_directory source_path_base_name /],
-            calculate => q( return $working_directory.'/'.$source_path_base_name.'.md5'; ),
-            doc => 'MD5 path.',
-        }, 
     ],
     has_transient_optional => [
         original_md5 => { is => 'Text', },
@@ -64,13 +61,13 @@ sub execute {
         );
         if ( @instrument_data_attr ) {
             $self->error_message(
-                'Intrument data was previously imported! Found existing instrument data with MD5 ($original_md5): '.
+                "Instrument data was previously imported! Found existing instrument data with MD5 ($original_md5): ".
                 join(' ', map { $_->instrument_data_id } @instrument_data_attr)
             );
             return;
         }
 
-        $md5 = $self->helpers->load_or_run_md5($self->source_path, $self->md5_path);
+        $md5 = $self->helpers->load_or_run_md5($self->source_path, $self->source_md5_path);
         return if not $md5;
 
         if ( $md5 ne $original_md5 ) {
@@ -79,11 +76,9 @@ sub execute {
         }
     }
     else {
-        $md5 = $self->helpers->load_or_run_md5($self->source_path, $self->md5_path);
+        $md5 = $self->helpers->load_or_run_md5($self->source_path, $self->source_md5_path);
         return if not $md5;
     }
-
-    $self->source_path_md5($md5);
 
     return 1;
 }
