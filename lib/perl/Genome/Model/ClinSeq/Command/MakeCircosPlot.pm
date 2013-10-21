@@ -183,8 +183,8 @@ EOS
     # Two gene hashes are created and two files are produced that could be used for gene labels on the circo plot
     #    1. genes-noAmpDel is a hash with all of genes except for amplifications and deletions
     #    2. genes-AmpDel is a wash with the amplifications and deletions (This file could enrich lables to only be in the AmpDel regions)
-    my %genes-noAmpDel ;
-	my %genes-AmpDel;
+    my %genes_noAmpDel ;
+	my %genes_AmpDel;
 
     #TODO I am assuming that this comes from the WGS data. I am not sure on this, however if it does not the <links> tag needs to be brought out of the conf section here
     ###Candidate Fusions
@@ -192,10 +192,10 @@ EOS
     my $candidate_fusions = Genome::Sys->read_file("$output_directory/raw/CandidateSvCodingFusions.tsv");
     my $candidate_fusions_fh = Genome::Sys->open_file_for_writing("$output_directory/data/CandidateSvCodingFusions.txt");
     while ($candidate_fusions =~ /(\S+)\s+(\S+)\s+chr(\S+):(\d+)-(\d+)\s+chr(\S+):(\d+)-(\d+)/g) {
-        $genes-noAmpDel{$1}="hs$3\t$4\t$5";
-        $genes-noAmpDel{$2}="hs$6\t$7\t$8";
-        $genes-AmpDel{$1}="hs$3\t$4\t$5";
-        $genes-AmpDel{$2}="hs$6\t$7\t$8";
+        $genes_noAmpDel{$1}="hs$3\t$4\t$5";
+        $genes_noAmpDel{$2}="hs$6\t$7\t$8";
+        $genes_AmpDel{$1}="hs$3\t$4\t$5";
+        $genes_AmpDel{$2}="hs$6\t$7\t$8";
         print $candidate_fusions_fh ("hs$3 $4 $5 hs$6 $7 $8\n");
     }
     $candidate_fusions_fh->close;
@@ -219,10 +219,10 @@ EOS
 #            my $fusions = Genome::Sys->read_file("$output_directory/raw/chimeras.bedpe.filtered.txt");
 #            my $fusions_fh = Genome::Sys->open_file_for_writing("$output_directory/data/chimeras.bedpe.filtered.txt");
 #           while ($fusions =~ /(\S+)\s+(\S+)\s+chr(\S+):(\d+)-(\d+)\s+chr(\S+):(\d+)-(\d+)/g) {
-#                $genes-noAmpDel{$1}="hs$3 $4 $5";
-#                $genes-noAmpDel{$2}="hs$6 $7 $8";
-#                $genes-AmpDel{$1}="hs$3 $4 $5";
-#                $genes-AmpDel{$2}="hs$6 $7 $8";
+#                $genes_noAmpDel{$1}="hs$3 $4 $5";
+#                $genes_noAmpDel{$2}="hs$6 $7 $8";
+#                $genes_AmpDel{$1}="hs$3 $4 $5";
+#                $genes_AmpDel{$2}="hs$6 $7 $8";
 #                print $fusions_fh ("hs$3 $4 $5 hs$6 $7 $8\n");
 #            }
 #            $fusions_fh->close;
@@ -291,7 +291,7 @@ EOS
     #the gene names for deletions and focal amplifications is in another file so it needs to be read in here
     my $ampdel_genes = Genome::Sys->read_file("$dataDir/cnv/cnview/cnv.All_genes.ampdel.tsv");
     while ($ampdel_genes =~ /ENS\w+\s\w+\s(\S+)\s\S+\s(\w+)\s(\d+)\s(\d+)/g) {
-        $genes-AmpDel="hs$2\t$3\t$4";
+        $genes_AmpDel{$1}="hs$2\t$3\t$4";
     }
     
     $config .=<<EOS;
@@ -383,8 +383,8 @@ EOS
         my $diffExpressionPositive_fh = Genome::Sys->open_file_for_writing("$output_directory/data/case_vs_control.coding.hq.de.positive.txt");
         my $diffExpressionNegative_fh = Genome::Sys->open_file_for_writing("$output_directory/data/case_vs_control.coding.hq.de.negative.txt");
         while ($diffExpression =~ /ENS\w+\s(\w+)\s\S+\s\S+\s(\w+):(\d+)-(\d+)\s\S+\s\S+\s\S+\s\S+\s\S+\s\S+\s\S+\s\S+\s(\S+)/g) {
-            $genes-noAmpDel{$1}="hs$2\t$3\t$4";
-			$genes-AmpDel{$1}="hs$2\t$3\t$4";
+            $genes_noAmpDel{$1}="hs$2\t$3\t$4";
+			$genes_AmpDel{$1}="hs$2\t$3\t$4";
             if($5>=2){
                 print $diffExpressionPositive_fh ("hs$2 $3 $4 $5\n");
             }elsif($5<=-2){
@@ -475,8 +475,8 @@ EOS
         my $expression = Genome::Sys->read_file("$output_directory/raw/genes.fpkm.expsort.top1percent.tsv");
         my $expression_fh = Genome::Sys->open_file_for_writing("$output_directory/data/genes.fpkm.expsort.top1percent.tsv");
         while ($expression =~ /\w+\t(\w+)\t\w+\t\w+\t(\w+):(\d+)-(\d+)\t\w+\t\w+\t(\S+)/g) {
-            $genes-noAmpDel{$1}="hs$2\t$3\t$4";
-            $genes-AmpDel{$1}="hs$2\t$3\t$4";
+            $genes_noAmpDel{$1}="hs$2\t$3\t$4";
+            $genes_AmpDel{$1}="hs$2\t$3\t$4";
             #if($5>=2 || $5<=-2){ Is this necessary
                 print $expression_fh ("hs$2 $3 $4 ".log($5)/log(2)."\n");
             #}
@@ -558,8 +558,8 @@ EOS
     my $snv_fh = Genome::Sys->open_file_for_writing("$output_directory/data/snvs.hq.tier1.v1.annotated.top.txt");
     while ($snv_file =~ /(\S+)\s+(\d+)\s+(\d+)\s+\S+\s+\S+\s+\S+\s+(\S+)\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+(\S+)\s+.+/g) {
     
-        $genes-noAmpDel{$4}="hs$1\t$2\t$3";
-        $genes-AmpDel{$4}="hs$1\t$2\t$3";
+        $genes_noAmpDel{$4}="hs$1\t$2\t$3";
+        $genes_AmpDel{$4}="hs$1\t$2\t$3";
         print $snv_fh "hs$1 $2 $3 0.5 ";
         switch($5){
             case "nonsense"            {print $snv_fh "fill_color=goldenrod\n"}
@@ -578,8 +578,8 @@ EOS
     my $indel_fh = Genome::Sys->open_file_for_writing("$output_directory/data/indels.hq.tier1.v1.annotated.top.txt");
     while ($indel_file =~ /(\S+)\s+(\d+)\s+(\d+)\s+\S+\s+\S+\s+\S+\s+(\S+)\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+(\S+)\s+.+/g) {
     
-        $genes-noAmpDel{$4}="hs$1\t$2\t$3";
-        $genes-AmpDel{$4}="hs$1\t$2\t$3";
+        $genes_noAmpDel{$4}="hs$1\t$2\t$3";
+        $genes_AmpDel{$4}="hs$1\t$2\t$3";
         print $indel_fh "hs$1 $2 $3 0.5 ";
         switch($5){
             case "in_frame_ins"            {print $indel_fh "fill_color=yellow\n"}
@@ -659,8 +659,8 @@ EOS
     ###Gene List
     my $gene_fh = Genome::Sys->open_file_for_writing("$output_directory/raw/genes-noAmpDel.txt");
     print $gene_fh "chr\tstart\tend\tgene\n";
-    foreach my $gene(keys %genes-noAmpDel){
-        print $gene_fh "$genes-noAmpDel{$gene}\t$gene\n";
+    foreach my $gene(keys %genes_noAmpDel){
+        print $gene_fh "$genes_noAmpDel{$gene}\t$gene\n";
     }
     $gene_fh->close;
 
@@ -671,8 +671,8 @@ EOS
 
     my $geneAmpDel_fh = Genome::Sys->open_file_for_writing("$output_directory/raw/genes-AmpDel.txt");
     print $geneAmpDel_fh "chr\tstart\tend\tgene\n";
-    foreach my $gene(keys %genes-AmpDel){
-        print $geneAmpDel_fh "$genes-AmpDel{$gene}\t$gene\n";
+    foreach my $gene(keys %genes_AmpDel){
+        print $geneAmpDel_fh "$genes_AmpDel{$gene}\t$gene\n";
     }
     $geneAmpDel_fh->close;
 

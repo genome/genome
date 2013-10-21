@@ -7,7 +7,7 @@ use Test::More tests => 5;
 
 # this gets a canonical test build, and is set up to not really hit the db
 # we temporarily have it overridden to test against Obi's example
-my $base_dir= $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-ClinSeq-Command-MakeCircosPlot/2013-10-01";
+my $base_dir= $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-ClinSeq-Command-MakeCircosPlot/2013-10-21";
 my $expected_output_dir = "$base_dir/expected-output";
 ok(-e $expected_output_dir, "expected output dir exists: $expected_output_dir");
 
@@ -18,7 +18,6 @@ my $test_build = Genome::Model::Build->get($test_build_id);
 ok($test_build, "got test build $test_build_id");
 
 # this directory lives under /gsc/var/cache/testsuite/data at TGI
-# it is also temporarily overridden for Obi's example
 #/gscmnt/gc13003/info/test_suite_data//Genome-Model-ClinSeq-Command-MakeCircosPlot/2013-10-01/expected-output
 
 # make a temp directory for output
@@ -34,9 +33,7 @@ print $result."\n";
 ok($result, "execution succeeded");
 
 # verify results
-# any tests in the TODO block will still run, but will not count as "failure" in the harness
-#SKIP: {
- #   skip "under development",1;
+
 
     my @differences = `diff $expected_output_dir $actual_output_dir`;
     is(scalar(@differences), 35, "only expected differences found: diff $expected_output_dir $actual_output_dir")
@@ -46,5 +43,5 @@ ok($result, "execution succeeded");
             my $debug_location = "/tmp/last-output-make-circos-plot-$$";
             system "mv $actual_output_dir $debug_location";
         };
-#}
+
 #TODO create tests for WGS only, WGS+Exome, and WGS+RNA. now this only tests for all three
