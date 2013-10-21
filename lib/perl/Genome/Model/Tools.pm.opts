@@ -22719,8 +22719,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
     [
       '>calc-covg',
       [
-        'gene-covg-dir=s',
-        'files',
         'roi-file=s',
         'files',
         'reference-sequence=s',
@@ -22728,6 +22726,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
         'bam-list=s',
         'files',
         'output-dir=s',
+        'files',
+        'gene-covg-dir=s',
         'files',
         'cmd-list-file=s',
         'files',
