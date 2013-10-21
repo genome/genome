@@ -7,7 +7,7 @@ use Genome;
 use Data::Dumper;
 use File::Temp;
 
-my $DEFAULT_VERSION = '2.3.6';
+my $DEFAULT_VERSION = '2.3.5';
 
 class Genome::Model::Tools::Varscan {
     is => ['Command'],
