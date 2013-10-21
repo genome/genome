@@ -29,7 +29,7 @@ my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::FastqsToBam->execut
 );
 ok($cmd->result, 'execute');
 my $bam_path = $cmd->bam_path;
-is($bam_path, $tmp_dir.'/input.bam', 'bam path named correctly');
+is($bam_path, $tmp_dir.'/__TEST_SAMPLE__.bam', 'bam path named correctly');
 ok(-s $bam_path, 'bam path exists');
 is(File::Compare::compare($bam_path, $test_dir.'/input.fastq.bam'), 0, 'bam matches');
 
