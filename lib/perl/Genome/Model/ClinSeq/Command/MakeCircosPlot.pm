@@ -68,7 +68,7 @@ sub execute {
 
     #TODO Remove when done testing
     #Remove circos.conf for testing purposes
-    system("yes| rm -r $output_directory");
+    Genome::Sys->shellcmd(cmd => "rm -rf $output_directory");
 
     # initialize directories
     unless (-d $output_directory) {
@@ -727,6 +727,10 @@ snuggle_refine        = yes
     
 EOS
 
+my $annotate_genes_cmd1 = "genome model clin-seq annotate-genes-by-category --infile=$output_directory/raw/genes.txt --cancer-annotation-db='tgi/cancer-annotation/human/build37-20130711.1' --gene-name-column='gene'";
+    Genome::Sys->shellcmd(cmd => $annotate_genes_cmd1);
+    my $sort_cmd1 = "sort -nrk 102 $output_directory/raw/genes.catanno.txt | head -100 | cut -d \$\'\\t\' -f 1-4 > $output_directory/data/genes.catanno.sorted.txt";
+    Genome::Sys->shellcmd(cmd => $sort_cmd1);
 
 =cut    
     # example accessing data:

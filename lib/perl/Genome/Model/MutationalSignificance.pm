@@ -33,6 +33,7 @@ BEGIN {
             annotation_build => ['input connector', 'annotation_build'], #input to model, not param
             extra_rois => ['input connector', 'extra_rois'], #TODO: get from somatic variation models?
             regulome_bed => ['input connector', 'regulome_bed'],
+            include_ensembl_annot => ['input connector', 'include_ensembl_annot'],
         },
         'Genome::Model::MutationalSignificance::Command::CreateBamList' => {
             somatic_variation_builds => ['input connector', 'somatic_variation_builds'],

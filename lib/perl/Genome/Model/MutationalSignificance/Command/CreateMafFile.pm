@@ -23,6 +23,14 @@ class Genome::Model::MutationalSignificance::Command::CreateMafFile {
             is => 'Boolean',
             default_value => 0,
         },
+        include_ensembl_annot => {
+            is => 'Boolean',
+            default_value => 1,
+        },
+        filter_on_regulomedb => {
+            is => 'Boolean',
+            default_value => 1,
+        },
         cosmic_dir => {
             is => 'Path',
             doc => 'cosmic amino acid mutation database folder',
@@ -132,16 +140,19 @@ sub execute {
                 regulatory_columns_to_check => [$self->regulatory_columns_to_check],
                 output_file => $snv_anno,
                 annotation_build => $self->somatic_variation_build->annotation_build,
+                include_ensembl_annot => $self->include_ensembl_annot,
             );
 
-            my $rdb_file = $self->somatic_variation_build->data_set_path("effects/snvs.hq.regulomedb", 1, "full");
-            unless (-s $rdb_file) {
-                $self->error_message("No regulomedb file detected");
-                return;
+            if ($self->filter_on_regulomedb) {
+                my $rdb_file = $self->somatic_variation_build->data_set_path("effects/snvs.hq.regulomedb", 1, "full");
+                unless (-s $rdb_file) {
+                    $self->error_message("No regulomedb file detected");
+                    return;
+                }
+
+                $params{regulome_db_file} = $rdb_file;
             }
-            
-            $params{regulome_db_file} = $rdb_file;
-            
+
             my $rv = Genome::Model::MutationalSignificance::Command::MergeAnnotations->execute(
                 %params
             );

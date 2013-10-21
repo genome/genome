@@ -84,8 +84,8 @@ sub createNewDir{
       #If this directory already exists, and the -force option was provide, delete this directory and start it cleanly
       if ($force eq "yes"){
 	print YELLOW, "\nForcing clean creation of $new_path\n\n", RESET;
-	my $command = "rm -r $new_path";
-	system ($command);
+	my $command = "rm -rf $new_path";
+	Genome::Sys->shellcmd(cmd => $command);
 	mkdir($new_path);
       }else{
 	print RED, "\nThe '-force' option provided to utility.pm was not understood!!", RESET;
@@ -104,8 +104,8 @@ sub createNewDir{
       chomp($answer);
 
       if ($answer =~ /^y$/i | $answer =~ /^yes$/i){
-	my $command = "rm -r $new_path";
-	system ($command);
+	my $command = "rm -rf $new_path";
+	Genome::Sys->shellcmd(cmd => $command);
 	mkdir($new_path);
       }else{
 	print YELLOW, "\nUsing existing directory, some files may be over-written and others that are unrelated to the current analysis may remain!\n", RESET;
@@ -188,12 +188,12 @@ sub checkDir{
         my $files_present = scalar(@temp) - 2;
         my $clean_dir_cmd = "rm -fr $dir"."*";
         print YELLOW, "\n\n$clean_dir_cmd\n\n", RESET;
-        system($clean_dir_cmd);
+	Genome::Sys->shellcmd(cmd => $clean_dir_cmd);
       }else{
         my $files_present = scalar(@temp) - 2;
         my $clean_dir_cmd = "rm -f $dir"."*";
         print YELLOW, "\n\n$clean_dir_cmd\n\n", RESET;
-        system($clean_dir_cmd);
+	Genome::Sys->shellcmd(cmd => $clean_dir_cmd);
       }
     }else{
 
@@ -209,9 +209,9 @@ sub checkDir{
 	chomp($answer);
 	if ($answer =~ /y|yes/i){
           if ($recursive =~ /y|yes/i){
-            system($clean_dir_cmd);
+	    Genome::Sys->shellcmd(cmd => $clean_dir_cmd);
           }else{
-	    system($clean_dir_cmd);
+	    Genome::Sys->shellcmd(cmd => $clean_dir_cmd);
           }
 	}else{
 	  print YELLOW, "\nContinuing and leaving files in place then ...\n\n", RESET;
