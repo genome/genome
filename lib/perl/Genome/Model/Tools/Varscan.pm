@@ -33,7 +33,7 @@ class Genome::Model::Tools::Varscan {
         version => {
             is    => 'String',
             doc   => 'version of Varscan application to use',
-            default_value => 'latest',
+            default_value => $DEFAULT_VERSION,
         },
         no_headers => {
             is => 'Boolean',
