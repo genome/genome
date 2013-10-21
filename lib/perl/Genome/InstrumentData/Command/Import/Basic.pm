@@ -221,6 +221,21 @@ sub _build_workflow_to_import_fastq {
     );
     $retrieve_source_path_op->parallel_by('source_path');
 
+    my $verify_md5_op = $helper->add_operation_to_workflow($workflow, 'verify md5');
+    $workflow->add_link(
+        left_operation => $workflow->get_input_connector,
+        left_property => 'working_directory',
+        right_operation => $verify_md5_op,
+        right_property => 'working_directory',
+    );
+    $workflow->add_link(
+        left_operation => $retrieve_source_path_op,
+        left_property => 'destination_path',
+        right_operation => $verify_md5_op,
+        right_property => 'source_path',
+   );
+    $verify_md5_op->parallel_by('source_path');
+
     my $fastqs_to_bam_op = $helper->add_operation_to_workflow($workflow, 'fastqs to bam');
     for my $property (qw/ working_directory sample_name /) {
         $workflow->add_link(
@@ -231,8 +246,8 @@ sub _build_workflow_to_import_fastq {
         );
     }
     $workflow->add_link(
-        left_operation => $retrieve_source_path_op,
-        left_property => 'destination_path',
+        left_operation => $verify_md5_op,
+        left_property => 'source_path',
         right_operation => $fastqs_to_bam_op,
         right_property => 'fastq_paths',
     );
