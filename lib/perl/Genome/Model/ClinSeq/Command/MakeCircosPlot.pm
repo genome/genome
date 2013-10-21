@@ -45,21 +45,21 @@ EOS
 sub execute {
     my $self = shift;
     
-	#TODO Determine what data types should be required to run this tool
-	#TODO code for wgs+exome and wgs+rna only
-	
-	
-	# grab params from $self
-	my $build = $self->build;
-	my $wgs_build = $build->wgs_build;
-	
-	unless($wgs_build){
-    	$self->status_message("There is no WGS build for this Clinseq build. This tool cannot be run");
+    #TODO Determine what data types should be required to run this tool
+    #TODO code for wgs+exome and wgs+rna only
+    
+    
+    # grab params from $self
+    my $build = $self->build;
+    my $wgs_build = $build->wgs_build;
+    
+    unless($wgs_build){
+        $self->status_message("There is no WGS build for this Clinseq build. This tool cannot be run");
         return;
     }
     
 
-	my $output_directory = $self->output_directory;
+    my $output_directory = $self->output_directory;
 
     $self->status_message("Running on build " . $build->__display_name__); 
     $self->status_message("Output directory is " . $self->output_directory);
@@ -180,7 +180,11 @@ EOS
 
 
     #Gene hash is a union of all of the different genes in each file used for the gene annotations on the plot.
-    my %genes ;
+    # Two gene hashes are created and two files are produced that could be used for gene labels on the circo plot
+    #    1. genes-noAmpDel is a hash with all of genes except for amplifications and deletions
+    #    2. genes-AmpDel is a wash with the amplifications and deletions (This file could enrich lables to only be in the AmpDel regions)
+    my %genes-noAmpDel ;
+	my %genes-AmpDel;
 
     #TODO I am assuming that this comes from the WGS data. I am not sure on this, however if it does not the <links> tag needs to be brought out of the conf section here
     ###Candidate Fusions
@@ -188,8 +192,10 @@ EOS
     my $candidate_fusions = Genome::Sys->read_file("$output_directory/raw/CandidateSvCodingFusions.tsv");
     my $candidate_fusions_fh = Genome::Sys->open_file_for_writing("$output_directory/data/CandidateSvCodingFusions.txt");
     while ($candidate_fusions =~ /(\S+)\s+(\S+)\s+chr(\S+):(\d+)-(\d+)\s+chr(\S+):(\d+)-(\d+)/g) {
-        $genes{$1}="hs$3\t$4\t$5";
-        $genes{$2}="hs$6\t$7\t$8";
+        $genes-noAmpDel{$1}="hs$3\t$4\t$5";
+        $genes-noAmpDel{$2}="hs$6\t$7\t$8";
+        $genes-AmpDel{$1}="hs$3\t$4\t$5";
+        $genes-AmpDel{$2}="hs$6\t$7\t$8";
         print $candidate_fusions_fh ("hs$3 $4 $5 hs$6 $7 $8\n");
     }
     $candidate_fusions_fh->close;
@@ -198,7 +204,7 @@ EOS
 <links>
 <link>
 file          = $output_directory/data/CandidateSvCodingFusions.txt
-radius		= 0.50r
+radius        = 0.50r
 bezier_radius = 0r
 color         = black_a1
 thickness     = 2
@@ -208,17 +214,19 @@ EOS
 
 ###Fusions
 #TODO /gscmnt/gc8001/info/model_data/9761cf3dbb73452980890eaf0e8aadb0/buildf4af67af82b94727bb4ac30554503e4b/fusions/chimeras.bedpe.filtered.txt
-#    	if(my $tumor_rnaseq_build = $build->tumor_rnaseq_build){
-#    		Genome::Sys->copy_file($tumor_rnaseq_build->data_directory."/fusions/chimeras.bedpe.filtered.txt", "$output_directory/raw/chimeras.bedpe.filtered.txt");
-#			my $fusions = Genome::Sys->read_file("$output_directory/raw/chimeras.bedpe.filtered.txt");
-#			my $fusions_fh = Genome::Sys->open_file_for_writing("$output_directory/data/chimeras.bedpe.filtered.txt");
-#   		while ($fusions =~ /(\S+)\s+(\S+)\s+chr(\S+):(\d+)-(\d+)\s+chr(\S+):(\d+)-(\d+)/g) {
-#    			$genes{$1}="hs$3 $4 $5";
-#    			$genes{$2}="hs$6 $7 $8";
-#    			print $fusions_fh ("hs$3 $4 $5 hs$6 $7 $8\n");
-#    		}
-#    		$fusions_fh->close;
-#			$config .=<<EOS;
+#        if(my $tumor_rnaseq_build = $build->tumor_rnaseq_build){
+#            Genome::Sys->copy_file($tumor_rnaseq_build->data_directory."/fusions/chimeras.bedpe.filtered.txt", "$output_directory/raw/chimeras.bedpe.filtered.txt");
+#            my $fusions = Genome::Sys->read_file("$output_directory/raw/chimeras.bedpe.filtered.txt");
+#            my $fusions_fh = Genome::Sys->open_file_for_writing("$output_directory/data/chimeras.bedpe.filtered.txt");
+#           while ($fusions =~ /(\S+)\s+(\S+)\s+chr(\S+):(\d+)-(\d+)\s+chr(\S+):(\d+)-(\d+)/g) {
+#                $genes-noAmpDel{$1}="hs$3 $4 $5";
+#                $genes-noAmpDel{$2}="hs$6 $7 $8";
+#                $genes-AmpDel{$1}="hs$3 $4 $5";
+#                $genes-AmpDel{$2}="hs$6 $7 $8";
+#                print $fusions_fh ("hs$3 $4 $5 hs$6 $7 $8\n");
+#            }
+#            $fusions_fh->close;
+#            $config .=<<EOS;
 #Fusions RNAseq support
 #<link>
 #file          = $output_directory/data/chimeras.bedpe.filtered.txt
@@ -226,9 +234,9 @@ EOS
 #bezier_radius = 0r
 #color         = red_a1
 #thickness     = 2
-#</link>		
+#</link>        
 #EOS
-#   	}
+#       }
 
     $config.=<<EOS;
 </links>
@@ -279,7 +287,13 @@ EOS
     }
     $deletions_fh->close;
     $focal_amps_fh->close;
-
+    
+    #the gene names for deletions and focal amplifications is in another file so it needs to be read in here
+    my $ampdel_genes = Genome::Sys->read_file("$dataDir/cnv/cnview/cnv.All_genes.ampdel.tsv");
+    while ($ampdel_genes =~ /ENS\w+\s\w+\s(\S+)\s\S+\s(\w+)\s(\d+)\s(\d+)/g) {
+        $genes-AmpDel="hs$2\t$3\t$4";
+    }
+    
     $config .=<<EOS;
 
 #DELETIONS DATA
@@ -328,7 +342,7 @@ position   = 0.333333333r
 color      = black
 </axis>
 </axes>
-</plot>		
+</plot>        
 
 #FOCAL AMPLIFICATIONS DATA
 <plot>
@@ -357,8 +371,8 @@ orientation = out
 
 </plot>
 EOS
-	if($build->normal_rnaseq_build || $build->tumor_rnaseq_build){
-	
+    if($build->normal_rnaseq_build || $build->tumor_rnaseq_build){
+    
     ###Differential Expression
     # Differential Expression data is only included if rnaseq builds are present for tumor and normal
     # If not the rna expression is displayed in this track.
@@ -369,16 +383,17 @@ EOS
         my $diffExpressionPositive_fh = Genome::Sys->open_file_for_writing("$output_directory/data/case_vs_control.coding.hq.de.positive.txt");
         my $diffExpressionNegative_fh = Genome::Sys->open_file_for_writing("$output_directory/data/case_vs_control.coding.hq.de.negative.txt");
         while ($diffExpression =~ /ENS\w+\s(\w+)\s\S+\s\S+\s(\w+):(\d+)-(\d+)\s\S+\s\S+\s\S+\s\S+\s\S+\s\S+\s\S+\s\S+\s(\S+)/g) {
-            $genes{$1}="hs$2\t$3\t$4";
+            $genes-noAmpDel{$1}="hs$2\t$3\t$4";
+			$genes-AmpDel{$1}="hs$2\t$3\t$4";
             if($5>=2){
                 print $diffExpressionPositive_fh ("hs$2 $3 $4 $5\n");
             }elsif($5<=-2){
-            	print $diffExpressionNegative_fh ("hs$2 $3 $4 $5\n");
+                print $diffExpressionNegative_fh ("hs$2 $3 $4 $5\n");
             }
         }
         $diffExpressionPositive_fh->close;    
-		$diffExpressionNegative_fh->close;    
-		
+        $diffExpressionNegative_fh->close;    
+        
         $config.=<<EOS;
 
 #DIFFERENTIAL EXPRESSION DATA 
@@ -460,7 +475,8 @@ EOS
         my $expression = Genome::Sys->read_file("$output_directory/raw/genes.fpkm.expsort.top1percent.tsv");
         my $expression_fh = Genome::Sys->open_file_for_writing("$output_directory/data/genes.fpkm.expsort.top1percent.tsv");
         while ($expression =~ /\w+\t(\w+)\t\w+\t\w+\t(\w+):(\d+)-(\d+)\t\w+\t\w+\t(\S+)/g) {
-            $genes{$1}="hs$2\t$3\t$4";
+            $genes-noAmpDel{$1}="hs$2\t$3\t$4";
+            $genes-AmpDel{$1}="hs$2\t$3\t$4";
             #if($5>=2 || $5<=-2){ Is this necessary
                 print $expression_fh ("hs$2 $3 $4 ".log($5)/log(2)."\n");
             #}
@@ -518,10 +534,10 @@ spacing   = 0.1r
 
 EOS
     }
-	}else{
-		$self->status_message("There was no rna data for this build. This track will be empty");
-	}
-	
+    }else{
+        $self->status_message("There was no rna data for this build. This track will be empty");
+    }
+    
     ### Tier1 SNVs and INDELs
     #decides which somatic variation model to use
     #my $wgs_build = $build->wgs_build; #WGS build required at beginning of execute
@@ -542,15 +558,16 @@ EOS
     my $snv_fh = Genome::Sys->open_file_for_writing("$output_directory/data/snvs.hq.tier1.v1.annotated.top.txt");
     while ($snv_file =~ /(\S+)\s+(\d+)\s+(\d+)\s+\S+\s+\S+\s+\S+\s+(\S+)\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+(\S+)\s+.+/g) {
     
-        $genes{$4}="hs$1\t$2\t$3";
+        $genes-noAmpDel{$4}="hs$1\t$2\t$3";
+        $genes-AmpDel{$4}="hs$1\t$2\t$3";
         print $snv_fh "hs$1 $2 $3 0.5 ";
         switch($5){
-            case "nonsense"			{print $snv_fh "fill_color=goldenrod\n"}
-            case "missense"			{print $snv_fh "fill_color=blue\n"}
-            case "silent"			{print $snv_fh "fill_color=green\n"}
-            case "splice_site"		{print $snv_fh "fill_color=black\n"}
-            case "rna"				{print $snv_fh "fill_color=purple\n"}
-            case "nonstop"			{print $snv_fh "fill_color=black\n"}
+            case "nonsense"            {print $snv_fh "fill_color=goldenrod\n"}
+            case "missense"            {print $snv_fh "fill_color=blue\n"}
+            case "silent"            {print $snv_fh "fill_color=green\n"}
+            case "splice_site"        {print $snv_fh "fill_color=black\n"}
+            case "rna"                {print $snv_fh "fill_color=purple\n"}
+            case "nonstop"            {print $snv_fh "fill_color=black\n"}
         }
     
     }
@@ -561,16 +578,17 @@ EOS
     my $indel_fh = Genome::Sys->open_file_for_writing("$output_directory/data/indels.hq.tier1.v1.annotated.top.txt");
     while ($indel_file =~ /(\S+)\s+(\d+)\s+(\d+)\s+\S+\s+\S+\s+\S+\s+(\S+)\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+(\S+)\s+.+/g) {
     
-        $genes{$4}="hs$1\t$2\t$3";
+        $genes-noAmpDel{$4}="hs$1\t$2\t$3";
+        $genes-AmpDel{$4}="hs$1\t$2\t$3";
         print $indel_fh "hs$1 $2 $3 0.5 ";
         switch($5){
-            case "in_frame_ins"			{print $indel_fh "fill_color=yellow\n"}
-            case "in_frame_del"			{print $indel_fh "fill_color=yellow\n"}
-            case "frame_shift_del"		{print $indel_fh "fill_color=teal\n"}
-            case "rna"					{print $indel_fh "fill_color=purple\n"}
-            case "frame_shift_ins"		{print $indel_fh "fill_color=red\n"}
-            case "splice_site_del"		{print $indel_fh "fill_color=black\n"}
-            case "splice_site_ins"		{print $indel_fh "fill_color=chocolate\n"}
+            case "in_frame_ins"            {print $indel_fh "fill_color=yellow\n"}
+            case "in_frame_del"            {print $indel_fh "fill_color=yellow\n"}
+            case "frame_shift_del"        {print $indel_fh "fill_color=teal\n"}
+            case "rna"                    {print $indel_fh "fill_color=purple\n"}
+            case "frame_shift_ins"        {print $indel_fh "fill_color=red\n"}
+            case "splice_site_del"        {print $indel_fh "fill_color=black\n"}
+            case "splice_site_ins"        {print $indel_fh "fill_color=chocolate\n"}
         }
     }
     $indel_fh->close;
@@ -636,20 +654,38 @@ thickness = 0p
 # Do not join histogram bins that do not abut.
 extend_bin = no
 orientation = out
-</plot>		
+</plot>        
 EOS
     ###Gene List
-    my $gene_fh = Genome::Sys->open_file_for_writing("$output_directory/raw/genes.txt");
+    my $gene_fh = Genome::Sys->open_file_for_writing("$output_directory/raw/genes-noAmpDel.txt");
     print $gene_fh "chr\tstart\tend\tgene\n";
-    foreach my $gene(keys %genes){
-        print $gene_fh "$genes{$gene}\t$gene\n";
+    foreach my $gene(keys %genes-noAmpDel){
+        print $gene_fh "$genes-noAmpDel{$gene}\t$gene\n";
     }
     $gene_fh->close;
+
+    Genome::Sys->shellcmd(cmd => "genome model clin-seq annotate-genes-by-category --infile=$output_directory/raw/genes-noAmpDel.txt --cancer-annotation-db='tgi/cancer-annotation/human/build37-20130711.1' --gene-name-column='gene'");
+    #TODO Genome::Sys->shellcmd( doesnt work
+    system( "sort -rnk 102 $output_directory/raw/genes-noAmpDel.catanno.txt|head -100 |cut -d \"\t\" -f 1-4  > $output_directory/data/genes-noAmpDel.catanno.sorted.txt");
+
+
+    my $geneAmpDel_fh = Genome::Sys->open_file_for_writing("$output_directory/raw/genes-AmpDel.txt");
+    print $geneAmpDel_fh "chr\tstart\tend\tgene\n";
+    foreach my $gene(keys %genes-AmpDel){
+        print $geneAmpDel_fh "$genes-AmpDel{$gene}\t$gene\n";
+    }
+    $geneAmpDel_fh->close;
+
+    Genome::Sys->shellcmd(cmd => "genome model clin-seq annotate-genes-by-category --infile=$output_directory/raw/genes-AmpDel.txt --cancer-annotation-db='tgi/cancer-annotation/human/build37-20130711.1' --gene-name-column='gene'");
+    #TODO Genome::Sys->shellcmd( doesnt work
+    system( "sort -rnk 102 $output_directory/raw/genes-AmpDel.catanno.txt|head -100 |cut -d \"\t\" -f 1-4  > $output_directory/data/genes-AmpDel.catanno.sorted.txt");
+
+
     $config .=<<EOS;
 #GENE LABELS
 <plot>
 type  = text
-file  = $output_directory/data/genes.catanno.sorted.txt
+file  = $output_directory/data/genes-noAmpDel.catanno.sorted.txt
 
 # Like with other tracks, text is limited to a radial range by setting
 # r0 and r1.
@@ -690,9 +726,7 @@ snuggle_refine        = yes
 </plot>
     
 EOS
-    Genome::Sys->shellcmd(cmd => "genome model clin-seq annotate-genes-by-category --infile=$output_directory/raw/genes.txt --cancer-annotation-db='tgi/cancer-annotation/human/build37-20130711.1' --gene-name-column='gene'");
-    #TODO Genome::Sys->shellcmd( doesnt work
-    system( "sort -rnk 102 $output_directory/raw/genes.catanno.txt|head -100 |cut -d \"\t\" -f 1-4  > $output_directory/data/genes.catanno.sorted.txt");
+
 
 =cut    
     # example accessing data:
