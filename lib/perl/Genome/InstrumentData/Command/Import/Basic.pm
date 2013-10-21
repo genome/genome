@@ -190,6 +190,7 @@ sub _gather_inputs {
         sample_name => $self->sample->name,
         $source_path_alias => $source_paths,
         source_path => $source_paths, # FIXME just have the one source path[s]
+        source_paths => $source_paths, # FIXME just have the one source path[s]
         instrument_data_properties => \@instrument_data_properties,
     );
     return { map { $_ => $possible_inputs{$_} } @{$workflow->operation_type->input_properties} };
@@ -200,7 +201,7 @@ sub _build_workflow_to_import_fastq {
 
     my $workflow = Workflow::Model->create(
         name => 'Import Inst Data',
-        input_properties => [qw/ working_directory source_fastq_paths sample sample_name instrument_data_properties /],
+        input_properties => [qw/ working_directory source_paths sample sample_name instrument_data_properties /],
         output_properties => [qw/ instrument_data /],
     );
 
@@ -215,7 +216,7 @@ sub _build_workflow_to_import_fastq {
     );
     $workflow->add_link(
         left_operation => $workflow->get_input_connector,
-        left_property => 'source_fastq_paths',
+        left_property => 'source_paths',
         right_operation => $retrieve_source_path_op,
         right_property => 'source_path',
     );
@@ -236,6 +237,31 @@ sub _build_workflow_to_import_fastq {
    );
     $verify_md5_op->parallel_by('source_path');
 
+    my %left_op_and_fastqs_property = (
+        left_operation => $verify_md5_op,
+        left_property => 'source_path',
+    );
+    my @source_files = $self->source_files;
+    if ( @source_files == 1 and $source_files[0] =~ /\.t?gz$/ ){
+        my $archive_to_fastqs_op = $helper->add_operation_to_workflow($workflow, 'archive to fastqs');
+        $workflow->add_link(
+            left_operation => $workflow->get_input_connector,
+            left_property => 'working_directory',
+            right_operation => $archive_to_fastqs_op,
+            right_property => 'working_directory',
+        );
+        $workflow->add_link(
+            left_operation => $verify_md5_op,
+            left_property => 'source_path',
+            right_operation => $archive_to_fastqs_op,
+            right_property => 'archive_path',
+        );
+        %left_op_and_fastqs_property = (
+            left_operation => $archive_to_fastqs_op,
+            left_property => 'fastq_paths',
+        );
+    }
+
     my $fastqs_to_bam_op = $helper->add_operation_to_workflow($workflow, 'fastqs to bam');
     for my $property (qw/ working_directory sample_name /) {
         $workflow->add_link(
@@ -246,8 +272,7 @@ sub _build_workflow_to_import_fastq {
         );
     }
     $workflow->add_link(
-        left_operation => $verify_md5_op,
-        left_property => 'source_path',
+        %left_op_and_fastqs_property,
         right_operation => $fastqs_to_bam_op,
         right_property => 'fastq_paths',
     );
