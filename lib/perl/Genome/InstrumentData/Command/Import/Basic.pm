@@ -111,7 +111,7 @@ sub execute {
     my $wf = $self->$method;
     return if not $wf;
 
-    my $inputs = $self->_gather_inputs($wf);
+    my $inputs = $self->_gather_inputs_for_workflow;
     return if not $inputs;
 
     my $success = Workflow::Simple::run_workflow($wf, %$inputs);
@@ -186,7 +186,7 @@ sub _add_operation_to_workflow {
     return $operation;
 }
 
-sub _gather_inputs {
+sub _gather_inputs_for_workflow {
     my $self = shift;
 
     my @instrument_data_properties = $self->instrument_data_properties;
@@ -212,13 +212,12 @@ sub _gather_inputs {
     );
     return if not $space_available;
 
-    my %possible_inputs = (
+    return {
         working_directory => $tmp_dir,
         sample => $self->sample,
         source_paths => \@source_files,
         instrument_data_properties => \@instrument_data_properties,
-    );
-    return { map { $_ => $possible_inputs{$_} } @{$self->_workflow->operation_type->input_properties} };
+    };
 }
 
 sub _build_workflow_to_import_fastq {
