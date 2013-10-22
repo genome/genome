@@ -71,12 +71,12 @@ sub _convert_to_standard_formats {
     # Put header and only PASS variants in HQ file
     my $pass_snv_output_file = $self->_temp_staging_directory . "/snvs.hq";
     my $pass_fh = Genome::Sys->open_file_for_writing($pass_snv_output_file);
-    $pass_fh->print($header->to_string);
+    $pass_fh->say($header->to_string);
 
     # Put header and only non PASS variants in LQ file
     my $fail_snv_output_file = $self->_temp_staging_directory . "/snvs.lq";
     my $fail_fh = Genome::Sys->open_file_for_writing($fail_snv_output_file);
-    $fail_fh->print($header->to_string);
+    $fail_fh->say($header->to_string);
 
     while(my $entry = $reader->next) {
         my $pass = 1;
@@ -89,9 +89,9 @@ sub _convert_to_standard_formats {
         }
 
         if ($pass) {
-            $pass_fh->print($entry->to_string);
+            $pass_fh->say($entry->to_string);
         } else {
-            $fail_fh->print($entry->to_string);
+            $fail_fh->say($entry->to_string);
         }
     }
 
