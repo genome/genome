@@ -110,6 +110,7 @@ sub tests {
                 sd_below_insert_size => undef,
                 fwd_filt_error_rate_avg => undef,
                 rev_run_type => 'Paired End Read 2',
+                analysis_project_id => 'a' x 64,
             },
         },
         {

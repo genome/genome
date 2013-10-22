@@ -357,6 +357,8 @@ sub _create_indexillumina {
     return 0 unless exists $self->instrument_data_with_successful_pidfas->{$original_object->id};
     # Bam path required!
     return 0 unless $original_object->bam_path;
+    # Analysis project id required
+    return 0 unless $original_object->analysis_project_id;
 
     my ($direct_properties, $indirect_properties) = $self->_get_direct_and_indirect_properties_for_object(
         $original_object,
