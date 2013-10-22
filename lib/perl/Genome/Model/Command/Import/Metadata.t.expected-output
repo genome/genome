@@ -570,9 +570,6 @@
 ## IMPORTING Genome::SubjectAttribute extraction_type	genomic dna	2889981253	GMS: bless( {"subject_id" => "2889981253","id" => "extraction_type\tgenomic dna\t2889981253\tGMS","nomenclature" => "GMS","attribute_label" => "extraction_type","attribute_value" => "genomic dna"}, 'Genome::SubjectAttribute' )
 ## IMPORTING Genome::SubjectAttribute extraction_type	genomic dna	2889981254	GMS: bless( {"subject_id" => "2889981254","id" => "extraction_type\tgenomic dna\t2889981254\tGMS","nomenclature" => "GMS","attribute_label" => "extraction_type","attribute_value" => "genomic dna"}, 'Genome::SubjectAttribute' )
 ## IMPORTING Genome::SubjectAttribute extraction_type	rna	2889953342	GMS: bless( {"subject_id" => "2889953342","id" => "extraction_type\trna\t2889953342\tGMS","nomenclature" => "GMS","attribute_label" => "extraction_type","attribute_value" => "rna"}, 'Genome::SubjectAttribute' )
-## FOUND Genome::SubjectAttribute format	Sample	2889953342	GC: format Sample 2889953342 GC
-## FOUND Genome::SubjectAttribute format	Sample	2889981253	GC: format Sample 2889981253 GC
-## FOUND Genome::SubjectAttribute format	Sample	2889981254	GC: format Sample 2889981254 GC
 ## IMPORTING Genome::SubjectAttribute gender	female	2889953340	GMS: bless( {"subject_id" => "2889953340","id" => "gender\tfemale\t2889953340\tGMS","nomenclature" => "GMS","attribute_label" => "gender","attribute_value" => "female"}, 'Genome::SubjectAttribute' )
 ## FOUND Genome::SubjectAttribute gender_name	Female	2889953342	GC: gender_name Female 2889953342 GC
 ## FOUND Genome::SubjectAttribute gender_name	Female	2889981253	GC: gender_name Female 2889981253 GC
