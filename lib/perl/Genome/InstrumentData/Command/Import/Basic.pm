@@ -50,6 +50,7 @@ class Genome::InstrumentData::Command::Import::Basic {
     ],
     has_optional_transient => [
         _workflow => {},
+        _verify_md5_op => {},
         _working_directory => { is => 'Text', },
     ],
 };
@@ -111,7 +112,7 @@ sub execute {
     my $space_available = $self->_verify_adequate_disk_space_is_available_for_source_files;
     return if not $space_available;
 
-    my $workflow = $self->_create_workflow_model;
+    my $workflow = $self->_create_workflow;
     return if not $workflow;
 
     my $method = '_build_workflow_to_import_'.$original_format;
@@ -185,16 +186,48 @@ sub _verify_adequate_disk_space_is_available_for_source_files {
     return $space_available;
 }
 
-sub _create_workflow_model {
+sub _create_workflow {
     my $self = shift;
 
-    return $self->_workflow(
-        Workflow::Model->create(
-            name => 'Import Instrument Data',
-            input_properties => [qw/ working_directory source_paths sample instrument_data_properties /],
-            output_properties => [qw/ instrument_data /],
-        )
+    my $workflow = Workflow::Model->create(
+        name => 'Import Instrument Data',
+        input_properties => [qw/ working_directory source_paths sample instrument_data_properties /],
+        output_properties => [qw/ instrument_data /],
     );
+    $self->_workflow($workflow);
+
+    my $retrieve_source_path_op = $self->_add_operation_to_workflow('retrieve source path');
+    $workflow->add_link(
+        left_operation => $workflow->get_input_connector,
+        left_property => 'working_directory',
+        right_operation => $retrieve_source_path_op,
+        right_property => 'working_directory',
+    );
+    $workflow->add_link(
+        left_operation => $workflow->get_input_connector,
+        left_property => 'source_paths',
+        right_operation => $retrieve_source_path_op,
+        right_property => 'source_path',
+    );
+    $retrieve_source_path_op->parallel_by('source_path') if $self->source_files > 1;
+
+    my $verify_md5_op = $self->_add_operation_to_workflow('verify md5');
+    $self->_verify_md5_op($verify_md5_op);
+    $workflow->add_link(
+        left_operation => $workflow->get_input_connector,
+        left_property => 'working_directory',
+        right_operation => $verify_md5_op,
+        right_property => 'working_directory',
+    );
+    $workflow->add_link(
+        left_operation => $retrieve_source_path_op,
+        left_property => 'destination_path',
+        right_operation => $verify_md5_op,
+        right_property => 'source_path',
+   );
+   $verify_md5_op->parallel_by('source_path') if $self->source_files > 1;
+
+    return $workflow;
 }
 
 sub _add_operation_to_workflow {
@@ -240,36 +273,7 @@ sub _build_workflow_to_import_fastq {
     my $self = shift;
 
     my $workflow = $self->_workflow;
-
-    my $retrieve_source_path_op = $self->_add_operation_to_workflow('retrieve source path');
-    $workflow->add_link(
-        left_operation => $workflow->get_input_connector,
-        left_property => 'working_directory',
-        right_operation => $retrieve_source_path_op,
-        right_property => 'working_directory',
-    );
-    $workflow->add_link(
-        left_operation => $workflow->get_input_connector,
-        left_property => 'source_paths',
-        right_operation => $retrieve_source_path_op,
-        right_property => 'source_path',
-    );
-    $retrieve_source_path_op->parallel_by('source_path');
-
-    my $verify_md5_op = $self->_add_operation_to_workflow('verify md5');
-    $workflow->add_link(
-        left_operation => $workflow->get_input_connector,
-        left_property => 'working_directory',
-        right_operation => $verify_md5_op,
-        right_property => 'working_directory',
-    );
-    $workflow->add_link(
-        left_operation => $retrieve_source_path_op,
-        left_property => 'destination_path',
-        right_operation => $verify_md5_op,
-        right_property => 'source_path',
-   );
-    $verify_md5_op->parallel_by('source_path');
+    my $verify_md5_op = $self->_verify_md5_op;
 
     my %left_op_and_fastqs_property = (
         left_operation => $verify_md5_op,
@@ -355,30 +359,7 @@ sub _build_workflow_to_import_bam {
     my $self = shift;
 
     my $workflow = $self->_workflow;
-
-    my $retrieve_source_path_op = $self->_add_operation_to_workflow('retrieve source path');
-    $workflow->add_link(
-        left_operation => $workflow->get_input_connector,
-        left_property => 'working_directory',
-        right_operation => $retrieve_source_path_op,
-        right_property => 'working_directory',
-    );
-    $workflow->add_link(
-        left_operation => $workflow->get_input_connector,
-        left_property => 'source_paths',
-        right_operation => $retrieve_source_path_op,
-        right_property => 'source_path',
-    );
-
-    my $verify_md5_op = $self->_add_operation_to_workflow('verify md5');
-    for my $property (qw/ working_directory source_path /) {
-        $workflow->add_link(
-            left_operation => $retrieve_source_path_op,
-            left_property => $property,
-            right_operation => $verify_md5_op,
-            right_property => $property,
-        );
-    }
+    my $verify_md5_op = $self->_verify_md5_op;
 
     my $sort_bam_op = $self->_add_operation_to_workflow('sort bam');
     $workflow->add_link(
@@ -433,36 +414,13 @@ sub _build_workflow_to_import_sra {
     my $self = shift;
 
     my $workflow = $self->_workflow;
-
-    my $retrieve_source_path_op = $self->_add_operation_to_workflow('retrieve source path');
-    $workflow->add_link(
-        left_operation => $workflow->get_input_connector,
-        left_property => 'working_directory',
-        right_operation => $retrieve_source_path_op,
-        right_property => 'working_directory',
-    );
-    $workflow->add_link(
-        left_operation => $workflow->get_input_connector,
-        left_property => 'source_paths',
-        right_operation => $retrieve_source_path_op,
-        right_property => 'source_path',
-    );
-
-    my $verify_md5_op = $self->_add_operation_to_workflow('verify md5');
-    for my $property (qw/ working_directory source_path /) {
-        $workflow->add_link(
-            left_operation => $retrieve_source_path_op,
-            left_property => $property,
-            right_operation => $verify_md5_op,
-            right_property => $property,
-        );
-    }
+    my $verify_md5_op = $self->_verify_md5_op;
 
     my $sra_to_bam_op = $self->_add_operation_to_workflow('sra to bam');
-    for my $property_mapping ( [qw/ working_directory working_directory /], [qw/ destination_path sra_path /] ) {
+    for my $property_mapping ( [qw/ working_directory working_directory /], [qw/ source_path sra_path /] ) {
         my ($left_property, $right_property) = @$property_mapping;
         $workflow->add_link(
-            left_operation => $retrieve_source_path_op,#$verify_md5_op,
+            left_operation => $verify_md5_op,
             left_property => $left_property,
             right_operation => $sra_to_bam_op,
             right_property => $right_property,
