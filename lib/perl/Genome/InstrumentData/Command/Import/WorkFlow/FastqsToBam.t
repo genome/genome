@@ -22,16 +22,19 @@ for my $source_fastq_base_name ( @source_fastq_base_names ) {
     Genome::Sys->create_symlink($test_dir.'/'.$source_fastq_base_name, $source_fastq_path);
 }
 
+my $sample = Genome::Sample->__define__(id => -1, name => '__TEST_SAMPLE__');
+ok($sample, 'define sample');
+
 my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::FastqsToBam->execute(
     working_directory => $tmp_dir,
     fastq_paths => \@source_fastq_paths,
-    sample_name => '__TEST_SAMPLE__',
+    sample => $sample,
 );
 ok($cmd->result, 'execute');
 my $bam_path = $cmd->bam_path;
 is($bam_path, $tmp_dir.'/__TEST_SAMPLE__.bam', 'bam path named correctly');
 ok(-s $bam_path, 'bam path exists');
-is(File::Compare::compare($bam_path, $test_dir.'/input.fastq.bam'), 0, 'bam matches');
+is(File::Compare::compare($bam_path, $test_dir.'/input.fastq.unsorted.bam'), 0, 'bam matches');
 
 #print "$tmp_dir\n"; <STDIN>;
 done_testing();

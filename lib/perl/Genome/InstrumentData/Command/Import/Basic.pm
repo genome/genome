@@ -181,7 +181,6 @@ sub _gather_inputs {
     my %possible_inputs = (
         working_directory => $tmp_dir,
         sample => $self->sample,
-        sample_name => $self->sample->name,
         source_paths => \@source_files,
         instrument_data_properties => \@instrument_data_properties,
     );
@@ -193,7 +192,7 @@ sub _build_workflow_to_import_fastq {
 
     my $workflow = Workflow::Model->create(
         name => 'Import Inst Data',
-        input_properties => [qw/ working_directory source_paths sample sample_name instrument_data_properties /],
+        input_properties => [qw/ working_directory source_paths sample instrument_data_properties /],
         output_properties => [qw/ instrument_data /],
     );
 
@@ -255,7 +254,7 @@ sub _build_workflow_to_import_fastq {
     }
 
     my $fastqs_to_bam_op = $helper->add_operation_to_workflow($workflow, 'fastqs to bam');
-    for my $property (qw/ working_directory sample_name /) {
+    for my $property (qw/ working_directory sample /) {
         $workflow->add_link(
             left_operation => $workflow->get_input_connector,
             left_property => $property,
