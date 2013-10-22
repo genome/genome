@@ -430,7 +430,10 @@ sub _create {
         }
     });
 
-    my $self = $class->_get_allocation_without_lock(\@candidate_volumes, \%parameters);
+    my $self;
+    Genome::Utility::Instrumentation::timer('disk.allocation.create.get_allocation_without_lock', sub {
+        $self = $class->_get_allocation_without_lock(\@candidate_volumes, \%parameters);
+    });
 
     $self->debug_message(sprintf("Allocation (%s) created at %s",
         $id, $self->absolute_path));
