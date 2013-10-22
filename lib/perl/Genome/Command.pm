@@ -8,7 +8,7 @@ use Genome;
 class Genome::Command {
     is => 'Command::Tree',
 };
-         
+
 # This map allows the top-level genome commands to be whatever
 # we wish, instead of having to match the directory structure.
 my %command_map = (
