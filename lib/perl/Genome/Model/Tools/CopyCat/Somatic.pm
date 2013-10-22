@@ -90,12 +90,6 @@ class Genome::Model::Tools::CopyCat::Somatic{
             doc => "use loess correction to account for gc-bias",
 
         },
-        # output_single_sample => {
-        #     is => 'Boolean',
-        #     is_optional => 1,
-        #     default => 0,
-        #     doc => "also output single-sample cn calls for each of tumor and normal",
-        # }
         min_width => {
             is => 'Integer',
             is_optional => 1,
@@ -108,19 +102,6 @@ class Genome::Model::Tools::CopyCat::Somatic{
             default => 0.60,
             doc => "the minimum mapability needed to include a window",
         },
-        # save_r_data => {
-        #     is => 'Boolean',
-        #     is_optional => 1,
-        #     default => 0,
-        #     doc => "save an r data file",
-        # },
-
-        # tumor_purity => {
-        #     is => 'Number',
-        #     is_optional => 1,
-        #     default => 1,
-        #     doc => "estimated tumor purity fraction (between 0 and 1)",
-        # }
         ]
 };
 
@@ -144,19 +125,12 @@ sub execute {
     my $per_lib = $self->per_library;
     my $per_read_length = $self->per_read_length;
     my $genome_build = $self->genome_build;
-    # my $sex = $self->sex;
     my $tumor_samtools_file = $self->tumor_samtools_file;
     my $normal_samtools_file = $self->normal_samtools_file;
     my $processors = $self->processors;
     my $dump_bins = $self->dump_bins;
     my $min_width = $self->min_width;
     my $min_mapability = $self->min_mapability;
-    # #shorthand for sex designation
-    # if (lc($sex) eq "m"){
-    #     $sex="male";
-    # } elsif (lc($sex) eq "f"){
-    #     $sex="female";
-    # }
 
 
     # validate genome build
@@ -235,14 +209,6 @@ sub execute {
     if(!($self->do_gc_correction)){
         $gcCorr="FALSE";
     }
-    # my $output_single_sample="FALSE";
-    # if($self->output_single_sample){
-    #     $output_single_sample="TRUE";
-    # }
-    # my $purity=1;
-    # if(defined($self->tumor_purity)){
-    #     $purity = $self->tumor_purity;
-    # }
 
     #open the r file
     open(my $RFILE, ">$output_directory/run.R") || die "Can't open R file for writing.\n";
@@ -262,10 +228,8 @@ sub execute {
     print $RFILE "                        minMapability=$min_mapability,\n";
     print $RFILE "                        dumpBins=$dump_bins,\n";
     print $RFILE "                        doGcCorrection=$gcCorr,\n";
-#    print $RFILE "                        outputSingleSample=$output_single_sample,\n";
     print $RFILE "                        normalSamtoolsFile=$normal_samtools_file,\n";
     print $RFILE "                        tumorSamtoolsFile=$tumor_samtools_file)\n";
-#    print $RFILE "                        purity=$purity)\n";
 
     close($RFILE);
 

@@ -87,11 +87,10 @@ sub _detect_variants {
     # $input{tumor_window_dir} = $tumor_window_dir; 
 
     #for copycat
-    # $input{copycat_params} = $copycat_params;
     $input{per_read_length} = $per_read_length;
     $input{per_library} = $per_library;
-    $input{tumor_samtools_file} = $self->get_samtools_results;
-    # $input{reference_build_id} = $self->reference_build_id;
+    $input{tumor_samtools_file} = $self->get_samtools_results($self->aligned_reads_input);
+    $input{normal_samtools_file} = $self->get_samtools_results($self->control_aligned_reads_input);
     $input{copycat_output_directory} = $self->_temp_staging_directory;
     $input{annotation_directory} = '/gscmnt/gc6122/info/medseq/annotations/copyCat'; #TODO: don't do this, this is really bad
     $input{genome_build} = $genome_build;
@@ -136,8 +135,8 @@ sub _sort_detector_output {
 ##todo comment
 sub get_samtools_results{
     my $self = shift;
+    my $bam_path = shift;
     my $return_snp_file;
-    my $bam_path = $self->aligned_reads_input;
     #TODO: This will never work in testing for obvious reasons
     my @results = Genome::Model::Tools::DetectVariants2::Result::DetectionBase->get(
         detector_name => "Genome::Model::Tools::DetectVariants2::Samtools",
@@ -185,6 +184,7 @@ __DATA__
     <link fromOperation="input connector" fromProperty="per_library" toOperation="CopyCat Somatic" toProperty="per_library" />
     <link fromOperation="input connector" fromProperty="per_read_length" toOperation="CopyCat Somatic" toProperty="per_read_length" />
     <link fromOperation="input connector" fromProperty="tumor_samtools_file" toOperation="CopyCat Somatic" toProperty="tumor_samtools_file" />
+    <link fromOperation="input connector" fromProperty="normal_samtools_file" toOperation="CopyCat Somatic" toProperty="normal_samtools_file" />
     <!-- <link fromOperation="input connector" fromProperty="reference_build_id" toOperation="CopyCat Somatic" toProperty="reference_build_id" /> -->
     <!-- <link fromOperation="input connector" fromProperty="copycat_params" toOperation="CopyCat Somatic" toProperty="params" /> --> 
     <link fromOperation="input connector" fromProperty="annotation_directory" toOperation="CopyCat Somatic" toProperty="annotation_directory" />
@@ -220,6 +220,7 @@ __DATA__
     <inputproperty>per_read_length</inputproperty>
     <inputproperty>per_library</inputproperty>
     <inputproperty>tumor_samtools_file</inputproperty>
+    <inputproperty>normal_samtools_file</inputproperty>
     <!-- <inputproperty>copycat_params</inputproperty> -->
     <inputproperty>copycat_output_directory</inputproperty>
     <inputproperty>annotation_directory</inputproperty>
