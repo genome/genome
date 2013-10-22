@@ -420,13 +420,15 @@ sub _create {
     # path for the new allocation). If a candidate allocation is created at this path and then destroyed for some
     # arbitrary reason, the user will lose their files.
 
-    for my $candidate_volume (@candidate_volumes) {
-        my $candidate_path = $class->_absolute_path($candidate_volume->mount_path, $group_subdirectory, $allocation_path);
-        if ( -e $candidate_path ) {
-            confess "The allocation path $candidate_path already exists. If you are attempting to create an allocation "
-                . "for an existing path, please move the path to a temporary location before continuing.";
+    Genome::Utility::Instrumentation::timer('disk.allocation.create.candidate_volumes.existing_allocation_path_check', sub {
+        for my $candidate_volume (@candidate_volumes) {
+            my $candidate_path = $class->_absolute_path($candidate_volume->mount_path, $group_subdirectory, $allocation_path);
+            if ( -e $candidate_path ) {
+                confess "The allocation path $candidate_path already exists. If you are attempting to create an allocation "
+                    . "for an existing path, please move the path to a temporary location before continuing.";
+            }
         }
-    }
+    });
 
     my $self = $class->_get_allocation_without_lock(\@candidate_volumes, \%parameters);
 
