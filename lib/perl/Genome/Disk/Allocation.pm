@@ -470,37 +470,39 @@ sub _get_allocation_without_lock {
         shuffle(@$candidate_volumes));
 
     my $chosen_allocation;
-    for my $candidate_volume (@randomized_candidate_volumes) {
-        if ($candidate_volume->allocated_kb + $kilobytes_requested
-                <= $candidate_volume->soft_limit_kb) {
-            my $candidate_allocation = $class->SUPER::create(
-                mount_path => $candidate_volume->mount_path,
-                %$parameters,
-            );
-            unless ($candidate_allocation) {
-                die 'Failed to create candidate allocation';
-            }
-            _commit_unless_testing();
-
-            # Reload so we guarantee that we calculate the correct allocated_kb
-            if (not $ENV{UR_DBI_NO_COMMIT}) {
-                UR::Context->current->reload($candidate_volume);
-            }
-
-            if ($candidate_volume->is_allocated_over_soft_limit) {
-                $class->status_message(sprintf("%s's allocated_kb exceeded soft limit (%d kB), rolling back allocation.", $candidate_volume->mount_path, $candidate_volume->soft_limit_kb, 'kB'));
-                $candidate_allocation->delete();
+    Genome::Utility::Instrumentation::timer('disk.allocation.create.get_allocation_without_lock.selection', sub {
+        for my $candidate_volume (@randomized_candidate_volumes) {
+            if ($candidate_volume->allocated_kb + $kilobytes_requested
+                    <= $candidate_volume->soft_limit_kb) {
+                my $candidate_allocation = $class->SUPER::create(
+                    mount_path => $candidate_volume->mount_path,
+                    %$parameters,
+                );
+                unless ($candidate_allocation) {
+                    die 'Failed to create candidate allocation';
+                }
                 _commit_unless_testing();
-            } elsif ($candidate_volume->is_used_over_soft_limit) {
-                $class->status_message(sprintf("%s's used_kb exceeded soft limit (%d %s), rolling back allocation.", $candidate_volume->mount_path, $candidate_volume->soft_limit_kb, 'kB'));
-                $candidate_allocation->delete();
-                _commit_unless_testing();
-            } else {
-                $chosen_allocation = $candidate_allocation;
-                last;
+
+                # Reload so we guarantee that we calculate the correct allocated_kb
+                if (not $ENV{UR_DBI_NO_COMMIT}) {
+                    UR::Context->current->reload($candidate_volume);
+                }
+
+                if ($candidate_volume->is_allocated_over_soft_limit) {
+                    $class->status_message(sprintf("%s's allocated_kb exceeded soft limit (%d kB), rolling back allocation.", $candidate_volume->mount_path, $candidate_volume->soft_limit_kb, 'kB'));
+                    $candidate_allocation->delete();
+                    _commit_unless_testing();
+                } elsif ($candidate_volume->is_used_over_soft_limit) {
+                    $class->status_message(sprintf("%s's used_kb exceeded soft limit (%d %s), rolling back allocation.", $candidate_volume->mount_path, $candidate_volume->soft_limit_kb, 'kB'));
+                    $candidate_allocation->delete();
+                    _commit_unless_testing();
+                } else {
+                    $chosen_allocation = $candidate_allocation;
+                    last;
+                }
             }
         }
-    }
+    });
 
     unless (defined $chosen_allocation) {
         Carp::confess $class->error_message(sprintf(
