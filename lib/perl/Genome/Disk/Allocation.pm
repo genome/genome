@@ -362,38 +362,40 @@ sub _create {
     # If given a mount path, need to ensure it's valid by trying to get a disk volume with it. Also need to make
     # sure that the retrieved volume actually belongs to the supplied disk group and that it can be allocated to
     my @candidate_volumes;
-    if (defined $mount_path) {
-        $mount_path =~ s/\/$//; # mount paths in database don't have trailing /
-        my $volume = Genome::Disk::Volume->get(mount_path => $mount_path, disk_status => 'active', can_allocate => 1);
-        confess "Could not get volume with mount path $mount_path" unless $volume;
+    Genome::Utility::Instrumentation::timer('disk.allocation.create.candidate_volumes.selection', sub {
+        if (defined $mount_path) {
+            $mount_path =~ s/\/$//; # mount paths in database don't have trailing /
+            my $volume = Genome::Disk::Volume->get(mount_path => $mount_path, disk_status => 'active', can_allocate => 1);
+            confess "Could not get volume with mount path $mount_path" unless $volume;
 
-        unless (grep { $_ eq $disk_group_name } $volume->disk_group_names) {
-            confess "Volume with mount path $mount_path is not in supplied group $disk_group_name!";
+            unless (grep { $_ eq $disk_group_name } $volume->disk_group_names) {
+                confess "Volume with mount path $mount_path is not in supplied group $disk_group_name!";
+            }
+
+            my @reasons;
+            push @reasons, 'disk is not active' if $volume->disk_status ne 'active';
+            push @reasons, 'allocation turned off for this disk' if $volume->can_allocate != 1;
+
+            if ($exclude_mount_path && $volume->mount_path eq $exclude_mount_path) {
+                push @reasons, 'Specified mount path matched the excluded mount path.';
+            }
+
+            if (@reasons) {
+                confess "Requested volume with mount path $mount_path cannot be allocated to:\n" . join("\n", @reasons);
+            }
+
+            push @candidate_volumes, $volume;
+        } else {
+            my %candidate_volume_params = (
+                disk_group_name => $disk_group_name,
+            );
+            if (defined $exclude_mount_path) {
+                $candidate_volume_params{'exclude'} = $exclude_mount_path;
+            }
+            push @candidate_volumes, $class->_get_candidate_volumes(
+                %candidate_volume_params);
         }
-
-        my @reasons;
-        push @reasons, 'disk is not active' if $volume->disk_status ne 'active';
-        push @reasons, 'allocation turned off for this disk' if $volume->can_allocate != 1;
-
-        if ($exclude_mount_path && $volume->mount_path eq $exclude_mount_path) {
-            push @reasons, 'Specified mount path matched the excluded mount path.';
-        }
-
-        if (@reasons) {
-            confess "Requested volume with mount path $mount_path cannot be allocated to:\n" . join("\n", @reasons);
-        }
-
-        push @candidate_volumes, $volume;
-    } else {
-        my %candidate_volume_params = (
-            disk_group_name => $disk_group_name,
-        );
-        if (defined $exclude_mount_path) {
-            $candidate_volume_params{'exclude'} = $exclude_mount_path;
-        }
-        push @candidate_volumes, $class->_get_candidate_volumes(
-            %candidate_volume_params);
-    }
+    });
 
     my %parameters = (
         disk_group_name              => $disk_group_name,
