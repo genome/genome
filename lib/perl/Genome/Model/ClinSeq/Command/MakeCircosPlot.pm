@@ -542,54 +542,63 @@ EOS
     #decides which somatic variation model to use
     #my $wgs_build = $build->wgs_build; #WGS build required at beginning of execute
     my $exo_build = $build->exome_build;
-    my $som_var_data_dir;
+    my $snv_data_dir;
+    my $indel_data_dir;
     if($wgs_build && $exo_build){
-        $som_var_data_dir=$exo_build->data_directory."/effects";
+        $snv_data_dir="$dataDir/snv/wgs_exome";
+        $indel_data_dir="$dataDir/indel/wgs_exome";
     }elsif($exo_build){
-        $som_var_data_dir=$exo_build->data_directory."/effects";
+        $snv_data_dir="$dataDir/snv/exome";
+        $indel_data_dir="$dataDir/indel/exome";
     }else{
-        $som_var_data_dir=$wgs_build->data_directory."/effects";
+        $snv_data_dir="$dataDir/snv/wgs";
+        $indel_data_dir="$dataDir/indel/wgs";
     }
-    Genome::Sys->copy_file("$som_var_data_dir/snvs.hq.tier1.v1.annotated.top", "$output_directory/raw/snvs.hq.tier1.v1.annotated.top");
-    Genome::Sys->copy_file("$som_var_data_dir/indels.hq.tier1.v1.annotated.top", "$output_directory/raw/indels.hq.tier1.v1.annotated.top");
+    Genome::Sys->copy_file("$snv_data_dir/snvs.hq.tier1.v1.annotated.compact.tsv", "$output_directory/raw/snvs.hq.tier1.v1.annotated.compact.tsv");
+    Genome::Sys->copy_file("$indel_data_dir/indels.hq.tier1.v1.annotated.compact.tsv", "$output_directory/raw/indels.hq.tier1.v1.annotated.compact.tsv");
 
     #SNV
-    my $snv_file = Genome::Sys->read_file("$output_directory/raw/snvs.hq.tier1.v1.annotated.top");
-    my $snv_fh = Genome::Sys->open_file_for_writing("$output_directory/data/snvs.hq.tier1.v1.annotated.top.txt");
-    while ($snv_file =~ /(\S+)\s+(\d+)\s+(\d+)\s+\S+\s+\S+\s+\S+\s+(\S+)\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+(\S+)\s+.+/g) {
+    my $snv_file = Genome::Sys->read_file("$output_directory/raw/snvs.hq.tier1.v1.annotated.compact.tsv");
+    my $snv_fh = Genome::Sys->open_file_for_writing("$output_directory/data/snvs.hq.tier1.v1.annotated.compact.tsv");
+    while ($snv_file =~ /(\S+):(\d+)-(\d+)\t\S+\t(\S+)\t\w+\t(\S+)\t(\S+)\t(\S+)\t.+/g) {
     
         $genes_noAmpDel{$4}="hs$1\t$2\t$3";
         $genes_AmpDel{$4}="hs$1\t$2\t$3";
-        print $snv_fh "hs$1 $2 $3 0.5 ";
-        switch($5){
-            case "nonsense"            {print $snv_fh "fill_color=goldenrod\n"}
-            case "missense"            {print $snv_fh "fill_color=blue\n"}
-            case "silent"            {print $snv_fh "fill_color=green\n"}
-            case "splice_site"        {print $snv_fh "fill_color=black\n"}
-            case "rna"                {print $snv_fh "fill_color=purple\n"}
-            case "nonstop"            {print $snv_fh "fill_color=black\n"}
-        }
+        print $snv_fh "hs$1 $2 $3 0.5 fill_color=black\n";
+
+#        switch($5){
+#            case "nonsense"            {print $snv_fh "fill_color=goldenrod\n"}
+#            case "missense"            {print $snv_fh "fill_color=blue\n"}
+#            case "silent"            {print $snv_fh "fill_color=green\n"}
+#            case "splice_site"        {print $snv_fh "fill_color=black\n"}
+#            case "rna"                {print $snv_fh "fill_color=purple\n"}
+#            case "nonstop"            {print $snv_fh "fill_color=black\n"}
+#        }
     
     }
     $snv_fh->close;
 
     #Indel
-    my $indel_file = Genome::Sys->read_file("$output_directory/raw/indels.hq.tier1.v1.annotated.top");
-    my $indel_fh = Genome::Sys->open_file_for_writing("$output_directory/data/indels.hq.tier1.v1.annotated.top.txt");
-    while ($indel_file =~ /(\S+)\s+(\d+)\s+(\d+)\s+\S+\s+\S+\s+\S+\s+(\S+)\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+(\S+)\s+.+/g) {
+    my $indel_file = Genome::Sys->read_file("$output_directory/raw/indels.hq.tier1.v1.annotated.compact.tsv");
+    my $indel_fh = Genome::Sys->open_file_for_writing("$output_directory/data/indels.hq.tier1.v1.annotated.compact.tsv");
+    my $color;
+    while ($indel_file =~ /(\S+):(\d+)-(\d+)\t\S+\t(\S+)\t\w+\t(\S+)\t(\S+)\t(\S+)\t.+/g) {
     
         $genes_noAmpDel{$4}="hs$1\t$2\t$3";
         $genes_AmpDel{$4}="hs$1\t$2\t$3";
-        print $indel_fh "hs$1 $2 $3 0.5 ";
-        switch($5){
-            case "in_frame_ins"            {print $indel_fh "fill_color=yellow\n"}
-            case "in_frame_del"            {print $indel_fh "fill_color=yellow\n"}
-            case "frame_shift_del"        {print $indel_fh "fill_color=teal\n"}
-            case "rna"                    {print $indel_fh "fill_color=purple\n"}
-            case "frame_shift_ins"        {print $indel_fh "fill_color=red\n"}
-            case "splice_site_del"        {print $indel_fh "fill_color=black\n"}
-            case "splice_site_ins"        {print $indel_fh "fill_color=chocolate\n"}
-        }
+        if (length($6)>length($7)){$color="red";}
+        else {$color="blue";}
+
+        print $indel_fh "hs$1 $2 $3 0.5 fill_color=$color\n";
+#        switch($5){
+#            case "in_frame_ins"            {print $indel_fh "fill_color=yellow\n"}
+#            case "in_frame_del"            {print $indel_fh "fill_color=yellow\n"}
+#            case "frame_shift_del"        {print $indel_fh "fill_color=teal\n"}
+#            case "rna"                    {print $indel_fh "fill_color=purple\n"}
+#            case "frame_shift_ins"        {print $indel_fh "fill_color=red\n"}
+#            case "splice_site_del"        {print $indel_fh "fill_color=black\n"}
+#            case "splice_site_ins"        {print $indel_fh "fill_color=chocolate\n"}
+#        }
     }
     $indel_fh->close;
 
@@ -598,7 +607,7 @@ EOS
 <plot>
 # The type sets the format of the track.
 type = histogram
-file = $output_directory/data/snvs.hq.tier1.v1.annotated.top.txt
+file = $output_directory/data/snvs.hq.tier1.v1.annotated.compact.tsv
 min=0
 max=0.5
 
@@ -634,7 +643,7 @@ color = vvlgrey
 <plot>
 # The type sets the format of the track.
 type = histogram
-file = $output_directory/data/indels.hq.tier1.v1.annotated.top.txt
+file = $output_directory/data/indels.hq.tier1.v1.annotated.compact.tsv
 min=0
 max=0.5
 
@@ -679,9 +688,10 @@ EOS
     }
     $geneAmpDel_fh->close;
 
-	my $annotate_genes_cmd1 = "genome model clin-seq annotate-genes-by-category --infile=$output_directory/raw/genes_AmpDel.txt --cancer-annotation-db='tgi/cancer-annotation/human/build37-20130711.1' --gene-name-column='gene'";
+	$annotate_genes_cmd1 = "genome model clin-seq annotate-genes-by-category --infile=$output_directory/raw/genes_AmpDel.txt --cancer-annotation-db='tgi/cancer-annotation/human/build37-20130711.1' --gene-name-column='gene'";
     Genome::Sys->shellcmd(cmd => $annotate_genes_cmd1);
-    my $sort_cmd1 = "sort -rnk 102 $output_directory/raw/genes_AmpDel.catanno.txt|head -100 |cut -d \"\t\" -f 1-4  > $output_directory/data/genes_AmpDel.catanno.sorted.txt";
+    $sort_cmd1 = "sort -rnk 102 $output_directory/raw/genes_AmpDel.catanno.txt|head -100 |cut -d \"\t\" -f 1-4  > $output_directory/data/genes_AmpDel.catanno.sorted.txt";
+    Genome::Sys->shellcmd(cmd => $sort_cmd1);
 
     $config .=<<EOS;
 #GENE LABELS
