@@ -12,6 +12,8 @@ class Genome::Command {
 # This map allows the top-level genome commands to be whatever
 # we wish, instead of having to match the directory structure.
 my %command_map = (
+    'analysis-project' => 'Genome::Config::AnalysisProject::Command',
+    'config' => 'Genome::Config::Command',
     'db' => 'Genome::Db::Command',
     'disk' => 'Genome::Disk::Command',
     'druggable-gene' => 'Genome::DruggableGene::Command',
@@ -33,8 +35,6 @@ my %command_map = (
     'task' => 'Genome::Task::Command',
     'taxon' => 'Genome::Taxon::Command',
     'tools' => 'Genome::Model::Tools',
-    'analysis-project' => 'Genome::Config::AnalysisProject::Command',
-    'config' => 'Genome::Config::Command',
 );
 
 $Genome::Command::SUB_COMMAND_MAPPING = \%command_map;
