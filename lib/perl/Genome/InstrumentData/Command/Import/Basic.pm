@@ -50,6 +50,7 @@ class Genome::InstrumentData::Command::Import::Basic {
     ],
     has_optional_transient => [
         _workflow => {},
+        _working_directory => { is => 'Text', },
     ],
 };
 
@@ -156,6 +157,18 @@ sub _resolve_original_format {
     return $self->original_format($formats[0]);
 }
 
+sub _resolve_working_directory {
+    my $self = shift;
+
+    my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
+    if ( not $tmp_dir ) {
+        $self->error_message('Failed to create tmp dir!');
+        return;
+    }
+
+    return $self->_working_directory($tmp_dir);
+}
+
 sub _create_workflow_model {
     my $self = shift;
 
@@ -199,21 +212,18 @@ sub _gather_inputs_for_workflow {
     my @source_files = $self->source_files;
     push @instrument_data_properties, 'original_data_path='.join(',', $self->source_files);
 
-    my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
-    if ( not $tmp_dir ) {
-        $self->error_message('Failed to create tmp dir!');
-        return;
-    }
+    my $working_directory = $self->_resolve_working_directory;
+    return if not $working_directory;
 
     my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
     my $space_available = $helpers->verify_adequate_disk_space_is_available_for_source_files(
-        working_directory => $tmp_dir,
+        working_directory => $self->_working_directory,
         source_files => \@source_files,
     );
     return if not $space_available;
 
     return {
-        working_directory => $tmp_dir,
+        working_directory => $self->_working_directory,
         sample => $self->sample,
         source_paths => \@source_files,
         instrument_data_properties => \@instrument_data_properties,
