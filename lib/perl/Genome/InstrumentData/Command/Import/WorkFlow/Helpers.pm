@@ -15,26 +15,6 @@ class Genome::InstrumentData::Command::Import::WorkFlow::Helpers {
     is => 'UR::Singleton',
 };
 
-#<INST DATA INFO>#
-sub local_source_files_for_instrument_data {
-    my ($self, $instrument_data) = @_;
-
-    Carp::confess('No instrument data to get local source files!') if not $instrument_data;
-
-    my $directory = $instrument_data->data_directory;
-    Carp::confess('No instrument data directory to get local source files!') if not $directory;
-
-    my @local_source_files;
-    for my $source_file ( split(',', $instrument_data->original_data_path) ) {
-        my $source_file_basename = File::Basename::basename($source_file);
-        $source_file_basename =~ s/\.gz$//;
-        push @local_source_files, $directory.'/'.$source_file_basename;
-    }
-
-    return @local_source_files;
-}
-#<>#
-
 #<MOVE>#
 sub move_path {
     my ($self, $from, $to) = @_;

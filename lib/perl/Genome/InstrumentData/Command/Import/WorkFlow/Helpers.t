@@ -32,11 +32,6 @@ ok($allocation, 'define allocation');
 
 my $helpers = $class->get;
 ok($helpers, 'get helpers');
-is_deeply(
-    [ $helpers->local_source_files_for_instrument_data($instrument_data) ],
-    [ map { $allocation->absolute_path.'/file.'.$_.'.fastq' } (1..2) ],
-    'local source files for instrument data',
-);
 
 # source files functions
 my @source_files = (
