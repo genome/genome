@@ -441,8 +441,11 @@ sub _create {
     # a restrictive umask can break builds for other users; force it to be friendly
     umask(0002);
     # If we cannot create the directory delete the new allocation
-    my $dir = eval {
-        Genome::Sys->create_directory($self->absolute_path);
+    my $dir;
+    eval {
+        Genome::Utility::Instrumentation::timer('disk.allocation.create.create_directory', sub {
+            $dir = Genome::Sys->create_directory($self->absolute_path);
+        });
     };
     my $error = $@;
     unless (defined($dir) and ( -d $dir ) and not $error) {
