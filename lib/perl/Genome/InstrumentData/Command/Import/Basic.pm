@@ -169,6 +169,16 @@ sub _resolve_working_directory {
     return $self->_working_directory($tmp_dir);
 }
 
+sub _verify_adequate_disk_space_is_available_for_source_files {
+    my $self = shift;
+    my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
+    my $space_available = $helpers->verify_adequate_disk_space_is_available_for_source_files(
+        working_directory => $self->_working_directory,
+        source_files => [ $self->source_files ],
+    );
+    return $space_available;
+}
+
 sub _create_workflow_model {
     my $self = shift;
 
@@ -215,11 +225,7 @@ sub _gather_inputs_for_workflow {
     my $working_directory = $self->_resolve_working_directory;
     return if not $working_directory;
 
-    my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
-    my $space_available = $helpers->verify_adequate_disk_space_is_available_for_source_files(
-        working_directory => $self->_working_directory,
-        source_files => \@source_files,
-    );
+    my $space_available = $self->_verify_adequate_disk_space_is_available_for_source_files;
     return if not $space_available;
 
     return {
