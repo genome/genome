@@ -105,6 +105,12 @@ sub execute {
     my $original_format = $self->_resolve_original_format;
     return if not $original_format;
 
+    my $working_directory = $self->_resolve_working_directory;
+    return if not $working_directory;
+
+    my $space_available = $self->_verify_adequate_disk_space_is_available_for_source_files;
+    return if not $space_available;
+
     my $workflow = $self->_create_workflow_model;
     return if not $workflow;
 
@@ -221,12 +227,6 @@ sub _gather_inputs_for_workflow {
 
     my @source_files = $self->source_files;
     push @instrument_data_properties, 'original_data_path='.join(',', $self->source_files);
-
-    my $working_directory = $self->_resolve_working_directory;
-    return if not $working_directory;
-
-    my $space_available = $self->_verify_adequate_disk_space_is_available_for_source_files;
-    return if not $space_available;
 
     return {
         working_directory => $self->_working_directory,
