@@ -1,10 +1,10 @@
-package Genome::Show;
+package Genome::Command::Search;
 
 use strict;
 use warnings;
 
 
-class Genome::Show {
+class Genome::Command::Search {
     is => 'Command::V2',
 
     has => [
@@ -71,7 +71,7 @@ sub get_object {
 }
 
 my %OBJECT_SHOWERS = (
-    'build' => 'Genome::Show::Build',
+    'build' => 'Genome::Command::Search::Build',
 #    "illumina_run"
 #    "imported_instrument_data"
 #    "individual"

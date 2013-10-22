@@ -1,9 +1,9 @@
-package Genome::Show::Base;
+package Genome::Command::Search::Base;
 
 use strict;
 use warnings;
 
-class Genome::Show::Base {
+class Genome::Command::Search::Base {
     is_abstract => 1,
 };
 

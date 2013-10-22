@@ -1,10 +1,10 @@
-package Genome::Show::Build;
+package Genome::Command::Search::Build;
 
 use strict;
 use warnings;
 
-class Genome::Show::Build {
-    is => 'Genome::Show::Base',
+class Genome::Command::Search::Build {
+    is => 'Genome::Command::Search::Base',
 };
 
 sub execute {
