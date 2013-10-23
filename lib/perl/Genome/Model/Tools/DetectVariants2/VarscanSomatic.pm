@@ -51,7 +51,7 @@ sub _detect_variants {
 
     my %optional_samtools_params;
     $optional_samtools_params{samtools_version} = $samtools_version if $samtools_version;
-    $optional_samtools_params{samtools_use_baq} = $use_baq if $use_baq;
+    $optional_samtools_params{samtools_use_baq} = $use_baq if defined $use_baq;
     $optional_samtools_params{samtools_params} = $other_params if $other_params;
 
     my $varscan = Genome::Model::Tools::Varscan::Somatic->create(
