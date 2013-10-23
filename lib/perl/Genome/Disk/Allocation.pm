@@ -1416,15 +1416,18 @@ sub _verify_no_child_allocations {
         return !($class->get_child_allocations($path));
     }
 
-    my $dbh = $data_source->get_default_handle();
-    my $query_object = $dbh->prepare($query_string);
-    $query_object->bind_param(1, $path . "/%");
-    $query_object->execute();
+    my ($err, $errstr, $row_arrayref);
+    Genome::Utility::Instrumentation::timer('disk.allocation.child_allocation_query', sub {
+        my $dbh = $data_source->get_default_handle();
+        my $query_object = $dbh->prepare($query_string);
+        $query_object->bind_param(1, $path . "/%");
+        $query_object->execute();
 
-    my $row_arrayref = $query_object->fetchrow_arrayref();
-    my $err = $dbh->err;
-    my $errstr = $dbh->errstr;
-    $query_object->finish();
+        $row_arrayref = $query_object->fetchrow_arrayref();
+        $err = $dbh->err;
+        $errstr = $dbh->errstr;
+        $query_object->finish();
+    });
 
     if ($err) {
         die $class->error_message(sprintf(
