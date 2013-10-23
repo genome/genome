@@ -11,7 +11,7 @@ require File::Temp;
 use Test::More;
 
 use_ok('Genome::InstrumentData::Command::Import::WorkFlow::VerifyMd5') or die;
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v1') or die;
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'fastq/v1') or die;
 my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
 
 my @source_fastq_base_names = (qw/ input.1.fastq.gz input.2.fastq /);

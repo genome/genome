@@ -61,7 +61,7 @@ is($helpers->kilobytes_required_for_processing_of_source_files(@source_files), 7
 
 # headers
 ok(!eval{$helpers->load_headers_from_bam;}, 'failed to get headers w/o bam');
-my $input_bam = $test_dir.'/input.rg-multi.bam';
+my $input_bam = $test_dir.'/bam-rg-multi/v1/input.rg-multi.bam';
 ok(-s $input_bam, 'input bam');
 my $headers = $helpers->load_headers_from_bam($input_bam);
 is_deeply(
@@ -102,7 +102,7 @@ my $headers_string = $helpers->headers_to_string($headers);
 ok($headers_string, 'headers to string');# cannot compare for some reason
 
 ok(!eval{$helpers->load_read_groups_from_bam;}, 'failed to load read groups from bam w/o bam');
-is_deeply($helpers->load_read_groups_from_bam($test_dir.'/input.sra.bam'), [], 'non read groups in bam');
+is_deeply($helpers->load_read_groups_from_bam($test_dir.'/sra/v1/input.sra.bam'), [], 'non read groups in bam');
 is_deeply($helpers->load_read_groups_from_bam($input_bam), [qw/ 2883581797 2883581798 2883581799 /], 'load read groups from bam');
 
 # verify tmp disk
@@ -112,7 +112,7 @@ ok($helpers->verify_adequate_disk_space_is_available_for_source_files(working_di
 my $bam_basename = 'input.bam';
 my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
 my $bam_path = $tmp_dir.'/'.$bam_basename;
-Genome::Sys->create_symlink($test_dir.'/'.$bam_basename, $bam_path);
+Genome::Sys->create_symlink($test_dir.'/bam/v1/'.$bam_basename, $bam_path);
 ok(-s $bam_path, 'linked bam path');
 my $run_flagstat = $helpers->load_or_run_flagstat($bam_path); # runs
 ok($run_flagstat, 'run flagstat');
