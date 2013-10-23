@@ -16,6 +16,7 @@ require Genome::Utility::Test;
 use Test::More;
 
 use_ok('Genome::InstrumentData::Command::Import::Basic') or die;
+use_ok('Genome::InstrumentData::Command::Import::WorkFlow::Helpers') or die;
 
 my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'sra/v1');
 my $source_sra = $test_dir.'/input.sra';
@@ -33,8 +34,14 @@ my $cmd = Genome::InstrumentData::Command::Import::Basic->create(
 ok($cmd, "create import command");
 ok($cmd->execute, "excute import command") or die;
 
-my $instrument_data = Genome::InstrumentData::Imported->get(original_data_path => $source_sra);
-ok($instrument_data, 'got instrument data');
+my $md5 = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->load_md5($source_sra.'.md5');
+ok($md5, 'load source md5');
+my @instrument_data = map { $_->instrument_data } Genome::InstrumentDataAttribute->get(
+    attribute_label => 'original_data_path_md5',
+    attribute_value => $md5,
+);
+is(@instrument_data, 1, "got instrument data for md5 $md5") or die;;
+my $instrument_data = $instrument_data[0];
 is($instrument_data->original_data_path, $source_sra, 'original_data_path correctly set');
 is($instrument_data->import_format, 'bam', 'import_format is bam');
 is($instrument_data->sequencing_platform, 'solexa', 'sequencing_platform correctly set');
