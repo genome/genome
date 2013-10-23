@@ -8,7 +8,7 @@ use Genome;
 use Genome::Info::IUB;
 
 class Genome::Model::Tools::DetectVariants2::VarscanSomatic {
-    is => ['Genome::Model::Tools::DetectVariants2::Detector'],
+    is => ['Genome::Model::Tools::DetectVariants2::VarscanBase'],
     has_optional => [
         params => {
             default => "--min-coverage 3 --min-var-freq 0.08 --p-value 0.10 --somatic-p-value 0.05 --strand-filter 1",
@@ -137,40 +137,6 @@ sub _parse_snv_for_bed_intersection {
     my ($chromosome, $position, $reference, undef, $depth1, $depth2, undef, undef, undef, $qual, undef, $consensus, @extra) = split("\t", $line);
 
     return [$chromosome, $position, $reference, (Genome::Info::IUB->variant_alleles_for_iub($reference, $consensus), $consensus)];
-}
-
-# This method breaks the samtools params down into individual params for the varscan modules
-sub _process_samtools_params {
-    my ($self, $params) = @_;
-    my $samtools_version;
-    my $use_baq = 1;
-
-    # Grab version if it exists
-    if ($params =~ m/version/) {
-        ($samtools_version) = ($params =~ m/--version\s*(\S+)/);
-        $params =~ s/--version\s*(\S+)\s*//;
-    }
-
-    # Grab baq boolean
-    if ($params =~ m/--nobaq/) {
-        $use_baq = 0;
-        $params =~ s/--nobaq\s*//;
-    }
-    
-    return ($samtools_version, $use_baq, $params);
-}
-
-# Params should be set up as <samtools params>:<varscan params>
-# If there is no : present, assume everything is varscan params (legacy processing profiles)
-sub _split_params {
-    my ($self, $params) = @_;
-    my ($samtools_params, $varscan_params);
-    if ($params =~ m/:/) {
-        ($samtools_params, $varscan_params) = split ":", $params;
-    } else {
-        $varscan_params = $params;
-    }
-    return ($samtools_params, $varscan_params);
 }
 
 1;
