@@ -25,10 +25,10 @@ class Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentDataAnd
             is_many => 1,
             doc => 'Name and value pairs to add to the instrument data. Separate name and value with an equals (=) and name/value pairs with a comma (,).',
         },
-        source_md5_paths => {
+        source_md5s => {
             is => 'Text',
             is_many => 1,
-            doc => 'The MD5 paths of the retrieved source paths.',
+            doc => 'The MD5s of the retrieved source paths.',
         },
     ],
     has_output => [
@@ -147,9 +147,6 @@ sub _create_instrument_data_for_bam_path {
         $additional_properties->{segment_id} = $read_group_ids_from_bam->[0];
     }
 
-    my @source_md5s = $self->_load_source_md5s;
-    return if not @source_md5s;
-
     $self->status_message('Checking if source files were previously imported...');
     my %properties = (
         library => $self->library,
@@ -184,7 +181,7 @@ sub _create_instrument_data_for_bam_path {
         $instrument_data->add_attribute(attribute_label => $name, attribute_value => $additional_properties->{$name});
     }
 
-    for my $md5 ( @source_md5s ) {
+    for my $md5 ( $self->source_md5s ) {
         $self->status_message('Add attribute: original_data_path_md5 => '.$md5);
         $instrument_data->add_attribute(attribute_label => 'original_data_path_md5', attribute_value => $md5);
     }
@@ -207,27 +204,6 @@ sub _create_instrument_data_for_bam_path {
 
     $self->status_message('Create instrument data for bam path...done');
     return $instrument_data;
-}
-
-sub _load_source_md5s {
-    my $self = shift;
-    $self->status_message('Load source MD5...');
-
-    my @md5s;
-    for my $source_md5_path ( $self->source_md5_paths ) {
-        $self->status_message('Source MD5 path: '.$source_md5_path);
-        if ( not -s $source_md5_path ) {
-            $self->error_message('Source MD5 path does not exist!');
-            return;
-        }
-        my $md5 = $self->helpers->load_md5($source_md5_path);
-        return if not $md5;
-        $self->status_message('MD5: '.$md5);
-        push @md5s, $md5;
-    }
-
-    $self->status_message('Load source MD5...done');
-    return @md5s;
 }
 
 1;

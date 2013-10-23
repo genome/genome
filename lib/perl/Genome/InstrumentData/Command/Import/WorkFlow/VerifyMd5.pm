@@ -20,10 +20,9 @@ class Genome::InstrumentData::Command::Import::WorkFlow::VerifyMd5 {
         },
     ],
     has_output => [
-        source_md5_path => {
-            calculate_from => [qw/ working_directory source_path_base_name /],
-            calculate => q( return $working_directory.'/'.$source_path_base_name.'.md5'; ),
-            doc => 'Source MD5 path.',
+        source_md5 => {
+            is => 'Text',
+            doc => 'Source MD5.',
         }, 
     ],
     has_optional_calculated => [
@@ -31,6 +30,11 @@ class Genome::InstrumentData::Command::Import::WorkFlow::VerifyMd5 {
             calculate_from => [qw/ source_path /],
             calculate => q( return File::Basename::basename($source_path); ),
         },
+        source_md5_path => {
+            calculate_from => [qw/ working_directory source_path_base_name /],
+            calculate => q( return $working_directory.'/'.$source_path_base_name.'.md5'; ),
+            doc => 'Source MD5 path.',
+        }, 
         original_md5_path => {
             calculate_from => [qw/ working_directory source_path_base_name /],
             calculate => q( return $working_directory.'/'.$source_path_base_name.'.orig-md5'; ),
@@ -79,6 +83,8 @@ sub execute {
         $md5 = $self->helpers->load_or_run_md5($self->source_path, $self->source_md5_path);
         return if not $md5;
     }
+
+    $self->source_md5($md5);
 
     return 1;
 }

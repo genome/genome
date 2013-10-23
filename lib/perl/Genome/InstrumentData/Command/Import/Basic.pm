@@ -340,9 +340,9 @@ sub _build_workflow_to_import_fastq {
     );
     $workflow->add_link(
         left_operation => $verify_md5_op,
-        left_property => 'source_md5_path',
+        left_property => 'source_md5',
         right_operation => $create_instdata_and_copy_bam,
-        right_property => 'source_md5_paths',
+        right_property => 'source_md5s',
     );
 
     $workflow->add_link(
@@ -394,9 +394,9 @@ sub _build_workflow_to_import_bam {
     );
     $workflow->add_link(
         left_operation => $verify_md5_op,
-        left_property => 'source_md5_path',
+        left_property => 'source_md5',
         right_operation => $create_instdata_and_copy_bam,
-        right_property => 'source_md5_paths',
+        right_property => 'source_md5s',
     );
     $create_instdata_and_copy_bam->parallel_by('bam_path');
 
@@ -460,9 +460,9 @@ sub _build_workflow_to_import_sra {
     );
     $workflow->add_link(
         left_operation => $verify_md5_op,
-        left_property => 'source_md5_path',
+        left_property => 'source_md5',
         right_operation => $create_instdata_and_copy_bam,
-        right_property => 'source_md5_paths',
+        right_property => 'source_md5s',
     );
     $create_instdata_and_copy_bam->parallel_by('bam_path');
 
