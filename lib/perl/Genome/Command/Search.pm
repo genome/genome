@@ -11,6 +11,7 @@ class Genome::Command::Search {
         target => {
             is => 'Text',
             shell_args_position => 1,
+            is_many => 1,
             doc => 'The string, id, or partial id to search for.',
         },
     ],
@@ -20,18 +21,18 @@ class Genome::Command::Search {
 sub execute {
     my $self = shift;
 
-    my ($type, $id) = $self->get_type_and_id;
-    $self->show($type, $id);
+    $self->show($self->get_docs);
 
     return 1;
 }
 
 
 sub show {
-    my ($self, $type, $id) = @_;
+    my ($self, $docs) = @_;
+    my $type = $docs->[0]->{type};
 
-    my $object = $self->get_object($type, $id);
-    $self->show_object($type, $object);
+    my @objects = $self->get_objects($docs);
+    $self->show_objects($type, @objects);
 }
 
 
@@ -63,11 +64,27 @@ my %OBJECT_GETTERS = (
 #    "work-order"
 );
 
-sub get_object {
-    my ($self, $type, $id) = @_;
+sub get_objects {
+    my ($self, $docs) = @_;
 
-    my $getter = $OBJECT_GETTERS{$type};
-    return $getter->get($id);
+    my $end = $self->find_different_getter($docs);
+
+    my $getter = $OBJECT_GETTERS{$docs->[0]->{type}};
+    return map {$getter->get($_->{object_id})} @{$docs}[0..$end-1];
+}
+
+sub find_different_getter {
+    my ($self, $docs) = @_;
+    my $len = length(@$docs);
+
+    my $getter = $OBJECT_GETTERS{$docs->[0]->{type}};
+    for (my $i = 0; $i < $len; $i++) {
+        my $this_getter = $OBJECT_GETTERS{$docs->[$i]->{type}};
+        if ($getter ne $this_getter) {
+            return $i;
+        }
+    }
+    return $len;
 }
 
 my %OBJECT_SHOWERS = (
@@ -98,32 +115,29 @@ my %OBJECT_SHOWERS = (
 #    "work-order"
 );
 
-sub show_object {
-    my ($self, $type, $object) = @_;
+sub show_objects {
+    my ($self, $type, @objects) = @_;
 
     my $shower = $OBJECT_SHOWERS{$type};
 
-    $shower->display_single($object);
+    if (length(@objects) > 1) {
+        $shower->display_many(@objects);
+    } else {
+        $shower->display_single($objects[0]);
+    }
 }
 
-sub get_type_and_id {
-    my $self = shift;
-
-    my $doc = $self->get_doc;
-    return ($doc->{type}, $doc->{object_id});
-}
-
-sub get_doc {
+sub get_docs {
     my $self = shift;
 
     my $content = $self->get_content;
-    return $content->{response}{docs}[0];
+    return $content->{response}{docs};
 }
 
 sub get_content {
     my $self = shift;
 
-    my $response = Genome::Search->search($self->target, {rows => 1});
+    my $response = Genome::Search->search(join(' ', $self->target));
     unless (defined($response)) {
         die "Invalid response from Search";
     }
@@ -138,10 +152,9 @@ my $SCORE_WARNING_THRESHOLD = 5;
 sub validate_response_content {
     my ($self, $content) = @_;
 
+
     if ($content->{response}{numFound} <= 0) {
         die "No results found";
-    } elsif ($content->{response}{numFound} > 1) {
-        die "Too many results found";
     }
 
     if ($content->{response}{maxScore} < $SCORE_WARNING_THRESHOLD) {
