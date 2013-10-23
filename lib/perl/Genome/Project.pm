@@ -138,7 +138,7 @@ sub get_part {
 
 sub __display_name__ {
     my $self = shift;
-    return $self->name."(".$self->id.")";
+    return $self->name." (".$self->id.")";
 }
 
 sub rename {
