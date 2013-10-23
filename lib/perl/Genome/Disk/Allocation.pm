@@ -1110,8 +1110,12 @@ sub _execute_system_command {
         my @includes = map { ( '-I' => $_ ) } UR::Util::used_libs;
 
         my $param_string = Genome::Utility::Text::hash_to_string(\%params, 'q');
-        my $perl_program_string = sprintf("%s->%s(%s); UR::Context->commit;",
-            $class, $method, $param_string);
+        my @statements = (
+            qq(Genome::Utility::Instrumentation::timer('disk.allocation.require', sub { require $class })),
+            sprintf('%s->%s(%s)', $class, $method, $param_string),
+            q(UR::Context->commit),
+        );
+        my $perl_program_string = join('; ', @statements);
 
         my @cmd = (
             'genome-perl',
