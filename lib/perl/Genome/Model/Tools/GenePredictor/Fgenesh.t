@@ -27,7 +27,7 @@ ok(-d $test_data_dir, "test data directory exists at $test_data_dir");
 my $fasta = $test_data_dir . 'Contig0a.masked.fasta';
 ok(-e $fasta, "fasta file exists at $fasta");
 
-my $model = $ENV{GENOME_SW} . '/softberry/installed/sprog/C_elegans';
+my $model = $ENV{GENOME_SW} . '/softberry/fgenesh_installed/C_elegans';
 ok(-e $model, "model file exists at $model");
 
 my $command = Genome::Model::Tools::GenePredictor::Fgenesh->create(
