@@ -1343,12 +1343,26 @@ sub _verify_no_parent_allocation {
 sub get_parent_allocation {
     my ($class, $path) = @_;
     Carp::confess("no path defined") unless defined $path;
+
+    my $allocation;
+    Genome::Utility::Instrumentation::timer('disk.allocation.get_parent_allocation', sub {
+        $allocation = $class->_get_parent_allocation_impl($path);
+    });
+
+    return $allocation if $allocation;
+    return;
+}
+
+sub _get_parent_allocation_impl {
+    my ($class, $path) = @_;
+    Carp::confess("no path defined") unless defined $path;
+
     my ($allocation) = $class->get(allocation_path => $path);
     return $allocation if $allocation;
 
     my $dir = File::Basename::dirname($path);
     if ($dir ne '.' and $dir ne '/') {
-        return $class->get_parent_allocation($dir);
+        return $class->_get_parent_allocation_impl($dir);
     }
     return;
 }
