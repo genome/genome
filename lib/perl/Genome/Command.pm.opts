@@ -335,7 +335,7 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'paths=s',
         'files',
-        'HASH(0x55d5e28)=s',
+        'HASH(0x57775a0)=s',
         'files',
         'help!',
         undef
@@ -8283,7 +8283,7 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>delay-archiving',
       [
-        'HASH(0x12f14cf8)=s',
+        'HASH(0x1307a6d0)=s',
         'files',
         'builds=s@',
         undef,
@@ -8746,7 +8746,7 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>delay-archiving',
     [
-      'HASH(0xc1737c0)=s',
+      'HASH(0xc2f3360)=s',
       'files',
       'models=s@',
       undef,
@@ -9131,7 +9131,7 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>delay-archiving',
     [
-      'HASH(0x135da218)=s',
+      'HASH(0x1373f9f0)=s',
       'files',
       'model-groups=s@',
       undef,
