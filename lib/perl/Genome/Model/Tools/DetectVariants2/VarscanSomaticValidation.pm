@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::Tools::DetectVariants2::VarscanSomaticValidation {
-    is => ['Genome::Model::Tools::DetectVariants2::Detector'],
+    is => ['Genome::Model::Tools::DetectVariants2::VarscanBase'],
     has_optional => [
         params => {
             default => '--min-var-freq 0.08 --p-value 0.10 --somatic-p-value 0.01 --validation 1 --min-coverage 8',
@@ -40,6 +40,15 @@ sub _detect_variants {
     my $output_snp = $self->_temp_staging_directory."/snvs.hq";
     my $output_indel = $self->_temp_staging_directory."/indels.hq";
 
+    my $params = $self->params;
+    my ($samtools_params, $varscan_params) = $self->_split_params($params);
+    my ($samtools_version, $use_baq, $other_params) = $self->_process_samtools_params($samtools_params);
+
+    my %optional_samtools_params;
+    $optional_samtools_params{samtools_version} = $samtools_version if $samtools_version;
+    $optional_samtools_params{samtools_use_baq} = $use_baq if defined $use_baq;
+    $optional_samtools_params{samtools_params} = $other_params if $other_params;
+
     my $varscan = Genome::Model::Tools::Varscan::Validation->create(
         normal_bam => $self->control_aligned_reads_input,
         tumor_bam => $self->aligned_reads_input,
@@ -47,9 +56,10 @@ sub _detect_variants {
         output_snp => $output_snp,
         output_indel => $output_indel,
         output_validation => $output_snp . '.validation',
-        varscan_params => $self->params,
+        varscan_params => $varscan_params,
         version => $self->version,
         no_headers => 1,
+        %optional_samtools_params,
     );
 
     unless($varscan->execute()) {
@@ -59,22 +69,6 @@ sub _detect_variants {
 
     return 1;
 }
-
-sub has_version {
-    my $self = shift;
-    my $version = shift;
-    unless(defined($version)){
-        $version = $self->version;
-    }
-    my @versions = Genome::Model::Tools::Varscan->available_varscan_versions;
-    for my $v (@versions){
-        if($v eq $version){
-            return 1;
-        }
-    }
-    return 0;
-}
-
 
 sub parse_line_for_bed_intersection {
     my $class = shift;

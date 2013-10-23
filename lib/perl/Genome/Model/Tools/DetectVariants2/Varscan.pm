@@ -8,7 +8,7 @@ use FileHandle;
 use Genome;
 
 class Genome::Model::Tools::DetectVariants2::Varscan {
-    is => ['Genome::Model::Tools::DetectVariants2::Detector'],
+    is => ['Genome::Model::Tools::DetectVariants2::VarscanBase'],
     has => [
         params => {
             default => '--min-var-freq 0.10 --p-value 0.10 --somatic-p-value 0.01',
@@ -65,7 +65,7 @@ sub _detect_variants {
 
     my %optional_samtools_params;
     $optional_samtools_params{samtools_version} = $samtools_version if $samtools_version;
-    $optional_samtools_params{samtools_use_baq} = $use_baq if $use_baq;
+    $optional_samtools_params{samtools_use_baq} = $use_baq if defined $use_baq;
     $optional_samtools_params{samtools_params} = $other_params if $other_params;
 
     my $varscan = Genome::Model::Tools::Varscan::Germline->create(
@@ -86,40 +86,6 @@ sub _detect_variants {
     }
 
     return 1;
-}
-
-# This method breaks the samtools params down into individual params for the varscan modules
-sub _process_samtools_params {
-    my ($self, $params) = @_;
-    my $samtools_version;
-    my $use_baq = 1;
-
-    # Grab version if it exists
-    if ($params =~ m/version/) {
-        ($samtools_version) = ($params =~ m/--version\s*(\S+)/);
-        $params =~ s/--version\s*(\S+)\s*//;
-    }
-
-    # Grab baq boolean
-    if ($params =~ m/--nobaq/) {
-        $use_baq = 0;
-        $params =~ s/--nobaq\s*//;
-    }
-    
-    return ($samtools_version, $use_baq, $params);
-}
-
-# Params should be set up as <samtools params>:<varscan params>
-# If there is no : present, assume everything is varscan params (legacy processing profiles)
-sub _split_params {
-    my ($self, $params) = @_;
-    my ($samtools_params, $varscan_params);
-    if ($params =~ m/:/) {
-        ($samtools_params, $varscan_params) = split ":", $params;
-    } else {
-        $varscan_params = $params;
-    }
-    return ($samtools_params, $varscan_params);
 }
 
 sub generate_metrics {
@@ -150,21 +116,6 @@ sub generate_metrics {
     }
 
     return $metrics;
-}
-
-sub has_version {
-    my $self = shift;
-    my $version = shift;
-    unless(defined($version)){
-        $version = $self->version;
-    }
-    my @versions = Genome::Model::Tools::Varscan->available_varscan_versions;
-    for my $v (@versions){
-        if($v eq $version){
-            return 1;
-        }
-    }
-    return 0;  
 }
 
 sub parse_line_for_bed_intersection {
