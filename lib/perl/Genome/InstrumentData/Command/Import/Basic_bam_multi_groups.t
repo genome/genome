@@ -20,7 +20,7 @@ use_ok('Genome::InstrumentData::Command::Import::Basic') or die;
 my $sample = Genome::Sample->create(name => '__TEST_SAMPLE__');
 ok($sample, 'Create sample');
 
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import');
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'bam-rg-multi/v1');
 my $source_bam = $test_dir.'/input.rg-multi.bam';
 ok(-s $source_bam, 'source bam exists') or die;
 
@@ -48,7 +48,8 @@ for my $instrument_data ( @instrument_data ) {
     ok(-s $bam_path, 'bam path exists');
     is($bam_path, $instrument_data->data_directory.'/all_sequences.bam', 'bam path correctly named');
     is(eval{$instrument_data->attributes(attribute_label => 'bam_path')->attribute_value}, $bam_path, 'set attributes bam path');
-    is(File::Compare::compare($bam_path.'.flagstat', $test_dir.'/input.two-read-groups.'.$read_group.'.bam.flagstat'), 0, 'flagstat matches');
+    is(File::Compare::compare($bam_path, $test_dir.'/'.$read_group.'.bam'), 0, 'flagstat matches');
+    is(File::Compare::compare($bam_path.'.flagstat', $test_dir.'/'.$read_group.'.bam.flagstat'), 0, 'flagstat matches');
 
     my $allocation = $instrument_data->allocations;
     ok($allocation, 'got allocation');

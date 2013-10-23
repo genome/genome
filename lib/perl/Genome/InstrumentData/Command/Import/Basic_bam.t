@@ -20,7 +20,7 @@ use_ok('Genome::InstrumentData::Command::Import::Basic') or die;
 my $sample = Genome::Sample->create(name => '__TEST_SAMPLE__');
 ok($sample, 'Create sample');
 
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import');
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'bam/v1');
 my $source_bam = $test_dir.'/input.bam';
 ok(-s $source_bam, 'source bam exists') or die;
 

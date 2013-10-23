@@ -17,7 +17,7 @@ use Test::More;
 
 use_ok('Genome::InstrumentData::Command::Import::Basic') or die;
 
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v1');
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'fastq/v1');
 my $source_file = $test_dir.'/input.fastq.tgz';
 ok($source_file, 'source archive exists');
 
@@ -29,6 +29,7 @@ my $cmd = Genome::InstrumentData::Command::Import::Basic->create(
     source_files => [$source_file],
     import_source_name => 'broad',
     instrument_data_properties => [qw/ lane=2 flow_cell_id=XXXXXX /],
+    original_format => 'fastq',
 );
 ok($cmd, "create import command");
 ok($cmd->execute, "excute import command");

@@ -17,7 +17,7 @@ use Test::More;
 
 use_ok('Genome::InstrumentData::Command::Import::Basic') or die;
 
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v1');
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'fastq/v1');
 my @source_files = (
     $test_dir.'/input.1.fastq.gz', 
     $test_dir.'/input.2.fastq',
