@@ -73,6 +73,7 @@ sub _process_models {
 
         $self->_assign_instrument_data_to_model($model, $instrument_data, $created_new);
         $self->_assign_model_to_analysis_project($analysis_project, $model);
+        $self->_update_models_for_associated_projects($instrument_data);
     }
 }
 
@@ -266,6 +267,24 @@ sub _assign_model_to_analysis_project {
     die('Must specify an anlysis project and a model!') unless $analysis_project && $model;
 
     return $analysis_project->model_group->assign_models($model);
+}
+
+sub _update_models_for_associated_projects {
+    my $self = shift;
+    my $instrument_data = shift;
+
+    my @projects = Genome::Project->get('parts.entity_id' => $instrument_data->id);
+
+    if(@projects) {
+        my $update_cmd = Genome::Project::Command::Update::Models->create(
+            projects => \@projects
+        );
+
+        die $self->error_message('Failed to update models for project associated with %s', $instrument_data->__display_name__)
+            unless $update_cmd->execute();
+    }
+
+    return 1;
 }
 
 sub _lock {

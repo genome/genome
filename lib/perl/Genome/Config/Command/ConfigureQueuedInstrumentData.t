@@ -158,7 +158,10 @@ sub _rna_seq_config_hash {
     };
 }
 
+my $som_val_project;
 sub _generate_som_val_instrument_data {
+    $som_val_project ||= Genome::Project->create(name => sprintf('test %s %s',  __FILE__));
+
     my $sample_1 = Genome::Test::Factory::Sample->setup_object(
         extraction_type => 'genomic_dna',
     );
@@ -193,6 +196,8 @@ sub _generate_som_val_instrument_data {
         rev_clusters => 10,
         run_type => 'Paired',
     );
+
+    map $som_val_project->add_part(role => 'instrument_data', entity => $_), ($inst_data_1, $inst_data_2);
 
     my $ap = Genome::Test::Factory::AnalysisProject->setup_object(
         config_hash => {
