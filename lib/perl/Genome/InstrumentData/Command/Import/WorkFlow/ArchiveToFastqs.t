@@ -17,6 +17,8 @@ my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
 my $archive_base_name = 'input.fastq.tgz';
 my $archive_path = $tmp_dir.'/'.$archive_base_name;
 Genome::Sys->create_symlink($test_dir.'/'.$archive_base_name, $archive_path);
+Genome::Sys->create_symlink($test_dir.'/'.$archive_base_name.'.md5', $archive_path.'.md5');
+Genome::Sys->create_symlink($test_dir.'/'.$archive_base_name.'.md5', $archive_path.'.md5-orig');
 
 my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::ArchiveToFastqs->execute(
     working_directory => $tmp_dir,
@@ -29,6 +31,11 @@ for (my $i = 0; $i < @fastq_paths; $i++) {
     ok(-s $fastq_paths[$i], 'fastq path exists');
     is(File::Compare::compare($fastq_paths[$i], $test_dir.'/input.'.($i + 1).'.fastq'), 0, 'fastq '.($i + 1).' matches');
 }
+
+ok(!-e $archive_path, 'removed archived source path after unarchiving');
+ok(!-e $archive_path.'.md5', 'removed archived source md5 path after unarchiving');
+ok(!-e $archive_path.'.md5-orig', 'removed archived source orig md5 path after unarchiving');
+ok(!-e $cmd->unarchive_directory, 'removed unarchived diectory after unarchiving');
 
 #print "$tmp_dir\n"; <STDIN>;
 done_testing();
