@@ -43,14 +43,14 @@ my %OBJECT_GETTERS = (
 #    "instrument data"
 #    "library"
 #    "mail"
-#    "model - ClinSeq"
-#    "model - alignment"
-#    "model - convergence"
-#    "model - lane_qc"
-#    "model - microarray"
-#    "model - other"
-#    "model - rna"
-#    "model - somatic"
+    "model - ClinSeq" => 'Genome::Model',
+    "model - alignment" => 'Genome::Model',
+    "model - convergence" => 'Genome::Model',
+    "model - lane_qc" => 'Genome::Model',
+    "model - microarray" => 'Genome::Model',
+    "model - other" => 'Genome::Model',
+    "model - rna" => 'Genome::Model',
+    "model - somatic" => 'Genome::Model',
 #    "modelgroup"
 #    "population_group"
 #    "processing_profile"
@@ -78,14 +78,14 @@ my %OBJECT_SHOWERS = (
 #    "instrument data"
 #    "library"
 #    "mail"
-#    "model - ClinSeq"
-#    "model - alignment"
-#    "model - convergence"
-#    "model - lane_qc"
-#    "model - microarray"
-#    "model - other"
-#    "model - rna"
-#    "model - somatic"
+    "model - ClinSeq" => 'Genome::Command::Search::Model',
+    "model - alignment" => 'Genome::Command::Search::Model',
+    "model - convergence" => 'Genome::Command::Search::Model',
+    "model - lane_qc" => 'Genome::Command::Search::Model',
+    "model - microarray" => 'Genome::Command::Search::Model',
+    "model - other" => 'Genome::Command::Search::Model',
+    "model - rna" => 'Genome::Command::Search::Model',
+    "model - somatic" => 'Genome::Command::Search::Model',
 #    "modelgroup"
 #    "population_group"
 #    "processing_profile"
@@ -103,7 +103,7 @@ sub show_object {
 
     my $shower = $OBJECT_SHOWERS{$type};
 
-    $shower->execute($object);
+    $shower->display_single($object);
 }
 
 sub get_type_and_id {

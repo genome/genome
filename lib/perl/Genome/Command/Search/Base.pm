@@ -8,6 +8,11 @@ class Genome::Command::Search::Base {
 };
 
 # Must be implemented
-sub execute {
+sub display_single {
     my ($self, $object) = @_;
+}
+
+sub display_many {
+    my $self = shift;
+    my @objects = @_;
 }
