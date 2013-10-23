@@ -52,7 +52,7 @@ my %OBJECT_GETTERS = (
     "model - other" => 'Genome::Model',
     "model - rna" => 'Genome::Model',
     "model - somatic" => 'Genome::Model',
-#    "modelgroup"
+    "modelgroup" => 'Genome::ModelGroup',
 #    "population_group"
 #    "processing_profile"
 #    "project"
@@ -69,22 +69,29 @@ sub get_objects {
 
     my $end = $self->find_different_getter($docs);
 
+    my @useful_docs = (@$docs)[0..$end];
+    my @ids = map {$_->{object_id}} @useful_docs;
+
     my $getter = $OBJECT_GETTERS{$docs->[0]->{type}};
-    return map {$getter->get($_->{object_id})} @{$docs}[0..$end-1];
+    return $getter->get(id => \@ids);
 }
 
 sub find_different_getter {
     my ($self, $docs) = @_;
-    my $len = length(@$docs);
+    my $len = scalar @$docs;
 
     my $getter = $OBJECT_GETTERS{$docs->[0]->{type}};
     for (my $i = 0; $i < $len; $i++) {
-        my $this_getter = $OBJECT_GETTERS{$docs->[$i]->{type}};
-        if ($getter ne $this_getter) {
-            return $i;
+        if (exists $OBJECT_GETTERS{$docs->[$i]->{type}}) {
+            my $this_getter = $OBJECT_GETTERS{$docs->[$i]->{type}};
+            if ($getter ne $this_getter) {
+                return $i - 1;
+            }
+        } else {
+            return $i - 1;
         }
     }
-    return $len;
+    return $len - 1;
 }
 
 my %OBJECT_SHOWERS = (
@@ -103,7 +110,7 @@ my %OBJECT_SHOWERS = (
     "model - other" => 'Genome::Command::Search::Model',
     "model - rna" => 'Genome::Command::Search::Model',
     "model - somatic" => 'Genome::Command::Search::Model',
-#    "modelgroup"
+    "modelgroup" => 'Genome::Command::Search::ModelGroup',
 #    "population_group"
 #    "processing_profile"
 #    "project"
@@ -120,8 +127,8 @@ sub show_objects {
 
     my $shower = $OBJECT_SHOWERS{$type};
 
-    if (length(@objects) > 1) {
-        $shower->display_many(@objects);
+    if (scalar(@objects) > 1) {
+        $shower->display_many(\@objects);
     } else {
         $shower->display_single($objects[0]);
     }

@@ -17,4 +17,3 @@ sub display_many {
     my $self = shift;
     Genome::Model::Command::Status->execute(models => \@_);
 }
-
