@@ -1412,7 +1412,7 @@ sub _verify_no_child_allocations {
         $query_string = sprintf(q(select * from %s where allocation_path like ? LIMIT 1), $table_name);
     } else {
         $class->error_message("Falling back on old child allocation detection behavior.");
-        return !($class->et_child_allocations($path));
+        return !($class->get_child_allocations($path));
     }
 
     my $dbh = $data_source->get_default_handle();
