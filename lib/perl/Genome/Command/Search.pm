@@ -145,8 +145,8 @@ sub validate_response_content {
     }
 
     if ($content->{response}{maxScore} < $SCORE_WARNING_THRESHOLD) {
-        warn sprintf("Warning: Low search score (%s).",
-            $content->{response}{maxScore});
+        warn sprintf("Warning: Low search score (%s < %s).",
+            $content->{response}{maxScore}, $SCORE_WARNING_THRESHOLD);
     }
 }
 
