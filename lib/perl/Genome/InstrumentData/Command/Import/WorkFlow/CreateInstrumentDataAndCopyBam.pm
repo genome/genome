@@ -60,7 +60,6 @@ sub execute {
     for my $bam_path ( @bam_paths ) {
         # Create inst data
         my $instrument_data = $self->_create_instrument_data_for_bam_path($bam_path);
-    $DB::single=1;
         return if not $instrument_data;
 
         # Move bam

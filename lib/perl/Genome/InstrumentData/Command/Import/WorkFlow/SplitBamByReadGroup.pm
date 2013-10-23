@@ -152,7 +152,6 @@ sub _write_reads {
     my $removed_reads_cnt = 0;
     while ( my $line = $bam_fh->getline ) {
         my @tokens = split(/\t/, $line);
-        print "$tokens[0] $tokens[1]\n";
         if ( $tokens[1] & 0x100 ) { # secondary alignment
             $removed_reads_cnt++;
             next;
