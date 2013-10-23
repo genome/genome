@@ -130,7 +130,8 @@ sub get_part {
 
     my @parts = Genome::ProjectPart->get(
         entity_class_name => $obj->class,
-        entity_id => $obj->id
+        entity_id => $obj->id,
+        project_id => $self->id,
     );
 
     return @parts;
