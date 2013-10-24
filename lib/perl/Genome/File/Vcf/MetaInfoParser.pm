@@ -1,0 +1,55 @@
+package Genome::File::Vcf::MetaInfoParser;
+
+use strict;
+use warnings;
+use Genome;
+
+use Parse::RecDescent;
+
+my $grammar = q{
+    evaluate_metainfo: map
+      | list
+
+    map: "<" pairs ">"
+      { $return = $item{pairs} }
+
+    pairs: pair "," pairs
+      { $return = {%{$item{pairs}}, %{$item{pair}}}}
+      | pair
+
+    pair: key "=" value
+      { $return = {$item{key} => $item{value}} }
+      | string
+      { $return = {$item{string} => 1} }
+
+    key: /[\w\d]+/
+
+    value: map
+      | string
+      | list 
+
+    list: string "," list
+      { unshift @{$item{list}}, $item{string}; $return = $item{list} }
+      | string
+      { $return = [$item{string}] }
+
+    string: <perl_quotelike>
+      { $return = $item[1]->[2] }
+      | /[\d\w\s-_\/\:\.]+/
+};
+
+my $parser;
+sub parse {
+    my $self = shift;
+    my $str = shift;
+
+    $parser = Parse::RecDescent->new($grammar) unless $parser;
+    unless ($parser) {
+        $self->error_message("Failed to create parser");
+        return;
+    }
+    return $parser->evaluate_metainfo($str);
+}
+
+1;
+
