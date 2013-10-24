@@ -477,6 +477,7 @@ sub _get_allocation_without_lock {
                     $candidate_allocation->delete();
                     _commit_unless_testing();
                 } elsif ($candidate_volume->is_used_over_soft_limit) {
+                    Genome::Utility::Instrumentation::inc('disk.allocation.get_allocation_without_lock.rollback.over_used');
                     $class->status_message(sprintf("%s's used_kb exceeded soft limit (%d %s), rolling back allocation.", $candidate_volume->mount_path, $candidate_volume->soft_limit_kb, 'kB'));
                     $candidate_allocation->delete();
                     _commit_unless_testing();
