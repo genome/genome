@@ -61,6 +61,10 @@ sub execute {
         my $instrument_data = $self->_create_instrument_data_for_bam_path($bam_path);
         return if not $instrument_data;
 
+        # Create allocation
+        my $allcoation = $self->_create_allocation($instrument_data, $bam_path);
+        return if not $allcoation;
+
         # Move bam
         my $final_bam_path = $instrument_data->data_directory.'/all_sequences.bam';
         my $move_ok = $helpers->move_path($bam_path, $final_bam_path);
@@ -180,6 +184,14 @@ sub _create_instrument_data_for_bam_path {
         $self->status_message('Add attribute: original_data_path_md5 => '.$md5);
         $instrument_data->add_attribute(attribute_label => 'original_data_path_md5', attribute_value => $md5);
     }
+
+    return $instrument_data;
+}
+
+sub _create_allocation {
+    my ($self, $instrument_data, $bam_path) = @_;
+
+    Carp::confess('No instrument data given to create allocation!') if not $instrument_data;
 
     my $bam_size = -s $bam_path;
     my $kilobytes_requested = int($bam_size / 1024) + 1024;
