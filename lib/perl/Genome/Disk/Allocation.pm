@@ -1616,12 +1616,14 @@ sub _purge {
         dirmove($self->absolute_path, $destination_directory);
     }
 
-    $self->status('purged');
-
     Genome::Timeline::Event::Allocation->purged(
         $reason,
         $self,
     );
+
+    $self->status('purged');
+    $self->kilobytes_requested(0);
+    $self->kilobytes_used(0);
 
     return 1;
 }
