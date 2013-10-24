@@ -163,7 +163,6 @@ sub _resolve_instrument_data_properties {
     }
 
     $properties->{original_data_path} = join(',', $self->source_files);
-    $properties->{import_format} = 'bam';
 
     return $self->_instrument_data_properties($properties);
 }
