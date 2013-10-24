@@ -46,7 +46,7 @@ sub execute {
     my $verify_bam_ok = $self->_verify_bam;
     return if not $verify_bam_ok;
 
-    my $cleanup_ok = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->remove_source_paths_and_md5s($self->fastq_paths);
+    my $cleanup_ok = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->remove_paths_and_auxiliary_files($self->fastq_paths);
     return if not $cleanup_ok;
 
     $self->status_message('Fastqs to bam...done');

@@ -512,21 +512,20 @@ sub load_md5 {
 }
 #<>#
 
-sub remove_source_paths_and_md5s {
-    my ($self, @source_paths) = @_;
+sub remove_paths_and_auxiliary_files {
+    my ($self, @paths) = @_;
 
-    Carp::confess('No source paths to remove!') if not @source_paths;
+    Carp::confess('No source paths to remove!') if not @paths;
 
-    for my $source_path ( @source_paths ) {
-        for my $ext ( '', '.md5', '.md5-orig' ) {
-            my $path = $source_path.$ext;
+    for my $path ( @paths ) {
+        for my $ext ( '', '.md5', '.md5-orig', '.flagstat' ) {
+            my $path = $path.$ext;
             unlink $path if -e $path;
         }
     }
 
     return 1;
 }
-
 
 1;
 

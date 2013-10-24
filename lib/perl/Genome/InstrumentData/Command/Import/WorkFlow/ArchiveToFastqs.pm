@@ -104,7 +104,7 @@ sub _find_fastqs {
 
 sub _cleanup {
     my $self = shift;
-    $self->helpers->remove_source_paths_and_md5s($self->archive_path);
+    $self->helpers->remove_paths_and_auxiliary_files($self->archive_path);
     File::Path::remove_tree($self->unarchive_directory);
     return 1;
 }

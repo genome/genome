@@ -140,11 +140,12 @@ $properties = $helpers->key_value_pairs_to_hash(qw/ sequencing_platform=solexa l
 is($helpers->error_message, 'Failed to parse with instrument data property label/value! lane=', 'correct error');
 
 # rm source files
-ok(!eval{$helpers->remove_source_paths_and_md5s();}, 'failed to remove source paths and md5s w/o source paths');
+ok(!eval{$helpers->remove_path_and_auxiliary_files();}, 'failed to remove source paths and md5s w/o source paths');
 Genome::Sys->create_symlink($test_dir.'/bam/v1/'.$bam_basename.'.md5-orig', $bam_path.'.md5-orig');
-ok($helpers->remove_source_paths_and_md5s($bam_path), 'remove source paths and md5s w/o source paths');
-ok(!-e $bam_path, 'removed source path');
-ok(!-e $bam_path.'.md5', 'removed source md5 path');
-ok(!-e $bam_path.'.md5-orig', 'removed source md5 orig path');
+ok($helpers->remove_paths_and_auxiliary_files($bam_path), 'remove source paths and md5s w/o source paths');
+ok(!-e $bam_path, 'removed path');
+ok(!-e $bam_path.'.md5', 'removed md5 path');
+ok(!-e $bam_path.'.md5-orig', 'removed md5 orig path');
+ok(!-e $bam_path.'.flagstat', 'removed flagstat path');
 
 done_testing();
