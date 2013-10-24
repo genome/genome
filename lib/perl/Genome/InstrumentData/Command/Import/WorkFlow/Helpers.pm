@@ -510,6 +510,27 @@ sub load_md5 {
     $self->status_message('Load MD5...done');
     return $md5;
 }
+
+sub ensure_original_data_path_md5s_were_not_previously_imported {
+    my ($self, @md5s) = @_;
+
+    Carp::confess('No md5s given to ensure instrument data were not imported!') if not @md5s;
+
+    my @instrument_data_attr = Genome::InstrumentDataAttribute->get(
+        attribute_label => 'original_data_path_md5',
+        'attribute_value in' => \@md5s,
+    );
+    if ( @instrument_data_attr ) {
+        $self->error_message(
+            "Instrument data was previously imported! Found existing instrument data with MD5s: ".
+            join(', ', map { $_->instrument_data_id.' => '.$_->attribute_value } @instrument_data_attr),
+        );
+        return;
+    }
+
+    return 1;
+}
+
 #<>#
 
 sub remove_paths_and_auxiliary_files {
