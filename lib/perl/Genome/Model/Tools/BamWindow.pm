@@ -16,6 +16,7 @@ class Genome::Model::Tools::BamWindow {
         options => {
             is => 'Text',
             doc => 'String of command line options to pass to bam-window.  Superseeds all other options',
+            is_optional => 1,
         },
         bam_file => {
             is => 'Path',
@@ -66,6 +67,12 @@ class Genome::Model::Tools::BamWindow {
             doc => 'probability of reporting a read [1.000000]',
             is_optional => 1,
         },
+        filter_to_chromosomes => {
+            is => 'Text',
+            is_many => 1,
+            doc => 'chromosomes to filter output to',
+            is_optional => 1,
+        }
     },
 };
 
@@ -77,15 +84,23 @@ sub execute {
 
     my $options_string = $self->options;
     unless($options_string){
-        $self->_get_options_string;
+        $options_string = $self->_get_options_string;
     }
+    
+    my $tmp_file = Genome::Sys->create_temp_file_path;
     my $output_file = $self->output_file;
 
-    my $cmd = join(" ", $base_cmd, $bam_file, $options_string, " > $output_file");
+    my $cmd = join(" ", $base_cmd, $bam_file, $options_string, " > $tmp_file");
     system($cmd);
     if($@){
         $self->error_message("Error running command $cmd: $@");
         return 0;
+    }
+
+    if ($self->filter_to_chromosomes){
+       $self->_filter_to_chromosomes($tmp_file, $output_file); 
+    }else{
+        Genome::Sys->copy_file($tmp_file, $output_file);
     }
 
     return 1;
@@ -128,6 +143,25 @@ sub _get_options_string {
     }
 
     return $options_string;
+}
+
+sub _filter_to_chromosomes{
+    my ($self, $tmp_file, $output_file) = @_; 
+    my @filter_to_chromosomes = $self->filter_to_chromosomes;
+    my $ifh = Genome::Sys->open_file_for_reading($tmp_file);
+    my $ofh = Genome::Sys->open_file_for_writing($output_file);
+
+    my $line = <$ifh>; #handle the header
+    print $ofh $line;
+
+    while(my $line = <$ifh>){
+        chomp $line;
+        my($chr) = split("\t", $line);
+        if(grep{$chr eq $_} @filter_to_chromosomes){
+            print $ofh $line, "\n";
+        }
+    }
+    return 1;
 }
 
 1;
