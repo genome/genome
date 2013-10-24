@@ -141,6 +141,11 @@ class Genome::Disk::Allocation {
                 return $owner_exists ? 1 : 0;
             ),
         },
+        file_summaries => {
+            is => 'Genome::Disk::Allocation::FileSummary',
+            is_many => 1,
+            reverse_as => 'allocation'
+        }
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
