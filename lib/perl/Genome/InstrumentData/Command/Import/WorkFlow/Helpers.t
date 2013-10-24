@@ -18,18 +18,6 @@ use_ok('Genome::InstrumentData::Command::Import::WorkFlow::Helpers') or die;
 use_ok($class) or die;
 my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import') or die;
 
-my $instrument_data = Genome::InstrumentData::Imported->__define__(
-    original_data_path => '/dir/file.1.fastq,/dir/file.2.fastq.gz',
-);
-ok($instrument_data, 'define instrument data');
-my $allocation = Genome::Disk::Allocation->__define__(
-    owner => $instrument_data,
-    mount_path => '/tmp',
-    group_subdirectory => 'info',
-    allocation_path => '100',
-);
-ok($allocation, 'define allocation');
-
 my $helpers = $class->get;
 ok($helpers, 'get helpers');
 
