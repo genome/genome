@@ -38,6 +38,7 @@ class Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentDataAnd
         },
     ],
     has_transient_optional => [
+    instrument_data_subset_name => { is => 'Text', },
         library => { is => 'Genome::Library', },
         kilobytes_requested => { is => 'Number', },
     ],
@@ -60,6 +61,10 @@ sub __errors__ {
             desc => 'No original data path!',
         );
     }
+
+    my $subset_name = delete $instrument_data_properties->{subset_name};
+    $subset_name = 'unknown' if not $subset_name;
+    $self->instrument_data_subset_name($subset_name);
 
     $instrument_data_properties->{import_format} = 'bam';
 
@@ -174,6 +179,7 @@ sub _create_instrument_data_for_bam_path {
 
     my $instrument_data = Genome::InstrumentData::Imported->create(
         library => $self->library,
+        subset_name => $self->instrument_data_subset_name,
         sequencing_platform => 'solexa',
     );
     if ( not $instrument_data ) {

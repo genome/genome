@@ -53,8 +53,9 @@ $cmd->instrument_data_properties(
         original_data_path => $source_bam, 
         sequencing_platform => 'solexa',
         import_format => 'bam',
-        lane => 2, 
         flow_cell_id => 'XXXXXX', 
+        index_sequence => 'ATGCTA',
+        lane => 2, 
     },
 );
 ok($cmd, "create command");
@@ -68,11 +69,14 @@ my @instrument_data = Genome::InstrumentData::Imported->get(id => [ map { $_->in
 is(@instrument_data, 2, "got instrument data for md5 $md5") or die;;
 my $read_group = 2883581797;
 for my $instrument_data ( @instrument_data ) {
+    is($instrument_data->subset_name, 'unknown', 'subset_name correctly set');
+    is($instrument_data->sequencing_platform, 'solexa', 'sequencing_platform correctly set');
+
     is($instrument_data->original_data_path, $source_bam, 'original_data_path correctly set');
     is($instrument_data->import_format, 'bam', 'import_format is bam');
-    is($instrument_data->sequencing_platform, 'solexa', 'sequencing_platform correctly set');
     is($instrument_data->is_paired_end, 1, 'is_paired_end correctly set');
     is($instrument_data->read_count, 128, 'read_count correctly set');
+    is($instrument_data->attributes(attribute_label => 'index_sequence')->attribute_value, 'ATGCTA', 'index_sequence correctly set');
     is($instrument_data->attributes(attribute_label => 'segment_id')->attribute_value, $read_group, 'segment_id correctly set');
 
     my $bam_path = $instrument_data->bam_path;
