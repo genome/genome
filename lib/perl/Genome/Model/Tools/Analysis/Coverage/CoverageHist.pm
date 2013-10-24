@@ -14,10 +14,17 @@ class Genome::Model::Tools::Analysis::Coverage::CoverageHist{
 	    is_optional => 1,
 	    doc => 'refalign model id to grab coverage stats from',
 	},
+
 	somatic_validation_model_id => {
 	    is => 'Number',
 	    is_optional => 1,
 	    doc => 'somatic-validation model id to grab coverage stats from',
+	},
+
+	somatic_variation_model_id => {
+	    is => 'Number',
+	    is_optional => 1,
+	    doc => 'somatic-variation model id - gets associated refalign models and gets coverage stats from them',
 	},
 
         output_pdf => {
@@ -47,19 +54,19 @@ sub help_detail {
 sub execute {
     my $self = shift;
     my $output_pdf = $self->output_pdf;
-    my $coverage_file = $self->coverage_file;    
-    
+    my $coverage_file = $self->coverage_file;
+
     my @covs;
     my @headers;
 
     #get the coverage file from the refalign model
     if(defined($self->refalign_model_id)){
-        my $model = Genome::Model->get($self->refalign_model_id) or 
+        my $model = Genome::Model->get($self->refalign_model_id) or
             die "Could not find model ($self->refalign_model_id\n";
-        my $build = $model->last_succeeded_build or 
+        my $build = $model->last_succeeded_build or
             die "Could not find last succeeded build from model $self->refalign_model_id.\n";
         my $dir = $build->data_directory;
-        print STDERR $dir . "\n";        
+        print STDERR $dir . "\n";
         my @a = glob("$dir/reference_coverage/wingspan_0/*_STATS.tsv");
         if(@a){
             push(@covs, $a[0]);
@@ -69,25 +76,46 @@ sub execute {
 
     #get the coverage files from the somval model
     } elsif(defined($self->somatic_validation_model_id)){
-        my $model = Genome::Model->get($self->somatic_validation_model_id) or 
+        my $model = Genome::Model->get($self->somatic_validation_model_id) or
             die "Could not find model ($self->somatic_validation_model_id\n";
-        my $build = $model->last_succeeded_build or 
+        my $build = $model->last_succeeded_build or
             die "Could not find last succeeded build from model $self->somatic_validation_model_id.\n";
         my $dir = $build->data_directory;
-        print STDERR $dir . "\n";                
+        print STDERR $dir . "\n";
         my @a = glob("$dir/coverage/normal/wingspan_0/*_STATS.tsv");
         if(@a){
             push(@covs, $a[0]);
             push(@headers, "Normal");
-        }        
+        }
         @a = glob("$dir/coverage/tumor/wingspan_0/*_STATS.tsv");
         if(@a){
             push(@covs, $a[0]);
             push(@headers, "Tumor");
         }
 
+    #get the coverage files from the somvar model
+    } elsif(defined($self->somatic_variation_model_id)){
+        my $model = Genome::Model->get($self->somatic_variation_model_id) or
+            die "Could not find somatic model";
+        my $tumor_model = $model->tumor_model;
+        my $normal_model = $model->normal_model;
+
+        foreach my $m ($tumor_model,$normal_model){
+            my $build = $m->last_succeeded_build or
+                die "Could not find last succeeded build from model " . $m->id . "\n";
+            my $dir = $build->data_directory;
+            print STDERR $dir . "\n";
+            my @a = glob("$dir/reference_coverage/wingspan_0/*_STATS.tsv");
+            if(@a){
+                push(@covs, $a[0]);
+            }
+        }
+        push(@headers, "Normal");
+        push(@headers, "Tumor");
+
+
     #just use the input coverage file
-    } else { 
+    } else {
         if(defined($coverage_file)){
             push(@covs, $coverage_file);
             push(@headers, "");
@@ -107,10 +135,10 @@ sub execute {
         $self->error_message("Unable to create temporary file $!");
         die;
     }
-    
+
     print $rfile "pdf(\"$output_pdf\", height=6, width=12)\n";
 
-    for my $i (0..(@covs-1)){        
+    for my $i (0..(@covs-1)){
         print $rfile 'par(mfrow=c(1,2))' . "\n";
         print $rfile 'b = read.table("' . $covs[$i] . "\")\n";
         print $rfile 'a = b[b$V13==1,]' . "\n";
@@ -123,7 +151,7 @@ sub execute {
     }
     print $rfile "dev.off()\n";
     close($rfile);
-    
+
     `cp $newfile /tmp/asdf.R`;
 
     my $cmd = "Rscript $newfile";

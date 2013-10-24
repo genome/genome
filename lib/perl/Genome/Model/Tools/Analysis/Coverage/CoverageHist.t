@@ -33,7 +33,7 @@ my $cmd = Genome::Model::Tools::Analysis::Coverage::CoverageHist->create(
                     refalign_model_id => $refalign_model_id,
                     output_pdf => $output_file);
 
-ok($cmd, 'gmt copy-number bam-window command created');
+ok($cmd, 'command created');
 my $rv = $cmd->execute;
 is($rv, 1, 'Testing for successful execution.  Expecting 1.  Got: '.$rv);
 
@@ -41,6 +41,6 @@ $cmd = Genome::Model::Tools::Analysis::Coverage::CoverageHist->create(
                     somatic_validation_model_id => $somval_model_id,
                     output_pdf => $output_file);
 
-ok($cmd, 'gmt copy-number bam-window command created');
+ok($cmd, 'command created');
 $rv = $cmd->execute;
 is($rv, 1, 'Testing for successful execution.  Expecting 1.  Got: '.$rv);
