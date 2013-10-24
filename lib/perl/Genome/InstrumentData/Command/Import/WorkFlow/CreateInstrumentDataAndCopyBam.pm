@@ -46,6 +46,28 @@ class Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentDataAnd
     ],
 };
 
+sub __errors__ {
+    my $self = shift;
+
+    my @errors = $self->SUPER::__errors__;
+    return @errors if @errors;
+
+    my $instrument_data_properties = $self->instrument_data_properties;
+    if ( not $instrument_data_properties->{original_data_path} ) {
+        push @errors, UR::Object::Tag->create(
+            type => 'invalid',
+            properties => [qw/ instrument_data_properties /],
+            desc => 'No original data path!',
+        );
+    }
+
+    $instrument_data_properties->{import_format} = 'bam';
+
+    $self->instrument_data_properties($instrument_data_properties);
+
+    return @errors;
+}
+
 sub execute {
     my $self = shift;
     $self->status_message('Create instrument data and copy bam...');

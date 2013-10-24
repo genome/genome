@@ -35,21 +35,30 @@ my $source_bam = $test_dir.'/input.rg-multi.bam';
 my $md5 = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->load_md5($source_bam.'.md5');
 ok($md5, 'load source md5');
 
-# success
+# failures
 my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentDataAndCopyBam->create(
     sample => $sample,
     bam_paths => \@bam_paths,
-    instrument_data_properties => {
+    instrument_data_properties => { },
+    source_md5s => [ $md5 ],
+);
+ok($cmd, "create command");
+my @errors = $cmd->__errors__;
+ok(@errors, "command has errors");
+is($errors[0]->__display_name__, "INVALID: property 'instrument_data_properties': No original data path!", 'correct error');
+
+# success
+$cmd->instrument_data_properties(
+    {
         original_data_path => $source_bam, 
         sequencing_platform => 'solexa',
         import_format => 'bam',
         lane => 2, 
         flow_cell_id => 'XXXXXX', 
     },
-    source_md5s => [ $md5 ],
 );
 ok($cmd, "create command");
-ok($cmd->execute, "excute command");
+ok($cmd->execute, "execute command");
 
 my @instrument_data_attributes = Genome::InstrumentDataAttribute->get(
     attribute_label => 'original_data_path_md5',
@@ -94,7 +103,7 @@ $cmd = Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentDataAn
     source_md5s => [ $md5 ],
 );
 ok($cmd, "create command");
-ok(!$cmd->execute, "excute command");
+ok(!$cmd->execute, "execute command");
 like(Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get->error_message, qr/^Instrument data was previously imported! Found existing instrument data with MD5s: /, 'correct error message');
 
 #print $instrument_data->data_directory."\n";<STDIN>;
