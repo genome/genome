@@ -45,6 +45,9 @@ sub execute {
     my $verify_read_count_ok = $self->_verify_read_count;
     return if not $verify_read_count_ok;
 
+    my $cleanup_ok = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->remove_paths_and_auxiliary_files($self->unsorted_bam_path);
+    return if not $cleanup_ok;
+
     $self->status_message('Sort bams...done');
     return 1;
 }
