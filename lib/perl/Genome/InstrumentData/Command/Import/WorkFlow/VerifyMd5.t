@@ -50,7 +50,7 @@ $cmd = Genome::InstrumentData::Command::Import::WorkFlow::VerifyMd5->execute(
     source_path => $source_path,
 );
 ok(!$cmd->result, 'execute');
-is($cmd->error_message, 'Instrument data was previously imported! Found existing instrument data with MD5 (940825168285c254b58c47399a3e1173): -11', 'correct error');
+is(Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get->error_message, 'Instrument data was previously imported! Found existing instrument data with MD5s: -11 => 940825168285c254b58c47399a3e1173', 'correct error');
 
 # Invalid MD5
 unlink($original_md5_path);

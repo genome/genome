@@ -59,6 +59,9 @@ sub execute {
     my $original_md5 = $self->original_md5;
     my $md5;
     if ( $original_md5 ) {
+        my $was_not_imported = $self->helpers->ensure_original_data_path_md5s_were_not_previously_imported($original_md5);
+        return if not $was_not_imported;
+
         my @instrument_data_attr = Genome::InstrumentDataAttribute->get(
             attribute_label => 'original_data_path_md5',
             attribute_value => $original_md5,
