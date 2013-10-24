@@ -52,6 +52,7 @@ class Genome::InstrumentData::Command::Import::Basic {
         _workflow => {},
         _verify_md5_op => {},
         _working_directory => { is => 'Text', },
+        _instrument_data_properties => { is => 'Hash', },
     ],
 };
 
@@ -77,31 +78,12 @@ sub help_detail {
 HELP
 }
 
-sub __errors__ { 
-    my $self = shift;
-
-    my @errors = $self->SUPER::__errors__;
-    return if @errors;
-
-    if ( $self->instrument_data_properties ) {
-        my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
-        my $properties = $helpers->key_value_pairs_to_hash( $self->instrument_data_properties );
-        if ( not $properties ) {
-            push @errors, UR::Object::Tag->create(
-                type => 'invalid',
-                properties => [qw/ instrument_data_properties /],
-                desc => $helpers->error_message,
-            );
-            return @errors;
-        }
-    }
-
-    return @errors;
-}
-
 sub execute {
     my $self = shift;
     $self->status_message('Import instrument data...');
+
+    my $instdat_props_ok = $self->_resolve_instrument_data_properties;
+    return if not $instdat_props_ok;
 
     my $original_format = $self->_resolve_original_format;
     return if not $original_format;
@@ -162,6 +144,28 @@ sub _resolve_original_format {
 
     $self->status_message('Resolve original format...done');
     return $self->original_format($formats[0]);
+}
+
+sub _resolve_instrument_data_properties {
+    my $self = shift;
+
+    my $properties = {};
+    if ( $self->instrument_data_properties ) {
+        my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
+        $properties = $helpers->key_value_pairs_to_hash( $self->instrument_data_properties );
+        return if not $properties;
+    }
+
+    for my $name (qw/ import_source_name description /) {
+        my $value = $self->$name;
+        next if not defined $value;
+        $properties->{$name} = $value;
+    }
+
+    $properties->{original_data_path} = join(',', $self->source_files);
+    $properties->{import_format} = 'bam';
+
+    return $self->_instrument_data_properties($properties);
 }
 
 sub _resolve_working_directory {
@@ -251,21 +255,11 @@ sub _add_operation_to_workflow {
 sub _gather_inputs_for_workflow {
     my $self = shift;
 
-    my @instrument_data_properties = $self->instrument_data_properties;
-    for my $property (qw/ import_source_name description /) {
-        my $value = $self->$property;
-        next if not defined $value;
-        push @instrument_data_properties, $property.'='.$value;
-    }
-
-    my @source_files = $self->source_files;
-    push @instrument_data_properties, 'original_data_path='.join(',', $self->source_files);
-
     return {
         working_directory => $self->_working_directory,
         sample => $self->sample,
-        source_paths => \@source_files,
-        instrument_data_properties => \@instrument_data_properties,
+        source_paths => [ $self->source_files ],
+        instrument_data_properties => $self->_instrument_data_properties,
     };
 }
 

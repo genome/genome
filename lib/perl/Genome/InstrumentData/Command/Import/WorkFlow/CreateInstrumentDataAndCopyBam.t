@@ -38,7 +38,13 @@ ok($md5, 'load source md5');
 my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentDataAndCopyBam->create(
     sample => $sample,
     bam_paths => \@bam_paths,
-    instrument_data_properties => [ "original_data_path=$source_bam", qw/ lane=2 flow_cell_id=XXXXXX /],
+    instrument_data_properties => {
+        original_data_path => $source_bam, 
+        sequencing_platform => 'solexa',
+        import_format => 'bam',
+        lane => 2, 
+        flow_cell_id => 'XXXXXX', 
+    },
     source_md5s => [ $md5 ],
 );
 ok($cmd, "create command");

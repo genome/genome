@@ -21,9 +21,8 @@ class Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentDataAnd
             doc => 'Sample to use. The external library for the instrument data will be gotten or created.',
         },
         instrument_data_properties => {
-            is => 'Text',
-            is_many => 1,
-            doc => 'Name and value pairs to add to the instrument data. Separate name and value with an equals (=) and name/value pairs with a comma (,).',
+            is => 'Hash',
+            doc => 'Hash of instrument data properties to store.',
         },
         source_md5s => {
             is => 'Text',
@@ -126,11 +125,6 @@ sub _create_instrument_data_for_bam_path {
     Carp::confess('No bam path to create instrument data!') if not $bam_path;
     $self->status_message('Bam path: '.$bam_path);
 
-    my $additional_properties = $self->helpers->key_value_pairs_to_hash( $self->instrument_data_properties );
-    return if not $additional_properties;
-
-    my $original_data_path = delete $additional_properties->{original_data_path};
-
     my $read_group_ids_from_bam = $self->helpers->load_read_groups_from_bam($bam_path);
     return if not $read_group_ids_from_bam; # should only be one or 0
     if ( @$read_group_ids_from_bam > 1 ) {
@@ -138,21 +132,22 @@ sub _create_instrument_data_for_bam_path {
         return;
     }
 
+    my $properties = $self->instrument_data_properties;
+
     if ( @$read_group_ids_from_bam ) {
         $self->status_message("Read groups in bam: @$read_group_ids_from_bam");
         if ( @$read_group_ids_from_bam > 1 ) {
             $self->error_message('Multiple read groups in bam! '.$bam_path);
             return;
         }
-        $additional_properties->{segment_id} = $read_group_ids_from_bam->[0];
+        $properties->{segment_id} = $read_group_ids_from_bam->[0];
     }
 
     $self->status_message('Checking if source files were previously imported...');
-    my %properties = (
+    my @existing_instrument_data = Genome::InstrumentData::Imported->get(
         library => $self->library,
-        original_data_path => $original_data_path,
+        original_data_path => $properties->{original_data_path},
     );
-    my @existing_instrument_data = Genome::InstrumentData::Imported->get(%properties);
     if ( defined $read_group_ids_from_bam->[0] ) {
         @existing_instrument_data = grep { 
             my $attr = $_->attributes(attribute_label => 'segment_id', attribute_value => $read_group_ids_from_bam->[0]); 
@@ -161,24 +156,24 @@ sub _create_instrument_data_for_bam_path {
     }
 
     if ( @existing_instrument_data ) {
-        $self->error_message('Found existing instrument data for library and source files. Were these previously imported? Exiting instrument data id: '.join(', ', map { $_->id } @existing_instrument_data).', source files: '.$properties{original_data_path});
+        $self->error_message('Found existing instrument data for library and source files. Were these previously imported? Exiting instrument data id: '.join(', ', map { $_->id } @existing_instrument_data).', source files: '.$properties->{original_data_path});
         return;
     }
     $self->status_message('Source files were NOT previously imported!');
 
-    $properties{import_format} = 'bam';
-    $properties{sequencing_platform} = 'solexa';
-
-    my $instrument_data = Genome::InstrumentData::Imported->create(%properties);
+    my $instrument_data = Genome::InstrumentData::Imported->create(
+        library => $self->library,
+        sequencing_platform => 'solexa',
+    );
     if ( not $instrument_data ) {
         $self->error_message('Failed to create instrument data!');
         return;
     }
     $self->status_message('Instrument data id: '.$instrument_data->id);
 
-    for my $name ( keys %$additional_properties ) {
-        $self->status_message('Add attribute: '.$name.' => '.$additional_properties->{$name});
-        $instrument_data->add_attribute(attribute_label => $name, attribute_value => $additional_properties->{$name});
+    for my $name ( keys %$properties ) {
+        $self->status_message('Add attribute: '.$name.' => '.$properties->{$name});
+        $instrument_data->add_attribute(attribute_label => $name, attribute_value => $properties->{$name});
     }
 
     for my $md5 ( $self->source_md5s ) {
