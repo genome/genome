@@ -50,6 +50,9 @@ sub execute {
     my $self = shift;
     $self->status_message('Create instrument data and copy bam...');
 
+    my $was_not_imported = $self->helpers->ensure_original_data_path_md5s_were_not_previously_imported($self->source_md5s);
+    return if not $was_not_imported;
+
     my $library = $self->_resvolve_library;
     return if not $library;
 
@@ -146,24 +149,6 @@ sub _create_instrument_data_for_bam_path {
         }
         $properties->{segment_id} = $read_group_ids_from_bam->[0];
     }
-
-    $self->status_message('Checking if source files were previously imported...');
-    my @existing_instrument_data = Genome::InstrumentData::Imported->get(
-        library => $self->library,
-        original_data_path => $properties->{original_data_path},
-    );
-    if ( defined $read_group_ids_from_bam->[0] ) {
-        @existing_instrument_data = grep { 
-            my $attr = $_->attributes(attribute_label => 'segment_id', attribute_value => $read_group_ids_from_bam->[0]); 
-            $attr ? $_ : undef
-        } @existing_instrument_data;
-    }
-
-    if ( @existing_instrument_data ) {
-        $self->error_message('Found existing instrument data for library and source files. Were these previously imported? Exiting instrument data id: '.join(', ', map { $_->id } @existing_instrument_data).', source files: '.$properties->{original_data_path});
-        return;
-    }
-    $self->status_message('Source files were NOT previously imported!');
 
     my $instrument_data = Genome::InstrumentData::Imported->create(
         library => $self->library,

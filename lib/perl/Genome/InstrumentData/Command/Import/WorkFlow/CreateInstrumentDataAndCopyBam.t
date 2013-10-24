@@ -35,6 +35,7 @@ my $source_bam = $test_dir.'/input.rg-multi.bam';
 my $md5 = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->load_md5($source_bam.'.md5');
 ok($md5, 'load source md5');
 
+# success
 my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentDataAndCopyBam->create(
     sample => $sample,
     bam_paths => \@bam_paths,
@@ -78,6 +79,23 @@ for my $instrument_data ( @instrument_data ) {
 
     $read_group++;
 }
+
+# recreate
+$cmd = Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentDataAndCopyBam->create(
+    sample => $sample,
+    bam_paths => \@bam_paths,
+    instrument_data_properties => {
+        original_data_path => $source_bam, 
+        sequencing_platform => 'solexa',
+        import_format => 'bam',
+        lane => 2, 
+        flow_cell_id => 'XXXXXX', 
+    },
+    source_md5s => [ $md5 ],
+);
+ok($cmd, "create command");
+ok(!$cmd->execute, "excute command");
+like(Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get->error_message, qr/^Instrument data was previously imported! Found existing instrument data with MD5s: /, 'correct error message');
 
 #print $instrument_data->data_directory."\n";<STDIN>;
 done_testing();
