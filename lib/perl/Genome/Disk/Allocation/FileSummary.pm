@@ -32,9 +32,11 @@ class Genome::Disk::Allocation::FileSummary {
         },
         digest => {
             is => 'Text',
+            is_optional => 1,
         },
         size_in_bytes => {
             is => 'Number',
+            is_optional => 1,
         },
         is_symlink => {
             is => 'Boolean',

@@ -10,6 +10,8 @@ use Carp qw(croak confess);
 use Digest::MD5 qw(md5_hex);
 use File::Copy::Recursive 'dircopy';
 use List::Util 'shuffle';
+use File::Find;
+use Cwd;
 use DateTime;
 
 our $TESTING_DISK_ALLOCATION = 0;
@@ -1586,6 +1588,25 @@ sub archive_after_time {
         return $self->__archive_after_time(@_);
     } else {
         return $self->__archive_after_time;
+    }
+}
+
+
+sub _create_file_summaries {
+    my $self = shift;
+
+    my $old_cwd = getcwd;
+    chdir($self->absolute_path);
+    my @files;
+    #why is File::Find this stupid? who knows...
+    find(sub { push(@files, $File::Find::name) unless (-d $_) }, '.');
+    chdir($old_cwd);
+
+    for my $file (@files) {
+        Genome::Disk::Allocation::FileSummary->create_or_update(
+            allocation => $self,
+            file => $file
+        );
     }
 }
 
