@@ -182,6 +182,7 @@ sub get_parts_of_class {
 
     my @desired_parts;
     for my $part (@parts) {
+        next unless $part->entity;
         my @classes = Class::ISA::self_and_super_path($part->entity->class);
         push @desired_parts, $part if grep { $_ eq $desired_class } @classes;
     }
