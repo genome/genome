@@ -21,7 +21,7 @@ class Genome::Model::ClinSeq::Command::MakeCircosPlot {
     has_param => [
         use_version         => { is => 'Text',
                                 valid_values => [ Genome::Sys->sw_versions("circos") ],
-                                default_value => '0.64',
+                                default_value => '0.64.broken',
                                 doc => 'the version of circos to use' },
     ],
     doc => 'This module interfaces with the circos program to produce a circos plot for a clin-seq build.',
@@ -37,7 +37,7 @@ EOS
 
 sub help_synopsis {
   return <<EOS
-    genome model clin-seq make-circos-plot --build model.name~bainsc%clinseq1,is_last_complete=1 --output-directory /tmp/outdir
+    genome model clin-seq make-circos-plot --build=aee9a31051754702a9c2835d63abc812 --output-directory /tmp/outdir
 EOS
 }
 
@@ -560,7 +560,7 @@ EOS
     #SNV
     my $snv_file = Genome::Sys->read_file("$output_directory/raw/snvs.hq.tier1.v1.annotated.compact.tsv");
     my $snv_fh = Genome::Sys->open_file_for_writing("$output_directory/data/snvs.hq.tier1.v1.annotated.compact.tsv");
-    while ($snv_file =~ /(\S+):(\d+)-(\d+)\t\S+\t(\S+)\t\w+\t(\S+)\t(\S+)\t(\S+)\t.+/g) {
+    while ($snv_file =~ /(\S+):(\d+)-(\d+)\s+\S+\s+(\S+)\s+\w+\s+(\S+)\s+(\S+)\s+(\S+)\s+.+/g) {
     
         $genes_noAmpDel{$4}="hs$1\t$2\t$3";
         $genes_AmpDel{$4}="hs$1\t$2\t$3";
