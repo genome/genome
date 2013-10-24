@@ -427,7 +427,6 @@ sub sw_version_path_map {
                     $version = substr($version,1);
                 }
                 next unless $version =~ /[0-9\.]/;
-                next if -l $version_path;
                 if (grep { index($version_path,$_) == 0 } @sw_ignore) {
                     next;
                 }

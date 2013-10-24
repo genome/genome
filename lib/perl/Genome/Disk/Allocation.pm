@@ -8,7 +8,7 @@ use Genome::Utility::Instrumentation;
 
 use Carp qw(croak confess);
 use Digest::MD5 qw(md5_hex);
-use File::Copy::Recursive 'dircopy';
+use File::Copy::Recursive qw(dircopy dirmove);
 use List::Util 'shuffle';
 use File::Find;
 use Cwd;
@@ -1591,6 +1591,40 @@ sub archive_after_time {
     }
 }
 
+sub purge {
+    my $self = shift;
+    my $reason = shift;
+    die("You must supply a reason for the purge!") unless $reason;
+    return $self->_execute_system_command('_purge', reason => $reason);
+}
+
+sub _purge {
+    my $class = shift;
+    my %params = @_;
+    my $reason = delete $params{reason};
+    my $allocation_id = delete $params{id};
+
+    my $self = $class->get($allocation_id);
+    die("No allocation found for id: $allocation_id") unless $self;
+    die("You must supply a reason for the purge!") unless $reason;
+
+    $self->_create_file_summaries();
+    my $trash_folder = $self->_get_trash_folder();
+
+    unless($ENV{UR_DBI_NO_COMMIT}) {
+        my $destination_directory = Genome::Sys->create_directory(File::Spec->join($trash_folder, $self->id));
+        dirmove($self->absolute_path, $destination_directory);
+    }
+
+    $self->status('purged');
+
+    Genome::Timeline::Event::Allocation->purged(
+        $reason,
+        $self,
+    );
+
+    return 1;
+}
 
 sub _create_file_summaries {
     my $self = shift;
@@ -1636,6 +1670,24 @@ sub _commit_unless_testing {
 
 sub _default_archive_after_time {
     DateTime->now(time_zone => 'local')->add(years => 1)->strftime('%F %T');
+}
+
+sub _get_trash_folder {
+    my $self = shift;
+
+    my @dv = Genome::Disk::Volume->get(disk_group_names => 'apipe_trash');
+    my %trash_map = map {
+       $self->_extract_aggr($_->physical_path) => File::Spec->join($_->mount_path, '.trash');
+    } @dv;
+
+    my $aggr = $self->_extract_aggr($self->volume->physical_path);
+
+    return $trash_map{$aggr};
+}
+
+sub _extract_aggr {
+    my $self = shift;
+    return (shift =~ m!/(aggr\d{2})/!)[0];
 }
 
 1;

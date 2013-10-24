@@ -2507,6 +2507,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
         undef,
         'somatic-validation-model-id=s',
         undef,
+        'somatic-variation-model-id=s',
+        undef,
         'help!',
         undef
       ],
