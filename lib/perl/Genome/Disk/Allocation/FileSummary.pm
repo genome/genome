@@ -50,6 +50,20 @@ class Genome::Disk::Allocation::FileSummary {
 sub create {
     my $class = shift;
     my $self = $class->SUPER::create(@_);
+    return $self->initialize();
+}
+
+sub create_or_update {
+    my $class = shift;
+    my $self = $class->get(@_);
+    unless ($self) {
+       $self = $class->SUPER::create(@_);
+    }
+    return $self->initialize()
+}
+
+sub initialize {
+    my $self = shift;
 
     eval {
         my $file_path = File::Spec->join($self->allocation->absolute_path, $self->file);
@@ -72,7 +86,6 @@ sub create {
     };
 
     if(my $error = $@) {
-        $self->allocation_id(undef);
         die($error);
     }
 
