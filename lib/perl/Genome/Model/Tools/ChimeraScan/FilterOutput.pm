@@ -8,7 +8,7 @@ use Genome::File::BedPe::Entry;
 use Genome::File::BedPe::Reader;
 
 class Genome::Model::Tools::ChimeraScan::FilterOutput {
-    is  => 'Command',
+    is  => 'Command::V2',
     has => [
         bedpe_file => {
             is => 'Text',

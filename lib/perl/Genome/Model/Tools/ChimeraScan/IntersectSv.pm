@@ -10,7 +10,7 @@ use Genome::File::BedPe::Entry;
 use Genome::File::BedPe::Reader;
 
 class Genome::Model::Tools::ChimeraScan::IntersectSv {
-    is  => 'Command',
+    is  => 'Command::V2',
     has => [
         filtered_bedpe_file => {
             is => 'Text',
