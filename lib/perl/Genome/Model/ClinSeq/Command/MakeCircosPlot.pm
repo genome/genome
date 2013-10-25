@@ -21,7 +21,7 @@ class Genome::Model::ClinSeq::Command::MakeCircosPlot {
     has_param => [
         use_version         => { is => 'Text',
                                 valid_values => [ Genome::Sys->sw_versions("circos") ],
-                                default_value => '0.64.broken',
+                                default_value => '0.64',
                                 doc => 'the version of circos to use' },
     ],
     doc => 'This module interfaces with the circos program to produce a circos plot for a clin-seq build.',
