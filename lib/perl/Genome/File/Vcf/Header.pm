@@ -1,7 +1,10 @@
 package Genome::File::Vcf::Header;
 
 use Carp qw/confess/;
+use Parse::RecDescent;
 use Genome;
+
+use Genome::File::Vcf::MetaInfoParser;
 
 use strict;
 use warnings;
@@ -71,7 +74,12 @@ class Genome::File::Vcf::Header {
             is => 'HASH',
             doc => 'Hash of filter name => description',
             default_value => {},
-        }
+        },
+        metainfo => {
+            is => 'HASH',
+            doc => 'Hash of metainformation name => contents',
+            default_value => {},
+        },
     ],
 };
 
@@ -91,6 +99,7 @@ sub to_string {
 
     push @lines, grep {defined} (
         @unparsed,
+        $self->_metainfo_lines,
         $self->_info_lines,
         $self->_format_lines,
         $self->_filter_lines,
@@ -102,6 +111,48 @@ sub to_string {
 sub _header_line {
     my $self = shift;
     return "#" . join("\t", @COLUMN_HEADERS, $self->sample_names);
+}
+
+sub _metainfo_lines {
+    my $self = shift;
+    return unless $self->metainfo;
+    return map {sprintf "##%s=%s", $_, $self->_metainfo_to_string($self->metainfo->{$_})} sort keys %{$self->metainfo};
+}
+
+sub _metainfo_to_string {
+    my $self = shift;
+    my $metainfo = shift;
+    return "" unless $metainfo;
+
+    if (ref $metainfo eq "") {
+        if ($metainfo =~ /[\w\d]+/) {
+            return $metainfo;
+        }
+        else {
+            return "\"$metainfo\""
+        }
+    }
+    elsif (ref $metainfo eq 'HASH') {
+        return "<".join(",", map {$self->_resolve_hash($_, $metainfo->{$_})} sort keys %$metainfo).">";
+    }
+    elsif (ref $metainfo eq 'ARRAY') {
+        return join(",", map {$self->_metainfo_to_string($_) } @$metainfo);
+    }
+    else {
+        confess "Unknown metainfo object ".Data::Dumper::Dumper($metainfo);
+    }
+}
+
+sub _resolve_hash {
+    my $self = shift;
+    my ($key, $value) = @_;
+
+    if ($value eq "IS_VCF_FLAG") {
+        return $key;
+    }
+    else {
+        return "$key=".$self->_metainfo_to_string($value);
+    }
 }
 
 sub _info_lines {
@@ -181,7 +232,7 @@ sub _parse_meta_info {
             };
 
         # Don't know what this is...
-        push(@{$self->_unparsed_lines}, $line);
+        $self->add_metainfo_str($key, $value);
     }
 }
 
@@ -253,6 +304,17 @@ sub add_filter_str {
 
     warn "Duplicate filter name $id in Vcf header" if exists $self->filters->{$id};
     $self->filters->{$id} = $description;
+}
+
+sub add_metainfo_str {
+    my ($self, $key, $str) = @_;
+    my $metainfo_hash = Genome::File::Vcf::MetaInfoParser->parse($str);
+    if ($self->metainfo->{$key}) {
+        push @{$self->metainfo->{$key}}, $metainfo_hash;
+    }
+    else {
+        $self->metainfo->{$key} = [$metainfo_hash];
+    }
 }
 
 sub add_filter {

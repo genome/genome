@@ -27,6 +27,8 @@ my $header_txt = <<EOS;
 ##INFO=<ID=GMAF,Number=A,Type=Float,Description="Global minor allele frequency">
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
 ##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read depth">
+##SAMPLE=<Accession=hhh000034,File=TCGA-1.bam,ID=TCGA-1,Platform=Illumina,SampleTCGABarcode=TCGA-1,SampleUUID=536-345-5dc-8234,Source=dbGap>
+##vcfProcessLog=<InputVCFSource=<Samtools>>
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	S1	S2	S3
 EOS
 my @lines = split("\n", $header_txt);
