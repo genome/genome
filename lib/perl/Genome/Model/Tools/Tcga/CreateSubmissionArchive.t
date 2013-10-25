@@ -10,9 +10,13 @@ use warnings;
 
 use above "Genome";
 use Test::More;
+use Genome::Utility::Test;
+use Genome::Test::Factory::Model::SomaticVariation;
 
 my $class = "Genome::Model::Tools::Tcga::CreateSubmissionArchive";
 use_ok($class);
+
+my $base_dir = Genome::Utility::Test->data_dir_ok($class, "v1");
 
 my @headers = $class->get_sdrf_headers;
 
@@ -82,5 +86,16 @@ is_deeply(\@empty_keys, \@sorted_headers, "Empty row got filled in");
 for my $key (@sorted_headers) {
     is($null_row->{$key}, $class->get_null_character, "Empty row was filled in with null symbols");
 }
+
+my $test_output = Genome::Sys->create_temp_file_path;
+ok($class->print_sdrf($test_output, $null_row), "print_sdrf ran ok with a row of nulls");
+ok(-s $test_output, "Output file exists");
+`cat $test_output > temp`;
+
+my $test_build = Genome::Test::Factory::Model::SomaticVariation->setup_somatic_variation_build;
+
+$test_build->data_directory($base_dir."/som_var_dir");
+my $row = $class->create_vcf_row($test_build);
+print Data::Dumper::Dumper($row);
 
 done_testing;

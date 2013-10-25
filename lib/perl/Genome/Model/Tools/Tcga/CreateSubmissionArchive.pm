@@ -3,6 +3,7 @@ package Genome::Model::Tools::Tcga::CreateSubmissionArchive;
 use strict;
 use warnings;
 use Genome;
+use Genome::File::Vcf::Reader;
 
 my $NULL_CHARACTER = "->";
 my $SDRF_FILE_NAME = "sdrf";
@@ -89,14 +90,36 @@ sub execute {
     }
 
     $self->print_idf($self->gather_protocols(@sdrf_rows));
-    $self->print_sdrf(@sdrf_rows);
+    $self->print_sdrf($self->output_dir."/".$SDRF_FILE_NAME, @sdrf_rows);
     $self->print_manifest(@manifest_rows);
 
     return 1;
 }
 
 sub create_vcf_row {
+    my $self = shift;
+    my $build = shift;
+    my %row;
 
+    my $snvs_vcf = $build->data_directory."/variants/snvs.vcf.gz";
+    die "Couldn't find file $snvs_vcf" unless (-s $snvs_vcf);
+    my $vcf_reader = new Genome::File::Vcf::Reader($snvs_vcf);
+    my $vcf_sample_info = $vcf_reader->header->metainfo->{"SAMPLE"};
+    unless (@$vcf_sample_info == 1) {
+        $self->error_message("Not exactly one SAMPLE vcf header in $snvs_vcf");
+        return;
+    }
+    $row{"Extract Name"} = $vcf_sample_info->[0]->{"SampleUUID"};
+    unless ($row{"Extract Name"}) {
+        $self->error_message("No UUID in vcf from build ".$build->id);
+        return;
+    }
+    $row{"Material Comment [TCGA Barcode]"} = $vcf_sample_info->[0]->{"SampleTCGABarcode"};
+    unless ($row{"Material Comment [TCGA Barcode]"}) {
+        $self->error_message("No extraction label set on subject of build ".$build->id);
+        return;
+    }
+    return \%row;
 }
 
 sub create_maf_row {
@@ -113,11 +136,14 @@ sub print_idf {
 
 sub print_sdrf {
     my $self = shift;
+    my $output_file = shift;
     my @rows = @_;
+
+    my $temp = Genome::Sys->create_temp_file_path;
     my $writer = Genome::Utility::IO::SeparatedValueWriter->create(
-        output => $self->output_dir."/".$SDRF_FILE_NAME,
+        output => $temp,
         separator => "\t",
-        headers => $self->get_sdrf_headers,
+        headers => [$self->get_sdrf_headers],
         print_headers => 0,
     );
 
@@ -125,7 +151,15 @@ sub print_sdrf {
         $writer->write_one($self->fill_in_nulls($row));
     }
 
-    $writer->close;
+    my $in = Genome::Sys->open_file_for_reading($temp);
+
+    my $out = Genome::Sys->open_file_for_writing($output_file);
+    $out->print(join("\t", $self->get_output_headers)."\n");
+    
+    while (my $line = <$in>) {
+        $out->print($line);
+    }
+    $out->close;
 
     return 1;
 }
@@ -158,6 +192,18 @@ sub get_sdrf_headers {
         push @headers, map {"$key ".$_} @$value;
     }
     return @headers;
+}
+
+sub get_output_headers {
+    my $self = shift;
+
+    my @new_headers;
+    for my $header ($self->get_sdrf_headers) {
+        my @fields = split(/\s/, $header);
+        shift @fields;
+        push @new_headers, join(" ", @fields);
+    }
+    return @new_headers;
 }
 
 1;
