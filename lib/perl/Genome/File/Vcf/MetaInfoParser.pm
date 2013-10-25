@@ -38,7 +38,7 @@ my $grammar = q{
 
     arbitraryString:  /.+/
 
-    string: /[\d\w\s-_\/\:\.]+/
+    string: /[^<>=,"]+/
       | <perl_quotelike>
       { $return = $item[1]->[2] }
 
