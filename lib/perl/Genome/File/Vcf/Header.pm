@@ -147,11 +147,11 @@ sub _resolve_hash {
     my $self = shift;
     my ($key, $value) = @_;
 
-    if ($value eq "IS_VCF_FLAG") {
-        return $key;
+    if (defined $value){
+        return "$key=".$self->_metainfo_to_string($value);
     }
     else {
-        return "$key=".$self->_metainfo_to_string($value);
+        return $key;
     }
 }
 

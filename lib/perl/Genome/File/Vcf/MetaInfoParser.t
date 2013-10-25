@@ -42,7 +42,7 @@ my @tests = (
         input => "<InputVCFSource=<Samtools>>",
         expected => {
             InputVCFSource => {
-                Samtools => "IS_VCF_FLAG"
+                Samtools => undef 
             }
         },
         description => "hash with flag",

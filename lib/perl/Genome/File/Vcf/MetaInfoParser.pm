@@ -21,7 +21,7 @@ my $grammar = q{
     pair: key "=" value
       { $return = {$item{key} => $item{value}} }
       | flag
-      { $return = {$item{flag} => "IS_VCF_FLAG"} }
+      { $return = {$item{flag} => undef} }
 
     flag: string
 
