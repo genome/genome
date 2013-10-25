@@ -62,8 +62,6 @@ sub _detect_variants {
         $per_read_length = 1;
     }
 
-
-
     my %input;
 
     # Define a workflow from the static XML at the bottom of this module
@@ -119,8 +117,6 @@ sub _detect_variants {
 
     return 1;
 }
-
-
 
 sub has_version {
     return 1; #FIXME implement this when this module is filled out
