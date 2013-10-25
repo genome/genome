@@ -6,9 +6,10 @@ use Genome;
 
 use Parse::RecDescent;
 
+#$::RD_TRACE = 1;
 my $grammar = q{
     evaluate_metainfo: map
-      | list
+      | arbitraryString 
 
     map: "<" pairs ">"
       { $return = $item{pairs} }
@@ -34,6 +35,8 @@ my $grammar = q{
       { unshift @{$item{list}}, $item{string}; $return = $item{list} }
       | string
       { $return = [$item{string}] }
+
+    arbitraryString:  /.+/
 
     string: /[\d\w\s-_\/\:\.]+/
       | <perl_quotelike>

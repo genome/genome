@@ -17,11 +17,13 @@ use_ok($class);
 my @tests = (
     {
         input => "20130805",
-        expected => ['20130805']
+        expected => '20130805',
+        description => "date",
     },
     {
         input => "ftp://ftp.ncbi.nih.gov/genbank/genomes/Eukaryotes/vertebrates_mammals/Homo_sapiens/GRCh37/special_requests/GRCh37-lite.fa.gz",
-        expected => ['ftp://ftp.ncbi.nih.gov/genbank/genomes/Eukaryotes/vertebrates_mammals/Homo_sapiens/GRCh37/special_requests/GRCh37-lite.fa.gz'],
+        expected => 'ftp://ftp.ncbi.nih.gov/genbank/genomes/Eukaryotes/vertebrates_mammals/Homo_sapiens/GRCh37/special_requests/GRCh37-lite.fa.gz',
+        description => "url",
     },
     {
         input => "<ID=TCGA-A2-A0CO-01A-13D-A228-09,SampleUUID=36053173-6839-43ec-8157-75d729085e6b,SampleTCGABarcode=TCGA-A2-A0CO-01A-13D-A228-09,File=TCGA-A2-A0CO-01A-13D-A228-09.bam,Platform=Illumina,Source=dbGap,Accession=phs000178>",
@@ -33,7 +35,8 @@ my @tests = (
             Platform => "Illumina",
             Source => "dbGap",
             Accession => "phs000178",
-        }
+        },
+        description => "sample",
     },
     {
         input => "<InputVCFSource=<Samtools>>",
@@ -41,7 +44,8 @@ my @tests = (
             InputVCFSource => {
                 Samtools => "IS_VCF_FLAG"
             }
-        }
+        },
+        description => "hash with flag",
     },
     {
         input => "<ID=SS,Number=1,Type=Integer,Description=\"Variant status relative to non-adjacent Normal,0=wildtype,1=germline,2=somatic,3=LOH,4=post-transcriptional modification,5=unknown\">",
@@ -50,7 +54,8 @@ my @tests = (
             Number => "1",
             Type => "Integer",
             Description => "Variant status relative to non-adjacent Normal,0=wildtype,1=germline,2=somatic,3=LOH,4=post-transcriptional modification,5=unknown",
-        }
+        },
+        description => "map",
     },
     {
         input => "<ID=MQ,Number=1,Type=Integer,Description=\"Phred style probability score that the variant is novel with respect to the genome\'s ancestor\">",
@@ -59,31 +64,28 @@ my @tests = (
             Number => "1",
             Type => "Integer",
             Description => "Phred style probability score that the variant is novel with respect to the genome\'s ancestor",
-        }
+        },
+        description => "map with quoted string",
     },
     {
         input => "/gsc/pkg/bio/vcftools/installed/bin/vcf-annotate",
-        expected => [
-            "/gsc/pkg/bio/vcftools/installed/bin/vcf-annotate",
-        ]
+        expected => "/gsc/pkg/bio/vcftools/installed/bin/vcf-annotate",
+        description => "file path",
     },
-
-);
-=cut
     {
         input => "/gsc/pkg/bio/vcftools/installed/bin/vcf-annotate -a /gscmnt/ams1102/info/model_data/2771411739/build106409619/annotation_data/tiering_bed_files_v3/tiers.bed.gz -d key=INFO,ID=TIER,Number=1,Type=Integer,Description=Location of variant by tier -c CHROM,FROM,TO,INFO/TIER",
-        expected => [
-            "/gsc/pkg/bio/vcftools/installed/bin/vcf-annotate -a /gscmnt/ams1102/info/model_data/2771411739/build106409619/annotation_data/tiering_bed_files_v3/tiers.bed.gz -d key=INFO,ID=TIER,Number=1,Type=Integer,Description=Location of variant by tier -c CHROM,FROM,TO,INFO/TIER"
-        ]
+        expected => "/gsc/pkg/bio/vcftools/installed/bin/vcf-annotate -a /gscmnt/ams1102/info/model_data/2771411739/build106409619/annotation_data/tiering_bed_files_v3/tiers.bed.gz -d key=INFO,ID=TIER,Number=1,Type=Integer,Description=Location of variant by tier -c CHROM,FROM,TO,INFO/TIER",
+        description => "arbitrary string with = and ,",
     },
-=cut
+);
 
 for my $test (@tests) {
     my $input = $test->{input};
     my $expected = $test->{expected};
+    my $description = $test->{description};
     my $output = $class->parse($input);
-    ok($output, "Output created") or diag("Parsing failed for input: $input");
-    is_deeply($output, $expected, "Input parsed as expected")
+    ok($output, "Output created for $description") or diag("Parsing failed for input: $input");
+    is_deeply($output, $expected, "Input parsed as expected for $description")
         or diag("Input: $input\nExpected: " .Data::Dumper::Dumper($expected) . "Got: ". Data::Dumper::Dumper($output));
 }
 
