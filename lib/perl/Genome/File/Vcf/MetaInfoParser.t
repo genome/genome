@@ -61,7 +61,22 @@ my @tests = (
             Description => "Phred style probability score that the variant is novel with respect to the genome\'s ancestor",
         }
     },
+    {
+        input => "/gsc/pkg/bio/vcftools/installed/bin/vcf-annotate",
+        expected => [
+            "/gsc/pkg/bio/vcftools/installed/bin/vcf-annotate",
+        ]
+    },
+
 );
+=cut
+    {
+        input => "/gsc/pkg/bio/vcftools/installed/bin/vcf-annotate -a /gscmnt/ams1102/info/model_data/2771411739/build106409619/annotation_data/tiering_bed_files_v3/tiers.bed.gz -d key=INFO,ID=TIER,Number=1,Type=Integer,Description=Location of variant by tier -c CHROM,FROM,TO,INFO/TIER",
+        expected => [
+            "/gsc/pkg/bio/vcftools/installed/bin/vcf-annotate -a /gscmnt/ams1102/info/model_data/2771411739/build106409619/annotation_data/tiering_bed_files_v3/tiers.bed.gz -d key=INFO,ID=TIER,Number=1,Type=Integer,Description=Location of variant by tier -c CHROM,FROM,TO,INFO/TIER"
+        ]
+    },
+=cut
 
 for my $test (@tests) {
     my $input = $test->{input};

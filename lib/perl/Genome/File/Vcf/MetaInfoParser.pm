@@ -35,9 +35,10 @@ my $grammar = q{
       | string
       { $return = [$item{string}] }
 
-    string: <perl_quotelike>
+    string: /[\d\w\s-_\/\:\.]+/
+      | <perl_quotelike>
       { $return = $item[1]->[2] }
-      | /[\d\w\s-_\/\:\.]+/
+
 };
 
 my $parser;
