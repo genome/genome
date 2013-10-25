@@ -214,6 +214,7 @@ sub _sort_sam {
 
     my $unsorted_sam = "$given_sam.unsorted";
 
+    # Prepare sort command
     unless (move($given_sam, $unsorted_sam)) {
         die $self->error_message(
             "Unable to move $given_sam to $unsorted_sam. " .
@@ -231,11 +232,13 @@ sub _sort_sam {
         use_version            => $self->picard_version,
     );
 
+    # Run sort command
     unless ($picard_sort_cmd and $picard_sort_cmd->execute) {
         die $self->error_message(
             "Failed to create or execute Picard sort command.");
     }
 
+    # Clean up
     unless (unlink($unsorted_sam)) {
         $self->status_message("Could not unlink $unsorted_sam.");
     }
@@ -248,18 +251,23 @@ sub _sort_sam {
 sub _fix_sam {
     my ($self, $raw_sequences, $all_sequences, $is_paired, $include_secondary, $mark_secondary_as_duplicate) = @_;
 
+    # Generate RG and PG tag
     my $rg_id = $self->read_and_platform_group_tag_id;
     my $rg_tag = "RG:Z:$rg_id\tPG:Z:$rg_id";
 
+    # Open read filehandles
     open my $all_sequences_read_fh, '<', $all_sequences;
     open my $raw_sequences_read_fh, '<', $raw_sequences;
 
+    # Get existing headers
     my @all_sequences_headers = _get_headers($all_sequences_read_fh); # get headers provided in all_sequences.fa
     my @raw_sequences_headers = _get_headers($raw_sequences_read_fh); # get headers created by Bwa
 
+    # Open write (append) filehandle
     close $all_sequences_read_fh;
     open my $all_sequences_append_fh, '>>', $all_sequences;
 
+    # Create final header
     for my $raw_header (@raw_sequences_headers) {
         unless (grep { index($_, $raw_header) >= 0 } @all_sequences_headers) {
             # Add any unique headers from Bwa to all_sequences.fa
@@ -268,6 +276,7 @@ sub _fix_sam {
         }
     }
 
+    # Loop over all records
     while (my @read_set = _get_read_set($raw_sequences_read_fh)) {
         die "No reads in read set; this should not happen"
             unless @read_set;
