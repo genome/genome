@@ -95,7 +95,7 @@ ok(-s $test_output, "Output file exists");
 my $test_build = Genome::Test::Factory::Model::SomaticVariation->setup_somatic_variation_build;
 
 $test_build->data_directory($base_dir."/som_var_dir");
-my $row = $class->create_vcf_row($test_build);
+my $row = $class->create_vcf_row($test_build, "test_archive");
 print Data::Dumper::Dumper($row);
 
 done_testing;

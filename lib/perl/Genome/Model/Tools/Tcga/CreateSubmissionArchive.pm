@@ -81,7 +81,7 @@ sub execute {
             $self->error_message("Could not resolve build from model ".$model->__display_name__);
             return;
         }
-        push @sdrf_rows, $self->create_vcf_row($build);
+        push @sdrf_rows, $self->create_vcf_row($build, $self->archive_name);
         push @manifest_rows, $self->create_manifest_row($build);
     }
 
@@ -99,6 +99,7 @@ sub execute {
 sub create_vcf_row {
     my $self = shift;
     my $build = shift;
+    my $archive_name = shift;
     my %row;
 
     my $snvs_vcf = $build->data_directory."/variants/snvs.vcf.gz";
@@ -109,16 +110,43 @@ sub create_vcf_row {
         $self->error_message("Not exactly one SAMPLE vcf header in $snvs_vcf");
         return;
     }
-    $row{"Extract Name"} = $vcf_sample_info->[0]->{"SampleUUID"};
+    $row{"Extract Name"} = $vcf_sample_info->[0]->{"SampleUUID"}->{content};
     unless ($row{"Extract Name"}) {
         $self->error_message("No UUID in vcf from build ".$build->id);
         return;
     }
-    $row{"Material Comment [TCGA Barcode]"} = $vcf_sample_info->[0]->{"SampleTCGABarcode"};
+    $row{"Material Comment [TCGA Barcode]"} = $vcf_sample_info->[0]->{"SampleTCGABarcode"}->{content};
     unless ($row{"Material Comment [TCGA Barcode]"}) {
         $self->error_message("No extraction label set on subject of build ".$build->id);
         return;
     }
+    #remaining required fields:
+    #$row{"Material Comment [is tumor]"}
+    #$row{"Material Material Type"}
+    #$row{"Material TCGA Genome Reference"}
+    #$row{"Library Protocol REF"}
+    #$row{"Library Parameter Value [Vendor]"} #only for non-custom
+    #$row{"Library Parameter Value [Catalog Name]"} #only for non-custom
+    #$row{"Library Parameter Value [Catalog Number]"} #only for non-custom
+    #$row{"Mapping Protocol REF"}
+    $row{"Mapping Comment [Derived Data File REF]"} =  $vcf_sample_info->[0]->{"File"}->{content};
+    #$row{"Mapping Comment [TCGA CGHub ID]"}
+    $row{"Mapping Comment [TCGA Include for Analysis]"} = "yes";
+    #$row{"Variants Protocol REF"}
+    #$row{"Variants Derived Data File"}
+    $row{"Variants Comment [TCGA Include for Analysis]"} = "yes";
+    $row{"Variants Comment [TCGA Data Type]"} = "Mutations";
+    $row{"Variants Comment [TCGA Data Level]"} = "Level 2";
+    $row{"Variants Comment [TCGA Archive Name]"} = $archive_name;
+    #$row{"Maf Protocol REF"}
+    #Required if providing maf file:
+    #$row{"Maf Derived Data File"}
+    $row{"Maf Comment [TCGA Spec Version]"} = 2.3;
+    $row{"Maf Comment [TCGA Include for Analysis]"} = "yes";
+    $row{"Maf Comment [TCGA Data Type]"} = "Mutations";
+    $row{"Maf Comment [TCGA Data Level]"} = "Level 2";
+    $row{"Maf Comment [TCGA Archive Name]"} = $archive_name;
+
     return \%row;
 }
 
