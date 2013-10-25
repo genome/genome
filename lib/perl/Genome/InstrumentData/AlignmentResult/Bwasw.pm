@@ -157,6 +157,9 @@ sub _run_aligner {
         die $self->error_message("Input '$_' is empty.") unless -s $_;
     }
 
+    # Disconnect from db
+    $self->_disconnect_from_db();
+
     # Run bwasw.
     my $full_command = sprintf '%s bwasw %s %s %s 1>> %s 2>> %s',
         $cmd_path, $params, $reference_fasta_path,
@@ -168,6 +171,9 @@ sub _run_aligner {
         output_files => [ $raw_sequences, $log_path ],
         skip_if_output_is_present => 0,
     );
+
+    # Hopefully we're still disconnected
+    $self->_check_db_connection();
 
     # TODO One potential improvement is to stream the output from bwasw
     # straight into _fix_sam. However, _fix_sam currently seeks back and forth
@@ -208,6 +214,31 @@ sub _run_aligner {
     return 1;
 }
 
+sub _disconnect_from_db {
+    my ($self) = @_;
+
+    $self->status_message("Closing data source db handle...");
+    if ($self->__meta__->data_source->has_default_handle) {
+        if ($self->__meta__->data_source->disconnect_default_handle) {
+            $self->status_message("Disconnected data source db handle (as expected).");
+        } else {
+            $self->status_message("Unable to disconnect data source db handle.");
+        }
+    } else {
+        $self->status_message("Data source db handle already closed.");
+    }
+}
+
+sub _check_db_connection {
+    my ($self) = @_;
+
+    if ($self->__meta__->data_source->has_default_handle) {
+        $self->status_message("Data source db handle unexpectedly reconnected itself.");
+    } else {
+        $self->status_message("Data source db handle still closed (as expected).");
+    }
+}
+
 # Sort a sam file.
 sub _sort_sam {
     my ($self, $given_sam) = @_;
@@ -232,11 +263,17 @@ sub _sort_sam {
         use_version            => $self->picard_version,
     );
 
+    # Disconnect from db
+    $self->_disconnect_from_db();
+
     # Run sort command
     unless ($picard_sort_cmd and $picard_sort_cmd->execute) {
         die $self->error_message(
             "Failed to create or execute Picard sort command.");
     }
+
+    # Hopefully we're still disconnected
+    $self->_check_db_connection();
 
     # Clean up
     unless (unlink($unsorted_sam)) {
@@ -276,6 +313,9 @@ sub _fix_sam {
         }
     }
 
+    # Disconnect from db before processing the rest of the sam file
+    $self->_disconnect_from_db();
+
     # Loop over all records
     while (my @read_set = _get_read_set($raw_sequences_read_fh)) {
         die "No reads in read set; this should not happen"
@@ -299,6 +339,9 @@ sub _fix_sam {
 
     close $raw_sequences_read_fh;
     close $all_sequences_append_fh;
+
+    # Hopefully we're still disconnected
+    $self->_check_db_connection();
 }
 
 # Fixes a read set containing paired reads.
