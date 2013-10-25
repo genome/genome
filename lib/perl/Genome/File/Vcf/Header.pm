@@ -124,12 +124,12 @@ sub _metainfo_to_string {
     my $metainfo = shift;
     return "" unless $metainfo;
 
-    if (ref $metainfo eq "") {
-        if ($metainfo =~ /[\w\d]+/) {
-            return $metainfo;
+    if (ref $metainfo eq "Genome::File::Vcf::Header::String") {
+        if ($metainfo->{is_quoted}) {
+            return "\"".$metainfo->{content}."\"";
         }
         else {
-            return "\"$metainfo\""
+            return $metainfo->{content};
         }
     }
     elsif (ref $metainfo eq 'HASH') {

@@ -23,7 +23,7 @@ my $grammar = q{
       | flag
       { $return = {$item{flag} => undef} }
 
-    flag: string
+    flag: key
 
     key: /[\w\d]+/
 
@@ -37,10 +37,13 @@ my $grammar = q{
       { $return = [$item{string}] }
 
     arbitraryString:  /.+/
+      { $return = Genome::File::Vcf::Header::String->new(content => $item[1], is_quoted => 0)}
 
     string: /[^<>=,"]+/
+      { $return = Genome::File::Vcf::Header::String->new(content => $item[1], is_quoted => 0)}
       | <perl_quotelike>
-      { $return = $item[1]->[2] }
+      { $return = Genome::File::Vcf::Header::String->new(content => $item[1]->[2],
+                                                            is_quoted => 1)}
 
 };
 
@@ -56,6 +59,13 @@ sub parse {
     }
     return $parser->evaluate_metainfo($str);
 }
+
+package Genome::File::Vcf::Header::String;
+sub new {
+    my ($class, %args) = @_;
+    return bless { %args }, $class;
+}
+
 
 1;
 
