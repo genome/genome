@@ -18,7 +18,7 @@ use File::Compare;
 my $class = 'Genome::Model::Tools::DetectVariants2::CopyCatSomaticWithBamWindow';
 use_ok($class);
 
-my $test_version = 2;
+my $test_version = 1;
 my $test_dir = File::Spec->join(Genome::Utility::Test->data_dir($class), "v$test_version");
 ok(-e $test_dir, "Test directory $test_dir exists");
 

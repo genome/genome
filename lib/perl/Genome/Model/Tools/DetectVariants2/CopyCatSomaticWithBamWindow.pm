@@ -76,7 +76,7 @@ sub _detect_variants {
         die "Errors validating workflow\n";
     }
 
-    my $genome_build = $self->_get_genome_build; #TODO: This is literally the dumbest thing on earth.  Fix it
+    my $genome_build = $self->_get_genome_build;
 
     # Collect and set input parameters
     #for bam-window
