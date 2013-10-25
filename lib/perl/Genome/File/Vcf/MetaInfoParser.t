@@ -39,7 +39,7 @@ my @tests = (
         input => "<InputVCFSource=<Samtools>>",
         expected => {
             InputVCFSource => {
-                Samtools => 1
+                Samtools => "IS_VCF_FLAG"
             }
         }
     },

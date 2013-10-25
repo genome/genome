@@ -19,8 +19,10 @@ my $grammar = q{
 
     pair: key "=" value
       { $return = {$item{key} => $item{value}} }
-      | string
-      { $return = {$item{string} => 1} }
+      | flag
+      { $return = {$item{flag} => "IS_VCF_FLAG"} }
+
+    flag: string
 
     key: /[\w\d]+/
 
