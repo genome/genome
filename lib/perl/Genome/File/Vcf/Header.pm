@@ -133,7 +133,7 @@ sub _metainfo_to_string {
         }
     }
     elsif (ref $metainfo eq 'HASH') {
-        return "<".join(",", map {$self->_resolve_hash($_, $metainfo->{$_})} sort keys %$metainfo).">";
+        return "<".join(",", map {$self->_format_hash_entry($_, $metainfo->{$_})} sort keys %$metainfo).">";
     }
     elsif (ref $metainfo eq 'ARRAY') {
         return join(",", map {$self->_metainfo_to_string($_) } @$metainfo);
@@ -143,7 +143,7 @@ sub _metainfo_to_string {
     }
 }
 
-sub _resolve_hash {
+sub _format_hash_entry {
     my $self = shift;
     my ($key, $value) = @_;
 
@@ -309,12 +309,7 @@ sub add_filter_str {
 sub add_metainfo_str {
     my ($self, $key, $str) = @_;
     my $metainfo_hash = Genome::File::Vcf::MetaInfoParser->parse($str);
-    if ($self->metainfo->{$key}) {
-        push @{$self->metainfo->{$key}}, $metainfo_hash;
-    }
-    else {
-        $self->metainfo->{$key} = [$metainfo_hash];
-    }
+    push @{$self->metainfo->{$key}}, $metainfo_hash;
 }
 
 sub add_filter {
