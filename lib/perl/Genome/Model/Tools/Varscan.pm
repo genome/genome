@@ -33,14 +33,14 @@ class Genome::Model::Tools::Varscan {
         version => {
             is    => 'String',
             doc   => 'version of Varscan application to use',
-            default_value => 'latest',
+            default_value => $DEFAULT_VERSION,
         },
         no_headers => {
             is => 'Boolean',
             doc => 'Stop varscan from putting headers on its output files',
             default_value => '0',
         },
-        
+
     ],
 };
 
@@ -55,6 +55,7 @@ EOS
 }
 
 my %VARSCAN_VERSIONS = (
+    '2.3.6' => $ENV{GENOME_SW_LEGACY_JAVA} . '/VarScan/VarScan.v2.3.6.jar',
     '2.3.5' => $ENV{GENOME_SW_LEGACY_JAVA} . '/VarScan/VarScan.v2.3.5.jar',
     '2.3.2' => $ENV{GENOME_SW_LEGACY_JAVA} . '/VarScan/VarScan.v2.3.2.jar',
     '2.3.1' => $ENV{GENOME_SW_LEGACY_JAVA} . '/VarScan/VarScan.v2.3.1.jar',
@@ -69,10 +70,17 @@ sub java_command_line {
 
     my $path = $self->path_for_version($self->version);
     my $headers = $self->no_headers ? "--no-headers 1" : "";
-    my $command_line = 'bash -c "java -jar ' . $path . ' ' . $parameter_string . ' '.$headers.' "';
+    my $command_line = 'java -jar ' . $path . ' ' . $parameter_string . ' '.$headers;
 
     return $command_line;
 }
+
+sub command_line {
+    my $self = shift;
+    my $parameter_string = shift;
+    return sprintf('bash -c "%s "', $self->java_command_line($parameter_string));
+}
+
 
 sub path_for_version {
     my $class = shift;

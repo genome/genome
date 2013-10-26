@@ -44,21 +44,31 @@
     when the assembly name is not the name of the build, set this 
   [1mgenerate-sequence-uri[0m
     (undocumented) 
+  [1mnogenerate-sequence-uri[0m
+    Make generate-sequence-uri 'false' 
   [1mskip-bases-files[0m
     If specified, individual bases files are not created for each sequence in the fasta 
     Default value 'true' if not specified
+  [1mnoskip-bases-files[0m
+    Make skip-bases-files 'false' 
   [1mis-rederivable[0m
     If true, indicates that the reference is the product of other analysis and could be rederived.
     It will be stored as a model/build product rather than imported data. 
     Default value 'false' (--nois-rederivable) if not specified
+  [1mnois-rederivable[0m
+    Make is-rederivable 'false' 
 
 [4mOPTIONAL PARAMS[0m
   [1mauto-assign-inst-data[0m
     Assigning instrument data to the model is performed automatically 
     Default value 'false' (--noauto-assign-inst-data) if not specified
+  [1mnoauto-assign-inst-data[0m
+    Make auto-assign-inst-data 'false' 
   [1mauto-build-alignments[0m
     The building of the model is performed automatically 
     Default value 'true' if not specified
+  [1mnoauto-build-alignments[0m
+    Make auto-build-alignments 'false' 
 
 [4mDESCRIPTION[0m
       # for a regular, complete fasta

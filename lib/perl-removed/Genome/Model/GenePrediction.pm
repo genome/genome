@@ -196,11 +196,9 @@ sub start_assembly_build {
     return $build;
 }
 
-# Given a list of models, return the most recent. This is determined using the model ID,
-# which is assumed to be larger for new models.
 sub get_most_recent_model {
     my ($self, $assembly_models) = @_;
-    my @sorted_models = sort {$b->genome_model_id <=> $a->genome_model_id} @$assembly_models;
+    my @sorted_models = sort {$b->creation_date cmp $a->genome_model_id} @$assembly_models;
     return shift @sorted_models;
 }
 

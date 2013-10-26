@@ -3,6 +3,7 @@
 use above 'Genome';
 use Data::Dumper;
 use Test::More;
+use Genome::File::Vcf::Genotype;
 
 use strict;
 use warnings;
@@ -31,77 +32,324 @@ EOS
 my @lines = split("\n", $header_txt);
 my $header = Genome::File::Vcf::Header->create(lines => \@lines);
 
-my @fields = (
-    '1',            # CHROM
-    10,             # POS
-    '.',            # ID
-    'A',            # REF
-    'C,G',          # ALT
-    '10.3',         # QUAL
-    'PASS',         # FILTER
-    'A=B;C=8,9;E',  # INFO
-    'GT:DP:FT',     # FORMAT
-    '0/1:12',       # FIRST_SAMPLE
-    '0/2:24:PASS',
-    '0/2:24:.',
-    '0/2:24:BAD',
-);
+subtest "null alternate alleles" => sub {
+    my @fields = (
+        '1',            # CHROM
+        10,             # POS
+        '.',            # ID
+        'A',            # REF
+        '.',            # ALT
+        '10.3',         # QUAL
+        'PASS',         # FILTER
+        'A=B;C=8,9;E',  # INFO
+        'GT:DP:FT',     # FORMAT
+        '0/1:12:x',   # FIRST_SAMPLE
+    );
 
-my $entry_txt = join("\t", @fields);
-my $entry = $pkg->new($header, $entry_txt);
+    my $entry_txt = join("\t", @fields);
+    my $entry = $pkg->new($header, $entry_txt);
+    is_deeply($entry->{alternate_alleles}, []);
+    is($entry->to_string, $entry_txt, 'to_string with null alternate alleles');
+};
 
-is($entry->{chrom}, '1', 'Parsed chromosome');
-is($entry->{position}, '10', 'Parsed position');
-ok(!$entry->{identifiers}, 'Parsed null identifiers');
-is($entry->{reference_allele}, 'A', 'Parsed reference allele');
-is_deeply($entry->{alternate_alleles}, ['C', 'G'], 'Parsed alternate alleles');
-my @alleles = $entry->alleles;
-is_deeply(\@alleles, ['A', 'C', 'G'], 'All alleles accessor');
-is($entry->allele_index('A'), 0, 'allele index');
-is($entry->allele_index('C'), 1, 'allele index');
-is($entry->allele_index('G'), 2, 'allele index');
-ok(!defined $entry->allele_index('AA'), 'allele index (not found)');
-is($entry->{quality}, '10.3', 'Parsed quality');
-is_deeply($entry->{filter}, ['PASS'], 'Parsed filter');
-is_deeply($entry->info, { A => 'B', C => '8,9', E => undef  }, 'Parsed info fields');
-is_deeply($entry->{format}, ['GT', 'DP', 'FT'], 'Parsed format');
+subtest "parse error: too many sample fields" => sub {
+    my @fields = (
+        '1',            # CHROM
+        10,             # POS
+        '.',            # ID
+        'A',            # REF
+        'C,G',          # ALT
+        '10.3',         # QUAL
+        'PASS',         # FILTER
+        'A=B;C=8,9;E',  # INFO
+        'GT:DP:FT',     # FORMAT
+        '0/1:12:x:y',   # FIRST_SAMPLE
+    );
 
-is($entry->info('A'), 'B', 'Info accessor works for A');
-is($entry->info('C'), '8,9', 'Info accessor works for C');
-ok($entry->info('E'), 'Info accessor works for flags');
-ok(!$entry->info('K'), 'Info accessor returns undef for unknown field');
+    my $entry_txt = join("\t", @fields);
+    eval {
+        my $entry = $pkg->new($header, $entry_txt);
+        $entry->sample_data;
+    };
+    ok($@, "Too many fields in a call is an error");
+};
 
-is($entry->sample_field(0, 'GT'), '0/1', 'Sample field accessor');
-is($entry->sample_field(0, 'DP'), '12', 'Sample field accessor');
-is($entry->sample_field(0, 'XX'), undef, 'Sample field accessor');
-is($entry->sample_field(1, 'GT'), '0/2', 'Sample field accessor');
-is($entry->sample_field(1, 'DP'), '24', 'Sample field accessor');
-is($entry->sample_field(1, 'XX'), undef, 'Sample field accessor');
+subtest "basic parsing/accessors" => sub {
+    my @fields = (
+        '1',            # CHROM
+        10,             # POS
+        '.',            # ID
+        'A',            # REF
+        'C,G',          # ALT
+        '10.3',         # QUAL
+        'PASS',         # FILTER
+        'A=B;C=8,9;E',  # INFO
+        'GT:DP:FT',     # FORMAT
+        '0/1:12',       # FIRST_SAMPLE
+        '0/2:24:PASS',
+        '0/2:24:.',
+        '0/2:24:BAD',
+    );
 
-my ($total, %counts) = $entry->allelic_distribution;
-is($total, 6, "allelic_distribution: total");
-is_deeply(\%counts, {0 => 3, 1 => 1, 2 => 2}, "allelic_distribution: counts");
+    my $entry_txt = join("\t", @fields);
+    my $entry = $pkg->new($header, $entry_txt);
+    ok($entry, "parsed entry");
+    is($entry->to_string, $entry_txt, 'to_string');
 
-($total, %counts) = $entry->allelic_distribution(1);
-is($total, 2, "allelic_distribution(1): total");
-is_deeply(\%counts, {0 => 1, 2 => 1}, "allelic_distribution(1): counts");
+    is($entry->{chrom}, '1', 'Parsed chromosome');
+    is($entry->{position}, '10', 'Parsed position');
+    ok(!@{$entry->{identifiers}}, 'Parsed null identifiers');
+    is($entry->{reference_allele}, 'A', 'Parsed reference allele');
+    is_deeply($entry->{alternate_alleles}, ['C', 'G'], 'Parsed alternate alleles');
+    ok(!$entry->has_indel, "has_indel reports correct value (false)");
+    my @alleles = $entry->alleles;
+    is_deeply(\@alleles, ['A', 'C', 'G'], 'All alleles accessor');
+    is($entry->allele_index('A'), 0, 'allele index');
+    is($entry->allele_index('C'), 1, 'allele index');
+    is($entry->allele_index('G'), 2, 'allele index');
+    ok(!defined $entry->allele_index('AA'), 'allele index (not found)');
+    is($entry->{quality}, '10.3', 'Parsed quality');
+    is_deeply([$entry->filters], ['PASS'], 'Parsed filter');
+    is_deeply($entry->info, { A => 'B', C => '8,9', E => undef  }, 'Parsed info fields');
+    is_deeply([$entry->format], ['GT', 'DP', 'FT'], 'Parsed format');
 
-ok(!$entry->info_for_allele("X"), "info_for_allele with bad allele name");
-is($entry->info_for_allele("C", "C"), 8, "info_for_allele 1");
-is($entry->info_for_allele("G", "C"), 9, "info_for_allele 2");
-is_deeply($entry->info_for_allele("C"), { A => 'B', C => 8, E => undef }, "info_for_allele (all fields)");
-is_deeply($entry->info_for_allele("G"), { A => 'B', C => 9, E => undef }, "info_for_allele (all fields)");
+    is($entry->info('A'), 'B', 'Info accessor works for A');
+    is($entry->info('C'), '8,9', 'Info accessor works for C');
+    ok($entry->info('E'), 'Info accessor works for flags');
+    ok(!$entry->info('K'), 'Info accessor returns undef for unknown field');
 
-ok(!$entry->is_filtered, "not filtered");
-$entry->{filter} = ["PASS"];
-ok(!$entry->is_filtered, "PASS != filtered");
-$entry->{filter} = ["."];
-ok(!$entry->is_filtered, ". != filtered");
-$entry->{filter} = undef;
-ok(!$entry->is_filtered, "undef != filtered");
-$entry->{filter} = [];
-ok(!$entry->is_filtered, "[] != filtered");
-$entry->{filter} = ["x"];
-ok($entry->is_filtered, "something else == filtered");
+    is($entry->sample_field(0, 'GT'), '0/1', 'Sample field accessor');
+    is($entry->sample_field(0, 'DP'), '12', 'Sample field accessor');
+    is($entry->sample_field(0, 'XX'), undef, 'Sample field accessor');
+    is($entry->sample_field(1, 'GT'), '0/2', 'Sample field accessor');
+    is($entry->sample_field(1, 'DP'), '24', 'Sample field accessor');
+    is($entry->sample_field(1, 'XX'), undef, 'Sample field accessor');
+
+    my ($total, %counts) = $entry->allelic_distribution;
+    is($total, 6, "allelic_distribution: total");
+    is_deeply(\%counts, {0 => 3, 1 => 1, 2 => 2}, "allelic_distribution: counts");
+
+    ($total, %counts) = $entry->allelic_distribution(1);
+    is($total, 2, "allelic_distribution(1): total");
+    is_deeply(\%counts, {0 => 1, 2 => 1}, "allelic_distribution(1): counts");
+
+    ok(!$entry->info_for_allele("X"), "info_for_allele with bad allele name");
+    is($entry->info_for_allele("C", "C"), 8, "info_for_allele 1");
+    is($entry->info_for_allele("G", "C"), 9, "info_for_allele 2");
+    is_deeply($entry->info_for_allele("C"), { A => 'B', C => 8, E => undef }, "info_for_allele (all fields)");
+    is_deeply($entry->info_for_allele("G"), { A => 'B', C => 9, E => undef }, "info_for_allele (all fields)");
+
+};
+
+subtest "is filtered / add site filter" => sub {
+    my @fields = ('1', 10, '.', 'A', 'C', '.', '.', '.', '.');
+
+    my $entry_txt = join("\t", @fields);
+    my $entry = $pkg->new($header, $entry_txt);
+    ok($entry, "parsed entry");
+
+    ok(!$entry->is_filtered, "not filtered");
+
+    $entry->add_filter(".");
+    is_deeply([$entry->filters], ["."], "set filter to .");
+    ok(!$entry->is_filtered, ". != filtered");
+
+    $entry->clear_filters;
+    ok(!$entry->filters, "cleared filters");
+    ok(!$entry->is_filtered, "undef != filtered");
+
+    $entry->add_filter("PASS");
+    is_deeply([$entry->filters], ["PASS"], "set filter to PASS");
+    ok(!$entry->is_filtered, "PASS != filtered");
+
+    $entry->add_filter("x");
+    is_deeply([$entry->filters], ["x"], "filtering removes pass");
+    ok($entry->is_filtered, "something else == filtered");
+};
+
+subtest "has_indel function (with deletion)" => sub {
+    my @fields = (
+        '1',            # CHROM
+        10,             # POS
+        '.',            # ID
+        'AT',           # REF
+        'AC,A',         # ALT
+        '10.3',         # QUAL
+        'PASS',         # FILTER
+        'A=B;C=8,9;E',  # INFO
+        'GT:DP:FT',     # FORMAT
+        '0/1:12',       # FIRST_SAMPLE
+        '0/2:24:PASS',
+        '0/2:24:.',
+        '0/2:24:BAD',
+    );
+
+    my $entry_txt = join("\t", @fields);
+    my $entry = $pkg->new($header, $entry_txt);
+    ok($entry, "parsed entry");
+    ok($entry->has_indel, "has_indel detected deletion");
+};
+
+subtest "has_indel function (with insertion)" => sub {
+    my @fields = (
+        '1',            # CHROM
+        10,             # POS
+        '.',            # ID
+        'A',            # REF
+        'AC,C',         # ALT
+        '10.3',         # QUAL
+        'PASS',         # FILTER
+        'A=B;C=8,9;E',  # INFO
+        'GT:DP:FT',     # FORMAT
+        '0/1:12',       # FIRST_SAMPLE
+        '0/2:24:PASS',
+        '0/2:24:.',
+        '0/2:24:BAD',
+    );
+
+    my $entry_txt = join("\t", @fields);
+    my $entry = $pkg->new($header, $entry_txt);
+    ok($entry, "parsed entry");
+    ok($entry->has_indel, "has_indel detected insertion");
+};
+
+subtest "to_string" => sub {
+    my @examples = (
+        [ 'Y', 99, '.', 'CGC', 'CGA,CG', '.', '.', '.', '.', ],
+        [ 'Y', 99, 'rs123', 'CGC', 'CGA,CG', '.', '.', '.', '.', ],
+        [ 'Y', 99, 'rs123', 'CGC', 'CGA,CG', '10.2', '.', '.', '.', ],
+        [ 'Y', 99, 'rs123', 'CGC', 'CGA,CG', '10.2', '.', 'A=B;E', '.', ],
+        [ 'Y', 99, 'rs123', 'CGC', 'CGA,CG', '10.2', 'PASS', 'A=B;E', '.', ],
+        [ 'Y', 99, 'rs123', 'CGC', 'CGA,CG', '10.2', 'PASS', 'A=B;E', 'GT', ],
+        [ 'Y', 99, 'rs123', 'CGC', 'CGA,CG', '10.2', 'PASS', 'A=B;E', 'GT', '.', '0/2'],
+        [ 'Y', 99, 'rs123', 'CGC', 'CGA,CG', '10.2', 'PASS', 'A=B;E', 'GT', '0/1', '0/2'],
+    );
+
+    for my $ex (@examples) {
+        my $entry_txt = join("\t", @$ex);
+        my $entry = $pkg->new($header, $entry_txt);
+        ok($entry, "parsed entry (" .join(" ", @$ex) . ")");
+        is($entry->to_string, $entry_txt, 'to_string');
+    }
+};
+
+subtest "add format field" => sub {
+    my @fields = ('Y', 99, '.', 'CGC', 'CGA,CG', '.', '.', '.', '.');
+    my $entry_txt = join("\t", @fields);
+    my $entry = $pkg->new($header, $entry_txt);
+    ok($entry, "Created entry");
+    ok(!$entry->format, "No format fields");
+    my $idx = $entry->add_format_field("GT");
+    is($idx, 0, "added GT at index 0");
+    $idx = $entry->add_format_field("FT");
+    is($idx, 1, "added FT at index 1");
+    my $expected_format = ["GT", "FT"];
+    my $expected_index = {"GT" => 0, "FT" => 1};
+
+    is_deeply([$entry->format], $expected_format) or diag
+        "Expected: " . Dumper($expected_format) . "\nActual: " . Dumper($entry->format);
+    is_deeply($entry->format_field_index, $expected_index) or diag
+        "Expected: " . Dumper($expected_format) . "\nActual: " . Dumper($entry->format);
+
+    is($entry->add_format_field("FT"), 1, "re-added FT at index 1");
+    is_deeply([$entry->format], $expected_format) or diag
+        "Expected: " . Dumper($expected_format) . "\nActual: " . Dumper($entry->format);
+    is_deeply($entry->format_field_index, $expected_index) or diag
+        "Expected: " . Dumper($expected_format) . "\nActual: " . Dumper($entry->format);
+};
+
+subtest "add format field (GT, special case)" => sub {
+    my @fields = ( 'Y', 99, 'rs123', 'CGC', 'CGA,CG', '10.2', 'PASS', '.', 'DP', '10', '20');
+    my $entry_txt = join("\t", @fields);
+    my $entry = $pkg->new($header, $entry_txt);
+    ok($entry, "Created entry");
+    is_deeply([$entry->format], ["DP"], "has DP field");
+    is($entry->sample_field(0, "DP"), 10, "DP=10 for sample #0");
+    is($entry->sample_field(1, "DP"), 20, "DP=10 for sample #1");
+
+    ok(!$entry->sample_field(0, "GT"), "No GT for sample #0");
+    ok(!$entry->sample_field(1, "GT"), "No GT for sample #1");
+
+
+    my $idx = $entry->add_format_field("GT");
+    is($idx, 0, "added GT at index 0");
+    my $expected_format = ["GT", "DP"];
+    my $expected_index = {"GT" => 0, "DP" => 1};
+
+    is_deeply([$entry->format], $expected_format) or diag
+        "Expected: " . Dumper($expected_format) . "\nActual: " . Dumper($entry->format);
+    is_deeply($entry->format_field_index, $expected_index) or diag
+        "Expected: " . Dumper($expected_format) . "\nActual: " . Dumper($entry->format);
+
+    is($entry->add_format_field("DP"), 1, "re-added DP at index 1");
+    is_deeply([$entry->format], $expected_format) or diag
+        "Expected: " . Dumper($expected_format) . "\nActual: " . Dumper($entry->format);
+    is_deeply($entry->format_field_index, $expected_index) or diag
+        "Expected: " . Dumper($expected_format) . "\nActual: " . Dumper($entry->format);
+
+    is($entry->sample_field(0, "DP"), 10, "DP=10 for sample #0");
+    is($entry->sample_field(1, "DP"), 20, "DP=10 for sample #1");
+
+    ok(!$entry->sample_field(0, "GT"), "no GT for sample #0");
+    ok(!$entry->sample_field(1, "GT"), "no GT for sample #1");
+
+    $entry->set_sample_field(0, "GT", "0/1");
+    $entry->set_sample_field(1, "GT", "1/2");
+
+    is($entry->sample_field(0, "GT"), "0/1", "GT=0/1 for sample #0");
+    is($entry->sample_field(1, "GT"), "1/2", "GT=1/2 for sample #1");
+};
+
+subtest "set sample fields" => sub {
+    my @fields = ('Y', 99, 'rs123', 'CGC', 'CGA,CG', '.', '.', '.', 'GT:DP:FT');
+    my $entry_txt = join("\t", @fields);
+    my $entry = $pkg->new($header, $entry_txt);
+    ok($entry, "Created entry");
+
+    ok(!$entry->sample_field(0, "GT"), "no GT value");
+    ok(!$entry->sample_field(0, "DP"), "no DP value");
+    ok(!$entry->sample_field(0, "FP"), "no FT value");
+
+    $entry->set_sample_field(2, "FT", "BAD");
+    is($entry->to_string, join("\t", @fields, './.:.:.', './.:.:.', "./.:.:BAD"), "to_string");
+
+    ok(!$entry->sample_field(0, "FT"), "no FT for sample #0");
+    ok(!$entry->sample_field(1, "FT"), "no FT for sample #1");
+    is($entry->sample_field(2, "FT"), "BAD", "set FT to bad for sample #2");
+
+    $entry->set_sample_field(1, "GT", "1/1");
+    is($entry->sample_field(1, "GT"), "1/1", "set GT to 1/1 for sample #1");
+
+    is($entry->to_string, join("\t", @fields, './.:.:.', '1/1:.:.', "./.:.:BAD"), "to_string");
+};
+
+subtest "filter calls involving only certain alleles" => sub {
+    my @fields = ('1', 99, '.', 'CG', 'CA,C', '.', '.', '.', 'GT:DP:FT', '0/1', '0/0', '0/2');
+    my $entry_txt = join("\t", @fields);
+    # Imagine that the SNV is boring but the deletion is interesting.
+    my $entry = $pkg->new($header, $entry_txt);
+    ok($entry, "Created entry");
+    $entry->filter_calls_involving_only(filter_name => "BAD", alleles => ["CG", "CA"]);
+
+    my @expected_fields = ('1', 99, '.', 'CG', 'CA,C', '.', '.', '.', 'GT:DP:FT', '0/1:.:BAD', '0/0:.:BAD', '0/2');
+    is($entry->to_string, join("\t", @expected_fields), "to_string");
+};
+
+subtest "get genotype for sample" => sub {
+    my @fields = ('1', 99, '.', 'CG', 'CA,C', '.', '.', '.', 'GT:DP:FT', '0/1', '0/0', '0/2');
+    my $entry_txt = join("\t", @fields);
+    my $entry = $pkg->new($header, $entry_txt);
+    ok($entry, "Created entry");
+
+    my @alternate_alleles = @{$entry->{alternate_alleles}};
+    my $expected_genotype = Genome::File::Vcf::Genotype->new($entry->{reference_allele}, \@alternate_alleles, '0/1');
+    my $retreived_genotype = $entry->genotype_for_sample(0);
+    is_deeply($retreived_genotype, $expected_genotype, "The genotype for the first sample was created correctly");
+
+    eval {
+        my $non_genotype = $entry->genotype_for_sample(3);
+    };
+    ok($@, "Getting a genotype for an out-of-bounds sample index is an error");
+};
 
 done_testing();

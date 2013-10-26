@@ -21,7 +21,7 @@ my $output_directory = tempdir(
     'Genome-Model-Tools-Blat-XXXXXX',
     CLEANUP => 1,
     UNLINK => 1,
-    TEMPDIR => 1,
+    TMPDIR => 1,
 );
 
 print $output_directory . "\n";

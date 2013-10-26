@@ -44,7 +44,7 @@ my $expected_data_in_each_file = [
 
 my $tmpdir = tempdir(
     't-SplitVariantMatrix-XXXXX',
-    TEMPDIR => 1,
+    TMPDIR => 1,
     CLEANUP => 1
 );
 my $variant_matrix = "$tmpdir/variant_matrix.txt";

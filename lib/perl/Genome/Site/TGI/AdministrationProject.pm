@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 class Genome::Site::TGI::AdministrationProject {
-    table_name => '(select * from ADMINISTRATION_PROJECT@oltp) admin_project',
     id_by => [
         id => { is => 'Number', len => 10, column_name => 'PROJECT_ID' },
     ],
@@ -33,7 +32,8 @@ class Genome::Site::TGI::AdministrationProject {
         status => { is => 'Text', column_name => 'STATUS' }
     ],
     doc => 'yet another table about projects',
-    data_source => 'Genome::DataSource::GMSchema',
+    data_source => 'Genome::DataSource::Oltp',
+    table_name => 'administration_project',
 };
 
 

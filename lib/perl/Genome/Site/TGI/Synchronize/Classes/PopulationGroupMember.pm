@@ -6,29 +6,18 @@ use warnings;
 =pod
 MEMBER_ID NUMBER   (10)                    {null} NOT NULL ok
 PG_ID     NUMBER   (10)                    {null} NOT NULL ok [population_group_id]
-properties 2, copied 2, updated 0
+properties 2, copied NA, updated NA
 =cut
 
 class Genome::Site::TGI::Synchronize::Classes::PopulationGroupMember {
     is => 'UR::Object',
-    table_name => 'GSC.POPULATION_GROUP_MEMBER',
+    table_name => 'POPULATION_GROUP_MEMBER',
     id_by => [
-        population_group_id => { is => 'Number', },
+        population_group  => { is => 'Genome::Site::TGI::Synchronize::Classes::PopulationGroup', id_by => 'pg_id' },
         member_id => { is => 'Number', },
     ],
-    data_source => 'Genome::DataSource::GMSchema',
+    data_source => 'Genome::DataSource::Dwrac',
 };
-
-sub properties_to_copy {# 2
-    return (qw/
-        member_id
-        population_group_id
-        /);
-}
-
-sub properties_to_keep_updated {# 0
-    return;
-}
 
 1;
 

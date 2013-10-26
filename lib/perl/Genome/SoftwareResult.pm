@@ -8,6 +8,7 @@ use Digest::MD5 qw(md5_hex);
 use Cwd;
 use File::Basename qw(fileparse);
 use Data::Dumper;
+use Date::Manip;
 use List::MoreUtils qw(uniq);
 
 use Carp;
@@ -18,11 +19,12 @@ use Genome::Utility::Instrumentation;
 
 class Genome::SoftwareResult {
     is_abstract => 1,
-    table_name => 'SOFTWARE_RESULT',
+    table_name => 'result.software_result',
     subclass_description_preprocessor => 'Genome::SoftwareResult::_expand_param_and_input_properties',
     subclassify_by => 'subclass_name',
+    id_generator => '-uuid',
     id_by => [
-        id => { is => 'Number', len => 32 },
+        id => { is => 'Text', len => 32 },
     ],
     attributes_have => [
         is_param => { is => 'Boolean', is_optional=>'1' },
@@ -727,13 +729,14 @@ sub delete {
 
     my $class_name = $self->class;
     my @users = $self->users;
-    if (@users) {
+    my @active_users = grep{$_->active} @users;
+    if (@active_users) {
         my $name = $self->__display_name__;
-        die "Refusing to delete $class_name $name as it still has users:\n\t"
-            .join("\n\t", map { $_->user_class . "\t" . $_->user_id } @users);
+        die "Refusing to delete $class_name $name as it still has active users:\n\t"
+            .join("\n\t", map { $_->user_class_name . "\t" . $_->user_id } @active_users);
     }
 
-    my @to_nuke = ($self->params, $self->inputs, $self->metrics);
+    my @to_nuke = ($self->params, $self->inputs, $self->metrics, @users);
 
     #If we use any other results, unregister ourselves as users
     push @to_nuke, Genome::SoftwareResult::User->get(user_class_name => $class_name, user_id => $self->id);
@@ -746,8 +749,10 @@ sub delete {
 
     #creating an anonymous sub to delete allocations when commit happens
     my $id = $self->id;
+    my $observer;
     my $upon_delete_callback = sub {
         print "Now Deleting Allocation with owner_id = $id\n";
+        $observer->delete if $observer;
         my $allocation = Genome::Disk::Allocation->get(owner_id=>$id, owner_class_name=>$class_name);
         if ($allocation) {
             $allocation->deallocate;
@@ -755,7 +760,7 @@ sub delete {
     };
 
     #hook our anonymous sub into the commit callback
-    $class_name->ghost_class->add_observer(aspect=>'commit', callback=>$upon_delete_callback);
+    $observer = $class_name->ghost_class->add_observer(aspect=>'commit', callback=>$upon_delete_callback);
 
     return $self->SUPER::delete(@_);
 }
@@ -990,5 +995,17 @@ sub descendents {
         return;
     }
 }
+
+sub best_guess_date {
+    my $self = shift;
+    my ($earliest_time) = sort map { $_->creation_time }
+        $self->disk_allocations;
+    return $earliest_time;
+}
+
+sub best_guess_date_numeric {
+    return UnixDate(shift->best_guess_date, "%s"); 
+}
+
 
 1;

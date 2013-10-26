@@ -11,7 +11,7 @@ generatePlots <- function(inputFile,readEnd,countPlotFile,ratePlotFile,rateDistF
 }
 
 readTable <- function(filename) {
-  fullFile <- read.delim(filename,header=TRUE)
+  fullFile <- read.delim(filename,header=TRUE,comment.char="#")
   return(fullFile)
 }
 

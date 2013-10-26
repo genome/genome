@@ -55,11 +55,17 @@ sub execute {
 			my $wt_aa = $1;
 			my $position = ($2 - 1);
 			my $mt_aa = $3;
-			my $wt_seq = $prot_arr[21];
+			my $wt_seq;
+			if (scalar (@prot_arr) == 22){$wt_seq = $prot_arr[21];}
+			elsif (scalar (@prot_arr) == 25) {$wt_seq = $prot_arr[24];}
+			else { print "File format incorrect.Please check columns";}
+
+			
 			my @arr_wt_seq = split('',$wt_seq);
 
     		if ($1 ne $arr_wt_seq[$position])
     		{
+#		print join ("\t",$prot_arr[0],$prot_arr[1],$prot_arr[2],$prot_arr[6],$1,$2,$3,$prot_arr[11],$arr_wt_seq[$position])."\n";
     		next;
     		#TO DO :print OUT $prot_arr[0]."\t".$prot_arr[1]."\t".$prot_arr[2]."\t".$prot_arr[6]."\t".$1."\t".$2."\t".$3."\t".$prot_arr[11]."\t".$arr_wt_seq[$position]."\n";
     		}

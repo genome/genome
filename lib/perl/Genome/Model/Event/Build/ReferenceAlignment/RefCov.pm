@@ -25,7 +25,7 @@ sub bsub_rusage {
 sub sorted_instrument_data {
     my $self = shift;
     my $build = $self->build;
-    my @sorted_data = sort { $a->id <=> $b->id } $build->instrument_data;
+    my @sorted_data = sort { $a->id cmp $b->id } $build->instrument_data;
     return @sorted_data;
 }
 

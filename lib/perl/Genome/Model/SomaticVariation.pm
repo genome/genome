@@ -48,7 +48,7 @@ class Genome::Model::SomaticVariation {
             doc => 'Version of the "annotate transcript-variants" tool to run during the annotation step',
             is_optional => 1,
             default_value => Genome::Model::Tools::Annotate::TranscriptVariants->default_annotator_version,
-            valid_values => [ 0,1,2,3],
+            valid_values => [ 0,1,2,3,4 ],
         },
         get_regulome_db => {
             doc => "Get the regulome-db annotation for the snvs list",
@@ -115,6 +115,18 @@ class Genome::Model::SomaticVariation {
             is => 'Genome::FeatureList',
             is_many => 1,
             is_optional => 1,
+        },
+    ],
+    has_optional => [
+        experimental_subject => {
+            is => 'Genome::Sample',
+            via => 'tumor_model',
+            to => 'subject'
+        },
+        control_subject => {
+            is => 'Genome::Sample',
+            via => 'normal_model',
+            to => 'subject'
         },
     ],
 };

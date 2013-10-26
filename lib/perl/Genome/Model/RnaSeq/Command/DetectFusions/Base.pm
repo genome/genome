@@ -23,7 +23,7 @@ class Genome::Model::RnaSeq::Command::DetectFusions::Base {
             doc => 'parameters for the chosen fusion detector'
         },
         build_id => {
-            is => 'Integer',
+            is => 'Text',
             is_optional => 0,
             is_input => 1,
             implied_by => 'build',

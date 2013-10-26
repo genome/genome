@@ -38,7 +38,7 @@ $ipr_tmp_path =~ s!/bin/iprscan!/tmp/!;
 
 my ($used_kb) = qx(df -Pk $ipr_tmp_path | tail -n 1 | awk '{print \$4}') =~ /(\d+)/;
 cmp_ok($used_kb, ">", (1024*1024), ">1GB free space in iprscan tmp directory")
-    or die("disk containing iprscan tmp at $ipr_tmp_path is almost full! Try removing old runs to free space.");
+    or die("disk containing iprscan tmp at $ipr_tmp_path is almost full! Try removing old runs to free space. Delete stuff that is 30 days old: `find $ipr_tmp_path -mtime +30 -delete`.");
 
 # Had to use touch instead of -w since -w must only check permissions.
 my $exit = system("touch $ipr_tmp_path");

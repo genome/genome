@@ -18,7 +18,7 @@ my $root_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sam/IndelFilter';
 
 my $tmp_dir  = File::Temp::tempdir(
     "IndelFilter_XXXXXX", 
-    TEMPDIR => 1,
+    TMPDIR => 1,
     CLEANUP => 1,
 );
 

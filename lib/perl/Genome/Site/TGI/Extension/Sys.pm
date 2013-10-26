@@ -23,6 +23,7 @@ require File::Copy;
 require Genome::Utility::Text; #TODO remove, unused
 use Sys::Hostname;
 use File::Find;
+use Params::Validate qw(:types);
 #use Archive::Extract;
 
 require MIME::Lite;
@@ -44,22 +45,40 @@ sub bsub_and_wait {
 # FIXME This is incomplete and should be expanded to accept more bsub parameters
 sub bsub {
     my $class = shift;
-    my %params = @_;
-    my $queue = $params{queue} || 'long';
-    my $job_group = $params{job_group};
-    my $cmd = $params{cmd};
-    my $log_file = $params{log_file};
-    unless ($cmd) {
-        die "Must be given a command to bsub!";
+
+    # this has to be a runtime dependency so it can compile on /gsc/bin/perl...
+    require IPC::System::Simple;
+
+    my %args = Params::Validate::validate(
+        @_, {
+            cmd => { type => (SCALAR | ARRAYREF) },
+            queue => { default => 'long' },
+            job_group => 0,
+            log_file => 0,
+            err_file => 0,
+        }
+    );
+
+    my @bsub_cmd = ('bsub', '-q', $args{queue});
+    if ($args{job_group}) {
+        push @bsub_cmd, '-g', $args{job_group};
+    }
+    if ($args{log_file}) {
+        push @bsub_cmd, '-o', $args{log_file};
+    }
+    if ($args{err_file}) {
+        push @bsub_cmd, '-e', $args{err_file};
     }
 
-    my $bsub_cmd = "bsub";
-    $bsub_cmd .= " -q $queue";
-    $bsub_cmd .= " -g $job_group" if $job_group;
-    $bsub_cmd .= " -o $log_file" if $log_file;
-    $bsub_cmd .= " $cmd";
+    my $bsub_output;
+    if (ref($args{cmd}) eq 'ARRAY') {
+        push @bsub_cmd, @{$args{cmd}};
+        $bsub_output = eval {IPC::System::Simple::capture(@bsub_cmd)};
+    } else {
+        my $bsub_cmd = join(' ', @bsub_cmd, $args{cmd});
+        $bsub_output = `$bsub_cmd`;
+    }
 
-    my $bsub_output = `$bsub_cmd`;
     my ($job_id) = $bsub_output =~ /Job <(\d+)> is submitted to/;
     unless ($job_id) {
         die "Could not get job id from bsub output!";

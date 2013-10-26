@@ -157,6 +157,9 @@ sub _run_aligner {
         die $self->error_message("Input '$_' is empty.") unless -s $_;
     }
 
+    # Disconnect from db
+    $self->_disconnect_from_db();
+
     # Run bwasw.
     my $full_command = sprintf '%s bwasw %s %s %s 1>> %s 2>> %s',
         $cmd_path, $params, $reference_fasta_path,
@@ -168,6 +171,9 @@ sub _run_aligner {
         output_files => [ $raw_sequences, $log_path ],
         skip_if_output_is_present => 0,
     );
+
+    # Hopefully we're still disconnected
+    $self->_check_db_connection();
 
     # TODO One potential improvement is to stream the output from bwasw
     # straight into _fix_sam. However, _fix_sam currently seeks back and forth
@@ -208,12 +214,38 @@ sub _run_aligner {
     return 1;
 }
 
+sub _disconnect_from_db {
+    my ($self) = @_;
+
+    $self->debug_message("Closing data source db handle...");
+    if ($self->__meta__->data_source->has_default_handle) {
+        if ($self->__meta__->data_source->disconnect_default_handle) {
+            $self->debug_message("Disconnected data source db handle (as expected).");
+        } else {
+            $self->debug_message("Unable to disconnect data source db handle.");
+        }
+    } else {
+        $self->debug_message("Data source db handle already closed.");
+    }
+}
+
+sub _check_db_connection {
+    my ($self) = @_;
+
+    if ($self->__meta__->data_source->has_default_handle) {
+        $self->debug_message("Data source db handle unexpectedly reconnected itself.");
+    } else {
+        $self->debug_message("Data source db handle still closed (as expected).");
+    }
+}
+
 # Sort a sam file.
 sub _sort_sam {
     my ($self, $given_sam) = @_;
 
     my $unsorted_sam = "$given_sam.unsorted";
 
+    # Prepare sort command
     unless (move($given_sam, $unsorted_sam)) {
         die $self->error_message(
             "Unable to move $given_sam to $unsorted_sam. " .
@@ -231,11 +263,19 @@ sub _sort_sam {
         use_version            => $self->picard_version,
     );
 
+    # Disconnect from db
+    $self->_disconnect_from_db();
+
+    # Run sort command
     unless ($picard_sort_cmd and $picard_sort_cmd->execute) {
         die $self->error_message(
             "Failed to create or execute Picard sort command.");
     }
 
+    # Hopefully we're still disconnected
+    $self->_check_db_connection();
+
+    # Clean up
     unless (unlink($unsorted_sam)) {
         $self->status_message("Could not unlink $unsorted_sam.");
     }
@@ -248,18 +288,23 @@ sub _sort_sam {
 sub _fix_sam {
     my ($self, $raw_sequences, $all_sequences, $is_paired, $include_secondary, $mark_secondary_as_duplicate) = @_;
 
+    # Generate RG and PG tag
     my $rg_id = $self->read_and_platform_group_tag_id;
     my $rg_tag = "RG:Z:$rg_id\tPG:Z:$rg_id";
 
+    # Open read filehandles
     open my $all_sequences_read_fh, '<', $all_sequences;
     open my $raw_sequences_read_fh, '<', $raw_sequences;
 
+    # Get existing headers
     my @all_sequences_headers = _get_headers($all_sequences_read_fh); # get headers provided in all_sequences.fa
     my @raw_sequences_headers = _get_headers($raw_sequences_read_fh); # get headers created by Bwa
 
+    # Open write (append) filehandle
     close $all_sequences_read_fh;
     open my $all_sequences_append_fh, '>>', $all_sequences;
 
+    # Create final header
     for my $raw_header (@raw_sequences_headers) {
         unless (grep { index($_, $raw_header) >= 0 } @all_sequences_headers) {
             # Add any unique headers from Bwa to all_sequences.fa
@@ -268,6 +313,10 @@ sub _fix_sam {
         }
     }
 
+    # Disconnect from db before processing the rest of the sam file
+    $self->_disconnect_from_db();
+
+    # Loop over all records
     while (my @read_set = _get_read_set($raw_sequences_read_fh)) {
         die "No reads in read set; this should not happen"
             unless @read_set;
@@ -290,6 +339,9 @@ sub _fix_sam {
 
     close $raw_sequences_read_fh;
     close $all_sequences_append_fh;
+
+    # Hopefully we're still disconnected
+    $self->_check_db_connection();
 }
 
 # Fixes a read set containing paired reads.

@@ -16,7 +16,7 @@ class Genome::Db::Ensembl::Command::Vep {
     has => [
         version => {
             is => 'String',
-            doc => 'version of the Variant Effects Predictor to use',
+            doc => 'version of the Variant Effects Predictor to use. Note: Version 2.7 requires using annotation version 69_37n_v3 or greater',
             valid_values => [qw(2_2 2_5 2_7)],
             is_optional => 1,
             default_value => "2_2",
@@ -152,7 +152,7 @@ class Genome::Db::Ensembl::Command::Vep {
             is => 'String',
             is_many => 1,
             is_optional => 1,
-            doc => 'Plugins to use.  These should be formated: PluginName,arg1,arg2,...  If you need to reference the plugin config directory in any of the args, use the placeholder PLUGIN_DIR.  For example, the Condel plugin should be called as follows: Condel,PLUGIN_DIR,b,2',
+            doc => 'Plugins to use.  These should be formated: PluginName@arg1@arg2,...  If you need to reference the plugin config directory in any of the args, use the placeholder PLUGIN_DIR.  For example, the Condel plugin should be called as follows: Condel@PLUGIN_DIR@b@2',
         },
         plugins_version => {
             is => 'String',
@@ -465,7 +465,7 @@ sub execute {
         Genome::Sys->create_directory($temp_plugins_dir);
         Genome::Sys->create_directory($temp_plugins_config_dir);
         foreach my $plugin ($self->plugins) {
-            my @plugin_fields = split /,/, $plugin;
+            my @plugin_fields = split /\@/, $plugin;
             my $plugin_name = $plugin_fields[0];
             my $plugin_source_file = "$plugins_source_dir/$plugin_name.pm";
             if (-e $plugin_source_file){
@@ -482,6 +482,7 @@ sub execute {
             }
             $plugin =~ s|PLUGIN_DIR|$temp_plugin_config_dir|;
             $plugin_args .= " --plugin $plugin";
+            $plugin_args =~ s/\@/,/g;
         }
     }
 

@@ -16,7 +16,7 @@ BEGIN {
 
 my $tmpdir = tempdir(
     't-ClinicalDataSummary-XXXXX',
-    TEMPDIR => 1,
+    TMPDIR => 1,
     CLEANUP => 1
 );
 

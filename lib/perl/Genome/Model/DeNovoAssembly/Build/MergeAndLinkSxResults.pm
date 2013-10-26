@@ -31,7 +31,7 @@ class Genome::Model::DeNovoAssembly::Build::MergeAndLinkSxResults {
     has_constant => [
         lsf_resource => { 
             is => 'Text',
-            default_value => "-R 'select[type==LINUX64 && gtmp>200] rusage[gtmp=200] span[hosts=1]'",
+            default_value => "-R 'select[type==LINUX64 && gtmp>1000] rusage[gtmp=1000] span[hosts=1]'",
         },
     ],
 };

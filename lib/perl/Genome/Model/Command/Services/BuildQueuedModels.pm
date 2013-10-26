@@ -6,6 +6,8 @@ use warnings;
 use Genome;
 use Genome::Model::Build::Command::Start;
 
+use Carp qw(croak);
+
 use POSIX qw(ceil);
 
 class Genome::Model::Command::Services::BuildQueuedModels {
@@ -62,6 +64,12 @@ Builds queued models.
 EOS
 }
 
+# We had to debug a failure on the cron server where a downstream pipe crashed
+# which meant that we got no mail due to having no SIGPIPE handler.
+$SIG{PIPE} = sub {
+    die "Cannot write to pipe (downstream pipe closed)";
+};
+
 sub execute {
     my $self = shift;
 
@@ -69,7 +77,7 @@ sub execute {
         die $self->error_message('--channel must be less than --channels');
     }
 
-    my $lock_resource = $ENV{GENOME_LOCK_DIR} . '/genome_model_services_builed_queued_models_' . $self->channel . '_' . $self->channels;
+    my $lock_resource = $ENV{GENOME_LOCK_DIR} . '/genome_model_services_build_queued_models_' . $self->channel . '_' . $self->channels;
 
     my $lock = Genome::Sys->lock_resource(resource_lock => $lock_resource, max_try => 1);
     unless ($lock) {
@@ -98,7 +106,7 @@ sub execute {
     my @iterator_params = (
         # prioritize genotype microarray over other builds because their
         # runtime is so short and are frequently prerequisite for other builds
-        {build_requested => '1', type_name => 'genotype microarray', -order_by => 'subject_id'}, 
+        {build_requested => '1', type_name => 'genotype microarray', -order_by => 'subject_id'},
         {build_requested => '1', -order_by => 'subject_id'},
     );
 
@@ -108,11 +116,11 @@ sub execute {
 
         MODEL:
         while (my $model = $models->next) {
-            next MODEL unless ($model->id % $self->channels == $self->channel);
+            next MODEL unless (channel_for_model($model->id, $self->channels) == $self->channel);
 
             if ($self->_builds_started >= $max_builds_to_start){
                 $self->status_message("Already started max builds (" . $self->_builds_started . "), quitting...");
-                last ITERATOR; 
+                last ITERATOR;
             }
 
             $self->_total_command_count($self->_total_command_count + 1);
@@ -132,17 +140,36 @@ sub execute {
 }
 
 
+sub channel_for_model {
+    my $id = shift;
+    my $divisor = shift;
+
+    unless (defined $id) {
+        croak 'first argument is invalid';
+    }
+
+    unless (defined $divisor) {
+        croak 'second argument is invalid';
+    }
+
+    $id =~ s/[a-zA-F]//g;
+    $id = substr($id, -10, 10);
+    my $channel = $id % $divisor;
+    return $channel;
+}
+
+
 sub num_builds_to_start {
     my $self = shift;
-    
+
     my $scheduled_builds = Genome::Model::Build->create_iterator(
         run_by => Genome::Sys->username,
         status => 'Scheduled',
     );
-    
+
     my $scheduled_build_count = 0;
     while ($scheduled_builds->next && ++$scheduled_build_count <= $self->max_scheduled_builds) { 1; }
-    
+
     my $max_per_channel = int($self->max_scheduled_builds / $self->channels);
     if ($scheduled_build_count >= $self->max_scheduled_builds) {
         return 0;

@@ -9,6 +9,7 @@ use strict;
 use warnings;
 
 use above "Genome";
+use Genome::Utility::Test qw(is_equal_set);
 
 require File::Temp;
 use Test::More;
@@ -130,14 +131,6 @@ my $model = Genome::Model->create(
 ok($model, 'create model');
 is_deeply([$model->projects], [$project], 'add project to model');
 
-# name
-is($model->default_model_name, 'TEST-00.testy_mc_testerson', 'default model name');
-is(
-    $model->default_model_name(capture_target => 'glutius maximus', roi => 'poop'),
-    'TEST-00.testy_mc_testerson.capture.glutius maximus.poop',
-    'default model name w/ capture and roi',
-);
-
 # recreate fails
 $model_fail = eval {
     Genome::Model->create(
@@ -169,6 +162,9 @@ for my $i (1..2) {
 }
 is(@instrument_data, 2, 'create instrument data');
 
+my $data_sorter = Genome::InstrumentData::Solexa->__meta__->id_property_sorter;
+@instrument_data = sort $data_sorter @instrument_data;
+
 # compatible
 my @compatible_id = $model->compatible_instrument_data;
 is_deeply(
@@ -197,7 +193,7 @@ is_deeply(\@model_instrument_data, \@instrument_data, 'model instrument data via
 # create these in reverse order because of negative ids
 my @builds;
 for my $i (1..2) {
-    unshift @builds, Genome::Model::Build->create( 
+    unshift @builds, Genome::Model::Build->create(
         model => $model,
         data_directory => $tmpdir.'/build'.$i,
     );
@@ -205,7 +201,7 @@ for my $i (1..2) {
 
 is(@builds, 2, 'create builds');
 my @model_builds = $model->builds;
-is_deeply(\@model_builds, \@builds, 'model builds');
+is_equal_set(\@model_builds, \@builds, 'model builds');
 
 # Fix the date_scheduled on the builds because completed_builds sorts by it
 my $time = time();

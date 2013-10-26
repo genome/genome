@@ -5,6 +5,9 @@ use warnings;
 
 use Genome;
 use Cwd;
+use Genome::Model::Tools::DetectVariants2::Utilities qw(
+    final_result_for_variant_type
+);
 
 class Genome::Model::SomaticValidation::Command::ManualResult {
     is => 'Command::V2',
@@ -51,21 +54,13 @@ sub execute {
     my $self = shift;
 
     my $source_build = $self->source_build;
-    my $previous_result;
-    if($source_build->can('final_result_for_variant_type')){
-        $previous_result = $source_build->final_result_for_variant_type($self->variant_type .'s');
-    }
-
-    my $tumor_model = $source_build->can('tumor_model')? $source_build->tumor_model : $source_build->model->tumor_model;
-    my $normal_model = $source_build->can('normal_model')? $source_build->normal_model : $source_build->model->normal_model;
+    my $previous_result = final_result_for_variant_type([$source_build->results], $self->variant_type . 's');
 
     $self->variant_file(Cwd::abs_path($self->variant_file));
 
-    my $manual_result = Genome::Model::Tools::DetectVariants2::Result::Manual->get_or_create(
+    my %params = (
         variant_type => $self->variant_type,
-        sample_id => $tumor_model->subject->id,
-        control_sample_id => $normal_model->subject->id,
-        reference_build_id => $source_build->tumor_build->reference_sequence_build->id,
+        reference_build_id => $source_build->reference_sequence_build->id,
         original_file_path => $self->variant_file,
         description => $self->description,
         format => $self->format,
@@ -73,6 +68,16 @@ sub execute {
         test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
         source_build_id => $source_build->id,
     );
+
+    # allow tumor only or normal only models.
+    if ($source_build->model->experimental_subject) {
+        $params{sample_id} = $source_build->model->experimental_subject->id;
+    }
+    if ($source_build->model->control_subject) {
+        $params{control_sample_id} = $source_build->model->control_subject->id;
+    }
+
+    my $manual_result = Genome::Model::Tools::DetectVariants2::Result::Manual->get_or_create(%params);
 
     unless($manual_result) {
         die $self->error_message('Failed to generate new result for data.');

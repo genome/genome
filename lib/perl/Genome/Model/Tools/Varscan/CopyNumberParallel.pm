@@ -208,7 +208,7 @@ sub execute {                               # replace with real execution logic.
 						my $varscan_path = Genome::Model::Tools::Varscan->path_for_version($self->version);
 						my $mpileup = $self->samtools_path . " mpileup -f $reference -B -q 10 -r $chrom:1 $normal_bam $tumor_bam";
 	
-	#					my $cmd = $self->java_command_line(" copynumber <\($mpileup\) $output_file --mpileup 1 $varscan_params");
+	#					my $cmd = $self->command_line(" copynumber <\($mpileup\) $output_file --mpileup 1 $varscan_params");
 						my $cmd = "bash -c \"java -jar $varscan_path copynumber <\($mpileup\) $output_file --mpileup 1 --data-ratio $normal_tumor_ratio $varscan_params\"";
 		
 						system("bsub -q long -R\"select[mem>2000 && tmp>2000] rusage[mem=2000]\" -oo $output_file.log $cmd");

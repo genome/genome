@@ -84,7 +84,7 @@ sub get_vcf_header_arrayref {
 
 # diffs vcf files ignoring the fileDate header entry.
 sub diff_vcf_file_vs_file {
-    my ($filename1, $filename2) = @_;
+    my ($filename1, $filename2, %options) = @_;
 
     my $fh1 = open_vcf_file($filename1);
     my $fh2 = open_vcf_file($filename2);
@@ -92,20 +92,31 @@ sub diff_vcf_file_vs_file {
     my $lines1 = [<$fh1>];
     my $lines2 = [<$fh2>];
 
-    return diff_vcf_text_vs_text($lines1, $lines2);
+    return diff_vcf_text_vs_text($lines1, $lines2, %options);
 }
 
-sub _strip_fileDate_from_header {
-    my @lines = @_;
-    return grep {!/fileDate/} @lines;
+sub _strip_ignored_patterns {
+    my ($lines, $patterns) = @_;
+    return grep {
+        my $x = $_;
+        !grep {$x =~ /$_/i} @$patterns
+    } @$lines
 }
 
 # diffs vcf formatted lines ignoring the fileDate header entry.
 sub diff_vcf_text_vs_text {
-    my ($lines1, $lines2) = @_;
+    my ($lines1, $lines2, %options) = @_;
+    my $ignore_patterns = delete $options{ignore_patterns};
+    if (%options) {
+        die "Unknown options to diff_vcf_text_vs_test: " . join(", ", keys(%options));
+    }
 
-    my @clean_lines1 = _strip_fileDate_from_header(@{$lines1});
-    my @clean_lines2 = _strip_fileDate_from_header(@{$lines2});
+    # we always ignore fileDate
+    my %ignore = map {$_ => undef} (@$ignore_patterns, "fileDate");
+    @$ignore_patterns = keys %ignore;
+
+    my @clean_lines1 = _strip_ignored_patterns($lines1, $ignore_patterns);
+    my @clean_lines2 = _strip_ignored_patterns($lines2, $ignore_patterns);
 
     my $t1 = join('', @clean_lines1);
     my $t2 = join('', @clean_lines2);
@@ -260,6 +271,10 @@ sub deparse_vcf_line {
 #FIXME probably move this to a base class
 sub get_samples_from_header {
     my $header = shift;
+
+    unless (ref($header) eq "ARRAY") {
+        $header = [split("\n", $header)];
+    }
 
     my $sample_line = @$header[-1];
     chomp $sample_line;

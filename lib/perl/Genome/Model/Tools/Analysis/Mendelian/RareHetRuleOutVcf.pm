@@ -1,17 +1,4 @@
-
-package Genome::Model::Tools::Analysis::Mendelian::RareHetRuleOutVcf;     # rename this when you give the module file a different name <--
-
-#####################################################################################################################################
-# SearchRuns - Search the database for runs
-#					
-#	AUTHOR:		Dan Koboldt (dkoboldt@watson.wustl.edu)
-#
-#	CREATED:	04/01/2009 by D.K.
-#	MODIFIED:	04/01/2009 by D.K.
-#
-#	NOTES:	
-#			
-#####################################################################################################################################
+package Genome::Model::Tools::Analysis::Mendelian::RareHetRuleOutVcf;
 
 use strict;
 use warnings;
@@ -19,7 +6,7 @@ use warnings;
 
 use FileHandle;
 
-use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
+use Genome;
 
 my $num_affected_called = my $affecteds_missing = my $unaffecteds_variant = my $affecteds_variant = my $affecteds_ambiguous = 0;
 my %genotypes = ();
@@ -27,11 +14,12 @@ my %genotypes = ();
 class Genome::Model::Tools::Analysis::Mendelian::RareHetRuleOutVcf {
 	is => 'Command',                       
 	
-	has => [                                # specify the command's single-value properties (parameters) <--- 
+	has => [
 		vcf_file	=> { is => 'Text', doc => "Input in VCF format", is_optional => 0, is_input => 1},
 		output_basename	=> { is => 'Text', doc => "Output basename for files", is_optional => 0, is_input => 1},
 		control_samples	=> { is => 'Text', doc => "Comma-separated list of control sample names", is_optional => 1, is_input => 1},
-		male_samples	=> { is => 'Text', doc => "Comma-separated list of male sample names", is_optional => 1, is_input => 1},		
+		male_samples	=> { is => 'Text', doc => "Comma-separated list of male sample names", is_optional => 1, is_input => 1},
+		ignore_samples	=> { is => 'Text', doc => "Comma-separated list of sample names to ignore", is_optional => 1, is_input => 1},
 		inheritance_model	=> { is => 'Text', doc => "Presumed model of mendelian inheritance [autosomal-dominant]", is_optional => 1, is_input => 1, default => 'autosomal-dominant'},
 		min_coverage	=> { is => 'Text', doc => "Minimum coverage to refute a possible variant in an affected", is_optional => 1, is_input => 1, default => 20},
 		min_call_rate	=> { is => 'Text', doc => "Minimum callrate for affecteds to include a variant", is_optional => 1, is_input => 1, default => 0.50},
@@ -45,7 +33,7 @@ class Genome::Model::Tools::Analysis::Mendelian::RareHetRuleOutVcf {
 
 sub sub_command_sort_position { 12 }
 
-sub help_brief {                            # keep this to just a few words <---
+sub help_brief {
     "Attempts to use haplotype and inheritance rules to include/exclude regions of shared haplotypes among affecteds"                 
 }
 
@@ -56,19 +44,13 @@ EXAMPLE:	gmt analysis mendelian rare-het-rule-out-vcf --vcf-file myVCF.vcf --out
 EOS
 }
 
-sub help_detail {                           # this is what the user will see with the longer version of help. <---
+sub help_detail {
     return <<EOS 
 This tool attempts to use haplotype and inheritance rules to include/exclude regions of shared haplotypes among affecteds
 EOS
 }
 
-
-################################################################################################
-# Execute - the main program logic
-#
-################################################################################################
-
-sub execute {                               # replace with real execution logic.
+sub execute {
 	my $self = shift;
 	my $vcf_file = $self->vcf_file;
 
@@ -82,6 +64,17 @@ sub execute {                               # replace with real execution logic.
 		{
 			$control_sample{$sample} = 1;
 			$stats{'num_samples_control'}++;
+		}
+	}
+
+	my %ignore_sample = ();
+	if($self->ignore_samples)
+	{
+		my @samples = split(/\,/, $self->ignore_samples);
+		foreach my $sample (@samples)
+		{
+			$ignore_sample{$sample} = 1;
+			$stats{'num_samples_ignored'}++;
 		}
 	}
 
@@ -100,6 +93,8 @@ sub execute {                               # replace with real execution logic.
 
 	warn "Parsing VCF...\n";
 	
+	
+	
 
 	my @candidate_variants = ();
 	my $num_candidates = 0;
@@ -108,6 +103,15 @@ sub execute {                               # replace with real execution logic.
 	my $output_file = $self->output_basename . ".counts.tsv";
 	my $windows_file = $self->output_basename . ".windows.tsv";
 
+	if($self->plot_results && $self->plot_results == 2)
+	{
+		do_plot_results($output_file, $windows_file, $self);
+		do_single_plot($output_file, $windows_file, $self);
+		exit(0);
+	}
+
+	my %centromeres = load_centromeres($self);
+
 	open(OUTFILE, ">$output_file") or die "Can't open outfile: $!\n";
 	print OUTFILE "chrom\tposition\tref\tvar\tdbsnp_status\tmendel_score\tis_hom_diff\tpct_affected_het\tcases\tcases_ref\tcases_het\tcases_hom\tcases_na\tcontrols\tcontrols_ref\tcontrols_het\tcontrols_hom\tcontrols_na\n";
 	
@@ -115,6 +119,8 @@ sub execute {                               # replace with real execution logic.
 	print WINDOWFILE "chrom\tchr_start\tchr_stop\tnum_variants\n";
 	
 	my %window = ();
+	
+
 	
 	## Parse the VCF file ##
 	
@@ -293,7 +299,7 @@ sub execute {                               # replace with real execution logic.
 						$marker_counts{$sample_status}++;
 						
 						## Only process the genotype if it has a value and is either unfiltered or for the control sample ##
-						if(length($genotype) > 2 && $genotype ne '.' && ($filter eq 'PASS' || $filter eq '.' || $control_sample{$sample_name}))
+						if(length($genotype) > 2 && $genotype ne '.' && ($filter eq 'PASS' || $filter eq '.' || $control_sample{$sample_name}) && !$ignore_sample{$sample_name})
 						{
 #							warn "Trying to convert $genotype in column $colCounter at line $lineCounter\n";
 							$genotype = convert_genotype($ref, $var, $genotype) if($genotype ne '.');
@@ -323,7 +329,15 @@ sub execute {                               # replace with real execution logic.
 								}
 								elsif(is_homozygous($genotype))
 								{
-									$gt = "Hom";
+									if($var_freq > 0.90)
+									{
+										$gt = "Hom";										
+									}
+									else
+									{
+										$gt = "Het";
+									}
+
 								}
 								elsif(is_heterozygous($genotype))
 								{
@@ -369,6 +383,8 @@ sub execute {                               # replace with real execution logic.
 					$marker_counts{'case_Missing'} = 0 if(!$marker_counts{'case_Missing'});
 					$marker_counts{'control_Missing'} = 0 if(!$marker_counts{'control_Missing'});
 					
+					## Get centromere start/stop ##
+					
 					
 					my $case_call_rate = 0;
 					$case_call_rate = $marker_counts{'case_called'} / $marker_counts{'case'} if($marker_counts{'case'});
@@ -410,10 +426,19 @@ sub execute {                               # replace with real execution logic.
 #						my $num_diff = $marker_counts{'case_Ref'};
 #						$num_diff = $marker_counts{'case_Hom'} if($marker_counts{'case_Hom'} < $num_diff);					
 #						$is_hom_diff = $num_diff / $marker_counts{'case_called'};
+
+
+
 						$is_hom_diff = 1;
+						## Try calculating this as the # of samples that are hom Diff ##
+#						$is_hom_diff = $marker_counts{'case_Ref'};
+#						$is_hom_diff = $marker_counts{'case_Hom'} if($marker_counts{'case_Hom'} < $is_hom_diff);
+
 					}
 					
 					## Determine probability based on mendel segregation status, where any error must be a wrong variant call ##
+			
+
 					
 					if($case_call_rate >= $self->min_call_rate && ($dbsnp_status eq "novel" || $is_hom_diff > 0)) #$dbsnp_status ne "common" && $dbsnp_status ne "uncommon")
 					{
@@ -431,9 +456,12 @@ sub execute {                               # replace with real execution logic.
 						if($window{'chrom'} && $window{'chrom'} ne $chrom)
 						{
 							## Ended a chromosome, so report the window then reset ##
-							print WINDOWFILE join("\t", $window{'chrom'}, $window{'start'}, $window{'stop'}, $window{'variants'}) . "\n" if($window{'variants'} > 1 || ($window{'stop'} - $window{'start'} + 1) >= 1000000);
+#							print WINDOWFILE join("\t", $window{'chrom'}, $window{'start'}, $window{'stop'}, $window{'variants'}) . "\n" if($window{'variants'} > 1 || ($window{'stop'} - $window{'start'} + 1) >= 1000000);
+							print_window($self, $window{'chrom'}, $window{'start'}, $window{'stop'}, $window{'variants'}) if($window{'variants'} > 1 || ($window{'stop'} - $window{'start'} + 1) >= 1000000);
 							%window = ();
 						}
+						
+
 						
 						if($is_hom_diff)
 						{
@@ -441,7 +469,8 @@ sub execute {                               # replace with real execution logic.
 							if($window{'chrom'})
 							{
 								$window{'stop'} = $position - 1;
-								print WINDOWFILE join("\t", $window{'chrom'}, $window{'start'}, $window{'stop'}, $window{'variants'}) . "\n" if($window{'variants'} > 1 || ($window{'stop'} - $window{'start'} + 1) >= 1000000);
+#								print WINDOWFILE join("\t", $window{'chrom'}, $window{'start'}, $window{'stop'}, $window{'variants'}) . "\n" if($window{'variants'} > 1 || ($window{'stop'} - $window{'start'} + 1) >= 1000000);
+								print_window($self, $window{'chrom'}, $window{'start'}, $window{'stop'}, $window{'variants'}) if($window{'variants'} > 1 || ($window{'stop'} - $window{'start'} + 1) >= 1000000);
 								%window = ();
 							}
 							else
@@ -499,7 +528,8 @@ sub execute {                               # replace with real execution logic.
 	if($window{'chrom'})
 	{
 		## Ended a chromosome, so report the window then reset ##
-		print WINDOWFILE join("\t", $window{'chrom'}, $window{'start'}, $window{'stop'}, $window{'variants'}) . "\n" if($window{'variants'} > 1 || ($window{'stop'} - $window{'start'} + 1) >= 1000000);
+#		print WINDOWFILE join("\t", $window{'chrom'}, $window{'start'}, $window{'stop'}, $window{'variants'}) . "\n" if($window{'variants'} > 1 || ($window{'stop'} - $window{'start'} + 1) >= 1000000);
+		print_window($self, $window{'chrom'}, $window{'start'}, $window{'stop'}, $window{'variants'}) if($window{'variants'} > 1 || ($window{'stop'} - $window{'start'} + 1) >= 1000000);
 		%window = ();
 	}
 
@@ -517,19 +547,47 @@ sub execute {                               # replace with real execution logic.
 	{
 		print "$stats{$key}\t$key\n";
 	}
+	
+	
+	sub print_window
+	{
+		my ($self, $chrom, $start, $stop, $variants) = @_;
+		my %centromeres = load_centromeres($self);
+		my $cen_start = my $cen_stop = 0;		
+		($cen_start, $cen_stop) = split(/\t/, $centromeres{$chrom}) if($centromeres{$chrom});
+
+		if($cen_start && $cen_stop && $start <= $cen_start && $stop >= $cen_stop)
+		{
+			## Window contains entire centromere, so adjust ##
+			print WINDOWFILE join("\t", $chrom, $start, $cen_start, $variants) . "\n";
+			print WINDOWFILE join("\t", $chrom, $cen_stop, $stop, $variants) . "\n";		
+		}
+		elsif($cen_start && $cen_stop && $start <= $cen_start && $stop >= $cen_start)
+		{
+			## WIndow runs into centromere ##
+			print WINDOWFILE join("\t", $chrom, $start, $cen_start, $variants) . "\n";
+		}
+		elsif($cen_start && $cen_stop && $start <= $cen_stop && $stop >= $cen_stop)
+		{
+			## Window starts within centromere
+			print WINDOWFILE join("\t", $chrom, $cen_stop, $stop, $variants) . "\n";
+		}
+		elsif($cen_start && $cen_stop && $start >= $cen_start && $stop <= $cen_stop)
+		{
+			## Window within centromere - don't print ##
+		}
+		else
+		{
+
+			print WINDOWFILE join("\t", $chrom, $start, $stop, $variants) . "\n"
+		}
+
+	}
 
 
 	
-	return 1;                               # exits 0 for true, exits 1 for false (retval/exit code mapping is overridable)
+	return 1;
 }
-
-
-
-
-################################################################################################
-# LoadAnnotation - load the VEP annotation 
-#
-################################################################################################
 
 sub do_plot_results
 {
@@ -551,7 +609,10 @@ sub do_plot_results
 
 	print SCRIPTFILE qq {count <- read.table("$infile", header=TRUE)\n};
 	print SCRIPTFILE qq {windows <- read.table("$windows_file", header=TRUE)\n};	
-
+	print SCRIPTFILE qq {library(ggplot2)\n};
+	
+	my %rhro_by_chrom = load_rhro_regions($windows_file);
+	
 	for(my $chrCounter = 1; $chrCounter <= 23; $chrCounter++)
 	{
 		my $chrom = $chrCounter;
@@ -569,34 +630,94 @@ sub do_plot_results
 #points(count\$position[count\$chrom=="$chrom" & count\$mendel_score == 1], count\$mendel_score[count\$chrom=="$chrom" & count\$mendel_score == 1] + 0.01, pch=19, cex=0.5, col="green")
 #};
 
+
+#png("$plot_basename.$chrom.png", height=600, width=800)
+
+################# THIS WAS THE ORIGINAL PLOTTING ######################
+#		print SCRIPTFILE qq{
+#png("$plot_basename.$chrom.png", height=200, width=800)
+#par(mar=c(4, 4, 1, 1) + 0.1)
+#plot(count\$position[count\$chrom=="$chrom"], count\$pct_affected_het[count\$chrom=="$chrom"], pch=19, cex=0.5, xlim=c(0,max(count\$position[count\$chrom=="$chrom"]) + 1), col="lightskyblue", xlab="Position on chromosome $chrom", ylab="Fraction of Affecteds", ylim=c(0,1), main="chr$chrom")
+#points(count\$position[count\$chrom=="$chrom" & count\$pct_affected_het == 1], count\$pct_affected_het[count\$chrom=="$chrom" & count\$pct_affected_het == 1], pch=19, cex=0.5, col="blue")
+#points(count\$position[count\$chrom=="$chrom" & count\$mendel_score == 1], count\$mendel_score[count\$chrom=="$chrom" & count\$mendel_score == 1] + 0.01, pch=19, cex=0.5, col="green")
+#points(count\$position[count\$chrom=="$chrom" & count\$is_hom_diff == 1], count\$is_hom_diff[count\$chrom=="$chrom" & count\$is_hom_diff == 1] - 0.01, pch=19, cex=0.5, col="red")
+#};
+#		print SCRIPTFILE qq|\nif(length(windows\$chr_start[windows\$chrom=="$chrom"]) > 0) {\n
+#segments(windows\$chr_start[windows\$chrom=="$chrom"], 1.02, windows\$chr_stop[windows\$chrom=="$chrom"], 1.02, col="black", lwd=2)\n
+#}\n|;
+#
+#		print SCRIPTFILE qq|\nif(length(windows\$chr_start[windows\$chrom=="$chrom"]) > 0) {\n
+#segments(windows\$chr_start[windows\$chrom=="$chrom"], 0.98, windows\$chr_stop[windows\$chrom=="$chrom"], 0.98, col="black", lwd=2)\n
+#}\n|;
+#
+#		print SCRIPTFILE qq{abline(v=$cen_start, lty=2)
+#abline(v=$cen_stop, lty=2);
+#legend("bottomright", c("Some Het", "All Het", "Fits Mendel", "Rule Out"), pch=c(19, 19, 19), col=c("lightskyblue", "blue","green","red"))
+#dev.off()
+#};	
+
+################### END ORIGINAL PLOTTING ##################################
+
+################# GGPLOT INSTEAD ################
 		print SCRIPTFILE qq{
-png("$plot_basename.$chrom.png", height=600, width=800)
+png("$plot_basename.$chrom.png", height=200, width=800)
 par(mar=c(4, 4, 1, 1) + 0.1)
-plot(count\$position[count\$chrom=="$chrom"], count\$pct_affected_het[count\$chrom=="$chrom"], pch=19, cex=0.5, xlim=c(0,max(count\$position[count\$chrom=="$chrom"]) + 1), col="lightskyblue", xlab="Position on chromosome $chrom", ylab="Fraction of Affecteds", ylim=c(0,1), main="chr$chrom")
-points(count\$position[count\$chrom=="$chrom" & count\$pct_affected_het == 1], count\$pct_affected_het[count\$chrom=="$chrom" & count\$pct_affected_het == 1], pch=19, cex=0.5, col="blue")
-points(count\$position[count\$chrom=="$chrom" & count\$mendel_score == 1], count\$mendel_score[count\$chrom=="$chrom" & count\$mendel_score == 1] + 0.01, pch=19, cex=0.5, col="green")
-points(count\$position[count\$chrom=="$chrom" & count\$is_hom_diff == 1], count\$is_hom_diff[count\$chrom=="$chrom" & count\$is_hom_diff == 1] - 0.01, pch=19, cex=0.5, col="red")
+p <- ggplot(count, aes(x = position[count\$chrom=="$chrom"], y = pct_affected_het[count\$chrom=="$chrom"])) + geom_point(color="blue") + xlab("Position on chr$chrom") + ylab("% Affecteds Het")
+q <- geom_point(data=count,aes(position[count\$chrom=="$chrom" & count\$is_hom_diff >= 1],is_hom_diff[count\$chrom=="$chrom" & count\$is_hom_diff >= 1]),color="red")
+m <- geom_point(data=count,aes(position[count\$chrom=="$chrom" & count\$mendel_score == 1],mendel_score[count\$chrom=="$chrom" & count\$mendel_score == 1]),color="green")
 };
 
+my $plot_line = "p + opts(title=\"chr$chrom\") + scale_x_continuous(limits = c(0,max(count\$position[count\$chrom==\"$chrom\"]))) + q + m ";
+#my $plot_line = "p + opts(title=\"chr$chrom\") + scale_x_continuous(limits = c(30000000,130000000)) + q + m ";
+
+if($rhro_by_chrom{$chrom})
+{
+	my $region_no = 0;
+	my @rhro_lines = split(/\n/, $rhro_by_chrom{$chrom});
+	
+	
+	foreach my $rhro_line (@rhro_lines)
+	{
+		$region_no++;
+		my ($region_start, $region_stop) = split(/\t/, $rhro_line);
+
+		print SCRIPTFILE qq{
+rect$region_no <- data.frame (xmin=$region_start, xmax=$region_stop, ymin=-Inf, ymax=Inf)
+r$region_no <- geom_rect(data=rect$region_no, aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax), color="lightskyblue", fill="lightskyblue", alpha=0.5, inherit.aes = FALSE)
+};
+		$plot_line .= "+ r$region_no ";
+	}
+}
+
+if($cen_start)
+{
+	$plot_line .= "+ geom_vline(xintercept = $cen_start, linetype = \"longdash\")";
+}
+
+if($cen_stop)
+{
+	$plot_line .= "+ geom_vline(xintercept = $cen_stop, linetype = \"longdash\")";
+}
 
 
-		print SCRIPTFILE qq|\nif(length(windows\$chr_start[windows\$chrom=="$chrom"]) > 0) {\n
-segments(windows\$chr_start[windows\$chrom=="$chrom"], 1.02, windows\$chr_stop[windows\$chrom=="$chrom"], 1.02, col="black", lwd=2)\n
-}\n|;
+print SCRIPTFILE "$plot_line\n";
+print SCRIPTFILE "dev.off()\n";
+#		print SCRIPTFILE qq{abline(v=$cen_start, lty=2)
+#abline(v=$cen_stop, lty=2);
+#legend("bottomright", c("Rare Het", "Rule Out"), pch=c(19, 19), col=c("lightskyblue", "red"))
+#dev.off()
+#};	
 
 
-		print SCRIPTFILE qq{abline(v=$cen_start, lty=2)
-abline(v=$cen_stop, lty=2);
-legend("bottomright", c("Some Het", "All Het", "Fits Mendel", "Rule Out"), pch=c(19, 19, 19), col=c("lightskyblue", "blue","green","red"))
-dev.off()
-};	
+################## END GGPLOT ################
 
 		my @temp = split(/\//, $self->output_basename);
 		my $numContents = @temp;
 		my $true_basename = $temp[$numContents - 1];
 		my $image_filename = "$true_basename.plot.$chrom.png";
 
-		print INDEX "<TD><A HREF=\"$image_filename\"><IMG SRC=\"$image_filename\" HEIGHT=240 WIDTH=320 BORDER=0></A></TD>\n";
+#		print INDEX "<TD><A HREF=\"$image_filename\"><IMG SRC=\"$image_filename\" HEIGHT=240 WIDTH=320 BORDER=0></A></TD>\n";
+		print INDEX "<TD><A HREF=\"$image_filename\"><IMG SRC=\"$image_filename\" HEIGHT=100 WIDTH=400 BORDER=0></A></TD>\n";
 
 		$num_printed_in_column++;
 
@@ -616,11 +737,146 @@ dev.off()
 	close(INDEX);
 }
 
+sub do_single_plot
+{
+	my $infile = shift(@_);
+	my $windows_file = shift(@_);
+	my $self = shift(@_);
 
-################################################################################################
-# LoadAnnotation - load the VEP annotation 
-#
-################################################################################################
+	my %centromeres = load_centromeres($self);
+
+	open(INDEX, ">" . $self->output_basename . ".plot.single.html") or die "Can't open outfile: $!\n";
+	print INDEX "<HTML><BODY><TABLE CELLSPACING=0 CELLPADDING=0 BORDER=0>\n";
+	print INDEX "<TR>\n";
+	my $num_printed_in_column = 0;
+
+	my $script_filename = $self->output_basename . ".single.R";
+	open(SCRIPTFILE, ">" . $script_filename) or die "Can't open output file for R script: $!\n";
+
+	my $plot_basename = $self->output_basename . ".single.plot";
+
+	print SCRIPTFILE qq {count <- read.table("$infile", header=TRUE)\n};
+	print SCRIPTFILE qq {windows <- read.table("$windows_file", header=TRUE)\n};	
+	print SCRIPTFILE qq {library(ggplot2)\n};
+	
+	my %rhro_by_chrom = load_rhro_regions($windows_file);
+	
+	for(my $chrCounter = 1; $chrCounter <= 23; $chrCounter++)
+	{
+		my $chrom = $chrCounter;
+		$chrom = "X" if($chrCounter == 23);
+		
+		my $cen_start = my $cen_stop = -1;
+		($cen_start, $cen_stop) = split(/\t/, $centromeres{$chrom}) if($centromeres{$chrom});
+		
+
+################# GGPLOT INSTEAD ################
+		print SCRIPTFILE qq{
+png("$plot_basename.$chrom.png", height=150, width=150)
+par(mar=c(4, 4, 1, 1) + 0.1)
+p <- ggplot(count, aes(x = position[count\$chrom=="$chrom"], y = pct_affected_het[count\$chrom=="$chrom"])) + geom_point(color="blue") + xlab("") + ylab("% Affecteds Het")
+q <- geom_point(data=count,aes(position[count\$chrom=="$chrom" & count\$is_hom_diff >= 1],is_hom_diff[count\$chrom=="$chrom" & count\$is_hom_diff >= 1]),color="red")
+m <- geom_point(data=count,aes(position[count\$chrom=="$chrom" & count\$mendel_score == 1],mendel_score[count\$chrom=="$chrom" & count\$mendel_score == 1]),color="green")
+};
+
+my $plot_line = "p ";
+#if($chrom eq "1")
+#{
+#	$plot_line .= "+ opts(title=\"chr$chrom\", plot.margin = unit(c(0.01,0.01,0.01,0.01), \"cm\"), axis.ticks=theme_blank(), axis.text.x=theme_blank(),axis.title.x=theme_blank()) + q + m ";
+#	
+#}
+#else
+#{
+	$plot_line .= "+ opts(title=\"chr$chrom\", plot.margin = unit(c(0.01,0.01,0.01,0.01), \"cm\"), axis.ticks=theme_blank(), axis.text.x=theme_blank(),axis.title.x=theme_blank(), axis.text.y=theme_blank(),axis.title.y=theme_blank()) + q + m ";
+#}
+
+
+if($rhro_by_chrom{$chrom})
+{
+	my $region_no = 0;
+	my @rhro_lines = split(/\n/, $rhro_by_chrom{$chrom});
+	foreach my $rhro_line (@rhro_lines)
+	{
+		$region_no++;
+		my ($region_start, $region_stop) = split(/\t/, $rhro_line);
+
+		print SCRIPTFILE qq{
+rect$region_no <- data.frame (xmin=$region_start, xmax=$region_stop, ymin=-Inf, ymax=Inf)
+r$region_no <- geom_rect(data=rect$region_no, aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax), color="lightskyblue", fill="lightskyblue", alpha=0.5, inherit.aes = FALSE)
+};
+		$plot_line .= "+ r$region_no ";
+	}
+}
+
+if($cen_start)
+{
+	$plot_line .= "+ geom_vline(xintercept = $cen_start, linetype = \"longdash\")";
+}
+
+if($cen_stop)
+{
+	$plot_line .= "+ geom_vline(xintercept = $cen_stop, linetype = \"longdash\")";
+}
+
+
+print SCRIPTFILE "$plot_line\n";
+print SCRIPTFILE "dev.off()\n";
+
+
+		my @temp = split(/\//, $self->output_basename);
+		my $numContents = @temp;
+		my $true_basename = $temp[$numContents - 1];
+		my $image_filename = "$true_basename.single.plot.$chrom.png";
+
+#		print INDEX "<TD><A HREF=\"$image_filename\"><IMG SRC=\"$image_filename\" HEIGHT=240 WIDTH=320 BORDER=0></A></TD>\n";
+		print INDEX "<TD><A HREF=\"$image_filename\"><IMG SRC=\"$image_filename\" HEIGHT=150 WIDTH=150 BORDER=0></A></TD>\n";
+
+		$num_printed_in_column++;
+
+		if($num_printed_in_column == 11)
+		{
+			print INDEX "<TD> &nbsp; </TD></TR><TR>\n";
+#			$num_printed_in_column = 0;
+		}
+
+	}
+
+	close(SCRIPTFILE);
+
+	system("R --no-save < $script_filename");
+
+	print INDEX "</TR></TABLE></BODY></HTML>\n";
+	close(INDEX);
+}
+
+sub load_rhro_regions
+{
+	my $FileName = shift;
+	my %regions = ();
+	## Parse the VCF file ##
+	
+	my $input = new FileHandle ($FileName);
+	my $lineCounter = 0;
+	
+	while (<$input>)
+	{
+		chomp;
+		my $line = $_;
+		$lineCounter++;
+		
+		my ($chrom, $chr_start, $chr_stop, $variants) = split(/\t/, $line);
+#		if($variants >= 2)
+#		{
+			$regions{$chrom} .= "\n" if($regions{$chrom});
+			$regions{$chrom} .= join("\t", $chr_start, $chr_stop, $variants);			
+#		}
+
+	}
+	
+	close($input);
+
+	return(%regions);
+}
 
 sub load_centromeres
 {
@@ -646,18 +902,12 @@ sub load_centromeres
 	return(%centromeres);
 }
 
-
 sub numericallyDesc
 {
 	$b = 0 if($b eq '.');
 	$a = 0 if($a eq '.');
 	$b <=> $a;
 }
-
-################################################################################################
-# LoadAnnotation - load the VEP annotation 
-#
-################################################################################################
 
 sub is_homozygous
 {
@@ -668,11 +918,6 @@ sub is_homozygous
 	return(0);
 }
 
-################################################################################################
-# LoadAnnotation - load the VEP annotation 
-#
-################################################################################################
-
 sub is_heterozygous
 {
 	my $gt = shift(@_);
@@ -681,11 +926,6 @@ sub is_heterozygous
 	return(1) if($a1 ne $a2);
 	return(0);
 }
-
-################################################################################################
-# LoadAnnotation - load the VEP annotation 
-#
-################################################################################################
 
 sub convert_genotype
 {
@@ -760,14 +1000,12 @@ sub convert_genotype
 	return("??");
 }
 
-
 sub commify
 {
 	local($_) = shift;
 	1 while s/^(-?\d+)(\d{3})/$1,$2/;
 	return $_;
 }
-
 
 1;
 

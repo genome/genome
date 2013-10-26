@@ -10,7 +10,7 @@ use strict;
 use warnings;
 
 use above 'Genome';
-use Genome::Utility::Vcf ('parse_vcf_line', 'deparse_vcf_line');
+use Genome::Utility::Vcf ('parse_vcf_line', 'deparse_vcf_line', 'get_samples_from_header');
 
 use Test::More;
 
@@ -92,7 +92,7 @@ ok(!$header_diff, 'parsed header matches expected result')
     or diag("diff:\n" . $header_diff);
 
 my @expected_samples = qw(H_ME-DS10239_2-DS10239_2 H_ME-DS10239_3-DS10239_3 H_ME-DS10239_1-DS10239_1);
-my @samples = $filter_command->get_samples_from_header($header);
+my @samples = get_samples_from_header($header);
 #is_deeply(\@samples, \@expected_samples, "Got the expected samples from get_samples_from_header");
 
 my $return = $filter_command->print_region_list($input_vcf, $output_regions);

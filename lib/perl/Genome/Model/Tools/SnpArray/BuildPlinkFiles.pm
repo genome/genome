@@ -16,6 +16,9 @@ use warnings;
 use FileHandle;
 
 use Genome; # using the namespace authorizes Class::Autouse to lazy-load modules under it
+use Genome::Model::Tools::Analysis::Helpers qw(
+    code_to_genotype
+);
 
 ## Declare global statistics hash ##
 my %stats = ();
@@ -320,28 +323,4 @@ sub execute {
       return(%genotypes);
   }
 
-
-  sub code_to_genotype
-  {
-      my $code = shift(@_);
-
-      return("AA") if($code eq "A");
-      return("CC") if($code eq "C");
-      return("GG") if($code eq "G");
-      return("TT") if($code eq "T");
-
-      return("AC") if($code eq "M");
-      return("AG") if($code eq "R");
-      return("AT") if($code eq "W");
-      return("CG") if($code eq "S");
-      return("CT") if($code eq "Y");
-      return("GT") if($code eq "K");
-
-#	warn "Unrecognized ambiguity code $code!\n";
-
-      return("NN");	
-  }
-
-
-  1;
-
+1;

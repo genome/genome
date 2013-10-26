@@ -168,7 +168,7 @@ sub execute {                               # replace with real execution logic.
 		my $normal_pileup = $self->samtools_path . " mpileup -f $reference -q 10 -r MT:1 $normal_bam";
 		my $tumor_pileup = $self->samtools_path . " mpileup -f $reference -q 10 -r MT:1 $tumor_bam";
 		
-		my $cmd = $self->java_command_line("somatic <\($normal_pileup\) <\($tumor_pileup\) --output-snp $output_snp --output-indel $output_indel $varscan_params");
+		my $cmd = $self->command_line("somatic <\($normal_pileup\) <\($tumor_pileup\) --output-snp $output_snp --output-indel $output_indel $varscan_params");
 
 		## Run Varscan ##
 		if($self->heap_space)
@@ -184,7 +184,7 @@ sub execute {                               # replace with real execution logic.
 		
 		if(-e $output_snp && -e $output_indel)
 		{
-			$cmd = $self->java_command_line("somaticFilter $output_snp --indel-file $output_indel --output-file $output_snp.filter");
+			$cmd = $self->command_line("somaticFilter $output_snp --indel-file $output_indel --output-file $output_snp.filter");
 			print "Running $cmd\n";
 			system($cmd);
 			

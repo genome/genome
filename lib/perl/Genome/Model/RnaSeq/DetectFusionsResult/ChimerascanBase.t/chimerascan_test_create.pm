@@ -39,7 +39,7 @@ sub test_create {
 
     # needs --bowtie-version
     $params{'detector_params'} = "--reuse-bam 0";
-    test_for_error($class, \%params, "Couldn't find parameter");
+    test_for_error($class, \%params, "Could not find parameter");
 
     # invalid bowtie version for chimerascan-vrl
     $params{'detector_params'} = "--bowtie-version 2.0.0 --reuse-bam 0", # --bowtie-version=2.0.0

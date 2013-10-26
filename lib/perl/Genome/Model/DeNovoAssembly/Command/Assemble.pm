@@ -10,9 +10,14 @@ class Genome::Model::DeNovoAssembly::Command::Assemble {
     has_input => [
         build => { is => 'Genome::Model::Build::DeNovoAssembly',
             is_output => 1},
+    ],    
+    has_constant => [
+        lsf_resource => {
+            is => 'Text',
+            default_value => "-R 'select[type==LINUX64 && mem>30000] rusage[mem=30000] span[hosts=1]' -M 30000000",
+        },
     ],
 };
-
 
 sub execute {
     my $self = shift;

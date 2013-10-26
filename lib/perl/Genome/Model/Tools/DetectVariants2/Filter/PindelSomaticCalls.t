@@ -17,24 +17,8 @@ use File::Compare;
 if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
 }
-else {
-    plan tests => 11;
-}
 
 use_ok( 'Genome::Model::Tools::DetectVariants2::Filter::PindelSomaticCalls');
-
-# THIS TESTS THE CACHING. Caching refseq in /var/cache/tgi-san. We gotta link these files to a tmp dir for tests so they don't get copied
-use Genome::Model::Build::ReferenceSequence;
-my $refseq_tmp_dir = File::Temp::tempdir(CLEANUP => 1);
-no warnings;
-*Genome::Model::Build::ReferenceSequence::local_cache_basedir = sub { return $refseq_tmp_dir; };
-*Genome::Model::Build::ReferenceSequence::copy_file = sub {
-    my ($build, $file, $dest) = @_;
-    symlink($file, $dest);
-    is(-s $file, -s $dest, 'linked '.$dest) or die;
-    return 1;
-};
-use warnings;
 
 my $refbuild_id = 101947881;
 my $input_directory = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-Filter-PindelSomaticCalls";
@@ -77,3 +61,5 @@ ok(-e $lq_output_bed,'LQ bed output exists');
 is(compare($hq_output_bed, $expected_hq_bed_output), 0, 'hq bed output matched expected output');
 is(compare($lq_output_bed, $expected_lq_bed_output), 0, 'lq bed output matched expected output');
 is(compare($raw_output, $expected_raw_output), 0, 'Raw output matched expected output');
+
+done_testing();

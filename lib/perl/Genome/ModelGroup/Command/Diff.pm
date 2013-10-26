@@ -48,8 +48,8 @@ sub execute {
 
     $self->status_message("\nselecting builds...\n");
 
-    my @from_models = sort { $a->subject_id <=> $b->subject_id || $a->id <=> $b->id } $from->models;
-    my @to_models   = sort { $a->subject_id <=> $b->subject_id || $a->id <=> $b->id } $to->models;
+    my @from_models = sort { $a->subject_id cmp $b->subject_id || $a->id cmp $b->id } $from->models;
+    my @to_models   = sort { $a->subject_id cmp $b->subject_id || $a->id cmp $b->id } $to->models;
     my @cache_all_builds = Genome::Model::Build->get(model_id => [map { $_->id } ( @from_models,@to_models) ]);
 
     #print scalar(@from_models),"\n@from_models\n\n";
@@ -58,7 +58,7 @@ sub execute {
 
     my %selected_build;
     for my $m (@from_models, @to_models) {
-        my @b = sort { $b->id <=> $a->id } $m->builds;
+        my @b = sort { $b->id cmp $a->id } $m->builds;
         $self->status_message("\n" . $m->__display_name__ . ":");
         for my $b (@b) {
             my $dir = $b->data_directory;

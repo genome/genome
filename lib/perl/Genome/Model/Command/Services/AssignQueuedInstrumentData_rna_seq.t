@@ -12,6 +12,7 @@ BEGIN {
 use above 'Genome';
 
 use Test::More;
+use Genome::Utility::Test qw(is_equal_set);
 
 use_ok('Genome::Model::Command::Services::AssignQueuedInstrumentData') or die;
 
@@ -20,7 +21,7 @@ my @projects;
 push @projects, Genome::Project->create(id => -111, name => '__TEST_PROJECT__');
 ok($projects[0], 'create project for research project');
 # 'GSC WorkOrder'
-my $gsc_workorder = Genome::Site::TGI::Synchronize::Classes::SetupProject->__define__(id => -222, name => '__TEST_WORKORDER__', pipeline => 'rna');
+my $gsc_workorder = Genome::Site::TGI::Synchronize::Classes::LimsProject->__define__(id => -222, name => '__TEST_WORKORDER__', pipeline => 'rna');
 push @projects, Genome::Project->create(id => -222, name => '__TEST_WORKORDER__');
 ok($projects[1], 'create project for research project');
 # Model groups for projects
@@ -43,7 +44,6 @@ no warnings;
     }
     return values %attrs;
 };
-#sub GSC::Setup::WorkOrder::get { return $gsc_workorder; }
 use warnings;
 
 $instrument_data[0]->add_attribute(attribute_label => 'tgi_lims_status', attribute_value => 'new');
@@ -122,10 +122,10 @@ ok( # processed instdata[2]
 
 # Did the models get added to the projects?
 for my $project ( @projects ) {
-    is_deeply(
-        \@new_model_ids,
-        [ sort { $b <=> $a } map { $_->entity_id } grep { $_->entity_class_name =~ /^Genome::Model/ } $project->parts ],
-        'added models to project '.$project->name,
+    is_equal_set(
+        [@new_model_ids],
+        [map { $_->entity_id } grep { $_->entity_class_name =~ /^Genome::Model/ } $project->parts],
+        'added models to project ' . $project->name,
     );
 }
 

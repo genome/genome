@@ -42,6 +42,17 @@ sub locus_id {
     return $locus_id;
 }
 
+sub post_allocation_initialization {
+    my $self = shift;
+
+    my($auto_suffix) = $self->input(name => 'auto_suffix');
+    if($auto_suffix and $auto_suffix->value_id eq 1 and not $self->locus_suffix) {
+        $self->add_input(name => 'locus_suffix', value_id => time(), value_class_name => 'UR::Value::Text'); #pick a unique suffix for this self
+    }
+
+    return 1;
+}
+
 sub assembly_name {
     my $self = shift;
     my $model = $self->model;
@@ -147,6 +158,8 @@ sub files_ignored_by_diff {
 
         merge_valid
         prediction_valid
+
+        rrna_screen_bsub.+(?:err|out)
 
         README
     );

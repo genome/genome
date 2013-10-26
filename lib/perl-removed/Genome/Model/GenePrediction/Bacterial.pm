@@ -26,7 +26,7 @@ class Genome::Model::GenePrediction::Bacterial {
             doc => 'Number of runners for the gene prediction step',
             is_optional => 1,
             default => 50,
-        }, 
+        },
         skip_acedb_parse => {
             is => 'Boolean',
             doc => 'If set, skip aceDB parsing in bap project finish',
@@ -72,7 +72,7 @@ class Genome::Model::GenePrediction::Bacterial {
         },
         pipeline_version => {
             is => 'String', # TODO Can this be removed? Why do we need it?
-            doc => 'Apparently, this notes the pipeline version.', 
+            doc => 'Apparently, this notes the pipeline version.',
         },
         acedb_version => {
             is => 'String', # TODO If we can figure out a way to automate switching to a new db, this can go away
@@ -120,11 +120,6 @@ sub _execute_build {
 
     local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
     $ENV{PATH} = join(':', $ENV{PATH}, '/gsc/scripts/gsc/annotation');
-
-    my($auto_suffix) = $build->input(name => 'auto_suffix');
-    if($auto_suffix and $auto_suffix->value_id eq 1 and not $build->locus_suffix) {
-        $build->add_input(name => 'locus_suffix', value_id => time(), value_class_name => 'UR::Value::Text'); #pick a unique suffix for this build
-    }
 
     my $model = $build->model;
     $self->status_message("Executing build logic for " . $self->__display_name__ . ":" . $build->__display_name__);

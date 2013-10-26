@@ -21,19 +21,21 @@ use_ok('Genome::Site::TGI::Synchronize::Classes::LibrarySummary') or die;
 my $uac = Genome::Site::TGI::Synchronize::UpdateApipeClasses->create;
 ok($uac, 'create update apipe classes');
 
-my @tests = tests();
-for my $test ( @tests ) {
+for my $test ( tests() ) {
     my $gsc_class = $test->{gsc_class};
     my $params = $test->{params};
     my $gsc_obj = $gsc_class->create(%$params);
     my $genome_class = $test->{genome_class};
-    my $genome_obj = $genome_class->get(id => $gsc_obj->id);
+    my $genome_get_params = $test->{genome_get_params} || { id => $gsc_obj->id };
+    my $genome_obj = $genome_class->get(%$genome_get_params);
     $uac->instrument_data_with_successful_pidfas->{$gsc_obj->id} = 1 if $genome_class =~ /Solexa$/;
     ok(!$genome_obj, "$genome_class data does not exist for $gsc_class for id ".$gsc_obj->id);
     my $method = $test->{method};
     ok($uac->$method($gsc_obj, $genome_class), $method);
-    $genome_obj = $genome_class->get($gsc_obj->id);
-    ok($genome_obj, "$genome_class exists for $gsc_class id ".$gsc_obj->id);
+    $genome_obj = $genome_class->get(%$genome_get_params);
+    ok($genome_obj, "$genome_class exists for $gsc_class id ".$gsc_obj->id) or die;
+
+    next if $test->{genome_get_params}; # skip if we have explicit params
 
     for my $name ( keys %$params ) {
         my $param_value = $params->{$name} // 'NULL';
@@ -108,6 +110,46 @@ sub tests {
                 sd_below_insert_size => undef,
                 fwd_filt_error_rate_avg => undef,
                 rev_run_type => 'Paired End Read 2',
+                analysis_project_id => 'a' x 64,
+            },
+        },
+        {
+            gsc_class => 'Genome::Site::TGI::Synchronize::Classes::LimsProject',
+            genome_class => 'Genome::Project',
+            method => '_create_limsproject',
+            params => {
+                id => -101,
+                name => '__LIMS_PROJECT__',
+            },
+        },
+        {
+            gsc_class => 'Genome::Site::TGI::Synchronize::Classes::LimsProjectSample',
+            genome_class => 'Genome::ProjectPart',
+            method => '_create_limsprojectsample',
+            params => {
+                project_id => -102,
+                sample_id => -103,
+            },
+            genome_get_params => {
+                project_id => -102,
+                entity_id => -103,
+                entity_class_name => 'Genome::Sample',
+                label => 'sample',
+            },
+        },
+        {
+            gsc_class => 'Genome::Site::TGI::Synchronize::Classes::LimsProjectInstrumentData',
+            genome_class => 'Genome::ProjectPart',
+            method => '_create_limsprojectinstrumentdata',
+            params => {
+                project_id => -104,
+                instrument_data_id => -105,
+            },
+            genome_get_params => {
+                project_id => -104,
+                entity_id => -105,
+                entity_class_name => 'Genome::InstrumentData',
+                label => 'instrument_data',
             },
         },
     );

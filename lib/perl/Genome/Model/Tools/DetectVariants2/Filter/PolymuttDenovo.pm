@@ -81,7 +81,7 @@ sub _filter_variants {
     my ($r_output) = Genome::Sys->create_temp_file_path();
     $r_fh->print($self->r_code($r_input_path, $r_output));
     $r_fh->close;
-    $self->status_message(`R --vanilla < $r_script_path 2>&1`);
+    $self->status_message(join('', `R --vanilla < $r_script_path 2>&1`));
     ###output new VCF
     my %ped_hash = $self->make_trios($self->pedigree_file_path, $header_line);
     $self->output_passing_vcf($vcf, $r_output, $self->min_unaffected_pvalue, $output_file, \%ped_hash);

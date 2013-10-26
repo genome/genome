@@ -46,7 +46,4 @@ sub create {
     return $self;
 }
 
-
-
 1;
-

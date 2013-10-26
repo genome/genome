@@ -39,7 +39,7 @@ $build->amplicons_classified(14);
 $build->amplicons_classified_success('1.00');
 
 # run
-my $reports = Genome::Model::Build::MetagenomicComposition16s::GenerateReports->create(input_build => [$build]);
+my $reports = Genome::Model::Build::MetagenomicComposition16s::GenerateReports->create(input_build => $build);
 ok($reports, 'create');
 ok($reports->execute, 'execute');
 

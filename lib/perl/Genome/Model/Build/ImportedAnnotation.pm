@@ -137,7 +137,7 @@ sub check_reference_sequence {
             properties => ['reference_sequence'],
             desc => "ImportedAnnotation has no reference_sequence, this will soon be an error",
         );
-    } elsif (defined $self->model->reference_sequence and $self->model->reference_sequence->id != $self->reference_sequence->model->id) {
+    } elsif (defined $self->model->reference_sequence and $self->model->reference_sequence->id ne $self->reference_sequence->model->id) {
         push @tags, UR::Object::Tag->create(
             type => 'error',
             properties => ['reference_sequence'],

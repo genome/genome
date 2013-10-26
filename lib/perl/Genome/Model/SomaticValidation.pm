@@ -53,6 +53,12 @@ class Genome::Model::SomaticValidation {
             is => 'Text',
             doc => 'The detection to run on the control aligned reads for determining LOH',
         },
+        transcript_variant_annotator_version => {
+            doc => 'Version of the "annotate transcript-variants" tool to run during the annotation step',
+            is_optional => 1,
+            default_value => Genome::Model::Tools::Annotate::TranscriptVariants->default_annotator_version,
+            valid_values => [ 0,1,2,3,4 ],
+        },
         tiering_version => {
             is => 'Text',
             doc => 'version of tiering BED files to use (tiering is not performed if not specified)',
@@ -140,6 +146,17 @@ class Genome::Model::SomaticValidation {
             via => 'target_region_set',
             to => 'name',
         },
+        experimental_subject => {
+            is => 'Genome::Sample',
+            via => '__self__',
+            to => 'tumor_sample'
+        },
+        control_subject => {
+            is => 'Genome::Sample',
+            via => '__self__',
+            to => 'normal_sample'
+        },
+
     ],
     has_transient_constant_optional => {
         sequencing_platform => {
@@ -228,6 +245,7 @@ sub map_workflow_inputs {
 
     push @inputs,
         build_id => $build->id,
+        transcript_variant_annotator_version => $build->processing_profile->transcript_variant_annotator_version,
         tumor_mode => 'tumor',
         normal_mode => 'normal',
         ;
@@ -267,5 +285,7 @@ sub default_single_bam_profile {
     return Genome::ProcessingProfile::SomaticValidation->get(
         name => 'Jun 2012 Single-Bam Validation (single-bam somatic)');
 }
+
+sub requires_pairing { return 1; }
 
 1;

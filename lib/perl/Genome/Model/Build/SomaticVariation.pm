@@ -228,6 +228,12 @@ sub reference_sequence_build {
     return $reference_sequence_build;
 }
 
+# TODO: this is now implemented in the base class, with a somewhat better chunk of code
+# pulled from SomaticValidation.  The new implementation, however, only returns a path
+# if there is actually a file there.  This implementation will return a path when 
+# there is no file, and is possibly being used to determine where to write a file
+# in the first place.  If we determine which one is right, this can be removed,
+# possibly with an update to the base class.
 sub data_set_path {
     my ($self, $dataset, $version, $file_format) = @_;
     my $path;
@@ -406,26 +412,5 @@ sub path_to_individual_output {
     }
     return $answer;
 }
-
-sub final_result_for_variant_type {
-    my $self = shift;
-    my $variant_type = shift;
-
-    my @users = Genome::SoftwareResult::User->get(user => $self);
-    my @results = Genome::SoftwareResult->get([map($_->software_result_id, @users)]);
-    my @dv2_results = grep($_->class =~ /Genome::Model::Tools::DetectVariants2::Result/, @results);
-    @dv2_results = grep($_->class !~ /::Vcf/, @dv2_results);
-    my @relevant_results = grep(scalar( @{[ glob($_->output_dir . '/' . $variant_type .'*') ]} ), @dv2_results);
-
-    if(!@relevant_results) {
-        return;
-    }
-    if(@relevant_results > 1) {
-        die $self->error_message('Found multiple results for variant type!');
-    }
-
-    return $relevant_results[0];
-}
-
 
 1;

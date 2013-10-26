@@ -48,7 +48,7 @@ use Genome;
 
 class Genome::Site::TGI::Sample {
     is => 'Genome::Site::TGI::Measurable',
-    table_name => 'GSC.ORGANISM_SAMPLE',
+    table_name => 'ORGANISM_SAMPLE',
     id_by => [
         id                          => { is => 'Number',
                                         doc => 'the numeric ID for the specimen in both the LIMS and the analysis system', 
@@ -154,7 +154,7 @@ class Genome::Site::TGI::Sample {
         solexa_lane_names           => { via => 'solexa_lanes', to => 'full_name' },
     ],
     doc         => 'a single specimen of DNA or RNA extracted from some tissue sample',
-    data_source => 'Genome::DataSource::GMSchema',
+    data_source => 'Genome::DataSource::Dwrac',
 };
 
 sub __display_name__ {
@@ -180,16 +180,6 @@ sub models {
     my $self = shift;
     my @m = Genome::Model->get(subject_id => $self->id, subject_class_name => $self->class);
     return @m;
-}
-
-sub canonical_model {
-
-    # TODO: maybe this should use model is_default?
-
-    my ($self) = @_;
-
-    my @models = sort { $a->id <=> $b->id } $self->models();
-    return $models[0];
 }
 
 1;

@@ -72,6 +72,7 @@ my $instrument_data_1 = Genome::InstrumentData::Solexa->create(
     rev_clusters => 65536,
     target_region_set_name => 'validation-test',
     index_sequence => 'GTTAC',
+    subset_name => '1-GTTAC',
 );
 $instrument_data_1->add_attribute(
     attribute_label => 'tgi_lims_status',
@@ -155,6 +156,7 @@ my $instrument_data_1a = Genome::InstrumentData::Solexa->create(
     rev_clusters => 65536,
     target_region_set_name => 'validation-test',
     index_sequence => 'unknown',
+    subset_name => '1-unknown',
 );
 $instrument_data_1a->add_attribute(
     attribute_label => 'tgi_lims_status',
@@ -190,6 +192,7 @@ my $instrument_data_2 = Genome::InstrumentData::Solexa->create(
     rev_clusters => 65536,
     target_region_set_name => 'validation-test-roi',
     index_sequence => 'GGGGG',
+    subset_name => '2-GGGGG',
 );
 $instrument_data_2->add_attribute(
     attribute_label => 'tgi_lims_status',
@@ -242,6 +245,7 @@ my $instrument_data_2a = Genome::InstrumentData::Solexa->create(
     rev_clusters => 65536,
     target_region_set_name => 'validation-test-roi-alternate_reference',
     index_sequence => 'GGGGG',
+    subset_name => '3-GGGGG',
 );
 $instrument_data_2a->add_attribute(
     attribute_label => 'tgi_lims_status',
@@ -286,6 +290,7 @@ my $instrument_data_2b = Genome::InstrumentData::Solexa->create(
     rev_clusters => 65536,
     target_region_set_name => 'validation-test-roi-alternate_reference',
     index_sequence => 'GGGGG',
+    subset_name => '3-GGGGG',
 );
 $instrument_data_2b->add_attribute(
     attribute_label => 'tgi_lims_status',

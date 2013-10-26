@@ -156,9 +156,9 @@ sub execute {
         if ( $line =~ /no\s+fasta\s+sequence/ ) { print NON "$line\n"; next; }
         $normalTotal = $patientId = $tumorTotal = $normalSv = $tumorSv  = undef;
         if ( $line =~ /(\S+).normal\.totalReads\:(\d+)/i ) { $patientId = $1; $normalTotal = $2; }
-        if ( $line =~ /$patientId.tumor\.totalReads\:(\d+)/i ) { $tumorTotal = $1; }
-        if ( $line =~ /$patientId.normal.svReadCount\:(\d+)/i ) { $normalSv = $1; }
-        if ( $line =~ /$patientId.tumor.svReadCount\:(\d+)/i ) { $tumorSv = $1; }
+        if ( $line =~ /\Q$patientId\E.tumor\.totalReads\:(\d+)/i ) { $tumorTotal = $1; }
+        if ( $line =~ /\Q$patientId\E.normal.svReadCount\:(\d+)/i ) { $normalSv = $1; }
+        if ( $line =~ /\Q$patientId\E.tumor.svReadCount\:(\d+)/i ) { $tumorSv = $1; }
         ( $normalTotal =~ /\d+/ && $tumorTotal =~ /\d+/ && $normalSv =~ /\d+/ && $tumorSv  =~ /\d+/ ) ||
         die "Did not get tumor and/or normal total reads and SV read count: '$line'";
 

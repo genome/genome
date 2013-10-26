@@ -7,10 +7,11 @@ class Genome::Config::AnalysisMenuItem {
     is => 'Genome::Utility::ObjectWithTimestamps',
     id_generator => '-uuid',
     data_source => 'Genome::DataSource::GMSchema',
-    table_name => 'GENOME_ANALYSIS_MENU_ITEM',
+    table_name => 'config.analysis_menu_item',
     id_by => [
         id => {
             is => 'Text',
+            len => 64,
         },
     ],
     has => [
@@ -28,12 +29,6 @@ class Genome::Config::AnalysisMenuItem {
         configuration_set => {
             is => 'Genome::Config::Set',
             id_by => 'configuration_set_id',
-        },
-        created_at => {
-            is => 'Timestamp',
-        },
-        updated_at => {
-            is => 'Timestamp',
         },
     ],
 };

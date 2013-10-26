@@ -116,7 +116,7 @@ sub _execute_v1 {
     }
     $self->status_message("Sample extraction type: " . $instrument_data->sample->extraction_type);
 
-    my $transcript_strand = $instrument_data->transcript_strand;
+    my $transcript_strand = $instrument_data->library->transcript_strand;
     unless ($transcript_strand) {
         die $self->error_message("Transcript strand is not set for instrument data " . $instrument_data->__display_name__ . "!"); 
     }

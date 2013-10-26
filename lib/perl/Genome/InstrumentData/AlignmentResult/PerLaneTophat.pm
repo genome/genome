@@ -182,8 +182,18 @@ sub _get_reference_fasta {
     my ($class, $annotation_index) = @_;
 
     # get the reference_fasta
-    my $reference_index = $annotation_index->reference_build;
-
+    my $reference_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_with_lock(
+        aligner_name => $annotation_index->aligner_name,
+        aligner_version => $annotation_index->aligner_version,
+        aligner_params => $annotation_index->aligner_params,
+        reference_build => $annotation_index->reference_build,
+    );
+    unless ($reference_index) {
+        $class->error_message('Failed to find the reference index to retrieve the reference FASTA file!  '.
+            "aligner_name: ".$annotation_index->aligner_name." aligner_version: ".$annotation_index->aligner_version.
+            "aligner_params: ".$annotation_index->aligner_params." reference_build: ".$annotation_index->reference_build->id);
+        return;
+    }
     my $reference_fasta = $reference_index->full_consensus_path('fa');
 
     # complain if we can't get it

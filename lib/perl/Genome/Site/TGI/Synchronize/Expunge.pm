@@ -27,6 +27,8 @@ sub execute {
         next unless $class =~ m/Genome::InstrumentData/; #only remove instrument data for now
         next if $class eq 'Genome::InstrumentData::Imported'; #imported instrument data doesn't come from LIMS, so skip it
         my @ids = @{$report{$class}->{missing}} if $report{$class}->{missing};
+        next if not @ids;
+        printf("DELETING %s %s\n", $class, join(' ', @ids));
         my @deleted;
         for my $id (@ids){
             my ($successfully_deleted, %expunge_info) = $self->_remove_expunged_object($class, $id);
@@ -38,7 +40,6 @@ sub execute {
 
     $self->_notify_expunged_objects_owners(%expunge_notifications);
     
-    confess 'Could not commit!' unless UR::Context->commit;
     return 1;
 }
 

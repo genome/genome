@@ -16,7 +16,7 @@ class Genome::Model::ClinSeq::Command::UpdateInputsFromModelGroup {
                             doc => 'the models to update' },
         set             => { is => 'Text',
                             is_many => 1,
-                            valid_values => ['exome_model'],
+                            valid_values => ['exome_model','tumor_rnaseq_model','normal_rnaseq_model'],
                             doc => 'the list of input properties on those models to update' },
         from            => { is => 'Genome::Model', is_many => 1,
                             is_many => 1,
@@ -48,6 +48,18 @@ sub help_synopsis {
         --set       exome_model \\
         --from      model_groups.id=73266
 
+    # HCC models get new RNASeq models from another group that has tumors and normals
+
+    genome model clin-seq update-inputs-from-model-group \\
+        --update    model_groups.id=73905\\
+        --set       tumor_rnaseq_model \\
+        --from      model_groups.id=69107 
+    
+    genome model clin-seq update-inputs-from-model-group \\
+        --update    model_groups.id=73905\\
+        --set       normal_rnaseq_model \\
+        --from      model_groups.id=69107 
+
 EOS
 }
 
@@ -55,9 +67,10 @@ sub execute {
     my $self = shift;
     my @models_to_update = $self->update;
     my @inputs = $self->from;
+    my ($input_name) = $self->set;
 
     my @model_ids_to_update = map { $_->id } @models_to_update;
-    
+   $DB::single = 1; 
     my %models_to_update_not_matched = map { $_->id => $_ } @models_to_update;
     my %inputs_with_no_matches_wrong_type;
     my %inputs_with_no_matches_correct_type;
@@ -69,7 +82,14 @@ sub execute {
     my %outcomes;
     for my $input (@inputs) {
         my $input_subject = $input->subject;
-        my $input_common_name = $input_subject->common_name;
+        my @other_subjects = 
+            grep { $_ != $input_subject } 
+            Genome::Sample->get(
+                source => $input_subject->source,
+                common_name => $input_subject->common_name,
+            );
+        my @check_subject_ids = map { $_->id } ($input_subject,@other_subjects);
+        
         $self->status_message($input->__display_name__ . ":");
 
         my %targets;
@@ -78,16 +98,66 @@ sub execute {
             %targets = map { defined($_) ? ($_=>$_) : () } map { $_->target_region_set_name } @inst;
         }
 
-        if ($input->isa("Genome::Model::SomaticVariation") and %targets) {
-            # exome/capture somatic model
-            my $model_to_update;
-            my $input_name = 'exome_model';
-
-            # approach 1: find the clinseq model to update by finding WGS models with the same subject
-            my @candidates = Genome::Model::ClinSeq->get(
+        # depending on the input to update, there are differen ways to find
+        # the applicable clinseq model
+        my @checks;
+        my $expected_type;
+        if ($input_name eq 'exome_model' or $input_name eq 'wgs_model') {
+            # look for clinseq models with the same patient behind the inputs 
+            @checks = (qw/
+                wgs_model.subject.id 
+                exome_model.subject.id 
+                tumor_rnaseq_model.subject.patient.id 
+                normal_rnaseq_model.subject.patient.id
+            /);
+            $expected_type = 'Genome::Model::SomaticVariation';
+        }
+        elsif ($input_name eq 'tumor_rnaseq_model') {
+            # look for clinseq models with the same tumor sample behind the inputs 
+            @checks = (qw/
+                wgs_model.tumor_model.subject.id 
+                exome_model.tumor_model.subject.id 
+                tumor_rnaseq_model.subject.id 
+            /);
+            $expected_type = 'Genome::Model::RnaSeq';
+        }
+        elsif ($input_name eq 'normal_rnaseq_model') {
+            # look for clinseq models with the same normal sample behind the inputs 
+            @checks = (qw/
+                wgs_model.normal_model.subject.id 
+                exome_model.normal_model.subject.id 
+                normal_rnaseq_model.subject.id 
+            /);
+            $expected_type = 'Genome::Model::RnaSeq';
+        }
+        else {
+            die "unknown input name $input_name";
+        }
+        
+        # perform each check to find candidate clinseq models for the update
+        my @candidates;
+        for my $check (@checks) {
+            push @candidates, Genome::Model::ClinSeq->get(
                 id => \@model_ids_to_update,
-                "wgs_model.subject.id" => $input_subject->id 
-            );
+                $check => \@check_subject_ids, 
+            )
+        }
+
+        # ensure the candidate list has no duplicates
+        my %candidates = map { $_ => $_ } @candidates;
+        @candidates = sort { $a->id cmp $b->id } values %candidates;
+
+        if (
+            $input->isa($expected_type) 
+            and 
+            (
+                ($input_name eq 'exome_model' and %targets) 
+                or
+                (not %targets)
+            )
+        ) {
+            my $model_to_update;
+
             for my $candidate (@candidates) {
                 delete $models_to_update_not_matched{$candidate->id};
             }

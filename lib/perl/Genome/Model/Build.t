@@ -162,9 +162,9 @@ $build2->add_metric(name => 'three', value => 3);
 $build2->add_metric(name => 'four', value => 4);
 my %diffs = $build->compare_output($build2->id);
 my %expected_diffs = (
-    'one' => qr|no build metric with name one found for build \-?\d+|,
-    'two' => qr|metric two has value 2 for build \-?\d+ and value not 2 for build \-?\d+|,
-    'four' => qr|no build metric with name four found for build \-?\d+|,
+    'one' => qr|no build metric with name one found for build \-?[[:xdigit:]]+|,
+    'two' => qr|metric two has value 2 for build \-?[[:xdigit:]]+ and value not 2 for build \-?[[:xdigit:]]+|,
+    'four' => qr|no build metric with name four found for build \-?[[:xdigit:]]+|,
 );
 for my $diff ( keys %expected_diffs ) {
     like($diffs{$diff}, $expected_diffs{$diff}, "diff message for $diff is correct");

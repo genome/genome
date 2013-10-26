@@ -35,27 +35,6 @@ class Genome::InstrumentData::Imported {
             is_mutable => 1,
             where => [ attribute_label => 'original_data_path' ],
         },
-        import_format => {
-            is => 'Text',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'import_format' ],
-        },
-        import_source_name => {
-            is => 'Text',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'import_source_name' ],
-        },
-        description => {
-            is => 'Text',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'description' ],
-        },
         read_count => {
             is => 'Number',
             via => 'attributes',
@@ -179,8 +158,6 @@ class Genome::InstrumentData::Imported {
             calculate => q( $subset_name ? "$run_name/$subset_name" : $run_name ),
         },
     ],
-    schema_name => 'GMSchema',
-    data_source => 'Genome::DataSource::GMSchema',
 };
 
 sub __display_name__ {

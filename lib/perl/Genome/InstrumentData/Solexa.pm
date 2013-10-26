@@ -144,7 +144,7 @@ class Genome::InstrumentData::Solexa {
             where => [ attribute_label => 'median_insert_size' ],
             is_mutable => 1,
         },
-        old_sd_above_insert_size => { 
+        old_sd_above_insert_size => {
             via => 'attributes',
             to => 'attribute_value',
             where => [ attribute_label => 'sd_above_insert_size' ],
@@ -231,17 +231,17 @@ class Genome::InstrumentData::Solexa {
         _sls_read_length => { calculate => q| return $self->read_length + 1| },
         _sls_fwd_read_length => { calculate => q| return $self->fwd_read_length + 1| },
         _sls_rev_read_length => { calculate => q| return $self->rev_read_length + 1| },
-        cycles => { calculate => q| return $self->read_length + 1| }, 
+        cycles => { calculate => q| return $self->read_length + 1| },
 
         short_name => {
             is => 'Text',
             calculate_from => ['run_name'],
             calculate => q|($run_name =~ /_([^_]+)$/)[0]|,
-            doc => 'The essential portion of the run name which identifies the run.  The rest is redundant information', 
+            doc => 'The essential portion of the run name which identifies the run.  The rest is redundant information',
         },
         is_paired_end => {
             calculate_from => ['run_type'],
-            calculate => q| 
+            calculate => q|
                 if (defined($run_type) and $run_type =~ m/^Paired$/) {
                     return 1;
                 }
@@ -254,37 +254,37 @@ class Genome::InstrumentData::Solexa {
             calculate => q|Genome::Site::TGI::Project->get(name => $self->project_name)|
         },
 
-        # TODO: move into the base class (we want to eliminate this subclass and not have the separate Imported subclass 
+        # TODO: move into the base class (we want to eliminate this subclass and not have the separate Imported subclass
         median_insert_size => {
             calculate_from => ['old_median_insert_size'],
-            calculate => q|$old_median_insert_size or $self->get_default_alignment_metrics("median_insert_size")|,  
+            calculate => q|$old_median_insert_size or $self->get_default_alignment_metrics("median_insert_size")|,
         },
         sd_insert_size => {
-            calculate => q|$self->get_default_alignment_metrics("sd_insert_size")|,  
+            calculate => q|$self->get_default_alignment_metrics("sd_insert_size")|,
         },
         read_1_pct_mismatch => {
-            calculate => q|$self->get_default_alignment_metrics("read_1_pct_mismatch")|,  
+            calculate => q|$self->get_default_alignment_metrics("read_1_pct_mismatch")|,
         },
         read_2_pct_mismatch => {
-            calculate => q|$self->get_default_alignment_metrics("read_2_pct_mismatch")|,  
+            calculate => q|$self->get_default_alignment_metrics("read_2_pct_mismatch")|,
         },
 
-        # for backward-compatibility    
+        # for backward-compatibility
         sd_above_insert_size => {
             calculate_from => ['old_sd_above_insert_size','sd_insert_size'],
-            calculate => q|$old_sd_above_insert_size or $sd_insert_size| 
+            calculate => q|$old_sd_above_insert_size or $sd_insert_size|
         },
         sd_below_insert_size => {
             calculate_from => ['old_sd_below_insert_size','sd_insert_size'],
-            calculate => q|$old_sd_below_insert_size or $sd_insert_size| 
+            calculate => q|$old_sd_below_insert_size or $sd_insert_size|
         },
         fwd_filt_error_rate_avg => {
             calculate_from => ['old_fwd_filt_error_rate_avg','read_1_pct_mismatch'],
-            calculate => q|$old_fwd_filt_error_rate_avg or $read_1_pct_mismatch| 
+            calculate => q|$old_fwd_filt_error_rate_avg or $read_1_pct_mismatch|
         },
         rev_filt_error_rate_avg => {
             calculate_from => ['old_rev_filt_error_rate_avg','read_2_pct_mismatch'],
-            calculate => q|$old_rev_filt_error_rate_avg or $read_2_pct_mismatch| 
+            calculate => q|$old_rev_filt_error_rate_avg or $read_2_pct_mismatch|
         },
         filt_error_rate_avg => {
             calculate_from => ['old_filt_error_rate_avg','read_1_pct_mismatch','read_2_pct_mismatch'],
@@ -306,12 +306,29 @@ class Genome::InstrumentData::Solexa {
     ],
 };
 
+sub create {
+    my $class = shift;
+    my $self = $class->SUPER::create(@_);
+    return if not $self;
+    # some properties previously only on imported data are set here
+    for my $property_name (qw/import_format/) {
+        my $resolver_name = 'resolve_' . $property_name;
+        my $value = eval { $self->$resolver_name };
+        if ($@) {
+            $self->warning_message("Failed to resolve import_format for " . $self->__display_name__ . ": $@");
+            next;
+        }
+        $self->$property_name($value);
+    }
+    return $self;
+}
+
 sub __display_name__ {
     my $self = $_[0];
     my $sample = $self->sample;
     my($flow_cell_id, $subset_name, $id, $sample_display_name)
             = map { defined($_) ? $_ : '' }
-                    ( $self->flow_cell_id, $self->subset_name, $self->id, $sample->__display_name__);
+                    ( $self->flow_cell_id, $self->subset_name, $self->id, $sample && $sample->__display_name__);
     return $flow_cell_id . '/' . $subset_name . " (" . $id . ") for " . $sample_display_name;
 }
 
@@ -394,7 +411,7 @@ sub calculate_alignment_estimated_kb_usage {
     # Different aligners will require different levels of overhead, so this should return
     # approximately the total size of the instrument data files.
     # In a FQ file, every read means 4 lines, 2 of length $self->read_length,
-    # and 2 of read identifier data. Therefore we can expect the total file size to be 
+    # and 2 of read identifier data. Therefore we can expect the total file size to be
     # about (($self->read_length + header_size) * $self->fwd_clusters)*2 / 1024
 
     # This is length of the id tag in the FQ file, it looks something like: @HWUSI-EAS712_6171L:2:1:1817:12676#TGACCC/1
@@ -434,7 +451,7 @@ sub dump_sanger_fastq_files {
     my $self = shift;
 
     if (defined $self->bam_path && -s $self->bam_path) {
-       $self->status_message("Now using a bam instead"); 
+       $self->status_message("Now using a bam instead");
        return $self->dump_fastqs_from_bam(@_);
     }
 
@@ -486,7 +503,7 @@ sub dump_sanger_fastq_files {
             unlink $illumina_fastq_pathname;
         }
         push @converted_pathnames, $converted_fastq_pathname;
-    }    
+    }
 
     return @converted_pathnames;
 
@@ -529,8 +546,8 @@ sub dump_trimmed_fastq_files {
         # Outputs and file names
         my (@trimmed_fastq_pathnames, @output);
         if ($self->is_paired_end) {
-            @trimmed_fastq_pathnames = 
-                map { $data_directory . '/trimmed-sanger-fastq-' . $_ . '.fastq' } 
+            @trimmed_fastq_pathnames =
+                map { $data_directory . '/trimmed-sanger-fastq-' . $_ . '.fastq' }
                     ('read1','read2','fragment');
             @output = (
                 $trimmed_fastq_pathnames[0].':name=fwd',
@@ -540,8 +557,8 @@ sub dump_trimmed_fastq_files {
 
         }
         else {
-            @trimmed_fastq_pathnames = 
-                map { $data_directory . '/trimmed-sanger-fastq-' . $_ .'.fastq'} 
+            @trimmed_fastq_pathnames =
+                map { $data_directory . '/trimmed-sanger-fastq-' . $_ .'.fastq'}
                     ('fragment');
             @output = $trimmed_fastq_pathnames[0];
         }
@@ -731,7 +748,7 @@ sub dump_trimmed_fastq_files {
                 $self->error_message('Failed to create fastq trim command');
                 die($self->error_message);
             }
-            
+
             unless ($trimmer->execute) {
                 $self->error_message('Failed to execute fastq trim command '. $trimmer->command_name);
                 die($self->error_message);
@@ -772,7 +789,7 @@ sub _convert_trimmer_to_sx_commands {
     if ( $is_sx_cmd ) {
         Carp::confess('Cannot have trimmer version w/ SX processing. Include the version in the sx command inside the trimmer name.') if $trimmer_version;
         Carp::confess('Cannot have trimmer params w/ SX processing. Include the params in the sx command inside the trimmer name.') if $trimmer_params;
-        return split(/\s*\|\s*/, $trimmer_name) 
+        return split(/\s*\|\s*/, $trimmer_name)
     }
 
     # Old SX way. Only supports one trimmer.
@@ -926,10 +943,10 @@ sub resolve_fastq_filenames {
                 if (!$paired_end_as_fragment || $paired_end_as_fragment == 1) {
                     if (-e "$directory/" . $self->read1_fastq_name) {
                         push @illumina_output_paths, "$directory/" . $self->read1_fastq_name;
-                    } 
+                    }
                     elsif (-e "$directory/Temp/" . $self->read1_fastq_name) {
                         push @illumina_output_paths, "$directory/Temp/" . $self->read1_fastq_name;
-                    } 
+                    }
                     else {
                         die "No illumina forward data in directory for lane $lane! $directory";
                     }
@@ -937,22 +954,22 @@ sub resolve_fastq_filenames {
                 if (!$paired_end_as_fragment || $paired_end_as_fragment == 2) {
                     if (-e "$directory/" . $self->read2_fastq_name) {
                         push @illumina_output_paths, "$directory/" . $self->read2_fastq_name;
-                    } 
+                    }
                     elsif (-e "$directory/Temp/" . $self->read2_fastq_name) {
                         push @illumina_output_paths, "$directory/Temp/" . $self->read2_fastq_name;
-                    } 
+                    }
                     else {
                         die "No illumina reverse data in directory for lane $lane! $directory";
                     }
                 }
-            } 
+            }
             else {
                 if (-e "$directory/" . $self->fragment_fastq_name) {
                     push @illumina_output_paths, "$directory/" . $self->fragment_fastq_name;
-                } 
+                }
                 elsif (-e "$directory/Temp/" . $self->fragment_fastq_name) {
                     push @illumina_output_paths, "$directory/Temp/" . $self->fragment_fastq_name;
-                } 
+                }
                 else {
                     die "No fragment illumina data in directory for lane $lane! $directory";
                 }
@@ -985,18 +1002,19 @@ sub dump_illumina_fastq_archive {
         if (-s $dir . '/' . $self->read1_fastq_name and -s $dir . '/' . $self->read2_fastq_name) {
             $already_dumped = 1;
         }
-    } 
+    }
     else {
         if (-s $dir . '/' . $self->fragment_fastq_name) {
             $already_dumped = 1;
         }
     }
+
     unless($already_dumped) {
         my $cmd = "tar -xzf $archive --directory=$dir";
         unless (Genome::Sys->shellcmd(
-                cmd => $cmd,
-                input_files => [$archive],
-            )) {
+            cmd => $cmd,
+            input_files => [$archive],
+        )) {
             $self->error_message('Failed to run tar command '. $cmd);
             return;
             #die($self->error_message); Should try to get fastq from gerald_directory instead of dying
@@ -1094,6 +1112,25 @@ sub resolve_quality_converter {
     return "sol2phred";
 }
 
+sub resolve_import_format {
+    my $self = shift;
+    if ($self->bam_path) {
+        return 'bam'
+    }
+    elsif ($self->native_qual_type eq 'solexa') {
+        return 'solexa fastq'
+    }
+    elsif ($self->native_qual_type eq 'illumina') {
+        return 'illumina fastq'
+    }
+    elsif ($self->native_qual_type eq 'sanger') {
+        return 'sanger fastq'
+    }
+    else {
+        die "cannot resolve import format: native qual type is " . $self->native_qual_type;
+    }
+}
+
 sub NEW_resolve_quality_converter {
     # TODO: this is the correct logic but it breaks tests,
     # implying our tests are wrong.  Investigate and fix.
@@ -1154,39 +1191,42 @@ sub create_mock {
         $self->mock($method,$ref);
     }
 
-	if (not defined $self->subset_name) {
-		if ($self->index_sequence) {
-			$self->subset_name($self->lane . '-' . $self->index_sequence);
-		}
-		else {
-			$self->subset_name($self->lane);
-		}
-	}
+    if (not defined $self->subset_name) {
+        if ($self->index_sequence) {
+            $self->subset_name($self->lane . '-' . $self->index_sequence);
+        }
+        else {
+            $self->subset_name($self->lane);
+        }
+    }
 
     return $self;
 }
 
 sub __errors__ {
-	my $self = shift;
-	my @errors = $self->SUPER::__errors__(@_);
-	my $expected;
-	if (defined($self->lane) and defined($self->index_sequence)) {
-		$expected = $self->lane . '-' . $self->index_sequence;
-	}
-	elsif (defined($self->lane)) {
-		$expected = $self->lane;
-	}
+    my $self = shift;
+    my @errors = $self->SUPER::__errors__(@_);
+    my $expected;
+    if (defined($self->lane) and defined($self->index_sequence)) {
+        $expected = $self->lane . '-' . $self->index_sequence;
+    }
+    elsif (defined($self->lane)) {
+        $expected = $self->lane;
+    }
+    else {
+        $expected = '';
+    }
     my $subset_name = $self->subset_name;
     $subset_name    = '' unless (defined $subset_name);
-	if ($subset_name ne $expected) {
-		push @errors, UR::Object::Tag->create(
-			type => 'error',
-			properties => ['subset_name'],
-			desc => 'Subset name for Illumina NGS instrument data should be "lane-indexsequence" or just "lane" for unindexed data. ' 
-					. 'Expected "' . $expected . '" got "' . $subset_name . '".'
-		);
-	}
-	return @errors;
+    if ($subset_name ne $expected) {
+        push @errors, UR::Object::Tag->create(
+            type => 'error',
+            properties => ['subset_name'],
+            desc => 'Subset name for Illumina NGS instrument data should be "lane-indexsequence" or just "lane" for unindexed data. '
+                    . 'Expected "' . $expected . '" got "' . $subset_name . '".'
+        );
+    }
+    return @errors;
 }
 
 sub run_start_date_formatted {
@@ -1238,7 +1278,7 @@ sub resolve_median_insert_size {
         return $self->median_insert_size;
     }
     else {
-        #try bwa metrics second    
+        #try bwa metrics second
         return $self->get_default_alignment_metrics('median_insert_size');
         #Need try library_insert_size last ?
     }
@@ -1273,7 +1313,7 @@ sub get_default_alignment_results {
 
     # Get alignment results for this inst data and the default aligner name, newest first
     my $pp = Genome::ProcessingProfile::ReferenceAlignment->default_profile;
-    my @alignment_results = sort {$b->id <=> $a->id} Genome::InstrumentData::AlignmentResult->get(
+    my @alignment_results = sort {$b->best_guess_date cmp $a->best_guess_date} Genome::InstrumentData::AlignmentResult->get(
         instrument_data_id => $self->id,
         aligner_name       => $pp->read_aligner_name,
     );
@@ -1307,7 +1347,7 @@ sub get_default_alignment_results {
             push @ars_by_others, $alignment_result;
         }
     }
-    
+
     # Prefer alignment results run by apipe-builder
     if (@ars_by_apipe_builder) {
         my @ars_run_by_apipe_builder = grep {$_->output_dir =~ /\-apipe\-builder\-/} @ars_by_apipe_builder;
@@ -1320,10 +1360,10 @@ sub get_default_alignment_results {
     }
     # lowest priority, in some rare cases, no LIMS eland metrics, no apipe-builder metrics.
     # Maybe we should not allow this to be used as default result.
-    return @ars_by_others;  
+    return @ars_by_others;
 }
 
-#This method is used in GSC::IndexIllumina to get bwa alignment metrics to retire eland 
+#This method is used in GSC::IndexIllumina to get bwa alignment metrics to retire eland
 sub get_default_alignment_metrics_hash {
     my $self = shift;
     my @ar   = $self->get_default_alignment_results;

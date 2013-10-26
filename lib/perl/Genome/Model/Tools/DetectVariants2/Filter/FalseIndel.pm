@@ -23,11 +23,10 @@ class Genome::Model::Tools::DetectVariants2::Filter::FalseIndel {
             is_optional => 1,
             doc => 'Minimum representation of variant allele on each strand',
        },
-       'min_good_coverage' => {
+       'min_coverage' => {
             type => 'String',
-            default => '20',
             is_optional => 1,
-            doc => 'Minimum site coverage to apply var_freq, var_count, and strandedness filters',
+            doc => 'Minimum site coverage to pass an indel.',
        },
        'min_var_freq' => {
             type => 'String',
@@ -139,6 +138,8 @@ sub _filter_variants {
 
     my $min_homopolymer = $self->min_homopolymer;
 
+    my $min_coverage = $self->min_coverage;
+
     ## Determine the strandedness and read position thresholds ##
     
     my $min_read_pos = $self->min_read_pos;
@@ -156,7 +157,11 @@ sub _filter_variants {
 
     ## Reset counters ##
     
-    my %stats = ();
+    my %stats = (
+        num_fail_homopolymer => 0,
+        num_got_readcounts => 0,
+        num_fail_filter => 0,
+    );
     $stats{'num_variants'}  = $stats{'num_no_readcounts'} = $stats{'num_pass_filter'} = $stats{'num_no_allele'} = 0;
     $stats{'num_fail_varcount'} = $stats{'num_fail_varfreq'} = $stats{'num_fail_strand'} = $stats{'num_fail_pos'} = $stats{'num_fail_mmqs'} = $stats{'num_fail_mapqual'} = $stats{'num_fail_readlen'} = $stats{'num_fail_dist3'} = 0;
     $stats{'num_MT_sites_autopassed'} = 0;
@@ -312,6 +317,7 @@ sub _filter_variants {
                     }
 
                     my $FilterResult = "";
+                    my $coverage = $ref_count + $var_count;
 
                     if($var_count && ($var_plus + $var_minus)) {
                         ## We must obtain variant read counts to proceed ##
@@ -319,8 +325,14 @@ sub _filter_variants {
 
                         my $readcount_info = join("\t", $var_allele, $var_count, $var_freq, $ref_pos, $var_pos, $ref_strandedness, $var_strandedness, $ref_mmqs, $var_mmqs, $mismatch_qualsum_diff);
 
+                        ## FAILURE 0: MINIMUM COVERAGE ##
+                        if ( defined $min_coverage and $coverage < $min_coverage ) {
+                            $FilterResult = "MinCoverage:$coverage<$min_coverage";
+                            $stats{'num_fail_min_quality'}++;
+                        }
+
                         ## FAILURE 1: READ POSITION ##
-                        if(($var_pos < $min_read_pos)) {
+                        elsif(($var_pos < $min_read_pos)) {
                             $FilterResult = "ReadPos<$min_read_pos";
                             $stats{'num_fail_pos'}++;
                         }

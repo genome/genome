@@ -18,12 +18,12 @@ class Genome::Model::Build::Error {
         doc => 'The main build event.',
     },
     build_event_id => {
-        is => 'Integer',
+        is => 'Text',
         doc => 'The main build event id.',
     },
     # Stage
     stage_event_id => {
-        is => 'Integer',
+        is => 'Text',
         doc => 'The event id of the stage.',
     },
     stage => {
@@ -37,7 +37,7 @@ class Genome::Model::Build::Error {
         doc => 'The step event.',
     },
     step_event_id => {
-        is => 'Integer',
+        is => 'Text',
         doc => 'The event id of the step.',
     },
     step => {

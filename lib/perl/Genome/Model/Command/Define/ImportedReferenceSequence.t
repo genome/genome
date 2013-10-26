@@ -11,6 +11,8 @@ BEGIN {
 use above 'Genome';
 use Test::More;
 
+Genome::Report::Email->silent();
+
 if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
 }

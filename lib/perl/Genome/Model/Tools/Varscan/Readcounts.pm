@@ -99,7 +99,7 @@ sub execute {                               # replace with real execution logic.
 		
 #		my $pileup = "samtools view -b -u -q 10 $bam_file | samtools pileup -f $reference -";
 		my $pileup = $self->samtools_path . " mpileup -q 10 -f $reference $bam_file";
-		my $cmd = $self->java_command_line("readcounts <\($pileup\) --variants-file $variants_file --output-file $output_file --min-base-qual $min_base_qual");
+		my $cmd = $self->command_line("readcounts <\($pileup\) --variants-file $variants_file --output-file $output_file --min-base-qual $min_base_qual");
 		print "RUN: $cmd\n";
 		system($cmd);
 	}

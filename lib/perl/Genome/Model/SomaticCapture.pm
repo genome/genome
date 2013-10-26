@@ -23,7 +23,7 @@ class Genome::Model::SomaticCapture {
         transcript_variant_annotator_version => {
             doc => 'Version of the "annotate transcript-variants" tool to run during the annotation step',
             is_optional => 1,
-            valid_values => [0,1,2,3],
+            valid_values => [0,1,2,3,4],
         },
     ],
     has_optional => [
@@ -39,7 +39,7 @@ class Genome::Model::SomaticCapture {
             to => 'from_model',
         },
         tumor_model_id => {
-            is => 'Integer',
+            is => 'Text',
             via => 'tumor_model',
             to => 'id',
         },
@@ -55,7 +55,7 @@ class Genome::Model::SomaticCapture {
             to => 'from_model',
         },
         normal_model_id => {
-            is => 'Integer',
+            is => 'Text',
             via => 'normal_model',
             to => 'id',
         },

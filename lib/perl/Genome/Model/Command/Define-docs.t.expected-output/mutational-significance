@@ -1,27 +1,27 @@
 
 [4mUSAGE[0m
  [1mgenome model define mutational-significance[0m [--auto-assign-inst-data]
-    [--auto-build-alignments] --processing-profile=? --somatic-variation-models=?[,?]
-    --annotation-build=? [--add-to-projects=?[,?]] [--instrument-data=?[,?]] [--subject=?]
-    [--groups=?[,?]] [--model-name=?] [--categorical-clinical-data-file=?]
-    [--numeric-clinical-data-file=?] [--glm-clinical-data-file=?] [--glm-model-file=?]
-    [--omimaa-dir=?] [--cosmic-dir=?] [--bmr-modifier-file=?] [--extra-rois=?[,?]]
-    [--regulome-bed=?] [--review-file-dir=?] [--regions-of-interest=?[,?]]
-    [--gene-black-lists=?[,?]] [--variant-black-lists=?[,?]] [--additional-snv-lists=?[,?]]
-    [--additional-indel-lists=?[,?]] [--additional-sv-lists=?[,?]] [--pathway-file=?]
+    [--auto-build-alignments] --clinseq-models=?[,?] --processing-profile=? --annotation-build=?
+    [--add-to-projects=?[,?]] [--instrument-data=?[,?]] [--subject=?] [--groups=?[,?]]
+    [--model-name=?] [--categorical-clinical-data-file=?] [--numeric-clinical-data-file=?]
+    [--glm-clinical-data-file=?] [--glm-model-file=?] [--omimaa-dir=?] [--cosmic-dir=?]
+    [--bmr-modifier-file=?] [--extra-rois=?[,?]] [--regulome-bed=?] [--review-file-dir=?]
+    [--regions-of-interest=?[,?]] [--gene-black-lists=?[,?]] [--variant-black-lists=?[,?]]
+    [--additional-snv-lists=?[,?]] [--additional-indel-lists=?[,?]] [--additional-sv-lists=?[,?]]
+    [--pathway-file=?]
 
 [4mSYNOPSIS[0m
-First, determine what group of somatic variation models you want to work on.  This might be all models in a model group, for example.
+First, determine what group of ClinSeq models you want to work on.  This might be all models in a model group, for example.
 Next, create a population group to use as subject:
 genome population-group create --models model_groups.id=29624
-Finally, define your model using the query for somatic variation models and the id of the population group you just created.
-genome model define mutational-significance --model-name "Example Mutational Significance" --processing-profile "Oct 2012 Default" --annotation-build 106409619 --somatic-variation-models model_groups.id=29624 --subject id=2882703149
+Finally, define your model using the query for ClinSeq models and the id of the population group you just created.
+genome model define mutational-significance --model-name "Example Mutational Significance" --processing-profile "Oct 2012 Default" --annotation-build 106409619 --clinseq-models model_groups.id=29624 --subject id=2882703149
 
 [4mREQUIRED INPUTS[0m
+  [1mclinseq-models[0m
+    clinseq models to evaluate 
   [1mprocessing-profile[0m
     Processing profile to be used by model, can provide either a name or an ID 
-  [1msomatic-variation-models[0m
-    somatic variation models to evaluate 
   [1mannotation-build[0m
     annotation to use for roi file 
 
@@ -83,15 +83,19 @@ genome model define mutational-significance --model-name "Example Mutational Sig
   [1mauto-assign-inst-data[0m
     Assigning instrument data to the model is performed automatically 
     Default value 'false' (--noauto-assign-inst-data) if not specified
+  [1mnoauto-assign-inst-data[0m
+    Make auto-assign-inst-data 'false' 
   [1mauto-build-alignments[0m
     The building of the model is performed automatically 
     Default value 'true' if not specified
+  [1mnoauto-build-alignments[0m
+    Make auto-build-alignments 'false' 
 
 [4mDESCRIPTION[0m
-    The mutational significance genome model represents analysis on a collection of somatic
-    variation models. There is an option to run the MuSiC pipeline to run various statistical tests
-    on the collection of variants. Additionally, a list of variants can be compiled that should be
-    suitable for use as a validation list.
+    The mutational significance genome model represents analysis on a collection of clinseq models.
+    There is an option to run the MuSiC pipeline to run various statistical tests on the collection
+    of variants. Additionally, a list of variants can be compiled that should be suitable for use
+    as a validation list.
 
 
 

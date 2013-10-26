@@ -10,7 +10,7 @@ class Genome::Model::Tools::Lims::ApipeBridge::FixPseParamsForBase {
     is_abstract => 1,
     has_optional => [
         instrument_data_id => {
-            is => 'Integer',
+            is => 'Text',
             doc => 'Instrument data id to get PIDFA to fix',
         },
         pidfa_id => {

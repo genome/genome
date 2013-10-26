@@ -5,14 +5,16 @@ package Genome::Utility::Test;
 use base 'Test::Builder::Module';
 
 use Exporter 'import';
-our @EXPORT_OK = qw(compare_ok run_ok capture_ok abort
-                    strip_ansi command_execute_ok command_execute_fail_ok );
+
+our @EXPORT_OK = qw(compare_ok run_ok capture_ok abort strip_ansi
+    command_execute_ok command_execute_fail_ok is_equal_set);
 
 use Carp qw(croak);
 use IPC::System::Simple qw(capture);
 use Sub::Install;
 use Test::More;
 use File::Spec qw();
+use Set::Scalar;
 
 
 my %ERRORS = (
@@ -160,6 +162,8 @@ sub compare_ok {
 
     my $tb = __PACKAGE__->builder;
 
+    $tb->no_diag(!$o{diag});
+
     my(@iters,@filename);
     foreach my $file ( $file_1, $file_2 ) {
         push @filename, $file;
@@ -194,15 +198,14 @@ sub compare_ok {
             }
 
             # different
-            if($o{diag}) {
-                my($line1,$line2) = @lines[0,$i];
-                chomp($line1, $line2);
+            my($line1,$line2) = @lines[0,$i];
+            chomp($line1, $line2);
 
-                $tb->diag(sprintf("First diff:\n--- %s line %d\n+++ %s line %d\n-%s\n+%s\n",
-                        $filename[0], $iters[0]->('input_line_number'),
-                        $filename[$i], $iters[$i]->('input_line_number'),
-                        $line1, $line2));
-            }
+            $tb->diag(sprintf("First diff:\n--- %s line %d\n+++ %s line %d\n-%s\n+%s\n",
+                    $filename[0], $iters[0]->('input_line_number'),
+                    $filename[$i], $iters[$i]->('input_line_number'),
+                    $line1, $line2));
+
             $result = 0;
             last GET_LINE_FROM_FILES;
         }
@@ -243,6 +246,25 @@ sub run_ok {
     $tb->ok($exit_zero, $test_name);
 
     return $exit_zero;
+}
+
+sub is_equal_set {
+    my ($ol, $el, $name) = @_;
+    my $tb = __PACKAGE__->builder;
+    my $os = Set::Scalar->new(@$ol);
+    my $es = Set::Scalar->new(@$el);
+    my $ok = $tb->ok($os->is_equal($es), $name);
+    unless ($ok) {
+        my $extra = $os - $es;
+        unless ($extra->is_empty) {
+            diag 'Extra: ' . join(', ', $extra->members);
+        }
+
+        my $missing = $es - $os;
+        unless ($missing->is_empty) {
+            diag 'Missing: ' . join(', ', $missing->members);
+        }
+    }
 }
 
 sub data_dir_ok {

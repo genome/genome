@@ -112,7 +112,7 @@ my @params_and_xml_list = (
     <operationtype commandClass="Genome::Model::DeNovoAssembly::Build::ProcessInstrumentData" lsfProject="build%s" lsfQueue="apipe" lsfResource="-R 'select[type==LINUX64 &amp;&amp; mem&gt;32000 &amp;&amp; gtmp&gt;200] rusage[mem=32000:gtmp=200] span[hosts=1]' -M 32000000" typeClass="Workflow::OperationType::Command" />
   </operation>
   <operation name="MergeAndLinkSxResults">
-    <operationtype commandClass="Genome::Model::DeNovoAssembly::Build::MergeAndLinkSxResults" lsfProject="build%s" lsfQueue="apipe" lsfResource="-R 'select[type==LINUX64 &amp;&amp; gtmp&gt;200] rusage[gtmp=200] span[hosts=1]'" typeClass="Workflow::OperationType::Command" />
+    <operationtype commandClass="Genome::Model::DeNovoAssembly::Build::MergeAndLinkSxResults" lsfProject="build%s" lsfQueue="apipe" lsfResource="-R 'select[type==LINUX64 &amp;&amp; gtmp&gt;1000] rusage[gtmp=1000] span[hosts=1]'" typeClass="Workflow::OperationType::Command" />
   </operation>
   <operation name="Report">
     <operationtype commandClass="Genome::Model::DeNovoAssembly::Command::Report" lsfProject="build%s" lsfQueue="apipe" typeClass="Workflow::OperationType::Command" />

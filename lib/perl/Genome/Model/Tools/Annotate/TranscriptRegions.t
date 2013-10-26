@@ -15,7 +15,7 @@ my $version = "54_36p_v2";
 my $tmp_dir = File::Temp::tempdir(
     TEMPLATE => 'Genome-Model-Tools-Annotate-GeneRegions-XXXXXX',
     CLEANUP => 1,
-    TEMPDIR => 1,
+    TMPDIR => 1,
 );
 my $output = File::Spec->join($tmp_dir, 'output');
 

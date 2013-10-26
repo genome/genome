@@ -134,6 +134,11 @@ sub execute {
 
     $self->status_message("Split $variant_matrix into " . scalar(@$submatrices) . " submatrices, creating workflow.");
 
+    if ($ENV{WF_USE_FLOW}) {
+        $self->status_message("Sleeping 90 seconds for NFS cache.");
+        sleep(90);
+    }
+
     my %params = (
         sample_list_file => $samples_file,
         output_directory => $sub_results_dir,

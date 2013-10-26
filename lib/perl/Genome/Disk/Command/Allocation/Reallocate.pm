@@ -64,7 +64,7 @@ sub execute {
             $self->status_message("Skipping archived allocation $dname");
             next;
         }
-        $params{allocation_id} = $allocation->id;
+        $params{id} = $allocation->id;
         $params{kilobytes_requested} = $self->kilobytes_requested if defined $self->kilobytes_requested;
         $params{allow_reallocate_with_move} = $self->allow_reallocate_with_move;
         $params{grow_only} = $self->grow_only;

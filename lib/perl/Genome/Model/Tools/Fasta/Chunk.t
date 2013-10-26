@@ -17,7 +17,7 @@ my $fasta_file = $dir .'/test.fasta';
 
 my $tmp_dir = File::Temp::tempdir(
     "FastaChunk_XXXXXX", 
-    TEMPDIR => 1,
+    TMPDIR => 1,
     CLEANUP => 1,
 );
 

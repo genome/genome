@@ -104,7 +104,7 @@ FILTEREDCORR
 
 my $tmpdir = tempdir(
     't-FilterCorrelationResults-XXXXX',
-    TEMPDIR => 1,
+    TMPDIR => 1,
     CLEANUP => 1
 );
 my $original_corr = "$tmpdir/orig.txt";

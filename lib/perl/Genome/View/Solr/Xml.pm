@@ -135,7 +135,7 @@ sub _generate_fields {
                 }
             } else {
                 my $aspect_content = $self->_generate_content_for_aspect($aspect);
-                my $node_list = $aspect_content->find('value');
+                my $node_list = $aspect_content->findnodes('.//value');
                 if ($node_list->isa('XML::LibXML::NodeList')) {
                     if ($key eq 'content') {
                         push @values, $aspect->name . ':';

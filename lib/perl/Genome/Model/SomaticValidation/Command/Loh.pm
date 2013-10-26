@@ -9,7 +9,7 @@ class Genome::Model::SomaticValidation::Command::Loh {
     is => 'Command::V2',
     has =>[
         build_id => {
-            is => 'Integer',
+            is => 'Text',
             is_input => 1,
             is_output => 1,
             doc => 'build id of SomaticValidation model',

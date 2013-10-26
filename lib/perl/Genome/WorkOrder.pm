@@ -9,8 +9,8 @@ class Genome::WorkOrder {
                            s.*, 
                            s.setup_name as name,
                            s.setup_description as description
-                      FROM setup_work_order@oltp swo
-                      JOIN setup@oltp s
+                      FROM setup_work_order swo
+                      JOIN setup s
                         ON s.setup_id = swo.setup_wo_id
                     ) work_order',
     id_by => [
@@ -49,7 +49,7 @@ class Genome::WorkOrder {
             len => 256,
         },
         project_id => {
-            is => 'Integer',
+            is => 'Text',
             len => 10,
         },
         project => { 
@@ -106,8 +106,7 @@ class Genome::WorkOrder {
             via => 'models',
         },
     ],
-    schema_name => 'GMSchema',
-    data_source => 'Genome::DataSource::GMSchema',
+    data_source => 'Genome::DataSource::Oltp',
 };
 
 sub xitems {

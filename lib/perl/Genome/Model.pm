@@ -9,7 +9,7 @@ use Carp;
 class Genome::Model {
     is => [ "Genome::Notable", "Genome::Searchable" ],
     subclass_description_preprocessor => __PACKAGE__ . '::_preprocess_subclass_description',
-    table_name => 'GENOME_MODEL',
+    table_name => 'model.model',
     is_abstract => 1,
     attributes_have => [
         is_param => {
@@ -39,11 +39,12 @@ class Genome::Model {
         },
     ],
     subclassify_by => 'subclass_name',
+    id_generator => '-uuid',
     id_by => [
         genome_model_id => {
             # TODO: change to just "id"
-            # And make the data type Text in preparation for UUIDs
-            is => 'Number',
+            is => 'Text',
+            len => 32,
             doc => 'the unique immutable system identifier for a model',
         },
     ],
@@ -161,6 +162,7 @@ class Genome::Model {
             is => 'Genome::Model::Build',
             reverse_as => 'model',
             doc => 'Versions of a model over time, with varying quantities of evidence',
+            where => [ -order_by => '-date_scheduled', ],
         },
         input_associations => {
             is => 'Genome::Model::Input',
@@ -483,6 +485,7 @@ sub create {
         Carp::confess $reason || $@;
     }
 
+    $self->user_name(Genome::Sys->username) unless $self->user_name;
     unless ($self->name) {
         my $name = $self->default_model_name;
         if ($name) {
@@ -494,7 +497,6 @@ sub create {
         }
     }
 
-    $self->user_name(Genome::Sys->username) unless $self->user_name;
     $self->creation_date(UR::Context->now);
 
     $self->_verify_no_other_models_with_same_name_and_type_exist;
@@ -623,7 +625,7 @@ sub current_build {
     my $self = shift;
     my $build_iterator = $self->build_iterator(
         'status not like' => 'Abandoned',
-        '-order_by' => '-date_scheduled',  
+        '-order_by' => '-date_scheduled',
     );
     while (my $build = $build_iterator->next) {
         return $build if $build->is_current;
@@ -820,15 +822,11 @@ sub default_model_name {
 
     $name_template .= '%s%s';
 
-    my @parts;
-    push @parts, 'capture', $params{capture_target} if defined $params{capture_target};
-    push @parts, $params{roi} if defined $params{roi};
-    my @additional_parts = eval{ $self->_additional_parts_for_default_name(%params); };
+    my @parts = eval{ $self->_additional_parts_for_default_name(%params); };
     if ( $@ ) {
         $self->error_message("Failed to get addtional default name parts: $@");
         return;
     }
-    push @parts, @additional_parts if @additional_parts;
     $name_template .= '.'.join('.', @parts) if @parts;
 
     my $name = sprintf($name_template, '', '');
@@ -900,38 +898,59 @@ sub _preprocess_subclass_description {
         }
 
         if (exists $prop_desc->{'is_input'} and $prop_desc->{'is_input'}) {
-
             my $assoc = $prop_name . '_association' . ($prop_desc->{is_many} ? 's' : '');
             next if $desc->{has}{$assoc};
 
             my @where_class;
+            my $prop_class;
             if (exists $prop_desc->{'data_type'} and $prop_desc->{'data_type'}) {
-                my $prop_class = UR::Object::Property->_convert_data_type_for_source_class_to_final_class(
+                $prop_class = UR::Object::Property->_convert_data_type_for_source_class_to_final_class(
                     $prop_desc->{'data_type'},
                     $class
                 );
 
-                if($prop_class->isa('UR::Value') and !$prop_class->isa('Genome::File::Base')) {
-                    push @where_class,
-                        value_class_name => $prop_class;
-                }
+                push @where_class,
+                    value_class_name => $prop_class;
             }
 
-            $desc->{has}{$assoc} = {
+            my $assoc_property_hash = {
                 property_name => $assoc,
                 implied_by => $prop_name,
                 is => 'Genome::Model::Input',
                 reverse_as => 'model',
-                where => [ name => $prop_name, @where_class ],
+                where => [ name => $prop_name ],
                 is_mutable => $prop_desc->{is_mutable},
                 is_optional => $prop_desc->{is_optional},
                 is_many => 1, #$prop_desc->{is_many},
             };
 
+            if($prop_class->isa('UR::Value') and !$prop_class->isa('Genome::File::Base')) {
+                push @{$assoc_property_hash->{where}}, @where_class;
+            }
+
+            $desc->{has}{$assoc} = $assoc_property_hash;
+
             %$prop_desc = (%$prop_desc,
                 via => $assoc,
                 to => $class->_resolve_to_for_prop_desc($prop_desc),
             );
+
+            #make a corresponding id property if one doesn't already exist
+            if (!$prop_desc->{is_many}) {
+                my $id_property = $prop_name . '_id';
+                if (!exists($desc->{has}{$id_property})) {
+                    $desc->{has}{$id_property} = {
+                        property_name => $id_property,
+                        implied_by => $prop_name,
+                        via => $assoc,
+                        to => 'value_id',
+                        where => \@where_class,
+                        is_mutable => $prop_desc->{is_mutable},
+                        is_optional => $prop_desc->{is_optional},
+                        is_many => 0,
+                    };
+                }
+            }
         }
 
     }
@@ -1053,5 +1072,9 @@ sub _extend_namespace_with_command_tree {
 # Only the methods actually used from Build.pm have been migrated.
 
 sub files_ignored_by_build_diff { () }
+
+#Does this model type require control/experimental (normal/tumor) pairing to work?
+#Used by Analysis Project configuration
+sub requires_pairing { return 0; }
 
 1;

@@ -33,7 +33,7 @@ TISSUE_NAME                 VARCHAR2 (64)                    {null} {null}   ok 
 
 class Genome::Site::TGI::Synchronize::Classes::OrganismSample {
     is => 'UR::Object',
-    table_name => 'GSC.ORGANISM_SAMPLE',
+    table_name => 'ORGANISM_SAMPLE',
     id_by => [
         id => { is => 'Number', column_name => 'ORGANISM_SAMPLE_ID', },
     ],
@@ -53,7 +53,7 @@ class Genome::Site::TGI::Synchronize::Classes::OrganismSample {
         tissue_desc             => { is => 'Text', column_name => 'TISSUE_NAME', },
         tissue_label	        => { is => 'Text', },
     ],
-    data_source => 'Genome::DataSource::GMSchema',
+    data_source => 'Genome::DataSource::Dwrac',
 };
 
 sub properties_to_copy {# 15

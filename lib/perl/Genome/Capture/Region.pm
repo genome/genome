@@ -13,7 +13,7 @@ class Genome::Capture::Region {
             REGION_OF_INTEREST_NAME name,
             REGION_OF_INTEREST_SEQ_ID seq_id,
             CREATION_EVENT_ID pse_id
-        from amplification_roi@oltp
+        from amplification_roi
         ) capture_region
     |,
     id_by => [
@@ -26,7 +26,7 @@ class Genome::Capture::Region {
         pse_id => { },
     ],
     doc         => 'usually a gene or some other region of interest',
-    data_source => 'Genome::DataSource::GMSchema',
+    data_source => 'Genome::DataSource::Oltp',
 };
 
 

@@ -123,7 +123,9 @@ sub resolve_valid_builds {
     my $mg = $self->model_group;
     my @builds;
 
-    my ($no_builds, $bad_builds, $ok);
+    my $no_builds = 0;
+    my $bad_builds = 0;
+    my $ok = 0;
     my @models = $mg->models;
     for my $model (@models) {
         my $build = $model->last_succeeded_build;
@@ -231,7 +233,11 @@ sub assemble_list_of_segregating_sites {
 sub polymutt_dir_for_build {
     my ($self, $build) = @_;
     my $glob_string = $build->data_directory . "/variants/snv/polymutt-*";
-    my @dirs = glob($glob_string);
+
+    my @all_dirs = glob($glob_string);
+    # Ignore -broken links
+    my @dirs = grep {! m/broken$/} @all_dirs;
+
     unless (scalar(@dirs) == 1) {
         die $self->error_message("Found " . scalar(@dirs) . " possible polymutt dirs in " . $build->data_directory . " and I expected to find one.");
     }

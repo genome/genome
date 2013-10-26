@@ -4,7 +4,8 @@ use strict;
 use warnings;
 
 use above 'Genome';
-use Test::More tests => 8;
+use Test::More tests => 10;
+use Data::Dumper;
 
 #test use first and quit if it doesn't work
 use_ok('Genome::File::Fasta') or die;
@@ -58,3 +59,11 @@ my @expected_chunks = (
 );
 my @generated_chunks = $file_obj->divide_into_chunks(5);
 is_deeply(\@generated_chunks, \@expected_chunks, "genome chunked as expected");
+
+my @specific_chunk = $file_obj->divide_into_chunks(5,4);
+is_deeply(\@specific_chunk, $expected_chunks[3], "specific chunk returned as expected");
+
+eval {
+    $file_obj->divide_into_chunks(5,6);
+};
+ok($@,"Bad specific chunk number throws as expected");

@@ -38,7 +38,7 @@ class Genome::InstrumentData::Command::Summary1 {
                         '20' || substr(run_name,0,2) || '-' || substr(run_name,3,2) || '-' || substr(run_name,5,2) run_date, 
                         sum(case when run_type != 'Paired End Read 2' then filt_clusters else 0 end) filter_clusters_r1, 
                         sum(case when run_type = 'Paired End Read 2' then filt_clusters else 0 end) filter_clusters_r2   
-                    from GSC.solexa_lane_summary
+                    from solexa_lane_summary
                     where sample_name like ? 
                     group by research_project,sample_name,library_name,flow_cell_id,run_name
                 ) x  
@@ -97,7 +97,7 @@ sub execute {
     
     $sample_pattern = "\%$sample_pattern\%" unless $sample_pattern eq '%';
 
-    my $dbh = Genome::DataSource::GMSchema->get_default_handle();
+    my $dbh = Genome::DataSource::Dwrac->get_default_handle();
     my $sth = $dbh->prepare($sql) or die "Failed to connect to the database!";
     $sth->execute($sample_pattern,$date) or die "Error querying the database!";
     UR::DBI::Report->print_formatted(sth => $sth);

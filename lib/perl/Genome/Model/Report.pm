@@ -16,11 +16,11 @@ class Genome::Model::Report {
             id_by => 'build_id'
         },
         build_id => {
-            is => 'Integer', 
+            is => 'Text',
             doc=> 'Build id'
         },
         model => {
-            is => 'Genome::Model', 
+            is => 'Genome::Model',
             via => 'build'
         },
         model_id => {

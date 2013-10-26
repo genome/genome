@@ -28,7 +28,7 @@ ok(@amplicon_sets && @example_amplicon_sets, 'Got amplicon sets');
 # PROCESS
 my $instrument_data = $build->instrument_data;
 my $process = Genome::Model::Build::MetagenomicComposition16s::ProcessInstrumentData->create(
-    input_build => [$build],
+    input_build => $build,
     instrument_data => $instrument_data,
 );
 ok($process, 'create process inst data cmd');
@@ -54,7 +54,7 @@ for ( my $i = 0; $i < @amplicon_sets; $i++ ) {
 
 # MERGE
 my $merge = Genome::Model::Build::MetagenomicComposition16s::MergeProcessedInstrumentData->create(
-    input_build => [$build],
+    input_build => $build,
 );
 ok($merge, 'create merge inst data cmd');
 ok($merge->execute, 'execute merge inst data cmd');

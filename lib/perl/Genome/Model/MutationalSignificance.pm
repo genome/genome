@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Genome::Model::ClinSeq::Util;
 
 my @has_param;
 my %module_input_exceptions;
@@ -32,6 +33,7 @@ BEGIN {
             annotation_build => ['input connector', 'annotation_build'], #input to model, not param
             extra_rois => ['input connector', 'extra_rois'], #TODO: get from somatic variation models?
             regulome_bed => ['input connector', 'regulome_bed'],
+            include_ensembl_annot => ['input connector', 'include_ensembl_annot'],
         },
         'Genome::Model::MutationalSignificance::Command::CreateBamList' => {
             somatic_variation_builds => ['input connector', 'somatic_variation_builds'],
@@ -125,10 +127,10 @@ class Genome::Model::MutationalSignificance {
         processing_profile => { is => 'Genome::ProcessingProfile', id_by => 'processing_profile_id', },
     ],
     has_input => [
-        somatic_variation_models => {
-            is    => 'Genome::Model::SomaticVariation',
+        clinseq_models => {
+            is    => 'Genome::Model::ClinSeq',
             is_many => 1,
-            doc => 'somatic variation models to evaluate',
+            doc => 'clinseq models to evaluate',
         },
         annotation_build => {
             is => 'Genome::Model::Build::ImportedAnnotation',
@@ -248,17 +250,17 @@ EOS
 
 sub _help_detail_for_model_define {
     return <<EOS
-The mutational significance genome model represents analysis on a collection of somatic variation models.  There is an option to run the MuSiC pipeline to run various statistical tests on the collection of variants.  Additionally, a list of variants can be compiled that should be suitable for use as a validation list.
+The mutational significance genome model represents analysis on a collection of clinseq models.  There is an option to run the MuSiC pipeline to run various statistical tests on the collection of variants.  Additionally, a list of variants can be compiled that should be suitable for use as a validation list.
 EOS
 }
 
 sub _help_synopsis_for_model_define {
     return <<EOS
-First, determine what group of somatic variation models you want to work on.  This might be all models in a model group, for example.
+First, determine what group of ClinSeq models you want to work on.  This might be all models in a model group, for example.
 Next, create a population group to use as subject:
 genome population-group create --models model_groups.id=29624
-Finally, define your model using the query for somatic variation models and the id of the population group you just created.
-genome model define mutational-significance --model-name "Example Mutational Significance" --processing-profile "Oct 2012 Default" --annotation-build 106409619 --somatic-variation-models model_groups.id=29624 --subject id=2882703149
+Finally, define your model using the query for ClinSeq models and the id of the population group you just created.
+genome model define mutational-significance --model-name "Example Mutational Significance" --processing-profile "Oct 2012 Default" --annotation-build 106409619 --clinseq-models model_groups.id=29624 --subject id=2882703149
 EOS
 }
 
@@ -312,6 +314,7 @@ sub _resolve_workflow_for_build {
     push @input_properties, "clinical_correlation_matrix_file";
     push @input_properties, "reference_build";
     push @input_properties, "regulatory_columns_to_check";
+    push @input_properties, "somatic_variation_builds";
 
     my @output_properties;
     if ($self->play_music) {
@@ -615,7 +618,7 @@ sub map_workflow_inputs {
 
     map {my $name = $_->property_name; my @values = $self->$name; if (defined $values[0]){my $value; if ($_->is_many){$value = \@values} else{$value = $values[0]} $inputs{$name} = $value}} @all_params;
  
-    my @builds = $build->somatic_variation_builds;
+    my @builds = $build->clinseq_builds;
     my $base_dir = $build->data_directory;
 
     if ($build->review_file_dir) {
@@ -633,18 +636,19 @@ sub map_workflow_inputs {
     $inputs{log_directory} = $build->log_directory;
     $inputs{merged_maf_path} = $base_dir."/final.maf";
     $inputs{create_maf_output_dir} = $base_dir;
-    $inputs{reference_sequence} = $builds[0]->reference_sequence_build->fasta_file;
-    $inputs{reference_sequence_build} = $builds[0]->reference_sequence_build;
+    $inputs{reference_sequence_build} = Genome::Model::ClinSeq::Util::resolve_reference_sequence_build($builds[0]);
+    $inputs{reference_sequence} = $inputs{reference_sequence_build}->fasta_file;
     $inputs{output_dir} = $base_dir;
     $inputs{bam_list} = $base_dir."/bam_list.txt";
     $inputs{clinical_data_file} = $base_dir."/clinical_data.txt";
     $inputs{significant_variant_list} = $base_dir."/significant_variant_list";
     $inputs{mutation_matrix_file} = $base_dir."/mutation_matrix_file";
     $inputs{clinical_correlation_matrix_file} = $base_dir."/clinical_correlation_matrix_file";
+    $inputs{somatic_variation_builds} = [map {$_->wgs_build} @builds]; #TODO:get exome build as well?
     #$inputs{categorical_clinical_data_file} = $build->categorical_clinical_data_file;
     #$inputs{numeric_clinical_data_file} = $build->numeric_clinical_data_file;
 
-    my $reference_build_name = $builds[0]->reference_sequence_build->name;
+    my $reference_build_name = $inputs{reference_sequence_build}->name;
     my $calculated_reference_build = "37";
     unless ($reference_build_name =~ /$calculated_reference_build/) {
         $calculated_reference_build = "36";

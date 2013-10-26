@@ -86,7 +86,7 @@ sub execute {
     my $from = $self->from;
     my $to_name = $self->to;
     my @changes = $self->changes;
-
+$DB::single = 1;
     my $to = Genome::ModelGroup->get(name => $to_name);
     if ($to) {
         die $self->error_message("model group $to_name exists!: " . $to->__display_name__);
@@ -137,7 +137,7 @@ sub execute {
     my $changes_pp = 0;
     for my $change (@changes) {
         my ($name,$op,$value) = ($change =~ $rx);
-        if ($name eq 'processing_profile_id') {
+        if ($name eq 'processing_profile_id' or $name eq 'processing_profile') {
             $changes_pp = Genome::ProcessingProfile->get($value);
             unless ($changes_pp) {
                 die "failed to find processing profile $value!";
@@ -222,7 +222,7 @@ sub execute {
             my @replacements = $pp_class->_profiles_matching_subclass_and_params(@new, type_name => $from_profile->type_name);
             if (@replacements) {
                 no warnings;
-                @replacements = sort { $a->id <=> $b->id || $a->id cmp $b->id } @replacements;
+                @replacements = sort { $a->id cmp $b->id } @replacements;
                 for my $replacement (@replacements) {
                     $self->status_message(" found profile matching the new parameters: " . $replacement->__display_name__);
                 }

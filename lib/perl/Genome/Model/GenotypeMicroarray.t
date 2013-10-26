@@ -35,9 +35,10 @@ sub test_dependent_cron_ref_align {
     isa_ok($gm_m, 'Genome::Model::GenotypeMicroarray', 'gm_m') or return;
 
     my @dependent_cron_ref_align = $gm_m->dependent_cron_ref_align;
-    is(@dependent_cron_ref_align, 2, 'got two models from dependent_cron_ref_align') or return;
-    is($dependent_cron_ref_align[0]->name, 'Another Test Build 36 Reference Alignment', 'other model was "Another Test Build 36 Reference Alignment"') or return;
-    is($dependent_cron_ref_align[1]->name, 'Test Build 36 Reference Alignment', 'one model was "Test Build 36 Reference Alignment"') or return;
+    my %names = map {$_->name, 1} @dependent_cron_ref_align;
+    is(scalar keys %names, 2, 'got two models from dependent_cron_ref_align') or return;
+    ok(exists $names{'Another Test Build 36 Reference Alignment'}, 'other model was "Another Test Build 36 Reference Alignment"') or return;
+    ok(exists $names{'Test Build 36 Reference Alignment'}, 'one model was "Test Build 36 Reference Alignment"') or return;
 
     return 1;
 }
@@ -78,6 +79,8 @@ sub test_dependent_cron_ref_align_init {
 
     my $genotype_data = Genome::InstrumentData::Imported->create(
         library => $library,
+        import_format => 'genotype file',
+        sequencing_platform => 'infinium',
     );
     isa_ok($genotype_data, 'Genome::InstrumentData::Imported', 'genotype data') or return;
 

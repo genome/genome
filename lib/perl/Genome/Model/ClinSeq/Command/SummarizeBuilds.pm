@@ -816,7 +816,7 @@ sub execute {
               Genome::Sys->shellcmd(cmd => $id_list_cmd, allow_failed_exit_code => 1);
               if (-e $tmp_file){
                 my $mv_cmd = "mv $tmp_file $id_summary_file";
-                system($mv_cmd);
+                Genome::Sys->shellcmd(cmd => $mv_cmd);
               }
             }
           }
@@ -1167,8 +1167,8 @@ sub execute {
 
       #Make copies of read locations .png and end bias plots for convenience
       foreach my $file (@rnaseq_files_to_copy){
-        my $cp_cmd = "cp $file $build_outdir 1>/dev/null 2>/dev/null";
-        system($cp_cmd);
+        my $cp_cmd = "cp $file $build_outdir";
+        Genome::Sys->shellcmd(cmd => $cp_cmd, allow_failed_exit_code => 1); 
       }
     }
 

@@ -94,7 +94,7 @@ class Genome::Site::TGI::InstrumentData::Solexa {
 
                 --s_rev.sd_above_insert_size,
                 i.sd_above_insert_size,
-                
+
                 --s_rev.sd_below_insert_size,
                 i.sd_below_insert_size,
 
@@ -124,39 +124,44 @@ class Genome::Site::TGI::InstrumentData::Solexa {
 
                 --s_rev.analysis_software_version,
                 i.analysis_software_version,
+                --Analysis Project
+                swo.analysis_project_id,
 
                 i.index_sequence
 
-                --from GSC.solexa_lane_summary s_rev
+                --from solexa_lane_summary s_rev
                 --join read_illumina r2 on r2.sls_seq_id = s_rev.seq_id --and r1.read_number = 1
-                from GSC.index_illumina i
-                    join GSC.flow_cell_illumina fc on fc.flow_cell_id = i.flow_cell_id
-                    join GSC.read_illumina r2
+                from index_illumina i
+                    join flow_cell_illumina fc on fc.flow_cell_id = i.flow_cell_id
+                    join read_illumina r2
                         on i.seq_id = r2.ii_seq_id
                         and (
                             (fc.run_type = 'Paired End' and r2.read_number = 2)
                             or
                             (fc.run_type = 'Fragment' and r2.read_number = 1)
                         )
-                    left join GSC.seq_fs_path archive2 on archive2.seq_id = i.seq_id
+                    left join seq_fs_path archive2 on archive2.seq_id = i.seq_id
                         and archive2.data_type = 'illumina fastq tgz'
-                    left join GSC.seq_fs_path gerald_bam on gerald_bam.seq_id = i.seq_id
+                    left join seq_fs_path gerald_bam on gerald_bam.seq_id = i.seq_id
                         and gerald_bam.data_type = 'gerald bam'
-                    left join GSC.seq_fs_path collect_gc_bias on collect_gc_bias.seq_id = i.seq_id
+                    left join seq_fs_path collect_gc_bias on collect_gc_bias.seq_id = i.seq_id
                         and collect_gc_bias.data_type = 'collect gc bias'
-                    left join GSC.seq_fs_path fastqc on fastqc.seq_id = i.seq_id
+                    left join seq_fs_path fastqc on fastqc.seq_id = i.seq_id
                         and fastqc.data_type = 'fastqc'
-                    left join GSC.read_illumina r1
+                    left join read_illumina r1
                         on run_type = 'Paired End'
                         and r1.ii_seq_id = i.seq_id
                         and r1.read_number = 1
-                    join GSC.library_summary lib on lib.library_id = i.library_id
-                    join GSC.organism_sample sam on sam.organism_sample_id = lib.sample_id
+                  join GSC.library_summary lib on lib.library_id = i.library_id
+                  join GSC.organism_sample sam on sam.organism_sample_id = lib.sample_id
+                  join GSC.woi_sequence_product wsp on wsp.seq_id = i.seq_id
+                  join work_order_item\@oltp woi on wsp.woi_id = woi.woi_id
+                  join setup_work_order\@oltp swo on swo.setup_wo_id = woi.setup_wo_id
             /*
-                    left join GSC.solexa_lane_summary s_fwd on s_fwd.sral_id = s_rev.sral_id and s_fwd.run_type = 'Paired End Read 1'
-                    left join GSC.seq_fs_path archive on archive.seq_id = s_rev.seq_id
+                    left join solexa_lane_summary s_fwd on s_fwd.sral_id = s_rev.sral_id and s_fwd.run_type = 'Paired End Read 1'
+                    left join seq_fs_path archive on archive.seq_id = s_rev.seq_id
                         and archive.data_type = 'illumina fastq tgz'
-                    left join GSC.seq_fs_path adaptor on adaptor.seq_id = s_rev.seq_id
+                    left join seq_fs_path adaptor on adaptor.seq_id = s_rev.seq_id
                         and adaptor.data_type = 'adaptor sequence file'
                     where s_rev.run_type in ('Standard','Paired End Read 2')
                         and s_rev.flow_cell_id = '617ER'
@@ -209,6 +214,7 @@ EOS
         fwd_filt_aligned_clusters_pct   => { },
         rev_filt_aligned_clusters_pct   => { },
         target_region_set_name          => { },
+        analysis_project_id             => { },
 
         short_name => {
             doc => 'The essential portion of the run name which identifies the run.  The rest is redundent information about the instrument, date, etc.',
@@ -262,95 +268,15 @@ sub __display_name__ {
 }
 
 sub _calculate_paired_end_kb_usage {
-    my $self = shift;
-    my $HEADER_LENGTH = shift;
-    $HEADER_LENGTH = $HEADER_LENGTH + 5; # Adding 5 accounts for newlines in the FQ file.
-    # If data is paired_end fwd_read_length, rev_read_length, fwd_clusters and rev_clusters
-    # should all be defined.
-    if (!defined($self->fwd_read_length) or $self->fwd_read_length <= 0) {
-        $self->error_message("Instrument data fwd_read_length is either undefined or less than 0.");
-        die;
-    } elsif (!defined($self->rev_read_length) or $self->rev_read_length <= 0) {
-        $self->error_message("Instrument data rev_read_length is either undefined or less than 0.");
-        die;
-    } elsif (!defined($self->fwd_clusters) or $self->fwd_clusters <= 0) {
-        $self->error_message("Instrument data fwd_clusters is either undefined or less than 0.");
-        die;
-    } elsif (!defined($self->rev_clusters) or $self->rev_clusters <= 0) {
-        $self->error_message("Instrument data rev_clusters is either undefined or less than 0.");
-        die;
-    }
-    
-    my $fwd = (($self->fwd_read_length + $HEADER_LENGTH) * $self->fwd_clusters)*2;
-    my $rev = (($self->rev_read_length + $HEADER_LENGTH) * $self->rev_clusters)*2;
-    my $total = ($fwd + $rev) / 1024.0;
-    return $total;
+    return Genome::InstrumentData::Solexa::_calculate_paired_end_kb_usage(@_);
 }
 
 sub _calculate_non_paired_end_kb_usage {
-    my $self = shift;
-    my $HEADER_LENGTH = shift;
-    $HEADER_LENGTH = $HEADER_LENGTH + 5; # adding 5 accounts for newlines in the FQ file.
-    # We will take the max of fwd_read_length or rev_read_length and the max of fwd_clusters and rev_clusters
-    # to make sure that even strange data won't cause overly low space allocation
-    # Get the max read length.
-    my $max_read_length;
-    if ( defined($self->read_length) and $self->read_length > 0 ) {
-        $max_read_length = $self->read_length;
-    } elsif ( defined($self->fwd_read_length) and defined($self->rev_read_length) ) {
-        if ( $self->fwd_read_length > $self->rev_read_length ) {
-            $max_read_length = $self->fwd_read_length;
-        } else {
-            $max_read_length = $self->rev_read_length;
-        }
-    } elsif ( defined($self->fwd_read_length) and $self->fwd_read_length > 0) {
-        $max_read_length = $self->fwd_read_length;
-    } elsif ( defined($self->rev_read_length) and $self->rev_read_length > 0) {
-        $max_read_length = $self->rev_read_length;
-    } else {
-        $self->error_message("No valid read length value found in instrument data");
-        die;
-    }
-    # Get the max cluster length.
-    my $max_clusters;
-    if ( defined($self->clusters) and $self->clusters > 0 ) {
-        $max_clusters = $self->clusters;
-    } elsif ( defined($self->fwd_clusters) and defined($self->rev_clusters) ) {
-        if ( $self->fwd_clusters > $self->rev_clusters ) {
-            $max_clusters = $self->fwd_clusters;
-        } else {
-            $max_clusters = $self->rev_clusters;
-        }
-    } elsif ( defined($self->fwd_clusters) and $self->fwd_clusters > 0) {
-        $max_clusters = $self->fwd_clusters;
-    } elsif ( defined($self->rev_clusters) and $self->rev_clusters > 0) {
-        $max_clusters = $self->rev_clusters;
-    } else {
-        $self->error_message("No valid number of clusters value found in instrument data");
-        die;
-    }
-    
-    my $total_b = (($max_read_length + $HEADER_LENGTH) * $max_clusters)*2;
-    my $total = $total_b / 1024.0;
-    return $total;
+    return Genome::InstrumentData::Solexa::_calculate_non_paired_end_kb_usage(@_);
 }
 
 sub calculate_alignment_estimated_kb_usage {
-    my $self = shift;
-    # Different aligners will require different levels of overhead, so this should return
-    # approximately the total size of the instrument data files.
-    # In a FQ file, every read means 4 lines, 2 of length $self->read_length,
-    # and 2 of read identifier data. Therefore we can expect the total file size to be 
-    # about (($self->read_length + header_size) * $self->fwd_clusters)*2 / 1024
-    
-    # This is length of the id tag in the FQ file, it looks something like: @HWUSI-EAS712_6171L:2:1:1817:12676#TGACCC/1
-    my $HEADER_LENGTH = 45;
-    
-    if ($self->is_paired_end) {
-        return int $self->_calculate_paired_end_kb_usage($HEADER_LENGTH);
-    } else {
-        return int $self->_calculate_non_paired_end_kb_usage($HEADER_LENGTH);
-    }
+    return Genome::InstrumentData::Solexa::calculate_alignment_estimated_kb_usage(@_);
 }
 
 sub resolve_full_path {
@@ -400,290 +326,57 @@ sub dump_to_file_system {
 }
 
 sub dump_illumina_fastq_files {
-    my $self = shift;
-
-    unless ($self->resolve_quality_converter eq 'sol2phred') {
-        $self->error_message("This instrument data is not natively Illumina formatted, cannot dump");
-        die $self->error_message;
-    }
-
-    return $self->_unprocessed_fastq_filenames(@_);
+    return Genome::InstrumentData::Solexa::dump_illumina_fastq_files(@_);
 }
 
 sub dump_solexa_fastq_files {
-    my $self = shift;
-
-    unless ($self->resolve_quality_converter eq 'sol2sanger') {
-        $self->error_message("This instrument data is not natively Solexa formatted, cannot dump");
-        die $self->error_message;
-    }
-
-    return $self->_unprocessed_fastq_filenames(@_);
+    return Genome::InstrumentData::Solexa::dump_solexa_fastq_files(@_);
 }
 
 sub dump_sanger_fastq_files {
-    my $self = shift;
-
-    if (defined $self->bam_path && -s $self->bam_path) {
-       $self->status_message("Now using a bam instead"); 
-       return $self->dump_fastqs_from_bam;
-    }
-
-    my @illumina_fastq_pathnames = $self->_unprocessed_fastq_filenames(@_);
-
-    my %params = @_;
-
-    my $requested_directory = delete $params{directory} || Genome::Sys->base_temp_directory;
-
-    my @converted_pathnames;
-    my $counter = 0;
-    for my $illumina_fastq_pathname (@illumina_fastq_pathnames) {
-        my $converted_fastq_pathname;
-        if ($self->resolve_quality_converter eq 'sol2sanger') {
-            $converted_fastq_pathname = $requested_directory . '/' . $self->id . '-sanger-fastq-'. $counter . ".fastq";
-            $self->status_message("Applying sol2sanger quality conversion.  Converting to $converted_fastq_pathname");
-            unless (Genome::Model::Tools::Maq::Sol2sanger->execute( use_version       => '0.7.1',
-                                                                    solexa_fastq_file => $illumina_fastq_pathname,
-                                                                    sanger_fastq_file => $converted_fastq_pathname)) {
-                $self->error_message('Failed to execute sol2sanger quality conversion $illumina_fastq_pathname $converted_fastq_pathname.');
-                die($self->error_message);
-            }
-        } elsif ($self->resolve_quality_converter eq 'sol2phred') {
-            $converted_fastq_pathname = $requested_directory . '/' . $self->id . '-sanger-fastq-'. $counter . ".fastq";
-            $self->status_message("Applying sol2phred quality conversion.  Converting to $converted_fastq_pathname");
-
-            unless (Genome::Model::Tools::Fastq::Sol2phred->execute(fastq_file => $illumina_fastq_pathname,
-                                                                    phred_fastq_file => $converted_fastq_pathname)) {
-                $self->error_message('Failed to execute sol2phred quality conversion.');
-                die($self->error_message);
-            }
-        } elsif ($self->resolve_quality_converter eq 'none') {
-            $self->status_message("No quality conversion required.");
-            $converted_fastq_pathname = $illumina_fastq_pathname;
-        } else {
-            $self->error_message("Undefined quality converter requested, I can't proceed");
-            die $self->error_message;
-        }
-        unless (-e $converted_fastq_pathname && -f $converted_fastq_pathname && -s $converted_fastq_pathname) {
-            $self->error_message('Failed to validate the conversion of solexa fastq file '. $illumina_fastq_pathname .' to sanger quality scores');
-            die($self->error_message);
-        }
-        $counter++;
-
-        if (($converted_fastq_pathname ne $illumina_fastq_pathname ) &&
-            ($illumina_fastq_pathname =~ m/\/tmp\//)) {
-
-            $self->status_message("Removing original unconverted file from temp space to save disk space:  $illumina_fastq_pathname");
-            unlink $illumina_fastq_pathname;
-        }
-        push @converted_pathnames, $converted_fastq_pathname;
-    }    
-
-    return @converted_pathnames;
-
+    return Genome::InstrumentData::Solexa::dump_sanger_fastq_files(@_);
 }
 
 sub _unprocessed_fastq_filenames {
-    my $self = shift;
-    my @fastqs;
-    if ($self->is_external) {
-        @fastqs = $self->resolve_external_fastq_filenames(@_);
-    } else {
-        @fastqs = @{$self->resolve_fastq_filenames(@_)};
-    }
-    return @fastqs;
+    return Genome::InstrumentData::Solexa::_unprocessed_fastq_filenames(@_);
 }
 
 sub desc {
-    my $self = shift;
-    return $self->full_name .'('. $self->id .')';
+    return Genome::InstrumentData::Solexa::desc(@_);
 }
 
 sub read1_fastq_name {
-    my $self = shift;
-    my $lane = $self->lane;
-
-    return "s_${lane}_1_sequence.txt";
+    return Genome::InstrumentData::Solexa::read1_fastq_name(@_);
 }
 
 sub read2_fastq_name {
-    my $self = shift;
-    my $lane = $self->lane;
-
-    return "s_${lane}_2_sequence.txt";
+    return Genome::InstrumentData::Solexa::read2_fastq_name(@_);
 }
 
 sub fragment_fastq_name {
-    my $self = shift;
-    my $lane = $self->lane;
-
-    return "s_${lane}_sequence.txt";
+    return Genome::InstrumentData::Solexa::fragment_fastq_name(@_);
 }
 
 sub resolve_fastq_filenames {
-    my $self = shift;
-    my $lane = $self->lane;
-    my $desc = $self->desc;
-
-    my %params = @_;
-    my $paired_end_as_fragment = delete $params{'paired_end_as_fragment'};
-    my $requested_directory = delete $params{'directory'} || $self->base_temp_directory;
-
-    my @illumina_output_paths;
-    my @errors;
-    
-    # First check the archive directory and second get the gerald directory
-    for my $dir_type (qw(archive_path gerald_directory)) {
-        $self->status_message("Now trying to get fastq from $dir_type for $desc");
-        
-        my $directory = $self->$dir_type;
-        $directory = $self->validate_fastq_directory($directory, $dir_type);
-        next unless $directory;
-
-        if ($dir_type eq 'archive_path') {
-            $directory = $self->dump_illumina_fastq_archive($requested_directory); #need eval{} here ?
-            $directory = $self->validate_fastq_directory($directory, 'dump_fastq_dir');
-            next unless $directory;
-        }
-
-        eval {
-            #handle fragment or paired-end data
-            if ($self->is_paired_end) {
-                if (!$paired_end_as_fragment || $paired_end_as_fragment == 1) {
-                    if (-e "$directory/" . $self->read1_fastq_name) {
-                        push @illumina_output_paths, "$directory/" . $self->read1_fastq_name;
-                    } 
-                    elsif (-e "$directory/Temp/" . $self->read1_fastq_name) {
-                        push @illumina_output_paths, "$directory/Temp/" . $self->read1_fastq_name;
-                    } 
-                    else {
-                        die "No illumina forward data in directory for lane $lane! $directory";
-                    }
-                }
-                if (!$paired_end_as_fragment || $paired_end_as_fragment == 2) {
-                    if (-e "$directory/" . $self->read2_fastq_name) {
-                        push @illumina_output_paths, "$directory/" . $self->read2_fastq_name;
-                    } 
-                    elsif (-e "$directory/Temp/" . $self->read2_fastq_name) {
-                        push @illumina_output_paths, "$directory/Temp/" . $self->read2_fastq_name;
-                    } 
-                    else {
-                        die "No illumina reverse data in directory for lane $lane! $directory";
-                    }
-                }
-            } 
-            else {
-                if (-e "$directory/" . $self->fragment_fastq_name) {
-                    push @illumina_output_paths, "$directory/" . $self->fragment_fastq_name;
-                } 
-                elsif (-e "$directory/Temp/" . $self->fragment_fastq_name) {
-                    push @illumina_output_paths, "$directory/Temp/" . $self->fragment_fastq_name;
-                } 
-                else {
-                    die "No fragment illumina data in directory for lane $lane! $directory";
-                }
-            }
-        };
-            
-        push @errors, $@ if $@;
-        last if @illumina_output_paths;
-    }
-    unless (@illumina_output_paths) {
-        $self->error_message("No fastq files were found for $desc");
-        $self->error_message(join("\n",@errors)) if @errors;
-        die $self->error_message;
-    }
-    return \@illumina_output_paths;
+    return Genome::InstrumentData::Solexa::resolve_fastq_filenames(@_);
 }
 
 
 sub dump_illumina_fastq_archive {
-    my ($self, $dir) = @_;
-
-    my $archive = $self->archive_path;
-    $dir = $self->base_temp_directory unless $dir;
-
-    #Prevent unarchiving multiple times during execution
-    #Hopefully nobody passes in a $dir expecting to overwrite another set of FASTQs coincidentally from the same lane number
-    my $already_dumped = 0;
-    
-    if($self->is_paired_end) {
-        if (-s $dir . '/' . $self->read1_fastq_name and -s $dir . '/' . $self->read2_fastq_name) {
-            $already_dumped = 1;
-        }
-    } 
-    else {
-        if (-s $dir . '/' . $self->fragment_fastq_name) {
-            $already_dumped = 1;
-        }
-    }
-
-    unless($already_dumped) {
-        my $cmd = "tar -xzf $archive --directory=$dir";
-        unless ($self->shellcmd(
-            cmd => $cmd,
-            input_files => [$archive],
-        )) {
-            $self->error_message('Failed to run tar command '. $cmd);
-            return;
-            #die($self->error_message); Should try to get fastq from gerald_directory instead of dying
-        }
-    }
-    return $dir;
+    return Genome::InstrumentData::Solexa::dump_illumina_fastq_archive(@_);
 }
 
 sub validate_fastq_directory {
-    my ($self, $dir, $dir_type) = @_;
-    
-    my $msg_base = "$dir_type : $dir";
-    
-    unless ($dir) {
-        $self->error_message("$msg_base is null");
-        return;
-    }
-
-    unless (-e $dir) {
-        $self->error_message("$msg_base not existing in file system");
-        return;
-    }
-
-    unless ($dir_type eq 'archive_path') {
-        my @files = glob("$dir/*"); #In scalar context, a glob functions as an iterator--we instead want to check the number of files
-        unless (scalar @files) {
-            $self->error_message("$msg_base is empty");
-            return;
-        }
-    }
-
-    return $dir;
+    return Genome::InstrumentData::Solexa::validate_fastq_directory(@_);
 }
 
-    
-sub resolve_external_fastq_filenames {
-    my $self = shift;
 
-    my @fastq_pathnames;
-    my $fastq_pathname = $self->create_temp_file_path('fastq');
-    unless ($fastq_pathname) {
-        die "Failed to create temp file for fastq!";
-    }
-    return ($fastq_pathname);
+sub resolve_external_fastq_filenames {
+    return Genome::InstrumentData::Solexa::resolve_external_fastq_filenames(@_);
 }
 
 sub _calculate_total_read_count {
-    my $self = shift;
-
-    if($self->is_external) {
-        my $data_path_object = Genome::MiscAttribute->get(entity_id => $self->id, property_name=>'full_path');
-        my $data_path = $data_path_object->value;
-        my $lines = `wc -l $data_path`;
-        return $lines/4;
-    }
-    if ($self->clusters <= 0) {
-        die('Impossible value '. $self->clusters .' for clusters field for solexa lane '. $self->id);
-    }
-
-    return $self->clusters;
+    return Genome::InstrumentData::Solexa::_calculate_total_read_count(@_);
 }
 
 sub resolve_quality_converter {
@@ -756,39 +449,11 @@ sub create_mock {
 }
 
 sub run_start_date_formatted {
-    my $self = shift;
-
-    my ($y, $m, $d) = $self->run_name =~ m/^(\d{2})(\d{2})(\d{2})_.*$/;
-
-    my $dt_format = UR::Time->config('datetime');
-    #UR::Time->config(datetime => '%a %b %d %T %Z %Y');
-    UR::Time->config(datetime => '%Y-%m-%d');
-    my $dt = UR::Time->numbers_to_datetime(0, 0, 0, $d, $m, "20$y");
-    UR::Time->config(datetime => $dt_format);
-
-    return $dt;
+    return Genome::InstrumentData::Solexa::run_start_date_formatted(@_);
 }
 
 sub total_bases_read {
-    my $self = shift;
-    my $filter = shift; # optional?
-    if(!defined($filter))
-    {
-        $filter = 'both';
-    }
-    my $total_bases; # unused?
-
-
-    my $count;
-    if ($self->is_paired_end) {
-        # this changed in case we only want the fwd or rev counts...
-        $count += ($self->fwd_read_length * $self->fwd_clusters)  unless $filter eq 'reverse-only';
-        $count += ($self->rev_read_length * $self->rev_clusters) unless $filter eq 'forward-only';
-    } else {
-        $count += ($self->read_length * $self->clusters);
-    }
-
-    return $count;
+    return Genome::InstrumentData::Solexa::total_bases_read(@_);
 }
 
 sub summary_xml_content {
@@ -799,8 +464,7 @@ sub summary_xml_content {
 }
 
 sub run_identifier {
-    my $self = shift;
-    return $self->flow_cell_id;
+    return Genome::InstrumentData::Solexa::run_identifier(@_);
 }
 
 1;

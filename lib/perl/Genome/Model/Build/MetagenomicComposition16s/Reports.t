@@ -41,7 +41,7 @@ $build->amplicons_classified_success(4);
 is($build->amplicons_classified_success, 4, 'amplicons classified success set');
 
 # run
-my $reports = Genome::Model::Build::MetagenomicComposition16s::Reports->create(input_build => [$build]);
+my $reports = Genome::Model::Build::MetagenomicComposition16s::Reports->create(input_build => $build);
 ok($reports, 'create');
 $reports->dump_status_messages(1);
 ok($reports->execute, 'execute');

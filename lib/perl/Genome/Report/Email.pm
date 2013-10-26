@@ -13,8 +13,15 @@ use Email::Valid;
 class Genome::Report::Email {
 };
 
+my $silent;
+sub silent {
+    $silent = 1;
+}
+
 sub send_report {
     my ($class, %params) = @_;
+
+    return 1 if $silent;
 
     # XSL Files
     unless ( $params{xsl_files} ) {

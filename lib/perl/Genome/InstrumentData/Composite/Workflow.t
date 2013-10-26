@@ -10,32 +10,27 @@ BEGIN {
 }
 
 use Test::More tests => 10;
-
 use above "Genome";
+
+use Genome::Test::Factory::InstrumentData::Solexa;
 
 use_ok('Genome::InstrumentData::Composite::Workflow')
   or die('test cannot continue');
 
-my $sample = Genome::Sample->__define__(
-    id => '-100',
-    name => 'sample',
-);
-
-my $instrument_data_1 = Genome::InstrumentData::Solexa->__define__(
+my $instrument_data_1 = Genome::Test::Factory::InstrumentData::Solexa->setup_object(
     flow_cell_id => '12345ABXX',
     lane => '1',
     subset_name => '1',
     run_name => 'example',
     id => '-23',
-    sample => $sample,
 );
-my $instrument_data_2 = Genome::InstrumentData::Solexa->__define__(
+my $instrument_data_2 = Genome::Test::Factory::InstrumentData::Solexa->setup_object(
+    library_id => $instrument_data_1->library_id,
     flow_cell_id => '12345ABXX',
     lane => '2',
     subset_name => '2',
     run_name => 'example',
     id => '-24',
-    sample => $sample,
 );
 
 my @instrument_data = ($instrument_data_1, $instrument_data_2);

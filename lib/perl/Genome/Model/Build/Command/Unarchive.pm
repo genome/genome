@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::Build::Command::Unarchive {
-    is => 'Command::V2',
+    is => 'Genome::Disk::Command::Allocation::UnarchiveBase',
     has => [
         builds => {
             is                  => 'Genome::Model::Build',
@@ -17,6 +17,7 @@ class Genome::Model::Build::Command::Unarchive {
         },
     ],
 };
+
 sub help_brief {
     return "Unarchive all allocations related to a build";
 }
@@ -25,7 +26,7 @@ sub help_detail {
     return help_brief();
 }
 
-sub execute {
+sub _execute {
     my $self = shift;
     my @builds = $self->builds;
     my $total_builds = scalar @builds;
@@ -41,6 +42,7 @@ sub execute {
         DIR => "/gsc/var/tmp/build_unarchive", 
         CLEANUP => 0
     );
+    chmod 0755, $dir;
 
     $self->status_message("Unarchiving data for $total_builds builds, logs being written to $dir");
 
@@ -67,7 +69,7 @@ sub execute {
         }
 
         # Old builds may have allocations symlinked to the data dir, and they may are archived, or the link is broken
-        my @symlinked_allocations_that_need_unarchiving = grep { not $_->is_archived } $build->symlinked_allocations;
+        my @symlinked_allocations_that_need_unarchiving = grep { $_->is_archived } $build->symlinked_allocations;
         if ( @symlinked_allocations_that_need_unarchiving ) {
             $num_allocations += @symlinked_allocations_that_need_unarchiving;
             $self->status_message("Found ".@symlinked_allocations_that_need_unarchiving." archived symlinked allocations. Unarchiving...");
@@ -140,13 +142,21 @@ sub _bsub_unarchives {
     my $self = shift;
     my $log_file_dir = shift;
     my @allocations = @_;
+
+    my $lab = $self->lab;
+    my $requestor = $self->requestor->id;
+
     my %job_to_allocation_mapping;
     for my $allocation (@allocations) {
         my $allocation_id = $allocation->id;
+        my @cmd = ('genome', 'disk', 'allocation', 'unarchive', $allocation_id,
+            '--lab', $lab, '--requestor', $requestor,
+        );
         my $job_id = Genome::Sys->bsub(
             queue => 'long',
-            cmd => "genome disk allocation unarchive '$allocation_id'",
-            log_file => "'$log_file_dir/$allocation_id'",
+            cmd => \@cmd,
+            log_file => "$log_file_dir/$allocation_id.out",
+            err_file => "$log_file_dir/$allocation_id.err",
             job_group => '/apipe/build-unarchive',
         );
         $job_to_allocation_mapping{$job_id} = $allocation_id;

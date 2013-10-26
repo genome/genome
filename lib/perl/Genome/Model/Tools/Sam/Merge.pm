@@ -102,7 +102,7 @@ sub merge_command {
             maximum_permgen_memory => $self->max_permgen_size,
             additional_jvm_options => '-Dcom.sun.management.jmxremote', #for monitoring
             _monitor_command => 1,
-            _monitor_mail_to => 'ssmith boberkfe jeldred abrummet',
+            _monitor_mail_to => 'ssmith jeldred abrummet',
             _monitor_check_interval => 60, #seconds
             _monitor_stdout_interval => 900, #seconds
         );

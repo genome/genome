@@ -6,23 +6,23 @@ use warnings;
 use Genome;
 
 class Genome::ProcessingProfile::Param {
-    table_name => 'PROCESSING_PROFILE_PARAM',
+    table_name => 'model.processing_profile_param',
     type_name => 'processing profile param',
     id_by => [
         processing_profile_id => {
-            is => 'Integer',
-            len => 11,
+            is => 'Text',
+            len => 32,
             constraint_name => 'PPP_PP_FK',
         },
         name => {
             is => 'Text',
             len => 255,
-            column_name => 'PARAM_NAME',
+            column_name => 'param_name',
         },
         value_id => {
             is => 'Text',
             len => 1000,
-            column_name => 'PARAM_VALUE',
+            column_name => 'param_value',
         },
     ],
     has => [

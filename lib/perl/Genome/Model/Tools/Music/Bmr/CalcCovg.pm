@@ -20,7 +20,7 @@ class Genome::Model::Tools::Music::Bmr::CalcCovg {
     min_mapq => { is => 'Integer', doc => "The minimum mapping quality of reads to consider towards read depth counts", is_optional => 1},
   ],
   has_output => [
-    gene_covg_dir => { is => 'Text', doc => "Directory where per-sample gene coverage files are located"},
+    gene_covg_dir => {is_optional => 1, is => 'Text', doc => "Directory where per-sample gene coverage files are located"},
   ],
   doc => "Uses calcRoiCovg.c to count covered bases per-gene for each given tumor-normal pair of BAMs."
 };

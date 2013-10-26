@@ -30,6 +30,12 @@ class Genome::Model::ClinSeq::Command::SummarizeSvs {
             doc => 'Directory where output files will be written', 
         },
     ],
+    has_output => [
+        fusion_output_file => {
+            is => 'Text',
+            doc => 'Path to output file',
+        },
+    ],
     doc => 'summarize the SVs of somatic variation build',
 };
 
@@ -299,8 +305,8 @@ sub execute {
       #print "\n\nNORMAL: $gene1 $coords2 $transcript1\t\t$gene2 $coords2 $transcript2\tnormal count = $pairoscope_normal_reads\n$pairoscope_normal_cmd";
 
       #Clean-up the pairoscope temp files
-      system("rm -f $pairoscope_tmp_tumor_file");
-      system("rm -f $pairoscope_tmp_normal_file");
+      Genome::Sys->shellcmd(cmd => "rm -f $pairoscope_tmp_tumor_file");
+      Genome::Sys->shellcmd(cmd => "rm -f $pairoscope_tmp_normal_file");
     }
 
     #Print out a new file containing the extra annotation columns
@@ -318,6 +324,7 @@ sub execute {
       print FUSION_OUT "$data{$l}{record}\t$data{$l}{pairoscope_tumor_reads}\t$data{$l}{pairoscope_normal_reads}\t$new_cols_string\n";
     }
     close(FUSION_OUT);
+    $self->fusion_output_file($fusion_candidate_outfile);
 
 
     #TODO: Create a Stats.tsv file summarizing basic statistics of the sv annotations file

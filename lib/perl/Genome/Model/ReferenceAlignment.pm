@@ -167,7 +167,7 @@ class Genome::Model::ReferenceAlignment {
         latest_build_event => {
             calculate_from => ['build_event_arrayref'],
             calculate => q|
-                my @e = sort { $a->id cmp $b->id } @$build_event_arrayref;
+                my @e = sort { $a->date_scheduled cmp $b->date_scheduled } @$build_event_arrayref;
                 my $e = $e[-1];
                 return $e;
             |,
@@ -334,7 +334,7 @@ sub default_genotype_model {
     my $sample = $self->subject;
     return unless $sample->isa('Genome::Sample');
 
-    my @genotype_models = sort { $a->id <=> $b->id } $sample->default_genotype_models;
+    my @genotype_models = sort { $a->creation_date cmp $b->creation_date } $sample->default_genotype_models;
     return unless @genotype_models;
 
     @genotype_models = grep { $_->reference_sequence_build->is_compatible_with($self->reference_sequence_build) } @genotype_models;
@@ -578,6 +578,27 @@ sub latest_build_bam_file {
     }
     my $bam_file = $build->whole_rmdup_bam_file;
     return $bam_file;
+}
+
+sub _additional_parts_for_default_name {
+    my $self = shift;
+    my @parts;
+
+    my @regions = $self->target_region_set_name;
+    push @parts, 'capture' if @regions;
+    push @parts, $self->region_of_interest_set_name if $self->region_of_interest_set_name;
+
+    return @parts;
+}
+
+sub default_model_name {
+    my $self = shift;
+
+    if ($self->is_lane_qc) {
+        return $self->default_lane_qc_model_name_for_instrument_data($self->instrument_data);
+    } else {
+        return $self->SUPER::default_model_name();
+    }
 }
 
 1;

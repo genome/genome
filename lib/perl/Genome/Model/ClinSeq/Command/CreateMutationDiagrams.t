@@ -14,15 +14,16 @@ BEGIN {
 };
 
 use above "Genome";
-use Test::More tests=>7; #One per 'ok', 'is', etc. statement below
+use Test::More tests=>8;
 use Genome::Model::ClinSeq::Command::CreateMutationDiagrams;
-use Genome::Model::Build::SomaticVariationTestGenerator;
 use Data::Dumper;
+use Genome::Model::ClinSeq::TestData;
 
 use_ok('Genome::Model::ClinSeq::Command::CreateMutationDiagrams') or die;
 
+
 #Define the test where expected results are stored
-my $base_dir = $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-ClinSeq-Command-CreateMutationDiagrams/2013-07-17/";
+my $base_dir = $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-ClinSeq-Command-CreateMutationDiagrams/2013-07-30/";
 my $expected_output_dir = $base_dir."expected";
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
@@ -31,11 +32,14 @@ my $temp_dir = Genome::Sys->create_temp_directory();
 ok($temp_dir, "created temp directory: $temp_dir");
 
 #Get a somatic variation build
-my ($somvar_build, $somvar_model) = Genome::Model::Build::SomaticVariationTestGenerator::setup_test_build(som_var_dir => "$base_dir/som_var_dir", annot_dir => "$base_dir/annot_dir");
+my $ids = Genome::Model::ClinSeq::TestData::load();
+my $somvar_build = Genome::Model::Build->get($ids->{WGS_BUILD});
 ok ($somvar_build, "Got somatic variation build") or die;
-$ENV{GENOME_DB} = "$base_dir/reference_annotations/";
-my $cancer_annotation_db = Genome::Db->get("tgi/cancer-annotation/human/build37-20130401.1");
-my $cosmic_annotation_db = Genome::Db->get("cosmic/65.1");
+
+my $clinseq_build = Genome::Model::Build->get($ids->{CLINSEQ_BUILD});
+ok($clinseq_build, "Got clinseq build") or die;
+my $cancer_annotation_db = $clinseq_build->cancer_annotation_db;
+my $cosmic_annotation_db = $clinseq_build->cosmic_annotation_db;
 
 #Create create-mutation-diagrams command and execute
 #genome model clin-seq create-mutation-diagrams --outdir=/tmp/create_mutation_diagrams/ --collapse-variants --max-transcripts=10 129973671
@@ -73,7 +77,3 @@ or do {
   Genome::Sys->shellcmd(cmd => "rm -fr /tmp/last-create-mutation-diagrams-result/");
   Genome::Sys->shellcmd(cmd => "mv $temp_dir /tmp/last-create-mutation-diagrams-result");
 };
-
-
-
-

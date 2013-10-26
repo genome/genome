@@ -29,7 +29,7 @@ my $normal_bam_file  = $test_data_directory. '/virtual_normal_sorted.bam';
 
 my $test_output_base = File::Temp::tempdir(
     'Genome-Model-Tools-DetectVariants2-Filter-VarFilterSnv-XXXXX', 
-    TEMPDIR => 1,
+    TMPDIR => 1,
     CLEANUP => 1,
 );
 my $test_output_dir = $test_output_base . '/filter';

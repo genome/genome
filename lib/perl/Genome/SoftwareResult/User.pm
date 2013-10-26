@@ -5,9 +5,13 @@ use warnings;
 use Genome;
 
 class Genome::SoftwareResult::User {
-    table_name => 'SOFTWARE_RESULT_USER',
+    table_name => 'result.user',
+    id_generator => '-uuid',
     id_by => [
-        id => { is => 'Text', len => 32 },
+        id => {
+            is => 'Text',
+            len => 32,
+        },
     ],
     has => [
         software_result => {
@@ -27,6 +31,11 @@ class Genome::SoftwareResult::User {
             is => 'UR::Object',
             id_by => 'user_id',
             id_class_by => 'user_class_name',
+        },
+        active => {
+            is => 'BOOLEAN',
+            doc => 'Results actively being used should not be deleted',
+            default => 1,
         },
         label => {  },
     ],

@@ -70,7 +70,7 @@ sub execute {
         $self->status_message("\nWorking on model $model_id, type $type");
 
         my ($first_build, $second_build);
-        my @builds = sort { $b->build_id <=> $a->build_id } $model->builds;
+        my @builds = sort { $b->date_scheduled cmp $a->date_scheduled } $model->builds;
         for my $build (@builds) {
             last if $first_build and $second_build;
             my $build_revision = $build->software_revision;

@@ -37,6 +37,7 @@
   <link fromOperation="input connector" fromProperty="targeted_snv_validation" toOperation="Varscan Process-Validation" toProperty="output_file" />
   <link fromOperation="input connector" fromProperty="minimum_coverage" toOperation="Varscan Process-Validation" toProperty="min_coverage" />
   <link fromOperation="input connector" fromProperty="output_plot" toOperation="Varscan Process-Validation" toProperty="output_plot" />
+  <link fromOperation="input connector" fromProperty="transcript_variant_annotator_version" toOperation="Annotate Variants" toProperty="annotator_version" />
 
   <link fromOperation="Varscan Process-Validation" fromProperty="output_file" toOperation="output connector" toProperty="targeted_snv_validation_output" />
   <link fromOperation="Identify DNPs" fromProperty="dnp_result_id" toOperation="output connector" toProperty="dnp_result_id" />
@@ -54,6 +55,7 @@
 
   <operation name="Validate Large Indels">
       <link fromOperation="input connector" fromProperty="build_id" toOperation="create assembled contig reference" toProperty="build_id" />
+      <link fromOperation="input connector" fromProperty="build_id" toOperation="output connector" toProperty="build_id" />
       <link fromOperation="create assembled contig reference" fromProperty="build_id" toOperation="align to contig reference" toProperty="build_id" />
       <link fromOperation="create assembled contig reference" fromProperty="output_dir" toOperation="align to contig reference" toProperty="output_dir" />
       <link fromOperation="create assembled contig reference" fromProperty="reference_build_id" toOperation="align to contig reference" toProperty="reference_build_id" />
@@ -78,6 +80,7 @@
 
       <operationtype typeClass="Workflow::OperationType::Model">
           <inputproperty>build_id</inputproperty>
+          <outputproperty>build_id</outputproperty>
           <outputproperty>output_dir</outputproperty>
       </operationtype>
   </operation>
@@ -156,6 +159,7 @@
     <inputproperty>minimum_coverage</inputproperty>
     <inputproperty>tumor_mode</inputproperty>
     <inputproperty>normal_mode</inputproperty>
+    <inputproperty>transcript_variant_annotator_version</inputproperty>
 
     <outputproperty>targeted_snv_validation_output</outputproperty>
     <outputproperty>dnp_result_id</outputproperty>

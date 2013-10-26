@@ -6,6 +6,18 @@ use Genome;
 use strict;
 use warnings;
 
+my @COLUMN_HEADERS = qw(
+    CHROM
+    POS
+    ID
+    REF
+    ALT
+    QUAL
+    FILTER
+    INFO
+    FORMAT
+);
+
 my %VALID_VCF_TYPE_NON_NUMERIC_NUMBERS = (
     'A' => 1, # per alt
     'G' => 1, # per genotype
@@ -55,6 +67,11 @@ class Genome::File::Vcf::Header {
             doc => 'Array of info field type definitions',
             default_value => {},
         },
+        filters => {
+            is => 'HASH',
+            doc => 'Hash of filter name => description',
+            default_value => {},
+        }
     ],
 };
 
@@ -63,6 +80,48 @@ sub create {
     my $self = $class->SUPER::create(@_);
     $self->_parse;
     return $self;
+}
+
+sub to_string {
+    my $self = shift;
+    my @lines;
+    push @lines, sprintf("##fileformat=%s", $self->fileformat) if defined $self->fileformat;
+
+    my @unparsed = map {"##$_"} @{$self->_unparsed_lines};
+
+    push @lines, grep {defined} (
+        @unparsed,
+        $self->_info_lines,
+        $self->_format_lines,
+        $self->_filter_lines,
+        $self->_header_line
+        );
+    return join("\n", @lines);
+}
+
+sub _header_line {
+    my $self = shift;
+    return "#" . join("\t", @COLUMN_HEADERS, $self->sample_names);
+}
+
+sub _info_lines {
+    my $self = shift;
+    return unless $self->info_types;
+    return map {sprintf "##INFO=%s", _vcf_type_to_string($_)} values %{$self->info_types};
+}
+
+sub _format_lines {
+    my $self = shift;
+    return unless $self->format_types;
+    return map {sprintf "##FORMAT=%s", _vcf_type_to_string($_)} values %{$self->format_types};
+}
+
+sub _filter_lines {
+    my $self = shift;
+    my %filters = %{$self->filters};
+    return map {
+        sprintf '##FILTER=<ID=%s,Description="%s">', $_, $filters{$_}
+        } keys %filters;
 }
 
 sub _parse {
@@ -98,17 +157,26 @@ sub _parse_meta_info {
 
     KEY: {
         $key eq 'fileformat' &&
-            do { $self->fileformat($value); last KEY; };
+            do {
+                $self->fileformat($value);
+                last KEY;
+            };
 
-        $key eq 'INFO' && 
+        $key eq 'INFO' &&
             do {
                 $self->add_info_str($value);
                 last KEY;
             };
 
-        $key eq 'FORMAT' && 
+        $key eq 'FORMAT' &&
             do {
                 $self->add_format_str($value);
+                last KEY;
+            };
+
+        $key eq 'FILTER' &&
+            do {
+                $self->add_filter_str($value);
                 last KEY;
             };
 
@@ -174,6 +242,52 @@ sub add_info_str {
     my $type = _parse_vcf_type($str);
     warn "Duplicate entry for INFO type $type->{id} in Vcf header" if exists $self->info_types->{$type->{id}};
     $self->info_types->{$type->{id}} = $type;
+}
+
+sub add_filter_str {
+    my ($self, $str) = @_;
+    my ($id, $description) = $str =~ /^<ID=([^,]*),Description="(.*)">$/;
+    if (!defined $id || !defined $description) {
+        confess "Malformed filter specification: $str";
+    }
+
+    warn "Duplicate filter name $id in Vcf header" if exists $self->filters->{$id};
+    $self->filters->{$id} = $description;
+}
+
+sub add_filter {
+    my ($self, %params) = @_;
+    my $id = delete $params{id} || confess "missing id";
+    my $description = delete $params{description} || confess "missing description";
+
+    confess "Unknown options passed to add_filter: " . Dumper(\%params) if %params;
+    confess "Duplicate filter name $id" if exists $self->filters->{$id};
+
+    $self->filters->{$id} = $description;
+}
+
+sub add_format_type {
+    my ($self, %params) = @_;
+    my $id = delete $params{id} || confess "missing id";
+    my $number = delete $params{number} || confess "missing number";
+    my $datatype = delete $params{type} || confess "missing type";
+    my $description = delete $params{description} || confess "missing description";
+    my $skip_if_exists = delete $params{skip_if_exists};
+
+    confess "Unknown options passed to add_format_type: " . Dumper(\%params) if %params;
+    if (exists $self->format_types->{$id}) {
+        return if $skip_if_exists;
+        confess "Duplicate format field name $id";
+    }
+
+    my $type = {
+        id => $id,
+        number => $number,
+        type => $datatype,
+        description => $description
+    };
+    _validate_vcf_type($type);
+    $self->format_types->{$type->{id}} = $type;
 }
 
 1;

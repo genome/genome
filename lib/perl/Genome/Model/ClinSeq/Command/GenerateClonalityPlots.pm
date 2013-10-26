@@ -40,6 +40,9 @@ class Genome::Model::ClinSeq::Command::GenerateClonalityPlots {
         min_tumor_cov       => { is => 'Number', is_optional => 1, default_value => 20,
                                  doc => 'Specify a minimum tumor coverage level for variants (you will still get another plot with all data)' },
 
+        max_tumor_cov       => { is => 'Number', is_optional => 1, default_value => 1000000,
+                                 doc => 'Specify a maximum tumor coverage level for variants (you will still get another plot with all data)' },
+
         max_normal_vaf      => { is => 'Number', is_optional => 1, default_value => 3,
                                  doc => 'Specify a maximum allowed normal VAF (you will still get another plot with all data)' },
 
@@ -287,7 +290,7 @@ sub execute {
       my $normal_vaf = $line[6];
       my $tumor_cov = $line[8]+$line[9];
       my $tumor_vaf = $line[10];
-      next if ($tumor_cov < $self->min_tumor_cov || $normal_vaf > $self->max_normal_vaf);
+      next if ($tumor_cov < $self->min_tumor_cov || $tumor_cov > $self->max_tumor_cov || $normal_vaf > $self->max_normal_vaf);
       print SNV2 $_;
     }
     close(SNV);

@@ -3,12 +3,15 @@ package Genome::Model::SomaticVariation::Command::IdentifyPreviouslyDiscoveredVa
 use strict;
 use warnings;
 use Genome;
+use Genome::Model::Tools::DetectVariants2::Utilities qw(
+    final_result_for_variant_type
+);
 
 class Genome::Model::SomaticVariation::Command::IdentifyPreviouslyDiscoveredVariations{
     is => 'Genome::Command::Base',
     has =>[
         build_id => {
-            is => 'Integer',
+            is => 'Text',
             is_input => 1,
             is_output => 1,
             doc => 'build id of SomaticVariation model',
@@ -280,7 +283,7 @@ sub params_for_result {
             }
         }
     } else {
-        $prior_result = $build->final_result_for_variant_type($variant_type);
+        $prior_result = final_result_for_variant_type([$build->results], $variant_type);
     }
 
     my $variations_build = $build->previously_discovered_variations_build;

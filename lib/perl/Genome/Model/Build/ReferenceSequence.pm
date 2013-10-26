@@ -118,7 +118,7 @@ sub check_derived_from_links {
             desc => $@);
     }
 
-    if (defined $self->derived_from and $self->derived_from->id == $self->id) {
+    if (defined $self->derived_from and $self->derived_from->id eq $self->id) {
         push @tags, UR::Object::Tag->create(
             type => 'error',
             properties => ['derived_from'],
@@ -183,7 +183,7 @@ sub is_derived_from {
             $self->derived_from->__display_name__ . ", seen: " . join(',', keys %{$seen});
     }
 
-    return 1 if $build->id == $self->id;
+    return 1 if $build->id eq $self->id;
     return 0 if !defined $self->derived_from;
 
     # recurse

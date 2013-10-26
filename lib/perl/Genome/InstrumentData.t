@@ -54,6 +54,7 @@ class SuperSeq {
         file => { is_attribute => 1, },
     ],
 };
+sub SuperSeq::Ghost::__signal_change__ { return 1; }
 
 my $library = Genome::Library->create(
     name => '__TEST_LIBRARY__',
@@ -76,5 +77,62 @@ can_ok($inst_data, 'tgi_lims_status');
 ok(!$inst_data->tgi_lims_status, 'tgi_lims_status is NULL');
 $inst_data->tgi_lims_status('new');
 is($inst_data->tgi_lims_status, 'new', 'No tgi_lims_status is new');
+
+# test delete
+#  abandon build
+class Genome::Model::SuperModel { is => 'Genome::Model', };
+my $model = Genome::Model::SuperModel->__define__(
+    id => -111,
+    name => 'Cathy Ireland',
+    user_name => 'apipe-builder',
+);
+$model->add_instrument_data($inst_data);
+
+class Genome::Model::Build::SuperBuild { is => 'Genome::Model::Build', };
+my $build = Genome::Model::Build::SuperBuild->__define__(
+    id => -111,
+    model_id => $model->id,
+    model => $model,
+);
+$build->add_instrument_data($inst_data);
+my $event = $build->_create_master_event;
+$event->event_status('Succeeded');
+
+#  create associated alignment results
+my $alignment_result = Genome::InstrumentData::AlignmentResult::Bwa->__define__(
+    id => -333,
+    instrument_data_id => $inst_data->id,
+    aligner_name => 'bwa',
+    aligner_version => '1',
+    aligner_params => 'NA',
+);
+ok($alignment_result, 'define alignment result for super seq inst data');
+ok($alignment_result->add_user(user => $build), 'add build as user of alignment result');
+
+my $merged_result = Genome::InstrumentData::AlignmentResult::Merged->__define__(id => -444,);#instrument_data_id => [$inst_data->id]);
+$merged_result->add_input(name => 'instrument_data_id-1', value_id => $inst_data->id, value_class_name => $inst_data->class);
+ok($merged_result, 'define merged alignment result for super seq inst data');
+
+my $qc_result = Genome::InstrumentData::AlignmentResult::Merged::BamQc->__define__(alignment_result_id => $alignment_result->id);
+ok($qc_result, 'define merged qc result for inst data');
+
+my $tophat_result = Genome::InstrumentData::AlignmentResult::Tophat->__define__(id => -555);
+ok($tophat_result, 'define top hat result');
+$tophat_result->add_input(name => 'instrument_data_id-1', value_id => $inst_data->id, value_class_name => $inst_data->class);
+
+#  add users to alignment results
+ok($alignment_result->add_user(user => $merged_result, label => 'uses'), 'add merged result as user of alignment result');
+ok($alignment_result->add_user(user => $build, label => 'uses'), 'add build as user of merged result');
+ok($alignment_result->add_user(user => $qc_result, label => 'uses'), 'add qc result as user of alignment result');
+ok($qc_result->add_user(user => $build, label => 'uses'), 'add build as user of qc result');
+ok($tophat_result->add_user(user => $build, label => 'uses'), 'add build as user of tophat result');
+
+ok($inst_data->delete, 'delete super seq inst data');
+ok(!$model->instrument_data, 'removed inst data from model');
+is($build->status, 'Abandoned', 'set build to abandoned');
+ok(ref($alignment_result) eq 'UR::DeletedRef', 'deleted alignment result');
+ok(ref($merged_result) eq 'UR::DeletedRef', 'deleted merged result');
+ok(ref($qc_result) eq 'UR::DeletedRef', 'deleted qc result');
+ok(ref($tophat_result) eq 'UR::DeletedRef', 'deleted top hat result');
 
 done_testing();

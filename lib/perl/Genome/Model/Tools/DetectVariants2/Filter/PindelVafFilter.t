@@ -18,24 +18,8 @@ use File::Slurp;
 if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
 }
-else {
-    plan tests => 10;
-}
 
 use_ok( 'Genome::Model::Tools::DetectVariants2::Filter::PindelVafFilter');
-
-# THIS TESTS THE CACHING. Caching refseq in /var/cache/tgi-san. We gotta link these files to a tmp dir for tests so they don't get copied
-use Genome::Model::Build::ReferenceSequence;
-my $refseq_tmp_dir = File::Temp::tempdir(CLEANUP => 1);
-no warnings;
-*Genome::Model::Build::ReferenceSequence::local_cache_basedir = sub { return $refseq_tmp_dir; };
-*Genome::Model::Build::ReferenceSequence::copy_file = sub {
-    my ($build, $file, $dest) = @_;
-    symlink($file, $dest);
-    is(-s $file, -s $dest, 'linked '.$dest) or die;
-    return 1;
-};
-use warnings;
 
 # This will compare 2 bed files field-by-field, numerically comparing on floats.
 # It's necessary so that implementations that produce slightly different floats
@@ -113,3 +97,5 @@ ok(-s $hq_output_bed ,'HQ bed output exists and has size');
 ok(-e $lq_output_bed,'LQ bed output exists');
 is(compare($hq_output_bed, $expected_hq_bed_output), 0, 'hq bed output matched expected output');
 is(compare($lq_output_bed, $expected_lq_bed_output), 0, 'lq bed output matched expected output');
+
+done_testing;

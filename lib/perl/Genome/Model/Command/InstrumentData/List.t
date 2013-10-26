@@ -10,7 +10,7 @@ BEGIN {
 
 use above 'Genome';
 
-use Test::More;
+use Test::More tests => 12;
 
 use_ok('Genome::Model::Command::InstrumentData::List') or die;
 
@@ -70,5 +70,3 @@ $lister = Genome::Model::Command::InstrumentData::List->create(
 );
 ok($lister, 'Created the lister trying to list assigned AND compatible inst data');
 ok(!$lister->execute, 'Execution fails as expected');
-
-done_testing();

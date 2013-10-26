@@ -13,7 +13,7 @@ class Genome::Model::Command::InstrumentData::List {
     is => 'Genome::Object::Command::List',
     has => [
         model => { is => 'Genome::Model', id_by => 'model_id' },
-        model_id => { is => 'Integer', doc => 'ID of the genome model' },
+        model_id => { is => 'Text', doc => 'ID of the genome model' },
         subject_class_name => {
             is_constant => 1,
             value => 'Genome::InstrumentData',
@@ -65,11 +65,6 @@ sub _resolve_boolexpr {
     # Verify model
     unless ( $self->model_id ) {
         $self->error_message("No model id given");
-        return;
-    }
-
-    unless ( $self->model_id =~ /^$RE{num}{int}$/ ) {
-        $self->error_message( sprintf('Model id given (%s) is not an integer', $self->model_id) );
         return;
     }
 

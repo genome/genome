@@ -87,8 +87,8 @@ sub execute {
 
     my $version = "500bp_assembled_contigs_sv";
     #don't overwrite an existing model...
-
-    $version = $self->check_ref_build_name($sample_id . "_SV_Contigs",$version);
+    my $prefix = $sample_id . "_SV_Contigs";
+    $version = $self->check_ref_build_name($prefix, $version);
 
     my $new_ref_cmd = Genome::Model::Command::Define::ImportedReferenceSequence->create(
         species_name => 'human',
@@ -97,7 +97,7 @@ sub execute {
         append_to => $ref_seq_build,
         version => $version,
         fasta_file => $contigs_file,
-        prefix => $sample_id . "_SV_Contigs",
+        prefix => $prefix,
         server_dispatch => 'inline',
         is_rederivable => 1,
     );
@@ -212,7 +212,7 @@ sub _process_fasta {
     return $contigs_file;
 }
 
-sub check_ref_build_name{
+sub check_ref_build_name {
     my $self = shift;
     my $sample_id = shift;
     my $version = shift;
@@ -220,20 +220,22 @@ sub check_ref_build_name{
     #FIXME this should be all about a specific build type...
     my @builds = Genome::Model::Build->get("model.name LIKE" => $sample_id . "-human%");
 
-    my $max=-1;
-    foreach my $build (@builds){
+    my $max = -1;
+    for my $build (@builds) {
         my $v = $build->version;
         #if we have models with a suffix already, store the highest suffix
-        if ($v=~/$version-(\d+)/){
-            if($1 > $max){
+        if ($v =~ /$version-(\d+)/){
+            if ($1 > $max){
                 $max = $1;
             }
             #else if we have a match at all for this model name
-        } elsif ($v=~/$version/){
-            $max = 0;
+        } 
+        elsif ($v =~ /$version/) {
+            my $ver = 0;
+            $max = $ver if $ver > $max;
         }
     }
-    if($max > -1){
+    if ($max > -1) {
         $max++;
         $version = $version . "-$max";
     }

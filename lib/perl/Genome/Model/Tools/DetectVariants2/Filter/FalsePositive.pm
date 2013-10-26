@@ -8,8 +8,9 @@ use Genome;
 class Genome::Model::Tools::DetectVariants2::Filter::FalsePositive {
     is => 'Genome::Model::Tools::DetectVariants2::Filter',
     doc => "This module uses detailed readcount information from bam-readcounts to filter likely false positives",
-    has => [
-    ## CAPTURE FILTER OPTIONS ##
+
+    has_input => [
+        ## CAPTURE FILTER OPTIONS ##
         'min_strandedness' => {
             type => 'String',
             default => '0.01',
@@ -69,6 +70,7 @@ class Genome::Model::Tools::DetectVariants2::Filter::FalsePositive {
             is_optional => 1,
             doc => 'Minimum length of a flanking homopolymer of same base to remove a variant',
         },
+
         ## WGS FILTER OPTIONS ##
         ## SHARED OPTIONS ##
         verbose => {
@@ -87,18 +89,18 @@ class Genome::Model::Tools::DetectVariants2::Filter::FalsePositive {
             is_optional => 1,
             doc => 'version of bam-readcount to use',
         },
-       bam_readcount_min_base_quality => {
-           is => 'Integer',
-           default => 15,
-           doc => 'The minimum base quality to require for bam-readcount',
-       },
+        bam_readcount_min_base_quality => {
+            is => 'Integer',
+            default => 15,
+            doc => 'The minimum base quality to require for bam-readcount',
+        },
     ],
+
     has_param => [
          lsf_resource => {
              default_value => "-M 8000000 -R 'select[type==LINUX64 && mem>8000] rusage[mem=8000]'",
          },
      ],
-
 };
 
 sub help_synopsis {
@@ -109,8 +111,8 @@ sub help_synopsis {
 EOS
 }
 
-sub help_detail {                           
-    return <<EOS 
+sub help_detail {
+    return <<EOS
 This module uses detailed readcount information from bam-readcounts to filter likely false positives.
 It is HIGHLY recommended that you use the default settings, which have been comprehensively vetted.
 Both capture and WGS projects now use the same filter and parameters.
@@ -119,6 +121,32 @@ EOS
 }
 
 sub _variant_type { 'snvs' };
+
+# Print out stats from a hashref
+sub print_stats {
+    my $self = shift;
+    my $stats = shift;
+    print $stats->{'num_variants'} . " variants\n";
+    print $stats->{'num_MT_sites_autopassed'} . " MT sites were auto-passed\n";
+    print $stats->{'num_random_sites_autopassed'} . " chrN_random sites were auto-passed\n" if($stats->{'num_random_sites_autopassed'});
+    print $stats->{'num_no_allele'} . " failed to determine variant allele\n";
+    print $stats->{'num_no_readcounts'} . " failed to get readcounts for variant allele\n";
+    print $stats->{'num_fail_pos'} . " had read position < " , $self->min_read_pos."\n";
+    print $stats->{'num_fail_strand'} . " had strandedness < " . $self->min_strandedness . "\n";
+    print $stats->{'num_fail_varcount'} . " had var_count < " . $self->min_var_count. "\n";
+    print $stats->{'num_fail_varfreq'} . " had var_freq < " . $self->min_var_freq . "\n";
+
+    print $stats->{'num_fail_mmqs'} . " had mismatch qualsum difference > " . $self->max_mm_qualsum_diff . "\n";
+    print $stats->{'num_fail_var_mmqs'} . " had variant MMQS > " . $self->max_var_mm_qualsum . "\n" if($stats->{'num_fail_var_mmqs'});
+    print $stats->{'num_fail_mapqual'} . " had mapping quality difference > " . $self->max_mapqual_diff . "\n";
+    print $stats->{'num_fail_readlen'} . " had read length difference > " . $self->max_readlen_diff . "\n";
+    print $stats->{'num_fail_dist3'} . " had var_distance_to_3' < " . $self->min_var_dist_3 . "\n";
+    print $stats->{'num_fail_homopolymer'} . " were in a homopolymer of " . $self->min_homopolymer . " or more bases\n";
+
+    print $stats->{'num_pass_filter'} . " passed the strand filter\n";
+
+    return 1;
+}
 
 ##########################################################################################
 # Capture filter for high-depth, lower-breadth datasets
@@ -147,7 +175,7 @@ sub _filter_variants {
     my $max_readlen_diff = $self->max_readlen_diff;
     my $min_var_dist_3 = $self->min_var_dist_3;
     my $max_var_mm_qualsum = $self->max_var_mm_qualsum if($self->max_var_mm_qualsum);
-    
+
 
     ## Reset counters ##
 
@@ -160,14 +188,14 @@ sub _filter_variants {
 
     my $hq_output_file = $self->_temp_staging_directory . "/snvs.hq.raw_filter";
     my $hq_fh = Genome::Sys->open_file_for_writing($hq_output_file);
-    
+
     ## Open the filtered output file ##
     my $lq_file = $self->_temp_staging_directory . "/snvs.lq.raw_filter";
     my $lq_fh = Genome::Sys->open_file_for_writing($lq_file);
 
     die $self->error_message('Unable to open temp output file '.$hq_output_file. ' for writing') unless $hq_fh;
     die $self->error_message('Unable to open temp output file '.$lq_file. ' for writing') unless $lq_fh;
-    
+
     #First, need to create a variant list file to use for generating the readcounts.
     my $input_file = $self->input_directory . "/snvs.hq.bed";
     unless (-s $input_file) {
@@ -214,7 +242,7 @@ sub _filter_variants {
 
     my $readcount_fh = Genome::Sys->open_file_for_reading($readcount_file);
 
-   
+
     ## Reopen file for parsing ##
     $input = Genome::Sys->open_file_for_reading($input_file);
 
@@ -261,7 +289,7 @@ sub _filter_variants {
             } else {
                 ## Run Readcounts ##
 
-                my $readcounts; 
+                my $readcounts;
                 unless($readcounts = $self->_get_readcount_line($readcount_fh, $chrom,$chr_start)){
                     die $self->error_message("Failed to find readcount data for: ".$chrom."\t".$chr_start);
                 }
@@ -414,24 +442,7 @@ sub _filter_variants {
 
     $self->_generate_standard_files;
 
-    print $stats{'num_variants'} . " variants\n";
-    print $stats{'num_MT_sites_autopassed'} . " MT sites were auto-passed\n";
-    print $stats{'num_random_sites_autopassed'} . " chrN_random sites were auto-passed\n" if($stats{'num_random_sites_autopassed'});
-    print $stats{'num_no_allele'} . " failed to determine variant allele\n";
-    print $stats{'num_no_readcounts'} . " failed to get readcounts for variant allele\n";
-    print $stats{'num_fail_pos'} . " had read position < $min_read_pos\n";
-    print $stats{'num_fail_strand'} . " had strandedness < $min_strandedness\n";
-    print $stats{'num_fail_varcount'} . " had var_count < $min_var_count\n";
-    print $stats{'num_fail_varfreq'} . " had var_freq < $min_var_freq\n";
-
-    print $stats{'num_fail_mmqs'} . " had mismatch qualsum difference > $max_mm_qualsum_diff\n";
-    print $stats{'num_fail_var_mmqs'} . " had variant MMQS > $max_var_mm_qualsum\n" if($stats{'num_fail_var_mmqs'});
-    print $stats{'num_fail_mapqual'} . " had mapping quality difference > $max_mapqual_diff\n";
-    print $stats{'num_fail_readlen'} . " had read length difference > $max_readlen_diff\n";
-    print $stats{'num_fail_dist3'} . " had var_distance_to_3' < $min_var_dist_3\n";
-    print $stats{'num_fail_homopolymer'} . " were in a homopolymer of " . $self->min_homopolymer . " or more bases\n";
-
-    print $stats{'num_pass_filter'} . " passed the strand filter\n";
+    $self->print_stats(\%stats);
 
     return 1;
 }
@@ -450,58 +461,6 @@ sub _get_readcount_line {
         }
     }
     return;
-}
-
-
-#############################################################
-# Read_Counts_By_Allele - parse out readcount info for an allele
-#
-#############################################################
-
-sub fails_homopolymer_check {
-    (my $self, my $reference, my $min_homopolymer, my $chrom, my $chr_start, my $chr_stop, my $ref, my $var) = @_;
-    $chr_start++; # Adjust for bed input format
-
-    ## Auto-pass large indels ##
-
-    my $indel_size = length($ref);
-    $indel_size = length($var) if(length($var) > $indel_size);
-
-    return(0) if($indel_size > 2);
-
-    ## Build strings of homopolymer bases ##
-    my $homoRef = $ref x $min_homopolymer;
-    my $homoVar = $var x $min_homopolymer;
-
-    ## Build a query string for the homopolymer check ##
-
-    my $query_string = "";
-
-    $query_string = $chrom . ":" . ($chr_start - $min_homopolymer) . "-" . ($chr_stop + $min_homopolymer);
-
-    my $samtools_path = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
-    my $sequence = `$samtools_path faidx $reference $query_string | grep -v \">\"`;
-    chomp($sequence);
-
-    if($sequence) {
-        if($sequence =~ $homoVar) { #$sequence =~ $homoRef || {
-            print join("\t", $chrom, $chr_start, $chr_stop, $ref, $var, "Homopolymer: $sequence") . "\n" if($self->verbose);
-            return($sequence);
-        }
-    }
-
-    return(0);
-}
-
-
-##########################################################################################
-# WGS filter for uniform-depth, full-breadth datasets
-# Contact: Dave Larson (dlarson@genome.wustl.edu)
-##########################################################################################
-
-sub wgs_filter {
-    
-    
 }
 
 #############################################################
@@ -611,6 +570,45 @@ sub _generate_standard_files {
     $lq_ofh->close;
 
     return 1;
+}
+
+sub _start_position_offset {
+    return 1;
+}
+
+sub fails_homopolymer_check {
+    my ($self, $reference, $min_homopolymer, $chrom, $start, $stop, $ref, $var) = @_;
+    $start += $self->_start_position_offset;
+
+    ## Auto-pass large indels ##
+
+    my $indel_size = length($ref);
+    $indel_size = length($var) if(length($var) > $indel_size);
+
+    return(0) if($indel_size > 2);
+
+    ## Build strings of homopolymer bases ##
+    my $homoRef = $ref x $min_homopolymer;
+    my $homoVar = $var x $min_homopolymer;
+
+    ## Build a query string for the homopolymer check ##
+
+    my $query_string = "";
+
+    $query_string = $chrom . ":" . ($start - $min_homopolymer) . "-" . ($stop + $min_homopolymer);
+
+    my $samtools_path = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
+    my $sequence = `$samtools_path faidx $reference $query_string | grep -v \">\"`;
+    chomp($sequence);
+
+    if($sequence) {
+        if($sequence =~ $homoVar) { #$sequence =~ $homoRef || {
+            print join("\t", $chrom, $start, $stop, $ref, $var, "Homopolymer: $sequence") . "\n" if($self->verbose);
+            return($sequence);
+        }
+    }
+
+    return(0);
 }
 
 1;

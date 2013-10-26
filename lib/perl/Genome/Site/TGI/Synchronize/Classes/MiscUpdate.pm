@@ -16,7 +16,7 @@ IS_RECONCILED         NUMBER   (1)                     0      NOT NULL
 =cut
 
 class Genome::Site::TGI::Synchronize::Classes::MiscUpdate {
-    table_name => 'GSC.misc_update',
+    table_name => 'misc_update',
     is => 'UR::Object',
     is_abstract => 1,
     subclassify_by => 'subclass_name',
@@ -34,7 +34,7 @@ class Genome::Site::TGI::Synchronize::Classes::MiscUpdate {
             doc => 'the column whose value changed' 
         },
         edit_date => { 
-            is => 'Date', 
+            is => 'Text', 
             doc => 'the time of the change' 
         },
     ],
@@ -94,7 +94,7 @@ class Genome::Site::TGI::Synchronize::Classes::MiscUpdate {
             },
         },
     ],
-    data_source => 'Genome::DataSource::GMSchema',
+    data_source => 'Genome::DataSource::Dwrac',
 };
 
 sub schema_and_lims_table_name_from_subject_class_name {
@@ -111,8 +111,8 @@ sub schema_and_lims_table_name_from_subject_class_name {
 }
 
 my %lims_table_names_to_site_tgi_class_names = (
-    "organism_taxon" => 'Genome::Site::TGI::Synchronize::Classes::Taxon',
-    "organism_individual" => 'Genome::Site::TGI::Synchronize::Classes::Individual',
+    "organism_taxon" => 'Genome::Site::TGI::Synchronize::Classes::OrganismTaxon',
+    "organism_individual" => 'Genome::Site::TGI::Synchronize::Classes::OrganismIndividual',
     "population_group" => 'Genome::Site::TGI::Synchronize::Classes::PopulationGroup',
     "organism_sample" => 'Genome::Site::TGI::Synchronize::Classes::OrganismSample',
     "library_summary" => 'Genome::Site::TGI::Synchronize::Classes::LibrarySummary',
@@ -243,7 +243,7 @@ sub success {
 sub skip {
     my $self = shift;
     $self->_set_result('SKIP');
-    return 1;
+    return;
 }
 
 sub failure {

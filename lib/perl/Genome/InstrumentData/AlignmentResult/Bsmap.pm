@@ -176,37 +176,25 @@ sub _run_aligner {
     ###################################################
     $self->status_message("Appending mapped_reads.sam to all_sequences.sam.");
 
-    #Remove @header lines from the raw sam file because it will make picard crash with duplicate header.
-    #This just for now. It better to make $temp_sam_output a named pipe (stream).
-    my $temp_sam_output_no_header = $temporary_directory . '/mapped_reads_no_header.sam';
-
-    my $in_fh  = Genome::Sys->open_file_for_reading($temp_sam_output)
-        or die "Failed to open $temp_sam_output for reading";
-    my $out_fh = Genome::Sys->open_file_for_writing($temp_sam_output_no_header)
-        or die "Failed to open $temp_sam_output_no_header for writing";
-
-    while (my $line = $in_fh->getline) {
-        next if $line =~ /^\@/;
-        $out_fh->print($line);
-    }
-    $in_fh->close;
-    $out_fh->close;
-
-    my $append_cmd = sprintf("cat %s >> %s",
-                             $temp_sam_output_no_header,
-                             $sam_file
-        );
+    # This will also remove @header lines from the raw sam file. The duplicate
+    # headers cause Picard crashes.
+    my $append_cmd = sprintf(
+        "grep -v -E '%s' %s >> %s", '^@', $temp_sam_output, $sam_file);
 
     $rv = Genome::Sys->shellcmd(
         cmd => $append_cmd,
-        input_files  => [$temp_sam_output_no_header],
+        input_files  => [$temp_sam_output],
         output_files => [$sam_file],
         skip_if_output_is_present => 0 # because there will already be an all_sequences.sam we're appending to
         );
 
     unless($rv) { die $self->error_message("Appending failed."); }
 
-
+    ###################################################
+    # Sort
+    ###################################################
+    $self->status_message("Resorting all_sequences.sam by coordinate.");
+    $self->_sort_sam($sam_file);
 
     ###################################################
     # clean up
@@ -221,6 +209,75 @@ sub _run_aligner {
     # If we got to here, everything must be A-OK.  AlignmentResult will take over from here
     # to convert the sam file to a BAM and copy everything out.
     return 1;
+}
+
+sub _disconnect_from_db {
+    my ($self) = @_;
+
+    $self->status_message("Closing data source db handle...");
+    if ($self->__meta__->data_source->has_default_handle) {
+        if ($self->__meta__->data_source->disconnect_default_handle) {
+            $self->status_message("Disconnected data source db handle (as expected).");
+        } else {
+            $self->status_message("Unable to disconnect data source db handle.");
+        }
+    } else {
+        $self->status_message("Data source db handle already closed.");
+    }
+}
+
+sub _check_db_connection {
+    my ($self) = @_;
+
+    if ($self->__meta__->data_source->has_default_handle) {
+        $self->status_message("Data source db handle unexpectedly reconnected itself.");
+    } else {
+        $self->status_message("Data source db handle still closed (as expected).");
+    }
+}
+
+# Sort a sam file.
+sub _sort_sam {
+    my ($self, $given_sam) = @_;
+
+    my $unsorted_sam = "$given_sam.unsorted";
+
+    # Prepare sort command
+    unless (move($given_sam, $unsorted_sam)) {
+        die $self->error_message(
+            "Unable to move $given_sam to $unsorted_sam. " .
+            "Cannot proceed with sorting.");
+    }
+
+    my $picard_sort_cmd = Genome::Model::Tools::Picard::SortSam->create(
+        sort_order             => 'coordinate',
+        input_file             => $unsorted_sam,
+        output_file            => $given_sam,
+        max_records_in_ram     => 2000000,
+        maximum_memory         => 8,
+        maximum_permgen_memory => 256,
+        temp_directory         => $self->temp_scratch_directory,
+        use_version            => $self->picard_version,
+    );
+
+    # Disconnect from db
+    $self->_disconnect_from_db();
+
+    # Run sort command
+    unless ($picard_sort_cmd and $picard_sort_cmd->execute) {
+        die $self->error_message(
+            "Failed to create or execute Picard sort command.");
+    }
+
+    # Hopefully we're still disconnected
+    $self->_check_db_connection();
+
+    # Clean up
+    unless (unlink($unsorted_sam)) {
+        $self->status_message("Could not unlink $unsorted_sam.");
+    }
+
+    return $given_sam;
 }
 
 # TODO: This should be the command line used to run your aligner, not just the params.

@@ -94,7 +94,7 @@ sub _run_vcf_indel_normalizer {
     my $output_file = $dir_name . '/normalized_indel.vcf.gz';
     my $detector_result = $self->input;
     my $reference_sequence_build = Genome::Model::Build->get($detector_result->reference_build_id);
-    my $reference_fasta = $reference_sequence_build->cached_full_consensus_path('fa');
+    my $reference_fasta = $reference_sequence_build->full_consensus_path('fa');
     my %params = (
         input_file => $input_file,
         output_file => $output_file,

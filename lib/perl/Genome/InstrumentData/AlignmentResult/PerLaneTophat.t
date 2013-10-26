@@ -56,11 +56,8 @@ ok(-s $fake_reads_file, "found fake reads file: $fake_reads_file");
 
 
 
-my ($reference_build, $annotation_build, $annotation_index) = _create_entities();
-
-# _get_reference_fasta
-my $found_reference_fasta = $class->_get_reference_fasta($annotation_index);
-is($found_reference_fasta, $reference_fasta, 'Looked up correct reference_fasta');
+my $starting_aligner_params = "--bowtie-version=$BOWTIE_VERSION";
+my ($reference_build, $annotation_build, $annotation_index) = _create_entities($starting_aligner_params);
 
 # _get_gtf_file
 my $found_gtf_file = $class->_get_gtf_file($annotation_index);
@@ -68,7 +65,6 @@ is($found_gtf_file, $gtf_file, 'Looked up correct gtf_file');
 
 # _get_aligner_params_to_generate_annotation_index
 my $index_prefix = _join($temp_input_dir, 'all_sequences');
-my $starting_aligner_params = "--bowtie-version=$BOWTIE_VERSION";
 $annotation_index->aligner_params($starting_aligner_params);
 my $expected_aligner_params =
     "--transcriptome-only --transcriptome-index '$index_prefix' -G $gtf_file --output-dir";
@@ -94,6 +90,11 @@ Genome::Sys->rsync_directory(
         file_pattern => 'all_sequences.fa.*',
 );
 
+# _get_reference_fasta
+my $found_reference_fasta = $class->_get_reference_fasta($annotation_index);
+is($found_reference_fasta, $aligner_index->full_consensus_path("fa"), 'Looked up correct reference_fasta');
+
+
 my $created_annotation_index = Genome::Model::Build::ReferenceSequence::AnnotationIndex->create(
     annotation_build => $annotation_build,
     reference_build => $reference_build,
@@ -115,6 +116,7 @@ done_testing();
 
 
 sub _create_entities {
+    my $aligner_params = shift;
     my $human = Genome::Taxon->create(name => 'test-taxon', domain => 'Unknown');
 
     # create the reference sequence model and build
@@ -162,6 +164,8 @@ sub _create_entities {
         annotation_build => $annotation_build,
         reference_build => $reference_build,
         aligner_name => 'PerLaneTophat',
+        aligner_params => $aligner_params,
+        aligner_version => $TOPHAT_VERSION,
     );
     ok($annotation_index, 'Defined an annotation index');
 

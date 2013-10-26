@@ -11,43 +11,43 @@ class Genome::InstrumentData::AlignmentResult::Merged::BamQc {
     is => ['Genome::SoftwareResult::Stageable'],
     has_input => [
         alignment_result_id => {
-            is => 'Number',
+            is  => 'Number',
             doc => 'ID of the result for the alignment data upon which to run coverage stats',
         },
     ],
     has_param => [
         picard_version => {
-            is => 'Text',
+            is  => 'Text',
             doc => 'The version of Picard to use.',
         },
         samstat_version => {
-            is => 'Text',
+            is  => 'Text',
             doc => 'The version of SamStat to use.',
         },
         fastqc_version => {
-            is => 'Text',
+            is  => 'Text',
             doc => 'The version of FastQC to use.',
         },
         samtools_version => {
-            is => 'Text',
+            is  => 'Text',
             doc => 'The version of Samtools to use.',
         },
         error_rate => {
-            is => 'Boolean',
+            is  => 'Boolean',
             doc => 'Whether or not to generate error rate summaries.',
         },
-        error_rate_pileup => {
-            is => 'Boolean',
-            doc => 'Whether or not to iterate over every position to calculate positional error rates.',
+        error_rate_version => {
+            is  => 'Text',
+            doc => 'The version of bam error rate C tool to use.',
         },
         read_length => {
-            is => 'Boolean',
+            is  => 'Boolean',
             doc => 'Whether or not to run read length distribution.',
         },
     ],
     has_metric => [
         _log_directory => {
-            is => 'Text',
+            is  => 'Text',
             doc => 'Path where workflow logs were written',
         },
         #many other metrics exist--see sub _generate_metrics
@@ -55,14 +55,14 @@ class Genome::InstrumentData::AlignmentResult::Merged::BamQc {
     has => [
         alignment_result => {
             #is => 'Genome::InstrumentData::AlignmentResult::Merged',
-            is => 'Genome::SoftwareResult',
+            is    => 'Genome::SoftwareResult',
             id_by => 'alignment_result_id',
-            doc => 'the alignment data upon which to run coverage stats',
+            doc   => 'the alignment data upon which to run coverage stats',
         },
     ],
     has_transient_optional => [
         log_directory => {
-            is => 'Text',
+            is  => 'Text',
             doc => 'Path to write logs from running the workflow',
         },
     ],
@@ -155,9 +155,20 @@ sub create {
         fastqc_version     => $self->fastqc_version,
         samstat_version    => $self->samstat_version,
         error_rate         => $self->error_rate,
-        error_rate_pileup  => $self->error_rate_pileup,
+        error_rate_version => $self->error_rate_version,
         read_length        => $self->read_length,
     );
+
+    # use per lane instrument data id as link name
+    if ($lane_flag) {
+        my $instr_data = $self->alignment_result->instrument_data;
+        $bam_qc_params{bam_link_name} = $instr_data->id;
+    }
+
+    # Skip samstat html-report for bwamem/sw
+    if ($self->alignment_result->aligner_name =~ /^bwa(mem|sw)$/) {
+        $bam_qc_params{samstat} = 0;
+    }
 
     my $cmd = Genome::Model::Tools::BamQc::Run->create(%bam_qc_params);
     unless($cmd->execute) {

@@ -43,7 +43,7 @@ class Genome::Model::Tools::Validation::LongIndelsPartOne {
             doc => 'somatic-validation build ID (better than using the "model_id" version of this option)'
         },
         reference_sequence_build_id => {
-            is => 'Integer',
+            is => 'Text',
             doc => 'Optional reference sequence path (default is to grab it from the input models)',
         },
     ],

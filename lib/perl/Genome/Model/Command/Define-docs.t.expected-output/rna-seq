@@ -3,7 +3,7 @@
  [1mgenome model define rna-seq[0m [--auto-assign-inst-data] [--auto-build-alignments]
     --processing-profile=? --reference-sequence-build=? --annotation-build=?
     [--add-to-projects=?[,?]] [--instrument-data=?[,?]] [--subject=?] [--groups=?[,?]]
-    [--model-name=?]
+    [--model-name=?] [--target-region-set-name=?]
 
 [4mSYNOPSIS[0m
   genome model define rna-seq \
@@ -31,14 +31,20 @@
     Model groups to put the newly created model into 
   [1mmodel-name[0m
     User meaningful name for this model, a default is used if none is provided 
+  [1mtarget-region-set-name[0m
+    limits the assignment of instrument data by default to only data with a matching TRSN 
 
 [4mOPTIONAL PARAMS[0m
   [1mauto-assign-inst-data[0m
     Assigning instrument data to the model is performed automatically 
     Default value 'false' (--noauto-assign-inst-data) if not specified
+  [1mnoauto-assign-inst-data[0m
+    Make auto-assign-inst-data 'false' 
   [1mauto-build-alignments[0m
     The building of the model is performed automatically 
     Default value 'true' if not specified
+  [1mnoauto-build-alignments[0m
+    Make auto-build-alignments 'false' 
 
 [4mDESCRIPTION[0m
     This defines a new genome model for the specified subject, using the specified processing

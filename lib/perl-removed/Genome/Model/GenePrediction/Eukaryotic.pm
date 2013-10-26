@@ -42,8 +42,8 @@ class Genome::Model::GenePrediction::Eukaryotic {
         snap_version => {
             is => 'Text',
             is_optional => 1,
-            valid_values => ['2004-06-17', '2007-12-18', '2010-07-28'],
-            default => '2010-07-28',
+            valid_values => ['2004-06-17', '2007-12-18', '2010-07-28', '2010-07-28.2'],
+            default => '2010-07-28.2',
             doc => 'Version of SNAP predictor to use',
         },
         skip_masking_if_no_rna => {
@@ -261,6 +261,12 @@ sub map_workflow_inputs {
     $self->status_message("Parameters for workflow are: \n$params");
 
     return @inputs;
+}
+
+sub _resolve_resource_requirements_for_build {
+    # This is called during '_resolve_workflow_for_build' to specify the lsf resource requirements of the one-step
+    # workflow that is generated from '_execute_build'.
+    return "-M 8000000 -R 'select[type==LINUX64 && mem>8000] rusage[mem=8000]'";
 }
 
 1;

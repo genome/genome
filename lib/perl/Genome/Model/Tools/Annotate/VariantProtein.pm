@@ -14,7 +14,7 @@ class Genome::Model::Tools::Annotate::VariantProtein {
         },
         output_tsv_file => {
             is => 'Text',
-            doc => 'A tab separated output file with the amino acid sequence, wiletype and mutant.',
+            doc => 'A tab separated output file with the amino acid sequence, wiletype.',
         },
     ],
     has_optional_input => [

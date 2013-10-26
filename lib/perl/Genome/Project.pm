@@ -7,7 +7,7 @@ use Class::ISA;
 
 class Genome::Project {
     is => [ "Genome::Notable", "Genome::Searchable" ],
-    table_name => 'GENOME_PROJECT',
+    table_name => 'subject.project',
     id_by => [
         id => {
             is => 'Text',
@@ -130,7 +130,8 @@ sub get_part {
 
     my @parts = Genome::ProjectPart->get(
         entity_class_name => $obj->class,
-        entity_id => $obj->id
+        entity_id => $obj->id,
+        project_id => $self->id,
     );
 
     return @parts;
@@ -138,7 +139,7 @@ sub get_part {
 
 sub __display_name__ {
     my $self = shift;
-    return $self->name."(".$self->id.")";
+    return $self->name." (".$self->id.")";
 }
 
 sub rename {
@@ -181,6 +182,7 @@ sub get_parts_of_class {
 
     my @desired_parts;
     for my $part (@parts) {
+        next unless $part->entity;
         my @classes = Class::ISA::self_and_super_path($part->entity->class);
         push @desired_parts, $part if grep { $_ eq $desired_class } @classes;
     }

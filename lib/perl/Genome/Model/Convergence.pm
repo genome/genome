@@ -9,7 +9,7 @@ class Genome::Model::Convergence {
     is  => 'Genome::ModelDeprecated',
     has => [
         group_id => {
-            is => 'Integer',
+            is => 'Text',
             via => 'inputs',
             to => 'value_id',
             where => [ name => 'group', value_class_name => 'Genome::ModelGroup' ],

@@ -68,7 +68,14 @@ class Genome::Model::ClinSeq {
               }
               return $final_name;
             |
-        }
+        },
+    ],
+    has => [
+        individual_common_name => {
+            via => '__self__',
+            to => 'expected_common_name',
+            doc => 'alias for benefit of Solr indexing',
+        },
     ],
     doc => 'clinical and discovery sequencing data analysis and convergence of RNASeq, WGS and exome capture data',
 };
@@ -183,8 +190,11 @@ sub map_workflow_inputs {
     # initial inputs used for various steps
     my @inputs = (
         build => $build,
+        build_as_array => [$build],
         wgs_build => $wgs_build,
+        wgs_build_as_array => [$wgs_build],
         exome_build => $exome_build,
+        exome_build_as_array => [$exome_build],
         tumor_rnaseq_build => $tumor_rnaseq_build,
         normal_rnaseq_build => $normal_rnaseq_build,
         working_dir => $data_directory,
@@ -204,7 +214,7 @@ sub map_workflow_inputs {
     push @inputs, summarize_builds_outdir => $input_summary_dir;
     push @inputs, summarize_builds_log_file => $input_summary_dir . "/SummarizeBuilds.log.tsv";
 
-    if ($build->id > 0) {
+    if ($build->id) {
       push @inputs, summarize_builds_skip_lims_reports => 0;
     }else {
       #Watch out for -ve build IDs which will occur when the ClinSeq.t test is run.  In that case, do not run the LIMS reports
@@ -325,7 +335,8 @@ sub map_workflow_inputs {
     #my $gene_symbol_lists_dir = "/gscmnt/sata132/techd/mgriffit/reference_annotations/GeneSymbolLists/";
     my $gene_symbol_lists_dir = $cancer_annotation_db->data_set_path("GeneSymbolLists");
     push @inputs, 'gene_symbol_lists_dir' => $gene_symbol_lists_dir;
-    push @inputs, 'gene_name_column' => 'mapped_gene_name';
+    push @inputs, 'gene_name_columns' => ['mapped_gene_name'];
+    push @inputs, 'gene_name_regex' => 'mapped_gene_name';
 
     # For now it works to create directories here because the data_directory has been allocated.  
     #It is possible that this would not happen until later, which would mess up assigning inputs to many of the commands.
@@ -377,6 +388,10 @@ sub _resolve_workflow_for_build {
             gene_category_cnv_ampdel_result
             gene_category_wgs_snv_result
             gene_category_wgs_indel_result
+            dgidb_cnv_amp_result
+            dgidb_sv_fusion_result
+            dgidb_wgs_snv_result
+            dgidb_wgs_indel_result
             wgs_variant_sources_result
         );
     }
@@ -387,6 +402,8 @@ sub _resolve_workflow_for_build {
             exome_mutation_spectrum_result
             gene_category_exome_snv_result
             gene_category_exome_indel_result
+            dgidb_exome_snv_result
+            dgidb_exome_indel_result
             exome_variant_sources_result
         );
     }
@@ -395,6 +412,8 @@ sub _resolve_workflow_for_build {
         push @output_properties, 'summarize_wgs_exome_tier1_snv_support_result';
         push @output_properties, 'gene_category_wgs_exome_indel_result';
         push @output_properties, 'gene_category_wgs_exome_snv_result';
+        push @output_properties, 'dgidb_wgs_exome_indel_result';
+        push @output_properties, 'dgidb_wgs_exome_snv_result';
     }
 
     if ($build->wgs_build or $build->exome_build) {
@@ -412,6 +431,8 @@ sub _resolve_workflow_for_build {
         push @output_properties, 'tumor_cufflinks_expression_absolute_result';
         push @output_properties, 'gene_category_cufflinks_result';
         push @output_properties, 'gene_category_tophat_result';
+        push @output_properties, 'dgidb_cufflinks_result';
+        push @output_properties, 'dgidb_tophat_result';
     }
 
     if ($build->normal_rnaseq_build and $build->tumor_rnaseq_build){
@@ -425,14 +446,14 @@ sub _resolve_workflow_for_build {
 
     my $workflow = Workflow::Model->create(
         name => $build->workflow_name,
-        input_properties => \@input_properties, 
+        input_properties  => \@input_properties, 
         output_properties => \@output_properties,
     );
 
     my $log_directory = $build->log_directory;
     $workflow->log_dir($log_directory);
 
-    my $input_connector = $workflow->get_input_connector;
+    my $input_connector  = $workflow->get_input_connector;
     my $output_connector = $workflow->get_output_connector;
 
     my %steps_by_name; 
@@ -582,7 +603,7 @@ sub _resolve_workflow_for_build {
     #SummarizeBuilds - Summarize build inputs using SummarizeBuilds.pm
     my $msg = "Creating a summary of input builds using summarize-builds";
     my $summarize_builds_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeBuilds");
-    $add_link->($input_connector, 'build', $summarize_builds_op, 'builds');
+    $add_link->($input_connector, 'build_as_array', $summarize_builds_op, 'builds');
     $add_link->($input_connector, 'summarize_builds_outdir', $summarize_builds_op, 'outdir');
     $add_link->($input_connector, 'summarize_builds_skip_lims_reports', $summarize_builds_op, 'skip_lims_reports');
     $add_link->($input_connector, 'summarize_builds_log_file', $summarize_builds_op, 'log_file');
@@ -608,7 +629,7 @@ sub _resolve_workflow_for_build {
     if ($build->wgs_build) {
       my $msg = "Determining source variant callers of all tier1-3 SNVs and InDels for wgs data";
       my $wgs_variant_sources_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::GetVariantSources");
-      $add_link->($input_connector, 'wgs_build', $wgs_variant_sources_op, 'builds');
+      $add_link->($input_connector, 'wgs_build_as_array', $wgs_variant_sources_op, 'builds');
       $add_link->($input_connector, 'wgs_variant_sources_dir', $wgs_variant_sources_op, 'outdir');
       $add_link->($wgs_variant_sources_op, 'result', $output_connector, 'wgs_variant_sources_result');
     }
@@ -616,7 +637,7 @@ sub _resolve_workflow_for_build {
     if ($build->exome_build) {
       my $msg = "Determining source variant callers of all tier1-3 SNVs and InDels for exome data";
       my $exome_variant_sources_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::GetVariantSources");
-      $add_link->($input_connector, 'exome_build', $exome_variant_sources_op, 'builds');
+      $add_link->($input_connector, 'exome_build_as_array', $exome_variant_sources_op, 'builds');
       $add_link->($input_connector, 'exome_variant_sources_dir', $exome_variant_sources_op, 'outdir');
       $add_link->($exome_variant_sources_op, 'result', $output_connector, 'exome_variant_sources_result');
     }
@@ -717,7 +738,7 @@ sub _resolve_workflow_for_build {
     #genome model clin-seq dump-igv-xml --outdir=/gscuser/mgriffit/ --builds=119971814
     $msg = "Create IGV XML session files for varying levels of detail using the input builds";
     my $igv_session_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::DumpIgvXml");
-    $add_link->($input_connector, 'build', $igv_session_op, 'builds');
+    $add_link->($input_connector, 'build_as_array', $igv_session_op, 'builds');
     $add_link->($input_connector, 'igv_session_dir', $igv_session_op, 'outdir');
     $add_link->($igv_session_op, 'result', $output_connector, 'igv_session_result'); 
 
@@ -758,10 +779,11 @@ sub _resolve_workflow_for_build {
     }
 
     #SummarizeSvs - Generate a summary of SV results from the WGS SV results
+    my $summarize_svs_op;
     if ($build->wgs_build){
         my $msg = "Summarize SV results from WGS somatic variation";
-        my $summarize_svs_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeSvs");
-        $add_link->($input_connector, 'wgs_build', $summarize_svs_op, 'builds');
+        $summarize_svs_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeSvs");
+        $add_link->($input_connector, 'wgs_build_as_array', $summarize_svs_op, 'builds');
         $add_link->($input_connector, 'sv_dir', $summarize_svs_op, 'outdir');
         $add_link->($summarize_svs_op, 'result', $output_connector, 'summarize_svs_result');
     }
@@ -788,7 +810,7 @@ sub _resolve_workflow_for_build {
       my $msg = "Add gene category annotations to SNVs identified by exome";
       my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
       $add_link->($import_snvs_indels_op, 'exome_snv_file', $annotate_genes_by_category_op, 'infile');
-      $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
+      $add_link->($input_connector, 'gene_name_columns', $annotate_genes_by_category_op, 'gene_name_columns');
       $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_exome_snv_result');
     }
     #AnnotateGenesByCategory - gene_category_wgs_snv_result
@@ -796,7 +818,7 @@ sub _resolve_workflow_for_build {
       my $msg = "Add gene category annotations to SNVs identified by wgs";
       my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
       $add_link->($import_snvs_indels_op, 'wgs_snv_file', $annotate_genes_by_category_op, 'infile');
-      $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
+      $add_link->($input_connector, 'gene_name_columns', $annotate_genes_by_category_op, 'gene_name_columns');
       $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_wgs_snv_result');
     }
     #AnnotateGenesByCategory - gene_category_wgs_exome_snv_result
@@ -804,7 +826,7 @@ sub _resolve_workflow_for_build {
       my $msg = "Add gene category annotations to SNVs identified by wgs OR exome";
       my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
       $add_link->($import_snvs_indels_op, 'wgs_exome_snv_file', $annotate_genes_by_category_op, 'infile');
-      $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
+      $add_link->($input_connector, 'gene_name_columns', $annotate_genes_by_category_op, 'gene_name_columns');
       $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_wgs_exome_snv_result');
     }
     #AnnotateGenesByCategory - gene_category_exome_indel_result
@@ -812,7 +834,7 @@ sub _resolve_workflow_for_build {
       my $msg = "Add gene category annotations to InDels identified by exome";
       my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
       $add_link->($import_snvs_indels_op, 'exome_indel_file', $annotate_genes_by_category_op, 'infile');
-      $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
+      $add_link->($input_connector, 'gene_name_columns', $annotate_genes_by_category_op, 'gene_name_columns');
       $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_exome_indel_result');
     }
     #AnnotateGenesByCategory - gene_category_wgs_indel_result
@@ -820,7 +842,7 @@ sub _resolve_workflow_for_build {
       my $msg = "Add gene category annotations to InDels identified by wgs";
       my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
       $add_link->($import_snvs_indels_op, 'wgs_indel_file', $annotate_genes_by_category_op, 'infile');
-      $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
+      $add_link->($input_connector, 'gene_name_columns', $annotate_genes_by_category_op, 'gene_name_columns');
       $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_wgs_indel_result');
     }
     #AnnotateGenesByCategory - gene_category_wgs_exome_indel_result
@@ -828,7 +850,7 @@ sub _resolve_workflow_for_build {
       my $msg = "Add gene category annotations to InDels identified by wgs OR exome";
       my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
       $add_link->($import_snvs_indels_op, 'wgs_exome_indel_file', $annotate_genes_by_category_op, 'infile');
-      $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
+      $add_link->($input_connector, 'gene_name_columns', $annotate_genes_by_category_op, 'gene_name_columns');
       $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_wgs_exome_indel_result');
     }
     #AnnotateGenesByCategory - gene_category_cnv_amp_result
@@ -836,7 +858,7 @@ sub _resolve_workflow_for_build {
       my $msg = "Add gene category annotations to CNV amp genes";
       my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
       $add_link->($run_cn_view_op, 'gene_amp_file', $annotate_genes_by_category_op, 'infile');
-      $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
+      $add_link->($input_connector, 'gene_name_columns', $annotate_genes_by_category_op, 'gene_name_columns');
       $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_cnv_amp_result');
     }
     #AnnotateGenesByCategory - gene_category_cnv_del_result
@@ -844,7 +866,7 @@ sub _resolve_workflow_for_build {
       my $msg = "Add gene category annotations to CNV del genes";
       my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
       $add_link->($run_cn_view_op, 'gene_del_file', $annotate_genes_by_category_op, 'infile');
-      $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
+      $add_link->($input_connector, 'gene_name_columns', $annotate_genes_by_category_op, 'gene_name_columns');
       $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_cnv_del_result');
     }
     #AnnotateGenesByCategory - gene_category_cnv_ampdel_result
@@ -852,7 +874,7 @@ sub _resolve_workflow_for_build {
       my $msg = "Add gene category annotations to CNV amp OR del genes";
       my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
       $add_link->($run_cn_view_op, 'gene_ampdel_file', $annotate_genes_by_category_op, 'infile');
-      $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
+      $add_link->($input_connector, 'gene_name_columns', $annotate_genes_by_category_op, 'gene_name_columns');
       $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_cnv_ampdel_result');
     }
     #AnnotateGenesByCategory - gene_category_cufflinks_result
@@ -860,7 +882,7 @@ sub _resolve_workflow_for_build {
       my $msg = "Add gene category annotations to cufflinks top1 percent genes";
       my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
       $add_link->($tumor_cufflinks_expression_absolute_op, 'tumor_fpkm_topnpercent_file', $annotate_genes_by_category_op, 'infile');
-      $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
+      $add_link->($input_connector, 'gene_name_columns', $annotate_genes_by_category_op, 'gene_name_columns');
       $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_cufflinks_result');
     }
     #AnnotateGenesByCategory - gene_category_tophat_result
@@ -868,7 +890,7 @@ sub _resolve_workflow_for_build {
       my $msg = "Add gene category annotations to tophat junctions top1 percent genes";
       my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
       $add_link->($tumor_tophat_junctions_absolute_op, 'junction_topnpercent_file', $annotate_genes_by_category_op, 'infile');
-      $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
+      $add_link->($input_connector, 'gene_name_columns', $annotate_genes_by_category_op, 'gene_name_columns');
       $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_tophat_result');
     }
     #AnnotateGenesByCategory - gene_category_coding_de_up_result
@@ -876,7 +898,7 @@ sub _resolve_workflow_for_build {
       my $msg = "Add gene category annotations to up-regulated coding genes";
       my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
       $add_link->($cufflinks_differential_expression_op, 'coding_hq_up_file', $annotate_genes_by_category_op, 'infile');
-      $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
+      $add_link->($input_connector, 'gene_name_columns', $annotate_genes_by_category_op, 'gene_name_columns');
       $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_coding_de_up_result');
     }
     #AnnotateGenesByCategory - gene_category_coding_de_down_result
@@ -884,7 +906,7 @@ sub _resolve_workflow_for_build {
       my $msg = "Add gene category annotations to down-regulated coding genes";
       my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
       $add_link->($cufflinks_differential_expression_op, 'coding_hq_down_file', $annotate_genes_by_category_op, 'infile');
-      $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
+      $add_link->($input_connector, 'gene_name_columns', $annotate_genes_by_category_op, 'gene_name_columns');
       $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_coding_de_down_result');
     }
     #AnnotateGenesByCategory - gene_category_coding_de_result
@@ -892,8 +914,31 @@ sub _resolve_workflow_for_build {
       my $msg = "Add gene category annotations to DE coding genes";
       my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
       $add_link->($cufflinks_differential_expression_op, 'coding_hq_de_file', $annotate_genes_by_category_op, 'infile');
-      $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
+      $add_link->($input_connector, 'gene_name_columns', $annotate_genes_by_category_op, 'gene_name_columns');
       $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_coding_de_result');
+    }
+
+    #DGIDB gene annotation
+    if ($build->exome_build){
+        $self->add_dgidb_op_to_flow($add_step, $add_link, $import_snvs_indels_op, 'exome_snv_file', $input_connector, $output_connector, 'dgidb_exome_snv_result');
+        $self->add_dgidb_op_to_flow($add_step, $add_link, $import_snvs_indels_op, 'exome_indel_file', $input_connector, $output_connector, 'dgidb_exome_indel_result');
+    }
+
+    if ($build->wgs_build){
+        $self->add_dgidb_op_to_flow($add_step, $add_link, $import_snvs_indels_op, 'wgs_snv_file', $input_connector, $output_connector, 'dgidb_wgs_snv_result');
+        $self->add_dgidb_op_to_flow($add_step, $add_link, $import_snvs_indels_op, 'wgs_indel_file', $input_connector, $output_connector, 'dgidb_wgs_indel_result');
+        $self->add_dgidb_op_to_flow($add_step, $add_link, $run_cn_view_op, 'gene_amp_file', $input_connector, $output_connector, 'dgidb_cnv_amp_result');
+        $self->add_dgidb_op_to_flow($add_step, $add_link, $summarize_svs_op, 'fusion_output_file', $input_connector, $output_connector, 'dgidb_sv_fusion_result');
+    }
+
+    if ($build->wgs_build and $build->exome_build) {
+        $self->add_dgidb_op_to_flow($add_step, $add_link, $import_snvs_indels_op, 'wgs_exome_snv_file', $input_connector, $output_connector, 'dgidb_wgs_exome_snv_result');
+        $self->add_dgidb_op_to_flow($add_step, $add_link, $import_snvs_indels_op, 'wgs_exome_indel_file', $input_connector, $output_connector, 'dgidb_wgs_exome_indel_result');
+    }
+
+    if ($build->tumor_rnaseq_build){
+        $self->add_dgidb_op_to_flow($add_step, $add_link, $tumor_cufflinks_expression_absolute_op, 'tumor_fpkm_topnpercent_file', $input_connector, $output_connector, 'dgidb_cufflinks_result');
+        $self->add_dgidb_op_to_flow($add_step, $add_link, $tumor_tophat_junctions_absolute_op, 'junction_topnpercent_file', $input_connector, $output_connector, 'dgidb_tophat_result');
     }
 
     #SummarizeTier1SnvSupport - For each of the following: WGS SNVs, Exome SNVs, and WGS+Exome SNVs, do the following:
@@ -941,6 +986,18 @@ sub _resolve_workflow_for_build {
 
     return $workflow;
 }
+
+
+sub add_dgidb_op_to_flow {
+    my ($self, $add_step, $add_link, $op, $op_prop, $input_connector, $output_connector, $out_prop) = @_;
+    my $msg = "Add dgidb gene annotations to $op_prop";
+    my $annotate_genes_by_dgidb_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByDgidb");
+    $add_link->($op, $op_prop, $annotate_genes_by_dgidb_op, 'input_file');
+    $add_link->($input_connector, 'gene_name_regex', $annotate_genes_by_dgidb_op, 'gene_name_regex');
+    $add_link->($annotate_genes_by_dgidb_op, 'result', $output_connector, $out_prop);
+    return 1;
+}
+
 
 sub _infer_candidate_subjects_from_input_models {
     my $self = shift;

@@ -15,23 +15,22 @@ sub run_and_diff {
     
     my $class;
     if (not defined $command or $command =~ /^[\w\_\:]+$/) {
-        my $cls;
         if (not defined $command) {
             my $base = $INC{"Genome.pm"} or die "Can't find Genome.pm for relative file lookup!";
             my $dir = File::Basename::dirname($base);
             my ($pkg, $file, $line) = caller();
-            $cls = Cwd::abs_path($file);
-            $cls =~ s/.t$// or die "Caller is not a .t file?: $file";
-            $cls =~ s/^$dir\/// or die "$file is not in directory $dir?";
-            $cls =~ s|/|::|g;
-            UR::Object::Type->get($cls) or die "cannot find class $cls to go with file $file?";
+            $class = Cwd::abs_path($file);
+            $class =~ s/.t$// or die "Caller is not a .t file?: $file";
+            $class =~ s/^$dir\/// or die "$file is not in directory $dir?";
+            $class =~ s|/|::|g;
+            UR::Object::Type->get($class) or die "cannot find class $class to go with file $file?";
         }
         else {
-            $cls = $command;
-            UR::Object::Type->get($cls) or die "cannot find class $cls!";
+            $class = $command;
+            UR::Object::Type->get($class) or die "cannot find class $class!";
         }
-        $command = $cls->help_synopsis;
-        $command or die "No help_command() on $cls!  Cannot autogenerate test.";
+        $command = $class->help_synopsis;
+        $command or die "No help_command() on $class!  Cannot autogenerate test.";
         print "SYN: $command\n";
     }
     elsif ($command =~ /^\S+\.pl\s/) {

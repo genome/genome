@@ -43,6 +43,11 @@ class Genome::Model::Tools::Joinx::VcfMerge {
             default => 0,
             doc => 'Allow input files with overlapping samples (-s option)',
         },
+        exact_pos => {
+            is => 'Boolean',
+            default => 0,
+            doc => 'When set, only entries with exactly the same position are merged (as opposed to any who overlap) Requires joinx1.7+',
+        },
         ratio_filter => {
             is => 'Text',
             doc => 'Require this ratio of inputs to agree on calls or else be filtered. Provide as a string: "ratio,filter name,filter description" ' .
@@ -161,6 +166,12 @@ sub _resolve_flags {
     }
     if ($self->merge_samples) {
         $flags .= " -s";
+    }
+    if ($self->exact_pos) {
+        if ($self->use_version < 1.7) {
+            die $self->error_message("Invalid option (--exact-pos) for joinx version (". $self->use_version .")");
+        }
+        $flags .= " -e";
     }
     if ($self->ratio_filter) {
         $flags .= ' -R "' . $self->ratio_filter . '"';

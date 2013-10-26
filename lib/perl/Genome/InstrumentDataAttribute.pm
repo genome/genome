@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::InstrumentDataAttribute {
-    table_name => 'INSTRUMENT_DATA_ATTRIBUTE',
+    table_name => 'instrument.data_attribute',
     id_by => [
         instrument_data_id => {
             is => 'Text',

@@ -69,7 +69,7 @@ class Genome::Model::Somatic {
             doc => 'Version of the "annotate transcript-variants" tool to run during the annotation step',
             is_optional => 1,
             default_value => Genome::Model::Tools::Annotate::TranscriptVariants->default_annotator_version,
-            valid_values => [ 0,1,2,3],#Genome::Model::Tools::Annotate::TranscriptVariants->available_versions ],
+            valid_values => [ 0,1,2,3,4 ],#Genome::Model::Tools::Annotate::TranscriptVariants->available_versions ],
         },
     ],
     has_optional => [
@@ -85,7 +85,7 @@ class Genome::Model::Somatic {
             to => 'from_model',
         },
         tumor_model_id => {
-            is => 'Integer',
+            is => 'Text',
             via => 'tumor_model',
             to => 'id',
         },
@@ -101,7 +101,7 @@ class Genome::Model::Somatic {
             to => 'from_model',
         },
         normal_model_id => {
-            is => 'Integer',
+            is => 'Text',
             via => 'normal_model',
             to => 'id',
         },

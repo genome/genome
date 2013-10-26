@@ -8,10 +8,12 @@ use Genome;
 class Genome::Command {
     is => 'Command::Tree',
 };
-         
+
 # This map allows the top-level genome commands to be whatever
 # we wish, instead of having to match the directory structure.
 my %command_map = (
+    'analysis-project' => 'Genome::Config::AnalysisProject::Command',
+    'config' => 'Genome::Config::Command',
     'db' => 'Genome::Db::Command',
     'disk' => 'Genome::Disk::Command',
     'druggable-gene' => 'Genome::DruggableGene::Command',
@@ -27,13 +29,13 @@ my %command_map = (
     'project-part' => 'Genome::ProjectPart::Command',
     'report' => 'Genome::Report::Command',
     'sample' => 'Genome::Sample::Command',
+    'search' => 'Genome::Command::Search',
     'software-result' => 'Genome::SoftwareResult::Command',
     'subject' => 'Genome::Subject::Command',
     'sys' => 'Genome::Sys::Command',
     'task' => 'Genome::Task::Command',
     'taxon' => 'Genome::Taxon::Command',
     'tools' => 'Genome::Model::Tools',
-    'analysis-project' => 'Genome::Config::AnalysisProject::Command',
 );
 
 $Genome::Command::SUB_COMMAND_MAPPING = \%command_map;

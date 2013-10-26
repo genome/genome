@@ -18,7 +18,7 @@ my $time = 'Mon Jan 10 20:00:00 2009';
 
 my $tmp_dir = File::Temp::tempdir(
     "PhdBallScf_XXXXXX", 
-    TEMPDIR => 1,
+    TMPDIR => 1,
     CLEANUP => 1,
 );
 

@@ -11,6 +11,7 @@ class Genome::Notable {
             is_many => 1,
             reverse_as => 'subject',
             specify_by => 'header_text',
+            where => ['-order_by' => 'entry_date'],
         },
     ],
 };

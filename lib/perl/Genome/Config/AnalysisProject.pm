@@ -6,13 +6,14 @@ use warnings;
 use Genome;
 
 class Genome::Config::AnalysisProject {
-    is => 'Genome::Utility::ObjectWithTimestamps',
+    is => ['Genome::Utility::ObjectWithTimestamps', 'Genome::Utility::ObjectWithCreatedBy'],
     id_generator => '-uuid',
     data_source => 'Genome::DataSource::GMSchema',
-    table_name => 'GENOME_CONFIG_ANALYSIS_PROJECT',
+    table_name => 'config.analysis_project',
     id_by => [
         id => {
             is => 'Text',
+            len => 64,
         },
     ],
     has => [
@@ -24,9 +25,6 @@ class Genome::Config::AnalysisProject {
             is => 'Genome::Config::Set',
             id_by => '_configuration_set_id',
         },
-        created_by => {
-            is => 'Text',
-        },
         _analysis_menu_item_id => {
             is => 'Text',
             column_name => 'analysis_menu_item_id',
@@ -35,14 +33,42 @@ class Genome::Config::AnalysisProject {
             is => 'Genome::Config::AnalysisMenuItem',
             id_by => '_analysis_menu_item_id',
         },
+        _model_group_id => {
+            is => 'Text',
+            column_name => 'model_group_id',
+        },
+        model_group => {
+            is => 'Genome::ModelGroup',
+            id_by => '_model_group_id',
+        },
         name => {
             is => 'Text',
         },
-        created_at => {
-            is => 'Timestamp',
+        status => {
+            is => 'Text',
+            default_value => 'Pending',
+            valid_values => ['Pending', 'Approved', 'In Progress', 'Completed', 'Archived'],
         },
-        updated_at => {
-            is => 'Timestamp',
+        subject_pairings => {
+            is_many => 1,
+            is => 'Genome::Config::AnalysisProject::SubjectPairing',
+            reverse_as => 'analysis_project',
+        },
+        instrument_data => {
+            is => 'Genome::InstrumentData',
+            reverse_as => 'analysis_project_id',
+            is_many => 1,
+        },
+        samples => {
+            is => 'Genome::Subject',
+            via => 'instrument_data',
+            to => 'sample',
+        },
+        models => {
+            is => 'Genome::Model',
+            to => 'models',
+            via => 'model_group',
+            is_many => 1,
         },
     ],
     has_transient_optional => [
@@ -52,12 +78,17 @@ class Genome::Config::AnalysisProject {
     ],
 };
 
+sub __display_name__ {
+    my $self = shift;
+    return sprintf('%s (%s)', $self->name, $self->id);
+}
+
 sub create {
     my $class = shift;
     my $self = $class->SUPER::create(@_);
     eval {
         $self->_create_configuration_set();
-        $self->_populate_created_by();
+        $self->_create_model_group();
     };
     if(my $error = $@) {
         $self->delete();
@@ -71,6 +102,9 @@ sub delete {
     eval {
         if ($self->_configuration_set) {
             $self->_configuration_set->delete();
+        }
+        if ($self->model_group) {
+            $self->model_group->delete();
         }
     };
     if(my $error = $@) {
@@ -100,17 +134,17 @@ sub get_configuration_reader {
     return $self->configuration_reader;
 }
 
-sub _populate_created_by {
-    my $self = shift;
-    unless ($self->created_by) {
-        $self->created_by(Genome::Sys->username);
-    }
-}
-
 sub _create_configuration_set {
     my $self = shift;
     my $set = Genome::Config::Set->create();
     $self->_configuration_set($set);
+}
+
+sub _create_model_group {
+    my $self = shift;
+    my $mg_name = sprintf("%s - %s - Analysis Project", $self->name, $self->id);
+    my $mg = Genome::ModelGroup->create(name => $mg_name);
+    $self->model_group($mg);
 }
 
 1;

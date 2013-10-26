@@ -44,6 +44,7 @@ class Genome::Model::Tools::Varscan::ProcessValidationIndels {
         output_file => {
             is => 'Text',
             doc => "Output file for validation results",
+            is_output => 1,
             is_optional => 0,
         },
     ],

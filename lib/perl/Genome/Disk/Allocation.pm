@@ -6,16 +6,19 @@ use warnings;
 use Genome;
 use Genome::Utility::Instrumentation;
 
-use File::Copy::Recursive 'dircopy';
-use Carp 'confess';
-
+use Carp qw(croak confess);
+use Digest::MD5 qw(md5_hex);
+use File::Copy::Recursive qw(dircopy dirmove);
 use List::Util 'shuffle';
+use File::Find;
+use Cwd;
+use DateTime;
 
 our $TESTING_DISK_ALLOCATION = 0;
 
 class Genome::Disk::Allocation {
     is => 'Genome::Notable',
-    table_name => 'GENOME_DISK_ALLOCATION',
+    table_name => 'disk.allocation',
     id_by => [
         id => {
             is => 'Text',
@@ -66,6 +69,12 @@ class Genome::Disk::Allocation {
             len => 255,
             doc => 'The group specific subdirectory where space is allocated',
         },
+        status => {
+            is => 'Text',
+            valid_values => ['active', 'completed', 'purged', 'archived', 'invalid'],
+            doc => 'The current status of this allocation',
+            default_value => 'active',
+        },
         absolute_path => {
             calculate_from => [ 'mount_path', 'group_subdirectory', 'allocation_path' ],
             calculate => q( $self->_absolute_path($mount_path, $group_subdirectory, $allocation_path); ),
@@ -88,17 +97,17 @@ class Genome::Disk::Allocation {
         archive_after_time => {
             is => 'DateTime',
             len => 11,
+            default_value => &_default_archive_after_time,
             is_optional => 1,
             doc => 'After this time, this allocation is subject to being archived'
         },
+        timeline_events => {
+            is_many => 1,
+            is => 'Genome::Timeline::Event::Allocation',
+            reverse_as => 'object',
+        },
     ],
     has_optional => [
-        preserved => {
-            is => 'Boolean',
-            len => 1,
-            default_value => 0,
-            doc => 'If set, the allocation cannot be deallocated',
-        },
         archivable => {
             is => 'Boolean',
             len => 1,
@@ -134,6 +143,11 @@ class Genome::Disk::Allocation {
                 return $owner_exists ? 1 : 0;
             ),
         },
+        file_summaries => {
+            is => 'Genome::Disk::Allocation::FileSummary',
+            is_many => 1,
+            reverse_as => 'allocation'
+        }
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
@@ -184,8 +198,8 @@ sub create {
     Genome::Utility::Instrumentation::inc('disk.allocation.create');
 
     # TODO Switch from %params to BoolExpr and pass in BX to autogenerate_new_object_id
-    unless (exists $params{allocation_id}) {
-        $params{allocation_id} = $class->__meta__->autogenerate_new_object_id;
+    unless (exists $params{id}) {
+        $params{id} = $class->__meta__->autogenerate_new_object_id;
     }
 
     # If no commit is on, make a dummy volume to allocate to
@@ -212,7 +226,6 @@ sub create {
             $self->_log_change_for_rollback;
         }
     }
-
 
     return $self;
 }
@@ -269,25 +282,6 @@ sub tar_path {
     return join('/', $self->absolute_path, 'archive.tar');
 }
 
-sub preserved {
-    my ($self, $value, $reason) = @_;
-    if (@_ > 1) {
-        $reason ||= 'no reason given';
-        $self->add_note(
-            header_text => $value ? 'set to preserved' : 'set to unpreserved',
-            body_text => $reason,
-        );
-        if ($value) {
-            $self->_create_observer($self->_mark_read_only_closure($self->absolute_path));
-        }
-        else {
-            $self->_create_observer($self->_set_default_permissions_closure($self->absolute_path));
-        }
-        return $self->__preserved($value);
-    }
-    return $self->__preserved();
-}
-
 sub archivable {
     my ($self, $value, $reason) = @_;
     if (@_ > 1) {
@@ -296,6 +290,8 @@ sub archivable {
             header_text => $value ? 'set to archivable' : 'set to unarchivable',
             body_text => $reason,
         );
+        my $event = $value ? 'unpreserved' : 'preserved';
+        Genome::Timeline::Event::Allocation->$event($reason, $self);
         return $self->__archivable($value);
     }
     return $self->__archivable;
@@ -312,12 +308,16 @@ sub _create {
             push @missing_params, $param;
         }
     }
+    my @optional_params = map { $_ => delete $params{$_} }
+        grep { exists $params{$_} }
+        qw/ archive_after_time kilobytes_used/;
+
     if (@missing_params) {
         confess "Missing required params for allocation:\n" . join("\n", @missing_params);
     }
 
     # Make sure there aren't any extra params
-    my $id = delete $params{allocation_id};
+    my $id = delete $params{id};
     $id = $class->__meta__->autogenerate_new_object_id unless defined $id; # TODO autogenerate_new_object_id should technically receive a BoolExpr
     my $kilobytes_requested = delete $params{kilobytes_requested};
     my $owner_class_name = delete $params{owner_class_name};
@@ -327,9 +327,7 @@ sub _create {
     my $mount_path = delete $params{mount_path};
     my $exclude_mount_path = delete $params{exclude_mount_path};
     my $group_subdirectory = delete $params{group_subdirectory};
-    my $kilobytes_used = delete $params{kilobytes_used} || 0;
-    my $archive_after_time = delete $params{archive_after_time};
-    
+
     if (%params) {
         confess "Extra parameters detected: " . Data::Dumper::Dumper(\%params);
     }
@@ -371,38 +369,40 @@ sub _create {
     # If given a mount path, need to ensure it's valid by trying to get a disk volume with it. Also need to make
     # sure that the retrieved volume actually belongs to the supplied disk group and that it can be allocated to
     my @candidate_volumes;
-    if (defined $mount_path) {
-        $mount_path =~ s/\/$//; # mount paths in database don't have trailing /
-        my $volume = Genome::Disk::Volume->get(mount_path => $mount_path, disk_status => 'active', can_allocate => 1);
-        confess "Could not get volume with mount path $mount_path" unless $volume;
+    Genome::Utility::Instrumentation::timer('disk.allocation.create.candidate_volumes.selection', sub {
+        if (defined $mount_path) {
+            $mount_path =~ s/\/$//; # mount paths in database don't have trailing /
+            my $volume = Genome::Disk::Volume->get(mount_path => $mount_path, disk_status => 'active', can_allocate => 1);
+            confess "Could not get volume with mount path $mount_path" unless $volume;
 
-        unless (grep { $_ eq $disk_group_name } $volume->disk_group_names) {
-            confess "Volume with mount path $mount_path is not in supplied group $disk_group_name!";
+            unless (grep { $_ eq $disk_group_name } $volume->disk_group_names) {
+                confess "Volume with mount path $mount_path is not in supplied group $disk_group_name!";
+            }
+
+            my @reasons;
+            push @reasons, 'disk is not active' if $volume->disk_status ne 'active';
+            push @reasons, 'allocation turned off for this disk' if $volume->can_allocate != 1;
+
+            if ($exclude_mount_path && $volume->mount_path eq $exclude_mount_path) {
+                push @reasons, 'Specified mount path matched the excluded mount path.';
+            }
+
+            if (@reasons) {
+                confess "Requested volume with mount path $mount_path cannot be allocated to:\n" . join("\n", @reasons);
+            }
+
+            push @candidate_volumes, $volume;
+        } else {
+            my %candidate_volume_params = (
+                disk_group_name => $disk_group_name,
+            );
+            if (defined $exclude_mount_path) {
+                $candidate_volume_params{'exclude'} = $exclude_mount_path;
+            }
+            push @candidate_volumes, $class->_get_candidate_volumes(
+                %candidate_volume_params);
         }
-
-        my @reasons;
-        push @reasons, 'disk is not active' if $volume->disk_status ne 'active';
-        push @reasons, 'allocation turned off for this disk' if $volume->can_allocate != 1;
-
-        if ($exclude_mount_path && $volume->mount_path eq $exclude_mount_path) {
-            push @reasons, 'Specified mount path matched the excluded mount path.';
-        }
-
-        if (@reasons) {
-            confess "Requested volume with mount path $mount_path cannot be allocated to:\n" . join("\n", @reasons);
-        }
-
-        push @candidate_volumes, $volume;
-    } else {
-        my %candidate_volume_params = (
-            disk_group_name => $disk_group_name,
-        );
-        if (defined $exclude_mount_path) {
-            $candidate_volume_params{'exclude'} = $exclude_mount_path;
-        }
-        push @candidate_volumes, $class->_get_candidate_volumes(
-            %candidate_volume_params);
-    }
+    });
 
     my %parameters = (
         disk_group_name              => $disk_group_name,
@@ -414,28 +414,13 @@ sub _create {
         group_subdirectory           => $group_subdirectory,
         id                           => $id,
         creation_time                => UR::Context->current->now,
-        archive_after_time           => $archive_after_time,        
+        @optional_params,
     );
 
-    # Make sure that we never attempt to create an allocation that has an absolute path that already exists. There are
-    # several places in this module that may delete a newly-created "candidate" allocation under the assumption that the
-    # absolute path for that allocation is empty. If there are preexisting files they will be unintentionally deleted
-    # when the candidate allocation is destroyed.
-    #
-    # For example: a user is trying to create an allocation for a specific path that already exists without an
-    # allocation (by specifying mount_path, disk_group_name, and allocation_path, they can force a specific absolute
-    # path for the new allocation). If a candidate allocation is created at this path and then destroyed for some
-    # arbitrary reason, the user will lose their files.
-
-    for my $candidate_volume (@candidate_volumes) {
-        my $candidate_path = $class->_absolute_path($candidate_volume->mount_path, $group_subdirectory, $allocation_path);
-        if ( -e $candidate_path ) {
-            confess "The allocation path $candidate_path already exists. If you are attempting to create an allocation "
-                . "for an existing path, please move the path to a temporary location before continuing.";
-        }
-    }
-
-    my $self = $class->_get_allocation_without_lock(\@candidate_volumes, \%parameters);
+    my $self;
+    Genome::Utility::Instrumentation::timer('disk.allocation.create.get_allocation_without_lock', sub {
+        $self = $class->_get_allocation_without_lock(\@candidate_volumes, \%parameters);
+    });
 
     $self->debug_message(sprintf("Allocation (%s) created at %s",
         $id, $self->absolute_path));
@@ -443,8 +428,11 @@ sub _create {
     # a restrictive umask can break builds for other users; force it to be friendly
     umask(0002);
     # If we cannot create the directory delete the new allocation
-    my $dir = eval {
-        Genome::Sys->create_directory($self->absolute_path);
+    my $dir;
+    eval {
+        Genome::Utility::Instrumentation::timer('disk.allocation.create.create_directory', sub {
+            $dir = Genome::Sys->create_directory($self->absolute_path);
+        });
     };
     my $error = $@;
     unless (defined($dir) and ( -d $dir ) and not $error) {
@@ -454,6 +442,8 @@ sub _create {
         $self->delete;
         confess $error;
     }
+
+    Genome::Timeline::Event::Allocation->created('initial creation', $self);
 
     return $self;
 }
@@ -470,6 +460,9 @@ sub _get_allocation_without_lock {
     for my $candidate_volume (@randomized_candidate_volumes) {
         if ($candidate_volume->allocated_kb + $kilobytes_requested
                 <= $candidate_volume->soft_limit_kb) {
+
+            $class->_existing_allocation_path_check($candidate_volume->mount_path, $parameters->{group_subdirectory}, $parameters->{allocation_path});
+
             my $candidate_allocation = $class->SUPER::create(
                 mount_path => $candidate_volume->mount_path,
                 %$parameters,
@@ -485,10 +478,12 @@ sub _get_allocation_without_lock {
             }
 
             if ($candidate_volume->is_allocated_over_soft_limit) {
+                Genome::Utility::Instrumentation::inc('disk.allocation.get_allocation_without_lock.rollback.over_allocated');
                 $class->status_message(sprintf("%s's allocated_kb exceeded soft limit (%d kB), rolling back allocation.", $candidate_volume->mount_path, $candidate_volume->soft_limit_kb, 'kB'));
                 $candidate_allocation->delete();
                 _commit_unless_testing();
             } elsif ($candidate_volume->is_used_over_soft_limit) {
+                Genome::Utility::Instrumentation::inc('disk.allocation.get_allocation_without_lock.rollback.over_used');
                 $class->status_message(sprintf("%s's used_kb exceeded soft limit (%d %s), rolling back allocation.", $candidate_volume->mount_path, $candidate_volume->soft_limit_kb, 'kB'));
                 $candidate_allocation->delete();
                 _commit_unless_testing();
@@ -510,21 +505,44 @@ sub _get_allocation_without_lock {
     return $chosen_allocation;
 }
 
+sub _existing_allocation_path_check {
+    my ($class, $mount_path, $group_subdirectory, $allocation_path) = @_;
+
+    # Make sure that we never attempt to create an allocation that has an absolute path that already exists. There are
+    # several places in this module that may delete a newly-created "candidate" allocation under the assumption that the
+    # absolute path for that allocation is empty. If there are preexisting files they will be unintentionally deleted
+    # when the candidate allocation is destroyed.
+    #
+    # For example: a user is trying to create an allocation for a specific path that already exists without an
+    # allocation (by specifying mount_path, disk_group_name, and allocation_path, they can force a specific absolute
+    # path for the new allocation). If a candidate allocation is created at this path and then destroyed for some
+    # arbitrary reason, the user will lose their files.
+
+    Genome::Utility::Instrumentation::timer('disk.allocation.create.candidate_volumes.existing_allocation_path_check', sub {
+        my $candidate_path = $class->_absolute_path($mount_path, $group_subdirectory, $allocation_path);
+        if ( -e $candidate_path ) {
+            confess "The allocation path $candidate_path already exists. If you are attempting to create an allocation "
+            . "for an existing path, please move the path to a temporary location before continuing.";
+        }
+    });
+}
+
+
 sub _delete {
     my ($class, %params) = @_;
-    my $id = delete $params{allocation_id};
+    my $id = delete $params{id};
     confess "Require allocation ID!" unless defined $id;
     if (%params) {
         confess "Extra params found: " . Data::Dumper::Dumper(\%params);
     }
 
     my $self = $class->get($id);
-    if ($self->preserved) {
-        confess sprintf("Allocation (%s) has been marked as preserved, cannot deallocate!",
-            $self->id);
-    }
 
     my $path = $self->absolute_path;
+
+    for my $event ($self->timeline_events) {
+        $event->delete();
+    }
 
     $self->SUPER::delete;
 
@@ -538,7 +556,7 @@ sub _delete {
 
 sub _reallocate {
     my ($class, %params) = @_;
-    my $id = delete $params{allocation_id};
+    my $id = delete $params{id};
     confess "Require allocation ID!" unless defined $id;
     my $kilobytes_requested = delete $params{kilobytes_requested} || 0;
     my $allow_reallocate_with_move = delete $params{allow_reallocate_with_move};
@@ -594,7 +612,13 @@ sub _reallocate {
         }
     }
 
-    unless ($succeeded) {
+    if ($succeeded) {
+        Genome::Timeline::Event::Allocation->reallocated(
+            "actual kb used: $kb_used",
+            $self,
+        );
+        _commit_unless_testing();
+    } else {
         # Rollback kilobytes_requested
         my $max_kilobytes_requested = List::Util::max($kb_used, $old_kb_requested);
         my $msg = $old_kb_requested == $max_kilobytes_requested ? 'Rolling back' : 'Setting';
@@ -610,11 +634,27 @@ sub _reallocate {
     return $succeeded;
 }
 
+sub move_shadow_path {
+    my $allocation_path = shift;
+    return sprintf("%s-move_allocation_destination", $allocation_path)
+}
+
+sub move_shadow_params {
+    my $self = shift;
+    return (
+        disk_group_name => $self->disk_group_name,
+        kilobytes_requested => $self->kilobytes_requested,
+        owner_class_name => "UR::Value",
+        owner_id => "shadow_allocation",
+        exclude_mount_path => $self->mount_path,
+        allocation_path => move_shadow_path($self->allocation_path),
+    );
+}
+
 sub _move {
     my ($class, %params) = @_;
-    my $id = delete $params{allocation_id};
+    my $id = delete $params{id};
 
-    my $kilobytes_requested = delete $params{kilobytes_requested};
     my $group_name = delete $params{disk_group_name};
     my $new_mount_path = delete $params{target_mount_path};
 
@@ -622,30 +662,12 @@ sub _move {
         confess "Extra parameters given to allocation move method: " . join(',', sort keys %params);
     }
 
-    # get allocation lock
-    my $allocation_lock = Genome::Disk::Allocation->get_lock($id);
-    unless ($allocation_lock) {
-        confess "Could not lock allocation with ID $id";
-    }
-    my $mode = $class->_retrieve_mode;
-    my $self = Genome::Disk::Allocation->$mode($id);
-    unless ($self) {
-        Genome::Sys->unlock_resource(resource_lock => $allocation_lock);
-        confess "Found no allocation with ID $id";
-    }
+    my ($self, $allocation_lock) = $class->get_with_lock($id);
 
     my $original_absolute_path = $self->absolute_path;
 
     # make shadow allocation
-    my %creation_params = (
-        disk_group_name => $self->disk_group_name,
-        kilobytes_requested => $self->kilobytes_requested,
-        owner_class_name => "UR::Value",
-        owner_id => "shadow_allocation",
-        exclude_mount_path => $self->mount_path,
-        allocation_path => sprintf("%s-move_allocation_destination",
-            $self->allocation_path),
-    );
+    my %creation_params = $self->move_shadow_params;
 
     # I think that it's dangerous to specify the new mount path, but this
     # feature existed, so nnutter and I kept it during this refactor.
@@ -659,7 +681,8 @@ sub _move {
 
     # The shadow allocation is just a way of keeping track of our temporary
     # additional disk usage during the move.
-    my $shadow_allocation = $class->create(%creation_params);
+    my $shadow_allocation = $class->shadow_get_or_create(%creation_params);
+
     my $shadow_absolute_path = $shadow_allocation->absolute_path;
 
     # copy files to shadow allocation
@@ -708,6 +731,11 @@ sub _move {
     # calculate their data_directories from their disk_allocations.
     $self->_update_owner_for_move;
 
+    Genome::Timeline::Event::Allocation->moved(
+        sprintf("moved from %s to %s", $original_absolute_path, $self->absolute_path),
+        $self,
+    );
+
     _symlink($self->absolute_path, $original_absolute_path);
 
     _commit_unless_testing();
@@ -724,22 +752,12 @@ sub _move {
 
 sub _archive {
     my ($class, %params) = @_;
-    my $id = delete $params{allocation_id};
+    my $id = delete $params{id};
     if (%params) {
         confess "Extra parameters given to allocation move method: " . join(',', sort keys %params);
     }
 
-    # Lock and load allocation object
-    my $allocation_lock = Genome::Disk::Allocation->get_lock($id);
-    unless ($allocation_lock) {
-        confess "Could not lock allocation with ID $id";
-    }
-    my $mode = $class->_retrieve_mode;
-    my $self = Genome::Disk::Allocation->$mode($id);
-    unless ($self) {
-        Genome::Sys->unlock_resource(resource_lock => $allocation_lock);
-        confess "Found no allocation with ID $id";
-    }
+    my ($self, $allocation_lock) = $class->get_with_lock($id);
 
     my $current_allocation_path = $self->absolute_path;
     my $archive_allocation_path = join('/', $self->volume->archive_mount_path, $self->group_subdirectory, $self->allocation_path);
@@ -834,6 +852,11 @@ sub _archive {
             $msg .= "\n\nWhile cleaning up archive tarball, encoutered error:\n$cleanup_error";
         }
         confess $msg;
+    } else {
+        Genome::Timeline::Event::Allocation->archived(
+            'archived',
+            $self,
+        )
     }
 
     # Never make filesystem changes if no commit is enabled
@@ -848,24 +871,31 @@ sub _archive {
     return 1;
 }
 
+sub unarchive_shadow_path {
+    my $allocation_path = shift;
+    return sprintf("%s-unarchive_allocation_destination", $allocation_path);
+}
+
+sub unarchive_shadow_params {
+    my $self = shift;
+    return (
+        disk_group_name => $self->disk_group_name,
+        kilobytes_requested => $self->kilobytes_requested,
+        owner_class_name => "UR::Value",
+        owner_id => "shadow_allocation",
+        allocation_path => unarchive_shadow_path($self->allocation_path),
+    );
+}
+
 sub _unarchive {
     my ($class, %params) = @_;
-    my $id = delete $params{allocation_id};
+    my $id = delete $params{id};
+    my $reason = (delete $params{reason} || 'no reason given');
     if (%params) {
         confess "Extra parameters given to allocation unarchive method: " . join(',', sort keys %params);
     }
 
-    # Lock and load allocation object
-    my $allocation_lock = Genome::Disk::Allocation->get_lock($id);
-    unless ($allocation_lock) {
-        confess "Could not lock allocation with ID $id";
-    }
-    my $mode = $class->_retrieve_mode;
-    my $self = Genome::Disk::Allocation->$mode($id);
-    unless ($self) {
-        Genome::Sys->unlock_resource(resource_lock => $allocation_lock);
-        confess "Found no allocation with ID $id";
-    }
+    my ($self, $allocation_lock) = $class->get_with_lock($id);
 
     unless ($self->is_archived) {
         Genome::Sys->unlock_resource(resource_lock => $allocation_lock);
@@ -873,20 +903,9 @@ sub _unarchive {
         return 1;
     }
 
-    my %creation_params = (
-        disk_group_name => $self->disk_group_name,
-        kilobytes_requested => $self->kilobytes_requested,
-        owner_class_name => "UR::Value",
-        owner_id => "shadow_allocation",
-        allocation_path => sprintf("%s-unarchive_allocation_destination",
-            $self->allocation_path),
-    );
+    my %creation_params = $self->unarchive_shadow_params;
     # shadow_allocation ensures that we wont over allocate our destination volume
-    my $shadow_allocation = $class->create(%creation_params);
-    unless ($shadow_allocation) {
-        confess(sprintf("Failed to create shadow allocation from params %s",
-                Data::Dumper::Dumper(\%creation_params)));
-    }
+    my $shadow_allocation = $class->shadow_get_or_create(%creation_params);
 
     my $archive_path = $self->absolute_path;
     my $target_path = $shadow_allocation->absolute_path;
@@ -945,7 +964,7 @@ sub _unarchive {
                     $shadow_allocation->absolute_path, $self->absolute_path)));
         }
         $self->_update_owner_for_move;
-        $self->archivable(0, 'allocation was unarchived'); # Wouldn't want this to be immediately re-archived... trolololol
+        $self->archive_after_time(Genome::Disk::Command::Allocation::DelayArchiving->_resolve_date_from_months(3));
 
         if ($old_absolute_path ne $self->absolute_path) {
             _symlink($old_absolute_path, $self->absolute_path);
@@ -966,25 +985,101 @@ sub _unarchive {
             Genome::Sys->remove_directory_tree($target_path);
         }
         confess "Could not unarchive, received error:\n$error";
+    } else {
+        $self->add_note(
+            header_text => 'unarchived',
+            body_text => $reason,
+        );
+        Genome::Timeline::Event::Allocation->unarchived($reason, $self);
     }
 
     $self->_cleanup_archive_directory($archive_path);
     return 1;
 }
 
-# Locks the allocation, if lock is not manually released (it had better be!) it'll be automatically
-# cleaned up on program exit
+# Locks the allocation, if lock is not manually released (it had better be!)
+# it'll be automatically cleaned up on program exit
 sub get_lock {
     my ($class, $id, $tries) = @_;
     $tries ||= 60;
+
     my $allocation_lock = Genome::Sys->lock_resource(
         resource_lock => $ENV{GENOME_LOCK_DIR} . '/allocation/allocation_' . join('_', split(' ', $id)),
         max_try => $tries,
         block_sleep => 1,
     );
+
     # lock implies mutation so object should be reloaded
     $class->_reload_allocation($id);
+
     return $allocation_lock;
+}
+
+sub get_with_lock {
+    my $class = shift;
+    my $id = shift;
+
+    my $lock = $class->get_lock($id);
+    unless ($lock) {
+        confess "Could not lock allocation with ID $id";
+    }
+    my $mode = $class->_retrieve_mode;
+    my $self = Genome::Disk::Allocation->$mode($id);
+    unless ($self) {
+        Genome::Sys->unlock_resource(resource_lock => $lock);
+        confess "Found no allocation with ID $id";
+    }
+
+    return ($self, $lock);
+}
+
+sub shadow_get_or_create {
+    my $class = shift;
+    my %params = @_;
+
+    my %create_extra_params;
+    for my $param (qw(exclude_mount_path kilobytes_requested)) {
+        if ($params{$param}) {
+            $create_extra_params{$param} = delete $params{$param};
+        }
+    }
+
+    unless ($params{allocation_path}) {
+        croak 'allocation_path is required for shadow_get_or_create';
+    }
+
+    my $md5_hex = md5_hex($params{allocation_path});;
+
+    my $path = File::Spec->join(
+        $ENV{GENOME_LOCK_DIR},
+        'allocation',
+        'allocation_path_' . $md5_hex,
+    );
+
+    my $lock = Genome::Sys->lock_resource(
+        resource_lock => $path,
+        wait_announce_interval => 600,
+    );
+
+    my $allocation = $class->get(%params);
+    if ($allocation) {
+        if ($create_extra_params{kilobytes_requested}) {
+            $allocation->reallocate(
+                kilobytes_requested => $create_extra_params{kilobytes_requested},
+            );
+        }
+    } else {
+        $allocation = $class->create(%params, %create_extra_params);
+    }
+
+    Genome::Sys->unlock_resource(resource_lock => $lock);
+
+    unless ($allocation) {
+        croak sprintf("Failed to shadow_get_or_create allocation from params %s",
+                Data::Dumper::Dumper({%params, %create_extra_params}));
+    }
+
+    return $allocation;
 }
 
 sub has_valid_owner {
@@ -1013,31 +1108,42 @@ our @_execute_system_command_perl5opt = '-MGenome';
 sub _execute_system_command {
     my ($class, $method, %params) = @_;
     if (ref($class)) {
-        $params{allocation_id} = $class->id;
+        $params{id} = $class->id;
         $class = ref($class);
     }
-    confess "Require allocation ID!" unless exists $params{allocation_id};
+    confess "Require allocation ID!" unless exists $params{id};
 
     my $allocation;
     if ($ENV{UR_DBI_NO_COMMIT}) {
         $allocation = $class->$method(%params);
     }
     else {
-        # Serialize params hash, construct command, and execute
-        my $param_string = Genome::Utility::Text::hash_to_string(\%params);
-        my $includes = join(' ', map { qq{-I "$_"} } UR::Util::used_libs);
-        my $perl5opt = join(' ', @_execute_system_command_perl5opt);
-        my $cmd_template = '%s %s %s -e "%s->%s(%s); UR::Context->commit;"';
-        my $cmd = sprintf($cmd_template, "genome-perl", $includes, $perl5opt, $class, $method, $param_string);
+        # remove the parens if you DARE
+        my @includes = map { ( '-I' => $_ ) } UR::Util::used_libs;
 
-        unless (eval { system($cmd) } == 0) {
+        my $param_string = Genome::Utility::Text::hash_to_string(\%params, 'q');
+        my @statements = (
+            qq(Genome::Utility::Instrumentation::timer('disk.allocation.require', sub { require $class })),
+            sprintf('%s->%s(%s)', $class, $method, $param_string),
+            q(UR::Context->commit),
+        );
+        my $perl_program_string = join('; ', @statements);
+
+        my @cmd = (
+            'genome-perl',
+            @includes,
+            @_execute_system_command_perl5opt,
+            '-e',
+            $perl_program_string
+        );
+        unless (system(@cmd) == 0) {
             my $msg = "Could not perform allocation action!";
             if ($@) {
                 $msg .= " Error: $@";
             }
             confess $msg;
         }
-        $allocation = $class->_reload_allocation($params{allocation_id});
+        $allocation = $class->_reload_allocation($params{id});
     }
 
 
@@ -1253,12 +1359,26 @@ sub _verify_no_parent_allocation {
 sub get_parent_allocation {
     my ($class, $path) = @_;
     Carp::confess("no path defined") unless defined $path;
+
+    my $allocation;
+    Genome::Utility::Instrumentation::timer('disk.allocation.get_parent_allocation', sub {
+        $allocation = $class->_get_parent_allocation_impl($path);
+    });
+
+    return $allocation if $allocation;
+    return;
+}
+
+sub _get_parent_allocation_impl {
+    my ($class, $path) = @_;
+    Carp::confess("no path defined") unless defined $path;
+
     my ($allocation) = $class->get(allocation_path => $path);
     return $allocation if $allocation;
 
     my $dir = File::Basename::dirname($path);
     if ($dir ne '.' and $dir ne '/') {
-        return $class->get_parent_allocation($dir);
+        return $class->_get_parent_allocation_impl($dir);
     }
     return;
 }
@@ -1316,9 +1436,6 @@ sub _verify_no_child_allocations {
     my $owner       = $data_source->owner;
     my $query_string;
 
-    #POSTGRES TODO:  remove this little ugly hack when we go 100% postgres.
-    $data_source = Genome::DataSource::PGTest->get() if ($ENV{'GENOME_QUERY_POSTGRES'});
-
     if ($data_source->isa('UR::DataSource::Oracle')) {
         my $fq_table_name = join('.', $owner, $table_name);
         $query_string = sprintf(q(select * from %s where allocation_path like ? AND rownum <= 1), $fq_table_name);
@@ -1326,18 +1443,21 @@ sub _verify_no_child_allocations {
         $query_string = sprintf(q(select * from %s where allocation_path like ? LIMIT 1), $table_name);
     } else {
         $class->error_message("Falling back on old child allocation detection behavior.");
-        return !($class->et_child_allocations($path));
+        return !($class->get_child_allocations($path));
     }
 
-    my $dbh = $data_source->get_default_handle();
-    my $query_object = $dbh->prepare($query_string);
-    $query_object->bind_param(1, $path . "/%");
-    $query_object->execute();
+    my ($err, $errstr, $row_arrayref);
+    Genome::Utility::Instrumentation::timer('disk.allocation.child_allocation_query', sub {
+        my $dbh = $data_source->get_default_handle();
+        my $query_object = $dbh->prepare($query_string);
+        $query_object->bind_param(1, $path . "/%");
+        $query_object->execute();
 
-    my $row_arrayref = $query_object->fetchrow_arrayref();
-    my $err = $dbh->err;
-    my $errstr = $dbh->errstr;
-    $query_object->finish();
+        $row_arrayref = $query_object->fetchrow_arrayref();
+        $err = $dbh->err;
+        $errstr = $dbh->errstr;
+        $query_object->finish();
+    });
 
     if ($err) {
         die $class->error_message(sprintf(
@@ -1453,6 +1573,79 @@ sub get_allocation_for_path {
     return $allocation;
 }
 
+sub archive_after_time {
+    my $self = shift;
+
+    if (@_) {
+        my ($new_time) = @_;
+        my $old_time = $self->__archive_after_time();
+        my $event = ($old_time lt $new_time) ? 'strengthened' : 'weakened';
+
+        Genome::Timeline::Event::Allocation->$event(
+            sprintf('original time: %s - new time: %s', $old_time, $new_time),
+            $self,
+        );
+        return $self->__archive_after_time(@_);
+    } else {
+        return $self->__archive_after_time;
+    }
+}
+
+sub purge {
+    my $self = shift;
+    my $reason = shift;
+    die("You must supply a reason for the purge!") unless $reason;
+    return $self->_execute_system_command('_purge', reason => $reason);
+}
+
+sub _purge {
+    my $class = shift;
+    my %params = @_;
+    my $reason = delete $params{reason};
+    my $allocation_id = delete $params{id};
+
+    my $self = $class->get($allocation_id);
+    die("No allocation found for id: $allocation_id") unless $self;
+    die("You must supply a reason for the purge!") unless $reason;
+
+    $self->_create_file_summaries();
+    my $trash_folder = $self->_get_trash_folder();
+
+    unless($ENV{UR_DBI_NO_COMMIT}) {
+        my $destination_directory = Genome::Sys->create_directory(File::Spec->join($trash_folder, $self->id));
+        dirmove($self->absolute_path, $destination_directory);
+    }
+
+    Genome::Timeline::Event::Allocation->purged(
+        $reason,
+        $self,
+    );
+
+    $self->status('purged');
+    $self->kilobytes_requested(0);
+    $self->kilobytes_used(0);
+
+    return 1;
+}
+
+sub _create_file_summaries {
+    my $self = shift;
+
+    my $old_cwd = getcwd;
+    chdir($self->absolute_path);
+    my @files;
+    #why is File::Find this stupid? who knows...
+    find(sub { push(@files, $File::Find::name) unless (-d $_) }, '.');
+    chdir($old_cwd);
+
+    for my $file (@files) {
+        Genome::Disk::Allocation::FileSummary->create_or_update(
+            allocation => $self,
+            file => $file
+        );
+    }
+}
+
 sub _symlink {
     # to fix previously existing/broken symlinks by restoring chain
     my $real_path = shift;
@@ -1475,6 +1668,28 @@ sub _commit_unless_testing {
     } else {
         return 1;
     }
+}
+
+sub _default_archive_after_time {
+    DateTime->now(time_zone => 'local')->add(years => 1)->strftime('%F %T');
+}
+
+sub _get_trash_folder {
+    my $self = shift;
+
+    my @dv = Genome::Disk::Volume->get(disk_group_names => 'apipe_trash');
+    my %trash_map = map {
+       $self->_extract_aggr($_->physical_path) => File::Spec->join($_->mount_path, '.trash');
+    } @dv;
+
+    my $aggr = $self->_extract_aggr($self->volume->physical_path);
+
+    return $trash_map{$aggr};
+}
+
+sub _extract_aggr {
+    my $self = shift;
+    return (shift =~ m!/(aggr\d{2})/!)[0];
 }
 
 1;

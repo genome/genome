@@ -4,46 +4,71 @@ use strict;
 use warnings;
 
 use Genome;
-use Data::Dumper;
-use File::Temp;
+
+my $DEFAULT_VERSION = "Test";
 
 class Genome::Model::Tools::Beagle {
     is => ['Command'],
-    has_optional => [
-                     version => {
-                                 is    => 'string',
-                                 doc   => 'version of Beagle application to use',
-                             },
-                     _tmp_dir => {
-                                  is => 'string',
-                                  doc => 'a temporary directory for storing files',
-                              },
-                 ]
+    doc => 'Tools and scripts to phase and impute data using Beagle software.',
+    has => [
+    version => {
+        is => 'Text',
+        default => $DEFAULT_VERSION,
+    },
+    ],
 };
 
-sub help_brief {
-    "Tools to run Beagle genetic analysis"
+my %BEAGLE_VERSIONS = (
+    'Test' => '/gscmnt/ams1161/info/model_data/kmeltzst/Software/b4.r1128.jar',
+);
+
+sub get_default_beagle_version {
+    return $DEFAULT_VERSION;
 }
 
-sub help_detail {                           # This is what the user will see with --help <---
-    return <<EOS
+sub path_for_version {
+    my $class = shift;
+    my $version = shift || $DEFAULT_VERSION;
 
-EOS
+    if($version eq 'latest') {
+        return $class->path_for_latest_version;
+    }
+
+    unless(exists $BEAGLE_VERSIONS{$version}) {
+        $class->error_message('No path found for Beagle Version ' . $version);
+        die $class->error_message;
+    }
+
+    return $BEAGLE_VERSIONS{$version};
+}
+sub path_for_latest_version {
+    my $class = shift;
+    my $path = '/gscmnt/ams1161/info/model_data/kmeltzst/Software/b4.r1128.jar';
+
+    unless(-e $path) {
+        $class->error_message("Path to latest version not found $path!");
+    }
+
+    return $path;
 }
 
-sub create {
+sub default_version {
     my $class = shift;
 
-    my $self = $class->SUPER::create(@_);
+    unless(exists $BEAGLE_VERSIONS{$DEFAULT_VERSION}) {
+        $class->error_message('Default Beagle version (' . $DEFAULT_VERSION . ') is invalid.');
+        die $class->error_message;
+    }
 
-    my $tempdir = File::Temp::tempdir(CLEANUP => 1);
-    $self->_tmp_dir($tempdir);
-
-    return $self;
+    return $DEFAULT_VERSION;
 }
 
-sub path_to_binary {
-    return("java -Xmx14000m -jar $ENV{GENOME_SW}/beagle/installed/beagle.jar");
+sub available_varscan_versions {
+    return keys(%BEAGLE_VERSIONS);
 }
+
+sub help_brief {
+    "Tools and scripts to phase and impute data using Beagle software."
+}
+
 1;
-

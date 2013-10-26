@@ -12,6 +12,7 @@ BEGIN {
 use above 'Genome';
 
 use Test::More;
+use Genome::Utility::Test qw(is_equal_set);
 
 use_ok('Genome::Model::Command::Services::AssignQueuedInstrumentData') or die;
 
@@ -19,7 +20,7 @@ use_ok('Genome::Model::Command::Services::AssignQueuedInstrumentData') or die;
 my @projects;
 push @projects, Genome::Project->create(id => -111, name => '__TEST_PROJECT__');
 ok($projects[0], 'create project for research project');
-my $gsc_workorder = Genome::Site::TGI::Synchronize::Classes::SetupProject->__define__(id => -222, name => '__TEST_WORKORDER__', pipeline => '16s');
+my $gsc_workorder = Genome::Site::TGI::Synchronize::Classes::LimsProject->__define__(id => -222, name => '__TEST_WORKORDER__', pipeline => '16s');
 push @projects, Genome::Project->create(id => -222, name => '__TEST_WORKORDER__');
 ok($projects[1], 'create project for research project');
 # Model groups for projects
@@ -60,42 +61,40 @@ my %existing_models = _model_hash(@existing_models);
 #print Data::Dumper::Dumper(\%new_models,\%existing_models);
 my $model_name_for_entire_run = "R_2011_07_27_14_54_40_FLX08080419_Administrator_113684816_r1.prod-mc16s-qc";
 my @default_processing_profile_ids = Genome::Model::MetagenomicComposition16s->default_processing_profile_ids;
-is_deeply(
-    \%new_models,
-    {
-        "AQID-testsample1.prod-mc16s.rdp2-2" => {
-            subject => $samples[0]->name,
-            processing_profile_id => $default_processing_profile_ids[0],
-            inst => [ $instrument_data[0]->id ],
-            auto_assign_inst_data => 1,
-        },
-        "AQID-testsample2.prod-mc16s.rdp2-2" => {
-            subject => $samples[1]->name,
-            processing_profile_id => $default_processing_profile_ids[0],
-            inst => [ $instrument_data[1]->id ],
-            auto_assign_inst_data => 1,
-        },
-        "AQID-testsample1.prod-mc16s.rdp2-5" => {
-            subject => $samples[0]->name,
-            processing_profile_id => $default_processing_profile_ids[1],
-            inst => [ $instrument_data[0]->id ],
-            auto_assign_inst_data => 1,
-        },
-        "AQID-testsample2.prod-mc16s.rdp2-5" => {
-            subject => $samples[1]->name,
-            processing_profile_id => $default_processing_profile_ids[1],
-            inst => [ $instrument_data[1]->id ],
-            auto_assign_inst_data => 1,
-        },
-        $model_name_for_entire_run => {
-            subject => "Human Metagenome",
-            processing_profile_id => $default_processing_profile_ids[0],
-            inst => [ map { $_->id } @instrument_data ],
-            auto_assign_inst_data => 0,
-        },
+my %model_expectations = (
+    "AQID-testsample1.prod-mc16s.rdp2-2" => {
+        subject => $samples[0]->name,
+        processing_profile_id => $default_processing_profile_ids[0],
+        inst => [ $instrument_data[0]->id ],
+        auto_assign_inst_data => 1,
     },
-    'new models for run 1',
+    "AQID-testsample2.prod-mc16s.rdp2-2" => {
+        subject => $samples[1]->name,
+        processing_profile_id => $default_processing_profile_ids[0],
+        inst => [ $instrument_data[1]->id ],
+        auto_assign_inst_data => 1,
+    },
+    "AQID-testsample1.prod-mc16s.rdp2-5" => {
+        subject => $samples[0]->name,
+        processing_profile_id => $default_processing_profile_ids[1],
+        inst => [ $instrument_data[0]->id ],
+        auto_assign_inst_data => 1,
+    },
+    "AQID-testsample2.prod-mc16s.rdp2-5" => {
+        subject => $samples[1]->name,
+        processing_profile_id => $default_processing_profile_ids[1],
+        inst => [ $instrument_data[1]->id ],
+        auto_assign_inst_data => 1,
+    },
+    $model_name_for_entire_run => {
+        subject => "Human Metagenome",
+        processing_profile_id => $default_processing_profile_ids[0],
+        inst => [ map { $_->id } @instrument_data ],
+        auto_assign_inst_data => 0,
+    },
 );
+test_fields(\%new_models, \%model_expectations,
+    qw(subject processing_profile_id auto_assign_inst_data inst));
 is_deeply(
     \%existing_models, 
     { $model_name_for_entire_run => $new_models{$model_name_for_entire_run} },
@@ -135,7 +134,7 @@ is_deeply(
     },
     'new models for run 2',
 );
-is_deeply(
+test_fields(
     \%existing_models,
     {
         $model_name_for_entire_run => {
@@ -145,8 +144,7 @@ is_deeply(
             auto_assign_inst_data => 0,
         },
     },
-    'existing models for run 2',
-);
+    qw(subject processing_profile_id auto_assign_inst_data inst));
 is( # processed 3
     scalar(grep { $_->attributes(attribute_label => 'tgi_lims_status')->attribute_value  eq 'processed' } @instrument_data),
     3,
@@ -222,3 +220,22 @@ sub _model_hash {
         }
     } @_;
 }
+
+sub test_fields {
+    my $got_runs = shift;
+    my $expect_runs = shift;
+    my @fields = @_;
+    for my $model_name (keys %$expect_runs) {
+        my $got = $got_runs->{$model_name};
+        my $expect = $expect_runs->{$model_name};
+        my $t = $model_name . ': %s matches';
+        for my $field (@fields) {
+            if (ref($got->{field}) eq 'ARRAY') {
+                is_equal_set($got->{field}, $expect->{field},
+                    sprintf($t, $field));
+            } else {
+                is($got->{field}, $expect->{field}, sprintf($t, $field));
+            }
+        }
+    }
+};

@@ -8,13 +8,28 @@ use Genome;
 require Carp;
 
 class Genome::Model::Input {
-    table_name => 'GENOME_MODEL_INPUT',
+    table_name => 'model.model_input',
     type_name => 'genome model input',
     id_by => [
-        value_class_name => { is => 'VARCHAR2', len => 255 },
-        value_id         => { is => 'VARCHAR2', len => 1000, implied_by => 'value' },
-        model_id         => { is => 'Number', len => 32, implied_by => 'model' },
-        name             => { is => 'VARCHAR2', len => 255 },
+        value_class_name => {
+            is => 'VARCHAR2',
+            len => 255,
+        },
+        value_id => {
+            is => 'VARCHAR2',
+            implied_by => 'value',
+            len => 1000,
+        },
+        model_id => {
+            is => 'Text',
+            len => 32,
+            implied_by => 'model',
+            is_deprecated => 1,
+        },
+        name => {
+            is => 'VARCHAR2',
+            len => 255,
+        },
     ],
     has => [
         model => {

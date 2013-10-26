@@ -25,7 +25,7 @@ my $root_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sam-SamToBam';
 
 my $tmp_dir  = File::Temp::tempdir(
     'SamToBam-XXXXX',
-    TEMPDIR => 1,
+    TMPDIR => 1,
     CLEANUP => 1,
 );
 

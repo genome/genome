@@ -37,7 +37,7 @@ $build->amplicons_classified(14);
 $build->amplicons_classified_success('1.00');
 $build->amplicons_classification_error(0);
 
-my $cmd = Genome::Model::Build::MetagenomicComposition16s::Orient->create(input_build => [$build]);
+my $cmd = Genome::Model::Build::MetagenomicComposition16s::Orient->create(input_build => $build);
 ok($cmd, 'create orient cmd');
 ok($cmd->execute, 'execute orient cmd');
 

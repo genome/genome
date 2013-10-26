@@ -17,40 +17,38 @@ use_ok('Genome::Model::SomaticValidation::Command::ImportVariants')
 my $temp_build_data_dir = File::Temp::tempdir('t_SomaticValidation_Build-XXXXX', CLEANUP => 1, TMPDIR => 1);
 my $temp_dir = File::Temp::tempdir('Model-Command-Define-SomaticValidation-XXXXX', CLEANUP => 1, TMPDIR => 1);
 
+my @somvar_models = &setup_somatic_variation_models();
+for (@somvar_models) {
+    isa_ok($_, 'Genome::Model::SomaticVariation', 'setup fake model');
+    for my $b ($_->builds) {
+        $b->data_directory($temp_build_data_dir);
+    }
+}
+
 my @snv_files;
 for my $i (1..2) {
-    my $f = Genome::Sys->create_temp_file_path . '/TEST' . ($i % 2 + 1);
+    my $individual_name = $somvar_models[$i - 1]->normal_model->subject->source->common_name;
+    my $f = Genome::Sys->create_temp_file_path . '/' . $individual_name;
     Genome::Sys->create_directory($f);
     $f .= '/variants.snv.anno';
-    Genome::Sys->write_file($f,
-        join("\t", 1, $i, $i, 'A', 'G', 'SNP'), "\n",
-        join("\t", 1, ($i+100), ($i+100), 'A', 'G', 'SNP'), "\n",
-        join("\t", 1, ($i+200), ($i+200), 'A', 'G', 'SNP'), "\n",
-    );
+    Genome::Sys->write_file($f, anno_data($i));
     push @snv_files, $f;
 }
+
+my $individual_name = $somvar_models[0]->normal_model->subject->source->common_name;
 for my $i (3) {
     my $f = Genome::Sys->create_temp_file_path . '/abc/def/TEST';
     Genome::Sys->create_directory($f);
-    $f .= '/TEST1.snv.anno';
-    Genome::Sys->write_file($f,
-        join("\t", 1, $i, $i, 'A', 'G', 'SNP'), "\n",
-        join("\t", 1, ($i+100), ($i+100), 'A', 'G', 'SNP'), "\n",
-        join("\t", 1, ($i+200), ($i+200), 'A', 'G', 'SNP'), "\n",
-    );
+    $f .= "/$individual_name.snv.anno";
+    Genome::Sys->write_file($f, anno_data($i));
     push @snv_files, $f;
 }
-my $indel_file = Genome::Sys->create_temp_file_path . '/TEST1';
+my $indel_file = Genome::Sys->create_temp_file_path . '/' . $individual_name;
 Genome::Sys->create_directory($indel_file);
 $indel_file .= '/variants.indel.anno';
 Genome::Sys->write_file($indel_file,
     join("\t", 2, 25, 29, 'CTCTT', '-', 'DEL'), "\n",
 );
-
-my @somvar_models = &setup_somatic_variation_models();
-for (@somvar_models) {
-    isa_ok($_, 'Genome::Model::SomaticVariation', 'setup fake model');
-}
 
 my $listing_file = Genome::Sys->create_temp_file_path;
 Genome::Sys->write_file($listing_file,
@@ -72,6 +70,8 @@ ok($cmd->execute, 'executed importer command');
 my @results = $cmd->results;
 is(scalar(@results), 3, 'produced expected number of results');
 
+use Genome::Test::Factory::Model::SomaticValidation;
+use Genome::Test::Factory::Model::SomaticVariation;
 sub setup_somatic_variation_models {
     my $test_profile = Genome::ProcessingProfile::ReferenceAlignment->create(
         name => 'test_profile',
@@ -93,71 +93,11 @@ sub setup_somatic_variation_models {
 
     my @somvar_models;
     for(1..2) {
-        my $test_individual = Genome::Individual->create(
-            common_name => 'TEST' . $_,
-            name => 'test_individual',
-        );
-
-        my $test_sample = Genome::Sample->create(
-            name => 'test_subject' . $_,
-            source_id => $test_individual->id,
-        );
-
-        my $test_control_sample = Genome::Sample->create(
-            name => 'test_control_subject' . $_,
-            source_id => $test_individual->id,
-        );
-
-        my $test_instrument_data = Genome::InstrumentData::Solexa->create(
-        );
-
-        my $reference_sequence_build = Genome::Model::Build::ReferenceSequence->get_by_name('NCBI-human-build36');
-
-        my $test_model = Genome::Model->create(
-            name => 'test_reference_aligment_model_TUMOR' . $_,
-            subject_name => 'test_subject' . $_,
-            subject_type => 'sample_name',
-            processing_profile_id => $test_profile->id,
-            reference_sequence_build => $reference_sequence_build,
-        );
-
-        my $add_ok = $test_model->add_instrument_data($test_instrument_data);
-
-        my $test_build = Genome::Model::Build->create(
-            model_id => $test_model->id,
-            data_directory => $temp_build_data_dir,
-        );
-
-        my $test_model_two = Genome::Model->create(
-            name => 'test_reference_aligment_model_mock_NORMAL' . $_,
-            subject_name => 'test_control_subject' . $_,
-            subject_type => 'sample_name',
-            processing_profile_id => $test_profile->id,
-            reference_sequence_build => $reference_sequence_build,
-        );
-
-        $add_ok = $test_model_two->add_instrument_data($test_instrument_data);
-
-        my $test_build_two = Genome::Model::Build->create(
-            model_id => $test_model_two->id,
-            data_directory => $temp_build_data_dir,
-        );
-
-        my $somvar_model = Genome::Model::SomaticVariation->create(
-            tumor_model => $test_model,
-            normal_model => $test_model_two,
-            name => 'test somvar model' . $_,
-            processing_profile => $test_somvar_pp,
-            annotation_build => $annotation_build,
-        );
+        # Why are SomaticValidation tests just using SomaticVariation models?
+        my $somvar_build = Genome::Test::Factory::Model::SomaticVariation->setup_somatic_variation_build();
+        my $somvar_model = $somvar_build->model;
         push @somvar_models, $somvar_model;
 
-        my $somvar_build = Genome::Model::Build::SomaticVariation->__define__(
-            model_id => $somvar_model->id,
-            data_directory => $temp_build_data_dir,
-            tumor_build => $test_build_two,
-            normal_build => $test_build,
-        );
         my $e = Genome::Model::Event::Build->__define__(
             build_id => $somvar_build->id,
             event_type => 'genome model build',
@@ -165,7 +105,6 @@ sub setup_somatic_variation_models {
             model_id => $somvar_model->id,
             date_completed => '1999-01-01 15:19:01',
         );
-        $DB::single = 1;
         is($somvar_model->last_complete_build, $somvar_build, 'setup a somatic model with a complete build');
 
         my $dir = ($temp_dir . '/' . 'fake_samtools_result' . $_);
@@ -179,11 +118,10 @@ sub setup_somatic_variation_models {
         );
         $result->lookup_hash($result->calculate_lookup_hash());
 
-        my $data = <<EOBED
-1	10003	10004	A/T
-2	8819	8820	A/G
-EOBED
-        ;
+        my $data = Genome::Utility::Text::table_to_tab_string([
+            [qw(1 10003 10004 A/T)],
+            [qw(2  8819  8820 A/G)],
+        ]);
         my $bed_file = $dir . '/snvs.hq.bed';
         Genome::Sys->write_file($bed_file, $data);
 
@@ -192,4 +130,16 @@ EOBED
     }
 
     return @somvar_models;
+}
+
+sub anno_data {
+    my $i = shift;
+
+    my $d = Genome::Utility::Text::table_to_tab_string([
+        [1 ,  $i      ,  $i      , 'A' , 'G' , 'SNP'],
+        [1 , ($i+100) , ($i+100) , 'A' , 'G' , 'SNP'],
+        [1 , ($i+200) , ($i+200) , 'A' , 'G' , 'SNP'],
+    ]);
+
+    return $d;
 }

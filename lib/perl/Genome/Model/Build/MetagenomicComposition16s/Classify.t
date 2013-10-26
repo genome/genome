@@ -31,7 +31,7 @@ for ( my $i = 0; $i < @example_amplicon_sets; $i++ ) {
 }
 $build->amplicons_attempted(20);
 
-my $cmd = Genome::Model::Build::MetagenomicComposition16s::Classify->create(input_build => [$build]);
+my $cmd = Genome::Model::Build::MetagenomicComposition16s::Classify->create(input_build => $build);
 ok($cmd, 'create classify cmd');
 ok($cmd->execute, 'execute classify cmd');
 

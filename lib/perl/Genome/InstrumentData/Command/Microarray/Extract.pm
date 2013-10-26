@@ -165,12 +165,17 @@ sub _resolve_instrument_data_from_sample_default_genotype_id {
 sub _resolve_instrument_data_from_library {
     my ($self, $sample) = @_;
 
-    my ($library) = sort {$b->id <=> $a->id} Genome::Library->get(name => $sample->name.'-microarraylib');
-    if ( not $library ) {
+    my $lib_name = $sample->name.'-microarraylib';
+    my @libraries = Genome::Library->get(name => $lib_name);
+    if (@libraries > 1) {
+        $self->error_message("Mulitple libraries found with name $lib_name for sample ".$sample->__display_name__);
+        return;
+    } elsif ( ! @libraries ) {
         $self->error_message('Failed to get microarry library for sample: '.$sample->__display_name__);
         return;
     }
 
+    my $library = $libraries[0];
     my %params = (
         library => $library,
         'import_source_name in' => ( $self->use_external )
@@ -295,9 +300,13 @@ sub _load_genotyopes {
         my %genotype;
         @genotype{@headers} = split(',', $line);
         # The id is from the snp mapping or the genotype's snp_name
-        $genotype{id} = ( $snp_id_mapping and $snp_id_mapping->{ $genotype{snp_name} } )
-        ? $snp_id_mapping->{ $genotype{snp_name} }
-        : $genotype{snp_name};
+        if($snp_id_mapping and exists $snp_id_mapping->{ $genotype{snp_name} }) {
+            $genotype{id} = $snp_id_mapping->{ $genotype{snp_name} };
+        } else {
+            $genotype{id} = $genotype{snp_name};
+            $genotype{id} =~ s/^(rs\d+)\D*$/$1/; #borrowed from GSC::Genotyping::normalize_to
+        }
+
         # Filter...
         for my $filter ( @$filters ) {
             next GENOTYPE if not $filter->filter(\%genotype);

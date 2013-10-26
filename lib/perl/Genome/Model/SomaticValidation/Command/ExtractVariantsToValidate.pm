@@ -4,6 +4,9 @@ use strict;
 use warnings;
 
 use Genome;
+use Genome::Model::Tools::DetectVariants2::Utilities qw(
+    final_result_for_variant_type
+);
 
 class Genome::Model::SomaticValidation::Command::ExtractVariantsToValidate {
     is => 'Command::V2',
@@ -60,8 +63,8 @@ sub execute {
         my @build_results = $build->results;
         my @results = grep($_->isa('Genome::Model::Tools::DetectVariants2::Classify::Tier') && $_->variant_type eq $variant_type, @build_results);
 
-        if(!@results and $build->can('final_result_for_variant_type')) {
-            @results = $build->final_result_for_variant_type($variant_type);
+        if(!@results) {
+            @results = final_result_for_variant_type(\@build_results, $variant_type);
         }
 
         unless(@results) {

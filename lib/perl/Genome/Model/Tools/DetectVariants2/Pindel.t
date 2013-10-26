@@ -18,10 +18,6 @@ use Genome::SoftwareResult;
 my $archos = `uname -a`;
 if ($archos !~ /64/) {
     plan skip_all => "Must run from 64-bit machine";
-} else {
-    if(not $ENV{UR_RUN_LONG_TESTS}) {
-        plan skip_all => 'This test takes up to 10 minutes to run and thus is skipped.  Use `ur test run --long` to enable.';
-    }
 }
 
 use_ok('Genome::Model::Tools::DetectVariants2::Pindel');
@@ -37,11 +33,13 @@ my $tmpbase = File::Temp::tempdir('PindelXXXXX', CLEANUP => 1, TMPDIR => 1);
 my $tmpdir = "$tmpbase/output";
 
 my $pindel = Genome::Model::Tools::DetectVariants2::Pindel->create(
+    chromosome_list => [22],
     aligned_reads_input=>$tumor, 
     control_aligned_reads_input=>$normal,
     reference_build_id => $refbuild_id,
     output_directory => $tmpdir, 
-    aligned_reads_sample => "TEST",                            
+    control_aligned_reads_sample => "TEST_NORMAL",
+    aligned_reads_sample => "TEST",
     version => '0.5',
 );
 ok($pindel, 'pindel command created');
@@ -51,6 +49,7 @@ ok($pindel->default_chromosomes_as_string =~ /^1,2,3,4,5,6,7,8,9,10,11,12,13,14,
 $ENV{NO_LSF}=1;
 
 $pindel->dump_status_messages(1);
+
 my $rv = $pindel->execute;
 is($rv, 1, 'Testing for successful execution.  Expecting 1.  Got: '.$rv);
 

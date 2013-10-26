@@ -427,7 +427,6 @@ sub sw_version_path_map {
                     $version = substr($version,1);
                 }
                 next unless $version =~ /[0-9\.]/;
-                next if -l $version_path;
                 if (grep { index($version_path,$_) == 0 } @sw_ignore) {
                     next;
                 }
@@ -1219,9 +1218,14 @@ sub current_user_is_admin {
 
 sub current_user_has_role {
     my ($class, $role_name) = @_;
-    my $user = Genome::Sys::User->get(username => $class->username);
+    my $user = $class->current_user;
     return 0 unless $user;
     return $user->has_role_by_name($role_name);
+}
+
+sub current_user {
+    my $class = shift;
+    return Genome::Sys::User->get(username => $class->username);
 }
 
 sub cmd_output_who_dash_m {
@@ -1278,6 +1282,7 @@ sub shellcmd {
     my $input_directories            = delete $params{input_directories};
     my $allow_failed_exit_code       = delete $params{allow_failed_exit_code};
     my $allow_zero_size_output_files = delete $params{allow_zero_size_output_files};
+    my $set_pipefail                 = delete $params{set_pipefail};
     my $allow_zero_size_input_files  = delete $params{allow_zero_size_input_files};
     my $skip_if_output_is_present    = delete $params{skip_if_output_is_present};
     my $redirect_stdout              = delete $params{redirect_stdout};
@@ -1286,6 +1291,7 @@ sub shellcmd {
         delete $params{dont_create_zero_size_files_for_missing_output};
     my $print_status_to_stderr       = delete $params{print_status_to_stderr};
 
+    $set_pipefail = 1 if not defined $set_pipefail;
     $print_status_to_stderr = 1 if not defined $print_status_to_stderr;
     $skip_if_output_is_present = 1 if not defined $skip_if_output_is_present;
     if (%params) {
@@ -1355,8 +1361,6 @@ sub shellcmd {
     else {
         $self->status_message("RUN: $cmd");
 
-        # Set -o pipefail ensures the command will fail if it contains pipes and intermediate pipes fail.
-        # Export SHELLOPTS ensures that if there are nested "bash -c"'s, each will inherit pipefail
         $t1 = time();
         my $system_retval;
         eval {
@@ -1373,7 +1377,21 @@ sub shellcmd {
                 if ($redirect_stderr) {
                     open(STDERR, '>', $redirect_stderr) || die "Can't redirect stderr to $redirect_stderr: $!";
                 }
-                $system_retval = system('bash', '-c', "set -o pipefail; export SHELLOPTS; $cmd");
+                # Set -o pipefail ensures the command will fail if it contains pipes and intermediate pipes fail.
+                # Export SHELLOPTS ensures that if there are nested "bash -c"'s, each will inherit pipefail
+                my $shellopts_part = 'export SHELLOPTS;';
+                if ($set_pipefail) {
+                    $shellopts_part = "set -o pipefail; $shellopts_part";
+                } else {
+                    $shellopts_part = "set +o pipefail; $shellopts_part";
+                }
+
+                {   # POE sets a handler to ignore SIG{PIPE}, that makes the
+                    # pipefail option useless.
+                    local $SIG{PIPE} = 'DEFAULT';
+                    $system_retval = system('bash', '-c', "$shellopts_part $cmd");
+                }
+
                 print STDOUT "\n"; # add a new line so that bad programs don't break TAP, etc.
         };
         my $exception = $@;
@@ -1393,7 +1411,11 @@ sub shellcmd {
             Carp::croak("COMMAND KILLED. Signal $signal, $withcore coredump: $cmd");
 
         } elsif ($child_exit_code != 0) {
-            if ($allow_failed_exit_code) {
+            if ($child_exit_code == 141) {
+                my ($package, $filename, $line) = caller(0);
+                my $msg = "SIGPIPE was recieved by command but IGNORED! cmd: '$cmd' in $package at $filename line $line";
+                $self->error_message($msg);
+            } elsif ($allow_failed_exit_code) {
                 Carp::carp("TOLERATING Exit code $child_exit_code from: $cmd");
             } else {
                 Carp::croak("ERROR RUNNING COMMAND.  Exit code $child_exit_code from: $cmd\nSee the command's captured STDERR (if it exists) for more information");

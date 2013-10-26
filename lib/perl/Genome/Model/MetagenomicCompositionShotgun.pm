@@ -15,26 +15,26 @@ class Genome::Model::MetagenomicCompositionShotgun {
     is => 'Genome::ModelDeprecated',
     has_param => [
         contamination_screen_pp_id => {
-            is => 'Integer',
+            is => 'Text',
             doc => 'processing profile id to use for contamination screen',
             is_optional=> 1,
         },
         metagenomic_alignment_pp_id => {
-            is => 'Integer',
+            is => 'Text',
             doc => 'processing profile id to use for metagenomic alignment',
         },
         unaligned_metagenomic_alignment_pp_id => {
-            is => 'Integer',
+            is => 'Text',
             doc => 'processing profile id to use for realignment of unaligned reads from first metagenomic alignment',
             is_optional => 1,
         },
         first_viral_verification_alignment_pp_id => {
-            is => 'Integer',
+            is => 'Text',
             doc => 'processing profile id to use for first viral verification alignment',
             is_optional => 1,
         },
         second_viral_verification_alignment_pp_id => {
-            is => 'Integer',
+            is => 'Text',
             doc => 'processing profile id to use for first viral verification alignment',
             is_optional => 1,
         },
@@ -1081,26 +1081,13 @@ sub upload_instrument_data_and_unlock {
 sub lock {
     my $self = shift;
     my @parts = @_;
-    my $resource_lock = join('/', $ENV{GENOME_LOCK_DIR}, @parts);
-    $self->status_message("Creating lock on $resource_lock...");
+    my $lock_key = join('_', @parts);
+    $self->debug_message("Creating lock on $lock_key...");
+    my $resource_lock = File::Spec->join($ENV{GENOME_LOCK_DIR}, $lock_key);
     my $lock = Genome::Sys->lock_resource(
         resource_lock => $resource_lock,
         max_try => 2,
     );
-    if ($lock) {
-        # Also get "new" lock.  Once code that only gets old lock is retired we
-        # can switch to using only the "new" lock.
-        my $lock_key = join('_', @parts);
-        my $new_resource_lock = File::Spec->join($ENV{GENOME_LOCK_DIR}, $lock_key);
-        my $new_lock = Genome::Sys->lock_resource(
-            resource_lock => $new_resource_lock,
-            max_try => 2,
-        );
-        unless ($new_lock) {
-            undef $lock;
-            Genome::Sys->unlock_resource(resource_lock => $resource_lock);
-        }
-    }
     return $lock;
 };
 
@@ -1238,8 +1225,8 @@ sub _verify_model_and_build_instrument_data_match {
     Carp::confess('No model to verify instrument data') if not $model;
     Carp::confess('No build to verify instrument data') if not $build;
 
-    my @build_instrument_data = sort {$a->id <=> $b->id} $build->instrument_data;
-    my @model_instrument_data = sort {$a->id <=> $b->id} $model->instrument_data;
+    my @build_instrument_data = sort {$a->id cmp $b->id} $build->instrument_data;
+    my @model_instrument_data = sort {$a->id cmp $b->id} $model->instrument_data;
 
     $self->status_message('Model: '.$model->__display_name__);
     $self->status_message('Model instrument data: '.join(' ', map { $_->id } @model_instrument_data));

@@ -12,7 +12,7 @@ BEGIN {
 use above 'Genome';
 use Test::More;
 use File::Temp 'tempdir';
-use File::Slurp;
+use File::Slurp qw(read_file);
 use Filesys::Df qw();
 
 $| = 1;
@@ -103,6 +103,7 @@ my %params = (
 );
 my $allocation = Genome::Disk::Allocation->create(%params);
 ok($allocation, 'successfully created test allocation');
+ok($allocation->archive_after_time, 'archive_after_time should be set automatically on creation');
 
 # Try to make another allocation that's a subdir of the first, which should fail
 $params{allocation_path} .= '/subdir';
@@ -131,7 +132,7 @@ ok($other_allocation->mount_path eq $volumes[-1]->mount_path, 'allocation landed
 
 # Try to delete
 printf("Deleting 'other' allocation at path %s\n", $other_allocation->absolute_path);
-Genome::Disk::Allocation->delete(allocation_id => $other_allocation->id);
+Genome::Disk::Allocation->delete(id => $other_allocation->id);
 isa_ok($other_allocation, 'UR::DeletedRef', 'successfully removed allocation');
 
 # Lower size of allocation's volume, then reallocate with move and make sure that works
@@ -146,7 +147,7 @@ my $old_allocation_size = $allocation->kilobytes_requested;
 $current_volume->total_kb($current_volume->allocated_kb);
 my $current_volume_unallocated_kb = $current_volume->unallocated_kb;
 my $move_rv = Genome::Disk::Allocation->reallocate(
-    allocation_id => $allocation->id,
+    id => $allocation->id,
     kilobytes_requested => $allocation->kilobytes_requested + 100,
     allow_reallocate_with_move => 1);
 # resets total_kb to actual usage; unshrink volume; needed for creating new allocations later in forked children
@@ -157,7 +158,7 @@ ok(-e $allocation->absolute_path . "/test_file", "touched file correctly moved t
 ok(!Genome::Disk::Allocation->get(mount_path => $current_volume->mount_path, allocation_path => $allocation->allocation_path), 'no redundant allocation on old volume');
 
 # Now delete the allocation
-Genome::Disk::Allocation->delete(allocation_id => $allocation->id);
+Genome::Disk::Allocation->delete(id => $allocation->id);
 isa_ok($allocation, 'UR::DeletedRef', 'other allocation removed successfully');
 
 
@@ -171,6 +172,7 @@ for my $child (1..$children) {
         push @pids, $pid;
     }
     else {
+        srand(time ^ $pid);
         print "*** Spinning up child process $child, PID $$\n";
         my $volume = $volumes[$child % @volumes];
         do_race_lock($child, $group, $volume, $test_dir);
@@ -190,7 +192,7 @@ for my $child (1..$children) {
     ok(-e $log, 'found child process log file') or next;
 
     my @lines = read_file($log);
-    ok(@lines == 3, 'there are three lines of output in the log, create/reallocate/deallocate') || system("cat $log");
+    ok(@lines == 3, 'there are three lines of output in the log, create/reallocate/deallocate') || diag $log, "\n", @lines;
     for my $line (@lines) {
         chomp $line;
         ok($line =~ /SUCCESS/, "log indicates success: $line");
@@ -217,6 +219,9 @@ sub do_race_lock {
         CLEANUP => 1,
         UNLINK => 1,
     );
+
+    my $mount_path = $volume->mount_path;
+    $path =~ s/$mount_path//;
 
     # The volume/group objects still exist (they were created in the parent process), but they aren't in the
     # UR cache for the child process, which means that gets/loads will not find them. Overriding the
@@ -250,7 +255,7 @@ sub do_race_lock {
     print "*** Child $child_id reallocating\n";
 
     my $reallo_rv = Genome::Disk::Allocation->reallocate(
-        allocation_id => $allocation->id,
+        id => $allocation->id,
         kilobytes_requested => 5,
     );
 
@@ -267,7 +272,7 @@ sub do_race_lock {
     print "*** Child $child_id deallocating!\n";
 
     my $deallo_rv = Genome::Disk::Allocation->delete(
-        allocation_id => $allocation->id,
+        id => $allocation->id,
     );
 
     unless (defined $deallo_rv and $deallo_rv) {

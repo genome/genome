@@ -1,23 +1,11 @@
-package Genome::Model::Tools::Vcf::ExtractSampleVariants;     # rename this when you give the module file a different name <--
-
-#####################################################################################################################################
-# MutationRate - Calculate the mutation rate (per megabase) given a list of mutations (e.g. tier1 SNVs) and a set of regions (e.g. coding space)
-#					
-#	AUTHOR:		Dan Koboldt (dkoboldt@genome.wustl.edu)
-#
-#	CREATED:	04/22/2011 by D.K.
-#	MODIFIED:	04/22/2011 by D.K.
-#
-#	NOTES:	
-#			
-#####################################################################################################################################
+package Genome::Model::Tools::Vcf::ExtractSampleVariants; 
 
 use strict;
 use warnings;
 
 use FileHandle;
 
-use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
+use Genome;
 
 ## Declare global statistics hash ##
 
@@ -50,7 +38,7 @@ $vep_class_rank{'FRAMESHIFT_CODING'} = 		13;
 class Genome::Model::Tools::Vcf::ExtractSampleVariants {
 	is => 'Command',                       
 	
-	has => [                                # specify the command's single-value properties (parameters) <--- 
+	has => [
 		vcf_file	=> { is => 'Text', doc => "Input VCF File" , is_optional => 0},
 		vep_file	=> { is => 'Text', doc => "Input VCF File" , is_optional => 0},		
 		output_file	=> { is => 'Text', doc => "Output file with sample variants" , is_optional => 0},
@@ -62,7 +50,7 @@ class Genome::Model::Tools::Vcf::ExtractSampleVariants {
 
 sub sub_command_sort_position { 12 }
 
-sub help_brief {                            # keep this to just a few words <---
+sub help_brief {
     "Uses VEP and VCF information to extract samples with certain variants"                 
 }
 
@@ -75,19 +63,13 @@ EXAMPLE:	gmt vcf extract-sample-variants --vcf-file my.vcf --vep-file my.vep.out
 EOS
 }
 
-sub help_detail {                           # this is what the user will see with the longer version of help. <---
+sub help_detail {
     return <<EOS 
 
 EOS
 }
 
-
-################################################################################################
-# Execute - the main program logic
-#
-################################################################################################
-
-sub execute {                               # replace with real execution logic.
+sub execute {
 	my $self = shift;
 
         my $vcf_file = $self->vcf_file;
@@ -333,13 +315,8 @@ sub execute {                               # replace with real execution logic.
 
 	close(OUTFILE);
 
-	return 1;                               # exits 0 for true, exits 1 for false (retval/exit code mapping is overridable)
+	return 1;
 }
-
-################################################################################################
-# LoadAnnotation - load the VEP annotation 
-#
-################################################################################################
 
 sub is_reference
 {
@@ -363,12 +340,6 @@ sub is_reference
 	return(0);
 }
 
-
-################################################################################################
-# LoadAnnotation - load the VEP annotation 
-#
-################################################################################################
-
 sub is_heterozygous
 {
 	my ($ref, $var, $genotype) = @_;
@@ -391,12 +362,6 @@ sub is_heterozygous
 	return(0);
 }
 
-
-################################################################################################
-# LoadAnnotation - load the VEP annotation 
-#
-################################################################################################
-
 sub is_homozygous
 {
 	my ($ref, $var, $genotype) = @_;
@@ -418,12 +383,6 @@ sub is_homozygous
 	
 	return(0);
 }
-
-
-################################################################################################
-# LoadAnnotation - load the VEP annotation 
-#
-################################################################################################
 
 sub load_vep
 {
@@ -553,15 +512,6 @@ sub load_vep
         return(%annotation);
 }
 
-
-
-
-
-#############################################################
-# load_vep_results - parses the file
-#
-#############################################################
-
 sub bySeverity
 {
 	my ($gene_a, $ens_gene_a, $class_a, $cdna_pos_a, $protein_pos_a, $amino_acids_a, $polyphen_a, $sift_a, $condel_a) = split(/\t/, $a);
@@ -624,12 +574,6 @@ sub bySeverity
 	$condel_b <=> $condel_a
 }
 
-
-#############################################################
-# load_vep_results - parses the file
-#
-#############################################################
-
 sub fxn_class_code
 {
 	my $class = shift(@_);
@@ -652,13 +596,6 @@ sub fxn_class_code
 	return(0);
 }
 
-
-
-#############################################################
-# load_vep_results - parses the file
-#
-#############################################################
-
 sub is_damaging
 {
 	my ($polyphen, $sift, $condel) = @_;
@@ -677,12 +614,6 @@ sub is_damaging
 	return(0);
 }
 
-
-################################################################################################
-# Execute - the main program logic
-#
-################################################################################################
-
 sub code_to_allele
 {
 	my ($ref, $alt, $code) = @_;
@@ -698,13 +629,6 @@ sub code_to_allele
 	## Variant ##
 	return($alt[$code - 1]);	
 }
-
-
-
-################################################################################################
-# LoadAnnotation - load the VEP annotation 
-#
-################################################################################################
 
 sub convert_genotype
 {

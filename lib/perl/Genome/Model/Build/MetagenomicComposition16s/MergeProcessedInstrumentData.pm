@@ -10,15 +10,19 @@ class Genome::Model::Build::MetagenomicComposition16s::MergeProcessedInstrumentD
     has_input => [
         input_build => {
             is => 'Genome::Model::Build::MetagenomicComposition16s',
+        },
+        dummy_input => {
+            is => 'Integer',
+            is_optional => 1,
             is_many => 1,
+            doc => 'Unused input to facilitate legacy Workflow flow control.',
         },
     ],
     has_output => [
         build => {
             is => 'Genome::Model::Build::MetagenomicComposition16s',
-            calculate_from => ['input_build'],
-            calculate => sub { return $_[0]; }
-
+            via => '__self__',
+            to => 'input_build',
         },
     ],
 };

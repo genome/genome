@@ -109,6 +109,10 @@ sub resolve_param_value_from_cmdline_text {
         }
     }
     if (@results) {
+        # the ALTERNATE_FROM_CLASS stuff leads to non $param_class objects in results
+        @results = $self->_unique_elements(@results);
+        @results = grep { $_->isa($param_class) } @results;
+
         $self->status_message($param_resolve_message . " found " . @results);
     }
     else {

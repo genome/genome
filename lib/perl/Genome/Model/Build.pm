@@ -20,13 +20,13 @@ use Date::Manip;
 class Genome::Model::Build {
     is => ['Genome::Notable','Genome::Searchable'],
     type_name => 'genome model build',
-    table_name => 'GENOME_MODEL_BUILD',
+    table_name => 'model.build',
     is_abstract => 1,
     subclassify_by => 'subclass_name',
     subclass_description_preprocessor => __PACKAGE__ . '::_preprocess_subclass_description',
     id_by => [
         # TODO: change to just "id"
-        build_id => { is => 'Number', },
+        build_id => { is => 'Text', len => 64 },
     ],
     attributes_have => [
         is_input    => { is => 'Boolean', is_optional => 1, },
@@ -104,6 +104,18 @@ class Genome::Model::Build {
             reverse_as => 'build',
             doc => 'Links between a build and its input values, including the specification of which input the value satisfies.'
         },
+        downstream_build_associations => {
+            is => 'Genome::Model::Build::Input',
+            reverse_as => '_build_value',
+            doc => 'links to models which use this model as an input', 
+        },
+        downstream_builds => {
+            is => 'Genome::Model::Build',
+            via => 'downstream_build_associations',
+            to => 'build',
+            doc => 'models which use this model as an input',
+        },
+
         instrument_data  => {
             is => 'Genome::InstrumentData',
             via => 'input_associations',
@@ -210,6 +222,8 @@ class Genome::Model::Build {
         master_event_status     => { via => 'the_master_event', to => 'event_status' },
 
         # we now use model/build inputs instead of links
+        # when these can be removed do
+        # see "downstream_builds" 
         from_build_links => { is => 'Genome::Model::Build::Link', reverse_as => 'to_build',
                               doc => 'bridge table entries where this is the \"to\" build(used to retrieve builds this build is \"from\")' },
         from_builds      => { is => 'Genome::Model::Build', via => 'from_build_links', to => 'from_build',
@@ -218,23 +232,33 @@ class Genome::Model::Build {
                               doc => 'bridge entries where this is the \"from\" build(used to retrieve builds builds this build is \"to\")' },
         to_builds        => { is => 'Genome::Model::Build', via => 'to_build_links', to => 'to_build',
                               doc => 'Genome builds this build contributes \"to\"' },
-        
-        
-        # this is part of a legacy database table into which variants were uploaded
-        # remove when possible
-        variants         => { 
-            is => 'Genome::Model::BuildVariant', 
-            reverse_as => 'build',
-            doc => 'variants linked to this build... currently only for Somatic builds but need this accessor for get_all_objects' 
-        },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
+    id_generator => '-uuid',
 };
 
 sub __display_name__ {
     my $self = shift;
     return $self->id . ' of ' . $self->model->name;
+}
+
+sub data_set_path {
+    my ($self, $dataset, $version, $file_format) = @_;
+    my $path;
+    
+    if ($version and $file_format) {
+        $version =~ s/^v//;
+        $path = $self->data_directory."/$dataset.v$version.$file_format";
+    }
+    elsif ($file_format) {
+        # example $b->data_set_path('alignments/tumor/','','flagstat')
+        my @paths = glob($self->data_directory."/$dataset".'*.'.$file_format);
+        return unless @paths == 1;
+        $path = $paths[0];
+    }
+    return $path if -e $path;
+    return;
 }
 
 # TODO Remove this
@@ -781,37 +805,48 @@ sub symlinked_allocations {
     my $data_directory = $self->data_directory;
     return if not $data_directory or not -d $data_directory;
 
-    my %symlinks;
-    File::Find::find(
-        {
-            wanted => sub{
-                return if not -l $File::Find::name;
-                return if -d $File::Find::name;
-                $symlinks{$File::Find::name} = readlink($File::Find::name);
-            },
-            follow_fast => 1,
-            follow_skip => 2,
-        },
-        $data_directory,
-    );
+    # In some circumstances, this can get called (though all_allocations())
+    # many times.  NFS slowness would compound the problem and make this
+    # method way too slow.  We'll get the result the first time and cache
+    # the answer
+    unless ($self->{__symlinked_allocations}) {
 
-    my %allocations;
-    for my $symlink ( keys %symlinks ) {
-        my $target = $symlinks{$symlink};
-        my @tokens = split(m#/+#, $target);
-        my $allocation_path = join('/', @tokens[4..$#tokens]);
-        my @allocations = Genome::Disk::Allocation->get(allocation_path => $allocation_path);
-        next if not @allocations or @allocations > 1;
-        my $allocation = $allocations[0];
-        next if $allocations{$allocation->id};
-        UR::Context->reload($allocation); # this may have been loaded and unarchived earlier
-        $allocations{$allocation->id} = $allocation;
-        $allocation->{_symlink_name} = $symlink;
-        $allocation->{_target_name} = $target;
-        $allocation->{_target_exists} = ( -e $target ? 1 : 0 );
+        my %symlinks;
+        File::Find::find(
+            {
+                wanted => sub{
+                    return if not -l $File::Find::name;
+                    return if -d $File::Find::name;
+                    $symlinks{$File::Find::name} = readlink($File::Find::name);
+                },
+                follow_fast => 1,
+                follow_skip => 2,
+            },
+            $data_directory,
+        );
+
+        my %allocations;
+        for my $symlink ( keys %symlinks ) {
+            my $target = $symlinks{$symlink};
+            my @tokens = split(m#/+#, $target);
+            my $allocation_path = join('/', @tokens[4..$#tokens]);
+            my @allocations = Genome::Disk::Allocation->get(allocation_path => $allocation_path);
+            next if not @allocations or @allocations > 1;
+            my $allocation = $allocations[0];
+            next if $allocations{$allocation->id};
+            UR::Context->reload($allocation); # this may have been loaded and unarchived earlier
+            $allocations{$allocation->id} = $allocation;
+            $allocation->{_symlink_name} = $symlink;
+            $allocation->{_target_name} = $target;
+            $allocation->{_target_exists} = ( -e $target ? 1 : 0 );
+        }
+
+        my @allocs = values %allocations;
+        $self->{__symlinked_allocations} = \@allocs;
+        $self->{__symlinked_allocations_time} = time();
     }
 
-    return values %allocations;
+    return @{ $self->{__symlinked_allocations}};
 }
 
 sub input_builds {
@@ -924,7 +959,8 @@ sub archivable {
     my $self = shift;
     my $allocation = $self->disk_allocation;
     unless ($allocation) {
-        confess "Could not get allocation for build " . $self->__display_name__;
+        $self->warning_message("Could not get allocation for build " . $self->__display_name__);
+        return 0;
     }
     return $allocation->archivable();
 }
@@ -1507,10 +1543,7 @@ sub _execute_bsub_command { # here to overload in testing
             system("bkill $job_id");
         };
         my $lsf_change = UR::Context::Transaction->log_change($self, 'UR::Value', $job_id, 'external_change', $bsub_undo);
-        if ($lsf_change) {
-            $self->debug_message("Recorded LSF job submission ($job_id).");
-        }
-        else {
+        unless ($lsf_change) {
             die $self->error_message("Failed to record LSF job submission ($job_id).");
         }
 
@@ -1523,10 +1556,7 @@ sub _execute_bsub_command { # here to overload in testing
                 $self->status_message($bresume_output) unless ( $bresume_output =~ /^Job <$job_id> is being resumed$/ );
             },
         );
-        if ($commit_observer) {
-            $self->debug_message("Added commit observer to resume LSF job ($job_id).");
-        }
-        else {
+        unless ($commit_observer) {
             $self->error_message("Failed to add commit observer to resume LSF job ($job_id).");
         }
 
@@ -1722,8 +1752,7 @@ sub abandon {
         $self->reallocate;
     }
 
-    $self->_unregister_software_results
-        or return;
+    $self->_deactivate_software_results;
 
     my %add_note_args = (header_text => $header_text);
     $add_note_args{body_text} = $body_text if defined $body_text;
@@ -1731,6 +1760,12 @@ sub abandon {
 
     Genome::Search->queue_for_update($self->model);
 
+    return 1;
+}
+
+sub _deactivate_software_results {
+    my $self = shift;
+    map{$_->active(0)} Genome::SoftwareResult::User->get(user_class_name => $self->subclass_name, user_id => $self->id);
     return 1;
 }
 
@@ -1752,7 +1787,7 @@ sub _abandon_events { # does not realloc
 
     my @events = do {
         no warnings;
-        sort { $b->id <=> $a->id || $b->id cmp $a->id } $self->events;
+        sort { $b->date_scheduled cmp $a->date_scheduled } $self->events;
     };
 
     for my $event ( @events ) {
@@ -1942,7 +1977,7 @@ sub get_all_objects {
             #}
     };
 
-    return map { $sorter->( $self->$_ ) } (qw(events inputs metrics from_build_links to_build_links variants));
+    return map { $sorter->( $self->$_ ) } (qw(events inputs metrics from_build_links to_build_links));
 }
 
 sub yaml_string {

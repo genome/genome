@@ -9,7 +9,11 @@ BEGIN {
 };
 
 use above "Genome";
+use Genome::Utility::Text;
 use Test::More tests => 37;
+use Genome::Model::Tools::DetectVariants2::Utilities qw(
+    final_result_for_variant_type
+);
 
 use Cwd;
 #use Carp::Always;
@@ -39,7 +43,7 @@ my $test_targets = Genome::FeatureList->create(
 );
 isa_ok($test_targets, 'Genome::FeatureList', 'created test feature-list');
 
-my $variants_1 = $somatic_variation_build->final_result_for_variant_type('snvs');
+my $variants_1 = final_result_for_variant_type([$somatic_variation_build->results], 'snvs');
 
 my $mg = Genome::ModelGroup->__define__( name => 'test for SomaticValidation.t');
 isa_ok($mg, 'Genome::ModelGroup', 'defined model-group');
@@ -93,7 +97,7 @@ is($indel_result->description, 'curated for testing purposes', 'found existing r
 
 
 my $somatic_variation_build2 = &setup_somatic_variation_build(2);
-my $variants_2 = $somatic_variation_build2->final_result_for_variant_type('snvs');
+my $variants_2 = final_result_for_variant_type([$somatic_variation_build2->results], 'snvs');
 my @params_for_define_3 = (
     design => $test_targets,
     target => $test_targets,
@@ -189,91 +193,16 @@ is(scalar(@m_6), 12, 'created twelve models based on sample file');
 
 my $wm = $define_6->warning_message;
 ok($wm =~ /Sample specified as tumor fake_sample_2.*indicates it is a normal!/, 'produced desired warning about possible tumor/normal swap');
+
 # Create some test models with builds and all of their prerequisites
 sub setup_somatic_variation_build {
     my $i = shift;
-    my $test_profile = Genome::ProcessingProfile::ReferenceAlignment->create(
-        name => 'test_profile' . $i,
-        sequencing_platform => 'solexa',
-        dna_type => 'cdna',
-        read_aligner_name => 'bwa',
-        snv_detection_strategy => 'samtools [--test ' . $i . ']',
-    );
 
-    my $test_individual = Genome::Individual->create(
-        common_name => 'TEST' . $i,
-        name => 'test_individual' . $i,
-    );
+    use Genome::Test::Factory::Model::SomaticValidation;
+    use Genome::Test::Factory::Model::SomaticVariation;
 
-    my $test_sample = Genome::Sample->create(
-        name => 'test_subject' . $i,
-        source_id => $test_individual->id,
-    );
-
-    my $test_control_sample = Genome::Sample->create(
-        name => 'test_control_subject' . $i,
-        source_id => $test_individual->id,
-    );
-
-    my $test_instrument_data = Genome::InstrumentData::Solexa->create(
-    );
-
-    my $reference_sequence_build = Genome::Model::Build::ReferenceSequence->get_by_name('NCBI-human-build36');
-
-    my $test_model = Genome::Model->create(
-        name => 'test_reference_aligment_model_TUMOR' . $i,
-        subject_name => 'test_subject' . $i,
-        subject_type => 'sample_name',
-        processing_profile_id => $test_profile->id,
-        reference_sequence_build => $reference_sequence_build,
-    );
-
-    my $add_ok = $test_model->add_instrument_data($test_instrument_data);
-
-    my $test_build = Genome::Model::Build->create(
-        model_id => $test_model->id,
-        data_directory => $temp_build_data_dir,
-    );
-
-    my $test_model_two = Genome::Model->create(
-        name => 'test_reference_aligment_model_mock_NORMAL' . $i,
-        subject_name => 'test_control_subject' . $i,
-        subject_type => 'sample_name',
-        processing_profile_id => $test_profile->id,
-        reference_sequence_build => $reference_sequence_build,
-    );
-
-    $add_ok = $test_model_two->add_instrument_data($test_instrument_data);
-
-    my $test_build_two = Genome::Model::Build->create(
-        model_id => $test_model_two->id,
-        data_directory => $temp_build_data_dir,
-    );
-
-    my $test_somvar_pp = Genome::ProcessingProfile::SomaticVariation->create(
-        name => 'test somvar pp' . $i,
-        snv_detection_strategy => 'samtools r599 [--test=' . $i . ']',
-        tiering_version => 1,
-    );
-
-    my $annotation_build = Genome::Model::Build::ImportedAnnotation->__define__(
-        model_id => (-1 - $i),
-    );
-
-    my $somvar_model = Genome::Model::SomaticVariation->create(
-        tumor_model => $test_model,
-        normal_model => $test_model_two,
-        name => 'test somvar model' . $i,
-        processing_profile => $test_somvar_pp,
-        annotation_build => $annotation_build,
-    );
-
-    my $somvar_build = Genome::Model::Build::SomaticVariation->__define__(
-        model_id => $somvar_model->id,
-        data_directory => $temp_build_data_dir,
-        tumor_build => $test_build_two,
-        normal_build => $test_build,
-    );
+    # Why are SomaticValidation tests just using SomaticVariation models?
+    my $somvar_build = Genome::Test::Factory::Model::SomaticVariation->setup_somatic_variation_build();
 
     my $dir = ($temp_dir . '/' . 'fake_samtools_result' . $i);
     Genome::Sys->create_directory($dir);
@@ -287,18 +216,18 @@ sub setup_somatic_variation_build {
     $result->lookup_hash($result->calculate_lookup_hash());
 
     my $bed_file = $dir . '/snvs.hq.bed';
-    Genome::Sys->write_file($bed_file, <<EOBED
-1	10003	10004	A/T
-2	8819	8820	A/G
-EOBED
-    );
+    my $bed_text = Genome::Utility::Text::table_to_tab_string([
+        [qw(1 10003 10004 A/T)],
+        [qw(2  8819  8820 A/G)],
+    ]);
+    Genome::Sys->write_file($bed_file, $bed_text);
 
     my $detector_file = $dir . '/snvs.hq';
-  Genome::Sys->write_file($detector_file, <<SAMTOOLSFILE
-1	554426	C	G	5	5	0	2	G	'
-1	3704868	C	T	30	30	37	1	t	;
-SAMTOOLSFILE
-    );
+    my $detector_text = Genome::Utility::Text::table_to_tab_string([
+        [qw(1  554426 C G  5  5  0 2 G ')],
+        [qw(1 3704868 C T 30 30 37 1 t ;)],
+    ]);
+    Genome::Sys->write_file($detector_file, $detector_text);
 
     my $dir2 = ($temp_dir .'/' . 'fake_combine_result' . $i);
     Genome::Sys->create_directory($dir2);
@@ -307,7 +236,6 @@ SAMTOOLSFILE
         id => (-3014 - $i),
     );
     $result2->lookup_hash($result2->calculate_lookup_hash());
-
 
     $result->add_user(user => $somvar_build, label => 'uses');
     $result2->add_user(user => $somvar_build, label => 'uses');

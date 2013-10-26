@@ -12,25 +12,43 @@ use File::Basename;
 class Genome::Model::Tools::Validation::ProcessSomaticValidation {
   is => 'Command',
   has_input => [
-      somatic_validation_model_id => {
-          is => 'Text',
-          doc => "ID of SomaticValidation model",
-      },
-
       output_dir => {
           is => 'Text',
           doc => "Directory where output will be stored (under a subdirectory with the sample name)",
       },
-
       ],
 
   has_optional_input => [
+      somatic_validation_model_id => {
+          is => 'Text',
+          doc => "ID of SomaticValidation model - either this or the --somatic-validation-build-id are required",
+          is_optional => 1,
+      },
+
+      somatic_validation_build_id => {
+          is => 'Text',
+          doc => "ID of SomaticValidation build - either this or the --somatic-validation-model-id are required",
+          is_optional => 1,
+      },
+
+      somatic_variation_model_id => {
+          is => 'Text',
+          doc => "Optional. If provided, will create xml sessions for review that display both the original bams from this model along with the capture validation bams",
+          is_optional => 1,
+      },
 
       tumor_only => {
           is => 'Boolean',
           is_optional => 1,
           default => 0,
           doc => "Model only has tumor data",
+      },
+
+      use_assembled_indels => {
+          is => 'Boolean',
+          is_optional => 1,
+          default => 1,
+          doc => 'Use the assembled indel calls from the build. Turning this off uses indels straight out of discovery',
       },
 
       restrict_to_target_regions =>{
@@ -99,7 +117,6 @@ class Genome::Model::Tools::Validation::ProcessSomaticValidation {
           doc => "only keep calls within the target regions. These are pulled from the build if possible",
       },
 
-
       get_readcounts =>{
           is => 'Boolean',
           is_optional => 1,
@@ -131,8 +148,15 @@ class Genome::Model::Tools::Validation::ProcessSomaticValidation {
       tiers_to_review => {
           is => 'String',
           is_optional => 1,
-          doc => "comma-separated list of tiers to include in review. (e.g. 1,2,3 will create bed files with tier1, tier2, and tier3)",
-          default => 1,
+          doc => "comma-separated list of tiers to include in review. (e.g. 1,2,3 will create bed files with tier1, tier2, and tier3).  Anything other than 1,2,3,4 (all tiers) requires that the --add-tiers option be specified",
+          default => "1,2,3,4",
+      },
+
+      statuses_to_review => {
+          is => 'String',
+          is_optional => 1,
+          doc => "comma-separated list of statuses to include in review. Accepted values: [validated,newcall,nonvalidated]",
+          default => "validated,newcall",
       },
 
       create_archive => {
@@ -427,7 +451,6 @@ sub doAnnotation{
         `touch $file.anno`;
         return($file . ".anno");
     }
-
     my $anno_cmd = Genome::Model::Tools::Annotate::TranscriptVariants->create(
         variant_file => $file,
         output_file => $file . ".anno",
@@ -498,7 +521,6 @@ sub getReadcounts{
 ###############################################################################################################
 sub execute {
   my $self = shift;
-  my $somatic_validation_model_id = $self->somatic_validation_model_id;
   my $output_dir = $self->output_dir;
   $output_dir =~ s/(\/)+$//; # Remove trailing forward-slashes if any
 
@@ -506,19 +528,57 @@ sub execute {
       mkdir($output_dir);
   }
 
+  unless(defined($self->somatic_validation_build_id) || defined($self->somatic_validation_model_id)){
+      die("must specify either somatic-validation-build-id or somatic-validation-model-id");
+  }
+
   # Check on the input data before starting work
-  my $model = Genome::Model->get( $somatic_validation_model_id );
-  print STDERR "ERROR: Could not find a model with ID: $somatic_validation_model_id\n" unless( defined $model );
-  print STDERR "ERROR: Output directory not found: $output_dir\n" unless( -e $output_dir );
-  return undef unless( defined $model && -e $output_dir );
+  my $model;
+  my $build;
+  if(defined($self->somatic_validation_model_id)){
+      $model = Genome::Model->get( $self->somatic_validation_model_id );
+      print STDERR "ERROR: Could not find a model with ID: " . $self->somatic_validation_model_id . "\n" unless( defined $model );
+      print STDERR "ERROR: Output directory not found: $output_dir\n" unless( -e $output_dir );
+      return undef unless( defined $model && -e $output_dir );
+      $build = $model->last_succeeded_build;
+  } elsif(defined($self->somatic_validation_build_id)){
+      $build = Genome::Model::Build->get( $self->somatic_validation_build_id );
+      $model = $build->model;
+      print STDERR "ERROR: Could not find a model with ID: " . $self->somatic_validation_model_id . "\n" unless( defined $model );
+      print STDERR "ERROR: Output directory not found: $output_dir\n" unless( -e $output_dir );
+      return undef unless( defined $model && -e $output_dir );      
+  }
 
-
-  #grab the info from the model
-  my $build = $model->last_succeeded_build;
   unless( defined($build) ){
       print STDERR "WARNING: Model ", $model->id, "has no succeeded builds\n";
       return undef;
   }
+
+  #validate that the statuses are valid
+  my @statuses = split(",",$self->statuses_to_review);
+  foreach my $i (@statuses){
+      unless($i =~ /^newcall$|^validated$|^nonvalidated$/){
+          print STDERR "ERROR: status $i is not a valid status to review. Status must be one of [validated,nonvalidated,newcall]";
+          die();
+      }
+  }
+
+  #make sure specified tiers are valid and that if anything other than
+  # all (tiers 1,2,3,4) is specified, that add-tiers is on
+  my @tiers = split(",",$self->tiers_to_review);
+  my $tstring = "";  
+  foreach my $t (sort(@tiers)){
+      unless ($t =~/^[1234]$/){
+          print STDERR "ERROR: $t is not a valid tier to review. tiers-to-review should be a comma-separated list containing only [1,2,3,4]";
+          die();          
+      }
+      $tstring .= $t
+  }
+  if(($tstring ne "1234") && !($self->add_tiers)){
+      print STDERR "ERROR: if a combination of tiers-to-review other than 1,2,3,4 is specified, --add-tiers must be specified. (otherwise I don't know how to grab the tiers you want for review!";
+      die();          
+  }
+
 
   my $ref_seq_build_id = $model->reference_sequence_build->build_id;
   my $ref_seq_build = Genome::Model::Build->get($ref_seq_build_id);
@@ -591,17 +651,8 @@ sub execute {
   }
 
   
-  my $small_indel_file = "$build_dir/validation/small_indel/final_output";
-  unless( -e $small_indel_file ){
-      print STDERR "WARNING: realigned small indels not found (tumor only build?). Using raw calls from validation data\n";
-      $small_indel_file = "$build_dir/variants/indels.hq.bed";
-  }
-  my $large_indel_file = "$build_dir/validation/large_indel/combined_counts.csv.somatic.adapted";
-  unless( -e $large_indel_file ){
-      print STDERR "WARNING: realigned large indels not found (tumor only build?). Using raw calls from validation data\n";
-      $large_indel_file = "$build_dir/variants/indels.hq.bed";
-      print STDERR $large_indel_file . "\n";
-  }
+  my ($small_indel_file, $large_indel_file) = $self->indel_files( $build_dir );
+
   my $process_svs = $self->process_svs;
   my $sv_file = "$build_dir/validation/sv/assembly_output.csv.merged.readcounts.somatic.wgs_readcounts.somatic";
   if($process_svs){
@@ -940,20 +991,60 @@ sub execute {
       for my $i (@tiers){
           `grep -w tier$i $output_dir/$sample_name/snvs.indels.annotated >>$output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp`;
       }
-      `joinx sort -i $output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp >$output_dir/$sample_name/snvs.indels.annotated.tier$tierstring`;
-      `rm -f $output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp`;
-      annoFileToSlashedBedFile("$output_dir/$sample_name/snvs.indels.annotated.tier$tierstring","$output_dir/review/$sample_name.bed");
-
-      my $bam_files;
-      my $labels;
-      if($self->tumor_only){
-          $bam_files = $tumor_bam;
-          $labels = "tumor $sample_name";
-      } else {
-          $bam_files = join(",",($normal_bam,$tumor_bam));
-          $labels = join(",",("normal $sample_name","tumor $sample_name"));
+      
+      my @statuses = split(",",$self->statuses_to_review);
+      foreach my $i (@statuses){
+          `grep -w $i $output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp >>$output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp2`;
       }
 
+      `joinx sort -i $output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp >$output_dir/$sample_name/snvs.indels.annotated.tier$tierstring`;
+      annoFileToSlashedBedFile("$output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp2","$output_dir/review/$sample_name.bed");
+      `rm -f $output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp`;
+      `rm -f $output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp2`;
+
+      my @bam_files;
+      my @labels;
+
+
+      #add bam files from som-var model, if specified
+      if(defined $self->somatic_variation_model_id){
+          my $var_model = Genome::Model->get( $self->somatic_variation_model_id );
+          if (!( defined $var_model )){
+              print STDERR "ERROR: Could not find a model with ID: " . $self->somatic_validation_model_id . "\n";
+          } else {
+              my $tvar_build = $var_model->tumor_model->last_succeeded_build;
+              my $nvar_build = $var_model->normal_model->last_succeeded_build;
+              if (!( defined $nvar_build ) || !(defined $tvar_build) ){
+                  print STDERR "ERROR: Could not find a succeeded refalign builds from model ID: " . $self->somatic_validation_model_id . "\n";
+              } else {                  
+                  my $tbam = $tvar_build->whole_rmdup_bam_file;
+                  my $nbam = $nvar_build->whole_rmdup_bam_file;
+                  
+                  if (!( -s $tbam && -s $nbam)){
+                      print STDERR "couldn't resolve bam files for somatic variation model";
+                  } else {
+                      
+                      push(@bam_files, $nbam);
+                      push(@bam_files, $tbam);
+                      push(@labels, "original normal $sample_name");
+                      push(@labels, "original tumor $sample_name");
+                  }
+              }
+          }
+      }
+
+      
+     # add bam files from this model
+      if($self->tumor_only){
+          push(@bam_files, $tumor_bam);
+          push(@labels, "tumor $sample_name");
+      } else {
+          push(@bam_files, $normal_bam);
+          push(@bam_files, $tumor_bam);
+
+          push(@labels, "normal $sample_name");
+          push(@labels, "tumor $sample_name");
+      }
 
       my $igv_reference_name = "b37"; #default
       if(defined($self->igv_reference_name)){
@@ -962,17 +1053,18 @@ sub execute {
           print STDERR "WARNING: No IGV reference name supplied - defaulting to build 37\n";
       }
 
+
       #create the xml file for review
       my $dumpXML = Genome::Model::Tools::Analysis::DumpIgvXmlMulti->create(
-          bams => "$bam_files",
-          labels => "$labels",
+          bams => join(",",@bam_files),
+          labels => join(",",@labels),
           output_file => "$output_dir/review/$sample_name.xml",
           genome_name => $sample_name,
           review_bed_file => "$output_dir/review/$sample_name.bed",
           reference_name => $igv_reference_name,
           );
       unless ($dumpXML->execute) {
-          die "Failed to dump IGV xml for poorly covered sites.\n";
+          die "Failed to dump IGV xml.\n";
       }
 
       print STDERR "\n--------------------------------------------------------------------------------\n";
@@ -1024,4 +1116,19 @@ sub execute {
   return 1;
 }
 
+sub indel_files {
+    my ($self, $build_dir) = @_;
+    my $small_indel_file = "$build_dir/validation/small_indel/final_output";
+    unless( -e $small_indel_file && $self->use_assembled_indels ){
+        print STDERR "WARNING: realigned small indels not found (tumor only build?) or not requested. Using raw calls from validation data\n";
+        $small_indel_file = "$build_dir/variants/indels.hq.bed";
+    }
+    my $large_indel_file = "$build_dir/validation/large_indel/combined_counts.csv.somatic.adapted";
+    unless( -e $large_indel_file && $self->use_assembled_indels ){
+        print STDERR "WARNING: realigned large indels not found (tumor only build?) or not requested. Using raw calls from validation data\n";
+        $large_indel_file = "$build_dir/variants/indels.hq.bed";
+        print STDERR $large_indel_file . "\n";
+    }
+    return ($small_indel_file,$large_indel_file);
+}
 1;

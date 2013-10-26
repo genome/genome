@@ -12,7 +12,7 @@ class Genome::Capture::Target {
             AMPLIFICATION_ROI_ID region_id,
             TARGET_STAG_ID tag_id,
             CREATION_EVENT_ID pse_id
-        from amplification_target@oltp
+        from amplification_target
         ) capture_target
     |,
     id_by => [
@@ -28,7 +28,7 @@ class Genome::Capture::Target {
         pse_id => { },
     ],
     doc         => 'the target, usually exon or cds',
-    data_source => 'Genome::DataSource::GMSchema',
+    data_source => 'Genome::DataSource::Oltp',
 };
 
 1;

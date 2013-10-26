@@ -11,23 +11,19 @@ use warnings;
 use above "Genome";
 use Test::More;
 
+use Genome::Test::Factory::Sample;
+
 use_ok('Genome::Model') or die;
 
 class Genome::ProcessingProfile::Test {
     is => 'Genome::ProcessingProfile'
 };
 
-class Genome::Subject::Test {
-    is => 'Genome::Subject'
-};
-
 class Genome::Model::Test {
     is => 'Genome::Model',
 };
 
-my $test_subject = Genome::Subject::Test->create(
-    name => 'test_subject'
-);
+my $test_subject = Genome::Test::Factory::Sample->setup_object();
 ok($test_subject, 'created test subject') or die;
 
 my $test_pp = Genome::ProcessingProfile::Test->create(

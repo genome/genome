@@ -51,7 +51,7 @@ $aligner_label =~ s/\./\_/g;
 
 #was the path for BSMAP2.1 - new path is in the more canonical location
 #my $expected_shortcut_path = "/gscmnt/sata828/info/alignment_data/$aligner_label/TEST-human/test_run_name/4_-123456",
-my $expected_shortcut_path = $ENV{GENOME_TEST_INPUTS} . "/Genome-InstrumentData-AlignmentResult-Bsmap/v2.6/2013-07-22";
+my $expected_shortcut_path = $ENV{GENOME_TEST_INPUTS} . "/Genome-InstrumentData-AlignmentResult-Bsmap/v2.6/2013-08-07";
 print STDERR $expected_shortcut_path . "\n";
 
 my $FAKE_INSTRUMENT_DATA_ID=-123456;

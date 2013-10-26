@@ -24,6 +24,12 @@ class Genome::Model::Tools::Bed::ChromSort {
             shell_args_position => 2,
             doc => 'Where to write the output BED file',
         },
+        skip_lines => {
+            is => 'Integer',
+            is_optional => 1,
+            shell_args_position => 3,
+            doc => 'The number of lines to skip at the beginning of the file. Useful for headers on non-standard files.',
+        },
     ],
     has_transient_optional => [
         _input_fh => {
@@ -99,7 +105,7 @@ sub sort  {
     my $self = shift;
     while (my $line = $self->_input_fh->getline) {
         #svs.hq could contain # lines
-        if ($line =~ /^#/) {
+        if ($line =~ /^#/ || ($self->skip_lines && $self->_input_fh->input_line_number <= $self->skip_lines)) {
             $self->_output_fh->print($line);
             next;
         }

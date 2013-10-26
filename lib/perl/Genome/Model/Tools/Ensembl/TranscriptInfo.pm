@@ -22,7 +22,7 @@ class Genome::Model::Tools::Ensembl::TranscriptInfo {
     is => ['Genome::Model::Tools::Ensembl::Base'],
     has => [
         reference_build_id => {
-            is => 'Integer',
+            is => 'Text',
             doc => 'The build id for the reference genome',
         },
         reference_build => {

@@ -6,7 +6,7 @@ use FileHandle;
 use Genome;
 use File::Basename;
 use FileHandle;
-#use Math::Combinatorics;
+use Math::Combinatorics;
 
 class Genome::Model::Tools::Sciclone {
     is => 'Command',
@@ -14,7 +14,7 @@ class Genome::Model::Tools::Sciclone {
     has => [
         variant_files => {
             is => 'Text',
-            doc => "comma separated list - files of validated variants with readcounts. 7-column Bam-readcount format - columns: Chr, Start, Ref, Var, RefReads, VarReads, VAF",
+            doc => "comma separated list of tab-delimited files - files of validated variants with readcounts. 7-column tab-delimited Bam-readcount format - columns: Chr, Start, Ref, Var, RefReads, VarReads, VAF. VAF must be expressed as a percentage in the range from 0 to 100.",
             is_optional => 0,
             is_input => 1 ,
         },
@@ -57,7 +57,7 @@ class Genome::Model::Tools::Sciclone {
         },
 
         minimum_depth => {
-            is => 'Integer',
+           is => 'Integer',
             doc => "Plot/Cluster only using variants that have at least this many reads. 100 is a reasonable default for capture data. If only wgs data is available, you'll need to lower this value.",
             is_optional => 1,
             default => 100,
@@ -140,20 +140,20 @@ class Genome::Model::Tools::Sciclone {
             default => 0,
         },
 
-        minimum_labelled_peak_height => {
-            is => 'Text',
-            doc => "only KDE peaks that exceed this height get labelled (1d plot)",
-            is_optional => 1,
-            is_input => 1,
-            default => 0.001
-        },
+        # minimum_labelled_peak_height => {
+        #     is => 'Text',
+        #     doc => "only KDE peaks that exceed this height get labelled (1d plot)",
+        #     is_optional => 1,
+        #     is_input => 1,
+        #     default => 0.001
+        # },
 
-        only_label_highest_peak => {
-            is => 'Boolean',
-            doc => "only label the highest peak (1d plot)",
-            is_optional => 1,
-            default => 0
-        },
+        # only_label_highest_peak => {
+        #     is => 'Boolean',
+        #     doc => "only label the highest peak (1d plot)",
+        #     is_optional => 1,
+        #     default => 0
+        # },
 
         overlay_error_bars => {
             is => 'Boolean',
@@ -195,6 +195,13 @@ class Genome::Model::Tools::Sciclone {
             is_optional => 1,
             default => 10, 
         },
+        save_image_file => {
+            is => 'Text',
+            doc => "filename to which the R session will be saved",
+            is_optional => 1,
+            is_input => 1,
+            is_output => 1            
+        }
 
         ],
 };
@@ -244,8 +251,8 @@ sub execute {
     my $highlight_sex_chrs = $self->highlight_sex_chrs;
     my $positions_to_highlight = $self->positions_to_highlight;
     my $label_highlighted_points  = $self->label_highlighted_points;
-    my $minimum_labelled_peak_height = $self->minimum_labelled_peak_height;
-    my $only_label_highest_peak = $self->only_label_highest_peak;
+    # my $minimum_labelled_peak_height = $self->minimum_labelled_peak_height;
+    # my $only_label_highest_peak = $self->only_label_highest_peak;
     my $plot_only_cn2 = $self->plot_only_cn2;
     my $overlay_clusters = $self->overlay_clusters;
     my $show_title = $self->show_title;
@@ -278,12 +285,14 @@ sub execute {
         my @cnFiles = split(",",$cn_files);
         my $i=0;
         for($i=0;$i<@cnFiles;$i++){
-            my $var = "cn$i";
-            push(@cnVars,$var);
-            # read in the file (and convert varscan, if necessary)
-            print $rfile "$var = " . 'read.table("' . $cnFiles[$i] .  '")' . "\n";
-            print $rfile "$var = $var" . '[,c(1,2,3,5)]' . "\n";
-        }
+	    if (-s $cnFiles[$i]) { # proceed if cn file is not empty
+		my $var = "cn$i";
+		push(@cnVars,$var);
+		# read in the file (and convert varscan, if necessary)
+		print $rfile "$var = " . 'read.table("' . $cnFiles[$i] .  '")' . "\n";
+		print $rfile "$var = $var" . '[,c(1,2,3,5)]' . "\n";
+	    }
+	}
     }
 
     my @regVars;
@@ -318,12 +327,33 @@ sub execute {
     $cmd = $cmd . ", sampleNames=c(" . $sampleNames . ")";
 
     if(defined($cn_files)){
-        $cmd = $cmd . ", copyNumberCalls=list(" . join(",",@cnVars) . ")";
+	my @cnFiles = split(",",$cn_files);
+        my $i=0;
+	my $good = 0; # count nonempty cnFiles
+	my $filecount = scalar(@cnFiles);
+        for($i=0;$i<@cnFiles;$i++){
+	    if (-s $cnFiles[$i]) { # proceed if all cn files are non-empty
+		$good++;
+	    }
+	}
+	if ($good == $filecount) {
+		$cmd = $cmd . ", copyNumberCalls=list(" . join(",",@cnVars) . ")";
+	}
     }
 
     
     if(defined($regions_to_exclude)){
-        $cmd = $cmd . ", regionsToExclude=list(" . join(",",@regVars) . ")";
+	my @regFiles =  split(",",$regions_to_exclude);
+        my $i=0;
+	my $good = 0; # count nonempty regFiles
+	my $filecount = scalar(@regFiles);
+        for($i=0;$i<@regFiles;$i++){
+            if(-s $regFiles[$i]){ # proceed if all reg files are non-empty
+		$good++;
+	    }
+	} if ($good == $filecount) {
+	    $cmd = $cmd . ", regionsToExclude=list(" . join(",",@regVars) . ")";
+	}
     }
 
     $cmd = $cmd . ", minimumDepth=$minimum_depth";
@@ -353,6 +383,9 @@ sub execute {
     #write out the cluster table command:
     print $rfile "writeClusterTable(sc, \"$clusters_file\")\n";
 
+    if(defined($self->save_image_file)){
+        print $rfile "save.image(\"" . $self->save_image_file . "\")\n";
+    }
 
     #--- 1d plotting ---
     if(defined(($plot1d_file))){
@@ -374,15 +407,15 @@ sub execute {
             print $rfile ", highlightsHaveNames=FALSE";
         }
 
-        if(defined($minimum_labelled_peak_height)){
-            print $rfile ", minimumLabelledPeakHeight=$minimum_labelled_peak_height";
-        }
+        # if(defined($minimum_labelled_peak_height)){
+        #     print $rfile ", minimumLabelledPeakHeight=$minimum_labelled_peak_height";
+        # }
 
-        if($only_label_highest_peak){
-            print $rfile ", onlyLabelHighestPeak=TRUE";
-        } else {
-            print $rfile ", onlyLabelHighestPeak=FALSE";
-        }
+        # if($only_label_highest_peak){
+        #     print $rfile ", onlyLabelHighestPeak=TRUE";
+        # } else {
+        #     print $rfile ", onlyLabelHighestPeak=FALSE";
+        # }
 
 
         if($plot_only_cn2){
@@ -451,21 +484,22 @@ sub execute {
 
     #--- 3d plotting ---
     if(defined(($plot3d_file))){
-        print "Warning: 3d plotting not implemented in gmt yet\n";
-        # if(@sampleNames < 3){
-        #     die("can't do 3d plotting without at least 3 samples")
-        # }
+        if(@sampleNames < 3){
+            die("can't do 3d plotting without at least 3 samples")
+        }
         
-        # my @combs = combine(2,@sampleNames);
-        # my @lists = map { join ",", @$_ } @combs; 
-        # my $count = 1;
-        # foreach my $list (@lists){
-        #     print $rfile "sc.plot3d(sc, outputFile=\"$plot3d_file.$count\", samplesToPlot=$list";
-        #     print $rfile ", size=$plot_size_3d";
-        #     print $rfile ")\n";
-        #     $count++;
-        # }
-
+        my @combs = combine(3,@sampleNames);
+        my @lists = map { join ",", @$_ } @combs; 
+        my $count = 1;
+        foreach my $list (@lists){
+            my @samp = split(",",$list);
+            my $samples = 'c("' . join('","',@samp) . '")';
+            print $rfile "sc.plot3d(sc, outputFile=\"$plot3d_file.$count\", samplesToPlot=$samples";
+            print $rfile ", size=$plot_size_3d";
+            print $rfile ")\n";
+            $count++;
+        }
+        
     }
 
     close $rfile;

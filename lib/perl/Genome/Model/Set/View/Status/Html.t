@@ -32,7 +32,7 @@ is(@models, 2, "created 2 models");
 my $set = Genome::Model->define_set(processing_profile_id => $pp->id);
 ok($set, "defined a model set") or die;
 my @members = $set->members;
-is_deeply([ sort { $a->id <=> $b->id } @models ], [ sort { $a->id <=> $b->id } @members ], 'set members match models');
+is_deeply([ sort { $a->id cmp $b->id } @models ], [ sort { $a->id cmp $b->id } @members ], 'set members match models');
 
 my $view_obj = $set->create_view(
     xsl_root => Genome->base_dir . '/xsl',

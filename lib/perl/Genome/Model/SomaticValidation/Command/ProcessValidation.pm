@@ -14,7 +14,7 @@ class Genome::Model::SomaticValidation::Command::ProcessValidation {
         output_file                 => { is => 'Text', doc => "Output file for validation results", is_output => 1 },
         output_plot                 => { is => 'Boolean', doc => "Optional plot of variant allele frequencies", is_optional => 1, },
         build_id => {
-            is => 'Integer',
+            is => 'Text',
             is_output => 1,
             doc => 'build id of SomaticValidation model',
         },
@@ -27,7 +27,7 @@ class Genome::Model::SomaticValidation::Command::ProcessValidation {
     ],
     has_param => [
         lsf_resource => {
-            default_value => "-M 10000000 -R 'rusage[tmp=2000 && mem=10000] select[mem>10000 && tmp>2000]'",
+            default_value => "-M 30000000 -R 'rusage[tmp=2000 && mem=30000] select[mem>30000 && tmp>2000]'",
         },
     ],
     doc => 'final processing of HQ SNV detection results',

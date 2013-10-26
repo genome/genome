@@ -6,6 +6,7 @@ use warnings;
 use POSIX "floor";
 use List::Util 'max';
 require Carp;
+use Params::Validate qw(:types);
 
 require Exporter;
 our @ISA = qw(Exporter);
@@ -85,13 +86,38 @@ sub param_string_to_hash {
 }
 
 sub hash_to_string {
-    my ($hash) = @_;
+    my ($hash, $delimiter) = Params::Validate::validate_pos(
+        @_, { type => HASHREF, },
+            {
+                type => SCALAR,
+                default => q('),
+                regex => qr/^('|"|q|qq)$/,
+            }
+    );
+
     my @params;
     for my $key (sort keys %$hash) {
         next unless defined $hash->{$key};
-        push @params, "$key => '" . $hash->{$key} . "'";
+        push @params, "$key => " . wrap_as_string($hash->{$key}, $delimiter);
     }
     return join(",", @params);
+}
+
+sub wrap_as_string {
+    my ($value, $delimiter) = Params::Validate::validate_pos(
+        @_, 1,
+            {
+                type => SCALAR,
+                default => q('),
+                regex => qr/^('|"|q|qq)$/,
+            }
+    );
+
+    if ($delimiter =~ /q/) {
+        return sprintf("%s(%s)", $delimiter, $value);
+    } else {
+        return sprintf("%s%s%s", $delimiter, $value, $delimiter);
+    }
 }
 
 #< Sanitize for File System >#
@@ -358,5 +384,19 @@ sub tree_to_string {
     return $result;
 }
 
-1;
+sub table_to_delim_string {
+    my ($delimiter, $array) = Params::Validate::validate_pos(
+        @_, { type => SCALAR },
+            { type => ARRAYREF },
+    );
 
+    return join("\n",
+        map { join($delimiter, @$_) } @$array
+    );
+}
+
+sub table_to_tab_string {
+    table_to_delim_string("\t", @_);
+}
+
+1;

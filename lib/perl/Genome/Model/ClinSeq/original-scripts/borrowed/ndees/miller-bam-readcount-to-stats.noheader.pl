@@ -3,6 +3,8 @@
 use warnings;
 use strict;
 use IO::File;
+use above 'Genome';
+use Genome::Model::Tools::Vcf::Helpers qw/convertIub/;
 
 # arg 0 = snps (5 col (chr, pos, pos, ref, var)
 # arg 1 = readcounts
@@ -20,49 +22,6 @@ while( my $line = $inFh->getline )
     my @fields = split("\t",$line);
     $refHash{$fields[0] . "|" . $fields[1]} = $fields[3];
     $varHash{$fields[0] . "|" . $fields[1]} = $fields[4]
-}
-
-
-#convert weird bases to lists
-sub convertIub{
-    my ($base) = @_;
-
-    #deal with cases like "A/T" or "C/W"
-    if ($base =~/\//){
-	my @bases=split(/\//,$base);
-	my %baseHash;
-	foreach my $b (@bases){
-	    my $res = convertIub($b);
-	    my @bases2 = split(",",$res);
-	    foreach my $b2 (@bases2){
-		$baseHash{$b2} = 0;
-	    }
-	}
-	return join(",",keys(%baseHash));
-    }
-
-    # use a lookup table to return the correct base
-    # there's a more efficient way than defining this, \
-    # every time, but meh.
-    my %iub_codes;
-    $iub_codes{"A"}="A";
-    $iub_codes{"C"}="C";
-    $iub_codes{"G"}="G";
-    $iub_codes{"T"}="T";
-    $iub_codes{"U"}="T";
-    $iub_codes{"M"}="A,C";
-    $iub_codes{"R"}="A,G";
-    $iub_codes{"W"}="A,T";
-    $iub_codes{"S"}="C,G";
-    $iub_codes{"Y"}="C,T";
-    $iub_codes{"K"}="G,T";
-    $iub_codes{"V"}="A,C,G";
-    $iub_codes{"H"}="A,C,T";
-    $iub_codes{"D"}="A,G,T";
-    $iub_codes{"B"}="C,G,T";
-    $iub_codes{"N"}="G,A,T,C";
-
-    return $iub_codes{$base}
 }
 
 #
