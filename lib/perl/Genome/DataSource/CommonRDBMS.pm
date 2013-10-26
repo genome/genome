@@ -68,7 +68,7 @@ sub _make_db_pause_function {
 sub _check_pg_version {
     my $class = shift;
 
-    my $required_pg_version = '2.19.0';  # note: master requires 2.19.3
+    my $required_pg_version = '2.19.3';
     require DBD::Pg;
     my $pg_version = $DBD::Pg::VERSION;
     if (($pg_version ne $required_pg_version) && !defined $ENV{'LIMS_PERL'}) {
