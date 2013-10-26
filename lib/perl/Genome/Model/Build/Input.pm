@@ -10,7 +10,7 @@ class Genome::Model::Build::Input {
     id_by => [
         build_id => {
             is => 'VARCHAR2',
-            implied_by => 'build'
+            implied_by => 'build',
             len => 64,
         },
         value_class_name => {
