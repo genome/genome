@@ -23,12 +23,11 @@ class Genome::Model::Tools::CopyCat::AnnotationData {
     ],
 };
 
-
 sub annotation_data_path {
     my $self = shift;
 
-    return $self->allocation->absolute_path;
+    my ($allocation) = $self->disk_allocations;
+    return $allocation->absolute_path;
 }
-
 
 1;
