@@ -122,8 +122,8 @@ sub create_vcf_row {
     }
     #remaining required fields:
     #$row{"Material Comment [is tumor]"}
-    #$row{"Material Material Type"}
-    #$row{"Material TCGA Genome Reference"}
+    $row{"Material Material Type"} = "DNA";
+    $row{"Material TCGA Genome Reference"} = "GRCh-37lite";
     #$row{"Library Protocol REF"}
     #$row{"Library Parameter Value [Vendor]"} #only for non-custom
     #$row{"Library Parameter Value [Catalog Name]"} #only for non-custom
