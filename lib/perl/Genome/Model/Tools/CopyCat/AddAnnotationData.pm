@@ -56,10 +56,21 @@ sub validate {
 sub create_software_result {
     my $self = shift;
 
-    return Genome::Model::Tools::CopyCat::AnnotationData->create(
+    my $software_result =  Genome::Model::Tools::CopyCat::AnnotationData->create(
         reference_sequence => $self->reference_sequence,
         version => $self->version,
     );
+
+    my $allocation = Genome::Disk::Allocation->create(
+        owner_id => $software_result->id,
+        owner_class_name => $software_result->class,
+        disk_group_name => 'info_genome_models',
+        allocation_path => 'model_data/copy-cat' . $software_result->id,
+        kilobytes_requested => 5*1024*1024,
+    );
+    $software_result->output_dir($allocation->absolute_path);
+
+    return $software_result;
 }
 
 
@@ -79,6 +90,8 @@ sub _rsync_data_to_software_result {
             source_directory => $self->data_directory,
             target_directory => $sr->annotation_data_path,
         );
+        my $allocation = $sr->disk_allocation;
+        $allocation->reallocate;
     };
     if ($@) {
         my $error = $@;
@@ -91,7 +104,7 @@ sub _set_permissions_on_software_result_allocation {
     my ($self, $sr) = @_;
 
     eval {
-        $sr->allocation->set_permissions_read_only;
+        $sr->disk_allocation->set_permissions_read_only;
     };
     if ($@) {
         my $error = $@;
