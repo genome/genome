@@ -98,14 +98,14 @@ subtest 'set_dir_permissions' => sub {
 };
 
 subtest 'set_permissions_read_only' => sub {
-    plan tests => scalar(@_DIRECTORIES) + scalar(@_FILES);
+    plan tests => scalar(@_DIRECTORIES) + scalar(@_FILES) + 1;
 
     my $a = create_allocation_with_stuff('all-perm-test');
 
     $a->set_permissions_read_only;
 
     verify_permissions(0444, $a, @_FILES);
-    verify_permissions(0555, $a, @_DIRECTORIES);
+    verify_permissions(0555, $a, @_DIRECTORIES, '.');
 };
 
 
