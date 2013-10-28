@@ -116,17 +116,15 @@ sub _resolve_original_fastq_files {
         die("Couldn't find 'original_bam_paths' to make fastq files!");
     }
 
-    # This directory will store temporary files necessary to generate the fastq1 and fastq2 files required by Chimerascan
-    my $tmp_dir = Genome::Sys->create_temp_directory();
-
     # queryname sort each BAM and get fastq1 and fastq2 from /tmp queryname sorted BAMs
     my (@fastq1_files, @fastq2_files);
     for my $bam_path (@original_bam_paths) {
+        my $tmp_dir = Genome::Sys->create_temp_directory();
+
         my $queryname_sorted_bam = File::Spec->join($tmp_dir,
                 'original_queryname_sorted.bam');
         $self->_qname_sort_bam($bam_path, $queryname_sorted_bam);
 
-        # These file paths would conflict if more than one BAM were in the array, need unique names.
         my $fastq1 = File::Spec->join($tmp_dir, "original_fastq1");
         my $fastq2 = File::Spec->join($tmp_dir, "original_fastq2");
 
