@@ -43,11 +43,11 @@ sub execute {
 
     for my $project ($self->projects) {
         my @parts = $project->get_parts_of_class($part_class);
-        my @entities = $part_class->get([map $_->entity_id, @parts]);
+
+        my $model_getter = '_models_for_' . $self->match_type;
         my @models =
             grep { $_->user_name eq $self->model_user }
-            map { $_->models }
-            @entities;
+            $self->$model_getter(@parts);
 
         my @new_parts =
             map { $project->add_part(entity => $_) }
@@ -74,6 +74,23 @@ sub _part_class_for_match_type {
     my $match_type = shift;
 
     return $MATCH_TYPE_TO_PART_CLASS->{$match_type};
+}
+
+sub _models_for_instrument_data {
+    my $self = shift;
+    my @parts = @_;
+
+    my @inputs = Genome::Model::Input->get(value_id => [map $_->entity_id, @parts] );
+    my @models = Genome::Model->get([map $_->model_id, @inputs]);
+    return @models;
+}
+
+sub _models_for_sample {
+    my $self = shift;
+    my @parts = @_;
+
+    my @models = Genome::Model->get(subject_id => [map $_->entity_id, @parts]);
+    return @models;
 }
 
 1;
