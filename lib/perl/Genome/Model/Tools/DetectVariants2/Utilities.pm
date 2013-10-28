@@ -16,6 +16,7 @@ sub final_result_for_variant_type {
 
     my @dv2_results = grep($_->class =~ /Genome::Model::Tools::DetectVariants2::Result/, @$results);
     @dv2_results = grep($_->class !~ /::Vcf/, @dv2_results);
+    @dv2_results = grep($_->class !~ /::LqUnion/, @dv2_results);
     my @relevant_results = grep(scalar( @{[ glob($_->output_dir . '/' . $variant_type .'*') ]} ), @dv2_results);
 
     if(!@relevant_results) {
