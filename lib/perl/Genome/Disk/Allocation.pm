@@ -11,6 +11,7 @@ use Digest::MD5 qw(md5_hex);
 use File::Copy::Recursive qw(dircopy dirmove);
 use List::Util 'shuffle';
 use File::Find;
+use File::Find::Rule;
 use Cwd;
 use DateTime;
 
@@ -190,6 +191,27 @@ sub du {
 
     return $kb_used;
 }
+
+
+sub set_permissions_read_only {
+    my $self = shift;
+
+    $self->set_file_permissions(0444);
+    $self->set_directory_permissions(0555);
+}
+
+sub set_file_permissions {
+    my ($self, $mode) = @_;
+    my @files = File::Find::Rule->file->in($self->absolute_path);
+    chmod $mode, @files;
+}
+
+sub set_directory_permissions {
+    my ($self, $mode) = @_;
+    my @subdirs = File::Find::Rule->directory->in($self->absolute_path);
+    chmod $mode, @subdirs;
+}
+
 
 sub allocate { return shift->create(@_); }
 sub create {
