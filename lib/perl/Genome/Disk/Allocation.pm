@@ -760,7 +760,7 @@ sub _move {
         $self,
     );
 
-    _symlink($self->absolute_path, $original_absolute_path);
+    _symlink_new_path_from_old($self->absolute_path, $original_absolute_path);
 
     _commit_unless_testing();
 
@@ -991,7 +991,7 @@ sub _unarchive {
         $self->archive_after_time(Genome::Disk::Command::Allocation::DelayArchiving->_resolve_date_from_months(3));
 
         if ($old_absolute_path ne $self->absolute_path) {
-            _symlink($old_absolute_path, $self->absolute_path);
+            _symlink_new_path_from_old($old_absolute_path, $self->absolute_path);
         }
 
         unless ($self->_commit_unless_testing) {
@@ -1670,8 +1670,7 @@ sub _create_file_summaries {
     }
 }
 
-sub _symlink {
-    # to fix previously existing/broken symlinks by restoring chain
+sub _symlink_new_path_from_old {
     my $real_path = shift;
     my $old_path = shift;
 
