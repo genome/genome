@@ -344,7 +344,7 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'paths=s',
         'files',
-        'HASH(0x4c5d6f0)=s',
+        'HASH(0x4ba5840)=s',
         'files',
         'help!',
         undef
@@ -8305,7 +8305,7 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>delay-archiving',
       [
-        'HASH(0x1259dad8)=s',
+        'HASH(0x124e7a80)=s',
         'files',
         'builds=s@',
         undef,
@@ -8768,7 +8768,7 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>delay-archiving',
     [
-      'HASH(0xb819648)=s',
+      'HASH(0xb762420)=s',
       'files',
       'models=s@',
       undef,
@@ -9153,7 +9153,7 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>delay-archiving',
     [
-      'HASH(0x12c5fca8)=s',
+      'HASH(0x12ba9f40)=s',
       'files',
       'model-groups=s@',
       undef,
@@ -18085,6 +18085,42 @@ $Genome::Command::OPTS_SPEC = [
         'processors=s',
         undef,
         'tumor-samtools-file=s',
+        'files',
+        'help!',
+        undef
+      ],
+      '>add-annotation-data',
+      [
+        'version=s',
+        undef,
+        'data-directory=s',
+        undef,
+        'reference-sequence=s',
+        undef,
+        'help!',
+        undef
+      ],
+      '>list',
+      [
+        'style=s',
+        [
+          'text',
+          'csv',
+          'tsv',
+          'pretty',
+          'html',
+          'xml',
+          'newtext'
+        ],
+        'csv-delimiter=s',
+        'files',
+        'noheaders!',
+        undef,
+        'show=s',
+        'files',
+        'order-by=s',
+        'files',
+        'filter=s',
         'files',
         'help!',
         undef
