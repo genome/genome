@@ -67,6 +67,7 @@ my $cmd = Genome::Model::Tools::DetectVariants2::CopyCatSomaticWithBamWindow->cr
     reference_build_id => $refbuild_id,
     output_directory => $output_directory,
     bamwindow_filter_to_chromosomes => ['14'],
+    annotation_version => 'chr14_test_data',
 );
 
 ok($cmd, 'created CopyCatSomaticWithBamWindow object');

@@ -24,6 +24,10 @@ class Genome::Model::Tools::DetectVariants2::CopyCatSomaticWithBamWindow{
             is_many => 1,
             doc => 'Chromosomes that bamwindow will filter output to (generally for test purposes)',
         },
+        annotation_version => {
+            is => 'Text',
+            doc => 'version of the copycat annotation to use',
+        }
     ],
 };
 
@@ -74,8 +78,6 @@ sub _detect_variants {
         die "Errors validating workflow\n";
     }
 
-    my $genome_build = $self->_get_genome_build;
-
     # Collect and set input parameters
     #for bam-window
     $input{bamwindow_version} = $bamwindow_version;
@@ -93,9 +95,8 @@ sub _detect_variants {
     $input{tumor_samtools_file} = $self->get_samtools_results($self->aligned_reads_input);
     $input{normal_samtools_file} = $self->get_samtools_results($self->control_aligned_reads_input);
     $input{copycat_output_directory} = $self->_temp_staging_directory;
-    $input{annotation_directory} = '/gscmnt/gc6122/info/medseq/annotations/copyCat'; #TODO: don't do this, this is really bad
-    $input{genome_build} = $genome_build;
-
+    $input{annotation_version} = $self->annotation_version;
+    $input{reference_build_id} = $self->reference_build_id;
 
     my $log_dir = $self->output_directory;
     if(Workflow::Model->parent_workflow_log_dir) {
@@ -142,15 +143,6 @@ sub get_samtools_results{
     return "";
 }
 
-sub _get_genome_build{
-    my $self = shift;
-    return 'hg19.chr14only' if($self->bamwindow_filter_to_chromosomes); #TODO: fix this hack. currently exists for testing purposes
-    my $reference_build = Genome::Model::Build->get($self->reference_build_id);
-    return 37 if $reference_build->build_name =~ /37/;
-    return 'mm9' if $reference_build->build_name =~/mm9/;
-    return 36;
-}
-
 1;
 
 __DATA__
@@ -178,9 +170,9 @@ __DATA__
     <link fromOperation="input connector" fromProperty="per_read_length" toOperation="CopyCat Somatic" toProperty="per_read_length" />
     <link fromOperation="input connector" fromProperty="tumor_samtools_file" toOperation="CopyCat Somatic" toProperty="tumor_samtools_file" />
     <link fromOperation="input connector" fromProperty="normal_samtools_file" toOperation="CopyCat Somatic" toProperty="normal_samtools_file" />
-    <link fromOperation="input connector" fromProperty="annotation_directory" toOperation="CopyCat Somatic" toProperty="annotation_directory" />
-    <link fromOperation="input connector" fromProperty="genome_build" toOperation="CopyCat Somatic" toProperty="genome_build" />
     <link fromOperation="input connector" fromProperty="copycat_output_directory" toOperation="CopyCat Somatic" toProperty="output_directory" />
+    <link fromOperation="input connector" fromProperty="reference_build_id" toOperation="CopyCat Somatic" toProperty="reference_build_id" />
+    <link fromOperation="input connector" fromProperty="annotation_version" toOperation="CopyCat Somatic" toProperty="annotation_version" />
 
 
     <link fromOperation="BamWindow Normal" fromProperty="output_file" toOperation="output connector" toProperty="bam_window_normal_output_file" />
@@ -212,8 +204,8 @@ __DATA__
     <inputproperty>tumor_samtools_file</inputproperty>
     <inputproperty>normal_samtools_file</inputproperty>
     <inputproperty>copycat_output_directory</inputproperty>
-    <inputproperty>annotation_directory</inputproperty>
-    <inputproperty>genome_build</inputproperty>
+    <inputproperty>annotation_version</inputproperty>
+    <inputproperty>reference_build_id</inputproperty>
     <inputproperty isOptional="Y">bamwindow_filter_to_chromosomes</inputproperty>
 
     <outputproperty>bam_window_normal_output_file</outputproperty>
