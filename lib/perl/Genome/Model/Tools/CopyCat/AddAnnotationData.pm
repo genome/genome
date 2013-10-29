@@ -17,7 +17,7 @@ class Genome::Model::Tools::CopyCat::AddAnnotationData {
         },
 
         'version' => {
-            is => 'Integer',
+            is => 'Text',
             doc => 'Version of these annotation data',
         },
 
