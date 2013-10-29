@@ -11,7 +11,8 @@ use warnings;
 use above "Genome";
 use Test::More;
 use Genome::Utility::Test;
-use Genome::Test::Factory::Model::SomaticVariation;
+use Genome::Test::Factory::Model::ReferenceAlignment;
+use Genome::Test::Factory::Build;
 
 my $class = "Genome::Model::Tools::Tcga::CreateSubmissionArchive";
 use_ok($class);
@@ -29,8 +30,10 @@ my @expected_headers = (
         'Material Comment [TCGA Genome Reference]',
         'Library Protocol REF',
         'Library Parameter Value [Vendor]',
+        'Library Parameter Value [Catalog Name]',
         'Library Parameter Value [Catalog Number]',
-        'Library Parameter Value [Produce URL]',
+        'Library Parameter Value [Annotation URL]',
+        'Library Parameter Value [Product URL]',
         'Library Parameter Value [Target File URL]',
         'Library Parameter Value [Target File Format]',
         'Library Parameter Value [Target File Format Version]',
@@ -90,12 +93,51 @@ for my $key (@sorted_headers) {
 my $test_output = Genome::Sys->create_temp_file_path;
 ok($class->print_sdrf($test_output, $null_row), "print_sdrf ran ok with a row of nulls");
 ok(-s $test_output, "Output file exists");
-`cat $test_output > temp`;
 
-my $test_build = Genome::Test::Factory::Model::SomaticVariation->setup_somatic_variation_build;
+my $test_model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object;
+my $test_build = Genome::Test::Factory::Build->setup_object(model_id => $test_model->id,
+                                                            data_directory => $base_dir."/refalign_dir", status => "Succeeded");
+$test_build->subject->common_name("normal");
 
-$test_build->data_directory($base_dir."/som_var_dir");
-my $row = $class->create_vcf_row($test_build, "test_archive");
-print Data::Dumper::Dumper($row);
+my $test_model2 = Genome::Test::Factory::Model::ReferenceAlignment->setup_object;
+my $test_build2 = Genome::Test::Factory::Build->setup_object(model_id => $test_model->id,
+                                                             data_directory => $base_dir."/refalign_dir2", status => "Succeeded");
+$test_build2->subject->common_name("tumor");
 
+my $row1 = $class->create_snvs_vcf_row($test_build, "test_archive");
+my $row2 = $class->create_indels_vcf_row($test_build, "test_archive");
+my $row3 = $class->create_maf_row($test_build, "test_archive", "/test/maf/path");
+my $row4 = $class->create_maf_row($test_build2, "test_archive", "/test/maf/path");
+
+my $output_sdrf = Genome::Sys->create_temp_file_path;
+ok($class->print_sdrf($output_sdrf, ($row1, $row2, $row3, $row4)), "sdrf printed");
+
+my %protocol_db = (
+    "library preparation" => [
+        {name => "libraryprep1", description => "First library prep protocol"}
+    ],
+    "nucleic acid sequencing" => [
+        {name => "sequencing1", description => "First sequencing protocol"},
+    ],
+    "sequence alignment" => [
+        {name => "alignment1", description => "First mapping protocol"},
+    ],
+    "variant calling" => [
+        {name => "variants1", description => "First variant detection protocol"},
+    ],
+    "mutation filtering and annotation" => [
+        {name => "maf1", description => "First filtering protocol"},
+    ],
+);
+my $output_idf = Genome::Sys->create_temp_file_path;
+ok($class->print_idf($output_idf, \%protocol_db));
+
+my $archive_output_dir = Genome::Sys->create_temp_directory;
+my $cmd = Genome::Model::Tools::Tcga::CreateSubmissionArchive->create(
+    models => [$test_build->model],
+    output_dir => $archive_output_dir,
+    archive_name => "test_archive",
+);
+ok($cmd, "Command created");
+ok($cmd->execute, "Command executed");
 done_testing;
