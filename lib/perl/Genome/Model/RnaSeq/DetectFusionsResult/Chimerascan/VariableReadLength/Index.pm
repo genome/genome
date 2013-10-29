@@ -1,4 +1,4 @@
-package Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult::Index;
+package Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::VariableReadLength::Index;
 
 use strict;
 use warnings;
@@ -6,8 +6,8 @@ use warnings;
 use Genome;
 use File::Spec qw();
 
-class Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult::Index {
-    is => 'Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanBase::Index',
+class Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::VariableReadLength::Index {
+    is => 'Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::IndexBase',
 };
 
 sub run_indexer {
@@ -17,7 +17,7 @@ sub run_indexer {
     my $output_dir = $self->temp_staging_directory;
 
     my $bowtie_dir =  Genome::Model::Tools::Bowtie->base_path($self->bowtie_version);
-    my $executable = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult->get_executable_path($self->version);
+    my $executable = Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::VariableReadLength::Result->get_executable_path($self->version);
 
     $self->_run($executable, $bowtie_dir, $fasta, $gene_file, $output_dir);
 }
@@ -51,7 +51,7 @@ sub prepare_gene_file {
 sub _convert_gtf_to_genepred {
     my ($self, $gtf_file, $gene_file) = @_;
 
-    my $executable = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult->get_executable_path($self->version);
+    my $executable = Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::VariableReadLength::Result->get_executable_path($self->version);
     my $cmd = "$executable gtf_to_genepred.py '$gtf_file' '$gene_file'";
 
     Genome::Sys->shellcmd(

@@ -9,14 +9,14 @@ BEGIN {
 
 use above 'Genome';
 use Test::More;
-use lib File::Spec->join(File::Basename::dirname(File::Basename::dirname(File::Spec->rel2abs(__FILE__))), "ChimerascanBase.t");
+use lib File::Spec->join(File::Basename::dirname(File::Basename::dirname(File::Spec->rel2abs(__FILE__))), "Base.t");
 use chimerascan_test_setup "setup";
 use chimerascan_test_create "test_create";
 
 my $picard_version = 1.82;
-my $chimerascan_version = '0.4.6';
-my $chimerascan_result_class = "Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult";
-my ($alignment_result, $annotation_build, @bam_files) = setup(test_data_version => 3,
+my $chimerascan_version = '0.4.5';
+my $chimerascan_result_class = "Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::Result";
+my ($alignment_result, $annotation_build, @bam_files) = setup(test_data_version => 4,
         chimerascan_version => $chimerascan_version,
         chimerascan_result_class => $chimerascan_result_class,
         picard_version => $picard_version);

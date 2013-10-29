@@ -1,12 +1,12 @@
-package Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanBase::Index;
+package Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::IndexBase;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanBase::Index {
-    is => 'Genome::Model::RnaSeq::DetectFusionsResult::Index::Base',
+class Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::IndexBase {
+    is => 'Genome::SoftwareResult::Stageable',
     has_param => [
         version => {
             is => 'Text',
@@ -22,6 +22,10 @@ class Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanBase::Index {
         },
     ],
     has_input => [
+        reference_build => {
+            is => "Genome::Model::Build::ReferenceSequence",
+            doc => 'object representing the reference sequence version to use'
+        },
         annotation_build => {
             is => 'Genome::Model::Build::ImportedAnnotation',
             doc => 'The annotation build from which to derive the gene file',
@@ -63,11 +67,6 @@ sub create {
     $self->_reallocate_disk_allocation;
 
     return $self;
-}
-
-sub resolve_allocation_subdirectory {
-    my $self = shift;
-    return 'build_merged_alignments/chimerascan-index/' . $self->id;
 }
 
 sub get_sequence_dictionary {
@@ -115,6 +114,15 @@ sub get_sequence_dictionary {
     #die('Validate the order of the chromosome SQ lines with the reference build!');
     unlink($sam_file);
     return $seqdict_file;
+}
+
+sub resolve_allocation_disk_group_name {
+    return 'info_genome_models';
+}
+
+sub resolve_allocation_subdirectory {
+    my $self = shift;
+    return 'build_merged_alignments/chimerascan-index/' . $self->id;
 }
 
 

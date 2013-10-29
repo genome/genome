@@ -55,7 +55,7 @@ sub _fetch_result {
     my $self = shift;
     my $method = shift;
 
-    my $result = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult->$method(
+    my $result = Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::Result->$method(
             test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
             version => $self->version,
             alignment_result => $self->build->alignment_result,

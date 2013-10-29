@@ -10,6 +10,9 @@ BEGIN {
 use above 'Genome';
 use Test::More;
 
+my $class = "Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::Index";
+use_ok($class);
+
 my $data_dir = $ENV{GENOME_TEST_INPUTS}."/Genome-Model-RnaSeq-DetectFusionsResult-ChimerascanResult-Index/v2";
 
 my $reference_model = Genome::Model::ImportedReferenceSequence->create(
@@ -50,7 +53,7 @@ no warnings qw(redefine once);
 };
 use warnings qw(redefine);
 
-my $result = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult::Index->get_or_create(
+my $result = $class->get_or_create(
     version => "0.4.3",
     bowtie_version => "0.12.5",
     reference_build => $reference_build,
@@ -58,7 +61,7 @@ my $result = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult::Inde
     picard_version => 1.82,
 );
 
-isa_ok($result, "Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult::Index");
+isa_ok($result, $class);
 
 done_testing();
 

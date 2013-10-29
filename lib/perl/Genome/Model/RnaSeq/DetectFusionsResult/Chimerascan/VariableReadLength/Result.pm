@@ -1,12 +1,12 @@
-package Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult;
+package Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::VariableReadLength::Result;
 
 use strict;
 use warnings;
 
 use above 'Genome';
 
-class Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult {
-    is => "Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanBase",
+class Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::VariableReadLength::Result {
+    is => "Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::ResultBase",
 };
 
 sub get_executable_path {
@@ -44,7 +44,7 @@ sub _chimerascan_index_cmd {
 }
 
 sub _chimerascan_result_class {
-    return 'Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult';
+    return 'Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::VariableReadLength::Result';
 }
 
 1;

@@ -9,19 +9,22 @@ BEGIN {
 
 use above 'Genome';
 use Test::More;
-use Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult;
-use lib File::Spec->join(File::Basename::dirname(File::Basename::dirname(File::Spec->rel2abs(__FILE__))), "ChimerascanBase.t");
+use File::Basename qw(dirname);
+use lib File::Spec->join(dirname(dirname(dirname(File::Spec->rel2abs(__FILE__)))), "Base.t");
 use chimerascan_test_setup "setup";
+
+my $chimerascan_result_class = 'Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::VariableReadLength::Result';
+use_ok($chimerascan_result_class);
 
 my $chimerascan_version = '0.4.6';
 my $picard_version = 1.82;
 my ($alignment_result, $annotation_build, @bam_files) = setup(test_data_version => 3,
         picard_version => $picard_version,
-        chimerascan_result_class => 'Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult',
+        chimerascan_result_class => $chimerascan_result_class,
         chimerascan_version => $chimerascan_version);
 
 
-my $r = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult->get_or_create(
+my $r = $chimerascan_result_class->get_or_create(
     alignment_result => $alignment_result,
     version => $chimerascan_version,
     detector_params => "--bowtie-version=0.12.7 --reuse-bam 1",
@@ -29,7 +32,7 @@ my $r = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult->get_or
     picard_version => $picard_version,
     original_bam_paths => \@bam_files,
 );
-isa_ok($r, "Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult");
+isa_ok($r, $chimerascan_result_class);
 
 done_testing();
 

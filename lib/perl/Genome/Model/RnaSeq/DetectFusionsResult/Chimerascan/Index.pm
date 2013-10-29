@@ -1,12 +1,12 @@
-package Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult::Index;
+package Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::Index;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult::Index {
-    is => 'Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanBase::Index',
+class Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::Index {
+    is => 'Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::IndexBase',
 };
 
 sub run_indexer {

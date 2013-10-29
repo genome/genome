@@ -1,4 +1,4 @@
-package Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanBase;
+package Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::ResultBase;
 
 use strict;
 use warnings;
@@ -14,7 +14,7 @@ our %OUR_OPTIONS_VALIDATORS = (
         '--reuse-bam' => '_validate_reuse_bam',
 );
 
-class Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanBase {
+class Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::ResultBase {
     is => "Genome::Model::RnaSeq::DetectFusionsResult",
     has_input => [
         original_bam_paths => {
@@ -533,7 +533,7 @@ sub _resolve_index_dir {
 sub _get_index {
     my ($self, $bowtie_version, $query_underlying_context) = @_;
 
-    my $index_class = $self->_chimerascan_result_class . "::Index";
+    (my $index_class = $self->_chimerascan_result_class) =~ s/::Result$/::Index/;
     my %params = (
         test_name => $ENV{GENOME_ALIGNER_INDEX_TEST_NAME} || undef,
         version => $self->version,

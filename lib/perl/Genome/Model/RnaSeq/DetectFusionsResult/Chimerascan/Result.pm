@@ -1,12 +1,12 @@
-package Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult;
+package Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::Result;
 
 use strict;
 use warnings;
 
 use above 'Genome';
 
-class Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult {
-    is => "Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanBase",
+class Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::Result {
+    is => "Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::ResultBase",
 };
 
 sub _run_chimerascan {
@@ -95,7 +95,7 @@ sub _chimerascan_index_cmd {
 }
 
 sub _chimerascan_result_class {
-    return 'Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult';
+    return 'Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::Result';
 }
 
 1;

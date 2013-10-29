@@ -10,7 +10,7 @@ BEGIN {
 
 use above 'Genome';
 use Test::More;
-use_ok('Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult::Index');
+use_ok('Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::VariableReadLength::Index');
 
 my $chimerascan_version = '0.4.6';
 my $picard_version = 1.82;
@@ -67,7 +67,7 @@ Sub::Install::reinstall_sub({
 });
 
 Sub::Install::reinstall_sub({
-    into => 'Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult::Index',
+    into => 'Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::VariableReadLength::Index',
     as => '_convert_gtf_to_genepred',
     code => sub {
         my $self = shift;
@@ -79,7 +79,7 @@ Sub::Install::reinstall_sub({
     }
 });
 
-my $result = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult::Index->get_or_create(
+my $result = Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::VariableReadLength::Index->get_or_create(
     version => $chimerascan_version,
     bowtie_version => "0.12.5",
     reference_build => $reference_build,
@@ -87,7 +87,7 @@ my $result = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult::I
     picard_version => $picard_version,
 );
 
-isa_ok($result, "Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult::Index");
+isa_ok($result, "Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::VariableReadLength::Index");
 
 done_testing();
 

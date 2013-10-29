@@ -75,7 +75,7 @@ sub setup {
     $alignment_result->lookup_hash($alignment_result->calculate_lookup_hash());
 
     my $index_dir = File::Spec->join($data_dir, 'IndexResult');
-    my $index_class = $chimerascan_result_class . "::Index";
+    (my $index_class = $chimerascan_result_class) =~ s/::Result$/::Index/;
     my $index = $index_class->__define__(
         version => $chimerascan_version,
         bowtie_version => "0.12.7",
