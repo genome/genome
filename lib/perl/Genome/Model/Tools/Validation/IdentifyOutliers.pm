@@ -118,7 +118,7 @@ sub execute {
             $tumor_ref_col = List::MoreUtils::first_index {$_ eq "Tumor_ref_count" } @F;
             $tumor_var_col = List::MoreUtils::first_index {$_ eq "Tumor_var_count" } @F;
 
-            print OUTFILE $line . "FilterCall\tProb\tLLR\n";
+            print OUTFILE $line . "\tFilterCall\tProb\tLLR\n";
             if(defined($self->lq_output_file)){
                 print LQFILE $line . "FilterCall\tProb\tLLR\n";
             }

@@ -18,7 +18,6 @@ use warnings;
 use FileHandle;
 
 use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
-use VarScan;
 
 my %stats = ();
 
