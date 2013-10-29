@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use above 'Genome';
-use Test::More tests => 12;
+use Test::More tests => 14;
 use Genome::Utility::Test;
 use File::Spec;
 use File::Compare;
@@ -31,6 +31,7 @@ ok(-s $normal_samtools_file, 'normal samtools file exists');
 my $reference_build_id = '106942997';
 
 my $output_directory = Genome::Sys->create_temp_directory();
+my $version = _create_test_annotation_data($reference_build_id, File::Spec->join($test_dir, 'annotation_data'));
 
 my $cmd = Genome::Model::Tools::CopyCat::Somatic->create(
     normal_window_file => $normal_window_file,
@@ -41,7 +42,7 @@ my $cmd = Genome::Model::Tools::CopyCat::Somatic->create(
     normal_samtools_file => $normal_samtools_file,
     tumor_samtools_file => $tumor_samtools_file,
     reference_build_id => $reference_build_id,
-    annotation_version => 'chr14_test_data',
+    annotation_version => $version,
 );
 ok($cmd, "Created command successfully");
 ok($cmd->execute, "Executed the command successfully");
@@ -65,6 +66,21 @@ for my $file (@non_diffable_files){
     my ($actual_wc) = split(" ", `wc -l $actual`);    
     my ($expected_wc) = split(" ", `wc -l $expected`);    
     ok(abs ($expected_wc - $actual_wc) <= 1, "$file line length is withing tolerance");
+}
+
+sub _create_test_annotation_data{
+    my $reference_build_id = shift;
+    my $annotation_dir = shift;
+    my $version = 'copycat_somatic.t_test_set';
+    my $reference_build = Genome::Model::Build->get($reference_build_id);
+    my $cmd = Genome::Model::Tools::CopyCat::AddAnnotationData->create(
+        version => $version,
+        data_directory => $annotation_dir,
+        reference_sequence => $reference_build,
+    );
+    ok($cmd, "Annotation data creation command exists");
+    ok($cmd->execute, 'Successfully created annotation data set');
+    return $version;
 }
 
 1;
