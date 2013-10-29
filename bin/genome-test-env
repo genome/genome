@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+unset WF_USE_FLOW
 unset GENOME_QUERY_POSTGRES
 export UR_DBI_NO_COMMIT=1
 export GE_ENV_NAME="genome-test-env"
