@@ -10,7 +10,7 @@ BEGIN {
 }
 
 use above 'Genome';
-use Test::More tests => 14;
+use Test::More tests => 16;
 use File::Spec;
 use Genome::Utility::Test;
 use File::Compare;
@@ -60,6 +60,8 @@ my $normal_detector_result = Genome::Model::Tools::DetectVariants2::Result->__de
 $normal_detector_result->lookup_hash($normal_detector_result->calculate_lookup_hash());
 ok($normal_detector_result, 'normal samtools results exists');
 
+my $version = _create_test_annotation_data($refbuild_id, File::Spec->join($test_dir, 'annotation_data'));
+
 my $cmd = Genome::Model::Tools::DetectVariants2::CopyCatSomaticWithBamWindow->create(
     params => $params, 
     aligned_reads_input => $tumor_bam_file,
@@ -67,7 +69,7 @@ my $cmd = Genome::Model::Tools::DetectVariants2::CopyCatSomaticWithBamWindow->cr
     reference_build_id => $refbuild_id,
     output_directory => $output_directory,
     bamwindow_filter_to_chromosomes => ['14'],
-    annotation_version => 'chr14_test_data',
+    annotation_version => $version,
 );
 
 ok($cmd, 'created CopyCatSomaticWithBamWindow object');
@@ -95,5 +97,19 @@ for my $file (@non_diffable_files){
     ok(abs ($expected_wc - $actual_wc) <= 1, "$file line length is withing tolerance");
 }
 
+sub _create_test_annotation_data{
+    my $reference_build_id = shift;
+    my $annotation_dir = shift;
+    my $version = 'copycat_somatic.t_test_set';
+    my $reference_build = Genome::Model::Build->get($reference_build_id);
+    my $cmd = Genome::Model::Tools::CopyCat::AddAnnotationData->create(
+        version => $version,
+        data_directory => $annotation_dir,
+        reference_sequence => $reference_build,
+    );
+    ok($cmd, "Annotation data creation command exists");
+    ok($cmd->execute, 'Successfully created annotation data set');
+    return $version;
+}
 
 1;
