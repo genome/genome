@@ -18,7 +18,6 @@ require Exporter;
 use strict;
 use warnings;
 use Data::Dumper;
-use Term::ANSIColor qw(:constants);
 
 
 =head2 createNewDir
@@ -68,8 +67,7 @@ sub createNewDir{
 
   #First make sure the specified base path exists and is a directory
   unless (-e $base_path && -d $base_path){
-    print RED, "\nSpecified working directory: $base_path does not appear valid! Create a working directory before proceeding\n\n", RESET;
-    exit();
+    die error_message("\nSpecified working directory: $base_path does not appear valid! Create a working directory before proceeding\n\n");
   }
 
   unless ($name =~ /.*\/$/){
@@ -83,13 +81,12 @@ sub createNewDir{
     if ($force){
       #If this directory already exists, and the -force option was provide, delete this directory and start it cleanly
       if ($force eq "yes"){
-	print YELLOW, "\nForcing clean creation of $new_path\n\n", RESET;
+	status_message("\nForcing clean creation of $new_path\n\n");
 	my $command = "rm -rf $new_path";
 	Genome::Sys->shellcmd(cmd => $command);
 	mkdir($new_path);
       }else{
-	print RED, "\nThe '-force' option provided to utility.pm was not understood!!", RESET;
-	exit();
+	die error_message("\nThe '-force' option provided to utility.pm was not understood!!");
       }
 
     }elsif($silent){
@@ -98,7 +95,7 @@ sub createNewDir{
     }else{
 
       #If this directory already exists, ask the user if they wish to erase it and start clean
-      print YELLOW, "\nNew dir: $new_path already exists.\n\tDo you wish to delete it and create it cleanly (y/n)? ", RESET;
+      status_message("\nNew dir: $new_path already exists.\n\tDo you wish to delete it and create it cleanly (y/n)? ");
       my $answer = <>;
 
       chomp($answer);
@@ -108,7 +105,7 @@ sub createNewDir{
 	Genome::Sys->shellcmd(cmd => $command);
 	mkdir($new_path);
       }else{
-	print YELLOW, "\nUsing existing directory, some files may be over-written and others that are unrelated to the current analysis may remain!\n", RESET;
+	status_message("\nUsing existing directory, some files may be over-written and others that are unrelated to the current analysis may remain!\n");
       }
     }
 
@@ -162,8 +159,7 @@ sub checkDir{
     $dir = "$dir"."/";
   }
   unless (-e $dir && -d $dir){
-    print RED, "\nDirectory: $dir does not appear to be valid!\n\n", RESET;
-    exit();
+    die error_message("\nDirectory: $dir does not appear to be valid!\n\n");
   }
 
   unless ($force){
@@ -187,12 +183,12 @@ sub checkDir{
       if ($recursive =~ /y|yes/i){
         my $files_present = scalar(@temp) - 2;
         my $clean_dir_cmd = "rm -fr $dir"."*";
-        print YELLOW, "\n\n$clean_dir_cmd\n\n", RESET;
+        status_message("\n\n$clean_dir_cmd\n\n");
 	Genome::Sys->shellcmd(cmd => $clean_dir_cmd);
       }else{
         my $files_present = scalar(@temp) - 2;
         my $clean_dir_cmd = "rm -f $dir"."*";
-        print YELLOW, "\n\n$clean_dir_cmd\n\n", RESET;
+        status_message("\n\n$clean_dir_cmd\n\n");
 	Genome::Sys->shellcmd(cmd => $clean_dir_cmd);
       }
     }else{
@@ -204,7 +200,7 @@ sub checkDir{
       }
 
       unless ($files_present == 0){
-	print YELLOW, "\nFound $files_present files in the specified directory ($dir)\nThis directory will be cleaned with the command:\n\t$clean_dir_cmd\n\nProceed (y/n)? ", RESET;
+	status_message("\nFound $files_present files in the specified directory ($dir)\nThis directory will be cleaned with the command:\n\t$clean_dir_cmd\n\nProceed (y/n)? ");
 	my $answer = <>;
 	chomp($answer);
 	if ($answer =~ /y|yes/i){
@@ -214,7 +210,7 @@ sub checkDir{
 	    Genome::Sys->shellcmd(cmd => $clean_dir_cmd);
           }
 	}else{
-	  print YELLOW, "\nContinuing and leaving files in place then ...\n\n", RESET;
+	  status_message("\nContinuing and leaving files in place then ...\n\n");
 	}
       }
     }
@@ -251,8 +247,7 @@ sub loadEnsemblMap{
       $transcript_id = $1;
     }
     unless ($gene_name && $gene_id && $transcript_id){
-      print RED, "Could not parse gene_name, gene_id, transcript_id from GTF in line:\n$_\n", RESET;
-      exit 1;
+      die error_message("Could not parse gene_name, gene_id, transcript_id from GTF in line:\n$_\n");
     }
     $ensembl_map{$transcript_id}{ensg_id} = $gene_id;
     $ensembl_map{$transcript_id}{ensg_name} = $gene_name;
@@ -283,8 +278,7 @@ sub loadEnsemblMap{
     my $transcript_biotype = $line[$columns{'transcript_biotype'}{pos}];
     my $gene_name = $line[$columns{'gene_name'}{pos}];
     unless ($gene_name && $gene_id && $transcript_id && $gene_biotype && $transcript_biotype){
-      print RED, "Could not parse gene_name, gene_id, transcript_id, gene_biotype, and transcript_biotype from INFO in line:\n$_\n", RESET;
-      exit 1;
+      die error_message("Could not parse gene_name, gene_id, transcript_id, gene_biotype, and transcript_biotype from INFO in line:\n$_\n");
     }
     if ($ensembl_map{$transcript_id}){
       $ensembl_map{$transcript_id}{gene_biotype} = $gene_biotype;
@@ -368,15 +362,13 @@ sub loadEntrezEnsemblData {
 
   #Check input dirs
   unless (-e $entrez_dir && -d $entrez_dir){
-    print RED, "\n\nEntrez dir not valid: $entrez_dir\n\n", RESET;
-    exit();
+    die error_message("\n\nEntrez dir not valid: $entrez_dir\n\n");
   }
   unless ($entrez_dir =~ /\/$/){
     $entrez_dir .= "/";
   }
   unless (-e $ensembl_dir && -d $ensembl_dir){
-    print RED, "\n\nEnsembl dir not valid: $ensembl_dir\n\n", RESET;
-    exit();
+    die error_message("\n\nEnsembl dir not valid: $ensembl_dir\n\n");
   }
   unless ($ensembl_dir =~ /\/$/){
     $ensembl_dir .= "/";
@@ -430,8 +422,7 @@ sub loadEntrezEnsemblData {
           $entrez_map{$entrez_id}{ensembl_id} = $1;
           $ensembl_hash{$1} = 1;
         }else{
-          print RED, "\n\nFormat of Ensembl field not understood: $ext_string\n\n", RESET;
-          exit();
+          die error_message("\n\nFormat of Ensembl field not understood: $ext_string\n\n");
         }   
       }else{
         next();
@@ -821,11 +812,11 @@ sub mapGeneName{
 
   if ($verbose){
     if ($entrez_name_string eq $original_name){
-      print BLUE, "\nSimple Entrez match: $original_name -> $corrected_name", RESET;
+      status_message("\nSimple Entrez match: $original_name -> $corrected_name");
     }elsif($corrected_name eq $original_name){
-      print YELLOW, "\nNo matches: $original_name -> $corrected_name", RESET;
+      status_message("\nNo matches: $original_name -> $corrected_name");
     }else{
-      print GREEN, "\nFixed name: $original_name -> $corrected_name", RESET;
+      status_message("\nFixed name: $original_name -> $corrected_name");
     }
   }
   my $uc_corrected_name = uc($corrected_name);
@@ -887,11 +878,11 @@ sub listGeneCategories{
   }
   my $cat_count = keys %categories;
   if ($verbose){
-    print BLUE, "\n\nFound $cat_count gene categories to chose from:", RESET;
+    status_message("\n\nFound $cat_count gene categories to chose from:");
   }
   foreach my $cat (sort keys %categories){
     if ($verbose){
-      print YELLOW, "\n\t$categories{$cat} genes -> $cat", RESET;
+      status_message("\n\t$categories{$cat} genes -> $cat");
     }
   }
   if ($verbose){
@@ -943,7 +934,7 @@ sub importSymbolListNames{
       chomp($_);
       if ($genes{$_}){
         if ($verbose){
-          print YELLOW, "\n\nFound a duplicate gene name ($_) in $path", RESET;
+          status_message("\n\nFound a duplicate gene name ($_) in $path");
         }
       }
       $genes{$_}=1;
@@ -953,8 +944,7 @@ sub importSymbolListNames{
 
     #Check to see if the master list name is unique, and if so, store it
     if (defined($master_lists{$name})){
-      print RED, "\n\nFound a duplicate gene_symbol list name ($name) in $master_list_file\n\n", RESET;
-      exit(1);
+      die error_message("\n\nFound a duplicate gene_symbol list name ($name) in $master_list_file\n\n");
     }
     $order++;
     $master_lists{$name}{filename} = $filename;
@@ -989,8 +979,7 @@ sub importSymbolListNames{
     my %genes;
     foreach my $member (@member_list){
       unless ($master_lists{$member}){
-        print RED, "\n\nGene group file: $master_group_file contains a group ($name) with a member ($member) that is not in the master gene symbol list file: $master_list_file\n\n", RESET;
-        exit(1);
+        die error_message("\n\nGene group file: $master_group_file contains a group ($name) with a member ($member) that is not in the master gene symbol list file: $master_list_file\n\n");
       }
       my $filename = $master_lists{$member}{filename};
       my $path = $gene_symbol_lists_dir . "$filename";
@@ -1003,8 +992,7 @@ sub importSymbolListNames{
     }
     #Make sure this group name is not a duplicate
     if (defined($master_groups{$name})){
-      print RED, "\n\nFound a duplicate gene group name ($name) in $master_group_file\n\n", RESET;
-      exit(1);
+      die error_message("\n\nFound a duplicate gene group name ($name) in $master_group_file\n\n");
     }
     my $gene_count = keys %genes;
     $master_groups{$name}{order} = $order;
@@ -1040,8 +1028,7 @@ sub importSymbolListNames{
       $sublists{$sublist_name}{groups} = \%groups;
       $sublists{$sublist_name}{group_count} = $group_count;
     }else{
-      print RED, "\n\nCould not determine sublist name for $file in &importSymbolListNames()\n\n", RESET;
-      exit(1);
+      die error_message("\n\nCould not determine sublist name for $file in &importSymbolListNames()\n\n");
     }
   }
 
@@ -1127,8 +1114,7 @@ sub importIdeogramData{
   my %args = @_;
   my $ideogram_file = $args{'-ideogram_file'};
   unless (-e $ideogram_file){
-    print RED, "\n\n&importIdeogramData -> could not find ideogram file\n\n", RESET;
-    exit();
+    die error_message("\n\n&importIdeogramData -> could not find ideogram file\n\n");
   }
   open (IDEO, $ideogram_file) || die "\n\nCould not open ideogram file: $ideogram_file\n\n";
   my %ideo_data;
@@ -1148,8 +1134,7 @@ sub importIdeogramData{
     if ($chr =~ /chr(\w+)/){
       $chr_name = $1;
     }else{
-      print RED, "\n\n&importIdeogramData -> could not understand chromosome name format\n\n", RESET;
-      exit();
+      die error_message("\n\n&importIdeogramData -> could not understand chromosome name format\n\n");
     }
     my $cytoname = "$chr_name"."$name";
     if ($ideo_data{$chr}){
@@ -1245,8 +1230,7 @@ sub getColumnPosition{
   if (defined($columns{$colname})){
     $desired_column_position = $columns{$colname}{position};
   }else{
-    print RED, "\n\n&getColumnPosition - The requested column name ($colname) was not found in the specified file ($path)\n\n", RESET;
-    exit();
+    die error_message("\n\n&getColumnPosition - The requested column name ($colname) was not found in the specified file ($path)\n\n");
   }
 
   return($desired_column_position);
@@ -1268,21 +1252,18 @@ sub getFilePathBase{
     $base = $1;      #Full path without extension
     $extension = $2; #Extension only
   }else{
-    print RED, "\n\n&getFileBasePath could not determine base and extension of a file path: $path\n\n", RESET;
-    exit();
+    die error_message("\n\n&getFileBasePath could not determine base and extension of a file path: $path\n\n");
   }
   if ($path =~ /(.*)\/(.*)$/){
     $base_dir = "$1"."/"; #Full directory path
     $file_name = $2;      #Full file name
   }else{
-    print RED, "\n\n&getFileBasePath could not determine base_dir and file_name of a file path: $path\n\n", RESET;
-    exit();
+    die error_message("\n\n&getFileBasePath could not determine base_dir and file_name of a file path: $path\n\n");
   }
   if ($file_name =~ /(.*)(\.\w+)$/){
     $file_base = $1;      #File name only without extension
   }else{
-    print RED, "\n\n&getFileBasePath could not determine file base from file_name: $file_name\n\n", RESET;
-    exit();
+    die error_message("\n\n&getFileBasePath could not determine file base from file_name: $file_name\n\n");
   }
 
   $fb{$path}{base} = $base;            #Full path without extension

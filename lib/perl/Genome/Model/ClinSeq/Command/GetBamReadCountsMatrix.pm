@@ -6,7 +6,6 @@ package Genome::Model::ClinSeq::Command::GetBamReadCountsMatrix;
 use strict;
 use warnings;
 use Genome; 
-use Term::ANSIColor qw(:constants);
 use Data::Dumper;
 use Genome;
 use Genome::Model::ClinSeq::Util qw(:all);
@@ -134,7 +133,7 @@ sub __errors__ {
 sub help_usage {
     my $self = shift;
     my $usage = $self->SUPER::help_usage(@_);
-    return GREEN . $usage . RESET;
+    status_message("$usage");
 }
 
 sub execute {
