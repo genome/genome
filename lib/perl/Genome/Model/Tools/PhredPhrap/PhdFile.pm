@@ -41,28 +41,36 @@ sub create {
 sub _verify_phds {
     my $self = shift;
 
-    my $fh = IO::File->new('<' . $self->phd_file)
-        or $self->fatal_msg( sprintf('Can\'t open include PHD file (%s): %s', $self->phd_file, $!) );
-    chdir $self->phd_dir
-        or $self->fatal_msg('Can\'t access directory (%s): %s', $self->phd_dir, $!);
+    my $fh = IO::File->new('<' . $self->phd_file);
+    if ( not $fh ) {
+        $self->error_message("$!") if $!;
+        $self->error_message('Can\'t open PHD file! '.$self->phd_file);
+        return;
+    }
+
+    my $chdir_ok = chdir $self->phd_dir;
+    if ( not $chdir_ok ) {
+        $self->error_message("$!") if $!;
+        $self->error_message('Can\'t access directory! '.$self->phd_dir);
+        return
+    }
 
     while ( my $phd_name = $fh->getline ) {
         chomp $phd_name;
 
         # Verify
-        $self->fatal_msg( 
-            sprintf('Can\'t find phd (%s) in directory (%s)', $phd_name, $self->phd_dir)
-        ) unless -s $phd_name;
+        if ( not -s $phd_name ) {
+            $self->error_message( sprintf('Can\'t find phd (%s) in directory (%s)', $phd_name, $self->phd_dir) );
+            return;
+        }
     }
 
     $fh->close;
 
     chdir $self->_cwd;
-    
+
     return $self->phd_file;
 }
 
 1;
 
-#$HeadURL$
-#$Id$

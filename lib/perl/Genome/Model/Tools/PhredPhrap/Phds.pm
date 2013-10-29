@@ -7,8 +7,6 @@ use Genome;
 
 class Genome::Model::Tools::PhredPhrap::Phds {
     is => 'Genome::Model::Tools::PhredPhrap::Base',
-    has => [
-    ],
 };
 
 require Genome::Model::Tools::PhredPhrap::PhdToFasta;
@@ -42,12 +40,18 @@ sub _verify_phds {
     my $self = shift;
 
     my $phd_dir = $self->_directory->phd_dir;
-    my $dh = IO::Dir->new($phd_dir)
-        or $self->fatal_msg( sprintf('Can\'t open dir (%s)', $phd_dir) );
+    my $dh = IO::Dir->new($phd_dir);
+    if ( not $dh ) {
+        $self->error_message("Can't open dir ($phd_dir)");
+        return;
+    }
     my $phd_file = $self->default_phd_file;
     unlink $phd_file if -e $phd_file;
-    my $phd_fh = IO::File->new("> $phd_file")
-        or $self->fatal_msg("Can\'t open phd file ($phd_file) for writing");
+    my $phd_fh = IO::File->new("> $phd_file");
+    if ( not $phd_fh ) {
+        $self->error_message("Can't open phd file ($phd_file) for writing");
+        return;
+    }
 
     while ( my $phd_name = $dh->read ) {
         next unless $phd_name =~ m#\.phd\.\d+$#;
@@ -58,7 +62,10 @@ sub _verify_phds {
     $dh->close;
     $phd_fh->close;
 
-    $self->fatal_msg("No phds found in directory ($phd_dir)") unless -s $phd_file;
+    if ( not -s $phd_file ) {
+        $self->error_message("No phds found in directory ($phd_dir)");
+        return;
+    }
 
     return $phd_file;
 }
@@ -75,5 +82,3 @@ sub _phd2fnq {
 
 1;
 
-#$HeadURL$
-#$Id$
