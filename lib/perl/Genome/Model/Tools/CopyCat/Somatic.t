@@ -28,19 +28,20 @@ ok(-s $tumor_samtools_file, 'tumor samtools file exists');
 my $normal_samtools_file = File::Spec->join($test_dir, 'normal_samtools', 'snvs.hq');
 ok(-s $normal_samtools_file, 'normal samtools file exists');
 
+my $reference_build_id = '106942997';
+
 my $output_directory = Genome::Sys->create_temp_directory();
-my $annotation_directory = '/gscmnt/gc6122/info/medseq/annotations/copyCat'; #TODO: don't do this, this is really bad
 
 my $cmd = Genome::Model::Tools::CopyCat::Somatic->create(
     normal_window_file => $normal_window_file,
     tumor_window_file => $tumor_window_file,
     output_directory => $output_directory,
-    annotation_directory => $annotation_directory,
     per_library => 1,
     per_read_length => 1,
-    genome_build => 'hg19.chr14only',
     normal_samtools_file => $normal_samtools_file,
     tumor_samtools_file => $tumor_samtools_file,
+    reference_build_id => $reference_build_id,
+    annotation_version => 'chr14_test_data',
 );
 ok($cmd, "Created command successfully");
 ok($cmd->execute, "Executed the command successfully");

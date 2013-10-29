@@ -31,13 +31,6 @@ class Genome::Model::Tools::CopyCat::Somatic{
             is_output => 1,
             doc =>'path to the output directory',
         },
-        annotation_directory => {
-            is => 'String',
-            is_optional => 0,
-            example_values => ['/gscmnt/gc6122/info/medseq/annotations/copyCat/'],
-            is_input => 1,
-            doc =>'path to the cn annotation directory',
-        },
         per_library => {
             is => 'Boolean',
             is_optional => 1,
@@ -52,11 +45,17 @@ class Genome::Model::Tools::CopyCat::Somatic{
             default => 1,
             doc =>'do normalization on a per-read-length basis',
         },
-        genome_build => {
+        reference_build_id => {
             is => 'String',
             is_optional => 0,
             is_input => 1,
-            doc =>'genome build - one of "36", "37", or "mm9"'
+            doc => 'Reference build of annotation set to use',
+        },
+        annotation_version => {
+            is => 'String',
+            is_optional => 0,
+            is_input => 1,
+            doc =>'annotation version to use'
         },
         tumor_samtools_file => {
             is => 'String',
@@ -118,10 +117,10 @@ sub execute {
     my $tumor_window_file = $self->tumor_window_file;
     my $normal_window_file = $self->normal_window_file;
     my $output_directory = $self->output_directory;
-    my $annotation_directory = $self->annotation_directory;
     my $per_lib = $self->per_library;
     my $per_read_length = $self->per_read_length;
-    my $genome_build = $self->genome_build;
+    my $annotation_version = $self->annotation_version;
+    my $reference_build_id = $self->reference_build_id;
     my $tumor_samtools_file = $self->tumor_samtools_file;
     my $normal_samtools_file = $self->normal_samtools_file;
     my $processors = $self->processors;
@@ -130,16 +129,12 @@ sub execute {
     my $min_mapability = $self->min_mapability;
 
 
-    # validate genome build
-    if($genome_build eq "36"){
-        $genome_build = "hg18";
-    } elsif($genome_build eq "37"){
-        $genome_build = "hg19";
-    } else {
-        unless ($genome_build eq "mm9" || $genome_build eq "hg18" || $genome_build eq "hg19" || $genome_build eq "hg19.chr1only" || $genome_build eq "hg19.chr14only"){
-            die("ERROR: genome build not recognized\nMust be one of [hg18,36,hg19,37,mm9,hg19.chr1only,hg19.chr14only]");
-        }
+    #get annotation directory
+    my $annotation_sr = Genome::Model::Tools::CopyCat::AnnotationData->get_with_lock(reference_sequence => $reference_build_id, version => $annotation_version);
+    unless ($annotation_sr){
+        $self->error_message("Couldn't find an annotation data set for reference_build: $reference_build_id version: $annotation_version");
     }
+    my $annotation_directory = $annotation_sr->annotation_data_path;
 
     #resolve relative paths to full path - makes parsing the R file easier if you want tweaks
     $output_directory = File::Spec->rel2abs($output_directory);
@@ -162,12 +157,6 @@ sub execute {
         $tumor_window_file = File::Spec->rel2abs($tumor_window_file);
     }
     
-    #add the genome build to the anno dir
-    $annotation_directory = $annotation_directory . "/" . $genome_build;
-    unless(-d $annotation_directory){
-        die("annotation directory not found $annotation_directory");
-    }
-
     #make sure the files exist
     unless(-e $normal_window_file){
         die("file not found $normal_window_file");
