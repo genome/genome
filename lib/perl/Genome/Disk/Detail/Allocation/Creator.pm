@@ -43,9 +43,6 @@ sub create_allocation {
 
     $self->wait_for_database_pause;
 
-    # If given a mount path, need to ensure it's valid by trying to get a disk
-    # volume with it. Also need to make sure that the retrieved volume actually
-    # belongs to the supplied disk group and that it can be allocated to.
     my @candidate_volumes;
     Genome::Utility::Instrumentation::timer(
         'disk.allocation.create.candidate_volumes.selection', sub {
