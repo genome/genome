@@ -116,6 +116,7 @@ class Genome::Disk::Volume {
         },
     ],
     data_source => 'Genome::DataSource::GMSchema',
+    id_generator => '-uuid',
     doc => 'Represents a particular disk volume (eg, sata483)',
 };
 
