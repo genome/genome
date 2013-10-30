@@ -344,7 +344,7 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'paths=s',
         'files',
-        'HASH(0x4ba5840)=s',
+        'HASH(0x53cd940)=s',
         'files',
         'help!',
         undef
@@ -456,6 +456,15 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'debug!',
         undef,
+        'help!',
+        undef
+      ],
+      '>install',
+      [
+        'repo=s',
+        'files',
+        'version=s',
+        'files',
         'help!',
         undef
       ],
@@ -741,6 +750,17 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      'help!',
+      undef
+    ],
+    '>install-from-git-repo',
+    [
+      'source=s',
+      'files',
+      'repo=s',
+      'files',
+      'version=s',
+      'files',
       'help!',
       undef
     ],
@@ -8305,7 +8325,7 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>delay-archiving',
       [
-        'HASH(0x124e7a80)=s',
+        'HASH(0x12d151c0)=s',
         'files',
         'builds=s@',
         undef,
@@ -8768,7 +8788,7 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>delay-archiving',
     [
-      'HASH(0xb762420)=s',
+      'HASH(0xbfa3ba8)=s',
       'files',
       'models=s@',
       undef,
@@ -9153,7 +9173,7 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>delay-archiving',
     [
-      'HASH(0x12ba9f40)=s',
+      'HASH(0x133e2f08)=s',
       'files',
       'model-groups=s@',
       undef,
@@ -18092,7 +18112,7 @@ $Genome::Command::OPTS_SPEC = [
       '>add-annotation-data',
       [
         'version=s',
-        undef,
+        'files',
         'data-directory=s',
         undef,
         'reference-sequence=s',
@@ -32205,29 +32225,6 @@ $Genome::Command::OPTS_SPEC = [
         'varscan-params=s',
         'files',
         'version=s',
-        undef,
-        'help!',
-        undef
-      ],
-      '>parsing-script',
-      [
-        'annotation-file=s',
-        'files',
-        'glf-unique-indel=s',
-        'files',
-        'glf-unique-snv=s',
-        'files',
-        'merged-indel=s',
-        'files',
-        'merged-snv=s',
-        'files',
-        'out-file=s',
-        'files',
-        'varscan-unique-indel=s',
-        'files',
-        'varscan-unique-snv=s',
-        'files',
-        'debug!',
         undef,
         'help!',
         undef
