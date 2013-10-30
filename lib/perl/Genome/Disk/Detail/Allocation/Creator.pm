@@ -33,9 +33,6 @@ sub create_allocation {
                 \@candidate_volumes);
     });
 
-    $allocation_object->debug_message(sprintf("Allocation (%s) created at %s",
-        $allocation_object->id, $allocation_object->absolute_path));
-
     $self->create_directory_or_delete_allocation($allocation_object);
 
     Genome::Timeline::Event::Allocation->created('initial creation',
@@ -200,6 +197,9 @@ sub _get_allocation_without_lock {
             join("\n", map { $_->mount_path } @$candidate_volumes),
         ));
     }
+
+    $chosen_allocation->debug_message(sprintf("Allocation (%s) created at %s",
+        $chosen_allocation->id, $chosen_allocation->absolute_path));
 
     return $chosen_allocation;
 }
