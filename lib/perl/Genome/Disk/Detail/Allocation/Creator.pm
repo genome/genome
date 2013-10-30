@@ -65,14 +65,6 @@ sub create_allocation {
                 confess "Volume with mount path $mount_path is not in supplied group $disk_group_name!";
             }
 
-            my @reasons;
-            push @reasons, 'disk is not active' if $volume->disk_status ne 'active';
-            push @reasons, 'allocation turned off for this disk' if $volume->can_allocate != 1;
-
-            if (@reasons) {
-                confess "Requested volume with mount path $mount_path cannot be allocated to:\n" . join("\n", @reasons);
-            }
-
             push @candidate_volumes, $volume;
         } else {
             my %candidate_volume_params = (
