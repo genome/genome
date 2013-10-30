@@ -24,11 +24,7 @@ sub create_allocation {
     $self->verify_no_parent_or_child_allocations;
     $self->wait_for_database_pause;
 
-    my @candidate_volumes;
-    Genome::Utility::Instrumentation::timer(
-        'disk.allocation.create.candidate_volumes.selection', sub {
-            @candidate_volumes = $self->candidate_volumes;
-    });
+    my @candidate_volumes = $self->candidate_volumes;
 
     my $allocation_object;
     Genome::Utility::Instrumentation::timer(
@@ -93,11 +89,18 @@ sub wait_for_database_pause {
 sub candidate_volumes {
     my $self = shift;
 
-    if (defined $self->parameters->mount_path) {
-        return $self->candidate_volumes_from_mount_path;
-    } else {
-        return $self->candidate_volumes_without_mount_path;
-    }
+    my @candidate_volumes;
+    Genome::Utility::Instrumentation::timer(
+        'disk.allocation.create.candidate_volumes.selection', sub {
+            if (defined $self->parameters->mount_path) {
+                @candidate_volumes = $self->candidate_volumes_from_mount_path;
+            } else {
+                @candidate_volumes =
+                    $self->candidate_volumes_without_mount_path;
+            }
+    });
+
+    return @candidate_volumes;
 }
 
 sub candidate_volumes_from_mount_path {
