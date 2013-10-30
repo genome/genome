@@ -32,7 +32,8 @@ my $test_dir = tempdir(
 
 # Add our testing group to the allowed list of disk groups
 use Genome::Disk::Allocation;
-push @Genome::Disk::Allocation::APIPE_DISK_GROUPS, 'testing_group';
+use Genome::Disk::Detail::Allocation::Creator;
+push @Genome::Disk::Detail::Allocation::Creator::APIPE_DISK_GROUPS, 'testing_group';
 $Genome::Disk::Allocation::CREATE_DUMMY_VOLUMES_FOR_TESTING = 0;
 #$Genome::Disk::Allocation::TESTING_DISK_ALLOCATION = 1;
 

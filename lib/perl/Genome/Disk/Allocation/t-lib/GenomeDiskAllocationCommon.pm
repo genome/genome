@@ -58,7 +58,8 @@ sub create_test_volumes {
             unix_gid => 0,
         );
         $tb->ok($archive_group, 'created archive group');
-        push @Genome::Disk::Allocation::APIPE_DISK_GROUPS, $group->disk_group_name, $archive_group->disk_group_name;
+        use Genome::Disk::Detail::Allocation::Creator;
+        push @Genome::Disk::Detail::Allocation::Creator::APIPE_DISK_GROUPS, $group->disk_group_name, $archive_group->disk_group_name;
 
         # Make two dummy volumes, one to create allocation on and one to archive it to
         for my $n (1..$n_pairs) {
