@@ -80,27 +80,7 @@ sub create_allocation {
     $allocation_object->debug_message(sprintf("Allocation (%s) created at %s",
         $id, $allocation_object->absolute_path));
 
-    # a restrictive umask can break builds for other users
-    # so force the umask to be friendly
-    umask(0002);
-    # If we cannot create the directory delete the new allocation
-    my $dir;
-    eval {
-        Genome::Utility::Instrumentation::timer(
-            'disk.allocation.create.create_directory', sub {
-                $dir = Genome::Sys->create_directory(
-                    $allocation_object->absolute_path);
-        });
-    };
-    my $error = $@;
-    unless (defined($dir) and ( -d $dir ) and not $error) {
-        $class->error_message(sprintf(
-                "Failed to create directory (%s) with return value = '%s', "
-                . "and error:\n%s", $allocation_object->absolute_path,
-                $dir || '', $error));
-        $allocation_object->delete;
-        confess $error;
-    }
+    $self->create_directory_or_delete_allocation($allocation_object);
 
     Genome::Timeline::Event::Allocation->created('initial creation',
         $allocation_object);
@@ -200,6 +180,33 @@ sub _get_candidate_volumes {
     }
 
     return @volumes;
+}
+
+sub create_directory_or_delete_allocation {
+    my ($self, $allocation_object) = @_;
+
+    # a restrictive umask can break builds for other users
+    # so force the umask to be friendly
+    umask(0002);
+
+    # If we cannot create the directory delete the new allocation
+    my $dir;
+    eval {
+        Genome::Utility::Instrumentation::timer(
+            'disk.allocation.create.create_directory', sub {
+                $dir = Genome::Sys->create_directory(
+                    $allocation_object->absolute_path);
+        });
+    };
+    my $error = $@;
+    unless (defined($dir) and ( -d $dir ) and not $error) {
+        $self->error_message(sprintf(
+                "Failed to create directory (%s) with return value = '%s', "
+                . "and error:\n%s", $allocation_object->absolute_path,
+                $dir || '', $error));
+        $allocation_object->delete;
+        confess $error;
+    }
 }
 
 
