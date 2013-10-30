@@ -36,14 +36,17 @@ sub create_allocation {
     my $group_subdirectory = $self->parameters->group_subdirectory;
 
     if (my $parent_alloc = $class->get_parent_allocation($allocation_path)) {
-        confess sprintf("Parent allocation (%s) found for %s", $parent_alloc->allocation_path, $allocation_path);
+        confess sprintf("Parent allocation (%s) found for %s",
+            $parent_alloc->allocation_path, $allocation_path);
     }
     unless ($class->_verify_no_child_allocations($allocation_path)) {
         confess "Child allocation found for $allocation_path!";
     }
 
     if ($ENV{GENOME_DB_PAUSE} and -e $ENV{GENOME_DB_PAUSE}) {
-        print "Database updating has been paused; not going to attempt to allocate disk until the pause is released. Please stand by...\n";
+        print "Database updating has been paused; not going to attempt "
+            . "to allocate disk until the pause is released. "
+            . "Please stand by...\n";
 
         while (1) {
             sleep 30;
@@ -53,15 +56,17 @@ sub create_allocation {
         print "Database updating has been resumed, continuing allocation!\n";
     }
 
-    # If given a mount path, need to ensure it's valid by trying to get a disk volume with it. Also need to make
-    # sure that the retrieved volume actually belongs to the supplied disk group and that it can be allocated to
+    # If given a mount path, need to ensure it's valid by trying to get a disk
+    # volume with it. Also need to make sure that the retrieved volume actually
+    # belongs to the supplied disk group and that it can be allocated to.
     my @candidate_volumes;
-    Genome::Utility::Instrumentation::timer('disk.allocation.create.candidate_volumes.selection', sub {
-        if (defined $mount_path) {
-            @candidate_volumes = $self->candidate_volumes_from_mount_path;
-        } else {
-            @candidate_volumes = $self->candidate_volumes_without_mount_path;
-        }
+    Genome::Utility::Instrumentation::timer(
+        'disk.allocation.create.candidate_volumes.selection', sub {
+            if (defined $mount_path) {
+                @candidate_volumes = $self->candidate_volumes_from_mount_path;
+            } else {
+                @candidate_volumes = $self->candidate_volumes_without_mount_path;
+            }
     });
 
     my %parameters = (
@@ -83,32 +88,39 @@ sub create_allocation {
     }
 
     my $allocation_object;
-    Genome::Utility::Instrumentation::timer('disk.allocation.create.get_allocation_without_lock', sub {
-        $allocation_object = $class->_get_allocation_without_lock(\@candidate_volumes, \%parameters);
+    Genome::Utility::Instrumentation::timer(
+        'disk.allocation.create.get_allocation_without_lock', sub {
+            $allocation_object = $class->_get_allocation_without_lock(
+                \@candidate_volumes, \%parameters);
     });
 
     $allocation_object->debug_message(sprintf("Allocation (%s) created at %s",
         $id, $allocation_object->absolute_path));
 
-    # a restrictive umask can break builds for other users; force it to be friendly
+    # a restrictive umask can break builds for other users
+    # so force the umask to be friendly
     umask(0002);
     # If we cannot create the directory delete the new allocation
     my $dir;
     eval {
-        Genome::Utility::Instrumentation::timer('disk.allocation.create.create_directory', sub {
-            $dir = Genome::Sys->create_directory($allocation_object->absolute_path);
+        Genome::Utility::Instrumentation::timer(
+            'disk.allocation.create.create_directory', sub {
+                $dir = Genome::Sys->create_directory(
+                    $allocation_object->absolute_path);
         });
     };
     my $error = $@;
     unless (defined($dir) and ( -d $dir ) and not $error) {
         $class->error_message(sprintf(
-                "Failed to create directory (%s) with return value = '%s', and error:\n%s",
-                $allocation_object->absolute_path, $dir || '', $error));
+                "Failed to create directory (%s) with return value = '%s', "
+                . "and error:\n%s", $allocation_object->absolute_path,
+                $dir || '', $error));
         $allocation_object->delete;
         confess $error;
     }
 
-    Genome::Timeline::Event::Allocation->created('initial creation', $allocation_object);
+    Genome::Timeline::Event::Allocation->created('initial creation',
+        $allocation_object);
 
     return $allocation_object;
 }
@@ -156,7 +168,8 @@ sub _get_candidate_volumes {
     my $exclude = delete $params{exclude};
 
     if (%params) {
-        confess "Illegal arguments to _get_candidate_volumes: " . join(', ', keys %params);
+        confess "Illegal arguments to _get_candidate_volumes: "
+            . join(', ', keys %params);
     }
 
     my %volume_params = (
@@ -165,14 +178,17 @@ sub _get_candidate_volumes {
         disk_status => 'active',
     );
 
-    # 'not like' caused conversion error on Oracle but 'not in' with anonymous array works
+    # 'not like' caused conversion error on Oracle,
+    # but 'not in' with anonymous array works
     $volume_params{'mount_path not in'} = [$exclude] if $exclude;
     # XXX Shouldn't need this, 'archive' should obviously be a status.
     #       This might be a performance issue.
     my @volumes = grep { not $_->is_archive } Genome::Disk::Volume->get(
         %volume_params, '-order_by' => ['-cached_unallocated_kb']);
     unless (@volumes) {
-        confess "Did not get any allocatable and active volumes belonging to group $disk_group_name.";
+        confess sprintf(
+            "Did not get any allocatable, active volumes from group %s.",
+            $disk_group_name);
     }
 
     return @volumes;
