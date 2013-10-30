@@ -22,12 +22,14 @@ BEGIN {
 
 
 sub dec {
+    return unless $Net::Statsd::HOST;
     eval {
         Net::Statsd::dec(@_);
     };
 }
 
 sub decrement {
+    return unless $Net::Statsd::HOST;
     eval {
         Net::Statsd::decrement(@_);
     };
@@ -35,6 +37,7 @@ sub decrement {
 
 
 sub gauge {
+    return unless $Net::Statsd::HOST;
     eval {
         Net::Statsd::gauge(@_);
     };
@@ -42,6 +45,7 @@ sub gauge {
 
 
 sub inc {
+    return unless $Net::Statsd::HOST;
     eval {
         Net::Statsd::inc(@_);
     };
@@ -55,6 +59,7 @@ sub increment {
 
 
 sub timer {
+    return unless $Net::Statsd::HOST;
     my ($name, $code) = @_;
 
     my $start_time = Time::HiRes::time();
@@ -79,6 +84,7 @@ sub timer {
 }
 
 sub timing {
+    return unless $Net::Statsd::HOST;
     eval {
         Net::Statsd::timing(@_);
     };
