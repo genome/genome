@@ -114,8 +114,8 @@ sub execute {
 
         # get or create each
         for my $id (@ids) {
+            # $id = "888.99" if $class->isa("Genome::Db");
             my $hash = $loaded{$class}{$id};
-            
             my $prev = $class->get($id);
             if ($prev) {
                 $log_fh->print("## FOUND $class $id: " . $prev->__display_name__ . "\n");
@@ -123,8 +123,20 @@ sub execute {
             else {
                 if ($class->isa("Genome::Db")) {
                     # these exist because of filesystem data being in place
-                    # run the install method
-                    $prev = $class->install($id);
+                    # run the install command if possible 
+                    my ($source) = ($class =~ /Genome::Db::([^\:]+)/);
+                    my $installer_class = "Genome::Db::${source}::Command::Install";
+                    unless (UR::Object::Type->get($installer_class)) {
+                        $self->warning_message("No installer $installer_class for $class!  Install manually!");
+                        next;
+                    }
+                    eval {
+                        $installer_class->execute(version => $id);
+                    };
+                    if ($@) {
+                        $self->warning_message("errors installing $source $id: $@");
+                    }
+                    $prev = $class->get($id);
                     unless ($prev) {
                         $self->warning_message("Failed to find $class $id!  Install manually.");
                     }
