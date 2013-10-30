@@ -133,8 +133,9 @@ sub execute {
         my %variants_for_samples;
         for my $v (@variants) {
             my ($tumor_sample, $normal_sample) = $self->resolve_samples_for_variant_list($v);
-            $variants_for_samples{$tumor_sample->id}{$normal_sample->id} ||= [];
-            push @{$variants_for_samples{$tumor_sample->id}{$normal_sample->id}}, $v;
+            my $normal_sample_id = $normal_sample? $normal_sample->id : ''; #normal sample will be undef for tumor-only case
+            $variants_for_samples{$tumor_sample->id}{$normal_sample_id} ||= [];
+            push @{$variants_for_samples{$tumor_sample->id}{$normal_sample_id}}, $v;
         }
 
         for my $tumor_sample_id (keys %variants_for_samples) {
@@ -142,7 +143,7 @@ sub execute {
                 my $v = $variants_for_samples{$tumor_sample_id}{$normal_sample_id};
                 push @m, $self->_define_model(
                     tumor_sample => Genome::Sample->get($tumor_sample_id),
-                    normal_sample => Genome::Sample->get($normal_sample_id),
+                    ($normal_sample_id? (normal_sample => Genome::Sample->get($normal_sample_id)) : ()),
                     variants => $v,
                 );
             }
