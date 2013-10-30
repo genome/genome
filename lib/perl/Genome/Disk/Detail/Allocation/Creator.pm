@@ -191,11 +191,7 @@ sub _get_allocation_without_lock {
     my $chosen_allocation;
     for my $candidate_volume (@randomized_candidate_volumes) {
         if ($candidate_volume->has_space($kilobytes_requested)) {
-
-            Genome::Disk::Allocation->_existing_allocation_path_check(
-                $candidate_volume->mount_path,
-                $parameters->{group_subdirectory},
-                $parameters->{allocation_path});
+            $self->_verify_allocation_path_unused($candidate_volume);
 
             $chosen_allocation = $self->_attempt_allocation_creation(
                 $candidate_volume, $parameters);
@@ -215,6 +211,14 @@ sub _get_allocation_without_lock {
     }
 
     return $chosen_allocation;
+}
+
+sub _verify_allocation_path_unused {
+    my ($self, $candidate_volume) = @_;
+    Genome::Disk::Allocation->_existing_allocation_path_check(
+        $candidate_volume->mount_path,
+        $self->parameters->group_subdirectory,
+        $self->parameters->allocation_path);
 }
 
 sub _attempt_allocation_creation {
