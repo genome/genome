@@ -208,3 +208,4 @@ timeline.base.index_object_id [timeline_base] 2013-11-05T17:14:36Z Anthony Brumm
 timeline_base_permission [timeline_base] 2013-11-07T17:18:29Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on timeline_base
 timeline_allocation_permission [timeline_allocation] 2013-11-07T17:18:37Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on timeline_allocation
 timeline_allocation_event_type_permission [timeline_allocation_event_type] 2013-11-07T17:18:42Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on timeline_allocation_event_type
+config_schema [empty_db] 2013-10-30T16:07:20Z Anthony Brummett <abrummet@genome.wustl.edu> # Add config schema
