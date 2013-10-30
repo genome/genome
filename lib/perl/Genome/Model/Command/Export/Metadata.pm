@@ -227,7 +227,7 @@ sub add_to_dump_queue {
         return;
     }
 
-    if ($base_class->isa("UR::Value")) {
+    if ($base_class->isa("UR::Value") and not $base_class->isa("Genome::Db")) {
         return;
     }
 
@@ -283,7 +283,7 @@ sub add_to_dump_queue {
         }
     }
 
-    for my $ext (qw/Input Param/) {
+    for my $ext (qw/Input Param Metric/) {
         my $related_class = $base_class . "::$ext";
         if (UR::Object::Type->get($related_class)) {
             my $owner_method;
@@ -299,8 +299,13 @@ sub add_to_dump_queue {
             }   
             elsif ($obj->isa("Genome::SoftwareResult")) {
                 $owner_method = "software_result_id";
-                $value_method = "value_obj";
-                $value_method2 = "value_id";
+                if ($ext eq 'Metric') {
+                    $value_method = "metric_value";
+                }
+                else {
+                    $value_method = "value_obj";
+                    $value_method2 = "value_id";
+                }
             }
             else {
                 next;
@@ -308,14 +313,16 @@ sub add_to_dump_queue {
             my @assoc = $related_class->get($owner_method => $obj->id);
             for my $a (@assoc) {
                 my $v = $a->$value_method;
-                unless ($v) {
+                if (not defined $v and $value_method2) {
                     my $id = $a->$value_method2;
                     die if not defined $id;
                     $v = UR::Value::Text->get($id);
                 }
-                unless ($sanitize_map->{$v->id} and $sanitize_map->{$v->id} == $obj->id) {
+                my $vid = (ref($v) ? $v->id : $v);
+
+                unless ($sanitize_map->{$vid} and $sanitize_map->{$vid} == $obj->id) {
                     $self->add_to_dump_queue($a, $queue, $exclude, $sanitize_map) unless $exclude->{$final_class};
-                    $self->add_to_dump_queue($v, $queue, $exclude, $sanitize_map);
+                    $self->add_to_dump_queue($v, $queue, $exclude, $sanitize_map) if ref $v;
                 }
             }
         }
