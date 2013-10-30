@@ -21,23 +21,7 @@ class Genome::Disk::Detail::Allocation::Creator {
 sub create_allocation {
     my $self = shift;
 
-    my $class = 'Genome::Disk::Allocation';
-
-    my $kilobytes_requested = $self->parameters->kilobytes_requested;
-    my $owner_class_name = $self->parameters->owner_class_name;
-    my $owner_id = $self->parameters->owner_id;
-    my $allocation_path = $self->parameters->allocation_path;
-    my $disk_group_name = $self->parameters->disk_group_name;
-    my $group_subdirectory = $self->parameters->group_subdirectory;
-
-    if (my $parent_alloc = $class->get_parent_allocation($allocation_path)) {
-        confess sprintf("Parent allocation (%s) found for %s",
-            $parent_alloc->allocation_path, $allocation_path);
-    }
-    unless ($class->_verify_no_child_allocations($allocation_path)) {
-        confess "Child allocation found for $allocation_path!";
-    }
-
+    $self->verify_no_parent_or_child_allocations;
     $self->wait_for_database_pause;
 
     my @candidate_volumes;
@@ -64,6 +48,32 @@ sub create_allocation {
     return $allocation_object;
 }
 
+sub verify_no_parent_or_child_allocations {
+    my $self = shift;
+
+    $self->verify_no_parent_allocation;
+    $self->verify_no_child_allocations;
+}
+
+sub verify_no_parent_allocation {
+    my $self = shift;
+
+    if (my $parent_alloc = Genome::Disk::Allocation->get_parent_allocation(
+            $self->parameters->allocation_path)) {
+        confess sprintf("Parent allocation (%s) found for %s",
+            $parent_alloc->allocation_path, $self->parameters->allocation_path);
+    }
+}
+
+sub verify_no_child_allocations {
+    my $self = shift;
+
+    unless (Genome::Disk::Allocation->_verify_no_child_allocations(
+            $self->parameters->allocation_path)) {
+        confess sprintf("Child allocation found for %s!",
+            $self->parameters->allocation_path);
+    }
+}
 
 sub wait_for_database_pause {
     if ($ENV{GENOME_DB_PAUSE} and -e $ENV{GENOME_DB_PAUSE}) {
