@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 
 use Carp qw(croak confess);
+use List::Util 'shuffle';
 
 
 class Genome::Disk::Detail::Allocation::Creator {
@@ -70,7 +71,7 @@ sub create_allocation {
     my $allocation_object;
     Genome::Utility::Instrumentation::timer(
         'disk.allocation.create.get_allocation_without_lock', sub {
-            $allocation_object = $class->_get_allocation_without_lock(
+            $allocation_object = $self->_get_allocation_without_lock(
                 \@candidate_volumes, \%parameters);
     });
 
@@ -177,6 +178,63 @@ sub _get_candidate_volumes {
     }
 
     return @volumes;
+}
+
+sub _get_allocation_without_lock {
+    my ($self, $candidate_volumes, $parameters) = @_;
+    my $kilobytes_requested = $parameters->{'kilobytes_requested'};
+
+    # We randomize to avoid the rare repeated contention case
+    my @randomized_candidate_volumes = (@$candidate_volumes,
+        shuffle(@$candidate_volumes));
+
+    my $chosen_allocation;
+    for my $candidate_volume (@randomized_candidate_volumes) {
+        if ($candidate_volume->allocated_kb + $kilobytes_requested
+                <= $candidate_volume->soft_limit_kb) {
+
+            Genome::Disk::Allocation->_existing_allocation_path_check($candidate_volume->mount_path, $parameters->{group_subdirectory}, $parameters->{allocation_path});
+
+            my $candidate_allocation = Genome::Disk::Allocation->SUPER::create(
+                mount_path => $candidate_volume->mount_path,
+                %$parameters,
+            );
+            unless ($candidate_allocation) {
+                die 'Failed to create candidate allocation';
+            }
+            Genome::Disk::Allocation::_commit_unless_testing();
+
+            # Reload so we guarantee that we calculate the correct allocated_kb
+            if (not $ENV{UR_DBI_NO_COMMIT}) {
+                UR::Context->current->reload($candidate_volume);
+            }
+
+            if ($candidate_volume->is_allocated_over_soft_limit) {
+                Genome::Utility::Instrumentation::inc('disk.allocation.get_allocation_without_lock.rollback.over_allocated');
+                $self->status_message(sprintf("%s's allocated_kb exceeded soft limit (%d kB), rolling back allocation.", $candidate_volume->mount_path, $candidate_volume->soft_limit_kb, 'kB'));
+                $candidate_allocation->delete();
+                Genome::Disk::Allocation::_commit_unless_testing();
+            } elsif ($candidate_volume->is_used_over_soft_limit) {
+                Genome::Utility::Instrumentation::inc('disk.allocation.get_allocation_without_lock.rollback.over_used');
+                $self->status_message(sprintf("%s's used_kb exceeded soft limit (%d %s), rolling back allocation.", $candidate_volume->mount_path, $candidate_volume->soft_limit_kb, 'kB'));
+                $candidate_allocation->delete();
+                Genome::Disk::Allocation::_commit_unless_testing();
+            } else {
+                $chosen_allocation = $candidate_allocation;
+                last;
+            }
+        }
+    }
+
+    unless (defined $chosen_allocation) {
+        Carp::confess $self->error_message(sprintf(
+            "Could not create allocation in specified disk group (%s), which contains %d volumes:\n%s\n",
+            $parameters->{disk_group_name}, scalar(@$candidate_volumes),
+            join("\n", map { $_->mount_path } @$candidate_volumes),
+        ));
+    }
+
+    return $chosen_allocation;
 }
 
 sub create_directory_or_delete_allocation {
