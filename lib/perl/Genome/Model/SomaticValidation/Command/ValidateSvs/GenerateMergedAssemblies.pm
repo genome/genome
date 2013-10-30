@@ -76,6 +76,12 @@ sub execute {
     my $tumor_val_bam = $build->tumor_bam;
     my $normal_val_bam = $build->normal_bam;
 
+    unless($normal_val_bam) {
+        $self->status_message('Skipping SV validation due to lack of normal BAM.');
+        $self->skip(1);
+        return 1;
+    }
+
     my ($merged_output_file, $merged_fasta_file) = $self->_generate_merged_callset();
     unless (-s $merged_fasta_file) {
         $self->status_message('Skipping SV validation due to empty merged fasta file.');

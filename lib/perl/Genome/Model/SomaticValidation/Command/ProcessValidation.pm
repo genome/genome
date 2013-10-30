@@ -37,7 +37,18 @@ sub sub_command_category { 'pipeline steps' }
 
 sub shortcut {
     my $self = shift;
+
+    return $self->should_skip_run;
+}
+
+sub should_skip_run {
+    $self = shift;
     my $build = $self->build;
+
+    unless($build->normal_sample) {
+        $self->status_message('No control sample. Skipping run.');
+        return 1;
+    }
 
     my $variant_list = $build->snv_variant_list;
     unless($variant_list) {
@@ -52,11 +63,7 @@ sub execute {
     my $self = shift;
     my $build = $self->build;
 
-    my $variant_list = $build->snv_variant_list;
-    unless($variant_list) {
-        $self->status_message('No SNVs list provided. Skipping run.');
-        return 1;
-    }
+    return 1 if $self->should_skip_run;
 
     my ($snv_variant_file) = glob($variant_list->output_dir . '/snvs.hq.bed');
     unless($snv_variant_file) {
