@@ -174,3 +174,4 @@ disk_schema_permissions [disk_schema] 2013-11-06T21:42:07Z Anthony Brummett <abr
 disk_allocation [disk_schema] 2013-10-30T21:31:56Z Anthony Brummett <abrummet@genome.wustl.edu> # table disk.allocation
 disk_file_summary [disk_schema disk_allocation] 2013-10-30T21:34:57Z Anthony Brummett <abrummet@genome.wustl.edu> # table disk.file_summary
 disk_group [disk_schema] 2013-10-30T21:38:05Z Anthony Brummett <abrummet@genome.wustl.edu> # table disk.group
+disk_volume [disk_schema] 2013-10-30T21:42:07Z Anthony Brummett <abrummet@genome.wustl.edu> # table disk.volume
