@@ -1359,36 +1359,6 @@ sub _check_kb_requested {
     return 1;
 }
 
-# Returns a list of volumes that meets the given criteria
-sub _get_candidate_volumes {
-    my ($class, %params) = @_;
-
-    my $disk_group_name = delete $params{disk_group_name};
-    my $exclude = delete $params{exclude};
-
-    if (%params) {
-        confess "Illegal arguments to _get_candidate_volumes: " . join(', ', keys %params);
-    }
-
-    my %volume_params = (
-        disk_group_names => $disk_group_name,
-        can_allocate => 1,
-        disk_status => 'active',
-    );
-
-    # 'not like' caused conversion error on Oracle but 'not in' with anonymous array works
-    $volume_params{'mount_path not in'} = [$exclude] if $exclude;
-    # XXX Shouldn't need this, 'archive' should obviously be a status.
-    #       This might be a performance issue.
-    my @volumes = grep { not $_->is_archive } Genome::Disk::Volume->get(
-        %volume_params, '-order_by' => ['-cached_unallocated_kb']);
-    unless (@volumes) {
-        confess "Did not get any allocatable and active volumes belonging to group $disk_group_name.";
-    }
-
-    return @volumes;
-}
-
 
 # When no commit is on, ordinarily an allocation goes to a dummy volume that only exists locally. Trying to load
 # that dummy volume would lead to an error, so use a get instead.

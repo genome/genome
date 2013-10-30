@@ -58,23 +58,9 @@ sub create_allocation {
     my @candidate_volumes;
     Genome::Utility::Instrumentation::timer('disk.allocation.create.candidate_volumes.selection', sub {
         if (defined $mount_path) {
-            my $volume = Genome::Disk::Volume->get(mount_path => $mount_path, disk_status => 'active', can_allocate => 1);
-            confess "Could not get volume with mount path $mount_path" unless $volume;
-
-            unless (grep { $_ eq $disk_group_name } $volume->disk_group_names) {
-                confess "Volume with mount path $mount_path is not in supplied group $disk_group_name!";
-            }
-
-            push @candidate_volumes, $volume;
+            @candidate_volumes = $self->candidate_volumes_from_mount_path;
         } else {
-            my %candidate_volume_params = (
-                disk_group_name => $disk_group_name,
-            );
-            if (defined $exclude_mount_path) {
-                $candidate_volume_params{'exclude'} = $exclude_mount_path;
-            }
-            push @candidate_volumes, $class->_get_candidate_volumes(
-                %candidate_volume_params);
+            @candidate_volumes = $self->candidate_volumes_without_mount_path;
         }
     });
 
@@ -126,5 +112,71 @@ sub create_allocation {
 
     return $allocation_object;
 }
+
+
+sub candidate_volumes_from_mount_path {
+    my $self = shift;
+
+    my $mount_path = $self->parameters->mount_path;
+    my $disk_group_name = $self->parameters->disk_group_name;
+
+    my $volume = Genome::Disk::Volume->get(mount_path => $mount_path,
+        disk_status => 'active', can_allocate => 1);
+    confess "Could not get volume with mount path $mount_path" unless $volume;
+
+    unless (grep { $_ eq $disk_group_name } $volume->disk_group_names) {
+        confess sprintf(
+            "Volume with mount path %s is not in supplied group %s!",
+            $mount_path, $disk_group_name);
+    }
+
+    return ($volume);
+}
+
+sub candidate_volumes_without_mount_path {
+    my $self = shift;
+
+    my %candidate_volume_params = (
+        disk_group_name => $self->parameters->disk_group_name,
+    );
+
+    my $exclude_mount_path = $self->parameters->exclude_mount_path;
+    if (defined $exclude_mount_path) {
+        $candidate_volume_params{'exclude'} = $exclude_mount_path;
+    }
+    return $self->_get_candidate_volumes(
+        %candidate_volume_params);
+}
+
+# Returns a list of volumes that meets the given criteria
+sub _get_candidate_volumes {
+    my ($self, %params) = @_;
+
+    my $disk_group_name = delete $params{disk_group_name};
+    my $exclude = delete $params{exclude};
+
+    if (%params) {
+        confess "Illegal arguments to _get_candidate_volumes: " . join(', ', keys %params);
+    }
+
+    my %volume_params = (
+        disk_group_names => $disk_group_name,
+        can_allocate => 1,
+        disk_status => 'active',
+    );
+
+    # 'not like' caused conversion error on Oracle but 'not in' with anonymous array works
+    $volume_params{'mount_path not in'} = [$exclude] if $exclude;
+    # XXX Shouldn't need this, 'archive' should obviously be a status.
+    #       This might be a performance issue.
+    my @volumes = grep { not $_->is_archive } Genome::Disk::Volume->get(
+        %volume_params, '-order_by' => ['-cached_unallocated_kb']);
+    unless (@volumes) {
+        confess "Did not get any allocatable and active volumes belonging to group $disk_group_name.";
+    }
+
+    return @volumes;
+}
+
 
 1;
