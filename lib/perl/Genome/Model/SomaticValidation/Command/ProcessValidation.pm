@@ -42,7 +42,8 @@ sub shortcut {
 }
 
 sub should_skip_run {
-    $self = shift;
+    my $self = shift;
+
     my $build = $self->build;
 
     unless($build->normal_sample) {
@@ -65,6 +66,7 @@ sub execute {
 
     return 1 if $self->should_skip_run;
 
+    my $variant_list = $build->snv_variant_list;
     my ($snv_variant_file) = glob($variant_list->output_dir . '/snvs.hq.bed');
     unless($snv_variant_file) {
         $self->error_message('Failed to get a snv variant file for this build!');
