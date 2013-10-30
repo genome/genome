@@ -146,6 +146,13 @@ sub execute {
             my $o = $c->get($i);
             die "No $c $i!" unless $o;
             #print "$c $i $o\n";
+            # TODO: standardize on a method in the class to initialize imported data
+            # This shoudl match a companion method to export data.
+            if ($o->isa("Genome::Disk::Volume")) {
+                # this only changes when we do something special to mount a remote system r/w
+                # and would require interaction with the remote GMS
+                $o->can_allocate(0);
+            }
         }
     }
     
