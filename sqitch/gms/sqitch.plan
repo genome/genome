@@ -60,7 +60,7 @@ model_schema_permissions [model_schema] 2013-11-06T21:49:10Z Anthony Brummett <a
 model_processing_profile [model_schema] 2013-10-30T22:39:06Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.processing_profile
 model_model [model_schema model_processing_profile] 2013-10-30T22:05:04Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.model
 model_build [model_model] 2013-10-30T22:08:02Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.build
-model_build_input [model_build] 2013-10-30T22:09:49Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.build_input
+model_build_input [model_model] 2013-10-30T22:09:49Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.build_input
 model_build_link [model_build] 2013-10-30T22:12:01Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.build_link
 model_build_metric [model_build] 2013-10-30T22:13:35Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.build_metric
 model_event [model_build model_model instrument_data] 2013-10-30T22:15:31Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.event
@@ -70,3 +70,4 @@ model_event_output [model_event] 2013-10-30T22:26:00Z Anthony Brummett <abrummet
 model_feature_list [model_schema model_build] 2013-10-30T22:28:01Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.feature_list
 model_model_group [model_schema] 2013-10-30T22:30:34Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.model_group
 model_model_group_bridge [model_model model_model_group] 2013-10-30T22:32:32Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.model_group_bridge
+model_model_input [model_model] 2013-10-30T22:34:28Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.model_input
