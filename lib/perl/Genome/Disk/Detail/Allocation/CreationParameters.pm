@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 use UR;
 
+use Carp qw(confess);
 
 class Genome::Disk::Detail::Allocation::CreationParameters {
     has => [
@@ -60,10 +61,30 @@ class Genome::Disk::Detail::Allocation::CreationParameters {
 };
 
 
-sub validate {
+sub create {
+    my $class = shift;
+
+    my $self = $class->SUPER::create(@_);
+
+    if ($self->__errors__) {
+        my @messages;
+        for my $error_tag ($self->__errors__) {
+            push @messages, $error_tag->__display_name__ . "\n";
+        }
+        confess sprintf(
+            'Could not create params object:\n%s', join('', @messages));
+    }
+
+    $self->sanitize;
+    $self->validate;
+
+    return $self;
 }
 
 sub sanitize {
+}
+
+sub validate {
 }
 
 

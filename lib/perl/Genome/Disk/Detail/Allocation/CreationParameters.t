@@ -24,6 +24,13 @@ my $EXAMPLE_PARAMETERS = {
     group_subdirectory => 'testing-dir',
 };
 
+subtest create_with_no_params_fails => sub {
+    plan tests => 1;
+
+    dies_ok { Genome::Disk::Detail::Allocation::CreationParameters->create() }
+        'create dies with no params';
+};
+
 subtest create_with_missing_required_param_fails => sub {
     plan tests => 1;
 
@@ -31,7 +38,16 @@ subtest create_with_missing_required_param_fails => sub {
 
     delete $params{owner_id};
     dies_ok { Genome::Disk::Detail::Allocation::CreationParameters->create(
-            %params);} 'dies with missing required params';
+            %params);} 'create dies with missing required params';
+};
+
+subtest create_with_required_params_is_ok => sub {
+    plan tests => 1;
+
+    my %params = %$EXAMPLE_PARAMETERS;
+
+    ok(Genome::Disk::Detail::Allocation::CreationParameters->create(
+            %params), 'normal creation ok');
 };
 
 done_testing;
