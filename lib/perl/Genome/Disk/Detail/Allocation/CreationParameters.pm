@@ -111,15 +111,31 @@ our @APIPE_DISK_GROUPS = qw/
 sub validate {
     my $self = shift;
 
+    $self->validate_owner_class_name;
+    $self->validate_kilobytes_requested;
+    $self->validate_disk_group_name;
+}
+
+sub validate_owner_class_name {
+    my $self = shift;
+
     unless ($self->owner_class_name->__meta__) {
         confess sprintf("Could not find meta information for owner class %s, "
             . "make sure this class exists!", $self->owner_class_name);
     }
+}
+
+sub validate_kilobytes_requested {
+    my $self = shift;
 
     unless ($self->kilobytes_requested >= 0) {
         confess sprintf('Kilobytes requested is negative (%s)!',
             $self->kilobytes_requested);
     }
+}
+
+sub validate_disk_group_name {
+    my $self = shift;
 
     unless (grep { $self->disk_group_name eq $_ } @APIPE_DISK_GROUPS) {
         confess "Can only allocate disk in apipe disk groups, "
