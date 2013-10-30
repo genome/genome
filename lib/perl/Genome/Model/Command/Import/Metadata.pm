@@ -121,13 +121,23 @@ sub execute {
                 $log_fh->print("## FOUND $class $id: " . $prev->__display_name__ . "\n");
             }
             else {
-                $log_fh->print("## IMPORTING $class $id: " . UR::Util::d($hash) . "\n");
-                my $entity = UR::Context->_construct_object($class,%$hash, id => $id);
-                die "failed create for $class $id\n" unless $entity;
-                $entity->__signal_change__('create');
-                $entity->{'__get_serial'} = $UR::Context::GET_COUNTER++;
-                $UR::Context::all_objects_cache_size++;
-                #print ">>> $hash $entity\n";
+                if ($class->isa("Genome::Db")) {
+                    # these exist because of filesystem data being in place
+                    # run the install method
+                    $prev = $class->install($id);
+                    unless ($prev) {
+                        $self->warning_message("Failed to find $class $id!  Install manually.");
+                    }
+                }
+                else {
+                    $log_fh->print("## IMPORTING $class $id: " . UR::Util::d($hash) . "\n");
+                    my $entity = UR::Context->_construct_object($class,%$hash, id => $id);
+                    die "failed create for $class $id\n" unless $entity;
+                    $entity->__signal_change__('create');
+                    $entity->{'__get_serial'} = $UR::Context::GET_COUNTER++;
+                    $UR::Context::all_objects_cache_size++;
+                    #print ">>> $hash $entity\n";
+                }
             }
         }
     }
@@ -146,6 +156,7 @@ sub execute {
             my $o = $c->get($i);
             die "No $c $i!" unless $o;
             #print "$c $i $o\n";
+            
             # TODO: standardize on a method in the class to initialize imported data
             # This shoudl match a companion method to export data.
             if ($o->isa("Genome::Disk::Volume")) {
