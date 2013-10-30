@@ -144,5 +144,15 @@ sub validate_disk_group_name {
     }
 }
 
+sub disk_group {
+    my $self = shift;
+
+    my $group = Genome::Disk::Group->get(
+        disk_group_name => $self->disk_group_name);
+    confess sprintf("Could not find a group with name %s",
+        $self->disk_group_name) unless $group;
+    return $group;
+}
+
 
 1;

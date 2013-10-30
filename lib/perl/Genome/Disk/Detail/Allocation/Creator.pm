@@ -53,8 +53,7 @@ sub create_allocation {
         print "Database updating has been resumed, continuing allocation!\n";
     }
 
-    my $group = Genome::Disk::Group->get(disk_group_name => $disk_group_name);
-    confess "Could not find a group with name $disk_group_name" unless $group;
+    my $group = $self->parameters->disk_group;
     if (defined $group_subdirectory and $group_subdirectory ne $group->subdirectory) {
         print STDERR "Given group subdirectory $group_subdirectory does not match retrieved group's subdirectory, ignoring provided value\n";
     }
