@@ -21,7 +21,6 @@ my $EXAMPLE_PARAMETERS = {
     owner_id => 'silly owner',
     allocation_path => 'foo/bar',
     disk_group_name => 'testing-disk-group',
-    group_subdirectory => 'testing-dir',
 };
 
 subtest create_with_no_params_fails => sub {

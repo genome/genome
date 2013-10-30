@@ -32,14 +32,14 @@ class Genome::Disk::Detail::Allocation::CreationParameters {
             is => 'Text',
             len => 40,
         },
+    ],
 
+    has_optional => [
         group_subdirectory => {
             is => 'Text',
             len => 255,
         },
-    ],
 
-    has_optional => [
         mount_path => {
             is => 'Text',
             len => 255,
