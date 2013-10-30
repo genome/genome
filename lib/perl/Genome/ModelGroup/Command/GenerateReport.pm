@@ -1,11 +1,11 @@
-package Genome::ModelGroup::Command::GenerateCoverageReport;
+package Genome::ModelGroup::Command::GenerateReport;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::ModelGroup::Command::GenerateCoverageReport {
+class Genome::ModelGroup::Command::GenerateReport {
     is => 'Genome::Command::Base',
     has => [
         group => {
@@ -20,23 +20,28 @@ class Genome::ModelGroup::Command::GenerateCoverageReport {
             is => 'Text',
             doc => 'Server with CSS and JS resources',
         },
+        perspective => {
+            is => 'Text',
+            default_value => 'coverage',
+            valid_values => ['coverage', 'status'],
+        },
     ],
 };
 
 sub help_brief {
-    "Generate a copy of the coverage report",
+    "Generate a copy of the coverage report or status view for a model-group",
 }
 
 sub help_synopsis {
     my $self = shift;
     return <<"EOS"
-genome model convergence generate-coverage-report --group 12345 --output /tmp/report.html
+genome model convergence generate-report --group 12345 --output /tmp/report.html --base-url https://imp-apipe/
 EOS
 }
 
 sub help_detail {
     return <<EOS
-Generates a copy of the coverage report as is produced by the coverage HTML view of ModelGroups.
+Generates a copy of the desired report as is produced by the HTML view of ModelGroups.
 EOS
 }
 
@@ -47,7 +52,7 @@ sub execute {
     Genome::Sys->validate_file_for_writing($output_file); #This will croak on errors
 
     my $group = $self->group;
-    my $view = $group->create_view(perspective => 'coverage', toolkit => 'html', xsl_root => Genome->base_dir. '/xsl' );
+    my $view = $group->create_view(perspective => $self->perspective, toolkit => 'html', xsl_root => Genome->base_dir. '/xsl' );
     my $content = $view->content;
 
     my $base = $self->base_url;
