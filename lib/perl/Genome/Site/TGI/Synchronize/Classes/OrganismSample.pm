@@ -32,7 +32,7 @@ TISSUE_NAME                 VARCHAR2 (64)                    {null} {null}   ok 
 #TODO SAMPLE_ATTRIBUTES
 
 class Genome::Site::TGI::Synchronize::Classes::OrganismSample {
-    is => 'UR::Object',
+    is => 'Genome::Site::TGI::Synchronize::Classes::LimsBase',
     table_name => 'ORGANISM_SAMPLE',
     id_by => [
         id => { is => 'Number', column_name => 'ORGANISM_SAMPLE_ID', },
@@ -55,6 +55,8 @@ class Genome::Site::TGI::Synchronize::Classes::OrganismSample {
     ],
     data_source => 'Genome::DataSource::Dwrac',
 };
+
+sub entity_name { return 'sample'; }
 
 sub properties_to_copy {# 15
     return ( 'id', 'name', 'default_genotype_seq_id', properties_to_keep_updated() );
