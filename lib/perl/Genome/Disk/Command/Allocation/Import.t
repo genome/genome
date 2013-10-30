@@ -264,7 +264,9 @@ sub test_nonunique_allocation_path {
     ok($dir, "have test path at $dir");
     ok($volume, "test volume created");
     ok($group, "test group created");
-    push @Genome::Disk::Allocation::APIPE_DISK_GROUPS, $group->disk_group_name;
+    use Genome::Disk::Detail::Allocation::CreationParameters;
+    push @Genome::Disk::Detail::Allocation::CreationParameters::APIPE_DISK_GROUPS,
+        $group->disk_group_name;
 
     my $allocation = Genome::Disk::Allocation->create(
         mount_path => $volume->mount_path,
@@ -304,7 +306,9 @@ sub test_successful_allocation_create {
     ok($dir, "have test path at $dir");
     ok($volume, "test volume created");
     ok($group, "test group created");
-    push @Genome::Disk::Allocation::APIPE_DISK_GROUPS, $group->disk_group_name;
+    use Genome::Disk::Detail::Allocation::CreationParameters;
+    push @Genome::Disk::Detail::Allocation::CreationParameters::APIPE_DISK_GROUPS,
+        $group->disk_group_name;
 
     my $cmd = create_test_command($dir, '/tmp');
     ok($cmd, "created test command with target path $dir");

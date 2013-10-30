@@ -30,7 +30,9 @@ my $group = Genome::Disk::Group->create(
     unix_gid => 0,
 );
 ok($group, 'created test group');
-push @Genome::Disk::Allocation::APIPE_DISK_GROUPS, $group->disk_group_name;
+use Genome::Disk::Detail::Allocation::CreationParameters;
+push @Genome::Disk::Detail::Allocation::CreationParameters::APIPE_DISK_GROUPS,
+    $group->disk_group_name;
 
 # Temp testing directory, used as mount path for test volumes and allocations
 my $test_dir = tempdir(
