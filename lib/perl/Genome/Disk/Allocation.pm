@@ -321,28 +321,6 @@ sub _create {
     return $creator->create_allocation();
 }
 
-sub _existing_allocation_path_check {
-    my ($class, $mount_path, $group_subdirectory, $allocation_path) = @_;
-
-    # Make sure that we never attempt to create an allocation that has an absolute path that already exists. There are
-    # several places in this module that may delete a newly-created "candidate" allocation under the assumption that the
-    # absolute path for that allocation is empty. If there are preexisting files they will be unintentionally deleted
-    # when the candidate allocation is destroyed.
-    #
-    # For example: a user is trying to create an allocation for a specific path that already exists without an
-    # allocation (by specifying mount_path, disk_group_name, and allocation_path, they can force a specific absolute
-    # path for the new allocation). If a candidate allocation is created at this path and then destroyed for some
-    # arbitrary reason, the user will lose their files.
-
-    Genome::Utility::Instrumentation::timer('disk.allocation.create.candidate_volumes.existing_allocation_path_check', sub {
-        my $candidate_path = $class->_absolute_path($mount_path, $group_subdirectory, $allocation_path);
-        if ( -e $candidate_path ) {
-            confess "The allocation path $candidate_path already exists. If you are attempting to create an allocation "
-            . "for an existing path, please move the path to a temporary location before continuing.";
-        }
-    });
-}
-
 
 sub _delete {
     my ($class, %params) = @_;
