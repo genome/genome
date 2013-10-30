@@ -63,3 +63,4 @@ model_build [model_model] 2013-10-30T22:08:02Z Anthony Brummett <abrummet@genome
 model_build_input [model_build] 2013-10-30T22:09:49Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.build_input
 model_build_link [model_build] 2013-10-30T22:12:01Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.build_link
 model_build_metric [model_build] 2013-10-30T22:13:35Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.build_metric
+model_event [model_build model_model instrument_data] 2013-10-30T22:15:31Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.event
