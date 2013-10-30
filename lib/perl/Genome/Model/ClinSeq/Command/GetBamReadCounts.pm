@@ -6,7 +6,6 @@ package Genome::Model::ClinSeq::Command::GetBamReadCounts;
 use strict;
 use warnings;
 use Genome; 
-use Term::ANSIColor qw(:constants);
 use Data::Dumper;
 use Genome;
 use Genome::Model::ClinSeq::Util qw(:all);
@@ -85,7 +84,7 @@ sub __errors__ {
       push @errors, UR::Object::Tag->create(
 	                                          type => 'error',
 	                                          properties => ['positions_file'],
-	                                          desc => RED . "Positions file: " . $self->positions_file . " not found" . RESET,
+	                                          desc => "Positions file: " . $self->positions_file . " not found",
       );
   }
   return @errors;
@@ -94,7 +93,7 @@ sub __errors__ {
 sub help_usage {
     my $self = shift;
     my $usage = $self->SUPER::help_usage(@_);
-    return GREEN . $usage . RESET;
+    return $usage;
 }
 
 sub execute {
@@ -142,12 +141,10 @@ sub execute {
   my $transcript_info_path = $annotation_data_dir . "/annotation_data/rna_annotation/$reference_build_id-transcript_info.tsv";
   my $gtf_path = $annotation_build->annotation_file('gtf',$reference_build_id);
   unless (defined($gtf_path)) {
-    $self->error_message("'There is no annotation GTF file defined for annotation_reference_transcripts build: ". $annotation_build->__display_name__);
-    die $self->error_message;
+    die $self->error_message("'There is no annotation GTF file defined for annotation_reference_transcripts build: ". $annotation_build->__display_name__);
   }
   unless (-e $transcript_info_path) {
-    $self->error_message("'There is no transcript info file for annotation_reference_transcripts build: ". $annotation_build->__display_name__);
-    die $self->error_message;
+    die $self->error_message("'There is no transcript info file for annotation_reference_transcripts build: ". $annotation_build->__display_name__);
   }
 
   my $ensembl_map = &loadEnsemblMap('-gtf_path'=>$gtf_path, '-transcript_info_path'=>$transcript_info_path);
@@ -178,7 +175,9 @@ sub execute {
     my $ref_fasta = $data->{$bam}->{ref_fasta};
     my $snv_count = keys %{$snvs};
 
-    if ($verbose){print YELLOW, "\n\nSNV count = $snv_count\n$data_type\n$sample_type\n$bam_path\n$ref_fasta\n", RESET};
+    if ($verbose){
+	$self->status_message("\n\nSNV count = $snv_count\n$data_type\n$sample_type\n$bam_path\n$ref_fasta\n")
+    }
     my $counts = &getBamReadCounts('-snvs'=>$snvs, '-data_type'=>$data_type, '-sample_type'=>$sample_type, '-bam_path'=>$bam_path, '-ref_fasta'=>$ref_fasta, '-verbose'=>$verbose, '-no_fasta_check'=>$no_fasta_check);
     $data->{$bam}->{read_counts} = $counts;
   }
@@ -285,8 +284,7 @@ sub importPositions{
       $header_line = $_;
       #Make sure all neccessary columns are defined
       unless (defined($columns{'coord'}) && defined($columns{'mapped_gene_name'}) && defined($columns{'ref_base'}) && defined($columns{'var_base'}) && defined($columns{'ensembl_gene_id'})){
-        print RED, "\n\nRequired column missing from file: $infile (need: coord, mapped_gene_name, ref_base, var_base, ensembl_gene_id)", RESET;
-        exit(1);
+        die error_message("\n\nRequired column missing from file: $infile (need: coord, mapped_gene_name, ref_base, var_base, ensembl_gene_id)");
       }
       next();
     }
@@ -304,8 +302,7 @@ sub importPositions{
       $s{$coord}{start} = $2;
       $s{$coord}{end} = $3;
     }else{
-      print RED, "\n\nCoord: $coord not understood\n\n", RESET;
-      exit(1);
+      die error_message("\n\nCoord: $coord not understood\n\n");
     }
 
   }
@@ -356,12 +353,10 @@ sub getFilePaths_Genome{
         $d{$b}{ref_fasta} = $reference_fasta_path;
         $d{$b}{ref_name} = $reference_display_name;
       }else{
-        print RED, "\n\nA WGS model ID was specified, but a successful build could not be found!\n\n", RESET;
-        exit(1);
+        die error_message("\n\nA WGS model ID was specified, but a successful build could not be found!\n\n");
       }
     }else{
-      print RED, "\n\nA WGS model ID was specified, but it could not be found!\n\n", RESET;
-      exit(1);
+      die error_message("\n\nA WGS model ID was specified, but it could not be found!\n\n");
     }
   }
 
@@ -391,12 +386,10 @@ sub getFilePaths_Genome{
         $d{$b}{ref_fasta} = $reference_fasta_path;
         $d{$b}{ref_name} = $reference_display_name;
       }else{
-        print RED, "\n\nA Exome model ID was specified, but a successful build could not be found!\n\n", RESET;
-        exit(1);
+        die error_message("\n\nA Exome model ID was specified, but a successful build could not be found!\n\n");
       }
     }else{
-      print RED, "\n\nA Exome model ID was specified, but it could not be found!\n\n", RESET;
-      exit(1);
+      die error_message("\n\nA Exome model ID was specified, but it could not be found!\n\n");
     }
   }
 
@@ -419,12 +412,10 @@ sub getFilePaths_Genome{
         $d{$b}{ref_fasta} = $reference_fasta_path;
         $d{$b}{ref_name} = $reference_display_name;
       }else{
-        print RED, "\n\nAn RNA-seq model ID was specified, but a successful build could not be found!\n\n", RESET;
-        exit(1);
+        die error_message("\n\nAn RNA-seq model ID was specified, but a successful build could not be found!\n\n");
       }
     }else{
-      print RED, "\n\nAn RNA-seq model ID was specified, but it could not be found!\n\n", RESET;
-      exit(1);
+      die error_message("\n\nAn RNA-seq model ID was specified, but it could not be found!\n\n");
     }
   }
 
@@ -447,10 +438,10 @@ sub getFilePaths_Genome{
         $d{$b}{ref_fasta} = $reference_fasta_path;
         $d{$b}{ref_name} = $reference_display_name;
       }else{
-        die RED . "\n\nAn RNA-seq model ID was specified, but a successful build could not be found!\n\n" . RESET;
+        die error_message("\n\nAn RNA-seq model ID was specified, but a successful build could not be found!\n\n");
       }
     }else{
-      die RED . "\n\nAn RNA-seq model ID was specified, but it could not be found!\n\n" . RESET;
+      die error_message("\n\nAn RNA-seq model ID was specified, but it could not be found!\n\n");
     }
   }
 
@@ -460,7 +451,7 @@ sub getFilePaths_Genome{
     my $ref_name = $d{$b}{ref_name};
     unless ($ref_name eq $test_ref_name){
       print Dumper %d;
-      die RED . "\n\nOne or more of the reference build names used to generate BAMs did not match\n\n" . RESET;
+      die error_message("\n\nOne or more of the reference build names used to generate BAMs did not match\n\n");
     }
   }
 
@@ -495,12 +486,11 @@ sub getBamReadCounts{
         my $ref_base = $fai->fetch($data->{chr} .':'. $data->{start} .'-'. $data->{stop});
         unless ($data->{reference} eq $ref_base) {
           #print RED, "\n\nReference base " . $ref_base .' does not match expected '. $data->{reference} .' at postion '. $pos .' for chr '. $data->{chr} . '(tid = '. $tid . ')' . "\n$bam_path", RESET;
-          die("\n\nReference base " . $ref_base .' does not match expected '. $data->{reference} .' at postion '. $pos .' for chr '. $data->{chr} . '(tid = '. $tid . ')' . "\n$bam_path");
+          die error_message("\n\nReference base " . $ref_base .' does not match expected '. $data->{reference} .' at postion '. $pos .' for chr '. $data->{chr} . '(tid = '. $tid . ')' . "\n$bam_path");
         }
       }
       for my $pileup ( @{$pileups} ) {
         my $alignment = $pileup->alignment;
-
         #Skip indels or skip regions
         next if $pileup->indel or $pileup->is_refskip;
         my $qbase  = substr($alignment->qseq,$pileup->qpos,1);
@@ -580,7 +570,7 @@ sub getExpressionValues{
   my $entrez_ensembl_data = $args{'-entrez_ensembl_data'};
   my $ensembl_map = $args{'-ensembl_map'};
 
-  if ($verbose){print YELLOW, "\n\nGetting expression data from: $build_dir", YELLOW;}
+  if ($verbose){status_message("\nGetting expression data from: $build_dir");}
 
   my %e;
 

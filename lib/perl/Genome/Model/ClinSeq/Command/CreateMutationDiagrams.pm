@@ -6,7 +6,6 @@ use strict;
 use warnings;
 use Genome;
 use Data::Dumper;
-use Term::ANSIColor qw(:constants);
 use Genome::Model::ClinSeq::Util qw(:all);
 
 class Genome::Model::ClinSeq::Command::CreateMutationDiagrams {
@@ -111,7 +110,7 @@ sub __errors__ {
       push @errors, UR::Object::Tag->create(
 	                                          type => 'error',
 	                                          properties => ['outdir'],
-	                                          desc => RED . "Outdir: " . $self->outdir . " not found or not a directory" . RESET,
+	                                          desc => "Outdir: " . $self->outdir . " not found or not a directory",
                                           );
   }
   return @errors;

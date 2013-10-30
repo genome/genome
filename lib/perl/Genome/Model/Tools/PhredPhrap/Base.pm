@@ -79,7 +79,8 @@ sub create {
     $directory->create_consed_directory_structure;
     $self->{_directory} = $directory;
 
-    $self->_create_busy_file;
+    my $create_busy_file_ok = $self->_create_busy_file;
+    return if not $create_busy_file_ok;
     
     for my $file_method ( (qw/ acefile singlets_file /), $self->_files_to_remove ) {
        my $file_name = $self->$file_method;
@@ -109,10 +110,13 @@ sub busy_file {
 sub _create_busy_file {
     my $self = shift;
 
-    $self->error_message( 
-        sprintf('Phred phrap process already running for assembly (%s)', $self->assembly_name) 
-    ) and return if -e $self->busy_file;
-
+    my $busy_file = $self->busy_file;
+    $self->error_message('Phred phrap busy file: '.$busy_file);
+    if ( -e $self->busy_file ) {
+        $self->error_message('Phred phrap busy file exists! There may be another phred phrap process running for this assembly! '.$self->assembly_name);
+        $self->error_message("If a phred phrap process is not running, remove the busy file ($busy_file) and retry.");
+        return;
+    }
     return IO::File->new('>' . $self->busy_file)->close;
 }
 
@@ -152,7 +156,7 @@ sub execute {
         }
         $processor->status_message('Running');
         unless ( $processor->execute ) {
-            $self->error_msg("Pre Assembly Processing failed, cannot assemble");
+            $self->error_message("Pre Assembly Processing failed, cannot assemble");
             return;
         }
     }

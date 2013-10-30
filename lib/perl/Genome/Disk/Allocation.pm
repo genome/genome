@@ -198,6 +198,8 @@ sub set_permissions_read_only {
 
     $self->set_file_permissions(0444);
     $self->set_directory_permissions(0555);
+
+    chmod 0555, $self->absolute_path;
 }
 
 sub set_file_permissions {

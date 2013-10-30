@@ -3,7 +3,6 @@ package Genome::Model::ClinSeq::Command::SummarizeTier1SnvSupport;
 use strict;
 use warnings;
 use Genome;
-use Term::ANSIColor qw(:constants);
 use Data::Dumper;
 use File::Basename;
 use Genome::Model::ClinSeq::Util qw(:all);
@@ -85,7 +84,7 @@ sub execute {
     close(POS);
     unless($positions_count > 0){
       if ($verbose){
-        print YELLOW, "\n\nNo SNV positions found, skipping summary", RESET;
+        self->status_message("\n\nNo SNV positions found, skipping summary");
       }
       next();
     }
@@ -109,7 +108,7 @@ sub execute {
     $rc_summary_cmd .= " 1>$rc_summary_stdout 2>$rc_summary_stderr";
 
     #Summarize the BAM readcounts results for candidate variants - produce descriptive statistics, figures etc.
-    if ($verbose){print YELLOW, "\n\n$rc_summary_cmd", RESET;}
+    if ($verbose){ $self->status_message("\n\n$rc_summary_cmd"); }
     mkdir($output_stats_dir);
     Genome::Sys->shellcmd(cmd => $rc_summary_cmd);
   }

@@ -6,7 +6,6 @@ use warnings;
 use Genome;
 use Command;
 use IO::File;
-use Genome::Utility::Text qw(sanitize_string_for_filesystem);
 
 class Genome::Model::Tools::Analysis::LaneQc::CopyNumber {
     is => 'Command',
@@ -84,18 +83,18 @@ sub execute {
             return;
         }
         for my $alignment (@alignments) {
-            my $lane_name = $alignment->__display_name__;
+            my $alignment_id = $alignment->id;
             my $reference = $alignment->reference_build->full_consensus_path('fa');
             my $instrument_data_id = $alignment->instrument_data_id;    
             my @bams = $alignment->alignment_bam_file_paths;
             unless(@bams) {
-                $self->error_message("No alignment bam for $lane_name");
+                $self->error_message("No alignment bam for $alignment_id");
                 return;
             }
             else {
                 my $alignment_count = @bams;
                 my $path = $bams[0];
-                $self->status_message("Found $alignment_count for $lane_name with default path $path\n");
+                $self->status_message("Found $alignment_count for $alignment_id with default path $path\n");
             }
             my $alignment_file = $bams[0];
             unless(-e $alignment_file) {
@@ -105,8 +104,7 @@ sub execute {
 
             my $user = Genome::Sys->username;
 
-            my $filesafe_lane_name = sanitize_string_for_filesystem($lane_name);
-            my $lane_outfile = $outfile_prefix . $filesafe_lane_name . ".cnqc";
+            my $lane_outfile = $outfile_prefix . $alignment_id . ".cnqc";
 
             my $job1_name = $lane_outfile . "-cn-qc";
             my $job2_name = $job1_name . "-plot";

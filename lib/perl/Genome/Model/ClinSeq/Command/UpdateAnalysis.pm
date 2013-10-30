@@ -7,7 +7,6 @@ use warnings;
 use Genome;
 use Genome::Model::ClinSeq;
 use Data::Dumper;
-use Term::ANSIColor qw(:constants);
 use Time::Piece;
 
 class Genome::Model::ClinSeq::Command::UpdateAnalysis {

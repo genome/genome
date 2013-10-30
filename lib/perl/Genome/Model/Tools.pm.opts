@@ -7591,6 +7591,42 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>add-annotation-data',
+    [
+      'version=s',
+      undef,
+      'data-directory=s',
+      undef,
+      'reference-sequence=s',
+      undef,
+      'help!',
+      undef
+    ],
+    '>list',
+    [
+      'style=s',
+      [
+        'text',
+        'csv',
+        'tsv',
+        'pretty',
+        'html',
+        'xml',
+        'newtext'
+      ],
+      'csv-delimiter=s',
+      'files',
+      'noheaders!',
+      undef,
+      'show=s',
+      'files',
+      'order-by=s',
+      'files',
+      'filter=s',
+      'files',
+      'help!',
+      undef
+    ],
     'help!',
     undef
   ],
