@@ -11,7 +11,7 @@ use Filesys::Df qw();
 use List::Util qw(max);
 
 class Genome::Disk::Volume {
-    table_name => 'DISK_VOLUME',
+    table_name => 'disk.volume',
     id_by => [
         dv_id => {is => 'Number', column_name => 'id' },
     ],

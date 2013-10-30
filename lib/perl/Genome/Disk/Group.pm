@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 class Genome::Disk::Group {
-    table_name => 'DISK_GROUP',
+    table_name => 'disk.group',
     id_by => [
         dg_id => { is => 'Number', column_name => 'id' },
     ],
