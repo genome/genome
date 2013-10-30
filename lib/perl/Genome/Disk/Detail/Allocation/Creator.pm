@@ -31,8 +31,6 @@ sub create_allocation {
     my $owner_id = $self->parameters->owner_id;
     my $allocation_path = $self->parameters->allocation_path;
     my $disk_group_name = $self->parameters->disk_group_name;
-    my $mount_path = $self->parameters->mount_path;
-    my $exclude_mount_path = $self->parameters->exclude_mount_path;
     my $group_subdirectory = $self->parameters->group_subdirectory;
 
     if (my $parent_alloc = $class->get_parent_allocation($allocation_path)) {
