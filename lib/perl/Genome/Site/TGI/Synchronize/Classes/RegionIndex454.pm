@@ -42,6 +42,7 @@ EXPERIMENT_PURPOSE VARCHAR2 (32)                    {null} {null}   NOT_SYNCED
 =cut
 
 class Genome::Site::TGI::Synchronize::Classes::RegionIndex454 {
+    is => 'Genome::Site::TGI::Synchronize::Classes::LimsInstDataBase',
     table_name => <<'SQL'
         (
             select 
@@ -63,7 +64,6 @@ class Genome::Site::TGI::Synchronize::Classes::RegionIndex454 {
                  end
                 ) subset_name,
                 --constants
-                '454' sequencing_platform
             from region_index_454 ri454
             join run_region_454 rr454 on rr454.region_id = ri454.region_id
         ) region_index_454
@@ -79,7 +79,6 @@ SQL
         region_id => { is => 'Text', },
         region_number => { is => 'Text', },
         run_name => { is => 'Text', },
-        sequencing_platform => { is => 'Text', },
         subset_name => { is => 'Text', },
         total_reads => { is => 'Text', },
         total_bases_read => { is => 'Text', },
@@ -87,17 +86,20 @@ SQL
     data_source => 'Genome::DataSource::Dwrac',
 };
 
+sub entity_name { return 'instrument data 454'; }
+
 sub properties_to_copy {# 9
     return ( 'id', 'library_id', properties_to_keep_updated() );
 }
 
-sub properties_to_keep_updated {# 7
+sub properties_to_keep_updated {# 8
     return (qw/ 
         index_sequence
         is_paired_end
         region_id
         region_number
         run_name
+        subset_name
         total_reads
         total_bases_read
         /);
@@ -114,4 +116,5 @@ sub lims_property_name_to_genome_property_name {
     return $name;
 }
 
+1;
 
