@@ -50,29 +50,11 @@ sub create_allocation {
             @candidate_volumes = $self->candidate_volumes;
     });
 
-    my %parameters = (
-        disk_group_name              => $disk_group_name,
-        kilobytes_requested          => $kilobytes_requested,
-        original_kilobytes_requested => $kilobytes_requested,
-        allocation_path              => $allocation_path,
-        owner_class_name             => $owner_class_name,
-        owner_id                     => $owner_id,
-        group_subdirectory           => $group_subdirectory,
-        id                           => $id,
-        creation_time                => UR::Context->current->now,
-    );
-    if ($self->parameters->archive_after_time) {
-        $parameters{archive_after_time} = $self->parameters->archive_after_time;
-    }
-    if ($self->parameters->kilobytes_used) {
-        $parameters{kilobytes_used} = $self->parameters->kilobytes_used;
-    }
-
     my $allocation_object;
     Genome::Utility::Instrumentation::timer(
         'disk.allocation.create.get_allocation_without_lock', sub {
             $allocation_object = $self->_get_allocation_without_lock(
-                \@candidate_volumes, \%parameters);
+                \@candidate_volumes);
     });
 
     $allocation_object->debug_message(sprintf("Allocation (%s) created at %s",
@@ -181,8 +163,7 @@ sub _get_candidate_volumes {
 }
 
 sub _get_allocation_without_lock {
-    my ($self, $candidate_volumes, $parameters) = @_;
-    my $kilobytes_requested = $parameters->{'kilobytes_requested'};
+    my ($self, $candidate_volumes) = @_;
 
     # We randomize to avoid the rare repeated contention case
     my @randomized_candidate_volumes = (@$candidate_volumes,
@@ -190,11 +171,12 @@ sub _get_allocation_without_lock {
 
     my $chosen_allocation;
     for my $candidate_volume (@randomized_candidate_volumes) {
-        if ($candidate_volume->has_space($kilobytes_requested)) {
+        if ($candidate_volume->has_space(
+                $self->parameters->kilobytes_requested)) {
             $self->_verify_allocation_path_unused($candidate_volume);
 
             $chosen_allocation = $self->_attempt_allocation_creation(
-                $candidate_volume, $parameters);
+                $candidate_volume);
             if ($chosen_allocation) {
                 last;
             }
@@ -205,7 +187,7 @@ sub _get_allocation_without_lock {
         Carp::confess $self->error_message(sprintf(
             "Could not create allocation in specified disk group (%s), "
             . "which contains %d volumes:\n%s\n",
-            $parameters->{disk_group_name}, scalar(@$candidate_volumes),
+            $self->parameters->disk_group_name, scalar(@$candidate_volumes),
             join("\n", map { $_->mount_path } @$candidate_volumes),
         ));
     }
@@ -248,11 +230,11 @@ sub _verify_allocation_path_unused {
 }
 
 sub _attempt_allocation_creation {
-    my ($self, $candidate_volume, $parameters) = @_;
+    my ($self, $candidate_volume) = @_;
 
     my $candidate_allocation = Genome::Disk::Allocation->SUPER::create(
         mount_path => $candidate_volume->mount_path,
-        %$parameters,
+        $self->parameters->as_hash,
     );
     unless ($candidate_allocation) {
         die 'Failed to create candidate allocation';

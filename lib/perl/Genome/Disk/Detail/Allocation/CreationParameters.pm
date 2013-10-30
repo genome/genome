@@ -206,5 +206,27 @@ sub disk_group {
     return $group;
 }
 
+sub as_hash {
+    my $self = shift;
+
+    my %parameters = (
+        disk_group_name              => $self->disk_group_name,
+        kilobytes_requested          => $self->kilobytes_requested,
+        original_kilobytes_requested => $self->kilobytes_requested,
+        allocation_path              => $self->allocation_path,
+        owner_class_name             => $self->owner_class_name,
+        owner_id                     => $self->owner_id,
+        group_subdirectory           => $self->group_subdirectory,
+        id                           => $self->id,
+        creation_time                => UR::Context->current->now,
+    );
+    if ($self->archive_after_time) {
+        $parameters{archive_after_time} = $self->parameters->archive_after_time;
+    }
+    if ($self->kilobytes_used) {
+        $parameters{kilobytes_used} = $self->parameters->kilobytes_used;
+    }
+    return %parameters;
+}
 
 1;
