@@ -262,6 +262,7 @@ sub execute {
 #########################################################################################################################################
 sub importPositions{
   my %args = @_;
+  my $self = shift;
   my $infile = $args{'-positions_file'};
   my %result;
   my %s;
@@ -284,7 +285,7 @@ sub importPositions{
       $header_line = $_;
       #Make sure all neccessary columns are defined
       unless (defined($columns{'coord'}) && defined($columns{'mapped_gene_name'}) && defined($columns{'ref_base'}) && defined($columns{'var_base'}) && defined($columns{'ensembl_gene_id'})){
-        die error_message("\n\nRequired column missing from file: $infile (need: coord, mapped_gene_name, ref_base, var_base, ensembl_gene_id)");
+        die $self->error_message("\n\nRequired column missing from file: $infile (need: coord, mapped_gene_name, ref_base, var_base, ensembl_gene_id)");
       }
       next();
     }
@@ -302,7 +303,7 @@ sub importPositions{
       $s{$coord}{start} = $2;
       $s{$coord}{end} = $3;
     }else{
-      die error_message("\n\nCoord: $coord not understood\n\n");
+      die $self->error_message("\n\nCoord: $coord not understood\n\n");
     }
 
   }
@@ -318,6 +319,7 @@ sub importPositions{
 #########################################################################################################################################
 sub getFilePaths_Genome{
   my %args = @_;
+  my $self = shift;
   my $wgs_som_var_model_id = $args{'-wgs_som_var_model_id'};
   my $exome_som_var_model_id = $args{'-exome_som_var_model_id'};
   my $rna_seq_normal_model_id = $args{'-rna_seq_normal_model_id'};
@@ -353,10 +355,10 @@ sub getFilePaths_Genome{
         $d{$b}{ref_fasta} = $reference_fasta_path;
         $d{$b}{ref_name} = $reference_display_name;
       }else{
-        die error_message("\n\nA WGS model ID was specified, but a successful build could not be found!\n\n");
+        die $self->error_message("\n\nA WGS model ID was specified, but a successful build could not be found!\n\n");
       }
     }else{
-      die error_message("\n\nA WGS model ID was specified, but it could not be found!\n\n");
+      die $self->error_message("\n\nA WGS model ID was specified, but it could not be found!\n\n");
     }
   }
 
@@ -386,10 +388,10 @@ sub getFilePaths_Genome{
         $d{$b}{ref_fasta} = $reference_fasta_path;
         $d{$b}{ref_name} = $reference_display_name;
       }else{
-        die error_message("\n\nA Exome model ID was specified, but a successful build could not be found!\n\n");
+        die $self->error_message("\n\nA Exome model ID was specified, but a successful build could not be found!\n\n");
       }
     }else{
-      die error_message("\n\nA Exome model ID was specified, but it could not be found!\n\n");
+      die $self->error_message("\n\nA Exome model ID was specified, but it could not be found!\n\n");
     }
   }
 
@@ -412,10 +414,10 @@ sub getFilePaths_Genome{
         $d{$b}{ref_fasta} = $reference_fasta_path;
         $d{$b}{ref_name} = $reference_display_name;
       }else{
-        die error_message("\n\nAn RNA-seq model ID was specified, but a successful build could not be found!\n\n");
+        die $self->error_message("\n\nAn RNA-seq model ID was specified, but a successful build could not be found!\n\n");
       }
     }else{
-      die error_message("\n\nAn RNA-seq model ID was specified, but it could not be found!\n\n");
+      die $self->error_message("\n\nAn RNA-seq model ID was specified, but it could not be found!\n\n");
     }
   }
 
@@ -438,10 +440,10 @@ sub getFilePaths_Genome{
         $d{$b}{ref_fasta} = $reference_fasta_path;
         $d{$b}{ref_name} = $reference_display_name;
       }else{
-        die error_message("\n\nAn RNA-seq model ID was specified, but a successful build could not be found!\n\n");
+        die $self->error_message("\n\nAn RNA-seq model ID was specified, but a successful build could not be found!\n\n");
       }
     }else{
-      die error_message("\n\nAn RNA-seq model ID was specified, but it could not be found!\n\n");
+      die $self->error_message("\n\nAn RNA-seq model ID was specified, but it could not be found!\n\n");
     }
   }
 
@@ -451,7 +453,7 @@ sub getFilePaths_Genome{
     my $ref_name = $d{$b}{ref_name};
     unless ($ref_name eq $test_ref_name){
       print Dumper %d;
-      die error_message("\n\nOne or more of the reference build names used to generate BAMs did not match\n\n");
+      die $self->error_message("\n\nOne or more of the reference build names used to generate BAMs did not match\n\n");
     }
   }
 
@@ -464,6 +466,7 @@ sub getFilePaths_Genome{
 #########################################################################################################################################
 sub getBamReadCounts{
   my %args = @_;
+  my $self = shift;
   my $snvs = $args{'-snvs'};
   my $data_type = $args{'-data_type'};
   my $sample_type = $args{'-sample_type'};
@@ -486,7 +489,7 @@ sub getBamReadCounts{
         my $ref_base = $fai->fetch($data->{chr} .':'. $data->{start} .'-'. $data->{stop});
         unless ($data->{reference} eq $ref_base) {
           #print RED, "\n\nReference base " . $ref_base .' does not match expected '. $data->{reference} .' at postion '. $pos .' for chr '. $data->{chr} . '(tid = '. $tid . ')' . "\n$bam_path", RESET;
-          die error_message("\n\nReference base " . $ref_base .' does not match expected '. $data->{reference} .' at postion '. $pos .' for chr '. $data->{chr} . '(tid = '. $tid . ')' . "\n$bam_path");
+          die $self->error_message("\n\nReference base " . $ref_base .' does not match expected '. $data->{reference} .' at postion '. $pos .' for chr '. $data->{chr} . '(tid = '. $tid . ')' . "\n$bam_path");
         }
       }
       for my $pileup ( @{$pileups} ) {
@@ -564,13 +567,14 @@ sub getBamReadCounts{
 #########################################################################################################################################
 sub getExpressionValues{
   my %args = @_;
+  my $self = shift;
   my $snvs = $args{'-snvs'};
   my $build_dir = $args{'-build_dir'};
   my $verbose = $args{'-verbose'};
   my $entrez_ensembl_data = $args{'-entrez_ensembl_data'};
   my $ensembl_map = $args{'-ensembl_map'};
 
-  if ($verbose){status_message("\nGetting expression data from: $build_dir");}
+  if ($verbose){ $self->status_message("\nGetting expression data from: $build_dir");}
 
   my %e;
 
@@ -605,4 +609,4 @@ sub getExpressionValues{
   return(\%e);
 }
 
-  
+

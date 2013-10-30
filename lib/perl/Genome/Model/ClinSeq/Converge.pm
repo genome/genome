@@ -17,6 +17,7 @@ require Exporter;
 
 use strict;
 use warnings;
+use Genome;
 use Data::Dumper;
 use Genome::Model::ClinSeq::Util qw(:all);
 
@@ -43,8 +44,8 @@ sub getModelsBuilds{
   if (defined($builds_ref)){$opt_count++;}
   if (defined($models_ref)){$opt_count++;}
   if (defined($model_group_id)){$opt_count++;}
-  if ($opt_count == 0){die error_message("\n\nYou must specify at least one option for &getModels (Coverge.pm)\n\n"); }
-  if ($opt_count > 1){die error_message("\n\nYou must specify only one option for &getModels (Coverge.pm)\n\n"); }
+  if ($opt_count == 0){die Genome::Model->error_message("\n\nYou must specify at least one option for &getModels (Coverge.pm)\n\n"); }
+  if ($opt_count > 1){die Genome::Model->error_message("\n\nYou must specify only one option for &getModels (Coverge.pm)\n\n"); }
 
   #Determine the target number of models/builds
   my $target_count = 0;
@@ -56,7 +57,7 @@ sub getModelsBuilds{
     my @models = $mg->models;
     $target_count = scalar(@models);
   }
-  if ($verbose){status_message("\nSearching for $target_count models/builds");}
+  if ($verbose){Genome::Model->status_message("\nSearching for $target_count models/builds");}
 
   #Always returns model AND build objects for convenience
   #If a model-group ID or array of model IDs is provided, get the last successful build for each and return that
@@ -77,7 +78,7 @@ sub getModelsBuilds{
         push(@builds, $b);
         push(@models, $m);
       }else{
-        status_message("\n\tWarning - build $build_id has a status of $status");
+        Genome::Model->status_message("\n\tWarning - build $build_id has a status of $status");
       }
     }
   }
@@ -93,10 +94,10 @@ sub getModelsBuilds{
           push(@builds, $b);
           push(@models, $m);
         }else{
-          warning_message("\n\tWarning - build $build_id has a status of $status");
+          Genome::Model->warning_message("\n\tWarning - build $build_id has a status of $status");
         }
       }else{
-        warning_message("\n\tWarning - model $model_id has no complete builds");
+        Genome::Model->warning_message("\n\tWarning - model $model_id has no complete builds");
       }
     }
   }
@@ -112,10 +113,10 @@ sub getModelsBuilds{
         if ($status eq "Succeeded"){
           push(@builds, $b);
         }else{
-          warning_message("\n\tWarning - build $build_id has a status of $status");
+          Genome::Model->warning_message("\n\tWarning - build $build_id has a status of $status");
         }
       }else{
-        warning_message("\n\tWarning - model $model_id has no complete builds");
+        Genome::Model->warning_message("\n\tWarning - model $model_id has no complete builds");
       }
     }
   }
@@ -130,7 +131,7 @@ sub getModelsBuilds{
   if ($pp_count > 1){
     my @pp = keys %pp_list;
     my $pp_list = join(",", @pp);
-    warning_message("\n\nWarning - more than one processing-profile is being used by this group of models. PP list: $pp_list");
+    Genome::Model->warning_message("\n\nWarning - more than one processing-profile is being used by this group of models. PP list: $pp_list");
   }
 
   #Summarize builds found
@@ -140,10 +141,10 @@ sub getModelsBuilds{
   #Allow the user to return an incomplete list, but only if they specify this option...
   unless ($partial){
     unless ($b_count == $target_count && $m_count == $target_count){
-      die error_message("\n\tDid not find the correct number of successful models/builds");
+      die Genome::Model->error_message("\n\tDid not find the correct number of successful models/builds");
     }
   }
-  if ($verbose){status_message("\n\tFound $b_count builds and $m_count models");}
+  if ($verbose){Genome::Model->status_message("\n\tFound $b_count builds and $m_count models");}
 
   #Build a hash that groups each model/build pair together
   my %mb;

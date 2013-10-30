@@ -27,6 +27,7 @@ use Genome::Model::ClinSeq::Util qw(:all);
 #################################################################################################################
 sub parseFpkmFile{
   my %args = @_;
+  my $self = shift;
   my $infile = $args{'-infile'};
   my $entrez_ensembl_data = $args{'-entrez_ensembl_data'};
   my $ensembl_tmap = $args{'-ensembl_map'};
@@ -37,7 +38,7 @@ sub parseFpkmFile{
   }
 
   if ($verbose){
-    status_message("\n\nParsing: $infile");
+    $self->status_message("\n\nParsing: $infile");
   }
 
   #Note that we could be parsing genes or transcripts here
@@ -83,7 +84,7 @@ sub parseFpkmFile{
     }elsif($columns{'status'}){
       $FPKM_status = $line[$columns{'status'}{position}];
     }else{
-      die error_message("\n\nRequired column not found: 'FPKM_status' or 'status'");
+      die $self->error_message("\n\nRequired column not found: 'FPKM_status' or 'status'");
     }
 
     #Fix gene name and create a new column for this name
@@ -113,7 +114,7 @@ sub parseFpkmFile{
 
   my $gc = keys %fpkm;
   unless ($gc == $rc){
-    die error_message("\n\nFound $gc distinct gene|coord entries but $rc data lines - not good...\n\n");
+    die $self->error_message("\n\nFound $gc distinct gene|coord entries but $rc data lines - not good...\n\n");
   }
 
   #Print an outfile sorted on the key
@@ -134,6 +135,7 @@ sub parseFpkmFile{
 #################################################################################################################
 sub mergeIsoformsFile{
   my %args = @_;
+  my $self = shift;
   my $infile = $args{'-infile'};
   my $entrez_ensembl_data = $args{'-entrez_ensembl_data'};
   my $ensembl_map = $args{'-ensembl_map'};
@@ -146,7 +148,7 @@ sub mergeIsoformsFile{
   $outfile = $args{'-outfile'} if (defined($args{'-outfile'}));
 
   if ($verbose){
-    status_message("\n\nParsing and merging to gene level: $infile");
+    $self->status_message("\n\nParsing and merging to gene level: $infile");
   }
 
   my %trans;
@@ -174,12 +176,12 @@ sub mergeIsoformsFile{
     my $original_gene_id = $line[$columns{'gene_id'}{position}];
 
     unless($tracking_id){
-      die error_message("\n\nTracking ID not defined\n\n");
+      die $self->error_message("\n\nTracking ID not defined\n\n");
     }
 
     #Get the gene ID from the transcript ID
     unless (defined($ensembl_map->{$tracking_id})){
-      die error_message("\n\nCould not map tracking id: $tracking_id to an ensembl gene via ensembl transcript ID!\n\n");
+      die $self->error_message("\n\nCould not map tracking id: $tracking_id to an ensembl gene via ensembl transcript ID!\n\n");
     }
     my $ensg_id = $ensembl_map->{$tracking_id}->{ensg_id};
     my $ensg_name = $ensembl_map->{$tracking_id}->{ensg_name};
@@ -200,7 +202,7 @@ sub mergeIsoformsFile{
     }elsif($columns{'status'}){
       $FPKM_status = $line[$columns{'status'}{position}];
     }else{
-      die error_message("\n\nRequired column not found: 'FPKM_status' or 'status'");
+      die $self->error_message("\n\nRequired column not found: 'FPKM_status' or 'status'");
     }
  
     #Fix gene name and create a new column for this name
@@ -217,7 +219,7 @@ sub mergeIsoformsFile{
       $chr_start = $2;
       $chr_end = $3;
     }else{
-      die error_message("\n\nlocus format not understood: $locus\n\n");
+      die $self->error_message("\n\nlocus format not understood: $locus\n\n");
     }
   
     #Merge down to genes, combining the coverage and FPKM values (cumulatively), coordinates (outer coords), and calculating a new length
@@ -250,7 +252,7 @@ sub mergeIsoformsFile{
 
   my $tc = keys %trans;
   unless ($tc == $rc){
-    die error_message("\n\nFound $tc distinct transcript entries but $rc data lines - not good...\n\n");
+    die $self->error_message("\n\nFound $tc distinct transcript entries but $rc data lines - not good...\n\n");
   }
 
   #If an FPKM status file was defined, use it to add FPKM status value to each gene where possible
@@ -303,6 +305,7 @@ sub mergeIsoformsFile{
 #################################################################################################################
 sub calculateCufflinksStats{
   my %args = @_;
+  my $self = shift;
   my $infile = $args{'-infile'};
   my $outfile = $args{'-outfile'};
 
@@ -311,7 +314,7 @@ sub calculateCufflinksStats{
   #Question Answer  Data_Type Analysis_Type Statistic_Type  Extra_Description
 
   unless (-e $infile){
-    die error_message("\n\nInput file to &calculateCufflinksStats() could not be found\n\n");
+    die $self->error_message("\n\nInput file to &calculateCufflinksStats() could not be found\n\n");
   }
 
   #Import FPKM data
