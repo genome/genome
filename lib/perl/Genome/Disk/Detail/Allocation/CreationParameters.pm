@@ -100,6 +100,29 @@ sub sanitize {
     my $self = shift;
 
     $self->group_subdirectory($self->disk_group->subdirectory);
+    $self->sanitize_mount_path;
+    $self->sanitize_exclude_mount_path;
+}
+
+sub sanitize_mount_path {
+    my $self = shift;
+
+    $self->mount_path(sanitize_directory_path($self->mount_path));
+}
+
+sub sanitize_exclude_mount_path {
+    my $self = shift;
+
+    $self->exclude_mount_path(sanitize_directory_path(
+            $self->exclude_mount_path));
+}
+
+sub sanitize_directory_path {
+    my $path = shift;
+    if ($path) {
+        $path =~ s/\/$//; # mount paths in database don't have trailing /
+    }
+    return $path;
 }
 
 # TODO This needs to be removed, site-specific
@@ -118,6 +141,7 @@ sub validate {
     $self->validate_kilobytes_requested;
     $self->validate_disk_group_name;
     $self->validate_group_subdirectory;
+    $self->validate_mount_path;
 }
 
 sub validate_owner_class_name {
@@ -162,6 +186,17 @@ sub validate_group_subdirectory {
     }
 }
 
+sub validate_mount_path {
+    my $self = shift;
+    if (defined $self->mount_path && defined $self->exclude_mount_path) {
+        $self->sanitize_mount_path;
+        $self->sanitize_exclude_mount_path;
+        if ($self->mount_path eq $self->exclude_mount_path) {
+            confess sprintf("mount_path (%s) equal to exclude_mount_path (%s)",
+                $self->mount_path, $self->exclude_mount_path);
+        }
+    }
+}
 
 sub disk_group {
     my $self = shift;

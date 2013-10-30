@@ -58,7 +58,6 @@ sub create_allocation {
     my @candidate_volumes;
     Genome::Utility::Instrumentation::timer('disk.allocation.create.candidate_volumes.selection', sub {
         if (defined $mount_path) {
-            $mount_path =~ s/\/$//; # mount paths in database don't have trailing /
             my $volume = Genome::Disk::Volume->get(mount_path => $mount_path, disk_status => 'active', can_allocate => 1);
             confess "Could not get volume with mount path $mount_path" unless $volume;
 
