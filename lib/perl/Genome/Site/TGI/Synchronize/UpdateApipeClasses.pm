@@ -453,46 +453,12 @@ sub _create_organismtaxon {
 
 sub _create_object {
     my ($self, $original_object, $new_object_class) = @_;
-
-    my %params;
-    for my $name ( $original_object->properties_to_copy ) {
-        my $value = $original_object->$name;
-        next if not defined $value;
-        $params{$name} = $value;
-    }
-
-    my $object = eval { $new_object_class->create(%params); };
-    $self->_confess_object_creation_error($original_object, $new_object_class, $@) unless $object;
-
-    return 1;
+    return $original_object->create_in_genome;
 }
 
 sub _create_populationgroup {
     my ($self, $original_object, $new_object_class) = @_;
-
-    # No attributes/indirect properties, etc to worry about here (except members, below)
-    my %params;
-    for my $property ($new_object_class->__meta__->_legacy_properties) {
-        my $property_name = $property->property_name;
-        $params{$property_name} = $original_object->{$property_name} if defined $original_object->{$property_name};
-    }
-
-    # Grab members from old object and pass to create parameters
-    my @member_ids = $original_object->member_ids;
-    if ( @member_ids ) {
-        $params{member_ids} = \@member_ids;
-    }
-
-    my $object = eval {
-        $new_object_class->create(
-            %params, 
-            id => $original_object->id, 
-            subclass_name => $new_object_class
-        ) 
-    };
-    $self->_confess_object_creation_error($original_object, $new_object_class, $@) unless $object;
-
-    return 1;
+    return $self->_create_object($original_object, $new_object_class);
 }
 
 sub _create_limsproject {
