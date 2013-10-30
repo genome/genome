@@ -62,11 +62,7 @@ sub create_allocation {
     my @candidate_volumes;
     Genome::Utility::Instrumentation::timer(
         'disk.allocation.create.candidate_volumes.selection', sub {
-            if (defined $mount_path) {
-                @candidate_volumes = $self->candidate_volumes_from_mount_path;
-            } else {
-                @candidate_volumes = $self->candidate_volumes_without_mount_path;
-            }
+            @candidate_volumes = $self->candidate_volumes;
     });
 
     my %parameters = (
@@ -125,6 +121,16 @@ sub create_allocation {
     return $allocation_object;
 }
 
+
+sub candidate_volumes {
+    my $self = shift;
+
+    if (defined $self->parameters->mount_path) {
+        return $self->candidate_volumes_from_mount_path;
+    } else {
+        return $self->candidate_volumes_without_mount_path;
+    }
+}
 
 sub candidate_volumes_from_mount_path {
     my $self = shift;
