@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 class Genome::Disk::Assignment {
-    table_name => 'DISK_VOLUME_GROUP',
+    table_name => 'disk.volume_group_bridge',
     id_by => [
         dg_id => {
             is => 'Number',
