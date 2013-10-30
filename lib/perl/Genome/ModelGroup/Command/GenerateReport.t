@@ -12,19 +12,19 @@ use Test::More tests => 4;
 use above "Genome";
 use Genome::Test::Factory::Model::ReferenceAlignment;
 
-use_ok('Genome::ModelGroup::Command::GenerateCoverageReport');
+use_ok('Genome::ModelGroup::Command::GenerateReport');
 
-my $group = Genome::ModelGroup->__define__(name => 'test model-group for coverage-report command');
+my $group = Genome::ModelGroup->__define__(name => 'test model-group for report command');
 my $model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object;
 $group->assign_models($model);
 my $output_file = Genome::Sys->create_temp_file_path;
 
-my $cmd = Genome::ModelGroup::Command::GenerateCoverageReport->create(
+my $cmd = Genome::ModelGroup::Command::GenerateReport->create(
     group => $group,
     output_file => $output_file,
     base_url => 'http://testing.example.com',
 );
-isa_ok($cmd,'Genome::ModelGroup::Command::GenerateCoverageReport','created report generator');
+isa_ok($cmd,'Genome::ModelGroup::Command::GenerateReport','created report generator');
 
 ok($cmd->execute, 'ran report generator');
 ok(-s $output_file, 'generated report');
