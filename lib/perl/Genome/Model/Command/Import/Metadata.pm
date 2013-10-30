@@ -117,29 +117,35 @@ sub execute {
             # $id = "888.99" if $class->isa("Genome::Db");
             my $hash = $loaded{$class}{$id};
             my $prev = $class->get($id);
-            if ($prev) {
+            if ($prev) { 
                 $log_fh->print("## FOUND $class $id: " . $prev->__display_name__ . "\n");
             }
             else {
                 if ($class->isa("Genome::Db")) {
                     # these exist because of filesystem data being in place
-                    # run the install command if possible 
+                    # the installation is slow, so just warn the user to install them
                     my ($source) = ($class =~ /Genome::Db::([^\:]+)/);
-                    my $installer_class = "Genome::Db::${source}::Command::Install";
-                    unless (UR::Object::Type->get($installer_class)) {
-                        $self->warning_message("No installer $installer_class for $class!  Install manually!");
-                        next;
-                    }
-                    eval {
-                        $installer_class->execute(version => $id);
-                    };
-                    if ($@) {
-                        $self->warning_message("errors installing $source $id: $@");
-                    }
-                    $prev = $class->get($id);
-                    unless ($prev) {
-                        $self->warning_message("Failed to find $class $id!  Install manually.");
-                    }
+                    
+                    # if we can speed this up, run the intaller below
+                    # for now just tell the user what they must run
+                    $source = lc($source);
+                    $self->warning_message("EXTERNAL DATABASE NOT INSTALLED.  DO: genome db $source install $id");
+                    
+                    #my $installer_class = "Genome::Db::${source}::Command::Install";
+                    #unless (UR::Object::Type->get($installer_class)) {
+                    #    $self->warning_message("No installer $installer_class for $class!  Install manually!");
+                    #    next;
+                    #}
+                    #eval {
+                    #    $installer_class->execute(version => $id);
+                    #};
+                    #if ($@) {
+                    #    $self->warning_message("errors installing $source $id: $@");
+                    #}
+                    #$prev = $class->get($id);
+                    #unless ($prev) {
+                    #    $self->warning_message("Failed to find $class $id!  Install manually.");
+                    #}
                 }
                 else {
                     $log_fh->print("## IMPORTING $class $id: " . UR::Util::d($hash) . "\n");
