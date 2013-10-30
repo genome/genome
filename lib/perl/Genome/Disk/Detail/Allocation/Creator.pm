@@ -69,10 +69,6 @@ sub create_allocation {
             push @reasons, 'disk is not active' if $volume->disk_status ne 'active';
             push @reasons, 'allocation turned off for this disk' if $volume->can_allocate != 1;
 
-            if ($exclude_mount_path && $volume->mount_path eq $exclude_mount_path) {
-                push @reasons, 'Specified mount path matched the excluded mount path.';
-            }
-
             if (@reasons) {
                 confess "Requested volume with mount path $mount_path cannot be allocated to:\n" . join("\n", @reasons);
             }
