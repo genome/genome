@@ -190,8 +190,7 @@ sub _get_allocation_without_lock {
 
     my $chosen_allocation;
     for my $candidate_volume (@randomized_candidate_volumes) {
-        if ($candidate_volume->allocated_kb + $kilobytes_requested
-                <= $candidate_volume->soft_limit_kb) {
+        if ($candidate_volume->has_space($kilobytes_requested)) {
 
             Genome::Disk::Allocation->_existing_allocation_path_check(
                 $candidate_volume->mount_path,
