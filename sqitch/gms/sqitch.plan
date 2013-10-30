@@ -61,3 +61,4 @@ model_processing_profile [model_schema] 2013-10-30T22:39:06Z Anthony Brummett <a
 model_model [model_schema model_processing_profile] 2013-10-30T22:05:04Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.model
 model_build [model_model] 2013-10-30T22:08:02Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.build
 model_build_input [model_build] 2013-10-30T22:09:49Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.build_input
+model_build_link [model_build] 2013-10-30T22:12:01Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.build_link
