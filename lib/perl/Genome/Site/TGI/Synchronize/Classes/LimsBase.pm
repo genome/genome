@@ -16,10 +16,24 @@ sub genome_class_for_comparison {
 
 sub genome_class_for_create {
     my $self = shift;
-    return 'Genome::'.ucfirst($self->entity_name);
+    return 'Genome::'.Genome::Utility::Text::string_to_camel_case($self->entity_name);
 }
 
 sub create_in_genome {
+    my $self = shift;
+
+    my %params = $self->params_for_create_in_genome;
+    return if not %params;
+
+    my $genome_class = $self->genome_class_for_create;
+    my $genome_object = eval { $genome_class->create(%params); };
+    Carp::confess("Could not create new object of type $genome_class based on object of type " .
+    $self->class . " with id " . $self->id . ":\n$@") unless $genome_object;
+
+    return $genome_object;
+}
+
+sub params_for_create_in_genome {
     my $self = shift;
 
     my %params;
@@ -29,12 +43,7 @@ sub create_in_genome {
         $params{$name} = $value;
     }
 
-    my $genome_class = $self->genome_class_for_create;
-    my $genome_object = eval { $genome_class->create(%params); };
-    Carp::confess("Could not create new object of type $genome_class based on object of type " .
-    $self->class . " with id " . $self->id . ":\n$@") unless $genome_object;
-
-    return $genome_object;
+    return %params;
 }
 
 1;
