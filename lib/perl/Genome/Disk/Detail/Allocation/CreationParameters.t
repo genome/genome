@@ -13,10 +13,20 @@ use Test::More;
 use Test::Exception;
 
 use Genome::Disk::Detail::Allocation::CreationParameters;
+push @Genome::Disk::Detail::Allocation::CreationParameters::APIPE_DISK_GROUPS,
+    'testing-disk-group';
+
+my $group = Genome::Disk::Group->create(
+    disk_group_name => 'testing-disk-group',
+    subdirectory => 'testing',
+    permissions => '755',
+    setgid => 1,
+    unix_uid => 0,
+    unix_gid => 0,
+);
 
 
 my $EXAMPLE_PARAMETERS = {
-    id => 'abcdef1'
     kilobytes_requested => 1024,
     owner_class_name => 'UR::Value',
     owner_id => 'silly owner',
@@ -35,6 +45,7 @@ subtest create_with_missing_required_param_fails => sub {
     plan tests => 1;
 
     my %params = %$EXAMPLE_PARAMETERS;
+    $params{id} = 'cwmrpf1';
 
     delete $params{owner_id};
     dies_ok { Genome::Disk::Detail::Allocation::CreationParameters->create(
@@ -45,6 +56,7 @@ subtest create_with_required_params_is_ok => sub {
     plan tests => 1;
 
     my %params = %$EXAMPLE_PARAMETERS;
+    $params{id} = 'cwrpio1';
 
     ok(Genome::Disk::Detail::Allocation::CreationParameters->create(
             %params), 'normal creation ok');
