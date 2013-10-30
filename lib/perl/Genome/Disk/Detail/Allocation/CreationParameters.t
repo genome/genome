@@ -16,6 +16,7 @@ use Genome::Disk::Detail::Allocation::CreationParameters;
 
 
 my $EXAMPLE_PARAMETERS = {
+    id => 'abcdef1'
     kilobytes_requested => 1024,
     owner_class_name => 'UR::Value',
     owner_id => 'silly owner',

@@ -32,7 +32,8 @@ sub create_allocation {
     my $class = 'Genome::Disk::Allocation';
 
     # Make sure there aren't any extra params
-    my $id = $class->__meta__->autogenerate_new_object_id; # TODO autogenerate_new_object_id should technically receive a BoolExpr
+    my $id = $self->parameters->get_id;
+
 
     my $kilobytes_requested = $self->parameters->kilobytes_requested;
     my $owner_class_name = $self->parameters->owner_class_name;

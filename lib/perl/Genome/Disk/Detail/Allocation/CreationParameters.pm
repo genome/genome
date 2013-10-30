@@ -35,6 +35,11 @@ class Genome::Disk::Detail::Allocation::CreationParameters {
     ],
 
     has_optional => [
+        id => {
+            is => 'Text',
+            len => 64,
+        },
+
         group_subdirectory => {
             is => 'Text',
             len => 255,
@@ -79,6 +84,16 @@ sub create {
     $self->validate;
 
     return $self;
+}
+
+sub get_id {
+    my $self = shift;
+    if ($self->id) {
+        return $self->id;
+    } else {
+        # TODO autogenerate_new_object_id should technically receive a BoolExpr
+        return Genome::Disk::Allocation->__meta__->autogenerate_new_object_id;
+    }
 }
 
 sub sanitize {
