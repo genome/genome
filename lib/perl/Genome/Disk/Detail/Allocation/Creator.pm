@@ -44,9 +44,6 @@ sub create_allocation {
     my $exclude_mount_path = $self->parameters->exclude_mount_path;
     my $group_subdirectory = $self->parameters->group_subdirectory;
 
-    unless (defined $kilobytes_requested && $kilobytes_requested >= 0) {
-        confess 'Kilobytes requested is not valid!';
-    }
     if (my $parent_alloc = $class->get_parent_allocation($allocation_path)) {
         confess sprintf("Parent allocation (%s) found for %s", $parent_alloc->allocation_path, $allocation_path);
     }

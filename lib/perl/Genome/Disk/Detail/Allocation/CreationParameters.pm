@@ -106,6 +106,11 @@ sub validate {
         confess sprintf("Could not find meta information for owner class %s, "
             . "make sure this class exists!", $self->owner_class_name);
     }
+
+    unless ($self->kilobytes_requested >= 0) {
+        confess sprintf('Kilobytes requested is negative (%s)!',
+            $self->kilobytes_requested);
+    }
 }
 
 
