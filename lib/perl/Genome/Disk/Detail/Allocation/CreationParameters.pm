@@ -80,8 +80,8 @@ sub create {
             'Could not create params object:\n%s', join('', @messages));
     }
 
-    $self->validate;
     $self->sanitize;
+    $self->validate;
 
     return $self;
 }
@@ -189,8 +189,6 @@ sub validate_group_subdirectory {
 sub validate_mount_path {
     my $self = shift;
     if (defined $self->mount_path && defined $self->exclude_mount_path) {
-        $self->sanitize_mount_path;
-        $self->sanitize_exclude_mount_path;
         if ($self->mount_path eq $self->exclude_mount_path) {
             confess sprintf("mount_path (%s) equal to exclude_mount_path (%s)",
                 $self->mount_path, $self->exclude_mount_path);
