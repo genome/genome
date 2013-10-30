@@ -22,12 +22,8 @@ sub genome_class_for_create {
 sub create_in_genome {
     my $self = shift;
 
-    my %params;
-    for my $name ( $self->properties_to_copy ) {
-        my $value = $self->$name;
-        next if not defined $value;
-        $params{$name} = $value;
-    }
+    my %params = $self->params_for_create_in_genome;
+    return if not %params;
 
     my $genome_class = $self->genome_class_for_create;
     my $genome_object = eval { $genome_class->create(%params); };
@@ -35,6 +31,19 @@ sub create_in_genome {
     $self->class . " with id " . $self->id . ":\n$@") unless $genome_object;
 
     return $genome_object;
+}
+
+sub params_for_create_in_genome {
+    my $self = shift;
+
+    my %params;
+    for my $name ( $self->properties_to_copy ) {
+        my $value = $self->$name;
+        next if not defined $value;
+        $params{$name} = $value;
+    }
+
+    return %params;
 }
 
 1;
