@@ -85,6 +85,12 @@ sub sanitize {
 }
 
 sub validate {
+    my $self = shift;
+
+    unless ($self->owner_class_name->__meta__) {
+        confess sprintf("Could not find meta information for owner class %s, "
+            . "make sure this class exists!", $self->owner_class_name);
+    }
 }
 
 

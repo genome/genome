@@ -43,9 +43,6 @@ sub create_allocation {
     my $exclude_mount_path = $self->parameters->exclude_mount_path;
     my $group_subdirectory = $self->parameters->group_subdirectory;
 
-    unless ($owner_class_name->__meta__) {
-        confess "Could not find meta information for owner class $owner_class_name, make sure this class exists!";
-    }
     unless (defined $kilobytes_requested && $kilobytes_requested >= 0) {
         confess 'Kilobytes requested is not valid!';
     }
