@@ -80,8 +80,8 @@ sub create {
             'Could not create params object:\n%s', join('', @messages));
     }
 
-    $self->sanitize;
     $self->validate;
+    $self->sanitize;
 
     return $self;
 }
@@ -97,6 +97,9 @@ sub get_id {
 }
 
 sub sanitize {
+    my $self = shift;
+
+    $self->group_subdirectory($self->disk_group->subdirectory);
 }
 
 # TODO This needs to be removed, site-specific
@@ -114,6 +117,7 @@ sub validate {
     $self->validate_owner_class_name;
     $self->validate_kilobytes_requested;
     $self->validate_disk_group_name;
+    $self->validate_group_subdirectory;
 }
 
 sub validate_owner_class_name {
@@ -143,6 +147,21 @@ sub validate_disk_group_name {
             $self->disk_group_name, join(", ", @APIPE_DISK_GROUPS);
     }
 }
+
+sub validate_group_subdirectory {
+    my $self = shift;
+
+    my $group = $self->disk_group;
+
+    if (defined $self->group_subdirectory
+            and $self->group_subdirectory ne $group->subdirectory) {
+        $self->warning_message(sprintf(
+            "Given group subdirectory %s does not match retrieved "
+            . "group's subdirectory, ignoring provided value\n",
+            $self->group_subdirectory));
+    }
+}
+
 
 sub disk_group {
     my $self = shift;

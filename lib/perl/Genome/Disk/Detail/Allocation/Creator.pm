@@ -53,12 +53,6 @@ sub create_allocation {
         print "Database updating has been resumed, continuing allocation!\n";
     }
 
-    my $group = $self->parameters->disk_group;
-    if (defined $group_subdirectory and $group_subdirectory ne $group->subdirectory) {
-        print STDERR "Given group subdirectory $group_subdirectory does not match retrieved group's subdirectory, ignoring provided value\n";
-    }
-    $group_subdirectory = $group->subdirectory;
-
     # If given a mount path, need to ensure it's valid by trying to get a disk volume with it. Also need to make
     # sure that the retrieved volume actually belongs to the supplied disk group and that it can be allocated to
     my @candidate_volumes;
