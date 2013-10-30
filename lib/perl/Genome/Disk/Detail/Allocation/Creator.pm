@@ -197,44 +197,9 @@ sub _get_allocation_without_lock {
                 $parameters->{group_subdirectory},
                 $parameters->{allocation_path});
 
-            my $candidate_allocation = Genome::Disk::Allocation->SUPER::create(
-                mount_path => $candidate_volume->mount_path,
-                %$parameters,
-            );
-            unless ($candidate_allocation) {
-                die 'Failed to create candidate allocation';
-            }
-            Genome::Disk::Allocation::_commit_unless_testing();
-
-            # Reload so we guarantee that we calculate the correct allocated_kb
-            if (not $ENV{UR_DBI_NO_COMMIT}) {
-                UR::Context->current->reload($candidate_volume);
-            }
-
-            if ($candidate_volume->is_allocated_over_soft_limit) {
-                Genome::Utility::Instrumentation::inc('disk.allocation."
-                    . "get_allocation_without_lock.rollback.over_allocated');
-                $self->status_message(sprintf(
-                        "%s's allocated_kb exceeded soft limit (%d kB), "
-                        . "rolling back allocation.",
-                        $candidate_volume->mount_path,
-                        $candidate_volume->soft_limit_kb, 'kB'));
-                $candidate_allocation->delete();
-                Genome::Disk::Allocation::_commit_unless_testing();
-
-            } elsif ($candidate_volume->is_used_over_soft_limit) {
-                Genome::Utility::Instrumentation::inc('disk.allocation."
-                    . "get_allocation_without_lock.rollback.over_used');
-                $self->status_message(sprintf(
-                        "%s's used_kb exceeded soft limit (%d %s), "
-                        . "rolling back allocation.",
-                        $candidate_volume->mount_path,
-                        $candidate_volume->soft_limit_kb, 'kB'));
-                $candidate_allocation->delete();
-                Genome::Disk::Allocation::_commit_unless_testing();
-
-            } else {
-                $chosen_allocation = $candidate_allocation;
+            $chosen_allocation = $self->_attempt_allocation_creation(
+                $candidate_volume, $parameters);
+            if ($chosen_allocation) {
                 last;
             }
         }
@@ -250,6 +215,51 @@ sub _get_allocation_without_lock {
     }
 
     return $chosen_allocation;
+}
+
+sub _attempt_allocation_creation {
+    my ($self, $candidate_volume, $parameters) = @_;
+
+    my $candidate_allocation = Genome::Disk::Allocation->SUPER::create(
+        mount_path => $candidate_volume->mount_path,
+        %$parameters,
+    );
+    unless ($candidate_allocation) {
+        die 'Failed to create candidate allocation';
+    }
+    Genome::Disk::Allocation::_commit_unless_testing();
+
+    # Reload so we guarantee that we calculate the correct allocated_kb
+    if (not $ENV{UR_DBI_NO_COMMIT}) {
+        UR::Context->current->reload($candidate_volume);
+    }
+
+    if ($candidate_volume->is_allocated_over_soft_limit) {
+        Genome::Utility::Instrumentation::inc('disk.allocation."
+            . "get_allocation_without_lock.rollback.over_allocated');
+        $self->status_message(sprintf(
+                "%s's allocated_kb exceeded soft limit (%d kB), "
+                . "rolling back allocation.",
+                $candidate_volume->mount_path,
+                $candidate_volume->soft_limit_kb, 'kB'));
+        $candidate_allocation->delete();
+        Genome::Disk::Allocation::_commit_unless_testing();
+        return;
+
+    } elsif ($candidate_volume->is_used_over_soft_limit) {
+        Genome::Utility::Instrumentation::inc('disk.allocation."
+            . "get_allocation_without_lock.rollback.over_used');
+        $self->status_message(sprintf(
+                "%s's used_kb exceeded soft limit (%d %s), "
+                . "rolling back allocation.",
+                $candidate_volume->mount_path,
+                $candidate_volume->soft_limit_kb, 'kB'));
+        $candidate_allocation->delete();
+        Genome::Disk::Allocation::_commit_unless_testing();
+        return;
+    }
+
+    return $candidate_allocation;
 }
 
 sub create_directory_or_delete_allocation {
