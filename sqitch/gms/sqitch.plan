@@ -46,3 +46,4 @@ instrument_schema [empty_db] 2013-10-30T21:52:16Z Anthony Brummett <abrummet@gen
 instrument_schema_permissions [instrument_schema] 2013-11-06T21:43:59Z Anthony Brummett <abrummet@genome.wustl.edu> # permissions on instrument schema
 instrument_fragment_library [instrument_schema subject_subject] 2013-10-30T22:00:00Z Anthony Brummett <abrummet@genome.wustl.edu> # table instrument.fragment_library
 instrument_data [instrument_schema instrument_fragment_library] 2013-10-30T21:54:24Z Anthony Brummett <abrummet@genome.wustl.edu> # table instrument.data
+instrument_data_attribute [instrument_data] 2013-10-30T21:57:29Z Anthony Brummett <abrummet@genome.wustl.edu> # table instrument.data_attribute
