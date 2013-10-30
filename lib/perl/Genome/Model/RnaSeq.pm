@@ -140,6 +140,21 @@ class Genome::Model::RnaSeq {
             is => 'Text',
             doc => 'program, version and params to use for fusion detection ex: chimerascan 0.4.3 [-v]'
         },
+        fusion_detector => {
+            is_optional => 1,
+            is => 'Text',
+            valid_values => ['chimerascan', 'chimerascan-vrl'],
+            doc => 'The program to use for detecting fusion events',
+        },
+        fusion_detector_version => {
+            is_optional => 1,
+            is => 'Text',
+            doc => 'The version of the fusion-detector to use.',
+        },
+        fusion_detector_params => {
+            is_optional => 1,
+            doc => 'Detector specific fusion-detection parameters.',
+        },
         bowtie_version => {
             is_optional => 1,
             is => 'Text',
