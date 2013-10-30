@@ -99,6 +99,15 @@ sub get_id {
 sub sanitize {
 }
 
+# TODO This needs to be removed, site-specific
+our @APIPE_DISK_GROUPS = qw/
+    info_apipe
+    info_apipe_ref
+    info_alignments
+    info_genome_models
+    research
+    systems_benchmarking
+/;
 sub validate {
     my $self = shift;
 
@@ -110,6 +119,12 @@ sub validate {
     unless ($self->kilobytes_requested >= 0) {
         confess sprintf('Kilobytes requested is negative (%s)!',
             $self->kilobytes_requested);
+    }
+
+    unless (grep { $self->disk_group_name eq $_ } @APIPE_DISK_GROUPS) {
+        confess "Can only allocate disk in apipe disk groups, "
+            . "not %s. Apipe groups are: %s",
+            $self->disk_group_name, join(", ", @APIPE_DISK_GROUPS);
     }
 }
 

@@ -52,8 +52,8 @@ my $group = Genome::Disk::Group->create(
 );
 ok($group, 'successfully made testing group') or die;
 { no warnings 'once';
-    use Genome::Disk::Detail::Allocation::Creator;
-    push @Genome::Disk::Detail::Allocation::Creator::APIPE_DISK_GROUPS, $group->disk_group_name;
+    use Genome::Disk::Detail::Allocation::CreationParameters;
+    push @Genome::Disk::Detail::Allocation::CreationParameters::APIPE_DISK_GROUPS, $group->disk_group_name;
 }
 
 my $assignment = Genome::Disk::Assignment->create(

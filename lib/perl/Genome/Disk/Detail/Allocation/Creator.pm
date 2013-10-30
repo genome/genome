@@ -17,15 +17,6 @@ class Genome::Disk::Detail::Allocation::Creator {
 };
 
 
-# TODO This needs to be removed, site-specific
-our @APIPE_DISK_GROUPS = qw/
-    info_apipe
-    info_apipe_ref
-    info_alignments
-    info_genome_models
-    research
-    systems_benchmarking
-/;
 sub create_allocation {
     my $self = shift;
 
@@ -49,9 +40,6 @@ sub create_allocation {
     }
     unless ($class->_verify_no_child_allocations($allocation_path)) {
         confess "Child allocation found for $allocation_path!";
-    }
-    unless (grep { $disk_group_name eq $_ } @APIPE_DISK_GROUPS) {
-        confess "Can only allocate disk in apipe disk groups, not $disk_group_name. Apipe groups are: " . join(", ", @APIPE_DISK_GROUPS);
     }
 
     if ($ENV{GENOME_DB_PAUSE} and -e $ENV{GENOME_DB_PAUSE}) {
