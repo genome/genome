@@ -43,18 +43,7 @@ sub create_allocation {
         confess "Child allocation found for $allocation_path!";
     }
 
-    if ($ENV{GENOME_DB_PAUSE} and -e $ENV{GENOME_DB_PAUSE}) {
-        print "Database updating has been paused; not going to attempt "
-            . "to allocate disk until the pause is released. "
-            . "Please stand by...\n";
-
-        while (1) {
-            sleep 30;
-            last unless -e $ENV{GENOME_DB_PAUSE};
-        }
-
-        print "Database updating has been resumed, continuing allocation!\n";
-    }
+    $self->wait_for_database_pause;
 
     # If given a mount path, need to ensure it's valid by trying to get a disk
     # volume with it. Also need to make sure that the retrieved volume actually
@@ -121,6 +110,21 @@ sub create_allocation {
     return $allocation_object;
 }
 
+
+sub wait_for_database_pause {
+    if ($ENV{GENOME_DB_PAUSE} and -e $ENV{GENOME_DB_PAUSE}) {
+        print "Database updating has been paused; not going to attempt "
+            . "to allocate disk until the pause is released. "
+            . "Please stand by...\n";
+
+        while (1) {
+            sleep 30;
+            last unless -e $ENV{GENOME_DB_PAUSE};
+        }
+
+        print "Database updating has been resumed, continuing allocation!\n";
+    }
+}
 
 sub candidate_volumes {
     my $self = shift;
