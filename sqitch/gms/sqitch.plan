@@ -69,3 +69,4 @@ model_event_metric [model_event] 2013-10-30T22:24:18Z Anthony Brummett <abrummet
 model_event_output [model_event] 2013-10-30T22:26:00Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.event_output
 model_feature_list [model_schema model_build] 2013-10-30T22:28:01Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.feature_list
 model_model_group [model_schema] 2013-10-30T22:30:34Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.model_group
+model_model_group_bridge [model_model model_model_group] 2013-10-30T22:32:32Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.model_group_bridge
