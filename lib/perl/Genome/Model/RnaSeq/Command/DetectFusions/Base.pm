@@ -50,23 +50,10 @@ sub create {
     my $self = $class->SUPER::create(@_);
     return unless $self;
 
-    my ($detector, $version, $detector_params) = _parse_strategy(
-            $self->build->processing_profile->fusion_detection_strategy);
-    $self->detector_params($detector_params);
-    $self->version($version);
+    $self->detector_params($self->build->processing_profile->fusion_detector_params);
+    $self->version($self->build->processing_profile->fusion_detector_version);
 
     return $self;
-}
-
-sub _parse_strategy {
-    my ($strategy_line) = @_;
-
-    $strategy_line =~ s/^\s*(.*)\s*$/$1/; # remove whitespace on ends
-    # only split on first two whitespace areas
-    my ($detector, $version, $params) = split(/\s+/, $strategy_line, 3);
-    ($params) = $params =~ /^\[(.+)\]$/ if $params;
-
-    return $detector, $version, $params;
 }
 
 sub _link_build_to_result {
