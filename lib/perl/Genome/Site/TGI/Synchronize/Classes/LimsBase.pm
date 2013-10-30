@@ -36,14 +36,26 @@ sub create_in_genome {
 sub params_for_create_in_genome {
     my $self = shift;
 
+    my $meta = $self->__meta__;
+
     my %params;
     for my $name ( $self->properties_to_copy ) {
-        my $value = $self->$name;
-        next if not defined $value;
-        $params{$name} = $value;
+        my @value = $self->$name;
+        next if not @value;
+        my $property = $meta->property_meta_for_name($name);
+        if ( $property->is_many ) {
+            $params{$name} = \@value;
+        }
+        else {
+            $params{$name} = $value[0];
+        }
     }
 
     return %params;
+}
+
+sub lims_property_name_to_genome_property_name {
+    return $_[1];
 }
 
 1;
