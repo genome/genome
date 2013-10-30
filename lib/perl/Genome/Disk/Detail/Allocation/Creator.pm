@@ -23,10 +23,6 @@ sub create_allocation {
 
     my $class = 'Genome::Disk::Allocation';
 
-    # Make sure there aren't any extra params
-    my $id = $self->parameters->get_id;
-
-
     my $kilobytes_requested = $self->parameters->kilobytes_requested;
     my $owner_class_name = $self->parameters->owner_class_name;
     my $owner_id = $self->parameters->owner_id;
@@ -58,7 +54,7 @@ sub create_allocation {
     });
 
     $allocation_object->debug_message(sprintf("Allocation (%s) created at %s",
-        $id, $allocation_object->absolute_path));
+        $allocation_object->id, $allocation_object->absolute_path));
 
     $self->create_directory_or_delete_allocation($allocation_object);
 
