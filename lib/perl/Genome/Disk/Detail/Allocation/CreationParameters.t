@@ -12,10 +12,6 @@ use above "Genome";
 use Test::More;
 use Test::Exception;
 
-use Genome::Disk::Detail::Allocation::CreationParameters;
-push @Genome::Disk::Detail::Allocation::CreationParameters::APIPE_DISK_GROUPS,
-    'testing-disk-group';
-
 my $group = Genome::Disk::Group->create(
     disk_group_name => 'testing-disk-group',
     subdirectory => 'testing',

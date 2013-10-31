@@ -106,21 +106,11 @@ sub sanitize_directory_path {
     return $path;
 }
 
-# TODO This needs to be removed, site-specific
-our @APIPE_DISK_GROUPS = qw/
-    info_apipe
-    info_apipe_ref
-    info_alignments
-    info_genome_models
-    research
-    systems_benchmarking
-/;
 sub validate {
     my $self = shift;
 
     $self->validate_owner_class_name;
     $self->validate_kilobytes_requested;
-    $self->validate_disk_group_name;
     $self->validate_group_subdirectory;
     $self->validate_mount_path;
 }
@@ -140,16 +130,6 @@ sub validate_kilobytes_requested {
     unless ($self->kilobytes_requested >= 0) {
         confess sprintf('Kilobytes requested is negative (%s)!',
             $self->kilobytes_requested);
-    }
-}
-
-sub validate_disk_group_name {
-    my $self = shift;
-
-    unless (grep { $self->disk_group_name eq $_ } @APIPE_DISK_GROUPS) {
-        confess "Can only allocate disk in apipe disk groups, "
-            . "not %s. Apipe groups are: %s",
-            $self->disk_group_name, join(", ", @APIPE_DISK_GROUPS);
     }
 }
 

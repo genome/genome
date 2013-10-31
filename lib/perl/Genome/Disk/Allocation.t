@@ -32,8 +32,6 @@ my $test_dir = tempdir(
 
 # Add our testing group to the allowed list of disk groups
 use Genome::Disk::Allocation;
-use Genome::Disk::Detail::Allocation::CreationParameters;
-push @Genome::Disk::Detail::Allocation::CreationParameters::APIPE_DISK_GROUPS, 'testing_group';
 $Genome::Disk::Allocation::CREATE_DUMMY_VOLUMES_FOR_TESTING = 0;
 #$Genome::Disk::Allocation::TESTING_DISK_ALLOCATION = 1;
 
@@ -227,7 +225,6 @@ sub do_race_lock {
     # The volume/group objects still exist (they were created in the parent process), but they aren't in the
     # UR cache for the child process, which means that gets/loads will not find them. Overriding the
     # get/load methods as needed on these classes to just return the objects gets around this.
-    local *Genome::Disk::Group::get = sub { return $group };
     local *Genome::Disk::Volume::get = sub { return $volume };
     local *Genome::Disk::Volume::load = sub { return $volume };
 
