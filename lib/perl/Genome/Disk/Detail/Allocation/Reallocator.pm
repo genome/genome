@@ -53,13 +53,15 @@ sub reallocate {
         $self->kilobytes_requested);
     if ($self->grow_only && ($actual_kb_requested <= $old_kb_requested)) {
         $allocation_object->status_message(
-            "Not changing kilobytes_requested, because grow_only = 1 & actual usage < original_kilobytes_requested");
+            "Not changing kilobytes_requested, because grow_only = 1 & "
+            . "actual usage < original_kilobytes_requested");
         return 1;
     }
     if ($actual_kb_requested > $self->kilobytes_requested) {
         $allocation_object->status_message(sprintf(
-                "Setting kilobytes_requested to %s based on `du` for allocation %s",
-                $actual_kb_requested, $allocation_object->id));
+                "Setting kilobytes_requested to %s based on `du` "
+                . "for allocation %s", $actual_kb_requested,
+                $allocation_object->id));
     }
 
     $allocation_object->reallocation_time(UR::Context->current->now);
@@ -78,13 +80,15 @@ sub reallocate {
                 $succeeded = 1;
             } else {
                 $allocation_object->error_message(sprintf(
-                        "Failed to reallocate and move allocation %s from volume %s.",
-                        $allocation_object->id, $volume->mount_path));
+                        "Failed to reallocate and move allocation %s from "
+                        . "volume %s.", $allocation_object->id,
+                        $volume->mount_path));
             }
         } else {
             $allocation_object->error_message(sprintf(
-                    "Failed to reallocate allocation %s on volume %s because the volume is beyond its quota.",
-                    $allocation_object->id, $volume->mount_path));
+                    "Failed to reallocate allocation %s on volume %s because "
+                    . "the volume is beyond its quota.", $allocation_object->id,
+                    $volume->mount_path));
         }
     }
 
@@ -96,8 +100,10 @@ sub reallocate {
         Genome::Disk::Allocation::_commit_unless_testing();
     } else {
         # Rollback kilobytes_requested
-        my $max_kilobytes_requested = List::Util::max($kb_used, $old_kb_requested);
-        my $msg = $old_kb_requested == $max_kilobytes_requested ? 'Rolling back' : 'Setting';
+        my $max_kilobytes_requested = List::Util::max($kb_used,
+            $old_kb_requested);
+        my $msg = ($old_kb_requested == $max_kilobytes_requested)
+            ? 'Rolling back' : 'Setting';
 
         $allocation_object->status_message(sprintf(
                 "%s kilobytes_requested to %d for allocation %s.",
