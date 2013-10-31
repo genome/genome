@@ -14,8 +14,8 @@
 
   <link fromOperation="Alignments" fromProperty="merged_bam_path" toOperation="Detect Variants" toProperty="bam_path"/>
   <link fromOperation="Alignments" fromProperty="control_merged_bam_path" toOperation="Detect Variants" toProperty="control_bam_path"/>
-  <link fromOperation="Alignments" fromProperty="build_id" toOperation="Validate SVs" toProperty="build_id"/>
 
+  <link fromOperation="Detect Variants" fromProperty="build_id" toOperation="Validate SVs" toProperty="build_id"/>
   <link fromOperation="Validate SVs" fromProperty="output_dir" toOperation="output connector" toProperty="sv_validation_output"/>
 
   <link fromOperation="Detect Variants" fromProperty="build_id" toOperation="Validate Small Indels" toProperty="somatic_validation_build" />

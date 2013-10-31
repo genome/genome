@@ -159,35 +159,37 @@ sub _resolve_svs_input {
     my $self = shift;
     my $build = $self->build;
 
-    my $sv_variants_to_validate;
-
+    my @sv_input_files;
     if(my $sv_list = $build->sv_variant_list) {
         $self->somatic_variation_build(Genome::Model::Build->get($sv_list->source_build_id));
         my $sv_file = join("/", $sv_list->output_dir, "svs.hq");
         if(-s $sv_file) {
-            $sv_variants_to_validate = $sv_file;
+            push @sv_input_files, $sv_file;
         }
     }
 
-    if($sv_variants_to_validate) {
-        if($build->sv_detection_strategy) {
-            my $merged_file = join("/", $self->output_dir, "assembly_input");
-            my $merge_cmd = Genome::Model::Tools::Breakdancer::MergeFiles->create(
-                input_files => join(',', $sv_variants_to_validate, $build->data_set_path('variants/svs', undef, 'hq')),
-                output_file => $merged_file,
-            );
-            unless($merge_cmd->execute) {
-                die $self->error_message('Failed to generate merged SV call file');
-            }
+    if($build->sv_detection_strategy) {
+        push @sv_input_files, $build->data_set_path('variants/svs', undef, 'hq');
+    }
 
-            $sv_variants_to_validate = $merged_file;
+    return unless @sv_input_files;
+
+    if(@sv_input_files > 1) {
+        my $merged_file = join("/", $self->output_dir, "assembly_input");
+        my $merge_cmd = Genome::Model::Tools::Breakdancer::MergeFiles->create(
+            input_files => join(',', @sv_input_files),
+            output_file => $merged_file,
+        );
+        unless($merge_cmd->execute) {
+            die $self->error_message('Failed to generate merged SV call file');
         }
 
-        $self->sv_call_file($sv_variants_to_validate);
-        return 1;
+        $self->sv_call_file($merged_file);
     } else {
-        return;
+        $self->sv_call_file($sv_input_files[0]);
     }
+
+    return 1;
 }
 
 sub _generate_merged_callset {
