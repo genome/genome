@@ -126,7 +126,7 @@ sub move {
     );
 }
 
-sub move_shadow_path {
+sub _get_move_shadow_path {
     my $allocation_path = shift;
     return sprintf("%s-move_allocation_destination", $allocation_path)
 }
@@ -140,7 +140,7 @@ sub _get_move_shadow_params {
         owner_class_name => "UR::Value",
         owner_id => "shadow_allocation",
         exclude_mount_path => $allocation->mount_path,
-        allocation_path => move_shadow_path($allocation->allocation_path),
+        allocation_path => _get_move_shadow_path($allocation->allocation_path),
     );
 
     # I think that it's dangerous to specify the new mount path, but this
