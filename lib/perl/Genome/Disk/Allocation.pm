@@ -985,32 +985,14 @@ sub purge {
 
 sub _purge {
     my $class = shift;
-    my %params = @_;
-    my $reason = delete $params{reason};
-    my $allocation_id = delete $params{id};
 
-    my $self = $class->get($allocation_id);
-    die("No allocation found for id: $allocation_id") unless $self;
-    die("You must supply a reason for the purge!") unless $reason;
+    my %parameters = @_;
+    $parameters{allocation_id} = delete $parameters{id};
 
-    $self->_create_file_summaries();
-    my $trash_folder = $self->_get_trash_folder();
+    my $purger = Genome::Disk::Detail::Allocation::Purger->create(
+        %parameters);
 
-    unless($ENV{UR_DBI_NO_COMMIT}) {
-        my $destination_directory = Genome::Sys->create_directory(File::Spec->join($trash_folder, $self->id));
-        dirmove($self->absolute_path, $destination_directory);
-    }
-
-    Genome::Timeline::Event::Allocation->purged(
-        $reason,
-        $self,
-    );
-
-    $self->status('purged');
-    $self->kilobytes_requested(0);
-    $self->kilobytes_used(0);
-
-    return 1;
+    return $purger->purge;
 }
 
 sub _create_file_summaries {
