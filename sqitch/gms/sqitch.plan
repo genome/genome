@@ -8,3 +8,4 @@ subject_misc_attribute [subject_schema] 2013-10-31T15:57:32Z Anthony Brummett <a
 subject_subject [subject_schema] 2013-10-31T16:02:44Z Anthony Brummett <abrummet@genome.wustl.edu> # table subject.subject
 subject_misc_note [subject_subject] 2013-10-31T16:08:05Z Anthony Brummett <abrummet@genome.wustl.edu> # table subject.misc_note
 subject_project [subject_schema] 2013-10-31T16:17:11Z Anthony Brummett <abrummet@genome.wustl.edu> # table subject.project
+subject_project_part [subject_project] 2013-10-31T16:18:52Z Anthony Brummett <abrummet@genome.wustl.edu> # table subject.project_part
