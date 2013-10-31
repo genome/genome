@@ -230,3 +230,4 @@ web_nomenclature [web_schema] 2013-10-31T17:10:37Z Anthony Brummett <abrummet@ge
 web_nomenclature_field [web_nomenclature] 2013-10-31T17:14:06Z Anthony Brummett <abrummet@genome.wustl.edu> # table web.nomenclature_field
 web_nomenclature_enum_value [web_nomenclature_field] 2013-10-31T17:18:12Z Anthony Brummett <abrummet@genome.wustl.edu> # table web.nomenclature_enum_value
 web_search_index_queue [web_schema] 2013-10-31T17:22:13Z Anthony Brummett <abrummet@genome.wustl.edu> # table web.search_index_queue
+web_task [web_schema] 2013-10-31T17:24:31Z Anthony Brummett <abrummet@genome.wustl.edu> # table web.task
