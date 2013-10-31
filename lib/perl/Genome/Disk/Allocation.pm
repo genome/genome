@@ -378,102 +378,15 @@ sub move_shadow_params {
 }
 
 sub _move {
-    my ($class, %params) = @_;
-    my $id = delete $params{id};
+    my $class = shift;
 
-    my $group_name = delete $params{disk_group_name};
-    my $new_mount_path = delete $params{target_mount_path};
+    my %parameters = @_;
+    $parameters{allocation_id} = delete $parameters{id};
 
-    if (%params) {
-        confess "Extra parameters given to allocation move method: " . join(',', sort keys %params);
-    }
+    my $mover = Genome::Disk::Detail::Allocation::Mover->create(
+        %parameters);
 
-    my ($self, $allocation_lock) = $class->get_with_lock($id);
-
-    my $original_absolute_path = $self->absolute_path;
-
-    # make shadow allocation
-    my %creation_params = $self->move_shadow_params;
-
-    # I think that it's dangerous to specify the new mount path, but this
-    # feature existed, so nnutter and I kept it during this refactor.
-    if ($new_mount_path) {
-        $creation_params{'mount_path'} = $new_mount_path;
-    }
-
-    if ($group_name) {
-        $creation_params{disk_group_name} = $group_name;
-    }
-
-    # The shadow allocation is just a way of keeping track of our temporary
-    # additional disk usage during the move.
-    my $shadow_allocation = $class->shadow_get_or_create(%creation_params);
-
-    my $shadow_absolute_path = $shadow_allocation->absolute_path;
-
-    # copy files to shadow allocation
-    my $copy_rv = eval {
-        Genome::Sys->rsync_directory(
-            source_directory => $original_absolute_path,
-            target_directory => $shadow_absolute_path,
-        );
-    };
-    unless ($copy_rv) {
-        my $copy_error_message = $@;
-        if (-d $shadow_absolute_path) {
-            if (Genome::Sys->remove_directory_tree($shadow_absolute_path)) {
-                $shadow_allocation->delete;
-            }
-        }
-        Genome::Sys->unlock_resource(resource_lock => $allocation_lock);
-        confess(sprintf(
-                "Could not copy allocation %s from %s to %s: %s",
-                $self->id, $original_absolute_path, $shadow_absolute_path, $copy_error_message));
-    }
-
-    my $new_volume_final_path = $class->_absolute_path(
-        $shadow_allocation->mount_path,
-        $shadow_allocation->group_subdirectory,
-        $self->allocation_path);
-
-
-    Genome::Sys->create_directory($new_volume_final_path);
-    unless (rename $shadow_allocation->absolute_path, $new_volume_final_path) {
-        Genome::Sys->unlock_resource(resource_lock => $allocation_lock);
-        my $shadow_allocation_abs_path = $shadow_allocation->absolute_path;
-        $shadow_allocation->delete;
-        confess($self->error_message(sprintf(
-                "Could not move shadow allocation path (%s) to final path (%s).  This should never happen, even when 100%% full.",
-                $shadow_allocation_abs_path, $self->absolute_path)));
-    }
-
-    # Change the shadow allocation to reserve some disk on the old volume until
-    # those files are deleted.
-    my $old_mount_path = $self->mount_path;
-    $self->mount_path($shadow_allocation->mount_path);
-    $shadow_allocation->mount_path($old_mount_path);
-
-    # This is here because certain objects (Build & SoftwareResult) don't
-    # calculate their data_directories from their disk_allocations.
-    $self->_update_owner_for_move;
-
-    Genome::Timeline::Event::Allocation->moved(
-        sprintf("moved from %s to %s", $original_absolute_path, $self->absolute_path),
-        $self,
-    );
-
-    _symlink_new_path_from_old($self->absolute_path, $original_absolute_path);
-
-    _commit_unless_testing();
-
-    Genome::Sys->unlock_resource(resource_lock => $allocation_lock);
-
-    $shadow_allocation->delete;
-
-    $class->_create_observer(
-        $class->_mark_for_deletion_closure($original_absolute_path),
-        $class->_remove_directory_closure($original_absolute_path),
-    );
+    return $mover->move;
 }
 
 sub _archive {
