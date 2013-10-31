@@ -9,9 +9,7 @@ BEGIN {
 
 use above 'Genome';
 use Test::More;
-use File::Basename qw(dirname);
-use lib File::Spec->join(dirname(dirname(dirname(File::Spec->rel2abs(__FILE__)))), "Base.t");
-use chimerascan_test_setup "setup";
+use Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::TestHelpers qw(setup);
 
 my $chimerascan_result_class = 'Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::VariableReadLength::Result';
 use_ok($chimerascan_result_class);

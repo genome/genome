@@ -9,8 +9,7 @@ BEGIN {
 
 use above 'Genome';
 use Test::More;
-use lib File::Spec->join(File::Basename::dirname(File::Basename::dirname(File::Spec->rel2abs(__FILE__))), "Base.t");
-use chimerascan_test_setup "setup";
+use Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::TestHelpers qw(setup);
 
 my $picard_version = 1.82;
 my $chimerascan_version = '0.4.5';
