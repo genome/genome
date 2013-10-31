@@ -401,113 +401,15 @@ sub unarchive_shadow_params {
 }
 
 sub _unarchive {
-    my ($class, %params) = @_;
-    my $id = delete $params{id};
-    my $reason = (delete $params{reason} || 'no reason given');
-    if (%params) {
-        confess "Extra parameters given to allocation unarchive method: " . join(',', sort keys %params);
-    }
+    my $class = shift;
 
-    my ($self, $allocation_lock) = $class->get_with_lock($id);
+    my %parameters = @_;
+    $parameters{allocation_id} = delete $parameters{id};
 
-    unless ($self->is_archived) {
-        Genome::Sys->unlock_resource(resource_lock => $allocation_lock);
-        $self->status_message("Allocation is not archived, cannot unarchive. Exiting.");
-        return 1;
-    }
+    my $unarchiver = Genome::Disk::Detail::Allocation::Unarchiver->create(
+        %parameters);
 
-    my %creation_params = $self->unarchive_shadow_params;
-    # shadow_allocation ensures that we wont over allocate our destination volume
-    my $shadow_allocation = $class->shadow_get_or_create(%creation_params);
-
-    my $archive_path = $self->absolute_path;
-    my $target_path = $shadow_allocation->absolute_path;
-
-    # Inferred path prior to archiving so we can symlink the new allocation,
-    # to this old location.
-    (my $old_absolute_path = $archive_path) =~ s/^\/gscarchive/\/gscmnt/;
-
-    my $tar_path = $self->tar_path;
-    my $cmd = "tar -C $target_path -xf $tar_path";
-
-    eval {
-        # It's very possible that if no commit is on, the volumes/allocations being dealt with are test objects that don't
-        # exist out of this local UR context, so bsubbing jobs would fail.
-        if ($ENV{UR_DBI_NO_COMMIT}) {
-            Genome::Sys->shellcmd(cmd => $cmd);
-        } else {
-            # If this process should be killed, the LSF job needs to be cleaned up
-            my ($job_id, $status);
-
-            # Signal handlers are added like this so an anonymous sub can be used, which handles variables defined
-            # in an outer scope differently than named subs (in this case, $job_id, $self, and $archive_path).
-            my @signals = qw/ INT TERM /;
-            for my $signal (@signals) {
-                $SIG{$signal} = sub {
-                    print STDERR "Cleanup activated within allocation, cleaning up LSF jobs\n";
-                    eval { Genome::Sys->kill_lsf_job($job_id) } if $job_id;
-                    $self->_cleanup_archive_directory($archive_path);
-                    die "Received signal, exiting.";
-                }
-            }
-
-            ($job_id, $status) = Genome::Sys->bsub_and_wait(
-                queue => $ENV{GENOME_ARCHIVE_LSF_QUEUE},
-                job_group => '/unarchive',
-                log_file => "\"/tmp/$id\"", # Entire path must be wrapped in quotes because older allocation IDs contain spaces
-                cmd => "\"$cmd\"", # If the command isn't wrapped in quotes, the '&&' is misinterpreted by
-                                   # bash (rather than being "bsub '1 && 2' it is looked at as 'bsub 1' && '2')
-            );
-
-            for my $signal (@signals) {
-                delete $SIG{$signal};
-            }
-
-            unless ($status eq 'DONE') {
-                confess "Could not execute command $cmd via LSF job $job_id, received status $status";
-            }
-        }
-
-        # Make updates to the allocation
-        $self->mount_path($shadow_allocation->volume->mount_path);
-        Genome::Sys->create_directory($self->absolute_path);
-        unless (rename $shadow_allocation->absolute_path, $self->absolute_path) {
-            confess($self->error_message(sprintf(
-                    "Could not move shadow allocation path (%s) to final path (%s).  This should never happen, even when 100%% full.",
-                    $shadow_allocation->absolute_path, $self->absolute_path)));
-        }
-        $self->_update_owner_for_move;
-        $self->archive_after_time(Genome::Disk::Command::Allocation::DelayArchiving->_resolve_date_from_months(3));
-
-        if ($old_absolute_path ne $self->absolute_path) {
-            _symlink_new_path_from_old($old_absolute_path, $self->absolute_path);
-        }
-
-        unless ($self->_commit_unless_testing) {
-            confess "Could not commit!";
-        }
-    };
-    my $error = $@;
-
-    # finally blocks would be really sweet. Alas...
-    Genome::Sys->unlock_resource(resource_lock => $allocation_lock) if $allocation_lock;
-    $shadow_allocation->delete();
-
-    if ($error) {
-        if ($target_path and -d $target_path and not $ENV{UR_DBI_NO_COMMIT}) {
-            Genome::Sys->remove_directory_tree($target_path);
-        }
-        confess "Could not unarchive, received error:\n$error";
-    } else {
-        $self->add_note(
-            header_text => 'unarchived',
-            body_text => $reason,
-        );
-        Genome::Timeline::Event::Allocation->unarchived($reason, $self);
-    }
-
-    $self->_cleanup_archive_directory($archive_path);
-    return 1;
+    return $unarchiver->unarchive;
 }
 
 # Locks the allocation, if lock is not manually released (it had better be!)
