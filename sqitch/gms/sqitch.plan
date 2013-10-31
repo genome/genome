@@ -222,3 +222,4 @@ config.set.index_allocation_id [config_set] 2013-11-04T21:06:27Z Anthony Brummet
 config_analysis_menu_item_permission [config_analysis_menu_item] 2013-11-07T16:45:15Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on config_analysis_menu_item
 config_analysis_project_permission [config_analysis_project] 2013-11-07T16:52:24Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on config_analysis_project
 config_set_permission [config_set] 2013-11-07T16:58:44Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on config_set
+subject_pairing [subject_subject config_analysis_project] 2013-10-31T16:11:29Z Anthony Brummett <abrummet@genome.wustl.edu> # table subject.pairing
