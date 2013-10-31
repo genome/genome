@@ -139,3 +139,4 @@ result_schema [empty_db] 2013-10-31T15:43:40Z Anthony Brummett <abrummet@genome.
 result_schema_permissions [result_schema] 2013-11-06T21:51:15Z Anthony Brummett <abrummet@genome.wustl.edu> # permissions on result schema
 result_software_result [result_schema] 2013-10-31T15:46:10Z Anthony Brummett <abrummet@genome.wustl.edu> # table result.software_result
 result_input [result_software_result] 2013-10-31T15:48:15Z Anthony Brummett <abrummet@genome.wustl.edu> # table result.input
+result_metric [result_software_result] 2013-10-31T15:49:55Z Anthony Brummett <abrummet@genome.wustl.edu> # table result.metric
