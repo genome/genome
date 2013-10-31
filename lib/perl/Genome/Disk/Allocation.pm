@@ -349,83 +349,15 @@ sub _delete {
 }
 
 sub _reallocate {
-    my ($class, %params) = @_;
-    my $id = delete $params{id};
-    confess "Require allocation ID!" unless defined $id;
-    my $kilobytes_requested = delete $params{kilobytes_requested} || 0;
-    my $allow_reallocate_with_move = delete $params{allow_reallocate_with_move};
-    my $grow_only = delete $params{grow_only};
-    if (%params) {
-        confess "Found extra params: " . Data::Dumper::Dumper(\%params);
-    }
+    my $class = shift;
 
-    my $mode = $class->_retrieve_mode();
-    my $self = $class->$mode($id);
-    my $old_kb_requested = $self->kilobytes_requested;
+    my %parameters = @_;
+    $parameters{allocation_id} = delete $parameters{id};
 
-    my $kb_used = $self->du();
+    my $reallocator = Genome::Disk::Detail::Allocation::Reallocator->create(
+        %parameters);
 
-    # Cache kilobytes used
-    $self->kilobytes_used($kb_used);
-
-    my $actual_kb_requested = List::Util::max($kb_used, $kilobytes_requested);
-    if ($grow_only && ($actual_kb_requested <= $old_kb_requested)) {
-        $self->status_message(
-            "Not changing kilobytes_requested, because grow_only = 1 & actual usage < original_kilobytes_requested");
-        return 1;
-    }
-    if ($actual_kb_requested > $kilobytes_requested) {
-        $self->status_message(sprintf(
-                "Setting kilobytes_requested to %s based on `du` for allocation %s",
-                $actual_kb_requested, $self->id));
-    }
-
-    $self->reallocation_time(UR::Context->current->now);
-    $self->kilobytes_requested($actual_kb_requested);
-    _commit_unless_testing();
-
-    my $volume = $self->volume;
-    my $succeeded;
-    if ($volume->allocated_kb < $volume->hard_limit_kb) {
-        $succeeded = 1;
-    } else {
-        if ($allow_reallocate_with_move) {
-            my $old_mount_path = $self->mount_path;
-            $self->move();
-            unless ($self->mount_path eq $old_mount_path) {
-                $succeeded = 1;
-            } else {
-                $self->error_message(sprintf(
-                        "Failed to reallocate and move allocation %s from volume %s.",
-                        $self->id, $volume->mount_path));
-            }
-        } else {
-            $self->error_message(sprintf(
-                    "Failed to reallocate allocation %s on volume %s because the volume is beyond its quota.",
-                    $self->id, $volume->mount_path));
-        }
-    }
-
-    if ($succeeded) {
-        Genome::Timeline::Event::Allocation->reallocated(
-            "actual kb used: $kb_used",
-            $self,
-        );
-        _commit_unless_testing();
-    } else {
-        # Rollback kilobytes_requested
-        my $max_kilobytes_requested = List::Util::max($kb_used, $old_kb_requested);
-        my $msg = $old_kb_requested == $max_kilobytes_requested ? 'Rolling back' : 'Setting';
-
-        $self->status_message(sprintf(
-                "%s kilobytes_requested to %d for allocation %s.",
-                $msg, $max_kilobytes_requested, $self->id));
-
-        $self->kilobytes_requested($max_kilobytes_requested);
-        _commit_unless_testing();
-    }
-
-    return $succeeded;
+    return $reallocator->reallocate;
 }
 
 sub move_shadow_path {
