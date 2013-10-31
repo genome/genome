@@ -6,3 +6,4 @@ subject_schema [empty_db] 2013-10-31T15:55:51Z Anthony Brummett <abrummet@genome
 subject_schema_permissions [subject_schema] 2013-11-06T21:53:09Z Anthony Brummett <abrummet@genome.wustl.edu> # permissions on subject schema
 subject_misc_attribute [subject_schema] 2013-10-31T15:57:32Z Anthony Brummett <abrummet@genome.wustl.edu> # table subject.misc_attribute
 subject_subject [subject_schema] 2013-10-31T16:02:44Z Anthony Brummett <abrummet@genome.wustl.edu> # table subject.subject
+subject_misc_note [subject_subject] 2013-10-31T16:08:05Z Anthony Brummett <abrummet@genome.wustl.edu> # table subject.misc_note
