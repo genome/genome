@@ -229,3 +229,4 @@ web_schema_permissions [web_schema] 2013-11-06T21:57:13Z Anthony Brummett <abrum
 web_nomenclature [web_schema] 2013-10-31T17:10:37Z Anthony Brummett <abrummet@genome.wustl.edu> # table web.nomenclature
 web_nomenclature_field [web_nomenclature] 2013-10-31T17:14:06Z Anthony Brummett <abrummet@genome.wustl.edu> # table web.nomenclature_field
 web_nomenclature_enum_value [web_nomenclature_field] 2013-10-31T17:18:12Z Anthony Brummett <abrummet@genome.wustl.edu> # table web.nomenclature_enum_value
+web_search_index_queue [web_schema] 2013-10-31T17:22:13Z Anthony Brummett <abrummet@genome.wustl.edu> # table web.search_index_queue
