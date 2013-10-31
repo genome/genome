@@ -45,7 +45,7 @@ sub move {
     my $original_absolute_path = $allocation_object->absolute_path;
 
     # make shadow allocation
-    my %creation_params = $self->move_shadow_params($allocation_object);
+    my %creation_params = $self->_get_move_shadow_params($allocation_object);
 
     # The shadow allocation is just a way of keeping track of our temporary
     # additional disk usage during the move.
@@ -131,7 +131,7 @@ sub move_shadow_path {
     return sprintf("%s-move_allocation_destination", $allocation_path)
 }
 
-sub move_shadow_params {
+sub _get_move_shadow_params {
     my ($self, $allocation) = @_;
 
     my %creation_parameters = (
