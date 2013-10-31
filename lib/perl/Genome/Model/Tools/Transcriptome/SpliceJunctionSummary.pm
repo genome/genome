@@ -1132,13 +1132,9 @@ sub generate_summary_and_plots {
     my $r_cmd_stdout = $self->output_directory .'/SpliceJunctionSummary.R.stdout';
     my $r_cmd_stderr = $self->output_directory .'/SpliceJunctionSummary.R.stderr';
     $r_cmd .= " 1>$r_cmd_stdout 2>$r_cmd_stderr";
-    eval {
-        Genome::Sys->shellcmd(cmd => $r_cmd);
-    };
-    if ($@) {
-        $self->warning_message('Failed to execute command \''. $r_cmd .'\' with error: '. $@);
-        $self->warning_message('Continuing without R plots or summary spreadsheet.');
-    }
+
+    Genome::Sys->shellcmd(cmd => $r_cmd);
+
     return 1;
 }
 
