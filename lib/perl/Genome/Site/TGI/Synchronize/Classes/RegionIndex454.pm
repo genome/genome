@@ -83,13 +83,27 @@ SQL
         total_reads => { is => 'Text', },
         total_bases_read => { is => 'Text', },
     ],
+    has_optional_calculated => [
+        sff_file => { calculate => q( return $self->sequence_file; ), },
+    ],
     data_source => 'Genome::DataSource::Dwrac',
 };
 
 sub entity_name { return 'instrument data 454'; }
 
+sub params_for_create_in_genome {
+    my $self = shift;
+
+    my %params = $self->SUPER::params_for_create_in_genome;
+    return if not %params;
+
+    $params{sff_file} = $self->sequence_file;
+
+    return %params;
+}
+
 sub properties_to_copy {# 9
-    return ( 'id', 'library_id', properties_to_keep_updated() );
+    return ( 'id', 'library_id', 'sff_file', properties_to_keep_updated() );
 }
 
 sub properties_to_keep_updated {# 8
