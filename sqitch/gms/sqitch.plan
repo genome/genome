@@ -2,3 +2,4 @@
 %project=gms
 
 empty_db 2013-10-30T21:24:32Z Anthony Brummett <abrummet@genome.wustl.edu> # brand new database
+subject_schema [empty_db] 2013-10-31T15:55:51Z Anthony Brummett <abrummet@genome.wustl.edu> # schema subject
