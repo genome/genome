@@ -373,124 +373,15 @@ sub _move {
 }
 
 sub _archive {
-    my ($class, %params) = @_;
-    my $id = delete $params{id};
-    if (%params) {
-        confess "Extra parameters given to allocation move method: " . join(',', sort keys %params);
-    }
+    my $class = shift;
 
-    my ($self, $allocation_lock) = $class->get_with_lock($id);
+    my %parameters = @_;
+    $parameters{allocation_id} = delete $parameters{id};
 
-    my $current_allocation_path = $self->absolute_path;
-    my $archive_allocation_path = join('/', $self->volume->archive_mount_path, $self->group_subdirectory, $self->allocation_path);
-    my $tar_path = join('/', $archive_allocation_path, 'archive.tar');
+    my $archiver = Genome::Disk::Detail::Allocation::Archiver->create(
+        %parameters);
 
-    # This gets set to true immediately before tarball creation is started. This allows for conditional clean up of the
-    # archive directory in case of failure, which is nice because that requires an LSF job be scheduled.
-    my $tarball_created = 0;
-
-    eval {
-        if ($self->is_archived) {
-            confess "Allocation " . $self->id . " is already archived!";
-        }
-        if (!$self->archivable) {
-            confess "Allocation " . $self->id . " is not flagged as archivable!";
-        }
-        unless (-e $current_allocation_path) {
-            confess "Allocation path $current_allocation_path does not exist!";
-        }
-
-        unless (Genome::Sys->recursively_validate_directory_for_read_write_access($current_allocation_path)) {
-            confess "Some files in allocation directory $current_allocation_path are not readable or writable, this must be fixed before archiving can continue";
-        }
-
-        # Reallocate so we're reflecting the correct size at time of archive.
-        $self->reallocate();
-        if (!$ENV{UR_DBI_NO_COMMIT} and $self->kilobytes_requested < 1048576) { # Must be greater than 1GB to be archived
-            confess(sprintf(
-                "Total size of files at path %s is only %s, which is not greater than 1GB!",
-                $current_allocation_path, $self->kilobytes_requested));
-        }
-
-        my $mkdir_cmd = "mkdir -p $archive_allocation_path";
-        my $cd_cmd = "cd $current_allocation_path";
-        my $tar_cmd = "/bin/ls -A | tar --create --file $tar_path -T -";
-        my $cmd = join(' && ', $mkdir_cmd, $cd_cmd, $tar_cmd);
-
-        $tarball_created = 1;
-        # It's very possible that if no commit is on, the volumes/allocations being dealt with are test objects that don't
-        # exist out of this local UR context, so bsubbing jobs would fail.
-        if ($ENV{UR_DBI_NO_COMMIT}) {
-            Genome::Sys->shellcmd(cmd => $cmd);
-        }
-        else {
-            my ($job_id, $status);
-
-            my @signals = qw/ INT TERM /;
-            for my $signal (@signals) {
-                $SIG{$signal} = sub {
-                    print STDERR "Cleanup activated within allocation, cleaning up LSF jobs\n";
-                    eval { Genome::Sys->kill_lsf_job($job_id) } if $job_id;
-                    $self->_cleanup_archive_directory($archive_allocation_path);
-                    die "Received signal, exiting.";
-                }
-            }
-
-            ($job_id, $status) = Genome::Sys->bsub_and_wait(
-                queue => $ENV{GENOME_ARCHIVE_LSF_QUEUE},
-                job_group => '/archive',
-                log_file => "\"/tmp/$id\"", # Entire path must be wrapped in quotes because older allocation IDs contain spaces
-                cmd => "\"$cmd\"",          # If the command isn't wrapped in quotes, the '&&' is misinterpreted by
-                                            # bash (rather than being "bsub '1 && 2' it is looked at as 'bsub 1' && '2')
-            );
-
-            for my $signal (@signals) {
-                delete $SIG{$signal};
-            }
-
-            unless ($status eq 'DONE') {
-                confess "LSF job $job_id failed to execute $cmd, exited with status $status";
-            }
-        }
-
-        $self->mount_path($self->volume->archive_mount_path);
-        $self->_update_owner_for_move;
-
-        my $rv = $self->_commit_unless_testing;
-        confess "Could not commit!" unless $rv;
-    };
-    my $error = $@; # Record error so it can be investigated after unlocking
-
-    # If only there were finally blocks...
-    Genome::Sys->unlock_resource(resource_lock => $allocation_lock) if $allocation_lock;
-
-    if ($error) {
-        eval {
-            $self->_cleanup_archive_directory($archive_allocation_path) if $tarball_created;
-        };
-        my $cleanup_error = $@;
-        my $msg = "Could not archive allocation " . $self->id . ", error:\n$error";
-        if ($cleanup_error) {
-            $msg .= "\n\nWhile cleaning up archive tarball, encoutered error:\n$cleanup_error";
-        }
-        confess $msg;
-    } else {
-        Genome::Timeline::Event::Allocation->archived(
-            'archived',
-            $self,
-        )
-    }
-
-    # Never make filesystem changes if no commit is enabled
-    unless ($ENV{UR_DBI_NO_COMMIT}) {
-        my $rv = Genome::Sys->remove_directory_tree($current_allocation_path);
-        unless ($rv) {
-            confess "Could not remove unarchived allocation path $current_allocation_path. " .
-                "Database changes have been committed, so clean this up manually!";
-        }
-    }
-
-    return 1;
+    return $archiver->archive;
 }
 
 sub unarchive_shadow_path {
