@@ -360,23 +360,6 @@ sub _reallocate {
     return $reallocator->reallocate;
 }
 
-sub move_shadow_path {
-    my $allocation_path = shift;
-    return sprintf("%s-move_allocation_destination", $allocation_path)
-}
-
-sub move_shadow_params {
-    my $self = shift;
-    return (
-        disk_group_name => $self->disk_group_name,
-        kilobytes_requested => $self->kilobytes_requested,
-        owner_class_name => "UR::Value",
-        owner_id => "shadow_allocation",
-        exclude_mount_path => $self->mount_path,
-        allocation_path => move_shadow_path($self->allocation_path),
-    );
-}
-
 sub _move {
     my $class = shift;
 

@@ -45,7 +45,7 @@ sub move {
     my $original_absolute_path = $allocation_object->absolute_path;
 
     # make shadow allocation
-    my %creation_params = $allocation_object->move_shadow_params;
+    my %creation_params = move_shadow_params($allocation_object);
 
     # I think that it's dangerous to specify the new mount path, but this
     # feature existed, so nnutter and I kept it during this refactor.
@@ -133,6 +133,23 @@ sub move {
             $original_absolute_path),
         Genome::Disk::Allocation->_remove_directory_closure(
             $original_absolute_path),
+    );
+}
+
+sub move_shadow_path {
+    my $allocation_path = shift;
+    return sprintf("%s-move_allocation_destination", $allocation_path)
+}
+
+sub move_shadow_params {
+    my $allocation = shift;
+    return (
+        disk_group_name => $allocation->disk_group_name,
+        kilobytes_requested => $allocation->kilobytes_requested,
+        owner_class_name => "UR::Value",
+        owner_id => "shadow_allocation",
+        exclude_mount_path => $allocation->mount_path,
+        allocation_path => move_shadow_path($allocation->allocation_path),
     );
 }
 
