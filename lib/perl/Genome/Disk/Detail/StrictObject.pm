@@ -17,6 +17,8 @@ sub create {
 
     my $self = $class->SUPER::create(@_);
 
+    confess "Failed to create $class" unless defined($self);
+
     if ($self->__errors__) {
         my @messages;
         for my $error_tag ($self->__errors__) {
