@@ -1,3 +1,4 @@
+Genome::Model::ClinSeq::Command::GetBamReadCounts->class; #loads the class
 package Genome::Model::ClinSeq::Command::GetBamReadCounts;
 
 #Written by Malachi Griffith and Scott Smith
@@ -567,14 +568,14 @@ sub getBamReadCounts{
 #########################################################################################################################################
 sub getExpressionValues{
   my %args = @_;
-  my $self = shift;
+  my $class = __PACKAGE__;
   my $snvs = $args{'-snvs'};
   my $build_dir = $args{'-build_dir'};
   my $verbose = $args{'-verbose'};
   my $entrez_ensembl_data = $args{'-entrez_ensembl_data'};
   my $ensembl_map = $args{'-ensembl_map'};
 
-  if ($verbose){ $self->status_message("\nGetting expression data from: $build_dir");}
+  if ($verbose){ $class->status_message("\nGetting expression data from: $build_dir");}
 
   my %e;
 
