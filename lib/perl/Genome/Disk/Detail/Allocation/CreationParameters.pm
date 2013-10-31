@@ -9,6 +9,7 @@ use UR;
 use Carp qw(confess);
 
 class Genome::Disk::Detail::Allocation::CreationParameters {
+    is => 'Genome::Disk::Detail::StrictObject',
     has => [
         kilobytes_requested => {
             is => 'Number',
@@ -65,26 +66,6 @@ class Genome::Disk::Detail::Allocation::CreationParameters {
     ],
 };
 
-
-sub create {
-    my $class = shift;
-
-    my $self = $class->SUPER::create(@_);
-
-    if ($self->__errors__) {
-        my @messages;
-        for my $error_tag ($self->__errors__) {
-            push @messages, $error_tag->__display_name__ . "\n";
-        }
-        confess sprintf(
-            'Could not create params object:\n%s', join('', @messages));
-    }
-
-    $self->sanitize;
-    $self->validate;
-
-    return $self;
-}
 
 sub get_id {
     my $self = shift;
