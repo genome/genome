@@ -23,7 +23,9 @@ subtest 'idempotent move' => sub {
     plan tests => 2;
 
     my $allocation_path = 'test_allocation_path';
-    my $shadow_allocation_path = Genome::Disk::Allocation::move_shadow_path($allocation_path);
+    my $shadow_allocation_path =
+        Genome::Disk::Detail::Allocation::Mover::_get_move_shadow_path(
+            $allocation_path);
 
 
     my $allocation = Genome::Disk::Allocation->create(
@@ -35,8 +37,10 @@ subtest 'idempotent move' => sub {
         mount_path => $volumes[0]->mount_path,
     );
 
+    my $mover = Genome::Disk::Detail::Allocation::Mover->create(
+        allocation_id => $allocation->id);
     my $shadow = Genome::Disk::Allocation->create(
-        $allocation->move_shadow_params,
+        $mover->_get_move_shadow_params($allocation),
         disk_group_name => $volumes[2]->disk_group_names,
         mount_path => $volumes[2]->mount_path,
     );
