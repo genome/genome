@@ -7,6 +7,9 @@ use Genome;
 
 class Genome::Site::TGI::Synchronize::Classes::LimsInstDataBase { 
     is => 'Genome::Site::TGI::Synchronize::Classes::LimsBase',
+    has_transient_optional => [
+        sequence_file => { is => 'Text', },
+    ],
 };
 
 sub genome_class_for_create {
