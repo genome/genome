@@ -5,7 +5,7 @@ use warnings;
 
 use Genome;
 
-use Carp qw(croak confess);
+use Carp qw(confess);
 use List::Util 'shuffle';
 
 
