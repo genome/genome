@@ -141,3 +141,4 @@ result_software_result [result_schema] 2013-10-31T15:46:10Z Anthony Brummett <ab
 result_input [result_software_result] 2013-10-31T15:48:15Z Anthony Brummett <abrummet@genome.wustl.edu> # table result.input
 result_metric [result_software_result] 2013-10-31T15:49:55Z Anthony Brummett <abrummet@genome.wustl.edu> # table result.metric
 result_param [result_software_result] 2013-10-31T15:52:08Z Anthony Brummett <abrummet@genome.wustl.edu> # table result.param
+result_user [result_software_result] 2013-10-31T15:53:57Z Anthony Brummett <abrummet@genome.wustl.edu> # table result.user
