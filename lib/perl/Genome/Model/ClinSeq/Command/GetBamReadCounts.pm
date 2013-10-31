@@ -1,4 +1,3 @@
-Genome::Model::ClinSeq::Command::GetBamReadCounts->class; #loads the class
 package Genome::Model::ClinSeq::Command::GetBamReadCounts;
 
 #Written by Malachi Griffith and Scott Smith
