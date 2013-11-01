@@ -55,7 +55,7 @@ my $fasta_dir = &createNewDir('-path'=>$temp_dir, '-new_dir_name'=>"ensembl_gene
 ###############################################################################################################
 sub createNewDir{
   my %args = @_;
-  my $self = shift;
+  my $class = __PACKAGE__;
   my $base_path = $args{'-path'};
   my $name = $args{'-new_dir_name'};
   my $force = $args{'-force'};
@@ -68,7 +68,7 @@ sub createNewDir{
 
   #First make sure the specified base path exists and is a directory
   unless (-e $base_path && -d $base_path){
-    die $self->error_message("\nSpecified working directory: $base_path does not appear valid! Create a working directory before proceeding\n\n");
+    die $class->error_message("\nSpecified working directory: $base_path does not appear valid! Create a working directory before proceeding\n\n");
   }
 
   unless ($name =~ /.*\/$/){
@@ -82,12 +82,12 @@ sub createNewDir{
     if ($force){
       #If this directory already exists, and the -force option was provide, delete this directory and start it cleanly
       if ($force eq "yes"){
-	$self->status_message("\nForcing clean creation of $new_path\n\n");
+	$class->status_message("\nForcing clean creation of $new_path\n\n");
 	my $command = "rm -rf $new_path";
 	Genome::Sys->shellcmd(cmd => $command);
 	mkdir($new_path);
       }else{
-	die $self->error_message("\nThe '-force' option provided to utility.pm was not understood!!");
+	die $class->error_message("\nThe '-force' option provided to utility.pm was not understood!!");
       }
 
     }elsif($silent){
@@ -96,7 +96,7 @@ sub createNewDir{
     }else{
 
       #If this directory already exists, ask the user if they wish to erase it and start clean
-      $self->status_message("\nNew dir: $new_path already exists.\n\tDo you wish to delete it and create it cleanly (y/n)? ");
+      $class->status_message("\nNew dir: $new_path already exists.\n\tDo you wish to delete it and create it cleanly (y/n)? ");
       my $answer = <>;
 
       chomp($answer);
@@ -106,7 +106,7 @@ sub createNewDir{
 	Genome::Sys->shellcmd(cmd => $command);
 	mkdir($new_path);
       }else{
-	$self->status_message("\nUsing existing directory, some files may be over-written and others that are unrelated to the current analysis may remain!\n");
+	$class->status_message("\nUsing existing directory, some files may be over-written and others that are unrelated to the current analysis may remain!\n");
       }
     }
 
@@ -151,7 +151,7 @@ my $working_dir = &checkDir('-dir'=>$working_dir, '-clear'=>"yes");
 #############################################################################################################################
 sub checkDir{
   my %args = @_;
-  my $self = shift;
+  my $class = __PACKAGE__;
   my $dir = $args{'-dir'};
   my $clear = $args{'-clear'};
   my $force = $args{'-force'};
@@ -161,7 +161,7 @@ sub checkDir{
     $dir = "$dir"."/";
   }
   unless (-e $dir && -d $dir){
-    die $self->error_message("\nDirectory: $dir does not appear to be valid!\n\n");
+    die $class->error_message("\nDirectory: $dir does not appear to be valid!\n\n");
   }
 
   unless ($force){
@@ -185,12 +185,12 @@ sub checkDir{
       if ($recursive =~ /y|yes/i){
         my $files_present = scalar(@temp) - 2;
         my $clean_dir_cmd = "rm -fr $dir"."*";
-        $self->status_message("\n\n$clean_dir_cmd\n\n");
+        $class->status_message("\n\n$clean_dir_cmd\n\n");
 	Genome::Sys->shellcmd(cmd => $clean_dir_cmd);
       }else{
         my $files_present = scalar(@temp) - 2;
         my $clean_dir_cmd = "rm -f $dir"."*";
-        $self->status_message("\n\n$clean_dir_cmd\n\n");
+        $class->status_message("\n\n$clean_dir_cmd\n\n");
 	Genome::Sys->shellcmd(cmd => $clean_dir_cmd);
       }
     }else{
@@ -202,7 +202,7 @@ sub checkDir{
       }
 
       unless ($files_present == 0){
-	$self->status_message("\nFound $files_present files in the specified directory ($dir)\nThis directory will be cleaned with the command:\n\t$clean_dir_cmd\n\nProceed (y/n)? ");
+	$class->status_message("\nFound $files_present files in the specified directory ($dir)\nThis directory will be cleaned with the command:\n\t$clean_dir_cmd\n\nProceed (y/n)? ");
 	my $answer = <>;
 	chomp($answer);
 	if ($answer =~ /y|yes/i){
@@ -212,7 +212,7 @@ sub checkDir{
 	    Genome::Sys->shellcmd(cmd => $clean_dir_cmd);
           }
 	}else{
-	  $self->status_message("\nContinuing and leaving files in place then ...\n\n");
+	  $class->status_message("\nContinuing and leaving files in place then ...\n\n");
 	}
       }
     }
@@ -227,7 +227,7 @@ sub checkDir{
 #######################################################################################################################################################################
 sub loadEnsemblMap{
   my %args = @_;
-  my $self = shift;
+  my $class = __PACKAGE__;
   my $transcript_info_path = $args{'-transcript_info_path'}; #e.g. /gscmnt/gc12001/info/model_data/2772828715/build124434505/annotation_data/rna_annotation/106942997-transcript_info.tsv
   my $gtf_path = $args{'-gtf_path'};                         #e.g. /gscmnt/gc12001/info/model_data/2772828715/build124434505/annotation_data/rna_annotation/106942997-all_sequences.gtf
 
@@ -250,7 +250,7 @@ sub loadEnsemblMap{
       $transcript_id = $1;
     }
     unless ($gene_name && $gene_id && $transcript_id){
-      die $self->error_message("Could not parse gene_name, gene_id, transcript_id from GTF in line:\n$_\n");
+      die $class->error_message("Could not parse gene_name, gene_id, transcript_id from GTF in line:\n$_\n");
     }
     $ensembl_map{$transcript_id}{ensg_id} = $gene_id;
     $ensembl_map{$transcript_id}{ensg_name} = $gene_name;
@@ -281,7 +281,7 @@ sub loadEnsemblMap{
     my $transcript_biotype = $line[$columns{'transcript_biotype'}{pos}];
     my $gene_name = $line[$columns{'gene_name'}{pos}];
     unless ($gene_name && $gene_id && $transcript_id && $gene_biotype && $transcript_biotype){
-      die $self->error_message("Could not parse gene_name, gene_id, transcript_id, gene_biotype, and transcript_biotype from INFO in line:\n$_\n");
+      die $class->error_message("Could not parse gene_name, gene_id, transcript_id, gene_biotype, and transcript_biotype from INFO in line:\n$_\n");
     }
     if ($ensembl_map{$transcript_id}){
       $ensembl_map{$transcript_id}{gene_biotype} = $gene_biotype;
@@ -299,7 +299,7 @@ sub loadEnsemblMap{
 #######################################################################################################################################################################
 sub loadEntrezEnsemblData {
   my %args = @_;
-  my $self = shift;
+  my $class = __PACKAGE__;
   my $species = $args{-species} || 'human';
   my $cancer_db = $args{-cancer_db};
   unless ($cancer_db) {
@@ -365,13 +365,13 @@ sub loadEntrezEnsemblData {
 
   #Check input dirs
   unless (-e $entrez_dir && -d $entrez_dir){
-    die $self->error_message("\n\nEntrez dir not valid: $entrez_dir\n\n");
+    die $class->error_message("\n\nEntrez dir not valid: $entrez_dir\n\n");
   }
   unless ($entrez_dir =~ /\/$/){
     $entrez_dir .= "/";
   }
   unless (-e $ensembl_dir && -d $ensembl_dir){
-    die $self->error_message("\n\nEnsembl dir not valid: $ensembl_dir\n\n");
+    die $class->error_message("\n\nEnsembl dir not valid: $ensembl_dir\n\n");
   }
   unless ($ensembl_dir =~ /\/$/){
     $ensembl_dir .= "/";
@@ -425,7 +425,7 @@ sub loadEntrezEnsemblData {
           $entrez_map{$entrez_id}{ensembl_id} = $1;
           $ensembl_hash{$1} = 1;
         }else{
-          die $self->error_message("\n\nFormat of Ensembl field not understood: $ext_string\n\n");
+          die $class->error_message("\n\nFormat of Ensembl field not understood: $ext_string\n\n");
         }   
       }else{
         next();
@@ -608,7 +608,7 @@ sub loadEntrezEnsemblData {
 #######################################################################################################################################################################
 sub mapGeneName{
   my %args = @_;
-  my $self = shift;
+  my $class = __PACKAGE__;
   my $edata = $args{'-entrez_ensembl_data'};
   my $original_name = uc($args{'-name'});
   my $verbose = $args{'-verbose'};
@@ -816,11 +816,11 @@ sub mapGeneName{
 
   if ($verbose){
     if ($entrez_name_string eq $original_name){
-      $self->status_message("\nSimple Entrez match: $original_name -> $corrected_name");
+      $class->status_message("\nSimple Entrez match: $original_name -> $corrected_name");
     }elsif($corrected_name eq $original_name){
-      $self->status_message("\nNo matches: $original_name -> $corrected_name");
+      $class->status_message("\nNo matches: $original_name -> $corrected_name");
     }else{
-      $self->status_message("\nFixed name: $original_name -> $corrected_name");
+      $class->status_message("\nFixed name: $original_name -> $corrected_name");
     }
   }
   my $uc_corrected_name = uc($corrected_name);
@@ -856,7 +856,7 @@ sub fixGeneName{
 ###################################################################################################################################
 sub listGeneCategories{
   my %args = @_;
-  my $self = shift;
+  my $class = __PACKAGE__;
   my $dir = $args{'-category_dir'};
   my $verbose = $args{'-verbose'};
   my %categories;
@@ -883,11 +883,11 @@ sub listGeneCategories{
   }
   my $cat_count = keys %categories;
   if ($verbose){
-    $self->status_message("\n\nFound $cat_count gene categories to chose from:");
+    $class->status_message("\n\nFound $cat_count gene categories to chose from:");
   }
   foreach my $cat (sort keys %categories){
     if ($verbose){
-      $self->status_message("\n\t$categories{$cat} genes -> $cat");
+      $class->status_message("\n\t$categories{$cat} genes -> $cat");
     }
   }
   if ($verbose){
@@ -905,7 +905,7 @@ sub listGeneCategories{
 ###################################################################################################################################
 sub importSymbolListNames{
   my %args = @_;
-  my $self = shift;
+  my $class = __PACKAGE__;
   my $gene_symbol_lists_dir = $args{'-gene_symbol_lists_dir'} . '/';
   my $verbose = $args{'-verbose'};
 
@@ -940,7 +940,7 @@ sub importSymbolListNames{
       chomp($_);
       if ($genes{$_}){
         if ($verbose){
-          $self->status_message("\n\nFound a duplicate gene name ($_) in $path");
+          $class->status_message("\n\nFound a duplicate gene name ($_) in $path");
         }
       }
       $genes{$_}=1;
@@ -950,7 +950,7 @@ sub importSymbolListNames{
 
     #Check to see if the master list name is unique, and if so, store it
     if (defined($master_lists{$name})){
-      die $self->error_message("\n\nFound a duplicate gene_symbol list name ($name) in $master_list_file\n\n");
+      die $class->error_message("\n\nFound a duplicate gene_symbol list name ($name) in $master_list_file\n\n");
     }
     $order++;
     $master_lists{$name}{filename} = $filename;
@@ -985,7 +985,7 @@ sub importSymbolListNames{
     my %genes;
     foreach my $member (@member_list){
       unless ($master_lists{$member}){
-        die $self->error_message("\n\nGene group file: $master_group_file contains a group ($name) with a member ($member) that is not in the master gene symbol list file: $master_list_file\n\n");
+        die $class->error_message("\n\nGene group file: $master_group_file contains a group ($name) with a member ($member) that is not in the master gene symbol list file: $master_list_file\n\n");
       }
       my $filename = $master_lists{$member}{filename};
       my $path = $gene_symbol_lists_dir . "$filename";
@@ -998,7 +998,7 @@ sub importSymbolListNames{
     }
     #Make sure this group name is not a duplicate
     if (defined($master_groups{$name})){
-      die $self->error_message("\n\nFound a duplicate gene group name ($name) in $master_group_file\n\n");
+      die $class->error_message("\n\nFound a duplicate gene group name ($name) in $master_group_file\n\n");
     }
     my $gene_count = keys %genes;
     $master_groups{$name}{order} = $order;
@@ -1034,7 +1034,7 @@ sub importSymbolListNames{
       $sublists{$sublist_name}{groups} = \%groups;
       $sublists{$sublist_name}{group_count} = $group_count;
     }else{
-      die $self->error_message("\n\nCould not determine sublist name for $file in &importSymbolListNames()\n\n");
+      die $class->error_message("\n\nCould not determine sublist name for $file in &importSymbolListNames()\n\n");
     }
   }
 
@@ -1118,10 +1118,10 @@ sub memoryUsage{
 #############################################################################################################################
 sub importIdeogramData{
   my %args = @_;
-  my $self = shift;
+  my $class = __PACKAGE__;
   my $ideogram_file = $args{'-ideogram_file'};
   unless (-e $ideogram_file){
-    die $self->error_message("\n\n&importIdeogramData -> could not find ideogram file\n\n");
+    die $class->error_message("\n\n&importIdeogramData -> could not find ideogram file\n\n");
   }
   open (IDEO, $ideogram_file) || die "\n\nCould not open ideogram file: $ideogram_file\n\n";
   my %ideo_data;
@@ -1141,7 +1141,7 @@ sub importIdeogramData{
     if ($chr =~ /chr(\w+)/){
       $chr_name = $1;
     }else{
-      die $self->error_message("\n\n&importIdeogramData -> could not understand chromosome name format\n\n");
+      die $class->error_message("\n\n&importIdeogramData -> could not understand chromosome name format\n\n");
     }
     my $cytoname = "$chr_name"."$name";
     if ($ideo_data{$chr}){
@@ -1216,7 +1216,7 @@ sub getCytoband{
 #############################################################################################################################
 sub getColumnPosition{
   my %args = @_;
-  my $self = shift;
+  my $class = __PACKAGE__;
   my $path = $args{'-path'};
   my $colname = $args{'-column_name'};
   my $desired_column_position;
@@ -1238,7 +1238,7 @@ sub getColumnPosition{
   if (defined($columns{$colname})){
     $desired_column_position = $columns{$colname}{position};
   }else{
-    die $self->error_message("\n\n&getColumnPosition - The requested column name ($colname) was not found in the specified file ($path)\n\n");
+    die $class->error_message("\n\n&getColumnPosition - The requested column name ($colname) was not found in the specified file ($path)\n\n");
   }
 
   return($desired_column_position);
@@ -1250,7 +1250,7 @@ sub getColumnPosition{
 #############################################################################################################################
 sub getFilePathBase{
   my %args = @_;
-  my $self = shift;
+  my $class = __PACKAGE__;
   my $path = $args{'-path'};
 
   my %fb;
@@ -1261,18 +1261,18 @@ sub getFilePathBase{
     $base = $1;      #Full path without extension
     $extension = $2; #Extension only
   }else{
-    die $self->error_message("\n\n&getFileBasePath could not determine base and extension of a file path: $path\n\n");
+    die $class->error_message("\n\n&getFileBasePath could not determine base and extension of a file path: $path\n\n");
   }
   if ($path =~ /(.*)\/(.*)$/){
     $base_dir = "$1"."/"; #Full directory path
     $file_name = $2;      #Full file name
   }else{
-    die $self->error_message("\n\n&getFileBasePath could not determine base_dir and file_name of a file path: $path\n\n");
+    die $class->error_message("\n\n&getFileBasePath could not determine base_dir and file_name of a file path: $path\n\n");
   }
   if ($file_name =~ /(.*)(\.\w+)$/){
     $file_base = $1;      #File name only without extension
   }else{
-    die $self->error_message("\n\n&getFileBasePath could not determine file base from file_name: $file_name\n\n");
+    die $class->error_message("\n\n&getFileBasePath could not determine file base from file_name: $file_name\n\n");
   }
 
   $fb{$path}{base} = $base;            #Full path without extension
