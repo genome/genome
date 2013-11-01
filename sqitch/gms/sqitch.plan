@@ -216,3 +216,4 @@ config_analysis_project [config_schema config_analysis_menu_item config_set mode
 config.analysis_menu_item.index_configuration_set_id [config_analysis_menu_item] 2013-11-01T17:05:45Z Anthony Brummett <abrummet@genome.wustl.edu> # index on config.analysis_menu_item
 config.analysis_project.index_name [config_analysis_project] 2013-11-01T19:12:07Z Anthony Brummett <abrummet@genome.wustl.edu> # index on config.analysis_project.name
 config.analysis_project.index_status [config_analysis_project] 2013-11-01T19:15:15Z Anthony Brummett <abrummet@genome.wustl.edu> # index on config.analysis_project.status
+config.analysis_project.index_analysis_menu_item_id [config_analysis_project] 2013-11-01T19:16:53Z Anthony Brummett <abrummet@genome.wustl.edu> # index on config.analysis_project.analysis_menu_item_id
