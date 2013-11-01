@@ -992,7 +992,9 @@ sub _promote_staged_data {
                 my $link_target = $output_dir."/$variant_type" . "s.detailed.vcf.gz";
                 my $clipped_vcf = $output_dir."/$variant_type" . "s.vcf.gz";
                 Genome::Model::Tools::Vcf::CleanupVcf->execute(input_file => $source, output_file => $clipped_vcf);
+                # Link both the vcf and the tabix index
                 Genome::Sys->create_symlink($source, $link_target);
+                Genome::Sys->create_symlink("$source.tbi", "$link_target.tbi");
             }
 
             # FIXME refactor this when we refactor versioning. This is pretty awful.

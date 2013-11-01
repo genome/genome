@@ -381,7 +381,11 @@ sub _link_vcf_output_directory_to_result {
         } elsif(-e $target){
             die $self->error_message("Found something that is not a symlink to a vcf!");
         }
+
+        # Symlink both the vcf and the tabix
         Genome::Sys->create_symlink($vcf, $target);
+        Genome::Sys->create_symlink("$vcf.tbi", "$target.tbi");
+
         #added a symlink to our own directory - reallocate the size
         $self->_result->_reallocate_disk_allocation
     }

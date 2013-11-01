@@ -74,11 +74,15 @@ sub create {
     }
 
     unless($self->_remove_existing_vcf){
-        die $self->error_message("Could not remove existing vcf..");
+        die $self->error_message("Could not remove existing vcf");
     }
 
     unless($self->_generate_vcf){
-        die $self->error_message("Could not generate vcf..");
+        die $self->error_message("Could not generate vcf");
+    }
+
+    unless($self->_tabix_index_vcf) {
+        die $self->error_message("Could not tabix index vcf");
     }
 
     unless($self->_reallocate_disk_allocation) {
@@ -91,6 +95,29 @@ sub create {
     }
 
     return $self;
+}
+
+sub _tabix_index_vcf {
+    my $self = shift;
+
+    for my $type ("snvs","indels") {
+        my $vcf;
+        eval { $vcf = $self->get_vcf($type); };
+        if ($@ and not defined $vcf) {
+            $self->status_message("Vcf for type $type not found, skipping");
+            next;
+        }
+
+        my $cmd = Genome::Model::Tools::Tabix::Index->create(
+            input_file => $vcf,
+            preset => 'vcf',
+        );
+        unless ($cmd->execute) {
+            die $self->error_message("Could not tabix index $vcf");
+        }
+    }
+
+    return 1;
 }
 
 sub conversion_class_name {
