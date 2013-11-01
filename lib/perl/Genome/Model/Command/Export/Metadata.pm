@@ -320,7 +320,7 @@ sub add_to_dump_queue {
                 }
                 my $vid = (ref($v) ? $v->id : $v);
 
-                unless ($sanitize_map->{$vid} and $sanitize_map->{$vid} == $obj->id) {
+                unless ($sanitize_map->{$vid} and $sanitize_map->{$vid} eq $obj->id) {
                     $self->add_to_dump_queue($a, $queue, $exclude, $sanitize_map) unless $exclude->{$final_class};
                     $self->add_to_dump_queue($v, $queue, $exclude, $sanitize_map) if ref $v;
                 }
