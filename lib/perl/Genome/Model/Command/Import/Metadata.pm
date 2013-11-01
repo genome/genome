@@ -172,7 +172,11 @@ sub execute {
         my $h = $loaded{$c};
         for my $i (keys %$h) {
             my $o = $c->get($i);
-            die "No $c $i!" unless $o;
+            unless ($o){
+                print "\nNo $c $i!";
+                next;
+            }
+            #die "No $c $i!" unless $o;
             #print "$c $i $o\n";
             
             # TODO: standardize on a method in the class to initialize imported data
