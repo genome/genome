@@ -3081,15 +3081,6 @@ $Genome::Command::OPTS_SPEC = [
           'help!',
           undef
         ],
-        '>tophat-fusion',
-        [
-          'build=s',
-          undef,
-          'lsf-resource=s',
-          'files',
-          'help!',
-          undef
-        ],
         'help!',
         undef
       ],
@@ -8666,7 +8657,8 @@ $Genome::Command::OPTS_SPEC = [
           0,
           1,
           2,
-          3
+          3,
+          4
         ],
         'color!',
         undef,
