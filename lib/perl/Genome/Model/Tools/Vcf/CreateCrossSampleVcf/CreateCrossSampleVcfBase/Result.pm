@@ -5,8 +5,9 @@ use strict;
 use warnings;
 use Carp;
 
-class Genome::Model::Tools::Vcf::CreateCrossSampleVcf::Result {
+class Genome::Model::Tools::Vcf::CreateCrossSampleVcf::CreateCrossSampleVcfBase::Result {
     is => 'Genome::SoftwareResult::DiskAllocationStaged',
+    is_abstract => 1,
 
     has_input => [
         builds => {
@@ -16,7 +17,6 @@ class Genome::Model::Tools::Vcf::CreateCrossSampleVcf::Result {
     ],
     has_param => [
         max_files_per_merge => { is => 'Text' },
-        variant_type => { is => 'Text' },
         roi_list => { is => 'Genome::FeatureList', is_optional => 1 },
         wingspan => { is => 'Text', is_optional => 1 },
         allow_multiple_processing_profiles => { is => 'Boolean' },
@@ -25,6 +25,7 @@ class Genome::Model::Tools::Vcf::CreateCrossSampleVcf::Result {
 };
 
 sub _generate_result {
+#define in subclasses
     my ($self, $staging_directory) = @_;
     my @builds = $self->builds;
     # FIXME pass command in, as non-input and non-param but required.
