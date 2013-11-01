@@ -20,7 +20,7 @@ if ($ARGV[0] && $ARGV[0] eq 'REBUILD') {
     warn "regenerating $expected_log_path...";
 }
 
-my $result = Genome::Model::Command::Import::Metadata->execute(input_path => $input_path, log_path => $actual_log_path);
+my $result = Genome::Model::Command::Import::Metadata->execute(input_path => $input_path, log_path => $actual_log_path, verbose => 1);
 ok($result, "ran");
 ok(-e $actual_log_path, "actual_log_path $actual_log_path exists");
 

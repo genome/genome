@@ -35,6 +35,12 @@ class Genome::Model::Command::Import::Metadata {
             default_value => 0,
             doc => 'if objects already exist and are different, ignore those differences instead of failing',
         },
+        verbose => {
+            is => 'Boolean',
+            default_value => 0,
+            is_optional => 1,
+            doc => 'verbose output',
+        },
     ],
     doc => 'import serialized Genome Models, typically from another system instance'
 };
@@ -93,7 +99,9 @@ sub execute {
                 
                 if ($hash->{$key} =~ m|gscmnt|) {
                     if ($hash->{$key} =~ s|gscmnt|opt/gms/fs|) {
-                        $log_fh->print("updated $class $id $key to $hash->{$key}\n");
+                        if ($self->verbose){
+                            $log_fh->print("updated $class $id $key to $hash->{$key}\n");
+                        }
                     }
                     else {
                         die "error updating $class $id $key gscmnt content!";
@@ -117,8 +125,10 @@ sub execute {
             # $id = "888.99" if $class->isa("Genome::Db");
             my $hash = $loaded{$class}{$id};
             my $prev = $class->get($id);
-            if ($prev) { 
-                $log_fh->print("## FOUND $class $id: " . $prev->__display_name__ . "\n");
+            if ($prev) {
+                if ($self->verbose){
+                    $log_fh->print("## FOUND $class $id: " . $prev->__display_name__ . "\n");
+                }
             }
             else {
                 if ($class->isa("Genome::Db")) {
@@ -148,7 +158,9 @@ sub execute {
                     #}
                 }
                 else {
-                    $log_fh->print("## IMPORTING $class $id: " . UR::Util::d($hash) . "\n");
+                    if ($self->verbose){
+                        $log_fh->print("## IMPORTING $class $id: " . UR::Util::d($hash) . "\n");
+                    }
                     my $entity = UR::Context->_construct_object($class,%$hash, id => $id);
                     die "failed create for $class $id\n" unless $entity;
                     $entity->__signal_change__('create');
@@ -173,11 +185,9 @@ sub execute {
         for my $i (keys %$h) {
             my $o = $c->get($i);
             unless ($o){
-                print "\nNo $c $i!";
+                print "\nNo $c $i!" if $self->verbose;
                 next;
             }
-            #die "No $c $i!" unless $o;
-            #print "$c $i $o\n";
             
             # TODO: standardize on a method in the class to initialize imported data
             # This shoudl match a companion method to export data.
