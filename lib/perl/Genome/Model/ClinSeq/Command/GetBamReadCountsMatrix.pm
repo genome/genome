@@ -133,7 +133,7 @@ sub __errors__ {
 sub help_usage {
     my $self = shift;
     my $usage = $self->SUPER::help_usage(@_);
-    status_message("$usage");
+    $self->status_message("$usage");
 }
 
 sub execute {

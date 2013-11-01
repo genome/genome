@@ -135,10 +135,20 @@ class Genome::Model::RnaSeq {
             is_optional => 1,
             valid_values => ['rRNA','MT','pseudogene','rRNA_MT','rRNA_MT_pseudogene'],
         },
-        fusion_detection_strategy => {
+        fusion_detector => {
             is_optional => 1,
             is => 'Text',
-            doc => 'program, version and params to use for fusion detection ex: chimerascan 0.4.3 [-v]'
+            valid_values => ['chimerascan', 'chimerascan-vrl'],
+            doc => 'The program to use for detecting fusion events',
+        },
+        fusion_detector_version => {
+            is_optional => 1,
+            is => 'Text',
+            doc => 'The version of the fusion-detector to use.',
+        },
+        fusion_detector_params => {
+            is_optional => 1,
+            doc => 'Detector specific fusion-detection parameters.',
         },
         bowtie_version => {
             is_optional => 1,
@@ -268,7 +278,7 @@ sub _resolve_workflow_for_build {
         }
     }
     my $output_properties = ['coverage_result','expression_result','metrics_result'];
-    push(@$output_properties, 'fusion_result') if $self->fusion_detection_strategy;
+    push(@$output_properties, 'fusion_result') if $self->fusion_detector;
     push(@$output_properties, 'digital_expression_detection_result') if $self->digital_expression_detection_strategy;
     if ($version_number >= 2) {
         push(@$output_properties, 'bam_qc_result');
@@ -491,9 +501,9 @@ sub _resolve_workflow_for_build {
     $cufflinks_operation->parallel_by('annotation_reference_transcripts_mode');
 
     #Fusion Detection
-    if($self->fusion_detection_strategy){
-        my ($detector, $version) = split(/\s+/, $self->fusion_detection_strategy);
-
+    if($self->fusion_detector){
+        my $detector = $self->fusion_detector;
+        my $version = $self->fusion_detector_version;
         my $fusion_detection_operation = $workflow->add_operation(
             name => "RnaSeq Fusion Detection ($detector $version)",
             operation_type => Workflow::OperationType::Command->create(

@@ -14,7 +14,7 @@ ok(-e $expected_log_path, "expected log output file $expected_log_path exists");
 my $actual_log_path = Genome::Sys->create_temp_file_path(); 
 $ENV{UR_DBI_NO_COMMIT} = 1;
 
-if (@ARGV && $ARGV[0] eq 'REBUILD') {
+if ($ARGV[0] && $ARGV[0] eq 'REBUILD') {
     unlink $expected_log_path;
     $actual_log_path = $expected_log_path;
     warn "regenerating $expected_log_path...";

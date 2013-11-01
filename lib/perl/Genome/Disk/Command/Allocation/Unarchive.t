@@ -17,7 +17,6 @@ use_ok('Genome::Disk::Allocation') or die;
 use_ok('Genome::Disk::Volume') or die;
 
 use Genome::Disk::Allocation;
-push @Genome::Disk::Allocation::APIPE_DISK_GROUPS, 'test';
 $Genome::Disk::Allocation::CREATE_DUMMY_VOLUMES_FOR_TESTING = 0;
 #$Genome::Disk::Allocation::TESTING_DISK_ALLOCATION = 1;
 

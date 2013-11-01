@@ -380,5 +380,103 @@ sub reference_being_replaced_for_input {
     return;
 }
 
+# DIFFING RELATED FUNCTIONS
+
+sub regex_for_custom_diff {
+    my $self = shift;
+
+    my @regexes_from_base_class = $self->SUPER::regex_for_custom_diff;
+    return (@regexes_from_base_class, 'bam_without_regard_to_header', '\.bam$');
+}
+
+sub diff_bam_without_regard_to_header {
+    my ($self, $first_file, $second_file) = @_;
+
+    my $first_md5  = `samtools view $first_file | md5sum`;
+    my $second_md5 = `samtools view $second_file | md5sum`;
+    return 1 if $first_md5 eq $second_md5;
+    return 0;
+}
+
+sub files_ignored_by_diff {
+    my $self = shift;
+
+    return (
+        'build.xml',
+        '.pdf$',
+        '.png$',
+        '.log$',
+        '.metrics$',
+        '.html$',
+        '.zip$',
+        '.bai',
+        '.swp',
+        'alignments/[[:xdigit:]]+(?:_merged_rmdup)?.bam.md5$',
+        'R.stderr$',
+        '_fastqc/fastqc_data.txt',
+        '_fastqc/summary.txt',
+        '-PicardGC_metrics.txt',
+        '-PicardGC_summary.txt',
+        File::Spec->join('metrics', 'PicardRnaSeqMetrics.txt'),
+
+        File::Spec->join('fusions', 'runconfig.xml'),
+        File::Spec->join('fusions', 'sorted_aligned_reads.bam'),
+        File::Spec->join('fusions', 'sorted_aligned_reads.bam.bai'),
+    );
+}
+
+sub dirs_ignored_by_diff {
+    my $self = shift;
+
+    my @directories = qw(
+        logs
+        reports
+        reference_guided
+        reference_only
+        de_novo
+        expression
+    );
+    return @directories;
+}
+
+sub regex_files_for_diff {
+    my $self = shift;
+
+    return ($self->alignment_regexes, $self->junctions_regexes, $self->bam_qc_regexes);
+
+}
+sub alignment_regexes {
+    my $self = shift;
+    return qw(
+        alignments/[[:xdigit:]]+(?:_merged_rmdup)?.bam$
+        alignments/[[:xdigit:]]+(?:_merged_rmdup)?.bam.flagstat$
+    );
+}
+
+sub junctions_regexes {
+    my $self = shift;
+
+    return qw(
+        junctions/AlignmentResult_[[:xdigit:]]+_junctions.bed$
+    );
+}
+
+sub bam_qc_regexes {
+    my $self = shift;
+    my @files = qw(
+        -AlignmentLengthDistribution.tsv
+        -ErrorRate.tsv
+        -ReadLengthDistribution.tsv
+        -ReadLengthSummary.tsv
+        .bam
+        .bam.bai
+        .bam.flagstat
+    );
+
+    my @regexes = map {sprintf('bam-qc/[[:xdigit:]]+%s$', $_)} @files;
+    return @regexes;
+}
+
+
 1;
 

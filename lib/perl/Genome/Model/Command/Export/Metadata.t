@@ -14,7 +14,8 @@ my $expected = __FILE__ . '.expected-output';
 my $intermediate_outfile = Genome::Sys->create_temp_file_path();
 
 my $scrubbed_outfile;
-if ($ARGV[0] eq 'REBUILD') {
+if ($ARGV[0] && $ARGV[0] eq 'REBUILD') {
+    print "\n\nRebuilding test result\n";
     $scrubbed_outfile = $expected;    
     unlink $expected;
 }

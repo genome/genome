@@ -410,5 +410,11 @@ sub get_active_volume {
     return $class->get(%params);
 }
 
+sub has_space {
+    my ($self, $kilobytes_requested) = @_;
+
+    return ($self->allocated_kb + $kilobytes_requested <= $self->soft_limit_kb);
+}
+
 1;
 

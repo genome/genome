@@ -16,9 +16,9 @@ UR::Object::Type->define(
     has        => [
         'sequence_set_id' => {is => 'Integer',
                               doc => "sequence set id in mgap",  },
-        'output-dir' => { is => 'String',
+        'output_dir' => { is => 'String',
                           doc => "output directory where output files get written", },
-        'locus-tag'  => { is => 'String',
+        'locus_tag'  => { is => 'String',
                           doc => "locus tag name; used to name output files", },
         'dev'        => { is => 'Boolian',
                           doc => "use development mgap db",

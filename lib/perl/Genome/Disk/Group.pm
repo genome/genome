@@ -3,6 +3,9 @@ package Genome::Disk::Group;
 use strict;
 use warnings;
 
+use Genome;
+use Carp qw(confess);
+
 class Genome::Disk::Group {
     table_name => 'disk.group',
     id_by => [
@@ -49,6 +52,68 @@ class Genome::Disk::Group {
     doc => 'Represents a disk group (eg, info_apipe), which contains any number of disk volumes',
 };
 
+
+sub create {
+    my $class = shift;
+    my $self = $class->SUPER::create(@_);
+
+    if (defined($self)) {
+        $self->validate;
+    }
+
+    return $self;
+}
+
+sub get {
+    my $class = shift;
+    if (wantarray) {
+        return $class->_get_many(@_);
+    } else {
+        return $class->_get_single(@_);
+    }
+}
+
+sub _get_many {
+    my $class = shift;
+
+    my @objs = $class->SUPER::get(@_);
+    for my $obj (@objs) {
+        $obj->validate;
+    }
+
+    return @objs;
+}
+
+sub _get_single {
+    my $class = shift;
+
+    my $self = $class->SUPER::get(@_);
+    if (defined($self)) {
+        $self->validate;
+    }
+
+    return $self;
+}
+
+# TODO This needs to be removed, site-specific
+my %VALID_NAMES = (
+    info_apipe => 1,
+    info_apipe_ref => 1,
+    info_alignments => 1,
+    info_genome_models => 1,
+    research => 1,
+    systems_benchmarking => 1,
+);
+sub validate {
+    my $self = shift;
+
+    unless ($ENV{UR_DBI_NO_COMMIT}) {
+        unless ($VALID_NAMES{$self->disk_group_name}) {
+            confess sprintf("Disk group name (%s) not allowed.",
+                $self->disk_group_name);
+        }
+    }
+}
 
 my %user_name_cache;
 my %group_name_cache;

@@ -9,16 +9,8 @@ BEGIN {
 
 use above 'Genome';
 use Test::More;
-use Genome::Model::RnaSeq::Command::DetectFusions::Base;
 
-my %expected = (
-    'a b [abc]' => ['a', 'b', 'abc'],
-    ' a-b:c|d/e 1.2   [-a --b c/d]' => ['a-b:c|d/e', '1.2', '-a --b c/d'],
-);
-
-for my $key (keys %expected) {
-    my @results = Genome::Model::RnaSeq::Command::DetectFusions::Base::_parse_strategy($key);
-    is_deeply(\@results, $expected{$key}, "parsed \"$key\" correctly.");
-}
+my $class = 'Genome::Model::RnaSeq::Command::DetectFusions::Base';
+use_ok($class);
 
 done_testing();

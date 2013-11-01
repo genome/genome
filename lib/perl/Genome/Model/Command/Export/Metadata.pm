@@ -98,12 +98,14 @@ sub execute {
         /;
     }
     %exclude = (%exclude, 'Genome::Disk::Group' => 1);
+    %exclude = (%exclude, 'Genome::Model::Metric' => 1);
 
     # Build the "sanitize" hash, to replace internal names with dummy names.
     # This is outside the repo intentionally.
     # This translates local values to those which are distributable outside of TGI.
 
     my $sanitize_file = $ENV{GENOME_HOME} . "/export/sanitize.csv";
+    print "\nExpected sanitize file: $sanitize_file\n\n";
     unless (-e $sanitize_file) {
         die "Expected external file $sanitize_file to exist to sanitize data.  Disable this if you are sure you can dump data unsanitized.";
     }
@@ -233,7 +235,7 @@ sub add_to_dump_queue {
 
     $depth++;
     
-    if ($exclude->{$final_class} or $exclude->{$base_class}) {
+    if ($exclude->{$final_class} or $exclude->{$base_class}){
         $self->p("skip $final_class " . $obj->__display_name__);
     }
     else {
@@ -320,7 +322,7 @@ sub add_to_dump_queue {
                 }
                 my $vid = (ref($v) ? $v->id : $v);
 
-                unless ($sanitize_map->{$vid} and $sanitize_map->{$vid} == $obj->id) {
+                unless ($sanitize_map->{$vid} and $sanitize_map->{$vid} eq $obj->id) {
                     $self->add_to_dump_queue($a, $queue, $exclude, $sanitize_map) unless $exclude->{$final_class};
                     $self->add_to_dump_queue($v, $queue, $exclude, $sanitize_map) if ref $v;
                 }

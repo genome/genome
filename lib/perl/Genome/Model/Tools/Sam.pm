@@ -54,7 +54,8 @@ EOS
 
 
 my %SAMTOOLS_VERSIONS = (
-    r982    => $ENV{GENOME_SW} . '/samtools/samtools-0.1.18', #newest version 0.1.18
+    '0.1.19' => $ENV{GENOME_SW} . '/samtools/samtools-0.1.19',
+    r982    => $ENV{GENOME_SW} . '/samtools/samtools-0.1.18',
     r973    => $ENV{GENOME_SW} . '/samtools/samtools-0.1.17',
     r963    => $ENV{GENOME_SW} . '/samtools/samtools-0.1.16',
     r868    => $ENV{GENOME_SW} . '/samtools/samtools-0.1.12a',

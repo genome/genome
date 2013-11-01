@@ -75,14 +75,14 @@ sub _resolve_date_from_months {
 }
 
 sub _duration_property_for_commands {
-    {
+    (
         duration => {
             is => 'Number',
             default_value => 3,
             doc => 'The number of months to delay archiving',
             valid_values => [1..12],
         }
-    }
+    )
 }
 
 1;
