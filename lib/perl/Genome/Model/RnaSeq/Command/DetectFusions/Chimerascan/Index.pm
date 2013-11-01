@@ -1,11 +1,11 @@
-package Genome::Model::RnaSeq::Command::DetectFusions::ChimerascanIndex;
+package Genome::Model::RnaSeq::Command::DetectFusions::Chimerascan::Index;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::RnaSeq::Command::DetectFusions::ChimerascanIndex {
+class Genome::Model::RnaSeq::Command::DetectFusions::Chimerascan::Index {
     is => 'Command::V2',
     doc => 'create the annotation index used inside chimerascan',
     has_param => [
