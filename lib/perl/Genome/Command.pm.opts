@@ -8630,6 +8630,8 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'ignore-differences!',
         undef,
+        'verbose!',
+        undef,
         'log-path=s',
         'files',
         'input-path=s',
