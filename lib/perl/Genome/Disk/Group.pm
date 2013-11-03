@@ -103,6 +103,7 @@ my %VALID_NAMES = (
     info_genome_models => 1,
     research => 1,
     systems_benchmarking => 1,
+    reads => 1,
 );
 sub validate {
     my $self = shift;
