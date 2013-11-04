@@ -13,22 +13,22 @@ use Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::TestHelpers qw(setu
 
 my $picard_version = 1.82;
 my $chimerascan_version = '0.4.5';
-my $chimerascan_result_class = "Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::Result";
+my $chimerascan_result_class = "Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::FixedReadLength::Result";
 use_ok($chimerascan_result_class);
 my ($alignment_result, $annotation_build, @bam_files) = setup(test_data_version => 4,
         chimerascan_version => $chimerascan_version,
         chimerascan_result_class => $chimerascan_result_class,
         picard_version => $picard_version);
 
-my $no_bam_result = Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::Result->get_or_create(
+my $no_bam_result = $chimerascan_result_class->get_or_create(
     picard_version => $picard_version,
     alignment_result => $alignment_result,
     version => $chimerascan_version,
-    detector_params => "--bowtie-version=0.12.7 --reuse-bam 0",
+    detector_params => "--bowtie-version=0.12.7 --reuse-bam 1",
     annotation_build => $annotation_build,
     original_bam_paths => \@bam_files,
 );
-isa_ok($no_bam_result, "Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::Result");
+isa_ok($no_bam_result, $chimerascan_result_class);
 
 done_testing();
 

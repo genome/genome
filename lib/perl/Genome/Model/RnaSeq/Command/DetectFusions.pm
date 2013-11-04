@@ -10,15 +10,15 @@ class Genome::Model::RnaSeq::Command::DetectFusions {
     has_input => [
         detector_name => {
             is => 'Text',
-            doc => 'the name of the fusion detector to run'
-        }
+            doc => 'the name of the fusion detector to run',
+        },
         detector_version => {
             is => 'Text',
-            doc => 'the version of the fusion detector to run'
+            doc => 'the version of the fusion detector to run',
         },
         detector_params => {
             is => 'Text',
-            doc => 'parameters for the chosen fusion detector'
+            doc => 'parameters for the chosen fusion detector',
         },
         build => {
             is => "Genome::Model::Build::RnaSeq",

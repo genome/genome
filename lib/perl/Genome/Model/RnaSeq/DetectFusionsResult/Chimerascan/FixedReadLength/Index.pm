@@ -1,11 +1,11 @@
-package Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::Index;
+package Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::FixedReadLength::Index;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::Index {
+class Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::FixedReadLength::Index {
     is => 'Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::IndexBase',
 };
 
@@ -16,12 +16,13 @@ sub run_indexer {
     my $output_dir = $self->temp_staging_directory;
 
     my $bowtie_dir =  Genome::Model::Tools::Bowtie->base_path($self->bowtie_version);
-    my $cmd_path = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult->_path_for_version($self->version);
+    my $result_class = 'Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::FixedReadLength::Result';
+    my $cmd_path = $result_class->_path_for_version($self->version);
 
     my $cmd = "python $cmd_path/chimerascan_index.py --bowtie-dir='$bowtie_dir' '$fasta' '$gene_file' '$output_dir'";
 
     local $ENV{PYTHONPATH} =  ($ENV{PYTHONPATH} ? $ENV{PYTHONPATH} . ":" : "")  .
-        Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult->_python_path_for_version($self->version);
+        $result_class->_python_path_for_version($self->version);
 
     Genome::Sys->shellcmd(
         cmd => $cmd,

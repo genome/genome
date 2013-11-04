@@ -1,11 +1,11 @@
-package Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::Result;
+package Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::FixedReadLength::Result;
 
 use strict;
 use warnings;
 
 use above 'Genome';
 
-class Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::Result {
+class Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::FixedReadLength::Result {
     is => "Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::ResultBase",
 };
 
@@ -95,7 +95,7 @@ sub _chimerascan_index_cmd {
 }
 
 sub _chimerascan_result_class {
-    return 'Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::Result';
+    return 'Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::FixedReadLength::Result';
 }
 
 1;

@@ -16,7 +16,7 @@ use Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::TestHelpers qw(
 
 my $picard_version = 1.82;
 my $chimerascan_version = '0.4.5';
-my $chimerascan_result_class = "Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::Result";
+my $chimerascan_result_class = "Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::FixedReadLength::Result";
 my ($alignment_result, $annotation_build, @bam_files) = setup(test_data_version => 4,
         chimerascan_version => $chimerascan_version,
         chimerascan_result_class => $chimerascan_result_class,

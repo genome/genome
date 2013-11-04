@@ -47,7 +47,7 @@ sub execute {
 
     $self->status_message( 'Starting to create index!' );
     my $result_class_name = $self->result_class_name;
-    my $result = $result_class->get_or_create(
+    my $result = $result_class_name->get_or_create(
             test_name => $ENV{GENOME_ALIGNER_INDEX_TEST_NAME} || undef,
             version => $self->detector_version,
             bowtie_version => $self->bowtie_version,

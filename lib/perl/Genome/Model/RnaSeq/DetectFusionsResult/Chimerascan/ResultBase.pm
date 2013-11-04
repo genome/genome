@@ -506,7 +506,7 @@ sub _resolve_index_dir {
                 'of the generated index (%s)', $self->id, $index->id));
         $index->add_user(user => $self, label => 'uses');
     } else {
-        die("Unable to get a $index_cmd result");
+        die("Unable to get a Chimerascan/ChimerascanVrl result");
     }
 
     return $index->output_dir;

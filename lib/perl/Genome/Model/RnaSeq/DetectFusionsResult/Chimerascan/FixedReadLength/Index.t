@@ -10,7 +10,7 @@ BEGIN {
 use above 'Genome';
 use Test::More;
 
-my $class = "Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::Index";
+my $class = "Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::FixedReadLength::Index";
 use_ok($class);
 
 my $data_dir = $ENV{GENOME_TEST_INPUTS}."/Genome-Model-RnaSeq-DetectFusionsResult-ChimerascanResult-Index/v2";
