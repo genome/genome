@@ -90,3 +90,4 @@ model.build_input.index_name_value_id [model_build_input] 2013-11-04T22:34:14Z A
 model.build_input.index_value_class_name_value_id [model_build_input] 2013-11-04T22:35:05Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.build_input.(value_class_name, value_id)
 model.event.index_build_id_date_completed_event_type [model_event] 2013-11-04T22:35:41Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.event.(build_id, date_completed, event_type)
 model.event.index_build_id_event_status_event_type_user_name [model_event] 2013-11-04T22:36:20Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.event.(build_id, event_status, event_type, user_name)
+model.event.index_event_status_event_type_model_id [model_event] 2013-11-04T22:37:06Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.event.(event_status, event_type, model_id)
