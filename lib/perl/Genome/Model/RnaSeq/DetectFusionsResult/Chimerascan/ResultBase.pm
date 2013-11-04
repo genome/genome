@@ -501,24 +501,6 @@ sub _resolve_index_dir {
 
     my $index = $self->_get_index($bowtie_version);
 
-    my $index_cmd = $self->_chimerascan_index_cmd;
-    unless ($index) {
-        #We want to shell out and create the chimerscan index in a different UR context.
-        #That way it is committed, even if we fail and other builds don't need to wait on
-        #the overall chimerscan run just to get their index results.
-        my $cmd = "genome model rna-seq detect-fusions $index_cmd";
-        $cmd .= ' --version="' . $self->version . '"';
-        $cmd .= ' --bowtie-version="' . $bowtie_version . '"';
-        $cmd .= ' --reference-build="' . $self->alignment_result->reference_build->id . '"';
-        $cmd .= ' --annotation-build="' . $self->annotation_build->id . '"';
-        $cmd .= ' --picard-version="' . $self->picard_version . '"';
-
-        Genome::Sys->shellcmd(cmd => $cmd);
-
-        # Force UR to query the datasource instead of using its cache for this lookup.
-        $index = $self->_get_index($bowtie_version, 1);
-    }
-
     if ($index) {
         $self->status_message(sprintf('Registering software result %s as a user ' .
                 'of the generated index (%s)', $self->id, $index->id));
