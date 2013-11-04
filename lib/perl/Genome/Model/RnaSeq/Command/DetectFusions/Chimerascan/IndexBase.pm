@@ -1,28 +1,31 @@
-package Genome::Model::RnaSeq::Command::DetectFusions::ChimerascanVrl::Index;
+package Genome::Model::RnaSeq::Command::DetectFusions::Chimerascan::IndexBase;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::RnaSeq::Command::DetectFusions::ChimerascanVrl::Index {
+class Genome::Model::RnaSeq::Command::DetectFusions::Chimerascan::IndexBase {
     is => 'Command::V2',
-    doc => 'create the annotation index used inside chimerascan-vrl',
-    has_param => [
-        version => {
+    is_abstract => 1,
+    doc => 'create the annotation index used inside chimerascan',
+    has_input => [
+        detector_version => {
             is => 'Text',
-            doc => 'the version of chimerascan-vrl to use',
+            doc => 'the version of chimerascan to use',
+        },
+        detector_params => {
+            is => 'Text',
+            doc => 'parameters for the chosen fusion detector',
         },
         bowtie_version => {
             is => 'Text',
-            doc => 'the version of bowtie chimerscan will use',
+            doc => 'the version of bowtie chimerascan will use',
         },
         picard_version => {
             is => 'Text',
             doc => 'the version of picard used to manipulate BAM files',
         },
-    ],
-    has_input => [
         reference_build =>  {
             is => 'Genome::Model::Build::ReferenceSequence',
         },
@@ -30,33 +33,23 @@ class Genome::Model::RnaSeq::Command::DetectFusions::ChimerascanVrl::Index {
             is => 'Genome::Model::Build::ImportedAnnotation',
         },
         build => {
-            is => 'Genome::Model::Build',
-            doc => 'optional build to mark as a user of the created result',
-            is_optional => 1,
+            is => "Genome::Model::Build::RnaSeq",
         },
     ],
 };
 
-sub help_synopsis {
-    return <<EOS
- genome model rna-seq detect-fusions chimerascan-vrl-index --version=0.4.6 --bowtie-version=0.12.7 --picard-version 1.2.3 --reference-build=1234 --annotation-build=1234
-
-EOS
-}
-
-sub help_detail {
-    return <<EOS
-Create the annotation index used inside chimerascan-vrl
-EOS
+sub result_class_name {
+    die "Abstract";
 }
 
 sub execute {
     my $self = shift;
 
-    $self->status_message( 'Starting to create chimerascan-vrl index!' );
-    my $result = Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::VariableReadLength::Index->get_or_create(
+    $self->status_message( 'Starting to create index!' );
+    my $result_class_name = $self->result_class_name;
+    my $result = $result_class->get_or_create(
             test_name => $ENV{GENOME_ALIGNER_INDEX_TEST_NAME} || undef,
-            version => $self->version,
+            version => $self->detector_version,
             bowtie_version => $self->bowtie_version,
             reference_build => $self->reference_build,
             annotation_build => $self->annotation_build,

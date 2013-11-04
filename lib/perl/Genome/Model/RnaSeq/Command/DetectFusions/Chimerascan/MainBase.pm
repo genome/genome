@@ -1,13 +1,29 @@
-package Genome::Model::RnaSeq::Command::DetectFusions::ChimerascanBase;
+package Genome::Model::RnaSeq::Command::DetectFusions::ChimerascanMainBase;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::RnaSeq::Command::DetectFusions::ChimerascanBase {
-    is => 'Genome::Model::RnaSeq::Command::DetectFusions::Base',
+class Genome::Model::RnaSeq::Command::DetectFusions::ChimerascanMainBase {
+    is => 'Genome::Command::Base',
     is_abstract => 1,
+    has_input => [
+        detector_version => {
+            is => 'Text',
+            doc => 'the version of chimerascan to use',
+        },
+        detector_params => {
+            is => 'Text',
+            doc => 'parameters for the chosen fusion detector',
+        },
+        annotation_build => {
+            is => 'Genome::Model::Build::ImportedAnnotation',
+        },
+        build => {
+            is => "Genome::Model::Build::RnaSeq",
+        },
+    ],
     has => [
         lsf_resource => {
             default_value => "-R 'select[type==LINUX64 && mem>32000] span[hosts=1] rusage[mem=32000]' -M 32000000 -n 2",
@@ -44,7 +60,7 @@ sub _fetch_result {
     my $result_class = $self->result_class;
     my $result = $result_class->$method(
             test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
-            version => $self->version,
+            version => $self->detector_version,
             alignment_result => $self->build->alignment_result,
             detector_params => $self->detector_params,
             annotation_build => $self->build->annotation_build,
