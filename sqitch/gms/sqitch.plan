@@ -188,3 +188,4 @@ disk.file_summary.index_allocation_id [disk_file_summary] 2013-11-04T21:35:35Z A
 disk.group.index_name [disk_group] 2013-11-04T22:10:39Z Anthony Brummett <abrummet@genome.wustl.edu> # index on disk.group.name
 disk.alloction.index_allocation_path [disk_allocation] 2013-11-04T22:14:14Z Anthony Brummett <abrummet@genome.wustl.edu> # index on disk.allocation.allocation_path
 disk.allocation.index_kilobytes_requested [disk_allocation] 2013-11-04T22:16:00Z Anthony Brummett <abrummet@genome.wustl.edu> # index on disk.allocation.kilobytes_requested
+disk.allocation.index_kilobytes_used [disk_allocation] 2013-11-04T22:17:04Z Anthony Brummett <abrummet@genome.wustl.edu> # index on disk.allocation.kilobytes_used
