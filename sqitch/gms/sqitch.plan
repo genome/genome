@@ -85,3 +85,4 @@ model.event.index_run_id [model_event] 2013-11-04T22:31:52Z Anthony Brummett <ab
 model.event.index_event_status [model_event] 2013-11-04T22:32:32Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.event.event_status
 model.event.index_event_type_model_id [model_event] 2013-11-04T22:32:56Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.event.(event_type, model_id)
 model.event.index_user_name [model_event] 2013-11-04T22:33:24Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.event.user_name
+model.feature_list.index_name [model_feature_list] 2013-11-04T22:33:47Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.feature_list.name
