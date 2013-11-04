@@ -35,9 +35,13 @@ my $csq = new $pkg($header);
 ok($csq, "Created consequence parser");
 ok($csq->isa($pkg), "Consequence parser has correct class");
 
+my $multi_alt = $reader->next;
+ok($multi_alt, "Got multi-alt vcf entry");
+my $multi_transcript = $reader->next;
+ok($multi_transcript, "Got multi-transcript vcf entry");
+
 subtest "multiple_alts" => sub {
-    my $e = $reader->next();
-    ok($e, "Got vcf entry");
+    my $e = $multi_alt;
     my $rv = $csq->process_entry($e);
     ok($rv, "Parsed VEP consequence");
     my @alleles = sort keys %$rv;
@@ -134,8 +138,7 @@ subtest "multiple_alts" => sub {
 };
 
 subtest "multiple_transcripts" => sub {
-    my $e = $reader->next();
-    ok($e, "Got vcf entry");
+    my $e = $multi_transcript;
     my $data = $csq->process_entry($e);
     my @alleles = keys %$data;
     is_deeply(\@alleles, ["C"], "allele matches");
@@ -197,5 +200,42 @@ subtest "multiple_transcripts" => sub {
     is_deeply($data->{C}, \@expected, "Got expected transcripts");
 };
 
+subtest "filters" => sub {
+    my $distance_filter = sub {
+        my $data = shift;
+        return $data->{distance} > 4000;
+    };
+
+    my $filtering_parser = new $pkg($header, filters => [$distance_filter]);
+    my $e = $multi_transcript;
+    my $rv = $filtering_parser->process_entry($e);
+    ok($rv, "Parsed VEP consequence");
+
+    my @expected = (
+        {
+            allele => 'C',
+            gene => 'ENSG00000227232', feature => 'ENST00000488147',
+            feature_type => 'Transcript', consequence => 'DOWNSTREAM',
+            cdna_position => '', cds_position => '', protein_position => '',
+            amino_acids => '', codons => '',  existing_variation => '',
+            hgnc => "WASH7P",
+            distance => '4227',
+            sift => '', polyphen => '', cell_type => '', condel => ''
+        },
+        {
+            allele => 'C',
+            gene => 'ENSG00000227232', feature => 'ENST00000541675',
+            feature_type => 'Transcript', consequence => 'DOWNSTREAM',
+            cdna_position => '', cds_position => '', protein_position => '',
+            amino_acids => '', codons => '',  existing_variation => '',
+            hgnc => "WASH7P",
+            distance => '4186',
+            sift => '', polyphen => '', cell_type => '', condel => ''
+        },
+    );
+
+    is_deeply($rv->{C}, \@expected, "Got expected transcripts");
+
+};
 
 done_testing();
