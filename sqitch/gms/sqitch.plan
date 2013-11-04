@@ -178,3 +178,4 @@ disk_volume [disk_schema] 2013-10-30T21:42:07Z Anthony Brummett <abrummet@genome
 disk_volume_group_bridge [disk_volume disk_group] 2013-10-30T21:49:18Z Anthony Brummett <abrummet@genome.wustl.edu> # table disk.volume_group_bridge
 disk.allocation.index_allocation_path [disk_allocation] 2013-11-04T21:09:34Z Anthony Brummett <abrummet@genome.wustl.edu> # index on disk.allocation.allocation_path
 disk.allocation.index_creation_time_reallocation_time [disk_allocation] 2013-11-04T21:11:40Z Anthony Brummett <abrummet@genome.wustl.edu> # index on disk.allocation.(creation_time, reallocation_time)
+disk.allocation.index_owner_class_name_owner_id [disk_allocation] 2013-11-04T21:14:07Z Anthony Brummett <abrummet@genome.wustl.edu> # index on disk.allocation.(owner_class_name, owner_id)
