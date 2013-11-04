@@ -19,7 +19,7 @@ sub execute {
     my $dag = $self->build_workflow();
     my $outputs = $dag->execute($self->workflow_inputs);
 
-    $self->result($outputs{'result'});
+    $self->result($outputs->{'result'});
     return 1;
 }
 
@@ -78,15 +78,19 @@ sub _add_inputs {
 
 sub _add_links {
     my $self = shift;
+    my $source_op = shift;
+    my $destination_op = shift;
 
     my $link = Genome::WorkflowBuilder::Link->create(
         source => $source_op, source_property => 'single_output',
-        destination => $destination_op, destination_property => 'input'
+        destination => $destination_op, destination_property => 'input',
     );
 }
 
 sub _add_outputs {
     my $self = shift;
+    my $dag = shift;
+    my $command = shift;
 
     $dag->connect_input(
         input_property => 'build_id',
@@ -96,10 +100,14 @@ sub _add_outputs {
 }
 
 sub chimerascan_command_name {
+    my $self = shift;
+
     return $self->command_class_prefix . "::Detector";
 }
 
 sub index_command_name {
+    my $self = shift;
+
     return $self->command_class_prefix . "::Index";
 }
 
