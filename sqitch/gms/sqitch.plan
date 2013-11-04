@@ -185,3 +185,4 @@ disk.allocation.index_mount_path_kilobytes_requested [disk_allocation] 2013-11-0
 disk.allocation.index_mount_path [disk_allocation] 2013-11-04T21:21:58Z Anthony Brummett <abrummet@genome.wustl.edu> # index on disk.allocation.mount_path
 disk.allocation.index_owner_id [disk_allocation] 2013-11-04T21:23:41Z Anthony Brummett <abrummet@genome.wustl.edu> # index on disk.allocation.owner_id
 disk.file_summary.index_allocation_id [disk_file_summary] 2013-11-04T21:35:35Z Anthony Brummett <abrummet@genome.wustl.edu> # index on disk.file_summary.allocation_id
+disk.group.index_name [disk_group] 2013-11-04T22:10:39Z Anthony Brummett <abrummet@genome.wustl.edu> # index on disk.group.name
