@@ -82,3 +82,4 @@ model.event.index_parent_event_id [model_event] 2013-11-04T22:28:58Z Anthony Bru
 model.event.index_prior_event_id [model_event] 2013-11-04T22:29:32Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.event.prior_event_id
 model.event.index_ref_seq_id [model_event] 2013-11-04T22:31:29Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.event.ref_seq_id
 model.event.index_run_id [model_event] 2013-11-04T22:31:52Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.event.run_id
+model.event.index_event_status [model_event] 2013-11-04T22:32:32Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.event.event_status
