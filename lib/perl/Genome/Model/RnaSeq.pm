@@ -238,6 +238,10 @@ sub map_workflow_inputs {
         }
     }
 
+    if ($self->fusion_detector) {
+        push @inputs, $self->fusion_detection_inputs($build->processing_profile);
+    }
+
     my %inputs = @inputs;
 
     return @inputs;
@@ -502,12 +506,12 @@ sub _resolve_workflow_for_build {
 
     #Fusion Detection
     if($self->fusion_detector){
-        my $detector = $self->fusion_detector;
-        my $version = $self->fusion_detector_version;
+        my $operation_name = sprintf("RnaSeq Fusion Detection (%s %s)",
+            $self->fusion_detector, $self->fusion_detector_version);
         my $fusion_detection_operation = $workflow->add_operation(
-            name => "RnaSeq Fusion Detection ($detector $version)",
+            name => $operation_name,
             operation_type => Workflow::OperationType::Command->create(
-                command_class_name => 'Genome::Model::RnaSeq::Command::DetectFusions::' . Genome::Utility::Text::string_to_camel_case($detector,"-"),
+                command_class_name => 'Genome::Model::RnaSeq::Command::DetectFusions',
             )
         );
 
@@ -520,6 +524,9 @@ sub _resolve_workflow_for_build {
             right_operation => $fusion_detection_operation,
             right_property => 'build_id'
         );
+
+        $self->connect_fusion_detector_to_input_connector($workflow,
+            $input_connector, $fusion_detection_operation);
 
         #output connector
         $workflow->add_link(
@@ -553,6 +560,47 @@ sub _resolve_workflow_for_build {
 
     return $workflow;
 }
+
+sub connect_fusion_detector_to_input_connector {
+    my $self = shift;
+    my $workflow = shift;
+    my $input_connector = shift;
+    my $fusion_detection_operation = shift;
+
+    $workflow->add_link(
+        left_operation => $input_connector,
+        left_property => 'fusion_detector_name',
+        right_operation => $fusion_detection_operation,
+        right_property => 'detector_name',
+    );
+
+    $workflow->add_link(
+        left_operation => $input_connector,
+        left_property => 'fusion_detector_version',
+        right_operation => $fusion_detection_operation,
+        right_property => 'detector_version',
+    );
+
+    $workflow->add_link(
+        left_operation => $input_connector,
+        left_property => 'fusion_detector_params',
+        right_operation => $fusion_detection_operation,
+        right_property => 'detector_params',
+    );
+    return;
+}
+
+sub fusion_detection_inputs {
+    my $self = shift;
+    my $processing_profile = shift;
+
+    return (
+        fusion_detector => $processing_profile->fusion_detector,
+        fusion_detector_version => $processing_profile->fusion_detector_version,
+        fusion_detector_params => $processing_profile->fusion_detector_params,
+    );
+}
+
 
 sub params_for_alignment {
     my $self = shift;
