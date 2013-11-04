@@ -20,7 +20,7 @@ BEGIN {
 my $class = 'Genome::Model::Tools::Varscan::Consensus';
 use_ok($class);
 
-my $VERSION = 1; # Bump this each time test data changes
+my $VERSION = 2; # Bump this each time test data changes
 
 my $ref_fasta = get_ref_fasta();
 
