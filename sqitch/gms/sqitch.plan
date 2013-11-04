@@ -176,3 +176,4 @@ disk_file_summary [disk_schema disk_allocation] 2013-10-30T21:34:57Z Anthony Bru
 disk_group [disk_schema] 2013-10-30T21:38:05Z Anthony Brummett <abrummet@genome.wustl.edu> # table disk.group
 disk_volume [disk_schema] 2013-10-30T21:42:07Z Anthony Brummett <abrummet@genome.wustl.edu> # table disk.volume
 disk_volume_group_bridge [disk_volume disk_group] 2013-10-30T21:49:18Z Anthony Brummett <abrummet@genome.wustl.edu> # table disk.volume_group_bridge
+disk.allocation.index_allocation_path [disk_allocation] 2013-11-04T21:09:34Z Anthony Brummett <abrummet@genome.wustl.edu> # index on disk.allocation.allocation_path
