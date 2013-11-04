@@ -1002,7 +1002,7 @@ sub _create_file_summaries {
     chdir($self->absolute_path);
     my @files;
     #why is File::Find this stupid? who knows...
-    find(sub { push(@files, $File::Find::name) unless (-d $_) }, '.');
+    File::Find::find(sub { push(@files, $File::Find::name) unless (-d $_) }, '.');
     chdir($old_cwd);
 
     for my $file (@files) {
