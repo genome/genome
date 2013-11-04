@@ -20,8 +20,12 @@ class Genome::Model::RnaSeq::Command::DetectFusions {
             is => 'Text',
             doc => 'parameters for the chosen fusion detector',
         },
+        build_id => {
+            is => 'Text',
+        },
         build => {
             is => "Genome::Model::Build::RnaSeq",
+            id_by => 'build_id',
         },
     ],
     doc => 'run a specified fusion detector',
