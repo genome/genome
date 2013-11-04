@@ -36,7 +36,7 @@ class Genome::Disk::Detail::Allocation::CreationParameters {
     ],
 
     has_optional => [
-        id => {
+        allocation_id => {
             is => 'Text',
             len => 64,
         },
@@ -69,8 +69,8 @@ class Genome::Disk::Detail::Allocation::CreationParameters {
 
 sub get_id {
     my $self = shift;
-    if ($self->id) {
-        return $self->id;
+    if ($self->allocation_id) {
+        return $self->allocation_id;
     } else {
         # TODO autogenerate_new_object_id should technically receive a BoolExpr
         return Genome::Disk::Allocation->__meta__->autogenerate_new_object_id;
@@ -178,9 +178,11 @@ sub as_hash {
         owner_class_name             => $self->owner_class_name,
         owner_id                     => $self->owner_id,
         group_subdirectory           => $self->group_subdirectory,
-        id                           => $self->id,
         creation_time                => UR::Context->current->now,
     );
+    if ($self->allocation_id) {
+        $parameters{id} = $self->allocation_id;
+    }
     if ($self->archive_after_time) {
         $parameters{archive_after_time} = $self->parameters->archive_after_time;
     }

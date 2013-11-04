@@ -314,7 +314,11 @@ sub archivable {
 sub _create {
     my $class = shift;
 
-    my $pars = Genome::Disk::Detail::Allocation::CreationParameters->create(@_);
+    my %parameters = @_;
+    $parameters{allocation_id} = delete $parameters{id};
+
+    my $pars = Genome::Disk::Detail::Allocation::CreationParameters->create(
+        %parameters);
 
     my $creator = Genome::Disk::Detail::Allocation::Creator->create(
         parameters => $pars);
