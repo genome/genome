@@ -76,3 +76,4 @@ model_processing_profile_param [model_processing_profile] 2013-10-31T15:40:17Z A
 model.build.index_data_directory [model_build] 2013-11-04T22:26:30Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.build.data_directory
 model.build.index_model_id [model_build] 2013-11-04T22:26:55Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.build.model_id
 model.event.index_build_id [model_event] 2013-11-04T22:27:28Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.event.build_id
+model.event.index_instrument_data_id [model_event] 2013-11-04T22:28:03Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.event.instrument_data_id
