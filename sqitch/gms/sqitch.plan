@@ -49,3 +49,4 @@ instrument_data [instrument_schema instrument_fragment_library] 2013-10-30T21:54
 instrument_data_attribute [instrument_data] 2013-10-30T21:57:29Z Anthony Brummett <abrummet@genome.wustl.edu> # table instrument.data_attribute
 instrument.fragment_library.index_sample_id [instrument_fragment_library] 2013-11-04T22:18:48Z Anthony Brummett <abrummet@genome.wustl.edu> # index on instrument.fragment_library.sample_id
 instrument.data_attribute.index_attribute_label_attribute_value [instrument_data_attribute] 2013-11-04T22:19:43Z Anthony Brummett <abrummet@genome.wustl.edu> # index on instrument.data_attribute.(attribute_label, attribute_value)
+instrument.data_attribute.index_attribute_label [instrument_data_attribute] 2013-11-04T22:20:52Z Anthony Brummett <abrummet@genome.wustl.edu> # index on instrument.data_attribute.attribute_label
