@@ -98,11 +98,13 @@ my $test_model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object;
 my $test_build = Genome::Test::Factory::Build->setup_object(model_id => $test_model->id,
                                                             data_directory => $base_dir."/refalign_dir", status => "Succeeded");
 $test_build->subject->common_name("normal");
+$test_model->target_region_set_name("11111001 capture chip set");
 
 my $test_model2 = Genome::Test::Factory::Model::ReferenceAlignment->setup_object;
 my $test_build2 = Genome::Test::Factory::Build->setup_object(model_id => $test_model->id,
                                                              data_directory => $base_dir."/refalign_dir2", status => "Succeeded");
 $test_build2->subject->common_name("tumor");
+$test_model2->target_region_set_name("SeqCap EZ Human Exome v2.0");
 
 my $row1 = $class->create_snvs_vcf_row($test_build, "test_archive");
 my $row2 = $class->create_indels_vcf_row($test_build, "test_archive");

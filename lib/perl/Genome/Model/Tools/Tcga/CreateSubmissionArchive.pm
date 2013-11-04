@@ -297,9 +297,9 @@ sub fill_in_common_fields {
     $row{"Material Material Type"} = "DNA";
     $row{"Material Comment [TCGA Genome Reference]"} = "GRCh-37lite";
     $row{"Library Protocol REF"} = $self->resolve_library_protocol($build, $protocol_db);
-    #$row{"Library Parameter Value [Vendor]"} #only for non-custom
-    #$row{"Library Parameter Value [Catalog Name]"} #only for non-custom
-    #$row{"Library Parameter Value [Catalog Number]"} #only for non-custom
+    ($row{"Library Parameter Value [Vendor]"},
+    $row{"Library Parameter Value [Catalog Name]"},
+    $row{"Library Parameter Value [Catalog Number]"}) = $self->resolve_capture_reagent($build);
     $row{"Mapping Protocol REF"} = $self->resolve_mapping_protocol($build, $protocol_db);
     $row{"Mapping Comment [Derived Data File REF]"} =  $vcf_sample_info->[0]->{"File"}->{content};
     #$row{"Mapping Comment [TCGA CGHub ID]"}
@@ -310,6 +310,30 @@ sub fill_in_common_fields {
     $row{"Variants Comment [TCGA Data Level]"} = "Level 2";
     $row{"Variants Comment [TCGA Archive Name]"} = $archive_name;
     return \%row;
+}
+
+sub resolve_capture_reagent {
+    my $self = shift;
+    my $build = shift;
+
+    my %CAPTURE_REAGENTS = (
+        "SeqCap EZ Human Exome v2.0" => {
+            vendor => "Nimblegen",
+            name => "Nimblegen SeqCap EZ Human Exome Library v2.0",
+            number => "05860504001",
+        },
+        "11111001 capture chip set" => {
+            vendor => "Nimblegen",
+            name => "Nimblegen EZ Exome v3.0",
+            number => "06465692001",
+        },
+    );
+
+    my $reagent_info = $CAPTURE_REAGENTS{$build->model->target_region_set_name};
+    unless (defined $reagent_info) {
+        die "No reagent info for capture set name: ".$build->target_region_set_name;
+    }
+    return ($reagent_info->{vendor}, $reagent_info->{name}, $reagent_info->{number});
 }
 
 sub print_idf {
