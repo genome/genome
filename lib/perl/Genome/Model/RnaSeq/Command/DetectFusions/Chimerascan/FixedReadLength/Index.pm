@@ -1,11 +1,11 @@
-package Genome::Model::RnaSeq::Command::DetectFusions::Chimerascan::Index;
+package Genome::Model::RnaSeq::Command::DetectFusions::Chimerascan::FixedReadLength::Index;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::RnaSeq::Command::DetectFusions::Chimerascan::Index {
+class Genome::Model::RnaSeq::Command::DetectFusions::Chimerascan::FixedReadLength::Index {
     is => 'Genome::Model::RnaSeq::Command::DetectFusions::Chimerascan::IndexBase',
     doc => 'create the annotation index used inside chimerascan',
 };

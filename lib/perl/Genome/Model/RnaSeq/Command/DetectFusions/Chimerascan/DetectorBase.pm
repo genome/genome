@@ -1,11 +1,11 @@
-package Genome::Model::RnaSeq::Command::DetectFusions::ChimerascanMainBase;
+package Genome::Model::RnaSeq::Command::DetectFusions::Chimerascan::DetectorBase;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::RnaSeq::Command::DetectFusions::ChimerascanMainBase {
+class Genome::Model::RnaSeq::Command::DetectFusions::Chimerascan::DetectorBase {
     is => 'Genome::Command::Base',
     is_abstract => 1,
     has_input => [
