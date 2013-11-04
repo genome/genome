@@ -73,3 +73,4 @@ model_model_group_bridge [model_model model_model_group] 2013-10-30T22:32:32Z An
 model_model_input [model_model] 2013-10-30T22:34:28Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.model_input
 model_model_link [model_model] 2013-10-30T22:36:17Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.model_link
 model_processing_profile_param [model_processing_profile] 2013-10-31T15:40:17Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.processing_profile_param
+model.build.index_data_directory [model_build] 2013-11-04T22:26:30Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.build.data_directory
