@@ -22,3 +22,4 @@ subject.subject_attribute.index_attribute_value_nomenclature [subject_subject_at
 subject.project_part.index_part_id [subject_project_part] 2013-11-05T17:09:44Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.project_part.part_id
 subject.misc_attribute.index_entity_class_name_property_name_value [subject_misc_attribute] 2013-11-05T17:10:06Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.misc_attribute.(entity_class_name, property_name, value)
 subject.misc_note.index_body_text [subject_misc_note] 2013-11-05T17:10:21Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.misc_note.body_text
+subject.misc_note.index_editor_id_entry_date [subject_misc_note] 2013-11-05T17:10:38Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.misc_note.(editor_id, entry_date)
