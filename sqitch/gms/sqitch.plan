@@ -25,3 +25,4 @@ subject.misc_note.index_body_text [subject_misc_note] 2013-11-05T17:10:21Z Antho
 subject.misc_note.index_editor_id_entry_date [subject_misc_note] 2013-11-05T17:10:38Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.misc_note.(editor_id, entry_date)
 subject.misc_note.index_entry_date_subject_class_name_subject_id [subject_misc_note] 2013-11-05T17:10:59Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.misc_note.(entry_date, subject_class_name, subject_id)
 subject.misc_note.index_subject_id [subject_misc_note] 2013-11-05T17:11:21Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.misc_note.subject_id
+subject.misc_note.index_subject_class_name_subject_id_header_text [subject_misc_note] 2013-11-05T17:11:39Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.misc_note.(subject_class_name, subject_id, header_text)
