@@ -96,3 +96,4 @@ model.event.index_event_status_user_name [model_event] 2013-11-05T16:31:16Z Anth
 model.event.index_parent_event_id_ref_seq_id [model_event] 2013-11-05T16:31:56Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.event.(parent_event_id, ref_seq_id)
 model.build_input.index_build_id [model_build_input] 2013-11-05T16:32:30Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.build_input.build_id
 model.build_input.index_value_class_name [model_build_input] 2013-11-05T16:32:59Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.build_input.value_class_name
+model.model.index_build_requested [model_model] 2013-11-05T16:33:22Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.model.build_requested
