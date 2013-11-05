@@ -16,3 +16,4 @@ subject_subject_attribute [subject_subject] 2013-10-31T16:24:02Z Anthony Brummet
 subject.misc_note.index_body_text_header_text_subject_class_name_subject_id [subject_misc_note] 2013-11-05T17:02:34Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.misc_note.(body_text, header_text, subject_class_name, subject_id)
 subject.project_part.index_label [subject_project_part] 2013-11-05T17:04:58Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.project_part.label
 subject.role_member.index_role_id [subject_role_member] 2013-11-05T17:05:14Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.role_member.role_id
+subject.role_member.index_user_email [subject_role_member] 2013-11-05T17:05:27Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.role_member.user_email
