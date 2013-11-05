@@ -200,3 +200,4 @@ timeline_schema_permissions [timeline_schema] 2013-11-06T21:55:25Z Anthony Brumm
 timeline_base [timeline_schema] 2013-10-31T16:34:42Z Anthony Brummett <abrummet@genome.wustl.edu> # table timeline.base
 timeline_allocation_event_type [timeline_schema] 2013-10-31T16:39:34Z Anthony Brummett <abrummet@genome.wustl.edu> # table timeline.allocation_event_type
 timeline_allocation [timeline_base disk_allocation timeline_allocation_event_type] 2013-10-31T16:37:11Z Anthony Brummett <abrummet@genome.wustl.edu> # table timeline.allocation
+timeline.allocation.index_absolute_path [timeline_allocation] 2013-11-05T17:13:28Z Anthony Brummett <abrummet@genome.wustl.edu> # index on timeline.allocation.absolute_path
