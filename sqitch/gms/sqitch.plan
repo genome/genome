@@ -118,3 +118,4 @@ model.processing_profile_param.index_processing_profile_id_param_name [model_pro
 model.processing_profile_param.index_name [model_processing_profile_param] 2013-11-05T16:48:53Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.processing_profile_param.name
 model.processing_profile_param.index_value_class_name_value_id [model_processing_profile_param] 2013-11-05T16:49:17Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.processing_profile_param.(value_class_name, value_id)
 model.processing_profile_param.index_value_id [model_processing_profile_param] 2013-11-05T16:49:42Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.processing_profile_param.value_id
+model.processing_profile.index_subclass_name [model_processing_profile] 2013-11-05T16:49:56Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.processing_profile.subclass_name
