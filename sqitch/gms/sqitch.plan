@@ -100,3 +100,4 @@ model.model.index_build_requested [model_model] 2013-11-05T16:33:22Z Anthony Bru
 model.model.index_current_running_build_id [model_model] 2013-11-05T16:35:34Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.model.current_running_build_id
 model.model.index_genome_model_id_subject_class_name [model_model] 2013-11-05T16:36:01Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.model.(genome_model_id, subject_class_name)
 model.model.index_genome_model_id_user_name_build_requested [model_model] 2013-11-05T16:36:42Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.model.(genome_model_id, user_name, build_requested)
+model.model.index_last_complete_build_id [model_model] 2013-11-05T16:37:08Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.model.last_complete_build_id
