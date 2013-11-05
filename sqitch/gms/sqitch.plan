@@ -161,3 +161,4 @@ result.param.index_param_name_param_value [result_param] 2013-11-05T16:59:28Z An
 result.param.index_software_result_id [result_param] 2013-11-05T16:59:40Z Anthony Brummett <abrummet@genome.wustl.edu> # index on result.param.software_result_id
 result.user.index_software_result_id [result_user] 2013-11-05T17:00:00Z Anthony Brummett <abrummet@genome.wustl.edu> # index on result.user.software_result_id
 result.user.index_user_id [result_user] 2013-11-05T17:00:45Z Anthony Brummett <abrummet@genome.wustl.edu> # index on result.user.user_id
+result.user.index_user_id_user_class_name_label [result_user] 2013-11-05T17:01:06Z Anthony Brummett <abrummet@genome.wustl.edu> # index on result.user.(user_id, user_class_name, label)
