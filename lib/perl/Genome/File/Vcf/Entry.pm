@@ -701,6 +701,17 @@ sub filter_calls_involving_only {
     }
 }
 
+=item C<genotype_for_sample>
+
+Returns a Genome::File::Vcf::Genotype object for the given sample
+
+params:
+    $sample_index - sample index
+
+=back
+
+=cut
+
 sub genotype_for_sample {
     my ($self, $sample_index) = @_;
     my $alts = $self->{alternate_alleles};
