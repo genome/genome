@@ -106,10 +106,15 @@ my $test_build2 = Genome::Test::Factory::Build->setup_object(model_id => $test_m
 $test_build2->subject->common_name("tumor");
 $test_model2->target_region_set_name("SeqCap EZ Human Exome v2.0");
 
-my $row1 = $class->create_snvs_vcf_row($test_build, "test_archive");
-my $row2 = $class->create_indels_vcf_row($test_build, "test_archive");
-my $row3 = $class->create_maf_row($test_build, "test_archive", "/test/maf/path");
-my $row4 = $class->create_maf_row($test_build2, "test_archive", "/test/maf/path");
+my $cghub_ids = Genome::Sys->create_temp_file_path;
+my $id1 = $test_build->id;
+my $id2 = $test_build2->id;
+`echo "CGHub_ID\tBuild_ID\ncghub1\t$id1\ncghub2\t$id2" > $cghub_ids`;
+
+my $row1 = $class->create_snvs_vcf_row($test_build, "test_archive", undef, $cghub_ids);
+my $row2 = $class->create_indels_vcf_row($test_build, "test_archive", undef, $cghub_ids);
+my $row3 = $class->create_maf_row($test_build, "test_archive", "/test/maf/path", undef, $cghub_ids);
+my $row4 = $class->create_maf_row($test_build2, "test_archive", "/test/maf/path", undef, $cghub_ids);
 
 my $output_sdrf = Genome::Sys->create_temp_file_path;
 ok($class->print_sdrf($output_sdrf, ($row1, $row2, $row3, $row4)), "sdrf printed");
@@ -139,6 +144,7 @@ my $cmd = Genome::Model::Tools::Tcga::CreateSubmissionArchive->create(
     models => [$test_build->model],
     output_dir => $archive_output_dir,
     archive_name => "test_archive",
+    cghub_id_file => $cghub_ids,
 );
 ok($cmd, "Command created");
 ok($cmd->execute, "Command executed");

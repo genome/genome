@@ -66,6 +66,8 @@ my %PROTOCOL_PARAMS = (
                             "Protocol Min Normal Coverage"],
 );
 
+my $CGHUB_INFO;
+
 class Genome::Model::Tools::Tcga::CreateSubmissionArchive {
     is => 'Command::V2',
     has => [
@@ -82,6 +84,9 @@ class Genome::Model::Tools::Tcga::CreateSubmissionArchive {
         create_archive => {
             is => "Boolean",
             default_value => 0,
+        },
+        cghub_id_file => {
+            is => "Text",
         },
     ],
     has_optional => [
@@ -111,15 +116,15 @@ sub execute {
         }
         Genome::Sys->copy_file($build->data_directory."/variants/snvs.vcf.gz", $archive_dir."/".$build->id.".snvs.vcf.gz");
         Genome::Sys->copy_file($build->data_directory."/variants/indels.vcf.gz", $archive_dir."/".$build->id.".indels.vcf.gz");
-        push @sdrf_rows, $self->create_snvs_vcf_row($build, $self->archive_name, \%protocol_db);
-        push @sdrf_rows, $self->create_indels_vcf_row($build, $self->archive_name, \%protocol_db);
+        push @sdrf_rows, $self->create_snvs_vcf_row($build, $self->archive_name, \%protocol_db, $self->cghub_id_file);
+        push @sdrf_rows, $self->create_indels_vcf_row($build, $self->archive_name, \%protocol_db, $self->cghub_id_file);
         if ($self->somatic_maf_file) {
             Genome::Sys->copy_file($self->somatic_maf_file, $archive_dir."/somatic.maf");
-            push @sdrf_rows, $self->create_maf_row($build, $self->archive_name, $self->somatic_maf_file, \%protocol_db);
+            push @sdrf_rows, $self->create_maf_row($build, $self->archive_name, $self->somatic_maf_file, \%protocol_db, $self->cghub_id_file);
         }
         if ($self->germline_maf_file) {
             Genome::Sys->copy_file($self->germline_maf_file, $archive_dir."/germline.maf");
-            push @sdrf_rows, $self->create_maf_row($build, $self->archive_name, $self->germline_maf_file, \%protocol_db);
+            push @sdrf_rows, $self->create_maf_row($build, $self->archive_name, $self->germline_maf_file, \%protocol_db, $self->cghub_id_file);
         }
     }
 
@@ -138,7 +143,8 @@ sub create_maf_row {
     my $archive_name = shift;
     my $maf_file =shift;
     my $protocol_db = shift;
-    my $row = $self->fill_in_common_fields($build, $archive_name, $protocol_db);
+    my $cghub_id_file = shift;
+    my $row = $self->fill_in_common_fields($build, $archive_name, $protocol_db, $cghub_id_file);
 
     $row->{"Maf Protocol REF"} = $self->resolve_maf_protocol($build, $protocol_db);
     #Required if providing maf file:
@@ -232,8 +238,9 @@ sub create_snvs_vcf_row {
     my $build = shift;
     my $archive_name = shift;
     my $protocol_db = shift;
+    my $cghub_id_file = shift;
 
-    my $row = $self->fill_in_common_fields($build, $archive_name, $protocol_db);
+    my $row = $self->fill_in_common_fields($build, $archive_name, $protocol_db, $cghub_id_file);
 
     my $snvs_vcf = $build->data_directory."/variants/snvs.vcf.gz";
     die "Couldn't find file $snvs_vcf" unless (-s $snvs_vcf);
@@ -247,8 +254,9 @@ sub create_indels_vcf_row {
     my $build = shift;
     my $archive_name = shift;
     my $protocol_db = shift;
+    my $cghub_id_file = shift;
 
-    my $row = $self->fill_in_common_fields($build, $archive_name, $protocol_db);
+    my $row = $self->fill_in_common_fields($build, $archive_name, $protocol_db, $cghub_id_file);
 
     my $indels_vcf = $build->data_directory."/variants/indels.vcf.gz";
     die "Couldn't find file $indels_vcf" unless (-s $indels_vcf);
@@ -262,6 +270,7 @@ sub fill_in_common_fields {
     my $build = shift;
     my $archive_name = shift;
     my $protocol_db = shift;
+    my $cghub_id_file = shift;
 
     my %row;
 
@@ -302,7 +311,7 @@ sub fill_in_common_fields {
     $row{"Library Parameter Value [Catalog Number]"}) = $self->resolve_capture_reagent($build);
     $row{"Mapping Protocol REF"} = $self->resolve_mapping_protocol($build, $protocol_db);
     $row{"Mapping Comment [Derived Data File REF]"} =  $vcf_sample_info->[0]->{"File"}->{content};
-    #$row{"Mapping Comment [TCGA CGHub ID]"}
+    $row{"Mapping Comment [TCGA CGHub ID]"} = $self->resolve_cghub_id($build, $cghub_id_file);
     $row{"Mapping Comment [TCGA Include for Analysis]"} = "yes";
     $row{"Variants Protocol REF"} = $self->resolve_variants_protocol($build, $protocol_db);
     $row{"Variants Comment [TCGA Include for Analysis]"} = "yes";
@@ -310,6 +319,38 @@ sub fill_in_common_fields {
     $row{"Variants Comment [TCGA Data Level]"} = "Level 2";
     $row{"Variants Comment [TCGA Archive Name]"} = $archive_name;
     return \%row;
+}
+
+sub resolve_cghub_id {
+    my $self = shift;
+    my $build = shift;
+    my $file = shift;
+
+    unless (defined $CGHUB_INFO) {
+        $CGHUB_INFO = $self->load_cghub_info($file);
+    }
+
+    my $id = $CGHUB_INFO->{$build->id};
+    unless (defined $id) {
+        die "CGHub id could not be resolved for build ".$build->id;
+    }
+    return $id;
+}
+
+sub load_cghub_info {
+    my $self = shift;
+    my $id_file = shift;
+    my %id_hash;
+
+    my $reader = Genome::Utility::IO::SeparatedValueReader->create(
+        input => $id_file,
+        separator => "\t",
+    );
+
+    while (my $line = $reader->next) {
+        $id_hash{$line->{Build_ID}} = $line->{CGHub_ID};
+    }
+    return \%id_hash;
 }
 
 sub resolve_capture_reagent {
