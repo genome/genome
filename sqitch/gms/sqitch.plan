@@ -103,3 +103,4 @@ model.model.index_genome_model_id_user_name_build_requested [model_model] 2013-1
 model.model.index_last_complete_build_id [model_model] 2013-11-05T16:37:08Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.model.last_complete_build_id
 model.build_metric.index_build_id_metric_name [model_build_metric] 2013-11-05T16:38:15Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.build_metric.(build_id, metric_name)
 model.model_group_bridge.index_model_group_id [model_model_group_bridge] 2013-11-05T16:38:59Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.model_group_bridge.model_group_id
+model.model_group_bridge.index_model_id [model_model_group_bridge] 2013-11-05T16:40:09Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.model_group_bridge.model_id
