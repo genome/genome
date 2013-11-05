@@ -114,3 +114,4 @@ model.model.index_subject_id [model_model] 2013-11-05T16:46:46Z Anthony Brummett
 model.model.index_subject_class_name_subject_id [model_model] 2013-11-05T16:47:10Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.model.(subject_class_name, subject_id)
 model.processing_profile.index_name [model_processing_profile] 2013-11-05T16:47:48Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.processing_profile.name
 model.processing_profile_param.index_processing_profile_id_name [model_processing_profile_param] 2013-11-05T16:48:09Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.processing_profile_param.(processing_profile_id, name)
+model.processing_profile_param.index_processing_profile_id_param_name [model_processing_profile_param] 2013-11-05T16:48:33Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.processing_profile_param.(processing_profile_id, param_name)
