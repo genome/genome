@@ -20,3 +20,4 @@ subject.role_member.index_user_email [subject_role_member] 2013-11-05T17:05:27Z 
 subject.subject_attribute.index_attribute_label_subject_id [subject_subject_attribute] 2013-11-05T17:05:43Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.subject_attribute.(attribute_label, subject_id)
 subject.subject_attribute.index_attribute_value_nomenclature [subject_subject_attribute] 2013-11-05T17:07:54Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.subject_attribute.(attribute_value, nomenclature)
 subject.project_part.index_part_id [subject_project_part] 2013-11-05T17:09:44Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.project_part.part_id
+subject.misc_attribute.index_entity_class_name_property_name_value [subject_misc_attribute] 2013-11-05T17:10:06Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.misc_attribute.(entity_class_name, property_name, value)
