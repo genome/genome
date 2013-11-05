@@ -32,3 +32,4 @@ subject.project_part.index_project_id_label [subject_project_part] 2013-11-05T17
 subject.project_part.index_project_id_role [subject_project_part] 2013-11-05T17:12:39Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.project_part.(project_id, role)
 subject.subject_attribute.index_attribute_label [subject_subject_attribute] 2013-11-05T17:12:51Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.subject_attribute.attribute_label
 subject.subject.index_name [subject_subject] 2013-11-05T17:13:01Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.subject.name
+subject.user.index_username [subject_user] 2013-11-05T17:13:14Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.user.username
