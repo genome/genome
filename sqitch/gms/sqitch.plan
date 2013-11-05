@@ -204,3 +204,4 @@ timeline.allocation.index_absolute_path [timeline_allocation] 2013-11-05T17:13:2
 timeline.allocation.index_name [timeline_allocation] 2013-11-05T17:13:38Z Anthony Brummett <abrummet@genome.wustl.edu> # index on timeline.allocation.name
 timeline.allocation.index_object_id [timeline_allocation] 2013-11-05T17:14:06Z Anthony Brummett <abrummet@genome.wustl.edu> # index on timeline.allocation.object_id
 timeline.base.index_created_by [timeline_base] 2013-11-05T17:14:17Z Anthony Brummett <abrummet@genome.wustl.edu> # index on timeline.base.created_by
+timeline.base.index_object_id [timeline_base] 2013-11-05T17:14:36Z Anthony Brummett <abrummet@genome.wustl.edu> # index on timeline.base.object_id
