@@ -232,3 +232,4 @@ web_nomenclature_enum_value [web_nomenclature_field] 2013-10-31T17:18:12Z Anthon
 web_search_index_queue [web_schema] 2013-10-31T17:22:13Z Anthony Brummett <abrummet@genome.wustl.edu> # table web.search_index_queue
 web_task [web_schema] 2013-10-31T17:24:31Z Anthony Brummett <abrummet@genome.wustl.edu> # table web.task
 web_task_params [web_task] 2013-10-31T17:26:45Z Anthony Brummett <abrummet@genome.wustl.edu> # table web.task_params
+web.nomenclature_enum_value.index_nomenclature_field_id [web_nomenclature_enum_value] 2013-11-05T17:14:48Z Anthony Brummett <abrummet@genome.wustl.edu> # index on web.nomenclature_enum_value.nomenclature_field_id
