@@ -146,3 +146,4 @@ result.metric.index_metric_name [result_metric] 2013-11-05T16:50:38Z Anthony Bru
 result.software_result.index_lookup_hash_class_name [result_software_result] 2013-11-05T16:51:10Z Anthony Brummett <abrummet@genome.wustl.edu> # index on result.software_result.(lookup_hash, class_name)
 result.software_result.index_lookup_hash [result_software_result] 2013-11-05T16:51:32Z Anthony Brummett <abrummet@genome.wustl.edu> # index on result.software_result.lookup_hash
 result.input.index_software_result_id_name [result_input] 2013-11-05T16:51:54Z Anthony Brummett <abrummet@genome.wustl.edu> # index on result.input.(software_result_id, name)
+result.input.index_name [result_input] 2013-11-05T16:52:18Z Anthony Brummett <abrummet@genome.wustl.edu> # index on result.input.name
