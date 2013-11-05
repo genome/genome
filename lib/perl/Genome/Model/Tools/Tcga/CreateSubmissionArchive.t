@@ -12,6 +12,7 @@ use above "Genome";
 use Test::More;
 use Genome::Utility::Test;
 use Genome::Test::Factory::Model::ReferenceAlignment;
+use Genome::Test::Factory::Model::SomaticVariation;
 use Genome::Test::Factory::Build;
 
 my $class = "Genome::Model::Tools::Tcga::CreateSubmissionArchive";
@@ -94,27 +95,24 @@ my $test_output = Genome::Sys->create_temp_file_path;
 ok($class->print_sdrf($test_output, $null_row), "print_sdrf ran ok with a row of nulls");
 ok(-s $test_output, "Output file exists");
 
-my $test_model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object;
-my $test_build = Genome::Test::Factory::Build->setup_object(model_id => $test_model->id,
-                                                            data_directory => $base_dir."/refalign_dir", status => "Succeeded");
-$test_build->subject->common_name("normal");
-$test_model->target_region_set_name("11111001 capture chip set");
+my $test_somatic_build = Genome::Test::Factory::Model::SomaticVariation->setup_somatic_variation_build();
+$test_somatic_build->normal_build->subject->common_name("normal");
+$test_somatic_build->normal_build->model->target_region_set_name("11111001 capture chip set");
+$test_somatic_build->normal_build->data_directory($base_dir."/refalign_dir");
 
-my $test_model2 = Genome::Test::Factory::Model::ReferenceAlignment->setup_object;
-my $test_build2 = Genome::Test::Factory::Build->setup_object(model_id => $test_model->id,
-                                                             data_directory => $base_dir."/refalign_dir2", status => "Succeeded");
-$test_build2->subject->common_name("tumor");
-$test_model2->target_region_set_name("SeqCap EZ Human Exome v2.0");
+$test_somatic_build->tumor_build->subject->common_name("tumor");
+$test_somatic_build->tumor_build->model->target_region_set_name("SeqCap EZ Human Exome v2.0");
+$test_somatic_build->tumor_build->data_directory($base_dir."/refalign_dir2");
 
 my $cghub_ids = Genome::Sys->create_temp_file_path;
-my $id1 = $test_build->id;
-my $id2 = $test_build2->id;
+my $id1 = $test_somatic_build->normal_build->id;
+my $id2 = $test_somatic_build->tumor_build->id;
 `echo "CGHub_ID\tBuild_ID\ncghub1\t$id1\ncghub2\t$id2" > $cghub_ids`;
 
-my $row1 = $class->create_snvs_vcf_row($test_build, "test_archive", undef, $cghub_ids);
-my $row2 = $class->create_indels_vcf_row($test_build, "test_archive", undef, $cghub_ids);
-my $row3 = $class->create_maf_row($test_build, "test_archive", "/test/maf/path", undef, $cghub_ids);
-my $row4 = $class->create_maf_row($test_build2, "test_archive", "/test/maf/path", undef, $cghub_ids);
+my $row1 = $class->create_snvs_vcf_row($test_somatic_build->normal_build, "test_archive", undef, $cghub_ids);
+my $row2 = $class->create_indels_vcf_row($test_somatic_build->normal_build, "test_archive", undef, $cghub_ids);
+my $row3 = $class->create_maf_row($test_somatic_build->normal_build, "test_archive", "/test/maf/path", undef, $cghub_ids);
+my $row4 = $class->create_maf_row($test_somatic_build->tumor_build, "test_archive", "/test/maf/path", undef, $cghub_ids);
 
 my $output_sdrf = Genome::Sys->create_temp_file_path;
 ok($class->print_sdrf($output_sdrf, ($row1, $row2, $row3, $row4)), "sdrf printed");
@@ -141,7 +139,7 @@ ok($class->print_idf($output_idf, \%protocol_db));
 
 my $archive_output_dir = Genome::Sys->create_temp_directory;
 my $cmd = Genome::Model::Tools::Tcga::CreateSubmissionArchive->create(
-    models => [$test_build->model],
+    models => [$test_somatic_build->model],
     output_dir => $archive_output_dir,
     archive_name => "test_archive",
     cghub_id_file => $cghub_ids,

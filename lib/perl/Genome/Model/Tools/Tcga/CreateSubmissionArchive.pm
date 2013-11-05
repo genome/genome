@@ -72,7 +72,7 @@ class Genome::Model::Tools::Tcga::CreateSubmissionArchive {
     is => 'Command::V2',
     has => [
         models => {
-            is => 'Genome::Model::ReferenceAlignment',
+            is => 'Genome::Model::SomaticVariation',
             is_many => 1,
         },       
         output_dir => {
@@ -108,23 +108,27 @@ sub execute {
     my $archive_dir = $self->output_dir."/".$self->archive_name;
     Genome::Sys->create_directory($archive_dir);
 
-    for my $model ($self->models) {
-        my $build = $model->last_succeeded_build;
-        unless($build) {
-            $self->error_message("Could not resolve build from model ".$model->__display_name__);
+    for my $somatic_model ($self->models) {
+        my $somatic_build = $somatic_model->last_succeeded_build;
+        unless($somatic_build) {
+            $self->error_message("Could not resolve build from model ".$somatic_model->__display_name__);
             return;
         }
-        Genome::Sys->copy_file($build->data_directory."/variants/snvs.vcf.gz", $archive_dir."/".$build->id.".snvs.vcf.gz");
-        Genome::Sys->copy_file($build->data_directory."/variants/indels.vcf.gz", $archive_dir."/".$build->id.".indels.vcf.gz");
-        push @sdrf_rows, $self->create_snvs_vcf_row($build, $self->archive_name, \%protocol_db, $self->cghub_id_file);
-        push @sdrf_rows, $self->create_indels_vcf_row($build, $self->archive_name, \%protocol_db, $self->cghub_id_file);
-        if ($self->somatic_maf_file) {
-            Genome::Sys->copy_file($self->somatic_maf_file, $archive_dir."/somatic.maf");
-            push @sdrf_rows, $self->create_maf_row($build, $self->archive_name, $self->somatic_maf_file, \%protocol_db, $self->cghub_id_file);
-        }
-        if ($self->germline_maf_file) {
-            Genome::Sys->copy_file($self->germline_maf_file, $archive_dir."/germline.maf");
-            push @sdrf_rows, $self->create_maf_row($build, $self->archive_name, $self->germline_maf_file, \%protocol_db, $self->cghub_id_file);
+        my $normal_build = $somatic_build->normal_build;
+        my $tumor_build = $somatic_build->tumor_build;
+        for my $build(($normal_build, $tumor_build)) {
+            Genome::Sys->copy_file($build->data_directory."/variants/snvs.vcf.gz", $archive_dir."/".$build->id.".snvs.vcf.gz");
+            Genome::Sys->copy_file($build->data_directory."/variants/indels.vcf.gz", $archive_dir."/".$build->id.".indels.vcf.gz");
+            push @sdrf_rows, $self->create_snvs_vcf_row($build, $self->archive_name, \%protocol_db, $self->cghub_id_file);
+            push @sdrf_rows, $self->create_indels_vcf_row($build, $self->archive_name, \%protocol_db, $self->cghub_id_file);
+            if ($self->somatic_maf_file) {
+                Genome::Sys->copy_file($self->somatic_maf_file, $archive_dir."/somatic.maf");
+                push @sdrf_rows, $self->create_maf_row($build, $self->archive_name, $self->somatic_maf_file, \%protocol_db, $self->cghub_id_file);
+            }
+            if ($self->germline_maf_file) {
+                Genome::Sys->copy_file($self->germline_maf_file, $archive_dir."/germline.maf");
+                push @sdrf_rows, $self->create_maf_row($build, $self->archive_name, $self->germline_maf_file, \%protocol_db, $self->cghub_id_file);
+            }
         }
     }
 
