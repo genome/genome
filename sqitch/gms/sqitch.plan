@@ -105,3 +105,4 @@ model.build_metric.index_build_id_metric_name [model_build_metric] 2013-11-05T16
 model.model_group_bridge.index_model_group_id [model_model_group_bridge] 2013-11-05T16:38:59Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.model_group_bridge.model_group_id
 model.model_group_bridge.index_model_id [model_model_group_bridge] 2013-11-05T16:40:09Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.model_group_bridge.model_id
 model.model_input.index_model_id [model_model_input] 2013-11-05T16:43:12Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.model_input.model_id
+model.model_input.index_value_class_name [model_model_input] 2013-11-05T16:44:21Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.model_input.value_class_name
