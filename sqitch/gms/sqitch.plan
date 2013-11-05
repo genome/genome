@@ -149,3 +149,4 @@ result.input.index_software_result_id_name [result_input] 2013-11-05T16:51:54Z A
 result.input.index_name [result_input] 2013-11-05T16:52:18Z Anthony Brummett <abrummet@genome.wustl.edu> # index on result.input.name
 result.input.index_value_class_name_value_id [result_input] 2013-11-05T16:54:18Z Anthony Brummett <abrummet@genome.wustl.edu> # index on result.input.(value_class_name, value_id)
 result.input.index_value_id [result_input] 2013-11-05T16:55:05Z Anthony Brummett <abrummet@genome.wustl.edu> # index on result.input.value_id
+result.param.index_software_result_id_name [result_param] 2013-11-05T16:55:27Z Anthony Brummett <abrummet@genome.wustl.edu> # index on result.param.(software_result_id, name)
