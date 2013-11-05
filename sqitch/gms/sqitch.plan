@@ -107,3 +107,4 @@ model.model_group_bridge.index_model_id [model_model_group_bridge] 2013-11-05T16
 model.model_input.index_model_id [model_model_input] 2013-11-05T16:43:12Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.model_input.model_id
 model.model_input.index_value_class_name [model_model_input] 2013-11-05T16:44:21Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.model_input.value_class_name
 model.model_input.index_value_id_name [model_model_input] 2013-11-05T16:44:52Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.model_input.(value_id, name)
+model.model.index_name [model_model] 2013-11-05T16:45:34Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.model.name
