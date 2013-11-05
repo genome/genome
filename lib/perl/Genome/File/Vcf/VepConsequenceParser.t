@@ -238,4 +238,18 @@ subtest "filters" => sub {
 
 };
 
+subtest "format transcripts" => sub {
+    my $e = $multi_transcript;
+    my $rv = $csq->process_entry($e);
+
+    my $fmt = $csq->format_transcripts($rv);
+    my $raw_info = $e->info("CSQ");
+    my @expected_fields = sort split(",", $raw_info);
+    my @actual_fields = sort split(",", $fmt);
+    is_deeply(\@actual_fields, \@expected_fields, "transcript reformatting");
+
+    my $empty_fmt = $csq->format_transcripts({});
+    is(".", $empty_fmt, "empty transcripts => .");
+};
+
 done_testing();

@@ -100,5 +100,16 @@ sub process_entry {
     return $rv;
 }
 
+sub _format_transcript {
+    my ($self, $transcript) = @_;
+    return join("|", map {$transcript->{$_} || ''} @{$self->{fields}});
+}
+
+sub format_transcripts {
+    my ($self, $transcripts) = @_;
+    return '.' unless %$transcripts;
+    my @flat_transcripts = map { @$_ } values %$transcripts;
+    return join(",", map {$self->_format_transcript($_)} @flat_transcripts);
+}
 
 1;
