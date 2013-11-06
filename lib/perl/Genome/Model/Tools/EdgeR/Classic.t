@@ -112,16 +112,22 @@ sub generate_counts_file {
     my $fh = Genome::Sys->open_file_for_writing($path);
 
     srand(1234);
+    # genrate some baseline counts
     my @counts = map { 10 + int(rand(15)) } 1..$n_genes;
     my @columns;
 
+    # normal samples
     for my $nid (1..$n_normal) {
+        # add a little noise to the counts
         my @new_counts = map {int($_ + rand(2) - 1)} @counts;
         push(@columns, \@new_counts);
     }
 
-    for my $nid (1..$n_tumor) {
+    # tumor samples
+    for my $tid (1..$n_tumor) {
+        # add a little noise to the counts
         my @new_counts = map {int($_ + rand(2) - 1)} @counts;
+        # but also greatly increase the expression of gene #0
         $new_counts[0] += 100;
         push(@columns, \@new_counts);
     }
