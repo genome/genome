@@ -56,3 +56,4 @@ instrument_data_permission [instrument_data] 2013-11-07T17:08:07Z Anthony Brumme
 instrument_data_attribute_permission [instrument_data_attribute] 2013-11-07T17:08:19Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on instrument_data_attribute
 instrument_fragment_library_permission [instrument_fragment_library] 2013-11-07T17:08:26Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on instrument_fragment_library
 model_schema [empty_db] 2013-10-30T22:02:28Z Anthony Brummett <abrummet@genome.wustl.edu> # schema model
+model_schema_permissions [model_schema] 2013-11-06T21:49:10Z Anthony Brummett <abrummet@genome.wustl.edu> # permissions on model schema
