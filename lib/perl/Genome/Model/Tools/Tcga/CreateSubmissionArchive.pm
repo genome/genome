@@ -282,8 +282,8 @@ sub fill_in_common_fields {
     die "Couldn't find file $snvs_vcf" unless (-s $snvs_vcf);
     my $vcf_reader = new Genome::File::Vcf::Reader($snvs_vcf);
     my $vcf_sample_info = $vcf_reader->header->metainfo->{"SAMPLE"};
-    unless (@$vcf_sample_info == 1) {
-        die $self->error_message("Not exactly one SAMPLE vcf header in $snvs_vcf");
+    unless (defined $vcf_sample_info and @$vcf_sample_info == 1) {
+        die $self->error_message("Not exactly one SAMPLE vcf header in $snvs_vcf for build ".$build->id);
     }
     $row{"Material Extract Name"} = $vcf_sample_info->[0]->{"SampleUUID"}->{content};
     unless ($row{"Material Extract Name"}) {
@@ -334,9 +334,9 @@ sub resolve_cghub_id {
         $CGHUB_INFO = $self->load_cghub_info($file);
     }
 
-    my $id = $CGHUB_INFO->{$build->id};
+    my $id = $CGHUB_INFO->{$build->whole_rmdup_bam_file};
     unless (defined $id) {
-        die "CGHub id could not be resolved for build ".$build->id;
+        die "CGHub id could not be resolved for build ".$build->id." with bam file ".$build->whole_rmdup_bam_file;
     }
     return $id;
 }
@@ -352,7 +352,7 @@ sub load_cghub_info {
     );
 
     while (my $line = $reader->next) {
-        $id_hash{$line->{Build_ID}} = $line->{CGHub_ID};
+        $id_hash{$line->{BAM_path}} = $line->{CGHub_ID};
     }
     return \%id_hash;
 }
@@ -370,6 +370,11 @@ sub resolve_capture_reagent {
         "11111001 capture chip set" => {
             vendor => "Nimblegen",
             name => "Nimblegen EZ Exome v3.0",
+            number => "06465692001",
+        },
+        "SeqCap EZ Human Exome v3.0" => {
+            vendor => "Nimblegen",
+            name => "Nimblegen SeqCap EZ Human Exome Library v3.0",
             number => "06465692001",
         },
     );
