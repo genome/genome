@@ -225,3 +225,4 @@ config_set_permission [config_set] 2013-11-07T16:58:44Z Anthony Brummett <abrumm
 subject_pairing [subject_subject config_analysis_project] 2013-10-31T16:11:29Z Anthony Brummett <abrummet@genome.wustl.edu> # table subject.pairing
 subject_pairing_permission [subject_pairing] 2013-11-07T17:17:40Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on subject_pairing
 web_schema [empty_db] 2013-10-31T17:09:03Z Anthony Brummett <abrummet@genome.wustl.edu> # schema web
+web_schema_permissions [web_schema] 2013-11-06T21:57:13Z Anthony Brummett <abrummet@genome.wustl.edu> # permissions on web schema
