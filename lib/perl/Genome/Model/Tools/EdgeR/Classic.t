@@ -29,7 +29,7 @@ subtest "bad p-values" => sub {
     for my $p (@bad_pvalues) {
         my $cmd = $pkg->create(
             counts_file => $input_file,
-            groups => [1, 2, 3],
+            groups => "1,2,2",
             output_file => "/dev/null",
             p_value => $p,
         );
@@ -46,7 +46,7 @@ subtest "bad p-values" => sub {
 subtest "no replication" => sub {
     my $cmd = $pkg->create(
         counts_file => $input_file,
-        groups => [1, 2, 3],
+        groups => "1,2,3",
         output_file => "/dev/null"
     );
 
@@ -61,7 +61,7 @@ subtest "no replication" => sub {
 subtest "execute" => sub {
     my $cmd = $pkg->create(
         counts_file => $input_file,
-        groups => ['normal', 'tumor', 'tumor'],
+        groups => 'normal,tumor,tumor',
         output_file => $output_file,
     );
     ok($cmd, "Created command");
