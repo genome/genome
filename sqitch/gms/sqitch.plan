@@ -170,3 +170,4 @@ result_param_permission [result_param] 2013-11-07T17:17:05Z Anthony Brummett <ab
 result_software_result_permission [result_software_result] 2013-11-07T17:17:11Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on result_software_result
 result_user_permission [result_user] 2013-11-07T17:17:20Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on result_user
 disk_schema [empty_db] 2013-10-30T21:24:32Z Anthony Brummett <abrummet@genome.wustl.edu> # schema disk
+disk_schema_permissions [disk_schema] 2013-11-06T21:42:07Z Anthony Brummett <abrummet@genome.wustl.edu> # permissions on disk schema
