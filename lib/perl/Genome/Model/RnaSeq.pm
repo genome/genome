@@ -569,7 +569,7 @@ sub connect_fusion_detector_to_input_connector {
 
     $workflow->add_link(
         left_operation => $input_connector,
-        left_property => 'fusion_detector_name',
+        left_property => 'fusion_detector',
         right_operation => $fusion_detection_operation,
         right_property => 'detector_name',
     );
