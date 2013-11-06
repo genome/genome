@@ -24,7 +24,13 @@ class Genome::Model::Tools::EdgeR::Classic {
 
         output_file => {
             is => "Text",
-        }
+        },
+
+        p_value => {
+            is => "Number",
+            doc => "The p-value used for significance testing (0 < p < 1)",
+            default_value => 0.05,
+        },
     ],
     doc => "Run edgeR's classic analysis on the given expression counts",
 };
@@ -65,8 +71,14 @@ like "normal,tumor,tumor" or "N,T,T".
 EOS
 }
 
-sub _validate_groups {
-    my @groups = @_;
+sub _validate_params {
+    my $self = shift;
+
+    if ($self->p_value <= 0 or $self->p_value >= 1) {
+        confess "--p-value parameter must satisfy 0 < p < 1";
+    }
+
+    my @groups = $self->groups;
     my %group_sizes;
     for my $g (@groups) {
         return if ++$group_sizes{$g} > 1;
@@ -79,14 +91,16 @@ sub _validate_groups {
 sub execute {
     my $self = shift;
 
-    _validate_groups($self->groups);
+    $self->_validate_params;
 
     my $groups_string = join(",", $self->groups);
-    my $cmd = sprintf("Rscript %s --input-file %s --groups '%s' --output-file %s",
+    my $cmd = sprintf("Rscript %s --input-file %s --groups '%s' --output-file %s --pvalue %f",
             $R_SCRIPT,
             $self->counts_file,
             $groups_string,
-            $self->output_file);
+            $self->output_file,
+            $self->p_value
+            );
 
     return Genome::Sys->shellcmd(
         cmd => $cmd

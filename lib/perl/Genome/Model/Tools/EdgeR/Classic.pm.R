@@ -3,16 +3,18 @@
 library(edgeR)
 library(getopt)
 
-classicAnalysis <- function(inputFile, groups, outputFile) {
+classicAnalysis <- function(inputFile, groups, outputFile, pvalue) {
     counts <- read.table(inputFile, head=T, row.names=1)
     dge <- DGEList(counts=counts, group=groups)
     dge <- calcNormFactors(dge)
     dge <- estimateCommonDisp(dge)
     dge <- estimateTagwiseDisp(dge)
     et <- exactTest(dge)
-    out <- et$table
+    de <- decideTestsDGE(et, p=pvalue)
+    out <- cbind(et$table, de)
+    colnames(out)[4] <- "test.result"
     out <- out[order(out$p.value), ]
-    write.table(out, outputFile)
+    write.table(out, outputFile, quote=FALSE, sep="\t")
     dge
 }
 
@@ -30,7 +32,6 @@ parseOptions <- function(optSpec) {
             cat(paste("Required option", req, "missing!\n"))
             q(status=1)
         }
-
     }
 
     opts
@@ -40,10 +41,11 @@ optSpec = matrix(c(
     "help", "h", 0, NA,
     "input-file", "i", 1, "character",
     "groups", "G", 1, "character",
-    "output-file", "o", 1, "character"
+    "output-file", "o", 1, "character",
+    "pvalue", "p", 1, "double"
     ), byrow=TRUE, ncol=4)
 
 opts <- parseOptions(optSpec)
 
 groups <- factor(unlist(strsplit(opts$groups, split=",")))
-dge <- classicAnalysis(opts$`input-file`, groups, opts$`output-file`)
+dge <- classicAnalysis(opts$`input-file`, groups, opts$`output-file`, opts$`pvalue`)
