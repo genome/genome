@@ -1517,6 +1517,7 @@ sub files_ignored_by_diff {
         variants/dispatcher.cmd
         variants/(.*).err
         variants/(.*).out
+        variants/(.*).tbi$
     );
 }
 
