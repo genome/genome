@@ -208,6 +208,8 @@ sub files_ignored_by_diff {
         variants/svs.hq
         svs\.merge\.index$
         sv/assembly_output\.csv\.index$
+        sv/assembly_input
+        sv/assembly_output.csv
         cnv_graph\.pdf$
         pindel\.config$
         variants/cnv/plot-cnv-[^/]+/[[:xdigit:]]+\.bam\.cnvseg$
