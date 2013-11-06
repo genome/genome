@@ -23,6 +23,7 @@ class Genome::Model::Tools::EdgeR::Classic {
 
         output_file => {
             is => "Text",
+            doc => "Output file path",
         },
 
         p_value => {
@@ -67,13 +68,13 @@ The groups parameter should be a comma separated list of condition ids to
 associate with each of the input samples. In the example above, this might be
 something like "normal,tumor,tumor" or "N,T,T".
 
-The output file consists of 5 columns with one row per input object:
+The output file consists of 5 columns (one row per input object):
 
-1) the object name
-2) log-average concentration/abundance for each tag (logConc)
-3) the log fold change (logFC)
-4) the exact (uncorrected) p-value for differential expression
-5) classification result (-1 = down, 0 = no DE, 1 = up).
+    1) the object name
+    2) log-average concentration/abundance for each tag (logConc)
+    3) the log fold change (logFC)
+    4) the exact (uncorrected) p-value for differential expression
+    5) classification result (-1 = down, 0 = no DE, 1 = up).
 
 Example output:
 
