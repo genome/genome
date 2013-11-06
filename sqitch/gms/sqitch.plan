@@ -136,3 +136,4 @@ model_model_link_permission [model_model_link] 2013-11-07T17:10:02Z Anthony Brum
 model_processing_profile_permission [model_processing_profile] 2013-11-07T17:10:09Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on model_processing_profile
 model_processing_profile_param_permission [model_processing_profile_param] 2013-11-07T17:10:15Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on model_processing_profile_param
 result_schema [empty_db] 2013-10-31T15:43:40Z Anthony Brummett <abrummet@genome.wustl.edu> # add schema result
+result_schema_permissions [result_schema] 2013-11-06T21:51:15Z Anthony Brummett <abrummet@genome.wustl.edu> # permissions on result schema
