@@ -184,13 +184,10 @@ sub resolve_annotation_build{
     $final_annotation_build = $annotation_build;
   }
   if (keys %tmp > 1){
-    $self->error_message("Found non-matching annotation build names for the list of somatic-variation builds");
-    print Dumper %ab_names;
-    exit 1;
+    die $self->error_message("Found non-matching annotation build names for the list of somatic-variation builds");
   }
   unless ($final_annotation_build){
-    $self->error_message("Unable to resolve annotation build for the list of somatic-variation builds");
-    exit 1;
+    die $self->error_message("Unable to resolve annotation build for the list of somatic-variation builds");
   }
   return $final_annotation_build;
 }
@@ -217,8 +214,7 @@ sub import_somatic_variants{
     
     #Add the SNV file to the list to be processed - if an optional max-allowed SNVs parameter was supplied, determine the number of unique SNVs in this file and skip if neccessary
     unless (-e $tier1_snv_file){
-      $self->error_message("\n\nCould not find tier1 SNV annotated file in build dir: $build_dir\n\n");
-      exit 1;
+      die $self->error_message("\n\nCould not find tier1 SNV annotated file in build dir: $build_dir\n\n");
     }
     if ($self->max_snvs_per_file){
       my $var_count = $self->unique_variant_count('-variant_file'=>$tier1_snv_file);
@@ -233,8 +229,7 @@ sub import_somatic_variants{
 
     #Add the INDEL file to the list to be processed - if an optional max-allowed SNVs parameter was supplied, determine the number of unique SNVs in this file and skip if neccessary
     unless (-e $tier1_indel_file){
-      $self->error_message("\n\nCould not find tier1 INDEL annotated file in build dir: $build_dir\n\n");
-      exit 1;
+      die $self->error_message("\n\nCould not find tier1 INDEL annotated file in build dir: $build_dir\n\n");
     }
     if ($self->max_indels_per_file){
       my $var_count = $self->unique_variant_count('-variant_file'=>$tier1_indel_file);
@@ -251,7 +246,7 @@ sub import_somatic_variants{
   #Make sure at least one file made it through the filters if not, exit with status 0
   unless (scalar(@file_list) > 0){
     $self->warning_message("All files were skipped because they exceeded the max specified number of SNVs or INDELs - no plots will be generated");
-    exit 0;
+    return 1;
   }
 
 
