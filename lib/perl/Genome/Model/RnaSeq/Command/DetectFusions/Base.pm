@@ -21,7 +21,9 @@ class Genome::Model::RnaSeq::Command::DetectFusions::Base {
             is => "Genome::Model::Build::RnaSeq",
         },
     ],
-    has_output => [
-        result => 'Genome::SoftwareResult',
+    has_optional_output => [
+        result => {
+            is => 'Genome::SoftwareResult',
+        },
     ],
 };
