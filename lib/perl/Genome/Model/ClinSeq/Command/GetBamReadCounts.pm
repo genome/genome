@@ -141,8 +141,8 @@ sub execute {
   my $transcript_info_path = $annotation_data_dir . "/annotation_data/rna_annotation/$reference_build_id-transcript_info.tsv";
   my $gtf_path = $annotation_build->annotation_file('gtf',$reference_build_id);
   unless (defined($gtf_path)) {
-die $self->error_message("'There is no annotation GTF file defined for annotation_reference_transcripts build: ". $annotation_build->__display_name__);
-}
+    die $self->error_message("'There is no annotation GTF file defined for annotation_reference_transcripts build: ". $annotation_build->__display_name__);
+  }
   unless (-e $transcript_info_path) {
     die $self->error_message("'There is no transcript info file for annotation_reference_transcripts build: ". $annotation_build->__display_name__);
   }
@@ -176,7 +176,7 @@ die $self->error_message("'There is no annotation GTF file defined for annotatio
     my $snv_count = keys %{$snvs};
 
     if ($verbose){
-	$self->status_message("\n\nSNV count = $snv_count\n$data_type\n$sample_type\n$bam_path\n$ref_fasta\n")
+	  $self->status_message("\n\nSNV count = $snv_count\n$data_type\n$sample_type\n$bam_path\n$ref_fasta\n")
     }
     my $counts = &getBamReadCounts('-snvs'=>$snvs, '-data_type'=>$data_type, '-sample_type'=>$sample_type, '-bam_path'=>$bam_path, '-ref_fasta'=>$ref_fasta, '-verbose'=>$verbose, '-no_fasta_check'=>$no_fasta_check);
     $data->{$bam}->{read_counts} = $counts;

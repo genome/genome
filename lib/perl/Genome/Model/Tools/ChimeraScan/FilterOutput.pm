@@ -39,6 +39,11 @@ class Genome::Model::Tools::ChimeraScan::FilterOutput {
             id_by => 'annotation_build_id',
         },
     ],
+    has_output => [
+        filtered_bedpe_file => {
+            is => 'Text',
+        },
+    ],
 };
 
 
@@ -144,6 +149,7 @@ sub execute {
         }
     }
 
+    $self->filtered_bedpe_file($output_file);
     return 1;
 }
 

@@ -263,7 +263,6 @@ sub map_workflow_inputs {
     if ($build->normal_rnaseq_build or $build->tumor_rnaseq_build){
       my $rnaseq_dir = $patient_dir . '/rnaseq';
       push @dirs, $rnaseq_dir;
-      
       push @inputs, cufflinks_percent_cutoff => 1;
 
       #TophatJunctionsAbsolute and CufflinksExpressionAbsolute for 'normal' sample
@@ -296,7 +295,30 @@ sub map_workflow_inputs {
         push @dirs, $cufflinks_differential_expression_dir;
         push @inputs, cufflinks_differential_expression_dir => $cufflinks_differential_expression_dir;
       }
-    }
+
+      #Filtered and Intersected ChimeraScan fusion output for tumor RNAseq
+      #The following will only work if the rna-seq build used a processing profile that uses chimerascan.
+      if ($build->tumor_rnaseq_build){
+        #Check for ChimeraScan fusion results
+        if(-e $build->tumor_rnaseq_build->data_directory . '/fusions/chimeras.bedpe'){
+            my $ncbi_human_ensembl_build_id = $build->tumor_rnaseq_build->annotation_build->id;
+            my $tumor_unfiltered_fusion_file = $build->tumor_rnaseq_build->data_directory . '/fusions/chimeras.bedpe';
+            my $tumor_filtered_fusion_dir = $patient_dir . '/rna_fusions/tumor';
+            my $tumor_filtered_fusion_file =  $tumor_filtered_fusion_dir . '/chimeras.filtered.bedpe';
+            push @inputs, tumor_unfiltered_fusion_file => $tumor_unfiltered_fusion_file;
+            push @inputs, ncbi_human_ensembl_build_id => $ncbi_human_ensembl_build_id;
+            push @inputs, tumor_filtered_fusion_file => $tumor_filtered_fusion_file;
+            push @dirs, $tumor_filtered_fusion_dir;
+            #Check for SV calls file
+            if(-e $build->wgs_build->data_directory . '/effects/svs.hq.annotated'){
+                my $wgs_sv_file = $build->wgs_build->data_directory . '/effects/svs.hq.annotated';
+                my $tumor_filtered_intersected_fusion_file =  $tumor_filtered_fusion_dir . '/chimeras.filtered.intersected.bedpe';
+                push @inputs, wgs_sv_file => $wgs_sv_file;
+                push @inputs, tumor_filtered_intersected_fusion_file => $tumor_filtered_intersected_fusion_file;
+            }
+          }
+        }
+      }
 
     #GenerateClonalityPlots
     if ($build->wgs_build){
@@ -434,7 +456,14 @@ sub _resolve_workflow_for_build {
         push @output_properties, 'dgidb_cufflinks_result';
         push @output_properties, 'dgidb_tophat_result';
     }
-
+    if ($build->tumor_rnaseq_build){
+        if(-e $build->tumor_rnaseq_build->data_directory . '/fusions/chimeras.bedpe'){
+            push @output_properties, 'tumor_chimerascan_fusion_filter_result';
+            if(-e $build->wgs_build->data_directory . '/effects/svs.hq.annotated'){
+                push @output_properties, 'intersect_tumor_fusion_sv_result';
+            }
+        }
+    }
     if ($build->normal_rnaseq_build and $build->tumor_rnaseq_build){
         push @output_properties, 'cufflinks_differential_expression_result';
         push @output_properties, 'gene_category_coding_de_up_result';
@@ -734,6 +763,29 @@ sub _resolve_workflow_for_build {
       $add_link->($cufflinks_differential_expression_op, 'result', $output_connector, 'cufflinks_differential_expression_result');
     }
 
+    my $tumor_chimerascan_filtered_fusion_op;
+    my $intersect_tumor_fusion_sv_op;
+    if ($build->tumor_rnaseq_build){
+        #Filter ChimeraScan tumor Fusion output - Use the ChimeraScan::FilterOutput GMT on the tumor fusion calls
+        if(-e $build->tumor_rnaseq_build->data_directory . '/fusions/chimeras.bedpe'){
+            my $msg = "Filtering tumor ChimeraScan fusion calls.";
+            $tumor_chimerascan_filtered_fusion_op = $add_step->($msg, 'Genome::Model::Tools::ChimeraScan::FilterOutput');
+            $add_link->($input_connector, 'tumor_unfiltered_fusion_file', $tumor_chimerascan_filtered_fusion_op, 'bedpe_file');
+            $add_link->($input_connector, 'ncbi_human_ensembl_build_id', $tumor_chimerascan_filtered_fusion_op, 'annotation_build_id');
+            $add_link->($input_connector, 'tumor_filtered_fusion_file', $tumor_chimerascan_filtered_fusion_op, 'output_file');
+            $add_link->($tumor_chimerascan_filtered_fusion_op, 'result', $output_connector, 'tumor_chimerascan_fusion_filter_result');
+            if(-e $build->wgs_build->data_directory . '/effects/svs.hq.annotated'){
+                my $msg = "Intersecting filtered tumor ChimeraScan fusion calls with WGS SV calls.";
+                $intersect_tumor_fusion_sv_op = $add_step->($msg, 'Genome::Model::Tools::ChimeraScan::IntersectSv');
+                $add_link->($input_connector, 'ncbi_human_ensembl_build_id', $intersect_tumor_fusion_sv_op, 'annotation_build_id');
+                $add_link->($input_connector, 'tumor_filtered_intersected_fusion_file', $intersect_tumor_fusion_sv_op, 'output_file');
+                $add_link->($input_connector, 'wgs_sv_file', $intersect_tumor_fusion_sv_op, 'sv_output_file');
+                $add_link->($tumor_chimerascan_filtered_fusion_op, 'filtered_bedpe_file', $intersect_tumor_fusion_sv_op, 'filtered_bedpe_file');
+                $add_link->($intersect_tumor_fusion_sv_op, 'result', $output_connector, 'intersect_tumor_fusion_sv_result');
+            }
+        }
+    }
+
     #DumpIgvXml - Create IGV xml session files with increasing numbers of tracks and store in a single (WGS and Exome BAM files, RNA-seq BAM files, junctions.bed, SNV bed files, etc.)
     #genome model clin-seq dump-igv-xml --outdir=/gscuser/mgriffit/ --builds=119971814
     $msg = "Create IGV XML session files for varying levels of detail using the input builds";
@@ -974,7 +1026,7 @@ sub _resolve_workflow_for_build {
 
     # REMINDER:
     # For new steps be sure to add their result to the output connector if they do not feed into another step.
-    # When you do that, expand the list of output properties at line 182 above. 
+    # When you do that, expand the list of output properties above. 
 
     my @errors = $workflow->validate();
     if (@errors) {
