@@ -17,7 +17,8 @@ sub execute {
     my $self = shift;
 
     my $dag = $self->build_workflow();
-    my $outputs = $dag->execute($self->workflow_inputs);
+    my %inputs = $self->build->model->map_workflow_inputs;
+    my $outputs = $dag->execute(%inputs);
 
     $self->result($outputs->{'result'});
     return 1;
