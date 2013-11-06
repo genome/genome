@@ -1,0 +1,114 @@
+#!/usr/bin/env perl
+
+use above 'Genome';
+use Data::Dumper;
+use IO::File;
+use Test::More;
+use File::Basename qw/dirname/;
+use File::Temp qw/tempdir/;
+
+use strict;
+use warnings;
+
+my $pkg = 'Genome::Model::Tools::EdgeR::Classic';
+
+use_ok($pkg);
+
+my $tmpdir = tempdir(CLEANUP => 1);
+my $input_file = "$tmpdir/in.txt";
+my $output_file = "$tmpdir/out.txt";
+my $num_genes = 20;
+my $num_normal = 1;
+my $num_tumor = 2;
+
+generate_counts_file($input_file, $num_genes, $num_normal, $num_tumor);
+
+subtest "no replication" => sub {
+    my $cmd = $pkg->create(
+        counts_file => $input_file,
+        groups => [1, 2, 3],
+        output_file => "/dev/null"
+    );
+
+    my $rv = 0;
+    eval {
+        $rv = $cmd->execute();
+    };
+    ok($@, "No replication is an error");
+    ok(!$rv);
+};
+
+subtest "execute" => sub {
+    my $cmd = $pkg->create(
+        counts_file => $input_file,
+        groups => ['normal', 'tumor', 'tumor'],
+        output_file => $output_file,
+    );
+    ok($cmd, "Created command");
+    ok($cmd->execute, "Executed command");
+
+    my $in = Genome::Sys->open_file_for_reading($output_file);
+    my $header = $in->getline;
+    my @fields = map {my $x = $_; $x =~ s/"//g; $x} split(" ", $header);
+    is_deeply(["logConc", "logFC", "p.value"], \@fields, "header is as expected");
+
+    my %gene_pvalues;
+    while (my $line = $in->getline) {
+        $line =~ s/"//g;
+        my ($name, $x, $y, $pvalue) = split(" ", $line);
+        $gene_pvalues{$name} = $pvalue;
+    }
+
+    my @missing = grep {
+            my $n = "GENE$_";
+            !exists $gene_pvalues{$n} or $gene_pvalues{$n} eq 'NA'
+        } 0..$num_genes - 1;
+
+    is(scalar @missing, 0, "Got data for all genes") or diag("Missing: " . Dumper(\@missing));
+
+    ok($gene_pvalues{GENE0} < 0.001,
+        "GENE0 is differentially expressed with high confidence");
+
+    my @fail = grep { $gene_pvalues{"GENE$_"} < 0.5 } 1..$num_genes - 1;
+    is(scalar @fail, 0, "All other genes are not DE") or diag("Failed: " . Dumper(\@fail));
+};
+
+done_testing();
+
+
+sub generate_counts_file {
+    my ($path, $n_genes, $n_normal, $n_tumor) = @_;
+
+    my $fh = Genome::Sys->open_file_for_writing($path);
+
+    srand(1234);
+    my @counts = map { 10 + int(rand(15)) } 1..$n_genes;
+    my @columns;
+
+    for my $nid (1..$n_normal) {
+        my @new_counts = map {int($_ + rand(2) - 1)} @counts;
+        push(@columns, \@new_counts);
+    }
+
+    for my $nid (1..$n_tumor) {
+        my @new_counts = map {int($_ + rand(2) - 1)} @counts;
+        $new_counts[0] += 100;
+        push(@columns, \@new_counts);
+    }
+
+    my @column_names = (
+        "Gene",
+        (map {"Normal$_"} 1..$n_normal),
+        (map {"Tumor$_"} 1..$n_tumor)
+        );
+
+    $fh->write(join("\t", @column_names) . "\n");
+
+    for my $i (0..$n_genes - 1) {
+        my @fields = ("GENE$i", map {$_->[$i]} @columns);
+        $fh->write(join("\t", @fields) . "\n");
+    }
+    $fh->close;
+}
+
+
