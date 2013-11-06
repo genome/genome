@@ -67,6 +67,7 @@ my %PROTOCOL_PARAMS = (
 );
 
 my $CGHUB_INFO;
+my $CGHUB_INFO_BY_TCGA_NAME;
 
 class Genome::Model::Tools::Tcga::CreateSubmissionArchive {
     is => 'Command::V2',
@@ -326,12 +327,19 @@ sub resolve_cghub_id {
     my $file = shift;
 
     unless (defined $CGHUB_INFO) {
-        $CGHUB_INFO = $self->load_cghub_info($file);
+        $CGHUB_INFO = $self->load_cghub_info($file, "BAM_path");
+    }
+
+    unless (defined $CGHUB_INFO_BY_TCGA_NAME) {
+        $CGHUB_INFO_BY_TCGA_NAME = $self->load_cghub_info($file, "TCGA_Name");
     }
 
     my $id = $CGHUB_INFO->{$build->whole_rmdup_bam_file};
     unless (defined $id) {
-        die("CGHub id could not be resolved for build ".$build->id." with bam file ".$build->whole_rmdup_bam_file);
+        $id = $CGHUB_INFO_BY_TCGA_NAME->{$build->subject->extraction_label};
+        unless (defined $id) {
+            die("CGHub id could not be resolved for build ".$build->id." with bam file ".$build->whole_rmdup_bam_file);
+        }
     }
     return $id;
 }
@@ -339,6 +347,7 @@ sub resolve_cghub_id {
 sub load_cghub_info {
     my $self = shift;
     my $id_file = shift;
+    my $load_by = shift;
     my %id_hash;
 
     my $reader = Genome::Utility::IO::SeparatedValueReader->create(
@@ -347,7 +356,7 @@ sub load_cghub_info {
     );
 
     while (my $line = $reader->next) {
-        $id_hash{$line->{BAM_path}} = $line->{CGHub_ID};
+        $id_hash{$line->{$load_by}} = $line->{CGHub_ID};
     }
     return \%id_hash;
 }
