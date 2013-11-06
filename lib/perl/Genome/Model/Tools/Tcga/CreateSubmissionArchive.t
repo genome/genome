@@ -97,22 +97,32 @@ ok(-s $test_output, "Output file exists");
 
 my $test_somatic_build = Genome::Test::Factory::Model::SomaticVariation->setup_somatic_variation_build();
 $test_somatic_build->normal_build->subject->common_name("normal");
+$test_somatic_build->normal_build->subject->extraction_label("TCGA-1");
 $test_somatic_build->normal_build->model->target_region_set_name("11111001 capture chip set");
 $test_somatic_build->normal_build->data_directory($base_dir."/refalign_dir");
 
 $test_somatic_build->tumor_build->subject->common_name("tumor");
+$test_somatic_build->tumor_build->subject->extraction_label("TCGA-2");
 $test_somatic_build->tumor_build->model->target_region_set_name("SeqCap EZ Human Exome v2.0");
 $test_somatic_build->tumor_build->data_directory($base_dir."/refalign_dir2");
+
+$test_somatic_build->data_directory("$base_dir/somvar_dir");
 
 my $cghub_ids = Genome::Sys->create_temp_file_path;
 my $id1 = $test_somatic_build->normal_build->id;
 my $id2 = $test_somatic_build->tumor_build->id;
 `echo "CGHub_ID\tBuild_ID\ncghub1\t$id1\ncghub2\t$id2" > $cghub_ids`;
 
-my $row1 = $class->create_snvs_vcf_row($test_somatic_build->normal_build, "test_archive", undef, $cghub_ids);
-my $row2 = $class->create_indels_vcf_row($test_somatic_build->normal_build, "test_archive", undef, $cghub_ids);
-my $row3 = $class->create_maf_row($test_somatic_build->normal_build, "test_archive", "/test/maf/path", undef, $cghub_ids);
-my $row4 = $class->create_maf_row($test_somatic_build->tumor_build, "test_archive", "/test/maf/path", undef, $cghub_ids);
+my $sample_1 = {
+   ID => {content => "TCGA_1"},
+   SampleUUID => {content => "3958t6"},
+   SampleTCGABarcode => {content => "TCGA_1"},
+};
+
+my $row1 = $class->create_vcf_row($test_somatic_build->normal_build, "test_archive", undef, $cghub_ids, "snvs.vcf", $sample_1);
+my $row2 = $class->create_vcf_row($test_somatic_build->normal_build, "test_archive", undef, $cghub_ids, "indels.vcf", $sample_1);
+my $row3 = $class->create_maf_row($test_somatic_build->normal_build, "test_archive", "/test/maf/path", undef, $cghub_ids, $sample_1);
+my $row4 = $class->create_maf_row($test_somatic_build->tumor_build, "test_archive", "/test/maf/path", undef, $cghub_ids, $sample_1);
 
 my $output_sdrf = Genome::Sys->create_temp_file_path;
 ok($class->print_sdrf($output_sdrf, ($row1, $row2, $row3, $row4)), "sdrf printed");

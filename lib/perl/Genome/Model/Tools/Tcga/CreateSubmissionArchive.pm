@@ -116,18 +116,35 @@ sub execute {
         }
         my $normal_build = $somatic_build->normal_build;
         my $tumor_build = $somatic_build->tumor_build;
+
+        my $snvs_vcf = $somatic_build->id.".snvs.vcf.gz";
+        my $indels_vcf = $somatic_build->id.".indels.vcf.gz";
+
+        Genome::Sys->copy_file($somatic_build->data_directory."/variants/snvs.vcf.gz", "$archive_dir/$snvs_vcf");
+        Genome::Sys->copy_file($somatic_build->data_directory."/variants/indels.vcf.gz", "$archive_dir/$indels_vcf");
+
+        my $vcf_reader = new Genome::File::Vcf::Reader("$archive_dir/$snvs_vcf");
+        my $vcf_sample_info = $vcf_reader->header->metainfo->{"SAMPLE"};
+        unless (defined $vcf_sample_info) {
+            die $self->error_message("No SAMPLE vcf header in $snvs_vcf for build ".$somatic_build->id);
+        }
+
         for my $build(($normal_build, $tumor_build)) {
-            Genome::Sys->copy_file($build->data_directory."/variants/snvs.vcf.gz", $archive_dir."/".$build->id.".snvs.vcf.gz");
-            Genome::Sys->copy_file($build->data_directory."/variants/indels.vcf.gz", $archive_dir."/".$build->id.".indels.vcf.gz");
-            push @sdrf_rows, $self->create_snvs_vcf_row($build, $self->archive_name, \%protocol_db, $self->cghub_id_file);
-            push @sdrf_rows, $self->create_indels_vcf_row($build, $self->archive_name, \%protocol_db, $self->cghub_id_file);
+            my $sample_info;
+            for my $sample (@$vcf_sample_info) {
+                if ($sample->{"ID"}->{content} eq $build->subject->extraction_label) {
+                    $sample_info = $sample;
+                }
+            }
+            push @sdrf_rows, $self->create_vcf_row($build, $self->archive_name, \%protocol_db, $self->cghub_id_file, $snvs_vcf, $sample_info);
+            push @sdrf_rows, $self->create_vcf_row($build, $self->archive_name, \%protocol_db, $self->cghub_id_file, $indels_vcf, $sample_info);
             if ($self->somatic_maf_file) {
                 Genome::Sys->copy_file($self->somatic_maf_file, $archive_dir."/somatic.maf");
-                push @sdrf_rows, $self->create_maf_row($build, $self->archive_name, $self->somatic_maf_file, \%protocol_db, $self->cghub_id_file);
+                push @sdrf_rows, $self->create_maf_row($build, $self->archive_name, "somatic.maf", \%protocol_db, $self->cghub_id_file, $sample_info);
             }
             if ($self->germline_maf_file) {
                 Genome::Sys->copy_file($self->germline_maf_file, $archive_dir."/germline.maf");
-                push @sdrf_rows, $self->create_maf_row($build, $self->archive_name, $self->germline_maf_file, \%protocol_db, $self->cghub_id_file);
+                push @sdrf_rows, $self->create_maf_row($build, $self->archive_name, "germline.maf", \%protocol_db, $self->cghub_id_file, $sample_info);
             }
         }
     }
@@ -148,7 +165,9 @@ sub create_maf_row {
     my $maf_file =shift;
     my $protocol_db = shift;
     my $cghub_id_file = shift;
-    my $row = $self->fill_in_common_fields($build, $archive_name, $protocol_db, $cghub_id_file);
+    my $sample_info = shift;
+
+    my $row = $self->fill_in_common_fields($build, $archive_name, $protocol_db, $cghub_id_file, $sample_info);
 
     $row->{"Maf Protocol REF"} = $self->resolve_maf_protocol($build, $protocol_db);
     #Required if providing maf file:
@@ -237,35 +256,18 @@ sub resolve_variants_protocol {
     return $name;
 }
 
-sub create_snvs_vcf_row {
+sub create_vcf_row {
     my $self = shift;
     my $build = shift;
     my $archive_name = shift;
     my $protocol_db = shift;
     my $cghub_id_file = shift;
+    my $vcf = shift;
+    my $sample_info = shift;
 
-    my $row = $self->fill_in_common_fields($build, $archive_name, $protocol_db, $cghub_id_file);
+    my $row = $self->fill_in_common_fields($build, $archive_name, $protocol_db, $cghub_id_file, $sample_info);
 
-    my $snvs_vcf = $build->data_directory."/variants/snvs.vcf.gz";
-    die "Couldn't find file $snvs_vcf" unless (-s $snvs_vcf);
-    
-    $row->{"Variants Derived Data File"} = $snvs_vcf;
-    return $row;
-}
-
-sub create_indels_vcf_row {
-    my $self = shift;
-    my $build = shift;
-    my $archive_name = shift;
-    my $protocol_db = shift;
-    my $cghub_id_file = shift;
-
-    my $row = $self->fill_in_common_fields($build, $archive_name, $protocol_db, $cghub_id_file);
-
-    my $indels_vcf = $build->data_directory."/variants/indels.vcf.gz";
-    die "Couldn't find file $indels_vcf" unless (-s $indels_vcf);
-    
-    $row->{"Variants Derived Data File"} = $indels_vcf;
+    $row->{"Variants Derived Data File"} = $vcf;
     return $row;
 }
 
@@ -275,21 +277,14 @@ sub fill_in_common_fields {
     my $archive_name = shift;
     my $protocol_db = shift;
     my $cghub_id_file = shift;
+    my $sample = shift;
 
     my %row;
-
-    my $snvs_vcf = $build->data_directory."/variants/snvs.vcf.gz";
-    die "Couldn't find file $snvs_vcf" unless (-s $snvs_vcf);
-    my $vcf_reader = new Genome::File::Vcf::Reader($snvs_vcf);
-    my $vcf_sample_info = $vcf_reader->header->metainfo->{"SAMPLE"};
-    unless (defined $vcf_sample_info and @$vcf_sample_info == 1) {
-        die $self->error_message("Not exactly one SAMPLE vcf header in $snvs_vcf for build ".$build->id);
-    }
-    $row{"Material Extract Name"} = $vcf_sample_info->[0]->{"SampleUUID"}->{content};
+    $row{"Material Extract Name"} = $sample->{"SampleUUID"}->{content};
     unless ($row{"Material Extract Name"}) {
         die $self->error_message("No UUID in vcf from build ".$build->id);
     }
-    $row{"Material Comment [TCGA Barcode]"} = $vcf_sample_info->[0]->{"SampleTCGABarcode"}->{content};
+    $row{"Material Comment [TCGA Barcode]"} = $sample->{"SampleTCGABarcode"}->{content};
     unless ($row{"Material Comment [TCGA Barcode]"}) {
         die $self->error_message("No extraction label set on subject of build ".$build->id);
     }
@@ -299,7 +294,7 @@ sub fill_in_common_fields {
     if ($sample_common_name eq "normal") {
         $is_tumor = "no";
     }
-    elsif ($sample_common_name eq "tumor") {
+    elsif ($sample_common_name eq "tumor" or $sample_common_name eq "recurrent") {
         $is_tumor = "yes";
     }
     else {
@@ -314,7 +309,7 @@ sub fill_in_common_fields {
     $row{"Library Parameter Value [Catalog Name]"},
     $row{"Library Parameter Value [Catalog Number]"}) = $self->resolve_capture_reagent($build);
     $row{"Mapping Protocol REF"} = $self->resolve_mapping_protocol($build, $protocol_db);
-    $row{"Mapping Comment [Derived Data File REF]"} =  $vcf_sample_info->[0]->{"File"}->{content};
+    $row{"Mapping Comment [Derived Data File REF]"} =  $sample->{"File"}->{content};
     $row{"Mapping Comment [TCGA CGHub ID]"} = $self->resolve_cghub_id($build, $cghub_id_file);
     $row{"Mapping Comment [TCGA Include for Analysis]"} = "yes";
     $row{"Variants Protocol REF"} = $self->resolve_variants_protocol($build, $protocol_db);
@@ -336,7 +331,7 @@ sub resolve_cghub_id {
 
     my $id = $CGHUB_INFO->{$build->whole_rmdup_bam_file};
     unless (defined $id) {
-        die "CGHub id could not be resolved for build ".$build->id." with bam file ".$build->whole_rmdup_bam_file;
+        die("CGHub id could not be resolved for build ".$build->id." with bam file ".$build->whole_rmdup_bam_file);
     }
     return $id;
 }
