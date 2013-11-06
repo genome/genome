@@ -85,12 +85,15 @@ sub parse_line {
     my $n_dp4 = '.,.,.,.';
     my $t_dp4 = join ',', $col[15], $col[16], $col[17], $col[18];
 
+    #0=wildtype,1=germline,2=somatic,3=LOH,4=post-transcriptional modification,5=unknown
     my %ss = (
-        WILDTYPE => 0,
-        GERMLINE => 1,
-        SOMATIC  => 2,
-        LOH      => 3,
-        UNKNOWN  => 5,
+        REFERENCE   => 0,
+        WILDTYPE    => 0,
+        GERMLINE    => 1,
+        INDELFILTER => 1,
+        SOMATIC     => 2,
+        LOH         => 3,
+        UNKNOWN     => 5,
     );
     my $t_ss = $ss{uc($col[12])};
 

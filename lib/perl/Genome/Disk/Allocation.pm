@@ -314,7 +314,11 @@ sub archivable {
 sub _create {
     my $class = shift;
 
-    my $pars = Genome::Disk::Detail::Allocation::CreationParameters->create(@_);
+    my %parameters = @_;
+    $parameters{allocation_id} = delete $parameters{id};
+
+    my $pars = Genome::Disk::Detail::Allocation::CreationParameters->create(
+        %parameters);
 
     my $creator = Genome::Disk::Detail::Allocation::Creator->create(
         parameters => $pars);
@@ -1031,7 +1035,7 @@ sub _create_file_summaries {
     chdir($self->absolute_path);
     my @files;
     #why is File::Find this stupid? who knows...
-    find(sub { push(@files, $File::Find::name) unless (-d $_) }, '.');
+    File::Find::find(sub { push(@files, $File::Find::name) unless (-d $_) }, '.');
     chdir($old_cwd);
 
     for my $file (@files) {
@@ -1072,7 +1076,7 @@ sub _default_archive_after_time {
 sub _get_trash_folder {
     my $self = shift;
 
-    my @dv = Genome::Disk::Volume->get(disk_group_names => 'apipe_trash');
+    my @dv = Genome::Disk::Volume->get(disk_group_names => 'info_apipe_trash');
     my %trash_map = map {
        $self->_extract_aggr($_->physical_path) => File::Spec->join($_->mount_path, '.trash');
     } @dv;

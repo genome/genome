@@ -179,7 +179,7 @@ EOS
 sub _software_result_test_name {
     my ($self) = @_;
     my $build = $self->build;
-    my @results = $build->results;
+    my @results = $build->all_results;
     my $label = 'SoftwareResult Test Name(s)';
 
     unless (scalar(@results)) {

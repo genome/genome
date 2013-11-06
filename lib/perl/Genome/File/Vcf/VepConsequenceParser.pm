@@ -17,6 +17,7 @@ use warnings;
 sub new {
     my ($class, $vcf_header, %options) = @_;
 
+    my $filters = delete $options{filters} || [];
     my $tag_name = delete $options{tag_name} || "CSQ";
     confess "Unknown options: " . Dumper(\%options) . " to " . __PACKAGE__ . " constructor"
         if (%options);
@@ -33,6 +34,7 @@ sub new {
     my @format = map {lc} split("\\|", $format_str);
 
     my $self = {
+        filters => $filters,
         tag_name => $tag_name,
         fields => \@format,
         field_index => [map {$format[$_] => $_} 0..$#format],
@@ -52,6 +54,16 @@ sub resolve_alleles {
         return map {substr($_, 1) || '-' => $_} @{$entry->{alternate_alleles}};
     }
     return;
+}
+
+sub _passes_filters {
+    my ($self, $annotation) = @_;
+    for my $f (@{$self->{filters}}) {
+        if (!$f->($annotation)) {
+            return;
+        }
+    }
+    return 1;
 }
 
 sub process_entry {
@@ -80,11 +92,24 @@ sub process_entry {
         else {
             $allele = $h{allele};
         }
-        push @{$rv->{$allele}}, \%h;
+        if ($self->_passes_filters(\%h)) {
+            push @{$rv->{$allele}}, \%h;
+        }
     }
 
     return $rv;
 }
 
+sub _format_transcript {
+    my ($self, $transcript) = @_;
+    return join("|", map {$transcript->{$_} || ''} @{$self->{fields}});
+}
+
+sub format_transcripts {
+    my ($self, $transcripts) = @_;
+    return '.' unless %$transcripts;
+    my @flat_transcripts = map { @$_ } values %$transcripts;
+    return join(",", map {$self->_format_transcript($_)} @flat_transcripts);
+}
 
 1;

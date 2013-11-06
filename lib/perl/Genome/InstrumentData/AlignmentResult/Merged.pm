@@ -525,19 +525,19 @@ sub _bam_flagstat_total {
             output_file    => $flag_file,
             include_stderr => 1,
         );
-        
+
         unless($cmd and $cmd->execute) {
             $self->error_message("Fail to create or execute flagstat command on bam file: $bam_file");
             return;
         }
     }
     my $flagstat_data = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flag_file);
-        
+
     unless($flagstat_data) {
         $self->error_message('No output from samtools flagstat');
         return;
     }
-    
+
     if(exists $flagstat_data->{errors}) {
         for my $error (@{ $flagstat_data->{errors} }) {
             if($error =~ m/Truncated file/) {
@@ -547,7 +547,7 @@ sub _bam_flagstat_total {
         }
     }
     my $total = $flagstat_data->{total_reads};
-    
+
     $self->status_message('flagstat for ' . $bam_file . ' reports ' . $total . ' in total');    
     return $total;
 }

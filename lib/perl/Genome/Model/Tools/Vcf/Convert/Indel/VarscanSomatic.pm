@@ -134,8 +134,10 @@ sub parse_line {
     my $t_dp4 = join ',', $columns[15], $columns[16], $columns[17], $columns[18];
 
     my %ss = (
+        REFERENCE => 0,
         WILDTYPE => 0,
         GERMLINE => 1,
+        INDELFILTER => 1,
         SOMATIC  => 2,
         LOH      => 3,
         UNKNOWN  => 5,

@@ -78,7 +78,7 @@ sub help_detail {
     !~  does not contain
     
 
-  If a line does not contain the value being searched for 
+    If a line does not contain the value being searched for it will also be removed, unless 'non-existent-fields-are-filtered' is set to false
 
 HELP
 }

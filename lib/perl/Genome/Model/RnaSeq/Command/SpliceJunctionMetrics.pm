@@ -63,10 +63,21 @@ sub execute {
         for (my $i = 0; $i < scalar(@model_builds); $i++) {
             $build = $model_builds[$i];
             $junctions_directory = $build->junctions_directory;
+            unless (-d $junctions_directory) {
+                $build = undef;
+                next;
+            }
             $junctions_file = $junctions_directory .'/summary/Stats.tsv';
-            if (-s $junctions_file) {
+            unless (-s $junctions_file) {
+                $build = undef;
+                next;
+            } else {
                 last;
             }
+        }
+        unless ($build) {
+            $self->warning_message('Failed to find a build for model \''. $model->id .'\' with splice junction output directory. SKIPPING!');
+            next;
         }
         push @builds, $build;
         my $model_reference_sequence_build = $model->reference_sequence_build;

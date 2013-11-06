@@ -169,7 +169,8 @@ sub get_roi_list {
 sub test_cmd {
     my ($variant_type, $version, $use_mg, $no_region_limiting) = @_;
 
-    my $class = 'Genome::Model::Tools::Vcf::CreateCrossSampleVcf';
+    my $class = 'Genome::Model::Tools::Vcf::CreateCrossSampleVcf::CreateCrossSampleVcf' . ucfirst($variant_type);
+
     my $sr_class = $class . "::Result";
     use_ok($class);
     use_ok($sr_class);
@@ -182,7 +183,6 @@ sub test_cmd {
     my @input_builds = create_test_builds($test_dir);
 
     my %params = (
-            variant_type => $variant_type,
             roi_list => $roi_list,
             max_files_per_merge => 2,
             wingspan => 500,
@@ -226,7 +226,7 @@ sub test_cmd {
     my $expected_result = get_expected_result($variant_type, $test_dir);
 
     my $differ = Genome::File::Vcf::Differ->new($result, $expected_result);
-    is($differ->diff, undef, 'Found No differences');
+    is($differ->diff, undef, "Found No differences between $result and (expected) $expected_result");
 }
 
 sub get_expected_result {
