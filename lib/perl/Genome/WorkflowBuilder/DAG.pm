@@ -7,6 +7,7 @@ use Genome;
 use Params::Validate qw();
 use Set::Scalar qw();
 use JSON;
+use List::MoreUtils qw();
 
 
 class Genome::WorkflowBuilder::DAG {
@@ -82,6 +83,24 @@ sub operation_named {
         }
     }
 
+    return;
+}
+
+sub is_input_property {
+    my ($self, $property_name) = @_;
+
+    return List::MoreUtils::any {$property_name eq $_} $self->input_properties;
+}
+
+sub is_output_property {
+    my ($self, $property_name) = @_;
+
+    return List::MoreUtils::any {$property_name eq $_} $self->output_properties;
+}
+
+sub is_many_property {
+    my ($self, $property_name) = @_;
+    # XXX There may not be an easy way to determine this.
     return;
 }
 
