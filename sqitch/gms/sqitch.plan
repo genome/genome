@@ -53,3 +53,4 @@ instrument.data_attribute.index_attribute_label [instrument_data_attribute] 2013
 instrument.data_attribute.index_instrument_data_id [instrument_data_attribute] 2013-11-04T22:21:43Z Anthony Brummett <abrummet@genome.wustl.edu> # index on instrument.data_attribute.instrument_data_id
 instrument.data.index_library_id [instrument_data] 2013-11-04T22:25:53Z Anthony Brummett <abrummet@genome.wustl.edu> # index on instrument.data.library_id
 instrument_data_permission [instrument_data] 2013-11-07T17:08:07Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on instrument_data
+instrument_data_attribute_permission [instrument_data_attribute] 2013-11-07T17:08:19Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on instrument_data_attribute
