@@ -39,3 +39,4 @@ subject_project_permission [subject_project] 2013-11-07T17:17:45Z Anthony Brumme
 subject_project_part_permission [subject_project_part] 2013-11-07T17:17:53Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on subject_project_part
 subject_role_permission [subject_role] 2013-11-07T17:17:59Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on subject_role
 subject_role_member_permission [subject_role_member] 2013-11-07T17:18:04Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on subject_role_member
+subject_subject_permission [subject_subject] 2013-11-07T17:18:07Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on subject_subject
