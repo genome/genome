@@ -220,3 +220,4 @@ config.analysis_project.index_analysis_menu_item_id [config_analysis_project] 20
 config.analysis_project.index_configuration_set_id [config_analysis_project] 2013-11-01T19:18:34Z Anthony Brummett <abrummet@genome.wustl.edu> # index on config.analysis_project.configuration_set_id
 config.set.index_allocation_id [config_set] 2013-11-04T21:06:27Z Anthony Brummett <abrummet@genome.wustl.edu> # index on config.set.allocation_id
 config_analysis_menu_item_permission [config_analysis_menu_item] 2013-11-07T16:45:15Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on config_analysis_menu_item
+config_analysis_project_permission [config_analysis_project] 2013-11-07T16:52:24Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on config_analysis_project
