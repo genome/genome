@@ -121,3 +121,4 @@ model.processing_profile_param.index_value_id [model_processing_profile_param] 2
 model.processing_profile.index_subclass_name [model_processing_profile] 2013-11-05T16:49:56Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.processing_profile.subclass_name
 model_build_permission [model_build] 2013-11-07T17:08:36Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on model_build
 model_build_input_permission [model_build_input] 2013-11-07T17:08:42Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on model_build_input
+model_build_link_permission [model_build_link] 2013-11-07T17:08:47Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on model_build_link
