@@ -191,3 +191,4 @@ disk.allocation.index_kilobytes_requested [disk_allocation] 2013-11-04T22:16:00Z
 disk.allocation.index_kilobytes_used [disk_allocation] 2013-11-04T22:17:04Z Anthony Brummett <abrummet@genome.wustl.edu> # index on disk.allocation.kilobytes_used
 disk.volume.index_mount_path [disk_volume] 2013-11-04T22:17:53Z Anthony Brummett <abrummet@genome.wustl.edu> # index on disk.volume.mount_path
 disk_allocation_permission [disk_allocation] 2013-11-07T17:04:25Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on disk_allocation
+disk_file_summary_permission [disk_file_summary] 2013-11-07T17:04:36Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on disk_file_summary
