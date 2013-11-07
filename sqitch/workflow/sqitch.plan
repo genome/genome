@@ -4,3 +4,4 @@
 empty_db 2013-11-07T21:36:02Z Anthony Brummett <abrummet@genome.wustl.edu> # brand new database
 workflow_schema [empty_db] 2013-11-07T21:55:48Z Anthony Brummett <abrummet@genome.wustl.edu> # workflow schema
 workflow_schema_permission [workflow_schema] 2013-11-07T21:59:13Z Anthony Brummett <abrummet@genome.wustl.edu> # workflow schema permissions
+workflow_instance_execution [workflow_schema] 2013-11-07T22:02:46Z Anthony Brummett <abrummet@genome.wustl.edu> # instance_execution table
