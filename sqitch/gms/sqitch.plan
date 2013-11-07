@@ -130,3 +130,4 @@ model_event_output_permission [model_event_output] 2013-11-07T17:09:23Z Anthony 
 model_feature_list_permission [model_feature_list] 2013-11-07T17:09:35Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on model_feature_list
 model_model_permission [model_model] 2013-11-07T17:09:40Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on model_model
 model_model_group_permission [model_model_group] 2013-11-07T17:09:46Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on model_model_group
+model_model_group_bridge_permission [model_model_group_bridge] 2013-11-07T17:09:53Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on model_model_group_bridge
