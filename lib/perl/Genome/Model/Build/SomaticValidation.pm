@@ -225,7 +225,8 @@ sub files_ignored_by_diff {
         validation/small_indel/indel_files_to_validate
         validation/large_indel/tumor.csv
         validation/large_indel/normal.csv
-        variants/(.*).tbi$
+        variants/(.*)\.tbi$
+        control_variants_for_loh/(.*)\.tbi$
     );
 }
 sub dirs_ignored_by_diff {
