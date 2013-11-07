@@ -2,3 +2,4 @@
 %project=workflow
 
 empty_db 2013-11-07T21:36:02Z Anthony Brummett <abrummet@genome.wustl.edu> # brand new database
+workflow_schema [empty_db] 2013-11-07T21:55:48Z Anthony Brummett <abrummet@genome.wustl.edu> # workflow schema
