@@ -5502,9 +5502,9 @@ $Genome::Command::OPTS_SPEC = [
       [
         'input-file=s',
         'files',
-        'output-dir=s',
-        'files',
         'gene-name-regex=s',
+        'files',
+        'output-dir=s',
         'files',
         'help!',
         undef
@@ -35095,6 +35095,8 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'fusion-partner-limit=s',
         undef,
+        'filtered-bedpe-file=s',
+        'files',
         'help!',
         undef
       ],
