@@ -207,3 +207,4 @@ timeline.base.index_created_by [timeline_base] 2013-11-05T17:14:17Z Anthony Brum
 timeline.base.index_object_id [timeline_base] 2013-11-05T17:14:36Z Anthony Brummett <abrummet@genome.wustl.edu> # index on timeline.base.object_id
 timeline_base_permission [timeline_base] 2013-11-07T17:18:29Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on timeline_base
 timeline_allocation_permission [timeline_allocation] 2013-11-07T17:18:37Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on timeline_allocation
+timeline_allocation_event_type_permission [timeline_allocation_event_type] 2013-11-07T17:18:42Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on timeline_allocation_event_type
