@@ -128,3 +128,4 @@ model_event_input_permission [model_event_input] 2013-11-07T17:09:10Z Anthony Br
 model_event_metric_permission [model_event_metric] 2013-11-07T17:09:18Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on model_event_metric
 model_event_output_permission [model_event_output] 2013-11-07T17:09:23Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on model_event_output
 model_feature_list_permission [model_feature_list] 2013-11-07T17:09:35Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on model_feature_list
+model_model_permission [model_model] 2013-11-07T17:09:40Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on model_model
