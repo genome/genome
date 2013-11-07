@@ -240,3 +240,4 @@ web_nomenclature_permission [web_nomenclature] 2013-11-07T17:18:51Z Anthony Brum
 web_nomenclature_enum_value_permission [web_nomenclature_enum_value] 2013-11-07T17:18:55Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on web_nomenclature_enum_value
 web_nomenclature_field_permission [web_nomenclature_field] 2013-11-07T17:19:02Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on web_nomenclature_field
 web_search_index_queue_permission [web_search_index_queue] 2013-11-07T17:19:08Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on web_search_index_queue
+web_task_permission [web_task] 2013-11-07T17:19:12Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on web_task
