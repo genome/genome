@@ -6,8 +6,8 @@ use Genome;
 use Genome::File::Vcf::Reader;
 
 my $NULL_CHARACTER = "->";
-my $IDF_FILE_NAME = "idf";
-my $SDRF_FILE_NAME = "sdrf";
+my $IDF_FILE_EXTENSION = "idf";
+my $SDRF_FILE_EXTENSION = "sdrf";
 my $MANIFEST_FILE_NAME = "MANIFEST.txt";
 
 my $SDRF_MATERIAL_HEADERS = ["Extract Name", "Comment [TCGA Barcode]", "Comment [is tumor]", "Material Type", 
@@ -102,7 +102,6 @@ class Genome::Model::Tools::Tcga::CreateSubmissionArchive {
 
 sub execute {
     my $self = shift;
-    print STDERR "Executing\n";
     my @sdrf_rows;
     my %protocol_db;
 
@@ -150,8 +149,8 @@ sub execute {
         }
     }
 
-    $self->print_idf($archive_dir."/".$IDF_FILE_NAME, \%protocol_db);
-    $self->print_sdrf($archive_dir."/".$SDRF_FILE_NAME, @sdrf_rows);
+    $self->print_idf($archive_dir."/".$self->archive_name.".".$IDF_FILE_EXTENSION, \%protocol_db);
+    $self->print_sdrf($archive_dir."/".$self->archive_name.".".$SDRF_FILE_EXTENSION, @sdrf_rows);
 
     #print manifest
     my $cd_cmd = "cd $archive_dir ; md5sum * > $MANIFEST_FILE_NAME";
@@ -333,7 +332,6 @@ sub resolve_cghub_id {
     unless (defined $CGHUB_INFO_BY_TCGA_NAME) {
         $CGHUB_INFO_BY_TCGA_NAME = $self->load_cghub_info($file, "TCGA_Name");
     }
-
     my $id = $CGHUB_INFO->{$build->whole_rmdup_bam_file};
     unless (defined $id) {
         $id = $CGHUB_INFO_BY_TCGA_NAME->{$build->subject->extraction_label};
