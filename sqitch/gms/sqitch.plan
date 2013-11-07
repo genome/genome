@@ -236,3 +236,4 @@ web.nomenclature_enum_value.index_nomenclature_field_id [web_nomenclature_enum_v
 web.nomenclature_field.index_nomenclature_id [web_nomenclature_field] 2013-11-05T17:14:57Z Anthony Brummett <abrummet@genome.wustl.edu> # index on web.nomenclature_field.nomenclature_id
 web.nomenclature.index_name [web_nomenclature] 2013-11-05T17:15:08Z Anthony Brummett <abrummet@genome.wustl.edu> # index on web.nomenclature.name
 web.search_index_queue.index_priority [web_search_index_queue] 2013-11-05T17:15:23Z Anthony Brummett <abrummet@genome.wustl.edu> # index on web.search_index_queue.priority
+web_nomenclature_permission [web_nomenclature] 2013-11-07T17:18:51Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on web_nomenclature
