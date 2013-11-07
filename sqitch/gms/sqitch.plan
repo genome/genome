@@ -193,3 +193,4 @@ disk.volume.index_mount_path [disk_volume] 2013-11-04T22:17:53Z Anthony Brummett
 disk_allocation_permission [disk_allocation] 2013-11-07T17:04:25Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on disk_allocation
 disk_file_summary_permission [disk_file_summary] 2013-11-07T17:04:36Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on disk_file_summary
 disk_group_permission [disk_group] 2013-11-07T17:04:41Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on disk_group
+disk_volume_permission [disk_volume] 2013-11-07T17:05:00Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on disk_volume
