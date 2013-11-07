@@ -50,7 +50,7 @@ sub reallocate {
     $allocation_object->kilobytes_used($kb_used);
 
     my $actual_kb_requested = List::Util::max($kb_used,
-        $self->kilobytes_requested);
+        $self->kilobytes_requested) || 0;
     if ($self->grow_only && ($actual_kb_requested <= $old_kb_requested)) {
         $allocation_object->status_message(
             "Not changing kilobytes_requested, because grow_only = 1 & "
