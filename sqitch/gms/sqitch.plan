@@ -168,3 +168,4 @@ result_input_permission [result_input] 2013-11-07T17:16:51Z Anthony Brummett <ab
 result_metric_permission [result_metric] 2013-11-07T17:17:00Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on result_metric
 result_param_permission [result_param] 2013-11-07T17:17:05Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on result_param
 result_software_result_permission [result_software_result] 2013-11-07T17:17:11Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on result_software_result
+result_user_permission [result_user] 2013-11-07T17:17:20Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on result_user
