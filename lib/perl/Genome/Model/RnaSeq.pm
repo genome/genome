@@ -202,8 +202,9 @@ sub _parse_strategy {
 }
 
 sub map_workflow_inputs {
-    my $self = shift;
-    my $build = shift;
+    my ($self, $build) = @_;
+
+    Carp::confess('No build guiven to map workflow inputs!') if not $build;
 
     # modes are validated later in Genome::Model::Build::RnaSeq and
     # Genome::InstrumentData::AlignmentResult::Command::CufflinksExpression
