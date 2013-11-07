@@ -24574,6 +24574,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       undef,
       'fusion-partner-limit=s',
       undef,
+      'filtered-bedpe-file=s',
+      'files',
       'help!',
       undef
     ],
