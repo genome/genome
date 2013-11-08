@@ -1,5 +1,5 @@
 <?xml version='1.0' standalone='yes'?>
-<workflow name="RegionLimitAndBackfillSnvVcf">
+<workflow name="RegionLimitAndBackfillIndelVcf">
     <!-- RegionLimitVcf -->
     <link fromOperation="input connector" fromProperty="builds" toOperation="RegionLimitVcf" toProperty="build" />
     <link fromOperation="input connector" fromProperty="region_limiting_output_directory" toOperation="RegionLimitVcf" toProperty="output_directory" />
@@ -42,6 +42,7 @@
         <link fromOperation="GetSampleName" fromProperty="sample_name" toOperation="VarscanConsensus" toProperty="vcf_sample_name" />
         <link fromOperation="input connector" fromProperty="ref_fasta" toOperation="VarscanConsensus" toProperty="ref_fasta" />
         <link fromOperation="input connector" fromProperty="use_bgzip" toOperation="VarscanConsensus" toProperty="use_bgzip" />
+        <link fromOperation="input connector" fromProperty="varscan_version_internal" toOperation="VarscanConsensus" toProperty="version" />
 
         <link fromOperation="VarscanConsensus" fromProperty="output_file" toOperation="output connector" toProperty="output_vcf" />
 
@@ -116,6 +117,7 @@
             <inputproperty>input_vcf</inputproperty>
             <inputproperty>use_bgzip</inputproperty>
             <inputproperty>base_directory</inputproperty>
+            <inputproperty>varscan_version_internal</inputproperty>
 
             <outputproperty>output_vcf</outputproperty>
         </operationtype>
@@ -126,6 +128,7 @@
     <link fromOperation="input connector" fromProperty="use_bgzip" toOperation="BackfillIndelVcf" toProperty="use_bgzip" />
     <link fromOperation="input connector" fromProperty="output_directory" toOperation="BackfillIndelVcf" toProperty="base_directory" />
     <link fromOperation="BackfillIndelVcf" fromProperty="output_vcf" toOperation="FinalVcfMerge" toProperty="input_files" />
+    <link fromOperation="input connector" fromProperty="varscan_version" toOperation="BackfillIndelVcf" toProperty="varscan_version_internal" />
 
     <!-- FinalVcfMerge -->
     <link fromOperation="input connector" fromProperty="use_bgzip" toOperation="FinalVcfMerge" toProperty="use_bgzip" />
@@ -161,6 +164,7 @@
         <inputproperty>input_bams</inputproperty>
         <inputproperty>ref_fasta</inputproperty>
         <inputproperty>output_directory</inputproperty>
+        <inputproperty>varscan_version</inputproperty>
 
         <!-- FinalVcfMerge -->
         <inputproperty>final_vcf_merge_working_directory</inputproperty>

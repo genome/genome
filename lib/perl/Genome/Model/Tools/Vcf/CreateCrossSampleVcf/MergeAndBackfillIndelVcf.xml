@@ -31,6 +31,7 @@
         <link fromOperation="GetSampleName" fromProperty="sample_name" toOperation="VarscanConsensus" toProperty="vcf_sample_name" />
         <link fromOperation="input connector" fromProperty="ref_fasta" toOperation="VarscanConsensus" toProperty="ref_fasta" />
         <link fromOperation="input connector" fromProperty="use_bgzip" toOperation="VarscanConsensus" toProperty="use_bgzip" />
+        <link fromOperation="input connector" fromProperty="varscan_version_internal" toOperation="VarscanConsensus" toProperty="version" />
 
         <link fromOperation="VarscanConsensus" fromProperty="output_file" toOperation="output connector" toProperty="output_vcf" />
 
@@ -100,6 +101,7 @@
         </operation>
 
         <operationtype typeClass="Workflow::OperationType::Model">
+            <inputproperty>varscan_version_internal</inputproperty>
             <inputproperty>input_bam</inputproperty>
             <inputproperty>ref_fasta</inputproperty>
             <inputproperty>input_vcf</inputproperty>
@@ -113,6 +115,7 @@
     <link fromOperation="input connector" fromProperty="input_bams" toOperation="BackfillIndelVcf" toProperty="input_bam" />
     <link fromOperation="input connector" fromProperty="ref_fasta" toOperation="BackfillIndelVcf" toProperty="ref_fasta" />
     <link fromOperation="input connector" fromProperty="use_bgzip" toOperation="BackfillIndelVcf" toProperty="use_bgzip" />
+    <link fromOperation="input connector" fromProperty="varscan_version" toOperation="BackfillIndelVcf" toProperty="varscan_version_internal" />
     <link fromOperation="input connector" fromProperty="output_directory" toOperation="BackfillIndelVcf" toProperty="base_directory" />
     <link fromOperation="BackfillIndelVcf" fromProperty="output_vcf" toOperation="FinalVcfMerge" toProperty="input_files" />
 
@@ -143,6 +146,7 @@
         <inputproperty>input_bams</inputproperty>
         <inputproperty>ref_fasta</inputproperty>
         <inputproperty>output_directory</inputproperty>
+        <inputproperty>varscan_version</inputproperty>
 
         <!-- FinalVcfMerge -->
         <inputproperty>final_vcf_merge_working_directory</inputproperty>
