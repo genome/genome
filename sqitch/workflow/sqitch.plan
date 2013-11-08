@@ -19,3 +19,4 @@ workflow_execution_metric_index_workflow_execution_id [workflow_execution_metric
 workflow_instance_execution_index_workflow_execution_id [workflow_instance_execution] 2013-11-08T17:56:03Z Anthony Brummett <abrummet@genome.wustl.edu> # index workflow.instance_execution.workflow_execution_id
 workflow_instance_index_name [workflow_instance] 2013-11-08T21:00:50Z Anthony Brummett <abrummet@genome.wustl.edu> # index on workflow.instance.name
 workflow_instance_index_name_workflow_instance_id [workflow_instance] 2013-11-08T21:04:39Z Anthony Brummett <abrummet@genome.wustl.edu> # index on workflow.instance.(name, workflow_instance_id)
+workflow_instance_index_parent_execution_id [workflow_instance] 2013-11-08T21:06:56Z Anthony Brummett <abrummet@genome.wustl.edu> # index on workflow.instance.parent_execution_id
