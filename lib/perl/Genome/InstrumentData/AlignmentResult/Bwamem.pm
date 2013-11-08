@@ -444,7 +444,7 @@ sub _fix_cpu_flag {
     $self->debug_message("[_fix_cpu_flag] cpu count is $cpu_count");
 
     # Make sure the thread count argument matches the number of CPUs available.
-    if ($param_hash->{t} ne $cpu_count) {
+    if ((not exists $param_hash->{t}) or (not defined $param_hash->{t}) or ($param_hash->{t} ne $cpu_count)) {
         $param_hash->{t} = $cpu_count;
         my $modified_param_string = $self->_param_hash_to_string($param_hash);
         $self->debug_message("[_fix_cpu_flag] autocalculated CPU requirement, bwa mem params modified: $modified_param_string");
