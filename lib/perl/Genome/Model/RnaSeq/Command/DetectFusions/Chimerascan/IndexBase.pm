@@ -22,18 +22,17 @@ class Genome::Model::RnaSeq::Command::DetectFusions::Chimerascan::IndexBase {
             is => 'Text',
             doc => 'the version of bowtie chimerascan will use',
         },
-        picard_version => {
-            is => 'Text',
-            doc => 'the version of picard used to manipulate BAM files',
-        },
-        reference_build =>  {
-            is => 'Genome::Model::Build::ReferenceSequence',
-        },
-        annotation_build => {
-            is => 'Genome::Model::Build::ImportedAnnotation',
-        },
         build => {
+            is_output => 1,
             is => "Genome::Model::Build::RnaSeq",
+        },
+    ],
+    has => [
+        lsf_resource => {
+            default_value => "-R 'select[type==LINUX64 && mem>32000] span[hosts=1] rusage[mem=32000]' -M 32000000 -n 2",
+            is_param => 1,
+            is_optional => 1,
+            doc => 'default LSF resource expectations',
         },
     ],
 };
@@ -51,9 +50,9 @@ sub execute {
             test_name => $ENV{GENOME_ALIGNER_INDEX_TEST_NAME} || undef,
             version => $self->detector_version,
             bowtie_version => $self->bowtie_version,
-            reference_build => $self->reference_build,
-            annotation_build => $self->annotation_build,
-            picard_version => $self->picard_version,
+            reference_build => $self->build->reference_sequence_build,
+            annotation_build => $self->build->annotation_build,
+            picard_version => $self->build->processing_profile->picard_version,
     );
 
     die( 'Failed to generate result!' ) unless $result;

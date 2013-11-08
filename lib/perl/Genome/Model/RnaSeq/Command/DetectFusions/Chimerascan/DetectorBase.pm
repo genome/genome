@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::RnaSeq::Command::DetectFusions::Chimerascan::DetectorBase {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     is_abstract => 1,
     has_input => [
         detector_version => {
@@ -17,11 +17,16 @@ class Genome::Model::RnaSeq::Command::DetectFusions::Chimerascan::DetectorBase {
             is => 'Text',
             doc => 'parameters for the chosen fusion detector',
         },
-        annotation_build => {
-            is => 'Genome::Model::Build::ImportedAnnotation',
+        bowtie_version => {
+            is => 'Text',
+            doc => 'the version of bowtie chimerascan will use',
         },
         build => {
             is => "Genome::Model::Build::RnaSeq",
+        },
+        reuse_bam => {
+            is => 'Boolean',
+            doc => 'Should we reuse the bams from alignment (experimental)',
         },
     ],
     has => [
@@ -61,10 +66,12 @@ sub _fetch_result {
     my $result = $result_class->$method(
             test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
             version => $self->detector_version,
+            reuse_bam => $self->reuse_bam,
+            bowtie_version => $self->bowtie_version,
             alignment_result => $self->build->alignment_result,
             detector_params => $self->detector_params,
             annotation_build => $self->build->annotation_build,
-            picard_version => $self->build->processing_profile->picard_version,
+            picard_version => $self->build->picard_version,
             original_bam_paths => [map {$_->bam_path} $self->build->instrument_data],
     );
 
