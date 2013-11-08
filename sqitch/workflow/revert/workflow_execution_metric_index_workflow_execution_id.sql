@@ -2,6 +2,6 @@
 
 BEGIN;
 
-DROP INDEX workflow.execution_metric;
+DROP INDEX workflow.execution_metric_workflow_execution_id_idx;
 
 COMMIT;
