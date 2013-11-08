@@ -108,22 +108,23 @@ sub tmp_megabytes_estimated {
     return;
 }
 
-# override this from AlignmentResult.pm to filter reads with secondary alignment flag (0x100)
+# Override _check_read_count() from Genome::InstrumentData::AlignmentResult to
+# filter reads with secondary or supplementary alignment flags (0x100 or 0x800)
+# when comparing to the fastq.
 sub _check_read_count {
-    my ($self) = @_;
-    my $fq_rd_ct = $self->_fastq_read_count;
+    my ($self, $bam_rd_ct) = @_;
+
+    my $param_hash = $self->decomposed_aligner_params;
+    my $flag = exists $param_hash->{M} ? 0x100 : 0x800;
+
     my $sam_path = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
+    my $cmd = "$sam_path view -F $flag -c " . $self->temp_staging_directory . "/all_sequences.bam";
+    my $filtered_bam_rd_ct = `$cmd`;
 
-    my $cmd = "$sam_path view -F 256 -c " . $self->temp_staging_directory . "/all_sequences.bam";
-    my $bam_read_count = `$cmd`;
-    my $check = "Read count from bam: $bam_read_count and fastq: $fq_rd_ct";
+    $self->status_message("Overriding _check_read_count: filtering flag $flag from bam read count.");
+    $self->status_message("Actual read count: $bam_rd_ct; filtered read count: $filtered_bam_rd_ct");
 
-    unless ($fq_rd_ct == $bam_read_count) {
-        $self->error_message("$check does not match.");
-        return;
-    }
-    $self->status_message("$check matches.");
-    return 1;
+    return $self->SUPER::_check_read_count($filtered_bam_rd_ct);
 }
 
 sub _run_aligner {
