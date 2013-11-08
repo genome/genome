@@ -21,3 +21,4 @@ workflow_instance_index_name [workflow_instance] 2013-11-08T21:00:50Z Anthony Br
 workflow_instance_index_name_workflow_instance_id [workflow_instance] 2013-11-08T21:04:39Z Anthony Brummett <abrummet@genome.wustl.edu> # index on workflow.instance.(name, workflow_instance_id)
 workflow_instance_index_parent_execution_id [workflow_instance] 2013-11-08T21:06:56Z Anthony Brummett <abrummet@genome.wustl.edu> # index on workflow.instance.parent_execution_id
 workflow_instance_index_parent_instance_id [workflow_instance] 2013-11-08T21:08:56Z Anthony Brummett <abrummet@genome.wustl.edu> # index on workflow.instance.parent_instance_id
+workflow_instance_index_peer_instance_id [workflow_instance] 2013-11-08T21:10:48Z Anthony Brummett <abrummet@genome.wustl.edu> # index on workflow.instance.peer_instance_id
