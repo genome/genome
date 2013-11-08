@@ -23,7 +23,7 @@ class Genome::Model::Tools::EdgeR::FilterStructures {
 
         percentile => {
             is => "Number",
-            doc => "Percent of samples that must reach min_count",
+            doc => "Percentile across samples to compare to min_count",
         },
 
         min_count => {
@@ -32,17 +32,18 @@ class Genome::Model::Tools::EdgeR::FilterStructures {
         },
 
     ],
-    doc => "Filter out structures where 'percentile'% of reads have less than 'min_count' counts",
+    doc => "Filter out structures where nth percentile "
+        . "(--percentile) is less than m (--min-count)"
 };
 
 sub help_synopsis {
     return <<EOS
 
-# Filter out structures where 75% of the samples have count < 20
+# Filter out structures where the 25th percentile is less than 20
 gmt edge-r filter-structures \\
     --counts-file counts.txt \\
     --output-file filtered.txt \\
-    --percentile 75 \\
+    --percentile 25 \\
     --min-count 20
 
 EOS
@@ -64,7 +65,7 @@ sub execute {
         confess "percentile param must satisfy 0 <= percentile <= 100 (value: $percentile)";
     }
 
-    my $quantile = 1.0 - ($percentile / 100.0);
+    my $quantile = $percentile / 100.0;
 
     my $cmd = sprintf("Rscript %s --input-file %s --output-file %s --quantile %f --min-count %d",
             $R_SCRIPT,

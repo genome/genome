@@ -29,8 +29,8 @@ my $counts_file = "$tempdir/counts.txt";
 
 write_file($counts_file, $data);
 
-subtest "Filter 75% >= 150" => make_test(75, 150, ["GENE0", "GENE1"]);
-subtest "Filter 75% >= 200" => make_test(75, 200, ["GENE0"]);
+subtest "Filter 25% >= 150" => make_test(25, 150, ["GENE0", "GENE1"]);
+subtest "Filter 25% >= 200" => make_test(25, 200, ["GENE0"]);
 subtest "Filter 50% >= 150" => make_test(50, 150, ["GENE0", "GENE1", "GENE2"]);
 
 done_testing();
