@@ -703,6 +703,11 @@ sub prepare_for_execution {
         unlink $self->dump_file;
     }
 
+    Genome::Sys->create_directory($self->temp_staging_directory."/genes");
+    Genome::Sys->create_directory($self->temp_staging_directory."/substructures");
+    Genome::Sys->create_directory($self->temp_staging_directory."/proteins");
+    Genome::Sys->create_directory($self->temp_staging_directory."/interpro_results");
+
     $self->{cumulative_transcripts} = 0;
     $self->{cumulative_sub_structures} = 0;
     $self->{cumulative_genes} = 0;
