@@ -29,6 +29,11 @@ class Genome::Model::RnaSeq::Command::DetectFusions::Chimerascan::DetectorBase {
             doc => 'Should we reuse the bams from alignment (experimental)',
         },
     ],
+    has_optional_output => [
+        software_result => {
+            is => 'Genome::SoftwareResult',
+        },
+    ],
     has => [
         lsf_resource => {
             default_value => "-R 'select[type==LINUX64 && mem>32000] span[hosts=1] rusage[mem=32000]' -M 32000000 -n 2",
@@ -76,7 +81,7 @@ sub _fetch_result {
     );
 
     if ($result){
-        $self->_link_build_to_result($result);
+        $self->software_result($result);
         return 1;
     }
 

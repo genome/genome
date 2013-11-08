@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use File::Spec;
 
 class Genome::Model::RnaSeq::Command::DetectFusions {
     is => "Command::V2",
@@ -46,8 +47,10 @@ sub execute {
     );
 
     my $rv = $cmd->execute();
-    if ($cmd->result) {
-        $self->_link_build_to_result($build, $cmd->result);
+    if ($cmd->software_results) {
+        for my $result ($cmd->software_results) {
+            $self->_link_build_to_result($build, $result);
+        }
     }
 
     return $rv;
@@ -58,7 +61,8 @@ sub _link_build_to_result {
     my $build = shift;
     my $result = shift;
 
-    Genome::Sys->create_symlink($result->output_dir, $build->data_directory . "/fusions");
+    (my $dir_name = $result->class) =~ s/::/_/g;
+    Genome::Sys->create_symlink($result->output_dir, File::Spec->join($build->data_directory, 'fusions', $dir_name));
     my $link = $result->add_user(user => $build, label => 'uses');
     if ($link) {
         $self->status_message("Linked result " . $result->id . " to the build");

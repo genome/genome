@@ -17,10 +17,12 @@ sub execute {
     my $self = shift;
 
     my $dag = $self->build_workflow();
-    print Data::Dumper::Dumper($dag->get_xml());
     my $outputs = $dag->execute(%{$self->workflow_inputs});
 
-    $self->result($outputs->{'result'});
+    $self->software_results([
+        $outputs->{'index_software_result'},
+        $outputs->{'detector_software_result'},
+    ]);
     return 1;
 }
 
@@ -51,7 +53,7 @@ sub build_workflow {
     my $detector_command = $self->attach_detector_command_to($dag);
 
     $self->_add_links($dag, $index_command, $detector_command);
-    $self->_add_outputs($dag, $detector_command);
+    $self->_add_outputs($dag, $index_command, $detector_command);
 
     return $dag;
 }
@@ -127,12 +129,18 @@ sub _add_links {
 sub _add_outputs {
     my $self = shift;
     my $dag = shift;
-    my $command = shift;
+    my $index_command = shift;
+    my $detector_command = shift;
 
     $dag->connect_output(
-        output_property => 'result',
-        source => $command,
-        source_property => 'result',
+        output_property => 'index_software_result',
+        source => $index_command,
+        source_property => 'software_result',
+    );
+    $dag->connect_output(
+        output_property => 'detector_software_result',
+        source => $detector_command,
+        source_property => 'software_result',
     );
 }
 

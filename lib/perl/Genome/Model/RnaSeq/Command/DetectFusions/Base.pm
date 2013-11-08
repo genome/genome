@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::RnaSeq::Command::DetectFusions::Base {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     is_abstract => 1,
     has_input => [
         detector_version => {
@@ -22,8 +22,9 @@ class Genome::Model::RnaSeq::Command::DetectFusions::Base {
         },
     ],
     has_optional_output => [
-        result => {
+        software_results => {
             is => 'Genome::SoftwareResult',
+            is_many => 1,
         },
     ],
 };
