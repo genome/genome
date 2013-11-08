@@ -12,6 +12,8 @@ use warnings;
 my $pkg = 'Genome::Model::Tools::EdgeR::FilterStructures';
 use_ok($pkg);
 
+my $tempdir = tempdir(CLEANUP => 1);
+
 my $counts = [
     [200, 200, 200, 200],
     [200, 200, 200, 100],
@@ -19,24 +21,23 @@ my $counts = [
     [200, 100, 100, 100],
     [100, 100, 100, 100],
 ];
+my $input_data = join("\n",
+        join("\t", "GENE", map {"SAMPLE$_"} 0..3),
+        make_matrix_text()
+        );
 
-my $data = join("\n",
-    join("\t", "GENE", map {"SAMPLE$_"} 0..3),
-    map {join("\t", "GENE$_", @{$counts->[$_]})} 0..$#$counts);
-
-my $tempdir = tempdir(CLEANUP => 1);
 my $counts_file = "$tempdir/counts.txt";
 
-write_file($counts_file, $data);
+write_file($counts_file, $input_data);
 
-subtest "Filter 25% >= 150" => make_test(25, 150, ["GENE0", "GENE1"]);
-subtest "Filter 25% >= 200" => make_test(25, 200, ["GENE0"]);
-subtest "Filter 50% >= 150" => make_test(50, 150, ["GENE0", "GENE1", "GENE2"]);
+subtest "Filter 25% >= 150" => make_test(25, 150, [0, 1]);
+subtest "Filter 25% >= 200" => make_test(25, 200, [0]);
+subtest "Filter 50% >= 150" => make_test(50, 150, [0, 1, 2]);
 
 done_testing();
 
 sub make_test {
-    my ($percentile, $min_count, $expected) = @_;
+    my ($percentile, $min_count, $expected_rows) = @_;
     return sub {
         my ($fh, $output_file) = tempfile(DIR => $tempdir);
         my $cmd = $pkg->create(
@@ -48,13 +49,27 @@ sub make_test {
         ok($cmd, "created command");
 
         ok($cmd->execute, "executed command");
+        my $expected_text = make_matrix_text(@$expected_rows);
 
-        my @genes = get_genes($output_file);
-        is_deeply($expected, \@genes, "Expected genes passed filter");
+        my @output = parse_output($output_file);
+        my @expected = @{$counts}[@$expected_rows];
+        is_deeply(\@output, \@expected, "Output is as expected")
+            or diag("expected: " . Dumper(\@expected)
+                . "\nactual: " . Dumper(\@output));
     }
 }
 
-sub get_genes {
+sub make_matrix_text {
+    my @indices = @_;
+    if (!scalar @indices) {
+        @indices = 0..$#$counts;
+    }
+
+    return join("\n",
+        map {join("\t", "GENE$_", @{$counts->[$_]})} @indices);
+}
+
+sub parse_output {
     my $path = shift;
     my $output = read_file($path);
 
@@ -62,5 +77,5 @@ sub get_genes {
     chomp @lines;
     shift @lines; # discard header
 
-    return map {my @f = split("\t", $_); $f[0]} @lines;
+    return map {my @x = split("\t", $_); shift @x; \@x} @lines;
 }
