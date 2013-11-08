@@ -12,3 +12,4 @@ workflow_instance [workflow_plan workflow_instance_execution] 2013-11-08T17:18:2
 workflow_instance_permission [workflow_instance] 2013-11-08T22:33:48Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on workflow_instance
 workflow_execution_metric [workflow_instance_execution] 2013-11-08T17:29:39Z Anthony Brummett <abrummet@genome.wustl.edu> # add table workflow.execution_metric
 workflow_service [workflow_schema] 2013-11-08T17:37:13Z Anthony Brummett <abrummet@genome.wustl.edu> # add table workflow.service
+workflow_service_permission [workflow_service] 2013-11-08T22:34:13Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on workflow_service
