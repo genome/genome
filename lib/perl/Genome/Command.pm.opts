@@ -3029,6 +3029,14 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>detect-fusions',
       [
+        'detector-name=s',
+        'files',
+        'detector-version=s',
+        'files',
+        'detector-params=s',
+        'files',
+        'build-id=s',
+        'files',
         'help!',
         undef
       ],
