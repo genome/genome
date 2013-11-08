@@ -76,6 +76,7 @@ FIRST_AVG_Q_BELOW_20        VARCHAR2 (7)                     {null} {null}   NOT
 =cut
 
 class Genome::Site::TGI::Synchronize::Classes::IndexIllumina {
+    is => 'Genome::Site::TGI::Synchronize::Classes::LimsInstDataBase',
     table_name => <<'EOS'
         (
             select
@@ -87,9 +88,9 @@ class Genome::Site::TGI::Synchronize::Classes::IndexIllumina {
                 i.lane lane,
                 i.target_region_set_name,
                 i.gerald_directory,
-                i.median_insert_size,
-                i.sd_above_insert_size,
-                i.sd_below_insert_size,
+                i.median_insert_size old_median_insert_size,
+                i.sd_above_insert_size old_sd_above_insert_size,
+                i.sd_below_insert_size old_sd_below_insert_size,
                 i.filt_clusters clusters,
                 i.analysis_software_version,
                 (case when i.index_sequence is null then to_char(i.lane) else to_char(i.lane) || '-' || i.index_sequence end) subset_name,
@@ -105,7 +106,7 @@ class Genome::Site::TGI::Synchronize::Classes::IndexIllumina {
 
                 --Read Illumina #2 r2 is fwd for fragment and rev for paired end
                 r2.read_length,
-                r2.filt_error_rate_avg,
+                r2.filt_error_rate_avg old_filt_error_rate_avg,
 
                 --Fwd
                 r1.sls_seq_id fwd_seq_id,
@@ -114,8 +115,8 @@ class Genome::Site::TGI::Synchronize::Classes::IndexIllumina {
                 (case when r1.seq_id is not null then r2.kilobases_read else -1 end) fwd_kilobases_read,
                 (case when r1.seq_id is not null then i.filt_clusters else null end) fwd_clusters,
                 (case when r1.seq_id is not null then i.filt_clusters else null end) fwd_filt_clusters,
-                r1.filt_aligned_clusters_pct fwd_filt_aligned_clusters_pct,
-                r1.filt_error_rate_avg fwd_filt_error_rate_avg,
+                r1.filt_aligned_clusters_pct old_fwd_filt_aligned_clusters_pct,
+                r1.filt_error_rate_avg old_fwd_filt_error_rate_avg,
 
                 --Rev
                 (case when r1.seq_id is not null then r2.sls_seq_id else null end) rev_seq_id,
@@ -124,8 +125,8 @@ class Genome::Site::TGI::Synchronize::Classes::IndexIllumina {
                 (case when r2.seq_id is not null then r2.kilobases_read else -1 end) rev_kilobases_read,
                 (case when r1.seq_id is not null then i.filt_clusters else null end) rev_clusters,
                 (case when r1.seq_id is not null then i.filt_clusters else null end) rev_filt_clusters,
-                (case when r1.seq_id is not null then r2.filt_error_rate_avg else null end) rev_filt_error_rate_avg,
-                (case when r1.seq_id is not null then r2.filt_aligned_clusters_pct else null end) rev_filt_aligned_clusters_pct,
+                (case when r1.seq_id is not null then r2.filt_error_rate_avg else null end) old_rev_filt_error_rate_avg,
+                (case when r1.seq_id is not null then r2.filt_aligned_clusters_pct else null end) old_rev_filt_aligned_clusters_pct,
 
                 --Misc Paths
                 archive2.path archive_path,
@@ -170,43 +171,45 @@ EOS
         is_external                     => { },
     ],
     has_optional => [
-        flow_cell_id                    => { }, # = short name
-        lane                            => { },
-        subset_name                     => { },
-        index_sequence                  => { },
-        run_name                        => { },
-        run_type                        => { },
-        fastqc_path                     => { },
-        read_length                     => { },
-        fwd_read_length                 => { },
-        rev_read_length                 => { },
-        fwd_kilobases_read              => { },
-        rev_kilobases_read              => { },
-        fwd_run_type                    => { },
-        rev_run_type                    => { },
-        gerald_directory                => { },
-        median_insert_size              => { },
-        sd_above_insert_size            => { },
-        sd_below_insert_size            => { },
-        adaptor_path                    => { },
-        archive_path                    => { },
-        bam_path                        => { },
-        gc_bias_path                    => { },
-        analysis_software_version       => { },
-        clusters                        => { },
-        fwd_clusters                    => { },
-        rev_clusters                    => { },
-        fwd_filt_aligned_clusters_pct   => { },
-        rev_filt_aligned_clusters_pct   => { },
-        target_region_set_name          => { },
-        filt_error_rate_avg             => { },
-        fwd_seq_id                      => { },
-        rev_seq_id                      => { },
-        fwd_filt_error_rate_avg         => { },
-        rev_filt_error_rate_avg         => { },
+        flow_cell_id                     => { }, # = short name
+        lane                             => { },
+        subset_name                      => { },
+        index_sequence                   => { },
+        run_name                         => { },
+        run_type                         => { },
+        fastqc_path                      => { },
+        read_length                      => { },
+        fwd_read_length                  => { },
+        rev_read_length                  => { },
+        fwd_kilobases_read               => { },
+        rev_kilobases_read               => { },
+        fwd_run_type                     => { },
+        rev_run_type                     => { },
+        gerald_directory                 => { },
+        old_median_insert_size           => { },
+        old_sd_above_insert_size         => { },
+        old_sd_below_insert_size         => { },
+        adaptor_path                     => { },
+        archive_path                     => { },
+        bam_path                         => { },
+        gc_bias_path                     => { },
+        analysis_software_version        => { },
+        clusters                         => { },
+        fwd_clusters                     => { },
+        rev_clusters                     => { },
+        old_fwd_filt_aligned_clusters_pct => { },
+        old_rev_filt_aligned_clusters_pct => { },
+        target_region_set_name           => { },
+        old_filt_error_rate_avg          => { },
+        fwd_seq_id                       => { },
+        rev_seq_id                       => { },
+        old_fwd_filt_error_rate_avg      => { },
+        old_rev_filt_error_rate_avg      => { },
     ],
     data_source => 'Genome::DataSource::Dwrac',
 };
+
+sub entity_name { return 'instrument data solexa'; }
 
 # TODO Require rebuild?
 # library_id
@@ -214,16 +217,25 @@ EOS
 # gerald_directory
 # TODO not updated. Fix?
 # run_name [on flow_cell_illumina]
-sub properties_to_copy {# 12
-    return ( 'id', 'library_id', 'gerald_directory', 'target_region_set_name', properties_to_keep_updated() );
+sub properties_to_copy {
+    return ( 'id', 'library_id', properties_to_keep_updated() );
 }
 
-sub properties_to_keep_updated {# 8
+sub properties_to_keep_updated {
     return (qw/ 
+        adaptor_path
         analysis_software_version
+        bam_path
         clusters
+        fastqc_path
         flow_cell_id
+        fwd_clusters
+        fwd_kilobases_read
+        fwd_read_length
+        fwd_run_type
+        gerald_directory
         index_sequence
+        is_external
         lane
         old_median_insert_size
         old_sd_above_insert_size
@@ -233,6 +245,15 @@ sub properties_to_keep_updated {# 8
         old_fwd_filt_error_rate_avg
         old_rev_filt_aligned_clusters_pct
         old_fwd_filt_aligned_clusters_pct
+        read_length
+        rev_clusters
+        rev_kilobases_read
+        rev_read_length
+        rev_run_type
+        run_name
+        run_type
+        subset_name
+        target_region_set_name
         /);
 }
 
