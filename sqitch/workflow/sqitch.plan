@@ -14,3 +14,4 @@ workflow_execution_metric [workflow_instance_execution] 2013-11-08T17:29:39Z Ant
 workflow_service [workflow_schema] 2013-11-08T17:37:13Z Anthony Brummett <abrummet@genome.wustl.edu> # add table workflow.service
 workflow_service_permission [workflow_service] 2013-11-08T22:34:13Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on workflow_service
 workflow_historian [workflow_schema] 2013-11-08T17:40:45Z Anthony Brummett <abrummet@genome.wustl.edu> # ad table workflow.historian
+workflow_historian_permission [workflow_historian] 2013-11-08T22:33:31Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on workflow_historian
