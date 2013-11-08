@@ -25,3 +25,4 @@ workflow_instance_index_peer_instance_id [workflow_instance] 2013-11-08T21:10:48
 workflow_instance_index_workflow_plan_id [workflow_instance] 2013-11-08T21:12:43Z Anthony Brummett <abrummet@genome.wustl.edu> # index on workflow.instance.workflow_plan_id
 workflow_instance_index_name_pattern [workflow_instance] 2013-11-08T21:21:06Z Anthony Brummett <abrummet@genome.wustl.edu> # index on workflow.instance.name
 workflow_instance_execution_index_workflow_instance_id [workflow_instance_execution] 2013-11-08T22:15:11Z Anthony Brummett <abrummet@genome.wustl.edu> # index on workflow.instance_execution.workflow_instance_id
+workflow_service_index_hostname_port_start_time_process_id_username [workflow_service] 2013-11-08T22:25:58Z Anthony Brummett <abrummet@genome.wustl.edu> # index on workflow.service.(hostname, port, start_time, process_id, username)
