@@ -2,7 +2,8 @@
 use strict;
 use warnings;
 use above "Genome";
-use Test::More tests => 5;
+use Test::More;
+use Genome::Utility::Test 'compare_ok';
 
 my ($class,$params) = Genome::Model::RnaSeq->_parse_strategy("htseq-count 0.5.4p1 [--mode intersect-strict --minaqual 1 --blacklist-alignments-flags 0x0104 --results-version 1]");
 is($class, 'Genome::Model::Tools::Htseq::Count', 'got expected tool class');
@@ -41,3 +42,17 @@ my $expected_inputs = {
 };
 is_deeply(\%inputs, $expected_inputs, "inputs match") or do { print Data::Dumper::Dumper($expected_inputs,\%inputs) };
 
+my $workflow = $rnaseq_model->_resolve_workflow_for_build($rnaseq_build);
+ok($workflow, "Got a workflow");
+
+# Test expected workflow xml
+my $test_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-RnaSeq";
+my $xml_file = Genome::Sys->create_temp_file_path;
+my $expected_xml_file = "$test_dir/workflow.xml";
+$workflow->save_to_xml(OutputFile => $xml_file);
+
+ok(-s $expected_xml_file, "Expected xml file exists at $expected_xml_file");
+ok(-s $xml_file, "Current xml file exists at $xml_file");
+compare_ok($expected_xml_file, $xml_file, "Xml file is as expected for the workflow");
+
+done_testing();
