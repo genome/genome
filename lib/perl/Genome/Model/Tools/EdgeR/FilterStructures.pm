@@ -35,6 +35,27 @@ class Genome::Model::Tools::EdgeR::FilterStructures {
     doc => "Filter out structures where 'percentile'% of reads have less than 'min_count' counts",
 };
 
+sub help_synopsis {
+    return <<EOS
+
+# Filter out structures where 75% of the samples have count < 20
+gmt edge-r filter-structures \\
+    --counts-file counts.txt \\
+    --output-file filtered.txt \\
+    --percentile 75 \\
+    --min-count 20
+
+EOS
+}
+
+sub help_detail {
+    return <<EOS
+
+Filter out structures with low counts across samples.
+
+EOS
+}
+
 sub execute {
     my $self = shift;
 
