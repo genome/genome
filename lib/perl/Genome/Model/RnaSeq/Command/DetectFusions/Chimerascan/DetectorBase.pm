@@ -71,7 +71,7 @@ sub _fetch_result {
             alignment_result => $self->build->alignment_result,
             detector_params => $self->detector_params,
             annotation_build => $self->build->annotation_build,
-            picard_version => $self->build->picard_version,
+            picard_version => $self->build->processing_profile->picard_version,
             original_bam_paths => [map {$_->bam_path} $self->build->instrument_data],
     );
 
