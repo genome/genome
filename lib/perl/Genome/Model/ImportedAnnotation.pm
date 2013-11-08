@@ -142,7 +142,7 @@ sub _execute_build {
 
     unless ($self->rna_seq_only) {
         my $name = ucfirst(lc($source));
-        my $importer_class_name = join('::', 'Genome', 'Db', $name, 'Import', 'Run');
+        my $importer_class_name = join('::', 'Genome', 'Db', $name, 'Command', 'Import', 'Run');
         my $cmd = $importer_class_name->execute(
             data_set => 'Core', 
             imported_annotation_build => $build,
