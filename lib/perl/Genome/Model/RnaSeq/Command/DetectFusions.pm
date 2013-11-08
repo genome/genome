@@ -62,6 +62,7 @@ sub _link_build_to_result {
     my $result = shift;
 
     (my $dir_name = $result->class) =~ s/::/_/g;
+    Genome::Sys->create_directory(File::Spec->join($build->data_directory, 'fusions'));
     Genome::Sys->create_symlink($result->output_dir, File::Spec->join($build->data_directory, 'fusions', $dir_name));
     my $link = $result->add_user(user => $build, label => 'uses');
     if ($link) {
