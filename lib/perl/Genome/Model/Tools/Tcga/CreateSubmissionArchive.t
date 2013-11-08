@@ -10,7 +10,7 @@ use warnings;
 
 use above "Genome";
 use Test::More;
-use Genome::Utility::Test;
+use Genome::Utility::Test qw(compare_ok);
 use Genome::Test::Factory::Model::ReferenceAlignment;
 use Genome::Test::Factory::Model::SomaticVariation;
 use Genome::Test::Factory::Build;
@@ -87,13 +87,10 @@ my $null_row = $class->fill_in_nulls(\%empty_row);
 my @empty_keys = sort keys %$null_row;
 my @sorted_headers = sort @expected_headers;
 is_deeply(\@empty_keys, \@sorted_headers, "Empty row got filled in");
-for my $key (@sorted_headers) {
-    is($null_row->{$key}, $class->get_null_character, "Empty row was filled in with null symbols");
-}
 
 my $test_output = Genome::Sys->create_temp_file_path;
 ok($class->print_sdrf($test_output, $null_row), "print_sdrf ran ok with a row of nulls");
-ok(-s $test_output, "Output file exists");
+compare_ok($test_output, $base_dir."/expected_null.sdrf", "null sdrf printed correctly");
 
 my $test_somatic_build = Genome::Test::Factory::Model::SomaticVariation->setup_somatic_variation_build();
 $test_somatic_build->normal_build->subject->common_name("normal");
@@ -109,9 +106,10 @@ $test_somatic_build->tumor_build->data_directory($base_dir."/refalign_dir2");
 $test_somatic_build->data_directory("$base_dir/somvar_dir");
 
 my $cghub_ids = Genome::Sys->create_temp_file_path;
-my $id1 = $test_somatic_build->normal_build->id;
-my $id2 = $test_somatic_build->tumor_build->id;
-`echo "CGHub_ID\tBuild_ID\ncghub1\t$id1\ncghub2\t$id2" > $cghub_ids`;
+`echo "CGHub_ID\tTCGA_Name\tBAM_path\ncghub1\tTCGA-1\t/dev/null\ncghub2\tTCGA-2\t/dev/null" > $cghub_ids`;
+
+is_deeply($class->load_cghub_info($cghub_ids, "TCGA_Name"), {"TCGA-1" => "cghub1", "TCGA-2" => "cghub2"}, "CGHub info loaded correctly");
+is($class->resolve_cghub_id($test_somatic_build->normal_build, $cghub_ids), "cghub1", "CGHub called correctly");
 
 my $sample_1 = {
    ID => {content => "TCGA_1"},
@@ -145,7 +143,8 @@ my %protocol_db = (
     ],
 );
 my $output_idf = Genome::Sys->create_temp_file_path;
-ok($class->print_idf($output_idf, \%protocol_db));
+ok($class->print_idf($output_idf, \%protocol_db), "Print idf called successfully");
+compare_ok($output_idf, $base_dir."/expected.idf", "idf printed as expected");
 
 my $archive_output_dir = Genome::Sys->create_temp_directory;
 my $cmd = Genome::Model::Tools::Tcga::CreateSubmissionArchive->create(
@@ -156,4 +155,12 @@ my $cmd = Genome::Model::Tools::Tcga::CreateSubmissionArchive->create(
 );
 ok($cmd, "Command created");
 ok($cmd->execute, "Command executed");
+
+is($class->resolve_maf_protocol, "genome.wustl.edu:maf_creation:data_consolidation:01", "Maf protocol resolved correctly");
+is($class->resolve_mapping_protocol($test_somatic_build->normal_build), "genome.wustl.edu:alignment:".$test_somatic_build->normal_build->processing_profile->id.":01", "Mapping protocol resolved correctly");
+is($class->resolve_library_protocol, "genome.wustl.edu:DNA_extraction:Illumina_DNASeq:01", "Library protocol resolved correctly");
+is($class->resolve_variants_protocol($test_somatic_build->normal_build), "genome.wustl.edu:variant_calling:".$test_somatic_build->normal_build->processing_profile->id.":01", "Variants protocol defined correctly");
+
+is_deeply([$class->resolve_capture_reagent($test_somatic_build->normal_build)], ["Nimblegen", "Nimblegen EZ Exome v3.0", "06465692001"], "Capture reagent resolved correctly");
+
 done_testing;
