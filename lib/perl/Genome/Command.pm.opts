@@ -20328,6 +20328,8 @@ $Genome::Command::OPTS_SPEC = [
         ],
         '>create-cross-sample-vcf-indels',
         [
+          'varscan-version=s',
+          'files',
           'software-result=s',
           undef,
           'final-result=s',
@@ -20377,6 +20379,17 @@ $Genome::Command::OPTS_SPEC = [
           undef,
           'roi-name=s',
           'files',
+          'help!',
+          undef
+        ],
+        '>backfill-indel-vcf-helper',
+        [
+          'sample-name=s',
+          'files',
+          'base-directory=s',
+          undef,
+          'output-directory=s',
+          undef,
           'help!',
           undef
         ],
