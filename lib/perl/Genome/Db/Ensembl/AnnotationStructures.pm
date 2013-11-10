@@ -92,7 +92,7 @@ sub create
     map{$biotype_class{lc($_)} = 'ncrna'} qw( 3prime_overlapping_ncrna Mt_rRNA Mt_tRNA antisense lincRNA miRNA misc_RNA ncRNA ncrna_host non_coding processed_transcript rRNA sense_intronic sense_overlapping snRNA snoRNA tRNA );
     map{$biotype_class{lc($_)} = 'ncrna_pseudogene'} qw( Mt_tRNA_pseudogene miRNA_pseudogene misc_RNA_pseudogene rRNA_pseudogene scRNA_pseudogene snRNA_pseudogene snoRNA_pseudogene tRNA_pseudogene );
     map{$biotype_class{lc($_)} = 'coding'} qw( LRG_gene IG_C_gene IG_D_gene IG_J_gene IG_V_gene TR_C_gene TR_D_gene TR_J_gene TR_V_gene protein_coding ambiguous_orf disrupted_domain non_stop_decay nonsense_mediated_decay retained_intron TEC );
-    map{$biotype_class{lc($_)} = 'coding_pseudogene'} qw( retrotransposed TR_J_pseudogene TR_V_pseudogene IG_C_pseudogene IG_J_pseudogene IG_V_pseudogene polymorphic_pseudogene processed_pseudogene pseudogene transcribed_processed_pseudogene transcribed_unprocessed_pseudogene unitary_pseudogene unprocessed_pseudogene );
+    map{$biotype_class{lc($_)} = 'coding_pseudogene'} qw( retrotransposed TR_J_pseudogene TR_V_pseudogene IG_C_pseudogene IG_J_pseudogene IG_V_pseudogene polymorphic_pseudogene processed_pseudogene pseudogene transcribed_processed_pseudogene transcribed_unprocessed_pseudogene translated_processed_pseudogene unitary_pseudogene unprocessed_pseudogene );
 
     my @slices = @{ $slice_adaptor->fetch_all('toplevel', undef, 1, 1, 1) };
 
