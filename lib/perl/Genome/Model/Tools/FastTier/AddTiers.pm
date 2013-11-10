@@ -8,13 +8,6 @@ use IO::File;
 class Genome::Model::Tools::FastTier::AddTiers {
     is => 'Command',
     has => [
-        build => {
-            is => 'Integer',
-            is_optional => 1,
-            doc => 'Genome build to use',
-            valid_values => ['36','37'],
-        },
-
         input_file => {
             is => 'String',
             is_optional => 0,
@@ -39,9 +32,9 @@ class Genome::Model::Tools::FastTier::AddTiers {
 
         tier_file_location =>{
             is => 'String',
-            is_optional => 1,
+            is_optional => 0,
             is_input => 1,
-            doc => 'Use this to override the default (v3) tiering files',
+            doc => 'annotation directory containing tiering files',
         },
 
         tiering_version =>{
@@ -67,21 +60,8 @@ sub execute {
     my $input_file = $self->input_file;
     my $output_file = $self->output_file;
     my $input_is_maf = $self->input_is_maf;
-    my $build = $self->build;
     my $tier_file_location = $self->tier_file_location;
     my $tiering_version = $self->tiering_version;
-
-    unless( defined( $tier_file_location )){
-        if( $build == 36 ){
-            $tier_file_location = "/gscmnt/ams1100/info/model_data/2771411739/build102550711/annotation_data/tiering_bed_files_v3";
-        }
-        elsif ( $build == 37 ){
-            $tier_file_location = "/gscmnt/ams1102/info/model_data/2771411739/build106409619/annotation_data/tiering_bed_files_v3";
-        }
-        else {
-            die("only supports builds 36 or 37");
-        }
-    }
 
     # Create a tmp dir where we'll do the tiering
     my $tempdir = Genome::Sys->create_temp_directory();
