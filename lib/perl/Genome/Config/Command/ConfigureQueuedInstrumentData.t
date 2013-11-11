@@ -81,28 +81,29 @@ assert_failed(@$data2[0], 'Found no pairing information');
 
 #inst data with no ap
 my $inst_data_without_a_project = Genome::Test::Factory::InstrumentData::Solexa->setup_object();
-build_and_run_cmd($inst_data_without_a_project);
-assert_failed($inst_data_without_a_project, "doesn't have an analysis project!");
+my $cmd = build_and_run_cmd($inst_data_without_a_project);
+ok($cmd->status_message =~ /Found 0 items to process/, 'no analysis project is a no-op');
 done_testing();
-
 
 sub assert_failed {
     my $inst_data = shift;
     my $error = shift;
-    ok($inst_data->tgi_lims_status eq 'failed', 'it should mark the inst data as failed');
-    ok($inst_data->attributes(attribute_label => 'tgi_lims_fail_count'), 'it should set the fail count');
-    ok($inst_data->attributes(attribute_label => 'tgi_lims_fail_message'), 'it should set the fail message');
+    my ($bridge) = $inst_data->analysis_project_bridges;
+    ok($bridge->status eq 'failed', 'it should mark the inst data as failed');
+    ok($bridge->fail_count, 'it should set the fail count');
+    ok($bridge->reason, 'it should set the fail message');
     if ($error) {
-        ok($inst_data->attributes(attribute_label => 'tgi_lims_fail_message')->value =~ $error, 'it should set the correct error message');
+        ok($bridge->reason =~ $error, 'it should set the correct error message');
     }
 }
 
 sub assert_succeeded {
     my $inst_data = shift;
     my $model_types = shift;
+    my ($bridge) = $inst_data->analysis_project_bridges;
 
-    ok($inst_data->tgi_lims_status eq 'processed', 'it should mark the inst data as succeeded');
-    ok(!$inst_data->attributes(attribute_label => 'tgi_lims_fail_count'), 'it should remove the fail count');
+    ok($bridge->status eq 'processed', 'it should mark the inst data as succeeded');
+    is($bridge->fail_count, 0, 'it should remove the fail count');
     for my $model_instance ($inst_data->models) {
         ok($model_instance->build_requested, 'it sets build requested on constructed models');
     }
@@ -122,7 +123,7 @@ sub build_and_run_cmd {
 
     ok($cmd, 'created the command successfully');
     ok($cmd->execute(), 'command ran successfully');
-    return;
+    return $cmd;
 }
 
 sub generate_rna_seq_instrument_data {
@@ -141,7 +142,11 @@ sub generate_rna_seq_instrument_data {
         }
     );
 
-    $inst_data->analysis_project_id($ap->id);
+    Genome::Config::AnalysisProject::InstrumentDataBridge->create(
+        instrument_data => $inst_data,
+        analysis_project => $ap,
+    );
+
     return ($inst_data, ['Genome::Model::RnaSeq']);
 }
 
@@ -205,8 +210,13 @@ sub _generate_som_val_instrument_data {
         }
     );
 
-    $inst_data_1->analysis_project_id($ap->id);
-    $inst_data_2->analysis_project_id($ap->id);
+    for my $inst_data ($inst_data_1, $inst_data_2) {
+        Genome::Config::AnalysisProject::InstrumentDataBridge->create(
+            instrument_data => $inst_data,
+            analysis_project => $ap,
+        );
+    }
+
     return ([$inst_data_1, $sample_1], [$inst_data_2, $sample_2], ['Genome::Model::SomaticValidation'], $ap);
 }
 

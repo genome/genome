@@ -33,13 +33,14 @@ sub execute {
 
     $self->_lock();
 
-    my @instrument_data = $self->_get_instrument_data_to_process();
-    $self->status_message(sprintf('Found %s instrument data to process.',
-            scalar(@instrument_data)));
+    my @instrument_data_analysis_project_pairs = $self->_get_items_to_process();
+    $self->status_message(sprintf('Found %s items to process.',
+            scalar(@instrument_data_analysis_project_pairs)));
 
-    for my $current_inst_data (@instrument_data) {
+    for my $current_pair (@instrument_data_analysis_project_pairs) {
+        my $current_inst_data = $current_pair->instrument_data;
+        my $analysis_project = $current_pair->analysis_project;
         eval {
-            my $analysis_project = $self->_get_analysis_project_for_instrument_data($current_inst_data);
             my $config = $analysis_project->get_configuration_reader();
             my $hashes = $self->_prepare_configuration_hashes_for_instrument_data($current_inst_data, $config);
             while (my ($model_type, $model_hashes) = (each %$hashes)) {
@@ -52,7 +53,7 @@ sub execute {
 
         my $error = $@;
         $self->error_message($error) if $error;
-        $self->_mark_instrument_data_status($current_inst_data, $error);
+        $self->_mark_sync_status($current_pair, $error);
     }
 
     return 1;
@@ -97,57 +98,35 @@ sub _assign_instrument_data_to_model {
     $model->build_requested(1);
 }
 
-sub _mark_instrument_data_status {
-    my ($self, $instrument_data, $error) = @_;
-
-    $instrument_data->remove_attribute(attribute_label => 'tgi_lims_status');
-    $instrument_data->remove_attribute(attribute_label => 'tgi_lims_fail_message');
+sub _mark_sync_status {
+    my ($self, $current_pair, $error) = @_;
 
     if ($error) {
-        $self->_mark_instrument_data_as_failed($instrument_data, $error);
+        $self->_mark_pair_as_failed($current_pair, $error);
     } else {
-        $self->_mark_instrument_data_as_processed($instrument_data);
+        $self->_mark_pair_as_processed($current_pair);
     }
 
     return 1;
 }
 
-sub _mark_instrument_data_as_processed {
-    my ($self, $instrument_data) = @_;
+sub _mark_pair_as_processed {
+    my ($self, $current_pair) = @_;
 
-    $instrument_data->add_attribute(
-        attribute_label => 'tgi_lims_status',
-        attribute_value => 'processed',
-    );
-    $instrument_data->remove_attribute(attribute_label => 'tgi_lims_fail_count');
+    $current_pair->fail_count(0);
+    $current_pair->reason(undef);
+    $current_pair->status('processed');
 
     return 1;
 }
 
-sub _mark_instrument_data_as_failed {
-    my ($self, $instrument_data, $error_message) = @_;
+sub _mark_pair_as_failed {
+    my ($self, $current_pair, $error_message) = @_;
 
-    my $fail_count_attr = $instrument_data->attributes(attribute_label => 'tgi_lims_fail_count');
-    my $previous_count = 0;
-    if ($fail_count_attr) {
-        $previous_count = $fail_count_attr->attribute_value;
-        $fail_count_attr->delete;
-    }
-
-    $instrument_data->add_attribute(
-        attribute_label => 'tgi_lims_fail_count',
-        attribute_value => ($previous_count + 1),
-    );
-
-    $instrument_data->add_attribute(
-        attribute_label => 'tgi_lims_status',
-        attribute_value => 'failed',
-    );
-
-    $instrument_data->add_attribute(
-        attribute_label => 'tgi_lims_fail_message',
-        attribute_value => $error_message,
-    );
+    my $previous_count = $current_pair->fail_count;
+    $current_pair->fail_count(++$previous_count);
+    $current_pair->status('failed');
+    $current_pair->reason($error_message);
 
     return 1;
 }
@@ -234,30 +213,20 @@ sub _process_paired_samples {
     } @subject_pairings ];
 }
 
-sub _get_instrument_data_to_process {
+sub _get_items_to_process {
     my $self = shift;
 
     if ($self->instrument_data) {
-        return $self->instrument_data;
+        return Genome::Config::AnalysisProject::InstrumentDataBridge->get(
+            instrument_data_id => [map { $_->id } $self->instrument_data],
+            -hint => ['analysis_project', 'instrument_data', 'instrument_data.sample']
+        );
     } else {
-        return Genome::InstrumentData->get(
-            'tgi_lims_status' => [qw/ new failed /],
-            'analysis_project_id !=' => undef,
-            -hint => [ 'sample', 'sample.source', 'sample.source.taxon', ],
+        return Genome::Config::AnalysisProject::InstrumentDataBridge->get(
+            status => 'new',
+            -hint => ['analysis_project', 'instrument_data', 'instrument_data.sample']
         );
     }
-}
-
-sub _get_analysis_project_for_instrument_data {
-    my $self = shift;
-    my $instrument_data = shift;
-    die('You must provide a single piece of instrument data!') unless $instrument_data;
-
-    my $analysis_project_id = $instrument_data->analysis_project_id
-        || die(sprintf("Instrument Data: %s doesn't have an analysis project!", $instrument_data->id));
-    my $analysis_project = Genome::Config::AnalysisProject->get($analysis_project_id)
-        || die(sprintf("Unable to find an analysis project for %s!", $instrument_data->id));
-    return $analysis_project;
 }
 
 sub _assign_model_to_analysis_project {

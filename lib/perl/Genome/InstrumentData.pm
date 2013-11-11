@@ -110,17 +110,16 @@ class Genome::InstrumentData {
             is_many => 0,
             where => [ attribute_label => 'tgi_lims_status' ],
         },
-        analysis_project_id => {
-            is => 'Text',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            is_many => 0,
-            where => [ attribute_label => 'analysis_project_id' ],
+        analysis_project_bridges => {
+            is => 'Genome::Config::AnalysisProject::InstrumentDataBridge',
+            reverse_as => 'instrument_data',
+            is_many => 1,
         },
-        analysis_project => {
+        analysis_projects => {
             is => 'Genome::Config::AnalysisProject',
-            id_by => 'analysis_project_id',
+            via => 'analysis_project_bridges',
+            to => 'analysis_project',
+            is_many => 1,
         },
         original_est_fragment_size => {
             is => 'Integer',
