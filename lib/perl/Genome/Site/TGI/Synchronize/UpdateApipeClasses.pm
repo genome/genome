@@ -456,9 +456,7 @@ sub _create_object {
     }
 
     my $object = eval { $new_object_class->create(%params); };
-        $self->_confess_object_creation_error($original_object, $new_object_class, $@);
-    confess "Could not create new object of type $new_object_class based on object of type " .
-    $original_object->class . " with id " . $original_object->id . ":\n$@" unless $object;
+    $self->_confess_object_creation_error($original_object, $new_object_class, $@) unless $object;
 
     return 1;
 }
