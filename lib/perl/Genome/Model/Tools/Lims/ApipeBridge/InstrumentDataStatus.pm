@@ -79,6 +79,7 @@ sub execute {
 sub _resolve_instrument_data_and_qidfgms {
     my $self = shift;
 
+    my %instrument_data_params;
     $instrument_data_params{id} = [ map { $_->id } $self->instrument_data ] if $self->instrument_data;
 
     # Get 'new' instrument data
