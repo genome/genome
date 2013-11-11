@@ -41,3 +41,10 @@ EOS
 sub properties_to_copy {
     return ('instrument_data_id', 'analysis_project_id');
 }
+
+sub sync_id {
+    my $self = shift;
+    return join("\t", $self->instrument_data_id, $self->analysis_project_id);
+}
+
+1;

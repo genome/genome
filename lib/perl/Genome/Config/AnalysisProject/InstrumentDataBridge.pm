@@ -28,16 +28,23 @@ class Genome::Config::AnalysisProject::InstrumentDataBridge {
         status => {
             is => 'Text',
             valid_values => ['new','failed','processed'],
+            default_value => 'new',
         },
         fail_count => {
             is => 'Integer',
             default_value => 0,
         },
         reason => {
-            is => 'Text'
+            is => 'Text',
+            is_optional => 1,
         },
     ],
 };
+
+sub sync_id {
+    my $self = shift;
+    return join("\t", $self->instrument_data_id, $self->analysis_project_id);
+}
 
 
 1;

@@ -45,7 +45,7 @@ sub objects_to_sync {
         'Genome::Site::TGI::Synchronize::Classes::RegionIndex454' => 'Genome::InstrumentData::454',
         'Genome::Site::TGI::Synchronize::Classes::IndexIllumina' => 'Genome::InstrumentData::Solexa',
         'Genome::Site::TGI::Synchronize::Classes::Genotyping' => 'Genome::InstrumentData::Imported',
-        'Genome::Site::TGI::Synchronize::Classes::InstrumentDataAnalysisProjectBridge' => 'Genome::Config::AnalysisProject::InstrumentDataBridge',
+        'Genome::Site::TGI::Synchronize::Classes::InstrumentDataAnalysisProjectBridge' => ['Genome::Config::AnalysisProject::InstrumentDataBridge', 'sync_id'],
     );
 }
 
@@ -125,7 +125,12 @@ sub execute {
         my $lims_ids = $self->_get_ids_for($lims_class);
 
         my $genome_class = $classes_to_sync[$i + 1];
-        my $genome_ids = $self->_get_ids_for($genome_class);
+        my $id_by_method;
+        if (ref $genome_class eq 'ARRAY') {
+            $id_by_method = $$genome_class[1];
+            $genome_class = $$genome_class[0];
+        }
+        my $genome_ids = $self->_get_ids_for($genome_class, $id_by_method);
 
         $self->status_message('Detemine IDs to create...');
         my $ids_to_create = $lims_ids->difference($genome_ids);
@@ -152,13 +157,14 @@ sub execute {
 }
 
 sub _get_ids_for {
-    my ($self, $class) = @_;
+    my ($self, $class, $id_by_method) = @_;
     $self->status_message("Getting IDs for $class...");
+    $id_by_method = 'id' unless defined($id_by_method);
 
     my $iterator = $class->create_iterator;
     my $set = Set::Scalar->new();
     while ( my $obj = $iterator->next ) {
-        $set->insert($obj->id);
+        $set->insert($obj->$id_by_method);
     };
     $self->status_message("Found ".scalar(@$set)." $class IDs.");
 
