@@ -27,7 +27,7 @@ class Genome::Config::AnalysisProject::InstrumentDataBridge {
         },
         status => {
             is => 'Text',
-            valid_values => ['new','failed','processed'],
+            valid_values => ['new', 'failed', 'processed', 'skipped'],
             default_value => 'new',
         },
         fail_count => {
