@@ -124,8 +124,6 @@ class Genome::Site::TGI::InstrumentData::Solexa {
 
                 --s_rev.analysis_software_version,
                 i.analysis_software_version,
-                --Analysis Project
-                swo.analysis_project_id,
 
                 i.index_sequence
 
@@ -154,9 +152,6 @@ class Genome::Site::TGI::InstrumentData::Solexa {
                         and r1.read_number = 1
                   join GSC.library_summary lib on lib.library_id = i.library_id
                   join GSC.organism_sample sam on sam.organism_sample_id = lib.sample_id
-                  join GSC.woi_sequence_product wsp on wsp.seq_id = i.seq_id
-                  join work_order_item\@oltp woi on wsp.woi_id = woi.woi_id
-                  join setup_work_order\@oltp swo on swo.setup_wo_id = woi.setup_wo_id
             /*
                     left join solexa_lane_summary s_fwd on s_fwd.sral_id = s_rev.sral_id and s_fwd.run_type = 'Paired End Read 1'
                     left join seq_fs_path archive on archive.seq_id = s_rev.seq_id
@@ -214,7 +209,6 @@ EOS
         fwd_filt_aligned_clusters_pct   => { },
         rev_filt_aligned_clusters_pct   => { },
         target_region_set_name          => { },
-        analysis_project_id             => { },
 
         short_name => {
             doc => 'The essential portion of the run name which identifies the run.  The rest is redundent information about the instrument, date, etc.',
