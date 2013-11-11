@@ -21,9 +21,11 @@ class Genome::Model::Command::Remove {
             default_value => 0,
             doc => 'A boolean flag to force model delete.(default_value=0)',
         },
+    ],
+    has_constant => [
         allow_model_with_builds => {
             is => 'Boolean',
-            default_value => 0,
+            value => 0,
             doc => 'By default this command will not remove a model with builds, as this destroys records of past processing that has been done.',
         },
     ],
