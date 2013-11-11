@@ -102,14 +102,6 @@ class Genome::InstrumentData {
         },
     ],
     has_optional => [
-        tgi_lims_status => { # TODO rename!
-            is => 'Text',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            is_many => 0,
-            where => [ attribute_label => 'tgi_lims_status' ],
-        },
         analysis_project_bridges => {
             is => 'Genome::Config::AnalysisProject::InstrumentDataBridge',
             reverse_as => 'instrument_data',

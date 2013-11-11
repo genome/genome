@@ -45,6 +45,7 @@ sub objects_to_sync {
         'Genome::Site::TGI::Synchronize::Classes::RegionIndex454' => 'Genome::InstrumentData::454',
         'Genome::Site::TGI::Synchronize::Classes::IndexIllumina' => 'Genome::InstrumentData::Solexa',
         'Genome::Site::TGI::Synchronize::Classes::Genotyping' => 'Genome::InstrumentData::Imported',
+        'Genome::Site::TGI::Synchronize::Classes::InstrumentDataAnalysisProjectBridge' => 'Genome::Config::AnalysisProject::InstrumentDataBridge',
     );
 }
 
@@ -338,7 +339,6 @@ sub _create_genotyping {
             version => $original_object->version,
             import_format => 'genotype file',
             import_source_name => $original_object->import_source_name,
-            tgi_lims_status => 'new',
         );
     };
     confess "Could not create new object of type $new_object_class based on object of type " .
@@ -357,8 +357,6 @@ sub _create_indexillumina {
     return 0 unless exists $self->instrument_data_with_successful_pidfas->{$original_object->id};
     # Bam path required!
     return 0 unless $original_object->bam_path;
-    # Analysis project id required
-    return 0 unless $original_object->analysis_project_id;
 
     my ($direct_properties, $indirect_properties) = $self->_get_direct_and_indirect_properties_for_object(
         $original_object,
@@ -372,7 +370,6 @@ sub _create_indexillumina {
             subclass_name => $new_object_class,
             %{$direct_properties},
             %{$indirect_properties},
-            tgi_lims_status => 'new',
         );
     };
     confess "Could not create new object of type $new_object_class based on object of type " .
@@ -417,8 +414,6 @@ sub _create_regionindex454 {
 sub _add_attributes_to_instrument_data {
     my ($self, $instrument_data, $attrs) = @_;
 
-    $attrs->{tgi_lims_status} = 'new';
-
     for my $name ( keys %{$attrs} ) {
         Genome::InstrumentDataAttribute->create(
             instrument_data_id => $instrument_data->id,
@@ -461,6 +456,7 @@ sub _create_object {
     }
 
     my $object = eval { $new_object_class->create(%params); };
+        $self->_confess_object_creation_error($original_object, $new_object_class, $@);
     confess "Could not create new object of type $new_object_class based on object of type " .
     $original_object->class . " with id " . $original_object->id . ":\n$@" unless $object;
 
@@ -483,15 +479,14 @@ sub _create_populationgroup {
         $params{member_ids} = \@member_ids;
     }
 
-    my $object = eval { 
+    my $object = eval {
         $new_object_class->create(
             %params, 
             id => $original_object->id, 
             subclass_name => $new_object_class
         ) 
     };
-    confess "Could not create new object of type $new_object_class based on object of type " .
-    $original_object->class . " with id " . $original_object->id . ":\n$@" unless $object;
+    $self->_confess_object_creation_error($original_object, $new_object_class, $@) unless $object;
 
     return 1;
 }
@@ -499,16 +494,13 @@ sub _create_populationgroup {
 sub _create_limsproject {
     my ($self, $original_object, $new_object_class) = @_;
 
-    my $object = eval { 
+    my $object = eval {
         $new_object_class->create(
             id => $original_object->id, 
             name => $original_object->name,
         );
     };
-    if ( not $object ) {
-        confess "Could not create new object of type $new_object_class based on object of type " .
-            $original_object->class . " with id " . $original_object->id . ":\n$@";
-    }
+    $self->_confess_object_creation_error($original_object, $new_object_class, $@) unless $object;
 
     return 1;
 }
@@ -524,10 +516,7 @@ sub _create_limsprojectinstrumentdata {
             label => 'instrument_data',
         );
     };
-    if ( not $object ) {
-        confess "Could not create new object of type Genome::ProjectPart based on object of type " .
-            $original_object->class . " with id " . $original_object->id . ":\n$@";
-    }
+    $self->_confess_object_creation_error($original_object, $new_object_class, $@) unless $object;
 
     return 1;
 }
@@ -543,12 +532,22 @@ sub _create_limsprojectsample {
             label => 'sample',
         );
     };
-    if ( not $object ) {
-        confess "Could not create new object of type Genome::ProjectPart based on object of type " .
-            $original_object->class . " with id " . $original_object->id . ":\n$@";
-    }
+    $self->_confess_object_creation_error($original_object, $new_object_class, $@) unless $object;
 
     return 1;
+}
+
+sub _create_instrumentdataanalysisprojectbridge {
+    my ($self, $original_object, $new_object_class) = @_;
+
+    return $self->_create_object($original_object, $new_object_class);
+}
+
+sub _confess_object_creation_error {
+    my ($self, $original_object, $new_object_class, $error) = @_;
+
+    confess sprintf("Could not create new object of type %s based on object of type %s with id %s:\n%s",
+        $new_object_class, $original_object->class, $original_object->id, $error);
 }
 
 1;

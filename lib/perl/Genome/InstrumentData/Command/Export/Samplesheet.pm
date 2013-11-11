@@ -163,7 +163,6 @@ our @ignored = qw(
     median_insert_size
     sd_above_insert_size
     sd_below_insert_size
-    tgi_lims_status
     user_name
     version
 );
