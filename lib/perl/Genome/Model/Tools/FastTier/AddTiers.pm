@@ -62,7 +62,7 @@ sub help_detail {
             if($build and $build->status eq 'Succeeded' and $build->name =~ /ensembl/) {  #probably implicit in the loops, but in case we get undefs in our list
                 if ($build->version !~ /old/ and $model->name and $build->version && ($build->data_directory !~ /gscarchive/)){
                     push(@currently_available_builds, $model->name . "/" . $build->version . "\n");
-                    push(@tiering_dirs, $build->data_directory . "annotation_data/tiering_bed_files_v3/");
+                    push(@tiering_dirs, $build->data_directory . "/annotation_data/tiering_bed_files_v3/");
                 }
             }
         }
