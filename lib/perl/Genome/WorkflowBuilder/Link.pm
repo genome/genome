@@ -92,10 +92,37 @@ sub external_output {
     return !defined($self->destination);
 }
 
+sub sort_key {
+    my $self = shift;
+    return sprintf("%s|%s|%s|%s",
+        $self->_source_name, $self->_destination_name,
+        $self->source_property, $self->destination_property);
+}
+
 
 # ------------------------------------------------------------------------------
 # Private Methods
 # ------------------------------------------------------------------------------
+
+sub _source_name {
+    my $self = shift;
+
+    if ($self->source) {
+        return $self->source->name;
+    } else {
+        return 'input connector';
+    }
+}
+
+sub _destination_name {
+    my $self = shift;
+
+    if ($self->destination) {
+        return $self->destination->name;
+    } else {
+        return 'output connector';
+    }
+}
 
 sub _operation_name {
     my ($self, $operation, $default) = @_;

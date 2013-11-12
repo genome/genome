@@ -133,8 +133,10 @@ sub get_xml_element {
         $element->setAttribute('logDir', $self->log_dir);
     }
 
-    map {$element->addChild($_->get_xml_element)} $self->operations;
-    map {$element->addChild($_->get_xml_element)} $self->links;
+    map {$element->addChild($_->get_xml_element)}
+        sort {$a->name cmp $b->name} $self->operations;
+    map {$element->addChild($_->get_xml_element)}
+        sort {$a->sort_key cmp $b->sort_key} $self->links;
 
     return $element;
 }
