@@ -115,7 +115,7 @@ class Genome::Site::TGI::Synchronize::Classes::IndexIllumina {
                 (case when r1.seq_id is not null then r2.kilobases_read else -1 end) fwd_kilobases_read,
                 (case when r1.seq_id is not null then i.filt_clusters else null end) fwd_clusters,
                 (case when r1.seq_id is not null then i.filt_clusters else null end) fwd_filt_clusters,
-                r1.filt_aligned_clusters_pct old_fwd_filt_aligned_clusters_pct,
+                r1.filt_aligned_clusters_pct old_fwd_filt_aligned_pct,
                 r1.filt_error_rate_avg old_fwd_filt_error_rate_avg,
 
                 --Rev
@@ -126,7 +126,7 @@ class Genome::Site::TGI::Synchronize::Classes::IndexIllumina {
                 (case when r1.seq_id is not null then i.filt_clusters else null end) rev_clusters,
                 (case when r1.seq_id is not null then i.filt_clusters else null end) rev_filt_clusters,
                 (case when r1.seq_id is not null then r2.filt_error_rate_avg else null end) old_rev_filt_error_rate_avg,
-                (case when r1.seq_id is not null then r2.filt_aligned_clusters_pct else null end) old_rev_filt_aligned_clusters_pct,
+                (case when r1.seq_id is not null then r2.filt_aligned_clusters_pct else null end) old_rev_filt_aligned_pct,
 
                 --Misc Paths
                 archive2.path archive_path,
@@ -197,8 +197,8 @@ EOS
         clusters                         => { },
         fwd_clusters                     => { },
         rev_clusters                     => { },
-        old_fwd_filt_aligned_clusters_pct => { },
-        old_rev_filt_aligned_clusters_pct => { },
+        old_fwd_filt_aligned_clusters_pct => { column_name => 'OLD_FWD_FILT_ALIGNED_PCT', },
+        old_rev_filt_aligned_clusters_pct => { column_name => 'OLD_REV_FILT_ALIGNED_PCT', },
         target_region_set_name           => { },
         old_filt_error_rate_avg          => { },
         fwd_seq_id                       => { },
