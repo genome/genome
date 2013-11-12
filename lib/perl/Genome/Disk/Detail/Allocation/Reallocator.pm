@@ -39,6 +39,10 @@ class Genome::Disk::Detail::Allocation::Reallocator {
 sub reallocate {
     my $self = shift;
 
+    unless($self->kilobytes_requested) {
+        $self->kilobytes_requested(0);
+    }
+
     my $mode = Genome::Disk::Allocation->_retrieve_mode();
     my $allocation_object = Genome::Disk::Allocation->$mode(
         $self->allocation_id);
@@ -50,7 +54,7 @@ sub reallocate {
     $allocation_object->kilobytes_used($kb_used);
 
     my $actual_kb_requested = List::Util::max($kb_used,
-        $self->kilobytes_requested) || 0;
+        $self->kilobytes_requested);
     if ($self->grow_only && ($actual_kb_requested <= $old_kb_requested)) {
         $allocation_object->status_message(
             "Not changing kilobytes_requested, because grow_only = 1 & "
