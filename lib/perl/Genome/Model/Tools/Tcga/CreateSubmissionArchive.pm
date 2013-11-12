@@ -125,11 +125,14 @@ sub execute {
 
         my $patient_id = $self->resolve_patient_id($somatic_build);
         my $patient_id_counter = ++$patient_ids{$patient_id};
-        my $snvs_vcf = "genome.wustl.edu.$patient_id.snv.".$patient_id_counter.".vcf.gz";
-        my $indels_vcf = "genome.wustl.edu.$patient_id.indel.".$patient_id_counter.".vcf.gz";
+        my $snvs_vcf = "genome.wustl.edu.$patient_id.snv.".$patient_id_counter.".vcf";
+        my $indels_vcf = "genome.wustl.edu.$patient_id.indel.".$patient_id_counter.".vcf";
 
-        Genome::Sys->copy_file($somatic_build->data_directory."/variants/snvs.vcf.gz", "$vcf_archive_dir/$snvs_vcf");
-        Genome::Sys->copy_file($somatic_build->data_directory."/variants/indels.vcf.gz", "$vcf_archive_dir/$indels_vcf");
+        my $snvs_file = $somatic_build->data_directory."/variants/snvs_tcga/snvs_tcga.vcf";
+        my $indels_file = $somatic_build->data_directory."/variants/indels_tcga/indels_tcga.vcf";
+        die "Tcga compliant snv and indel vcfs not found for build ".$somatic_build->id unless(-s $snvs_file and -s $indels_file);
+        Genome::Sys->copy_file($snvs_file, "$vcf_archive_dir/$snvs_vcf");
+        Genome::Sys->copy_file($indels_file, "$vcf_archive_dir/$indels_vcf");
 
         my $vcf_reader = new Genome::File::Vcf::Reader("$vcf_archive_dir/$snvs_vcf");
         my $vcf_sample_info = $vcf_reader->header->metainfo->{"SAMPLE"};
