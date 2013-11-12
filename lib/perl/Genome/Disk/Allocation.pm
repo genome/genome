@@ -98,7 +98,6 @@ class Genome::Disk::Allocation {
             is => 'DateTime',
             len => 11,
             default_value => &_default_archive_after_time,
-            is_optional => 1,
             doc => 'After this time, this allocation is subject to being archived'
         },
         timeline_events => {
