@@ -92,7 +92,7 @@ sub from_xml_file {
 }
 
 sub from_xml_filename {
-    my ($class, $filename) = shift;
+    my ($class, $filename) = @_;
 
     my $fh = Genome::Sys->open_file_for_reading($filename);
     return $class->from_xml_file($fh);
