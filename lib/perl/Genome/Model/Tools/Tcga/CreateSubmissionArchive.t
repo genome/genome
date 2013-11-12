@@ -95,6 +95,7 @@ compare_ok($test_output, $base_dir."/expected_null.sdrf", "null sdrf printed cor
 my $test_somatic_build = Genome::Test::Factory::Model::SomaticVariation->setup_somatic_variation_build();
 $test_somatic_build->normal_build->subject->common_name("normal");
 $test_somatic_build->normal_build->subject->extraction_label("TCGA-1");
+$test_somatic_build->normal_build->subject->source->upn("TCGA-UPN-A");
 $test_somatic_build->normal_build->model->target_region_set_name("11111001 capture chip set");
 $test_somatic_build->normal_build->data_directory($base_dir."/refalign_dir");
 
@@ -151,6 +152,7 @@ my $cmd = Genome::Model::Tools::Tcga::CreateSubmissionArchive->create(
     models => [$test_somatic_build->model],
     output_dir => $archive_output_dir,
     archive_name => "test_archive",
+    archive_version => "1.0.0",
     cghub_id_file => $cghub_ids,
 );
 ok($cmd, "Command created");

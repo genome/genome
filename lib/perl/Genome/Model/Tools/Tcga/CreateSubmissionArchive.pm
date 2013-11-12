@@ -82,6 +82,9 @@ class Genome::Model::Tools::Tcga::CreateSubmissionArchive {
         archive_name => {
             is => "Text",
         },
+        archive_version => {
+            is => "Text",
+        },
         create_archive => {
             is => "Boolean",
             default_value => 0,
@@ -105,9 +108,12 @@ sub execute {
     my @sdrf_rows;
     my %protocol_db;
 
-    my $archive_dir = $self->output_dir."/".$self->archive_name;
-    Genome::Sys->create_directory($archive_dir);
+    my $vcf_archive_dir = $self->output_dir."/".$self->archive_name.".Level_2.".$self->archive_version;
+    Genome::Sys->create_directory($vcf_archive_dir);
+    my $magetab_archive_dir = $self->output_dir."/".$self->archive_name.".mage-tab.".$self->archive_version;
+    Genome::Sys->create_directory($magetab_archive_dir);
 
+    my %patient_ids;
     for my $somatic_model ($self->models) {
         my $somatic_build = $somatic_model->last_succeeded_build;
         unless($somatic_build) {
@@ -117,13 +123,15 @@ sub execute {
         my $normal_build = $somatic_build->normal_build;
         my $tumor_build = $somatic_build->tumor_build;
 
-        my $snvs_vcf = $somatic_build->id.".snvs.vcf.gz";
-        my $indels_vcf = $somatic_build->id.".indels.vcf.gz";
+        my $patient_id = $self->resolve_patient_id($somatic_build);
+        my $patient_id_counter = ++$patient_ids{$patient_id};
+        my $snvs_vcf = "genome.wustl.edu.$patient_id.snv.".$patient_id_counter.".vcf.gz";
+        my $indels_vcf = "genome.wustl.edu.$patient_id.indel.".$patient_id_counter.".vcf.gz";
 
-        Genome::Sys->copy_file($somatic_build->data_directory."/variants/snvs.vcf.gz", "$archive_dir/$snvs_vcf");
-        Genome::Sys->copy_file($somatic_build->data_directory."/variants/indels.vcf.gz", "$archive_dir/$indels_vcf");
+        Genome::Sys->copy_file($somatic_build->data_directory."/variants/snvs.vcf.gz", "$vcf_archive_dir/$snvs_vcf");
+        Genome::Sys->copy_file($somatic_build->data_directory."/variants/indels.vcf.gz", "$vcf_archive_dir/$indels_vcf");
 
-        my $vcf_reader = new Genome::File::Vcf::Reader("$archive_dir/$snvs_vcf");
+        my $vcf_reader = new Genome::File::Vcf::Reader("$vcf_archive_dir/$snvs_vcf");
         my $vcf_sample_info = $vcf_reader->header->metainfo->{"SAMPLE"};
         unless (defined $vcf_sample_info) {
             die $self->error_message("No SAMPLE vcf header in $snvs_vcf for build ".$somatic_build->id);
@@ -136,26 +144,36 @@ sub execute {
                     $sample_info = $sample;
                 }
             }
-            push @sdrf_rows, $self->create_vcf_row($build, $self->archive_name, \%protocol_db, $self->cghub_id_file, $snvs_vcf, $sample_info);
-            push @sdrf_rows, $self->create_vcf_row($build, $self->archive_name, \%protocol_db, $self->cghub_id_file, $indels_vcf, $sample_info);
+            push @sdrf_rows, $self->create_vcf_row($build, $self->archive_name.".".$self->archive_version, \%protocol_db, $self->cghub_id_file, $snvs_vcf, $sample_info);
+            push @sdrf_rows, $self->create_vcf_row($build, $self->archive_name.".".$self->archive_version, \%protocol_db, $self->cghub_id_file, $indels_vcf, $sample_info);
             if ($self->somatic_maf_file) {
-                Genome::Sys->copy_file($self->somatic_maf_file, $archive_dir."/somatic.maf");
-                push @sdrf_rows, $self->create_maf_row($build, $self->archive_name, "somatic.maf", \%protocol_db, $self->cghub_id_file, $sample_info);
+                Genome::Sys->copy_file($self->somatic_maf_file, $vcf_archive_dir."/somatic.maf");
+                push @sdrf_rows, $self->create_maf_row($build, $self->archive_name.".".$self->archive_version, "somatic.maf", \%protocol_db, $self->cghub_id_file, $sample_info);
             }
             if ($self->germline_maf_file) {
-                Genome::Sys->copy_file($self->germline_maf_file, $archive_dir."/germline.maf");
-                push @sdrf_rows, $self->create_maf_row($build, $self->archive_name, "germline.maf", \%protocol_db, $self->cghub_id_file, $sample_info);
+                Genome::Sys->copy_file($self->germline_maf_file, $vcf_archive_dir."/germline.maf");
+                push @sdrf_rows, $self->create_maf_row($build, $self->archive_name.".".$self->archive_version, "germline.maf", \%protocol_db, $self->cghub_id_file, $sample_info);
             }
         }
     }
 
-    $self->print_idf($archive_dir."/".$self->archive_name.".".$IDF_FILE_EXTENSION, \%protocol_db);
-    $self->print_sdrf($archive_dir."/".$self->archive_name.".".$SDRF_FILE_EXTENSION, @sdrf_rows);
+    $self->print_idf($magetab_archive_dir."/".$self->archive_name.".".$self->archive_version.".".$IDF_FILE_EXTENSION.".txt", \%protocol_db);
+    $self->print_sdrf($magetab_archive_dir."/".$self->archive_name.".".$self->archive_version.".".$SDRF_FILE_EXTENSION.".txt", @sdrf_rows);
 
     #print manifest
-    my $cd_cmd = "cd $archive_dir ; md5sum * > $MANIFEST_FILE_NAME";
-    Genome::Sys->shellcmd(cmd => $cd_cmd, output_files => [$archive_dir."/$MANIFEST_FILE_NAME"]);
+    my $cd_cmd = "cd $vcf_archive_dir ; md5sum * > $MANIFEST_FILE_NAME";
+    Genome::Sys->shellcmd(cmd => $cd_cmd, output_files => [$vcf_archive_dir."/$MANIFEST_FILE_NAME"]);
+    $cd_cmd = "cd $magetab_archive_dir ; md5sum * > $MANIFEST_FILE_NAME";
+    Genome::Sys->shellcmd(cmd => $cd_cmd, output_files => [$magetab_archive_dir."/$MANIFEST_FILE_NAME"]);
     return 1;
+}
+
+sub resolve_patient_id {
+    my $self = shift;
+    my $build = shift;
+    my $patient_id = $build->subject->source->upn;
+    die "Could not resolve patient_id for build ".$build->id unless (defined $patient_id);
+    return $patient_id;
 }
 
 sub create_maf_row {
