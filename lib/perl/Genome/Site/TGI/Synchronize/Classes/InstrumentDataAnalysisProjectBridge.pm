@@ -17,7 +17,7 @@ class Genome::Site::TGI::Synchronize::Classes::InstrumentDataAnalysisProjectBrid
         UNION ALL
         SELECT to_char(g.seq_id) instrument_data_id FROM external_genotyping g
         UNION ALL
-        SELECT to_char(g.seq_id) instrument_data_id FROM illumina_genotyping g WHERE g.status = 'PASS'
+        SELECT to_char(g.seq_id) instrument_data_id FROM illumina_genotyping g
     ) x
     LEFT JOIN GSC.woi_sequence_product wsp ON wsp.seq_id = x.instrument_data_id
     LEFT JOIN work_order_item@oltp woi ON wsp.woi_id = woi.woi_id

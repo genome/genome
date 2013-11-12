@@ -544,6 +544,10 @@ sub _create_limsprojectsample {
 sub _create_instrumentdataanalysisprojectbridge {
     my ($self, $original_object, $new_object_class) = @_;
 
+    my $inst_data = Genome::InstrumentData->get($original_object->instrument_data_id);
+    return 0 unless $inst_data;
+    $inst_data->unload();
+
     return $self->_create_object($original_object, $new_object_class);
 }
 
