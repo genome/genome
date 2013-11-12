@@ -51,7 +51,34 @@ sub help_brief {
 }
 
 sub help_detail {
-    "Add tiering information to an existing file. Use --input-is-maf if input is a MAF file."
+    #get a list of currrently available builds and ouput in the help
+    my $listing;
+    my @currently_available_models = Genome::Model->get(subclass_name => 'Genome::Model::ImportedAnnotation');
+    my @currently_available_builds;
+    my @tiering_dirs;
+    foreach my $model (@currently_available_models) {
+        next unless $model;
+        foreach my $build ($model->builds) {
+            if($build and $build->status eq 'Succeeded' and $build->name =~ /ensembl/) {  #probably implicit in the loops, but in case we get undefs in our list
+                if ($build->version !~ /old/ and $model->name and $build->version && ($build->data_directory !~ /gscarchive/)){
+                    push(@currently_available_builds, $model->name . "/" . $build->version . "\n");
+                    push(@tiering_dirs, $build->data_directory . "annotation_data/tiering_bed_files_v3/");
+                }
+            }
+        }
+    }
+
+    my $i = 0;
+    for($i=0;$i<@tiering_dirs;$i++){
+        my $name = $currently_available_builds[$i];
+        chomp($name);
+        my $dir = $tiering_dirs[$i];
+        chomp($dir);
+
+        $listing .= $name . "\n    " . $dir . "\n";
+    }
+
+    "Add tiering information to an existing file. Use --input-is-maf if input is a MAF file.\n\nCurrently Available Builds and Dirs\n----------------------------------\n$listing\n\n"
 }
 
 sub execute {
