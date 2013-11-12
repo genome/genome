@@ -287,11 +287,6 @@ sub delete {
     my ($expunge_status) = $self->_expunge_assignments;
     return unless $expunge_status;
 
-    #finally, clean up the instrument data
-    for my $attr ( $self->attributes ) {
-        $attr->delete;
-    }
-
     $self->_create_deallocate_observer;
 
     for my $attribute ($self->attributes) {
