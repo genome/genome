@@ -2862,8 +2862,6 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>remove',
     [
-      'allow-model-with-builds!',
-      undef,
       'force-delete!',
       undef,
       'color!',
@@ -7097,15 +7095,6 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>services',
     [
-      '>assign-queued-instrument-data',
-      [
-        'instrument-data=s@',
-        undef,
-        'max-instrument-data-to-process=s',
-        undef,
-        'help!',
-        undef
-      ],
       '>build',
       [
         '>bmod-alignments-to-queue',
