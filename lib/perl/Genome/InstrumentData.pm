@@ -293,6 +293,10 @@ sub delete {
         $attribute->delete;
     }
 
+    for my $bridge ($self->analysis_project_bridges) {
+        $bridge->delete;
+    }
+
     return $self->SUPER::delete;
 }
 
