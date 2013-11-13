@@ -26,7 +26,6 @@ my %properties = (# real example
     library_id  => 2893602880,
     run_name    => '131015_HWI-ST489_143184634_AC2LPUACXX',
     adaptor_path    => '/gscmnt/sata114/info/medseq/adaptor_sequences/solexa_adaptor_pcr_primer',
-    analysis_project_id => '89c2aebaa9f341748bfa7ad7efc5b43c',
     analysis_software_version => 'CASAVA-1.8.2',
     bam_path        => '/gscmnt/gc6001/production/csf_143288757/gerald_C2LPUACXX_7_GCCGCGAT-GCCGCGAT.bam',
     clusters        => 18687845,
