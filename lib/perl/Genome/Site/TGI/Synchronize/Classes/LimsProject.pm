@@ -35,9 +35,8 @@ SQL
 
 sub entity_name { return 'project'; }
 
-sub params_for_create_in_genome {
-    my $self = shift;
-    return ( map { $_ => $self->$_ } (qw/ id name /) );
+sub properties_to_copy {
+    return (qw/ id name /);
 }
 
 sub __display_name__ {

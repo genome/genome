@@ -20,10 +20,10 @@ my $expected_genome_class = 'Genome::'.ucfirst($entity_name);
 is($lims_class->genome_class_for_comparison, $expected_genome_class, 'genome class for create');
 is($lims_class->genome_class_for_create, $expected_genome_class, 'genome class for create');
 
-my %properties = (
-    id => -11,
-    name => '__TEST_PROJECT__',
-);
+my @properties_to_copy = $lims_class->properties_to_copy;
+ok(@properties_to_copy, 'properties to copy');
+my $i = -10;
+my %properties = map { $_ => --$i } @properties_to_copy;
 my $lims_object = $lims_class->__define__(%properties);
 ok($lims_object, "define lims $entity_name object");
 can_ok($lims_object, 'pipeline');
@@ -32,7 +32,7 @@ my $genome_object = $lims_object->create_in_genome;
 ok($genome_object, "create genome $entity_name object");
 isa_ok($genome_object, $expected_genome_class);
 
-for my $property ( keys %properties ) {
+for my $property ( @properties_to_copy ) {
     my $value = eval{ $genome_object->$property; };
     $value = eval{ $genome_object->attributes(attribute_label => $property)->attribute_value; } if not defined $value;
     is($value, $properties{$property}, "genome and lims $property matches => $value");
