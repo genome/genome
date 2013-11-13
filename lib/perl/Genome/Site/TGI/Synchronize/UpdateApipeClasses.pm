@@ -463,16 +463,7 @@ sub _create_populationgroup {
 
 sub _create_limsproject {
     my ($self, $original_object, $new_object_class) = @_;
-
-    my $object = eval {
-        $new_object_class->create(
-            id => $original_object->id, 
-            name => $original_object->name,
-        );
-    };
-    $self->_confess_object_creation_error($original_object, $new_object_class, $@) unless $object;
-
-    return 1;
+    return $self->_create_object($original_object, $new_object_class);
 }
 
 sub _create_limsprojectinstrumentdata {
