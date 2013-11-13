@@ -177,14 +177,13 @@ sub get_parts_of_class {
     my $desired_class = shift;
     croak $self->error_message('missing desired_class argument') unless $desired_class;
 
-    my @parts = $self->parts;
-    return unless @parts;
+    my @entities = $self->entities;
+    return unless @entities;
 
     my @desired_parts;
-    for my $part (@parts) {
-        next unless $part->entity;
-        my @classes = Class::ISA::self_and_super_path($part->entity->class);
-        push @desired_parts, $part if grep { $_ eq $desired_class } @classes;
+    for my $entity (@entities) {
+        my @classes = Class::ISA::self_and_super_path($entity->class);
+        push @desired_parts, $self->get_part($entity) if grep { $_ eq $desired_class } @classes;
     }
 
     return @desired_parts;
