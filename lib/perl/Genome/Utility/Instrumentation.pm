@@ -16,8 +16,8 @@ use Net::Statsd;
 use Time::HiRes;
 
 BEGIN {
-    $Net::Statsd::HOST = $ENV{GENOME_STATSD_HOST} || '';
-    $Net::Statsd::PORT = $ENV{GENOME_STATSD_PORT} || 0;
+    $Net::Statsd::HOST = $ENV{GENOME_STATSD_HOST} || 'localhost';
+    $Net::Statsd::PORT = $ENV{GENOME_STATSD_PORT} || 8125;
 };
 
 
