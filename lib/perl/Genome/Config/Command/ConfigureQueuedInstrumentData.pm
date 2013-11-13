@@ -95,7 +95,17 @@ sub _assign_instrument_data_to_model {
                 $model->__display_name__));
     }
 
-    $model->build_requested(1);
+    $self->_request_build_if_necessary($model, $newly_created);
+}
+
+sub _request_build_if_necessary {
+    my ($self, $model, $newly_created) = @_;
+
+    my $reason = $newly_created? 'created' : 'processed';
+
+    if($model->build_needed) {
+        $model->build_requested(1, "CQID $reason model");
+    }
 }
 
 sub _mark_sync_status {
