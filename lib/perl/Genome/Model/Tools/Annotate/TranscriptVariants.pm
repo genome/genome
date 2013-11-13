@@ -591,7 +591,7 @@ sub _main_annotation_loop {
             if ($annotation_start) {
                 $annotation_stop = Benchmark->new;
                 my $annotation_time = timediff($annotation_stop, $annotation_start);
-                $self->status_message("Annotating chromsome $chromosome_name took " . timestr($annotation_time)) if $self->benchmark;
+                $self->status_message("Annotating chromosome $chromosome_name took " . timestr($annotation_time)) if $self->benchmark;
             }
 
             $chromosome_name = $variant->{chromosome_name};
