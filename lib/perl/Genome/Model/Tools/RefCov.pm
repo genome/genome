@@ -1022,7 +1022,7 @@ sub validate_chromosome_names {
         };
         if ($@) {
             my $err = $@;
-            die('Failed to validate chromsomes in ROI '. $self->roi_file_format .' file '. $self->roi_file_path .' with alignment '. $self->alignment_file_format .' file '. $self->alignment_file_path .' with error:' ."\n". $err);
+            die('Failed to validate chromosomes in ROI '. $self->roi_file_format .' file '. $self->roi_file_path .' with alignment '. $self->alignment_file_format .' file '. $self->alignment_file_path .' with error:' ."\n". $err);
         }
     }
     $self->status_message('Validate chromosomes...OK');
