@@ -154,6 +154,7 @@ my $cmd = Genome::Model::Tools::Tcga::CreateSubmissionArchive->create(
     archive_name => "test_archive",
     archive_version => "1.0.0",
     cghub_id_file => $cghub_ids,
+    create_archive => 1,
 );
 ok($cmd, "Command created");
 ok($cmd->execute, "Command executed");

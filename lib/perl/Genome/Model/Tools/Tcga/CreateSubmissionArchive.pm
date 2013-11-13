@@ -168,6 +168,25 @@ sub execute {
     Genome::Sys->shellcmd(cmd => $cd_cmd, output_files => [$vcf_archive_dir."/$MANIFEST_FILE_NAME"]);
     $cd_cmd = "cd $magetab_archive_dir ; md5sum * > $MANIFEST_FILE_NAME";
     Genome::Sys->shellcmd(cmd => $cd_cmd, output_files => [$magetab_archive_dir."/$MANIFEST_FILE_NAME"]);
+
+    if ($self->create_archive) {
+        $self->tar_and_md5_dir($vcf_archive_dir);
+        $self->tar_and_md5_dir($magetab_archive_dir);
+    }
+
+    return 1;
+}
+
+sub tar_and_md5_dir {
+    my $self = shift;
+    my $dir = shift;
+
+    my $tar_file = "$dir.tar.gz";
+    my $tar_cmd = "tar -czf $tar_file $dir";
+    Genome::Sys->shellcmd(cmd => $tar_cmd, output_files => [$tar_file]);
+    my $md5 = Genome::Sys->md5sum($tar_file);
+    my $md5_cmd = "echo $md5 > $tar_file.md5";
+    Genome::Sys->shellcmd(cmd => $md5_cmd, output_files => ["$tar_file.md5"]);
     return 1;
 }
 
