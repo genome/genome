@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Site::TGI::Synchronize::Classes::LimsProjectSample {
+    is => 'Genome::Site::TGI::Synchronize::Classes::LimsProjectPartBase',
     table_name => <<SQL
     (
         --Administration Project Sample
@@ -30,6 +31,11 @@ SQL
     id_by => [
         project_id => { is => 'Text', },
         sample_id => { is => 'Text', },
+    ],
+    has_constant_calculated => [
+        entity_id => { calculate => q( return $self->sample_id; ) },
+        entity_class_name => { calculate => q( return 'Genome::Sample'; ) },
+        label => { calculate => q( return 'sample'; ), },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::Oltp',
