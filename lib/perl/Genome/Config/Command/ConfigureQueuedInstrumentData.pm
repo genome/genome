@@ -5,11 +5,17 @@ use warnings;
 
 class Genome::Config::Command::ConfigureQueuedInstrumentData {
     is => 'Command::V2',
-    has_optional => [
+    has => [
         instrument_data => {
             is          => 'Genome::InstrumentData',
             is_many     => 1,
+            is_optional => 1,
             doc         => '[Re]process these instrument data.',
+        },
+        limit => {
+            is => 'Integer',
+            default => 50,
+            doc => 'Maximum number of instrument data analysis project pairs to process in a single run'
         },
     ],
 };
@@ -233,8 +239,10 @@ sub _get_items_to_process {
         );
     } else {
         return Genome::Config::AnalysisProject::InstrumentDataBridge->get(
-            status => 'new',
-            -hint => ['analysis_project', 'instrument_data', 'instrument_data.sample']
+            status => ['new', 'failed'],
+            -hint => ['analysis_project', 'instrument_data', 'instrument_data.sample'],
+            -order => ['fail_count'],
+            -limit => $self->limit,
         );
     }
 }
