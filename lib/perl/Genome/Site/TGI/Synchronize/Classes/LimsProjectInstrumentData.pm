@@ -7,6 +7,7 @@ use Genome;
 
 # EX: project id 2744972
 class Genome::Site::TGI::Synchronize::Classes::LimsProjectInstrumentData {
+    is => 'Genome::Site::TGI::Synchronize::Classes::LimsProjectPartBase',
     table_name => <<SQL
     (
 		--Administration Projects Instrument Data
