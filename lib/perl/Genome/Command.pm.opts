@@ -38013,6 +38013,8 @@ $Genome::Command::OPTS_SPEC = [
   [
     '>configure-queued-instrument-data',
     [
+      'limit=s',
+      undef,
       'instrument-data=s@',
       undef,
       'help!',
