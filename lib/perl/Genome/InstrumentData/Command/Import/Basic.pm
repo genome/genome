@@ -439,7 +439,8 @@ sub _transfer_fastq_source_files {
         my $lane = eval{ 
             my $attr = $self->instrument_data->attributes(attribute_label => 'lane');
             return $attr->attribute_value if $attr;
-            return 1;
+            $attr = $self->instrument_data->add_attribute(attribute_label => 'lane', attribute_value => 1);
+            return $attr->attribute_value;
         };
         push @destination_base_names, sprintf(
             's_%s%s_sequence.txt',
