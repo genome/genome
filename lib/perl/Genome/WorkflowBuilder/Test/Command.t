@@ -75,4 +75,19 @@ EOS
     is($op->get_xml, $xml, 'xml round trip');
 };
 
+subtest 'unspecified_operation_type_attributes' => sub {
+    my $op = Genome::WorkflowBuilder::Command->create(
+        name => 'some op',
+        command => 'Genome::WorkflowBuilder::Test::DummyCommand',
+    );
+    my %got = $op->operation_type_attributes;
+    my %expected = (
+        lsfQueue => 'apipe',
+        lsfResource => "-M 25000000 -R 'select[mem>25000] rusage[mem=25000]'",
+        commandClass => 'Genome::WorkflowBuilder::Test::DummyCommand',
+    );
+    is_deeply(\%got, \%expected, 'got attributes from command');
+};
+
+
 done_testing();
