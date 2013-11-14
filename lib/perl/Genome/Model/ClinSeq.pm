@@ -310,7 +310,7 @@ sub map_workflow_inputs {
             push @inputs, tumor_filtered_fusion_file => $tumor_filtered_fusion_file;
             push @dirs, $tumor_filtered_fusion_dir;
             #Check for SV calls file
-            if(-e $wgs_build->data_directory . '/effects/svs.hq.annotated'){
+            if($wgs_build and -e $wgs_build->data_directory . '/effects/svs.hq.annotated'){
                 my $wgs_sv_file = $wgs_build->data_directory . '/effects/svs.hq.annotated';
                 my $tumor_filtered_intersected_fusion_file =  $tumor_filtered_fusion_dir . '/chimeras.filtered.intersected.bedpe';
                 push @inputs, wgs_sv_file => $wgs_sv_file;
