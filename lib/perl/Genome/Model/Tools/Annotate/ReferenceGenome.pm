@@ -94,6 +94,8 @@ sub execute {
     my $xml_path = $module_path;
     $xml_path =~ s/\.pm/\.xml/;
     my $workflow = Workflow::Operation->create_from_xml($xml_path);
+    Genome::Sys->create_directory($dirname."/annotate_reference_genome_logs");
+    $workflow->log_dir($dirname."/annotate_reference_genome_logs");
     my @errors = $workflow->validate;
     unless ($workflow->is_valid) {
         die('Errors encountered while validating workflow '. $xml_path ."\n". join("\n", @errors));
