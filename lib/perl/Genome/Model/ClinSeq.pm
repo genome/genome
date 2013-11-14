@@ -459,7 +459,7 @@ sub _resolve_workflow_for_build {
     if ($build->tumor_rnaseq_build){
         if(-e $build->tumor_rnaseq_build->data_directory . '/fusions/chimeras.bedpe'){
             push @output_properties, 'tumor_chimerascan_fusion_filter_result';
-            if(-e $build->wgs_build->data_directory . '/effects/svs.hq.annotated'){
+            if($build->wgs_build and -e $build->wgs_build->data_directory . '/effects/svs.hq.annotated'){
                 push @output_properties, 'intersect_tumor_fusion_sv_result';
             }
         }
