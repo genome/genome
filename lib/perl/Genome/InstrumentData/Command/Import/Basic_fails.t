@@ -55,8 +55,7 @@ $fail = Genome::InstrumentData::Command::Import::Basic->create(
     instrument_data_properties => [qw/ sequencing_platform=solexa lane= flow_cell_id=XXXXXX /],
 );
 ok(!$fail->execute, 'Fails w/ invalid instrument_data_properties');
-$error = $fail->error_message;
-is($error, 'Property \'instrument_data_properties\': Failed to parse with instrument data property label/value! lane=', 'Correct error meassage');
+is(Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get->error_message, 'Failed to parse with instrument data property label/value! lane=', 'Correct error meassage');
 
 $fail = Genome::InstrumentData::Command::Import::Basic->create(
     sample => $sample,
@@ -65,8 +64,7 @@ $fail = Genome::InstrumentData::Command::Import::Basic->create(
     instrument_data_properties => [qw/ sequencing_platform=solexa lane=2 lane=3 flow_cell_id=XXXXXX /],
 );
 ok(!$fail->execute, 'Fails w/ invalid instrument_data_properties');
-$error = $fail->error_message;
-is($error, 'Property \'instrument_data_properties\': Multiple values for instrument data property! lane => 2, 3', 'Correct error meassage');
+is(Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get->error_message, 'Multiple values for instrument data property! lane => 2, 3', 'Correct error meassage');
 
 my $inst_data = Genome::InstrumentData::Imported->create(
     library => $library,
