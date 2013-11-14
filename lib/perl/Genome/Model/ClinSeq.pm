@@ -227,15 +227,15 @@ sub map_workflow_inputs {
     push @inputs, igv_session_dir => $igv_session_dir;
 
     #GetVariantSources
-    if ($build->wgs_build or $build->exome_build) {
+    if ($wgs_build or $exome_build) {
       my $variant_sources_dir = $patient_dir . '/variant_source_callers';
       push @dirs, $variant_sources_dir;
-      if ($build->wgs_build){
+      if ($wgs_build){
         my $wgs_variant_sources_dir = $variant_sources_dir . '/wgs';
         push @inputs, wgs_variant_sources_dir => $wgs_variant_sources_dir;
         push @dirs, $wgs_variant_sources_dir;
       }
-      if ($build->exome_build){
+      if ($exome_build){
         my $exome_variant_sources_dir = $variant_sources_dir . '/exome';
         push @inputs, exome_variant_sources_dir => $exome_variant_sources_dir;
         push @dirs, $exome_variant_sources_dir;
@@ -247,7 +247,7 @@ sub map_workflow_inputs {
     push @inputs, import_snvs_indels_outdir => $patient_dir;
 
     #CreateMutationDiagrams
-    if ($build->wgs_build or $build->exome_build) {
+    if ($wgs_build or $exome_build) {
       my $mutation_diagram_dir = $patient_dir . '/mutation_diagrams';
       push @dirs, $mutation_diagram_dir;
       push @inputs, (
@@ -260,13 +260,13 @@ sub map_workflow_inputs {
     }
 
     #rnaseq analysis steps according to what rna-seq builds are defined as inputs
-    if ($build->normal_rnaseq_build or $build->tumor_rnaseq_build){
+    if ($normal_rnaseq_build or $tumor_rnaseq_build){
       my $rnaseq_dir = $patient_dir . '/rnaseq';
       push @dirs, $rnaseq_dir;
       push @inputs, cufflinks_percent_cutoff => 1;
 
       #TophatJunctionsAbsolute and CufflinksExpressionAbsolute for 'normal' sample
-      if ($build->normal_rnaseq_build){
+      if ($normal_rnaseq_build){
         my $normal_rnaseq_dir = $rnaseq_dir . '/normal';
         push @dirs, $normal_rnaseq_dir;
         my $normal_tophat_junctions_absolute_dir = $normal_rnaseq_dir . '/tophat_junctions_absolute';
@@ -278,7 +278,7 @@ sub map_workflow_inputs {
       }
 
       #TophatJunctionsAbsolute and CufflinksExpressionAbsolute for 'tumor' sample
-      if ($build->tumor_rnaseq_build){
+      if ($tumor_rnaseq_build){
         my $tumor_rnaseq_dir = $rnaseq_dir . '/tumor';
         push @dirs, $tumor_rnaseq_dir;
         my $tumor_tophat_junctions_absolute_dir = $tumor_rnaseq_dir . '/tophat_junctions_absolute';
@@ -290,7 +290,7 @@ sub map_workflow_inputs {
       }
 
       #CufflinksDifferentialExpression
-      if ($build->normal_rnaseq_build and $build->tumor_rnaseq_build){
+      if ($normal_rnaseq_build and $tumor_rnaseq_build){
         my $cufflinks_differential_expression_dir = $rnaseq_dir . '/cufflinks_differential_expression';
         push @dirs, $cufflinks_differential_expression_dir;
         push @inputs, cufflinks_differential_expression_dir => $cufflinks_differential_expression_dir;
@@ -298,9 +298,9 @@ sub map_workflow_inputs {
 
       #Filtered and Intersected ChimeraScan fusion output for tumor RNAseq
       #The following will only work if the rna-seq build used a processing profile that uses chimerascan.
-      if ($build->tumor_rnaseq_build){
+      if ($tumor_rnaseq_build){
         #Check for ChimeraScan fusion results
-        if(-e $build->tumor_rnaseq_build->data_directory . '/fusions/chimeras.bedpe'){
+        if(-e $tumor_rnaseq_build->data_directory . '/fusions/chimeras.bedpe'){
             my $ncbi_human_ensembl_build_id = $build->tumor_rnaseq_build->annotation_build->id;
             my $tumor_unfiltered_fusion_file = $build->tumor_rnaseq_build->data_directory . '/fusions/chimeras.bedpe';
             my $tumor_filtered_fusion_dir = $patient_dir . '/rna_fusions/tumor';
@@ -310,7 +310,7 @@ sub map_workflow_inputs {
             push @inputs, tumor_filtered_fusion_file => $tumor_filtered_fusion_file;
             push @dirs, $tumor_filtered_fusion_dir;
             #Check for SV calls file
-            if(-e $build->wgs_build->data_directory . '/effects/svs.hq.annotated'){
+            if(-e $wgs_build->data_directory . '/effects/svs.hq.annotated'){
                 my $wgs_sv_file = $build->wgs_build->data_directory . '/effects/svs.hq.annotated';
                 my $tumor_filtered_intersected_fusion_file =  $tumor_filtered_fusion_dir . '/chimeras.filtered.intersected.bedpe';
                 push @inputs, wgs_sv_file => $wgs_sv_file;
@@ -321,32 +321,32 @@ sub map_workflow_inputs {
       }
 
     #GenerateClonalityPlots
-    if ($build->wgs_build){
+    if ($wgs_build){
       my $clonality_dir = $patient_dir . "/clonality/";
       push @dirs, $clonality_dir;
       push @inputs, clonality_dir => $clonality_dir;      
     }
 
     #RunCnView
-    if ($build->wgs_build){
+    if ($wgs_build){
       my $cnv_dir = $patient_dir . "/cnv/";
       push @dirs, $cnv_dir;
       push @inputs, cnv_dir => $cnv_dir;
     }
 
     #SummarizeSvs
-    if ($build->wgs_build){
+    if ($wgs_build){
       my $sv_dir = $patient_dir . "/sv/";
       push @dirs, $sv_dir;
       push @inputs, sv_dir => $sv_dir;
     }
 
     #CreateMutationSpectrum
-    if ($build->wgs_build) {
+    if ($wgs_build) {
         push @inputs, 'wgs_mutation_spectrum_outdir' => $patient_dir . '/mutation-spectrum';
         push @inputs, 'wgs_mutation_spectrum_datatype' => 'wgs';
     }
-    if ($build->exome_build) {
+    if ($exome_build) {
         push @inputs, 'exome_mutation_spectrum_outdir' => $patient_dir . '/mutation-spectrum';
         push @inputs, 'exome_mutation_spectrum_datatype' => 'exome';
     }
