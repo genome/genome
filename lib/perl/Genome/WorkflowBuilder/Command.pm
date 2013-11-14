@@ -14,6 +14,17 @@ class Genome::WorkflowBuilder::Command {
             is => 'Command',
         },
     ],
+    has_optional => [
+        lsf_queue => {
+            is => 'String',
+        },
+        lsf_project => {
+            is => 'String',
+        },
+        lsf_resource => {
+            is => 'String',
+        },
+    ],
 };
 
 sub create {
@@ -60,10 +71,16 @@ sub operation_type_attributes {
     my %attributes = (
         commandClass => $self->command,
     );
-    for my $command_property (keys(%_EXPECTED_ATTRIBUTES)) {
-        my $value = $self->_get_attribue_from_command($command_property);
+    for my $name (keys(%_EXPECTED_ATTRIBUTES)) {
+        my $value;
+        if (defined($self->$name)) {
+            $value = $self->$name;
+        } else {
+            $value = $self->_get_attribue_from_command($name);
+        }
+
         if (defined($value)) {
-            $attributes{$_EXPECTED_ATTRIBUTES{$command_property}} = $value;
+            $attributes{$_EXPECTED_ATTRIBUTES{$name}} = $value;
         }
     }
     return %attributes;
