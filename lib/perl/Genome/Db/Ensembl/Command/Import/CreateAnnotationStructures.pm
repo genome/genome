@@ -77,7 +77,7 @@ EOS
 sub execute
 {
     my $self = shift;
-    my $result = Genome::Db::Ensembl::Command::AnnotationStructures->get_or_create(
+    my $result = Genome::Db::Ensembl::AnnotationStructures->get_or_create(
         reference_build_id => $self->reference_build_id,
         version => $self->version,
         species => $self->species,

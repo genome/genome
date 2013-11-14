@@ -10,7 +10,7 @@ my $DEFAULT_VERSION = '54_36p_v2';
 my $DEFAULT_ANNO_DB = 'NCBI-human.combined-annotation';
 
 class Genome::Model::Tools::Annotate::Chromosome {
-    is => ['Command'],
+    is => ['Command::V2'],
     has_input => [
         anno_db => {
             doc => 'The name of the annotation database to use. default_value='. $DEFAULT_ANNO_DB,
@@ -34,6 +34,12 @@ class Genome::Model::Tools::Annotate::Chromosome {
             doc => 'The output directory where the annotation file will be dumped.',
         },
     ],
+    has_param => [
+        lsf_resource => {
+            is => 'Text',
+            default_value => "-M 8000000 -R 'select[type==LINUX64 && mem>8000] rusage[mem=8000]'",
+        },
+    ],
     has_output => [
         anno_file => {
             doc => 'The output file where annotation is written.  Do not define from command line',
@@ -44,16 +50,20 @@ class Genome::Model::Tools::Annotate::Chromosome {
 
 sub execute {
     my $self = shift;
-
+    $self->debug_message("Running Annotate::Chromosome for chromosome ".$self->chromosome);
     Genome::Sys->create_directory($self->output_directory);
     $self->anno_file($self->output_directory .'/'. $self->anno_db .'_'. $self->version .'_'. $self->chromosome .'.'. $self->output_format);
     my $fh = Genome::Sys->open_file_for_writing($self->anno_file);
     unless ($fh) {
         die('Failed to open '. $self->output_format .' file: '. $self->anno_file);
     }
-    my $ti = Genome::Model->get(name => $self->anno_db)->build_by_version($self->version)->transcript_iterator(chrom_name => $self->chromosome);
+    my $annotation_build = Genome::Model->get(name => $self->anno_db)->build_by_version($self->version);
+    my $ti = $annotation_build->transcript_iterator(chrom_name => $self->chromosome);
+    $self->debug_message("Preloading substructures");
+    my @subs = Genome::TranscriptStructure->get(chrom_name => $self->chromosome, data_directory => $annotation_build->data_directory."/annotation_data");
     my $format_string = $self->output_format .'_string';
     my %gene_strings;
+    $self->debug_message("Starting transcript iteration");
     while (my $t = $ti->next) {
         my $gene = $t->gene;
         unless (defined($gene_strings{$gene->gene_id})) {

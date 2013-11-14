@@ -241,7 +241,7 @@ sub create {
         my $fh = Genome::Sys->open_file_for_reading($cpg_islands);
         while(my $line = $fh->getline) {
             chomp $line;
-            my ($chr, $start, $end, ) = split /\t/, $line; #ignoring scores on these tables (may be bad)
+            my ($bin, $chr, $start, $end, ) = split /\t/, $line; #ignoring scores on these tables (may be bad)
             $chr =~ s/chr//g;
             $self->add_range_to_set($regulatory_regions,$chr, $start, $end); 
         }

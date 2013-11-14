@@ -15,28 +15,7 @@
   <link fromOperation="Sort Annotation" fromProperty="result" toOperation="output connector" toProperty="result" />
   
   <operation name="Annotate Chromosome" parallelBy="chromosome">
-    <link fromOperation="input connector" fromProperty="chromosome" toOperation="Dump Annotation" toProperty="chromosome" />
-    <link fromOperation="input connector" fromProperty="anno_db" toOperation="Dump Annotation" toProperty="anno_db" />
-    <link fromOperation="input connector" fromProperty="version" toOperation="Dump Annotation" toProperty="version" />
-    <link fromOperation="input connector" fromProperty="output_format" toOperation="Dump Annotation" toProperty="output_format" />
-    <link fromOperation="input connector" fromProperty="output_directory" toOperation="Dump Annotation" toProperty="output_directory" />
-
-    <link fromOperation="Dump Annotation" fromProperty="anno_file" toOperation="output connector" toProperty="anno_file" />
-    <link fromOperation="Dump Annotation" fromProperty="result" toOperation="output connector" toProperty="result" />
-
-    <operation name="Dump Annotation">
       <operationtype commandClass="Genome::Model::Tools::Annotate::Chromosome" typeClass="Workflow::OperationType::Command" />
-    </operation>
-
-    <operationtype typeClass="Workflow::OperationType::Model">
-      <inputproperty>chromosome</inputproperty>
-      <inputproperty>anno_db</inputproperty>
-      <inputproperty>version</inputproperty>
-      <inputproperty>output_format</inputproperty>
-      <inputproperty>output_directory</inputproperty>
-      <outputproperty>anno_file</outputproperty>
-      <outputproperty>result</outputproperty>
-    </operationtype>
   </operation>
 
   <operation name="Merge Annotation">
