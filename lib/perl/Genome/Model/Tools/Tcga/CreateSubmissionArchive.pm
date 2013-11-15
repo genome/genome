@@ -73,32 +73,40 @@ class Genome::Model::Tools::Tcga::CreateSubmissionArchive {
     is => 'Command::V2',
     has => [
         models => {
+            doc => "Models to include in the archive",
             is => 'Genome::Model::SomaticVariation',
             is_many => 1,
         },       
         output_dir => {
             is => "Text",
+            doc => "Directory where the archives should be written",
         },
         archive_name => {
             is => "Text",
+            doc => "Name of the archive, e.g genome.wustl.edu_SARC.IlluminaHiSeq_DNASeq",
         },
         archive_version => {
             is => "Text",
+            doc => "Version of the archive, e.g. 1.0.0",
         },
         create_archive => {
             is => "Boolean",
             default_value => 0,
+            doc => "Create the final tar.gz and md5 files",
         },
         cghub_id_file => {
             is => "Text",
+            doc => "A tab-delimited file that maps bam files (column header: BAM_path) to CGHub ids (column header: CGHub_ID).",
         },
     ],
     has_optional => [
         somatic_maf_file => {
             is => "Text",
+            doc => "Somatic maf file to be included in the archive",
         },
         germline_maf_file => {
             is => "Text",
+            doc => "Germline maf file to be included in the archive",
         },
     ],
 };
