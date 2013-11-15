@@ -159,4 +159,35 @@ subtest 'Parallel-By Data Source is_many' => sub {
     ok($@, 'non is_many properties cannot be linked to parallelBy input');
 };
 
+# This tests that one can have a parallel_by operation with one singular input and one parallel_by is_many input
+subtest 'Parallel-By Link Plus Single Link' => sub {
+    my $source_op = Genome::WorkflowBuilder::Command->create(
+        name => 'source op',
+        command => 'Genome::WorkflowBuilder::Test::DummyCommand'
+    );
+    my $destination_op = Genome::WorkflowBuilder::Command->create(
+        name => 'destination op',
+        command => 'Genome::WorkflowBuilder::Test::DummyCommandTwoInputs',
+        parallel_by => 'input',
+    );
+
+    my $link_many = Genome::WorkflowBuilder::Link->create(
+        source => $source_op, source_property => 'many_output',
+        destination => $destination_op, destination_property => 'input'
+    );
+    ok($link_many->validate, "parallelBy link validates");
+
+    my $link_single = Genome::WorkflowBuilder::Link->create(
+        source => $source_op, source_property => 'single_output',
+        destination => $destination_op, destination_property => 'input_two'
+    );
+    ok($link_single->validate, "single link validates");
+
+    my $expected_xml_many = '<link fromOperation="source op" fromProperty="many_output" toOperation="destination op" toProperty="input"/>';
+    my $expected_xml_single = '<link fromOperation="source op" fromProperty="single_output" toOperation="destination op" toProperty="input_two"/>';
+
+    is($link_many->get_xml, $expected_xml_many, 'parallelBy link produces expected xml');
+    is($link_single->get_xml, $expected_xml_single, 'single link produces expected xml');
+};
+
 done_testing();
