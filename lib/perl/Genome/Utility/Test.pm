@@ -91,7 +91,7 @@ sub _compare_ok_parse_args {
                 $replacement = defined($r->[1]) ? $r->[1] : '';  # Default replacement is empty string
                 $coderef = sub {
                     my $orig = shift;
-                    (my $changed = $orig) =~ s/$regex/$replacement/;
+                    (my $changed = $orig) =~ s/$regex/$replacement/g;
                     return $changed;
                 };
 

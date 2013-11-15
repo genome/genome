@@ -158,6 +158,14 @@ my $cmd = Genome::Model::Tools::Tcga::CreateSubmissionArchive->create(
 );
 ok($cmd, "Command created");
 ok($cmd->execute, "Command executed");
+for my $outfile (qw(test_archive.Level_2.1.0.0/genome.wustl.edu.TCGA-UPN-A.snv.1.vcf test_archive.Level_2.1.0.0/genome.wustl.edu.TCGA-UPN-A.indel.1.vcf test_archive.Level_2.1.0.0/MANIFEST.txt test_archive.mage-tab.1.0.0/test_archive.1.0.0.idf.txt test_archive.mage-tab.1.0.0/test_archive.1.0.0.sdrf.txt)) {
+    compare_ok("$archive_output_dir/$outfile", "$base_dir/archive_test/$outfile", replace => [['PP_ID' => $test_somatic_build->normal_build->processing_profile->id]], name => "file $outfile diffed correctly");
+}
+ok(-s "$archive_output_dir/test_archive.Level_2.1.0.0.tar.gz", "vcf archive was created");
+ok(-s "$archive_output_dir/test_archive.Level_2.1.0.0.tar.gz.md5", "vcf archive was md5ed");
+ok(-s "$archive_output_dir/test_archive.mage-tab.1.0.0.tar.gz", "magetab archive was created");
+ok(-s "$archive_output_dir/test_archive.mage-tab.1.0.0.tar.gz.md5", "magetab archive was md5ed");
+ok(-s "$archive_output_dir/test_archive.mage-tab.1.0.0/MANIFEST.txt", "magetab manifest was created");
 
 is($class->resolve_maf_protocol, "genome.wustl.edu:maf_creation:data_consolidation:01", "Maf protocol resolved correctly");
 is($class->resolve_mapping_protocol($test_somatic_build->normal_build), "genome.wustl.edu:alignment:".$test_somatic_build->normal_build->processing_profile->id.":01", "Mapping protocol resolved correctly");
