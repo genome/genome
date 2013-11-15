@@ -309,12 +309,14 @@ sub map_workflow_inputs {
             push @inputs, ncbi_human_ensembl_build_id => $ncbi_human_ensembl_build_id;
             push @inputs, tumor_filtered_fusion_file => $tumor_filtered_fusion_file;
             push @dirs, $tumor_filtered_fusion_dir;
-            #Check for SV calls file
-            if($wgs_build and -e $wgs_build->data_directory . '/effects/svs.hq.annotated'){
-                my $wgs_sv_file = $wgs_build->data_directory . '/effects/svs.hq.annotated';
-                my $tumor_filtered_intersected_fusion_file =  $tumor_filtered_fusion_dir . '/chimeras.filtered.intersected.bedpe';
-                push @inputs, wgs_sv_file => $wgs_sv_file;
-                push @inputs, tumor_filtered_intersected_fusion_file => $tumor_filtered_intersected_fusion_file;
+            if ($wgs_build){
+                #Check for SV calls file
+                if(-e $build->wgs_build->data_directory . '/effects/svs.hq.annotated'){
+                    my $wgs_sv_file = $build->wgs_build->data_directory . '/effects/svs.hq.annotated';
+                    my $tumor_filtered_intersected_fusion_file =  $tumor_filtered_fusion_dir . '/chimeras.filtered.intersected.bedpe';
+                    push @inputs, wgs_sv_file => $wgs_sv_file;
+                    push @inputs, tumor_filtered_intersected_fusion_file => $tumor_filtered_intersected_fusion_file;
+                }
             }
           }
         }
@@ -459,8 +461,10 @@ sub _resolve_workflow_for_build {
     if ($build->tumor_rnaseq_build){
         if(-e $build->tumor_rnaseq_build->data_directory . '/fusions/chimeras.bedpe'){
             push @output_properties, 'tumor_chimerascan_fusion_filter_result';
-            if($build->wgs_build and -e $build->wgs_build->data_directory . '/effects/svs.hq.annotated'){
-                push @output_properties, 'intersect_tumor_fusion_sv_result';
+            if ($build->wgs_build){
+                if(-e $build->wgs_build->data_directory . '/effects/svs.hq.annotated'){
+                    push @output_properties, 'intersect_tumor_fusion_sv_result';
+                }
             }
         }
     }
@@ -774,14 +778,16 @@ sub _resolve_workflow_for_build {
             $add_link->($input_connector, 'ncbi_human_ensembl_build_id', $tumor_chimerascan_filtered_fusion_op, 'annotation_build_id');
             $add_link->($input_connector, 'tumor_filtered_fusion_file', $tumor_chimerascan_filtered_fusion_op, 'output_file');
             $add_link->($tumor_chimerascan_filtered_fusion_op, 'result', $output_connector, 'tumor_chimerascan_fusion_filter_result');
-            if(-e $build->wgs_build->data_directory . '/effects/svs.hq.annotated'){
-                my $msg = "Intersecting filtered tumor ChimeraScan fusion calls with WGS SV calls.";
-                $intersect_tumor_fusion_sv_op = $add_step->($msg, 'Genome::Model::Tools::ChimeraScan::IntersectSv');
-                $add_link->($input_connector, 'ncbi_human_ensembl_build_id', $intersect_tumor_fusion_sv_op, 'annotation_build_id');
-                $add_link->($input_connector, 'tumor_filtered_intersected_fusion_file', $intersect_tumor_fusion_sv_op, 'output_file');
-                $add_link->($input_connector, 'wgs_sv_file', $intersect_tumor_fusion_sv_op, 'sv_output_file');
-                $add_link->($tumor_chimerascan_filtered_fusion_op, 'filtered_bedpe_file', $intersect_tumor_fusion_sv_op, 'filtered_bedpe_file');
-                $add_link->($intersect_tumor_fusion_sv_op, 'result', $output_connector, 'intersect_tumor_fusion_sv_result');
+            if ($build->wgs_build){
+                if(-e $build->wgs_build->data_directory . '/effects/svs.hq.annotated'){
+                    my $msg = "Intersecting filtered tumor ChimeraScan fusion calls with WGS SV calls.";
+                    $intersect_tumor_fusion_sv_op = $add_step->($msg, 'Genome::Model::Tools::ChimeraScan::IntersectSv');
+                    $add_link->($input_connector, 'ncbi_human_ensembl_build_id', $intersect_tumor_fusion_sv_op, 'annotation_build_id');
+                    $add_link->($input_connector, 'tumor_filtered_intersected_fusion_file', $intersect_tumor_fusion_sv_op, 'output_file');
+                    $add_link->($input_connector, 'wgs_sv_file', $intersect_tumor_fusion_sv_op, 'sv_output_file');
+                    $add_link->($tumor_chimerascan_filtered_fusion_op, 'filtered_bedpe_file', $intersect_tumor_fusion_sv_op, 'filtered_bedpe_file');
+                    $add_link->($intersect_tumor_fusion_sv_op, 'result', $output_connector, 'intersect_tumor_fusion_sv_result');
+                }
             }
         }
     }
