@@ -155,6 +155,7 @@ sub _validate_general_operation_type {
         }
     }
 
+    return 1;
 }
 
 sub _validate_source_property {
@@ -168,6 +169,8 @@ sub _validate_source_property {
             ));
         }
     }
+
+    return 1;
 }
 
 sub _validate_output_property {
@@ -182,13 +185,16 @@ sub _validate_output_property {
             ));
         }
     }
+
+    return 1;
 }
 
 sub _validate_parallel_by_destination {
     my $self = shift;
 
     if (defined($self->source) && defined($self->destination)) {
-        if (defined($self->destination->parallel_by)) {
+        if (defined($self->destination->parallel_by) &&
+            $self->destination->parallel_by eq $self->destination_property) {
             unless ($self->source->is_many_property($self->source_property)) {
                 die $self->error_message(sprintf(
                     "Source property '%s' (%s) is not is_many for parallel_by "
@@ -199,6 +205,8 @@ sub _validate_parallel_by_destination {
             }
         }
     }
+
+    return 1;
 }
 
 
