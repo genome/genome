@@ -13,7 +13,7 @@ my $class_mapping = Genome::Site::TGI::Synchronize::Classes::Dictionary->get;
 ok($class_mapping, 'get class mapping');
 
 my @entities_to_sync = $class_mapping->entity_names;
-is(@entities_to_sync, 11, 'entity names');
+is(@entities_to_sync, 12, 'entity names');
 
 ok(!eval{$class_mapping->lims_class_for_entity_name;}, 'failed to get lims class for undef entity');
 is($class_mapping->error_message, 'No entity name given to get LIMS class!', 'correct error');
