@@ -18,6 +18,9 @@ class Genome::Model::ClinSeq::Command::MakeCircosPlot {
                                 doc => 'Directory where output will be written', },
 
     ],
+    has_optional_input => [
+        clinseq_result               => { is => 'Boolean', doc => 'Dependency for the ClinSeq pipeline' },
+    ],
     has_param => [
         use_version         => { is => 'Text',
                                 valid_values => [ Genome::Sys->sw_versions("circos") ],
@@ -214,29 +217,31 @@ EOS
 
 ###Fusions
 #TODO /gscmnt/gc8001/info/model_data/9761cf3dbb73452980890eaf0e8aadb0/buildf4af67af82b94727bb4ac30554503e4b/fusions/chimeras.bedpe.filtered.txt
-#        if(my $tumor_rnaseq_build = $build->tumor_rnaseq_build){
-#            Genome::Sys->copy_file($tumor_rnaseq_build->data_directory."/fusions/chimeras.bedpe.filtered.txt", "$output_directory/raw/chimeras.bedpe.filtered.txt");
-#            my $fusions = Genome::Sys->read_file("$output_directory/raw/chimeras.bedpe.filtered.txt");
-#            my $fusions_fh = Genome::Sys->open_file_for_writing("$output_directory/data/chimeras.bedpe.filtered.txt");
-#           while ($fusions =~ /(\S+)\s+(\S+)\s+chr(\S+):(\d+)-(\d+)\s+chr(\S+):(\d+)-(\d+)/g) {
-#                $genes_noAmpDel{$1}="hs$3 $4 $5";
-#                $genes_noAmpDel{$2}="hs$6 $7 $8";
-#                $genes_AmpDel{$1}="hs$3 $4 $5";
-#                $genes_AmpDel{$2}="hs$6 $7 $8";
-#                print $fusions_fh ("hs$3 $4 $5 hs$6 $7 $8\n");
-#            }
-#            $fusions_fh->close;
-#            $config .=<<EOS;
+        if(my $tumor_rnaseq_build = $build->tumor_rnaseq_build && -e $dataDir."/rna_fusions/tumor/chimeras.filtered.bedpe"){
+            Genome::Sys->copy_file($dataDir."/rna_fusions/tumor/chimeras.filtered.bedpe", "$output_directory/raw/chimeras.filtered.bedpe");
+            my $fusions = Genome::Sys->read_file("$output_directory/raw/chimeras.filtered.bedpe");
+            my $fusions_fh = Genome::Sys->open_file_for_writing("$output_directory/data/chimeras.filtered.bedpe");
+           while ($fusions =~ /(\d+|X|Y)\s(\d+)\s(\d+)\s(\d+|X|Y)\s(\d+)\s(\d+)\s+\w+\s\d+\s[+|-]\s[+|-]\s(\S+):(\S+)/g) {
+           		print "gene 1 : $7 hs$1 $2 $3";
+           		print "gene 2 : $8 hs$4 $5 $6";
+#                $genes_noAmpDel{$7}="hs$1 $2 $3";
+#                $genes_noAmpDel{$8}="hs$4 $5 $6";
+#                $genes_AmpDel{$7}="hs$1 $2 $3";
+#                $genes_AmpDel{$8}="hs$4 $5 $6";
+                print $fusions_fh ("hs$1 $2 $3 hs$4 $5 $6\n");
+            }
+            $fusions_fh->close;
+            $config .=<<EOS;
 #Fusions RNAseq support
-#<link>
-#file          = $output_directory/data/chimeras.bedpe.filtered.txt
-#radius          = 0.50r
-#bezier_radius = 0r
-#color         = red_a1
-#thickness     = 2
-#</link>        
-#EOS
-#       }
+<link>
+file          = $output_directory/data/chimeras.filtered.bedpe
+radius          = 0.50r
+bezier_radius = 0r
+color         = red_a1
+thickness     = 2
+</link>        
+EOS
+       }
 
     $config.=<<EOS;
 </links>

@@ -361,7 +361,12 @@ sub map_workflow_inputs {
     push @inputs, 'gene_symbol_lists_dir' => $gene_symbol_lists_dir;
     push @inputs, 'gene_name_columns' => ['mapped_gene_name'];
     push @inputs, 'gene_name_regex' => 'mapped_gene_name';
-
+    
+    #MakeCircosPlot
+    my $circos_dir = $patient_dir . "/circos";
+    push @dirs, $circos_dir;
+    push @inputs, circos_outdir => $circos_dir;
+    
     # For now it works to create directories here because the data_directory has been allocated.  
     #It is possible that this would not happen until later, which would mess up assigning inputs to many of the commands.
     for my $dir (@dirs) {
@@ -417,6 +422,7 @@ sub _resolve_workflow_for_build {
             dgidb_wgs_snv_result
             dgidb_wgs_indel_result
             wgs_variant_sources_result
+            circos_result
         );
     }
 
@@ -825,9 +831,10 @@ sub _resolve_workflow_for_build {
     #SummarizeCnvs - Generate a summary of CNV results, copy cnvs.hq, cnvs.png, single-bam copy number plot PDF, etc. to the cnv directory
     #This step relies on the generate-clonality-plots step already having been run 
     #It also relies on run-cn-view step having been run already
+    my $summarize_cnvs_op;
     if ($build->wgs_build){
         my $msg = "Summarize CNV results from WGS somatic variation";
-        my $summarize_cnvs_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeCnvs");
+        $summarize_cnvs_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeCnvs");
         $add_link->($input_connector, 'cnv_dir', $summarize_cnvs_op, 'outdir');
         $add_link->($input_connector, 'wgs_build', $summarize_cnvs_op, 'build');
         $add_link->($clonality_op, 'cnv_hmm_file', $summarize_cnvs_op);
@@ -1002,6 +1009,7 @@ sub _resolve_workflow_for_build {
     #SummarizeTier1SnvSupport - For each of the following: WGS SNVs, Exome SNVs, and WGS+Exome SNVs, do the following:
     #Get BAM readcounts for WGS (tumor/normal), Exome (tumor/normal), RNAseq (tumor), RNAseq (normal) - as available of course
     #TODO: Break this down to do direct calls to GetBamReadCounts instead of wrapping it.
+    my $summarize_tier1_snv_support_op;
     for my $run (qw/wgs exome wgs_exome/) {
       if ($run eq 'wgs' and not $build->wgs_build) {
         next;
@@ -1017,7 +1025,7 @@ sub _resolve_workflow_for_build {
       $txt_name =~ s/wgs/WGS/;
       $txt_name =~ s/exome/Exome/;
       $msg = "$txt_name Summarize Tier 1 SNV Support (BAM read counts)";
-      my $summarize_tier1_snv_support_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeTier1SnvSupport");
+      $summarize_tier1_snv_support_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeTier1SnvSupport");
       $add_link->($import_snvs_indels_op, $run . "_snv_file", $summarize_tier1_snv_support_op, $run . "_positions_file");
       $add_link->($input_connector, 'wgs_build', $summarize_tier1_snv_support_op);
       $add_link->($input_connector, 'exome_build', $summarize_tier1_snv_support_op);
@@ -1029,6 +1037,16 @@ sub _resolve_workflow_for_build {
       $add_link->($input_connector, 'verbose', $summarize_tier1_snv_support_op);
       $add_link->($summarize_tier1_snv_support_op, 'result', $output_connector, "summarize_${run}_tier1_snv_support_result");
     }
+    
+    #MakeCircosPlot - Creates a Circos plot to summarize the data using MakeCircosPlot.pm
+    $msg = "Creating a Circos plot using MakeCircosPlot";
+    my $make_circos_plot_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::MakeCircosPlot");
+    $add_link->($input_connector, 'build', $make_circos_plot_op, 'build');
+    $add_link->($input_connector, 'circos_outdir', $make_circos_plot_op, 'output_directory');
+#    $add_link->($summarize_tier1_snv_support_op, 'result', $make_circos_plot_op, 'clinseq_result');
+    $add_link->($summarize_cnvs_op, 'result', $make_circos_plot_op, 'clinseq_result');
+    $add_link->($make_circos_plot_op, 'result', $output_connector, 'circos_result');
+    
 
     # REMINDER:
     # For new steps be sure to add their result to the output connector if they do not feed into another step.
