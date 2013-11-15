@@ -134,21 +134,18 @@ sub execute {
         Genome::Sys->copy_file($snvs_file, "$vcf_archive_dir/$snvs_vcf");
         Genome::Sys->copy_file($indels_file, "$vcf_archive_dir/$indels_vcf");
 
-        my $vcf_reader = new Genome::File::Vcf::Reader("$vcf_archive_dir/$snvs_vcf");
-        my $vcf_sample_info = $vcf_reader->header->metainfo->{"SAMPLE"};
+        my $vcf_sample_info = $self->get_sample_info_from_vcf("$vcf_archive_dir/$snvs_vcf");
         unless (defined $vcf_sample_info) {
             die $self->error_message("No SAMPLE vcf header in $snvs_vcf for build ".$somatic_build->id);
         }
 
         for my $build(($normal_build, $tumor_build)) {
-            my $sample_info;
-            for my $sample (@$vcf_sample_info) {
-                if ($sample->{"ID"}->{content} eq $build->subject->extraction_label) {
-                    $sample_info = $sample;
-                }
+            my $sample_info = $self->get_info_for_sample($build->subject->extraction_label, $vcf_sample_info);
+            
+            for my $vcf($snvs_vcf, $indels_vcf) {
+                push @sdrf_rows, $self->create_vcf_row($build, $self->archive_name.".".$self->archive_version, \%protocol_db, $self->cghub_id_file, $vcf, $sample_info);
             }
-            push @sdrf_rows, $self->create_vcf_row($build, $self->archive_name.".".$self->archive_version, \%protocol_db, $self->cghub_id_file, $snvs_vcf, $sample_info);
-            push @sdrf_rows, $self->create_vcf_row($build, $self->archive_name.".".$self->archive_version, \%protocol_db, $self->cghub_id_file, $indels_vcf, $sample_info);
+
             if ($self->somatic_maf_file) {
                 Genome::Sys->copy_file($self->somatic_maf_file, $vcf_archive_dir."/somatic.maf");
                 push @sdrf_rows, $self->create_maf_row($build, $self->archive_name.".".$self->archive_version, "somatic.maf", \%protocol_db, $self->cghub_id_file, $sample_info);
@@ -163,11 +160,8 @@ sub execute {
     $self->print_idf($magetab_archive_dir."/".$self->archive_name.".".$self->archive_version.".".$IDF_FILE_EXTENSION.".txt", \%protocol_db);
     $self->print_sdrf($magetab_archive_dir."/".$self->archive_name.".".$self->archive_version.".".$SDRF_FILE_EXTENSION.".txt", @sdrf_rows);
 
-    #print manifest
-    my $cd_cmd = "cd $vcf_archive_dir ; md5sum * > $MANIFEST_FILE_NAME";
-    Genome::Sys->shellcmd(cmd => $cd_cmd, output_files => [$vcf_archive_dir."/$MANIFEST_FILE_NAME"]);
-    $cd_cmd = "cd $magetab_archive_dir ; md5sum * > $MANIFEST_FILE_NAME";
-    Genome::Sys->shellcmd(cmd => $cd_cmd, output_files => [$magetab_archive_dir."/$MANIFEST_FILE_NAME"]);
+    $self->print_manifest($vcf_archive_dir);
+    $self->print_manifest($magetab_archive_dir);
 
     if ($self->create_archive) {
         $self->tar_and_md5_dir($vcf_archive_dir);
@@ -175,6 +169,32 @@ sub execute {
     }
 
     return 1;
+}
+
+sub print_manifest {
+    my $self = shift;
+    my $directory = shift;
+    my $cd_cmd = "cd $directory ; md5sum * > $MANIFEST_FILE_NAME";
+    Genome::Sys->shellcmd(cmd => $cd_cmd, output_files => [$directory."/$MANIFEST_FILE_NAME"]);
+}
+
+sub get_info_for_sample {
+    my $self = shift;
+    my $desired_sample = shift;
+    my $sample_info_collection = shift;
+    for my $sample (@$sample_info_collection) {
+        if ($sample->{"ID"}->{content} eq $desired_sample) {
+            return $sample;
+        }
+    }
+    die "Info for sample $desired_sample was not available";
+}
+
+sub get_sample_info_from_vcf {
+    my $self = shift;
+    my $vcf_file = shift;
+    my $vcf_reader = new Genome::File::Vcf::Reader($vcf_file);
+    return $vcf_reader->header->metainfo->{"SAMPLE"};
 }
 
 sub tar_and_md5_dir {
