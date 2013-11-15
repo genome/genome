@@ -125,14 +125,15 @@ sub execute {
 
         my $patient_id = $self->resolve_patient_id($somatic_build);
         my $patient_id_counter = ++$patient_ids{$patient_id};
-        my $snvs_vcf = "genome.wustl.edu.$patient_id.snv.".$patient_id_counter.".vcf";
-        my $indels_vcf = "genome.wustl.edu.$patient_id.indel.".$patient_id_counter.".vcf";
+        
+        my $snvs_vcf = $self->construct_vcf_name("snv", $patient_id, $patient_id_counter);
+        my $indels_vcf = $self->construct_vcf_name("indel", $patient_id, $patient_id_counter);
 
-        my $snvs_file = $somatic_build->data_directory."/variants/snvs_tcga/snvs_tcga.vcf";
-        my $indels_file = $somatic_build->data_directory."/variants/indels_tcga/indels_tcga.vcf";
-        die "Tcga compliant snv and indel vcfs not found for build ".$somatic_build->id unless(-s $snvs_file and -s $indels_file);
-        Genome::Sys->copy_file($snvs_file, "$vcf_archive_dir/$snvs_vcf");
-        Genome::Sys->copy_file($indels_file, "$vcf_archive_dir/$indels_vcf");
+        for my $variant_type (qw(snv indel)) {
+            my $local_file = $somatic_build->data_directory."/variants/".$variant_type."s_tcga/".$variant_type."s_tcga.vcf";
+            die "Tcga compliant $variant_type vcf not found for build ".$somatic_build->id unless(-s $local_file);
+            Genome::Sys->copy_file($local_file, "$vcf_archive_dir/".$self->construct_vcf_name($variant_type, $patient_id, $patient_id_counter));
+        }
 
         my $vcf_sample_info = $self->get_sample_info_from_vcf("$vcf_archive_dir/$snvs_vcf");
         unless (defined $vcf_sample_info) {
@@ -146,13 +147,12 @@ sub execute {
                 push @sdrf_rows, $self->create_vcf_row($build, $self->archive_name.".".$self->archive_version, \%protocol_db, $self->cghub_id_file, $vcf, $sample_info);
             }
 
-            if ($self->somatic_maf_file) {
-                Genome::Sys->copy_file($self->somatic_maf_file, $vcf_archive_dir."/somatic.maf");
-                push @sdrf_rows, $self->create_maf_row($build, $self->archive_name.".".$self->archive_version, "somatic.maf", \%protocol_db, $self->cghub_id_file, $sample_info);
-            }
-            if ($self->germline_maf_file) {
-                Genome::Sys->copy_file($self->germline_maf_file, $vcf_archive_dir."/germline.maf");
-                push @sdrf_rows, $self->create_maf_row($build, $self->archive_name.".".$self->archive_version, "germline.maf", \%protocol_db, $self->cghub_id_file, $sample_info);
+            for my $maf_type (qw(somatic germline)) {
+                my $maf_accessor = $maf_type."_maf_file";
+                if ($self->$maf_accessor) {
+                    Genome::Sys->copy_file($self->$maf_accessor, $vcf_archive_dir."/$maf_type.maf");
+                    push @sdrf_rows, $self->create_maf_row($build, $self->archive_name.".".$self->archive_version, "$maf_type.maf", \%protocol_db, $self->cghub_id_file, $sample_info);
+                }
             }
         }
     }
@@ -169,6 +169,14 @@ sub execute {
     }
 
     return 1;
+}
+
+sub construct_vcf_name {
+    my $self = shift;
+    my $variant_type = shift;
+    my $patient_id = shift;
+    my $patient_id_counter = shift;
+    my $snvs_vcf = "genome.wustl.edu.$patient_id.$variant_type.".$patient_id_counter.".vcf";
 }
 
 sub print_manifest {
