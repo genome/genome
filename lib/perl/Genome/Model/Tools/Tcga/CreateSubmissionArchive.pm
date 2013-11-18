@@ -49,15 +49,6 @@ my @HEADERS = (
     ["Validation", $SDRF_VALIDATION_HEADERS],
 );
 
-my @IDF_FIELDS = (
-    "Investigation Title", "Experimental Design", "Experimental Design Term Source REF",
-    "Experimental Factor Name", "Experimental Factor Type", "Person Last Name",
-    "Person First Name", "Person Middle Initials", "Person Email", "Person Address",
-    "Person Affiliation", "Person Roles", "PubMed ID", "Publication Author List",
-    "Publication Title", "Publication Status", "Experiment Description",
-    "SDRF File",
-);
-
 my %PROTOCOL_PARAMS = (
     "library preparation" => ["Vendor", "Catalog Name", "Catalog Number", "Annotation URL", "Product URL", "Target File URL", 
                             "Target File Format", "Target File Format Version", "Probe File URL", "Probe File Format",
@@ -115,7 +106,7 @@ sub execute {
     my $self = shift;
     my @sdrf_rows;
     my %protocol_db;
-
+    my $idf = Genome::Model::Tools::Tcga::Idf->create;
     my $vcf_archive_dir = $self->output_dir."/".$self->archive_name.".Level_2.".$self->archive_version;
     Genome::Sys->create_directory($vcf_archive_dir);
     my $magetab_archive_dir = $self->output_dir."/".$self->archive_name.".mage-tab.".$self->archive_version;
@@ -152,14 +143,14 @@ sub execute {
             my $sample_info = $self->get_info_for_sample($build->subject->extraction_label, $vcf_sample_info);
             
             for my $vcf($snvs_vcf, $indels_vcf) {
-                push @sdrf_rows, $self->create_vcf_row($build, $self->archive_name.".".$self->archive_version, \%protocol_db, $self->cghub_id_file, $vcf, $sample_info);
+                push @sdrf_rows, $self->create_vcf_row($build, $self->archive_name.".".$self->archive_version, \%protocol_db, $self->cghub_id_file, $vcf, $sample_info, $idf);
             }
 
             for my $maf_type (qw(somatic germline)) {
                 my $maf_accessor = $maf_type."_maf_file";
                 if ($self->$maf_accessor) {
                     Genome::Sys->copy_file($self->$maf_accessor, $vcf_archive_dir."/$maf_type.maf");
-                    push @sdrf_rows, $self->create_maf_row($build, $self->archive_name.".".$self->archive_version, "$maf_type.maf", \%protocol_db, $self->cghub_id_file, $sample_info);
+                    push @sdrf_rows, $self->create_maf_row($build, $self->archive_name.".".$self->archive_version, "$maf_type.maf", \%protocol_db, $self->cghub_id_file, $sample_info, $idf);
                 }
             }
         }
@@ -242,10 +233,11 @@ sub create_maf_row {
     my $protocol_db = shift;
     my $cghub_id_file = shift;
     my $sample_info = shift;
+    my $idf = shift;
 
-    my $row = $self->fill_in_common_fields($build, $archive_name, $protocol_db, $cghub_id_file, $sample_info);
+    my $row = $self->fill_in_common_fields($build, $archive_name, $protocol_db, $cghub_id_file, $sample_info, $idf);
 
-    $row->{"Maf Protocol REF"} = $self->resolve_maf_protocol($build, $protocol_db);
+    $row->{"Maf Protocol REF"} = $idf->resolve_maf_protocol($build, $protocol_db);
     #Required if providing maf file:
     $row->{"Maf Derived Data File"} = $maf_file;
     $row->{"Maf Comment [TCGA Spec Version]"} = 2.3;
@@ -257,81 +249,6 @@ sub create_maf_row {
     return $row;
 }
 
-sub resolve_maf_protocol {
-    my $self = shift;
-    my $build = shift;
-    my $protocol_db = shift;
-
-    unless (defined $protocol_db->{"mutation filtering annotation and curation"}) {
-        $protocol_db->{"mutation filtering annotation and curation"} = [{name => "genome.wustl.edu:maf_creation:data_consolidation:01",
-                                                                description => "Automatic and manual filtering and curation of variants"}];
-    }
-    return $protocol_db->{"mutation filtering annotation and curation"}->[0]->{name};
-}
-
-sub resolve_mapping_protocol {
-    my $self = shift;
-    my $build = shift;
-    my $protocol_db = shift;
-
-    my $name = "genome.wustl.edu:alignment:".$build->processing_profile->id.":01";
-    my $description = $build->processing_profile->name;
-    if (defined $protocol_db->{"sequence alignment"}){
-        my $found = 0;
-        for my $protocol (@{$protocol_db->{"variant calling"}}) {
-            if ($protocol->{name} eq $name) {
-                $found = 1;
-                last;
-            }
-        }
-        unless ($found) {
-            push @{$protocol_db->{"variant calling"}}, {name => $name, description => $description};
-        }      
-    }
-    else {
-        $protocol_db->{"sequence alignment"} = [{name => "genome.wustl.edu:DNA_sequencing:Illumina:01",
-                                                                description => "Illumina sequencing by synthesis"}];
-    }
-    return $name;
-}
-
-sub resolve_library_protocol {
-    my $self = shift;
-    my $build = shift;
-    my $protocol_db = shift;
-
-    unless (defined $protocol_db->{"library preparation"}){
-        $protocol_db->{"library preparation"} = [{name => "genome.wustl.edu:DNA_extraction:Illumina_DNASeq:01",
-                                                                description => "Illumina library prep"}];
-    }
-    return $protocol_db->{"library preparation"}->[0]->{name};
-}
-
-sub resolve_variants_protocol {
-    my $self = shift;
-    my $build = shift;
-    my $protocol_db = shift;
-
-    my $name = "genome.wustl.edu:variant_calling:".$build->processing_profile->id.":01";
-    my $description = $build->processing_profile->name;
-    if (defined $protocol_db->{"variant calling"}){
-        my $found = 0;
-        for my $protocol (@{$protocol_db->{"variant calling"}}) {
-            if ($protocol->{name} eq $name) {
-                $found = 1;
-                last;
-            }
-        }
-        unless ($found) {
-            push @{$protocol_db->{"variant calling"}}, {name => $name, description => $description};
-        }
-    }
-    else {
-        $protocol_db->{"variant calling"} = [{name => $name, description => $description}];
-    }
-    return $name;
-}
-
 sub create_vcf_row {
     my $self = shift;
     my $build = shift;
@@ -340,8 +257,9 @@ sub create_vcf_row {
     my $cghub_id_file = shift;
     my $vcf = shift;
     my $sample_info = shift;
+    my $idf = shift;
 
-    my $row = $self->fill_in_common_fields($build, $archive_name, $protocol_db, $cghub_id_file, $sample_info);
+    my $row = $self->fill_in_common_fields($build, $archive_name, $protocol_db, $cghub_id_file, $sample_info, $idf);
 
     $row->{"Variants Derived Data File"} = $vcf;
     return $row;
@@ -354,6 +272,7 @@ sub fill_in_common_fields {
     my $protocol_db = shift;
     my $cghub_id_file = shift;
     my $sample = shift;
+    my $idf = shift;
 
     my %row;
     $row{"Material Extract Name"} = $sample->{"SampleUUID"}->{content};
@@ -380,15 +299,15 @@ sub fill_in_common_fields {
     $row{"Material Comment [is tumor]"} = $is_tumor;
     $row{"Material Material Type"} = "DNA";
     $row{"Material Comment [TCGA Genome Reference]"} = "GRCh-37lite";
-    $row{"Library Protocol REF"} = $self->resolve_library_protocol($build, $protocol_db);
+    $row{"Library Protocol REF"} = $idf->resolve_library_protocol($build, $protocol_db);
     ($row{"Library Parameter Value [Vendor]"},
     $row{"Library Parameter Value [Catalog Name]"},
     $row{"Library Parameter Value [Catalog Number]"}) = $self->resolve_capture_reagent($build);
-    $row{"Mapping Protocol REF"} = $self->resolve_mapping_protocol($build, $protocol_db);
+    $row{"Mapping Protocol REF"} = $idf->resolve_mapping_protocol($build, $protocol_db);
     $row{"Mapping Comment [Derived Data File REF]"} =  $sample->{"File"}->{content};
     $row{"Mapping Comment [TCGA CGHub ID]"} = $self->resolve_cghub_id($build, $cghub_id_file);
     $row{"Mapping Comment [TCGA Include for Analysis]"} = "yes";
-    $row{"Variants Protocol REF"} = $self->resolve_variants_protocol($build, $protocol_db);
+    $row{"Variants Protocol REF"} = $idf->resolve_variants_protocol($build, $protocol_db);
     $row{"Variants Comment [TCGA Include for Analysis]"} = "yes";
     $row{"Variants Comment [TCGA Data Type]"} = "Mutations";
     $row{"Variants Comment [TCGA Data Level]"} = "Level 2";
