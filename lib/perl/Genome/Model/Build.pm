@@ -2189,6 +2189,7 @@ sub regex_for_custom_diff {
         gz     => '(?<!\.vcf)\.gz$',
         vcf    => '\.vcf$',
         vcf_gz => '\.vcf\.gz$',
+        circos => 'circos.conf$',
     );
 }
 
@@ -2234,6 +2235,13 @@ sub diff_vcf_gz {
     my ($self, $first_file, $second_file) = @_;
     my $first_md5  = qx(zcat $first_file | grep -vP '^##fileDate' | md5sum);
     my $second_md5 = qx(zcat $second_file | grep -vP '^##fileDate' | md5sum);
+    return ($first_md5 eq $second_md5 ? 1 : 0);
+}
+
+sub diff_circos {
+    my ($self, $first_file, $second_file) = @_;
+    my $first_md5  = qx(grep -vP '\\w+/\\w+/info/model_data/\\w+/build\\w+/\\w+/circos/data' $first_file | md5sum);
+    my $second_md5 = qx(grep -vP '\\w+/\\w+/info/model_data/\\w+/build\\w+/\\w+/circos/data' $second_file | md5sum);
     return ($first_md5 eq $second_md5 ? 1 : 0);
 }
 
