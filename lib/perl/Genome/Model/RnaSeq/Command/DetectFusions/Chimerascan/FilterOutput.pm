@@ -1,4 +1,4 @@
-package Genome::Model::Tools::ChimeraScan::FilterOutput;
+package Genome::Model::RnaSeq::Command::DetectFusions::Chimerascan::FilterOutput;
 
 use strict;
 use warnings;
@@ -7,7 +7,7 @@ use Genome;
 use Genome::File::BedPe::Entry;
 use Genome::File::BedPe::Reader;
 
-class Genome::Model::Tools::ChimeraScan::FilterOutput {
+class Genome::Model::RnaSeq::Command::DetectFusions::Chimerascan::FilterOutput {
     is  => 'Command::V2',
     has => [
         bedpe_file => {

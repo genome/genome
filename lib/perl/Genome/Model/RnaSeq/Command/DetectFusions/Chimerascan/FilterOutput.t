@@ -12,7 +12,7 @@ use above "Genome";
 use Test::More;
 use Genome::Utility::Test;
 
-my $class = "Genome::Model::Tools::ChimeraScan::FilterOutput";
+my $class = "Genome::Model::RnaSeq::Command::DetectFusions::Chimerascan::FilterOutput";
 
 use_ok($class);
 my $data_dir = Genome::Utility::Test->data_dir_ok($class, "v5");
