@@ -2197,7 +2197,6 @@ sub regex_for_custom_diff {
         gz     => '(?<!\.vcf)\.gz$',
         vcf    => '\.vcf$',
         vcf_gz => '\.vcf\.gz$',
-        circos => 'circos.conf$',
     );
 
     # Addition custom differs
