@@ -128,6 +128,22 @@ sub execute {
     my $flagstat_input = $self->resolve_input_flagstat_file;
     my $flagstat_file= $bamfile.'.flagstat';
 
+    ### check input coverage_stats_file, sometimes cluster_coverage outputs empty files due to failed parameter cutoff
+    my $message = "The input coverage_stats_file: $coverage is not valid";
+
+    unless (-s $coverage) {
+        $self->warning_message($message);
+        return 1;
+    }
+
+    my $check = `wc -l $coverage`; 
+    my ($line_ct) = split /\s/, $check;
+
+    unless ($line_ct and $line_ct > 1) {
+        $self->warning_message($message);
+        return 1;
+    }
+
     ### OPENING FLAGSTAT FILE AND GETTING STATS###
     my $flagstat_mapped_input = $self->resolve_reads_mapped($flagstat_input);
 
@@ -158,7 +174,7 @@ sub execute {
     my $i   = 0;
 
     ### WRITING TO ALIGNMENT STATS FILE####
-    my $output_fh = open_output_and_write_header($output);
+    my $output_fh = $self->open_output_and_write_header($output);
 
     #### CREATE A TEMPORARY BED FILE###
     my ( $bed_temp_fh, $bed_temp_name ) = Genome::Sys->create_temp_file();

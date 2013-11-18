@@ -39,7 +39,10 @@ sub execute {
 	my @annotation  = split(',',$self->annotation_bed_file);
 	my $output_fh = Genome::Sys->open_file_for_writing($self->output_tsv_file);	
 	
-	
+    unless (-s $cluster_bed) {
+        $self->warning_message("Input cluster_bed_file: $cluster_bed is not valid.");
+        return 1;
+    }
 	########### INTERSECTING CLUSTER BED FILE WITH ANNOTATION #############
 	
 	my @bed_names_array;
