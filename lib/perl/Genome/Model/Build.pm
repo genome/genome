@@ -2365,10 +2365,18 @@ sub compare_output {
         elsif (keys %matching_regex_for_custom_diff == 1) {
             my ($key) = keys %matching_regex_for_custom_diff;
             my $method = "diff_$key";
-            unless($self->can($method)) {
-                die "Custom diff method ($method) not implemented on class (" . $self->class . ").\n";
+            # Check build class first
+            if ($self->can($method)) {
+                $diff_result = $self->$method($abs_path, $other_abs_path);
             }
-            $diff_result = $self->$method($abs_path, $other_abs_path);
+            # then model class
+            elsif ($self->model_class->can($method)) {
+                $diff_result = $self->model_class->$method($abs_path, $other_abs_path);
+            }
+            # cannot find it..die
+            else {
+                die "Custom diff method ($method) not implemented in " . $self->class . " or ".$self->model_class."!\n";
+            }
         }
         else {
             my $file_md5 = Genome::Sys->md5sum($abs_path);
