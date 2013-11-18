@@ -2161,9 +2161,7 @@ sub full_path_to_relative {
 # Override in subclasses!
 sub files_ignored_by_diff {
     my $self = shift;
-    my $model_class = $self->class;
-    $model_class =~ s/::Model::Build/::Model/;
-    return $model_class->files_ignored_by_build_diff($self);
+    return $self->model_class->files_ignored_by_build_diff($self);
 }
 
 # Returns a list of directories that should be ignored by the diffing done by compare_output

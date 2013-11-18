@@ -28,6 +28,7 @@ class Genome::Model::Test {
     is => 'Genome::ModelDeprecated',
 };
 sub Genome::Model::Test::_execute_build { return 1 };
+sub Genome::Model::Test::files_ignored_by_build_diff { return 'meh'; }
 
 class Genome::Model::Build::Test {
     is => 'Genome::Model::Build',
@@ -35,6 +36,7 @@ class Genome::Model::Build::Test {
         metric1 => { is_metric => 1, },
    ],
 };
+
 my $build_meta = Genome::Model::Build::Test->__meta__;
 ok($build_meta, 'build meta') or die;
 my $metric1_property = $build_meta->property_meta_for_name('metric1');
@@ -151,6 +153,8 @@ ok(!$build->fail, 'Failed to fail an abandoned build');
 ok(!$build->success, 'Failed to success an abandoned build');
 
 # DIFF
+my @files_ignored_by_build_diff = $build->files_ignored_by_diff;
+is_deeply(\@files_ignored_by_build_diff, ['meh'], 'files_ignored_by_diff');
 my $build2 = Genome::Model::Build::Test->create(
     model => $model,
     data_directory => $tmpdir, # TODO actually test file diffs?
