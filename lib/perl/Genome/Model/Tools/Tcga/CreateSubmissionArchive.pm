@@ -49,14 +49,6 @@ my @HEADERS = (
     ["Validation", $SDRF_VALIDATION_HEADERS],
 );
 
-my %PROTOCOL_PARAMS = (
-    "library preparation" => ["Vendor", "Catalog Name", "Catalog Number", "Annotation URL", "Product URL", "Target File URL", 
-                            "Target File Format", "Target File Format Version", "Probe File URL", "Probe File Format",
-                            "Probe File Format Version", "Target Reference Accession"],
-    "sequence alignment" => ["Protocol Min Base Quality", "Protocol Min Map Quality", "Protocol Min Tumor Coverage",
-                            "Protocol Min Normal Coverage"],
-);
-
 my $CGHUB_INFO;
 my $CGHUB_INFO_BY_TCGA_NAME;
 
@@ -156,7 +148,7 @@ sub execute {
         }
     }
 
-    $self->print_idf($magetab_archive_dir."/".$self->archive_name.".".$self->archive_version.".".$IDF_FILE_EXTENSION.".txt", \%protocol_db);
+    $idf->print_idf($magetab_archive_dir."/".$self->archive_name.".".$self->archive_version.".".$IDF_FILE_EXTENSION.".txt", \%protocol_db);
     $self->print_sdrf($magetab_archive_dir."/".$self->archive_name.".".$self->archive_version.".".$SDRF_FILE_EXTENSION.".txt", @sdrf_rows);
 
     $self->print_manifest($vcf_archive_dir);
@@ -383,33 +375,7 @@ sub resolve_capture_reagent {
     return ($reagent_info->{vendor}, $reagent_info->{name}, $reagent_info->{number});
 }
 
-sub print_idf {
-    my $self = shift;
-    my $output_file = shift;
-    my $protocol_db = shift;
 
-    my $out = Genome::Sys->open_file_for_writing($output_file);
-    my @protocol_names;
-    my @protocol_types;
-    my @protocol_descriptions;
-    my @protocol_parameters;
-    for my $protocol_type (keys %$protocol_db) {
-        for my $protocol (@{$protocol_db->{$protocol_type}}) {
-            push @protocol_names, $protocol->{name};
-            push @protocol_types, $protocol_type;
-            push @protocol_descriptions, $protocol->{description};
-            push @protocol_parameters, $PROTOCOL_PARAMS{$protocol_type};
-        }
-    }
-
-    $out->print(join("\t", "Protocol Name", @protocol_names)."\n");
-    $out->print(join("\t", "Protocol Type", @protocol_types)."\n");
-    $out->print(join("\t", "Protocol Description", @protocol_descriptions)."\n");
-    $out->print(join("\t", "Protocol Parameters", map {if (defined $_){join(";", @{$_})}else {""}} @protocol_parameters)."\n");
-
-    $out->close;
-    return 1;
-}
 
 sub print_sdrf {
     my $self = shift;

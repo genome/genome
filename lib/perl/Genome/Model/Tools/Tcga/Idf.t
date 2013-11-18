@@ -10,18 +10,44 @@ use warnings;
 
 use above "Genome";
 use Test::More;
-use Genome::Utility::Test;
+use Genome::Utility::Test qw(compare_ok); 
 use Genome::Test::Factory::ProcessingProfile::SomaticVariation;
 
 my $class = "Genome::Model::Tools::Tcga::Idf";
 
-#Genome::Utility::Test->data_dir_ok($class);
+my $base_dir = Genome::Utility::Test->data_dir_ok($class, "v1");
 
-my $idf = $class->create;
-my $test_pp = Genome::Test::Factory::ProcessingProfile::SomaticVariation->setup_object;
-is($idf->resolve_maf_protocol, "genome.wustl.edu:maf_creation:data_consolidation:01", "Maf protocol resolved correctly");
-is($idf->resolve_mapping_protocol($test_pp), "genome.wustl.edu:alignment:".$test_pp->id.":01", "Mapping protocol resolved correctly");
-is($idf->resolve_library_protocol, "genome.wustl.edu:DNA_extraction:Illumina_DNASeq:01", "Library protocol resolved correctly");
-is($idf->resolve_variants_protocol($test_pp), "genome.wustl.edu:variant_calling:".$test_pp->id.":01", "Variants protocol defined correctly");
+subtest resolve_x_protocol => sub {
+    my $idf = $class->create;
+    my $test_pp = Genome::Test::Factory::ProcessingProfile::SomaticVariation->setup_object;
+    is($idf->resolve_maf_protocol, "genome.wustl.edu:maf_creation:data_consolidation:01", "Maf protocol resolved correctly");
+    is($idf->resolve_mapping_protocol($test_pp), "genome.wustl.edu:alignment:".$test_pp->id.":01", "Mapping protocol resolved correctly");
+    is($idf->resolve_library_protocol, "genome.wustl.edu:DNA_extraction:Illumina_DNASeq:01", "Library protocol resolved correctly");
+    is($idf->resolve_variants_protocol($test_pp), "genome.wustl.edu:variant_calling:".$test_pp->id.":01", "Variants protocol defined correctly");
+};
+
+subtest "print IDF" => sub {
+    my %protocol_db = (
+        "library preparation" => [
+        {name => "libraryprep1", description => "First library prep protocol"}
+        ],
+        "nucleic acid sequencing" => [
+        {name => "sequencing1", description => "First sequencing protocol"},
+        ],
+        "sequence alignment" => [
+        {name => "alignment1", description => "First mapping protocol"},
+        ],
+        "variant calling" => [
+        {name => "variants1", description => "First variant detection protocol"},
+        ],
+        "mutation filtering and annotation" => [
+        {name => "maf1", description => "First filtering protocol"},
+        ],
+    );
+    my $idf = Genome::Model::Tools::Tcga::Idf->create;
+    my $output_idf = Genome::Sys->create_temp_file_path;
+    ok($idf->print_idf($output_idf, \%protocol_db), "Print idf called successfully");
+    compare_ok($output_idf, $base_dir."/expected.idf", "idf printed as expected");
+};
 
 done_testing;

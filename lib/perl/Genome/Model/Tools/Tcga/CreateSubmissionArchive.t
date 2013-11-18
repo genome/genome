@@ -129,27 +129,6 @@ subtest "testPrintSdrf" => sub {
     ok($class->print_sdrf($output_sdrf, ($row1, $row2, $row3, $row4)), "sdrf printed");
 };
 
-my %protocol_db = (
-    "library preparation" => [
-        {name => "libraryprep1", description => "First library prep protocol"}
-    ],
-    "nucleic acid sequencing" => [
-        {name => "sequencing1", description => "First sequencing protocol"},
-    ],
-    "sequence alignment" => [
-        {name => "alignment1", description => "First mapping protocol"},
-    ],
-    "variant calling" => [
-        {name => "variants1", description => "First variant detection protocol"},
-    ],
-    "mutation filtering and annotation" => [
-        {name => "maf1", description => "First filtering protocol"},
-    ],
-);
-my $output_idf = Genome::Sys->create_temp_file_path;
-ok($class->print_idf($output_idf, \%protocol_db), "Print idf called successfully");
-compare_ok($output_idf, $base_dir."/expected.idf", "idf printed as expected");
-
 my $archive_output_dir = Genome::Sys->create_temp_directory;
 my $cmd = Genome::Model::Tools::Tcga::CreateSubmissionArchive->create(
     models => [$test_somatic_build->model],
