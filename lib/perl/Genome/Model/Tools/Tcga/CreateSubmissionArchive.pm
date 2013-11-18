@@ -237,7 +237,7 @@ sub create_maf_row {
 
     my $row = $self->fill_in_common_fields($build, $archive_name, $protocol_db, $cghub_id_file, $sample_info, $idf);
 
-    $row->{"Maf Protocol REF"} = $idf->resolve_maf_protocol($build, $protocol_db);
+    $row->{"Maf Protocol REF"} = $idf->resolve_maf_protocol($protocol_db);
     #Required if providing maf file:
     $row->{"Maf Derived Data File"} = $maf_file;
     $row->{"Maf Comment [TCGA Spec Version]"} = 2.3;
@@ -299,15 +299,15 @@ sub fill_in_common_fields {
     $row{"Material Comment [is tumor]"} = $is_tumor;
     $row{"Material Material Type"} = "DNA";
     $row{"Material Comment [TCGA Genome Reference]"} = "GRCh-37lite";
-    $row{"Library Protocol REF"} = $idf->resolve_library_protocol($build, $protocol_db);
+    $row{"Library Protocol REF"} = $idf->resolve_library_protocol($protocol_db);
     ($row{"Library Parameter Value [Vendor]"},
     $row{"Library Parameter Value [Catalog Name]"},
     $row{"Library Parameter Value [Catalog Number]"}) = $self->resolve_capture_reagent($build);
-    $row{"Mapping Protocol REF"} = $idf->resolve_mapping_protocol($build, $protocol_db);
+    $row{"Mapping Protocol REF"} = $idf->resolve_mapping_protocol($build->processing_profile, $protocol_db);
     $row{"Mapping Comment [Derived Data File REF]"} =  $sample->{"File"}->{content};
     $row{"Mapping Comment [TCGA CGHub ID]"} = $self->resolve_cghub_id($build, $cghub_id_file);
     $row{"Mapping Comment [TCGA Include for Analysis]"} = "yes";
-    $row{"Variants Protocol REF"} = $idf->resolve_variants_protocol($build, $protocol_db);
+    $row{"Variants Protocol REF"} = $idf->resolve_variants_protocol($build->processing_profile, $protocol_db);
     $row{"Variants Comment [TCGA Include for Analysis]"} = "yes";
     $row{"Variants Comment [TCGA Data Type]"} = "Mutations";
     $row{"Variants Comment [TCGA Data Level]"} = "Level 2";

@@ -11,7 +11,6 @@ class Genome::Model::Tools::Tcga::Idf {
 
 sub resolve_maf_protocol {
     my $self = shift;
-    my $build = shift;
     my $protocol_db = shift;
 
     unless (defined $protocol_db->{"mutation filtering annotation and curation"}) {
@@ -23,11 +22,11 @@ sub resolve_maf_protocol {
 
 sub resolve_mapping_protocol {
     my $self = shift;
-    my $build = shift;
+    my $processing_profile = shift;
     my $protocol_db = shift;
 
-    my $name = "genome.wustl.edu:alignment:".$build->processing_profile->id.":01";
-    my $description = $build->processing_profile->name;
+    my $name = "genome.wustl.edu:alignment:".$processing_profile->id.":01";
+    my $description = $processing_profile->name;
     if (defined $protocol_db->{"sequence alignment"}){
         my $found = 0;
         for my $protocol (@{$protocol_db->{"variant calling"}}) {
@@ -49,7 +48,6 @@ sub resolve_mapping_protocol {
 
 sub resolve_library_protocol {
     my $self = shift;
-    my $build = shift;
     my $protocol_db = shift;
 
     unless (defined $protocol_db->{"library preparation"}){
@@ -61,11 +59,11 @@ sub resolve_library_protocol {
 
 sub resolve_variants_protocol {
     my $self = shift;
-    my $build = shift;
+    my $processing_profile = shift;
     my $protocol_db = shift;
 
-    my $name = "genome.wustl.edu:variant_calling:".$build->processing_profile->id.":01";
-    my $description = $build->processing_profile->name;
+    my $name = "genome.wustl.edu:variant_calling:".$processing_profile->id.":01";
+    my $description = $processing_profile->name;
     if (defined $protocol_db->{"variant calling"}){
         my $found = 0;
         for my $protocol (@{$protocol_db->{"variant calling"}}) {

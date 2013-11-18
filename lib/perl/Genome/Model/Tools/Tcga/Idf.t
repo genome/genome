@@ -11,17 +11,17 @@ use warnings;
 use above "Genome";
 use Test::More;
 use Genome::Utility::Test;
-use Genome::Test::Factory::Model::SomaticVariation;
+use Genome::Test::Factory::ProcessingProfile::SomaticVariation;
 
 my $class = "Genome::Model::Tools::Tcga::Idf";
 
 #Genome::Utility::Test->data_dir_ok($class);
 
 my $idf = $class->create;
-my $test_somatic_build = Genome::Test::Factory::Model::SomaticVariation->setup_somatic_variation_build();
+my $test_pp = Genome::Test::Factory::ProcessingProfile::SomaticVariation->setup_object;
 is($idf->resolve_maf_protocol, "genome.wustl.edu:maf_creation:data_consolidation:01", "Maf protocol resolved correctly");
-is($idf->resolve_mapping_protocol($test_somatic_build->normal_build), "genome.wustl.edu:alignment:".$test_somatic_build->normal_build->processing_profile->id.":01", "Mapping protocol resolved correctly");
+is($idf->resolve_mapping_protocol($test_pp), "genome.wustl.edu:alignment:".$test_pp->id.":01", "Mapping protocol resolved correctly");
 is($idf->resolve_library_protocol, "genome.wustl.edu:DNA_extraction:Illumina_DNASeq:01", "Library protocol resolved correctly");
-is($idf->resolve_variants_protocol($test_somatic_build->normal_build), "genome.wustl.edu:variant_calling:".$test_somatic_build->normal_build->processing_profile->id.":01", "Variants protocol defined correctly");
+is($idf->resolve_variants_protocol($test_pp), "genome.wustl.edu:variant_calling:".$test_pp->id.":01", "Variants protocol defined correctly");
 
 done_testing;
