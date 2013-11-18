@@ -29,6 +29,7 @@ class Genome::Model::Test {
 };
 sub Genome::Model::Test::_execute_build { return 1 };
 sub Genome::Model::Test::files_ignored_by_build_diff { return 'meh'; }
+sub Genome::Model::Test::addtional_regex_for_custom_diff { return ( 'blah' => '^blah$' ); }
 
 class Genome::Model::Build::Test {
     is => 'Genome::Model::Build',
@@ -154,6 +155,16 @@ ok(!$build->success, 'Failed to success an abandoned build');
 
 # DIFF
 my @files_ignored_by_build_diff = $build->files_ignored_by_diff;
+my %regex_for_custom_diff = Genome::Model::Build::Test->regex_for_custom_diff;
+my %expected_regex_for_custom_diff = (
+    hq     => '\.hq$',
+    gz     => '(?<!\.vcf)\.gz$',
+    vcf    => '\.vcf$',
+    vcf_gz => '\.vcf\.gz$',
+    blah => '^blah$',
+);
+is_deeply(\%regex_for_custom_diff, \%expected_regex_for_custom_diff, 'regex_for_custom_diff plus additional');
+
 is_deeply(\@files_ignored_by_build_diff, ['meh'], 'files_ignored_by_diff');
 my $build2 = Genome::Model::Build::Test->create(
     model => $model,

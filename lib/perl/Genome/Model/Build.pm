@@ -2189,13 +2189,28 @@ sub metrics_ignored_by_diff {
 # files that have timestamps or other changing fields in them that an md5sum can't handle.
 # Each suffix should have a method called diff_<SUFFIX> that'll contain the logic.
 sub regex_for_custom_diff {
-    return (
+    my $self = shift;
+
+    # Standard custom differs
+    my @regex_for_custom_diff = (
         hq     => '\.hq$',
         gz     => '(?<!\.vcf)\.gz$',
         vcf    => '\.vcf$',
         vcf_gz => '\.vcf\.gz$',
         circos => 'circos.conf$',
     );
+
+    # Addition custom differs
+    my $model_class = $self->model_class;
+    if ( $model_class->can('addtional_regex_for_custom_diff') ) {
+        my @addtional_regex_for_custom_diff = $model_class->addtional_regex_for_custom_diff;
+        if ( @addtional_regex_for_custom_diff % 2 != 0 ) {
+            Carp::confess('Invalid addtional_regex_for_custom_diff! '.Data::Dumper::Dumper(\@addtional_regex_for_custom_diff));
+        }
+        push @regex_for_custom_diff, @addtional_regex_for_custom_diff;
+    }
+
+    return @regex_for_custom_diff;
 }
 
 sub matching_regex_for_custom_diff {
