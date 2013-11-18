@@ -243,6 +243,13 @@ sub __display_name__ {
     return $self->id . ' of ' . $self->model->name;
 }
 
+sub model_class {
+    my $self = shift;
+    my $model_class = $self->class;
+    $model_class =~ s/::Model::Build/::Model/;
+    return $model_class;
+}
+
 sub data_set_path {
     my ($self, $dataset, $version, $file_format) = @_;
     my $path;

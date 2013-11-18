@@ -92,6 +92,7 @@ my $build = Genome::Model::Build->create(
 );
 ok($build, 'Created build') or die;
 isa_ok($build, 'Genome::Model::Build::Test', 'build subclass automagically generated');
+is(Genome::Model::Build::Test->model_class, $model->class, 'build model_class');
 ok($build->the_master_event, 'master event created');
 is($build->model->id, $model->id, 'indirect model accessor');
 is($build->status, 'New', 'status set to New');
