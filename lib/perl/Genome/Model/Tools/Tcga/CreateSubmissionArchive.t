@@ -18,7 +18,7 @@ use Genome::Test::Factory::Build;
 my $class = "Genome::Model::Tools::Tcga::CreateSubmissionArchive";
 use_ok($class);
 
-my $base_dir = Genome::Utility::Test->data_dir_ok($class, "v1");
+my $base_dir = Genome::Utility::Test->data_dir_ok($class, "v2");
 
 my @headers = $class->get_sdrf_headers;
 
@@ -118,34 +118,16 @@ my $sample_1 = {
    SampleTCGABarcode => {content => "TCGA_1"},
 };
 
-my $row1 = $class->create_vcf_row($test_somatic_build->normal_build, "test_archive", undef, $cghub_ids, "snvs.vcf", $sample_1);
-my $row2 = $class->create_vcf_row($test_somatic_build->normal_build, "test_archive", undef, $cghub_ids, "indels.vcf", $sample_1);
-my $row3 = $class->create_maf_row($test_somatic_build->normal_build, "test_archive", "/test/maf/path", undef, $cghub_ids, $sample_1);
-my $row4 = $class->create_maf_row($test_somatic_build->tumor_build, "test_archive", "/test/maf/path", undef, $cghub_ids, $sample_1);
+subtest "testPrintSdrf" => sub {
+    my $idf = Genome::Model::Tools::Tcga::Idf->create;
+    my $row1 = $class->create_vcf_row($test_somatic_build->normal_build, "test_archive", $cghub_ids, "snvs.vcf", $sample_1, $idf);
+    my $row2 = $class->create_vcf_row($test_somatic_build->normal_build, "test_archive", $cghub_ids, "indels.vcf", $sample_1, $idf);
+    my $row3 = $class->create_maf_row($test_somatic_build->normal_build, "test_archive", "/test/maf/path", $cghub_ids, $sample_1, $idf);
+    my $row4 = $class->create_maf_row($test_somatic_build->tumor_build, "test_archive", "/test/maf/path", $cghub_ids, $sample_1, $idf);
 
-my $output_sdrf = Genome::Sys->create_temp_file_path;
-ok($class->print_sdrf($output_sdrf, ($row1, $row2, $row3, $row4)), "sdrf printed");
-
-my %protocol_db = (
-    "library preparation" => [
-        {name => "libraryprep1", description => "First library prep protocol"}
-    ],
-    "nucleic acid sequencing" => [
-        {name => "sequencing1", description => "First sequencing protocol"},
-    ],
-    "sequence alignment" => [
-        {name => "alignment1", description => "First mapping protocol"},
-    ],
-    "variant calling" => [
-        {name => "variants1", description => "First variant detection protocol"},
-    ],
-    "mutation filtering and annotation" => [
-        {name => "maf1", description => "First filtering protocol"},
-    ],
-);
-my $output_idf = Genome::Sys->create_temp_file_path;
-ok($class->print_idf($output_idf, \%protocol_db), "Print idf called successfully");
-compare_ok($output_idf, $base_dir."/expected.idf", "idf printed as expected");
+    my $output_sdrf = Genome::Sys->create_temp_file_path;
+    ok($class->print_sdrf($output_sdrf, ($row1, $row2, $row3, $row4)), "sdrf printed");
+};
 
 my $archive_output_dir = Genome::Sys->create_temp_directory;
 my $cmd = Genome::Model::Tools::Tcga::CreateSubmissionArchive->create(
@@ -161,16 +143,12 @@ ok($cmd->execute, "Command executed");
 for my $outfile (qw(test_archive.Level_2.1.0.0/genome.wustl.edu.TCGA-UPN-A.snv.1.vcf test_archive.Level_2.1.0.0/genome.wustl.edu.TCGA-UPN-A.indel.1.vcf test_archive.Level_2.1.0.0/MANIFEST.txt test_archive.mage-tab.1.0.0/test_archive.1.0.0.idf.txt test_archive.mage-tab.1.0.0/test_archive.1.0.0.sdrf.txt)) {
     compare_ok("$archive_output_dir/$outfile", "$base_dir/archive_test/$outfile", replace => [['PP_ID' => $test_somatic_build->normal_build->processing_profile->id]], name => "file $outfile diffed correctly");
 }
+
 ok(-s "$archive_output_dir/test_archive.Level_2.1.0.0.tar.gz", "vcf archive was created");
 ok(-s "$archive_output_dir/test_archive.Level_2.1.0.0.tar.gz.md5", "vcf archive was md5ed");
 ok(-s "$archive_output_dir/test_archive.mage-tab.1.0.0.tar.gz", "magetab archive was created");
 ok(-s "$archive_output_dir/test_archive.mage-tab.1.0.0.tar.gz.md5", "magetab archive was md5ed");
 ok(-s "$archive_output_dir/test_archive.mage-tab.1.0.0/MANIFEST.txt", "magetab manifest was created");
-
-is($class->resolve_maf_protocol, "genome.wustl.edu:maf_creation:data_consolidation:01", "Maf protocol resolved correctly");
-is($class->resolve_mapping_protocol($test_somatic_build->normal_build), "genome.wustl.edu:alignment:".$test_somatic_build->normal_build->processing_profile->id.":01", "Mapping protocol resolved correctly");
-is($class->resolve_library_protocol, "genome.wustl.edu:DNA_extraction:Illumina_DNASeq:01", "Library protocol resolved correctly");
-is($class->resolve_variants_protocol($test_somatic_build->normal_build), "genome.wustl.edu:variant_calling:".$test_somatic_build->normal_build->processing_profile->id.":01", "Variants protocol defined correctly");
 
 is_deeply([$class->resolve_capture_reagent($test_somatic_build->normal_build)], ["Nimblegen", "Nimblegen EZ Exome v3.0", "06465692001"], "Capture reagent resolved correctly");
 
