@@ -22,7 +22,7 @@ my %HARD_CODED_PROTOCOLS = (
 
 );
 
-my %PROTOCOL_TYPE_NAME = (
+my %PROCESSING_PROFILE_PROTOCOL_TYPES = (
     "sequence alignment" => "alignment",
     "variant calling" => "variant_calling",
 );
@@ -44,6 +44,15 @@ sub create {
         $self->_add_hard_coded_protocol($key);
     }
     return $self;
+}
+
+sub add_pp_protocols {
+    my $self = shift;
+    my $processing_profile = shift;
+
+    for my $type (keys %PROCESSING_PROFILE_PROTOCOL_TYPES) {
+        $self->_add_protocol_with_pp($processing_profile, $type);
+    }
 }
 
 sub _add_hard_coded_protocol {
@@ -79,7 +88,15 @@ sub _resolve_protocol_with_pp {
     my $processing_profile = shift;
     my $type = shift;
 
-    my $name = "genome.wustl.edu:".$PROTOCOL_TYPE_NAME{$type}.":".$processing_profile->id.":01";
+    return "genome.wustl.edu:".$PROCESSING_PROFILE_PROTOCOL_TYPES{$type}.":".$processing_profile->id.":01";
+}
+
+sub _add_protocol_with_pp {
+    my $self = shift;
+    my $processing_profile = shift;
+    my $type = shift;
+
+    my $name = $self->_resolve_protocol_with_pp($processing_profile, $type);
     my $description = $processing_profile->name;
     my $found = 0;
     for my $protocol (@{$self->protocols->{$type}}) {
@@ -91,7 +108,7 @@ sub _resolve_protocol_with_pp {
     unless ($found) {
         push @{$self->protocols->{$type}}, {name => $name, description => $description};
     }      
-    return $name;
+    return 1;
 }
 
 sub resolve_mapping_protocol {
