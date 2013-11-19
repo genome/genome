@@ -227,4 +227,12 @@ EOS
         $self->_color_pair('LSF ID', $event->lsf_job_id));
 }
 
+sub _resolve_running_child_end_time {
+    my ($self) = @_;
+    unless ('Abandoned' eq $self->build->status) {
+        return DateTime->now(time_zone=>'local');
+    }
+    return;
+}
+
 1;

@@ -260,10 +260,8 @@ sub _resolve_child_times {
 
 sub _resolve_running_child_end_time {
     my ($self) = @_;
-    unless ('Abandoned' eq $self->build->status) {
-        return DateTime->now(time_zone=>'local');
-    }
-    return;
+
+    return DateTime->now(time_zone=>'local');
 }
 
 sub _format_workflow_child_line {
