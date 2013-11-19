@@ -51,7 +51,7 @@ sub add_pp_protocols {
     my $processing_profile = shift;
 
     for my $type (keys %PROCESSING_PROFILE_PROTOCOL_TYPES) {
-        $self->_resolve_protocol_with_pp($processing_profile, $type);
+        $self->_add_protocol_with_pp($processing_profile, $type);
     }
 }
 
@@ -88,7 +88,15 @@ sub _resolve_protocol_with_pp {
     my $processing_profile = shift;
     my $type = shift;
 
-    my $name = "genome.wustl.edu:".$PROCESSING_PROFILE_PROTOCOL_TYPES{$type}.":".$processing_profile->id.":01";
+    return "genome.wustl.edu:".$PROCESSING_PROFILE_PROTOCOL_TYPES{$type}.":".$processing_profile->id.":01";
+}
+
+sub _add_protocol_with_pp {
+    my $self = shift;
+    my $processing_profile = shift;
+    my $type = shift;
+
+    my $name = $self->_resolve_protocol_with_pp($processing_profile, $type);
     my $description = $processing_profile->name;
     my $found = 0;
     for my $protocol (@{$self->protocols->{$type}}) {
@@ -100,7 +108,7 @@ sub _resolve_protocol_with_pp {
     unless ($found) {
         push @{$self->protocols->{$type}}, {name => $name, description => $description};
     }      
-    return $name;
+    return 1;
 }
 
 sub resolve_mapping_protocol {
