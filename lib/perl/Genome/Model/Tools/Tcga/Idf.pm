@@ -14,8 +14,12 @@ my %PROTOCOL_PARAMS = (
 
 my %HARD_CODED_PROTOCOLS = (
     "mutation filtering annotation and curation" => {name => "genome.wustl.edu:maf_creation:data_consolidation:01",
-                                                    description => "Automatic and manual filtering and curation of variants"},
-    "nucleic acid sequencing" => {name => "genome.wustl.edu:DNA_sequencing:Illumina:01", description => "Illumina sequencing by synthesis"},
+                                                     description => "Automatic and manual filtering and curation of variants"},
+    "nucleic acid sequencing"                    => {name => "genome.wustl.edu:DNA_sequencing:Illumina:01", 
+                                                     description => "Illumina sequencing by synthesis"},
+    "library preparation"                        => {name => "genome.wustl.edu:DNA_extraction:Illumina_DNASeq:01",
+                                                     description => "Illumina library prep"},
+
 );
 
 class Genome::Model::Tools::Tcga::Idf {
@@ -92,11 +96,7 @@ sub resolve_mapping_protocol {
 sub resolve_library_protocol {
     my $self = shift;
 
-    unless (defined $self->protocols->{"library preparation"}){
-        $self->protocols->{"library preparation"} = [{name => "genome.wustl.edu:DNA_extraction:Illumina_DNASeq:01",
-                                                                description => "Illumina library prep"}];
-    }
-    return $self->protocols->{"library preparation"}->[0]->{name};
+    return $self->_resolve_hard_coded_protocol("library preparation");
 }
 
 sub resolve_variants_protocol {
