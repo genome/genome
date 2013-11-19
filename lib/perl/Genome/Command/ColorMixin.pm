@@ -75,6 +75,22 @@ sub _strip_key {
     return $stripped_text;
 }
 
+sub _color_heading {
+    my ($self, $text) = @_;
+    return $self->_color_dim('=== ') . $self->_color($text, 'bold') .
+        $self->_color_dim(' ===');
+}
+
+sub _color_pair {
+    my ($self, $key, $value) = @_;
+    return $self->_color_dim($key.':') . ' ' . ($value || '');
+}
+
+sub _color_dim {
+    my ($self, $text) = @_;
+    return $self->_color($text, 'white');
+}
+
 
 
 1;
