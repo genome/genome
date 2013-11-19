@@ -20,77 +20,6 @@ use_ok($class);
 
 my $base_dir = Genome::Utility::Test->data_dir_ok($class, "v2");
 
-my @headers = $class->get_sdrf_headers;
-
-my @expected_headers = (
-        'Material Extract Name',
-        'Material Comment [TCGA Barcode]',
-        'Material Comment [is tumor]',
-        'Material Material Type',
-        'Material Annotation REF',
-        'Material Comment [TCGA Genome Reference]',
-        'Library Protocol REF',
-        'Library Parameter Value [Vendor]',
-        'Library Parameter Value [Catalog Name]',
-        'Library Parameter Value [Catalog Number]',
-        'Library Parameter Value [Annotation URL]',
-        'Library Parameter Value [Product URL]',
-        'Library Parameter Value [Target File URL]',
-        'Library Parameter Value [Target File Format]',
-        'Library Parameter Value [Target File Format Version]',
-        'Library Parameter Value [Probe File URL]',
-        'Library Parameter Value [Probe File Format]',
-        'Library Parameter Value [Probe File Format Version]',
-        'Library Parameter Value [Target Reference Accession]',
-        'Sequencing Protocol REF',
-        'Mapping Protocol REF',
-        'Mapping Comment [Derived Data File REF]',
-        'Mapping Comment [TCGA CGHub ID]',
-        'Mapping Comment [TCGA CGHub metadata URL]',
-        'Mapping Comment [TCGA Include for Analysis]',
-        'Mapping2 Derived Data File',
-        'Mapping2 Comment [TCGA Include for Analysis]',
-        'Mapping2 Comment [TCGA Data Type]',
-        'Mapping2 Comment [TCGA Data Level]',
-        'Mapping2 Comment [TCGA Archive Name]',
-        'Mapping2 Parameter Value [Protocol Min Base Quality]',
-        'Mapping2 Parameter Value [Protocol Min Map Quality]',
-        'Mapping2 Parameter Value [Protocol Min Tumor Coverage]',
-        'Mapping2 Parameter Value [Protocol Min Normal Coverage]',
-        'Variants Protocol REF',
-        'Variants Derived Data File',
-        'Variants Comment [TCGA Spec Version]',
-        'Variants Comment [TCGA Include for Analysis]',
-        'Variants Comment [TCGA Data Type]',
-        'Variants Comment [TCGA Data Level]',
-        'Variants Comment [TCGA Archive Name]',
-        'Maf Protocol REF',
-        'Maf Derived Data File',
-        'Maf Comment [TCGA Spec Version]',
-        'Maf Comment [TCGA Include for Analysis]',
-        'Maf Comment [TCGA Data Type]',
-        'Maf Comment [TCGA Data Level]',
-        'Maf Comment [TCGA Archive Name]',
-        'Validation Protocol REF',
-        'Validation Derived Data File',
-        'Validation Comment [TCGA Spec Version]',
-        'Validation Comment [TCGA Include for Analysis]',
-        'Validation Comment [TCGA Data Type]',
-        'Validation Comment [TCGA Data Level]',
-        'Validation Comment [TCGA Archive Name]'
-        );
-
-is_deeply(\@headers, \@expected_headers, "Headers generated correctly");
-
-my %empty_row;
-my $null_row = $class->fill_in_nulls(\%empty_row);
-my @empty_keys = sort keys %$null_row;
-my @sorted_headers = sort @expected_headers;
-is_deeply(\@empty_keys, \@sorted_headers, "Empty row got filled in");
-
-my $test_output = Genome::Sys->create_temp_file_path;
-ok($class->print_sdrf($test_output, $null_row), "print_sdrf ran ok with a row of nulls");
-compare_ok($test_output, $base_dir."/expected_null.sdrf", "null sdrf printed correctly");
 
 my $test_somatic_build = Genome::Test::Factory::Model::SomaticVariation->setup_somatic_variation_build();
 $test_somatic_build->normal_build->subject->common_name("normal");
@@ -108,26 +37,6 @@ $test_somatic_build->data_directory("$base_dir/somvar_dir");
 
 my $cghub_ids = Genome::Sys->create_temp_file_path;
 `echo "CGHub_ID\tTCGA_Name\tBAM_path\ncghub1\tTCGA-1\t/dev/null\ncghub2\tTCGA-2\t/dev/null" > $cghub_ids`;
-
-is_deeply($class->load_cghub_info($cghub_ids, "TCGA_Name"), {"TCGA-1" => "cghub1", "TCGA-2" => "cghub2"}, "CGHub info loaded correctly");
-is($class->resolve_cghub_id($test_somatic_build->normal_build, $cghub_ids), "cghub1", "CGHub called correctly");
-
-my $sample_1 = {
-   ID => {content => "TCGA_1"},
-   SampleUUID => {content => "3958t6"},
-   SampleTCGABarcode => {content => "TCGA_1"},
-};
-
-subtest "testPrintSdrf" => sub {
-    my $idf = Genome::Model::Tools::Tcga::Idf->create;
-    my $row1 = $class->create_vcf_row($test_somatic_build->normal_build, "test_archive", $cghub_ids, "snvs.vcf", $sample_1, $idf);
-    my $row2 = $class->create_vcf_row($test_somatic_build->normal_build, "test_archive", $cghub_ids, "indels.vcf", $sample_1, $idf);
-    my $row3 = $class->create_maf_row($test_somatic_build->normal_build, "test_archive", "/test/maf/path", $cghub_ids, $sample_1, $idf);
-    my $row4 = $class->create_maf_row($test_somatic_build->tumor_build, "test_archive", "/test/maf/path", $cghub_ids, $sample_1, $idf);
-
-    my $output_sdrf = Genome::Sys->create_temp_file_path;
-    ok($class->print_sdrf($output_sdrf, ($row1, $row2, $row3, $row4)), "sdrf printed");
-};
 
 my $archive_output_dir = Genome::Sys->create_temp_directory;
 my $cmd = Genome::Model::Tools::Tcga::CreateSubmissionArchive->create(
@@ -149,7 +58,5 @@ ok(-s "$archive_output_dir/test_archive.Level_2.1.0.0.tar.gz.md5", "vcf archive 
 ok(-s "$archive_output_dir/test_archive.mage-tab.1.0.0.tar.gz", "magetab archive was created");
 ok(-s "$archive_output_dir/test_archive.mage-tab.1.0.0.tar.gz.md5", "magetab archive was md5ed");
 ok(-s "$archive_output_dir/test_archive.mage-tab.1.0.0/MANIFEST.txt", "magetab manifest was created");
-
-is_deeply([$class->resolve_capture_reagent($test_somatic_build->normal_build)], ["Nimblegen", "Nimblegen EZ Exome v3.0", "06465692001"], "Capture reagent resolved correctly");
 
 done_testing;
