@@ -75,6 +75,11 @@ sub lims_property_name_to_genome_property_name {
 sub create_in_genome {
     my $self = shift;
 
+    my $genotype_file = $self->genotype_file;
+    if ( not $genotype_file or not -s $genotype_file ) {
+        Carp::confess('No genotype file set!');
+    }
+
     my $library_name = $self->sample_name.'-microarraylib';
     my ($library) = Genome::Library->get(name => $library_name, sample_id => $self->sample_id);
     if ( not $library ) {
@@ -85,10 +90,13 @@ sub create_in_genome {
     }
     $self->library($library);
 
-    my $genome_object = $self->SUPER::create_in_genome;
+    my %params = $self->params_for_create_in_genome;
+    return if not %params;
+
+    my $genome_class = $self->genome_class_for_create;
+    my $genome_object = $genome_class->create(%params); 
     return if not $genome_object;
 
-    my $genotype_file = $self->genotype_file;
     my $new_genotype_file = eval{ Genome::InstrumentData::Microarray->update_genotype_file($genome_object, $genotype_file); };
     if ( not $new_genotype_file ) {
         Carp::confess "$@\nFailed to update genotype_file: $genotype_file on instrument data: ".$genome_object->id;
