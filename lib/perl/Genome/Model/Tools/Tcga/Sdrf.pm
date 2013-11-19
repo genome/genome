@@ -125,13 +125,14 @@ sub get_output_headers {
 sub create_vcf_row {
     my $self = shift;
     my $build = shift;
+    my $somatic_build = shift;
     my $archive_name = shift;
     my $cghub_id_file = shift;
     my $vcf = shift;
     my $sample_info = shift;
     my $idf = shift;
 
-    my $row = $self->fill_in_common_fields($build, $archive_name, $cghub_id_file, $sample_info, $idf);
+    my $row = $self->fill_in_common_fields($build, $somatic_build, $archive_name, $cghub_id_file, $sample_info, $idf);
 
     $row->{"Variants Derived Data File"} = $vcf;
     return $row;
@@ -140,6 +141,7 @@ sub create_vcf_row {
 sub fill_in_common_fields {
     my $self = shift;
     my $build = shift;
+    my $somatic_build = shift;
     my $archive_name = shift;
     my $cghub_id_file = shift;
     my $sample = shift;
@@ -175,11 +177,11 @@ sub fill_in_common_fields {
     $row{"Library Parameter Value [Catalog Name]"},
     $row{"Library Parameter Value [Catalog Number]"}) = $self->resolve_capture_reagent($build);
     $row{"Sequencing Protocol REF"} = $idf->resolve_sequencing_protocol();
-    $row{"Mapping Protocol REF"} = $idf->resolve_mapping_protocol($build->processing_profile);
+    $row{"Mapping Protocol REF"} = $idf->resolve_mapping_protocol($somatic_build->processing_profile);
     $row{"Mapping Comment [Derived Data File REF]"} =  $sample->{"File"}->{content};
     $row{"Mapping Comment [TCGA CGHub ID]"} = $self->resolve_cghub_id($build, $cghub_id_file);
     $row{"Mapping Comment [TCGA Include for Analysis]"} = "yes";
-    $row{"Variants Protocol REF"} = $idf->resolve_variants_protocol($build->processing_profile);
+    $row{"Variants Protocol REF"} = $idf->resolve_variants_protocol($somatic_build->processing_profile);
     $row{"Variants Comment [TCGA Include for Analysis]"} = "yes";
     $row{"Variants Comment [TCGA Data Type]"} = "Mutations";
     $row{"Variants Comment [TCGA Data Level]"} = "Level 2";
@@ -258,13 +260,14 @@ sub resolve_capture_reagent {
 sub create_maf_row {
     my $self = shift;
     my $build = shift;
+    my $somatic_build = shift;
     my $archive_name = shift;
     my $maf_file =shift;
     my $cghub_id_file = shift;
     my $sample_info = shift;
     my $idf = shift;
 
-    my $row = $self->fill_in_common_fields($build, $archive_name, $cghub_id_file, $sample_info, $idf);
+    my $row = $self->fill_in_common_fields($build, $somatic_build, $archive_name, $cghub_id_file, $sample_info, $idf);
 
     $row->{"Maf Protocol REF"} = $idf->resolve_maf_protocol;
     #Required if providing maf file:

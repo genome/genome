@@ -17,9 +17,79 @@ my $class = "Genome::Model::Tools::Tcga::Idf";
 
 my $base_dir = Genome::Utility::Test->data_dir_ok($class, "v1");
 
+subtest add_pp_protocol => sub {
+    my $idf = $class->create;
+    my $test_pp = get_test_pp();
+    $idf->add_pp_protocols($test_pp);
+
+    my $expected = {
+        "library preparation" => [{name => 'genome.wustl.edu:DNA_extraction:Illumina_DNASeq:01',
+                                    description => 'Illumina library prep'}],
+        "mutation filtering annotation and curation" => [{name => 'genome.wustl.edu:maf_creation:data_consolidation:01',
+                                    description => 'Automatic and manual filtering and curation of variants'}],
+        "variant calling" => [{name => 'genome.wustl.edu:variant_calling:'.$test_pp->id.':01',
+                                    description => 'test_processing_profile_1'}],
+        "nucleic acid sequencing" => [{name => 'genome.wustl.edu:DNA_sequencing:Illumina:01',
+                                    description => 'Illumina sequencing by synthesis'}],
+        "sequence alignment" => [{name => 'genome.wustl.edu:alignment:'.$test_pp->id.':01',
+                                    description => 'test_processing_profile_1'}],
+    };
+
+    is_deeply($idf->protocols, $expected, "Fill in idf worked as expected after adding one processing profile");
+};
+
+subtest add_same_pp_protocols => sub {
+    my $idf = $class->create;
+    my $test_pp = get_test_pp();
+    $idf->add_pp_protocols($test_pp);
+    $idf->add_pp_protocols($test_pp);
+
+    my $expected = {
+        "library preparation" => [{name => 'genome.wustl.edu:DNA_extraction:Illumina_DNASeq:01',
+                                    description => 'Illumina library prep'}],
+        "mutation filtering annotation and curation" => [{name => 'genome.wustl.edu:maf_creation:data_consolidation:01',
+                                    description => 'Automatic and manual filtering and curation of variants'}],
+        "variant calling" => [{name => 'genome.wustl.edu:variant_calling:'.$test_pp->id.':01',
+                                    description => 'test_processing_profile_1'}],
+        "nucleic acid sequencing" => [{name => 'genome.wustl.edu:DNA_sequencing:Illumina:01',
+                                    description => 'Illumina sequencing by synthesis'}],
+        "sequence alignment" => [{name => 'genome.wustl.edu:alignment:'.$test_pp->id.':01',
+                                    description => 'test_processing_profile_1'}],
+    };
+
+    is_deeply($idf->protocols, $expected, "Fill in idf worked as expected after adding the same processing profile twice");
+};
+
+subtest add_different_pp_protocols => sub {
+    my $idf = $class->create;
+    my $test_pp = get_test_pp();
+    my $test_pp2 = get_test_pp2();
+    $idf->add_pp_protocols($test_pp);
+    $idf->add_pp_protocols($test_pp2);
+
+    my $expected = {
+        "library preparation" => [{name => 'genome.wustl.edu:DNA_extraction:Illumina_DNASeq:01',
+                                    description => 'Illumina library prep'}],
+        "mutation filtering annotation and curation" => [{name => 'genome.wustl.edu:maf_creation:data_consolidation:01',
+                                    description => 'Automatic and manual filtering and curation of variants'}],
+        "variant calling" => [{name => 'genome.wustl.edu:variant_calling:'.$test_pp->id.':01',
+                                    description => 'test_processing_profile_1'},
+                              {name => 'genome.wustl.edu:variant_calling:'.$test_pp2->id.':01',
+                                    description => 'test_processing_profile_2'}],
+        "nucleic acid sequencing" => [{name => 'genome.wustl.edu:DNA_sequencing:Illumina:01',
+                                    description => 'Illumina sequencing by synthesis'}],
+        "sequence alignment" => [{name => 'genome.wustl.edu:alignment:'.$test_pp->id.':01',
+                                    description => 'test_processing_profile_1'},
+                                 {name => 'genome.wustl.edu:alignment:'.$test_pp2->id.':01',
+                                    description => 'test_processing_profile_2'}],
+    };
+
+    is_deeply($idf->protocols, $expected, "Fill in idf worked as expected after adding the same processing profile twice");
+};
+
 subtest resolve_x_protocol => sub {
     my $idf = $class->create;
-    my $test_pp = Genome::Test::Factory::ProcessingProfile::SomaticVariation->setup_object;
+    my $test_pp = get_test_pp();
     is($idf->resolve_maf_protocol, "genome.wustl.edu:maf_creation:data_consolidation:01", "Maf protocol resolved correctly");
     is($idf->resolve_mapping_protocol($test_pp), "genome.wustl.edu:alignment:".$test_pp->id.":01", "Mapping protocol resolved correctly");
     is($idf->resolve_library_protocol, "genome.wustl.edu:DNA_extraction:Illumina_DNASeq:01", "Library protocol resolved correctly");
@@ -51,5 +121,21 @@ subtest "print IDF" => sub {
     ok($idf->print_idf($output_idf), "Print idf called successfully");
     compare_ok($output_idf, $base_dir."/expected.idf", "idf printed as expected");
 };
+
+my $TEST_PP;
+my $TEST_PP2;
+sub get_test_pp {
+    unless (defined $TEST_PP) {
+        $TEST_PP = Genome::Test::Factory::ProcessingProfile::SomaticVariation->setup_object;
+    }
+    return $TEST_PP;
+}
+
+sub get_test_pp2 {
+    unless (defined $TEST_PP2) {
+        $TEST_PP2 = Genome::Test::Factory::ProcessingProfile::SomaticVariation->setup_object(tiering_version => 3);
+    }
+    return $TEST_PP2;
+}
 
 done_testing;

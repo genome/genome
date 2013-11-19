@@ -54,8 +54,13 @@ class Genome::Model::Tools::Tcga::CreateSubmissionArchive {
 sub execute {
     my $self = shift;
     my @sdrf_rows;
-    my $sdrf = Genome::Model::Tools::Tcga::Sdrf->create;
     my $idf = Genome::Model::Tools::Tcga::Idf->create;
+    
+    for my $somatic_model ($self->models) {
+        $idf->add_pp_protocols($somatic_model->last_succeeded_build->processing_profile);
+    }
+
+    my $sdrf = Genome::Model::Tools::Tcga::Sdrf->create();
 
     my $vcf_archive_dir = $self->output_dir."/".$self->complete_archive_name("Level_2");
     Genome::Sys->create_directory($vcf_archive_dir);
@@ -93,14 +98,14 @@ sub execute {
             my $sample_info = $self->get_info_for_sample($build->subject->extraction_label, $vcf_sample_info);
             
             for my $vcf($snvs_vcf, $indels_vcf) {
-                push @sdrf_rows, $sdrf->create_vcf_row($build, $self->complete_archive_name, $self->cghub_id_file, $vcf, $sample_info, $idf);
+                push @sdrf_rows, $sdrf->create_vcf_row($build, $somatic_build, $self->complete_archive_name, $self->cghub_id_file, $vcf, $sample_info, $idf);
             }
 
             for my $maf_type (qw(somatic germline)) {
                 my $maf_accessor = $maf_type."_maf_file";
                 if ($self->$maf_accessor) {
                     Genome::Sys->copy_file($self->$maf_accessor, $vcf_archive_dir."/$maf_type.maf");
-                    push @sdrf_rows, $sdrf->create_maf_row($build, $self->complete_archive_name, "$maf_type.maf", $self->cghub_id_file, $sample_info, $idf);
+                    push @sdrf_rows, $sdrf->create_maf_row($build, $somatic_build, $self->complete_archive_name, "$maf_type.maf", $self->cghub_id_file, $sample_info, $idf);
                 }
             }
         }

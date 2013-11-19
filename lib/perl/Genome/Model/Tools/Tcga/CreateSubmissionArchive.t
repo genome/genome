@@ -18,7 +18,7 @@ use Genome::Test::Factory::Build;
 my $class = "Genome::Model::Tools::Tcga::CreateSubmissionArchive";
 use_ok($class);
 
-my $base_dir = Genome::Utility::Test->data_dir_ok($class, "v2");
+my $base_dir = Genome::Utility::Test->data_dir_ok($class, "v3");
 
 
 my $test_somatic_build = Genome::Test::Factory::Model::SomaticVariation->setup_somatic_variation_build();
@@ -50,7 +50,7 @@ my $cmd = Genome::Model::Tools::Tcga::CreateSubmissionArchive->create(
 ok($cmd, "Command created");
 ok($cmd->execute, "Command executed");
 for my $outfile (qw(test_archive.Level_2.1.0.0/genome.wustl.edu.TCGA-UPN-A.snv.1.vcf test_archive.Level_2.1.0.0/genome.wustl.edu.TCGA-UPN-A.indel.1.vcf test_archive.Level_2.1.0.0/MANIFEST.txt test_archive.mage-tab.1.0.0/test_archive.1.0.0.idf.txt test_archive.mage-tab.1.0.0/test_archive.1.0.0.sdrf.txt)) {
-    compare_ok("$archive_output_dir/$outfile", "$base_dir/archive_test/$outfile", replace => [['PP_ID' => $test_somatic_build->normal_build->processing_profile->id]], name => "file $outfile diffed correctly");
+    compare_ok("$archive_output_dir/$outfile", "$base_dir/archive_test/$outfile", replace => [['PP_ID' => $test_somatic_build->processing_profile->id], ['PP_NAME' => $test_somatic_build->processing_profile->name]], name => "file $outfile diffed correctly");
 }
 
 ok(-s "$archive_output_dir/test_archive.Level_2.1.0.0.tar.gz", "vcf archive was created");
