@@ -49,11 +49,12 @@ subtest "print sdrf" => sub {
 
 subtest "testPrintSdrf" => sub {
     my $idf = Genome::Model::Tools::Tcga::Idf->create;
-    my $sdrf = $class->create;
 
     my $test_somatic_build = setup_test_build();
+    $idf->add_pp_protocols($test_somatic_build->processing_profile);
     my $cghub_ids = setup_cghubids_file();
 
+    my $sdrf = $class->create(idf => $idf);
     my $sample_1 = {
         ID => {content => "TCGA_1"},
         SampleUUID => {content => "3958t6"},

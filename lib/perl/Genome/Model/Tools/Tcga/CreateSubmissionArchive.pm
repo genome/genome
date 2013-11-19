@@ -60,7 +60,7 @@ sub execute {
         $idf->add_pp_protocols($somatic_model->last_succeeded_build->processing_profile);
     }
 
-    my $sdrf = Genome::Model::Tools::Tcga::Sdrf->create();
+    my $sdrf = Genome::Model::Tools::Tcga::Sdrf->create(idf => $idf);
 
     my $vcf_archive_dir = $self->output_dir."/".$self->complete_archive_name("Level_2");
     Genome::Sys->create_directory($vcf_archive_dir);
