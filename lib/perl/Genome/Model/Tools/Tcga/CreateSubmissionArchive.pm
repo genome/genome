@@ -57,9 +57,9 @@ sub execute {
     my $sdrf = Genome::Model::Tools::Tcga::Sdrf->create;
     my $idf = Genome::Model::Tools::Tcga::Idf->create;
 
-    my $vcf_archive_dir = $self->output_dir."/".$self->archive_name.".Level_2.".$self->archive_version;
+    my $vcf_archive_dir = $self->output_dir."/".$self->complete_archive_name("Level_2");
     Genome::Sys->create_directory($vcf_archive_dir);
-    my $magetab_archive_dir = $self->output_dir."/".$self->archive_name.".mage-tab.".$self->archive_version;
+    my $magetab_archive_dir = $self->output_dir."/".$self->complete_archive_name("mage-tab");
     Genome::Sys->create_directory($magetab_archive_dir);
 
     my %patient_ids;
@@ -93,21 +93,21 @@ sub execute {
             my $sample_info = $self->get_info_for_sample($build->subject->extraction_label, $vcf_sample_info);
             
             for my $vcf($snvs_vcf, $indels_vcf) {
-                push @sdrf_rows, $sdrf->create_vcf_row($build, $self->archive_name.".".$self->archive_version, $self->cghub_id_file, $vcf, $sample_info, $idf);
+                push @sdrf_rows, $sdrf->create_vcf_row($build, $self->complete_archive_name, $self->cghub_id_file, $vcf, $sample_info, $idf);
             }
 
             for my $maf_type (qw(somatic germline)) {
                 my $maf_accessor = $maf_type."_maf_file";
                 if ($self->$maf_accessor) {
                     Genome::Sys->copy_file($self->$maf_accessor, $vcf_archive_dir."/$maf_type.maf");
-                    push @sdrf_rows, $sdrf->create_maf_row($build, $self->archive_name.".".$self->archive_version, "$maf_type.maf", $self->cghub_id_file, $sample_info, $idf);
+                    push @sdrf_rows, $sdrf->create_maf_row($build, $self->complete_archive_name, "$maf_type.maf", $self->cghub_id_file, $sample_info, $idf);
                 }
             }
         }
     }
 
-    $idf->print_idf($magetab_archive_dir."/".$self->archive_name.".".$self->archive_version.".".$IDF_FILE_EXTENSION.".txt");
-    $sdrf->print_sdrf($magetab_archive_dir."/".$self->archive_name.".".$self->archive_version.".".$SDRF_FILE_EXTENSION.".txt", @sdrf_rows);
+    $idf->print_idf($magetab_archive_dir."/".$self->complete_archive_name.".".$IDF_FILE_EXTENSION.".txt");
+    $sdrf->print_sdrf($magetab_archive_dir."/".$self->complete_archive_name.".".$SDRF_FILE_EXTENSION.".txt", @sdrf_rows);
 
     $self->print_manifest($vcf_archive_dir);
     $self->print_manifest($magetab_archive_dir);
@@ -118,6 +118,17 @@ sub execute {
     }
 
     return 1;
+}
+
+sub complete_archive_name {
+    my $self = shift;
+    my $infix = shift;
+
+    my @parts;
+    push @parts, $self->archive_name;
+    if (defined $infix) {push @parts, $infix;}
+    push @parts, $self->archive_version;
+    return join(".", @parts);
 }
 
 sub construct_vcf_name {
