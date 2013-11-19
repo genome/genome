@@ -27,8 +27,9 @@ sub create_in_genome {
 
     my $genome_class = $self->genome_class_for_create;
     my $genome_object = eval { $genome_class->create(%params); };
-    Carp::confess("Could not create new object of type $genome_class based on object of type " .
-    $self->class . " with id " . $self->id . ":\n$@") unless $genome_object;
+    if ( not $genome_object ) {
+        Carp::confess("$@\nFailed to create $genome_class with parmas: ".Data::Dumper::Dumper(\%params));
+    }
 
     return $genome_object;
 }
