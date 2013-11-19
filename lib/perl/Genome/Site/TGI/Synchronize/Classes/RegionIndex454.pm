@@ -42,7 +42,7 @@ EXPERIMENT_PURPOSE VARCHAR2 (32)                    {null} {null}   NOT_SYNCED
 =cut
 
 class Genome::Site::TGI::Synchronize::Classes::RegionIndex454 {
-    is => 'Genome::Site::TGI::Synchronize::Classes::LimsInstDataBase',
+    is => 'Genome::Site::TGI::Synchronize::Classes::LimsBase',
     table_name => <<'SQL'
         (
             select 
@@ -83,24 +83,15 @@ SQL
         total_reads => { is => 'Text', },
         total_bases_read => { is => 'Text', },
     ],
-    has_optional_calculated => [
-        sff_file => { calculate => q( return $self->sequence_file; ), },
+    has_transient_optional => [
+        sff_file => { is => 'Text', },
     ],
     data_source => 'Genome::DataSource::Dwrac',
 };
 
 sub entity_name { return 'instrument data 454'; }
 
-sub params_for_create_in_genome {
-    my $self = shift;
-
-    my %params = $self->SUPER::params_for_create_in_genome;
-    return if not %params;
-
-    $params{sff_file} = $self->sequence_file;
-
-    return %params;
-}
+sub genome_class_for_create { return 'Genome::InstrumentData::454'; }
 
 sub properties_to_copy {# 9
     return ( 'id', 'library_id', 'sff_file', properties_to_keep_updated() );

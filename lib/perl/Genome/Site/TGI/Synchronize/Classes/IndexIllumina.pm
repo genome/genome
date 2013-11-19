@@ -76,7 +76,7 @@ FIRST_AVG_Q_BELOW_20        VARCHAR2 (7)                     {null} {null}   NOT
 =cut
 
 class Genome::Site::TGI::Synchronize::Classes::IndexIllumina {
-    is => 'Genome::Site::TGI::Synchronize::Classes::LimsInstDataBase',
+    is => 'Genome::Site::TGI::Synchronize::Classes::LimsBase',
     table_name => <<'EOS'
         (
             select
@@ -210,6 +210,8 @@ EOS
 };
 
 sub entity_name { return 'instrument data solexa'; }
+
+sub genome_class_for_create { return 'Genome::InstrumentData::Solexa'; }
 
 # TODO Require rebuild?
 # library_id

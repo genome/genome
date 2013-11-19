@@ -43,7 +43,6 @@ cmp_ok(@properties_to_copy, '>', @properties_to_keep_updated, 'more properties t
 
 my $lims_object = $lims_class->__define__(%properties);
 ok($lims_object, "define lims $entity_name object");
-$lims_object->sequence_file('/gscmnt/gc2135/production/143098577/R_2013_09_27_11_18_20_FLX12070281_Administrator_143098577/D_2013_10_01_13_56_25_blade8-4-11_fullProcessing/sff/demux/IGPA0UP02.demux.TTGAACTC.sff');
 
 my $genome_object = $lims_object->create_in_genome;
 ok($genome_object, "create genome $entity_name object");

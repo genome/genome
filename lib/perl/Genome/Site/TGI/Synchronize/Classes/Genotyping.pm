@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Site::TGI::Synchronize::Classes::Genotyping { # EXTERNAL 2877138689 ILLUMINA (INTERNAL) 2883765759
-    is => 'Genome::Site::TGI::Synchronize::Classes::LimsInstDataBase',
+    is => 'Genome::Site::TGI::Synchronize::Classes::LimsBase',
     table_name => <<SQL
     (
         select g.seq_id id, g.status status,
