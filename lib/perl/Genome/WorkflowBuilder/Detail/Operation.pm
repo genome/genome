@@ -117,7 +117,7 @@ sub get_xml {
     my $doc = XML::LibXML::Document->new();
     $doc->setDocumentElement($self->get_xml_element);
 
-    return $doc->toString();
+    return $doc->toString(1);
 }
 
 sub get_xml_element {
