@@ -11,7 +11,7 @@ use DateTime::Format::Strptime;
 use Date::Calc "Delta_DHMS";
 
 class Genome::Command::WorkflowMixin {
-    is => ['Genome::Command::ColorMixin'],
+    is => ['Command::V2', 'Genome::Command::ColorMixin'],
     has => [
         connectors => {
             is => 'Boolean',
