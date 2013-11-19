@@ -12,6 +12,12 @@ my %PROTOCOL_PARAMS = (
                             "Protocol Min Normal Coverage"],
 );
 
+my %HARD_CODED_PROTOCOLS = (
+    "mutation filtering annotation and curation" => {name => "genome.wustl.edu:maf_creation:data_consolidation:01",
+                                                    description => "Automatic and manual filtering and curation of variants"},
+    "nucleic acid sequencing" => {name => "genome.wustl.edu:DNA_sequencing:Illumina:01", description => "Illumina sequencing by synthesis"},
+);
+
 class Genome::Model::Tools::Tcga::Idf {
     has => [
         protocols => {
@@ -25,26 +31,38 @@ sub create {
 
     my %p;
     $self->protocols(\%p);
+    for my $key (keys %HARD_CODED_PROTOCOLS) {
+        $self->_add_hard_coded_protocol($key);
+    }
     return $self;
+}
+
+sub _add_hard_coded_protocol {
+    my $self = shift;
+    my $type = shift;
+
+    unless (defined $self->protocols->{$type}) {
+        $self->protocols->{$type} = [$HARD_CODED_PROTOCOLS{$type}];
+    }
+    return 1;
+}
+
+sub _resolve_hard_coded_protocol {
+    my $self = shift;
+    my $type = shift;
+
+    return $self->protocols->{$type}->[0]->{name};
 }
 
 sub resolve_maf_protocol {
     my $self = shift;
-
-    unless (defined $self->protocols->{"mutation filtering annotation and curation"}) {
-        $self->protocols->{"mutation filtering annotation and curation"} = [{name => "genome.wustl.edu:maf_creation:data_consolidation:01",
-                                                                description => "Automatic and manual filtering and curation of variants"}];
-    }
-    return $self->protocols->{"mutation filtering annotation and curation"}->[0]->{name};
+    return $self->_resolve_hard_coded_protocol("mutation filtering annotation and curation");
 }
 
 sub resolve_sequencing_protocol {
     my $self = shift;
 
-    unless (defined $self->protocols->{"nucleic acid sequencing"}) {
-        $self->protocols->{"nucleic acid sequencing"} = [{name => "genome.wustl.edu:DNA_sequencing:Illumina:01", description => "Illumina sequencing by synthesis"}];
-    }
-    return $self->protocols->{"nucleic acid sequencing"}->[0]->{name};
+    return $self->_resolve_hard_coded_protocol("nucleic acid sequencing");
 }
 
 sub resolve_mapping_protocol {
