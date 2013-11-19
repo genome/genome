@@ -289,39 +289,27 @@ sub justify {
     $fill = $fill || " ";
     $spacer = " " unless defined($spacer);
 
-    my $num_spaces_needed = $field_width - width($string);
-    my $fill_string = "$fill"x$num_spaces_needed;
+    $field_width = max($field_width, length($string));
 
-    if($num_spaces_needed > 0) {
-        if(width($spacer) > $num_spaces_needed) {
-            $spacer = substr($spacer, 0, $num_spaces_needed);
-        }
-        $num_spaces_needed -= width($spacer);
-        my $result = $string . $spacer;
-        if($num_spaces_needed == 0) {
-            return $result;
-        }
-    } else {
-        return $string;
-    }
+    my $add_left = "$fill"x$field_width . $spacer;
+    my $add_right = $spacer . "$fill"x$field_width;
+    my $add_width = length($add_left);
 
-    my $format;
-    if($kind eq 'left') {
-        $format = "%s" . $spacer .
-                substr($fill_string, -1 * $num_spaces_needed);
-    } elsif($kind eq 'right') {
-        $format = substr($fill_string, 0, $num_spaces_needed ) .
-                $spacer . "%s";
-    } elsif($kind eq 'center') {
-        my $left_spaces = floor($num_spaces_needed/2);
-        my $right_spaces = $num_spaces_needed - $left_spaces;
-        $format = substr($fill_string, 0, $left_spaces) .  "%s" .
-                  substr($fill_string, -1 * $right_spaces)
+    my $num_spaces_needed = $field_width - length($string);
+    my $left_index;
+    if ($kind eq 'left') {
+        $left_index = $add_width;
+    } elsif ($kind eq 'right') {
+        $left_index = $add_width - $num_spaces_needed;
+    } elsif ($kind eq 'center') {
+        $left_index = $add_width - floor($num_spaces_needed/2);
     } else {
-        Carp::croak("kind argument must be one of 'left',".
+        carp::croak("kind argument must be one of 'left',".
                     " 'right', or 'center', not '$kind'");
     }
-    return sprintf($format, $string);
+
+    my $full_string = $add_left . $string . $add_right;
+    return substr($full_string, $left_index, $field_width);
 }
 
 sub _next_foundation {
