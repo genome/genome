@@ -133,9 +133,8 @@ sub create_vcf_row {
     my $cghub_id_file = shift;
     my $vcf = shift;
     my $sample_info = shift;
-    my $idf = shift;
 
-    my $row = $self->fill_in_common_fields($build, $somatic_build, $archive_name, $cghub_id_file, $sample_info, $idf);
+    my $row = $self->fill_in_common_fields($build, $somatic_build, $archive_name, $cghub_id_file, $sample_info);
 
     $row->{"Variants Derived Data File"} = $vcf;
     return $row;
@@ -148,7 +147,6 @@ sub fill_in_common_fields {
     my $archive_name = shift;
     my $cghub_id_file = shift;
     my $sample = shift;
-    my $idf = shift;
 
     my %row;
     $row{"Material Extract Name"} = $sample->{"SampleUUID"}->{content};
@@ -268,9 +266,8 @@ sub create_maf_row {
     my $maf_file =shift;
     my $cghub_id_file = shift;
     my $sample_info = shift;
-    my $idf = shift;
 
-    my $row = $self->fill_in_common_fields($build, $somatic_build, $archive_name, $cghub_id_file, $sample_info, $idf);
+    my $row = $self->fill_in_common_fields($build, $somatic_build, $archive_name, $cghub_id_file, $sample_info);
 
     $row->{"Maf Protocol REF"} = $self->idf->resolve_maf_protocol;
     #Required if providing maf file:
