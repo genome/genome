@@ -56,6 +56,9 @@ class Genome::Model::Tools::Tcga::Sdrf {
         cghub_id_file => {
             is => 'File',
         },
+        archive_name => {
+            is => 'Text',
+        },
     ],
 };
 
@@ -132,11 +135,10 @@ sub create_vcf_row {
     my $self = shift;
     my $build = shift;
     my $somatic_build = shift;
-    my $archive_name = shift;
     my $vcf = shift;
     my $sample_info = shift;
 
-    my $row = $self->fill_in_common_fields($build, $somatic_build, $archive_name, $sample_info);
+    my $row = $self->fill_in_common_fields($build, $somatic_build, $sample_info);
 
     $row->{"Variants Derived Data File"} = $vcf;
     return $row;
@@ -146,7 +148,6 @@ sub fill_in_common_fields {
     my $self = shift;
     my $build = shift;
     my $somatic_build = shift;
-    my $archive_name = shift;
     my $sample = shift;
 
     my %row;
@@ -187,7 +188,7 @@ sub fill_in_common_fields {
     $row{"Variants Comment [TCGA Include for Analysis]"} = "yes";
     $row{"Variants Comment [TCGA Data Type]"} = "Mutations";
     $row{"Variants Comment [TCGA Data Level]"} = "Level 2";
-    $row{"Variants Comment [TCGA Archive Name]"} = $archive_name;
+    $row{"Variants Comment [TCGA Archive Name]"} = $self->archive_name;
     return \%row;
 }
 
@@ -261,11 +262,10 @@ sub create_maf_row {
     my $self = shift;
     my $build = shift;
     my $somatic_build = shift;
-    my $archive_name = shift;
     my $maf_file =shift;
     my $sample_info = shift;
 
-    my $row = $self->fill_in_common_fields($build, $somatic_build, $archive_name, $sample_info);
+    my $row = $self->fill_in_common_fields($build, $somatic_build, $sample_info);
 
     $row->{"Maf Protocol REF"} = $self->idf->resolve_maf_protocol;
     #Required if providing maf file:
@@ -274,7 +274,7 @@ sub create_maf_row {
     $row->{"Maf Comment [TCGA Include for Analysis]"} = "yes";
     $row->{"Maf Comment [TCGA Data Type]"} = "Mutations";
     $row->{"Maf Comment [TCGA Data Level]"} = "Level 2";
-    $row->{"Maf Comment [TCGA Archive Name]"} = $archive_name;
+    $row->{"Maf Comment [TCGA Archive Name]"} = $self->archive_name;
 
     return $row;
 }
