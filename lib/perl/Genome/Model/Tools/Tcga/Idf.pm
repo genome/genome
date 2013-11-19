@@ -22,6 +22,11 @@ my %HARD_CODED_PROTOCOLS = (
 
 );
 
+my %PROTOCOL_TYPE_NAME = (
+    "sequence alignment" => "alignment",
+    "variant calling" => "variant_calling",
+);
+
 class Genome::Model::Tools::Tcga::Idf {
     has => [
         protocols => {
@@ -69,28 +74,31 @@ sub resolve_sequencing_protocol {
     return $self->_resolve_hard_coded_protocol("nucleic acid sequencing");
 }
 
+sub _resolve_protocol_with_pp {
+    my $self = shift;
+    my $processing_profile = shift;
+    my $type = shift;
+
+    my $name = "genome.wustl.edu:".$PROTOCOL_TYPE_NAME{$type}.":".$processing_profile->id.":01";
+    my $description = $processing_profile->name;
+    my $found = 0;
+    for my $protocol (@{$self->protocols->{$type}}) {
+        if ($protocol->{name} eq $name) {
+            $found = 1;
+            last;
+        }
+    }
+    unless ($found) {
+        push @{$self->protocols->{$type}}, {name => $name, description => $description};
+    }      
+    return $name;
+}
+
 sub resolve_mapping_protocol {
     my $self = shift;
     my $processing_profile = shift;
-
-    my $name = "genome.wustl.edu:alignment:".$processing_profile->id.":01";
-    my $description = $processing_profile->name;
-    if (defined $self->protocols->{"sequence alignment"}){
-        my $found = 0;
-        for my $protocol (@{$self->protocols->{"sequence alignment"}}) {
-            if ($protocol->{name} eq $name) {
-                $found = 1;
-                last;
-            }
-        }
-        unless ($found) {
-            push @{$self->protocols->{"sequence alignment"}}, {name => $name, description => $description};
-        }      
-    }
-    else {
-        $self->protocols->{"sequence alignment"} = [{name => $name, description => $description}],
-    }
-    return $name;
+    
+    return $self->_resolve_protocol_with_pp($processing_profile, "sequence alignment");
 }
 
 sub resolve_library_protocol {
@@ -103,24 +111,7 @@ sub resolve_variants_protocol {
     my $self = shift;
     my $processing_profile = shift;
 
-    my $name = "genome.wustl.edu:variant_calling:".$processing_profile->id.":01";
-    my $description = $processing_profile->name;
-    if (defined $self->protocols->{"variant calling"}){
-        my $found = 0;
-        for my $protocol (@{$self->protocols->{"variant calling"}}) {
-            if ($protocol->{name} eq $name) {
-                $found = 1;
-                last;
-            }
-        }
-        unless ($found) {
-            push @{$self->protocols->{"variant calling"}}, {name => $name, description => $description};
-        }
-    }
-    else {
-        $self->protocols->{"variant calling"} = [{name => $name, description => $description}];
-    }
-    return $name;
+    return $self->_resolve_protocol_with_pp($processing_profile, "variant calling");
 }
 
 sub print_idf {
