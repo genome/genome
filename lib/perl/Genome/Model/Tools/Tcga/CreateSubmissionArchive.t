@@ -120,10 +120,10 @@ my $sample_1 = {
 
 subtest "testPrintSdrf" => sub {
     my $idf = Genome::Model::Tools::Tcga::Idf->create;
-    my $row1 = $class->create_vcf_row($test_somatic_build->normal_build, "test_archive", undef, $cghub_ids, "snvs.vcf", $sample_1, $idf);
-    my $row2 = $class->create_vcf_row($test_somatic_build->normal_build, "test_archive", undef, $cghub_ids, "indels.vcf", $sample_1, $idf);
-    my $row3 = $class->create_maf_row($test_somatic_build->normal_build, "test_archive", "/test/maf/path", undef, $cghub_ids, $sample_1, $idf);
-    my $row4 = $class->create_maf_row($test_somatic_build->tumor_build, "test_archive", "/test/maf/path", undef, $cghub_ids, $sample_1, $idf);
+    my $row1 = $class->create_vcf_row($test_somatic_build->normal_build, "test_archive", $cghub_ids, "snvs.vcf", $sample_1, $idf);
+    my $row2 = $class->create_vcf_row($test_somatic_build->normal_build, "test_archive", $cghub_ids, "indels.vcf", $sample_1, $idf);
+    my $row3 = $class->create_maf_row($test_somatic_build->normal_build, "test_archive", "/test/maf/path", $cghub_ids, $sample_1, $idf);
+    my $row4 = $class->create_maf_row($test_somatic_build->tumor_build, "test_archive", "/test/maf/path", $cghub_ids, $sample_1, $idf);
 
     my $output_sdrf = Genome::Sys->create_temp_file_path;
     ok($class->print_sdrf($output_sdrf, ($row1, $row2, $row3, $row4)), "sdrf printed");

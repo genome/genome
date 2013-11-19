@@ -24,6 +24,7 @@ subtest resolve_x_protocol => sub {
     is($idf->resolve_mapping_protocol($test_pp), "genome.wustl.edu:alignment:".$test_pp->id.":01", "Mapping protocol resolved correctly");
     is($idf->resolve_library_protocol, "genome.wustl.edu:DNA_extraction:Illumina_DNASeq:01", "Library protocol resolved correctly");
     is($idf->resolve_variants_protocol($test_pp), "genome.wustl.edu:variant_calling:".$test_pp->id.":01", "Variants protocol defined correctly");
+    is($idf->resolve_sequencing_protocol(), "genome.wustl.edu:DNA_sequencing:Illumina:01", "Sequencing protocol defined correctly");
 };
 
 subtest "print IDF" => sub {

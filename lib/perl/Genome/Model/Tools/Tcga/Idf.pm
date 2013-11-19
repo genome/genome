@@ -38,6 +38,15 @@ sub resolve_maf_protocol {
     return $self->protocols->{"mutation filtering annotation and curation"}->[0]->{name};
 }
 
+sub resolve_sequencing_protocol {
+    my $self = shift;
+
+    unless (defined $self->protocols->{"nucleic acid sequencing"}) {
+        $self->protocols->{"nucleic acid sequencing"} = [{name => "genome.wustl.edu:DNA_sequencing:Illumina:01", description => "Illumina sequencing by synthesis"}];
+    }
+    return $self->protocols->{"nucleic acid sequencing"}->[0]->{name};
+}
+
 sub resolve_mapping_protocol {
     my $self = shift;
     my $processing_profile = shift;
@@ -57,8 +66,7 @@ sub resolve_mapping_protocol {
         }      
     }
     else {
-        $self->protocols->{"sequence alignment"} = [{name => "genome.wustl.edu:DNA_sequencing:Illumina:01",
-                                                                description => "Illumina sequencing by synthesis"}];
+        $self->protocols->{"sequence alignment"} = [{name => $name, description => $description}],
     }
     return $name;
 }

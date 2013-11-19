@@ -97,7 +97,6 @@ class Genome::Model::Tools::Tcga::CreateSubmissionArchive {
 sub execute {
     my $self = shift;
     my @sdrf_rows;
-    my %protocol_db;
     my $idf = Genome::Model::Tools::Tcga::Idf->create;
     my $vcf_archive_dir = $self->output_dir."/".$self->archive_name.".Level_2.".$self->archive_version;
     Genome::Sys->create_directory($vcf_archive_dir);
@@ -135,20 +134,20 @@ sub execute {
             my $sample_info = $self->get_info_for_sample($build->subject->extraction_label, $vcf_sample_info);
             
             for my $vcf($snvs_vcf, $indels_vcf) {
-                push @sdrf_rows, $self->create_vcf_row($build, $self->archive_name.".".$self->archive_version, \%protocol_db, $self->cghub_id_file, $vcf, $sample_info, $idf);
+                push @sdrf_rows, $self->create_vcf_row($build, $self->archive_name.".".$self->archive_version, $self->cghub_id_file, $vcf, $sample_info, $idf);
             }
 
             for my $maf_type (qw(somatic germline)) {
                 my $maf_accessor = $maf_type."_maf_file";
                 if ($self->$maf_accessor) {
                     Genome::Sys->copy_file($self->$maf_accessor, $vcf_archive_dir."/$maf_type.maf");
-                    push @sdrf_rows, $self->create_maf_row($build, $self->archive_name.".".$self->archive_version, "$maf_type.maf", \%protocol_db, $self->cghub_id_file, $sample_info, $idf);
+                    push @sdrf_rows, $self->create_maf_row($build, $self->archive_name.".".$self->archive_version, "$maf_type.maf", $self->cghub_id_file, $sample_info, $idf);
                 }
             }
         }
     }
 
-    $idf->print_idf($magetab_archive_dir."/".$self->archive_name.".".$self->archive_version.".".$IDF_FILE_EXTENSION.".txt", \%protocol_db);
+    $idf->print_idf($magetab_archive_dir."/".$self->archive_name.".".$self->archive_version.".".$IDF_FILE_EXTENSION.".txt");
     $self->print_sdrf($magetab_archive_dir."/".$self->archive_name.".".$self->archive_version.".".$SDRF_FILE_EXTENSION.".txt", @sdrf_rows);
 
     $self->print_manifest($vcf_archive_dir);
@@ -222,12 +221,11 @@ sub create_maf_row {
     my $build = shift;
     my $archive_name = shift;
     my $maf_file =shift;
-    my $protocol_db = shift;
     my $cghub_id_file = shift;
     my $sample_info = shift;
     my $idf = shift;
 
-    my $row = $self->fill_in_common_fields($build, $archive_name, $protocol_db, $cghub_id_file, $sample_info, $idf);
+    my $row = $self->fill_in_common_fields($build, $archive_name, $cghub_id_file, $sample_info, $idf);
 
     $row->{"Maf Protocol REF"} = $idf->resolve_maf_protocol;
     #Required if providing maf file:
@@ -245,13 +243,12 @@ sub create_vcf_row {
     my $self = shift;
     my $build = shift;
     my $archive_name = shift;
-    my $protocol_db = shift;
     my $cghub_id_file = shift;
     my $vcf = shift;
     my $sample_info = shift;
     my $idf = shift;
 
-    my $row = $self->fill_in_common_fields($build, $archive_name, $protocol_db, $cghub_id_file, $sample_info, $idf);
+    my $row = $self->fill_in_common_fields($build, $archive_name, $cghub_id_file, $sample_info, $idf);
 
     $row->{"Variants Derived Data File"} = $vcf;
     return $row;
@@ -261,7 +258,6 @@ sub fill_in_common_fields {
     my $self = shift;
     my $build = shift;
     my $archive_name = shift;
-    my $protocol_db = shift;
     my $cghub_id_file = shift;
     my $sample = shift;
     my $idf = shift;
@@ -291,15 +287,16 @@ sub fill_in_common_fields {
     $row{"Material Comment [is tumor]"} = $is_tumor;
     $row{"Material Material Type"} = "DNA";
     $row{"Material Comment [TCGA Genome Reference]"} = "GRCh-37lite";
-    $row{"Library Protocol REF"} = $idf->resolve_library_protocol($protocol_db);
+    $row{"Library Protocol REF"} = $idf->resolve_library_protocol();
     ($row{"Library Parameter Value [Vendor]"},
     $row{"Library Parameter Value [Catalog Name]"},
     $row{"Library Parameter Value [Catalog Number]"}) = $self->resolve_capture_reagent($build);
-    $row{"Mapping Protocol REF"} = $idf->resolve_mapping_protocol($build->processing_profile, $protocol_db);
+    $row{"Sequencing Protocol REF"} = $idf->resolve_sequencing_protocol();
+    $row{"Mapping Protocol REF"} = $idf->resolve_mapping_protocol($build->processing_profile);
     $row{"Mapping Comment [Derived Data File REF]"} =  $sample->{"File"}->{content};
     $row{"Mapping Comment [TCGA CGHub ID]"} = $self->resolve_cghub_id($build, $cghub_id_file);
     $row{"Mapping Comment [TCGA Include for Analysis]"} = "yes";
-    $row{"Variants Protocol REF"} = $idf->resolve_variants_protocol($build->processing_profile, $protocol_db);
+    $row{"Variants Protocol REF"} = $idf->resolve_variants_protocol($build->processing_profile);
     $row{"Variants Comment [TCGA Include for Analysis]"} = "yes";
     $row{"Variants Comment [TCGA Data Type]"} = "Mutations";
     $row{"Variants Comment [TCGA Data Level]"} = "Level 2";
