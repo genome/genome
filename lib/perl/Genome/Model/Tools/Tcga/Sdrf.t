@@ -54,17 +54,17 @@ subtest "testPrintSdrf" => sub {
     $idf->add_pp_protocols($test_somatic_build->processing_profile);
     my $cghub_ids = setup_cghubids_file();
 
-    my $sdrf = $class->create(idf => $idf);
+    my $sdrf = $class->create(idf => $idf, cghub_id_file => $cghub_ids);
     my $sample_1 = {
         ID => {content => "TCGA_1"},
         SampleUUID => {content => "3958t6"},
         SampleTCGABarcode => {content => "TCGA_1"},
     };
 
-    my $row1 = $sdrf->create_vcf_row($test_somatic_build->normal_build, $test_somatic_build, "test_archive", $cghub_ids, "snvs.vcf", $sample_1);
-    my $row2 = $sdrf->create_vcf_row($test_somatic_build->normal_build, $test_somatic_build, "test_archive", $cghub_ids, "indels.vcf", $sample_1);
-    my $row3 = $sdrf->create_maf_row($test_somatic_build->normal_build, $test_somatic_build, "test_archive", "/test/maf/path", $cghub_ids, $sample_1);
-    my $row4 = $sdrf->create_maf_row($test_somatic_build->tumor_build, $test_somatic_build, "test_archive", "/test/maf/path", $cghub_ids, $sample_1);
+    my $row1 = $sdrf->create_vcf_row($test_somatic_build->normal_build, $test_somatic_build, "test_archive", "snvs.vcf", $sample_1);
+    my $row2 = $sdrf->create_vcf_row($test_somatic_build->normal_build, $test_somatic_build, "test_archive", "indels.vcf", $sample_1);
+    my $row3 = $sdrf->create_maf_row($test_somatic_build->normal_build, $test_somatic_build, "test_archive", "/test/maf/path", $sample_1);
+    my $row4 = $sdrf->create_maf_row($test_somatic_build->tumor_build, $test_somatic_build, "test_archive", "/test/maf/path", $sample_1);
 
     my $output_sdrf = Genome::Sys->create_temp_file_path;
     ok($sdrf->print_sdrf($output_sdrf, ($row1, $row2, $row3, $row4)), "sdrf printed");
@@ -72,13 +72,15 @@ subtest "testPrintSdrf" => sub {
 
 subtest load_cghub_id => sub {
     my $cghub_ids = setup_cghubids_file();
-    is_deeply($class->load_cghub_info($cghub_ids, "TCGA_Name"), {"TCGA-1" => "cghub1", "TCGA-2" => "cghub2"}, "CGHub info loaded correctly");
+    my $sdrf = $class->create(cghub_id_file => $cghub_ids);
+    is_deeply($sdrf->load_cghub_info("TCGA_Name"), {"TCGA-1" => "cghub1", "TCGA-2" => "cghub2"}, "CGHub info loaded correctly");
 };
 
 subtest "resolve cghub id" => sub {
     my $cghub_ids = setup_cghubids_file();
     my $test_somatic_build = setup_test_build();
-    is($class->resolve_cghub_id($test_somatic_build->normal_build, $cghub_ids), "cghub1", "CGHub called correctly");
+    my $sdrf = $class->create(cghub_id_file => $cghub_ids);
+    is($sdrf->resolve_cghub_id($test_somatic_build->normal_build), "cghub1", "CGHub called correctly");
 };
 
 subtest "resolve capture reagent" => sub {
