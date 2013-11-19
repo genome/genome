@@ -229,7 +229,7 @@ sub create_maf_row {
 
     my $row = $self->fill_in_common_fields($build, $archive_name, $protocol_db, $cghub_id_file, $sample_info, $idf);
 
-    $row->{"Maf Protocol REF"} = $idf->resolve_maf_protocol($protocol_db);
+    $row->{"Maf Protocol REF"} = $idf->resolve_maf_protocol;
     #Required if providing maf file:
     $row->{"Maf Derived Data File"} = $maf_file;
     $row->{"Maf Comment [TCGA Spec Version]"} = 2.3;

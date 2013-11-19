@@ -45,8 +45,9 @@ subtest "print IDF" => sub {
         ],
     );
     my $idf = Genome::Model::Tools::Tcga::Idf->create;
+    $idf->protocols(\%protocol_db);
     my $output_idf = Genome::Sys->create_temp_file_path;
-    ok($idf->print_idf($output_idf, \%protocol_db), "Print idf called successfully");
+    ok($idf->print_idf($output_idf), "Print idf called successfully");
     compare_ok($output_idf, $base_dir."/expected.idf", "idf printed as expected");
 };
 
