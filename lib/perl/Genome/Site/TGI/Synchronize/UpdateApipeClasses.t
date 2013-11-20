@@ -241,7 +241,7 @@ sub verify {
                 } if not defined $genome_value;
                 $ok++ if $genome_value eq $lims_object->$property;
             }
-            is($ok, @properties_to_copy, 'properties match');
+            is($ok, @properties_to_copy, $ok.' properties match '.$lims_object->entity_name.' ID '.$lims_object->id);
         }
         is($genome_object_cnt, $lims_object_cnt, "correct number of genome '$entity_name' objects!");
     }
