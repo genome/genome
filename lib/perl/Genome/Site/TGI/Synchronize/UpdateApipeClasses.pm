@@ -323,26 +323,8 @@ sub _create_indexillumina {
     # Bam path required!
     return 0 unless $original_object->bam_path;
 
-    my ($direct_properties, $indirect_properties) = $self->_get_direct_and_indirect_properties_for_object(
-        $original_object,
-        $new_object_class, 
-        qw/ sample_name sample_id /
-    );
-
-    my $object = eval {
-        $new_object_class->create(
-            id => $original_object->id,
-            subclass_name => $new_object_class,
-            %{$direct_properties},
-            %{$indirect_properties},
-        );
-    };
-    confess "Could not create new object of type $new_object_class based on object of type " .
-    $original_object->class . " with id " . $original_object->id . ":\n$@" unless $object;
-
-    return 1;
+    return $self->_create_object($original_object, $new_object_class);
 }
-
 
 sub _create_regionindex454 {
     my ($self, $original_object, $new_object_class) = @_;
