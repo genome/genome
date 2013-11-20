@@ -350,44 +350,10 @@ sub _create_regionindex454 {
     # Successful PIDFA required!
     return 0 unless exists $self->instrument_data_with_successful_pidfas->{$original_object->id};
 
-    my ($direct_properties, $indirect_properties) = $self->_get_direct_and_indirect_properties_for_object(
-        $original_object,
-        $new_object_class, 
-        qw/ sample_name sample_id full_path/
-    );
-    # The value of successful pidfas is the sff file. If they are no reads, the SFF will not be defined. 
-    # 454 w/ reads and no SFF should be caught in PIDFA.
     my $sff_file = $self->instrument_data_with_successful_pidfas->{$original_object->id};
-    $indirect_properties->{sff_file} = $sff_file if $sff_file;
+    $original_object->sff_file($sff_file) if $sff_file;
 
-    my $object = eval {
-        $new_object_class->create(
-            %{$direct_properties},
-            id => $original_object->id,
-            subclass_name => $new_object_class,
-        )
-    };
-    confess "Could not create new object of type $new_object_class based on object of type " .
-    $original_object->class . " with id " . $original_object->id . ":\n$!" unless $object;
-
-    my $add_attrs = $self->_add_attributes_to_instrument_data($object, $indirect_properties);
-    Carp::confess('Failed to add attributes to instrument data: '.$object->__display_name__) if not $add_attrs;
-
-    return 1;
-}
-
-sub _add_attributes_to_instrument_data {
-    my ($self, $instrument_data, $attrs) = @_;
-
-    for my $name ( keys %{$attrs} ) {
-        Genome::InstrumentDataAttribute->create(
-            instrument_data_id => $instrument_data->id,
-            attribute_label => $name,
-            attribute_value => $attrs->{$name}, 
-        );
-    }
-
-    return 1;
+    return $self->_create_object($original_object, $new_object_class);
 }
 
 sub _create_librarysummary {
