@@ -53,6 +53,12 @@ class Genome::Model::Tools::Tcga::Sdrf {
         idf => {
             is => 'Genome::Model::Tools::Tcga::Idf',
         },
+        cghub_id_file => {
+            is => 'File',
+        },
+        archive_name => {
+            is => 'Text',
+        },
     ],
 };
 
@@ -129,12 +135,10 @@ sub create_vcf_row {
     my $self = shift;
     my $build = shift;
     my $somatic_build = shift;
-    my $archive_name = shift;
-    my $cghub_id_file = shift;
     my $vcf = shift;
     my $sample_info = shift;
 
-    my $row = $self->fill_in_common_fields($build, $somatic_build, $archive_name, $cghub_id_file, $sample_info);
+    my $row = $self->fill_in_common_fields($build, $somatic_build, $sample_info);
 
     $row->{"Variants Derived Data File"} = $vcf;
     return $row;
@@ -144,8 +148,6 @@ sub fill_in_common_fields {
     my $self = shift;
     my $build = shift;
     my $somatic_build = shift;
-    my $archive_name = shift;
-    my $cghub_id_file = shift;
     my $sample = shift;
 
     my %row;
@@ -180,27 +182,26 @@ sub fill_in_common_fields {
     $row{"Sequencing Protocol REF"} = $self->idf->resolve_sequencing_protocol();
     $row{"Mapping Protocol REF"} = $self->idf->resolve_mapping_protocol($somatic_build->processing_profile);
     $row{"Mapping Comment [Derived Data File REF]"} =  $sample->{"File"}->{content};
-    $row{"Mapping Comment [TCGA CGHub ID]"} = $self->resolve_cghub_id($build, $cghub_id_file);
+    $row{"Mapping Comment [TCGA CGHub ID]"} = $self->resolve_cghub_id($build);
     $row{"Mapping Comment [TCGA Include for Analysis]"} = "yes";
     $row{"Variants Protocol REF"} = $self->idf->resolve_variants_protocol($somatic_build->processing_profile);
     $row{"Variants Comment [TCGA Include for Analysis]"} = "yes";
     $row{"Variants Comment [TCGA Data Type]"} = "Mutations";
     $row{"Variants Comment [TCGA Data Level]"} = "Level 2";
-    $row{"Variants Comment [TCGA Archive Name]"} = $archive_name;
+    $row{"Variants Comment [TCGA Archive Name]"} = $self->archive_name;
     return \%row;
 }
 
 sub resolve_cghub_id {
     my $self = shift;
     my $build = shift;
-    my $file = shift;
 
     unless (defined $CGHUB_INFO) {
-        $CGHUB_INFO = $self->load_cghub_info($file, "BAM_path");
+        $CGHUB_INFO = $self->load_cghub_info("BAM_path");
     }
 
     unless (defined $CGHUB_INFO_BY_TCGA_NAME) {
-        $CGHUB_INFO_BY_TCGA_NAME = $self->load_cghub_info($file, "TCGA_Name");
+        $CGHUB_INFO_BY_TCGA_NAME = $self->load_cghub_info("TCGA_Name");
     }
     my $id = $CGHUB_INFO->{$build->whole_rmdup_bam_file};
     unless (defined $id) {
@@ -214,12 +215,11 @@ sub resolve_cghub_id {
 
 sub load_cghub_info {
     my $self = shift;
-    my $id_file = shift;
     my $load_by = shift;
     my %id_hash;
 
     my $reader = Genome::Utility::IO::SeparatedValueReader->create(
-        input => $id_file,
+        input => $self->cghub_id_file,
         separator => "\t",
     );
 
@@ -262,12 +262,10 @@ sub create_maf_row {
     my $self = shift;
     my $build = shift;
     my $somatic_build = shift;
-    my $archive_name = shift;
     my $maf_file =shift;
-    my $cghub_id_file = shift;
     my $sample_info = shift;
 
-    my $row = $self->fill_in_common_fields($build, $somatic_build, $archive_name, $cghub_id_file, $sample_info);
+    my $row = $self->fill_in_common_fields($build, $somatic_build, $sample_info);
 
     $row->{"Maf Protocol REF"} = $self->idf->resolve_maf_protocol;
     #Required if providing maf file:
@@ -276,7 +274,7 @@ sub create_maf_row {
     $row->{"Maf Comment [TCGA Include for Analysis]"} = "yes";
     $row->{"Maf Comment [TCGA Data Type]"} = "Mutations";
     $row->{"Maf Comment [TCGA Data Level]"} = "Level 2";
-    $row->{"Maf Comment [TCGA Archive Name]"} = $archive_name;
+    $row->{"Maf Comment [TCGA Archive Name]"} = $self->archive_name;
 
     return $row;
 }
