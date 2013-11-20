@@ -22,6 +22,7 @@ is($lims_class->genome_class_for_create, $expected_genome_class, 'genome class f
 
 my @properties_to_copy = $lims_class->properties_to_copy;
 ok(@properties_to_copy, 'properties to copy');
+is(@properties_to_copy, 13, 'properties to copy count');
 my @properties_to_keep_updated = $lims_class->properties_to_keep_updated;
 ok(@properties_to_keep_updated, 'properties to keep updated');
 cmp_ok(@properties_to_copy, '>', @properties_to_keep_updated, 'more properties to copy than keep updated');
