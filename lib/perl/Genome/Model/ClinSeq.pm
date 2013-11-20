@@ -303,7 +303,7 @@ sub map_workflow_inputs {
         if(-e $tumor_rnaseq_build->data_directory . '/fusions/chimeras.bedpe'){
             my $ncbi_human_ensembl_build_id = $tumor_rnaseq_build->annotation_build->id;
             my $tumor_unfiltered_fusion_file = $tumor_rnaseq_build->data_directory . '/fusions/chimeras.bedpe';
-            my $tumor_filtered_fusion_dir = $patient_dir . '/rna_fusions/tumor';
+            my $tumor_filtered_fusion_dir = $patient_dir . '/rnaseq/fusions/tumor';
             my $tumor_filtered_fusion_file =  $tumor_filtered_fusion_dir . '/chimeras.filtered.bedpe';
             push @inputs, tumor_unfiltered_fusion_file => $tumor_unfiltered_fusion_file;
             push @inputs, ncbi_human_ensembl_build_id => $ncbi_human_ensembl_build_id;
@@ -778,6 +778,9 @@ sub _resolve_workflow_for_build {
     if ($build->tumor_rnaseq_build){
         #Filter ChimeraScan tumor Fusion output - Use the ChimeraScan::FilterOutput GMT on the tumor fusion calls
         if(-e $build->tumor_rnaseq_build->data_directory . '/fusions/chimeras.bedpe'){
+            #copy over unfiltered fusion file
+            $self->copy_unfiltered_fusion($build);
+            
             my $msg = "Filtering tumor ChimeraScan fusion calls.";
             $tumor_chimerascan_filtered_fusion_op = $add_step->($msg, 'Genome::Model::Tools::ChimeraScan::FilterOutput');
             $add_link->($input_connector, 'tumor_unfiltered_fusion_file', $tumor_chimerascan_filtered_fusion_op, 'bedpe_file');
@@ -1199,6 +1202,14 @@ sub snv_variant_source_file {
         $exception = $class->error_message("$source directory not found");
     }
     die $exception;
+}
+
+sub copy_unfiltered_fusion {
+    my ($class, $build) = @_;
+    my $tumor_unfiltered_fusion_file = $build->tumor_rnaseq_build->data_directory . '/fusions/chimeras.bedpe';
+    my $tumor_filtered_fusion_dir = $class->patient_dir($build) . '/rnaseq/fusions/tumor';
+    my $cp_tumor_unfiltered_fusion = "cp " . $tumor_unfiltered_fusion_file . " " . $tumor_filtered_fusion_dir;
+    Genome::Sys->shellcmd(cmd => $cp_tumor_unfiltered_fusion);
 }
 
 sub clonality_dir {

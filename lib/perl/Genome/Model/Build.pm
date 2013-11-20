@@ -2257,14 +2257,6 @@ sub diff_vcf_gz {
     return ($first_md5 eq $second_md5 ? 1 : 0);
 }
 
-sub diff_circos {
-    my ($self, $first_file, $second_file) = @_;
-    my $first_md5  = qx(grep -vP '\\w+/\\w+/info/model_data/\\w+/build\\w+/\\w+/circos/data' $first_file | md5sum);
-    my $second_md5 = qx(grep -vP '\\w+/\\w+/info/model_data/\\w+/build\\w+/\\w+/circos/data' $second_file | md5sum);
-    return ($first_md5 eq $second_md5 ? 1 : 0);
-}
-
-
 # This method takes another build id and compares that build against this one. It gets
 # a list of all the files in both builds and attempts to find pairs of corresponding
 # files. The files/dirs listed in the files_ignored_by_diff and dirs_ignored_by_diff
