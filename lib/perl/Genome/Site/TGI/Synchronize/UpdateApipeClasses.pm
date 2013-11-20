@@ -128,7 +128,7 @@ sub execute {
         }
 
         my $in_genome_not_lims = $differ->in_genome_not_lims;
-        $self->_report->{$genome_class_for_create}->{'missing'} = [ @$in_genome_not_lims ];
+        $self->_report->{$entity_name}->{'missing'} = [ @$in_genome_not_lims ];
     }
 
     $self->_unlock_me;
@@ -174,7 +174,7 @@ sub _create_genome_objects_for_lims_objects {
     while ( my $lims_obj = $iterator->next ) {
         my $genome_obj = $self->$create_method($lims_obj, $genome_class);
         if ( $genome_obj ) {
-            push @{$report->{$genome_class}->{'copied'}}, $lims_obj->id;
+            push @{$report->{$lims_obj->entity_name}->{'copied'}}, $lims_obj->id;
         }
     }
     $self->status_message('Create objects in Genome...done');
