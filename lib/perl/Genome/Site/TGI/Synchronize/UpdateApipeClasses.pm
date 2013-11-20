@@ -30,25 +30,6 @@ class Genome::Site::TGI::Synchronize::UpdateApipeClasses {
         'the MG schema and determines if anything needs to be copied over',
 };
 
-# Maps old classes to new classes. Abstract classes should not be included here because 
-# it can lead to some attributes not being copied over.
-sub objects_to_sync {
-    return (
-        'Genome::Site::TGI::Synchronize::Classes::OrganismTaxon' => 'Genome::Taxon',
-        'Genome::Site::TGI::Synchronize::Classes::OrganismIndividual' => 'Genome::Individual',
-        'Genome::Site::TGI::Synchronize::Classes::PopulationGroup' => 'Genome::PopulationGroup',
-        'Genome::Site::TGI::Synchronize::Classes::OrganismSample' => 'Genome::Sample',
-        'Genome::Site::TGI::Synchronize::Classes::LibrarySummary' => 'Genome::Library',
-        'Genome::Site::TGI::Synchronize::Classes::LimsProject' => 'Genome::Project',
-        'Genome::Site::TGI::Synchronize::Classes::LimsProjectSample' => 'Genome::Site::TGI::Synchronize::Classes::ProjectSample',
-        'Genome::Site::TGI::Synchronize::Classes::LimsProjectInstrumentData' => 'Genome::Site::TGI::Synchronize::Classes::ProjectInstrumentData',
-        'Genome::Site::TGI::Synchronize::Classes::RegionIndex454' => 'Genome::InstrumentData::454',
-        'Genome::Site::TGI::Synchronize::Classes::IndexIllumina' => 'Genome::InstrumentData::Solexa',
-        'Genome::Site::TGI::Synchronize::Classes::Genotyping' => 'Genome::InstrumentData::Imported',
-        'Genome::Site::TGI::Synchronize::Classes::InstrumentDataAnalysisProjectBridge' => ['Genome::Config::AnalysisProject::InstrumentDataBridge', 'sync_id'],
-    );
-}
-
 sub _suppress_status_messages {
     my $self = shift;
 
@@ -122,63 +103,38 @@ sub execute {
     my $dictionary = Genome::Site::TGI::Synchronize::Classes::Dictionary->get;
     my @entity_names = $dictionary->entity_names;
     for my $entity_name ( @entity_names ) {
-        my $lims_class = $dictionary->lims_class_for_entity_name($entity_name);
-        my $lims_ids = $self->_get_ids_for($lims_class);
-
-        my $genome_class = $lims_class->genome_class_for_comparison($entity_name);
-        my $id_by_method;
-        if (ref $genome_class eq 'ARRAY') {
-            $id_by_method = $$genome_class[1];
-            $genome_class = $$genome_class[0];
+        $self->status_message("Detemine $entity_name IDs to create...");
+        my $differ = Genome::Site::TGI::Synchronize::DiffLimsAndGenome->create(
+            entity_name => $entity_name,
+            print_diffs => 0,
+        );
+        my $execute_differ = $differ->execute;
+        if ( not $execute_differ ) {
+            $self->error_message("Failed to execute LIMS v. Genome differ for $entity_name");
+            return;
         }
-        my $genome_ids = $self->_get_ids_for($genome_class, $id_by_method);
 
-        $self->status_message('Detemine IDs to create...');
-        my $ids_to_create = $lims_ids->difference($genome_ids);
+        my $ids_to_create = $differ->in_lims_not_genome;
         $self->status_message('Found IDs to create: '.scalar(@{$ids_to_create}));
 
+        my $lims_class = $differ->lims_class;
+        my $genome_class_for_create = $lims_class->genome_class_for_create;
         if ( not $ids_to_create->is_empty ) {
-        my $start_transaction = UR::Context::Transaction->begin();
-
             $self->_create_genome_objects_for_lims_objects(
                 ids_to_create => $ids_to_create,
                 lims_class => $lims_class,
-                genome_class => $lims_class->genome_class_for_create,
+                genome_class => $genome_class_for_create,
             );
         }
 
-        my $ids_in_genome_not_in_lims = $genome_ids->difference($lims_ids);
-        $self->_report->{$genome_class}->{'missing'} = [ @$ids_in_genome_not_in_lims ];
+        my $in_genome_not_lims = $differ->in_genome_not_lims;
+        $self->_report->{$genome_class_for_create}->{'missing'} = [ @$in_genome_not_lims ];
     }
 
     $self->_unlock_me;
 
     $self->status_message('Sync LIMS to Genome...done');
     return 1;
-}
-
-sub _get_ids_for {
-    my ($self, $class, $id_by_method) = @_;
-    $self->status_message("Getting IDs for $class...");
-    $id_by_method = 'id' unless defined($id_by_method);
-
-    my $iterator = $class->create_iterator;
-    my $set = Set::Scalar->new();
-    while ( my $obj = $iterator->next ) {
-        $set->insert($obj->$id_by_method);
-    };
-    $self->status_message("Found ".scalar(@$set)." $class IDs.");
-
-    if ( $set->is_empty ) {
-        Carp::confess('Failed to get ids for class! '.$class);
-    }
-
-    $self->status_message("Unloading $class objects...");
-    my $unloaded = $class->unload;
-    $self->status_message("Unloaded $unloaded objects...OK");
-
-    $self->status_message("Getting IDs for $class...done");
-    return $set;
 }
 
 sub _resolve_create_method_for {
