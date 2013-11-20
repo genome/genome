@@ -31,10 +31,6 @@ sub lims_class {
     return Genome::Site::TGI::Synchronize::Classes::Dictionary->lims_class_for_entity_name($_[0]->entity_name);
 }
 
-sub genome_class {
-    return Genome::Site::TGI::Synchronize::Classes::Dictionary->genome_class_for_entity_name($_[0]->entity_name);
-}
-
 sub execute {
     my $self = shift;
 
@@ -44,7 +40,7 @@ sub execute {
     my $lims_class = $self->lims_class;
     my $lims_ids = $self->_create_id_set_for_class($lims_class);
 
-    my $genome_class =$self->genome_class;
+    my $genome_class = $lims_class->genome_class_for_comparison;
     my $genome_ids = $self->_create_id_set_for_class($genome_class);
 
     my $in_lims_not_genome = $lims_ids->difference($genome_ids);
