@@ -286,33 +286,9 @@ sub _create_genotyping {
     my $genotype_file = $self->instrument_data_with_successful_pidfas->{$original_object->id};
     return 0 unless $genotype_file and -s $genotype_file;
 
-    my $library_name = $original_object->sample_name.'-microarraylib';
-    my ($library) = Genome::Library->get(name => $library_name, sample_id => $original_object->sample_id);
-    if ( not $library ) {
-        $library = Genome::Library->create(name => $library_name, sample_id => $original_object->sample_id);
-        if ( not $library ) {
-            Carp::confess('Failed to create genotype microarray library for sample: '.$original_object->sample_id);
-        }
-    }
+    $original_object->genotype_file($genotype_file);
 
-    my $object = eval {
-        $new_object_class->create(
-            id => $original_object->id,
-            library => $library,
-            sequencing_platform => $original_object->sequencing_platform,
-            chip_name => $original_object->chip_name,
-            version => $original_object->version,
-            import_format => 'genotype file',
-            import_source_name => $original_object->import_source_name,
-        );
-    };
-    confess "Could not create new object of type $new_object_class based on object of type " .
-    $original_object->class . " with id " . $original_object->id . ":\n$@" if not $object;
-
-    my $new_genotype_file = eval{ Genome::InstrumentData::Microarray->update_genotype_file($object, $genotype_file); };
-    confess "$@\nFailed to update genotype_file: $genotype_file on instrument data: ".$object->id if not $new_genotype_file;
-
-    return 1;
+    return $self->_create_object($original_object, $new_object_class);
 }
 
 sub _create_indexillumina {
