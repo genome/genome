@@ -15,141 +15,210 @@ use Data::Dumper 'Dumper';
 use Test::More;
 
 use_ok('Genome::Site::TGI::Synchronize::UpdateApipeClasses') or die;
-use_ok('Genome::Site::TGI::Synchronize::Classes::IndexIllumina') or die;
-use_ok('Genome::Site::TGI::Synchronize::Classes::LibrarySummary') or die;
+use_ok('Genome::Site::TGI::Synchronize::Classes::Dictionary') or die;
 
-my $uac = Genome::Site::TGI::Synchronize::UpdateApipeClasses->create;
-ok($uac, 'create update apipe classes');
+class Iterator {
+    has => [
+        objects => { is_many => 1, },
+        position => { is => 'Integer', default_value => -1, },
+    ],
+};
+sub Iterator::_inc_position {
+    my $self = shift;
+    return $self->position( $self->position + 1 );
+};
+sub Iterator::next {
+    my $self = shift;
+    my $position = $self->_inc_position;
+    return ($self->objects)[$position];
+};
 
-for my $test ( tests() ) {
-    my $gsc_class = $test->{gsc_class};
-    my $params = $test->{params};
-    my $gsc_obj = $gsc_class->create(%$params);
-    my $genome_class = $test->{genome_class};
-    my $genome_get_params = $test->{genome_get_params} || { id => $gsc_obj->id };
-    my $genome_obj = $genome_class->get(%$genome_get_params);
-    $uac->instrument_data_with_successful_pidfas->{$gsc_obj->id} = 1 if $genome_class =~ /Solexa$/;
-    ok(!$genome_obj, "$genome_class data does not exist for $gsc_class for id ".$gsc_obj->id);
-    my $method = $test->{method};
-    ok($uac->$method($gsc_obj, $genome_class), $method);
-    $genome_obj = $genome_class->get(%$genome_get_params);
-    ok($genome_obj, "$genome_class exists for $gsc_class id ".$gsc_obj->id) or die;
-
-    next if $test->{genome_get_params}; # skip if we have explicit params
-
-    for my $name ( keys %$params ) {
-        my $param_value = $params->{$name} // 'NULL';
-        my $gsc_value = $gsc_obj->$name // 'NULL';
-        is($gsc_value, $param_value, $gsc_class.' '.$gsc_obj->id.' '.$name.' is '.$param_value);
-        my $genome_value = eval{ $genome_obj->$name; };
-        $genome_value = eval{ $genome_obj->attributes(attribute_label => $name)->attribute_value; } if not defined $genome_value;
-        $genome_value //= 'NULL';
-        is($genome_value, $gsc_value, $genome_class.' '.$genome_obj->id.' '.$name.' is '.$gsc_value);
-    }
+class Transaction {};
+sub Transaction::commit { return 1; };
+{
+    no warnings;
+    use UR::Context::Transaction;
+    *UR::Context::Transaction::begin = sub{ return Transaction->create; };
+    *Genome::InstrumentData::Microarray::update_genotype_file = sub{ return 1; };
 }
+
+my $uac = Genome::Site::TGI::Synchronize::UpdateApipeClasses->create();
+ok($uac, 'create');
+my $i = -100;
+ok(init(), 'init') or die;
+ok($uac->execute, 'execute');
+
+ok(verify(), 'verify') or die;
 
 done_testing();
 
 ###
 
-sub tests {
-    # Ask ebelter/fdu about how to add a test if you'd like to add one
+sub init {
+    diag("INIT...");
+    my @lims_objects;
+    for my $entity_name ( Genome::Site::TGI::Synchronize::Classes::Dictionary->entity_names ) {
+        my $lims_class = Genome::Site::TGI::Synchronize::Classes::Dictionary->lims_class_for_entity_name($entity_name);
+        eval "use $lims_class";
+        warn $@ if $@;
+        my @properties_to_copy = $lims_class->properties_to_copy;
+
+        my @lims_objects = _define_lims_objects($lims_class);
+        is(@lims_objects, 2, "create 2 lims '$entity_name' objects") or die;
+
+        if ( $entity_name =~ /^instrument data/ ) {
+            for my $lims_object ( @lims_objects ) {
+                # FIXME
+                my $file = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Microarray/test_genotype_file1';
+                $uac->instrument_data_with_successful_pidfas->{ $lims_object->id } = $file;
+            }
+        }
+
+        my @genome_objects = (
+            $lims_objects[$#lims_objects]->create_in_genome,
+        );
+        is(@genome_objects, 1, "create 1 genome '$entity_name' objects") or die;
+
+        no strict;
+        *{$lims_class  .'::create_iterator'} = sub{ 
+            my ($class, %params) = @_;
+            return Iterator->create(objects => [ %params ? $lims_objects[0] : @lims_objects ]); 
+        };
+
+        my $genome_class_for_comparison = $lims_class->genome_class_for_comparison;
+        eval "use $genome_class_for_comparison";
+        warn $@ if $@;
+        *{$genome_class_for_comparison.'::create_iterator'} = sub{
+            return Iterator->create(objects => \@genome_objects); 
+        };
+    }
+
+    return 1;
+}
+
+sub _define_lims_objects {
+    my ($lims_class) = @_;
+
+    my $entity_name = $lims_class->entity_name;
+    $entity_name =~ s/ /_/g;
+    my $method = '_define_lims_'.$entity_name;
+    if ( main->can($method) ) {
+        no strict;
+        return $method->($lims_class);
+    }
+
     return (
-        {
-            gsc_class => 'Genome::Site::TGI::Synchronize::Classes::LibrarySummary',
-            genome_class => 'Genome::Library',
-            method => '_create_librarysummary',
-            params => {
-                id => -2889531422,
-                name => 'H_LA-9315-3290.1-cDNA-1-lib4',
-                sample_id => 2887788990,
-                protocol => 'Ovation SP Ultralow DR',
-                original_insert_size => '300-500',
-                library_insert_size => '325',
-            },
-        },
-        {
-            gsc_class => 'Genome::Site::TGI::Synchronize::Classes::IndexIllumina',
-            genome_class => 'Genome::InstrumentData::Solexa',
-            method => '_create_indexillumina',
-            params => {
-                id => -2889838607,
-                analysis_software_version => 'CASAVA-1.8.2',
-                fwd_read_length => '150',
-                fwd_seq_id => undef,
-                library_id => '2889531422',
-                gc_bias_path => undef,
-                clusters => '2057469',
-                lane => '1',
-                target_region_set_name => undef,
-                adaptor_path => '/gscmnt/sata114/info/medseq/adaptor_sequences/solexa_adaptor_pcr_primer',
-                fwd_run_type => 'Paired End Read 1',
-                run_type => 'Paired',
-                fwd_kilobases_read => '308620350',
-                fwd_clusters => '2057469',
-                rev_clusters => '2057469',
-                fwd_filt_aligned_clusters_pct => '0',
-                gerald_directory => '/gscmnt/gc1500/production/Unaligned_lane_1_131628932/Project_Dummy/Sample_lane1_TTCAGC',
-                archive_path => undef,
-                read_length => '150',
-                rev_filt_error_rate_avg => undef,
-                rev_read_length => '150',
-                run_name => '121130_HWI-M00678_131575527_A23R6',
-                rev_seq_id => undef,
-                rev_filt_aligned_clusters_pct => '0',
-                subset_name => '1-TTCAGC',
-                flow_cell_id => 'A23R6',
-                fastqc_path => '/gscmnt/sata162/production/A23R6/L001/TTCAGC/fastqc',
-                index_sequence => 'TTCAGC',
-                bam_path => '/gscmnt/gc6001/production/csf_131629071/gerald_A23R6_1_TTCAGC.bam',
-                is_external => '0',
-                median_insert_size => undef,
-                filt_error_rate_avg => undef,
-                rev_kilobases_read => '308620350',
-                sd_above_insert_size => undef,
-                sd_below_insert_size => undef,
-                fwd_filt_error_rate_avg => undef,
-                rev_run_type => 'Paired End Read 2',
-            },
-        },
-        {
-            gsc_class => 'Genome::Site::TGI::Synchronize::Classes::LimsProject',
-            genome_class => 'Genome::Project',
-            method => '_create_limsproject',
-            params => {
-                id => -101,
-                name => '__LIMS_PROJECT__',
-            },
-        },
-        {
-            gsc_class => 'Genome::Site::TGI::Synchronize::Classes::LimsProjectSample',
-            genome_class => 'Genome::ProjectPart',
-            method => '_create_limsprojectsample',
-            params => {
-                project_id => -102,
-                sample_id => -103,
-            },
-            genome_get_params => {
-                project_id => -102,
-                entity_id => -103,
-                entity_class_name => 'Genome::Sample',
-                label => 'sample',
-            },
-        },
-        {
-            gsc_class => 'Genome::Site::TGI::Synchronize::Classes::LimsProjectInstrumentData',
-            genome_class => 'Genome::ProjectPart',
-            method => '_create_limsprojectinstrumentdata',
-            params => {
-                project_id => -104,
-                instrument_data_id => -105,
-            },
-            genome_get_params => {
-                project_id => -104,
-                entity_id => -105,
-                entity_class_name => 'Genome::InstrumentData',
-                label => 'instrument_data',
-            },
-        },
+        $lims_class->create( map { $_ => --$i } $lims_class->properties_to_copy ),
+        $lims_class->create( map { $_ => --$i } $lims_class->properties_to_copy ),
     );
 }
+
+sub _define_lims_population_group {
+    my ($lims_class) = @_;
+
+    my %properties = map {
+        $_ => --$i,
+    } $lims_class->properties_to_copy;
+    delete $properties{member_ids};
+
+    my @lims_objects = ( $lims_class->create(%properties) );
+    $properties{id} = --$i;
+    push @lims_objects, $lims_class->create(%properties);
+
+    return @lims_objects;
+}
+
+sub _define_lims_instrument_data_microarray {
+    my ($lims_class) = @_;
+
+    my $sample = Genome::Sample->__define__(id => -22, name => '__TEST_SAMPLE__');
+    my %properties = ( map { $_ => --$i } $lims_class->properties_to_copy );
+    $properties{sample_id} = $sample->id;
+    $properties{sample_name} = $sample->name;
+    $properties{genotype_file} = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Microarray/test_genotype_file1';
+
+    my @lims_objects = ( $lims_class->create(%properties) );
+    $properties{id} = --$i;
+    push @lims_objects, $lims_class->create(%properties);
+
+    return @lims_objects;
+}
+
+sub _define_lims_instrument_data_454 {
+    my ($lims_class) = @_;
+
+    my @lims_objects = (
+        $lims_class->create( map { $_ => --$i } $lims_class->properties_to_copy ),
+        $lims_class->create( map { $_ => --$i } $lims_class->properties_to_copy ),
+    );
+
+    my $file = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Microarray/test_genotype_file1';
+    map { $_->sff_file($file) } @lims_objects;
+
+    return @lims_objects;
+}
+
+sub _define_lims_analysis_project_instrument_data {
+    my ($lims_class) = @_;
+
+    my %properties = map {
+        $_ => --$i,
+    } $lims_class->properties_to_copy;
+    my $ii_iterator = Genome::Site::TGI::Synchronize::Classes::IndexIllumina->create_iterator;
+    $properties{instrument_data_id} = $ii_iterator->next->id;
+
+    my @lims_objects = ( $lims_class->create(%properties) );
+    $properties{analysis_project_id} = --$i;
+    push @lims_objects, $lims_class->create(%properties);
+
+    return @lims_objects;
+}
+
+sub verify {
+    diag("VERIFY...");
+    for my $entity_name ( Genome::Site::TGI::Synchronize::Classes::Dictionary->entity_names ) {
+        my $lims_class = Genome::Site::TGI::Synchronize::Classes::Dictionary->lims_class_for_entity_name($entity_name);
+        my $genome_class = $lims_class->genome_class_for_create($entity_name);
+        my $iterator = $lims_class->create_iterator;
+        my ($lims_object_cnt, $genome_object_cnt) = (qw/ 0 0 /);
+        while ( my $lims_object = $iterator->next ) {
+            $lims_object_cnt++;
+            my (%get_params, @properties_to_copy);
+            if ( $entity_name =~ /^project / ) {
+                %get_params = (
+                    project_id => $lims_object->project_id,
+                    entity_id => $lims_object->entity_id,
+                    entity_class_name => $lims_object->entity_class_name,
+                    label => $lims_object->label,
+                );
+                @properties_to_copy = keys %get_params;
+            }
+            elsif ( $entity_name eq 'analysis project instrument data' ) {
+                %get_params = (
+                    analysis_project_id => $lims_object->analysis_project_id,
+                    instrument_data_id => $lims_object->instrument_data_id,
+                );
+                @properties_to_copy = keys %get_params;
+            }
+            else {
+                %get_params = (id => $lims_object->id);
+                @properties_to_copy = $lims_object->properties_to_copy;
+            }
+            my $genome_object = $genome_class->get(%get_params);
+            $genome_object_cnt++ if $genome_object;
+            my $ok = 0;
+            for my $property ( @properties_to_copy ) {
+                my $genome_value = eval{ $genome_object->$property; };
+                $genome_value = eval{
+                    $genome_object->attributes(attribute_label => $property)->attribute_value; 
+                } if not defined $genome_value;
+                $ok++ if $genome_value eq $lims_object->$property;
+            }
+            is($ok, @properties_to_copy, 'properties match');
+        }
+        is($genome_object_cnt, $lims_object_cnt, "correct number of genome '$entity_name' objects!");
+    }
+
+    return 1;
+}
+
