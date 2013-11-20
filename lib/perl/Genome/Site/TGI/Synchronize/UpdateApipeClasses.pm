@@ -119,12 +119,13 @@ sub execute {
         return;
     }
 
-    my @classes_to_sync = $self->objects_to_sync;
-    for ( my $i = 0; $i < @classes_to_sync; $i += 2 ) {
-        my $lims_class = $classes_to_sync[$i];
+    my $dictionary = Genome::Site::TGI::Synchronize::Classes::Dictionary->get;
+    my @entity_names = $dictionary->entity_names;
+    for my $entity_name ( @entity_names ) {
+        my $lims_class = $dictionary->lims_class_for_entity_name($entity_name);
         my $lims_ids = $self->_get_ids_for($lims_class);
 
-        my $genome_class = $classes_to_sync[$i + 1];
+        my $genome_class = $lims_class->genome_class_for_comparison($entity_name);
         my $id_by_method;
         if (ref $genome_class eq 'ARRAY') {
             $id_by_method = $$genome_class[1];
@@ -142,7 +143,7 @@ sub execute {
             $self->_create_genome_objects_for_lims_objects(
                 ids_to_create => $ids_to_create,
                 lims_class => $lims_class,
-                genome_class => $genome_class,
+                genome_class => $lims_class->genome_class_for_create,
             );
         }
 
