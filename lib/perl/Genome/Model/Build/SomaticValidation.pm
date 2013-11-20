@@ -289,4 +289,28 @@ sub reference_being_replaced_for_input {
     return;
 }
 
+sub get_indels_vcf {
+    my $self = shift;
+    return $self->variants_directory . "/indels.vcf.gz";
+}
+
+sub get_snvs_vcf {
+    my $self = shift;
+    return $self->variants_directory . "/snvs.vcf.gz";
+}
+
+sub whole_rmdup_bam_file {
+    my $self = shift;
+    return $self->tumor_bam;
+}
+
+sub variants_directory {
+    my $self = shift;
+    my $expected_directory = $self->data_directory . '/variants';
+    unless (-d $expected_directory) {
+        die $self->error_message("Variants directory does not exist at $expected_directory");
+    }
+    return $expected_directory;
+}
+
 1;
