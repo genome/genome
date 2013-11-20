@@ -7,10 +7,10 @@ use above 'Genome';
 use Test::More;
 use Genome::Utility::Test;
 
+plan skip_all => 'This test takes 7 mins to run. Skip for now';
+
 my $class = 'Genome::Model::SmallRna::Command::FilterNewBam';
 use_ok($class);
-
-plan skip_all => 'This test takes 7 mins to run. Skip for now';
 
 my $data_dir  = Genome::Utility::Test->data_dir_ok($class);
 my $test_file = Genome::Sys->create_temp_file_path;

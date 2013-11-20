@@ -7,10 +7,10 @@ use above 'Genome';
 use Test::More;
 use Genome::Utility::Test;
 
+plan skip_all => 'This test takes more than 10 mins to run. Skip for now';
+
 my $class = 'Genome::Model::SmallRna::Command::ClusterCoverage';
 use_ok($class);
-
-plan skip_all => 'This test takes more than 10 mins to run. Skip for now';
 
 my $data_dir    = Genome::Utility::Test->data_dir_ok($class);
 my $test_dir    = Genome::Sys->create_temp_directory;
