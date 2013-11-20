@@ -48,6 +48,10 @@ my $i = -100;
 ok(init(), 'init') or die;
 ok($uac->execute, 'execute');
 
+my $report = $uac->_report;
+my @missing = map { @{$report->{$_}->{missing}} } keys %$report;
+is(@missing, 0, 'None missing in LIMS');
+
 ok(verify(), 'verify') or die;
 
 done_testing();
@@ -74,23 +78,8 @@ sub init {
             }
         }
 
-        my @genome_objects = (
-            $lims_objects[$#lims_objects]->create_in_genome,
-        );
-        is(@genome_objects, 1, "create 1 genome '$entity_name' objects") or die;
-
-        no strict;
-        *{$lims_class  .'::create_iterator'} = sub{ 
-            my ($class, %params) = @_;
-            return Iterator->create(objects => [ %params ? $lims_objects[0] : @lims_objects ]); 
-        };
-
-        my $genome_class_for_comparison = $lims_class->genome_class_for_comparison;
-        eval "use $genome_class_for_comparison";
-        warn $@ if $@;
-        *{$genome_class_for_comparison.'::create_iterator'} = sub{
-            return Iterator->create(objects => \@genome_objects); 
-        };
+        my $genome_object = _define_genome_object_for_lims_object($lims_objects[$#lims_objects]);
+        ok($genome_object, "create genome '$entity_name' objects") or die;
     }
 
     return 1;
@@ -102,15 +91,28 @@ sub _define_lims_objects {
     my $entity_name = $lims_class->entity_name;
     $entity_name =~ s/ /_/g;
     my $method = '_define_lims_'.$entity_name;
+    my @lims_objects;
     if ( main->can($method) ) {
         no strict;
-        return $method->($lims_class);
+        @lims_objects = $method->($lims_class);
+    }
+    else {
+        @lims_objects = (
+            $lims_class->create( map { $_ => --$i } $lims_class->properties_to_copy ),
+            $lims_class->create( map { $_ => --$i } $lims_class->properties_to_copy ),
+        );
     }
 
-    return (
-        $lims_class->create( map { $_ => --$i } $lims_class->properties_to_copy ),
-        $lims_class->create( map { $_ => --$i } $lims_class->properties_to_copy ),
-    );
+    return if not @lims_objects;
+
+    no strict;
+    *{$lims_class  .'::create_iterator'} = sub{ 
+        my ($class, %params) = @_;
+        return Iterator->create(objects => [ %params ? $lims_objects[0] : @lims_objects ]); 
+    };
+    use strict;
+
+    return @lims_objects;
 }
 
 sub _define_lims_population_group {
@@ -172,6 +174,31 @@ sub _define_lims_analysis_project_instrument_data {
     push @lims_objects, $lims_class->create(%properties);
 
     return @lims_objects;
+}
+
+sub _define_genome_object_for_lims_object {
+    my ($lims_object) = @_;
+
+    my $lims_class = $lims_object->class;
+    my $genome_class_for_comparison = $lims_class->genome_class_for_comparison;
+    eval "use $genome_class_for_comparison";
+    warn $@ if $@;
+
+    my $genome_object = $lims_object->create_in_genome;
+    ok($genome_object, 'create lims object in genome');
+
+    if ( $lims_object->entity_name =~ /project / ) {
+        $genome_object = $genome_class_for_comparison->create( 
+            map { $_ => $lims_object->$_ } $lims_object->properties_to_copy 
+        );
+    }
+
+    no strict;
+    *{$genome_class_for_comparison.'::create_iterator'} = sub{
+        return Iterator->create(objects => [$genome_object]); 
+    };
+
+    return $genome_object;
 }
 
 sub verify {
