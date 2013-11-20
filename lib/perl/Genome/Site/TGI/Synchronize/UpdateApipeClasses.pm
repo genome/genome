@@ -431,7 +431,7 @@ sub _create_limsprojectinstrumentdata {
     my $object = eval { 
         Genome::ProjectPart->create(
             project_id => $original_object->project_id, 
-            entity_id => $original_object->instrument_data_id,
+            entity_id => $original_object->entity_id,
             entity_class_name => 'Genome::InstrumentData',
             label => 'instrument_data',
         );
@@ -447,7 +447,7 @@ sub _create_limsprojectsample {
     my $object = eval { 
         Genome::ProjectPart->create(
             project_id => $original_object->project_id, 
-            entity_id => $original_object->sample_id,
+            entity_id => $original_object->entity_id,
             entity_class_name => 'Genome::Sample',
             label => 'sample',
         );

@@ -18,7 +18,7 @@ is($lims_class->genome_class_for_create, 'Genome::ProjectPart', 'genome class fo
 my @properties_to_copy = $lims_class->properties_to_copy;
 ok(@properties_to_copy, 'properties to copy');
 my $i = -10;
-my %properties = ( project_id => --$i, sample_id => --$i );
+my %properties = map { $_ => --$i } @properties_to_copy;
 my $lims_object = $lims_class->__define__(%properties);
 ok($lims_object, "define lims $entity_name object");
 
@@ -27,7 +27,7 @@ ok($genome_object, "create genome $entity_name object");
 isa_ok($genome_object, 'Genome::ProjectPart');
 
 is($genome_object->project_id, $properties{project_id}, 'project_id matches');
-is($genome_object->entity_id, $properties{sample_id}, 'entity_id matches');
+is($genome_object->entity_id, $properties{entity_id}, 'entity_id matches');
 is($genome_object->entity_class_name, 'Genome::Sample', 'correct entity_class_name');
 is($genome_object->label, 'sample', 'correct label');
 

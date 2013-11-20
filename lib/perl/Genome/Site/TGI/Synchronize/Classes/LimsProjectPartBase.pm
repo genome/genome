@@ -32,18 +32,7 @@ sub genome_class_for_create { return 'Genome::ProjectPart'; }
 
 sub properties_to_copy {
     my $self = shift;
-    return ( 'project_id', $self->entity_id_method );
-}
-
-sub entity_id_method {
-    my $self = shift;
-    return $self->label.'_id';
-}
-
-sub entity_id {
-    my $self = shift;
-    my $entity_id_method = $self->entity_id_method;
-    return $self->$entity_id_method; 
+    return ( 'project_id', 'entity_id' );
 }
 
 sub entity_class_name { 
@@ -58,10 +47,9 @@ sub label{
 
 sub params_for_create_in_genome {
     my $self = shift;
-    my $entity_id_method = $self->entity_id_method;
     return (
         project_id => $self->project_id,
-        entity_id => $self->$entity_id_method,
+        entity_id => $self->entity_id,
         entity_class_name => $self->entity_class_name,
         label => $self->label,
     );
