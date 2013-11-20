@@ -32,9 +32,10 @@ class Genome::Model::Tools::BioSamtools::ErrorRate {
 
 
 my %versions = (
-    0.6 => '/gsc/pkg/bio/bam-errorrate/0.6/bam-errorrate',
-    0.7 => '/gscuser/iferguso/bin/bam-errorrate0.7',
-    0.9 => '/gscuser/iferguso/bin/bam-errorrate0.9',
+    0.6 => $ENV{GENOME_SW} . '/bam-errorrate/0.6/bam-errorrate',
+    0.7 => $ENV{GENOME_SW} . '/bam-errorrate/0.7/bam-errorrate0.7',
+    0.8 => $ENV{GENOME_SW} . '/bam-errorrate/0.8/bam-errorrate0.8',
+    0.9 => $ENV{GENOME_SW} . '/bam-errorrate/0.9/bam-errorrate0.9',
     #C util is running out of iferguson home directory until it has been tested and can be deployed to the blades
 );
 
