@@ -155,6 +155,7 @@ my %PINDEL_VERSIONS = (
     '0.2'    => $ENV{GENOME_SW} . '/pindel/0.2/pindel',
     '0.2.4d' => $ENV{GENOME_SW} .'/pindel/0.2.4d/pindel',
     '0.2.4t' => '/usr/bin/pindel0.2.4t',
+    '0.2.5' => '/usr/bin/pindel0.2.5',
     '0.3'    => $ENV{GENOME_SW} .'/pindel/0.3/pindel',
     '0.4'    => $ENV{GENOME_SW} .'/pindel/0.4/pindel',
     '0.5'    => $ENV{GENOME_SW} .'/pindel/0.5/pindel',
