@@ -10,13 +10,6 @@ use Carp 'confess';
 
 class Genome::Site::TGI::Synchronize::UpdateApipeClasses {
     is => 'Genome::Command::Base',
-    has_optional => [
-        show_object_cache_summary => {
-            is => 'Boolean',
-            default => 0,
-            doc => 'If set, a summary of the contents of the UR object cache is occasionally printed, useful for debugging',
-        },
-    ],
     has_transient_optional => [
         instrument_data_with_successful_pidfas => {
             is => 'Hash',
