@@ -578,10 +578,7 @@ sub _cpu_slot_usage_breakdown {
         }
 
         if ($op_type->can('lsf_queue') and defined($op_type->lsf_queue)
-            and grep { $op_type->lsf_queue eq $_ } (
-                $ENV{GENOME_LSF_QUEUE_BUILD_WORKFLOW},
-                $ENV{WF_SERVER_QUEUE},
-            )
+            and $op_type->lsf_queue eq $ENV{GENOME_LSF_QUEUE_BUILD_WORKFLOW}
         ) {
             # skip jobs which run in workflow because they internally run another workflow
             next;
@@ -1361,7 +1358,7 @@ sub _launch {
     } elsif ($model->can('server_dispatch') && defined $model->server_dispatch) {
         $server_dispatch = $model->server_dispatch;
     } else {
-        $server_dispatch = $ENV{WF_SERVER_QUEUE};
+        $server_dispatch = $ENV{GENOME_LSF_QUEUE_BUILD_WORKFLOW};
     }
 
     # resolve job_dispatch
