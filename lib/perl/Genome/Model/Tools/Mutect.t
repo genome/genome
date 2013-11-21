@@ -14,6 +14,7 @@ use File::Temp;
 use Test::More;
 use above 'Genome';
 use Genome::SoftwareResult;
+use Genome::Utility::Test qw(compare_ok);
 
 my $archos = `uname -a`;
 if ($archos !~ /64/) {
@@ -53,14 +54,7 @@ is($rv, 1, 'Testing for successful execution.  Expecting 1.  Got: '.$rv);
 ok(-s $test_output, "output file created");
 ok(-s $test_vcf, "vcf file created");
 
-my $diff = Genome::Sys->diff_file_vs_file($test_output, $expected_out);
-    ok(!$diff, 'output matched expected result')
-        or diag("diff results:\n" . $diff);
-
-
-my $diff_vcf = Genome::Sys->diff_file_vs_file($test_vcf, $expected_vcf);
-    ok(!$diff_vcf, 'vcf matched expected result')
-        or diag("diff results:\n" . $diff_vcf);
+compare_ok($expected_out, $test_output, 'output matched expected result');
+compare_ok($expected_vcf, $test_vcf, 'vcf matched expected result');
 
 done_testing();
-
