@@ -984,7 +984,7 @@ sub start {
 
         # Creates a workflow for the build
         # TODO Initialize workflow shouldn't take arguments
-        unless ($self->_initialize_workflow($params{job_dispatch} || $ENV{WF_JOB_QUEUE})) {
+        unless ($self->_initialize_workflow($params{job_dispatch} || $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT})) {
             Carp::croak "Build " . $self->__display_name__ . " could not initialize workflow!";
         }
 
