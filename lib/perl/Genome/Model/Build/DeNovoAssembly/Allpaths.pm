@@ -286,7 +286,7 @@ sub _mem_in_gb {
 sub resolve_assemble_lsf_queue {
     my $self = shift;
     my $queue = 'assembly';
-    $queue = 'alignment-pd' if $ENV{UR_DBI_NO_COMMIT};
+    $queue = $ENV{GENOME_LSF_QUEUE_ALIGNMENT_PROD} if $ENV{UR_DBI_NO_COMMIT};
     return $queue;
 }
 

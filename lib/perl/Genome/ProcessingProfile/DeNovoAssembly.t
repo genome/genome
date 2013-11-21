@@ -106,7 +106,7 @@ my @params_and_xml_list = (
   <link fromOperation="Assemble" fromProperty="build" toOperation="Report" toProperty="build" />
   <link fromOperation="Report" fromProperty="report_directory" toOperation="output connector" toProperty="report_directory" />
   <operation name="Assemble">
-    <operationtype commandClass="Genome::Model::DeNovoAssembly::Build::Assemble" lsfProject="build%s" lsfQueue="alignment-pd" lsfResource="-n 4 -R 'span[hosts=1] select[type==LINUX64 &amp;&amp; mem&gt;61440] rusage[mem=61440]' -M 63963136" typeClass="Workflow::OperationType::Command" />
+    <operationtype commandClass="Genome::Model::DeNovoAssembly::Build::Assemble" lsfProject="build%s" lsfQueue="$ENV{GENOME_LSF_QUEUE_ALIGNMENT_PROD}" lsfResource="-n 4 -R 'span[hosts=1] select[type==LINUX64 &amp;&amp; mem&gt;61440] rusage[mem=61440]' -M 63963136" typeClass="Workflow::OperationType::Command" />
   </operation>
   <operation name="ProcessInstrumentData" parallelBy="instrument_data">
     <operationtype commandClass="Genome::Model::DeNovoAssembly::Build::ProcessInstrumentData" lsfProject="build%s" lsfQueue="$ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT}" lsfResource="-R 'select[type==LINUX64 &amp;&amp; mem&gt;32000 &amp;&amp; gtmp&gt;200] rusage[mem=32000:gtmp=200] span[hosts=1]' -M 32000000" typeClass="Workflow::OperationType::Command" />
