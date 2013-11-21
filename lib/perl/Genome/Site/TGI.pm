@@ -61,7 +61,6 @@ $ENV{GENOME_LSF_QUEUE_BUILD_WORKFLOW} ||= 'workflow';
 $ENV{GENOME_LSF_QUEUE_DV2_WORKER} ||= 'apipe';
 $ENV{GENOME_LSF_QUEUE_DV2_WORKFLOW} ||= 'long';
 $ENV{GENOME_LSF_QUEUE_SHORT} ||= 'short';
-$ENV{WF_JOB_QUEUE} = 'apipe' if !defined($ENV{WF_JOB_QUEUE}) or $ENV{WF_JOB_QUEUE} eq 'normal';
 
 # testsuite data
 my $inputs_directory = '/gsc/var/cache/testsuite/data';
