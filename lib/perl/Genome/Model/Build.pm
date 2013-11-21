@@ -575,7 +575,6 @@ sub _cpu_slot_usage_breakdown {
 
             if ($op_type->class eq 'Workflow::OperationType::Model') {
                 # don't double count
-                #print "\tskipping workflow model instance...\n";
                 next;
             }
 
@@ -583,7 +582,6 @@ sub _cpu_slot_usage_breakdown {
                 and grep { $op_type->lsf_queue eq $_ } ('workflow', $ENV{WF_SERVER_QUEUE)
             ) {
                 # skip jobs which run in workflow because they internally run another workflow
-                #print "\tskipping workflow queue job...\n";
                 next;
             }
 
@@ -592,7 +590,6 @@ sub _cpu_slot_usage_breakdown {
             if (defined($rusage)) {
                 if ($rusage =~ /(?<!\S)-n\s+(\S+)/) {
                     $cpus = $1;
-                    #warn "MULTIPLE CPUS: $cpus on $op_name!\n";
                 }
             }
 
@@ -607,15 +604,12 @@ sub _cpu_slot_usage_breakdown {
             my $value = Date::Manip::Delta_Format( $delta, 1, "%mt" );
 
             if ($value eq '') {
-                #print "null value for " . $op_inst->start_time . " - " . $op_inst->end_time . "\n";
                 $value = 0; # for crashed/incomplete steps
             }
 
             if ($cpus eq '') {
                 die "null cpus??? resource was $rusage\n";
             }
-
-            #print "$op_type\t$op_name\t$rusage\t$cpus\n";# . $op_inst->start_time . "\t" . $op_inst->end_time . "\t$value\n";
 
             my $key         = $op_inst->name;
             $key =~ s/ \d+$//;
