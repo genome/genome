@@ -21,7 +21,7 @@ ok($config_set->path, 'it successfully delegates path to the underlying allocati
 
 my $allocation = Genome::Disk::Allocation->create(
     owner_id            => 'acoffman',
-    disk_group_name     => 'info_apipe_ref',
+    disk_group_name     => $ENV{GENOME_DISK_GROUP_REFERENCES},
     allocation_path     => 'analysis_configuration/acoffman',
     owner_class_name    => 'Genome::Config::Set',
     kilobytes_requested => 25,

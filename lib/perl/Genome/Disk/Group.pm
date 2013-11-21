@@ -98,7 +98,7 @@ sub _get_single {
 # TODO This needs to be removed, site-specific
 my %VALID_NAMES = (
     info_apipe => 1,
-    info_apipe_ref => 1,
+    $ENV{GENOME_DISK_GROUP_REFERENCES} => 1,
     info_alignments => 1,
     info_genome_models => 1,
     info_apipe_trash => 1,

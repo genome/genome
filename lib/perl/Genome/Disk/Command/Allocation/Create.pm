@@ -10,7 +10,7 @@ class Genome::Disk::Command::Allocation::Create {
         disk_group_name => {
             is => 'Text',
             doc => 'Name of the disk group in which the allocation should be made.',
-            valid_values => ['info_apipe', 'info_apipe_ref', 'info_alignments', 'info_genome_models', 'research' ],
+            valid_values => ['info_apipe', $ENV{GENOME_DISK_GROUP_REFERENCES}, 'info_alignments', 'info_genome_models', 'research' ],
         },
         allocation_path => {
             is => 'Text',

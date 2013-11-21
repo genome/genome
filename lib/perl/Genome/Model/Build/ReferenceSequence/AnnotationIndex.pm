@@ -285,7 +285,7 @@ sub resolve_allocation_subdirectory {
 }
 
 sub resolve_allocation_disk_group_name {
-    "info_apipe_ref";
+    $ENV{GENOME_DISK_GROUP_REFERENCES};
 }
 
 sub full_consensus_path {

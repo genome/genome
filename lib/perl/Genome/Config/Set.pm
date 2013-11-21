@@ -66,7 +66,7 @@ sub _create_allocation {
     unless($self->allocation){
         my $allocation = Genome::Disk::Allocation->create(
             owner_id            => $self->id,
-            disk_group_name     => 'info_apipe_ref',
+            disk_group_name     => $ENV{GENOME_DISK_GROUP_REFERENCES},
             allocation_path     => 'analysis_configuration/' . $self->id,
             owner_class_name    => 'Genome::Config::Set',
             kilobytes_requested => 25,
