@@ -49,7 +49,7 @@ class Genome::Disk::Group {
         },
     ],
     data_source => 'Genome::DataSource::Oltp',
-    doc => 'Represents a disk group (eg, info_apipe), which contains any number of disk volumes',
+    doc => "Represents a disk group (eg, $ENV{GENOME_DISK_GROUP_DEV}), which contains any number of disk volumes",
 };
 
 
@@ -97,7 +97,7 @@ sub _get_single {
 
 # TODO This needs to be removed, site-specific
 my %VALID_NAMES = (
-    info_apipe => 1,
+    $ENV{GENOME_DISK_GROUP_DEV} => 1,
     $ENV{GENOME_DISK_GROUP_REFERENCES} => 1,
     $ENV{GENOME_DISK_GROUP_ALIGNMENTS} => 1,
     $ENV{GENOME_DISK_GROUP_MODELS} => 1,

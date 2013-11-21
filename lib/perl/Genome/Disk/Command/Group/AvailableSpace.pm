@@ -26,7 +26,7 @@ class Genome::Disk::Command::Group::AvailableSpace {
 };
 
 my %minimum_space_for_group = (
-    info_apipe => 512_000,                # 500MB
+    $ENV{GENOME_DISK_GROUP_DEV} => 512_000,                # 500MB
     $ENV{GENOME_DISK_GROUP_REFERENCES} => 1_073_741_824,      # 1TB
     $ENV{GENOME_DISK_GROUP_ALIGNMENTS} => 12_884_901_888,    # 12TB
     $ENV{GENOME_DISK_GROUP_MODELS} => 25_769_803_776  # 24TB

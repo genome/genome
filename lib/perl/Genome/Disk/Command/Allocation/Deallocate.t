@@ -15,7 +15,7 @@ use_ok('Genome::Disk::Command::Allocation::Deallocate') or die;
 use_ok('Genome::Disk::Allocation') or die;
 
 my $allocation = Genome::Disk::Allocation->create(
-    disk_group_name => 'info_apipe',
+    disk_group_name => $ENV{GENOME_DISK_GROUP_DEV},
     allocation_path => 'command/allocation/deallocate/test',
     kilobytes_requested => 100,
     owner_class_name => 'UR::Value',

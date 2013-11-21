@@ -138,7 +138,7 @@ sub execute {
 
     # Get the disk groups
 
-    my @group_names = ($ENV{GENOME_DISK_GROUP_ALIGNMENTS}, qw/info_apipe/, $ENV{GENOME_DISK_GROUP_MODELS}, $ENV{GENOME_DISK_GROUP_REFERENCES});
+    my @group_names = ($ENV{GENOME_DISK_GROUP_ALIGNMENTS}, $ENV{GENOME_DISK_GROUP_DEV}, $ENV{GENOME_DISK_GROUP_MODELS}, $ENV{GENOME_DISK_GROUP_REFERENCES});
     my @groups = Genome::Disk::Group->get(group_name => \@group_names);
     for my $group (@groups) {
         $self->add_to_dump_queue($group, \%queue, \%exclude, \%sanitize_map);
