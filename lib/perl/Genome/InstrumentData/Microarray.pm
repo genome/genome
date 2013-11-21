@@ -99,7 +99,7 @@ sub _copy_genotype_file {
     my $kilobytes_requested = int( $size / 1024 ) + 20; # extra for directory etc
     if (not $disk_allocation) {
         $disk_allocation = Genome::Disk::Allocation->allocate (
-            disk_group_name => 'info_alignments',
+            disk_group_name => $ENV{GENOME_DISK_GROUP_ALIGNMENTS},
             allocation_path => 'instrument_data/imported/'.$instrument_data->id,
             kilobytes_requested => $kilobytes_requested,
             owner_class_name => $instrument_data->class,

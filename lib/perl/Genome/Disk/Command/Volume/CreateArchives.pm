@@ -37,7 +37,7 @@ sub execute {
         push @{$report{groups}}, $archive_group->disk_group_name;
     }
 
-    my @disk_group_names = ($ENV{GENOME_DISK_GROUP_REFERENCES}, $ENV{GENOME_DISK_GROUP_MODELS}, qw/info_alignments/);
+    my @disk_group_names = ($ENV{GENOME_DISK_GROUP_REFERENCES}, $ENV{GENOME_DISK_GROUP_MODELS}, $ENV{GENOME_DISK_GROUP_ALIGNMENTS});
     my @groups = Genome::Disk::Group->get(disk_group_name => \@disk_group_names);
     for my $group (@groups) {
         my @volumes = $group->volumes;

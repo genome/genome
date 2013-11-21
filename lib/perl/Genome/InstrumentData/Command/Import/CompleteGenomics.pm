@@ -173,7 +173,7 @@ sub _prepare_output_directory {
     my $kb_usage = $instrument_data->calculate_alignment_estimated_kb_usage;
 
     my $alloc = Genome::Disk::Allocation->create(
-        disk_group_name     => 'info_alignments',
+        disk_group_name     => $ENV{GENOME_DISK_GROUP_ALIGNMENTS},
         allocation_path     => $alloc_path,
         kilobytes_requested => ($ENV{UR_DBI_NO_COMMIT}? 5 : $kb_usage),
         owner_class_name    => $instrument_data->class,

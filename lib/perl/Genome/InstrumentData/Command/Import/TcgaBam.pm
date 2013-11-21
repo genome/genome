@@ -645,7 +645,7 @@ sub _create_imported_instrument_data {
     my $alloc_path = sprintf('alignment_data/imported/%s', $instrument_data_id);
 
     my %alloc_params = (
-        disk_group_name     => 'info_alignments',
+        disk_group_name     => $ENV{GENOME_DISK_GROUP_ALIGNMENTS},
         allocation_path     => $alloc_path,
         kilobytes_requested => $kb_usage,
         owner_class_name    => $import_instrument_data->class,
