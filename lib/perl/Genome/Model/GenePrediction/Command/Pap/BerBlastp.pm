@@ -56,13 +56,6 @@ class Genome::Model::GenePrediction::Command::Pap::BerBlastp {
     ],
 };
 
-#operation Genome::Model::GenePrediction::Command::Pap::BerBlastp {
-#    input        => [ 'sequence_names', 'fastadir','blastp_query', 'berdirpath' ],
-#    output       => [ 'success'],
-#    lsf_queue    => 'long',
-#    lsf_resource => 'rusage[tmp=100]'
-#};
-
 sub sub_command_sort_position { 10 }
 
 sub help_brief {

@@ -72,14 +72,6 @@ class Genome::Model::GenePrediction::Command::Pap::InterProScan {
             ],
 };
 
-#operation Genome::Model::GenePrediction::Command::Pap::InterProScan {
-#   input        => [ 'fasta_file', 'report_save_dir', 'locus_tag' ],
-#  output       => [ 'bio_seq_feature' ],
-# lsf_queue    => 'long',
-#lsf_resource => 'rusage[tmp=100]',
-#   
-#};
-
 sub sub_command_sort_position { 10 }
 
 sub help_brief {
