@@ -102,7 +102,7 @@ my %VALID_NAMES = (
     $ENV{GENOME_DISK_GROUP_ALIGNMENTS} => 1,
     $ENV{GENOME_DISK_GROUP_MODELS} => 1,
     $ENV{GENOME_DISK_GROUP_TRASH} => 1,
-    research => 1,
+    $ENV{GENOME_DISK_GROUP_RESEARCH} => 1,
     systems_benchmarking => 1,
 );
 sub validate {
