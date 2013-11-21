@@ -376,7 +376,7 @@ sub run_filter
 			{
 				$cmd .= " --reference " . $self->reference;
 			}
-                        system("bsub -q long -oo $variant_file.err -J varscan -R\"select[mem>2000 && tmp>2000] rusage[mem=2000]\" $cmd");
+                        system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -oo $variant_file.err -J varscan -R\"select[mem>2000 && tmp>2000] rusage[mem=2000]\" $cmd");
                 }
         }        
 }
@@ -400,7 +400,7 @@ sub run_indel_filter
                 else
                 {
                         my $cmd = "gmt somatic filter-false-indels --variant-file $variant_file --bam-file $bam_file --output-file $variant_file.fpfilter --filtered-file $variant_file.fpfilter.removed";
-                        system("bsub -q long -oo $variant_file.err -J varscan -R\"select[mem>2000 && tmp>2000] rusage[mem=2000]\" $cmd");
+                        system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -oo $variant_file.err -J varscan -R\"select[mem>2000 && tmp>2000] rusage[mem=2000]\" $cmd");
                 }
         }        
 }

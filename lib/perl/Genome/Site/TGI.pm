@@ -56,6 +56,18 @@ $ENV{GENOME_LOCK_DIR} ||= '/gsc/var/lock';
 $ENV{GENOME_SYS_GROUP} ||= 'info';
 $ENV{GENOME_FS_LOCAL_NETWORK_CACHE} = '/var/cache/tgisan';
 
+# GENOME_LSF_QUEUE_*
+$ENV{GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT} ||= 'alignment';
+$ENV{GENOME_LSF_QUEUE_ALIGNMENT_PROD} ||= 'alignment-pd';
+$ENV{GENOME_LSF_QUEUE_ASSEMBLY} ||= 'assembly';
+$ENV{GENOME_LSF_QUEUE_BIGMEM} ||= 'bigmem';
+$ENV{GENOME_LSF_QUEUE_BUILD_WORKER} ||= 'long';
+$ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT} ||= 'apipe';
+$ENV{GENOME_LSF_QUEUE_BUILD_WORKFLOW} ||= 'workflow';
+$ENV{GENOME_LSF_QUEUE_DV2_WORKER} ||= 'apipe';
+$ENV{GENOME_LSF_QUEUE_DV2_WORKFLOW} ||= 'long';
+$ENV{GENOME_LSF_QUEUE_SHORT} ||= 'short';
+
 # testsuite data
 my $inputs_directory = '/gsc/var/cache/testsuite/data';
 $ENV{GENOME_TEST_INPUTS} ||= -l $inputs_directory ? readlink($inputs_directory) : $inputs_directory;

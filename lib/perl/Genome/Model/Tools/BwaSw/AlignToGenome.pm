@@ -108,7 +108,7 @@ sub execute {                               # replace with real execution logic.
 	print "FQ file: $fq_file\n";
 
 	print "Aligning $fq_file to $reference\n";
-	system("bsub -q long -R\"select[mem>8000] rusage[mem=8000]\" -M 8000000 -oo $output_file.log \"" . $self->bwa_path . " bwasw $bwa_params $reference $fq_file > $output_file\"");
+	system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -R\"select[mem>8000] rusage[mem=8000]\" -M 8000000 -oo $output_file.log \"" . $self->bwa_path . " bwasw $bwa_params $reference $fq_file > $output_file\"");
 #	system("ssaha2 $bwa_params -outfile $output_file -save $reference $fq_file");
 	return 1;                               # exits 0 for true, exits 1 for false (retval/exit code mapping is overridable)
 }

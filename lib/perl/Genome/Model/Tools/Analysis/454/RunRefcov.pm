@@ -154,7 +154,7 @@ sub execute {                               # replace with real execution logic.
 			
 			## Run bsub ##
 #			system("$script_filename");			
-			system("bsub -q long -R\"select[type==LINUX64 && model != Opteron250 && mem>4000 && tmp>20000] rusage[mem=4000]\" -oo $script_filename.out $script_filename");
+			system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -R\"select[type==LINUX64 && model != Opteron250 && mem>4000 && tmp>20000] rusage[mem=4000]\" -oo $script_filename.out $script_filename");
 
 		}
 		else

@@ -15,7 +15,7 @@ class Genome::Model::Tools::DetectVariants2::Filter::VarscanHighConfidenceIndel{
     ],
     has_param => [
          lsf_queue => {
-             default_value => 'long',
+             default_value => $ENV{GENOME_LSF_QUEUE_DV2_WORKFLOW},
          },
          lsf_resource => {
              default_value => "-M 6000000 -R 'select[type==LINUX64 && mem>6000] rusage[mem=6000]'",

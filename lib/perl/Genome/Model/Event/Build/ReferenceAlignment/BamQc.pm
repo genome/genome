@@ -14,7 +14,7 @@ class Genome::Model::Event::Build::ReferenceAlignment::BamQc {
 };
 
 sub bsub_rusage {
-    return '-q long';
+    return "-q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER}";
 }
 
 sub shortcut {

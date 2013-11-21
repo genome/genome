@@ -142,7 +142,7 @@ sub execute {                               # replace with real execution logic.
 							
 							if($self->use_bsub)
 							{
-								$cmd = "bsub -q short genome instrument-data import microarray affymetrix-genotype-array --reference-sequence-build $reference_sequence_build --original-data-file=$path_to_file --sample-name=\"$washu_sample_name\" --import-format=\"$import_format\"";
+								$cmd = "bsub -q $ENV{GENOME_LSF_QUEUE_SHORT} genome instrument-data import microarray affymetrix-genotype-array --reference-sequence-build $reference_sequence_build --original-data-file=$path_to_file --sample-name=\"$washu_sample_name\" --import-format=\"$import_format\"";
 							}
 							else
 							{

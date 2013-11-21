@@ -37,7 +37,7 @@ class Genome::Model::Tools::Somatic::SnpFilter {
         }, 
         lsf_queue => {
             is_param => 1,
-            default_value => 'long'
+            default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
         },
         skip_if_output_present => {
             is => 'Boolean',

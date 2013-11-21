@@ -70,7 +70,7 @@ class Genome::Model::Tools::Somatic::PindelToBed {
             default_value => 'rusage[mem=4000] select[type==LINUX64] span[hosts=1] -M 4000000',
         },
         lsf_queue => {
-            default_value => 'long'
+            default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
         }, 
     ],
 };

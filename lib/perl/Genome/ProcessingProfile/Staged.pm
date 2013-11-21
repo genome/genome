@@ -117,7 +117,7 @@ sub _resolve_workflow_for_build {
     my $lsf_project = shift;
 
     if (!defined $lsf_queue || $lsf_queue eq '' || $lsf_queue eq 'inline') {
-        $lsf_queue = 'apipe';
+        $lsf_queue = $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
     }
     if (!defined $lsf_project || $lsf_project eq '') {
         $lsf_project = 'build' . $build->id;

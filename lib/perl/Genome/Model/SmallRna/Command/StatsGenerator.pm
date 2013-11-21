@@ -78,7 +78,7 @@ class Genome::Model::SmallRna::Command::StatsGenerator {
 	
 	has_optional_param => [
         lsf_queue => {
-            default_value => 'workflow',
+            default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKFLOW},
         },
         lsf_resource => {
             default_value => '-R \'select[mem>16000] rusage[mem=16000]\' -M 16000000 ',

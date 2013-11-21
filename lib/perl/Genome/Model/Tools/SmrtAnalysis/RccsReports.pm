@@ -25,7 +25,7 @@ class Genome::Model::Tools::SmrtAnalysis::RccsReports {
     ],
     has_optional_param => [
         lsf_queue => {
-            default_value => 'workflow',
+            default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKFLOW},
         },
         lsf_resource => {
             default_value => '',

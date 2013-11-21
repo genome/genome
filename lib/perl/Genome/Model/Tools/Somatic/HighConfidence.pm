@@ -73,7 +73,7 @@ class Genome::Model::Tools::Somatic::HighConfidence {
        },
        lsf_queue => {
             is_param => 1,
-            default_value => 'long',
+            default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
        },
        skip => {
            is => 'Boolean',

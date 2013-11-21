@@ -32,7 +32,7 @@ class Genome::Model::Tools::Predictor::FastaChunker {
         },
         lsf_queue => { 
             is_param => 1, 
-            default_value => 'short',
+            default_value => $ENV{GENOME_LSF_QUEUE_SHORT},
         },
         lsf_resource => { 
             is_param => 1, 
