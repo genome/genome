@@ -320,7 +320,6 @@ sub execute {                               # replace with real execution logic.
 								my $file2 = $output_fastq;
 								$file2 =~ s/1\_sequence\.fastq/2\_sequence\.fastq/;
 								my $paired_outfile = $flowcell_dir . "/" . $aligner . "_out/" . "s_" . $lane . "_paired.novoalign";
-								#system("bsub -q alignment -R\"select[type==LINUX64 && mem>12000] rusage[mem=12000]\" -M 20000000 -oo $paired_outfile.log \"$path_to_novoalign $novoalign_params -d $reference -f $file1 $file2 >$paired_outfile\"");
 							}
 						}
 					}
