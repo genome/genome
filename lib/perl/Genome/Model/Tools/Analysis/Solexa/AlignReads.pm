@@ -301,7 +301,6 @@ sub execute {                               # replace with real execution logic.
 								my $file2 = $output_fastq;
 								$file2 =~ s/1\_sequence\.fastq/2\_sequence\.fastq/;
 								my $paired_outfile = $flowcell_dir . "/" . $aligner . "_out/" . "s_" . $lane . "_paired.bowtie";
-							#	system("bsub -q long -R\"select[type==LINUX64 && mem>4000] rusage[mem=4000]\" -oo $paired_outfile.log bowtie -m 1 -p 4 -I 50 -X 450 --unfq $paired_outfile.unmapped.fastq --maxfq $paired_outfile.multiple.fastq $reference -1 $file1 -2 $file2 $paired_outfile");
 							}
 						}
 						elsif($aligner eq "novoalign")

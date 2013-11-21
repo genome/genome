@@ -1245,7 +1245,6 @@ sub output_germline_files
 
 	print SCRIPT "echo Running FP Filter...\n";
 	## Apply FP-filter to Germline using Tumor BAM ##
-	#bsub -q long -R\"select[type==LINUX64 && mem>8000] rusage[mem=8000]\" -M 8000000 
 	$cmd = "gmt somatic filter-false-positives --reference " . $self->reference . " --max-mm-qualsum-diff 100 ";
 	$cmd .= "--variant-file $germline_dir/merged.tumor.snp.tier1 --bam-file $tumor_bam --output-file $germline_dir/merged.tumor.snp.tier1.fpfilter --filtered-file $germline_dir/merged.tumor.snp.tier1.fpfilter.removed";
 	print SCRIPT "$cmd\n";

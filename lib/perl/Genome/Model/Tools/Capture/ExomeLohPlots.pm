@@ -190,7 +190,6 @@ sub execute {                               # replace with real execution logic.
 			{
 				my $cmd = "gmt varscan loh-segments --variant-file $combined_outfile.fpfilter --output-basename $combined_outfile.fpfilter.plot --varscan-cn-basename varScan.output.copynumber.called.cbs";
 				system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} $cmd");				
-#				system("bsub -q short $cmd");				
 			}
 
 
