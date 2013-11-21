@@ -652,7 +652,7 @@ sub create_fake_phds
         (
             pp_type => 'lsf',
             command => $cmd,
-            q       => 'long',
+            q       => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
             J       => "$fasta.MAKE_PHD",
             n       => 1,
             u       => Genome::Config->user_email,

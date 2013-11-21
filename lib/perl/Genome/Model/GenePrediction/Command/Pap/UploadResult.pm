@@ -28,7 +28,7 @@ class Genome::Model::GenePrediction::Command::Pap::UploadResult {
                               doc => 'array of Bio::Seq::Feature' ,
                              is_input => 1,
                             },
-        lsf_queue => { is_param => 1, default_value => 'long' ,},
+        lsf_queue => { is_param => 1, default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},},
         lsf_resource => {is_param => 1, default_value => 'rusage[tmp=100]',},
     ],
 };

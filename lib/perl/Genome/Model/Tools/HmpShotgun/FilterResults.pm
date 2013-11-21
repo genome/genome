@@ -72,7 +72,6 @@ class Genome::Model::Tools::HmpShotgun::FilterResults {
         lsf_queue => {
                 is_param => 1,
                 value => 'bigmem'
-                #value => 'long',
                 }	
         ],
         has_param => [

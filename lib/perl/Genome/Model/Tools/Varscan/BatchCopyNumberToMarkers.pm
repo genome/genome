@@ -108,7 +108,7 @@ sub execute {                               # replace with real execution logic.
 		if(!(-e $output_file))
 		{
 			my $cmd = "gmt varscan copy-number-to-markers --sample-dir $dir --bed-file $bed_file --output-file $output_file";
-			system("bsub -q long -R\"select[mem>4000] rusage[mem=4000]\" $cmd");
+			system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -R\"select[mem>4000] rusage[mem=4000]\" $cmd");
 			sleep(1);
 		}
 		else

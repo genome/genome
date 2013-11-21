@@ -194,7 +194,7 @@ sub run_refcov
 	else
 	{
 	print "Running coverage for $sample_name...\n";
-	system("bsub -q long -R\"select[type==LINUX64 && model != Opteron250 && mem>4000] rusage[mem=4000]\" $cmd");		
+	system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -R\"select[type==LINUX64 && model != Opteron250 && mem>4000] rusage[mem=4000]\" $cmd");		
 	}
 
 }

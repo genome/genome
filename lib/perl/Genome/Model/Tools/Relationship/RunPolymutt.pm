@@ -80,7 +80,7 @@ class Genome::Model::Tools::Relationship::RunPolymutt {
         },
         lsf_queue => {
             is => 'Text',
-            default => 'long',
+            default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
         },
     ],
 };

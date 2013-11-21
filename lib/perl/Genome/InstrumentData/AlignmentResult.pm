@@ -316,7 +316,7 @@ sub required_rusage_for_building_index {
 
     my $select = "select[mem>=10000 && tmp>=15000]";
     my $rusage = "rusage[mem=10000, tmp=15000]";
-    my $options = "-M 10000000 -q long";
+    my $options = "-M 10000000 -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER}";
 
     return sprintf("-R '%s %s' %s", $select, $rusage, $options);
 }

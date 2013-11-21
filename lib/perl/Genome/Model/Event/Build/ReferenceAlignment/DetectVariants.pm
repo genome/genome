@@ -12,7 +12,7 @@ class Genome::Model::Event::Build::ReferenceAlignment::DetectVariants{
 sub bsub_rusage {
     my $self = shift;
 
-    return "-R 'select[tmp>4000] rusage[tmp=4000]' -q long";
+    return "-R 'select[tmp>4000] rusage[tmp=4000]' -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER}";
 }
 
 sub execute{

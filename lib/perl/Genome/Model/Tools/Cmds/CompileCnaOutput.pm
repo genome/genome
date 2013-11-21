@@ -129,8 +129,7 @@ sub regenerate_cnv_output {
     my $job_name = $somatic_model_id . "_bam2cna";
     my $oo = $job_name . "_stdout"; #print job's STDOUT in the current directory
     $self->status_message("Submitting job $job_name (bam-to-cna): $job \n");
-    #LSF::Job->submit(-q => 'long', -J => $job_name, -R => 'select[type==LINUX64]', -oo => $oo, "$job");
-    Genome::Sys->shellcmd(cmd => "bsub -q long -J $job_name -R 'select[type==LINUX64]' -oo $oo $job");
+    Genome::Sys->shellcmd(cmd => "bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -J $job_name -R 'select[type==LINUX64]' -oo $oo $job");
 
 }
 

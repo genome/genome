@@ -191,7 +191,7 @@ sub _launch_to_lsf {
     my $logging = '-u '. Genome::Config->user_email;
     my @rusage = $self->rusage;
     my $cmd = sprintf(
-        'bsub -q long %s -R \'rusage[%s]\' gmt dacc %s %s %s', 
+        qq(bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} %s -R 'rusage[%s]' gmt dacc %s %s %s),
         $logging,
         join(',', @rusage),
         $self->command_name_brief,

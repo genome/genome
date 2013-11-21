@@ -184,12 +184,12 @@ sub execute {                               # replace with real execution logic.
 			{
 				print "Running false-positive filter...\n";
 				my $cmd = "gmt somatic filter-false-positives --variant-file $combined_outfile --output-file $combined_outfile.fpfilter --bam-file $normal_bam --reference " . $self->reference;
-				system("bsub -q long -R\"select[mem>8000] rusage[mem=8000]\" -M 8000000 -oo $output_dir/fperr.log $cmd");
+				system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -R\"select[mem>8000] rusage[mem=8000]\" -M 8000000 -oo $output_dir/fperr.log $cmd");
 			}
 			else
 			{
 				my $cmd = "gmt varscan loh-segments --variant-file $combined_outfile.fpfilter --output-basename $combined_outfile.fpfilter.plot --varscan-cn-basename varScan.output.copynumber.called.cbs";
-				system("bsub -q long $cmd");				
+				system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} $cmd");				
 #				system("bsub -q short $cmd");				
 			}
 

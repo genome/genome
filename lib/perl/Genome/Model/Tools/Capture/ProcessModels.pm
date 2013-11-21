@@ -214,7 +214,7 @@ sub execute {                               # replace with real execution logic.
 			print "-e bam_file && -e snp_file && -e indel_file failed";
 			exit;
 		}
-		my $longqueue_pending=`bjobs -q long | grep PEND | wc -l`; chomp $longqueue_pending;
+		my $longqueue_pending=`bjobs -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} | grep PEND | wc -l`; chomp $longqueue_pending;
 		my $apipequeue_pending=`bjobs -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT} | grep PEND | wc -l`; chomp $apipequeue_pending;
 		if ($longqueue_pending >= 75) {
 			sleep(600);

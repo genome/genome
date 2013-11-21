@@ -61,7 +61,7 @@ class Genome::Model::GenePrediction::Command::Pap::InterProScan {
 								},
 
 				lsf_queue => { is_param => 1, 
-                               default_value => 'long',},
+                               default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},},
                 lsf_resource => { is_param => 1,
                                   default_value => 'rusage[tmp=100]' },
                 locus_tag  => {

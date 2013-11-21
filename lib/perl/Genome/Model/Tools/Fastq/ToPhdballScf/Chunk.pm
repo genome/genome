@@ -124,7 +124,7 @@ sub _lsf_job {
     return PP->create(
         pp_type => 'lsf',
         command => $command,
-        q       => 'long',
+        q       => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
         J       => basename($ball_chunk_file),
     );
 }

@@ -177,7 +177,7 @@ SLEEP:      sleep 30;
             #system("bsub -q aml -W 50 -oo $seqpos.log gmt maq get-intersect --input=$out_dir/all.map --snpfile=$out_dir/$seqpos/annotation.tsv --output=$out_dir/$seqpos/$seqpos --justname=2");
             my %job_params = (
                 pp_type => 'lsf',
-                q => 'long',
+                q => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
                 #W => 5,
                 command => "$gmt maq get-intersect --input=$out_dir/all.map --snpfile=$out_dir/$seqpos/annotation.tsv --output=$out_dir/$seqpos/$seqpos --justname=2",
                 oo => "$seqpos.log",
@@ -239,7 +239,7 @@ SLEEEP:      sleep 30;
         print $command,"\n";
         my %job_params = (
             pp_type => 'lsf',
-            q => 'long',
+            q => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
             R => 'select[type=LINUX64]',
             #W => 15,
             command =>$command,#"$gmt manual-review prepare-nextgen-ace --project-dir=$line --basedir=$out_dir",
