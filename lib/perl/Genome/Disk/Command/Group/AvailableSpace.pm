@@ -29,7 +29,7 @@ my %minimum_space_for_group = (
     info_apipe => 512_000,                # 500MB
     $ENV{GENOME_DISK_GROUP_REFERENCES} => 1_073_741_824,      # 1TB
     info_alignments => 12_884_901_888,    # 12TB
-    info_genome_models => 25_769_803_776  # 24TB
+    $ENV{GENOME_DISK_GROUP_MODELS} => 25_769_803_776  # 24TB
 );
 
 sub help_brief {

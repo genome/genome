@@ -294,7 +294,7 @@ sub resolve_allocation_subdirectory {
 
 sub resolve_allocation_disk_group_name {
     if ($_[0]->reference_build->model->is_rederivable) {
-        return 'info_genome_models';
+        return $ENV{GENOME_DISK_GROUP_MODELS};
     } else {
         return $ENV{GENOME_DISK_GROUP_REFERENCES};
     }

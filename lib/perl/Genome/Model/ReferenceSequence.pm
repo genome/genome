@@ -156,7 +156,7 @@ sub _resolve_resource_requirements_for_build {
 }
 
 sub _resolve_disk_group_name_for_build {
-    return ($_[0]->is_rederivable ? 'info_genome_models' : $ENV{GENOME_DISK_GROUP_REFERENCES});
+    return ($_[0]->is_rederivable ? $ENV{GENOME_DISK_GROUP_MODELS} : $ENV{GENOME_DISK_GROUP_REFERENCES});
 }
 
 sub _execute_build {

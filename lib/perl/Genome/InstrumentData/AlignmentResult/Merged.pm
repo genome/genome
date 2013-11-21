@@ -326,7 +326,7 @@ sub required_rusage {
 }
 
 sub resolve_allocation_disk_group_name {
-    return 'info_genome_models';
+    $ENV{GENOME_DISK_GROUP_MODELS};
 }
 
 sub resolve_allocation_kilobytes_requested {

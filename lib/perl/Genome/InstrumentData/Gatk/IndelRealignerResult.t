@@ -59,7 +59,7 @@ is_deeply(\@users, [$indel_realigner], 'bam source is used by indel realigner re
 # Allocation params
 is(
     $indel_realigner->resolve_allocation_disk_group_name,
-    'info_genome_models',
+    $ENV{GENOME_DISK_GROUP_MODELS},
     'resolve_allocation_disk_group_name',
 );
 is(

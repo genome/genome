@@ -228,7 +228,7 @@ sub _import_from_uuids {
         my $alloc_path = 'build_merged_alignments/tcga_import_bams/' . $self->uuid;
 
         my %alloc_params = (
-            disk_group_name     => 'info_genome_models',
+            disk_group_name     => $ENV{GENOME_DISK_GROUP_MODELS},
             allocation_path     => $alloc_path,
             kilobytes_requested => $kb_usage,
             owner_class_name    => 'Genome::InstrumentData::Command::Import::TcgaBam',

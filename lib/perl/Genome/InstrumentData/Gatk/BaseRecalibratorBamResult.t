@@ -90,7 +90,7 @@ is_deeply(
 # Allocation params
 is(
     $base_recalibrator_bam_result->resolve_allocation_disk_group_name,
-    'info_genome_models',
+    $ENV{GENOME_DISK_GROUP_MODELS},
     'resolve_allocation_disk_group_name',
 );
 is(
