@@ -1,13 +1,13 @@
-package Genome::Site::TGI;
+package Genome::Site::CLIA;
 use strict;
 use warnings;
 
 BEGIN {
-    if ($ENV{GENOME_SYS_ID} and $ENV{GENOME_SYS_ID} ne 'GMS1') {
-        die "At TGI we expect the GENOME_SYS_ID to be 'GMS1'.  Other sites should not use the Genome::Site::TGI module."
+    if ($ENV{GENOME_SYS_ID} and $ENV{GENOME_SYS_ID} ne 'CLIA') {
+        die "For CLIA lab, we expect the GENOME_SYS_ID to be 'CLIA'.  Other sites should not use the Genome::Site::CLIA module."
     }
     else {
-        $ENV{GENOME_SYS_ID} = 'GMS1';
+        $ENV{GENOME_SYS_ID} = 'CLIA';
     }
     $ENV{GENOME_ROOT} = "/gsc/scripts/opt/genome/gms-root/";
     $ENV{GENOME_HOME} = "/gsc/scripts/opt/genome/home/";
@@ -21,6 +21,12 @@ BEGIN {
         $ENV{GENOME_SYS_SERVICES_SOLR} ||= 'http://solr:8080/solr';
     }
 	
+}
+
+{ no warnings 'uninitialized';
+  $ENV{WF_TEST_QUEUE} = 'short' if !defined($ENV{WF_TEST_QUEUE}) or $ENV{WF_TEST_QUEUE} eq 'normal';
+  $ENV{WF_SERVER_QUEUE} = 'workflow' if !defined($ENV{WF_SERVER_QUEUE}) or $ENV{WF_SERVER_QUEUE} eq 'normal';
+  $ENV{WF_JOB_QUEUE} = 'apipe' if !defined($ENV{WF_JOB_QUEUE}) or $ENV{WF_JOB_QUEUE} eq 'normal';
 }
 
 # configure local statsd server
@@ -48,29 +54,7 @@ $ENV{GENOME_SW_LEGACY_JAVA} ||= '/gsc/scripts/lib/java';
 $ENV{GENOME_SW_IGNORE} ||= '/gsc/bin:/gsc/scripts/bin';
 $ENV{GENOME_LOCK_DIR} ||= '/gsc/var/lock';
 $ENV{GENOME_SYS_GROUP} ||= 'info';
-$ENV{GENOME_SYS_UMASK} ||= 0002;
 $ENV{GENOME_FS_LOCAL_NETWORK_CACHE} = '/var/cache/tgisan';
-
-# GENOME_LSF_QUEUE_*
-$ENV{GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT} ||= 'alignment';
-$ENV{GENOME_LSF_QUEUE_ALIGNMENT_PROD} ||= 'alignment-pd';
-$ENV{GENOME_LSF_QUEUE_ASSEMBLY} ||= 'assembly';
-$ENV{GENOME_LSF_QUEUE_BIGMEM} ||= 'bigmem';
-$ENV{GENOME_LSF_QUEUE_BUILD_WORKER} ||= 'long';
-$ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT} ||= 'apipe';
-$ENV{GENOME_LSF_QUEUE_BUILD_WORKFLOW} ||= 'workflow';
-$ENV{GENOME_LSF_QUEUE_DV2_WORKER} ||= 'apipe';
-$ENV{GENOME_LSF_QUEUE_DV2_WORKFLOW} ||= 'long';
-$ENV{GENOME_LSF_QUEUE_SHORT} ||= 'short';
-
-# GENOME_DISK_GROUP_*
-$ENV{GENOME_DISK_GROUP_ARCHIVE} ||= 'info_archive';
-$ENV{GENOME_DISK_GROUP_DEV} ||= 'info_apipe';
-$ENV{GENOME_DISK_GROUP_REFERENCES} ||= 'info_apipe_ref';
-$ENV{GENOME_DISK_GROUP_MODELS} ||= 'info_genome_models';
-$ENV{GENOME_DISK_GROUP_ALIGNMENTS} ||= 'info_alignments';
-$ENV{GENOME_DISK_GROUP_RESEARCH} ||= 'research';
-$ENV{GENOME_DISK_GROUP_TRASH} ||= 'info_apipe_trash';
 
 # Data source connection details
 # GMSchema
@@ -82,7 +66,7 @@ $ENV{GENOME_DS_GMSCHEMA_OWNER} ||= 'public';
 
 # DgiDB
 $ENV{GENOME_DS_DGIDB_TYPE} ||= 'UR::DataSource::Pg';
-$ENV{GENOME_DS_DGIDB_SERVER} ||= 'dbname=genome;host=postgres';
+$ENV{GENOME_DS_DGIDB_SERVER} ||= 'dbname=genome;host=gms-postgres';
 $ENV{GENOME_DS_DGIDB_LOGIN} ||= 'genome';
 $ENV{GENOME_DS_DGIDB_AUTH} ||= 'TGI_pg_1';
 $ENV{GENOME_DS_DGIDB_OWNER} ||= 'public';
@@ -327,12 +311,12 @@ sub _sync_env {
 
 =head1 NAME
 
-Genome::Site::TGI - internal configuration for The Genome Institute at Washington University
+Genome::Site::CLIA - internal configuration for CLIA lab at The Genome Institute at Washington University
 
 =head1 DESCRIPTION
 
-Configures the Genome Modeling system to work on the internal network at
-The Genome Institute at Washington University
+Configures the Genome Modeling system to work on the internal network for
+the CLIA lab at The Genome Institute at Washington University
 
 This module ensures that GSCApp and related modules are avialable to the running application.
 

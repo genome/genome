@@ -5,12 +5,12 @@ use warnings;
 use Genome;
 
 class Genome::DataSource::Dwrac {
-    is => ['Genome::DataSource::OracleType', 'Genome::DataSource::CommonRDBMS'],
+    is => [$ENV{GENOME_DS_DWRAC_TYPE}, 'Genome::DataSource::CommonRDBMS'],
     has_classwide_constant => [
-        server  => { default_value => 'dwrac' },
-        login   => { default_value => 'gscuser' },
-        auth    => { default_value => 'user_dw' },
-        owner   => { default_value => 'GSC' },
+        server  => { default_value => $ENV{GENOME_DS_DWRAC_SERVER} },
+        login   => { default_value => $ENV{GENOME_DS_DWRAC_LOGIN} },
+        auth    => { default_value => $ENV{GENOME_DS_DWRAC_AUTH} },
+        owner   => { default_value => $ENV{GENOME_DS_DWRAC_OWNER} },
     ],
 };
 
