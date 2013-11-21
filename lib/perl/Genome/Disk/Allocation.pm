@@ -1046,7 +1046,7 @@ sub _default_archive_after_time {
 sub _get_trash_folder {
     my $self = shift;
 
-    my @dv = Genome::Disk::Volume->get(disk_group_names => 'info_apipe_trash');
+    my @dv = Genome::Disk::Volume->get(disk_group_names => $ENV{GENOME_DISK_GROUP_TRASH});
     my %trash_map = map {
        $self->_extract_aggr($_->physical_path) => File::Spec->join($_->mount_path, '.trash');
     } @dv;

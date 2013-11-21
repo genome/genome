@@ -101,7 +101,7 @@ my %VALID_NAMES = (
     $ENV{GENOME_DISK_GROUP_REFERENCES} => 1,
     $ENV{GENOME_DISK_GROUP_ALIGNMENTS} => 1,
     $ENV{GENOME_DISK_GROUP_MODELS} => 1,
-    info_apipe_trash => 1,
+    $ENV{GENOME_DISK_GROUP_TRASH} => 1,
     research => 1,
     systems_benchmarking => 1,
 );
