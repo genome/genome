@@ -40,7 +40,7 @@ class Genome::Model::GenePrediction::Command::Pap::PsortB {
     ],
     has_param => [
         lsf_resource => { 
-            default_value => "-q short -R 'select[type==LINUX64] rusage[tmp=100]'", 
+            default_value => "-q $ENV{GENOME_LSF_QUEUE_SHORT} -R 'select[type==LINUX64] rusage[tmp=100]'", 
         },
     ],
 };

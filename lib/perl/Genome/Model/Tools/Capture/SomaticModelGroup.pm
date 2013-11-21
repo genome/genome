@@ -400,11 +400,11 @@ sub execute {                               # replace with real execution logic.
 						{
 							if($self->reference)
 							{
-								system("bsub -q short -R\"select[model!=Opteron250 && mem>6000] rusage[mem=6000]\" -M 6000000 gmt somatic ultra-high-confidence --min-tumor-var-freq 0.10 --tumor-bam $tumor_bam --normal-bam $normal_bam --variant-file $tier1_snvs --output-file $output_file --filtered-file $filtered_file --reference " . $self->reference);
+								system("bsub -q $ENV{GENOME_LSF_QUEUE_SHORT} -R\"select[model!=Opteron250 && mem>6000] rusage[mem=6000]\" -M 6000000 gmt somatic ultra-high-confidence --min-tumor-var-freq 0.10 --tumor-bam $tumor_bam --normal-bam $normal_bam --variant-file $tier1_snvs --output-file $output_file --filtered-file $filtered_file --reference " . $self->reference);
 							}
 							else
 							{
-								system("bsub -q short -R\"select[model!=Opteron250 && mem>6000] rusage[mem=6000]\" -M 6000000 gmt somatic ultra-high-confidence --min-tumor-var-freq 0.10 --tumor-bam $tumor_bam --normal-bam $normal_bam --variant-file $tier1_snvs --output-file $output_file --filtered-file $filtered_file");															
+								system("bsub -q $ENV{GENOME_LSF_QUEUE_SHORT} -R\"select[model!=Opteron250 && mem>6000] rusage[mem=6000]\" -M 6000000 gmt somatic ultra-high-confidence --min-tumor-var-freq 0.10 --tumor-bam $tumor_bam --normal-bam $normal_bam --variant-file $tier1_snvs --output-file $output_file --filtered-file $filtered_file");															
 							}
 
 						}
@@ -1499,7 +1499,7 @@ sub process_loh
 		system("cat $germline_snp $loh_snp >$combined_snp");
 		system("gmt capture sort-by-chr-pos --input $combined_snp --output $combined_snp");
 		my $cmd = "gmt varscan loh-segments --variant-file $combined_snp --output-basename $combined_snp.loh";
-		system("bsub -q short -R\"select[type==LINUX64 && mem>1000] rusage[mem=1000]\" \"$cmd\"");
+		system("bsub -q $ENV{GENOME_LSF_QUEUE_SHORT} -R\"select[type==LINUX64 && mem>1000] rusage[mem=1000]\" \"$cmd\"");
 	}
 	else
 	{

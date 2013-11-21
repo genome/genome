@@ -80,7 +80,7 @@ sub execute {
             #system("bsub -q aml -oo $l.log gmt maq get-intersect --input=$f --snpfile=$snps --output=$o");
             my %job_params = (
                 pp_type => 'lsf',
-                q => 'short',
+                q => $ENV{GENOME_LSF_QUEUE_SHORT},
                 command => "$gmt maq get-intersect --input=$f --snpfile=$snps --output=$o",
                 o => "$l.log",
             );
@@ -137,7 +137,7 @@ SLEEP:      sleep 30;
         #system("bsub -q aml -R 'select[type=LINUX64]'-oo mapmerge.log maq mapmerge $out_dir/all.map $maps");
         my %job_params = (
                 pp_type => 'lsf',
-                q => 'short',
+                q => $ENV{GENOME_LSF_QUEUE_SHORT},
                 R => 'select[type=LINUX64]',
                 command => "$out_dir/temp_map/command",#"maq mapmerge $out_dir/all.map $maps",
                 oo => "mapmerge.log",

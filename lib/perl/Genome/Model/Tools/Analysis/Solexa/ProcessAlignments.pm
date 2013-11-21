@@ -289,7 +289,7 @@ sub execute {                               # replace with real execution logic.
 								}
 								$cmd = "gmt bowtie match-to-regions --regions-file $match_to_regions --alignments-file $alignment_outfile --output-file $output_roi --output-layers $output_layers";
 								print "$cmd\n";
-								system("bsub -q short -oo $output_roi.out -R\"select[mem>2000] rusage[mem=2000]\" $cmd");
+								system("bsub -q $ENV{GENOME_LSF_QUEUE_SHORT} -oo $output_roi.out -R\"select[mem>2000] rusage[mem=2000]\" $cmd");
 							}
 
 							if($varscan_roi)
