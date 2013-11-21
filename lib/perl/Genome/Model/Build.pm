@@ -578,7 +578,10 @@ sub _cpu_slot_usage_breakdown {
         }
 
         if ($op_type->can('lsf_queue') and defined($op_type->lsf_queue)
-            and grep { $op_type->lsf_queue eq $_ } ('workflow', $ENV{WF_SERVER_QUEUE)
+            and grep { $op_type->lsf_queue eq $_ } (
+                $ENV{GENOME_LSF_QUEUE_BUILD_WORKFLOW},
+                $ENV{WF_SERVER_QUEUE},
+            )
         ) {
             # skip jobs which run in workflow because they internally run another workflow
             next;
