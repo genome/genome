@@ -545,111 +545,77 @@ sub _cpu_slot_usage_breakdown {
     my %steps;
 
     my $workflow_instance = $self->newest_workflow_instance;
-    if (1) { #($workflow_instance) {
-        my $bx;
-        if (@params) {
-            if ($params[0] =~ /event_type/) {
-                $params[0] =~ s/event_type/name/;
-            }
-            $bx = Workflow::Operation::Instance->define_boolexpr(@params);
+    my $bx;
+    if (@params) {
+        if ($params[0] =~ /event_type/) {
+            $params[0] =~ s/event_type/name/;
         }
-
-
-        my @all_children;
-        my @queue = $workflow_instance;
-
-        while ( my $next = shift @queue ) {
-            my @children = $next->related_instances;
-            push @all_children, @children;
-            push @queue,        @children;
-        }
-
-        for my $op_inst (@all_children) {
-            if ($bx and not $bx->evaluate($op_inst)) {
-                warn "skipping $op_inst $op_inst->{name}...\n";
-                next;
-            }
-            my $op = $op_inst->operation;
-            my $op_name = $op->name;
-            my $op_type = $op->operation_type;
-
-            if ($op_type->class eq 'Workflow::OperationType::Model') {
-                # don't double count
-                next;
-            }
-
-            if ($op_type->can('lsf_queue') and defined($op_type->lsf_queue)
-                and grep { $op_type->lsf_queue eq $_ } ('workflow', $ENV{WF_SERVER_QUEUE)
-            ) {
-                # skip jobs which run in workflow because they internally run another workflow
-                next;
-            }
-
-            my $cpus = 1;
-            my $rusage = ($op_type->can('lsf_resource') ? $op_type->lsf_resource : undef);
-            if (defined($rusage)) {
-                if ($rusage =~ /(?<!\S)-n\s+(\S+)/) {
-                    $cpus = $1;
-                }
-            }
-
-            my $eclass;
-            if ($op_type->can('command_class_name')) {
-                $eclass = $op_type->command_class_name;
-            }
-
-            my $d1    = Date::Manip::ParseDate( $op_inst->end_time );
-            my $d2    = Date::Manip::ParseDate( $op_inst->start_time );
-            my $delta = Date::Manip::DateCalc( $d2, $d1 );
-            my $value = Date::Manip::Delta_Format( $delta, 1, "%mt" );
-
-            if ($value eq '') {
-                $value = 0; # for crashed/incomplete steps
-            }
-
-            if ($cpus eq '') {
-                die "null cpus??? resource was $rusage\n";
-            }
-
-            my $key         = $op_inst->name;
-            $key =~ s/ \d+$//;
-            $steps{$key}{sum} ||= 0;
-            $steps{$key}{count} ||= 0;
-            $steps{$key}{sum} += $value * $cpus;
-            $steps{$key}{count} += $cpus;
-        }
+        $bx = Workflow::Operation::Instance->define_boolexpr(@params);
     }
-    else {
-        my @events = $self->events(@_);
-        my $s = 0;
-        for my $event (@events) {
-            # the master event has an elapsed time for the whole process: don't double count
-            next if (ref($event) eq 'Genome::Model::Event::Build');
 
-            # this would be a method on event, but we won't keep it that long
-            # it's just good enough to do the calc for the grant 2011-01-30 -ss
-            my $cores;
-            if (ref($event) =~ /deduplicate/i) {
-                $cores = 4;
-            }
-            elsif (ref($event) =~ /AlignReads/) {
-                $cores = 4;
-            }
-            else {
-                $cores = 1;
-            }
-            my $e = UR::Time->datetime_to_time($event->date_completed)
-                    -
-                    UR::Time->datetime_to_time($event->date_scheduled);
-            if ($e < 0) {
-                warn "event " . $event->__display_name__ . " has negative elapsed time!";
-                next;
-            }
 
-            my $name = $event->event_type;
-            $steps{$name}{sum} += ($e * $cores/60);
-            $steps{$name}{count} += $cores
+    my @all_children;
+    my @queue = $workflow_instance;
+
+    while ( my $next = shift @queue ) {
+        my @children = $next->related_instances;
+        push @all_children, @children;
+        push @queue,        @children;
+    }
+
+    for my $op_inst (@all_children) {
+        if ($bx and not $bx->evaluate($op_inst)) {
+            warn "skipping $op_inst $op_inst->{name}...\n";
+            next;
         }
+        my $op = $op_inst->operation;
+        my $op_name = $op->name;
+        my $op_type = $op->operation_type;
+
+        if ($op_type->class eq 'Workflow::OperationType::Model') {
+            # don't double count
+            next;
+        }
+
+        if ($op_type->can('lsf_queue') and defined($op_type->lsf_queue)
+            and grep { $op_type->lsf_queue eq $_ } ('workflow', $ENV{WF_SERVER_QUEUE)
+        ) {
+            # skip jobs which run in workflow because they internally run another workflow
+            next;
+        }
+
+        my $cpus = 1;
+        my $rusage = ($op_type->can('lsf_resource') ? $op_type->lsf_resource : undef);
+        if (defined($rusage)) {
+            if ($rusage =~ /(?<!\S)-n\s+(\S+)/) {
+                $cpus = $1;
+            }
+        }
+
+        my $eclass;
+        if ($op_type->can('command_class_name')) {
+            $eclass = $op_type->command_class_name;
+        }
+
+        my $d1    = Date::Manip::ParseDate( $op_inst->end_time );
+        my $d2    = Date::Manip::ParseDate( $op_inst->start_time );
+        my $delta = Date::Manip::DateCalc( $d2, $d1 );
+        my $value = Date::Manip::Delta_Format( $delta, 1, "%mt" );
+
+        if ($value eq '') {
+            $value = 0; # for crashed/incomplete steps
+        }
+
+        if ($cpus eq '') {
+            die "null cpus??? resource was $rusage\n";
+        }
+
+        my $key         = $op_inst->name;
+        $key =~ s/ \d+$//;
+        $steps{$key}{sum} ||= 0;
+        $steps{$key}{count} ||= 0;
+        $steps{$key}{sum} += $value * $cpus;
+        $steps{$key}{count} += $cpus;
     }
 
     return \%steps;
