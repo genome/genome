@@ -1463,7 +1463,7 @@ sub output_loh_files
 		## Apply the FP-filter ##
 		my $cmd = "gmt somatic filter-false-positives --variant-file $loh_output_file.unfiltered --bam-file $normal_bam --output-file $loh_output_file";
 		$cmd .= " --reference " . $self->reference if($self->reference);
-		system("bsub -q apipe -R\"select[type==LINUX64 && mem>8000 && tmp>2000] rusage[mem=8000]\" -M 8000000 $cmd");
+		system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT} -R\"select[type==LINUX64 && mem>8000 && tmp>2000] rusage[mem=8000]\" -M 8000000 $cmd");
 	}
 	
 	## If both files exist, process them ##

@@ -151,7 +151,7 @@ is(File::Compare::compare($existing_assembler_input_files[0],
     0, 'assembler input file matches');
 
 # ASSEMBLE
-my $queue = ( $build->run_by eq 'apipe-tester' ) ? 'alignment-pd' : 'apipe';
+my $queue = ( $build->run_by eq 'apipe-tester' ) ? 'alignment-pd' : $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
 my %assembler_params = $build->assembler_params;
 #print Data::Dumper::Dumper(\%assembler_params);
 is_deeply(

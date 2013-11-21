@@ -1370,7 +1370,7 @@ sub _launch {
     } elsif ($model->processing_profile->can('job_dispatch') && defined $model->processing_profile->job_dispatch) {
         $job_dispatch = $model->processing_profile->job_dispatch;
     } else {
-        $job_dispatch = 'apipe';
+        $job_dispatch = $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
     }
 
     my $fresh_workflow = delete $params{fresh_workflow};
@@ -1450,7 +1450,7 @@ sub _launch {
 sub _initialize_workflow {
     #     Create the data and log directories and resolve the workflow for this build.
     my $self = shift;
-    my $optional_lsf_queue = shift || 'apipe';
+    my $optional_lsf_queue = shift || $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
 
     Genome::Sys->create_directory( $self->data_directory )
         or return;

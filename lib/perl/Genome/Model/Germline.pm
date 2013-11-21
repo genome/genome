@@ -34,7 +34,7 @@ class Genome::Model::Germline {
         job_dispatch => {
             is_constant => 1,
             is_class_wide => 1,
-            value => 'apipe',
+            value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT},
             doc => 'lsf queue to submit jobs or \'inline\' to run them in the launcher'
         },
     ],

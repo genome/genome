@@ -206,7 +206,7 @@ sub execute {                               # replace with real execution logic.
 					my $cmd_mv = "mv $error_name $error_name_bak";
 					system($cmd_mv);
 				}
-				system("bsub -u wschierd\@genome.wustl.edu -q apipe -R\"select[type==LINUX64 && model != Opteron250 && mem>4000] rusage[mem=4000]\" -M 4000000 -J $job_name -o $output_name -e $error_name \"$cmd\"");
+				system("bsub -u wschierd\@genome.wustl.edu -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT} -R\"select[type==LINUX64 && model != Opteron250 && mem>4000] rusage[mem=4000]\" -M 4000000 -J $job_name -o $output_name -e $error_name \"$cmd\"");
 				sleep(1);
 			}
 		}
@@ -215,7 +215,7 @@ sub execute {                               # replace with real execution logic.
 			exit;
 		}
 		my $longqueue_pending=`bjobs -q long | grep PEND | wc -l`; chomp $longqueue_pending;
-		my $apipequeue_pending=`bjobs -q apipe | grep PEND | wc -l`; chomp $apipequeue_pending;
+		my $apipequeue_pending=`bjobs -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT} | grep PEND | wc -l`; chomp $apipequeue_pending;
 		if ($longqueue_pending >= 75) {
 			sleep(600);
 		}

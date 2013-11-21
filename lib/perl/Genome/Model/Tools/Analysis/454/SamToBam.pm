@@ -149,7 +149,7 @@ sub execute {                               # replace with real execution logic.
 			
 			## Run bsub ##
 #			system("$script_filename");			
-			system("bsub -q apipe -R\"select[mem>2000] rusage[mem=2000]\" -oo $script_filename.out $script_filename");
+			system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT} -R\"select[mem>2000] rusage[mem=2000]\" -oo $script_filename.out $script_filename");
 		}
 		else
 		{

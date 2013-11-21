@@ -17,7 +17,7 @@ sub required_arch_os { 'x86_64' }
 
 sub required_rusage {
     # TODO - not sure yet how much mem to require
-    return "-q apipe -R 'select[type==LINUX64 && mem>4000] rusage[mem=4000] span[hosts=1]' -M 4000000";
+    return "-q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT} -R 'select[type==LINUX64 && mem>4000] rusage[mem=4000] span[hosts=1]' -M 4000000";
 }
 
 sub _run_aligner {
