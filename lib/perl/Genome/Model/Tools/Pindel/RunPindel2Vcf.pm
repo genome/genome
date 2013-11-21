@@ -6,9 +6,6 @@ use strict;
 use Genome;
 use Workflow;
 
-my $DEFAULT_VERSION = '0.5';
-my $PINDEL_COMMAND = 'pindel';
-
 class Genome::Model::Tools::Pindel::RunPindel2Vcf {
     is => ['Command'],
     has => [
