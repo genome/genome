@@ -1461,10 +1461,10 @@ sub _initialize_workflow {
 
     ## so developers dont fail before the workflow changes get deployed to /gsc/scripts
     # NOTE: Genome::Config is obsolete, so this code must work when it is not installed as well.
-    if ($workflow->can('notify_url') and $ENV{GENOME_SYS_SERVICES_WEB_BASE_URL}) {
+    if ($workflow->can('notify_url') and $ENV{GENOME_SYS_SERVICES_WEB_VIEW_URL}) {
         require UR::Object::View::Default::Xsl;
 
-        my $cachetrigger = $ENV{GENOME_SYS_SERVICES_WEB_BASE_URL};
+        my $cachetrigger = $ENV{GENOME_SYS_SERVICES_WEB_VIEW_URL};
         $cachetrigger =~ s/view$/cachetrigger/;
 
         my $url = $cachetrigger . '/' . UR::Object::View::Default::Xsl::type_to_url(ref($self)) . '/status.html?id=' . $self->id;

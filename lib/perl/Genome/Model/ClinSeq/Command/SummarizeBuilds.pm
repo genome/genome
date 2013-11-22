@@ -967,7 +967,7 @@ sub execute {
       $id_string .= "&id=$exome_build";
     }
     if ($id_string =~ /\d+/){
-      my $cov_report_url = "https://imp-apipe.gsc.wustl.edu/view/genome/model/build/set/coverage.html?"."$id_string";
+      my $cov_report_url = Genome::Utility::List::join_with_single_slash($ENV{GENOME_SYS_SERVICES_WEB_VIEW_URL}, "/genome/model/build/set/coverage.html?"."$id_string");
       $self->status_message("\nView here:\n$cov_report_url");
       #Use wget to retrieve the page so that is is cached and ready to go...
       my $wget_cmd = "wget --no-check-certificate -O /dev/null \"$cov_report_url\" 1>/dev/null 2>/dev/null";

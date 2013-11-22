@@ -61,7 +61,7 @@ sub generate_report_detail
     my $module_path = $INC{"Genome/Model/ReferenceAlignment/Report/DbSnpConcordance.pm"};
     die 'failed to find module path!' unless $module_path;
 
-    my $view_url = $ENV{GENOME_SYS_SERVICES_WEB_BASE_URL} . "/genome/model/build/db-snp-concordance.html?id=" . $build->id;
+    my $view_url = $ENV{GENOME_SYS_SERVICES_WEB_VIEW_URL} . "/genome/model/build/db-snp-concordance.html?id=" . $build->id;
     my $rv = <<EOF
 <html>
 <head>

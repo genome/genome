@@ -116,7 +116,7 @@ sub execute {
             push @new_models, $to_model;
     }
     $to->assign_models(@new_models); 
-    $self->status_message("Monitor this group at: " . $ENV{GENOME_SYS_SERVICES_WEB_BASE_URL} . "/genome/model-group/status.html?id=" . $to->id);
+    $self->status_message("Monitor this group at: " . $ENV{GENOME_SYS_SERVICES_WEB_VIEW_URL} . "/genome/model-group/status.html?id=" . $to->id);
 
     return 1;
 }

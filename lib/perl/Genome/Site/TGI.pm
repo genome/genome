@@ -22,7 +22,7 @@ BEGIN {
     }
     $ENV{GENOME_SYS_SERVICES_SEARCH_URL} ||= 'https://imp-apipe.gsc.wustl.edu/';
     $ENV{GENOME_SYS_SERVICES_FILES_URL} ||= 'https://gscweb.gsc.wustl.edu/';
-    $ENV{GENOME_SYS_SERVICES_WEB_BASE_URL} ||= 'https://imp-apipe.gsc.wustl.edu/view/';
+    $ENV{GENOME_SYS_SERVICES_WEB_VIEW_URL} ||= 'https://imp-apipe.gsc.wustl.edu/view/';
 }
 
 # configure local statsd server

@@ -50,7 +50,7 @@ sub generate_report_detail {
         return $self->error_message("Unable to locate gold snp build for " . $build->__display_name__);
     }
 
-    my $view_url = $ENV{GENOME_SYS_SERVICES_WEB_BASE_URL} . "/genome/model/build/set/intersect-snv.html?-standard_build_id=" . $gold_snp_build->id . "&id=" . $build->id;
+    my $view_url = $ENV{GENOME_SYS_SERVICES_WEB_VIEW_URL} . "/genome/model/build/set/intersect-snv.html?-standard_build_id=" . $gold_snp_build->id . "&id=" . $build->id;
     my $rv = <<EOF
 <html>
 <head>

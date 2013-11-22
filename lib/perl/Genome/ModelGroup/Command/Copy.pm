@@ -314,7 +314,7 @@ $DB::single = 1;
         $to->add_model_bridge(model_id => $to_model->id);
     }
    
-    $self->status_message("Monitor this group at: " . $ENV{GENOME_SYS_SERVICES_WEB_BASE_URL} . "/genome/model-group/status.html?id=" . $to->id);
+    $self->status_message("Monitor this group at: " . $ENV{GENOME_SYS_SERVICES_WEB_VIEW_URL} . "/genome/model-group/status.html?id=" . $to->id);
 
     return 1;
 }
