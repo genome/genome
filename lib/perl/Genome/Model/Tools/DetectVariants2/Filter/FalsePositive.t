@@ -59,7 +59,7 @@ my $detector_result = Genome::Model::Tools::DetectVariants2::Result->__define__(
 $detector_result->lookup_hash($detector_result->calculate_lookup_hash());
 
 my $result_allocation = Genome::Disk::Allocation->create(
-    disk_group_name => 'info_genome_models',
+    disk_group_name => $ENV{GENOME_DISK_GROUP_MODELS},
     kilobytes_requested => 1,
     allocation_path => 'this_is_a_test',
     owner_id => $detector_result->id,

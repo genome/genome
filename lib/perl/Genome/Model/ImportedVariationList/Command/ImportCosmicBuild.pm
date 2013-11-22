@@ -39,7 +39,7 @@ sub execute {
     my $self = shift;
     my $allocation = Genome::Disk::Allocation->create(
         kilobytes_requested => $self->kilobytes_requested, 
-        disk_group_name => 'info_genome_models', 
+        disk_group_name => $ENV{GENOME_DISK_GROUP_MODELS}, 
         allocation_path => 'build_merged_alignments/import_cosmic_' . $self->version . '_' . Genome::Sys->md5sum_data(join(",",$self->vcf_file_urls)),
         owner_class_name => 'Genome::Model::ImportedVariationList::Command::ImportCosmicBuild',
         owner_id => $self->id

@@ -53,7 +53,7 @@ is_deeply(\@users, [$base_recalibrator], 'bam source is used by base recal resul
 # Allocation params
 is(
     $base_recalibrator->resolve_allocation_disk_group_name,
-    'info_genome_models',
+    $ENV{GENOME_DISK_GROUP_MODELS},
     'resolve_allocation_disk_group_name',
 );
 is(

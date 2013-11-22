@@ -29,7 +29,7 @@ ok($sample, "found sample $sample_name")
 my $tmp_dir = File::Temp::tempdir('Genome-InstrumentData-Commnd-Import-Fastq-XXXXX', TMPDIR =>1, CLEANUP => 1);
 my $tmp_allocation = Genome::Disk::Allocation->__define__(
                                                            id => '-123459',
-                                                           disk_group_name => 'info_alignments',
+                                                           disk_group_name => $ENV{GENOME_DISK_GROUP_ALIGNMENTS},
                                                            group_subdirectory => 'test',
                                                            mount_path => '/tmp/mount_path',
                                                            allocation_path => 'fastq_data/imported/-830001',

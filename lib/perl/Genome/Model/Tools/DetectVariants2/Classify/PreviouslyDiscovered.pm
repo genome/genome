@@ -93,7 +93,7 @@ sub _classify_variants {
 
 sub _needs_symlinks_followed_when_syncing { 0 };
 sub _working_dir_prefix { 'dv2-previously-discovered-result' };
-sub resolve_allocation_disk_group_name { 'info_genome_models' };
+sub resolve_allocation_disk_group_name { $ENV{GENOME_DISK_GROUP_MODELS} };
 
 sub resolve_allocation_subdirectory {
     my $self = shift;

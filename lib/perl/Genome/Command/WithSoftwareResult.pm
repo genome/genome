@@ -57,8 +57,7 @@ sub resolve_allocation_subdirectory {
 
 # disk allocation information
 sub resolve_allocation_disk_group_name {
-    my ($self, $result) = @_;
-    return "info_genome_models";
+    $ENV{GENOME_DISK_GROUP_MODELS};
 }
 
 # ==== INTERNAL USE ONLY ====

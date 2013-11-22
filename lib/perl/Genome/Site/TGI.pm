@@ -62,6 +62,15 @@ $ENV{GENOME_LSF_QUEUE_DV2_WORKER} ||= 'apipe';
 $ENV{GENOME_LSF_QUEUE_DV2_WORKFLOW} ||= 'long';
 $ENV{GENOME_LSF_QUEUE_SHORT} ||= 'short';
 
+# GENOME_DISK_GROUP_*
+$ENV{GENOME_DISK_GROUP_ARCHIVE} ||= 'info_archive';
+$ENV{GENOME_DISK_GROUP_DEV} ||= 'info_apipe';
+$ENV{GENOME_DISK_GROUP_REFERENCES} ||= 'info_apipe_ref';
+$ENV{GENOME_DISK_GROUP_MODELS} ||= 'info_genome_models';
+$ENV{GENOME_DISK_GROUP_ALIGNMENTS} ||= 'info_alignments';
+$ENV{GENOME_DISK_GROUP_RESEARCH} ||= 'research';
+$ENV{GENOME_DISK_GROUP_TRASH} ||= 'info_apipe_trash';
+
 # testsuite data
 my $inputs_directory = '/gsc/var/cache/testsuite/data';
 $ENV{GENOME_TEST_INPUTS} ||= -l $inputs_directory ? readlink($inputs_directory) : $inputs_directory;

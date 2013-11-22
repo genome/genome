@@ -1,0 +1,3 @@
+package Genome::Env::GENOME_DISK_GROUP_REFERENCES;
+
+1;
