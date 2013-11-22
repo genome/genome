@@ -19,8 +19,7 @@ class Genome::Site::TGI::Synchronize::UpdateApipeClasses {
         _report => { is => 'Hash', default_value => {}, },
         _lock => { is => 'Text', },
     ],
-    doc => 'This command contains a mapping of old LIMS-based classes to new classes that use tables in ' .
-        'the MG schema and determines if anything needs to be copied over',
+    doc => 'Copy new objects in LIMS to Genome, removed LIMS expunged solexa and 454 instrument data from Genome.',
 };
 
 sub _suppress_status_messages {
