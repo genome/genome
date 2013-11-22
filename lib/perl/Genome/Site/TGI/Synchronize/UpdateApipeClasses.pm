@@ -162,6 +162,9 @@ sub _create_genome_objects_for_lims_objects {
     my $genome_class = delete $params{genome_class};
     Carp::confess('No genome class to create genome objects!') if not $genome_class;
 
+    my $entity_name = $lims_class->entity_name;
+    $self->status_message("Create $entity_name objects in Genome...");
+
     $self->status_message('Loading LIMS objects to create in Genome...');
     my $iterator = $lims_class->create_iterator(id => [ @{$ids_to_create} ]);
     $self->status_message('Loading LIMS objects to create in Genome...done');
@@ -181,11 +184,10 @@ sub _create_genome_objects_for_lims_objects {
 
     $self->status_message("Unloading $lims_class objects...");
     my $unloaded = $lims_class->unload;
-    $self->status_message("Unloaded $unloaded objects...OK");
 
     $self->_report($report);
 
-    $self->status_message("Commit $genome_class...");
+    $self->status_message("Commit $entity_name...");
     my $commit_ok = $transaction->commit;
     if ( not $commit_ok ) {
         $self->error_message( $transaction->error_message ) if $transaction->error_message;
@@ -193,8 +195,8 @@ sub _create_genome_objects_for_lims_objects {
         Carp::confess( $self->error_message("Failed to commit $genome_class!") );
 
     }
-    $self->status_message("Commit $genome_class...OK");
 
+    $self->status_message("Create $entity_name objects in Genome...done");
     return 1;
 }
 
