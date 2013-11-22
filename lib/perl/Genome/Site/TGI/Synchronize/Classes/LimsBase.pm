@@ -41,14 +41,16 @@ sub params_for_create_in_genome {
 
     my %params;
     for my $name ( $self->properties_to_copy ) {
-        my @value = $self->$name;
-        next if not @value;
         my $property = $meta->property_meta_for_name($name);
         if ( $property->is_many ) {
+            my @value = $self->$name;
+            next if not @value;
             $params{$name} = \@value;
         }
         else {
-            $params{$name} = $value[0];
+            my $value = $self->$name;
+            next if not defined $value;
+            $params{$name} = $value;
         }
     }
 
