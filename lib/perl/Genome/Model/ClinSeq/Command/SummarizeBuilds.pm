@@ -958,9 +958,9 @@ sub execute {
     }
 
     #Create ROI (i.e. exome) coverage view for a series of model IDs
-    #   https://imp-apipe.gsc.wustl.edu/view/genome/model/set/coverage.html?&id=2880223426&id=2880225204&id=2880225668
+    #   $ENV{GENOME_SYS_SERVICES_SEARCH_URL}/view/genome/model/set/coverage.html?&id=2880223426&id=2880225204&id=2880225668
     #Create coverage view for a series of build IDs
-    #   https://imp-apipe.gsc.wustl.edu/view/genome/model/build/set/coverage.html?&id=115088238&id=115092892&id=115667927
+    #   $ENV{GENOME_SYS_SERVICES_SEARCH_URL}/view/genome/model/build/set/coverage.html?&id=115088238&id=115092892&id=115667927
     $self->status_message("\n\nCreate exome coverage reports for exome reference alignment builds");
     my $id_string = '';
     foreach my $exome_build (keys %exome_builds_with_coverage){
