@@ -62,8 +62,7 @@ class Genome::Site::TGI::Synchronize::Classes::RegionIndex454 {
                   then to_char(rr454.region_number)
                   else to_char(rr454.region_number) || '-' || ri454.index_sequence 
                  end
-                ) subset_name,
-                --constants
+                ) subset_name
             from region_index_454 ri454
             join run_region_454 rr454 on rr454.region_id = ri454.region_id
         ) region_index_454
