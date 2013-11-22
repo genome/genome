@@ -16,8 +16,8 @@ our @lims_classes = (
         'Genome::Site::TGI::Synchronize::Classes::'.$_
     } (qw/ 
         OrganismTaxon OrganismIndividual PopulationGroup OrganismSample LibrarySummary
-        LimsProject LimsProjectSample LimsProjectInstrumentData
         RegionIndex454 IndexIllumina Genotyping
+        LimsProject LimsProjectSample LimsProjectInstrumentData
         InstrumentDataAnalysisProjectBridge
     /)
 );
