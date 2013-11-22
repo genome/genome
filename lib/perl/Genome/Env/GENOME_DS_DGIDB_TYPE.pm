@@ -1,10 +1,6 @@
 package Genome::Env::GENOME_DS_DGIDB_TYPE;
 
-use Carp;
-
-unless ($ENV{GENOME_DS_DGIDB_TYPE}) {
-    Carp::copak('Environment variable GENOME_DS_DGIDB_TYPE must be set in your environment or by a site configuration module');
-}
+use Genome::Env::Required;
 
 =pod
 

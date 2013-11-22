@@ -1,10 +1,6 @@
 package Genome::Env::GENOME_DS_DWRAC_AUTH;
 
-use Carp;
-
-unless ($ENV{GENOME_DS_DWRAC_AUTH}) {
-    Carp::copak('Environment variable GENOME_DS_DWRAC_AUTH must be set in your environment or by a site configuration module');
-}
+use Genome::Env::Required;
 
 =pod
 

@@ -1,10 +1,6 @@
 package Genome::Env::GENOME_DS_GMSCHEMA_SERVER;
 
-use Carp;
-
-unless ($ENV{GENOME_DS_GMSCHEMA_SERVER}) {
-    Carp::copak('Environment variable GENOME_DS_GMSCHEMA_SERVER must be set in your environment or by a site configuration module');
-}
+use Genome::Env::Required;
 
 =pod
 
