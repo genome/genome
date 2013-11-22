@@ -191,38 +191,6 @@ sub _create_genome_objects_for_lims_objects {
     return 1;
 }
 
-# Returns indirect and direct properties for an object and the values those properties hold
-sub _get_direct_and_indirect_properties_for_object {
-    my ($self, $original_object, $class, @ignore) = @_;
-    my %direct_properties;
-    my %indirect_properties;
-
-    my @properties = $class->__meta__->properties;
-    for my $property (@properties) {
-        next if $property->is_calculated;
-        next if $property->is_constant;
-        next if $property->is_many;
-        next if $property->id_by;
-        next if $property->via and $property->via ne 'attributes';
-
-        my $property_name = $property->property_name;
-        next unless $original_object->can($property_name);
-        next if @ignore and grep { $property_name eq $_ } @ignore;
-
-        my $value = $original_object->$property_name;
-        next unless defined $value;
-
-        if ($property->via) {
-            $indirect_properties{$property_name} = $value;
-        }
-        else {
-            $direct_properties{$property_name} = $value;
-        }
-    }
-
-    return (\%direct_properties, \%indirect_properties);
-}
-
 sub _load_successful_pidfas {
     my $self = shift;
     # Load successful pidfas grabbing the pidfa_output pse param, if available
@@ -344,34 +312,12 @@ sub _create_limsproject {
 
 sub _create_limsprojectinstrumentdata {
     my ($self, $original_object, $new_object_class) = @_;
-
-    my $object = eval { 
-        Genome::ProjectPart->create(
-            project_id => $original_object->project_id, 
-            entity_id => $original_object->entity_id,
-            entity_class_name => 'Genome::InstrumentData',
-            label => 'instrument_data',
-        );
-    };
-    $self->_confess_object_creation_error($original_object, $new_object_class, $@) unless $object;
-
-    return 1;
+    return $self->_create_object($original_object, $new_object_class);
 }
 
 sub _create_limsprojectsample {
     my ($self, $original_object, $new_object_class) = @_;
-
-    my $object = eval { 
-        Genome::ProjectPart->create(
-            project_id => $original_object->project_id, 
-            entity_id => $original_object->entity_id,
-            entity_class_name => 'Genome::Sample',
-            label => 'sample',
-        );
-    };
-    $self->_confess_object_creation_error($original_object, $new_object_class, $@) unless $object;
-
-    return 1;
+    return $self->_create_object($original_object, $new_object_class);
 }
 
 sub _create_instrumentdataanalysisprojectbridge {
@@ -382,13 +328,6 @@ sub _create_instrumentdataanalysisprojectbridge {
     $inst_data->unload();
 
     return $self->_create_object($original_object, $new_object_class);
-}
-
-sub _confess_object_creation_error {
-    my ($self, $original_object, $new_object_class, $error) = @_;
-
-    confess sprintf("Could not create new object of type %s based on object of type %s with id %s:\n%s",
-        $new_object_class, $original_object->class, $original_object->id, $error);
 }
 
 1;
