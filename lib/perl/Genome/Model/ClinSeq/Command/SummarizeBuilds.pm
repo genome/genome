@@ -7,6 +7,8 @@ use warnings;
 use Genome;
 use Data::Dumper;
 
+use Genome::Utility::List;
+
 class Genome::Model::ClinSeq::Command::SummarizeBuilds {
     is => 'Command::V2',
     has_input => [
@@ -990,8 +992,8 @@ sub execute {
     #$build_dir/bam-qc/*.pdf (NEW)
     #$build_dir/bam-qc/*.html (NEW)
 
-    #https://gscweb.gsc.wustl.edu/$build_dir/bam-qc/
-    #https://gscweb.gsc.wustl.edu/$build_dir/junctions/summary/
+    #$ENV{GENOME_SYS_SERVICES_FILES_URL}/$build_dir/bam-qc/
+    #$ENV{GENOME_SYS_SERVICES_FILES_URL}/$build_dir/junctions/summary/
 
     $self->status_message("\n\nGet basic RNA-seq alignment stats");
     $self->status_message("\nsample\ttotal_reads\ttotal_reads_mapped_percent\tunmapped_reads_percent\tfragment_size_mean\tfragment_size_std\tpercent_coding_bases\tpercent_utr_bases\tpercent_intronic_bases\tpercent_intergenic_bases\tpercent_ribosomal_bases\tbuild_id");
@@ -1148,10 +1150,14 @@ sub execute {
 
       #Display URLs to some handy locations in the RNA-seq build
       if (-e "$build_dir/bam-qc/"){
-        $self->status_message("\nRNA-seq BAM-QC results:\nhttps://gscweb.gsc.wustl.edu$build_dir/bam-qc/");
+        $self->status_message("\nRNA-seq BAM-QC results:\n"
+                                . Genome::Utility::List::join_with_single_slash($ENV{GENOME_SYS_SERVICES_FILES_URL},
+                                                                                "$build_dir/bam-qc/"));
       }
       if (-e "$build_dir/junctions/summary/"){
-        $self->status_message("\nRNA-seq junction summary results:\nhttps://gscweb.gsc.wustl.edu$build_dir/junctions/summary/");
+        $self->status_message("\nRNA-seq junction summary results:\n"
+                                . Genome::Utility::List::join_with_single_slash($ENV{GENOME_SYS_SERVICES_FILES_URL},
+                                                                                "$build_dir/junctions/summary/"));
       }
 
       my @rnaseq_files_to_copy;

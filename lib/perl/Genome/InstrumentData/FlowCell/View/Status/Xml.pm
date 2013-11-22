@@ -79,7 +79,7 @@ sub _generate_content {
 
                 }
 
-                if ($url =~ m/gscmnt/)  { $url = "https://gscweb.gsc.wustl.edu" . $url; }
+                if ($url =~ m/gscmnt/)  { $url = $ENV{GENOME_SYS_SERVICES_FILES_URL} . $url; }
 
                 my $report_node = $instrument_data_node->addChild( $doc->createElement('report'));
                 $report_node->addChild( $doc->createAttribute('name', $name) );

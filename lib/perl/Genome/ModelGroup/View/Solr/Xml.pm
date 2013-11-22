@@ -65,7 +65,7 @@ class Genome::ModelGroup::View::Solr::Xml {
                 my $build  = $cmodel->last_succeeded_build() || return 'none';
                 my $data_dir = $build->data_directory() || return 'none';
                 my $url = join( '/',
-                    'https://gscweb.gsc.wustl.edu',
+                    $ENV{GENOME_SYS_SERVICES_FILES_URL},
                     $data_dir, 'reports', 'Summary', 'report.html' );
                 return $url;
             },

@@ -20,6 +20,7 @@ BEGIN {
         $ENV{GENOME_SYS_SERVICES_MEMCACHE} ||= 'imp-apipe.gsc.wustl.edu:11211';
         $ENV{GENOME_SYS_SERVICES_SOLR} ||= 'http://solr:8080/solr';
     }
+    $ENV{GENOME_SYS_SERVICES_FILES_URL} ||= 'https://gscweb.gsc.wustl.edu';
     $ENV{GENOME_SYS_SERVICES_WEB_BASE_URL} ||= 'https://imp-apipe.gsc.wustl.edu/view/';
 }
 
@@ -88,7 +89,7 @@ $ENV{GENOME_DS_OLTP_OWNER} ||= 'GSC';
 # testsuite data
 my $inputs_directory = '/gsc/var/cache/testsuite/data';
 $ENV{GENOME_TEST_INPUTS} ||= -l $inputs_directory ? readlink($inputs_directory) : $inputs_directory;
-$ENV{GENOME_TEST_URL} ||= sprintf('https://gscweb.gsc.wustl.edu/%s', $ENV{GENOME_TEST_INPUTS});
+$ENV{GENOME_TEST_URL} ||= sprintf('%s/%s', $ENV{GENOME_SYS_SERVICES_FILES_URL}, $ENV{GENOME_TEST_INPUTS});
 
 # configure file that signals that database updates should be paused
 if (!$ENV{UR_DBI_NO_COMMIT}) {

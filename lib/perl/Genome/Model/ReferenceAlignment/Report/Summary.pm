@@ -433,6 +433,7 @@ sub get_summary_information
         name     => 'Mickey',
         debt     => '3 riffs and a solo',
         deadline => 'the next chorus',
+        files_url => $ENV{GENOME_SYS_SERVICES_FILES_URL},
     };
 
     $self->status_message("processing template $template");

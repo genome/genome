@@ -24,9 +24,9 @@
           <dt>Status:</dt>
           <dd>[% build.build_status %]</dd>
           <dt>Data Directory:</dt>
-          <dd><a href="https://gscweb.gsc.wustl.edu[% build.data_directory %]">https://gscweb.gsc.wustl.edu[% build.data_directory %]</a></dd>
+          <dd><a href="[% files_url %][% build.data_directory %]">[% files_url %][% build.data_directory %]</a></dd>
         </dl>
-        <h3 class="section_title">Model Information: [% model.id %] ([% model.name %]) <a href="https://gscweb.gsc.wustl.edu[% build.data_directory %]/reports/ModelOverview/report.html" class="details">details</a></h3>
+        <h3 class="section_title">Model Information: [% model.id %] ([% model.name %]) <a href="[% files_url %][% build.data_directory %]/reports/ModelOverview/report.html" class="details">details</a></h3>
         <dl class="vert_list">
           <dt>Project[% IF project_list.size > 1 %]s[% END %]:</dt>
       [% FOREACH project IN project_list %]
@@ -34,10 +34,10 @@
           [% IF project_list.size > 1 %]
             [% IF project.parent_project_id %] <em>child of project #[% project.parent_project_id %]</em> [% END %]
           [% END %]
-            <a href="https://gscweb.gsc.wustl.edu[% build.data_directory %]/reports/ProjectOverview/report.html" class="details">details</a></dd>
+            <a href="[% files_url %][% build.data_directory %]/reports/ProjectOverview/report.html" class="details">details</a></dd>
       [% END %]
           <dt>Sample:</dt>
-          <dd>[% sample.name %] <a href="https://gscweb.gsc.wustl.edu[% build.data_directory %]/reports/SampleOverview/report.html" class="details">details</a></dd>
+          <dd>[% sample.name %] <a href="[% files_url %][% build.data_directory %]/reports/SampleOverview/report.html" class="details">details</a></dd>
           <dt>Processing Profile:</dt>
           <dd>[% pprofile.name %], <em>[% pprofile.type_name %]</em> <a href="#" class="details">details</a></dd>
           <dt>Instrument Data:</dt>
@@ -45,9 +45,9 @@
         </dl>
         <h3 class="section_title">Detailed Reports</h3>
         <ul>
-          <li><a href="https://gscweb.gsc.wustl.edu/cgi-bin/solexa/status.cgi?build-id=[% build.id %]">Build Status</a> (CGI)</li>
+          <li><a href="[% files_url %]cgi-bin/solexa/status.cgi?build-id=[% build.id %]">Build Status</a> (CGI)</li>
        [% FOREACH report IN build_reports_list %] [% report_dir = report.name; %]
-          <li><a href="https://gscweb.gsc.wustl.edu[% build.data_directory %]/reports/[% report_dir.replace('\W+', '_'); %]/report.html">[% report.name %]</a></li>
+          <li><a href="[% files_url %][% build.data_directory %]/reports/[% report_dir.replace('\W+', '_'); %]/report.html">[% report.name %]</a></li>
        [% END %]
         </ul>
       </div><!-- end background -->

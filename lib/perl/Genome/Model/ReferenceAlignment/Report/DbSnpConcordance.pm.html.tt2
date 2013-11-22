@@ -8,8 +8,9 @@
     <style type="text/css" media="screen">
       [% page_css %]
     </style>
-    <script src="https://gscweb.gsc.wustl.edu/report_resources/db_snp_concordance/js/jquery.js" type="text/javascript"></script>
-    <script src="https://gscweb.gsc.wustl.edu/report_resources/db_snp_concordance/js/jquery.flot.js" type="text/javascript"></script>
+    <! value for files_url should be $ENV{GENOME_SYS_SERVICES_FILES_URL}, but I can't see where this template is used from>
+    <script src="[% files_url %]/report_resources/db_snp_concordance/js/jquery.js" type="text/javascript"></script>
+    <script src="[% files_url %]/report_resources/db_snp_concordance/js/jquery.flot.js" type="text/javascript"></script>
 	
     <script type="text/javascript">//<![CDATA[
       $(function() {
@@ -140,15 +141,15 @@
           <h3 class="graph_title">dbSNP Concordance for SNVs by Quality</h3>
           <table width="100%" cellpadding="5" cellspacing="0">
             <tr>
-              <td valign="middle"><img src="https://gscweb.gsc.wustl.edu/report_resources/db_snp_concordance/images/axis_label_v_SNPs.png" width="19" height="49"/></td>
+              <td valign="middle"><img src="[% files_url %]/report_resources/db_snp_concordance/images/axis_label_v_SNPs.png" width="19" height="49"/></td>
               <td align="center" valign="middle">
                 <div id="placeholder" class="graph_placeholder"/>
               </td>
-              <td valign="middle"><img src="https://gscweb.gsc.wustl.edu/report_resources/db_snp_concordance/images/axis_label_v_pct_Concordance.png" width="19" height="151"/></td>
+              <td valign="middle"><img src="[% files_url %]/report_resources/db_snp_concordance/images/axis_label_v_pct_Concordance.png" width="19" height="151"/></td>
             </tr>            
             <tr>
               <td>&nbsp;</td>
-              <td align="center"><img src="https://gscweb.gsc.wustl.edu/report_resources/db_snp_concordance/images/axis_label_h_Quality.png" width="67" height="23"/></td>
+              <td align="center"><img src="[% files_url %]/report_resources/db_snp_concordance/images/axis_label_h_Quality.png" width="67" height="23"/></td>
               <td>&nbsp;</td>
             </tr>
             <tr>

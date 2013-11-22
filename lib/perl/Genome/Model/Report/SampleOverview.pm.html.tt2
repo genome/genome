@@ -37,7 +37,7 @@
       [% IF sample_models %]
         <dl class="vert_list">
           [% FOREACH sample_model IN sample_models %]
-          <dt>[% sample_model.id %][% IF sample_model.id == model.id %]<a href="https://gscweb.gsc.wustl.edu[% build.data_directory %]/reports/ModelOverview/report.html" class="details">details</a>[% END %]</dt>
+          <dt>[% sample_model.id %][% IF sample_model.id == model.id %]<a href="[% files_url %][% build.data_directory %]/reports/ModelOverview/report.html" class="details">details</a>[% END %]</dt>
           <dd><strong>Name:</strong> [% sample_model.name %]</dd>
           <dd><strong>Processing Profile:</strong> [% sample_model.processing_profile_name %]</dd>
           <dd><strong>Last Succeeded Build:</strong> [% IF sample_model.last_succeeded_build.date_completed %][% sample_model.last_succeeded_build.date_completed %][% ELSE %]No successful build[% END %]</dd>

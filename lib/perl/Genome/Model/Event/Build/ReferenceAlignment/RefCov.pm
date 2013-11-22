@@ -8,6 +8,8 @@ use warnings;
 
 use Genome;
 
+use Genome::Utility::List;
+
 class Genome::Model::Event::Build::ReferenceAlignment::RefCov {
     is => ['Genome::Model::Event'],
     has => [
@@ -248,7 +250,7 @@ sub execute {
     $fh->print( $xslt->{content} );
     $fh->close;
     my $mail_dest = 'jwalker@genome.wustl.edu,twylie@genome.wustl.edu';
-    my $link = 'https://gscweb.gsc.wustl.edu'. $report_file;
+    my $link = Genome::Utility::List::join_with_single_slash($ENV{GENOME_SYS_SERVICES_FILES_URL}, $report_file);
     my $sender = Mail::Sender->new({
         smtp => 'gscsmtp.wustl.edu',
         from => 'jwalker@genome.wustl.edu',

@@ -82,7 +82,7 @@
 														[% IF ref_seq_desc %]
 															[% ref_seq_desc %] <a href="https://imp.gsc.wustl.edu/view/Genome/Model/Build/status.html?id=[% ref_seq_build_id %]" style="text-decoration:none;font-size:85%;font-weight:bold;font-family:Helvetica,Arial,sans-serif;line-height:1.2;">view reference build &gt;</a>
 														[% ELSE %]
-															[% ref_seq_name %] <a href="https://gscweb.gsc.wustl.edu[% ref_seq_dir %]" style="text-decoration:none;font-size:85%;font-weight:bold;font-family:Helvetica,Arial,sans-serif;line-height:1.2;">view reference directory &gt;</a>
+															[% ref_seq_name %] <a href="[% files_url %][% ref_seq_dir %]" style="text-decoration:none;font-size:85%;font-weight:bold;font-family:Helvetica,Arial,sans-serif;line-height:1.2;">view reference directory &gt;</a>
 														[% END %]
 													</td>
 												</tr>
@@ -122,7 +122,7 @@
 														</h2>
 													</td>
 													<td style="border-bottom: 2px solid #CCC;" align="right">
-														<a href="https://gscweb.gsc.wustl.edu[% data_directory %]" style="text-decoration:none;font-size:70%;font-weight:bold;font-family:Helvetica,Arial,sans-serif;line-height:1.2;">view data directory&gt;</a>
+														<a href="[% files_url %][% data_directory %]" style="text-decoration:none;font-size:70%;font-weight:bold;font-family:Helvetica,Arial,sans-serif;line-height:1.2;">view data directory&gt;</a>
 													</td>
 												</tr>
 											</table>
@@ -172,7 +172,7 @@
 														</h2>
 													</td>
 													<td style="border-bottom: 2px solid #CCC;" align="right">
-														<!--<a href="https://gscweb.gsc.wustl.edu[% data_directory %]reports/RefSeqMaq/report.html" style="text-decoration:none;font-size:70%;font-weight:bold;font-family:Helvetica,Arial,sans-serif;line-height:1.2;">view details &gt;</a>-->
+														<!--<a href="[% files_url %][% data_directory %]reports/RefSeqMaq/report.html" style="text-decoration:none;font-size:70%;font-weight:bold;font-family:Helvetica,Arial,sans-serif;line-height:1.2;">view details &gt;</a>-->
 													</td>
 												</tr>
 											</table>
@@ -238,7 +238,7 @@
 													  <a href="https://imp.gsc.wustl.edu/view/Genome/Model/Set/gold-snp-comparison.html?genome_model_id=[% model_id %]" style="text-decoration:none;font-size:70%;font-weight:bold;font-family:Helvetica,Arial,sans-serif;line-height:1.2;">view diploid graph &gt;</a>
 													</td>
 													<td style="border-bottom: 2px solid #CCC;" align="right">
-													  <a href="https://gscweb.gsc.wustl.edu[% data_directory %]reports/Gold_SNP_Concordance/report.html" style="text-decoration:none;font-size:70%;font-weight:bold;font-family:Helvetica,Arial,sans-serif;line-height:1.2;">view details &gt;</a>
+													  <a href="[% files_url %][% data_directory %]reports/Gold_SNP_Concordance/report.html" style="text-decoration:none;font-size:70%;font-weight:bold;font-family:Helvetica,Arial,sans-serif;line-height:1.2;">view details &gt;</a>
 													</td>
 												</tr>
 											</table>
@@ -325,7 +325,7 @@
 														</h2>
 													</td>
 													<td style="border-bottom: 2px solid #CCC;" align="right">
-														<a href="https://gscweb.gsc.wustl.edu[% data_directory %]reports/dbSNP_Concordance/report.html" style="text-decoration:none;font-size:70%;font-weight:bold;font-family:Helvetica,Arial,sans-serif;line-height:1.2;">view details &gt;</a>
+														<a href="[% files_url %][% data_directory %]reports/dbSNP_Concordance/report.html" style="text-decoration:none;font-size:70%;font-weight:bold;font-family:Helvetica,Arial,sans-serif;line-height:1.2;">view details &gt;</a>
 													</td>
 												</tr>
 											</table>
