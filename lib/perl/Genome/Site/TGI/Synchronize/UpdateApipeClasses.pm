@@ -164,13 +164,14 @@ sub _create_genome_objects_for_lims_objects {
     my $report = $self->_report;
     my $transaction = UR::Context::Transaction->begin();
     $self->status_message('Create objects in Genome...');
+    my @ids_created;
     while ( my $lims_obj = $iterator->next ) {
         my $genome_obj = $self->$create_method($lims_obj, $genome_class);
-        if ( $genome_obj ) {
-            push @{$report->{$lims_obj->entity_name}->{'copied'}}, $lims_obj->id;
-        }
+        push @ids_created, $lims_obj->id if $genome_obj;
     }
-    $self->status_message('Create objects in Genome...done');
+    $report->{ $lims_class->entity_name }->{copied} = \@ids_created;
+    $self->status_message('Attempted: '.$ids_to_create->size);
+    $self->status_message('Created:   '.@ids_created);
 
     $self->status_message("Unloading $lims_class objects...");
     my $unloaded = $lims_class->unload;
