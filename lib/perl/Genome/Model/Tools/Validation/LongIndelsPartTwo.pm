@@ -39,8 +39,8 @@ class Genome::Model::Tools::Validation::LongIndelsPartTwo {
 };
 
 sub help_detail {
-    return <<EOS
-    This tool performs the last steps (#'s 6-8) of the 3bp indel validation process outlined on this wiki page: https://gscweb.gsc.wustl.edu/wiki/Medical_Genomics/Nimblegen_Solid_Phase_Capture_Validation/Analysis#.3E3bp_Indels. It also then creates an annotate-able file using an adaptor 'gmt annotate adaptor indel-contig'. It also creates a bed file from this adapted list, and then uses fast-tier to tier the final calls. Lastly, the tool prints some details for possible manual review tickets as well, so be sure to SAVE THE STDOUT.
+    return <<"EOS"
+    This tool performs the last steps (#'s 6-8) of the 3bp indel validation process outlined on this wiki page: $ENV{GENOME_SYS_SERVICES_WIKI_URL}Medical_Genomics/Nimblegen_Solid_Phase_Capture_Validation/Analysis#.3E3bp_Indels. It also then creates an annotate-able file using an adaptor 'gmt annotate adaptor indel-contig'. It also creates a bed file from this adapted list, and then uses fast-tier to tier the final calls. Lastly, the tool prints some details for possible manual review tickets as well, so be sure to SAVE THE STDOUT.
 EOS
 }
 

@@ -63,8 +63,8 @@ class Genome::Model::Tools::Validation::LongIndelsPartOne {
 };
 
 sub help_detail {
-    return <<EOS
-    This tool performs the first 5 steps of the 3bp indel validation process outlined on this wiki page: https://gscweb.gsc.wustl.edu/wiki/Medical_Genomics/Nimblegen_Solid_Phase_Capture_Validation/Analysis#.3E3bp_Indels. It then prints out a command which the user may use to run two builds for remapping validation data to a new reference sequence containing indel contigs, and also prints a follow-up command to run to complete the final steps of the 3bp indel process. It also prints out some details for any future manual review tickets of these indels, so save the STDOUT. Remember to address the optional parameters if you are not using HG18 build36.
+    return <<"EOS"
+This tool performs the first 5 steps of the 3bp indel validation process outlined on this wiki page: $ENV{GENOME_SYS_SERVICES_WIKI_URL}Medical_Genomics/Nimblegen_Solid_Phase_Capture_Validation/Analysis#.3E3bp_Indels. It then prints out a command which the user may use to run two builds for remapping validation data to a new reference sequence containing indel contigs, and also prints a follow-up command to run to complete the final steps of the 3bp indel process. It also prints out some details for any future manual review tickets of these indels, so save the STDOUT. Remember to address the optional parameters if you are not using HG18 build36.
 
 Requires either paired tumor/normal models or a single somatic-validation model
 EOS

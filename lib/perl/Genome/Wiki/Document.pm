@@ -27,14 +27,10 @@ class Genome::Wiki::Document {
     },
     has => {
         environment => {
-            calculate => q{
-                default_value => Genome::Config::dev_mode() ? 'dev' : 'prod'
-            },
+             calculate => q{ Genome::Config::dev_mode() ? 'dev' : 'prod' },
         },
         wiki_server_url => {
-            calculate => q{
-                default_value => 'https://gscweb.gsc.wustl.edu/mediawiki/api.php',
-            },
+            calculate => qq{ '$ENV{GENOME_SYS_SERVICES_WIKI_URL}' . 'api.php' },
         },
     },
 };
