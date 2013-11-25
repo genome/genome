@@ -42,10 +42,34 @@ my @read_processor_output_files = $sx_result->read_processor_output_files;
 ok(@read_processor_output_files, 'produced read processor output files');
 is_deeply(\@read_processor_output_files, [map { $instrument_data->id.'.'.$_.'.fastq' } (qw/ 1 2 /)], 'correctly names read processor output files');
 
-my $read_processor_output_metric_file = $sx_result->read_processor_output_metric_file;
-my $read_processor_input_metric_file = $sx_result->read_processor_input_metric_file;
-ok($read_processor_output_metric_file, 'produced read processor output metric file');
-ok($read_processor_input_metric_file, 'produced read processor input metric file');
+# metric files
+is($sx_result->read_processor_input_metric_file_base_name, $instrument_data->id.'.input_metrics', 'input metric file base name');
+is(
+    $sx_result->temp_staging_input_metric_file,
+    $sx_result->temp_staging_directory.'/'.$sx_result->read_processor_input_metric_file_base_name,
+    'temp staging input metric file',
+);
+ok(-s $sx_result->temp_staging_input_metric_file, 'temp statging input metric file has size');
+is(
+    $sx_result->read_processor_input_metric_file,
+    $sx_result->output_dir.'/'.$sx_result->read_processor_input_metric_file_base_name,
+    'read processor input metric file',
+);
+ok(-s $sx_result->read_processor_input_metric_file, 'input metric file has size');
+
+is($sx_result->read_processor_output_metric_file_base_name, $instrument_data->id.'.output_metrics', 'output metric file base name');
+is(
+    $sx_result->temp_staging_output_metric_file,
+    $sx_result->temp_staging_directory.'/'.$sx_result->read_processor_output_metric_file_base_name,
+    'temp statging output metric file',
+);
+ok(-s $sx_result->temp_staging_output_metric_file, 'temp staging output metric file has size');
+is(
+    $sx_result->read_processor_output_metric_file,
+    $sx_result->output_dir.'/'.$sx_result->read_processor_output_metric_file_base_name,
+    'output metric file',
+);
+ok(-s $sx_result->read_processor_output_metric_file, 'output metric file');
 
 $sx_result_params{output_file_count} = 1;
 my $sx_result3 = Genome::InstrumentData::SxResult->get_with_lock(%sx_result_params);

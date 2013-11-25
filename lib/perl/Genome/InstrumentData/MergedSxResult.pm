@@ -72,7 +72,7 @@ sub _construct_sx_command_parts {
             my $cmd = "cat ".$output_files[$input_number]." >> ".$input_files[$input_number];
             `$cmd`;
         }
-        my $metrics = Genome::Model::Tools::Sx::Metrics->from_file($result->output_dir."/".$result->read_processor_output_metric_file);
+        my $metrics = Genome::Model::Tools::Sx::Metrics->from_file($result->read_processor_output_metric_file);
         my $output_bases = $metrics->bases;
         $total_incoming_bases += $output_bases;
     }

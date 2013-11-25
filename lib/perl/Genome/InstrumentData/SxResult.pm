@@ -157,13 +157,11 @@ sub _run_sx {
     my @sx_cmd_parts = map { 'gmt sx '.$_ } @read_processor_parts;
     $sx_cmd_parts[0] .= ' --input '.join(',', @$inputs);
     $sx_cmd_parts[0] .= ' --input-metrics '.
-    $self->temp_staging_directory.'/'.
-    $self->read_processor_input_metric_file;
+    $self->temp_staging_input_metric_file;
     my $num_parts = scalar @read_processor_parts;
     $sx_cmd_parts[$num_parts-1] .= ' --output '.$output;
     $sx_cmd_parts[$num_parts-1] .= ' --output-metrics '.
-    $self->temp_staging_directory.'/'.
-    $self->read_processor_output_metric_file;
+    $self->temp_staging_output_metric_file;
 
     if (Genome::DataSource::GMSchema->has_default_handle) {
         $self->debug_message("Disconnecting GMSchema default handle.");
@@ -199,14 +197,13 @@ sub _verify_output_files {
         $self->error_message('No output files were created!');
         return;
     }
-    if (not -s $self->temp_staging_directory.'/'.
-            $self->read_processor_output_metric_file) {
-        $self->error_message('Output metrics file not created');
+
+    if (not -s $self->temp_staging_output_metric_file ) {
+        $self->error_message('Output metrics file not created!');
         return;
     }
-    if (not -s $self->temp_staging_directory.'/'.
-            $self->read_processor_input_metric_file) {
-        $self->error_message('Input metrics file not created');
+    if (not -s $self->temp_staging_input_metric_file ) {
+        $self->error_message('Input metrics file not created!');
         return;
     }
 
@@ -228,16 +225,44 @@ sub resolve_allocation_disk_group_name {
     $ENV{GENOME_DISK_GROUP_MODELS};
 }
 
-sub read_processor_output_metric_file {
+sub read_processor_input_metric_file_base_name {
+    my $self = shift;
+    my $base = $self->resolve_base_name_from_instrument_data;
+    return "$base.input_metrics";
+}
+
+sub temp_staging_input_metric_file {
+    my $self = shift;
+    my $temp_staging_directory = $self->temp_staging_directory;
+    return if not $temp_staging_directory or not -d $temp_staging_directory;
+    return $temp_staging_directory.'/'.$self->read_processor_input_metric_file_base_name;
+}
+
+sub read_processor_input_metric_file {
+    my $self = shift;
+    my $output_dir = $self->output_dir;
+    return if not $output_dir or not -d $output_dir;
+    return $output_dir.'/'.$self->read_processor_input_metric_file_base_name;
+}
+
+sub read_processor_output_metric_file_base_name {
     my $self = shift;
     my $base = $self->resolve_base_name_from_instrument_data;
     return "$base.output_metrics";
 }
 
-sub read_processor_input_metric_file {
+sub temp_staging_output_metric_file {
     my $self = shift;
-    my $base = $self->resolve_base_name_from_instrument_data;
-    return "$base.input_metrics";
+    my $temp_staging_directory = $self->temp_staging_directory;
+    return if not $temp_staging_directory or not -d $temp_staging_directory;
+    return $temp_staging_directory.'/'.$self->read_processor_output_metric_file_base_name;
+}
+
+sub read_processor_output_metric_file {
+    my $self = shift;
+    my $output_dir = $self->output_dir;
+    return if not $output_dir or not -d $output_dir;
+    return $output_dir.'/'.$self->read_processor_output_metric_file_base_name;
 }
 
 sub read_processor_output_files {

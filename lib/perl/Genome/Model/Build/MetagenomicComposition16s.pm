@@ -356,7 +356,7 @@ sub merge_processed_instrument_data {
         $self->status_message('Merge metrics for SX result: '.$sx_result->id);
         for my $type (qw/ input output /) {
             my $metrics_file_method = 'read_processor_'.$type.'_metric_file';
-            my $metrics_file = $sx_result->output_dir.'/'.$sx_result->$metrics_file_method;
+            my $metrics_file = $sx_result->$metrics_file_method;
             if ( not -s $metrics_file ) {
                 $self->error_message("No $type metrics file for SX result! ".$sx_result->output_dir);
                 return;
