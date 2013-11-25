@@ -30,10 +30,12 @@ sub import {
             return if (index($File::Find::name, 'Test2.pm') >= 0);
             return if (index($File::Find::dir, '.d') >= 0);
 
-
             my $name = 'Genome' . substr($File::Find::name, length($base_dir));
             $name =~ s/\//::/g;
 
+            # Skip pre-loading things under Genome::Site to ensure only
+            # one site config is ever loaded
+            return if ($name =~ m/^Genome::Site::/);
 
             substr($name, index($name, '.pm'), 3, '');
 
