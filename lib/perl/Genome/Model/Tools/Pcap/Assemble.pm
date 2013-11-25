@@ -418,7 +418,8 @@ sub create_project_directories
         return;
     }
 
-    foreach my $sub_dir (qw/ edit_dir input output phd_dir chromat_dir blastdb acefiles ftp read_dump 454_processed/)
+    my @subdirs = qw(edit_dir input output phd_dir chromat_dir blastdb acefiles ftp read_dump 454_processed);
+    foreach my $sub_dir (@subdirs)
     {
         next if -d "$path/$sub_dir";
 
