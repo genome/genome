@@ -410,16 +410,9 @@ sub create_project_directories
     my $path = $self->{project_path};
 
     umask 002;
-    mkdir "$path" unless -d $path;
-
-    unless (-d "$path")
-    {
-        $self->error_message ("failed to create $path : $!");
-        return;
-    }
 
     my @subdirs = qw(edit_dir input output phd_dir chromat_dir blastdb acefiles ftp read_dump 454_processed);
-    foreach my $sub_dir (@subdirs)
+    foreach my $sub_dir ('', @subdirs)
     {
         my $dirpath = "$path/$sub_dir";
         next if -d $dirpath;
