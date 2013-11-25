@@ -70,7 +70,7 @@ my $expected_xml = <<XML;
 </Session>
 XML
 
-is($expected_xml, $igv_file2->xml,"XML with Bam file, junction file and bed file as expected.");
+is($igv_file2->xml, $expected_xml, "XML with Bam file, junction file and bed file as expected.");
 
 my $path3 = Genome::Sys->create_temp_file_path;
 my $igv_file3 = Genome::File::IgvXml->create(id => $path3, font_size => 10, genome => 'b37');
@@ -101,4 +101,4 @@ my $expected_xml2 = <<XML;
 </Session>
 XML
 
-is($expected_xml2, $igv_file3->xml("1:2-5"),"XML with Bam file, junction file and bed file with custom locus as expected.");
+is($igv_file3->xml("1:2-5"), $expected_xml2,"XML with Bam file, junction file and bed file with custom locus as expected.");
