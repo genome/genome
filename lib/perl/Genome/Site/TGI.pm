@@ -48,6 +48,7 @@ $ENV{GENOME_SW_LEGACY_JAVA} ||= '/gsc/scripts/lib/java';
 $ENV{GENOME_SW_IGNORE} ||= '/gsc/bin:/gsc/scripts/bin';
 $ENV{GENOME_LOCK_DIR} ||= '/gsc/var/lock';
 $ENV{GENOME_SYS_GROUP} ||= 'info';
+$ENV{GENOME_SYS_UMASK} ||= 0002;
 $ENV{GENOME_FS_LOCAL_NETWORK_CACHE} = '/var/cache/tgisan';
 
 # GENOME_LSF_QUEUE_*
