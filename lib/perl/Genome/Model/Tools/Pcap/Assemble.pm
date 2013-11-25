@@ -409,15 +409,13 @@ sub create_project_directories
 
     my $path = $self->{project_path};
 
-    umask 002;
-
     my @subdirs = qw(edit_dir input output phd_dir chromat_dir blastdb acefiles ftp read_dump 454_processed);
     foreach my $sub_dir ('', @subdirs)
     {
         my $dirpath = "$path/$sub_dir";
         next if -d $dirpath;
 
-        mkdir $dirpath;
+        eval { Genome::Sys->create_directory($dirpath) };
 
         unless (-d $dirpath)
         {

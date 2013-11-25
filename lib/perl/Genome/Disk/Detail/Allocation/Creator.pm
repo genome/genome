@@ -293,10 +293,6 @@ sub _attempt_allocation_creation {
 sub create_directory_or_delete_allocation {
     my ($self, $allocation_object) = @_;
 
-    # a restrictive umask can break builds for other users
-    # so force the umask to be friendly
-    umask(0002);
-
     # If we cannot create the directory delete the new allocation
     my $dir;
     eval {
