@@ -421,13 +421,14 @@ sub create_project_directories
     my @subdirs = qw(edit_dir input output phd_dir chromat_dir blastdb acefiles ftp read_dump 454_processed);
     foreach my $sub_dir (@subdirs)
     {
-        next if -d "$path/$sub_dir";
+        my $dirpath = "$path/$sub_dir";
+        next if -d $dirpath;
 
-        mkdir "$path/$sub_dir";
+        mkdir $dirpath;
 
-        unless (-d "$path/$sub_dir")
+        unless (-d $dirpath)
         {
-            $self->error_message ("failed to create $path/$sub_dir : $!");
+            $self->error_message ("failed to create $dirpath: $!");
             return;
         }
     }
