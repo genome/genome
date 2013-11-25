@@ -6,6 +6,7 @@ use warnings;
 use above 'Genome';
 use Genome::Utility::List 'in';
 use File::Path qw();
+use File::Spec;
 
 class Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::ResultBase {
     is => "Genome::Model::RnaSeq::DetectFusionsResult",
@@ -21,6 +22,14 @@ class Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::ResultBase {
         },
         bowtie_version => {
             is => 'Text',
+        },
+    ],
+    has => [
+        bedpe_file => {
+            is => 'Path',
+            calculate_from => 'disk_allocations',
+            calculate => q| File::Spec->join($disk_allocations->absolute_path, 'chimeras.bedpe'); |,
+
         },
     ],
 };

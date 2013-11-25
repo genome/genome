@@ -9,7 +9,7 @@ use Genome::File::BedPe::Reader;
 
 class Genome::Model::RnaSeq::Command::DetectFusions::Chimerascan::FilterOutput {
     is  => 'Command::V2',
-    has => [
+    has_input => [
         bedpe_file => {
             is => 'Text',
         },
