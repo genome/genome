@@ -62,7 +62,7 @@ par(mar=c(5, 5.5, 4, 2) +0.1) #c(bottom, left, top, right) - make some extra roo
 main_title = "Events by sample by gene (ordered by recurrence)"
 
 if (max_genes > 100){
-  color2D.matplot(events, cellcolors=as.matrix(events_color_matrix), axes=FALSE, xlab=NA, ylab=NA, show.legend=FALSE, show.values=FALSE, vcex=0.4, main=main_title, border=NA)
+  color2D.matplot(events, cellcolors=as.matrix(events_color_matrix), axes=FALSE, xlab=NA, ylab="Genes", show.legend=FALSE, show.values=FALSE, vcex=0.4, main=main_title, border=NA)
   axis(side=1, at=c(0.5:(dim(events)[2]-0.5)), labels=sample_names, las=2, cex.axis=0.75)
 }else{
   color2D.matplot(events, cellcolors=as.matrix(events_color_matrix), axes=FALSE, xlab=NA, ylab=NA, show.legend=FALSE, show.values=FALSE, vcex=0.4, main=main_title)
@@ -97,7 +97,7 @@ par(mar=c(5, 5.5, 4, 2) +0.1) #c(bottom, left, top, right) - make some extra roo
 main_title = "Events by sample by gene (ordered by gene name)"
 
 if (max_genes > 100){
-  color2D.matplot(events, cellcolors=as.matrix(events_color_matrix), axes=FALSE, xlab=NA, ylab=NA, show.legend=FALSE, show.values=FALSE, vcex=0.4, main=main_title, border=NA)
+  color2D.matplot(events, cellcolors=as.matrix(events_color_matrix), axes=FALSE, xlab=NA, ylab="Genes", show.legend=FALSE, show.values=FALSE, vcex=0.4, main=main_title, border=NA)
   axis(side=1, at=c(0.5:(dim(events)[2]-0.5)), labels=sample_names, las=2, cex.axis=0.75)
 }else{
   color2D.matplot(events, cellcolors=as.matrix(events_color_matrix), axes=FALSE, xlab=NA, ylab=NA, show.legend=FALSE, show.values=FALSE, vcex=0.4, main=main_title)
@@ -152,7 +152,7 @@ par(mar=c(5, 5.5, 4, 2) +0.1) #c(bottom, left, top, right) - make some extra roo
 main_title = "Events by sample by gene (hierarchical ordering by recurrence)"
 
 if (max_genes > 100){  
-  color2D.matplot(events[,sample_names_sorted], cellcolors=as.matrix(events_color_matrix[,sample_names_sorted]), axes=FALSE, xlab=NA, ylab=NA, show.legend=FALSE, show.values=FALSE, vcex=0.4, main=main_title, border=NA)
+  color2D.matplot(events[,sample_names_sorted], cellcolors=as.matrix(events_color_matrix[,sample_names_sorted]), axes=FALSE, xlab=NA, ylab="Genes", show.legend=FALSE, show.values=FALSE, vcex=0.4, main=main_title, border=NA)
   axis(side=1, at=c(0.5:(dim(events)[2]-0.5)), labels=sample_names_sorted, las=2, cex.axis=0.75)
 }else{
   color2D.matplot(events[,sample_names_sorted], cellcolors=as.matrix(events_color_matrix[,sample_names_sorted]), axes=FALSE, xlab=NA, ylab=NA, show.legend=FALSE, show.values=FALSE, vcex=0.4, main=main_title)
