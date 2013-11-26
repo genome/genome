@@ -87,7 +87,10 @@ sub create {
     my $run_sx = $self->_run_sx(@sx_command_parts);
     return $self->_error('Failed to run SX!') if not $run_sx; 
 
-    my $verify_output_files = $self->_set_metrics;
+    my $set_metrics = $self->_set_metrics;
+    return $self->_error('Failed to set metrics!') if not $set_metrics; 
+
+    my $verify_output_files = $self->_verify_output_files;
     return $self->_error('Failed to verify SX output files!') if not $verify_output_files; 
 
     $self->_prepare_output_directory;
@@ -216,6 +219,13 @@ sub _set_metrics {
         }
     }
 
+    $self->status_message('Set metrics...OK');
+    return 1;
+}
+
+sub _verify_output_files {
+    my $self = shift;
+
     my @output_files = $self->read_processor_output_files;
     my $existing_cnt = 0;
     foreach my $output_file (@output_files) {
@@ -232,7 +242,6 @@ sub _set_metrics {
         return;
     }
 
-    $self->status_message('Set metrics...OK');
     return 1;
 }
 
