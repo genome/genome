@@ -3,6 +3,8 @@ package Genome::Config::Command::ConfigureQueuedInstrumentData;
 use strict;
 use warnings;
 
+use Genome;
+
 class Genome::Config::Command::ConfigureQueuedInstrumentData {
     is => 'Command::V2',
     has => [
