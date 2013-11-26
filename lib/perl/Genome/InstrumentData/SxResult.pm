@@ -229,7 +229,15 @@ sub set_metrics {
 
 sub _verify_output_files {
     my $self = shift;
+    $self->status_message('Verify output files...');
 
+    my $output_count = $self->output_count;
+    if ( $output_count == 0 ) {
+        $self->status_message('SX ran correctly, but all sequences were filtered out. The output files are empty.');
+        return 1;
+    }
+
+    # TODO run a  validator?
     my @output_files = $self->read_processor_output_files;
     my $existing_cnt = 0;
     foreach my $output_file (@output_files) {
@@ -246,6 +254,7 @@ sub _verify_output_files {
         return;
     }
 
+    $self->status_message('Verify output files...OK');
     return 1;
 }
 

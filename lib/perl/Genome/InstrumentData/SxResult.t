@@ -111,8 +111,22 @@ for ( my $i = 0; $i < @read_processor_output_files; $i++ ) {
     );
 }
 
-# fail - rm output metrics and verify files
+# success - no output files created
+$sx_result_params{read_processor} = 'filter by-min-length --length 2000';
+my $sx_result_all_reads_filtered = Genome::InstrumentData::SxResult->get_or_create(%sx_result_params);
+isa_ok($sx_result_all_reads_filtered, 'Genome::InstrumentData::SxResult', 'get_or_create sx result w/ all reads filtered');
+my $get_sx_result_all_reads_filtered = Genome::InstrumentData::SxResult->get(%sx_result_params);
+is_deeply($get_sx_result_all_reads_filtered, $sx_result_all_reads_filtered, 'Re-get sx result w/ result w/ all reads filtered');
+my @output_files = $sx_result_all_reads_filtered->read_processor_output_files;
+ok(@output_files, 'produced read processor output files w/ config');
+ok(!(grep { -e } @output_files), 'output files exist');
+ok(!(grep { -s } @output_files), 'output files do not have any size');
+is($sx_result_all_reads_filtered->input_bases, 8999908, 'metrics input bases');
+is($sx_result_all_reads_filtered->input_count, 89108, 'metrics input count');
+is($sx_result_all_reads_filtered->output_bases, 0, 'metrics output bases');
+is($sx_result_all_reads_filtered->output_count, 0, 'metrics output count');
 
+# fail - rm output metrics and verify files
 
 # fails [create]
 ok( # no config or count
