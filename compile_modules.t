@@ -68,6 +68,7 @@ sub is_blacklisted {
     my @blacklist = (
         qr(Db/Ensembl/Command/Vep.d/),
         qr(Site/CLIA.pm$),
+        qr(Site/CLIA.t$),
     );
     return grep { $file =~ /$_/ } @blacklist;
 }
