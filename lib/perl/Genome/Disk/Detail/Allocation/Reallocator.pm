@@ -39,6 +39,10 @@ class Genome::Disk::Detail::Allocation::Reallocator {
 sub reallocate {
     my $self = shift;
 
+    unless($self->kilobytes_requested) {
+        $self->kilobytes_requested(0);
+    }
+
     my $mode = Genome::Disk::Allocation->_retrieve_mode();
     my $allocation_object = Genome::Disk::Allocation->$mode(
         $self->allocation_id);
