@@ -189,21 +189,19 @@ sub _run_sx {
 
 sub set_metrics {
     my $self = shift;
-    $self->status_message('Set metrics...');
 
     my @metric_names = map { $_->property_name } grep { $_->is_metric } $self->__meta__->properties;
     my @metrics_defined = grep { defined $self->$_ } @metric_names;
-    if ( @metrics_defined != @metric_names ) {
-        my %metrics = $self->load_metrics;
-        return if not %metrics;
+    return 1 if @metrics_defined == @metric_names;
 
-        for my $metric_name ( keys %metrics ) {
-            $self->$metric_name($metrics{$metric_name});
-        }
-    }
+    $self->status_message('Set metrics...');
 
-    for my $metric_name ( @metric_names ) {
-        $self->status_message( sprintf('%s %s: %s', ucfirst( join(' ', split('_', $metric_name))), $self->$metric_name) );
+    my %metrics = $self->load_metrics;
+    return if not %metrics;
+
+    for my $metric_name ( keys %metrics ) {
+        $self->$metric_name($metrics{$metric_name});
+        $self->status_message( sprintf('%s: %s', ucfirst( join(' ', split('_', $metric_name))), $self->$metric_name) );
     }
 
     $self->status_message('Set metrics...OK');
@@ -217,7 +215,7 @@ sub load_metrics {
     for my $type (qw/ input output /) {
         my $metric_file_method = 'read_processor_'.$type.'_metric_file';
         my $metric_file = $self->$metric_file_method;
-        if (not -s $metric_file ) {
+        if ( not $metric_file or not -s $metric_file ) {
             $metric_file_method = 'temp_staging_'.$type.'_metric_file';
             $metric_file = $self->$metric_file_method;
             if ( not -s $metric_file ) {
