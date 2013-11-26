@@ -156,9 +156,17 @@ sub _get_model_for_config_hash {
     my $class_name = shift;
     my $config = shift;
 
+    my %read_config = %$config;
+    for my $key (keys %read_config) {
+        my $value = $read_config{$key};
+        if(ref($value) eq 'ARRAY' and scalar(@$value) == 0) {
+            $read_config{$key} = undef;
+        }
+    }
+
     my @extra_params = (auto_assign_inst_data => 1);
 
-    my @m = $class_name->get(@extra_params, %$config);
+    my @m = $class_name->get(@extra_params, %read_config);
 
     if (scalar(@m) > 1) {
         die(sprintf("Sorry, but multiple identical models were found: %s", join(',', map { $_->id } @m)));
