@@ -189,11 +189,32 @@ sub _run_sx {
 
 sub set_metrics {
     my $self = shift;
-
     $self->status_message('Set metrics...');
 
+    my @metric_names = map { $_->property_name } grep { $_->is_metric } $self->__meta__->properties;
+    my @metrics_defined = grep { defined $self->$_ } @metric_names;
+    if ( @metrics_defined != @metric_names ) {
+        my %metrics = $self->load_metrics;
+        return if not %metrics;
+
+        for my $metric_name ( keys %metrics ) {
+            $self->$metric_name($metrics{$metric_name});
+        }
+    }
+
+    for my $metric_name ( @metric_names ) {
+        $self->status_message( sprintf('%s %s: %s', ucfirst( join(' ', split('_', $metric_name))), $self->$metric_name) );
+    }
+
+    $self->status_message('Set metrics...OK');
+    return 1;
+}
+
+sub load_metrics {
+    my $self = shift;
+
+    my %metrics;
     for my $type (qw/ input output /) {
-        $self->status_message(ucfirst($type).' metrics...');
         my $metric_file_method = 'read_processor_'.$type.'_metric_file';
         my $metric_file = $self->$metric_file_method;
         if (not -s $metric_file ) {
@@ -217,14 +238,11 @@ sub set_metrics {
                 $self->error_message("No $metric_name in metrics! ".Data::Dumper::Dumper($metrics));
                 return;
             }
-            $self->status_message( sprintf('%s %s: %s', ucfirst($type), $metric_name, $metric_value) );
-            my $sx_metric_name = $type.'_'.$metric_name;
-            $self->$sx_metric_name($metric_value);
+            $metrics{$type.'_'.$metric_name} = $metric_value;
         }
     }
 
-    $self->status_message('Set metrics...OK');
-    return 1;
+    return %metrics;
 }
 
 sub _verify_output_files {
