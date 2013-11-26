@@ -84,7 +84,7 @@ assert_failed(@$data2[0], 'Found no pairing information');
 #inst data with no ap
 my $inst_data_without_a_project = Genome::Test::Factory::InstrumentData::Solexa->setup_object();
 my $cmd = build_and_run_cmd($inst_data_without_a_project);
-ok($cmd->status_message =~ /Found 0 items to process/, 'no analysis project is a no-op');
+ok($cmd->status_message =~ /Found no items to process/, 'no analysis project is a no-op');
 done_testing();
 
 sub assert_failed {
