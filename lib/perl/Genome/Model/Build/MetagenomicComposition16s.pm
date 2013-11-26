@@ -325,7 +325,7 @@ sub merge_processed_instrument_data {
         return;
     }
 
-    for my $sx_result ( @sx_results ) {
+    SX_RESULT: for my $sx_result ( @sx_results ) {
         $self->status_message('Merge sequences for SX result: '.$sx_result->id);
         for my $amplicon_set ( @amplicon_sets ) {
             my $sx_processed_fastq_file = $sx_result->output_dir.'/'.$amplicon_set->base_name_for('processed_fastq');
@@ -333,6 +333,14 @@ sub merge_processed_instrument_data {
 
             $self->status_message('Amplicon set: '.$amplicon_set->name);
             $self->status_message('SX result:    '.$sx_result->id.' '.$sx_result->output_dir);
+
+            my $set_metrics = $sx_result->set_metrics; # metrics were not set on older results
+            return if not $set_metrics;
+
+            if ( $sx_result->output_count == 0 ) {
+                $self->status_message('No sequences in SX result...skipping');
+                next SX_RESULT;
+            }
 
             my $reader = Genome::Model::Tools::Sx::Reader->create(config => [ $sx_processed_fastq_file ]);
             Carp::confess('Failed to open fastq reader for processed sx result fastq! '.$sx_processed_fastq_file) if not $reader;
