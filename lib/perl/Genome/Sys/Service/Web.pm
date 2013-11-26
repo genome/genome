@@ -18,4 +18,4 @@ sub log_path { "/var/log/kom/genome_view.log" }
 
 sub pid_name { "perl-fcgi-pm" }
 
-sub url { "http://imp.gsc.wustl.edu/Search" }
+sub url { $ENV{GENOME_SYS_SERVICES_SEARCH_URL} }
