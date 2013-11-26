@@ -57,7 +57,7 @@ sub _staging_disk_usage {
 
     my $self = shift;
     my $usage;
-    unless ($usage = Genome::Sys->disk_usage_for_path($self->temp_staging_directory)) {
+    unless (defined($usage = Genome::Sys->disk_usage_for_path($self->temp_staging_directory))) {
         $self->error_message("Failed to get disk usage for staging: " . Genome::Sys->error_message);
         die $self->error_message;
     }
