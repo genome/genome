@@ -66,7 +66,8 @@ sub resolve_start_point {
 sub is_blacklisted {
     my $file = shift;
     my @blacklist = (
-        'Db/Ensembl/Command/Vep.d/',
+        qr(Db/Ensembl/Command/Vep.d/),
+        qr(Site/CLIA.pm$),
     );
     return grep { $file =~ /$_/ } @blacklist;
 }
