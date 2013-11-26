@@ -5,6 +5,8 @@ use warnings;
 
 use Genome;
 
+use Lingua::EN::Inflect;
+
 class Genome::Config::Command::ConfigureQueuedInstrumentData {
     is => 'Command::V2',
     has => [
@@ -42,8 +44,8 @@ sub execute {
     $self->_lock();
 
     my @instrument_data_analysis_project_pairs = $self->_get_items_to_process();
-    $self->status_message(sprintf('Found %s items to process.',
-            scalar(@instrument_data_analysis_project_pairs)));
+    $self->status_message(sprintf('Found %s to process.',
+            Lingua::EN::Inflect::NO('item', scalar(@instrument_data_analysis_project_pairs))));
 
     for my $current_pair (@instrument_data_analysis_project_pairs) {
         my $current_inst_data = $current_pair->instrument_data;
