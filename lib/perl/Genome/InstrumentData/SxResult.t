@@ -36,7 +36,7 @@ my %sx_result_params = (
 my $sx_result = Genome::InstrumentData::SxResult->get_or_create(%sx_result_params);
 isa_ok($sx_result, 'Genome::InstrumentData::SxResult', 'successful run');
 my $get_sx_result = Genome::InstrumentData::SxResult->get(%sx_result_params);
-is_deeply($get_sx_result, $sx_result, 'Re-got sx reult');
+is_deeply($get_sx_result, $sx_result, 'Re-got sx result');
 
 my @read_processor_output_files = $sx_result->read_processor_output_files;
 ok(@read_processor_output_files, 'produced read processor output files');
@@ -70,6 +70,12 @@ is(
     'output metric file',
 );
 ok(-s $sx_result->read_processor_output_metric_file, 'output metric file');
+
+# metrics
+is($sx_result->input_bases, 8999908, 'metrics input bases');
+is($sx_result->input_count, 89108, 'metrics input count');
+is($sx_result->output_bases, 8999908, 'metrics output bases');
+is($sx_result->output_count, 89108, 'metrics output count');
 
 $sx_result_params{output_file_count} = 1;
 my $sx_result3 = Genome::InstrumentData::SxResult->get_with_lock(%sx_result_params);
@@ -105,7 +111,10 @@ for ( my $i = 0; $i < @read_processor_output_files; $i++ ) {
     );
 }
 
-# fails
+# fail - rm output metrics and verify files
+
+
+# fails [create]
 ok( # no config or count
     !Genome::InstrumentData::SxResult->create(
         instrument_data_id => $instrument_data->id,

@@ -38,6 +38,12 @@ class Genome::InstrumentData::SxResult {
             doc => 'The SX output file config. See "gmt sx --h" for help.',
         },
     ],
+    has_metric => [
+        input_bases => { is => 'Text', doc => 'Number of bases from input.', },
+        input_count => { is => 'Text', doc => 'Number of sequences from input.', },
+        output_bases => { is => 'Text', doc => 'Number of bases in output.', },
+        output_count => { is => 'Text', doc => 'Number of sequences in output.', },
+    ],
     has => [
         instrument_data => {
             is => 'Genome::InstrumentData',
@@ -81,7 +87,7 @@ sub create {
     my $run_sx = $self->_run_sx(@sx_command_parts);
     return $self->_error('Failed to run SX!') if not $run_sx; 
 
-    my $verify_output_files = $self->_verify_output_files;
+    my $verify_output_files = $self->_set_metrics;
     return $self->_error('Failed to verify SX output files!') if not $verify_output_files; 
 
     $self->_prepare_output_directory;
@@ -178,10 +184,38 @@ sub _run_sx {
     return 1;
 }
 
-sub _verify_output_files {
+sub _set_metrics {
     my $self = shift;
 
-    $self->status_message('Verify output files...');
+    $self->status_message('Set metrics...');
+
+    for my $type (qw/ input output /) {
+        $self->status_message(ucfirst($type).' metrics...');
+        my $metric_file_method = 'temp_staging_'.$type.'_metric_file';
+        my $metric_file = $self->$metric_file_method;
+        if (not -s $metric_file ) {
+            $self->error_message(ucfirst($type).' metric file not created!');
+            return;
+        }
+
+        my $metrics = Genome::Model::Tools::Sx::Metrics::Basic->from_file($metric_file);
+        if ( not $metrics ) {
+            $self->error_message('Failed to create SX metrics from file! '.$metric_file);
+            return;
+        }
+
+        for my $metric_name (qw/ bases count /) {
+            my $metric_value = $metrics->$metric_name;
+            if ( not defined $metric_value ) {
+                $self->error_message("No $metric_name in metrics! ".Data::Dumper::Dumper($metrics));
+                return;
+            }
+            $self->status_message( sprintf('%s %s: %s', ucfirst($type), $metric_name, $metric_value) );
+            my $sx_metric_name = $type.'_'.$metric_name;
+            $self->$sx_metric_name($metric_value);
+        }
+    }
+
     my @output_files = $self->read_processor_output_files;
     my $existing_cnt = 0;
     foreach my $output_file (@output_files) {
@@ -198,16 +232,7 @@ sub _verify_output_files {
         return;
     }
 
-    if (not -s $self->temp_staging_output_metric_file ) {
-        $self->error_message('Output metrics file not created!');
-        return;
-    }
-    if (not -s $self->temp_staging_input_metric_file ) {
-        $self->error_message('Input metrics file not created!');
-        return;
-    }
-
-    $self->status_message('Verify output files...OK');
+    $self->status_message('Set metrics...OK');
     return 1;
 }
 
