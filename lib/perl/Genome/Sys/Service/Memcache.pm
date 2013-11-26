@@ -36,3 +36,4 @@ sub status {
         return 'stopped';
     }
 }
+1;
