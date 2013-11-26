@@ -87,7 +87,7 @@ sub create {
     my $run_sx = $self->_run_sx(@sx_command_parts);
     return $self->_error('Failed to run SX!') if not $run_sx; 
 
-    my $set_metrics = $self->_set_metrics;
+    my $set_metrics = $self->set_metrics;
     return $self->_error('Failed to set metrics!') if not $set_metrics; 
 
     my $verify_output_files = $self->_verify_output_files;
@@ -187,18 +187,22 @@ sub _run_sx {
     return 1;
 }
 
-sub _set_metrics {
+sub set_metrics {
     my $self = shift;
 
     $self->status_message('Set metrics...');
 
     for my $type (qw/ input output /) {
         $self->status_message(ucfirst($type).' metrics...');
-        my $metric_file_method = 'temp_staging_'.$type.'_metric_file';
+        my $metric_file_method = 'read_processor_'.$type.'_metric_file';
         my $metric_file = $self->$metric_file_method;
         if (not -s $metric_file ) {
-            $self->error_message(ucfirst($type).' metric file not created!');
-            return;
+            $metric_file_method = 'temp_staging_'.$type.'_metric_file';
+            $metric_file = $self->$metric_file_method;
+            if ( not -s $metric_file ) {
+                $self->error_message(ucfirst($type).' metric file not created!');
+                return;
+            }
         }
 
         my $metrics = Genome::Model::Tools::Sx::Metrics::Basic->from_file($metric_file);
