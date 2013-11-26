@@ -263,6 +263,11 @@ sub resolve_allocation_disk_group_name {
     $ENV{GENOME_DISK_GROUP_MODELS};
 }
 
+sub resolve_base_name_from_instrument_data {
+    my $self = shift;
+    return $self->instrument_data_id;
+}
+
 sub read_processor_input_metric_file_base_name {
     my $self = shift;
     my $base = $self->resolve_base_name_from_instrument_data;
@@ -408,12 +413,6 @@ sub get_output_file_count {
         $self->error_message("Couldn't resolve output file count");
         die $self->error_message;
     }
-}
-
-sub resolve_base_name_from_instrument_data {
-    my $self = shift;
-    
-    return $self->instrument_data_id;
 }
 
 1;
