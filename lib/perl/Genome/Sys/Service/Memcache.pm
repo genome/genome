@@ -8,7 +8,16 @@ class Genome::Sys::Service::Memcache {
     doc => "Memcache service"
 };
 
-sub host { "imp.gsc.wustl.edu" }
+{
+    my $host;
+    sub host {
+        unless (defined $host) {
+            $host = $ENV{GENOME_SYS_SERVICES_MEMCACHE};
+            $host =~ s/:\w+$//;  # Strip out port designation
+        }
+        return $host;
+    }
+}
 
 sub restart_command { "/etc/init.d/memcached restart" }
 
