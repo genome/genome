@@ -60,9 +60,15 @@ for (i in 1:length(events[1,])){
 pdf(file="heatmap_ordered_by_recurrence.pdf")
 par(mar=c(5, 5.5, 4, 2) +0.1) #c(bottom, left, top, right) - make some extra room for long gene names
 main_title = "Events by sample by gene (ordered by recurrence)"
-color2D.matplot(events, cellcolors=as.matrix(events_color_matrix), axes=FALSE, xlab=NA, ylab=NA, show.legend=FALSE, show.values=FALSE, vcex=0.4, main=main_title)
-axis(side=1, at=c(0.5:(dim(events)[2]-0.5)), labels=sample_names, las=2, cex.axis=0.75)
-axis(side=2, at=c((dim(events)[1]-0.5):0.5), labels=sample_data_all[,"ensg_name"], las=2, cex.axis=0.65, font=3)
+
+if (max_genes > 100){
+  color2D.matplot(events, cellcolors=as.matrix(events_color_matrix), axes=FALSE, xlab=NA, ylab=NA, show.legend=FALSE, show.values=FALSE, vcex=0.4, main=main_title, border=NA)
+  axis(side=1, at=c(0.5:(dim(events)[2]-0.5)), labels=sample_names, las=2, cex.axis=0.75)
+}else{
+  color2D.matplot(events, cellcolors=as.matrix(events_color_matrix), axes=FALSE, xlab=NA, ylab=NA, show.legend=FALSE, show.values=FALSE, vcex=0.4, main=main_title)
+  axis(side=1, at=c(0.5:(dim(events)[2]-0.5)), labels=sample_names, las=2, cex.axis=0.75)
+  axis(side=2, at=c((dim(events)[1]-0.5):0.5), labels=sample_data_all[,"ensg_name"], las=2, cex.axis=0.65, font=3)
+}
 
 plot(x=1:10, y=1:10, type="n", xaxt="n", yaxt="n", ylab=NA, xlab=NA)
 color.legend(5,2,6,8, legend_data[,"event_type"], rect.col=legend_data[,"color"], align="rb", gradient="y")
@@ -89,9 +95,15 @@ for (i in 1:length(events[1,])){
 pdf(file="heatmap_ordered_by_gene_name.pdf")
 par(mar=c(5, 5.5, 4, 2) +0.1) #c(bottom, left, top, right) - make some extra room for long gene names
 main_title = "Events by sample by gene (ordered by gene name)"
-color2D.matplot(events, cellcolors=as.matrix(events_color_matrix), axes=FALSE, xlab=NA, ylab=NA, show.legend=FALSE, show.values=FALSE, vcex=0.4, main=main_title)
-axis(side=1, at=c(0.5:(dim(events)[2]-0.5)), labels=sample_names, las=2, cex.axis=0.75)
-axis(side=2, at=c((dim(events)[1]-0.5):0.5), labels=sample_data_all[,"ensg_name"], las=2, cex.axis=0.65, font=3)
+
+if (max_genes > 100){
+  color2D.matplot(events, cellcolors=as.matrix(events_color_matrix), axes=FALSE, xlab=NA, ylab=NA, show.legend=FALSE, show.values=FALSE, vcex=0.4, main=main_title, border=NA)
+  axis(side=1, at=c(0.5:(dim(events)[2]-0.5)), labels=sample_names, las=2, cex.axis=0.75)
+}else{
+  color2D.matplot(events, cellcolors=as.matrix(events_color_matrix), axes=FALSE, xlab=NA, ylab=NA, show.legend=FALSE, show.values=FALSE, vcex=0.4, main=main_title)
+  axis(side=1, at=c(0.5:(dim(events)[2]-0.5)), labels=sample_names, las=2, cex.axis=0.75)
+  axis(side=2, at=c((dim(events)[1]-0.5):0.5), labels=sample_data_all[,"ensg_name"], las=2, cex.axis=0.65, font=3)
+}
 
 plot(x=1:10, y=1:10, type="n", xaxt="n", yaxt="n", ylab=NA, xlab=NA)
 color.legend(5,2,6,8, legend_data[,"event_type"], rect.col=legend_data[,"color"], align="rb", gradient="y")
@@ -138,9 +150,15 @@ sample_names_sorted = colnames(dds)[3:NCOL(dds)]
 pdf(file="heatmap_ordered_by_gene_name_and_patient.pdf")
 par(mar=c(5, 5.5, 4, 2) +0.1) #c(bottom, left, top, right) - make some extra room for long gene names
 main_title = "Events by sample by gene (hierarchical ordering by recurrence)"
-color2D.matplot(events[,sample_names_sorted], cellcolors=as.matrix(events_color_matrix[,sample_names_sorted]), axes=FALSE, xlab=NA, ylab=NA, show.legend=FALSE, show.values=FALSE, vcex=0.4, main=main_title)
-axis(side=1, at=c(0.5:(dim(events)[2]-0.5)), labels=sample_names_sorted, las=2, cex.axis=0.75)
-axis(side=2, at=c((dim(events)[1]-0.5):0.5), labels=sample_data_all[,"ensg_name"], las=2, cex.axis=0.65, font=3)
+
+if (max_genes > 100){  
+  color2D.matplot(events[,sample_names_sorted], cellcolors=as.matrix(events_color_matrix[,sample_names_sorted]), axes=FALSE, xlab=NA, ylab=NA, show.legend=FALSE, show.values=FALSE, vcex=0.4, main=main_title, border=NA)
+  axis(side=1, at=c(0.5:(dim(events)[2]-0.5)), labels=sample_names_sorted, las=2, cex.axis=0.75)
+}else{
+  color2D.matplot(events[,sample_names_sorted], cellcolors=as.matrix(events_color_matrix[,sample_names_sorted]), axes=FALSE, xlab=NA, ylab=NA, show.legend=FALSE, show.values=FALSE, vcex=0.4, main=main_title)
+  axis(side=1, at=c(0.5:(dim(events)[2]-0.5)), labels=sample_names_sorted, las=2, cex.axis=0.75)
+  axis(side=2, at=c((dim(events)[1]-0.5):0.5), labels=sample_data_all[,"ensg_name"], las=2, cex.axis=0.65, font=3)
+}
 
 plot(x=1:10, y=1:10, type="n", xaxt="n", yaxt="n", ylab=NA, xlab=NA)
 color.legend(5,2,6,8, legend_data[,"event_type"], rect.col=legend_data[,"color"], align="rb", gradient="y")
