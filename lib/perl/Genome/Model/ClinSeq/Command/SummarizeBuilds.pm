@@ -813,8 +813,7 @@ sub execute {
             unless ($self->skip_lims_reports){
               Genome::Sys->shellcmd(cmd => $id_list_cmd, allow_failed_exit_code => 1);
               if (-e $tmp_file){
-                my $mv_cmd = "mv $tmp_file $id_summary_file";
-                Genome::Sys->shellcmd(cmd => $mv_cmd);
+                Genome::Sys->move_file($tmp_file, $id_summary_file);
               }
             }
           }
