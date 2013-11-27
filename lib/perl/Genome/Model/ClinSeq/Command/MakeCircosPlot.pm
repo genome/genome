@@ -673,9 +673,13 @@ EOS
     }
     $gene_fh->close;
 
-
-	my $annotate_genes_cmd1 = "genome model clin-seq annotate-genes-by-category --infile=$output_directory/raw/genes_noAmpDel.txt --cancer-annotation-db='tgi/cancer-annotation/human/build37-20130711.1' --gene-name-column='gene'";
-    Genome::Sys->shellcmd(cmd => $annotate_genes_cmd1);
+    my $cancer_annotation_db = Genome::Db->get(id => 'tgi/cancer-annotation/human/build37-20130711.1');
+    my $annotate_genes_cmd1 = Genome::Model::ClinSeq::Command::AnnotateGenesByCategory->create(
+        infile => "$output_directory/raw/genes_noAmpDel.txt",
+        cancer_annotation_db => $cancer_annotation_db,
+        gene_name_columns => ['gene'],
+    );
+    $annotate_genes_cmd1->execute() or die;
     my $sort_cmd1 = "sort -rnk 102 $output_directory/raw/genes_noAmpDel.catanno.txt|head -100 |cut -d \"\t\" -f 1-4  > $output_directory/data/genes_noAmpDel.catanno.sorted.txt";
     Genome::Sys->shellcmd(cmd => $sort_cmd1);
 
@@ -688,10 +692,14 @@ EOS
     }
     $geneAmpDel_fh->close;
 
-	$annotate_genes_cmd1 = "genome model clin-seq annotate-genes-by-category --infile=$output_directory/raw/genes_AmpDel.txt --cancer-annotation-db='tgi/cancer-annotation/human/build37-20130711.1' --gene-name-column='gene'";
-    Genome::Sys->shellcmd(cmd => $annotate_genes_cmd1);
-    $sort_cmd1 = "sort -rnk 102 $output_directory/raw/genes_AmpDel.catanno.txt|head -100 |cut -d \"\t\" -f 1-4  > $output_directory/data/genes_AmpDel.catanno.sorted.txt";
-    Genome::Sys->shellcmd(cmd => $sort_cmd1);
+    my $annotate_genes_cmd2 = Genome::Model::ClinSeq::Command::AnnotateGenesByCategory->create(
+        infile => "$output_directory/raw/genes_AmpDel.txt",
+        cancer_annotation_db => $cancer_annotation_db,
+        gene_name_columns => ['gene'],
+    );
+    $annotate_genes_cmd2->execute() or die;
+    my $sort_cmd2 = "sort -rnk 102 $output_directory/raw/genes_AmpDel.catanno.txt|head -100 |cut -d \"\t\" -f 1-4  > $output_directory/data/genes_AmpDel.catanno.sorted.txt";
+    Genome::Sys->shellcmd(cmd => $sort_cmd2);
 
     $config .=<<EOS;
 #GENE LABELS
