@@ -334,10 +334,10 @@ sub merge_processed_instrument_data {
             $self->status_message('Amplicon set: '.$amplicon_set->name);
             $self->status_message('SX result:    '.$sx_result->id.' '.$sx_result->output_dir);
 
-            my $set_metrics = $sx_result->set_metrics; # metrics were not set on older results
-            return if not $set_metrics;
+            my %sx_metrics = $sx_result->load_metrics; # metrics were not set on older results
+            return if not %sx_metrics;
 
-            if ( $sx_result->output_count == 0 ) {
+            if ( $sx_metrics{output_count} == 0 ) {
                 $self->status_message('No sequences in SX result...skipping');
                 next SX_RESULT;
             }
