@@ -18,6 +18,7 @@ my $model_ids = '';
 my $model_group_id = '';
 #my $ensembl_version = '';
 #my $genome_build = '';
+my $cancer_annotation_db = '';
 my $outdir = '';
 my $label = '';
 my $verbose = 0;
@@ -27,7 +28,8 @@ my $test = 0;
 #            'ensembl_version=i'=>\$ensembl_version, 'genome_build=s'=>\$genome_build,
 #            'outdir=s'=>\$outdir, 'label=s'=>\$label, 'verbose=i'=>\$verbose, 'test=i'=>\$test);
 GetOptions ('build_ids=s'=>\$build_ids, 'model_ids=s'=>\$model_ids, 'model_group_id=s'=>\$model_group_id,
-            'outdir=s'=>\$outdir, 'label=s'=>\$label, 'verbose=i'=>\$verbose, 'test=i'=>\$test);
+            'outdir=s'=>\$outdir, 'label=s'=>\$label, 'verbose=i'=>\$verbose, 'test=i'=>\$test,
+            'cancer_annotation_db=s'=>\$cancer_annotation_db);
 
 
 my $usage=<<INFO;
@@ -43,6 +45,7 @@ my $usage=<<INFO;
   Include genome build and Ensembl version (both deprecated)
   --ensembl_version      Version of Ensembl used in the analysis
   --genome_build         Takes either a string describing the genome build (one of 36, 37, mm9, mus37, mus37wOSK) or a path to the genome fasta file 
+  --cancer_annotation_db A database of cancer annotations (e.g. 'tgi/cancer-annotation/human/build37-20131010.1').  See genome db list for options.
 
   Combines SNV results from a group of Clinseq models into a single report:
   --outdir               Path to directory for output files
@@ -53,7 +56,7 @@ my $usage=<<INFO;
 INFO
 
 #unless (($build_ids || $model_ids || $model_group_id) && $genome_build && $ensembl_version && $outdir && $label){
-unless (($build_ids || $model_ids || $model_group_id) && $outdir && $label){
+unless (($build_ids || $model_ids || $model_group_id) && $outdir && $label && $cancer_annotation_db){
   print RED, "\n\nRequired parameter missing", RESET;
   print GREEN, "\n\n$usage", RESET;
   exit(1);
@@ -360,6 +363,7 @@ foreach my $model_id (sort keys %model_list){
   $bam_rc_cmd .= "  --exome-som-var-build=" . $exome_build->id if $exome_build;
   $bam_rc_cmd .= "  --rna-seq-normal-build=" . $normal_rnaseq_build->id if $normal_rnaseq_build;
   $bam_rc_cmd .= "  --rna-seq-tumor-build=" . $tumor_rnaseq_build->id if $tumor_rnaseq_build;
+  $bam_rc_cmd .= "  --cancer-annotation-db=$cancer_annotation_db";
 
   unless ($verbose){
     $bam_rc_cmd .= "  1>/dev/null 2>/dev/null";
