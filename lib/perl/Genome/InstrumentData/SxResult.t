@@ -42,7 +42,8 @@ my @read_processor_output_files = $sx_result->read_processor_output_files;
 ok(@read_processor_output_files, 'produced read processor output files');
 is_deeply(\@read_processor_output_files, [map { $instrument_data->id.'.'.$_.'.fastq' } (qw/ 1 2 /)], 'correctly names read processor output files');
 
-# metric files
+# metrics
+is_deeply([$sx_result->metric_names], [qw/ input_bases input_count output_bases output_count /], 'metric names');
 is($sx_result->read_processor_input_metric_file_base_name, $instrument_data->id.'.input_metrics', 'input metric file base name');
 is(
     $sx_result->temp_staging_input_metric_file,
@@ -71,11 +72,11 @@ is(
 );
 ok(-s $sx_result->read_processor_output_metric_file, 'output metric file');
 
-# metrics
 is($sx_result->input_bases, 8999908, 'metrics input bases');
 is($sx_result->input_count, 89108, 'metrics input count');
 is($sx_result->output_bases, 8999908, 'metrics output bases');
 is($sx_result->output_count, 89108, 'metrics output count');
+#/metrics
 
 $sx_result_params{output_file_count} = 1;
 my $sx_result3 = Genome::InstrumentData::SxResult->get_with_lock(%sx_result_params);
@@ -117,7 +118,7 @@ my $sx_result_all_reads_filtered = Genome::InstrumentData::SxResult->get_or_crea
 isa_ok($sx_result_all_reads_filtered, 'Genome::InstrumentData::SxResult', 'get_or_create sx result w/ all reads filtered');
 my $get_sx_result_all_reads_filtered = Genome::InstrumentData::SxResult->get(%sx_result_params);
 is_deeply($get_sx_result_all_reads_filtered, $sx_result_all_reads_filtered, 'Re-get sx result w/ result w/ all reads filtered');
-my @output_files = $sx_result_all_reads_filtered->read_processor_output_files;
+@output_files = $sx_result_all_reads_filtered->read_processor_output_files;
 ok(@output_files, 'produced read processor output files w/ config');
 ok(!(grep { -e } @output_files), 'output files exist');
 ok(!(grep { -s } @output_files), 'output files do not have any size');

@@ -65,6 +65,11 @@ class Genome::InstrumentData::SxResult {
     ],
 };
 
+sub metric_names {
+    my $self = shift;
+    return map { $_->property_name } grep { $_->is_metric } $self->__meta__->properties;
+}
+
 sub _error {
     my ($self, $msg) = @_;
     $self->error_message($msg);
@@ -191,15 +196,15 @@ sub set_metrics {
     my $self = shift;
 
     my @metric_names = map { $_->property_name } grep { $_->is_metric } $self->__meta__->properties;
-    my @metrics_defined = grep { defined $self->$_ } @metric_names;
-    return 1 if @metrics_defined == @metric_names;
+    my @metrics_undefined = grep { not defined $self->$_ } @metric_names;
+    return 1 if not @metrics_undefined;
 
     $self->status_message('Set metrics...');
 
     my %metrics = $self->load_metrics;
     return if not %metrics;
 
-    for my $metric_name ( keys %metrics ) {
+    for my $metric_name ( @metrics_undefined ) {
         $self->$metric_name($metrics{$metric_name});
         $self->status_message( sprintf('%s: %s', ucfirst( join(' ', split('_', $metric_name))), $self->$metric_name) );
     }
