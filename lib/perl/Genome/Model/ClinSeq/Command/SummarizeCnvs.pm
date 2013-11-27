@@ -301,11 +301,6 @@ sub execute {
     my $tumor_bam = $build->tumor_bam;
     my $single_bam_cnv_plot_cmd = Genome::Model::Tools::CopyNumber::PlotSegmentsFromBamsWorkflow->create(normal_bam=>$normal_bam, tumor_bam=>$tumor_bam, output_directory=>$single_bam_cnv_dir, genome_build=>$reference_build_ncbi_n, output_pdf=>$output_pdf_name);
     $single_bam_cnv_plot_cmd->execute();
-
-    unless (-e $output_pdf_path){
-      $single_bam_cnv_plot_cmd .= " 1>$cn_stdout 2>$cn_stderr";
-      Genome::Sys->shellcmd(cmd => $single_bam_cnv_plot_cmd);
-    }
   }
 
   $self->status_message("\n\n");
