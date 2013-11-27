@@ -30,14 +30,13 @@ for ( my $i = 0; $i < @example_amplicon_sets; $i++ ) {
     }
 }
 $build->amplicons_attempted(20);
+$build->amplicons_processed(14);
+$build->amplicons_processed_success('0.70');
 
 my $cmd = Genome::Model::Build::MetagenomicComposition16s::Classify->create(input_build => $build);
 ok($cmd, 'create classify cmd');
 ok($cmd->execute, 'execute classify cmd');
 
-is($build->amplicons_processed, 14, 'amplicons processed');
-is($build->amplicons_processed_success, '0.70', 'amplicons processed success');
-$build->amplicons_processed_success('0.70');
 is($build->amplicons_classified, $build->amplicons_processed, 'amplicons classified matches processed: '.$build->amplicons_processed);
 is($build->amplicons_classified_success, '1.00', 'amplicons classified success is 1.00');
 is($build->amplicons_classification_error, 0, 'amplicons classified error is 0');

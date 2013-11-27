@@ -325,7 +325,7 @@ sub merge_processed_instrument_data {
         return;
     }
 
-    for my $sx_result ( @sx_results ) {
+    SX_RESULT: for my $sx_result ( @sx_results ) {
         $self->status_message('Merge sequences for SX result: '.$sx_result->id);
         for my $amplicon_set ( @amplicon_sets ) {
             my $sx_processed_fastq_file = $sx_result->output_dir.'/'.$amplicon_set->base_name_for('processed_fastq');
@@ -333,6 +333,14 @@ sub merge_processed_instrument_data {
 
             $self->status_message('Amplicon set: '.$amplicon_set->name);
             $self->status_message('SX result:    '.$sx_result->id.' '.$sx_result->output_dir);
+
+            my $set_metrics = $sx_result->set_metrics; # metrics were not set on older results
+            return if not $set_metrics;
+
+            if ( $sx_result->output_count == 0 ) {
+                $self->status_message('No sequences in SX result...skipping');
+                next SX_RESULT;
+            }
 
             my $reader = Genome::Model::Tools::Sx::Reader->create(config => [ $sx_processed_fastq_file ]);
             Carp::confess('Failed to open fastq reader for processed sx result fastq! '.$sx_processed_fastq_file) if not $reader;
@@ -400,7 +408,7 @@ sub detect_and_remove_chimeras {
 
     my $amplicons_classified = $self->amplicons_classified;
     if ( not defined $amplicons_classified ) {
-        $self->error_message('Cannot deteect and remove chimeras because "amplicons classified" metric is not set!');
+        $self->error_message('Cannot detect and remove chimeras because "amplicons classified" metric is not set!');
         return;
     }
 
@@ -497,11 +505,16 @@ sub detect_and_remove_chimeras {
     $self->amplicons_chimeric($amplicons_chimeric);
     $self->amplicons_chimeric_percent( sprintf('%.2f', $amplicons_chimeric / $amplicons_classified) );
 
-    $self->status_message('Classifed and oriented: '.$self->amplicons_classified);
-    $self->status_message('Chimeric:               '.$self->amplicons_chimeric);
-    $self->status_message('Chimeric percent:       '.($self->amplicons_chimeric_percent * 100).'%');
-    #$self->status_message('Total passed:           '.$self->amplicons_passed);
-    #$self->status_message('Total passed:           '.$self->amplicons_passed);
+    $self->status_message('Summary of metrics:');
+    $self->status_message('Attempted:          '.$self->amplicons_attempted);
+    $self->status_message('Processed:          '.$self->amplicons_processed);
+    $self->status_message('Processed success:  '.sprintf('%.2f', $self->amplicons_processed_success));
+    $self->status_message('Classified:         '.$self->amplicons_classified);
+    $self->status_message('Classified success: '.sprintf('%.2f', $self->amplicons_classified_success));
+    $self->status_message('Oriented:           '.$self->amplicons_oriented);
+    $self->status_message('Oriented success:   '.sprintf('%.2f', $self->amplicons_oriented_success));
+    $self->status_message('Chimeric:           '.$self->amplicons_chimeric);
+    $self->status_message('Chimeric percent:   '.($self->amplicons_chimeric_percent * 100).'%');
 
     $self->status_message('Detect and remove chimeras...OK');
     return 1;
@@ -521,6 +534,8 @@ sub orient_amplicons {
 
     if ( $amplicons_classified == 0 ) {
         $self->status_message("No amplicons were successfully classified, skipping orient.");
+        $self->amplicons_oriented(0);
+        $self->amplicons_oriented_success(0.00);
         return 1;
     }
 
@@ -562,11 +577,13 @@ sub orient_amplicons {
     }
 
     $self->status_message('Summary of metrics:');
-    $self->status_message('Attempted:         '.$self->amplicons_attempted);
-    $self->status_message('Processed:         '.$self->amplicons_processed);
-    $self->status_message('Processed success: '.sprintf('%.2f', $self->amplicons_processed_success));
-    $self->status_message('Oriented:          '.$self->amplicons_oriented);
-    $self->status_message('Oriented success:  '.sprintf('%.2f', $self->amplicons_oriented_success));
+    $self->status_message('Attempted:          '.$self->amplicons_attempted);
+    $self->status_message('Processed:          '.$self->amplicons_processed);
+    $self->status_message('Processed success:  '.sprintf('%.2f', $self->amplicons_processed_success));
+    $self->status_message('Classified:         '.$self->amplicons_classified);
+    $self->status_message('Classified success: '.sprintf('%.2f', $self->amplicons_classified_success));
+    $self->status_message('Oriented:           '.$self->amplicons_oriented);
+    $self->status_message('Oriented success:   '.sprintf('%.2f', $self->amplicons_oriented_success));
 
     $self->status_message('Orient amplicons...OK');
     return 1;
@@ -577,10 +594,17 @@ sub classify_amplicons {
     my $self = shift;
     $self->status_message('Classify amplicons...');
 
-    my $attempted = $self->amplicons_attempted;
-    if ( not defined $attempted ) {
-        $self->error_message('No value for amplicons attempted set. Cannot classify.');
+    my $amplicons_processed = $self->amplicons_processed;
+    if ( not defined $amplicons_processed ) {
+        $self->error_message('Cannot classify amplicons because "amplicons processed" metric is not set!');
         return;
+    }
+
+    if ( $amplicons_processed == 0 ) {
+        $self->status_message("No amplicons were successfully processed, skipping classify.");
+        $self->amplicons_classified(0);
+        $self->amplicons_classified_success(0.00);
+        return 1;
     }
 
     my @amplicon_sets = $self->amplicon_sets;
@@ -626,10 +650,6 @@ sub classify_amplicons {
         }
     }
 
-    $self->amplicons_processed($metrics{total});
-    $self->amplicons_processed_success( 
-        defined $attempted and $attempted > 0 ?  sprintf('%.2f', $metrics{total} / $attempted) : 0 
-    );
     $self->amplicons_classified($metrics{success});
     $self->amplicons_classified_success( 
         $metrics{total} > 0 ?  sprintf('%.2f', $metrics{success} / $metrics{total}) : 0
@@ -637,9 +657,9 @@ sub classify_amplicons {
     $self->amplicons_classification_error($metrics{error});
 
     $self->status_message('Summary of metrics:');
-    $self->status_message('Attempted:  '.$self->amplicons_attempted);
-    $self->status_message('Processed:  '.$self->amplicons_processed);
-    $self->status_message('Success:    '.sprintf('%.2f', $self->amplicons_processed_success));
+    $self->status_message('Attempted:         '.$self->amplicons_attempted);
+    $self->status_message('Processed:         '.$self->amplicons_processed);
+    $self->status_message('Processed success: '.sprintf('%.2f', $self->amplicons_processed_success));
     $self->status_message('Classified: '.$self->amplicons_classified);
     $self->status_message('Error:      '.$self->amplicons_classification_error);
     $self->status_message('Success:    '.($self->amplicons_classified_success * 100).'%');
