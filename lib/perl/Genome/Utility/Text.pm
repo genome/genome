@@ -289,13 +289,13 @@ sub justify {
     $fill = $fill || " ";
     $spacer = " " unless defined($spacer);
 
-    $field_width = max($field_width, length($string));
+    $field_width = max($field_width, width($string));
 
     my $add_left = "$fill"x$field_width . $spacer;
     my $add_right = $spacer . "$fill"x$field_width;
     my $add_width = length($add_left);
 
-    my $num_spaces_needed = $field_width - length($string);
+    my $num_spaces_needed = $field_width - width($string);
     my $left_index;
     if ($kind eq 'left') {
         $left_index = $add_width;
@@ -309,7 +309,9 @@ sub justify {
     }
 
     my $full_string = $add_left . $string . $add_right;
-    return substr($full_string, $left_index, $field_width);
+
+    my $color_spaces = length($string) - width($string);
+    return substr($full_string, $left_index, $field_width + $color_spaces);
 }
 
 sub _next_foundation {
