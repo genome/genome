@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Genome;
-use Command; 
 use Data::Dumper;
 
 class Genome::Model::ClinSeq::Command::List {
