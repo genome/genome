@@ -55,4 +55,9 @@ for my $property ( @properties_to_copy ) {
     is($value, $properties{$property}, "genome and lims $property matches => $value");
 }
 
+# Check to see if ignored param is set when no sff file
+$lims_object->sff_file(undef);
+my %params_for_create_in_genome = $lims_object->params_for_create_in_genome;
+ok($params_for_create_in_genome{ignored}, 'Igenored set when no sff file present');
+
 done_testing();

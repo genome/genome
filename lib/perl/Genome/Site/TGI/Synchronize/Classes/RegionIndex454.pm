@@ -92,6 +92,15 @@ sub entity_name { return 'instrument data 454'; }
 
 sub genome_class_for_create { return 'Genome::InstrumentData::454'; }
 
+sub params_for_create_in_genome {
+    my $self = shift;
+
+    my %params = $self->SUPER::params_for_create_in_genome;
+    $params{ignored} = 1 if not exists $params{sff_file};
+
+    return %params;
+}
+
 sub properties_to_copy {# 9
     return ( 'id', 'library_id', 'sff_file', properties_to_keep_updated() );
 }
