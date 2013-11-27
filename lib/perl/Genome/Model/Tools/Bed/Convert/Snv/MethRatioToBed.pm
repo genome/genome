@@ -38,13 +38,18 @@ sub process_source {
         #skip header
         next if $line =~/context/;
 
+        #ratio is fixed-width column, so convert to integer by removing decimal and leading zero(es)
+        my $score = $fields[4];
+        $score =~ s/\.//;
+        $score =~ s/^0+(\d)/$1/;
+
         $self->write_bed_line(
             $fields[0],   #chr
             $fields[1]-1, #st
             $fields[1],   #sp
             "C",          #ref (will always be C->T)
             "T",          #var
-            $fields[4],   #ratio as score
+            $score,       #ratio as score
             $fields[2],   #strand
             $fields[5],   #depth
             $fields[3],   #context
