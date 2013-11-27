@@ -5,7 +5,6 @@ package Genome::Model::ClinSeq::Command::GetBamReadCountsMatrix;
 #Load modules
 use strict;
 use warnings;
-use Genome; 
 use Data::Dumper;
 use Genome;
 use Genome::Info::IUB; 
