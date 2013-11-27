@@ -20,7 +20,7 @@ sub help_synopsis {
 EOS
 }
 
-sub help_detail {                           
+sub help_detail {
     return <<EOS
     This is a small tool to take SNV calls in meth-ratio format and convert them to a common BED format (using the first five columns).
 EOS
@@ -28,16 +28,16 @@ EOS
 
 sub process_source {
     my $self = shift;
-    
+
     my $input_fh = $self->_input_fh;
-    
+
     while(my $line = <$input_fh>) {
         chomp($line);
         my @fields = split("\t", $line);
 
         #skip header
         next if $line =~/context/;
-        
+
         $self->write_bed_line(
             $fields[0],   #chr
             $fields[1]-1, #st
@@ -52,7 +52,7 @@ sub process_source {
             $fields[8],   #CI_high
             )
     }
-    
+
     return 1;
 }
 
