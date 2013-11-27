@@ -6,7 +6,6 @@ use strict;
 use warnings;
 use Genome;
 use Data::Dumper;
-use Genome::Model::ClinSeq::Util qw(:all);
 
 class Genome::Model::ClinSeq::Command::SummarizeCnvs {
     is => 'Command::V2',

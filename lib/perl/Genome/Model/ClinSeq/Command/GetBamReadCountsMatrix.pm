@@ -8,7 +8,6 @@ use warnings;
 use Genome; 
 use Data::Dumper;
 use Genome;
-use Genome::Model::ClinSeq::Util qw(:all);
 use Genome::Info::IUB; 
 
 class Genome::Model::ClinSeq::Command::GetBamReadCountsMatrix {
