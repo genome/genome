@@ -68,11 +68,6 @@ sub execute {
     $self->status_message("Output directory is " . $self->output_directory);
 
 
-
-    #TODO Remove when done testing
-    #Remove circos.conf for testing purposes
-    Genome::Sys->shellcmd(cmd => "rm -rf $output_directory");
-
     # initialize directories
     unless (-d $output_directory) {
         # this module has wrappers which do logging, throw exceptions, around regular tasks
