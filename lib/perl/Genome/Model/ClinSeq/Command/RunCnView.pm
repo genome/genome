@@ -99,8 +99,8 @@ $DB::single = 1;
   my $cnview_dir = $outdir . "cnview/";
 
   #Create a copy of the cnvs.hq file for later convenience
-  my $cnv_cp_cmd = "cp $cnv_data_file $outdir";
-  Genome::Sys->shellcmd(cmd => $cnv_cp_cmd) unless (-e $outdir . "cnvs.hq");
+  my $new_cnv_data_file = $outdir . "cnvs.hq";
+  Genome::Sys->copy_file($cnv_data_file, $new_cnv_data_file) unless (-e $new_cnv_data_file);
 
   #For each list of gene symbols, run the CNView analysis
   foreach my $symbol_list_name (@cnv_symbol_lists){
@@ -115,7 +115,7 @@ $DB::single = 1;
       foreach my $suffix (@suffixes){
         my $path1 = "$new_dir"."CNView_"."$symbol_list_name"."$suffix".".tsv";
         my $path2 = "$cnview_dir"."cnv."."$symbol_list_name"."$suffix".".tsv";
-        Genome::Sys->shellcmd(cmd => "cp $path1 $path2");
+        Genome::Sys->copy_file($path1, $path2);
         my $dataname = "cnv".$suffix;
       }
     }else{
