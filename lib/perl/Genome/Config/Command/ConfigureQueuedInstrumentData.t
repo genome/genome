@@ -85,7 +85,23 @@ assert_failed(@$data2[0], 'Found no pairing information');
 my $inst_data_without_a_project = Genome::Test::Factory::InstrumentData::Solexa->setup_object();
 my $cmd = build_and_run_cmd($inst_data_without_a_project);
 ok($cmd->status_message =~ /Found no items to process/, 'no analysis project is a no-op');
+
+#skipped data
+($rna_instrument_data, $model_types) = generate_rna_seq_instrument_data();
+$rna_instrument_data->ignored(1);
+build_and_run_cmd($rna_instrument_data);
+assert_skipped($rna_instrument_data);
+
 done_testing();
+
+sub assert_skipped {
+    my $inst_data = shift;
+
+    my ($bridge) = $inst_data->analysis_project_bridges;
+    ok($bridge->status eq 'skipped', 'it should mark the inst data as skipped');
+    ok($bridge->reason, 'a reason for being skipped was specified');
+    is($bridge->fail_count, 0, 'a fail count was not set');
+}
 
 sub assert_failed {
     my $inst_data = shift;

@@ -49,6 +49,11 @@ sub execute {
 
     for my $current_pair (@instrument_data_analysis_project_pairs) {
         my $current_inst_data = $current_pair->instrument_data;
+
+        if(my $skip_reason = $self->should_skip($current_inst_data)) {
+            return $self->_mark_pair_as_skipped($current_pair, $skip_reason);
+        }
+
         my $analysis_project = $current_pair->analysis_project;
         eval {
             my $config = $analysis_project->get_configuration_reader();
@@ -126,6 +131,23 @@ sub _mark_sync_status {
     } else {
         $self->_mark_pair_as_processed($current_pair);
     }
+
+    return 1;
+}
+
+sub should_skip {
+    my ($self, $inst_data) = @_;
+
+    return 'ignored flag is set on instrument data' if $inst_data->ignored;
+    return;
+}
+
+sub _mark_pair_as_skipped {
+    my ($self, $current_pair, $skip_reason) = @_;
+
+    $current_pair->fail_count(0);
+    $current_pair->reason($skip_reason);
+    $current_pair->status('skipped');
 
     return 1;
 }
