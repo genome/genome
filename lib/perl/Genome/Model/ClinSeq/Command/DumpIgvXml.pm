@@ -4,7 +4,6 @@ package Genome::Model::ClinSeq::Command::DumpIgvXml;
 use strict;
 use warnings;
 use Genome;
-use Data::Dumper;
 use Genome::Model::ClinSeq::Util;
 
 use Genome::Utility::List;

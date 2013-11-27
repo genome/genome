@@ -3,7 +3,6 @@ use strict;
 use warnings;
 use Switch;
 use Genome; 
-use Data::Dumper;
 
 # Written by Ben Ainscough and Scott Smith, based on prototype from Obi Griffith
 # See JIRA issue https://jira.gsc.wustl.edu/browse/TD-691

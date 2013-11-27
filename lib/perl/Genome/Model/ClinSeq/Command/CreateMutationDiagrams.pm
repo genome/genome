@@ -5,7 +5,6 @@ package Genome::Model::ClinSeq::Command::CreateMutationDiagrams;
 use strict;
 use warnings;
 use Genome;
-use Data::Dumper;
 
 class Genome::Model::ClinSeq::Command::CreateMutationDiagrams {
     is => 'Command::V2',

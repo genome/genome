@@ -5,7 +5,6 @@ package Genome::Model::ClinSeq::Command::SummarizeBuilds;
 use strict;
 use warnings;
 use Genome;
-use Data::Dumper;
 
 use Genome::Utility::List;
 

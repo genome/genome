@@ -5,7 +5,6 @@ package Genome::Model::ClinSeq::Command::GetBamReadCounts;
 #Load modules
 use strict;
 use warnings;
-use Data::Dumper;
 use Genome;
 use Genome::Model::ClinSeq::Util qw(:all);
 use Genome::Model::ClinSeq::RnaSeqUtil qw(:all);

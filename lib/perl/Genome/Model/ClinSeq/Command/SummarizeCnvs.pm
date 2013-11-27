@@ -5,7 +5,6 @@ package Genome::Model::ClinSeq::Command::SummarizeCnvs;
 use strict;
 use warnings;
 use Genome;
-use Data::Dumper;
 
 class Genome::Model::ClinSeq::Command::SummarizeCnvs {
     is => 'Command::V2',

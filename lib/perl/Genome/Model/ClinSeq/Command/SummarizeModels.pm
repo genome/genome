@@ -2,7 +2,6 @@ package Genome::Model::ClinSeq::Command::SummarizeModels;
 use strict;
 use warnings;
 use Genome;
-use Data::Dumper;
 
 class Genome::Model::ClinSeq::Command::SummarizeModels {
     is => 'Command::V2',

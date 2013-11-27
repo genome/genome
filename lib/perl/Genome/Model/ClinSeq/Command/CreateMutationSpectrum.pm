@@ -3,7 +3,6 @@ package Genome::Model::ClinSeq::Command::CreateMutationSpectrum;
 use strict;
 use warnings;
 use Genome;
-use Data::Dumper;
 
 class Genome::Model::ClinSeq::Command::CreateMutationSpectrum {
     is => 'Command::V2',

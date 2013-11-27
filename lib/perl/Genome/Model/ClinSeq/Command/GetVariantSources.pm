@@ -5,7 +5,6 @@ package Genome::Model::ClinSeq::Command::GetVariantSources;
 use strict;
 use warnings;
 use Genome;
-use Data::Dumper;
 
 class Genome::Model::ClinSeq::Command::GetVariantSources {
     is => 'Command::V2',

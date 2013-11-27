@@ -5,7 +5,6 @@ package Genome::Model::ClinSeq::Command::GenerateClonalityPlots;
 use strict;
 use warnings;
 use Genome;
-use Data::Dumper;
 use Genome::Model::ClinSeq::Util qw(:all);
 
 

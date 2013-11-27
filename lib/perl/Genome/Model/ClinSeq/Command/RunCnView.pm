@@ -2,7 +2,6 @@ package Genome::Model::ClinSeq::Command::RunCnView;
 use strict;
 use warnings;
 use Genome;
-use Data::Dumper;
 
 class Genome::Model::ClinSeq::Command::RunCnView {
     is => 'Command::V2',
