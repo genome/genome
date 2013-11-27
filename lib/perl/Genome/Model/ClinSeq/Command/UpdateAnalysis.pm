@@ -5,7 +5,6 @@ package Genome::Model::ClinSeq::Command::UpdateAnalysis;
 use strict;
 use warnings;
 use Genome;
-use Genome::Model::ClinSeq;
 use Data::Dumper;
 use Time::Piece;
 
