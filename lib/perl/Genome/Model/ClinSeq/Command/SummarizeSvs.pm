@@ -142,9 +142,8 @@ sub execute {
 
       #Copy the SV annot file to the clinseq working dir
       my $new_sv_annot_file = $build_outdir . "svs.hq.merge.annot.somatic";
-      my $cp_cmd = "cp $sv_annot_file $build_outdir";
       unless (-e $new_sv_annot_file){
-        Genome::Sys->shellcmd(cmd => $cp_cmd);
+        Genome::Sys->copy_file($sv_annot_file, $new_sv_annot_file);
       }
 
       open (SV_ANNO, "$sv_annot_file") || die "\n\nCould not open SV annotation file: $sv_annot_file\n\n";
@@ -304,8 +303,8 @@ sub execute {
       #print "\n\nNORMAL: $gene1 $coords2 $transcript1\t\t$gene2 $coords2 $transcript2\tnormal count = $pairoscope_normal_reads\n$pairoscope_normal_cmd";
 
       #Clean-up the pairoscope temp files
-      Genome::Sys->shellcmd(cmd => "rm -f $pairoscope_tmp_tumor_file");
-      Genome::Sys->shellcmd(cmd => "rm -f $pairoscope_tmp_normal_file");
+      unlink $pairoscope_tmp_tumor_file;
+      unlink $pairoscope_tmp_normal_file;
     }
 
     #Print out a new file containing the extra annotation columns
