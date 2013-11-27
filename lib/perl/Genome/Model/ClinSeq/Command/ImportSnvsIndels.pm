@@ -193,10 +193,8 @@ sub execute {
 
     my $new_annotated_file = "$target_dir$t1_hq_annotated".".tsv";
     my $new_annotated_top_file = "$target_dir$t1_hq_annotated_top".".tsv";
-    my $cp_cmd1 = "cp $effects_dir$t1_hq_annotated $new_annotated_file";
-    my $cp_cmd2 = "cp $effects_dir$t1_hq_annotated_top $new_annotated_top_file";
-    Genome::Sys->shellcmd(cmd => $cp_cmd1);
-    Genome::Sys->shellcmd(cmd => $cp_cmd2);
+    Genome::Sys->copy_file("$effects_dir$t1_hq_annotated",$new_annotated_file);
+    Genome::Sys->copy_file("$effects_dir$t1_hq_annotated_top", $new_annotated_top_file);
 
     #Get a column count on the file and use this to determine the correct header for the annotated variant file
     my $col_count = 0;
