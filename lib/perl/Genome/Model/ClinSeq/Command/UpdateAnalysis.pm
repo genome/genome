@@ -136,7 +136,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
         tumor_sample_common_names => {
               #TODO: Is there a better way to determine which samples are 'tumor'?
               is => 'Text',
-              default => 'tumor|met|post treatment|recurrence met|pre-treatment met|pin lesion|relapse|xenograft',
+              default => 'tumor|met|post treatment|recurrence met|pre-treatment met|pin lesion|relapse|xenograft|pre-resistant|post-resistant',
               doc => 'The possible sample common names used in the database to specify a Tumor sample',
         },
         instrument_data_to_exclude => {
@@ -146,6 +146,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
         skip_check_archived => {
               is => 'Boolean',
               doc => 'Check if builds are currently archived',
+              default => 1,
         },
         check_archivable_status => {
               is => 'Boolean',
