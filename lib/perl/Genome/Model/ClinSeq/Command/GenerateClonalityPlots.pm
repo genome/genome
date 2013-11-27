@@ -146,8 +146,8 @@ sub execute {
       close(IN);
       close (OUT);
       $self->status_message("Filtered down to $s variants on chromosome: $chromosome");
-      my $mv_cmd = "mv $file $snv_file";
-      Genome::Sys->shellcmd(cmd => $mv_cmd);
+      unlink($snv_file);
+      Genome::Sys->move_file($file, $snv_file);
     }
 
     #Apply the variant limit if specified
@@ -167,8 +167,8 @@ sub execute {
       }
       close(IN);
       close (OUT);
-      my $mv_cmd = "mv $file $snv_file";
-      Genome::Sys->shellcmd(cmd => $mv_cmd);
+      unlink($snv_file);
+      Genome::Sys->move_file($file, $snv_file);
     }
 
     #Step 3 - take it out of bed format to be fed into bam-readcounts:
@@ -221,11 +221,9 @@ sub execute {
     #gmt copy-number cna-seg --copy-number-file=/gscmnt/ams1184/info/model_data/2875816457/build111674790/variants/cnvs.hq  --min-markers=4  --detect-somatic  --centromere-file=/gscmnt/sata186/info/medseq/kchen/work/SolexaCNV/scripts/centromere.hg19.csv  --gap-file=/gscmnt/sata186/info/medseq/kchen/work/SolexaCNV/scripts/hg19gaps.csv  --output-file=hg1.cnvhmm
 
     #Make a copy of the cnvs.hq file
-    $cp_cmd = "cp $data_paths{cnvs_hq} $output_dir";
-    if ($verbose){$self->status_message("$cp_cmd");}
-    Genome::Sys->shellcmd(cmd => $cp_cmd);
-    my $chmod_cmd = "chmod 664 $output_dir"."cnvs.hq";
-    Genome::Sys->shellcmd(cmd => $chmod_cmd);
+    my $cnvs_output_path = "${output_dir}cnvs.hq";
+    Genome::Sys->copy_file($data_paths{cnvs_hq}, $cnvs_output_path);
+    chmod 0664, $cnvs_output_path;
 
     my $misc_annotation_db = $self->misc_annotation_db;
     my $centromere_file = $misc_annotation_db->data_set_path("centromere.csv");
