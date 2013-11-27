@@ -707,12 +707,9 @@ sub execute {
         my $id_sample_summary_file_html = $build_outdir . $subject_name_escaped . "_APIPE_Sample_Sequence_QC.html";
 
         #Produce the sample sequencing summary in csv format
-        my $id_list_cmd1 = "/usr/bin/perl -S genome instrument-data list solexa --filter \"sample_name='$subject_name'\"  --show='id,flow_cell_id,lane,sample_name,library_name,read_length,is_paired_end,clusters,median_insert_size,sd_above_insert_size,target_region_set_name,fwd_filt_error_rate_avg,rev_filt_error_rate_avg' --style=csv > $id_sample_summary_file_csv";
-        my $id_list_cmd2 = "/usr/bin/perl -S genome instrument-data list solexa --filter \"sample_name='$subject_name'\"  --show='id,flow_cell_id,lane,sample_name,library_name,read_length,is_paired_end,clusters,median_insert_size,sd_above_insert_size,target_region_set_name,fwd_filt_error_rate_avg,rev_filt_error_rate_avg' --style=html > $id_sample_summary_file_html";
-
         $self->status_message("\n");
-        Genome::Sys->shellcmd(cmd => $id_list_cmd1, output_files=>["$id_sample_summary_file_csv"]);
-        Genome::Sys->shellcmd(cmd => $id_list_cmd2, output_files=>["$id_sample_summary_file_html"]);
+        $self->_run_solexa_lister($subject_name, 'csv', $id_sample_summary_file_csv);
+        $self->_run_solexa_lister($subject_name, 'html', $id_sample_summary_file_html);
 
         $self->status_message("\nSample: $subject_name ($common_name | $tissue_desc | $extraction_type)");
 
@@ -1471,6 +1468,26 @@ sub execute {
 
   return 1;
 }
+
+sub _run_solexa_lister {
+    my $self = shift;
+    my $sample_name = shift;
+    my $style = shift;
+    my $output_file = shift;
+
+    my $output_fh = Genome::Sys->open_file_for_writing($output_file);
+    my $id_list_cmd1 = Genome::InstrumentData::Command::List::Solexa->create(
+        filter => "sample_name='$sample_name'",
+        show => 'id,flow_cell_id,lane,sample_name,library_name,read_length,is_paired_end,clusters,median_insert_size,sd_above_insert_size,target_region_set_name,fwd_filt_error_rate_avg,rev_filt_error_rate_avg',
+        style => $style,
+        output => $output_fh,
+    );
+    $id_list_cmd1->execute() or die 'failed to run lister to generate ' . $output_file;
+    $output_fh->close();
+
+    return 1;
+}
+
 
 1;
 
