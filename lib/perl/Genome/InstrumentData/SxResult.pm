@@ -223,7 +223,7 @@ sub load_metrics {
         if ( not $metric_file or not -s $metric_file ) {
             $metric_file_method = 'temp_staging_'.$type.'_metric_file';
             $metric_file = $self->$metric_file_method;
-            if ( not -s $metric_file ) {
+            if ( not $metric_file or not -s $metric_file ) {
                 $self->error_message(ucfirst($type).' metric file not created!');
                 return;
             }
