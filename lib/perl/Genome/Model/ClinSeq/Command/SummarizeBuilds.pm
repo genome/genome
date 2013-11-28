@@ -209,14 +209,12 @@ sub summarize_clinseq_build {
     #Summarize the instrument data used by each model
     $self->status_message("\n\nInstrument data actually used by each build");
     for my $build (@builds){
-      my $m = $build->model;
-      my $pp = $m->processing_profile;
-      my $pp_type = $pp->type_name;
+      my $build_type = $build->type_name;
       my @instdata = $build->instrument_data;
       my $instdata_count = scalar(@instdata);
 
       if ($instdata_count > 0){
-        $self->status_message("\nbuild " . $build->__display_name__ . " ($pp_type)" . " uses " . $instdata_count . " instrument data");
+        $self->status_message("\nbuild " . $build->__display_name__ . " ($build_type)" . " uses " . $instdata_count . " instrument data");
         foreach my $instdata (@instdata){
           my $run_name = $instdata->run_name || "[UNDEF run_name]";
           $self->status_message("\t" . $instdata->id . "\t" . $run_name . "\t" . $instdata->library_name . "\t" . $instdata->sample_name);
@@ -233,12 +231,10 @@ sub summarize_clinseq_build {
     #List the build dirs for each build
     $self->status_message("\n\nBuild dir associated with each model/build");
     for my $build (@builds){
-      my $m = $build->model;
-      my $pp = $m->processing_profile;
-      my $pp_type = $pp->type_name;
+      my $build_type = $build->type_name;
       my $build_dir = $build->data_directory || "[UNDEF data_directory]";
       my $build_dn = $build->__display_name__;
-      $self->status_message("$build_dir\t$pp_type\t$build_dn");
+      $self->status_message("$build_dir\t$build_type\t$build_dn");
     }
 
     #Summarize the processing profiles associated with each model
@@ -247,7 +243,6 @@ sub summarize_clinseq_build {
       my $m = $build->model;
       my $pp = $m->processing_profile;
       my $pp_type = $pp->type_name;
-      my $pp_name = $pp->name;
       $self->status_message("model '" . $m->id . "' used processing profile '" . $pp->__display_name__ . "' ($pp_type)");
     }
 
@@ -255,11 +250,10 @@ sub summarize_clinseq_build {
     $self->status_message("\n\nReference sequence build associated with each model");
     for my $build (@builds){
       my $m = $build->model;
-      my $pp = $m->processing_profile;
-      my $pp_type = $pp->type_name;
+      my $build_type = $build->type_name;
       if ($m->can("reference_sequence_build")){
         my $rb = $m->reference_sequence_build;
-        $self->status_message("model '" . $m->__display_name__ . " ($pp_type)" . "' used reference sequence build " . $rb->__display_name__);
+        $self->status_message("model '" . $m->__display_name__ . " ($build_type)" . "' used reference sequence build " . $rb->__display_name__);
       }
     }
 
@@ -267,22 +261,21 @@ sub summarize_clinseq_build {
     $self->status_message("\n\nAnnotation reference build associated with each model");
     for my $build (@builds){
       my $m = $build->model;
-      my $pp = $m->processing_profile;
-      my $pp_type = $pp->type_name;
+      my $build_type = $build->type_name;
       if ($m->can("annotation_reference_build")){
         my $ab = $m->annotation_reference_build;
         if ($ab){
           my $ab_name = $ab->name || "[UNDEF annotation_name]";
           my $ab_dname = $ab->__display_name__ || "[UNDEF annotation_reference_build]";
-          $self->status_message("model '" . $m->__display_name__ . " ($pp_type)" . "' used annotation reference build " . $ab_dname . " ($ab_name)");
+          $self->status_message("model '" . $m->__display_name__ . " ($build_type)" . "' used annotation reference build " . $ab_dname . " ($ab_name)");
         }else{
-          $self->status_message("model '" . $m->__display_name__ . " ($pp_type)" . "' did NOT have an annotation reference build defined!");
+          $self->status_message("model '" . $m->__display_name__ . " ($build_type)" . "' did NOT have an annotation reference build defined!");
         }
       }elsif ($m->can("annotation_build")){
         my $ab = $m->annotation_build;
         my $ab_name = $ab->name || "[UNDEF annotation_name]";
         my $ab_dname = $ab->__display_name__ || "[UNDEF annotation_reference_build]";
-        $self->status_message("model '" . $m->__display_name__ . " ($pp_type)" . "' used annotation reference build " . $ab_dname . " ($ab_name)");
+        $self->status_message("model '" . $m->__display_name__ . " ($build_type)" . "' used annotation reference build " . $ab_dname . " ($ab_name)");
       }
     }
 
@@ -290,15 +283,14 @@ sub summarize_clinseq_build {
     $self->status_message("\n\nGenotype microarray build associated with each model");
     for my $build (@builds){
       my $m = $build->model;
-      my $pp = $m->processing_profile;
-      my $pp_type = $pp->type_name;
+      my $build_type = $build->type_name;
       if ($build->can("genotype_microarray_build")){
         my $gb = $build->genotype_microarray_build;
         if ($gb){
           my $gb_name = $gb->__display_name__ || "[UNDEF genotype_microarray_build]";
-          $self->status_message("model '" . $m->__display_name__ . " ($pp_type)" . "' used genotype microarray build " . $gb_name);
+          $self->status_message("model '" . $m->__display_name__ . " ($build_type)" . "' used genotype microarray build " . $gb_name);
         }else{
-          $self->status_message("model '" . $m->__display_name__ . " ($pp_type)" . "' did NOT have an associated microarray build ");
+          $self->status_message("model '" . $m->__display_name__ . " ($build_type)" . "' did NOT have an associated microarray build ");
         }
       }
     }
@@ -307,8 +299,7 @@ sub summarize_clinseq_build {
     $self->status_message("\n\ndbSNP build associated with each model");
     for my $build (@builds){
       my $m = $build->model;
-      my $pp = $m->processing_profile;
-      my $pp_type = $pp->type_name;
+      my $build_type = $build->type_name;
       if ($m->can("dbsnp_build")){
         my $db = $build->dbsnp_build;
         my $dm = $m->dbsnp_model;
@@ -316,7 +307,7 @@ sub summarize_clinseq_build {
         my $dm_name = $dm->__display_name__ || "[UNDEF dbsnp_model]";
         my $dm_id = $dm->id || "[UNDEF dbsnp_model]";
 
-        $self->status_message("model '" . $m->__display_name__ . " ($pp_type)" . "' used dbSNP build " . $db_name . " ($dm_id)");
+        $self->status_message("model '" . $m->__display_name__ . " ($build_type)" . "' used dbSNP build " . $db_name . " ($dm_id)");
       }
     }
 
@@ -328,12 +319,9 @@ sub summarize_clinseq_build {
     $self->status_message("\n\nHaploid coverage of each Exome/WGS ref alignment model");
     $self->status_message("subject_name\tpp_type\tsequence_type\tlane_count\tcommon_name\ttissue_desc\textraction_type\tsequence_amount_gbp\thaploid_coverage\tarray_het_snp_count\tarray_het_snp_depth\tarray_het_snp_concordance\ttotal_snp_positions_found_unfiltered\ttotal_snp_positions_found_filtered\tsnp_positions_in_dbsnp\tsnp_positions_not_in_dbsnp\toverall_dbsnp_concordance\tbuild_id");
     for my $build (@builds) {
-      my $m = $build->model;
-      my $pp = $m->processing_profile;
-      my $pp_type = $pp->type_name;
-
       #Only perform the following for reference alignment builds!
-      unless ($pp_type eq "reference alignment"){
+      my $build_type = $build->type_name;
+      unless ($build_type eq "reference alignment"){
         next();
       }
       my $build_dir = $build->data_directory;
@@ -454,7 +442,7 @@ sub summarize_clinseq_build {
       }
 
       #Display gathered info for both Exome and WGS reference alignment models
-      $self->status_message("$subject_name\t$pp_type\t$sequence_type\t$lane_count\t$common_name\t$tissue_desc\t$extraction_type\t$gbp\t$haploid_coverage\t$gold_filtered_het_snp_count\t$gold_filtered_het_snp_depth\t$gold_filtered_het_snp_percent_concordance\t$total_snp_positions_found_unfiltered\t$total_snp_positions_found_filtered\t$snp_positions_in_dbsnp\t$snp_positions_not_in_dbsnp\t$overall_dbsnp_concordance\t$build_id");
+      $self->status_message("$subject_name\t$build_type\t$sequence_type\t$lane_count\t$common_name\t$tissue_desc\t$extraction_type\t$gbp\t$haploid_coverage\t$gold_filtered_het_snp_count\t$gold_filtered_het_snp_depth\t$gold_filtered_het_snp_percent_concordance\t$total_snp_positions_found_unfiltered\t$total_snp_positions_found_filtered\t$snp_positions_in_dbsnp\t$snp_positions_not_in_dbsnp\t$overall_dbsnp_concordance\t$build_id");
 
       #Resolve data type
       my $data_type;
@@ -482,12 +470,9 @@ sub summarize_clinseq_build {
     $self->status_message("\n\nSample and library metrics from the reference alignment build directory");
     $self->status_message("subject_name\tpp_type\tsequence_type\tlane_count\tcommon_name\ttissue_desc\textraction_type\tsequence_amount_gbp\thaploid_coverage\tsample_total_single_read_count\tsample_mapped_read_percent\tsample_properly_paired_read_percent\tsample_duplicate_read_percent");
     for my $build (@builds) {
-      my $m = $build->model;
-      my $pp = $m->processing_profile;
-      my $pp_type = $pp->type_name;
-
       #Only perform the following for reference alignment builds!
-      unless ($pp_type eq "reference alignment"){
+      my $build_type = $build->type_name;
+      unless ($build_type eq "reference alignment"){
         next();
       }
       my $build_dir = $build->data_directory;
@@ -591,7 +576,7 @@ sub summarize_clinseq_build {
         $self->status_message("Warning: Could not find flagstat file: $flagstat_file");
       }
 
-      $self->status_message("$subject_name\t$pp_type\t$sequence_type\t$lane_count\t$common_name\t$tissue_desc\t$extraction_type\t$gbp\t$haploid_coverage\t$sample_total_single_read_count\t$sample_mapped_read_percent\t$sample_properly_paired_read_percent\t$sample_duplicate_read_percent");
+      $self->status_message("$subject_name\t$build_type\t$sequence_type\t$lane_count\t$common_name\t$tissue_desc\t$extraction_type\t$gbp\t$haploid_coverage\t$sample_total_single_read_count\t$sample_mapped_read_percent\t$sample_properly_paired_read_percent\t$sample_duplicate_read_percent");
 
       #Resolve data type
       my $data_type;
@@ -635,12 +620,9 @@ sub summarize_clinseq_build {
     $self->status_message("\n\nSample sequencing metrics from APIPE");
     my %samples_processed;
     for my $build (@builds) {
-      my $m = $build->model;
-      my $pp = $m->processing_profile;
-      my $pp_type = $pp->type_name;
-
       #Only perform the following for reference alignment builds!
-      unless ($pp_type eq "reference alignment"){
+      my $build_type = $build->type_name;
+      unless ($build_type eq "reference alignment"){
         next();
       }
       my $build_dir = $build->data_directory;
@@ -742,12 +724,10 @@ sub summarize_clinseq_build {
     $self->status_message("See results files in: $build_outdir\n");
     %samples_processed = ();
     for my $build (@builds) {
-      my $m = $build->model;
-      my $pp = $m->processing_profile;
-      my $pp_type = $pp->type_name;
 
       #Only perform the following for reference alignment builds!
-      unless ($pp_type eq "reference alignment"){
+      my $build_type = $build->type_name;
+      unless ($build_type eq "reference alignment"){
         next();
       }
       my $build_dir = $build->data_directory;
@@ -795,12 +775,9 @@ sub summarize_clinseq_build {
     my %exome_builds_with_coverage;
     $self->status_message("\n\nExome coverage values for each WGS/Exome reference alignment build");
     for my $build (@builds) {
-      my $m = $build->model;
-      my $pp = $m->processing_profile;
-      my $pp_type = $pp->type_name;
-
       #Only perform the following for reference alignment builds!
-      unless ($pp_type eq "reference alignment"){
+      my $build_type = $build->type_name;
+      unless ($build_type eq "reference alignment"){
         next();
       }
       my $build_dir = $build->data_directory;
@@ -959,12 +936,9 @@ sub summarize_clinseq_build {
     $self->status_message("\n\nGet basic RNA-seq alignment stats");
     $self->status_message("\nsample\ttotal_reads\ttotal_reads_mapped_percent\tunmapped_reads_percent\tfragment_size_mean\tfragment_size_std\tpercent_coding_bases\tpercent_utr_bases\tpercent_intronic_bases\tpercent_intergenic_bases\tpercent_ribosomal_bases\tbuild_id");
     for my $build (@builds) {
-      my $m = $build->model;
-      my $pp = $m->processing_profile;
-      my $pp_type = $pp->type_name;
-
       #Only perform the following for reference alignment builds!
-      unless ($pp_type eq "rna seq"){
+      my $build_type = $build->type_name;
+      unless ($build_type eq "rna seq"){
         next();
       }
       my $build_id = $build->id;
@@ -1145,7 +1119,6 @@ sub summarize_clinseq_build {
     for my $build (@builds) {
       my $m = $build->model;
       my $pp = $m->processing_profile;
-      my $pp_type = $pp->type_name;
       my $pp_name = $pp->name;
       my $data_type = "Unknown";
       if ($pp_name =~ /wgs/i){
@@ -1155,7 +1128,8 @@ sub summarize_clinseq_build {
       }
 
       #Only perform the following for reference alignment builds!
-      unless ($pp_type eq "somatic variation"){
+      my $build_type = $build->type_name;
+      unless ($build_type eq "somatic variation"){
         next();
       }
       my $build_id = $build->id;
@@ -1238,7 +1212,6 @@ sub summarize_clinseq_build {
     for my $build (@builds) {
       my $m = $build->model;
       my $pp = $m->processing_profile;
-      my $pp_type = $pp->type_name;
       my $pp_name = $pp->name;
       my $data_type = "Unknown";
       if ($pp_name =~ /wgs/i){
@@ -1247,7 +1220,8 @@ sub summarize_clinseq_build {
         $data_type = "Exome";
       }
       #Only perform the following for reference alignment builds and WGS only!
-      unless ($pp_type eq "somatic variation" && $data_type eq "WGS"){
+      my $build_type = $build->type_name;
+      unless ($build_type eq "somatic variation" && $data_type eq "WGS"){
         next();
       }
       my $build_id = $build->id;
@@ -1302,7 +1276,6 @@ sub summarize_clinseq_build {
     for my $build (@builds) {
       my $m = $build->model;
       my $pp = $m->processing_profile;
-      my $pp_type = $pp->type_name;
       my $pp_name = $pp->name;
       my $subject = $build->subject;
       my $subject_name = $subject->name;
@@ -1312,7 +1285,8 @@ sub summarize_clinseq_build {
       }
 
       #Only perform the following for reference alignment builds and WGS only!
-      next unless ($pp_type eq "rna seq");
+      my $build_type = $build->type_name;
+      next unless ($build_type eq "rna seq");
 
       my $build_id = $build->id;
       my $build_dir = $build->data_directory;
@@ -1363,13 +1337,10 @@ sub summarize_clinseq_build {
     #Print BAMs for all reference alignment and RNA-seq builds
     $self->status_message("\n\nGet all BAM file locations");
     for my $build (@builds) {
-      my $m = $build->model;
-      my $pp = $m->processing_profile;
-      my $pp_type = $pp->type_name;
-      my $pp_name = $pp->name;
 
       #Only perform the following for reference alignment builds!
-      unless ($pp_type eq "reference alignment" || $pp_type eq "rna seq"){
+      my $build_type = $build->type_name;
+      unless ($build_type eq "reference alignment" || $build_type eq "rna seq"){
         next();
       }
       my $build_id = $build->id;
