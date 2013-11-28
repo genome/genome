@@ -178,28 +178,8 @@ sub summarize_build {
       push (@model_samples, $model_samples{$sample_id}{sample});
     }
 
-    #Summarize Individual (id, name, gender, etc.). Check if all models hit the same individual and warn if not
-    #... /Genome/lib/perl/Genome/Individual.pm
-    $self->status_message("\n\nIndividual (subject/patient) information");
     my $individual = $model->subject;
-    my $individual_id = $individual->id || "[UNDEF individual id]";
-    my $individual_type = $individual->subject_type || "[UNDEF individual subject type]";
-    my $individual_species_name = $individual->species_name || "[UNDEF individual species name]";
-    my $individual_name = $individual->name || "[UNDEF individual name]";
-    my $individual_gender = $individual->gender || "[UNDEF individual gender]";
-    my $individual_common_name = $individual->common_name || "[UNDEF individual common name]";
-    my $individual_upn =  $individual->upn || "[UNDEF individual upn]";
-    my $individual_ethnicity =  $individual->ethnicity || "[UNDEF individual ethnicity]";
-    my $individual_race =  $individual->race || "[UNDEF individual race]";
-    $self->status_message("individual_id: $individual_id");
-    $self->status_message("individual_type: $individual_type");
-    $self->status_message("individual_species_name: $individual_species_name");
-    $self->status_message("individual_name: $individual_name");
-    $self->status_message("individual_gender: $individual_gender");
-    $self->status_message("individual_common_name: $individual_common_name");
-    $self->status_message("individual_upn: $individual_upn");
-    $self->status_message("individual_ethnicity: $individual_ethnicity");
-    $self->status_message("individual_race: $individual_race");
+    $self->summarize_individual($individual);
 
     #Display instrument data counts for each sample/build actually associated with the clinseq model
     $self->status_message("\n\nSamples and instrument data counts (for samples associated with this clinseq model only - not all samples of the individual)");
@@ -1471,6 +1451,35 @@ sub summarize_build {
       $self->status_message("$subject_name ($common_name | $tissue_desc | $extraction_type)\t$bam_file");
     }
     close(STATS);
+
+    return 1;
+}
+
+sub summarize_individual {
+    my $self = shift;
+    my $individual = shift;
+
+    #Summarize Individual (id, name, gender, etc.). Check if all models hit the same individual and warn if not
+    #... /Genome/lib/perl/Genome/Individual.pm
+    $self->status_message("\n\nIndividual (subject/patient) information");
+    my $individual_id = $individual->id || "[UNDEF individual id]";
+    my $individual_type = $individual->subject_type || "[UNDEF individual subject type]";
+    my $individual_species_name = $individual->species_name || "[UNDEF individual species name]";
+    my $individual_name = $individual->name || "[UNDEF individual name]";
+    my $individual_gender = $individual->gender || "[UNDEF individual gender]";
+    my $individual_common_name = $individual->common_name || "[UNDEF individual common name]";
+    my $individual_upn =  $individual->upn || "[UNDEF individual upn]";
+    my $individual_ethnicity =  $individual->ethnicity || "[UNDEF individual ethnicity]";
+    my $individual_race =  $individual->race || "[UNDEF individual race]";
+    $self->status_message("individual_id: $individual_id");
+    $self->status_message("individual_type: $individual_type");
+    $self->status_message("individual_species_name: $individual_species_name");
+    $self->status_message("individual_name: $individual_name");
+    $self->status_message("individual_gender: $individual_gender");
+    $self->status_message("individual_common_name: $individual_common_name");
+    $self->status_message("individual_upn: $individual_upn");
+    $self->status_message("individual_ethnicity: $individual_ethnicity");
+    $self->status_message("individual_race: $individual_race");
 
     return 1;
 }
