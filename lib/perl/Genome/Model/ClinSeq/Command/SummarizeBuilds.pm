@@ -1120,12 +1120,7 @@ sub summarize_clinseq_build {
       my $m = $build->model;
       my $pp = $m->processing_profile;
       my $pp_name = $pp->name;
-      my $data_type = "Unknown";
-      if ($pp_name =~ /wgs/i){
-        $data_type = "WGS";
-      }elsif($pp_name =~ /exome/i){
-        $data_type = "Exome";
-      }
+      my $data_type = $self->_determine_wgs_or_exome_for_build($build);
 
       #Only perform the following for reference alignment builds!
       my $build_type = $build->type_name;
@@ -1213,12 +1208,7 @@ sub summarize_clinseq_build {
       my $m = $build->model;
       my $pp = $m->processing_profile;
       my $pp_name = $pp->name;
-      my $data_type = "Unknown";
-      if ($pp_name =~ /wgs/i){
-        $data_type = "WGS";
-      }elsif($pp_name =~ /exome/i){
-        $data_type = "Exome";
-      }
+      my $data_type = $self->_determine_wgs_or_exome_for_build($build);
       #Only perform the following for reference alignment builds and WGS only!
       my $build_type = $build->type_name;
       unless ($build_type eq "somatic variation" && $data_type eq "WGS"){
@@ -1459,6 +1449,23 @@ sub _run_solexa_lister {
     $output_fh->close();
 
     return 1;
+}
+
+sub _determine_wgs_or_exome_for_build {
+    my $self = shift;
+    my $build = shift;
+
+    my $m = $build->model;
+    my $pp = $m->processing_profile;
+    my $pp_name = $pp->name;
+    my $data_type = "Unknown";
+    if ($pp_name =~ /wgs/i){
+        $data_type = "WGS";
+    }elsif($pp_name =~ /exome/i){
+        $data_type = "Exome";
+    }
+
+    return $data_type;
 }
 
 
