@@ -331,18 +331,18 @@ sub summarize_clinseq_build {
       my $subject = $build->subject;
       my $subject_name = $subject->name;
       if ($subject->can("common_name")){
-        if ($build->subject->common_name){
-          $common_name = $build->subject->common_name;
+        if ($subject->common_name){
+          $common_name = $subject->common_name;
         }
       }
       if ($subject->can("tissue_desc")){
-        if ($build->subject->tissue_desc){
-          $tissue_desc = $build->subject->tissue_desc;
+        if ($subject->tissue_desc){
+          $tissue_desc = $subject->tissue_desc;
         }
       }
       if ($subject->can("extraction_type")){
-        if ($build->subject->extraction_type){
-          $extraction_type = $build->subject->extraction_type;
+        if ($subject->extraction_type){
+          $extraction_type = $subject->extraction_type;
         }
       }
       #grab metrics and build a hash from them
@@ -447,7 +447,7 @@ sub summarize_clinseq_build {
       #Resolve data type
       my $data_type;
       if ($subject->can("common_name")){
-        if ($build->subject->common_name){
+        if ($subject->common_name){
           $data_type = $sequence_type . "_" . $common_name;
         }else{
           $data_type = $sequence_type . "_" . $subject_name;
@@ -482,18 +482,18 @@ sub summarize_clinseq_build {
       my $subject = $build->subject;
       my $subject_name = $subject->name;
       if ($subject->can("common_name")){
-        if ($build->subject->common_name){
-          $common_name = $build->subject->common_name;
+        if ($subject->common_name){
+          $common_name = $subject->common_name;
         }
       }
       if ($subject->can("tissue_desc")){
-        if ($build->subject->tissue_desc){
-          $tissue_desc = $build->subject->tissue_desc;
+        if ($subject->tissue_desc){
+          $tissue_desc = $subject->tissue_desc;
         }
       }
       if ($subject->can("extraction_type")){
-        if ($build->subject->extraction_type){
-          $extraction_type = $build->subject->extraction_type;
+        if ($subject->extraction_type){
+          $extraction_type = $subject->extraction_type;
         }
       }
       #grab metrics and build a hash from them
@@ -581,7 +581,7 @@ sub summarize_clinseq_build {
       #Resolve data type
       my $data_type;
       if ($subject->can("common_name")){
-        if ($build->subject->common_name){
+        if ($subject->common_name){
           $data_type = $sequence_type . "_" . $common_name;
         }else{
           $data_type = $sequence_type . "_" . $subject_name;
@@ -632,18 +632,18 @@ sub summarize_clinseq_build {
       my $subject = $build->subject;
       my $subject_name = $subject->name;
       if ($subject->can("common_name")){
-        if ($build->subject->common_name){
-          $common_name = $build->subject->common_name;
+        if ($subject->common_name){
+          $common_name = $subject->common_name;
         }
       }
       if ($subject->can("tissue_desc")){
-        if ($build->subject->tissue_desc){
-          $tissue_desc = $build->subject->tissue_desc;
+        if ($subject->tissue_desc){
+          $tissue_desc = $subject->tissue_desc;
         }
       }
       if ($subject->can("extraction_type")){
-        if ($build->subject->extraction_type){
-          $extraction_type = $build->subject->extraction_type;
+        if ($subject->extraction_type){
+          $extraction_type = $subject->extraction_type;
         }
       }
 
@@ -737,13 +737,13 @@ sub summarize_clinseq_build {
       my $subject = $build->subject;
       my $subject_name = $subject->name;
       if ($subject->can("common_name")){
-        $common_name = $build->subject->common_name;
+        $common_name = $subject->common_name;
       }
       if ($subject->can("tissue_desc")){
-        $tissue_desc = $build->subject->tissue_desc;
+        $tissue_desc = $subject->tissue_desc;
       }
       if ($subject->can("extraction_type")){
-        $extraction_type = $build->subject->extraction_type;
+        $extraction_type = $subject->extraction_type;
       }
 
       #Only process each sample once
@@ -787,13 +787,13 @@ sub summarize_clinseq_build {
       my $subject = $build->subject;
       my $subject_name = $subject->name;
       if ($subject->can("common_name")){
-        $common_name = $build->subject->common_name;
+        $common_name = $subject->common_name;
       }
       if ($subject->can("tissue_desc")){
-        $tissue_desc = $build->subject->tissue_desc;
+        $tissue_desc = $subject->tissue_desc;
       }
       if ($subject->can("extraction_type")){
-        $extraction_type = $build->subject->extraction_type;
+        $extraction_type = $subject->extraction_type;
       }
       my @lanes = $build->instrument_data;
       my $lane_count = scalar(@lanes);
@@ -949,13 +949,13 @@ sub summarize_clinseq_build {
       my $subject = $build->subject;
       my $subject_name = $subject->name;
       if ($subject->can("common_name")){
-        $common_name = $build->subject->common_name;
+        $common_name = $subject->common_name;
       }
       if ($subject->can("tissue_desc")){
-        $tissue_desc = $build->subject->tissue_desc;
+        $tissue_desc = $subject->tissue_desc;
       }
       if ($subject->can("extraction_type")){
-        $extraction_type = $build->subject->extraction_type;
+        $extraction_type = $subject->extraction_type;
       }
 
       #TODO: The alignment stats file will be moved in new versions of the RNA-seq pipeline.  The following code will need to be updated to find this file
@@ -1134,18 +1134,18 @@ sub summarize_clinseq_build {
       my $subject = $build->subject;
       my $subject_name = $subject->name;
       if ($subject->can("common_name")){
-        if ($build->subject->common_name){
-          $common_name = $build->subject->common_name;
+        if ($subject->common_name){
+          $common_name = $subject->common_name;
         }
       }
       if ($subject->can("tissue_desc")){
-        if ($build->subject->tissue_desc){
-          $tissue_desc = $build->subject->tissue_desc;
+        if ($subject->tissue_desc){
+          $tissue_desc = $subject->tissue_desc;
         }
       }
       if ($subject->can("extraction_type")){
-        if ($build->subject->extraction_type){
-          $extraction_type = $build->subject->extraction_type;
+        if ($subject->extraction_type){
+          $extraction_type = $subject->extraction_type;
         }
       }
       #grab metrics and build a hash from them
@@ -1271,7 +1271,7 @@ sub summarize_clinseq_build {
       my $subject_name = $subject->name;
       my $common_name = "[UNDEF common_name]";
       if ($subject->can("common_name")){
-        $common_name = $build->subject->common_name;
+        $common_name = $subject->common_name;
       }
 
       #Only perform the following for reference alignment builds and WGS only!
@@ -1341,18 +1341,18 @@ sub summarize_clinseq_build {
       my $subject = $build->subject;
       my $subject_name = $subject->name;
       if ($subject->can("common_name")){
-        if ($build->subject->common_name){
-          $common_name = $build->subject->common_name;
+        if ($subject->common_name){
+          $common_name = $subject->common_name;
         }
       }
       if ($subject->can("tissue_desc")){
-        if ($build->subject->tissue_desc){
-          $tissue_desc = $build->subject->tissue_desc;
+        if ($subject->tissue_desc){
+          $tissue_desc = $subject->tissue_desc;
         }
       }
       if ($subject->can("extraction_type")){
-        if ($build->subject->extraction_type){
-          $extraction_type = $build->subject->extraction_type;
+        if ($subject->extraction_type){
+          $extraction_type = $subject->extraction_type;
         }
       }
 
