@@ -183,27 +183,18 @@ sub summarize_build {
 
     #Display instrument data counts for each sample/build actually associated with the clinseq model
     $self->status_message("\n\nSamples and instrument data counts (for samples associated with this clinseq model only - not all samples of the individual)");
-    my ($tumor_dna_id_count, $normal_dna_id_count, $tumor_rna_id_count, $normal_rna_id_count) = ("n/a", "n/a", "n/a", "n/a");
+    my %instdata_counts;
+    for my $tn ('tumor', 'normal') { for my $type ('dna', 'rna') { $instdata_counts{$tn.$type} = 'n/a'; }}
 
     for my $sample (@model_samples) {
-      my $sample_id = $sample->id;
-      my @instdata = $sample->instrument_data;
-      my $scn = $sample->common_name || "[UNDEF sample common_name]";
-      my $tissue_desc = $sample->tissue_desc || "[UNDEF sample tissue_desc]";
-      my $extraction_type = $sample->extraction_type || "[UNDEF sample extraction_type]";
-      $self->status_message("sample " . $sample->__display_name__ . " ($tissue_desc - $extraction_type) has " . scalar(@instdata) . " instrument data");
-      my $normal_sample_common_names = $self->normal_sample_common_names;
-      my $tumor_sample_common_names = $self->tumor_sample_common_names;
-      if (($scn =~ /$tumor_sample_common_names/i) && ($extraction_type eq "genomic dna")){$tumor_dna_id_count = scalar(@instdata);}
-      if (($scn =~ /$normal_sample_common_names/i) && ($extraction_type eq "genomic dna")){$normal_dna_id_count = scalar(@instdata);}
-      if (($scn =~ /$tumor_sample_common_names/i) && ($extraction_type =~ /rna/)){$tumor_rna_id_count = scalar(@instdata);}
-      if (($scn =~ /$normal_sample_common_names/i) && ($extraction_type =~ /rna/)){$normal_rna_id_count = scalar(@instdata);}
+     my ($key, $value) = $self->summarize_sample($sample);
+     $instdata_counts{$key} = $value;
     }
 
-    print STATS "Tumor Genomic DNA Instrument Data Count\t$tumor_dna_id_count\tlims\tClinseq Build Summary\tCount\tNumber of lanes of instrument data generated for tumor genomic DNA\n";
-    print STATS "Normal Genomic DNA Instrument Data Count\t$normal_dna_id_count\tlims\tClinseq Build Summary\tCount\tNumber of lanes of instrument data generated for normal genomic DNA\n";
-    print STATS "Tumor RNA Instrument Data Count\t$tumor_rna_id_count\tlims\tClinseq Build Summary\tCount\tNumber of lanes of instrument data generated for tumor RNA\n";
-    print STATS "Normal RNA Instrument Data Count\t$normal_rna_id_count\tlims\tClinseq Build Summary\tCount\tNumber of lanes of instrument data generated for normal RNA\n";
+    print STATS "Tumor Genomic DNA Instrument Data Count\t$instdata_counts{tumordna}\tlims\tClinseq Build Summary\tCount\tNumber of lanes of instrument data generated for tumor genomic DNA\n";
+    print STATS "Normal Genomic DNA Instrument Data Count\t$instdata_counts{normaldna}\tlims\tClinseq Build Summary\tCount\tNumber of lanes of instrument data generated for normal genomic DNA\n";
+    print STATS "Tumor RNA Instrument Data Count\t$instdata_counts{tumorrna}\tlims\tClinseq Build Summary\tCount\tNumber of lanes of instrument data generated for tumor RNA\n";
+    print STATS "Normal RNA Instrument Data Count\t$instdata_counts{normalrna}\tlims\tClinseq Build Summary\tCount\tNumber of lanes of instrument data generated for normal RNA\n";
 
     #Locations of useful methods need to do the following:
     #... /Genome/lib/perl/Genome/IntrumentData.pm
@@ -1482,6 +1473,37 @@ sub summarize_individual {
     $self->status_message("individual_race: $individual_race");
 
     return 1;
+}
+
+sub summarize_sample {
+    my $self = shift;
+    my $sample = shift;
+
+    my $sample_id = $sample->id;
+    my @instdata = $sample->instrument_data;
+    my $scn = $sample->common_name || "[UNDEF sample common_name]";
+    my $tissue_desc = $sample->tissue_desc || "[UNDEF sample tissue_desc]";
+    my $extraction_type = $sample->extraction_type || "[UNDEF sample extraction_type]";
+    $self->status_message("sample " . $sample->__display_name__ . " ($tissue_desc - $extraction_type) has " . scalar(@instdata) . " instrument data");
+    my $normal_sample_common_names = $self->normal_sample_common_names;
+    my $tumor_sample_common_names = $self->tumor_sample_common_names;
+
+    my ($tumor_or_normal, $dna_or_rna) = ('n/a') x 2;
+    if ($scn =~ /$tumor_sample_common_names/i) {
+       $tumor_or_normal = 'tumor';
+    } elsif ($scn =~ /$normal_sample_common_names/i) {
+        $tumor_or_normal = 'normal';
+    }
+
+    if($extraction_type eq 'genomic dna') {
+        $dna_or_rna = 'dna';
+    } elsif ($extraction_type eq 'rna') {
+        $dna_or_rna = 'rna';
+    }
+
+    my $count = scalar(@instdata);
+
+    return ($tumor_or_normal . $dna_or_rna) => $count;
 }
 
 sub _run_solexa_lister {
