@@ -211,8 +211,7 @@ sub summarize_clinseq_build {
     for my $build (@builds){
       next unless $build;
       my $m = $build->model;
-      my $pp_id = $m->processing_profile_id;
-      my $pp = Genome::ProcessingProfile->get($pp_id);
+      my $pp = $m->processing_profile;
       my $pp_type = $pp->type_name;
       my @instdata = $build->instrument_data;
       my $instdata_count = scalar(@instdata);
@@ -238,8 +237,7 @@ sub summarize_clinseq_build {
     for my $build (@builds){
       next unless $build;
       my $m = $build->model;
-      my $pp_id = $m->processing_profile_id;
-      my $pp = Genome::ProcessingProfile->get($pp_id);
+      my $pp = $m->processing_profile;
       my $pp_type = $pp->type_name;
       my $build_dir = $build->data_directory || "[UNDEF data_directory]";
       my $build_dn = $build->__display_name__;
@@ -251,8 +249,7 @@ sub summarize_clinseq_build {
     for my $build (@builds){
       next unless $build;
       my $m = $build->model;
-      my $pp_id = $m->processing_profile_id;
-      my $pp = Genome::ProcessingProfile->get($pp_id);
+      my $pp = $m->processing_profile;
       my $pp_type = $pp->type_name;
       my $pp_name = $pp->name;
       $self->status_message("model '" . $m->id . "' used processing profile '" . $pp->__display_name__ . "' ($pp_type)");
@@ -263,8 +260,7 @@ sub summarize_clinseq_build {
     for my $build (@builds){
       next unless $build;
       my $m = $build->model;
-      my $pp_id = $m->processing_profile_id;
-      my $pp = Genome::ProcessingProfile->get($pp_id);
+      my $pp = $m->processing_profile;
       my $pp_type = $pp->type_name;
       if ($m->can("reference_sequence_build")){
         my $rb = $m->reference_sequence_build;
@@ -277,8 +273,7 @@ sub summarize_clinseq_build {
     for my $build (@builds){
       next unless $build;
       my $m = $build->model;
-      my $pp_id = $m->processing_profile_id;
-      my $pp = Genome::ProcessingProfile->get($pp_id);
+      my $pp = $m->processing_profile;
       my $pp_type = $pp->type_name;
       if ($m->can("annotation_reference_build")){
         my $ab = $m->annotation_reference_build;
@@ -302,8 +297,7 @@ sub summarize_clinseq_build {
     for my $build (@builds){
       next unless $build;
       my $m = $build->model;
-      my $pp_id = $m->processing_profile_id;
-      my $pp = Genome::ProcessingProfile->get($pp_id);
+      my $pp = $m->processing_profile;
       my $pp_type = $pp->type_name;
       if ($build->can("genotype_microarray_build")){
         my $gb = $build->genotype_microarray_build;
@@ -321,8 +315,7 @@ sub summarize_clinseq_build {
     for my $build (@builds){
       next unless $build;
       my $m = $build->model;
-      my $pp_id = $m->processing_profile_id;
-      my $pp = Genome::ProcessingProfile->get($pp_id);
+      my $pp = $m->processing_profile;
       my $pp_type = $pp->type_name;
       if ($m->can("dbsnp_build")){
         my $db = $build->dbsnp_build;
@@ -345,8 +338,7 @@ sub summarize_clinseq_build {
     for my $build (@builds) {
       next unless $build;
       my $m = $build->model;
-      my $pp_id = $m->processing_profile_id;
-      my $pp = Genome::ProcessingProfile->get($pp_id);
+      my $pp = $m->processing_profile;
       my $pp_type = $pp->type_name;
 
       #Only perform the following for reference alignment builds!
@@ -501,8 +493,7 @@ sub summarize_clinseq_build {
     for my $build (@builds) {
       next unless $build;
       my $m = $build->model;
-      my $pp_id = $m->processing_profile_id;
-      my $pp = Genome::ProcessingProfile->get($pp_id);
+      my $pp = $m->processing_profile;
       my $pp_type = $pp->type_name;
 
       #Only perform the following for reference alignment builds!
@@ -656,8 +647,7 @@ sub summarize_clinseq_build {
     for my $build (@builds) {
       next unless $build;
       my $m = $build->model;
-      my $pp_id = $m->processing_profile_id;
-      my $pp = Genome::ProcessingProfile->get($pp_id);
+      my $pp = $m->processing_profile;
       my $pp_type = $pp->type_name;
 
       #Only perform the following for reference alignment builds!
@@ -765,8 +755,7 @@ sub summarize_clinseq_build {
     for my $build (@builds) {
       next unless $build;
       my $m = $build->model;
-      my $pp_id = $m->processing_profile_id;
-      my $pp = Genome::ProcessingProfile->get($pp_id);
+      my $pp = $m->processing_profile;
       my $pp_type = $pp->type_name;
 
       #Only perform the following for reference alignment builds!
@@ -820,8 +809,7 @@ sub summarize_clinseq_build {
     for my $build (@builds) {
       next unless $build;
       my $m = $build->model;
-      my $pp_id = $m->processing_profile_id;
-      my $pp = Genome::ProcessingProfile->get($pp_id);
+      my $pp = $m->processing_profile;
       my $pp_type = $pp->type_name;
 
       #Only perform the following for reference alignment builds!
@@ -986,8 +974,7 @@ sub summarize_clinseq_build {
     for my $build (@builds) {
       next unless $build;
       my $m = $build->model;
-      my $pp_id = $m->processing_profile_id;
-      my $pp = Genome::ProcessingProfile->get($pp_id);
+      my $pp = $m->processing_profile;
       my $pp_type = $pp->type_name;
 
       #Only perform the following for reference alignment builds!
@@ -1172,8 +1159,7 @@ sub summarize_clinseq_build {
     for my $build (@builds) {
       next unless $build;
       my $m = $build->model;
-      my $pp_id = $m->processing_profile_id;
-      my $pp = Genome::ProcessingProfile->get($pp_id);
+      my $pp = $m->processing_profile;
       my $pp_type = $pp->type_name;
       my $pp_name = $pp->name;
       my $data_type = "Unknown";
@@ -1267,8 +1253,7 @@ sub summarize_clinseq_build {
     for my $build (@builds) {
       next unless $build;
       my $m = $build->model;
-      my $pp_id = $m->processing_profile_id;
-      my $pp = Genome::ProcessingProfile->get($pp_id);
+      my $pp = $m->processing_profile;
       my $pp_type = $pp->type_name;
       my $pp_name = $pp->name;
       my $data_type = "Unknown";
@@ -1333,8 +1318,7 @@ sub summarize_clinseq_build {
     for my $build (@builds) {
       next unless $build;
       my $m = $build->model;
-      my $pp_id = $m->processing_profile_id;
-      my $pp = Genome::ProcessingProfile->get($pp_id);
+      my $pp = $m->processing_profile;
       my $pp_type = $pp->type_name;
       my $pp_name = $pp->name;
       my $subject = $build->subject;
@@ -1398,8 +1382,7 @@ sub summarize_clinseq_build {
     for my $build (@builds) {
       next unless $build;
       my $m = $build->model;
-      my $pp_id = $m->processing_profile_id;
-      my $pp = Genome::ProcessingProfile->get($pp_id);
+      my $pp = $m->processing_profile;
       my $pp_type = $pp->type_name;
       my $pp_name = $pp->name;
 
