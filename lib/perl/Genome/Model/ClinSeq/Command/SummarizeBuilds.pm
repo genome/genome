@@ -118,7 +118,7 @@ sub execute {
       $build_outdir = $outdir;
     }
 
-    $self->summarize_build($clinseq_build, $build_outdir);
+    $self->summarize_clinseq_build($clinseq_build, $build_outdir);
   }
 
   $self->status_message("\n\n");
@@ -136,7 +136,7 @@ sub execute {
   return 1;
 }
 
-sub summarize_build {
+sub summarize_clinseq_build {
     my ($self, $clinseq_build, $build_outdir) = @_;
 
     #Store grand summary values that apply to the entire ClinSeq build
