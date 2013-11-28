@@ -11,16 +11,16 @@ use Genome::Utility::List;
 class Genome::Model::ClinSeq::Command::SummarizeBuilds {
     is => 'Command::V2',
     has_input => [
-        builds => { 
+        builds => {
               is => 'Genome::Model::Build::ClinSeq',
               is_many => 1,
               shell_args_position => 1,
               require_user_verify => 0,
               doc => 'clinseq build to summarize',
         },
-        outdir => { 
+        outdir => {
               is => 'FilesystemPath',
-              doc => 'Directory where output files will be written', 
+              doc => 'Directory where output files will be written',
         },
         skip_lims_reports => {
               is => 'Number',
@@ -147,7 +147,7 @@ sub summarize_clinseq_build {
     open (STATS, ">$stats_file") || die "\n\nCould not open output file: $stats_file\n\n";
     print STATS "Question\tAnswer\tData_Type\tAnalysis_Type\tStatistic_Type\tExtra_Description\n";
 
-    my $model = $clinseq_build->model; 
+    my $model = $clinseq_build->model;
 
     $self->status_message("\n***** " . $clinseq_build->__display_name__ . " ****");
 
@@ -233,7 +233,7 @@ sub summarize_clinseq_build {
     }
 
     #List the build dirs for each build
-    $self->status_message("\n\nBuild dir associated with each model/build"); 
+    $self->status_message("\n\nBuild dir associated with each model/build");
     for my $build (@builds){
       next unless $build;
       my $m = $build->model;
@@ -245,7 +245,7 @@ sub summarize_clinseq_build {
     }
 
     #Summarize the processing profiles associated with each model
-    $self->status_message("\n\nProcessing profiles associated with each model"); 
+    $self->status_message("\n\nProcessing profiles associated with each model");
     for my $build (@builds){
       next unless $build;
       my $m = $build->model;
@@ -266,7 +266,7 @@ sub summarize_clinseq_build {
         my $rb = $m->reference_sequence_build;
         $self->status_message("model '" . $m->__display_name__ . " ($pp_type)" . "' used reference sequence build " . $rb->__display_name__);
       }
-    }   
+    }
 
     #Summarize the annotation reference build associated with each model
     $self->status_message("\n\nAnnotation reference build associated with each model");
@@ -290,7 +290,7 @@ sub summarize_clinseq_build {
         my $ab_dname = $ab->__display_name__ || "[UNDEF annotation_reference_build]";
         $self->status_message("model '" . $m->__display_name__ . " ($pp_type)" . "' used annotation reference build " . $ab_dname . " ($ab_name)");
       }
-    }   
+    }
 
     #Summarize the genotype microarray build used with each model
     $self->status_message("\n\nGenotype microarray build associated with each model");
@@ -308,7 +308,7 @@ sub summarize_clinseq_build {
           $self->status_message("model '" . $m->__display_name__ . " ($pp_type)" . "' did NOT have an associated microarray build ");
         }
       }
-    }   
+    }
 
     #Summarize the dbsnp build used with each model
     $self->status_message("\n\ndbSNP build associated with each model");
@@ -326,7 +326,7 @@ sub summarize_clinseq_build {
 
         $self->status_message("model '" . $m->__display_name__ . " ($pp_type)" . "' used dbSNP build " . $db_name . " ($dm_id)");
       }
-    }   
+    }
 
     #Obtain the haploid coverage of each WGS/Exome ref alignment model
     #Obtain the array SNP concordance metrics for each ref alignment model (these are the 'Gold' SNP concordance values where SNPs called by WGS are compared to SNPs called by microarray of the same sample)
@@ -464,7 +464,7 @@ sub summarize_clinseq_build {
 
       #Display gathered info for both Exome and WGS reference alignment models
       $self->status_message("$subject_name\t$pp_type\t$sequence_type\t$lane_count\t$common_name\t$tissue_desc\t$extraction_type\t$gbp\t$haploid_coverage\t$gold_filtered_het_snp_count\t$gold_filtered_het_snp_depth\t$gold_filtered_het_snp_percent_concordance\t$total_snp_positions_found_unfiltered\t$total_snp_positions_found_filtered\t$snp_positions_in_dbsnp\t$snp_positions_not_in_dbsnp\t$overall_dbsnp_concordance\t$build_id");
-      
+
       #Resolve data type
       my $data_type;
       if ($subject->can("common_name")){
@@ -592,7 +592,7 @@ sub summarize_clinseq_build {
             $sample_properly_paired_read_percent = $1;
           }
           if ($_ =~ /^(\d+).*duplicates/){
-            my $duplicate_count = $1; 
+            my $duplicate_count = $1;
             $sample_duplicate_read_percent = sprintf("%.2f", (($duplicate_count/$sample_total_single_read_count)*100));
           }
         }
@@ -600,7 +600,7 @@ sub summarize_clinseq_build {
       }else{
         $self->status_message("Warning: Could not find flagstat file: $flagstat_file");
       }
-      
+
       $self->status_message("$subject_name\t$pp_type\t$sequence_type\t$lane_count\t$common_name\t$tissue_desc\t$extraction_type\t$gbp\t$haploid_coverage\t$sample_total_single_read_count\t$sample_mapped_read_percent\t$sample_properly_paired_read_percent\t$sample_duplicate_read_percent");
 
       #Resolve data type
@@ -640,7 +640,7 @@ sub summarize_clinseq_build {
     }
 
     #Generate APIPE instrument data reports (including quality metrics) for each sample
-    #e.g. 
+    #e.g.
     #genome instrument-data list solexa --filter sample_name='H_LF-10-0372-09-131-1135122'  --show='id,flow_cell_id,lane,sample_name,library_name,read_length,is_paired_end,clusters,median_insert_size,sd_above_insert_size,target_region_set_name,fwd_filt_error_rate_avg,rev_filt_error_rate_avg' --style=csv
     $self->status_message("\n\nSample sequencing metrics from APIPE");
     my %samples_processed;
@@ -738,7 +738,7 @@ sub summarize_clinseq_build {
 
 
     #Generate LIMS library quality reports (including alignment and quality metrics) for each flowcell associated with each sample
-    #e.g. 
+    #e.g.
     #illumina_info --sample H_KA-306905-S.4294 --report library --format tsv
     my @formats = qw (csv tsv html);
     my @reports = qw (lane library library_index_summary run);
@@ -888,7 +888,7 @@ sub summarize_clinseq_build {
       #[13] Discarded Bases (Min. Depth Filter)
       #[14] Percent Discarded Bases (Min. Depth Filter)
 
-      #Calculate: 
+      #Calculate:
       #total number of ROIs
       #average of all median ROI coverage levels
       #percent of all ROIs covered at X depth or greater across 80% or greater of breadth of ROIs
@@ -922,7 +922,7 @@ sub summarize_clinseq_build {
         }
       }
       close (REFCOV);
-      
+
       $self->status_message("min_coverage\troi_count\tmin_breadth_count_"."$min_breadth\tmin_breadth_count_percent_"."$min_breadth\taverage_median_coverage");
       foreach my $min_cov (sort {$a <=> $b} keys %covs){
         $self->status_message("$min_cov\t$covs{$min_cov}{count}\t$covs{$min_cov}{min_breadth_count}\t$covs{$min_cov}{min_breadth_count_percent}\t$covs{$min_cov}{avg_median_coverage}");
@@ -1000,7 +1000,7 @@ sub summarize_clinseq_build {
 
       #TODO: The alignment stats file will be moved in new versions of the RNA-seq pipeline.  The following code will need to be updated to find this file
       #In new builds it should be possible to identify this file via an API call similar to the following.  Refer to Jason Walker for details
-      #$rna_seq_build->alignment_stats_file; 
+      #$rna_seq_build->alignment_stats_file;
       my $alignment_stats_file;
       my $as_file1 = $build_dir . "/alignments/alignment_stats.txt";
       my $as_file2 = $build_dir . "/alignment_stats/alignment_stats.txt";
@@ -1146,7 +1146,7 @@ sub summarize_clinseq_build {
       #Make copies of read locations .png and end bias plots for convenience
       foreach my $file (@rnaseq_files_to_copy){
         my $cp_cmd = "cp $file $build_outdir";
-        Genome::Sys->shellcmd(cmd => $cp_cmd, allow_failed_exit_code => 1); 
+        Genome::Sys->shellcmd(cmd => $cp_cmd, allow_failed_exit_code => 1);
       }
     }
 
@@ -1235,7 +1235,7 @@ sub summarize_clinseq_build {
       }
 
       $self->status_message("$pp_name\t$tier1_snv_count\t$tier2_snv_count\t$tier3_snv_count\t$tier4_snv_count\t$tier1_indel_count\t$tier2_indel_count\t$tier3_indel_count\t$tier4_indel_count\t$sv_count\t$build_id");
-      
+
       print STATS "SomVar Tier1 SNV Count\t$tier1_snv_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation tier 1 SNV count for $common_name $extraction_type data\n";
       print STATS "SomVar Tier2 SNV Count\t$tier2_snv_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation tier 2 SNV count for $common_name $extraction_type data\n";
       print STATS "SomVar Tier3 SNV Count\t$tier3_snv_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation tier 3 SNV count for $common_name $extraction_type data\n";
@@ -1286,7 +1286,7 @@ sub summarize_clinseq_build {
       }elsif (-e $sv_annot_file2){
         $sv_annot_file = $sv_annot_file2;
       }
-      
+
       chomp($sv_annot_file);
       my $sv_count = 0;
       my $ctx_count = 0;
@@ -1323,7 +1323,7 @@ sub summarize_clinseq_build {
       my $pp_name = $pp->name;
       my $subject = $build->subject;
       my $subject_name = $subject->name;
-      my $common_name = "[UNDEF common_name]";    
+      my $common_name = "[UNDEF common_name]";
       if ($subject->can("common_name")){
         $common_name = $build->subject->common_name;
       }
