@@ -935,7 +935,7 @@ sub check_for_missing_and_excluded_data{
     }
   }
 
-  #Warn about builds missing intrument data
+  #Warn about builds missing instrument data
   unless (scalar(@final_models2)){
     foreach my $model_id (sort keys %problem_builds){
       my $id_string = $problem_builds{$model_id}{id_string};

@@ -215,7 +215,7 @@ sub execute {
     #... /Genome/lib/perl/Genome/Model/Build/RnaSeq.pm
 
 
-    #Summarize the intrument data used by each model
+    #Summarize the instrument data used by each model
     $self->status_message("\n\nInstrument data actually used by each build");
     for my $build (@builds){
       next unless $build;
@@ -657,7 +657,7 @@ sub execute {
       }
     }
 
-    #Generate APIPE intrument data reports (including quality metrics) for each sample
+    #Generate APIPE instrument data reports (including quality metrics) for each sample
     #e.g. 
     #genome instrument-data list solexa --filter sample_name='H_LF-10-0372-09-131-1135122'  --show='id,flow_cell_id,lane,sample_name,library_name,read_length,is_paired_end,clusters,median_insert_size,sd_above_insert_size,target_region_set_name,fwd_filt_error_rate_avg,rev_filt_error_rate_avg' --style=csv
     $self->status_message("\n\nSample sequencing metrics from APIPE");

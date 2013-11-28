@@ -51,7 +51,7 @@ sub _import_run {
             run_name => $run_name,
         );
         if ( not $sanger ) {
-            $self->error_message('Failed to create sanger intrument data for run name: '.$run_name);
+            $self->error_message('Failed to create sanger instrument data for run name: '.$run_name);
             return;
         }
         $created = 1;

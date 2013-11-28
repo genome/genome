@@ -68,7 +68,7 @@ class Genome::InstrumentData::Command::Import::Basic {
 };
 
 sub help_detail {
-    return 'Import intrument data. Can be in the format of fastqs [gzipped ok] or bam. Format is guessed from file suffix. Recognized suffixes include fastq, fq, txt and bam. Files will be transferred and correctly named. Read count and paired endness will also be determined.';
+    return 'Import instrument data. Can be in the format of fastqs [gzipped ok] or bam. Format is guessed from file suffix. Recognized suffixes include fastq, fq, txt and bam. Files will be transferred and correctly named. Read count and paired endness will also be determined.';
 }
 
 sub execute {
