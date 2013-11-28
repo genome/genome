@@ -118,6 +118,27 @@ sub execute {
       $build_outdir = $outdir;
     }
 
+    $self->summarize_build($clinseq_build, $build_outdir);
+  }
+
+  $self->status_message("\n\n");
+
+  my @output = $self->status_messages();
+  if ($log_file) {
+      my $log = IO::File->new(">$log_file");
+      $log->print(join("\n", @output));
+      $log->close;
+
+      $self->queue_status_messages(0);
+      $self->status_message("Log file written to $log_file\n");
+  }
+
+  return 1;
+}
+
+sub summarize_build {
+    my ($self, $clinseq_build, $build_outdir) = @_;
+
     #Store grand summary values that apply to the entire ClinSeq build
     my $summary_dir = $build_outdir . "summary/";
     unless (-e $summary_dir && -d $summary_dir){
@@ -1451,20 +1472,8 @@ sub execute {
       $self->status_message("$subject_name ($common_name | $tissue_desc | $extraction_type)\t$bam_file");
     }
     close(STATS);
-  }
-  $self->status_message("\n\n");
 
-  my @output = $self->status_messages();
-  if ($log_file) {
-      my $log = IO::File->new(">$log_file");
-      $log->print(join("\n", @output));
-      $log->close;
-
-      $self->queue_status_messages(0);
-      $self->status_message("Log file written to $log_file\n");
-  }
-
-  return 1;
+    return 1;
 }
 
 sub _run_solexa_lister {
