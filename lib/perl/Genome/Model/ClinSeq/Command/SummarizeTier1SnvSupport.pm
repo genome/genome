@@ -6,6 +6,8 @@ use Genome;
 use Data::Dumper;
 use File::Basename;
 
+use Genome::Model::ClinSeq::Util qw(:all);
+
 class Genome::Model::ClinSeq::Command::SummarizeTier1SnvSupport {
     is => 'Command::V2',
     has_input => [
