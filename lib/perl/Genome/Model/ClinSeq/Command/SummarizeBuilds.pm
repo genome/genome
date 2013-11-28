@@ -165,12 +165,12 @@ sub summarize_clinseq_build {
 
     #Gather all builds into a single array
     my @builds = ($wgs_normal_refalign_build, $wgs_tumor_refalign_build, $wgs_somvar_build, $exome_normal_refalign_build, $exome_tumor_refalign_build, $exome_somvar_build, $tumor_rnaseq_build, $normal_rnaseq_build, $clinseq_build);
+    @builds = grep { $_ } @builds;
 
     #Get a list of sample names for samples associated with this clinseq build
     my %model_samples;
     my @model_samples;
     for my $build (@builds){
-      next unless $build;
       next unless ($build->model->subject->class eq "Genome::Sample");
       $model_samples{$build->model->subject->id}{sample} = $build->model->subject;
     }
@@ -209,7 +209,6 @@ sub summarize_clinseq_build {
     #Summarize the instrument data used by each model
     $self->status_message("\n\nInstrument data actually used by each build");
     for my $build (@builds){
-      next unless $build;
       my $m = $build->model;
       my $pp = $m->processing_profile;
       my $pp_type = $pp->type_name;
@@ -228,14 +227,12 @@ sub summarize_clinseq_build {
     #Summarize the build IDs and status of each build comprising the ClinSeq model
     $self->status_message("\n\nBuilds and status of each");
     for my $build (@builds) {
-      next unless $build;
       $self->status_message("build '" . $build->__display_name__ . "' has status " . $build->status);
     }
 
     #List the build dirs for each build
     $self->status_message("\n\nBuild dir associated with each model/build");
     for my $build (@builds){
-      next unless $build;
       my $m = $build->model;
       my $pp = $m->processing_profile;
       my $pp_type = $pp->type_name;
@@ -247,7 +244,6 @@ sub summarize_clinseq_build {
     #Summarize the processing profiles associated with each model
     $self->status_message("\n\nProcessing profiles associated with each model");
     for my $build (@builds){
-      next unless $build;
       my $m = $build->model;
       my $pp = $m->processing_profile;
       my $pp_type = $pp->type_name;
@@ -258,7 +254,6 @@ sub summarize_clinseq_build {
     #Summarize the reference sequence build associated with each model
     $self->status_message("\n\nReference sequence build associated with each model");
     for my $build (@builds){
-      next unless $build;
       my $m = $build->model;
       my $pp = $m->processing_profile;
       my $pp_type = $pp->type_name;
@@ -271,7 +266,6 @@ sub summarize_clinseq_build {
     #Summarize the annotation reference build associated with each model
     $self->status_message("\n\nAnnotation reference build associated with each model");
     for my $build (@builds){
-      next unless $build;
       my $m = $build->model;
       my $pp = $m->processing_profile;
       my $pp_type = $pp->type_name;
@@ -295,7 +289,6 @@ sub summarize_clinseq_build {
     #Summarize the genotype microarray build used with each model
     $self->status_message("\n\nGenotype microarray build associated with each model");
     for my $build (@builds){
-      next unless $build;
       my $m = $build->model;
       my $pp = $m->processing_profile;
       my $pp_type = $pp->type_name;
@@ -313,7 +306,6 @@ sub summarize_clinseq_build {
     #Summarize the dbsnp build used with each model
     $self->status_message("\n\ndbSNP build associated with each model");
     for my $build (@builds){
-      next unless $build;
       my $m = $build->model;
       my $pp = $m->processing_profile;
       my $pp_type = $pp->type_name;
@@ -336,7 +328,6 @@ sub summarize_clinseq_build {
     $self->status_message("\n\nHaploid coverage of each Exome/WGS ref alignment model");
     $self->status_message("subject_name\tpp_type\tsequence_type\tlane_count\tcommon_name\ttissue_desc\textraction_type\tsequence_amount_gbp\thaploid_coverage\tarray_het_snp_count\tarray_het_snp_depth\tarray_het_snp_concordance\ttotal_snp_positions_found_unfiltered\ttotal_snp_positions_found_filtered\tsnp_positions_in_dbsnp\tsnp_positions_not_in_dbsnp\toverall_dbsnp_concordance\tbuild_id");
     for my $build (@builds) {
-      next unless $build;
       my $m = $build->model;
       my $pp = $m->processing_profile;
       my $pp_type = $pp->type_name;
@@ -491,7 +482,6 @@ sub summarize_clinseq_build {
     $self->status_message("\n\nSample and library metrics from the reference alignment build directory");
     $self->status_message("subject_name\tpp_type\tsequence_type\tlane_count\tcommon_name\ttissue_desc\textraction_type\tsequence_amount_gbp\thaploid_coverage\tsample_total_single_read_count\tsample_mapped_read_percent\tsample_properly_paired_read_percent\tsample_duplicate_read_percent");
     for my $build (@builds) {
-      next unless $build;
       my $m = $build->model;
       my $pp = $m->processing_profile;
       my $pp_type = $pp->type_name;
@@ -645,7 +635,6 @@ sub summarize_clinseq_build {
     $self->status_message("\n\nSample sequencing metrics from APIPE");
     my %samples_processed;
     for my $build (@builds) {
-      next unless $build;
       my $m = $build->model;
       my $pp = $m->processing_profile;
       my $pp_type = $pp->type_name;
@@ -753,7 +742,6 @@ sub summarize_clinseq_build {
     $self->status_message("See results files in: $build_outdir\n");
     %samples_processed = ();
     for my $build (@builds) {
-      next unless $build;
       my $m = $build->model;
       my $pp = $m->processing_profile;
       my $pp_type = $pp->type_name;
@@ -807,7 +795,6 @@ sub summarize_clinseq_build {
     my %exome_builds_with_coverage;
     $self->status_message("\n\nExome coverage values for each WGS/Exome reference alignment build");
     for my $build (@builds) {
-      next unless $build;
       my $m = $build->model;
       my $pp = $m->processing_profile;
       my $pp_type = $pp->type_name;
@@ -972,7 +959,6 @@ sub summarize_clinseq_build {
     $self->status_message("\n\nGet basic RNA-seq alignment stats");
     $self->status_message("\nsample\ttotal_reads\ttotal_reads_mapped_percent\tunmapped_reads_percent\tfragment_size_mean\tfragment_size_std\tpercent_coding_bases\tpercent_utr_bases\tpercent_intronic_bases\tpercent_intergenic_bases\tpercent_ribosomal_bases\tbuild_id");
     for my $build (@builds) {
-      next unless $build;
       my $m = $build->model;
       my $pp = $m->processing_profile;
       my $pp_type = $pp->type_name;
@@ -1157,7 +1143,6 @@ sub summarize_clinseq_build {
     $self->status_message("\n\nGet basic somatic variation stats");
     $self->status_message("pp_name\ttier1_snv_count\ttier2_snv_count\ttier3_snv_count\ttier4_snv_count\ttier1_indel_count\ttier2_indel_count\ttier3_indel_count\ttier4_indel_count\tsv_count\tbuild_id");
     for my $build (@builds) {
-      next unless $build;
       my $m = $build->model;
       my $pp = $m->processing_profile;
       my $pp_type = $pp->type_name;
@@ -1251,7 +1236,6 @@ sub summarize_clinseq_build {
     $self->status_message("\n\nGet more detailed merged somatic SV stats");
     $self->status_message("pp_name\tsv_count\tctx_count\tdel_count\tinv_count\titx_count\tbuild_id");
     for my $build (@builds) {
-      next unless $build;
       my $m = $build->model;
       my $pp = $m->processing_profile;
       my $pp_type = $pp->type_name;
@@ -1316,7 +1300,6 @@ sub summarize_clinseq_build {
     $self->status_message("\n\nGet basic expression count from RNA-seq");
     $self->status_message("pp_name\tgenes_fpkm_greater_1\ttranscripts_fpkm_greater_1\tbuild_id");
     for my $build (@builds) {
-      next unless $build;
       my $m = $build->model;
       my $pp = $m->processing_profile;
       my $pp_type = $pp->type_name;
@@ -1380,7 +1363,6 @@ sub summarize_clinseq_build {
     #Print BAMs for all reference alignment and RNA-seq builds
     $self->status_message("\n\nGet all BAM file locations");
     for my $build (@builds) {
-      next unless $build;
       my $m = $build->model;
       my $pp = $m->processing_profile;
       my $pp_type = $pp->type_name;
