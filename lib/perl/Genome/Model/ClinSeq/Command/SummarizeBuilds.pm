@@ -113,7 +113,7 @@ sub execute {
     my $build_outdir;
     if ($clinseq_build_count > 1){
       $build_outdir = $outdir . $clinseq_build->id . "/";
-      mkdir($build_outdir);
+      Genome::Sys->create_directory($build_outdir);
     }else{
       $build_outdir = $outdir;
     }
@@ -141,9 +141,8 @@ sub summarize_build {
 
     #Store grand summary values that apply to the entire ClinSeq build
     my $summary_dir = $build_outdir . "summary/";
-    unless (-e $summary_dir && -d $summary_dir){
-      mkdir ($summary_dir);
-    }
+    Genome::Sys->create_directory($summary_dir);
+
     my $stats_file = $summary_dir . "Stats.tsv";
     open (STATS, ">$stats_file") || die "\n\nCould not open output file: $stats_file\n\n";
     print STATS "Question\tAnswer\tData_Type\tAnalysis_Type\tStatistic_Type\tExtra_Description\n";
