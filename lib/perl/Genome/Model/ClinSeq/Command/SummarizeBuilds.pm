@@ -320,10 +320,9 @@ sub summarize_clinseq_build {
     $self->status_message("subject_name\tpp_type\tsequence_type\tlane_count\tcommon_name\ttissue_desc\textraction_type\tsequence_amount_gbp\thaploid_coverage\tarray_het_snp_count\tarray_het_snp_depth\tarray_het_snp_concordance\ttotal_snp_positions_found_unfiltered\ttotal_snp_positions_found_filtered\tsnp_positions_in_dbsnp\tsnp_positions_not_in_dbsnp\toverall_dbsnp_concordance\tbuild_id");
     for my $build (@builds) {
       #Only perform the following for reference alignment builds!
+      next unless $self->_is_reference_alignment_build($build);
+
       my $build_type = $build->type_name;
-      unless ($build_type eq "reference alignment"){
-        next();
-      }
       my $build_dir = $build->data_directory;
       my $common_name = "[UNDEF sample common_name]";
       my $tissue_desc = "[UNDEF tissue_desc]";
@@ -471,10 +470,9 @@ sub summarize_clinseq_build {
     $self->status_message("subject_name\tpp_type\tsequence_type\tlane_count\tcommon_name\ttissue_desc\textraction_type\tsequence_amount_gbp\thaploid_coverage\tsample_total_single_read_count\tsample_mapped_read_percent\tsample_properly_paired_read_percent\tsample_duplicate_read_percent");
     for my $build (@builds) {
       #Only perform the following for reference alignment builds!
+      next unless $self->_is_reference_alignment_build($build);
+
       my $build_type = $build->type_name;
-      unless ($build_type eq "reference alignment"){
-        next();
-      }
       my $build_dir = $build->data_directory;
       my $common_name = "[UNDEF common_name]";
       my $tissue_desc = "[UNDEF tissue_desc]";
@@ -621,10 +619,8 @@ sub summarize_clinseq_build {
     my %samples_processed;
     for my $build (@builds) {
       #Only perform the following for reference alignment builds!
-      my $build_type = $build->type_name;
-      unless ($build_type eq "reference alignment"){
-        next();
-      }
+      next unless $self->_is_reference_alignment_build($build);
+
       my $build_dir = $build->data_directory;
       my $common_name = "[UNDEF common_name]";
       my $tissue_desc = "[UNDEF tissue_desc]";
@@ -726,10 +722,8 @@ sub summarize_clinseq_build {
     for my $build (@builds) {
 
       #Only perform the following for reference alignment builds!
-      my $build_type = $build->type_name;
-      unless ($build_type eq "reference alignment"){
-        next();
-      }
+      next unless $self->_is_reference_alignment_build($build);
+
       my $build_dir = $build->data_directory;
       my $common_name = "[UNDEF common_name]";
       my $tissue_desc = "[UNDEF tissue_desc]";
@@ -776,10 +770,8 @@ sub summarize_clinseq_build {
     $self->status_message("\n\nExome coverage values for each WGS/Exome reference alignment build");
     for my $build (@builds) {
       #Only perform the following for reference alignment builds!
-      my $build_type = $build->type_name;
-      unless ($build_type eq "reference alignment"){
-        next();
-      }
+      next unless $self->_is_reference_alignment_build($build);
+
       my $build_dir = $build->data_directory;
       my $common_name = "[UNDEF common_name]";
       my $tissue_desc = "[UNDEF tissue_desc]";
@@ -937,10 +929,8 @@ sub summarize_clinseq_build {
     $self->status_message("\nsample\ttotal_reads\ttotal_reads_mapped_percent\tunmapped_reads_percent\tfragment_size_mean\tfragment_size_std\tpercent_coding_bases\tpercent_utr_bases\tpercent_intronic_bases\tpercent_intergenic_bases\tpercent_ribosomal_bases\tbuild_id");
     for my $build (@builds) {
       #Only perform the following for reference alignment builds!
-      my $build_type = $build->type_name;
-      unless ($build_type eq "rna seq"){
-        next();
-      }
+      next unless $self->_is_rna_seq_build($build);
+
       my $build_id = $build->id;
       my $build_dir = $build->data_directory;
       my $common_name = "[UNDEF common_name]";
@@ -1123,10 +1113,9 @@ sub summarize_clinseq_build {
       my $data_type = $self->_determine_wgs_or_exome_for_build($build);
 
       #Only perform the following for reference alignment builds!
-      my $build_type = $build->type_name;
-      unless ($build_type eq "somatic variation"){
-        next();
-      }
+      #my $build_type = $build->type_name;
+      next unless $self->_is_somatic_variation_build($build);
+
       my $build_id = $build->id;
       my $common_name = "[UNDEF common_name]";
       my $tissue_desc = "[UNDEF tissue_desc]";
@@ -1210,10 +1199,8 @@ sub summarize_clinseq_build {
       my $pp_name = $pp->name;
       my $data_type = $self->_determine_wgs_or_exome_for_build($build);
       #Only perform the following for reference alignment builds and WGS only!
-      my $build_type = $build->type_name;
-      unless ($build_type eq "somatic variation" && $data_type eq "WGS"){
-        next();
-      }
+      next unless ($self->_is_somatic_variation_build($build) && $data_type eq "WGS");
+
       my $build_id = $build->id;
       my $build_dir = $build->data_directory;
 
@@ -1275,8 +1262,7 @@ sub summarize_clinseq_build {
       }
 
       #Only perform the following for reference alignment builds and WGS only!
-      my $build_type = $build->type_name;
-      next unless ($build_type eq "rna seq");
+      next unless $self->_is_rna_seq_build($build);
 
       my $build_id = $build->id;
       my $build_dir = $build->data_directory;
@@ -1329,10 +1315,8 @@ sub summarize_clinseq_build {
     for my $build (@builds) {
 
       #Only perform the following for reference alignment builds!
-      my $build_type = $build->type_name;
-      unless ($build_type eq "reference alignment" || $build_type eq "rna seq"){
-        next();
-      }
+      next unless($self->_is_reference_alignment_build($build) or $self->_is_rna_seq_build($build));
+
       my $build_id = $build->id;
       my $build_dir = $build->data_directory;
       my $common_name = "[UNDEF common_name]";
@@ -1468,6 +1452,26 @@ sub _determine_wgs_or_exome_for_build {
     return $data_type;
 }
 
+sub _is_reference_alignment_build {
+    my $self = shift;
+    my $build = shift;
+
+    return $build->type_name eq 'reference alignment';
+}
+
+sub _is_rna_seq_build {
+    my $self = shift;
+    my $build = shift;
+
+    return $build->type_name eq 'rna seq';
+}
+
+sub _is_somatic_variation_build {
+    my $self = shift;
+    my $build = shift;
+
+    return $build->type_name eq 'somatic variation';
+}
 
 1;
 
