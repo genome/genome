@@ -27,32 +27,6 @@ class Genome::Site::TGI::Synchronize::SyncLimsAndGenome {
         'It then removes all non-imported instrument data that are no longer represented in the LIMS based classes', 
 };
 
-sub _lock_me {
-    my $self = shift;
-    return 1 if $ENV{UR_DBI_NO_COMMIT};
-    $self->status_message('Lock...');
-    my $lock = Genome::Sys->lock_resource(
-        resource_lock => $ENV{GENOME_LOCK_DIR} . '/synchronize-genome-from-lims',
-        max_try => 1,
-    );
-    if ( not $lock ) {
-        $self->error_message("Could not lock!");
-        return;
-    }
-    $self->status_message('Lock: '.$lock);
-    $self->_lock($lock);
-    return 1;
-}
-
-sub _unlock_me {
-    my $self = shift;
-    return 1 if $ENV{UR_DBI_NO_COMMIT};
-    return 1 if not $self->_lock;
-    $self->status_message('Unlock: '.$self->_lock);
-    eval{ Genome::Sys->unlock_resource(resource_lock => $self->_lock); };
-    return 1;
-}
-
 sub execute {
     my $self = shift; 
     $self->status_message('Sync Genome from LIMS...');
@@ -76,12 +50,38 @@ sub execute {
         return if not $expunge;
     }
 
-    my $report_string = $self->generate_report;
+    my $report_string = $self->_generate_report;
     print $report_string;
 
     $self->_unlock_me;
 
     $self->status_message('Sync Genome from LIMS...done');
+    return 1;
+}
+
+sub _lock_me {
+    my $self = shift;
+    return 1 if $ENV{UR_DBI_NO_COMMIT};
+    $self->status_message('Lock...');
+    my $lock = Genome::Sys->lock_resource(
+        resource_lock => $ENV{GENOME_LOCK_DIR} . '/synchronize-genome-from-lims',
+        max_try => 1,
+    );
+    if ( not $lock ) {
+        $self->error_message("Could not lock!");
+        return;
+    }
+    $self->status_message('Lock: '.$lock);
+    $self->_lock($lock);
+    return 1;
+}
+
+sub _unlock_me {
+    my $self = shift;
+    return 1 if $ENV{UR_DBI_NO_COMMIT};
+    return 1 if not $self->_lock;
+    $self->status_message('Unlock: '.$self->_lock);
+    eval{ Genome::Sys->unlock_resource(resource_lock => $self->_lock); };
     return 1;
 }
 
@@ -109,7 +109,55 @@ sub _suppress_status_messages {
         *{$class.'::format_and_print'} = sub{return $_[0];};
     }
 
+    return 1;
+}
 
+sub _load_successful_pidfas {
+    my $self = shift;
+    # Load successful pidfas grabbing the pidfa_output pse param, if available
+    # This query/hash loading takes 10-15 secs
+    my $instrument_data_with_successful_pidfas = $self->instrument_data_with_successful_pidfas;
+    return 1 if %$instrument_data_with_successful_pidfas;
+
+    print STDERR "Load instrument data successful pidfas...\n";
+
+    my $dbh = Genome::DataSource::Oltp->get_default_handle;
+    if ( not $dbh ) {
+        $self->error_message('Failed to get dbh from gm schema!');
+        return;
+    }
+    my $sql = <<SQL;
+        select p1.param_value, p2.param_value
+        from process_step_executions pse
+        inner join pse_param p1 on p1.pse_id = pse.pse_id and p1.param_name = 'instrument_data_id'
+        left join pse_param p2 on p2.pse_id = pse.pse_id and p2.param_name = 'pidfa_output'
+        where pse.ps_ps_id = 3870 and pse.pr_pse_result = 'successful'
+        order by p1.param_value desc
+SQL
+
+    print STDERR "PIDFA SQL:\n$sql\n";
+    print STDERR "PIDFA Prepare SQL\n";
+    my $sth = $dbh->prepare($sql);
+    if ( not $sth ) {
+        $self->error_message('Failed to prepare successful pidfa sql');
+        return;
+    }
+    print STDERR "PIDFA Execute SQL\n";
+    my $execute = $sth->execute;
+    if ( not $execute ) {
+        $self->error_message('Failed to execute successful pidfa sql');
+        return;
+    }
+    print STDERR "PIDFA Fetch Results\n";
+    while ( my ($instrument_data_id, $pidfa_output) = $sth->fetchrow_array ) {
+        # Going in reverse id order...use the most recent pidfa output for duplicate pidfas
+        # pidfa output is defined for genotype microarray (genotype file) and 454 (sff file)
+        $instrument_data_with_successful_pidfas->{$instrument_data_id} = $pidfa_output if not defined $instrument_data_with_successful_pidfas->{$instrument_data_id};
+    }
+    $sth->finish;
+
+    print STDERR 'Loaded '.scalar(keys %$instrument_data_with_successful_pidfas)." successful PIDFAs\n";
+    print STDERR 'Loaded '.scalar(grep { defined } values %$instrument_data_with_successful_pidfas)." pidfa outputs\n";
     return 1;
 }
 
@@ -213,55 +261,6 @@ sub _create_genome_objects_for_lims_objects {
     return 1;
 }
 
-sub _load_successful_pidfas {
-    my $self = shift;
-    # Load successful pidfas grabbing the pidfa_output pse param, if available
-    # This query/hash loading takes 10-15 secs
-    my $instrument_data_with_successful_pidfas = $self->instrument_data_with_successful_pidfas;
-    return 1 if %$instrument_data_with_successful_pidfas;
-
-    print STDERR "Load instrument data successful pidfas...\n";
-
-    my $dbh = Genome::DataSource::Oltp->get_default_handle;
-    if ( not $dbh ) {
-        $self->error_message('Failed to get dbh from gm schema!');
-        return;
-    }
-    my $sql = <<SQL;
-        select p1.param_value, p2.param_value
-        from process_step_executions pse
-        inner join pse_param p1 on p1.pse_id = pse.pse_id and p1.param_name = 'instrument_data_id'
-        left join pse_param p2 on p2.pse_id = pse.pse_id and p2.param_name = 'pidfa_output'
-        where pse.ps_ps_id = 3870 and pse.pr_pse_result = 'successful'
-        order by p1.param_value desc
-SQL
-
-    print STDERR "PIDFA SQL:\n$sql\n";
-    print STDERR "PIDFA Prepare SQL\n";
-    my $sth = $dbh->prepare($sql);
-    if ( not $sth ) {
-        $self->error_message('Failed to prepare successful pidfa sql');
-        return;
-    }
-    print STDERR "PIDFA Execute SQL\n";
-    my $execute = $sth->execute;
-    if ( not $execute ) {
-        $self->error_message('Failed to execute successful pidfa sql');
-        return;
-    }
-    print STDERR "PIDFA Fetch Results\n";
-    while ( my ($instrument_data_id, $pidfa_output) = $sth->fetchrow_array ) {
-        # Going in reverse id order...use the most recent pidfa output for duplicate pidfas
-        # pidfa output is defined for genotype microarray (genotype file) and 454 (sff file)
-        $instrument_data_with_successful_pidfas->{$instrument_data_id} = $pidfa_output if not defined $instrument_data_with_successful_pidfas->{$instrument_data_id};
-    }
-    $sth->finish;
-
-    print STDERR 'Loaded '.scalar(keys %$instrument_data_with_successful_pidfas)." successful PIDFAs\n";
-    print STDERR 'Loaded '.scalar(grep { defined } values %$instrument_data_with_successful_pidfas)." pidfa outputs\n";
-    return 1;
-}
-
 sub _create_object {
     my ($self, $original_object, $new_object_class) = @_;
     return $original_object->create_in_genome;
@@ -312,27 +311,6 @@ sub _create_instrumentdataanalysisprojectbridge {
     return $self->_create_object($original_object, $new_object_class);
 }
 
-1;
-
-sub generate_report {
-    my $self = shift;
-
-    my %report = %{$self->_report};
-    my $string;
-    for my $type (sort keys %report) {
-        $string .= "Type $type";
-        for my $operation (qw/ copied missing deleted /) {
-            my $num = 0;
-            if (exists $report{$type}{$operation}) {
-                $num = scalar @{$report{$type}{$operation}};
-            }
-            $string .= (', ' . (ucfirst $operation) . " $num");
-        }
-        $string .= "\n";
-    }
-    return $string;
-}
-
 sub _expunge {
     my $self = shift;
 
@@ -370,6 +348,25 @@ sub _expunge {
     $self->_report($report);
 
     return 1;
+}
+
+sub _generate_report {
+    my $self = shift;
+
+    my %report = %{$self->_report};
+    my $string;
+    for my $type (sort keys %report) {
+        $string .= "Type $type";
+        for my $operation (qw/ copied missing deleted /) {
+            my $num = 0;
+            if (exists $report{$type}{$operation}) {
+                $num = scalar @{$report{$type}{$operation}};
+            }
+            $string .= (', ' . (ucfirst $operation) . " $num");
+        }
+        $string .= "\n";
+    }
+    return $string;
 }
 
 1;
