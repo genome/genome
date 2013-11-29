@@ -1365,6 +1365,8 @@ sub summarize_library_quality_reports_for_build {
 
     return unless $self->_is_reference_alignment_build($build);
 
+    return if $self->skip_lims_reports;
+
     my @formats = qw (csv tsv html);
     my @reports = qw (lane library library_index_summary run);
     my %rf;
