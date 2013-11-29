@@ -319,148 +319,8 @@ sub summarize_clinseq_build {
     $self->status_message("\n\nHaploid coverage of each Exome/WGS ref alignment model");
     $self->status_message("subject_name\tpp_type\tsequence_type\tlane_count\tcommon_name\ttissue_desc\textraction_type\tsequence_amount_gbp\thaploid_coverage\tarray_het_snp_count\tarray_het_snp_depth\tarray_het_snp_concordance\ttotal_snp_positions_found_unfiltered\ttotal_snp_positions_found_filtered\tsnp_positions_in_dbsnp\tsnp_positions_not_in_dbsnp\toverall_dbsnp_concordance\tbuild_id");
     for my $build (@builds) {
-      #Only perform the following for reference alignment builds!
-      next unless $self->_is_reference_alignment_build($build);
-
-      my $build_type = $build->type_name;
-      my $build_dir = $build->data_directory;
-      my $common_name = "[UNDEF sample common_name]";
-      my $tissue_desc = "[UNDEF tissue_desc]";
-      my $extraction_type = "[UNDEF extraction_type]";
-      my $subject = $build->subject;
-      my $subject_name = $subject->name;
-      if ($subject->can("common_name")){
-        if ($subject->common_name){
-          $common_name = $subject->common_name;
-        }
-      }
-      if ($subject->can("tissue_desc")){
-        if ($subject->tissue_desc){
-          $tissue_desc = $subject->tissue_desc;
-        }
-      }
-      if ($subject->can("extraction_type")){
-        if ($subject->extraction_type){
-          $extraction_type = $subject->extraction_type;
-        }
-      }
-      #grab metrics and build a hash from them
-      my %metrics = map {$_->name => $_->value} $build->metrics;
-      my $build_id = $build->id;
-      my $gbp = "n/a";
-      my $haploid_coverage = "n/a";
-
-      #Get total amount of instrument data from the 'metrics' object
-      if (defined($metrics{"instrument data total kb"})){
-        $gbp = sprintf("%0.01f", $metrics{"instrument data total kb"} / 10**6);
-      }
-
-      #Get haploid coverage from the 'metrics' object
-      if (defined($metrics{'haploid_coverage'})){
-        $haploid_coverage = sprintf("%0.01f", $metrics{'haploid_coverage'});
-      }
-
-      my @lanes = $build->instrument_data;
-      my $lane_count = scalar(@lanes);
-      #Infer whether the data is wgs or exome based on the presence of target region set names
-      my $trsn_count = 0;
-      for my $id (@lanes) {
-        if ($id->target_region_set_name){
-          $trsn_count++;
-        }
-      }
-      my $sequence_type = "unknown";
-      if ($trsn_count == $lane_count){
-        $sequence_type = "exome";
-      }elsif($trsn_count == 0){
-        $sequence_type = "wgs";
-      }else{
-        $sequence_type = "mixed";
-      }
-
-      #Get array vs. sequence concordance of SNP positions (only those on the Illumina bead array).  These are referred to in the system as 'Gold SNP Concordance' values
-      my $gold_filtered_het_snp_count = "n/a";                 # 'filtered:heterozygous snv:hits:match:heterozygous (1 alleles) snv:count'
-      my $gold_filtered_total = "n/a";                         # 'filtered:heterozygous snv:total'
-      my $gold_filtered_het_snp_depth = "n/a";                 # 'filtered:heterozygous snv:hits:match:heterozygous (1 alleles) snv:qual'
-      my $gold_filtered_het_snp_percent_concordance = "n/a";   # ($gold_filtered_het_snp_count / $gold_filtered_total) * 100
-
-      #Note, do not calculate for Exome as the SNP concordance values are not being calculated correctly... not accounting for the target space when determining percent concordance!
-      if (($sequence_type eq "wgs" || $sequence_type eq "mixed") && defined($metrics{'filtered:heterozygous snv:hits:match:heterozygous (1 alleles) snv:count'}) && defined($metrics{'filtered:heterozygous snv:total'}) && defined($metrics{'filtered:heterozygous snv:hits:match:heterozygous (1 alleles) snv:qual'})){
-        $gold_filtered_het_snp_count = $metrics{'filtered:heterozygous snv:hits:match:heterozygous (1 alleles) snv:count'};
-        $gold_filtered_total = $metrics{'filtered:heterozygous snv:total'};
-        $gold_filtered_het_snp_depth = $metrics{'filtered:heterozygous snv:hits:match:heterozygous (1 alleles) snv:qual'};
-        if ($gold_filtered_total){
-          $gold_filtered_het_snp_percent_concordance = sprintf("%.2f", (($gold_filtered_het_snp_count / $gold_filtered_total)*100));
-        }
-      }
-
-      #Obtain the dbSNP concordance metrics for each ref alignment model (these are the SNPs called by WGS compared to publicly known dbSNPS)
-      #NOTE: These metrics do not appear to be stored in a metrics object...  Will have to parse from a file routinely created for reference alignment builds
-      #e.g. /gscmnt/gc7001/info/model_data/2879615516/build114445127/reports/dbsnp_concordance.filtered.txt
-      #"Overall concordance: 93.6585"  "Total Snvs: 3656996"  "Hits: 3425089"  "Misses: 231907"
-      my $total_snp_positions_found_filtered = "n/a";
-      my $snp_positions_in_dbsnp = "n/a";
-      my $snp_positions_not_in_dbsnp = "n/a";
-      my $overall_dbsnp_concordance = "n/a";
-      my $dbsnp_concordance_file = $build_dir . "/reports/dbsnp_concordance.filtered.txt";
-      if (-e $dbsnp_concordance_file){
-        open (DBSNPC, "$dbsnp_concordance_file");
-        while(<DBSNPC>){
-          chomp($_);
-          if ($_ =~ /Overall\s+concordance\:\s+(\S+)/){
-            $overall_dbsnp_concordance = $1;
-            if ($overall_dbsnp_concordance =~ /\d+/){
-              $overall_dbsnp_concordance = sprintf("%.2f", $overall_dbsnp_concordance)
-            }
-          }
-          if ($_ =~ /Hits\:\s+(\S+)/){
-            $snp_positions_in_dbsnp = $1;
-          }
-          if ($_ =~ /Misses\:\s+(\S+)/){
-            $snp_positions_not_in_dbsnp = $1;
-          }
-          if ($_ =~ /Total\s+Snvs\:\s+(\S+)/){
-            $total_snp_positions_found_filtered = $1;
-          }
-        }
-        close (DBSNPC);
-      }
-
-      #Get the total unfiltered SNP calls for each reference alignment build
-      my $total_snp_positions_found_unfiltered = "n/a";
-      $dbsnp_concordance_file = $build_dir . "/reports/dbsnp_concordance.txt";
-      if (-e $dbsnp_concordance_file){
-        open (DBSNPC, "$dbsnp_concordance_file");
-        while(<DBSNPC>){
-          chomp($_);
-          if ($_ =~ /Total\s+Snvs\:\s+(\S+)/){
-            $total_snp_positions_found_unfiltered = $1;
-          }
-        }
-        close (DBSNPC);
-      }
-
-      #Display gathered info for both Exome and WGS reference alignment models
-      $self->status_message("$subject_name\t$build_type\t$sequence_type\t$lane_count\t$common_name\t$tissue_desc\t$extraction_type\t$gbp\t$haploid_coverage\t$gold_filtered_het_snp_count\t$gold_filtered_het_snp_depth\t$gold_filtered_het_snp_percent_concordance\t$total_snp_positions_found_unfiltered\t$total_snp_positions_found_filtered\t$snp_positions_in_dbsnp\t$snp_positions_not_in_dbsnp\t$overall_dbsnp_concordance\t$build_id");
-
-      #Resolve data type
-      my $data_type;
-      if ($subject->can("common_name")){
-        if ($subject->common_name){
-          $data_type = $sequence_type . "_" . $common_name;
-        }else{
-          $data_type = $sequence_type . "_" . $subject_name;
-        }
-      }else{
-        $data_type = $sequence_type . "_" . $subject_name;
-      }
-
-      print STATS "Data amount (Gbp)\t$gbp\t$data_type\tClinseq Build Summary\tFloat\tData amount (Gbp) for $sequence_type $common_name data\n";
-      print STATS "Haploid coverage\t$haploid_coverage\t$data_type\tClinseq Build Summary\tFloat\tHaploid coverage for $sequence_type $common_name data\n";
-      print STATS "Gold SNP Concordance\t$gold_filtered_het_snp_percent_concordance\t$data_type\tClinseq Build Summary\tPercent\tSNP array vs. sequencing SNP concordance (gold, filtered, het, snps) for $sequence_type $common_name data\n";
-      print STATS "dbSNP SNP Concordance\t$overall_dbsnp_concordance\t$data_type\tClinseq Build Summary\tPercent\tdbSNP vs. sequencing SNP concordance for $sequence_type $common_name data\n";
+        $self->summarize_haploid_coverage_for_build($build);
     }
-
 
     #Obtain the read duplication rate for each WGS BAM file from the Reference alignment models - note that duplication rate is defined on a per library basis (as it should be)
     #Also obtain other basic mapping information from the alignments files
@@ -1406,6 +1266,154 @@ sub summarize_sample {
     my $count = scalar(@instdata);
 
     return ($tumor_or_normal . $dna_or_rna) => $count;
+}
+
+sub summarize_haploid_coverage_for_build {
+    my $self = shift;
+    my $build = shift;
+
+    #Only perform the following for reference alignment builds!
+    return unless $self->_is_reference_alignment_build($build);
+
+    my $build_type = $build->type_name;
+    my $build_dir = $build->data_directory;
+    my $common_name = "[UNDEF sample common_name]";
+    my $tissue_desc = "[UNDEF tissue_desc]";
+    my $extraction_type = "[UNDEF extraction_type]";
+    my $subject = $build->subject;
+    my $subject_name = $subject->name;
+    if ($subject->can("common_name")){
+        if ($subject->common_name){
+            $common_name = $subject->common_name;
+        }
+    }
+    if ($subject->can("tissue_desc")){
+        if ($subject->tissue_desc){
+            $tissue_desc = $subject->tissue_desc;
+        }
+    }
+    if ($subject->can("extraction_type")){
+        if ($subject->extraction_type){
+            $extraction_type = $subject->extraction_type;
+        }
+    }
+    #grab metrics and build a hash from them
+    my %metrics = map {$_->name => $_->value} $build->metrics;
+    my $build_id = $build->id;
+    my $gbp = "n/a";
+    my $haploid_coverage = "n/a";
+
+    #Get total amount of instrument data from the 'metrics' object
+    if (defined($metrics{"instrument data total kb"})){
+        $gbp = sprintf("%0.01f", $metrics{"instrument data total kb"} / 10**6);
+    }
+
+    #Get haploid coverage from the 'metrics' object
+    if (defined($metrics{'haploid_coverage'})){
+        $haploid_coverage = sprintf("%0.01f", $metrics{'haploid_coverage'});
+    }
+
+    my @lanes = $build->instrument_data;
+    my $lane_count = scalar(@lanes);
+    #Infer whether the data is wgs or exome based on the presence of target region set names
+    my $trsn_count = 0;
+    for my $id (@lanes) {
+        if ($id->target_region_set_name){
+            $trsn_count++;
+        }
+    }
+    my $sequence_type = "unknown";
+    if ($trsn_count == $lane_count){
+        $sequence_type = "exome";
+    }elsif($trsn_count == 0){
+        $sequence_type = "wgs";
+    }else{
+        $sequence_type = "mixed";
+    }
+
+    #Get array vs. sequence concordance of SNP positions (only those on the Illumina bead array).  These are referred to in the system as 'Gold SNP Concordance' values
+    my $gold_filtered_het_snp_count = "n/a";                 # 'filtered:heterozygous snv:hits:match:heterozygous (1 alleles) snv:count'
+    my $gold_filtered_total = "n/a";                         # 'filtered:heterozygous snv:total'
+    my $gold_filtered_het_snp_depth = "n/a";                 # 'filtered:heterozygous snv:hits:match:heterozygous (1 alleles) snv:qual'
+    my $gold_filtered_het_snp_percent_concordance = "n/a";   # ($gold_filtered_het_snp_count / $gold_filtered_total) * 100
+
+    #Note, do not calculate for Exome as the SNP concordance values are not being calculated correctly... not accounting for the target space when determining percent concordance!
+    if (($sequence_type eq "wgs" || $sequence_type eq "mixed") && defined($metrics{'filtered:heterozygous snv:hits:match:heterozygous (1 alleles) snv:count'}) && defined($metrics{'filtered:heterozygous snv:total'}) && defined($metrics{'filtered:heterozygous snv:hits:match:heterozygous (1 alleles) snv:qual'})){
+        $gold_filtered_het_snp_count = $metrics{'filtered:heterozygous snv:hits:match:heterozygous (1 alleles) snv:count'};
+        $gold_filtered_total = $metrics{'filtered:heterozygous snv:total'};
+        $gold_filtered_het_snp_depth = $metrics{'filtered:heterozygous snv:hits:match:heterozygous (1 alleles) snv:qual'};
+        if ($gold_filtered_total){
+            $gold_filtered_het_snp_percent_concordance = sprintf("%.2f", (($gold_filtered_het_snp_count / $gold_filtered_total)*100));
+        }
+    }
+
+    #Obtain the dbSNP concordance metrics for each ref alignment model (these are the SNPs called by WGS compared to publicly known dbSNPS)
+    #NOTE: These metrics do not appear to be stored in a metrics object...  Will have to parse from a file routinely created for reference alignment builds
+    #e.g. /gscmnt/gc7001/info/model_data/2879615516/build114445127/reports/dbsnp_concordance.filtered.txt
+    #"Overall concordance: 93.6585"  "Total Snvs: 3656996"  "Hits: 3425089"  "Misses: 231907"
+    my $total_snp_positions_found_filtered = "n/a";
+    my $snp_positions_in_dbsnp = "n/a";
+    my $snp_positions_not_in_dbsnp = "n/a";
+    my $overall_dbsnp_concordance = "n/a";
+    my $dbsnp_concordance_file = $build_dir . "/reports/dbsnp_concordance.filtered.txt";
+    if (-e $dbsnp_concordance_file){
+        open (DBSNPC, "$dbsnp_concordance_file");
+        while(<DBSNPC>){
+            chomp($_);
+            if ($_ =~ /Overall\s+concordance\:\s+(\S+)/){
+                $overall_dbsnp_concordance = $1;
+                if ($overall_dbsnp_concordance =~ /\d+/){
+                    $overall_dbsnp_concordance = sprintf("%.2f", $overall_dbsnp_concordance)
+                }
+            }
+            if ($_ =~ /Hits\:\s+(\S+)/){
+                $snp_positions_in_dbsnp = $1;
+            }
+            if ($_ =~ /Misses\:\s+(\S+)/){
+                $snp_positions_not_in_dbsnp = $1;
+            }
+            if ($_ =~ /Total\s+Snvs\:\s+(\S+)/){
+                $total_snp_positions_found_filtered = $1;
+            }
+        }
+        close (DBSNPC);
+    }
+
+    #Get the total unfiltered SNP calls for each reference alignment build
+    my $total_snp_positions_found_unfiltered = "n/a";
+    $dbsnp_concordance_file = $build_dir . "/reports/dbsnp_concordance.txt";
+    if (-e $dbsnp_concordance_file){
+        open (DBSNPC, "$dbsnp_concordance_file");
+        while(<DBSNPC>){
+            chomp($_);
+            if ($_ =~ /Total\s+Snvs\:\s+(\S+)/){
+                $total_snp_positions_found_unfiltered = $1;
+            }
+        }
+        close (DBSNPC);
+    }
+
+    #Display gathered info for both Exome and WGS reference alignment models
+    $self->status_message("$subject_name\t$build_type\t$sequence_type\t$lane_count\t$common_name\t$tissue_desc\t$extraction_type\t$gbp\t$haploid_coverage\t$gold_filtered_het_snp_count\t$gold_filtered_het_snp_depth\t$gold_filtered_het_snp_percent_concordance\t$total_snp_positions_found_unfiltered\t$total_snp_positions_found_filtered\t$snp_positions_in_dbsnp\t$snp_positions_not_in_dbsnp\t$overall_dbsnp_concordance\t$build_id");
+
+    #Resolve data type
+    my $data_type;
+    if ($subject->can("common_name")){
+        if ($subject->common_name){
+            $data_type = $sequence_type . "_" . $common_name;
+        }else{
+            $data_type = $sequence_type . "_" . $subject_name;
+        }
+    }else{
+        $data_type = $sequence_type . "_" . $subject_name;
+    }
+
+    print STATS "Data amount (Gbp)\t$gbp\t$data_type\tClinseq Build Summary\tFloat\tData amount (Gbp) for $sequence_type $common_name data\n";
+    print STATS "Haploid coverage\t$haploid_coverage\t$data_type\tClinseq Build Summary\tFloat\tHaploid coverage for $sequence_type $common_name data\n";
+    print STATS "Gold SNP Concordance\t$gold_filtered_het_snp_percent_concordance\t$data_type\tClinseq Build Summary\tPercent\tSNP array vs. sequencing SNP concordance (gold, filtered, het, snps) for $sequence_type $common_name data\n";
+    print STATS "dbSNP SNP Concordance\t$overall_dbsnp_concordance\t$data_type\tClinseq Build Summary\tPercent\tdbSNP vs. sequencing SNP concordance for $sequence_type $common_name data\n";
+
+    return 1;
 }
 
 sub _run_solexa_lister {
