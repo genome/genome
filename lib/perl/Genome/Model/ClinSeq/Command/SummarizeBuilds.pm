@@ -347,89 +347,15 @@ sub summarize_clinseq_build {
     $self->status_message("\n\nSample sequencing metrics from APIPE");
     my %samples_processed;
     for my $build (@builds) {
-      #Only perform the following for reference alignment builds!
-      next unless $self->_is_reference_alignment_build($build);
+        my $subject_name = $build->subject->name;
 
-      my $build_dir = $build->data_directory;
-      my $common_name = "[UNDEF common_name]";
-      my $tissue_desc = "[UNDEF tissue_desc]";
-      my $extraction_type = "[UNDEF extraction_type]";
-      my $subject = $build->subject;
-      my $subject_name = $subject->name;
-      if ($subject->can("common_name")){
-        if ($subject->common_name){
-          $common_name = $subject->common_name;
-        }
-      }
-      if ($subject->can("tissue_desc")){
-        if ($subject->tissue_desc){
-          $tissue_desc = $subject->tissue_desc;
-        }
-      }
-      if ($subject->can("extraction_type")){
-        if ($subject->extraction_type){
-          $extraction_type = $subject->extraction_type;
-        }
-      }
+        #Only process each sample once
+        unless ($samples_processed{$subject_name}){
+            $samples_processed{$subject_name} = 1;
 
-      #Only process each sample once
-      unless ($samples_processed{$subject_name}){
-        $samples_processed{$subject_name} = 1;
-        #Occasionally the sample name will contain problem characters like "(" and ")" which need to be escaped or replaced
-        my $subject_name_escaped = Genome::Utility::Text::sanitize_string_for_filesystem($subject_name);
-        my $id_sample_summary_file_csv = $build_outdir . $subject_name_escaped . "_APIPE_Sample_Sequence_QC.csv";
-        my $id_sample_summary_file_html = $build_outdir . $subject_name_escaped . "_APIPE_Sample_Sequence_QC.html";
-
-        #Produce the sample sequencing summary in csv format
-        $self->status_message("\n");
-        $self->_run_solexa_lister($subject_name, 'csv', $id_sample_summary_file_csv);
-        $self->_run_solexa_lister($subject_name, 'html', $id_sample_summary_file_html);
-
-        $self->status_message("\nSample: $subject_name ($common_name | $tissue_desc | $extraction_type)");
-
-        #Parse the csv file and store as tsv in the main output
-        my ($insert_size_sum, $insert_size_count, $avg_insert_size, $fwd_error_rate_sum, $fwd_error_rate_count, $avg_fwd_error_rate, $rev_error_rate_sum, $rev_error_rate_count, $avg_rev_error_rate) = (0,0,0,0,0,0,0,0,0);
-        if (-e $id_sample_summary_file_csv){
-          open (SID, "$id_sample_summary_file_csv");
-          while(<SID>){
-            $_ =~ s/\,/\t/g;
-            $self->status_message("$_");
-            chomp($_);
-            my @line = split("\t", $_);
-            next unless (scalar(@line) == 13);
-            if ($line[8] =~ /\d+/){
-              $insert_size_sum += $line[8]; $insert_size_count++;
-            }
-            if ($line[11] =~ /\d+/){
-              $fwd_error_rate_sum += $line[11]; $fwd_error_rate_count++;
-            }
-            if ($line[12] =~ /\d+/){
-              $rev_error_rate_sum += $line[12]; $rev_error_rate_count++;
-            }
-          }
-          close (SID);
+            $self->summarize_instrument_data_reports_for_build($build, $build_outdir);
         }
-        if ($insert_size_sum){
-          $avg_insert_size = sprintf("%.0f", $insert_size_sum/$insert_size_count);
-        }else{
-          $avg_insert_size = "n/a";
-        }
-        if ($fwd_error_rate_sum){
-          $avg_fwd_error_rate = sprintf("%.2f", ($fwd_error_rate_sum/$fwd_error_rate_count));
-        }else{
-          $avg_fwd_error_rate = "n/a";
-        }
-        if ($rev_error_rate_sum){
-          $avg_rev_error_rate = sprintf("%.2f", ($rev_error_rate_sum/$rev_error_rate_count));
-        }else{
-          $avg_rev_error_rate = "n/a";
-        }
-        print STATS "Average Library Insert Size\t$avg_insert_size\t$common_name\tClinseq Build Summary\tAverage\tAverage of library-by-library median insert sizes for $common_name $extraction_type data\n";
-        print STATS "Forward Read Average Error Rate\t$avg_fwd_error_rate\t$common_name\tClinseq Build Summary\tAverage\tAverage of library-by-library sequencing forward read error rates for $common_name $extraction_type data\n";
-        print STATS "Reverse Read Average Error Rate\t$avg_rev_error_rate\t$common_name\tClinseq Build Summary\tAverage\tAverage of library-by-library sequencing reverse read error rates for $common_name $extraction_type data\n";
-      }
     }
-
 
     #Generate LIMS library quality reports (including alignment and quality metrics) for each flowcell associated with each sample
     #e.g.
@@ -1388,6 +1314,89 @@ sub summarize_sample_and_library_metrics_for_build {
     }
 
     return 1;
+}
+
+sub summarize_instrument_data_reports_for_build {
+    my $self = shift;
+    my $build = shift;
+    my $build_outdir = shift;
+
+    return unless $self->_is_reference_alignment_build($build);
+
+    my $build_dir = $build->data_directory;
+    my $common_name = "[UNDEF common_name]";
+    my $tissue_desc = "[UNDEF tissue_desc]";
+    my $extraction_type = "[UNDEF extraction_type]";
+    my $subject = $build->subject;
+    my $subject_name = $subject->name;
+    if ($subject->can("common_name")){
+        if ($subject->common_name){
+            $common_name = $subject->common_name;
+        }
+    }
+    if ($subject->can("tissue_desc")){
+        if ($subject->tissue_desc){
+            $tissue_desc = $subject->tissue_desc;
+        }
+    }
+    if ($subject->can("extraction_type")){
+        if ($subject->extraction_type){
+            $extraction_type = $subject->extraction_type;
+        }
+    }
+
+    #Occasionally the sample name will contain problem characters like "(" and ")" which need to be escaped or replaced
+    my $subject_name_escaped = Genome::Utility::Text::sanitize_string_for_filesystem($subject_name);
+    my $id_sample_summary_file_csv = $build_outdir . $subject_name_escaped . "_APIPE_Sample_Sequence_QC.csv";
+    my $id_sample_summary_file_html = $build_outdir . $subject_name_escaped . "_APIPE_Sample_Sequence_QC.html";
+
+    #Produce the sample sequencing summary in csv format
+    $self->status_message("\n");
+    $self->_run_solexa_lister($subject_name, 'csv', $id_sample_summary_file_csv);
+    $self->_run_solexa_lister($subject_name, 'html', $id_sample_summary_file_html);
+
+    $self->status_message("\nSample: $subject_name ($common_name | $tissue_desc | $extraction_type)");
+
+    #Parse the csv file and store as tsv in the main output
+    my ($insert_size_sum, $insert_size_count, $avg_insert_size, $fwd_error_rate_sum, $fwd_error_rate_count, $avg_fwd_error_rate, $rev_error_rate_sum, $rev_error_rate_count, $avg_rev_error_rate) = (0,0,0,0,0,0,0,0,0);
+    if (-e $id_sample_summary_file_csv){
+        open (SID, "$id_sample_summary_file_csv");
+        while(<SID>){
+            $_ =~ s/\,/\t/g;
+            $self->status_message("$_");
+            chomp($_);
+            my @line = split("\t", $_);
+            next unless (scalar(@line) == 13);
+            if ($line[8] =~ /\d+/){
+                $insert_size_sum += $line[8]; $insert_size_count++;
+            }
+            if ($line[11] =~ /\d+/){
+                $fwd_error_rate_sum += $line[11]; $fwd_error_rate_count++;
+            }
+            if ($line[12] =~ /\d+/){
+                $rev_error_rate_sum += $line[12]; $rev_error_rate_count++;
+            }
+        }
+        close (SID);
+    }
+    if ($insert_size_sum){
+        $avg_insert_size = sprintf("%.0f", $insert_size_sum/$insert_size_count);
+    }else{
+        $avg_insert_size = "n/a";
+    }
+    if ($fwd_error_rate_sum){
+        $avg_fwd_error_rate = sprintf("%.2f", ($fwd_error_rate_sum/$fwd_error_rate_count));
+    }else{
+        $avg_fwd_error_rate = "n/a";
+    }
+    if ($rev_error_rate_sum){
+        $avg_rev_error_rate = sprintf("%.2f", ($rev_error_rate_sum/$rev_error_rate_count));
+    }else{
+        $avg_rev_error_rate = "n/a";
+    }
+    print STATS "Average Library Insert Size\t$avg_insert_size\t$common_name\tClinseq Build Summary\tAverage\tAverage of library-by-library median insert sizes for $common_name $extraction_type data\n";
+    print STATS "Forward Read Average Error Rate\t$avg_fwd_error_rate\t$common_name\tClinseq Build Summary\tAverage\tAverage of library-by-library sequencing forward read error rates for $common_name $extraction_type data\n";
+    print STATS "Reverse Read Average Error Rate\t$avg_rev_error_rate\t$common_name\tClinseq Build Summary\tAverage\tAverage of library-by-library sequencing reverse read error rates for $common_name $extraction_type data\n";
 }
 
 sub _run_solexa_lister {
