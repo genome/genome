@@ -769,7 +769,6 @@ sub summarize_clinseq_build {
     my %exome_builds_with_coverage;
     $self->status_message("\n\nExome coverage values for each WGS/Exome reference alignment build");
     for my $build (@builds) {
-      #Only perform the following for reference alignment builds!
       next unless $self->_is_reference_alignment_build($build);
 
       my $build_dir = $build->data_directory;
@@ -928,7 +927,6 @@ sub summarize_clinseq_build {
     $self->status_message("\n\nGet basic RNA-seq alignment stats");
     $self->status_message("\nsample\ttotal_reads\ttotal_reads_mapped_percent\tunmapped_reads_percent\tfragment_size_mean\tfragment_size_std\tpercent_coding_bases\tpercent_utr_bases\tpercent_intronic_bases\tpercent_intergenic_bases\tpercent_ribosomal_bases\tbuild_id");
     for my $build (@builds) {
-      #Only perform the following for reference alignment builds!
       next unless $self->_is_rna_seq_build($build);
 
       my $build_id = $build->id;
@@ -1112,8 +1110,6 @@ sub summarize_clinseq_build {
       my $pp_name = $pp->name;
       my $data_type = $self->_determine_wgs_or_exome_for_build($build);
 
-      #Only perform the following for reference alignment builds!
-      #my $build_type = $build->type_name;
       next unless $self->_is_somatic_variation_build($build);
 
       my $build_id = $build->id;
@@ -1198,7 +1194,6 @@ sub summarize_clinseq_build {
       my $pp = $m->processing_profile;
       my $pp_name = $pp->name;
       my $data_type = $self->_determine_wgs_or_exome_for_build($build);
-      #Only perform the following for reference alignment builds and WGS only!
       next unless ($self->_is_somatic_variation_build($build) && $data_type eq "WGS");
 
       my $build_id = $build->id;
@@ -1261,7 +1256,6 @@ sub summarize_clinseq_build {
         $common_name = $subject->common_name;
       }
 
-      #Only perform the following for reference alignment builds and WGS only!
       next unless $self->_is_rna_seq_build($build);
 
       my $build_id = $build->id;
@@ -1313,8 +1307,6 @@ sub summarize_clinseq_build {
     #Print BAMs for all reference alignment and RNA-seq builds
     $self->status_message("\n\nGet all BAM file locations");
     for my $build (@builds) {
-
-      #Only perform the following for reference alignment builds!
       next unless($self->_is_reference_alignment_build($build) or $self->_is_rna_seq_build($build));
 
       my $build_id = $build->id;
