@@ -379,22 +379,8 @@ sub summarize_clinseq_build {
       }
 
       my @lanes = $build->instrument_data;
+      my $sequence_type = $self->_determine_wgs_or_exome_for_instrument_data(@lanes);
       my $lane_count = scalar(@lanes);
-      #Infer whether the data is wgs or exome based on the presence of target region set names
-      my $trsn_count = 0;
-      for my $id (@lanes) {
-        if ($id->target_region_set_name){
-          $trsn_count++;
-        }
-      }
-      my $sequence_type = "unknown";
-      if ($trsn_count == $lane_count){
-        $sequence_type = "exome";
-      }elsif($trsn_count == 0){
-        $sequence_type = "wgs";
-      }else{
-        $sequence_type = "mixed";
-      }
 
       my $alignments_dir = $build_dir . "/alignments/";
 
@@ -659,22 +645,7 @@ sub summarize_clinseq_build {
         $extraction_type = $subject->extraction_type;
       }
       my @lanes = $build->instrument_data;
-      my $lane_count = scalar(@lanes);
-      #Infer whether the data is wgs or exome based on the presence of target region set names
-      my $trsn_count = 0;
-      for my $id (@lanes) {
-        if ($id->target_region_set_name){
-          $trsn_count++;
-        }
-      }
-      my $sequence_type = "unknown";
-      if ($trsn_count == $lane_count){
-        $sequence_type = "exome";
-      }elsif($trsn_count == 0){
-        $sequence_type = "wgs";
-      }else{
-        $sequence_type = "mixed";
-      }
+      my $sequence_type = $self->_determine_wgs_or_exome_for_instrument_data(@lanes);
 
       my $wingspan_0_dir = "$build_dir/reference_coverage/wingspan_0/";
       #my $wingspan_0_path = $wingspan_0_dir . "*_STATS.tsv";
@@ -1326,22 +1297,8 @@ sub summarize_haploid_coverage_for_build {
     }
 
     my @lanes = $build->instrument_data;
+    my $sequence_type = $self->_determine_wgs_or_exome_for_instrument_data(@lanes);
     my $lane_count = scalar(@lanes);
-    #Infer whether the data is wgs or exome based on the presence of target region set names
-    my $trsn_count = 0;
-    for my $id (@lanes) {
-        if ($id->target_region_set_name){
-            $trsn_count++;
-        }
-    }
-    my $sequence_type = "unknown";
-    if ($trsn_count == $lane_count){
-        $sequence_type = "exome";
-    }elsif($trsn_count == 0){
-        $sequence_type = "wgs";
-    }else{
-        $sequence_type = "mixed";
-    }
 
     #Get array vs. sequence concordance of SNP positions (only those on the Illumina bead array).  These are referred to in the system as 'Gold SNP Concordance' values
     my $gold_filtered_het_snp_count = "n/a";                 # 'filtered:heterozygous snv:hits:match:heterozygous (1 alleles) snv:count'
@@ -1469,6 +1426,30 @@ sub _determine_wgs_or_exome_for_build {
     }
 
     return $data_type;
+}
+
+sub _determine_wgs_or_exome_for_instrument_data {
+    my $self = shift;
+    my @lanes = shift;
+
+    my $lane_count = scalar(@lanes);
+    #Infer whether the data is wgs or exome based on the presence of target region set names
+    my $trsn_count = 0;
+    for my $id (@lanes) {
+        if ($id->target_region_set_name){
+            $trsn_count++;
+        }
+    }
+    my $sequence_type = "unknown";
+    if ($trsn_count == $lane_count){
+        $sequence_type = "exome";
+    }elsif($trsn_count == 0){
+        $sequence_type = "wgs";
+    }else{
+        $sequence_type = "mixed";
+    }
+
+    return $sequence_type;
 }
 
 sub _is_reference_alignment_build {
