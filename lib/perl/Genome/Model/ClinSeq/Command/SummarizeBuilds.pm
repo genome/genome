@@ -317,7 +317,12 @@ sub summarize_clinseq_build {
     #gmt analysis report-coverage --build-ids 120559668
     #Grab code from here: Genome/Model/Tools/Analysis/ReportCoverage.pm
     $self->status_message("\n\nHaploid coverage of each Exome/WGS ref alignment model");
-    $self->status_message("subject_name\tpp_type\tsequence_type\tlane_count\tcommon_name\ttissue_desc\textraction_type\tsequence_amount_gbp\thaploid_coverage\tarray_het_snp_count\tarray_het_snp_depth\tarray_het_snp_concordance\ttotal_snp_positions_found_unfiltered\ttotal_snp_positions_found_filtered\tsnp_positions_in_dbsnp\tsnp_positions_not_in_dbsnp\toverall_dbsnp_concordance\tbuild_id");
+    $self->status_message(join("\t",
+        qw(subject_name pp_type sequence_type lane_count common_name
+        tissue_desc extraction_type sequence_amount_gbp haploid_coverage array_het_snp_count
+        array_het_snp_depth array_het_snp_concordance total_snp_positions_found_unfiltered
+        total_snp_positions_found_filtered snp_positions_in_dbsnp snp_positions_not_in_dbsnp overall_dbsnp_concordance
+        build_id)));
     for my $build (@builds) {
         $self->summarize_haploid_coverage_for_build($build);
     }
@@ -327,7 +332,10 @@ sub summarize_clinseq_build {
     #Get per library info from the .metrics files in the alignments subdir of the refalign build dir
     #Get per BAM (all libraries combined) info from the .flagstat file in the alignments subdir of the refalign build dir
     $self->status_message("\n\nSample and library metrics from the reference alignment build directory");
-    $self->status_message("subject_name\tpp_type\tsequence_type\tlane_count\tcommon_name\ttissue_desc\textraction_type\tsequence_amount_gbp\thaploid_coverage\tsample_total_single_read_count\tsample_mapped_read_percent\tsample_properly_paired_read_percent\tsample_duplicate_read_percent");
+    $self->status_message(join("\t",
+        qw(subject_name pp_type sequence_type lane_count common_name tissue_desc extraction_type
+        sequence_amount_gbp haploid_coverage sample_total_single_read_count sample_mapped_read_percent
+        sample_properly_paired_read_percent sample_duplicate_read_percent)));
     for my $build (@builds) {
       #Only perform the following for reference alignment builds!
       next unless $self->_is_reference_alignment_build($build);
@@ -434,7 +442,11 @@ sub summarize_clinseq_build {
         $self->status_message("Warning: Could not find flagstat file: $flagstat_file");
       }
 
-      $self->status_message("$subject_name\t$build_type\t$sequence_type\t$lane_count\t$common_name\t$tissue_desc\t$extraction_type\t$gbp\t$haploid_coverage\t$sample_total_single_read_count\t$sample_mapped_read_percent\t$sample_properly_paired_read_percent\t$sample_duplicate_read_percent");
+      $self->status_message(join("\t",
+          $subject_name, $build_type, $sequence_type, $lane_count, $common_name, $tissue_desc, $extraction_type,
+          $gbp, $haploid_coverage, $sample_total_single_read_count, $sample_mapped_read_percent,
+          $sample_properly_paired_read_percent, $sample_duplicate_read_percent
+      ));
 
       #Resolve data type
       my $data_type;
@@ -1394,7 +1406,14 @@ sub summarize_haploid_coverage_for_build {
     }
 
     #Display gathered info for both Exome and WGS reference alignment models
-    $self->status_message("$subject_name\t$build_type\t$sequence_type\t$lane_count\t$common_name\t$tissue_desc\t$extraction_type\t$gbp\t$haploid_coverage\t$gold_filtered_het_snp_count\t$gold_filtered_het_snp_depth\t$gold_filtered_het_snp_percent_concordance\t$total_snp_positions_found_unfiltered\t$total_snp_positions_found_filtered\t$snp_positions_in_dbsnp\t$snp_positions_not_in_dbsnp\t$overall_dbsnp_concordance\t$build_id");
+    $self->status_message(join("\t",
+        $subject_name, $build_type, $sequence_type, $lane_count, $common_name,
+        $tissue_desc, $extraction_type, $gbp, $haploid_coverage, $gold_filtered_het_snp_count,
+        $gold_filtered_het_snp_depth, $gold_filtered_het_snp_percent_concordance,
+        $total_snp_positions_found_unfiltered, $total_snp_positions_found_filtered,
+        $snp_positions_in_dbsnp, $snp_positions_not_in_dbsnp, $overall_dbsnp_concordance,
+        $build_id
+    ));
 
     #Resolve data type
     my $data_type;
