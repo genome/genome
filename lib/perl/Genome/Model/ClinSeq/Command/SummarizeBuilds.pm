@@ -9,6 +9,8 @@ use Genome;
 use Genome::Utility::List;
 use Genome::Utility::Text;
 
+use Cwd;
+
 class Genome::Model::ClinSeq::Command::SummarizeBuilds {
     is => 'Command::V2',
     has_input => [
@@ -360,61 +362,18 @@ sub summarize_clinseq_build {
     #Generate LIMS library quality reports (including alignment and quality metrics) for each flowcell associated with each sample
     #e.g.
     #illumina_info --sample H_KA-306905-S.4294 --report library --format tsv
-    my @formats = qw (csv tsv html);
-    my @reports = qw (lane library library_index_summary run);
-    my %rf;
-    $rf{lane}{file} = "lane";
-    $rf{library}{file} = "library_index_summary";
-    $rf{library_index_summary}{file} = "library_index_summary";
-    $rf{run}{file} = "run";
-
-    chdir($build_outdir);
     $self->status_message("\n\nSample sequencing metrics from LIMS");
     $self->status_message("See results files in: $build_outdir\n");
     %samples_processed = ();
     for my $build (@builds) {
+        my $subject_name = $build->subject->name;
+        #Only process each sample once
+        unless ($samples_processed{$subject_name}){
+            $samples_processed{$subject_name} = 1;
 
-      #Only perform the following for reference alignment builds!
-      next unless $self->_is_reference_alignment_build($build);
-
-      my $build_dir = $build->data_directory;
-      my $common_name = "[UNDEF common_name]";
-      my $tissue_desc = "[UNDEF tissue_desc]";
-      my $extraction_type = "[UNDEF extraction_type]";
-      my $subject = $build->subject;
-      my $subject_name = $subject->name;
-      if ($subject->can("common_name")){
-        $common_name = $subject->common_name;
-      }
-      if ($subject->can("tissue_desc")){
-        $tissue_desc = $subject->tissue_desc;
-      }
-      if ($subject->can("extraction_type")){
-        $extraction_type = $subject->extraction_type;
-      }
-
-      #Only process each sample once
-      unless ($samples_processed{$subject_name}){
-        $samples_processed{$subject_name} = 1;
-
-        foreach my $format (@formats){
-          foreach my $report (@reports){
-            my $rf_file = $rf{$report}{file};
-            my $id_summary_file = $build_outdir . $subject_name . "_LIMS_Sample_Sequence_QC_" . $report . "." . $format;
-            next if (-e $id_summary_file); #Shortcut for testing purposes
-            my $tmp_file = $build_outdir . $rf_file . "." . $format;
-            my $id_list_cmd = "PATH=/gsc/bin/:\$PATH illumina_info --sample $subject_name --report $report --format $format 1>/dev/null 2>/dev/null";
-            unless ($self->skip_lims_reports){
-              Genome::Sys->shellcmd(cmd => $id_list_cmd, allow_failed_exit_code => 1);
-              if (-e $tmp_file){
-                Genome::Sys->move_file($tmp_file, $id_summary_file);
-              }
-            }
-          }
+            $self->summarize_library_quality_reports_for_build($build, $build_outdir);
         }
-      }
     }
-
 
     #Summarize exome coverage statistics for each WGS/Exome reference alignment model
     # cd /gscmnt/gc8001/info/model_data/2882774248/build120412367/reference_coverage/wingspan_0
@@ -1397,6 +1356,61 @@ sub summarize_instrument_data_reports_for_build {
     print STATS "Average Library Insert Size\t$avg_insert_size\t$common_name\tClinseq Build Summary\tAverage\tAverage of library-by-library median insert sizes for $common_name $extraction_type data\n";
     print STATS "Forward Read Average Error Rate\t$avg_fwd_error_rate\t$common_name\tClinseq Build Summary\tAverage\tAverage of library-by-library sequencing forward read error rates for $common_name $extraction_type data\n";
     print STATS "Reverse Read Average Error Rate\t$avg_rev_error_rate\t$common_name\tClinseq Build Summary\tAverage\tAverage of library-by-library sequencing reverse read error rates for $common_name $extraction_type data\n";
+}
+
+sub summarize_library_quality_reports_for_build {
+    my $self = shift;
+    my $build = shift;
+    my $build_outdir = shift;
+
+    return unless $self->_is_reference_alignment_build($build);
+
+    my @formats = qw (csv tsv html);
+    my @reports = qw (lane library library_index_summary run);
+    my %rf;
+    $rf{lane}{file} = "lane";
+    $rf{library}{file} = "library_index_summary";
+    $rf{library_index_summary}{file} = "library_index_summary";
+    $rf{run}{file} = "run";
+
+    my $build_dir = $build->data_directory;
+    my $common_name = "[UNDEF common_name]";
+    my $tissue_desc = "[UNDEF tissue_desc]";
+    my $extraction_type = "[UNDEF extraction_type]";
+    my $subject = $build->subject;
+    my $subject_name = $subject->name;
+    if ($subject->can("common_name")){
+        $common_name = $subject->common_name;
+    }
+    if ($subject->can("tissue_desc")){
+        $tissue_desc = $subject->tissue_desc;
+    }
+    if ($subject->can("extraction_type")){
+        $extraction_type = $subject->extraction_type;
+    }
+
+    my $previous_cwd = Cwd::getcwd();
+    chdir($build_outdir); #illumina_info writes to cwd
+
+    foreach my $format (@formats){
+        foreach my $report (@reports){
+            my $rf_file = $rf{$report}{file};
+            my $id_summary_file = $build_outdir . $subject_name . "_LIMS_Sample_Sequence_QC_" . $report . "." . $format;
+            next if (-e $id_summary_file); #Shortcut for testing purposes
+            my $tmp_file = $build_outdir . $rf_file . "." . $format;
+            my $id_list_cmd = "PATH=/gsc/bin/:\$PATH illumina_info --sample $subject_name --report $report --format $format 1>/dev/null 2>/dev/null";
+            unless ($self->skip_lims_reports){
+                Genome::Sys->shellcmd(cmd => $id_list_cmd, allow_failed_exit_code => 1);
+                if (-e $tmp_file){
+                    Genome::Sys->move_file($tmp_file, $id_summary_file);
+                }
+            }
+        }
+    }
+
+    chdir($previous_cwd);
+
+    return 1;
 }
 
 sub _run_solexa_lister {
