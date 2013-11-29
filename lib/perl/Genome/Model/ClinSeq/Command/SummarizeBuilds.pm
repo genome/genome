@@ -1310,48 +1310,25 @@ sub summarize_sample_and_library_metrics_for_build {
     my $sequence_type = $self->_determine_wgs_or_exome_for_instrument_data(@lanes);
     my $lane_count = scalar(@lanes);
 
-    my $alignments_dir = $build_dir . "/alignments/";
-
-    #Search for flagstat and metrics files.  Hard to predict which build ID will be used for the name of this file because of short cutting
-    my @metrics_files;
-    my $flagstat_file;
-    opendir (my $dh, $alignments_dir);
-    my @files = readdir($dh);
-    closedir($dh);
-    foreach my $file (@files){
-        if ($file =~ /\.bam\.flagstat/){
-            $flagstat_file = $alignments_dir . $file;
-        }
-        if ($file =~ /\.metrics/){
-            my $metrics_file = $alignments_dir . $file;
-            push(@metrics_files, $metrics_file);
-        }
-    }
-
     #Parse the flagstat file for sample metrics of the BAM file
     my $sample_total_single_read_count = "n/a";
     my $sample_mapped_read_percent = "n/a";
     my $sample_properly_paired_read_percent = "n/a";
     my $sample_duplicate_read_percent = "n/a";
 
+    my $flagstat_file = $build->merged_alignment_result->merged_alignment_bam_flagstat;
     if (-e $flagstat_file){
-        open (FLAG, "$flagstat_file");
-        while(<FLAG>){
-            if ($_ =~ /^(\d+).*in\s+total/){
-                $sample_total_single_read_count = $1;
-            }
-            if ($_ =~ /mapped\s+\(([\d\.]+)\%/){
-                $sample_mapped_read_percent = $1;
-            }
-            if ($_ =~ /properly\s+paired\s+\(([\d\.]+)\%/){
-                $sample_properly_paired_read_percent = $1;
-            }
-            if ($_ =~ /^(\d+).*duplicates/){
-                my $duplicate_count = $1;
-                $sample_duplicate_read_percent = sprintf("%.2f", (($duplicate_count/$sample_total_single_read_count)*100));
-            }
-        }
-        close (FLAG);
+        my $flagstat_data = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flagstat_file);
+        $sample_total_single_read_count = $flagstat_data->{total_reads};
+
+        $sample_mapped_read_percent = $flagstat_data->{reads_mapped_percentage}
+            if $flagstat_data->{reads_mapped_percentage};
+
+        $sample_properly_paired_read_percent = $flagstat_data->{reads_mapped_in_proper_pairs_percentage}
+            if $flagstat_data->{reads_mapped_in_proper_pairs_percentage};
+
+        my $duplicate_count = $flagstat_data->{reads_marked_duplicates};
+        $sample_duplicate_read_percent = sprintf("%.2f", (($duplicate_count/$sample_total_single_read_count)*100));
     }else{
         $self->status_message("Warning: Could not find flagstat file: $flagstat_file");
     }
@@ -1378,6 +1355,20 @@ sub summarize_sample_and_library_metrics_for_build {
     print STATS "Percent Reads Mapped\t$sample_mapped_read_percent\t$data_type\tClinseq Build Summary\tPercent\tRead mapping percent for $sequence_type $common_name data\n";
     print STATS "Percent Reads Properly Paired\t$sample_properly_paired_read_percent\t$data_type\tClinseq Build Summary\tPercent\tPercent of reads that are properly paired for $sequence_type $common_name data\n";
     print STATS "Read Duplication Rate (sample level)\t$sample_duplicate_read_percent\t$data_type\tClinseq Build Summary\tPercent\tPercent read duplication at sample level (all libraries combined) for $sequence_type $common_name data\n";
+
+    my $alignments_dir = $build_dir . "/alignments/";
+
+    #Search for metrics files.  Hard to predict which build ID will be used for the name of this file because of short cutting
+    my @metrics_files;
+    opendir (my $dh, $alignments_dir);
+    my @files = readdir($dh);
+    closedir($dh);
+    foreach my $file (@files){
+        if ($file =~ /\.metrics/){
+            my $metrics_file = $alignments_dir . $file;
+            push(@metrics_files, $metrics_file);
+        }
+    }
 
     $self->status_message("\tlibrary_name\tlibrary_duplication_rate");
     foreach my $file (@metrics_files){
