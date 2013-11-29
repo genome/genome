@@ -139,7 +139,7 @@ sub _resolve_create_method_for {
     $method_base =~ s/::/_/g;
     my $create_method = '_create_' . lc($method_base);
     if ( not $self->can($create_method)) {
-        Carp::confess "Did not find create method ($create_method) for LIMS class! ".$lims_class;
+        $create_method = '_create_object';
     }
 
     return $create_method;
@@ -242,6 +242,11 @@ SQL
     return 1;
 }
 
+sub _create_object {
+    my ($self, $original_object, $new_object_class) = @_;
+    return $original_object->create_in_genome;
+}
+
 sub _create_genotyping {
     my ($self, $original_object, $new_object_class) = @_;
 
@@ -274,51 +279,6 @@ sub _create_regionindex454 {
     my $sff_file = $self->instrument_data_with_successful_pidfas->{$original_object->id};
     $original_object->sff_file($sff_file) if $sff_file;
 
-    return $self->_create_object($original_object, $new_object_class);
-}
-
-sub _create_librarysummary {
-    my ($self, $original_object, $new_object_class) = @_;
-    return $self->_create_object($original_object, $new_object_class);
-}
-
-sub _create_organismsample {
-    my ($self, $original_object, $new_object_class) = @_;
-    return $self->_create_object($original_object, $new_object_class);
-}
-
-sub _create_organismindividual {
-    my ($self, $original_object, $new_object_class) = @_;
-    return $self->_create_object($original_object, $new_object_class);
-}
-
-sub _create_organismtaxon {
-    my ($self, $original_object, $new_object_class) = @_;
-    return $self->_create_object($original_object, $new_object_class);
-}
-
-sub _create_object {
-    my ($self, $original_object, $new_object_class) = @_;
-    return $original_object->create_in_genome;
-}
-
-sub _create_populationgroup {
-    my ($self, $original_object, $new_object_class) = @_;
-    return $self->_create_object($original_object, $new_object_class);
-}
-
-sub _create_limsproject {
-    my ($self, $original_object, $new_object_class) = @_;
-    return $self->_create_object($original_object, $new_object_class);
-}
-
-sub _create_limsprojectinstrumentdata {
-    my ($self, $original_object, $new_object_class) = @_;
-    return $self->_create_object($original_object, $new_object_class);
-}
-
-sub _create_limsprojectsample {
-    my ($self, $original_object, $new_object_class) = @_;
     return $self->_create_object($original_object, $new_object_class);
 }
 
