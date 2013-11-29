@@ -207,7 +207,6 @@ sub _create_genome_objects_for_lims_objects {
         $self->error_message( $transaction->error_message ) if $transaction->error_message;
         $transaction->rollback;
         Carp::confess( $self->error_message("Failed to commit $genome_class!") );
-
     }
 
     $self->status_message("Create $entity_name objects in Genome...done");
@@ -345,8 +344,11 @@ sub _expunge {
         my $class = $lims_class->genome_class_for_create;
         next unless $class =~ m/Genome::InstrumentData/; #only remove instrument data for now
         next if $class eq 'Genome::InstrumentData::Imported'; #imported instrument data doesn't come from LIMS, so skip it
+
         my @ids = @{$report->{$class}->{missing}} if $report->{$class}->{missing};
         next if not @ids;
+
+        my $transaction = UR::Context::Transaction->begin();
         printf("DELETING %s %s\n", $class, join(' ', @ids));
         my @deleted;
         for my $id ( @ids ) {
@@ -354,6 +356,14 @@ sub _expunge {
             $object->delete;
             push @deleted, $id;
         }
+
+        my $commit_ok = $transaction->commit;
+        if ( not $commit_ok ) {
+            $self->error_message( $transaction->error_message ) if $transaction->error_message;
+            $transaction->rollback;
+            Carp::confess( $self->error_message("Failed to commit deleting missing $class!") );
+        }
+
         $report->{$class}->{deleted} = \@deleted;
     }
 
