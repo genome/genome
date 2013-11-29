@@ -32,11 +32,11 @@ sub _lock_me {
     return 1 if $ENV{UR_DBI_NO_COMMIT};
     $self->status_message('Lock...');
     my $lock = Genome::Sys->lock_resource(
-        resource_lock => $ENV{GENOME_LOCK_DIR} . '/synchronize-update-apipe-classes',
+        resource_lock => $ENV{GENOME_LOCK_DIR} . '/synchronize-genome-from-lims',
         max_try => 1,
     );
     if ( not $lock ) {
-        $self->error_message("Could not lock sync cron!");
+        $self->error_message("Could not lock!");
         return;
     }
     $self->status_message('Lock: '.$lock);
@@ -48,13 +48,19 @@ sub _unlock_me {
     my $self = shift;
     return 1 if $ENV{UR_DBI_NO_COMMIT};
     return 1 if not $self->_lock;
-    $self->status_message('Unlock...');
+    $self->status_message('Unlock: '.$self->_lock);
     eval{ Genome::Sys->unlock_resource(resource_lock => $self->_lock); };
     return 1;
 }
 
 sub execute {
     my $self = shift; 
+    $self->status_message('Sync Genome from LIMS...');
+
+    my $i_am_locked = $self->_lock_me;
+    return if not $i_am_locked;
+
+    $self->_suppress_status_messages;
 
     my $uac = $self->_update_apipe_classes;
     return if not $uac;
@@ -67,6 +73,9 @@ sub execute {
     my $report_string = $self->generate_report;
     print $report_string;
 
+    $self->_unlock_me;
+
+    $self->status_message('Sync Genome from LIMS...done');
     return 1;
 }
 
@@ -100,12 +109,6 @@ sub _suppress_status_messages {
 
 sub _update_apipe_classes {
     my $self = shift;
-    $self->status_message('Sync LIMS to Genome...');
-
-    $self->_lock_me;
-
-    # Suppress overly talkative classes
-    $self->_suppress_status_messages;
 
     # Load instrument data successful pidfas. We only sync instrument data the have a successful pidfa.
     my $load_pidfas = $self->_load_successful_pidfas;
@@ -145,9 +148,6 @@ sub _update_apipe_classes {
         $self->_report->{$entity_name}->{'missing'} = [ @$in_genome_not_lims ];
     }
 
-    $self->_unlock_me;
-
-    $self->status_message('Sync LIMS to Genome...done');
     return 1;
 }
 
