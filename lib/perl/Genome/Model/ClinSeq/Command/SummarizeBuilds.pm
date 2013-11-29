@@ -7,6 +7,7 @@ use warnings;
 use Genome;
 
 use Genome::Utility::List;
+use Genome::Utility::Text;
 
 class Genome::Model::ClinSeq::Command::SummarizeBuilds {
     is => 'Command::V2',
@@ -375,9 +376,7 @@ sub summarize_clinseq_build {
       unless ($samples_processed{$subject_name}){
         $samples_processed{$subject_name} = 1;
         #Occasionally the sample name will contain problem characters like "(" and ")" which need to be escaped or replaced
-        my $subject_name_escaped = $subject_name;
-        $subject_name_escaped =~s/\(/_/g;
-        $subject_name_escaped =~s/\)//g;
+        my $subject_name_escaped = Genome::Utility::Text::sanitize_string_for_filesystem($subject_name);
         my $id_sample_summary_file_csv = $build_outdir . $subject_name_escaped . "_APIPE_Sample_Sequence_QC.csv";
         my $id_sample_summary_file_html = $build_outdir . $subject_name_escaped . "_APIPE_Sample_Sequence_QC.html";
 
