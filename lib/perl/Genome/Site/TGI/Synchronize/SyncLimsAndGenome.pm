@@ -62,6 +62,12 @@ sub execute {
 
     $self->_suppress_status_messages;
 
+    my $load_pidfas = $self->_load_successful_pidfas;
+    if ( not $load_pidfas ) {
+        $self->error_message('Failed to load instrument data successful pidfas!');
+        return;
+    }
+
     my $uac = $self->_update_apipe_classes;
     return if not $uac;
 
@@ -109,13 +115,6 @@ sub _suppress_status_messages {
 
 sub _update_apipe_classes {
     my $self = shift;
-
-    # Load instrument data successful pidfas. We only sync instrument data the have a successful pidfa.
-    my $load_pidfas = $self->_load_successful_pidfas;
-    if ( not $load_pidfas ) {
-        $self->error_message('Failed to load instruemnt data successful pidfas!');
-        return;
-    }
 
     my $dictionary = Genome::Site::TGI::Synchronize::Classes::Dictionary->get;
     my @entity_names = $dictionary->entity_names;
