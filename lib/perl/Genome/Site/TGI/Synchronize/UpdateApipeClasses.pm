@@ -10,13 +10,6 @@ use Carp 'confess';
 
 class Genome::Site::TGI::Synchronize::UpdateApipeClasses {
     is => 'Genome::Command::Base',
-    has_optional => [
-        expunge => {
-            is => 'Boolean',
-            default_value => 0,
-            doc => 'Expunge solexa and 454 instrument data from Genome that are not in LIMS.',
-        },
-    ],
     has_transient_optional => [
         instrument_data_with_successful_pidfas => {
             is => 'Hash',

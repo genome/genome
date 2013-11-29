@@ -6,6 +6,13 @@ use Genome;
 
 class Genome::Site::TGI::Synchronize::SyncLimsAndGenome {
     is => 'Command::V2',
+    has_optional => [
+        expunge => {
+            is => 'Boolean',
+            default_value => 0,
+            doc => 'Expunge solexa and 454 instrument data from Genome that are not in LIMS.',
+        },
+    ],
     has_optional_transient => [
         _report => {
             is_transient => 1,
@@ -27,10 +34,9 @@ sub execute {
     }
     $self->_report($update->report);
 
-    my $expunge = $self->expunge;
-    unless ($expunge) {
-        $self->error_message("Failed to Expunge: $@");
-        die $self->error_message;
+    if ( $self->expunge ) {
+        my $expunge = $self->_expunge;
+        return if not $expunge;
     }
 
     my $report_string = $self->generate_report;
@@ -58,7 +64,7 @@ sub generate_report {
     return $string;
 }
 
-sub expunge {
+sub _expunge {
     my $self = shift;
 
     my $report = $self->_report;
