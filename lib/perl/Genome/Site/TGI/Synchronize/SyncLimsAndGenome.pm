@@ -79,9 +79,10 @@ sub _expunge {
         next if not @ids;
         printf("DELETING %s %s\n", $class, join(' ', @ids));
         my @deleted;
-        for my $id (@ids){
-            my $successfully_deleted = $self->_remove_expunged_object($class, $id);
-            push @deleted, $successfully_deleted;
+        for my $id ( @ids ) {
+            my $object = $class->get($id);
+            $object->delete;
+            push @deleted, $id;
         }
         $report->{$class}->{deleted} = \@deleted;
     }
@@ -89,18 +90,6 @@ sub _expunge {
     $self->_report($report);
 
     return 1;
-}
-
-sub _remove_expunged_object {
-    my $self = shift;
-    my $class = shift;
-    my $id = shift;
-
-    my $object = $class->get($id);
-
-    $object->delete;
-
-    return $id;
 }
 
 1;
