@@ -5662,6 +5662,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'tumor-fpkm-file=s',
         'files',
+        'output-dir=s',
+        'files',
         'help!',
         undef
       ],
