@@ -16,7 +16,12 @@ class Genome::Model::ClinSeq::Command::MakeCircosPlot {
         output_directory    => { is => 'FilesystemPath',
                                 doc => 'Directory where output will be written', },
 
+        #TODO: Define all input files as optional inputs here
+        #TODO: Each of these will have to be defined as output on the commands they come from.
+
+
     ],
+    #TODO This optional input should not be needed... remove it and resolve any problem that causes  
     has_optional_input => [
         clinseq_result               => { is => 'Boolean', doc => 'Dependency for the ClinSeq pipeline' },
     ],
