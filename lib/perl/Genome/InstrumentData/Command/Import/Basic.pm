@@ -40,12 +40,6 @@ class Genome::InstrumentData::Command::Import::Basic {
             doc => 'The original format of the source files. Use if the format cannot be determined from the file extension.',
         },
     ],
-    has_output => [
-        instrument_data => {
-            is => 'Genome::InstrumentData',
-            doc => 'The instrument data entity to be imported.',
-        },
-    ],
     has_optional_transient => [
         _workflow => {},
         _verify_md5_op => {},
