@@ -31,7 +31,7 @@ my @lims_objects = (
     $lims_class->__define__(id => -11, name => '__TEST_TAXON__'),
     $lims_class->__define__(id => -13, name => '__TEST_TAXON__'),
 );
-my $genome_class = Genome::Site::TGI::Synchronize::Classes::Dictionary->genome_class_for_entity_name($entity_name);
+my $genome_class = $lims_class->genome_class_for_comparison;
 my @genome_objects = (
     $genome_class->__define__(id => -12, name => '__TEST_TAXON__'),
     $genome_class->__define__(id => -13, name => '__TEST_TAXON__'),
@@ -48,7 +48,6 @@ ok(!$differ->execute, 'failed to execute w/o entity_name');
 $differ->is_executed(undef);
 is($differ->entity_name('taxon'), 'taxon', 'set entity_name');
 ok($differ->lims_class, 'lims class');
-ok($differ->genome_class, 'genome class');
 
 ok($differ->execute, 'execute');
 is_deeply([@{$differ->in_lims_not_genome}], [-11], $entity_name."s in lims not genome");
