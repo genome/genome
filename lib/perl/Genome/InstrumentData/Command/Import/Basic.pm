@@ -17,7 +17,7 @@ class Genome::InstrumentData::Command::Import::Basic {
         source_files => {
             is => 'Text',
             is_many => 1,
-            doc => 'Source files to import. If importing multiple files, put the file containing the forward reads first.',
+            doc => 'Source files to import. If importing fastqs, put the file containing the forward [read 1] reads first.',
         },
         sample => {
             is => 'Genome::Sample',
@@ -34,18 +34,16 @@ class Genome::InstrumentData::Command::Import::Basic {
             is_many => 1,
             doc => 'Name and value pairs to add to the instrument data. Separate name and value with an equals (=) and name/value pairs with a comma (,).',
         },
+        original_format => {
+            is => 'Text',
+            valid_values => [qw/ bam fastq sra /],
+            doc => 'The original format of the source files. Use if the format cannot be determined from the file extension.',
+        },
     ],
     has_output => [
         instrument_data => {
             is => 'Genome::InstrumentData',
             doc => 'The instrument data entity to be imported.',
-        },
-    ],
-    has_optional_param => [
-        original_format => {
-            is => 'Text',
-            valid_values => [qw/ bam fastq sra /],
-            doc => 'The original format of the source files. Use if the format cannot be determined from the file extension.',
         },
     ],
     has_optional_transient => [
@@ -60,20 +58,18 @@ sub help_detail {
     return <<HELP;
     Import sequence files into GMS. All files will be converted to SAM format and stored as BAM.
 
-
     Source Files 
+     Types       Notes
+     FASTQ       Can be remote, tar'd and/or gzipped.
+     BAM, SAM    Will be split by read group.
+     SRA         Aligned and unaligned reads will be dumped. SRAs are known to produce unreliable BAM files.
 
-     Types      Notes
-     FASTQ      Can be remote, tar'd and/or gzipped.
-     SAM [BAM]  Will be split by read group.
-     SRA        Aligned and unaligned reads will be dumped. SRAs are known to produce unreliable BAM files.
+    Instrument Data Properties
+     Indicate properties for the resulting instrument data entities. Give as equal separatated name value pairs (name=value). Separate pairs with commas, no spaces. Example:
 
+      Set flow_cell_id to 'AXXAX' and the index sequence to 'AATTGGCC' on the created instrument data entities.
 
-     Instrument Data Properties
-      Indicate properties for the resulting instrument data entity. Give as comma separtated key=values pairs.
-
-      Examples:
-       flow_cell_id=AXXAX,index_sequence=AATTGGCC
+      flow_cell_id=AXXAX,index_sequence=AATTGGCC
 
 HELP
 }
