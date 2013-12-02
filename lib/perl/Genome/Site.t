@@ -29,7 +29,7 @@ subtest 'shallow match' => sub {
     use warnings 'redefine';
 
     my $foo = Genome::Site::site_pkg($site_dirs[0]);
-    my $foo_filename = Genome::Site::module_to_filename($foo);
+    my $foo_filename = module_to_filename($foo);
     my $foo_path = create_module($tmp_dir_path, $foo,
         'package ' . $foo . ';',
         '1;',
@@ -56,7 +56,7 @@ subtest 'deep match' => sub {
     use warnings 'redefine';
 
     my $foo = Genome::Site::site_pkg(@site_dirs);
-    my $foo_filename = Genome::Site::module_to_filename($foo);
+    my $foo_filename = module_to_filename($foo);
     my $foo_path = create_module($tmp_dir_path, $foo,
         'package ' . $foo . ';',
         '1;',
@@ -83,7 +83,7 @@ subtest 'catch site compile errors' => sub {
     use warnings 'redefine';
 
     my $foo = Genome::Site::site_pkg($site_dirs[0]);
-    my $foo_filename = Genome::Site::module_to_filename($foo);
+    my $foo_filename = module_to_filename($foo);
     my $foo_path = create_module($tmp_dir_path, $foo,
         'package ' . $foo . ';',
         '0;',
@@ -114,7 +114,7 @@ subtest 'catch missing dependencies' => sub {
     my $dep = 'Chautauquan';
 
     my $foo = Genome::Site::site_pkg($site_dirs[0]);
-    my $foo_filename = Genome::Site::module_to_filename($foo);
+    my $foo_filename = module_to_filename($foo);
     my $foo_path = create_module($tmp_dir_path, $foo,
         'package ' . $foo . ';',
         'use ' . $dep . ';',
@@ -135,6 +135,15 @@ sub tempdir {
     return File::Temp::tempdir();
 }
 
+sub module_to_filename {
+    my $module = shift;
+    unless ($module) {
+        croak 'must specify module';
+    }
+    my @path = split(/::/, $module);
+    my $filename = File::Spec->join(@path) . '.pm';
+}
+
 sub create_module {
     my $dir_path = shift;
     my $module = shift;
@@ -146,7 +155,7 @@ sub create_module {
 
     my $filename = File::Spec->join(
         $dir_path,
-        Genome::Site::module_to_filename($module),
+        module_to_filename($module),
     );
 
     my $dirname = (File::Spec->splitpath($filename))[1];

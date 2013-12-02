@@ -45,15 +45,6 @@ sub site_dirs {
     my @hwords = map { s/-/_/g; $_ } reverse split(/\./, $hostname);
 }
 
-sub module_to_filename {
-    my $module = shift;
-    unless ($module) {
-        croak 'must specify module';
-    }
-    my @path = split(/::/, $module);
-    my $filename = File::Spec->join(@path) . '.pm';
-}
-
 BEGIN {
     import();
 }
