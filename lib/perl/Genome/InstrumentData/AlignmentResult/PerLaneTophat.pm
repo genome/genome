@@ -242,6 +242,7 @@ sub _get_gtf_file {
 
     my $annotation_build = $annotation_index->annotation_build;
     my $gtf_file = $annotation_build->annotation_file('gtf', $annotation_index->reference_build->id);
+    my $fallback_gtf_file = $annotation_build->annotation_file('gtf');
 
     # complain if we can't get it
     my $msg = sprintf(
@@ -251,6 +252,9 @@ sub _get_gtf_file {
     if (-s $gtf_file) {
         $class->debug_message("Found " .$msg);
         return $gtf_file;
+    } elsif (-s $fallback_gtf_file) {
+        $class->warning_message('Did not find %s. Falling back to %s', $msg, $fallback_gtf_file);
+        return $fallback_gtf_file;
     } else {
         $class->error_message("Failed to find " . $msg);
         return;
