@@ -119,6 +119,11 @@ sub execute {
     }
     $self->instrument_data(\@instrument_data);
 
+    $self->status_message('Imported instrument data bam paths:');
+    for my $instrument_data ( @instrument_data ) {
+        printf("%s\n", $instrument_data->bam_path);
+    }
+
     $self->status_message('Create instrument data and copy bam...done');
     return 1;
 }
