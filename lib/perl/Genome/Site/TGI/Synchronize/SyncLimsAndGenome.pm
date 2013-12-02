@@ -117,7 +117,7 @@ sub _load_successful_pidfas {
     # Load successful pidfas grabbing the pidfa_output pse param, if available
     # This query/hash loading takes 10-15 secs
 
-    print STDERR "Load instrument data successful pidfas...\n";
+    $self->status_message("Load instrument data successful pidfas...");
 
     my $dbh = Genome::DataSource::Oltp->get_default_handle;
     if ( not $dbh ) {
@@ -133,20 +133,20 @@ sub _load_successful_pidfas {
         order by p1.param_value desc
 SQL
 
-    print STDERR "PIDFA SQL:\n$sql\n";
-    print STDERR "PIDFA Prepare SQL\n";
+    $self->status_message("PIDFA SQL:\n$sql");
+    $self->status_message("PIDFA Prepare SQL");
     my $sth = $dbh->prepare($sql);
     if ( not $sth ) {
         $self->error_message('Failed to prepare successful pidfa sql');
         return;
     }
-    print STDERR "PIDFA Execute SQL\n";
+    $self->status_message("PIDFA Execute SQL");
     my $execute = $sth->execute;
     if ( not $execute ) {
         $self->error_message('Failed to execute successful pidfa sql');
         return;
     }
-    print STDERR "PIDFA Fetch Results\n";
+    $self->status_message("PIDFA Fetch Results");
     my $instrument_data_with_successful_pidfas = $self->instrument_data_with_successful_pidfas;
     while ( my ($instrument_data_id, $pidfa_output) = $sth->fetchrow_array ) {
         # Going in reverse id order...use the most recent pidfa output for duplicate pidfas
@@ -155,8 +155,8 @@ SQL
     }
     $sth->finish;
 
-    print STDERR 'Loaded '.scalar(keys %$instrument_data_with_successful_pidfas)." successful PIDFAs\n";
-    print STDERR 'Loaded '.scalar(grep { defined } values %$instrument_data_with_successful_pidfas)." pidfa outputs\n";
+    $self->status_message('Loaded '.scalar(keys %$instrument_data_with_successful_pidfas)." successful PIDFAs");
+    $self->status_message('Loaded '.scalar(grep { defined } values %$instrument_data_with_successful_pidfas)." pidfa outputs");
     return 1;
 }
 
