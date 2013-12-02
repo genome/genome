@@ -16,23 +16,27 @@ sub import {
         die $@ if $@;
     }
     else {
-        my @hwords = site_dirs();
-        while (@hwords) {
-            my $pkg = site_pkg(@hwords);
-            my $filename = module_to_filename($pkg);
-            local $SIG{__DIE__};
-            local $SIG{__WARN__};
-            eval "use $pkg";
-            if ($@ =~ /Can't locate $filename/) {
-                pop @hwords;
-                next;
-            }
-            elsif ($@) {
-                Carp::confess("error in $pkg: $@\n");
-            }
-            else {
-                last;
-            }
+        load_host_config();
+    }
+}
+
+sub load_host_config {
+    my @hwords = site_dirs();
+    while (@hwords) {
+        my $pkg = site_pkg(@hwords);
+        my $filename = module_to_filename($pkg);
+        local $SIG{__DIE__};
+        local $SIG{__WARN__};
+        eval "use $pkg";
+        if ($@ =~ /Can't locate $filename/) {
+            pop @hwords;
+            next;
+        }
+        elsif ($@) {
+            Carp::confess("error in $pkg: $@\n");
+        }
+        else {
+            last;
         }
     }
 }
