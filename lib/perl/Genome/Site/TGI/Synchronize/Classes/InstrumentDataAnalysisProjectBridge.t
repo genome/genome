@@ -11,7 +11,7 @@ use_ok($lims_class) or die;
 
 my $entity_name = $lims_class->entity_name;
 is($entity_name, 'analysis project instrument data', 'entity name');
-is($lims_class->genome_class_for_comparison, 'Genome::Config::AnalysisProject::InstrumentDataBridge', 'genome class for comparison');
+is($lims_class->genome_class_for_comparison, 'Genome::Site::TGI::Synchronize::Classes::AnalysisProjectInstrumentData', 'genome class for comparison');
 is($lims_class->genome_class_for_create, 'Genome::Config::AnalysisProject::InstrumentDataBridge', 'genome class for create');
 
 my @properties_to_copy = $lims_class->properties_to_copy;
