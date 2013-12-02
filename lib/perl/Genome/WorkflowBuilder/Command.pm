@@ -110,8 +110,10 @@ sub validate {
 
 sub is_input_property {
     my ($self, $property_name) = @_;
-    return $self->command->__meta__->properties(property_name => $property_name,
-        is_input => 1);
+    return $self->command->__meta__->properties(
+            property_name => $property_name, is_input => 1)
+        || $self->command->__meta__->properties(
+            property_name => $property_name, is_param => 1);
 }
 
 sub is_output_property {
