@@ -116,8 +116,6 @@ sub _load_successful_pidfas {
     my $self = shift;
     # Load successful pidfas grabbing the pidfa_output pse param, if available
     # This query/hash loading takes 10-15 secs
-    my $instrument_data_with_successful_pidfas = $self->instrument_data_with_successful_pidfas;
-    return 1 if %$instrument_data_with_successful_pidfas;
 
     print STDERR "Load instrument data successful pidfas...\n";
 
@@ -149,6 +147,7 @@ SQL
         return;
     }
     print STDERR "PIDFA Fetch Results\n";
+    my $instrument_data_with_successful_pidfas = $self->instrument_data_with_successful_pidfas;
     while ( my ($instrument_data_id, $pidfa_output) = $sth->fetchrow_array ) {
         # Going in reverse id order...use the most recent pidfa output for duplicate pidfas
         # pidfa output is defined for genotype microarray (genotype file) and 454 (sff file)

@@ -60,6 +60,10 @@ done_testing();
 
 sub init {
     diag("INIT...");
+    {
+        no warnings 'redefine';
+        *Genome::Site::TGI::Synchronize::SyncLimsAndGenome::_load_successful_pidfas = sub{ return 1; };
+    }
     my @lims_objects;
     for my $entity_name ( Genome::Site::TGI::Synchronize::Classes::Dictionary->entity_names ) {
         my $lims_class = Genome::Site::TGI::Synchronize::Classes::Dictionary->lims_class_for_entity_name($entity_name);
