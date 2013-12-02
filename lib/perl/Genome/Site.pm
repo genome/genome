@@ -6,6 +6,7 @@ use warnings;
 use Carp qw(croak);
 use File::Spec qw();
 use Sys::Hostname qw(hostname);
+use UR::Util qw();
 
 our $VERSION = $Genome::VERSION;
 
@@ -24,19 +25,11 @@ sub load_host_config {
     my @hwords = site_dirs();
     while (@hwords) {
         my $pkg = site_pkg(@hwords);
-        my $filename = module_to_filename($pkg);
-        local $SIG{__DIE__};
-        local $SIG{__WARN__};
-        eval "use $pkg";
-        if ($@ =~ /Can't locate $filename/) {
+        if (UR::Util::load_class_or_file($pkg)) {
+            last;
+        } else {
             pop @hwords;
             next;
-        }
-        elsif ($@) {
-            Carp::confess("error in $pkg: $@\n");
-        }
-        else {
-            last;
         }
     }
 }
