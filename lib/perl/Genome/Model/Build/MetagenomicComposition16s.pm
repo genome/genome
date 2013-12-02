@@ -283,15 +283,18 @@ sub process_instrument_data {
     $self->status_message('Process instrument data...');
 
     Carp::confess('No instrument data given to process!') if not $instrument_data;
+    $self->status_message('Instrument data: '.$instrument_data->id);
 
     my %sx_result_params = $self->sx_result_params_for_instrument_data($instrument_data);
     return if not %sx_result_params;
+    $self->status_message('SX result Params: '.Data::Dumper::Dumper(\%sx_result_params));
 
     my $sx_result = Genome::InstrumentData::SxResult->get_or_create(%sx_result_params);
     if ( not $sx_result ) {
         $self->error_message('Failed to create SX result!');
         return;
     }
+    $self->status_message('SX result: '.$sx_result->id);
 
     $sx_result->add_user(user => $self, label => 'sx_result');
 
@@ -307,14 +310,20 @@ sub merge_processed_instrument_data {
     return if not @amplicon_sets;
 
     my @instrument_data = $self->instrument_data;
+    $self->status_message('Instrument data: '.join(' ', map { $_->id } @instrument_data));
+
     my %sx_result_params = $self->sx_result_params_for_instrument_data(@instrument_data);
     return if not %sx_result_params;
+    $self->status_message('SX result Params: '.Data::Dumper::Dumper(\%sx_result_params));
 
-    my @sx_results = Genome::InstrumentData::SxResult->get(%sx_result_params);
+    my @sx_results = Genome::InstrumentData::SxResult->get_with_lock(%sx_result_params);
+    $self->status_message('Instrument data count: '.@instrument_data);
+    $self->status_message('SX result count: '.@sx_results);
     if ( not @sx_results or @sx_results != @instrument_data ) {
         $self->error_message('Failed to find sx results for instrument data!');
         return;
     }
+    $self->status_message('SX results: '.join(' ', map { $_->id } @sx_results));
 
     my %metrics = (
         input => Genome::Model::Tools::Sx::Metrics::Basic->create(),
