@@ -15,7 +15,7 @@ BEGIN {
     $ENV{NO_LSF} = 1;
 };
 
-my $VERSION = 'snvs-mg-1';
+my $VERSION = 'snvs-mg-2';
 my $use_mg = 1;
 test_cmd('snvs', $VERSION, $use_mg);
 

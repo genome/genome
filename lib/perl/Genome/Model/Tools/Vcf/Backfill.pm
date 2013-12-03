@@ -400,32 +400,32 @@ sub calculate_stats_for_alts {
     my @alts = split ",", $alt_string;
     my %ad;
     # Iinitialize values
-    for my $base ($ref, @alts) {
-        $ad{$base} = 0;
+    for my $alt ($ref, @alts) {
+        $ad{$alt} = 0;
     }
     my %bq_total;
     my %bq;
     my (@bq_values, @ad_values);
-    for my $base ($ref, @alts) {
+    for my $alt ($ref, @alts) {
         my @bases = split("", $read_bases);
         my @qualities = split("", $base_qualities);
         for (my $index = 0; $index < scalar(@bases); $index++) {
             my $base = $bases[$index];
-            if (lc $base eq lc $base) { 
+            if (lc $base eq lc $alt) { 
                 #http://samtools.sourceforge.net/pileup.shtml base quality is the same as mapping quality
-                $ad{$base}++;
-                $bq_total{$base} += ord($qualities[$index]) - 33;
+                $ad{$alt}++;
+                $bq_total{$alt} += ord($qualities[$index]) - 33;
             }
         }
 
         # Get an average of the quality for BQ
-        if ($ad{$base} == 0) {
-            $bq{$base} = 0;
+        if ($ad{$alt} == 0) {
+            $bq{$alt} = 0;
         } else {
-            $bq{$base} = int($bq_total{$base} / $ad{$base});
+            $bq{$alt} = int($bq_total{$alt} / $ad{$alt});
         }
-        push @ad_values, $ad{$base};
-        push @bq_values, $bq{$base};
+        push @ad_values, $ad{$alt};
+        push @bq_values, $bq{$alt};
     }
 
     my $ad_string = join(",", @ad_values );
