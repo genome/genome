@@ -50,20 +50,22 @@ class Genome::InstrumentData::Command::Import::Basic {
 
 sub help_detail {
     return <<HELP;
-    Import sequence files into GMS. All files will be converted to SAM format and stored as BAM.
+Import sequence files into GMS. All files will be converted to SAM format and stored as BAM.
 
-    Source Files 
-     Types       Notes
-     FASTQ       Can be remote, tar'd and/or gzipped.
-     BAM, SAM    Will be split by read group.
-     SRA         Aligned and unaligned reads will be dumped. SRAs are known to produce unreliable BAM files.
+Source Files 
+ Types       Notes
+  FASTQ       Can be remote, tar'd and/or gzipped.
+  BAM, SAM    Will be split by read group.
+  SRA         Aligned and unaligned reads will be dumped. SRAs are known to produce unreliable BAM files.
 
-    Instrument Data Properties
-     Indicate properties for the resulting instrument data entities. Give as equal separatated name value pairs (name=value). Separate pairs with commas, no spaces. Example:
+Instrument Data Properties
+ Name and value pairs to add to the instrument data. Separate name and value with an equals (=)
+  and name/value pairs with a comma (,).
+  
+  Example...set flow_cell_id to 'AXXAX' and the index sequence to 'AATTGGCC' on the created instrument
+   data entities:
 
-      Set flow_cell_id to 'AXXAX' and the index sequence to 'AATTGGCC' on the created instrument data entities.
-
-      flow_cell_id=AXXAX,index_sequence=AATTGGCC
+  flow_cell_id=AXXAX,index_sequence=AATTGGCC
 
 HELP
 }
