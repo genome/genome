@@ -10051,19 +10051,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>manager',
-      [
-        'working-directory=s',
-        'files',
-        'make-progress!',
-        undef,
-        'launch-imports!',
-        undef,
-        'start-builds!',
-        undef,
-        'help!',
-        undef
-      ],
       'help!',
       undef
     ],
@@ -37496,6 +37483,12 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'instrument-data-properties=s@',
         'files',
+        'original-format=s',
+        [
+          'bam',
+          'fastq',
+          'sra'
+        ],
         'help!',
         undef
       ],
@@ -37603,6 +37596,19 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'picard-dir=s',
         'files',
+        'help!',
+        undef
+      ],
+      '>manager',
+      [
+        'source-files-tsv=s',
+        'files',
+        'launch-config=s',
+        'files',
+        'list-config=s',
+        'files',
+        'show-import-commands!',
+        undef,
         'help!',
         undef
       ],
