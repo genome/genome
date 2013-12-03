@@ -71,7 +71,7 @@ subtest "execute" => sub {
     my $header = $in->getline;
     chomp $header;
     my @fields = split("\t", $header);
-    is_deeply(["", "logConc", "logFC", "p.value", "test.result"], \@fields, "header is as expected");
+    is_deeply(["", "logFC", "logCPM", "PValue", "test.result"], \@fields, "header is as expected");
 
     my %gene_results;
     my %gene_tests;

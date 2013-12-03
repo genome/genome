@@ -13,7 +13,7 @@ classicAnalysis <- function(inputFile, groups, outputFile, pvalue) {
     de <- decideTestsDGE(et, p=pvalue)
     out <- cbind(et$table, de)
     colnames(out)[4] <- "test.result"
-    out <- out[order(out$p.value), ]
+    out <- out[order(out$PValue), ]
 
     write.table(out, outputFile, quote=FALSE, sep="\t",
         row.names=TRUE, col.names=NA)
