@@ -71,4 +71,47 @@ sub construct_r_command {
     return 0;
 }
 
+sub generate_counts_file {
+    my ($path, $n_genes, $n_normal, $n_tumor) = @_;
+
+    my $fh = Genome::Sys->open_file_for_writing($path);
+
+    srand(1234);
+    # genrate some baseline counts
+    my @counts = map { 10 + int(rand(15)) } 1..$n_genes;
+    my @columns;
+
+    # normal samples
+    for my $nid (1..$n_normal) {
+        # add a little noise to the counts
+        my @new_counts = map {int($_ + rand(2) - 1)} @counts;
+        push(@columns, \@new_counts);
+    }
+
+    # tumor samples
+    for my $tid (1..$n_tumor) {
+        # add a little noise to the counts
+        my @new_counts = map {int($_ + rand(2) - 1)} @counts;
+        # but also greatly increase the expression of gene #0
+        $new_counts[0] += 100;
+        push(@columns, \@new_counts);
+    }
+
+    my @column_names = (
+        "Gene",
+        (map {"Normal$_"} 1..$n_normal),
+        (map {"Tumor$_"} 1..$n_tumor)
+        );
+
+    $fh->write(join("\t", @column_names) . "\n");
+
+    for my $i (0..$n_genes - 1) {
+        my @fields = ("GENE$i", map {$_->[$i]} @columns);
+        $fh->write(join("\t", @fields) . "\n");
+    }
+    $fh->close;
+}
+
+
+
 1;
