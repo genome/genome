@@ -57,7 +57,7 @@ The output file consists of 5 columns (one row per input object):
 
 Example output:
 
-            logConc logFC   p.value    test.result
+            logCPM  logFC   PValue     test.result
     GENE0   -1.583  2.039   2.627e-08  1
     GENE1   -2.618  -0.031  0.865      0
     GENE2   -2.408  -0.023  0.874      0
