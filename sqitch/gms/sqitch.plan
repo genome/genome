@@ -253,3 +253,4 @@ config.analysismenu_item_indices [config_analysismenu_item] 2013-12-04T15:54:01Z
 config_profile_item [config_analysis_project config_analysismenu_item] 2013-12-04T15:57:47Z Adam Coffman <acoffman@genome.wustl.edu> # add config.profile_item table
 @config_profiles 2013-12-04T16:56:35Z Adam Coffman <acoffman@genome.wustl.edu> # cqid refactor to support more flexible custom config
 disk_allocation [disk_allocation@production-copy-dev] 2013-12-04T17:17:47Z Anthony Brummett <abrummet@genome.wustl.edu># drop preserved column
+config_instrument_data_analysis_project_bridge_permission [config_instrument_data_analysis_project_bridge] 2013-12-04T21:06:43Z Anthony Brummett <abrummet@genome.wustl.edu># set permission on config.instrument_data_analysis_project_bridge
