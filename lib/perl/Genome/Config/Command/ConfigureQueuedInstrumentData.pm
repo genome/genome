@@ -47,7 +47,7 @@ sub execute {
         my $current_inst_data = $current_pair->instrument_data;
         my $analysis_project = $current_pair->analysis_project;
         eval {
-            my $config = $analysis_project->get_configuration_reader();
+            my $config = $analysis_project->get_configuration_profile();
             my $hashes = $self->_prepare_configuration_hashes_for_instrument_data($current_inst_data, $config);
             while (my ($model_type, $model_hashes) = (each %$hashes)) {
                 if ($model_type->requires_pairing) {
@@ -167,12 +167,7 @@ sub _get_model_for_config_hash {
 sub _prepare_configuration_hashes_for_instrument_data {
     my ($self, $instrument_data, $config_obj) = @_;
 
-    my $config_hash = $config_obj->get_config(
-        sequencing_platform => $instrument_data->sequencing_platform,
-        domain              => _normalize_domain($instrument_data->taxon->domain),
-        taxon               => _normalize_taxon($instrument_data->species_name),
-        type                => _normalize_extraction_type($instrument_data->sample->extraction_type),
-    );
+    my $config_hash = $config_obj->get_config($instrument_data);
 
     for my $model_type (keys %$config_hash) {
         if (ref $config_hash->{$model_type} ne 'ARRAY') {
