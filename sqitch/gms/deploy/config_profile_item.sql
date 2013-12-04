@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS config.profile_item (
   created_at timestamp(6) without time zone NOT NULL,
   updated_at timestamp(6) without time zone NOT NULL,
   created_by character varying(255) NOT NULL,
-  analysismenu_item_id character varying(64) NOT NULL REFERENCES config.analysismenu_item(id),
+  analysismenu_item_id character varying(64) REFERENCES config.analysismenu_item(id),
   analysis_project_id character varying(64) NOT NULL REFERENCES config.analysis_project(id)
 );
 
