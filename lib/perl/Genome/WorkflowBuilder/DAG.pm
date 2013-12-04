@@ -285,8 +285,7 @@ sub _validate_mandatory_inputs {
     unless ($mandatory_inputs->is_empty) {
         die $self->error_message(sprintf(
             "%d mandatory input(s) missing in DAG: %s",
-            $mandatory_inputs->size,
-            Data::Dumper::Dumper($mandatory_inputs->members)
+            $mandatory_inputs->size, $mandatory_inputs
         ));
     }
 }
