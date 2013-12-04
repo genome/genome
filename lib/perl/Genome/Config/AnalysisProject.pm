@@ -38,9 +38,15 @@ class Genome::Config::AnalysisProject {
             is => 'Genome::Config::AnalysisProject::SubjectPairing',
             reverse_as => 'analysis_project',
         },
+        analysis_project_bridges => {
+            is => 'Genome::Config::AnalysisProject::InstrumentDataBridge',
+            reverse_as => 'analysis_project',
+            is_many => 1,
+        },
         instrument_data => {
             is => 'Genome::InstrumentData',
-            reverse_as => 'analysis_project_id',
+            via => 'analysis_project_bridges',
+            to => 'instrument_data',
             is_many => 1,
         },
         samples => {

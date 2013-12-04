@@ -10,7 +10,7 @@ use Lingua::EN::Inflect;
 
 class Genome::Config::Profile::Item {
     is => ['Genome::Utility::ObjectWithTimestamps','Genome::Utility::ObjectWithCreatedBy'],
-    data_source => 'GMSchema',
+    data_source => 'Genome::DataSource::GMSchema',
     table_name => 'config.profile_item',
     id_generator => '-uuid',
     has => [
@@ -20,6 +20,7 @@ class Genome::Config::Profile::Item {
         },
         allocation => {
             is => 'Genome::Disk::Allocation',
+            is_many => 1,
             reverse_as => 'owner'
         },
         analysis_menu_item => {
