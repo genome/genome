@@ -26,6 +26,7 @@ class Genome::Config::Profile::Item {
         analysis_menu_item => {
             is => 'Genome::Config::AnalysisMenu::Item',
             id_by => 'analysismenu_item_id',
+            is_optional => 1,
         },
         analysis_project => {
             is => 'Genome::Config::AnalysisProject',
