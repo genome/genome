@@ -18,6 +18,7 @@ class Genome::Config::AnalysisProject::Command::Create {
             is_optional         => 1,
             is_many             => 1,
             doc                 => 'the analysis menu items to associate with this project.',
+            require_user_verify => 1,
         }
     ],
 };
