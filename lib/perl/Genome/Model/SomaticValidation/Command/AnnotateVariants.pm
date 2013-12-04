@@ -33,7 +33,7 @@ class Genome::Model::SomaticValidation::Command::AnnotateVariants {
     ],
     has_param => [
         lsf_queue => {
-            default => 'apipe',
+            default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT},
         },
         snv_tiers_to_annotate => {
             is => 'Array',

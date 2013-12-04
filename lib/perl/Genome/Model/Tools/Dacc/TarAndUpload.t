@@ -16,7 +16,7 @@ my $tar_file = $dir.'/dacc.tar.gz';
 my $cnt = 0;
 my @cmds = (
     "tar cvzf $tar_file ".join(' ', @files),
-    "bsub -q long -u " . Genome::Config->user_email . " -R 'rusage[internet_upload_mbps=100,aspera_upload_mbps=100]' gmt dacc upload /DACC_DIR/ $tar_file"
+    "bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -u " . Genome::Config->user_email . " -R 'rusage[internet_upload_mbps=100,aspera_upload_mbps=100]' gmt dacc upload /DACC_DIR/ $tar_file"
 );
 no warnings qw/ once redefine /;
 *Genome::Sys::shellcmd = sub{

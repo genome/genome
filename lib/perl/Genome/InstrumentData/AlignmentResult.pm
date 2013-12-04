@@ -316,7 +316,7 @@ sub required_rusage_for_building_index {
 
     my $select = "select[mem>=10000 && tmp>=15000]";
     my $rusage = "rusage[mem=10000, tmp=15000]";
-    my $options = "-M 10000000 -q long";
+    my $options = "-M 10000000 -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER}";
 
     return sprintf("-R '%s %s' %s", $select, $rusage, $options);
 }
@@ -388,7 +388,7 @@ sub create {
     my $estimated_kb_usage = $self->estimated_kb_usage;
     $self->status_message("Estimated disk for this data set: " . $estimated_kb_usage . " kb");
     $self->status_message("Check for available disk...");
-    my @available_volumes = Genome::Disk::Volume->get(disk_group_names => "info_alignments");
+    my @available_volumes = Genome::Disk::Volume->get(disk_group_names => $ENV{GENOME_DISK_GROUP_ALIGNMENTS});
     $self->status_message("Found " . scalar(@available_volumes) . " disk volumes");
     my $unallocated_kb = 0;
     for my $volume (@available_volumes) {
@@ -1386,7 +1386,7 @@ sub resolve_allocation_subdirectory {
 }
 
 sub resolve_allocation_disk_group_name {
-    return "info_alignments";
+    $ENV{GENOME_DISK_GROUP_ALIGNMENTS};
 }
 
 

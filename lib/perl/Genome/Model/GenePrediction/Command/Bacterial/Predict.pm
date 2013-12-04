@@ -285,7 +285,7 @@ sub execute
         port         => 7654 + $PID,
         pp_type      => 'lsf',
         R            => "rusage[tmp=$tmp_usage]",
-        q            => 'long',
+        q            => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
         maxmessage   => 16384000,
         lib_paths    => [
             UR::Util::used_libs,

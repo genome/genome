@@ -43,8 +43,8 @@ sub required_rusage {
     my $tmp_gb = $tmp_mb/1024;
 
     my $user = getpwuid($<);
-    my $queue = 'alignment';
-    $queue = 'alignment-pd' if (Genome::Config->should_use_alignment_pd);
+    my $queue = $ENV{GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT};
+    $queue = $ENV{GENOME_LSF_QUEUE_ALIGNMENT_PROD} if (Genome::Config->should_use_alignment_pd);
 
     my $host_groups;
     $host_groups = qx(bqueues -l $queue | grep ^HOSTS:);

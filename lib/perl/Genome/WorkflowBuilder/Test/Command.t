@@ -15,7 +15,14 @@ subtest 'Typical Command' => sub {
 
     my $expected_xml = <<EOS;
 <?xml version="1.0"?>
-<operation name="some op"><operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" lsfResource="-M 25000000 -R 'select[mem&gt;25000] rusage[mem=25000]'" commandClass="Genome::WorkflowBuilder::Test::DummyCommand"><inputproperty>input</inputproperty><outputproperty>many_output</outputproperty><outputproperty>result</outputproperty><outputproperty>single_output</outputproperty></operationtype></operation>
+<operation name="some op">
+  <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="$ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT}" lsfResource="-M 25000000 -R 'select[mem&gt;25000] rusage[mem=25000]'" commandClass="Genome::WorkflowBuilder::Test::DummyCommand">
+    <inputproperty>input</inputproperty>
+    <outputproperty>many_output</outputproperty>
+    <outputproperty>result</outputproperty>
+    <outputproperty>single_output</outputproperty>
+  </operationtype>
+</operation>
 EOS
 
     is($op->get_xml, $expected_xml, 'typical command produces expected xml');
@@ -30,7 +37,14 @@ subtest 'Parallel-By Command' => sub {
 
     my $expected_xml = <<EOS;
 <?xml version="1.0"?>
-<operation name="some op" parallelBy="input"><operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" lsfResource="-M 25000000 -R 'select[mem&gt;25000] rusage[mem=25000]'" commandClass="Genome::WorkflowBuilder::Test::DummyCommand"><inputproperty>input</inputproperty><outputproperty>many_output</outputproperty><outputproperty>result</outputproperty><outputproperty>single_output</outputproperty></operationtype></operation>
+<operation name="some op" parallelBy="input">
+  <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="$ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT}" lsfResource="-M 25000000 -R 'select[mem&gt;25000] rusage[mem=25000]'" commandClass="Genome::WorkflowBuilder::Test::DummyCommand">
+    <inputproperty>input</inputproperty>
+    <outputproperty>many_output</outputproperty>
+    <outputproperty>result</outputproperty>
+    <outputproperty>single_output</outputproperty>
+  </operationtype>
+</operation>
 EOS
 
     is($op->get_xml, $expected_xml, 'parallelBy command produces expected xml');
@@ -68,7 +82,14 @@ subtest 'Invalid Command Name' => sub {
 subtest 'XML Round Trip' => sub {
     my $xml = <<EOS;
 <?xml version="1.0"?>
-<operation name="some op"><operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" lsfResource="-M 25000000 -R 'select[mem&gt;25000] rusage[mem=25000]'" commandClass="Genome::WorkflowBuilder::Test::DummyCommand"><inputproperty>input</inputproperty><outputproperty>many_output</outputproperty><outputproperty>result</outputproperty><outputproperty>single_output</outputproperty></operationtype></operation>
+<operation name="some op">
+  <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="$ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT}" lsfResource="-M 25000000 -R 'select[mem&gt;25000] rusage[mem=25000]'" commandClass="Genome::WorkflowBuilder::Test::DummyCommand">
+    <inputproperty>input</inputproperty>
+    <outputproperty>many_output</outputproperty>
+    <outputproperty>result</outputproperty>
+    <outputproperty>single_output</outputproperty>
+  </operationtype>
+</operation>
 EOS
 
     my $op = Genome::WorkflowBuilder::Command->from_xml($xml);
@@ -82,7 +103,7 @@ subtest 'unspecified_operation_type_attributes' => sub {
     );
     my %got = $op->operation_type_attributes;
     my %expected = (
-        lsfQueue => 'apipe',
+        lsfQueue => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT},
         lsfResource => "-M 25000000 -R 'select[mem>25000] rusage[mem=25000]'",
         commandClass => 'Genome::WorkflowBuilder::Test::DummyCommand',
     );
@@ -98,7 +119,7 @@ subtest 'specified_operation_type_attributes' => sub {
     $op->lsf_project('specified project');
     my %got = $op->operation_type_attributes;
     my %expected = (
-        lsfQueue => 'not apipe',
+        lsfQueue => "not $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT}",
         lsfResource => "-M 25000000 -R 'select[mem>25000] rusage[mem=25000]'",
         lsfProject => 'specified project',
         commandClass => 'Genome::WorkflowBuilder::Test::DummyCommand',

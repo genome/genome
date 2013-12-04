@@ -123,7 +123,7 @@ class Genome::Model::Tools::Pindel::RunPindelModelGroup {
     # Make workflow choose 64 bit blades
     has_param => [
         lsf_queue => {
-            default_value => 'apipe'
+            default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT},
         }, 
         lsf_resource => {
             default_value => "-M 12000000 -R 'select[type==LINUX64 && mem>12000] rusage[mem=12000]'",

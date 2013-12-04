@@ -67,7 +67,7 @@ sub __errors__ {
 }
 
 sub server_dispatch {
-    return 'long';
+    return $ENV{GENOME_LSF_QUEUE_BUILD_WORKER};
 }
 
 sub map_workflow_inputs {

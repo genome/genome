@@ -96,7 +96,7 @@ sub _create_disk_allocation_for_busting {
 
     # FIXME WHAT SHOULD OWN THIS ALLOCATION?
     my %disk_allocation_params = (
-        disk_group_name     => 'info_alignments',
+        disk_group_name     => $ENV{GENOME_DISK_GROUP_ALIGNMENTS},
         allocation_path     => 'alignment_data/busted_bam/' . $self->instrument_data->id,
         kilobytes_requested => sprintf('%.0f',($self->_bam_size * .002)), # reserve 2X the bam size
         owner_class_name    => 'Genome::InstrumentData::Bam',

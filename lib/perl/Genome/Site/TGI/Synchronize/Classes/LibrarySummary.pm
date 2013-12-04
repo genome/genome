@@ -15,7 +15,7 @@ SAMPLE_ID            NUMBER   (20)                    {null} NOT NULL ok
 =cut
 
 class Genome::Site::TGI::Synchronize::Classes::LibrarySummary {
-    is => 'UR::Object',
+    is => 'Genome::Site::TGI::Synchronize::Classes::LimsBase',
     table_name => 'LIBRARY_SUMMARY',
     id_by => [
         id                      => { is => 'Number', column_name => 'LIBRARY_ID', },
@@ -32,6 +32,8 @@ class Genome::Site::TGI::Synchronize::Classes::LibrarySummary {
     ],
     data_source => 'Genome::DataSource::Dwrac',
 };
+
+sub entity_name { return 'library' }
 
 sub properties_to_copy {# 6
     return ( 'id', 'name', 'sample_id', properties_to_keep_updated() );

@@ -3,7 +3,6 @@ package Genome::Model::ClinSeq::Command::CreateMutationSpectrum;
 use strict;
 use warnings;
 use Genome;
-use Data::Dumper;
 
 class Genome::Model::ClinSeq::Command::CreateMutationSpectrum {
     is => 'Command::V2',
@@ -141,7 +140,7 @@ sub execute {
 
   #2.) Run annotator on all Tier1-3 variants
   my $annotated_file = $variant_file . ".annotated";
-  my $annotate_cmd = Genome::Model::Tools::Annotate::TranscriptVariants->create(variant_bed_file=>$variant_file, output_file=>$annotated_file, no_headers=>1, annotation_filter=>'top', use_version=>3, reference_transcripts=>$reference_annotation_name, skip_if_output_present=>1);
+  my $annotate_cmd = Genome::Model::Tools::Annotate::TranscriptVariants->create(variant_bed_file=>$variant_file, output_file=>$annotated_file, no_headers=>1, annotation_filter=>'top', reference_transcripts=>$reference_annotation_name, skip_if_output_present=>1);
   $annotate_cmd->execute();
   
   #5.) Generate mutation-spectrum-sequence-context result

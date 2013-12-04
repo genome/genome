@@ -42,6 +42,7 @@ EXPERIMENT_PURPOSE VARCHAR2 (32)                    {null} {null}   NOT_SYNCED
 =cut
 
 class Genome::Site::TGI::Synchronize::Classes::RegionIndex454 {
+    is => 'Genome::Site::TGI::Synchronize::Classes::LimsBase',
     table_name => <<'SQL'
         (
             select 
@@ -61,9 +62,7 @@ class Genome::Site::TGI::Synchronize::Classes::RegionIndex454 {
                   then to_char(rr454.region_number)
                   else to_char(rr454.region_number) || '-' || ri454.index_sequence 
                  end
-                ) subset_name,
-                --constants
-                '454' sequencing_platform
+                ) subset_name
             from region_index_454 ri454
             join run_region_454 rr454 on rr454.region_id = ri454.region_id
         ) region_index_454
@@ -79,25 +78,41 @@ SQL
         region_id => { is => 'Text', },
         region_number => { is => 'Text', },
         run_name => { is => 'Text', },
-        sequencing_platform => { is => 'Text', },
         subset_name => { is => 'Text', },
         total_reads => { is => 'Text', },
         total_bases_read => { is => 'Text', },
     ],
+    has_transient_optional => [
+        sff_file => { is => 'Text', },
+    ],
     data_source => 'Genome::DataSource::Dwrac',
 };
 
-sub properties_to_copy {# 9
-    return ( 'id', 'library_id', properties_to_keep_updated() );
+sub entity_name { return 'instrument data 454'; }
+
+sub genome_class_for_create { return 'Genome::InstrumentData::454'; }
+
+sub params_for_create_in_genome {
+    my $self = shift;
+
+    my %params = $self->SUPER::params_for_create_in_genome;
+    $params{ignored} = 1 if not exists $params{sff_file};
+
+    return %params;
 }
 
-sub properties_to_keep_updated {# 7
+sub properties_to_copy {# 9
+    return ( 'id', 'library_id', 'sff_file', properties_to_keep_updated() );
+}
+
+sub properties_to_keep_updated {# 8
     return (qw/ 
         index_sequence
         is_paired_end
         region_id
         region_number
         run_name
+        subset_name
         total_reads
         total_bases_read
         /);
@@ -114,4 +129,5 @@ sub lims_property_name_to_genome_property_name {
     return $name;
 }
 
+1;
 

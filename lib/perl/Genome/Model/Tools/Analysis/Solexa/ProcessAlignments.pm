@@ -289,7 +289,7 @@ sub execute {                               # replace with real execution logic.
 								}
 								$cmd = "gmt bowtie match-to-regions --regions-file $match_to_regions --alignments-file $alignment_outfile --output-file $output_roi --output-layers $output_layers";
 								print "$cmd\n";
-								system("bsub -q short -oo $output_roi.out -R\"select[mem>2000] rusage[mem=2000]\" $cmd");
+								system("bsub -q $ENV{GENOME_LSF_QUEUE_SHORT} -oo $output_roi.out -R\"select[mem>2000] rusage[mem=2000]\" $cmd");
 							}
 
 							if($varscan_roi)
@@ -304,7 +304,7 @@ sub execute {                               # replace with real execution logic.
 								if(-e $roi_file)
 								{
 									$cmd = "varscan easyrun $roi_file --output-dir $varscan_dir --sample $varscan_sample --min-coverage 10 --min-var-freq 0.25";
-									system("bsub -q long -R\"select[mem>4000] rusage[mem=4000]\" $cmd");
+									system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -R\"select[mem>4000] rusage[mem=4000]\" $cmd");
 								}
 							}
 							
@@ -312,7 +312,7 @@ sub execute {                               # replace with real execution logic.
 							{
 								my $unmapped_file = $flowcell_dir . "/" . $aligner . "_out/" . "s_" . $lane_name . "_sequence.bowtie.unmapped.fastq";
 								my $reference = Genome::Config::reference_sequence_directory() . '/NCBI-human-build36/all_sequences.novoindex-k14-s3-v2.03.01';
-								system("bsub -q long -R\"select[type==LINUX64 && model != Opteron250 && mem>1000] rusage[mem=4000]\" -M 12000000 -oo $unmapped_file.novoalign.log \"/gscuser/dkoboldt/Software/NovoCraft/novocraftV2.05.07/novocraft/novoalign -a -l 50 -t 240 -k -d $reference -f $unmapped_file >$unmapped_file.novoalign\"");
+								system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -R\"select[type==LINUX64 && model != Opteron250 && mem>1000] rusage[mem=4000]\" -M 12000000 -oo $unmapped_file.novoalign.log \"/gscuser/dkoboldt/Software/NovoCraft/novocraftV2.05.07/novocraft/novoalign -a -l 50 -t 240 -k -d $reference -f $unmapped_file >$unmapped_file.novoalign\"");
 							}
 							
 							if($unmapped_indels)
@@ -336,7 +336,7 @@ sub execute {                               # replace with real execution logic.
 									print SCRIPT "$cmd\n";
 									
 									close(SCRIPT);
-									system("bsub -q long -R\"select[mem>4000] rusage[mem=4000]\" sh $script_filename");
+									system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -R\"select[mem>4000] rusage[mem=4000]\" sh $script_filename");
 								}
 							}
 							

@@ -150,7 +150,7 @@ sub _launch_import {
         $logging = '-u '. Genome::Config->user_email;
     }
 
-    my $cmd = "bsub -q long $logging genome instrument-data dacc import $sub_command_format $sra_sample_id";
+    my $cmd = "bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} $logging genome instrument-data dacc import $sub_command_format $sra_sample_id";
     if ( not $self->validate_md5 ) {
         $cmd .= ' --novalidate-md5';
     }

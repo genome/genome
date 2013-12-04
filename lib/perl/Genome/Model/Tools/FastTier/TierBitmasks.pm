@@ -241,7 +241,7 @@ sub create {
         my $fh = Genome::Sys->open_file_for_reading($cpg_islands);
         while(my $line = $fh->getline) {
             chomp $line;
-            my ($chr, $start, $end, ) = split /\t/, $line; #ignoring scores on these tables (may be bad)
+            my ($bin, $chr, $start, $end, ) = split /\t/, $line; #ignoring scores on these tables (may be bad)
             $chr =~ s/chr//g;
             $self->add_range_to_set($regulatory_regions,$chr, $start, $end); 
         }
@@ -306,7 +306,7 @@ sub resolve_allocation_subdirectory {
 }
 
 sub resolve_allocation_disk_group_name {
-    return 'info_genome_models';
+    $ENV{GENOME_DISK_GROUP_MODELS};
 }
 
 sub add_substructure_to_set {

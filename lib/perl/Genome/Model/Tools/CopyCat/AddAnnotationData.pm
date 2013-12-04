@@ -64,7 +64,7 @@ sub create_software_result {
     my $allocation = Genome::Disk::Allocation->create(
         owner_id => $software_result->id,
         owner_class_name => $software_result->class,
-        disk_group_name => 'info_genome_models',
+        disk_group_name => $ENV{GENOME_DISK_GROUP_MODELS},
         allocation_path => 'model_data/copy-cat' . $software_result->id,
         kilobytes_requested => 5*1024*1024,
     );

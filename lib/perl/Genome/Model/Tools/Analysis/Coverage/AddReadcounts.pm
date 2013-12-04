@@ -221,7 +221,7 @@ sub execute {
             chomp($sline);
             
             if($count == 0){ #check for header
-                if($sline =~ /^(#|Hugo_Symbol|Chrom|chromosome)/i){
+                if($sline =~ /^(#|Hugo_Symbol|Chrom|chromosome|chr\s+)/i){
                     #good header match                    
                     if(defined($header_prefixes[$prefix-1])){
                         my $pre = $header_prefixes[$prefix-1];

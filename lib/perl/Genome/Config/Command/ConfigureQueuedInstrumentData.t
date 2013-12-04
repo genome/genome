@@ -36,6 +36,7 @@ delete $config_hash->{instrument_data_properties};
 $config_hash->{subject} = $rna_instrument_data->sample;
 $config_hash->{target_region_set_name} = $rna_instrument_data->target_region_set_name;
 $config_hash->{auto_assign_inst_data} = 1;
+$config_hash->{user_name} = 'apipe-builder';
 my $rna_model = Genome::Model::RnaSeq->create(%{$config_hash});
 build_and_run_cmd($rna_instrument_data);
 assert_succeeded($rna_instrument_data, $model_types);
@@ -48,6 +49,7 @@ delete $config_hash_no_auto_assign->{instrument_data_properties};
 $config_hash_no_auto_assign->{subject} = $rna_instrument_data->sample;
 $config_hash_no_auto_assign->{target_region_set_name} = $rna_instrument_data->target_region_set_name;
 $config_hash_no_auto_assign->{auto_assign_inst_data} = 0;
+$config_hash_no_auto_assign->{user_name} = 'apipe-builder';
 my $rna_model_no_auto_assign = Genome::Model::RnaSeq->create(%{$config_hash_no_auto_assign});
 build_and_run_cmd($rna_instrument_data);
 assert_succeeded($rna_instrument_data, $model_types);
@@ -82,8 +84,24 @@ assert_failed(@$data2[0], 'Found no pairing information');
 #inst data with no ap
 my $inst_data_without_a_project = Genome::Test::Factory::InstrumentData::Solexa->setup_object();
 my $cmd = build_and_run_cmd($inst_data_without_a_project);
-ok($cmd->status_message =~ /Found 0 items to process/, 'no analysis project is a no-op');
+ok($cmd->status_message =~ /Found no items to process/, 'no analysis project is a no-op');
+
+#skipped data
+($rna_instrument_data, $model_types) = generate_rna_seq_instrument_data();
+$rna_instrument_data->ignored(1);
+build_and_run_cmd($rna_instrument_data);
+assert_skipped($rna_instrument_data);
+
 done_testing();
+
+sub assert_skipped {
+    my $inst_data = shift;
+
+    my ($bridge) = $inst_data->analysis_project_bridges;
+    ok($bridge->status eq 'skipped', 'it should mark the inst data as skipped');
+    ok($bridge->reason, 'a reason for being skipped was specified');
+    is($bridge->fail_count, 0, 'a fail count was not set');
+}
 
 sub assert_failed {
     my $inst_data = shift;
@@ -106,6 +124,7 @@ sub assert_succeeded {
     is($bridge->fail_count, 0, 'it should remove the fail count');
     for my $model_instance ($inst_data->models) {
         ok($model_instance->build_requested, 'it sets build requested on constructed models');
+        is($model_instance->user_name, 'apipe-builder');
     }
     for my $model_type (@$model_types) {
         ok(

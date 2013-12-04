@@ -114,7 +114,7 @@
 	url = ssh://git/srv/git/genome-tgi-etc.git
 [submodule "vendor/pindel"]
 	path = vendor/pindel
-	url = git@github.com:genome-vendor/pindel.git
+	url = git@github.com:genome/pindel.git
 [submodule "vendor/dendrix"]
 	path = vendor/dendrix
 	url = git@github.com:genome-vendor/Dendrix.git

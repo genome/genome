@@ -9,6 +9,7 @@ use Data::Dumper 'Dumper';
 use Test::More;
 
 use_ok('Genome::Utility::Text') or die;
+use Genome::Utility::Text 'justify';
 
 # camel case
 my $string                  = 'genome model reference alignment 454x titanium';
@@ -45,5 +46,23 @@ my $cap_string   = 'GoOd Morning Vietnam!';
 is(Genome::Utility::Text::capitalize_words($uncap_string1), $cap_string, 'capitalize words');
 is(Genome::Utility::Text::capitalize_words($uncap_string2, '-'), $cap_string, 'capitalize words');
 ok(!eval{Genome::Utility::Text::capitalize_words(undef)}, 'failed as expected - capitalize w/o string words');
+
+subtest justify_plain => sub {
+    is(justify('12345', 'left', 6), '12345 ', 'Left justification works');
+    is(justify('12345', 'right', 6), ' 12345', 'Right justification works');
+    is(justify('12345', 'center', 7), ' 12345 ', 'Center justification works');
+};
+
+subtest justify_fill => sub {
+    is(justify('12345', 'left', 7, '.'), '12345 .', 'Left justification works');
+    is(justify('12345', 'right', 7, '.'), '. 12345', 'Right justification works');
+    is(justify('12345', 'center', 9, '.'), '. 12345 .', 'Center justification works');
+};
+
+subtest justify_spacer => sub {
+    is(justify('12345', 'left', 7, '.', '  '), '12345  ', 'Left justification works');
+    is(justify('12345', 'right', 7, '.', '  '), '  12345', 'Right justification works');
+    is(justify('12345', 'center', 9, '.', '  '), '  12345  ', 'Center justification works');
+};
 
 done_testing();

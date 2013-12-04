@@ -283,7 +283,7 @@ sub _prepare_output_directory {
 
     unless($allocation) {
         my %allocation_parameters = (
-            disk_group_name => 'info_genome_models',
+            disk_group_name => $ENV{GENOME_DISK_GROUP_MODELS},
             allocation_path => $subdir,
             owner_class_name => $self->class,
             owner_id => $self->id,

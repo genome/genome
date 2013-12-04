@@ -230,6 +230,7 @@ sub _render_view {
         page_title => $title,
         style => $page_css,
         report_content => $report_html,
+        files_url => $ENV{GENOME_SYS_SERVICES_FILES_URL},
     );
 
     my $template = $self->_support_file_path("Intersect.html.tt2");

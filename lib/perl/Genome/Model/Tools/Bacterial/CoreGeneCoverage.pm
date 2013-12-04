@@ -143,7 +143,7 @@ sub execute {
     $self->status_message("bsubbing blastp command: $blastp_cmd");
     my $blastp_job = PP::LSF->create(
         command => $blastp_cmd,
-        q => 'long',
+        q => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
         o => $bsubout,
         e => $bsuberr,
     );

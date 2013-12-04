@@ -152,7 +152,7 @@ class Genome::Model::Tools::DetectVariants2::Detector {
     ],
     has_param => [
         lsf_queue => {
-            default => 'apipe',
+            default => $ENV{GENOME_LSF_QUEUE_DV2_WORKER},
         },
     ],
     doc => 'This is the base class for all detector classes',

@@ -59,17 +59,6 @@ _test_skip(
     new_value => -202,
 );
 
-_test_skip(
-   subject_property_name => 'gerald_directory',
-    new_value => '/somedir/'
-);
-
-_test_skip(
-    subject_property_name => 'target_region_set_name',
-    new_value => 3,
-);
-
-
 _test_pass(
     subject_property_name => 'median_insert_size',
     new_value => 100,

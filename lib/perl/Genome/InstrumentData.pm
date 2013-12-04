@@ -255,7 +255,7 @@ sub create {
     eval{ ($bx, @extra) = $class->define_boolexpr(@_); };
     return if not $bx;
     if ( @extra and @extra % 2 == 1 ) {
-        $class->error_message("Odd number of attributes sent to create intrument data: ".Data::Dumper::Dumper(\@extra));
+        $class->error_message("Odd number of attributes sent to create instrument data: ".Data::Dumper::Dumper(\@extra));
         return;
     }
     my %extra = @extra;

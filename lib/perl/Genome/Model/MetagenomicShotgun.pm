@@ -274,7 +274,7 @@ sub _resolve_workflow_for_build {
         output_properties => [qw/ build /],
         log_dir => $build->log_directory,
     );
-    $lsf_queue //= 'apipe';
+    $lsf_queue //= $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
     $lsf_project //= 'build' . $build->id;
     my $left_operation = $workflow->get_input_connector;
 

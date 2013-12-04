@@ -33,6 +33,9 @@ class Genome::Model::RnaSeq::Command::DetectFusions::Chimerascan::DetectorBase {
         software_result => {
             is => 'Genome::SoftwareResult',
         },
+        bedpe_file => {
+            is => 'Path',
+        },
     ],
     has => [
         lsf_resource => {
@@ -82,6 +85,7 @@ sub _fetch_result {
 
     if ($result){
         $self->software_result($result);
+        $self->bedpe_file($result->bedpe_file);
         return 1;
     }
 

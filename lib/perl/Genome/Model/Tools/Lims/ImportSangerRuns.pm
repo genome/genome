@@ -51,7 +51,7 @@ sub _import_run {
             run_name => $run_name,
         );
         if ( not $sanger ) {
-            $self->error_message('Failed to create sanger intrument data for run name: '.$run_name);
+            $self->error_message('Failed to create sanger instrument data for run name: '.$run_name);
             return;
         }
         $created = 1;
@@ -81,7 +81,7 @@ sub _dump_to_file_system {
     my $disk_allocation = $sanger->disk_allocation;
     unless ( $disk_allocation ) {
         $disk_allocation = Genome::Disk::Allocation->allocate(
-            disk_group_name => 'info_alignments',
+            disk_group_name => $ENV{GENOME_DISK_GROUP_ALIGNMENTS},
             allocation_path => '/instrument_data/sanger'.$sanger->id,
             kilobytes_requested => 10240, # 10 Mb
             owner_class_name => $sanger->class,

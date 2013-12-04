@@ -220,7 +220,7 @@ sub execute {
 
     require UR::Object::View::Default::Xsl;
 
-    my $cachetrigger = Genome::Config->base_web_uri;
+    my $cachetrigger = $ENV{GENOME_SYS_SERVICES_WEB_VIEW_URL};
     $cachetrigger =~ s/view$/cachetrigger/;
 
     my $url = $cachetrigger . '/' . UR::Object::View::Default::Xsl::type_to_url     (ref($build)) . '/status.html?id=' . $build->id;

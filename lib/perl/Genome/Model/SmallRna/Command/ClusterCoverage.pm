@@ -44,7 +44,7 @@ class Genome::Model::SmallRna::Command::ClusterCoverage {
 
     has_optional_param => [
         lsf_queue => {
-            default_value => 'workflow',
+            default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKFLOW},
         },
         lsf_resource => {
             default_value => '-R \'select[mem>16000] rusage[mem=16000]\' -M 16000000 ',
@@ -55,16 +55,32 @@ class Genome::Model::SmallRna::Command::ClusterCoverage {
 
 sub execute {
     my $self = shift;
+    my $bam_file   = $self->bam_file;
+    my $stats_file = $self->stats_file;
+    my $bed_file   = $self->bed_file;
     
+    my $cmd = 'genome-perl5.10 -S gmt ref-cov cluster-coverage --bam-file='. $bam_file .' --minimum-zenith='. $self->zenith_depth .' --minimum-depth='. $self->minimum_depth .' --stats-file='. $stats_file .' --bed-file='. $bed_file;
     
-    my $cmd = 'genome-perl5.10 -S gmt ref-cov cluster-coverage --bam-file='. $self->bam_file .' --minimum-zenith='. $self->zenith_depth .' --minimum-depth='. $self->minimum_depth .' --stats-file='. $self->stats_file .' --bed-file='. $self->bed_file ;
-    
-    Genome::Sys->shellcmd(
+    my $rv = Genome::Sys->shellcmd(
         cmd => $cmd,
-        input_files => [$self->bam_file],
-        output_files => [$self->bed_file,$self->stats_file],
+        input_files  => [$bam_file],
         skip_if_output_is_present => 0,
     );
+
+    unless ($rv) {
+        $self->error_message('Failed to execute command: '. $cmd);
+        die $self->error_message;
+    }
+
+    my $err_msg = 'Probably caused by the cutoff failure of either zenith_depth or minimum_depth (or both)';
+
+    unless (-s $stats_file) {
+        $self->warning_message("Output stats file: $stats_file is not valid. $err_msg");
+    }
+
+    unless (-s $bed_file) {
+        $self->warning_message("Output bed file: $bed_file is not valid. $err_msg");
+    }
     
     return 1;   
 }

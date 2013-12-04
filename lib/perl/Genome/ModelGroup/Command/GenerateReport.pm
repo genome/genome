@@ -35,7 +35,7 @@ sub help_brief {
 sub help_synopsis {
     my $self = shift;
     return <<"EOS"
-genome model convergence generate-report --group 12345 --output /tmp/report.html --base-url https://imp-apipe/
+genome model convergence generate-report --group 12345 --output /tmp/report.html --base-url $ENV{GENOME_SYS_SERVICES_FILES_URL}
 EOS
 }
 

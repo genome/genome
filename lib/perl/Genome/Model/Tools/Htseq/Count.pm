@@ -294,16 +294,6 @@ sub _merge_v1 {
     return 1;
 }
 
-## the following three methods could be implemented, but the defaults are sufficient:
-## the values below are examples, not the defaults
-
-# sub resolve_resource_requirements { "select[ncpus>=1,mem=8000] -n 1 rusage[mem=5000]" }
-
-# sub resolve_allocation_subdirectory { 'my/sub/dir' }
-
-# sub resolve_allocation_disk_group_name { 'info_genome_models' }
-
-
 sub help_synopsis {
     return <<EOS
 

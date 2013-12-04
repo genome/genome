@@ -85,6 +85,17 @@ subtest '_compare_ok_parse_args parsed: ' . join(', ', @args_F) => sub {
     is($filter->('1abc23'), '1xyz23', 'transform changes out "abc" for "xyz"');
 };
 
+subtest '_compare_ok_parse_args parsed with multiple occurrences: ' . join(', ', @args_F) => sub {
+    local $@ = '';
+    my ($f1, $f2, %o) = eval { $_compare_ok_parse_args->(@args_F) };
+    ok(!$@, 'did not die');
+    is($o{name}, $args_F[2], 'name matched expected value');
+    is(scalar(@{$o{xform}}), 2, 'Created two transforms');
+
+    my $filter = $o{xform}->[0];
+    is($filter->('123/foo/456/foo/'), '123bar456bar', 'transform changes out qr(/foo/) for "bar"');
+};
+
 subtest 'compare_ok matches diff command' => sub {
     my $expected_fh = File::Temp->new(TMPDIR => 1);
     my $expected_fn = $expected_fh->filename;

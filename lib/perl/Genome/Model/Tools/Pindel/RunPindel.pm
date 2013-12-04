@@ -133,7 +133,7 @@ class Genome::Model::Tools::Pindel::RunPindel {
     # Make workflow choose 64 bit blades
     has_param => [
         lsf_queue => {
-            default_value => 'apipe'
+            default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT},
         }, 
         lsf_resource => {
             default_value => "-M 12000000 -R 'select[type==LINUX64 && mem>12000] rusage[mem=12000]'",
@@ -155,6 +155,7 @@ my %PINDEL_VERSIONS = (
     '0.2'    => $ENV{GENOME_SW} . '/pindel/0.2/pindel',
     '0.2.4d' => $ENV{GENOME_SW} .'/pindel/0.2.4d/pindel',
     '0.2.4t' => '/usr/bin/pindel0.2.4t',
+    '0.2.5' => '/usr/bin/pindel0.2.5',
     '0.3'    => $ENV{GENOME_SW} .'/pindel/0.3/pindel',
     '0.4'    => $ENV{GENOME_SW} .'/pindel/0.4/pindel',
     '0.5'    => $ENV{GENOME_SW} .'/pindel/0.5/pindel',

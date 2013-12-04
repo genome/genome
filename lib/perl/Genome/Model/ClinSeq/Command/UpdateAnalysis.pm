@@ -5,8 +5,6 @@ package Genome::Model::ClinSeq::Command::UpdateAnalysis;
 use strict;
 use warnings;
 use Genome;
-use Genome::Model::ClinSeq;
-use Data::Dumper;
 use Time::Piece;
 
 class Genome::Model::ClinSeq::Command::UpdateAnalysis {
@@ -136,7 +134,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
         tumor_sample_common_names => {
               #TODO: Is there a better way to determine which samples are 'tumor'?
               is => 'Text',
-              default => 'tumor|met|post treatment|recurrence met|pre-treatment met|pin lesion|relapse|xenograft',
+              default => 'tumor|met|post treatment|recurrence met|pre-treatment met|pin lesion|relapse|xenograft|pre-resistant|post-resistant',
               doc => 'The possible sample common names used in the database to specify a Tumor sample',
         },
         instrument_data_to_exclude => {
@@ -146,6 +144,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
         skip_check_archived => {
               is => 'Boolean',
               doc => 'Check if builds are currently archived',
+              default => 1,
         },
         check_archivable_status => {
               is => 'Boolean',
@@ -936,7 +935,7 @@ sub check_for_missing_and_excluded_data{
     }
   }
 
-  #Warn about builds missing intrument data
+  #Warn about builds missing instrument data
   unless (scalar(@final_models2)){
     foreach my $model_id (sort keys %problem_builds){
       my $id_string = $problem_builds{$model_id}{id_string};

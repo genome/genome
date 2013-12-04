@@ -21,7 +21,7 @@ use Genome;                                 # using the namespace authorizes Cla
 ## Bowtie Parameters ##
 my $batch_size = 1000000;
 my $num_cores = 1;
-my $lsf_queue = "long";
+my $lsf_queue = $ENV{GENOME_LSF_QUEUE_BUILD_WORKER};
 
 my $novoalign_params = "-c $num_cores -a -l 36 -t 240 -k";	# -o SAM
 

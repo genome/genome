@@ -27,7 +27,7 @@ class Genome::Model::GenePrediction::Command::Pap::FastaChunker {
                          is_optional => 1,
                          is_output => 1,
                        },
-        lsf_queue => { is_param => 1, default_value => 'short',},
+        lsf_queue => { is_param => 1, default_value => $ENV{GENOME_LSF_QUEUE_SHORT},},
         lsf_resource => { is_param => 1, default_value => 'rusage[tmp=100]',},
     ],
 };

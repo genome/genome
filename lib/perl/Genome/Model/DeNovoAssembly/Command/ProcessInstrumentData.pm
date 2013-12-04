@@ -71,16 +71,14 @@ sub link_result_to_build {
     }
 
     Genome::Sys->create_symlink(
-        $result->output_dir . '/'
-            .  $result->read_processor_output_metric_file,
+        $result->read_processor_output_metric_file,
         $self->build->data_directory . '/'
-            .  $result->read_processor_output_metric_file);
+            . $result->read_processor_output_metric_file_base_name);
 
     Genome::Sys->create_symlink(
-        $result->output_dir.'/'.
         $result->read_processor_input_metric_file,
-        $self->build->data_directory.'/'.
-        $result->read_processor_input_metric_file);
+        $self->build->data_directory.'/'
+            . $result->read_processor_input_metric_file_base_name);
 
     return 1;
 }

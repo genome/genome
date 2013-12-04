@@ -3,7 +3,6 @@ use strict;
 use warnings;
 use Switch;
 use Genome; 
-use Data::Dumper;
 
 # Written by Ben Ainscough and Scott Smith, based on prototype from Obi Griffith
 # See JIRA issue https://jira.gsc.wustl.edu/browse/TD-691
@@ -17,6 +16,14 @@ class Genome::Model::ClinSeq::Command::MakeCircosPlot {
         output_directory    => { is => 'FilesystemPath',
                                 doc => 'Directory where output will be written', },
 
+        #TODO: Define all input files as optional inputs here
+        #TODO: Each of these will have to be defined as output on the commands they come from.
+
+
+    ],
+    #TODO This optional input should not be needed... remove it and resolve any problem that causes  
+    has_optional_input => [
+        clinseq_result               => { is => 'Boolean', doc => 'Dependency for the ClinSeq pipeline' },
     ],
     has_param => [
         use_version         => { is => 'Text',
@@ -64,11 +71,6 @@ sub execute {
     $self->status_message("Running on build " . $build->__display_name__); 
     $self->status_message("Output directory is " . $self->output_directory);
 
-
-
-    #TODO Remove when done testing
-    #Remove circos.conf for testing purposes
-    Genome::Sys->shellcmd(cmd => "rm -rf $output_directory");
 
     # initialize directories
     unless (-d $output_directory) {
@@ -214,29 +216,31 @@ EOS
 
 ###Fusions
 #TODO /gscmnt/gc8001/info/model_data/9761cf3dbb73452980890eaf0e8aadb0/buildf4af67af82b94727bb4ac30554503e4b/fusions/chimeras.bedpe.filtered.txt
-#        if(my $tumor_rnaseq_build = $build->tumor_rnaseq_build){
-#            Genome::Sys->copy_file($tumor_rnaseq_build->data_directory."/fusions/chimeras.bedpe.filtered.txt", "$output_directory/raw/chimeras.bedpe.filtered.txt");
-#            my $fusions = Genome::Sys->read_file("$output_directory/raw/chimeras.bedpe.filtered.txt");
-#            my $fusions_fh = Genome::Sys->open_file_for_writing("$output_directory/data/chimeras.bedpe.filtered.txt");
-#           while ($fusions =~ /(\S+)\s+(\S+)\s+chr(\S+):(\d+)-(\d+)\s+chr(\S+):(\d+)-(\d+)/g) {
-#                $genes_noAmpDel{$1}="hs$3 $4 $5";
-#                $genes_noAmpDel{$2}="hs$6 $7 $8";
-#                $genes_AmpDel{$1}="hs$3 $4 $5";
-#                $genes_AmpDel{$2}="hs$6 $7 $8";
-#                print $fusions_fh ("hs$3 $4 $5 hs$6 $7 $8\n");
-#            }
-#            $fusions_fh->close;
-#            $config .=<<EOS;
+        if(my $tumor_rnaseq_build = $build->tumor_rnaseq_build && -e $dataDir."/rna_fusions/tumor/chimeras.filtered.bedpe"){
+            Genome::Sys->copy_file($dataDir."/rna_fusions/tumor/chimeras.filtered.bedpe", "$output_directory/raw/chimeras.filtered.bedpe");
+            my $fusions = Genome::Sys->read_file("$output_directory/raw/chimeras.filtered.bedpe");
+            my $fusions_fh = Genome::Sys->open_file_for_writing("$output_directory/data/chimeras.filtered.bedpe");
+           while ($fusions =~ /(\d+|X|Y)\s(\d+)\s(\d+)\s(\d+|X|Y)\s(\d+)\s(\d+)\s+\w+\s\d+\s[+|-]\s[+|-]\s(\S+):(\S+)/g) {
+           		print "gene 1 : $7 hs$1 $2 $3";
+           		print "gene 2 : $8 hs$4 $5 $6";
+#                $genes_noAmpDel{$7}="hs$1 $2 $3";
+#                $genes_noAmpDel{$8}="hs$4 $5 $6";
+#                $genes_AmpDel{$7}="hs$1 $2 $3";
+#                $genes_AmpDel{$8}="hs$4 $5 $6";
+                print $fusions_fh ("hs$1 $2 $3 hs$4 $5 $6\n");
+            }
+            $fusions_fh->close;
+            $config .=<<EOS;
 #Fusions RNAseq support
-#<link>
-#file          = $output_directory/data/chimeras.bedpe.filtered.txt
-#radius          = 0.50r
-#bezier_radius = 0r
-#color         = red_a1
-#thickness     = 2
-#</link>        
-#EOS
-#       }
+<link>
+file          = $output_directory/data/chimeras.filtered.bedpe
+radius          = 0.50r
+bezier_radius = 0r
+color         = red_a1
+thickness     = 2
+</link>        
+EOS
+       }
 
     $config.=<<EOS;
 </links>
@@ -673,9 +677,13 @@ EOS
     }
     $gene_fh->close;
 
-
-	my $annotate_genes_cmd1 = "genome model clin-seq annotate-genes-by-category --infile=$output_directory/raw/genes_noAmpDel.txt --cancer-annotation-db='tgi/cancer-annotation/human/build37-20130711.1' --gene-name-column='gene'";
-    Genome::Sys->shellcmd(cmd => $annotate_genes_cmd1);
+    my $cancer_annotation_db = Genome::Db->get(id => 'tgi/cancer-annotation/human/build37-20130711.1');
+    my $annotate_genes_cmd1 = Genome::Model::ClinSeq::Command::AnnotateGenesByCategory->create(
+        infile => "$output_directory/raw/genes_noAmpDel.txt",
+        cancer_annotation_db => $cancer_annotation_db,
+        gene_name_columns => ['gene'],
+    );
+    $annotate_genes_cmd1->execute() or die;
     my $sort_cmd1 = "sort -rnk 102 $output_directory/raw/genes_noAmpDel.catanno.txt|head -100 |cut -d \"\t\" -f 1-4  > $output_directory/data/genes_noAmpDel.catanno.sorted.txt";
     Genome::Sys->shellcmd(cmd => $sort_cmd1);
 
@@ -688,10 +696,14 @@ EOS
     }
     $geneAmpDel_fh->close;
 
-	$annotate_genes_cmd1 = "genome model clin-seq annotate-genes-by-category --infile=$output_directory/raw/genes_AmpDel.txt --cancer-annotation-db='tgi/cancer-annotation/human/build37-20130711.1' --gene-name-column='gene'";
-    Genome::Sys->shellcmd(cmd => $annotate_genes_cmd1);
-    $sort_cmd1 = "sort -rnk 102 $output_directory/raw/genes_AmpDel.catanno.txt|head -100 |cut -d \"\t\" -f 1-4  > $output_directory/data/genes_AmpDel.catanno.sorted.txt";
-    Genome::Sys->shellcmd(cmd => $sort_cmd1);
+    my $annotate_genes_cmd2 = Genome::Model::ClinSeq::Command::AnnotateGenesByCategory->create(
+        infile => "$output_directory/raw/genes_AmpDel.txt",
+        cancer_annotation_db => $cancer_annotation_db,
+        gene_name_columns => ['gene'],
+    );
+    $annotate_genes_cmd2->execute() or die;
+    my $sort_cmd2 = "sort -rnk 102 $output_directory/raw/genes_AmpDel.catanno.txt|head -100 |cut -d \"\t\" -f 1-4  > $output_directory/data/genes_AmpDel.catanno.sorted.txt";
+    Genome::Sys->shellcmd(cmd => $sort_cmd2);
 
     $config .=<<EOS;
 #GENE LABELS

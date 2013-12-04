@@ -7,10 +7,11 @@ use Genome;
 
 # EX: project id 2744972
 class Genome::Site::TGI::Synchronize::Classes::LimsProjectInstrumentData {
+    is => 'Genome::Site::TGI::Synchronize::Classes::LimsProjectPartBase',
     table_name => <<SQL
     (
 		--Administration Projects Instrument Data
-		select distinct ap.project_id project_id, woisp.seq_id instrument_data_id
+		select distinct ap.project_id project_id, woisp.seq_id entity_id
 		from administration_project ap
 		join project_work_order pwo on pwo.project_id = ap.project_id
 		join work_order_item woi on woi.setup_wo_id = pwo.setup_wo_id
@@ -19,7 +20,7 @@ class Genome::Site::TGI::Synchronize::Classes::LimsProjectInstrumentData {
 		 and ap.status != 'abandoned'
 		union
 		--Setup Work Order Instrument Data
-		select distinct woi.setup_wo_id project_id, woisp.seq_id instrument_data_id
+		select distinct woi.setup_wo_id project_id, woisp.seq_id entity_id
 		from setup s
 		join work_order_item woi on woi.setup_wo_id = s.setup_id
 		join gsc.woi_sequence_product\@dw woisp on woisp.woi_id = woi.woi_id
@@ -30,7 +31,7 @@ SQL
     ,
     id_by => [
         project_id => { is => 'Text', },
-        instrument_data_id => { is => 'Text', },
+        entity_id => { is => 'Text', },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::Oltp',

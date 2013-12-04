@@ -397,7 +397,7 @@ sub slurp_srr_data {
 
 
     my %alloc_params = (
-        disk_group_name     => 'info_alignments',     #'info_apipe',
+        disk_group_name     => $ENV{GENOME_DISK_GROUP_ALIGNMENTS},
         allocation_path     => $alloc_path,
         kilobytes_requested => $kb_used,
         owner_class_name    => $import_instrument_data->class,

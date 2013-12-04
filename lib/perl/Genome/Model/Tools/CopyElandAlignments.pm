@@ -169,7 +169,7 @@ sub execute {
                               ) . "\n";
             close (SCRIPT);
         }
-        system ("bsub -q long -e $error_log \'sh $bsub_script\'\n");  # launch the bsub job
+        system ("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -e $error_log \'sh $bsub_script\'\n");  # launch the bsub job
     }
 
     return 1;

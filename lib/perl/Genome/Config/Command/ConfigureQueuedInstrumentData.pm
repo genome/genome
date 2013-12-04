@@ -3,6 +3,10 @@ package Genome::Config::Command::ConfigureQueuedInstrumentData;
 use strict;
 use warnings;
 
+use Genome;
+
+use Lingua::EN::Inflect;
+
 class Genome::Config::Command::ConfigureQueuedInstrumentData {
     is => 'Command::V2',
     has => [
@@ -40,11 +44,16 @@ sub execute {
     $self->_lock();
 
     my @instrument_data_analysis_project_pairs = $self->_get_items_to_process();
-    $self->status_message(sprintf('Found %s items to process.',
-            scalar(@instrument_data_analysis_project_pairs)));
+    $self->status_message(sprintf('Found %s to process.',
+            Lingua::EN::Inflect::NO('item', scalar(@instrument_data_analysis_project_pairs))));
 
     for my $current_pair (@instrument_data_analysis_project_pairs) {
         my $current_inst_data = $current_pair->instrument_data;
+
+        if(my $skip_reason = $self->should_skip($current_inst_data)) {
+            return $self->_mark_pair_as_skipped($current_pair, $skip_reason);
+        }
+
         my $analysis_project = $current_pair->analysis_project;
         eval {
             my $config = $analysis_project->get_configuration_profile();
@@ -126,6 +135,23 @@ sub _mark_sync_status {
     return 1;
 }
 
+sub should_skip {
+    my ($self, $inst_data) = @_;
+
+    return 'ignored flag is set on instrument data' if $inst_data->ignored;
+    return;
+}
+
+sub _mark_pair_as_skipped {
+    my ($self, $current_pair, $skip_reason) = @_;
+
+    $current_pair->fail_count(0);
+    $current_pair->reason($skip_reason);
+    $current_pair->status('skipped');
+
+    return 1;
+}
+
 sub _mark_pair_as_processed {
     my ($self, $current_pair) = @_;
 
@@ -152,14 +178,23 @@ sub _get_model_for_config_hash {
     my $class_name = shift;
     my $config = shift;
 
+    my %read_config = %$config;
+    for my $key (keys %read_config) {
+        my $value = $read_config{$key};
+        if(ref($value) eq 'ARRAY' and scalar(@$value) == 0) {
+            $read_config{$key} = undef;
+        }
+    }
+
     my @extra_params = (auto_assign_inst_data => 1);
 
-    my @m = $class_name->get(@extra_params, %$config);
+    my @m = $class_name->get(@extra_params, %read_config);
 
     if (scalar(@m) > 1) {
         die(sprintf("Sorry, but multiple identical models were found: %s", join(',', map { $_->id } @m)));
     };
     #return the model, plus a 'boolean' value indicating if we created a new model
+    push @extra_params, ( user_name => 'apipe-builder' );
     my @model_info =  $m[0] ? ($m[0], 0) : ($class_name->create(@extra_params, %$config), 1);
     return wantarray ? @model_info : $model_info[0];
 }

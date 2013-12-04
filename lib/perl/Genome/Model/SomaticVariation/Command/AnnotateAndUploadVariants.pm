@@ -43,7 +43,7 @@ class Genome::Model::SomaticVariation::Command::AnnotateAndUploadVariants{
     ],
     has_param => [
         lsf_queue => {
-            default => 'apipe',
+            default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT},
         },
         lsf_resource => {
             default => "-M 20000000 -R 'select[mem>20000] rusage[mem=20000]'",

@@ -41,10 +41,4 @@ class Genome::Config::AnalysisProject::InstrumentDataBridge {
     ],
 };
 
-sub sync_id {
-    my $self = shift;
-    return join("\t", $self->instrument_data_id, $self->analysis_project_id);
-}
-
-
 1;

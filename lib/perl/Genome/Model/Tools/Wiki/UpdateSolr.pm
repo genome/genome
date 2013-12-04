@@ -107,7 +107,7 @@ sub url {
     my ($self) = @_;
 
     my $url = join( '',
-        'https://gscweb.gsc.wustl.edu/mediawiki/index.php?title=Special:RecentChanges&feed=rss&days=',
+        $ENV{GENOME_SYS_SERVICES_WIKI_URL} . 'index.php?title=Special:RecentChanges&feed=rss&days=',
         $self->days_ago() );
 
     return $url;

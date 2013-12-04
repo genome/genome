@@ -173,7 +173,7 @@ sub execute {                               # replace with real execution logic.
 						print "$flowcell \t$lane_name \t$read_length bp $end_type\t$num_reads \t$sample \t$output_fastq\t$split_dir\n";
 						## Run the split command ##
 						
-						system("bsub -q short split -l $split_num $output_fastq $split_basename");
+						system("bsub -q $ENV{GENOME_LSF_QUEUE_SHORT} split -l $split_num $output_fastq $split_basename");
 					}
 					else
 					{

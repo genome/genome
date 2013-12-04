@@ -39,6 +39,7 @@ sub execute {
     my $self = shift;
 
     my $build = Genome::Model::Build::RnaSeq->get($self->build_id);
+    Genome::Sys->create_directory(File::Spec->join($build->data_directory, 'fusions'));
     my $command_class = $COMMANDS{$self->detector_name};
     my $cmd = $command_class->create(
         detector_version => $self->detector_version,
@@ -62,7 +63,6 @@ sub _link_build_to_result {
     my $result = shift;
 
     (my $dir_name = $result->class) =~ s/::/_/g;
-    Genome::Sys->create_directory(File::Spec->join($build->data_directory, 'fusions'));
     Genome::Sys->create_symlink($result->output_dir, File::Spec->join($build->data_directory, 'fusions', $dir_name));
     my $link = $result->add_user(user => $build, label => 'uses');
     if ($link) {

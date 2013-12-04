@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Site::TGI::Synchronize::Classes::InstrumentDataAnalysisProjectBridge {
+    is => 'Genome::Site::TGI::Synchronize::Classes::LimsBase',
     table_name => <<'EOS'
 (
     SELECT
@@ -38,13 +39,15 @@ EOS
     data_source => 'Genome::DataSource::Dwrac',
 };
 
+sub entity_name { return 'analysis project instrument data'; }
+
+sub genome_class_for_create { return 'Genome::Config::AnalysisProject::InstrumentDataBridge'; }
+
+sub genome_class_for_comparison { return 'Genome::Site::TGI::Synchronize::Classes::AnalysisProjectInstrumentData'; }
+
 sub properties_to_copy {
     return ('instrument_data_id', 'analysis_project_id');
 }
 
-sub sync_id {
-    my $self = shift;
-    return join("\t", $self->instrument_data_id, $self->analysis_project_id);
-}
-
 1;
+

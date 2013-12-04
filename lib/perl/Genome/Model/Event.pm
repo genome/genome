@@ -540,7 +540,7 @@ sub execute_with_bsub {
     my $model_id = $self->model_id;
 
     ## should check if $self isa Command??
-    $queue ||= 'apipe';
+    $queue ||= $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
 
     $DB::single = $DB::stopper;
 

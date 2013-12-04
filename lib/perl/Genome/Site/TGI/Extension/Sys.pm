@@ -52,7 +52,7 @@ sub bsub {
     my %args = Params::Validate::validate(
         @_, {
             cmd => { type => (SCALAR | ARRAYREF) },
-            queue => { default => 'long' },
+            queue => { default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} },
             job_group => 0,
             log_file => 0,
             err_file => 0,

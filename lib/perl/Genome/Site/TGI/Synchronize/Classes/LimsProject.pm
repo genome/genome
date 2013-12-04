@@ -5,6 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::Site::TGI::Synchronize::Classes::LimsProject {
+    is => 'Genome::Site::TGI::Synchronize::Classes::LimsBase',
     table_name => <<SQL
     (
 		--Administration Project
@@ -31,6 +32,12 @@ SQL
     ],
     data_source => 'Genome::DataSource::Oltp',
 };
+
+sub entity_name { return 'project'; }
+
+sub properties_to_copy {
+    return (qw/ id name /);
+}
 
 sub __display_name__ {
     return $_[0]->name.' ('.$_[0]->id.')';

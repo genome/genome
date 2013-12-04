@@ -365,7 +365,6 @@
 ## FOUND Genome::Model::Build::Input 127786607	Genome::Model::Tools::DetectVariants2::Result::Manual	127786602	snv_result: 127786607 Genome::Model::Tools::DetectVariants2::Result::Manual 127786602 snv_result
 ## FOUND Genome::Model::Build::Input 127786607	UR::Value	137	version: 127786607 UR::Value 137 version
 ## FOUND Genome::Model::Build::Input 127786607	UR::Value::Text	dbsnp	source_name: 127786607 UR::Value::Text dbsnp source_name
-## FOUND Genome::Model::Build::ReferenceSequence::AlignerIndex 117803766: AlignerIndex for build GRCh37-lite-build37 with bwa, version 0.5.9, params=''
 ## FOUND Genome::Model::Build::ReferenceSequence::Converter 108573982: Genome::Model::Build::ReferenceSequence::Converter (108573982)
 ## FOUND Genome::Model::ClinSeq 2891454740: tst1-clinseq (2891454740)
 ## FOUND Genome::Model::Event::Build 106942999: 106942999
@@ -523,15 +522,12 @@
 ## FOUND Genome::Sample 2889981254: H_NJ-HCC1395-HCC1395_BL (TST1 normal 2889981254)
 ## FOUND Genome::SoftwareResult::Input 108573982	destination_reference_build_id: destination_reference_build_id:106942997
 ## FOUND Genome::SoftwareResult::Input 108573982	source_reference_build_id: source_reference_build_id:108563338
-## FOUND Genome::SoftwareResult::Input 117803766	reference_build_id: reference_build_id:106942997
 ## FOUND Genome::SoftwareResult::Input 127786602	file_content_hash: file_content_hash:28c131a0815fd81173e8f79d40057226
 ## FOUND Genome::SoftwareResult::Input 127786602	reference_build_id: reference_build_id:106942997
 ## FOUND Genome::SoftwareResult::Metric algorithm	108573982: algorithm 108573982
 ## FOUND Genome::SoftwareResult::Metric description	127786602: description 127786602
 ## FOUND Genome::SoftwareResult::Metric original_file_path	127786602: original_file_path 127786602
 ## FOUND Genome::SoftwareResult::Metric username	127786602: username 127786602
-## FOUND Genome::SoftwareResult::Param 117803766	aligner_name: aligner_name:bwa
-## FOUND Genome::SoftwareResult::Param 117803766	aligner_version: aligner_version:0.5.9
 ## FOUND Genome::SoftwareResult::Param 127786602	format: format:vcf
 ## FOUND Genome::SoftwareResult::Param 127786602	variant_type: variant_type:snv
 ## FOUND Genome::SubjectAttribute age	43	2889953342	GC: age 43 2889953342 GC
