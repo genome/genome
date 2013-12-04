@@ -248,3 +248,7 @@ config.instrument_data_analysis_project_bridge_index_fail_count [config_instrume
 config.instrument_data_analysis_project_bridge_index_instrument_data_id [config_instrument_data_analysis_project_bridge] 2013-11-12T20:41:18Z Anthony Brummett <abrummet@genome.wustl.edu> # index on config.instrument_data_analysis_project_bridge.instrument_data_id
 config.instrument_data_analysis_project_bridge_index_analysis_project_id [config_instrument_data_analysis_project_bridge] 2013-11-12T20:43:29Z Anthony Brummett <abrummet@genome.wustl.edu> # index on config.instrument_data_analysis_project_bridge.analysis_project_id
 @production-copy-dev 2013-11-21T16:55:35Z Anthony Brummett <abrummet@genome.wustl.edu> # Proposed copy of production DB before running any tests on it
+config_analysismenu_item [config_schema] 2013-12-04T15:47:38Z Adam Coffman <acoffman@genome.wustl.edu> # add config.analysismenu_item table
+config.analysismenu_item_indices [config_analysismenu_item] 2013-12-04T15:54:01Z Adam Coffman <acoffman@genome.wustl.edu> # add config.analysismenu_item indices
+config_profile_item [config_analysis_project config_analysismenu_item] 2013-12-04T15:57:47Z Adam Coffman <acoffman@genome.wustl.edu> # add config.profile_item table
+@config_profiles 2013-12-04T16:56:35Z Adam Coffman <acoffman@genome.wustl.edu> # cqid refactor to support more flexible custom config
