@@ -52,6 +52,7 @@ sub from_xml_element {
     return $class->create(
         name => $element->getAttribute('name'),
         command => $command_class,
+        parallel_by => $element->getAttribute('parallelBy'),
     );
 }
 

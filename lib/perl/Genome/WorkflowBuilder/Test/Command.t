@@ -82,7 +82,7 @@ subtest 'Invalid Command Name' => sub {
 subtest 'XML Round Trip' => sub {
     my $xml = <<EOS;
 <?xml version="1.0"?>
-<operation name="some op">
+<operation name="some op" parallelBy="input">
   <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="$ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT}" lsfResource="-M 25000000 -R 'select[mem&gt;25000] rusage[mem=25000]'" commandClass="Genome::WorkflowBuilder::Test::DummyCommand">
     <inputproperty>input</inputproperty>
     <outputproperty>many_output</outputproperty>

@@ -114,7 +114,8 @@ sub from_xml_element {
 
     my $self = $class->create(
         name => $element->getAttribute('name'),
-        log_dir => $element->getAttribute('logDir')
+        log_dir => $element->getAttribute('logDir'),
+        parallel_by => $element->getAttribute('parallelBy'),
     );
 
     $self->_add_operations_from_xml_element($element);

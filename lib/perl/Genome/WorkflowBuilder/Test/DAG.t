@@ -165,7 +165,7 @@ subtest 'Conflicting Inputs' => sub {
 subtest 'XML Round Trip' => sub {
     my $xml = <<EOS;
 <?xml version="1.0"?>
-<operation name="top level" logDir="/tmp">
+<operation name="top level" parallelBy="some_external_input" logDir="/tmp">
   <operationtype typeClass="Workflow::OperationType::Model">
     <inputproperty>some_external_input</inputproperty>
     <outputproperty>some_external_output</outputproperty>
