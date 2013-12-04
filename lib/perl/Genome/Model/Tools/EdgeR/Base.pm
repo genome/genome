@@ -48,7 +48,7 @@ sub _validate_params {
 }
 
 sub _list_validator_subroutines {
-    return ("_replication_in_one_group");
+    return ("_replication_in_one_group", "_more_than_one_group");
 }
 
 sub _replication_in_one_group {
@@ -63,6 +63,22 @@ sub _replication_in_one_group {
     confess sprintf("At least one group must contain replication! Groups " .
         "assignments were: %s\n",
         $self->groups);
+}
+
+sub _more_than_one_group {
+    my $self = shift;
+
+    my @groups = split(",", $self->groups);
+    my %group_sizes;
+    for my $g (@groups) {
+        ++$group_sizes{$g};
+    }
+
+    unless (scalar(keys(%group_sizes)) > 1) {
+        confess "There needs to be more than one group\n";
+    }
+
+    return 1;
 }
 
 sub execute {

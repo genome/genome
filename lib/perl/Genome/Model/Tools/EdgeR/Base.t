@@ -58,4 +58,19 @@ subtest "no replication" => sub {
     ok(!$rv);
 };
 
+subtest "only one group" => sub {
+        my $cmd = $pkg->create(
+        counts_file => $input_file,
+        groups => "1,1,1",
+        output_file => "/dev/null"
+    );
+
+    my $rv = 0;
+    eval {
+        $rv = $cmd->_validate_params();
+    };
+    ok($@, "Just one group is an error");
+    ok(!$rv);
+};
+
 done_testing();
