@@ -54,8 +54,16 @@ class Genome::Config::AnalysisProject {
             via => 'model_group',
             is_many => 1,
         },
+        config_items => {
+            is => 'Genome::Config::Profile::Item',
+            is_many => 1,
+            reverse_as => 'analysis_project',
+        },
     ],
     has_transient_optional => [
+        configuration_profile => {
+            is => 'Genome::Config::Profile'
+        }
     ],
 };
 
@@ -90,10 +98,16 @@ sub delete {
     return $self->SUPER::delete();
 }
 
+sub get_configuration_profile {
     my $self = shift;
 
+    unless ($self->configuration_profile) {
+        $self->configuration_profile(
+            Genome::Config::Profile->create_from_analysis_project($self)
+        );
     }
 
+    return $self->configuration_profile;
 }
 
 sub _create_model_group {
