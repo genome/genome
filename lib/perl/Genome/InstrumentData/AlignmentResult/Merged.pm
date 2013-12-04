@@ -250,7 +250,7 @@ sub collect_individual_alignments {
     my %params;
     for my $property (Genome::InstrumentData::AlignmentResult->__meta__->_legacy_properties(via => 'params')) {
         my $property_name = $property->property_name;
-        next if grep($_ eq $property_name, ('filter_name')); #these are handled below
+        next if grep($_ eq $property_name, ('filter_name', 'test_name')); #these are handled below
         $params{$property_name} = $self->$property_name;
     }
 
@@ -299,6 +299,7 @@ sub collect_individual_alignments {
                 annotation_build_id => ($self->annotation_build_id || undef),
                 instrument_data_id => $i->id,
                 filter_name => ($filters->{$i->id} || undef),
+                test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
                 %$segment_param,
             );
 
