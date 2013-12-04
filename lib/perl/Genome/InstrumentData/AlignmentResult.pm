@@ -899,8 +899,7 @@ sub close_out_streamed_bam_file {
     my $samtools = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
 
     my $tmp_file = $bam_file.'.sort';
-    #402653184 bytes = 3 Gb
-    my $rv = system "$samtools sort -n -m 402653184 $bam_file $tmp_file";
+    my $rv = system "$samtools sort -n $bam_file $tmp_file";
     $self->error_message("Sort by name failed") and return if $rv or !-s $tmp_file.'.bam';
     $self->status_message("unlinking original bam file $bam_file.");
     unlink $bam_file;
@@ -914,7 +913,7 @@ sub close_out_streamed_bam_file {
     unlink "$tmp_file.bam";
 
     $self->status_message("Now putting things back in chr/pos order");
-    $rv = system "$samtools sort -m 402653184 $tmp_file.fixmate $tmp_file.fix";
+    $rv = system "$samtools sort $tmp_file.fixmate $tmp_file.fix";
     $self->error_message("Sort by position failed") and return if $rv or !-s $tmp_file.'.fix.bam';
 
     unlink "$tmp_file.fixmate";
