@@ -3,6 +3,6 @@
 
 BEGIN;
 
-CREATE INDEX c_idapb_index_instrument_data_id ON config.instrument_data_analysis_project_bridge (instrument_data_id);
+CREATE INDEX instrument_data_analysis_project_bridge_instrument_data_id_idx ON config.instrument_data_analysis_project_bridge (instrument_data_id);
 
 COMMIT;

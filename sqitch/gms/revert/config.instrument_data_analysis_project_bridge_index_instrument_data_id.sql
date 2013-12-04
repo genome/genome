@@ -2,6 +2,6 @@
 
 BEGIN;
 
-DROP INDEX config.c_idapb_index_instrument_data_id;
+DROP INDEX config.instrument_data_analysis_project_bridge_instrument_data_id_idx;
 
 COMMIT;
