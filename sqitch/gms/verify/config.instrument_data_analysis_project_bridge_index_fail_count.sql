@@ -2,6 +2,6 @@
 
 BEGIN;
 
-SELECT 1/count(*) FROM pg_class WHERE relkind = 'i' and relname = 'c_adapb_index_fail_count';
+SELECT 1/count(*) FROM pg_class WHERE relkind = 'i' and relname = 'instrument_data_analysis_project_bridge_fail_count_idx';
 
 ROLLBACK;

@@ -3,6 +3,6 @@
 
 BEGIN;
 
-CREATE INDEX c_adapb_index_fail_count ON config.instrument_data_analysis_project_bridge (fail_count);
+CREATE INDEX instrument_data_analysis_project_bridge_fail_count_idx ON config.instrument_data_analysis_project_bridge (fail_count);
 
 COMMIT;
