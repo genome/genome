@@ -24589,25 +24589,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>filter-output',
-    [
-      'bedpe-file=s',
-      'files',
-      'output-file=s',
-      'files',
-      'annotation-build=s',
-      undef,
-      'total-frag-limit=s',
-      undef,
-      'span-frag-limit=s',
-      undef,
-      'fusion-partner-limit=s',
-      undef,
-      'filtered-bedpe-file=s',
-      'files',
-      'help!',
-      undef
-    ],
     'help!',
     undef
   ],
