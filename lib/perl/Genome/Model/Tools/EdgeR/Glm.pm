@@ -95,7 +95,13 @@ sub construct_r_command {
 }
 
 sub _list_validator_subroutines {
-    return ("_replication_in_one_group", "_more_than_one_group", "_replication_for_each_subject", "_more_than_one_subject");
+    return (
+        "_replication_in_one_group",
+        "_more_than_one_group",
+        "_replication_for_each_subject",
+        "_more_than_one_subject",
+        "_same_length_of_groups_and_subjects"
+    );
 }
 
 sub _replication_for_each_subject {
@@ -132,4 +138,16 @@ sub _more_than_one_subject {
     return 1;
 }
 
+sub _same_length_of_groups_and_subjects {
+    my $self = shift;
+
+    my @groups = split(",", $self->groups);
+    my @subjects = split(",", $self->subjects);
+
+    unless (scalar(@groups) == scalar(@subjects)) {
+        confess "There needs to be the same number of entries for groups and subjects";
+    }
+
+    return 1;
+}
 1;

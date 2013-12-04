@@ -55,6 +55,22 @@ subtest "only one subject" => sub {
     ok(!$rv);
 };
 
+subtest "different number of groups and subjects" => sub {
+        my $cmd = $pkg->create(
+        counts_file => $input_file,
+        groups => "A,A,B,B",
+        subjects => "s1,s1,s1",
+        output_file => "/dev/null"
+    );
+
+    my $rv = 0;
+    eval {
+        $rv = $cmd->_validate_params();
+    };
+    ok($@, "Different nuber of groups and subjects is an error");
+    ok(!$rv);
+};
+
 subtest "execute" => sub {
     my $cmd = $pkg->create(
         counts_file => $input_file,
