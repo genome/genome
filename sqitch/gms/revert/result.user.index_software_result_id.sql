@@ -2,6 +2,6 @@
 
 BEGIN;
 
-DROP INDEX result.sru_rid_i;
+DROP INDEX result.user_software_result_id_idx;
 
 COMMIT;

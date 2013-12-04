@@ -2,6 +2,6 @@
 
 BEGIN;
 
-SELECT 1/count(*) FROM pg_class WHERE relkind = 'i' and relname = 'sru_rid_i';
+SELECT 1/count(*) FROM pg_class WHERE relkind = 'i' and relname = 'user_software_result_id_idx';
 
 ROLLBACK;

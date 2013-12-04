@@ -3,6 +3,6 @@
 
 BEGIN;
 
-CREATE INDEX sru_rid_i on result."user" using btree (software_result_id);
+CREATE INDEX user_software_result_id_idx on result."user" using btree (software_result_id);
 
 COMMIT;
