@@ -40,10 +40,24 @@ sub _validate_params {
         confess "--p-value parameter must satisfy 0 < p < 1";
     }
 
+    for my $validation_subroutine ($self->_list_validator_subroutines) {
+        unless ($self->$validation_subroutine) {
+            confess "Validation check $validation_subroutine failed";
+        }
+    }
+}
+
+sub _list_validator_subroutines {
+    return ("_replication_in_one_group");
+}
+
+sub _replication_in_one_group {
+    my $self = shift;
+
     my @groups = split(",", $self->groups);
     my %group_sizes;
     for my $g (@groups) {
-        return if ++$group_sizes{$g} > 1;
+        return 1 if ++$group_sizes{$g} > 1;
     }
 
     confess sprintf("At least one group must contain replication! Groups " .
