@@ -71,6 +71,22 @@ subtest "different number of groups and subjects" => sub {
     ok(!$rv);
 };
 
+subtest "each subject is not in each group" => sub {
+        my $cmd = $pkg->create(
+        counts_file => $input_file,
+        groups => "A,A,B,B",
+        subjects => "s1,s1,s2,s2",
+        output_file => "/dev/null"
+    );
+
+    my $rv = 0;
+    eval {
+        $rv = $cmd->_validate_params();
+    };
+    ok($@, "Each subject is not in each group is an error");
+    ok(!$rv);
+};
+
 subtest "execute" => sub {
     my $cmd = $pkg->create(
         counts_file => $input_file,

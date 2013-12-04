@@ -2,6 +2,7 @@ package Genome::Model::Tools::EdgeR::Glm;
 
 use Genome;
 use Carp qw/confess/;
+use List::MoreUtils qw/uniq/;
 
 use strict;
 use warnings;
@@ -100,7 +101,8 @@ sub _list_validator_subroutines {
         "_more_than_one_group",
         "_replication_for_each_subject",
         "_more_than_one_subject",
-        "_same_length_of_groups_and_subjects"
+        "_same_length_of_groups_and_subjects",
+        "_at_least_one_for_each_subject_for_each_group"
     );
 }
 
@@ -150,4 +152,32 @@ sub _same_length_of_groups_and_subjects {
 
     return 1;
 }
+
+sub _at_least_one_for_each_subject_for_each_group {
+    my $self = shift;
+
+    my @groups = split(",", $self->groups);
+    my @subjects = split(",", $self->subjects);
+
+    my %subject_group_sizes;
+
+    for my $index (0..$#groups) {
+        ++$subject_group_sizes{$subjects[$index]}{$groups[$index]};
+    }
+    $DB::single=1;
+
+    my @unique_groups = uniq @groups;
+    my @unique_subjects = uniq @subjects;
+
+    for my $g (@unique_groups) {
+        for my $s (@unique_subjects) {
+            unless (defined($subject_group_sizes{$s}{$g})) {
+                confess "Each subject needs to have at least one entry for each group";
+            }
+        }
+    }
+
+    return 1;
+}
+
 1;
