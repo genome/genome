@@ -39,6 +39,22 @@ subtest "subject only used once" => sub {
     ok(!$rv);
 };
 
+subtest "only one subject" => sub {
+        my $cmd = $pkg->create(
+        counts_file => $input_file,
+        groups => "A,A,B,B",
+        subjects => "s1,s1,s1,s1",
+        output_file => "/dev/null"
+    );
+
+    my $rv = 0;
+    eval {
+        $rv = $cmd->_validate_params();
+    };
+    ok($@, "Only one subject is an error");
+    ok(!$rv);
+};
+
 subtest "execute" => sub {
     my $cmd = $pkg->create(
         counts_file => $input_file,

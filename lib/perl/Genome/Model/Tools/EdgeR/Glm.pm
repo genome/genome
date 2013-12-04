@@ -95,7 +95,7 @@ sub construct_r_command {
 }
 
 sub _list_validator_subroutines {
-    return ("_replication_in_one_group", "_more_than_one_group", "_replication_for_each_subject");
+    return ("_replication_in_one_group", "_more_than_one_group", "_replication_for_each_subject", "_more_than_one_subject");
 }
 
 sub _replication_for_each_subject {
@@ -115,4 +115,21 @@ sub _replication_for_each_subject {
 
     return 1;
 }
+
+sub _more_than_one_subject {
+    my $self = shift;
+
+    my @subjects = split(",", $self->subjects);
+    my %subject_sizes;
+    for my $s (@subjects) {
+        ++$subject_sizes{$s};
+    }
+
+    unless (scalar(keys(%subject_sizes)) > 1) {
+        confess "There needs to be more than one subject\n";
+    }
+
+    return 1;
+}
+
 1;
