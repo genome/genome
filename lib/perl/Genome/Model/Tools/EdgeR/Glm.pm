@@ -94,4 +94,25 @@ sub construct_r_command {
     return $cmd;
 }
 
+sub _list_validator_subroutines {
+    return ("_replication_in_one_group", "_more_than_one_group", "_replication_for_each_subject");
+}
+
+sub _replication_for_each_subject {
+    my $self = shift;
+
+    my @subjects = split(",", $self->subjects);
+    my %subject_sizes;
+    for my $s (@subjects) {
+        ++$subject_sizes{$s};
+    }
+
+    while( my ($key, $value) = each %subject_sizes ) {
+        unless ($value > 1) {
+            confess "Each subject must be used more than once";
+        }
+    }
+
+    return 1;
+}
 1;

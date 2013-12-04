@@ -23,6 +23,22 @@ my $num_tumor = 2;
 
 Genome::Model::Tools::EdgeR::Base::generate_counts_file($input_file, $num_genes, $num_normal, $num_tumor);
 
+subtest "subject only used once" => sub {
+        my $cmd = $pkg->create(
+        counts_file => $input_file,
+        groups => "A,A,B,B",
+        subjects => "s1,s2,s3,s4",
+        output_file => "/dev/null"
+    );
+
+    my $rv = 0;
+    eval {
+        $rv = $cmd->_validate_params();
+    };
+    ok($@, "Subject only used once is an error");
+    ok(!$rv);
+};
+
 subtest "execute" => sub {
     my $cmd = $pkg->create(
         counts_file => $input_file,
