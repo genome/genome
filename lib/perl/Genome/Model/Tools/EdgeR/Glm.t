@@ -23,43 +23,6 @@ my $num_tumor = 2;
 
 Genome::Model::Tools::EdgeR::Base::generate_counts_file($input_file, $num_genes, $num_normal, $num_tumor);
 
-subtest "bad p-values" => sub {
-    my @bad_pvalues = (-1, 0, 1, 2);
-
-    for my $p (@bad_pvalues) {
-        my $cmd = $pkg->create(
-            counts_file => $input_file,
-            groups => "1,1,2,2",
-            subjects => "s1,s2,s1,s2",
-            output_file => "/dev/null",
-            p_value => $p,
-        );
-
-        my $rv = 0;
-        eval {
-            $rv = $cmd->execute();
-        };
-        ok($@, "p_value $p is invalid");
-        ok(!$rv);
-    }
-};
-
-subtest "no replication" => sub {
-    my $cmd = $pkg->create(
-        counts_file => $input_file,
-        groups => "1,2,3,4",
-        subjects => "s1,s2,s3,s4",
-        output_file => "/dev/null"
-    );
-
-    my $rv = 0;
-    eval {
-        $rv = $cmd->execute();
-    };
-    ok($@, "No replication is an error");
-    ok(!$rv);
-};
-
 subtest "execute" => sub {
     my $cmd = $pkg->create(
         counts_file => $input_file,
