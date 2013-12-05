@@ -64,7 +64,7 @@ sub execute {
         if($rsID eq '.'){
             $rsID = "-";
         }
-
+ 
         my $GMAF = ($INFO =~ /(GMAF=[0-9.]+)/)[0] || '-';
 
         my $key = RSid_key($chr, $pos);
@@ -82,8 +82,8 @@ sub execute {
 
                 if(defined($annotation->{$key}->{$RSid_var_allele})){
                     if($annotation->{$key}->{$RSid_var_allele} ne "0"){                    
-                        $vcf_vals{$key}{"rsID"} = $rsID;
-                        $vcf_vals{$key}{"GMAF"} = $GMAF;
+                        $vcf_vals{$key}{$RSid_var_allele}{"rsID"} = $rsID;
+                        $vcf_vals{$key}{$RSid_var_allele}{"GMAF"} = $GMAF;
                     }
                 }
             }
@@ -113,7 +113,7 @@ sub store_annotation{
 
         my @list = split(/\t/, $line);
         my ($chr, $pos, $RSid_var_allele) = (split(/\t/, $line))[0, 1, 4];
-        my $key = RSid_key($chr, $pos, );
+        my $key = RSid_key($chr, $pos);
 
         $annotation->{$key}->{$RSid_var_allele} = $line;
     }
@@ -138,12 +138,12 @@ sub print_annotation{
         }
 
         my @list = split(/\t/, $line);
-        my ($chr, $pos) = (split(/\t/, $line))[0, 1];
+        my ($chr, $pos, $var) = (split(/\t/, $line))[0, 1, 4];
         my $key = RSid_key($chr, $pos);
         
-        my $suffix = "\t-\t-";
-        if(defined($vcf_vals->{$key})){
-            $suffix = $vcf_vals->{$key}->{"rsID"} . "\t" . $vcf_vals->{$key}->{"GMAF"};
+        my $suffix = "-\t-";
+        if(defined($vcf_vals->{$key}->{$var})){
+            $suffix = $vcf_vals->{$key}->{$var}->{"rsID"} . "\t" . $vcf_vals->{$key}->{$var}->{"GMAF"};
         }
         print $output_fh $line . "\t" . $suffix . "\n";
 
