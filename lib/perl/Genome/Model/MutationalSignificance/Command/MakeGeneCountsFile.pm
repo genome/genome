@@ -91,9 +91,9 @@ sub _create_file_join_command {
         die $self->error_message("You need at least two files to join");
     }
 
-    my $cmd = "join " . $files[0] . " " . $files[1];
+    my $cmd = "join -t '\t' " . $files[0] . " " . $files[1];
 
-    $cmd = join (" \| join - ", $cmd, @files[2..$#files]) . " > " . $output_file;
+    $cmd = join (" \| join -t '\t' - ", $cmd, @files[2..$#files]) . " > " . $output_file;
 
     return $cmd;
 }

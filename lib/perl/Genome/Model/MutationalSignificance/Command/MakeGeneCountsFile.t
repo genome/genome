@@ -6,7 +6,7 @@ use IO::File;
 use Test::More;
 use Genome::Test::Factory::Model::RnaSeq;
 use Genome::Test::Factory::Build;
-use Genome::Utility::Test;
+use Genome::Utility::Test qw/compare_ok/;
 
 use strict;
 use warnings;
@@ -41,7 +41,7 @@ subtest "ok create file join command" => sub {
 
     my $cmd = $pkg->_create_file_join_command("output_file", @files);
 
-    is($cmd, "join file1 file2 | join - file3 | join - file4 > output_file", "Join command as expected");
+    is($cmd, "join -t '\t' file1 file2 | join -t '\t' - file3 | join -t '\t' - file4 > output_file", "Join command as expected");
 };
 
 subtest "only one file to join" => sub {
@@ -55,7 +55,7 @@ subtest "only one file to join" => sub {
     ok(!$rv);
 };
 
-subtest "only one group" => sub {
+subtest "execute" => sub {
     my $gene_counts_file_path = Genome::Sys->create_temp_file_path;
 
     my $obj = $pkg->create(
@@ -68,6 +68,12 @@ subtest "only one group" => sub {
 
     is($obj->groups_list, "tumor,tumor,normal,normal", "Groups list as expected");
     is($obj->subjects_list, "$build_source,$build_source,$build_source,$build_source", "Subjects list as expected");
+
+    compare_ok(
+        $gene_counts_file_path,
+        $rna_seq_build->data_directory . "/results/digital_expression_result/gene-counts_joined.tsv",
+        "Joined gene counts file as expected"
+    );
 };
 
 
