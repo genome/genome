@@ -44,6 +44,21 @@ subtest "ok create file join command" => sub {
     is($cmd, "join -t '\t' file1 file2 | join -t '\t' - file3 | join -t '\t' - file4 > output_file", "Join command as expected");
 };
 
+subtest "first column on input file not identical" => sub {
+    my @files = (
+        $data_dir . "/results/digital_expression_result/gene-counts_joined.tsv",
+        $data_dir . "/results/digital_expression_result/gene-counts_joined_different.tsv",
+    );
+
+    my $rv = 0;
+    eval {
+        $rv = $pkg->_check_gene_column_identical(@files);
+    };
+    ok($@, "Different gene columns is an error");
+    ok(!$rv);
+
+};
+
 subtest "only one file to join" => sub {
     my @files = ("file1");
 

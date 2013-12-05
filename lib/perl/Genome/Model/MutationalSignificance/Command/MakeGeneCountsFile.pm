@@ -52,6 +52,8 @@ sub execute {
         @{$tumor_builds_information->{groups}},
         @{$normal_builds_information->{groups}} ;
 
+    $self->_check_gene_column_identical(@input_gene_count_files);
+
     my $join_cmd = $self->_create_file_join_command($self->gene_counts_file, @input_gene_count_files);
 
     my $rv = Genome::Sys->shellcmd(cmd => $join_cmd);
@@ -80,6 +82,29 @@ sub _retrieve_build_information {
     }
 
     return { input_gene_count_files => \@input_gene_count_files, subjects => \@subjects, groups => \@groups };
+}
+
+sub _check_gene_column_identical {
+    my $self = shift;
+    my @files = @_;
+
+    if (scalar(@files) < 2) {
+        die $self->error_message("You need at least two files to join");
+    }
+
+    my $cut_cmd = "cut -f1 " . $files[0];
+    my $master_column = `$cut_cmd`;
+
+    for my $file (@files) {
+         $cut_cmd = "cut -f1 " . $file;
+         my $comparison_column = `$cut_cmd`;
+
+         unless ($comparison_column eq $master_column) {
+            die $self->error_message("Gene column of $file is not the same");
+         }
+    }
+
+    return 1;
 }
 
 sub _create_file_join_command {
