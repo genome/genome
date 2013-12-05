@@ -925,7 +925,7 @@ $Genome::Command::OPTS_SPEC = [
   [
     '>create',
     [
-      'analysis-menu-item=s',
+      'analysis-menu-items=s@',
       undef,
       'name=s',
       'files',
@@ -38036,7 +38036,7 @@ $Genome::Command::OPTS_SPEC = [
     [
       '>create',
       [
-        'analysis-menu-item=s',
+        'analysis-menu-items=s@',
         undef,
         'name=s',
         'files',
@@ -38045,43 +38045,6 @@ $Genome::Command::OPTS_SPEC = [
       ],
       'genome::config::analysisproject::subjectpairing::command',
       undef,
-      '>delete',
-      [
-        'analysis-projects=s@',
-        undef,
-        'help!',
-        undef
-      ],
-      '>list',
-      [
-        'show=s',
-        'files',
-        'style=s',
-        [
-          'text',
-          'csv',
-          'tsv',
-          'pretty',
-          'html',
-          'xml',
-          'newtext'
-        ],
-        'csv-delimiter=s',
-        'files',
-        'noheaders!',
-        undef,
-        'order-by=s',
-        'files',
-        'filter=s',
-        'files',
-        'help!',
-        undef
-      ],
-      'help!',
-      undef
-    ],
-    '>analysis-menu-item',
-    [
       '>delete',
       [
         'analysis-projects=s@',
