@@ -47,7 +47,7 @@ subtest "ok retrieve build information" => sub {
     my $build_information = $pkg->_retrieve_build_information("normal", @builds);
 
     my %expected_information = (
-        input_gene_count_files  => [$build_data_directory, $build_data_directory],
+        input_counts_files      => [$build_data_directory, $build_data_directory],
         subjects                => [$build_source, $build_source],
         groups                  => ["normal", "normal"],
         headers                 => ["$build_source-normal", "$build_source-normal"],
@@ -91,20 +91,20 @@ subtest "only one file to join" => sub {
 };
 
 subtest "execute" => sub {
-    my $gene_counts_file_path = Genome::Sys->create_temp_file_path;
+    my $counts_file_path = Genome::Sys->create_temp_file_path;
 
     my $obj = $pkg->create(
-        clinseq_models   => [$clinseq_model, $clinseq_model],
-        gene_counts_file => $gene_counts_file_path,
+        clinseq_models  => [$clinseq_model, $clinseq_model],
+        counts_file     => $counts_file_path,
     );
 
     my $rv = $obj->execute;
 
-    is($obj->groups_list, "tumor,tumor,normal,normal", "Groups list as expected");
-    is($obj->subjects_list, "$build_source,$build_source,$build_source,$build_source", "Subjects list as expected");
+    is($obj->groups, "tumor,tumor,normal,normal", "Groups list as expected");
+    is($obj->subjects, "$build_source,$build_source,$build_source,$build_source", "Subjects list as expected");
 
     compare_ok(
-        $gene_counts_file_path,
+        $counts_file_path,
         $rnaseq_build->data_directory . "/results/digital_expression_result/gene-counts_joined.tsv",
         "Joined gene counts file as expected"
     );

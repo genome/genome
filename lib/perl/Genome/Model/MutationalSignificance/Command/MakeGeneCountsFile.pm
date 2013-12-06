@@ -14,14 +14,14 @@ class Genome::Model::MutationalSignificance::Command::MakeGeneCountsFile {
         },
     ],
     has_output => [
-        gene_counts_file => {
+        counts_file => {
             is => 'File',
         },
-        subjects_list => {
+        subjects => {
             is => 'Text',
             is_optional => 1,
         },
-        groups_list => {
+        groups => {
             is => 'Text',
             is_optional => 1,
         }
@@ -44,14 +44,14 @@ sub execute {
         }
     }
 
-    my (@input_gene_count_files, @header, @subjects, @groups);
+    my (@input_counts_files, @header, @subjects, @groups);
 
     my $tumor_builds_information = $self->_retrieve_build_information("tumor", @tumor_builds);
     my $normal_builds_information = $self->_retrieve_build_information("normal", @normal_builds);
 
-    push @input_gene_count_files,
-        @{$tumor_builds_information->{input_gene_count_files}},
-        @{$normal_builds_information->{input_gene_count_files}} ;
+    push @input_counts_files,
+        @{$tumor_builds_information->{input_counts_files}},
+        @{$normal_builds_information->{input_counts_files}} ;
     push @subjects,
         @{$tumor_builds_information->{subjects}},
         @{$normal_builds_information->{subjects}} ;
@@ -62,11 +62,11 @@ sub execute {
         @{$tumor_builds_information->{headers}},
         @{$normal_builds_information->{headers}};
 
-    $self->_check_gene_column_identical(@input_gene_count_files);
+    $self->_check_gene_column_identical(@input_counts_files);
 
-    $self->_write_header_to_file($self->gene_counts_file, @header);
+    $self->_write_header_to_file($self->counts_file, @header);
 
-    my $join_cmd = $self->_create_file_join_command($self->gene_counts_file, @input_gene_count_files);
+    my $join_cmd = $self->_create_file_join_command($self->counts_file, @input_counts_files);
 
     my $rv = Genome::Sys->shellcmd(cmd => $join_cmd);
 
@@ -74,8 +74,8 @@ sub execute {
         die $self->error_message("Join command unsuccessful");
     }
 
-    $self->subjects_list(join ",", @subjects);
-    $self->groups_list(join ",", @groups);
+    $self->subjects(join ",", @subjects);
+    $self->groups(join ",", @groups);
 
     return 1;
 }
@@ -97,17 +97,17 @@ sub _retrieve_build_information {
     my $group_name = shift;
     my @builds = @_;
 
-    my (@input_gene_count_files, @groups, @subjects, @header);
+    my (@input_counts_files, @groups, @subjects, @header);
 
     for my $build (@builds) {
         my $subject = $build->subject->source->common_name;
-        push @input_gene_count_files, $build->data_directory . "/results/digital_expression_result/gene-counts.tsv";
+        push @input_counts_files, $build->data_directory . "/results/digital_expression_result/gene-counts.tsv";
         push @subjects, $subject;
         push @groups, $group_name;
         push @header, "$subject-$group_name";
     }
 
-    return { input_gene_count_files => \@input_gene_count_files, 
+    return { input_counts_files => \@input_counts_files, 
              subjects => \@subjects, 
              groups => \@groups, 
              headers => \@header };
