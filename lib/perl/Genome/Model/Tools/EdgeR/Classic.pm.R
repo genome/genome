@@ -11,9 +11,10 @@ classicAnalysis <- function(inputFile, groups, outputFile, pvalue) {
     dge <- estimateTagwiseDisp(dge)
     et <- exactTest(dge)
     de <- decideTestsDGE(et, p=pvalue)
-    out <- cbind(et$table, de)
-    colnames(out)[4] <- "test.result"
-    out <- out[order(out$PValue), ]
+    top <- topTags(et, n=length(et$table$PValue))
+    out <- cbind(top$table, de)
+    colnames(out)[5] <- "test.result"
+    out <- out[order(out$FDR), ]
 
     write.table(out, outputFile, quote=FALSE, sep="\t",
         row.names=TRUE, col.names=NA)
