@@ -24,9 +24,11 @@ class Genome::Model::MutationalSignificance::Command::MakeGeneCountsFile {
         },
         subjects_list => {
             is => 'Text',
+            is_optional => 1,
         },
         groups_list => {
             is => 'Text',
+            is_optional => 1,
         }
     ],
 };
