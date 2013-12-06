@@ -23,6 +23,7 @@ class Genome::Model::RnaSeq::Command::DetectFusions::Chimerascan::DetectorBase {
         },
         build => {
             is => "Genome::Model::Build::RnaSeq",
+            is_output => 1,
         },
         reuse_bam => {
             is => 'Boolean',

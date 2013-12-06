@@ -23,6 +23,7 @@ class Genome::Model::RnaSeq::Command::DetectFusions {
         },
         build_id => {
             is => 'Text',
+            is_output => 1,
             doc => 'The rna-seq build',
         },
     ],

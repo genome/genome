@@ -189,6 +189,11 @@ sub _add_outputs {
         source_property => 'software_result',
     );
     $dag->connect_output(
+        output_property => 'build',
+        source => $detector_command,
+        source_property => 'build',
+    );
+    $dag->connect_output(
         output_property => 'filtered_bedpe_file',
         source => $filter_command,
         source_property => 'filtered_bedpe_file',

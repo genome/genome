@@ -19,6 +19,7 @@ class Genome::Model::RnaSeq::Command::DetectFusions::Base {
         },
         build => {
             is => "Genome::Model::Build::RnaSeq",
+            is_output => 1,
         },
     ],
     has_optional_output => [
