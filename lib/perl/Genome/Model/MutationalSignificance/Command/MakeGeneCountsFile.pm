@@ -44,7 +44,7 @@ sub execute {
         }
     }
 
-    my (@input_gene_count_files, @subjects, @groups);
+    my (@input_gene_count_files, @header, @subjects, @groups);
 
     my $tumor_builds_information = $self->_retrieve_build_information("tumor", @tumor_builds);
     my $normal_builds_information = $self->_retrieve_build_information("normal", @normal_builds);
@@ -58,8 +58,13 @@ sub execute {
     push @groups,
         @{$tumor_builds_information->{groups}},
         @{$normal_builds_information->{groups}} ;
+    push @header,
+        @{$tumor_builds_information->{headers}},
+        @{$normal_builds_information->{headers}};
 
     $self->_check_gene_column_identical(@input_gene_count_files);
+
+    $self->_write_header_to_file($self->gene_counts_file, @header);
 
     my $join_cmd = $self->_create_file_join_command($self->gene_counts_file, @input_gene_count_files);
 
@@ -75,20 +80,37 @@ sub execute {
     return 1;
 }
 
+sub _write_header_to_file {
+    my $self = shift;
+    my $output_file = shift;
+    my @headers = @_;
+
+    my $out = Genome::Sys->open_file_for_writing($output_file);
+    $out->print(join("\t", "GENE", @headers)."\n");
+    $out->close;
+
+    return 1;
+}
+
 sub _retrieve_build_information {
     my $self = shift;
     my $group_name = shift;
     my @builds = @_;
 
-    my (@input_gene_count_files, @groups, @subjects);
+    my (@input_gene_count_files, @groups, @subjects, @header);
 
     for my $build (@builds) {
+        my $subject = $build->subject->source->common_name;
         push @input_gene_count_files, $build->data_directory . "/results/digital_expression_result/gene-counts.tsv";
-        push @subjects, $build->subject->source;
-        push @groups, $group_name
+        push @subjects, $subject;
+        push @groups, $group_name;
+        push @header, "$subject-$group_name";
     }
 
-    return { input_gene_count_files => \@input_gene_count_files, subjects => \@subjects, groups => \@groups };
+    return { input_gene_count_files => \@input_gene_count_files, 
+             subjects => \@subjects, 
+             groups => \@groups, 
+             headers => \@header };
 }
 
 sub _check_gene_column_identical {
@@ -125,7 +147,7 @@ sub _create_file_join_command {
 
     my $cmd = "join -t '\t' " . $files[0] . " " . $files[1];
 
-    $cmd = join (" \| join -t '\t' - ", $cmd, @files[2..$#files]) . " > " . $output_file;
+    $cmd = join (" \| join -t '\t' - ", $cmd, @files[2..$#files]) . " >> " . $output_file;
 
     return $cmd;
 }

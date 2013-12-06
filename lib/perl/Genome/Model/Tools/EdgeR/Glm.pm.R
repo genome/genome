@@ -5,7 +5,7 @@ library(getopt)
 
 glmAnalysis <- function(inputFile, groups, subjects, outputFile, pvalue) {
     counts <- read.table(inputFile, head=T, row.names=1)
-    dge <- DGEList(counts=counts, genes=rownames(counts), group=groups)
+    dge <- DGEList(counts=counts, genes=rownames(counts))
     dge <- calcNormFactors(dge)
     design <- model.matrix(~subjects+groups)
     rownames(design) <- colnames(dge)

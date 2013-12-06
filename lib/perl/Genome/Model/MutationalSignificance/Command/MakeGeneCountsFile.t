@@ -15,7 +15,7 @@ use warnings;
 my $pkg = 'Genome::Model::MutationalSignificance::Command::MakeGeneCountsFile';
 
 use_ok($pkg);
-my $data_dir = Genome::Utility::Test->data_dir_ok($pkg, "v1");
+my $data_dir = Genome::Utility::Test->data_dir_ok($pkg, "v2");
 
 my $rnaseq_model = Genome::Test::Factory::Model::RnaSeq->setup_object();
 my $rnaseq_build = Genome::Test::Factory::Build->setup_object(
@@ -30,9 +30,17 @@ my $clinseq_model = Genome::Test::Factory::Model::ClinSeq->setup_object(
 );
 
 my $build_data_directory = $rnaseq_build->data_directory . "/results/digital_expression_result/gene-counts.tsv";
-my $build_source = $rnaseq_build->subject->source;
+my $build_source = $rnaseq_build->subject->source->common_name;
 
-$DB::single=1;
+subtest "write header to file" => sub {
+    my @headers = qw(1 2 3 4);
+
+    my $out = Genome::Sys->create_temp_file_path;
+    my $rv = $pkg->_write_header_to_file($out, @headers);
+    ok($rv, "Subroutine returned 1");
+    is(`cat $out`, "GENE\t1\t2\t3\t4\n", "File created as expected");
+};
+
 subtest "ok retrieve build information" => sub {
     my @builds = ($rnaseq_build, $rnaseq_build);
 
@@ -42,6 +50,7 @@ subtest "ok retrieve build information" => sub {
         input_gene_count_files  => [$build_data_directory, $build_data_directory],
         subjects                => [$build_source, $build_source],
         groups                  => ["normal", "normal"],
+        headers                 => ["$build_source-normal", "$build_source-normal"],
     );
 
     is_deeply($build_information, \%expected_information, "Build information matches expected build information");
@@ -52,7 +61,7 @@ subtest "ok create file join command" => sub {
 
     my $cmd = $pkg->_create_file_join_command("output_file", @files);
 
-    is($cmd, "join -t '\t' file1 file2 | join -t '\t' - file3 | join -t '\t' - file4 > output_file", "Join command as expected");
+    is($cmd, "join -t '\t' file1 file2 | join -t '\t' - file3 | join -t '\t' - file4 >> output_file", "Join command as expected");
 };
 
 subtest "first column on input file not identical" => sub {
