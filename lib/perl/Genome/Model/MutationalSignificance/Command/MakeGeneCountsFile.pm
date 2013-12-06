@@ -7,13 +7,8 @@ use Genome;
 class Genome::Model::MutationalSignificance::Command::MakeGeneCountsFile {
     is => 'Command::V2',
     has_input => [
-        tumor_rnaseq_builds => {
-            is => 'Genome::Model::Build::RnaSeq',
-            is_many => 1,
-            is_input => 1,
-        },
-        normal_rnaseq_builds => {
-            is => 'Genome::Model::Build::RnaSeq',
+        clinseq_models => {
+            is => 'Genome::Model::ClinSeq',
             is_many => 1,
             is_input => 1,
         },
@@ -36,8 +31,18 @@ class Genome::Model::MutationalSignificance::Command::MakeGeneCountsFile {
 sub execute {
     my $self = shift;
 
-    my @tumor_builds = $self->tumor_rnaseq_builds;
-    my @normal_builds = $self->normal_rnaseq_builds;
+    my @clinseq_models = $self->clinseq_models;
+
+    my (@tumor_builds, @normal_builds);
+
+    for my $model (@clinseq_models) {
+        if ( defined($model->tumor_rnaseq_model) && defined($model->tumor_rnaseq_model->last_succeeded_build) ) {
+                push @tumor_builds, $model->tumor_rnaseq_model->last_succeeded_build;
+        }
+        if ( defined($model->normal_rnaseq_model) && defined($model->normal_rnaseq_model->last_succeeded_build) ) {
+                push @normal_builds, $model->normal_rnaseq_model->last_succeeded_build;
+        }
+    }
 
     my (@input_gene_count_files, @subjects, @groups);
 
