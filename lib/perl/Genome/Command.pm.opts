@@ -6843,6 +6843,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'max-cols-per-file=s',
         undef,
+        'max-output-files=s',
+        undef,
         'output-prefix=s',
         'files',
         'color!',
