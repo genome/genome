@@ -15,9 +15,10 @@ glmAnalysis <- function(inputFile, groups, subjects, outputFile, pvalue) {
     fit <- glmFit(dge, design)
     lrt <- glmLRT(fit)
     de <- decideTestsDGE(lrt, p=pvalue)
-    out <- cbind(lrt$table, de)
+    top <- topTags(lrt, n=length(lrt$table$PValue))
+    out <- cbind(top$table, de)
 
-    colnames(out)[5] <- "test.result"
+    colnames(out)[length(out)] <- "test.result"
     out <- out[order(out$PValue), ]
 
     write.table(out, outputFile, quote=FALSE, sep="\t",

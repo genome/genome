@@ -101,14 +101,13 @@ subtest "execute" => sub {
     my $header = $in->getline;
     chomp $header;
     my @fields = split("\t", $header);
-    is_deeply(["", "logFC", "logCPM", "LR", "PValue", "test.result"], \@fields, "header is as expected");
-
+    is_deeply(["", "genes", "logFC", "logCPM", "LR", "PValue", "FDR", "test.result"], \@fields, "header is as expected");
     my %gene_results;
     my %gene_tests;
     while (my $line = $in->getline) {
         chomp $line;
-        my ($name, $x, $y, $z, $pvalue, $test) = split("\t", $line);
-        $gene_results{$name}{pvalue} = $pvalue;
+        my ($coeff, $name, $x, $y, $z, $pvalue, $adjusted_pvalue, $test) = split("\t", $line);
+        $gene_results{$name}{pvalue} = $adjusted_pvalue;
         $gene_results{$name}{test} = $test;
     }
 
