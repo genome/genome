@@ -5149,6 +5149,19 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>make-gene-counts-file',
+      [
+        'clinseq-models=s@',
+        undef,
+        'gene-counts-file=s',
+        'files',
+        'subjects-list=s',
+        'files',
+        'groups-list=s',
+        'files',
+        'help!',
+        undef
+      ],
       '>merge-calc-covg',
       [
         'output-dir=s',
