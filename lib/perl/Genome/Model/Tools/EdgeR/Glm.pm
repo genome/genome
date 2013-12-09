@@ -164,7 +164,6 @@ sub _at_least_one_for_each_subject_for_each_group {
     for my $index (0..$#groups) {
         ++$subject_group_sizes{$subjects[$index]}{$groups[$index]};
     }
-    $DB::single=1;
 
     my @unique_groups = uniq @groups;
     my @unique_subjects = uniq @subjects;
