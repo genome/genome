@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use UR::Util;
 
 class Genome::Config::Profile {
     is => 'UR::Object',
@@ -54,7 +55,7 @@ sub _merge_model_hashes {
         }
     }
 
-    return $destination_hash;
+    return UR::Util::deep_copy($destination_hash);
 }
 
 1;
