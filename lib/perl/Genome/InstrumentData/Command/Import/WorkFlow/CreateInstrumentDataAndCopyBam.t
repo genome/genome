@@ -65,7 +65,8 @@ my @instrument_data_attributes = Genome::InstrumentDataAttribute->get(
     attribute_label => 'original_data_path_md5',
     attribute_value => $md5,
 );
-my @instrument_data = Genome::InstrumentData::Imported->get(id => [ map { $_->instrument_data_id } @instrument_data_attributes ], '-order_by' => 'import_date');
+my @instrument_data = Genome::InstrumentData::Imported->get(id => [ map { $_->instrument_data_id } @instrument_data_attributes ]);
+@instrument_data = sort { $a->attributes(attribute_label => 'segment_id')->attribute_value cmp $b->attributes(attribute_label => 'segment_id')->attribute_value } @instrument_data;
 is(@instrument_data, 2, "got instrument data for md5 $md5") or die;;
 my $read_group = 2883581797;
 for my $instrument_data ( @instrument_data ) {
