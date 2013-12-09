@@ -14,9 +14,9 @@ use_ok('Genome::Model::Tools::Vcf::Convert::Indel::VarscanSomatic');
 
 # the test indels.hq is from build 119211229
 # v3 add code to handle IUPAC gt type
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Vcf-Convert-Indel-VarscanSomatic';
-my $expected_file = "$test_dir/v3/indels.vcf.gz";
-my $input_file    = "$test_dir/v3/indels.hq";
+my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Vcf-Convert-Indel-VarscanSomatic/v4';
+my $expected_file = "$test_dir/indels.vcf.gz";
+my $input_file    = "$test_dir/indels.hq";
 my $output_file   = Genome::Sys->create_temp_file_path;
 
 my $command = Genome::Model::Tools::Vcf::Convert::Indel::VarscanSomatic->create( 

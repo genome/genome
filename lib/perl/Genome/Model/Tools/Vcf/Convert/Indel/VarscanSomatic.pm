@@ -179,11 +179,14 @@ sub _convert_gt {
 
     if ($gt =~ /^[A-Z]$/) {
         if ($gt =~ /^[ATCG]$/) {
-            unless ($ref eq $gt) {
-                $self->error_message("Genotype: $gt conflict with reference: $ref");
-                return;
+            if ($ref eq $gt) {
+                return '0/0';
             }
-            return '0/0';
+            else {
+                $self->warning_message("Genotype: $gt conflict with reference: $ref");
+                return './.';
+            }
+            
         }
         else { #sometimes it gets IUPAC symbol like Y, check whether it contains ref or not
             my @alleles = Genome::Info::IUB->iub_to_alleles($gt);
