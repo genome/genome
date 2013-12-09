@@ -51,7 +51,9 @@ sub _evaluate_method_chain {
     return unless defined($_[0]);
 
     if (@_ >= 2) {
-        return _evaluate_method_chain(shift->shift, @_);
+        my $obj = shift;
+        my $meth = shift;
+        return _evaluate_method_chain($obj->$meth, @_);
     } else {
        return shift;
     }

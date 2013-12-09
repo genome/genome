@@ -20,7 +20,7 @@ sub get_rule_model_map_from_config {
     my $models = $config_hash->{models};
 
     return Genome::Config::RuleModelMap->create(
-        rules => @rules,
+        rules => \@rules,
         models => $models,
         config => $config,
     );
