@@ -124,6 +124,9 @@ sub execute {
             if ($mask_transcripts) {
                 my $mask_file_method = $mask_transcripts .'_file';
                 my $mask_gtf_path = $annotation_build->$mask_file_method('gtf',$reference_build->id);
+                unless(-s $mask_gtf_path) {
+                    my $mask_gtf_path = $annotation_build->$mask_file_method('gtf');
+                }
                 unless ($mask_gtf_path) {
                     $self->error_message('Failed to find GTF annotation used to mask transcripts with type: '. $mask_transcripts);
                     return;
@@ -133,6 +136,9 @@ sub execute {
             
             # Determine both the annotation file and mode to use it with Currlinks
             my $gtf_path = $annotation_build->annotation_file('gtf',$reference_build->id);
+            unless($gtf_path) {
+                my $gtf_path = $annotation_build->annotation_file('gtf');
+            }
             my $mode = $self->annotation_reference_transcripts_mode;
             unless (defined($mode)) {
                 $mode = 'de novo';
