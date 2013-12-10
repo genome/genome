@@ -1088,6 +1088,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'read-aligner-version=s',
         'files',
+        'cancer-annotation-db=s',
+        'files',
         'error-rate-version=s',
         'files',
         'transcript-coverage-merge-annotation-features=s',
@@ -3098,6 +3100,17 @@ $Genome::Command::OPTS_SPEC = [
           'subject_name'
         ],
         'models=s@',
+        undef,
+        'help!',
+        undef
+      ],
+      '>annotate-chimerascan',
+      [
+        'build=s',
+        undef,
+        'cancer-annotation-db=s',
+        undef,
+        'annotated-bedpe-file=s',
         undef,
         'help!',
         undef
