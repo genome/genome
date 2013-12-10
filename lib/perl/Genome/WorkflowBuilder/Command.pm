@@ -67,7 +67,7 @@ sub input_properties {
         is_input => 1, is_optional => 0);
     push @result, grep {!exists $_EXPECTED_ATTRIBUTES{$_}} map {$_->property_name} $self->command->__meta__->properties(
         is_param => 1, is_optional => 0);
-    return @result;
+    return sort @result;
 }
 
 sub operation_type_attributes {
@@ -92,7 +92,7 @@ sub operation_type_attributes {
 
 sub output_properties {
     my $self = shift;
-    return map {$_->property_name} $self->command->__meta__->properties(
+    return sort map {$_->property_name} $self->command->__meta__->properties(
         is_output => 1);
 }
 

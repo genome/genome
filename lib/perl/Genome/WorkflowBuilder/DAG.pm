@@ -144,13 +144,13 @@ sub get_xml_element {
 
 sub input_properties {
     my $self = shift;
-    return $self->_property_names_from_links('external_input',
+    return sort $self->_property_names_from_links('external_input',
         'source_property');
 }
 
 sub output_properties {
     my $self = shift;
-    return $self->_property_names_from_links('external_output',
+    return sort $self->_property_names_from_links('external_output',
         'destination_property');
 }
 
