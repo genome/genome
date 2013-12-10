@@ -31,8 +31,8 @@ class Genome::Model::Tools::Music::Bmr::CalcBmr {
         skip_silent => { is => 'Boolean', doc => "Skip silent mutations from the provided MAF file", is_optional => 1, default => 1 },
     ],
     has_output => [
-        bmr_output => { is => 'Number', doc => "TODO" },
-        gene_mr_file => { is => 'Text', doc => "TODO" },
+        bmr_output => { is => 'Number', is_optional => 1, doc => "TODO" },
+        gene_mr_file => { is => 'Text', is_optional => 1, doc => "TODO" },
     ],
     doc => "Calculates mutation rates given per-gene coverage (from \"music bmr calc-covg\"), and a mutation list",
 };
