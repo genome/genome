@@ -201,7 +201,7 @@ Email a Genome::Report
     # Required
     report => $report, # Genome::Report to send
     xslt_files => [...], # transforms report, then adds to email
-    to => 'social@genome.wustl.edu', # whom to send the report, separate by commas
+    to => 'social@example.com', # whom to send the report, separate by commas
     # Optional
     from => 'me@gmail.com', # optional; defaults to current user, separate by commas
     replyto => 'noreply', # optional; defaults to current user, separate by commas
