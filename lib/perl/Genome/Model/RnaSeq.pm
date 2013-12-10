@@ -25,6 +25,11 @@ class Genome::Model::RnaSeq {
             is_optional => 1,
             doc => 'limits the assignment of instrument data by default to only data with a matching TRSN'
         },
+        cancer_annotation_db => {
+            is => 'Text',
+            is_optional => 1,
+            doc => 'db of cancer annotation (see \'genome db list\' for latest version of desired database)',
+        },
     ],
     has_param => [
         sequencing_platform => {
@@ -150,15 +155,11 @@ class Genome::Model::RnaSeq {
             is_optional => 1,
             doc => 'Detector specific fusion-detection parameters.',
         },
-        cancer_annotation_db => {
-            is_optional => 1,
-            doc => 'db of cancer annotation (see \'genome db list\' for latest version of desired database)',
-        },
         bowtie_version => {
             is_optional => 1,
             is => 'Text',
             doc => 'version of bowtie for tophat to use internally',
-        }
+        },
     ],
     doc => 'A genome model produced by aligning cDNA reads to a reference sequence.',
 };
@@ -245,7 +246,7 @@ sub map_workflow_inputs {
 
     if ($self->fusion_detector) {
         push @inputs, $self->fusion_detection_inputs($build->processing_profile);
-        push @inputs, $self->chimerascan_annotation_inputs($build->processing_profile);
+        push @inputs, $self->chimerascan_annotation_inputs($build);
     }
 
     my %inputs = @inputs;
@@ -642,10 +643,10 @@ sub fusion_detection_inputs {
 
 sub chimerascan_annotation_inputs {
     my $self = shift;
-    my $processing_profile = shift;
+    my $build = shift;
 
     return (
-        cancer_annotation_db => $processing_profile->cancer_annotation_db,
+        cancer_annotation_db => $build->cancer_annotation_db,
     );
 }
 
