@@ -2,6 +2,7 @@ use strict;
 use warnings;
 
 use above 'Genome';
+use Test::Exception;
 use Test::More;
 
 
@@ -78,26 +79,15 @@ subtest 'Output Connector' => sub {
 };
 
 
-subtest 'Valid Operation Type' => sub {
-    my $link_with_invalid_source = Genome::WorkflowBuilder::Link->create(
+subtest 'Valid Operation Type for Notify' => sub {
+    dies_ok { Genome::WorkflowBuilder::Link->create(
         source => 'INVALID_OPERATION', source_property => 'foo',
-        destination_property => 'bar'
-    );
-    eval {
-        diag "Expect one error message about invalid source here:";
-        $link_with_invalid_source->validate;
-    };
-    ok($@, 'invalid source operation fails to validate');
+        destination_property => 'bar') }, 'invalid source operation dies';
 
-    my $link_with_invalid_destination = Genome::WorkflowBuilder::Link->create(
+    dies_ok { Genome::WorkflowBuilder::Link->create(
         source_property => 'foo',
-        destination => 'INVALID_OPERATION', destination_property => 'bar'
-    );
-    eval {
-        diag "Expect one error message about invalid destination here:";
-        $link_with_invalid_destination->validate;
-    };
-    ok($@, 'invalid destination operation fails to validate');
+        destination => 'INVALID_OPERATION', destination_property => 'bar') },
+        'invalid destination operation dies';
 };
 
 subtest 'Source Property Valid' => sub {

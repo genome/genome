@@ -31,6 +31,21 @@ class Genome::WorkflowBuilder::Link {
 };
 
 
+sub create {
+    my $class = shift;
+
+    my $self = $class->SUPER::create(@_);
+
+    if ($self->source) {
+        $self->source->notify_output_link($self);
+    }
+    if ($self->destination) {
+        $self->destination->notify_input_link($self);
+    }
+
+    return $self;
+}
+
 # ------------------------------------------------------------------------------
 # Inherited Methods
 # ------------------------------------------------------------------------------

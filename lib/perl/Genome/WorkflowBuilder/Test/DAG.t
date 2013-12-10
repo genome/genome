@@ -187,4 +187,67 @@ EOS
     is($dag->get_xml, $xml, 'xml round trip');
 };
 
+subtest 'Converge XML Round Trip' => sub {
+    my $xml = <<EOS;
+<?xml version="1.0"?>
+<operation name="top level" parallelBy="some_external_input" logDir="/tmp">
+  <operationtype typeClass="Workflow::OperationType::Model">
+    <inputproperty>external_input_0</inputproperty>
+    <inputproperty>external_input_1</inputproperty>
+    <outputproperty>external_output</outputproperty>
+  </operationtype>
+  <operation name="some op">
+    <operationtype typeClass="Workflow::OperationType::Converge">
+      <inputproperty>input_0</inputproperty>
+      <inputproperty>input_1</inputproperty>
+      <outputproperty>converge_output</outputproperty>
+      <outputproperty>result</outputproperty>
+    </operationtype>
+  </operation>
+  <link fromOperation="input connector" fromProperty="external_input_0" toOperation="some op" toProperty="input_0"/>
+  <link fromOperation="input connector" fromProperty="external_input_1" toOperation="some op" toProperty="input_1"/>
+  <link fromOperation="some op" fromProperty="converge_output" toOperation="output connector" toProperty="external_output"/>
+</operation>
+EOS
+
+    my $dag = Genome::WorkflowBuilder::DAG->from_xml($xml);
+    is($dag->get_xml, $xml, 'xml round trip');
+};
+
+subtest 'Converge DAG' => sub {
+    my $xml = <<EOS;
+<?xml version="1.0"?>
+<operation name="top level">
+  <operationtype typeClass="Workflow::OperationType::Model">
+    <inputproperty>external_input_0</inputproperty>
+    <inputproperty>external_input_1</inputproperty>
+    <outputproperty>external_output</outputproperty>
+  </operationtype>
+  <operation name="some op">
+    <operationtype typeClass="Workflow::OperationType::Converge">
+      <inputproperty>input_1</inputproperty>
+      <inputproperty>input_0</inputproperty>
+      <outputproperty>converge_output</outputproperty>
+    </operationtype>
+  </operation>
+  <link fromOperation="input connector" fromProperty="external_input_0" toOperation="some op" toProperty="input_0"/>
+  <link fromOperation="input connector" fromProperty="external_input_1" toOperation="some op" toProperty="input_1"/>
+  <link fromOperation="some op" fromProperty="converge_output" toOperation="output connector" toProperty="external_output"/>
+</operation>
+EOS
+
+    my $dag = Genome::WorkflowBuilder::DAG->create(name => 'top level');
+    my $converge = $dag->add_operation(
+        Genome::WorkflowBuilder::Converge->create(name => 'some op'));
+    $dag->connect_input(input_property => 'external_input_1',
+        destination => $converge, destination_property => 'input_1');
+    $dag->connect_input(input_property => 'external_input_0',
+        destination => $converge, destination_property => 'input_0');
+
+    $dag->connect_output(output_property => 'external_output',
+        source => $converge, source_property => 'converge_output');
+
+    is($dag->get_xml, $xml, 'xml round trip');
+};
+
 done_testing();

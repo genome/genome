@@ -109,6 +109,10 @@ sub operation_type {
 # Inherited methods
 # ------------------------------------------------------------------------------
 
+sub notify_input_link {}
+
+sub notify_output_link {}
+
 sub get_xml {
     my $self = shift;
 
