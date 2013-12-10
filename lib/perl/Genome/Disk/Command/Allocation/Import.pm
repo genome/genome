@@ -20,7 +20,7 @@ class Genome::Disk::Command::Allocation::Import {
         },
         owner_id => {
             is => 'Text',
-            default_value => $ENV{USER} . '@genome.wustl.edu',
+            default_value => Genome::Sys::User->owner_id,
             doc => 'The ID used to retrieve the owner (in conjunction with owner_class_name), ' .
                    'e.g. bdericks@genome.wustl.edu for Genome::Sys::User or build_id for Genome::Model::Build.',
         },
