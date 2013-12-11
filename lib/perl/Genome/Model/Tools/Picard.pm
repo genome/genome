@@ -274,6 +274,7 @@ MESSAGE
                     From => $from,
                     To => $to,
                     Cc => 'apipe-run@genome.wustl.edu',
+                    cc      => $ENV{GENOME_EMAIL_PIPELINE_NOISY},
                     Subject => $subject,
                     Data => $data
                 );
