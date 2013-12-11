@@ -864,7 +864,7 @@ sub perform_post_success_actions {
             To => 'esodergr@genome.wustl.edu, kmihindu@genome.wustl.edu', 
             #To => 'ebelter@genome.wustl.edu', 
             Cc => 'ebelter@genome.wustl.edu', 
-            From => 'apipe@genome.wustl.edu', 
+            From => $ENV{GENOME_EMAIL_PIPELINE},
             Subject => 'MC16s QC Build is Done',
             Message => $msg,
         );

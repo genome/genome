@@ -41,7 +41,7 @@ sub {
           <div class="rounded" style="background: #FFF; margin-bottom: 10px;">
             <div class="padding10">
               <p><strong>Error:</strong> $string<br>
-                Please email apipe\@genome.wustl.edu</p>
+                Please email $ENV{GENOME_EMAIL_PIPELINE}</p>
             </div>
           </div>
         </div>

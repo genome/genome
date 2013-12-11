@@ -200,7 +200,7 @@ sub send_mail {
                     {
                             smtp => 'gscsmtp.wustl.edu',
                             to => $recipients,
-                            from => 'apipe@genome.wustl.edu',
+                            from => $ENV{GENOME_EMAIL_PIPELINE},
                             subject => $subject,
                             multipart => 'related',
                             on_error => 'die',
