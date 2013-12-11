@@ -105,6 +105,7 @@ $ENV{GENOME_DS_OLTP_AUTH} ||= 'g_user';
 $ENV{GENOME_DS_OLTP_OWNER} ||= 'GSC';
 
 # Email
+$ENV{GENOME_EMAIL_ILLUMINA_BWA} ||= 'illumina-bwa@genome.wustl.edu';
 $ENV{GENOME_EMAIL_VIROME_SCREENING} ||= 'virome-screen@genome.wustl.edu';
 
 
