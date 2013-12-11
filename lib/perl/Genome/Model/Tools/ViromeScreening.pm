@@ -129,10 +129,11 @@ sub _send_failed_mail {
               "Reason from logfile:\n\n$reason\n";
                   
     my $mail_dest = Genome::Config->user_email;
+
     my $sender = Mail::Sender->new({
         smtp => 'gscsmtp.wustl.edu',
-        from => 'virome-screen@genome.wustl.edu',
-        replyto => 'virome-screen@genome.wustl.edu',
+        from => $ENV{GENOME_EMAIL_VIROME_SCREENING},
+        replyto => $ENV{GENOME_EMAIL_VIROME_SCREENING},
     });
     $sender->MailMsg({
         to => $mail_dest,
@@ -152,9 +153,9 @@ sub _send_succeeded_mail {
 
     my $mail_dest = Genome::Config->user_email;
     my $sender = Mail::Sender->new({
-        smtp => 'gscsmtp.wustl.edu',
-        from => 'virome-screen@genome.wustl.edu',
-        replyto => 'virome-screen@genome.wustl.edu',
+        smtp => $ENV{GENOME_EMAIL_SMTP_SERVER},
+        from => $ENV{GENOME_EMAIL_VIROME_SCREENING},
+        replyto => $ENV{GENOME_EMAIL_VIROME_SCREENING},
     });
     $sender->MailMsg({
         to => $mail_dest,
