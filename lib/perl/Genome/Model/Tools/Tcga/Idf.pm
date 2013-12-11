@@ -27,16 +27,37 @@ my %PROCESSING_PROFILE_PROTOCOL_TYPES = (
     "variant calling" => "variant_calling",
 );
 
+my @HARD_CODED_ROW_HEADERS = (
+    "Investigation Title",
+    "Experimental Design",
+    "Experimental Design Term Source REF",
+    "Experimental Factor Name",
+    "Experimental Factor Type",
+    "Person Last Name",
+    "Person First Name",
+    "Person Email",
+    "Person Affiliation",
+    "Person Roles",
+    "Experiment Description",
+    "Protocol Term Source REF",
+    "Term Source Name",
+    "Term Source File",
+    "Term Source Version",
+);
+
 class Genome::Model::Tools::Tcga::Idf {
     has => [
         protocols => {
+        },
+        sdrf_file => {
+            is => "Text",
         },
     ],
 };
 
 sub create {
     my $class = shift;
-    my $self = $class->SUPER::create;
+    my $self = $class->SUPER::create(@_);
 
     my %p;
     $self->protocols(\%p);
@@ -153,6 +174,10 @@ sub print_idf {
     $out->print(join("\t", "Protocol Type", @protocol_types)."\n");
     $out->print(join("\t", "Protocol Description", @protocol_descriptions)."\n");
     $out->print(join("\t", "Protocol Parameters", map {if (defined $_){join(";", @{$_})}else {""}} @protocol_parameters)."\n");
+    $out->print(join("\t", "SDRF Files", $self->sdrf_file)."\n");
+    for my $row_header (@HARD_CODED_ROW_HEADERS) {
+        $out->print("$row_header\n");
+    }
 
     $out->close;
     return 1;

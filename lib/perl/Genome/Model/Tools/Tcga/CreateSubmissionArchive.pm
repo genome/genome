@@ -113,8 +113,11 @@ sub execute {
         }
     }
 
-    $idf->print_idf($magetab_archive_dir."/".$self->complete_archive_name.".".$IDF_FILE_EXTENSION.".txt");
-    $sdrf->print_sdrf($magetab_archive_dir."/".$self->complete_archive_name.".".$SDRF_FILE_EXTENSION.".txt", @sdrf_rows);
+    my $sdrf_name = $self->complete_archive_name.".".$SDRF_FILE_EXTENSION.".txt";
+    my $idf_name = $magetab_archive_dir."/".$self->complete_archive_name.".".$IDF_FILE_EXTENSION.".txt";
+    $idf->sdrf_file($sdrf_name);
+    $idf->print_idf($idf_name);
+    $sdrf->print_sdrf($magetab_archive_dir."/".$sdrf_name, @sdrf_rows);
 
     $self->print_manifest($vcf_archive_dir);
     $self->print_manifest($magetab_archive_dir);
