@@ -106,6 +106,7 @@ $ENV{GENOME_DS_OLTP_OWNER} ||= 'GSC';
 
 # Email
 $ENV{GENOME_EMAIL_PIPELINE_NOISY} ||= 'apipe-run@genome.wustl.edu'; # recepient alias for noisy system emails
+$ENV{GENOME_EMAIL_TEST} ||= 'fakeguy@genome.wustl.edu';  # Used in some tests
 $ENV{GENOME_EMAIL_NOREPLY} ||= 'donotreply@genome.wustl.edu';
 $ENV{GENOME_EMAIL_ILLUMINA_BWA} ||= 'illumina-bwa@genome.wustl.edu';
 $ENV{GENOME_EMAIL_VIROME_SCREENING} ||= 'virome-screen@genome.wustl.edu';
