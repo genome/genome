@@ -154,7 +154,7 @@ sub execute {
 print Data::Dumper->new([$output,\@Workflow::Simple::ERROR])->Dump;
     my $mail_dest = Genome::Config->user_email;
     my $sender = Mail::Sender->new({
-        smtp => 'gscsmtp.wustl.edu',
+        smtp => $ENV{GENOME_EMAIL_SMTP_SERVER},
         from => $ENV{GENOME_EMAIL_ILLUMINA_BWA},
         replyto => $ENV{GENOME_EMAIL_NOREPLY},
     });
