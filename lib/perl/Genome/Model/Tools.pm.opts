@@ -4360,6 +4360,19 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>add-evs-maf',
+    [
+      'anno-file=s',
+      'files',
+      'output-file=s',
+      'files',
+      'vcf-file=s',
+      'files',
+      'debug!',
+      undef,
+      'help!',
+      undef
+    ],
     '>add-rsid',
     [
       'anno-file=s',
@@ -22911,11 +22924,7 @@ $Genome::Model::Tools::OPTS_SPEC = [
       ],
       '>calc-bmr',
       [
-        'bmr-output=s',
-        undef,
         'roi-file=s',
-        'files',
-        'gene-mr-file=s',
         'files',
         'reference-sequence=s',
         'files',
@@ -22924,6 +22933,10 @@ $Genome::Model::Tools::OPTS_SPEC = [
         'output-dir=s',
         'files',
         'maf-file=s',
+        'files',
+        'bmr-output=s',
+        undef,
+        'gene-mr-file=s',
         'files',
         'skip-non-coding!',
         undef,
