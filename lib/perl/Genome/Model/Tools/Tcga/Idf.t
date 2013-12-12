@@ -15,7 +15,7 @@ use Genome::Test::Factory::ProcessingProfile::SomaticVariation;
 
 my $class = "Genome::Model::Tools::Tcga::Idf";
 
-my $base_dir = Genome::Utility::Test->data_dir_ok($class, "v1");
+my $base_dir = Genome::Utility::Test->data_dir_ok($class, "v2");
 
 subtest add_pp_protocol => sub {
     my $idf = $class->create;
@@ -115,7 +115,7 @@ subtest "print IDF" => sub {
         {name => "maf1", description => "First filtering protocol"},
         ],
     );
-    my $idf = Genome::Model::Tools::Tcga::Idf->create;
+    my $idf = Genome::Model::Tools::Tcga::Idf->create(sdrf_file => "test.sdrf");
     $idf->protocols(\%protocol_db);
     my $output_idf = Genome::Sys->create_temp_file_path;
     ok($idf->print_idf($output_idf), "Print idf called successfully");
