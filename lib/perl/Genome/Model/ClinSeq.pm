@@ -300,21 +300,19 @@ sub map_workflow_inputs {
       #The following will only work if the rna-seq build used a processing profile that uses chimerascan.
       if ($tumor_rnaseq_build){
         #Check for ChimeraScan fusion results
-        if(-e $tumor_rnaseq_build->data_directory . '/fusions/chimeras.bedpe'){
-            my $ncbi_human_ensembl_build_id = $tumor_rnaseq_build->annotation_build->id;
-            my $tumor_unfiltered_fusion_file = $tumor_rnaseq_build->data_directory . '/fusions/chimeras.bedpe';
-            my $tumor_filtered_fusion_dir = $patient_dir . '/rnaseq/fusions/tumor';
-            my $tumor_filtered_fusion_file =  $tumor_filtered_fusion_dir . '/chimeras.filtered.bedpe';
-            push @inputs, tumor_unfiltered_fusion_file => $tumor_unfiltered_fusion_file;
-            push @inputs, ncbi_human_ensembl_build_id => $ncbi_human_ensembl_build_id;
-            push @inputs, tumor_filtered_fusion_file => $tumor_filtered_fusion_file;
-            push @dirs, $tumor_filtered_fusion_dir;
+        if(-e $tumor_rnaseq_build->data_directory . '/fusions/chimeras_filtered.bedpe'){
             if ($wgs_build){
                 #Check for SV calls file
                 if(-e $wgs_build->data_directory . '/effects/svs.hq.annotated'){
+                    my $ncbi_human_ensembl_build_id = $tumor_rnaseq_build->annotation_build->id;
+                    my $tumor_filtered_fusion_dir = $patient_dir . '/rnaseq/fusions/tumor';
+                    my $tumor_filtered_fusion_file =  $tumor_filtered_fusion_dir . '/filtered_chimeras.bedpe';
                     my $wgs_sv_file = $build->wgs_build->data_directory . '/effects/svs.hq.annotated';
                     my $tumor_filtered_intersected_fusion_file =  $tumor_filtered_fusion_dir . '/chimeras.filtered.intersected.bedpe';
+                    push @dirs, $tumor_filtered_fusion_dir;
+                    push @inputs, ncbi_human_ensembl_build_id => $ncbi_human_ensembl_build_id;
                     push @inputs, wgs_sv_file => $wgs_sv_file;
+                    push @inputs, tumor_filtered_fusion_file => $tumor_filtered_fusion_file;
                     push @inputs, tumor_filtered_intersected_fusion_file => $tumor_filtered_intersected_fusion_file;
                 }
             }
@@ -465,8 +463,7 @@ sub _resolve_workflow_for_build {
         push @output_properties, 'dgidb_tophat_result';
     }
     if ($build->tumor_rnaseq_build){
-        if(-e $build->tumor_rnaseq_build->data_directory . '/fusions/chimeras.bedpe'){
-            push @output_properties, 'tumor_chimerascan_fusion_filter_result';
+        if(-e $build->tumor_rnaseq_build->data_directory . '/fusions/filtered_chimeras.bedpe'){
             if ($build->wgs_build){
                 if(-e $build->wgs_build->data_directory . '/effects/svs.hq.annotated'){
                     push @output_properties, 'intersect_tumor_fusion_sv_result';
@@ -773,20 +770,12 @@ sub _resolve_workflow_for_build {
       $add_link->($cufflinks_differential_expression_op, 'result', $output_connector, 'cufflinks_differential_expression_result');
     }
 
-    my $tumor_chimerascan_filtered_fusion_op;
+    #Intersect filtered fusion calls with WGS SV calls.
     my $intersect_tumor_fusion_sv_op;
     if ($build->tumor_rnaseq_build){
-        #Filter ChimeraScan tumor Fusion output - Use the ChimeraScan::FilterOutput GMT on the tumor fusion calls
-        if(-e $build->tumor_rnaseq_build->data_directory . '/fusions/chimeras.bedpe'){
-            #copy over unfiltered fusion file
-            $self->copy_unfiltered_fusion($build);
-            
-            my $msg = "Filtering tumor ChimeraScan fusion calls.";
-            $tumor_chimerascan_filtered_fusion_op = $add_step->($msg, 'Genome::Model::Tools::ChimeraScan::FilterOutput');
-            $add_link->($input_connector, 'tumor_unfiltered_fusion_file', $tumor_chimerascan_filtered_fusion_op, 'bedpe_file');
-            $add_link->($input_connector, 'ncbi_human_ensembl_build_id', $tumor_chimerascan_filtered_fusion_op, 'annotation_build_id');
-            $add_link->($input_connector, 'tumor_filtered_fusion_file', $tumor_chimerascan_filtered_fusion_op, 'output_file');
-            $add_link->($tumor_chimerascan_filtered_fusion_op, 'result', $output_connector, 'tumor_chimerascan_fusion_filter_result');
+        if(-e $build->tumor_rnaseq_build->data_directory . '/fusions/filtered_chimeras.bedpe'){
+            #copy over fusion files
+            $self->copy_fusion_files($build);
             if ($build->wgs_build){
                 if(-e $build->wgs_build->data_directory . '/effects/svs.hq.annotated'){
                     my $msg = "Intersecting filtered tumor ChimeraScan fusion calls with WGS SV calls.";
@@ -794,7 +783,7 @@ sub _resolve_workflow_for_build {
                     $add_link->($input_connector, 'ncbi_human_ensembl_build_id', $intersect_tumor_fusion_sv_op, 'annotation_build_id');
                     $add_link->($input_connector, 'tumor_filtered_intersected_fusion_file', $intersect_tumor_fusion_sv_op, 'output_file');
                     $add_link->($input_connector, 'wgs_sv_file', $intersect_tumor_fusion_sv_op, 'sv_output_file');
-                    $add_link->($tumor_chimerascan_filtered_fusion_op, 'filtered_bedpe_file', $intersect_tumor_fusion_sv_op, 'filtered_bedpe_file');
+                    $add_link->($input_connector, 'tumor_filtered_fusion_file', $intersect_tumor_fusion_sv_op, 'filtered_bedpe_file');
                     $add_link->($intersect_tumor_fusion_sv_op, 'result', $output_connector, 'intersect_tumor_fusion_sv_result');
                 }
             }
@@ -1204,12 +1193,18 @@ sub snv_variant_source_file {
     die $exception;
 }
 
-sub copy_unfiltered_fusion {
+sub copy_fusion_files {
     my ($class, $build) = @_;
-    my $tumor_unfiltered_fusion_file = $build->tumor_rnaseq_build->data_directory . '/fusions/chimeras.bedpe';
+    my $rnaseq_build_dir = $build->tumor_rnaseq_build->data_directory;
+    my $tumor_filtered_fusion_file =  $rnaseq_build_dir . '/fusions/filtered_chimeras.bedpe';
+    my $tumor_filtered_annotated_fusion_file =  $rnaseq_build_dir . '/fusions/filtered_chimeras.catanno.bedpe';
     my $tumor_filtered_fusion_dir = $class->patient_dir($build) . '/rnaseq/fusions/tumor';
-    my $cp_tumor_unfiltered_fusion = "cp " . $tumor_unfiltered_fusion_file . " " . $tumor_filtered_fusion_dir;
-    Genome::Sys->shellcmd(cmd => $cp_tumor_unfiltered_fusion);
+    if(-e $tumor_filtered_fusion_file) {
+        Genome::Sys->copy_file($tumor_filtered_fusion_file, $tumor_filtered_fusion_dir);
+    }
+    if(-e $tumor_filtered_annotated_fusion_file) {
+        Genome::Sys->copy_file($tumor_filtered_annotated_fusion_file, $tumor_filtered_fusion_dir);
+    }
 }
 
 sub clonality_dir {
