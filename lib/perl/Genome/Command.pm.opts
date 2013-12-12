@@ -5093,6 +5093,21 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>run-edge-r',
+      [
+        'clinseq-models=s@',
+        undef,
+        'output-file=s',
+        'files',
+        'counts-per-million=s',
+        undef,
+        'num-samples=s',
+        undef,
+        'p-value=s',
+        undef,
+        'help!',
+        undef
+      ],
       '>calc-covg',
       [
         'music-build=s',
@@ -5164,11 +5179,11 @@ $Genome::Command::OPTS_SPEC = [
       [
         'clinseq-models=s@',
         undef,
-        'gene-counts-file=s',
+        'counts-file=s',
         'files',
-        'subjects-list=s',
+        'subjects=s',
         'files',
-        'groups-list=s',
+        'groups=s',
         'files',
         'help!',
         undef
