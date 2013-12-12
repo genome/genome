@@ -47,5 +47,37 @@ my @output = glob("$temp_dir/*fastq");
 is(@output, 1, "got 1 fastq files");
 is(Genome::Sys->md5sum($output[0]), '0bc803457a4343eaa555b99916d226c3', "Output fastq matches");
 
+my $version = 230;
+$datadir = $ENV{GENOME_TEST_INPUTS}.'/Genome-Model-Tools-Sx/TrimFlexbar'.$version;
+$input1 = "$datadir/input_1.fastq";
+ok(-s $input1, 'fastq input 1') or die;
+$input2 = "$datadir/input_2.fastq";
+ok(-s $input2, 'fastq input 2') or die;
+
+$temp_dir = Genome::Sys->create_temp_directory;
+$cmd = Genome::Model::Tools::Sx::Trim::Flexbar->create(
+    version => $version,
+    input => [ $input1, $input2 ],
+    output => [ "$temp_dir/output.fastq", ],
+    adapter => 'gtttcccagtcacgata',
+    adapter_match => 3,
+    adapter_min_overlap => 16,
+    adapter_mismatch => -3,
+    adapter_trim_end => 'ANY',
+    max_uncalled => 100,
+    remove_revcomp => 1, 
+    threads => 4,
+);
+ok($cmd, "create flexbar to remove single adapter for v230");
+ok(eval{$cmd->execute}, "execute");
+print "$@\n" if $@;
+is_deeply( $cmd->_cmds, ['LD_LIBRARY_PATH=/gscmnt/gc3001/assembly/Downloads/Flexbar_2.4/flexbar_v2.4_linux64 /gsc/bin/flexbar --adapter-match 3 --adapter-min-overlap 16 --adapter-mismatch -3 --adapter-trim-end ANY --adapters '.$cmd->_tmpdir.'/adapters.fasta --max-uncalled 100 --threads 4 --reads '.$datadir.'/input_1.fastq --reads2 '.$datadir.'/input_2.fastq --format sanger --target '.$cmd->_tmpdir.'/output.fastq'], 'flexbar command');
+
+@output = glob("$temp_dir/*fastq");
+is(@output, 1, "got 1 fastq files");
+
+my $md_sum = Genome::Sys->md5sum( $output[0] );
+is( Genome::Sys->md5sum( $output[0] ), '88874bc2a76115d49589b2e5d58d3d9b', 'Output fastq matches' );
+
 #print "gvimdiff $output[0] /gsc/var/cache/testsuite/data/Genome-Model-Tools-Sx/TrimFlexbar/revcomp_adapter_removed.far2.17.fastq\n"; <STDIN>;
 done_testing();
