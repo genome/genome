@@ -20,7 +20,8 @@ my $expected_base = "expected.v1";
 my $expected_dir = "$test_dir/$expected_base";
 my $expected_file = "$expected_dir/expected.vcf.gz";
 
-my $input_file = "$test_dir/snvs.hq";
+my $input_file = "$test_dir/snvs.v1.1.4.hq"; #updated input data
+
 my $output_file = Genome::Sys->create_temp_file_path;
 my %params = ( aligned_reads_sample => 'TestTumor',
                control_aligned_reads_sample => 'TestNormal',
