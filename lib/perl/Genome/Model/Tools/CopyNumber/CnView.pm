@@ -16,7 +16,7 @@ class Genome::Model::Tools::CopyNumber::CnView{
       doc => 'Supply an annotation build id (e.g., 124434505 for NCBI-human.ensembl/67_37l_v2)' },
     cancer_annotation_db => {
       is => 'Genome::Db',
-      example_values => ['/cancer-annotation/human/build37-20130401.1'],
+      example_values => ['tgi/cancer-annotation/human/build37-20130401.1'],
       doc => 'cancer-specific annotation extenions',
     },
     output_dir        => { 
@@ -69,7 +69,7 @@ class Genome::Model::Tools::CopyNumber::CnView{
 
 sub help_synopsis {
   return <<EOS
-gmt copy-number cn-view --annotation-build=124434505 --cnv-file=/gscmnt/gc13001/info/model_data/2888915570/build129973671/variants/cnvs.hq --segments-file=/gscmnt/gc2013/info/model_data/2889110844/build130030495/PNC6/clonality/cnaseq.cnvhmm --output-dir=/tmp/ --gene-targets-file=/gscmnt/sata132/techd/mgriffit/reference_annotations/GeneSymbolLists/CancerGeneCensusPlus_Sanger.txt --name='Cancer Genes'  --chr=1  --verbose
+gmt copy-number cn-view --annotation-build=124434505 --cancer_annotation_db='tgi/cancer-annotation/human/build37-20130401.1' --cnv-file=/gscmnt/gc13001/info/model_data/2888915570/build129973671/variants/cnvs.hq --segments-file=/gscmnt/gc2013/info/model_data/2889110844/build130030495/PNC6/clonality/cnaseq.cnvhmm --output-dir=/tmp/ --gene-targets-file=/gscmnt/sata132/techd/mgriffit/reference_annotations/GeneSymbolLists/CancerGeneCensusPlus_Sanger.txt --name='Cancer Genes'  --chr=1  --verbose
 EOS
 }
 
