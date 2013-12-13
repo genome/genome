@@ -1,4 +1,5 @@
 package Genome::Env::GENOME_SYS_UMASK;
+use base 'Genome::Env::Required';
 
 =pod
 

@@ -1,4 +1,5 @@
 package Genome::Env::GENOME_DB_ENSEMBL_DEFAULT_IMPORTED_ANNOTATION_BUILD;
+use base 'Genome::Env::Required';
 
 =pod
 

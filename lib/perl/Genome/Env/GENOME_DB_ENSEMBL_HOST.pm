@@ -1,4 +1,5 @@
 package Genome::Env::GENOME_DB_ENSEMBL_HOST;
+use base 'Genome::Env::Required';
 
 =pod
 

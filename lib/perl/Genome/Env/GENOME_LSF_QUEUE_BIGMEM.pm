@@ -1,4 +1,5 @@
 package Genome::Env::GENOME_LSF_QUEUE_BIGMEM;
+use base 'Genome::Env::Required';
 
 =pod
 
