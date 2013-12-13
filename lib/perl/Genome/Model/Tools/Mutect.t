@@ -57,7 +57,4 @@ ok(-s $test_vcf, "vcf file created");
 compare_ok($expected_out, $test_output, name => 'output matched expected result', filters => [ qr/^##.*$/ ] );
 compare_ok($expected_vcf, $test_vcf, name => 'vcf matched expected result', filters => [ qr/^##MuTect.*$/, qr/^##reference.*$/ ] );
 
-`cp $test_output /tmp/mutect_updating/`;
-`cp $test_vcf /tmp/mutect_updating/`;
-
 done_testing();
