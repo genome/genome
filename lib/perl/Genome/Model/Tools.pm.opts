@@ -2588,12 +2588,12 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'files',
       'output-file=s',
       'files',
+      'reference-name=s',
+      'files',
       'review-bed-file=s',
       'files',
       'debug!',
       undef,
-      'reference-name=s',
-      'files',
       'review-description=s',
       'files',
       'roi=s',
@@ -25631,7 +25631,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
         ],
         'version=s',
         [
-          '229'
+          '229',
+          '230'
         ],
         'adapter=s',
         'files',
@@ -25658,6 +25659,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
         'input-metrics=s',
         'files',
         'max-uncalled=s',
+        'files',
+        'min-read-length=s',
         'files',
         'min-readlength=s',
         'files',
