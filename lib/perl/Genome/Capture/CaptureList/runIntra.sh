@@ -18,7 +18,7 @@ set output_dir = $argv[4];
 if(!(-e "${output_dir}/no_filters")) then
     mkdir ${output_dir}/no_filters;
 endif
-	bsub -u $argv[5]@genome.wustl.edu -J ${name}${i} -q 'short' "perl bigComparison_final_simple_more.pl -h -n -r 0.75 ${output_dir}/${name}${i} > ${output_dir}/no_filters/${name}${i}"
+	bsub -u $argv[5]@${GENOME_EMAIL_DOMAIN} -J ${name}${i} -q 'short' "perl bigComparison_final_simple_more.pl -h -n -r 0.75 ${output_dir}/${name}${i} > ${output_dir}/no_filters/${name}${i}"
 #	@ j = ${j} ;	
 #end	
 

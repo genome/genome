@@ -54,7 +54,7 @@ sub _convert_listrefs_to_strings {
 sub _fill_in_defaults {
     my $params = shift;
 
-    $params->{from} ||= Genome::Sys::User->owner_id;
+    $params->{from} ||= construct_address();
 }
 
 sub _handle_attachments {
@@ -89,8 +89,11 @@ sub _validate_attachment {
     $att->{filename} ||= $att->{path};
 }
 
-sub default_sender {
-    return join('@', $ENV{USER}, $ENV{GENOME_EMAIL_DOMAIN});
+sub construct_address {
+    my $user = shift;
+    $user = defined($user) ? $user : $ENV{USER};
+
+    return join('@', $user, $ENV{GENOME_EMAIL_DOMAIN});
 }
-    
+
 1;

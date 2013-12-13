@@ -45,7 +45,7 @@ sub auth_user {
 }
 
 sub domain {
-    return 'genome.wustl.edu';
+    return $ENV{GENOME_EMAIL_DOMAIN};
 }
 
 sub user_email {

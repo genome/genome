@@ -20,11 +20,11 @@ class Genome::Report::Command::Email {
     has_optional => [
         from => {
             is => 'Text',
-            doc => 'Sender of the email.  Defaults to YOU@genome.wustl.edu.',
+            doc => "Sender of the email.  Defaults to YOU\@$ENV{GENOME_EMAIL_DOMAIN}.",
         },
         replyto => {
             is => 'Text',
-            doc => 'Reply to for email.  Defaults to YOU@genome.wustl.edu.',
+            doc => "Reply to for email.  Defaults to YOU\@$ENV{GENOME_EMAIL_DOMAIN}.",
         },
     ],
 };

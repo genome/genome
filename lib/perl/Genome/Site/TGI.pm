@@ -105,6 +105,7 @@ $ENV{GENOME_DS_OLTP_AUTH} ||= 'g_user';
 $ENV{GENOME_DS_OLTP_OWNER} ||= 'GSC';
 
 # Email
+$ENV{GENOME_EMAIL_DOMAIN} ||= 'genome.wustl.edu';
 $ENV{GENOME_EMAIL_SMTP_SERVER} ||= 'gscsmtp.wustl.edu';
 $ENV{GENOME_EMAIL_PIPELINE} ||= 'apipe@genome.wustl.edu';  # Used as the source of some system emails
 $ENV{GENOME_EMAIL_PIPELINE_NOISY} ||= 'apipe-run@genome.wustl.edu'; # recepient alias for noisy system emails
