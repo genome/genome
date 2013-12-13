@@ -7,7 +7,9 @@ use Genome;
 use Data::Dumper;
 use File::Temp;
 
-my $DEFAULT_VERSION = 'test';
+my $DEFAULT_VERSION = '1.1.4';
+my $MUTECT_BASE = 'muTect';
+my $MUTECT_COMMAND = "$MUTECT_BASE.jar";
 
 class Genome::Model::Tools::Mutect {
     is => ['Command'],
@@ -101,6 +103,7 @@ EOS
 sub mutect_versions {
     my %MUTECT_VERSIONS = (
         'test' => "/gscuser/dlarson/mutect/muTect-1.1.4.jar", # This is temporary until this can be packaged...
+        '1.1.4' => Genome::Sys->jar_path($MUTECT_BASE, '1.1.4'),
     );
     return %MUTECT_VERSIONS;
 }
@@ -148,7 +151,7 @@ sub has_version {
 sub execute {
     my $self = shift;
 
-    my $cmd = "java -Xmx5g -jar " . $self->path_for_mutect_version($self->version) . " --analysis_type MuTect";
+    my $cmd = "java -Xmx5g -jar " . $self->path_for_mutect_version($self->version) . " -et NO_ET --analysis_type MuTect";
     $cmd .= " --reference_sequence " . $self->reference;
     $cmd .= " --input_file:normal " . $self->normal_bam;
     $cmd .= " --input_file:tumor " . $self->tumor_bam;
