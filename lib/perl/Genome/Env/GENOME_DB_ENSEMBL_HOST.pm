@@ -1,3 +1,5 @@
+package Genome::Env::GENOME_DB_ENSEMBL_HOST;
+
 =pod
 
 =head1 NAME
