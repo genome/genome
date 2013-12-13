@@ -119,6 +119,26 @@ sub _cmd_properties {
 #            default_value => '1',
              doc => 'Prevent writing length distributions for read output files.',
          },
+	post_trim_length =>  {
+	    is => 'Number',
+	    is_optional => 1,
+	    doc => 'Trim to specified read length from 3\' end after removal, v230 only',
+	},
+	pre_trim_left => {
+	    is => 'Number',
+	    is_optional => 1,
+	    doc => 'Trim given number of bases on 5\' read end before detection, v230 only.',
+	},
+	pre_trim_right => {
+	    is => 'Number',
+	    is_optional => 1,
+	    doc => 'Trim specified number of bases on 3\' end prior to detection, v230 only.',
+	},
+	pre_trim_phred => {
+	    is => 'Number',
+	    is_optional => 1,
+	    doc => 'Trim 3\' end until specified or higher quality reached, v230 only',
+	},
          removal_tag => {
              is => 'Boolean',
              is_optional => 1,
