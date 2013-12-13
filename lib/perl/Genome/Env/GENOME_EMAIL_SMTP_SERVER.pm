@@ -1,6 +1,5 @@
 package Genome::Env::GENOME_EMAIL_SMTP_SERVER;
-
-use Genome::Env::Required;
+use base 'Genome::Env::Required';
 
 =pod
 

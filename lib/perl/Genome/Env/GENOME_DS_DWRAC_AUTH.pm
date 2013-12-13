@@ -1,6 +1,5 @@
 package Genome::Env::GENOME_DS_DWRAC_AUTH;
-
-use Genome::Env::Required;
+use base 'Genome::Env::Required';
 
 =pod
 

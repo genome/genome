@@ -1,6 +1,5 @@
 package Genome::Env::GENOME_EMAIL_ILLUMINA_BWA;
-
-use Genome::Env::Required;
+use base 'Genome::Env::Required';
 
 =pod
 

@@ -1,6 +1,5 @@
 package Genome::Env::GENOME_DS_GMSCHEMA_SERVER;
-
-use Genome::Env::Required;
+use base 'Genome::Env::Required';
 
 =pod
 

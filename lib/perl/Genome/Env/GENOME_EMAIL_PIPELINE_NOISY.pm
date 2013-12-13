@@ -1,6 +1,5 @@
 package Genome::Env::GENOME_EMAIL_PIPELINE_NOISY;
-
-use Genome::Env::Required;
+use base 'Genome::Env::Required';
 
 =pod
 

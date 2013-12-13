@@ -1,6 +1,5 @@
 package Genome::Env::GENOME_DS_DGIDB_OWNER;
-
-use Genome::Env::Required;
+use base 'Genome::Env::Required';
 
 =pod
 
