@@ -48,6 +48,9 @@ class Genome::Model::Tools::CopyNumber::CnView{
     chr               => { 
       is => 'Text', 
       doc => 'If you wish to limit analysis to a single chromosome, use --chr (e.g. --chr=17). Otherwise all will be processed' },
+    window_size         => { 
+      is => 'Number', 
+      doc => 'For determining overlap, you can define a window size' },
     chr_start         => { 
       is => 'Number', 
       doc => 'If you specify a single chromosome, you may also specify start position using --chr-start' },
@@ -101,6 +104,7 @@ sub execute{
   my $chr_start = $self->chr_start;
   my $chr_end = $self->chr_end;
   my $image_type = $self->image_type;
+  my $window_size = $self->window_size;
 
   #Set amplification / deletion cutoffs that will be used to created filtered files of results for convenience in downstream analyses
   #Try two fold gain and 1/2 loss to start
@@ -305,7 +309,7 @@ sub execute{
     $t_map = $r->{trans};
 
     #Load the CNV window coordinates and copy number estimates
-    $cnvs = $self->loadCnvData('-cnv_file'=>$cnv_file, '-target_chr'=>$chr, '-target_chr_start'=>$chr_start, '-target_chr_end'=>$chr_end);
+    $cnvs = $self->loadCnvData('-cnv_file'=>$cnv_file, '-target_chr'=>$chr, '-target_chr_start'=>$chr_start, '-target_chr_end'=>$chr_end, '-window_size'=>$window_size);
     
     #Load the CNV segments and copy number estimates
     $segments = $self->loadSegmentData('-segments_file'=>$segments_file, '-outfile_cnvhmm'=>$outfile_cnvhmm);
@@ -526,6 +530,7 @@ sub loadCnvData{
   my $target_chr = $args{'-target_chr'};
   my $target_chr_start = $args{'-target_chr_start'};
   my $target_chr_end = $args{'-target_chr_end'};
+  my $window_size = $args{'-window_size'};
 
   my %cnvs;
   open(CNV, "$cnv_file") || die "\n\nCould not open input file: $cnv_file\n\n";
@@ -546,7 +551,9 @@ sub loadCnvData{
     $cnvs{$chr}{$chr_start}{diff} = $line[4];
   }
   close(CNV);
-  my $window_size = $p2 - $p1;
+  unless(defined($window_size)){
+    $window_size = $p2 - $p1;
+  }
   if ($self->verbose){
     $self->status_message("Detected a CNV window size of $window_size bp.  Using this for overlap calculations") if $self->verbose;
   }
