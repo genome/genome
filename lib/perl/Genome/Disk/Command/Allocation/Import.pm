@@ -6,6 +6,8 @@ use warnings;
 use Genome;
 use Cwd 'realpath';
 
+use Genome::Utility::Email;
+
 class Genome::Disk::Command::Allocation::Import {
     is => 'Command::V2',
     has => [

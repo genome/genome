@@ -7,6 +7,7 @@ use Genome;
 use Carp;
 use IO::File;
 use Genome::Info::IUB;
+use Genome::Utility::Email;
 
 class Genome::Model::Tools::Somatic::LaunchPindel{
     is => 'Command',
@@ -83,7 +84,7 @@ sub execute {
     my $output = $self->output_dir;
     Genome::Sys->create_directory($output);  #this seems to be a no op if it exists
     
-        my $email_address = $ENV{'LOGNAME'} . "\@genome.wustl.edu";
+        my $email_address = Genome::Utility::Email::construct_address($ENV{'LOGNAME'});
         $self->status_message("sending a completion mail to: $email_address");
         my $include;
         if($INC[0] !~ m/noarch/) {

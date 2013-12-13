@@ -7,6 +7,7 @@ use Genome;
 use File::Basename;
 use Sys::Hostname;
 use Genome::Utility::AsyncFileSystem qw(on_each_line);
+use Genome::Utility::Email;
 
 my $PICARD_DEFAULT = '1.46';
 my $DEFAULT_MEMORY = 4;
@@ -262,23 +263,21 @@ This is the last warning you will receive about this process.
 MESSAGE
 
                 undef $w;
-                my $from = '"' . __PACKAGE__ . sprintf('" <%s@genome.wustl.edu>', Genome::Sys->username);
+                my $from = '"' . __PACKAGE__ . sprintf('" <%s@%s>', Genome::Sys->username, $ENV{GENOME_EMAIL_DOMAIN});
 
-                my @to = split(' ', $self->_monitor_mail_to);
-                my $to = join(', ', map { "$_\@genome.wustl.edu" } @to);
+                my @to = map { Genome::Utility::Email::construct_address($_) }
+                            split(' ', $self->_monitor_mail_to);
                 my $subject = 'Slow ' . $self->class . ' happening right now';
                 my $data = sprintf($message,
                     hostname,$$,$pid,$ENV{LSB_JOBID},Genome::Sys->username);
 
-                my $msg = MIME::Lite->new(
-                    From => $from,
-                    To => $to,
-                    Cc => 'apipe-run@genome.wustl.edu',
+                Genome::Utility::Email::send(
+                    from    => $from,
+                    to      => \@to,
                     cc      => $ENV{GENOME_EMAIL_PIPELINE_NOISY},
-                    Subject => $subject,
-                    Data => $data
+                    subject => $subject,
+                    body    => $data,
                 );
-                $msg->send();
             }
         }
     );

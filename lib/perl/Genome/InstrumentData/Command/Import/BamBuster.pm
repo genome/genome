@@ -7,6 +7,8 @@ use Genome;
 
 use Data::Dumper 'Dumper';
 
+use Genome::Utility::Email;
+
 class Genome::InstrumentData::Command::Import::BamBuster { 
     is => 'Genome::Command::Base',
     has => [
@@ -215,7 +217,9 @@ sub _launch_jobs_and_monitor {
             my $import_cmd = "genome instrument-data import bam --original-data-path $bam --library $library_id $import_params_string";
             my $bsub;
     
-            $bsub = sprintf("bsub -g %s -u %s $import_cmd", $self->lsf_job_group_name, $ENV{'USER'} . '@genome.wustl.edu');
+            $bsub = sprintf("bsub -g %s -u %s $import_cmd",
+                            $self->lsf_job_group_name,
+                            Genome::Utility::Email::construct_address());
             print $bsub, "\n";
             system($bsub);
         }
