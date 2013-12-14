@@ -1197,17 +1197,24 @@ sub snv_variant_source_file {
 sub copy_fusion_files {
     my ($class, $build) = @_;
     my $rnaseq_build_dir = $build->tumor_rnaseq_build->data_directory;
+    my $tumor_unfiltered_fusion_file =  $rnaseq_build_dir . '/fusions/Genome_Model_RnaSeq_DetectFusionsResult_Chimerascan_VariableReadLength_Result/chimeras.bedpe';
     my $tumor_filtered_fusion_file =  $rnaseq_build_dir . '/fusions/filtered_chimeras.bedpe';
     my $tumor_filtered_annotated_fusion_file =  $rnaseq_build_dir . '/fusions/filtered_chimeras.catanno.bedpe';
+    my $clinseq_tumor_unfiltered_fusion_file = $class->patient_dir($build) . '/rnaseq/fusions/tumor/chimeras.bedpe';
     my $clinseq_tumor_filtered_fusion_file = $class->patient_dir($build) . '/rnaseq/fusions/tumor/filtered_chimeras.bedpe';
     my $clinseq_tumor_filtered_annotated_fusion_file = $class->patient_dir($build) . '/rnaseq/fusions/tumor/filtered_chimeras.catanno.bedpe';
+    if(-e $tumor_unfiltered_fusion_file) {
+        unless(Genome::Sys->copy_file($tumor_unfiltered_fusion_file, $clinseq_tumor_unfiltered_fusion_file)) {
+           die "unable to copy $tumor_unfiltered_fusion_file";
+        }
+    }
     if(-e $tumor_filtered_fusion_file) {
         unless(Genome::Sys->copy_file($tumor_filtered_fusion_file, $clinseq_tumor_filtered_fusion_file)) {
            die "unable to copy $tumor_filtered_fusion_file";
         }
     }
     if(-e $tumor_filtered_annotated_fusion_file) {
-        unless(Genome::Sys->copy_file($tumor_filtered_fusion_file, $clinseq_tumor_filtered_annotated_fusion_file)) {
+        unless(Genome::Sys->copy_file($tumor_filtered_annotated_fusion_file, $clinseq_tumor_filtered_annotated_fusion_file)) {
            die "unable to copy $tumor_filtered_annotated_fusion_file";
         }
     }
