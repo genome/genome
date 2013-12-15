@@ -1,6 +1,5 @@
 package Genome::Env::GENOME_SYS_SERVICES_WIKI_URL;
-
-use Genome::Env::Required;
+use base 'Genome::Env::Required';
 
 1;
 

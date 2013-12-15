@@ -1,6 +1,5 @@
 package Genome::Env::GENOME_DS_OLTP_TYPE;
-
-use Genome::Env::Required;
+use base 'Genome::Env::Required';
 
 =pod
 

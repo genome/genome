@@ -1,22 +1,26 @@
-package Genome::Env::Required;
-
 use strict;
 use warnings;
 
-use Carp;
+package Genome::Env::Required;
+use base 'Genome::Env';
 
 sub import {
-    my $package = caller;
-    return unless $package =~ m/^Genome::Env::/;
+    my $class = shift;
 
-    my($env_name) = $package =~ m/::(\w+)$/;
+    return if ($class eq __PACKAGE__);
 
-    unless ($ENV{$env_name}) {
-        Carp::croak("Environment variable $env_name must be set in your environment or by a site configuration module");
+    my $NAME = $class->NAME();
+    unless ($ENV{$NAME}) {
+        warn("Environment variable $NAME must be configured to use Genome");
+        exit 255;
     }
+
+    return 1;
 }
 
 1;
+
+__END__
 
 =pod
 
@@ -26,7 +30,7 @@ Genome::Env::Required
 
 =head1 DESCRIPTION
 
-Make your enviroment variable's module inherit from this one, and the 
+Make your enviroment variable's module inherit from this one, and the
 enviroment variable becomes required.  If not set, it will throw an exception.
 
 =cut

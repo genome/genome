@@ -40,11 +40,11 @@ sub help_brief {
 
 sub help_synopsis {
     return <<EOS
-genome model report mail --build-id 12345 --report-name "Summary" --to dlarson\@genome.wustl.edu,charris\@genome.wustl.edu
+genome model report mail --build-id 12345 --report-name "Summary" --to user1\@example.com,user2\@example.com
 
-genome model report run -b 12345 -r "DbSnp" --to reseq\@genome.wustl.edu
+genome model report run -b 12345 -r "DbSnp" --to user\@example.com
 
-genome model report run -b 12345 -r "GoldSnp" --to reseq\@genome.wustl.edu --directory /gscuser/jpeck/reports
+genome model report run -b 12345 -r "GoldSnp" --to user\@example.com --directory /homedirs/username/reports
 
 EOS
 }
@@ -200,7 +200,7 @@ sub send_mail {
                     {
                             smtp => 'gscsmtp.wustl.edu',
                             to => $recipients,
-                            from => 'apipe@genome.wustl.edu',
+                            from => $ENV{GENOME_EMAIL_PIPELINE},
                             subject => $subject,
                             multipart => 'related',
                             on_error => 'die',

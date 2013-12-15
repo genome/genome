@@ -1,3 +1,6 @@
+package Genome::Env::GENOME_DB_ENSEMBL_USER;
+use base 'Genome::Env::Required';
+
 =pod
 
 =head1 NAME

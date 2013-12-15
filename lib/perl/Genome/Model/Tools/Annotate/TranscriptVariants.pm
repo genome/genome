@@ -775,13 +775,13 @@ Your pal,
 Genome::Model::Tools::Annotate::TranscriptVariants
 
 END_CONTENT
-    require MIME::Lite;
-    my $msg = MIME::Lite->new(From    => sprintf('"Genome::Utility::Filesystem" <%s@genome.wustl.edu>', $ENV{'USER'}),
-            To      => 'jweible@genome.wustl.edu',
-            Subject => 'Attempt to cache annotation data directory',
-            Data    => sprintf($message_content, hostname, $ENV{'USER'}),
-            );
-    $msg->send();
+    require Genome::Utility::Email;
+    Genome::Utility::Email::send(
+        from    => sprintf('"Genome::Utility::Filesystem" <%s@%s>', $ENV{'USER'}, $ENV{GENOME_EMAIL_DOMAIN}),
+        to      => 'jweible@genome.wustl.edu',
+        subject => 'Attempt to cache annotation data directory',
+        body    => sprintf($message_content, hostname, $ENV{'USER'}),
+    );
 }
 1;
 

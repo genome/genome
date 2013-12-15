@@ -29,7 +29,7 @@ my $pp_meta = Genome::ProcessingProfile::Test->__meta__;
 ok($pp_meta, 'got meta object for test pp subclass');
 
 # FIXME Mock a user object here instead
-my $user = Genome::Sys::User->get('bdericks@genome.wustl.edu');
+my $user = Genome::Sys::User->get($ENV{GENOME_EMAIL_PIPELINE});
 ok($user, 'got user');
 
 # Make a processing profile, providing a user object during construction
@@ -61,7 +61,7 @@ my $param = Genome::ProcessingProfile::Param->create(
     processing_profile_id => $pp2->id,
     name => $name,
     value_class_name => $value_class_name,
-    value_id => 'bdericks@genome.wustl.edu',
+    value_id => $ENV{GENOME_EMAIL_PIPELINE},
 );
 
 isa_ok($param,'Genome::ProcessingProfile::Param');
@@ -82,7 +82,7 @@ my $param2 = Genome::ProcessingProfile::Param->create(
     processing_profile_id => $pp3->id,
     name => $name,
     value_class_name => $text_class_name,
-    value_id => 'bdericks@genome.wustl.edu',
+    value_id => $ENV{GENOME_EMAIL_PIPELINE},
 );
 
 isa_ok($param2,'Genome::ProcessingProfile::Param');
@@ -101,7 +101,7 @@ ok($pp4, 'created second test processing profile without providing user');
 my $param3 = Genome::ProcessingProfile::Param->create(
     processing_profile_id => $pp4->id,
     name => $name,
-    value_id => 'bdericks@genome.wustl.edu',
+    value_id => $ENV{GENOME_EMAIL_PIPELINE},
 );
 
 isa_ok($param3,'Genome::ProcessingProfile::Param');

@@ -1,4 +1,5 @@
 package Genome::Env::GENOME_LSF_QUEUE_ALIGNMENT_PROD;
+use base 'Genome::Env::Required';
 
 =pod
 

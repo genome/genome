@@ -158,8 +158,8 @@ Genome::Utility::Filesystem
 
 END_CONTENT
 
-                        my $msg = MIME::Lite->new(From    => sprintf('"Genome::Utility::Filesystem" <%s@genome.wustl.edu>', $ENV{'USER'}),
-                                              To      => 'apipe-run@genome.wustl.edu',
+                        my $msg = MIME::Lite->new(From    => sprintf('"Genome::Utility::Filesystem" <%s@%s>', $ENV{'USER'}, $ENV{GENOME_EMAIL_DOMAIN}),
+                                              To      => $ENV{GENOME_EMAIL_PIPELINE_NOISY},
                                               Subject => 'Attempt to release a lock held by a dead process',
                                               Data    => sprintf($message_content, $my_host, $ENV{'LSB_JOBID'}, $ENV{'USER'}, $resource_lock, $info_content),
                                             );

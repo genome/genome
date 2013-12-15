@@ -17,7 +17,7 @@ use Ace;
 use Ace::Sequence;
 use Carp;
 use File::Path;
-use MIME::Lite;
+use Genome::Utility::Email;
 use File::Path 'make_path';
 
 class Genome::Model::GenePrediction::Command::Bacterial::Finish {
@@ -806,13 +806,7 @@ sub send_mail
     my $self = shift;
     my ( $ss_id, $ss_name, $user ) = @_;
 
-    my $useraddress = "$user\@genome.wustl.edu";
-
-    my $from = $useraddress;
-    #FIXME remove hard-coded addresses
-    my $to = join( ', ',
-        "$useraddress", 'kpepin@watson.wustl.edu',
-    );
+    my $from = Genome::Utility::Email::construct_address($user);
 
     my $subject = "BAP Finish script mail for MGAP SSID: $ss_id ($ss_name)";
 
@@ -820,15 +814,12 @@ sub send_mail
 The bap_finish_scripts script has finished running MGAP SSID: $ss_id ($ss_name).
 BODY
 
-    my $msg = MIME::Lite->new(
-        From    => $from,
-        To      => $to,
-        Subject => $subject,
-        Data    => $body,
+    Genome::Utility::Email::send(
+        from => $from,
+        to => [ $from, 'kpepin@watson.wustl.edu' ], # FIXME remove hard-coded addresses
+        subject => $subject,
+        body => $body,
     );
-
-    $msg->send();
-
 }
 
 1;

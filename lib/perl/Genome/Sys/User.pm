@@ -162,4 +162,10 @@ sub has_role {
     return defined $bridge;
 }
 
+# Other entities have owner_ids.  This seems a convienent place to
+# put it
+sub owner_id {
+    return join('', $ENV{USER}, '@', $ENV{GENOME_EMAIL_DOMAIN});
+}
+
 1;

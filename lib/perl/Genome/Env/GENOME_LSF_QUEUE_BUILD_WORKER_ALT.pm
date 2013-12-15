@@ -1,4 +1,5 @@
 package Genome::Env::GENOME_LSF_QUEUE_BUILD_WORKER_ALT;
+use base 'Genome::Env::Required';
 
 =pod
 

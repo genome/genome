@@ -36,7 +36,7 @@ use File::Slurp qw(slurp);
 use File::Temp;
 
 use IPC::Run;
-use MIME::Lite;
+use Genome::Utility::Email;
 use XML::DOM::XPath;
 
 class Genome::Model::GenePrediction::Command::Bacterial::Merge {
@@ -419,17 +419,7 @@ sub send_mail
         = join( ' on ', $finished->hms(':'), $finished->ymd('/') );
     my $duration      = DateTime::Duration->new( $finished - $started );
     my $hours_running = $duration->in_units('hours');
-    my $useraddress   = "$user\@genome.wustl.edu";
-
-    my $from = $useraddress;
-
-    #FIXME remove hardcoded address
-    my $to = join(
-        ', ',
-        "$useraddress",
-        'kpepin@watson.wustl.edu',
-
-    );
+    my $from   = Genome::Utility::Email::construct_address($user);
 
     my $subject = "BMG script mail for MGAP SSID: $ss_id ($ss_name)";
 
@@ -439,15 +429,12 @@ The job began at $date_started and ended at $date_finished.
 The total run time of the script is:  $hours_running  hours.
 BODY
 
-    my $msg = MIME::Lite->new(
-        From    => $from,
-        To      => $to,
-        Subject => $subject,
-        Data    => $body,
+    Genome::Utility::Email::send(
+        from    => $from,
+        to      => [ $from, 'kpepin@watson.wustl.edu' ], #FIXME remove hardcoded address
+        subject => $subject,
+        body    => $body,
     );
-
-    $msg->send();
-
 }
 
 sub check_failed_jobs

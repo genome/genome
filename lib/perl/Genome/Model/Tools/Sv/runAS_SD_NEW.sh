@@ -49,11 +49,11 @@ foreach directory (`ls -d $sddir/assembly_*`)
 	
 	if(! `echo $directory | perl -ane 'print $F[0]=~/old/'`) then
 		# new
-		set new="bsub -q apipe -N -u someone@genome.wustl.edu -M 8000000 -R ${R1} ${R2} -e $directory/$bam.log -J ${project}_${job}_SD_AS 'perl -I ${scriptpath} $gmt sv assembly-validation --bam-files $bam_complete --sv-file ${sdfile} --breakpoint-seq-file $directory/$bam.fasta --cm-aln-file $directory/$bam.cm --min-breakdancer-score 40 --intermediate-read-dir $directory --output-file $directory/$bam.csv --skip-libraries $g --min-size-of-confirm-asm-sv 10'";
+		set new="bsub -q apipe -N -u someone@${GENOME_EMAIL_DOMAIN} -M 8000000 -R ${R1} ${R2} -e $directory/$bam.log -J ${project}_${job}_SD_AS 'perl -I ${scriptpath} $gmt sv assembly-validation --bam-files $bam_complete --sv-file ${sdfile} --breakpoint-seq-file $directory/$bam.fasta --cm-aln-file $directory/$bam.cm --min-breakdancer-score 40 --intermediate-read-dir $directory --output-file $directory/$bam.csv --skip-libraries $g --min-size-of-confirm-asm-sv 10'";
 		if(-e ${directory}/${bam}.csv) then
 			rm -f ${directory}/${bam}.csv;
 		endif
-		bsub -q apipe -N -u someone@genome.wustl.edu -M 8000000 -R "select[type==LINUX64 && mem>8000] rusage[mem=8000]" -e $directory/$bam.log -J ${project}_${job}_SD_AS "perl -I ${scriptpath} $gmt sv assembly-validation --bam-files $bam_complete --sv-file $sdfile --breakpoint-seq-file $directory/$bam.fasta --cm-aln-file $directory/$bam.cm --min-breakdancer-score 40 --intermediate-read-dir $directory --output-file $directory/$bam.csv --skip-libraries $g --min-size-of-confirm-asm-sv 10";
+		bsub -q apipe -N -u someone@${GENOME_EMAIL_DOMAIN} -M 8000000 -R "select[type==LINUX64 && mem>8000] rusage[mem=8000]" -e $directory/$bam.log -J ${project}_${job}_SD_AS "perl -I ${scriptpath} $gmt sv assembly-validation --bam-files $bam_complete --sv-file $sdfile --breakpoint-seq-file $directory/$bam.fasta --cm-aln-file $directory/$bam.cm --min-breakdancer-score 40 --intermediate-read-dir $directory --output-file $directory/$bam.csv --skip-libraries $g --min-size-of-confirm-asm-sv 10";
 	endif
 	
 end	

@@ -1,4 +1,5 @@
 package Genome::Env::GENOME_LSF_QUEUE_DV2_WORKFLOW;
+use base 'Genome::Env::Required';
 
 =pod
 

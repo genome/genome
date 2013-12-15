@@ -1,4 +1,5 @@
 package Genome::Env::GENOME_HOME;
+use base 'Genome::Env::Required';
 
 =pod
 

@@ -18,7 +18,11 @@ sub _title {
 }
 
 sub _html_body {
-    return Genome::Sys->read_file(__FILE__ .'.html');
+    my $body = Genome::Sys->read_file(__FILE__ .'.html');
+
+    # Crappy templating
+    $body =~ s/##EMAIL##/$ENV{GENOME_EMAIL_PIPELINE}/g;
+    return $body;
 }
 
 1;

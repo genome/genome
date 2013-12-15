@@ -3,7 +3,7 @@ package Genome::Disk::Command::Group::UnderAllocated;
 use strict;
 use warnings;
 use Genome;
-use MIME::Lite;
+use Genome::Utility::Email;
 
 class Genome::Disk::Command::Group::UnderAllocated {
     is => 'Command::V2',
@@ -94,13 +94,13 @@ sub _send_report {
     my ($self, $under_allocated_volumes, $report) = @_;
 
     if ((keys %{$under_allocated_volumes}) and $self->send_alert) {
-        my $msg = MIME::Lite->new(
-            From => Genome::Config->user_email,
-            To => join(',', map { $_ . '@genome.wustl.edu' } split(',', $self->alert_recipients)),
-            Subject => 'Underallocated Volumes Found!',
-            Data => $report,
+        my @to = map { Genome::Utility::Email::construct_address($_) } split(',', $self->alert_recipients);
+        Genome::Utility::Email::send(
+            from    => Genome::Config->user_email,
+            to      => \@to,
+            subject => 'Underallocated Volumes Found!',
+            body    => $report,
         );
-        $msg->send;
         $self->status_message("Alert sent to " . $self->alert_recipients);
     }
 }
