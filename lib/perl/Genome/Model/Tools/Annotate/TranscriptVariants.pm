@@ -410,7 +410,6 @@ sub _validate_parameters {
     if ($self->build and $self->cache_annotation_data_directory) {
         $self->cache_annotation_data_directory(0);
         $self->status_message("--cache-annotation-data-directory is currently disabled.  Operating from the annotation data directory instead.");
-        $self->_notify_cache_attempt;
     }
 
     my $annotation_filter = $self->annotation_filter( lc $self->annotation_filter );
@@ -761,28 +760,6 @@ sub transcript_report_headers {
     return ($self->variant_attributes, $self->variant_output_attributes, $self->get_extra_columns, $self->transcript_attributes);
 }
 
-sub _notify_cache_attempt{
-    my $self = shift;
-    
-    my $message_content = <<END_CONTENT;
-Hey Jim,
-
-This is a cache attempt on %s running as PID $$ and user %s.
-
-I told the user I'm not freaking doing it, and am working normally.  Just wanted to give you a heads up.
-
-Your pal,
-Genome::Model::Tools::Annotate::TranscriptVariants
-
-END_CONTENT
-    require Genome::Utility::Email;
-    Genome::Utility::Email::send(
-        from    => sprintf('"Genome::Utility::Filesystem" <%s@%s>', $ENV{'USER'}, $ENV{GENOME_EMAIL_DOMAIN}),
-        to      => 'jweible@genome.wustl.edu',
-        subject => 'Attempt to cache annotation data directory',
-        body    => sprintf($message_content, hostname, $ENV{'USER'}),
-    );
-}
 1;
 
 =pod
