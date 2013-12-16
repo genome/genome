@@ -246,7 +246,7 @@ sub map_workflow_inputs {
 
     if ($self->fusion_detector) {
         push @inputs, $self->fusion_detection_inputs($build->processing_profile);
-        push @inputs, $self->chimerascan_annotation_inputs($build);
+        push @inputs, $self->chimerascan_annotation_inputs($build) if $self->cancer_annotation_db;
     }
 
     my %inputs = @inputs;
@@ -290,7 +290,7 @@ sub _resolve_workflow_for_build {
     }
     my $output_properties = ['coverage_result','expression_result','metrics_result'];
     push(@$output_properties, 'fusion_result') if $self->fusion_detector;
-    push(@$output_properties, 'annotated_bedpe_file') if $self->fusion_detector;
+    push(@$output_properties, 'annotated_bedpe_file') if $self->fusion_detector and $self->cancer_annotation_db;
     push(@$output_properties, 'digital_expression_detection_result') if $self->digital_expression_detection_strategy;
     if ($version_number >= 2) {
         push(@$output_properties, 'bam_qc_result');
@@ -545,37 +545,39 @@ sub _resolve_workflow_for_build {
         );
 
         ###Post Fusion Detection Annotation
-        my $annotation_operation = $workflow->add_operation(
-            name => 'Fusion Detection Annotation',
-            operation_type => Workflow::OperationType::Command->create(
-                command_class_name => 'Genome::Model::RnaSeq::Command::AnnotateChimerascan',
-            )
-        );
+        if($self->cancer_annotation_db){
+            my $annotation_operation = $workflow->add_operation(
+                name => 'Fusion Detection Annotation',
+                operation_type => Workflow::OperationType::Command->create(
+                    command_class_name => 'Genome::Model::RnaSeq::Command::AnnotateChimerascan',
+                )
+            );
 
-        $annotation_operation->operation_type->lsf_queue($lsf_queue);
-        $annotation_operation->operation_type->lsf_project($lsf_project);
+            $annotation_operation->operation_type->lsf_queue($lsf_queue);
+            $annotation_operation->operation_type->lsf_project($lsf_project);
 
-        $workflow->add_link(
-            left_operation => $fusion_detection_operation,
-            left_property => 'build_id',
-            right_operation => $annotation_operation,
-            right_property => 'build_id',
-        );
+            $workflow->add_link(
+                left_operation => $fusion_detection_operation,
+                left_property => 'build_id',
+                right_operation => $annotation_operation,
+                right_property => 'build_id',
+            );
 
-        $workflow->add_link(
-            left_operation => $input_connector,
-            left_property => 'cancer_annotation_db',
-            right_operation => $annotation_operation,
-            right_property => 'cancer_annotation_db_id',
-        );
+            $workflow->add_link(
+                left_operation => $input_connector,
+                left_property => 'cancer_annotation_db',
+                right_operation => $annotation_operation,
+                right_property => 'cancer_annotation_db_id',
+            );
 
 
-        $workflow->add_link(
-            left_operation => $annotation_operation,
-            left_property => 'annotated_bedpe_file',
-            right_operation => $output_connector,
-            right_property => 'annotated_bedpe_file',
-        );
+            $workflow->add_link(
+                left_operation => $annotation_operation,
+                left_property => 'annotated_bedpe_file',
+                right_operation => $output_connector,
+                right_property => 'annotated_bedpe_file',
+            );
+        }
     }
 
     # Define output connector results from coverage and expression
