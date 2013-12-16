@@ -55,6 +55,10 @@ sub execute {
         }
 
         my $analysis_project = $current_pair->analysis_project;
+        if (my $msg = $self->should_wait($current_inst_data, $analysis_project)) {
+            $self->status_message($msg);
+            next;
+        }
         eval {
             my $config = $analysis_project->get_configuration_profile();
             my $hashes = $self->_prepare_configuration_hashes_for_instrument_data($current_inst_data, $config);
@@ -139,6 +143,15 @@ sub should_skip {
     my ($self, $inst_data) = @_;
 
     return 'ignored flag is set on instrument data' if $inst_data->ignored;
+    return;
+}
+
+sub should_wait {
+    my ($self, $inst_data, $analysis_project) = @_;
+
+    if ($analysis_project->status eq 'Hold') {
+        return sprintf("Analysis Project (%s) is set to status 'Hold', skipping!", $analysis_project->id);
+    }
     return;
 }
 

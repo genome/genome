@@ -31,7 +31,7 @@ class Genome::Config::AnalysisProject {
         status => {
             is => 'Text',
             default_value => 'Pending',
-            valid_values => ['Pending', 'Approved', 'In Progress', 'Completed', 'Archived'],
+            valid_values => ['Pending', 'Approved', 'In Progress', 'Completed', 'Archived', 'Hold'],
         },
         subject_pairings => {
             is_many => 1,
