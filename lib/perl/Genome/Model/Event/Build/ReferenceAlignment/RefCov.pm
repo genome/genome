@@ -9,6 +9,7 @@ use warnings;
 use Genome;
 
 use Genome::Utility::List;
+use Genome::Utility::Email;
 
 class Genome::Model::Event::Build::ReferenceAlignment::RefCov {
     is => ['Genome::Model::Event'],
@@ -249,19 +250,24 @@ sub execute {
     my $fh = Genome::Sys->open_file_for_writing( $report_file );
     $fh->print( $xslt->{content} );
     $fh->close;
-    my $mail_dest = 'jwalker@genome.wustl.edu,twylie@genome.wustl.edu';
+
     my $link = Genome::Utility::List::join_with_single_slash($ENV{GENOME_SYS_SERVICES_FILES_URL}, $report_file);
-    my $sender = Mail::Sender->new({
-        smtp => 'gscsmtp.wustl.edu',
-        from => 'jwalker@genome.wustl.edu',
-        replyto => 'jwalker@genome.wustl.edu',
-    });
-    $sender->MailMsg({
-        to => $mail_dest,
+    send_email_report(
+        to => undef,  # don't actually send the email anymore
         subject => 'Genome Model '. $self->model->name .' Reference Coverage Report for Build '. $self->build->id,
-        msg => $link,
-    });
+        body => $link,
+    );
+
     return $self->verify_successful_completion;
+}
+
+sub send_email_report {
+    my $self = shift;
+    my %params = @_;
+
+    if ($params{to}) {
+        Genome::Utility::Email::send(%params);
+    }
 }
 
 sub progression_stats_files {
