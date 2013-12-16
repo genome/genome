@@ -57,9 +57,9 @@ sub concretize {
 sub create_from_file_path {
     my $class = shift;
     my %params = @_;
-    my $file = delete $params{file};
+    my $file = delete $params{file_path};
 
-    die('Must supply the path to a file as "file"!') unless $file;
+    die('Must supply the path to a file as "file_path"!') unless $file;
 
     my $profile_item = $class->create(%params);
     $profile_item->_create_allocation_for_file($file);
