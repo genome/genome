@@ -41,7 +41,7 @@ sub execute {
     
     #netMHCpan -a HLA-A03:01 -f WHIM32_21_ns.fa -xlsfile WHIM32_21_pan.xls -xls > pan_netmhc
     
-    my $netmhcpan_cmd = 'bsub -q techd -u jhundal@genome.wustl.edu -R \'select[mem >8000] rusage[mem=8000]\' -M 8000000 -N '.
+    my $netmhcpan_cmd = 'bsub -q techd -R \'select[mem >8000] rusage[mem=8000]\' -M 8000000 -N '.
     				  
     				  '\'/gsc/bin/netMHCpan -a '.
     				   $self->allele .

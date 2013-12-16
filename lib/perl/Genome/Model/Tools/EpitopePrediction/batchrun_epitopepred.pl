@@ -27,7 +27,7 @@ foreach my $sample(@samples)
 {
 	my $command1 = join (
                         q/ /,
-                        'bsub -q techd -u jhundal@genome.wustl.edu',
+                        'bsub -q techd',
                         '\'gmt epitope-prediction get-wildtype --input-tsv-file=/gscmnt/sata141/techd/jhundal/KOMEN_BRC/p53_NULL/'.$sample.'/snvs.'
                         .$sample.
                         '.cluster-filter.tier1.bed.transcript-annotation --output-tsv-file=/gscmnt/sata141/techd/jhundal/KOMEN_BRC/p53_NULL/'.
@@ -37,7 +37,7 @@ foreach my $sample(@samples)
 
 my $command2 = join (
                         q/ /,
-                        'bsub -q techd -u jhundal@genome.wustl.edu',
+                        'bsub -q techd',
                         '\'gmt epitope-prediction generate-variant-seq21mer --input-file=/gscmnt/sata141/techd/jhundal/KOMEN_BRC/p53_NULL/'.
                         $sample.'/'.$sample.'_WT.tsv --output-file=/gscmnt/sata141/techd/jhundal/KOMEN_BRC/p53_NULL/'.
                         $sample.'/'.$sample.'_21mer\'');
@@ -66,7 +66,7 @@ my $command3 = join (
 						
 						my $command4 = join (
                         q/ /,
-                        'bsub -q techd -u jhundal@genome.wustl.edu',
+                        'bsub -q techd',
                         'gmt epitope-prediction run-netmhc --allele='.$allele,
                         '--epitope-length='.$length,
                         '--fasta-file=/gscmnt/sata141/techd/jhundal/KOMEN_BRC/p53_NULL/'.$sample.'/'.$sample.'_21mer.fa',
