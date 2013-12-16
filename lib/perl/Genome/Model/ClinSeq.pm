@@ -1032,14 +1032,15 @@ sub _resolve_workflow_for_build {
     }
     
     #MakeCircosPlot - Creates a Circos plot to summarize the data using MakeCircosPlot.pm
-    $msg = "Creating a Circos plot using MakeCircosPlot";
-    my $make_circos_plot_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::MakeCircosPlot");
-    $add_link->($input_connector, 'build', $make_circos_plot_op, 'build');
-    $add_link->($input_connector, 'circos_outdir', $make_circos_plot_op, 'output_directory');
-#    $add_link->($summarize_tier1_snv_support_op, 'result', $make_circos_plot_op, 'clinseq_result');
-    $add_link->($summarize_cnvs_op, 'result', $make_circos_plot_op, 'clinseq_result');
-    $add_link->($make_circos_plot_op, 'result', $output_connector, 'circos_result');
-    
+    #Currently WGS data is a minimum requirement for Circos plot generation.
+    if ($build->wgs_build){
+      $msg = "Creating a Circos plot using MakeCircosPlot";
+      my $make_circos_plot_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::MakeCircosPlot");
+      $add_link->($input_connector, 'build', $make_circos_plot_op);
+      $add_link->($input_connector, 'circos_outdir', $make_circos_plot_op, 'output_directory');
+      $add_link->($summarize_cnvs_op, 'result', $make_circos_plot_op, 'clinseq_result');
+      $add_link->($make_circos_plot_op, 'result', $output_connector, 'circos_result');
+    }
 
     # REMINDER:
     # For new steps be sure to add their result to the output connector if they do not feed into another step.
