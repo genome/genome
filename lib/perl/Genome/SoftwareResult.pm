@@ -905,26 +905,44 @@ sub generate_expected_metrics {
 sub _available_cpu_count {
     my $self = shift;
 
-    # Not running on LSF, allow only one CPU
-    if (!exists $ENV{LSB_MCPU_HOSTS}) {
-        return 1;
+    my $attempt1 = eval {
+        # Not running on LSF, allow only one CPU
+        if (!exists $ENV{LSB_MCPU_HOSTS}) {
+            return 1;
+        }
+
+        my $mval = $ENV{LSB_MCPU_HOSTS};
+        my @c = split /\s+/, $mval;
+
+        if (scalar @c != 2) {
+            $self->error_message("LSB_MCPU_HOSTS environment variable doesn't specify just one host and one CPU count. (value is '$mval').  Is the span[hosts=1] value set in your resource request?");
+            die $self->error_message;
+        }
+
+        if ($mval =~ m/(\.*?) (\d+)/) {
+            return $2;
+        } else {
+            $self->error_message("Couldn't parse the LSB_MCPU_HOSTS environment variable (value is '$mval'). ");
+            die $self->error_message;
+        }
+    };
+    die $@ if $@;
+
+    my @rows = `bjobs -l $ENV{LSB_JOBID}`;
+    chomp @rows;
+    my $rows = join('',@rows);
+    $rows =~ s/\s+//;
+    my ($op, $attempt2) = ($rows =~ /ncpus(>=|>)(\d+)/);
+    if ($op eq '>') {
+        $attempt2++;
     }
-
-    my $mval = $ENV{LSB_MCPU_HOSTS};
-    my @c = split /\s+/, $mval;
-
-    if (scalar @c != 2) {
-        $self->error_message("LSB_MCPU_HOSTS environment variable doesn't specify just one host and one CPU count. (value is '$mval').  Is the span[hosts=1] value set in your resource request?");
-        die $self->error_message;
+    if ($attempt2 > $attempt1) {
+        $self->warning_message("overriding CPU count of $attempt1 with $attempt2 parsed from rusage");
+        return $attempt2;
     }
-
-    if ($mval =~ m/(\.*?) (\d+)/) {
-        return $2;
-    } else {
-        $self->error_message("Couldn't parse the LSB_MCPU_HOSTS environment variable (value is '$mval'). ");
-        die $self->error_message;
+    else {
+        return $attempt1;
     }
-
 }
 
 sub _resolve_param_value_from_text_by_name_or_id {
