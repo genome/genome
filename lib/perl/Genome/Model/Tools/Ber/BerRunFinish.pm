@@ -910,7 +910,7 @@ BODY
 
     Genome::Utility::Email::send(
         from    => $from,
-        to      => [ $from, 'kpepin@genome.wustl.edu'],  #FIXME remove hard-coded addresses
+        to      => [ $from, $ENV{GENOME_EMAIL_ANNOTATION}],
         subject => $subject,
         body    => $body,
         attachments => {
