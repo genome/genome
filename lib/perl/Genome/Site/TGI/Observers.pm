@@ -14,8 +14,6 @@ UR::Object::Type->add_observer(
             require Genome::Site::TGI::Observers::ModelGroup;
         } elsif ($class_name eq 'Genome::Project') {
             require Genome::Site::TGI::Observers::Project;
-        } elsif ($class_name eq 'Command::V1') {
-            require Genome::Site::TGI::Observers::Command;
         }
         die $@ if $@;
     },
