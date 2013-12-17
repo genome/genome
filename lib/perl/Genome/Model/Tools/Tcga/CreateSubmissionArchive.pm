@@ -62,7 +62,7 @@ sub execute {
 
     my $sdrf = Genome::Model::Tools::Tcga::Sdrf->create(idf => $idf, 
                                                         cghub_id_file => $self->cghub_id_file,
-                                                        archive_name => $self->complete_archive_name);
+                                                        archive_name => $self->complete_archive_name("Level_2"));
 
     my $vcf_archive_dir = $self->output_dir."/".$self->complete_archive_name("Level_2");
     Genome::Sys->create_directory($vcf_archive_dir);
