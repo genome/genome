@@ -61,7 +61,8 @@ sub gatk_versions {
         '4168' => $ENV{GENOME_SW} . '/gatk/GenomeAnalysisTK-1.0.4168/' . $GATK_COMMAND,
         '5336' => $ENV{GENOME_SW} . '/gatk/GenomeAnalysisTK-1.0.5336/' . $GATK_COMMAND,
         '5777' => $ENV{GENOME_SW} . '/gatk/GenomeAnalysisTK-1.0.5777/' . $GATK_COMMAND,
-        '2.4' => Genome::Sys->jar_path($GATK_BASE, "2.4"),
+        '2.4' => $ENV{GENOME_SW} . '/gatk/GenomeAnalysisTK-2.4/' . $GATK_COMMAND,
+        #'2.4' => Genome::Sys->jar_path($GATK_BASE, "2.4"),
     );
     return %GATK_VERSIONS;
 }
