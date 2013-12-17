@@ -934,7 +934,23 @@ $Genome::Command::OPTS_SPEC = [
     ],
     'genome::config::analysisproject::subjectpairing::command',
     undef,
+    'addconfigfile',
+    undef,
+    '>hold',
+    [
+      'analysis-projects=s@',
+      undef,
+      'help!',
+      undef
+    ],
     '>delete',
+    [
+      'analysis-projects=s@',
+      undef,
+      'help!',
+      undef
+    ],
+    '>release',
     [
       'analysis-projects=s@',
       undef,
@@ -11007,6 +11023,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'chr=s',
         'files',
+        'window-size=s',
+        undef,
         'chr-start=s',
         undef,
         'chr-end=s',
@@ -38112,7 +38130,23 @@ $Genome::Command::OPTS_SPEC = [
       ],
       'genome::config::analysisproject::subjectpairing::command',
       undef,
+      'addconfigfile',
+      undef,
+      '>hold',
+      [
+        'analysis-projects=s@',
+        undef,
+        'help!',
+        undef
+      ],
       '>delete',
+      [
+        'analysis-projects=s@',
+        undef,
+        'help!',
+        undef
+      ],
+      '>release',
       [
         'analysis-projects=s@',
         undef,
