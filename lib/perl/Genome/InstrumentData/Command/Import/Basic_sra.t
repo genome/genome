@@ -12,58 +12,52 @@ use warnings;
 use above "Genome";
 
 require File::Compare;
+require Genome::Utility::Test;
 use Test::More;
 
 use_ok('Genome::InstrumentData::Command::Import::Basic') or die;
+use_ok('Genome::InstrumentData::Command::Import::WorkFlow::Helpers') or die;
+
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'sra/v1');
+my $source_sra = $test_dir.'/input.sra';
+ok(-s $source_sra, 'source sra exists') or die;
 
 my $sample = Genome::Sample->create(name => '__TEST_SAMPLE__');
 ok($sample, 'Create sample');
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS}.'Genome-InstrumentData-Command-Import-Basic/';
-my $source_sra = $test_dir.'/test.sra';
 my $cmd = Genome::InstrumentData::Command::Import::Basic->create(
     sample => $sample,
     source_files => [$source_sra],
     import_source_name => 'sra',
-    sequencing_platform => 'solexa',
     instrument_data_properties => [qw/ lane=2 flow_cell_id=XXXXXX /],
 );
 ok($cmd, "create import command");
 ok($cmd->execute, "excute import command") or die;
 
-my $instrument_data = $cmd->instrument_data;
-ok($instrument_data, 'got instrument data');
+my $md5 = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->load_md5($source_sra.'.md5');
+ok($md5, 'load source md5');
+my @instrument_data = map { $_->instrument_data } Genome::InstrumentDataAttribute->get(
+    attribute_label => 'original_data_path_md5',
+    attribute_value => $md5,
+);
+is(@instrument_data, 1, "got instrument data for md5 $md5") or die;;
+my $instrument_data = $instrument_data[0];
 is($instrument_data->original_data_path, $source_sra, 'original_data_path correctly set');
-my $original_format = eval{ $instrument_data->attributes(attribute_label => 'original_format')->attribute_value; };
-is($original_format, 'sra', 'orginal_format is sra');
 is($instrument_data->import_format, 'bam', 'import_format is bam');
 is($instrument_data->sequencing_platform, 'solexa', 'sequencing_platform correctly set');
 is($instrument_data->is_paired_end, 0, 'is_paired_end correctly set');
 is($instrument_data->read_count, 148, 'read_count correctly set');
+is(eval{$instrument_data->attributes(attribute_label => 'original_data_path_md5')->attribute_value;}, 'dcd04a5bcb2d18f29c21c25b0f2387e3', 'original_data_path_md5 correctly set');
 my $allocation = $instrument_data->allocations;
 ok($allocation, 'got allocation');
 ok($allocation->kilobytes_requested > 0, 'allocation kb was set');
 
-# sra
-ok(-s $allocation->absolute_path.'/all_sequences.sra', 'sra file was copied');
-ok(-s $allocation->absolute_path.'/all_sequences.sra.dbcc', 'dbcc file exists');
+my $bam_path = $instrument_data->bam_path;
+ok(-s $bam_path, 'bam path exists');
+is($bam_path, $instrument_data->data_directory.'/all_sequences.bam', 'bam path correctly named');
+is(eval{$instrument_data->attributes(attribute_label => 'bam_path')->attribute_value}, $bam_path, 'set attributes bam path');
+is(File::Compare::compare($bam_path, $test_dir.'/input.sra.bam'), 0, 'sra dumped and sorted bam matches');
+is(File::Compare::compare($bam_path.'.flagstat', $test_dir.'/input.sra.bam.flagstat'), 0, 'flagstat matches');
 
-# bam
-my $bam_via_archive_path = $instrument_data->archive_path;
-my $bam_via_bam_path = $instrument_data->bam_path;
-ok($bam_via_bam_path, 'got bam via bam path');
-ok(-s $bam_via_bam_path, 'bam via bam path exists');
-is($bam_via_bam_path, $allocation->absolute_path.'/all_sequences.bam', 'bam via bam path named correctly');
-
-my $bam_via_attrs = eval{ $instrument_data->attributes(attribute_label => 'bam_path')->attribute_value; };
-ok($bam_via_attrs, 'got bam via attrs');
-ok(-s $bam_via_attrs, 'bam via attrs exists');
-is($bam_via_attrs, $allocation->absolute_path.'/all_sequences.bam', 'bam via attrs named correctly');
-
-is(File::Compare::compare($bam_via_archive_path, $test_dir.'/test.sra.bam'), 0, 'sra dumped and sorted bam matches');
-
-# flagstat
-is(File::Compare::compare($bam_via_archive_path.'.flagstat', $test_dir.'/test.sra.bam.flagstat'), 0, 'flagstat matches');
-
-#print $cmd->instrument_data->allocations->absolute_path."\n"; <STDIN>;
+#print $instrument_data->data_directory."\n"; <STDIN>;
 done_testing();

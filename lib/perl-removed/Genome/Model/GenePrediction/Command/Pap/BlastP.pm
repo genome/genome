@@ -50,7 +50,7 @@ class Genome::Model::GenePrediction::Command::Pap::BlastP {
         },
     ],
     has_param => [
-        lsf_resource => { default_value => '-q long rusage[tmp=100]', },
+        lsf_resource => { default_value => "-q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} rusage[tmp=100]", },
     ],
 };
 

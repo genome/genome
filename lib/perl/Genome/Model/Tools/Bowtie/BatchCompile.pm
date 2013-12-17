@@ -21,7 +21,7 @@ use FileHandle;
 ## Bowtie Parameters ##
 my $batch_size = 1000000;
 my $num_cores = 1;
-my $lsf_queue = "long";
+my $lsf_queue = $ENV{GENOME_LSF_QUEUE_BUILD_WORKER};
 
 my %stats = ();
 
@@ -131,7 +131,6 @@ sub execute {                               # replace with real execution logic.
 				my $fastq_file = $batch_file;
 				$fastq_file =~ s/\.novoalign//;
 				## Resubmit the failure ##
-				#system("bsub -q long -R\"select[type==LINUX64 && mem>6000] rusage[mem=6000]\" -M 10000000 -oo $batch_file.log \"$path_to_novoalign $novoalign_params -d $novoalign_reference -f $fastq_file >$batch_file 2>$batch_file.err\"");
 				system("bsub -q $lsf_queue -R\"select[type==LINUX64 && model != Opteron250 && mem>10000] rusage[mem=10000] span[hosts=1]\" -n $num_cores -M 12000000 -oo $batch_file.log \"$path_to_novoalign $novoalign_params -d $novoalign_reference -f $fastq_file >$batch_file 2>$batch_file.err\"");
 			}
 		}

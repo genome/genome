@@ -158,7 +158,7 @@ sub breakdancer_config_command_for_version {
             $self->error_message("breakdancer config command $cfg_cmd for version $version is not valid");
             die $self->error_message;
         }
-        return $cfg_cmd;
+        return join(' ', $^X, $cfg_cmd);
     }
     die 'No breakdancer config command for breakdancer version '. $version;
 }

@@ -35,7 +35,7 @@ use DBD::SQLite;
 use English;
 use File::Temp;
 use Getopt::Long;
-use MIME::Lite;
+use Genome::Utility::Email;
 use Pod::Usage;
 
 class Genome::Model::GenePrediction::Command::Bacterial::Predict {
@@ -285,7 +285,7 @@ sub execute
         port         => 7654 + $PID,
         pp_type      => 'lsf',
         R            => "rusage[tmp=$tmp_usage]",
-        q            => 'long',
+        q            => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
         maxmessage   => 16384000,
         lib_paths    => [
             UR::Util::used_libs,
@@ -701,16 +701,7 @@ sub send_mail
     = join( ' on ', $finished->hms(':'), $finished->ymd('/') );
     my $duration        = DateTime::Duration->new( $finished - $started );
     my $minutes_running = $duration->in_units('minutes');
-    my $useraddress     = "$user\@genome.wustl.edu";
-
-    my $from = $useraddress;
-    #FIXME remove hardcoded address
-    my $to = join(
-        ', ',
-        "$useraddress",
-        'kpepin@watson.wustl.edu',
-
-    );
+    my $from     = Genome::Utility::Email::construct_address($user);
 
     my $subject = "BPG script mail for MGAP SSID: $ss_id ($ss_name)";
 
@@ -720,14 +711,12 @@ The job began at $date_started and ended at $date_finished.
 The total run time of the script is:  $minutes_running  minutes.
 BODY
 
-    my $msg = MIME::Lite->new(
-        From    => $from,
-        To      => $to,
-        Subject => $subject,
-        Data    => $body,
+    Genome::Utility::Email::send(
+        from    => $from,
+        to      => [ $from, 'kpepin@watson.wustl.edu'], #FIXME remove hardcoded address
+        subject => $subject,
+        body    => $body,
     );
-
-    $msg->send();
 
     return 1;
 }

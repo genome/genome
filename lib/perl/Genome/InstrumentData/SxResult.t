@@ -36,16 +36,47 @@ my %sx_result_params = (
 my $sx_result = Genome::InstrumentData::SxResult->get_or_create(%sx_result_params);
 isa_ok($sx_result, 'Genome::InstrumentData::SxResult', 'successful run');
 my $get_sx_result = Genome::InstrumentData::SxResult->get(%sx_result_params);
-is_deeply($get_sx_result, $sx_result, 'Re-got sx reult');
+is_deeply($get_sx_result, $sx_result, 'Re-got sx result');
 
 my @read_processor_output_files = $sx_result->read_processor_output_files;
 ok(@read_processor_output_files, 'produced read processor output files');
 is_deeply(\@read_processor_output_files, [map { $instrument_data->id.'.'.$_.'.fastq' } (qw/ 1 2 /)], 'correctly names read processor output files');
 
-my $read_processor_output_metric_file = $sx_result->read_processor_output_metric_file;
-my $read_processor_input_metric_file = $sx_result->read_processor_input_metric_file;
-ok($read_processor_output_metric_file, 'produced read processor output metric file');
-ok($read_processor_input_metric_file, 'produced read processor input metric file');
+# metrics
+is_deeply([$sx_result->metric_names], [qw/ input_bases input_count output_bases output_count /], 'metric names');
+is($sx_result->read_processor_input_metric_file_base_name, $instrument_data->id.'.input_metrics', 'input metric file base name');
+is(
+    $sx_result->temp_staging_input_metric_file,
+    $sx_result->temp_staging_directory.'/'.$sx_result->read_processor_input_metric_file_base_name,
+    'temp staging input metric file',
+);
+ok(-s $sx_result->temp_staging_input_metric_file, 'temp statging input metric file has size');
+is(
+    $sx_result->read_processor_input_metric_file,
+    $sx_result->output_dir.'/'.$sx_result->read_processor_input_metric_file_base_name,
+    'read processor input metric file',
+);
+ok(-s $sx_result->read_processor_input_metric_file, 'input metric file has size');
+
+is($sx_result->read_processor_output_metric_file_base_name, $instrument_data->id.'.output_metrics', 'output metric file base name');
+is(
+    $sx_result->temp_staging_output_metric_file,
+    $sx_result->temp_staging_directory.'/'.$sx_result->read_processor_output_metric_file_base_name,
+    'temp statging output metric file',
+);
+ok(-s $sx_result->temp_staging_output_metric_file, 'temp staging output metric file has size');
+is(
+    $sx_result->read_processor_output_metric_file,
+    $sx_result->output_dir.'/'.$sx_result->read_processor_output_metric_file_base_name,
+    'output metric file',
+);
+ok(-s $sx_result->read_processor_output_metric_file, 'output metric file');
+
+is($sx_result->input_bases, 8999908, 'metrics input bases');
+is($sx_result->input_count, 89108, 'metrics input count');
+is($sx_result->output_bases, 8999908, 'metrics output bases');
+is($sx_result->output_count, 89108, 'metrics output count');
+#/metrics
 
 $sx_result_params{output_file_count} = 1;
 my $sx_result3 = Genome::InstrumentData::SxResult->get_with_lock(%sx_result_params);
@@ -81,7 +112,24 @@ for ( my $i = 0; $i < @read_processor_output_files; $i++ ) {
     );
 }
 
-# fails
+# success - no output files created
+$sx_result_params{read_processor} = 'filter by-min-length --length 2000';
+my $sx_result_all_reads_filtered = Genome::InstrumentData::SxResult->get_or_create(%sx_result_params);
+isa_ok($sx_result_all_reads_filtered, 'Genome::InstrumentData::SxResult', 'get_or_create sx result w/ all reads filtered');
+my $get_sx_result_all_reads_filtered = Genome::InstrumentData::SxResult->get(%sx_result_params);
+is_deeply($get_sx_result_all_reads_filtered, $sx_result_all_reads_filtered, 'Re-get sx result w/ result w/ all reads filtered');
+@output_files = $sx_result_all_reads_filtered->read_processor_output_files;
+ok(@output_files, 'produced read processor output files w/ config');
+ok(!(grep { -e } @output_files), 'output files exist');
+ok(!(grep { -s } @output_files), 'output files do not have any size');
+is($sx_result_all_reads_filtered->input_bases, 8999908, 'metrics input bases');
+is($sx_result_all_reads_filtered->input_count, 89108, 'metrics input count');
+is($sx_result_all_reads_filtered->output_bases, 0, 'metrics output bases');
+is($sx_result_all_reads_filtered->output_count, 0, 'metrics output count');
+
+# fail - rm output metrics and verify files
+
+# fails [create]
 ok( # no config or count
     !Genome::InstrumentData::SxResult->create(
         instrument_data_id => $instrument_data->id,

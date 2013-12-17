@@ -35,7 +35,7 @@ sub create_test_command {
     my ($target_path, $volume_prefix, $owner_class_name, $owner_id) = @_;
     $volume_prefix ||= '/gscmnt';
     $owner_class_name ||= 'Genome::Sys::User';
-    $owner_id ||= $ENV{USER} . '@genome.wustl.edu';
+    $owner_id ||= Genome::Sys::User->owner_id;
     return Genome::Disk::Command::Allocation::Import->create(
         path => $target_path,
         owner_class_name => $owner_class_name,
@@ -269,7 +269,7 @@ sub test_nonunique_allocation_path {
         mount_path => $volume->mount_path,
         disk_group_name => $group->disk_group_name,
         kilobytes_requested => 4,
-        owner_id => $ENV{USER} . '@genome.wustl.edu',
+        owner_id => Genome::Sys::User->owner_id,
         owner_class_name => 'Genome::Sys::User',
         allocation_path => 'allocation_test',
     );

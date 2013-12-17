@@ -6,29 +6,33 @@ use warnings;
 use above 'Genome';
 use Genome::Utility::List 'in';
 use File::Path qw();
-
-# these are the options which you must specify to us in the
-# fusion-detection-strategy part of the processing-profile
-our %OUR_OPTIONS_VALIDATORS = (
-        '--bowtie-version' => '_validate_bowtie_version',
-        '--reuse-bam' => '_validate_reuse_bam',
-);
+use File::Spec;
 
 class Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::ResultBase {
     is => "Genome::Model::RnaSeq::DetectFusionsResult",
     has_input => [
         original_bam_paths => {
             is => "Text",
+
             is_many => 1,
             doc => "The path(s) to the original instrument_data BAM files."
-        }
+        },
+        reuse_bam => {
+            is => 'Boolean',
+        },
+        bowtie_version => {
+            is => 'Text',
+        },
+    ],
+    has => [
+        bedpe_file => {
+            is => 'Path',
+            calculate_from => 'disk_allocations',
+            calculate => q| File::Spec->join($disk_allocations->absolute_path, 'chimeras.bedpe'); |,
+
+        },
     ],
 };
-
-our %INDIRECT_PARAMETER_VALIDATORS = (
-        '--bowtie-version' => '_validate_bowtie_version',
-        '--reuse-bam' => '_validate_reuse_bam',
-);
 
 sub _run_chimerascan {
     my ($bowtie_version, $c_pargs, $c_opts) = @_;
@@ -51,16 +55,14 @@ sub create {
     $self->_prepare_output_directory();
     $self->_prepare_staging_directory();
 
-    my ($bowtie_version, $reuse_bam, $c_opts) = $self->_resolve_options($self->detector_params);
-
-    my ($fastq1, $fastq2, $qname_sorted_bam) = $self->_resolve_original_files($reuse_bam);
-    my $index_dir = $self->_resolve_index_dir($bowtie_version);
+    my ($fastq1, $fastq2, $qname_sorted_bam) = $self->_resolve_original_files($self->reuse_bam);
+    my $index_dir = $self->_resolve_index_dir($self->bowtie_version);
 
     my $c_pargs = $self->_resolve_chimerascan_positional_arguments($index_dir, $fastq1, $fastq2);
 
-    $self->_prepare_to_run_chimerascan($bowtie_version, $reuse_bam, $fastq1, $fastq2, $qname_sorted_bam);
+    $self->_prepare_to_run_chimerascan($self->bowtie_version, $self->reuse_bam, $fastq1, $fastq2, $qname_sorted_bam);
 
-    $self->_run_chimerascan($bowtie_version, $c_pargs, $c_opts);
+    $self->_run_chimerascan($self->bowtie_version, $c_pargs, $self->detector_params);
 
     # cleanup $fastq1, $fastq2, and $qname_sorted_bam?
     if (-f $fastq1) {
@@ -155,40 +157,6 @@ sub _resolve_original_fastq_files {
     );
 
     return ($fastq1, $fastq2);
-}
-
-# return our options (hash) and the options for chimerascan (string)
-sub _resolve_options {
-    my ($self, $params) = @_;
-
-    my %our_opts;
-    # go through and remove our options from the params
-    for my $name (keys %OUR_OPTIONS_VALIDATORS) {
-        # \Q$foo\E ensures that regex symbols are 'quoted'
-        if($params and $params =~ m/(\s*\Q$name\E[=\s]([^\s]*)\s*)/) {
-            my $str = $1;
-            my $val = $2;
-            $params =~ s/\Q$str\E/ /;
-
-            my $validation_method_name = $OUR_OPTIONS_VALIDATORS{$name};
-            $self->$validation_method_name($val, $params); # dies if invalid
-
-            $our_opts{$name} = $val;
-        } else {
-            my $t = q(Could not find parameter named '%s' in param string '%s');
-            die(sprintf($t, $name, $params || ''));
-        }
-    }
-    return ($our_opts{'--bowtie-version'}, $our_opts{'--reuse-bam'}, $params);
-}
-
-sub _resolve_chimerascan_positional_arguments {
-    my ($self, $index_dir, $fastq1, $fastq2) = @_;
-
-    my $output_directory = $self->temp_staging_directory;
-
-    my @c_pargs = ($index_dir, $fastq1, $fastq2, $output_directory);
-    return \@c_pargs;
 }
 
 sub _prepare_to_run_chimerascan {
@@ -438,52 +406,13 @@ sub _symlink_in_files {
             File::Spec->join($self->temp_staging_directory, 'sorted_aligned_reads.bam.bai'));
 }
 
-# return the detector params (sent directly to detector) and a hash of
-# indirect parameters
-sub _preprocess_detector_params {
-    my ($self, $params) = @_;
+sub _resolve_chimerascan_positional_arguments {
+    my ($self, $index_dir, $fastq1, $fastq2) = @_;
 
-    my %indirect_parameters;
-    for my $name (keys %OUR_OPTIONS_VALIDATORS) {
-        # \Q$foo\E ensures that regex symbols are 'quoted'
-        if($params and $params =~ m/(\s*\Q$name\E[=\s]([^\s]*)\s*)/) {
-            my $str = $1;
-            my $val = $2;
-            $params =~ s/\Q$str\E/ /;
+    my $output_directory = $self->temp_staging_directory;
 
-            my $validation_method_name = $OUR_OPTIONS_VALIDATORS{$name};
-            $self->$validation_method_name($val, $params); # dies if invalid
-
-            $indirect_parameters{$name} = $val;
-        } else {
-            die(sprintf("Couldn't find parameter named \"%s\" in \"%s\"",
-                    $name, $params || ''));
-        }
-    }
-    return $params, \%indirect_parameters;
-}
-
-sub _validate_bowtie_version {
-    my ($self, $val, $params) = @_;
-
-    my $bowtie_version = $val ||
-            die("You must supply a bowtie version in the detector parameters " .
-                "in the form of \"--bowtie-version=<version>\" Got detector " .
-                "parameters: [\"$params\"]");
-    my ($major_version) = split(/\./, $bowtie_version);
-    if ($major_version ne 0) {
-        die("Currently chimerascan only supports bowtie major version 0, " .
-            "not $major_version");
-    }
-}
-
-sub _validate_reuse_bam {
-    my ($self, $val, $params) = @_;
-
-    unless ($val eq 1 or $val eq 0) {
-        die "You must specify either 1 (true) or 0 (false) for parameter " .
-                \"--reuse-bam\", you specified \"$val\"";
-    }
+    my @c_pargs = ($index_dir, $fastq1, $fastq2, $output_directory);
+    return \@c_pargs;
 }
 
 sub _staging_disk_usage {

@@ -7,6 +7,9 @@ use Carp;
 
 class Genome::Model::Tools::Vcf::CreateCrossSampleVcf::CreateCrossSampleVcfIndels::Result {
     is => 'Genome::Model::Tools::Vcf::CreateCrossSampleVcf::CreateCrossSampleVcfBase::Result',
+    has_param => [
+        varscan_version => { is => 'Text' },
+    ],
 };
 
 sub _generate_result {
@@ -21,6 +24,7 @@ sub _generate_result {
             wingspan => $self->wingspan,
             allow_multiple_processing_profiles => $self->allow_multiple_processing_profiles,
             joinx_version => $self->joinx_version,
+            varscan_version => $self->varscan_version,
     );
     my $return_value = $cmd->generate_result();
     Carp::croak($self->error_message('Command failed')) unless $return_value;

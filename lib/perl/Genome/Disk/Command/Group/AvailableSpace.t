@@ -14,7 +14,7 @@ use Test::More;
 use_ok('Genome::Disk::Command::Group::AvailableSpace') or die;
 
 my $cmd = Genome::Disk::Command::Group::AvailableSpace->create(
-    disk_group_names => 'info_apipe',
+    disk_group_names => $ENV{GENOME_DISK_GROUP_DEV},
     send_alert => 0,
 );
 ok($cmd, 'Successfully created avaiable space command object') or die;

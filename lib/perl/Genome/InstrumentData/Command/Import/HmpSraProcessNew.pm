@@ -263,7 +263,7 @@ sub execute {
     my $pe_read_size_in_kb = $fwd_read_size[0] + $rev_read_size[0];
     my $pe_allocation_request_in_kb = $pe_read_size_in_kb * 1.05;
     my $pe_alloc = Genome::Disk::Allocation->create(
-	disk_group_name     => 'info_alignments',
+	disk_group_name     => $ENV{GENOME_DISK_GROUP_ALIGNMENTS},
 	allocation_path     => 'instrument_data/imported/'.$pe_inst_data->id,
 	kilobytes_requested => $pe_allocation_request_in_kb,
 	owner_class_name    => $pe_inst_data->class,
@@ -335,7 +335,7 @@ sub execute {
     my @singleton_read_size = split(/\s+/,$singleton_read_size);
     my $sing_allocation_request_in_kb = $singleton_read_size[0] * 1.05;
     my $sing_alloc = Genome::Disk::Allocation->create(
-	disk_group_name     => 'info_alignments',
+	disk_group_name     => $ENV{GENOME_DISK_GROUP_ALIGNMENTS},
 	allocation_path     => 'instrument_data/imported/'.$sing_inst_data->id,
 	kilobytes_requested => $sing_allocation_request_in_kb,
 	owner_class_name    => $sing_inst_data->class,

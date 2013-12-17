@@ -316,7 +316,7 @@ sub required_rusage_for_building_index {
 
     my $select = "select[mem>=10000 && tmp>=15000]";
     my $rusage = "rusage[mem=10000, tmp=15000]";
-    my $options = "-M 10000000 -q long";
+    my $options = "-M 10000000 -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER}";
 
     return sprintf("-R '%s %s' %s", $select, $rusage, $options);
 }
@@ -388,7 +388,7 @@ sub create {
     my $estimated_kb_usage = $self->estimated_kb_usage;
     $self->status_message("Estimated disk for this data set: " . $estimated_kb_usage . " kb");
     $self->status_message("Check for available disk...");
-    my @available_volumes = Genome::Disk::Volume->get(disk_group_names => "info_alignments");
+    my @available_volumes = Genome::Disk::Volume->get(disk_group_names => $ENV{GENOME_DISK_GROUP_ALIGNMENTS});
     $self->status_message("Found " . scalar(@available_volumes) . " disk volumes");
     my $unallocated_kb = 0;
     for my $volume (@available_volumes) {
@@ -899,8 +899,7 @@ sub close_out_streamed_bam_file {
     my $samtools = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
 
     my $tmp_file = $bam_file.'.sort';
-    #402653184 bytes = 3 Gb
-    my $rv = system "$samtools sort -n -m 402653184 $bam_file $tmp_file";
+    my $rv = system "$samtools sort -n $bam_file $tmp_file";
     $self->error_message("Sort by name failed") and return if $rv or !-s $tmp_file.'.bam';
     $self->status_message("unlinking original bam file $bam_file.");
     unlink $bam_file;
@@ -914,7 +913,7 @@ sub close_out_streamed_bam_file {
     unlink "$tmp_file.bam";
 
     $self->status_message("Now putting things back in chr/pos order");
-    $rv = system "$samtools sort -m 402653184 $tmp_file.fixmate $tmp_file.fix";
+    $rv = system "$samtools sort $tmp_file.fixmate $tmp_file.fix";
     $self->error_message("Sort by position failed") and return if $rv or !-s $tmp_file.'.fix.bam';
 
     unlink "$tmp_file.fixmate";
@@ -1386,7 +1385,7 @@ sub resolve_allocation_subdirectory {
 }
 
 sub resolve_allocation_disk_group_name {
-    return "info_alignments";
+    $ENV{GENOME_DISK_GROUP_ALIGNMENTS};
 }
 
 

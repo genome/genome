@@ -13,7 +13,7 @@ class Genome::Model::Tools::DetectVariants2::Polymutt {
     is => ['Genome::Model::Tools::DetectVariants2::Detector'],
     has_param => [
         lsf_queue=> {
-            default => "workflow",
+            default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKFLOW},
         },
     ],
 };

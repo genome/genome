@@ -7,6 +7,8 @@ use Genome;
 
 use Data::Dumper 'Dumper';
 
+use Genome::Utility::Email;
+
 class Genome::InstrumentData::Command::Import::BamBuster { 
     is => 'Genome::Command::Base',
     has => [
@@ -96,7 +98,7 @@ sub _create_disk_allocation_for_busting {
 
     # FIXME WHAT SHOULD OWN THIS ALLOCATION?
     my %disk_allocation_params = (
-        disk_group_name     => 'info_alignments',
+        disk_group_name     => $ENV{GENOME_DISK_GROUP_ALIGNMENTS},
         allocation_path     => 'alignment_data/busted_bam/' . $self->instrument_data->id,
         kilobytes_requested => sprintf('%.0f',($self->_bam_size * .002)), # reserve 2X the bam size
         owner_class_name    => 'Genome::InstrumentData::Bam',
@@ -215,7 +217,9 @@ sub _launch_jobs_and_monitor {
             my $import_cmd = "genome instrument-data import bam --original-data-path $bam --library $library_id $import_params_string";
             my $bsub;
     
-            $bsub = sprintf("bsub -g %s -u %s $import_cmd", $self->lsf_job_group_name, $ENV{'USER'} . '@genome.wustl.edu');
+            $bsub = sprintf("bsub -g %s -u %s $import_cmd",
+                            $self->lsf_job_group_name,
+                            Genome::Utility::Email::construct_address());
             print $bsub, "\n";
             system($bsub);
         }

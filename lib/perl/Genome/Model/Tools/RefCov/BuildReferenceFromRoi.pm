@@ -150,7 +150,7 @@ sub execute {
             # Append ROI info to existing data
             $sequences{$key}{dna_string} .= $dna_string;
             unless ($sequences{$key}{chrom} eq $region->{chrom}) {
-                warn('Invalid chromsome for region!');
+                warn('Invalid chromosome for region!');
                 warn(Data::Dumper::Dumper($region));
                 warn(Data::Dumper::Dumper($sequences{$key}));
             }

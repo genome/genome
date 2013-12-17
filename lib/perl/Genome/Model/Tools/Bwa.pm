@@ -201,13 +201,13 @@ sub _lookup_version {
         },
         '0.7.5' => {
             path       => '/usr/bin/bwa0.7.5',
-            features   => ['bam_input', 'bwasw', 'mem'],
+            features   => ['bam_input', 'bwasw', 'mem', 'supplementary_alignment_flag'],
             log_format => 'new',
             index_type => 'skips_reverse',
         },
         '0.7.5a' => {
             path       => '/usr/bin/bwa0.7.5a',
-            features   => ['bam_input', 'bwasw', 'mem'],
+            features   => ['bam_input', 'bwasw', 'mem', 'supplementary_alignment_flag'],
             log_format => 'new',
             index_type => 'skips_reverse',
         },
@@ -267,7 +267,7 @@ sub _version_hash_keys_valid {
 
 sub _is_valid_feature {
     my ($class, $feature) = @_;
-    return grep { $feature eq $_ } qw(bam_input multiple_reference_mode mem bwasw);
+    return grep { $feature eq $_ } qw(bam_input multiple_reference_mode mem bwasw supplementary_alignment_flag);
 }
 
 sub _is_valid_log_format {
@@ -330,6 +330,11 @@ sub supports_mem {
 sub supports_bwasw {
     my ($class, $version) = @_;
     return $class->supports($version, 'bwasw');
+}
+
+sub supports_supplementary_alignment_flag {
+    my ($class, $version) = @_;
+    return $class->supports($version, 'supplementary_alignment_flag');
 }
 
 sub index_extensions {

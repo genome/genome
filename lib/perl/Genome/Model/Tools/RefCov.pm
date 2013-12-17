@@ -258,7 +258,7 @@ class Genome::Model::Tools::RefCov {
         lsf_queue => {
             doc => 'When run in parallel, the LSF queue to submit jobs to.',
             is_optional => 1,
-            default_value => 'apipe',
+            default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT},
         },
         lsf_resource => {
             doc => 'When run in parallel, the resource request necessary to run jobs on LSF.',
@@ -1022,7 +1022,7 @@ sub validate_chromosome_names {
         };
         if ($@) {
             my $err = $@;
-            die('Failed to validate chromsomes in ROI '. $self->roi_file_format .' file '. $self->roi_file_path .' with alignment '. $self->alignment_file_format .' file '. $self->alignment_file_path .' with error:' ."\n". $err);
+            die('Failed to validate chromosomes in ROI '. $self->roi_file_format .' file '. $self->roi_file_path .' with alignment '. $self->alignment_file_format .' file '. $self->alignment_file_path .' with error:' ."\n". $err);
         }
     }
     $self->status_message('Validate chromosomes...OK');

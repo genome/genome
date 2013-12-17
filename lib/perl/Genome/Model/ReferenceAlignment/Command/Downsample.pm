@@ -346,7 +346,7 @@ sub _get_readlength {
         }
     }
     unless($readlength){
-        die $self->error_message("Could not locate intrument data on the model to determine read-length");
+        die $self->error_message("Could not locate instrument data on the model to determine read-length");
     }
     return $readlength;
 }

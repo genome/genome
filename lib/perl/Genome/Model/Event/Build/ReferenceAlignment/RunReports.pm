@@ -99,36 +99,6 @@ sub execute {
     }
     $self->status_message('Report summary complete.');
 
-    ###################################################
-    #Send user email
-
-    #adukes TURNING THIS OFF because no one needs 10000 emails a week
-    #my $mail_dest = ($build->id < 0 ? Genome::Config->user_email() . ',jpeck@genome.wustl.edu' : 'apipe-run@genome.wustl.edu');
-    #$self->status_message('Sending summary e-mail to ' . $mail_dest);
-    #my $mail_rv = Genome::Model::Command::Report::Mail->execute(
-    #    model => $self->model,
-    #    build => $build,
-    #    report_name => "Summary",
-    #    to => $mail_dest,
-    #);
-    #$self->status_message("E-mail command executed.  Return value: $mail_rv");
-
-=cut
-
-    ###############################################
-    #Clean up big consensus file
-    my $consensus_file = $build->bam_pileup_file_path;
-    if (-s $consensus_file) {
-        if (Genome::Sys->bzip($consensus_file) ) {
-            $self->status_message("Converted consesnsus file to bzip format.");
-        } else {
-            $self->error_message("Could NOT convert consensus file to bzip format.  Continuing anyway.");
-        }
-    }
-    #################################################3 
-    
-=cut
-
     return $self->verify_successful_completion;
 }
 

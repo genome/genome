@@ -205,7 +205,7 @@ sub execute {                               # replace with real execution logic.
 
 				## Run the runassembly ##
 				my $cmd = "runMapping -o $aligner_output_dir -pairt $reference $sff_file";
-				system("bsub -q long -R\"select[mem>8000] rusage[mem=8000]\" -M 8000000 -oo $aligner_output_dir/RunMap.out $cmd");
+				system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -R\"select[mem>8000] rusage[mem=8000]\" -M 8000000 -oo $aligner_output_dir/RunMap.out $cmd");
 #				my $cmd_obj = Genome::Model::Tools::454::Newbler::RunMapping->create(
 #				    sff_dir => $sff_dir,
 #				    mapping_dir => $aligner_output_dir,

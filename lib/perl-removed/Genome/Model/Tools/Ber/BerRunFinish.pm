@@ -21,7 +21,7 @@ use IO::File;
 use IPC::Run qw/ run timeout /;
 use Time::HiRes qw(sleep);
 use DateTime;
-use MIME::Lite;
+use Genome::Utility::Email;
 
 use File::Slurp;    # to replace IO::File access...
 use File::Copy;
@@ -894,12 +894,7 @@ sub send_mail
 {
 
     my ( $ssid, $assembly_name, $rtfileloc, $rtfilename, $rtfullname ) = @ARG;
-    my $usermail = Genome::Sys->username . '@genome.wustl.edu';
-    my $from
-        = join( ', ', $usermail,
-        );
-        #FIXME remove hard-coded addresses
-    my $to = join( ', ', $usermail, 'kpepin@genome.wustl.edu');
+    my $from = Genome::Utility::Email::construct_address(Genome::Sys->username);
 
     my $subject
         = "Amgap BER Product Naming script mail for AMGAP SSID: $ssid ($assembly_name)";
@@ -913,20 +908,15 @@ File: $rtfilename
 Path: $rtfileloc
 BODY
 
-    my $msg = MIME::Lite->new(
-        From    => $from,
-        To      => $to,
-        Subject => $subject,
-        Data    => $body,
+    Genome::Utility::Email::send(
+        from    => $from,
+        to      => [ $from, 'kpepin@genome.wustl.edu'],  #FIXME remove hard-coded addresses
+        subject => $subject,
+        body    => $body,
+        attachments => {
+            path        => $rtfullname,
+        },
     );
-    $msg->attach(
-        Type        => "text/plain",
-        Path        => $rtfullname,
-        Filename    => $rtfilename,
-        Disposition => "attachment",
-    );
-
-    $msg->send();
     return 1;
 }
 

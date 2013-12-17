@@ -113,13 +113,12 @@ sub execute {                               # replace with real execution logic.
 	{
 		print "Aligning $fq_file to $reference\n";
 		$ssaha2_params = "-454 -seeds 2 -diff -1 -kmer 12 -skip 5 -output sam";
-		system("bsub -q apipe -R\"select[mem>8000] rusage[mem=8000]\" -M 8000000 -oo $output_file.log ssaha2 $ssaha2_params -outfile $output_file $reference_fasta $fq_file");				
+		system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT} -R\"select[mem>8000] rusage[mem=8000]\" -M 8000000 -oo $output_file.log ssaha2 $ssaha2_params -outfile $output_file $reference_fasta $fq_file");				
 	}
 	else
 	{
 		print "Aligning $fq_file to $reference\n";
-#		system("bsub -q apipe -R\"select[type==LINUX64 && model != Opteron250 && mem>8000] rusage[mem=8000]\" -M 8000000 -oo $output_file.log ssaha2 $ssaha2_params -outfile $output_file -save $reference $fq_file");		
-		system("bsub -q apipe -R\"select[mem>8000] rusage[mem=8000]\" -M 8000000 -oo $output_file.log ssaha2 $ssaha2_params -outfile $output_file $reference_fasta $fq_file");		
+		system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT} -R\"select[mem>8000] rusage[mem=8000]\" -M 8000000 -oo $output_file.log ssaha2 $ssaha2_params -outfile $output_file $reference_fasta $fq_file");		
 	}
 
 

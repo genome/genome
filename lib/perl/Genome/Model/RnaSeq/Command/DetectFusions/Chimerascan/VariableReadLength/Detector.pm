@@ -1,11 +1,11 @@
-package Genome::Model::RnaSeq::Command::DetectFusions::ChimerascanVrl::Detector;
+package Genome::Model::RnaSeq::Command::DetectFusions::Chimerascan::VariableReadLength::Detector;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::RnaSeq::Command::DetectFusions::ChimerascanVrl::Detector {
+class Genome::Model::RnaSeq::Command::DetectFusions::Chimerascan::VariableReadLength::Detector {
     is => 'Genome::Model::RnaSeq::Command::DetectFusions::Chimerascan::DetectorBase',
     doc => 'run the chimerascan-vrl (variable-read-length) transcript fusion detector',
 };

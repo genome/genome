@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Genome;
 use File::Basename;
+use Genome::Info::IUB;
 
 class Genome::Model::Tools::Vcf::Convert::Indel::VarscanSomatic {
     is  => 'Genome::Model::Tools::Vcf::Convert::Base',
@@ -134,13 +135,13 @@ sub parse_line {
     my $t_dp4 = join ',', $columns[15], $columns[16], $columns[17], $columns[18];
 
     my %ss = (
-        REFERENCE => 0,
-        WILDTYPE => 0,
-        GERMLINE => 1,
+        REFERENCE   => 0,
+        WILDTYPE    => 0,
+        GERMLINE    => 1,
         INDELFILTER => 1,
-        SOMATIC  => 2,
-        LOH      => 3,
-        UNKNOWN  => 5,
+        SOMATIC     => 2,
+        LOH         => 3,
+        UNKNOWN     => 5,
     );
 
     my $t_ss = $ss{uc($columns[12])};
@@ -176,12 +177,29 @@ sub _convert_unknown_gt {
 sub _convert_gt {
     my ($self, $ref, $var, $gt, $ss) = @_;
 
-    if ($gt =~ /^[ATCG]$/) {
-        unless ($ref eq $gt) {
-            $self->error_message("Genotype: $gt conflict with reference: $ref");
-            return;
+    if ($gt =~ /^[A-Z]$/) {
+        if ($gt =~ /^[ATCG]$/) {
+            if ($ref eq $gt) {
+                return '0/0';
+            }
+            else {
+                $self->warning_message("Genotype: $gt conflict with reference: $ref");
+                return './.';
+            }
+            
         }
-        return '0/0';
+        else { #sometimes it gets IUPAC symbol like Y, check whether it contains ref or not
+            my @alleles = Genome::Info::IUB->iub_to_alleles($gt);
+            unless (@alleles) {
+                $self->error_message("Genotype: $gt supposed to be an IUPAC symbol, but it is not");
+                return;
+            }
+            unless (grep{$_ eq $ref}@alleles) {
+                $self->error_message("Genotype: $gt supposed to contain ref base, but it does not");
+                return;
+            }
+            return '0/0';
+        }
     }
 
     if ($gt =~ /\//) {

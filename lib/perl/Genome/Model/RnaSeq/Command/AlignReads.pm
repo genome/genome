@@ -20,7 +20,7 @@ class Genome::Model::RnaSeq::Command::AlignReads {
     ],
     has_param => [
         lsf_queue => {
-            default => 'apipe',
+            default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT},
         },
     ],
     has_transient_optional_output => [

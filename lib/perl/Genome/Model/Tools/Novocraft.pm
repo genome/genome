@@ -58,6 +58,7 @@ my %NOVOCRAFT_VERSIONS = (
                     '2.05.13' => $ENV{GENOME_SW} . '/novocraft/novocraft-2.05.13',
                     '2.05.20' => $ENV{GENOME_SW} . '/novocraft/novocraft-2.05.20',
                     '2.05.32' => $ENV{GENOME_SW} . '/novocraft/novocraft-2.05.33',
+                    '2.07.11' => $ENV{GENOME_SW} . '/novocraft/novocraft-2.07.11', 
                     'novocraft'   => 'novoalign',
                 );
 

@@ -25,60 +25,6 @@ my $bam_name = 'GoldStandardForTesting.2873462096.cleaned.bam';
 my $bam_path = $test_dir . '/' . $bam_name;
 
 
-
-#Setup imported bam file for use in this test (using my small bam file at $test_dir/GoldStandardForTesting.2873462096.cleaned.bam
-#NOTE: I need to do this to setup the test bam file that I will refer to using the 'sra_samples' & 'srr_list' files
-#
-#NOTE: COMMENT THIS OUT TO RUN FULL TEST!!!!
-#vvvvvvvvvvvvvvvvvvvvvvvvvvvv
-#my $sample = Genome::Sample->create(
-#    name        => 'WFAA-9999-9999999999', #Fake sample name
-#    );
-#ok($sample, 'create sample');
-#my $library = Genome::Library->create(
-#    name   => $sample->name.'-testlibs',
-#    sample_id => $sample->id
-#    );
-#ok($library, 'create library');
-#my $instrument_data = Genome::InstrumentData::Imported->create(
-#    library       => $library,
-#    import_format => 'bam',
-#    description => 'vervet clean bamfile (subset_name:9999999999 flowcell:XXXXX lane:X index:<NULL> num_input_reads:40 num_clean_reads:30)', #Fake description
-#    bam_path      => $bam_path, #Path to my small, 30 read test bam file
-#    );
-#ok($instrument_data, 'create instrument data');
-#my $alloc = Genome::Disk::Allocation->create(
-#    owner_id => $instrument_data->id,
-#    owner_class_name => $instrument_data->class,
-#    kilobytes_requested => 1000,
-#    allocation_path => $instrument_data->id,
-#    disk_group_name => 'info_alignments',
-#    );
-#ok($alloc, 'create allocation');
-#print $alloc->absolute_path."\n";
-#^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-
-
-
-
-
-#### THIS IS AN EXAMPLE OF HOW TO IMPORT ATTRIBUTE PAIRS INTO INSTRUMENT-DATAS
-#my $attr = G:ID:Attribute->create(
-#    inst_data=>$inst_data,
-#    attribute_name=>'subset_name',
-#    attribute_value=>??,
-#    );
-#my $attr = G:ID:Attribute->get(
-#    inst_data=>$inst_data,
-#    attribute_name=>'subset_name',
-#    attribute_value=>??
-#   );
-
-
-
-
-
 #Test create
 use_ok('VervetHmpSraProcess') or die;
 

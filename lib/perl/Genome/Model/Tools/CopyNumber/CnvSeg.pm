@@ -76,7 +76,7 @@ class Genome::Model::Tools::CopyNumber::CnvSeg {
     ],
     has_param => [
         lsf_queue => {
-            default => "apipe",
+            default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT},
         }
     ],
 };

@@ -308,7 +308,7 @@ sub _create_instrument_data_allocation {
     $allocation = Genome::Disk::Allocation->allocate(
         owner_id => $instrument_data->id,
         owner_class_name => $instrument_data->class,
-        disk_group_name => 'info_alignments',
+        disk_group_name => $ENV{GENOME_DISK_GROUP_ALIGNMENTS},
         allocation_path => 'instrument_data/imported/'.$instrument_data->id,
         kilobytes_requested => $kilobytes_requested,
     );

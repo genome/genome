@@ -6,9 +6,6 @@ use strict;
 use Genome;
 use Workflow;
 
-my $DEFAULT_VERSION = '0.5';
-my $PINDEL_COMMAND = 'pindel';
-
 class Genome::Model::Tools::Pindel::RunPindel2Vcf {
     is => ['Command'],
     has => [
@@ -55,7 +52,7 @@ class Genome::Model::Tools::Pindel::RunPindel2Vcf {
     ],
     has_param => [
         lsf_queue => {
-            default_value => 'apipe',
+            default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT},
         },
         lsf_resource => {
             default_value => "-M 16000000 -R 'select[type==LINUX64 && mem>16000] rusage[mem=16000]'",

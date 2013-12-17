@@ -140,7 +140,7 @@ class Genome::Model::Tools::Analysis::PlotMultiMutationSpectrum {
     },
     lsf_queue => {
         is_param => 1,
-        default_value => 'long'
+        default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
     }, 
     ],
 };

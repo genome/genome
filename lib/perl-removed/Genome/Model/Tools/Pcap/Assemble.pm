@@ -409,24 +409,17 @@ sub create_project_directories
 
     my $path = $self->{project_path};
 
-    umask 002;
-    mkdir "$path" unless -d $path;
-
-    unless (-d "$path")
+    my @subdirs = qw(edit_dir input output phd_dir chromat_dir blastdb acefiles ftp read_dump 454_processed);
+    foreach my $sub_dir ('', @subdirs)
     {
-        $self->error_message ("failed to create $path : $!");
-        return;
-    }
+        my $dirpath = "$path/$sub_dir";
+        next if -d $dirpath;
 
-    foreach my $sub_dir (qw/ edit_dir input output phd_dir chromat_dir blastdb acefiles ftp read_dump 454_processed/)
-    {
-        next if -d "$path/$sub_dir";
+        eval { Genome::Sys->create_directory($dirpath) };
 
-        mkdir "$path/$sub_dir";
-
-        unless (-d "$path/$sub_dir")
+        unless (-d $dirpath)
         {
-            $self->error_message ("failed to create $path/$sub_dir : $!");
+            $self->error_message ("failed to create $dirpath: $!");
             return;
         }
     }
@@ -652,7 +645,7 @@ sub create_fake_phds
         (
             pp_type => 'lsf',
             command => $cmd,
-            q       => 'long',
+            q       => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
             J       => "$fasta.MAKE_PHD",
             n       => 1,
             u       => Genome::Config->user_email,

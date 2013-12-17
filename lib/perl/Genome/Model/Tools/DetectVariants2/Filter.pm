@@ -157,7 +157,7 @@ class Genome::Model::Tools::DetectVariants2::Filter {
     ],
     has_param => [
         lsf_queue => {
-            default => 'apipe',
+            default => $ENV{GENOME_LSF_QUEUE_DV2_WORKER},
         },
     ],
 };

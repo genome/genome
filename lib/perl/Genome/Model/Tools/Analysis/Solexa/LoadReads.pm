@@ -201,7 +201,7 @@ sub execute {                               # replace with real execution logic.
 								$cmd = "maq sol2sanger $location $output_fastq";
 #								print "$cmd\n";
 #								system($cmd);
-								system("bsub -q short -R\"select[type==LINUX64 && mem>1000] rusage[mem=1000]\" $cmd");
+								system("bsub -q $ENV{GENOME_LSF_QUEUE_SHORT} -R\"select[type==LINUX64 && mem>1000] rusage[mem=1000]\" $cmd");
 							}
 						}
 					}

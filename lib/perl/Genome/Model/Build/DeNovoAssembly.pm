@@ -174,7 +174,7 @@ sub input_metrics_file_for_instrument_data {
     my $instrument_data = shift;
     my %params = $self->read_processor_params_for_instrument_data($instrument_data);
     my $result = Genome::InstrumentData::SxResult->get_with_lock(%params);
-    return $self->data_directory.'/'.$result->read_processor_input_metric_file;
+    return $self->data_directory.'/'.$result->read_processor_input_metric_file_base_name;
 }
  
 sub output_metrics_file_for_instrument_data {
@@ -182,7 +182,7 @@ sub output_metrics_file_for_instrument_data {
     my $instrument_data = shift;
     my %params = $self->read_processor_params_for_instrument_data($instrument_data);
     my $result = Genome::InstrumentData::SxResult->get_with_lock(%params);
-    return $self->data_directory.'/'.$result->read_processor_input_metric_file;
+    return $self->data_directory.'/'.$result->read_processor_output_metric_file_base_name;
 }
 
 #check $attribute on a collection of @instrument_data.  If $require_same, 

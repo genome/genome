@@ -134,6 +134,11 @@ class Genome::Model::SomaticValidation {
         normal_sample => {
             is => 'Genome::Sample',
         },
+        known_sites => {
+            is => 'Genome::Model::Build::ImportedVariationList',
+            is_many => 1,
+            doc => 'Build[s] of known variants to use in when refining with GATK best practices.',
+        },
     ],
     has_optional => [
         region_of_interest_set_name => {

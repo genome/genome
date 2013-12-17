@@ -7,12 +7,12 @@ use Genome;
 use Genome::DataSource::CommonRDBMS qw(log_error log_commit_time);
 
 class Genome::DataSource::GMSchema {
-    is => ['UR::DataSource::Pg', 'Genome::DataSource::CommonRDBMS'],
+    is => [$ENV{GENOME_DS_GMSCHEMA_TYPE}, 'Genome::DataSource::CommonRDBMS'],
     has_constant => [
-        server => { default_value => 'dbname=genome' },
-        login => { default_value => 'genome' },
-        auth => { default_value => 'changeme' },
-        owner => { default_value => 'public' },
+        server  => { default_value  => $ENV{GENOME_DS_GMSCHEMA_SERVER} },
+        login   => { default_value  => $ENV{GENOME_DS_GMSCHEMA_LOGIN} },
+        auth    => { default_value  => $ENV{GENOME_DS_GMSCHEMA_AUTH} },
+        owner   => { default_value  => $ENV{GENOME_DS_GMSCHEMA_OWNER} },
     ],
 };
 

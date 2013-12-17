@@ -35,6 +35,11 @@ sub execute {
 
     my $geno_path = $self->resolve_geno_path_for_build($build);
 
+    unless (-s $geno_path) {
+        $self->warning_message("Genotype file is empty: $geno_path. Joinx intersect did not find any intersection.");
+        return 1;
+    }
+
     #TODO: Remove Over-Ambiguous Glob
     my @variant_files = glob($build->variants_directory . '/snv/samtools-*/snvs.hq');
     unless(scalar @variant_files eq 1) {
@@ -153,8 +158,8 @@ sub resolve_geno_path_for_build {
         $geno_path = $build->gold_snp_build->gold2geno_file_path;
     }
 
-    unless ( -s $geno_path ) {
-        die $self->error_message("Genotype file missing/empty: $geno_path");
+    unless ( -e $geno_path ) {
+        die $self->error_message("Genotype file missing: $geno_path");
     }
 
     return $geno_path;

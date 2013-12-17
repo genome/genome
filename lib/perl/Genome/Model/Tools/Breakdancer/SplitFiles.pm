@@ -38,7 +38,7 @@ class Genome::Model::Tools::Breakdancer::SplitFiles {
         create_other => {
             is => "Boolean",
             default => 1,
-            doc => 'Whether or not to restrict to canonical chromsomes plus an "other" chromosome',
+            doc => 'Whether or not to restrict to canonical chromosomes plus an "other" chromosome',
         },
     ],
 };

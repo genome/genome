@@ -23,7 +23,7 @@ class Genome::Model::Tools::DetectVariants2::Combine {
     ],
     has_param => [
         lsf_queue => {
-            default => 'apipe',
+            default => $ENV{GENOME_LSF_QUEUE_DV2_WORKER},
         },
     ],
     has_optional => [

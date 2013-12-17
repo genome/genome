@@ -103,9 +103,9 @@ sub create_tmpfs {
 sub create_tmpfs_volume {
     my %arg = @_;
     my $total_kb = delete $arg{total_kb} || die;
-    my $group = delete $arg{group} || Genome::Disk::Group->get(disk_group_name => 'info_apipe');
+    my $group = delete $arg{group} || Genome::Disk::Group->get(disk_group_name => $ENV{GENOME_DISK_GROUP_DEV});
     unless ($group) {
-        $group = create_group('info_apipe');
+        $group = create_group($ENV{GENOME_DISK_GROUP_DEV});
     }
 
     my $mount_path = create_tmpfs(size => "${total_kb}");

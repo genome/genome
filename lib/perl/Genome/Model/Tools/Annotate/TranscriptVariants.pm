@@ -174,7 +174,7 @@ class Genome::Model::Tools::Annotate::TranscriptVariants {
         },
         lsf_queue => {
             is => 'Text',
-            default => 'long',
+            default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
         },
     ],
 };
@@ -410,7 +410,6 @@ sub _validate_parameters {
     if ($self->build and $self->cache_annotation_data_directory) {
         $self->cache_annotation_data_directory(0);
         $self->status_message("--cache-annotation-data-directory is currently disabled.  Operating from the annotation data directory instead.");
-        $self->_notify_cache_attempt;
     }
 
     my $annotation_filter = $self->annotation_filter( lc $self->annotation_filter );
@@ -591,7 +590,7 @@ sub _main_annotation_loop {
             if ($annotation_start) {
                 $annotation_stop = Benchmark->new;
                 my $annotation_time = timediff($annotation_stop, $annotation_start);
-                $self->status_message("Annotating chromsome $chromosome_name took " . timestr($annotation_time)) if $self->benchmark;
+                $self->status_message("Annotating chromosome $chromosome_name took " . timestr($annotation_time)) if $self->benchmark;
             }
 
             $chromosome_name = $variant->{chromosome_name};
@@ -761,28 +760,6 @@ sub transcript_report_headers {
     return ($self->variant_attributes, $self->variant_output_attributes, $self->get_extra_columns, $self->transcript_attributes);
 }
 
-sub _notify_cache_attempt{
-    my $self = shift;
-    
-    my $message_content = <<END_CONTENT;
-Hey Jim,
-
-This is a cache attempt on %s running as PID $$ and user %s.
-
-I told the user I'm not freaking doing it, and am working normally.  Just wanted to give you a heads up.
-
-Your pal,
-Genome::Model::Tools::Annotate::TranscriptVariants
-
-END_CONTENT
-    require MIME::Lite;
-    my $msg = MIME::Lite->new(From    => sprintf('"Genome::Utility::Filesystem" <%s@genome.wustl.edu>', $ENV{'USER'}),
-            To      => 'jweible@genome.wustl.edu',
-            Subject => 'Attempt to cache annotation data directory',
-            Data    => sprintf($message_content, hostname, $ENV{'USER'}),
-            );
-    $msg->send();
-}
 1;
 
 =pod

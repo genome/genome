@@ -65,6 +65,7 @@ my $build;
     $build = Genome::Model::Build->get(135315483);
 }
 ok($build, "got test build");
+print join("\n",Genome::Model::Build->error_messages),"\n";
 
 # temp change data dir to test location
 my $dir1 = Genome::Sys->create_temp_directory();

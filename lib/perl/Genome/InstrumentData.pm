@@ -102,25 +102,16 @@ class Genome::InstrumentData {
         },
     ],
     has_optional => [
-        tgi_lims_status => { # TODO rename!
-            is => 'Text',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            is_many => 0,
-            where => [ attribute_label => 'tgi_lims_status' ],
+        analysis_project_bridges => {
+            is => 'Genome::Config::AnalysisProject::InstrumentDataBridge',
+            reverse_as => 'instrument_data',
+            is_many => 1,
         },
-        analysis_project_id => {
-            is => 'Text',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            is_many => 0,
-            where => [ attribute_label => 'analysis_project_id' ],
-        },
-        analysis_project => {
+        analysis_projects => {
             is => 'Genome::Config::AnalysisProject',
-            id_by => 'analysis_project_id',
+            via => 'analysis_project_bridges',
+            to => 'analysis_project',
+            is_many => 1,
         },
         original_est_fragment_size => {
             is => 'Integer',
@@ -264,7 +255,7 @@ sub create {
     eval{ ($bx, @extra) = $class->define_boolexpr(@_); };
     return if not $bx;
     if ( @extra and @extra % 2 == 1 ) {
-        $class->error_message("Odd number of attributes sent to create intrument data: ".Data::Dumper::Dumper(\@extra));
+        $class->error_message("Odd number of attributes sent to create instrument data: ".Data::Dumper::Dumper(\@extra));
         return;
     }
     my %extra = @extra;
@@ -296,15 +287,14 @@ sub delete {
     my ($expunge_status) = $self->_expunge_assignments;
     return unless $expunge_status;
 
-    #finally, clean up the instrument data
-    for my $attr ( $self->attributes ) {
-        $attr->delete;
-    }
-
     $self->_create_deallocate_observer;
 
     for my $attribute ($self->attributes) {
         $attribute->delete;
+    }
+
+    for my $bridge ($self->analysis_project_bridges) {
+        $bridge->delete;
     }
 
     return $self->SUPER::delete;

@@ -38,7 +38,7 @@ sub resolve_allocation_disk_group_name {
         return $command->resolve_allocation_disk_group_name();
     }
     else {
-        "info_genome_models" 
+        $ENV{GENOME_DISK_GROUP_MODELS};
     }
 }
 

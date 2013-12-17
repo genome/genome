@@ -73,7 +73,7 @@ sub execute {
         my $pp = PP->create(
             pp_type => 'lsf',
             command => $command,
-            q       => 'long',
+            q       => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
             J       => $chunk_name,
         );    
         

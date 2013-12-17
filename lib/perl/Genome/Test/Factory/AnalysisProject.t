@@ -21,7 +21,7 @@ my $test_hash = { blah => { blah => 'test' } };
 my $ap2 = $class->setup_object(config_hash => $test_hash);
 isa_ok($ap2, 'Genome::Config::AnalysisProject', 'It sets up an AnalysisProject object');
 
-is_deeply($test_hash, $ap2->get_configuration_reader->get_config(),
+is_deeply($test_hash, $ap2->get_configuration_profile->get_config(),
     'it allows for the config reader to be mocked');
 
 done_testing();

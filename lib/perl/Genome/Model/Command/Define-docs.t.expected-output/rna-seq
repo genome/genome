@@ -3,7 +3,7 @@
  [1mgenome model define rna-seq[0m [--auto-assign-inst-data] [--auto-build-alignments]
     --processing-profile=? --reference-sequence-build=? --annotation-build=?
     [--add-to-projects=?[,?]] [--instrument-data=?[,?]] [--subject=?] [--groups=?[,?]]
-    [--model-name=?] [--target-region-set-name=?]
+    [--model-name=?] [--target-region-set-name=?] [--cancer-annotation-db=?]
 
 [4mSYNOPSIS[0m
   genome model define rna-seq \
@@ -33,6 +33,8 @@
     User meaningful name for this model, a default is used if none is provided 
   [1mtarget-region-set-name[0m
     limits the assignment of instrument data by default to only data with a matching TRSN 
+  [1mcancer-annotation-db[0m
+    db of cancer annotation (see 'genome db list' for latest version of desired database) 
 
 [4mOPTIONAL PARAMS[0m
   [1mauto-assign-inst-data[0m

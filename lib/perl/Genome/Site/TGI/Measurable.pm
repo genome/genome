@@ -95,7 +95,7 @@ sub add_file {
     if ( not $disk_allocation ) {
         # Create
         $disk_allocation = Genome::Disk::Allocation->allocate(
-            disk_group_name => 'info_genome_models',
+            disk_group_name => $ENV{GENOME_DISK_GROUP_MODELS},
             allocation_path => '/model_data/'.$self->id,
             kilobytes_requested => $size,
             owner_class_name => $self->class,

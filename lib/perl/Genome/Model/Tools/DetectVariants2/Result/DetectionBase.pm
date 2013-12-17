@@ -186,6 +186,11 @@ sub _check_instance_output {
                 );
                 die $class->error_message(join(' ', @error_message));
             }
+            # If a test name is set, we can remove the symlink and proceed
+            elsif ($result and defined $result->test_name and -l $instance_output) {
+                $class->warning_message("The software result for the existing symlink has a test name set; removing symlink.");
+                unlink $instance_output;
+            }
             elsif ($result and not $allocation) {
                 # A result without an allocation... this really shouldn't ever happen, unless someone deleted the allocation row from the database?
                 die $class->error_message("Found a software result (" . $result->__display_name__ . ") that has output directory " .
@@ -283,7 +288,7 @@ sub _prepare_output_directory {
 
     unless($allocation) {
         my %allocation_parameters = (
-            disk_group_name => 'info_genome_models',
+            disk_group_name => $ENV{GENOME_DISK_GROUP_MODELS},
             allocation_path => $subdir,
             owner_class_name => $self->class,
             owner_id => $self->id,

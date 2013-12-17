@@ -111,9 +111,9 @@ sub execute {                               # replace with real execution logic.
 		        $build = $model->latest_build;
                 if (!defined $build && $rebuild_set) {
                     print OUTPUT join("\t", $model_id, "No_Build_Found", $subject_name, "No_Build_Found", "No_Build_Found") . "\n";
-                    my $restart_command = "bsub -q short \'perl -I /gsc/scripts/opt/genome/current/pipeline/lib/perl/ -S genome model build start $model_id\'";
+                    my $restart_command = "bsub -q $ENV{GENOME_LSF_QUEUE_SHORT} \'perl -I /gsc/scripts/opt/genome/current/pipeline/lib/perl/ -S genome model build start $model_id\'";
                     system($restart_command);
-                    my $shortqueue_pending=`bjobs -q short | wc -l`; chomp $shortqueue_pending;
+                    my $shortqueue_pending=`bjobs -q $ENV{GENOME_LSF_QUEUE_SHORT} | wc -l`; chomp $shortqueue_pending;
                     if ($shortqueue_pending > 20) {
                         sleep(30);
                     }
@@ -131,7 +131,7 @@ sub execute {                               # replace with real execution logic.
                     if ($size) {
                         my $new_status = "$build_status-restartable";
                         print OUTPUT join("\t", $model_id, $build_id, $subject_name, $new_status) . "\n";
-                        my $restart_command = "bsub -q short \'perl -I /gsc/scripts/opt/genome/current/pipeline/lib/perl/ -S genome model build start $model_id\'";
+                        my $restart_command = "bsub -q $ENV{GENOME_LSF_QUEUE_SHORT} \'perl -I /gsc/scripts/opt/genome/current/pipeline/lib/perl/ -S genome model build start $model_id\'";
                         unless ($build_status =~ m/abandon/i || $build_status =~ m/run/i || $build_status =~ m/schedule/i || $build_status =~ m/succeed/i) {
                             if ($rebuild_set) {
                                 print "Build Id To Abandon: $build_id\n";
@@ -196,7 +196,7 @@ sub execute {                               # replace with real execution logic.
             #			print join("\t", $model_id, $build_id, $subject_name, $build_status, $specific_stats_file, $general_stats_file, $summary_stats_ref, $summary_stats_ref2) . "\n";
                         print OUTPUT join("\t", $model_id, $build_id, $subject_name, $build_status, $bam_file, $summary_stats_ref, $summary_stats_ref2, $summary_stats_ref3) . "\n";
                         if ($depth_array3[0] > 100000) {
-                            my $restart_command = "bsub -q short \'perl -I /gsc/scripts/opt/genome/current/pipeline/lib/perl/ -S genome model build start $model_id\'";
+                            my $restart_command = "bsub -q $ENV{GENOME_LSF_QUEUE_SHORT} \'perl -I /gsc/scripts/opt/genome/current/pipeline/lib/perl/ -S genome model build start $model_id\'";
                             unless ($build_status =~ m/abandon/i || $build_status =~ m/run/i || $build_status =~ m/schedule/i || $build_status =~ m/succeed/i) {
                                     if ($rebuild_set) {
                                         print "Build Id To Abandon: $build_id\n";
@@ -214,7 +214,7 @@ sub execute {                               # replace with real execution logic.
                 }
                 else {
                 print OUTPUT join("\t", $model_id, $build_id, $subject_name, $build_status, $bam_file) . "\n";
-                    my $restart_command = "bsub -q short \'perl -I /gsc/scripts/opt/genome/current/pipeline/lib/perl/ -S genome model build start $model_id\'";
+                    my $restart_command = "bsub -q $ENV{GENOME_LSF_QUEUE_SHORT} \'perl -I /gsc/scripts/opt/genome/current/pipeline/lib/perl/ -S genome model build start $model_id\'";
                     unless ($build_status =~ m/abandon/i || $build_status =~ m/run/i || $build_status =~ m/schedule/i || $build_status =~ m/succeed/i) {
                         if ($rebuild_set) {
                             print "Build Id To Abandon: $build_id\n";

@@ -100,7 +100,7 @@ class Genome::Model::Tools::DetectVariants2::Dispatcher {
     ],
     has_param => [
         lsf_queue => {
-            default_value => 'long'
+            default_value => $ENV{GENOME_LSF_QUEUE_DV2_WORKFLOW},
         },
     ],
     doc => 'generate complex variant detection results'

@@ -25,7 +25,9 @@ my ($alignment_result, $annotation_build, @bam_files) = setup(test_data_version 
 my $r = $chimerascan_result_class->get_or_create(
     alignment_result => $alignment_result,
     version => $chimerascan_version,
-    detector_params => "--bowtie-version=0.12.7 --reuse-bam 0",
+    bowtie_version => '0.12.7',
+    reuse_bam => 0,
+    detector_params => "-p 2",
     annotation_build => $annotation_build,
     picard_version => $picard_version,
     original_bam_paths => \@bam_files,

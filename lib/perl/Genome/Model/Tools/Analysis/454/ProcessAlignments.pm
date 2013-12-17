@@ -110,7 +110,7 @@ sub execute {                               # replace with real execution logic.
 
 			## Set up initial bsub command ##
 			
-			my $bsub_cmd = qq{bsub -q long -R \"select[type==LINUX64 && mem>4000] rusage[mem=4000]\" -oo $ScriptFileOut sh $ScriptFileName};
+			my $bsub_cmd = qq{bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -R \"select[type==LINUX64 && mem>4000] rusage[mem=4000]\" -oo $ScriptFileOut sh $ScriptFileName};
 
 
 			if($regions_file)

@@ -12,7 +12,7 @@ class Genome::Model::Tools::DetectVariants2::Result::Combine::UnionSnv{
 
 sub _needs_symlinks_followed_when_syncing { 0 };
 sub _working_dir_prefix { 'union-snv' };
-sub resolve_allocation_disk_group_name { 'info_genome_models' };
+sub resolve_allocation_disk_group_name { $ENV{GENOME_DISK_GROUP_MODELS} };
 sub allocation_subdir_prefix { 'union_snv' };
 sub _variant_type { 'snvs' };
 

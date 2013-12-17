@@ -199,7 +199,7 @@ sub check_dependencies {
     );
 
     # if the reference is a compound reference
-    if ($self->reference_build->append_to) {
+    if ($self->reference_build->append_to and $self->_supports_multiple_reference) {
         die('Compound references are not currently supported in '. __PACKAGE__);
         for my $b ($self->reference_build->append_to) { # (append_to is_many)
             $params{reference_build} = $b;
@@ -285,7 +285,7 @@ sub resolve_allocation_subdirectory {
 }
 
 sub resolve_allocation_disk_group_name {
-    "info_apipe_ref";
+    $ENV{GENOME_DISK_GROUP_REFERENCES};
 }
 
 sub full_consensus_path {

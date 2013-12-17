@@ -783,7 +783,7 @@ sub _get_sr_dirs {
         }
         my $sr_dir = $sr->output_dir;
         unless ($sr_dir and -d $sr_dir) {
-            $self->error_message("Software result output_dir for chromsome $chr_name does not exist");
+            $self->error_message("Software result output_dir for chromosome $chr_name does not exist");
             die;
         }
         $self->status_message("Chromosome $chr_name gets software_result output_dir: $sr_dir");

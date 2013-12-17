@@ -64,7 +64,7 @@ is($instrument_data->attributes(attribute_label => 'version')->attribute_value, 
 $sample->default_genotype_data_id($instrument_data->id);
 
 my $alloc_for_snpid_mapping = Genome::Disk::Allocation->__define__(
-    disk_group_name => 'info_alignments',
+    disk_group_name => $ENV{GENOME_DISK_GROUP_ALIGNMENTS},
     group_subdirectory => '',
     mount_path => $testdir_version,
     allocation_path => 'microarray_data/infinium-test-1',

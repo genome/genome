@@ -155,7 +155,7 @@ sub _ui_start {
                         # parent falls thru
                     }
                     elsif (defined($pid)) {
-                        exec("firefox http://gscweb.gsc.wustl.edu/wiki/External_nav_Fin_FAQs")
+                        exec("firefox $ENV{GENOME_SYS_SERVICES_WIKI_URL}External_nav_Fin_FAQs")
                             or $self->error_msg("Could not launch firefox: $!");
                     }
                     else {

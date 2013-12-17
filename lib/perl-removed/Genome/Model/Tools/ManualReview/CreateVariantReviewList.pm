@@ -53,7 +53,7 @@ sub help_synopsis{
 }
 
 sub help_detail{
-    return "This command takes in a character delimited list of variants. The separation character is the '|' char by default, but can be specified on the command line. The list should be formatted as follows:\n".join('|', Genome::Utility::VariantReviewListReader->list_columns)."\n Once uploaded, the variants can be viewed and edited online at this address: https://gscweb.gsc.wustl.edu/view/variant_review_list.html
+    return "This command takes in a character delimited list of variants. The separation character is the '|' char by default, but can be specified on the command line. The list should be formatted as follows:\n".join('|', Genome::Utility::VariantReviewListReader->list_columns)."\n Once uploaded, the variants can be viewed and edited online at this address: $ENV{GENOME_SYS_SERVICES_FILES_URL}/view/variant_review_list.html
 ";
 }
 

@@ -116,8 +116,9 @@ sub _link_sx_result {
     $self->status_message('Link SX result...');
     for my $type (qw/ input output /) {
         my $metrics_file_method = 'read_processor_'.$type.'_metric_file';
-        my $target = $sx_result->output_dir.'/'.$sx_result->$metrics_file_method;
-        my $link_name = $build->data_directory.'/'.$sx_result->$metrics_file_method;
+        my $target = $sx_result->$metrics_file_method;
+        my $metrics_file_base_name_method = 'read_processor_'.$type.'_metric_file_base_name';
+        my $link_name = $build->data_directory.'/'.$sx_result->$metrics_file_base_name_method;
         $self->status_message("Link $type metrics file $target to $link_name");
         Genome::Sys->create_symlink($target, $link_name);
     }
@@ -136,7 +137,7 @@ sub _collect_metrics_from_sx_result {
     my %types_and_values = ( input => 0, output => 0, );
     for my $type ( keys %types_and_values ) {
         my $metrics_file_method = 'read_processor_'.$type.'_metric_file';
-        my $metrics_file = $build->data_directory.'/'.$sx_result->$metrics_file_method;
+        my $metrics_file = $sx_result->$metrics_file_method;
         if ( not $metrics_file or not -s $metrics_file ) {
             $self->error_message('No output metrics file for SX result! '.$sx_result->id);
             return;

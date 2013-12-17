@@ -10,7 +10,7 @@ class Genome::Disk::Command::Allocation::Create {
         disk_group_name => {
             is => 'Text',
             doc => 'Name of the disk group in which the allocation should be made.',
-            valid_values => ['info_apipe', 'info_apipe_ref', 'info_alignments', 'info_genome_models', 'research' ],
+            valid_values => [$ENV{GENOME_DISK_GROUP_DEV}, $ENV{GENOME_DISK_GROUP_REFERENCES}, $ENV{GENOME_DISK_GROUP_ALIGNMENTS}, $ENV{GENOME_DISK_GROUP_MODELS}, $ENV{GENOME_DISK_GROUP_RESEARCH}],
         },
         allocation_path => {
             is => 'Text',
@@ -27,8 +27,8 @@ class Genome::Disk::Command::Allocation::Create {
         },
         owner_id => {
             is => 'Text',
-            default_value => $ENV{USER} . '@genome.wustl.edu',
-            doc => 'The ID used to retrieve the owner (in conjunction with owner_class_name), e.g. bdericks@genome.wustl.edu for Genome::Sys::User or build_id for Genome::Model::Build.',
+            default_value => Genome::Sys::User->owner_id,
+            doc => 'The ID used to retrieve the owner (in conjunction with owner_class_name), e.g. username@example.com for Genome::Sys::User or build_id for Genome::Model::Build.',
         },
     ],
     has_optional => [

@@ -25,6 +25,11 @@ class Genome::Model::RnaSeq {
             is_optional => 1,
             doc => 'limits the assignment of instrument data by default to only data with a matching TRSN'
         },
+        cancer_annotation_db => {
+            is => 'Text',
+            is_optional => 1,
+            doc => 'db of cancer annotation (see \'genome db list\' for latest version of desired database)',
+        },
     ],
     has_param => [
         sequencing_platform => {
@@ -154,7 +159,7 @@ class Genome::Model::RnaSeq {
             is_optional => 1,
             is => 'Text',
             doc => 'version of bowtie for tophat to use internally',
-        }
+        },
     ],
     doc => 'A genome model produced by aligning cDNA reads to a reference sequence.',
 };
@@ -202,8 +207,9 @@ sub _parse_strategy {
 }
 
 sub map_workflow_inputs {
-    my $self = shift;
-    my $build = shift;
+    my ($self, $build) = @_;
+
+    Carp::confess('No build guiven to map workflow inputs!') if not $build;
 
     # modes are validated later in Genome::Model::Build::RnaSeq and
     # Genome::InstrumentData::AlignmentResult::Command::CufflinksExpression
@@ -240,6 +246,7 @@ sub map_workflow_inputs {
 
     if ($self->fusion_detector) {
         push @inputs, $self->fusion_detection_inputs($build->processing_profile);
+        push @inputs, $self->chimerascan_annotation_inputs($build) if $self->cancer_annotation_db;
     }
 
     my %inputs = @inputs;
@@ -257,7 +264,7 @@ sub _resolve_workflow_for_build {
     my $lsf_project = shift;
 
     if (!defined $lsf_queue || $lsf_queue eq '' || $lsf_queue eq 'inline') {
-        $lsf_queue = 'apipe';
+        $lsf_queue = $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
     }
     if (!defined $lsf_project || $lsf_project eq '') {
         $lsf_project = 'build' . $build->id;
@@ -283,6 +290,7 @@ sub _resolve_workflow_for_build {
     }
     my $output_properties = ['coverage_result','expression_result','metrics_result'];
     push(@$output_properties, 'fusion_result') if $self->fusion_detector;
+    push(@$output_properties, 'annotated_bedpe_file') if $self->fusion_detector and $self->cancer_annotation_db;
     push(@$output_properties, 'digital_expression_detection_result') if $self->digital_expression_detection_strategy;
     if ($version_number >= 2) {
         push(@$output_properties, 'bam_qc_result');
@@ -536,6 +544,40 @@ sub _resolve_workflow_for_build {
             right_property => 'fusion_result'
         );
 
+        ###Post Fusion Detection Annotation
+        if($self->cancer_annotation_db){
+            my $annotation_operation = $workflow->add_operation(
+                name => 'Fusion Detection Annotation',
+                operation_type => Workflow::OperationType::Command->create(
+                    command_class_name => 'Genome::Model::RnaSeq::Command::AnnotateChimerascan',
+                )
+            );
+
+            $annotation_operation->operation_type->lsf_queue($lsf_queue);
+            $annotation_operation->operation_type->lsf_project($lsf_project);
+
+            $workflow->add_link(
+                left_operation => $fusion_detection_operation,
+                left_property => 'build_id',
+                right_operation => $annotation_operation,
+                right_property => 'build_id',
+            );
+
+            $workflow->add_link(
+                left_operation => $input_connector,
+                left_property => 'cancer_annotation_db',
+                right_operation => $annotation_operation,
+                right_property => 'cancer_annotation_db_id',
+            );
+
+
+            $workflow->add_link(
+                left_operation => $annotation_operation,
+                left_property => 'annotated_bedpe_file',
+                right_operation => $output_connector,
+                right_property => 'annotated_bedpe_file',
+            );
+        }
     }
 
     # Define output connector results from coverage and expression
@@ -569,7 +611,7 @@ sub connect_fusion_detector_to_input_connector {
 
     $workflow->add_link(
         left_operation => $input_connector,
-        left_property => 'fusion_detector_name',
+        left_property => 'fusion_detector',
         right_operation => $fusion_detection_operation,
         right_property => 'detector_name',
     );
@@ -598,6 +640,15 @@ sub fusion_detection_inputs {
         fusion_detector => $processing_profile->fusion_detector,
         fusion_detector_version => $processing_profile->fusion_detector_version,
         fusion_detector_params => $processing_profile->fusion_detector_params,
+    );
+}
+
+sub chimerascan_annotation_inputs {
+    my $self = shift;
+    my $build = shift;
+
+    return (
+        cancer_annotation_db => $build->cancer_annotation_db,
     );
 }
 

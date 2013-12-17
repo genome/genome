@@ -39,8 +39,8 @@ sub required_rusage {
     my $tmp_gb = $tmp_mb/1024;
 
     my $user = getpwuid($<);
-    my $queue = 'alignment';
-    $queue = 'alignment-pd' if (Genome::Config->should_use_alignment_pd);
+    my $queue = $ENV{GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT};
+    $queue = $ENV{GENOME_LSF_QUEUE_ALIGNMENT_PROD} if (Genome::Config->should_use_alignment_pd);
 
     my $host_groups;
     $host_groups = qx(bqueues -l $queue | grep ^HOSTS:);
@@ -108,22 +108,23 @@ sub tmp_megabytes_estimated {
     return;
 }
 
-# override this from AlignmentResult.pm to filter reads with secondary alignment flag (0x100)
+# Override _check_read_count() from Genome::InstrumentData::AlignmentResult to
+# filter reads with secondary or supplementary alignment flags (0x100 or 0x800)
+# when comparing to the fastq.
 sub _check_read_count {
-    my ($self) = @_;
-    my $fq_rd_ct = $self->_fastq_read_count;
+    my ($self, $bam_rd_ct) = @_;
+
+    my $param_hash = $self->decomposed_aligner_params;
+    my $flag = exists $param_hash->{M} ? 0x100 : 0x800;
+
     my $sam_path = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
+    my $cmd = "$sam_path view -F $flag -c " . $self->temp_staging_directory . "/all_sequences.bam";
+    my $filtered_bam_rd_ct = `$cmd`;
 
-    my $cmd = "$sam_path view -F 256 -c " . $self->temp_staging_directory . "/all_sequences.bam";
-    my $bam_read_count = `$cmd`;
-    my $check = "Read count from bam: $bam_read_count and fastq: $fq_rd_ct";
+    $self->status_message("Overriding _check_read_count: filtering flag $flag from bam read count.");
+    $self->status_message("Actual read count: $bam_rd_ct; filtered read count: $filtered_bam_rd_ct");
 
-    unless ($fq_rd_ct == $bam_read_count) {
-        $self->error_message("$check does not match.");
-        return;
-    }
-    $self->status_message("$check matches.");
-    return 1;
+    return $self->SUPER::_check_read_count($filtered_bam_rd_ct);
 }
 
 sub _run_aligner {
@@ -151,7 +152,8 @@ sub _run_aligner {
         );
     }
     my $cmd_path = Genome::Model::Tools::Bwa->path_for_bwa_version($aligner_version);
-    my $params = $self->decomposed_aligner_params;
+    my $param_hash = $self->decomposed_aligner_params;
+    my $param_string = $self->_param_hash_to_string($param_hash);
 
     # Verify inputs and outputs.
     for (@input_paths, $reference_fasta_path) {
@@ -163,7 +165,7 @@ sub _run_aligner {
     $self->status_message("Running bwa mem.");
 
     my $full_command = sprintf '%s mem %s %s %s 2>> %s',
-        $cmd_path, $params, $reference_fasta_path,
+        $cmd_path, $param_string, $reference_fasta_path,
         (join ' ', @input_paths), $log_path;
     $self->_stream_bwamem($full_command, $out_sam);
 
@@ -249,15 +251,15 @@ sub _stream_bwamem {
 sub _disconnect_from_db {
     my ($self) = @_;
 
-    $self->status_message("Closing data source db handle...");
+    $self->debug_message("Closing data source db handle...");
     if ($self->__meta__->data_source->has_default_handle) {
         if ($self->__meta__->data_source->disconnect_default_handle) {
-            $self->status_message("Disconnected data source db handle (as expected).");
+            $self->debug_message("Disconnected data source db handle (as expected).");
         } else {
-            $self->status_message("Unable to disconnect data source db handle.");
+            $self->debug_message("Unable to disconnect data source db handle.");
         }
     } else {
-        $self->status_message("Data source db handle already closed.");
+        $self->debug_message("Data source db handle already closed.");
     }
 }
 
@@ -265,9 +267,9 @@ sub _check_db_connection {
     my ($self) = @_;
 
     if ($self->__meta__->data_source->has_default_handle) {
-        $self->status_message("Data source db handle unexpectedly reconnected itself.");
+        $self->debug_message("Data source db handle unexpectedly reconnected itself.");
     } else {
-        $self->status_message("Data source db handle still closed (as expected).");
+        $self->debug_message("Data source db handle still closed (as expected).");
     }
 }
 
@@ -343,51 +345,44 @@ sub _verify_bwa_mem_did_happen {
     return 1;
 }
 
+# Generates the param hash from the processing profile aligner_params. Corrects
+# the cpu and M flags (if necessary) and the returns the param hash.
 sub decomposed_aligner_params {
     my $self = shift;
+
     my $param_string = $self->aligner_params || '';
+    my $param_hash = $self->_param_string_to_hash($param_string);
 
-    my $param_hash = $self->get_aligner_params_hash($param_string);
+    # I'm not sure why we need all these debug messages...
+    $self->debug_message(
+        "[decomposed_aligner_params] unmodified bwa mem params are: "
+        . $self->_param_hash_to_string($param_hash));
 
-    my $cpu_count = $self->_available_cpu_count;
-    my $processed_param_string = $self->join_aligner_params_hash($param_hash);
+    $self->_fix_cpu_flag($param_hash);
+    $self->_fix_M_flag($param_hash);
 
-    $self->status_message("[decomposed_aligner_params] cpu count is $cpu_count");
-    $self->status_message("[decomposed_aligner_params] bwa mem params are: $processed_param_string");
+    $self->debug_message(
+        "[decomposed_aligner_params] final bwa mem params are: "
+        . $self->_param_hash_to_string($param_hash));
 
-    # Make sure the thread count argument matches the number of CPUs available.
-    if ($param_hash->{t} ne $cpu_count) {
-        $param_hash->{t} = $cpu_count;
-        my $modified_param_string = $self->join_aligner_params_hash($param_hash);
-        $self->status_message("[decomposed_aligner_params] autocalculated CPU requirement, bwa mem params modified: $modified_param_string");
-    }
-
-    if (not exists $param_hash->{M}) {
-        $param_hash->{M} = '';
-        my $modified_param_string = $self->join_aligner_params_hash($param_hash);
-        $self->status_message("[decomposed_aligner_params] forcing -M, bwa mem params modified: $modified_param_string");
-    }
-
-    my $final_param_string = $self->join_aligner_params_hash($param_hash);
-
-    return $final_param_string;
+    return $param_hash;
 }
 
+# Gets the param hash using decomposed_aligner_params, strips out the cpu count
+# flag, and returns the string using _param_hash_to_string.
 sub aligner_params_for_sam_header {
     my $self = shift;
 
-    my $param_string = $self->aligner_params || '';
-    my $param_hash = $self->get_aligner_params_hash($param_string);
+    my $param_hash = $self->decomposed_aligner_params;
+    delete $param_hash->{t}; # we don't want cpu count to be in the sam header
+    my $param_string = $self->_param_hash_to_string($param_hash);
 
-    delete $param_hash->{t}; # we don't want cpu count to be part of the sam header
-
-    my $modified_param_string = $self->join_aligner_params_hash($param_hash);
-
-    return "bwa mem $modified_param_string";
+    return "bwa mem $param_string";
 }
 
-# helper for decomposed_aligner_params and aligner_params_for_sam_header
-sub get_aligner_params_hash {
+# Helper for decomposed_aligner_params. Takes a param string (from the
+# processing profile) and generates a param hash.
+sub _param_string_to_hash {
     my $self = shift;
     my $param_string = shift;
 
@@ -439,8 +434,45 @@ sub get_aligner_params_hash {
     return \%param_hash;
 }
 
-# helper for decomposed_aligner_params and aligner_params_for_sam_header
-sub join_aligner_params_hash {
+# Helper for decomposed_aligner_params. Forces the CPU flag to match the
+# available cpu count in a param hash.
+sub _fix_cpu_flag {
+    my $self = shift;
+    my $param_hash = shift;
+
+    my $cpu_count = $self->_available_cpu_count;
+    $self->debug_message("[_fix_cpu_flag] cpu count is $cpu_count");
+
+    # Make sure the thread count argument matches the number of CPUs available.
+    if ((not exists $param_hash->{t}) or (not defined $param_hash->{t}) or ($param_hash->{t} ne $cpu_count)) {
+        $param_hash->{t} = $cpu_count;
+        my $modified_param_string = $self->_param_hash_to_string($param_hash);
+        $self->debug_message("[_fix_cpu_flag] autocalculated CPU requirement, bwa mem params modified: $modified_param_string");
+    }
+
+    return $param_hash;
+}
+
+# Helper for decomposed_aligner_params. Forces the M flag if we're on an older
+# version of bwamem in a param hash.
+sub _fix_M_flag {
+    my $self = shift;
+    my $param_hash = shift;
+
+    # version check
+    my $supports_supplementary_flag = Genome::Model::Tools::Bwa->supports_supplementary_alignment_flag($self->aligner_version);
+
+    if ((not exists $param_hash->{M}) and (not $supports_supplementary_flag)) {
+        $param_hash->{M} = ''; # in this instance, '' means -M is added with no argument
+        my $modified_param_string = $self->_param_hash_to_string($param_hash);
+        $self->debug_message("[_fix_mem_flag] forcing -M, bwa mem params modified: $modified_param_string");
+    }
+
+    return $param_hash;
+}
+
+# Takes a param hash and turns it into a string; sorts by keys before joining.
+sub _param_hash_to_string {
     my $self = shift;
     my $param_hash = shift;
 

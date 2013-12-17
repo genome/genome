@@ -203,7 +203,7 @@ sub execute {                               # replace with real execution logic.
 					my $cmd = $self->command_line(" somatic <\($normal_pileup\) <\($tumor_pileup\) --output-snp $output_snp --output-indel $output_indel $varscan_params");
 	
 					print "Running $cmd\n";                
-					system("bsub -q long -J varscan -R\"select[mem>2000 && tmp>2000] rusage[mem=2000]\" $cmd");
+					system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -J varscan -R\"select[mem>2000 && tmp>2000] rusage[mem=2000]\" $cmd");
 	 #                               system($cmd);					
 				}
 

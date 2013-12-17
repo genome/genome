@@ -22,25 +22,9 @@ use_ok($pkg);
 # TEST PARAMETERS
 my $n_rows = 4;
 my $n_cols = 16;
-my $max_cols_per_file = 5;
 
 my @row_names = map {"Row$_"} 1..$n_rows;
 my @col_names = map {"Col$_"} 1..$n_cols;
-
-# EXPECTED RESULTS AFTER SPLITTING
-my $expected_cols_in_each_file = [
-    [ @col_names[0..4] ], # file 1 gets cols 0-4
-    [ @col_names[5..9] ], # ...
-    [ @col_names[10..14] ],
-    [ $col_names[15] ], # last guy only gets 1 :(
-];
-# you can count linearly by following columns
-my $expected_data_in_each_file = [
-    [  1..5,  17..21, 33..37, 49..53, ],
-    [  6..10, 22..26, 38..42, 54..58, ],
-    [ 11..15, 27..31, 43..47, 59..63, ],
-    [ 16,     32,     48,     64,     ],
-];
 
 my $tmpdir = tempdir(
     't-SplitVariantMatrix-XXXXX',
@@ -52,53 +36,120 @@ my $output_prefix = "$tmpdir/output";
 
 # LET THE TESTING BEGIN!
 create_variant_matrix($variant_matrix, \@row_names, \@col_names);
-my $cmd = $pkg->create(
-    input_file => $variant_matrix,
-    output_prefix => $output_prefix,
-    max_cols_per_file => $max_cols_per_file,
+
+my @tests = (
+    {
+        name => "Split normal",
+        base_params => {
+            input_file => $variant_matrix,
+            max_cols_per_file => 5
+        },
+        expected_cols_per_file => [
+            [ @col_names[0..4] ], # file 1 gets cols 0-4
+            [ @col_names[5..9] ], # ...
+            [ @col_names[10..14] ],
+            [ $col_names[15] ], # last guy only gets 1 :(
+        ],
+        expected_data_per_file => [
+            [  1..5,  17..21, 33..37, 49..53, ],
+            [  6..10, 22..26, 38..42, 54..58, ],
+            [ 11..15, 27..31, 43..47, 59..63, ],
+            [ 16,     32,     48,     64,     ],
+        ],
+    },
+
+    {
+        name => "Max files",
+        expected_cols_per_file => [
+            [ @col_names[0..5] ],
+            [ @col_names[6..11] ],
+            [ @col_names[12..15] ],
+        ],
+        expected_data_per_file => [
+            [  1..6,  17..22, 33..38, 49..54],
+            [  7..12, 23..28, 39..44, 55..60],
+            [ 13..16, 29..32, 45..48, 61..64],
+        ],
+        base_params => {
+            input_file => $variant_matrix,
+            max_cols_per_file => 2,
+            max_output_files => 3,
+        },
+    },
 );
-ok($cmd, "Created command object");
-my $results = $cmd->execute;
-ok($results, "Executed command");
-is(scalar(@$results), 4, "Got expected number of output files");
 
 
-# CHECK RESULTS
-my @parsed_results = map {parse_matrix($_)} @$results;
-
-my $actual_cols_in_each_file = [map {$_->{cols}} @parsed_results];
-is_deeply($actual_cols_in_each_file, $expected_cols_in_each_file, "split files got the expected columns")
-    or diag(
-        "Expected: "
-        . Dumper($expected_cols_in_each_file)
-        . "\nGot: "
-        . Dumper($actual_cols_in_each_file)
-        );
-
-my $actual_data_in_each_file = [map {$_->{data}} @parsed_results];
-is_deeply($actual_data_in_each_file, $expected_data_in_each_file, "split files got the expected data")
-    or diag(
-        "Expected: "
-        . Dumper($expected_data_in_each_file)
-        . "\nGot: "
-        . Dumper($actual_data_in_each_file)
-        );
-
-for my $i (0..$#parsed_results) {
-    is_deeply($parsed_results[$i]->{rows}, \@row_names, "File $i contains all rows");
+for my $tst (@tests) {
+    subtest "split normal" => make_test($tst);
 }
 
-my @data = nsort map {@{$_->{data}}} @parsed_results;
-my $n_elements = $n_rows * $n_cols;
-is_deeply(\@data, [1..$n_elements], "All data recovered")
-    or diag(
-        "Expected: "
-        . Dumper([1..$n_elements])
-        . "\nGot: " . Dumper(\@data)
-        );
+done_testing();
 
-done_testing(); 
+sub make_test {
+    my ($input_data) = @_;
 
+    my $name = $input_data->{name};
+    my $expected_cols_per_file = $input_data->{expected_cols_per_file};
+    my $expected_data_per_file = $input_data->{expected_data_per_file};
+
+    my $output_tmpdir = tempdir(
+        't-SplitVariantMatrix-XXXXX',
+        TMPDIR => 1,
+        CLEANUP => 1
+    );
+
+    my $output_prefix = "$output_tmpdir/output";
+
+    my %params = (
+        %{$input_data->{base_params}},
+        output_prefix => $output_prefix
+    );
+
+    return sub {
+        my $n_expected_files = scalar @$expected_cols_per_file;
+
+        my $cmd = $pkg->create(%params);
+        ok($cmd, "Created command object");
+        my $results = $cmd->execute;
+        ok($results, "Executed command");
+        is(scalar(@$results), $n_expected_files, "Got expected number of output files");
+
+
+        # CHECK RESULTS
+        my @parsed_results = map {parse_matrix($_)} @$results;
+
+        my $actual_cols_per_file = [map {$_->{cols}} @parsed_results];
+        is_deeply($actual_cols_per_file, $expected_cols_per_file, "split files got the expected columns")
+            or diag(
+                "Expected: "
+                . Dumper($expected_cols_per_file)
+                . "\nGot: "
+                . Dumper($actual_cols_per_file)
+                );
+
+        my $actual_data_per_file = [map {$_->{data}} @parsed_results];
+        is_deeply($actual_data_per_file, $expected_data_per_file, "split files got the expected data")
+            or diag(
+                "Expected: "
+                . Dumper($expected_data_per_file)
+                . "\nGot: "
+                . Dumper($actual_data_per_file)
+                );
+
+        for my $i (0..$#parsed_results) {
+            is_deeply($parsed_results[$i]->{rows}, \@row_names, "File $i contains all rows");
+        }
+
+        my @data = nsort map {@{$_->{data}}} @parsed_results;
+        my $n_elements = $n_rows * $n_cols;
+        is_deeply(\@data, [1..$n_elements], "All data recovered")
+            or diag(
+                "Expected: "
+                . Dumper([1..$n_elements])
+                . "\nGot: " . Dumper(\@data)
+            );
+    };
+}
 
 sub create_variant_matrix {
     my ($output_path, $row_names, $col_names) = @_;
@@ -115,7 +166,7 @@ sub create_variant_matrix {
         my $beg = $i*$n_cols;
         my $end = $beg + $n_cols - 1;
         $ofh->write(join("\t", $row_names->[$i], @data[$beg..$end]) . "\n");
-    } 
+    }
 }
 
 sub parse_matrix {

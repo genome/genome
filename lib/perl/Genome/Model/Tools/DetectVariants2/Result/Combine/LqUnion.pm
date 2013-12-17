@@ -166,7 +166,7 @@ sub _file_for_type {
 
 sub _needs_symlinks_followed_when_syncing { 1 };
 sub _working_dir_prefix { 'dv2-lq-union-result' };
-sub resolve_allocation_disk_group_name { 'info_genome_models' };
+sub resolve_allocation_disk_group_name { $ENV{GENOME_DISK_GROUP_MODELS} };
 
 sub resolve_allocation_subdirectory {
     my $self = shift;

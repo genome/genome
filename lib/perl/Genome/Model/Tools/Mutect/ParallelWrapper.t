@@ -14,6 +14,7 @@ use File::Temp;
 use Test::More;
 use above 'Genome';
 use Genome::SoftwareResult;
+use Genome::Utility::Test qw(compare_ok);
 
 my $archos = `uname -a`;
 if ($archos !~ /64/) {
@@ -24,7 +25,7 @@ use_ok('Genome::Model::Tools::Mutect::ParallelWrapper');
 
 my $tumor =  $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Mutect-Parallel-Wrapper/tiny.tumor.bam";
 my $normal = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Mutect-Parallel-Wrapper/tiny.normal.bam";
-my $expected_out = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Mutect-Parallel-Wrapper/expected.out";
+my $expected_out = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Mutect-Parallel-Wrapper/expected.v2.out"; #updating for v1.1.4
 my $expected_vcf = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Mutect-Parallel-Wrapper/expected.vcf";
 
 #Define path to a custom reference sequence build dir
@@ -52,14 +53,7 @@ my $vcf_file = "$test_base_dir/test_5.vcf";
 ok(-s $out_file, "output file created");
 ok(-s $vcf_file, "vcf file created");
 
-my $diff = Genome::Sys->diff_file_vs_file($out_file, $expected_out);
-    ok(!$diff, 'output matched expected result')
-        or diag("diff results:\n" . $diff);
-
-
-my $diff_vcf = Genome::Sys->diff_file_vs_file($vcf_file, $expected_vcf);
-    ok(!$diff_vcf, 'vcf matched expected result')
-        or diag("diff results:\n" . $diff_vcf);
+compare_ok($expected_out, $out_file, name => 'output matched expected result', filters => [ qr/^##.*$/ ] );
+compare_ok($expected_vcf, $vcf_file, name => 'vcf matched expected result', filters => [ qr/^##MuTect.*$/, qr/^##reference.*$/ ] );
 
 done_testing();
-

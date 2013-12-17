@@ -38,25 +38,15 @@ sub execute {
     }
 
 
+    # we have to handle the case where there are multiple anno lines at the same position, so
+    # we store every annotation position (chr/pos), store the dbsnp info associated with it,
+    # then re-read the annotation file to append the dbsnp info.  Also has the benefit of 
+    # ensuring that the annotation file output is in the same order as the info
+
     my $annotation = store_annotation($anno_file);
 
-    #use a temp file, then sort it into the output file at the end
-    my ($tmp_fh,$tmpfile) = Genome::Sys->create_temp_file;
-    unless($tmp_fh) {
-        $self->error_message("Unable to create temporary file $!");
-        die;
-    }
-
-    #output the header line, if it exists;
-    my $out_fh = Genome::Sys->open_file_for_writing($output_file);
-    if($annotation->{"header"}->{"header"}){
-        print $out_fh $annotation->{"header"}->{"header"} . "\trsid\tGMAF\n";
-        $annotation->{"header"}->{"header"} = 0;
-    }
-    $out_fh->close;
-
-
-    #read through the VCF, outputting any annotation lines that match
+    #read through the VCF, storing values for any annotation lines that match
+    my %vcf_vals;
     my $vcf_fh;
     #handle gzipped or non-gzipped VCF
     if($vcf_file =~ /.gz$/){
@@ -74,7 +64,7 @@ sub execute {
         if($rsID eq '.'){
             $rsID = "-";
         }
-
+ 
         my $GMAF = ($INFO =~ /(GMAF=[0-9.]+)/)[0] || '-';
 
         my $key = RSid_key($chr, $pos);
@@ -92,8 +82,8 @@ sub execute {
 
                 if(defined($annotation->{$key}->{$RSid_var_allele})){
                     if($annotation->{$key}->{$RSid_var_allele} ne "0"){                    
-                        print $tmp_fh $annotation->{$key}->{$RSid_var_allele} . "\t$rsID\t$GMAF\n";
-                        $annotation->{$key}->{$RSid_var_allele} = 0;
+                        $vcf_vals{$key}{$RSid_var_allele}{"rsID"} = $rsID;
+                        $vcf_vals{$key}{$RSid_var_allele}{"GMAF"} = $GMAF;
                     }
                 }
             }
@@ -101,18 +91,7 @@ sub execute {
     }
     $vcf_fh->close();
 
-    #take care of any positions/alleles not in the VCF
-    for my $k (keys(%{$annotation})){
-        for my $v (keys(%{$annotation->{$k}})){
-            if($annotation->{$k}->{$v}){
-                print $tmp_fh $annotation->{$k}->{$v} . "\t-\t-\n";
-            }
-        }
-    }
-    $tmp_fh->close;
-
-    #should probably do a proper shell out wrapper here...
-    `joinx sort -i $tmpfile >>$output_file;`;
+    print_annotation($anno_file, $output_file, \%vcf_vals);
 
     return 1;
 }
@@ -134,12 +113,43 @@ sub store_annotation{
 
         my @list = split(/\t/, $line);
         my ($chr, $pos, $RSid_var_allele) = (split(/\t/, $line))[0, 1, 4];
-        my $key = RSid_key($chr, $pos, );
+        my $key = RSid_key($chr, $pos);
 
         $annotation->{$key}->{$RSid_var_allele} = $line;
     }
     $anno_fh->close;
     return $annotation;
+}
+
+sub print_annotation{
+    my $anno_file = shift;
+    my $output_file = shift;
+    my $vcf_vals = shift;
+   
+    my $output_fh = Genome::Sys->open_file_for_writing($output_file);
+
+    my $anno_fh = Genome::Sys->open_file_for_reading($anno_file);
+    while (my $line = $anno_fh->getline) {
+        chomp $line;
+
+        if($line =~ /^chromosome/){
+            print $output_fh $line . "\trsID\tGMAF\n";
+            next;
+        }
+
+        my @list = split(/\t/, $line);
+        my ($chr, $pos, $var) = (split(/\t/, $line))[0, 1, 4];
+        my $key = RSid_key($chr, $pos);
+        
+        my $suffix = "-\t-";
+        if(defined($vcf_vals->{$key}->{$var})){
+            $suffix = $vcf_vals->{$key}->{$var}->{"rsID"} . "\t" . $vcf_vals->{$key}->{$var}->{"GMAF"};
+        }
+        print $output_fh $line . "\t" . $suffix . "\n";
+
+    }
+    $anno_fh->close;
+    $output_fh->close;
 }
 
 

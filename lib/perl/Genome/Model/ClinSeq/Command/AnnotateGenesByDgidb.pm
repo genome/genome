@@ -20,6 +20,7 @@ class Genome::Model::ClinSeq::Command::AnnotateGenesByDgidb {
     has_output => [
         output_dir => {
             is  => 'FilesystemPath',            
+            is_optional => 1,
             doc => 'result directory of DGIDB output, it will create a xxx.dgidb subdir under input file source dir',
         },
     ],

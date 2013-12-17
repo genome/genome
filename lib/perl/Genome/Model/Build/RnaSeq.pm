@@ -386,7 +386,20 @@ sub regex_for_custom_diff {
     my $self = shift;
 
     my @regexes_from_base_class = $self->SUPER::regex_for_custom_diff;
-    return (@regexes_from_base_class, 'bam_without_regard_to_header', '\.bam$');
+    return (@regexes_from_base_class,
+        'bam_without_regard_to_header' => '\.bam$',
+        'via_md5' => '\.fa$',
+        'via_md5' => '\.ebwt$',
+    );
+}
+
+sub diff_via_md5 {
+    my ($self, $first_file, $second_file) = @_;
+
+    my $first_md5  = `md5sum $first_file`;
+    my $second_md5 = `md5sum $second_file`;
+    return 1 if $first_md5 eq $second_md5;
+    return 0;
 }
 
 sub diff_bam_without_regard_to_header {
@@ -402,6 +415,7 @@ sub files_ignored_by_diff {
     my $self = shift;
 
     return (
+        '.fai$',
         'build.xml',
         '.pdf$',
         '.png$',
@@ -419,9 +433,9 @@ sub files_ignored_by_diff {
         '-PicardGC_summary.txt',
         File::Spec->join('metrics', 'PicardRnaSeqMetrics.txt'),
 
-        File::Spec->join('fusions', 'runconfig.xml'),
-        File::Spec->join('fusions', 'sorted_aligned_reads.bam'),
-        File::Spec->join('fusions', 'sorted_aligned_reads.bam.bai'),
+        'fusions.*Index.*',
+        'fusions.*runconfig.xml',
+        'fusions.*sorted_aligned_reads.bam.*',
     );
 }
 

@@ -227,15 +227,15 @@ sub map_workflow_inputs {
     push @inputs, igv_session_dir => $igv_session_dir;
 
     #GetVariantSources
-    if ($build->wgs_build or $build->exome_build) {
+    if ($wgs_build or $exome_build) {
       my $variant_sources_dir = $patient_dir . '/variant_source_callers';
       push @dirs, $variant_sources_dir;
-      if ($build->wgs_build){
+      if ($wgs_build){
         my $wgs_variant_sources_dir = $variant_sources_dir . '/wgs';
         push @inputs, wgs_variant_sources_dir => $wgs_variant_sources_dir;
         push @dirs, $wgs_variant_sources_dir;
       }
-      if ($build->exome_build){
+      if ($exome_build){
         my $exome_variant_sources_dir = $variant_sources_dir . '/exome';
         push @inputs, exome_variant_sources_dir => $exome_variant_sources_dir;
         push @dirs, $exome_variant_sources_dir;
@@ -247,7 +247,7 @@ sub map_workflow_inputs {
     push @inputs, import_snvs_indels_outdir => $patient_dir;
 
     #CreateMutationDiagrams
-    if ($build->wgs_build or $build->exome_build) {
+    if ($wgs_build or $exome_build) {
       my $mutation_diagram_dir = $patient_dir . '/mutation_diagrams';
       push @dirs, $mutation_diagram_dir;
       push @inputs, (
@@ -260,14 +260,13 @@ sub map_workflow_inputs {
     }
 
     #rnaseq analysis steps according to what rna-seq builds are defined as inputs
-    if ($build->normal_rnaseq_build or $build->tumor_rnaseq_build){
+    if ($normal_rnaseq_build or $tumor_rnaseq_build){
       my $rnaseq_dir = $patient_dir . '/rnaseq';
       push @dirs, $rnaseq_dir;
-      
       push @inputs, cufflinks_percent_cutoff => 1;
 
       #TophatJunctionsAbsolute and CufflinksExpressionAbsolute for 'normal' sample
-      if ($build->normal_rnaseq_build){
+      if ($normal_rnaseq_build){
         my $normal_rnaseq_dir = $rnaseq_dir . '/normal';
         push @dirs, $normal_rnaseq_dir;
         my $normal_tophat_junctions_absolute_dir = $normal_rnaseq_dir . '/tophat_junctions_absolute';
@@ -279,7 +278,7 @@ sub map_workflow_inputs {
       }
 
       #TophatJunctionsAbsolute and CufflinksExpressionAbsolute for 'tumor' sample
-      if ($build->tumor_rnaseq_build){
+      if ($tumor_rnaseq_build){
         my $tumor_rnaseq_dir = $rnaseq_dir . '/tumor';
         push @dirs, $tumor_rnaseq_dir;
         my $tumor_tophat_junctions_absolute_dir = $tumor_rnaseq_dir . '/tophat_junctions_absolute';
@@ -291,40 +290,64 @@ sub map_workflow_inputs {
       }
 
       #CufflinksDifferentialExpression
-      if ($build->normal_rnaseq_build and $build->tumor_rnaseq_build){
+      if ($normal_rnaseq_build and $tumor_rnaseq_build){
         my $cufflinks_differential_expression_dir = $rnaseq_dir . '/cufflinks_differential_expression';
         push @dirs, $cufflinks_differential_expression_dir;
         push @inputs, cufflinks_differential_expression_dir => $cufflinks_differential_expression_dir;
       }
-    }
+
+      #Filtered and Intersected ChimeraScan fusion output for tumor RNAseq
+      #The following will only work if the rna-seq build used a processing profile that uses chimerascan.
+      if ($tumor_rnaseq_build){
+        #Check for ChimeraScan fusion results
+        if(-e $tumor_rnaseq_build->data_directory . '/fusions/filtered_chimeras.bedpe'){
+            #copy over fusion files to this dir even if SV calls do not exist.
+            my $tumor_filtered_fusion_dir = $patient_dir . '/rnaseq/fusions/tumor';
+            push @dirs, $tumor_filtered_fusion_dir;
+            if ($wgs_build){
+                #Check for SV calls file
+                if(-e $wgs_build->data_directory . '/effects/svs.hq.annotated'){
+                    my $ncbi_human_ensembl_build_id = $tumor_rnaseq_build->annotation_build->id;
+                    my $tumor_filtered_fusion_file =  $tumor_filtered_fusion_dir . '/filtered_chimeras.bedpe';
+                    my $wgs_sv_file = $build->wgs_build->data_directory . '/effects/svs.hq.annotated';
+                    my $tumor_filtered_intersected_fusion_file =  $tumor_filtered_fusion_dir . '/chimeras.filtered.intersected.bedpe';
+                    push @inputs, ncbi_human_ensembl_build_id => $ncbi_human_ensembl_build_id;
+                    push @inputs, wgs_sv_file => $wgs_sv_file;
+                    push @inputs, tumor_filtered_fusion_file => $tumor_filtered_fusion_file;
+                    push @inputs, tumor_filtered_intersected_fusion_file => $tumor_filtered_intersected_fusion_file;
+                }
+            }
+          }
+        }
+      }
 
     #GenerateClonalityPlots
-    if ($build->wgs_build){
+    if ($wgs_build){
       my $clonality_dir = $patient_dir . "/clonality/";
       push @dirs, $clonality_dir;
       push @inputs, clonality_dir => $clonality_dir;      
     }
 
     #RunCnView
-    if ($build->wgs_build){
+    if ($wgs_build){
       my $cnv_dir = $patient_dir . "/cnv/";
       push @dirs, $cnv_dir;
       push @inputs, cnv_dir => $cnv_dir;
     }
 
     #SummarizeSvs
-    if ($build->wgs_build){
+    if ($wgs_build){
       my $sv_dir = $patient_dir . "/sv/";
       push @dirs, $sv_dir;
       push @inputs, sv_dir => $sv_dir;
     }
 
     #CreateMutationSpectrum
-    if ($build->wgs_build) {
+    if ($wgs_build) {
         push @inputs, 'wgs_mutation_spectrum_outdir' => $patient_dir . '/mutation-spectrum';
         push @inputs, 'wgs_mutation_spectrum_datatype' => 'wgs';
     }
-    if ($build->exome_build) {
+    if ($exome_build) {
         push @inputs, 'exome_mutation_spectrum_outdir' => $patient_dir . '/mutation-spectrum';
         push @inputs, 'exome_mutation_spectrum_datatype' => 'exome';
     }
@@ -337,7 +360,12 @@ sub map_workflow_inputs {
     push @inputs, 'gene_symbol_lists_dir' => $gene_symbol_lists_dir;
     push @inputs, 'gene_name_columns' => ['mapped_gene_name'];
     push @inputs, 'gene_name_regex' => 'mapped_gene_name';
-
+    
+    #MakeCircosPlot
+    my $circos_dir = $patient_dir . "/circos";
+    push @dirs, $circos_dir;
+    push @inputs, circos_outdir => $circos_dir;
+    
     # For now it works to create directories here because the data_directory has been allocated.  
     #It is possible that this would not happen until later, which would mess up assigning inputs to many of the commands.
     for my $dir (@dirs) {
@@ -356,7 +384,7 @@ sub _resolve_workflow_for_build {
     my $lsf_project = shift;
 
     if (!defined $lsf_queue || $lsf_queue eq '' || $lsf_queue eq 'inline') {
-        $lsf_queue = 'apipe';
+        $lsf_queue = $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
     }
     if (!defined $lsf_project || $lsf_project eq '') {
         $lsf_project = 'build' . $build->id;
@@ -393,6 +421,7 @@ sub _resolve_workflow_for_build {
             dgidb_wgs_snv_result
             dgidb_wgs_indel_result
             wgs_variant_sources_result
+            circos_result
         );
     }
 
@@ -434,7 +463,15 @@ sub _resolve_workflow_for_build {
         push @output_properties, 'dgidb_cufflinks_result';
         push @output_properties, 'dgidb_tophat_result';
     }
-
+    if ($build->tumor_rnaseq_build){
+        if(-e $build->tumor_rnaseq_build->data_directory . '/fusions/filtered_chimeras.bedpe'){
+            if ($build->wgs_build){
+                if(-e $build->wgs_build->data_directory . '/effects/svs.hq.annotated'){
+                    push @output_properties, 'intersect_tumor_fusion_sv_result';
+                }
+            }
+        }
+    }
     if ($build->normal_rnaseq_build and $build->tumor_rnaseq_build){
         push @output_properties, 'cufflinks_differential_expression_result';
         push @output_properties, 'gene_category_coding_de_up_result';
@@ -734,6 +771,26 @@ sub _resolve_workflow_for_build {
       $add_link->($cufflinks_differential_expression_op, 'result', $output_connector, 'cufflinks_differential_expression_result');
     }
 
+    #Intersect filtered fusion calls with WGS SV calls.
+    my $intersect_tumor_fusion_sv_op;
+    if ($build->tumor_rnaseq_build){
+        if(-e $build->tumor_rnaseq_build->data_directory . '/fusions/filtered_chimeras.bedpe'){
+            #copy over fusion files
+            $self->copy_fusion_files($build);
+            if ($build->wgs_build){
+                if(-e $build->wgs_build->data_directory . '/effects/svs.hq.annotated'){
+                    my $msg = "Intersecting filtered tumor ChimeraScan fusion calls with WGS SV calls.";
+                    $intersect_tumor_fusion_sv_op = $add_step->($msg, 'Genome::Model::Tools::ChimeraScan::IntersectSv');
+                    $add_link->($input_connector, 'ncbi_human_ensembl_build_id', $intersect_tumor_fusion_sv_op, 'annotation_build_id');
+                    $add_link->($input_connector, 'tumor_filtered_intersected_fusion_file', $intersect_tumor_fusion_sv_op, 'output_file');
+                    $add_link->($input_connector, 'wgs_sv_file', $intersect_tumor_fusion_sv_op, 'sv_output_file');
+                    $add_link->($input_connector, 'tumor_filtered_fusion_file', $intersect_tumor_fusion_sv_op, 'filtered_bedpe_file');
+                    $add_link->($intersect_tumor_fusion_sv_op, 'result', $output_connector, 'intersect_tumor_fusion_sv_result');
+                }
+            }
+        }
+    }
+
     #DumpIgvXml - Create IGV xml session files with increasing numbers of tracks and store in a single (WGS and Exome BAM files, RNA-seq BAM files, junctions.bed, SNV bed files, etc.)
     #genome model clin-seq dump-igv-xml --outdir=/gscuser/mgriffit/ --builds=119971814
     $msg = "Create IGV XML session files for varying levels of detail using the input builds";
@@ -767,9 +824,10 @@ sub _resolve_workflow_for_build {
     #SummarizeCnvs - Generate a summary of CNV results, copy cnvs.hq, cnvs.png, single-bam copy number plot PDF, etc. to the cnv directory
     #This step relies on the generate-clonality-plots step already having been run 
     #It also relies on run-cn-view step having been run already
+    my $summarize_cnvs_op;
     if ($build->wgs_build){
         my $msg = "Summarize CNV results from WGS somatic variation";
-        my $summarize_cnvs_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeCnvs");
+        $summarize_cnvs_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeCnvs");
         $add_link->($input_connector, 'cnv_dir', $summarize_cnvs_op, 'outdir');
         $add_link->($input_connector, 'wgs_build', $summarize_cnvs_op, 'build');
         $add_link->($clonality_op, 'cnv_hmm_file', $summarize_cnvs_op);
@@ -944,6 +1002,7 @@ sub _resolve_workflow_for_build {
     #SummarizeTier1SnvSupport - For each of the following: WGS SNVs, Exome SNVs, and WGS+Exome SNVs, do the following:
     #Get BAM readcounts for WGS (tumor/normal), Exome (tumor/normal), RNAseq (tumor), RNAseq (normal) - as available of course
     #TODO: Break this down to do direct calls to GetBamReadCounts instead of wrapping it.
+    my $summarize_tier1_snv_support_op;
     for my $run (qw/wgs exome wgs_exome/) {
       if ($run eq 'wgs' and not $build->wgs_build) {
         next;
@@ -959,7 +1018,7 @@ sub _resolve_workflow_for_build {
       $txt_name =~ s/wgs/WGS/;
       $txt_name =~ s/exome/Exome/;
       $msg = "$txt_name Summarize Tier 1 SNV Support (BAM read counts)";
-      my $summarize_tier1_snv_support_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeTier1SnvSupport");
+      $summarize_tier1_snv_support_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeTier1SnvSupport");
       $add_link->($import_snvs_indels_op, $run . "_snv_file", $summarize_tier1_snv_support_op, $run . "_positions_file");
       $add_link->($input_connector, 'wgs_build', $summarize_tier1_snv_support_op);
       $add_link->($input_connector, 'exome_build', $summarize_tier1_snv_support_op);
@@ -971,10 +1030,21 @@ sub _resolve_workflow_for_build {
       $add_link->($input_connector, 'verbose', $summarize_tier1_snv_support_op);
       $add_link->($summarize_tier1_snv_support_op, 'result', $output_connector, "summarize_${run}_tier1_snv_support_result");
     }
+    
+    #MakeCircosPlot - Creates a Circos plot to summarize the data using MakeCircosPlot.pm
+    #Currently WGS data is a minimum requirement for Circos plot generation.
+    if ($build->wgs_build){
+      $msg = "Creating a Circos plot using MakeCircosPlot";
+      my $make_circos_plot_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::MakeCircosPlot");
+      $add_link->($input_connector, 'build', $make_circos_plot_op);
+      $add_link->($input_connector, 'circos_outdir', $make_circos_plot_op, 'output_directory');
+      $add_link->($summarize_cnvs_op, 'result', $make_circos_plot_op, 'clinseq_result');
+      $add_link->($make_circos_plot_op, 'result', $output_connector, 'circos_result');
+    }
 
     # REMINDER:
     # For new steps be sure to add their result to the output connector if they do not feed into another step.
-    # When you do that, expand the list of output properties at line 182 above. 
+    # When you do that, expand the list of output properties above. 
 
     my @errors = $workflow->validate();
     if (@errors) {
@@ -1070,6 +1140,19 @@ sub files_ignored_by_build_diff {
     );
 };
 
+# Custom differs for ClinSeq builds
+sub addtional_regex_for_custom_diff {
+    return ( circos_conf => 'circos\.conf$', );
+}
+
+sub diff_circos_conf {
+    my ($self, $first_file, $second_file) = @_;
+    Carp::confess('Missing files to diff!') if @_ != 3;
+    my $first_md5  = qx(grep -vP '\\w+/\\w+/info/model_data/\\w+/build\\w+/\\w+/circos/data' $first_file | md5sum);
+    my $second_md5 = qx(grep -vP '\\w+/\\w+/info/model_data/\\w+/build\\w+/\\w+/circos/data' $second_file | md5sum);
+    return ($first_md5 eq $second_md5 ? 1 : 0);
+}
+
 # Below are some methods to retrieve files from a build
 # Ideally they would be tied to creation of these file paths, but they currently 
 # throw an exception if the files don't exist. Consider another approach...
@@ -1110,6 +1193,32 @@ sub snv_variant_source_file {
         $exception = $class->error_message("$source directory not found");
     }
     die $exception;
+}
+
+sub copy_fusion_files {
+    my ($class, $build) = @_;
+    my $rnaseq_build_dir = $build->tumor_rnaseq_build->data_directory;
+    my $tumor_unfiltered_fusion_file =  $rnaseq_build_dir . '/fusions/Genome_Model_RnaSeq_DetectFusionsResult_Chimerascan_VariableReadLength_Result/chimeras.bedpe';
+    my $tumor_filtered_fusion_file =  $rnaseq_build_dir . '/fusions/filtered_chimeras.bedpe';
+    my $tumor_filtered_annotated_fusion_file =  $rnaseq_build_dir . '/fusions/filtered_chimeras.catanno.bedpe';
+    my $clinseq_tumor_unfiltered_fusion_file = $class->patient_dir($build) . '/rnaseq/fusions/tumor/chimeras.bedpe';
+    my $clinseq_tumor_filtered_fusion_file = $class->patient_dir($build) . '/rnaseq/fusions/tumor/filtered_chimeras.bedpe';
+    my $clinseq_tumor_filtered_annotated_fusion_file = $class->patient_dir($build) . '/rnaseq/fusions/tumor/filtered_chimeras.catanno.bedpe';
+    if(-e $tumor_unfiltered_fusion_file) {
+        unless(Genome::Sys->copy_file($tumor_unfiltered_fusion_file, $clinseq_tumor_unfiltered_fusion_file)) {
+           die "unable to copy $tumor_unfiltered_fusion_file";
+        }
+    }
+    if(-e $tumor_filtered_fusion_file) {
+        unless(Genome::Sys->copy_file($tumor_filtered_fusion_file, $clinseq_tumor_filtered_fusion_file)) {
+           die "unable to copy $tumor_filtered_fusion_file";
+        }
+    }
+    if(-e $tumor_filtered_annotated_fusion_file) {
+        unless(Genome::Sys->copy_file($tumor_filtered_annotated_fusion_file, $clinseq_tumor_filtered_annotated_fusion_file)) {
+           die "unable to copy $tumor_filtered_annotated_fusion_file";
+        }
+    }
 }
 
 sub clonality_dir {

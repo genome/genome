@@ -40,6 +40,7 @@ sub cmd_display_name {
 sub _cmd_versions {
     return (
         '229' => '/usr/bin/flexbar229',
+	'230' => '/gsc/bin/flexbar',
     );
 }
 
@@ -102,6 +103,11 @@ sub _cmd_properties {
              is_optional => 1,
              doc => 'Minimum readlength in basepairs after adapter removal or read will be discarded.',
          },
+        min_read_length => {
+             is => 'Text',
+             is_optional => 1,
+             doc => 'Minimum readlength in basepairs after adapter removal or read will be discarded, use in version 230 only',
+         },
          max_uncalled => {
              is => 'Text',
              is_optional => 1,
@@ -110,9 +116,29 @@ sub _cmd_properties {
          no_length_dist => {
              is => 'Boolean',
              is_optional => 1,
-             default_value => '1',
+#            default_value => '1',
              doc => 'Prevent writing length distributions for read output files.',
          },
+	post_trim_length =>  {
+	    is => 'Number',
+	    is_optional => 1,
+	    doc => 'Trim to specified read length from 3\' end after removal, v230 only',
+	},
+	pre_trim_left => {
+	    is => 'Number',
+	    is_optional => 1,
+	    doc => 'Trim given number of bases on 5\' read end before detection, v230 only.',
+	},
+	pre_trim_right => {
+	    is => 'Number',
+	    is_optional => 1,
+	    doc => 'Trim specified number of bases on 3\' end prior to detection, v230 only.',
+	},
+	pre_trim_phred => {
+	    is => 'Number',
+	    is_optional => 1,
+	    doc => 'Trim 3\' end until specified or higher quality reached, v230 only',
+	},
          removal_tag => {
              is => 'Boolean',
              is_optional => 1,
@@ -140,11 +166,25 @@ sub _cmd_properties {
      return if not $output;
 
      $self->status_message('Run flexbar...');
+
      my $cmd = $self->build_command;
-    $cmd .= ' --source '.$input_params[0]->{file};
-    $cmd .= ' --source2 '.$input_params[1]->{file} if $input_params[1];
-    $cmd .= ' --format fastq-sanger';
-    $cmd .= ' --target '.$self->_tmpdir.'/output.fastq',
+
+     # set input param name .. either reads or source
+     my $input_param_name = $self->_input_data_param_name();
+     $cmd .= ' --'.$input_param_name.' '.$input_params[0]->{file};
+     $cmd .= ' --'.$input_param_name.'2 '.$input_params[1]->{file} if $input_params[1];
+
+     # set input format ..sanger or sanger-fastq
+     my $input_format = $self->_input_data_format();
+     $cmd .= ' --format '.$input_format;
+
+     # set output file name
+     $cmd .= ' --target '.$self->_tmpdir.'/output.fastq',
+
+     # set versions env variable
+     my $env_var = $self->_env_var_for_version();
+     $cmd = $env_var.' '.$cmd if $env_var;
+
     my $rv = $self->_run_command($cmd);
     return if not $rv;
     $self->status_message('Run flexbar...OK');
@@ -173,6 +213,37 @@ sub _cmd_properties {
     $self->_rm_tmpdir;
 
     return 1;
+}
+
+sub _input_data_param_name {
+    my $self = shift;
+
+    my $name = 'source';
+    if( $self->version eq '230' ) {
+	$name = 'reads';
+    }   
+    return $name;
+}
+
+sub _input_data_format {
+    my $self = shift;
+
+    my $format = 'fastq-sanger';
+    if( $self->version eq '230' ) {
+	$format = 'sanger';
+    }
+    return $format;
+}
+
+sub _env_var_for_version {
+    my $self = shift;
+
+    my $env_var;
+    if( $self->version eq '230' ) {
+	$env_var = 'LD_LIBRARY_PATH=/gscmnt/gc3001/assembly/Downloads/Flexbar_2.4/flexbar_v2.4_linux64';
+	# this is needed to use multiple nodes for v230
+    }
+    return $env_var;
 }
 
 sub _resolve_adapters {

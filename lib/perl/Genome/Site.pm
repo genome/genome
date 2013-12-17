@@ -6,6 +6,7 @@ use warnings;
 use Carp qw(croak);
 use File::Spec qw();
 use Sys::Hostname qw(hostname);
+use UR::Util qw();
 
 our $VERSION = $Genome::VERSION;
 
@@ -16,23 +17,19 @@ sub import {
         die $@ if $@;
     }
     else {
-        my @hwords = site_dirs();
-        while (@hwords) {
-            my $pkg = site_pkg(@hwords);
-            my $filename = module_to_filename($pkg);
-            local $SIG{__DIE__};
-            local $SIG{__WARN__};
-            eval "use $pkg";
-            if ($@ =~ /Can't locate $filename/) {
-                pop @hwords;
-                next;
-            }
-            elsif ($@) {
-                Carp::confess("error in $pkg: $@\n");
-            }
-            else {
-                last;
-            }
+        load_host_config();
+    }
+}
+
+sub load_host_config {
+    my @hwords = site_dirs();
+    while (@hwords) {
+        my $pkg = site_pkg(@hwords);
+        if (UR::Util::load_class_or_file($pkg)) {
+            last;
+        } else {
+            pop @hwords;
+            next;
         }
     }
 }
@@ -46,15 +43,6 @@ sub site_dirs {
     # look for a config module matching all or part of the hostname
     my $hostname = hostname();
     my @hwords = map { s/-/_/g; $_ } reverse split(/\./, $hostname);
-}
-
-sub module_to_filename {
-    my $module = shift;
-    unless ($module) {
-        croak 'must specify module';
-    }
-    my @path = split(/::/, $module);
-    my $filename = File::Spec->join(@path) . '.pm';
 }
 
 BEGIN {

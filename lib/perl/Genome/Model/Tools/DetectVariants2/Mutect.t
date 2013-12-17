@@ -47,7 +47,7 @@ my $mutect = Genome::Model::Tools::DetectVariants2::Mutect->create(aligned_reads
                                                                    control_aligned_reads_input=>$normal,
                                                                    output_directory => $test_base_dir,
                                                                    reference_build_id => $reduced_ref_seq_build->id,
-                                                                   version => 'test',
+                                                                   version => '1.1.4',
                                                                    params => '--number-of-chunks 5;',
                                                                    aligned_reads_sample => 'test',
                                                                    );

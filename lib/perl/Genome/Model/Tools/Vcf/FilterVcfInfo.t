@@ -10,7 +10,7 @@ use_ok('Genome::Model::Tools::Vcf::FilterVcfInfo');
 # To rebuild results, run like:
 # perl FilterVcfInfo.t REBUILD v2
 # then update the version on the next line
-my $version = "v1";
+my $version = "v2";
 
 my $rebuild = 0;
 if(defined($ARGV[0]) && ($ARGV[0] eq "REBUILD")){
@@ -50,4 +50,4 @@ if($rebuild){
 }
 
 my $diff = Genome::Sys->diff_file_vs_file($output_file, $expected_result);
-ok(!$diff, 'output matched expected result');
+ok(!$diff, 'output matched expected result') or diag($diff);

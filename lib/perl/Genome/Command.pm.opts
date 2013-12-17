@@ -925,7 +925,7 @@ $Genome::Command::OPTS_SPEC = [
   [
     '>create',
     [
-      'analysis-menu-item=s',
+      'analysis-menu-items=s@',
       undef,
       'name=s',
       'files',
@@ -934,7 +934,23 @@ $Genome::Command::OPTS_SPEC = [
     ],
     'genome::config::analysisproject::subjectpairing::command',
     undef,
+    'addconfigfile',
+    undef,
+    '>hold',
+    [
+      'analysis-projects=s@',
+      undef,
+      'help!',
+      undef
+    ],
     '>delete',
+    [
+      'analysis-projects=s@',
+      undef,
+      'help!',
+      undef
+    ],
+    '>release',
     [
       'analysis-projects=s@',
       undef,
@@ -2862,8 +2878,6 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>remove',
     [
-      'allow-model-with-builds!',
-      undef,
       'force-delete!',
       undef,
       'color!',
@@ -3029,6 +3043,14 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>detect-fusions',
       [
+        'detector-name=s',
+        'files',
+        'detector-version=s',
+        'files',
+        'detector-params=s',
+        'files',
+        'build-id=s',
+        'files',
         'help!',
         undef
       ],
@@ -3092,6 +3114,17 @@ $Genome::Command::OPTS_SPEC = [
           'subject_name'
         ],
         'models=s@',
+        undef,
+        'help!',
+        undef
+      ],
+      '>annotate-chimerascan',
+      [
+        'build=s',
+        undef,
+        'cancer-annotation-db=s',
+        undef,
+        'annotated-bedpe-file=s',
         undef,
         'help!',
         undef
@@ -5076,6 +5109,21 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>run-edge-r',
+      [
+        'clinseq-models=s@',
+        undef,
+        'output-file=s',
+        'files',
+        'counts-per-million=s',
+        undef,
+        'num-samples=s',
+        undef,
+        'p-value=s',
+        undef,
+        'help!',
+        undef
+      ],
       '>calc-covg',
       [
         'music-build=s',
@@ -5140,6 +5188,19 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'review-file-dir=s',
         undef,
+        'help!',
+        undef
+      ],
+      '>make-gene-counts-file',
+      [
+        'clinseq-models=s@',
+        undef,
+        'counts-file=s',
+        'files',
+        'subjects=s',
+        'files',
+        'groups=s',
+        'files',
         'help!',
         undef
       ],
@@ -5387,6 +5448,8 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'output-directory=s',
         'files',
+        'clinseq-result!',
+        undef,
         'help!',
         undef
       ],
@@ -5502,9 +5565,9 @@ $Genome::Command::OPTS_SPEC = [
       [
         'input-file=s',
         'files',
-        'output-dir=s',
-        'files',
         'gene-name-regex=s',
+        'files',
+        'output-dir=s',
         'files',
         'help!',
         undef
@@ -5653,6 +5716,8 @@ $Genome::Command::OPTS_SPEC = [
         'wgs-exome-positions-file=s',
         'files',
         'tumor-fpkm-file=s',
+        'files',
+        'output-dir=s',
         'files',
         'help!',
         undef
@@ -6833,6 +6898,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'max-cols-per-file=s',
         undef,
+        'max-output-files=s',
+        undef,
         'output-prefix=s',
         'files',
         'color!',
@@ -7089,15 +7156,6 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>services',
     [
-      '>assign-queued-instrument-data',
-      [
-        'instrument-data=s@',
-        undef,
-        'max-instrument-data-to-process=s',
-        undef,
-        'help!',
-        undef
-      ],
       '>build',
       [
         '>bmod-alignments-to-queue',
@@ -7433,6 +7491,8 @@ $Genome::Command::OPTS_SPEC = [
         'model-name=s',
         'files',
         'target-region-set-name=s',
+        'files',
+        'cancer-annotation-db=s',
         'files',
         'help!',
         undef
@@ -8533,6 +8593,8 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>view',
       [
+        'COLUMN-WIDTH=s',
+        undef,
         'color!',
         undef,
         'connectors!',
@@ -8543,13 +8605,11 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'full!',
         undef,
-        'inputs!',
-        undef,
         'logs!',
         undef,
-        'notes!',
+        'inputs!',
         undef,
-        'show-input-display-names!',
+        'notes!',
         undef,
         'workflow!',
         undef,
@@ -10050,19 +10110,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>manager',
-      [
-        'working-directory=s',
-        'files',
-        'make-progress!',
-        undef,
-        'launch-imports!',
-        undef,
-        'start-builds!',
-        undef,
-        'help!',
-        undef
-      ],
       'help!',
       undef
     ],
@@ -10976,6 +11023,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'chr=s',
         'files',
+        'window-size=s',
+        undef,
         'chr-start=s',
         undef,
         'chr-end=s',
@@ -13109,12 +13158,12 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'output-file=s',
         'files',
+        'reference-name=s',
+        'files',
         'review-bed-file=s',
         'files',
         'debug!',
         undef,
-        'reference-name=s',
-        'files',
         'review-description=s',
         'files',
         'roi=s',
@@ -14881,6 +14930,19 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>add-evs-maf',
+      [
+        'anno-file=s',
+        'files',
+        'output-file=s',
+        'files',
+        'vcf-file=s',
+        'files',
+        'debug!',
+        undef,
+        'help!',
+        undef
+      ],
       '>add-rsid',
       [
         'anno-file=s',
@@ -14926,9 +14988,11 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>chromosome',
       [
+        'lsf-resource=s',
+        'files',
         'anno-db=s',
         'files',
-        'output-directory=s',
+        'version=s',
         'files',
         'output-format=s',
         [
@@ -14937,14 +15001,12 @@ $Genome::Command::OPTS_SPEC = [
           'bed',
           'gff3'
         ],
-        'version=s',
+        'output-directory=s',
         'files',
         'anno-file=s',
         'files',
         'chromosome=s',
         'files',
-        'debug!',
-        undef,
         'help!',
         undef
       ],
@@ -16048,17 +16110,12 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'output-file=s',
         'files',
-        'build=s',
-        [
-          '36',
-          '37'
-        ],
+        'tier-file-location=s',
+        'files',
         'debug!',
         undef,
         'input-is-maf!',
         undef,
-        'tier-file-location=s',
-        'files',
         'tiering-version=s',
         'files',
         'help!',
@@ -19406,6 +19463,27 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>create-submission-archive',
+      [
+        'models=s@',
+        undef,
+        'output-dir=s',
+        'files',
+        'archive-name=s',
+        'files',
+        'archive-version=s',
+        'files',
+        'create-archive!',
+        undef,
+        'cghub-id-file=s',
+        'files',
+        'somatic-maf-file=s',
+        'files',
+        'germline-maf-file=s',
+        'files',
+        'help!',
+        undef
+      ],
       '>generate-maq-based-file',
       [
         'model-id=s',
@@ -20320,6 +20398,8 @@ $Genome::Command::OPTS_SPEC = [
         ],
         '>create-cross-sample-vcf-indels',
         [
+          'varscan-version=s',
+          'files',
           'software-result=s',
           undef,
           'final-result=s',
@@ -20369,6 +20449,17 @@ $Genome::Command::OPTS_SPEC = [
           undef,
           'roi-name=s',
           'files',
+          'help!',
+          undef
+        ],
+        '>backfill-indel-vcf-helper',
+        [
+          'sample-name=s',
+          'files',
+          'base-directory=s',
+          undef,
+          'output-directory=s',
+          undef,
           'help!',
           undef
         ],
@@ -33403,11 +33494,7 @@ $Genome::Command::OPTS_SPEC = [
         ],
         '>calc-bmr',
         [
-          'bmr-output=s',
-          undef,
           'roi-file=s',
-          'files',
-          'gene-mr-file=s',
           'files',
           'reference-sequence=s',
           'files',
@@ -33416,6 +33503,10 @@ $Genome::Command::OPTS_SPEC = [
           'output-dir=s',
           'files',
           'maf-file=s',
+          'files',
+          'bmr-output=s',
+          undef,
+          'gene-mr-file=s',
           'files',
           'skip-non-coding!',
           undef,
@@ -35081,23 +35172,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>filter-output',
-      [
-        'bedpe-file=s',
-        'files',
-        'output-file=s',
-        'files',
-        'annotation-build=s',
-        undef,
-        'total-frag-limit=s',
-        undef,
-        'span-frag-limit=s',
-        undef,
-        'fusion-partner-limit=s',
-        undef,
-        'help!',
-        undef
-      ],
       'help!',
       undef
     ],
@@ -36127,7 +36201,8 @@ $Genome::Command::OPTS_SPEC = [
           ],
           'version=s',
           [
-            '229'
+            '229',
+            '230'
           ],
           'adapter=s',
           'files',
@@ -36155,6 +36230,8 @@ $Genome::Command::OPTS_SPEC = [
           'files',
           'max-uncalled=s',
           'files',
+          'min-read-length=s',
+          'files',
           'min-readlength=s',
           'files',
           'no-length-dist!',
@@ -36163,6 +36240,14 @@ $Genome::Command::OPTS_SPEC = [
           'files',
           'output-metrics=s',
           'files',
+          'post-trim-length=s',
+          undef,
+          'pre-trim-left=s',
+          undef,
+          'pre-trim-phred=s',
+          undef,
+          'pre-trim-right=s',
+          undef,
           'removal-tag!',
           undef,
           'remove-revcomp!',
@@ -37464,6 +37549,12 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'instrument-data-properties=s@',
         'files',
+        'original-format=s',
+        [
+          'bam',
+          'fastq',
+          'sra'
+        ],
         'help!',
         undef
       ],
@@ -37571,6 +37662,19 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'picard-dir=s',
         'files',
+        'help!',
+        undef
+      ],
+      '>manager',
+      [
+        'source-files-tsv=s',
+        'files',
+        'launch-config=s',
+        'files',
+        'list-config=s',
+        'files',
+        'show-import-commands!',
+        undef,
         'help!',
         undef
       ],
@@ -38006,6 +38110,8 @@ $Genome::Command::OPTS_SPEC = [
   [
     '>configure-queued-instrument-data',
     [
+      'limit=s',
+      undef,
       'instrument-data=s@',
       undef,
       'help!',
@@ -38015,7 +38121,7 @@ $Genome::Command::OPTS_SPEC = [
     [
       '>create',
       [
-        'analysis-menu-item=s',
+        'analysis-menu-items=s@',
         undef,
         'name=s',
         'files',
@@ -38024,6 +38130,15 @@ $Genome::Command::OPTS_SPEC = [
       ],
       'genome::config::analysisproject::subjectpairing::command',
       undef,
+      'addconfigfile',
+      undef,
+      '>hold',
+      [
+        'analysis-projects=s@',
+        undef,
+        'help!',
+        undef
+      ],
       '>delete',
       [
         'analysis-projects=s@',
@@ -38031,37 +38146,7 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>list',
-      [
-        'show=s',
-        'files',
-        'style=s',
-        [
-          'text',
-          'csv',
-          'tsv',
-          'pretty',
-          'html',
-          'xml',
-          'newtext'
-        ],
-        'csv-delimiter=s',
-        'files',
-        'noheaders!',
-        undef,
-        'order-by=s',
-        'files',
-        'filter=s',
-        'files',
-        'help!',
-        undef
-      ],
-      'help!',
-      undef
-    ],
-    '>analysis-menu-item',
-    [
-      '>delete',
+      '>release',
       [
         'analysis-projects=s@',
         undef,

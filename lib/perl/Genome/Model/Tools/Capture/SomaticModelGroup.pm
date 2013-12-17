@@ -400,11 +400,11 @@ sub execute {                               # replace with real execution logic.
 						{
 							if($self->reference)
 							{
-								system("bsub -q short -R\"select[model!=Opteron250 && mem>6000] rusage[mem=6000]\" -M 6000000 gmt somatic ultra-high-confidence --min-tumor-var-freq 0.10 --tumor-bam $tumor_bam --normal-bam $normal_bam --variant-file $tier1_snvs --output-file $output_file --filtered-file $filtered_file --reference " . $self->reference);
+								system("bsub -q $ENV{GENOME_LSF_QUEUE_SHORT} -R\"select[model!=Opteron250 && mem>6000] rusage[mem=6000]\" -M 6000000 gmt somatic ultra-high-confidence --min-tumor-var-freq 0.10 --tumor-bam $tumor_bam --normal-bam $normal_bam --variant-file $tier1_snvs --output-file $output_file --filtered-file $filtered_file --reference " . $self->reference);
 							}
 							else
 							{
-								system("bsub -q short -R\"select[model!=Opteron250 && mem>6000] rusage[mem=6000]\" -M 6000000 gmt somatic ultra-high-confidence --min-tumor-var-freq 0.10 --tumor-bam $tumor_bam --normal-bam $normal_bam --variant-file $tier1_snvs --output-file $output_file --filtered-file $filtered_file");															
+								system("bsub -q $ENV{GENOME_LSF_QUEUE_SHORT} -R\"select[model!=Opteron250 && mem>6000] rusage[mem=6000]\" -M 6000000 gmt somatic ultra-high-confidence --min-tumor-var-freq 0.10 --tumor-bam $tumor_bam --normal-bam $normal_bam --variant-file $tier1_snvs --output-file $output_file --filtered-file $filtered_file");															
 							}
 
 						}
@@ -436,7 +436,7 @@ sub execute {                               # replace with real execution logic.
 						$cmd .= " --reference " . $self->reference if($self->reference);
 						if(!(-e "$output_dir/varScan.output.copynumber"))
 						{
-							system("bsub -q long -R\"select[model!=Opteron250 && mem>4000]\" $cmd");							
+							system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -R\"select[model!=Opteron250 && mem>4000]\" $cmd");							
 						}
 						else
 						{
@@ -1245,7 +1245,6 @@ sub output_germline_files
 
 	print SCRIPT "echo Running FP Filter...\n";
 	## Apply FP-filter to Germline using Tumor BAM ##
-	#bsub -q long -R\"select[type==LINUX64 && mem>8000] rusage[mem=8000]\" -M 8000000 
 	$cmd = "gmt somatic filter-false-positives --reference " . $self->reference . " --max-mm-qualsum-diff 100 ";
 	$cmd .= "--variant-file $germline_dir/merged.tumor.snp.tier1 --bam-file $tumor_bam --output-file $germline_dir/merged.tumor.snp.tier1.fpfilter --filtered-file $germline_dir/merged.tumor.snp.tier1.fpfilter.removed";
 	print SCRIPT "$cmd\n";
@@ -1268,7 +1267,7 @@ sub output_germline_files
 
 	close(SCRIPT);
 	
-	system("bsub -q long -R\"select[type==LINUX64 && mem>8000] rusage[mem=8000]\" -M 8000000 -oo $germline_dir/germline.sh.log \"sh $germline_dir/germline.sh\"");
+	system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -R\"select[type==LINUX64 && mem>8000] rusage[mem=8000]\" -M 8000000 -oo $germline_dir/germline.sh.log \"sh $germline_dir/germline.sh\"");
 
 
 	## Process Germline Indels ##
@@ -1350,7 +1349,7 @@ sub output_germline_files
 		print SCRIPT "$cmd\n";
 	}
 
-	system("bsub -q long -R\"select[type==LINUX64 && mem>8000] rusage[mem=8000]\" -M 8000000 -oo $germline_dir/germline-indel.sh.log \"sh $germline_dir/germline-indel.sh\"");
+	system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -R\"select[type==LINUX64 && mem>8000] rusage[mem=8000]\" -M 8000000 -oo $germline_dir/germline-indel.sh.log \"sh $germline_dir/germline-indel.sh\"");
 
 }
 
@@ -1444,7 +1443,7 @@ sub output_loh_files
 		## Apply the FP-filter ##
 		my $cmd = "gmt somatic filter-false-positives --variant-file $germline_output_file.unfiltered --bam-file $tumor_bam --output-file $germline_output_file";
 		$cmd .= " --reference " . $self->reference if($self->reference);
-		system("bsub -q long -R\"select[type==LINUX64 && mem>8000 && tmp>2000] rusage[mem=8000]\" -M 8000000 $cmd");
+		system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -R\"select[type==LINUX64 && mem>8000 && tmp>2000] rusage[mem=8000]\" -M 8000000 $cmd");
 	}
 	
 
@@ -1463,7 +1462,7 @@ sub output_loh_files
 		## Apply the FP-filter ##
 		my $cmd = "gmt somatic filter-false-positives --variant-file $loh_output_file.unfiltered --bam-file $normal_bam --output-file $loh_output_file";
 		$cmd .= " --reference " . $self->reference if($self->reference);
-		system("bsub -q apipe -R\"select[type==LINUX64 && mem>8000 && tmp>2000] rusage[mem=8000]\" -M 8000000 $cmd");
+		system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT} -R\"select[type==LINUX64 && mem>8000 && tmp>2000] rusage[mem=8000]\" -M 8000000 $cmd");
 	}
 	
 	## If both files exist, process them ##
@@ -1500,7 +1499,7 @@ sub process_loh
 		system("cat $germline_snp $loh_snp >$combined_snp");
 		system("gmt capture sort-by-chr-pos --input $combined_snp --output $combined_snp");
 		my $cmd = "gmt varscan loh-segments --variant-file $combined_snp --output-basename $combined_snp.loh";
-		system("bsub -q short -R\"select[type==LINUX64 && mem>1000] rusage[mem=1000]\" \"$cmd\"");
+		system("bsub -q $ENV{GENOME_LSF_QUEUE_SHORT} -R\"select[type==LINUX64 && mem>1000] rusage[mem=1000]\" \"$cmd\"");
 	}
 	else
 	{

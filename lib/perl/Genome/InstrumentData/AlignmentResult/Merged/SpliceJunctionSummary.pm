@@ -56,7 +56,7 @@ sub resolve_allocation_subdirectory {
 }
 
 sub resolve_allocation_disk_group_name {
-    return 'info_genome_models';
+    $ENV{GENOME_DISK_GROUP_MODELS};
 }
 
 sub _staging_disk_usage {
@@ -83,6 +83,9 @@ sub create {
     # Annotation inputs
     my $annotation_build = $self->alignment_result->annotation_build;
     my $annotation_gtf_file = $annotation_build->annotation_file('gtf',$reference_build->id);
+    unless(-s $annotation_gtf_file) {
+        my $annotation_gtf_file = $annotation_build->annotation_file('gtf');
+    }
     my $annotation_file_basename = $annotation_build->name;
     $annotation_file_basename =~ s/\//-/g;
 

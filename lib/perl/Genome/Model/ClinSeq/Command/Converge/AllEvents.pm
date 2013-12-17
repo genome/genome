@@ -480,7 +480,7 @@ sub override_event_labels{
   die $self->error_message("Could not find event labels file: $event_labels_file") unless (-e $event_labels_file);
   my %event_labs;
   my $legend_file = $self->outdir . "/events_legend.txt";
-  Genome::Sys->shellcmd(cmd => "cp $event_labels_file $legend_file");
+  Genome::Sys->copy_file($event_labels_file, $legend_file);
     
   return;
 }

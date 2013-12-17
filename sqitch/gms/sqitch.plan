@@ -1,0 +1,257 @@
+%syntax-version=1.0.0-b2
+%project=gms
+
+empty_db 2013-10-30T21:24:32Z Anthony Brummett <abrummet@genome.wustl.edu> # brand new database
+subject_schema [empty_db] 2013-10-31T15:55:51Z Anthony Brummett <abrummet@genome.wustl.edu> # schema subject
+subject_schema_permissions [subject_schema] 2013-11-06T21:53:09Z Anthony Brummett <abrummet@genome.wustl.edu> # permissions on subject schema
+subject_misc_attribute [subject_schema] 2013-10-31T15:57:32Z Anthony Brummett <abrummet@genome.wustl.edu> # table subject.misc_attribute
+subject_subject [subject_schema] 2013-10-31T16:02:44Z Anthony Brummett <abrummet@genome.wustl.edu> # table subject.subject
+subject_misc_note [subject_subject] 2013-10-31T16:08:05Z Anthony Brummett <abrummet@genome.wustl.edu> # table subject.misc_note
+subject_project [subject_schema] 2013-10-31T16:17:11Z Anthony Brummett <abrummet@genome.wustl.edu> # table subject.project
+subject_project_part [subject_project] 2013-10-31T16:18:52Z Anthony Brummett <abrummet@genome.wustl.edu> # table subject.project_part
+subject_role [subject_schema] 2013-10-31T16:20:40Z Anthony Brummett <abrummet@genome.wustl.edu> # table subject.role
+subject_user [subject_schema] 2013-10-31T16:25:53Z Anthony Brummett <abrummet@genome.wustl.edu> # table subject.user
+subject_role_member [subject_role] 2013-10-31T16:22:24Z Anthony Brummett <abrummet@genome.wustl.edu> # table subject.role_member
+subject_subject_attribute [subject_subject] 2013-10-31T16:24:02Z Anthony Brummett <abrummet@genome.wustl.edu> # table subject.subject_attribute
+subject.misc_note.index_body_text_header_text_subject_class_name_subject_id [subject_misc_note] 2013-11-05T17:02:34Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.misc_note.(body_text, header_text, subject_class_name, subject_id)
+subject.project_part.index_label [subject_project_part] 2013-11-05T17:04:58Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.project_part.label
+subject.role_member.index_role_id [subject_role_member] 2013-11-05T17:05:14Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.role_member.role_id
+subject.role_member.index_user_email [subject_role_member] 2013-11-05T17:05:27Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.role_member.user_email
+subject.subject_attribute.index_attribute_label_subject_id [subject_subject_attribute] 2013-11-05T17:05:43Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.subject_attribute.(attribute_label, subject_id)
+subject.subject_attribute.index_attribute_value_nomenclature [subject_subject_attribute] 2013-11-05T17:07:54Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.subject_attribute.(attribute_value, nomenclature)
+subject.project_part.index_part_id [subject_project_part] 2013-11-05T17:09:44Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.project_part.part_id
+subject.misc_attribute.index_entity_class_name_property_name_value [subject_misc_attribute] 2013-11-05T17:10:06Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.misc_attribute.(entity_class_name, property_name, value)
+subject.misc_note.index_body_text [subject_misc_note] 2013-11-05T17:10:21Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.misc_note.body_text
+subject.misc_note.index_editor_id_entry_date [subject_misc_note] 2013-11-05T17:10:38Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.misc_note.(editor_id, entry_date)
+subject.misc_note.index_entry_date_subject_class_name_subject_id [subject_misc_note] 2013-11-05T17:10:59Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.misc_note.(entry_date, subject_class_name, subject_id)
+subject.misc_note.index_subject_id [subject_misc_note] 2013-11-05T17:11:21Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.misc_note.subject_id
+subject.misc_note.index_subject_class_name_subject_id_header_text [subject_misc_note] 2013-11-05T17:11:39Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.misc_note.(subject_class_name, subject_id, header_text)
+subject.project.index_name [subject_project] 2013-11-05T17:11:46Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.project.name
+subject.project_part.index_part_class_name_part_id_role [subject_project_part] 2013-11-05T17:12:05Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.project_part.(part_class_name, part_id, role)
+subject.project_part.index_project_id_label [subject_project_part] 2013-11-05T17:12:26Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.project_part.(project_id, label)
+subject.project_part.index_project_id_role [subject_project_part] 2013-11-05T17:12:39Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.project_part.(project_id, role)
+subject.subject_attribute.index_attribute_label [subject_subject_attribute] 2013-11-05T17:12:51Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.subject_attribute.attribute_label
+subject.subject.index_name [subject_subject] 2013-11-05T17:13:01Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.subject.name
+subject.user.index_username [subject_user] 2013-11-05T17:13:14Z Anthony Brummett <abrummet@genome.wustl.edu> # index on subject.user.username
+subject_misc_attribute_permission [subject_misc_attribute] 2013-11-07T17:17:26Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on subject_misc_attribute
+subject_misc_note_permission [subject_misc_note] 2013-11-07T17:17:36Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on subject_misc_note
+subject_project_permission [subject_project] 2013-11-07T17:17:45Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on subject_project
+subject_project_part_permission [subject_project_part] 2013-11-07T17:17:53Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on subject_project_part
+subject_role_permission [subject_role] 2013-11-07T17:17:59Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on subject_role
+subject_role_member_permission [subject_role_member] 2013-11-07T17:18:04Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on subject_role_member
+subject_subject_permission [subject_subject] 2013-11-07T17:18:07Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on subject_subject
+subject_subject_attribute_permission [subject_subject_attribute] 2013-11-07T17:18:16Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on subject_subject_attribute
+subject_user_permission [subject_user] 2013-11-07T17:18:21Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on subject_user
+instrument_schema [empty_db] 2013-10-30T21:52:16Z Anthony Brummett <abrummet@genome.wustl.edu> # add schema instrument
+instrument_schema_permissions [instrument_schema] 2013-11-06T21:43:59Z Anthony Brummett <abrummet@genome.wustl.edu> # permissions on instrument schema
+instrument_fragment_library [instrument_schema subject_subject] 2013-10-30T22:00:00Z Anthony Brummett <abrummet@genome.wustl.edu> # table instrument.fragment_library
+instrument_data [instrument_schema instrument_fragment_library] 2013-10-30T21:54:24Z Anthony Brummett <abrummet@genome.wustl.edu> # table instrument.data
+instrument_data_attribute [instrument_data] 2013-10-30T21:57:29Z Anthony Brummett <abrummet@genome.wustl.edu> # table instrument.data_attribute
+instrument.fragment_library.index_sample_id [instrument_fragment_library] 2013-11-04T22:18:48Z Anthony Brummett <abrummet@genome.wustl.edu> # index on instrument.fragment_library.sample_id
+instrument.data_attribute.index_attribute_label_attribute_value [instrument_data_attribute] 2013-11-04T22:19:43Z Anthony Brummett <abrummet@genome.wustl.edu> # index on instrument.data_attribute.(attribute_label, attribute_value)
+instrument.data_attribute.index_attribute_label [instrument_data_attribute] 2013-11-04T22:20:52Z Anthony Brummett <abrummet@genome.wustl.edu> # index on instrument.data_attribute.attribute_label
+instrument.data_attribute.index_instrument_data_id [instrument_data_attribute] 2013-11-04T22:21:43Z Anthony Brummett <abrummet@genome.wustl.edu> # index on instrument.data_attribute.instrument_data_id
+instrument.data.index_library_id [instrument_data] 2013-11-04T22:25:53Z Anthony Brummett <abrummet@genome.wustl.edu> # index on instrument.data.library_id
+instrument_data_permission [instrument_data] 2013-11-07T17:08:07Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on instrument_data
+instrument_data_attribute_permission [instrument_data_attribute] 2013-11-07T17:08:19Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on instrument_data_attribute
+instrument_fragment_library_permission [instrument_fragment_library] 2013-11-07T17:08:26Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on instrument_fragment_library
+model_schema [empty_db] 2013-10-30T22:02:28Z Anthony Brummett <abrummet@genome.wustl.edu> # schema model
+model_schema_permissions [model_schema] 2013-11-06T21:49:10Z Anthony Brummett <abrummet@genome.wustl.edu> # permissions on model schema
+model_processing_profile [model_schema] 2013-10-30T22:39:06Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.processing_profile
+model_model [model_schema model_processing_profile] 2013-10-30T22:05:04Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.model
+model_build [model_model] 2013-10-30T22:08:02Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.build
+model_build_input [model_model] 2013-10-30T22:09:49Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.build_input
+model_build_link [model_build] 2013-10-30T22:12:01Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.build_link
+model_build_metric [model_build] 2013-10-30T22:13:35Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.build_metric
+model_event [model_build model_model instrument_data] 2013-10-30T22:15:31Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.event
+model_event_input [model_event] 2013-10-30T22:19:13Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.event_input
+model_event_metric [model_event] 2013-10-30T22:24:18Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.event_metric
+model_event_output [model_event] 2013-10-30T22:26:00Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.event_output
+model_feature_list [model_schema model_build] 2013-10-30T22:28:01Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.feature_list
+model_model_group [model_schema] 2013-10-30T22:30:34Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.model_group
+model_model_group_bridge [model_model model_model_group] 2013-10-30T22:32:32Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.model_group_bridge
+model_model_input [model_model] 2013-10-30T22:34:28Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.model_input
+model_model_link [model_model] 2013-10-30T22:36:17Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.model_link
+model_processing_profile_param [model_processing_profile] 2013-10-31T15:40:17Z Anthony Brummett <abrummet@genome.wustl.edu> # table model.processing_profile_param
+model.build.index_data_directory [model_build] 2013-11-04T22:26:30Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.build.data_directory
+model.build.index_model_id [model_build] 2013-11-04T22:26:55Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.build.model_id
+model.event.index_build_id [model_event] 2013-11-04T22:27:28Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.event.build_id
+model.event.index_instrument_data_id [model_event] 2013-11-04T22:28:03Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.event.instrument_data_id
+model.event.index_model_id [model_event] 2013-11-04T22:28:30Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.event.model_id
+model.event.index_parent_event_id [model_event] 2013-11-04T22:28:58Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.event.parent_event_id
+model.event.index_prior_event_id [model_event] 2013-11-04T22:29:32Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.event.prior_event_id
+model.event.index_ref_seq_id [model_event] 2013-11-04T22:31:29Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.event.ref_seq_id
+model.event.index_run_id [model_event] 2013-11-04T22:31:52Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.event.run_id
+model.event.index_event_status [model_event] 2013-11-04T22:32:32Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.event.event_status
+model.event.index_event_type_model_id [model_event] 2013-11-04T22:32:56Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.event.(event_type, model_id)
+model.event.index_user_name [model_event] 2013-11-04T22:33:24Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.event.user_name
+model.feature_list.index_name [model_feature_list] 2013-11-04T22:33:47Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.feature_list.name
+model.build_input.index_name_value_id [model_build_input] 2013-11-04T22:34:14Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.build_input.(name, value_id)
+model.build_input.index_value_class_name_value_id [model_build_input] 2013-11-04T22:35:05Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.build_input.(value_class_name, value_id)
+model.event.index_build_id_date_completed_event_type [model_event] 2013-11-04T22:35:41Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.event.(build_id, date_completed, event_type)
+model.event.index_build_id_event_status_event_type_user_name [model_event] 2013-11-04T22:36:20Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.event.(build_id, event_status, event_type, user_name)
+model.event.index_event_status_event_type_model_id [model_event] 2013-11-04T22:37:06Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.event.(event_status, event_type, model_id)
+model.event.index_event_status_event_type_user_name [model_event] 2013-11-05T16:27:58Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.event.(event_status, event_type, user_name)
+model.event.index_event_status_user_name [model_event] 2013-11-05T16:31:16Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.event.(event_status, user_name)
+model.event.index_parent_event_id_ref_seq_id [model_event] 2013-11-05T16:31:56Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.event.(parent_event_id, ref_seq_id)
+model.build_input.index_build_id [model_build_input] 2013-11-05T16:32:30Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.build_input.build_id
+model.build_input.index_value_class_name [model_build_input] 2013-11-05T16:32:59Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.build_input.value_class_name
+model.model.index_build_requested [model_model] 2013-11-05T16:33:22Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.model.build_requested
+model.model.index_current_running_build_id [model_model] 2013-11-05T16:35:34Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.model.current_running_build_id
+model.model.index_genome_model_id_subject_class_name [model_model] 2013-11-05T16:36:01Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.model.(genome_model_id, subject_class_name)
+model.model.index_genome_model_id_user_name_build_requested [model_model] 2013-11-05T16:36:42Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.model.(genome_model_id, user_name, build_requested)
+model.model.index_last_complete_build_id [model_model] 2013-11-05T16:37:08Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.model.last_complete_build_id
+model.build_metric.index_build_id_metric_name [model_build_metric] 2013-11-05T16:38:15Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.build_metric.(build_id, metric_name)
+model.model_group_bridge.index_model_group_id [model_model_group_bridge] 2013-11-05T16:38:59Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.model_group_bridge.model_group_id
+model.model_group_bridge.index_model_id [model_model_group_bridge] 2013-11-05T16:40:09Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.model_group_bridge.model_id
+model.model_input.index_model_id [model_model_input] 2013-11-05T16:43:12Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.model_input.model_id
+model.model_input.index_value_class_name [model_model_input] 2013-11-05T16:44:21Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.model_input.value_class_name
+model.model_input.index_value_id_name [model_model_input] 2013-11-05T16:44:52Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.model_input.(value_id, name)
+model.model.index_name [model_model] 2013-11-05T16:45:34Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.model.name
+model.model.index_processing_profile_id [model_model] 2013-11-05T16:45:52Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.model.processing_profile_id
+model.model.index_subclass_name [model_model] 2013-11-05T16:46:13Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.model.subclass_name
+model.model.index_subject_id [model_model] 2013-11-05T16:46:46Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.model.subject_id
+model.model.index_subject_class_name_subject_id [model_model] 2013-11-05T16:47:10Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.model.(subject_class_name, subject_id)
+model.processing_profile.index_name [model_processing_profile] 2013-11-05T16:47:48Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.processing_profile.name
+model.processing_profile_param.index_processing_profile_id_name [model_processing_profile_param] 2013-11-05T16:48:09Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.processing_profile_param.(processing_profile_id, name)
+model.processing_profile_param.index_processing_profile_id_param_name [model_processing_profile_param] 2013-11-05T16:48:33Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.processing_profile_param.(processing_profile_id, param_name)
+model.processing_profile_param.index_name [model_processing_profile_param] 2013-11-05T16:48:53Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.processing_profile_param.name
+model.processing_profile_param.index_value_class_name_value_id [model_processing_profile_param] 2013-11-05T16:49:17Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.processing_profile_param.(value_class_name, value_id)
+model.processing_profile_param.index_value_id [model_processing_profile_param] 2013-11-05T16:49:42Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.processing_profile_param.value_id
+model.processing_profile.index_subclass_name [model_processing_profile] 2013-11-05T16:49:56Z Anthony Brummett <abrummet@genome.wustl.edu> # index on model.processing_profile.subclass_name
+model_build_permission [model_build] 2013-11-07T17:08:36Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on model_build
+model_build_input_permission [model_build_input] 2013-11-07T17:08:42Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on model_build_input
+model_build_link_permission [model_build_link] 2013-11-07T17:08:47Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on model_build_link
+model_build_metric_permission [model_build_metric] 2013-11-07T17:08:52Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on model_build_metric
+model_event_permission [model_event] 2013-11-07T17:09:05Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on model_event
+model_event_input_permission [model_event_input] 2013-11-07T17:09:10Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on model_event_input
+model_event_metric_permission [model_event_metric] 2013-11-07T17:09:18Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on model_event_metric
+model_event_output_permission [model_event_output] 2013-11-07T17:09:23Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on model_event_output
+model_feature_list_permission [model_feature_list] 2013-11-07T17:09:35Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on model_feature_list
+model_model_permission [model_model] 2013-11-07T17:09:40Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on model_model
+model_model_group_permission [model_model_group] 2013-11-07T17:09:46Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on model_model_group
+model_model_group_bridge_permission [model_model_group_bridge] 2013-11-07T17:09:53Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on model_model_group_bridge
+model_model_input_permission [model_model_input] 2013-11-07T17:09:57Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on model_model_input
+model_model_link_permission [model_model_link] 2013-11-07T17:10:02Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on model_model_link
+model_processing_profile_permission [model_processing_profile] 2013-11-07T17:10:09Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on model_processing_profile
+model_processing_profile_param_permission [model_processing_profile_param] 2013-11-07T17:10:15Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on model_processing_profile_param
+result_schema [empty_db] 2013-10-31T15:43:40Z Anthony Brummett <abrummet@genome.wustl.edu> # add schema result
+result_schema_permissions [result_schema] 2013-11-06T21:51:15Z Anthony Brummett <abrummet@genome.wustl.edu> # permissions on result schema
+result_software_result [result_schema] 2013-10-31T15:46:10Z Anthony Brummett <abrummet@genome.wustl.edu> # table result.software_result
+result_input [result_software_result] 2013-10-31T15:48:15Z Anthony Brummett <abrummet@genome.wustl.edu> # table result.input
+result_metric [result_software_result] 2013-10-31T15:49:55Z Anthony Brummett <abrummet@genome.wustl.edu> # table result.metric
+result_param [result_software_result] 2013-10-31T15:52:08Z Anthony Brummett <abrummet@genome.wustl.edu> # table result.param
+result_user [result_software_result] 2013-10-31T15:53:57Z Anthony Brummett <abrummet@genome.wustl.edu> # table result.user
+result.metric.index_metric_name [result_metric] 2013-11-05T16:50:38Z Anthony Brummett <abrummet@genome.wustl.edu> # index on result.metric.metric_name
+result.software_result.index_lookup_hash_class_name [result_software_result] 2013-11-05T16:51:10Z Anthony Brummett <abrummet@genome.wustl.edu> # index on result.software_result.(lookup_hash, class_name)
+result.software_result.index_lookup_hash [result_software_result] 2013-11-05T16:51:32Z Anthony Brummett <abrummet@genome.wustl.edu> # index on result.software_result.lookup_hash
+result.input.index_software_result_id_name [result_input] 2013-11-05T16:51:54Z Anthony Brummett <abrummet@genome.wustl.edu> # index on result.input.(software_result_id, name)
+result.input.index_name [result_input] 2013-11-05T16:52:18Z Anthony Brummett <abrummet@genome.wustl.edu> # index on result.input.name
+result.input.index_value_class_name_value_id [result_input] 2013-11-05T16:54:18Z Anthony Brummett <abrummet@genome.wustl.edu> # index on result.input.(value_class_name, value_id)
+result.input.index_value_id [result_input] 2013-11-05T16:55:05Z Anthony Brummett <abrummet@genome.wustl.edu> # index on result.input.value_id
+result.param.index_software_result_id_name [result_param] 2013-11-05T16:55:27Z Anthony Brummett <abrummet@genome.wustl.edu> # index on result.param.(software_result_id, name)
+result.param.index_name [result_param] 2013-11-05T16:56:27Z Anthony Brummett <abrummet@genome.wustl.edu> # index on result.param.name
+result.param.index_value_class_name_value_id [result_param] 2013-11-05T16:56:49Z Anthony Brummett <abrummet@genome.wustl.edu> # index on result.param.(value_class_name, value_id)
+result.param.index_value_id [result_param] 2013-11-05T16:56:59Z Anthony Brummett <abrummet@genome.wustl.edu> # index on result.param.value_id
+result.software_result.index_class_name [result_software_result] 2013-11-05T16:57:14Z Anthony Brummett <abrummet@genome.wustl.edu> # index on result.software_result.class_name
+result.input.index_input_value_input_name [result_input] 2013-11-05T16:57:36Z Anthony Brummett <abrummet@genome.wustl.edu> # index on result.input.(input_value, input_name)
+result.input.index_input_value_input_name_software_result_id [result_input] 2013-11-05T16:58:57Z Anthony Brummett <abrummet@genome.wustl.edu> # index on result.input.(input_value, input_name, software_result_id)
+result.param.index_param_name [result_param] 2013-11-05T16:59:13Z Anthony Brummett <abrummet@genome.wustl.edu> # index on result.param.param_name
+result.param.index_param_name_param_value [result_param] 2013-11-05T16:59:28Z Anthony Brummett <abrummet@genome.wustl.edu> # index on result.param.(param_name, param_value)
+result.param.index_software_result_id [result_param] 2013-11-05T16:59:40Z Anthony Brummett <abrummet@genome.wustl.edu> # index on result.param.software_result_id
+result.user.index_software_result_id [result_user] 2013-11-05T17:00:00Z Anthony Brummett <abrummet@genome.wustl.edu> # index on result.user.software_result_id
+result.user.index_user_id [result_user] 2013-11-05T17:00:45Z Anthony Brummett <abrummet@genome.wustl.edu> # index on result.user.user_id
+result.user.index_user_id_user_class_name_label [result_user] 2013-11-05T17:01:06Z Anthony Brummett <abrummet@genome.wustl.edu> # index on result.user.(user_id, user_class_name, label)
+result.user.index_software_result_id_user_id [result_user] 2013-11-05T17:01:26Z Anthony Brummett <abrummet@genome.wustl.edu> # index on result.user.(software_result_id, user_id)
+result.user.index_software_result_id_label [result_user] 2013-11-05T17:01:41Z Anthony Brummett <abrummet@genome.wustl.edu> # index on result.user.(software_result_id, label)
+result_input_permission [result_input] 2013-11-07T17:16:51Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on result_input
+result_metric_permission [result_metric] 2013-11-07T17:17:00Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on result_metric
+result_param_permission [result_param] 2013-11-07T17:17:05Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on result_param
+result_software_result_permission [result_software_result] 2013-11-07T17:17:11Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on result_software_result
+result_user_permission [result_user] 2013-11-07T17:17:20Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on result_user
+disk_schema [empty_db] 2013-10-30T21:24:32Z Anthony Brummett <abrummet@genome.wustl.edu> # schema disk
+disk_schema_permissions [disk_schema] 2013-11-06T21:42:07Z Anthony Brummett <abrummet@genome.wustl.edu> # permissions on disk schema
+disk_allocation [disk_schema] 2013-10-30T21:31:56Z Anthony Brummett <abrummet@genome.wustl.edu> # table disk.allocation
+disk_file_summary [disk_schema disk_allocation] 2013-10-30T21:34:57Z Anthony Brummett <abrummet@genome.wustl.edu> # table disk.file_summary
+disk_group [disk_schema] 2013-10-30T21:38:05Z Anthony Brummett <abrummet@genome.wustl.edu> # table disk.group
+disk_volume [disk_schema] 2013-10-30T21:42:07Z Anthony Brummett <abrummet@genome.wustl.edu> # table disk.volume
+disk_volume_group_bridge [disk_volume disk_group] 2013-10-30T21:49:18Z Anthony Brummett <abrummet@genome.wustl.edu> # table disk.volume_group_bridge
+disk.allocation.index_allocation_path [disk_allocation] 2013-11-04T21:09:34Z Anthony Brummett <abrummet@genome.wustl.edu> # index on disk.allocation.allocation_path
+disk.allocation.index_creation_time_reallocation_time [disk_allocation] 2013-11-04T21:11:40Z Anthony Brummett <abrummet@genome.wustl.edu> # index on disk.allocation.(creation_time, reallocation_time)
+disk.allocation.index_owner_class_name_owner_id [disk_allocation] 2013-11-04T21:14:07Z Anthony Brummett <abrummet@genome.wustl.edu> # index on disk.allocation.(owner_class_name, owner_id)
+disk.allocation.index_status [disk_allocation] 2013-11-04T21:15:18Z Anthony Brummett <abrummet@genome.wustl.edu> # index on disk.allocation.status
+disk.allocation.index_kilobytes_used_time [disk_allocation] 2013-11-04T21:17:46Z Anthony Brummett <abrummet@genome.wustl.edu> # index on disk.allocation.kilobytes_used_time
+disk.allocation.index_mount_path_kilobytes_requested [disk_allocation] 2013-11-04T21:20:09Z Anthony Brummett <abrummet@genome.wustl.edu> # index on disk.allocation.(mount_path, kilobytes_requested)
+disk.allocation.index_mount_path [disk_allocation] 2013-11-04T21:21:58Z Anthony Brummett <abrummet@genome.wustl.edu> # index on disk.allocation.mount_path
+disk.allocation.index_owner_id [disk_allocation] 2013-11-04T21:23:41Z Anthony Brummett <abrummet@genome.wustl.edu> # index on disk.allocation.owner_id
+disk.file_summary.index_allocation_id [disk_file_summary] 2013-11-04T21:35:35Z Anthony Brummett <abrummet@genome.wustl.edu> # index on disk.file_summary.allocation_id
+disk.group.index_name [disk_group] 2013-11-04T22:10:39Z Anthony Brummett <abrummet@genome.wustl.edu> # index on disk.group.name
+disk.alloction.index_allocation_path [disk_allocation] 2013-11-04T22:14:14Z Anthony Brummett <abrummet@genome.wustl.edu> # index on disk.allocation.allocation_path
+disk.allocation.index_kilobytes_requested [disk_allocation] 2013-11-04T22:16:00Z Anthony Brummett <abrummet@genome.wustl.edu> # index on disk.allocation.kilobytes_requested
+disk.allocation.index_kilobytes_used [disk_allocation] 2013-11-04T22:17:04Z Anthony Brummett <abrummet@genome.wustl.edu> # index on disk.allocation.kilobytes_used
+disk.volume.index_mount_path [disk_volume] 2013-11-04T22:17:53Z Anthony Brummett <abrummet@genome.wustl.edu> # index on disk.volume.mount_path
+disk_allocation_permission [disk_allocation] 2013-11-07T17:04:25Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on disk_allocation
+disk_file_summary_permission [disk_file_summary] 2013-11-07T17:04:36Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on disk_file_summary
+disk_group_permission [disk_group] 2013-11-07T17:04:41Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on disk_group
+disk_volume_permission [disk_volume] 2013-11-07T17:05:00Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on disk_volume
+disk_volume_group_bridge_permission [disk_volume_group_bridge] 2013-11-07T17:05:07Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on disk_volume_group_bridge
+timeline_schema [empty_db] 2013-10-31T16:27:27Z Anthony Brummett <abrummet@genome.wustl.edu> # schema timeline
+timeline_schema_permissions [timeline_schema] 2013-11-06T21:55:25Z Anthony Brummett <abrummet@genome.wustl.edu> # permissions on timeline schema
+timeline_base [timeline_schema] 2013-10-31T16:34:42Z Anthony Brummett <abrummet@genome.wustl.edu> # table timeline.base
+timeline_allocation_event_type [timeline_schema] 2013-10-31T16:39:34Z Anthony Brummett <abrummet@genome.wustl.edu> # table timeline.allocation_event_type
+timeline_allocation [timeline_base disk_allocation timeline_allocation_event_type] 2013-10-31T16:37:11Z Anthony Brummett <abrummet@genome.wustl.edu> # table timeline.allocation
+timeline.allocation.index_absolute_path [timeline_allocation] 2013-11-05T17:13:28Z Anthony Brummett <abrummet@genome.wustl.edu> # index on timeline.allocation.absolute_path
+timeline.allocation.index_name [timeline_allocation] 2013-11-05T17:13:38Z Anthony Brummett <abrummet@genome.wustl.edu> # index on timeline.allocation.name
+timeline.allocation.index_object_id [timeline_allocation] 2013-11-05T17:14:06Z Anthony Brummett <abrummet@genome.wustl.edu> # index on timeline.allocation.object_id
+timeline.base.index_created_by [timeline_base] 2013-11-05T17:14:17Z Anthony Brummett <abrummet@genome.wustl.edu> # index on timeline.base.created_by
+timeline.base.index_object_id [timeline_base] 2013-11-05T17:14:36Z Anthony Brummett <abrummet@genome.wustl.edu> # index on timeline.base.object_id
+timeline_base_permission [timeline_base] 2013-11-07T17:18:29Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on timeline_base
+timeline_allocation_permission [timeline_allocation] 2013-11-07T17:18:37Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on timeline_allocation
+timeline_allocation_event_type_permission [timeline_allocation_event_type] 2013-11-07T17:18:42Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on timeline_allocation_event_type
+config_schema [empty_db] 2013-10-30T16:07:20Z Anthony Brummett <abrummet@genome.wustl.edu> # Add config schema
+config_schema_permissions [config_schema] 2013-11-06T21:13:44Z Anthony Brummett <abrummet@genome.wustl.edu> # permissions on config schema
+config_set [config_schema disk_allocation] 2013-10-30T21:22:29Z Anthony Brummett <abrummet@genome.wustl.edu> # table config.set
+config_analysis_menu_item [config_schema config_set] 2013-10-30T21:14:00Z Anthony Brummett <abrummet@genome.wustl.edu> # table config.analysis_menu_item
+config_analysis_project [config_schema config_analysis_menu_item config_set model_model_group disk_allocation] 2103-11-05T21:14:00Z Anthony Brummett <abrummet@genome.wustl.edu> # table config.analysis_project
+config.analysis_menu_item.index_configuration_set_id [config_analysis_menu_item] 2013-11-01T17:05:45Z Anthony Brummett <abrummet@genome.wustl.edu> # index on config.analysis_menu_item
+config.analysis_project.index_name [config_analysis_project] 2013-11-01T19:12:07Z Anthony Brummett <abrummet@genome.wustl.edu> # index on config.analysis_project.name
+config.analysis_project.index_status [config_analysis_project] 2013-11-01T19:15:15Z Anthony Brummett <abrummet@genome.wustl.edu> # index on config.analysis_project.status
+config.analysis_project.index_analysis_menu_item_id [config_analysis_project] 2013-11-01T19:16:53Z Anthony Brummett <abrummet@genome.wustl.edu> # index on config.analysis_project.analysis_menu_item_id
+config.analysis_project.index_configuration_set_id [config_analysis_project] 2013-11-01T19:18:34Z Anthony Brummett <abrummet@genome.wustl.edu> # index on config.analysis_project.configuration_set_id
+config.set.index_allocation_id [config_set] 2013-11-04T21:06:27Z Anthony Brummett <abrummet@genome.wustl.edu> # index on config.set.allocation_id
+config_analysis_menu_item_permission [config_analysis_menu_item] 2013-11-07T16:45:15Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on config_analysis_menu_item
+config_analysis_project_permission [config_analysis_project] 2013-11-07T16:52:24Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on config_analysis_project
+config_set_permission [config_set] 2013-11-07T16:58:44Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on config_set
+subject_pairing [subject_subject config_analysis_project] 2013-10-31T16:11:29Z Anthony Brummett <abrummet@genome.wustl.edu> # table subject.pairing
+subject_pairing_permission [subject_pairing] 2013-11-07T17:17:40Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on subject_pairing
+web_schema [empty_db] 2013-10-31T17:09:03Z Anthony Brummett <abrummet@genome.wustl.edu> # schema web
+web_schema_permissions [web_schema] 2013-11-06T21:57:13Z Anthony Brummett <abrummet@genome.wustl.edu> # permissions on web schema
+web_nomenclature [web_schema] 2013-10-31T17:10:37Z Anthony Brummett <abrummet@genome.wustl.edu> # table web.nomenclature
+web_nomenclature_field [web_nomenclature] 2013-10-31T17:14:06Z Anthony Brummett <abrummet@genome.wustl.edu> # table web.nomenclature_field
+web_nomenclature_enum_value [web_nomenclature_field] 2013-10-31T17:18:12Z Anthony Brummett <abrummet@genome.wustl.edu> # table web.nomenclature_enum_value
+web_search_index_queue [web_schema] 2013-10-31T17:22:13Z Anthony Brummett <abrummet@genome.wustl.edu> # table web.search_index_queue
+web_task [web_schema] 2013-10-31T17:24:31Z Anthony Brummett <abrummet@genome.wustl.edu> # table web.task
+web_task_params [web_task] 2013-10-31T17:26:45Z Anthony Brummett <abrummet@genome.wustl.edu> # table web.task_params
+web.nomenclature_enum_value.index_nomenclature_field_id [web_nomenclature_enum_value] 2013-11-05T17:14:48Z Anthony Brummett <abrummet@genome.wustl.edu> # index on web.nomenclature_enum_value.nomenclature_field_id
+web.nomenclature_field.index_nomenclature_id [web_nomenclature_field] 2013-11-05T17:14:57Z Anthony Brummett <abrummet@genome.wustl.edu> # index on web.nomenclature_field.nomenclature_id
+web.nomenclature.index_name [web_nomenclature] 2013-11-05T17:15:08Z Anthony Brummett <abrummet@genome.wustl.edu> # index on web.nomenclature.name
+web.search_index_queue.index_priority [web_search_index_queue] 2013-11-05T17:15:23Z Anthony Brummett <abrummet@genome.wustl.edu> # index on web.search_index_queue.priority
+web_nomenclature_permission [web_nomenclature] 2013-11-07T17:18:51Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on web_nomenclature
+web_nomenclature_enum_value_permission [web_nomenclature_enum_value] 2013-11-07T17:18:55Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on web_nomenclature_enum_value
+web_nomenclature_field_permission [web_nomenclature_field] 2013-11-07T17:19:02Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on web_nomenclature_field
+web_search_index_queue_permission [web_search_index_queue] 2013-11-07T17:19:08Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on web_search_index_queue
+web_task_permission [web_task] 2013-11-07T17:19:12Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on web_task
+web_task_params_permission [web_task_params] 2013-11-07T17:19:17Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on web_task_params
+config_instrument_data_analysis_project_bridge [config_schema instrument_data config_analysis_project] 2013-11-12T20:25:15Z Anthony Brummett <abrummet@genome.wustl.edu> # table config.instrument_data_analysis_project_bridge
+config.instrument_data_analysis_project_bridge_index_status [config_instrument_data_analysis_project_bridge] 2013-11-12T20:29:55Z Anthony Brummett <abrummet@genome.wustl.edu> # index on config.instrument_data_analysis_project_bridge.status
+config.instrument_data_analysis_project_bridge_index_fail_count [config_instrument_data_analysis_project_bridge] 2013-11-12T20:38:34Z Anthony Brummett <abrummet@genome.wustl.edu> # index on config.instrument_data_analysis_project_bridge.fail_count
+config.instrument_data_analysis_project_bridge_index_instrument_data_id [config_instrument_data_analysis_project_bridge] 2013-11-12T20:41:18Z Anthony Brummett <abrummet@genome.wustl.edu> # index on config.instrument_data_analysis_project_bridge.instrument_data_id
+config.instrument_data_analysis_project_bridge_index_analysis_project_id [config_instrument_data_analysis_project_bridge] 2013-11-12T20:43:29Z Anthony Brummett <abrummet@genome.wustl.edu> # index on config.instrument_data_analysis_project_bridge.analysis_project_id
+@production-copy-dev 2013-11-21T16:55:35Z Anthony Brummett <abrummet@genome.wustl.edu> # Proposed copy of production DB before running any tests on it
+config_analysismenu_item [config_schema] 2013-12-04T15:47:38Z Adam Coffman <acoffman@genome.wustl.edu> # add config.analysismenu_item table
+config.analysismenu_item_indices [config_analysismenu_item] 2013-12-04T15:54:01Z Adam Coffman <acoffman@genome.wustl.edu> # add config.analysismenu_item indices
+config_profile_item [config_analysis_project config_analysismenu_item] 2013-12-04T15:57:47Z Adam Coffman <acoffman@genome.wustl.edu> # add config.profile_item table
+@config_profiles 2013-12-04T16:56:35Z Adam Coffman <acoffman@genome.wustl.edu> # cqid refactor to support more flexible custom config
+disk_allocation [disk_allocation@production-copy-dev] 2013-12-04T17:17:47Z Anthony Brummett <abrummet@genome.wustl.edu># drop preserved column
+config_instrument_data_analysis_project_bridge_permission [config_instrument_data_analysis_project_bridge] 2013-12-04T21:06:43Z Anthony Brummett <abrummet@genome.wustl.edu># set permission on config.instrument_data_analysis_project_bridge
+@sync-with-production 2013-12-06T21:20:22Z Anthony Brummett <abrummet@genome.wustl.edu># Sync sqitch with production DB

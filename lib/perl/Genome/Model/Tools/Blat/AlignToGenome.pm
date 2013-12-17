@@ -15,7 +15,7 @@ package Genome::Model::Tools::Blat::AlignToGenome;     # rename this when you gi
 #				-out=pslx	(provides extended-PSL output with read/ref sequences)
 #				-noHead		(specifies output without header)
 #
-#			Default BSUB parameters are: -q long -R"select[mem>3000] rusage[mem=3000]" 
+#			Default BSUB parameters are: -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -R"select[mem>3000] rusage[mem=3000]" 
 #
 #####################################################################################################################################
 
@@ -35,7 +35,7 @@ class Genome::Model::Tools::Blat::AlignToGenome {
 		query_file	=> { is => 'Text', doc => "Query file in FASTA format" },
 		output_dir	=> { is => 'Text', doc => "Directory to store output files" },
 		params		=> { is => 'Text', doc => "BLAT parameters [-mask=lower -out=pslx -noHead]", is_optional => 1 },
-		lsf_queue	=> { is => 'Text', doc => "LSF queue if other than long [long]", is_optional => 1 },	
+		lsf_queue	=> { is => 'Text', doc => "LSF queue if other than $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} [$ENV{GENOME_LSF_QUEUE_BUILD_WORKER}]", is_optional => 1 },	
 	],
 };
 
@@ -56,7 +56,7 @@ sub help_detail {                           # this is what the user will see wit
 This command would spawn BLAT alignments between myDeletions.fasta and each of the 24 human chrom refseqs:
  gmt blat align-to-genome --reference-dir /gscmnt/839/info/medseq/reference_sequences/NCBI-human-build36/ --search-string *.fasta --query-file myDeletions.fasta --output-dir ./ 
 
-By default, each BLAT alignment will be launched in the LONG queue, and outputs will be in the ./ directory.
+By default, each BLAT alignment will be launched in the $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} queue, and outputs will be in the ./ directory.
 
 Output filenames are in the format [output_dir]/[query_filename].[reference_filename].psl.  For example, the above query
 would have output files ./myDeletions.fasta.chr1.fa.psl ./myDeletions.fasta.chr2.fa.psl etc.
@@ -80,7 +80,7 @@ sub execute {                               # replace with real execution logic.
 	my $dir = "/gscmnt/839/info/medseq/reference_sequences/NCBI-human-build36/";
 	my $search_string = "*.fasta";
 	my $blat_params = "-mask=lower -out=pslx -noHead";
-	my $lsf_queue = "long";
+	my $lsf_queue = $ENV{GENOME_LSF_QUEUE_BUILD_WORKER};
 
 	## Get optional parameters if provided ##
 	$dir = $self->reference_dir if($self->reference_dir);

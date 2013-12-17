@@ -17,6 +17,8 @@ use Workflow;
 use YAML;
 use Date::Manip;
 
+use Genome::Utility::Email;
+
 class Genome::Model::Build {
     is => ['Genome::Notable','Genome::Searchable'],
     type_name => 'genome model build',
@@ -241,6 +243,13 @@ class Genome::Model::Build {
 sub __display_name__ {
     my $self = shift;
     return $self->id . ' of ' . $self->model->name;
+}
+
+sub model_class {
+    my $self = shift;
+    my $model_class = $self->class;
+    $model_class =~ s/::Model::Build/::Model/;
+    return $model_class;
 }
 
 sub data_set_path {
@@ -538,115 +547,77 @@ sub _cpu_slot_usage_breakdown {
     my %steps;
 
     my $workflow_instance = $self->newest_workflow_instance;
-    if (1) { #($workflow_instance) {
-        my $bx;
-        if (@params) {
-            if ($params[0] =~ /event_type/) {
-                $params[0] =~ s/event_type/name/;
-            }
-            $bx = Workflow::Operation::Instance->define_boolexpr(@params);
+    my $bx;
+    if (@params) {
+        if ($params[0] =~ /event_type/) {
+            $params[0] =~ s/event_type/name/;
         }
-
-
-        my @all_children;
-        my @queue = $workflow_instance;
-
-        while ( my $next = shift @queue ) {
-            my @children = $next->related_instances;
-            push @all_children, @children;
-            push @queue,        @children;
-        }
-
-        for my $op_inst (@all_children) {
-            if ($bx and not $bx->evaluate($op_inst)) {
-                warn "skipping $op_inst $op_inst->{name}...\n";
-                next;
-            }
-            my $op = $op_inst->operation;
-            my $op_name = $op->name;
-            my $op_type = $op->operation_type;
-
-            if ($op_type->class eq 'Workflow::OperationType::Model') {
-                # don't double count
-                #print "\tskipping workflow model instance...\n";
-                next;
-            }
-
-            if ($op_type->can('lsf_queue') and defined($op_type->lsf_queue) and ($op_type->lsf_queue eq 'workflow' or $op_type->lsf_queue eq $ENV{WF_SERVER_QUEUE})) {
-                # skip jobs which run in workflow because they internally run another workflow
-                #print "\tskipping workflow queue job...\n";
-                next;
-            }
-
-            my $cpus = 1;
-            my $rusage = ($op_type->can('lsf_resource') ? $op_type->lsf_resource : undef);
-            if (defined($rusage)) {
-                if ($rusage =~ /(?<!\S)-n\s+(\S+)/) {
-                    $cpus = $1;
-                    #warn "MULTIPLE CPUS: $cpus on $op_name!\n";
-                }
-            }
-
-            my $eclass;
-            if ($op_type->can('command_class_name')) {
-                $eclass = $op_type->command_class_name;
-            }
-
-            my $d1    = Date::Manip::ParseDate( $op_inst->end_time );
-            my $d2    = Date::Manip::ParseDate( $op_inst->start_time );
-            my $delta = Date::Manip::DateCalc( $d2, $d1 );
-            my $value = Date::Manip::Delta_Format( $delta, 1, "%mt" );
-
-            if ($value eq '') {
-                #print "null value for " . $op_inst->start_time . " - " . $op_inst->end_time . "\n";
-                $value = 0; # for crashed/incomplete steps
-            }
-
-            if ($cpus eq '') {
-                die "null cpus??? resource was $rusage\n";
-            }
-
-            #print "$op_type\t$op_name\t$rusage\t$cpus\n";# . $op_inst->start_time . "\t" . $op_inst->end_time . "\t$value\n";
-
-            my $key         = $op_inst->name;
-            $key =~ s/ \d+$//;
-            $steps{$key}{sum} ||= 0;
-            $steps{$key}{count} ||= 0;
-            $steps{$key}{sum} += $value * $cpus;
-            $steps{$key}{count} += $cpus;
-        }
+        $bx = Workflow::Operation::Instance->define_boolexpr(@params);
     }
-    else {
-        my @events = $self->events(@_);
-        my $s = 0;
-        for my $event (@events) {
-            # the master event has an elapsed time for the whole process: don't double count
-            next if (ref($event) eq 'Genome::Model::Event::Build');
 
-            # this would be a method on event, but we won't keep it that long
-            # it's just good enough to do the calc for the grant 2011-01-30 -ss
-            my $cores;
-            if (ref($event) =~ /deduplicate/i) {
-                $cores = 4;
-            }
-            elsif (ref($event) =~ /AlignReads/) {
-                $cores = 4;
-            }
-            else {
-                $cores = 1;
-            }
-            my $e = UR::Time->datetime_to_time($event->date_completed)
-                    -
-                    UR::Time->datetime_to_time($event->date_scheduled);
-            if ($e < 0) {
-                warn "event " . $event->__display_name__ . " has negative elapsed time!";
-                next;
-            }
 
-            my $name = $event->event_type;
-            $steps{$name}{sum} += ($e * $cores/60);
-            $steps{$name}{count} += $cores
+    my @all_children;
+    my @queue = $workflow_instance;
+
+    while ( my $next = shift @queue ) {
+        my @children = $next->related_instances;
+        push @all_children, @children;
+        push @queue,        @children;
+    }
+
+    for my $op_inst (@all_children) {
+        if ($bx and not $bx->evaluate($op_inst)) {
+            warn "skipping $op_inst $op_inst->{name}...\n";
+            next;
         }
+        my $op = $op_inst->operation;
+        my $op_name = $op->name;
+        my $op_type = $op->operation_type;
+
+        if ($op_type->class eq 'Workflow::OperationType::Model') {
+            # don't double count
+            next;
+        }
+
+        if ($op_type->can('lsf_queue') and defined($op_type->lsf_queue)
+            and $op_type->lsf_queue eq $ENV{GENOME_LSF_QUEUE_BUILD_WORKFLOW}
+        ) {
+            # skip jobs which run in workflow because they internally run another workflow
+            next;
+        }
+
+        my $cpus = 1;
+        my $rusage = ($op_type->can('lsf_resource') ? $op_type->lsf_resource : undef);
+        if (defined($rusage)) {
+            if ($rusage =~ /(?<!\S)-n\s+(\S+)/) {
+                $cpus = $1;
+            }
+        }
+
+        my $eclass;
+        if ($op_type->can('command_class_name')) {
+            $eclass = $op_type->command_class_name;
+        }
+
+        my $d1    = Date::Manip::ParseDate( $op_inst->end_time );
+        my $d2    = Date::Manip::ParseDate( $op_inst->start_time );
+        my $delta = Date::Manip::DateCalc( $d2, $d1 );
+        my $value = Date::Manip::Delta_Format( $delta, 1, "%mt" );
+
+        if ($value eq '') {
+            $value = 0; # for crashed/incomplete steps
+        }
+
+        if ($cpus eq '') {
+            die "null cpus??? resource was $rusage\n";
+        }
+
+        my $key         = $op_inst->name;
+        $key =~ s/ \d+$//;
+        $steps{$key}{sum} ||= 0;
+        $steps{$key}{count} ||= 0;
+        $steps{$key}{sum} += $value * $cpus;
+        $steps{$key}{count} += $cpus;
     }
 
     return \%steps;
@@ -1015,7 +986,7 @@ sub start {
 
         # Creates a workflow for the build
         # TODO Initialize workflow shouldn't take arguments
-        unless ($self->_initialize_workflow($params{job_dispatch} || $ENV{WF_JOB_QUEUE})) {
+        unless ($self->_initialize_workflow($params{job_dispatch} || $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT})) {
             Carp::croak "Build " . $self->__display_name__ . " could not initialize workflow!";
         }
 
@@ -1389,7 +1360,7 @@ sub _launch {
     } elsif ($model->can('server_dispatch') && defined $model->server_dispatch) {
         $server_dispatch = $model->server_dispatch;
     } else {
-        $server_dispatch = $ENV{WF_SERVER_QUEUE};
+        $server_dispatch = $ENV{GENOME_LSF_QUEUE_BUILD_WORKFLOW};
     }
 
     # resolve job_dispatch
@@ -1398,7 +1369,7 @@ sub _launch {
     } elsif ($model->processing_profile->can('job_dispatch') && defined $model->processing_profile->job_dispatch) {
         $job_dispatch = $model->processing_profile->job_dispatch;
     } else {
-        $job_dispatch = 'apipe';
+        $job_dispatch = $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
     }
 
     my $fresh_workflow = delete $params{fresh_workflow};
@@ -1455,7 +1426,7 @@ sub _launch {
             '-P', $lsf_project,
             '-q', $server_dispatch,
             ($ENV{WF_EXCLUDE_JOB_GROUP} ? '' : $job_group_spec),
-            '-u', $user . '@genome.wustl.edu',
+            '-u', Genome::Utility::Email::construct_address(),
             '-o', $build_event->output_log_file,
             '-e', $build_event->error_log_file,
             '"', 
@@ -1483,7 +1454,7 @@ sub _launch {
 sub _initialize_workflow {
     #     Create the data and log directories and resolve the workflow for this build.
     my $self = shift;
-    my $optional_lsf_queue = shift || 'apipe';
+    my $optional_lsf_queue = shift || $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
 
     Genome::Sys->create_directory( $self->data_directory )
         or return;
@@ -1497,10 +1468,10 @@ sub _initialize_workflow {
 
     ## so developers dont fail before the workflow changes get deployed to /gsc/scripts
     # NOTE: Genome::Config is obsolete, so this code must work when it is not installed as well.
-    if ($workflow->can('notify_url') and Genome::Config->can("base_web_uri")) {
+    if ($workflow->can('notify_url') and $ENV{GENOME_SYS_SERVICES_WEB_VIEW_URL}) {
         require UR::Object::View::Default::Xsl;
 
-        my $cachetrigger = Genome::Config->base_web_uri;
+        my $cachetrigger = $ENV{GENOME_SYS_SERVICES_WEB_VIEW_URL};
         $cachetrigger =~ s/view$/cachetrigger/;
 
         my $url = $cachetrigger . '/' . UR::Object::View::Default::Xsl::type_to_url(ref($self)) . '/status.html?id=' . $self->id;
@@ -2159,9 +2130,7 @@ sub full_path_to_relative {
 # Override in subclasses!
 sub files_ignored_by_diff {
     my $self = shift;
-    my $model_class = $self->class;
-    $model_class =~ s/::Model::Build/::Model/;
-    return $model_class->files_ignored_by_build_diff($self);
+    return $self->model_class->files_ignored_by_build_diff($self);
 }
 
 # Returns a list of directories that should be ignored by the diffing done by compare_output
@@ -2189,12 +2158,27 @@ sub metrics_ignored_by_diff {
 # files that have timestamps or other changing fields in them that an md5sum can't handle.
 # Each suffix should have a method called diff_<SUFFIX> that'll contain the logic.
 sub regex_for_custom_diff {
-    return (
+    my $self = shift;
+
+    # Standard custom differs
+    my @regex_for_custom_diff = (
         hq     => '\.hq$',
         gz     => '(?<!\.vcf)\.gz$',
         vcf    => '\.vcf$',
         vcf_gz => '\.vcf\.gz$',
     );
+
+    # Addition custom differs
+    my $model_class = $self->model_class;
+    if ( $model_class->can('addtional_regex_for_custom_diff') ) {
+        my @addtional_regex_for_custom_diff = $model_class->addtional_regex_for_custom_diff;
+        if ( @addtional_regex_for_custom_diff % 2 != 0 ) {
+            Carp::confess('Invalid addtional_regex_for_custom_diff! '.Data::Dumper::Dumper(\@addtional_regex_for_custom_diff));
+        }
+        push @regex_for_custom_diff, @addtional_regex_for_custom_diff;
+    }
+
+    return @regex_for_custom_diff;
 }
 
 sub matching_regex_for_custom_diff {
@@ -2241,7 +2225,6 @@ sub diff_vcf_gz {
     my $second_md5 = qx(zcat $second_file | grep -vP '^##fileDate' | md5sum);
     return ($first_md5 eq $second_md5 ? 1 : 0);
 }
-
 
 # This method takes another build id and compares that build against this one. It gets
 # a list of all the files in both builds and attempts to find pairs of corresponding
@@ -2342,10 +2325,18 @@ sub compare_output {
         elsif (keys %matching_regex_for_custom_diff == 1) {
             my ($key) = keys %matching_regex_for_custom_diff;
             my $method = "diff_$key";
-            unless($self->can($method)) {
-                die "Custom diff method ($method) not implemented on class (" . $self->class . ").\n";
+            # Check build class first
+            if ($self->can($method)) {
+                $diff_result = $self->$method($abs_path, $other_abs_path);
             }
-            $diff_result = $self->$method($abs_path, $other_abs_path);
+            # then model class
+            elsif ($self->model_class->can($method)) {
+                $diff_result = $self->model_class->$method($abs_path, $other_abs_path);
+            }
+            # cannot find it..die
+            else {
+                die "Custom diff method ($method) not implemented in " . $self->class . " or ".$self->model_class."!\n";
+            }
         }
         else {
             my $file_md5 = Genome::Sys->md5sum($abs_path);

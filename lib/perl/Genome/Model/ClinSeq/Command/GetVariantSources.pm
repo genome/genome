@@ -5,8 +5,6 @@ package Genome::Model::ClinSeq::Command::GetVariantSources;
 use strict;
 use warnings;
 use Genome;
-use Data::Dumper;
-use Genome::Model::ClinSeq::Util qw(:all);
 
 class Genome::Model::ClinSeq::Command::GetVariantSources {
     is => 'Command::V2',
@@ -181,12 +179,14 @@ sub execute {
     my $indel_results_file_sorted = $indel_results_file . ".sort";
     my $joinx_indel_sort_cmd = Genome::Model::Tools::Joinx::Sort->create(output_file=>$indel_results_file_sorted, input_files=>[$indel_results_file]);
     $joinx_indel_sort_cmd->execute();
-    Genome::Sys->shellcmd(cmd => "mv $indel_results_file_sorted $indel_results_file");
+    unlink $indel_results_file;
+    Genome::Sys->move_file($indel_results_file_sorted, $indel_results_file);
     
     my $snv_results_file_sorted = $snv_results_file . ".sort";
     my $joinx_snv_sort_cmd = Genome::Model::Tools::Joinx::Sort->create(output_file=>$snv_results_file_sorted, input_files=>[$snv_results_file]);
     $joinx_snv_sort_cmd->execute();
-    Genome::Sys->shellcmd(cmd => "mv $snv_results_file_sorted $snv_results_file");
+    unlink $snv_results_file;
+    Genome::Sys->move_file($snv_results_file_sorted, $snv_results_file);
 
     my $indel_count = keys %indels;
     $self->status_message("Stored $indel_count indels");
@@ -283,8 +283,8 @@ sub execute {
     close(INDEL_OUT);
 
     #Cleanup temp files
-    Genome::Sys->shellcmd(cmd => "rm $indel_results_file");
-    Genome::Sys->shellcmd(cmd => "rm $snv_results_file");
+    unlink $indel_results_file;
+    unlink $snv_results_file;
 
     #Set output files as output to this step
     die $self->error_message("Trying to set a file as output but the file does not exist: $indel_outfile") unless (-e $indel_outfile);
@@ -318,8 +318,7 @@ sub noteCaller{
     }
   }
   #when finished, delete intermediate result file from joinx - otherwise this can sometimes interfere with future runs of the tool
-  my $rm_command = "rm $intersect_file";
-  Genome::Sys->shellcmd(cmd => $rm_command);
+  unlink $intersect_file;
 }
 
 sub checkResultFile{

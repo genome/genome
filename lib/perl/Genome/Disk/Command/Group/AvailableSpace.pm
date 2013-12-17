@@ -3,7 +3,7 @@ package Genome::Disk::Command::Group::AvailableSpace;
 use strict;
 use warnings;
 use Genome;
-use MIME::Lite;
+use Genome::Utility::Email;
 
 class Genome::Disk::Command::Group::AvailableSpace {
     is => 'Command::V2',
@@ -26,10 +26,10 @@ class Genome::Disk::Command::Group::AvailableSpace {
 };
 
 my %minimum_space_for_group = (
-    info_apipe => 512_000,                # 500MB
-    info_apipe_ref => 1_073_741_824,      # 1TB
-    info_alignments => 12_884_901_888,    # 12TB
-    info_genome_models => 25_769_803_776  # 24TB
+    $ENV{GENOME_DISK_GROUP_DEV} => 512_000,                # 500MB
+    $ENV{GENOME_DISK_GROUP_REFERENCES} => 1_073_741_824,      # 1TB
+    $ENV{GENOME_DISK_GROUP_ALIGNMENTS} => 12_884_901_888,    # 12TB
+    $ENV{GENOME_DISK_GROUP_MODELS} => 25_769_803_776  # 24TB
 );
 
 sub help_brief {
@@ -89,13 +89,13 @@ sub execute {
     $self->status_message(join("\n", @reports));
 
     if ($group_is_low and $self->send_alert) {
-        my $msg = MIME::Lite->new(
-            From => Genome::Config->user_email,
-            To => join(',', map { $_ . '@genome.wustl.edu' } split(',', $self->alert_recipients)),
-            Subject => 'Disk Groups Running Low on Space!',
-            Data => join("\n", @reports),
+        my @to = map { Genome::Utility::Email::construct_address($_) } split(',', $self->alert_recipients);
+        Genome::Utility::Email::send(
+            from    => Genome::Config->user_email,
+            to      => \@to,
+            subject => 'Disk Groups Running Low on Space!',
+            body    => join("\n", @reports),
         );
-        $msg->send();
         $self->warning_message("Sent alert to " . $self->alert_recipients);
     }
 

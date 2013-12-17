@@ -94,7 +94,7 @@ class Genome::Model::Tools::CopyNumber::PlotSegmentsFromBamsWorkflow {
     ],
     has_param => [
         lsf_queue => {
-            default => "long",
+            default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
         }
     ],
 

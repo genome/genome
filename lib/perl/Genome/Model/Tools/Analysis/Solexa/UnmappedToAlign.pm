@@ -20,7 +20,7 @@ use Genome;                                 # using the namespace authorizes Cla
 
 my $aligner = "novoalign";
 my $num_cores = 1;
-my $lsf_queue = "long";
+my $lsf_queue = $ENV{GENOME_LSF_QUEUE_BUILD_WORKER};
 my $bsub_cmd = "bsub -q $lsf_queue -R\"select[type==LINUX64 && model != Opteron250 && mem>8000] rusage[mem=8000] span[hosts=1]\" -n $num_cores -M 8000000";
 my $novoalign_reference = Genome::Config::reference_sequence_directory() . '/NCBI-human-build36/all_sequences.novoindex-k14-s3-v2.05.13';
 my $path_to_novoalign = "/gscuser/dkoboldt/Software/NovoCraft/novocraftV2.05.13/novocraft/novoalign";
