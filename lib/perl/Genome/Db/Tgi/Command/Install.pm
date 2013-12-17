@@ -8,7 +8,7 @@ class Genome::Db::Tgi::Command::Install {
     has => [
         source  => { is => 'Text',
                     is_constant => 1,
-                    value => 'cosmic' 
+                    value => 'tgi' 
                 },
     ],
     doc => 'install some data set on the local GMS for which there is a branch in the canonical repository'
