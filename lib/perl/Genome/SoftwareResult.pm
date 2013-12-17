@@ -937,7 +937,7 @@ sub _available_cpu_count {
         $attempt2++;
     }
     if ($attempt2 > $attempt1) {
-        $self->warning_message("overriding CPU count of $attempt1 with $attempt2 parsed from rusage");
+        $self->warning_message("overriding CPU count of $attempt1 with $attempt2 parsed from rusage (select block)");
         return $attempt2;
     }
     else {
