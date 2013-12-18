@@ -377,9 +377,9 @@
 ## FOUND Genome::Model::ImportedReferenceSequence 2869585698: GRCh37-lite (2869585698)
 ## FOUND Genome::Model::ImportedReferenceSequence 2871743894: nimblegen-human (2871743894)
 ## FOUND Genome::Model::ImportedVariationList 2887964832: dbsnp-GRCh37-lite-build37 (2887964832)
-## FOUND Genome::Model::Input Genome::Db	tgi/cancer-annotation/human/build37-20130401.1	2891454740	cancer_annotation_db: tst1-clinseq (2891454740) cancer_annotation_db: DB(tgi/cancer-annotation/human/build37-20130401.1)
 ## FOUND Genome::Model::Input Genome::Db	tgi/misc-annotation/human/build37-20130113.1	2891454740	misc_annotation_db: tst1-clinseq (2891454740) misc_annotation_db: DB(tgi/misc-annotation/human/build37-20130113.1)
 ## FOUND Genome::Model::Input Genome::Db::Cosmic	cosmic/61.1	2891454740	cosmic_annotation_db: tst1-clinseq (2891454740) cosmic_annotation_db: DB(cosmic/61.1)
+## FOUND Genome::Model::Input Genome::Db::Tgi::CancerAnnotation	tgi/cancer-annotation/human/build37-20130401.1	2891454740	cancer_annotation_db: tst1-clinseq (2891454740) cancer_annotation_db: DB(tgi/cancer-annotation/human/build37-20130401.1)
 ## FOUND Genome::Model::Input Genome::InstrumentData::Imported	2891080776	2891230330	instrument_data: tst1-normal-snparray (2891230330) instrument_data: infinium genotype file genotype file 2891080776 ([unknown])
 ## FOUND Genome::Model::Input Genome::InstrumentData::Imported	2891080777	2891230328	instrument_data: tst1-tumor-snparray (2891230328) instrument_data: infinium genotype file genotype file 2891080777 ([unknown])
 ## FOUND Genome::Model::Input Genome::InstrumentData::Solexa	2891322951	2891325873	instrument_data: tst1-tumor-refalign-wgs (2891325873) instrument_data: D1VCPACXX/D1VCPACXX (1) for 2891322951
