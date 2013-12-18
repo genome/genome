@@ -8,9 +8,8 @@ BEGIN {
 }
 
 use above 'Genome';
-use Genome::Test::Factory::InstrumentData::Solexa;
-
 use Test::More;
+use Genome::Test::Factory::InstrumentData::Solexa;
 
 my $class = 'Genome::Config::AnalysisProject::Command::AddInstrumentDataToAnalysisProject';
 use_ok($class);
@@ -37,3 +36,5 @@ for ($inst_data_1, $inst_data_2) {
 }
 
 done_testing();
+
+1;
