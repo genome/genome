@@ -685,7 +685,7 @@ EOS
     );
     $annotate_genes_cmd1->execute() or die;
     my $sort_cmd1 = "sort -rnk 102 $output_directory/raw/genes_noAmpDel.catanno.txt|head -100 |cut -d \"\t\" -f 1-4  > $output_directory/data/genes_noAmpDel.catanno.sorted.txt";
-    Genome::Sys->shellcmd(cmd => $sort_cmd1);
+    Genome::Sys->shellcmd(cmd => $sort_cmd1, set_pipefail => 1,);
 
 
 
@@ -703,7 +703,7 @@ EOS
     );
     $annotate_genes_cmd2->execute() or die;
     my $sort_cmd2 = "sort -rnk 102 $output_directory/raw/genes_AmpDel.catanno.txt|head -100 |cut -d \"\t\" -f 1-4  > $output_directory/data/genes_AmpDel.catanno.sorted.txt";
-    Genome::Sys->shellcmd(cmd => $sort_cmd2);
+    Genome::Sys->shellcmd(cmd => $sort_cmd2, set_pipefail => 1,);
 
     $config .=<<EOS;
 #GENE LABELS

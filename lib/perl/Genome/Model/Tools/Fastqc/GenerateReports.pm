@@ -127,6 +127,7 @@ sub execute {
         Genome::Sys->shellcmd(
             cmd => $cmd,
             input_files => \@input_files,
+            set_pipefail => 1,
         );
     }
     return 1;

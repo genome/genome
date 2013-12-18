@@ -106,6 +106,7 @@ sub _detect_variants {
         cmd          => $snv_cmd,
         input_files  => [$bam_file, $ref_seq_file],
         output_files => [$check_out],
+        set_pipefail => 1,
         allow_zero_size_output_files => 1,
     );
     unless ($rv) {

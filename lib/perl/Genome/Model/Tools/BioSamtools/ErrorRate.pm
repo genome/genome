@@ -70,6 +70,7 @@ sub execute {
         input_files  => [ $bam_file ],
         output_files => [ $output_file ],
         skip_if_output_is_present => 0,
+        set_pipefail => 1,
     );
 
     $self->run_r_script;
