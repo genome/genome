@@ -115,6 +115,7 @@ sub _create_workflow {
     my $burden_matrix_file = "$output_directory/burden_matrix.txt";
     my $vep_burden_file = "$vep_annotation_file_path.for_burden";
     my $burden_test_output_directory = "$output_directory/burden_analysis";
+    my $burden_test_summary_file = "$burden_test_output_directory/burden_test_summary.csv";
 
     my $log_dir = "$output_directory/logs";
     my $vep_work_directory = "$output_directory/vep_tmp";
@@ -374,25 +375,83 @@ sub _create_workflow {
             },
         },
 
-        # Run burden test
-        bur => {
-            name => "Burden analysis",
-            class => "Genome::Model::Tools::Germline::BurdenAnalysis",
+        # Create burden test option file
+        bt_opts => {
+            name => "Create burden test option file",
+            class => "Genome::Model::PhenotypeCorrelation::Command::CreateBurdenTestOptions",
             inputs => {
                 glm_clinical_data_file => $clinical_data,
                 output_directory => $burden_test_output_directory,
-                glm_model_file => $glm_model_file,
                 maf_cutoff => $self->maximum_maf,
-                permutations => "1",
-                trv_types => "ALL",
-                p_value_permutations => 1,  #not a general case desirable
-                use_bsub => !$ENV{WF_USE_FLOW},
-                aggregate_only => 0,
             },
             inputs_from => {
                 bvm => {
                     output_file => "mutation_file",
-                    burden_test_annotation_file => "VEP_annotation_file",
+                    burden_test_annotation_file => "vep_annotation_file",
+                },
+            },
+        },
+
+        get_genes => {
+            name => "List gene names",
+            class => "Genome::File::Vep::Command::ListGenes",
+            inputs_from => {
+                bvm => {
+                    burden_test_annotation_file => "input_file",
+                },
+            },
+        },
+
+        # Begin burden test
+        beg_bur => {
+            name => "Begin burden analysis",
+            class => "Genome::Model::PhenotypeCorrelation::Command::BeginBurdenTest",
+            inputs => {
+                glm_model_file => $glm_model_file,
+            },
+            inputs_from => {
+                bt_opts => {
+                    output_file => "option_file",
+                },
+                get_genes => {
+                    genes => "genes",
+                },
+            },
+        },
+
+        # Burden test wrapper
+        bur_wrap => {
+            name => "Burden test",
+            class => "Genome::Model::PhenotypeCorrelation::Command::BurdenTestWrapper",
+            parallel_by => "params",
+            inputs => {
+                permutations => "1",
+                p_value_permutations => 1,  #not a general case desirable
+            },
+            inputs_from => {
+                beg_bur => {
+                    job_params => "params",
+                },
+                bt_opts => {
+                    output_file => "option_file",
+                },
+            },
+        },
+
+        # Merge burden test results into a single summary csv.
+        bur_collate => {
+            name => "Collate burden test results",
+            class => "Genome::Model::PhenotypeCorrelation::Command::CollateBurdenResults",
+            inputs => {
+                results_directory => $burden_test_output_directory,
+                output_file => $burden_test_summary_file,
+            },
+            inputs_from => {
+                beg_bur => {
+                    job_params => "job_params",
+                },
+                bur_wrap => {
+                    result => "dummy",
                 },
             },
         },
@@ -425,12 +484,13 @@ sub _create_workflow {
         my $operation_type = Workflow::OperationType::Command->create(
             command_class_name => $node->{class},
         );
+
         $operation_type->lsf_resource( $node->{lsf_resource} ) if $node->{lsf_resource};
         $ops{$opname} = $workflow->add_operation(
             name => $node->{name},
             operation_type => $operation_type,
-            #operation_type => Workflow::OperationType::Command->get($node->{class}),
         );
+        $ops{$opname}->parallel_by($node->{parallel_by}) if exists $node->{parallel_by};
     }
 
     # add workflow links
