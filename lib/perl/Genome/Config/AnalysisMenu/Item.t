@@ -7,6 +7,6 @@ use above 'Genome';
 
 use Test::More;
 
-use_ok('Genome::Config::Profile::Item');
+use_ok('Genome::Config::AnalysisMenu::Item');
 
 done_testing();
