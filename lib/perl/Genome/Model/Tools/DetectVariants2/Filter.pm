@@ -378,7 +378,7 @@ sub _link_vcf_output_directory_to_result {
                 }
             }
         } elsif(-e $target){
-            die $self->error_message("Found something that is not a symlink to a vcf!");
+            die $self->error_message("Found something that is not a symlink to a vcf at $target!");
         }
 
         # Symlink both the vcf and the tabix
