@@ -474,9 +474,13 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>install',
       [
-        'repo=s',
+        'subsource=s',
         'files',
-        'version=s',
+        'species=s',
+        'files',
+        'branch=s',
+        'files',
+        'repo=s',
         'files',
         'help!',
         undef
@@ -504,9 +508,13 @@ $Genome::Command::OPTS_SPEC = [
     [
       '>install',
       [
-        'repo=s',
+        'subsource=s',
         'files',
-        'version=s',
+        'species=s',
+        'files',
+        'branch=s',
+        'files',
+        'repo=s',
         'files',
         'help!',
         undef
@@ -770,9 +778,13 @@ $Genome::Command::OPTS_SPEC = [
     [
       'source=s',
       'files',
-      'repo=s',
+      'subsource=s',
       'files',
-      'version=s',
+      'species=s',
+      'files',
+      'branch=s',
+      'files',
+      'repo=s',
       'files',
       'help!',
       undef
