@@ -944,6 +944,15 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>release',
+    [
+      'analysis-projects=s@',
+      undef,
+      'help!',
+      undef
+    ],
+    'addinstrumentdatatoanalysisproject',
+    undef,
     'genome::config::analysisproject::subjectpairing::command',
     undef,
     'addconfigfile',
@@ -962,10 +971,8 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>release',
+    '>update',
     [
-      'analysis-projects=s@',
-      undef,
       'help!',
       undef
     ],
@@ -38140,6 +38147,15 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>release',
+      [
+        'analysis-projects=s@',
+        undef,
+        'help!',
+        undef
+      ],
+      'addinstrumentdatatoanalysisproject',
+      undef,
       'genome::config::analysisproject::subjectpairing::command',
       undef,
       'addconfigfile',
@@ -38158,10 +38174,8 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>release',
+      '>update',
       [
-        'analysis-projects=s@',
-        undef,
         'help!',
         undef
       ],
