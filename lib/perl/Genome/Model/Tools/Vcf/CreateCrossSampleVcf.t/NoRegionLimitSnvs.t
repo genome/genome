@@ -15,7 +15,7 @@ BEGIN {
     $ENV{NO_LSF} = 1;
 };
 
-my $VERSION = 'no-region-limit-snvs-1';
+my $VERSION = 'no-region-limit-snvs-2';
 my $use_mg = 0;
 my $no_region_limiting = 1;
 test_cmd('snvs', $VERSION, $use_mg, $no_region_limiting);
