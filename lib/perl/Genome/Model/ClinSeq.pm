@@ -362,9 +362,11 @@ sub map_workflow_inputs {
     push @inputs, 'gene_name_regex' => 'mapped_gene_name';
     
     #MakeCircosPlot
-    my $circos_dir = $patient_dir . "/circos";
-    push @dirs, $circos_dir;
-    push @inputs, circos_outdir => $circos_dir;
+    if ($wgs_build){
+        my $circos_dir = $patient_dir . "/circos";
+        push @dirs, $circos_dir;
+        push @inputs, circos_outdir => $circos_dir;
+    }
     
     # For now it works to create directories here because the data_directory has been allocated.  
     #It is possible that this would not happen until later, which would mess up assigning inputs to many of the commands.
@@ -1033,12 +1035,23 @@ sub _resolve_workflow_for_build {
     
     #MakeCircosPlot - Creates a Circos plot to summarize the data using MakeCircosPlot.pm
     #Currently WGS data is a minimum requirement for Circos plot generation.
+    my $make_circos_plot_op;
     if ($build->wgs_build){
       $msg = "Creating a Circos plot using MakeCircosPlot";
-      my $make_circos_plot_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::MakeCircosPlot");
+      $make_circos_plot_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::MakeCircosPlot");
       $add_link->($input_connector, 'build', $make_circos_plot_op);
       $add_link->($input_connector, 'circos_outdir', $make_circos_plot_op, 'output_directory');
-      $add_link->($summarize_cnvs_op, 'result', $make_circos_plot_op, 'clinseq_result');
+      $add_link->($summarize_svs_op, 'fusion_output_file', $make_circos_plot_op, 'candidate_fusion_infile');
+      $add_link->($clonality_op, 'cnv_hmm_file', $make_circos_plot_op);
+      if($build->normal_rnaseq_build || $build->tumor_rnaseq_build){
+        if($build->normal_rnaseq_build){
+            $add_link->($cufflinks_differential_expression_op, 'coding_hq_de_file', $make_circos_plot_op);
+        }else{
+            $add_link->($tumor_cufflinks_expression_absolute_op, 'tumor_fpkm_topnpercent_file', $make_circos_plot_op);
+        }
+      }
+      $add_link->($import_snvs_indels_op, 'result', $make_circos_plot_op, 'import_snvs_indels_result');
+      $add_link->($run_cn_view_op, 'gene_ampdel_file', $make_circos_plot_op);
       $add_link->($make_circos_plot_op, 'result', $output_connector, 'circos_result');
     }
 
