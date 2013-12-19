@@ -44,7 +44,7 @@ class Genome::Model::Tools::Tcga::CreateSubmissionArchive {
             is => "Text",
             doc => "Somatic maf file to be included in the archive",
         },
-        germline_maf_file => {
+        protected_maf_file => {
             is => "Text",
             doc => "Germline maf file to be included in the archive",
         },
@@ -103,11 +103,12 @@ sub execute {
                 push @sdrf_rows, $sdrf->create_vcf_row($build, $somatic_build, $vcf, $sample_info);
             }
 
-            for my $maf_type (qw(somatic germline)) {
+            for my $maf_type (qw(somatic protected)) {
                 my $maf_accessor = $maf_type."_maf_file";
                 if ($self->$maf_accessor) {
-                    Genome::Sys->copy_file($self->$maf_accessor, $vcf_archive_dir."/$maf_type.maf");
-                    push @sdrf_rows, $sdrf->create_maf_row($build, $somatic_build, "$maf_type.maf", $sample_info);
+                    my $maf_name = $self->complete_archive_name.".$maf_type.maf";
+                    Genome::Sys->copy_file($self->$maf_accessor, $vcf_archive_dir."/".$maf_name);
+                    push @sdrf_rows, $sdrf->create_maf_row($build, $somatic_build, $maf_name, $sample_info);
                 }
             }
         }
