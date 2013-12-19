@@ -174,7 +174,7 @@ sub fill_in_common_fields {
     }
     $row{"Material Comment [is tumor]"} = $is_tumor;
     $row{"Material Material Type"} = "DNA";
-    $row{"Material Comment [TCGA Genome Reference]"} = "GRCh-37lite";
+    $row{"Material Comment [TCGA Genome Reference]"} = "GRCh37-lite";
     $row{"Library Protocol REF"} = $self->idf->resolve_library_protocol();
     ($row{"Library Parameter Value [Vendor]"},
     $row{"Library Parameter Value [Catalog Name]"},
