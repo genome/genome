@@ -16,6 +16,8 @@ class Genome::Site::TGI::Synchronize::Classes::InstrumentDataAnalysisProjectBrid
     (
         SELECT to_char(i.analysis_id) instrument_data_id FROM index_illumina i
         UNION ALL
+        SELECT to_char(ri454.seq_id) instrument_data_id FROM region_index_454 ri454
+        UNION ALL
         SELECT to_char(g.seq_id) instrument_data_id FROM external_genotyping g
         UNION ALL
         SELECT to_char(g.seq_id) instrument_data_id FROM illumina_genotyping g
