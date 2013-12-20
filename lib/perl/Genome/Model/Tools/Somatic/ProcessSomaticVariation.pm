@@ -201,9 +201,12 @@ sub bedFileToAnnoFile{
 
 
 sub annoFileToBedFile{
-    my ($file) = @_;
+    my ($file,$outfile) = @_;
     #add bed to name
     my $newfile = $file . ".bed";
+    if($outfile){
+        $newfile = $outfile;
+    }
 
     open(OUTFILE,">$newfile");
     my $inFh = IO::File->new( $file ) || die "can't open file2\n";
