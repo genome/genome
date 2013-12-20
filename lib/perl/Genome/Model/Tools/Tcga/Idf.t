@@ -23,7 +23,7 @@ subtest add_pp_protocol => sub {
     $idf->add_pp_protocols($test_pp);
 
     my $expected = {
-        "library preparation" => [{name => 'genome.wustl.edu:DNA_extraction:Illumina_DNASeq:01',
+        "library preparation" => [{name => 'genome.wustl.edu:DNA_extraction:IlluminaHiSeq_DNASeq:01',
                                     description => 'Illumina library prep'}],
         "mutation filtering annotation and curation" => [{name => 'genome.wustl.edu:maf_creation:data_consolidation:01',
                                     description => 'Automatic and manual filtering and curation of variants'}],
@@ -45,7 +45,7 @@ subtest add_same_pp_protocols => sub {
     $idf->add_pp_protocols($test_pp);
 
     my $expected = {
-        "library preparation" => [{name => 'genome.wustl.edu:DNA_extraction:Illumina_DNASeq:01',
+        "library preparation" => [{name => 'genome.wustl.edu:DNA_extraction:IlluminaHiSeq_DNASeq:01',
                                     description => 'Illumina library prep'}],
         "mutation filtering annotation and curation" => [{name => 'genome.wustl.edu:maf_creation:data_consolidation:01',
                                     description => 'Automatic and manual filtering and curation of variants'}],
@@ -68,7 +68,7 @@ subtest add_different_pp_protocols => sub {
     $idf->add_pp_protocols($test_pp2);
 
     my $expected = {
-        "library preparation" => [{name => 'genome.wustl.edu:DNA_extraction:Illumina_DNASeq:01',
+        "library preparation" => [{name => 'genome.wustl.edu:DNA_extraction:IlluminaHiSeq_DNASeq:01',
                                     description => 'Illumina library prep'}],
         "mutation filtering annotation and curation" => [{name => 'genome.wustl.edu:maf_creation:data_consolidation:01',
                                     description => 'Automatic and manual filtering and curation of variants'}],
@@ -92,7 +92,7 @@ subtest resolve_x_protocol => sub {
     my $test_pp = get_test_pp();
     is($idf->resolve_maf_protocol, "genome.wustl.edu:maf_creation:data_consolidation:01", "Maf protocol resolved correctly");
     is($idf->resolve_mapping_protocol($test_pp), "genome.wustl.edu:alignment:".$test_pp->id.":01", "Mapping protocol resolved correctly");
-    is($idf->resolve_library_protocol, "genome.wustl.edu:DNA_extraction:Illumina_DNASeq:01", "Library protocol resolved correctly");
+    is($idf->resolve_library_protocol, "genome.wustl.edu:DNA_extraction:IlluminaHiSeq_DNASeq:01", "Library protocol resolved correctly");
     is($idf->resolve_variants_protocol($test_pp), "genome.wustl.edu:variant_calling:".$test_pp->id.":01", "Variants protocol defined correctly");
     is($idf->resolve_sequencing_protocol(), "genome.wustl.edu:DNA_sequencing:Illumina:01", "Sequencing protocol defined correctly");
 };

@@ -3896,6 +3896,15 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>reference-alignment',
     [
+      '>adsp-qc-summary',
+      [
+        'output-file=s',
+        'files',
+        'builds=s@',
+        undef,
+        'help!',
+        undef
+      ],
       '>bam-qc-metrics',
       [
         'color!',
@@ -5463,12 +5472,22 @@ $Genome::Command::OPTS_SPEC = [
           '0.64',
           '0.64.broken'
         ],
-        'build=s',
-        undef,
         'output-directory=s',
         'files',
-        'clinseq-result!',
+        'build=s',
         undef,
+        'candidate-fusion-infile=s',
+        'files',
+        'cnv-hmm-file=s',
+        'files',
+        'coding-hq-de-file=s',
+        'files',
+        'tumor-fpkm-topnpercent-file=s',
+        'files',
+        'import-snvs-indels-result!',
+        undef,
+        'gene-ampdel-file=s',
+        'files',
         'help!',
         undef
       ],
@@ -19498,7 +19517,7 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'somatic-maf-file=s',
         'files',
-        'germline-maf-file=s',
+        'protected-maf-file=s',
         'files',
         'help!',
         undef
