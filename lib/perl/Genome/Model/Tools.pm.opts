@@ -8911,7 +8911,7 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'files',
       'somatic-maf-file=s',
       'files',
-      'germline-maf-file=s',
+      'protected-maf-file=s',
       'files',
       'help!',
       undef
