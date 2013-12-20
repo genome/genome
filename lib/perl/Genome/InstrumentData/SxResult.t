@@ -170,4 +170,11 @@ ok( # no type in output file config
     'Did not create sx result w/ config w/o basename',
 );
 
+# fails [_verify_output_files]
+my $input_count = $sx_result->input_count;
+$sx_result->input_count(0);
+ok(!$sx_result->_verify_output_files, 'failed to verify output files b/c input count is 0');
+is($sx_result->error_message, 'Input count is 0! Failed to process any sequences!', 'correct error');
+$sx_result->input_count($input_count);
+
 done_testing;
