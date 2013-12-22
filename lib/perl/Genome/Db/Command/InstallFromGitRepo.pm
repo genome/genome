@@ -9,21 +9,29 @@ class Genome::Db::Command::InstallFromGitRepo {
         source  => { is => 'Text',
                     doc => 'the data source' },
         subsource => { is => 'Text',
-                       doc => 'the data sub-source (if applicable)' },
+                       doc => 'the data sub-source (if applicable. e.g. tgi)' },
         species => { is => 'Text',
                      doc => 'the species of the source (if applicable, e.g. human or mouse)' },
         branch => { is => 'Text',
-                    doc => 'the branch of database to install, corresponding to a branch name in the genome-db-$SOURCE-data repository' },
+                    doc => 'the branch of database (git repo) to install, corresponding to a branch name in the genome-db-$SOURCE-data repository in genome-vendor on github' },
         repo    => { is => 'Text',
                     is_optional => 1,
                     doc => 'override the repository URL' },
     ],
-    doc => 'install some version data set on the local GMS for which there is a branch in the canonical repository'
+    doc => 'install some versioned data set on the local GMS for which there is a branch in the canonical repository'
 };
 
 sub help_detail {
     return <<EOS
-Install a file-based database from one of the canonical set at http://github.com/genome-vendor/genome-db-\$SOURCE-data.git.
+Install a file-based database from one of the canonical sets at http://github.com/genome-vendor/genome-db-\$SOURCE-data.git.
+
+
+genome db cosmic install --branch=65_v2
+
+genome db tgi install --subsource=cancer-annotation --species=human --branch=human-build37-20130401
+
+genome db tgi install --subsource=misc-annotation --species=human --branch=human-build37-20130113
+
 EOS
 }
 
@@ -56,13 +64,25 @@ sub execute {
     my $species = $self->species;
     my $branch = $self->branch;
 
+    #If there is 'human-' or 'mouse-' a the beginning of the branch name, do not use this in the directory name (arbitrary convention)
+    #Other arbitrary parsing of the final dirname should go here
+    my $dirname;
+    if ($branch =~ /human\-(.*)/){
+        $dirname = $1;
+    }elsif($branch =~ /mouse\-(.*)/){
+        $dirname = $1; 
+    }else{
+        $dirname = $branch;
+    }
+    
     $self->status_message("Repo is: " . $repo);
     $self->status_message("Source is: " . $source);
     $self->status_message("Subsource is: " . $subsource) if $self->subsource;
     $self->status_message("Species is: " . $species) if $self->species;
     $self->status_message("Branch is: " . $branch);
+    $self->status_message("Dirname is: " . $dirname);
 
-    my $subdir = $branch;
+    my $subdir = $dirname;
     $subdir = $species . "/" . $subdir if $species;
     $subdir = $subsource . "/" . $subdir if $subsource;
     $subdir = $source . "/" . $subdir;
