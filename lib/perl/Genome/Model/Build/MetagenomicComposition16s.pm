@@ -859,18 +859,17 @@ sub perform_post_success_actions {
     $msg .= "\n-APIPE";
     $self->status_message($msg);
 
-    if ( not $ENV{UR_DBI_NO_COMMIT} ) { # do not send mail when in dev mode
+    if ( 0 ) {  # sending email report is disabled - all recepients declined getting it anymore
         Mail::Sendmail::sendmail(
-            To => 'esodergr@genome.wustl.edu, kmihindu@genome.wustl.edu', 
-            #To => 'ebelter@genome.wustl.edu', 
-            Cc => 'ebelter@genome.wustl.edu', 
+            To => '',
+            Cc => '',
             From => $ENV{GENOME_EMAIL_PIPELINE},
             Subject => 'MC16s QC Build is Done',
             Message => $msg,
         );
+        $self->status_message('Sent email report');
     }
 
-    $self->status_message('Sent email to Erica (esodergren) and Kathie (kmihindu)');
 
     return 1;
 }
