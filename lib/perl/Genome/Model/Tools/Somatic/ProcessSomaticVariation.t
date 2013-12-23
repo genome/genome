@@ -5,54 +5,74 @@ use warnings;
 
 use above 'Genome';
 use Test::More;
-
+use Genome::Test::Factory::Model::SomaticVariation;
+use Genome::Test::Factory::Model::ImportedAnnotation;
+use Genome::Test::Factory::Build;
 use Genome::Utility::Test qw/compare_ok/;
+
 my $pkg = 'Genome::Model::Tools::Somatic::ProcessSomaticVariation';
 
 use_ok($pkg);
 
 my $data_dir = Genome::Utility::Test->data_dir_ok($pkg, "data");
 
-subtest "bedFileToAnnoFile" => sub {
-    my $input_file  = "$data_dir/H_NS-POET0092.var.SNV.bed";
-    my $output_file = Genome::Sys->create_temp_file_path;
-
-    my $annotation_file = Genome::Model::Tools::Somatic::ProcessSomaticVariation::bedFileToAnnoFile("$input_file", "$output_file");
-
-    is($annotation_file, $output_file, "Annotation file written to the desired location");
-    compare_ok("$data_dir/H_NS-POET0092.var.SNV", "$annotation_file", "Content of output file as expected");
-};
-
-#This produces warning - refactor to avoid
-subtest "bedFileToAnnoFile_slashed_input" => sub {
-    my $slashed_input_file  = "$data_dir/H_NS-POET0092.var.SNV.slashed.bed";
-    my $output_file = Genome::Sys->create_temp_file_path;
-
-    my $annotation_file = Genome::Model::Tools::Somatic::ProcessSomaticVariation::bedFileToAnnoFile("$slashed_input_file", "$output_file");
-
-    is($annotation_file, $output_file, "Annotation file written to the desired location");
-    compare_ok("$data_dir/H_NS-POET0092.var.SNV", "$annotation_file", "Content of output file as expected");
-};
-
 subtest "annoFileToBedFile" => sub {
-    my $input_file = "$data_dir/H_NS-POET0092.var.SNV";
+    my $input_file = "$data_dir/snvs_before_tiering.anno";
     my $output_file = Genome::Sys->create_temp_file_path;
 
-    my $bed_file = Genome::Model::Tools::Somatic::ProcessSomaticVariation::annoFileToBedFile("$input_file", $output_file);
+    my $bed_file = Genome::Model::Tools::Somatic::ProcessSomaticVariation::annoFileToBedFile($input_file, $output_file);
 
     is($bed_file, $output_file, "BED file written to the desired location");
-    compare_ok("$data_dir/H_NS-POET0092.var.SNV.bed", "$bed_file", "Content of output file as expected");
+    compare_ok("$data_dir/snvs_before_tiering.bed", "$bed_file", "Content of output file as expected");
 };
 
-subtest "annoFileToSlashedBedFile" => sub {
-    my $input_file = "$data_dir/H_NS-POET0092.var.SNV";
+subtest "bedFileToAnnoFile" => sub {
+    my $input_file  = "$data_dir/snvs_after_tiering.bed";
     my $output_file = Genome::Sys->create_temp_file_path;
 
-    my $bed_file = Genome::Model::Tools::Somatic::ProcessSomaticVariation::annoFileToSlashedBedFile("$input_file", $output_file);
+    my $annotation_file = Genome::Model::Tools::Somatic::ProcessSomaticVariation::bedFileToAnnoFile($input_file, $output_file);
 
-    is($bed_file, $output_file, "BED file written to the desired location");
-    compare_ok("$data_dir/H_NS-POET0092.var.SNV.slashed.bed", "$bed_file", "Content of output file as expected");
-
+    is($annotation_file, $output_file, "Annotation file written to the desired location");
+    compare_ok("$data_dir/snvs_after_tiering.anno", "$annotation_file", "Content of output file as expected");
 };
 
+# subtest "annoFileToSlashedBedFile" => sub {
+    # my $input_file = "$data_dir/H_NS-POET0092.var.SNV";
+    # my $output_file = Genome::Sys->create_temp_file_path;
+
+    # my $bed_file = Genome::Model::Tools::Somatic::ProcessSomaticVariation::annoFileToSlashedBedFile($input_file, $output_file);
+
+    # is($bed_file, $output_file, "BED file written to the desired location");
+    # compare_ok("$data_dir/H_NS-POET0092.var.SNV.slashed.bed", "$bed_file", "Content of output file as expected");
+# };
+
+subtest "addTiering_annotation_input" => sub {
+    my $input_file = "$data_dir/snvs_before_tiering.anno";
+    my $output_file = Genome::Sys->create_temp_file_path;
+
+#move tiering files to test data directory
+    my $tiering_file = Genome::Model::Tools::Somatic::ProcessSomaticVariation::addTiering(
+        $input_file,
+        "/gscmnt/gc12001/info/model_data/2772828715/build124434505/annotation_data/tiering_bed_files_v3",
+        $output_file
+    );
+
+    is($tiering_file, $output_file, "BED file written to the expected location");
+    compare_ok("$data_dir/snvs_after_tiering.bed", "$tiering_file", "Content of output file as expected");
+};
+
+subtest "addTiering_bed_input" => sub {
+    my $input_file = "$data_dir/snvs_before_tiering.bed";
+    my $output_file = Genome::Sys->create_temp_file_path;
+
+#move tiering files to test data directory
+    my $tiering_file = Genome::Model::Tools::Somatic::ProcessSomaticVariation::addTiering(
+        $input_file,
+        "/gscmnt/gc12001/info/model_data/2772828715/build124434505/annotation_data/tiering_bed_files_v3",
+        $output_file
+    );
+
+    is($tiering_file, $output_file, "BED file written to the expected location");
+    compare_ok("$data_dir/snvs_after_tiering.bed", "$tiering_file", "Content of output file as expected");
+};
 done_testing();
