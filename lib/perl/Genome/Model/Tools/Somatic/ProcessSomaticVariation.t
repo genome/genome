@@ -15,6 +15,7 @@ my $pkg = 'Genome::Model::Tools::Somatic::ProcessSomaticVariation';
 use_ok($pkg);
 
 my $data_dir = Genome::Utility::Test->data_dir_ok($pkg, "data");
+my $tiering_files_dir = Genome::Utility::Test->data_dir_ok($pkg, "tiering_bed_files_v3");
 
 subtest "annoFileToBedFile" => sub {
     my $input_file = "$data_dir/snvs_before_tiering.anno";
@@ -50,10 +51,9 @@ subtest "addTiering_annotation_input" => sub {
     my $input_file = "$data_dir/snvs_before_tiering.anno";
     my $output_file = Genome::Sys->create_temp_file_path;
 
-#move tiering files to test data directory
     my $tiering_file = Genome::Model::Tools::Somatic::ProcessSomaticVariation::addTiering(
         $input_file,
-        "/gscmnt/gc12001/info/model_data/2772828715/build124434505/annotation_data/tiering_bed_files_v3",
+        $tiering_files_dir,
         $output_file
     );
 
@@ -65,10 +65,9 @@ subtest "addTiering_bed_input" => sub {
     my $input_file = "$data_dir/snvs_before_tiering.bed";
     my $output_file = Genome::Sys->create_temp_file_path;
 
-#move tiering files to test data directory
     my $tiering_file = Genome::Model::Tools::Somatic::ProcessSomaticVariation::addTiering(
         $input_file,
-        "/gscmnt/gc12001/info/model_data/2772828715/build124434505/annotation_data/tiering_bed_files_v3",
+        $tiering_files_dir,
         $output_file
     );
 
