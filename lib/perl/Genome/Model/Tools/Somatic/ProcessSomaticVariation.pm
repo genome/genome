@@ -538,7 +538,7 @@ sub doAnnotation{
 
 
 sub addTiering{
-    my ($file, $tier_file_location) = @_;
+    my ($file, $tier_file_location, $outfile) = @_;
 
     my $newfile = addName($file, "tiered");
 
