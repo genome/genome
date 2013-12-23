@@ -11,143 +11,124 @@ use File::Slurp qw(read_dir);
 use File::Basename;
 
 class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
-  is => 'Command',
-  has_input => [
-      somatic_variation_model_id => {
-          is => 'Text',
-          doc => "ID of SomaticVariation model",
-      },
-
-      output_dir => {
-          is => 'Text',
-          doc => "Directory where output will be stored (under a subdirectory with the sample name)",
-      },
-
-      ],
-
-  has_optional_input => [
-
-      igv_reference_name =>{
-          is => 'Text',
-          is_optional => 1,
-          doc => "name of the igv reference to use",
-          example_values => ["reference_build36","b37","mm9"],
-      },
-
-      filter_sites =>{
-          is => 'Text',
-          is_optional => 1,
-          doc => "comma separated list of bed files containing sites to be removed (example - removing cell-line sites from tumors grown on them). Only sites with these exact coordinates and that match the ref and var alleles are removed.",
-      },
-
-      filter_regions =>{
-          is => 'Text',
-          is_optional => 1,
-          doc => "comma separated list of bed files containing regions to be removed (example - removing paralog regions) Any sites intersecting these regions are removed.",
-      },
-
-      get_readcounts =>{
-          is => 'Boolean',
-          is_optional => 1,
-          default => 1,
-          doc => "add readcounts to the final variant list",
-      },
-
-      restrict_to_target_regions =>{
-          is => 'Boolean',
-          is_optional => 1,
-          default => 1,
-          doc => "only keep snv calls within the target regions. These are pulled from the build if possible",
-      },
-
-      target_regions =>{
-          is => 'String',
-          is_optional => 1,
-          doc => "path to a target file region. Used in conjunction with --restrict-to-target-regions to limit sites to those appearing in these regions",
-      },
-
-      add_tiers =>{
-          is => 'Boolean',
-          is_optional => 1,
-          default => 0,
-          doc => "add tier information to the output",
-      },
-
-      variant_list_is_one_based => {
-          is => 'Boolean',
-          is_optional => 1,
-          doc => "The variant list you provide is in annotation (one-based) format, instead of bed. This flag fixes that.",
-          default => 0,
-      },
-
-      add_dbsnp_and_gmaf => {
-          is => 'Boolean',
-          is_optional => 1,
-          default => 1,
-          doc => "if this is a recent build with vcf files (Jan 2013 or later), will add the rsids and GMAF information for all SNVs",
-      },
-
-      process_svs => {
-          is => 'Boolean',
-          is_optional => 1,
-          doc => "Build has sv calls (probably WGS data). Most exomes won't have this",
-          default => 0,
-      },
-
-      sites_to_pass => {
-          is => 'String',
-          is_optional => 1,
-          doc => "an annotation file (5 col, 1 based) containing sites that will automatically be passed. This is useful when sequencing a relapse - the sites already found in the tumor don't need to be manually reviewed",
-      },
-
-      create_review_files => {
-          is => 'Boolean',
-          is_optional => 1,
-          doc => "create xml and bed files for manual review",
-          default => 0,
-      },
-
-      create_archive => {
-          is => 'Boolean',
-          is_optional => 1,
-          doc => "create an archive suitable for passing to collaborators",
-          default => 0,
-      },
-
-      include_vcfs_in_archive => {
-          is => 'Boolean',
-          is_optional => 1,
-          doc => "include full vcf files in archive (very large files)",
-          default => 0,
-      },
-
-      required_snv_callers => {
-          is => 'Number',
-          is_optional => 1,
-          doc => "Number of independent algorithms that must call a SNV. If set to 1 (default), all calls are used",
-          default => 1,
-      },
-
-      tiers_to_review => {
-          is => 'String',
-          is_optional => 1,
-          doc => "comma-separated list of tiers to include in review. (e.g. 1,2,3 will create bed files with tier1, tier2, and tier3)",
-          default => 1,
-      },
-
-      sample_name =>{
-          is => 'Text',
-          is_optional => 1,
-          doc => "override the sample name on the build and use this name instead",
-      },
-
-      reference_transcripts => {
-          is => 'Text',
-          is_optional => 1,
-          doc => "use this reference transcript build instead of the one specified in the model (e.g. NCBI-mouse.ensembl/67_37)",
-      },
-
-      ],
+    is => 'Command',
+    has => [
+        somatic_variation_model => {
+            is => 'Genome::Model::SomaticVariation',
+            is_optional => 1,
+            id_by => 'somatic_variation_model_id',
+        },
+    ],
+    has_input => [
+        somatic_variation_model_id => {
+            is => 'Text',
+            is_optional => 0,
+            doc => "ID of SomaticVariation model",
+        },
+        output_dir => {
+            is => 'Text',
+            doc => "Directory where output will be stored (under a subdirectory with the sample name)",
+        },
+    ],
+    has_optional_input => [
+        igv_reference_name =>{
+            is => 'Text',
+            is_optional => 1,
+            doc => "name of the igv reference to use",
+            example_values => ["reference_build36","b37","mm9"],
+        },
+        filter_sites =>{
+            is => 'Text',
+            is_optional => 1,
+            doc => "comma separated list of bed files containing sites to be removed (example - removing cell-line sites from tumors grown on them). Only sites with these exact coordinates and that match the ref and var alleles are removed.",
+        },
+        filter_regions =>{
+            is => 'Text',
+            is_optional => 1,
+            doc => "comma separated list of bed files containing regions to be removed (example - removing paralog regions) Any sites intersecting these regions are removed.",
+        },
+        get_readcounts =>{
+            is => 'Boolean',
+            is_optional => 1,
+            default => 1,
+            doc => "add readcounts to the final variant list",
+        },
+        restrict_to_target_regions =>{
+            is => 'Boolean',
+            is_optional => 1,
+            default => 1,
+            doc => "only keep snv calls within the target regions. These are pulled from the build if possible",
+        },
+        target_regions =>{
+            is => 'String',
+            is_optional => 1,
+            doc => "path to a target file region. Used in conjunction with --restrict-to-target-regions to limit sites to those appearing in these regions",
+        },
+        add_tiers =>{
+            is => 'Boolean',
+            is_optional => 1,
+            default => 0,
+            doc => "add tier information to the output",
+        },
+        variant_list_is_one_based => {
+            is => 'Boolean',
+            is_optional => 1,
+            doc => "The variant list you provide is in annotation (one-based) format, instead of bed. This flag fixes that.",
+            default => 0,
+        },
+        add_dbsnp_and_gmaf => {
+            is => 'Boolean',
+            is_optional => 1,
+            default => 1,
+            doc => "if this is a recent build with vcf files (Jan 2013 or later), will add the rsids and GMAF information for all SNVs",
+        },
+        process_svs => {
+            is => 'Boolean',
+            is_optional => 1,
+            doc => "Build has sv calls (probably WGS data). Most exomes won't have this",
+            default => 0,
+        },
+        sites_to_pass => {
+            is => 'String',
+            is_optional => 1,
+            doc => "an annotation file (5 col, 1 based) containing sites that will automatically be passed. This is useful when sequencing a relapse - the sites already found in the tumor don't need to be manually reviewed",
+        },
+        create_review_files => {
+            is => 'Boolean',
+            is_optional => 1,
+            doc => "create xml and bed files for manual review",
+            default => 0,
+        },
+        create_archive => {
+            is => 'Boolean',
+            is_optional => 1,
+            doc => "create an archive suitable for passing to collaborators",
+            default => 0,
+        },
+        include_vcfs_in_archive => {
+            is => 'Boolean',
+            is_optional => 1,
+            doc => "include full vcf files in archive (very large files)",
+            default => 0,
+        },
+        required_snv_callers => {
+            is => 'Number',
+            is_optional => 1,
+            doc => "Number of independent algorithms that must call a SNV. If set to 1 (default), all calls are used",
+            default => 1,
+        },
+        tiers_to_review => {
+            is => 'String',
+            is_optional => 1,
+            doc => "comma-separated list of tiers to include in review. (e.g. 1,2,3 will create bed files with tier1, tier2, and tier3)",
+            default => 1,
+        },
+        sample_name =>{
+            is => 'Text',
+            is_optional => 1,
+            doc => "override the sample name on the build and use this name instead",
+        },
+    ],
 };
 
 
@@ -598,21 +579,25 @@ sub getReadcounts{
 
 #########################################################################################################
 sub execute {
-  my $self = shift;
-  my $somatic_variation_model_id = $self->somatic_variation_model_id;
-  my $output_dir = $self->output_dir;
-  $output_dir =~ s/(\/)+$//; # Remove trailing forward-slashes if any
+    my $self = shift;
 
-  if(!(-e $output_dir)){
-      mkdir($output_dir);
-  }
+    my $output_dir = $self->output_dir;
+    $output_dir =~ s/(\/)+$//; # Remove trailing forward-slashes if any
 
-  # Check on the input data before starting work
-  my $model = Genome::Model->get( $somatic_variation_model_id );
-  print STDERR "ERROR: Could not find a model with ID: $somatic_variation_model_id\n" unless( defined $model );
-  print STDERR "ERROR: Output directory not found: $output_dir\n" unless( -e $output_dir );
-  return undef unless( defined $model && -e $output_dir );
+    if(!(-e $output_dir)){
+        mkdir($output_dir);
+    }
 
+    # Check on the input data before starting work
+    my $model = $self->somatic_variation_model;
+    unless (defined $model) {
+        print STDERR "ERROR: Could not find a soamtic variation model with ID: " . $model->id . "\n";
+        return undef;
+    }
+    unless( -e $output_dir ) {
+        print STDERR "ERROR: Output directory not found: $output_dir\n";
+        return undef;
+    }
 
   #grab the info from the model
   my $build = $model->last_succeeded_build;
