@@ -512,28 +512,36 @@ sub removeUnsupportedSites{
 
 
 sub doAnnotation{
-    my ($file,$annotation_build_name) = @_;
+    my ($file,$annotation_build_name, $outfile) = @_;
 
     if($file =~ /.bed$/){
         $file = bedFileToAnnoFile($file);
     }
 
+    my $newfile;
+    if($outfile){
+        $newfile = $outfile;
+    }
+    else {
+        $newfile = $file . ".anno";
+    }
+
     #handle zero size files
     if( -z $file ){
-        `touch $file.anno`;
-        return($file . ".anno");
+        `touch $newfile`;
+        return($newfile);
     }
 
     my $anno_cmd = Genome::Model::Tools::Annotate::TranscriptVariants->create(
         variant_file => $file,
-        output_file => $file . ".anno",
+        output_file => $newfile,
         reference_transcripts => $annotation_build_name,
         annotation_filter => "top",
-        );
+    );
     unless ($anno_cmd->execute) {
         die "Failed to annotate variants successfully.\n";
     }
-    return($file . ".anno");
+    return($newfile);
 }
 
 
@@ -552,7 +560,7 @@ sub addTiering{
         input_file => $file,
         output_file => $newfile,
         tier_file_location => $tier_file_location,
-        );
+    );
     unless ($tier_cmd->execute) {
         die "Failed to tier variants successfully.\n";
     }

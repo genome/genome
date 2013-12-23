@@ -38,7 +38,6 @@ subtest "bedFileToAnnoFile" => sub {
 };
 
 subtest "annoFileToSlashedBedFile" => sub {
-    $DB::single=1;
     my $input_file = "$data_dir/review_anno_before_annoFileToSlashedBedFile.anno";
     my $output_file = Genome::Sys->create_temp_file_path;
 
@@ -46,6 +45,21 @@ subtest "annoFileToSlashedBedFile" => sub {
 
     is($bed_file, $output_file, "BED file written to the desired location");
     compare_ok("$data_dir/review_bed_after_annoFileToSlashedBedFile.bed", $bed_file, "Content of output file as expected");
+};
+
+subtest "doAnnotation_bed_input" => sub {
+    my $input_file = "$data_dir/snvs_before_annotation.bed";
+    my $output_file = Genome::Sys->create_temp_file_path;
+
+    my $annotation_file = Genome::Model::Tools::Somatic::ProcessSomaticVariation::doAnnotation(
+        $input_file,
+        "NCBI-human.ensembl/67_37l_v2",
+        $output_file
+    );
+
+    is($annotation_file, $output_file, "BED file written to the expected location");
+    compare_ok("$data_dir/snvs_before_tiering.anno", "$annotation_file", "Content of output file as expected");
+
 };
 
 subtest "addTiering_annotation_input" => sub {
