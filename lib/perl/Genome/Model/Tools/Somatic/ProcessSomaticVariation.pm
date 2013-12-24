@@ -584,103 +584,87 @@ sub execute {
     my $output_dir = $self->output_dir;
     $output_dir =~ s/(\/)+$//; # Remove trailing forward-slashes if any
 
-    if(!(-e $output_dir)){
+    unless (-e $output_dir) {
         mkdir($output_dir);
     }
 
     # Check on the input data before starting work
     my $model = $self->somatic_variation_model;
     unless (defined $model) {
-        print STDERR "ERROR: Could not find a soamtic variation model with ID: " . $model->id . "\n";
-        return undef;
+        die "ERROR: Could not find a soamtic variation model with ID: " . $model->id . "\n";
     }
-    unless( -e $output_dir ) {
-        print STDERR "ERROR: Output directory not found: $output_dir\n";
-        return undef;
+    unless (-e $output_dir) {
+        die "ERROR: Output directory not found: $output_dir\n";
     }
 
-  #grab the info from the model
-  my $build = $model->last_succeeded_build;
-  unless( defined($build) ){
-      print STDERR "WARNING: Model ", $model->id, "has no succeeded builds\n";
-      return undef;
-  }
+    #grab the info from the model
+    my $build = $model->last_succeeded_build;
+    unless (defined($build)) {
+        die "ERROR: Model ", $model->id, "has no succeeded builds\n";
+    }
 
-  my $tumor_model = $model->tumor_model;
-  my $normal_model = $model->normal_model;
+    my $tumor_model = $model->tumor_model;
+    my $normal_model = $model->normal_model;
 
-  my $ref_seq_build_id = $tumor_model->reference_sequence_build->build_id;
-  my $ref_seq_build = Genome::Model::Build->get($ref_seq_build_id);
-  my $ref_seq_fasta = $ref_seq_build->full_consensus_path('fa');
+    my $ref_seq_build = $tumor_model->reference_sequence_build;
+    my $ref_seq_fasta = $ref_seq_build->full_consensus_path('fa');
+    my $annotation_build_name = $model->annotation_build->name;
+    my $tiering_files = $model->annotation_build->data_directory . "/annotation_data/tiering_bed_files_v3/";
+    my $sample_name = $self->sample_name;
+    unless (defined($sample_name)) {
+        $sample_name = $model->subject->name;
+    }
+    print STDERR "processing model with sample_name: " . $sample_name . "\n";
+    my $tumor_bam = $tumor_model->last_succeeded_build->merged_alignment_result->bam_file;
+    my $normal_bam = $normal_model->last_succeeded_build->merged_alignment_result->bam_file;
+    my $build_dir = $build->data_directory;
 
-  my $annotation_build_name = $model->annotation_build->name;
-  if(defined $self->reference_transcripts){
-      print STDERR "Model's annotation build overriden. Using " . $self->reference_transcripts . "\n";
-      $annotation_build_name = $self->reference_transcripts;
-  }
-
-  my $tiering_files = $model->annotation_build->data_directory . "/annotation_data/tiering_bed_files_v3/";
-  my $sample_name;
-  if(!defined($self->sample_name)){
-      $sample_name = $model->subject->name;
-  } else {
-      $sample_name = $self->sample_name;
-  }
-  print STDERR "processing model with sample_name: " . $sample_name . "\n";
-  my $tumor_bam = $tumor_model->last_succeeded_build->merged_alignment_result->bam_file;
-  my $normal_bam = $normal_model->last_succeeded_build->merged_alignment_result->bam_file;
-  my $build_dir = $build->data_directory;
-
-  my $igv_reference_name;
-  if($self->create_review_files){
-      if(defined($self->igv_reference_name)){
-          $igv_reference_name = $self->igv_reference_name;
-      } else {
-          die("igv-reference-name required if --create-review-files is specified");
-      }
-  }
+    my $igv_reference_name = $self->igv_reference_name;
+    if ($self->create_review_files && !defined($self->igv_reference_name)) {
+        die "ERROR: igv-reference-name required if --create-review-files is specified";
+    }
 
 
-  # create subdirectories, get files in place
+    # create subdirectories, get files in place
 
-  # if multiple models with the same name, add a suffix
-  if( -e "$output_dir/$sample_name" ){
-      my $suffix = 1;
-      my $newname = $sample_name . "-" . $suffix;
-      while ( -e "$output_dir/$newname" ){
-          $suffix++;
-          $newname = $sample_name . "-" . $suffix;
-      }
-      $sample_name = $newname;
-  }
-  #make the directory structure
-  mkdir "$output_dir/$sample_name";
-  mkdir "$output_dir/$sample_name/snvs" unless( -e "$output_dir/$sample_name/snvs" );
-  mkdir "$output_dir/$sample_name/indels" unless( -e "$output_dir/$sample_name/indels" );
-  mkdir "$output_dir/review" unless( -e "$output_dir/review" || !($self->create_review_files));
-  `ln -s $build_dir $output_dir/$sample_name/build_directory`;
+    # if multiple models with the same name, add a suffix
+    if( -e "$output_dir/$sample_name" ){
+        my $suffix = 1;
+        my $newname = $sample_name . "-" . $suffix;
+        while ( -e "$output_dir/$newname" ){
+            $suffix++;
+            $newname = $sample_name . "-" . $suffix;
+        }
+        $sample_name = $newname;
+    }
+    #make the directory structure
+    mkdir "$output_dir/$sample_name";
+    mkdir "$output_dir/$sample_name/snvs" unless( -e "$output_dir/$sample_name/snvs" );
+    mkdir "$output_dir/$sample_name/indels" unless( -e "$output_dir/$sample_name/indels" );
+    mkdir "$output_dir/review" unless( -e "$output_dir/review" || !($self->create_review_files));
+    `ln -s $build_dir $output_dir/$sample_name/build_directory`;
 
 
-
-  # Check if the necessary files exist in this build
-  my $snv_file = "$build_dir/effects/snvs.hq.novel.tier1.v2.bed";
-  unless( -e $snv_file ){
-      die "ERROR: SNV results for $sample_name not found at $snv_file\n";
-  }
-  my $indel_file = "$build_dir/effects/indels.hq.novel.tier1.v2.bed";
-  unless( -e $indel_file ){
-      die "ERROR: INDEL results for $sample_name not found at $indel_file\n";
-  }
-  my $sv_file;
-  my $process_svs = $self->process_svs;
-  if($process_svs){
-      my @sv_files = glob("$build_dir/variants/sv/union-union-sv_breakdancer_*sv_squaredancer*/svs.merge.file.somatic");
-      $sv_file = $sv_files[0];
-      unless( -e $sv_file ){
-          print STDERR "ERROR: SV results for $sample_name not found, skipping SVs\n";
-          $process_svs = 0;
-      }
-  }
+    # Check if the necessary files exist in this build
+    my $snv_file = "$build_dir/effects/snvs.hq.novel.tier1.v2.bed";
+    unless( -e $snv_file ){
+        die "ERROR: SNV results for $sample_name not found at $snv_file\n";
+    }
+    my $indel_file = "$build_dir/effects/indels.hq.novel.tier1.v2.bed";
+    unless( -e $indel_file ){
+        die "ERROR: INDEL results for $sample_name not found at $indel_file\n";
+    }
+    my $sv_file;
+    my $process_svs = $self->process_svs;
+    if($process_svs){
+        my @sv_files = glob("$build_dir/variants/sv/union-union-sv_breakdancer_*sv_squaredancer*/svs.merge.file.somatic");
+        $sv_file = $sv_files[0];
+        unless( -e $sv_file ){
+            print STDERR "WARNING: SV results for $sample_name not found, skipping SVs\n";
+#SHOULD THIS BE MADE INTO AN OBJECT PARAM $self->process_svs
+            $process_svs = 0;
+        }
+    }
 
 
   #cat all the filtered snvs together (same for indels)
