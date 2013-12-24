@@ -585,7 +585,7 @@ sub execute {
     $output_dir =~ s/(\/)+$//; # Remove trailing forward-slashes if any
 
     unless (-e $output_dir) {
-        mkdir($output_dir);
+        Genome::Sys->create_directory($output_dir);
     }
 
     # Check on the input data before starting work
@@ -638,10 +638,12 @@ sub execute {
         $sample_name = $newname;
     }
     #make the directory structure
-    mkdir "$output_dir/$sample_name";
-    mkdir "$output_dir/$sample_name/snvs" unless( -e "$output_dir/$sample_name/snvs" );
-    mkdir "$output_dir/$sample_name/indels" unless( -e "$output_dir/$sample_name/indels" );
-    mkdir "$output_dir/review" unless( -e "$output_dir/review" || !($self->create_review_files));
+    Genome::Sys->create_directory("$output_dir/$sample_name");
+    Genome::Sys->create_directory("$output_dir/$sample_name/snvs");
+    Genome::Sys->create_directory("$output_dir/$sample_name/indels");
+    unless ($self->create_review_files) {
+        Genome::Sys->create_directory("$output_dir/review");
+    }
     `ln -s $build_dir $output_dir/$sample_name/build_directory`;
 
 
@@ -674,7 +676,7 @@ sub execute {
 #  `ln -s $snv_file $output_dir/$sample_name/snvs/` unless( -e "$output_dir/$sample_name/snvs/$snv_file");
 #  `ln -s $indel_file $output_dir/$sample_name/indels/` unless( -e "$output_dir/$sample_name/indels/$indel_file");
   if($process_svs){
-      `mkdir $output_dir/$sample_name/svs`;
+      Genome::Sys->create_directory("$output_dir/$sample_name/svs");
       `ln -s $sv_file $output_dir/$sample_name/svs/svs.hq` unless( -e "$output_dir/$sample_name/svs/$sv_file");
 
 #       #annotate the svs
@@ -959,11 +961,12 @@ sub execute {
       print STDERR "$output_dir/review/$sample_name.xml\n\n";
   }
 
+#NEW SUBROUTINE
   #------------------------------------------------
   # tar up the files to be sent to collaborators
   #
   if($self->create_archive){
-      mkdir("$output_dir/$sample_name/$sample_name");
+      Genome::Sys->create_directory("$output_dir/$sample_name/$sample_name");
 
       chdir("$output_dir/$sample_name/");
       #VCF files
