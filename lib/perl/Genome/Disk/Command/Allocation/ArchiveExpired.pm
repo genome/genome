@@ -16,7 +16,7 @@ class Genome::Disk::Command::Allocation::ArchiveExpired {
       archive_time => {
         is=>'Time',
         doc=>'Time before which allocations should be archived',
-        default_value => Date::Format::time2str(UR::Context->date_template, time()+10000),
+        default_value => Date::Format::time2str(UR::Context->date_template, time()),
       }
     ],
     doc => 'archive allocations where the archive_after_time is prior to now.',
