@@ -3,14 +3,12 @@
 use strict;
 use warnings FATAL => qw(all);
 
-# This pre-receive hook comes from jira issue AR-206
-# The idea is to prevent a naive git commit -a from updating
-# submodules in genome.git that should never be updated by
-# a regular user.
+use IPC::System::Simple qw(capture);
 
-# The ur and workflow submodules are in the list of protected directories
-# so that only apipe-tester (and other users in the white list) can make
-# changes to those submodules.  This will prevent accidental modifications.
+# This pre-receive hook comes from jira issue AR-206 The idea is to prevent a
+# naive git commit -a from updating submodules in genome.git that should never
+# be updated by a regular user.
+# See githooks(5) for more information.
 
 my @user_whitelist  = exists $ENV{GENOMECI_USER_WHITELIST}
     ? (split /:/, $ENV{GENOMECI_USER_WHITELIST})
@@ -21,43 +19,55 @@ my @protected_heads = qw( master );
 my $user_name = getpwuid($>);
 exit 0 if grep {$user_name eq $_} @user_whitelist;
 
-# If the user running the hook is in the user whitelist, we can exit
-# immediately with success, because whitelist users are allowed to change
-# anything.
-#
-# For non-whitelist users, we should inspect specifically what they are changing.
-# We only care about branches in the list of proteted_heads.  We do not check
-# tags.
-#
-# This hook processes a list of arguments that arrive on STDIN in this format:
-#       <old-value> SP <new-value> SP <ref-name> LF
-# See "pre-receive" in githooks(5) for more information.
-
 my $exit_status = 0;
-while (my $line = <STDIN>) {
-    chomp $line;
+while (my $change = next_change()) {
+    my $protected = grep {$change->{'ref_name'} eq "refs/heads/$_"} @protected_heads;
 
-    my ($old_value, $new_value, $ref_name) = split / /, $line;
-    next unless grep {$ref_name eq "refs/heads/$_"} @protected_heads;
+    if (not $protected) { }
 
-    if ($old_value eq '0000000000000000000000000000000000000000') {
-        # CASE: Protected branch did not exist previously. Allowed.
-        next;
-    }
+    elsif (change_creates_branch($change)) { }
 
-    if ($new_value eq '0000000000000000000000000000000000000000') {
-        # CASE: Attempt to delete protected branch. Restricted.
-        print "*** $user_name is not allowed to delete $ref_name\n";
+    elsif (change_delete_branch($change)) {
+        printf "*** %s is not allowed to delete %s\n", $user_name, $change->{'ref_name'};
         $exit_status++;
     }
 
-    my $cmd = "git diff --name-only $old_value $new_value -- @protected_dirs";
-    if ( my @modified_dirs = qx($cmd) ) {
-        # CASE: Attempt to modify dir on protected branch. Restricted.
-        chomp @modified_dirs;
-        print "*** $user_name is not allowed to modify @modified_dirs on $ref_name\n";
+    elsif ( my @modified_dirs = get_modified_dirs($change, @protected_dirs) ) {
+        printf "*** %s is not allowed to modify %s on %s\n",
+            $user_name, join(', ', @modified_dirs), $change->{'ref_name'};
         $exit_status++;
     }
 }
 
 exit $exit_status;
+
+sub next_change {
+    my $record = <STDIN>;
+    return unless $record;
+
+    chomp $record;
+
+    my %record;
+    @record{'old_value', 'new_value', 'ref_name'} = split / /, $record;
+    return \%record;
+}
+
+sub change_creates_branch {
+    my ($change) = @_;
+    return $change->{old_value} eq '0000000000000000000000000000000000000000';
+}
+
+sub change_delete_branch {
+    my ($change) = @_;
+    return $change->{new_value} eq '0000000000000000000000000000000000000000';
+}
+
+sub get_modified_dirs {
+    my ($change, @dirs_to_check) = @_;
+
+    my @modified_dirs = capture(
+        git => 'diff', '--name-only', @{$change}{'old_value', 'new_value'}, '--', @dirs_to_check);
+
+    chomp @modified_dirs;
+    return @modified_dirs;
+}
