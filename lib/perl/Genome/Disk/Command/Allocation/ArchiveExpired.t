@@ -146,7 +146,7 @@ system("touch " . $shouldnt_allocation->absolute_path . "/a.out");
 # Create command object and execute it
 my $cmd = Genome::Disk::Command::Allocation::ArchiveExpired->create(
   disk_group_name=>$group->disk_group_name,
-  archive_time => time(),
+  archive_time => Date::Format::time2str(UR::Context->date_template, time()),
 );
 ok($cmd, 'created archive expired command');
 ok($cmd->execute, 'successfully executed archive expired command');
