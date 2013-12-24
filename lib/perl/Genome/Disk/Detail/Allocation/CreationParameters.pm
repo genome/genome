@@ -184,10 +184,10 @@ sub as_hash {
         $parameters{id} = $self->allocation_id;
     }
     if ($self->archive_after_time) {
-        $parameters{archive_after_time} = $self->parameters->archive_after_time;
+        $parameters{archive_after_time} = $self->archive_after_time;
     }
     if ($self->kilobytes_used) {
-        $parameters{kilobytes_used} = $self->parameters->kilobytes_used;
+        $parameters{kilobytes_used} = $self->kilobytes_used;
     }
     return %parameters;
 }
