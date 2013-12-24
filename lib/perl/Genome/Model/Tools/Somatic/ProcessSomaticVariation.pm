@@ -644,7 +644,7 @@ sub execute {
     unless ($self->create_review_files) {
         Genome::Sys->create_directory("$output_dir/review");
     }
-    `ln -s $build_dir $output_dir/$sample_name/build_directory`;
+    Genome::Sys->create_symlink($build_dir, "$output_dir/$sample_name/build_directory");
 
 
     # Check if the necessary files exist in this build
@@ -677,7 +677,7 @@ sub execute {
 #  `ln -s $indel_file $output_dir/$sample_name/indels/` unless( -e "$output_dir/$sample_name/indels/$indel_file");
   if($process_svs){
       Genome::Sys->create_directory("$output_dir/$sample_name/svs");
-      `ln -s $sv_file $output_dir/$sample_name/svs/svs.hq` unless( -e "$output_dir/$sample_name/svs/$sv_file");
+      Genome::Sys->create_symlink($sv_file, "$output_dir/$sample_name/svs/svs.hq") unless( -e "$output_dir/$sample_name/svs/$sv_file");
 
 #       #annotate the svs
 #       my $anno_cmd = Genome::Model::Tools::Annotate::Sv::Combine->create(
@@ -972,27 +972,27 @@ sub execute {
       #VCF files
       if($self->include_vcfs_in_archive){
           if(-e "$build_dir/variants/indels.detailed.vcf.gz"){
-              `ln -s $build_dir/variants/indels.detailed.vcf.gz $sample_name/indels.vcf.gz`;
+              Genome::Sys->create_symlink("$build_dir/variants/indels.detailed.vcf.gz", "$sample_name/indels.vcf.gz");
           } elsif(-e "$build_dir/variants/indels.vcf.gz") {
-              `ln -s $build_dir/variants/indels.vcf.gz $sample_name/indels.vcf.gz`;
+              Genome::Sys->create_symlink("$build_dir/variants/indels.vcf.gz", "$sample_name/indels.vcf.gz");
           } else {
               print STDERR "WARNING: no indel VCF file available. If this is an older model, a rebuild may fix this\n";
           }
           if(-e "$build_dir/variants/snvs.annotated.vcf.gz"){
-              `ln -s $build_dir/variants/snvs.annotated.vcf.gz  $sample_name/snvs.vcf.gz`;
+              Genome::Sys->create_symlink("$build_dir/variants/snvs.annotated.vcf.gz", "$sample_name/snvs.vcf.gz");
           } elsif (-e "$build_dir/variants/snvs.vcf.gz"){
-              `ln -s $build_dir/variants/snvs.vcf.gz  $sample_name/snvs.vcf.gz`;
+              Genome::Sys->create_symlink("$build_dir/variants/snvs.vcf.gz", "$sample_name/snvs.vcf.gz");
           } else {
               print STDERR "WARNING: no snv VCF file available. If this is an older model, a rebuild may fix this\n";
           }
       }
       #annotated snvs and indels
-      `ln -s ../snvs.indels.annotated $sample_name/snvsAndIndels.annotated`;
+      Genome::Sys->create_symlink("../snvs.indels.annotated", "$sample_name/snvsAndIndels.annotated");
       #same in excel format
-      `ln -s ../snvs.indels.annotated.xls $sample_name/snvsAndIndels.annotated.xls`;
+      Genome::Sys->create_symlink("../snvs.indels.annotated.xls", "$sample_name/snvsAndIndels.annotated.xls");
       #sv calls
       if($process_svs){
-          `ln -s $sv_file $output_dir/$sample_name/$sample_name/svs`;
+          Genome::Sys->create_symlink("$sv_file", "$output_dir/$sample_name/$sample_name/svs");
           #`ln -s $sv_file $output_dir/$sample_name/$sample_name/svs.annotated`;
       }
       #cnv calls - todo
