@@ -7,7 +7,7 @@ use Carp;
 
 class Genome::Disk::Command::Allocation::ArchiveExpired {
     is => 'Command::V2',
-    has => [        
+    has => [
     disk_group_name => {
             is => 'Text',
             doc => 'Name for disk group to search against',
@@ -32,16 +32,16 @@ sub help_brief {
 
 sub execute {
     my $self = shift;
-    
+
     $self->status_message("Gathering allocations...");
-    
+
 
     my %search_params;
     $search_params{disk_group_name} = $self->disk_group_name if $self->disk_group_name;
-    
+
     my @volumes = grep {!$_->is_archive} Genome::Disk::Volume->get();
-    
-    my @allocations = Genome::Disk::Allocation->get(%search_params, 
+
+    my @allocations = Genome::Disk::Allocation->get(%search_params,
                                                 mount_path=>[map {$_->mount_path} @volumes],
                                                 kilobytes_requested=>{operator=>'>=', value=>1024**2},
                                                 archive_after_time=>{operator=>'<', value=>$self->archive_time});
@@ -51,9 +51,9 @@ sub execute {
     return 1 if (@allocations == 0);
 
     $self->status_message("Starting archive command on these allocations.");
-    
+
     my $archive_cmd = Genome::Disk::Command::Allocation::Archive->create(allocations=>\@allocations);
-    
+
     my $rv = $archive_cmd->execute();
     unless ($rv) {
         Carp::confess "Could not execute archive allocation command.";
