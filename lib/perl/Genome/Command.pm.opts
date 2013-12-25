@@ -387,6 +387,15 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>archive-expired',
+      [
+        'archive-time=s',
+        undef,
+        'disk-group-name=s',
+        'files',
+        'help!',
+        undef
+      ],
       'help!',
       undef
     ],
