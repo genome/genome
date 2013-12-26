@@ -455,37 +455,6 @@ sub _link_output_directory_to_result {
     return 1;
 }
 
-sub _link_vcf_output_directory_to_result {
-    my $self = shift;
-    $self->status_message("Linking in vcfs from vcf_result");
-
-    my $result = $self->_vcf_result;
-    return unless $result;
-    my @vcfs = glob($result->output_dir."/*.vcf.gz");
-    my $output_directory = $self->output_directory;
-    for my $vcf (@vcfs){
-        for my $file ($vcf, "$vcf.tbi") {
-            my $target = $output_directory . "/" . basename($file);
-
-            $self->status_message("Attempting to link : " .$file."  to  ". $target);
-            if(-l $target) {
-                if (readlink($target) eq $file) {
-                    $self->status_message("Already found a file linked in here, and it already has the correct target. Continuing.");
-                    next;
-                } else {
-                    $self->status_message("Found previous file linked in here, unlinking that for you.");
-                    unless(unlink($target)){
-                        die $self->error_message("Failed to unlink a link at: ".$target);
-                    }
-                }
-            } elsif(-e $target) {
-                die $self->error_message("Found something in place of the symlink.");
-            }
-            Genome::Sys->create_symlink($file, $target);
-        }
-    }
-    return 1;
-}
 
 # Given a line of output from this detector, parse and return the chromosome, position, reference, and variant
 # The position must be converted to the same position that a bed would consider the STOP position
