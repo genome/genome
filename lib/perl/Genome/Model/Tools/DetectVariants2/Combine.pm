@@ -282,32 +282,9 @@ sub params_for_vcf_result {
 
 sub _link_vcf_output_directory_to_result {
     my $self = shift;
-    $self->status_message("Linking in vcfs from vcf_result");
 
-    my $result = $self->_vcf_result;
-    return unless $result;
-    my @vcfs = glob($result->output_dir."/*.vcf.gz");
-    my $output_directory = $self->output_directory;
-    for my $vcf (@vcfs){
-        my $target = $output_directory . "/" . basename($vcf);
-        $self->status_message("Attempting to link : " .$vcf."  to  ". $target);
-        if(-l $target) {
-            if (readlink($target) eq $vcf) {
-                $self->status_message("Already found a vcf linked in here, and it already has the correct target. Continuing.");
-                next;
-            } else {
-                $self->status_message("Already found a vcf linked in here, unlinking that for you.");
-                unless(unlink($target)){
-                    die $self->error_message("Failed to unlink a link to a vcf at: ".$target);
-                }
-            }
-        } elsif(-e $target){
-            die $self->error_message("Found something that is not a symlink to a vcf at $target!");
-        }
-        # Symlink both the vcf and the tabix
-        Genome::Sys->create_symlink($vcf, $target);
-        Genome::Sys->create_symlink("$vcf.tbi", "$target.tbi");
-    }
+    require Genome::Model::Tools::DetectVariants2::Base;
+    return Genome::Model::Tools::DetectVariants2::Base::_link_vcf_output_directory_to_result($self);
 
     return 1;
 }
