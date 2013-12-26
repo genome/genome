@@ -384,3 +384,5 @@ sub line_count {
     my ($answer)  = split /\s/,$result;
     return $answer
 }
+
+1;
