@@ -4,7 +4,6 @@ use strict;
 use warnings FATAL => qw(all);
 
 use File::Copy      qw(copy);
-use File::Temp      qw();
 use Git::Repository qw(Test);
 use Path::Class     qw(file dir);
 
@@ -18,7 +17,7 @@ my $proto_repo  = initialize_repo({
 
 my $setup = sub {
     my $remote = bare_clone_repo($proto_repo);
-    install_hook($remote, $hook_script);
+    $remote->install_hook($hook_script, 'pre-receive');
     my $local = clone_repo($remote);
 
     return ($local, $remote);
@@ -34,7 +33,7 @@ sub test_modify_ur_file {
     dir($local->work_tree)->subdir('ur')->file('test')->openw('Modified file contents');
 
     commit_all($local, 'Modified the test UR file');
-    $local->run_exit_is(1, push => 'origin', 'master');
+    $local->run_exit_is(1, push => $remote->git_dir, 'master');
 }
 
 sub test_modify_readme {
@@ -43,7 +42,7 @@ sub test_modify_readme {
     dir($local->work_tree)->file('README')->openw('New readme documentation!');
 
     commit_all($local, 'Modified the README file');
-    $local->run_exit_ok(push => 'origin', 'master');
+    $local->run_exit_ok(push => $remote->git_dir, 'master');
 }
 
 
@@ -52,16 +51,14 @@ sub test_modify_readme {
 sub initialize_repo {
     my ($dir_spec) = @_;
 
-    my $work_dir = dir( File::Temp->newdir() );
+    my $git = Git::Repository->new_tmp_repo;
     while (my ($path, $content) = each %$dir_spec) {
-        my $f = $work_dir->file($path);
+        my $f = dir($git->work_tree)->file($path);
         $f->dir->mkpath;
         $f->touch;
         $f->openw->say($content);
     }
 
-    Git::Repository->run(init => $work_dir);
-    my $git = Git::Repository->new( work_tree => $work_dir );
     commit_all($git, 'Initial commit');
 
     return $git;
@@ -70,19 +67,24 @@ sub initialize_repo {
 sub bare_clone_repo {
     my ($origin) = @_;
 
-    my $new_git_dir = dir( File::Temp->newdir() );
-    Git::Repository->run(clone => '--bare', $origin->git_dir, $new_git_dir);
+    my $git = Git::Repository->new_tmp_repo('--bare');
+    $git->run('fetch', $origin->git_dir, 'master:master');
 
-    return Git::Repository->new( git_dir => $new_git_dir );
+    return $git;
 }
 
 sub clone_repo {
     my ($origin) = @_;
 
-    my $new_work_tree = dir( File::Temp->newdir() );
-    Git::Repository->run(clone => $origin->git_dir, $new_work_tree);
+    # This involves a little hackery because fetching to the checked-out branch
+    # of a non-bare repo does not work
 
-    return Git::Repository->new( work_tree => $new_work_tree );
+    my $git = Git::Repository->new_tmp_repo;
+    $git->run('checkout', '-b', 'fake');
+    $git->run('fetch', $origin->git_dir, 'master:master');
+    $git->run('checkout', 'master');
+
+    return $git;
 }
 
 sub commit_all {
@@ -91,12 +93,4 @@ sub commit_all {
     $git->run('commit', '-am', $message);
 }
 
-sub install_hook {
-    my ($git, $hook_script) = @_;
-    my $install_path = dir($git->git_dir)->subdir('hooks')->file($hook_script->basename);
-
-    copy($hook_script, $install_path) or die "file copy failed $!";
-    chmod 0755, $install_path;
-
-    return $install_path;
-}
+1;
