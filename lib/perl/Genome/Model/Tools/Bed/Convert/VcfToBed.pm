@@ -123,4 +123,22 @@ sub _simplify_indel_allele {
     return (join("",@ref_array), join("",@var_array), $right_shift);
 }
 
+sub help_brief {
+    "Tool to convert the first sample in a VCF to TGI BED.",
+}
+
+sub help_synopsis {
+    my $self = shift;
+    return <<"EOS"
+  gmt bed convert vcf-to-bed...
+EOS
+}
+
+sub help_detail {                           
+    return <<EOS
+    This tool takes a VCF file and converts the first sample in it to a TGI variant BED file with no information about the depth and quality
+EOS
+}
+
+
 1;
