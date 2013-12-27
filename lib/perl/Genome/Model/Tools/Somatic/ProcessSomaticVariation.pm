@@ -321,8 +321,8 @@ sub cleanFile{
     }
     close(OUTFILE);
     close($inFh);
-    `joinx sort -i $newfile >$newfile.tmp`;
-    `mv -f $newfile.tmp $newfile`;
+    Genome::Sys->shellcmd( cmd => "joinx sort -i $newfile >$newfile.tmp" );
+    Genome::Sys->shellcmd( cmd => "mv -f $newfile.tmp $newfile");
     return($newfile)
 }
 
@@ -369,7 +369,7 @@ sub removeFilterSites{
     my $newfile = addName($file,"filtered");
     #handle zero size files
     if( -z $file ){
-        `touch $newfile`;
+        Genome::Sys->shellcmd( cmd => "touch $newfile" );
         return($newfile);
     }
 
@@ -509,7 +509,7 @@ sub doAnnotation{
 
     #handle zero size files
     if( -z $file ){
-        `touch $newfile`;
+        Genome::Sys->shellcmd( cmd => "touch $newfile" );
         return($newfile);
     }
 
@@ -533,7 +533,7 @@ sub addTiering{
 
     #handle zero size files
     if( -z $file ){
-        `touch $newfile`;
+        Genome::Sys->shellcmd( cmd => "touch $newfile" );
         return($newfile);
     }
 
@@ -571,7 +571,7 @@ sub getReadcounts{
             die "Failed to obtain readcounts for file $file.\n";
         }
     } else {
-        `touch $file.rcnt`;
+        Genome::Sys->shellcmd( cmd => "touch $file.rcnt" );
     }
     return("$file.rcnt");
 }
@@ -669,9 +669,9 @@ sub execute {
     }
 
 
-  #cat all the filtered snvs together (same for indels)
-  `cat $build_dir/effects/snvs.hq.novel.tier*.v2.bed $build_dir/effects/snvs.hq.previously_detected.tier*.v2.bed | joinx sort >$output_dir/$sample_name/snvs/snvs.hq.bed`;
-  `cat $build_dir/effects/indels.hq.novel.tier*.v2.bed $build_dir/effects/indels.hq.previously_detected.tier*.v2.bed | joinx sort >$output_dir/$sample_name/indels/indels.hq.bed`;
+    #cat all the filtered snvs together (same for indels)
+    Genome::Sys->shellcmd( cmd => "cat $build_dir/effects/snvs.hq.novel.tier*.v2.bed $build_dir/effects/snvs.hq.previously_detected.tier*.v2.bed | joinx sort >$output_dir/$sample_name/snvs/snvs.hq.bed");
+    Genome::Sys->shellcmd( cmd => "cat $build_dir/effects/indels.hq.novel.tier*.v2.bed $build_dir/effects/indels.hq.previously_detected.tier*.v2.bed | joinx sort >$output_dir/$sample_name/indels/indels.hq.bed" );
 
 #  `ln -s $snv_file $output_dir/$sample_name/snvs/` unless( -e "$output_dir/$sample_name/snvs/$snv_file");
 #  `ln -s $indel_file $output_dir/$sample_name/indels/` unless( -e "$output_dir/$sample_name/indels/$indel_file");
@@ -750,18 +750,18 @@ sub execute {
           close(FEATFILE);
           my $new_snv_file = addName($snv_file,"ontarget");
           my $new_indel_file = addName($indel_file,"ontarget");
-          
-          `joinx sort $output_dir/$sample_name/featurelist.tmp >$output_dir/$sample_name/featurelist`;
-          `rm -f $output_dir/$sample_name/featurelist.tmp`;
-          `joinx intersect -a $snv_file -b $output_dir/$sample_name/featurelist >$new_snv_file`;
+
+          Genome::Sys->shellcmd(cmd => "joinx sort $output_dir/$sample_name/featurelist.tmp >$output_dir/$sample_name/featurelist");
+          Genome::Sys->shellcmd(cmd => "rm -f $output_dir/$sample_name/featurelist.tmp");
+          Genome::Sys->shellcmd(cmd => "joinx intersect -a $snv_file -b $output_dir/$sample_name/featurelist >$new_snv_file");
           $snv_file = "$new_snv_file";
-          `joinx intersect -a $indel_file -b $output_dir/$sample_name/featurelist >$new_indel_file`;
-          $indel_file = "$new_indel_file";      
-      } else {
+          Genome::Sys->shellcmd(cmd => "joinx intersect -a $indel_file -b $output_dir/$sample_name/featurelist >$new_indel_file");
+          $indel_file = "$new_indel_file";
+      }
+      else {
           $self->warning_message("feature list not found or target regions not specified; No target region filtering being done even though --restrict-to-target-regions set.");
       }
   }
-
 
   #-------------------------------------------------
   #remove filter sites specified by the user
