@@ -966,7 +966,8 @@ sub execute {
   # tar up the files to be sent to collaborators
   #
   if($self->create_archive){
-      Genome::Sys->create_directory("$output_dir/$sample_name/$sample_name");
+      my $archive_dir = "$output_dir/$sample_name/$sample_name";
+      Genome::Sys->create_directory("$archive_dir");
 
       chdir("$output_dir/$sample_name/");
       #VCF files
@@ -997,8 +998,10 @@ sub execute {
       }
       #cnv calls - todo
 
+
       #tar it up
-      `tar -chzvf $sample_name.tar.gz $sample_name`;
+#write tests for the new options param
+      Genome::Sys->tar(tar_path => "$archive_dir.tar.gz", input_directory => "$archive_dir", options => "-chzvf")
   }
 
   return 1;
