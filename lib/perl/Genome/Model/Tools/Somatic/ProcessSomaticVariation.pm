@@ -961,48 +961,72 @@ sub execute {
       print STDERR "$output_dir/review/$sample_name.xml\n\n";
   }
 
-#NEW SUBROUTINE
-  #------------------------------------------------
-  # tar up the files to be sent to collaborators
-  #
-  if($self->create_archive){
-      my $archive_dir = "$output_dir/$sample_name/$sample_name";
-      Genome::Sys->create_directory("$archive_dir");
+    #------------------------------------------------
+    # tar up the files to be sent to collaborators
+    #
+    my $archive_dir = "$output_dir/$sample_name/$sample_name";
+    if($self->create_archive){
+        $self->_create_archive($archive_dir, $build_dir, $sv_file);
+    }
 
-      #VCF files
-      if($self->include_vcfs_in_archive){
-          if(-e "$build_dir/variants/indels.detailed.vcf.gz"){
-              Genome::Sys->create_symlink("$build_dir/variants/indels.detailed.vcf.gz", "$archive_dir/indels.vcf.gz");
-          } elsif(-e "$build_dir/variants/indels.vcf.gz") {
-              Genome::Sys->create_symlink("$build_dir/variants/indels.vcf.gz", "$archive_dir/indels.vcf.gz");
-          } else {
-              print STDERR "WARNING: no indel VCF file available. If this is an older model, a rebuild may fix this\n";
-          }
-          if(-e "$build_dir/variants/snvs.annotated.vcf.gz"){
-              Genome::Sys->create_symlink("$build_dir/variants/snvs.annotated.vcf.gz", "$archive_dir/snvs.vcf.gz");
-          } elsif (-e "$build_dir/variants/snvs.vcf.gz"){
-              Genome::Sys->create_symlink("$build_dir/variants/snvs.vcf.gz", "$archive_dir/snvs.vcf.gz");
-          } else {
-              print STDERR "WARNING: no snv VCF file available. If this is an older model, a rebuild may fix this\n";
-          }
-      }
-      #annotated snvs and indels/
-      Genome::Sys->create_symlink("$output_dir/$sample_name/snvs.indels.annotated", "$archive_dir/snvsAndIndels.annotated");
-      #same in excel format
-      Genome::Sys->create_symlink("$output_dir/$sample_name/snvs.indels.annotated.xls", "$archive_dir/snvsAndIndels.annotated.xls");
-      #sv calls
-      if($process_svs){
-          Genome::Sys->create_symlink("$sv_file", "$archive_dir/svs");
-      }
-      #cnv calls - todo
+    return 1;
+}
 
+sub _create_archive {
+    my $self        = shift;
+    my $archive_dir = shift;
+    my $build_dir   = shift;
+    my $sv_file     = shift;
 
-      #tar it up
-#write tests for the new options param
-      Genome::Sys->tar(tar_path => "$archive_dir.tar.gz", input_directory => "$archive_dir", options => "-chzvf")
-  }
+    my $output_dir = $self->output_dir;
 
-  return 1;
+    my $sample_name = $self->sample_name;
+    unless (defined($sample_name)) {
+        $sample_name = $self->somatic_variation_model->subject->name;
+    }
+
+    my $full_output_dir = "$output_dir/$sample_name";
+
+    Genome::Sys->create_directory("$archive_dir");
+
+    #symlink VCF files
+    if ($self->include_vcfs_in_archive) {
+        if (-e "$build_dir/variants/indels.detailed.vcf.gz") {
+            Genome::Sys->create_symlink("$build_dir/variants/indels.detailed.vcf.gz", "$archive_dir/indels.vcf.gz");
+        }
+        elsif (-e "$build_dir/variants/indels.vcf.gz") {
+            Genome::Sys->create_symlink("$build_dir/variants/indels.vcf.gz", "$archive_dir/indels.vcf.gz");
+        }
+        else {
+            print STDERR "WARNING: no indel VCF file available. If this is an older model, a rebuild may fix this\n";
+        }
+
+        if (-e "$build_dir/variants/snvs.annotated.vcf.gz") {
+            Genome::Sys->create_symlink("$build_dir/variants/snvs.annotated.vcf.gz", "$archive_dir/snvs.vcf.gz");
+        }
+        elsif (-e "$build_dir/variants/snvs.vcf.gz") {
+            Genome::Sys->create_symlink("$build_dir/variants/snvs.vcf.gz", "$archive_dir/snvs.vcf.gz");
+        }
+        else {
+            print STDERR "WARNING: no snv VCF file available. If this is an older model, a rebuild may fix this\n";
+        }
+    }
+
+    #symlink annotated snvs and indels
+    Genome::Sys->create_symlink("$full_output_dir/snvs.indels.annotated", "$archive_dir/snvsAndIndels.annotated");
+    #symlink annoted snvs and indels excel file
+    Genome::Sys->create_symlink("$full_output_dir/snvs.indels.annotated.xls", "$archive_dir/snvsAndIndels.annotated.xls");
+    #symlink sv calls
+    if($self->process_svs){
+        Genome::Sys->create_symlink("$sv_file", "$archive_dir/svs");
+    }
+    #synlink cnv calls - todo
+
+    #tar it up
+#WRITE Genome::Sys TEST FOR THE NEW options PARAMETER
+    Genome::Sys->tar(tar_path => "$archive_dir.tar.gz", input_directory => "$archive_dir", options => "-chzvf");
+
+    return 1;
 }
 
 1;
