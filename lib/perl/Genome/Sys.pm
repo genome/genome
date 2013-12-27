@@ -692,6 +692,8 @@ sub tar {
     my $input_directory = delete $params{input_directory};
     my $input_pattern = delete $params{input_pattern};
     $input_pattern = '*' unless defined $input_pattern;
+    my $options = delete $params{options};
+    $options = '-cf' unless defined $options;
 
     if (%params) {
         Carp::confess "Extra parameters given to tar method: " . join(', ', sort keys %params);
@@ -720,7 +722,7 @@ sub tar {
         Carp::confess "Cannot create tarball for empty directory $input_directory!";
     }
 
-    my $cmd = "tar -cf $tar_path $input_pattern";
+    my $cmd = "tar $options $tar_path $input_pattern";
     my $rv = Genome::Sys->shellcmd(
         cmd => $cmd,
     );
