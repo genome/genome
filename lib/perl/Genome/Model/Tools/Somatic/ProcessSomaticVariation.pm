@@ -915,51 +915,11 @@ sub execute {
   close($inFh);
   $workbook->close();
 
-
-  #------------------------------------------------------
-  #now get the files together for review
-  if($self->create_review_files){
-      print "Generating Review files...\n";
-      my @tiers = split(",",$self->tiers_to_review);
-      my $tierstring = join("",@tiers);
-      for my $i (@tiers){
-          `grep -w tier$i $output_dir/$sample_name/snvs.indels.annotated >>$output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp`;
-      }
-      `joinx sort -i $output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp >$output_dir/$sample_name/snvs.indels.annotated.tier$tierstring`;
-      `rm -f $output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp`;
-      annoFileToSlashedBedFile("$output_dir/$sample_name/snvs.indels.annotated.tier$tierstring","$output_dir/review/$sample_name.bed");
-
-      my $bam_files;
-      my $labels;
-      $bam_files = join(",",($normal_bam,$tumor_bam));
-      $labels = join(",",("normal $sample_name","tumor $sample_name"));      
-
-
-      if(defined($igv_reference_name)){
-          $igv_reference_name = $self->igv_reference_name;
-      } else {
-          print STDERR "WARNING: No IGV reference name supplied - defaulting to build 37\n";
-      }
-
-      #create the xml file for review
-      my $dumpXML = Genome::Model::Tools::Analysis::DumpIgvXmlMulti->create(
-          bams => "$bam_files",
-          labels => "$labels",
-          output_file => "$output_dir/review/$sample_name.xml",
-          genome_name => $sample_name,
-          review_bed_file => "$output_dir/review/$sample_name.bed",
-          reference_name => $igv_reference_name,
-          );
-      unless ($dumpXML->execute) {
-          die "Failed to create IGV xml file\n";
-      }
-
-      print STDERR "\n--------------------------------------------------------------------------------\n";
-      print STDERR "Sites to review are here:\n";
-      print STDERR "$output_dir/review/$sample_name.bed\n";
-      print STDERR "IGV XML file is here:";
-      print STDERR "$output_dir/review/$sample_name.xml\n\n";
-  }
+    #------------------------------------------------------
+    # now get the files together for review
+    if($self->create_review_files){
+        $self->_create_review_files();
+    }
 
     #------------------------------------------------
     # tar up the files to be sent to collaborators
@@ -968,6 +928,59 @@ sub execute {
     if($self->create_archive){
         $self->_create_archive($archive_dir, $build_dir, $sv_file);
     }
+
+    return 1;
+}
+
+sub _create_review_files {
+    my $self = shift;
+
+    my $output_dir = $self->output_dir;
+    my $sample_name = $self->sample_name;
+    unless (defined($sample_name)) {
+        $sample_name = $self->somatic_variation_model->subject->name;
+    }
+    my $full_output_dir = "$output_dir/$sample_name";
+
+    print "Generating Review files...\n";
+    my @tiers = split(",",$self->tiers_to_review);
+    my $tierstring = join("",@tiers);
+    for my $i (@tiers){
+        Genome::Sys->shellcmd(cmd => "grep -w tier$i $full_output_dir/snvs.indels.annotated >>$full_output_dir/snvs.indels.annotated.tier$tierstring.tmp");
+    }
+    Genome::Sys->shellcmd(cmd => "joinx sort -i $full_output_dir/snvs.indels.annotated.tier$tierstring.tmp >$full_output_dir/snvs.indels.annotated.tier$tierstring");
+    Genome::Sys->shellcmd(cmd => "rm -f $output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp");
+    annoFileToSlashedBedFile("$full_output_dir/snvs.indels.annotated.tier$tierstring","$output_dir/review/$sample_name.bed");
+
+    my $tumor_bam = $self->somatic_variation_model->tumor_model->last_succeeded_build->merged_alignment_result->bam_file;
+    my $normal_bam = $self->somatic_variation_model->normal_model->last_succeeded_build->merged_alignment_result->bam_file;
+
+    my $bam_files = join(",",($normal_bam,$tumor_bam));
+    my $labels = join(",",("normal $sample_name","tumor $sample_name"));
+
+    my $igv_reference_name = $self->igv_reference_name;
+    unless (defined($igv_reference_name))  {
+          print STDERR "WARNING: No IGV reference name supplied - defaulting to build 37\n";
+    }
+
+    #create the xml file for review
+    my $dumpXML = Genome::Model::Tools::Analysis::DumpIgvXmlMulti->create(
+        bams => "$bam_files",
+        labels => "$labels",
+        output_file => "$output_dir/review/$sample_name.xml",
+        genome_name => $sample_name,
+        review_bed_file => "$output_dir/review/$sample_name.bed",
+        reference_name => $igv_reference_name,
+    );
+    unless ($dumpXML->execute) {
+        die "Failed to create IGV xml file\n";
+    }
+
+    print STDERR "\n--------------------------------------------------------------------------------\n";
+    print STDERR "Sites to review are here:\n";
+    print STDERR "$output_dir/review/$sample_name.bed\n";
+    print STDERR "IGV XML file is here:";
+    print STDERR "$output_dir/review/$sample_name.xml\n\n";
 
     return 1;
 }
