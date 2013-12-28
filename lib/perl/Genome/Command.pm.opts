@@ -29424,6 +29424,21 @@ $Genome::Command::OPTS_SPEC = [
           'help!',
           undef
         ],
+        '>vcf-to-bed',
+        [
+          'debug!',
+          undef,
+          'detector-style-input=s',
+          'files',
+          'reference-build-id=s',
+          'files',
+          'source=s',
+          'files',
+          'output=s',
+          'files',
+          'help!',
+          undef
+        ],
         'help!',
         undef
       ],
