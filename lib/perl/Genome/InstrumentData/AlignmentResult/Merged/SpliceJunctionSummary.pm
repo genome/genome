@@ -97,7 +97,7 @@ sub create {
     for my $alignment (@alignments) {
         my $alignment_junctions_bed12_file = $alignment->output_dir .'/junctions.bed';
         my $id = $alignment->id;
-        symlink($alignment_junctions_bed12_file,$self->temp_staging_directory .'/AlignmentResult_'. $id .'_junctions.bed');
+        Genome::Sys->create_symlink($alignment_junctions_bed12_file,$self->temp_staging_directory .'/AlignmentResult_'. $id .'_junctions.bed');
         push @alignment_junctions_bed12_files, $alignment_junctions_bed12_file;
     }
     
