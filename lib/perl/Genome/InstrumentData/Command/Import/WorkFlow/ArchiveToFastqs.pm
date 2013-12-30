@@ -5,7 +5,9 @@ use warnings;
 
 use Genome;
 
-use Data::Dumper 'Dumper';
+use Archive::Extract;
+$Archive::Extract::PREFER_BIN = 1;
+require File::Basename;
 require File::Find;
 require File::Path;
 
@@ -25,13 +27,16 @@ class Genome::InstrumentData::Command::Import::WorkFlow::ArchiveToFastqs {
         fastq_paths => {
             is => 'Text',
             is_many => 1,
-            doc => 'The paths of the unarchived fastqs.',
+            doc => 'The paths of the extracted fastqs.',
         },
     ],
-    has_optional_ => [
-        unarchive_directory => {
+    has_optional => [
+        extract_directory => {
             calculate_from => [qw/ working_directory /],
-            calculate => q( return $working_directory.'/unarchive'; ),
+            calculate => q( return $working_directory.'/extract'; ),
+        },
+        extracted_fastqs => {
+            is => 'Array',
         },
     ],
     has_constant_calculated => [
@@ -48,8 +53,8 @@ sub execute {
     my $archive_to_fastqs_ok = $self->_archive_to_fastqs;
     return if not $archive_to_fastqs_ok;
 
-    my $find_fastqs = $self->_find_fastqs;
-    return if not $find_fastqs;
+    my $move_fastqs = $self->_move_extracted_fastqs_to_working_directory;
+    return if not $move_fastqs;
 
     my $cleanup_ok = $self->_cleanup;
     return if not $cleanup_ok;
@@ -60,52 +65,70 @@ sub execute {
 
 sub _archive_to_fastqs {
     my $self = shift;
-    $self->status_message('Unarchive...');
+    $self->status_message('Extract...');
 
     my $archive_path = $self->archive_path;
     $self->status_message("Archive path: $archive_path");
-    my $unarchive_directory = $self->unarchive_directory;
-    mkdir $unarchive_directory;
-    my $cmd = "tar xzf $archive_path --directory=$unarchive_directory";
 
-    my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
-    if ( not $rv ) {
-        $self->error_message($@) if $@;
-        $self->error_message('Failed to run tar!');
+    my $extractor = Archive::Extract->new(archive => $self->archive_path);
+    if ( not $extractor ) {
+        $self->error_message('Failed to create extractor!');
         return;
     }
 
-    $self->status_message('Unarchive...done');
+    my $extract_directory = $self->extract_directory;
+    mkdir $extract_directory;
+
+    my $extract_ok = $extractor->extract(to => $extract_directory);
+    if ( not $extract_ok ) {
+        my $error_message = $extractor->error;
+        $self->error_message($error_message) if defined $error_message;
+        $self->error_message('Failed to extract!');
+        return;
+    }
+
+    my @extracted_fastqs = grep { /\.f(ast)?q$/ } @{$extractor->files};
+    if ( not @extracted_fastqs ) {
+        $self->error_message('No fastqs found in archive!');
+        return;
+    }
+    $self->extracted_fastqs(\@extracted_fastqs);
+
+
+    $self->status_message('Extract...done');
     return 1;
 }
 
-sub _find_fastqs {
+sub _move_extracted_fastqs_to_working_directory {
     my $self = shift;
-    $self->status_message('Find fastqs...');
-    
+    $self->status_message('Move extracted fastqs to working directory...');
+
     my @fastq_paths;
-    File::Find::find(
-        sub{
-            return if not /\.fa?s?t?q$/;
-            $self->status_message("Unarchived FASTQ path: ".$File::Find::name);
-            my $fastq_path = $self->working_directory.'/'.$_;
-            my $move_ok = $self->helpers->move_path($File::Find::name, $fastq_path);
-            Carp::confess('Failed to move file!') if not $move_ok;
-            $self->status_message("FASTQ path: ".$fastq_path);
-            push @fastq_paths, $fastq_path;
-        },
-        $self->working_directory,
-    );
+    for my $extracted_fastq ( @{$self->extracted_fastqs} ) {
+        my $extracted_fastq_path = $self->extract_directory.'/'.$extracted_fastq;
+        $self->status_message("Extracted FASTQ path: ".$extracted_fastq_path);
+        my $extracted_fastq_basename = File::Basename::basename($extracted_fastq_path);
+        my $fastq_path = $self->working_directory.'/'.$extracted_fastq_basename;
+        my $move_ok = $self->helpers->move_path($extracted_fastq_path, $fastq_path);
+        Carp::confess('Failed to move file!') if not $move_ok;
+        $self->status_message("FASTQ path: ".$fastq_path);
+        push @fastq_paths, $fastq_path;
+    }
+
+    if ( not @fastq_paths ) {
+        $self->error_message('No fastqs found in archive!');
+        return;
+    }
     $self->fastq_paths(\@fastq_paths);
 
-    $self->status_message('Find fastqs...done');
+    $self->status_message('Move extracted fastqs to working directory...done');
     return 1;
 }
 
 sub _cleanup {
     my $self = shift;
     $self->helpers->remove_paths_and_auxiliary_files($self->archive_path);
-    File::Path::remove_tree($self->unarchive_directory);
+    File::Path::remove_tree($self->extract_directory);
     return 1;
 }
 

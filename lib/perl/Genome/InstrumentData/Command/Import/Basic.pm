@@ -265,7 +265,12 @@ sub _build_workflow_to_import_fastq {
         left_property => 'source_path',
     );
     my @source_files = $self->source_files;
-    if ( @source_files == 1 and $source_files[0] =~ /\.t?gz$/ ){
+
+    my $is_archived = ( 
+        @source_files == 1
+            and grep { $source_files[0] =~ /$_$/ } (qw/ tar tar\.gz tgz zip bz2 tbz /)
+    );
+    if ( $is_archived ) {
         my $archive_to_fastqs_op = $self->_add_operation_to_workflow('archive to fastqs');
         $workflow->add_link(
             left_operation => $workflow->get_input_connector,
