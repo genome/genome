@@ -159,7 +159,7 @@ sub bedFileToAnnoFile{
     }
 
     my $outFh = Genome::Sys->open_file_for_writing($newfile);
-    my $inFh = IO::File->new( $file ) || die "can't open file2\n";
+    my $inFh  = Genome::Sys->open_file_for_reading($file);
     while( my $line = $inFh->getline )
     {
         chomp($line);
@@ -190,7 +190,7 @@ sub annoFileToBedFile{
     }
 
     my $outFh = Genome::Sys->open_file_for_writing($newfile);
-    my $inFh = IO::File->new( $file ) || die "can't open file2\n";
+    my $inFh  = Genome::Sys->open_file_for_reading($file);
     while( my $line = $inFh->getline )
     {
         chomp($line);
@@ -215,7 +215,7 @@ sub annoFileToSlashedBedFile{
     }
 
     my $outFh = Genome::Sys->open_file_for_writing($newfile);
-    my $inFh = IO::File->new( $file ) || die "can't open file2\n";
+    my $inFh  = Genome::Sys->open_file_for_reading($file);
     while( my $line = $inFh->getline )
     {
         chomp($line);
@@ -292,9 +292,9 @@ sub cleanFile{
     my $newfile = addName($file,"clean");
 
     my %dups;
-    my $outFh = Genome::Sys->open_file_for_writing($newfile);
 
-    my $inFh = IO::File->new( $file ) || die "can't open file $file\n";
+    my $outFh = Genome::Sys->open_file_for_writing($newfile);
+    my $inFh  = Genome::Sys->open_file_for_reading($file);
     while( my $line = $inFh->getline ){
         chomp($line);
         my ( $chr, $start, $stop, $ref, $var, @rest ) = split( /\t/, $line );
@@ -335,7 +335,7 @@ sub getFilterSites{
     foreach my $filterfile (@filters){
         if( -s $filterfile){
             #store sites to filter out in a hash
-            my $inFh = IO::File->new( $filterfile ) || die "can't open file5\n";
+            my $inFh = Genome::Sys->open_file_for_reading($filterfile);
             while( my $line = $inFh->getline )
             {
                 chomp($line);
@@ -374,7 +374,7 @@ sub removeFilterSites{
     }
 
     my $outFh = Genome::Sys->open_file_for_writing($newfile);
-    my $inFh = IO::File->new( $file ) || die "can't open filter input file\n";
+    my $inFh  = Genome::Sys->open_file_for_reading($file);
     while( my $line = $inFh->getline )
     {
         chomp($line);
@@ -863,7 +863,7 @@ sub create_or_get_featurelist {
     if (defined($featurelist) && (-s $featurelist)) {
         #clean up feature list
         my $outFh = Genome::Sys->open_file_for_writing("$featurelist_file.tmp");
-        my $inFh = IO::File->new( $featurelist ) || die "can't open file feature file\n";
+        my $inFh  = Genome::Sys->open_file_for_reading($featurelist);
         while ( my $line = $inFh->getline ) {
             chomp($line);
             next if $line =~ /^track/;
@@ -951,7 +951,7 @@ sub _add_dbsnp_and_gmaf_to_indel {
     if (-s "$build_dir/variants/snvs.annotated.vcf.gz") {
         #pad indel file with tabs to match - if we ever start annotating with indels from dbsnp, replace this section
         my $outFh = Genome::Sys->open_file_for_writing("$indel_file.rsid");
-        my $inFh = IO::File->new( "$indel_file" ) || die "can't open file2d\n";
+        my $inFh  = Genome::Sys->open_file_for_reading($indel_file);
         while ( my $line = $inFh->getline ) {
             chomp($line);
             print $outFh $line . "\t\t\n"
@@ -990,7 +990,7 @@ sub _create_master_files {
     my $worksheet = $workbook->add_worksheet();
 
     my $row=0;
-    my $inFh = IO::File->new( "$output_dir/$sample_name/snvs.indels.annotated" ) || die "can't open file\n";
+    my $inFh = Genome::Sys->open_file_for_reading("$output_dir/$sample_name/snvs.indels.annotated");
     while( my $line = $inFh->getline )
     {
         chomp($line);
