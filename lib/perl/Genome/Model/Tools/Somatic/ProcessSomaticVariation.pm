@@ -889,31 +889,9 @@ sub execute {
 
 
 
-  #------------------------------------------------------
-  # combine the files into one master table
-  `head -n 1 $snv_file >$output_dir/$sample_name/snvs.indels.annotated`;
-  `tail -n +2 $indel_file >>$output_dir/$sample_name/snvs.indels.annotated.tmp`;
-  `tail -n +2 $snv_file >>$output_dir/$sample_name/snvs.indels.annotated.tmp`;
-  `joinx sort -i $output_dir/$sample_name/snvs.indels.annotated.tmp >>$output_dir/$sample_name/snvs.indels.annotated`;
-  `rm -f $output_dir/$sample_name/snvs.indels.annotated.tmp`;
-
-  # convert master table to excel
-  my $workbook  = Spreadsheet::WriteExcel->new("$output_dir/$sample_name/snvs.indels.annotated.xls");
-  my $worksheet = $workbook->add_worksheet();
-
-  my $row=0;
-  my $inFh = IO::File->new( "$output_dir/$sample_name/snvs.indels.annotated" ) || die "can't open file\n";
-  while( my $line = $inFh->getline )
-  {
-      chomp($line);
-      my @F = split("\t",$line);
-      for(my $i=0;$i<@F;$i++){
-          $worksheet->write($row, $i, $F[$i]);
-      }
-      $row++;
-  }
-  close($inFh);
-  $workbook->close();
+    #------------------------------------------------------
+    # combine the files into one master table
+    $self->_create_master_files($snv_file, $indel_file);
 
     #------------------------------------------------------
     # now get the files together for review
@@ -923,11 +901,48 @@ sub execute {
 
     #------------------------------------------------
     # tar up the files to be sent to collaborators
-    #
     my $archive_dir = "$output_dir/$sample_name/$sample_name";
     if($self->create_archive){
         $self->_create_archive($archive_dir, $build_dir, $sv_file);
     }
+
+    return 1;
+}
+sub _create_master_files {
+    my $self       = shift;
+    my $snv_file   = shift;
+    my $indel_file = shift;
+
+    my $output_dir = $self->output_dir;
+    my $sample_name = $self->sample_name;
+    unless (defined($sample_name)) {
+        $sample_name = $self->somatic_variation_model->subject->name;
+    }
+    my $full_output_dir = "$output_dir/$sample_name";
+
+    Genome::Sys->shellcmd(cmd => "head -n 1 $snv_file >$full_output_dir/snvs.indels.annotated");
+    Genome::Sys->shellcmd(cmd => "tail -n +2 $indel_file >>$full_output_dir/snvs.indels.annotated.tmp");
+    Genome::Sys->shellcmd(cmd => "tail -n +2 $snv_file >>$full_output_dir/snvs.indels.annotated.tmp");
+    Genome::Sys->shellcmd(cmd => "joinx sort -i $full_output_dir/snvs.indels.annotated.tmp >>$full_output_dir/snvs.indels.annotated");
+    Genome::Sys->shellcmd(cmd => "rm -f $full_output_dir/snvs.indels.annotated.tmp");
+
+    # convert master table to excel
+    my $workbook  = Spreadsheet::WriteExcel->new("$output_dir/$sample_name/snvs.indels.annotated.xls");
+    my $worksheet = $workbook->add_worksheet();
+
+    my $row=0;
+    my $inFh = IO::File->new( "$output_dir/$sample_name/snvs.indels.annotated" ) || die "can't open file\n";
+    while( my $line = $inFh->getline )
+    {
+        chomp($line);
+        my @F = split("\t",$line);
+        for(my $i=0;$i<@F;$i++){
+            $worksheet->write($row, $i, $F[$i]);
+        }
+        $row++;
+    }
+    close($inFh);
+    $workbook->close();
 
     return 1;
 }
