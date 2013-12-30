@@ -721,47 +721,12 @@ sub execute {
 
 
 
-  #-------------------------------------------------
-  #filter out the off-target regions, if target regions are available
-  if($self->restrict_to_target_regions){
-      print STDERR "Filtering out off-target regions...\n";
-
-      my $featurelist;
-      if($self->target_regions) {
-         $featurelist = $self->target_regions;
-      } elsif ($model->tumor_model->can('target_region_set_name') and defined($model->tumor_model->target_region_set_name)){
-          my $featurelist_name = $model->tumor_model->target_region_set_name;
-          $featurelist = Genome::FeatureList->get(name=>$featurelist_name)->file_path;
-      }
-      if(defined($featurelist) && (-s $featurelist)){
-          #clean up feature list
-          open(FEATFILE,">$output_dir/$sample_name/featurelist.tmp");
-          my $inFh = IO::File->new( $featurelist ) || die "can't open file feature file\n";
-          while( my $line = $inFh->getline )
-          {
-              chomp($line);
-              next if $line =~ /^track/;
-              my ( $chr, $start, $stop, @rest) = split( /\t/, $line );
-              #remove chr if present
-              $chr =~ s/^chr//g;
-              print FEATFILE join("\t",( $chr, $start, $stop, @rest)) . "\n";
-          }
-          close($inFh);
-          close(FEATFILE);
-          my $new_snv_file = addName($snv_file,"ontarget");
-          my $new_indel_file = addName($indel_file,"ontarget");
-
-          Genome::Sys->shellcmd(cmd => "joinx sort $output_dir/$sample_name/featurelist.tmp >$output_dir/$sample_name/featurelist");
-          Genome::Sys->shellcmd(cmd => "rm -f $output_dir/$sample_name/featurelist.tmp");
-          Genome::Sys->shellcmd(cmd => "joinx intersect -a $snv_file -b $output_dir/$sample_name/featurelist >$new_snv_file");
-          $snv_file = "$new_snv_file";
-          Genome::Sys->shellcmd(cmd => "joinx intersect -a $indel_file -b $output_dir/$sample_name/featurelist >$new_indel_file");
-          $indel_file = "$new_indel_file";
-      }
-      else {
-          $self->warning_message("feature list not found or target regions not specified; No target region filtering being done even though --restrict-to-target-regions set.");
-      }
-  }
+    #-------------------------------------------------
+    #filter out the off-target regions, if target regions are available
+    if ($self->restrict_to_target_regions) {
+        $snv_file = $self->_filter_off_target_regions($snv_file);
+        $indel_file = $self->_filter_off_target_regions($indel_file);
+    }
 
   #-------------------------------------------------
   #remove filter sites specified by the user
@@ -849,6 +814,74 @@ sub execute {
     }
 
     return 1;
+}
+
+sub _filter_off_target_regions {
+    my $self = shift;
+    my $file = shift;
+
+    print STDERR "Filtering out off-target regions for $file...\n";
+
+    my $featurelist = $self->create_or_get_featurelist();
+    if (defined($featurelist)) {
+          my $new_file = addName($file,"ontarget");
+
+          Genome::Sys->shellcmd(cmd => "joinx intersect -a $file -b $featurelist >$new_file");
+          $file = $new_file;
+    }
+    else {
+        $self->warning_message("feature list not found or target regions not specified; No target region filtering being done even though --restrict-to-target-regions set.");
+    }
+
+    return $file;
+}
+
+sub create_or_get_featurelist {
+    my $self = shift;
+
+    my $output_dir = $self->output_dir;
+    my $sample_name = $self->sample_name;
+    unless (defined($sample_name)) {
+        $sample_name = $self->somatic_variation_model->subject->name;
+    }
+    my $model = $self->somatic_variation_model;
+
+    my $featurelist_file = "$output_dir/$sample_name/featurelist";
+
+    if (-e $featurelist_file) {
+        return $featurelist_file;
+    }
+
+    my $featurelist;
+    if ($self->target_regions) {
+       $featurelist = $self->target_regions;
+    }
+    elsif ($model->tumor_model->can('target_region_set_name') and defined($model->tumor_model->target_region_set_name)){
+        my $featurelist_name = $model->tumor_model->target_region_set_name;
+        $featurelist = Genome::FeatureList->get(name=>$featurelist_name)->file_path;
+    }
+    if (defined($featurelist) && (-s $featurelist)) {
+        #clean up feature list
+        open(FEATFILE,">$featurelist_file.tmp");
+        my $inFh = IO::File->new( $featurelist ) || die "can't open file feature file\n";
+        while ( my $line = $inFh->getline ) {
+            chomp($line);
+            next if $line =~ /^track/;
+            my ( $chr, $start, $stop, @rest) = split( /\t/, $line );
+            #remove chr if present
+            $chr =~ s/^chr//g;
+            print FEATFILE join("\t",( $chr, $start, $stop, @rest)) . "\n";
+        }
+        close($inFh);
+        close(FEATFILE);
+
+        Genome::Sys->shellcmd(cmd => "joinx sort $featurelist_file.tmp >$featurelist_file");
+        Genome::Sys->shellcmd(cmd => "rm -f $featurelist_file.tmp");
+        return "$featurelist";
+    }
+    else {
+        return 0;
+    }
 }
 
 sub _filter_regions {
