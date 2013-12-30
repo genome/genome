@@ -822,7 +822,7 @@ sub _filter_off_target_regions {
 
     print STDERR "Filtering out off-target regions for $file...\n";
 
-    my $featurelist = $self->create_or_get_featurelist();
+    my $featurelist = $self->create_or_get_featurelist_file();
     if (defined($featurelist)) {
           my $new_file = addName($file,"ontarget");
 
@@ -836,7 +836,7 @@ sub _filter_off_target_regions {
     return $file;
 }
 
-sub create_or_get_featurelist {
+sub create_or_get_featurelist_file {
     my $self = shift;
 
     my $output_dir = $self->output_dir;
@@ -877,7 +877,7 @@ sub create_or_get_featurelist {
 
         Genome::Sys->shellcmd(cmd => "joinx sort $featurelist_file.tmp >$featurelist_file");
         Genome::Sys->shellcmd(cmd => "rm -f $featurelist_file.tmp");
-        return "$featurelist";
+        return $featurelist_file;
     }
     else {
         return 0;
