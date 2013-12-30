@@ -773,45 +773,12 @@ sub execute {
   }
 
 
-  #-------------------------------------------------
-  #remove filter regions specified by the user
-  if(defined($self->filter_regions)){
-      #cat all the filter files together into one bed file
-      my @filters = split(",",$self->filter_regions);
-
-      my ($fh,$temp_file) = Genome::Sys->create_temp_file;
-
-      foreach my $filterfile (@filters){
-          my $inFh2 = IO::File->new( $filterfile ) || die "can't open file8\n";
-          while( my $line = $inFh2->getline )
-          {
-              print $fh $line;
-          }
-          close $inFh2;
-      }
-      close($fh);
-
-      print STDERR "Removing user-specified filter...\n";
-      my $cmd = "joinx intersect --miss-a $snv_file.filteredReg -a $snv_file -b $temp_file >/dev/null";
-      my $result = Genome::Sys->shellcmd(
-          cmd => "$cmd",
-          );
-      unless($result) {
-          $self->error_message("Failed to execute joinx: Returned $result");
-          die $self->error_message;
-      }
-      $snv_file = "$snv_file.filteredReg";
-
-      $cmd = "joinx intersect --miss-a $indel_file.filteredReg -a $indel_file -b $temp_file >/dev/null";
-      $result = Genome::Sys->shellcmd(
-          cmd => "$cmd",
-          );
-      unless($result) {
-          $self->error_message("Failed to execute joinx: Returned $result");
-          die $self->error_message;
-      }
-      $indel_file = "$indel_file.filteredReg";
-  }
+    #-------------------------------------------------
+    #remove filter regions specified by the user
+    if(defined($self->filter_regions)){
+        $snv_file = $self->_filter_regions($snv_file);
+        $indel_file = $self->_filter_regions($indel_file);
+    }
 
 
   #-------------------------------------------------------
@@ -882,6 +849,39 @@ sub execute {
     }
 
     return 1;
+}
+
+sub _filter_regions {
+    my $self = shift;
+    my $file = shift;
+
+    #cat all the filter files together into one bed file
+    #This will be executed twice because this subroutine is being called twice
+    #which is not ideal
+    my @filters = split(",",$self->filter_regions);
+
+    my ($fh,$temp_file) = Genome::Sys->create_temp_file;
+
+    foreach my $filterfile (@filters) {
+        my $inFh2 = IO::File->new( $filterfile ) || die "can't open file8\n";
+        while ( my $line = $inFh2->getline ) {
+            print $fh $line;
+        }
+        close $inFh2;
+    }
+    close($fh);
+
+    print STDERR "Removing user-specified filter for $file...\n";
+    my $cmd = "joinx intersect --miss-a $file.filteredReg -a $file -b $temp_file >/dev/null";
+    my $result = Genome::Sys->shellcmd(
+        cmd => "$cmd",
+    );
+    unless ($result) {
+        $self->error_message("Failed to execute joinx: Returned $result");
+        die $self->error_message;
+    }
+    $file = "$file.filteredReg";
+    return $file;
 }
 
 sub _add_dbsnp_and_gmaf_to_snv {
