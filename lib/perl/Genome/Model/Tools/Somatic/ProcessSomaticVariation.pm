@@ -158,50 +158,50 @@ sub bedFileToAnnoFile{
         $newfile = $outfile;
     }
 
-    open(OUTFILE,">$newfile");
+    my $outFh = Genome::Sys->open_file_for_writing($newfile);
     my $inFh = IO::File->new( $file ) || die "can't open file2\n";
     while( my $line = $inFh->getline )
     {
         chomp($line);
         if($line =~ /^chrom/){
-            print OUTFILE $line . "\n";
+            print $outFh $line . "\n";
             next;
         }
         my ( $chr, $start, $stop, $ref, $var, @rest ) = split( /\t/, $line );
         if($ref =~ /\//){
             my @alleles = split("/",$ref);
-            print OUTFILE bedToAnno(join("\t",($chr, $start, $stop, $alleles[0], $alleles[1]))) . "\t" . join("\t",($var,@rest)) . "\n";
+            print $outFh bedToAnno(join("\t",($chr, $start, $stop, $alleles[0], $alleles[1]))) . "\t" . join("\t",($var,@rest)) . "\n";
         } else {
-            print OUTFILE bedToAnno(join("\t",($chr, $start, $stop, $ref, $var))) . "\t" . join("\t",@rest) . "\n";
+            print $outFh bedToAnno(join("\t",($chr, $start, $stop, $ref, $var))) . "\t" . join("\t",@rest) . "\n";
         }
     }
-    close(OUTFILE);
+    close($outFh);
     close($inFh);
     return($newfile);
 }
 
-
 sub annoFileToBedFile{
     my ($file,$outfile) = @_;
+
     #add bed to name
     my $newfile = $file . ".bed";
     if($outfile){
         $newfile = $outfile;
     }
 
-    open(OUTFILE,">$newfile");
+    my $outFh = Genome::Sys->open_file_for_writing($newfile);
     my $inFh = IO::File->new( $file ) || die "can't open file2\n";
     while( my $line = $inFh->getline )
     {
         chomp($line);
         if($line =~ /^chrom/){
-            print OUTFILE $line . "\n";
+            print $outFh $line . "\n";
             next;
         }
         my ( $chr, $start, $stop, $ref, $var, @rest ) = split( /\t/, $line );
-        print OUTFILE annoToBed(join("\t",($chr, $start, $stop, $ref, $var))) . "\t" . join("\t",@rest) . "\n";
+        print $outFh annoToBed(join("\t",($chr, $start, $stop, $ref, $var))) . "\t" . join("\t",@rest) . "\n";
     }
-    close(OUTFILE);
+    close($outFh);
     close($inFh);
     return($newfile);
 }
@@ -214,7 +214,7 @@ sub annoFileToSlashedBedFile{
         $newfile = $outfile;
     }
 
-    open(OUTFILE,">$newfile");
+    my $outFh = Genome::Sys->open_file_for_writing($newfile);
     my $inFh = IO::File->new( $file ) || die "can't open file2\n";
     while( my $line = $inFh->getline )
     {
@@ -225,9 +225,9 @@ sub annoFileToSlashedBedFile{
         my ( $chr, $start, $stop, $ref, $var, @rest ) = split( /\t/, $line );
         my $bed = annoToBed(join("\t",($chr, $start, $stop, $ref, $var)));
         my @bedline = split(/\t/,$bed);
-        print OUTFILE join("\t",(@bedline[0..2],"$bedline[3]/$bedline[4]")) . "\n";
+        print $outFh join("\t",(@bedline[0..2],"$bedline[3]/$bedline[4]")) . "\n";
     }
-    close(OUTFILE);
+    close($outFh);
     close($inFh);
     return($newfile);
 }
@@ -292,7 +292,7 @@ sub cleanFile{
     my $newfile = addName($file,"clean");
 
     my %dups;
-    open(OUTFILE, ">$newfile");
+    my $outFh = Genome::Sys->open_file_for_writing($newfile);
 
     my $inFh = IO::File->new( $file ) || die "can't open file $file\n";
     while( my $line = $inFh->getline ){
@@ -314,12 +314,12 @@ sub cleanFile{
 
         foreach my $v (@vars){
             unless (exists($dups{join("\t",($chr, $start, $stop, $ref, $v ))})){
-                print OUTFILE join("\t",($chr, $start, $stop, $ref, $v )) . "\n";
+                print $outFh join("\t",($chr, $start, $stop, $ref, $v )) . "\n";
             }
             $dups{join("\t",($chr, $start, $stop, $ref, $v ))} = 1;
         }
     }
-    close(OUTFILE);
+    close($outFh);
     close($inFh);
     Genome::Sys->shellcmd( cmd => "joinx sort -i $newfile >$newfile.tmp" );
     Genome::Sys->shellcmd( cmd => "mv -f $newfile.tmp $newfile");
@@ -373,7 +373,7 @@ sub removeFilterSites{
         return($newfile);
     }
 
-    open(FILFILE,">$newfile") || die ("couldn't open filter output file");
+    my $outFh = Genome::Sys->open_file_for_writing($newfile);
     my $inFh = IO::File->new( $file ) || die "can't open filter input file\n";
     while( my $line = $inFh->getline )
     {
@@ -383,10 +383,10 @@ sub removeFilterSites{
             ( $ref, $var ) = split(/\//, $ref);
         }
         unless (defined($filterSites->join("\t",($chr, $start, $stop, $ref, $var )))){
-            print FILFILE $line . "\n";
+            print $outFh $line . "\n";
         }
     }
-    close(FILFILE);
+    close($outFh);
     return($newfile)
 }
 
@@ -862,7 +862,7 @@ sub create_or_get_featurelist {
     }
     if (defined($featurelist) && (-s $featurelist)) {
         #clean up feature list
-        open(FEATFILE,">$featurelist_file.tmp");
+        my $outFh = Genome::Sys->open_file_for_writing("$featurelist_file.tmp");
         my $inFh = IO::File->new( $featurelist ) || die "can't open file feature file\n";
         while ( my $line = $inFh->getline ) {
             chomp($line);
@@ -870,10 +870,10 @@ sub create_or_get_featurelist {
             my ( $chr, $start, $stop, @rest) = split( /\t/, $line );
             #remove chr if present
             $chr =~ s/^chr//g;
-            print FEATFILE join("\t",( $chr, $start, $stop, @rest)) . "\n";
+            print $outFh join("\t",( $chr, $start, $stop, @rest)) . "\n";
         }
         close($inFh);
-        close(FEATFILE);
+        close($outFh);
 
         Genome::Sys->shellcmd(cmd => "joinx sort $featurelist_file.tmp >$featurelist_file");
         Genome::Sys->shellcmd(cmd => "rm -f $featurelist_file.tmp");
@@ -893,16 +893,16 @@ sub _filter_regions {
     #which is not ideal
     my @filters = split(",",$self->filter_regions);
 
-    my ($fh,$temp_file) = Genome::Sys->create_temp_file;
+    my ($outFh, $temp_file) = Genome::Sys->create_temp_file;
 
     foreach my $filterfile (@filters) {
         my $inFh2 = IO::File->new( $filterfile ) || die "can't open file8\n";
         while ( my $line = $inFh2->getline ) {
-            print $fh $line;
+            print $outFh $line;
         }
         close $inFh2;
     }
-    close($fh);
+    close($outFh);
 
     print STDERR "Removing user-specified filter for $file...\n";
     my $cmd = "joinx intersect --miss-a $file.filteredReg -a $file -b $temp_file >/dev/null";
@@ -950,14 +950,14 @@ sub _add_dbsnp_and_gmaf_to_indel {
     print STDERR "$build_dir/variants/snvs.annotated.vcf.gz\n";
     if (-s "$build_dir/variants/snvs.annotated.vcf.gz") {
         #pad indel file with tabs to match - if we ever start annotating with indels from dbsnp, replace this section
-        open(OUTFILE,">$indel_file.rsid");
+        my $outFh = Genome::Sys->open_file_for_writing("$indel_file.rsid");
         my $inFh = IO::File->new( "$indel_file" ) || die "can't open file2d\n";
         while ( my $line = $inFh->getline ) {
             chomp($line);
-            print OUTFILE $line . "\t\t\n"
+            print $outFh $line . "\t\t\n"
         }
         close($inFh);
-        close(OUTFILE);
+        close($outFh);
 
         $indel_file = "$indel_file.rsid";
         return $indel_file;
