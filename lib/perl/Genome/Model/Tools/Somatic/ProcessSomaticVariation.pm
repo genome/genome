@@ -844,7 +844,8 @@ sub execute {
     #----------------------------------------------------
     # add dbsnp/gmaf
     if ($self->add_dbsnp_and_gmaf){
-        $self->_add_dbsnp_and_gmaf($build_dir, $snv_file, $indel_file);
+        $snv_file = $self->_add_dbsnp_and_gmaf_to_snv($build_dir, $snv_file);
+        $indel_file = $self->_add_dbsnp_and_gmaf_to_indel($build_dir, $indel_file);
     }
 
 
@@ -883,11 +884,10 @@ sub execute {
     return 1;
 }
 
-sub _add_dbsnp_and_gmaf {
+sub _add_dbsnp_and_gmaf_to_snv {
     my $self       = shift;
     my $build_dir  = shift;
     my $snv_file   = shift;
-    my $indel_file = shift;
 
     print STDERR "==== adding dbsnp ids ====\n";
     print STDERR "$build_dir/variants/snvs.annotated.vcf.gz\n";
@@ -900,6 +900,22 @@ sub _add_dbsnp_and_gmaf {
         unless ($db_cmd->execute) {
             die "Failed to add dbsnp anno to file $snv_file.\n";
         }
+        $snv_file = "$snv_file.rsid";
+        return $snv_file;
+    }
+    else {
+        print STDERR "Warning: couldn't find annotated SNV file in build, skipping dbsnp anno\n";
+    }
+}
+
+sub _add_dbsnp_and_gmaf_to_indel {
+    my $self       = shift;
+    my $build_dir  = shift;
+    my $indel_file = shift;
+
+    print STDERR "==== padding indel file with tabs to match ====\n";
+    print STDERR "$build_dir/variants/snvs.annotated.vcf.gz\n";
+    if (-s "$build_dir/variants/snvs.annotated.vcf.gz") {
         #pad indel file with tabs to match - if we ever start annotating with indels from dbsnp, replace this section
         open(OUTFILE,">$indel_file.rsid");
         my $inFh = IO::File->new( "$indel_file" ) || die "can't open file2d\n";
@@ -910,8 +926,8 @@ sub _add_dbsnp_and_gmaf {
         close($inFh);
         close(OUTFILE);
 
-        $snv_file = "$snv_file.rsid";
         $indel_file = "$indel_file.rsid";
+        return $indel_file;
     }
     else {
         print STDERR "Warning: couldn't find annotated SNV file in build, skipping dbsnp anno\n";
