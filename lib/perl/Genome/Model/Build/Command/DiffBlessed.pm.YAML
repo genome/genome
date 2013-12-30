@@ -4,7 +4,7 @@ apipe-test-clinseq-v1: 133114501
 apipe-test-clinseq-wer: 399cd00e5d0f460cb28ccfa280bf1aad
 apipe-test-de-novo-soap: 137388725
 apipe-test-de-novo-velvet: 133133150
-apipe-test-gene-prediction-bacterial: 6cb41ec606d442b084d123b0efa2022b
+apipe-test-gene-prediction-bacterial: 8d3e31bedac04e45b4abd8c37a62bc62
 apipe-test-gene-prediction-eukaryotic: 41f7045d104846ed9096453b3a0510af
 apipe-test-mc16s-454: 135304826
 apipe-test-mc16s-sanger: 133668184
