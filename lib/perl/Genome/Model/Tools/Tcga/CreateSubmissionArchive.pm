@@ -107,7 +107,9 @@ sub execute {
                 my $maf_accessor = $maf_type."_maf_file";
                 if ($self->$maf_accessor) {
                     my $maf_name = $self->complete_archive_name.".$maf_type.maf";
-                    Genome::Sys->copy_file($self->$maf_accessor, $vcf_archive_dir."/".$maf_name);
+                    unless(-s $vcf_archive_dir."/".$maf_name) {
+                        Genome::Sys->copy_file($self->$maf_accessor, $vcf_archive_dir."/".$maf_name);
+                    }
                     push @sdrf_rows, $sdrf->create_maf_row($build, $somatic_build, $maf_name, $sample_info);
                 }
             }
