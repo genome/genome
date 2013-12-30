@@ -636,6 +636,7 @@ sub execute {
             $newname = $sample_name . "-" . $suffix;
         }
         $sample_name = $newname;
+        $self->sample_name($newname);
     }
     #make the directory structure
     Genome::Sys->create_directory("$output_dir/$sample_name");
@@ -841,9 +842,6 @@ sub create_or_get_featurelist_file {
 
     my $output_dir = $self->output_dir;
     my $sample_name = $self->sample_name;
-    unless (defined($sample_name)) {
-        $sample_name = $self->somatic_variation_model->subject->name;
-    }
     my $model = $self->somatic_variation_model;
 
     my $featurelist_file = "$output_dir/$sample_name/featurelist";
@@ -981,9 +979,7 @@ sub _create_master_files {
 
     my $output_dir = $self->output_dir;
     my $sample_name = $self->sample_name;
-    unless (defined($sample_name)) {
-        $sample_name = $self->somatic_variation_model->subject->name;
-    }
+
     my $full_output_dir = "$output_dir/$sample_name";
 
     Genome::Sys->shellcmd(cmd => "head -n 1 $snv_file >$full_output_dir/snvs.indels.annotated");
@@ -1018,9 +1014,7 @@ sub _create_review_files {
 
     my $output_dir = $self->output_dir;
     my $sample_name = $self->sample_name;
-    unless (defined($sample_name)) {
-        $sample_name = $self->somatic_variation_model->subject->name;
-    }
+
     my $full_output_dir = "$output_dir/$sample_name";
 
     print "Generating Review files...\n";
@@ -1073,11 +1067,7 @@ sub _create_archive {
     my $sv_file     = shift;
 
     my $output_dir = $self->output_dir;
-
     my $sample_name = $self->sample_name;
-    unless (defined($sample_name)) {
-        $sample_name = $self->somatic_variation_model->subject->name;
-    }
 
     my $full_output_dir = "$output_dir/$sample_name";
 
