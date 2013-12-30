@@ -945,7 +945,7 @@ sub execute {
 	      $get_tumor_only=0;
 	  }
 
-
+          
           if($small_indel_file =~ /final_output/){
               my %counts;
               #first small indels
@@ -967,17 +967,34 @@ sub execute {
                   #$counts{$key} = join("\t",(@F[7..9],@F[11..13]));
               }
               #then large indels
-              $inFh = IO::File->new( $large_indel_file ) || die "can't open small indel file\n";
+              $large_indel_file =~ s/\.adapted//g;
+              $inFh = IO::File->new( $large_indel_file ) || die "can't open large indel file\n";
               while( my $line = $inFh->getline ){
                   chomp($line);
                   my @F = split("\t",$line);
-
                   next if($line =~ /^chrom/ || !($line =~ /Somatic/));
-                  my $key = join("\t",@F[0..4]);
+
+                  my @comp = split("_",$F[0]);
+                  my $key = $comp[0];
+                  
+                  if($comp[1] =~ /(\d+)\(\d+\)/){
+                      $key = $key . "\t" . $1;
+                  } else {
+                      print STDERR "WARNING: unable to parse \"$F[0]\"\n";
+                      next;
+                  }
+                  if($comp[2] =~ /\d+\((\d+)\)/){
+                      $key = $key . "\t" . $1;
+                  } else {
+                      print STDERR "WARNING: unable to parse \"$F[0]\"\n";
+                      next;
+                  }
+                  $key = $key . "\t" . $comp[5] . "\t" . $comp[6];
+                  print STDERR $key . "\n";
                   if($get_tumor_only){
-		      $counts{$key} = join("\t",($F[27]-$F[20], $F[20], $F[28]));
+		      $counts{$key} = join("\t",($F[27]-$F[21], $F[21], $F[28]));
 		  }else {
-		      $counts{$key} = join("\t",($F[22]-$F[9], $F[9], $F[23], $F[27]-$F[20], $F[20], $F[28]));
+		      $counts{$key} = join("\t",($F[22]-$F[11], $F[11], $F[23], $F[27]-$F[21], $F[21], $F[28]));
 		  }
 
               }
@@ -1220,6 +1237,7 @@ sub indel_files {
         $large_indel_file = "$build_dir/variants/indels.hq.bed";
         print STDERR $large_indel_file . "\n";
     }
+    print STDERR "indel1: " . $large_indel_file . "\n";
     return ($small_indel_file,$large_indel_file);
 }
 
