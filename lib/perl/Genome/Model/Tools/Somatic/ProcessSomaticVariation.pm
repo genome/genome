@@ -888,24 +888,11 @@ sub _filter_regions {
     my $self = shift;
     my $file = shift;
 
-    #cat all the filter files together into one bed file
-    #This will be executed twice because this subroutine is being called twice
-    #which is not ideal
-    my @filters = split(",",$self->filter_regions);
-
-    my ($outFh, $temp_file) = Genome::Sys->create_temp_file;
-
-    foreach my $filterfile (@filters) {
-        my $inFh2 = IO::File->new( $filterfile ) || die "can't open file8\n";
-        while ( my $line = $inFh2->getline ) {
-            print $outFh $line;
-        }
-        close $inFh2;
-    }
-    close($outFh);
+    my $filter_file = $self->get_or_create_filter_file();
 
     print STDERR "Removing user-specified filter for $file...\n";
-    my $cmd = "joinx intersect --miss-a $file.filteredReg -a $file -b $temp_file >/dev/null";
+    my $filtered_file = "$file.filteredReg";
+    my $cmd = "joinx intersect --miss-a $filtered_file -a $file -b $filter_file >/dev/null";
     my $result = Genome::Sys->shellcmd(
         cmd => "$cmd",
     );
@@ -913,8 +900,28 @@ sub _filter_regions {
         $self->error_message("Failed to execute joinx: Returned $result");
         die $self->error_message;
     }
-    $file = "$file.filteredReg";
-    return $file;
+    return $filtered_file;
+}
+
+sub get_or_create_filter_file {
+    my $self = shift;
+
+    my $output_dir = $self->output_dir;
+    my $sample_name = $self->sample_name;
+
+    #cat all the filter files together into one bed file
+    #why are we even doing it this way? Wouldn't it be easier to just cat?
+    my @filters = split(",", $self->filter_regions);
+
+    my $filter_file = "$output_dir/$sample_name/filter";
+
+    if (-e $filter_file) {
+        return $filter_file;
+    }
+
+    Genome::Sys->concatenate_files(\@filters, $filter_file);
+
+    return $filter_file;
 }
 
 sub _add_dbsnp_and_gmaf_to_snv {
