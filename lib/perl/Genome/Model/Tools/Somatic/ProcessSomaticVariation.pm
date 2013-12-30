@@ -841,37 +841,11 @@ sub execute {
 
 
 
-  #----------------------------------------------------
-  # add dbsnp/gmaf
-
-  if ($self->add_dbsnp_and_gmaf){
-      print STDERR "==== adding dbsnp ids ====\n";
-      print STDERR "$build_dir/variants/snvs.annotated.vcf.gz\n";
-      if(-s "$build_dir/variants/snvs.annotated.vcf.gz"){
-          my $db_cmd = Genome::Model::Tools::Annotate::AddRsid->create(
-              anno_file => $snv_file,
-              output_file => "$snv_file.rsid",
-              vcf_file => "$build_dir/variants/snvs.annotated.vcf.gz",
-              );
-          unless ($db_cmd->execute) {
-              die "Failed to add dbsnp anno to file $snv_file.\n";
-          }
-          #pad indel file with tabs to match - if we ever start annotating with indels from dbsnp, replace this section
-          open(OUTFILE,">$indel_file.rsid");
-          my $inFh = IO::File->new( "$indel_file" ) || die "can't open file2d\n";
-          while( my $line = $inFh->getline ){
-              chomp($line);
-              print OUTFILE $line . "\t\t\n"
-          }
-          close($inFh);
-          close(OUTFILE);
-
-          $snv_file = "$snv_file.rsid";
-          $indel_file = "$indel_file.rsid";
-      } else {
-          print STDERR "Warning: couldn't find annotated SNV file in build, skipping dbsnp anno\n";
-      }
-  }
+    #----------------------------------------------------
+    # add dbsnp/gmaf
+    if ($self->add_dbsnp_and_gmaf){
+        $self->_add_dbsnp_and_gmaf($build_dir, $snv_file, $indel_file);
+    }
 
 
 
@@ -908,6 +882,42 @@ sub execute {
 
     return 1;
 }
+
+sub _add_dbsnp_and_gmaf {
+    my $self       = shift;
+    my $build_dir  = shift;
+    my $snv_file   = shift;
+    my $indel_file = shift;
+
+    print STDERR "==== adding dbsnp ids ====\n";
+    print STDERR "$build_dir/variants/snvs.annotated.vcf.gz\n";
+    if (-s "$build_dir/variants/snvs.annotated.vcf.gz") {
+        my $db_cmd = Genome::Model::Tools::Annotate::AddRsid->create(
+            anno_file => $snv_file,
+            output_file => "$snv_file.rsid",
+            vcf_file => "$build_dir/variants/snvs.annotated.vcf.gz",
+        );
+        unless ($db_cmd->execute) {
+            die "Failed to add dbsnp anno to file $snv_file.\n";
+        }
+        #pad indel file with tabs to match - if we ever start annotating with indels from dbsnp, replace this section
+        open(OUTFILE,">$indel_file.rsid");
+        my $inFh = IO::File->new( "$indel_file" ) || die "can't open file2d\n";
+        while ( my $line = $inFh->getline ) {
+            chomp($line);
+            print OUTFILE $line . "\t\t\n"
+        }
+        close($inFh);
+        close(OUTFILE);
+
+        $snv_file = "$snv_file.rsid";
+        $indel_file = "$indel_file.rsid";
+    }
+    else {
+        print STDERR "Warning: couldn't find annotated SNV file in build, skipping dbsnp anno\n";
+    }
+}
+
 sub _create_master_files {
     my $self       = shift;
     my $snv_file   = shift;
