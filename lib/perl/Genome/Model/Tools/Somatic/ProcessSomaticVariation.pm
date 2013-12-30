@@ -670,9 +670,13 @@ sub execute {
     }
 
 
-    #cat all the filtered snvs together (same for indels)
-    Genome::Sys->shellcmd( cmd => "cat $build_dir/effects/snvs.hq.novel.tier*.v2.bed $build_dir/effects/snvs.hq.previously_detected.tier*.v2.bed | joinx sort >$output_dir/$sample_name/snvs/snvs.hq.bed");
-    Genome::Sys->shellcmd( cmd => "cat $build_dir/effects/indels.hq.novel.tier*.v2.bed $build_dir/effects/indels.hq.previously_detected.tier*.v2.bed | joinx sort >$output_dir/$sample_name/indels/indels.hq.bed" );
+    #cat all the filtered snvs together
+    $snv_file = "$output_dir/$sample_name/snvs/snvs.hq.bed";
+    Genome::Sys->shellcmd( cmd => "cat $build_dir/effects/snvs.hq.novel.tier*.v2.bed $build_dir/effects/snvs.hq.previously_detected.tier*.v2.bed | joinx sort >$snv_file");
+
+    #cat all the filtered indels together
+    $indel_file = "$output_dir/$sample_name/indels/indels.hq.bed";
+    Genome::Sys->shellcmd( cmd => "cat $build_dir/effects/indels.hq.novel.tier*.v2.bed $build_dir/effects/indels.hq.previously_detected.tier*.v2.bed | joinx sort >$indel_file" );
 
 #  `ln -s $snv_file $output_dir/$sample_name/snvs/` unless( -e "$output_dir/$sample_name/snvs/$snv_file");
 #  `ln -s $indel_file $output_dir/$sample_name/indels/` unless( -e "$output_dir/$sample_name/indels/$indel_file");
@@ -707,8 +711,6 @@ sub execute {
 
 
   }
-  $snv_file = "$output_dir/$sample_name/snvs/snvs.hq.bed";
-  $indel_file = "$output_dir/$sample_name/indels/indels.hq.bed";
 
 
 
