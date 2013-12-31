@@ -334,34 +334,4 @@ sub _lock {
     }
 }
 
-#It's lame that these methods need to exist - is there a way to clean the data before it comes over?
-sub _normalize_domain {
-    my $domain = lc(shift);
-    if ($domain eq 'unknown') {
-        return 'eukaryota';
-    }
-    return $domain;
-}
-
-sub _normalize_taxon {
-    my $taxon = lc(shift);
-    if ($taxon =~ /mus musculus/i || $taxon =~ /mouse/i) {
-        return 'mus_musculus';
-    } elsif ($taxon =~ /homo sapien/i || $taxon =~ /human/i) {
-        return 'homo_sapien';
-    } elsif ($taxon =~ /maize/i) {
-        return 'maize';
-    }
-}
-
-sub _normalize_extraction_type {
-    my $type = lc(shift);
-    if ($type =~ /rna/i || $type =~ /cdna/i) {
-        return 'rna';
-    } elsif ($type =~ /[^c]dna/i) {
-        return 'genomic_dna';
-    }
-    return $type
-}
-
 1;
