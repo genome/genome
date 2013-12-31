@@ -184,7 +184,8 @@ sub _resolve_gaps_and_centromere_files {
     for my $file_type ("gaps", "centromere") {
         my $accessor = $file_type . "_file";
         unless ($self->$accessor) {
-            my $file = Genome::Sys->dbpath("tgi-misc-annotation","human-build$refseq_version-20130113") . "/$file_type.csv";
+            $self->status_message("attempting to resolve dbpath for build_version '$refseq_version' and file_type '$file_type'");
+            my $file = Genome::Sys->dbpath("tgi/misc-annotation/human","build$refseq_version-20130113") . "/$file_type.csv";
             unless (-e $file) {
                 die $self->error_message("Could not find the $file_type file located at $file");
             }
