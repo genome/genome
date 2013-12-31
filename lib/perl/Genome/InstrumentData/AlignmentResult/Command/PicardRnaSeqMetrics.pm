@@ -103,7 +103,7 @@ sub execute {
     # Get all MT and rRNA annotation in intervals format
     my $rRNA_MT_gtf_file = $annotation_build->rRNA_MT_file('gtf',$reference_build->id,0);
     unless(-s $rRNA_MT_gtf_file) {
-        my $rRNA_MT_gtf_file = $annotation_build->rRNA_MT_file('gtf',undef,0);
+        $rRNA_MT_gtf_file = $annotation_build->rRNA_MT_file('gtf',undef,0);
     }
     my $seqdict_file = $reference_build->get_sequence_dictionary('sam',$reference_build->species_name,$picard_version);
     unless (Genome::Model::Tools::Gtf::ToIntervals->execute(
@@ -118,7 +118,7 @@ sub execute {
     # Get all mRNA annotation in RefFlat format
     my $mRNA_gtf_file = $annotation_build->annotation_file('gtf',$reference_build->id,0);
     unless(-s $mRNA_gtf_file) {
-        my $mRNA_gtf_file = $annotation_build->annotation_file('gtf',undef,0);
+        $mRNA_gtf_file = $annotation_build->annotation_file('gtf',undef,0);
     }
     unless (Genome::Model::Tools::Gtf::ToRefFlat->execute(
         input_gtf_file => $mRNA_gtf_file,
