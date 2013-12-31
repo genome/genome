@@ -87,14 +87,26 @@ sub execute {
     $subdir = $subsource . "/" . $subdir if $subsource;
     $subdir = $source . "/" . $subdir;
 
+    my $fulldir = $dir . "/" . $subdir;
+
+    #If the repo/branch directory already exists, do nothing
+    if (-e $fulldir && -d $fulldir){
+      die $self->error_message("It appears that this branch has already been cloned to $fulldir.  Aborting.  Delete it if you want to clone from scratch.");
+    }
+
+    #Attempt to clone the specified git branch into the desired sub-directory of the database directory specified by $ENV{$GENOME_DB}
     my $clone_cmd = "cd $dir; git clone $repo -b $branch $subdir";
     Genome::Sys->shellcmd(cmd => $clone_cmd);
 
-    my $exit_code = `bash -c 'cd $subdir; git ls-remote --exit-code . origin/$branch &> /dev/null; echo \$\?'`;
+    unless (-e $fulldir && -d $fulldir){
+      die $self->error_message("git clone command failed to create the expected directory");
+    }
+
+    my $exit_code = `bash -c 'cd $fulldir; git ls-remote --exit-code . origin/$branch &> /dev/null; echo \$\?'`;
     chomp($exit_code);
     
     unless ($exit_code == 0){
-        my $cleanup_cmd = "rm -fr $subdir";
+        my $cleanup_cmd = "rm -fr $fulldir";
         Genome::Sys->shellcmd(cmd => $cleanup_cmd);
         die $self->error_message("Specified git branch ($branch) could not be checked out, repository has been deleted");
     }
