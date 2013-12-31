@@ -166,7 +166,14 @@ sub assign_models {
 
     my $attempted = scalar @models;
     my $skipped = $attempted - $added;
-    $self->status_message("Added $added models to group: ".$self->__display_name__.". Skipped $skipped of $attempted models because they were already assigned.");
+    my $msg = "Added $added models to group: ".$self->__display_name__.".";
+    if($skipped > 0){
+        $msg = $msg . " Skipped $skipped of $attempted models because they were already assigned.";
+    }
+    $self->status_message($msg);
+    
+        
+
 
     return 1;
 }
