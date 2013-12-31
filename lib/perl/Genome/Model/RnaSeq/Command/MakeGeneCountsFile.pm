@@ -49,6 +49,8 @@ sub execute {
         }
     }
 
+    _validate_all_inputs_have_same_annotation(@normal_builds, @tumor_builds);
+
     my (@input_counts_files, @header, @subjects, @groups);
 
     my $tumor_builds_information = $self->_retrieve_build_information("tumor", @tumor_builds);
@@ -81,6 +83,27 @@ sub execute {
 
     $self->subjects(join ",", @subjects);
     $self->groups(join ",", @groups);
+
+    return 1;
+}
+
+sub _validate_all_inputs_have_same_annotation {
+    my $self = shift;
+    my @builds = @_;
+
+    my $annot_build;
+
+    for my $build (@builds) {
+        unless (defined $build->annotation_build) {
+            die $self->error_message("Build ".$build->id." does not have annotation build defined");
+        }
+        unless (defined $annot_build) {
+            $annot_build = $build->annotation_build->id;
+        }
+        unless ($build->annotation_build->id eq $annot_build) {
+            die $self->error_message("Builds must have the same annotation input");
+        }
+    }
 
     return 1;
 }

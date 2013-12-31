@@ -5,6 +5,7 @@ use Data::Dumper;
 use IO::File;
 use Test::More;
 use Genome::Test::Factory::Model::RnaSeq;
+use Genome::Test::Factory::Model::ImportedAnnotation;
 use Genome::Test::Factory::Build;
 use Genome::Utility::Test qw/compare_ok/;
 
@@ -16,15 +17,48 @@ my $pkg = 'Genome::Model::RnaSeq::Command::MakeGeneCountsFile';
 use_ok($pkg);
 my $data_dir = Genome::Utility::Test->data_dir_ok($pkg, "v1");
 
+my $annot_model = Genome::Test::Factory::Model::ImportedAnnotation->setup_object();
+my $annot_build1 = Genome::Test::Factory::Build->setup_object(
+    model_id => $annot_model->id,
+    status   => "Succeeded",
+);
+my $annot_build2 = Genome::Test::Factory::Build->setup_object(
+    model_id => $annot_model->id,
+    status => "Succeeded",
+);
+
 my $rnaseq_model = Genome::Test::Factory::Model::RnaSeq->setup_object();
 my $rnaseq_build = Genome::Test::Factory::Build->setup_object(
     model_id        => $rnaseq_model->id,
     data_directory  => $data_dir,
     status          => "Succeeded",
+    annotation_build => $annot_build1,
+);
+
+my $diff_annot_rnaseq_model = Genome::Test::Factory::Model::RnaSeq->setup_object(
+    processing_profile_id => $rnaseq_model->processing_profile->id);
+my $diff_annot_rnaseq_build = Genome::Test::Factory::Build->setup_object(
+    model_id        => $diff_annot_rnaseq_model->id,
+    data_directory  => $data_dir,
+    status          => "Succeeded",
+    annotation_build => $annot_build2,
 );
 
 my $build_data_directory = $rnaseq_build->data_directory . "/results/digital_expression_result/gene-counts.tsv";
 my $build_source = $rnaseq_build->subject->source->common_name;
+
+subtest "validate annotation" => sub {
+    my $rv = $pkg->_validate_all_inputs_have_same_annotation($rnaseq_build, $rnaseq_build);
+    ok($rv, "Two of the same builds had the same annotation");
+};
+
+subtest "different annotations" => sub {
+    my $rv = eval{
+        $pkg->_validate_all_inputs_have_same_annotation($rnaseq_build, $diff_annot_rnaseq_build);
+    };
+    ok($@, "Different annotation inputs to rnaseq builds is and error");
+    ok(!$rv);
+};
 
 subtest "write header to file" => sub {
     my @headers = qw(1 2 3 4);

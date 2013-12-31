@@ -6,6 +6,7 @@ use IO::File;
 use Test::More;
 use Genome::Test::Factory::Model::RnaSeq;
 use Genome::Test::Factory::Model::ClinSeq;
+use Genome::Test::Factory::Model::ImportedAnnotation;
 use Genome::Test::Factory::Build;
 use Genome::Utility::Test qw/compare_ok/;
 
@@ -17,11 +18,18 @@ my $pkg = 'Genome::Model::MutationalSignificance::Command::MakeGeneCountsFile';
 use_ok($pkg);
 my $data_dir = Genome::Utility::Test->data_dir_ok($pkg, "v2");
 
+my $annot_model = Genome::Test::Factory::Model::ImportedAnnotation->setup_object();
+my $annot_build = Genome::Test::Factory::Build->setup_object(
+    model_id => $annot_model->id,
+    status   => "Succeeded",
+);
+
 my $rnaseq_model = Genome::Test::Factory::Model::RnaSeq->setup_object();
 my $rnaseq_build = Genome::Test::Factory::Build->setup_object(
     model_id        => $rnaseq_model->id,
     data_directory  => $data_dir,
     status          => "Succeeded",
+    annotation_build => $annot_build,
 );
 
 my $clinseq_model = Genome::Test::Factory::Model::ClinSeq->setup_object(

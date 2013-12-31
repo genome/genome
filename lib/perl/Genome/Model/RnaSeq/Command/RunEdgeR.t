@@ -6,6 +6,7 @@ use IO::File;
 use Test::More;
 use Genome::Test::Factory::Model::RnaSeq;
 use Genome::Test::Factory::Model::ClinSeq;
+use Genome::Test::Factory::Model::ImportedAnnotation;
 use Genome::Test::Factory::Build;
 use Genome::Utility::Test qw/compare_ok/;
 
@@ -21,11 +22,18 @@ my $data_dir = Genome::Utility::Test->data_dir_ok($pkg, "v1");
 my $data_dir_n = join("/", $data_dir, "N");
 my $data_dir_t = join("/", $data_dir, "T");
 
+my $annot_model = Genome::Test::Factory::Model::ImportedAnnotation->setup_object();
+my $annot_build = Genome::Test::Factory::Build->setup_object(
+    model_id => $annot_model->id,
+    status   => "Succeeded",
+);
+
 my $rnaseq_model_s1_t = Genome::Test::Factory::Model::RnaSeq->setup_object();
 my $rnaseq_build_s1_t = Genome::Test::Factory::Build->setup_object(
     model_id        => $rnaseq_model_s1_t->id,
     data_directory  => $data_dir_t,
     status          => "Succeeded",
+    annotation_build => $annot_build,
 );
 my $rnaseq_model_s1_n = Genome::Test::Factory::Model::RnaSeq->setup_object(
     processing_profile_id  => $rnaseq_model_s1_t->processing_profile_id,
@@ -35,6 +43,7 @@ my $rnaseq_build_s1_n = Genome::Test::Factory::Build->setup_object(
     model_id        => $rnaseq_model_s1_n->id,
     data_directory  => $data_dir_n,
     status          => "Succeeded",
+    annotation_build => $annot_build,
 );
 
 
@@ -45,6 +54,7 @@ my $rnaseq_build_s2_t = Genome::Test::Factory::Build->setup_object(
     model_id            => $rnaseq_model_s2_t->id,
     data_directory      => $data_dir_t,
     status              => "Succeeded",
+    annotation_build => $annot_build,
 );
 my $rnaseq_model_s2_n = Genome::Test::Factory::Model::RnaSeq->setup_object(
     processing_profile_id  => $rnaseq_model_s1_t->processing_profile_id,
@@ -54,6 +64,7 @@ my $rnaseq_build_s2_n = Genome::Test::Factory::Build->setup_object(
     model_id            => $rnaseq_model_s2_n->id,
     data_directory      => $data_dir_n,
     status              => "Succeeded",
+    annotation_build => $annot_build,
 );
 
 my $rnaseq_model_s3_t = Genome::Test::Factory::Model::RnaSeq->setup_object(
@@ -63,6 +74,7 @@ my $rnaseq_build_s3_t = Genome::Test::Factory::Build->setup_object(
     model_id            => $rnaseq_model_s3_t->id,
     data_directory      => $data_dir_t,
     status              => "Succeeded",
+    annotation_build => $annot_build,
 );
 
 subtest "execute" => sub {
