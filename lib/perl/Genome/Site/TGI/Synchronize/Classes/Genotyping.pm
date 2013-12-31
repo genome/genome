@@ -111,7 +111,7 @@ sub params_for_create_in_genome {
     my %params = $self->SUPER::params_for_create_in_genome;
     return if not %params;
 
-    $params{import_format} = 'genotype_file';
+    $params{import_format} = 'genotype file';
     $params{library} = $self->library;
 
     return %params;
