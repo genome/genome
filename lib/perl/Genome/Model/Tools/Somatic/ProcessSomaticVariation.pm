@@ -9,6 +9,7 @@ use Genome::Info::IUB;
 use Spreadsheet::WriteExcel;
 use File::Slurp qw(read_dir);
 use File::Basename;
+use Carp qw(confess);
 
 class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
     is => 'Command',
@@ -231,7 +232,7 @@ sub annoFileToSlashedBedFile{
 
 sub bedToAnno{
     my ($chr, $start, $stop, $ref, $var) = split("\t", $_[0]);
-    #print STDERR join("|",($chr,$start,$stop,$ref,$var)) . "\n";
+    #$self->status_message(join("|",($chr, $start, $stop, $ref, $var)));
     if ($ref =~ /^[-0*]/) { #indel INS
         $stop = $stop++;
     }
@@ -328,6 +329,7 @@ sub cleanFile{
 
 
 sub getFilterSites{
+    my $self = shift;
     my $filter_string = shift;
 
     my @filters = split(",", $filter_string);
@@ -357,7 +359,7 @@ sub getFilterSites{
             close($inFh);
         }
         else {
-            die "filter sites file doesn't exist or has zero size: " . $filterfile;
+            confess $self->error_message("filter sites file doesn't exist or has zero size: " . $filterfile);
         }
     }
     return \%filterSites;
@@ -408,6 +410,7 @@ sub removeFilterSites{
 
 ##TODO - these two functions are brittle. There needs to be a better way to grab calls for specific callers. Ideally, from the VCF...
 sub getVcfFile{
+    my $self      = shift;
     my $build_dir = shift;
     my $dir       = shift;
 
@@ -430,18 +433,18 @@ sub getVcfFile{
         }
     }
     else {
-        die "Don't know how to find the calls for ";
+        confess $self->error_message("Don't know how to find the calls for $prefix/$dir. $dir is neither 'strelka', 'varscan' or 'sniper'.");
     }
-    return "ERROR: couldn't find the snvs.vcf.gz file under directory $dir\n";
+    confess $self->error_message("Couldn't find the snvs.vcf.gz file under directory $dir");
 }
 
 
 sub removeUnsupportedSites{
-    my ($snv_file, $numcallers, $build_dir) = @_;
+    my ($self, $snv_file, $numcallers, $build_dir) = @_;
 
     #hash all of the sites
-    my $sites = getFilterSites($snv_file);
-    print "here\n";
+    my $sites = $self->getFilterSites($snv_file);
+    $self->status_message("here");
     for my $k (keys(%{$sites})) {
         $sites->{$k} = 0;
     }
@@ -454,7 +457,7 @@ sub removeUnsupportedSites{
 
     #count the number of callers that called each site from the vcfs
     for my $dir (@dirs) {
-        my $file = getVcfFile($build_dir,$dir);
+        my $file = $self->getVcfFile($build_dir, $dir);
         my $ifh = Genome::Sys->open_gzip_file_for_reading($file);
 
         while (my $line = $ifh->getline) {
@@ -481,7 +484,7 @@ sub removeUnsupportedSites{
         my $key = join("\t",($chr, $start, $stop, $ref, $var));
 
         if (!defined($sites->{$key})) {
-            print STDERR "wut?: " . $key . "\n";
+            $self->status_message("wut?: " . $key);
         }
         if ($sites->{$key} >= $numcallers) {
             print $ofh $line . "\n";
@@ -496,7 +499,10 @@ sub removeUnsupportedSites{
 
 
 sub doAnnotation{
-    my ($file,$annotation_build_name, $outfile) = @_;
+    my $self                  = shift;
+    my $file                  = shift;
+    my $annotation_build_name = shift;
+    my $outfile               = shift;
 
     if ($file =~ /.bed$/) {
         $file = bedFileToAnnoFile($file);
@@ -523,14 +529,17 @@ sub doAnnotation{
         annotation_filter     => "top",
     );
     unless ($anno_cmd->execute) {
-        die "Failed to annotate variants successfully.\n";
+        confess $self->error_message("Failed to annotate variants successfully.");
     }
     return $newfile;
 }
 
 
 sub addTiering{
-    my ($file, $tier_file_location, $outfile) = @_;
+    my $self               = shift;
+    my $file               = shift;
+    my $tier_file_location = shift;
+    my $outfile            = shift;
 
     my $newfile = addName($file, "tiered");
 
@@ -546,13 +555,13 @@ sub addTiering{
         tier_file_location => $tier_file_location,
     );
     unless ($tier_cmd->execute) {
-        die "Failed to tier variants successfully.\n";
+        confess $self->error_message("Failed to tier variants successfully.");
     }
     return $newfile;
 }
 
 sub getReadcounts{
-    my ($file, $ref_seq_fasta, @bams) = @_;
+    my ($self, $file, $ref_seq_fasta, @bams) = @_;
     #todo - should check if input is bed and do coversion if necessary
 
     if (-s "$file") {
@@ -571,7 +580,7 @@ sub getReadcounts{
             indel_size_limit => 4,
         );
         unless ($rc_cmd->execute) {
-            die "Failed to obtain readcounts for file $file.\n";
+            confess $self->error_message("Failed to obtain readcounts for file $file.");
         }
     }
     else {
@@ -595,16 +604,16 @@ sub execute {
     # Check on the input data before starting work
     my $model = $self->somatic_variation_model;
     unless (defined $model) {
-        die "ERROR: Could not find a soamtic variation model with ID: " . $model->id . "\n";
+        confess $self->error_message("Could not find a soamtic variation model with ID: " . $self->somatic_variation_model_id);
     }
     unless (-e $output_dir) {
-        die "ERROR: Output directory not found: $output_dir\n";
+        confess $self->error_message("Output directory not found: $output_dir");
     }
 
     #grab the info from the model
     my $build = $model->last_succeeded_build;
     unless (defined($build)) {
-        die "ERROR: Model ", $model->id, "has no succeeded builds\n";
+        confess $self->error_message("Model " . $model->id . "has no succeeded builds");
     }
 
     my $tumor_model = $model->tumor_model;
@@ -618,14 +627,14 @@ sub execute {
     unless (defined($sample_name)) {
         $sample_name = $model->subject->name;
     }
-    print STDERR "processing model with sample_name: " . $sample_name . "\n";
+    $self->status_message("Processing model with sample_name: " . $sample_name);
     my $tumor_bam = $tumor_model->last_succeeded_build->merged_alignment_result->bam_file;
     my $normal_bam = $normal_model->last_succeeded_build->merged_alignment_result->bam_file;
     my $build_dir = $build->data_directory;
 
     my $igv_reference_name = $self->igv_reference_name;
     if ($self->create_review_files && !defined($self->igv_reference_name)) {
-        die "ERROR: igv-reference-name required if --create-review-files is specified";
+        confess $self->error_message("igv-reference-name required if --create-review-files is specified");
     }
 
 
@@ -655,11 +664,11 @@ sub execute {
     # Check if the necessary files exist in this build
     my $snv_file = "$build_dir/effects/snvs.hq.novel.tier1.v2.bed";
     unless (-e $snv_file) {
-        die "ERROR: SNV results for $sample_name not found at $snv_file\n";
+        confess $self->error_message("SNV results for $sample_name not found at $snv_file");
     }
     my $indel_file = "$build_dir/effects/indels.hq.novel.tier1.v2.bed";
     unless (-e $indel_file) {
-        die "ERROR: INDEL results for $sample_name not found at $indel_file\n";
+        confess $self->error_message("INDEL results for $sample_name not found at $indel_file");
     }
     my $sv_file;
     my $process_svs = $self->process_svs;
@@ -667,7 +676,7 @@ sub execute {
         my @sv_files = glob("$build_dir/variants/sv/union-union-sv_breakdancer_*sv_squaredancer*/svs.merge.file.somatic");
         $sv_file = $sv_files[0];
         unless (-e $sv_file) {
-            print STDERR "WARNING: SV results for $sample_name not found, skipping SVs\n";
+            $self->warning_message("SV results for $sample_name not found, skipping SVs");
 #SHOULD THIS BE MADE INTO AN OBJECT PARAM $self->process_svs
             $process_svs = 0;
         }
@@ -731,8 +740,8 @@ sub execute {
     #-------------------------------------------------
     # remove filter sites specified by the user
     if (defined($self->filter_sites)) {
-        print STDERR "Applying user-supplied filter...\n";
-        my $filterSites = getFilterSites($self->filter_sites);
+        $self->status_message("Applying user-supplied filter");
+        my $filterSites = $self->getFilterSites($self->filter_sites);
         $snv_file   = removeFilterSites($snv_file, $filterSites);
         $indel_file = removeFilterSites($indel_file, $filterSites);
     }
@@ -747,22 +756,22 @@ sub execute {
     #-------------------------------------------------------
     # remove regions called by less than the required number of callers
     unless ($self->required_snv_callers == 1) {
-        print STDERR "Removing regions supported by less than " . $self->required_snv_callers . " regions...\n";
-        $snv_file = removeUnsupportedSites($snv_file, $self->required_snv_callers, $build_dir);
+        $self->status_message("Removing regions supported by less than " . $self->required_snv_callers . " regions");
+        $snv_file = $self->removeUnsupportedSites($snv_file, $self->required_snv_callers, $build_dir);
     }
 
     #------------------------------------------------------
     # do annotation
-    $snv_file = doAnnotation($snv_file, $annotation_build_name);
-    $indel_file = doAnnotation($indel_file, $annotation_build_name);
+    $snv_file   = $self->doAnnotation($snv_file, $annotation_build_name);
+    $indel_file = $self->doAnnotation($indel_file, $annotation_build_name);
 
     #-------------------------------------------------------
     # add tiers
     if ($self->add_tiers) {
-        print STDERR "Adding tiers...\n";
+        $self->status_message("Adding tiers");
         #do annotation
-        $snv_file = addTiering($snv_file, $tiering_files);
-        $indel_file = addTiering($indel_file, $tiering_files);
+        $snv_file   = $self->addTiering($snv_file, $tiering_files);
+        $indel_file = $self->addTiering($indel_file, $tiering_files);
 
         #convert back to annotation format (1-based)
         $snv_file = bedFileToAnnoFile($snv_file);
@@ -779,12 +788,12 @@ sub execute {
     #-------------------------------------------------------
     # get readcounts
     if ($self->get_readcounts) {
-      print STDERR "Getting readcounts...\n";
+      $self->status_message("Getting readcounts");
       if (-s "$snv_file") {
-          $snv_file = getReadcounts($snv_file, $ref_seq_fasta, $normal_bam, $tumor_bam);
+          $snv_file   = $self->getReadcounts($snv_file, $ref_seq_fasta, $normal_bam, $tumor_bam);
       }
       if (-s "$indel_file") {
-          $indel_file = getReadcounts($indel_file, $ref_seq_fasta, $normal_bam, $tumor_bam);
+          $indel_file = $self->getReadcounts($indel_file, $ref_seq_fasta, $normal_bam, $tumor_bam);
       }
     }
 
@@ -811,7 +820,7 @@ sub _filter_off_target_regions {
     my $self = shift;
     my $file = shift;
 
-    print STDERR "Filtering out off-target regions for $file...\n";
+    $self->status_message("Filtering out off-target regions for $file");
 
     my $featurelist = $self->create_or_get_featurelist_file();
     if (defined($featurelist)) {
@@ -878,7 +887,7 @@ sub _filter_regions {
 
     my $filter_file = $self->get_or_create_filter_file();
 
-    print STDERR "Removing user-specified filter for $file...\n";
+    $self->status_message("Removing user-specified filter for $file");
     my $filtered_file = "$file.filteredReg";
     Genome::Sys->shellcmd( cmd => "joinx intersect --miss-a $filtered_file -a $file -b $filter_file >/dev/null" );
 
@@ -909,8 +918,8 @@ sub _add_dbsnp_and_gmaf_to_snv {
     my $build_dir  = shift;
     my $snv_file   = shift;
 
-    print STDERR "==== adding dbsnp ids ====\n";
-    print STDERR "$build_dir/variants/snvs.annotated.vcf.gz\n";
+    $self->status_message("==== adding dbsnp ids ====");
+    $self->status_message("$build_dir/variants/snvs.annotated.vcf.gz");
     if (-s "$build_dir/variants/snvs.annotated.vcf.gz") {
         my $db_cmd = Genome::Model::Tools::Annotate::AddRsid->create(
             anno_file   => $snv_file,
@@ -918,13 +927,13 @@ sub _add_dbsnp_and_gmaf_to_snv {
             vcf_file    => "$build_dir/variants/snvs.annotated.vcf.gz",
         );
         unless ($db_cmd->execute) {
-            die "Failed to add dbsnp anno to file $snv_file.\n";
+            confess $self->error_message("Failed to add dbsnp anno to file $snv_file.");
         }
         $snv_file = "$snv_file.rsid";
         return $snv_file;
     }
     else {
-        print STDERR "Warning: couldn't find annotated SNV file in build, skipping dbsnp anno\n";
+        $self->warning_message("Warning: couldn't find annotated SNV file in build, skipping dbsnp anno");
     }
 }
 
@@ -933,8 +942,8 @@ sub _add_dbsnp_and_gmaf_to_indel {
     my $build_dir  = shift;
     my $indel_file = shift;
 
-    print STDERR "==== padding indel file with tabs to match ====\n";
-    print STDERR "$build_dir/variants/snvs.annotated.vcf.gz\n";
+    $self->status_message("==== padding indel file with tabs to match ====");
+    $self->status_message("$build_dir/variants/snvs.annotated.vcf.gz");
     if (-s "$build_dir/variants/snvs.annotated.vcf.gz") {
         #pad indel file with tabs to match - if we ever start annotating with indels from dbsnp, replace this section
         my $outFh = Genome::Sys->open_file_for_writing("$indel_file.rsid");
@@ -950,7 +959,7 @@ sub _add_dbsnp_and_gmaf_to_indel {
         return $indel_file;
     }
     else {
-        print STDERR "Warning: couldn't find annotated SNV file in build, skipping dbsnp anno\n";
+        $self->warning_message("Couldn't find annotated SNV file in build, skipping dbsnp anno");
     }
 }
 
@@ -998,7 +1007,7 @@ sub _create_review_files {
 
     my $full_output_dir = "$output_dir/$sample_name";
 
-    print "Generating Review files...\n";
+    $self->status_message("Generating Review files");
     my @tiers = split(",", $self->tiers_to_review);
     my $tierstring = join("",@tiers);
     for my $i (@tiers) {
@@ -1016,7 +1025,7 @@ sub _create_review_files {
 
     my $igv_reference_name = $self->igv_reference_name;
     unless (defined($igv_reference_name)) {
-          print STDERR "WARNING: No IGV reference name supplied - defaulting to build 37\n";
+          $self->warning_message("No IGV reference name supplied - defaulting to build 37");
     }
 
     #create the xml file for review
@@ -1062,7 +1071,7 @@ sub _create_archive {
             Genome::Sys->create_symlink("$build_dir/variants/indels.vcf.gz", "$archive_dir/indels.vcf.gz");
         }
         else {
-            print STDERR "WARNING: no indel VCF file available. If this is an older model, a rebuild may fix this\n";
+            $self->warning_message("No indel VCF file available. If this is an older model, a rebuild may fix this");
         }
 
         if (-e "$build_dir/variants/snvs.annotated.vcf.gz") {
@@ -1072,7 +1081,7 @@ sub _create_archive {
             Genome::Sys->create_symlink("$build_dir/variants/snvs.vcf.gz", "$archive_dir/snvs.vcf.gz");
         }
         else {
-            print STDERR "WARNING: no snv VCF file available. If this is an older model, a rebuild may fix this\n";
+            $self->warning_message("No snv VCF file available. If this is an older model, a rebuild may fix this");
         }
     }
 
