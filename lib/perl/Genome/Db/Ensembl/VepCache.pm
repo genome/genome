@@ -46,10 +46,6 @@ sub create {
     #ensembl-64 and 65
     #my $base_url = "ftp://ftp.ensembl.org/pub/release-VERSION/variation/VEP/SPECIES/SPECIES_vep_VERSION";
 
-    if ($self->sift) {
-        $base_url = $base_url."_sift_polyphen";
-    }
-
     $base_url = $base_url.".tar.gz";
 
     my $temp_directory_path = $self->temp_staging_directory;
