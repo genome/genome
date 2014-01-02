@@ -59,6 +59,9 @@ plotChrCNV = function(target_chr, direction){
   #target_chr = "chr17"
   i = which(cnvs[,"CHR"] == target_chr)
 
+  #Get the ideogram value for the current chromosome
+  ideo_thischr = ideo_data[which(ideo_data[,"chrom"] == target_chr), ]
+
   #Define some display genes.  Those in the input gene list on the target chr
   #They should also be below the lowest cut or above the highest cut
   gi_up = which(genes[,"chr"] == target_chr & (genes[,"mean_cnv_diff"] >= cut5 | genes[,"cnvhmm_status"]=="Gain"))
@@ -111,6 +114,12 @@ plotChrCNV = function(target_chr, direction){
     yd2 = (abs(min(yl))+(2*1.0)) *(-1)
     yd3 = (abs(min(yl))+(2*1.4)) *(-1)
   }
+
+  #Get the limits for the X axis
+  x_ideo_chr = c(ideo_thischr[,"chromStart"], ideo_thischr[,"chromEnd"])
+  xlim_lower = min(x_ideo_chr)
+  xlim_upper = max(x_ideo_chr)
+
   #Axis labels
   xlabel=paste("Position (bp) on ", target_chr, sep="")
   ylabel="CNV Difference"
@@ -120,7 +129,7 @@ plotChrCNV = function(target_chr, direction){
     mainlabel="Gains"
     ylim_lower=display_cut_up; if (ylim_lower > -2){ylim_lower = -2}
     ylim_upper=yu3; if (ylim_upper < 2){ylim_upper = 2}
-    plot(x=xg, y=yg, pch=16, col=cg, ylim=c(ylim_lower, ylim_upper), xlab="", ylab=ylabel, main=mainlabel)
+    plot(x=xg, y=yg, pch=16, col=cg, ylim=c(ylim_lower, ylim_upper), xlim = c(xlim_lower, xlim_upper), xlab="", ylab=ylabel, main=mainlabel)
     abline(h=0, lty=3, lwd=0.5, col="black")
     abline(h=cut4, lty=2, lwd=0.5, col=gaincolor1)
     abline(h=cut5, lty=2, lwd=0.5, col=gaincolor2)
@@ -156,7 +165,7 @@ plotChrCNV = function(target_chr, direction){
     mainlabel="Losses"
     ylim_lower=yd3; if (ylim_lower > -2){ylim_lower = -2}
     ylim_upper=display_cut_down;
-    plot(x=xl, y=yl, pch=16, col=cl, ylim=c(ylim_lower,ylim_upper), xlab=xlabel, ylab=ylabel, main=mainlabel)
+    plot(x=xl, y=yl, pch=16, col=cl, ylim=c(ylim_lower,ylim_upper), xlim = c(xlim_lower, xlim_upper), xlab=xlabel, ylab=ylabel, main=mainlabel)
     abline(h=0, lty=3, lwd=0.5, col="black")
     abline(h=cut1, lty=2, lwd=0.5, col=losscolor1)
     abline(h=cut2, lty=2, lwd=0.5, col=losscolor2)
@@ -260,6 +269,14 @@ plotChrCNV_Compact = function(target_chr, type){
   yl=cnvs_chr[loss_i,"DIFF"]
   cl=cnvs_chr[loss_i,"COLOR"]
 
+  #Get the ideogram value for the current chromosome
+  ideo_thischr = ideo_data[which(ideo_data[,"chrom"] == target_chr), ]
+
+  #Get the limits for the X axis
+  x_ideo_chr = c(ideo_thischr[,"chromStart"], ideo_thischr[,"chromEnd"])
+  xlim_lower = min(x_ideo_chr)
+  xlim_upper = max(x_ideo_chr)
+
   #Grab the CNV HMM segments
   j = which(segments[,"CHR"] == target_chr)
   segments_chr=segments[j,]
@@ -269,17 +286,17 @@ plotChrCNV_Compact = function(target_chr, type){
   if (type == "GAIN"){
     ylim_lower = min(yg); if (ylim_lower > -2){ylim_lower = -2}
     ylim_upper = max(yg); if (ylim_upper < 2){ylim_upper = 2}
-    plot(x=xg, y=yg, pch=16, col=cg, xlab="", ylab="CNV", main=target_chr, ylim=c(ylim_lower, ylim_upper))
+    plot(x=xg, y=yg, pch=16, col=cg, xlab="", ylab="CNV", main=target_chr, ylim=c(ylim_lower, ylim_upper), xlim=c(xlim_lower, xlim_upper))
   }else if (type == "LOSS"){
     ylim_lower = min(yl); if (ylim_lower > -2){ylim_lower = -2}
     ylim_upper = 1
-    plot(x=xl, y=yl, pch=16, col=cl, xlab="", ylab="CNV", main=target_chr, ylim=c(ylim_lower, ylim_upper))
+    plot(x=xl, y=yl, pch=16, col=cl, xlab="", ylab="CNV", main=target_chr, ylim=c(ylim_lower, ylim_upper), xlim=c(xlim_lower, xlim_upper))
   }else if (type == "BOTH"){
     ylim_lower = -2
     ylim_upper = 6
     yl[which(yl > 5.5)] = 5.5
     yl[which(yl < -2)] = -2
-    plot(x=xl, y=yl, pch=16, col=cl, xlab="", ylab="CNV", main=target_chr, ylim=c(ylim_lower, ylim_upper))
+    plot(x=xl, y=yl, pch=16, col=cl, xlab="", ylab="CNV", main=target_chr, ylim=c(ylim_lower, ylim_upper), xlim=c(xlim_lower, xlim_upper))
   }
   if (length(gain_j)>0){
     segx1g = segments_chr[gain_j,"START"]
