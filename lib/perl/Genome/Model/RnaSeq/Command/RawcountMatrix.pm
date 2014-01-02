@@ -14,7 +14,7 @@ use Genome;
 ####################### set up input parameters #######################
 #######################################################################
 
-class Genome::Model::RnaSeq::Command::rawcountMatrix
+class Genome::Model::RnaSeq::Command::RawcountMatrix
 {
     is => 'Genome::Command::Base',
     has_input =>
