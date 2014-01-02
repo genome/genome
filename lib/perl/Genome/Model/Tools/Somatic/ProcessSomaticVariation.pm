@@ -800,9 +800,8 @@ sub execute {
 
     #------------------------------------------------
     # tar up the files to be sent to collaborators
-    my $archive_dir = "$output_dir/$sample_name/$sample_name";
     if ($self->create_archive) {
-        $self->_create_archive($archive_dir, $build_dir, $sv_file);
+        $self->_create_archive($build_dir, $sv_file);
     }
 
     return 1;
@@ -1030,21 +1029,20 @@ sub _create_review_files {
         reference_name  => $igv_reference_name,
     );
     unless ($dumpXML->execute) {
-        die "Failed to create IGV xml file\n";
+        confess $self->error_message("Failed to create IGV xml file");
     }
 
-    print STDERR "\n--------------------------------------------------------------------------------\n";
-    print STDERR "Sites to review are here:\n";
-    print STDERR "$output_dir/review/$sample_name.bed\n";
-    print STDERR "IGV XML file is here:";
-    print STDERR "$output_dir/review/$sample_name.xml\n\n";
+    $self->status_message("\n--------------------------------------------------------------------------------");
+    $self->status_message("Sites to review are here:");
+    $self->status_message("$output_dir/review/$sample_name.bed");
+    $self->status_message("IGV XML file is here:");
+    $self->status_message("$output_dir/review/$sample_name.xml");
 
     return 1;
 }
 
 sub _create_archive {
     my $self        = shift;
-    my $archive_dir = shift;
     my $build_dir   = shift;
     my $sv_file     = shift;
 
@@ -1052,7 +1050,7 @@ sub _create_archive {
     my $sample_name = $self->sample_name;
 
     my $full_output_dir = "$output_dir/$sample_name";
-
+    my $archive_dir     = "$full_output_dir/$sample_name";
     Genome::Sys->create_directory("$archive_dir");
 
     #symlink VCF files
