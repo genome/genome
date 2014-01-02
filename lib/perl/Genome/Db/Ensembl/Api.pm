@@ -126,8 +126,8 @@ sub prepend_api_path_and_execute {
 
 sub vep_script {
     my $self = shift;
-    return join("/", $self->output_dir, "variant_effect_predictor", "variant_effect_predictor.pl");
+    my $script_name = shift;
+    return join("/", $self->output_dir, "variant_effect_predictor", $script_name);
 }
-
 1;
 

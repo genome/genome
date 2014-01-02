@@ -570,8 +570,9 @@ sub _resolve_vep_script_path {
 
     my $api = Genome::Db::Ensembl::Api->get_or_create(version => $version);
     if (defined $api) {
-        if (-s $api->vep_script) {
-            return $api->vep_script;
+        my $script_path = $api->vep_script("variant_effect_predictor.pl");
+        if (-s $script_path) {
+            return $script_path;
         }
         else {
             $self->warning_message("Ensembl api ".$api->id." did not have VEP script");
