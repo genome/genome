@@ -13,6 +13,12 @@ class Genome::Config::AnalysisProject::Command::Create {
             doc                 => 'the name of the analysis project to create',
             shell_args_position => 1
         },
+        no_config => {
+            is => 'Boolean',
+            is_optional => 1,
+            default_value => 0,
+            doc => 'If specified, you will not be prompted for any menu items and the project will be created without config.'
+        },
         analysis_menu_items => {
             is                  => 'Genome::Config::AnalysisMenu::Item',
             is_optional         => 1,
@@ -74,6 +80,8 @@ sub _get_menu_items {
 
     if ($self->analysis_menu_items()) {
         return [$self->analysis_menu_items];
+    } elsif ($self->no_config()) {
+        return [];
     } else {
         my $class_name = 'Genome::Config::AnalysisMenu::Item';
         return [$self->resolve_param_value_from_cmdline_text(
