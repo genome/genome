@@ -14,6 +14,10 @@ require RT::Client::REST;
 require RT::Client::REST::Ticket;
 require WWW::Mechanize;
 
+BEGIN {
+        $ENV{UR_DBI_NO_COMMIT} = 1;
+}
+
 class Genome::Model::Command::Admin::FailedModelTickets {
     is => 'Genome::Command::Base',
     doc => 'find failed cron models, check that they are in a ticket',
