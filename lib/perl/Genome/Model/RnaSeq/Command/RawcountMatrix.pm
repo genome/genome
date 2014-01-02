@@ -36,6 +36,7 @@ class Genome::Model::RnaSeq::Command::RawcountMatrix
             is_optional => 1,
         },
     ],
+    doc => 'accumulate Raw Count values obtained from (presumably) the HTseq tool into a matrix, optionally performs DE analysis with edgeR.',
 };
 
 ######################################################################
