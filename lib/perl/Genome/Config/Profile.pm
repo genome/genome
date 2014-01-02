@@ -6,6 +6,8 @@ use warnings;
 use Genome;
 use UR::Util;
 
+use feature qw(switch);
+
 class Genome::Config::Profile {
     is => 'UR::Object',
     is_transactional => 0,
@@ -51,7 +53,11 @@ sub _merge_model_hashes {
     for my $source (@source_hashes) {
         for my $key (keys %$source) {
             $destination_hash->{$key} ||= [];
-            push @{$destination_hash->{$key}}, @{$source->{$key}};
+            given(ref $source->{$key}) {
+                when('ARRAY') { push @{$destination_hash->{$key}}, @{$source->{$key}}; }
+                when('HASH')  { push @{$destination_hash->{$key}}, $source->{$key}; }
+                default       { die $self->error_message('unexpected value for key %s', $key); }
+            }
         }
     }
 
