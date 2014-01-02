@@ -36,8 +36,8 @@ sub _invoke_editor {
 
     system(_editor(), $file);
 
-    return 0 unless (-e $file);
-    return 0 unless (-s $file || $allow_empty);
+    return undef unless (-e $file);
+    return undef unless (-s $file || $allow_empty);
     return Genome::Sys->read_file($file);
 }
 

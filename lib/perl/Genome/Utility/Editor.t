@@ -12,8 +12,8 @@ $ENV{'EDITOR'} = 'touch';
 my $class = 'Genome::Utility::Editor';
 use_ok($class);
 
-is(Genome::Utility::Editor::from_empty_file(), 0,
-    'expect 0 return code for empty file');
+is(Genome::Utility::Editor::from_empty_file(), undef,
+    'expect undef return code for empty file');
 
 is(Genome::Utility::Editor::from_empty_file(allow_empty => 1), '',
     'expect empty string when allow_empty is on for empty file');
