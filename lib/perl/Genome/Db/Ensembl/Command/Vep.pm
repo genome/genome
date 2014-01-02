@@ -217,9 +217,8 @@ sub execute {
         return;
     }
 
-    unless ($annotation_build->get_api_paths) {
-        $self->error_message("Could not find ensembl api in ImportedAnnotation build with id ".$annotation_build->id);
-    }
+    my $ensembl_version_number = Genome::Db::Ensembl::Command::Import::Run->ensembl_version_string($annotation_build->ensembl_version);
+    my $script_path = $self->_resolve_vep_script_path($ensembl_version_number);
 
     my $format = $self->format;
     my $input_file= $self->input_file;
@@ -354,7 +353,6 @@ sub execute {
         $input_file = $tmpfile;
     }
 
-    my $script_path = $VEP_SCRIPT_PATH.$self->{version}.".pl";
     my $string_args = "";
 
     #UR magic to get the string and boolean property lists
@@ -530,12 +528,9 @@ sub execute {
 
     if ($cache_result) {
         $self->status_message("Using VEP cache result ".$cache_result->id);
-        $cmd = "$cmd --cache --dir ".$temp_config_dir."/";
+        $cmd = "$cmd --cache --offline --dir ".$temp_config_dir."/";
         foreach my $file (glob $cache_result->output_dir."/*"){
             `ln -s $file $temp_config_dir`;
-        }
-        if ($self->gtf_cache) {
-            $cmd = "$cmd --offline";
         }
     }
     else {
@@ -569,5 +564,23 @@ sub _species_lookup {
     }
 }
 
+sub _resolve_vep_script_path {
+    my $self = shift;
+    my $version = shift;
 
+    my $api = Genome::Db::Ensembl::Api->get_or_create(version => $version);
+    if (defined $api) {
+        if (-s $api->vep_script) {
+            return $api->vep_script;
+        }
+        else {
+            $self->warning_message("Ensembl api ".$api->id." did not have VEP script");
+        }
+    }
+    else {
+        $self->warning_message("Could not find ensembl api version ".$version);
+    }
+    
+    return $VEP_SCRIPT_PATH.$self->{version}.".pl";
+}
 1;
