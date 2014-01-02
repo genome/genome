@@ -1,4 +1,4 @@
-package Genome::Model::RnaSeq::Command::rawcountMatrix;
+package Genome::Model::RnaSeq::Command::RawcountMatrix;
 
 # Written by: Zachary Skidmore, Avinash Ramu
 
@@ -36,7 +36,6 @@ class Genome::Model::RnaSeq::Command::RawcountMatrix
             is_optional => 1,
         },
     ],
-    doc => 'accumulate Raw Count values obtained from (presumably) the HTseq tool into a matrix, optionally performs DE analysis with edgeR.',
 };
 
 ######################################################################
@@ -45,7 +44,7 @@ class Genome::Model::RnaSeq::Command::RawcountMatrix
 
 sub help_synopsis
 {
-    return <<EOS
+    return <<"EOS"
     genome model rna-seq rawcount-Matrix --output=FILE.tsv --edgeR=(1 or 0)(optional)  MODEL_GROUP_ID
 EOS
 }
