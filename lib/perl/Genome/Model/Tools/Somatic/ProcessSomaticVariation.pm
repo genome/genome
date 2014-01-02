@@ -671,14 +671,12 @@ sub execute {
         confess $self->error_message("INDEL results for $sample_name not found at $indel_file");
     }
     my $sv_file;
-    my $process_svs = $self->process_svs;
-    if($process_svs){
+    if ($self->process_svs) {
         my @sv_files = glob("$build_dir/variants/sv/union-union-sv_breakdancer_*sv_squaredancer*/svs.merge.file.somatic");
         $sv_file = $sv_files[0];
         unless (-e $sv_file) {
             $self->warning_message("SV results for $sample_name not found, skipping SVs");
-#SHOULD THIS BE MADE INTO AN OBJECT PARAM $self->process_svs
-            $process_svs = 0;
+            $self->process_svs(0);
         }
     }
 
