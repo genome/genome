@@ -1,4 +1,4 @@
-package Genome::Site::TGI::Synchronize::Classes::LibrarySummary; 
+package Genome::Site::TGI::Synchronize::Classes::LibrarySummary;
 
 use strict;
 use warnings;
@@ -40,7 +40,7 @@ sub properties_to_copy {# 6
 }
 
 sub properties_to_keep_updated {# 3
-    return (qw/ 
+    return (qw/
         protocol
         library_insert_size
         original_insert_size
