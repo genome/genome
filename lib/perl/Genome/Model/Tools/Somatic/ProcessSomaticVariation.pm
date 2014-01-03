@@ -18,6 +18,12 @@ class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
             is => 'Genome::Model::SomaticVariation',
             is_optional => 1,
             id_by => 'somatic_variation_model_id',
+        sample_name_dir => {
+            is => 'Text',
+            is_optional => 1,
+            is_transient => 1,
+            is_mutable => 0,
+            calculate => q { return $self->get_unique_sample_name_dir(); }
         },
     ],
     has_input => [
@@ -591,6 +597,25 @@ sub getReadcounts{
     return "$file.rcnt";
 }
 
+sub get_unique_sample_name_dir {
+    my $self = shift;
+
+    my $output_dir  = $self->output_dir;
+    my $sample_name = $self->sample_name;
+
+    if (-e "$output_dir/$sample_name") {
+        my $suffix = 1;
+        my $newname = $sample_name . "-" . $suffix;
+        while (-e "$output_dir/$newname") {
+            $suffix++;
+            $newname = $sample_name . "-" . $suffix;
+        }
+        return $newname;
+    }
+    else {
+        return $sample_name;
+    }
+}
 
 #########################################################################################################
 sub execute {
@@ -640,16 +665,7 @@ sub execute {
     # create subdirectories, get files in place
 
     # if multiple models with the same name, add a suffix
-    if (-e "$output_dir/$sample_name") {
-        my $suffix = 1;
-        my $newname = $sample_name . "-" . $suffix;
-        while (-e "$output_dir/$newname") {
-            $suffix++;
-            $newname = $sample_name . "-" . $suffix;
-        }
-        $sample_name = $newname;
-        $self->sample_name($newname);
-    }
+    my $sample_name_dir = $self->sample_name_dir;
     #make the directory structure
     Genome::Sys->create_directory("$output_dir/$sample_name");
     Genome::Sys->create_directory("$output_dir/$sample_name/snvs");
@@ -1003,6 +1019,7 @@ sub _create_review_files {
     my $sample_name = $self->sample_name;
 
     my $full_output_dir = "$output_dir/$sample_name";
+    my $sample_name_dir = $self->sample_name_dir;
 
     $self->status_message("Generating Review files");
     my @tiers = split(",", $self->tiers_to_review);
@@ -1012,13 +1029,13 @@ sub _create_review_files {
     }
     Genome::Sys->shellcmd(cmd => "joinx sort -i $full_output_dir/snvs.indels.annotated.tier$tierstring.tmp >$full_output_dir/snvs.indels.annotated.tier$tierstring");
     Genome::Sys->shellcmd(cmd => "rm -f $full_output_dir/snvs.indels.annotated.tier$tierstring.tmp");
-    annoFileToSlashedBedFile("$full_output_dir/snvs.indels.annotated.tier$tierstring","$output_dir/review/$sample_name.bed");
+    annoFileToSlashedBedFile("$full_output_dir/snvs.indels.annotated.tier$tierstring","$review_dir/$sample_name_dir.bed");
 
     my $tumor_bam = $self->somatic_variation_model->tumor_model->last_succeeded_build->merged_alignment_result->bam_file;
     my $normal_bam = $self->somatic_variation_model->normal_model->last_succeeded_build->merged_alignment_result->bam_file;
 
     my $bam_files = join(",",($normal_bam, $tumor_bam));
-    my $labels = join(",",("normal $sample_name","tumor $sample_name"));
+    my $labels = join(",",("normal $sample_name_dir","tumor $sample_name_dir"));
 
     my $igv_reference_name = $self->igv_reference_name;
     unless (defined($igv_reference_name)) {
@@ -1029,9 +1046,9 @@ sub _create_review_files {
     my $dumpXML = Genome::Model::Tools::Analysis::DumpIgvXmlMulti->create(
         bams            => "$bam_files",
         labels          => "$labels",
-        output_file     => "$output_dir/review/$sample_name.xml",
-        genome_name     => $sample_name,
-        review_bed_file => "$output_dir/review/$sample_name.bed",
+        output_file     => "$review_dir/$sample_name_dir.xml",
+        genome_name     => $sample_name_dir,
+        review_bed_file => "$review_dir/$sample_name_dir.bed",
         reference_name  => $igv_reference_name,
     );
     unless ($dumpXML->execute) {
@@ -1040,9 +1057,9 @@ sub _create_review_files {
 
     $self->status_message("\n--------------------------------------------------------------------------------");
     $self->status_message("Sites to review are here:");
-    $self->status_message("$output_dir/review/$sample_name.bed");
+    $self->status_message("$review_dir/$sample_name_dir.bed");
     $self->status_message("IGV XML file is here:");
-    $self->status_message("$output_dir/review/$sample_name.xml");
+    $self->status_message("$review_dir/$sample_name_dir.xml");
 
     return 1;
 }
