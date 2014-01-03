@@ -159,7 +159,7 @@ sub run_cbs {
     if(not $self->test) {
         $create_diff_cmd = 'paste ' . $tumor_copynumber . ' ' . $normal_copynumber . ' | awk \'!/NaN|chr/ { print $1"\t"$2"\t"2^($6 + 1) - 2^($17 + 1) }\' > ' . $cnv_diff_file;
     } else { #use only chr1 for test
-        $create_diff_cmd = 'paste ' . $tumor_copynumber . ' ' . $normal_copynumber . ' | awk \'!/NaN|chr/ { if($1 == 21) print $1"\t"$2"\t"2^($6 + 1) - 2^($17 + 1) }\' > ' . $cnv_diff_file;
+        $create_diff_cmd = 'paste ' . $tumor_copynumber . ' ' . $normal_copynumber . ' | awk \'!/NaN|chr/ { if($1 == 6) print $1"\t"$2"\t"2^($6 + 1) - 2^($17 + 1) }\' > ' . $cnv_diff_file;
     }
     Genome::Sys->shellcmd(cmd => $create_diff_cmd);
     my $cbs = Genome::Model::Tools::CopyNumber::Cbs->create(array_file => $cnv_diff_file, output_file => $cbs_op);
@@ -180,7 +180,7 @@ sub run_cnview {
     if(not $self -> test) { 
         $create_cnvhq_cmd = 'paste ' . $tumor_copynumber . ' ' .  $normal_copynumber . ' | awk \' BEGIN { print "CHR\tPOS\tTUMOR\tNORMAL\tDIFF"; } !/NaN|chr/ { print $1"\t"$2"\t"2^($6 + 1)"\t"2^($17 + 1)"\t"2^($6 + 1)-2^($17 + 1); }\' > ' . $cnv_file;
     } else {#use just chr1 for test
-        $create_cnvhq_cmd = 'paste ' . $tumor_copynumber . ' ' .  $normal_copynumber . ' | awk \' BEGIN { print "CHR\tPOS\tTUMOR\tNORMAL\tDIFF"; } !/NaN|chr/ { if($1 == 21) print $1"\t"$2"\t"2^($6 + 1)"\t"2^($17 + 1)"\t"2^($6 + 1)-2^($17 + 1); }\' > ' . $cnv_file;
+        $create_cnvhq_cmd = 'paste ' . $tumor_copynumber . ' ' .  $normal_copynumber . ' | awk \' BEGIN { print "CHR\tPOS\tTUMOR\tNORMAL\tDIFF"; } !/NaN|chr/ { if($1 == 6) print $1"\t"$2"\t"2^($6 + 1)"\t"2^($17 + 1)"\t"2^($6 + 1)-2^($17 + 1); }\' > ' . $cnv_file;
     }
     
     Genome::Sys->shellcmd(cmd => $create_cnvhq_cmd);
