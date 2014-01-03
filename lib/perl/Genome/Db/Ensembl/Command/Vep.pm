@@ -240,33 +240,7 @@ sub execute {
         $format = "ensembl";
     }
 
-    my $string_args = "";
-
-    #UR magic to get the string and boolean property lists
-    my $meta = $self->__meta__;
-    my @all_bool_args = $meta->properties(
-        class_name => __PACKAGE__,
-        data_type => 'Boolean');
-    my @all_string_args = $meta->properties(
-        class_name => __PACKAGE__,
-        data_type => 'String');
-
-    for my $local_property (qw(version ensembl_annotation_build_id plugins plugins_version gtf_file reference_build_id)) {
-        @all_string_args = $self->_remove_arg($local_property, @all_string_args);
-    }
-
-    for my $local_property (qw(gtf_cache)) {
-        @all_bool_args = $self->_remove_arg($local_property, @all_bool_args);
-    }
-
-    $string_args = join( ' ',
-        map {
-            my $name = $_->property_name;
-            my $value = $self->$name;
-            defined($value) ? ("--".($name)." ".$value) : ()
-        } @all_string_args
-    );
-
+    my $string_args = $self->_get_string_args;
     #have to replace these arg, because it may have changed (from bed -> ensembl)
     $string_args =~ s/--format (\w+)/--format $format/;
     # the vep script does not understand --input_file - as read from stdin.
@@ -274,14 +248,8 @@ sub execute {
     my $input_file_arg = $input_file eq '-' ? "" : "--input_file $input_file";
     $string_args =~ s/--input_file ([^\s]+)/$input_file_arg/;
 
-    my $bool_args = "";
-    $bool_args = join (' ',
-        map {
-            my $name = $_->property_name;
-            my $value = $self->$name;
-            $value ? ("--".($name)) : ()
-        } @all_bool_args
-    );
+    my $bool_args = $self->_get_bool_args;
+
 
     my $temp_config_dir = Genome::Sys->create_temp_directory;
     my $plugin_args = "";
@@ -302,7 +270,6 @@ sub execute {
     my $user_param = defined $ENV{GENOME_DB_ENSEMBL_USER} ? "--user ".$ENV{GENOME_DB_ENSEMBL_USER} : "";
     my $password_param = defined $ENV{GENOME_DB_ENSEMBL_PASS} ? "--password ".$ENV{GENOME_DB_ENSEMBL_PASS} : "";
     my $port_param = defined $ENV{GENOME_DB_ENSEMBL_PORT} ? "--port ".$ENV{GENOME_DB_ENSEMBL_PORT} : "";
-    my $cache_param;
 
     my $cache_result = $self->_get_cache_result($annotation_build);
 
@@ -333,6 +300,51 @@ sub execute {
         %params
     );
     return 1;
+}
+
+sub _get_string_args {
+    my $self = shift;
+    my $meta = $self->__meta__;
+    
+    my @all_string_args = $meta->properties(
+        class_name => __PACKAGE__,
+        data_type => 'String');
+
+    for my $local_property (qw(version ensembl_annotation_build_id plugins plugins_version gtf_file reference_build_id)) {
+        @all_string_args = $self->_remove_arg($local_property, @all_string_args);
+    }
+
+    my $string_args = join( ' ',
+        map {
+            my $name = $_->property_name;
+            my $value = $self->$name;
+            defined($value) ? ("--".($name)." ".$value) : ()
+        } @all_string_args
+    );
+
+    return $string_args;
+}
+
+sub _get_bool_args {
+    my $self = shift;
+    my $meta = $self->__meta__;
+    my @all_bool_args = $meta->properties(
+        class_name => __PACKAGE__,
+        data_type => 'Boolean');
+
+    for my $local_property (qw(gtf_cache)) {
+        @all_bool_args = $self->_remove_arg($local_property, @all_bool_args);
+    }
+
+    my $bool_args = "";
+    $bool_args = join (' ',
+        map {
+            my $name = $_->property_name;
+            my $value = $self->$name;
+            $value ? ("--".($name)) : ()
+        } @all_bool_args
+    );
+    return $bool_args;
 }
 
 sub _remove_arg {
