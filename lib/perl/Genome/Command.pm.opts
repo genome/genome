@@ -948,6 +948,8 @@ $Genome::Command::OPTS_SPEC = [
     undef,
     '>create',
     [
+      'no-config!',
+      undef,
       'analysis-menu-items=s@',
       undef,
       'name=s',
@@ -3118,6 +3120,32 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>rawcount-matrix',
+      [
+        'output=s',
+        'files',
+        'color!',
+        undef,
+        'debug!',
+        undef,
+        'edgeR=s',
+        'files',
+        'models=s@',
+        undef,
+        'help!',
+        undef
+      ],
+      '>splice-junction-summary',
+      [
+        'build=s',
+        undef,
+        'lsf-resource=s',
+        'files',
+        'splice-junction-summary-result=s',
+        undef,
+        'help!',
+        undef
+      ],
       '>detect-fusions',
       [
         'detector-name=s',
@@ -3140,17 +3168,6 @@ $Genome::Command::OPTS_SPEC = [
         'debug!',
         undef,
         'models=s@',
-        undef,
-        'help!',
-        undef
-      ],
-      '>splice-junction-summary',
-      [
-        'build=s',
-        undef,
-        'lsf-resource=s',
-        'files',
-        'splice-junction-summary-result=s',
         undef,
         'help!',
         undef
@@ -5702,6 +5719,29 @@ $Genome::Command::OPTS_SPEC = [
         'outdir=s',
         'files',
         'builds=s@',
+        undef,
+        'help!',
+        undef
+      ],
+      '>microarray-cnv',
+      [
+        'outdir=s',
+        'files',
+        'copynumber-tumor=s',
+        'files',
+        'microarray-model-tumor=s',
+        undef,
+        'copynumber-normal=s',
+        'files',
+        'microarray-model-normal=s',
+        undef,
+        'cancer-annotation-db=s',
+        undef,
+        'clinseq-model=s',
+        undef,
+        'annotation-build-id=s',
+        undef,
+        'test!',
         undef,
         'help!',
         undef
@@ -38221,6 +38261,8 @@ $Genome::Command::OPTS_SPEC = [
       undef,
       '>create',
       [
+        'no-config!',
+        undef,
         'analysis-menu-items=s@',
         undef,
         'name=s',
