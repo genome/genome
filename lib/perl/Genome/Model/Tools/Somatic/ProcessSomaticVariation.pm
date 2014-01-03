@@ -12,7 +12,7 @@ use File::Basename;
 use Carp qw(confess);
 
 class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
-    is => 'Command',
+    is => 'Command::V2',
     has => [
         somatic_variation_model => {
             is => 'Genome::Model::SomaticVariation',
@@ -127,8 +127,10 @@ class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
         sample_name =>{
             is => 'Text',
             is_optional => 1,
+            is_mutable => 0,
+            calculate => q { return $self->somatic_variation_model->subject->name; },
             doc => "override the sample name on the build and use this name instead",
-        },
+        }
     ],
 };
 
@@ -623,11 +625,8 @@ sub execute {
     my $ref_seq_fasta = $ref_seq_build->full_consensus_path('fa');
     my $annotation_build_name = $model->annotation_build->name;
     my $tiering_files = $model->annotation_build->data_directory . "/annotation_data/tiering_bed_files_v3/";
-    my $sample_name = $self->sample_name;
-    unless (defined($sample_name)) {
-        $sample_name = $model->subject->name;
-    }
-    $self->status_message("Processing model with sample_name: " . $sample_name);
+    $self->status_message("Processing model with sample_name: " . $self->sample_name);
+
     my $tumor_bam = $tumor_model->last_succeeded_build->merged_alignment_result->bam_file;
     my $normal_bam = $normal_model->last_succeeded_build->merged_alignment_result->bam_file;
     my $build_dir = $build->data_directory;
@@ -664,18 +663,18 @@ sub execute {
     # Check if the necessary files exist in this build
     my $snv_file = "$build_dir/effects/snvs.hq.novel.tier1.v2.bed";
     unless (-e $snv_file) {
-        confess $self->error_message("SNV results for $sample_name not found at $snv_file");
+        confess $self->error_message("SNV results for " . $self->sample_name . " not found at $snv_file");
     }
     my $indel_file = "$build_dir/effects/indels.hq.novel.tier1.v2.bed";
     unless (-e $indel_file) {
-        confess $self->error_message("INDEL results for $sample_name not found at $indel_file");
+        confess $self->error_message("INDEL results for " . $self->sample_name . " not found at $indel_file");
     }
     my $sv_file;
     if ($self->process_svs) {
         my @sv_files = glob("$build_dir/variants/sv/union-union-sv_breakdancer_*sv_squaredancer*/svs.merge.file.somatic");
         $sv_file = $sv_files[0];
         unless (-e $sv_file) {
-            $self->warning_message("SV results for $sample_name not found, skipping SVs");
+            $self->warning_message("SV results for " . $self->sample_name . " not found, skipping SVs");
             $self->process_svs(0);
         }
     }
