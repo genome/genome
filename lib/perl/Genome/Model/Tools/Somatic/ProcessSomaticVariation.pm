@@ -840,7 +840,7 @@ sub _filter_off_target_regions {
 
     $self->status_message("Filtering out off-target regions for $file");
 
-    my $featurelist = $self->create_or_get_featurelist_file();
+    my $featurelist = $self->get_or_create_featurelist_file();
     if (defined($featurelist)) {
           my $new_file = addName($file,"ontarget");
 
@@ -854,7 +854,7 @@ sub _filter_off_target_regions {
     return $file;
 }
 
-sub create_or_get_featurelist_file {
+sub get_or_create_featurelist_file {
     my $self = shift;
 
     my $full_output_dir = $self->full_output_dir;
