@@ -308,13 +308,7 @@ sub execute {
     my $cache_result;
     my %cache_result_params;
     $cache_result_params{version} = $ensembl_version;
-    my $rename_species = $self->_species_lookup($self->species);
-    if ($rename_species) {
-        $cache_result_params{species} = $rename_species;
-    }
-    else {
-        $cache_result_params{species} = $self->species;
-    }
+    my $cache_result_params{species} = $self->_species_lookup($self->species);
     $cache_result_params{test_name} = $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME};
     if ($self->gtf_cache) {
         $cache_result_params{reference_build_id} = $self->reference_build_id;
@@ -419,7 +413,7 @@ sub _species_lookup {
         return "human";
     }
     else {
-        return;
+        return $species;
     }
 }
 
