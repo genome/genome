@@ -10,6 +10,10 @@ use File::Basename;
 my ($VEP_DIR) = Cwd::abs_path(__FILE__) =~ /(.*)\//;
 my $VEP_SCRIPT_PATH = $VEP_DIR . "/Vep.d/vep";
 
+#Properties that are local to the wrapper and should not be passed through to the VEP script:
+my @LOCAL_STRING_PROPERTIES = qw(version ensembl_annotation_build_id plugins plugins_version gtf_file reference_build_id);
+my @LOCAL_BOOL_PROPERTIES = qw(gtf_cache);
+
 class Genome::Db::Ensembl::Command::Vep {
     is => 'Command::V2',
     doc => 'Run VEP',
@@ -310,7 +314,7 @@ sub _get_string_args {
         class_name => __PACKAGE__,
         data_type => 'String');
 
-    for my $local_property (qw(version ensembl_annotation_build_id plugins plugins_version gtf_file reference_build_id)) {
+    for my $local_property (@LOCAL_STRING_PROPERTIES) {
         @all_string_args = $self->_remove_arg($local_property, @all_string_args);
     }
 
@@ -332,7 +336,7 @@ sub _get_bool_args {
         class_name => __PACKAGE__,
         data_type => 'Boolean');
 
-    for my $local_property (qw(gtf_cache)) {
+    for my $local_property (@LOCAL_BOOL_PROPERTIES) {
         @all_bool_args = $self->_remove_arg($local_property, @all_bool_args);
     }
 
