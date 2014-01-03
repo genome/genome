@@ -303,34 +303,8 @@ sub execute {
     my $password_param = defined $ENV{GENOME_DB_ENSEMBL_PASS} ? "--password ".$ENV{GENOME_DB_ENSEMBL_PASS} : "";
     my $port_param = defined $ENV{GENOME_DB_ENSEMBL_PORT} ? "--port ".$ENV{GENOME_DB_ENSEMBL_PORT} : "";
     my $cache_param;
-    my $ensembl_version = Genome::Db::Ensembl::Command::Import::Run->ensembl_version_string($annotation_build->version);
 
-    my $cache_result;
-    my %cache_result_params;
-    $cache_result_params{version} = $ensembl_version;
-    my $cache_result_params{species} = $self->_species_lookup($self->species);
-    $cache_result_params{test_name} = $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME};
-    if ($self->gtf_cache) {
-        $cache_result_params{reference_build_id} = $self->reference_build_id;
-        if (defined $self->gtf_file) {
-            $cache_result_params{gtf_file_path} = $self->gtf_file;
-            $cache_result_params{vep_version} = $self->version;
-            $cache_result = Genome::Db::Ensembl::GtfCache->get_or_create(%cache_result_params);
-        }
-        else {
-            $cache_result = Genome::Db::Ensembl::GtfCache->get(%cache_result_params);
-        }
-    }
-    else {
-        if ($self->sift or $self->polyphen) {
-            $cache_result_params{sift} = 1;
-        }
-        else {
-            $cache_result_params{sift} = 0;
-        }
-        eval {$cache_result = Genome::Db::Ensembl::VepCache->get_or_create(%cache_result_params);
-        };
-    }
+    my $cache_result = $self->_get_cache_result($annotation_build);
 
     my $cmd = "$script_path $string_args $bool_args $plugin_args $host_param $user_param $password_param $port_param";
 
@@ -560,6 +534,42 @@ sub _convert_bed_to_ensembl_input {
     }
     close($inFh);
     return $tmpfile;
+}
+
+sub _get_cache_result {
+    my $self = shift;
+    my $annotation_build = shift;
+
+    my $ensembl_version = Genome::Db::Ensembl::Command::Import::Run->ensembl_version_string($annotation_build->version);
+
+    my $cache_result;
+    my %cache_result_params;
+    $cache_result_params{version} = $ensembl_version;
+    $cache_result_params{species} = $self->_species_lookup($self->species);
+    $cache_result_params{test_name} = $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME};
+    if ($self->gtf_cache) {
+        $cache_result_params{reference_build_id} = $self->reference_build_id;
+        if (defined $self->gtf_file) {
+            $cache_result_params{gtf_file_path} = $self->gtf_file;
+            $cache_result_params{vep_version} = $self->version;
+            $cache_result = Genome::Db::Ensembl::GtfCache->get_or_create(%cache_result_params);
+        }
+        else {
+            $cache_result = Genome::Db::Ensembl::GtfCache->get(%cache_result_params);
+        }
+    }
+    else {
+        if ($self->sift or $self->polyphen) {
+            $cache_result_params{sift} = 1;
+        }
+        else {
+            $cache_result_params{sift} = 0;
+        }
+        eval {$cache_result = Genome::Db::Ensembl::VepCache->get_or_create(%cache_result_params);
+        };
+    }
+
+    return $cache_result;
 }
 
 1;
