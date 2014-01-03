@@ -251,60 +251,13 @@ sub execute {
         class_name => __PACKAGE__,
         data_type => 'String');
 
-    my $count = 0;
-    foreach my $arg (@all_string_args) {
-        if ($arg->property_name eq 'version') {
-            splice @all_string_args, $count, 1;
-            last;
-        }
-        $count++;
+    for my $local_property (qw(version ensembl_annotation_build_id plugins plugins_version gtf_file reference_build_id)) {
+        @all_string_args = $self->_remove_arg($local_property, @all_string_args);
     }
 
-    $count = 0;
-    foreach my $arg (@all_string_args) {
-        if ($arg->property_name eq 'ensembl_annotation_build_id') {
-            splice @all_string_args, $count, 1;
-            last;
-        }
-        $count++;
+    for my $local_property (qw(gtf_cache)) {
+        @all_bool_args = $self->_remove_arg($local_property, @all_bool_args);
     }
-
-    $count = 0;
-    foreach my $arg (@all_string_args) {
-        if ($arg->property_name eq 'plugins') {
-            splice @all_string_args, $count, 1;
-            last;
-        }
-        $count++;
-    }
-
-    $count = 0;
-    foreach my $arg (@all_string_args) {
-        if ($arg->property_name eq 'plugins_version') {
-            splice @all_string_args, $count, 1;
-            last;
-        }
-        $count++;
-    }
-
-    $count = 0;
-    foreach my $arg (@all_string_args) {
-        if ($arg->property_name eq 'gtf_file') {
-            splice @all_string_args, $count, 1;
-            last;
-        }
-        $count++;
-    }
-
-    $count = 0;
-    foreach my $arg (@all_string_args) {
-        if ($arg->property_name eq 'reference_build_id') {
-            splice @all_string_args, $count, 1;
-            last;
-        }
-        $count++;
-    }
-
 
     $string_args = join( ' ',
         map {
@@ -320,16 +273,6 @@ sub execute {
     # instead, we must leave out the --input_file arg to get that behavior.
     my $input_file_arg = $input_file eq '-' ? "" : "--input_file $input_file";
     $string_args =~ s/--input_file ([^\s]+)/$input_file_arg/;
-
-    $count = 0;
-    foreach my $arg (@all_bool_args) {
-        if ($arg->property_name eq 'gtf_cache') {
-            splice @all_bool_args, $count, 1;
-            last;
-        }
-        $count++;
-    }
-
 
     my $bool_args = "";
     $bool_args = join (' ',
@@ -350,24 +293,8 @@ sub execute {
         Genome::Sys->create_directory($temp_plugins_dir);
         Genome::Sys->create_directory($temp_plugins_config_dir);
         foreach my $plugin ($self->plugins) {
-            my @plugin_fields = split /\@/, $plugin;
-            my $plugin_name = $plugin_fields[0];
-            my $plugin_source_file = "$plugins_source_dir/$plugin_name.pm";
-            if (-e $plugin_source_file){
-                Genome::Sys->copy_file($plugin_source_file, "$temp_plugins_dir/$plugin_name.pm");
-            }
-            my $plugin_dir = "$plugins_source_dir/config/$plugin_name";
-            my $temp_plugin_config_dir = "$temp_plugins_config_dir/$plugin_name/config";
-            if (-d $plugin_dir) {
-                `cp -r $plugin_dir $temp_plugins_config_dir`;
-                foreach my $config_file (glob "$temp_plugin_config_dir/*") {
-                    my $sed_cmd = "s|path/to/config/|$temp_plugins_config_dir/|";
-                    `sed "$sed_cmd" $config_file > $config_file.new; mv $config_file.new $config_file`;
-                }
-            }
-            $plugin =~ s|PLUGIN_DIR|$temp_plugin_config_dir|;
-            $plugin_args .= " --plugin $plugin";
-            $plugin_args =~ s/\@/,/g;
+            $plugin_args = $self->_append_plugin_to_plugin_args($plugin, $plugin_args, $temp_plugins_dir, 
+                                                                $temp_plugins_config_dir, $plugins_source_dir);
         }
     }
 
@@ -438,6 +365,51 @@ sub execute {
         %params
     );
     return 1;
+}
+
+sub _remove_arg {
+    my $self = shift;
+    my $property_name = shift;
+    my @all_string_args = @_;
+    my $count = 0;
+    foreach my $arg (@all_string_args) {
+        if ($arg->property_name eq $property_name) {
+            splice @all_string_args, $count, 1;
+            last;
+        }
+        $count++;
+    }
+    return @all_string_args;
+}
+
+sub _append_plugin_to_plugin_args {
+    my $self = shift;
+    my $plugin = shift;
+    my $plugin_args = shift;
+    my $temp_plugins_dir = shift;
+    my $temp_plugins_config_dir = shift;
+    my $plugins_source_dir = shift;
+
+    my @plugin_fields = split /\@/, $plugin;
+    my $plugin_name = $plugin_fields[0];
+    my $plugin_source_file = "$plugins_source_dir/$plugin_name.pm";
+    if (-e $plugin_source_file){
+        Genome::Sys->copy_file($plugin_source_file, "$temp_plugins_dir/$plugin_name.pm");
+    }
+    my $plugin_dir = "$plugins_source_dir/config/$plugin_name";
+    my $temp_plugin_config_dir = "$temp_plugins_config_dir/$plugin_name/config";
+    if (-d $plugin_dir) {
+        `cp -r $plugin_dir $temp_plugins_config_dir`;
+        foreach my $config_file (glob "$temp_plugin_config_dir/*") {
+            my $sed_cmd = "s|path/to/config/|$temp_plugins_config_dir/|";
+            `sed "$sed_cmd" $config_file > $config_file.new; mv $config_file.new $config_file`;
+        }
+    }
+    $plugin =~ s|PLUGIN_DIR|$temp_plugin_config_dir|;
+    $plugin_args .= " --plugin $plugin";
+    $plugin_args =~ s/\@/,/g;
+
+    return $plugin_args;
 }
 
 sub _species_lookup {
