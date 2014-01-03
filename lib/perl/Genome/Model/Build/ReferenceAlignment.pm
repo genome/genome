@@ -210,7 +210,7 @@ sub check_genotype_input {
         unless ($self->genotype_microarray_build) {
             my $desc;
             if ($self->model->genotype_microarray_model) {
-                $desc = 'model has genotype_microarray input but build is missing it';
+                $desc = 'model has genotype_microarray input but build is missing genotype_microarray_build';
             }
             elsif ($self->subject->default_genotype_data_id) {
                 $desc = 'subject has default_genotype_data but build and model are missing genotype_microarray input';
