@@ -169,6 +169,7 @@ sub map_workflow_inputs {
     my $self = shift;
     my $build = shift;
 
+    my $model = $self;
     my $data_directory = $build->data_directory;
 
     # inputs
@@ -189,6 +190,7 @@ sub map_workflow_inputs {
 
     # initial inputs used for various steps
     my @inputs = (
+        model => $model,
         build => $build,
         build_as_array => [$build],
         wgs_build => $wgs_build,
@@ -334,6 +336,13 @@ sub map_workflow_inputs {
       push @dirs, $cnv_dir;
       push @inputs, cnv_dir => $cnv_dir;
     }
+    
+    #RunMicroArrayCnView
+    if ($wgs_build or $exome_build){
+      my $microarray_cnv_dir = $patient_dir . "/cnv/microarray_cnv/";
+      push @dirs, $microarray_cnv_dir;
+      push @inputs, microarray_cnv_dir => $microarray_cnv_dir;
+    }
 
     #SummarizeSvs
     if ($wgs_build){
@@ -450,6 +459,7 @@ sub _resolve_workflow_for_build {
     if ($build->wgs_build or $build->exome_build) {
         push @output_properties, 'mutation_diagram_result';
         push @output_properties, 'import_snvs_indels_result';
+        push @output_properties, 'microarray_cnv_result';
     }
 
     if ($build->normal_rnaseq_build){
@@ -822,7 +832,17 @@ sub _resolve_workflow_for_build {
       $add_link->($clonality_op, 'cnv_hmm_file', $run_cn_view_op);
       $add_link->($run_cn_view_op, 'result', $output_connector, 'run_cn_view_result');
     }
-   
+
+    #RunMicroarrayCNV - produce cnv plots with microarray results
+    my $microarray_cnv_op;
+    if ($build->wgs_build or $build->exome_build){
+      $msg = "Call somatic copy number changes using microarray calls";
+      $microarray_cnv_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::MicroarrayCnv");
+      $add_link->($input_connector, 'microarray_cnv_dir', $microarray_cnv_op, 'outdir');
+      $add_link->($input_connector, 'model', $microarray_cnv_op, 'clinseq_model');
+      $add_link->($microarray_cnv_op, 'result', $output_connector, 'microarray_cnv_result');
+    }
+
     #SummarizeCnvs - Generate a summary of CNV results, copy cnvs.hq, cnvs.png, single-bam copy number plot PDF, etc. to the cnv directory
     #This step relies on the generate-clonality-plots step already having been run 
     #It also relies on run-cn-view step having been run already
