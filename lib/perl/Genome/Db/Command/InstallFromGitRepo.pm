@@ -102,15 +102,16 @@ sub execute {
       die $self->error_message("git clone command failed to create the expected directory");
     }
 
+    #Make sure the specified branch exists and was checked out successfully
     my $exit_code = `bash -c 'cd $fulldir; git ls-remote --exit-code . origin/$branch &> /dev/null; echo \$\?'`;
     chomp($exit_code);
-    
     unless ($exit_code == 0){
         my $cleanup_cmd = "rm -fr $fulldir";
         Genome::Sys->shellcmd(cmd => $cleanup_cmd);
         die $self->error_message("Specified git branch ($branch) could not be checked out, repository has been deleted");
     }
 
+    #Create a 'latest' symlink to the db just installed
     my $latest = $dir . "/" . $source;
     $latest .= "/" . $subsource if $subsource;
     $latest .= "/" . $species if $species;
@@ -118,8 +119,13 @@ sub execute {
     if (-e $latest) {
         unlink $latest;
     }
-
     symlink "$dir/$subdir", $latest;
+
+    #If the installed repo contains a 'join_db.pl' there may be large files that were split to go on github that now need to be joined
+    my $join_script = $fulldir . "/" . "join_db.pl";
+    if (-e $join_script){
+      Genome::Sys->shellcmd(cmd => $join_script);
+    }
 
     return 1;
 }
