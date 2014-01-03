@@ -14,10 +14,13 @@ use Carp qw(confess);
 class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
     is => 'Command::V2',
     has => [
-        somatic_variation_model => {
-            is => 'Genome::Model::SomaticVariation',
+        full_output_dir => {
+            is => 'Text',
             is_optional => 1,
-            id_by => 'somatic_variation_model_id',
+            is_transient => 1,
+            is_mutable => 0,
+            calculate => q { return $self->output_dir . "/" . $self->sample_name_dir; }
+        },
         sample_name_dir => {
             is => 'Text',
             is_optional => 1,
@@ -666,14 +669,16 @@ sub execute {
 
     # if multiple models with the same name, add a suffix
     my $sample_name_dir = $self->sample_name_dir;
+    my $full_output_dir = $self->full_output_dir;
+
     #make the directory structure
-    Genome::Sys->create_directory("$output_dir/$sample_name");
-    Genome::Sys->create_directory("$output_dir/$sample_name/snvs");
-    Genome::Sys->create_directory("$output_dir/$sample_name/indels");
+    Genome::Sys->create_directory("$full_output_dir");
+    Genome::Sys->create_directory("$full_output_dir/snvs");
+    Genome::Sys->create_directory("$full_output_dir/indels");
     unless ($self->create_review_files) {
         Genome::Sys->create_directory("$output_dir/review");
     }
-    Genome::Sys->create_symlink($build_dir, "$output_dir/$sample_name/build_directory");
+    Genome::Sys->create_symlink($build_dir, "$full_output_dir/build_directory");
 
 
     # Check if the necessary files exist in this build
@@ -697,23 +702,23 @@ sub execute {
 
 
     #cat all the filtered snvs together
-    $snv_file = "$output_dir/$sample_name/snvs/snvs.hq.bed";
+    $snv_file = "$full_output_dir/snvs/snvs.hq.bed";
     Genome::Sys->shellcmd( cmd => "cat $build_dir/effects/snvs.hq.novel.tier*.v2.bed $build_dir/effects/snvs.hq.previously_detected.tier*.v2.bed | joinx sort >$snv_file");
 
     #cat all the filtered indels together
-    $indel_file = "$output_dir/$sample_name/indels/indels.hq.bed";
+    $indel_file = "$full_output_dir/indels/indels.hq.bed";
     Genome::Sys->shellcmd( cmd => "cat $build_dir/effects/indels.hq.novel.tier*.v2.bed $build_dir/effects/indels.hq.previously_detected.tier*.v2.bed | joinx sort >$indel_file" );
 
-#  `ln -s $snv_file $output_dir/$sample_name/snvs/` unless( -e "$output_dir/$sample_name/snvs/$snv_file");
-#  `ln -s $indel_file $output_dir/$sample_name/indels/` unless( -e "$output_dir/$sample_name/indels/$indel_file");
+#  `ln -s $snv_file $full_output_dir/snvs/` unless( -e "$full_output_dir/snvs/$snv_file");
+#  `ln -s $indel_file $full_output_dirindels/` unless( -e "$full_output_dir/indels/$indel_file");
     if ($self->process_svs) {
-        Genome::Sys->create_directory("$output_dir/$sample_name/svs");
-        Genome::Sys->create_symlink($sv_file, "$output_dir/$sample_name/svs/svs.hq") unless( -e "$output_dir/$sample_name/svs/$sv_file");
+        Genome::Sys->create_directory("$full_output_dir/svs");
+        Genome::Sys->create_symlink($sv_file, "$full_output_dir/svs/svs.hq") unless( -e "$full_output_dir/svs/$sv_file");
 
 #       #annotate the svs
 #       my $anno_cmd = Genome::Model::Tools::Annotate::Sv::Combine->create(
 #           input-file => $sv_file,
-#           output-file => "$output_dir/$sample_name/svs/svs.hq.annotated",
+#           output-file => "$full_output_dir/svs/svs.hq.annotated",
 #           annotation-build
 #           dbsnp-annotation-file /gsc/scripts/opt/genome/db/genome-db-dbsnp/human/build/37/132/dbsnp.csv
 #           dbvar-annotation-file /gsc/scripts/opt/genome/db/dbvar/human/build37/dbvar.tsv
@@ -852,11 +857,10 @@ sub _filter_off_target_regions {
 sub create_or_get_featurelist_file {
     my $self = shift;
 
-    my $output_dir = $self->output_dir;
-    my $sample_name = $self->sample_name;
+    my $full_output_dir = $self->full_output_dir;
     my $model = $self->somatic_variation_model;
 
-    my $featurelist_file = "$output_dir/$sample_name/featurelist";
+    my $featurelist_file = "$full_output_dir/featurelist";
 
     if (-e $featurelist_file) {
         return $featurelist_file;
@@ -910,12 +914,11 @@ sub _filter_regions {
 sub get_or_create_filter_file {
     my $self = shift;
 
-    my $output_dir = $self->output_dir;
-    my $sample_name = $self->sample_name;
+    my $full_output_dir = $self->full_output_dir;
 
     my @filters = split(",", $self->filter_regions);
 
-    my $filter_file = "$output_dir/$sample_name/filter";
+    my $filter_file = "$full_output_dir/filter";
 
     if (-e $filter_file) {
         return $filter_file;
@@ -981,10 +984,7 @@ sub _create_master_files {
     my $snv_file   = shift;
     my $indel_file = shift;
 
-    my $output_dir = $self->output_dir;
-    my $sample_name = $self->sample_name;
-
-    my $full_output_dir = "$output_dir/$sample_name";
+    my $full_output_dir = $self->full_output_dir;
 
     Genome::Sys->shellcmd(cmd => "head -n 1 $snv_file >$full_output_dir/snvs.indels.annotated");
     Genome::Sys->shellcmd(cmd => "tail -n +2 $indel_file >>$full_output_dir/snvs.indels.annotated.tmp");
@@ -1015,11 +1015,9 @@ sub _create_master_files {
 sub _create_review_files {
     my $self = shift;
 
-    my $output_dir = $self->output_dir;
-    my $sample_name = $self->sample_name;
-
-    my $full_output_dir = "$output_dir/$sample_name";
+    my $review_dir      = $self->output_dir . "/review";
     my $sample_name_dir = $self->sample_name_dir;
+    my $full_output_dir = $self->full_output_dir;
 
     $self->status_message("Generating Review files");
     my @tiers = split(",", $self->tiers_to_review);
@@ -1069,11 +1067,8 @@ sub _create_archive {
     my $build_dir   = shift;
     my $sv_file     = shift;
 
-    my $output_dir = $self->output_dir;
-    my $sample_name = $self->sample_name;
-
-    my $full_output_dir = "$output_dir/$sample_name";
-    my $archive_dir     = "$full_output_dir/$sample_name";
+    my $full_output_dir = $self->full_output_dir;
+    my $archive_dir     = "$full_output_dir/" . $self->sample_name_dir;
     Genome::Sys->create_directory("$archive_dir");
 
     #symlink VCF files
