@@ -193,7 +193,7 @@ EOS
 
 sub _open_input_file {
     my $self = shift;
-    my $input_file = $self->input_file;
+    my $input_file = shift;
     return Genome::Sys->open_file_for_reading($input_file) if $input_file ne '-';
 
     my $ioh = new IO::Handle;
@@ -223,59 +223,8 @@ sub execute {
     my $format = $self->format;
     my $input_file= $self->input_file;
 
-    # sanity check for ensembl input, since some of us are unable to
-    # keep our zero and one-based annotation files straight, and VEP
-    # fails cryptically when given one-based indels
-
     if ($format eq "ensembl"){
-        my $inFh = $self->_open_input_file;
-        my $tfh;
-        my $tmpfile;
-
-        # If we are reading from stdin, we won't be able to reopen the input, so dump
-        # to a temp file while verifying the format
-        if ($input_file eq '-') {
-            ($tfh, $tmpfile) = Genome::Sys->create_temp_file;
-        }
-
-        while( my $line = $inFh->getline )
-        {
-            $tfh->print($line) if $tfh;
-
-            chomp($line);
-            my @F = split("\t",$line);
-
-            #skip headers and blank lines
-            next if $line =~/^#/;
-            next if $line =~/^Chr/;
-            next if $line =~/^$/;
-
-            my @vars = split("/",$F[3]);
-            #check SNVs
-            if(($vars[0] =~ /^\w$/) && ($vars[1] =~ /^\w$/)){
-                unless ($F[1] == $F[2]){
-                    die ("Ensembl variant format is 1-based. This line doesn't appear valid:\n$line\n");
-                }
-            }
-            #indel insertion
-            elsif(($vars[0] =~ /^-$/) && ($vars[1] =~ /\w+/)){
-                unless ($F[1] == $F[2]+1){
-                    die ("This insertion is not in valid Ensembl format:\n$line\n");
-                }
-            }
-            #indel deletion
-            elsif(($vars[0] =~ /\w+/) && ($vars[1] =~ /^-$/)){
-                unless ($F[1]+length($vars[0])-1 == $F[2]){
-                    die ("This deletion is not in valid Ensembl format:\n$line\n");
-                }
-            }
-            else{
-                die ("This variant is not in valid Ensembl format:\n$line\n");
-            }
-        }
-        close($inFh);
-
-        $input_file = $tmpfile if $tmpfile;
+        $input_file = $self->_verify_ensembl_input($input_file);
     }
 
     # If bed format is input, we do a conversion to ensembl format. This is necessary
@@ -287,70 +236,8 @@ sub execute {
     # 1  978  980  ACT/-
 
     if ($format eq "bed"){
-        #create a tmp file for ensembl file
-        my ($tfh,$tmpfile) = Genome::Sys->create_temp_file;
-        unless($tfh) {
-            die $self->error_message("Unable to create temporary file $!");
-        }
-
-        #convert the bed file
-        my $inFh = $self->_open_input_file;
-        while( my $line = $inFh->getline ){
-            chomp($line);
-            my @F = split("\t",$line);
-
-            #skip headers and blank lines
-            next if $line =~/^#/;
-            next if $line =~/^Chr/;
-            next if $line =~/^$/;
-
-            #accept ref/var alleles as either slash or tab sep (A/C or A\tC)
-            my @vars;
-            my @suffix;
-            if($F[3] =~ /\//){
-                @vars = split(/\//,$F[3]);
-                @suffix = @F[4..(@F-1)]
-            }
-            else {
-                @vars = @F[3..4];
-                @suffix = @F[5..(@F-1)]
-            }
-            $vars[0] =~ s/\*/-/g;
-            $vars[0] =~ s/0/-/g;
-            $vars[1] =~ s/\*/-/g;
-            $vars[1] =~ s/0/-/g;
-
-            #check SNVs
-            if(($vars[0] =~ /^\w$/) && ($vars[1] =~ /^\w$/)){
-                unless ($F[1] == $F[2]-1){
-                    die ("BED variant format is 0-based. This line doesn't appear valid:\n$line\n");
-                }
-                $F[1]++;
-            }
-            #indel insertion
-            elsif(($vars[0] =~ /^-$/) && ($vars[1] =~ /\w+/)){
-                unless ($F[1] == $F[2]){
-                    die ("This insertion is not in valid BED format:\n$line\n");
-                }
-                #increment the start position
-                $F[1]++;
-            }
-            #indel deletion
-            elsif(($vars[0] =~ /\w+/) && ($vars[1] =~ /^-$/)){
-                unless ($F[1]+length($vars[0]) == $F[2]){
-                    die ("This deletion is not in valid BED format:\n$line\n");
-                }
-                #increment the start position
-                $F[1]++;
-            }
-            else {
-                die ("This variant is not in valid BED format:\n$line\n");
-            }
-            $tfh->print(join("\t",(@F[0..2],join("/",@vars),"+",@suffix)) . "\n");
-        }
-
+        $input_file = $self->_convert_bed_to_ensembl_input($input_file);
         $format = "ensembl";
-        $input_file = $tmpfile;
     }
 
     my $string_args = "";
@@ -584,4 +471,129 @@ sub _resolve_vep_script_path {
     
     return $VEP_SCRIPT_PATH.$self->{version}.".pl";
 }
+
+sub _verify_ensembl_input {
+    my $self = shift;
+    my $input_file = shift;
+    my $inFh = $self->_open_input_file($input_file);
+    my $tfh;
+    my $tmpfile;
+
+    # If we are reading from stdin, we won't be able to reopen the input, so dump
+    # to a temp file while verifying the format
+    if ($input_file eq '-') {
+        ($tfh, $tmpfile) = Genome::Sys->create_temp_file;
+    }
+
+    while( my $line = $inFh->getline )
+    {
+        $tfh->print($line) if $tfh;
+
+        chomp($line);
+        my @F = split("\t",$line);
+
+        #skip headers and blank lines
+        next if $line =~/^#/;
+        next if $line =~/^Chr/;
+        next if $line =~/^$/;
+
+        my @vars = split("/",$F[3]);
+        #check SNVs
+        if(($vars[0] =~ /^\w$/) && ($vars[1] =~ /^\w$/)){
+            unless ($F[1] == $F[2]){
+                die ("Ensembl variant format is 1-based. This line doesn't appear valid:\n$line\n");
+            }
+        }
+        #indel insertion
+        elsif(($vars[0] =~ /^-$/) && ($vars[1] =~ /\w+/)){
+            unless ($F[1] == $F[2]+1){
+                die ("This insertion is not in valid Ensembl format:\n$line\n");
+            }
+        }
+        #indel deletion
+        elsif(($vars[0] =~ /\w+/) && ($vars[1] =~ /^-$/)){
+            unless ($F[1]+length($vars[0])-1 == $F[2]){
+                die ("This deletion is not in valid Ensembl format:\n$line\n");
+            }
+        }
+        else{
+            die ("This variant is not in valid Ensembl format:\n$line\n");
+        }
+    }
+    close($inFh);
+
+    $input_file = $tmpfile if $tmpfile;
+
+    return $input_file;
+}
+
+sub _convert_bed_to_ensembl_input {
+    my $self = shift;
+    my $input_file = shift;
+
+    #create a tmp file for ensembl file
+    my ($tfh,$tmpfile) = Genome::Sys->create_temp_file;
+    unless($tfh) {
+        die $self->error_message("Unable to create temporary file $!");
+    }
+
+    #convert the bed file
+    my $inFh = $self->_open_input_file($self->input_file);
+    while( my $line = $inFh->getline ){
+        chomp($line);
+        my @F = split("\t",$line);
+
+        #skip headers and blank lines
+        next if $line =~/^#/;
+        next if $line =~/^Chr/;
+        next if $line =~/^$/;
+
+        #accept ref/var alleles as either slash or tab sep (A/C or A\tC)
+        my @vars;
+        my @suffix;
+        if($F[3] =~ /\//){
+            @vars = split(/\//,$F[3]);
+            @suffix = @F[4..(@F-1)]
+        }
+        else {
+            @vars = @F[3..4];
+            @suffix = @F[5..(@F-1)]
+        }
+        $vars[0] =~ s/\*/-/g;
+        $vars[0] =~ s/0/-/g;
+        $vars[1] =~ s/\*/-/g;
+        $vars[1] =~ s/0/-/g;
+
+        #check SNVs
+        if(($vars[0] =~ /^\w$/) && ($vars[1] =~ /^\w$/)){
+            unless ($F[1] == $F[2]-1){
+                die ("BED variant format is 0-based. This line doesn't appear valid:\n$line\n");
+            }
+            $F[1]++;
+        }
+        #indel insertion
+        elsif(($vars[0] =~ /^-$/) && ($vars[1] =~ /\w+/)){
+            unless ($F[1] == $F[2]){
+                die ("This insertion is not in valid BED format:\n$line\n");
+            }
+            #increment the start position
+            $F[1]++;
+        }
+        #indel deletion
+        elsif(($vars[0] =~ /\w+/) && ($vars[1] =~ /^-$/)){
+            unless ($F[1]+length($vars[0]) == $F[2]){
+                die ("This deletion is not in valid BED format:\n$line\n");
+            }
+            #increment the start position
+            $F[1]++;
+        }
+        else {
+            die ("This variant is not in valid BED format:\n$line\n");
+        }
+        $tfh->print(join("\t",(@F[0..2],join("/",@vars),"+",@suffix)) . "\n");
+    }
+    close($inFh);
+    return $tmpfile;
+}
+
 1;
