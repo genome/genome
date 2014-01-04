@@ -361,6 +361,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'files',
       'sample-name=s',
       'files',
+      'seed=s',
+      undef,
       'tcga-array-file=s',
       'files',
       'undo-splits-sd=s',
