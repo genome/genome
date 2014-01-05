@@ -151,7 +151,7 @@ sub execute {
   my $entrez_ensembl_data = &loadEntrezEnsemblData(-cancer_db => $cancer_annotation_db);
 
   #Import SNVs from the specified file
-  my $result = &importPositions('-positions_file'=>$positions_file);
+  my $result = $self->importPositions('-positions_file'=>$positions_file);
   my $snvs = $result->{'snvs'};
   my $snv_header = $result->{'header'};
   #print Dumper $result;
@@ -259,8 +259,7 @@ sub execute {
 #Import SNVs from the specified file                                                                                                    #
 #########################################################################################################################################
 sub importPositions{
-  my %args = @_;
-  my $class = __PACKAGE__;
+  my ($class, %args) = @_;
   my $infile = $args{'-positions_file'};
   my %result;
   my %s;
