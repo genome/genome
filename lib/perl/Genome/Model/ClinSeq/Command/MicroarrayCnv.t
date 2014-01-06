@@ -26,8 +26,7 @@ ok($temp_dir, "created temp directory: $temp_dir") or die;
 my $clinseq_model = Genome::Model->get(name => 'apipe-test-clinseq-wer');
 my $run_microarray_cnv = Genome::Model::ClinSeq::Command::MicroarrayCnv->create(outdir=>$temp_dir, clinseq_model=>$clinseq_model, test=>1);
 $run_microarray_cnv->queue_status_messages(1);
-my $return = $run_microarray_cnv->execute();
-is($return, 1, 'Testing for successful execution.  Expecting 1.  Got: ' . $return);
+$run_microarray_cnv->execute();
 
 #Dump the output to a log file
 my @output1 = $run_microarray_cnv->status_messages();
