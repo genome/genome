@@ -273,9 +273,9 @@ sub execute{
     return 1;
   };
 
+  #die if the inputs are invalid
   unless ($inputs_are_good) {
-    $self->error_message("error processing inputs!");
-    return;
+    die $self->error_message("error processing inputs!");
   }
 
   #Done checking inputs
