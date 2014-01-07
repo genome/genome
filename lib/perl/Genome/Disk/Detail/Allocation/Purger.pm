@@ -23,6 +23,32 @@ class Genome::Disk::Detail::Allocation::Purger {
 
 };
 
+# Eventually SoftwareResults should have something like a status field,
+# removing the need to set a test_name to invalidate a SoftwareResult
+# backed by a purged allocation.
+sub _update_owner_test_name {
+    my $self       = shift;
+    my $allocation = shift;
+    my $event      = shift;
+
+    my $owner = $allocation->owner;
+
+    # Make sure the owner is a SoftwareResult before we set_test_name.
+    return unless defined $owner;
+    return unless $owner->isa('Genome::SoftwareResult');
+    return if defined $owner->test_name;
+
+    my $timestamp = $event->created_at;
+    my $reason    = $event->reason;
+
+    my $test_name = sprintf "Allocation ID %s purged on %s, %s",
+        $allocation->id, $timestamp,
+        (defined $reason ? "with reason '$reason'" : 'no reason specified');
+
+    $owner->set_test_name($test_name);
+
+    return;
+}
 
 sub purge {
     my $self = shift;
@@ -40,10 +66,12 @@ sub purge {
         dirmove($allocation_object->absolute_path, $destination_directory);
     }
 
-    Genome::Timeline::Event::Allocation->purged(
+    my $event = Genome::Timeline::Event::Allocation->purged(
         $self->reason,
         $allocation_object,
     );
+
+    $self->_update_owner_test_name($allocation_object, $event);
 
     $allocation_object->status('purged');
     $allocation_object->kilobytes_requested(0);
