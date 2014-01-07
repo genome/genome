@@ -63,6 +63,12 @@ subtest "stage_snv_file" => sub {
     is($snv_file, $process_somatic_variation->full_output_dir . "/snvs/snvs.hq.bed", "snv file name as expected");
 };
 
+subtest "stage_indel_file" => sub {
+    my $indel_file = $process_somatic_variation->stage_indel_file();
+
+    is($indel_file, $process_somatic_variation->full_output_dir . "/indels/indels.hq.bed", "indels file name as expected");
+};
+
 subtest "get_or_create_featurelist_file" => sub {
     my $featurelist_file = $process_somatic_variation->get_or_create_featurelist_file();
 

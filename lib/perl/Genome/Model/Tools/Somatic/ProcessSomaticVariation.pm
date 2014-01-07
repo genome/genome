@@ -658,6 +658,26 @@ sub stage_snv_file {
     return $snv_file;
 }
 
+sub stage_indel_file {
+    my $self = shift;
+
+    my $full_output_dir = $self->full_output_dir;
+    my $build_dir       = $self->somatic_variation_model->last_succeeded_build->data_directory;
+
+    my $indel_file = "$build_dir/effects/indels.hq.novel.tier1.v2.bed";
+    unless (-e $indel_file) {
+        confess $self->error_message("INDEL results for " . $self->sample_name . " not found at $indel_file");
+    }
+
+    #cat all the filtered indels together
+    $indel_file = "$full_output_dir/indels/indels.hq.bed";
+    Genome::Sys->shellcmd( cmd => "cat $build_dir/effects/indels.hq.novel.tier*.v2.bed $build_dir/effects/indels.hq.previously_detected.tier*.v2.bed | joinx sort >$indel_file" );
+
+#  `ln -s $indel_file $full_output_dirindels/` unless( -e "$full_output_dir/indels/$indel_file");
+
+    return $indel_file;
+}
+
 #########################################################################################################
 sub execute {
     my $self = shift;
@@ -714,12 +734,8 @@ sub execute {
 
     # Check if the necessary files exist in this build and put them in the processing location
     my $snv_file   = $self->stage_snv_file();
+    my $indel_file = $self->stage_indel_file();
 
-    my $indel_file = "$build_dir/effects/indels.hq.novel.tier1.v2.bed";
-    unless (-e $indel_file) {
-        confess $self->error_message("INDEL results for " . $self->sample_name . " not found at $indel_file");
-    }
-    my $sv_file;
     if ($self->process_svs) {
         my @sv_files = glob("$build_dir/variants/sv/union-union-sv_breakdancer_*sv_squaredancer*/svs.merge.file.somatic");
         $sv_file = $sv_files[0];
@@ -730,11 +746,6 @@ sub execute {
     }
 
 
-    #cat all the filtered indels together
-    $indel_file = "$full_output_dir/indels/indels.hq.bed";
-    Genome::Sys->shellcmd( cmd => "cat $build_dir/effects/indels.hq.novel.tier*.v2.bed $build_dir/effects/indels.hq.previously_detected.tier*.v2.bed | joinx sort >$indel_file" );
-
-#  `ln -s $indel_file $full_output_dirindels/` unless( -e "$full_output_dir/indels/$indel_file");
     if ($self->process_svs) {
         Genome::Sys->create_directory("$full_output_dir/svs");
         Genome::Sys->create_symlink($sv_file, "$full_output_dir/svs/svs.hq") unless( -e "$full_output_dir/svs/$sv_file");
