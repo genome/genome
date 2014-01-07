@@ -620,6 +620,24 @@ sub get_unique_sample_name_dir {
     }
 }
 
+sub create_directories {
+    my $self = shift;
+
+    my $full_output_dir = $self->full_output_dir;
+    my $output_dir      = $self->output_dir;
+    my $build_dir       = $self->somatic_variation_model->last_succeeded_build->data_directory;
+
+    Genome::Sys->create_directory("$full_output_dir");
+    Genome::Sys->create_directory("$full_output_dir/snvs");
+    Genome::Sys->create_directory("$full_output_dir/indels");
+    unless ($self->create_review_files) {
+        Genome::Sys->create_directory("$output_dir/review");
+    }
+    Genome::Sys->create_symlink($build_dir, "$full_output_dir/build_directory");
+
+    return 1;
+}
+
 #########################################################################################################
 sub execute {
     my $self = shift;
@@ -672,14 +690,7 @@ sub execute {
     my $full_output_dir = $self->full_output_dir;
 
     #make the directory structure
-    Genome::Sys->create_directory("$full_output_dir");
-    Genome::Sys->create_directory("$full_output_dir/snvs");
-    Genome::Sys->create_directory("$full_output_dir/indels");
-    unless ($self->create_review_files) {
-        Genome::Sys->create_directory("$output_dir/review");
-    }
-    Genome::Sys->create_symlink($build_dir, "$full_output_dir/build_directory");
-
+    $self->create_directories();
 
     # Check if the necessary files exist in this build
     my $snv_file = "$build_dir/effects/snvs.hq.novel.tier1.v2.bed";
