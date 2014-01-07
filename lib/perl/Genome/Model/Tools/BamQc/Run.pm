@@ -279,7 +279,7 @@ sub execute {
     my @input_properties = keys %workflow_params;
 
     my $workflow = Workflow::Model->create(
-        name => $self->id .' BamQc '. $self->bam_file,
+        name => 'BamQc',
         input_properties  => \@input_properties,
         output_properties => \@output_properties,
     );
@@ -290,7 +290,7 @@ sub execute {
     if ($workflow_params{samtools_flagstat_path}) {
         my %samtools_flagstat_operation_params = (
             workflow   => $workflow,
-            name       => $self->id .' Samtools Flagstat '. $self->bam_file,
+            name       => 'Samtools Flagstat',
             class_name => 'Genome::Model::Tools::Sam::Flagstat',
             input_properties => {
                 'bam_file'                => 'bam_file',
@@ -308,7 +308,7 @@ sub execute {
     # PicardMetrics
     my %picard_metrics_operation_params = (
         workflow   => $workflow,
-        name       => $self->id .' Collect Picard Metrics '. $self->bam_file,
+        name       => 'Collect Picard Metrics',
         class_name => 'Genome::Model::Tools::Picard::CollectMultipleMetrics',
         input_properties => {
             'bam_file'                       => 'input_file',
@@ -332,7 +332,7 @@ sub execute {
     if ($workflow_params{reference_sequence}) {
         my %picard_gc_bias_operation_params = (
             workflow   => $workflow,
-            name       => $self->id .' Collect Picard G+C Bias '. $self->bam_file,
+            name       => 'Collect Picard G+C Bias',
             class_name => 'Genome::Model::Tools::Picard::CollectGcBiasMetrics',
             input_properties => {
                 bam_file                      => 'input_file',
@@ -361,7 +361,7 @@ sub execute {
     if ($self->samstat) {
         my %samstat_operation_params = (
             workflow   => $workflow,
-            name       => $self->id .' SamStat Html Report '. $self->bam_file,
+            name       => 'SamStat Html Report',
             class_name => 'Genome::Model::Tools::SamStat::HtmlReport',
             input_properties => {
                 bam_file        => 'input_files',
@@ -377,7 +377,7 @@ sub execute {
     # FastQC
     my %fastqc_operation_params = (
         workflow   => $workflow,
-        name       => $self->id .' FastQC Generate Reports '. $self->bam_file,
+        name       => 'FastQC Generate Reports',
         class_name => 'Genome::Model::Tools::Fastqc::GenerateReports',
         input_properties => {
             bam_file         => 'input_files',
@@ -394,7 +394,7 @@ sub execute {
     if ($self->error_rate) {
         my %error_rate_operation_params = (
             workflow   => $workflow,
-            name       => $self->id .' BioSamtools Error Rate '. $self->bam_file,
+            name       => 'BioSamtools Error Rate',
             class_name => 'Genome::Model::Tools::BioSamtools::ErrorRate',
             input_properties => {
                 bam_file           => 'bam_file',
@@ -413,7 +413,7 @@ sub execute {
     if ($self->read_length) {
         my %read_length_operation_params = (
             workflow   => $workflow,
-            name       => $self->id .' BioSamtools Read Length Distribution '. basename($self->bam_file),
+            name       => 'BioSamtools Read Length Distribution',
             class_name => 'Genome::Model::Tools::BioSamtools::ReadLengthDistribution',
             input_properties => {
                 bam_file                   => 'bam_file',
@@ -434,7 +434,7 @@ sub execute {
     if ($workflow_params{reference_sequence} && $self->roi_file_path) {
         my %refcov_operation_params = (
             workflow   => $workflow,
-            name       => $self->id .' RefCov '. $self->bam_file,
+            name       => 'RefCov',
             class_name => 'Genome::Model::Tools::RefCov::Standard',
             input_properties => {
                 bam_file             => 'alignment_file_path',
