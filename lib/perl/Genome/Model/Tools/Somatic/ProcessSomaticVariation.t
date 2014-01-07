@@ -21,12 +21,12 @@ my $tiering_files_dir = Genome::Utility::Test->data_dir_ok($pkg, "tiering_bed_fi
 my $somatic_variation_build_data_dir = Genome::Utility::Test->data_dir_ok($pkg, "somatic_variation_build_data");
 
 my $normal_model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object();
-ok($normal_model->isa("Genome::Model::ReferecenAlignment"), "Generated a reference alignment model for normal");
+ok($normal_model->isa("Genome::Model::ReferenceAlignment"), "Generated a reference alignment model for normal");
 my $tumor_model  = Genome::Test::Factory::Model::ReferenceAlignment->setup_object(
     subject_id            => $normal_model->subject_id,
     processing_profile_id => $normal_model->processing_profile->id
 );
-ok($tumor_model->isa("Genome::Model::ReferecenAlignment"), "Generated a reference alignment model for tumor");
+ok($tumor_model->isa("Genome::Model::ReferenceAlignment"), "Generated a reference alignment model for tumor");
 
 my $somatic_variation_model = Genome::Test::Factory::Model::SomaticVariation->setup_object(
     normal_model => $normal_model,
