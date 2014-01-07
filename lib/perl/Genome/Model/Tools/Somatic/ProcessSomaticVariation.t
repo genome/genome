@@ -49,6 +49,14 @@ my $process_somatic_variation = $pkg->create(
 );
 ok($process_somatic_variation->isa("Genome::Model::Tools::Somatic::ProcessSomaticVariation"), "Generated a process somatic variation object");
 
+subtest "create_directories" => sub {
+    my $result = $process_somatic_variation->create_directories();
+
+    ok($result, "Directories successfully created");
+    is($process_somatic_variation->sample_name_dir, $somatic_variation_model->subject->name, "Sample name directory as expected");
+    is($process_somatic_variation->full_output_dir, $output_dir . "/" . $somatic_variation_model->subject->name, "Full output dir as expected");
+};
+
 subtest "annoFileToBedFile" => sub {
     my $input_file = "$data_dir/snvs_before_tiering.anno";
     my $output_file = Genome::Sys->create_temp_file_path;
