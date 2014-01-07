@@ -13,9 +13,41 @@ use Genome::Utility::Test qw/compare_ok/;
 my $pkg = 'Genome::Model::Tools::Somatic::ProcessSomaticVariation';
 
 use_ok($pkg);
+use_ok("Genome::Test::Factory::Model::SomaticVariation");
 
 my $data_dir = Genome::Utility::Test->data_dir_ok($pkg, "data");
+my $input_dir = Genome::Utility::Test->data_dir_ok($pkg, "input");
 my $tiering_files_dir = Genome::Utility::Test->data_dir_ok($pkg, "tiering_bed_files_v3");
+
+my $normal_model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object();
+ok($normal_model->isa("Genome::Model::ReferecenAlignment"), "Generated a reference alignment model for normal");
+my $tumor_model  = Genome::Test::Factory::Model::ReferenceAlignment->setup_object(
+    subject_id            => $normal_model->subject_id,
+    processing_profile_id => $normal_model->processing_profile->id
+);
+ok($tumor_model->isa("Genome::Model::ReferecenAlignment"), "Generated a reference alignment model for tumor");
+
+my $somatic_variation_model = Genome::Test::Factory::Model::SomaticVariation->setup_object(
+    normal_model => $normal_model,
+    tumor_model  => $tumor_model
+);
+ok($somatic_variation_model->isa("Genome::Model::SomaticVariation"), "Generated a somatic variation model");
+
+my $somatic_variation_build = Genome::Test::Factory::Build->setup_object(
+    model_id        => $somatic_variation_model->id,
+    data_directory  => $data_dir,
+    status          => "Succeeded",
+);
+ok($somatic_variation_build->isa("Genome::Model::Build::SomaticVariation"), "Generated a somatic variation build");
+
+my $output_dir = Genome::Sys->create_temp_directory;
+my $process_somatic_variation = $pkg->create(
+    somatic_variation_model => $somatic_variation_model,
+    output_dir              => $output_dir,
+    target_regions          => "$input_dir/target_regions.bed",
+    filter_regions          => "$input_dir/filter.bed",
+);
+ok($process_somatic_variation->isa("Genome::Model::Tools::Somatic::ProcessSomaticVariation"), "Generated a process somatic variation object");
 
 subtest "annoFileToBedFile" => sub {
     my $input_file = "$data_dir/snvs_before_tiering.anno";
