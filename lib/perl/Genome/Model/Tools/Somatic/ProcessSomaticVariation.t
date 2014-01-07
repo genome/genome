@@ -87,6 +87,16 @@ subtest "get_or_create_featurelist_file" => sub {
     compare_ok($featurelist_file, "$data_dir/featurelist", "Contents of feature list file as expected");
 };
 
+subtest "_filter_off_target_regions" => sub {
+    my $file_to_be_filtered = $process_somatic_variation->full_output_dir . "/snvs/snvs.hq.clean.bed";
+#Test that the file exists;
+    compare_ok($file_to_be_filtered, "$data_dir/snvs/snvs.hq.clean.bed", "Contents of file to be filtered as expected");
+
+    my $filtered_file = $process_somatic_variation->_filter_off_target_regions($file_to_be_filtered);
+    is($filtered_file, $process_somatic_variation->full_output_dir . "/snvs/snvs.hq.clean.ontarget.bed", "Filtered file path as expected");
+    compare_ok($filtered_file, "$data_dir/snvs/snvs.hq.clean.ontarget.bed", "Contents of filtered file as expected");
+};
+
 subtest "get_or_create_filter_file" => sub {
     my $filter_file = $process_somatic_variation->get_or_create_filter_file();
 
