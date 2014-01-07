@@ -114,6 +114,12 @@ sub create {
         }
     }
 
+    if(Genome::Sys->line_count($merged_junctions_bed12_file) < 2) {
+        $self->warning_message("No splice junctions found for alignments.  Skipping run.");
+        $self->_finalize_allocation();
+        return $self;
+    }
+
     my $log_dir = $self->log_directory;
     unless($log_dir) {
         $log_dir = '' . $self->temp_staging_directory;
@@ -133,14 +139,22 @@ sub create {
     unless($cmd->execute) {
         die('Failed to run SpliceJunctionSummary tool with params: '. Data::Dumper::Dumper(%params));
     }
-    
-    $self->_prepare_output_directory;
-    $self->_promote_data;
-    $self->_reallocate_disk_allocation;
+
+    $self->_finalize_allocation();
 
     $self->_generate_metrics();
 
     return $self;
+}
+
+sub _finalize_allocation {
+    my $self = shift;
+
+    $self->_prepare_output_directory;
+    $self->_promote_data;
+    $self->_reallocate_disk_allocation;
+
+    return 1;
 }
 
 sub _generate_metrics {
