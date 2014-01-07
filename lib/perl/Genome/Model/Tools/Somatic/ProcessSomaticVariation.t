@@ -64,6 +64,13 @@ subtest "get_or_create_featurelist_file" => sub {
     compare_ok($featurelist_file, "$data_dir/featurelist", "Contents of feature list file as expected");
 };
 
+subtest "get_or_create_filter_file" => sub {
+    my $filter_file = $process_somatic_variation->get_or_create_filter_file();
+
+    is($filter_file, $process_somatic_variation->full_output_dir . "/filter", "Filter file path as expected");
+    compare_ok($filter_file, "$data_dir/filter", "Contents of filter file as expected");
+};
+
 subtest "annoFileToBedFile" => sub {
     my $input_file = "$data_dir/snvs_before_tiering.anno";
     my $output_file = Genome::Sys->create_temp_file_path;
