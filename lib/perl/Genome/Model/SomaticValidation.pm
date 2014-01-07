@@ -275,7 +275,7 @@ sub default_filenames{
     my $self = shift;
 
     my %default_filenames = (
-        targeted_snv_validation => 'targeted.snvs.validation',
+        targeted_snv_validation => 'validation/metrics/targeted.snvs.validation',
     );
 
     return %default_filenames;
