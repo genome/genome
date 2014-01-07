@@ -132,30 +132,51 @@ sub execute {
             }
             else {
                 if ($class->isa("Genome::Db")) {
-                    # these exist because of filesystem data being in place
-                    # the installation is slow, so just warn the user to install them
                     my ($source) = ($class =~ /Genome::Db::([^\:]+)/);
-                    
-                    # if we can speed this up, run the intaller below
-                    # for now just tell the user what they must run
+                    my $source_name = $source;
                     $source = lc($source);
-                    $self->warning_message("EXTERNAL DATABASE NOT INSTALLED.  DO: genome db $source install $id");
+                    my $installer_class = "Genome::Db::${source_name}::Command::Install";
+                    unless (UR::Object::Type->get($installer_class)) {
+                        die $self->error_message("No installer $installer_class for $class!");
+                    }
+                    $self->warning_message("EXTERNAL DATABASE NOT INSTALLED. Attempting to install source: $source, id: $id, of class: $class");
+                    if ($id =~ /cosmic\/(\d+)\.(\d+)/){
+                        #Set up import for 'cosmic' sources with IDs like: ('cosmic/61.1')
+                        #create commands that look like:
+                        #genome db cosmic install --branch=61_v1
+                        my $branch = $1 . "_v" . $2;
+
+                        eval {
+                            $installer_class->execute(branch => $branch);
+                        };
+                        if ($@) {
+                            die $self->error_message("errors installing $source $id: $@");
+                        }
+                    }elsif ($id =~ /^tgi\/(.*)\/(.*)\/(.*)\-(\d+)\.(\d+)/){
+                        #Set up import for 'tgi' sources with IDs like: ('tgi/cancer-annotation/human/build37-20130401.1' or 'tgi/misc-annotation/human/build37-20130113.1')
+                        #create commands that look like:
+                        #genome db tgi install --subsource=cancer-annotation --species=human --branch=human-build37-20130401
+                        #genome db tgi install --subsource=misc-annotation --species=human --branch=human-build37-20130113
+                        my $subsource = $1;
+                        my $species = $2;
+                        my $build = $3;
+                        my $date = $4;
+                        my $version = $5;
+                        my $branch = $species . "-" . $build . "-" . $date;
+                        eval {
+                            $installer_class->execute(subsource => $subsource, species => $species, branch => $branch);
+                        };
+                        if ($@) {
+                            die $self->error_message("errors installing $source $id: $@");
+                        }
+                    }else{
+                        die "could not parse Genome::Db source: $source";
+                    }
+                    $prev = Genome::Db->get($id);
+                    unless ($prev) {
+                        die $self->error_message("Failed to find $class $id!");
+                    }
                     
-                    #my $installer_class = "Genome::Db::${source}::Command::Install";
-                    #unless (UR::Object::Type->get($installer_class)) {
-                    #    $self->warning_message("No installer $installer_class for $class!  Install manually!");
-                    #    next;
-                    #}
-                    #eval {
-                    #    $installer_class->execute(version => $id);
-                    #};
-                    #if ($@) {
-                    #    $self->warning_message("errors installing $source $id: $@");
-                    #}
-                    #$prev = $class->get($id);
-                    #unless ($prev) {
-                    #    $self->warning_message("Failed to find $class $id!  Install manually.");
-                    #}
                 }
                 else {
                     if ($self->verbose){
