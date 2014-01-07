@@ -70,6 +70,16 @@ subtest "stage_indel_file" => sub {
     is($indel_file, $process_somatic_variation->full_output_dir . "/indels/indels.hq.bed", "indels file name as expected");
 };
 
+subtest "cleanFile" => sub {
+    my $snv_file = $process_somatic_variation->full_output_dir . "/snvs/snvs.hq.bed";
+#Test that the file exists;
+    $DB::single=1;
+    my $cleaned_file = Genome::Model::Tools::Somatic::ProcessSomaticVariation::cleanFile($snv_file);
+
+    is($cleaned_file, $process_somatic_variation->full_output_dir . "/snvs/snvs.hq.clean.bed", "clean snv file name as expected");    
+    compare_ok($cleaned_file, "$data_dir/snvs/snvs.hq.clean.bed", "Contents of feature list file as expected");
+};
+
 subtest "get_or_create_featurelist_file" => sub {
     my $featurelist_file = $process_somatic_variation->get_or_create_featurelist_file();
 
