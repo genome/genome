@@ -638,6 +638,26 @@ sub create_directories {
     return 1;
 }
 
+sub stage_snv_file {
+    my $self = shift;
+
+    my $full_output_dir = $self->full_output_dir;
+    my $build_dir       = $self->somatic_variation_model->last_succeeded_build->data_directory;
+
+    my $snv_file = "$build_dir/effects/snvs.hq.novel.tier1.v2.bed";
+    unless (-e $snv_file) {
+        confess $self->error_message("SNV results for " . $self->sample_name . " not found at $snv_file");
+    }
+
+    #cat all the filtered snvs together
+    $snv_file = "$full_output_dir/snvs/snvs.hq.bed";
+    Genome::Sys->shellcmd( cmd => "cat $build_dir/effects/snvs.hq.novel.tier*.v2.bed $build_dir/effects/snvs.hq.previously_detected.tier*.v2.bed | joinx sort >$snv_file");
+
+#  `ln -s $snv_file $full_output_dir/snvs/` unless( -e "$full_output_dir/snvs/$snv_file");
+
+    return $snv_file;
+}
+
 #########################################################################################################
 sub execute {
     my $self = shift;
@@ -692,11 +712,9 @@ sub execute {
     #make the directory structure
     $self->create_directories();
 
-    # Check if the necessary files exist in this build
-    my $snv_file = "$build_dir/effects/snvs.hq.novel.tier1.v2.bed";
-    unless (-e $snv_file) {
-        confess $self->error_message("SNV results for " . $self->sample_name . " not found at $snv_file");
-    }
+    # Check if the necessary files exist in this build and put them in the processing location
+    my $snv_file   = $self->stage_snv_file();
+
     my $indel_file = "$build_dir/effects/indels.hq.novel.tier1.v2.bed";
     unless (-e $indel_file) {
         confess $self->error_message("INDEL results for " . $self->sample_name . " not found at $indel_file");
@@ -712,15 +730,10 @@ sub execute {
     }
 
 
-    #cat all the filtered snvs together
-    $snv_file = "$full_output_dir/snvs/snvs.hq.bed";
-    Genome::Sys->shellcmd( cmd => "cat $build_dir/effects/snvs.hq.novel.tier*.v2.bed $build_dir/effects/snvs.hq.previously_detected.tier*.v2.bed | joinx sort >$snv_file");
-
     #cat all the filtered indels together
     $indel_file = "$full_output_dir/indels/indels.hq.bed";
     Genome::Sys->shellcmd( cmd => "cat $build_dir/effects/indels.hq.novel.tier*.v2.bed $build_dir/effects/indels.hq.previously_detected.tier*.v2.bed | joinx sort >$indel_file" );
 
-#  `ln -s $snv_file $full_output_dir/snvs/` unless( -e "$full_output_dir/snvs/$snv_file");
 #  `ln -s $indel_file $full_output_dirindels/` unless( -e "$full_output_dir/indels/$indel_file");
     if ($self->process_svs) {
         Genome::Sys->create_directory("$full_output_dir/svs");
