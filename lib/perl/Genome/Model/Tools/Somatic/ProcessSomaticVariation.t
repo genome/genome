@@ -57,6 +57,13 @@ subtest "create_directories" => sub {
     is($process_somatic_variation->full_output_dir, $output_dir . "/" . $somatic_variation_model->subject->name, "Full output dir as expected");
 };
 
+subtest "get_or_create_featurelist_file" => sub {
+    my $featurelist_file = $process_somatic_variation->get_or_create_featurelist_file();
+
+    is($featurelist_file, $process_somatic_variation->full_output_dir . "/featurelist", "Feature list file path as expected");
+    compare_ok($featurelist_file, "$data_dir/featurelist", "Contents of feature list file as expected");
+};
+
 subtest "annoFileToBedFile" => sub {
     my $input_file = "$data_dir/snvs_before_tiering.anno";
     my $output_file = Genome::Sys->create_temp_file_path;
