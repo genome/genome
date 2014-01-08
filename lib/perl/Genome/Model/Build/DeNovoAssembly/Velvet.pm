@@ -173,7 +173,7 @@ sub dirs_ignored_by_diff {
 #way it's grepping for the files .. stats.txt file exists in two places and test method does not
 #like that
 sub regex_files_for_diff { 
-    return qw/ Graph2 LastGraph Log PreGraph Roadmaps Sequences build.xml collated.fastq velvet_asm.afg /;
+    return qw/ Log Sequences build.xml collated.fastq velvet_asm.afg /;
 }
 #</ DIFF >#
 

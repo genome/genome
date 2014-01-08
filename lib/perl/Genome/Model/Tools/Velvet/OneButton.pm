@@ -226,9 +226,25 @@ sub execute {
     }
 
     #remove screen_g file
-    unlink $self->output_dir.'/screen_g';
+    #unlink $self->output_dir.'/screen_g';
+
+    # clean up .. remove files not needed to save space
+    for my $file_name( $self->_assembly_files_to_remove ) {
+	my $file = $self->output_dir."/$file_name";
+	unlink $file if -s $file;
+    }
 
     return 1;
+}
+
+sub _assembly_files_to_remove {
+    return (qw/
+Graph2
+LastGraph
+PreGraph
+Roadmaps
+screen_g
+/);
 }
 
 # TOP LEVEL EXECUTION STEPS (CALLED ONCE, ONLY FROM EXECUTE)
