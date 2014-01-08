@@ -255,3 +255,5 @@ config_profile_item [config_analysis_project config_analysismenu_item] 2013-12-0
 disk_allocation [disk_allocation@production-copy-dev] 2013-12-04T17:17:47Z Anthony Brummett <abrummet@genome.wustl.edu># drop preserved column
 config_instrument_data_analysis_project_bridge_permission [config_instrument_data_analysis_project_bridge] 2013-12-04T21:06:43Z Anthony Brummett <abrummet@genome.wustl.edu># set permission on config.instrument_data_analysis_project_bridge
 @sync-with-production 2013-12-06T21:20:22Z Anthony Brummett <abrummet@genome.wustl.edu># Sync sqitch with production DB
+
+add_bisulfite_column_to_fragment_library [instrument_fragment_library] 2014-01-08T19:32:36Z Adam Coffman <acoffman@genome.wustl.edu># Add support for new column from LIMS
