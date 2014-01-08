@@ -11,7 +11,7 @@ apipe-test-mc16s-sanger: 133668184
 apipe-test-refalign-germline-short: d5095b6b71434e998ddaf077b769f68c
 apipe-test-reference-alignment-lane-qc: f900b8b02a7345e4993e7470efac91c0
 apipe-test-reference-alignment: 053677a43dad42c9a664c98e52707db9
-apipe-test-rnaseq: 61689d78feae41c98e8e664d4a0c7b37
+apipe-test-rnaseq: 40dd79f3079242d38e4585a472e772e4
 apipe-test-somatic-validation-sv: e89a8a8963984bc19bdf3c6f06b895f4 
 apipe-test-somatic-validation: 8fabb160c58240799833dbfafd7c968d
 apipe-test-somatic-variation-short: 5697a7e7b60e4c41a36fd523a1a78f15
