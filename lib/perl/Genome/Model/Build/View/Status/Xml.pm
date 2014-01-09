@@ -106,8 +106,8 @@ sub _generate_content {
         $buildnode->addChild( $self->get_workflow_node );
     }
 
-    #processing profile
-    $buildnode->addChild ( $self->get_processing_profile_node() );
+    #processing profile--may fail if error grabbing events, but not critical to the view
+    eval { $buildnode->addChild ( $self->get_processing_profile_node() ) };
 
     #TODO:  add method to build for logs, reports
     #$buildnode->addChild ( $self->tnode("logs","") );
