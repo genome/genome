@@ -112,6 +112,18 @@ subtest "getFilterSites" => sub {
     compare_ok($temp_file, "$data_dir/filter_sites", "Filter sites as expected");
 };
 
+subtest "removeFilterSites" => sub {
+    my $file_to_be_filtered = $process_somatic_variation->full_output_dir . "/snvs/snvs.hq.clean.ontarget.bed";
+#Test that file exists
+    compare_ok($file_to_be_filtered, "$data_dir/snvs/snvs.hq.clean.ontarget.bed", "Contents of file to be filtered as expected");
+
+    my $filter_sites = $process_somatic_variation->getFilterSites($process_somatic_variation->filter_sites);
+    my $filtered_file = Genome::Model::Tools::Somatic::ProcessSomaticVariation::removeFilterSites($file_to_be_filtered, $filter_sites);
+    is($filtered_file, $process_somatic_variation->full_output_dir . "/snvs/snvs.hq.clean.ontarget.filtered.bed", "Filtered file path as expected");
+    $DB::single=1;
+    compare_ok($filtered_file, "$data_dir/snvs/snvs.hq.clean.ontarget.filtered.bed", "Contents of filtered file as expected");
+};
+
 subtest "get_or_create_filter_file" => sub {
     my $filter_file = $process_somatic_variation->get_or_create_filter_file();
 
