@@ -394,7 +394,7 @@ sub removeFilterSites{
         if ($ref =~ /\//) {
             ( $ref, $var ) = split(/\//, $ref);
         }
-        unless (defined($filterSites->join("\t",($chr, $start, $stop, $ref, $var )))) {
+        unless (defined($filterSites->{join("\t",($chr, $start, $stop, $ref, $var ))})) {
             print $outFh $line . "\n";
         }
     }
