@@ -30,10 +30,9 @@ class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
         },
     ],
     has_input => [
-        somatic_variation_model_id => {
-            is => 'Text',
-            is_optional => 0,
-            doc => "ID of SomaticVariation model",
+        somatic_variation_model => {
+            is => 'Genome::Model::SomaticVariation',
+            doc => "SomaticVariation model",
         },
         output_dir => {
             is => 'Text',
@@ -739,9 +738,7 @@ sub execute {
 
     # Check on the input data before starting work
     my $model = $self->somatic_variation_model;
-    unless (defined $model) {
-        confess $self->error_message("Could not find a soamtic variation model with ID: " . $self->somatic_variation_model_id);
-    }
+
     unless (-e $output_dir) {
         confess $self->error_message("Output directory not found: $output_dir");
     }
