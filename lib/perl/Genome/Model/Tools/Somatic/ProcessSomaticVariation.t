@@ -62,12 +62,14 @@ subtest "stage_snv_file" => sub {
     my $snv_file = $process_somatic_variation->stage_snv_file();
 
     is($snv_file, $process_somatic_variation->full_output_dir . "/snvs/snvs.hq.bed", "snv file name as expected");
+    compare_ok($snv_file, "$data_dir/snvs/snvs.hq.bed", "Contents of snv file as expected");
 };
 
 subtest "stage_indel_file" => sub {
     my $indel_file = $process_somatic_variation->stage_indel_file();
 
     is($indel_file, $process_somatic_variation->full_output_dir . "/indels/indels.hq.bed", "indels file name as expected");
+    compare_ok($indel_file, "$data_dir/indels/indels.hq.bed", "Contents of indels file as expected");
 };
 
 subtest "cleanFile" => sub {
