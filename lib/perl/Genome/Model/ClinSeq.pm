@@ -338,7 +338,7 @@ sub map_workflow_inputs {
     }
     
     #RunMicroArrayCnView
-    if ($wgs_build or $exome_build){
+    if ($self->has_microarray_build()) {
       my $microarray_cnv_dir = $patient_dir . "/cnv/microarray_cnv/";
       push @dirs, $microarray_cnv_dir;
       push @inputs, microarray_cnv_dir => $microarray_cnv_dir;
@@ -459,6 +459,9 @@ sub _resolve_workflow_for_build {
     if ($build->wgs_build or $build->exome_build) {
         push @output_properties, 'mutation_diagram_result';
         push @output_properties, 'import_snvs_indels_result';
+    }
+    
+    if ($self->has_microarray_build()) {
         push @output_properties, 'microarray_cnv_result';
     }
 
@@ -835,7 +838,7 @@ sub _resolve_workflow_for_build {
 
     #RunMicroarrayCNV - produce cnv plots with microarray results
     my $microarray_cnv_op;
-    if ($build->wgs_build or $build->exome_build){
+    if ($self->has_microarray_build()) {
       $msg = "Call somatic copy number changes using microarray calls";
       $microarray_cnv_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::MicroarrayCnv");
       $add_link->($input_connector, 'microarray_cnv_dir', $microarray_cnv_op, 'outdir');
@@ -1284,6 +1287,23 @@ sub cnaseq_hmm_file {
         die $class->error_message("Unable to find cnaseq hmm file. Expected: $hmm_file");
     }
     return $hmm_file;
+}
+
+sub has_microarray_build {
+    my $self = shift;
+    my $base_model;
+    if($self->exome_model) {
+        $base_model = $self->exome_model;
+    } elsif($self->wgs_model) {
+        $base_model = $self->wgs_model;
+    } else {
+        return 0;
+    }
+    if($base_model->tumor_model->genotype_microarray && $base_model->normal_model->genotype_microarray) {
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
 1;

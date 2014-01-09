@@ -26,6 +26,12 @@ class Genome::Model::ClinSeq::Command::MicroarrayCnv {
             is => 'FilesystemPath',
             doc => 'Directory where output files will be written',
         },
+        min_cnv_diff => {
+            is => 'Float',
+            doc => 'Cutoff for the minimum cnv difference between tumor and normal [the absolute value]',
+            default_value => 0.5,
+            is_optional => 1,
+        },
         test => {
             is => 'Boolean',
             doc => 'True for tests, just makes CNView plots for kinase gene symbol list',
@@ -111,11 +117,15 @@ sub get_microarray_models {
         } elsif($self->clinseq_model->wgs_model) {
             $base_model = $self->clinseq_model->wgs_model;
         } else {
-            die $self->error_message("Please specify a clinseq model with either an exome-sv [or] WGS-sv model");
+            die $self->error_message("Please specify a clinseq model with either an exome-sv [or] wgs-sv model");
         }
-        my $microarray_model_tumor = $base_model->tumor_model->genotype_microarray;
-        my $microarray_model_normal = $base_model->normal_model->genotype_microarray;
-        return $microarray_model_tumor, $microarray_model_normal;
+        if($base_model->tumor_model->genotype_microarray && $base_model->normal_model->genotype_microarray) {
+            my $microarray_model_tumor = $base_model->tumor_model->genotype_microarray;
+            my $microarray_model_normal = $base_model->normal_model->genotype_microarray;
+            return $microarray_model_tumor, $microarray_model_normal;
+        } else {
+            die $self->error_message("Please specify a clinseq model with either an exome-sv [or] wgs-sv model with microarray builds");
+        }
     } else {
         die $self->error_message("Please specify one clinseq model [or] two microarray models as input!");
     }
@@ -172,7 +182,12 @@ sub run_cnview {
     my $normal_copynumber = shift;
     my $cbs_op = shift;
     my $cancer_annotation_db = shift;
-    
+    my $min_cnv_diff = $self->min_cnv_diff;
+
+    if($min_cnv_diff < 0) {
+        $min_cnv_diff = $min_cnv_diff * -1; #use the absolute value
+    }
+
     #Create cnvhq file
     my $cnv_file = $self->outdir . "/cnvs.hq";
     #copynumber = 2^(log_r_ratio + 1)
@@ -188,7 +203,7 @@ sub run_cnview {
     #Create cnvhmm file
     my $cnv_hmm_file = $cbs_op . ".cnvhmm"; 
     #print only cnv segments with atleast five snp markers.
-    my $make_hmmfile_cmd = 'awk \'{ size = $3-$2; nmarkers=size; event = "NA"; if($5>0) { event = "Gain" } else if($5<0) { event = "Loss" } cn1 = $5 +2; cn1 = int(cn1 + 0.5); cn2 = 2; if((event == "Gain" || event == "Loss") && cn1 !=2 && $4 >=5) print $1"\t"$2"\t"$3"\t"size"\t"nmarkers"\t"cn1"\t"cn1"\t"cn2"\t"cn2"\tNA\t"event; } \' ' . $cbs_op . ' > ' .  $cnv_hmm_file;
+    my $make_hmmfile_cmd = 'awk \'{ size = $3-$2; nmarkers=size; event = "NA"; if($5>0) { event = "Gain" } else if($5<0) { event = "Loss" } cn1 = $5 +2; cn2 = 2; if((event == "Gain" || event == "Loss") && ($5 > ' . $min_cnv_diff . ' || $5 < -1 * ' . $min_cnv_diff . ' ) && $4 >=5) print $1"\t"$2"\t"$3"\t"size"\t"nmarkers"\t"cn1"\t"cn1"\t"cn2"\t"cn2"\tNA\t"event; } \' ' . $cbs_op . ' > ' .  $cnv_hmm_file;
     Genome::Sys->shellcmd(cmd => $make_hmmfile_cmd);
     
     #For each list of gene symbols, run the CNView analysis
