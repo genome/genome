@@ -47,6 +47,7 @@ my $process_somatic_variation = $pkg->create(
     output_dir              => $output_dir,
     target_regions          => "$input_dir/target_regions.bed",
     filter_regions          => "$input_dir/filter.bed",
+    filter_sites            => "$input_dir/filter_sites.bed",
 );
 ok($process_somatic_variation->isa("Genome::Model::Tools::Somatic::ProcessSomaticVariation"), "Generated a process somatic variation object");
 
@@ -97,6 +98,18 @@ subtest "_filter_off_target_regions" => sub {
     my $filtered_file = $process_somatic_variation->_filter_off_target_regions($file_to_be_filtered);
     is($filtered_file, $process_somatic_variation->full_output_dir . "/snvs/snvs.hq.clean.ontarget.bed", "Filtered file path as expected");
     compare_ok($filtered_file, "$data_dir/snvs/snvs.hq.clean.ontarget.bed", "Contents of filtered file as expected");
+};
+
+
+#Test for removing filter sites specified by the user
+
+subtest "getFilterSites" => sub {
+    my $filter_sites = $process_somatic_variation->getFilterSites($process_somatic_variation->filter_sites);
+    my $temp_file = Genome::Sys->create_temp_file_path;
+    my $temp_fh   = Genome::Sys->open_file_for_writing($temp_file);
+    print $temp_fh Data::Dumper::Dumper($filter_sites);
+    close ($temp_fh);
+    compare_ok($temp_file, "$data_dir/filter_sites", "Filter sites as expected");
 };
 
 subtest "get_or_create_filter_file" => sub {
