@@ -6,7 +6,7 @@ use Genome;
 
 # these are used below, and are also used in the documentation on commands in the tree
 # to provide the most useful examples possible
-our $DEFAULT_CANCER_ANNOTATION_DB_ID    = 'tgi/cancer-annotation/human/build37-20130401.1';
+our $DEFAULT_CANCER_ANNOTATION_DB_ID    = 'tgi/cancer-annotation/human/build37-20131010.1';
 our $DEFAULT_MISC_ANNOTATION_DB_ID      = 'tgi/misc-annotation/human/build37-20130113.1';
 our $DEFAULT_COSMIC_ANNOTATION_DB_ID    = 'cosmic/65.1';
 
