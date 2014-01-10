@@ -46,7 +46,7 @@ my $process_somatic_variation = $pkg->create(
     somatic_variation_model => $somatic_variation_model,
     output_dir              => $output_dir,
     target_regions          => "$input_dir/target_regions.bed",
-    filter_regions          => "$input_dir/filter.bed",
+    filter_regions          => "$input_dir/filter_regions.bed",
     filter_sites            => "$input_dir/filter_sites.bed",
 );
 ok($process_somatic_variation->isa("Genome::Model::Tools::Somatic::ProcessSomaticVariation"), "Generated a process somatic variation object");
@@ -120,15 +120,24 @@ subtest "removeFilterSites" => sub {
     my $filter_sites = $process_somatic_variation->getFilterSites($process_somatic_variation->filter_sites);
     my $filtered_file = Genome::Model::Tools::Somatic::ProcessSomaticVariation::removeFilterSites($file_to_be_filtered, $filter_sites);
     is($filtered_file, $process_somatic_variation->full_output_dir . "/snvs/snvs.hq.clean.ontarget.filtered.bed", "Filtered file path as expected");
-    $DB::single=1;
     compare_ok($filtered_file, "$data_dir/snvs/snvs.hq.clean.ontarget.filtered.bed", "Contents of filtered file as expected");
 };
 
+#Tests for removing filter regions specified by the user
 subtest "get_or_create_filter_file" => sub {
     my $filter_file = $process_somatic_variation->get_or_create_filter_file();
 
     is($filter_file, $process_somatic_variation->full_output_dir . "/filter", "Filter file path as expected");
     compare_ok($filter_file, "$data_dir/filter", "Contents of filter file as expected");
+};
+
+subtest "_filter_regions" => sub {
+    my $file_to_be_filtered = $process_somatic_variation->full_output_dir . "/snvs/snvs.hq.clean.ontarget.filtered.bed";
+    compare_ok($file_to_be_filtered, "$data_dir/snvs/snvs.hq.clean.ontarget.filtered.bed", "Contents of file to be filtered as expected");
+
+    my $filtered_file = $process_somatic_variation->_filter_regions($file_to_be_filtered);
+    is($filtered_file, $process_somatic_variation->full_output_dir . "/snvs/snvs.hq.clean.ontarget.filtered.bed.filteredReg", "Filtered file path as expected");
+    compare_ok($filtered_file, "$data_dir/snvs/snvs.hq.clean.ontarget.filtered.bed.filteredReg", "Contents of filtered file as expected");
 };
 
 subtest "annoFileToBedFile" => sub {
