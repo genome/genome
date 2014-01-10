@@ -63,7 +63,6 @@ my $orig_cmd = Genome::Db::Ensembl::Command::Vep->create(
     condel => "b",
     polyphen => "b",
     sift => "b",
-    hgnc => 1,
     quiet => 1,
 );
 
