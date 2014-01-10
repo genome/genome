@@ -48,6 +48,7 @@ my $process_somatic_variation = $pkg->create(
     target_regions          => "$input_dir/target_regions.bed",
     filter_regions          => "$input_dir/filter_regions.bed",
     filter_sites            => "$input_dir/filter_sites.bed",
+    required_snv_callers    => 2,
 );
 ok($process_somatic_variation->isa("Genome::Model::Tools::Somatic::ProcessSomaticVariation"), "Generated a process somatic variation object");
 
@@ -147,6 +148,14 @@ subtest "_filter_regions" => sub {
     my $filtered_file = $process_somatic_variation->_filter_regions($file_to_be_filtered);
     is($filtered_file, $full_output_dir . "/snvs/snvs.hq.clean.ontarget.filtered.bed.filteredReg", "Filtered file path as expected");
     compare_ok($filtered_file, "$data_dir/snvs/snvs.hq.clean.ontarget.filtered.bed.filteredReg", "Contents of filtered file as expected");
+};
+
+subtest "removeUnsupportedSites" => sub {
+    my $file_to_be_filtered = $full_output_dir . "/snvs/snvs.hq.clean.ontarget.filtered.bed.filteredReg";
+    compare_ok($file_to_be_filtered, "$data_dir/snvs/snvs.hq.clean.ontarget.filtered.bed.filteredReg", "Contents of file to be filtered as expected");
+
+    my $filtered_file = $process_somatic_variation->removeUnsupportedSites($file_to_be_filtered);
+    is($filtered_file, $full_output_dir . "/snvs/snvs.hq.clean.ontarget.filtered.bed.filteredReg.gt2callers", "Filtered file path as expected");
 };
 
 subtest "annoFileToBedFile" => sub {
