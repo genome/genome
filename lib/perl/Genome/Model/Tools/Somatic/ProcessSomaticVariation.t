@@ -59,49 +59,58 @@ subtest "create_directories" => sub {
     is($process_somatic_variation->full_output_dir, $output_dir . "/" . $somatic_variation_model->subject->name, "Full output dir as expected");
 };
 
+my $full_output_dir = $process_somatic_variation->full_output_dir;
+
 subtest "stage_snv_file" => sub {
     my $snv_file = $process_somatic_variation->stage_snv_file();
 
-    is($snv_file, $process_somatic_variation->full_output_dir . "/snvs/snvs.hq.bed", "snv file name as expected");
+    is($snv_file, $full_output_dir . "/snvs/snvs.hq.bed", "snv file name as expected");
     compare_ok($snv_file, "$data_dir/snvs/snvs.hq.bed", "Contents of snv file as expected");
 };
 
 subtest "stage_indel_file" => sub {
     my $indel_file = $process_somatic_variation->stage_indel_file();
 
-    is($indel_file, $process_somatic_variation->full_output_dir . "/indels/indels.hq.bed", "indels file name as expected");
+    is($indel_file, $full_output_dir . "/indels/indels.hq.bed", "indels file name as expected");
     compare_ok($indel_file, "$data_dir/indels/indels.hq.bed", "Contents of indels file as expected");
 };
 
 subtest "cleanFile" => sub {
-    my $snv_file = $process_somatic_variation->full_output_dir . "/snvs/snvs.hq.bed";
+    my $snv_file = $full_output_dir . "/snvs/snvs.hq.bed";
 #Test that the file exists;
-    $DB::single=1;
     my $cleaned_file = Genome::Model::Tools::Somatic::ProcessSomaticVariation::cleanFile($snv_file);
 
-    is($cleaned_file, $process_somatic_variation->full_output_dir . "/snvs/snvs.hq.clean.bed", "clean snv file name as expected");    
+    is($cleaned_file, $full_output_dir . "/snvs/snvs.hq.clean.bed", "clean snv file name as expected");
     compare_ok($cleaned_file, "$data_dir/snvs/snvs.hq.clean.bed", "Contents of feature list file as expected");
 };
+
 
 subtest "get_or_create_featurelist_file" => sub {
     my $featurelist_file = $process_somatic_variation->get_or_create_featurelist_file();
 
-    is($featurelist_file, $process_somatic_variation->full_output_dir . "/featurelist", "Feature list file path as expected");
+    is($featurelist_file, $full_output_dir . "/featurelist", "Feature list file path as expected");
     compare_ok($featurelist_file, "$data_dir/featurelist", "Contents of feature list file as expected");
 };
 
 subtest "_filter_off_target_regions" => sub {
-    my $file_to_be_filtered = $process_somatic_variation->full_output_dir . "/snvs/snvs.hq.clean.bed";
+    my $file_to_be_filtered = $full_output_dir . "/snvs/snvs.hq.clean.bed";
 #Test that the file exists;
     compare_ok($file_to_be_filtered, "$data_dir/snvs/snvs.hq.clean.bed", "Contents of file to be filtered as expected");
 
     my $filtered_file = $process_somatic_variation->_filter_off_target_regions($file_to_be_filtered);
-    is($filtered_file, $process_somatic_variation->full_output_dir . "/snvs/snvs.hq.clean.ontarget.bed", "Filtered file path as expected");
+    is($filtered_file, $full_output_dir . "/snvs/snvs.hq.clean.ontarget.bed", "Filtered file path as expected");
     compare_ok($filtered_file, "$data_dir/snvs/snvs.hq.clean.ontarget.bed", "Contents of filtered file as expected");
 };
 
 
 #Test for removing filter sites specified by the user
+#No need to test fixIUB? It's basically just a flat wrapper for Genome::Info::IUB->variant_alleles_for_iub
+#Maybe we shouldn't even have this wrapper method since it doesn't do anything
+#in addition
+# subtest "fixIUB" => sub {
+    # my ($ref, $var);
+    # Genome::Model::Tools::Somatic::ProcessSomaticVariation::fixIUB($ref, $var);
+# };
 
 subtest "getFilterSites" => sub {
     my $filter_sites = $process_somatic_variation->getFilterSites($process_somatic_variation->filter_sites);
@@ -113,13 +122,13 @@ subtest "getFilterSites" => sub {
 };
 
 subtest "removeFilterSites" => sub {
-    my $file_to_be_filtered = $process_somatic_variation->full_output_dir . "/snvs/snvs.hq.clean.ontarget.bed";
+    my $file_to_be_filtered = $full_output_dir . "/snvs/snvs.hq.clean.ontarget.bed";
 #Test that file exists
     compare_ok($file_to_be_filtered, "$data_dir/snvs/snvs.hq.clean.ontarget.bed", "Contents of file to be filtered as expected");
 
     my $filter_sites = $process_somatic_variation->getFilterSites($process_somatic_variation->filter_sites);
     my $filtered_file = Genome::Model::Tools::Somatic::ProcessSomaticVariation::removeFilterSites($file_to_be_filtered, $filter_sites);
-    is($filtered_file, $process_somatic_variation->full_output_dir . "/snvs/snvs.hq.clean.ontarget.filtered.bed", "Filtered file path as expected");
+    is($filtered_file, $full_output_dir . "/snvs/snvs.hq.clean.ontarget.filtered.bed", "Filtered file path as expected");
     compare_ok($filtered_file, "$data_dir/snvs/snvs.hq.clean.ontarget.filtered.bed", "Contents of filtered file as expected");
 };
 
@@ -127,16 +136,16 @@ subtest "removeFilterSites" => sub {
 subtest "get_or_create_filter_file" => sub {
     my $filter_file = $process_somatic_variation->get_or_create_filter_file();
 
-    is($filter_file, $process_somatic_variation->full_output_dir . "/filter", "Filter file path as expected");
+    is($filter_file, $full_output_dir . "/filter", "Filter file path as expected");
     compare_ok($filter_file, "$data_dir/filter", "Contents of filter file as expected");
 };
 
 subtest "_filter_regions" => sub {
-    my $file_to_be_filtered = $process_somatic_variation->full_output_dir . "/snvs/snvs.hq.clean.ontarget.filtered.bed";
+    my $file_to_be_filtered = $full_output_dir . "/snvs/snvs.hq.clean.ontarget.filtered.bed";
     compare_ok($file_to_be_filtered, "$data_dir/snvs/snvs.hq.clean.ontarget.filtered.bed", "Contents of file to be filtered as expected");
 
     my $filtered_file = $process_somatic_variation->_filter_regions($file_to_be_filtered);
-    is($filtered_file, $process_somatic_variation->full_output_dir . "/snvs/snvs.hq.clean.ontarget.filtered.bed.filteredReg", "Filtered file path as expected");
+    is($filtered_file, $full_output_dir . "/snvs/snvs.hq.clean.ontarget.filtered.bed.filteredReg", "Filtered file path as expected");
     compare_ok($filtered_file, "$data_dir/snvs/snvs.hq.clean.ontarget.filtered.bed.filteredReg", "Contents of filtered file as expected");
 };
 
