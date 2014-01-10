@@ -76,27 +76,27 @@ sub link_known_sites_vcfs {
 
 sub _get_and_link_vcf_from_known_site_result {
     my ($self, $result, $type) = @_;
-    $self->status_message("Link VCF from known site result...");
+    $self->debug_message("Link VCF from known site result...");
 
     Carp::confess('No result given to get and link vcf from known site result!') if not $result;
     Carp::confess('No type given to get and link vcf from known site result!') if not $type;
 
-    $self->status_message('Known site result: '.$result->__display_name__);
-    $self->status_message("Type: $type");
+    $self->debug_message('Known site result: '.$result->__display_name__);
+    $self->debug_message("Type: $type");
 
     my $source_known_sites_vcf = $result->path.'/'.$type.'s.hq.vcf';
     if ( not -s $source_known_sites_vcf ) {
         $self->error_message("No $type vcf (${type}s.hq.vcf) in indel result output directory! ".$result->output_dir);
         return;
     }
-    $self->status_message("Target: $source_known_sites_vcf");
+    $self->debug_message("Target: $source_known_sites_vcf");
 
     my $link_name = $self->_tmpdir.'/'.$result->id.'.vcf';
-    $self->status_message("Link: $link_name");
+    $self->debug_message("Link: $link_name");
 
     symlink($source_known_sites_vcf, $link_name) if not -l $link_name;
 
-    $self->status_message("Link VCF from known site result...done");
+    $self->debug_message("Link VCF from known site result...done");
     return $link_name;
 }
 
@@ -113,7 +113,7 @@ sub create {
     }
 
     for my $known_sites ( $self->known_sites ) {
-        $self->status_message('Known sites: '.$known_sites->id);
+        $self->debug_message('Known sites: '.$known_sites->id);
     }
 
     return $self;

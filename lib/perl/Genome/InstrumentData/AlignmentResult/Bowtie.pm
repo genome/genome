@@ -148,7 +148,7 @@ sub prepare_reference_sequence_index {
     my $staging_dir = $refindex->temp_staging_directory;
     my $staged_fasta_file = sprintf("%s/all_sequences.fa", $staging_dir);
 
-    $class->status_message("Doing bowtie indexing.");
+    $class->debug_message("Doing bowtie indexing.");
 
     my $bowtie_file_stem = "";
     my $bowtie_extension = "";

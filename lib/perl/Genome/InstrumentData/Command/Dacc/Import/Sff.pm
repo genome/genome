@@ -32,7 +32,7 @@ sub _execute {
     my $self = shift;
 
     my @sffs = $self->existing_data_files;
-    $self->status_message('SFF count: '.scalar(@sffs));
+    $self->debug_message('SFF count: '.scalar(@sffs));
     my @instrument_data;
     # Get the inst data that need the archive path, as the command may have died
     for my $instrument_data ( $self->_get_instrument_data ) {
@@ -75,7 +75,7 @@ sub _execute {
             $self->error_message('No archive path for instrument data: '.$instrument_data->id);
             return;
         }
-        $self->status_message("Move $sff to $archive_path");
+        $self->debug_message("Move $sff to $archive_path");
         my $move_ok = File::Copy::move($sff, $archive_path);
         if ( not $move_ok ) {
             $self->error_message("Failed to move SFF $sff to $archive_path: $!");

@@ -25,7 +25,7 @@ sub help_detail {
 sub execute {
     my $self = shift;
 
-    $self->status_message('Import: '.$self->__display_name__);
+    $self->debug_message('Import: '.$self->__display_name__);
 
     my $sample = $self->_get_sample;
     if ( not $sample ) {
@@ -59,7 +59,7 @@ sub execute {
 
     $self->_reallocate; # ignore error
 
-    $self->status_message('Import...OK');
+    $self->debug_message('Import...OK');
 
     return 1;
 }
@@ -67,7 +67,7 @@ sub execute {
 sub _reallocate {
     my $self = shift;
 
-    $self->status_message('Reallocate...');
+    $self->debug_message('Reallocate...');
 
     my $allocation = $self->_allocation;
     if ( not $allocation ) {
@@ -77,7 +77,7 @@ sub _reallocate {
         $self->error_message('Failed to reallocate main allocation: '.$allocation->id);
     }
 
-    $self->status_message('Reallocate...OK');
+    $self->debug_message('Reallocate...OK');
 
     return 1;
 }

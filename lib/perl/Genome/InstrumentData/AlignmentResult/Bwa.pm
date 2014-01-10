@@ -35,7 +35,7 @@ sub required_rusage {
     }
 
     if ($reference_build and $reference_build->id eq '107494762') {
-        $class->status_message(sprintf 'Doubling memory requirements for alignments against %s.', $reference_build->name);
+        $class->debug_message(sprintf 'Doubling memory requirements for alignments against %s.', $reference_build->name);
         $mem_mb *= 2;
     }
 
@@ -124,19 +124,19 @@ sub _all_reference_indices {
     my $b = $self->reference_build;
     if ($self->multiple_reference_mode) {
         do {
-            $self->status_message("Getting reference sequence index for build ".$b->__display_name__);
-            $self->status_message("...using overrides @overrides\n") if @overrides;
+            $self->debug_message("Getting reference sequence index for build ".$b->__display_name__);
+            $self->debug_message("...using overrides @overrides\n") if @overrides;
             my $index = $self->get_reference_sequence_index($b,@overrides);
-            $self->status_message("Index: " . $index->__display_name__);
+            $self->debug_message("Index: " . $index->__display_name__);
             unshift(@indices, $index);
             $b = $b->append_to;
         } while ($b);
     } else {
         # TODO: the above condition works for the single-layer reference too right? -ssmith
-        $self->status_message("Getting reference sequence index for build ".$b->__display_name__);
-        $self->status_message("...using overrides @overrides\n") if @overrides;
+        $self->debug_message("Getting reference sequence index for build ".$b->__display_name__);
+        $self->debug_message("...using overrides @overrides\n") if @overrides;
         my $index = $self->get_reference_sequence_index($b,@overrides);
-        $self->status_message("Index: " . $index->__display_name__);
+        $self->debug_message("Index: " . $index->__display_name__);
         unshift(@indices, $index);
     }
     return @indices;
@@ -205,7 +205,7 @@ sub _intermediate_result {
             confess "Failed to generate IntermediateAlignmentResult for $path, params were: " . Dumper(\%intermediate_params);
         }
 
-        $self->status_message(sprintf("Got/created an intermediate alignment result %s with file path %s", $intermediate_result->id, $intermediate_result->sai_file));
+        $self->debug_message(sprintf("Got/created an intermediate alignment result %s with file path %s", $intermediate_result->id, $intermediate_result->sai_file));
         push(@results, $intermediate_result);
     }
 
@@ -330,7 +330,7 @@ sub _run_aligner {
 
     for my $file (@input_pathnames) {
         if ($file =~ m/^\/tmp\//) {
-            $self->status_message("removing $file to save space!");
+            $self->debug_message("removing $file to save space!");
             unlink($file);
         }
     }
@@ -367,7 +367,7 @@ sub _filter_samxe_output {
 
     my $sam_run_output_fh = IO::File->new( $sam_cmd . "|" );
     binmode $sam_run_output_fh;
-    $self->status_message("Running $sam_cmd");
+    $self->debug_message("Running $sam_cmd");
     if ( !$sam_run_output_fh ) {
             $self->error_message("Error running $sam_cmd $!");
             return;
@@ -377,10 +377,10 @@ sub _filter_samxe_output {
     # UGLY HACK: the multi-aligner code redefines this to zero so it can extract sam files.
     if ($self->supports_streaming_to_bam) {
         $sam_out_fh = $self->_sam_output_fh;
-        $self->status_message("Streaming output through existing file handle");
+        $self->debug_message("Streaming output through existing file handle");
     } else {
         $sam_out_fh = IO::File->new(">>" . $self->temp_scratch_directory . "/all_sequences.sam");
-        $self->status_message("Opened for output ( " . $self->temp_scratch_directory . "/all_sequences.sam )");
+        $self->debug_message("Opened for output ( " . $self->temp_scratch_directory . "/all_sequences.sam )");
     }
     my $add_rg_cmd = Genome::Model::Tools::Sam::AddReadGroupTag->create(
             input_filehandle     => $sam_run_output_fh,
@@ -487,9 +487,9 @@ sub decomposed_aligner_params {
 
     my $cpu_count = $self->_available_cpu_count;
 
-    $self->status_message("[decomposed_aligner_params] cpu count is $cpu_count");
+    $self->debug_message("[decomposed_aligner_params] cpu count is $cpu_count");
 
-    $self->status_message("[decomposed_aligner_params] bwa aln params are: $bwa_aln_params");
+    $self->debug_message("[decomposed_aligner_params] bwa aln params are: $bwa_aln_params");
 
     # Make sure the thread count argument matches the number of CPUs available.
     if (!$bwa_aln_params || $bwa_aln_params !~ m/-t/) {
@@ -498,7 +498,7 @@ sub decomposed_aligner_params {
         $bwa_aln_params =~ s/-t ?\d/-t$cpu_count/;
     }
 
-    $self->status_message("[decomposed_aligner_params] autocalculated CPU requirement, bwa aln params modified: $bwa_aln_params");
+    $self->debug_message("[decomposed_aligner_params] autocalculated CPU requirement, bwa aln params modified: $bwa_aln_params");
 
 
     return ('bwa_aln_params' => $bwa_aln_params, 'bwa_samse_params' => $spar[1], 'bwa_sampe_params' => $spar[2]);
@@ -525,7 +525,7 @@ sub _derive_bwa_sampe_parameters {
 
     # Ignore where we have a -a already specified
     if ($bwa_sampe_params =~ m/\-a\s*(\d+)/) {
-        $self->status_message("Aligner params specify a -a parameter ($1) as upper bound on insert size.");
+        $self->debug_message("Aligner params specify a -a parameter ($1) as upper bound on insert size.");
     } else {
         # come up with an upper bound on insert size.
         my $instrument_data = $self->instrument_data;
@@ -533,9 +533,9 @@ sub _derive_bwa_sampe_parameters {
         my $median_insert   = $instrument_data->resolve_median_insert_size || 0;
         my $upper_bound_on_insert_size= ($sd_above * 5) + $median_insert;
         if($upper_bound_on_insert_size > 0) {
-            $self->status_message("Calculated a valid insert size as $upper_bound_on_insert_size.  This will be used when BWA's internal algorithm can't determine an insert size");
+            $self->debug_message("Calculated a valid insert size as $upper_bound_on_insert_size.  This will be used when BWA's internal algorithm can't determine an insert size");
         } else {
-            $self->status_message("Unable to calculate a valid insert size to run BWA with. Using 600 (hax)");
+            $self->debug_message("Unable to calculate a valid insert size to run BWA with. Using 600 (hax)");
             $upper_bound_on_insert_size= 600;
         }
 
@@ -581,7 +581,7 @@ sub prepare_reference_sequence_index {
     my $actual_fasta_file = $staged_fasta_file;
 
     if (-l $staged_fasta_file) {
-        $class->status_message(sprintf("Following symlink for fasta file %s", $staged_fasta_file));
+        $class->debug_message(sprintf("Following symlink for fasta file %s", $staged_fasta_file));
         $actual_fasta_file = readlink($staged_fasta_file);
         unless($actual_fasta_file) {
             $class->error_message("Can't read target of symlink $staged_fasta_file");
@@ -589,14 +589,14 @@ sub prepare_reference_sequence_index {
         }
     }
 
-    $class->status_message(sprintf("Checking size of fasta file %s", $actual_fasta_file));
+    $class->debug_message(sprintf("Checking size of fasta file %s", $actual_fasta_file));
 
     my $fasta_size = -s $actual_fasta_file;
     my $bwa_index_algorithm = ($fasta_size < 11_000_000) ? "is" : "bwtsw";
     my $bwa_version = $refindex->aligner_version;
     my $bwa_path = Genome::Model::Tools::Bwa->path_for_bwa_version($bwa_version);
 
-    $class->status_message(sprintf("Building a BWA index in %s using %s.  The file size is %s; selecting the %s algorithm to build it.", $staging_dir, $staged_fasta_file, $fasta_size, $bwa_index_algorithm));
+    $class->debug_message(sprintf("Building a BWA index in %s using %s.  The file size is %s; selecting the %s algorithm to build it.", $staging_dir, $staged_fasta_file, $fasta_size, $bwa_index_algorithm));
 
     # Expected output files from bwa index. Bwa index creates files with the
     # following extensions: amb, ann, bwt, pac, and sa; older versions also

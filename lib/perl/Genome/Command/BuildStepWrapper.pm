@@ -88,7 +88,7 @@ sub execute {
     my $link = $label;
     $link =~ s/[\s\:]/_/g;
     $link = "$subdir/$link";
-    $self->status_message("Running $command_class for build.  Linking results to $link.");
+    $self->debug_message("Running $command_class for build.  Linking results to $link.");
     
     # run
     my $retval = $command->execute(@_);
@@ -102,7 +102,7 @@ sub execute {
     my $user_link = $result->add_user(label => $label, user => $build);
 
     # link to the data directory
-    $self->status_message("linking to $dir/$subdir: result " . $result->__display_name__ . " from " . $result->output_dir);
+    $self->debug_message("linking to $dir/$subdir: result " . $result->__display_name__ . " from " . $result->output_dir);
     Genome::Sys->create_symlink($result->output_dir,"$link");
 
     return $result;

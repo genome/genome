@@ -54,7 +54,7 @@ sub _generate_quality_stats {
     elsif ( $self->instrument_data->archive_path ){
         my $archive_path = $self->instrument_data->archive_path;
         my $tar_cmd = "tar zxf $archive_path -C $tmp_directory";
-        $self->status_message("Running tar: $tar_cmd");
+        $self->debug_message("Running tar: $tar_cmd");
         unless ( Genome::Sys->shellcmd(cmd => $tar_cmd) ){
             $self->error_message("Failed to get fastq files from tarred archive path: $archive_path using command: $tar_cmd");
             return;

@@ -75,7 +75,7 @@ sub __errors__ {
 
 sub execute {
     my $self = shift;
-    $self->status_message('Create instrument data and copy bam...');
+    $self->debug_message('Create instrument data and copy bam...');
 
     my $was_not_imported = $self->helpers->ensure_original_data_path_md5s_were_not_previously_imported($self->source_md5s);
     return if not $was_not_imported;
@@ -102,7 +102,7 @@ sub execute {
 
         # Flagstat
         my $flagstat_path = $final_bam_path.'.flagstat';
-        $self->status_message("Flagstat path: $flagstat_path");
+        $self->debug_message("Flagstat path: $flagstat_path");
         my $flagstat = $helpers->validate_bam($final_bam_path, $flagstat_path);
         return if not $flagstat;
 
@@ -111,32 +111,32 @@ sub execute {
         $instrument_data->add_attribute(attribute_label => 'read_count', attribute_value => $flagstat->{total_reads});
         $instrument_data->add_attribute(attribute_label => 'is_paired_end', attribute_value => $flagstat->{is_paired_end});
 
-        $self->status_message('Reallocate...');
+        $self->debug_message('Reallocate...');
         $instrument_data->allocations->reallocate;# with move??
-        $self->status_message('Reallocate...done');
+        $self->debug_message('Reallocate...done');
 
         push @instrument_data, $instrument_data;
     }
     $self->instrument_data(\@instrument_data);
 
-    $self->status_message('Imported instrument data bam paths:');
+    $self->debug_message('Imported instrument data bam paths:');
     for my $instrument_data ( @instrument_data ) {
         printf("%s\n", $instrument_data->bam_path);
     }
 
-    $self->status_message('Create instrument data and copy bam...done');
+    $self->debug_message('Create instrument data and copy bam...done');
     return 1;
 }
 
 sub _resvolve_library {
     my $self = shift;
-    $self->status_message('Resolve library...');
+    $self->debug_message('Resolve library...');
 
     my $sample = $self->sample;
-    $self->status_message('Sample name: '.$sample->name);
-    $self->status_message('Sample id: '.$sample->id);
+    $self->debug_message('Sample name: '.$sample->name);
+    $self->debug_message('Sample id: '.$sample->id);
     my $library_name = $sample->name.'-extlibs';
-    $self->status_message('Library name: '.$library_name);
+    $self->debug_message('Library name: '.$library_name);
     my $library = Genome::Library->get(
         name => $library_name,
         sample => $sample,
@@ -151,18 +151,18 @@ sub _resvolve_library {
             return;
         }
     }
-    $self->status_message('Library id: '.$library->id);
+    $self->debug_message('Library id: '.$library->id);
 
-    $self->status_message('Resolve library...done');
+    $self->debug_message('Resolve library...done');
     return $self->library($library);
 }
 
 sub _create_instrument_data_for_bam_path {
     my ($self, $bam_path) = @_;
-    $self->status_message('Create instrument data for bam path...');
+    $self->debug_message('Create instrument data for bam path...');
 
     Carp::confess('No bam path to create instrument data!') if not $bam_path;
-    $self->status_message('Bam path: '.$bam_path);
+    $self->debug_message('Bam path: '.$bam_path);
 
     my $read_group_ids_from_bam = $self->helpers->load_read_groups_from_bam($bam_path);
     return if not $read_group_ids_from_bam; # should only be one or 0
@@ -174,7 +174,7 @@ sub _create_instrument_data_for_bam_path {
     my $properties = $self->instrument_data_properties;
 
     if ( @$read_group_ids_from_bam ) {
-        $self->status_message("Read groups in bam: @$read_group_ids_from_bam");
+        $self->debug_message("Read groups in bam: @$read_group_ids_from_bam");
         if ( @$read_group_ids_from_bam > 1 ) {
             $self->error_message('Multiple read groups in bam! '.$bam_path);
             return;
@@ -194,12 +194,12 @@ sub _create_instrument_data_for_bam_path {
     $self->status_message('Instrument data id: '.$instrument_data->id);
 
     for my $name ( keys %$properties ) {
-        $self->status_message('Add attribute: '.$name.' => '.$properties->{$name});
+        $self->debug_message('Add attribute: '.$name.' => '.$properties->{$name});
         $instrument_data->add_attribute(attribute_label => $name, attribute_value => $properties->{$name});
     }
 
     for my $md5 ( $self->source_md5s ) {
-        $self->status_message('Add attribute: original_data_path_md5 => '.$md5);
+        $self->debug_message('Add attribute: original_data_path_md5 => '.$md5);
         $instrument_data->add_attribute(attribute_label => 'original_data_path_md5', attribute_value => $md5);
     }
 
@@ -224,10 +224,10 @@ sub _create_allocation {
         $self->error_message('Failed to create allocation for instrument data! '.$instrument_data->id);
         return;
     }
-    $self->status_message('Allocation id: '.$allocation->id);
-    $self->status_message('Allocation path: '.$allocation->absolute_path);
+    $self->debug_message('Allocation id: '.$allocation->id);
+    $self->debug_message('Allocation path: '.$allocation->absolute_path);
 
-    $self->status_message('Create instrument data for bam path...done');
+    $self->debug_message('Create instrument data for bam path...done');
     return $instrument_data;
 }
 

@@ -50,7 +50,7 @@ sub execute {
 
     return 1 if (@allocations == 0);
 
-    $self->status_message("Starting archive command on these allocations.");
+    $self->debug_message("Starting archive command on these allocations.");
 
     my $archive_cmd = Genome::Disk::Command::Allocation::Archive->create(allocations=>\@allocations);
 

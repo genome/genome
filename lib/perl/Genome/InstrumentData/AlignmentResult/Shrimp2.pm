@@ -67,7 +67,7 @@ sub _run_aligner {
         $self->error_message('The sam output file is missing or empty.');
         return 0;
     }
-    $self->status_message('SHRiMP2 alignment finished.');
+    $self->debug_message('SHRiMP2 alignment finished.');
     return 1;
 }
 
@@ -80,7 +80,7 @@ sub fastq_to_fasta {
     my $self = shift;
     my $input = shift;
     my $output = $input . ".fa";
-    $self->status_message("Converting $input (FastQ) to $output (FastA).");
+    $self->debug_message("Converting $input (FastQ) to $output (FastA).");
     my $fastq_fh = IO::File->new($input);
     my $fasta_fh = IO::File->new(">$output");
     my $line_type;
@@ -103,7 +103,7 @@ sub merge_pairs {
     my $merged = $inputs[0];
     $merged =~ s/\.fa/_merged\.fa/;
     
-    $self->status_message("Interleaving $inputs[0] and $inputs[1] into one file.");
+    $self->debug_message("Interleaving $inputs[0] and $inputs[1] into one file.");
     my ($infh1,$infh2) = map { IO::File->new($_) } @inputs;
     my $merged_fh = IO::File->new(">$merged");
     my $line_type;

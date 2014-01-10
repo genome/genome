@@ -59,9 +59,9 @@ sub _check_instrument_data {
     my $self = shift;
 
     my $instrument_data = $self->instrument_data;
-    $self->status_message('Check instrument data');
+    $self->debug_message('Check instrument data');
 
-    $self->status_message('Check sample');
+    $self->debug_message('Check sample');
     my $sample_id = $instrument_data->sample_id;
     if ( not defined $sample_id ) {
         $self->error_message('No sample id fo instrument data: '.$instrument_data->id);
@@ -73,9 +73,9 @@ sub _check_instrument_data {
         return;
     }
     $self->_sample($sample);
-    $self->status_message('Check sample OK');
+    $self->debug_message('Check sample OK');
 
-    $self->status_message('Check BAM');
+    $self->debug_message('Check BAM');
     my $bam = $instrument_data->data_directory . "/all_sequences.bam";
     my $bam_size = -s $bam;
     if ( not -s $bam ) {
@@ -84,9 +84,9 @@ sub _check_instrument_data {
     }
     $self->_bam($bam); 
     $self->_bam_size($bam_size); 
-    $self->status_message('BAM OK');
+    $self->debug_message('BAM OK');
 
-    $self->status_message('Check instrument data OK');
+    $self->debug_message('Check instrument data OK');
 
     return 1; 
 }
@@ -94,7 +94,7 @@ sub _check_instrument_data {
 sub _create_disk_allocation_for_busting {
     my $self = shift;
 
-    $self->status_message('Create disk allocation');
+    $self->debug_message('Create disk allocation');
 
     # FIXME WHAT SHOULD OWN THIS ALLOCATION?
     my %disk_allocation_params = (
@@ -111,7 +111,7 @@ sub _create_disk_allocation_for_busting {
     }
     $self->_disk_allocation($disk_allocation);
 
-    $self->status_message('Create disk allocation OK');
+    $self->debug_message('Create disk allocation OK');
 
     return 1 ;
 }
@@ -119,7 +119,7 @@ sub _create_disk_allocation_for_busting {
 sub _bust_bams {
     my $self = shift;
 
-    $self->status_message('Bust BAM');
+    $self->debug_message('Bust BAM');
 
     my $bam = $self->_bam;
     $self->status_message('From: '.$bam);
@@ -148,7 +148,7 @@ sub _bust_bams {
 sub _get_busted_bams_and_create_libraries {
     my $self = shift;
 
-    $self->status_message('Get busted bams');
+    $self->debug_message('Get busted bams');
 
     my $disk_allocation = $self->_disk_allocation;
     Carp::confess('No disk allocation!') if not $disk_allocation;
@@ -184,12 +184,12 @@ sub _get_busted_bams_and_create_libraries {
         $libraries_and_busted_bams{ $library->id } = [ map { $absolute_path.'/'.$subdir.'/'.$_ } @bams ];
     }
 
-    $self->status_message('Commit libraries');
+    $self->debug_message('Commit libraries');
     if ( not UR::Context->commit ) {
         $self->error_message('Cannot commit libraries');
         return;
     }
-    $self->status_message('Commit libraries OK');
+    $self->debug_message('Commit libraries OK');
 
     $self->status_message('Got '.scalar(values %libraries_and_busted_bams).' busted bams');
 

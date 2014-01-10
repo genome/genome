@@ -34,7 +34,7 @@ sub execute {
         $self->error_message('No instrument data given!');
         return;
     }
-    $self->status_message('Instrument data: '.join(' ', map { $instrument_data->$_ } (qw/ id sequencing_platform /)));
+    $self->debug_message('Instrument data: '.join(' ', map { $instrument_data->$_ } (qw/ id sequencing_platform /)));
 
     if ( not $instrument_data->can('dump_sanger_fastq_files') ) {
         $self->error_message('Instrument data can not dump fastq files!');
@@ -45,7 +45,7 @@ sub execute {
         $self->error_message('Failed to validate directory '. $self->directory .' for write access!');
         return;
     }
-    $self->status_message('Directory: '.$self->directory);
+    $self->debug_message('Directory: '.$self->directory);
 
     my @files = $instrument_data->dump_sanger_fastq_files(directory=>$self->directory);
     if ( not @files ) {
@@ -53,7 +53,7 @@ sub execute {
         return;
     }
 
-    $self->status_message('Finished!');
+    $self->debug_message('Finished!');
     return 1;
 }
 

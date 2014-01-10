@@ -201,17 +201,17 @@ sub set_metrics {
     my @metrics_undefined = grep { not defined $self->$_ } @metric_names;
     return 1 if not @metrics_undefined;
 
-    $self->status_message('Set metrics...');
+    $self->debug_message('Set metrics...');
 
     my %metrics = $self->load_metrics;
     return if not %metrics;
 
     for my $metric_name ( @metrics_undefined ) {
         $self->$metric_name($metrics{$metric_name});
-        $self->status_message( sprintf('%s: %s', ucfirst( join(' ', split('_', $metric_name))), $self->$metric_name) );
+        $self->debug_message( sprintf('%s: %s', ucfirst( join(' ', split('_', $metric_name))), $self->$metric_name) );
     }
 
-    $self->status_message('Set metrics...OK');
+    $self->debug_message('Set metrics...OK');
     return 1;
 }
 
@@ -252,7 +252,7 @@ sub load_metrics {
 
 sub _verify_output_files {
     my $self = shift;
-    $self->status_message('Verify output files...');
+    $self->debug_message('Verify output files...');
 
     # Check that we processed something...
     my $read_count = List::Util::sum( grep { defined } map { $_->read_count } $self->instrument_data );
@@ -268,7 +268,7 @@ sub _verify_output_files {
 
     my $output_count = $self->output_count;
     if ( $output_count == 0 ) {
-        $self->status_message('SX ran correctly, but all sequences were filtered out. The output files are empty.');
+        $self->debug_message('SX ran correctly, but all sequences were filtered out. The output files are empty.');
         return 1;
     }
 
@@ -289,7 +289,7 @@ sub _verify_output_files {
         return;
     }
 
-    $self->status_message('Verify output files...OK');
+    $self->debug_message('Verify output files...OK');
     return 1;
 }
 

@@ -50,12 +50,12 @@ sub execute {
     }
     
     #my @a = sort { $b->id <=> $a->id } $self->alignments;
-    $self->status_message(sprintf("Found %s alignments...",scalar(@a)));
+    $self->debug_message(sprintf("Found %s alignments...",scalar(@a)));
     
     my %reference_build_header_count;
     my @bad;
     for my $a (@a) {
-        $self->status_message(sprintf("checking alignment %s...",$a->__display_name__));
+        $self->debug_message(sprintf("checking alignment %s...",$a->__display_name__));
         
         my $reference_build_id = $a->reference_build_id;
         unless (exists $reference_build_header_count{$reference_build_id}) {
@@ -66,7 +66,7 @@ sub execute {
             die $! unless $cnt;
             chomp $cnt;
             $cnt =~ s/ .*//;
-            $self->status_message("expected count for $data_directory is $cnt\n");
+            $self->debug_message("expected count for $data_directory is $cnt\n");
             $reference_build_header_count{$reference_build_id} = $cnt;
         }
         my $expected_count = $reference_build_header_count{$reference_build_id};
@@ -86,7 +86,7 @@ sub execute {
             $msg = "BAD";
         }
 
-        $self->status_message(
+        $self->debug_message(
             sprintf(
                 " alignment %s has header size %s with expected %s %s",
                 $a->__display_name__,

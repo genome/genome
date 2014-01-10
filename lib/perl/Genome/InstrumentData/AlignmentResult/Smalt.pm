@@ -57,7 +57,7 @@ sub _run_aligner {
         $self->error_message('The sam output file is missing or empty.');
         return 0;
     }
-    $self->status_message('Smalt alignment finished.');
+    $self->debug_message('Smalt alignment finished.');
     return 1;
 }
 
@@ -80,7 +80,7 @@ sub prepare_reference_sequence_index {
     my $actual_fasta_file = $staged_fasta_file;
 
     if (-l $staged_fasta_file) {
-        $class->status_message(sprintf("Following symlink for fasta file %s", $staged_fasta_file));
+        $class->debug_message(sprintf("Following symlink for fasta file %s", $staged_fasta_file));
         $actual_fasta_file = readlink($staged_fasta_file);
         unless($actual_fasta_file) {
             $class->error_message("Can't read target of symlink $staged_fasta_file");
@@ -95,7 +95,7 @@ sub prepare_reference_sequence_index {
 
     # if it got to here then we have valid files 
 
-    $class->status_message("Successfully ran smalt index");
+    $class->debug_message("Successfully ran smalt index");
 
     return 1;
 

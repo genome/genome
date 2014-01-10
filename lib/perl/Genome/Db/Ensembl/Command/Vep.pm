@@ -279,7 +279,7 @@ sub execute {
     my $cmd = "$script_path $string_args $bool_args $plugin_args $host_param $user_param $password_param $port_param";
 
     if ($cache_result) {
-        $self->status_message("Using VEP cache result ".$cache_result->id);
+        $self->debug_message("Using VEP cache result ".$cache_result->id);
         $cmd = "$cmd --cache --offline --dir ".$temp_config_dir."/";
         foreach my $file (glob $cache_result->output_dir."/*"){
             `ln -s $file $temp_config_dir`;
@@ -289,7 +289,7 @@ sub execute {
         $self->warning_message("No cache result available, running from database");
     }
 
-    $self->status_message("Running command:\n$cmd");
+    $self->debug_message("Running command:\n$cmd");
 
     my %params = (
         cmd=>$cmd,

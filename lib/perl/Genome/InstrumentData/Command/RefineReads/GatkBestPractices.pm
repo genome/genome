@@ -29,23 +29,23 @@ class Genome::InstrumentData::Command::RefineReads::GatkBestPractices {
 
 sub shortcut {
     my $self = shift;
-    $self->status_message('Attempting to shortcut...');
+    $self->debug_message('Attempting to shortcut...');
 
     # Get indel aligner result
     my $indel_realigner_result = $self->_get_indel_realigner_result;
     if ( not $indel_realigner_result ) {
-        $self->status_message('Failed to find indel realigner result, cannot shortcut!');
+        $self->debug_message('Failed to find indel realigner result, cannot shortcut!');
         return;
     }
 
     # Get base recalibrator result
     my $base_recalibrator_result = $self->_get_base_recalibrator_result;
     if ( not $indel_realigner_result ) {
-        $self->status_message('Failed to find base recalibrator result, cannot shortcut!');
+        $self->debug_message('Failed to find base recalibrator result, cannot shortcut!');
         return;
     }
 
-    $self->status_message('Shortcut...OK');
+    $self->debug_message('Shortcut...OK');
     return $base_recalibrator_result;
 }
 
@@ -70,7 +70,7 @@ sub execute {
         return;
     }
 
-    $self->status_message('Execute...OK');
+    $self->debug_message('Execute...OK');
     return $base_recalibrator_result;
 }
 
@@ -83,20 +83,20 @@ sub _load_result {
     $result_method .= '_result';
     return $self->$result_method if $self->$result_method;
 
-    $self->status_message("Looking for $result_name result...");
+    $self->debug_message("Looking for $result_name result...");
     my $result_class = 'Genome::InstrumentData::Gatk::'.Genome::Utility::Text::string_to_camel_case($result_name).'Result';
-    $self->status_message('Class: '.$result_class);
-    $self->status_message('Method: '.$retrieval_method);
+    $self->debug_message('Class: '.$result_class);
+    $self->debug_message('Method: '.$retrieval_method);
 
     my $params_method = '_params_for_'.$result_method;
     my %params = $self->$params_method;
-    $self->status_message("Params: \n".$self->_params_display_name(\%params));
+    $self->debug_message("Params: \n".$self->_params_display_name(\%params));
     my $result = $result_class->$retrieval_method(%params);
     return if not $result; # let caller handle error/status
     $self->$result_method($result);
 
-    $self->status_message(ucfirst($result_name).': '.$result->__display_name__);
-    $self->status_message(ucfirst($result_name).' output directory: '.$result->output_dir);
+    $self->debug_message(ucfirst($result_name).': '.$result->__display_name__);
+    $self->debug_message(ucfirst($result_name).' output directory: '.$result->output_dir);
     return $result;
 }
 

@@ -101,7 +101,7 @@ sub _send_report {
             subject => 'Underallocated Volumes Found!',
             body    => $report,
         );
-        $self->status_message("Alert sent to " . $self->alert_recipients);
+        $self->debug_message("Alert sent to " . $self->alert_recipients);
     }
 }
 
