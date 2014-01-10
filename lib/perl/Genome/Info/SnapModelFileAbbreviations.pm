@@ -40,6 +40,8 @@ my %model_files = (
     'C_aethiops.hmm'			    => 'sn_vercgmk2',
     'F_hepatica_v1.0.allpaths.pg.cgmk2.hmm' => 'sn_fh1cgmk2',
     'F_hepatica_v1.0.allpaths.pg.mk2.hmm'   => 'sn_fh1mk2',
+    'Tnativa.rf.gd.cgmkv2.hmm'              => 'sn_tn1cgmk2',
+    'Tnativa.rf.gd.mkv2.hmm'                => 'sn_tn1mk2',
 );
 
 
