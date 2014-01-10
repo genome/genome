@@ -223,17 +223,21 @@ sub execute {
             my $end = $gene->end;
             ($start, $end) = ($end, $start) if $start > $end;
             
-            $ace_fh->print("Sequence $sequence\n");
-            $ace_fh->print("Subsequence $gene_name $start $end\n\n");
-            $ace_fh->print("Sequence : $gene_name\n");
-            $ace_fh->print("Source $sequence\n");
+           # $ace_fh->print("Sequence $sequence\n");
+           # $ace_fh->print("Subsequence $gene_name $start $end\n\n");
+           # $ace_fh->print("Sequence : $gene_name\n");
+           # $ace_fh->print("Source $sequence\n");
 
             my ($method, $remark, $transcript, $locus, $rfam_prod_line, @rfam_line);
             if ($source =~ /trnascan/i) {
                 $method = 'tRNAscan';
                 $remark = "\"tRNA-$amino_acid Sc=$gene_score\"";
                 $transcript = "tRNA \"$codon $amino_acid $amino_acid_code\"";
-
+                    $ace_fh->print("Sequence $sequence\n");
+	            $ace_fh->print("Subsequence $gene_name $start $end\n\n");
+        	    $ace_fh->print("Sequence : $gene_name\n");
+        	    $ace_fh->print("Source $sequence\n");
+                    
                     $ace_fh->print("Method $method\n") if defined $method;
                     $ace_fh->print("Remark $remark\n") if defined $remark;
                     $ace_fh->print("Locus $locus\n") if defined $locus;
@@ -249,7 +253,12 @@ sub execute {
                 $rfam_prod_line = `grep $locus /gscmnt/278/analysis/HGMI/RFAM/RFAM_v8.1.tbl | head -1`;
                        chomp $rfam_prod_line;
                        @rfam_line = split(/\t+/, $rfam_prod_line);
-                 
+                    
+ 		    $ace_fh->print("Sequence $sequence\n");
+	            $ace_fh->print("Subsequence $gene_name $start $end\n\n");
+        	    $ace_fh->print("Sequence : $gene_name\n");
+        	    $ace_fh->print("Source $sequence\n");                 
+
                     $ace_fh->print("Method $method\n") if defined $method;
                     $ace_fh->print("Remark $remark\n") if defined $remark;
                     $ace_fh->print("Locus $locus\n") if defined $locus;
@@ -264,6 +273,11 @@ sub execute {
                 $remark = "\"Predicted by RNAmmer, score $gene_score\"";
                 $locus = $gene->description;
                
+		    $ace_fh->print("Sequence $sequence\n");
+	            $ace_fh->print("Subsequence $gene_name $start $end\n\n");
+        	    $ace_fh->print("Sequence : $gene_name\n");
+        	    $ace_fh->print("Source $sequence\n");
+
                     $ace_fh->print("Method $method\n") if defined $method;
                     $ace_fh->print("Remark $remark\n") if defined $remark;
                     $ace_fh->print("Locus $locus\n") if defined $locus;
@@ -275,6 +289,11 @@ sub execute {
                 $remark = "\"Predicted by $method, score $gene_score\$";
                 $locus = $gene->description;
                
+                    $ace_fh->print("Sequence $sequence\n");
+	            $ace_fh->print("Subsequence $gene_name $start $end\n\n");
+        	    $ace_fh->print("Sequence : $gene_name\n");
+        	    $ace_fh->print("Source $sequence\n");
+
                     $ace_fh->print("Method $method\n") if defined $method;
                     $ace_fh->print("Remark $remark\n") if defined $remark;
                     $ace_fh->print("Locus $locus\n") if defined $locus;
