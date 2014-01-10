@@ -56,6 +56,9 @@ sub process_source {
 
 sub _convert_snv_gt_to_bed {
     my ($self, $ref, @alleles) = @_;
+    if(@alleles == 1) {
+        push  @alleles, $alleles[0];
+    }
     my $ret = Genome::Info::IUB->iub_for_alleles(@alleles); #this will return undef if the ploidy is off;
     unless($ret) {
         confess "Unable to convert SNV to IUB code";
@@ -86,7 +89,8 @@ sub _convert_indel_gt_to_bed {
         next if $allele eq $reference_allele;
         my ($ref, $var, $right_shift) = $self->_simplify_indel_allele($reference_allele, $allele);
         unless($var eq q{} || $ref eq q{}) {
-            confess "Complex indels cannot be converted to TGI bed\n";
+            warn "Complex indels cannot be converted to TGI bed. This indel ($ref, $var) will be skipped.\n";
+            next;
         }
         ($ref, $var) = map { $_ ne q{} ? $_ : '*' } ($ref, $var);
 
@@ -122,5 +126,23 @@ sub _simplify_indel_allele {
 
     return (join("",@ref_array), join("",@var_array), $right_shift);
 }
+
+sub help_brief {
+    "Tool to convert the first sample in a VCF to TGI BED.",
+}
+
+sub help_synopsis {
+    my $self = shift;
+    return <<"EOS"
+  gmt bed convert vcf-to-bed...
+EOS
+}
+
+sub help_detail {                           
+    return <<EOS
+    This tool takes a VCF file and converts the first sample in it to a TGI variant BED file with no information about the depth and quality
+EOS
+}
+
 
 1;

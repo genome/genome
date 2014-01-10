@@ -15,7 +15,7 @@ use Test::More;
 use_ok("Genome::Db::Ensembl::Command::Vep");
 
 my $INPUT_VERSION = '2';
-my $OUTPUT_VERSION = '3';
+my $OUTPUT_VERSION = '4';
 my $input_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Db-Ensembl-Vep';
 my $expected_data_dir = $input_data_dir . '/expected_output';
 my $expected_output_file = $expected_data_dir.'/output.'.$OUTPUT_VERSION;
@@ -30,6 +30,7 @@ my $cmd_1 = Genome::Db::Ensembl::Command::Vep->create(
     plugins => ["Condel\@PLUGIN_DIR\@b\@2"],
     ensembl_annotation_build_id => "d00a39c84382427fa0efdec3229e8f5f",
     quiet => 1,
+    hgnc => 1,
 );
 
 isa_ok($cmd_1, 'Genome::Db::Ensembl::Command::Vep');
@@ -39,6 +40,5 @@ command_execute_ok($cmd_1,
       status_messages => undef, },
     'execute');
 ok(-s $output_file, 'output file is non-zero');
-
 compare_ok($expected_output_file, $output_file, filters => [qr(^## Output produced at.*$), qr(^## Using cache in.*$)]);
 done_testing();
