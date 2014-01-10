@@ -24,7 +24,7 @@ ok($temp_dir, "created temp directory: $temp_dir") or die;
 
 #Run MicroarrayCNV on the 'apipe-test-clinseq-wer' model
 my $clinseq_model = Genome::Model->get(name => 'apipe-test-clinseq-wer');
-my $run_microarray_cnv = Genome::Model::ClinSeq::Command::MicroarrayCnv->create(outdir=>$temp_dir, clinseq_model=>$clinseq_model, test=>1);
+my $run_microarray_cnv = Genome::Model::ClinSeq::Command::MicroarrayCnv->create(outdir=>$temp_dir, clinseq_model=>$clinseq_model, test=>1, min_cnv_diff=>0.1);
 $run_microarray_cnv->queue_status_messages(1);
 $run_microarray_cnv->execute();
 

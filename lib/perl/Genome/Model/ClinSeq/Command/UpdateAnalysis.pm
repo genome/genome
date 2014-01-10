@@ -7,6 +7,8 @@ use warnings;
 use Genome;
 use Time::Piece;
 
+my $cancer_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("cancer_annotation_db")->default_value;
+
 class Genome::Model::ClinSeq::Command::UpdateAnalysis {
     is => 'Command::V2',
     has_optional => [
@@ -116,6 +118,15 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
               is => 'Genome::Model::Build',
               id_by => '_previously_discovered_variations_id',
               doc => 'Desired previously discovered variants build',
+        },
+        _cancer_annotation_db_id => {
+        	  is => 'Text',
+        	  default => $cancer_annotation_db_id,
+        },
+        cancer_annotation_db => { 
+            is => 'Genome::Db::Tgi::CancerAnnotation', 
+            id_by => '_cancer_annotation_db_id',
+            doc => 'Desired TGI cancer annotation',
         },
         display_defaults => {
               is => 'Boolean',
@@ -519,8 +530,8 @@ sub display_inputs{
   $self->status_message("dbsnp_build: " . $self->dbsnp_build->__display_name__ . " (version " . $self->dbsnp_build->version . ")");
   $self->status_message("previously_discovered_variations: " . $self->previously_discovered_variations->__display_name__ . " (version " . $self->previously_discovered_variations->version . ")");
 
-  my $cancer_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("cancer_annotation_db")->default_value;
-  my $cancer_annotation_db = Genome::Db::Tgi::CancerAnnotation->get($cancer_annotation_db_id);
+  my $cancer_annotation_db = $self->cancer_annotation_db;
+  my $cancer_annotation_db_id = $cancer_annotation_db->id;
   $self->status_message("cancer_annotation_db: " . $cancer_annotation_db_id . " (" . $cancer_annotation_db->data_directory . ")");
 
   my $misc_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("misc_annotation_db")->default_value;
@@ -1197,6 +1208,8 @@ sub check_rnaseq_models{
     next unless ($model->processing_profile_id eq $self->rnaseq_pp->id);
     next unless ($model->reference_sequence_build->id eq $self->reference_sequence_build->id);
     next unless ($model->annotation_build->id eq $self->annotation_build->id);
+    next unless ($model->cancer_annotation_db);
+    next unless ($model->cancer_annotation_db eq $self->cancer_annotation_db->id);
     push (@final_models, $model);
     #$self->status_message("\t\tName: " . $model->name . " (" . $model->id . ")");
   }
@@ -1528,11 +1541,12 @@ sub create_rnaseq_model{
   my $annotation_id = $self->annotation_build->id;
   my $reference_build_id = $self->reference_sequence_build->id;
   my $rnaseq_pp_id = $self->rnaseq_pp->id;
+  my $cancer_annotation_db_id= $self->cancer_annotation_db->id;
 
   my @commands;
 
   push(@commands, "\n#Create an RNA-seq model as follows:");
-  push(@commands, "genome model define rna-seq  --reference-sequence-build='$reference_build_id'  --annotation-build='$annotation_id'  --subject='$sample_name'  --processing-profile='$rnaseq_pp_id'  --instrument-data='$iids_list'");
+  push(@commands, "genome model define rna-seq  --reference-sequence-build='$reference_build_id'  --annotation-build='$annotation_id'  --cancer-annotation-db='$cancer_annotation_db_id' --subject='$sample_name'  --processing-profile='$rnaseq_pp_id'  --instrument-data='$iids_list'");
   push(@commands, "genome model build start ''");
 
   foreach my $line (@commands){
@@ -1882,8 +1896,8 @@ sub check_clinseq_models{
     next if ($found_nonmatching_sample);
 
     #Only consider clin-seq models whose annotation inputs match the current defaults defined for the pipeline
-    my $cancer_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("cancer_annotation_db")->default_value;
-    my $cancer_annotation_db = Genome::Db::Tgi::CancerAnnotation->get($cancer_annotation_db_id);
+    my $cancer_annotation_db = $self->cancer_annotation_db;
+    my $cancer_annotation_db_id = $cancer_annotation_db->id;
     next unless ($model->cancer_annotation_db->id eq $cancer_annotation_db_id);
 
     my $misc_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("misc_annotation_db")->default_value;

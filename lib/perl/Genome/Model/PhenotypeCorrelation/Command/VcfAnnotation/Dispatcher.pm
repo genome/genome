@@ -39,7 +39,7 @@ sub help_synopsis {
     genome model phenotype-correlation vcf-annotation dispatcher \\
         --input-file in.vcf \\
         --output-file out.vcf \\
-        --strategy 'vep {condel: b, sift: b, polyphen: b, hgnc: 1} | joinx [{source_name: dbsnp, source_version: 137, info_fields: GMAF}, {source_name: 1kg-wgs, source_version: 20101123}]'
+        --strategy 'vep {condel: b, sift: b, polyphen: b} | joinx [{source_name: dbsnp, source_version: 137, info_fields: GMAF}, {source_name: 1kg-wgs, source_version: 20101123}]'
 EOS
 }
 

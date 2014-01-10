@@ -12,7 +12,7 @@ my $VEP_SCRIPT_PATH = $VEP_DIR . "/Vep.d/vep";
 
 #Properties that are local to the wrapper and should not be passed through to the VEP script:
 my @LOCAL_STRING_PROPERTIES = qw(version ensembl_annotation_build_id plugins plugins_version gtf_file reference_build_id);
-my @LOCAL_BOOL_PROPERTIES = qw(gtf_cache);
+my @LOCAL_BOOL_PROPERTIES = qw(gtf_cache hgnc);
 
 class Genome::Db::Ensembl::Command::Vep {
     is => 'Command::V2',
@@ -120,8 +120,7 @@ class Genome::Db::Ensembl::Command::Vep {
         },
         hgnc => {
             is => 'Boolean',
-            doc => 'Adds the HGNC gene identifier (where available) to the output.',
-            default_value => 0,
+            doc => 'NOTE: this option is ignored. The gene symbol (e.g. HGNC) will always be printed',
             is_optional => 1,
             is_input => 1,
         },
@@ -340,15 +339,39 @@ sub _get_bool_args {
         @all_bool_args = $self->_remove_arg($local_property, @all_bool_args);
     }
 
+    my @extra_args;
+    
+    if ($self->_get_ensembl_version >= 74) {
+        push @extra_args, "symbol";
+    }
+    else {
+        push @extra_args, "hgnc";
+    }
+
     my $bool_args = "";
+    my @args_strings = map {
+        my $name = $_->property_name;
+        my $value = $self->$name;
+        $value ? ("--".($name)) : ()
+    } @all_bool_args;
+
+    my @extra_args_strings = map {
+        "--".$_;
+    } @extra_args;
+
     $bool_args = join (' ',
-        map {
-            my $name = $_->property_name;
-            my $value = $self->$name;
-            $value ? ("--".($name)) : ()
-        } @all_bool_args
+        @args_strings, @extra_args_strings
     );
+
     return $bool_args;
+}
+
+sub _get_ensembl_version {
+    my $self = shift;
+
+    my $annotation_build = Genome::Model::Build::ImportedAnnotation->get($self->ensembl_annotation_build_id);
+
+    return Genome::Db::Ensembl::Command::Import::Run->ensembl_version_string($annotation_build->ensembl_version);
 }
 
 sub _remove_arg {

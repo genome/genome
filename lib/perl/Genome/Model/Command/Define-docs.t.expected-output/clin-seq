@@ -34,7 +34,7 @@
     differential-expression for tumor vs normal rna-seq data 
   [1mcancer-annotation-db[0m
     (undocumented) 
-    Default value 'tgi/cancer-annotation/human/build37-20130401.1' if not specified
+    Default value 'tgi/cancer-annotation/human/build37-20131010.1' if not specified
   [1mmisc-annotation-db[0m
     (undocumented) 
     Default value 'tgi/misc-annotation/human/build37-20130113.1' if not specified

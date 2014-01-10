@@ -170,6 +170,8 @@ sub load {
 
     my $rna_seq_pp = Genome::Test::Factory::ProcessingProfile::RnaSeq->setup_object();
     $ids{RNASEQ_PP} = $rna_seq_pp->id;
+    
+    my $cancer_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("cancer_annotation_db")->default_value;
 
     unless ($params{exclude_normal_rnaseq_model}) {
         my $rna_seq_model = Genome::Test::Factory::Model::RnaSeq->setup_object(
@@ -177,6 +179,7 @@ sub load {
             processing_profile_id => $rna_seq_pp->id,
             annotation_build => $annotation_build,
             reference_sequence_build => $ref_seq_build,
+            cancer_annotation_db => $cancer_annotation_db_id,
         );
         $rna_seq_model->add_instrument_data($normal_rna_inst_data);
         my $rna_seq_build = Genome::Test::Factory::Build->setup_object(model_id => $rna_seq_model->id, 
@@ -191,6 +194,7 @@ sub load {
             processing_profile_id => $rna_seq_pp->id,
             annotation_build => $annotation_build,
             reference_sequence_build => $ref_seq_build,
+            cancer_annotation_db => $cancer_annotation_db_id,
         );
         $rna_seq_model->add_instrument_data($rna_inst_data);
         $ids{TUMOR_RNASEQ_MODEL} = $rna_seq_model->id;
