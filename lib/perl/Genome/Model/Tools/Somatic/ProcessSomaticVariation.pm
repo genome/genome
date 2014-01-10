@@ -450,7 +450,10 @@ sub getVcfFile{
 
 
 sub removeUnsupportedSites{
-    my ($self, $snv_file, $numcallers, $build_dir) = @_;
+    my ($self, $snv_file) = @_;
+
+    my $numcallers = $self->required_snv_callers;
+    my $build_dir  = $self->somatic_variation_model->last_succeeded_build->data_directory;
 
     #hash all of the sites
     my $sites = $self->getFilterSites($snv_file);
@@ -814,7 +817,7 @@ sub execute {
     # remove regions called by less than the required number of callers
     unless ($self->required_snv_callers == 1) {
         $self->status_message("Removing regions supported by less than " . $self->required_snv_callers . " regions");
-        $snv_file = $self->removeUnsupportedSites($snv_file, $self->required_snv_callers, $build_dir);
+        $snv_file = $self->removeUnsupportedSites($snv_file);
     }
 
     #------------------------------------------------------
