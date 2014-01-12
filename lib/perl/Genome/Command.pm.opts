@@ -19679,6 +19679,17 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>fix-snv-vcf-null-alt',
+      [
+        'input-file=s',
+        'files',
+        'output-file=s',
+        'files',
+        'debug!',
+        undef,
+        'help!',
+        undef
+      ],
       '>generate-maq-based-file',
       [
         'model-id=s',
