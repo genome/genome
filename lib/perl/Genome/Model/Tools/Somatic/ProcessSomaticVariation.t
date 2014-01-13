@@ -8,6 +8,7 @@ use Test::More;
 use Genome::Test::Factory::Model::SomaticVariation;
 use Genome::Test::Factory::Model::ImportedAnnotation;
 use Genome::Test::Factory::Build;
+use File::Spec;
 use Genome::Utility::Test qw/compare_ok/;
 
 my $pkg = 'Genome::Model::Tools::Somatic::ProcessSomaticVariation';
@@ -15,10 +16,12 @@ my $pkg = 'Genome::Model::Tools::Somatic::ProcessSomaticVariation';
 use_ok($pkg);
 use_ok("Genome::Test::Factory::Model::SomaticVariation");
 
-my $data_dir = Genome::Utility::Test->data_dir_ok($pkg, "data");
-my $input_dir = Genome::Utility::Test->data_dir_ok($pkg, "input");
-my $tiering_files_dir = Genome::Utility::Test->data_dir_ok($pkg, "tiering_bed_files_v3");
-my $somatic_variation_build_data_dir = Genome::Utility::Test->data_dir_ok($pkg, "somatic_variation_build_data");
+my $TEST_DATA_VERSION = 1;
+
+my $data_dir = Genome::Utility::Test->data_dir_ok($pkg, File::Spec->join($TEST_DATA_VERSION, "data"));
+my $input_dir = Genome::Utility::Test->data_dir_ok($pkg, File::Spec->join($TEST_DATA_VERSION, "input"));
+my $tiering_files_dir = Genome::Utility::Test->data_dir_ok($pkg, File::Spec->join($TEST_DATA_VERSION, "tiering_bed_files_v3"));
+my $somatic_variation_build_data_dir = Genome::Utility::Test->data_dir_ok($pkg, File::Spec->join($TEST_DATA_VERSION, "somatic_variation_build_data"));
 
 my $normal_model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object();
 ok($normal_model->isa("Genome::Model::ReferenceAlignment"), "Generated a reference alignment model for normal");
