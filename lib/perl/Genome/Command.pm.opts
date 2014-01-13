@@ -5849,6 +5849,27 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>converge',
       [
+        '>snv-indel-report',
+        [
+          'builds=s@',
+          undef,
+          'outdir=s',
+          'files',
+          'target-gene-list=s',
+          'files',
+          'target-gene-list-name=s',
+          'files',
+          'subject-labels-file=s',
+          'files',
+          'tiers=s',
+          'files',
+          'annotation-build=s',
+          undef,
+          'test=s',
+          undef,
+          'help!',
+          undef
+        ],
         '>cufflinks-de',
         [
           'builds=s@',
