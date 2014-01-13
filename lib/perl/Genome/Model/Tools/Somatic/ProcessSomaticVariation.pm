@@ -514,8 +514,9 @@ sub removeUnsupportedSites{
 sub doAnnotation{
     my $self                  = shift;
     my $file                  = shift;
-    my $annotation_build_name = shift;
     my $outfile               = shift;
+
+    my $annotation_build_name = $self->somatic_variation_model->annotation_build->name;
 
     if ($file =~ /.bed$/) {
         $file = bedFileToAnnoFile($file);
@@ -757,7 +758,6 @@ sub execute {
 
     my $ref_seq_build = $tumor_model->reference_sequence_build;
     my $ref_seq_fasta = $ref_seq_build->full_consensus_path('fa');
-    my $annotation_build_name = $model->annotation_build->name;
     my $tiering_files = $model->annotation_build->data_directory . "/annotation_data/tiering_bed_files_v3/";
     $self->status_message("Processing model with sample_name: " . $self->sample_name);
 
@@ -822,8 +822,8 @@ sub execute {
 
     #------------------------------------------------------
     # do annotation
-    $snv_file   = $self->doAnnotation($snv_file, $annotation_build_name);
-    $indel_file = $self->doAnnotation($indel_file, $annotation_build_name);
+    $snv_file   = $self->doAnnotation($snv_file);
+    $indel_file = $self->doAnnotation($indel_file);
 
     #-------------------------------------------------------
     # add tiers
