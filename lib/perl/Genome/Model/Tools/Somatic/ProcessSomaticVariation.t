@@ -16,7 +16,7 @@ my $pkg = 'Genome::Model::Tools::Somatic::ProcessSomaticVariation';
 use_ok($pkg);
 use_ok("Genome::Test::Factory::Model::SomaticVariation");
 
-my $TEST_DATA_VERSION = 1;
+my $TEST_DATA_VERSION = 2;
 
 my $data_dir = Genome::Utility::Test->data_dir_ok($pkg, File::Spec->join($TEST_DATA_VERSION, "data"));
 my $input_dir = Genome::Utility::Test->data_dir_ok($pkg, File::Spec->join($TEST_DATA_VERSION, "input"));
@@ -189,15 +189,15 @@ $DB::single=1;
 
 };
 
-subtest "annoFileToBedFile" => sub {
-    my $input_file = "$data_dir/snvs_before_tiering.anno";
-    my $output_file = Genome::Sys->create_temp_file_path;
-
-    my $bed_file = Genome::Model::Tools::Somatic::ProcessSomaticVariation::annoFileToBedFile($input_file, $output_file);
-
-    is($bed_file, $output_file, "BED file written to the desired location");
-    compare_ok("$data_dir/snvs_before_tiering.bed", "$bed_file", "Content of output file as expected");
-};
+#subtest "annoFileToBedFile" => sub {
+#    my $input_file = "$data_dir/snvs_before_tiering.anno";
+#    my $output_file = Genome::Sys->create_temp_file_path;
+#
+#    my $bed_file = Genome::Model::Tools::Somatic::ProcessSomaticVariation::annoFileToBedFile($input_file, $output_file);
+#
+#    is($bed_file, $output_file, "BED file written to the desired location");
+#    compare_ok("$data_dir/snvs_before_tiering.bed", "$bed_file", "Content of output file as expected");
+#};
 
 # subtest "bedFileToAnnoFile" => sub {
     # my $input_file  = "$data_dir/snvs_after_tiering.bed";
