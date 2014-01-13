@@ -175,10 +175,19 @@ sub execute {
     }
     close (SNVS_OUT);
 
-    #Sort the result BED files using joinx
-    $self->joinxSortFile($indel_results_file);
-    $self->joinxSortFile($snv_results_file);
+    #Sort the BED files using joinx
+    my $indel_results_file_sorted = $indel_results_file . ".sort";
+    my $joinx_indel_sort_cmd = Genome::Model::Tools::Joinx::Sort->create(output_file=>$indel_results_file_sorted, input_files=>[$indel_results_file]);
+    $joinx_indel_sort_cmd->execute();
+    unlink $indel_results_file;
+    Genome::Sys->move_file($indel_results_file_sorted, $indel_results_file);
     
+    my $snv_results_file_sorted = $snv_results_file . ".sort";
+    my $joinx_snv_sort_cmd = Genome::Model::Tools::Joinx::Sort->create(output_file=>$snv_results_file_sorted, input_files=>[$snv_results_file]);
+    $joinx_snv_sort_cmd->execute();
+    unlink $snv_results_file;
+    Genome::Sys->move_file($snv_results_file_sorted, $snv_results_file);
+
     my $indel_count = keys %indels;
     $self->status_message("Stored $indel_count indels");
     my $snv_count = keys %snvs;
@@ -215,15 +224,6 @@ sub execute {
     my @varscan_snv_paths = glob("${build_dir}/variants/snv/varscan-*/snvs.hq.bed");
     $snv_varscan_results_file = $self->checkResultFile('-paths'=>\@varscan_snv_paths, '-caller'=>"varscan");
 
-
-    #Sort the caller result BED files using joinx before running joinx intersect
-    $self->joinxSortFile($indel_strelka_results_file);
-    $self->joinxSortFile($indel_gatk_results_file);
-    $self->joinxSortFile($indel_pindel_results_file);
-    $self->joinxSortFile($indel_varscan_results_file);
-    $self->joinxSortFile($snv_strelka_results_file);
-    $self->joinxSortFile($snv_sniper_results_file);
-    $self->joinxSortFile($snv_varscan_results_file);
 
     #Use 'joinx intersect' to determine which indels in the merged/union file are found in each individual caller's results file
     #gmt joinx intersect a.bed b.bed [--output-file=n.bed] --exact-pos --exact-allele
@@ -348,14 +348,6 @@ sub determineCaller {
     }
 }
 
-sub joinxSortFile {
-    my ($self, $file) = @_;
-    my $file_sorted = $file . ".sort";
-    my $joinx_sort_cmd = Genome::Model::Tools::Joinx::Sort->create(output_file=>$file_sorted, input_files=>[$file]);
-    $joinx_sort_cmd->execute();
-    unlink $file;
-    Genome::Sys->move_file($file_sorted, $file);
-}
 
 1;
 
