@@ -127,7 +127,7 @@ sub handle_failed_from_logs {
         if ($failed_step->current->can('stderr') and my $error_log = $failed_step->current->stderr) {
             if (-e $error_log and -s $error_log) {
 
-                $self->set_status_from_log_file;
+                $self->set_status_from_log_file($error_log);
 
                 # if we can't determine the date from the log file, try the workflow step.
                 unless ($self->error_date) {
