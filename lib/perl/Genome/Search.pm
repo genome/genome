@@ -612,6 +612,26 @@ sub unregister_callbacks {
     $observer->delete unless $observer->isa("UR::DeletedRef");
 }
 
+sub get_indexed_document_count {
+    my $class = shift;
+    my $self = $class->_singleton_object();
+
+    my $response = $class->search(
+        '*:*',
+        {
+            rows => 0,
+            hl => 'false',
+            defType => 'lucene'
+        }
+    );
+
+    if ($response->ok) {
+        return $response->content->{response}{numFound};
+    } else {
+        die($self->error_message($response->status_message));
+    }
+}
+
 #OK!
 1;
 
