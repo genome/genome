@@ -162,6 +162,8 @@ sub _mark_pair_as_skipped {
     $current_pair->reason($skip_reason);
     $current_pair->status('skipped');
 
+    $self->debug_message('Marking pair as skipped.  Reason: %s', $skip_reason);
+
     return 1;
 }
 
@@ -171,6 +173,8 @@ sub _mark_pair_as_processed {
     $current_pair->fail_count(0);
     $current_pair->reason(undef);
     $current_pair->status('processed');
+
+    $self->debug_message('Marking pair as processed.');
 
     return 1;
 }
@@ -182,6 +186,8 @@ sub _mark_pair_as_failed {
     $current_pair->fail_count(++$previous_count);
     $current_pair->status('failed');
     $current_pair->reason($error_message);
+
+    $self->status_message('Marking pair as failed.  (Total failures on this pair: %s)  Reason: %s', $current_pair->fail_count, $current_pair->reason);
 
     return 1;
 }
