@@ -26,7 +26,6 @@ class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
     has_optional_input => [
         igv_reference_name =>{
             is => 'Text',
-            is_optional => 1,
             doc => "name of the igv reference to use",
             example_values => ["reference_build36","b37","mm9"],
         },
@@ -42,72 +41,60 @@ class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
         },
         get_readcounts =>{
             is => 'Boolean',
-            is_optional => 1,
             default => 1,
             doc => "add readcounts to the final variant list",
         },
         restrict_to_target_regions =>{
             is => 'Boolean',
-            is_optional => 1,
             default => 1,
             doc => "only keep snv calls within the target regions. These are pulled from the build if possible",
         },
         target_regions =>{
             is => 'String',
-            is_optional => 1,
             doc => "path to a target file region. Used in conjunction with --restrict-to-target-regions to limit sites to those appearing in these regions",
         },
         add_tiers =>{
             is => 'Boolean',
-            is_optional => 1,
             default => 0,
             doc => "add tier information to the output",
         },
         add_dbsnp_and_gmaf => {
             is => 'Boolean',
-            is_optional => 1,
             default => 1,
             doc => "if this is a recent build with vcf files (Jan 2013 or later), will add the rsids and GMAF information for all SNVs",
         },
         process_svs => {
             is => 'Boolean',
-            is_optional => 1,
             doc => "Build has sv calls (probably WGS data). Most exomes won't have this",
             default => 0,
         },
         create_review_files => {
             is => 'Boolean',
-            is_optional => 1,
             doc => "create xml and bed files for manual review",
             default => 0,
         },
         create_archive => {
             is => 'Boolean',
-            is_optional => 1,
             doc => "create an archive suitable for passing to collaborators",
             default => 0,
         },
         include_vcfs_in_archive => {
             is => 'Boolean',
-            is_optional => 1,
             doc => "include full vcf files in archive (very large files)",
             default => 0,
         },
         required_snv_callers => {
             is => 'Number',
-            is_optional => 1,
             doc => "Number of independent algorithms that must call a SNV. If set to 1 (default), all calls are used",
             default => 1,
         },
         tiers_to_review => {
             is => 'String',
-            is_optional => 1,
             doc => "comma-separated list of tiers to include in review. (e.g. 1,2,3 will create bed files with tier1, tier2, and tier3)",
             default => 1,
         },
         sample_name =>{
             is => 'Text',
-            is_optional => 1,
             is_mutable => 0,
             calculate => q { return $self->somatic_variation_model->subject->name; },
             doc => "override the sample name on the build and use this name instead",
