@@ -30,66 +30,90 @@ class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
             doc => "name of the igv reference to use",
             example_values => ["reference_build36","b37","mm9"],
         },
-        get_readcounts =>{
+        # make 1
+        get_read_counts =>{
             is => 'Boolean',
             default => 1,
-            doc => "add readcounts to the final variant list",
+            doc => "add read counts to the final variant list",
         },
+        # make pp option
         restrict_to_target_regions =>{
             is => 'Boolean',
             default => 1,
             doc => "only keep snv calls within the target regions. These are pulled from the build if possible",
         },
+        # make pp option
         target_regions =>{
             is => 'String',
             doc => "path to a target file region. Used in conjunction with --restrict-to-target-regions to limit sites to those appearing in these regions",
         },
+        # make 1
         add_tiers =>{
             is => 'Boolean',
             default => 0,
             doc => "add tier information to the output",
         },
+        # make 1
         add_dbsnp_and_gmaf => {
             is => 'Boolean',
             default => 1,
             doc => "if this is a recent build with vcf files (Jan 2013 or later), will add the rsids and GMAF information for all SNVs",
         },
+        # make 0 
         process_svs => {
             is => 'Boolean',
             doc => "Build has sv calls (probably WGS data). Most exomes won't have this",
             default => 0,
         },
+        # make 1 
         create_review_files => {
             is => 'Boolean',
             doc => "create xml and bed files for manual review",
             default => 0,
         },
+        # make pp option
         create_archive => {
             is => 'Boolean',
             doc => "create an archive suitable for passing to collaborators",
             default => 0,
         },
+        # not an option  make 0
         include_vcfs_in_archive => {
             is => 'Boolean',
             doc => "include full vcf files in archive (very large files)",
             default => 0,
         },
+        # pp option
         required_snv_callers => {
             is => 'Number',
             doc => "Number of independent algorithms that must call a SNV. If set to 1 (default), all calls are used",
             default => 1,
         },
+        # pp option
         tiers_to_review => {
             is => 'String',
             doc => "comma-separated list of tiers to include in review. (e.g. 1,2,3 will create bed files with tier1, tier2, and tier3)",
             default => 1,
         },
+        # goes away
         sample_name =>{
             is => 'Text',
             is_mutable => 0,
-            calculate => q { return $self->somatic_variation_model->subject->name; },
+            calculate => q{ return $self->somatic_variation_model->subject->name; },
             doc => "override the sample name on the build and use this name instead",
         }
+    ],
+    has_optional_output => [
+        report => {
+            is => 'Path',
+            calculate =>  q{ File::Spec->join($_full_output_dir, 'snvs.indels.annotated') },
+            calculate_from => ['_full_output_dir'],
+        },
+        report_xls => {
+            is => 'Path',
+            calculate =>  q{ $report . '.xls' },
+            calculate_from => ['report'],
+        },
     ],
     has => [
         _full_output_dir => {
@@ -97,22 +121,23 @@ class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
             is_optional => 1,
             is_transient => 1,
             is_mutable => 0,
-            calculate => q { return $self->output_dir . "/" . $self->_sample_name_dir; }
+            calculate => q{ File::Spec->join($output_dir, $_sample_name_dir) },
+            calculate_from => ['output_dir', '_sample_name_dir'],
         },
         _sample_name_dir => {
             is => 'Text',
             is_optional => 1,
             is_transient => 1,
             is_mutable => 0,
-            calculate => q { return $self->get_unique_sample_name_dir(); }
+            calculate => q{ $self->get_unique_sample_name_dir }
         },
         _build_dir => {
             is => 'Text',
             is_optional => 1,
             is_transient => 1,
             is_mutable => 0,
-            calculate => q { return $self->somatic_variation_model->last_succeeded_build->data_directory },
-        }
+            calculate => q{ $self->somatic_variation_model->last_succeeded_build->data_directory },
+        },
     ],
 };
 
@@ -130,6 +155,135 @@ sub _doc_authors {
  Chris Miller
 AUTHS
 }
+
+
+sub execute {
+    my $self = shift;
+
+    my $output_dir = $self->output_dir;
+    $output_dir =~ s/(\/)+$//; # Remove trailing forward-slashes if any
+
+    unless (-e $output_dir) {
+        Genome::Sys->create_directory($output_dir);
+    }
+
+    # Check on the input data before starting work
+    my $model = $self->somatic_variation_model;
+
+    unless (-e $output_dir) {
+        confess $self->error_message("Output directory not found: $output_dir");
+    }
+
+    #grab the info from the model
+    my $build = $model->last_succeeded_build;
+    unless (defined($build)) {
+        confess $self->error_message("Model " . $model->id . "has no succeeded builds");
+    }
+
+    my $tumor_model = $model->tumor_model;
+    my $normal_model = $model->normal_model;
+
+    my $ref_seq_build = $tumor_model->reference_sequence_build;
+    my $ref_seq_fasta = $ref_seq_build->full_consensus_path('fa');
+    my $tiering_files = $model->annotation_build->data_directory . "/annotation_data/tiering_bed_files_v3/";
+    $self->status_message("Processing model with sample_name: " . $self->sample_name);
+
+    my $build_dir = $self->_build_dir;
+
+    my $igv_reference_name = $self->igv_reference_name;
+    if ($self->create_review_files && !defined($self->igv_reference_name)) {
+        confess $self->error_message("igv-reference-name required if --create-review-files is specified");
+    }
+
+
+    #NEW SUBROUTINES - one for sample name, and one for dir creation
+#TEST THAT sample name is being set correctly
+    # create subdirectories, get files in place
+
+    # if multiple models with the same name, add a suffix
+    my $sample_name_dir = $self->_sample_name_dir;
+    my $full_output_dir = $self->_full_output_dir;
+
+    #make the directory structure
+    $self->create_directories();
+
+    # Check if the necessary files exist in this build and put them in the processing location
+    my $snv_file   = $self->stage_snv_file();
+    my $indel_file = $self->stage_indel_file();
+    my $sv_file    = $self->stage_sv_file();
+
+    #--------------------------------------------------------------
+    # munge through SNV file to remove duplicates and fix IUB codes
+    $snv_file = $self->cleanFile($snv_file, 'snvs');
+    $indel_file = $self->cleanFile($indel_file, 'indels');
+
+    #-------------------------------------------------
+    # filter out the off-target regions, if target regions are available
+    if ($self->restrict_to_target_regions) {
+        $snv_file = $self->_filter_off_target_regions($snv_file, "snvs");
+        $indel_file = $self->_filter_off_target_regions($indel_file, "indels");
+    }
+
+    #-------------------------------------------------------
+    # remove regions called by less than the required number of callers
+    unless ($self->required_snv_callers == 1) {
+        $self->status_message("Removing regions supported by less than " . $self->required_snv_callers . " regions");
+        $snv_file = $self->removeUnsupportedSites($snv_file);
+    }
+
+    #------------------------------------------------------
+    # do annotation
+    $snv_file   = $self->doAnnotation($snv_file, 'snvs');
+    $indel_file = $self->doAnnotation($indel_file, 'indels');
+
+    #-------------------------------------------------------
+    # add tiers
+    if ($self->add_tiers) {
+        $self->status_message("Adding tiers");
+        #do annotation
+        $snv_file   = $self->addTiering($snv_file, $tiering_files);
+        $indel_file = $self->addTiering($indel_file, $tiering_files);
+
+        #convert back to annotation format (1-based)
+        $snv_file = bedFileToAnnoFile($snv_file);
+        $indel_file = bedFileToAnnoFile($indel_file);
+    }
+
+    #----------------------------------------------------
+    # add dbsnp/gmaf
+    if ($self->add_dbsnp_and_gmaf) {
+        ($snv_file, $indel_file) = $self->_add_dbsnp_and_gmaf($snv_file, $indel_file);
+    }
+
+    if ($self->get_read_counts) {
+      $self->status_message("Getting read counts");
+      if (-s $snv_file) {
+          $snv_file   = $self->read_counts($snv_file, 'snvs');
+      }
+      if (-s $indel_file) {
+          $indel_file = $self->read_counts($indel_file, 'indels');
+      }
+    }
+
+    #------------------------------------------------------
+    # combine the files into one master table
+    $self->_create_master_files($snv_file, $indel_file);
+
+    #------------------------------------------------------
+    # now get the files together for review
+    if ($self->create_review_files) {
+        $self->_create_review_files();
+    }
+
+    #------------------------------------------------
+    # tar up the files to be sent to collaborators
+    if ($self->create_archive) {
+        $self->_create_archive($sv_file);
+    }
+
+    return 1;
+}
+
 
 sub bedFileToAnnoFile{
     my ($file, $outfile) = @_;
@@ -537,34 +691,55 @@ sub addTiering{
     return $newfile;
 }
 
-sub getReadcounts{
-    my ($self, $file, $ref_seq_fasta, @bams) = @_;
-    #todo - should check if input is bed and do coversion if necessary
+sub read_counts {
+    my ($self, $variants_file, $subdirectory) = @_;
 
-    if (-s "$file") {
-        my $bamfiles = join(",",@bams);
-        my $header = "Tumor";
-        if (@bams == 2) {
-            $header = "Normal,Tumor";
-        }
-        #get readcounts from the tumor bam only
+    my $output_file = $self->result_file_path(
+        input_file_path => $variants_file,
+        suffix => 'rcnt',
+        subdirectory => $subdirectory,
+    );
+
+    if (-s $variants_file) {
+        my $bamfiles = join(",", $self->normal_bam, $self->tumor_bam);
+        my $header = "Normal,Tumor";
+
         my $rc_cmd = Genome::Model::Tools::Analysis::Coverage::AddReadcounts->create(
             bam_files        => $bamfiles,
-            output_file      => "$file.rcnt",
-            variant_file     => "$file",
-            genome_build     => $ref_seq_fasta,
+            output_file      => $output_file,
+            variant_file     => $variants_file,
+            genome_build     => $self->ref_seq_fasta,
             header_prefixes  => $header,
             indel_size_limit => 4,
         );
         unless ($rc_cmd->execute) {
-            confess $self->error_message("Failed to obtain readcounts for file $file.");
+            confess $self->error_message("Failed to obtain read counts for file $variants_file.");
         }
     }
     else {
-        Genome::Sys->shellcmd( cmd => "touch $file.rcnt" );
+        Genome::Sys->shellcmd( cmd => "touch $output_file" );
     }
-    return "$file.rcnt";
+    return $output_file;
 }
+
+sub tumor_bam {
+    my $self = shift;
+
+    return $self->somatic_variation_model->tumor_model->last_succeeded_build->merged_alignment_result->bam_file;
+}
+
+sub normal_bam {
+    my $self = shift;
+
+    my $self->somatic_variation_model->normal_model->last_succeeded_build->merged_alignment_result->bam_file;
+}
+
+sub ref_seq_fasta {
+    my $self = shift;
+
+    return $self->tumor_model->reference_sequence_build->full_consensus_path('fa');
+}
+
 
 sub get_unique_sample_name_dir {
     my $self = shift;
@@ -692,139 +867,6 @@ sub stage_sv_file {
     return $sv_file;
 }
 
-#########################################################################################################
-sub execute {
-    my $self = shift;
-
-    my $output_dir = $self->output_dir;
-    $output_dir =~ s/(\/)+$//; # Remove trailing forward-slashes if any
-
-    unless (-e $output_dir) {
-        Genome::Sys->create_directory($output_dir);
-    }
-
-    # Check on the input data before starting work
-    my $model = $self->somatic_variation_model;
-
-    unless (-e $output_dir) {
-        confess $self->error_message("Output directory not found: $output_dir");
-    }
-
-    #grab the info from the model
-    my $build = $model->last_succeeded_build;
-    unless (defined($build)) {
-        confess $self->error_message("Model " . $model->id . "has no succeeded builds");
-    }
-
-    my $tumor_model = $model->tumor_model;
-    my $normal_model = $model->normal_model;
-
-    my $ref_seq_build = $tumor_model->reference_sequence_build;
-    my $ref_seq_fasta = $ref_seq_build->full_consensus_path('fa');
-    my $tiering_files = $model->annotation_build->data_directory . "/annotation_data/tiering_bed_files_v3/";
-    $self->status_message("Processing model with sample_name: " . $self->sample_name);
-
-    my $tumor_bam = $tumor_model->last_succeeded_build->merged_alignment_result->bam_file;
-    my $normal_bam = $normal_model->last_succeeded_build->merged_alignment_result->bam_file;
-    my $build_dir = $self->_build_dir;
-
-    my $igv_reference_name = $self->igv_reference_name;
-    if ($self->create_review_files && !defined($self->igv_reference_name)) {
-        confess $self->error_message("igv-reference-name required if --create-review-files is specified");
-    }
-
-
-    #NEW SUBROUTINES - one for sample name, and one for dir creation
-#TEST THAT sample name is being set correctly
-    # create subdirectories, get files in place
-
-    # if multiple models with the same name, add a suffix
-    my $sample_name_dir = $self->_sample_name_dir;
-    my $full_output_dir = $self->_full_output_dir;
-
-    #make the directory structure
-    $self->create_directories();
-
-    # Check if the necessary files exist in this build and put them in the processing location
-    my $snv_file   = $self->stage_snv_file();
-    my $indel_file = $self->stage_indel_file();
-    my $sv_file    = $self->stage_sv_file();
-
-    #--------------------------------------------------------------
-    # munge through SNV file to remove duplicates and fix IUB codes
-    $snv_file = $self->cleanFile($snv_file, 'snvs');
-    $indel_file = $self->cleanFile($indel_file, 'indels');
-
-    #-------------------------------------------------
-    # filter out the off-target regions, if target regions are available
-    if ($self->restrict_to_target_regions) {
-        $snv_file = $self->_filter_off_target_regions($snv_file, "snvs");
-        $indel_file = $self->_filter_off_target_regions($indel_file, "indels");
-    }
-
-    #-------------------------------------------------------
-    # remove regions called by less than the required number of callers
-    unless ($self->required_snv_callers == 1) {
-        $self->status_message("Removing regions supported by less than " . $self->required_snv_callers . " regions");
-        $snv_file = $self->removeUnsupportedSites($snv_file);
-    }
-
-    #------------------------------------------------------
-    # do annotation
-    $snv_file   = $self->doAnnotation($snv_file, 'snvs');
-    $indel_file = $self->doAnnotation($indel_file, 'indels');
-
-    #-------------------------------------------------------
-    # add tiers
-    if ($self->add_tiers) {
-        $self->status_message("Adding tiers");
-        #do annotation
-        $snv_file   = $self->addTiering($snv_file, $tiering_files);
-        $indel_file = $self->addTiering($indel_file, $tiering_files);
-
-        #convert back to annotation format (1-based)
-        $snv_file = bedFileToAnnoFile($snv_file);
-        $indel_file = bedFileToAnnoFile($indel_file);
-    }
-
-    #----------------------------------------------------
-    # add dbsnp/gmaf
-    if ($self->add_dbsnp_and_gmaf) {
-        $snv_file   = $self->_add_dbsnp_and_gmaf_to_snv($snv_file);
-        $indel_file = $self->_add_dbsnp_and_gmaf_to_indel($indel_file);
-    }
-
-    #-------------------------------------------------------
-    # get readcounts
-    if ($self->get_readcounts) {
-      $self->status_message("Getting readcounts");
-      if (-s "$snv_file") {
-          $snv_file   = $self->getReadcounts($snv_file, $ref_seq_fasta, $normal_bam, $tumor_bam);
-      }
-      if (-s "$indel_file") {
-          $indel_file = $self->getReadcounts($indel_file, $ref_seq_fasta, $normal_bam, $tumor_bam);
-      }
-    }
-
-    #------------------------------------------------------
-    # combine the files into one master table
-    $self->_create_master_files($snv_file, $indel_file);
-
-    #------------------------------------------------------
-    # now get the files together for review
-    if ($self->create_review_files) {
-        $self->_create_review_files();
-    }
-
-    #------------------------------------------------
-    # tar up the files to be sent to collaborators
-    if ($self->create_archive) {
-        $self->_create_archive($sv_file);
-    }
-
-    return 1;
-}
-
 sub _filter_off_target_regions {
     my $self         = shift;
     my $file         = shift;
@@ -894,56 +936,68 @@ sub get_or_create_featurelist_file {
     }
 }
 
+sub annotated_snvs_vcf {
+    my $self = shift;
+
+    return File::Spec->join($self->_build_dir, 'variants', 'snvs.annotated.vcf.gz');
+}
+
+sub _add_dbsnp_and_gmaf {
+    my ($self, $snv_file, $indel_file) = @_;
+
+    if (-s $self->annotated_snvs_vcf) {
+        my $new_snv_file = $self->_add_dbsnp_and_gmaf_to_snv($snv_file);
+        my $new_indel_file = $self->_add_dbsnp_and_gmaf_to_indel($indel_file);
+        return ($new_snv_file, $new_indel_file);
+    }
+    else {
+        $self->warning_message("Warning: couldn't find annotated SNV file in build, skipping dbsnp anno");
+        return ($snv_file, $indel_file);
+    }
+}
+
 sub _add_dbsnp_and_gmaf_to_snv {
     my $self       = shift;
     my $snv_file   = shift;
 
-    my $build_dir = $self->_build_dir;
+    my $output_file = $self->result_file_path(
+        input_file_path => $snv_file,
+        suffix => 'rsid',
+        subdirectory => 'snvs',
+    );
 
-    $self->status_message("==== adding dbsnp ids ====");
-    $self->status_message("$build_dir/variants/snvs.annotated.vcf.gz");
-    if (-s "$build_dir/variants/snvs.annotated.vcf.gz") {
-        my $db_cmd = Genome::Model::Tools::Annotate::AddRsid->create(
-            anno_file   => $snv_file,
-            output_file => "$snv_file.rsid",
-            vcf_file    => "$build_dir/variants/snvs.annotated.vcf.gz",
-        );
-        unless ($db_cmd->execute) {
-            confess $self->error_message("Failed to add dbsnp anno to file $snv_file.");
-        }
-        $snv_file = "$snv_file.rsid";
-        return $snv_file;
+    my $db_cmd = Genome::Model::Tools::Annotate::AddRsid->create(
+        anno_file   => $snv_file,
+        output_file => $output_file,
+        vcf_file    => $self->annotated_snvs_vcf,
+    );
+    unless ($db_cmd->execute) {
+        confess $self->error_message("Failed to add dbsnp anno to file $snv_file.");
     }
-    else {
-        $self->warning_message("Warning: couldn't find annotated SNV file in build, skipping dbsnp anno");
-    }
+    return $output_file;
 }
 
+# pad indel file with tabs to match - if we ever start annotating with indels from dbsnp, replace this section
 sub _add_dbsnp_and_gmaf_to_indel {
     my $self       = shift;
     my $indel_file = shift;
 
-    my $build_dir = $self->_build_dir;
+    my $output_file = $self->result_file_path(
+        input_file_path => $indel_file,
+        suffix => 'rsid',
+        subdirectory => 'indels',
+    );
 
-    $self->status_message("==== padding indel file with tabs to match ====");
-    $self->status_message("$build_dir/variants/snvs.annotated.vcf.gz");
-    if (-s "$build_dir/variants/snvs.annotated.vcf.gz") {
-        #pad indel file with tabs to match - if we ever start annotating with indels from dbsnp, replace this section
-        my $outFh = Genome::Sys->open_file_for_writing("$indel_file.rsid");
-        my $inFh  = Genome::Sys->open_file_for_reading($indel_file);
-        while ( my $line = $inFh->getline ) {
-            chomp($line);
-            print $outFh $line . "\t\t\n"
-        }
-        close($inFh);
-        close($outFh);
+    my $outFh = Genome::Sys->open_file_for_writing($output_file);
+    my $inFh  = Genome::Sys->open_file_for_reading($indel_file);
+    while ( my $line = $inFh->getline ) {
+        chomp($line);
+        print $outFh $line . "\t\t\n"
+    }
+    close($inFh);
+    close($outFh);
 
-        $indel_file = "$indel_file.rsid";
-        return $indel_file;
-    }
-    else {
-        $self->warning_message("Couldn't find annotated SNV file in build, skipping dbsnp anno");
-    }
+    return $output_file;
 }
 
 sub _create_master_files {
