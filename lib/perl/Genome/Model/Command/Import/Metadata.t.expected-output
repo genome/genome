@@ -1,13 +1,6 @@
 ## FOUND Genome::Db::Cosmic cosmic/61.1: DB(cosmic/61.1)
 ## FOUND Genome::Db::Tgi::CancerAnnotation::Human tgi/cancer-annotation/human/build37-20130401.1: DB(tgi/cancer-annotation/human/build37-20130401.1)
 ## FOUND Genome::Db::Tgi::MiscAnnotation::Human tgi/misc-annotation/human/build37-20130113.1: DB(tgi/misc-annotation/human/build37-20130113.1)
-## FOUND Genome::Disk::Assignment 168	14406: 168 14406
-## FOUND Genome::Disk::Assignment 168	9981: 168 9981
-## FOUND Genome::Disk::Assignment 169	14315: 169 14315
-## FOUND Genome::Disk::Assignment 169	14365: 169 14365
-## FOUND Genome::Disk::Assignment 172	1403: 172 1403
-## FOUND Genome::Disk::Assignment 172	9544: 172 9544
-## FOUND Genome::Disk::Assignment 172	9545: 172 9545
 ## FOUND Genome::FeatureList 7BF768EF51FB11E1A0743039993C62A0: 11111001 capture chip set (7BF768EF51FB11E1A0743039993C62A0)
 ## FOUND Genome::Individual 2889953340: H_NJ-HCC1395 (TST1 2889953340)
 ## FOUND Genome::InstrumentData::Imported 2891080776: infinium genotype file 2891080776 ([unknown])
@@ -365,83 +358,85 @@
 ## FOUND Genome::Model::Build::Input 127786607	Genome::Model::Tools::DetectVariants2::Result::Manual	127786602	snv_result: 127786607 Genome::Model::Tools::DetectVariants2::Result::Manual 127786602 snv_result
 ## FOUND Genome::Model::Build::Input 127786607	UR::Value	137	version: 127786607 UR::Value 137 version
 ## FOUND Genome::Model::Build::Input 127786607	UR::Value::Text	dbsnp	source_name: 127786607 UR::Value::Text dbsnp source_name
-## FOUND Genome::Model::Build::ReferenceSequence::AlignerIndex 117803766: AlignerIndex for build GRCh37-lite-build37 with bwa, version 0.5.9, params=''
+## FOUND Genome::Model::Build::ReferenceSequence::AlignerIndex 127215977: AlignerIndex for build GRCh37-lite-build37 with per-lane-tophat, version 2.0.4, params='-p 4 --bowtie-version=2.0.0-beta7'
+## FOUND Genome::Model::Build::ReferenceSequence::AlignerIndex 127215980: AlignerIndex for build GRCh37-lite-build37 with bowtie, version 2.0.0-beta7, params=''
+## FOUND Genome::Model::Build::ReferenceSequence::AlignerIndex ec26139c40dc4d9ea24dc9fa55160b71: AlignerIndex for build GRCh37-lite-build37 with bwa, version 0.5.9, params=''
 ## FOUND Genome::Model::Build::ReferenceSequence::Converter 108573982: Genome::Model::Build::ReferenceSequence::Converter (108573982)
 ## FOUND Genome::Model::ClinSeq 2891454740: tst1-clinseq (2891454740)
 ## FOUND Genome::Model::Event::Build 106942999: 106942999
 ## FOUND Genome::Model::Event::Build 108563392: 108563392
 ## FOUND Genome::Model::Event::Build 124434506: 124434506
 ## FOUND Genome::Model::Event::Build 127786608: 127786608
-## FOUND Genome::Model::GenotypeMicroarray 2891230328: tst1-tumor-snparray (2891230328)
-## FOUND Genome::Model::GenotypeMicroarray 2891230330: tst1-normal-snparray (2891230330)
+## FOUND Genome::Model::GenotypeMicroarray 2891230328: hcc1395-tumor-snparray (2891230328)
+## FOUND Genome::Model::GenotypeMicroarray 2891230330: hcc1395-normal-snparray (2891230330)
 ## FOUND Genome::Model::ImportedAnnotation 2772828715: NCBI-human.ensembl (2772828715)
 ## FOUND Genome::Model::ImportedReferenceSequence 2869585698: GRCh37-lite (2869585698)
 ## FOUND Genome::Model::ImportedReferenceSequence 2871743894: nimblegen-human (2871743894)
 ## FOUND Genome::Model::ImportedVariationList 2887964832: dbsnp-GRCh37-lite-build37 (2887964832)
-## FOUND Genome::Model::Input Genome::Db	tgi/cancer-annotation/human/build37-20130401.1	2891454740	cancer_annotation_db: tst1-clinseq (2891454740) cancer_annotation_db: DB(tgi/cancer-annotation/human/build37-20130401.1)
 ## FOUND Genome::Model::Input Genome::Db	tgi/misc-annotation/human/build37-20130113.1	2891454740	misc_annotation_db: tst1-clinseq (2891454740) misc_annotation_db: DB(tgi/misc-annotation/human/build37-20130113.1)
 ## FOUND Genome::Model::Input Genome::Db::Cosmic	cosmic/61.1	2891454740	cosmic_annotation_db: tst1-clinseq (2891454740) cosmic_annotation_db: DB(cosmic/61.1)
-## FOUND Genome::Model::Input Genome::InstrumentData::Imported	2891080776	2891230330	instrument_data: tst1-normal-snparray (2891230330) instrument_data: infinium genotype file genotype file 2891080776 ([unknown])
-## FOUND Genome::Model::Input Genome::InstrumentData::Imported	2891080777	2891230328	instrument_data: tst1-tumor-snparray (2891230328) instrument_data: infinium genotype file genotype file 2891080777 ([unknown])
-## FOUND Genome::Model::Input Genome::InstrumentData::Solexa	2891322951	2891325873	instrument_data: tst1-tumor-refalign-wgs (2891325873) instrument_data: D1VCPACXX/D1VCPACXX (1) for 2891322951
-## FOUND Genome::Model::Input Genome::InstrumentData::Solexa	2891323123	2891325882	instrument_data: tst1-normal-refalign-wgs (2891325882) instrument_data: D1VCPACXX/D1VCPACXX (6) for 2891323123
-## FOUND Genome::Model::Input Genome::InstrumentData::Solexa	2891323124	2891325882	instrument_data: tst1-normal-refalign-wgs (2891325882) instrument_data: D1VCPACXX/D1VCPACXX (7) for 2891323124
-## FOUND Genome::Model::Input Genome::InstrumentData::Solexa	2891323125	2891325882	instrument_data: tst1-normal-refalign-wgs (2891325882) instrument_data: D1VCPACXX/D1VCPACXX (8) for 2891323125
-## FOUND Genome::Model::Input Genome::InstrumentData::Solexa	2891323147	2891325873	instrument_data: tst1-tumor-refalign-wgs (2891325873) instrument_data: D1VCPACXX/D1VCPACXX (5) for 2891323147
-## FOUND Genome::Model::Input Genome::InstrumentData::Solexa	2891323150	2891325873	instrument_data: tst1-tumor-refalign-wgs (2891325873) instrument_data: D1VCPACXX/D1VCPACXX (4) for 2891323150
-## FOUND Genome::Model::Input Genome::InstrumentData::Solexa	2891323174	2891325873	instrument_data: tst1-tumor-refalign-wgs (2891325873) instrument_data: D1VCPACXX/D1VCPACXX (2) for 2891323174
-## FOUND Genome::Model::Input Genome::InstrumentData::Solexa	2891323175	2891325873	instrument_data: tst1-tumor-refalign-wgs (2891325873) instrument_data: D1VCPACXX/D1VCPACXX (3) for 2891323175
-## FOUND Genome::Model::Input Genome::InstrumentData::Solexa	2891351066	2891377997	instrument_data: tst1-tumor-refalign-exome (2891377997) instrument_data: C1TD1ACXX/C1TD1ACXX (7-ATCACG) for 2891351066
-## FOUND Genome::Model::Input Genome::InstrumentData::Solexa	2891351068	2891377978	instrument_data: tst1-normal-refalign-exome (2891377978) instrument_data: C1TD1ACXX/C1TD1ACXX (7-CGATGT) for 2891351068
-## FOUND Genome::Model::Input Genome::InstrumentData::Solexa	2891354555	2891371548	instrument_data: tst1-tumor-rnaseq (2891371548) instrument_data: C1TD1ACXX/C1TD1ACXX (8-ACAGTG) for 2891354555
-## FOUND Genome::Model::Input Genome::Model::Build::ImportedAnnotation	124434505	2891325873	annotation_reference_build: tst1-tumor-refalign-wgs (2891325873) annotation_reference_build: 124434505 of NCBI-human.ensembl
-## FOUND Genome::Model::Input Genome::Model::Build::ImportedAnnotation	124434505	2891325882	annotation_reference_build: tst1-normal-refalign-wgs (2891325882) annotation_reference_build: 124434505 of NCBI-human.ensembl
-## FOUND Genome::Model::Input Genome::Model::Build::ImportedAnnotation	124434505	2891371548	annotation_build: tst1-tumor-rnaseq (2891371548) annotation_build: 124434505 of NCBI-human.ensembl
-## FOUND Genome::Model::Input Genome::Model::Build::ImportedAnnotation	124434505	2891377978	annotation_reference_build: tst1-normal-refalign-exome (2891377978) annotation_reference_build: 124434505 of NCBI-human.ensembl
-## FOUND Genome::Model::Input Genome::Model::Build::ImportedAnnotation	124434505	2891377997	annotation_reference_build: tst1-tumor-refalign-exome (2891377997) annotation_reference_build: 124434505 of NCBI-human.ensembl
-## FOUND Genome::Model::Input Genome::Model::Build::ImportedAnnotation	124434505	2891407507	annotation_build: tst1-somatic-exome (2891407507) annotation_build: 124434505 of NCBI-human.ensembl
-## FOUND Genome::Model::Input Genome::Model::Build::ImportedAnnotation	124434505	2891454547	annotation_build: tst1-somatic-wgs (2891454547) annotation_build: 124434505 of NCBI-human.ensembl
+## FOUND Genome::Model::Input Genome::Db::Tgi::CancerAnnotation	tgi/cancer-annotation/human/build37-20130401.1	2891454740	cancer_annotation_db: tst1-clinseq (2891454740) cancer_annotation_db: DB(tgi/cancer-annotation/human/build37-20130401.1)
+## FOUND Genome::Model::Input Genome::InstrumentData::Imported	2891080776	2891230330	instrument_data: hcc1395-normal-snparray (2891230330) instrument_data: infinium genotype file genotype file 2891080776 ([unknown])
+## FOUND Genome::Model::Input Genome::InstrumentData::Imported	2891080777	2891230328	instrument_data: hcc1395-tumor-snparray (2891230328) instrument_data: infinium genotype file genotype file 2891080777 ([unknown])
+## FOUND Genome::Model::Input Genome::InstrumentData::Solexa	2891322951	2891325873	instrument_data: hcc1395-tumor-refalign-wgs (2891325873) instrument_data: D1VCPACXX/D1VCPACXX (1) for 2891322951
+## FOUND Genome::Model::Input Genome::InstrumentData::Solexa	2891323123	2891325882	instrument_data: hcc1395-normal-refalign-wgs (2891325882) instrument_data: D1VCPACXX/D1VCPACXX (6) for 2891323123
+## FOUND Genome::Model::Input Genome::InstrumentData::Solexa	2891323124	2891325882	instrument_data: hcc1395-normal-refalign-wgs (2891325882) instrument_data: D1VCPACXX/D1VCPACXX (7) for 2891323124
+## FOUND Genome::Model::Input Genome::InstrumentData::Solexa	2891323125	2891325882	instrument_data: hcc1395-normal-refalign-wgs (2891325882) instrument_data: D1VCPACXX/D1VCPACXX (8) for 2891323125
+## FOUND Genome::Model::Input Genome::InstrumentData::Solexa	2891323147	2891325873	instrument_data: hcc1395-tumor-refalign-wgs (2891325873) instrument_data: D1VCPACXX/D1VCPACXX (5) for 2891323147
+## FOUND Genome::Model::Input Genome::InstrumentData::Solexa	2891323150	2891325873	instrument_data: hcc1395-tumor-refalign-wgs (2891325873) instrument_data: D1VCPACXX/D1VCPACXX (4) for 2891323150
+## FOUND Genome::Model::Input Genome::InstrumentData::Solexa	2891323174	2891325873	instrument_data: hcc1395-tumor-refalign-wgs (2891325873) instrument_data: D1VCPACXX/D1VCPACXX (2) for 2891323174
+## FOUND Genome::Model::Input Genome::InstrumentData::Solexa	2891323175	2891325873	instrument_data: hcc1395-tumor-refalign-wgs (2891325873) instrument_data: D1VCPACXX/D1VCPACXX (3) for 2891323175
+## FOUND Genome::Model::Input Genome::InstrumentData::Solexa	2891351066	2891377997	instrument_data: hcc1395-tumor-refalign-exome (2891377997) instrument_data: C1TD1ACXX/C1TD1ACXX (7-ATCACG) for 2891351066
+## FOUND Genome::Model::Input Genome::InstrumentData::Solexa	2891351068	2891377978	instrument_data: hcc1395-normal-refalign-exome (2891377978) instrument_data: C1TD1ACXX/C1TD1ACXX (7-CGATGT) for 2891351068
+## FOUND Genome::Model::Input Genome::InstrumentData::Solexa	2891354555	2891371548	instrument_data: hcc1395-tumor-rnaseq (2891371548) instrument_data: C1TD1ACXX/C1TD1ACXX (8-ACAGTG) for 2891354555
+## FOUND Genome::Model::Input Genome::Model::Build::ImportedAnnotation	124434505	2891325873	annotation_reference_build: hcc1395-tumor-refalign-wgs (2891325873) annotation_reference_build: 124434505 of NCBI-human.ensembl
+## FOUND Genome::Model::Input Genome::Model::Build::ImportedAnnotation	124434505	2891325882	annotation_reference_build: hcc1395-normal-refalign-wgs (2891325882) annotation_reference_build: 124434505 of NCBI-human.ensembl
+## FOUND Genome::Model::Input Genome::Model::Build::ImportedAnnotation	124434505	2891371548	annotation_build: hcc1395-tumor-rnaseq (2891371548) annotation_build: 124434505 of NCBI-human.ensembl
+## FOUND Genome::Model::Input Genome::Model::Build::ImportedAnnotation	124434505	2891377978	annotation_reference_build: hcc1395-normal-refalign-exome (2891377978) annotation_reference_build: 124434505 of NCBI-human.ensembl
+## FOUND Genome::Model::Input Genome::Model::Build::ImportedAnnotation	124434505	2891377997	annotation_reference_build: hcc1395-tumor-refalign-exome (2891377997) annotation_reference_build: 124434505 of NCBI-human.ensembl
+## FOUND Genome::Model::Input Genome::Model::Build::ImportedAnnotation	124434505	2891407507	annotation_build: hcc1395-somatic-exome (2891407507) annotation_build: 124434505 of NCBI-human.ensembl
+## FOUND Genome::Model::Input Genome::Model::Build::ImportedAnnotation	124434505	2891454547	annotation_build: hcc1395-somatic-wgs (2891454547) annotation_build: 124434505 of NCBI-human.ensembl
 ## FOUND Genome::Model::Input Genome::Model::Build::ImportedReferenceSequence	106942997	2887964832	reference: dbsnp-GRCh37-lite-build37 (2887964832) reference: GRCh37-lite-build37 (106942997)
-## FOUND Genome::Model::Input Genome::Model::Build::ImportedReferenceSequence	106942997	2891230328	reference_sequence_build: tst1-tumor-snparray (2891230328) reference_sequence_build: GRCh37-lite-build37 (106942997)
-## FOUND Genome::Model::Input Genome::Model::Build::ImportedReferenceSequence	106942997	2891230330	reference_sequence_build: tst1-normal-snparray (2891230330) reference_sequence_build: GRCh37-lite-build37 (106942997)
-## FOUND Genome::Model::Input Genome::Model::Build::ImportedReferenceSequence	106942997	2891325873	reference_sequence_build: tst1-tumor-refalign-wgs (2891325873) reference_sequence_build: GRCh37-lite-build37 (106942997)
-## FOUND Genome::Model::Input Genome::Model::Build::ImportedReferenceSequence	106942997	2891325882	reference_sequence_build: tst1-normal-refalign-wgs (2891325882) reference_sequence_build: GRCh37-lite-build37 (106942997)
-## FOUND Genome::Model::Input Genome::Model::Build::ImportedReferenceSequence	106942997	2891371548	reference_sequence_build: tst1-tumor-rnaseq (2891371548) reference_sequence_build: GRCh37-lite-build37 (106942997)
-## FOUND Genome::Model::Input Genome::Model::Build::ImportedReferenceSequence	106942997	2891377978	reference_sequence_build: tst1-normal-refalign-exome (2891377978) reference_sequence_build: GRCh37-lite-build37 (106942997)
-## FOUND Genome::Model::Input Genome::Model::Build::ImportedReferenceSequence	106942997	2891377997	reference_sequence_build: tst1-tumor-refalign-exome (2891377997) reference_sequence_build: GRCh37-lite-build37 (106942997)
-## FOUND Genome::Model::Input Genome::Model::Build::ImportedVariationList	127786607	2891230328	dbsnp_build: tst1-tumor-snparray (2891230328) dbsnp_build: 127786607 of dbsnp-GRCh37-lite-build37
-## FOUND Genome::Model::Input Genome::Model::Build::ImportedVariationList	127786607	2891230330	dbsnp_build: tst1-normal-snparray (2891230330) dbsnp_build: 127786607 of dbsnp-GRCh37-lite-build37
-## FOUND Genome::Model::Input Genome::Model::Build::ImportedVariationList	127786607	2891325873	dbsnp_build: tst1-tumor-refalign-wgs (2891325873) dbsnp_build: 127786607 of dbsnp-GRCh37-lite-build37
-## FOUND Genome::Model::Input Genome::Model::Build::ImportedVariationList	127786607	2891325882	dbsnp_build: tst1-normal-refalign-wgs (2891325882) dbsnp_build: 127786607 of dbsnp-GRCh37-lite-build37
-## FOUND Genome::Model::Input Genome::Model::Build::ImportedVariationList	127786607	2891377978	dbsnp_build: tst1-normal-refalign-exome (2891377978) dbsnp_build: 127786607 of dbsnp-GRCh37-lite-build37
-## FOUND Genome::Model::Input Genome::Model::Build::ImportedVariationList	127786607	2891377997	dbsnp_build: tst1-tumor-refalign-exome (2891377997) dbsnp_build: 127786607 of dbsnp-GRCh37-lite-build37
-## FOUND Genome::Model::Input Genome::Model::Build::ImportedVariationList	127786607	2891407507	previously_discovered_variations: tst1-somatic-exome (2891407507) previously_discovered_variations: 127786607 of dbsnp-GRCh37-lite-build37
-## FOUND Genome::Model::Input Genome::Model::Build::ImportedVariationList	127786607	2891454547	previously_discovered_variations: tst1-somatic-wgs (2891454547) previously_discovered_variations: 127786607 of dbsnp-GRCh37-lite-build37
-## FOUND Genome::Model::Input Genome::Model::GenotypeMicroarray	2891230328	2891325873	genotype_microarray: tst1-tumor-refalign-wgs (2891325873) genotype_microarray: tst1-tumor-snparray (2891230328)
-## FOUND Genome::Model::Input Genome::Model::GenotypeMicroarray	2891230328	2891377997	genotype_microarray: tst1-tumor-refalign-exome (2891377997) genotype_microarray: tst1-tumor-snparray (2891230328)
-## FOUND Genome::Model::Input Genome::Model::GenotypeMicroarray	2891230330	2891325882	genotype_microarray: tst1-normal-refalign-wgs (2891325882) genotype_microarray: tst1-normal-snparray (2891230330)
-## FOUND Genome::Model::Input Genome::Model::GenotypeMicroarray	2891230330	2891377978	genotype_microarray: tst1-normal-refalign-exome (2891377978) genotype_microarray: tst1-normal-snparray (2891230330)
-## FOUND Genome::Model::Input Genome::Model::ReferenceAlignment	2891325873	2891454547	tumor_model: tst1-somatic-wgs (2891454547) tumor_model: tst1-tumor-refalign-wgs (2891325873)
-## FOUND Genome::Model::Input Genome::Model::ReferenceAlignment	2891325882	2891454547	normal_model: tst1-somatic-wgs (2891454547) normal_model: tst1-normal-refalign-wgs (2891325882)
-## FOUND Genome::Model::Input Genome::Model::ReferenceAlignment	2891377978	2891407507	normal_model: tst1-somatic-exome (2891407507) normal_model: tst1-normal-refalign-exome (2891377978)
-## FOUND Genome::Model::Input Genome::Model::ReferenceAlignment	2891377997	2891407507	tumor_model: tst1-somatic-exome (2891407507) tumor_model: tst1-tumor-refalign-exome (2891377997)
-## FOUND Genome::Model::Input Genome::Model::RnaSeq	2891371548	2891454740	tumor_rnaseq_model: tst1-clinseq (2891454740) tumor_rnaseq_model: tst1-tumor-rnaseq (2891371548)
-## FOUND Genome::Model::Input Genome::Model::SomaticVariation	2891407507	2891454740	exome_model: tst1-clinseq (2891454740) exome_model: tst1-somatic-exome (2891407507)
-## FOUND Genome::Model::Input Genome::Model::SomaticVariation	2891454547	2891454740	wgs_model: tst1-clinseq (2891454740) wgs_model: tst1-somatic-wgs (2891454547)
-## FOUND Genome::Model::Input UR::Value	11111001 capture chip set	2891377978	region_of_interest_set_name: tst1-normal-refalign-exome (2891377978) region_of_interest_set_name: 11111001 capture chip set
-## FOUND Genome::Model::Input UR::Value	11111001 capture chip set	2891377978	target_region_set_name: tst1-normal-refalign-exome (2891377978) target_region_set_name: 11111001 capture chip set
-## FOUND Genome::Model::Input UR::Value	11111001 capture chip set	2891377997	region_of_interest_set_name: tst1-tumor-refalign-exome (2891377997) region_of_interest_set_name: 11111001 capture chip set
-## FOUND Genome::Model::Input UR::Value	11111001 capture chip set	2891377997	target_region_set_name: tst1-tumor-refalign-exome (2891377997) target_region_set_name: 11111001 capture chip set
+## FOUND Genome::Model::Input Genome::Model::Build::ImportedReferenceSequence	106942997	2891230328	reference_sequence_build: hcc1395-tumor-snparray (2891230328) reference_sequence_build: GRCh37-lite-build37 (106942997)
+## FOUND Genome::Model::Input Genome::Model::Build::ImportedReferenceSequence	106942997	2891230330	reference_sequence_build: hcc1395-normal-snparray (2891230330) reference_sequence_build: GRCh37-lite-build37 (106942997)
+## FOUND Genome::Model::Input Genome::Model::Build::ImportedReferenceSequence	106942997	2891325873	reference_sequence_build: hcc1395-tumor-refalign-wgs (2891325873) reference_sequence_build: GRCh37-lite-build37 (106942997)
+## FOUND Genome::Model::Input Genome::Model::Build::ImportedReferenceSequence	106942997	2891325882	reference_sequence_build: hcc1395-normal-refalign-wgs (2891325882) reference_sequence_build: GRCh37-lite-build37 (106942997)
+## FOUND Genome::Model::Input Genome::Model::Build::ImportedReferenceSequence	106942997	2891371548	reference_sequence_build: hcc1395-tumor-rnaseq (2891371548) reference_sequence_build: GRCh37-lite-build37 (106942997)
+## FOUND Genome::Model::Input Genome::Model::Build::ImportedReferenceSequence	106942997	2891377978	reference_sequence_build: hcc1395-normal-refalign-exome (2891377978) reference_sequence_build: GRCh37-lite-build37 (106942997)
+## FOUND Genome::Model::Input Genome::Model::Build::ImportedReferenceSequence	106942997	2891377997	reference_sequence_build: hcc1395-tumor-refalign-exome (2891377997) reference_sequence_build: GRCh37-lite-build37 (106942997)
+## FOUND Genome::Model::Input Genome::Model::Build::ImportedVariationList	127786607	2891230328	dbsnp_build: hcc1395-tumor-snparray (2891230328) dbsnp_build: 127786607 of dbsnp-GRCh37-lite-build37
+## FOUND Genome::Model::Input Genome::Model::Build::ImportedVariationList	127786607	2891230330	dbsnp_build: hcc1395-normal-snparray (2891230330) dbsnp_build: 127786607 of dbsnp-GRCh37-lite-build37
+## FOUND Genome::Model::Input Genome::Model::Build::ImportedVariationList	127786607	2891325873	dbsnp_build: hcc1395-tumor-refalign-wgs (2891325873) dbsnp_build: 127786607 of dbsnp-GRCh37-lite-build37
+## FOUND Genome::Model::Input Genome::Model::Build::ImportedVariationList	127786607	2891325882	dbsnp_build: hcc1395-normal-refalign-wgs (2891325882) dbsnp_build: 127786607 of dbsnp-GRCh37-lite-build37
+## FOUND Genome::Model::Input Genome::Model::Build::ImportedVariationList	127786607	2891377978	dbsnp_build: hcc1395-normal-refalign-exome (2891377978) dbsnp_build: 127786607 of dbsnp-GRCh37-lite-build37
+## FOUND Genome::Model::Input Genome::Model::Build::ImportedVariationList	127786607	2891377997	dbsnp_build: hcc1395-tumor-refalign-exome (2891377997) dbsnp_build: 127786607 of dbsnp-GRCh37-lite-build37
+## FOUND Genome::Model::Input Genome::Model::Build::ImportedVariationList	127786607	2891407507	previously_discovered_variations: hcc1395-somatic-exome (2891407507) previously_discovered_variations: 127786607 of dbsnp-GRCh37-lite-build37
+## FOUND Genome::Model::Input Genome::Model::Build::ImportedVariationList	127786607	2891454547	previously_discovered_variations: hcc1395-somatic-wgs (2891454547) previously_discovered_variations: 127786607 of dbsnp-GRCh37-lite-build37
+## FOUND Genome::Model::Input Genome::Model::GenotypeMicroarray	2891230328	2891325873	genotype_microarray: hcc1395-tumor-refalign-wgs (2891325873) genotype_microarray: hcc1395-tumor-snparray (2891230328)
+## FOUND Genome::Model::Input Genome::Model::GenotypeMicroarray	2891230328	2891377997	genotype_microarray: hcc1395-tumor-refalign-exome (2891377997) genotype_microarray: hcc1395-tumor-snparray (2891230328)
+## FOUND Genome::Model::Input Genome::Model::GenotypeMicroarray	2891230330	2891325882	genotype_microarray: hcc1395-normal-refalign-wgs (2891325882) genotype_microarray: hcc1395-normal-snparray (2891230330)
+## FOUND Genome::Model::Input Genome::Model::GenotypeMicroarray	2891230330	2891377978	genotype_microarray: hcc1395-normal-refalign-exome (2891377978) genotype_microarray: hcc1395-normal-snparray (2891230330)
+## FOUND Genome::Model::Input Genome::Model::ReferenceAlignment	2891325873	2891454547	tumor_model: hcc1395-somatic-wgs (2891454547) tumor_model: hcc1395-tumor-refalign-wgs (2891325873)
+## FOUND Genome::Model::Input Genome::Model::ReferenceAlignment	2891325882	2891454547	normal_model: hcc1395-somatic-wgs (2891454547) normal_model: hcc1395-normal-refalign-wgs (2891325882)
+## FOUND Genome::Model::Input Genome::Model::ReferenceAlignment	2891377978	2891407507	normal_model: hcc1395-somatic-exome (2891407507) normal_model: hcc1395-normal-refalign-exome (2891377978)
+## FOUND Genome::Model::Input Genome::Model::ReferenceAlignment	2891377997	2891407507	tumor_model: hcc1395-somatic-exome (2891407507) tumor_model: hcc1395-tumor-refalign-exome (2891377997)
+## FOUND Genome::Model::Input Genome::Model::RnaSeq	2891371548	2891454740	tumor_rnaseq_model: tst1-clinseq (2891454740) tumor_rnaseq_model: hcc1395-tumor-rnaseq (2891371548)
+## FOUND Genome::Model::Input Genome::Model::SomaticVariation	2891407507	2891454740	exome_model: tst1-clinseq (2891454740) exome_model: hcc1395-somatic-exome (2891407507)
+## FOUND Genome::Model::Input Genome::Model::SomaticVariation	2891454547	2891454740	wgs_model: tst1-clinseq (2891454740) wgs_model: hcc1395-somatic-wgs (2891454547)
+## FOUND Genome::Model::Input UR::Value	11111001 capture chip set	2891377978	region_of_interest_set_name: hcc1395-normal-refalign-exome (2891377978) region_of_interest_set_name: 11111001 capture chip set
+## FOUND Genome::Model::Input UR::Value	11111001 capture chip set	2891377978	target_region_set_name: hcc1395-normal-refalign-exome (2891377978) target_region_set_name: 11111001 capture chip set
+## FOUND Genome::Model::Input UR::Value	11111001 capture chip set	2891377997	region_of_interest_set_name: hcc1395-tumor-refalign-exome (2891377997) region_of_interest_set_name: 11111001 capture chip set
+## FOUND Genome::Model::Input UR::Value	11111001 capture chip set	2891377997	target_region_set_name: hcc1395-tumor-refalign-exome (2891377997) target_region_set_name: 11111001 capture chip set
 ## FOUND Genome::Model::Input UR::Value	2	2772828715	annotation_import_version: NCBI-human.ensembl (2772828715) annotation_import_version: 2
 ## FOUND Genome::Model::Input UR::Value	human	2772828715	species_name: NCBI-human.ensembl (2772828715) species_name: human
 ## FOUND Genome::Model::Input UR::Value::Text	dbsnp	2887964832	source_name: dbsnp-GRCh37-lite-build37 (2887964832) source_name: dbsnp
-## FOUND Genome::Model::ReferenceAlignment 2891325873: tst1-tumor-refalign-wgs (2891325873)
-## FOUND Genome::Model::ReferenceAlignment 2891325882: tst1-normal-refalign-wgs (2891325882)
-## FOUND Genome::Model::ReferenceAlignment 2891377978: tst1-normal-refalign-exome (2891377978)
-## FOUND Genome::Model::ReferenceAlignment 2891377997: tst1-tumor-refalign-exome (2891377997)
-## FOUND Genome::Model::RnaSeq 2891371548: tst1-tumor-rnaseq (2891371548)
-## FOUND Genome::Model::SomaticVariation 2891407507: tst1-somatic-exome (2891407507)
-## FOUND Genome::Model::SomaticVariation 2891454547: tst1-somatic-wgs (2891454547)
+## FOUND Genome::Model::ReferenceAlignment 2891325873: hcc1395-tumor-refalign-wgs (2891325873)
+## FOUND Genome::Model::ReferenceAlignment 2891325882: hcc1395-normal-refalign-wgs (2891325882)
+## FOUND Genome::Model::ReferenceAlignment 2891377978: hcc1395-normal-refalign-exome (2891377978)
+## FOUND Genome::Model::ReferenceAlignment 2891377997: hcc1395-tumor-refalign-exome (2891377997)
+## FOUND Genome::Model::RnaSeq 2891371548: hcc1395-tumor-rnaseq (2891371548)
+## FOUND Genome::Model::SomaticVariation 2891407507: hcc1395-somatic-exome (2891407507)
+## FOUND Genome::Model::SomaticVariation 2891454547: hcc1395-somatic-wgs (2891454547)
 ## FOUND Genome::Model::Tools::DetectVariants2::Result::Manual 127786602: Genome::Model::Tools::DetectVariants2::Result::Manual (127786602)
 ## FOUND Genome::ProcessingProfile::ClinSeq 2649924: November 2011 Clinical Sequencing (2649924)
 ## FOUND Genome::ProcessingProfile::GenotypeMicroarray 2575175: infinium wugc (2575175)
@@ -523,17 +518,25 @@
 ## FOUND Genome::Sample 2889981254: H_NJ-HCC1395-HCC1395_BL (TST1 normal 2889981254)
 ## FOUND Genome::SoftwareResult::Input 108573982	destination_reference_build_id: destination_reference_build_id:106942997
 ## FOUND Genome::SoftwareResult::Input 108573982	source_reference_build_id: source_reference_build_id:108563338
-## FOUND Genome::SoftwareResult::Input 117803766	reference_build_id: reference_build_id:106942997
+## FOUND Genome::SoftwareResult::Input 127215977	reference_build_id: reference_build_id:106942997
+## FOUND Genome::SoftwareResult::Input 127215980	reference_build_id: reference_build_id:106942997
 ## FOUND Genome::SoftwareResult::Input 127786602	file_content_hash: file_content_hash:28c131a0815fd81173e8f79d40057226
 ## FOUND Genome::SoftwareResult::Input 127786602	reference_build_id: reference_build_id:106942997
+## FOUND Genome::SoftwareResult::Input ec26139c40dc4d9ea24dc9fa55160b71	reference_build_id: reference_build_id:106942997
 ## FOUND Genome::SoftwareResult::Metric algorithm	108573982: algorithm 108573982
 ## FOUND Genome::SoftwareResult::Metric description	127786602: description 127786602
 ## FOUND Genome::SoftwareResult::Metric original_file_path	127786602: original_file_path 127786602
 ## FOUND Genome::SoftwareResult::Metric username	127786602: username 127786602
-## FOUND Genome::SoftwareResult::Param 117803766	aligner_name: aligner_name:bwa
-## FOUND Genome::SoftwareResult::Param 117803766	aligner_version: aligner_version:0.5.9
+## FOUND Genome::SoftwareResult::Param 127215977	aligner_name: aligner_name:per-lane-tophat
+## FOUND Genome::SoftwareResult::Param 127215977	aligner_params: aligner_params:-p 4 --bowtie-version=2.0.0-beta7
+## FOUND Genome::SoftwareResult::Param 127215977	aligner_version: aligner_version:2.0.4
+## FOUND Genome::SoftwareResult::Param 127215980	aligner_name: aligner_name:bowtie
+## FOUND Genome::SoftwareResult::Param 127215980	aligner_version: aligner_version:2.0.0-beta7
 ## FOUND Genome::SoftwareResult::Param 127786602	format: format:vcf
 ## FOUND Genome::SoftwareResult::Param 127786602	variant_type: variant_type:snv
+## FOUND Genome::SoftwareResult::Param ec26139c40dc4d9ea24dc9fa55160b71	aligner_name: aligner_name:bwa
+## FOUND Genome::SoftwareResult::Param ec26139c40dc4d9ea24dc9fa55160b71	aligner_version: aligner_version:0.5.9
+## FOUND Genome::SoftwareResult::User 127219266: 127219266
 ## FOUND Genome::SubjectAttribute age	43	2889953342	GC: age 43 2889953342 GC
 ## FOUND Genome::SubjectAttribute age	43	2889981253	GC: age 43 2889981253 GC
 ## FOUND Genome::SubjectAttribute age	43	2889981254	GC: age 43 2889981254 GC
