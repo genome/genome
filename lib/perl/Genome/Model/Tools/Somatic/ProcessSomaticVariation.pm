@@ -13,22 +13,6 @@ use Carp qw(confess);
 
 class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
     is => 'Command::V2',
-    has => [
-        full_output_dir => {
-            is => 'Text',
-            is_optional => 1,
-            is_transient => 1,
-            is_mutable => 0,
-            calculate => q { return $self->output_dir . "/" . $self->sample_name_dir; }
-        },
-        sample_name_dir => {
-            is => 'Text',
-            is_optional => 1,
-            is_transient => 1,
-            is_mutable => 0,
-            calculate => q { return $self->get_unique_sample_name_dir(); }
-        },
-    ],
     has_input => [
         somatic_variation_model => {
             is => 'Genome::Model::SomaticVariation',
@@ -138,6 +122,29 @@ class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
             is_mutable => 0,
             calculate => q { return $self->somatic_variation_model->subject->name; },
             doc => "override the sample name on the build and use this name instead",
+        }
+    ],
+    has => [
+        _full_output_dir => {
+            is => 'Text',
+            is_optional => 1,
+            is_transient => 1,
+            is_mutable => 0,
+            calculate => q { return $self->output_dir . "/" . $self->_sample_name_dir; }
+        },
+        _sample_name_dir => {
+            is => 'Text',
+            is_optional => 1,
+            is_transient => 1,
+            is_mutable => 0,
+            calculate => q { return $self->get_unique_sample_name_dir(); }
+        },
+        _build_dir => {
+            is => 'Text',
+            is_optional => 1,
+            is_transient => 1,
+            is_mutable => 0,
+            calculate => q { return $self->somatic_variation_model->last_succeeded_build->data_directory },
         }
     ],
 };
@@ -421,10 +428,9 @@ sub removeFilterSites{
 ##TODO - these two functions are brittle. There needs to be a better way to grab calls for specific callers. Ideally, from the VCF...
 sub getVcfFile{
     my $self      = shift;
-    my $build_dir = shift;
     my $dir       = shift;
 
-    my $prefix = $build_dir . "/variants/snv/";
+    my $prefix = $self->_build_dir . "/variants/snv/";
 
     if ($dir=~/strelka/) {
         if (-s "$prefix/$dir/snvs.vcf.gz") {
@@ -470,7 +476,7 @@ sub removeUnsupportedSites{
 
     #count the number of callers that called each site from the vcfs
     for my $dir (@dirs) {
-        my $file = $self->getVcfFile($build_dir, $dir);
+        my $file = $self->getVcfFile($dir);
         my $ifh = Genome::Sys->open_gzip_file_for_reading($file);
 
         while (my $line = $ifh->getline) {
@@ -626,9 +632,9 @@ sub get_unique_sample_name_dir {
 sub create_directories {
     my $self = shift;
 
-    my $full_output_dir = $self->full_output_dir;
+    my $full_output_dir = $self->_full_output_dir;
     my $output_dir      = $self->output_dir;
-    my $build_dir       = $self->somatic_variation_model->last_succeeded_build->data_directory;
+    my $build_dir       = $self->_build_dir;
 
     Genome::Sys->create_directory("$full_output_dir");
     Genome::Sys->create_directory("$full_output_dir/snvs");
@@ -644,8 +650,8 @@ sub create_directories {
 sub stage_snv_file {
     my $self = shift;
 
-    my $full_output_dir = $self->full_output_dir;
-    my $build_dir       = $self->somatic_variation_model->last_succeeded_build->data_directory;
+    my $full_output_dir = $self->_full_output_dir;
+    my $build_dir       = $self->_build_dir;
 
     my $snv_file = "$build_dir/effects/snvs.hq.novel.tier1.v2.bed";
     unless (-e $snv_file) {
@@ -664,8 +670,8 @@ sub stage_snv_file {
 sub stage_indel_file {
     my $self = shift;
 
-    my $full_output_dir = $self->full_output_dir;
-    my $build_dir       = $self->somatic_variation_model->last_succeeded_build->data_directory;
+    my $full_output_dir = $self->_full_output_dir;
+    my $build_dir       = $self->_build_dir;
 
     my $indel_file = "$build_dir/effects/indels.hq.novel.tier1.v2.bed";
     unless (-e $indel_file) {
@@ -684,8 +690,8 @@ sub stage_indel_file {
 sub stage_sv_file {
     my $self = shift;
 
-    my $full_output_dir = $self->full_output_dir;
-    my $build_dir       = $self->somatic_variation_model->last_succeeded_build->data_directory;
+    my $full_output_dir = $self->_full_output_dir;
+    my $build_dir       = $self->_build_dir;
 
     my $sv_file;
 #THIS NEEDS A TEST TO MAKE SURE THAT $self->process_svs IS BEING SET CORRECTLY
@@ -763,7 +769,7 @@ sub execute {
 
     my $tumor_bam = $tumor_model->last_succeeded_build->merged_alignment_result->bam_file;
     my $normal_bam = $normal_model->last_succeeded_build->merged_alignment_result->bam_file;
-    my $build_dir = $build->data_directory;
+    my $build_dir = $self->_build_dir;
 
     my $igv_reference_name = $self->igv_reference_name;
     if ($self->create_review_files && !defined($self->igv_reference_name)) {
@@ -771,11 +777,13 @@ sub execute {
     }
 
 
+    #NEW SUBROUTINES - one for sample name, and one for dir creation
+#TEST THAT sample name is being set correctly
     # create subdirectories, get files in place
 
     # if multiple models with the same name, add a suffix
-    my $sample_name_dir = $self->sample_name_dir;
-    my $full_output_dir = $self->full_output_dir;
+    my $sample_name_dir = $self->_sample_name_dir;
+    my $full_output_dir = $self->_full_output_dir;
 
     #make the directory structure
     $self->create_directories();
@@ -841,8 +849,8 @@ sub execute {
     #----------------------------------------------------
     # add dbsnp/gmaf
     if ($self->add_dbsnp_and_gmaf) {
-        $snv_file   = $self->_add_dbsnp_and_gmaf_to_snv($build_dir, $snv_file);
-        $indel_file = $self->_add_dbsnp_and_gmaf_to_indel($build_dir, $indel_file);
+        $snv_file   = $self->_add_dbsnp_and_gmaf_to_snv($snv_file);
+        $indel_file = $self->_add_dbsnp_and_gmaf_to_indel($indel_file);
     }
 
     #-------------------------------------------------------
@@ -870,7 +878,7 @@ sub execute {
     #------------------------------------------------
     # tar up the files to be sent to collaborators
     if ($self->create_archive) {
-        $self->_create_archive($build_dir, $sv_file);
+        $self->_create_archive($sv_file);
     }
 
     return 1;
@@ -899,7 +907,7 @@ sub _filter_off_target_regions {
 sub get_or_create_featurelist_file {
     my $self = shift;
 
-    my $full_output_dir = $self->full_output_dir;
+    my $full_output_dir = $self->_full_output_dir;
     my $model = $self->somatic_variation_model;
 
     my $featurelist_file = "$full_output_dir/featurelist";
@@ -956,7 +964,7 @@ sub _filter_regions {
 sub get_or_create_filter_file {
     my $self = shift;
 
-    my $full_output_dir = $self->full_output_dir;
+    my $full_output_dir = $self->_full_output_dir;
 
     my @filters = split(",", $self->filter_regions);
 
@@ -973,8 +981,9 @@ sub get_or_create_filter_file {
 
 sub _add_dbsnp_and_gmaf_to_snv {
     my $self       = shift;
-    my $build_dir  = shift;
     my $snv_file   = shift;
+
+    my $build_dir = $self->_build_dir;
 
     $self->status_message("==== adding dbsnp ids ====");
     $self->status_message("$build_dir/variants/snvs.annotated.vcf.gz");
@@ -997,8 +1006,9 @@ sub _add_dbsnp_and_gmaf_to_snv {
 
 sub _add_dbsnp_and_gmaf_to_indel {
     my $self       = shift;
-    my $build_dir  = shift;
     my $indel_file = shift;
+
+    my $build_dir = $self->_build_dir;
 
     $self->status_message("==== padding indel file with tabs to match ====");
     $self->status_message("$build_dir/variants/snvs.annotated.vcf.gz");
@@ -1026,7 +1036,7 @@ sub _create_master_files {
     my $snv_file   = shift;
     my $indel_file = shift;
 
-    my $full_output_dir = $self->full_output_dir;
+    my $full_output_dir = $self->_full_output_dir;
 
     Genome::Sys->shellcmd(cmd => "head -n 1 $snv_file >$full_output_dir/snvs.indels.annotated");
     Genome::Sys->shellcmd(cmd => "tail -n +2 $indel_file >>$full_output_dir/snvs.indels.annotated.tmp");
@@ -1058,8 +1068,8 @@ sub _create_review_files {
     my $self = shift;
 
     my $review_dir      = $self->output_dir . "/review";
-    my $sample_name_dir = $self->sample_name_dir;
-    my $full_output_dir = $self->full_output_dir;
+    my $sample_name_dir = $self->_sample_name_dir;
+    my $full_output_dir = $self->_full_output_dir;
 
     $self->status_message("Generating Review files");
     my @tiers = split(",", $self->tiers_to_review);
@@ -1106,11 +1116,11 @@ sub _create_review_files {
 
 sub _create_archive {
     my $self        = shift;
-    my $build_dir   = shift;
     my $sv_file     = shift;
 
-    my $full_output_dir = $self->full_output_dir;
-    my $archive_dir     = "$full_output_dir/" . $self->sample_name_dir;
+    my $build_dir       = $self->_build_dir;
+    my $full_output_dir = $self->_full_output_dir;
+    my $archive_dir     = "$full_output_dir/" . $self->_sample_name_dir;
     Genome::Sys->create_directory("$archive_dir");
 
     #symlink VCF files

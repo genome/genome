@@ -70,11 +70,11 @@ subtest "create_directories" => sub {
     my $result = $process_somatic_variation->create_directories();
 
     ok($result, "Directories successfully created");
-    is($process_somatic_variation->sample_name_dir, $somatic_variation_model->subject->name, "Sample name directory as expected");
-    is($process_somatic_variation->full_output_dir, $output_dir . "/" . $somatic_variation_model->subject->name, "Full output dir as expected");
+    is($process_somatic_variation->_sample_name_dir, $somatic_variation_model->subject->name, "Sample name directory as expected");
+    is($process_somatic_variation->_full_output_dir, $output_dir . "/" . $somatic_variation_model->subject->name, "Full output dir as expected");
 };
 
-my $full_output_dir = $process_somatic_variation->full_output_dir;
+my $full_output_dir = $process_somatic_variation->_full_output_dir;
 
 subtest "stage_snv_file" => sub {
     my $snv_file = $process_somatic_variation->stage_snv_file();
