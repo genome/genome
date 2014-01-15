@@ -207,7 +207,7 @@ sub remove_ids_and_paths {
     $formatted_str =~ s/[a-zA-Z0-9.\-_]*[\/][a-zA-Z0-9.\-_\/]*/<path>/g;
 
     # replace things that look like ids
-    $formatted_str =~ s/[0-9a-f]{5,30}/<id>/g;
+    $formatted_str =~ s/[0-9a-f]{5,32}/<id>/g;
 
     return $formatted_str;
 }
