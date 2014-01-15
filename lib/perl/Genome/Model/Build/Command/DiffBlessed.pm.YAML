@@ -8,11 +8,11 @@ apipe-test-gene-prediction-bacterial: 8d3e31bedac04e45b4abd8c37a62bc62
 apipe-test-gene-prediction-eukaryotic: 41f7045d104846ed9096453b3a0510af
 apipe-test-mc16s-454: 135304826
 apipe-test-mc16s-sanger: 133668184
-apipe-test-refalign-germline-short: d5095b6b71434e998ddaf077b769f68c
+apipe-test-refalign-germline-short: e213a4e2d05c4a79a777fd106a504ec1
 apipe-test-reference-alignment-lane-qc: f900b8b02a7345e4993e7470efac91c0
 apipe-test-reference-alignment: 3cf7ca78cee34e15a55c67bc8a1a1d3a
 apipe-test-rnaseq: 40dd79f3079242d38e4585a472e772e4
-apipe-test-somatic-validation-sv: e89a8a8963984bc19bdf3c6f06b895f4 
+apipe-test-somatic-validation-sv: 7c09daa72f1e4b95a98ae81a657eb0cc 
 apipe-test-somatic-validation: 0642634cdf6b4dbd81de8e5a35d6bd62
 apipe-test-somatic-variation-short: 998ff67bc2734d9e94eee2e9a9f02e6d
 apipe-test-somatic-variation-sv-detection: 136692589
