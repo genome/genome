@@ -19,6 +19,7 @@ subtest 'Regular reporting' => sub {
     is($new_entry->libraries, undef, "Libraries undefined");
     is($new_entry->num_libraries, 0, "Number of libraries is 0");
     ok(!$new_entry->has_per_library, "Does not report as having per library metrics");
+    is_deeply([$new_entry->alleles], ["=","A","C","G","T","N"], "Alleles are returned correctly");
     my $allele_metrics = $new_entry->metrics_for("T");
     ok($allele_metrics, "Able to retrieve metrics for base 'T'");
     is($allele_metrics->allele, 'T', "Reported allele matches expected");
@@ -35,6 +36,10 @@ subtest 'Per-lib reporting' => sub {
     is($second_entry->depth, 344, "Depth correct");
     is($second_entry->num_libraries, 2, "Num libraries correct");
     ok($second_entry->has_per_library, "Reports as having per-library");
+    eval {
+        my @alleles = $second_entry->alleles;
+    };
+    ok($@, "Entry with per-lib throws when you try access alleles directly");
     my @libmetrics = $second_entry->libraries;
     my @libnames = map {$_->name} @libmetrics;
     is_deeply(\@libnames, [qw(Solexa-135852 Solexa-135853)], "Names report correctly");
