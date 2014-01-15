@@ -244,10 +244,10 @@ sub bedToAnno{
     my ($chr, $start, $stop, $ref, $var) = split("\t", $_[0]);
     #$self->status_message(join("|",($chr, $start, $stop, $ref, $var)));
     if ($ref =~ /^[-0*]/) { #indel INS
-        $stop = $stop++;
+        $stop++;
     }
     else { #indel DEL or SNV
-        $start = $start++;
+        $start++;
     }
     return join("\t", ($chr, $start, $stop, $ref, $var));
 }
@@ -256,10 +256,10 @@ sub bedToAnno{
 sub annoToBed{
     my ($chr, $start, $stop, $ref, $var) = split("\t", $_[0]);
     if ($ref =~ /^[-*0]/) { #indel INS
-        $stop = $stop--;
+        $stop--;
     }
     else { #indel DEL or SNV
-        $start = $start--;
+        $start--;
     }
     #handle 5 col or 4 col ref/var
     if (defined($var)) {
@@ -479,9 +479,9 @@ sub removeUnsupportedSites{
             my ($chr, $pos, $id, $ref, $var, @rest) = split /\t/, $line;
             my @vars = split(",", $var);
             for my $v (@vars) {
-                my $key = join("\t",($chr, $pos--, $pos, $ref, $v));
+                my $key = join("\t",($chr, $pos-1, $pos, $ref, $v));
                 if (defined($sites->{$key})) {
-                    $sites->{$key} = $sites->{$key}++;
+                    $sites->{$key}++;
                 }
             }
         }
