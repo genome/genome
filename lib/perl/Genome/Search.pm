@@ -632,6 +632,27 @@ sub get_indexed_document_count {
     }
 }
 
+sub get_indexed_class_counts {
+    my $class = shift;
+    my $self = $class->_singleton_object();
+
+    my $response = $class->search(
+        '*:*',
+        {
+            rows => 0,
+            hl => 'false',
+            defType => 'lucene',
+            'facet.field' => 'class'
+        }
+    );
+
+    if ($response->ok) {
+        return @{$response->content->{facet_counts}{facet_fields}{class}};
+    } else {
+        die($self->error_message($response->status_message));
+    }
+}
+
 #OK!
 1;
 
