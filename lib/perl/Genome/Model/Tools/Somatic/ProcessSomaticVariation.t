@@ -16,11 +16,10 @@ my $pkg = 'Genome::Model::Tools::Somatic::ProcessSomaticVariation';
 use_ok($pkg);
 use_ok("Genome::Test::Factory::Model::SomaticVariation");
 
-my $TEST_DATA_VERSION = 2;
+my $TEST_DATA_VERSION = 3;
 
 my $data_dir = Genome::Utility::Test->data_dir_ok($pkg, File::Spec->join($TEST_DATA_VERSION, "data"));
 my $input_dir = Genome::Utility::Test->data_dir_ok($pkg, File::Spec->join($TEST_DATA_VERSION, "input"));
-my $tiering_files_dir = Genome::Utility::Test->data_dir_ok($pkg, File::Spec->join($TEST_DATA_VERSION, "tiering_bed_files_v3"));
 my $somatic_variation_build_data_dir = Genome::Utility::Test->data_dir_ok($pkg, File::Spec->join($TEST_DATA_VERSION, "somatic_variation_build_data"));
 
 my $normal_model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object();
