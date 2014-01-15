@@ -53,6 +53,8 @@ sub execute {
         return;
     }
 
+    my %chromosomes;
+    $chromosomes{$_} = 1 for @{$self->reference_sequence_build->chromosome_array_ref};
     while(my $line = $genotype_fh->getline) {
         chomp $line;
 
@@ -61,6 +63,10 @@ sub execute {
         #intersecting position
         #check genotypes
         my @alleles = split //, uc($genotype);
+        unless(exists $chromosomes{$chr}) {
+            $self->warning_message('Chromosome "%s" is not in the reference "%s". Skipping position.', $chr, $self->reference_sequence_build->name);
+            next;
+        }
         my $ref = $self->reference_sequence_build->sequence($chr, $pos, $pos);
 
         if($genotype ne '--' && $genotype =~ /[ACTGN]/ ) {
