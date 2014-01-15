@@ -29,11 +29,6 @@ class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
             doc => "name of the igv reference to use",
             example_values => ["reference_build36","b37","mm9"],
         },
-        filter_sites =>{
-            is => 'Text',
-            is_optional => 1,
-            doc => "comma separated list of bed files containing sites to be removed (example - removing cell-line sites from tumors grown on them). Only sites with these exact coordinates and that match the ref and var alleles are removed.",
-        },
         filter_regions =>{
             is => 'Text',
             is_optional => 1,
@@ -357,34 +352,6 @@ sub getFilterSites{
     }
     return \%filterSites;
 }
-
-
-sub removeFilterSites{
-    my ($file, $filterSites) = @_;
-
-    my $newfile = addName($file,"filtered");
-    #handle zero size files
-    if (-z $file) {
-        Genome::Sys->shellcmd( cmd => "touch $newfile" );
-        return $newfile;
-    }
-
-    my $outFh = Genome::Sys->open_file_for_writing($newfile);
-    my $inFh  = Genome::Sys->open_file_for_reading($file);
-    while (my $line = $inFh->getline) {
-        chomp($line);
-        my ( $chr, $start, $stop, $ref, $var ) = split( /\t/, $line );
-        if ($ref =~ /\//) {
-            ( $ref, $var ) = split(/\//, $ref);
-        }
-        unless (defined($filterSites->{join("\t",($chr, $start, $stop, $ref, $var ))})) {
-            print $outFh $line . "\n";
-        }
-    }
-    close($outFh);
-    return $newfile;
-}
-
 
 
 # sub getDeepestSubDir{ #danger - assumes one subdirectory per folder
@@ -779,15 +746,6 @@ sub execute {
     if ($self->restrict_to_target_regions) {
         $snv_file = $self->_filter_off_target_regions($snv_file);
         $indel_file = $self->_filter_off_target_regions($indel_file);
-    }
-
-    #-------------------------------------------------
-    # remove filter sites specified by the user
-    if (defined($self->filter_sites)) {
-        $self->status_message("Applying user-supplied filter");
-        my $filterSites = $self->getFilterSites($self->filter_sites);
-        $snv_file   = removeFilterSites($snv_file, $filterSites);
-        $indel_file = removeFilterSites($indel_file, $filterSites);
     }
 
     #-------------------------------------------------
