@@ -63,12 +63,6 @@ class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
             default => 0,
             doc => "add tier information to the output",
         },
-        variant_list_is_one_based => {
-            is => 'Boolean',
-            is_optional => 1,
-            doc => "The variant list you provide is in annotation (one-based) format, instead of bed. This flag fixes that.",
-            default => 0,
-        },
         add_dbsnp_and_gmaf => {
             is => 'Boolean',
             is_optional => 1,
@@ -80,11 +74,6 @@ class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
             is_optional => 1,
             doc => "Build has sv calls (probably WGS data). Most exomes won't have this",
             default => 0,
-        },
-        sites_to_pass => {
-            is => 'String',
-            is_optional => 1,
-            doc => "an annotation file (5 col, 1 based) containing sites that will automatically be passed. This is useful when sequencing a relapse - the sites already found in the tumor don't need to be manually reviewed",
         },
         create_review_files => {
             is => 'Boolean',
