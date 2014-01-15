@@ -1,13 +1,6 @@
 ## FOUND Genome::Db::Cosmic cosmic/61.1: DB(cosmic/61.1)
 ## FOUND Genome::Db::Tgi::CancerAnnotation::Human tgi/cancer-annotation/human/build37-20130401.1: DB(tgi/cancer-annotation/human/build37-20130401.1)
 ## FOUND Genome::Db::Tgi::MiscAnnotation::Human tgi/misc-annotation/human/build37-20130113.1: DB(tgi/misc-annotation/human/build37-20130113.1)
-## FOUND Genome::Disk::Assignment 168	14406: 168 14406
-## FOUND Genome::Disk::Assignment 168	9981: 168 9981
-## FOUND Genome::Disk::Assignment 169	14315: 169 14315
-## FOUND Genome::Disk::Assignment 169	14365: 169 14365
-## FOUND Genome::Disk::Assignment 172	1403: 172 1403
-## FOUND Genome::Disk::Assignment 172	9544: 172 9544
-## FOUND Genome::Disk::Assignment 172	9545: 172 9545
 ## FOUND Genome::FeatureList 7BF768EF51FB11E1A0743039993C62A0: 11111001 capture chip set (7BF768EF51FB11E1A0743039993C62A0)
 ## FOUND Genome::Individual 2889953340: H_NJ-HCC1395 (TST1 2889953340)
 ## FOUND Genome::InstrumentData::Imported 2891080776: infinium genotype file 2891080776 ([unknown])
@@ -365,6 +358,9 @@
 ## FOUND Genome::Model::Build::Input 127786607	Genome::Model::Tools::DetectVariants2::Result::Manual	127786602	snv_result: 127786607 Genome::Model::Tools::DetectVariants2::Result::Manual 127786602 snv_result
 ## FOUND Genome::Model::Build::Input 127786607	UR::Value	137	version: 127786607 UR::Value 137 version
 ## FOUND Genome::Model::Build::Input 127786607	UR::Value::Text	dbsnp	source_name: 127786607 UR::Value::Text dbsnp source_name
+## FOUND Genome::Model::Build::ReferenceSequence::AlignerIndex 127215977: AlignerIndex for build GRCh37-lite-build37 with per-lane-tophat, version 2.0.4, params='-p 4 --bowtie-version=2.0.0-beta7'
+## FOUND Genome::Model::Build::ReferenceSequence::AlignerIndex 127215980: AlignerIndex for build GRCh37-lite-build37 with bowtie, version 2.0.0-beta7, params=''
+## FOUND Genome::Model::Build::ReferenceSequence::AlignerIndex ec26139c40dc4d9ea24dc9fa55160b71: AlignerIndex for build GRCh37-lite-build37 with bwa, version 0.5.9, params=''
 ## FOUND Genome::Model::Build::ReferenceSequence::Converter 108573982: Genome::Model::Build::ReferenceSequence::Converter (108573982)
 ## FOUND Genome::Model::ClinSeq 2891454740: tst1-clinseq (2891454740)
 ## FOUND Genome::Model::Event::Build 106942999: 106942999
@@ -522,14 +518,25 @@
 ## FOUND Genome::Sample 2889981254: H_NJ-HCC1395-HCC1395_BL (TST1 normal 2889981254)
 ## FOUND Genome::SoftwareResult::Input 108573982	destination_reference_build_id: destination_reference_build_id:106942997
 ## FOUND Genome::SoftwareResult::Input 108573982	source_reference_build_id: source_reference_build_id:108563338
+## FOUND Genome::SoftwareResult::Input 127215977	reference_build_id: reference_build_id:106942997
+## FOUND Genome::SoftwareResult::Input 127215980	reference_build_id: reference_build_id:106942997
 ## FOUND Genome::SoftwareResult::Input 127786602	file_content_hash: file_content_hash:28c131a0815fd81173e8f79d40057226
 ## FOUND Genome::SoftwareResult::Input 127786602	reference_build_id: reference_build_id:106942997
+## FOUND Genome::SoftwareResult::Input ec26139c40dc4d9ea24dc9fa55160b71	reference_build_id: reference_build_id:106942997
 ## FOUND Genome::SoftwareResult::Metric algorithm	108573982: algorithm 108573982
 ## FOUND Genome::SoftwareResult::Metric description	127786602: description 127786602
 ## FOUND Genome::SoftwareResult::Metric original_file_path	127786602: original_file_path 127786602
 ## FOUND Genome::SoftwareResult::Metric username	127786602: username 127786602
+## FOUND Genome::SoftwareResult::Param 127215977	aligner_name: aligner_name:per-lane-tophat
+## FOUND Genome::SoftwareResult::Param 127215977	aligner_params: aligner_params:-p 4 --bowtie-version=2.0.0-beta7
+## FOUND Genome::SoftwareResult::Param 127215977	aligner_version: aligner_version:2.0.4
+## FOUND Genome::SoftwareResult::Param 127215980	aligner_name: aligner_name:bowtie
+## FOUND Genome::SoftwareResult::Param 127215980	aligner_version: aligner_version:2.0.0-beta7
 ## FOUND Genome::SoftwareResult::Param 127786602	format: format:vcf
 ## FOUND Genome::SoftwareResult::Param 127786602	variant_type: variant_type:snv
+## FOUND Genome::SoftwareResult::Param ec26139c40dc4d9ea24dc9fa55160b71	aligner_name: aligner_name:bwa
+## FOUND Genome::SoftwareResult::Param ec26139c40dc4d9ea24dc9fa55160b71	aligner_version: aligner_version:0.5.9
+## FOUND Genome::SoftwareResult::User 127219266: 127219266
 ## FOUND Genome::SubjectAttribute age	43	2889953342	GC: age 43 2889953342 GC
 ## FOUND Genome::SubjectAttribute age	43	2889981253	GC: age 43 2889981253 GC
 ## FOUND Genome::SubjectAttribute age	43	2889981254	GC: age 43 2889981254 GC

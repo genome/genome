@@ -189,6 +189,15 @@ sub execute {
     return 1;
 }
 
+#Add aligners whose indexes have to be exported here
+sub aligner_indexes() {
+    my $self = shift;
+    my @aligners;
+    push @aligners, {aligner_name=>"bwa", reference_build_id=>106942997, aligner_version=>"0.5.9", aligner_params =>""};
+    push @aligners, {aligner_name=>"bowtie", reference_build_id=>106942997, aligner_version=>"2.0.0-beta7", aligner_params=>""};
+    push @aligners, {aligner_name=>"per-lane-tophat", reference_build_id=>106942997, aligner_version=>"2.0.4", aligner_params=>"-p 4 --bowtie-version=2.0.0-beta7"};
+    return @aligners;
+}
 
 # TODO: instead of conditional logic, move this method
 # to each of the types of data we intend to dump.
@@ -341,14 +350,14 @@ sub add_to_dump_queue {
         }
 
         $self->add_to_dump_queue($obj->model, $queue, $exclude, $sanitize_map);
-
         if ($obj->isa("Genome::Model::Build::ReferenceSequence")) {
-            my @i = Genome::Model::Build::ReferenceSequence::AlignerIndex->get(reference_build_id => $obj->id, test_name => undef);
-            for my $i (@i) {
-                my $dir = $i->output_dir;
-                next if $dir and $dir =~ /gscarchive/;
-                next unless $i->id eq '117803766';        # TODO: make this smarter
-                $self->add_to_dump_queue($i, $queue, $exclude, $sanitize_map);
+            for my $a ($self->aligner_indexes()) {
+                my @i = Genome::Model::Build::ReferenceSequence::AlignerIndex->get(aligner_name => $a->{aligner_name}, aligner_version => $a->{aligner_version}, reference_build_id => $a->{reference_build_id}, aligner_params => $a->{aligner_params}, test_name => undef);
+                for my $i (@i) {
+                    my $dir = $i->output_dir;
+                    next if $dir and $dir =~ /gscarchive/;
+                    $self->add_to_dump_queue($i, $queue, $exclude, $sanitize_map);
+                }
             }
             my @prev_builds = grep { $_->isa("Genome::Model::Build::ReferenceSequence") } values %{ $queue->{"Genome::Model::Build"} };
             if (@prev_builds) {
