@@ -402,7 +402,7 @@ sub removeUnsupportedSites{
     my ($self, $snv_file) = @_;
 
     my $numcallers = $self->required_snv_callers;
-    my $build_dir  = $self->somatic_variation_model->last_succeeded_build->data_directory;
+    my $build_dir  = $self->_build_dir;
 
     #hash all of the sites
     my $sites = $self->getSiteHash($snv_file);
