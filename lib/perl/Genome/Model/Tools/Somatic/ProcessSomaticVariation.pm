@@ -10,6 +10,7 @@ use Spreadsheet::WriteExcel;
 use File::Slurp qw(read_dir);
 use File::Basename qw(basename);
 use Carp qw(confess);
+use Params::Validate;
 
 class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
     is => 'Command::V2',
@@ -28,11 +29,6 @@ class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
             is => 'Text',
             doc => "name of the igv reference to use",
             example_values => ["reference_build36","b37","mm9"],
-        },
-        filter_regions =>{
-            is => 'Text',
-            is_optional => 1,
-            doc => "comma separated list of bed files containing regions to be removed (example - removing paralog regions) Any sites intersecting these regions are removed.",
         },
         get_readcounts =>{
             is => 'Boolean',
@@ -275,10 +271,14 @@ sub addName{
 }
 
 #read in the file, output a cleaned-up version
-sub cleanFile{
-    my ($file) = @_;
+sub cleanFile {
+    my ($self, $file, $subdirectory) = @_;
 
-    my $newfile = addName($file,"clean");
+    my $newfile = $self->result_file_path(
+        input_file_path => $file,
+        suffix => 'clean',
+        subdirectory => $subdirectory,
+    );
 
     my %dups;
 
@@ -316,7 +316,7 @@ sub cleanFile{
 }
 
 
-sub getFilterSites{
+sub getSiteHash  {
     my $self = shift;
     my $filter_string = shift;
 
@@ -405,7 +405,7 @@ sub removeUnsupportedSites{
     my $build_dir  = $self->somatic_variation_model->last_succeeded_build->data_directory;
 
     #hash all of the sites
-    my $sites = $self->getFilterSites($snv_file);
+    my $sites = $self->getSiteHash($snv_file);
     $self->status_message("here");
     for my $k (keys(%{$sites})) {
         $sites->{$k} = 0;
@@ -437,7 +437,13 @@ sub removeUnsupportedSites{
         $ifh->close;
     }
 
-    my $ofh = Genome::Sys->open_file_for_writing(addName($snv_file, "gt" . $numcallers . "callers"));
+    my $result_file_path = $self->result_file_path(
+        input_file_path => $snv_file,
+        suffix          => "gt" . $numcallers . "callers",
+        subdirectory    => "snvs"
+    );
+
+    my $ofh = Genome::Sys->open_file_for_writing($result_file_path);
     #read the snv_file again to preserve order, traiing fields, etc.
     my $ifh = Genome::Sys->open_file_for_reading($snv_file);
     while (my $line = $ifh->getline) {
@@ -454,16 +460,30 @@ sub removeUnsupportedSites{
     }
     close($ifh);
     close($ofh);
-    return addName($snv_file, "gt" . $numcallers . "callers");
+    return $result_file_path;
 }
 
+sub result_file_path {
+    my $self   = shift;
+    my %params = Params::Validate::validate(@_,
+        {
+            input_file_path => Params::Validate::SCALAR,
+            suffix => Params::Validate::SCALAR,
+            subdirectory => Params::Validate::SCALAR,
+        },
+    );
 
+    my $input_file_name  = basename($params{input_file_path});
+    my $output_file_name = addName($input_file_name, $params{suffix});
+    my $result_file_path = File::Spec->join($self->_full_output_dir, $params{subdirectory}, $output_file_name);
 
+    return $result_file_path;
+}
 
-sub doAnnotation{
-    my $self                  = shift;
-    my $file                  = shift;
-    my $outfile               = shift;
+sub doAnnotation {
+    my $self         = shift;
+    my $file         = shift;
+    my $subdirectory = shift;
 
     my $annotation_build_name = $self->somatic_variation_model->annotation_build->name;
 
@@ -471,13 +491,11 @@ sub doAnnotation{
         $file = bedFileToAnnoFile($file);
     }
 
-    my $newfile;
-    if ($outfile) {
-        $newfile = $outfile;
-    }
-    else {
-        $newfile = $file . ".anno";
-    }
+    my $newfile = $self->result_file_path(
+        input_file_path => $file,
+        suffix          => "anno",
+        subdirectory    => $subdirectory,
+    );
 
     #handle zero size files
     if (-z $file ) {
@@ -738,21 +756,14 @@ sub execute {
 
     #--------------------------------------------------------------
     # munge through SNV file to remove duplicates and fix IUB codes
-    $snv_file = cleanFile($snv_file);
-    $indel_file = cleanFile($indel_file);
+    $snv_file = $self->cleanFile($snv_file, 'snvs');
+    $indel_file = $self->cleanFile($indel_file, 'indels');
 
     #-------------------------------------------------
     # filter out the off-target regions, if target regions are available
     if ($self->restrict_to_target_regions) {
-        $snv_file = $self->_filter_off_target_regions($snv_file);
-        $indel_file = $self->_filter_off_target_regions($indel_file);
-    }
-
-    #-------------------------------------------------
-    # remove filter regions specified by the user
-    if (defined($self->filter_regions)) {
-        $snv_file = $self->_filter_regions($snv_file);
-        $indel_file = $self->_filter_regions($indel_file);
+        $snv_file = $self->_filter_off_target_regions($snv_file, "snvs");
+        $indel_file = $self->_filter_off_target_regions($indel_file, "indels");
     }
 
     #-------------------------------------------------------
@@ -764,8 +775,8 @@ sub execute {
 
     #------------------------------------------------------
     # do annotation
-    $snv_file   = $self->doAnnotation($snv_file);
-    $indel_file = $self->doAnnotation($indel_file);
+    $snv_file   = $self->doAnnotation($snv_file, 'snvs');
+    $indel_file = $self->doAnnotation($indel_file, 'indels');
 
     #-------------------------------------------------------
     # add tiers
@@ -819,17 +830,22 @@ sub execute {
 }
 
 sub _filter_off_target_regions {
-    my $self = shift;
-    my $file = shift;
+    my $self         = shift;
+    my $file         = shift;
+    my $subdirectory = shift;
 
     $self->status_message("Filtering out off-target regions for $file");
 
     my $featurelist = $self->get_or_create_featurelist_file();
     if (defined($featurelist)) {
-          my $new_file = addName($file,"ontarget");
+        my $new_file = $self->result_file_path(
+            input_file_path => $file,
+            suffix => 'ontarget',
+            subdirectory => $subdirectory,
+        );
 
-          Genome::Sys->shellcmd(cmd => "joinx intersect -a $file -b $featurelist >$new_file");
-          $file = $new_file;
+        Genome::Sys->shellcmd(cmd => "joinx intersect -a $file -b $featurelist -o $new_file");
+        return $new_file;
     }
     else {
         $self->warning_message("feature list not found or target regions not specified; No target region filtering being done even though --restrict-to-target-regions set.");
@@ -880,37 +896,6 @@ sub get_or_create_featurelist_file {
     else {
         return 0;
     }
-}
-
-sub _filter_regions {
-    my $self = shift;
-    my $file = shift;
-
-    my $filter_file = $self->get_or_create_filter_file();
-
-    $self->status_message("Removing user-specified filter for $file");
-    my $filtered_file = "$file.filteredReg";
-    Genome::Sys->shellcmd( cmd => "joinx intersect --miss-a $filtered_file -a $file -b $filter_file >/dev/null" );
-
-    return $filtered_file;
-}
-
-sub get_or_create_filter_file {
-    my $self = shift;
-
-    my $full_output_dir = $self->_full_output_dir;
-
-    my @filters = split(",", $self->filter_regions);
-
-    my $filter_file = "$full_output_dir/filter";
-
-    if (-e $filter_file) {
-        return $filter_file;
-    }
-
-    Genome::Sys->concatenate_files(\@filters, $filter_file);
-
-    return $filter_file;
 }
 
 sub _add_dbsnp_and_gmaf_to_snv {

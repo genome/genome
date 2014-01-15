@@ -16,7 +16,7 @@ my $pkg = 'Genome::Model::Tools::Somatic::ProcessSomaticVariation';
 use_ok($pkg);
 use_ok("Genome::Test::Factory::Model::SomaticVariation");
 
-my $TEST_DATA_VERSION = 3;
+my $TEST_DATA_VERSION = 4;
 
 my $data_dir = Genome::Utility::Test->data_dir_ok($pkg, File::Spec->join($TEST_DATA_VERSION, "data"));
 my $input_dir = Genome::Utility::Test->data_dir_ok($pkg, File::Spec->join($TEST_DATA_VERSION, "input"));
@@ -60,11 +60,11 @@ my $process_somatic_variation = $pkg->create(
     somatic_variation_model => $somatic_variation_model,
     output_dir              => $output_dir,
     target_regions          => "$input_dir/target_regions.bed",
-    filter_regions          => "$input_dir/filter_regions.bed",
-    filter_sites            => "$input_dir/filter_sites.bed",
     required_snv_callers    => 2,
 );
 ok($process_somatic_variation->isa("Genome::Model::Tools::Somatic::ProcessSomaticVariation"), "Generated a process somatic variation object");
+
+
 
 subtest "create_directories" => sub {
     my $result = $process_somatic_variation->create_directories();
@@ -91,9 +91,8 @@ subtest "stage_indel_file" => sub {
 };
 
 subtest "cleanFile" => sub {
-    my $snv_file = $full_output_dir . "/snvs/snvs.hq.bed";
-#Test that the file exists;
-    my $cleaned_file = Genome::Model::Tools::Somatic::ProcessSomaticVariation::cleanFile($snv_file);
+    my $snv_file = $data_dir . "/snvs/snvs.hq.bed";
+    my $cleaned_file = $process_somatic_variation->cleanFile($snv_file, 'snvs');
 
     is($cleaned_file, $full_output_dir . "/snvs/snvs.hq.clean.bed", "clean snv file name as expected");
     compare_ok($cleaned_file, "$data_dir/snvs/snvs.hq.clean.bed", "Contents of feature list file as expected");
@@ -108,68 +107,16 @@ subtest "get_or_create_featurelist_file" => sub {
     compare_ok($featurelist_file, "$data_dir/featurelist", "Contents of feature list file as expected");
 };
 
-subtest "_filter_off_target_regions" => sub {
-    my $file_to_be_filtered = $full_output_dir . "/snvs/snvs.hq.clean.bed";
-#Test that the file exists;
-    compare_ok($file_to_be_filtered, "$data_dir/snvs/snvs.hq.clean.bed", "Contents of file to be filtered as expected");
+subtest "filter_off_target_regions" => sub {
+    my $file_to_be_filtered = $data_dir . "/snvs/snvs.hq.clean.bed";
 
-    my $filtered_file = $process_somatic_variation->_filter_off_target_regions($file_to_be_filtered);
+    my $filtered_file = $process_somatic_variation->_filter_off_target_regions($file_to_be_filtered, "snvs");
     is($filtered_file, $full_output_dir . "/snvs/snvs.hq.clean.ontarget.bed", "Filtered file path as expected");
     compare_ok($filtered_file, "$data_dir/snvs/snvs.hq.clean.ontarget.bed", "Contents of filtered file as expected");
 };
 
-
-#Test for removing filter sites specified by the user
-#No need to test fixIUB? It's basically just a flat wrapper for Genome::Info::IUB->variant_alleles_for_iub
-#Maybe we shouldn't even have this wrapper method since it doesn't do anything
-#in addition
-# subtest "fixIUB" => sub {
-    # my ($ref, $var);
-    # Genome::Model::Tools::Somatic::ProcessSomaticVariation::fixIUB($ref, $var);
-# };
-
-subtest "getFilterSites" => sub {
-    my $filter_sites = $process_somatic_variation->getFilterSites($process_somatic_variation->filter_sites);
-    my $temp_file = Genome::Sys->create_temp_file_path;
-    my $temp_fh   = Genome::Sys->open_file_for_writing($temp_file);
-    print $temp_fh Data::Dumper::Dumper($filter_sites);
-    close ($temp_fh);
-    compare_ok($temp_file, "$data_dir/filter_sites", "Filter sites as expected");
-};
-
-subtest "removeFilterSites" => sub {
-    my $file_to_be_filtered = $full_output_dir . "/snvs/snvs.hq.clean.ontarget.bed";
-#Test that file exists
-    compare_ok($file_to_be_filtered, "$data_dir/snvs/snvs.hq.clean.ontarget.bed", "Contents of file to be filtered as expected");
-
-    my $filter_sites = $process_somatic_variation->getFilterSites($process_somatic_variation->filter_sites);
-    my $filtered_file = Genome::Model::Tools::Somatic::ProcessSomaticVariation::removeFilterSites($file_to_be_filtered, $filter_sites);
-    is($filtered_file, $full_output_dir . "/snvs/snvs.hq.clean.ontarget.filtered.bed", "Filtered file path as expected");
-    compare_ok($filtered_file, "$data_dir/snvs/snvs.hq.clean.ontarget.filtered.bed", "Contents of filtered file as expected");
-};
-
-#Tests for removing filter regions specified by the user
-subtest "get_or_create_filter_file" => sub {
-    my $filter_file = $process_somatic_variation->get_or_create_filter_file();
-
-    is($filter_file, $full_output_dir . "/filter", "Filter file path as expected");
-    compare_ok($filter_file, "$data_dir/filter", "Contents of filter file as expected");
-};
-
-subtest "_filter_regions" => sub {
-    my $file_to_be_filtered = $full_output_dir . "/snvs/snvs.hq.clean.ontarget.filtered.bed";
-#Test that file exists
-    compare_ok($file_to_be_filtered, "$data_dir/snvs/snvs.hq.clean.ontarget.filtered.bed", "Contents of file to be filtered as expected");
-
-    my $filtered_file = $process_somatic_variation->_filter_regions($file_to_be_filtered);
-    is($filtered_file, $full_output_dir . "/snvs/snvs.hq.clean.ontarget.filtered.bed.filteredReg", "Filtered file path as expected");
-    compare_ok($filtered_file, "$data_dir/snvs/snvs.hq.clean.ontarget.filtered.bed.filteredReg", "Contents of filtered file as expected");
-};
-
 subtest "removeUnsupportedSites" => sub {
-    my $file_to_be_filtered = $full_output_dir . "/snvs/snvs.hq.clean.ontarget.filtered.bed.filteredReg";
-#Test that file exists
-    compare_ok($file_to_be_filtered, "$data_dir/snvs/snvs.hq.clean.ontarget.filtered.bed.filteredReg", "Contents of file to be filtered as expected");
+    my $file_to_be_filtered = $data_dir . "/snvs/snvs.hq.clean.ontarget.filtered.bed.filteredReg";
 
     my $filtered_file = $process_somatic_variation->removeUnsupportedSites($file_to_be_filtered);
     is($filtered_file, $full_output_dir . "/snvs/snvs.hq.clean.ontarget.filtered.bed.filteredReg.gt2callers", "Filtered file path as expected");
@@ -178,14 +125,10 @@ subtest "removeUnsupportedSites" => sub {
 };
 
 subtest "doAnnotation" => sub {
-    my $file_to_annotate = $full_output_dir . "/snvs/snvs.hq.clean.ontarget.filtered.bed.filteredReg";
-#Test that file exists
-    compare_ok($file_to_annotate, "$data_dir/snvs/snvs.hq.clean.ontarget.filtered.bed.filteredReg", "Contents of file to be filtered as expected");
+    my $file_to_annotate = $data_dir . "/snvs/snvs.hq.clean.ontarget.filtered.bed.filteredReg";
 
-    my $annotated_file = $process_somatic_variation->doAnnotation($file_to_annotate);
-$DB::single=1;
+    my $annotated_file = $process_somatic_variation->doAnnotation($file_to_annotate, 'snvs');
     is($annotated_file, $full_output_dir . "/snvs/snvs.hq.clean.ontarget.filtered.bed.filteredReg.anno", "Filtered file path as expected");
-
 };
 
 #subtest "annoFileToBedFile" => sub {
