@@ -406,10 +406,6 @@ sub removeUnsupportedSites{
 
     #hash all of the sites
     my $sites = $self->getSiteHash($snv_file);
-    $self->status_message("here");
-    for my $k (keys(%{$sites})) {
-        $sites->{$k} = 0;
-    }
 
 
     #Look for the callers
