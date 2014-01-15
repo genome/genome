@@ -8,7 +8,7 @@ use Sort::Naturally qw(nsort);
 use Genome::Info::IUB;
 use Spreadsheet::WriteExcel;
 use File::Slurp qw(read_dir);
-use File::Basename;
+use File::Basename qw(basename);
 use Carp qw(confess);
 
 class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
