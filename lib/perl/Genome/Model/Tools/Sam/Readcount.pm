@@ -45,7 +45,21 @@ class Genome::Model::Tools::Sam::Readcount{
         comma_separated_format => {
             is  => 'Boolean',
             default => 0,
-            doc => "report the mapping qualities as a comma separated list. This is the -d paremeter. This is only available in versions 0.3 and later.",
+            doc => "report the mapping qualities as a comma separated list. This is the -d parameter. This is only available in versions 0.3 to 0.4.",
+        },
+        max_count => {
+            is  => 'Integer',
+            doc => "max depth to avoid excessive memory. This is the -d parameter in version 0.5.",
+        },
+        per_library => {
+            is  => 'Bool',
+            default => 0,
+            doc => "report results per library. This is the -p parameter in version 0.5.",
+        },
+        insertion_centric => {
+            is  => 'Bool',
+            default => 0,
+            doc => "do not include reads containing insertions after the current position in per-base counts. This is the -i parameter in version 0.5.",
         },
     ],
     doc => "Tool to get readcount information from a bam",
@@ -67,7 +81,11 @@ sub readcount_path {
     my $path;
     if ($version eq "0.2") {
         $path = "/gsc/bin/bam-readcount";
-    } else {
+    } 
+    elsif ($version eq "0.5") {
+        $path = "/gscuser/dlarson/src/bam-readcount/build/bin/bam-readcount";
+    }
+    else {
         $path = "/usr/bin/bam-readcount$version";
     }
 
@@ -79,6 +97,7 @@ sub readcount_path {
 
 sub execute {
     my $self = shift;
+    my $version = $self->use_version || "";
 
     my $bam = $self->bam_file;
     unless (-s $bam) {
@@ -102,9 +121,19 @@ sub execute {
     if ($self->minimum_base_quality) {
         $command .= " -b " . $self->minimum_base_quality;
     }
-    if ($self->comma_separated_format) {
+    if ($self->comma_separated_format && ($version eq "0.3" or $version eq "0.4")) {
         $command .= " -d";
     }
+    if(defined $self->max_count) {
+        $command .= " -d " . $self->max_count;
+    }
+    if($self->per_library) {
+        $command .= " -p";
+    }
+    if($self->insertion_centric) {
+        $command .= " -i";
+    }
+        
 
     Genome::Sys->shellcmd(
         cmd => "$command > $output_file 2> /dev/null",
