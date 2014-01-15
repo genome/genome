@@ -4,6 +4,8 @@ use Genome;
 use IO::File;
 use warnings;
 use Genome::Model::Tools::Vcf::Helpers qw/convertIub/;
+use Genome::File::BamReadcount::Reader;
+
 
 
 class Genome::Model::Tools::Analysis::Coverage::BamReadcount{
@@ -302,7 +304,7 @@ sub execute {
                     $indelVariantHash{$key} = join("\t",($fields[3],$fields[4]));
                 }
                 $foundHash{join("\t",($fields[0],$fields[1],$fields[3],$fields[4]))} = 0;
-                if(length($fields[3]) > 1) {
+                if(length($fields[3]) > 1 && !$use_varscan) {
                     $fields[1] -= 1;
                 }
                 print INDELFILE join("\t",($fields[0],$fields[1],$fields[2],$fields[3],$fields[4])) . "\n";
@@ -705,23 +707,17 @@ sub execute {
                 die $self->error_message;
             }
 
-            my %readdepth;
-            my %reads;
-
-            #store indel counts
-            $inFh = IO::File->new( "$tempdir/readcounts_indel" ) || die "can't open indel readcount file\n";
-            while( my $line = $inFh->getline )
-            {
-                chomp($line);
-                my ($chr, $pos, $ref, $depth, @counts) = split("\t",$line);
+            my $reader = new Genome::File::BamReadcount::Reader("$tempdir/readcounts_indel");
+            while( my $entry = $reader->next) { 
 
                 my $ref_count = 0;
                 my $var_count = 0;
 
-                unless((defined($indelVariantHash{join("\t",($chr, $pos))}))){
+                my $key = join("\t", $entry->chromosome, $entry->position);
+                unless((defined($indelVariantHash{$key}))){
                     next;
                 }
-                my ($knownRef, $knownVar) = split("\t",$indelVariantHash{join("\t",($chr, $pos))});
+                my ($knownRef, $knownVar) = split("\t",$indelVariantHash{$key});
                 my $testvarallele;
                 if($knownRef =~ /0|\-|\*/) { #INS
                     $testvarallele = "+$knownVar"
@@ -733,30 +729,23 @@ sub execute {
                     print "WARNING - $knownRef/$knownVar isn't an indel, how did it get in the indel hash?\n";
                 }
 
-
-                #go through each base at that position, grab the correct one
-                foreach my $count_stats (@counts) {
-                    my ($allele, $count, $mq, $bq) = split /:/, $count_stats;
-
-                    if ($allele ne $testvarallele){
-                        $ref_count += $count;
+                for my $allele ($entry->alleles) {
+                    if($allele ne $testvarallele) {
+                        $ref_count += $entry->metrics_for($allele)->count;
                     }
                     else {
-                        if($allele eq $testvarallele) {
-                            $var_count += $count;
-                        }
+                        $var_count += $entry->metrics_for($allele)->count;
                     }
-
                 }
-                if ($depth ne '0') {
-                    filterAndPrint($chr, $pos, $knownRef, $knownVar, $ref_count, $var_count, ($var_count/$depth)*100,
+                if ($entry->depth ne '0') {
+                    filterAndPrint($entry->chromosome, $entry->position, $knownRef, $knownVar, $ref_count, $var_count, ($var_count/$entry->depth)*100,
                         $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);            
                 }
                 else {
-                    filterAndPrint($chr, $pos, $knownRef, $knownVar, $ref_count, $var_count, 0,
+                    filterAndPrint($entry->chromosome, $entry->position, $knownRef, $knownVar, $ref_count, $var_count, 0,
                         $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);            
                 }
-                $foundHash{join("\t",$chr,$pos,$knownRef,$knownVar)} = 1;
+                $foundHash{join("\t",$entry->chromosome,$entry->position,$knownRef,$knownVar)} = 1;
             }
         }
     }
