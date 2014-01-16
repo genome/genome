@@ -45,9 +45,9 @@ ok($tumor_build->isa("Genome::Model::Build::ReferenceAlignment"), "Generated a t
 my $annotation_model = Genome::Test::Factory::Model::ImportedAnnotation->setup_object();
 ok($annotation_model->isa("Genome::Model::ImportedAnnotation"), "Generated an annotation model");
 my $annotation_build = Genome::Test::Factory::Build->setup_object(
-    model_id   => $annotation_model->id,
-    name       => "NCBI-human.ensembl/67_37l_v2",
-    status     => "Succeeded",
+    model_id       => $annotation_model->id,
+    name           => "NCBI-human.ensembl/67_37l_v2",
+    status         => "Succeeded",
     data_directory => $annotation_build_data_dir,
 );
 ok($annotation_build->isa("Genome::Model::Build::ImportedAnnotation"), "Generated an annotation build");
@@ -74,7 +74,6 @@ my $cmd = $pkg->create(
     output_dir              => $output_dir,
     get_read_counts         => 0,
     target_regions          => "$input_dir/target_regions.bed",
-    required_snv_callers    => 1,
 );
 ok($cmd->isa("Genome::Model::Tools::Somatic::ProcessSomaticVariation"), "Generated a process somatic variation object");
 
