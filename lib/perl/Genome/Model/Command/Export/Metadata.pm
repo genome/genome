@@ -105,7 +105,6 @@ sub execute {
     # This translates local values to those which are distributable outside of TGI.
 
     my $sanitize_file = $ENV{GENOME_HOME} . "/export/sanitize.csv";
-    print "\nExpected sanitize file: $sanitize_file\n\n";
     unless (-e $sanitize_file) {
         die "Expected external file $sanitize_file to exist to sanitize data.  Disable this if you are sure you can dump data unsanitized.";
     }
