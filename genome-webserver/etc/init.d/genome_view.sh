@@ -13,8 +13,13 @@
 PATH=/bin:/usr/bin:/sbin:/usr/sbin
 USER=www-data
 NAME="genome_view"
-PIDFILE="/var/run/kom_fastcgi/$NAME.pid"
-DAEMON="/gsc/scripts/sbin/genome_view"
+RUNDIR="/var/run/kom_fastcgi"
+PIDFILE="$RUNDIR/$NAME.pid"
+DAEMON="/gsc/scripts/sbin/gsc-cron /gsc/scripts/sbin/genome_view"
+
+export GENOME_REST_RLIMIT_CPU=900 # 15 minutes
+export GENOME_REST_RLIMIT_AS=1073741824 # 1 GB
+export GENOME_SYS_SERVICES_MEMCACHE=imp-apipe.gsc.wustl.edu:11211
 
 # Defaults
 RUN="no"
@@ -24,8 +29,16 @@ OPTIONS=""
 
 start()
 {
+    if test ! -d $RUNDIR
+    then
+        mkdir $RUNDIR
+        chown $USER:$USER $RUNDIR
+        chmod 0775 $RUNDIR
+        chmod g+s $RUNDIR
+    fi
+
     log_daemon_msg "Starting genome_view server" "$NAME"
-    start-stop-daemon --start --quiet -m -b --chuid $USER --pidfile "$PIDFILE" --exec $DAEMON -- $OPTIONS
+    start-stop-daemon --start --quiet -b --chuid $USER --pidfile "$PIDFILE" --exec $DAEMON -- $OPTIONS
 
     if [ $? != 0 ]; then
         log_end_msg 1
