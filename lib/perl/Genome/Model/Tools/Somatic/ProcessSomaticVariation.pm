@@ -30,12 +30,6 @@ class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
             doc => "name of the igv reference to use",
             example_values => ["reference_build36","b37","mm9"],
         },
-        # make 1
-        get_read_counts =>{
-            is => 'Boolean',
-            default => 1,
-            doc => "add read counts to the final variant list",
-        },
         # make pp option
         restrict_to_target_regions =>{
             is => 'Boolean',
@@ -218,15 +212,9 @@ sub execute {
     # add dbsnp/gmaf
     ($snv_file, $indel_file) = $self->_add_dbsnp_and_gmaf($snv_file, $indel_file);
 
-    if ($self->get_read_counts) {
-      $self->status_message("Getting read counts");
-      if (-s $snv_file) {
-          $snv_file   = $self->read_counts($snv_file, 'snvs');
-      }
-      if (-s $indel_file) {
-          $indel_file = $self->read_counts($indel_file, 'indels');
-      }
-    }
+    $self->status_message("Getting read counts");
+    $snv_file   = $self->read_counts($snv_file, 'snvs');
+    $indel_file = $self->read_counts($indel_file, 'indels');
 
     #------------------------------------------------------
     # combine the files into one master table
@@ -699,19 +687,19 @@ sub annotation_build {
 sub tumor_bam {
     my $self = shift;
 
-    return $self->somatic_variation_model->tumor_model->last_succeeded_build->merged_alignment_result->bam_file;
+    return $self->somatic_variation_model->tumor_model->last_succeeded_build->merged_alignment_result->bam_path;
 }
 
 sub normal_bam {
     my $self = shift;
 
-    return $self->somatic_variation_model->normal_model->last_succeeded_build->merged_alignment_result->bam_file;
+    return $self->somatic_variation_model->normal_model->last_succeeded_build->merged_alignment_result->bam_path;
 }
 
 sub ref_seq_fasta {
     my $self = shift;
 
-    return $self->tumor_model->reference_sequence_build->full_consensus_path('fa');
+    return $self->somatic_variation_model->tumor_model->reference_sequence_build->full_consensus_path('fa');
 }
 
 
