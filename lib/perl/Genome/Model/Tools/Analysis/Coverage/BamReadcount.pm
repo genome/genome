@@ -98,6 +98,14 @@ class Genome::Model::Tools::Analysis::Coverage::BamReadcount{
         default => 0,
         doc => 'use samtools mpilup and varscan readcounts for snv readcounts'
     },
+
+    per_library => {
+        is => 'Boolean',
+        is_optional => 1,
+        default => 0,
+        doc => 'generate a file containing per-library counts. Will contain a header.',
+    },
+
     ]
 };
 
@@ -465,11 +473,8 @@ sub execute {
             }
 
             #parse the results
-            my $inFh2 = IO::File->new( "$tempdir/readcounts" ) || die "can't open file\n";
-            while( my $line = $inFh2->getline )
-            {
-                chomp($line);
-                my ($chr, $pos, $ref, $depth, @counts) = split("\t",$line);
+            my $reader = new Genome::File::BamReadcount::Reader("$tempdir/readcounts");
+            while(my $entry = $reader->next) {
 
                 my $ref_count = 0;
                 my $var_count = 0;
@@ -477,12 +482,14 @@ sub execute {
                 my $knownRef;
                 my $knownVar;
 
-                if(!(defined($snvVariantHash{join("\t",($chr, $pos))}))){
+                my ($chr, $pos) = ($entry->chromosome, $entry->position);
+                my $key = join("\t", $chr, $pos);
+                if(!(defined($snvVariantHash{$key}))){
                     print STDERR "WARNING: position $chr : $pos not found in input\n";
                     next;
                 }
 
-                my @snvs = split(",",$snvVariantHash{join("\t",($chr, $pos))});
+                my @snvs = split(",",$snvVariantHash{$key});
 
                 foreach my $pair (@snvs){
                     my @as = split("\t",$pair);
@@ -493,20 +500,18 @@ sub execute {
                     my $var_freq = 0;
 
                     #go through each base at that position, grab the correct one
-                    foreach my $count_stats (@counts) {
-                        my ($allele, $count, $mq, $bq) = split /:/, $count_stats;
-
+                    for my $allele ($entry->alleles) {
                         # assume that the ref call is ACTG, not iub
                         # (assumption looks valid in my files)
                         if ($allele eq $knownRef){
-                            $ref_count += $count;
+                            $ref_count += $entry->metrics_for($allele)->count;
                             next;
                         }
 
                         # if we're counting all non-reference reads, not just the specified allele
                         if($count_non_reference_reads){
                             unless($allele eq $knownRef){
-                                $var_count += $count;
+                                $var_count += $entry->metrics_for($allele)->count;
                             }
                             next;
                         }
@@ -514,12 +519,12 @@ sub execute {
                         # if this base is included in the IUB code for
                         # for the variant, (but doesn't match the ref)
                         if (matchIub($allele,$knownRef,$knownVar)){
-                            $var_count += $count;
+                            $var_count += $entry->metrics_for($allele)->count;
                         }
 
                     }
-                    if ($depth ne '0') {
-                        $var_freq = $var_count/$depth * 100;
+                    if ($entry->depth ne '0') {
+                        $var_freq = $var_count/$entry->depth * 100;
                     }
 
                     $foundHash{join("\t",$chr,$pos,$knownRef,$knownVar)} = 1;
