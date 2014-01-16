@@ -184,55 +184,35 @@ sub execute {
         return 0;
     }
 
+    sub shouldFilter {
+        my ($ref_count, $var_count, $var_freq, $min_depth, $max_depth, $min_vaf, $max_vaf) = @_;
+        if($var_freq eq "NA") {
+            return 1;
+        }
+        else {
+            if(defined($min_depth) && $min_depth ne "NA") {
+                return 1 if(($ref_count + $var_count) < $min_depth);
+            }      
+            if(defined($max_depth) && $max_depth ne "NA") {
+                return 1 if(($ref_count + $var_count) > $max_depth);
+            }
+            if(defined($min_vaf) && $min_vaf ne "NA") {
+                return 1 if( $var_freq < $min_vaf );
+            }
+            if(defined($max_vaf) && $max_vaf ne "NA") {
+                return 1 if( $var_freq > $max_vaf)
+            }
+        }
+        return 0;
+    }
 
     sub filterAndPrint{
         my ($chr, $pos, $knownRef, $knownVar, $ref_count, $var_count, $var_freq,
             $min_depth,$max_depth,$min_vaf,$max_vaf,$OUTFILE) = @_;
-        #filters on the output
-        my $do_print=1;
-
         #handle the special case where this value is NA, which means don't filter, but
         #pass everything through. This lets AddReadcounts.pm work correctly.
-        if(defined($min_depth)){
-            unless($min_depth eq "NA"){
-                if($var_freq eq "NA"){
-                    $do_print = 0;
-                } else {
-                    $do_print = 0 if(($ref_count + $var_count) < $min_depth);
-                }
-            }
-        }
-        if(defined($max_depth)){
-            unless($max_depth eq "NA"){
-                if($var_freq eq "NA"){
-                    $do_print = 0;
-                } else {
-                    $do_print = 0 if(($ref_count + $var_count) > $max_depth);
-                }
-            }
-        }
 
-        if(defined($min_vaf)){
-            unless($min_vaf eq "NA"){
-                if($var_freq eq "NA"){
-                    $do_print = 0;
-                } elsif( $var_freq < $min_vaf) {
-                    $do_print = 0;
-                }
-            }
-        }
-        if(defined($max_vaf)){
-            unless($max_vaf eq "NA"){
-                if($var_freq eq "NA"){
-                    $do_print = 0;
-                } elsif( $var_freq > $max_vaf) {
-                    $do_print = 0;
-                }
-            }
-        }
-
-
-        if($do_print){
+        unless(shouldFilter($ref_count, $var_count, $var_freq, $min_depth, $max_depth, $min_vaf, $max_vaf)) {
             print $OUTFILE "$chr\t$pos\t$knownRef\t$knownVar\t$ref_count\t$var_count\t";
             if ($var_freq eq "NA"){
                 print $OUTFILE $var_freq;
@@ -338,6 +318,22 @@ sub execute {
     #open the output file
     my $OUTFILE;
     open($OUTFILE,">$output_file") || die "can't open $output_file for writing\n";
+
+    my @libraries;
+    if($self->per_library) {
+        my $bam_file = $self->bam_file;
+        my @header = `samtools view -H $bam_file`;
+
+        my %libraries = map { ($_) = $_ =~ /LB:(.+?)\s/; $_ => 1; } grep { /^\@RG/ } @header;
+        @libraries = sort keys %libraries;
+
+        print $OUTFILE "#chr\tpos\tref\tvar\t";
+        for my $lib (@libraries) {
+            print $OUTFILE join("\t", map { join("_", $lib, $_) } qw( ref_count var_count VAF )), "\t";
+        }
+        print $OUTFILE "\n";
+    }
+
 
 
     #------------------------------------------
