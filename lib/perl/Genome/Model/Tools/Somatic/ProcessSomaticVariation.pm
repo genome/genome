@@ -53,12 +53,6 @@ class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
             default => 0,
             doc => "add tier information to the output",
         },
-        # make 0 
-        process_svs => {
-            is => 'Boolean',
-            doc => "Build has sv calls (probably WGS data). Most exomes won't have this",
-            default => 0,
-        },
         # make 1 
         create_review_files => {
             is => 'Boolean',
@@ -204,7 +198,6 @@ sub execute {
     # Check if the necessary files exist in this build and put them in the processing location
     my $snv_file   = $self->stage_snv_file();
     my $indel_file = $self->stage_indel_file();
-    my $sv_file    = $self->stage_sv_file();
 
     #--------------------------------------------------------------
     # munge through SNV file to remove duplicates and fix IUB codes
@@ -270,7 +263,7 @@ sub execute {
     #------------------------------------------------
     # tar up the files to be sent to collaborators
     if ($self->create_archive) {
-        $self->_create_archive($sv_file);
+        $self->_create_archive();
     }
 
     return 1;
@@ -811,54 +804,6 @@ sub stage_indel_file {
     return $indel_file;
 }
 
-sub stage_sv_file {
-    my $self = shift;
-
-    my $full_output_dir = $self->_full_output_dir;
-    my $build_dir       = $self->_build_dir;
-
-    my $sv_file;
-#THIS NEEDS A TEST TO MAKE SURE THAT $self->process_svs IS BEING SET CORRECTLY
-    if ($self->process_svs) {
-        my @sv_files = glob("$build_dir/variants/sv/union-union-sv_breakdancer_*sv_squaredancer*/svs.merge.file.somatic");
-        $sv_file = $sv_files[0];
-        unless (-e $sv_file) {
-            $self->warning_message("SV results for " . $self->sample_name . " not found, skipping SVs");
-            $self->process_svs(0);
-        }
-
-        Genome::Sys->create_directory("$full_output_dir/svs");
-        Genome::Sys->create_symlink($sv_file, "$full_output_dir/svs/svs.hq") unless( -e "$full_output_dir/svs/$sv_file");
-
-#       #annotate the svs
-#       my $anno_cmd = Genome::Model::Tools::Annotate::Sv::Combine->create(
-#           input-file => $sv_file,
-#           output-file => "$full_output_dir/svs/svs.hq.annotated",
-#           annotation-build
-#           dbsnp-annotation-file /gsc/scripts/opt/genome/db/genome-db-dbsnp/human/build/37/132/dbsnp.csv
-#           dbvar-annotation-file /gsc/scripts/opt/genome/db/dbvar/human/build37/dbvar.tsv
-#           fusion-transcripts-fusion-output-file /tmp/zout.fusions
-#           repeat-masker-annotation-file /gscuser/aregier/git/genome/vep/lib/perl/Genome/repeat_masker.tsv
-#           annotator-list=Transcripts,FusionTranscripts,Dbsnp,Segdup,Dbvar
-#           segdup-annotation-file /gsc/scripts/opt/genome/db/ucsc/human/build37/segdup.tsv
-#           chrA-column 1
-#           bpA-column 2
-#           chrB-column 4
-#           bpB-column 5
-#           event-type-column 7
-#           score-column 12
-#           orient-column 8
-
-#           );
-#       unless ($anno_cmd->execute) {
-#           die "Failed to annotate sv file\n";
-#       }
-# #gmt annotate sv combine --input-file /tmp/zin --output-file /tmp/zout1 --annotation-build 124434505 --dbsnp-annotation-file /gsc/scripts/opt/genome/db/genome-db-dbsnp/human/build37/132/dbsnp.csv --dbvar-annotation-file /gsc/scripts/opt/genome/db/dbvar/human/build37/dbvar.tsv --fusion-transcripts-fusion-output-file /tmp/zout.fusions --repeat-masker-annotation-file /gscuser/aregier/git/genome/vep/lib/perl/Genome/repeat_masker.tsv --annotator-list=Transcripts,FusionTranscripts,Dbsnp,Segdup,Dbvar --segdup-annotation-file /gsc/scripts/opt/genome/db/ucsc/human/build37/segdup.tsv --chrA-column 1 --bpA-column 2 --chrB-column 4 --bpB-column 5 --event-type-column 7 --score-column 12 --orient-column 8
-    }
-
-    return $sv_file;
-}
-
 sub _filter_off_target_regions {
     my $self         = shift;
     my $file         = shift;
@@ -1077,7 +1022,6 @@ sub _create_review_files {
 
 sub _create_archive {
     my $self        = shift;
-    my $sv_file     = shift;
 
     my $build_dir       = $self->_build_dir;
     my $full_output_dir = $self->_full_output_dir;
@@ -1112,9 +1056,6 @@ sub _create_archive {
     #symlink annoted snvs and indels excel file
     Genome::Sys->create_symlink("$full_output_dir/snvs.indels.annotated.xls", "$archive_dir/snvsAndIndels.annotated.xls");
     #symlink sv calls
-    if ($self->process_svs) {
-        Genome::Sys->create_symlink("$sv_file", "$archive_dir/svs");
-    }
     #synlink cnv calls - todo
 
     #tar it up
