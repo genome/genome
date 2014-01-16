@@ -16,11 +16,12 @@ my $pkg = 'Genome::Model::Tools::Somatic::ProcessSomaticVariation';
 use_ok($pkg);
 use_ok("Genome::Test::Factory::Model::SomaticVariation");
 
-my $TEST_DATA_VERSION = 5;
+my $TEST_DATA_VERSION = 6;
 
 my $data_dir = Genome::Utility::Test->data_dir_ok($pkg, File::Spec->join($TEST_DATA_VERSION, "data"));
 my $input_dir = Genome::Utility::Test->data_dir_ok($pkg, File::Spec->join($TEST_DATA_VERSION, "input"));
 my $somatic_variation_build_data_dir = Genome::Utility::Test->data_dir_ok($pkg, File::Spec->join($TEST_DATA_VERSION, "somatic_variation_build_data"));
+my $annotation_build_data_dir = Genome::Utility::Test->data_dir_ok($pkg, File::Spec->join($TEST_DATA_VERSION, "annotation_build_data"));
 
 my $normal_model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object();
 ok($normal_model->isa("Genome::Model::ReferenceAlignment"), "Generated a reference alignment model for normal");
@@ -47,6 +48,7 @@ my $annotation_build = Genome::Test::Factory::Build->setup_object(
     model_id   => $annotation_model->id,
     name       => "NCBI-human.ensembl/67_37l_v2",
     status     => "Succeeded",
+    data_directory => $annotation_build_data_dir,
 );
 ok($annotation_build->isa("Genome::Model::Build::ImportedAnnotation"), "Generated an annotation build");
 $annotation_build->name("NCBI-human.ensembl/67_37l_v2");

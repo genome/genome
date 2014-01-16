@@ -47,12 +47,6 @@ class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
             is => 'String',
             doc => "path to a target file region. Used in conjunction with --restrict-to-target-regions to limit sites to those appearing in these regions",
         },
-        # make 1
-        add_tiers =>{
-            is => 'Boolean',
-            default => 0,
-            doc => "add tier information to the output",
-        },
         # make 1 
         create_review_files => {
             is => 'Boolean',
@@ -173,7 +167,6 @@ sub execute {
 
     my $ref_seq_build = $tumor_model->reference_sequence_build;
     my $ref_seq_fasta = $ref_seq_build->full_consensus_path('fa');
-    my $tiering_files = $model->annotation_build->data_directory . "/annotation_data/tiering_bed_files_v3/";
     $self->status_message("Processing model with sample_name: " . $self->sample_name);
 
     my $build_dir = $self->_build_dir;
@@ -225,16 +218,13 @@ sub execute {
 
     #-------------------------------------------------------
     # add tiers
-    if ($self->add_tiers) {
-        $self->status_message("Adding tiers");
-        #do annotation
-        $snv_file   = $self->addTiering($snv_file, $tiering_files);
-        $indel_file = $self->addTiering($indel_file, $tiering_files);
+    $self->status_message("Adding tiers");
+    $snv_file   = $self->addTiering($snv_file);
+    $indel_file = $self->addTiering($indel_file);
 
-        #convert back to annotation format (1-based)
-        $snv_file = bedFileToAnnoFile($snv_file);
-        $indel_file = bedFileToAnnoFile($indel_file);
-    }
+    #convert back to annotation format (1-based)
+    $snv_file = bedFileToAnnoFile($snv_file);
+    $indel_file = bedFileToAnnoFile($indel_file);
 
     #----------------------------------------------------
     # add dbsnp/gmaf
@@ -620,7 +610,7 @@ sub doAnnotation {
     my $file         = shift;
     my $subdirectory = shift;
 
-    my $annotation_build_name = $self->somatic_variation_model->annotation_build->name;
+    my $annotation_build_name = $self->annotation_build->name;
 
     if ($file =~ /.bed$/) {
         $file = bedFileToAnnoFile($file);
@@ -654,10 +644,21 @@ sub doAnnotation {
 sub addTiering{
     my $self               = shift;
     my $file               = shift;
-    my $tier_file_location = shift;
     my $outfile            = shift;
 
-    my $newfile = addName($file, "tiered");
+    my $tier_file_location = $self->annotation_build->data_directory . "/annotation_data/tiering_bed_files_v3/";
+
+    unless ($file =~ /\.bed/) {
+        $file = annoFileToBedFile($file);
+    }
+
+    my $newfile;
+    if ($outfile) {
+        $newfile = $outfile;
+    }
+    else {
+        $newfile = addName($file, "tiered");
+    }
 
     #handle zero size files
     if (-z $file) {
@@ -705,6 +706,12 @@ sub read_counts {
         Genome::Sys->shellcmd( cmd => "touch $output_file" );
     }
     return $output_file;
+}
+
+sub annotation_build {
+    my $self = shift;
+
+    return $self->somatic_variation_model->annotation_build;
 }
 
 sub tumor_bam {
