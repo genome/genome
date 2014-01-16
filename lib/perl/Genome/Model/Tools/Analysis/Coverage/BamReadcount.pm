@@ -225,9 +225,10 @@ sub execute {
 
     sub printLibs {
         my ($OUTFILE, $chr, $pos, $ref, $var, @counts) = @_;
-        print $OUTFILE "$chr\t$pos\t$ref\t$var\t";
+        print $OUTFILE "$chr\t$pos\t$ref\t$var";
         while(@counts) {
             my ($ref_count, $var_count, $var_freq) = splice @counts, 0, 3;
+            print $OUTFILE "\t",join("\t", $ref_count, $var_count),"\t";
             if ($var_freq eq "NA"){
                 print $OUTFILE $var_freq;
             } else {
@@ -507,24 +508,59 @@ sub execute {
                     my @as = split("\t",$pair);
                     $knownRef = $as[0];
                     $knownVar = $as[1];
-                    my $var_freq = 0;
+                    unless($self->per_library) {
+                        my $var_freq = 0;
 
-                    my ($ref_count, $var_count) = snvCounts($self,$entry, $knownRef, $knownVar);
+                        my ($ref_count, $var_count) = snvCounts($self,$entry, $knownRef, $knownVar);
 
-                    if ($entry->depth ne '0') {
-                        $var_freq = $var_count/$entry->depth * 100;
+                        if ($entry->depth ne '0') {
+                            $var_freq = $var_count/$entry->depth * 100;
+                        }
+
+                        $foundHash{join("\t",$chr,$pos,$knownRef,$knownVar)} = 1;
+
+                        if($count_non_reference_reads){
+                            $knownVar = "NonRef";
+                        }
+
+                        filterAndPrint($chr, $pos, $knownRef, $knownVar, $ref_count, $var_count, $var_freq,
+                            $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);
                     }
+                    else {
+                        my %counts;
+                        my $total_ref = 0;
+                        my $total_var = 0;
+                        my $total_var_freq = 0;
 
-                    $foundHash{join("\t",$chr,$pos,$knownRef,$knownVar)} = 1;
+                        for my $lib ($entry->libraries) {
+                            my $var_freq = 0;
 
-                    if($count_non_reference_reads){
-                        $knownVar = "NonRef";
+                            my ($ref_count, $var_count) = $self->snvCounts($lib, $knownRef, $knownVar);
+
+                            if ($lib->depth ne '0') {
+                                $var_freq = $var_count/$lib->depth * 100;
+                            }
+                            $counts{$lib->name} = [$ref_count, $var_count, $var_freq];
+                            $total_ref += $ref_count;
+                            $total_var += $var_count;
+                        }
+
+
+                        $foundHash{join("\t",$chr,$pos,$knownRef,$knownVar)} = 1;
+
+                        if($count_non_reference_reads){
+                            $knownVar = "NonRef";
+                        }
+
+                        if ($entry->depth ne '0') {
+                            $total_var_freq = $total_var/$entry->depth * 100;
+                        }
+                        unless(shouldFilter($total_ref, $total_var, $total_var_freq, $min_depth, $max_depth, $min_vaf, $max_vaf)) {
+                            $DB::single = 1;
+                            my @ordered_counts = (map { @$_ } @counts{@libraries});
+                            printLibs($OUTFILE, $chr, $pos, $knownRef, $knownVar, @ordered_counts);
+                        }
                     }
-
-                    filterAndPrint($chr, $pos, $knownRef, $knownVar, $ref_count, $var_count, $var_freq,
-                        $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);
-
-
                 }
             }
         }
@@ -694,6 +730,7 @@ sub execute {
                 reference_fasta => $fasta,
                 region_list => "$tempdir/indelpos",
                 insertion_centric => 1,
+                per_library => $self->per_library,
             );
             unless($return) {
                 $self->error_message("Failed to execute: Returned $return");
@@ -702,9 +739,6 @@ sub execute {
 
             my $reader = new Genome::File::BamReadcount::Reader("$tempdir/readcounts_indel");
             while( my $entry = $reader->next) { 
-
-                my $ref_count = 0;
-                my $var_count = 0;
 
                 my $key = join("\t", $entry->chromosome, $entry->position);
                 unless((defined($indelVariantHash{$key}))){
@@ -722,23 +756,44 @@ sub execute {
                     print "WARNING - $knownRef/$knownVar isn't an indel, how did it get in the indel hash?\n";
                 }
 
-                for my $allele ($entry->alleles) {
-                    if($allele ne $testvarallele) {
-                        $ref_count += $entry->metrics_for($allele)->count;
+                unless($self->per_library) {
+                    my $ref_count = 0;
+                    my $var_count = 0;
+                    ($ref_count, $var_count) = $self->indelCounts($entry, $testvarallele);
+                    if ($entry->depth ne '0') {
+                        filterAndPrint($entry->chromosome, $entry->position, $knownRef, $knownVar, $ref_count, $var_count, ($var_count/$entry->depth)*100,
+                            $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);            
                     }
                     else {
-                        $var_count += $entry->metrics_for($allele)->count;
+                        filterAndPrint($entry->chromosome, $entry->position, $knownRef, $knownVar, $ref_count, $var_count, 0,
+                            $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);            
                     }
-                }
-                if ($entry->depth ne '0') {
-                    filterAndPrint($entry->chromosome, $entry->position, $knownRef, $knownVar, $ref_count, $var_count, ($var_count/$entry->depth)*100,
-                        $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);            
+                    $foundHash{join("\t",$entry->chromosome,$entry->position,$knownRef,$knownVar)} = 1;
                 }
                 else {
-                    filterAndPrint($entry->chromosome, $entry->position, $knownRef, $knownVar, $ref_count, $var_count, 0,
-                        $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);            
+                    my %counts;
+                    my $total_ref = 0;
+                    my $total_var = 0;
+                    my $total_var_freq = 0;
+                    for my $lib ($entry->libraries) {
+                        my $var_freq = 0;
+                        my ($ref_count, $var_count) = $self->indelCounts($lib, $testvarallele);
+                        if ($lib->depth ne '0') {
+                            $var_freq = $var_count/$lib->depth * 100;
+                        }
+                        $counts{$lib->name} = [$ref_count, $var_count, $var_freq];
+                        $total_ref += $ref_count;
+                        $total_var += $var_count;
+                    }
+                    $foundHash{join("\t",$entry->chromosome,$entry->position,$knownRef,$knownVar)} = 1;
+                    if ($entry->depth ne '0') {
+                        $total_var_freq = $total_var/$entry->depth * 100;
+                    }
+                    unless(shouldFilter($total_ref, $total_var, $total_var_freq, $min_depth, $max_depth, $min_vaf, $max_vaf)) {
+                        my @ordered_counts = (map { @$_ } @counts{@libraries});
+                        printLibs($OUTFILE, $entry->chromosome, $entry->position, $knownRef, $knownVar, @ordered_counts);
+                    }
                 }
-                $foundHash{join("\t",$entry->chromosome,$entry->position,$knownRef,$knownVar)} = 1;
             }
         }
     }
@@ -748,20 +803,47 @@ sub execute {
         unless($foundHash{$k}){
             #site not called, gets a zero count
             my ($chr, $pos, $knownRef, $knownVar) = split("\t",$k);
-            filterAndPrint($chr, $pos, $knownRef, $knownVar, 0, 0, 0,
-                           $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);
+            if($self->per_library) {
+                my $num_libs = scalar(@libraries) || 1;
+                printLibs($OUTFILE, $chr, $pos, $knownRef, $knownVar, (0) x ($num_libs * 3));
+            }
+            else {
+                filterAndPrint($chr, $pos, $knownRef, $knownVar, 0, 0, 0,
+                    $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);
+            }
         }
     }
 
     foreach my $k (keys(%tooLongIndels)){
         #site too long, gets an NA value
         my ($chr, $pos, $knownRef, $knownVar) = split("\t",$k);
-        filterAndPrint($chr, $pos, $knownRef, $knownVar, "NA", "NA", "NA",
-                       $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);
+        if($self->per_library) {
+            my $num_libs = scalar(@libraries) || 1;
+            printLibs($OUTFILE, $chr, $pos, $knownVar, $knownVar, ("NA") x $num_libs * 3);
+        }
+        else {
+            filterAndPrint($chr, $pos, $knownRef, $knownVar, "NA", "NA", "NA",
+                $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);
+        }
     }
     close($OUTFILE);
     
     return(1);
+}
+
+sub indelCounts {
+    my ($self, $lib, $testvarallele) = @_;
+    my $ref_count = 0;
+    my $var_count = 0;
+    for my $allele ($lib->alleles) {
+        if($allele ne $testvarallele) {
+            $ref_count += $lib->metrics_for($allele)->count;
+        }
+        else {
+            $var_count += $lib->metrics_for($allele)->count;
+        }
+    }
+    return ($ref_count, $var_count);
 }
 
 sub snvCounts {
