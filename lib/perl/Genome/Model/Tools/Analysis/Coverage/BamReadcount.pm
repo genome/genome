@@ -223,6 +223,21 @@ sub execute {
         }
     }
 
+    sub printLibs {
+        my ($OUTFILE, $chr, $pos, $ref, $var, @counts) = @_;
+        print $OUTFILE "$chr\t$pos\t$ref\t$var\t";
+        while(@counts) {
+            my ($ref_count, $var_count, $var_freq) = splice @counts, 0, 3;
+            if ($var_freq eq "NA"){
+                print $OUTFILE $var_freq;
+            } else {
+                print $OUTFILE sprintf("%.2f",$var_freq);
+            }
+        }
+        print $OUTFILE "\n";
+    }
+
+
 
     #---------------------------
 
@@ -462,6 +477,7 @@ sub execute {
                 output_file => "$tempdir/readcounts",
                 reference_fasta => $fasta,
                 region_list => "$tempdir/snvpos",
+                per_library => $self->per_library,
             );
             unless($return) {
                 $self->error_message("Failed to execute: Returned $return");
@@ -491,34 +507,10 @@ sub execute {
                     my @as = split("\t",$pair);
                     $knownRef = $as[0];
                     $knownVar = $as[1];
-                    my $ref_count = 0;
-                    my $var_count = 0;
                     my $var_freq = 0;
 
-                    #go through each base at that position, grab the correct one
-                    for my $allele ($entry->alleles) {
-                        # assume that the ref call is ACTG, not iub
-                        # (assumption looks valid in my files)
-                        if ($allele eq $knownRef){
-                            $ref_count += $entry->metrics_for($allele)->count;
-                            next;
-                        }
+                    my ($ref_count, $var_count) = snvCounts($self,$entry, $knownRef, $knownVar);
 
-                        # if we're counting all non-reference reads, not just the specified allele
-                        if($count_non_reference_reads){
-                            unless($allele eq $knownRef){
-                                $var_count += $entry->metrics_for($allele)->count;
-                            }
-                            next;
-                        }
-
-                        # if this base is included in the IUB code for
-                        # for the variant, (but doesn't match the ref)
-                        if (matchIub($allele,$knownRef,$knownVar)){
-                            $var_count += $entry->metrics_for($allele)->count;
-                        }
-
-                    }
                     if ($entry->depth ne '0') {
                         $var_freq = $var_count/$entry->depth * 100;
                     }
@@ -772,3 +764,32 @@ sub execute {
     return(1);
 }
 
+sub snvCounts {
+    my ($self, $lib, $knownRef, $knownVar) = @_;
+    my $ref_count = 0;
+    my $var_count = 0;
+
+    for my $allele ($lib->alleles) {
+        # assume that the ref call is ACTG, not iub
+        # (assumption looks valid in my files)
+        if ($allele eq $knownRef){
+            $ref_count += $lib->metrics_for($allele)->count;
+            next;
+        }
+
+        # if we're counting all non-reference reads, not just the specified allele
+        if($self->count_non_reference_reads){
+            unless($allele eq $knownRef){
+                $var_count += $lib->metrics_for($allele)->count;
+            }
+            next;
+        }
+
+        # if this base is included in the IUB code for
+        # for the variant, (but doesn't match the ref)
+        if (matchIub($allele,$knownRef,$knownVar)){
+            $var_count += $lib->metrics_for($allele)->count;
+        }
+    }
+    return ($ref_count, $var_count);
+}
