@@ -82,9 +82,6 @@ sub searchable_classes {
         Genome::WorkOrder
         Genome::Site::TGI::Project
         Genome::Sys::Email
-        Genome::DruggableGene::DrugGeneInteractionReport
-        Genome::DruggableGene::DrugNameReport
-        Genome::DruggableGene::GeneNameReport
         Genome::InstrumentData::Imported
         Genome::Sys::User
         Genome::Wiki::Document
