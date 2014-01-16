@@ -53,18 +53,6 @@ class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
             doc => "create xml and bed files for manual review",
             default => 0,
         },
-        # make pp option
-        create_archive => {
-            is => 'Boolean',
-            doc => "create an archive suitable for passing to collaborators",
-            default => 0,
-        },
-        # not an option  make 0
-        include_vcfs_in_archive => {
-            is => 'Boolean',
-            doc => "include full vcf files in archive (very large files)",
-            default => 0,
-        },
         # pp option
         required_snv_callers => {
             is => 'Number',
@@ -248,12 +236,6 @@ sub execute {
     # now get the files together for review
     if ($self->create_review_files) {
         $self->_create_review_files();
-    }
-
-    #------------------------------------------------
-    # tar up the files to be sent to collaborators
-    if ($self->create_archive) {
-        $self->_create_archive();
     }
 
     return 1;
@@ -1023,51 +1005,6 @@ sub _create_review_files {
     $self->status_message("$review_dir/$sample_name_dir.bed");
     $self->status_message("IGV XML file is here:");
     $self->status_message("$review_dir/$sample_name_dir.xml");
-
-    return 1;
-}
-
-sub _create_archive {
-    my $self        = shift;
-
-    my $build_dir       = $self->_build_dir;
-    my $full_output_dir = $self->_full_output_dir;
-    my $archive_dir     = "$full_output_dir/" . $self->_sample_name_dir;
-    Genome::Sys->create_directory("$archive_dir");
-
-    #symlink VCF files
-    if ($self->include_vcfs_in_archive) {
-        if (-e "$build_dir/variants/indels.detailed.vcf.gz") {
-            Genome::Sys->create_symlink("$build_dir/variants/indels.detailed.vcf.gz", "$archive_dir/indels.vcf.gz");
-        }
-        elsif (-e "$build_dir/variants/indels.vcf.gz") {
-            Genome::Sys->create_symlink("$build_dir/variants/indels.vcf.gz", "$archive_dir/indels.vcf.gz");
-        }
-        else {
-            $self->warning_message("No indel VCF file available. If this is an older model, a rebuild may fix this");
-        }
-
-        if (-e "$build_dir/variants/snvs.annotated.vcf.gz") {
-            Genome::Sys->create_symlink("$build_dir/variants/snvs.annotated.vcf.gz", "$archive_dir/snvs.vcf.gz");
-        }
-        elsif (-e "$build_dir/variants/snvs.vcf.gz") {
-            Genome::Sys->create_symlink("$build_dir/variants/snvs.vcf.gz", "$archive_dir/snvs.vcf.gz");
-        }
-        else {
-            $self->warning_message("No snv VCF file available. If this is an older model, a rebuild may fix this");
-        }
-    }
-
-    #symlink annotated snvs and indels
-    Genome::Sys->create_symlink("$full_output_dir/snvs.indels.annotated", "$archive_dir/snvsAndIndels.annotated");
-    #symlink annoted snvs and indels excel file
-    Genome::Sys->create_symlink("$full_output_dir/snvs.indels.annotated.xls", "$archive_dir/snvsAndIndels.annotated.xls");
-    #symlink sv calls
-    #synlink cnv calls - todo
-
-    #tar it up
-#WRITE Genome::Sys TEST FOR THE NEW options PARAMETER
-    Genome::Sys->tar(tar_path => "$archive_dir.tar.gz", input_directory => "$archive_dir", options => "-chzvf");
 
     return 1;
 }
