@@ -705,7 +705,7 @@ sub tumor_bam {
 sub normal_bam {
     my $self = shift;
 
-    my $self->somatic_variation_model->normal_model->last_succeeded_build->merged_alignment_result->bam_file;
+    return $self->somatic_variation_model->normal_model->last_succeeded_build->merged_alignment_result->bam_file;
 }
 
 sub ref_seq_fasta {
