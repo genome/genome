@@ -53,12 +53,6 @@ class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
             default => 0,
             doc => "add tier information to the output",
         },
-        # make 1
-        add_dbsnp_and_gmaf => {
-            is => 'Boolean',
-            default => 1,
-            doc => "if this is a recent build with vcf files (Jan 2013 or later), will add the rsids and GMAF information for all SNVs",
-        },
         # make 0 
         process_svs => {
             is => 'Boolean',
@@ -251,9 +245,7 @@ sub execute {
 
     #----------------------------------------------------
     # add dbsnp/gmaf
-    if ($self->add_dbsnp_and_gmaf) {
-        ($snv_file, $indel_file) = $self->_add_dbsnp_and_gmaf($snv_file, $indel_file);
-    }
+    ($snv_file, $indel_file) = $self->_add_dbsnp_and_gmaf($snv_file, $indel_file);
 
     if ($self->get_read_counts) {
       $self->status_message("Getting read counts");
