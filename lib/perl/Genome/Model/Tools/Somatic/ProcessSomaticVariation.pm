@@ -15,9 +15,9 @@ use Params::Validate;
 class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
     is => 'Command::V2',
     has_input => [
-        somatic_variation_model => {
-            is => 'Genome::Model::SomaticVariation',
-            doc => "SomaticVariation model",
+        somatic_variation_build => {
+            is => 'Genome::Model::Build::SomaticVariation',
+            doc => 'Somactic Variation build',
         },
         output_dir => {
             is => 'Text',
@@ -57,7 +57,7 @@ class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
         sample_name =>{
             is => 'Text',
             is_mutable => 0,
-            calculate => q{ return $self->somatic_variation_model->subject->name; },
+            calculate => q{ return $self->somatic_variation_build->get_subject_name; },
             doc => "override the sample name on the build and use this name instead",
         }
     ],
@@ -109,7 +109,7 @@ class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
             is_optional => 1,
             is_transient => 1,
             is_mutable => 0,
-            calculate => q{ $self->somatic_variation_model->last_succeeded_build->data_directory },
+            calculate => q{ $self->somatic_variation_build->data_directory },
         },
     ],
 };
@@ -117,7 +117,7 @@ class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
 
 sub help_detail {
   return <<HELP;
-Given a SomaticVariation model, this tool will gather the resulting variants, remove
+Given a SomaticVariation build, this tool will gather the resulting variants, remove
 off-target sites, tier the variants, optionally filter them, etc. Calls are prepped for
 manual review in the review/ directory.
 HELP
@@ -140,28 +140,20 @@ sub execute {
         Genome::Sys->create_directory($output_dir);
     }
 
-    # Check on the input data before starting work
-    my $model = $self->somatic_variation_model;
-
     unless (-e $output_dir) {
         confess $self->error_message("Output directory not found: $output_dir");
     }
 
-    #grab the info from the model
-    my $build = $model->last_succeeded_build;
-    unless (defined($build)) {
-        confess $self->error_message("Model " . $model->id . "has no succeeded builds");
-    }
+    my $build = $self->somatic_variation_build;
 
-    my $tumor_model = $model->tumor_model;
-    my $normal_model = $model->normal_model;
+    my $tumor_model = $build->tumor_model;
+    my $normal_model = $build->normal_model;
 
     my $ref_seq_build = $tumor_model->reference_sequence_build;
     my $ref_seq_fasta = $ref_seq_build->full_consensus_path('fa');
     $self->status_message("Processing model with sample_name: " . $self->sample_name);
 
     my $build_dir = $self->_build_dir;
-
     #NEW SUBROUTINES - one for sample name, and one for dir creation
 #TEST THAT sample name is being set correctly
     # create subdirectories, get files in place
@@ -682,25 +674,25 @@ sub read_counts {
 sub annotation_build {
     my $self = shift;
 
-    return $self->somatic_variation_model->annotation_build;
+    return $self->somatic_variation_build->annotation_build;
 }
 
 sub tumor_bam {
     my $self = shift;
 
-    return $self->somatic_variation_model->tumor_model->last_succeeded_build->merged_alignment_result->bam_path;
+    return $self->somatic_variation_build->tumor_build->merged_alignment_result->bam_path;
 }
 
 sub normal_bam {
     my $self = shift;
 
-    return $self->somatic_variation_model->normal_model->last_succeeded_build->merged_alignment_result->bam_path;
+    return $self->somatic_variation_build->normal_build->merged_alignment_result->bam_path;
 }
 
 sub ref_seq_fasta {
     my $self = shift;
 
-    return $self->somatic_variation_model->tumor_model->reference_sequence_build->full_consensus_path('fa');
+    return $self->somatic_variation_build->tumor_build->reference_sequence_build->full_consensus_path('fa');
 }
 
 
@@ -809,7 +801,7 @@ sub get_or_create_featurelist_file {
     my $self = shift;
 
     my $full_output_dir = $self->_full_output_dir;
-    my $model = $self->somatic_variation_model;
+    my $build = $self->somatic_variation_build;
 
     my $featurelist_file = "$full_output_dir/featurelist";
 
@@ -821,8 +813,8 @@ sub get_or_create_featurelist_file {
     if ($self->target_regions) {
        $featurelist = $self->target_regions;
     }
-    elsif ($model->tumor_model->can('target_region_set_name') and defined($model->tumor_model->target_region_set_name)) {
-        my $featurelist_name = $model->tumor_model->target_region_set_name;
+    elsif ($build->tumor_model->can('target_region_set_name') and defined($build->tumor_model->target_region_set_name)) {
+        my $featurelist_name = $build->tumor_model->target_region_set_name;
         $featurelist = Genome::FeatureList->get(name=>$featurelist_name)->file_path;
     }
     if (defined($featurelist) && (-s $featurelist)) {

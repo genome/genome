@@ -107,7 +107,7 @@ ok($somatic_variation_build->isa("Genome::Model::Build::SomaticVariation"), "Gen
 
 my $output_dir = Genome::Sys->create_temp_directory;
 my $cmd = $pkg->create(
-    somatic_variation_model => $somatic_variation_model,
+    somatic_variation_build => $somatic_variation_build,
     output_dir              => $output_dir,
     target_regions          => "$input_dir/target_regions.bed",
     igv_reference_name      => 'b37',
