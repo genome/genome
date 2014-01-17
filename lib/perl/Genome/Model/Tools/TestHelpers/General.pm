@@ -12,10 +12,27 @@ require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(
     get_test_dir
+    get_test_data
     get_blessed_file
     ensure_file
     compare_to_blessed_file
 );
+
+sub get_test_data {
+    my ($class, $data_path, $version) = Params::Validate::validate_pos(@_,
+        1, 1, 1);
+
+    my $test_dir = get_test_dir($class, $version, 1);
+    my $test_data = File::Spec->join($test_dir, $data_path);
+
+    if (-e $test_data) {
+        note "Found test data: ($test_data)";
+    } else {
+        die "Couldn't find test data: ($test_data)";
+    }
+
+    return $test_data;
+}
 
 sub get_test_dir {
     my ($class, $version, $silent) = Params::Validate::validate_pos(@_,
