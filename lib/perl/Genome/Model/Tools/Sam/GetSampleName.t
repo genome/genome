@@ -5,7 +5,7 @@ use warnings;
 
 use above 'Genome';
 use Test::More;
-use Genome::Model::Tools::Dindel::TestHelpers qw(
+use Genome::Model::Tools::TestHelpers::General qw(
     get_test_dir
 );
 

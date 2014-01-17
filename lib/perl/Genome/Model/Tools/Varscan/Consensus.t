@@ -6,11 +6,13 @@ use warnings;
 use above 'Genome';
 use Test::More;
 use File::Spec;
-# probably a better place for these than in Dindel...
-use Genome::Model::Tools::Dindel::TestHelpers qw(
+
+use Genome::Model::Tools::TestHelpers::General qw(
     get_test_dir
-    get_ref_fasta
-    compare_output_to_test_data
+    compare_to_blessed_file
+);
+use Genome::Model::Tools::TestHelpers::Data qw(
+    get_shared_test_data
 );
 
 BEGIN {
@@ -21,6 +23,7 @@ my $class = 'Genome::Model::Tools::Varscan::Consensus';
 use_ok($class);
 
 my $VERSION = 2; # Bump this each time test data changes
+my $SHARED_DATA_VERSION = 1;
 
 my $ref_fasta = get_ref_fasta();
 
@@ -40,6 +43,10 @@ test_input_files();
 
 done_testing();
 
+sub get_ref_fasta {
+    return get_shared_test_data('human_reference_37.fa', $SHARED_DATA_VERSION);
+}
+
 sub test_without_output_vcf {
     my $output_file = File::Spec->join($output_directory, 'output.cns');
     my $cmd = $class->create(
@@ -48,7 +55,11 @@ sub test_without_output_vcf {
         output_file => $output_file,
     );
     ok($cmd->execute(), 'Successfully, ran command');
-    compare_output_to_test_data($cmd->output_file, $output_directory, $test_dir);
+    compare_to_blessed_file(
+        output_path => $cmd->output_file,
+        output_dir => $output_directory,
+        test_dir => $test_dir,
+    );
 }
 
 sub test_with_output_vcf {
@@ -61,7 +72,11 @@ sub test_with_output_vcf {
         vcf_sample_name => 'vcf_sample_name',
     );
     ok($cmd->execute(), 'Successfully, ran command');
-    compare_output_to_test_data($cmd->output_file, $output_directory, $test_dir);
+    compare_to_blessed_file(
+        output_path => $cmd->output_file,
+        output_dir => $output_directory,
+        test_dir => $test_dir,
+    );
 }
 
 sub get_command {

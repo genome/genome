@@ -8,6 +8,9 @@ use Genome::Model::Tools::TestHelpers::General qw(
     ensure_file
     compare_to_blessed_file
 );
+use Genome::Model::Tools::TestHelpers::Data qw(
+    get_shared_test_data
+);
 use Test::More;
 
 require Exporter;
@@ -18,14 +21,10 @@ our @EXPORT_OK = qw(
     compare_output_to_test_data
 );
 
+my $SHARED_DATA_VERSION = 1;
+
 sub get_ref_fasta {
-    my $reference_sequence_build = Genome::Model::Build->get(106942997);
-    my $ref_fasta = $reference_sequence_build->full_consensus_path('fa');
-
-    ensure_file($ref_fasta);
-    note "Reference sequence fasta found at ($ref_fasta)\n";
-
-    return $ref_fasta;
+    return get_shared_test_data('human_reference_37.fa', $SHARED_DATA_VERSION);
 }
 
 sub compare_output_to_test_data {
