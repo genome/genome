@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Params::Validate qw(:types);
+use above 'Genome';
 use Genome::Utility::Test 'compare_ok';
 use Test::More;
 
@@ -17,11 +18,22 @@ our @EXPORT_OK = qw(
 );
 
 sub get_test_dir {
-    my ($class, $version) = @_;
+    my ($class, $version, $silent) = Params::Validate::validate_pos(@_,
+        1, 1, {default => 0});
 
-    my $test_dir = File::Spec->join(Genome::Utility::Test->data_dir($class),
-        "v$version");
-    note("Test data located at ($test_dir)\n");
+    my $test_dir = _test_dir($class, "v$version");
+    note("Test data located at ($test_dir)\n") unless $silent;
+
+    return $test_dir;
+}
+
+sub _test_dir {
+    my ($package, $test_version) = @_;
+
+    (my $dirname = $package) =~ s/::/-/g;
+    my $test_dir = File::Spec->join($ENV{GENOME_TEST_INPUTS},
+        $dirname, $test_version);
+
     return $test_dir;
 }
 
