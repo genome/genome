@@ -105,7 +105,6 @@ sub execute {
     # This translates local values to those which are distributable outside of TGI.
 
     my $sanitize_file = $ENV{GENOME_HOME} . "/export/sanitize.csv";
-    print "\nExpected sanitize file: $sanitize_file\n\n";
     unless (-e $sanitize_file) {
         die "Expected external file $sanitize_file to exist to sanitize data.  Disable this if you are sure you can dump data unsanitized.";
     }
@@ -352,8 +351,16 @@ sub add_to_dump_queue {
         $self->add_to_dump_queue($obj->model, $queue, $exclude, $sanitize_map);
         if ($obj->isa("Genome::Model::Build::ReferenceSequence")) {
             for my $a ($self->aligner_indexes()) {
+                #Get Aligner Indexes for the aligners and reference sequences we are interested in.
                 my @i = Genome::Model::Build::ReferenceSequence::AlignerIndex->get(aligner_name => $a->{aligner_name}, aligner_version => $a->{aligner_version}, reference_build_id => $a->{reference_build_id}, aligner_params => $a->{aligner_params}, test_name => undef);
                 for my $i (@i) {
+                    my $dir = $i->output_dir;
+                    next if $dir and $dir =~ /gscarchive/;
+                    $self->add_to_dump_queue($i, $queue, $exclude, $sanitize_map);
+                }
+                #Get Annotation Indexes for the aligners and reference sequences we are interested in.
+                my @i2 = Genome::Model::Build::ReferenceSequence::AnnotationIndex->get(aligner_name => $a->{aligner_name}, aligner_version => $a->{aligner_version}, reference_build_id => $a->{reference_build_id}, aligner_params => $a->{aligner_params},  annotation_build_id => 124434505, test_name => undef);
+                for my $i (@i2) {
                     my $dir = $i->output_dir;
                     next if $dir and $dir =~ /gscarchive/;
                     $self->add_to_dump_queue($i, $queue, $exclude, $sanitize_map);
