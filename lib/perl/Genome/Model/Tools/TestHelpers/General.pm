@@ -91,7 +91,6 @@ sub _validate_for_blessed_lookup {
 
 sub ensure_file {
     my $path = shift;
-    my $announce = shift;
 
     unless (-f $path) {
         die "Couldn't find file at ($path)";
