@@ -19,7 +19,7 @@ my $pkg = 'Genome::Model::Tools::Somatic::ProcessSomaticVariation';
 use_ok($pkg);
 use_ok("Genome::Test::Factory::Model::SomaticVariation");
 
-my $TEST_DATA_VERSION = 7;
+my $TEST_DATA_VERSION = 8;
 
 my $main_dir = Genome::Utility::Test->data_dir_ok($pkg, $TEST_DATA_VERSION);
 my $data_dir = Genome::Utility::Test->data_dir_ok($pkg, File::Spec->join($TEST_DATA_VERSION, "data"));
@@ -110,6 +110,7 @@ my $cmd = $pkg->create(
     somatic_variation_model => $somatic_variation_model,
     output_dir              => $output_dir,
     target_regions          => "$input_dir/target_regions.bed",
+    igv_reference_name      => 'b37',
 );
 ok($cmd->isa("Genome::Model::Tools::Somatic::ProcessSomaticVariation"), "Generated a process somatic variation object");
 
@@ -119,5 +120,10 @@ ok(-s $cmd->report, 'Found "report" output: ' . $cmd->report);
 ok(-s $cmd->report_xls, 'Found "report.xls" output'  .  $cmd->report_xls);
 
 compare_ok($cmd->report, File::Spec->join($data_dir, 'snvs.indels.annotated'), 'report is as expected');
+
+ok(-s $cmd->review_bed, 'Found "review.bed" output: ' . $cmd->review_bed);
+ok(-s $cmd->review_xml, 'Found "review.xml" output: ' . $cmd->review_xml);
+
+compare_ok($cmd->review_bed, File::Spec->join($data_dir, 'review.bed'), 'review.bed is as expected');
 
 done_testing();

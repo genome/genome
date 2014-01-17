@@ -23,13 +23,13 @@ class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
             is => 'Text',
             doc => "Directory where output will be stored (under a subdirectory with the sample name)",
         },
-    ],
-    has_optional_input => [
         igv_reference_name =>{
             is => 'Text',
-            doc => "name of the igv reference to use",
+            doc => "name of the igv reference to use for review",
             example_values => ["reference_build36","b37","mm9"],
         },
+    ],
+    has_optional_input => [
         # make pp option
         restrict_to_target_regions =>{
             is => 'Boolean',
@@ -40,12 +40,6 @@ class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
         target_regions =>{
             is => 'String',
             doc => "path to a target file region. Used in conjunction with --restrict-to-target-regions to limit sites to those appearing in these regions",
-        },
-        # make 1 
-        create_review_files => {
-            is => 'Boolean',
-            doc => "create xml and bed files for manual review",
-            default => 0,
         },
         # pp option
         required_snv_callers => {
@@ -77,6 +71,21 @@ class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
             is => 'Path',
             calculate =>  q{ $report . '.xls' },
             calculate_from => ['report'],
+        },
+        review_dir => {
+            is => 'Path',
+            calculate => q{ File::Spec->join($output_dir, 'review') },
+            calculate_from => ['output_dir'],
+        },
+        review_bed => {
+            is => 'Path',
+            calculate =>  q{ File::Spec->join($review_dir, $_sample_name_dir . '.bed') },
+            calculate_from => ['review_dir', '_sample_name_dir' ],
+        },
+        review_xml => {
+            is => 'Path',
+            calculate =>  q{ File::Spec->join($review_dir, $_sample_name_dir . '.xml') },
+            calculate_from => ['review_dir', '_sample_name_dir' ],
         },
     ],
     has => [
@@ -153,12 +162,6 @@ sub execute {
 
     my $build_dir = $self->_build_dir;
 
-    my $igv_reference_name = $self->igv_reference_name;
-    if ($self->create_review_files && !defined($self->igv_reference_name)) {
-        confess $self->error_message("igv-reference-name required if --create-review-files is specified");
-    }
-
-
     #NEW SUBROUTINES - one for sample name, and one for dir creation
 #TEST THAT sample name is being set correctly
     # create subdirectories, get files in place
@@ -222,9 +225,7 @@ sub execute {
 
     #------------------------------------------------------
     # now get the files together for review
-    if ($self->create_review_files) {
-        $self->_create_review_files();
-    }
+    $self->_create_review_files();
 
     return 1;
 }
@@ -733,9 +734,7 @@ sub create_directories {
     Genome::Sys->create_directory("$full_output_dir");
     Genome::Sys->create_directory("$full_output_dir/snvs");
     Genome::Sys->create_directory("$full_output_dir/indels");
-    unless ($self->create_review_files) {
-        Genome::Sys->create_directory("$output_dir/review");
-    }
+    Genome::Sys->create_directory("$output_dir/review");
     Genome::Sys->create_symlink($build_dir, "$full_output_dir/build_directory");
 
     return 1;
@@ -950,7 +949,6 @@ sub _create_master_files {
 sub _create_review_files {
     my $self = shift;
 
-    my $review_dir      = $self->output_dir . "/review";
     my $sample_name_dir = $self->_sample_name_dir;
     my $full_output_dir = $self->_full_output_dir;
 
@@ -962,27 +960,22 @@ sub _create_review_files {
     }
     Genome::Sys->shellcmd(cmd => "joinx sort -i $full_output_dir/snvs.indels.annotated.tier$tierstring.tmp >$full_output_dir/snvs.indels.annotated.tier$tierstring");
     Genome::Sys->shellcmd(cmd => "rm -f $full_output_dir/snvs.indels.annotated.tier$tierstring.tmp");
-    annoFileToSlashedBedFile("$full_output_dir/snvs.indels.annotated.tier$tierstring","$review_dir/$sample_name_dir.bed");
+    annoFileToSlashedBedFile("$full_output_dir/snvs.indels.annotated.tier$tierstring",$self->review_bed);
 
-    my $tumor_bam = $self->somatic_variation_model->tumor_model->last_succeeded_build->merged_alignment_result->bam_file;
-    my $normal_bam = $self->somatic_variation_model->normal_model->last_succeeded_build->merged_alignment_result->bam_file;
+    my $tumor_bam = $self->tumor_bam;
+    my $normal_bam = $self->normal_bam;
 
     my $bam_files = join(",",($normal_bam, $tumor_bam));
     my $labels = join(",",("normal $sample_name_dir","tumor $sample_name_dir"));
 
-    my $igv_reference_name = $self->igv_reference_name;
-    unless (defined($igv_reference_name)) {
-          $self->warning_message("No IGV reference name supplied - defaulting to build 37");
-    }
-
     #create the xml file for review
     my $dumpXML = Genome::Model::Tools::Analysis::DumpIgvXmlMulti->create(
-        bams            => "$bam_files",
-        labels          => "$labels",
-        output_file     => "$review_dir/$sample_name_dir.xml",
+        bams            => $bam_files,
+        labels          => $labels,
+        output_file     => $self->review_xml,
         genome_name     => $sample_name_dir,
-        review_bed_file => "$review_dir/$sample_name_dir.bed",
-        reference_name  => $igv_reference_name,
+        review_bed_file => $self->review_bed,
+        reference_name  => $self->igv_reference_name,
     );
     unless ($dumpXML->execute) {
         confess $self->error_message("Failed to create IGV xml file");
@@ -990,9 +983,9 @@ sub _create_review_files {
 
     $self->status_message("\n--------------------------------------------------------------------------------");
     $self->status_message("Sites to review are here:");
-    $self->status_message("$review_dir/$sample_name_dir.bed");
+    $self->status_message($self->review_bed);
     $self->status_message("IGV XML file is here:");
-    $self->status_message("$review_dir/$sample_name_dir.xml");
+    $self->status_message($self->review_xml);
 
     return 1;
 }
