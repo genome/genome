@@ -8,6 +8,8 @@ use Genome;
 use Time::Piece;
 
 my $cancer_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("cancer_annotation_db")->default_value;
+my $misc_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("misc_annotation_db")->default_value;
+my $cosmic_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("cosmic_annotation_db")->default_value;
 
 class Genome::Model::ClinSeq::Command::UpdateAnalysis {
     is => 'Command::V2',
@@ -126,7 +128,26 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
         cancer_annotation_db => { 
             is => 'Genome::Db::Tgi::CancerAnnotation', 
             id_by => '_cancer_annotation_db_id',
-            doc => 'Desired TGI cancer annotation',
+            doc => 'Desired TGI cancer annotations',
+        },
+        _misc_annotation_db_id => {
+        	  is => 'Text',
+        	  default => $misc_annotation_db_id,
+        },
+        misc_annotation_db => { 
+            is => 'Genome::Db::Tgi::MiscAnnotation', 
+            id_by => '_misc_annotation_db_id',
+            doc => 'Desired TGI misc annotations',
+        },
+ 
+        _cosmic_annotation_db_id => {
+        	  is => 'Text',
+        	  default => $cosmic_annotation_db_id,
+        },
+        cosmic_annotation_db => { 
+            is => 'Genome::Db::Cosmic', 
+            id_by => '_cosmic_annotation_db_id',
+            doc => 'Desired COSMIC annotations',
         },
         display_defaults => {
               is => 'Boolean',
@@ -530,17 +551,9 @@ sub display_inputs{
   $self->status_message("dbsnp_build: " . $self->dbsnp_build->__display_name__ . " (version " . $self->dbsnp_build->version . ")");
   $self->status_message("previously_discovered_variations: " . $self->previously_discovered_variations->__display_name__ . " (version " . $self->previously_discovered_variations->version . ")");
 
-  my $cancer_annotation_db = $self->cancer_annotation_db;
-  my $cancer_annotation_db_id = $cancer_annotation_db->id;
-  $self->status_message("cancer_annotation_db: " . $cancer_annotation_db_id . " (" . $cancer_annotation_db->data_directory . ")");
-
-  my $misc_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("misc_annotation_db")->default_value;
-  my $misc_annotation_db = Genome::Db::Tgi::MiscAnnotation->get($misc_annotation_db_id);
-  $self->status_message("misc_annotation_db: " . $misc_annotation_db_id . " (" . $misc_annotation_db->data_directory . ")");
-
-  my $cosmic_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("cosmic_annotation_db")->default_value;
-  my $cosmic_annotation_db = Genome::Db::Cosmic->get($cosmic_annotation_db_id);
-  $self->status_message("cosmic_annotation_db: " . $cosmic_annotation_db_id . " (" . $cosmic_annotation_db->data_directory . ")");
+  $self->status_message("cancer_annotation_db: " . $self->cancer_annotation_db->id . " (" . $self->cancer_annotation_db->data_directory . ")");
+  $self->status_message("misc_annotation_db: " . $self->misc_annotation_db->id . " (" . $self->misc_annotation_db->data_directory . ")");
+  $self->status_message("cosmic_annotation_db: " . $self->cosmic_annotation_db->id . " (" . $self->cosmic_annotation_db->data_directory . ")");
 
   #Make sure none of the basic input models/builds have been archived before proceeding...
   unless ($self->skip_check_archived){
@@ -1896,17 +1909,9 @@ sub check_clinseq_models{
     next if ($found_nonmatching_sample);
 
     #Only consider clin-seq models whose annotation inputs match the current defaults defined for the pipeline
-    my $cancer_annotation_db = $self->cancer_annotation_db;
-    my $cancer_annotation_db_id = $cancer_annotation_db->id;
-    next unless ($model->cancer_annotation_db->id eq $cancer_annotation_db_id);
-
-    my $misc_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("misc_annotation_db")->default_value;
-    my $misc_annotation_db = Genome::Db::Tgi::MiscAnnotation->get($misc_annotation_db_id);
-    next unless ($model->misc_annotation_db->id eq $misc_annotation_db_id);
-
-    my $cosmic_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("cosmic_annotation_db")->default_value;
-    my $cosmic_annotation_db = Genome::Db::Cosmic->get($cosmic_annotation_db_id);
-    next unless ($model->cosmic_annotation_db->id eq $cosmic_annotation_db_id);
+    next unless ($model->cancer_annotation_db->id eq $self->cancer_annotation_db->id);
+    next unless ($model->misc_annotation_db->id eq $self->misc_annotation_db->id);
+    next unless ($model->cosmic_annotation_db->id eq $self->cosmic_annotation_db->id);
 
     #If a 'best' model is defined, only compare against clinseq models that have a model of that type defined and skip if the actual model does not match
     if ($wgs_model){
