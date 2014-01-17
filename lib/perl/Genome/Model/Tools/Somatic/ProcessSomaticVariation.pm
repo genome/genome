@@ -140,27 +140,7 @@ sub execute {
         Genome::Sys->create_directory($output_dir);
     }
 
-    unless (-e $output_dir) {
-        confess $self->error_message("Output directory not found: $output_dir");
-    }
-
-    my $build = $self->somatic_variation_build;
-
-    my $tumor_model = $build->tumor_model;
-    my $normal_model = $build->normal_model;
-
-    my $ref_seq_build = $tumor_model->reference_sequence_build;
-    my $ref_seq_fasta = $ref_seq_build->full_consensus_path('fa');
     $self->status_message("Processing model with sample_name: " . $self->sample_name);
-
-    my $build_dir = $self->_build_dir;
-    #NEW SUBROUTINES - one for sample name, and one for dir creation
-#TEST THAT sample name is being set correctly
-    # create subdirectories, get files in place
-
-    # if multiple models with the same name, add a suffix
-    my $sample_name_dir = $self->_sample_name_dir;
-    my $full_output_dir = $self->_full_output_dir;
 
     #make the directory structure
     $self->create_directories();
@@ -444,21 +424,6 @@ sub getSiteHash  {
     }
     return \%filterSites;
 }
-
-
-# sub getDeepestSubDir{ #danger - assumes one subdirectory per folder
-#     my $dir = shift;
-#     print STDERR "$dir\n";
-#     if(grep { -d "$dir/$_"} read_dir($dir)){ #subdirectories exist
-#         #get subdir, recurse into it
-#         my @z = grep { -d "$dir/$_"} read_dir($dir);
-#         @z = grep{ ! /indel/ } @z;
-#         return(getDeepestSubDir("$dir/$z[0]"));
-#     } else {
-#         return($dir);
-#     }
-# }
-
 
 ##TODO - these two functions are brittle. There needs to be a better way to grab calls for specific callers. Ideally, from the VCF...
 sub getVcfFile{
