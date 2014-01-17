@@ -5,9 +5,11 @@ package Genome::Model::ClinSeq::Command::UpdateAnalysis;
 use strict;
 use warnings;
 use Genome;
-use Genome::Model::ClinSeq;
-use Data::Dumper;
 use Time::Piece;
+
+my $cancer_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("cancer_annotation_db")->default_value;
+my $misc_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("misc_annotation_db")->default_value;
+my $cosmic_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("cosmic_annotation_db")->default_value;
 
 class Genome::Model::ClinSeq::Command::UpdateAnalysis {
     is => 'Command::V2',
@@ -119,6 +121,34 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
               id_by => '_previously_discovered_variations_id',
               doc => 'Desired previously discovered variants build',
         },
+        _cancer_annotation_db_id => {
+        	  is => 'Text',
+        	  default => $cancer_annotation_db_id,
+        },
+        cancer_annotation_db => { 
+            is => 'Genome::Db::Tgi::CancerAnnotation', 
+            id_by => '_cancer_annotation_db_id',
+            doc => 'Desired TGI cancer annotations',
+        },
+        _misc_annotation_db_id => {
+        	  is => 'Text',
+        	  default => $misc_annotation_db_id,
+        },
+        misc_annotation_db => { 
+            is => 'Genome::Db::Tgi::MiscAnnotation', 
+            id_by => '_misc_annotation_db_id',
+            doc => 'Desired TGI misc annotations',
+        },
+ 
+        _cosmic_annotation_db_id => {
+        	  is => 'Text',
+        	  default => $cosmic_annotation_db_id,
+        },
+        cosmic_annotation_db => { 
+            is => 'Genome::Db::Cosmic', 
+            id_by => '_cosmic_annotation_db_id',
+            doc => 'Desired COSMIC annotations',
+        },
         display_defaults => {
               is => 'Boolean',
               doc => 'Display current default processing profiles and annotation/reference genome inputs',
@@ -136,7 +166,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
         tumor_sample_common_names => {
               #TODO: Is there a better way to determine which samples are 'tumor'?
               is => 'Text',
-              default => 'tumor|met|post treatment|recurrence met|pre-treatment met|pin lesion|relapse|xenograft',
+              default => 'tumor|met|post treatment|recurrence met|pre-treatment met|pin lesion|relapse|xenograft|pre-resistant|post-resistant',
               doc => 'The possible sample common names used in the database to specify a Tumor sample',
         },
         instrument_data_to_exclude => {
@@ -146,6 +176,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
         skip_check_archived => {
               is => 'Boolean',
               doc => 'Check if builds are currently archived',
+              default => 1,
         },
         check_archivable_status => {
               is => 'Boolean',
@@ -520,17 +551,9 @@ sub display_inputs{
   $self->status_message("dbsnp_build: " . $self->dbsnp_build->__display_name__ . " (version " . $self->dbsnp_build->version . ")");
   $self->status_message("previously_discovered_variations: " . $self->previously_discovered_variations->__display_name__ . " (version " . $self->previously_discovered_variations->version . ")");
 
-  my $cancer_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("cancer_annotation_db")->default_value;
-  my $cancer_annotation_db = Genome::Db::Tgi::CancerAnnotation->get($cancer_annotation_db_id);
-  $self->status_message("cancer_annotation_db: " . $cancer_annotation_db_id . " (" . $cancer_annotation_db->data_directory . ")");
-
-  my $misc_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("misc_annotation_db")->default_value;
-  my $misc_annotation_db = Genome::Db::Tgi::MiscAnnotation->get($misc_annotation_db_id);
-  $self->status_message("misc_annotation_db: " . $misc_annotation_db_id . " (" . $misc_annotation_db->data_directory . ")");
-
-  my $cosmic_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("cosmic_annotation_db")->default_value;
-  my $cosmic_annotation_db = Genome::Db::Cosmic->get($cosmic_annotation_db_id);
-  $self->status_message("cosmic_annotation_db: " . $cosmic_annotation_db_id . " (" . $cosmic_annotation_db->data_directory . ")");
+  $self->status_message("cancer_annotation_db: " . $self->cancer_annotation_db->id . " (" . $self->cancer_annotation_db->data_directory . ")");
+  $self->status_message("misc_annotation_db: " . $self->misc_annotation_db->id . " (" . $self->misc_annotation_db->data_directory . ")");
+  $self->status_message("cosmic_annotation_db: " . $self->cosmic_annotation_db->id . " (" . $self->cosmic_annotation_db->data_directory . ")");
 
   #Make sure none of the basic input models/builds have been archived before proceeding...
   unless ($self->skip_check_archived){
@@ -936,7 +959,7 @@ sub check_for_missing_and_excluded_data{
     }
   }
 
-  #Warn about builds missing intrument data
+  #Warn about builds missing instrument data
   unless (scalar(@final_models2)){
     foreach my $model_id (sort keys %problem_builds){
       my $id_string = $problem_builds{$model_id}{id_string};
@@ -1198,6 +1221,8 @@ sub check_rnaseq_models{
     next unless ($model->processing_profile_id eq $self->rnaseq_pp->id);
     next unless ($model->reference_sequence_build->id eq $self->reference_sequence_build->id);
     next unless ($model->annotation_build->id eq $self->annotation_build->id);
+    next unless ($model->cancer_annotation_db);
+    next unless ($model->cancer_annotation_db eq $self->cancer_annotation_db->id);
     push (@final_models, $model);
     #$self->status_message("\t\tName: " . $model->name . " (" . $model->id . ")");
   }
@@ -1529,11 +1554,12 @@ sub create_rnaseq_model{
   my $annotation_id = $self->annotation_build->id;
   my $reference_build_id = $self->reference_sequence_build->id;
   my $rnaseq_pp_id = $self->rnaseq_pp->id;
+  my $cancer_annotation_db_id= $self->cancer_annotation_db->id;
 
   my @commands;
 
   push(@commands, "\n#Create an RNA-seq model as follows:");
-  push(@commands, "genome model define rna-seq  --reference-sequence-build='$reference_build_id'  --annotation-build='$annotation_id'  --subject='$sample_name'  --processing-profile='$rnaseq_pp_id'  --instrument-data='$iids_list'");
+  push(@commands, "genome model define rna-seq  --reference-sequence-build='$reference_build_id'  --annotation-build='$annotation_id'  --cancer-annotation-db='$cancer_annotation_db_id' --subject='$sample_name'  --processing-profile='$rnaseq_pp_id'  --instrument-data='$iids_list'");
   push(@commands, "genome model build start ''");
 
   foreach my $line (@commands){
@@ -1883,17 +1909,9 @@ sub check_clinseq_models{
     next if ($found_nonmatching_sample);
 
     #Only consider clin-seq models whose annotation inputs match the current defaults defined for the pipeline
-    my $cancer_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("cancer_annotation_db")->default_value;
-    my $cancer_annotation_db = Genome::Db::Tgi::CancerAnnotation->get($cancer_annotation_db_id);
-    next unless ($model->cancer_annotation_db->id eq $cancer_annotation_db_id);
-
-    my $misc_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("misc_annotation_db")->default_value;
-    my $misc_annotation_db = Genome::Db::Tgi::MiscAnnotation->get($misc_annotation_db_id);
-    next unless ($model->misc_annotation_db->id eq $misc_annotation_db_id);
-
-    my $cosmic_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("cosmic_annotation_db")->default_value;
-    my $cosmic_annotation_db = Genome::Db::Cosmic->get($cosmic_annotation_db_id);
-    next unless ($model->cosmic_annotation_db->id eq $cosmic_annotation_db_id);
+    next unless ($model->cancer_annotation_db->id eq $self->cancer_annotation_db->id);
+    next unless ($model->misc_annotation_db->id eq $self->misc_annotation_db->id);
+    next unless ($model->cosmic_annotation_db->id eq $self->cosmic_annotation_db->id);
 
     #If a 'best' model is defined, only compare against clinseq models that have a model of that type defined and skip if the actual model does not match
     if ($wgs_model){
