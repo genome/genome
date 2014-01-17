@@ -166,11 +166,15 @@ sub execute {
   my $result = $self->gather_variants('-somatic_builds'=>$somatic_builds);
   my $variants = $result->{'variants'};
   my $header = $result->{'header'};
+  
+  #TODO: Perform hotspot analysis of critical mutation sites
+  #If these variants are not already in the list, inject them so that all subsequent steps are performed on these sites...
+  #As a starting point create a database of these variants, separate into SNVs and Indels and then tier them
 
   #Make note of which variants correspond to $self->target_gene_list
   $self->intersect_target_gene_list('-variants'=>$variants);
 
-  #TODO: Pull in source variant caller info from the clin-seq build results
+  #Pull in source variant caller info from the clin-seq build results
   $self->get_variant_caller_sources('-variants'=>$variants);
 
   #Print a grand table of all annotated variants with extra annotation columns (tier, target gene list)
@@ -180,9 +184,12 @@ sub execute {
   my $align_builds = $self->get_ref_align_builds('-somatic_builds'=>$somatic_builds);
 
   #Get bam-readcounts for all positions for all BAM files
-  #TODO: This will need to be done at the level of replicate libraries once that readcounting tool is availble.  For now just use standard bam read counts
   my $grand_anno_count_file = $self->add_read_counts('-align_builds'=>$align_builds, '-grand_anno_file'=>$grand_anno_file);
   
+  #TODO: This will need to be done at the level of replicate libraries once that readcounting tool is availble.  For now just use standard bam read counts
+  #Example usage for per-library BAM readcounting from Dave Larson
+  #perl -I ~/src/genome/lib/perl/ `which gmt` analysis coverage add-readcounts --bam-file ~dlarson/src/bam-readcount/test-data/test.bam --genome-build ~dlarson/src/somatic-snv-test-data/ref.fa --variant-file variants_wheader.csv --output-file add_readcount_new5.csv --per-library 
+
   #Parse the BAM read count info and gather minimal data needed to apply filters:
   #Max normal VAF, Min Coverage
   $self->parse_read_counts('-align_builds'=>$align_builds, '-grand_anno_count_file'=>$grand_anno_count_file, '-variants'=>$variants);
@@ -204,6 +211,9 @@ sub execute {
 
   #TODO: Write out final tsv files (filtered and unfiltered), a clean version with useless columns removed, and an Excel spreadsheet version of the final file
   $self->print_final_files('-variants'=>$variants, '-grand_anno_count_file'=>$grand_anno_count_file, '-case_name'=>$case_name);
+
+  #Produce some visualizations for variants in the target gene list as well as all high quality variants, the higher VAF variants etc.
+  #If there are two tumors, Produce SciClone plots showing tumor1 vs. tumor2 VAF and with gene names labelled
 
 
   print "\n\n";
