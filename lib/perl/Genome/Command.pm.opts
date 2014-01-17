@@ -9999,25 +9999,6 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>gene-name-report',
     [
-      '>lookup-interactions',
-      [
-        'color!',
-        undef,
-        'debug!',
-        undef,
-        'gene-identifiers=s@',
-        'files',
-        'headers!',
-        undef,
-        'output-file=s',
-        'files',
-        'gene-file=s',
-        undef,
-        'filter=s',
-        'files',
-        'help!',
-        undef
-      ],
       '>convert-to-entrez',
       [
         'color!',
@@ -10475,12 +10456,6 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>purge-orphans',
       [
-        'start=s',
-        undef,
-        'rows=s',
-        undef,
-        'batch-size=s',
-        undef,
         'help!',
         undef
       ],
