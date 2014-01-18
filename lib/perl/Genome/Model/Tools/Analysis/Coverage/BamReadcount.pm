@@ -556,8 +556,15 @@ sub execute {
                             $total_var_freq = $total_var/$entry->depth * 100;
                         }
                         unless(shouldFilter($total_ref, $total_var, $total_var_freq, $min_depth, $max_depth, $min_vaf, $max_vaf)) {
-                            $DB::single = 1;
-                            my @ordered_counts = (map { @$_ } @counts{@libraries});
+                            my @ordered_counts;
+                            for my $count_ref (@counts{@libraries}) {
+                                if(defined $count_ref) {
+                                    push @ordered_counts, @$count_ref;
+                                }
+                                else {
+                                    push @ordered_counts, (0,0,0);
+                                }
+                            }
                             printLibs($OUTFILE, $chr, $pos, $knownRef, $knownVar, @ordered_counts);
                         }
                     }
@@ -790,7 +797,16 @@ sub execute {
                         $total_var_freq = $total_var/$entry->depth * 100;
                     }
                     unless(shouldFilter($total_ref, $total_var, $total_var_freq, $min_depth, $max_depth, $min_vaf, $max_vaf)) {
-                        my @ordered_counts = (map { @$_ } @counts{@libraries});
+                        #this is duplicated from above and should be refactored
+                        my @ordered_counts;
+                        for my $count_ref (@counts{@libraries}) {
+                            if(defined $count_ref) {
+                                push @ordered_counts, @$count_ref;
+                            }
+                            else {
+                                push @ordered_counts, (0,0,0);
+                            }
+                        }
                         printLibs($OUTFILE, $entry->chromosome, $entry->position, $knownRef, $knownVar, @ordered_counts);
                     }
                 }
@@ -819,7 +835,7 @@ sub execute {
         my ($chr, $pos, $knownRef, $knownVar) = split("\t",$k);
         if($self->per_library) {
             my $num_libs = scalar(@libraries) || 1;
-            printLibs($OUTFILE, $chr, $pos, $knownVar, $knownVar, ("NA") x $num_libs * 3);
+            printLibs($OUTFILE, $chr, $pos, $knownVar, $knownVar, ("NA") x ($num_libs * 3));
         }
         else {
             filterAndPrint($chr, $pos, $knownRef, $knownVar, "NA", "NA", "NA",
