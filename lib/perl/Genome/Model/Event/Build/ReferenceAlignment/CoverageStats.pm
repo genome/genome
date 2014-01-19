@@ -77,7 +77,8 @@ sub _reference_sequence_matches {
     }
 
     unless ($roi_reference->is_compatible_with($reference)) {
-        if(Genome::Model::Build::ReferenceSequence::Converter->get(source_reference_build => $roi_reference, destination_reference_build => $reference)) {
+        my @sr = Genome::Model::Build::ReferenceSequence::Converter->get(source_reference_build => $roi_reference, destination_reference_build => $reference);
+        if(@sr) {
             $self->status_message('Will run converter on ROI list.');
         } else {
             $self->error_message('reference sequence: ' . $reference->name . ' does not match the reference on the region of interest: ' . $roi_reference->name);
