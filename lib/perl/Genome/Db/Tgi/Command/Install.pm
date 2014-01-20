@@ -16,8 +16,8 @@ class Genome::Db::Tgi::Command::Install {
 
 sub help_synopsis {
     return <<EOS
-genome db tgi install cancer-annotation/human/build37-20131010.1
-genome db tgi install misc-annotation/human/build37-20130113.1
+genome db tgi install --subsource=cancer-annotation --species=human --branch=human-build37-20130401
+genome db tgi install --subsource=misc-annotation --species=human --branch=human-build37-20130113
 EOS
 }
 

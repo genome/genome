@@ -25,13 +25,6 @@ sub help_detail {
     return <<EOS
 Install a file-based database from one of the canonical sets at http://github.com/genome-vendor/genome-db-\$SOURCE-data.git.
 
-
-genome db cosmic install --branch=65_v2
-
-genome db tgi install --subsource=cancer-annotation --species=human --branch=human-build37-20130401
-
-genome db tgi install --subsource=misc-annotation --species=human --branch=human-build37-20130113
-
 EOS
 }
 
@@ -63,26 +56,34 @@ sub execute {
     my $subsource = $self->subsource;
     my $species = $self->species;
     my $branch = $self->branch;
+    my $build = '';
 
     #If there is 'human-' or 'mouse-' a the beginning of the branch name, do not use this in the directory name (arbitrary convention)
     #Other arbitrary parsing of the final dirname should go here
     my $dirname;
-    if ($branch =~ /human\-(.*)/){
+    if($branch =~ /\w+\-(build\d+)\-(\d+)/){
+        $build = $1;
+        $dirname = $2;
+    }elsif ($branch =~ /human\-(.*)/){
         $dirname = $1;
     }elsif($branch =~ /mouse\-(.*)/){
         $dirname = $1; 
     }else{
         $dirname = $branch;
     }
-    
+    #Override 'dbsnp' source name 'dbsnp' to 'genome-db-dbsnp'. We have *different* DBs name 'dbsnp' and 'genome-db-dbsnp'...
+    $source = 'genome-db-dbsnp' if ($source eq 'dbsnp');
+
     $self->status_message("Repo is: " . $repo);
     $self->status_message("Source is: " . $source);
     $self->status_message("Subsource is: " . $subsource) if $self->subsource;
     $self->status_message("Species is: " . $species) if $self->species;
-    $self->status_message("Branch is: " . $branch);
+    $self->status_message("Build is: " . $build) if $build;
     $self->status_message("Dirname is: " . $dirname);
+    $self->status_message("Branch is: " . $branch);
 
     my $subdir = $dirname;
+    $subdir = $build . "/" . $subdir if $build;
     $subdir = $species . "/" . $subdir if $species;
     $subdir = $subsource . "/" . $subdir if $subsource;
     $subdir = $source . "/" . $subdir;
@@ -115,6 +116,7 @@ sub execute {
     my $latest = $dir . "/" . $source;
     $latest .= "/" . $subsource if $subsource;
     $latest .= "/" . $species if $species;
+    $latest .= "/" . $build if $build;
     $latest .= "/" . "/latest";
     if (-e $latest) {
         unlink $latest;
