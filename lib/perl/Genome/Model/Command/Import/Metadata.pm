@@ -211,7 +211,7 @@ sub execute {
             }
             
             # TODO: standardize on a method in the class to initialize imported data
-            # This shoudl match a companion method to export data.
+            # This should match a companion method to export data.
             if ($o->isa("Genome::Disk::Volume")) {
                 # this only changes when we do something special to mount a remote system r/w
                 # and would require interaction with the remote GMS
@@ -219,7 +219,22 @@ sub execute {
             }
         }
     }
+
+    #Import file based databases that we need but that are not inputs on models and therefore can not be resolved automatically
+    $self->status_message("manually installing some file based databases from github");
+
+    #genome db ucsc install --species=human --branch=human-build37
+    eval { Genome::Db::Ucsc::Command::Install->execute(species => 'human', branch => 'human-build37'); };
+    die $self->error_message("errors installing ucsc db human-build37: $@") if $@;
     
+    #genome db db-var install --species=human --branch=human-build37
+    eval { Genome::Db::DbVar::Command::Install->execute(species => 'human', branch => 'human-build37'); };
+    die $self->error_message("errors installing dbvar db human-build37: $@") if $@;
+
+    #genome db dbsnp install --species=human --branch=human-build37-132
+    eval { Genome::Db::Dbsnp::Command::Install->execute(species => 'human', branch => 'human-build37-132'); };
+    die $self->error_message("errors installing dbsnp db human-build37-132: $@") if $@;
+
     $self->status_message("import complete");
     return 1;
 };
