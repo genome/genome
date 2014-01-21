@@ -802,7 +802,7 @@ sub get_or_create_featurelist_file {
         return $featurelist_file;
     }
     else {
-        return 0;
+        return;
     }
 }
 
