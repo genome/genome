@@ -75,26 +75,49 @@ sub run_predictor {
     return 1;
 }
 
+sub _get_locus_from_fasta_header {
+    my $self = shift;
+    
+    $self->input_fasta_file;
+    #get headers
+    
+    #check header format 
+    my ($locus, $contig, $start, $stop) = $fasta_header =~ /^\>\w*?\-?(\w+)\_(Contig.*)\s(\d+)\s(\d+)$/; 
+
+    #get locus id and ensure only one exists
+
+    return $locus_id;
+}
+
 
 sub _create_config_files {
 
-Genome/Model/Tools/Ber/AmgapPrepareBER.pm
+    my $self = shift;
 
-Manually running details:
-> perl ~/git/xu_script/BER_config_from_txtfile.pl -locus TELCIRDFT Final_BER_Naming.05-15-13.fof
+    my $locus_id = $self->_get_locus_from_fasta_header;
 
-This command creates 4 files
-TELCIRDFT_asm_feature
-TELCIRDFT_asmbl_data
-TELCIRDFT_ident2
-TELCIRDFT_stan
-
-run the command todos on the 4 files
-> todos TELCIRDFT_*
-
+    #replace with real code to produce config files in a config dir in our output directory
+    {
+        Genome/Model/Tools/Ber/AmgapPrepareBER.pm
+            
+            Manually running details:
+            > perl ~/git/xu_script/BER_config_from_txtfile.pl -locus TELCIRDFT Final_BER_Naming.05-15-13.fof
+                
+                This command creates 4 files
+                 TELCIRDFT_asm_feature
+                 TELCIRDFT_asmbl_data
+                 TELCIRDFT_ident2
+                 TELCIRDFT_stan
+                                    
+                                    run the command todos on the 4 files
+                                        > todos TELCIRDFT_*
+    }
+    
+    return 1;
 }
 
 sub _setup_dirs {
+
 Genome/Model/Tools/Ber/AmgapBerProtName.pm
 
 Manually running details:
@@ -125,7 +148,25 @@ sub _prep_input_files {
        Genome/Model/Tools/Ber/BerRunBlastphmmpfam.pm
 
        Manully running details:
-perl ~/git/xu_script/BER_config_from_txtfile.pl -locus TELCIRDFT Final_BER_Naming.05-15-13.fof
+       > for file in `cat dbshatter.fof`; do ln -s $file $file.fasta; done
+       > ~kpepin/git/staging/run_ber_prep.csh TELCIRDFT
+
+         This step takes some time, overnight, it blasts each gene vs an nr db and runs hmmpfam vs an hmm db.
+
+         Check output and that the hmm and ber fof files created by the script are linked to src dir
+         ls -lt  /gscmnt/gc9002/info/annotation/BER/autoannotate_v2.5/src/*TELCIR*fof
+
+         For the next step you can cd src_dir
+        /gscmnt/gc9002/info/annotation/BER/autoannotate_v2.5/src, but script does it as well.
+
+    ii) Converting blastp & hmmpfam output to btab & htab files respectively
+        
+       Genome/Model/Tools/Ber/BerRunBtabhmmtab.pm
+
+        Details:
+        > ~kpepin/git/staging/run_ber_prep.step2.csh TELCIRDFT
+
+       This will take some time, overnight, as well to parse each of the blastp/hmmpfam files to btab and htab files.
 
 }
 
