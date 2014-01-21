@@ -105,25 +105,35 @@ my $somatic_variation_build = Genome::Test::Factory::Build->setup_object(
 );
 ok($somatic_variation_build->isa("Genome::Model::Build::SomaticVariation"), "Generated a somatic variation build");
 
-my $output_dir = Genome::Sys->create_temp_directory;
-my $cmd = $pkg->create(
-    somatic_variation_build => $somatic_variation_build,
-    output_dir              => $output_dir,
-    target_regions          => "$input_dir/target_regions.bed",
-    igv_reference_name      => 'b37',
-);
-ok($cmd->isa("Genome::Model::Tools::Somatic::ProcessSomaticVariation"), "Generated a process somatic variation object");
+subtest "execute with target_regions" => sub {
+    run_test(
+        somatic_variation_build => $somatic_variation_build,
+        target_regions          => "$input_dir/target_regions.bed",
+        igv_reference_name      => 'b37',
+    );
+};
 
-ok($cmd->execute(), 'Command executed');
+sub run_test {
+    my %params = @_;
 
-ok(-s $cmd->report, 'Found "report" output: ' . $cmd->report);
-ok(-s $cmd->report_xls, 'Found "report.xls" output'  .  $cmd->report_xls);
+    my $output_dir = Genome::Sys->create_temp_directory;
+    my $cmd = $pkg->create(
+        %params,
+        output_dir              => $output_dir,
+    );
+    ok($cmd->isa("Genome::Model::Tools::Somatic::ProcessSomaticVariation"), "Generated a process somatic variation object");
 
-compare_ok($cmd->report, File::Spec->join($data_dir, 'snvs.indels.annotated'), 'report is as expected');
+    ok($cmd->execute(), 'Command executed');
 
-ok(-s $cmd->review_bed, 'Found "review.bed" output: ' . $cmd->review_bed);
-ok(-s $cmd->review_xml, 'Found "review.xml" output: ' . $cmd->review_xml);
+    ok(-s $cmd->report, 'Found "report" output: ' . $cmd->report);
+    ok(-s $cmd->report_xls, 'Found "report.xls" output'  .  $cmd->report_xls);
 
-compare_ok($cmd->review_bed, File::Spec->join($data_dir, 'review.bed'), 'review.bed is as expected');
+    compare_ok($cmd->report, File::Spec->join($data_dir, 'snvs.indels.annotated'), 'report is as expected');
+
+    ok(-s $cmd->review_bed, 'Found "review.bed" output: ' . $cmd->review_bed);
+    ok(-s $cmd->review_xml, 'Found "review.xml" output: ' . $cmd->review_xml);
+
+    compare_ok($cmd->review_bed, File::Spec->join($data_dir, 'review.bed'), 'review.bed is as expected');
+}
 
 done_testing();
