@@ -72,9 +72,12 @@ BEGIN {
         GENOME_TEST_URL
     );
 
-    if ($ENV{GENOME_DEV_MODE} || $ENV{UR_DBI_NO_COMMIT}) {
+    if ($ENV{GENOME_DEV_MODE}) {
         $ENV{GENOME_SYS_SERVICES_MEMCACHE} = 'apipe-dev.gsc.wustl.edu:11211';
         $ENV{GENOME_SYS_SERVICES_SOLR} = 'http://solr-dev:8080/solr';
+    }
+
+    if ($ENV{UR_DBI_NO_COMMIT}) {
         delete $ENV{GENOME_STATSD_HOST};
         delete $ENV{GENOME_STATSD_PORT};
         delete $ENV{GENOME_DB_PAUSE};
