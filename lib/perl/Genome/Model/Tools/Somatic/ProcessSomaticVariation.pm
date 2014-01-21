@@ -778,8 +778,8 @@ sub get_or_create_featurelist_file {
     if ($self->target_regions) {
        $featurelist = $self->target_regions;
     }
-    elsif ($build->tumor_model->can('target_region_set_name') and defined($build->tumor_model->target_region_set_name)) {
-        my $featurelist_name = $build->tumor_model->target_region_set_name;
+    elsif ($build->tumor_build->can('target_region_set_name') and defined($build->tumor_build->target_region_set_name)) {
+        my $featurelist_name = $build->tumor_build->target_region_set_name;
         $featurelist = Genome::FeatureList->get(name=>$featurelist_name)->file_path;
     }
     if (defined($featurelist) && (-s $featurelist)) {

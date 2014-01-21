@@ -113,6 +113,29 @@ subtest "execute with target_regions" => sub {
     );
 };
 
+subtest "execute without target_regions" => sub {
+    my $feature_list = Genome::FeatureList->create(
+        name              => 'ProcessSomaticVariation test',
+        format            => 'true-BED',
+        content_type      => 'targeted',
+        description       => 'test target region set name feature list for ProcessSomaticVariation',
+        file_path         => "$input_dir/target_regions.bed",
+        file_content_hash => Genome::Sys->md5sum( "$input_dir/target_regions.bed" ),
+    );
+
+    Genome::Model::Build::Input->create(
+        build_id         => $tumor_build->id,
+        value_class_name => 'UR::Value',
+        value_id         => $feature_list->name,
+        name             => 'target_region_set_name',
+    );
+
+    run_test(
+        somatic_variation_build => $somatic_variation_build,
+        igv_reference_name      => 'b37',
+    );
+};
+
 sub run_test {
     my %params = @_;
 
