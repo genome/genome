@@ -1404,14 +1404,14 @@ sub check_somatic_variation_models{
     return @tmp;
   }
 
+  #If there are suitable models, check the status of their *builds*, and if neccessary launch a new build
+  my $models_status = $self->check_models_status('-models'=>\@final_models);
+
   #TODO: Now check the input builds of supposedly good somatic-variation models to make sure they are using the latest reference-alignment builds
   #We already check to see if ref-align data needs to be added to a ref-align model...  but if that does happen the somatic-models are out-of-date
   @final_models = @{$self->check_somatic_input_builds('-models'=>\@final_models)};
   $final_model_count = scalar(@final_models);
   return @tmp unless ($final_model_count > 0);
-
-  #If there are suitable models, check the status of their *builds*, and if neccessary launch a new build
-  my $models_status = $self->check_models_status('-models'=>\@final_models);
 
   #If there is one or more suitable successful models, return the models objects.  Must return all suitable models to allow checking against available clinseq models
   if ($models_status){
@@ -1433,9 +1433,6 @@ sub check_somatic_input_builds{
     my $latest_somatic_build = $somatic_model->latest_build;
     my $last_complete_somatic_build = $somatic_model->last_succeeded_build;
 
-    my $latest_tumor_build = $latest_somatic_build->tumor_build;
-    my $latest_normal_build = $latest_somatic_build->normal_build;
-
     my $tumor_model = $somatic_model->tumor_model;
     my $lc_tumor_build = $tumor_model->last_succeeded_build;
     my $normal_model = $somatic_model->normal_model;
@@ -1449,14 +1446,14 @@ sub check_somatic_input_builds{
       my $last_complete_normal_build = $last_complete_somatic_build->normal_build;
       if (($last_complete_tumor_build->id eq $lc_tumor_build->id) && ($last_complete_normal_build->id eq $lc_normal_build->id)){
         push(@final_models, $somatic_model);
-      }elsif(($latest_tumor_build->id eq $lc_tumor_build->id) && ($latest_normal_build->id eq $lc_normal_build->id)){
+      }elsif(($latest_somatic_build->tumor_build->id eq $lc_tumor_build->id) && ($latest_somatic_build->normal_build->id eq $lc_normal_build->id)){  
         $self->status_message("WARNING -> latest build of somatic model $somatic_model_id is using the latest refalign builds but has the following status: " . $latest_somatic_build->status);
       }else{
         $self->status_message("WARNING -> latest build of somatic model: $somatic_model_id is not using the last complete builds of the underlying refalign models.  Run the following:");
         $self->status_message("genome model build start $somatic_model_id");
       }
     }elsif($latest_somatic_build && $lc_tumor_build && $lc_normal_build){
-      if(($latest_tumor_build->id eq $lc_tumor_build->id) && ($latest_normal_build->id eq $lc_normal_build->id)){
+      if(($latest_somatic_build->tumor_build->id eq $lc_tumor_build->id) && ($latest_somatic_build->normal_build->id eq $lc_normal_build->id)){
         $self->status_message("WARNING -> latest build of somatic model $somatic_model_id is using the latest refalign builds but has the following status: " . $latest_somatic_build->status);
       }else{
         $self->status_message("WARNING -> latest build of somatic model: $somatic_model_id is not using the last complete builds of the underlying refalign models.  Run the following:");
@@ -1749,6 +1746,7 @@ sub check_models_status{
     my $succeeded_builds = 0;
     my $unstartable_builds = 0;
     my $scheduled_builds = 0;
+    my $total_builds = scalar(@builds);
     foreach my $build (@builds){
       my $build_id = $build->id;
       my $status = $build->status;
