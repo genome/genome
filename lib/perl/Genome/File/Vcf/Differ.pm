@@ -21,8 +21,6 @@ while (my ($A_entry, $B_entry, @columns) = $differ->next) {
     # ...
 }
 
-$differ->close;
-
 =cut
 
 sub new {

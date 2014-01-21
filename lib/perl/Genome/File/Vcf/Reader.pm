@@ -22,8 +22,6 @@ while (my $entry = $reader->next) {
     # ...
 }
 
-$reader->close;
-
 =cut
 
 sub _parse_header {
