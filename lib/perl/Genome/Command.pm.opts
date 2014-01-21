@@ -411,6 +411,19 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>db-var',
     [
+      '>install',
+      [
+        'subsource=s',
+        'files',
+        'species=s',
+        'files',
+        'branch=s',
+        'files',
+        'repo=s',
+        'files',
+        'help!',
+        undef
+      ],
       '>import',
       [
         'filename=s',
@@ -444,6 +457,19 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>dbsnp',
     [
+      '>install',
+      [
+        'subsource=s',
+        'files',
+        'species=s',
+        'files',
+        'branch=s',
+        'files',
+        'repo=s',
+        'files',
+        'help!',
+        undef
+      ],
       'help!',
       undef
     ],
@@ -741,6 +767,19 @@ $Genome::Command::OPTS_SPEC = [
           'hg18',
           'hg19'
         ],
+        'help!',
+        undef
+      ],
+      '>install',
+      [
+        'subsource=s',
+        'files',
+        'species=s',
+        'files',
+        'branch=s',
+        'files',
+        'repo=s',
+        'files',
         'help!',
         undef
       ],
