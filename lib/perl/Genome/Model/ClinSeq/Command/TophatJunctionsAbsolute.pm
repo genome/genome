@@ -3,7 +3,6 @@ package Genome::Model::ClinSeq::Command::TophatJunctionsAbsolute;
 
 use strict;
 use warnings;
-use Data::Dumper;
 use Genome;
 use Genome::Model::ClinSeq::Util qw(:all);
 

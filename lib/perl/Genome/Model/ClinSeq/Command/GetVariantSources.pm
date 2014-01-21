@@ -5,8 +5,6 @@ package Genome::Model::ClinSeq::Command::GetVariantSources;
 use strict;
 use warnings;
 use Genome;
-use Data::Dumper;
-use Genome::Model::ClinSeq::Util qw(:all);
 
 class Genome::Model::ClinSeq::Command::GetVariantSources {
     is => 'Command::V2',
@@ -181,12 +179,14 @@ sub execute {
     my $indel_results_file_sorted = $indel_results_file . ".sort";
     my $joinx_indel_sort_cmd = Genome::Model::Tools::Joinx::Sort->create(output_file=>$indel_results_file_sorted, input_files=>[$indel_results_file]);
     $joinx_indel_sort_cmd->execute();
-    Genome::Sys->shellcmd(cmd => "mv $indel_results_file_sorted $indel_results_file");
+    unlink $indel_results_file;
+    Genome::Sys->move_file($indel_results_file_sorted, $indel_results_file);
     
     my $snv_results_file_sorted = $snv_results_file . ".sort";
     my $joinx_snv_sort_cmd = Genome::Model::Tools::Joinx::Sort->create(output_file=>$snv_results_file_sorted, input_files=>[$snv_results_file]);
     $joinx_snv_sort_cmd->execute();
-    Genome::Sys->shellcmd(cmd => "mv $snv_results_file_sorted $snv_results_file");
+    unlink $snv_results_file;
+    Genome::Sys->move_file($snv_results_file_sorted, $snv_results_file);
 
     my $indel_count = keys %indels;
     $self->status_message("Stored $indel_count indels");
@@ -197,39 +197,48 @@ sub execute {
     #This should be replaced by a method which somehow determines the appropriate files automatically
     #Depending on whether the somatic variation build is for exome or wgs data, the paths will differ - this should also be determined automatically
 
-    my ($indel_strelka_results_file, $indel_gatk_results_file, $indel_pindel_results_file, $indel_varscan_results_file);
+    my ($indel_strelka_original_results_file, $indel_gatk_original_results_file, $indel_pindel_original_results_file, $indel_varscan_original_results_file);
 
     #Create a list of possible indels file paths
-    my @strelka_indel_paths = ("$build_dir/variants/indel/strelka-0.4.6.2-bc1213eb5850cc1810af3214c95cf30d/indels.hq.bed",
-                               "$build_dir/variants/indel/strelka-0.4.6.2-c5009c08801c3ffa834ecb28d4293d27/indels.hq.bed",
-                               "$build_dir/variants/indel/strelka-0.4.6.2-14acc00d0b01975892118ec71cfc3506/indels.hq.bed",
-                               "$build_dir/variants/indel/strelka-0.4.6.2-673995e8237c2c733def86d8d9b3d5a6/indels.hq.bed");
-    $indel_strelka_results_file = $self->checkResultFile('-paths'=>\@strelka_indel_paths, '-caller'=>"strelka");
+    my @strelka_indel_paths = glob("${build_dir}/variants/indel/strelka-*/indels.hq.bed");
+    $indel_strelka_original_results_file = $self->checkResultFile('-paths'=>\@strelka_indel_paths, '-caller'=>"strelka");
 
-    my @gatk_indel_paths = ("$build_dir/variants/indel/gatk-somatic-indel-5336-d41d8cd98f00b204e9800998ecf8427e/false-indel-v1-05fbf69c10534fd630b99e44ddf73c7f/indels.hq.bed");
-    $indel_gatk_results_file = $self->checkResultFile('-paths'=>\@gatk_indel_paths, '-caller'=>"gatk");
+    my @gatk_indel_paths = glob("${build_dir}/variants/indel/gatk-*/indels.hq.bed");
+    $indel_gatk_original_results_file = $self->checkResultFile('-paths'=>\@gatk_indel_paths, '-caller'=>"gatk");
     
-    my @pindel_indel_paths = ("$build_dir/variants/indel/pindel-0.5-d41d8cd98f00b204e9800998ecf8427e/pindel-somatic-calls-v1-d41d8cd98f00b204e9800998ecf8427e/pindel-vaf-filter-v1-34c9479830c83a54e5d4f73f71e9c660/pindel-read-support-v1-d41d8cd98f00b204e9800998ecf8427e/indels.hq.bed");
-    $indel_pindel_results_file = $self->checkResultFile('-paths'=>\@pindel_indel_paths, '-caller'=>"pindel");
+    my @pindel_indel_paths = glob("${build_dir}/variants/indel/pindel-*/indels.hq.bed");
+    $indel_pindel_original_results_file = $self->checkResultFile('-paths'=>\@pindel_indel_paths, '-caller'=>"pindel");
 
-    my @varscan_indel_paths = ("$build_dir/variants/indel/varscan-somatic-2.2.6-d41d8cd98f00b204e9800998ecf8427e/varscan-high-confidence-indel-v1-d41d8cd98f00b204e9800998ecf8427e/false-indel-v1-05fbf69c10534fd630b99e44ddf73c7f/indels.hq.bed");
-    $indel_varscan_results_file = $self->checkResultFile('-paths'=>\@varscan_indel_paths, '-caller'=>"varscan");
+    my @varscan_indel_paths = glob("${build_dir}/variants/indel/varscan-*/indels.hq.bed");
+    $indel_varscan_original_results_file = $self->checkResultFile('-paths'=>\@varscan_indel_paths, '-caller'=>"varscan");
 
-    my ($snv_strelka_results_file, $snv_sniper_results_file, $snv_varscan_results_file);
+    my ($snv_strelka_original_results_file, $snv_sniper_original_results_file, $snv_varscan_original_results_file);
 
     #Create a list of possible snv file paths
-    my @strelka_snv_paths = ("$build_dir/variants/snv/strelka-0.4.6.2-bc1213eb5850cc1810af3214c95cf30d/snvs.hq.bed",
-                             "$build_dir/variants/snv/strelka-0.4.6.2-c5009c08801c3ffa834ecb28d4293d27/snvs.hq.bed",
-                             "$build_dir/variants/snv/strelka-0.4.6.2-673995e8237c2c733def86d8d9b3d5a6/snvs.hq.bed",
-                             "$build_dir/variants/snv/strelka-0.4.6.2-14acc00d0b01975892118ec71cfc3506/snvs.hq.bed");
-    $snv_strelka_results_file = $self->checkResultFile('-paths'=>\@strelka_snv_paths, '-caller'=>"strelka");
+    my @strelka_snv_paths = glob("${build_dir}/variants/snv/strelka-*/snvs.hq.bed");
+    $snv_strelka_original_results_file = $self->checkResultFile('-paths'=>\@strelka_snv_paths, '-caller'=>"strelka");
 
-    my @sniper_snv_paths = ("$build_dir/variants/snv/sniper-1.0.2-74a151fc61a7a2171177397f4c4f3633/false-positive-v1-05fbf69c10534fd630b99e44ddf73c7f/somatic-score-mapping-quality-v1-39b60f48b6f8c9e63436a5424305e9fd/snvs.hq.bed");
-    $snv_sniper_results_file = $self->checkResultFile('-paths'=>\@sniper_snv_paths, '-caller'=>"sniper");
+    my @sniper_snv_paths = glob("${build_dir}/variants/snv/sniper-*/snvs.hq.bed");
+    $snv_sniper_original_results_file = $self->checkResultFile('-paths'=>\@sniper_snv_paths, '-caller'=>"sniper");
 
-    my @varscan_snv_paths = ("$build_dir/variants/snv/varscan-somatic-2.2.6-d41d8cd98f00b204e9800998ecf8427e/varscan-high-confidence-v1-d41d8cd98f00b204e9800998ecf8427e/false-positive-v1-05fbf69c10534fd630b99e44ddf73c7f/snvs.hq.bed");
-    $snv_varscan_results_file = $self->checkResultFile('-paths'=>\@varscan_snv_paths, '-caller'=>"varscan");
+    my @varscan_snv_paths = glob("${build_dir}/variants/snv/varscan-*/snvs.hq.bed");
+    $snv_varscan_original_results_file = $self->checkResultFile('-paths'=>\@varscan_snv_paths, '-caller'=>"varscan");
 
+    #Sort the caller result BED files using joinx and store in a temporary file and use that to run joinx intersect
+    my $indel_strelka_results_file =  Genome::Sys->create_temp_file_path("indel_strelka_sorted");
+    $self->joinxSortFile($indel_strelka_original_results_file, $indel_strelka_results_file);
+    my $indel_gatk_results_file =  Genome::Sys->create_temp_file_path("indel_gatk_sorted");
+    $self->joinxSortFile($indel_gatk_original_results_file, $indel_gatk_results_file);
+    my $indel_pindel_results_file =  Genome::Sys->create_temp_file_path("indel_pindel_sorted");
+    $self->joinxSortFile($indel_pindel_original_results_file, $indel_pindel_results_file);
+    my $indel_varscan_results_file =  Genome::Sys->create_temp_file_path("indel_varscan_sorted");
+    $self->joinxSortFile($indel_varscan_original_results_file, $indel_varscan_results_file);
+    my $snv_strelka_results_file =  Genome::Sys->create_temp_file_path("snv_strelka_sorted");
+    $self->joinxSortFile($snv_strelka_original_results_file, $snv_strelka_results_file);
+    my $snv_sniper_results_file =  Genome::Sys->create_temp_file_path("snv_sniper_sorted");
+    $self->joinxSortFile($snv_sniper_original_results_file, $snv_sniper_results_file);
+    my $snv_varscan_results_file =  Genome::Sys->create_temp_file_path("snv_varscan_sorted");
+    $self->joinxSortFile($snv_varscan_original_results_file, $snv_varscan_results_file);
 
     #Use 'joinx intersect' to determine which indels in the merged/union file are found in each individual caller's results file
     #gmt joinx intersect a.bed b.bed [--output-file=n.bed] --exact-pos --exact-allele
@@ -283,8 +292,8 @@ sub execute {
     close(INDEL_OUT);
 
     #Cleanup temp files
-    Genome::Sys->shellcmd(cmd => "rm $indel_results_file");
-    Genome::Sys->shellcmd(cmd => "rm $snv_results_file");
+    unlink $indel_results_file;
+    unlink $snv_results_file;
 
     #Set output files as output to this step
     die $self->error_message("Trying to set a file as output but the file does not exist: $indel_outfile") unless (-e $indel_outfile);
@@ -318,8 +327,7 @@ sub noteCaller{
     }
   }
   #when finished, delete intermediate result file from joinx - otherwise this can sometimes interfere with future runs of the tool
-  my $rm_command = "rm $intersect_file";
-  Genome::Sys->shellcmd(cmd => $rm_command);
+  unlink $intersect_file;
 }
 
 sub checkResultFile{
@@ -355,6 +363,11 @@ sub determineCaller {
     }
 }
 
+sub joinxSortFile {
+    my ($self, $ip_file, $sorted_op_file) = @_;
+    my $joinx_sort_cmd = Genome::Model::Tools::Joinx::Sort->create(output_file=>$sorted_op_file, input_files=>[$ip_file]);
+    $joinx_sort_cmd->execute();
+}
 
 1;
 

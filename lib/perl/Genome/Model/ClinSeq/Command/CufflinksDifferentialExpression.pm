@@ -5,8 +5,6 @@ use Genome;
 use Genome::Model::ClinSeq::Util qw(:all);
 use Genome::Model::ClinSeq::RnaSeqUtil qw(:all);
 
-use Data::Dumper;
-
 class Genome::Model::ClinSeq::Command::CufflinksDifferentialExpression {
     is => 'Command::V2',
     has_input => [

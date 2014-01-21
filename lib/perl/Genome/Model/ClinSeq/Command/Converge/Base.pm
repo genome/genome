@@ -184,6 +184,41 @@ sub get_final_common_name{
 }
 
 
+sub get_final_name{
+  my $self = shift;
+  my %args = @_;
+  my $clinseq_build = $args{'-clinseq_build'};
+
+  my $final_name;
+  
+  my $wgs_build = $clinseq_build->wgs_build;
+  my $exome_build = $clinseq_build->exome_build;
+  my $normal_rnaseq_build = $clinseq_build->normal_rnaseq_build;
+  my $tumor_rnaseq_build = $clinseq_build->tumor_rnaseq_build;
+
+  my @builds = ($clinseq_build, $wgs_build, $exome_build, $normal_rnaseq_build, $tumor_rnaseq_build);
+
+  my %names;
+  foreach my $build (@builds){
+    next unless $build;
+    if ($build->subject->class eq 'Genome::Individual'){
+      my $name = $build->subject->name;
+      $names{$name}=1 if $name;
+      $final_name = $name if $name;
+    }elsif ($build->subject->class eq 'Genome::Sample'){
+      my $name = $build->subject->patient->name;
+      $names{$name}=1 if $name;
+      $final_name = $name if $name;
+    }
+  }
+  if (scalar (keys %names) > 1){
+    $self->warning_message("Found multiple patient names for clin-seq build: " . $clinseq_build->id);
+  }
+
+  return ($final_name);
+}
+
+
 sub get_dna_sample_type{
   my $self = shift;
   my %args= @_;
@@ -274,6 +309,23 @@ sub resolve_input_builds{
     push (@defined_builds, $build);
   }
   return(\@defined_builds);
+}
+
+
+sub resolve_somatic_builds{
+  my $self = shift;
+  my @clinseq_builds = $self->builds;
+
+  my %somatic_builds;
+  foreach my $clinseq_build (@clinseq_builds){
+    my $wgs_build = $clinseq_build->wgs_build;
+    $somatic_builds{$wgs_build->id}{build} = $wgs_build if $wgs_build;
+    $somatic_builds{$wgs_build->id}{type} = 'wgs' if $wgs_build;
+    my $exome_build = $clinseq_build->exome_build;
+    $somatic_builds{$exome_build->id}{build} = $exome_build if $exome_build;
+    $somatic_builds{$exome_build->id}{type} = 'exome' if $exome_build;
+  }
+  return (\%somatic_builds);
 }
 
 
