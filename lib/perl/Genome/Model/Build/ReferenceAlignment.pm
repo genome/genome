@@ -85,6 +85,13 @@ class Genome::Model::Build::ReferenceAlignment {
             is => 'Genome::Model::Build::ImportedVariationList',
             id_by => 'dbsnp_build_id',
         },
+        target_region_set_name => {
+            is => 'Text',
+            via => 'inputs',
+            to => 'value_id',
+            where => [name=>'target_region_set_name'],
+            is_optional => 1,
+        },
     ],
     has_transient_optional => [
         _unfiltered_snv_file => {
