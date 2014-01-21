@@ -61,7 +61,7 @@ sub execute {
     #If there is 'human-' or 'mouse-' a the beginning of the branch name, do not use this in the directory name (arbitrary convention)
     #Other arbitrary parsing of the final dirname should go here
     my $dirname;
-    if($branch =~ /\w+\-(build\d+)\-(\d+)/){
+    if(($branch =~ /\w+\-(build\d+)\-(\d+)/) && ($source eq 'dbsnp')){
         $build = $1;
         $dirname = $2;
     }elsif ($branch =~ /human\-(.*)/){
