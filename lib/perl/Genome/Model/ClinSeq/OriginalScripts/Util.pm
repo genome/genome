@@ -1,4 +1,4 @@
-package Genome::Model::ClinSeq::Util;
+package Genome::Model::ClinSeq::OriginalScripts::Util;
 
 #Written by Malachi Griffith
 

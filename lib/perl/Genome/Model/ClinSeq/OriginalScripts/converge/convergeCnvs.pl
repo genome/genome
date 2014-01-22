@@ -20,7 +20,7 @@ use Term::ANSIColor qw(:constants);
 use Data::Dumper;
 use Statistics::Descriptive;
 use above 'Genome';
-use Genome::Model::ClinSeq::Util qw(:all);
+use Genome::Model::ClinSeq::OriginalScripts::Util qw(:all);
 use Genome::Model::ClinSeq::OriginalScripts::Converge qw(:all);
 
 my $build_ids = '';
