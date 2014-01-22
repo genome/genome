@@ -91,7 +91,7 @@ sub execute {
 
     # This tool calls some scripts which have not been converted into tools
     #TODO: Fix that so that Nate and Krishna's old code is cleaned up and brought into the fold
-    my $script_dir = Cwd::abs_path(File::Basename::dirname(__FILE__) . '/../original-scripts/') . '/';
+    my $script_dir = Cwd::abs_path(File::Basename::dirname(__FILE__) . '/../OriginalScripts/') . '/';
     unless (-d $script_dir) {
       die $self->error_message("failed to find script dir $script_dir!")
     }

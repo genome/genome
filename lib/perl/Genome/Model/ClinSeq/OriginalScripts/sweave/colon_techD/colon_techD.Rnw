@@ -1,0 +1,570 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{amscd}
+\usepackage[tableposition=top]{caption}
+\usepackage{ifthen}
+\usepackage[utf8]{inputenc}
+\usepackage[hmargin=2cm,vmargin=2cm]{geometry}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks = true,
+    linkcolor = blue
+}
+\begin{document}
+
+\title{Stratagene colon RNA-seq - Tumor vs Normal - polyA vs. Nugen Ovation}
+\author{Malachi Griffith}
+\maketitle
+
+The following is a comparison of RNA-seq libraries (1 lane each) created from human colon RNA obtained from Strategene.  The samples correspond to tumor and matched normal.  The input was either polyA purified RNA (PolyA purist) or total RNA.  BOTH were then prepared by Nugen Ovation cDNA synthesis followed by Illumina library construction and sequencing (\verb@paired 100-mers - Flowcell: 62UWCAAXX@). Results were compared at the level of cufflinks transcript expression and differential gene expression (correlation, significant genes identified, etc.) and a list of targets representing the distribution of gene FPKM values were selected for qPCR validation experiments.  In all the following, 'Nugen' refers to a library made from \textbf{total RNA} followed by cDNA synthesis with the Nugen Ovation kit and 'PolyA' refers to a library made from \textbf{polyA purified RNA} followed cDNA synthesis with the Nugen Ovation kit. 
+
+\subsubsection*{Libraries}
+\begin{itemize}
+\item Build 109043854 - polyA - Lane 3 - Tumor - \verb@'polyA_T' - (H_KH-540079-41-11865-cDNA2-lib1)@ 
+\item Build 109044379 - polyA - Lane 4 - Normal - \verb@'polyA_N' - (H_KH-540079-41-11866-cDNA2-lib1)@ 
+\item Build 109044745 - Nugen - Lane 5 - Tumor - \verb@'nugen_T' - (H_KH-540079-41-11865-cDNA3-lib1)@
+\item Build 109044779 - Nugen - Lane 6 - Normal - \verb@'nugen_N' - (H_KH-540079-41-11866-cDNA3-lib1)@
+\end{itemize}
+
+\subsubsection*{Library depths}
+Note that the library depths were not quite equal between Nugen and PolyA libraries.  The Nugen libraries had higher cluster densities on the flowcell and this translated into more total reads and more reads aligned by TopHat.  Since Nugen is the more commonly used method here at TGI, cluster formation may be optimized for this input... Furthermore, things like dynamic range of expression estimates and ability to accurately predict transcript structures are highly dependent on library depth (specifically the number of reads that can be aligned). The following numbers should be kept in mind when interpreting the library comparisons reported.   
+\begin{itemize}
+\item \verb@'polyA_T'@ | Clusters = 20,967,587 | Reads = 41,102,232 | Reads aligned by TopHat = 30,395,945 \verb@(74.0%)@
+\item \verb@'polyA_N'@ | Clusters = 20,551,116 | Reads = 41,935,174 | Reads aligned by TopHat = 30,225,983 \verb@(72.1%)@
+\item \verb@'nugen_T'@ | Clusters = 25,088,358 | Reads = 52,364,484 | Reads aligned by TopHat = 38,398,439 \verb@(73.3%)@
+\item \verb@'nugen_N'@ | Clusters = 26,182,242 | Reads = 50,176,716 | Reads aligned by TopHat = 37,328,010 \verb@(74.4%)@
+\end{itemize}
+
+\subsubsection*{Pairwise comparisons}
+\begin{itemize}
+\item \verb@1 => PolyA_T vs Nugen_T@
+\item \verb@2 => PolyA_T vs PolyA_N@
+\item \verb@3 => PolyA_T vs Nugen_N@
+\item \verb@4 => Nugen_T vs PolyA_N@
+\item \verb@5 => Nugen_T vs Nugen_N@
+\item \verb@6 => PolyA_N vs Nugen_N@
+\end{itemize}
+
+\subsection*{Description of input data}
+Each lane was aligned and processed using processing profile: 2581924 (February 2011 Human RNA-Seq Default hg18-build36). Briefly, each lane was aligned using TopHat with a known gene model GTF to provide information on known exon-exon junctions (by Jasreet).  Then the alignments were analyzed by Cufflinks.  The resulting GTF files were each individually compared back to the same known gene model GTF using cuffcompare (but non-matching transcripts were simply flagged, not removed) (by Todd).  Most of the following analysis is based on these Cufflinks predicted transcripts that were compared back to known genes for the purpose of classification Cufflinks was NOT forced to use the gene model info (i.e. they are de novo transcript structures predicted by Cufflinks).  They were also analyzed by Cuffdiff, using all six pairwise combinations individually (by Todd) and in aggregate where all four libraries and possible combinations were considered simultaneously (by Malachi). When selecting the target list, gene expression values calculated assuming known gene models were used.  Model group is 6372 (Colon Tumor/Normal RNA-Seq). Processing profile is: '2581924'.  Try: 'genome processing-profile describe 2581924' for details. 
+
+\pagebreak
+\subsection*{Highlights}
+\begin{itemize}
+\item Nugen libraries resulted in a larger range of cufflink transcript FPKM values (due to a small number of very highly expressed genes - extreme outliers - ribosomal genes?) \textbf{(p.~\pageref{text:one} -~\pageref{fig:oneb})}.
+\item PolyA libraries had a higher median gene FPKM \textbf{(p.~\pageref{text:one} -~\pageref{fig:oneb})}.
+\item Generally the distribution of gene FPKMs was comparable between Nugen and PolyA, although PolyA tended to give higher FPKMs for more genes \textbf{(p.~\pageref{text:one} -~\pageref{fig:oneb})}.
+\item The Nugen libraries resulted in larger Cufflinks transcripts identified.  In general, there are a lot of small transcripts in both sets of libraries though.  These are likely made up of two categories. (1) false positive transcripts caused by noise reads in introns and intergenic space. (2) Real transcripts that are represented by several cufflinks transcripts (i.e. the full length transcript did not assemble due to insufficient coverage or other problems, and instead you get several fragmented transcripts) \textbf{(p.~\pageref{fig:two} -~\pageref{fig:three})}.
+\item The level of correlation between Nugen and PolyA gene FPKMs (i.e. Tumor vs. Tumor and Normal vs. Normal) was acceptable (Spearman correlations: ~0.83) \textbf{(p.~\pageref{text:two})}.
+\item The level of correlation between tumor/normal within the same library type (i.e. PolyA vs. PolyA and Nugen vs. Nugen) was higher (Spearman correlations: 0.85 - 0.87) \textbf{(p.~\pageref{text:two})}.
+\item For highly expressed genes the correlations between library types look nice \textbf{(p.~\pageref{fig:threeb} -~\pageref{fig:threec})}.
+\item An assessment of differential expression is not possible for the majority of 'known' genes (likely due to insufficient coverage).  The majority of these genes may be those that are not expressed in either condition \textbf{(p.~\pageref{fig:four})}.
+\item PolyA libraries detected more differentially expressed (DE) genes between Tumor and Normal than the Nugen libraries - 7,150 for PolyA and 5,809 for Nugen (of ~65k possible) \textbf{(p.~\pageref{fig:five})}.
+\item Many genes identified as DE by Cufflinks have a small fold change, while some genes with an apparently large fold change are not DE (due to coverage level?) \textbf{(p.~\pageref{fig:six} -~\pageref{fig:seven})}.
+\item A tentative list of target genes for qPCR validation is provided \textbf{(p.~\pageref{fig:eight} -~\pageref{text:three})}.
+\end{itemize}
+
+
+<<label=data_import, cache=TRUE, echo=FALSE>>=
+options(width=60)
+polyA_T=read.table("/gscmnt/sata132/techd/twylie/Stratagene_Colon_RNA-seq/cuffDiffCompare/cuffcompare/109043854/transcripts.gtf.tmap", header=TRUE, as.is=c(1:5,12))
+polyA_N=read.table("/gscmnt/sata132/techd/twylie/Stratagene_Colon_RNA-seq/cuffDiffCompare/cuffcompare/109044379/transcripts.gtf.tmap", header=TRUE, as.is=c(1:5,12))
+nugen_T=read.table("/gscmnt/sata132/techd/twylie/Stratagene_Colon_RNA-seq/cuffDiffCompare/cuffcompare/09044745/transcripts.gtf.tmap", header=TRUE, as.is=c(1:5,12))
+nugen_N=read.table("/gscmnt/sata132/techd/twylie/Stratagene_Colon_RNA-seq/cuffDiffCompare/cuffcompare/09044779/transcripts.gtf.tmap", header=TRUE, as.is=c(1:5,12))
+comp1_fpkm=read.table("/gscmnt/sata132/techd/twylie/Stratagene_Colon_RNA-seq/cuffDiffCompare/1_x_1_trials/1/genes.fpkm_tracking", header=TRUE, as.is=c(1:6))
+comp1_diff=read.table("/gscmnt/sata132/techd/twylie/Stratagene_Colon_RNA-seq/cuffDiffCompare/1_x_1_trials/1/gene_exp.diff", header=TRUE, as.is=c(1:6,12))
+comp2_fpkm=read.table("/gscmnt/sata132/techd/twylie/Stratagene_Colon_RNA-seq/cuffDiffCompare/1_x_1_trials/2/genes.fpkm_tracking", header=TRUE, as.is=c(1:6))
+comp2_diff=read.table("/gscmnt/sata132/techd/twylie/Stratagene_Colon_RNA-seq/cuffDiffCompare/1_x_1_trials/2/gene_exp.diff", header=TRUE, as.is=c(1:6,12))
+comp3_fpkm=read.table("/gscmnt/sata132/techd/twylie/Stratagene_Colon_RNA-seq/cuffDiffCompare/1_x_1_trials/3/genes.fpkm_tracking", header=TRUE, as.is=c(1:6))
+comp3_diff=read.table("/gscmnt/sata132/techd/twylie/Stratagene_Colon_RNA-seq/cuffDiffCompare/1_x_1_trials/3/gene_exp.diff", header=TRUE, as.is=c(1:6,12))
+comp4_fpkm=read.table("/gscmnt/sata132/techd/twylie/Stratagene_Colon_RNA-seq/cuffDiffCompare/1_x_1_trials/4/genes.fpkm_tracking", header=TRUE, as.is=c(1:6))
+comp4_diff=read.table("/gscmnt/sata132/techd/twylie/Stratagene_Colon_RNA-seq/cuffDiffCompare/1_x_1_trials/4/gene_exp.diff", header=TRUE, as.is=c(1:6,12))
+comp5_fpkm=read.table("/gscmnt/sata132/techd/twylie/Stratagene_Colon_RNA-seq/cuffDiffCompare/1_x_1_trials/5/genes.fpkm_tracking", header=TRUE, as.is=c(1:6))
+comp5_diff=read.table("/gscmnt/sata132/techd/twylie/Stratagene_Colon_RNA-seq/cuffDiffCompare/1_x_1_trials/5/gene_exp.diff", header=TRUE, as.is=c(1:6,12))
+comp6_fpkm=read.table("/gscmnt/sata132/techd/twylie/Stratagene_Colon_RNA-seq/cuffDiffCompare/1_x_1_trials/6/genes.fpkm_tracking", header=TRUE, as.is=c(1:6))
+comp6_diff=read.table("/gscmnt/sata132/techd/twylie/Stratagene_Colon_RNA-seq/cuffDiffCompare/1_x_1_trials/6/gene_exp.diff", header=TRUE, as.is=c(1:6,12))
+compN_fpkm=read.table("/gscmnt/sata132/techd/twylie/Stratagene_Colon_RNA-seq/cuffDiffCompare/4_x_4_trials/genes.fpkm_tracking.annotated", header=TRUE, as.is=c(1:6, 19:20), sep="\t")
+compN_diff=read.table("/gscmnt/sata132/techd/twylie/Stratagene_Colon_RNA-seq/cuffDiffCompare/4_x_4_trials/gene_exp.diff", header=TRUE, as.is=c(1:6,12))
+nanoString_CAE=read.table("/gscmnt/sata132/techd/twylie/Stratagene_Colon_RNA-seq/cuffDiffCompare/Nanostring/CAEkit.tsv", header=TRUE, as.is=c(1:2), sep="\t")
+nanoString_CancerReference=read.table("/gscmnt/sata132/techd/twylie/Stratagene_Colon_RNA-seq/cuffDiffCompare/Nanostring/CancerReferenceKit.tsv", header=TRUE, as.is=c(1:2), sep="\t")
+nanoString_Gpcr=read.table("/gscmnt/sata132/techd/twylie/Stratagene_Colon_RNA-seq/cuffDiffCompare/Nanostring/GpcrKit.tsv", header=TRUE, as.is=c(1:2), sep="\t")
+nanoString_Inflammation=read.table("/gscmnt/sata132/techd/twylie/Stratagene_Colon_RNA-seq/cuffDiffCompare/Nanostring/InflammationKit.tsv", header=TRUE, as.is=c(1:2), sep="\t")
+nanoString_Kinase=read.table("/gscmnt/sata132/techd/twylie/Stratagene_Colon_RNA-seq/cuffDiffCompare/Nanostring/KinaseKit.tsv", header=TRUE, as.is=c(1:2), sep="\t")
+nanoString_Reference=read.table("/gscmnt/sata132/techd/twylie/Stratagene_Colon_RNA-seq/cuffDiffCompare/Nanostring/ReferenceKit.tsv", header=TRUE, as.is=c(1:2), sep="\t")
+ucsc_vs_refseq=read.table("/gscmnt/sata132/techd/twylie/Stratagene_Colon_RNA-seq/cuffDiffCompare/Nanostring/UCSC_vs_Refseq_IDs.tsv", header=TRUE, as.is=c(1:3), sep="\t")
+@
+\pagebreak
+\subsection*{Brief summary of the input data}
+The following output provides brief summary statistics for Cufflinks transcript FPKM values derived from each library.  'summary()' provides the minimum, 25th percentile, median, mean, 75th percentile and maximum observed values.  'length()' provides the total number of Cufflinks transcripts observed. 
+\label{text:one}
+<<label=summary1>>=
+summary(polyA_T[,"FPKM"]); length(polyA_T[,"FPKM"])
+summary(polyA_N[,"FPKM"]); length(polyA_N[,"FPKM"])
+summary(nugen_T[,"FPKM"]); length(nugen_T[,"FPKM"])
+summary(nugen_N[,"FPKM"]); length(nugen_N[,"FPKM"])
+@
+
+\pagebreak
+\subsection*{Distribution of FPKM values}
+<<label=fpkm_distributions, echo=FALSE>>=
+par(mfrow=c(2,2))
+ylabel="Frequency"
+xlabel="FPKM (Log2 scale)"
+hist(log2(polyA_T[,"FPKM"]), breaks=50, xlim=c(-5,15), col="Light Blue", xlab=xlabel, ylab=ylabel, main="PolyA Tumor")
+hist(log2(polyA_N[,"FPKM"]), breaks=50, xlim=c(-5,15), col="Light Blue", xlab=xlabel, ylab=ylabel, main="PolyA Normal")
+hist(log2(nugen_T[,"FPKM"]), breaks=50, xlim=c(-5,15), col="Light green", xlab=xlabel, ylab=ylabel, main="Nugen Tumor")
+hist(log2(nugen_N[,"FPKM"]), breaks=50, xlim=c(-5,15), col="Light green", xlab=xlabel, ylab=ylabel, main="Nugen Normal")
+@
+
+Figure~\ref{fig:one} (p.~\pageref{fig:one}) below shows the distribution of FPKM values for each of the four libraries 
+\begin{figure}[placement h]
+\begin{center}
+<<label=fig1,fig=TRUE,echo=FALSE>>=
+<<fpkm_distributions>>
+@
+\end{center}
+\caption{Histograms displaying distribution of FPKMs for each library}
+\label{fig:one}
+\end{figure}
+
+
+<<label=fpkm_distributions2, echo=FALSE>>=
+xlist=list(log2(polyA_T[,"FPKM"]), log2(polyA_N[,"FPKM"]), log2(nugen_T[,"FPKM"]), log2(nugen_N[,"FPKM"]))
+names(xlist) = c("PolyA Tum", "PolyA Nor", "Nugen Tum", "Nugen Nor")
+cols=c("light blue","light blue","light green","light green")
+boxplot(xlist, col=cols, xlab="Library", ylab="FPKM (log2)")
+@
+\pagebreak
+Figure~\ref{fig:oneb} (p.~\pageref{fig:oneb}) below shows the distribution of transcript FPKM values for each of the four libraries 
+\begin{figure}[placement h]
+\begin{center}
+<<label=fig1b,fig=TRUE,echo=FALSE>>=
+<<fpkm_distributions2>>
+@
+\end{center}
+\caption{Box plots displaying distribution of transcript FPKMs for each library}
+\label{fig:oneb}
+\end{figure}
+
+
+\pagebreak
+\subsection*{Distribution of Cufflinks transcript length values}
+<<label=length_distributions, echo=FALSE>>=
+par(mfrow=c(2,2))
+ylabel="Frequency"
+xlabel="Length (bp)"
+hist(polyA_T[,"len"], breaks=50, xlim=c(0,10000), col="Light blue", xlab=xlabel, ylab=ylabel, main="PolyA Tumor")
+hist(polyA_N[,"len"], breaks=50, xlim=c(0,10000), col="Light blue", xlab=xlabel, ylab=ylabel, main="PolyA Normal")
+hist(nugen_T[,"len"], breaks=50, xlim=c(0,10000), col="Light Green", xlab=xlabel, ylab=ylabel, main="Nugen Tumor")
+hist(nugen_N[,"len"], breaks=50, xlim=c(0,10000), col="Light Green", xlab=xlabel, ylab=ylabel, main="Nugen Normal")
+@
+Figure~\ref{fig:two} (p.~\pageref{fig:two}) below shows the distribution of Cufflinks transcript length values for each of the four libraries. Distributions are capped at 10,000 bp.
+\begin{figure}[placement h]
+\begin{center}
+<<label=fig2,fig=TRUE,echo=FALSE>>=
+<<length_distributions>>
+@
+\end{center}
+\caption{Histograms displaying distribution of Cufflinks transcript lengths for each library}
+\label{fig:two}
+\end{figure}
+
+<<label=length_distributions2, echo=FALSE>>=
+ylabel="Frequency"
+xlabel="Length (bp)"
+xlist=list(log2(polyA_T[,"len"]), log2(polyA_N[,"len"]), log2(nugen_T[,"len"]), log2(nugen_N[,"len"]))
+names(xlist) = c("PolyA Tum", "PolyA Nor", "Nugen Tum", "Nugen Nor")
+cols=c("light blue","light blue","light green","light green")
+boxplot(xlist, col=cols, xlab="Library", ylab="Length in bp (log2)")
+@
+
+\pagebreak
+Figure~\ref{fig:three} (p.~\pageref{fig:three}) below shows the distribution of Cufflinks transcript length values for each of the four libraries on a log2 scale.
+\begin{figure}[placement h]
+\begin{center}
+<<label=fig3,fig=TRUE,echo=FALSE>>=
+<<length_distributions2>>
+@
+\end{center}
+\caption{Box plots displaying distribution of Cufflinks transcript lengths for each library (log2 scale)}
+\label{fig:three}
+\end{figure}
+
+
+\pagebreak
+\subsection*{Comparison of expression values between library types (PolyA vs. Nugen)}
+Spearman correlations between all four sets of gene FPKM values (see below) suggest that the method of library preparation has a significant effect.  If the polyA and Nugen approaches were equivalent we would expect to see the best correlations between the two tumor libraries and two normal libraries.  Instead we see the best correlations between tumor/normal from polyA and tumor/normal from Nugen.  Limiting the comparison to more highly expressed genes does not seem to improve this situation. It is not surprising that sample prep method influences expression values... In particular, since the Nugen method supposedly captures non-polyadenylated transcripts, the same amount of coverage will tend to be distributed across a larger number of genes.  As shown in the brief data summary above, both Nugen libraries had larger numbers of observed transcript fragments.  This might be due to the presence of biologically relevant non-polyadenylated transcripts but it could also be due to increased noise.  PolyA selection may reduce noise by selecting for mature transcripts and removing some amount of unprocessed heteronuclear RNA as well as genomic DNA (neither of which is polyadenylated).  Since the Nugen method involves amplification, this might also introduce some bias.  There are many other possible contributing factors.  In any case, the correlation between Nugen and PolyA libraries is still quite respectible.  A Spearman correlation of \verb@~0.83@ would be considered \verb@'good'@ in many cross platform comparisons (e.g. microarray vs. SAGE, microarray vs. RNA-seq, etc.).
+\label{text:two}
+
+<<label=spearman>>=
+cor(compN_fpkm[,c("polyA_T_FPKM","nugen_T_FPKM","polyA_N_FPKM","nugen_N_FPKM")], method="spearman")
+#compN_fpkm[,"mean_FPKM"] = apply(compN_fpkm[,c("polyA_T_FPKM","nugen_T_FPKM","polyA_N_FPKM","nugen_N_FPKM")], 1, mean)
+#i=which(compN_fpkm[, "mean_FPKM"] > median(compN_fpkm[,"mean_FPKM"]))
+#cor(compN_fpkm[i,c("polyA_T_FPKM","nugen_T_FPKM","polyA_N_FPKM","nugen_N_FPKM")], method="spearman")
+@
+
+\pagebreak
+
+<<label=smoothscatter_fig1, echo=FALSE>>=
+library(RColorBrewer)
+colors = colorRampPalette(c("white", "blue", "#007FFF", "cyan","#7FFF7F", "yellow", "#FF7F00", "red", "#7F0000"))
+x1=compN_fpkm[,"polyA_T_FPKM"]
+y1=compN_fpkm[,"nugen_T_FPKM"]
+smoothScatter(log2(x1+1), log2(y1+1), xlab="PolyA tumor (log2(FPKM+1))", ylab="Nugen tumor (log2(FPKM+1))", main="FPKM values from PolyA vs. Nugen tumor libraries", colramp=colors, nbin=275)
+@
+Figure~\ref{fig:threeb} (p.~\pageref{fig:threeb}) shows a density scatter plot of known gene FPKM values from the Nugen and PolyA tumor libraries (plotted on a log2 scale, after adding 1 to stabilize variance).  Note that the vast majority of detected genes have very low expression values (less than 1 FPKM, often way less).  The correlation between these small values is obscured in the following display (due to the +1, log2 transformation).  For more highly expressed genes, the level of correlation appears reasonable.
+\begin{figure}[placement h]
+\begin{center}
+<<label=fig3b,fig=TRUE,echo=FALSE>>=
+<<smoothscatter_fig1>>
+@
+\end{center}
+\caption{Smoothscatter plot of Nugen and PolyA tumor known gene FPKM values}
+\label{fig:threeb}
+\end{figure}
+
+<<label=smoothscatter_fig2, echo=FALSE>>=
+x1=compN_fpkm[,"polyA_N_FPKM"]
+y1=compN_fpkm[,"nugen_N_FPKM"]
+smoothScatter(log2(x1+1), log2(y1+1), xlab="PolyA normal (log2(FPKM+1))", ylab="Nugen normal (log2(FPKM+1))", main="FPKM values from PolyA vs. Nugen normal libraries", colramp=colors, nbin=275)
+@
+\pagebreak
+Figure~\ref{fig:threec} (p.~\pageref{fig:threec}) shows a density scatter plot of known gene FPKM values from the Nugen and PolyA normal libraries (plotted on a log2 scale, after adding 1 to stabilize variance).
+\begin{figure}[placement h]
+\begin{center}
+<<label=fig3c,fig=TRUE,echo=FALSE>>=
+<<smoothscatter_fig2>>
+@
+\end{center}
+\caption{Smoothscatter plot of Nugen and PolyA normal known gene FPKM values}
+\label{fig:threec}
+\end{figure}
+
+\pagebreak
+\subsection*{Tests of differential expression between tumor and normal}
+Differential expression results from pairwise comparisons were generated by Cuffdiff using known gene models.  The following shows (1) how many differentially expressed (DE) genes were identified between tumor and normal tissue and (2) how many were identified in polyA versus nugen libraries.  Note that a test of signifance was not possible for all genes (depends on coverage observed and other factors probably).  The polyA libraries resulted in a larger number of DE genes being identified.  This was despite fewer mapped reads available... and may be due to the more even spread of coverage across all genes.  Note that Cuffdiff identifies genes that are significantly DE but have a very small apparent fold change while other genes have an apparently large fold change and are not DE (see scatter plots following).
+<<label=de_summary_fig, echo=FALSE>>=
+no_sig_polyA=length(which(comp2_diff[,"significant"] == "no" & comp2_diff[,"status"] == "OK"))
+yes_sig_polyA=length(which(comp2_diff[,"significant"] == "yes" & comp2_diff[,"status"] == "OK"))
+no_test_polyA=length(which(comp2_diff[,"status"] != "OK"))
+no_sig_nugen=length(which(comp5_diff[,"significant"] == "no" & comp5_diff[,"status"] == "OK"))
+yes_sig_nugen=length(which(comp5_diff[,"significant"] == "yes" & comp5_diff[,"status"] == "OK"))
+no_test_nugen=length(which(comp5_diff[,"status"] != "OK"))
+z=matrix(data=c(no_test_polyA,no_sig_polyA,yes_sig_polyA,no_test_nugen,no_sig_nugen,yes_sig_nugen), ncol=2)
+cols=c("#B3CDE3","#8C96C6","#810F7C")
+ylimit=length(comp2_diff[,"significant"]) + length(comp2_diff[,"significant"])*0.25
+barplot(z, beside=FALSE,col=cols, names.arg=c("PolyA","Nugen"), ylim=c(0,ylimit))
+legend("topright", c("Sig.", "Not sig.", "No test"), col=rev(cols), pch=15, bg="white")
+@ 
+Figure~\ref{fig:four} (p.~\pageref{fig:four}) below shows the proportion of significant, non-significant and untestable differential genes for tumor vs. normal (both polyA and Nugen libraries).
+\begin{figure}[placement h]
+\begin{center}
+<<label=fig4,fig=TRUE,echo=FALSE>>=
+<<de_summary_fig>>
+@
+\end{center}
+\caption{Bar charts summarizing significant vs. non significant vs. no-test}
+\label{fig:four}
+\end{figure}
+
+\pagebreak
+<<label=de_summary_fig2, echo=FALSE>>=
+z=matrix(data=c(no_sig_polyA,yes_sig_polyA,no_sig_nugen,yes_sig_nugen), ncol=2)
+cols=c("#8C96C6","#810F7C")
+l=length(comp2_diff[,"significant"])-no_test_polyA
+ylimit=l + l*0.25
+barplot(z, beside=FALSE,col=cols, names.arg=c("PolyA","Nugen"), ylim=c(0,ylimit))
+legend("topright", c("Sig.", "Not sig."), col=rev(cols), pch=15, bg="white")
+@ 
+Figure~\ref{fig:five} (p.~\pageref{fig:five}) below shows the proportion of significant and non-significant differential genes for tumor vs. normal (both polyA and Nugen libraries).
+<<label=de_stats, echo=FALSE>>=
+print(c("Significant DE genes (polyA)",yes_sig_polyA))
+print(c("Significant DE genes (Nugen)",yes_sig_nugen))
+@
+\begin{figure}[placement h]
+\begin{center}
+<<label=fig5,fig=TRUE,echo=FALSE>>=
+<<de_summary_fig2>>
+@
+\end{center}
+\caption{Bar charts summarizing significant vs. non significant}
+\label{fig:five}
+\end{figure}
+
+
+<<label=de_summary_fig3, echo=FALSE>>=
+plot(x=log2(comp2_diff[,"value_1"]),y=log2(comp2_diff[,"value_2"]), xlab="Gene expression in tumor (FPKM on log2 scale)", ylab="Gene expression in normal (log2 scale)", main="Poly A gene expression values (tumor vs. normal)")
+i=which(comp2_diff[,"significant"]=="yes")
+points(x=log2(comp2_diff[i,"value_1"]),y=log2(comp2_diff[i,"value_2"]), col="magenta", pch=".")
+abline(a=0, b=1, col="blue")
+legend("topleft", c("Significant", "Fold-change=0"), col=c("magenta","blue"), pch=c(".", NA), lty=c(NA,1), bg="white")
+@
+\pagebreak
+Figure~\ref{fig:six} (p.~\pageref{fig:six}) below shows gene expression values (known gene FPKM) in tumor vs. normal for the polyA libraries (significantly DE genes are highlighted).
+\begin{figure}[placement h]
+\begin{center}
+<<label=fig6,fig=TRUE,echo=FALSE>>=
+<<de_summary_fig3>>
+@
+\end{center}
+\caption{Scatter plot of tumor vs. normal gene expression in the PolyA libraries}
+\label{fig:six}
+\end{figure}
+
+<<label=de_summary_fig4, echo=FALSE>>=
+plot(x=log2(comp5_diff[,"value_1"]),y=log2(comp5_diff[,"value_2"]), xlab="Gene expression in tumor (FPKM on log2 scale)", ylab="Gene expression in normal (log2 scale)", main="Nugen gene expression values (tumor vs. normal)")
+i=which(comp5_diff[,"significant"]=="yes")
+points(x=log2(comp5_diff[i,"value_1"]),y=log2(comp5_diff[i,"value_2"]), col="magenta", pch=".")
+abline(a=0, b=1, col="blue")
+legend("topleft", c("Significant", "Fold-change=0"), col=c("magenta","blue"), pch=c(".", NA), lty=c(NA,1), bg="white")
+@
+\pagebreak
+Figure~\ref{fig:seven} (p.~\pageref{fig:seven}) below shows gene expression values (known gene FPKM) in tumor vs. normal for the Nugen libraries (significantly DE genes are highlighted).
+\begin{figure}[placement h]
+\begin{center}
+<<label=fig7,fig=TRUE,echo=FALSE>>=
+<<de_summary_fig4>>
+@
+\end{center}
+\caption{Scatter plot of tumor vs. normal gene expression in the Nugen libraries}
+\label{fig:seven}
+\end{figure}
+
+\pagebreak
+\subsection*{Select a custom list of target genes for qPCR validation}
+Since we want exon-exon spanning qPCR primers, I only considered multi-exon genes (at least 5 exons).  I then calculated the mean expression across the four libraries for each of these genes.  Then I ranked the genes according to this mean and selected genes that are evenly distributed across this set.  Figure~\ref{fig:eight} (p.~\pageref{fig:eight}) below shows the disribution of all multi-exon gene expression values as well as the genes selected for validation (red stars).  Since there are many genes with an FPKM of 0, if we picked genes across the spectrum of all genes assayed, about 1/3 of genes selected would have an FPKM of 0.  I therefore removed \verb@90%@ of the 'non-detected' genes and left the remainder to see how the sensitivity of qPCR compares to RNA-seq at this level of library depth. This should allow us to assess HOW zero is zero.  :).  Since the distribution of expression values is non-uniform, the highly and lowly expressed outliers were also not ideally represented in the list.  For this reason, I picked an extra 5 targets at both ends to cover the full range of expression values.  A tentative list of 40 targets is printed after the figure below.
+
+<<label=generate_list1, echo=FALSE>>=
+#generate a list of target genes selected evenly across all genes by their rank order (i.e. evenly covering the distribution of all values)
+compN_fpkm[,"mean_FPKM"] = apply(compN_fpkm[,c("polyA_T_FPKM","nugen_T_FPKM","polyA_N_FPKM","nugen_N_FPKM")], 1, mean)
+multi_exon=which(compN_fpkm[,"hg18.knownGene.exonCount"] >=5)
+compN_fpkm2=compN_fpkm[multi_exon,]
+o=order(compN_fpkm2[,"mean_FPKM"])
+compN_fpkm3=compN_fpkm2[o,]
+non_detected=length(which(compN_fpkm3[,"mean_FPKM"] == 0))
+starting_point=floor(non_detected*0.90)
+remainder=length(o)-starting_point
+target_count=29
+increment=floor(remainder/(target_count+1))
+targets_i=seq(from=starting_point, to=starting_point+(increment*target_count), by=increment)
+
+#Pick a few more to cover the range of the very high extreme outliers...
+extras=5
+upper_min=log2(compN_fpkm3[targets_i[target_count+1],"mean_FPKM"]+1)
+upper_max=log2(compN_fpkm3[length(o),"mean_FPKM"]+1)
+range=upper_max-upper_min
+increment=range/extras
+target_fpkms=seq(from=upper_min+increment, to=upper_max, by=increment)
+extra_targets=rep(NA, extras)
+for (f in 1:extras){
+  target=target_fpkms[f]
+  t=which(abs(log2(compN_fpkm3[,"mean_FPKM"]+1)-target)==min(abs(log2(compN_fpkm3[,"mean_FPKM"]+1)-target)))
+  extra_targets[f]=t  
+  #print(c(t, target, compN_fpkm3[t,"mean_FPKM"]))
+}
+targets_i=c(targets_i,extra_targets)
+
+#Pick a few more to cover the range of very low extreme outliers
+extras=6
+min_nonzero=min(compN_fpkm3[which(compN_fpkm3[,"mean_FPKM"] > 0),"mean_FPKM"])
+lower_min=log2(min_nonzero)
+z=compN_fpkm3[targets_i,"mean_FPKM"]
+lower_max=log2(min(z[which(z > 0)])-min_nonzero)
+range=abs(lower_max-lower_min)
+increment=range/extras
+target_fpkms=seq(from=lower_min+increment, to=lower_max, by=increment)
+extra_targets=rep(NA, extras)
+for (f in 1:extras){
+  target=target_fpkms[f]
+  t=which(abs(log2(compN_fpkm3[,"mean_FPKM"]+min_nonzero)-target)==min(abs(log2(compN_fpkm3[,"mean_FPKM"]+min_nonzero)-target)))
+  extra_targets[f]=t  
+  #print(c(t, target, compN_fpkm3[t,"mean_FPKM"]))
+}
+targets_i=c(targets_i,extra_targets[1:extras-1])
+
+@
+
+
+
+<<label=target_list1_fig, echo=FALSE>>=
+nonzeros=which(compN_fpkm2[,"mean_FPKM"] > 0)
+compN_fpkm_nonzero = compN_fpkm2[nonzeros,]
+par(mfrow=c(2,1))
+boxplot(log2(compN_fpkm_nonzero[,"mean_FPKM"]+1), ylab="FPKM (+1, log2 scale)", main="Targets selected to uniformly cover genes by FPKM RANK", col="grey90")
+points(x=rep(1,length(targets_i)),y=log2(compN_fpkm3[targets_i,"mean_FPKM"]+1), pch=8, col="red")
+legend("topright", c("Selected targets"), col="red", pch=8, bg="white")
+min_nonzero=min(compN_fpkm2[which(compN_fpkm2[,"mean_FPKM"] > 0),"mean_FPKM"])
+boxplot(log2(compN_fpkm_nonzero[,"mean_FPKM"]+min_nonzero), ylab="FPKM (+min non-zero, log2 scale)", main="Targets selected to uniformly cover genes by FPKM RANK", col="grey90")
+points(x=rep(1,length(targets_i)),y=log2(compN_fpkm3[targets_i,"mean_FPKM"]+min_nonzero), pch=8, col="red")
+legend("topright", c("Selected targets"), col="red", pch=8, bg="white")
+
+#par(mfrow=c(2,1))
+#boxplot(log2(compN_fpkm2[,"mean_FPKM"]+1), ylab="FPKM (+1, log2 scale)", main="Targets selected to uniformly cover genes by FPKM RANK", col="grey90")
+#points(x=rep(1,length(targets_i)),y=log2(compN_fpkm3[targets_i,"mean_FPKM"]+1), pch=8, col="red")
+#legend("topright", c("Selected targets"), col="red", pch=8, bg="white")
+#min_nonzero=min(compN_fpkm2[which(compN_fpkm2[,"mean_FPKM"] > 0),"mean_FPKM"])
+#boxplot(log2(compN_fpkm2[,"mean_FPKM"]+min_nonzero), ylab="FPKM (+min non-zero, log2 scale)", main="Targets selected to uniformly cover genes by FPKM RANK", col="grey90")
+#points(x=rep(1,length(targets_i)),y=log2(compN_fpkm3[targets_i,"mean_FPKM"]+min_nonzero), pch=8, col="red")
+#legend("topright", c("Selected targets"), col="red", pch=8, bg="white")
+@
+
+\begin{figure}[placement h]
+\begin{center}
+<<label=fig8,fig=TRUE,echo=FALSE>>=
+<<target_list1_fig>>
+@
+\end{center}
+\caption{Distribution of expression values for all multi-exon genes with selected target genes highlighted}
+\label{fig:eight}
+\end{figure}
+
+\pagebreak
+
+\subsubsection*{Custom target list sorted by FPKM}
+<<label=print_list1, echo=FALSE, results=verbatim>>=
+z=compN_fpkm3[targets_i,c("tracking_id","hg18.kgXref.geneSymbol","hg18.knownGene.exonCount","mean_FPKM")]
+o=order(z[,"mean_FPKM"])
+z=z[o,]
+rownames(z)=1:length(rownames(z))
+colnames(z)=c("UCSC_Gene_ID","Gene_Symbol", "Exon_count", "Mean_FPKM")
+z
+@
+\label{text:three}
+
+
+\pagebreak
+\subsection*{Use a pre-defined list of target genes corresponding to a nanoString kit}
+The following figures show the expression observed in the RNA-seq data for genes from the following pre-defined panels of genes from nanoString (nCounter Gene Expression Panels). Genes from the nanoString panels were mapped to the Cufflinks gene expression data using a Refseq to UCSC ID mapping.  Mapping info was obtained from UCSC using the genome table browser. Note in many cases a single Refseq ID will map to 2 or more UCSC gene IDs.  Similarly, there are Refseq IDs that do not correspond to a UCSC ID.  When comparing the results from nanoString and Cufflinks later, we will have to either collapse the multiple UCSC expression values, or replicate the nanoString values to give us a one-to-one relationship.  Data for IDs that could not be mapped will not used in the comparison.  The number of refseq genes in each nanoString target list are itemized below and the number of matches found in the Cufflinks data are displayed on each figure.  Note that since the assay is being designed by nanoString, the previous requirement of multi-exon genes is no longer applicable.  So the distribution shown is for ALL genes now, except the genes with FPKM of 0 have been collapsed.
+\begin{itemize}
+\item 'Kinase' - nCounter GX Human Kinase Kit - 519 genes \textbf{(p.~\pageref{fig:nine})}.
+\item 'Gpcr' - nCounter GX Human GPCR Kit - 431 genes \textbf{(p.~\pageref{fig:ten})}.
+\item 'CancerReference' - nCounter Human Cancer Reference Kit - 230 genes \textbf{(p.~\pageref{fig:eleven})}.
+\item 'Inflammation' - nCounter Human Inflammation Kit - 184 genes \textbf{(p.~\pageref{fig:twelve})}.
+\item 'Reference' - nCounter Human Reference GX Kit - 18 genes \textbf{(p.~\pageref{fig:thirteen})}.
+\item 'CAE' - nCounter Customer Assay Evaluation (CAE) Kit - 48 genes \textbf{(p.~\pageref{fig:fourteen})}.
+\end{itemize}
+\setkeys{Gin}{width=0.8\textwidth}
+
+\pagebreak
+\subsection*{nanoString Targets (Kinase kit)}
+<<label=nanostring_fig9, echo=FALSE>>=
+createCustomPlot=function(fpkm, nanoString, ucsc){
+  par(mfrow=c(2,1))
+  zeros=which(fpkm[,"mean_FPKM"] == 0)
+  nonzeros=which(fpkm[,"mean_FPKM"] > 0)
+  min_nonzero=min(fpkm[which(fpkm[,"mean_FPKM"] > 0),"mean_FPKM"])
+  nano_ids = nanoString[,"Accession"]
+  ucsc_ids = ucsc[which(ucsc[,"hg18.kgXref.refseq"] %in% nano_ids),"hg18.knownGene.name"]
+  compN_fpkm_nonzero = fpkm[nonzeros,]
+  targets_j=which(fpkm[,"tracking_id"] %in% ucsc_ids)
+  targets_i=which(compN_fpkm_nonzero[,"tracking_id"] %in% ucsc_ids)
+  targets_with_zero=length(targets_j)-length(targets_i)
+  l=length(nano_ids)
+  m=length(which(nano_ids %in% ucsc[,"hg18.kgXref.refseq"]))
+  n=length(targets_i)
+  legend_text = c(paste("Expressed = ", n, sep=""), paste("Undetected = ", targets_with_zero, sep=""), paste("l = ", l, sep=""), paste("m = ", m, sep=""), paste("n = ", n, sep=""))
+  boxplot(log2(compN_fpkm_nonzero[,"mean_FPKM"]+1), ylab="FPKM (+1, log2 scale)", main="Highly expressed", col="grey90", ylim=c(0,max(log2(compN_fpkm_nonzero[,"mean_FPKM"]+1))))
+  points(x=rep(1,length(targets_i)),y=log2(compN_fpkm_nonzero[targets_i,"mean_FPKM"]+1), pch=8, col="red")
+  if (targets_with_zero > 0){points(x=1, y=0, pch=8, col="blue")}
+  legend("topright", legend_text, col=c("red","blue",NA,NA,NA), pch=c(8,8,NA,NA,NA), bg="white", cex=0.8)
+  boxplot(log2(compN_fpkm_nonzero[,"mean_FPKM"]+min_nonzero), ylab="FPKM (+min non-zero, log2 scale)", main="Lowly expressed", col="grey90", ylim=c(log2(min_nonzero), max(log2(compN_fpkm_nonzero[,"mean_FPKM"]+min_nonzero))))
+  points(x=rep(1,length(targets_i)),y=log2(compN_fpkm_nonzero[targets_i,"mean_FPKM"]+min_nonzero), pch=8, col="red")
+  if (targets_with_zero > 0){points(x=1, y=log2(min_nonzero), pch=8, col="blue")}
+  legend("topright", legend_text, col=c("red","blue",NA,NA,NA), pch=c(8,8,NA,NA,NA), bg="white", cex=0.8)
+}
+createCustomPlot(compN_fpkm, nanoString_Kinase, ucsc_vs_refseq)
+@
+\begin{figure}[placement h]
+\begin{center}
+<<label=fig9,fig=TRUE,echo=FALSE>>=
+<<nanostring_fig9>>
+@
+\end{center}
+\caption{Distribution of expression values for all multi-exon genes with nanoString target genes highlighted. Two data transformations are applied to assist in visualization of the distribution of FPKM values. Targets from the indicated nanoString assay are marked with stars.  Those that were detected as expressed in RNA-seq (by Cufflinks FPKM) are marked red.  Those that were not detected are marked blue (i.e. FPKM = 0). Expressed = targets with FPKM greater than 0 according to Cufflinks, Undetected = targets with FPKM of 0 according to Cufflinks, l = nanoString targets, m = nanoString targets with at least one match, n = total matches found}
+\label{fig:nine}
+\end{figure}
+
+\pagebreak
+\subsection*{nanoString Targets (GPCR kit)}
+<<label=nanostring_fig10, echo=FALSE>>=
+createCustomPlot(compN_fpkm, nanoString_Gpcr, ucsc_vs_refseq)
+@
+\begin{figure}[placement h]
+\begin{center}
+<<label=fig10,fig=TRUE,echo=FALSE>>=
+<<nanostring_fig10>>
+@
+\end{center}
+\caption{Distribution of expression values for all multi-exon genes with nanoString target genes highlighted. Two data transformations are applied to assist in visualization of the distribution of FPKM values. Targets from the indicated nanoString assay are marked with stars.  Those that were detected as expressed in RNA-seq (by Cufflinks FPKM) are marked red.  Those that were not detected are marked blue (i.e. FPKM = 0). Expressed = targets with FPKM greater than 0 according to Cufflinks, Undetected = targets with FPKM of 0 according to Cufflinks, l = nanoString targets, m = nanoString targets with at least one match, n = total matches found}
+\label{fig:ten}
+\end{figure}
+
+
+\pagebreak
+\subsection*{nanoString Targets (Cancer Reference kit)}
+<<label=nanostring_fig11, echo=FALSE>>=
+createCustomPlot(compN_fpkm, nanoString_CancerReference, ucsc_vs_refseq)
+@
+\begin{figure}[placement h]
+\begin{center}
+<<label=fig11,fig=TRUE,echo=FALSE>>=
+<<nanostring_fig11>>
+@
+\end{center}
+\caption{Distribution of expression values for all multi-exon genes with nanoString target genes highlighted. Two data transformations are applied to assist in visualization of the distribution of FPKM values. Targets from the indicated nanoString assay are marked with stars.  Those that were detected as expressed in RNA-seq (by Cufflinks FPKM) are marked red.  Those that were not detected are marked blue (i.e. FPKM = 0). Expressed = targets with FPKM greater than 0 according to Cufflinks, Undetected = targets with FPKM of 0 according to Cufflinks, l = nanoString targets, m = nanoString targets with at least one match, n = total matches found}
+\label{fig:eleven}
+\end{figure}
+
+
+\pagebreak
+\subsection*{nanoString Targets (Inflammation kit)}
+<<label=nanostring_fig12, echo=FALSE>>=
+createCustomPlot(compN_fpkm, nanoString_Inflammation, ucsc_vs_refseq)
+@
+\begin{figure}[placement h]
+\begin{center}
+<<label=fig12,fig=TRUE,echo=FALSE>>=
+<<nanostring_fig12>>
+@
+\end{center}
+\caption{Distribution of expression values for all multi-exon genes with nanoString target genes highlighted. Two data transformations are applied to assist in visualization of the distribution of FPKM values. Targets from the indicated nanoString assay are marked with stars.  Those that were detected as expressed in RNA-seq (by Cufflinks FPKM) are marked red.  Those that were not detected are marked blue (i.e. FPKM = 0). Expressed = targets with FPKM greater than 0 according to Cufflinks, Undetected = targets with FPKM of 0 according to Cufflinks, l = nanoString targets, m = nanoString targets with at least one match, n = total matches found}
+\label{fig:twelve}
+\end{figure}
+
+
+\pagebreak
+\subsection*{nanoString Targets (Reference kit)}
+<<label=nanostring_fig13, echo=FALSE>>=
+createCustomPlot(compN_fpkm, nanoString_Reference, ucsc_vs_refseq)
+@
+\begin{figure}[placement h]
+\begin{center}
+<<label=fig13,fig=TRUE,echo=FALSE>>=
+<<nanostring_fig13>>
+@
+\end{center}
+\caption{Distribution of expression values for all multi-exon genes with nanoString target genes highlighted. Two data transformations are applied to assist in visualization of the distribution of FPKM values. Targets from the indicated nanoString assay are marked with stars.  Those that were detected as expressed in RNA-seq (by Cufflinks FPKM) are marked red.  Those that were not detected are marked blue (i.e. FPKM = 0). Expressed = targets with FPKM greater than 0 according to Cufflinks, Undetected = targets with FPKM of 0 according to Cufflinks, l = nanoString targets, m = nanoString targets with at least one match, n = total matches found}
+\label{fig:thirteen}
+\end{figure}
+
+
+\pagebreak
+\subsection*{nanoString Targets (CAE kit)}
+<<label=nanostring_fig14, echo=FALSE>>=
+createCustomPlot(compN_fpkm, nanoString_CAE, ucsc_vs_refseq)
+@
+\begin{figure}[placement h]
+\begin{center}
+<<label=fig14,fig=TRUE,echo=FALSE>>=
+<<nanostring_fig14>>
+@
+\end{center}
+\caption{Distribution of expression values for all multi-exon genes with nanoString target genes highlighted. Two data transformations are applied to assist in visualization of the distribution of FPKM values. Targets from the indicated nanoString assay are marked with stars.  Those that were detected as expressed in RNA-seq (by Cufflinks FPKM) are marked red.  Those that were not detected are marked blue (i.e. FPKM = 0). Expressed = targets with FPKM greater than 0 according to Cufflinks, Undetected = targets with FPKM of 0 according to Cufflinks, l = nanoString targets, m = nanoString targets with at least one match, n = total matches found}
+\label{fig:fourteen}
+\end{figure}
+
+
+
+
+\end{document}
