@@ -282,10 +282,10 @@ sub execute{
   ####################################################################################################################################
 
   #Load ensembl/entrez data for fixing gene names
-  my $entrez_ensembl_data = &loadEntrezEnsemblData(-cancer_db => $cancer_annotation_db);
+  my $entrez_ensembl_data = $self->loadEntrezEnsemblData(-cancer_db => $cancer_annotation_db);
 
   #Import ideogram data
-  my $ideo_data = &importIdeogramData('-ideogram_file'=>$ideogram_file);
+  my $ideo_data = $self->importIdeogramData('-ideogram_file'=>$ideogram_file);
 
   #If the user is supplying a pre-computed CNV file, the following steps will be skipped
   my ($g_map, $t_map, $cnvs, $segments, $targets);
@@ -377,7 +377,7 @@ sub loadTargetGenes{
       if ($gene_name eq "n/a"){
         next();
       }else{
-        my $mapped_gene_name = &fixGeneName('-gene'=>$gene_name, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);      
+        my $mapped_gene_name = $self->fixGeneName('-gene'=>$gene_name, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);      
         $targets_gene_name{$gene_name} = 1;
         $targets_mapped_gene_name{$mapped_gene_name} = 1;
       }
@@ -447,7 +447,7 @@ sub loadGeneTranscriptMap{
     }
 
     #Get a 'fixed' version of the gene name
-    my $mapped_gene_name = &fixGeneName('-gene'=>$gene_name, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
+    my $mapped_gene_name = $self->fixGeneName('-gene'=>$gene_name, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
 
     #If the user defined a gene target list, limit import of genes/transcripts at this point to symbol matches from that list
     if ($self->gene_targets_file){
