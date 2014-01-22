@@ -26,6 +26,7 @@ use Genome::Model::ClinSeq::Util qw(:all);
 #Parse the genes.fpkm_trackin file                                                                              #
 #################################################################################################################
 sub parseFpkmFile{
+  my $self = shift;
   my %args = @_;
   my $infile = $args{'-infile'};
   my $entrez_ensembl_data = $args{'-entrez_ensembl_data'};
@@ -87,7 +88,7 @@ sub parseFpkmFile{
     }
 
     #Fix gene name and create a new column for this name
-    my $fixed_gene_name = &fixGeneName('-gene'=>$gene_id, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
+    my $fixed_gene_name = $self->fixGeneName('-gene'=>$gene_id, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
 
     #Key on tracking id AND locus coordinates
     my $key = "$tracking_id"."|"."$locus";
@@ -133,6 +134,7 @@ sub parseFpkmFile{
 #Merge the isoforms.fpkm_tracking file to the gene level                                                        #
 #################################################################################################################
 sub mergeIsoformsFile{
+  my $self = shift;
   my %args = @_;
   my $infile = $args{'-infile'};
   my $entrez_ensembl_data = $args{'-entrez_ensembl_data'};
@@ -204,7 +206,7 @@ sub mergeIsoformsFile{
     }
  
     #Fix gene name and create a new column for this name
-    my $fixed_gene_name = &fixGeneName('-gene'=>$ensg_name, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
+    my $fixed_gene_name = $self->fixGeneName('-gene'=>$ensg_name, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
 
     $trans{$tracking_id}{record_count} = $rc;
 

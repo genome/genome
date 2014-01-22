@@ -101,7 +101,7 @@ sub execute {
   my $junction_topnpercent_file = $working_dir . "Junction.GeneExpression.topnpercent.tsv";
 
   #Get Entrez and Ensembl data for gene name mappings
-  my $entrez_ensembl_data = &loadEntrezEnsemblData(-cancer_db => $cancer_annotation_db);
+  my $entrez_ensembl_data = $self->loadEntrezEnsemblData(-cancer_db => $cancer_annotation_db);
 
   open(JUNC_IN, "$test_result") || die $self->error_message("Could not open junction file for reading: $test_result");
   open(JUNC_OUT, ">$junction_topnpercent_file") || die $self->error_message("Could not open junction file for writing: $junction_topnpercent_file");
@@ -121,7 +121,7 @@ sub execute {
       next;
     }
     my $gene_name = $line[$columns{'gene_name'}{position}];
-    my $fixed_gene_name = &fixGeneName('-gene'=>$gene_name, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
+    my $fixed_gene_name = $self->fixGeneName('-gene'=>$gene_name, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
     print JUNC_OUT "$_\t$fixed_gene_name\n";
   }
   close(JUNC_IN);

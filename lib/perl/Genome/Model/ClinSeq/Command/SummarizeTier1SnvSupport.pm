@@ -61,7 +61,7 @@ sub execute {
   }
 
   foreach my $positions_file (@positions_files){
-    my $fb = &getFilePathBase('-path'=>$positions_file);
+    my $fb = $self->getFilePathBase('-path'=>$positions_file);
 
     my $output_file;
     my $output_stats_dir;
