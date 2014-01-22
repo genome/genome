@@ -218,9 +218,9 @@ sub execute {
   my $isoforms_merge_stat_file = "$isoforms_merged_stats_dir"."Stats.tsv";
 
   #Each of these files above has an 'FPKM' column.  All basic Cufflinks stats will be based on that
-  &calculateCufflinksStats('-infile'=>$genes_data_file, '-outfile'=>$genes_stat_file);
-  &calculateCufflinksStats('-infile'=>$isoforms_data_file, '-outfile'=>$isoforms_stat_file);
-  &calculateCufflinksStats('-infile'=>$isoforms_merge_data_file, '-outfile'=>$isoforms_merge_stat_file);
+  $self->calculateCufflinksStats('-infile'=>$genes_data_file, '-outfile'=>$genes_stat_file);
+  $self->calculateCufflinksStats('-infile'=>$isoforms_data_file, '-outfile'=>$isoforms_stat_file);
+  $self->calculateCufflinksStats('-infile'=>$isoforms_merge_data_file, '-outfile'=>$isoforms_merge_stat_file);
 
   #Set outputs
   my $tumor_fpkm_file = "$isoforms_merged_sub_dir"."isoforms.merged.fpkm.expsort.tsv";
