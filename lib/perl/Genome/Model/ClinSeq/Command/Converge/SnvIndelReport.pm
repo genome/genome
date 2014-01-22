@@ -188,7 +188,7 @@ sub execute {
   
   #TODO: This will need to be done at the level of replicate libraries once that readcounting tool is availble.  For now just use standard bam read counts
   #Example usage for per-library BAM readcounting from Dave Larson
-  #perl -I ~/src/genome/lib/perl/ `which gmt` analysis coverage add-readcounts --bam-file ~dlarson/src/bam-readcount/test-data/test.bam --genome-build ~dlarson/src/somatic-snv-test-data/ref.fa --variant-file variants_wheader.csv --output-file add_readcount_new5.csv --per-library 
+  my $grand_anno_per_lib_count_file = $self->add_per_lib_read_counts('-align_builds'=>$align_builds, '-grand_anno_file'=>$grand_anno_count_file);
 
   #Parse the BAM read count info and gather minimal data needed to apply filters:
   #Max normal VAF, Min Coverage
@@ -707,7 +707,7 @@ sub add_read_counts{
   #gmt analysis coverage add-readcounts --bam-files=? --genome-build=? --output-file=? --variant-file=? [--header-prefixes=?] 
   my $output_file = $self->outdir . "/variants.all.anno.readcounts";
   if (-e $output_file){
-    $self->warning_message("using pre-generated file: $output_file");
+    $self->warning_message("using pre-generated bam read count file: $output_file");
   }else{
     my $add_count_cmd = Genome::Model::Tools::Analysis::Coverage::AddReadcounts->create(
             bam_files=>$bam_list,
@@ -722,6 +722,61 @@ sub add_read_counts{
 
   return ($output_file);
 }
+
+
+
+sub add_per_lib_read_counts{
+  my $self = shift;
+  my %args = @_;
+  my $align_builds = $args{'-align_builds'};
+  my $grand_anno_file = $args{'-grand_anno_file'};
+
+  my @bam_files;
+  foreach my $name (sort {$align_builds->{$a}->{order} <=> $align_builds->{$b}->{order}} keys  %{$align_builds}){
+    push(@bam_files, $align_builds->{$name}->{bam_path});
+  }
+  my $bam_list = join(",", @bam_files);
+
+  #Get the reference fasta
+  my $reference_build = $self->resolve_clinseq_reference_build;
+  my $reference_fasta = $reference_build->full_consensus_path('fa');
+
+  #Determine header prefixes to use. In order of preference if all are unique: (time_points, samples, names)
+  my @prefixes;
+  foreach my $name (sort {$align_builds->{$a}->{order} <=> $align_builds->{$b}->{order}} keys  %{$align_builds}){
+    push(@prefixes, $align_builds->{$name}->{prefix});
+  }
+  my $header_prefixes = join(",", @prefixes);
+
+  my $output_file = $self->outdir . "/variants.all.anno.per.library.readcounts";
+  if (-e $output_file){
+    $self->warning_message("using pre-generated per-library bam read-count file: $output_file");
+  }else{
+    #perl -I /gscuser/dlarson/src/genome/lib/perl/ `which gmt` analysis coverage add-readcounts --bam-file /gscuser/dlarson/src/bam-readcount/test-data/test.bam --genome-build ~dlarson/src/somatic-snv-test-data/ref.fa --variant-file variants_wheader.csv --output-file add_readcount_new5.csv --per-library 
+    
+    my $per_lib_count_cmd = "`which gmt` analysis coverage add-readcounts --bam-files $bam_list --genome-build $reference_fasta --variant-file $grand_anno_file --output-file $output_file --header-prefixes $header_prefixes --per-library";
+    $self->status_message("attempting per library read counting: \n$per_lib_count_cmd");
+    Genome::Sys->shellcmd(cmd => $per_lib_count_cmd);
+
+    #TODO: replace with proper method call once this gets pushed to master
+    #my $add_count_cmd = Genome::Model::Tools::Analysis::Coverage::AddReadcounts->create(
+    #        bam_files=>$bam_list,
+    #        genome_build=>$reference_fasta,
+    #        output_file=>$output_file,
+    #        variant_file=>$grand_anno_file,
+    #        header_prefixes=>$header_prefixes,
+    #      );
+    #my $r = $add_count_cmd->execute();
+    #die $self->error_message("add-readcounts cmd unsuccessful") unless ($r);
+  }
+
+  return ($output_file);
+}
+
+
+
+
+
 
 
 sub parse_read_counts{

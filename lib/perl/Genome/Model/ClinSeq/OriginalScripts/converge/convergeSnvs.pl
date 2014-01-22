@@ -10,7 +10,7 @@ use Term::ANSIColor qw(:constants);
 use Data::Dumper;
 use above 'Genome';
 use Genome::Model::ClinSeq::Util qw(:all);
-use Genome::Model::ClinSeq::Converge qw(:all);
+use Genome::Model::ClinSeq::OriginalScripts::Converge qw(:all);
 
 #Required
 my $build_ids = '';

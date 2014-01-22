@@ -6,7 +6,7 @@ use Getopt::Long;
 use Term::ANSIColor qw(:constants);
 use Data::Dumper;
 use above 'Genome';
-use Genome::Model::ClinSeq::Converge qw(:all);
+use Genome::Model::ClinSeq::OriginalScripts::Converge qw(:all);
 
 #The following three input should retrieve the same list of models/builds
 my @build_ids = qw (120828540 120828557 120828600 120828640 120828672 120876429);

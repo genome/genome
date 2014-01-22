@@ -112,7 +112,7 @@ sub execute {
   }
 
   #Get Entrez and Ensembl data for gene name mappings
-  my $entrez_ensembl_data = &loadEntrezEnsemblData(-cancer_db => $cancer_annotation_db);
+  my $entrez_ensembl_data = $self->loadEntrezEnsemblData(-cancer_db => $cancer_annotation_db);
 
   my $snv_dir = $outdir . "snv/";
   Genome::Sys->create_directory($snv_dir);
@@ -279,7 +279,7 @@ sub execute {
       }
 
       #Attempt to fix the gene name:
-      my $fixed_gene_name = &fixGeneName('-gene'=>$data->{gene_name}, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
+      my $fixed_gene_name = $self->fixGeneName('-gene'=>$data->{gene_name}, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
       $data_out{$coord}{mapped_gene_name} = $fixed_gene_name;
       $data_merge{$var_type}{$coord}{mapped_gene_name} = $fixed_gene_name;
     }

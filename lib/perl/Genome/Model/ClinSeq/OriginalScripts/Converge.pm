@@ -1,4 +1,4 @@
-package Genome::Model::ClinSeq::Converge;
+package Genome::Model::ClinSeq::OriginalScripts::Converge;
 
 #Written by Malachi Griffith
 

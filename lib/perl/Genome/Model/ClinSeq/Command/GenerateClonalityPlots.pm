@@ -91,7 +91,7 @@ sub execute {
 
     # This tool calls some scripts which have not been converted into tools
     #TODO: Fix that so that Nate and Krishna's old code is cleaned up and brought into the fold
-    my $script_dir = Cwd::abs_path(File::Basename::dirname(__FILE__) . '/../original-scripts/') . '/';
+    my $script_dir = Cwd::abs_path(File::Basename::dirname(__FILE__) . '/../OriginalScripts/') . '/';
     unless (-d $script_dir) {
       die $self->error_message("failed to find script dir $script_dir!")
     }
@@ -111,8 +111,8 @@ sub execute {
     my $somatic_effects_dir = $data_paths{effects_dir};
 
     #Make sure the specified parameters are correct
-    $somatic_effects_dir = &checkDir('-dir'=>$somatic_effects_dir, '-clear'=>"no");
-    $output_dir = &checkDir('-dir'=>$output_dir, '-clear'=>"no");
+    $somatic_effects_dir = $self->checkDir('-dir'=>$somatic_effects_dir, '-clear'=>"no");
+    $output_dir = $self->checkDir('-dir'=>$output_dir, '-clear'=>"no");
 
     #Step 1 - gather the tier 1-3 snv files from the build:
     my $tier1_snv_file = $somatic_effects_dir . "snvs.hq.novel.tier1.v2.bed";

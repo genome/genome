@@ -1,7 +1,7 @@
 #!/usr/bin/env genome-perl
 #Written by Malachi Griffith
-#For a group of ClinSeq models, get Indels and create a master table that merges all cases together
-#Merge at the level of INDEL positions and then separately at the level of genes
+#For a group of ClinSeq models, get SVs and create a master table that merges all cases together
+#Merge at the level of SV positions and then separately at the level of genes
 
 use strict;
 use warnings;
@@ -10,9 +10,8 @@ use Term::ANSIColor qw(:constants);
 use Data::Dumper;
 use above 'Genome';
 use Genome::Model::ClinSeq::Util qw(:all);
-use Genome::Model::ClinSeq::Converge qw(:all);
+use Genome::Model::ClinSeq::OriginalScripts::Converge qw(:all);
 
-#Required
 my $build_ids = '';
 my $model_ids = '';
 my $model_group_id = '';
@@ -21,12 +20,13 @@ my $label = '';
 my $verbose = 0;
 my $test = 0;
 
+
 GetOptions ('build_ids=s'=>\$build_ids, 'model_ids=s'=>\$model_ids, 'model_group_id=s'=>\$model_group_id, 'outdir=s'=>\$outdir, 'label=s'=>\$label, 'verbose=i'=>\$verbose, 'test=i'=>\$test);
 
 my $usage=<<INFO;
   Example usage: 
   
-  convergeIndels.pl  --model_group_id='25307'  --outdir=/gscmnt/sata132/techd/mgriffit/braf_resistance/recurrence_indel_results/  --label='BRAF'  --verbose=1
+  convergeSvs.pl  --model_group_id='50714'  --outdir=/tmp/converge_svs/  --label='BRAF'  --verbose=1
 
   Specify *one* of the following as input (each model/build should be a ClinSeq model)
   --build_ids            Comma separated list of specific build IDs
@@ -55,10 +55,10 @@ unless (-e $outdir && -d $outdir){
 }
 
 #Define paths/names of final output files
-my $positions_outfile = "$outdir"."$label"."_INDELs_Merged_PositionLevel.tsv";
-my $genes_outfile = "$outdir"."$label"."_INDELs_Merged_GeneLevel.tsv";
-my $positions_outfile_categorical = "$outdir"."$label"."_INDELs_Merged_PositionLevel_Categorical.tsv";
-my $genes_outfile_categorical = "$outdir"."$label"."_INDELs_Merged_GeneLevel_Categorical.tsv";
+my $positions_outfile = "$outdir"."$label"."_SVs_Merged_PositionLevel.tsv";
+my $genes_outfile = "$outdir"."$label"."_SVs_Merged_GeneLevel.tsv";
+my $positions_outfile_categorical = "$outdir"."$label"."_SVs_Merged_PositionLevel_Categorical.tsv";
+my $genes_outfile_categorical = "$outdir"."$label"."_SVs_Merged_GeneLevel_Categorical.tsv";
 
 #Get the models/builds
 my $models_builds;
@@ -83,7 +83,7 @@ my @builds = @{$models_builds->{builds}};
 
 my $model_count = scalar(@models);
 
-my %indels;
+my %svs;
 my %genes;
 
 #Cycle through the models and get their builds
@@ -130,32 +130,23 @@ foreach my $m (@models){
   $model_list{$model_id}{model_name} = $model_name;
   $model_list{$model_id}{data_directory} = $data_directory;
   $model_list{$model_id}{patient} = $patient;
-  $model_list{$model_id}{wgs_build} = $wgs_build;
-  $model_list{$model_id}{exome_build} = $exome_build;
   $model_list{$model_id}{final_name} = $final_name;
 
-  #Find the appropriate INDEL file
-  my $clinseq_indel_dir = $data_directory . "/" . $final_name . "/indel/";
-  if ($wgs_build && $exome_build){
-    $clinseq_indel_dir .= "wgs_exome/";
-  }elsif($wgs_build){
-    $clinseq_indel_dir .= "wgs/";
-  }elsif($exome_build){
-    $clinseq_indel_dir .= "exome/";
-  }
-  print BLUE, "\n$final_name\t$model_id\t$model_name\t$clinseq_indel_dir", RESET;
+  #Find the appropriate SV file
+  my $clinseq_sv_dir = $data_directory . "/" . $final_name . "/sv/";
+  print BLUE, "\n$final_name\t$model_id\t$model_name\t$clinseq_sv_dir", RESET;
 
-  my $indel_file = $clinseq_indel_dir . "indels.hq.tier1.v1.annotated.compact.tsv";
-  unless (-e $indel_file){
-    print RED, "\n\nCould not find INDEL file: $indel_file\n\n", RESET;
+  my $sv_file = $clinseq_sv_dir . "CandidateSvCodingFusions.tsv";
+  unless (-e $sv_file){
+    print RED, "\n\nCould not find SV file: $sv_file\n\n", RESET;
     exit(1);
   }
 
-  #Parse the INDEL file
+  #Parse the SV file
   my $header = 1;
   my %columns;
-  open (INDEL, "$indel_file") || die "\n\nCould not open INDEL file: $indel_file\n\n";
-  while(<INDEL>){
+  open (SV, "$sv_file") || die "\n\nCould not open SV file: $sv_file\n\n";
+  while(<SV>){
     chomp($_);
     my $line = $_;
     my @line = split("\t", $line);
@@ -170,74 +161,80 @@ foreach my $m (@models){
       next();
     }
 
-    my $coord = $line[$columns{'coord'}{pos}];
-    my $gene_name = $line[$columns{'gene_name'}{pos}];
-    my $mapped_gene_name = $line[$columns{'mapped_gene_name'}{pos}];
-    my $ensembl_gene_id = $line[$columns{'ensembl_gene_id'}{pos}];
-    my $aa_changes = $line[$columns{'aa_changes'}{pos}];
-    my $ref_base = $line[$columns{'ref_base'}{pos}];
-    my $var_base = $line[$columns{'var_base'}{pos}];
-    my $gid = $ensembl_gene_id;
+    my $gene_pair	= $line[$columns{'gene_pair'}{pos}];
+    my $gene1	= $line[$columns{'gene1'}{pos}];
+    my $gene2	= $line[$columns{'gene2'}{pos}];
+    my $coord1 = $line[$columns{'coord1'}{pos}];
+    my $coord2 = $line[$columns{'coord2'}{pos}];
+    my $coord = $coord1 . "_" . $coord2;
+    my $mapped_gene_name1	= $line[$columns{'mapped_gene_name1'}{pos}];
+    my $mapped_gene_name2	= $line[$columns{'mapped_gene_name2'}{pos}];
+    my $pairoscope_tumor_reads = $line[$columns{'pairoscope_tumor_reads'}{pos}];
+    my $pairoscope_normal_reads = $line[$columns{'pairoscope_normal_reads'}{pos}];
 
-    #Merge to the level of distinct positions...
-    if ($indels{$coord}){
-      $indels{$coord}{recurrence}++;
-      my $cases_ref = $indels{$coord}{cases};
+    #Merge to the level of distinct CTX SV positions...
+    if ($svs{$coord}){
+      $svs{$coord}{recurrence}++;
+      my $cases_ref = $svs{$coord}{cases};
       $cases_ref->{$final_name}=1;
+      $svs{$coord}{pairoscope_tumor_reads} += $pairoscope_tumor_reads;
+      $svs{$coord}{pairoscope_normal_reads} += $pairoscope_normal_reads;
     }else{
-      $indels{$coord}{gene_name} = $gene_name;
-      $indels{$coord}{mapped_gene_name} = $mapped_gene_name;
-      $indels{$coord}{aa_changes} = $aa_changes;
-      $indels{$coord}{ensembl_gene_id} = $ensembl_gene_id;
-      $indels{$coord}{ref_base} = $ref_base;
-      $indels{$coord}{var_base} = $var_base;
-      $indels{$coord}{recurrence} = 1;
-      $indels{$coord}{line} = $line;
+      $svs{$coord}{recurrence} = 1;
+      $svs{$coord}{gene_pair} = $gene_pair;
+      $svs{$coord}{gene1} = $gene1;
+      $svs{$coord}{gene2} = $gene2;
+      $svs{$coord}{coord1} = $coord1;
+      $svs{$coord}{coord2} = $coord2;
+      $svs{$coord}{mapped_gene_name1} = $mapped_gene_name1;
+      $svs{$coord}{mapped_gene_name2} = $mapped_gene_name2;
+      $svs{$coord}{pairoscope_tumor_reads} = $pairoscope_tumor_reads;
+      $svs{$coord}{pairoscope_normal_reads} = $pairoscope_normal_reads;
+      $svs{$coord}{line} = $line;
       my %cases;
       $cases{$final_name}=1;
-      $indels{$coord}{cases} = \%cases;
+      $svs{$coord}{cases} = \%cases;
     }
 
-    #Merge to the level of distinct gene names
-    if ($genes{$gid}){
-      $genes{$gid}{total_mutation_count}++;
-      my $positions_ref = $genes{$gid}{positions};
+    #Merge to the level of distinct gene name pairs
+    if ($genes{$gene_pair}){
+      $genes{$gene_pair}{total_mutation_count}++;
+      my $positions_ref = $genes{$gene_pair}{positions};
       $positions_ref->{$coord}=1;
-      my $cases_ref = $genes{$gid}{cases};
+      my $cases_ref = $genes{$gene_pair}{cases};
       $cases_ref->{$final_name}=1;
     }else{
-      $genes{$gid}{gene_name} = $gene_name;
-      $genes{$gid}{mapped_gene_name} = $mapped_gene_name;
-      $genes{$gid}{ensembl_gene_id} = $ensembl_gene_id;
-      $genes{$gid}{total_mutation_count} = 1;
+      $genes{$gene_pair}{mapped_gene_name1} = $mapped_gene_name1;
+      $genes{$gene_pair}{mapped_gene_name2} = $mapped_gene_name2;
+      $genes{$gene_pair}{total_mutation_count} = 1;
       my %positions;
       $positions{$coord} = 1;
-      $genes{$gid}{positions} = \%positions;
+      $genes{$gene_pair}{positions} = \%positions;
       my %cases;
       $cases{$final_name} = 1;
-      $genes{$gid}{cases} = \%cases;
+      $genes{$gene_pair}{cases} = \%cases;
     }
   }
-  close(INDEL);
+  close(SV);
 }
 my $new_model_count = keys %model_list;
 unless ($model_count == $new_model_count){
   print RED, "\n\nDiscrepancy between number of models in input model group and number of common/subject names found (redundant models?)\n\n", RESET;
-  exit();
+  exit(1);
 }
 
 
 #Print the position level recurrence summary
 open (OUT1, ">$positions_outfile") || die "\n\nCould not open output file for writing: $positions_outfile\n\n";
 open (OUT2, ">$positions_outfile_categorical") || die "\n\nCould not open output file for writing: $positions_outfile_categorical\n\n";
-print OUT1 "coord\trecurrence_count\tmutated_samples\t$header_line\n";
+print OUT1 "coord\trecurrence_count\tmutated_samples\tsum_pairoscope_tumor_reads\tsum_pairoscope_normal_reads\t$header_line\n";
 print OUT2 "coord\tsample\n";
-foreach my $coord (sort keys %indels){
-  my $cases_ref = $indels{$coord}{cases};
+foreach my $coord (sort keys %svs){
+  my $cases_ref = $svs{$coord}{cases};
   my @cases = keys %{$cases_ref};
   my @sort_cases = sort @cases;
   my $sort_cases_string = join(",", @sort_cases);
-  print OUT1 "$coord\t$indels{$coord}{recurrence}\t$sort_cases_string\t$indels{$coord}{line}\n";
+  print OUT1 "$coord\t$svs{$coord}{recurrence}\t$sort_cases_string\t$svs{$coord}{pairoscope_tumor_reads}\t$svs{$coord}{pairoscope_normal_reads}\t$svs{$coord}{line}\n";
   foreach my $case (@sort_cases){
     print OUT2 "$coord\t$case\n";
   }
@@ -248,35 +245,34 @@ close(OUT2);
 #Print the gene level recurrence summary
 open (OUT1, ">$genes_outfile") || die "\n\nCould not open output file for writing: $genes_outfile\n\n";
 open (OUT2, ">$genes_outfile_categorical") || die "\n\nCould not open output file for writing: $genes_outfile_categorical\n\n";
-print OUT1 "ensembl_gene_id\tgene_name\tmapped_gene_name\ttotal_mutation_count\tmutated_sample_count\tmutated_position_count\tmutated_samples\tmutated_positions\n";
-print OUT2 "ensembl_gene_id\tgene_name\tmapped_gene_name\tsample\n";
-foreach my $gid (sort keys %genes){
-  my $positions_ref = $genes{$gid}{positions};
+print OUT1 "gene_pair\tmapped_gene_name1\tmapped_gene_name2\ttotal_mutation_count\tmutated_sample_count\tmutated_position_count\tmutated_samples\tmutated_positions\n";
+print OUT2 "gene_pair\tsample\n";
+foreach my $gene_pair (sort keys %genes){
+  my $positions_ref = $genes{$gene_pair}{positions};
   my @positions = keys %{$positions_ref};
   my $positions_count = scalar(@positions);
   my @sort_positions = sort @positions;
   my $sort_positions_string = join (",", @sort_positions);
-  my $cases_ref = $genes{$gid}{cases};
+  my $cases_ref = $genes{$gene_pair}{cases};
   my @cases = keys %{$cases_ref};
   my @sort_cases = sort @cases;
   my $sort_cases_string = join(",", @sort_cases);
   my $cases_count = scalar(@cases);
-  print OUT1 "$genes{$gid}{ensembl_gene_id}\t$genes{$gid}{gene_name}\t$genes{$gid}{mapped_gene_name}\t$genes{$gid}{total_mutation_count}\t$cases_count\t$positions_count\t$sort_cases_string\t$sort_positions_string\n";
+  print OUT1 "$gene_pair\t$genes{$gene_pair}{mapped_gene_name1}\t$genes{$gene_pair}{mapped_gene_name2}\t$genes{$gene_pair}{total_mutation_count}\t$cases_count\t$positions_count\t$sort_cases_string\t$sort_positions_string\n";
   foreach my $case (@sort_cases){
-    print OUT2 "$genes{$gid}{ensembl_gene_id}\t$genes{$gid}{gene_name}\t$genes{$gid}{mapped_gene_name}\t$case\n";
+    print OUT2 "$gene_pair\t$case\n";
   }
 }
 close(OUT1);
 close(OUT2);
 
-#TODO:
-#Calculate the WGS and/or Exome Variant Allele frequencies for all positions mutated in any sample, for all samples
-#Use BAM read counts...
-
-
 print BLUE, "\n\nWrote results to: $outdir\n\n", RESET;
 
 exit();
+
+
+
+
 
 
 

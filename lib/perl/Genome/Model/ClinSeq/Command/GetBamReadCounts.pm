@@ -145,10 +145,10 @@ sub execute {
     die $self->error_message("'There is no transcript info file for annotation_reference_transcripts build: ". $annotation_build->__display_name__);
   }
 
-  my $ensembl_map = &loadEnsemblMap('-gtf_path'=>$gtf_path, '-transcript_info_path'=>$transcript_info_path);
+  my $ensembl_map = $self->loadEnsemblMap('-gtf_path'=>$gtf_path, '-transcript_info_path'=>$transcript_info_path);
 
   #Get Entrez and Ensembl data for gene name mappings
-  my $entrez_ensembl_data = &loadEntrezEnsemblData(-cancer_db => $cancer_annotation_db);
+  my $entrez_ensembl_data = $self->loadEntrezEnsemblData(-cancer_db => $cancer_annotation_db);
 
   #Import SNVs from the specified file
   my $result = $self->importPositions('-positions_file'=>$positions_file);
@@ -158,7 +158,7 @@ sub execute {
 
   #Get BAM file paths from build IDs.  Perform sanity checks
   my $data;
-  $data = &getFilePaths_Genome(
+  $data = $self->getFilePaths_Genome(
     '-wgs_som_var_model_id'     => ($wgs_som_var_build      ? $wgs_som_var_build->model_id : undef), 
     '-exome_som_var_model_id'   => ($exome_som_var_build    ? $exome_som_var_build->model_id : undef), 
     '-rna_seq_normal_model_id'  => ($rna_seq_normal_build   ? $rna_seq_normal_build->model_id : undef), 
@@ -176,7 +176,7 @@ sub execute {
     if ($verbose){
 	  $self->status_message("\n\nSNV count = $snv_count\n$data_type\n$sample_type\n$bam_path\n$ref_fasta\n")
     }
-    my $counts = &getBamReadCounts('-snvs'=>$snvs, '-data_type'=>$data_type, '-sample_type'=>$sample_type, '-bam_path'=>$bam_path, '-ref_fasta'=>$ref_fasta, '-verbose'=>$verbose, '-no_fasta_check'=>$no_fasta_check);
+    my $counts = $self->getBamReadCounts('-snvs'=>$snvs, '-data_type'=>$data_type, '-sample_type'=>$sample_type, '-bam_path'=>$bam_path, '-ref_fasta'=>$ref_fasta, '-verbose'=>$verbose, '-no_fasta_check'=>$no_fasta_check);
     $data->{$bam}->{read_counts} = $counts;
   }
 
@@ -189,7 +189,7 @@ sub execute {
       next();
     }
     my $build_dir = $data->{$bam}->{build_dir};
-    my $exp = &getExpressionValues('-snvs'=>$snvs, '-build_dir'=>$build_dir, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>$ensembl_map, '-verbose'=>$verbose);
+    my $exp = $self->getExpressionValues('-snvs'=>$snvs, '-build_dir'=>$build_dir, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>$ensembl_map, '-verbose'=>$verbose);
     $data->{$bam}->{gene_expression} = $exp;
   }
 
@@ -259,7 +259,8 @@ sub execute {
 #Import SNVs from the specified file                                                                                                    #
 #########################################################################################################################################
 sub importPositions{
-  my ($class, %args) = @_;
+  my $self = shift;
+  my %args = @_;
   my $infile = $args{'-positions_file'};
   my %result;
   my %s;
@@ -282,7 +283,7 @@ sub importPositions{
       $header_line = $_;
       #Make sure all neccessary columns are defined
       unless (defined($columns{'coord'}) && defined($columns{'mapped_gene_name'}) && defined($columns{'ref_base'}) && defined($columns{'var_base'}) && defined($columns{'ensembl_gene_id'})){
-        die $class->error_message("\n\nRequired column missing from file: $infile (need: coord, mapped_gene_name, ref_base, var_base, ensembl_gene_id)");
+        die $self->error_message("\n\nRequired column missing from file: $infile (need: coord, mapped_gene_name, ref_base, var_base, ensembl_gene_id)");
       }
       next();
     }
@@ -300,7 +301,7 @@ sub importPositions{
       $s{$coord}{start} = $2;
       $s{$coord}{end} = $3;
     }else{
-      die $class->error_message("\n\nCoord: $coord not understood\n\n");
+      die $self->error_message("\n\nCoord: $coord not understood\n\n");
     }
 
   }
@@ -315,8 +316,8 @@ sub importPositions{
 #getFilePaths_Genome - Get file paths from model IDs                                                                                    #
 #########################################################################################################################################
 sub getFilePaths_Genome{
+  my $self = shift;
   my %args = @_;
-  my $class = __PACKAGE__;
   my $wgs_som_var_model_id = $args{'-wgs_som_var_model_id'};
   my $exome_som_var_model_id = $args{'-exome_som_var_model_id'};
   my $rna_seq_normal_model_id = $args{'-rna_seq_normal_model_id'};
@@ -352,10 +353,10 @@ sub getFilePaths_Genome{
         $d{$b}{ref_fasta} = $reference_fasta_path;
         $d{$b}{ref_name} = $reference_display_name;
       }else{
-        die $class->error_message("\n\nA WGS model ID was specified, but a successful build could not be found!\n\n");
+        die $self->error_message("\n\nA WGS model ID was specified, but a successful build could not be found!\n\n");
       }
     }else{
-      die $class->error_message("\n\nA WGS model ID was specified, but it could not be found!\n\n");
+      die $self->error_message("\n\nA WGS model ID was specified, but it could not be found!\n\n");
     }
   }
 
@@ -385,10 +386,10 @@ sub getFilePaths_Genome{
         $d{$b}{ref_fasta} = $reference_fasta_path;
         $d{$b}{ref_name} = $reference_display_name;
       }else{
-        die $class->error_message("\n\nA Exome model ID was specified, but a successful build could not be found!\n\n");
+        die $self->error_message("\n\nA Exome model ID was specified, but a successful build could not be found!\n\n");
       }
     }else{
-      die $class->error_message("\n\nA Exome model ID was specified, but it could not be found!\n\n");
+      die $self->error_message("\n\nA Exome model ID was specified, but it could not be found!\n\n");
     }
   }
 
@@ -411,10 +412,10 @@ sub getFilePaths_Genome{
         $d{$b}{ref_fasta} = $reference_fasta_path;
         $d{$b}{ref_name} = $reference_display_name;
       }else{
-        die $class->error_message("\n\nAn RNA-seq model ID was specified, but a successful build could not be found!\n\n");
+        die $self->error_message("\n\nAn RNA-seq model ID was specified, but a successful build could not be found!\n\n");
       }
     }else{
-      die $class->error_message("\n\nAn RNA-seq model ID was specified, but it could not be found!\n\n");
+      die $self->error_message("\n\nAn RNA-seq model ID was specified, but it could not be found!\n\n");
     }
   }
 
@@ -437,10 +438,10 @@ sub getFilePaths_Genome{
         $d{$b}{ref_fasta} = $reference_fasta_path;
         $d{$b}{ref_name} = $reference_display_name;
       }else{
-        die $class->error_message("\n\nAn RNA-seq model ID was specified, but a successful build could not be found!\n\n");
+        die $self->error_message("\n\nAn RNA-seq model ID was specified, but a successful build could not be found!\n\n");
       }
     }else{
-      die $class->error_message("\n\nAn RNA-seq model ID was specified, but it could not be found!\n\n");
+      die $self->error_message("\n\nAn RNA-seq model ID was specified, but it could not be found!\n\n");
     }
   }
 
@@ -450,7 +451,7 @@ sub getFilePaths_Genome{
     my $ref_name = $d{$b}{ref_name};
     unless ($ref_name eq $test_ref_name){
       print Dumper %d;
-      die $class->error_message("\n\nOne or more of the reference build names used to generate BAMs did not match\n\n");
+      die $self->error_message("\n\nOne or more of the reference build names used to generate BAMs did not match\n\n");
     }
   }
 
@@ -462,8 +463,8 @@ sub getFilePaths_Genome{
 #getBamReadCounts                                                                                                                       #
 #########################################################################################################################################
 sub getBamReadCounts{
+  my $self = shift;
   my %args = @_;
-  my $class = __PACKAGE__;
   my $snvs = $args{'-snvs'};
   my $data_type = $args{'-data_type'};
   my $sample_type = $args{'-sample_type'};
@@ -486,7 +487,7 @@ sub getBamReadCounts{
         my $ref_base = $fai->fetch($data->{chr} .':'. $data->{start} .'-'. $data->{stop});
         unless ($data->{reference} eq $ref_base) {
           #print RED, "\n\nReference base " . $ref_base .' does not match expected '. $data->{reference} .' at postion '. $pos .' for chr '. $data->{chr} . '(tid = '. $tid . ')' . "\n$bam_path", RESET;
-          die $class->error_message("\n\nReference base " . $ref_base .' does not match expected '. $data->{reference} .' at postion '. $pos .' for chr '. $data->{chr} . '(tid = '. $tid . ')' . "\n$bam_path");
+          die $self->error_message("\n\nReference base " . $ref_base .' does not match expected '. $data->{reference} .' at postion '. $pos .' for chr '. $data->{chr} . '(tid = '. $tid . ')' . "\n$bam_path");
         }
       }
       for my $pileup ( @{$pileups} ) {
@@ -563,21 +564,21 @@ sub getBamReadCounts{
 #getExpressionValues                                                                                                                    #
 #########################################################################################################################################
 sub getExpressionValues{
+  my $self = shift;
   my %args = @_;
-  my $class = __PACKAGE__;
   my $snvs = $args{'-snvs'};
   my $build_dir = $args{'-build_dir'};
   my $verbose = $args{'-verbose'};
   my $entrez_ensembl_data = $args{'-entrez_ensembl_data'};
   my $ensembl_map = $args{'-ensembl_map'};
 
-  if ($verbose){ $class->status_message("\nGetting expression data from: $build_dir");}
+  if ($verbose){ $self->status_message("\nGetting expression data from: $build_dir");}
 
   my %e;
 
   #Import FPKM values from the gene-level expression file created by merging the isoforms of each gene
   my $isoforms_infile = "$build_dir"."expression/isoforms.fpkm_tracking";
-  my $merged_fpkm = &mergeIsoformsFile('-infile'=>$isoforms_infile, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>$ensembl_map, '-verbose'=>$verbose);
+  my $merged_fpkm = $self->mergeIsoformsFile('-infile'=>$isoforms_infile, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>$ensembl_map, '-verbose'=>$verbose);
   
   #Calculate the ranks and percentiles for all genes
   my $rank = 0;
