@@ -126,6 +126,8 @@ HELP
 sub _doc_authors {
   return <<AUTHS;
  Chris Miller
+ Susanna Siebert
+ David Morton
 AUTHS
 }
 
