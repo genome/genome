@@ -2,6 +2,6 @@
 
 BEGIN;
 
-  SELECT is_cle,run_as FROM config.analysis_project WHERE FALSE;
+  SELECT is_clia,run_as FROM config.analysis_project WHERE FALSE;
 
 ROLLBACK;
