@@ -994,6 +994,9 @@ sub _promote_staged_data {
                 my $link_target = $output_dir."/$variant_type" . "s.detailed.vcf.gz";
                 my $clipped_vcf = $output_dir."/$variant_type" . "s.vcf.gz";
                 Genome::Model::Tools::Vcf::CleanupVcf->execute(input_file => $source, output_file => $clipped_vcf);
+                if ($variant_type eq "snv") {
+                    $self->_create_bed_from_vcf($clipped_vcf);
+                }
                 # Link both the vcf and the tabix index
                 Genome::Sys->create_symlink($source, $link_target);
                 Genome::Sys->create_symlink("$source.tbi", "$link_target.tbi");
@@ -1030,6 +1033,18 @@ sub _promote_staged_data {
     }
 
     return 1;
+}
+
+sub _create_bed_from_vcf {
+    my $self = shift;
+    my $vcf = shift;
+
+    my $rv = Genome::Model::Tools::Bed::Convert::VcfToBed->execute(source => $vcf, output => "$vcf.bed");
+    unless ($rv) {
+        $self->error_message("VcfToBed conversion failed");
+        die;
+    }
+    return $rv;
 }
 
 # for each strategy input we look in the workflow result for output_directories which we then turn into relative paths, and then into final full paths
