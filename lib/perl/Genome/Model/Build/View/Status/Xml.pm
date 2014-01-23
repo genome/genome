@@ -76,7 +76,7 @@ sub _generate_content {
 
     ## find the latest workflow for this build
     unless ($self->instance) {
-        $self->instance($subject->newest_workflow_instance);
+        eval { $self->instance($subject->newest_workflow_instance); };
     }
     if ($self->instance) {
 =pod
