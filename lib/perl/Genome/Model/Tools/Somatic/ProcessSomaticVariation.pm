@@ -178,7 +178,7 @@ sub execute {
     $self->_create_review_files();
 
     $self->reallocate();
-    #$self->create_symlinks_in_build_dir();
+    $self->create_symlinks_in_build_dir();
 
     return 1;
 }
@@ -218,6 +218,22 @@ sub reallocate {
     my $self = shift;
 
     $self->_allocation->reallocate();
+}
+
+sub create_symlinks_in_build_dir {
+    my $self = shift;
+
+    $self->symlink_into_reports_dir($self->report, 'snvs.indels.annotated');
+    $self->symlink_into_reports_dir($self->report_xls, 'snvs.indels.annotated.xls');
+    $self->symlink_into_reports_dir($self->review_bed, 'review.bed');
+    $self->symlink_into_reports_dir($self->review_xml, 'review.xml');
+}
+
+sub symlink_into_reports_dir {
+    my ($self, $source, $target_filename) = @_;
+
+    Genome::Sys->create_symlink($source,
+        File::Spec->join($self->_build_dir, 'reports', $target_filename));
 }
 
 sub bedFileToAnnoFile{

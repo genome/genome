@@ -13,6 +13,7 @@ use Genome::Test::Factory::Build;
 use File::Spec;
 use Genome::Utility::Test qw/compare_ok/;
 use Sub::Install qw();
+use IPC::System::Simple qw(capture);
 
 require Exporter;
 our @ISA = qw(Exporter);
@@ -24,7 +25,12 @@ our @EXPORT_OK = qw(
 sub create_test_objects {
     my $main_dir = shift;
 
-    my $somatic_variation_build_data_dir = File::Spec->join($main_dir, "somatic_variation_build_data");
+    my $somatic_variation_build_data_dir = Genome::Sys->create_temp_directory();
+    Genome::Sys->rsync_directory(
+        source_directory => File::Spec->join($main_dir, "somatic_variation_build_data"),
+        target_directory => $somatic_variation_build_data_dir,
+    );
+
     my $annotation_build_data_dir = File::Spec->join($main_dir, "annotation_build_data");
     my $instrument_data_dir = File::Spec->join($main_dir, "instrument_data");
 
@@ -131,6 +137,30 @@ sub run_test {
     ok(-s $cmd->review_xml, 'Found "review.xml" output: ' . $cmd->review_xml);
 
     compare_ok($cmd->review_bed, File::Spec->join($data_dir, 'review.bed'), 'review.bed is as expected');
+
+    ensure_symlinks_in_build_directory($cmd);
+}
+
+sub ensure_symlinks_in_build_directory {
+    my $cmd = shift;
+
+    my $build = $cmd->somatic_variation_build;
+    my $reports_dir = File::Spec->join($build->data_directory, 'reports');
+
+    my %SYMLINKS = (
+        'snvs.indels.annotated' => $cmd->report,
+        'snvs.indels.annotated.xls' => $cmd->report_xls,
+        'review.bed' => $cmd->review_bed,
+        'review.xml' => $cmd->review_xml,
+    );
+
+    while (my ($file_in_build, $path_in_allocation) = each(%SYMLINKS)) {
+        my $path_in_build = File::Spec->join($reports_dir, $file_in_build);
+
+        my $result = capture([0,1], 'readlink', '-e', $path_in_build);
+        chomp($result);
+        is($result, $path_in_allocation, sprintf('found symlink to allocation: %s', $result));
+    }
 }
 
 1;
