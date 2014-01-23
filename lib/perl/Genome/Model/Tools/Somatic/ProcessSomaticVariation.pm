@@ -255,14 +255,8 @@ sub bedFileToAnnoFile{
             print $outFh $line . "\n";
             next;
         }
-        my ( $chr, $start, $stop, $ref, $var, @rest ) = split( /\t/, $line );
-        if ($ref =~ /\//) {
-            my @alleles = split("/", $ref);
-            print $outFh bedToAnno(join("\t",($chr, $start, $stop, $alleles[0], $alleles[1]))) . "\t" . join("\t",($var,@rest)) . "\n";
-        }
-        else {
-            print $outFh bedToAnno(join("\t",($chr, $start, $stop, $ref, $var))) . "\t" . join("\t",@rest) . "\n";
-        }
+
+        print $outFh _zero_to_one_based($line) . "\n";
     }
     close($outFh);
     close($inFh);
@@ -286,8 +280,7 @@ sub annoFileToBedFile{
             print $outFh $line . "\n";
             next;
         }
-        my ( $chr, $start, $stop, $ref, $var, @rest ) = split( /\t/, $line );
-        print $outFh annoToBed(join("\t",($chr, $start, $stop, $ref, $var))) . "\t" . join("\t",@rest) . "\n";
+        print $outFh _one_to_zero_based($line) . "\n";
     }
     close($outFh);
     close($inFh);
@@ -309,8 +302,7 @@ sub annoFileToSlashedBedFile{
         if ($line =~ /^chrom/) {
             next;
         }
-        my ( $chr, $start, $stop, $ref, $var, @rest ) = split( /\t/, $line );
-        my $bed = annoToBed(join("\t",($chr, $start, $stop, $ref, $var)));
+        my $bed = _one_to_zero_based($line);
         my @bedline = split(/\t/, $bed);
         print $outFh join("\t",(@bedline[0..2],"$bedline[3]/$bedline[4]")) . "\n";
     }
@@ -319,43 +311,42 @@ sub annoFileToSlashedBedFile{
     return $newfile;
 }
 
-sub bedToAnno{
-    my ($chr, $start, $stop, $ref, $var) = split("\t", $_[0]);
-    #$self->status_message(join("|",($chr, $start, $stop, $ref, $var)));
+sub _zero_to_one_based{
+    my $line = shift;
+
+    my ( $chr, $start, $stop, $ref, @rest ) = split( /\t/, $line );
+
+    if ($ref =~ /\//) {
+        my @alleles = split("/", $ref);
+        $ref = shift @alleles;
+
+        @rest = (@alleles, @rest);
+    }
+
     if ($ref =~ /^[-0*]/) { #indel INS
         $stop++;
     }
     else { #indel DEL or SNV
         $start++;
     }
-    return join("\t", ($chr, $start, $stop, $ref, $var));
+
+    return join("\t", ($chr, $start, $stop, $ref, @rest));
 }
 
 
-sub annoToBed{
-    my ($chr, $start, $stop, $ref, $var) = split("\t", $_[0]);
+sub _one_to_zero_based {
+    my $line = shift;
+
+    my ($chr, $start, $stop, $ref, @rest) = split(/\t/, $line);
+
     if ($ref =~ /^[-*0]/) { #indel INS
         $stop--;
     }
     else { #indel DEL or SNV
         $start--;
     }
-    #handle 5 col or 4 col ref/var
-    if (defined($var)) {
-        return join("\t", ($chr, $start, $stop, $ref, $var));
-    }
-    else {
-        return join("\t", ($chr, $start, $stop, $ref));
-    }
-}
 
-sub intersects{
-    my ($st, $sp, $st2, $sp2) = @_;
-    if ((($sp2 >= $st) && ($sp2 <= $sp)) ||
-        (($sp >= $st2) && ($sp <= $sp2))) {
-        return 1;
-    }
-    return 0;
+    return join("\t", ($chr, $start, $stop, $ref, @rest));
 }
 
 sub fixIUB{
