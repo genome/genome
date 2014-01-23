@@ -115,7 +115,7 @@ sub execute {
     close(POS);
     unless($positions_count > 0){
       if ($verbose){
-        self->status_message("\n\nNo SNV positions found, skipping summary");
+        $self->status_message("\n\nNo SNV positions found, skipping summary");
       }
       next();
     }
