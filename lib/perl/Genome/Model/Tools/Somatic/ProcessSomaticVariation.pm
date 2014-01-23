@@ -478,7 +478,7 @@ sub removeUnsupportedSites {
     if ($self->required_snv_callers == 1) {
         return $snv_file;
     }
-    $self->status_message("Removing regions supported by less than %s regions", $self->required_snv_callers);
+    $self->status_message("Removing sites supported by less than %s callers", $self->required_snv_callers);
 
     #hash all of the sites
     my $sites = $self->getSiteHash($snv_file);
