@@ -132,12 +132,12 @@ sub execute {
 
     #--------------------------------------------------------------
     # munge through SNV file to remove duplicates and fix IUB codes
-    $snv_file = $self->cleanFile($snv_file, $self->snvs_dir);
-    $indel_file = $self->cleanFile($indel_file, $self->indels_dir);
+    $snv_file = $self->clean_file($snv_file, $self->snvs_dir);
+    $indel_file = $self->clean_file($indel_file, $self->indels_dir);
 
     #-------------------------------------------------------
     # remove regions called by less than the required number of callers
-    $snv_file = $self->removeUnsupportedSites($snv_file);
+    $snv_file = $self->remove_unsupported_sites($snv_file);
 
     #-------------------------------------------------
     # filter out the off-target regions, if target regions are available
@@ -148,26 +148,26 @@ sub execute {
 
     #------------------------------------------------------
     # do annotation
-    $snv_file   = $self->doAnnotation($snv_file, $self->snvs_dir);
-    $indel_file = $self->doAnnotation($indel_file, $self->indels_dir);
+    $snv_file   = $self->annotate($snv_file, $self->snvs_dir);
+    $indel_file = $self->annotate($indel_file, $self->indels_dir);
 
     #-------------------------------------------------------
     # add tiers
     $self->status_message("Adding tiers");
-    $snv_file   = $self->addTiering($snv_file);
-    $indel_file = $self->addTiering($indel_file);
+    $snv_file   = $self->add_tiers($snv_file);
+    $indel_file = $self->add_tiers($indel_file);
 
     #convert back to annotation format (1-based)
-    $snv_file = bedFileToAnnoFile($snv_file);
-    $indel_file = bedFileToAnnoFile($indel_file);
+    $snv_file = convert_from_zero_to_one_based($snv_file);
+    $indel_file = convert_from_zero_to_one_based($indel_file);
 
     #----------------------------------------------------
     # add dbsnp/gmaf
     ($snv_file, $indel_file) = $self->_add_dbsnp_and_gmaf($snv_file, $indel_file);
 
     $self->status_message("Getting read counts");
-    $snv_file   = $self->read_counts($snv_file, $self->snvs_dir);
-    $indel_file = $self->read_counts($indel_file, $self->indels_dir);
+    $snv_file   = $self->add_read_counts($snv_file, $self->snvs_dir);
+    $indel_file = $self->add_read_counts($indel_file, $self->indels_dir);
 
     #------------------------------------------------------
     # combine the files into one master table
@@ -236,78 +236,66 @@ sub symlink_into_reports_dir {
         File::Spec->join($self->_build_dir, 'reports', $target_filename));
 }
 
-sub bedFileToAnnoFile{
-    my ($file, $outfile) = @_;
+sub convert_from_zero_to_one_based {
+    my $file = shift;
 
     #remove bed from name
     my $newfile = $file;
     $newfile =~ s/\.bed//g;
 
-    if ($outfile) {
-        $newfile = $outfile;
-    }
-
-    my $outFh = Genome::Sys->open_file_for_writing($newfile);
-    my $inFh  = Genome::Sys->open_file_for_reading($file);
-    while (my $line = $inFh->getline) {
+    my $outfile = Genome::Sys->open_file_for_writing($newfile);
+    my $infile  = Genome::Sys->open_file_for_reading($file);
+    while (my $line = $infile->getline) {
         chomp($line);
         if ($line =~ /^chrom/) {
-            print $outFh $line . "\n";
+            print $outfile $line . "\n";
             next;
         }
 
-        print $outFh _zero_to_one_based($line) . "\n";
+        print $outfile _zero_to_one_based($line) . "\n";
     }
-    close($outFh);
-    close($inFh);
+    close($outfile);
+    close($infile);
     return $newfile;
 }
 
-sub annoFileToBedFile{
-    my ($file, $outfile) = @_;
+sub convert_from_one_to_zero_based {
+    my $file = shift;
 
     #add bed to name
     my $newfile = $file . ".bed";
-    if ($outfile) {
-        $newfile = $outfile;
-    }
 
-    my $outFh = Genome::Sys->open_file_for_writing($newfile);
-    my $inFh  = Genome::Sys->open_file_for_reading($file);
-    while (my $line = $inFh->getline) {
+    my $outfile = Genome::Sys->open_file_for_writing($newfile);
+    my $infile  = Genome::Sys->open_file_for_reading($file);
+    while (my $line = $infile->getline) {
         chomp($line);
         if ($line =~ /^chrom/) {
-            print $outFh $line . "\n";
+            print $outfile $line . "\n";
             next;
         }
-        print $outFh _one_to_zero_based($line) . "\n";
+        print $outfile _one_to_zero_based($line) . "\n";
     }
-    close($outFh);
-    close($inFh);
+    close($outfile);
+    close($infile);
     return $newfile;
 }
 
-sub annoFileToSlashedBedFile{
-    my ($file, $outfile) = @_;
+sub convert_from_one_based_to_bed_file {
+    my ($file, $newfile) = @_;
 
-    my $newfile = $file . ".bed";
-    if ($outfile) {
-        $newfile = $outfile;
-    }
-
-    my $outFh = Genome::Sys->open_file_for_writing($newfile);
-    my $inFh  = Genome::Sys->open_file_for_reading($file);
-    while (my $line = $inFh->getline) {
+    my $outfile = Genome::Sys->open_file_for_writing($newfile);
+    my $infile  = Genome::Sys->open_file_for_reading($file);
+    while (my $line = $infile->getline) {
         chomp($line);
         if ($line =~ /^chrom/) {
             next;
         }
         my $bed = _one_to_zero_based($line);
         my @bedline = split(/\t/, $bed);
-        print $outFh join("\t",(@bedline[0..2],"$bedline[3]/$bedline[4]")) . "\n";
+        print $outfile join("\t",(@bedline[0..2],"$bedline[3]/$bedline[4]")) . "\n";
     }
-    close($outFh);
-    close($inFh);
+    close($outfile);
+    close($infile);
     return $newfile;
 }
 
@@ -349,25 +337,25 @@ sub _one_to_zero_based {
     return join("\t", ($chr, $start, $stop, $ref, @rest));
 }
 
-sub fixIUB{
+sub fix_IUB {
     my ($ref, $var) = @_;
     my @vars = Genome::Info::IUB->variant_alleles_for_iub($ref, $var);
     return @vars;
 }
 
-sub addName{
-    my ($file, $name) = @_;
+sub add_suffix {
+    my ($file, $suffix) = @_;
     if ($file =~ /\.bed$/) {
         $file =~ s/\.bed//g;
-        return $file . "." . $name . ".bed";
+        return $file . "." . $suffix . ".bed";
     }
     else {
-        return $file . "." . $name;
+        return $file . "." . $suffix;
     }
 }
 
 #read in the file, output a cleaned-up version
-sub cleanFile {
+sub clean_file {
     my ($self, $file, $directory) = @_;
 
     my $newfile = $self->result_file_path(
@@ -378,9 +366,9 @@ sub cleanFile {
 
     my %dups;
 
-    my $outFh = Genome::Sys->open_file_for_writing($newfile);
-    my $inFh  = Genome::Sys->open_file_for_reading($file);
-    while (my $line = $inFh->getline) {
+    my $outfile = Genome::Sys->open_file_for_writing($newfile);
+    my $infile  = Genome::Sys->open_file_for_reading($file);
+    while (my $line = $infile->getline) {
         chomp($line);
         my ( $chr, $start, $stop, $ref, $var, @rest ) = split( /\t/, $line );
         if ($ref =~ /\//) {
@@ -394,36 +382,36 @@ sub cleanFile {
 
         my @vars = ($var);
         unless ($ref =~ /-/ || $var =~ /-/) { #fixiub doesn't handle indels
-            @vars = fixIUB($ref, $var);
+            @vars = fix_IUB($ref, $var);
         }
 
         foreach my $v (@vars) {
             unless (exists($dups{join("\t",($chr, $start, $stop, $ref, $v ))})) {
-                print $outFh join("\t",($chr, $start, $stop, $ref, $v )) . "\n";
+                print $outfile join("\t",($chr, $start, $stop, $ref, $v )) . "\n";
             }
             $dups{join("\t",($chr, $start, $stop, $ref, $v ))} = 1;
         }
     }
-    close($outFh);
-    close($inFh);
+    close($outfile);
+    close($infile);
     Genome::Sys->shellcmd( cmd => "joinx sort -i $newfile >$newfile.tmp" );
     Genome::Sys->shellcmd( cmd => "mv -f $newfile.tmp $newfile");
     return $newfile;
 }
 
 
-sub getSiteHash  {
+sub get_site_hash  {
     my $self = shift;
     my $filter_string = shift;
 
     my @filters = split(",", $filter_string);
-    my %filterSites;
+    my %filter_sites;
 
     foreach my $filterfile (@filters) {
         if (-s $filterfile) {
             #store sites to filter out in a hash
-            my $inFh = Genome::Sys->open_file_for_reading($filterfile);
-            while (my $line = $inFh->getline) {
+            my $infile = Genome::Sys->open_file_for_reading($filterfile);
+            while (my $line = $infile->getline) {
                 chomp($line);
                 #handle either 5 col (Ref\tVar) or 4 col (Ref/Var) bed
                 my ( $chr, $start, $stop, $ref, $var ) = split( /\t/, $line );
@@ -435,22 +423,22 @@ sub getSiteHash  {
                 $ref =~ s/\*/-/g;
                 $var =~ s/\*/-/g;
 
-                my @vars = fixIUB($ref, $var);
+                my @vars = fix_IUB($ref, $var);
                 foreach my $v (@vars) {
-                    $filterSites{join("\t",($chr, $start, $stop, $ref, $v ))} = 0;
+                    $filter_sites{join("\t",($chr, $start, $stop, $ref, $v ))} = 0;
                 }
             }
-            close($inFh);
+            close($infile);
         }
         else {
             confess $self->error_message("filter sites file doesn't exist or has zero size: " . $filterfile);
         }
     }
-    return \%filterSites;
+    return \%filter_sites;
 }
 
 ##TODO - these two functions are brittle. There needs to be a better way to grab calls for specific callers. Ideally, from the VCF...
-sub getVcfFile{
+sub get_vcf_file {
     my $self      = shift;
     my $dir       = shift;
 
@@ -479,7 +467,7 @@ sub getVcfFile{
 }
 
 
-sub removeUnsupportedSites {
+sub remove_unsupported_sites {
     my ($self, $snv_file) = @_;
 
     if ($self->required_snv_callers == 1) {
@@ -488,7 +476,7 @@ sub removeUnsupportedSites {
     $self->status_message("Removing sites supported by less than %s callers", $self->required_snv_callers);
 
     #hash all of the sites
-    my $sites = $self->getSiteHash($snv_file);
+    my $sites = $self->get_site_hash($snv_file);
 
     #Look for the callers
     my @dirs = map {basename($_) } glob(
@@ -499,10 +487,10 @@ sub removeUnsupportedSites {
 
     #count the number of callers that called each site from the vcfs
     for my $dir (@dirs) {
-        my $file = $self->getVcfFile($dir);
-        my $ifh = Genome::Sys->open_gzip_file_for_reading($file);
+        my $file = $self->get_vcf_file($dir);
+        my $infile = Genome::Sys->open_gzip_file_for_reading($file);
 
-        while (my $line = $ifh->getline) {
+        while (my $line = $infile->getline) {
             chomp $line;
             next if $line =~ /^#/;
             my ($chr, $pos, $id, $ref, $var, @rest) = split /\t/, $line;
@@ -514,7 +502,7 @@ sub removeUnsupportedSites {
                 }
             }
         }
-        $ifh->close;
+        $infile->close;
     }
 
     my $result_file_path = $self->result_file_path(
@@ -523,10 +511,10 @@ sub removeUnsupportedSites {
         directory    => $self->snvs_dir,
     );
 
-    my $ofh = Genome::Sys->open_file_for_writing($result_file_path);
+    my $outfile = Genome::Sys->open_file_for_writing($result_file_path);
     #read the snv_file again to preserve order, traiing fields, etc.
-    my $ifh = Genome::Sys->open_file_for_reading($snv_file);
-    while (my $line = $ifh->getline) {
+    my $infile = Genome::Sys->open_file_for_reading($snv_file);
+    while (my $line = $infile->getline) {
         chomp $line;
         my ($chr, $start, $stop, $ref, $var, @rest) = split /\t/, $line;
         my $key = join("\t",($chr, $start, $stop, $ref, $var));
@@ -535,11 +523,11 @@ sub removeUnsupportedSites {
             $self->status_message("wut?: " . $key);
         }
         if ($sites->{$key} >= $self->required_snv_callers) {
-            print $ofh $line . "\n";
+            print $outfile $line . "\n";
         }
     }
-    close($ifh);
-    close($ofh);
+    close($infile);
+    close($outfile);
     return $result_file_path;
 }
 
@@ -554,13 +542,13 @@ sub result_file_path {
     );
 
     my $input_file_name  = basename($params{input_file_path});
-    my $output_file_name = addName($input_file_name, $params{suffix});
+    my $output_file_name = add_suffix($input_file_name, $params{suffix});
     my $result_file_path = File::Spec->join($params{directory}, $output_file_name);
 
     return $result_file_path;
 }
 
-sub doAnnotation {
+sub annotate {
     my $self         = shift;
     my $file         = shift;
     my $directory    = shift;
@@ -568,7 +556,7 @@ sub doAnnotation {
     my $annotation_build_name = $self->annotation_build->name;
 
     if ($file =~ /.bed$/) {
-        $file = bedFileToAnnoFile($file);
+        $file = convert_from_zero_to_one_based($file);
     }
 
     my $newfile = $self->result_file_path(
@@ -596,7 +584,7 @@ sub doAnnotation {
 }
 
 
-sub addTiering {
+sub add_tiers {
     my $self               = shift;
     my $file               = shift;
     my $outfile            = shift;
@@ -604,7 +592,7 @@ sub addTiering {
     my $tier_file_location = File::Spec->join($self->annotation_build->data_directory, 'annotation_data', 'tiering_bed_files_v3');
 
     unless ($file =~ /\.bed/) {
-        $file = annoFileToBedFile($file);
+        $file = convert_from_one_to_zero_based($file);
     }
 
     my $newfile;
@@ -612,7 +600,7 @@ sub addTiering {
         $newfile = $outfile;
     }
     else {
-        $newfile = addName($file, "tiered");
+        $newfile = add_suffix($file, "tiered");
     }
 
     #handle zero size files
@@ -632,7 +620,7 @@ sub addTiering {
     return $newfile;
 }
 
-sub read_counts {
+sub add_read_counts {
     my ($self, $variants_file, $directory) = @_;
 
     my $output_file = $self->result_file_path(
@@ -819,18 +807,18 @@ sub get_or_create_featurelist_file {
     }
     if (defined($featurelist) && (-s $featurelist)) {
         #clean up feature list
-        my $outFh = Genome::Sys->open_file_for_writing("$featurelist_file.tmp");
-        my $inFh  = Genome::Sys->open_file_for_reading($featurelist);
-        while (my $line = $inFh->getline) {
+        my $outfile = Genome::Sys->open_file_for_writing("$featurelist_file.tmp");
+        my $infile  = Genome::Sys->open_file_for_reading($featurelist);
+        while (my $line = $infile->getline) {
             chomp($line);
             next if $line =~ /^track/;
             my ( $chr, $start, $stop, @rest) = split( /\t/, $line );
             #remove chr if present
             $chr =~ s/^chr//g;
-            print $outFh join("\t",( $chr, $start, $stop, @rest)) . "\n";
+            print $outfile join("\t",( $chr, $start, $stop, @rest)) . "\n";
         }
-        close($inFh);
-        close($outFh);
+        close($infile);
+        close($outfile);
 
         Genome::Sys->shellcmd(cmd => "joinx sort $featurelist_file.tmp >$featurelist_file");
         Genome::Sys->shellcmd(cmd => "rm -f $featurelist_file.tmp");
@@ -893,14 +881,14 @@ sub _add_dbsnp_and_gmaf_to_indel {
         directory => $self->indels_dir,
     );
 
-    my $outFh = Genome::Sys->open_file_for_writing($output_file);
-    my $inFh  = Genome::Sys->open_file_for_reading($indel_file);
-    while ( my $line = $inFh->getline ) {
+    my $outfile = Genome::Sys->open_file_for_writing($output_file);
+    my $infile  = Genome::Sys->open_file_for_reading($indel_file);
+    while ( my $line = $infile->getline ) {
         chomp($line);
-        print $outFh $line . "\t\t\n"
+        print $outfile $line . "\t\t\n"
     }
-    close($inFh);
-    close($outFh);
+    close($infile);
+    close($outfile);
 
     return $output_file;
 }
@@ -924,8 +912,8 @@ sub _create_master_files {
     my $worksheet = $workbook->add_worksheet();
 
     my $row=0;
-    my $inFh = Genome::Sys->open_file_for_reading($self->report);
-    while (my $line = $inFh->getline) {
+    my $infile = Genome::Sys->open_file_for_reading($self->report);
+    while (my $line = $infile->getline) {
         chomp($line);
         my @F = split("\t", $line);
         for( my $i=0;$ i<@F; $i++) {
@@ -933,7 +921,7 @@ sub _create_master_files {
         }
         $row++;
     }
-    close($inFh);
+    close($infile);
     $workbook->close();
 
     return 1;
@@ -974,7 +962,7 @@ sub _create_review_bed {
             $tier_restricted_file . '.tmp', $tier_restricted_file),
     );
     Genome::Sys->shellcmd(cmd => sprintf('rm -f %s', $tier_restricted_file . '.tmp'));
-    annoFileToSlashedBedFile($tier_restricted_file, $self->review_bed);
+    convert_from_one_based_to_bed_file($tier_restricted_file, $self->review_bed);
 }
 
 sub _create_review_xml {
