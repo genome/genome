@@ -160,26 +160,26 @@ sub execute {
   }
   $self->status_message("\t$transcript_info_path");
 
-  my $ensembl_map = &loadEnsemblMap('-gtf_path'=>$gtf_path, '-transcript_info_path'=>$transcript_info_path);
+  my $ensembl_map = $self->loadEnsemblMap('-gtf_path'=>$gtf_path, '-transcript_info_path'=>$transcript_info_path);
 
   #Get Entrez and Ensembl data for gene name mappings
   $self->status_message("Load entrez and ensembl gene data");
-  my $entrez_ensembl_data = &loadEntrezEnsemblData(-cancer_db => $cancer_annotation_db);
+  my $entrez_ensembl_data = $self->loadEntrezEnsemblData(-cancer_db => $cancer_annotation_db);
 
   #Parse the isoform fpkm files, create cleaner transcript level versions of these files and store them in the output dir
   $self->status_message("Parse transcript FPKM files from Cufflinks");
   my $fpkm;
   my $case_isoforms_file_sorted = "$transcripts_outdir"."case.transcripts.fpkm.namesort.tsv";
-  $fpkm = &parseFpkmFile('-infile'=>$case_fpkm_file, '-outfile'=>$case_isoforms_file_sorted, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>$ensembl_map, '-verbose'=>0);
+  $fpkm = $self->parseFpkmFile('-infile'=>$case_fpkm_file, '-outfile'=>$case_isoforms_file_sorted, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>$ensembl_map, '-verbose'=>0);
   my $control_isoforms_file_sorted = "$transcripts_outdir"."control.transcripts.fpkm.namesort.tsv";
-  $fpkm = &parseFpkmFile('-infile'=>$control_fpkm_file, '-outfile'=>$control_isoforms_file_sorted, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>$ensembl_map, '-verbose'=>0);
+  $fpkm = $self->parseFpkmFile('-infile'=>$control_fpkm_file, '-outfile'=>$control_isoforms_file_sorted, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>$ensembl_map, '-verbose'=>0);
 
   #Create gene-level files where the transcript level values are merged
   $self->status_message("Assemble gene estimates by merging Cufflinks transcript results");
   my $case_isoforms_merged_file_sorted = "$genes_outdir"."case.genes.fpkm.namesort.tsv";
-  $fpkm = &mergeIsoformsFile('-infile'=>$case_fpkm_file, '-status_file'=>$case_status_file, '-outfile'=>$case_isoforms_merged_file_sorted, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>$ensembl_map, '-verbose'=>0);
+  $fpkm = $self->mergeIsoformsFile('-infile'=>$case_fpkm_file, '-status_file'=>$case_status_file, '-outfile'=>$case_isoforms_merged_file_sorted, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>$ensembl_map, '-verbose'=>0);
   my $control_isoforms_merged_file_sorted = "$genes_outdir"."control.genes.fpkm.namesort.tsv";
-  $fpkm = &mergeIsoformsFile('-infile'=>$control_fpkm_file, '-status_file'=>$control_status_file, '-outfile'=>$control_isoforms_merged_file_sorted, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>$ensembl_map, '-verbose'=>0);
+  $fpkm = $self->mergeIsoformsFile('-infile'=>$control_fpkm_file, '-status_file'=>$control_status_file, '-outfile'=>$control_isoforms_merged_file_sorted, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>$ensembl_map, '-verbose'=>0);
 
   #Create a file containing basic gene ids, names, etc. along with FPKM values for case and control
   $self->status_message("Create transcript DE file");

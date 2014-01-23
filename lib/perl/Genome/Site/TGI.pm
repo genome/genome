@@ -3,34 +3,102 @@ use strict;
 use warnings;
 
 BEGIN {
-    if ($ENV{GENOME_SYS_ID} and $ENV{GENOME_SYS_ID} ne 'GMS1') {
-        die "At TGI we expect the GENOME_SYS_ID to be 'GMS1'.  Other sites should not use the Genome::Site::TGI module."
-    }
-    else {
-        $ENV{GENOME_SYS_ID} = 'GMS1';
-    }
-    $ENV{GENOME_ROOT} = "/gsc/scripts/opt/genome/gms-root/";
-    $ENV{GENOME_HOME} = "/gsc/scripts/opt/genome/home/";
+    my @shell_vars = qw(
+        GENOME_DB
+        GENOME_DB_QUERY_PAUSE
+        GENOME_DISK_GROUP_ALIGNMENTS
+        GENOME_DISK_GROUP_ARCHIVE
+        GENOME_DISK_GROUP_DEV
+        GENOME_DISK_GROUP_MODELS
+        GENOME_DISK_GROUP_REFERENCES
+        GENOME_DISK_GROUP_RESEARCH
+        GENOME_DISK_GROUP_TRASH
+        GENOME_DS_DGIDB_AUTH
+        GENOME_DS_DGIDB_LOGIN
+        GENOME_DS_DGIDB_OWNER
+        GENOME_DS_DGIDB_SERVER
+        GENOME_DS_DGIDB_TYPE
+        GENOME_DS_DWRAC_AUTH
+        GENOME_DS_DWRAC_LOGIN
+        GENOME_DS_DWRAC_OWNER
+        GENOME_DS_DWRAC_SERVER
+        GENOME_DS_DWRAC_TYPE
+        GENOME_DS_GMSCHEMA_AUTH
+        GENOME_DS_GMSCHEMA_LOGIN
+        GENOME_DS_GMSCHEMA_OWNER
+        GENOME_DS_GMSCHEMA_SERVER
+        GENOME_DS_GMSCHEMA_TYPE
+        GENOME_DS_OLTP_AUTH
+        GENOME_DS_OLTP_LOGIN
+        GENOME_DS_OLTP_OWNER
+        GENOME_DS_OLTP_SERVER
+        GENOME_DS_OLTP_TYPE
+        GENOME_EMAIL_ANNOTATION
+        GENOME_EMAIL_DOMAIN
+        GENOME_EMAIL_ILLUMINA_BWA
+        GENOME_EMAIL_NOREPLY
+        GENOME_EMAIL_PIPELINE
+        GENOME_EMAIL_PIPELINE_NOISY
+        GENOME_EMAIL_SMTP_SERVER
+        GENOME_EMAIL_TEST
+        GENOME_EMAIL_VIROME_SCREENING
+        GENOME_FS_LOCAL_NETWORK_CACHE
+        GENOME_HOME
+        GENOME_LOCK_DIR
+        GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT
+        GENOME_LSF_QUEUE_ALIGNMENT_PROD
+        GENOME_LSF_QUEUE_ASSEMBLY
+        GENOME_LSF_QUEUE_BIGMEM
+        GENOME_LSF_QUEUE_BUILD_WORKER
+        GENOME_LSF_QUEUE_BUILD_WORKER_ALT
+        GENOME_LSF_QUEUE_BUILD_WORKFLOW
+        GENOME_LSF_QUEUE_DV2_WORKER
+        GENOME_LSF_QUEUE_DV2_WORKFLOW
+        GENOME_LSF_QUEUE_SHORT
+        GENOME_ROOT
+        GENOME_SW
+        GENOME_SW_IGNORE
+        GENOME_SW_LEGACY_JAVA
+        GENOME_SYS_GROUP
+        GENOME_SYS_ID
+        GENOME_SYS_SERVICES_FILES_URL
+        GENOME_SYS_SERVICES_MEMCACHE
+        GENOME_SYS_SERVICES_SEARCH_URL
+        GENOME_SYS_SERVICES_SOLR
+        GENOME_SYS_SERVICES_WEB_VIEW_URL
+        GENOME_SYS_SERVICES_WIKI_URL
+        GENOME_SYS_UMASK
+        GENOME_TEST_INPUTS
+        GENOME_TEST_URL
+    );
 
     if ($ENV{GENOME_DEV_MODE}) {
-        $ENV{GENOME_SYS_SERVICES_MEMCACHE} ||= 'apipe-dev.gsc.wustl.edu:11211';
-        $ENV{GENOME_SYS_SERVICES_SOLR} ||= 'http://solr-dev:8080/solr';
+        $ENV{GENOME_SYS_SERVICES_MEMCACHE} = 'apipe-dev.gsc.wustl.edu:11211';
+        $ENV{GENOME_SYS_SERVICES_SOLR} = 'http://solr-dev:8080/solr';
     }
-    else {
-        $ENV{GENOME_SYS_SERVICES_MEMCACHE} ||= 'imp-apipe.gsc.wustl.edu:11211';
-        $ENV{GENOME_SYS_SERVICES_SOLR} ||= 'http://solr:8080/solr';
-    }
-    $ENV{GENOME_SYS_SERVICES_SEARCH_URL} ||= 'https://imp-apipe.gsc.wustl.edu/';
-    $ENV{GENOME_SYS_SERVICES_FILES_URL} ||= 'https://gscweb.gsc.wustl.edu/';
-    $ENV{GENOME_SYS_SERVICES_WIKI_URL} ||= 'https://gscweb.gsc.wustl.edu/mediawiki/';
-    $ENV{GENOME_SYS_SERVICES_WEB_VIEW_URL} ||= 'https://imp-apipe.gsc.wustl.edu/view/';
-}
 
-# configure local statsd server
-BEGIN {
-    unless ($ENV{UR_DBI_NO_COMMIT}) {
-        $ENV{GENOME_STATSD_HOST} ||= 'apipe-statsd.gsc.wustl.edu';
-        $ENV{GENOME_STATSD_PORT} ||= 8125;
+    if ($ENV{UR_DBI_NO_COMMIT}) {
+        delete $ENV{GENOME_STATSD_HOST};
+        delete $ENV{GENOME_STATSD_PORT};
+        delete $ENV{GENOME_DB_PAUSE};
+    } else {
+        # these get pushed on because if Genome::Site::TGI gets called by a
+        # subshell during tests then it will fail because the parent deleted
+        # these environment variables
+        push @shell_vars, qw(
+            GENOME_DB_PAUSE
+            GENOME_STATSD_HOST
+            GENOME_STATSD_PORT
+        );
+    }
+
+    my @unset_shell_vars = grep { !defined($ENV{$_}) } @shell_vars;
+    if (@unset_shell_vars) {
+        die q(ERROR: You need to start a new shell so that environment variables are setup for Genome.pm.  The following environment variables are not set: ) . join(', ', @unset_shell_vars);
+    }
+
+    if (!$ENV{GENOME_SYS_ID} || $ENV{GENOME_SYS_ID} ne 'GMS1') {
+        die q(ERROR: At TGI we expect the GENOME_SYS_ID to be 'GMS1'.  Other sites should not use the Genome::Site::TGI module.)
     }
 };
 
@@ -43,106 +111,6 @@ BEGIN { $INC{"UNIVERSAL/isa.pm"} = 'no' };
 BEGIN { $INC{"Genome/Config.pm"} = 'no' };
 
 BEGIN { $INC{ "UR/Time.pm"} = "no" };
-
-# set our internal paths for data and software
-$ENV{GENOME_DB} ||= '/gsc/scripts/opt/genome/db';
-$ENV{GENOME_SW} ||= '/gsc/pkg/bio';
-$ENV{GENOME_SW_LEGACY_JAVA} ||= '/gsc/scripts/lib/java';
-$ENV{GENOME_SW_IGNORE} ||= '/gsc/bin:/gsc/scripts/bin';
-$ENV{GENOME_LOCK_DIR} ||= '/gsc/var/lock';
-$ENV{GENOME_SYS_GROUP} ||= 'info';
-$ENV{GENOME_SYS_UMASK} ||= 0002;
-$ENV{GENOME_FS_LOCAL_NETWORK_CACHE} = '/var/cache/tgisan';
-
-# GENOME_LSF_QUEUE_*
-$ENV{GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT} ||= 'alignment';
-$ENV{GENOME_LSF_QUEUE_ALIGNMENT_PROD} ||= 'alignment-pd';
-$ENV{GENOME_LSF_QUEUE_ASSEMBLY} ||= 'assembly';
-$ENV{GENOME_LSF_QUEUE_BIGMEM} ||= 'bigmem';
-$ENV{GENOME_LSF_QUEUE_BUILD_WORKER} ||= 'long';
-$ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT} ||= 'apipe';
-$ENV{GENOME_LSF_QUEUE_BUILD_WORKFLOW} ||= 'workflow';
-$ENV{GENOME_LSF_QUEUE_DV2_WORKER} ||= 'apipe';
-$ENV{GENOME_LSF_QUEUE_DV2_WORKFLOW} ||= 'long';
-$ENV{GENOME_LSF_QUEUE_SHORT} ||= 'short';
-
-# GENOME_DISK_GROUP_*
-$ENV{GENOME_DISK_GROUP_ARCHIVE} ||= 'info_archive';
-$ENV{GENOME_DISK_GROUP_DEV} ||= 'info_apipe';
-$ENV{GENOME_DISK_GROUP_REFERENCES} ||= 'info_apipe_ref';
-$ENV{GENOME_DISK_GROUP_MODELS} ||= 'info_genome_models';
-$ENV{GENOME_DISK_GROUP_ALIGNMENTS} ||= 'info_alignments';
-$ENV{GENOME_DISK_GROUP_RESEARCH} ||= 'research';
-$ENV{GENOME_DISK_GROUP_TRASH} ||= 'info_apipe_trash';
-
-# Data source connection details
-# GMSchema
-$ENV{GENOME_DS_GMSCHEMA_TYPE} ||= 'UR::DataSource::Pg';
-$ENV{GENOME_DS_GMSCHEMA_SERVER} ||= 'dbname=genome;host=gms-postgres';
-$ENV{GENOME_DS_GMSCHEMA_LOGIN} ||= 'gms-user';
-$ENV{GENOME_DS_GMSCHEMA_AUTH} ||= 'kqa4BLqp';
-$ENV{GENOME_DS_GMSCHEMA_OWNER} ||= 'public';
-
-# DgiDB
-$ENV{GENOME_DS_DGIDB_TYPE} ||= 'UR::DataSource::Pg';
-$ENV{GENOME_DS_DGIDB_SERVER} ||= 'dbname=genome;host=postgres';
-$ENV{GENOME_DS_DGIDB_LOGIN} ||= 'genome';
-$ENV{GENOME_DS_DGIDB_AUTH} ||= 'TGI_pg_1';
-$ENV{GENOME_DS_DGIDB_OWNER} ||= 'public';
-
-# dwrac
-$ENV{GENOME_DS_DWRAC_TYPE} ||= 'Genome::DataSource::OracleType';
-$ENV{GENOME_DS_DWRAC_SERVER} ||= 'dwrac';
-$ENV{GENOME_DS_DWRAC_LOGIN} ||= 'gscuser';
-$ENV{GENOME_DS_DWRAC_AUTH} ||= 'user_dw';
-$ENV{GENOME_DS_DWRAC_OWNER} ||= 'GSC';
-
-# oltp
-$ENV{GENOME_DS_OLTP_TYPE} ||= 'Genome::DataSource::OracleType';
-$ENV{GENOME_DS_OLTP_SERVER} ||= 'gscprod';
-$ENV{GENOME_DS_OLTP_LOGIN} ||= 'gscuser';
-$ENV{GENOME_DS_OLTP_AUTH} ||= 'g_user';
-$ENV{GENOME_DS_OLTP_OWNER} ||= 'GSC';
-
-# Email
-$ENV{GENOME_EMAIL_DOMAIN} ||= 'genome.wustl.edu';
-$ENV{GENOME_EMAIL_SMTP_SERVER} ||= 'gscsmtp.wustl.edu';
-$ENV{GENOME_EMAIL_PIPELINE} ||= 'apipe@genome.wustl.edu';  # Used as the source of some system emails
-$ENV{GENOME_EMAIL_PIPELINE_NOISY} ||= 'apipe-run@genome.wustl.edu'; # recepient alias for noisy system emails
-$ENV{GENOME_EMAIL_TEST} ||= 'fakeguy@genome.wustl.edu';  # Used in some tests
-$ENV{GENOME_EMAIL_NOREPLY} ||= 'donotreply@genome.wustl.edu';
-$ENV{GENOME_EMAIL_ILLUMINA_BWA} ||= 'illumina-bwa@genome.wustl.edu';
-$ENV{GENOME_EMAIL_VIROME_SCREENING} ||= 'virome-screen@genome.wustl.edu';
-$ENV{GENOME_EMAIL_ANNOTATION} ||= 'annopipe@genome.wustl.edu '; # for report generated by Genome/Model/Tools/Ber/BerRunFinish.pm
-
-
-# testsuite data
-my $inputs_directory = '/gsc/var/cache/testsuite/data';
-$ENV{GENOME_TEST_INPUTS} ||= -l $inputs_directory ? readlink($inputs_directory) : $inputs_directory;
-$ENV{GENOME_TEST_URL} ||= sprintf('%s/%s', $ENV{GENOME_SYS_SERVICES_FILES_URL}, $ENV{GENOME_TEST_INPUTS});
-
-# configure file that signals that database updates should be paused
-if (!$ENV{UR_DBI_NO_COMMIT}) {
-    $ENV{GENOME_DB_PAUSE} ||= $ENV{GENOME_LOCK_DIR} . '/database/pause_updates';
-}
-$ENV{GENOME_DB_QUERY_PAUSE} ||= $ENV{GENOME_LOCK_DIR} . '/database/pause_queries';
-
-
-
-# configure our local ensembl db
-$ENV{GENOME_DB_ENSEMBL_DEFAULT_IMPORTED_ANNOTATION_BUILD} ||= '122704720';
-$ENV{GENOME_DB_ENSEMBL_HOST} ||= 'mysql1';
-$ENV{GENOME_DB_ENSEMBL_USER} ||= 'mse';
-$ENV{GENOME_DB_ENSEMBL_PORT} ||= '3306';
-
-# default nomenclature for new instrument data and sample attributes
-$ENV{GENOME_NOMENCLATURE_DEFAULT} ||= 'WUGC';
-
-# Log directory
-$ENV{GENOME_LOG_DIR} ||= '/gsc/var/log/genome';
-
-#set default analysis project configuration path
-$ENV{GENOME_ANALYSIS_PROJECT_DEFAULTS} = '/gsc/scripts/opt/analysis_project_config/defaults';
 
 # a unique ID for each program execution.  Used got logging saves to the database
 $ENV{GENOME_EXECUTION_ID} = UR::Object::Type->autogenerate_new_object_id_uuid();
