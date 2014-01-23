@@ -113,10 +113,8 @@ sub run_test {
     my $main_dir = shift;
     my %params = @_;
 
-    my $output_dir = Genome::Sys->create_temp_directory;
     my $cmd = $pkg->create(
         %params,
-        output_dir              => $output_dir,
     );
     ok($cmd->isa("Genome::Model::Tools::Somatic::ProcessSomaticVariation"), "Generated a process somatic variation object");
 

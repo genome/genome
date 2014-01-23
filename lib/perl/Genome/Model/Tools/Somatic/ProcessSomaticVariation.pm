@@ -11,6 +11,7 @@ use File::Slurp qw(read_dir);
 use File::Basename qw(basename);
 use Carp qw(confess);
 use Params::Validate;
+use YAML;
 
 class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
     is => 'Command::V2',
@@ -18,10 +19,6 @@ class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
         somatic_variation_build => {
             is => 'Genome::Model::Build::SomaticVariation',
             doc => 'Somactic Variation build',
-        },
-        output_dir => {
-            is => 'Text',
-            doc => "Directory where output will be stored (under a subdirectory with the sample name)",
         },
         igv_reference_name =>{
             is => 'Text',
@@ -64,8 +61,8 @@ class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
     has_optional_output => [
         report => {
             is => 'Path',
-            calculate =>  q{ File::Spec->join($_full_output_dir, 'snvs.indels.annotated') },
-            calculate_from => ['_full_output_dir'],
+            calculate =>  q{ File::Spec->join($_output_dir, 'snvs.indels.annotated') },
+            calculate_from => ['_output_dir'],
         },
         report_xls => {
             is => 'Path',
@@ -74,42 +71,32 @@ class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
         },
         review_dir => {
             is => 'Path',
-            calculate => q{ File::Spec->join($output_dir, 'review') },
-            calculate_from => ['output_dir'],
+            calculate => q{ File::Spec->join($_output_dir, 'review') },
+            calculate_from => ['_output_dir'],
         },
         review_bed => {
             is => 'Path',
-            calculate =>  q{ File::Spec->join($review_dir, $_sample_name_dir . '.bed') },
-            calculate_from => ['review_dir', '_sample_name_dir' ],
+            calculate =>  q{ File::Spec->join($review_dir, $sample_name . '.bed') },
+            calculate_from => ['review_dir', 'sample_name' ],
         },
         review_xml => {
             is => 'Path',
-            calculate =>  q{ File::Spec->join($review_dir, $_sample_name_dir . '.xml') },
-            calculate_from => ['review_dir', '_sample_name_dir' ],
+            calculate =>  q{ File::Spec->join($review_dir, $sample_name . '.xml') },
+            calculate_from => ['review_dir', 'sample_name' ],
         },
     ],
-    has => [
-        _full_output_dir => {
-            is => 'Text',
-            is_optional => 1,
-            is_transient => 1,
-            is_mutable => 0,
-            calculate => q{ File::Spec->join($output_dir, $_sample_name_dir) },
-            calculate_from => ['output_dir', '_sample_name_dir'],
-        },
-        _sample_name_dir => {
-            is => 'Text',
-            is_optional => 1,
-            is_transient => 1,
-            is_mutable => 0,
-            calculate => q{ $self->get_unique_sample_name_dir }
-        },
+    has_transient_optional => [
         _build_dir => {
             is => 'Text',
-            is_optional => 1,
-            is_transient => 1,
             is_mutable => 0,
             calculate => q{ $self->somatic_variation_build->data_directory },
+        },
+        _output_dir => {
+            is => 'Text',
+            doc => "Directory where output will be stored",
+        },
+        _allocation => {
+            is => 'Genome::Disk::Allocation',
         },
     ],
 };
@@ -135,17 +122,9 @@ AUTHS
 sub execute {
     my $self = shift;
 
-    my $output_dir = $self->output_dir;
-    $output_dir =~ s/(\/)+$//; # Remove trailing forward-slashes if any
-
-    unless (-e $output_dir) {
-        Genome::Sys->create_directory($output_dir);
-    }
-
     $self->status_message("Processing model with sample_name: " . $self->sample_name);
 
-    #make the directory structure
-    $self->create_directories();
+    $self->_output_dir($self->create_allocation());
 
     # Check if the necessary files exist in this build and put them in the processing location
     my $snv_file   = $self->stage_snv_file();
@@ -153,27 +132,24 @@ sub execute {
 
     #--------------------------------------------------------------
     # munge through SNV file to remove duplicates and fix IUB codes
-    $snv_file = $self->cleanFile($snv_file, 'snvs');
-    $indel_file = $self->cleanFile($indel_file, 'indels');
+    $snv_file = $self->cleanFile($snv_file, $self->snvs_dir);
+    $indel_file = $self->cleanFile($indel_file, $self->indels_dir);
+
+    #-------------------------------------------------------
+    # remove regions called by less than the required number of callers
+    $snv_file = $self->removeUnsupportedSites($snv_file);
 
     #-------------------------------------------------
     # filter out the off-target regions, if target regions are available
     if ($self->restrict_to_target_regions) {
-        $snv_file = $self->_filter_off_target_regions($snv_file, "snvs");
-        $indel_file = $self->_filter_off_target_regions($indel_file, "indels");
-    }
-
-    #-------------------------------------------------------
-    # remove regions called by less than the required number of callers
-    unless ($self->required_snv_callers == 1) {
-        $self->status_message("Removing regions supported by less than " . $self->required_snv_callers . " regions");
-        $snv_file = $self->removeUnsupportedSites($snv_file);
+        $snv_file = $self->_filter_off_target_regions($snv_file, $self->snvs_dir);
+        $indel_file = $self->_filter_off_target_regions($indel_file, $self->indels_dir);
     }
 
     #------------------------------------------------------
     # do annotation
-    $snv_file   = $self->doAnnotation($snv_file, 'snvs');
-    $indel_file = $self->doAnnotation($indel_file, 'indels');
+    $snv_file   = $self->doAnnotation($snv_file, $self->snvs_dir);
+    $indel_file = $self->doAnnotation($indel_file, $self->indels_dir);
 
     #-------------------------------------------------------
     # add tiers
@@ -190,8 +166,8 @@ sub execute {
     ($snv_file, $indel_file) = $self->_add_dbsnp_and_gmaf($snv_file, $indel_file);
 
     $self->status_message("Getting read counts");
-    $snv_file   = $self->read_counts($snv_file, 'snvs');
-    $indel_file = $self->read_counts($indel_file, 'indels');
+    $snv_file   = $self->read_counts($snv_file, $self->snvs_dir);
+    $indel_file = $self->read_counts($indel_file, $self->indels_dir);
 
     #------------------------------------------------------
     # combine the files into one master table
@@ -201,9 +177,48 @@ sub execute {
     # now get the files together for review
     $self->_create_review_files();
 
+    $self->reallocate();
+    #$self->create_symlinks_in_build_dir();
+
     return 1;
 }
 
+sub create_allocation {
+    my $self = shift;
+
+    my $build = $self->somatic_variation_build;
+    my %allocation_params = (
+        disk_group_name => $ENV{GENOME_DISK_GROUP_MODELS},
+        allocation_path => File::Spec->join('model_data', 'ProcessSomaticVariation', $build->id),
+        kilobytes_requested => 4_000_000,
+        owner_class_name => $build->class,
+        owner_id => $build->id,
+    );
+
+    my $allocation = Genome::Disk::Allocation->allocate(
+        %allocation_params);
+    unless ($allocation) {
+        confess $self->error_message(
+                "Failed to get disk allocation with params:\n" .
+                YAML::Dump(%allocation_params));
+    }
+
+    my $absolute_path = $allocation->absolute_path;
+    unless (-d $absolute_path) {
+        $allocation->delete;
+        confess $self->error_message(
+                "Path $absolute_path doesn't exist!");
+    }
+    $self->_allocation($allocation);
+
+    return $absolute_path;
+}
+
+sub reallocate {
+    my $self = shift;
+
+    $self->_allocation->reallocate();
+}
 
 sub bedFileToAnnoFile{
     my ($file, $outfile) = @_;
@@ -346,12 +361,12 @@ sub addName{
 
 #read in the file, output a cleaned-up version
 sub cleanFile {
-    my ($self, $file, $subdirectory) = @_;
+    my ($self, $file, $directory) = @_;
 
     my $newfile = $self->result_file_path(
         input_file_path => $file,
         suffix => 'clean',
-        subdirectory => $subdirectory,
+        directory => $directory,
     );
 
     my %dups;
@@ -457,18 +472,21 @@ sub getVcfFile{
 }
 
 
-sub removeUnsupportedSites{
+sub removeUnsupportedSites {
     my ($self, $snv_file) = @_;
 
-    my $numcallers = $self->required_snv_callers;
-    my $build_dir  = $self->_build_dir;
+    if ($self->required_snv_callers == 1) {
+        return $snv_file;
+    }
+    $self->status_message("Removing regions supported by less than %s regions", $self->required_snv_callers);
 
     #hash all of the sites
     my $sites = $self->getSiteHash($snv_file);
 
-
     #Look for the callers
-    my @dirs = map {basename($_) } glob("$build_dir/variants/snv/*");
+    my @dirs = map {basename($_) } glob(
+        File::Spec->join($self->_build_dir, 'variants', 'snv', '*'),
+    );
     #remove non-caller dirs
     @dirs = grep{ ! /^intersect|^union|^samtools/ } @dirs;
 
@@ -494,8 +512,8 @@ sub removeUnsupportedSites{
 
     my $result_file_path = $self->result_file_path(
         input_file_path => $snv_file,
-        suffix          => "gt" . $numcallers . "callers",
-        subdirectory    => "snvs"
+        suffix          => "gt" . $self->required_snv_callers . "callers",
+        directory    => $self->snvs_dir,
     );
 
     my $ofh = Genome::Sys->open_file_for_writing($result_file_path);
@@ -509,7 +527,7 @@ sub removeUnsupportedSites{
         if (!defined($sites->{$key})) {
             $self->status_message("wut?: " . $key);
         }
-        if ($sites->{$key} >= $numcallers) {
+        if ($sites->{$key} >= $self->required_snv_callers) {
             print $ofh $line . "\n";
         }
     }
@@ -524,13 +542,13 @@ sub result_file_path {
         {
             input_file_path => Params::Validate::SCALAR,
             suffix => Params::Validate::SCALAR,
-            subdirectory => Params::Validate::SCALAR,
+            directory => Params::Validate::SCALAR,
         },
     );
 
     my $input_file_name  = basename($params{input_file_path});
     my $output_file_name = addName($input_file_name, $params{suffix});
-    my $result_file_path = File::Spec->join($self->_full_output_dir, $params{subdirectory}, $output_file_name);
+    my $result_file_path = File::Spec->join($params{directory}, $output_file_name);
 
     return $result_file_path;
 }
@@ -538,7 +556,7 @@ sub result_file_path {
 sub doAnnotation {
     my $self         = shift;
     my $file         = shift;
-    my $subdirectory = shift;
+    my $directory    = shift;
 
     my $annotation_build_name = $self->annotation_build->name;
 
@@ -549,7 +567,7 @@ sub doAnnotation {
     my $newfile = $self->result_file_path(
         input_file_path => $file,
         suffix          => "anno",
-        subdirectory    => $subdirectory,
+        directory       => $directory,
     );
 
     #handle zero size files
@@ -571,12 +589,12 @@ sub doAnnotation {
 }
 
 
-sub addTiering{
+sub addTiering {
     my $self               = shift;
     my $file               = shift;
     my $outfile            = shift;
 
-    my $tier_file_location = $self->annotation_build->data_directory . "/annotation_data/tiering_bed_files_v3/";
+    my $tier_file_location = File::Spec->join($self->annotation_build->data_directory, 'annotation_data', 'tiering_bed_files_v3');
 
     unless ($file =~ /\.bed/) {
         $file = annoFileToBedFile($file);
@@ -608,12 +626,12 @@ sub addTiering{
 }
 
 sub read_counts {
-    my ($self, $variants_file, $subdirectory) = @_;
+    my ($self, $variants_file, $directory) = @_;
 
     my $output_file = $self->result_file_path(
         input_file_path => $variants_file,
         suffix => 'rcnt',
-        subdirectory => $subdirectory,
+        directory => $directory,
     );
 
     if (-s $variants_file) {
@@ -662,87 +680,97 @@ sub ref_seq_fasta {
     return $self->somatic_variation_build->tumor_build->reference_sequence_build->full_consensus_path('fa');
 }
 
-
-sub get_unique_sample_name_dir {
+sub snvs_dir {
     my $self = shift;
-
-    my $output_dir  = $self->output_dir;
-    my $sample_name = $self->sample_name;
-
-    if (-e "$output_dir/$sample_name") {
-        my $suffix = 1;
-        my $newname = $sample_name . "-" . $suffix;
-        while (-e "$output_dir/$newname") {
-            $suffix++;
-            $newname = $sample_name . "-" . $suffix;
-        }
-        return $newname;
-    }
-    else {
-        return $sample_name;
-    }
+    return get_or_create_directory(
+        File::Spec->join($self->_output_dir, 'snvs'),
+    );
 }
 
-sub create_directories {
+sub indels_dir {
     my $self = shift;
+    return get_or_create_directory(
+        File::Spec->join($self->_output_dir, 'indels'),
+    );
+}
 
-    my $full_output_dir = $self->_full_output_dir;
-    my $output_dir      = $self->output_dir;
-    my $build_dir       = $self->_build_dir;
+sub review_dir {
+    my $self = shift;
+    return get_or_create_directory(
+        File::Spec->join($self->_output_dir, 'review'),
+    );
+}
 
-    Genome::Sys->create_directory("$full_output_dir");
-    Genome::Sys->create_directory("$full_output_dir/snvs");
-    Genome::Sys->create_directory("$full_output_dir/indels");
-    Genome::Sys->create_directory("$output_dir/review");
-    Genome::Sys->create_symlink($build_dir, "$full_output_dir/build_directory");
+sub get_or_create_directory {
+    my $path = shift;
 
-    return 1;
+    unless (-d $path) {
+        Genome::Sys->create_directory($path);
+    }
+
+    return $path;
 }
 
 sub stage_snv_file {
     my $self = shift;
 
-    my $full_output_dir = $self->_full_output_dir;
-    my $build_dir       = $self->_build_dir;
+    $self->ensure_snvs_were_processed();
 
-    my $snv_file = "$build_dir/effects/snvs.hq.novel.tier1.v2.bed";
-    unless (-e $snv_file) {
-        confess $self->error_message("SNV results for " . $self->sample_name . " not found at $snv_file");
-    }
-
-    #cat all the filtered snvs together
-    $snv_file = "$full_output_dir/snvs/snvs.hq.bed";
-    Genome::Sys->shellcmd( cmd => "cat $build_dir/effects/snvs.hq.novel.tier*.v2.bed $build_dir/effects/snvs.hq.previously_detected.tier*.v2.bed | joinx sort >$snv_file");
-
-#  `ln -s $snv_file $full_output_dir/snvs/` unless( -e "$full_output_dir/snvs/$snv_file");
+    my $snv_file = File::Spec->join($self->snvs_dir, 'snvs.hq.bed');
+    my $cmd = sprintf('cat %s %s | joinx sort -o %s',
+        File::Spec->join($self->_build_dir, 'effects', 'snvs.hq.novel.tier*.v2.bed'),
+        File::Spec->join($self->_build_dir, 'effects', 'snvs.hq.previously_detected.tier*.v2.bed'),
+        $snv_file,
+    );
+    Genome::Sys->shellcmd(
+        cmd => $cmd,
+        output_files => [$snv_file],
+    );
 
     return $snv_file;
+}
+
+sub ensure_snvs_were_processed {
+    my $self = shift;
+
+    my $snv_file = File::Spec->join($self->_build_dir, 'effects', 'snvs.hq.novel.tier1.v2.bed');
+    unless (-e $snv_file) {
+        confess $self->error_message("SNV results for %s not found at %s", $self->sample_name, $snv_file);
+    }
 }
 
 sub stage_indel_file {
     my $self = shift;
 
-    my $full_output_dir = $self->_full_output_dir;
-    my $build_dir       = $self->_build_dir;
+    $self->ensure_indels_were_processed();
 
-    my $indel_file = "$build_dir/effects/indels.hq.novel.tier1.v2.bed";
-    unless (-e $indel_file) {
-        confess $self->error_message("INDEL results for " . $self->sample_name . " not found at $indel_file");
-    }
-
-    #cat all the filtered indels together
-    $indel_file = "$full_output_dir/indels/indels.hq.bed";
-    Genome::Sys->shellcmd( cmd => "cat $build_dir/effects/indels.hq.novel.tier*.v2.bed $build_dir/effects/indels.hq.previously_detected.tier*.v2.bed | joinx sort >$indel_file" );
-
-#  `ln -s $indel_file $full_output_dirindels/` unless( -e "$full_output_dir/indels/$indel_file");
+    my $indel_file = File::Spec->join($self->indels_dir, 'indels.hq.bed');
+    my $cmd = sprintf('cat %s %s | joinx sort -o %s',
+        File::Spec->join($self->_build_dir, 'effects', 'indels.hq.novel.tier*.v2.bed'),
+        File::Spec->join($self->_build_dir, 'effects', 'indels.hq.previously_detected.tier*.v2.bed'),
+        $indel_file,
+    );
+    Genome::Sys->shellcmd(
+        cmd => $cmd,
+        output_files => [$indel_file],
+    );
 
     return $indel_file;
+}
+
+sub ensure_indels_were_processed {
+    my $self = shift;
+
+    my $indel_file = File::Spec->join($self->_build_dir, 'effects', 'indels.hq.novel.tier1.v2.bed');
+    unless (-e $indel_file) {
+        confess $self->error_message("INDEL results for %s not found at %s", $self->sample_name, $indel_file);
+    }
 }
 
 sub _filter_off_target_regions {
     my $self         = shift;
     my $file         = shift;
-    my $subdirectory = shift;
+    my $directory    = shift;
 
     $self->status_message("Filtering out off-target regions for $file");
 
@@ -751,7 +779,7 @@ sub _filter_off_target_regions {
         my $new_file = $self->result_file_path(
             input_file_path => $file,
             suffix => 'ontarget',
-            subdirectory => $subdirectory,
+            directory => $directory,
         );
 
         Genome::Sys->shellcmd(cmd => "joinx intersect -a $file -b $featurelist -o $new_file");
@@ -767,11 +795,9 @@ sub _filter_off_target_regions {
 sub get_or_create_featurelist_file {
     my $self = shift;
 
-    my $full_output_dir = $self->_full_output_dir;
     my $build = $self->somatic_variation_build;
 
-    my $featurelist_file = "$full_output_dir/featurelist";
-
+    my $featurelist_file = File::Spec->join($self->_output_dir, 'featurelist');
     if (-e $featurelist_file) {
         return $featurelist_file;
     }
@@ -835,7 +861,7 @@ sub _add_dbsnp_and_gmaf_to_snv {
     my $output_file = $self->result_file_path(
         input_file_path => $snv_file,
         suffix => 'rsid',
-        subdirectory => 'snvs',
+        directory => $self->snvs_dir,
     );
 
     my $db_cmd = Genome::Model::Tools::Annotate::AddRsid->create(
@@ -857,7 +883,7 @@ sub _add_dbsnp_and_gmaf_to_indel {
     my $output_file = $self->result_file_path(
         input_file_path => $indel_file,
         suffix => 'rsid',
-        subdirectory => 'indels',
+        directory => $self->indels_dir,
     );
 
     my $outFh = Genome::Sys->open_file_for_writing($output_file);
@@ -877,20 +903,21 @@ sub _create_master_files {
     my $snv_file   = shift;
     my $indel_file = shift;
 
-    my $full_output_dir = $self->_full_output_dir;
+    Genome::Sys->shellcmd(cmd => sprintf('tail -n +2 %s >> %s', $indel_file, $self->report . '.unsorted'));
+    Genome::Sys->shellcmd(cmd => sprintf('tail -n +2 %s >> %s', $snv_file, $self->report . '.unsorted'));
+    Genome::Sys->shellcmd(cmd => sprintf('joinx sort -i %s -o %s', $self->report . '.unsorted', $self->report . '.sorted'));
 
-    Genome::Sys->shellcmd(cmd => "head -n 1 $snv_file >$full_output_dir/snvs.indels.annotated");
-    Genome::Sys->shellcmd(cmd => "tail -n +2 $indel_file >>$full_output_dir/snvs.indels.annotated.tmp");
-    Genome::Sys->shellcmd(cmd => "tail -n +2 $snv_file >>$full_output_dir/snvs.indels.annotated.tmp");
-    Genome::Sys->shellcmd(cmd => "joinx sort -i $full_output_dir/snvs.indels.annotated.tmp >>$full_output_dir/snvs.indels.annotated");
-    Genome::Sys->shellcmd(cmd => "rm -f $full_output_dir/snvs.indels.annotated.tmp");
+    # have to put the header on after joinx sort because joinx
+    # won't recognize it as a bed format with a header
+    Genome::Sys->shellcmd(cmd => sprintf('cat <(head -n 1 %s) %s > %s', $snv_file, $self->report . '.sorted', $self->report));
+    Genome::Sys->shellcmd(cmd => sprintf('rm -f %s %s', $self->report . '.unsorted', $self->report . '.sorted'));
 
     # convert master table to excel
-    my $workbook  = Spreadsheet::WriteExcel->new("$full_output_dir/snvs.indels.annotated.xls");
+    my $workbook  = Spreadsheet::WriteExcel->new($self->report_xls);
     my $worksheet = $workbook->add_worksheet();
 
     my $row=0;
-    my $inFh = Genome::Sys->open_file_for_reading("$full_output_dir/snvs.indels.annotated");
+    my $inFh = Genome::Sys->open_file_for_reading($self->report);
     while (my $line = $inFh->getline) {
         chomp($line);
         my @F = split("\t", $line);
@@ -908,38 +935,11 @@ sub _create_master_files {
 sub _create_review_files {
     my $self = shift;
 
-    my $sample_name_dir = $self->_sample_name_dir;
-    my $full_output_dir = $self->_full_output_dir;
-
     $self->status_message("Generating Review files");
-    my @tiers = split(",", $self->tiers_to_review);
-    my $tierstring = join("",@tiers);
-    for my $i (@tiers) {
-        Genome::Sys->shellcmd(cmd => "grep -w tier$i $full_output_dir/snvs.indels.annotated >>$full_output_dir/snvs.indels.annotated.tier$tierstring.tmp");
-    }
-    Genome::Sys->shellcmd(cmd => "joinx sort -i $full_output_dir/snvs.indels.annotated.tier$tierstring.tmp >$full_output_dir/snvs.indels.annotated.tier$tierstring");
-    Genome::Sys->shellcmd(cmd => "rm -f $full_output_dir/snvs.indels.annotated.tier$tierstring.tmp");
-    annoFileToSlashedBedFile("$full_output_dir/snvs.indels.annotated.tier$tierstring",$self->review_bed);
 
-    my $tumor_bam = $self->tumor_bam;
-    my $normal_bam = $self->normal_bam;
+    $self->_create_review_bed();
 
-    my $bam_files = join(",",($normal_bam, $tumor_bam));
-    my $labels = join(",",("normal $sample_name_dir","tumor $sample_name_dir"));
-
-    #create the xml file for review
-    my $dumpXML = Genome::Model::Tools::Analysis::DumpIgvXmlMulti->create(
-        bams            => $bam_files,
-        labels          => $labels,
-        output_file     => $self->review_xml,
-        genome_name     => $sample_name_dir,
-        review_bed_file => $self->review_bed,
-        reference_name  => $self->igv_reference_name,
-    );
-    unless ($dumpXML->execute) {
-        confess $self->error_message("Failed to create IGV xml file");
-    }
-
+    $self->_create_review_xml();
     $self->status_message("\n--------------------------------------------------------------------------------");
     $self->status_message("Sites to review are here:");
     $self->status_message($self->review_bed);
@@ -947,6 +947,49 @@ sub _create_review_files {
     $self->status_message($self->review_xml);
 
     return 1;
+}
+
+sub _create_review_bed {
+    my $self = shift;
+
+    my @tiers = split(",", $self->tiers_to_review);
+    my $tier_restricted_file = sprintf('%s.tier%s',
+        $self->report, join('', @tiers));
+
+    for my $i (@tiers) {
+        Genome::Sys->shellcmd(
+            cmd => sprintf('grep -w tier%s %s >> %s',
+                $i, $self->report, $tier_restricted_file . '.tmp'),
+        );
+    }
+    Genome::Sys->shellcmd(
+        cmd => sprintf('joinx sort -i %s -o %s',
+            $tier_restricted_file . '.tmp', $tier_restricted_file),
+    );
+    Genome::Sys->shellcmd(cmd => sprintf('rm -f %s', $tier_restricted_file . '.tmp'));
+    annoFileToSlashedBedFile($tier_restricted_file, $self->review_bed);
+}
+
+sub _create_review_xml {
+    my $self = shift;
+
+    my $bam_files = join(",",($self->normal_bam, $self->tumor_bam));
+
+    my $labels = sprintf('normal %s,tumor %s',
+        $self->sample_name, $self->sample_name);
+
+    #create the xml file for review
+    my $dumpXML = Genome::Model::Tools::Analysis::DumpIgvXmlMulti->create(
+        bams            => $bam_files,
+        labels          => $labels,
+        output_file     => $self->review_xml,
+        genome_name     => $self->sample_name,
+        review_bed_file => $self->review_bed,
+        reference_name  => $self->igv_reference_name,
+    );
+    unless ($dumpXML->execute) {
+        confess $self->error_message("Failed to create IGV xml file");
+    }
 }
 
 1;
