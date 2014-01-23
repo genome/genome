@@ -16,7 +16,7 @@ class Genome::Model::Tools::Bed::Convert::VcfToBed {
 
 sub process_source {
     my $self = shift;
-    my $vcf_reader = Genome::File::Vcf::Reader->fhopen($self->_input_fh, $self->source);
+    my $vcf_reader = new Genome::File::Vcf::Reader($self->source);
 
     while(my $entry = $vcf_reader->next) {
         #do something intelligent here
