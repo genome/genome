@@ -68,6 +68,16 @@ class Genome::Model::ClinSeq::Command::Converge::SnvIndelReport {
               default => '-|3_prime_flanking_region|3_prime_untranslated_region|5_prime_flanking_region|5_prime_untranslated_region|intronic|silent|rna|splice_region',
               doc => 'Variants with these transcript variant types will be filtered out of the final coding result.',
         },
+        min_reads_per_lib => {
+              is => 'Number',
+              default => 0,
+              doc => 'In per library read counting, the minimum variant supporting reads for a library to be said to support a variant',
+        },
+        min_tumor_var_supporting_libs => {
+              is => 'Number',
+              default => 0,
+              doc => 'In per library analysis, variants with less than this number of tumor libraries supporting will be filtered out',
+        },
         test => {
               is => 'Number',
               doc => 'Only import this many variants (for testing purposes)',
@@ -194,13 +204,15 @@ sub execute {
   #Max normal VAF, Min Coverage
   $self->parse_read_counts('-align_builds'=>$align_builds, '-grand_anno_count_file'=>$grand_anno_count_file, '-variants'=>$variants);
 
+  #print Dumper $variants;
+  #Parse the per lib BAM read count info
+  my $per_lib_header = $self->parse_per_lib_read_counts('-align_builds'=>$align_builds, '-grand_anno_per_lib_count_file'=>$grand_anno_per_lib_count_file, '-variants'=>$variants);
+
   #Apply some automatic filters:
   #Normal VAF > $self->max_normal_vaf
   #Min coverage > $self->min_coverage (position must be covered at this level across all samples)
   #GMAF > $self->max_gmaf
   $self->apply_variant_filters('-variants'=>$variants);
-
-  #print Dumper $variants;
 
   #TODO: Make note of which variants lie within a particular set of regions of interest (e.g. nimblegen v3 + AML RMG)
   #TODO: Have option to filter these out
@@ -210,7 +222,7 @@ sub execute {
 
 
   #TODO: Write out final tsv files (filtered and unfiltered), a clean version with useless columns removed, and an Excel spreadsheet version of the final file
-  $self->print_final_files('-variants'=>$variants, '-grand_anno_count_file'=>$grand_anno_count_file, '-case_name'=>$case_name);
+  $self->print_final_files('-variants'=>$variants, '-grand_anno_count_file'=>$grand_anno_count_file, '-case_name'=>$case_name, '-align_builds'=>$align_builds, '-per_lib_header'=>$per_lib_header);
 
   #Produce some visualizations for variants in the target gene list as well as all high quality variants, the higher VAF variants etc.
   #If there are two tumors, Produce SciClone plots showing tumor1 vs. tumor2 VAF and with gene names labelled
@@ -724,7 +736,6 @@ sub add_read_counts{
 }
 
 
-
 sub add_per_lib_read_counts{
   my $self = shift;
   my %args = @_;
@@ -772,11 +783,6 @@ sub add_per_lib_read_counts{
 
   return ($output_file);
 }
-
-
-
-
-
 
 
 sub parse_read_counts{
@@ -872,6 +878,128 @@ sub parse_read_counts{
   return;
 }
 
+sub parse_per_lib_read_counts{
+  my $self = shift;
+  my %args = @_;
+  my $align_builds = $args{'-align_builds'};
+  my $grand_anno_per_lib_count_file = $args{'-grand_anno_per_lib_count_file'};
+  my $variants = $args{'-variants'};
+
+  foreach my $name (sort {$align_builds->{$a}->{order} <=> $align_builds->{$b}->{order}} keys  %{$align_builds}){
+    my $prefix = $align_builds->{$name}->{prefix};
+  }
+
+  my @per_lib_header;
+  my %columns;
+  my %libs;
+  my $l = 0;
+  open (VAR, $grand_anno_per_lib_count_file) || die $self->error_message("could not open var anno count file: $grand_anno_per_lib_count_file");
+  while(<VAR>){
+    chomp($_);
+    my @line = split("\t", $_);
+    my $tumor_var_supporting_libs = 0;
+    if ($l == 0){
+      my $c = 0;
+      foreach my $column (@line){
+        $columns{$column}{c} = $c;
+        $c++;
+      }
+
+      #Get the per lib names used
+      foreach my $name (sort {$align_builds->{$a}->{order} <=> $align_builds->{$b}->{order}} keys  %{$align_builds}){
+        my $prefix = $align_builds->{$name}->{prefix};
+
+        foreach my $column (keys %columns){
+          if ($column =~ /$prefix\_(\S+)\_ref\_count$/){
+            my $lib = $1;
+            if (defined($align_builds->{$name}->{libs})){
+              my $libs = $align_builds->{$name}->{libs};
+              $libs->{$lib}->{rep} = (keys %{$libs}) + 1;
+              my $per_lib_ref_col = $prefix . "_" . $lib . "_ref_count";
+              my $per_lib_var_col = $prefix . "_" . $lib . "_var_count";
+              my $per_lib_vaf_col = $prefix . "_" . $lib . "_VAF";
+              unless ($columns{$per_lib_ref_col} && $columns{$per_lib_var_col} && $columns{$per_lib_vaf_col}){
+                die "Could not find expected columns: $per_lib_ref_col $per_lib_var_col $per_lib_ref_col";
+              }
+            }else{
+              my %tmp;
+              $tmp{$lib}{rep} = 1;
+              $align_builds->{$name}->{libs} = \%tmp;
+            }
+          }
+        }
+      }
+
+      #Set up the header for the per-lib count section
+      foreach my $name (sort {$align_builds->{$a}->{order} <=> $align_builds->{$b}->{order}} keys  %{$align_builds}){
+        my $prefix = $align_builds->{$name}->{prefix};
+        my $libs = $align_builds->{$name}->{libs};
+        foreach my $lib (sort {$libs->{$a}->{rep} <=> $libs->{$b}->{rep}} keys %{$libs}){
+          my $rep = $libs->{$lib}->{rep};
+          my $per_lib_ref_col = $prefix . "_rep" . $rep . "_ref_count";
+          push(@per_lib_header, $per_lib_ref_col);
+          my $per_lib_var_col = $prefix . "_rep" . $rep . "_var_count";
+          push(@per_lib_header, $per_lib_var_col);
+          my $per_lib_vaf_col = $prefix . "_rep" . $rep . "_VAF";
+          push(@per_lib_header, $per_lib_vaf_col);
+        }
+      }
+
+      $l++;
+      next;
+    }
+    $l++;
+
+    my ($chr, $start, $stop, $ref, $var) = ($line[0], $line[1], $line[2], $line[3], $line[4]);
+    my $v = $chr . "_$start" . "_$stop" . "_$ref" . "_$var";
+    die $self->error_message("parsed a variant that is not defined in the variant hash") unless $variants->{$v};
+
+    my @per_lib_counts;
+    foreach my $name (sort {$align_builds->{$a}->{order} <=> $align_builds->{$b}->{order}} keys  %{$align_builds}){
+      my $prefix = $align_builds->{$name}->{prefix};
+      my $libs = $align_builds->{$name}->{libs};
+      foreach my $lib (sort {$libs->{$a}->{rep} <=> $libs->{$b}->{rep}} keys %{$libs}){
+        my $rep = $libs->{$lib}->{rep};
+        my $per_lib_ref_col = $prefix . "_" . $lib . "_ref_count";
+        my $per_lib_var_col = $prefix . "_" . $lib . "_var_count";
+        my $per_lib_vaf_col = $prefix . "_" . $lib . "_VAF";
+
+        if (defined($line[$columns{$per_lib_ref_col}{c}])){
+          push(@per_lib_counts, $line[$columns{$per_lib_ref_col}{c}]);      
+        }else{
+          push(@per_lib_counts, "NA");
+        }
+
+        if (defined($line[$columns{$per_lib_var_col}{c}])){
+          push(@per_lib_counts, $line[$columns{$per_lib_var_col}{c}]);      
+        }else{
+          push(@per_lib_counts, "NA");
+        }
+
+        if (defined($line[$columns{$per_lib_vaf_col}{c}])){
+          push(@per_lib_counts, $line[$columns{$per_lib_vaf_col}{c}]);      
+        }else{
+          push(@per_lib_counts, "NA");
+        }
+
+        #Count tumor libraries that support the variant with at least N variant read counts
+        unless ($prefix =~ /normal/i){
+          if (defined($line[$columns{$per_lib_var_col}{c}])){
+            if ($line[$columns{$per_lib_var_col}{c}] =~ /\d+/){
+              $tumor_var_supporting_libs++ if ($line[$columns{$per_lib_var_col}{c}] >= $self->min_reads_per_lib);
+            }
+          }
+        }
+      }
+    }
+    $variants->{$v}->{per_lib_counts} = \@per_lib_counts;
+    $variants->{$v}->{tumor_var_supporting_libs} = $tumor_var_supporting_libs;
+  }
+  my $per_lib_header = join("\t", @per_lib_header);
+
+  return $per_lib_header;
+}
+
 
 sub apply_variant_filters{
   my $self = shift;
@@ -881,6 +1009,7 @@ sub apply_variant_filters{
   my $min_tumor_vaf = $self->min_tumor_vaf;
   my $min_coverage = $self->min_coverage;
   my $max_gmaf = $self->max_gmaf;
+  my $min_tumor_var_supporting_libs = $self->min_tumor_var_supporting_libs;
   
   foreach my $v (keys %{$variants}){
     $variants->{$v}->{filtered} = 0;
@@ -888,7 +1017,8 @@ sub apply_variant_filters{
     my $max_tumor_vaf_observed = $variants->{$v}->{max_tumor_vaf_observed};
     my $min_coverage_observed = $variants->{$v}->{min_coverage_observed};
     my $gmaf = $variants->{$v}->{gmaf};
-   
+    my $tumor_var_supporting_libs = $variants->{$v}->{tumor_var_supporting_libs} if defined($variants->{$v}->{tumor_var_supporting_libs});
+  
     #Normal VAF filter
     if ($max_normal_vaf_observed =~ /\d+/){
       $variants->{$v}->{filtered} = 1 if ($max_normal_vaf_observed > $max_normal_vaf);
@@ -915,6 +1045,10 @@ sub apply_variant_filters{
       $variants->{$v}->{filtered} = 1 if (($gmaf*100) > $max_gmaf);
     }
 
+    #Min library support filter
+    if (defined($tumor_var_supporting_libs) && $min_tumor_var_supporting_libs){
+      $variants->{$v}->{filtered} = 1 if ($tumor_var_supporting_libs < $min_tumor_var_supporting_libs);
+    }
   }
 
   return;
@@ -927,7 +1061,10 @@ sub print_final_files{
   my $variants = $args{'-variants'};
   my $grand_anno_count_file = $args{'-grand_anno_count_file'};
   my $case_name = $args{'-case_name'};
+  my $align_builds = $args{'-align_builds'};
+  my $per_lib_header = $args{'-per_lib_header'};
   my $trv_type_filter = $self->trv_type_filter;
+
 
   #Write out final tsv files (filtered and unfiltered), a clean version with useless columns removed, and an Excel spreadsheet version of the final file
   my $final_unfiltered_tsv = $self->outdir . "/$case_name" . "_final_unfiltered.tsv"; #OUT1
@@ -971,12 +1108,14 @@ sub print_final_files{
       #Print headers for each out file
       my $header_extension = "min_coverage_observed\tmax_normal_vaf_observed\tmax_tumor_vaf_observed\tvariant_source_callers\tvariant_source_caller_count\tfiltered";
       my $full_header = "$_"."\t$header_extension";
+      $full_header .= "\t$per_lib_header" if $per_lib_header;
       print OUT1 "$full_header\n";
       print OUT2 "$full_header\n";
 
       my @include_values = @line[@include_col_pos];
       my $include_values_string = join("\t", @include_values);
       my $short_header = "$include_values_string"."\t$header_extension";
+      $short_header .= "\t$per_lib_header" if $per_lib_header;
       print OUT3 "$short_header\n";
       print OUT4 "$short_header\n";
       next;
@@ -986,8 +1125,13 @@ sub print_final_files{
     my $v = $chr . "_$start" . "_$stop" . "_$ref" . "_$var";
     die $self->error_message("parsed a variant that is not defined in the variant hash") unless $variants->{$v};
 
-    my $line_extension = "$variants->{$v}->{min_coverage_observed}\t$variants->{$v}->{max_normal_vaf_observed}\t$variants->{$v}->{max_tumor_vaf_observed}\t$variants->{$v}->{variant_source_callers}\t$variants->{$v}->{variant_source_caller_count}\t$variants->{$v}->{filtered}";
+    my @per_lib_counts = @{$variants->{$v}->{per_lib_counts}} if defined($variants->{$v}->{per_lib_counts});
+    my $per_lib_count_line = join("\t", @per_lib_counts) if defined($variants->{$v}->{per_lib_counts});
+
+    my $line_extension = "$variants->{$v}->{min_coverage_observed}\t$variants->{$v}->{max_normal_vaf_observed}\t$variants->{$v}->{max_tumor_vaf_observed}\t$variants->{$v}->{variant_source_callers}\t$variants->{$v}->{variant_source_caller_count}\t$variants->{$v}->{filtered}";  
     my $full_line = "$_\t$line_extension";
+    $full_line .= "\t$per_lib_count_line" if defined($per_lib_count_line);
+
     print OUT1 "$full_line\n";
     unless ($variants->{$v}->{filtered}){
       print OUT2 "$full_line\n";
@@ -996,6 +1140,8 @@ sub print_final_files{
     my @include_values = @line[@include_col_pos];
     my $include_values_string = join("\t", @include_values);
     my $short_line = "$include_values_string"."\t$line_extension";
+    $short_line .= "\t$per_lib_count_line" if defined($per_lib_count_line);
+
     unless ($variants->{$v}->{filtered}){
       print OUT3 "$short_line\n";
     }
@@ -1013,6 +1159,13 @@ sub print_final_files{
   close(OUT1);
   close(OUT2);
   close(OUT3);
+
+  #Run the R scripts to generate some plots 
+  my $r_script = __FILE__ . '.R';
+  my $r_cmd = "$r_script $final_filtered_coding_clean_tsv \"normal_day0_VAF tumor_day0_VAF tumor_day30_VAF\" \"34 37 40\" \"43 46 49\" \"52 55 58\" " . $self->target_gene_list_name . " " . $self->outdir;
+  print Dumper $r_cmd;
+  Genome::Sys->shellcmd(cmd => $r_cmd);
+
 
   return;
 }
