@@ -7,7 +7,7 @@ use List::Util 'first';
 
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(
-        in
+        in join_with_single_slash
 );
 
 sub in {
@@ -15,3 +15,14 @@ sub in {
     my $find = first {$element eq $_} @_;
     return defined($find);
 }
+
+sub join_with_single_slash {
+    List::Util::reduce
+        {   $a =~ s/\/$//;
+            $b =~ s/^\///;
+            return join('/', $a, $b);
+        }
+        @_;
+}
+
+1;
