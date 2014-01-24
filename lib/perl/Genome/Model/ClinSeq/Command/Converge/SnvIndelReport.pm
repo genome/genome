@@ -5,6 +5,8 @@ use Genome;
 use Data::Dumper;
 use List::MoreUtils qw/ uniq /;
 use Genome::Info::IUB;
+use Spreadsheet::WriteExcel;
+
 
 class Genome::Model::ClinSeq::Command::Converge::SnvIndelReport {
     is => 'Genome::Model::ClinSeq::Command::Converge::Base',
@@ -1079,7 +1081,7 @@ sub print_final_files{
   open(OUT2, ">$final_filtered_tsv") || die $self->error_message("could not open output file: $final_filtered_tsv");
   open(OUT3, ">$final_filtered_clean_tsv") || die $self->error_message("could not open output file: $final_filtered_clean_tsv");
   open(OUT4, ">$final_filtered_coding_clean_tsv") || die $self->error_message("could not open output file: $final_filtered_coding_clean_tsv");
-
+ 
   my @skip = qw (gene_name transcript_species transcript_source transcript_version transcript_status c_position ucsc_cons domain all_domains deletion_substructures transcript_error gene_name_source);
   my %skip_columns;
   foreach my $name (@skip){
@@ -1118,6 +1120,7 @@ sub print_final_files{
       $short_header .= "\t$per_lib_header" if $per_lib_header;
       print OUT3 "$short_header\n";
       print OUT4 "$short_header\n";
+
       next;
     }
 
@@ -1153,22 +1156,68 @@ sub print_final_files{
         print OUT4 "$short_line\n";
       }
     }
-
   }
   close(ANNO);
   close(OUT1);
   close(OUT2);
   close(OUT3);
+  close(OUT4);
 
-  #Run the R scripts to generate some plots 
+  # convert master table to excel
+  my $final_filtered_clean_workbook  = Spreadsheet::WriteExcel->new("$final_filtered_clean_xls");
+  my $final_filtered_clean_worksheet = $final_filtered_clean_workbook->add_worksheet();
+  open (IN, $final_filtered_clean_tsv) || die $self->error_message("Could not open in file: $final_filtered_clean_tsv");
+  my $row=0;
+  while(<IN>){
+    chomp($_);
+    if ($row == 0){
+      $_ =~ s/\_/ /g;
+    }
+    my @F = split("\t",$_);
+    for(my $i=0;$i<@F;$i++){
+      $final_filtered_clean_worksheet->write($row, $i, $F[$i]);
+    }
+    $row++;
+  }
+  close(IN);
+  $final_filtered_clean_workbook->close();
+
+  my $final_filtered_coding_clean_workbook  = Spreadsheet::WriteExcel->new("$final_filtered_coding_clean_xls");
+  my $final_filtered_coding_clean_worksheet = $final_filtered_coding_clean_workbook->add_worksheet();
+  open (IN, $final_filtered_coding_clean_tsv) || die $self->error_message("Could not open in file: $final_filtered_coding_clean_tsv");
+  $row=0;
+  while(<IN>){
+    chomp($_);
+    if ($row == 0){
+      $_ =~ s/\_/ /g;
+    }
+    my @F = split("\t",$_);
+    for(my $i=0;$i<@F;$i++){
+      $final_filtered_coding_clean_worksheet->write($row, $i, $F[$i]);
+    }
+    $row++;
+  }
+  close(IN);
+  $final_filtered_coding_clean_workbook->close();
+
+  #Set the R script that will process output from this perl script
   my $r_script = __FILE__ . '.R';
-  my $r_cmd = "$r_script $final_filtered_coding_clean_tsv \"normal_day0_VAF tumor_day0_VAF tumor_day30_VAF\" \"34 37 40\" \"43 46 49\" \"52 55 58\" " . $self->target_gene_list_name . " " . $self->outdir;
-  print Dumper $r_cmd;
-  Genome::Sys->shellcmd(cmd => $r_cmd);
 
+  #Run the R script to generate some plots from the complete clean tsv file
+  my $outdir1 = $self->outdir . "/filtered_clean/";
+  mkdir($outdir1);
+  my $r_cmd1 = "$r_script $final_filtered_clean_tsv \"normal_day0_VAF tumor_day0_VAF tumor_day30_VAF\" \"34 37 40\" \"43 46 49\" \"52 55 58\" " . $self->target_gene_list_name . " " . $outdir1;
+  Genome::Sys->shellcmd(cmd => $r_cmd1);
+
+  #Run the R scripts to generate some plots from the coding clean tsv file
+  my $outdir2 = $self->outdir . "/filtered_coding_clean/";
+  mkdir($outdir2);
+  my $r_cmd2 = "$r_script $final_filtered_coding_clean_tsv \"normal_day0_VAF tumor_day0_VAF tumor_day30_VAF\" \"34 37 40\" \"43 46 49\" \"52 55 58\" " . $self->target_gene_list_name . " " . $outdir2;
+  Genome::Sys->shellcmd(cmd => $r_cmd2);
 
   return;
 }
+
 
 1;
 
