@@ -16,7 +16,7 @@ class Genome::Model::Tools::CopyNumber::CnView{
       doc => 'Supply an annotation build id (e.g., 124434505 for NCBI-human.ensembl/67_37l_v2)' },
     cancer_annotation_db => {
       is => 'Genome::Db',
-      example_values => ['/cancer-annotation/human/build37-20130401.1'],
+      example_values => ['tgi/cancer-annotation/human/build37-20130401.1'],
       doc => 'cancer-specific annotation extenions',
     },
     output_dir        => { 
@@ -48,6 +48,9 @@ class Genome::Model::Tools::CopyNumber::CnView{
     chr               => { 
       is => 'Text', 
       doc => 'If you wish to limit analysis to a single chromosome, use --chr (e.g. --chr=17). Otherwise all will be processed' },
+    window_size         => { 
+      is => 'Number', 
+      doc => 'For determining overlap, you can define a window size' },
     chr_start         => { 
       is => 'Number', 
       doc => 'If you specify a single chromosome, you may also specify start position using --chr-start' },
@@ -69,7 +72,7 @@ class Genome::Model::Tools::CopyNumber::CnView{
 
 sub help_synopsis {
   return <<EOS
-gmt copy-number cn-view --annotation-build=124434505 --cnv-file=/gscmnt/gc13001/info/model_data/2888915570/build129973671/variants/cnvs.hq --segments-file=/gscmnt/gc2013/info/model_data/2889110844/build130030495/PNC6/clonality/cnaseq.cnvhmm --output-dir=/tmp/ --gene-targets-file=/gscmnt/sata132/techd/mgriffit/reference_annotations/GeneSymbolLists/CancerGeneCensusPlus_Sanger.txt --name='Cancer Genes'  --chr=1  --verbose
+gmt copy-number cn-view --annotation-build=124434505 --cancer_annotation_db='tgi/cancer-annotation/human/build37-20130401.1' --cnv-file=/gscmnt/gc13001/info/model_data/2888915570/build129973671/variants/cnvs.hq --segments-file=/gscmnt/gc2013/info/model_data/2889110844/build130030495/PNC6/clonality/cnaseq.cnvhmm --output-dir=/tmp/ --gene-targets-file=/gscmnt/sata132/techd/mgriffit/reference_annotations/GeneSymbolLists/CancerGeneCensusPlus_Sanger.txt --name='Cancer Genes'  --chr=1  --verbose
 EOS
 }
 
@@ -101,6 +104,7 @@ sub execute{
   my $chr_start = $self->chr_start;
   my $chr_end = $self->chr_end;
   my $image_type = $self->image_type;
+  my $window_size = $self->window_size;
 
   #Set amplification / deletion cutoffs that will be used to created filtered files of results for convenience in downstream analyses
   #Try two fold gain and 1/2 loss to start
@@ -122,15 +126,15 @@ sub execute{
     }
 
     #Check annotation build and clinseq annotations dir
-    my $clinseq_annotations_dir="/gscmnt/sata132/techd/mgriffit/reference_annotations/";
+    my $clinseq_annotations_dir = $cancer_annotation_db->data_directory;
     my $annotation_data_dir=$annotation_build->data_directory;
     my $reference_sequence_build=$annotation_build->reference_sequence;
-    my $default_build37 = Genome::Model::Build->get(102671028);
+    my $default_build37 = Genome::Model::Build->get(106942997);
     my $default_build36 = Genome::Model::Build->get(101947881);
     if ($reference_sequence_build->is_compatible_with($default_build37)){
-      $ideogram_file ||= $clinseq_annotations_dir . "hg19/ideogram/ChrBandIdeogram.tsv";
+      $ideogram_file ||= $clinseq_annotations_dir . "/hg19/ideogram/ChrBandIdeogram.tsv";
     }elsif ($reference_sequence_build->is_compatible_with($default_build36)){
-      $ideogram_file ||= $clinseq_annotations_dir . "hg18/ideogram/ChrBandIdeogram.tsv";
+      $ideogram_file ||= $clinseq_annotations_dir . "/hg18/ideogram/ChrBandIdeogram.tsv";
     }else {
       $self->error_message("Specified reference build resolved from annotation build is not compatible with default build36 or build37");
       return;
@@ -266,19 +270,19 @@ sub execute{
     return 1;
   };
 
+  #die if the inputs are invalid
   unless ($inputs_are_good) {
-    $self->error_message("error processing inputs!");
-    return;
+    die $self->error_message("error processing inputs!");
   }
 
   #Done checking inputs
   ####################################################################################################################################
 
   #Load ensembl/entrez data for fixing gene names
-  my $entrez_ensembl_data = &loadEntrezEnsemblData(-cancer_db => $cancer_annotation_db);
+  my $entrez_ensembl_data = $self->loadEntrezEnsemblData(-cancer_db => $cancer_annotation_db);
 
   #Import ideogram data
-  my $ideo_data = &importIdeogramData('-ideogram_file'=>$ideogram_file);
+  my $ideo_data = $self->importIdeogramData('-ideogram_file'=>$ideogram_file);
 
   #If the user is supplying a pre-computed CNV file, the following steps will be skipped
   my ($g_map, $t_map, $cnvs, $segments, $targets);
@@ -302,7 +306,7 @@ sub execute{
     $t_map = $r->{trans};
 
     #Load the CNV window coordinates and copy number estimates
-    $cnvs = $self->loadCnvData('-cnv_file'=>$cnv_file, '-target_chr'=>$chr, '-target_chr_start'=>$chr_start, '-target_chr_end'=>$chr_end);
+    $cnvs = $self->loadCnvData('-cnv_file'=>$cnv_file, '-target_chr'=>$chr, '-target_chr_start'=>$chr_start, '-target_chr_end'=>$chr_end, '-window_size'=>$window_size);
     
     #Load the CNV segments and copy number estimates
     $segments = $self->loadSegmentData('-segments_file'=>$segments_file, '-outfile_cnvhmm'=>$outfile_cnvhmm);
@@ -370,7 +374,7 @@ sub loadTargetGenes{
       if ($gene_name eq "n/a"){
         next();
       }else{
-        my $mapped_gene_name = &fixGeneName('-gene'=>$gene_name, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);      
+        my $mapped_gene_name = $self->fixGeneName('-gene'=>$gene_name, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);      
         $targets_gene_name{$gene_name} = 1;
         $targets_mapped_gene_name{$mapped_gene_name} = 1;
       }
@@ -440,7 +444,7 @@ sub loadGeneTranscriptMap{
     }
 
     #Get a 'fixed' version of the gene name
-    my $mapped_gene_name = &fixGeneName('-gene'=>$gene_name, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
+    my $mapped_gene_name = $self->fixGeneName('-gene'=>$gene_name, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
 
     #If the user defined a gene target list, limit import of genes/transcripts at this point to symbol matches from that list
     if ($self->gene_targets_file){
@@ -523,6 +527,7 @@ sub loadCnvData{
   my $target_chr = $args{'-target_chr'};
   my $target_chr_start = $args{'-target_chr_start'};
   my $target_chr_end = $args{'-target_chr_end'};
+  my $window_size = $args{'-window_size'};
 
   my %cnvs;
   open(CNV, "$cnv_file") || die "\n\nCould not open input file: $cnv_file\n\n";
@@ -543,7 +548,9 @@ sub loadCnvData{
     $cnvs{$chr}{$chr_start}{diff} = $line[4];
   }
   close(CNV);
-  my $window_size = $p2 - $p1;
+  unless(defined($window_size)){
+    $window_size = $p2 - $p1;
+  }
   if ($self->verbose){
     $self->status_message("Detected a CNV window size of $window_size bp.  Using this for overlap calculations") if $self->verbose;
   }
