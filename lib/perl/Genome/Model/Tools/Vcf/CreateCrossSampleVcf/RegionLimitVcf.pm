@@ -8,8 +8,17 @@ use Genome;
 class Genome::Model::Tools::Vcf::CreateCrossSampleVcf::RegionLimitVcf {
     is => 'Command::V2',
     has_input => [
+        build_clump => {
+            is => 'Genome::Model::Tools::Vcf::CreateCrossSampleVcf::BuildClump',
+            doc => 'This is currently only used as a pass-through in one of the workflows.',
+            is_output => 1,
+        },
         build => {
             is => 'Genome::Model::Build',
+            id_by => 'build_id',
+        },
+        build_id => {
+            via => 'build_clump',
         },
         variant_type => {
             is => 'Text',

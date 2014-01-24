@@ -36,7 +36,7 @@ sub execute {
         output_file => $self->build_clump->backfilled_vcf,
         merged_positions_file => $self->region_file,
         pileup_file => $self->pileup_file,
-        vcf_file => $self->build_clump->vcf_file,
+        vcf_file => $self->build_clump->filtered_vcf,
         use_bgzip => $self->use_bgzip,
     );
     return $cmd->execute();

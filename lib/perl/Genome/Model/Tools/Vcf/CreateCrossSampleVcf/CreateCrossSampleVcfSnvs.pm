@@ -65,7 +65,6 @@ sub _get_variant_type_specific_inputs {
     my ($samtools_version, $samtools_params) = $self->_get_samtools_version_and_params($pp->snv_detection_strategy);
 
     my %inputs = (
-        build_clumps => $self->build_clumps,
         samtools_version => $samtools_version,
         samtools_params => $samtools_params,
     );

@@ -15,7 +15,7 @@ BEGIN {
     $ENV{NO_LSF} = 1;
 };
 
-my $VERSION = 'no-region-limit-indels-3';
+my $VERSION = 'no-region-limit-indels-4';
 my $use_mg = 1;
 my $no_region_limiting = 1;
 test_cmd('indels', $VERSION, $use_mg, $no_region_limiting);
