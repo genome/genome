@@ -126,15 +126,15 @@ sub execute{
     }
 
     #Check annotation build and clinseq annotations dir
-    my $clinseq_annotations_dir="/gscmnt/sata132/techd/mgriffit/reference_annotations/";
+    my $clinseq_annotations_dir = $cancer_annotation_db->data_directory;
     my $annotation_data_dir=$annotation_build->data_directory;
     my $reference_sequence_build=$annotation_build->reference_sequence;
-    my $default_build37 = Genome::Model::Build->get(102671028);
+    my $default_build37 = Genome::Model::Build->get(106942997);
     my $default_build36 = Genome::Model::Build->get(101947881);
     if ($reference_sequence_build->is_compatible_with($default_build37)){
-      $ideogram_file ||= $clinseq_annotations_dir . "hg19/ideogram/ChrBandIdeogram.tsv";
+      $ideogram_file ||= $clinseq_annotations_dir . "/hg19/ideogram/ChrBandIdeogram.tsv";
     }elsif ($reference_sequence_build->is_compatible_with($default_build36)){
-      $ideogram_file ||= $clinseq_annotations_dir . "hg18/ideogram/ChrBandIdeogram.tsv";
+      $ideogram_file ||= $clinseq_annotations_dir . "/hg18/ideogram/ChrBandIdeogram.tsv";
     }else {
       $self->error_message("Specified reference build resolved from annotation build is not compatible with default build36 or build37");
       return;
