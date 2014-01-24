@@ -148,9 +148,6 @@ sub execute{
       return;
     }
 
-    # TODO: switch that name and version (date) for a value in the processing profile if this changes
-    my $gene_symbol_lists_dir = Genome::Sys->dbpath("tgi-gene-symbol-lists","2012-11-13");
-
     #Check gene targets file if defined
     if ($self->gene_targets_file){    
       unless (-e $gene_targets_file){
