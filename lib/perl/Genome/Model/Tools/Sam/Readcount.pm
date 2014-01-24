@@ -82,9 +82,6 @@ sub readcount_path {
     if ($version eq "0.2") {
         $path = "/gsc/bin/bam-readcount";
     } 
-    elsif ($version eq "0.5") {
-        $path = "/gscuser/dlarson/src/bam-readcount/build/bin/bam-readcount";
-    }
     else {
         $path = "/usr/bin/bam-readcount$version";
     }
