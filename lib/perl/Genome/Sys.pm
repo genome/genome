@@ -666,6 +666,25 @@ sub copy_file {
     return 1;
 }
 
+sub move_file {
+    my ($self, $file, $dest) = @_;
+
+    $self->validate_file_for_reading($file)
+        or Carp::croak("Cannot open input file ($file) for reading!");
+
+    $self->validate_file_for_writing($dest)
+        or Carp::croak("Cannot open output file ($dest) for writing!");
+
+    # Note: since the file is validate_file_for_reading, and the dest is validate_file_for_writing,
+    #  the files can never be exactly the same.
+
+    unless ( File::Copy::move($file, $dest) ) {
+        Carp::croak("Can't move $file to $dest: $!");
+    }
+
+    return 1;
+}
+
 sub tar {
     my ($class, %params) = @_;
     my $tar_path = delete $params{tar_path};
@@ -814,7 +833,7 @@ sub create_directory {
 
     # have to set umask, make_path's mode/umask option is not sufficient
     my $umask = umask;
-    umask 0002;
+    umask $ENV{GENOME_SYS_UMASK};
     make_path($directory); # not from File::Path
     umask $umask;
 

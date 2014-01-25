@@ -2,7 +2,6 @@ package Genome::Model::ClinSeq::Command::SummarizeModels;
 use strict;
 use warnings;
 use Genome;
-use Data::Dumper;
 
 class Genome::Model::ClinSeq::Command::SummarizeModels {
     is => 'Command::V2',
@@ -12,7 +11,7 @@ class Genome::Model::ClinSeq::Command::SummarizeModels {
             is_many => 1,
             shell_args_position => 1,
             require_user_verify => 0,
-            doc => 'clinseq models to sumamrize'
+            doc => 'clinseq models to summarize'
         },
         outdir => { 
             is => 'FilesystemPath',

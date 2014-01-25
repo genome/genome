@@ -489,7 +489,6 @@ sub decomposed_aligner_params {
     my $bwa_aln_params = $spar[0] || "";
 
     my $cpu_count = $self->_available_cpu_count;
-    $cpu_count = $cpu_count * 20;
 
     $self->status_message("[decomposed_aligner_params] cpu count is $cpu_count");
 

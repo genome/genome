@@ -5,6 +5,7 @@ use warnings;
 use Genome;
 use Data::Dumper;
 use File::Basename;
+
 use Genome::Model::ClinSeq::Util qw(:all);
 
 class Genome::Model::ClinSeq::Command::SummarizeTier1SnvSupport {
@@ -23,8 +24,9 @@ class Genome::Model::ClinSeq::Command::SummarizeTier1SnvSupport {
         wgs_positions_file          => { is => 'FilesystemPath', is_optional => 1 },
         exome_positions_file        => { is => 'FilesystemPath', is_optional => 1 },
         wgs_exome_positions_file    => { is => 'FilesystemPath', is_optional => 1 },
-        
         tumor_fpkm_file             => { is => 'FilesystemPath', is_optional => 1 },
+        output_dir                  => { is => 'FilesystemPath', is_optional => 1 },
+
     ],
     has_param => [
         verbose => { is => 'Boolean', default_value => 0 },
@@ -39,7 +41,9 @@ sub positions_files {
 
 sub execute {
   my $self = shift;
-  $self->status_message("starting summarize tier1 snvs with " . Data::Dumper::Dumper($self));
+  if ($self->verbose){
+    $self->status_message("starting summarize tier1 snvs with " . Data::Dumper::Dumper($self));
+  }
   my $wgs_build = $self->wgs_build;
   my $exome_build = $self->exome_build;
   my $tumor_rnaseq_build = $self->tumor_rnaseq_build;
@@ -48,15 +52,40 @@ sub execute {
   my $tumor_fpkm_file = $self->tumor_fpkm_file;
   my $verbose = $self->verbose;
   my $cancer_annotation_db = $self->cancer_annotation_db;
+  my $output_dir = $self->output_dir;
 
   my $read_counts_summary_script = __FILE__ . '.R'; #"$script_dir"."snv/WGS_vs_Exome_vs_RNAseq_VAF_and_FPKM.R";
 
-  $self->status_message("Positions files are " . Data::Dumper::Dumper(\@positions_files));
+  if ($verbose){
+    $self->status_message("Positions files are " . Data::Dumper::Dumper(\@positions_files));
+  }
 
   foreach my $positions_file (@positions_files){
-    my $fb = &getFilePathBase('-path'=>$positions_file);
-    my $output_file = $fb->{$positions_file}->{base} . ".readcounts" . $fb->{$positions_file}->{extension};
-    my $output_stats_dir = $fb->{$positions_file}->{base_dir} . "summary/";
+    my $fb = $self->getFilePathBase('-path'=>$positions_file);
+
+    my $output_file;
+    my $output_stats_dir;
+
+    #If the user defined an optional, place output there, otherwise place is same dir as the current $positions_file
+    if ($output_dir){
+      unless (-d $output_dir){
+        die $self->error_message("Directory not valid:" . $output_dir);
+      }
+      my $file_name = $fb->{$positions_file}->{file_name};
+      my $subdir_name;
+      if ($positions_file =~ /\/(\w+)\/snvs/){
+        $subdir_name = $1;
+      }else{
+        die $self->error_message("Could not resolve subdir_name from: " . $positions_file);
+      }
+      my $subdir = $output_dir . "/" . $subdir_name . "/";
+      Genome::Sys->create_directory($subdir);
+      $output_file = $subdir . $file_name . ".readcounts" . $fb->{$positions_file}->{extension};
+      $output_stats_dir = $subdir . "summary/";
+    }else{
+      $output_file = $fb->{$positions_file}->{base} . ".readcounts" . $fb->{$positions_file}->{extension};
+      $output_stats_dir = $fb->{$positions_file}->{base_dir} . "summary/";
+    }
 
     my @params = ('positions_file' => $positions_file);
     push (@params, ('wgs_som_var_build' => $wgs_build)) if $wgs_build;
@@ -67,7 +96,9 @@ sub execute {
     push (@params, ('cancer_annotation_db' => $cancer_annotation_db));
     push (@params, ('verbose' => $verbose));
 
-    $self->status_message("Params for GetBamReadCounts are " . Data::Dumper::Dumper({ @params }));
+    if ($verbose){
+      $self->status_message("Params for GetBamReadCounts are " . Data::Dumper::Dumper({ @params }));
+    }
     my $bam_rc_cmd = Genome::Model::ClinSeq::Command::GetBamReadCounts->create(@params);
 
     #Summarize the positions file using an R script.  BUT if no variants are present, skip this positions file.
@@ -84,7 +115,7 @@ sub execute {
     close(POS);
     unless($positions_count > 0){
       if ($verbose){
-        self->status_message("\n\nNo SNV positions found, skipping summary");
+        $self->status_message("\n\nNo SNV positions found, skipping summary");
       }
       next();
     }

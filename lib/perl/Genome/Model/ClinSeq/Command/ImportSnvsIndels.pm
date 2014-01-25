@@ -3,7 +3,6 @@ package Genome::Model::ClinSeq::Command::ImportSnvsIndels;
 use strict;
 use warnings;
 use Genome;
-use Data::Dumper;
 use Genome::Model::ClinSeq::Util qw(:all);
 
 class Genome::Model::ClinSeq::Command::ImportSnvsIndels {
@@ -113,13 +112,13 @@ sub execute {
   }
 
   #Get Entrez and Ensembl data for gene name mappings
-  my $entrez_ensembl_data = &loadEntrezEnsemblData(-cancer_db => $cancer_annotation_db);
+  my $entrez_ensembl_data = $self->loadEntrezEnsemblData(-cancer_db => $cancer_annotation_db);
 
   my $snv_dir = $outdir . "snv/";
-  Genome::Sys->shellcmd(cmd => "mkdir $snv_dir") unless (-e $snv_dir && -d $snv_dir);
+  Genome::Sys->create_directory($snv_dir);
 
   my $indel_dir = $outdir . "indel/";
-  Genome::Sys->shellcmd(cmd => "mkdir $indel_dir") unless (-e $indel_dir && -d $indel_dir);
+  Genome::Sys->create_directory($indel_dir);
 
   #Define variant effect type filters
   #TODO: Allow different filters to be used as a parameter
@@ -130,9 +129,9 @@ sub execute {
   my %dataset;
   if ($wgs_build){
     my $snv_wgs_dir = $snv_dir . "wgs/";
-    Genome::Sys->shellcmd(cmd => "mkdir $snv_wgs_dir") unless (-e $snv_wgs_dir && -d $snv_wgs_dir);
+    Genome::Sys->create_directory($snv_wgs_dir);
     my $indel_wgs_dir = $indel_dir . "wgs/";
-    Genome::Sys->shellcmd(cmd => "mkdir $indel_wgs_dir") unless (-e $indel_wgs_dir && -d $indel_wgs_dir);
+    Genome::Sys->create_directory($indel_wgs_dir);
     my $effects_dir = $wgs_build->data_directory . "/effects/";
     $dataset{'1'}{data_type} = "wgs";
     $dataset{'1'}{var_type} = "snv";
@@ -154,9 +153,9 @@ sub execute {
   }
   if ($exome_build){
     my $snv_exome_dir = $snv_dir . "exome/";
-    Genome::Sys->shellcmd(cmd => "mkdir $snv_exome_dir") unless (-e $snv_exome_dir && -d $snv_exome_dir);
+    Genome::Sys->create_directory($snv_exome_dir);
     my $indel_exome_dir = $indel_dir . "exome/";
-    Genome::Sys->shellcmd(cmd => "mkdir $indel_exome_dir") unless (-e $indel_exome_dir && -d $indel_exome_dir);
+    Genome::Sys->create_directory($indel_exome_dir);
     my $effects_dir = $exome_build->data_directory . "/effects/";
     $dataset{'3'}{data_type} = "exome";
     $dataset{'3'}{var_type} = "snv";
@@ -193,27 +192,30 @@ sub execute {
 
     my $new_annotated_file = "$target_dir$t1_hq_annotated".".tsv";
     my $new_annotated_top_file = "$target_dir$t1_hq_annotated_top".".tsv";
-    my $cp_cmd1 = "cp $effects_dir$t1_hq_annotated $new_annotated_file";
-    my $cp_cmd2 = "cp $effects_dir$t1_hq_annotated_top $new_annotated_top_file";
-    Genome::Sys->shellcmd(cmd => $cp_cmd1);
-    Genome::Sys->shellcmd(cmd => $cp_cmd2);
+    Genome::Sys->copy_file("$effects_dir$t1_hq_annotated",$new_annotated_file);
+    Genome::Sys->copy_file("$effects_dir$t1_hq_annotated_top", $new_annotated_top_file);
 
     #Get a column count on the file and use this to determine the correct header for the annotated variant file
-    my $col_count = 0;
-    open (TMP, $new_annotated_file) || die "\n\nCould not open variant annotation file: $new_annotated_file\n\n";
-    while(<TMP>){
-      chomp($_);
-      my @line = split("\t", $_);
-      $col_count = scalar(@line);
-    }
-    close(TMP);
-
-    my @input_headers; 
-    if ($col_count == 24){
+    my @input_headers;
+    #If empty file, just set header otherwise check number of columns before setting header
+    if (-z $new_annotated_file){
       @input_headers = qw (chr start stop ref_base var_base var_type gene_name transcript_id species transcript_source transcript_version strand transcript_status var_effect_type coding_pos aa_change ucsc_cons domain all_domains deletion_substructures transcript_error default_gene_name gene_name_source ensembl_gene_id);
     }else{
-      $self->error_message("Unexpected column count ($col_count) found in SNV/INDEL file - ClinSeq is not compatible with old annotation format...");
-      die();
+      my $col_count = 0;
+      open (TMP, $new_annotated_file) || die "\n\nCould not open variant annotation file: $new_annotated_file\n\n";
+      while(<TMP>){
+        chomp($_);
+        my @line = split("\t", $_);
+        $col_count = scalar(@line);
+      }
+      close(TMP);
+
+      if ($col_count == 24){
+        @input_headers = qw (chr start stop ref_base var_base var_type gene_name transcript_id species transcript_source transcript_version strand transcript_status var_effect_type coding_pos aa_change ucsc_cons domain all_domains deletion_substructures transcript_error default_gene_name gene_name_source ensembl_gene_id);
+      }else{
+        $self->error_message("Unexpected column count ($col_count) found in SNV/INDEL file - ClinSeq is not compatible with old annotation format...");
+        die();
+      }
     }
 
     #Get AA changes from full .annotated file
@@ -282,7 +284,7 @@ sub execute {
       }
 
       #Attempt to fix the gene name:
-      my $fixed_gene_name = &fixGeneName('-gene'=>$data->{gene_name}, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
+      my $fixed_gene_name = $self->fixGeneName('-gene'=>$data->{gene_name}, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
       $data_out{$coord}{mapped_gene_name} = $fixed_gene_name;
       $data_merge{$var_type}{$coord}{mapped_gene_name} = $fixed_gene_name;
     }
@@ -305,9 +307,9 @@ sub execute {
   #If both WGS and Exome data were present, print out a data merge for SNVs and Indels
   if ($self->wgs_build && $self->exome_build){
     my $snv_wgs_exome_dir = $snv_dir . "wgs_exome/"; 
-    Genome::Sys->shellcmd(cmd => "mkdir $snv_wgs_exome_dir") unless (-e $snv_wgs_exome_dir && -d $snv_wgs_exome_dir);
+    Genome::Sys->create_directory($snv_wgs_exome_dir);
     my $indel_wgs_exome_dir = $indel_dir . "wgs_exome/";
-    Genome::Sys->shellcmd(cmd => "mkdir $indel_wgs_exome_dir") unless (-e $indel_wgs_exome_dir && -d $indel_wgs_exome_dir);
+    Genome::Sys->create_directory($indel_wgs_exome_dir);
 
     my $snv_merge_file = "$snv_wgs_exome_dir"."snvs.hq.tier1.v1.annotated.compact.tsv";
     my $indel_merge_file = "$indel_wgs_exome_dir"."indels.hq.tier1.v1.annotated.compact.tsv";

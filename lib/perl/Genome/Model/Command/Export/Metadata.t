@@ -27,7 +27,7 @@ my $result = Genome::Model::Command::Export::Metadata->execute(models => [$model
 ok($result, "ran");
 ok(-e $intermediate_outfile, "intermediate_outfile $intermediate_outfile exists");
 
-Genome::Sys->shellcmd(cmd => "grep -v Genome::Disk::Allocation <$intermediate_outfile | grep -v Genome::Disk::Volume >  $scrubbed_outfile");
+Genome::Sys->shellcmd(cmd => "grep -v 'Genome::Disk::Allocation\\|Genome::Disk::Assignment' <$intermediate_outfile | grep -v Genome::Disk::Volume >  $scrubbed_outfile");
 
 Genome::Utility::Test::compare_ok(
     $scrubbed_outfile, 
@@ -41,5 +41,6 @@ Genome::Utility::Test::compare_ok(
         },
     ],
 );
-
+Genome::Sys->shellcmd(cmd => "rm -rf /tmp/last-run-genome-model-export-metadata-op");
+Genome::Sys->copy_file($scrubbed_outfile, "/tmp/last-run-genome-model-export-metadata-op");
 done_testing(4);

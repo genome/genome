@@ -5,8 +5,6 @@ package Genome::Model::ClinSeq::Command::SummarizeSvs;
 use strict;
 use warnings;
 use Genome;
-use Data::Dumper;
-use Genome::Model::ClinSeq;
 use Genome::Model::ClinSeq::Util qw(:all);
 
 class Genome::Model::ClinSeq::Command::SummarizeSvs {
@@ -91,11 +89,11 @@ sub execute {
   my $cancer_annotation_db = $self->cancer_annotation_db;
   my $clinseq_annotations_dir = $cancer_annotation_db->data_directory; 
   my $gene_symbol_lists_dir = $clinseq_annotations_dir . "/GeneSymbolLists/";
-  my $entrez_ensembl_data = &loadEntrezEnsemblData(-cancer_db => $cancer_annotation_db);
-  my $symbol_list_names = &importSymbolListNames('-gene_symbol_lists_dir'=>$gene_symbol_lists_dir, '-verbose'=>0);
+  my $entrez_ensembl_data = $self->loadEntrezEnsemblData(-cancer_db => $cancer_annotation_db);
+  my $symbol_list_names = $self->importSymbolListNames('-gene_symbol_lists_dir'=>$gene_symbol_lists_dir, '-verbose'=>0);
   my $master_list = $symbol_list_names->{master_list};
   my @symbol_list_names = sort {$master_list->{$a}->{order} <=> $master_list->{$b}->{order}} keys %{$master_list};
-  my $gene_symbol_lists = &importGeneSymbolLists('-gene_symbol_lists_dir'=>$gene_symbol_lists_dir, '-symbol_list_names'=>\@symbol_list_names, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
+  my $gene_symbol_lists = $self->importGeneSymbolLists('-gene_symbol_lists_dir'=>$gene_symbol_lists_dir, '-symbol_list_names'=>\@symbol_list_names, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
 
   my $somatic_build_count = scalar(@builds);
   for my $somatic_build (@builds) {
@@ -142,9 +140,8 @@ sub execute {
 
       #Copy the SV annot file to the clinseq working dir
       my $new_sv_annot_file = $build_outdir . "svs.hq.merge.annot.somatic";
-      my $cp_cmd = "cp $sv_annot_file $build_outdir";
       unless (-e $new_sv_annot_file){
-        Genome::Sys->shellcmd(cmd => $cp_cmd);
+        Genome::Sys->copy_file($sv_annot_file, $new_sv_annot_file);
       }
 
       open (SV_ANNO, "$sv_annot_file") || die "\n\nCould not open SV annotation file: $sv_annot_file\n\n";
@@ -172,8 +169,8 @@ sub execute {
           }
           $l++;
           my @coords = split(",", $coord_string);
-          my $mapped_gene_name1 = &fixGeneName('-gene'=>$gene1, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
-          my $mapped_gene_name2 = &fixGeneName('-gene'=>$gene2, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
+          my $mapped_gene_name1 = $self->fixGeneName('-gene'=>$gene1, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
+          my $mapped_gene_name2 = $self->fixGeneName('-gene'=>$gene2, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
           my $record = "$gene_pair\t$gene1\t$gene2\t$coords[0]\t$coords[1]\t$mapped_gene_name1\t$mapped_gene_name2";
           $data{$l}{record} = $record;
           $data{$l}{coords1} = $coords[0];
@@ -304,8 +301,8 @@ sub execute {
       #print "\n\nNORMAL: $gene1 $coords2 $transcript1\t\t$gene2 $coords2 $transcript2\tnormal count = $pairoscope_normal_reads\n$pairoscope_normal_cmd";
 
       #Clean-up the pairoscope temp files
-      Genome::Sys->shellcmd(cmd => "rm -f $pairoscope_tmp_tumor_file");
-      Genome::Sys->shellcmd(cmd => "rm -f $pairoscope_tmp_normal_file");
+      unlink $pairoscope_tmp_tumor_file;
+      unlink $pairoscope_tmp_normal_file;
     }
 
     #Print out a new file containing the extra annotation columns

@@ -3,7 +3,6 @@ package Genome::Model::ClinSeq::Command::CufflinksExpressionAbsolute;
 
 use strict;
 use warnings;
-use Data::Dumper;
 use Genome;
 use Genome::Model::ClinSeq::Util qw(:all);
 use Genome::Model::ClinSeq::RnaSeqUtil qw(:all);
@@ -108,7 +107,6 @@ sub execute {
   my $rnaseq_build = $self->build;
   my $cancer_annotation_db = $self->cancer_annotation_db;
   my $working_dir = $self->outdir;
-$DB::single = 1;
   $working_dir .= "/" unless ($working_dir =~ /\/$/);
 
   my $cufflinks_dir = $rnaseq_build->data_directory . "/expression/";
@@ -136,7 +134,7 @@ $DB::single = 1;
   my $goi_file = "$working_dir"."genes_of_interest.txt";
 
   #Get Entrez and Ensembl data for gene name mappings
-  my $entrez_ensembl_data = &loadEntrezEnsemblData(-cancer_db => $cancer_annotation_db);
+  my $entrez_ensembl_data = $self->loadEntrezEnsemblData('-cancer_db' => $cancer_annotation_db);
 
   #Build a map of ensembl transcript ids to gene ids and gene names from the gene annotation object associated with the rna-seq builds
   my $reference_build = $rnaseq_build->reference_sequence_build;
@@ -160,16 +158,15 @@ $DB::single = 1;
     die $self->error_message;
   }
   $self->status_message("\t$transcript_info_path");
-  my $ensembl_map = &loadEnsemblMap('-gtf_path'=>$gtf_path, '-transcript_info_path'=>$transcript_info_path);
+  my $ensembl_map = $self->loadEnsemblMap('-gtf_path'=>$gtf_path, '-transcript_info_path'=>$transcript_info_path);
 
   #Import a set of gene symbol lists 
   #- these files must be gene symbols in the first column, .txt extension, tab-delimited if multiple columns, one symbol per field, no header
   #- fix gene names as they are being imported
-  #TODO: eliminate this horrible hard coding to untracked data!
   my $gene_symbol_lists_dir = $cancer_annotation_db->data_directory . "/GeneSymbolLists/";
-  $gene_symbol_lists_dir = &checkDir('-dir'=>$gene_symbol_lists_dir, '-clear'=>"no");
+  $gene_symbol_lists_dir = $self->checkDir('-dir'=>$gene_symbol_lists_dir, '-clear'=>"no");
   my @symbol_list_names = qw ( GenesOfInterest_MG );
-  my $gene_symbol_lists = &importGeneSymbolLists('-gene_symbol_lists_dir'=>$gene_symbol_lists_dir, '-symbol_list_names'=>\@symbol_list_names, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
+  my $gene_symbol_lists = $self->importGeneSymbolLists('-gene_symbol_lists_dir'=>$gene_symbol_lists_dir, '-symbol_list_names'=>\@symbol_list_names, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
   my $goi_ref = $gene_symbol_lists->{'GenesOfInterest_MG'}->{'symbols'};
   open (GOI, ">$goi_file") || die "\n\nCould not open genes of interest file\n\n";
   foreach my $goi (sort keys %{$goi_ref}){
@@ -178,11 +175,11 @@ $DB::single = 1;
   close(GOI);
 
   #Parse the genes.fpkm_tracking and isoforms.fpkm_tracking files
-  my $fpkm = &parseFpkmFile('-infile'=>$genes_infile, '-outfile'=>$genes_file_sorted, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>$ensembl_map, '-verbose'=>$self->verbose);
-  $fpkm = &parseFpkmFile('-infile'=>$isoforms_infile, '-outfile'=>$isoforms_file_sorted, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>$ensembl_map, '-verbose'=>$self->verbose);
+  my $fpkm = $self->parseFpkmFile('-infile'=>$genes_infile, '-outfile'=>$genes_file_sorted, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>$ensembl_map, '-verbose'=>$self->verbose);
+  $fpkm = $self->parseFpkmFile('-infile'=>$isoforms_infile, '-outfile'=>$isoforms_file_sorted, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>$ensembl_map, '-verbose'=>$self->verbose);
 
   #Merge the isoforms.fpkm_tracking file to the gene level
-  my $merged_fpkm = &mergeIsoformsFile('-infile'=>$isoforms_infile, '-status_file'=>$genes_infile, '-outfile'=>$isoforms_merge_file_sorted, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>$ensembl_map, '-verbose'=>$self->verbose);
+  my $merged_fpkm = $self->mergeIsoformsFile('-infile'=>$isoforms_infile, '-status_file'=>$genes_infile, '-outfile'=>$isoforms_merge_file_sorted, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>$ensembl_map, '-verbose'=>$self->verbose);
 
   #Make the genes subdir
   my $images_sub_dir = $working_dir . "images/";
@@ -198,12 +195,12 @@ $DB::single = 1;
   Genome::Sys->shellcmd(cmd => $r_cmd);
 
   #Reorganize the output files into sub-directories
-  my $genes_sub_dir = &createNewDir('-path'=>$working_dir, '-new_dir_name'=>"genes", '-force'=>"yes");
-  my $genes_stats_dir = &createNewDir('-path'=>$genes_sub_dir, '-new_dir_name'=>"summary", '-force'=>"yes");
-  my $isoforms_sub_dir = &createNewDir('-path'=>$working_dir, '-new_dir_name'=>"isoforms", '-force'=>"yes");
-  my $isoforms_stats_dir = &createNewDir('-path'=>$isoforms_sub_dir, '-new_dir_name'=>"summary", '-force'=>"yes");
-  my $isoforms_merged_sub_dir = &createNewDir('-path'=>$working_dir, '-new_dir_name'=>"isoforms_merged", '-force'=>"yes");
-  my $isoforms_merged_stats_dir = &createNewDir('-path'=>$isoforms_merged_sub_dir, '-new_dir_name'=>"summary", '-force'=>"yes");
+  my $genes_sub_dir = $self->createNewDir('-path'=>$working_dir, '-new_dir_name'=>"genes", '-force'=>"yes");
+  my $genes_stats_dir = $self->createNewDir('-path'=>$genes_sub_dir, '-new_dir_name'=>"summary", '-force'=>"yes");
+  my $isoforms_sub_dir = $self->createNewDir('-path'=>$working_dir, '-new_dir_name'=>"isoforms", '-force'=>"yes");
+  my $isoforms_stats_dir = $self->createNewDir('-path'=>$isoforms_sub_dir, '-new_dir_name'=>"summary", '-force'=>"yes");
+  my $isoforms_merged_sub_dir = $self->createNewDir('-path'=>$working_dir, '-new_dir_name'=>"isoforms_merged", '-force'=>"yes");
+  my $isoforms_merged_stats_dir = $self->createNewDir('-path'=>$isoforms_merged_sub_dir, '-new_dir_name'=>"summary", '-force'=>"yes");
 
   my $mv_cmd1 = "mv $working_dir/genes.fpkm*.tsv $genes_sub_dir";
   Genome::Sys->shellcmd(cmd => $mv_cmd1);
@@ -221,9 +218,9 @@ $DB::single = 1;
   my $isoforms_merge_stat_file = "$isoforms_merged_stats_dir"."Stats.tsv";
 
   #Each of these files above has an 'FPKM' column.  All basic Cufflinks stats will be based on that
-  &calculateCufflinksStats('-infile'=>$genes_data_file, '-outfile'=>$genes_stat_file);
-  &calculateCufflinksStats('-infile'=>$isoforms_data_file, '-outfile'=>$isoforms_stat_file);
-  &calculateCufflinksStats('-infile'=>$isoforms_merge_data_file, '-outfile'=>$isoforms_merge_stat_file);
+  $self->calculateCufflinksStats('-infile'=>$genes_data_file, '-outfile'=>$genes_stat_file);
+  $self->calculateCufflinksStats('-infile'=>$isoforms_data_file, '-outfile'=>$isoforms_stat_file);
+  $self->calculateCufflinksStats('-infile'=>$isoforms_merge_data_file, '-outfile'=>$isoforms_merge_stat_file);
 
   #Set outputs
   my $tumor_fpkm_file = "$isoforms_merged_sub_dir"."isoforms.merged.fpkm.expsort.tsv";

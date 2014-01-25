@@ -37,4 +37,7 @@ Genome::Utility::Test::compare_ok(
     ],
 );
 
+Genome::Sys->shellcmd(cmd => "rm -rf /tmp/last-run-genome-model-import-metadata-op");
+Genome::Sys->copy_file($actual_log_path, "/tmp/last-run-genome-model-import-metadata-op");
+
 done_testing(5);

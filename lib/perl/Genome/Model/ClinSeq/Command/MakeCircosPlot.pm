@@ -3,7 +3,6 @@ use strict;
 use warnings;
 use Switch;
 use Genome; 
-use Data::Dumper;
 
 # Written by Ben Ainscough and Scott Smith, based on prototype from Obi Griffith
 # See JIRA issue https://jira.gsc.wustl.edu/browse/TD-691
@@ -11,13 +10,25 @@ use Data::Dumper;
 class Genome::Model::ClinSeq::Command::MakeCircosPlot {
     is => 'Command::V2',
     has_input => [
-        build               => { is => 'Genome::Model::Build::ClinSeq',
-                                doc => 'Clinseq build' },
-
+        
         output_directory    => { is => 'FilesystemPath',
                                 doc => 'Directory where output will be written', },
+                                
+        build               => { is => 'Genome::Model::Build::ClinSeq',
+                                doc => 'Clinseq build' },
+                                
+        candidate_fusion_infile      => {  is => 'FilesystemPath', doc => 'fusion_output_file file from SummarizeSvs.pm' , is_optional => 1 },
+        cnv_hmm_file				 => {  is => 'FilesystemPath', doc => 'cnv_hmm_file is from GenerateClonalityPlots.pm', is_optional => 1 },
+        coding_hq_de_file			 => {  is => 'FilesystemPath', doc => 'coding_hq_de_file is from CufflinksDifferentialExpression.pm', is_optional => 1 },
+        tumor_fpkm_topnpercent_file  => {  is => 'FilesystemPath', doc => 'tumor_fpkm_topnpercent_file is from CufflinksExpressionAbsolute.pm', is_optional => 1 },
+        import_snvs_indels_result    => {  is => 'Boolean', doc => 'Used in the to link in workflow', is_optional => 1 },
+        gene_ampdel_file             => {  is => 'FilesystemPath', doc => 'gene_ampdel_file is from RunCnView.pm and is used to provide gene lables for Deletions and Focal Amps', is_optional => 1 },
 
-    ],
+        #TODO: Define all input files as optional inputs here
+        #TODO: Each of these will have to be defined as output on the commands they come from.
+
+
+    ], 
     has_param => [
         use_version         => { is => 'Text',
                                 valid_values => [ Genome::Sys->sw_versions("circos") ],
@@ -65,11 +76,6 @@ sub execute {
     $self->status_message("Output directory is " . $self->output_directory);
 
 
-
-    #TODO Remove when done testing
-    #Remove circos.conf for testing purposes
-    Genome::Sys->shellcmd(cmd => "rm -rf $output_directory");
-
     # initialize directories
     unless (-d $output_directory) {
         # this module has wrappers which do logging, throw exceptions, around regular tasks
@@ -86,6 +92,72 @@ sub execute {
 
     my $dataDir = $build->data_directory . "/" . $build->common_name;
 
+
+    ###Candidate Fusions
+    Genome::Sys->copy_file("$dataDir/sv/CandidateSvCodingFusions.tsv", "$output_directory/raw/CandidateSvCodingFusions.tsv");
+    ### The following if statement is necessary to integrate MakeCircosPlot into the ClinSeq pipeline.
+    if($self->candidate_fusion_infile){
+	    system("rm -f $output_directory/raw/CandidateSvCodingFusions.tsv");
+	    Genome::Sys->copy_file($self->candidate_fusion_infile , "$output_directory/raw/CandidateSvCodingFusions.tsv");
+	}
+    ###Fusions
+    if(my $tumor_rnaseq_build = $build->tumor_rnaseq_build && -e $dataDir."/rnaseq/fusions/tumor/filtered_chimeras.bedpe"){
+        Genome::Sys->copy_file($dataDir."/rnaseq/fusions/tumor/filtered_chimeras.bedpe", "$output_directory/raw/filtered_chimeras.bedpe");
+	}
+	###Deletions and Focal Amplifications
+    Genome::Sys->copy_file("$dataDir/clonality/cnaseq.cnvhmm", "$output_directory/raw/cnaseq.cnvhmm");
+    if($self->cnv_hmm_file){
+	    system("rm -f $output_directory/raw/cnaseq.cnvhmm");
+	    Genome::Sys->copy_file($self->cnv_hmm_file , "$output_directory/raw/cnaseq.cnvhmm");
+	}
+	###Deletions and focal amplifications gene files
+	Genome::Sys->copy_file("$dataDir/cnv/cnview/cnv.All_genes.ampdel.tsv" , "$output_directory/raw/cnv.All_genes.ampdel.tsv");
+	if($self->gene_ampdel_file){
+	    system("rm -f $output_directory/raw/cnv.All_genes.ampdel.tsv");
+	    Genome::Sys->copy_file($self->gene_ampdel_file , "$output_directory/raw/cnv.All_genes.ampdel.tsv");
+	}
+	
+	###Differential Expression
+    # Differential Expression data is only included if rnaseq builds are present for tumor and normal
+    # If not the rna expression is displayed.
+	if($build->normal_rnaseq_build || $build->tumor_rnaseq_build){
+        if($build->normal_rnaseq_build){
+            Genome::Sys->copy_file("$dataDir/rnaseq/cufflinks_differential_expression/genes/case_vs_control.coding.hq.de.tsv", "$output_directory/raw/case_vs_control.coding.hq.de.tsv");
+            if($self->coding_hq_de_file){
+	            system("rm -f $output_directory/raw/case_vs_control.coding.hq.de.tsv");
+	            Genome::Sys->copy_file($self->coding_hq_de_file , "$output_directory/raw/case_vs_control.coding.hq.de.tsv");
+	        }
+        }else{
+            Genome::Sys->copy_file("$dataDir/rnaseq/tumor/cufflinks_expression_absolute/genes/genes.fpkm.expsort.top1percent.tsv", "$output_directory/raw/genes.fpkm.expsort.top1percent.tsv");
+            if($self->tumor_fpkm_topnpercent_file){
+	            system("rm -f $output_directory/raw/genes.fpkm.expsort.top1percent.tsv");
+	            Genome::Sys->copy_file($self->tumor_fpkm_topnpercent_file , "$output_directory/raw/genes.fpkm.expsort.top1percent.tsv");
+	        }
+        }
+    }    
+    ### Tier1 SNVs and INDELs
+    #decides which somatic variation model to use
+    #my $wgs_build = $build->wgs_build; #WGS build required at beginning of execute
+    my $exo_build = $build->exome_build;
+    my $snv_data_dir;
+    my $indel_data_dir;
+    if($wgs_build && $exo_build){
+        $snv_data_dir="$dataDir/snv/wgs_exome";
+        $indel_data_dir="$dataDir/indel/wgs_exome";
+    }elsif($exo_build){
+        $snv_data_dir="$dataDir/snv/exome";
+        $indel_data_dir="$dataDir/indel/exome";
+    }else{
+        $snv_data_dir="$dataDir/snv/wgs";
+        $indel_data_dir="$dataDir/indel/wgs";
+    }
+    Genome::Sys->copy_file("$snv_data_dir/snvs.hq.tier1.v1.annotated.compact.tsv", "$output_directory/raw/snvs.hq.tier1.v1.annotated.compact.tsv");
+    Genome::Sys->copy_file("$indel_data_dir/indels.hq.tier1.v1.annotated.compact.tsv", "$output_directory/raw/indels.hq.tier1.v1.annotated.compact.tsv");
+    
+
+	
+#TODO if user enters specific files to run then overide the standard files retrived from the build here
+    
     my $config =<<EOS;
 # Chromosome name, size and color definition
 karyotype = data/karyotype/karyotype.human.txt
@@ -188,7 +260,6 @@ EOS
 
     #TODO I am assuming that this comes from the WGS data. I am not sure on this, however if it does not the <links> tag needs to be brought out of the conf section here
     ###Candidate Fusions
-    Genome::Sys->copy_file("$dataDir/sv/CandidateSvCodingFusions.tsv", "$output_directory/raw/CandidateSvCodingFusions.tsv");
     my $candidate_fusions = Genome::Sys->read_file("$output_directory/raw/CandidateSvCodingFusions.tsv");
     my $candidate_fusions_fh = Genome::Sys->open_file_for_writing("$output_directory/data/CandidateSvCodingFusions.txt");
     while ($candidate_fusions =~ /(\S+)\s+(\S+)\s+chr(\S+):(\d+)-(\d+)\s+chr(\S+):(\d+)-(\d+)/g) {
@@ -213,30 +284,30 @@ thickness     = 2
 EOS
 
 ###Fusions
-#TODO /gscmnt/gc8001/info/model_data/9761cf3dbb73452980890eaf0e8aadb0/buildf4af67af82b94727bb4ac30554503e4b/fusions/chimeras.bedpe.filtered.txt
-#        if(my $tumor_rnaseq_build = $build->tumor_rnaseq_build){
-#            Genome::Sys->copy_file($tumor_rnaseq_build->data_directory."/fusions/chimeras.bedpe.filtered.txt", "$output_directory/raw/chimeras.bedpe.filtered.txt");
-#            my $fusions = Genome::Sys->read_file("$output_directory/raw/chimeras.bedpe.filtered.txt");
-#            my $fusions_fh = Genome::Sys->open_file_for_writing("$output_directory/data/chimeras.bedpe.filtered.txt");
-#           while ($fusions =~ /(\S+)\s+(\S+)\s+chr(\S+):(\d+)-(\d+)\s+chr(\S+):(\d+)-(\d+)/g) {
-#                $genes_noAmpDel{$1}="hs$3 $4 $5";
-#                $genes_noAmpDel{$2}="hs$6 $7 $8";
-#                $genes_AmpDel{$1}="hs$3 $4 $5";
-#                $genes_AmpDel{$2}="hs$6 $7 $8";
-#                print $fusions_fh ("hs$3 $4 $5 hs$6 $7 $8\n");
-#            }
-#            $fusions_fh->close;
-#            $config .=<<EOS;
+        if(my $tumor_rnaseq_build = $build->tumor_rnaseq_build && -e $dataDir."/rnaseq/fusions/tumor/filtered_chimeras.bedpe"){
+            my $fusions = Genome::Sys->read_file("$output_directory/raw/filtered_chimeras.bedpe");
+            my $fusions_fh = Genome::Sys->open_file_for_writing("$output_directory/data/filtered_chimeras.bedpe");
+           while ($fusions =~ /(\d+|X|Y)\s(\d+)\s(\d+)\s(\d+|X|Y)\s(\d+)\s(\d+)\s+\w+\s\d+\s[+|-]\s[+|-]\s(\S+):(\S+)/g) {
+#           		print "gene 1 : $7 hs$1 $2 $3";
+#           		print "gene 2 : $8 hs$4 $5 $6";
+#                $genes_noAmpDel{$7}="hs$1 $2 $3";
+#                $genes_noAmpDel{$8}="hs$4 $5 $6";
+#                $genes_AmpDel{$7}="hs$1 $2 $3";
+#                $genes_AmpDel{$8}="hs$4 $5 $6";
+                print $fusions_fh ("hs$1 $2 $3 hs$4 $5 $6\n");
+            }
+            $fusions_fh->close;
+            $config .=<<EOS;
 #Fusions RNAseq support
-#<link>
-#file          = $output_directory/data/chimeras.bedpe.filtered.txt
-#radius          = 0.50r
-#bezier_radius = 0r
-#color         = red_a1
-#thickness     = 2
-#</link>        
-#EOS
-#       }
+<link>
+file          = $output_directory/data/filtered_chimeras.bedpe
+radius          = 0.50r
+bezier_radius = 0r
+color         = red_a1
+thickness     = 2
+</link>        
+EOS
+       }
 
     $config.=<<EOS;
 </links>
@@ -252,7 +323,6 @@ EOS
 
 
     ###Deletions and Focal Amplifications
-    Genome::Sys->copy_file("$dataDir/clonality/cnaseq.cnvhmm", "$output_directory/raw/cnaseq.cnvhmm");
     my $deletions_and_focal_amps = Genome::Sys->read_file("$output_directory/raw/cnaseq.cnvhmm");
     my $deletions_fh = Genome::Sys->open_file_for_writing("$output_directory/data/deletions.txt");
     my $focal_amps_fh = Genome::Sys->open_file_for_writing("$output_directory/data/focalAmps.txt");
@@ -289,7 +359,7 @@ EOS
     $focal_amps_fh->close;
     
     #the gene names for deletions and focal amplifications is in another file so it needs to be read in here
-    my $ampdel_genes = Genome::Sys->read_file("$dataDir/cnv/cnview/cnv.All_genes.ampdel.tsv");
+    my $ampdel_genes = Genome::Sys->read_file("$output_directory/raw/cnv.All_genes.ampdel.tsv");
     while ($ampdel_genes =~ /ENS\w+\s\w+\s(\S+)\s\S+\s(\w+)\s(\d+)\s(\d+)/g) {
         $genes_AmpDel{$1}="hs$2\t$3\t$4";
     }
@@ -378,7 +448,6 @@ EOS
     # If not the rna expression is displayed in this track.
 
     if($build->normal_rnaseq_build){
-        Genome::Sys->copy_file("$dataDir/rnaseq/cufflinks_differential_expression/genes/case_vs_control.coding.hq.de.tsv", "$output_directory/raw/case_vs_control.coding.hq.de.tsv");   
         my $diffExpression = Genome::Sys->read_file("$output_directory/raw/case_vs_control.coding.hq.de.tsv");
         my $diffExpressionPositive_fh = Genome::Sys->open_file_for_writing("$output_directory/data/case_vs_control.coding.hq.de.positive.txt");
         my $diffExpressionNegative_fh = Genome::Sys->open_file_for_writing("$output_directory/data/case_vs_control.coding.hq.de.negative.txt");
@@ -471,7 +540,6 @@ EOS
     
     }else{
         my $tumor_rnaseq_build=$build->tumor_rnaseq_build;
-        Genome::Sys->copy_file("$dataDir/rnaseq/tumor/cufflinks_expression_absolute/genes/genes.fpkm.expsort.top1percent.tsv", "$output_directory/raw/genes.fpkm.expsort.top1percent.tsv");   
         my $expression = Genome::Sys->read_file("$output_directory/raw/genes.fpkm.expsort.top1percent.tsv");
         my $expression_fh = Genome::Sys->open_file_for_writing("$output_directory/data/genes.fpkm.expsort.top1percent.tsv");
         while ($expression =~ /\w+\t(\w+)\t\w+\t\w+\t(\w+):(\d+)-(\d+)\t\w+\t\w+\t(\S+)/g) {
@@ -539,23 +607,6 @@ EOS
     }
     
     ### Tier1 SNVs and INDELs
-    #decides which somatic variation model to use
-    #my $wgs_build = $build->wgs_build; #WGS build required at beginning of execute
-    my $exo_build = $build->exome_build;
-    my $snv_data_dir;
-    my $indel_data_dir;
-    if($wgs_build && $exo_build){
-        $snv_data_dir="$dataDir/snv/wgs_exome";
-        $indel_data_dir="$dataDir/indel/wgs_exome";
-    }elsif($exo_build){
-        $snv_data_dir="$dataDir/snv/exome";
-        $indel_data_dir="$dataDir/indel/exome";
-    }else{
-        $snv_data_dir="$dataDir/snv/wgs";
-        $indel_data_dir="$dataDir/indel/wgs";
-    }
-    Genome::Sys->copy_file("$snv_data_dir/snvs.hq.tier1.v1.annotated.compact.tsv", "$output_directory/raw/snvs.hq.tier1.v1.annotated.compact.tsv");
-    Genome::Sys->copy_file("$indel_data_dir/indels.hq.tier1.v1.annotated.compact.tsv", "$output_directory/raw/indels.hq.tier1.v1.annotated.compact.tsv");
 
     #SNV
     my $snv_file = Genome::Sys->read_file("$output_directory/raw/snvs.hq.tier1.v1.annotated.compact.tsv");
@@ -590,15 +641,7 @@ EOS
         else {$color="blue";}
 
         print $indel_fh "hs$1 $2 $3 0.5 fill_color=$color\n";
-#        switch($5){
-#            case "in_frame_ins"            {print $indel_fh "fill_color=yellow\n"}
-#            case "in_frame_del"            {print $indel_fh "fill_color=yellow\n"}
-#            case "frame_shift_del"        {print $indel_fh "fill_color=teal\n"}
-#            case "rna"                    {print $indel_fh "fill_color=purple\n"}
-#            case "frame_shift_ins"        {print $indel_fh "fill_color=red\n"}
-#            case "splice_site_del"        {print $indel_fh "fill_color=black\n"}
-#            case "splice_site_ins"        {print $indel_fh "fill_color=chocolate\n"}
-#        }
+
     }
     $indel_fh->close;
 
@@ -673,11 +716,15 @@ EOS
     }
     $gene_fh->close;
 
-
-	my $annotate_genes_cmd1 = "genome model clin-seq annotate-genes-by-category --infile=$output_directory/raw/genes_noAmpDel.txt --cancer-annotation-db='tgi/cancer-annotation/human/build37-20130711.1' --gene-name-column='gene'";
-    Genome::Sys->shellcmd(cmd => $annotate_genes_cmd1);
+    my $cancer_annotation_db = Genome::Db->get(id => 'tgi/cancer-annotation/human/build37-20130711.1');
+    my $annotate_genes_cmd1 = Genome::Model::ClinSeq::Command::AnnotateGenesByCategory->create(
+        infile => "$output_directory/raw/genes_noAmpDel.txt",
+        cancer_annotation_db => $cancer_annotation_db,
+        gene_name_columns => ['gene'],
+    );
+    $annotate_genes_cmd1->execute() or die;
     my $sort_cmd1 = "sort -rnk 102 $output_directory/raw/genes_noAmpDel.catanno.txt|head -100 |cut -d \"\t\" -f 1-4  > $output_directory/data/genes_noAmpDel.catanno.sorted.txt";
-    Genome::Sys->shellcmd(cmd => $sort_cmd1);
+    Genome::Sys->shellcmd(cmd => $sort_cmd1, set_pipefail => 1,);
 
 
 
@@ -688,10 +735,14 @@ EOS
     }
     $geneAmpDel_fh->close;
 
-	$annotate_genes_cmd1 = "genome model clin-seq annotate-genes-by-category --infile=$output_directory/raw/genes_AmpDel.txt --cancer-annotation-db='tgi/cancer-annotation/human/build37-20130711.1' --gene-name-column='gene'";
-    Genome::Sys->shellcmd(cmd => $annotate_genes_cmd1);
-    $sort_cmd1 = "sort -rnk 102 $output_directory/raw/genes_AmpDel.catanno.txt|head -100 |cut -d \"\t\" -f 1-4  > $output_directory/data/genes_AmpDel.catanno.sorted.txt";
-    Genome::Sys->shellcmd(cmd => $sort_cmd1);
+    my $annotate_genes_cmd2 = Genome::Model::ClinSeq::Command::AnnotateGenesByCategory->create(
+        infile => "$output_directory/raw/genes_AmpDel.txt",
+        cancer_annotation_db => $cancer_annotation_db,
+        gene_name_columns => ['gene'],
+    );
+    $annotate_genes_cmd2->execute() or die;
+    my $sort_cmd2 = "sort -rnk 102 $output_directory/raw/genes_AmpDel.catanno.txt|head -100 |cut -d \"\t\" -f 1-4  > $output_directory/data/genes_AmpDel.catanno.sorted.txt";
+    Genome::Sys->shellcmd(cmd => $sort_cmd2, set_pipefail => 1,);
 
     $config .=<<EOS;
 #GENE LABELS

@@ -67,5 +67,15 @@ sub get_variables_from_paths {
     return @variables;
 }
 
-1;
+sub NAME {
+    my $class = shift;
 
+    my $tail = ($class =~ /^Genome::Env::(.*)/)[0];
+    my $NAME = uc($tail);
+    unless ($NAME) {
+        die 'Could not infer NAME from package';
+    }
+    return $NAME;
+}
+
+1;

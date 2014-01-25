@@ -391,7 +391,7 @@ sub _rsync_ftp {
         open '$url';
         lcd $lcd/; 
         cd $rcd; 
-        mirror --verbose --continue --use-cache --exclude fs-tgz/ --exclude transcript_sub_structure_tree/" 
+        mirror --verbose --continue --use-cache --exclude fs-tgz/ --exclude transcript_sub_structure_tree/ --exclude setup/" 
     |;
     Genome::Sys->shellcmd(cmd => $cmd);
     my $manifest = "$lcd/fs-tgz/MANIFEST";

@@ -21,7 +21,7 @@ use Data::Dumper;
 use_ok('Genome::Model::ClinSeq::Command::GetVariantSources') or die;
 
 #Define the test where expected results are stored
-my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-ClinSeq-Command-GetVariantSources/2013-04-15/";
+my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-ClinSeq-Command-GetVariantSources/2014-01-14/";
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 #Create a temp dir for results
@@ -29,7 +29,7 @@ my $temp_dir = Genome::Sys->create_temp_directory();
 ok($temp_dir, "created temp directory: $temp_dir");
 
 #Get a somatic variation build
-my $somvar_build_id1 = 128884819;
+my $somvar_build_id1 = '5073b4ac211b4ad498e1ee365b0603d8';
 my $somvar_build1 = Genome::Model::Build->get($somvar_build_id1);
 
 #Create get-variant sources command and execute

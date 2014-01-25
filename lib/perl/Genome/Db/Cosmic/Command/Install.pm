@@ -16,7 +16,7 @@ class Genome::Db::Cosmic::Command::Install {
 
 sub help_synopsis {
     return <<EOS
-genome db cosmic install 65.1
+genome db cosmic install --branch=65_v2
 EOS
 }
 

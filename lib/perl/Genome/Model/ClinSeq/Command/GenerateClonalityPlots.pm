@@ -5,7 +5,6 @@ package Genome::Model::ClinSeq::Command::GenerateClonalityPlots;
 use strict;
 use warnings;
 use Genome;
-use Data::Dumper;
 use Genome::Model::ClinSeq::Util qw(:all);
 
 
@@ -92,7 +91,7 @@ sub execute {
 
     # This tool calls some scripts which have not been converted into tools
     #TODO: Fix that so that Nate and Krishna's old code is cleaned up and brought into the fold
-    my $script_dir = Cwd::abs_path(File::Basename::dirname(__FILE__) . '/../original-scripts/') . '/';
+    my $script_dir = Cwd::abs_path(File::Basename::dirname(__FILE__) . '/../OriginalScripts/') . '/';
     unless (-d $script_dir) {
       die $self->error_message("failed to find script dir $script_dir!")
     }
@@ -112,8 +111,8 @@ sub execute {
     my $somatic_effects_dir = $data_paths{effects_dir};
 
     #Make sure the specified parameters are correct
-    $somatic_effects_dir = &checkDir('-dir'=>$somatic_effects_dir, '-clear'=>"no");
-    $output_dir = &checkDir('-dir'=>$output_dir, '-clear'=>"no");
+    $somatic_effects_dir = $self->checkDir('-dir'=>$somatic_effects_dir, '-clear'=>"no");
+    $output_dir = $self->checkDir('-dir'=>$output_dir, '-clear'=>"no");
 
     #Step 1 - gather the tier 1-3 snv files from the build:
     my $tier1_snv_file = $somatic_effects_dir . "snvs.hq.novel.tier1.v2.bed";
@@ -146,8 +145,8 @@ sub execute {
       close(IN);
       close (OUT);
       $self->status_message("Filtered down to $s variants on chromosome: $chromosome");
-      my $mv_cmd = "mv $file $snv_file";
-      Genome::Sys->shellcmd(cmd => $mv_cmd);
+      unlink($snv_file);
+      Genome::Sys->move_file($file, $snv_file);
     }
 
     #Apply the variant limit if specified
@@ -167,8 +166,8 @@ sub execute {
       }
       close(IN);
       close (OUT);
-      my $mv_cmd = "mv $file $snv_file";
-      Genome::Sys->shellcmd(cmd => $mv_cmd);
+      unlink($snv_file);
+      Genome::Sys->move_file($file, $snv_file);
     }
 
     #Step 3 - take it out of bed format to be fed into bam-readcounts:
@@ -221,11 +220,9 @@ sub execute {
     #gmt copy-number cna-seg --copy-number-file=/gscmnt/ams1184/info/model_data/2875816457/build111674790/variants/cnvs.hq  --min-markers=4  --detect-somatic  --centromere-file=/gscmnt/sata186/info/medseq/kchen/work/SolexaCNV/scripts/centromere.hg19.csv  --gap-file=/gscmnt/sata186/info/medseq/kchen/work/SolexaCNV/scripts/hg19gaps.csv  --output-file=hg1.cnvhmm
 
     #Make a copy of the cnvs.hq file
-    $cp_cmd = "cp $data_paths{cnvs_hq} $output_dir";
-    if ($verbose){$self->status_message("$cp_cmd");}
-    Genome::Sys->shellcmd(cmd => $cp_cmd);
-    my $chmod_cmd = "chmod 664 $output_dir"."cnvs.hq";
-    Genome::Sys->shellcmd(cmd => $chmod_cmd);
+    my $cnvs_output_path = "${output_dir}cnvs.hq";
+    Genome::Sys->copy_file($data_paths{cnvs_hq}, $cnvs_output_path);
+    chmod 0664, $cnvs_output_path;
 
     my $misc_annotation_db = $self->misc_annotation_db;
     my $centromere_file = $misc_annotation_db->data_set_path("centromere.csv");
@@ -264,12 +261,16 @@ sub execute {
     my $output_image_file1a = "$output_dir"."$common_name".".clonality.pdf";
     my $r_script_file = "$output_dir"."clonality.R";
     my $uc_common_name = uc($common_name);
-    my $clonality_cmd1a = Genome::Model::Tools::Validation::ClonalityPlot->create(cnvhmm_file=>$cnvhmm_file, output_image=>$output_image_file1a, r_script_output_file=>$r_script_file, varscan_file=>$varscan_file, analysis_type=>'wgs', sample_id=>$uc_common_name);
-    $clonality_cmd1a->execute();
-
-    my $output_image_file1b = "$output_dir"."$common_name".".clonality.cn2.pdf";
-    my $clonality_cmd1b = Genome::Model::Tools::Validation::ClonalityPlot->create(cnvhmm_file=>$cnvhmm_file, output_image=>$output_image_file1b, r_script_output_file=>$r_script_file, varscan_file=>$varscan_file, analysis_type=>'wgs', sample_id=>$uc_common_name, plot_only_cn2=>1);
-    $clonality_cmd1b->execute();
+    if (-s $varscan_file){
+      my $clonality_cmd1a = Genome::Model::Tools::Validation::ClonalityPlot->create(cnvhmm_file=>$cnvhmm_file, output_image=>$output_image_file1a, r_script_output_file=>$r_script_file, varscan_file=>$varscan_file, analysis_type=>'wgs', sample_id=>$uc_common_name);
+      $clonality_cmd1a->execute();
+    
+      my $output_image_file1b = "$output_dir"."$common_name".".clonality.cn2.pdf";
+      my $clonality_cmd1b = Genome::Model::Tools::Validation::ClonalityPlot->create(cnvhmm_file=>$cnvhmm_file, output_image=>$output_image_file1b, r_script_output_file=>$r_script_file, varscan_file=>$varscan_file, analysis_type=>'wgs', sample_id=>$uc_common_name, plot_only_cn2=>1);
+      $clonality_cmd1b->execute();
+    }else{
+      $self->warning_message("Empty snv file: $varscan_file");
+    }
 
     #Step 7-B. With clusters - not working - deactivate until the new version of clonality is available
     #my $clustered_data_output_file = $output_dir . $common_name . ".clustered.data.tsv";
@@ -295,14 +296,16 @@ sub execute {
     }
     close(SNV);
     close(SNV2);
-    my $output_image_file3a = "$output_dir"."$common_name".".clonality.filtered_snvs.pdf";
-    my $clonality_cmd3a = Genome::Model::Tools::Validation::ClonalityPlot->create(cnvhmm_file=>$cnvhmm_file, output_image=>$output_image_file3a, r_script_output_file=>$r_script_file, varscan_file=>$filtered_file, analysis_type=>'wgs', sample_id=>$uc_common_name);
-    $clonality_cmd3a->execute();
-
-    my $output_image_file3b = "$output_dir"."$common_name".".clonality.filtered_snvs.cn2.pdf";
-    my $clonality_cmd3b = Genome::Model::Tools::Validation::ClonalityPlot->create(cnvhmm_file=>$cnvhmm_file, output_image=>$output_image_file3b, r_script_output_file=>$r_script_file, varscan_file=>$filtered_file, analysis_type=>'wgs', sample_id=>$uc_common_name, plot_only_cn2=>1);
-    $clonality_cmd3b->execute();
-
+    if (-s $filtered_file){
+      my $output_image_file3a = "$output_dir"."$common_name".".clonality.filtered_snvs.pdf";
+      my $clonality_cmd3a = Genome::Model::Tools::Validation::ClonalityPlot->create(cnvhmm_file=>$cnvhmm_file, output_image=>$output_image_file3a, r_script_output_file=>$r_script_file, varscan_file=>$filtered_file, analysis_type=>'wgs', sample_id=>$uc_common_name);
+      $clonality_cmd3a->execute();
+      my $output_image_file3b = "$output_dir"."$common_name".".clonality.filtered_snvs.cn2.pdf";
+      my $clonality_cmd3b = Genome::Model::Tools::Validation::ClonalityPlot->create(cnvhmm_file=>$cnvhmm_file, output_image=>$output_image_file3b, r_script_output_file=>$r_script_file, varscan_file=>$filtered_file, analysis_type=>'wgs', sample_id=>$uc_common_name, plot_only_cn2=>1);
+      $clonality_cmd3b->execute();
+    }else{
+      $self->warning_message("Empty filtered snv file: $filtered_file");
+    }
     #Keep the files that were needed to run the cna-seg and clonality plot steps so that someone can rerun with different parameters 
 
     #Define the output parameter for the cnvhmm so that it can be fed into downstream steps in a workflow
