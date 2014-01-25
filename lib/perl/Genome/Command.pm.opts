@@ -20634,6 +20634,19 @@ $Genome::Command::OPTS_SPEC = [
           'help!',
           undef
         ],
+        '>filter-non-calls',
+        [
+          'build-clump=s',
+          undef,
+          'color!',
+          undef,
+          'debug!',
+          undef,
+          'filtered-vcf=s',
+          'files',
+          'help!',
+          undef
+        ],
         '>pileup',
         [
           'build-clump=s',
@@ -20655,6 +20668,30 @@ $Genome::Command::OPTS_SPEC = [
           'debug!',
           undef,
           'pileup-file=s',
+          'files',
+          'help!',
+          undef
+        ],
+        '>region-limit-vcf',
+        [
+          'build-clump=s',
+          undef,
+          'build=s',
+          undef,
+          'variant-type=s',
+          [
+            'snvs',
+            'indels'
+          ],
+          'output-directory=s',
+          undef,
+          'region-bed-file=s',
+          'files',
+          'wingspan=s',
+          'files',
+          'output-vcf=s',
+          undef,
+          'roi-name=s',
           'files',
           'help!',
           undef
@@ -20689,28 +20726,6 @@ $Genome::Command::OPTS_SPEC = [
         '>determine-varscan-options',
         [
           'output-directory=s',
-          'files',
-          'help!',
-          undef
-        ],
-        '>region-limit-vcf',
-        [
-          'build=s',
-          undef,
-          'variant-type=s',
-          [
-            'snvs',
-            'indels'
-          ],
-          'output-directory=s',
-          undef,
-          'region-bed-file=s',
-          'files',
-          'wingspan=s',
-          'files',
-          'output-vcf=s',
-          undef,
-          'roi-name=s',
           'files',
           'help!',
           undef
@@ -20783,6 +20798,17 @@ $Genome::Command::OPTS_SPEC = [
         'gtonly-output-file=s',
         'files',
         'remove-nonvariant-sites!',
+        undef,
+        'help!',
+        undef
+      ],
+      '>filter-non-calls',
+      [
+        'input-file=s',
+        'files',
+        'output-file=s',
+        'files',
+        'debug!',
         undef,
         'help!',
         undef
