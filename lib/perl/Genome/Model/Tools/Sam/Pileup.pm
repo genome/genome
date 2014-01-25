@@ -102,7 +102,7 @@ sub execute {
     my $params = $self->samtools_params || "";
     my $cmd = "bash -c \"samtools view -u $view_region_file $bam | $samtools pileup $params -c -f $refseq_path $region_file - $out";
 
-    my $result = Genome::Sys->shellcmd( cmd => $cmd); #, input_files => [$refseq_path, $bam], output_files => [$output_file], skip_if_output_is_present => 1);
+    my $result = Genome::Sys->shellcmd( cmd => $cmd, set_pipefail => 1,); #, input_files => [$refseq_path, $bam], output_files => [$output_file], skip_if_output_is_present => 1);
     unless($result){
         die $self->error_message("failed to execute cmd: ".$cmd);
     }

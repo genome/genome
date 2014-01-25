@@ -7,6 +7,10 @@ use warnings;
 use Genome;
 use Time::Piece;
 
+my $cancer_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("cancer_annotation_db")->default_value;
+my $misc_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("misc_annotation_db")->default_value;
+my $cosmic_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("cosmic_annotation_db")->default_value;
+
 class Genome::Model::ClinSeq::Command::UpdateAnalysis {
     is => 'Command::V2',
     has_optional => [
@@ -116,6 +120,34 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
               is => 'Genome::Model::Build',
               id_by => '_previously_discovered_variations_id',
               doc => 'Desired previously discovered variants build',
+        },
+        _cancer_annotation_db_id => {
+        	  is => 'Text',
+        	  default => $cancer_annotation_db_id,
+        },
+        cancer_annotation_db => { 
+            is => 'Genome::Db::Tgi::CancerAnnotation', 
+            id_by => '_cancer_annotation_db_id',
+            doc => 'Desired TGI cancer annotations',
+        },
+        _misc_annotation_db_id => {
+        	  is => 'Text',
+        	  default => $misc_annotation_db_id,
+        },
+        misc_annotation_db => { 
+            is => 'Genome::Db::Tgi::MiscAnnotation', 
+            id_by => '_misc_annotation_db_id',
+            doc => 'Desired TGI misc annotations',
+        },
+ 
+        _cosmic_annotation_db_id => {
+        	  is => 'Text',
+        	  default => $cosmic_annotation_db_id,
+        },
+        cosmic_annotation_db => { 
+            is => 'Genome::Db::Cosmic', 
+            id_by => '_cosmic_annotation_db_id',
+            doc => 'Desired COSMIC annotations',
         },
         display_defaults => {
               is => 'Boolean',
@@ -519,17 +551,9 @@ sub display_inputs{
   $self->status_message("dbsnp_build: " . $self->dbsnp_build->__display_name__ . " (version " . $self->dbsnp_build->version . ")");
   $self->status_message("previously_discovered_variations: " . $self->previously_discovered_variations->__display_name__ . " (version " . $self->previously_discovered_variations->version . ")");
 
-  my $cancer_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("cancer_annotation_db")->default_value;
-  my $cancer_annotation_db = Genome::Db::Tgi::CancerAnnotation->get($cancer_annotation_db_id);
-  $self->status_message("cancer_annotation_db: " . $cancer_annotation_db_id . " (" . $cancer_annotation_db->data_directory . ")");
-
-  my $misc_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("misc_annotation_db")->default_value;
-  my $misc_annotation_db = Genome::Db::Tgi::MiscAnnotation->get($misc_annotation_db_id);
-  $self->status_message("misc_annotation_db: " . $misc_annotation_db_id . " (" . $misc_annotation_db->data_directory . ")");
-
-  my $cosmic_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("cosmic_annotation_db")->default_value;
-  my $cosmic_annotation_db = Genome::Db::Cosmic->get($cosmic_annotation_db_id);
-  $self->status_message("cosmic_annotation_db: " . $cosmic_annotation_db_id . " (" . $cosmic_annotation_db->data_directory . ")");
+  $self->status_message("cancer_annotation_db: " . $self->cancer_annotation_db->id . " (" . $self->cancer_annotation_db->data_directory . ")");
+  $self->status_message("misc_annotation_db: " . $self->misc_annotation_db->id . " (" . $self->misc_annotation_db->data_directory . ")");
+  $self->status_message("cosmic_annotation_db: " . $self->cosmic_annotation_db->id . " (" . $self->cosmic_annotation_db->data_directory . ")");
 
   #Make sure none of the basic input models/builds have been archived before proceeding...
   unless ($self->skip_check_archived){
@@ -1197,6 +1221,8 @@ sub check_rnaseq_models{
     next unless ($model->processing_profile_id eq $self->rnaseq_pp->id);
     next unless ($model->reference_sequence_build->id eq $self->reference_sequence_build->id);
     next unless ($model->annotation_build->id eq $self->annotation_build->id);
+    next unless ($model->cancer_annotation_db);
+    next unless ($model->cancer_annotation_db eq $self->cancer_annotation_db->id);
     push (@final_models, $model);
     #$self->status_message("\t\tName: " . $model->name . " (" . $model->id . ")");
   }
@@ -1378,14 +1404,14 @@ sub check_somatic_variation_models{
     return @tmp;
   }
 
+  #If there are suitable models, check the status of their *builds*, and if neccessary launch a new build
+  my $models_status = $self->check_models_status('-models'=>\@final_models);
+
   #TODO: Now check the input builds of supposedly good somatic-variation models to make sure they are using the latest reference-alignment builds
   #We already check to see if ref-align data needs to be added to a ref-align model...  but if that does happen the somatic-models are out-of-date
   @final_models = @{$self->check_somatic_input_builds('-models'=>\@final_models)};
   $final_model_count = scalar(@final_models);
   return @tmp unless ($final_model_count > 0);
-
-  #If there are suitable models, check the status of their *builds*, and if neccessary launch a new build
-  my $models_status = $self->check_models_status('-models'=>\@final_models);
 
   #If there is one or more suitable successful models, return the models objects.  Must return all suitable models to allow checking against available clinseq models
   if ($models_status){
@@ -1407,9 +1433,6 @@ sub check_somatic_input_builds{
     my $latest_somatic_build = $somatic_model->latest_build;
     my $last_complete_somatic_build = $somatic_model->last_succeeded_build;
 
-    my $latest_tumor_build = $latest_somatic_build->tumor_build;
-    my $latest_normal_build = $latest_somatic_build->normal_build;
-
     my $tumor_model = $somatic_model->tumor_model;
     my $lc_tumor_build = $tumor_model->last_succeeded_build;
     my $normal_model = $somatic_model->normal_model;
@@ -1423,14 +1446,14 @@ sub check_somatic_input_builds{
       my $last_complete_normal_build = $last_complete_somatic_build->normal_build;
       if (($last_complete_tumor_build->id eq $lc_tumor_build->id) && ($last_complete_normal_build->id eq $lc_normal_build->id)){
         push(@final_models, $somatic_model);
-      }elsif(($latest_tumor_build->id eq $lc_tumor_build->id) && ($latest_normal_build->id eq $lc_normal_build->id)){
+      }elsif(($latest_somatic_build->tumor_build->id eq $lc_tumor_build->id) && ($latest_somatic_build->normal_build->id eq $lc_normal_build->id)){  
         $self->status_message("WARNING -> latest build of somatic model $somatic_model_id is using the latest refalign builds but has the following status: " . $latest_somatic_build->status);
       }else{
         $self->status_message("WARNING -> latest build of somatic model: $somatic_model_id is not using the last complete builds of the underlying refalign models.  Run the following:");
         $self->status_message("genome model build start $somatic_model_id");
       }
     }elsif($latest_somatic_build && $lc_tumor_build && $lc_normal_build){
-      if(($latest_tumor_build->id eq $lc_tumor_build->id) && ($latest_normal_build->id eq $lc_normal_build->id)){
+      if(($latest_somatic_build->tumor_build->id eq $lc_tumor_build->id) && ($latest_somatic_build->normal_build->id eq $lc_normal_build->id)){
         $self->status_message("WARNING -> latest build of somatic model $somatic_model_id is using the latest refalign builds but has the following status: " . $latest_somatic_build->status);
       }else{
         $self->status_message("WARNING -> latest build of somatic model: $somatic_model_id is not using the last complete builds of the underlying refalign models.  Run the following:");
@@ -1528,11 +1551,12 @@ sub create_rnaseq_model{
   my $annotation_id = $self->annotation_build->id;
   my $reference_build_id = $self->reference_sequence_build->id;
   my $rnaseq_pp_id = $self->rnaseq_pp->id;
+  my $cancer_annotation_db_id= $self->cancer_annotation_db->id;
 
   my @commands;
 
   push(@commands, "\n#Create an RNA-seq model as follows:");
-  push(@commands, "genome model define rna-seq  --reference-sequence-build='$reference_build_id'  --annotation-build='$annotation_id'  --subject='$sample_name'  --processing-profile='$rnaseq_pp_id'  --instrument-data='$iids_list'");
+  push(@commands, "genome model define rna-seq  --reference-sequence-build='$reference_build_id'  --annotation-build='$annotation_id'  --cancer-annotation-db='$cancer_annotation_db_id' --subject='$sample_name'  --processing-profile='$rnaseq_pp_id'  --instrument-data='$iids_list'");
   push(@commands, "genome model build start ''");
 
   foreach my $line (@commands){
@@ -1722,6 +1746,7 @@ sub check_models_status{
     my $succeeded_builds = 0;
     my $unstartable_builds = 0;
     my $scheduled_builds = 0;
+    my $total_builds = scalar(@builds);
     foreach my $build (@builds){
       my $build_id = $build->id;
       my $status = $build->status;
@@ -1882,17 +1907,9 @@ sub check_clinseq_models{
     next if ($found_nonmatching_sample);
 
     #Only consider clin-seq models whose annotation inputs match the current defaults defined for the pipeline
-    my $cancer_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("cancer_annotation_db")->default_value;
-    my $cancer_annotation_db = Genome::Db::Tgi::CancerAnnotation->get($cancer_annotation_db_id);
-    next unless ($model->cancer_annotation_db->id eq $cancer_annotation_db_id);
-
-    my $misc_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("misc_annotation_db")->default_value;
-    my $misc_annotation_db = Genome::Db::Tgi::MiscAnnotation->get($misc_annotation_db_id);
-    next unless ($model->misc_annotation_db->id eq $misc_annotation_db_id);
-
-    my $cosmic_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("cosmic_annotation_db")->default_value;
-    my $cosmic_annotation_db = Genome::Db::Cosmic->get($cosmic_annotation_db_id);
-    next unless ($model->cosmic_annotation_db->id eq $cosmic_annotation_db_id);
+    next unless ($model->cancer_annotation_db->id eq $self->cancer_annotation_db->id);
+    next unless ($model->misc_annotation_db->id eq $self->misc_annotation_db->id);
+    next unless ($model->cosmic_annotation_db->id eq $self->cosmic_annotation_db->id);
 
     #If a 'best' model is defined, only compare against clinseq models that have a model of that type defined and skip if the actual model does not match
     if ($wgs_model){

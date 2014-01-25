@@ -60,6 +60,8 @@ sub _fill_in_defaults {
 sub _handle_attachments {
     my($params, $msg) = @_;
 
+    return unless exists $params->{attachments};
+
     my $attachments = $params->{attachments};
     unless (ref($attachments) eq 'ARRAY') {
         $attachments = [ $attachments ];

@@ -1,4 +1,4 @@
-package Genome::Site::TGI::Synchronize::Classes::LibrarySummary; 
+package Genome::Site::TGI::Synchronize::Classes::LibrarySummary;
 
 use strict;
 use warnings;
@@ -12,6 +12,7 @@ ORIGINAL_INSERT_SIZE VARCHAR2 (64)                    {null} {null}   ok
 PROTOCOL             VARCHAR2 (64)                    {null} {null}   ok
 TRANSCRIPT_STRAND    VARCHAR2 (16)                    {null} {null}   ok
 SAMPLE_ID            NUMBER   (20)                    {null} NOT NULL ok
+BISULFITE_CONVERSION VARCHAR2 (32)                    {null} {null}   ok
 =cut
 
 class Genome::Site::TGI::Synchronize::Classes::LibrarySummary {
@@ -29,6 +30,7 @@ class Genome::Site::TGI::Synchronize::Classes::LibrarySummary {
         library_insert_size     => { is => 'Text', },
         original_insert_size    => { is => 'Text', },
         transcript_strand       => { is => 'Text', },
+        bisulfite_conversion    => { is => 'Text', },
     ],
     data_source => 'Genome::DataSource::Dwrac',
 };
@@ -40,11 +42,12 @@ sub properties_to_copy {# 6
 }
 
 sub properties_to_keep_updated {# 3
-    return (qw/ 
+    return (qw/
         protocol
         library_insert_size
         original_insert_size
         transcript_strand
+        bisulfite_conversion
         /);
 }
 

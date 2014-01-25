@@ -36,7 +36,6 @@ delete $config_hash->{instrument_data_properties};
 $config_hash->{subject} = $rna_instrument_data->sample;
 $config_hash->{target_region_set_name} = $rna_instrument_data->target_region_set_name;
 $config_hash->{auto_assign_inst_data} = 1;
-$config_hash->{user_name} = 'apipe-builder';
 my $rna_model = Genome::Model::RnaSeq->create(%{$config_hash});
 build_and_run_cmd($rna_instrument_data);
 assert_succeeded($rna_instrument_data, $model_types);
@@ -49,7 +48,6 @@ delete $config_hash_no_auto_assign->{instrument_data_properties};
 $config_hash_no_auto_assign->{subject} = $rna_instrument_data->sample;
 $config_hash_no_auto_assign->{target_region_set_name} = $rna_instrument_data->target_region_set_name;
 $config_hash_no_auto_assign->{auto_assign_inst_data} = 0;
-$config_hash_no_auto_assign->{user_name} = 'apipe-builder';
 my $rna_model_no_auto_assign = Genome::Model::RnaSeq->create(%{$config_hash_no_auto_assign});
 build_and_run_cmd($rna_instrument_data);
 assert_succeeded($rna_instrument_data, $model_types);
@@ -175,6 +173,7 @@ sub _rna_seq_config_hash {
         processing_profile_id       => 2819506,
         annotation_build_id         => 124434505,
         reference_sequence_build_id => 106942997,
+        user_name => 'apipe-builder',
         instrument_data_properties  => {
             subject => 'sample',
             target_region_set_name => 'target_region_set_name'
@@ -244,5 +243,6 @@ sub _som_val_config_hash {
         processing_profile_id       => 2656116,
         annotation_build_id         => 124434505,
         reference_sequence_build_id => 106942997,
+        user_name                   => 'apipe-builder',
     };
 }

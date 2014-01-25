@@ -141,7 +141,7 @@ sub parse_line {
     # If the variant called is N, just null out the GT and FET fields to minimize interference with cross-sample VCFs
     if ($genotype eq "N") {
         $gt  = "./.";
-        $alt = ".";
+        $alt = "N";
         $ad_string = ".";
         $bq_string = ".";
         $fa = ".";

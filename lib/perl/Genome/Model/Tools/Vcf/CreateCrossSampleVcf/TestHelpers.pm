@@ -237,7 +237,9 @@ sub test_cmd {
 
 sub get_expected_result {
     my ($variant_type, $result_dir) = @_;
-    return File::Spec->join($result_dir, "$variant_type.merged.vcf.gz");
+    my $expected_result = File::Spec->join($result_dir, "$variant_type.merged.vcf.gz");
+    ok(-s $expected_result, "expected result exists: $expected_result");
+    return $expected_result;
 }
 
 

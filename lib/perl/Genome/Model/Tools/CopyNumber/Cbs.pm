@@ -23,76 +23,81 @@ use FileHandle;
 class Genome::Model::Tools::CopyNumber::Cbs {
     is => 'Command',
     has => [
-	bamwindow_file => {
-	    is => 'String',
-	    is_optional => 1,
-	    doc => 'File containing read counts in windows. Three columns requred: chr, start, read count',
-	},
+    bamwindow_file => {
+        is => 'String',
+        is_optional => 1,
+        doc => 'File containing read counts in windows. Three columns requred: chr, start, read count',
+    },
 
-	bam2cna_file => {
-	    is => 'String',
-	    is_optional => 1,
-	    doc => 'File containing read counts in windows. Three columns requred: chr, start, read count',
-	},
+    bam2cna_file => {
+        is => 'String',
+        is_optional => 1,
+        doc => 'File containing read counts in windows. Three columns requred: chr, start, read count',
+    },
 
-        array_file => {
-            is => 'String',
-	    is_optional => 1,
-	    doc => 'File containing 3-column array data (chr, pos, log-ratio)',           
-        },
+    array_file => {
+        is => 'String',
+        is_optional => 1,
+        doc => 'File containing 3-column array data (chr, pos, log-ratio)',          
+    },
 
-        binary_array_file => {
-            is => 'String',
-	    is_optional => 1,
-	    doc => 'File containing 3-column binary array data (chr, pos, 0/1)',
-        },
+    binary_array_file => {
+        is => 'String',
+        is_optional => 1,
+        doc => 'File containing 3-column binary array data (chr, pos, 0/1)',
+    },
 
 
-        tcga_array_file => {
-            is => 'String',
-	    is_optional => 1,
-	    doc => 'File containing 4-column array data (sample, chr, pos, log-ratio)',           
-        },
+    tcga_array_file => {
+        is => 'String',
+        is_optional => 1,
+        doc => 'File containing 4-column array data (sample, chr, pos, log-ratio)',           
+    },
 
-        output_R_object => {
-            is => 'String',
-	    is_optional => 1,
-            doc => 'If specified, output will be an Rdata object with segments stored in a variable named "d". This creates suitable input for the RAE peak-finding algorithm.',
-        },
-        
-        output_file => {
-            is => 'String',
-	    is_optional => 1,
-            doc => 'If specified, output will be a 5-column tab-seperated file containing segments',
-        },
-        
-        convert_names => {
-            is => 'Boolean',
-            is_optional => 1,
-            doc => 'Replace X, Y, MT with 23, 24, 25',
-            default => 0,
-        },
+    output_R_object => {
+        is => 'String',
+        is_optional => 1,
+        doc => 'If specified, output will be an Rdata object with segments stored in a variable named "d". This creates suitable input for the RAE peak-finding algorithm.',
+    },
 
-        min_width => {
-            is => 'Integer',
-            is_optional => 1,
-            doc => 'minimum number of consecutive probes/windows to require before making a call',
-            default => 2,
-        },
+    output_file => {
+        is => 'String',
+        is_optional => 1,
+        doc => 'If specified, output will be a 5-column tab-seperated file containing segments',
+    },
 
-        sample_name => {
-            is => 'String',
-            is_optional => 1,
-            doc => 'If specified, output becomes 6-column with sample name in first column, followed by chr, st, sp, bins, cn',
-        },
+    convert_names => {
+        is => 'Boolean',
+        is_optional => 1,
+        doc => 'Replace X, Y, MT with 23, 24, 25',
+        default => 0,
+    },
 
-        undo_splits_sd => {
-            is => 'Float',
-            is_optional => 1,
-            default => 3,
-            doc => 'apply the undo-splits option, using this number of standard deviations as the threshold. Set to 0 to disable.',
-        },
-        
+    min_width => {
+        is => 'Integer',
+        is_optional => 1,
+        doc => 'minimum number of consecutive probes/windows to require before making a call',
+        default => 2,
+    },
+
+    sample_name => {
+        is => 'String',
+        is_optional => 1,
+        doc => 'If specified, output becomes 6-column with sample name in first column, followed by chr, st, sp, bins, cn',
+    },
+
+    undo_splits_sd => {
+        is => 'Float',
+        is_optional => 1,
+        default => 3,
+        doc => 'apply the undo-splits option, using this number of standard deviations as the threshold. Set to 0 to disable.',
+    },
+    seed => {
+        is => 'Integer',
+        is_optional => 1,
+        default => 25,
+        doc => 'seed to be used for random permutation testing. A default seed of 25 is used before the segmentation is done.',
+    }
     ]
 };
 
@@ -154,6 +159,9 @@ sub execute {
     open(R_COMMANDS,">$tfile") || die "can't open $tfile for writing\n";
 
     print R_COMMANDS "library(DNAcopy)" . "\n";
+
+    $self->status_message("Seed set to " . $self->seed . "\n");
+    print R_COMMANDS "set.seed(" . $self->seed .")" . "\n";
 
     #suppress scientific notation in output
     print R_COMMANDS "options(scipen=999)\n";

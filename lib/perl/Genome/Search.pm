@@ -82,9 +82,6 @@ sub searchable_classes {
         Genome::WorkOrder
         Genome::Site::TGI::Project
         Genome::Sys::Email
-        Genome::DruggableGene::DrugGeneInteractionReport
-        Genome::DruggableGene::DrugNameReport
-        Genome::DruggableGene::GeneNameReport
         Genome::InstrumentData::Imported
         Genome::Sys::User
         Genome::Wiki::Document
@@ -610,6 +607,47 @@ sub register_callbacks {
 
 sub unregister_callbacks {
     $observer->delete unless $observer->isa("UR::DeletedRef");
+}
+
+sub get_indexed_document_count {
+    my $class = shift;
+    my $self = $class->_singleton_object();
+
+    my $response = $class->search(
+        '*:*',
+        {
+            rows => 0,
+            hl => 'false',
+            defType => 'lucene'
+        }
+    );
+
+    if ($response->ok) {
+        return $response->content->{response}{numFound};
+    } else {
+        die($self->error_message($response->status_message));
+    }
+}
+
+sub get_indexed_class_counts {
+    my $class = shift;
+    my $self = $class->_singleton_object();
+
+    my $response = $class->search(
+        '*:*',
+        {
+            rows => 0,
+            hl => 'false',
+            defType => 'lucene',
+            'facet.field' => 'class'
+        }
+    );
+
+    if ($response->ok) {
+        return @{$response->content->{facet_counts}{facet_fields}{class}};
+    } else {
+        die($self->error_message($response->status_message));
+    }
 }
 
 #OK!

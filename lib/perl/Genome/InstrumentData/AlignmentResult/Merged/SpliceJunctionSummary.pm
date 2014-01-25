@@ -84,7 +84,7 @@ sub create {
     my $annotation_build = $self->alignment_result->annotation_build;
     my $annotation_gtf_file = $annotation_build->annotation_file('gtf',$reference_build->id);
     unless(-s $annotation_gtf_file) {
-        my $annotation_gtf_file = $annotation_build->annotation_file('gtf');
+        $annotation_gtf_file = $annotation_build->annotation_file('gtf');
     }
     my $annotation_file_basename = $annotation_build->name;
     $annotation_file_basename =~ s/\//-/g;
@@ -97,20 +97,29 @@ sub create {
     for my $alignment (@alignments) {
         my $alignment_junctions_bed12_file = $alignment->output_dir .'/junctions.bed';
         my $id = $alignment->id;
-        symlink($alignment_junctions_bed12_file,$self->temp_staging_directory .'/AlignmentResult_'. $id .'_junctions.bed');
+        Genome::Sys->create_symlink($alignment_junctions_bed12_file,$self->temp_staging_directory .'/AlignmentResult_'. $id .'_junctions.bed');
         push @alignment_junctions_bed12_files, $alignment_junctions_bed12_file;
     }
-    
-    # TODO: We could bypass the merge when only one file is in array
+
     my $merged_junctions_bed12_file = $self->temp_staging_directory  .'/junctions.bed';
-    unless (Genome::Model::Tools::Bed::MergeBed12Junctions->execute(
-        input_files => \@alignment_junctions_bed12_files,
-        output_file => $merged_junctions_bed12_file,
-        bedtools_version => $self->bedtools_version,
-    )) {
-        die();
+    if (scalar(@alignment_junctions_bed12_files) == 1) {
+        Genome::Sys->create_symlink($alignment_junctions_bed12_files[0], $merged_junctions_bed12_file);
+    } else {
+        unless (Genome::Model::Tools::Bed::MergeBed12Junctions->execute(
+            input_files => \@alignment_junctions_bed12_files,
+            output_file => $merged_junctions_bed12_file,
+            bedtools_version => $self->bedtools_version,
+        )) {
+            die();
+        }
     }
-    
+
+    if(Genome::Sys->line_count($merged_junctions_bed12_file) < 2) {
+        $self->warning_message("No splice junctions found for alignments.  Skipping run.");
+        $self->_finalize_allocation();
+        return $self;
+    }
+
     my $log_dir = $self->log_directory;
     unless($log_dir) {
         $log_dir = '' . $self->temp_staging_directory;
@@ -130,14 +139,22 @@ sub create {
     unless($cmd->execute) {
         die('Failed to run SpliceJunctionSummary tool with params: '. Data::Dumper::Dumper(%params));
     }
-    
-    $self->_prepare_output_directory;
-    $self->_promote_data;
-    $self->_reallocate_disk_allocation;
+
+    $self->_finalize_allocation();
 
     $self->_generate_metrics();
 
     return $self;
+}
+
+sub _finalize_allocation {
+    my $self = shift;
+
+    $self->_prepare_output_directory;
+    $self->_promote_data;
+    $self->_reallocate_disk_allocation;
+
+    return 1;
 }
 
 sub _generate_metrics {

@@ -112,7 +112,7 @@ sub execute {
   }
 
   #Get Entrez and Ensembl data for gene name mappings
-  my $entrez_ensembl_data = &loadEntrezEnsemblData(-cancer_db => $cancer_annotation_db);
+  my $entrez_ensembl_data = $self->loadEntrezEnsemblData(-cancer_db => $cancer_annotation_db);
 
   my $snv_dir = $outdir . "snv/";
   Genome::Sys->create_directory($snv_dir);
@@ -196,21 +196,26 @@ sub execute {
     Genome::Sys->copy_file("$effects_dir$t1_hq_annotated_top", $new_annotated_top_file);
 
     #Get a column count on the file and use this to determine the correct header for the annotated variant file
-    my $col_count = 0;
-    open (TMP, $new_annotated_file) || die "\n\nCould not open variant annotation file: $new_annotated_file\n\n";
-    while(<TMP>){
+    my @input_headers; 
+    #If empty file, just set header otherwise check number of columns before setting header
+    if (-z $new_annotated_file){
+      @input_headers = qw (chr start stop ref_base var_base var_type gene_name transcript_id species transcript_source transcript_version strand transcript_status var_effect_type coding_pos          aa_change ucsc_cons domain all_domains deletion_substructures transcript_error default_gene_name gene_name_source ensembl_gene_id);
+    }else{
+      my $col_count = 0;
+      open (TMP, $new_annotated_file) || die "\n\nCould not open variant annotation file: $new_annotated_file\n\n";
+      while(<TMP>){
       chomp($_);
       my @line = split("\t", $_);
       $col_count = scalar(@line);
-    }
-    close(TMP);
+      }
+      close(TMP);
 
-    my @input_headers; 
-    if ($col_count == 24){
-      @input_headers = qw (chr start stop ref_base var_base var_type gene_name transcript_id species transcript_source transcript_version strand transcript_status var_effect_type coding_pos aa_change ucsc_cons domain all_domains deletion_substructures transcript_error default_gene_name gene_name_source ensembl_gene_id);
-    }else{
-      $self->error_message("Unexpected column count ($col_count) found in SNV/INDEL file - ClinSeq is not compatible with old annotation format...");
-      die();
+      if ($col_count == 24){
+        @input_headers = qw (chr start stop ref_base var_base var_type gene_name transcript_id species transcript_source transcript_version strand transcript_status var_effect_type coding_pos aa_change ucsc_cons domain all_domains deletion_substructures transcript_error default_gene_name gene_name_source ensembl_gene_id);
+      }else{
+        $self->error_message("Unexpected column count ($col_count) found in SNV/INDEL file - ClinSeq is not compatible with old annotation format...");
+        die();
+      }
     }
 
     #Get AA changes from full .annotated file
@@ -279,7 +284,7 @@ sub execute {
       }
 
       #Attempt to fix the gene name:
-      my $fixed_gene_name = &fixGeneName('-gene'=>$data->{gene_name}, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
+      my $fixed_gene_name = $self->fixGeneName('-gene'=>$data->{gene_name}, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
       $data_out{$coord}{mapped_gene_name} = $fixed_gene_name;
       $data_merge{$var_type}{$coord}{mapped_gene_name} = $fixed_gene_name;
     }

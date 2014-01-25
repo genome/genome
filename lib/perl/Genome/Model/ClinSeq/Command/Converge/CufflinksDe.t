@@ -21,7 +21,7 @@ use Data::Dumper;
 use_ok('Genome::Model::ClinSeq::Command::Converge::CufflinksDe') or die;
 
 #Define the test where expected results are stored
-my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "Genome-Model-ClinSeq-Command-Coverge-CufflinksDe/2013-02-10/";
+my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-ClinSeq-Command-Coverge-CufflinksDe/2013-02-10/";
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 #Create a temp dir for results

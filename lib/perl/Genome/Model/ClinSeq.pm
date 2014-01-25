@@ -6,7 +6,7 @@ use Genome;
 
 # these are used below, and are also used in the documentation on commands in the tree
 # to provide the most useful examples possible
-our $DEFAULT_CANCER_ANNOTATION_DB_ID    = 'tgi/cancer-annotation/human/build37-20130401.1';
+our $DEFAULT_CANCER_ANNOTATION_DB_ID    = 'tgi/cancer-annotation/human/build37-20131010.1';
 our $DEFAULT_MISC_ANNOTATION_DB_ID      = 'tgi/misc-annotation/human/build37-20130113.1';
 our $DEFAULT_COSMIC_ANNOTATION_DB_ID    = 'cosmic/65.1';
 
@@ -169,6 +169,7 @@ sub map_workflow_inputs {
     my $self = shift;
     my $build = shift;
 
+    my $model = $self;
     my $data_directory = $build->data_directory;
 
     # inputs
@@ -189,6 +190,7 @@ sub map_workflow_inputs {
 
     # initial inputs used for various steps
     my @inputs = (
+        model => $model,
         build => $build,
         build_as_array => [$build],
         wgs_build => $wgs_build,
@@ -334,6 +336,13 @@ sub map_workflow_inputs {
       push @dirs, $cnv_dir;
       push @inputs, cnv_dir => $cnv_dir;
     }
+    
+    #RunMicroArrayCnView
+    if ($self->has_microarray_build()) {
+      my $microarray_cnv_dir = $patient_dir . "/cnv/microarray_cnv/";
+      push @dirs, $microarray_cnv_dir;
+      push @inputs, microarray_cnv_dir => $microarray_cnv_dir;
+    }
 
     #SummarizeSvs
     if ($wgs_build){
@@ -362,9 +371,11 @@ sub map_workflow_inputs {
     push @inputs, 'gene_name_regex' => 'mapped_gene_name';
     
     #MakeCircosPlot
-    my $circos_dir = $patient_dir . "/circos";
-    push @dirs, $circos_dir;
-    push @inputs, circos_outdir => $circos_dir;
+    if ($wgs_build){
+        my $circos_dir = $patient_dir . "/circos";
+        push @dirs, $circos_dir;
+        push @inputs, circos_outdir => $circos_dir;
+    }
     
     # For now it works to create directories here because the data_directory has been allocated.  
     #It is possible that this would not happen until later, which would mess up assigning inputs to many of the commands.
@@ -448,6 +459,10 @@ sub _resolve_workflow_for_build {
     if ($build->wgs_build or $build->exome_build) {
         push @output_properties, 'mutation_diagram_result';
         push @output_properties, 'import_snvs_indels_result';
+    }
+    
+    if ($self->has_microarray_build()) {
+        push @output_properties, 'microarray_cnv_result';
     }
 
     if ($build->normal_rnaseq_build){
@@ -820,7 +835,17 @@ sub _resolve_workflow_for_build {
       $add_link->($clonality_op, 'cnv_hmm_file', $run_cn_view_op);
       $add_link->($run_cn_view_op, 'result', $output_connector, 'run_cn_view_result');
     }
-   
+
+    #RunMicroarrayCNV - produce cnv plots with microarray results
+    my $microarray_cnv_op;
+    if ($self->has_microarray_build()) {
+      $msg = "Call somatic copy number changes using microarray calls";
+      $microarray_cnv_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::MicroarrayCnv");
+      $add_link->($input_connector, 'microarray_cnv_dir', $microarray_cnv_op, 'outdir');
+      $add_link->($input_connector, 'model', $microarray_cnv_op, 'clinseq_model');
+      $add_link->($microarray_cnv_op, 'result', $output_connector, 'microarray_cnv_result');
+    }
+
     #SummarizeCnvs - Generate a summary of CNV results, copy cnvs.hq, cnvs.png, single-bam copy number plot PDF, etc. to the cnv directory
     #This step relies on the generate-clonality-plots step already having been run 
     #It also relies on run-cn-view step having been run already
@@ -1033,12 +1058,23 @@ sub _resolve_workflow_for_build {
     
     #MakeCircosPlot - Creates a Circos plot to summarize the data using MakeCircosPlot.pm
     #Currently WGS data is a minimum requirement for Circos plot generation.
+    my $make_circos_plot_op;
     if ($build->wgs_build){
       $msg = "Creating a Circos plot using MakeCircosPlot";
-      my $make_circos_plot_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::MakeCircosPlot");
+      $make_circos_plot_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::MakeCircosPlot");
       $add_link->($input_connector, 'build', $make_circos_plot_op);
       $add_link->($input_connector, 'circos_outdir', $make_circos_plot_op, 'output_directory');
-      $add_link->($summarize_cnvs_op, 'result', $make_circos_plot_op, 'clinseq_result');
+      $add_link->($summarize_svs_op, 'fusion_output_file', $make_circos_plot_op, 'candidate_fusion_infile');
+      $add_link->($clonality_op, 'cnv_hmm_file', $make_circos_plot_op);
+      if($build->normal_rnaseq_build || $build->tumor_rnaseq_build){
+        if($build->normal_rnaseq_build){
+            $add_link->($cufflinks_differential_expression_op, 'coding_hq_de_file', $make_circos_plot_op);
+        }else{
+            $add_link->($tumor_cufflinks_expression_absolute_op, 'tumor_fpkm_topnpercent_file', $make_circos_plot_op);
+        }
+      }
+      $add_link->($import_snvs_indels_op, 'result', $make_circos_plot_op, 'import_snvs_indels_result');
+      $add_link->($run_cn_view_op, 'gene_ampdel_file', $make_circos_plot_op);
       $add_link->($make_circos_plot_op, 'result', $output_connector, 'circos_result');
     }
 
@@ -1251,6 +1287,23 @@ sub cnaseq_hmm_file {
         die $class->error_message("Unable to find cnaseq hmm file. Expected: $hmm_file");
     }
     return $hmm_file;
+}
+
+sub has_microarray_build {
+    my $self = shift;
+    my $base_model;
+    if($self->exome_model) {
+        $base_model = $self->exome_model;
+    } elsif($self->wgs_model) {
+        $base_model = $self->wgs_model;
+    } else {
+        return 0;
+    }
+    if($base_model->tumor_model->genotype_microarray && $base_model->normal_model->genotype_microarray) {
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
 1;

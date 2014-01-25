@@ -8,7 +8,7 @@ use Genome;
 use Regexp::Common;
 
 class Genome::Model::Command::Copy {
-    class_name => __PACKAGE__,    
+    class_name => __PACKAGE__,
     is => 'Command::V2',
     has_input => [
         model => {
@@ -79,7 +79,7 @@ This copy notes that the PP must change for the refalign models under the wgs_mo
 
 When a model is shared as an input in several places during recursion, it is only copied once:
 
- > genome model copy name=tst1-clinseq name=tst1-clinseq-copy1 
+ > genome model copy name=tst1-clinseq name=tst1-clinseq-copy1
  NEW MODEL: tst1-clinseq-copy2 (403f62e0936c4f7ca97bb94e5409b7b0)
  NEW MODEL: tst1-clinseq-copy2.tumor_rnaseq_model (6f31ee70ebcd40868ef828ae7ffd76d1)
  NEW MODEL: tst1-clinseq-copy2.exome_model (fc7c6c2a4cfb471ab07b9b597d650fd6)
@@ -99,7 +99,7 @@ EOS
 sub help_detail {
     return <<"EOS"
 Copy a model to a new model overriding some of the original model's properties. This will copy the model's definition only, and not any builds.
- 
+
 Override properties are actual model properties. If you want to override reference_sequence_build, you use that, and not reference_sequence_build_id. Give override as space separated bare arguments. Use the format: property=value. The value can be an id or filter string.  If the property can have many values, use a filter string, or multiple key=value pairs. To set something to undefined, use 'property='.
 
 These properties can be overridden on all models:
@@ -108,7 +108,7 @@ These properties can be overridden on all models:
  processing_profile
  subject
 
-All model input specific to that type can also be overriden. 
+All model input specific to that type can also be overriden.
 See model input names and values with:
 
  genome model input show MODELID
@@ -139,11 +139,11 @@ To specify a new subject, you can use the ID, or any expression to match the sub
  subject=name=\$NAME
  subject=common_name=\$NAME
 
-When the "recurse" option is set, inputs which are also models will also be copied.  
+When the "recurse" option is set, inputs which are also models will also be copied.
 The new models will be named after the primary model with the suffix "." followed by the name of the input.
 
  genome model copy name=apipe-test-clinseq-v4 name=apipe-test-clinseq-v5 --recurse
- 
+
  'model' may require verification...
  Resolving parameter 'model' from command argument 'name=apipe-test-clinseq-v4'... found 1
  NEW MODEL: apipe-test-clinseq-v5 (2890809239)
@@ -182,7 +182,7 @@ sub execute {
     }
     #$self->status_message('Copy model: '.$model->__display_name__);
 
-    my %overrides = $self->params_from_param_strings($model->class, $self->overrides); 
+    my %overrides = $self->params_from_param_strings($model->class, $self->overrides);
     if (not %overrides) {
         die "eror parsing overrides!";
     }
@@ -203,13 +203,13 @@ sub execute {
     if (@errors) {
         die $self->error_message(join("\n",@errors));
     }
-    
+
     my $new_model = $model->copy(%overrides);
     return if not $new_model;
     $self->_new_model($new_model);
 
     $self->status_message("NEW MODEL: ".$new_model->__display_name__);
-    
+
     $self->add_copied_model_pair(
         Genome::Model::Pair->get(first => $model, second => $new_model)
     );
@@ -227,9 +227,9 @@ sub execute {
             }
 
             my $new_input_model_name = $new_model->name . "." . $assoc->name;
-            
+
             #TODO make this an object which parses from this text blob instead of a text blob
-            my @overrides;  
+            my @overrides;
             my $more_overrides = delete $indirect_overrides{$input_name};
             if ($more_overrides) {
                 for my $key (keys %$more_overrides) {
@@ -264,7 +264,7 @@ sub execute {
                 unless ($new_input_model) {
                     my @new_copied_model_pairs = eval {
                         my $cmd = __PACKAGE__->create(
-                            model => $input_value,                
+                            model => $input_value,
                             recurse => $self->recurse,
                             start => $self->start,
                             overrides => [ "name=$new_input_model_name", @overrides ],
@@ -273,22 +273,22 @@ sub execute {
                         $cmd->execute();
                         return $cmd->copied_model_pairs;
                     };
-                    
+
                     my $err = $@ || '';
 
-                    $new_input_model = Genome::Model->get(name => $new_input_model_name);          
+                    $new_input_model = Genome::Model->get(name => $new_input_model_name);
                     if ($err or not $new_input_model) {
                         $new_model->delete;
                         die "failed to generate model $new_input_model_name for $input_name replacing $input_value: $err!";
                     }
-                    
+
                     my ($both,$old,$new) = UR::Util::intersect_lists([@copied_model_pairs],[@new_copied_model_pairs]);
                     if (@$old or not @$new) {
                         die "New list of copied model pairs should be a superset of the old list got (old,new,both)!: " . Data::Dumper::Dumper($old,$new,$both);
                     }
 
                     unless (@overrides) {
-                        # If there were overrides, this new model cannot safely be used 
+                        # If there were overrides, this new model cannot safely be used
                         # in place of other copies of the original model.
                         # An improvement on this logic would see if the overrides happened to match.  In lieu of that this is conservative.
                         $self->copied_model_pairs(\@new_copied_model_pairs);
@@ -302,7 +302,7 @@ sub execute {
             }
         }
         if (%indirect_overrides) {
-            die "indirect overrides for values that are not set on the original model are not supported yet, sadly: " . Data::Dumper::Dumper(\%indirect_overrides);  
+            die "indirect overrides for values that are not set on the original model are not supported yet, sadly: " . Data::Dumper::Dumper(\%indirect_overrides);
         }
 
         if ($self->start) {
@@ -347,7 +347,7 @@ sub params_from_param_strings {
     for my $param_string ( @param_strings ) {
         my ($key, $value) = split('=', $param_string, 2);
         if ($key =~ /\./) {
-            # defer processing 
+            # defer processing
             # this will be handled in recursive calls to copy()
             $params{$key} = $value;
             next;

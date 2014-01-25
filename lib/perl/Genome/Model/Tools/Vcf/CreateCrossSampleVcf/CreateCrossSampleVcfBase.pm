@@ -46,7 +46,7 @@ class Genome::Model::Tools::Vcf::CreateCrossSampleVcf::CreateCrossSampleVcfBase 
         },
         wingspan => {
             is => 'Text',
-            is_optional => 1,
+            default => 0,
             doc => 'Set this to add a wingspan to region limiting',
         },
         allow_multiple_processing_profiles => {
@@ -191,7 +191,6 @@ sub _get_region_limiting_specific_inputs {
     my $reference_sequence_build = $builds[0]->reference_sequence_build;
     my %inputs = (
         variant_type => $self->variant_type,
-        builds => \@builds,
         region_limiting_output_directory => $region_limiting_output_directory,
         roi_name => $self->roi_list->name,
         wingspan => $self->wingspan,
@@ -204,10 +203,7 @@ sub _get_region_limiting_specific_inputs {
 sub _get_non_region_limiting_specific_inputs {
     my $self = shift;
     my @vcf_files = $self->_get_vcf_files;
-    my %inputs = (
-            vcf_files => \@vcf_files,
-    );
-
+    my %inputs;
     return \%inputs
 }
 
@@ -314,6 +310,8 @@ sub _get_workflow_inputs {
     $self->prepare_vcf_merge_working_directories();
 
     my %inputs = (
+        build_clumps => $self->build_clumps,
+
         # InitialVcfMerge
         use_bgzip => 1,
         joinx_version => $self->joinx_version,
@@ -360,9 +358,11 @@ sub _get_build_clump {
     my $clump = Genome::Model::Tools::Vcf::CreateCrossSampleVcf::BuildClump->create(
         backfilled_vcf      => $dir."/".$self->variant_type.".backfilled.vcf.gz",
         bam_file            => $build->whole_rmdup_bam_file,
-        pileup_output_file => $dir."/".$sample.".for_".$self->variant_type.".pileup.gz",
+        pileup_output_file  => $dir."/".$sample.".for_".$self->variant_type.".pileup.gz",
         sample              => $sample,
         vcf_file            => $self->_get_vcf_from_build($build),
+        filtered_vcf        => $dir."/".$self->variant_type.".non_calls_removed.vcf.gz",
+        build_id            => $build->id,
     );
 
     return $clump;

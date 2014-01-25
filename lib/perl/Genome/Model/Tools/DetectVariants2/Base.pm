@@ -384,3 +384,41 @@ sub line_count {
     my ($answer)  = split /\s/,$result;
     return $answer
 }
+
+sub _link_vcf_output_directory_to_result {
+    my $self = shift;
+    $self->status_message("Linking in vcfs from vcf_result");
+
+    my $result = $self->_vcf_result;
+    return unless $result;
+    my @vcfs = glob($result->output_dir."/*.vcf.gz");
+    my $output_directory = $self->output_directory;
+    for my $vcf (@vcfs){
+        for my $file ($vcf, "$vcf.tbi") {
+            my $target = $output_directory . "/" . basename($file);
+
+            $self->status_message("Attempting to link : " .$file."  to  ". $target);
+            if(-l $target) {
+                if (readlink($target) eq $file) {
+                    $self->status_message("Already found a file linked in here, and it already has the correct target. Continuing.");
+                    next;
+                } else {
+                    $self->status_message("Found previous file linked in here, unlinking that for you.");
+                    unless(unlink($target)){
+                        die $self->error_message("Failed to unlink a link at: ".$target);
+                    }
+                }
+            } elsif(-e $target) {
+                die $self->error_message("Found something in place of the symlink.");
+            }
+            Genome::Sys->create_symlink($file, $target);
+
+            #added a symlink to our own directory - reallocate the size
+            $self->_result->_reallocate_disk_allocation;
+        }
+    }
+
+    return 1;
+}
+
+1;

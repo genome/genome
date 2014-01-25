@@ -1,26 +1,12 @@
-
-package Genome::Model::Tools::Varscan::ProcessValidation;     # rename this when you give the module file a different name <--
-
-#####################################################################################################################################
-# ProcessValidation - Report the results of validation 
-#                    
-#    AUTHOR:        Dan Koboldt (dkoboldt@genome.wustl.edu)
-#
-#    CREATED:    10/21/2010 by D.K.
-#    MODIFIED:    10/21/2010 by D.K.
-#
-#    NOTES:    
-#            
-#####################################################################################################################################
+package Genome::Model::Tools::Varscan::ProcessValidation;
 
 use strict;
 use warnings;
-
-use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
+use Genome;
 
 class Genome::Model::Tools::Varscan::ProcessValidation {
     is => 'Command',
-    has_input => [                                # specify the command's single-value properties (parameters) <---
+    has_input => [
         validation_file => {
             is => 'Text',
             doc => "Varscan output file for validation data",
@@ -77,7 +63,7 @@ class Genome::Model::Tools::Varscan::ProcessValidation {
 sub sub_command_sort_position { 12 }
 
 sub help_brief {                            # keep this to just a few words <---
-    "Processes and reports on validation status of a list of variants"                 
+    "Processes and reports on validation status of a list of variants"
 }
 
 sub help_synopsis {
@@ -88,7 +74,7 @@ EOS
 }
 
 sub help_detail {                           # this is what the user will see with the longer version of help. <---
-    return <<EOS 
+    return <<EOS
 
 EOS
 }
@@ -151,12 +137,13 @@ sub execute {                               # replace with real execution logic.
             $call_status = "Yes";
             $filter_status = "Pass";
             my @results = split(/\t/, $filtered_results->{$key});
-            $validation_status = $results[13];
+            $validation_status = $results[12];
             $varscan_results = join("\t", $results[3], $results[4], $results[5], $results[6], $results[7], $results[8], $results[9], $results[10], $results[11], $results[12], $results[13], $results[14], $results[15]);
-            $varscan_freqs = join("\t", $results[7], $results[11]);
+            $varscan_freqs = join("\t", $results[6], $results[10]);
             $varscan_freqs =~ s/\%//g;
-            $normal_coverage = $results[5] + $results[6];
-            $tumor_coverage = $results[9] + $results[10];
+            $normal_coverage = $results[4] + $results[5];
+            $tumor_coverage = $results[8] + $results[9];
+
         } elsif($validation_results->{$key}) {
             $stats{'with_unfiltered_results'}++;
             $stats{'with_filtered_results'}++;
@@ -165,22 +152,29 @@ sub execute {                               # replace with real execution logic.
             $filter_status = "N/A" if(!$self->filtered_validation_file);
             my @results = split(/\t/, $validation_results->{$key});
 
-            if($results[12] && ($results[12] =~ 'Germline' || $results[12] =~ 'Somatic' || $results[12] =~ 'Reference' || $results[12] =~ 'LOH' || $results[12] =~ 'IndelFilter' || $results[12] =~ 'Unknown')) {
+            if($results[12] && ($results[12] =~ 'Germline' ||
+                                $results[12] =~ 'Somatic' ||
+                                $results[12] =~ 'Reference' ||
+                                $results[12] =~ 'LOH' ||
+                                $results[12] =~ 'IndelFilter' ||
+                                $results[12] =~ 'Unknown')) {
+
                 ## STANDARD VARSCAN FORMAT
-                $validation_status = $results[12];        
+                $validation_status = $results[12];
                 $varscan_results = join("\t", $results[2], $results[3], $results[4], $results[5], $results[6], $results[7], $results[8], $results[9], $results[10], $results[11], $results[12], $results[13], $results[14]);
-                $varscan_freqs = join("\t", $results[6], $results[10]);                                
+                $varscan_freqs = join("\t", $results[6], $results[10]);
                 $normal_coverage = $results[4] + $results[5];
                 $tumor_coverage = $results[8] + $results[9];
             } else {
                 ## ANNOTATION VARSCAN FORMAT ##
-                $validation_status = $results[13];        
+                $validation_status = $results[13];
                 $varscan_results = join("\t", $results[3], $results[4], $results[5], $results[6], $results[7], $results[8], $results[9], $results[10], $results[11], $results[12], $results[13], $results[14], $results[15]);
-                $varscan_freqs = join("\t", $results[7], $results[11]);                
+                $varscan_freqs = join("\t", $results[7], $results[11]);
                 $normal_coverage = $results[5] + $results[6];
                 $tumor_coverage = $results[9] + $results[10];
             }
             $varscan_freqs =~ s/\%//g;
+
         } else {
             $stats{'with_no_results'}++;
             $call_status = "No";
@@ -193,13 +187,13 @@ sub execute {                               # replace with real execution logic.
 
             ## Print the results to the output file ##
             print $output_fh join("\t", $chrom, $chr_start, $chr_stop, $ref, $var, $result, $varscan_results) . "\n";
-    
+
             ## If plotting, print to correct file ##
             if($self->output_plot) {
                 print $somatic_fh "$varscan_freqs\n" if($filter_status eq "Pass" && $validation_status eq "Somatic");
                 print $germline_fh "$varscan_freqs\n" if($filter_status eq "Pass" && $validation_status eq "Germline");
                 print $reference_fh "$varscan_freqs\n" if($filter_status eq "Fail" && $validation_status eq "Reference");
-            }            
+            }
         } else {
             $call_status = "No";
             $filter_status = $validation_status = "-";
@@ -335,11 +329,11 @@ sub load_validation_results {
 
             $results{$key} = $newline;
         } else {
-            $results{$key} = $line;            
+            $results{$key} = $line;
         }
     }
 
-    close($input);    
+    close($input);
 
     return \%results;
 }

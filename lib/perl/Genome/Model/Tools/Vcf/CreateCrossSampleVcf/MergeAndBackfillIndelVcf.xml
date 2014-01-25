@@ -1,7 +1,13 @@
 <?xml version='1.0' standalone='yes'?>
 <workflow name="MergeAndBackfillIndelVcf">
+    <!-- Filter out lines with no real calls -->
+    <link fromOperation="input connector" fromProperty="build_clumps" toOperation="FilterNonCalls" toProperty="build_clump" />
+    <operation name="FilterNonCalls" parallelBy='build_clump'>
+        <operationtype commandClass="Genome::Model::Tools::Vcf::CreateCrossSampleVcf::FilterNonCalls" typeClass="Workflow::OperationType::Command" />
+    </operation>
+
     <!-- InitialVcfMerge -->
-    <link fromOperation="input connector" fromProperty="vcf_files" toOperation="InitialVcfMerge" toProperty="input_files" />
+    <link fromOperation="FilterNonCalls" fromProperty="filtered_vcf" toOperation="InitialVcfMerge" toProperty="input_files" />
     <link fromOperation="input connector" fromProperty="use_bgzip" toOperation="InitialVcfMerge" toProperty="use_bgzip" />
     <link fromOperation="input connector" fromProperty="joinx_version" toOperation="InitialVcfMerge" toProperty="use_version" />
     <link fromOperation="input connector" fromProperty="segregating_sites_vcf_file" toOperation="InitialVcfMerge" toProperty="output_file" />
@@ -141,7 +147,7 @@
 
     <operationtype typeClass="Workflow::OperationType::Model">
         <!-- InitialVcfMerge -->
-        <inputproperty>vcf_files</inputproperty>
+        <inputproperty>build_clumps</inputproperty>
         <inputproperty>use_bgzip</inputproperty>
         <inputproperty>joinx_version</inputproperty>
         <inputproperty>segregating_sites_vcf_file</inputproperty>

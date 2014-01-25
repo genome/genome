@@ -1,18 +1,24 @@
 <?xml version='1.0' standalone='yes'?>
 <workflow name="RegionLimitAndBackfillIndelVcf">
     <!-- RegionLimitVcf -->
-    <link fromOperation="input connector" fromProperty="builds" toOperation="RegionLimitVcf" toProperty="build" />
+    <link fromOperation="input connector" fromProperty="build_clumps" toOperation="RegionLimitVcf" toProperty="build_clump" />
     <link fromOperation="input connector" fromProperty="region_limiting_output_directory" toOperation="RegionLimitVcf" toProperty="output_directory" />
     <link fromOperation="input connector" fromProperty="variant_type" toOperation="RegionLimitVcf" toProperty="variant_type" />
     <link fromOperation="input connector" fromProperty="region_bed_file" toOperation="RegionLimitVcf" toProperty="region_bed_file" />
     <link fromOperation="input connector" fromProperty="roi_name" toOperation="RegionLimitVcf" toProperty="roi_name" />
     <link fromOperation="input connector" fromProperty="wingspan" toOperation="RegionLimitVcf" toProperty="wingspan" />
-    <link fromOperation="RegionLimitVcf" fromProperty="output_vcf" toOperation="InitialVcfMerge" toProperty="input_files" />
-    <operation name="RegionLimitVcf" parallelBy='build'>
-        <operationtype commandClass="Genome::Model::Tools::Vcf::CreateCrossSampleVcf::RegionLimitVcf" typeClass="Workflow::OperationType::Command"/>
+    <operation name="RegionLimitVcf" parallelBy='build_clump'>
+        <operationtype commandClass="Genome::Model::Tools::Vcf::CreateCrossSampleVcf::RegionLimitVcf" typeClass="Workflow::OperationType::Command" />
+    </operation>
+
+    <!-- Filter out lines with no real calls -->
+    <link fromOperation="RegionLimitVcf" fromProperty="build_clump" toOperation="FilterNonCalls" toProperty="build_clump" />
+    <operation name="FilterNonCalls" parallelBy='build_clump'>
+        <operationtype commandClass="Genome::Model::Tools::Vcf::CreateCrossSampleVcf::FilterNonCalls" typeClass="Workflow::OperationType::Command" />
     </operation>
 
     <!-- InitialVcfMerge -->
+    <link fromOperation="FilterNonCalls" fromProperty="filtered_vcf" toOperation="InitialVcfMerge" toProperty="input_files" />
     <link fromOperation="input connector" fromProperty="use_bgzip" toOperation="InitialVcfMerge" toProperty="use_bgzip" />
     <link fromOperation="input connector" fromProperty="joinx_version" toOperation="InitialVcfMerge" toProperty="use_version" />
     <link fromOperation="input connector" fromProperty="segregating_sites_vcf_file" toOperation="InitialVcfMerge" toProperty="output_file" />
@@ -152,7 +158,7 @@
 
     <operationtype typeClass="Workflow::OperationType::Model">
         <!-- RegionLimitVcf -->
-        <inputproperty>builds</inputproperty>
+        <inputproperty>build_clumps</inputproperty>
         <inputproperty>region_limiting_output_directory</inputproperty>
         <inputproperty>variant_type</inputproperty>
         <inputproperty>region_bed_file</inputproperty>

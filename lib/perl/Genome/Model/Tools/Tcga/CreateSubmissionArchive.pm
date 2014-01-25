@@ -44,7 +44,7 @@ class Genome::Model::Tools::Tcga::CreateSubmissionArchive {
             is => "Text",
             doc => "Somatic maf file to be included in the archive",
         },
-        germline_maf_file => {
+        protected_maf_file => {
             is => "Text",
             doc => "Germline maf file to be included in the archive",
         },
@@ -62,7 +62,7 @@ sub execute {
 
     my $sdrf = Genome::Model::Tools::Tcga::Sdrf->create(idf => $idf, 
                                                         cghub_id_file => $self->cghub_id_file,
-                                                        archive_name => $self->complete_archive_name);
+                                                        archive_name => $self->complete_archive_name("Level_2"));
 
     my $vcf_archive_dir = $self->output_dir."/".$self->complete_archive_name("Level_2");
     Genome::Sys->create_directory($vcf_archive_dir);
@@ -88,7 +88,21 @@ sub execute {
         for my $variant_type (qw(snv indel)) {
             my $local_file = $somatic_build->data_directory."/variants/".$variant_type."s_tcga/".$variant_type."s_tcga.vcf";
             die "Tcga compliant $variant_type vcf not found for build ".$somatic_build->id unless(-s $local_file);
-            Genome::Sys->copy_file($local_file, "$vcf_archive_dir/".$self->construct_vcf_name($variant_type, $patient_id, $patient_id_counter));
+            my $tcga_vcf_file = "$vcf_archive_dir/".$self->construct_vcf_name($variant_type, $patient_id, $patient_id_counter);
+
+            #Some snv vcf lines have null ALT column as '.', it should be 'N' to pass the validator
+            if ($variant_type eq 'indel') {
+                Genome::Sys->copy_file($local_file, $tcga_vcf_file);
+            }
+            elsif ($variant_type eq 'snv') {
+                my $fixvcf = Genome::Model::Tools::Tcga::FixSnvVcfNullAlt->create(
+                    input_file  => $local_file,
+                    output_file => $tcga_vcf_file,
+                );
+                unless ($fixvcf->execute) {
+                    die $self->error_message('Failed to run FixSnvVcfNullAlt');
+                }
+            }
         }
 
         my $vcf_sample_info = $self->get_sample_info_from_vcf("$vcf_archive_dir/$snvs_vcf");
@@ -103,11 +117,14 @@ sub execute {
                 push @sdrf_rows, $sdrf->create_vcf_row($build, $somatic_build, $vcf, $sample_info);
             }
 
-            for my $maf_type (qw(somatic germline)) {
+            for my $maf_type (qw(somatic protected)) {
                 my $maf_accessor = $maf_type."_maf_file";
                 if ($self->$maf_accessor) {
-                    Genome::Sys->copy_file($self->$maf_accessor, $vcf_archive_dir."/$maf_type.maf");
-                    push @sdrf_rows, $sdrf->create_maf_row($build, $somatic_build, "$maf_type.maf", $sample_info);
+                    my $maf_name = $self->complete_archive_name.".$maf_type.maf";
+                    unless(-s $vcf_archive_dir."/".$maf_name) {
+                        Genome::Sys->copy_file($self->$maf_accessor, $vcf_archive_dir."/".$maf_name);
+                    }
+                    push @sdrf_rows, $sdrf->create_maf_row($build, $somatic_build, $maf_name, $sample_info);
                 }
             }
         }

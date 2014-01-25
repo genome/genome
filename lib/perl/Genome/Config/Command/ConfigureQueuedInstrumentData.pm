@@ -162,6 +162,8 @@ sub _mark_pair_as_skipped {
     $current_pair->reason($skip_reason);
     $current_pair->status('skipped');
 
+    $self->debug_message('Marking pair as skipped.  Reason: %s', $skip_reason);
+
     return 1;
 }
 
@@ -171,6 +173,8 @@ sub _mark_pair_as_processed {
     $current_pair->fail_count(0);
     $current_pair->reason(undef);
     $current_pair->status('processed');
+
+    $self->debug_message('Marking pair as processed.');
 
     return 1;
 }
@@ -182,6 +186,8 @@ sub _mark_pair_as_failed {
     $current_pair->fail_count(++$previous_count);
     $current_pair->status('failed');
     $current_pair->reason($error_message);
+
+    $self->status_message('Marking pair as failed.  (Total failures on this pair: %s)  Reason: %s', $current_pair->fail_count, $current_pair->reason);
 
     return 1;
 }
@@ -332,36 +338,6 @@ sub _lock {
             }
         );
     }
-}
-
-#It's lame that these methods need to exist - is there a way to clean the data before it comes over?
-sub _normalize_domain {
-    my $domain = lc(shift);
-    if ($domain eq 'unknown') {
-        return 'eukaryota';
-    }
-    return $domain;
-}
-
-sub _normalize_taxon {
-    my $taxon = lc(shift);
-    if ($taxon =~ /mus musculus/i || $taxon =~ /mouse/i) {
-        return 'mus_musculus';
-    } elsif ($taxon =~ /homo sapien/i || $taxon =~ /human/i) {
-        return 'homo_sapien';
-    } elsif ($taxon =~ /maize/i) {
-        return 'maize';
-    }
-}
-
-sub _normalize_extraction_type {
-    my $type = lc(shift);
-    if ($type =~ /rna/i || $type =~ /cdna/i) {
-        return 'rna';
-    } elsif ($type =~ /[^c]dna/i) {
-        return 'genomic_dna';
-    }
-    return $type
 }
 
 1;

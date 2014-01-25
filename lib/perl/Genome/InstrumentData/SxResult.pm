@@ -3,8 +3,10 @@ package Genome::InstrumentData::SxResult;
 use strict;
 use warnings;
 
-use Sys::Hostname;
 use Genome;
+
+require List::Util;
+use Sys::Hostname;
 
 class Genome::InstrumentData::SxResult {
     is => 'Genome::SoftwareResult::Stageable',
@@ -251,6 +253,18 @@ sub load_metrics {
 sub _verify_output_files {
     my $self = shift;
     $self->status_message('Verify output files...');
+
+    # Check that we processed something...
+    my $read_count = List::Util::sum( grep { defined } map { $_->read_count } $self->instrument_data );
+    if ( defined $read_count and $read_count > 1  ) {
+        # Instdata has reads. Make sure some were read in.
+        # Can't check read_count == input_count b/c might have done a coverage limiter which 
+        #  would stop the reading
+        if ( $self->input_count == 0 ) {
+            $self->error_message("Input count is 0! Failed to process any sequences!");
+            return;
+        }
+    }
 
     my $output_count = $self->output_count;
     if ( $output_count == 0 ) {

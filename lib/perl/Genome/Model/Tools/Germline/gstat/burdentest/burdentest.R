@@ -72,7 +72,18 @@ lsty=as.character(lsty[lsty[,toupper(gene)]==1,1])
 }
 
 
-read.table(anno.file,head=T,sep=gfile.delimiter,na.strings=c("NA",".","",missing.data))->m
+m <- read.table(
+    anno.file,
+    check.names=F,
+    comment.char="",
+    head=T,
+    sep=gfile.delimiter,
+    na.strings=c("NA",
+    ".",
+    "",
+    missing.data))
+# strip optional leading # from header
+colnames(m)[1] <- gsub("^#", "", colnames(m)[1])
 
 if (vtype.use[1]!="ALL") m=m[(m[,vtype.col] %in% vtype.use),]
 

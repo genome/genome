@@ -121,7 +121,7 @@ sub execute {
     unless($anno_ofh) {
         die $self->error_message("Unable to open " . $self->burden_test_annotation_file. " for writing.");
     }
-    print $anno_ofh join("\t",@$anno_header),"\n";
+    $anno_ofh->write(sprintf("#%s\n", join("\t", @$anno_header)));
 
     my @finished_file;
     my @sample_indexes_to_include;

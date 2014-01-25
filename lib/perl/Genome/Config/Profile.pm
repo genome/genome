@@ -6,6 +6,8 @@ use warnings;
 use Genome;
 use UR::Util;
 
+use feature qw(switch);
+
 class Genome::Config::Profile {
     is => 'UR::Object',
     is_transactional => 0,

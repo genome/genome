@@ -3,7 +3,6 @@ use strict;
 use warnings;
 use Genome;
 use Genome::Model::ClinSeq::Util qw(:all);
-use Data::Dumper;
 
 class Genome::Model::ClinSeq::Command::Converge::AllEvents {
     is => 'Genome::Model::ClinSeq::Command::Converge::Base',
@@ -183,7 +182,7 @@ sub execute {
   $self->status_message("\t$transcript_info_path");
 
   #Get Ensembl gene ID to name mappings from the annotation build
-  my $tmap = &loadEnsemblMap('-gtf_path'=>$gtf_path, '-transcript_info_path'=>$transcript_info_path);
+  my $tmap = $self->loadEnsemblMap('-gtf_path'=>$gtf_path, '-transcript_info_path'=>$transcript_info_path);
 
   #Create a new ensembl map that is keyed on gene ID
   my %gmap;
@@ -309,7 +308,6 @@ sub execute {
   #Each sample column will contain a list of observed event types, each indicated by a single letter, word, etc.
   #The user will specify these as options. Indicating it will trigger that kind of event consideration
 
-  #print Dumper \%targets;
   $self->print_final_table('-genes'=>\%targets, '-gmap'=>$gmap, '-subject_labels'=>$subject_labels, '-event_labels'=>$event_labels);
 
   #Warn the user if the number of targets imported is more than can be displaye according to $max_genes

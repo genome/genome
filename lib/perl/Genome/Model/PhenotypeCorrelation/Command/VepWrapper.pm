@@ -66,7 +66,6 @@ sub execute {
         condel => "b",
         polyphen => "b",
         sift => "b",
-        hgnc => 1,
         quiet => 1,
     );
 

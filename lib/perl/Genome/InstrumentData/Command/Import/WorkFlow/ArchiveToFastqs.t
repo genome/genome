@@ -32,10 +32,18 @@ for (my $i = 0; $i < @fastq_paths; $i++) {
     is(File::Compare::compare($fastq_paths[$i], $test_dir.'/input.'.($i + 1).'.fastq'), 0, 'fastq '.($i + 1).' matches');
 }
 
-ok(!-e $archive_path, 'removed archived source path after unarchiving');
-ok(!-e $archive_path.'.md5', 'removed archived source md5 path after unarchiving');
-ok(!-e $archive_path.'.md5-orig', 'removed archived source orig md5 path after unarchiving');
-ok(!-e $cmd->unarchive_directory, 'removed unarchived diectory after unarchiving');
+ok(!-e $archive_path, 'removed archived source path after extracting');
+ok(!-e $archive_path.'.md5', 'removed archived source md5 path after extracting');
+ok(!-e $archive_path.'.md5-orig', 'removed archived source orig md5 path after extracting');
+ok(!-e $cmd->extract_directory, 'removed extract diectory after extracting');
+
+# FAIL - no fastqs in archive
+$cmd = Genome::InstrumentData::Command::Import::WorkFlow::ArchiveToFastqs->execute(
+    working_directory => $tmp_dir,
+    archive_path => $test_dir.'/input.fail.no-fastqs.tar',
+);
+ok(!$cmd->result, 'execute failed');
+is($cmd->error_message, 'No fastqs found in archive!', 'correct error');
 
 #print "$tmp_dir\n"; <STDIN>;
 done_testing();

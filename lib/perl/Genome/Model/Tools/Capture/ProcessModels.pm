@@ -206,7 +206,7 @@ sub execute {                               # replace with real execution logic.
 					my $cmd_mv = "mv $error_name $error_name_bak";
 					system($cmd_mv);
 				}
-				system("bsub -u wschierd\@genome.wustl.edu -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT} -R\"select[type==LINUX64 && model != Opteron250 && mem>4000] rusage[mem=4000]\" -M 4000000 -J $job_name -o $output_name -e $error_name \"$cmd\"");
+				system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT} -R\"select[type==LINUX64 && model != Opteron250 && mem>4000] rusage[mem=4000]\" -M 4000000 -J $job_name -o $output_name -e $error_name \"$cmd\"");
 				sleep(1);
 			}
 		}

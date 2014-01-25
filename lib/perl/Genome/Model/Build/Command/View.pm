@@ -216,7 +216,7 @@ sub _display_event {
     %s
 EOS
     print $handle sprintf($format_str,
-        $self->_color_pair('ID', $self->_pad_right($event->id, $self->ID_LENGTH)),
+        $self->_color_pair('ID', $self->_pad_right($event->id, $self->COLUMN_WIDTH)),
         $self->_color_pair('Status',
             $self->_status_color($event->event_status)),
         $self->_color_pair('Name', $event->event_type),

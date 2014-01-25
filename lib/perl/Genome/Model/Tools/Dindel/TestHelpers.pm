@@ -3,7 +3,14 @@ package Genome::Model::Tools::Dindel::TestHelpers;
 use strict;
 use warnings;
 
-use Genome::Utility::Test 'compare_ok';
+use Genome::Model::Tools::TestHelpers::General qw(
+    get_test_dir
+    ensure_file
+    compare_to_blessed_file
+);
+use Genome::Model::Tools::TestHelpers::Data qw(
+    get_shared_test_data
+);
 use Test::More;
 
 require Exporter;
@@ -14,27 +21,17 @@ our @EXPORT_OK = qw(
     compare_output_to_test_data
 );
 
-sub get_test_dir {
-    my ($class, $version) = @_;
-
-    my $test_dir = File::Spec->join(Genome::Utility::Test->data_dir($class), "v$version");
-    diag "Test data located at $test_dir\n";
-    return $test_dir;
-}
+my $SHARED_DATA_VERSION = 1;
 
 sub get_ref_fasta {
-    my $reference_sequence_build = Genome::Model::Build->get(106942997);
-    my $ref_fasta = $reference_sequence_build->full_consensus_path('fa');
-    diag "Reference sequence fasta: $ref_fasta\n";
-    ok(-s $ref_fasta, "Found Reference Sequence fasta") || die;
-
-    return $ref_fasta;
+    return get_shared_test_data('human_reference_37.fa', $SHARED_DATA_VERSION);
 }
 
 sub compare_output_to_test_data {
     my ($output_path, $output_dir, $test_dir) = @_;
-    (my $expected_path = $output_path) =~ s/$output_dir/$test_dir/;
-    ok(-f $expected_path, "Found test-data: $expected_path") || die;
-    ok(-f $output_path, "Found output-data: $output_path") || die;
-    compare_ok($expected_path, $output_path, "test-data matches output-data");
+    return compare_to_blessed_file(
+        output_path => $output_path,
+        output_dir => $output_dir,
+        test_dir => $test_dir,
+    );
 }

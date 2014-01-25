@@ -498,7 +498,7 @@ sub summarize_clinseq_build {
       #Use wget to retrieve the page so that is is cached and ready to go...
       my $wget_cmd = "wget --no-check-certificate -O /dev/null \"$cov_report_url\" 1>/dev/null 2>/dev/null";
       $self->status_message("\n");
-      Genome::Sys->shellcmd(cmd => $wget_cmd);
+      Genome::Sys->shellcmd(cmd => $wget_cmd, allow_failed_exit_code => 1);
     }
 
 

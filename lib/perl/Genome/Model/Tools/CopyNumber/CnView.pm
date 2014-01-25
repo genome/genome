@@ -126,15 +126,15 @@ sub execute{
     }
 
     #Check annotation build and clinseq annotations dir
-    my $clinseq_annotations_dir="/gscmnt/sata132/techd/mgriffit/reference_annotations/";
+    my $clinseq_annotations_dir = $cancer_annotation_db->data_directory;
     my $annotation_data_dir=$annotation_build->data_directory;
     my $reference_sequence_build=$annotation_build->reference_sequence;
-    my $default_build37 = Genome::Model::Build->get(102671028);
+    my $default_build37 = Genome::Model::Build->get(106942997);
     my $default_build36 = Genome::Model::Build->get(101947881);
     if ($reference_sequence_build->is_compatible_with($default_build37)){
-      $ideogram_file ||= $clinseq_annotations_dir . "hg19/ideogram/ChrBandIdeogram.tsv";
+      $ideogram_file ||= $clinseq_annotations_dir . "/hg19/ideogram/ChrBandIdeogram.tsv";
     }elsif ($reference_sequence_build->is_compatible_with($default_build36)){
-      $ideogram_file ||= $clinseq_annotations_dir . "hg18/ideogram/ChrBandIdeogram.tsv";
+      $ideogram_file ||= $clinseq_annotations_dir . "/hg18/ideogram/ChrBandIdeogram.tsv";
     }else {
       $self->error_message("Specified reference build resolved from annotation build is not compatible with default build36 or build37");
       return;
@@ -147,9 +147,6 @@ sub execute{
       $self->error_message("One or more of the following annotation files is missing:\ngtf_file = $gtf_file\nideogram_file = $ideogram_file");
       return;
     }
-
-    # TODO: switch that name and version (date) for a value in the processing profile if this changes
-    my $gene_symbol_lists_dir = Genome::Sys->dbpath("tgi-gene-symbol-lists","2012-11-13");
 
     #Check gene targets file if defined
     if ($self->gene_targets_file){    
@@ -273,19 +270,19 @@ sub execute{
     return 1;
   };
 
+  #die if the inputs are invalid
   unless ($inputs_are_good) {
-    $self->error_message("error processing inputs!");
-    return;
+    die $self->error_message("error processing inputs!");
   }
 
   #Done checking inputs
   ####################################################################################################################################
 
   #Load ensembl/entrez data for fixing gene names
-  my $entrez_ensembl_data = &loadEntrezEnsemblData(-cancer_db => $cancer_annotation_db);
+  my $entrez_ensembl_data = $self->loadEntrezEnsemblData(-cancer_db => $cancer_annotation_db);
 
   #Import ideogram data
-  my $ideo_data = &importIdeogramData('-ideogram_file'=>$ideogram_file);
+  my $ideo_data = $self->importIdeogramData('-ideogram_file'=>$ideogram_file);
 
   #If the user is supplying a pre-computed CNV file, the following steps will be skipped
   my ($g_map, $t_map, $cnvs, $segments, $targets);
@@ -377,7 +374,7 @@ sub loadTargetGenes{
       if ($gene_name eq "n/a"){
         next();
       }else{
-        my $mapped_gene_name = &fixGeneName('-gene'=>$gene_name, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);      
+        my $mapped_gene_name = $self->fixGeneName('-gene'=>$gene_name, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);      
         $targets_gene_name{$gene_name} = 1;
         $targets_mapped_gene_name{$mapped_gene_name} = 1;
       }
@@ -447,7 +444,7 @@ sub loadGeneTranscriptMap{
     }
 
     #Get a 'fixed' version of the gene name
-    my $mapped_gene_name = &fixGeneName('-gene'=>$gene_name, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
+    my $mapped_gene_name = $self->fixGeneName('-gene'=>$gene_name, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
 
     #If the user defined a gene target list, limit import of genes/transcripts at this point to symbol matches from that list
     if ($self->gene_targets_file){

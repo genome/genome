@@ -112,4 +112,16 @@ sub metrics_for {
     }
 }
 
+sub alleles {
+    my ($self) = @_;
+    if($self->has_per_library) {
+        #TODO either add whole entry support to the executable or try to form some sort of perl summary here
+        die "Please grab alleles through the library objects instead of the Entry directly.\n";
+    }
+    else {
+        return @{$self->{_alleles}};
+    }
+}
+
+
 1;

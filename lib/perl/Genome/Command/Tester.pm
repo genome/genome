@@ -93,7 +93,7 @@ sub run_and_diff {
 
     # TODO: these values are clinseq-specific, though the module in overall general-purpose
     # Remove these after converting the last scripts and files into regular modules and file-based-databases.
-    my $script_dir = Cwd::abs_path(File::Basename::dirname(__FILE__)) . '/../Model/ClinSeq/original-scripts/';
+    my $script_dir = Cwd::abs_path(File::Basename::dirname(__FILE__)) . '/../Model/ClinSeq/OriginalScripts/';
     my $annotation_dir = '/gscmnt/sata132/techd/mgriffit/reference_annotations/';
     
     # If the synopsis contains a /tmp/output_dir, swap it for the one we have dynamically created

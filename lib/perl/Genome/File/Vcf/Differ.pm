@@ -15,13 +15,15 @@ Genome::File::Vcf::Differ - A class for diffing vcf files.
 =head1 SYNOPSIS
 
 my $differ = new Genome::File::Vcf::Differ("A.vcf", "B.vcf.gz")
-my @header_differences = $differ->header;
+
+#   keys = file_names
+#   values = list of lines that differ
+my %header_differences = $differ->header;
+
 
 while (my ($A_entry, $B_entry, @columns) = $differ->next) {
     # ...
 }
-
-$differ->close;
 
 =cut
 
@@ -61,7 +63,16 @@ sub next {
     my $self = shift;
 
     while (my ($a, $b) = $self->paired_next) {
-        my @columns = $self->entries_diff($a, $b);
+        my @columns;
+
+        if (!defined($a)) { # a has FEWER lines than b
+            @columns = @{$self->{_b_columns}};
+        } elsif (!defined($b)) { # a has MORE lines than b
+            @columns = @{$self->{_a_columns}};
+        } else {
+            @columns = $self->entries_diff($a, $b);
+        }
+
         if (@columns) {
             return ($a, $b, @columns);
         }

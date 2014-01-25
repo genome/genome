@@ -78,7 +78,9 @@ sub execute {
                 next unless $dbSNPids[$i] =~ /^\d+$/;
 
                 my $RSid_var_allele = $var_alleles[$i];
-
+                unless($RSid_var_allele){
+                    $self->warning_message("RDis_var_allele undefined, i: $i, var_alleles: @var_alleles");
+                }
 
                 if(defined($annotation->{$key}->{$RSid_var_allele})){
                     if($annotation->{$key}->{$RSid_var_allele} ne "0"){                    

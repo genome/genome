@@ -17,7 +17,7 @@ my %HARD_CODED_PROTOCOLS = (
                                                      description => "Automatic and manual filtering and curation of variants"},
     "nucleic acid sequencing"                    => {name => "genome.wustl.edu:DNA_sequencing:Illumina:01", 
                                                      description => "Illumina sequencing by synthesis"},
-    "library preparation"                        => {name => "genome.wustl.edu:DNA_extraction:Illumina_DNASeq:01",
+    "library preparation"                        => {name => "genome.wustl.edu:DNA_extraction:IlluminaHiSeq_DNASeq:01",
                                                      description => "Illumina library prep"},
 
 );

@@ -244,7 +244,7 @@ sub _execute_build {
     $self->status_message('Create genotype file...OK');
 
     # Nutter made this file name, so we will link to it
-    $self->status_message('Link genotpe file to gold2geno file...');
+    $self->status_message('Link genotype file to gold2geno file...');
     $self->status_message('Genotype file: '.$genotype_file);
     my $gold2geno_file = $build->gold2geno_file_path;
     $self->status_message('Gold2geno file: '.$gold2geno_file);
@@ -263,7 +263,7 @@ sub _execute_build {
         $self->error_message('Failed to link genotype file to gold2geno file!');
         return;
     }
-    $self->status_message('Link genotpe file to gold2geno file...OK');
+    $self->status_message('Link genotype file to gold2geno file...OK');
 
     # Copy number file. No headers, tab sep with chrom, pos and log r ratio
     $self->status_message('Create copy number file...');

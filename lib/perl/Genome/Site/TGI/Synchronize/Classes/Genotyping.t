@@ -52,7 +52,7 @@ my $genome_object = $lims_object->create_in_genome;
 ok($genome_object, "create genome $entity_name object");
 isa_ok($genome_object, $expected_genome_class);
 
-is($genome_object->import_format, 'genotype_file', 'import format');
+is($genome_object->import_format, 'genotype file', 'import format');
 ok($genome_object->library, 'library');
 is($genome_object->library->name, $sample->name.'-microarraylib', 'library name');
 

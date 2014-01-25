@@ -184,24 +184,23 @@ sub _process_params {
 
     if ($self->params) {
         my @param_list = split(" ", $self->params);
-        my($cmd_class,$params) = $self->class->resolve_class_and_params_for_argv(@param_list);
+        my ($cmd_class, $params) = $self->class->resolve_class_and_params_for_argv(@param_list);
         # For each parameter set in params... use the class properties to assign the values
+        
         for my $param_name (keys %$params) {
-            if($self->$param_name) {
-                if(defined $params->{param}) {
-                    if(ref $params->{param} eq 'ARRAY') {
-                       if(scalar @{$params->{param}}) {
-                           die $self->error_message('Param ' . $param_name . ' specified in multiple ways: property: ' . $self->$param_name . ' values and --param ' . @{$params->{param}} . ' values');
-                       } else {
-                            #returned value from params is empty--accept current value
-                       }
-                    } else {
+            if ($self->$param_name) {
+                if (defined $params->{param}) {
+                    if (ref $params->{param} eq 'ARRAY') {
+                        if (scalar @{$params->{param}}) {
+                            die $self->error_message('Param ' . $param_name . ' specified in multiple ways: property: ' . $self->$param_name . ' values and --param ' . @{$params->{param}} . ' values');
+                        }
+                    }
+                    else {
                         die $self->error_message('Param ' . $param_name . ' specified in multiple ways: property: ' . $self->$param_name . ' and --param: ' . $params->{$param_name});
                     }
                 }
-            } else {
-                $self->$param_name($params->{$param_name});
             }
+            $self->$param_name($params->{$param_name});   #overwrite the property value no matter it exists or not
         }
     }
 
@@ -353,42 +352,6 @@ sub _summon_filter_result {
         $self->_link_output_directory_to_result;
     }
     $self->_link_result_to_previous_result;
-
-    return 1;
-}
-
-sub _link_vcf_output_directory_to_result {
-    my $self = shift;
-    $self->status_message("Linking in vcfs from vcf_result");
-
-    my $result = $self->_vcf_result;
-    return unless $result;
-    my @vcfs = glob($result->output_dir."/*.vcf.gz");
-    my $output_directory = $self->output_directory;
-    for my $vcf (@vcfs){
-        my $target = $output_directory . "/" . basename($vcf);
-        $self->status_message("Attempting to link : " .$vcf."  to  ". $target);
-        if(-l $target) {
-            if (readlink($target) eq $vcf) {
-                $self->status_message("Already found a vcf linked in here, and it already has the correct target. Continuing.");
-                next;
-            } else {
-                $self->status_message("Already found a vcf linked in here, unlinking that for you.");
-                unless(unlink($target)){
-                    die $self->error_message("Failed to unlink a link to a vcf at: ".$target);
-                }
-            }
-        } elsif(-e $target){
-            die $self->error_message("Found something that is not a symlink to a vcf!");
-        }
-
-        # Symlink both the vcf and the tabix
-        Genome::Sys->create_symlink($vcf, $target);
-        Genome::Sys->create_symlink("$vcf.tbi", "$target.tbi");
-
-        #added a symlink to our own directory - reallocate the size
-        $self->_result->_reallocate_disk_allocation
-    }
 
     return 1;
 }

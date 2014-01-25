@@ -32,8 +32,11 @@ sub execute {
 
         my %params = (
             'id !=' => $m->latest_build->id,
-            'run_by' => 'apipe-builder',
         );
+
+        if($user ne 'apipe-builder') {
+            $params{run_by} = $user;
+        }
 
         # if we made it out of Unstartable then the Unstartable problem is
         # fixed so we can abandon previous Unstartable builds

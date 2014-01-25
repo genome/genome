@@ -1,1 +1,0 @@
-../../../../../../test-data-relocate-me/lib--perl--Genome--DruggableGene--Command--GeneNameReport--LookupInteractions.t.d

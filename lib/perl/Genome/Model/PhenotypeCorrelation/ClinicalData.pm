@@ -15,6 +15,10 @@ class Genome::Model::PhenotypeCorrelation::ClinicalData {
     is => "UR::Object",
     doc => "Clinical (phenotype) data for a set of samples",
     has_transient_optional => [
+        subject_column_header => {
+            is => "Text",
+            doc => "The name of the subject id column",
+        },
         _attributes => {
             is => "HASH",
             doc => "Contains type information (datatype, quantitative vs categorical, etc.)",
@@ -121,7 +125,7 @@ sub from_filehandle {
     my $header_line = $fh->getline or confess "Failed to read clinical data header";
     chomp $header_line;
     my @attr_names = split("\t", $header_line);
-    shift @attr_names; # drop the leading Sample_name in header
+    my $subject_column_header = shift @attr_names;
 
     my @sample_data;
     my $line_num = 1;
@@ -165,6 +169,7 @@ sub from_filehandle {
     $self->_phenotypes(\%phenotypes);
     my %attributes = map { $_ => { categorical => $self->_is_categorical($_) } } @attr_names;
     $self->_attributes(\%attributes);
+    $self->subject_column_header($subject_column_header);
 
     return $self;
 }
