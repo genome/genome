@@ -199,7 +199,19 @@ sub execute {
         unless ( @errors ) {
             print STDERR "Can't convert workflow errors to build errors\n";
             print STDERR Data::Dumper->new([\@Workflow::Simple::ERROR],['ERROR'])->Dump;
-            return $self->_post_build_failure("Can't convert workflow errors to build errors");
+
+            my $error = '[Unable to automatically determine error.]';
+            eval {
+                my $determine_error_command = Genome::Model::Build::Command::DetermineError->create(
+                    build => $build,
+                    assume_build_status => 'Failed',
+                    display_results => 0,
+                    color => 0,
+                );
+                $determine_error_command->execute();
+                $error = $determine_error_command->formatted_results;
+            };
+            return $self->_post_build_failure($error);
         }
         unless ( $build->fail(@errors) ) {
             return $self->_failed_build_fail(@errors);
