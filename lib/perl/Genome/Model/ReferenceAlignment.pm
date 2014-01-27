@@ -414,7 +414,32 @@ sub default_lane_qc_model_name_for_instrument_data {
         $model_name .= '.capture.' . $instrument_data->target_region_set_name;
     }
 
+    if($self->_check_for_existing_model_name($model_name)) {
+        $model_name = $self->_get_incremented_name($model_name);
+    }
+
     return $model_name;
+}
+
+sub _check_for_existing_model_name {
+    my $self = shift;
+    my $model_name = shift;
+    return scalar @{[Genome::Model->get(name => $model_name)]};
+}
+
+sub _get_incremented_name {
+    my $self = shift;
+    my $model_name = shift;
+    my $counter = 1;
+
+    my $format_name = sub {
+        return sprintf("%s-%s", shift, shift);
+    };
+    while ($self->_check_for_existing_model_name($format_name->($model_name, $counter))) {
+            $counter++;
+    }
+
+    return $format_name->($model_name, $counter);
 }
 
 sub default_lane_qc_model_for_instrument_data {
