@@ -76,6 +76,8 @@ sub execute {
         $self->_mark_sync_status($current_pair, $error);
     }
 
+    $self->_update_models_for_associated_projects(@instrument_data_analysis_project_pairs);
+
     return 1;
 }
 
@@ -94,7 +96,6 @@ sub _process_models {
 
         $self->_assign_instrument_data_to_model($model, $instrument_data, $created_new);
         $self->_assign_model_to_analysis_project($analysis_project, $model);
-        $self->_update_models_for_associated_projects($instrument_data);
     }
 }
 
@@ -307,16 +308,18 @@ sub _assign_model_to_analysis_project {
 
 sub _update_models_for_associated_projects {
     my $self = shift;
-    my $instrument_data = shift;
+    my @instrument_data_analysis_project_pairs = @_;
 
-    my @projects = Genome::Project->get('parts.entity_id' => $instrument_data->id);
+    my @instrument_data_ids = map { $_->instrument_data->id } @instrument_data_analysis_project_pairs;
+
+    my @projects = Genome::Project->get('parts.entity_id' => \@instrument_data_ids);
 
     if(@projects) {
         my $update_cmd = Genome::Project::Command::Update::Models->create(
             projects => \@projects
         );
 
-        die $self->error_message('Failed to update models for project associated with %s', $instrument_data->__display_name__)
+        die $self->error_message('Failed to update models for project associated with %s', join(',', @instrument_data_ids))
             unless $update_cmd->execute();
     }
 
