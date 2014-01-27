@@ -19,7 +19,13 @@ class Genome::Model::Build::Command::DetermineError {
         display_results => {
             is => 'Boolean',
             default => 1,
-        }
+        },
+        assume_build_status => {
+            is => 'Text',
+            is_optional => 1,
+            doc => 'Treat the build as if it has this status when determining the error. (Useful for finding errors in already-abandoned builds.)',
+            valid_values => ['Failed', 'Unstartable'],
+        },
     ],
     has_optional_output => [
         error_type => {
@@ -61,9 +67,11 @@ HELP
 sub execute {
     my $self = shift;
 
-    if ($self->build->status eq 'Failed') {
+    my $status = $self->assume_build_status || $self->build->status;
+
+    if ($status eq 'Failed') {
         $self->handle_failed();
-    } elsif ($self->build->status eq 'Unstartable') {
+    } elsif ($status eq 'Unstartable') {
         $self->handle_unstartable();
     } else {
         $self->error_message(sprintf("Build (%s) has an unexpected status: %s",
