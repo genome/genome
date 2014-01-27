@@ -51,7 +51,8 @@ sub execute {
         my $current_inst_data = $current_pair->instrument_data;
 
         if(my $skip_reason = $self->should_skip($current_inst_data)) {
-            return $self->_mark_pair_as_skipped($current_pair, $skip_reason);
+            $self->_mark_pair_as_skipped($current_pair, $skip_reason);
+            next;
         }
 
         my $analysis_project = $current_pair->analysis_project;
