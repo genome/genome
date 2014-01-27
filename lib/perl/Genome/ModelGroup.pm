@@ -150,7 +150,13 @@ sub assign_models {
     }
 
     my $added = 0;
-    my %existing_models = map { $_->id => $_ } $self->models;
+    my @existing_bridges = Genome::ModelGroupBridge->get(
+            model_group_id => $self->id,
+            model_id       => [map { $_->id } @models],
+        );
+
+    my %existing_models = map { $_->model_id => $_->model_id } @existing_bridges;
+
     for my $m (@models) {
         if ( exists $existing_models{ $m->id } ) {
             $self->status_message('Skipping model '.$m->__display_name__.', it is already assigned...');
@@ -158,7 +164,7 @@ sub assign_models {
         }
         my $bridge = Genome::ModelGroupBridge->create(
             model_group_id => $self->id,
-            model_id       => $m->genome_model_id,
+            model_id       => $m->id,
         );
         $existing_models{$m->id} = $m->id;
         $added++;
@@ -171,9 +177,6 @@ sub assign_models {
         $msg = $msg . " Skipped $skipped of $attempted models because they were already assigned.";
     }
     $self->status_message($msg);
-    
-        
-
 
     return 1;
 }
