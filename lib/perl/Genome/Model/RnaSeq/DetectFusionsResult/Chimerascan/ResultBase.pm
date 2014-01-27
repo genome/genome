@@ -133,6 +133,10 @@ sub _resolve_original_fastq_files {
         # make fastqs from the qname sorted bam
         $self->_convert_bam_to_fastqs($queryname_sorted_bam, $fastq1, $fastq2);
 
+        unless(unlink($queryname_sorted_bam)){
+            $self->debug_message("Failed to remove temporary sorted bam file: $queryname_sorted_bam.  Reason: $!");
+        };
+
         push @fastq1_files, $fastq1;
         push @fastq2_files, $fastq2;
 
