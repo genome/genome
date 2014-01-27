@@ -358,15 +358,9 @@ sub add_suffix {
 sub clean_file {
     my ($self, $file, $directory) = @_;
 
-    my $newfile = $self->result_file_path(
-        input_file_path => $file,
-        suffix => 'clean',
-        directory => $directory,
-    );
-
     my %dups;
 
-    my $outfile = Genome::Sys->open_file_for_writing($newfile);
+    my ($tempfile, $tempfile_path) = Genome::Sys->create_temp_file();
     my $infile  = Genome::Sys->open_file_for_reading($file);
     while (my $line = $infile->getline) {
         chomp($line);
@@ -387,16 +381,22 @@ sub clean_file {
 
         foreach my $v (@vars) {
             unless (exists($dups{join("\t",($chr, $start, $stop, $ref, $v ))})) {
-                print $outfile join("\t",($chr, $start, $stop, $ref, $v )) . "\n";
+                print $tempfile join("\t",($chr, $start, $stop, $ref, $v )) . "\n";
             }
             $dups{join("\t",($chr, $start, $stop, $ref, $v ))} = 1;
         }
     }
-    close($outfile);
+    close($tempfile);
     close($infile);
-    Genome::Sys->shellcmd( cmd => "joinx sort -i $newfile >$newfile.tmp" );
-    Genome::Sys->shellcmd( cmd => "mv -f $newfile.tmp $newfile");
-    return $newfile;
+
+    my $outfile_path = $self->result_file_path(
+        input_file_path => $file,
+        suffix => 'clean',
+        directory => $directory,
+    );
+    Genome::Sys->shellcmd( cmd => "joinx sort -i $tempfile_path -o $outfile_path" );
+
+    return $outfile_path;
 }
 
 
@@ -807,7 +807,7 @@ sub get_or_create_featurelist_file {
     }
     if (defined($featurelist) && (-s $featurelist)) {
         #clean up feature list
-        my $outfile = Genome::Sys->open_file_for_writing("$featurelist_file.tmp");
+        my ($tempfile, $tempfile_path) = Genome::Sys->create_temp_file();
         my $infile  = Genome::Sys->open_file_for_reading($featurelist);
         while (my $line = $infile->getline) {
             chomp($line);
@@ -815,13 +815,13 @@ sub get_or_create_featurelist_file {
             my ( $chr, $start, $stop, @rest) = split( /\t/, $line );
             #remove chr if present
             $chr =~ s/^chr//g;
-            print $outfile join("\t",( $chr, $start, $stop, @rest)) . "\n";
+            print $tempfile join("\t",( $chr, $start, $stop, @rest)) . "\n";
         }
         close($infile);
-        close($outfile);
+        close($tempfile);
 
-        Genome::Sys->shellcmd(cmd => "joinx sort $featurelist_file.tmp >$featurelist_file");
-        Genome::Sys->shellcmd(cmd => "rm -f $featurelist_file.tmp");
+        Genome::Sys->shellcmd(cmd => "joinx sort -i $tempfile_path -o $featurelist_file");
+
         return $featurelist_file;
     }
     else {
@@ -898,14 +898,16 @@ sub _create_master_files {
     my $snv_file   = shift;
     my $indel_file = shift;
 
-    Genome::Sys->shellcmd(cmd => sprintf('tail -n +2 %s >> %s', $indel_file, $self->report . '.unsorted'));
-    Genome::Sys->shellcmd(cmd => sprintf('tail -n +2 %s >> %s', $snv_file, $self->report . '.unsorted'));
-    Genome::Sys->shellcmd(cmd => sprintf('joinx sort -i %s -o %s', $self->report . '.unsorted', $self->report . '.sorted'));
+    my $unsorted_path = Genome::Sys->create_temp_file_path();
+    my $sorted_path = Genome::Sys->create_temp_file_path();
+
+    Genome::Sys->shellcmd(cmd => sprintf('tail -n +2 %s >> %s', $indel_file, $unsorted_path));
+    Genome::Sys->shellcmd(cmd => sprintf('tail -n +2 %s >> %s', $snv_file, $unsorted_path));
+    Genome::Sys->shellcmd(cmd => sprintf('joinx sort -i %s -o %s', $unsorted_path, $sorted_path));
 
     # have to put the header on after joinx sort because joinx
     # won't recognize it as a bed format with a header
-    Genome::Sys->shellcmd(cmd => sprintf('cat <(head -n 1 %s) %s > %s', $snv_file, $self->report . '.sorted', $self->report));
-    Genome::Sys->shellcmd(cmd => sprintf('rm -f %s %s', $self->report . '.unsorted', $self->report . '.sorted'));
+    Genome::Sys->shellcmd(cmd => sprintf('cat <(head -n 1 %s) %s > %s', $snv_file, $sorted_path, $self->report));
 
     # convert master table to excel
     my $workbook  = Spreadsheet::WriteExcel->new($self->report_xls);
@@ -915,9 +917,9 @@ sub _create_master_files {
     my $infile = Genome::Sys->open_file_for_reading($self->report);
     while (my $line = $infile->getline) {
         chomp($line);
-        my @F = split("\t", $line);
-        for( my $i=0;$ i<@F; $i++) {
-            $worksheet->write($row, $i, $F[$i]);
+        my @elements = split("\t", $line);
+        for( my $column=0; $column < scalar(@elements); $column++) {
+            $worksheet->write($row, $column, $elements[$column]);
         }
         $row++;
     }
@@ -948,20 +950,23 @@ sub _create_review_bed {
     my $self = shift;
 
     my @tiers = split(",", $self->tiers_to_review);
-    my $tier_restricted_file = sprintf('%s.tier%s',
-        $self->report, join('', @tiers));
 
-    for my $i (@tiers) {
+    my $tempfile_path = Genome::Sys->create_temp_file_path();
+
+    for my $tier (@tiers) {
         Genome::Sys->shellcmd(
             cmd => sprintf('grep -w tier%s %s >> %s',
-                $i, $self->report, $tier_restricted_file . '.tmp'),
+                $tier, $self->report, $tempfile_path),
         );
     }
+
+    my $tier_restricted_file = sprintf('%s.tier%s',
+        $self->report, join('', @tiers));
     Genome::Sys->shellcmd(
         cmd => sprintf('joinx sort -i %s -o %s',
-            $tier_restricted_file . '.tmp', $tier_restricted_file),
+            $tempfile_path, $tier_restricted_file),
     );
-    Genome::Sys->shellcmd(cmd => sprintf('rm -f %s', $tier_restricted_file . '.tmp'));
+
     convert_from_one_based_to_bed_file($tier_restricted_file, $self->review_bed);
 }
 
