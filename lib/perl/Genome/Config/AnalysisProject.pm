@@ -33,6 +33,15 @@ class Genome::Config::AnalysisProject {
             default_value => 'Pending',
             valid_values => ['Pending', 'Approved', 'In Progress', 'Completed', 'Archived', 'Hold'],
         },
+        is_clia => {
+            is => 'Boolean',
+            default_value => 0,
+            doc => 'Is this an analysis project for the CLIA Licensed Environment?',
+        },
+        run_as => {
+            is => 'Text',
+            doc => 'The user account that will be used to run these models',
+        },
         subject_pairings => {
             is_many => 1,
             is => 'Genome::Config::AnalysisProject::SubjectPairing',
@@ -83,6 +92,7 @@ sub create {
     my $self = $class->SUPER::create(@_);
     eval {
         $self->_create_model_group();
+        $self->_set_run_as();
     };
     if(my $error = $@) {
         $self->delete();
@@ -121,6 +131,18 @@ sub _create_model_group {
     my $mg_name = sprintf("%s - %s - Analysis Project", $self->name, $self->id);
     my $mg = Genome::ModelGroup->create(name => $mg_name);
     $self->model_group($mg);
+}
+
+sub _set_run_as {
+    my $self = shift;
+
+    return if $self->run_as;
+
+    if ($self->is_clia) {
+        $self->run_as('clia');
+    } else {
+        $self->run_as('apipe-builder');
+    }
 }
 
 1;

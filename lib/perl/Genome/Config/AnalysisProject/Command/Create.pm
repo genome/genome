@@ -13,6 +13,12 @@ class Genome::Config::AnalysisProject::Command::Create {
             doc                 => 'the name of the analysis project to create',
             shell_args_position => 1
         },
+        is_clia => {
+            is => 'Boolean',
+            is_optional => 1,
+            default_value => 0,
+            doc => 'If specified, this will flag this analysis project as being CLIA-related. All models will be created accordingly.',
+        },
         no_config => {
             is => 'Boolean',
             is_optional => 1,
@@ -48,7 +54,10 @@ sub execute {
     my $self = shift;
 
     $self->_validate_name($self->name);
-    my $project = Genome::Config::AnalysisProject->create(name => $self->name);
+    my $project = Genome::Config::AnalysisProject->create(
+        name => $self->name,
+        is_clia => $self->is_clia,
+    );
     die('No project created!') unless $project;
 
     eval {
