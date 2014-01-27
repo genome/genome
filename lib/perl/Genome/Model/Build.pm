@@ -17,6 +17,8 @@ use Workflow;
 use YAML;
 use Date::Manip;
 
+use Genome::Utility::Email;
+
 class Genome::Model::Build {
     is => ['Genome::Notable','Genome::Searchable'],
     type_name => 'genome model build',
@@ -1449,13 +1451,12 @@ sub _launch {
         # bsub into the queue specified by the dispatch spec
         my $lsf_project = "build" . $self->id;
         $ENV{'WF_LSF_PROJECT'} = $lsf_project;
-        my $user = Genome::Sys->username;
         my $lsf_command  = join(' ',
             'bsub -N -H',
             '-P', $lsf_project,
             '-q', $server_dispatch,
             ($ENV{WF_EXCLUDE_JOB_GROUP} ? '' : $job_group_spec),
-            '-u', $user . '@genome.wustl.edu',
+            '-u', Genome::Utility::Email::construct_address(),
             '-o', $build_event->output_log_file,
             '-e', $build_event->error_log_file,
             '"', 
