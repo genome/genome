@@ -987,6 +987,8 @@ $Genome::Command::OPTS_SPEC = [
     undef,
     '>create',
     [
+      'is-clia!',
+      undef,
       'no-config!',
       undef,
       'analysis-menu-items=s@',
@@ -8634,6 +8636,11 @@ $Genome::Command::OPTS_SPEC = [
       [
         'display-results!',
         undef,
+        'assume-build-status=s',
+        [
+          'Failed',
+          'Unstartable'
+        ],
         'color!',
         undef,
         'debug!',
@@ -38507,6 +38514,8 @@ $Genome::Command::OPTS_SPEC = [
       undef,
       '>create',
       [
+        'is-clia!',
+        undef,
         'no-config!',
         undef,
         'analysis-menu-items=s@',
