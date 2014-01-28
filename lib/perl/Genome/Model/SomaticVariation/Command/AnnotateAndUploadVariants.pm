@@ -14,7 +14,7 @@ class Genome::Model::SomaticVariation::Command::AnnotateAndUploadVariants{
         build_id => {
             is => 'Text',
             is_input => 1,
-            is_output => 1,
+            # is_output => 1,
             doc => 'build id of SomaticVariation model',
         },
         annotator_version => {
@@ -27,6 +27,7 @@ class Genome::Model::SomaticVariation::Command::AnnotateAndUploadVariants{
         build => {
             is => 'Genome::Model::Build::SomaticVariation',
             id_by => 'build_id',
+            is_output => 1,
         },
         regulatory_annotations => {
             is => 'Genome::FeatureList',
