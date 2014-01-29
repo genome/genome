@@ -187,7 +187,7 @@ sub execute {
     sub shouldFilter {
         my ($ref_count, $var_count, $var_freq, $min_depth, $max_depth, $min_vaf, $max_vaf) = @_;
         if($var_freq eq "NA") {
-            return 1;
+            return 0;
         }
         else {
             if(defined($min_depth) && $min_depth ne "NA") {
