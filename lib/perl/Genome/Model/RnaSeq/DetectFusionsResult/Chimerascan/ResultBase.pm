@@ -120,22 +120,22 @@ sub _resolve_original_fastq_files {
 
     # queryname sort each BAM and get fastq1 and fastq2 from /tmp queryname sorted BAMs
     my (@fastq1_files, @fastq2_files);
+    my $counter = 0; #make sure the original_fastq names are unique
     for my $bam_path (@original_bam_paths) {
-        my $tmp_dir = Genome::Sys->create_temp_directory();
-
-        my $queryname_sorted_bam = File::Spec->join($tmp_dir,
+        my $queryname_sorted_bam = File::Spec->join($self->temp_staging_directory,
                 'original_queryname_sorted.bam');
         $self->_qname_sort_bam($bam_path, $queryname_sorted_bam);
 
-        my $fastq1 = File::Spec->join($tmp_dir, "original_fastq1");
-        my $fastq2 = File::Spec->join($tmp_dir, "original_fastq2");
+        my $fastq1 = File::Spec->join($self->temp_staging_directory, "original_fastq1.$counter");
+        my $fastq2 = File::Spec->join($self->temp_staging_directory, "original_fastq2.$counter");
+        $counter++;
 
         # make fastqs from the qname sorted bam
         $self->_convert_bam_to_fastqs($queryname_sorted_bam, $fastq1, $fastq2);
 
         unless(unlink($queryname_sorted_bam)){
             $self->debug_message("Failed to remove temporary sorted bam file: $queryname_sorted_bam.  Reason: $!");
-        };
+        }
 
         push @fastq1_files, $fastq1;
         push @fastq2_files, $fastq2;
@@ -159,6 +159,13 @@ sub _resolve_original_fastq_files {
         input_files => [@fastq2_files],
         output_files => [$fastq2],
     );
+
+    #cleanup temporary fastq files
+    foreach my $fastq (@fastq1_files, @fastq2_files){
+        unless(unlink($fastq)){
+            $self->debug_message("Failed to remove temporary fastq file: $fastq.  Reason: $!");
+        }
+    }
 
     return ($fastq1, $fastq2);
 }
