@@ -308,10 +308,11 @@ sub execute {
                     $indelVariantHash{$key} = join("\t",($fields[3],$fields[4]));
                 }
                 $foundHash{join("\t",($fields[0],$fields[1],$fields[3],$fields[4]))} = 0;
-                if(length($fields[3]) > 1 && !$use_varscan) {
-                    $fields[1] -= 1;
+                if($use_varscan) {
+                    print INDELFILE join("\t",($fields[0],$fields[1],$fields[2],$fields[3],$fields[4])) . "\n";
+                } else {
+                    print INDELFILE join("\t",($fields[0],$fields[1]-1,$fields[2],$fields[3],$fields[4])) . "\n";
                 }
-                print INDELFILE join("\t",($fields[0],$fields[1],$fields[2],$fields[3],$fields[4])) . "\n";
             }
 
         } else { #snv
@@ -843,6 +844,8 @@ sub execute {
         }
     }
     close($OUTFILE);
+
+    `cp -r $tempdir /gscmnt/gc7210/info/medseq/mxie/pan-germline/table2/table2.3/readdepth/test/ztmp`;
     
     return(1);
 }
@@ -888,6 +891,6 @@ sub snvCounts {
         if (matchIub($allele,$knownRef,$knownVar)){
             $var_count += $lib->metrics_for($allele)->count;
         }
-    }
+    }    
     return ($ref_count, $var_count);
 }
