@@ -521,20 +521,20 @@ sub get_or_create_lane_qc_models {
 
         my $existing_model = Genome::Model->get(name => $lane_qc_model_name);
         if ($existing_model) {
-            $self->status_message("Default lane QC model " . $existing_model->__display_name__ . " already exists.");
+            $self->debug_message("Default lane QC model " . $existing_model->__display_name__ . " already exists.");
 
             my @existing_instrument_data = $existing_model->instrument_data;
             unless (@existing_instrument_data) {
                 $existing_model->add_instrument_data($instrument_data);
                 $existing_model->build_requested(1, 'instrument data assigned');
-                $self->status_message("New build requested for lane qc model " . $existing_model->__display_name__ .
+                $self->debug_message("New build requested for lane qc model " . $existing_model->__display_name__ .
                     " because it just had instrument data assigned to it"
                 );
             }
 
             unless ($existing_model->genotype_microarray_model_id) {
                 $self->build_requested(1, 'genotype ' . $subject->default_genotype_data_id . ' data added');
-                $self->status_message("New build requested for lane QC model " . $existing_model->__display_name__ . 
+                $self->debug_message("New build requested for lane QC model " . $existing_model->__display_name__ . 
                     " because it is missing the genotype_microarray input."
                 );
             }

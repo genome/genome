@@ -24,7 +24,7 @@ sub hlep_detail { return help_brief(); }
 
 sub execute {
     my $self = shift;
-    $self->status_message('Genotype alleles...');
+    $self->debug_message('Genotype alleles...');
 
     my $build = $self->_resolve_build;
     return if not $build;
@@ -48,13 +48,13 @@ sub execute {
         $alleles{ $genotype->{alleles} }++;
     }
 
-    $self->status_message('Alleles and instances:');
+    $self->debug_message('Alleles and instances:');
     for my $alleles ( sort keys %alleles ) {
         print join(' ', $alleles, $alleles{$alleles})."\n";
     }
-    $self->status_message('Total genotypes: '.$reader->total);
+    $self->debug_message('Total genotypes: '.$reader->total);
     
-    $self->status_message('Done');
+    $self->debug_message('Done');
     return 1;
 };
 

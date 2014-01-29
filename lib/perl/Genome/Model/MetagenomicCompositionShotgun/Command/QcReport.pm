@@ -59,7 +59,7 @@ sub execute {
     unless (-d $self->report_dir) {
         mkpath $self->report_dir;
     }
-    $self->status_message('Report Path: ' . $self->report_dir);
+    $self->debug_message('Report Path: ' . $self->report_dir);
 
     # get existing metrics
     my @mcs_metrics = $mcs_build->metrics;
@@ -91,10 +91,10 @@ sub execute {
     }
 
     print "\n\n";
-    $self->status_message('Model: ' . $mcs_model->name);
-    $self->status_message('Build: ' . $mcs_build->id);
-    $self->status_message('Reports: ' . $self->report_dir);
-    $self->status_message('Report Data: ' . $self->report_dir . '/data');
+    $self->debug_message('Model: ' . $mcs_model->name);
+    $self->debug_message('Build: ' . $mcs_build->id);
+    $self->debug_message('Reports: ' . $self->report_dir);
+    $self->debug_message('Report Data: ' . $self->report_dir . '/data');
     my $done = system("touch ".$self->report_dir."/FINISHED");
     return 1;
 }
@@ -106,13 +106,13 @@ sub post_trimming_stats {
     my %mcs_metrics = %$mcs_metrics_hash;
 
     my $stats_output_path = $self->report_dir . '/post_trim_stats_report.tsv';
-    $self->status_message("Generating post trimming stats...");
+    $self->debug_message("Generating post trimming stats...");
     unlink($stats_output_path) if (-f $stats_output_path);
     my $stats_output = Genome::Sys->open_file_for_writing($stats_output_path);
 
-    $self->status_message("\tParsing $contamination_bam...");
+    $self->debug_message("\tParsing $contamination_bam...");
     my %stats = $self->bam_stats_per_lane($contamination_bam);
-    $self->status_message("\tParsing of $contamination_bam is complete.");
+    $self->debug_message("\tParsing of $contamination_bam is complete.");
 
     # print header
     print $stats_output "flow_lane";
@@ -160,9 +160,9 @@ sub per_lane_qc {
 
     ### ###
 
-    $self->status_message("Extracting FastQ files from original and imported data...");    
+    $self->debug_message("Extracting FastQ files from original and imported data...");    
     if (! $self->overwrite && -f $humanfree_bam_path && -f $original_bam_path) {
-        $self->status_message("\t$hcs_data_id: Skipping FastQ extraction for " . $hcs_data_id . ", bam files already exists. Use --overwrite to replace...");
+        $self->debug_message("\t$hcs_data_id: Skipping FastQ extraction for " . $hcs_data_id . ", bam files already exists. Use --overwrite to replace...");
     }
     else {
         # untar both imported and original fastq files, only keeping paired files
@@ -188,18 +188,18 @@ sub per_lane_qc {
             }
         }
         else {
-            $self->status_message("\tSkipping unpaired fastq (imported id: " . $imported_data->id . ")...");
+            $self->debug_message("\tSkipping unpaired fastq (imported id: " . $imported_data->id . ")...");
             return;
         }
     }
 
     ### ###
-    $self->status_message("Generating human-free, untrimmed data...");
+    $self->debug_message("Generating human-free, untrimmed data...");
     if (! $self->overwrite && -f $humanfree_bam_path) {
-        $self->status_message("\t$hcs_data_id: Skipping humanfree creation, humanfree bam file already exists. Use --overwrite to replace...");
+        $self->debug_message("\t$hcs_data_id: Skipping humanfree creation, humanfree bam file already exists. Use --overwrite to replace...");
     }
     else {
-        $self->status_message("\tGenerating hash of read names for instrument data: $hcs_data_id...");
+        $self->debug_message("\tGenerating hash of read names for instrument data: $hcs_data_id...");
 
         my $imported_path = (@{$fastq_files{$hcs_data_id}{imported}})[0];
         my $original_fwd_path = @{$fastq_files{$hcs_data_id}{original}}[0];
@@ -208,17 +208,17 @@ sub per_lane_qc {
         my $humanfree_fwd_file = Genome::Sys->open_file_for_writing($humanfree_fwd_path);
         my $humanfree_rev_file = Genome::Sys->open_file_for_writing($humanfree_rev_path);
 
-        $self->status_message("\t\tReading in up to 8M read names...");
+        $self->debug_message("\t\tReading in up to 8M read names...");
         my $reads_left = 1;
         my $readname_re = '[^:]*:(.*)#.*';
         while ($reads_left) {
             my %read_names;
             # read 8M reads at a time to prevent oom
             for (my $count = 0; $count < 8e6; $count++) {
-                $self->status_message("\t\t\tHashed $count reads...") unless ($count % 2e6 || ! $count);
+                $self->debug_message("\t\t\tHashed $count reads...") unless ($count % 2e6 || ! $count);
                 my $imported_read = read_and_join_lines($imported_file);
                 unless ($imported_read) {
-                    $self->status_message("\t\t\tFinished reading $count reads.");
+                    $self->debug_message("\t\t\tFinished reading $count reads.");
                     $reads_left = 0;
                     last;
                 }
@@ -230,7 +230,7 @@ sub per_lane_qc {
             my $original_fwd_file = Genome::Sys->open_file_for_reading($original_fwd_path);
             my $original_rev_file = Genome::Sys->open_file_for_reading($original_rev_path);
 
-            $self->status_message("\t\tParsing original forward read file with those hashed reads...");
+            $self->debug_message("\t\tParsing original forward read file with those hashed reads...");
             while (my $fwd_read = read_and_join_lines($original_fwd_file)) {
                 $fwd_read =~ /$readname_re/;
                 my $fwd_readname = $1;
@@ -239,7 +239,7 @@ sub per_lane_qc {
                 }
             }
 
-            $self->status_message("\t\tParsing original reverse read file with those hashed reads...");
+            $self->debug_message("\t\tParsing original reverse read file with those hashed reads...");
             while (my $rev_read = read_and_join_lines($original_rev_file)) {
                 $rev_read =~ /$readname_re/;
                 my $rev_readname = $1;
@@ -251,30 +251,30 @@ sub per_lane_qc {
     }
 
     ### ###
-    $self->status_message("Creating bams...");
+    $self->debug_message("Creating bams...");
 
     if (! $self->overwrite && -f $humanfree_bam_path ) {
-        $self->status_message("\t$hcs_data_id: Skipping humanfree bam creation, files already exists. Use --overwrite to replace...");
+        $self->debug_message("\t$hcs_data_id: Skipping humanfree bam creation, files already exists. Use --overwrite to replace...");
     }
     else {
         unlink($humanfree_bam_path);
 
-        $self->status_message("\t$hcs_data_id: Generating humanfree bam file...");
+        $self->debug_message("\t$hcs_data_id: Generating humanfree bam file...");
 
-        $self->status_message("\tVerifying fwd/rev pairs are correct, will swap if not...");
+        $self->debug_message("\tVerifying fwd/rev pairs are correct, will swap if not...");
 
         my $humanfree_fwd_file = Genome::Sys->open_file_for_reading($humanfree_fwd_path);
         my $humanfree_rev_file = Genome::Sys->open_file_for_reading($humanfree_rev_path);
         # If humanfree_untrimmed files are reversed then file contents are probably switched so switch files.
         my $humanfree_fwd_line = $humanfree_fwd_file->getline;
         if ($humanfree_fwd_line =~ /\/2$/) {
-            $self->status_message("\t\t" . (split("/", $humanfree_fwd_path))[-1] . " looks like a reverse file. Swapping...");
+            $self->debug_message("\t\t" . (split("/", $humanfree_fwd_path))[-1] . " looks like a reverse file. Swapping...");
             rename($humanfree_fwd_path, $humanfree_fwd_path . '.tmp');
             rename($humanfree_rev_path, $humanfree_fwd_path);
             rename($humanfree_fwd_path . '.tmp', $humanfree_rev_path);
         }
 
-        $self->status_message("\t" . (split("/", $humanfree_bam_path))[-1]. "...");
+        $self->debug_message("\t" . (split("/", $humanfree_bam_path))[-1]. "...");
         my $humanfree_fastq_to_sam = Genome::Model::Tools::Picard::FastqToSam->create(
             fastq => $humanfree_fwd_path,
             fastq2 => $humanfree_rev_path,
@@ -290,13 +290,13 @@ sub per_lane_qc {
         }
     }
     if (! $self->overwrite && -f $original_bam_path) {
-        $self->status_message("\t$hcs_data_id: Skipping original bam creation, file already exists. Use --overwrite to replace...");
+        $self->debug_message("\t$hcs_data_id: Skipping original bam creation, file already exists. Use --overwrite to replace...");
     }
     else {
         unlink($original_bam_path);
-        $self->status_message("\t$hcs_data_id: Generating original bam file...");
+        $self->debug_message("\t$hcs_data_id: Generating original bam file...");
 
-        $self->status_message("\tVerifying fwd/rev pairs are correct, will swap if not...");
+        $self->debug_message("\tVerifying fwd/rev pairs are correct, will swap if not...");
 
         # If original files are reversed then they probably just have rev in [0] and fwd in [1] so switch "pointer".
         my $original_fwd_path = @{$fastq_files{$hcs_data_id}{original}}[0];
@@ -304,7 +304,7 @@ sub per_lane_qc {
         my $original_fwd_file = Genome::Sys->open_file_for_reading($original_fwd_path);
         my $original_fwd_line = $original_fwd_file->getline;
         if ($original_fwd_line =~ /\/2$/) {
-            $self->status_message("\t\t" . (split("/", $original_fwd_path))[-1] . " looks like a reverse file. Swapping...");
+            $self->debug_message("\t\t" . (split("/", $original_fwd_path))[-1] . " looks like a reverse file. Swapping...");
             my $tmp = @{$fastq_files{$hcs_data_id}{original}}[0];
             @{$fastq_files{$hcs_data_id}{original}}[0] = @{$fastq_files{$hcs_data_id}{original}}[1];
             @{$fastq_files{$hcs_data_id}{original}}[1] = $tmp;
@@ -312,7 +312,7 @@ sub per_lane_qc {
             $original_rev_path = @{$fastq_files{$hcs_data_id}{original}}[1];
         }
 
-        $self->status_message("\t" . (split("/", $original_bam_path))[-1]. "...");
+        $self->debug_message("\t" . (split("/", $original_bam_path))[-1]. "...");
         my $original_fastq_to_sam = Genome::Model::Tools::Picard::FastqToSam->create(
             fastq => $original_fwd_path,
             fastq2 => $original_rev_path,
@@ -329,17 +329,17 @@ sub per_lane_qc {
     }
 
     ### Genome::Model::Tools::Picard::EstimateLibraryComplexity (human-free) ###
-    $self->status_message("Running Picard EstimateLibraryComplexity report on human-free bam...");
+    $self->debug_message("Running Picard EstimateLibraryComplexity report on human-free bam...");
     my $humanfree_report_path = $self->report_dir . '/' . $hcs_data_id . '_humanfree_untrimmed_estimate_library_complexity_report.txt';
     if (! $self->overwrite && -f $humanfree_report_path) {
-        $self->status_message("\t$hcs_data_id: Skipping EstimateLibraryComplexity, files already exists. Use --overwrite to replace...");
+        $self->debug_message("\t$hcs_data_id: Skipping EstimateLibraryComplexity, files already exists. Use --overwrite to replace...");
     }
     else {
         unlink($humanfree_report_path);
 
-        $self->status_message("\t$hcs_data_id: Generating EstimateLibraryComplexity report on human-free bam...");
+        $self->debug_message("\t$hcs_data_id: Generating EstimateLibraryComplexity report on human-free bam...");
 
-        $self->status_message("\t\t" . (split("/", $humanfree_report_path))[-1] . "...");
+        $self->debug_message("\t\t" . (split("/", $humanfree_report_path))[-1] . "...");
         my $humanfree_picard_elc = Genome::Model::Tools::Picard::EstimateLibraryComplexity->create(
             input_file => [$humanfree_bam_path],
             output_file => $humanfree_report_path,
@@ -352,16 +352,16 @@ sub per_lane_qc {
     }
 
     ### Genome::Model::Tools::Picard::EstimateLibraryComplexity (original) ###
-    $self->status_message("Running Picard EstimateLibraryComplexity report on \"original bam\"...");
+    $self->debug_message("Running Picard EstimateLibraryComplexity report on \"original bam\"...");
     my $original_report_path = $self->report_dir . '/' . $hcs_data_id . '_original_untrimmed_estimate_library_complexity_report.txt';
     if (! $self->overwrite && -f $original_report_path) {
-        $self->status_message("\t$hcs_data_id: Skipping EstimateLibraryComplexity, files already exists. Use --overwrite to replace...");
+        $self->debug_message("\t$hcs_data_id: Skipping EstimateLibraryComplexity, files already exists. Use --overwrite to replace...");
     }
     else {
         unlink($original_report_path);
-        $self->status_message("\t$hcs_data_id: Generating EstimateLibraryComplexity report on \"original\" bam...");
+        $self->debug_message("\t$hcs_data_id: Generating EstimateLibraryComplexity report on \"original\" bam...");
 
-        $self->status_message("\t\t" . (split("/", $original_report_path))[-1] . "...");
+        $self->debug_message("\t\t" . (split("/", $original_report_path))[-1] . "...");
         my $original_picard_elc = Genome::Model::Tools::Picard::EstimateLibraryComplexity->create(
             input_file => [$original_bam_path],
             output_file => $original_report_path,
@@ -372,7 +372,7 @@ sub per_lane_qc {
         }    
     }
 
-    $self->status_message("Removing unneeded FastQ files...");
+    $self->debug_message("Removing unneeded FastQ files...");
     for my $hcs_data_id (keys %fastq_files) {
         last unless(exists($fastq_files{$hcs_data_id}) && exists($fastq_files{$hcs_data_id}{original}) && exists($fastq_files{$hcs_data_id}{imported}));
         unlink(@{$fastq_files{$hcs_data_id}{original}}[0]) if (-f @{$fastq_files{$hcs_data_id}{original}}[0]);
@@ -403,7 +403,7 @@ sub other_stats {
 
     # Count bases in humanfree, untrimmed bams
     my %humanfree_base_count;
-    $self->status_message("Counting human-free, untrimmed bases per lane...");
+    $self->debug_message("Counting human-free, untrimmed bases per lane...");
 
     $self->expect64();
     my $humanfree_bam_path = $self->report_dir . '/data/' . $hcs_data_id . '_humanfree_untrimmed.bam';
@@ -415,7 +415,7 @@ sub other_stats {
     }
 
 
-    $self->status_message("Generating other stats...");
+    $self->debug_message("Generating other stats...");
 
     my $orig_data = $self->original_data_from_imported_id($hcs_data_id);
     my $lane = $orig_data->flow_cell_id . "_" . $orig_data->lane;
@@ -504,7 +504,7 @@ sub bam_stats_per_lane {
     my $self = shift;
     my $bam = shift;
 
-    #$self->status_message("Opening $bam with samtools...");
+    #$self->debug_message("Opening $bam with samtools...");
     $self->expect64();
     my $bam_fh = IO::File->new("samtools view $bam |");
     unless($bam_fh) {
@@ -531,7 +531,7 @@ sub bam_stats_per_lane {
         }
 
         if ($seq eq '*'){
-            $self->status_message("invalid sequence for read in bam: $_");
+            $self->debug_message("invalid sequence for read in bam: $_");
             next;
         }
         $stats{$flow_lane{$id}}{total_bases} += length($seq);
@@ -550,7 +550,7 @@ sub bam_stats_per_lane {
 
         $total_reads_all_lanes++;
         $stats{$flow_lane{$id}}{total_reads}++;
-        $self->status_message("\t\tProcessed " . $total_reads_all_lanes/1e6 . "M reads so far...") unless ($total_reads_all_lanes % 1e6);
+        $self->debug_message("\t\tProcessed " . $total_reads_all_lanes/1e6 . "M reads so far...") unless ($total_reads_all_lanes % 1e6);
         #print " done\n";
     }
 

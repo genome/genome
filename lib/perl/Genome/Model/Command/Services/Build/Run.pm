@@ -149,7 +149,7 @@ sub execute {
 
     } else {
         if (Genome::DataSource::GMSchema->has_default_handle) {
-            $self->status_message("Disconnecting GMSchema default handle.");
+            $self->debug_message("Disconnecting GMSchema default handle.");
             Genome::DataSource::GMSchema->disconnect_default_dbh();
         }
 
@@ -160,7 +160,7 @@ sub execute {
             $self->set_not_running($w);
             UR::Context->commit;
             if (Workflow::DataSource::InstanceSchema->has_default_handle) {
-                $self->status_message("Disconnecting InstanceSchema default handle.");
+                $self->debug_message("Disconnecting InstanceSchema default handle.");
                 Workflow::DataSource::InstanceSchema->disconnect_default_dbh();
             }
 
@@ -176,7 +176,7 @@ sub execute {
             }
 
             if (Workflow::DataSource::InstanceSchema->has_default_handle) {
-                $self->status_message("Disconnecting InstanceSchema default handle.");
+                $self->debug_message("Disconnecting InstanceSchema default handle.");
                 Workflow::DataSource::InstanceSchema->disconnect_default_dbh();
             }
 

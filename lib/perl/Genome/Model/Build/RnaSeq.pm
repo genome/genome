@@ -250,14 +250,14 @@ sub delete {
 sub eviscerate {
     my $self = shift;
     
-    $self->status_message('Entering eviscerate for build:' . $self->id);
+    $self->debug_message('Entering eviscerate for build:' . $self->id);
 
 
     if($self->alignment_result) {
         my $alignment_result = $self->alignment_result;
 
         if (-l $self->accumulated_alignments_directory && readlink($self->accumulated_alignments_directory) eq $alignment_result->output_dir) {
-           $self->status_message("Unlinking symlink to alignment result: " . $self->accumulated_alignments_directory);
+           $self->debug_message("Unlinking symlink to alignment result: " . $self->accumulated_alignments_directory);
             unless(unlink($self->accumulated_alignments_directory)) {
                 $self->error_message("could not remove symlink to alignment result path");
                 return;
@@ -266,16 +266,16 @@ sub eviscerate {
 
         my @users = $alignment_result->users(user => $self);
         map($_->delete, @users);
-        $self->status_message('Removed self as user of alignment result.');
+        $self->debug_message('Removed self as user of alignment result.');
     } else {
         my $alignment_alloc = $self->accumulated_alignments_disk_allocation;
         my $alignment_path = ($alignment_alloc ? $alignment_alloc->absolute_path :  $self->accumulated_alignments_directory);
 
         if (!-d $alignment_path && !-l $self->accumulated_alignments_directory) {
-            $self->status_message("Nothing to do, alignment path doesn't exist and this build has no alignments symlink.");
+            $self->debug_message("Nothing to do, alignment path doesn't exist and this build has no alignments symlink.");
         }
 
-        $self->status_message("Removing tree $alignment_path");
+        $self->debug_message("Removing tree $alignment_path");
         if (-d $alignment_path) {
             rmtree($alignment_path);
             if (-d $alignment_path) {
@@ -292,7 +292,7 @@ sub eviscerate {
         }
 
         if (-l $self->accumulated_alignments_directory && readlink($self->accumulated_alignments_directory) eq $alignment_path ) {
-            $self->status_message("Unlinking symlink: " . $self->accumulated_alignments_directory);
+            $self->debug_message("Unlinking symlink: " . $self->accumulated_alignments_directory);
             unless(unlink($self->accumulated_alignments_directory)) {
                 $self->error_message("could not remove symlink to deallocated accumulated alignments path");
                 return;
@@ -317,7 +317,7 @@ sub eviscerate {
     for my $item (keys %directories) {
         my $directory = $directories{$item};
         if (-d $directory) {
-            $self->status_message("removing $item directory");
+            $self->debug_message("removing $item directory");
             rmtree($directory);
             if (-d $directory) {
                 $self->error_message("$item path $directory still exists after evisceration attempt, something went wrong.");

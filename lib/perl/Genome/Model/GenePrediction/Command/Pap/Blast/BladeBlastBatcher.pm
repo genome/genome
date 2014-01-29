@@ -97,7 +97,7 @@ sub execute {
     my $sequence_counter = 0;
     my $fasta_chunk;
 
-    $self->status_message("Splitting up sequences of " . $self->query_fasta_path . " into separate files in " . 
+    $self->debug_message("Splitting up sequences of " . $self->query_fasta_path . " into separate files in " . 
         $self->output_directory . " containing no more than " . $self->fasta_chunk_size . 
         " sequences each and executing in batches of " . $self->lsf_job_limit);
 
@@ -169,7 +169,7 @@ sub execute {
     }
 
     $self->reports(\@reports);
-    $self->status_message("All jobs are done and fasta chunks have been cleaned up. Reports can be found at " . $self->output_directory . ".");
+    $self->debug_message("All jobs are done and fasta chunks have been cleaned up. Reports can be found at " . $self->output_directory . ".");
     return 1;
 }
 
@@ -187,7 +187,7 @@ sub _run_lsf_jobs {
     );
     $scheduler->start();
 
-    $self->status_message("Starting a batch of $num_jobs jobs!");
+    $self->debug_message("Starting a batch of $num_jobs jobs!");
     my $batch_start = Benchmark->new;
 
     # Wait for jobs to finish
@@ -200,7 +200,7 @@ sub _run_lsf_jobs {
         unless (@running_jobs) {
             my $batch_stop = Benchmark->new;
             my $batch_time = timediff($batch_stop, $batch_start);
-            $self->status_message("Batch complete, took " . timestr($batch_time, 'noc'));
+            $self->debug_message("Batch complete, took " . timestr($batch_time, 'noc'));
             last;
         }
     }

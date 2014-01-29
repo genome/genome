@@ -40,14 +40,14 @@ sub execute {
     my $self = shift;
 
     my $tar_file = $self->tar_file;
-    $self->status_message("Tar file: $tar_file");
+    $self->debug_message("Tar file: $tar_file");
     if ( $tar_file !~ /\.tgz$/ and $tar_file !~ /\.tar\.gz/  ) {
         $self->error_message('Tar file must have .tar.gz or .tgz extension');
         return;
     }
 
     my $file_string = join(' ', $self->files);
-    $self->status_message("Files: $file_string");
+    $self->debug_message("Files: $file_string");
     for my $file ( $self->files ) {
         if ( not -e $file ) {
             $self->error_message("File to upload ($file) does not exist");
@@ -65,7 +65,7 @@ sub execute {
         $self->error_message('Tar command succeeded, but no tar file was created');
         return;
     }
-    $self->status_message("Tar-ing...OK");
+    $self->debug_message("Tar-ing...OK");
 
     my $upload = Genome::Model::Tools::Dacc::Upload->create(
         dacc_directory => $self->dacc_directory,

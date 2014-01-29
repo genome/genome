@@ -145,7 +145,7 @@ sub _generate_vcf {
     my $hq_vcf  = $self->output_directory.'/'.$self->_variant_type.'.hq';
 
     unless(-s $ori_vcf){
-        $self->status_message("Skipping VCF generation, no vcf if the previous result: $ori_vcf");
+        $self->debug_message("Skipping VCF generation, no vcf if the previous result: $ori_vcf");
         return 1;
     }
 

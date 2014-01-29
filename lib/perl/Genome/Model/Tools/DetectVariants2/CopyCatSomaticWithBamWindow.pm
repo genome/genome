@@ -105,7 +105,7 @@ sub _detect_variants {
     $workflow->log_dir($log_dir);
 
     # Launch workflow
-    $self->status_message("Launching workflow now.");
+    $self->debug_message("Launching workflow now.");
     my $result = Workflow::Simple::run_workflow_lsf($workflow, %input);
 
     # Collect and analyze results
@@ -137,7 +137,7 @@ sub get_samtools_results{
     if(@results) {
         return $results[0]->path("snvs.hq");
     } else {
-        $self->status_message("Could not find any DV2::Samtools result object for $bam_path");
+        $self->debug_message("Could not find any DV2::Samtools result object for $bam_path");
         #alternative lookup - maybe later?
     }
     return "";

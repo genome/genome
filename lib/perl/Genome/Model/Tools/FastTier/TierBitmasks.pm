@@ -44,7 +44,7 @@ sub create {
 
     $self->_prepare_staging_directory;
 
-    $self->status_message('Create TierBitmasks');
+    $self->debug_message('Create TierBitmasks');
 
     my $ref = $self->reference_sequence_build->full_consensus_path('fa');
     my $ref_list_fh = Genome::Sys->open_file_for_reading($self->reference_sequence_build->full_consensus_sam_index_path);
@@ -61,7 +61,7 @@ sub create {
     my $genome_size = 0;
     my $masked_genome_size = 0;
     for my $ref_chr (@chromosomes) {
-        $self->status_message("Running samtools faidx on $ref_chr");
+        $self->debug_message("Running samtools faidx on $ref_chr");
         unless(open(FAIDX,"samtools faidx $ref $ref_chr |")) {
             die "Couldn't pipe samtools faidx\n";
         }
@@ -133,7 +133,7 @@ sub create {
             chrom_name => $chromosome_name,            
             reference_build_id => $self->reference_sequence_build->id
         );
-        $self->status_message("Parsing $chromosome_name\n");
+        $self->debug_message("Parsing $chromosome_name\n");
         unless($transcript_iterator) {
             warn "No iterator because ", Genome::Transcript->error_message, " Skipping to next\n";
             next;
@@ -191,7 +191,7 @@ sub create {
     #undef($tier2_conserved_set); 
     my $tier2 = $tier2_conserved_set;
     print STDERR "Calculated Tier2 conserved set\n";
-    $self->status_message("Calculated Tier2 conserved set\n");
+    $self->debug_message("Calculated Tier2 conserved set\n");
     #printf "Tier2 conserved set encompasses %u bases. %f%% of the genome\n", bases_covered($tier2), bases_covered($tier2)/$masked_genome_size * 100;
 
     #now do regulatory regions
@@ -212,7 +212,7 @@ sub create {
         $fh->close;
     }
     print STDERR "Calculated repeatmasker regions\n";
-    $self->status_message("Calculated repeatmasker regions\n");
+    $self->debug_message("Calculated repeatmasker regions\n");
 
     #now take union and calculate the coverage
 
@@ -233,7 +233,7 @@ sub create {
         $fh->close;
     }
     print STDERR "Calculated Tier2 regulatory regions\n";
-    $self->status_message("Calculated Tier2 regulatory regions\n");
+    $self->debug_message("Calculated Tier2 regulatory regions\n");
 
     #no bins in this file
     my @cpg_islands = glob($self->ucsc_directory."/cpg_islands/*");
@@ -251,18 +251,18 @@ sub create {
     $self->in_place_difference_genomes($regulatory_regions, $repeatmasker_regions); 
     #in_place_difference_genomes($regulatory_regions, $tier2);
     print STDERR "Calculated Tier2 regulatory regions / repeatmasker\n";
-    $self->status_message("Calculated Tier2 regulatory regions / repeatmasker\n");
+    $self->debug_message("Calculated Tier2 regulatory regions / repeatmasker\n");
     #printf "Tier2 regulatory set encompasses %u bases. %f%% of the genome\n", bases_covered($regulatory_regions), bases_covered($regulatory_regions)/$masked_genome_size * 100;
 
     $self->in_place_union_genomes($tier2, $regulatory_regions);
     print STDERR "Calculated Tier2 conserved U regulatory regions / repeatmasker\n";
-    $self->status_message("Calculated Tier2 conserved U regulatory regions / repeatmasker\n");
+    $self->debug_message("Calculated Tier2 conserved U regulatory regions / repeatmasker\n");
     $self->in_place_difference_genomes($tier2, $tier1); #exclude things hitting Tier1
     print STDERR "Calculated (Tier2 conserved U regulatory regions / repeatmasker) / Tier1\n";
-    $self->status_message("Calculated (Tier2 conserved U regulatory regions / repeatmasker) / Tier1\n");
+    $self->debug_message("Calculated (Tier2 conserved U regulatory regions / repeatmasker) / Tier1\n");
     $self->in_place_difference_genomes($tier2, \%genome); #account for masking
     print STDERR "Calculated (Tier2 conserved U regulatory regions / repeatmasker) / Tier1 / masked genome\n";
-    $self->status_message("Calculated (Tier2 conserved U regulatory regions / repeatmasker) / Tier1 / masked genome\n");
+    $self->debug_message("Calculated (Tier2 conserved U regulatory regions / repeatmasker) / Tier1 / masked genome\n");
     printf "Tier2 encompasses %u bases. %f%% of the genome\n", $self->bases_covered($tier2), $self->bases_covered($tier2)/$masked_genome_size * 100;
     $self->write_genome_bitmask($self->temp_staging_directory."/tier2.bitmask", $tier2);
     #free up some mem?

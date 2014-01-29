@@ -87,7 +87,7 @@ sub execute {
         or ($self->error_message( sprintf('Can\'t copy output qual file (%s) to %s: %s', $qual_clip, $self->qual_base, $!) ) and return);
     unlink $qual_clip;
 
-    $self->status_message("No sequences made the quality and length cut.") unless -s $self->fasta_base;
+    $self->debug_message("No sequences made the quality and length cut.") unless -s $self->fasta_base;
 
     $self->chdir_cwd 
         or return;

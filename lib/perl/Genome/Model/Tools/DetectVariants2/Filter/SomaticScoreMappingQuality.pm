@@ -132,7 +132,7 @@ sub _filter_variants {
     }
     #Run readcount program 
     my $readcount_command = sprintf("%s %s -l %s %s |",$self->readcount_path, $self->bam_readcount_params, $temp_path, $tumor_bam_file);
-    $self->status_message("Running: $readcount_command");
+    $self->debug_message("Running: $readcount_command");
 
     my $readcounts = IO::File->new($readcount_command);
 
@@ -149,7 +149,7 @@ sub _filter_variants {
 
         #check if the sniper line was present in the readcount output
         while($vchr ne $chr && $vstart != $pos && @sniper_lines) {
-            $self->status_message("Skipped $current_variant");
+            $self->debug_message("Skipped $current_variant");
             
             print $lq_output_fh $current_variant ."\n";;
             $current_variant = shift @sniper_lines;

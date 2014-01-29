@@ -89,7 +89,7 @@ sub execute {
                 #FIXME this doesn't support tri-nucleotide polymorphisms and up.
                 if(($pos - $last_pos) == 1) {
                     #potential DNP
-                    $self->status_message("Potential DNP found at $chr:$pos-$last_pos\n");
+                    $self->debug_message("Potential DNP found at $chr:$pos-$last_pos\n");
 
                     if($self->is_dnp($chr, $last_pos, $last_var, $pos, $variants[0])) {
                         my $ref_col = $last_ref . $ref;

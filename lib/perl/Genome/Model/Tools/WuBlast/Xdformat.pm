@@ -43,7 +43,7 @@ sub execute {
         $self->database,
         ( $self->can('fasta_files') ? join(' ', $self->fasta_files) : '' ),
     );
-    $self->status_message('Running: '.$cmd);
+    $self->debug_message('Running: '.$cmd);
 
     my $rv = system($cmd);
     unless ( $rv == 0 ) {

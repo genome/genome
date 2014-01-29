@@ -59,7 +59,7 @@ sub execute {
     }
 
     #create input fasta and qual files from sff files
-    $self->status_message("Creating input fasta and qual files from sff files");
+    $self->debug_message("Creating input fasta and qual files from sff files");
     my $inputs = Genome::Model::Tools::Assembly::CreateOutputFiles::InputFromSff->create (
 	directory => $self->assembly_directory,
 	);
@@ -69,7 +69,7 @@ sub execute {
     }
 
     #create sorted contigs.bases and contigs.qual files
-    $self->status_message("Creating contigs.bases and contigs.quals files");
+    $self->debug_message("Creating contigs.bases and contigs.quals files");
     my $contigs = Genome::Model::Tools::Assembly::CreateOutputFiles::ContigsFromAce->create (
 	acefile => $acefile,
 	fasta_out => $self->contigs_bases_file,
@@ -83,7 +83,7 @@ sub execute {
     sleep(1);
 
     #create msi.readinfo.txt file
-    $self->status_message("Creating readinfo.txt file");
+    $self->debug_message("Creating readinfo.txt file");
     my $readinfo = Genome::Model::Tools::Assembly::CreateOutputFiles::ReadInfo->create (
 	acefile => $acefile,
 	output_file => $self->read_info_file,
@@ -95,7 +95,7 @@ sub execute {
     }
 
     #create msi.reads.placed file
-    $self->status_message("Creating reads.placed file");
+    $self->debug_message("Creating reads.placed file");
     my $reads_placed = Genome::Model::Tools::Assembly::CreateOutputFiles::ReadsPlaced->create (
 	read_info_file => $self->read_info_file,
 	gap_file => $self->gap_sizes_file,
@@ -110,7 +110,7 @@ sub execute {
     sleep(1);
 
     #create reads.unplaced files (reads.unplaced and reads.unplaced.fasta)
-    $self->status_message("Creating reads.unplaced and reads.unplaced.fasta files");
+    $self->debug_message("Creating reads.unplaced and reads.unplaced.fasta files");
     my $unplaced = Genome::Model::Tools::Assembly::CreateOutputFiles::ReadsUnplaced->create(
 	reads_placed_file => $self->_reads_placed_file,
 	directory => $self->assembly_directory,
@@ -126,7 +126,7 @@ sub execute {
     sleep(1);
 
     #create supercontigs.agp file
-    $self->status_message("Creating supercontigs.agp file");
+    $self->debug_message("Creating supercontigs.agp file");
     my $agp = Genome::Model::Tools::Assembly::CreateOutputFiles::SupercontigsAgp->create (
 	contigs_bases_file => $self->contigs_bases_file,
 	gap_file => $self->gap_sizes_file,
@@ -139,7 +139,7 @@ sub execute {
     }
 
     #create supercontigs.fasta
-    $self->status_message("Creating supercontigs.fasta file");
+    $self->debug_message("Creating supercontigs.fasta file");
     my $s_fa = Genome::Model::Tools::Assembly::CreateOutputFiles::SupercontigsFasta->create (
 	contigs_bases_file => $self->contigs_bases_file,
 	gap_file => $self->gap_sizes_file,
@@ -152,7 +152,7 @@ sub execute {
     }
     #run core gene survey .. does system call to deployed script
     if ($self->run_core_gene_survey) {
-        $self->status_message("Running core gene survey");
+        $self->debug_message("Running core gene survey");
         my $gene_option = ($self->core_gene_option) ? $self->core_gene_option : 'bact';
         my $survey = Genome::Model::Tools::Assembly::CreateOutputFiles::CoreGeneSurvey->create (
             core_gene_option => $gene_option,
@@ -165,7 +165,7 @@ sub execute {
     }
 
     #create stats.txt file
-    $self->status_message("Creating stats.txt file");
+    $self->debug_message("Creating stats.txt file");
     my $stats = Genome::Model::Tools::Assembly::Stats::Newbler->create (
 	#acefile => $self->acefile,
 	assembly_directory => $self->assembly_directory,

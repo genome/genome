@@ -50,7 +50,7 @@ sub execute {
         . ' --inactivity-timeout ' . 3 * 60 * 24   # in minutes - instead of bsub -W
     ;
 
-    $self->status_message('Cmd: ' . $cmd);
+    $self->debug_message('Cmd: ' . $cmd);
 
     my $res = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
 

@@ -137,7 +137,7 @@ sub get_scaffold_info_from_afg_file {
     for my $name ( @method_names ) {
         my $method = '_add_'.$name;
         if ( not $self->$method(\%scaf_info,\%ctgs_in_sctgs) ) {
-            $self->status_message("Failed to run add $name to scaffold infos");
+            $self->debug_message("Failed to run add $name to scaffold infos");
             return;
         }
     }

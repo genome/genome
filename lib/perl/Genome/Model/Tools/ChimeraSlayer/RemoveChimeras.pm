@@ -37,24 +37,24 @@ HELP
 sub execute {
     my $self = shift;
 
-    $self->status_message('Remove chimeras...');
+    $self->debug_message('Remove chimeras...');
 
-    $self->status_message('Sequences: '.$self->sequences);
+    $self->debug_message('Sequences: '.$self->sequences);
     my ($reader_class, $reader_params) = Genome::Model::Tools::Sx::Reader->parse_reader_config($self->sequences);
     return if not $reader_class;
     my $reader = $reader_class->create(%$reader_params);
     return if not $reader;
 
-    $self->status_message('Chimeras: '.$self->chimeras);
+    $self->debug_message('Chimeras: '.$self->chimeras);
     my $chimera_reader = Genome::Model::Tools::ChimeraSlayer::Reader->create(input => $self->chimeras);
     return if not $chimera_reader;
 
-    $self->status_message('Output: '.$self->output);
+    $self->debug_message('Output: '.$self->output);
     my ($writer_class, $writer_params) = Genome::Model::Tools::Sx::Writer->parse_writer_config($self->output);
     my $writer = $writer_class->create(%$writer_params);
     return if not $writer;
 
-    $self->status_message('Read sequences...');
+    $self->debug_message('Read sequences...');
     my %metrics = ( sequences => 0, chimeras => 0 );
     my $chimera = $chimera_reader->read;
     while ( my $seq = $reader->read ) {
@@ -70,14 +70,14 @@ sub execute {
         $metrics{output}++;
         $writer->write($seq);
     }
-    $self->status_message('Read sequences...OK');
+    $self->debug_message('Read sequences...OK');
 
     $self->_metrics(\%metrics);
-    $self->status_message('Sequence count: '.$metrics{sequences});
-    $self->status_message('Chimera count: '.$metrics{chimeras});
-    $self->status_message('Output count: '.$metrics{output});
+    $self->debug_message('Sequence count: '.$metrics{sequences});
+    $self->debug_message('Chimera count: '.$metrics{chimeras});
+    $self->debug_message('Output count: '.$metrics{output});
 
-    $self->status_message('Remove chimeras...OK');
+    $self->debug_message('Remove chimeras...OK');
 
     return 1;
 }

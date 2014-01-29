@@ -298,7 +298,7 @@ sub execute
 
     my $server = PP::RPC->new(%rpc_args);
 
-    $self->status_message("Starting rpc server");
+    $self->debug_message("Starting rpc server");
     $server->start();
 
     my $failed_jobs = $job_source->failed_jobs();
@@ -318,7 +318,7 @@ sub execute
         confess;
     }
 
-    $self->status_message("RPC server has run all jobs, none appear to have failed!");
+    $self->debug_message("RPC server has run all jobs, none appear to have failed!");
 
     my %features = ();
 
@@ -326,11 +326,11 @@ sub execute
         push @{ $features{ $feature->seq_id() } }, $feature;
     }
 
-    $self->status_message("Iterating through sequences produced by predictors...");
+    $self->debug_message("Iterating through sequences produced by predictors...");
 
     SEQUENCE: foreach my $seq_id ( keys %features ) {
 
-        $self->status_message("Retrieving sequence with set id $sequence_set_id and name $seq_id");
+        $self->debug_message("Retrieving sequence with set id $sequence_set_id and name $seq_id");
         my $sequence = BAP::DB::Sequence->retrieve(
             sequence_set_id => $sequence_set_id,
             sequence_name   => $seq_id,
@@ -658,7 +658,7 @@ sub execute
 
     }
 
-    $self->status_message("Committing to BAP database!");
+    $self->debug_message("Committing to BAP database!");
     BAP::DB::DBI->dbi_commit();
     my $dt_finished = $self->mark_time();
 
@@ -724,7 +724,7 @@ BODY
 sub log_run
 {
     my $self = shift;
-    $self->status_message("Inserting logging information into database.");
+    $self->debug_message("Inserting logging information into database.");
     my ( $started, $finished , $sequence_set) = @_;
     my $elapsed_seconds = ( $finished->epoch() - $started->epoch() );
     my $db_file         = BAP::Config->new()->activity_db_file();
@@ -780,7 +780,7 @@ SQL
     $dbh->do( $sql, {}, 'predict', $sequence_id, $sequence_name, $organism,
         $host, $user );
 
-    $self->status_message("Done logging!");
+    $self->debug_message("Done logging!");
     return 1;
 }
 

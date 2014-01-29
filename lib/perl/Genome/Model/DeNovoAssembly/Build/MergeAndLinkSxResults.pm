@@ -38,15 +38,15 @@ class Genome::Model::DeNovoAssembly::Build::MergeAndLinkSxResults {
 
 sub execute {
     my $self = shift;
-    $self->status_message('Merge and Link SX results...');
+    $self->debug_message('Merge and Link SX results...');
 
     my ($build) = $self->build;
-    $self->status_message('Build: '.$build->__display_name__);
+    $self->debug_message('Build: '.$build->__display_name__);
     $build->reads_attempted(0);
     $build->reads_processed(0);
 
     my $read_processor = $build->processing_profile->read_processor;
-    $self->status_message('Read processor: '.$read_processor);
+    $self->debug_message('Read processor: '.$read_processor);
 
     my $sx_processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(
         processor => $read_processor, # what if no processing is desired?
@@ -62,7 +62,7 @@ sub execute {
 
     my @sx_results;
     for my $sx_result_params ( @final_sx_result_params ) {
-        $self->status_message('Sx result params: '.Dumper($sx_result_params));
+        $self->debug_message('Sx result params: '.Dumper($sx_result_params));
         my $sx_result;
         if ( $sx_result_params->{coverage} ) { # merged: get, then get_or_create
             $sx_result = Genome::InstrumentData::MergedSxResult->get_with_lock(%$sx_result_params);
@@ -75,9 +75,9 @@ sub execute {
         }
         return if not $sx_result;
 
-        $self->status_message('Sx result id: '.$sx_result->id);
-        $self->status_message('Sx output dir: '.$sx_result->output_dir);
-        $self->status_message('Instrument data: '.join(' ', $sx_result->instrument_data_id));
+        $self->debug_message('Sx result id: '.$sx_result->id);
+        $self->debug_message('Sx output dir: '.$sx_result->output_dir);
+        $self->debug_message('Instrument data: '.join(' ', $sx_result->instrument_data_id));
 
         my $link_ok = $self->_link_sx_result($sx_result);
         return if not $link_ok;
@@ -88,20 +88,20 @@ sub execute {
         push @sx_results, $sx_result;
     }
 
-    $self->status_message('Reads attempted: '.$build->reads_attempted);
-    $self->status_message('Reads processed: '.$build->reads_processed);
+    $self->debug_message('Reads attempted: '.$build->reads_attempted);
+    $self->debug_message('Reads processed: '.$build->reads_processed);
     $build->reads_processed_success( $build->reads_attempted ? sprintf('%0.3f', $build->reads_processed / $build->reads_attempted) : 0);
-    $self->status_message('Reads processed success: '.$build->reads_processed_success);
+    $self->debug_message('Reads processed success: '.$build->reads_processed_success);
 
     $self->output_build($build);
     $self->sx_results(\@sx_results);
-    $self->status_message('Merge and Link SX results...OK');
+    $self->debug_message('Merge and Link SX results...OK');
     return 1;
 }
 
 sub _link_sx_result {
     my ($self, $sx_result) = @_;
-    $self->status_message('Link SX result...');
+    $self->debug_message('Link SX result...');
 
     Carp::confess('No SX result given to link!') if not $sx_result;
 
@@ -109,27 +109,27 @@ sub _link_sx_result {
     foreach my $output_file ( $sx_result->read_processor_output_files ) {
         my $target = $sx_result->output_dir.'/'.$output_file;
         my $link_name = $build->data_directory.'/'.$output_file;
-        $self->status_message("Link output file $target to $link_name");
+        $self->debug_message("Link output file $target to $link_name");
         Genome::Sys->create_symlink($target, $link_name);
     }
 
-    $self->status_message('Link SX result...');
+    $self->debug_message('Link SX result...');
     for my $type (qw/ input output /) {
         my $metrics_file_method = 'read_processor_'.$type.'_metric_file';
         my $target = $sx_result->$metrics_file_method;
         my $metrics_file_base_name_method = 'read_processor_'.$type.'_metric_file_base_name';
         my $link_name = $build->data_directory.'/'.$sx_result->$metrics_file_base_name_method;
-        $self->status_message("Link $type metrics file $target to $link_name");
+        $self->debug_message("Link $type metrics file $target to $link_name");
         Genome::Sys->create_symlink($target, $link_name);
     }
 
-    $self->status_message('Link SX result...done');
+    $self->debug_message('Link SX result...done');
     return 1;
 }
 
 sub _collect_metrics_from_sx_result {
     my ($self, $sx_result) = @_;
-    $self->status_message('Collect metrics from SX result...');
+    $self->debug_message('Collect metrics from SX result...');
 
     Carp::confess('No SX result given to collect metrics!') if not $sx_result;
 
@@ -142,7 +142,7 @@ sub _collect_metrics_from_sx_result {
             $self->error_message('No output metrics file for SX result! '.$sx_result->id);
             return;
         }
-        $self->status_message(ucfirst($type).' metrics file: '.$metrics_file);
+        $self->debug_message(ucfirst($type).' metrics file: '.$metrics_file);
 
         my $metrics = Genome::Model::Tools::Sx::Metrics::Basic->from_file($metrics_file);
         if ( not $metrics ) {
@@ -156,14 +156,14 @@ sub _collect_metrics_from_sx_result {
             return;
         }
 
-        $self->status_message('Count: '.$count);
+        $self->debug_message('Count: '.$count);
         $types_and_values{$type} = $count;
     }
 
     $build->reads_attempted( $build->reads_attempted + $types_and_values{input} );
     $build->reads_processed( $build->reads_processed + $types_and_values{output} );
 
-    $self->status_message('Collect metrics from SX result...OK');
+    $self->debug_message('Collect metrics from SX result...OK');
     return 1;
 }
 

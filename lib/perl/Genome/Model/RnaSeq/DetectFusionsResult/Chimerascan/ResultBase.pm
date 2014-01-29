@@ -175,26 +175,26 @@ sub _prepare_to_run_chimerascan {
 
     if ($reuse_bam) {
         my $tmp_dir = $self->_symlink_in_fastqs($fastq1, $fastq2);
-        $self->status_message("Attempting to reuse BAMs from pipeline");
+        $self->debug_message("Attempting to reuse BAMs from pipeline");
 
         my $reusable_dir = File::Spec->join($self->temp_staging_directory,
                 'reusable');
         Genome::Sys->create_directory($reusable_dir);
 
-        $self->status_message("Creating the reheadered bam.");
+        $self->debug_message("Creating the reheadered bam.");
         my $reheadered_bam = $self->_create_reheadered_bam($reusable_dir,
                 $bowtie_version, $qname_sorted_bam);
 
-        $self->status_message("Creating the 'both mates mapped' bam.");
+        $self->debug_message("Creating the 'both mates mapped' bam.");
         my ($both_mates_bam, $sorted_both_mates_bam, $sorted_both_mates_index) =
                 $self->_create_both_mates_bam($reusable_dir, $reheadered_bam);
 
-        $self->status_message("Creating the unmapped fastqs.");
+        $self->debug_message("Creating the unmapped fastqs.");
         my ($unmapped_1, $unmapped_2) =
                 $self->_create_unmapped_fastqs($reusable_dir, $reheadered_bam);
         unlink($reheadered_bam);
 
-        $self->status_message("Symlinking reusable parts into Chimerascan working dir.");
+        $self->debug_message("Symlinking reusable parts into Chimerascan working dir.");
         $self->_symlink_in_files($tmp_dir, $both_mates_bam, $unmapped_1,
                 $unmapped_2, $sorted_both_mates_bam, $sorted_both_mates_index);
     }
@@ -281,7 +281,7 @@ sub _symlink_in_fastqs {
 sub _create_both_mates_bam {
     my ($self, $reusable_dir, $reheadered_bam) = @_;
 
-    $self->status_message("Filtering to only reads where both mates map (for aligned_reads.bam)");
+    $self->debug_message("Filtering to only reads where both mates map (for aligned_reads.bam)");
     my $both_mates_bam = File::Spec->join($reusable_dir, 'both_mates.bam');
     my $view_cmd = "samtools view -F 12 -b -h $reheadered_bam > $both_mates_bam";
     Genome::Sys->shellcmd(
@@ -290,7 +290,7 @@ sub _create_both_mates_bam {
         output_files => [$both_mates_bam],
     );
 
-    $self->status_message("Sorting both_mates_bam by position");
+    $self->debug_message("Sorting both_mates_bam by position");
     my $sorted_both_mates_bam = File::Spec->join($reusable_dir, 'sorted_both_mates.bam');
     my $rv = Genome::Model::Tools::Picard::SortSam->execute(
         input_file => $both_mates_bam,
@@ -303,7 +303,7 @@ sub _create_both_mates_bam {
     }
 
     # create index
-    $self->status_message("Indexing BAM: $sorted_both_mates_bam");
+    $self->debug_message("Indexing BAM: $sorted_both_mates_bam");
     my $sorted_both_mates_index = $sorted_both_mates_bam . '.bai';
     my $index_cmd = Genome::Model::Tools::Picard::BuildBamIndex->create(
         input_file => $sorted_both_mates_bam,
@@ -322,7 +322,7 @@ sub _create_both_mates_bam {
 sub _create_reheadered_bam {
     my ($self, $reusable_dir, $bowtie_version, $qname_sorted_bam) = @_;
 
-    $self->status_message("Creating bam re-headered with transcripts from the chimerascan-index");
+    $self->debug_message("Creating bam re-headered with transcripts from the chimerascan-index");
     my $index = $self->_get_index($bowtie_version);
     my $seqdict_file = $index->get_sequence_dictionary;
     my $new_bam_header = $self->_get_new_bam_header($reusable_dir, $qname_sorted_bam, $seqdict_file);
@@ -369,7 +369,7 @@ sub _create_unmapped_fastqs {
     my ($self, $reusable_dir, $reheadered_bam) = @_;
 
     # Run samtools to filter, include only reads where one or both mates didn't map (primary and non-primary).
-    $self->status_message("Filtering to get all the other reads.");
+    $self->debug_message("Filtering to get all the other reads.");
     my $not_both_mates_bam = File::Spec->join($reusable_dir, 'not_both_mates.bam');
     # sam format specifies bitmask 4 = read itself unmapped and 8 = read's mate is unmapped (we want either of them)
     my $gawk_cmd = q{substr($1, 0, 1) == "@" || and($2, 4) || and($2, 8)};
@@ -381,7 +381,7 @@ sub _create_unmapped_fastqs {
         output_files => [$not_both_mates_bam],
     );
 
-    $self->status_message("Generating the unaligned fastqs from $not_both_mates_bam");
+    $self->debug_message("Generating the unaligned fastqs from $not_both_mates_bam");
     my $unmapped_1 = File::Spec->join($reusable_dir, 'unmapped_1');
     my $unmapped_2 = File::Spec->join($reusable_dir, 'unmapped_2');
 
@@ -442,7 +442,7 @@ sub _resolve_index_dir {
     my $index = $self->_get_index($bowtie_version);
 
     if ($index) {
-        $self->status_message(sprintf('Registering software result %s as a user ' .
+        $self->debug_message(sprintf('Registering software result %s as a user ' .
                 'of the generated index (%s)', $self->id, $index->id));
         $index->add_user(user => $self, label => 'uses');
     } else {

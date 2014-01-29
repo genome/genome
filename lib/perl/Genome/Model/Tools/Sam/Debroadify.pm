@@ -88,8 +88,8 @@ sub execute {
     unless ($input) {
         die 'Could not open the input pipe.';
     }
-    $self->status_message('Converting Broad chromosome references to TGI style.');
-    $self->status_message('output will be at: ' . $chr_rename_output_file);
+    $self->debug_message('Converting Broad chromosome references to TGI style.');
+    $self->debug_message('output will be at: ' . $chr_rename_output_file);
     while (my $line = $input->getline) {
         if ($line =~ /^\@SQ/ && $line =~ /chr/) {
             $line =~ s/\@SQ\tSN:chrM/\@SQ\tSN:MT/;
@@ -115,8 +115,8 @@ sub execute {
 
     # This needs to be done because Broad's reference is sorted 1-22,X,Y but ours is 1-9,X,Y,10-22.
     if ($self->reference_file) {
-        $self->status_message('Reordering BAM to match reference.');
-        $self->status_message('output will be at: ' . $self->output_file);
+        $self->debug_message('Reordering BAM to match reference.');
+        $self->debug_message('output will be at: ' . $self->output_file);
         my $reorder_cmd = Genome::Model::Tools::Picard::ReorderSam->create(
             input_file => $chr_rename_output_file,
             output_file => $self->output_file,

@@ -98,7 +98,7 @@ sub execute {
         if ($reader->line_number == 1) {
             my $first_column = $self->annotation_columns->[0];
             if ($line->{$first_column} eq $first_column) {
-                $self->status_message("Skipping first line due to headers.");
+                $self->debug_message("Skipping first line due to headers.");
                 next LINE;
             }
         }
@@ -109,7 +109,7 @@ sub execute {
             $species = $line->{species};
             @annotation_data_dirs = $self->annotation_directories_for_version_and_species($version, $species);
             confess 'Could not determine annotation data directories!' unless @annotation_data_dirs;
-            $self->status_message("Found annotation data for version $version and species $species!");
+            $self->debug_message("Found annotation data for version $version and species $species!");
         }
 
         # Get the transcript using information in the output file
@@ -126,7 +126,7 @@ sub execute {
     }
 
     $roi_fh->close;
-    $self->status_message("ROI file containing chromosome, start, and stop of transcripts successfully created!");
+    $self->debug_message("ROI file containing chromosome, start, and stop of transcripts successfully created!");
     return 1;
 }
      

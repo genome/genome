@@ -167,7 +167,7 @@ sub _filter_variants {
     $stats{'num_MT_sites_autopassed'} = 0;
 
     ## Run BAM readcounts in batch mode to get read counts for all positions in file ##
-    $self->status_message('Running BAM Readcounts...');
+    $self->debug_message('Running BAM Readcounts...');
 
     #First, need to create a variant list file to use for generating the readcounts.
     my $input_file = $self->input_directory . "/indels.hq.bed";
@@ -188,7 +188,7 @@ sub _filter_variants {
 
 
     ## Print each line to file ##
-    $self->status_message("Printing variants to temp file...");
+    $self->debug_message("Printing variants to temp file...");
     while(my $line = $input_fh->getline) {
         chomp $line;
         my ($chr, $start, $stop, $ref, $var) = split /[\t\/]/, $line;
@@ -715,7 +715,7 @@ sub _get_readcount_lines {
         if($rc_chr eq $chr and $rc_pos > $start_position) {
             if(!$has_reset) {
                 $has_reset = 1;
-                $self->status_message('Resetting readcount filehandle...' . ($rc_pos . ' > ' . $start_position));
+                $self->debug_message('Resetting readcount filehandle...' . ($rc_pos . ' > ' . $start_position));
                 seek($readcount_fh, 0, 0);
             } else {
                 $self->error_message('Could not find readcount information! (' . $chr . ' ' . $start_position . ')');

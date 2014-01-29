@@ -254,7 +254,7 @@ sub structure_at_position {
 
     my @structures = $self->ordered_sub_structures;
     unless (@structures) {
-        $self->status_message("No sub-structures for transcript " . $self->transcript_name . ", cannot find structure at position $position");
+        $self->debug_message("No sub-structures for transcript " . $self->transcript_name . ", cannot find structure at position $position");
         return;
     }
 
@@ -263,7 +263,7 @@ sub structure_at_position {
             and $position <= $struct->structure_stop;
     }
 
-    $self->status_message("No substructure found for transcript " . $self->transcript_name . " at position $position");
+    $self->debug_message("No substructure found for transcript " . $self->transcript_name . " at position $position");
     return;
 }
 

@@ -60,17 +60,17 @@ sub execute {
 
 sub _assign_instrument_data  {
     my $self = shift;
-    $self->status_message('Ensure correct assigned to sub model...');
+    $self->debug_message('Ensure correct assigned to sub model...');
 
     my $model = $self->sub_model;
     if ( not $model ) {
         $self->error_message('Failed to get sub model!');
         return;
     }
-    $self->status_message('Model: '.$model->__display_name__);
+    $self->debug_message('Model: '.$model->__display_name__);
 
     my @instrument_data = $self->instrument_data;
-    $self->status_message('Instrument data: '.join(' ', map { $_->id } @instrument_data));
+    $self->debug_message('Instrument data: '.join(' ', map { $_->id } @instrument_data));
 
     # Ensure correct inst data on model
     my %assigned_instrument_data = map { $_->id => $_ } $model->instrument_data;
@@ -88,7 +88,7 @@ sub _assign_instrument_data  {
     my $model_id = $model->id;
     my @instrument_data_ids_to_unassign = keys %assigned_instrument_data;
     if ( @instrument_data_ids_to_unassign ) {
-        $self->status_message("Unassign incorrect instrument data ".join(' ', @instrument_data_ids_to_unassign)." from model ".$model->__display_name__);
+        $self->debug_message("Unassign incorrect instrument data ".join(' ', @instrument_data_ids_to_unassign)." from model ".$model->__display_name__);
         my $instrument_data_expression = 'id'.( @instrument_data_ids_to_unassign > 1 ) 
         ? '='.$instrument_data_ids_to_unassign[0]
         : ':'.join(@instrument_data_ids_to_unassign);
@@ -99,12 +99,12 @@ sub _assign_instrument_data  {
             $self->error_message('Failed to unassign instrument data from model!');
             return;
         }
-        $self->status_message('Unassign incorrect instrument data...done');
+        $self->debug_message('Unassign incorrect instrument data...done');
     }
 
     # Add correct inst data
     if ( @instrument_data_ids_to_assign ) {
-        $self->status_message("Assign correct instrument data ".join(' ', @instrument_data_ids_to_assign)." to model ".$model->__display_name__);
+        $self->debug_message("Assign correct instrument data ".join(' ', @instrument_data_ids_to_assign)." to model ".$model->__display_name__);
         my $instrument_data_expression = 'id'.( @instrument_data_ids_to_assign > 1 ) 
         ? '='.$instrument_data_ids_to_assign[0]
         : ':'.join(@instrument_data_ids_to_assign);
@@ -115,7 +115,7 @@ sub _assign_instrument_data  {
             $self->error_message('Failed to assign instrument data to model!');
             return;
         }
-        $self->status_message('Assign correct instrument data...done');
+        $self->debug_message('Assign correct instrument data...done');
     }
 
     # Reload the model and inputs
@@ -134,28 +134,28 @@ sub _assign_instrument_data  {
         return;
     }
 
-    $self->status_message('Ensure correct assigned to sub model...OK');
+    $self->debug_message('Ensure correct assigned to sub model...OK');
     return 1;
 }
 
 sub _build_if_necessary {
     my ($self, $model) = @_;
-    $self->status_message('Build if necessary...');
+    $self->debug_message('Build if necessary...');
 
-    $self->status_message('Model: '. $model->__display_name__);
-    $self->status_message('Search for succeeded build...');
+    $self->debug_message('Model: '. $model->__display_name__);
+    $self->debug_message('Search for succeeded build...');
     my $sub_build = $model->build_needed;
     if ( $sub_build ) {
-        $self->status_message('Found current build! '.$sub_build->__display_name__);
+        $self->debug_message('Found current build! '.$sub_build->__display_name__);
         return;
     }
 
-    $self->status_message('No succeeded build. Look for a build that is scheduled or running...');
+    $self->debug_message('No succeeded build. Look for a build that is scheduled or running...');
     $sub_build = $self->_find_scheduled_or_running_build_for_model($model);
     if ( not $sub_build ) {
-        $self->status_message('None found. Creating a build...');
+        $self->debug_message('None found. Creating a build...');
         my $cmd = 'genome model build start '.$model->id.' --job-dispatch apipe --server-dispatch workflow'; # these are defaults
-        $self->status_message('cmd: '.$cmd);
+        $self->debug_message('cmd: '.$cmd);
         my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
         if ( not $rv ) {
             $self->error_message($@);
@@ -169,17 +169,17 @@ sub _build_if_necessary {
         }
     }
     else {
-        $self->status_message('Found scheduled/running build!');
+        $self->debug_message('Found scheduled/running build!');
     }
-    $self->status_message('Build id: '.$sub_build->id);
-    $self->status_message('Build data directory '.$sub_build->data_directory);
-    $self->status_message('Watching build...');
+    $self->debug_message('Build id: '.$sub_build->id);
+    $self->debug_message('Build data directory '.$sub_build->data_directory);
+    $self->debug_message('Watching build...');
     my $time = 0;
     my $inc = 30;
     my $status = $sub_build->status;
     while ( $status eq 'Running' or $status eq 'Scheduled' ) {
         if ( $time % 150 ){ # Only report every 5 minutes
-            $self->status_message("Watching build. Time: $time Status: $status");
+            $self->debug_message("Watching build. Time: $time Status: $status");
         }
         sleep $inc;
         $time += $inc;
@@ -187,8 +187,8 @@ sub _build_if_necessary {
         $status = $sub_build->status;
     }
 
-    $self->status_message('Build has stopped running, checking status...');
-    $self->status_message('Status: '.$status);
+    $self->debug_message('Build has stopped running, checking status...');
+    $self->debug_message('Status: '.$status);
     return ( $status eq 'Succeeded' ? 1 : 0 );
 }
 
@@ -197,7 +197,7 @@ sub _find_scheduled_or_running_build_for_model {
 
     Carp::confess('No model sent to find running or scheduled build') if not $model;
 
-    $self->status_message('Looking for running or scheduled build for model: '.$model->__display_name__);
+    $self->debug_message('Looking for running or scheduled build for model: '.$model->__display_name__);
 
     UR::Context->reload('Genome::Model', id => $model->id);
     UR::Context->reload('Genome::Model::Build', model_id => $model->id);
@@ -206,7 +206,7 @@ sub _find_scheduled_or_running_build_for_model {
     my $build = $model->latest_build;
     return if not $build;
 
-    $self->status_message( sprintf('Build: %s %s', $build->id, $build->status) );
+    $self->debug_message( sprintf('Build: %s %s', $build->id, $build->status) );
     if ( grep { $build->status eq $_ } (qw/ Scheduled Running /) ) {
         return $build;
     }

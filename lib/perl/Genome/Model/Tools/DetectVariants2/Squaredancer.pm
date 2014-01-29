@@ -103,10 +103,10 @@ sub run_config {
             $self->error_message("Given breakdancer config file $cfg_file is not valid");
             die $self->error_message;
         }
-        $self->status_message("Using given breakdancer config file: $cfg_file");
+        $self->debug_message("Using given breakdancer config file: $cfg_file");
     }
     else {
-        $self->status_message("Run bam2cfg to make breakdancer_config file");
+        $self->debug_message("Run bam2cfg to make breakdancer_config file");
 
         my %params = (
             tumor_bam   => $self->aligned_reads_input,
@@ -126,7 +126,7 @@ sub run_config {
         }
 
         $self->config_file($self->_config_staging_output);
-        $self->status_message('Breakdancer config is created ok');
+        $self->debug_message('Breakdancer config is created ok');
     }
     return 1;
 }
@@ -171,7 +171,7 @@ sub run_squaredancer {
     my $cmd = $sd_params ? $sd_path . " $sd_params" : $sd_path;
        $cmd = "$pl_path $cmd $bam_string" . ' 1> ' . $ori_out . ' 2> '. $self->_sd_error_staging_output;
 
-    $self->status_message("EXECUTING SQUAREDANCER STEP: $cmd");
+    $self->debug_message("EXECUTING SQUAREDANCER STEP: $cmd");
     my $return = Genome::Sys->shellcmd(
         cmd => $cmd,
         input_files  => \@bam_list,
@@ -205,7 +205,7 @@ sub run_squaredancer {
     $in_fh->close;
     $out_fh->close;
 
-    $self->status_message('Squaredancer run finished ok');
+    $self->debug_message('Squaredancer run finished ok');
     return 1;
 }
 

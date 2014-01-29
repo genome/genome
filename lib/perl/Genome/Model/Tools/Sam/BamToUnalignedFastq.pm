@@ -82,7 +82,7 @@ sub execute {
     my $bam_fh = IO::File->new('samtools view '.$self->bam_file.'|');
     if ($self->ignore_bitflags){
         #print everything out to a single file, sort, then print to correct fh
-        $self->status_message("extracting (un)aligned reads based on reference name");
+        $self->debug_message("extracting (un)aligned reads based on reference name");
         my $temp_out = Genome::Sys->create_temp_file_path();
         my $tfh = IO::File->new("> $temp_out");
         while ( my $align = $bam_fh->getline) {
@@ -105,11 +105,11 @@ sub execute {
         }
         $tfh->close;
         my $temp_out_sorted = Genome::Sys->create_temp_file_path();
-        $self->status_message("sorting (un)aligned reads");
+        $self->debug_message("sorting (un)aligned reads");
         system("sort $temp_out > $temp_out_sorted");
         my $sfh = IO::File->new($temp_out_sorted);
         my $cache;
-        $self->status_message("placing (un)aligned reads in paired-end or fragment fastq files");
+        $self->debug_message("placing (un)aligned reads in paired-end or fragment fastq files");
         while (my $align = $sfh->getline){
             if ( ! $cache ){
                 $cache = $align;

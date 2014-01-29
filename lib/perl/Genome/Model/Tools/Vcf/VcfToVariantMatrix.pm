@@ -292,7 +292,7 @@ sub execute {                               # replace with real execution logic.
 
 sub load_positions {
     my ($self, $positions_file, $positions_selection_hash) = @_;
-    $self->status_message("Loading Position Restriction File");
+    $self->debug_message("Loading Position Restriction File");
     my $inFh_positions = Genome::Sys->open_file_for_reading( $positions_file ) || die "can't open $positions_file\n";
     while(my $line = $inFh_positions->getline ) {
         chomp($line);
@@ -469,7 +469,7 @@ sub append_columns_to_file {
 
     my ($ofh, $path) = Genome::Sys->create_temp_file;
     push(@{$self->_temp_files}, $path);
-    $self->status_message("Creating temp file #" .scalar(@{$self->_temp_files}). ": $path");
+    $self->debug_message("Creating temp file #" .scalar(@{$self->_temp_files}). ": $path");
     for my $line (@$contents) {
         $ofh->print(join($sep, @$line)."\n");
     }

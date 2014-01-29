@@ -38,11 +38,11 @@ sub pre_execute {
 
     $self->_operation->log_dir($self->workflow_log_directory);
 
-    $self->status_message("Generating TCGA compliant file for model id:".$model_id);
-    $self->status_message("Using working directory:".$working_dir);
-    $self->status_message("Workflow log directory:".$self->workflow_log_directory);
-    $self->status_message("Delete intermediate files on completion: ".$self->cleanup);
-    $self->status_message("Creating required directories.");
+    $self->debug_message("Generating TCGA compliant file for model id:".$model_id);
+    $self->debug_message("Using working directory:".$working_dir);
+    $self->debug_message("Workflow log directory:".$self->workflow_log_directory);
+    $self->debug_message("Delete intermediate files on completion: ".$self->cleanup);
+    $self->debug_message("Creating required directories.");
 
     Genome::Sys->create_directory("$working_dir");
     Genome::Sys->create_directory("$working_dir/header");
@@ -54,7 +54,7 @@ sub pre_execute {
     Genome::Sys->create_directory("$working_dir/sams");
     Genome::Sys->create_directory("$working_dir/bams");
 
-    $self->status_message("Pre-execute of GenerateMaqBasedFile complete.");
+    $self->debug_message("Pre-execute of GenerateMaqBasedFile complete.");
 
     return 1;
 }
@@ -66,7 +66,7 @@ sub post_execute {
     my $cleanup = $self->cleanup;
 
     if ($cleanup) {
-        $self->status_message("Cleaning up intermediate files.");
+        $self->debug_message("Cleaning up intermediate files.");
         unlink(<$working_dir/header/*>);
         unlink(<$working_dir/aligned/*>);
         unlink(<$working_dir/unaligned/*>);
@@ -75,7 +75,7 @@ sub post_execute {
         unlink(<$working_dir/sams/*>);
         unlink(<$working_dir/bams/*>);
     } else {
-        $self->status_message("Leaving intermediate files behind. Done.");
+        $self->debug_message("Leaving intermediate files behind. Done.");
     }
 
     return 1;

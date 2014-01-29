@@ -77,7 +77,7 @@ sub execute {
     $params{build_id} = $abuild->id if $abuild;
 
     use Data::Dumper;
-    $self->status_message("Annotator params are:\n"
+    $self->debug_message("Annotator params are:\n"
       . Dumper(\%params)
     );
 

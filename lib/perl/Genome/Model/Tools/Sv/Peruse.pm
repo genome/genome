@@ -104,7 +104,7 @@ sub execute {
         $start =~ s/(.+\.)//;
         if($start_prefix) {
             #report what we chunked off in case this is unexpected
-            $self->status_message("Identified $start_prefix from the beginning of $start as a prefix");
+            $self->debug_message("Identified $start_prefix from the beginning of $start as a prefix");
         }
         $start_prefix =~ s/\.// if $start_prefix;
         
@@ -137,7 +137,7 @@ sub execute {
         );
         if($fields[0] =~ /\./) {
             #probably is HQfiltered input
-            $self->status_message("First column contains a period. Assuming Ken Chen's HQFiltered file format.");
+            $self->debug_message("First column contains a period. Assuming Ken Chen's HQFiltered file format.");
             ($chr1,
                 $chr1_pos,
                 $chr2,

@@ -83,7 +83,7 @@ sub aligner_requires_param_masking {
 
     # if aligner params are not required for index, and we can   generically create an index for that version, then filter it out.
     if ($aligner_class->aligner_params_required_for_index) {
-        $class->status_message("This aligner requires a parameter-specific index.  Can't mask params out.");
+        $class->debug_message("This aligner requires a parameter-specific index.  Can't mask params out.");
         return 0;
     }
 
@@ -126,7 +126,7 @@ sub create {
     my %p = @_;
 
     my $aligner_class = 'Genome::InstrumentData::AlignmentResult::'  . Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name($p{aligner_name});
-    $class->status_message(sprintf("Resolved aligner class %s, making sure it's real and can be loaded.", $aligner_class));
+    $class->debug_message(sprintf("Resolved aligner class %s, making sure it's real and can be loaded.", $aligner_class));
     unless ($aligner_class->class) {
         $class->error_message(sprintf("Failed to load aligner class (%s).", $aligner_class));
         return;
@@ -136,7 +136,7 @@ sub create {
     return unless $self;
     $self->aligner_class_name($aligner_class);
 
-    $self->status_message("Prepare staging directories...");
+    $self->debug_message("Prepare staging directories...");
     unless ($self->_prepare_staging_directory) {
         $self->error_message("Failed to prepare working directory");
         return;
@@ -173,7 +173,7 @@ sub generate_dependencies_as_needed {
 
         for my $b ($self->reference_build->append_to) { # (append_to is_many)
             $params{reference_build} = $b;
-            $self->status_message("Creating AlignmentIndex for build dependency " . $b->name);
+            $self->debug_message("Creating AlignmentIndex for build dependency " . $b->name);
             my $result = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_or_create(%params);
             unless($result) {
                 die $self->error_message("Failed to create AlignmentIndex for dependency " . $b->name);
@@ -200,7 +200,7 @@ sub _prepare_reference_index {
         return;
     }
 
-    $self->status_message(sprintf("Confirmed non-zero reference fasta file is %s", $reference_fasta_file));
+    $self->debug_message(sprintf("Confirmed non-zero reference fasta file is %s", $reference_fasta_file));
     unless (symlink($reference_fasta_file, sprintf("%s/all_sequences.fa", $self->temp_staging_directory))) {
         $self->error_message("Couldn't symlink reference fasta into the staging directory");
     }
@@ -208,7 +208,7 @@ sub _prepare_reference_index {
     my $reference_remap_file = sprintf("%s.remap", $reference_fasta_file);
 
     if (-e $reference_remap_file) {
-        $self->status_message("Detected $reference_remap_file.remap. Symlinking that as well.");
+        $self->debug_message("Detected $reference_remap_file.remap. Symlinking that as well.");
         unless (symlink($reference_remap_file, sprintf("%s/all_sequences.fa.remap", $self->temp_staging_directory))) {
             $self->error_message("Couldn't symlink reference remap into the staging directory");
         }
@@ -220,7 +220,7 @@ sub _prepare_reference_index {
     }
 
     my $output_dir = $self->output_dir || $self->_prepare_output_directory;
-    $self->status_message("Alignment output path is $output_dir");
+    $self->debug_message("Alignment output path is $output_dir");
 
     unless ($self->_promote_data)  {
         $self->error_message("Failed to de-stage data into output path " . $self->output_dir);
@@ -229,7 +229,7 @@ sub _prepare_reference_index {
 
     $self->_reallocate_disk_allocation;
 
-    $self->status_message("Prepared alignment reference index!");
+    $self->debug_message("Prepared alignment reference index!");
 
     return $self;
 }
@@ -288,7 +288,7 @@ sub resolve_allocation_subdirectory {
 
     my $directory = join('/', @path_components);
 
-    $self->status_message(sprintf("Resolved allocation subdirectory to %s", $directory));
+    $self->debug_message(sprintf("Resolved allocation subdirectory to %s", $directory));
     return $directory;
 }
 

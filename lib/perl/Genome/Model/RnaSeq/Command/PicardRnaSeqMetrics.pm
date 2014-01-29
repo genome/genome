@@ -51,7 +51,7 @@ sub shortcut {
         my %params = $self->params_for_result;
         my $result = Genome::InstrumentData::AlignmentResult::Merged::PicardRnaSeqMetrics->get_with_lock(%params);
         if ($result) {
-            $self->status_message('Using existing result ' . $result->__display_name__);
+            $self->debug_message('Using existing result ' . $result->__display_name__);
             return $self->link_result_to_build($result);
         }
     }
@@ -64,7 +64,7 @@ sub execute {
     my $build = $self->build;
     my $annotation_build = $build->annotation_build;
     unless ($annotation_build) {
-        $self->status_message('Skipping PicardRnaSeqMetrics since annotation_build is not defined');
+        $self->debug_message('Skipping PicardRnaSeqMetrics since annotation_build is not defined');
         return 1;
     }
     my $alignment_result = $build->alignment_result;

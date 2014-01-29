@@ -164,7 +164,7 @@ sub execute {
     my $self = shift;
 
     my $alignment_directory = $self->alignment_directory;
-    $self->status_message("OUTPUT PATH: $alignment_directory\n");
+    $self->debug_message("OUTPUT PATH: $alignment_directory\n");
 
 
     # we resolve these first, since we might just print the paths we work with then exit
@@ -180,7 +180,7 @@ sub execute {
     } else {
         $is_paired_end = 0;
     }
-    $self->status_message("INPUT PATH(S): $files_to_align\n");
+    $self->debug_message("INPUT PATH(S): $files_to_align\n");
 
     # prepare the refseq
     my $ref_seq_file =  $self->reference_path;
@@ -194,7 +194,7 @@ sub execute {
         $self->error_message("Reference build index path '$ref_seq_index_file' does not exist.");
         die($self->error_message);
     }
-    $self->status_message("REFSEQ PATH: $ref_seq_file\n");
+    $self->debug_message("REFSEQ PATH: $ref_seq_file\n");
 
     # these are general params not infered from the above
     my $aligner_output_file = $self->aligner_output_file;
@@ -224,7 +224,7 @@ sub execute {
               $files_to_align) .' > '. $aligner_output_file .' 2>&1';
     my @input_files = map{ split(',', $_) }  split(' ',$files_to_align);
 
-    $self->status_message("COMMAND: $cmdline\n");
+    $self->debug_message("COMMAND: $cmdline\n");
     my $aligner_output_files = [$self->bam_file];
     if (version->parse($self->use_version) < version->parse('1.1.0')) {
         $aligner_output_files = [$self->sam_file];

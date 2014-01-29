@@ -32,7 +32,7 @@ sub _combine_variants {
     else {
         die $self->error_message("Cnv Union operation found two cnv files, but this module currently only passes one forward.");
     }
-    $self->status_message("Completed copying cnvs.hq file into output directory.");
+    $self->debug_message("Completed copying cnvs.hq file into output directory.");
     return 1;
 }
 

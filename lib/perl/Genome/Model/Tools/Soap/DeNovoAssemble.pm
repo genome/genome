@@ -111,7 +111,7 @@ sub execute {
     $cmd .= ' -L '.$self->min_scaffold_contig_length if $self->min_scaffold_contig_length;
     $cmd .= ' -F ' if $self->fill_gaps_in_scaffold;
 
-    $self->status_message("Running SOAPdenovo with command: $cmd");
+    $self->debug_message("Running SOAPdenovo with command: $cmd");
 
     my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
     if ( not $rv ) {

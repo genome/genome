@@ -50,7 +50,7 @@ sub execute
 
     #create read file
     my $cmd = 'blastn ' . $self->database . ' ' . $input_file . ' M=1 N=-3 R=3 Q=3 wordmask=seg lcmask topcomboN=1 hspsepsmax=10 golmax=0 B=1 V=1 novalidctxok >  ' . $read_file; 
-    $self->status_message('Running: '. $cmd);
+    $self->debug_message('Running: '. $cmd);
 
     print("$cmd\n");
     my $rv = system($cmd);
@@ -61,7 +61,7 @@ sub execute
 
     #run parsing script
     my $parse_cmd = $parse_script . ' -input ' . $read_file . ' -output ' . $parsed_file . ' -num_hits 1 -percent 95 -fol .75'; 
-    $self->status_message('Running: ' . $parse_cmd);
+    $self->debug_message('Running: ' . $parse_cmd);
     print $parse_cmd, "\n";
     $rv = system($parse_cmd);
     unless ($rv == 0)

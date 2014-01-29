@@ -49,7 +49,7 @@ sub execute {
     my $output_dir = $self->output_dir;
     my $mapfile = $self->map_file;
     if (-s $mapfile) {
-        $self->status_message("A valid map.csv file was input. Skipping the creation of map.csv and per-sample cn files.\n");
+        $self->debug_message("A valid map.csv file was input. Skipping the creation of map.csv and per-sample cn files.\n");
     }
     else {
         ## Step 1) Create map.csv file and per-sample copy number file for many-sample datasets

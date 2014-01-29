@@ -27,10 +27,10 @@ sub _files_to_remove {
 sub _handle_input {
     my $self = shift;
 
-    $self->status_message("Verifying PHDs");
+    $self->debug_message("Verifying PHDs");
     my $phd_file = $self->_verify_phds;
 
-    $self->status_message("PHD to FASTA and Quality");
+    $self->debug_message("PHD to FASTA and Quality");
     $self->_phd2fnq($phd_file);
 
     return 1;

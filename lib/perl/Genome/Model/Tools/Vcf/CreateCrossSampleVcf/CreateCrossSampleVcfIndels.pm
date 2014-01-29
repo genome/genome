@@ -25,7 +25,7 @@ sub execute {
     my ($self) = @_;
 
     Genome::Sys->create_directory($self->output_directory);
-    $self->status_message("Resolving Builds...");
+    $self->debug_message("Resolving Builds...");
     my $builds = $self->_resolve_builds();
     my %params = (
         builds => $builds,
@@ -42,7 +42,7 @@ sub execute {
        delete $params{'wingspan'};
     }
     my $software_result = Genome::Model::Tools::Vcf::CreateCrossSampleVcf::CreateCrossSampleVcfIndels::Result->get_or_create(%params);
-    $self->status_message("Got or created software result with id "
+    $self->debug_message("Got or created software result with id "
         . $software_result->id . " (test_name='" . $software_result->test_name . "')");
     Genome::Sys->symlink_directory($software_result->output_dir,
         $self->output_directory);

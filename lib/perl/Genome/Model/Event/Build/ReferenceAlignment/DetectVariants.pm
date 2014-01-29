@@ -18,7 +18,7 @@ sub bsub_rusage {
 sub execute{
     my $self = shift;
 
-    $self->status_message("Executing detect variants step");
+    $self->debug_message("Executing detect variants step");
     my $build = $self->build;
 
     my $processing_profile = $build->processing_profile;
@@ -63,7 +63,7 @@ sub execute{
         }
     }
 
-    $self->status_message("detect variants command completed successfully");
+    $self->debug_message("detect variants command completed successfully");
 
     return 1;
 }

@@ -58,7 +58,7 @@ sub execute {
     $self->dump_warning_messages(1);
 
     my $now = UR::Context->current->now;
-    $self->status_message(">>>Starting Report execute() at $now"); 
+    $self->debug_message(">>>Starting Report execute() at $now"); 
     
     $self->final_file($self->align_final_file);
     #my $doc = XML::LibXML->createDocument();
@@ -78,7 +78,7 @@ sub execute {
     #$report->close;
     
     
-    $self->status_message("<<<Ending Report execute() at ".UR::Context->current->now); 
+    $self->debug_message("<<<Ending Report execute() at ".UR::Context->current->now); 
     return 1;
 }
 1;

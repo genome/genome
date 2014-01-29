@@ -277,7 +277,7 @@ sub print_region_list {
     my ($input_fh, $header) = $self->parse_vcf_header($input_file);
 
     ## Print each line to file in order to get readcounts
-    $self->status_message("Printing variants to temporary region_list file $output_file...");
+    $self->debug_message("Printing variants to temporary region_list file $output_file...");
     while(my $line = $input_fh->getline) {
         if ($self->should_print_region_line($line)) {
             my ($chr, $pos) = split /\t/, $line;
@@ -594,7 +594,7 @@ sub add_per_bam_params_to_input {
     for my $sample_name (@$sample_names) {
         my $bam_path = shift @$bam_paths;
 
-        $self->status_message("Running BAM Readcounts for sample $sample_name...");
+        $self->debug_message("Running BAM Readcounts for sample $sample_name...");
         my $readcount_file = $self->_temp_staging_directory . "/$sample_name.readcounts";  #this is suboptimal, but I want to wait until someone tells me a better way...multiple options exist
         if (-f $bam_path) {
             $inputs{"bam_${sample_name}"} = $bam_path;
@@ -691,7 +691,7 @@ sub generate_and_run_readcounts_in_parallel {
         $self->error_message(@errors);
         die "Errors validating workflow\n";
     }
-    $self->status_message("Now launching readcount generation jobs");
+    $self->debug_message("Now launching readcount generation jobs");
     my $result = Workflow::Simple::run_workflow_lsf( $workflow, %inputs);
     unless($result) {
         $self->error_message( join("\n", map($_->name . ': ' . $_->error, @Workflow::Simple::ERROR)) );
@@ -751,7 +751,7 @@ sub _filter_variants {
     $self->print_region_list($input_file, $self->region_path);
 
     if ($self->should_skip_filter) {
-        $self->status_message("No variants found, copying file over and reporting success (this filter was a no-op");
+        $self->debug_message("No variants found, copying file over and reporting success (this filter was a no-op");
         Genome::Sys->copy_file($input_file, $self->output_file_path);
         return 1;
     }

@@ -73,7 +73,7 @@ sub execute {
     $command .= ' -size '.$self->scaffold_size_cutoff if $self->scaffold_size_cutoff;
     $command .= ' -name '.$file_prefix;
 
-    $self->status_message("Running fasta2agp with command: $command");
+    $self->debug_message("Running fasta2agp with command: $command");
 
     system("$command"); #script has no return value
 

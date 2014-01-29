@@ -104,7 +104,7 @@ class Genome::Model::GenePrediction::Command::Pap::KEGGScan::RunKeggScan {
 sub execute {
     my $self = shift;
 
-    $self->status_message("Creating kegg output directory at " . $self->output_directory);
+    $self->debug_message("Creating kegg output directory at " . $self->output_directory);
 
     if (-d $self->output_directory) {
         $self->warning_message("Existing output directory found at " . $self->output_directory . ", removing!");
@@ -115,7 +115,7 @@ sub execute {
     make_path($self->output_directory);
     chmod(0775, $self->output_directory);
 
-    $self->status_message("Done creating output directory, now creating EC indices.");
+    $self->debug_message("Done creating output directory, now creating EC indices.");
 
     # We will be running BLAST (blastp) on the set of all sequences in the
     # query (species) FASTA file against ONLY the sequences in the KEGG
@@ -126,7 +126,7 @@ sub execute {
     my $revised_subject = $self->revise_subject_for_ECs;
     my ($EC_index,$KO_index) = $self->build_EC_index($revised_subject);
 
-    $self->status_message("Using BladeBlastBatcher to schedule blast jobs.");
+    $self->debug_message("Using BladeBlastBatcher to schedule blast jobs.");
 
     my $blast_batcher = Genome::Model::GenePrediction::Command::Pap::Blast::BladeBlastBatcher->create(
 	    query_fasta_path => $self->query_fasta_path,
@@ -144,8 +144,8 @@ sub execute {
     confess "Trouble executing blast batcher!" unless defined $batcher_rv and $batcher_rv == 1;
     my @reports = @{$blast_batcher->reports};
 
-    $self->status_message("BladeBlastBatcher completed, aggregating reports.");
-    $self->status_message("There are " . scalar @reports . " that need to be aggregated!");
+    $self->debug_message("BladeBlastBatcher completed, aggregating reports.");
+    $self->debug_message("There are " . scalar @reports . " that need to be aggregated!");
 
     my $master_report_path = $self->output_directory . "/MASTER_BLAST.report";
     my $aggregate = IO::File->new($master_report_path, "a");
@@ -174,7 +174,7 @@ sub execute {
         confess "Master blast report at $master_report_path has no size!";
     }
 
-    $self->status_message("All reports aggregated, now parsing.");
+    $self->debug_message("All reports aggregated, now parsing.");
 
     # Walk through all of the blast report files and gather the needed info. We
     # will be using BPdeluxe.pm to parse the BLAST reports. Our goal is to get
@@ -185,7 +185,7 @@ sub execute {
     my $full_report_path    = $self->output_directory . "/" . "REPORT-full.ks";
     my $top_hit_report_path = $self->output_directory . "/" . "REPORT-top.ks";
     $self->generate_blast_reports($master_report_path, $top_hit_report_path, $full_report_path, $EC_index, $KO_index);
-    $self->status_message("Report parsing completed, starting clean up.");
+    $self->debug_message("Report parsing completed, starting clean up.");
 
     # Move files to subdirectories to reduce clutter
     my $ancillary_dir = $self->create_directory($self->output_directory . "/ancillary/");
@@ -210,7 +210,7 @@ sub execute {
         $self->warning_message("Could not move $full_path to $destination!") unless $mv_rv == 0;
     }
 
-    $self->status_message("Keggscan finished, reports can be found at:\n$full_report_path\n$top_hit_report_path");
+    $self->debug_message("Keggscan finished, reports can be found at:\n$full_report_path\n$top_hit_report_path");
     return 1;
 }
 

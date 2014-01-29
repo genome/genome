@@ -93,7 +93,7 @@ sub execute {
             if ($job->has_ended) {
                 delete $run{$id};
                 if ($job->is_successful) {
-                    $self->status_message("Job $id done");
+                    $self->debug_message("Job $id done");
                 }
                 elsif ($job->has_exited) {
                     $self->warning_message("Job $id : ".$job->command." exited");

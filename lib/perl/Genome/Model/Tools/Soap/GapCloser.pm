@@ -117,7 +117,7 @@ sub __errors__ {
 sub execute {
     my $self = shift;
 
-    $self->status_message('SOAP GapCloser...');
+    $self->debug_message('SOAP GapCloser...');
 
     unlink $self->o;
 
@@ -128,22 +128,22 @@ sub execute {
         $self->b,
         $self->p,
     );
-    $self->status_message("Run GapCloser command: $cmd");
+    $self->debug_message("Run GapCloser command: $cmd");
     my $rv = eval{ Genome::Sys->shellcmd( cmd => $cmd ) };
     if ( $rv ) {
         $self->error_message('GapCloser shell command failed!');
         return;
     }
-    $self->status_message('Run GapCloser command...OK');
+    $self->debug_message('Run GapCloser command...OK');
 
     my $output = $self->o;
     if ( not -s $output ) {
         $self->error_message("GapCloaser ran ok, but output file ($output) was not created!");
         return;
     }
-    $self->status_message("Output file exists: $output");
+    $self->debug_message("Output file exists: $output");
 
-    $self->status_message('SOAP GapCloser...DONE');
+    $self->debug_message('SOAP GapCloser...DONE');
 
     return 1;
 }

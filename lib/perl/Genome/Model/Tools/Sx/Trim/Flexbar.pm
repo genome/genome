@@ -165,7 +165,7 @@ sub _cmd_properties {
      my $output = $self->_init_ouptut;
      return if not $output;
 
-     $self->status_message('Run flexbar...');
+     $self->debug_message('Run flexbar...');
 
      my $cmd = $self->build_command;
 
@@ -187,7 +187,7 @@ sub _cmd_properties {
 
     my $rv = $self->_run_command($cmd);
     return if not $rv;
-    $self->status_message('Run flexbar...OK');
+    $self->debug_message('Run flexbar...OK');
 
     my @fastq_files = glob $self->_tmpdir.'/output*.fastq';
     my @outputs = grep { $_ !~ /single/ } @fastq_files;
@@ -195,7 +195,7 @@ sub _cmd_properties {
         $self->error_message('Failed to find output files! Files in output directory: ');
         return;
     }
-    $self->status_message('Output: '.join(' ', @outputs));
+    $self->debug_message('Output: '.join(' ', @outputs));
     
     my $output_reader = Genome::Model::Tools::Sx::Reader->create(
         config => [ map { $_.':type=sanger' } @outputs ],
@@ -205,7 +205,7 @@ sub _cmd_properties {
         return;
     }
 
-    $self->status_message('Processing flexbar output...');
+    $self->debug_message('Processing flexbar output...');
     while ( my $seqs = $output_reader->read ) {
         $output->write($seqs);
     }

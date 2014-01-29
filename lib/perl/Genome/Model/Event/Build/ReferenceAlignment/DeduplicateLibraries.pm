@@ -87,7 +87,7 @@ sub create_bam_md5 {
     my $md5_file = $bam_merged_output_file.'.md5';
     my $cmd = "md5sum $bam_merged_output_file > $md5_file";
 
-    $self->status_message("Creating md5 file for the whole rmdup BAM file...");
+    $self->debug_message("Creating md5 file for the whole rmdup BAM file...");
 
     my $md5_rv  = Genome::Sys->shellcmd(
         cmd                        => $cmd, 

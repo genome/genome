@@ -15,7 +15,7 @@ sub fetch_large_annotation {
 
     my @data = split(/\n/, $data);
     my $num_lines = scalar @data;
-    $self->status_message("Fetching annotations for $num_lines");
+    $self->debug_message("Fetching annotations for $num_lines");
     my $content;
     while (@data) {
         my @part = splice(@data, 0, 1000);
@@ -67,7 +67,7 @@ sub fetch_annotation {
         else {
             $retry_count++;
             my $sleep = rand($range) + $min;
-            $self->status_message("Sleeping $sleep seconds and retrying");
+            $self->debug_message("Sleeping $sleep seconds and retrying");
             sleep($sleep);
         }
     }
@@ -84,7 +84,7 @@ sub fetch_annotation {
     #    $self->error_message( "Output did not contain the same number of lines as the input.  Output had $output_count and input had $num_lines.  Output: \n$output");
     #    die $self->error_message;
     #}
-    $self->status_message("Successfully got $output_count lines");
+    $self->debug_message("Successfully got $output_count lines");
     return $output;
 }
 

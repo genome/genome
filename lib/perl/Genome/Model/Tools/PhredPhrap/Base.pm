@@ -142,7 +142,7 @@ sub execute {
     }
 
     # PRE ASSEMBLY PROCESSING
-    $self->status_message("Pre Assembly Processing");
+    $self->debug_message("Pre Assembly Processing");
     for my $processor_name ( $self->pre_assembly_processors ) {
         my $no_processor = 'no_' . $processor_name ;
         next if $self->$no_processor;
@@ -154,7 +154,7 @@ sub execute {
             #or $self->error_message("Can't create class ($class)");
             return;
         }
-        $processor->status_message('Running');
+        $processor->debug_message('Running');
         unless ( $processor->execute ) {
             $self->error_message("Pre Assembly Processing failed, cannot assemble");
             return;
@@ -163,17 +163,17 @@ sub execute {
 
     my %params = $self->_params_for_class('Genome::Model::Tools::PhredPhrap::Fasta');
     my $phrap = Genome::Model::Tools::PhredPhrap::Fasta->create(%params);
-    $phrap->status_message("Assembling");
+    $phrap->debug_message("Assembling");
     $phrap->execute
         or return;
 
     #POST ASEMBLY PROCESS
-    $self->status_message("Post Assembly Processing");
+    $self->debug_message("Post Assembly Processing");
 
     unlink $self->busy_file if -e $self->busy_file;
     chdir $self->_cwd;
 
-    $self->status_message("Finished");
+    $self->debug_message("Finished");
 
     return 1;
 }

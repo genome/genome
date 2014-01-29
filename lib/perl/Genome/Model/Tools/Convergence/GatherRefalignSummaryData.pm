@@ -66,7 +66,7 @@ sub execute {
 
     #XML doesn't contain data due to deprecated report format--try text version
     my $summary_report = $reports_directory . "Summary/report.txt";
-    $self->status_message('Using ' . $summary_report);
+    $self->debug_message('Using ' . $summary_report);
 
     unless(-e $summary_report and -f $summary_report) {
         $self->error_message('Summary report file ' . $summary_report . ' does not exist or is not a file.');

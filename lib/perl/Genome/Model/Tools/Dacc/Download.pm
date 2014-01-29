@@ -49,14 +49,14 @@ sub rusage {
 sub execute {
     my $self = shift;
 
-    $self->status_message('Download');
+    $self->debug_message('Download');
 
     my $dacc_remote_directory = $self->dacc_remote_directory;
-    $self->status_message("Dacc remote directory: $dacc_remote_directory");
+    $self->debug_message("Dacc remote directory: $dacc_remote_directory");
 
     my @files = $self->files;
     my $files_string = join(' ', @files);
-    $self->status_message("Files: $files_string");
+    $self->debug_message("Files: $files_string");
 
     #This commented out because validation required sshing into the server
     #to determine that file exists but we can no longer ssh into ther server 5/13/11
@@ -72,7 +72,7 @@ sub execute {
         $self->error_message("Destination ($destination) does not exist or is not a direcory.");
         return;
     }
-    $self->status_message("Destination: $destination");
+    $self->debug_message("Destination: $destination");
 
     if ( $self->launch_to_lsf ) {
         return $self->_launch_to_lsf($destination, @files);
@@ -95,7 +95,7 @@ sub execute {
     #my $dl_ok = $self->validate_files_were_downloaded;
     #return if not $dl_ok;
 
-    $self->status_message('Download...OK');
+    $self->debug_message('Download...OK');
 
     return 1;
 }
@@ -103,7 +103,7 @@ sub execute {
 sub validate_files_exist_in_dacc_directory {
     my $self = shift;
 
-    $self->status_message('Validate files exist on the DACC');
+    $self->debug_message('Validate files exist on the DACC');
 
     my %available_files_and_sizes = $self->available_files_and_sizes;
     if ( not %available_files_and_sizes ) {
@@ -122,7 +122,7 @@ sub validate_files_exist_in_dacc_directory {
 
     return if $error;
 
-    $self->status_message('Validate files exist on the DACC...OK');
+    $self->debug_message('Validate files exist on the DACC...OK');
 
     return 1;
 }
@@ -130,7 +130,7 @@ sub validate_files_exist_in_dacc_directory {
 sub validate_files_were_downloaded {
     my $self = shift;
 
-    $self->status_message('Validate files were downloaded');
+    $self->debug_message('Validate files were downloaded');
 
     my %available_files_and_sizes = $self->available_files_and_sizes;
     if ( not %available_files_and_sizes ) {
@@ -144,9 +144,9 @@ sub validate_files_were_downloaded {
     for my $file_name ( @files ) {
         my $file = $destination.'/'.$file_name;
         my $size = -s $file;
-        $self->status_message('File: '.$file);
-        $self->status_message('Size: '.$size);
-        $self->status_message('Size on DACC: '.$available_files_and_sizes{$file_name});
+        $self->debug_message('File: '.$file);
+        $self->debug_message('Size: '.$size);
+        $self->debug_message('Size on DACC: '.$available_files_and_sizes{$file_name});
         if ( not $size ) {
             $error = 1;
             $self->error_message("Attempted to download file ($file_name) from the DACC, but it does not exist");
@@ -159,7 +159,7 @@ sub validate_files_were_downloaded {
 
     return if $error;
 
-    $self->status_message('Validate files were downloaded...OK');
+    $self->debug_message('Validate files were downloaded...OK');
 
     return 1;
 }

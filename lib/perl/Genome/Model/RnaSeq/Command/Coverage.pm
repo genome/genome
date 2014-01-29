@@ -47,12 +47,12 @@ sub shortcut {
     
     my $pp = $build->processing_profile;
     if ($pp->transcriptome_coverage_annotation_file_basenames eq 'none') {
-        $self->status_message('The annotation file defined in the processing profile is \'none\'.  Transcriptome coverage will be skipped.');
+        $self->debug_message('The annotation file defined in the processing profile is \'none\'.  Transcriptome coverage will be skipped.');
         return 1;
     }
     my $annotation_build = $build->annotation_build;
     unless ($annotation_build) {
-        $self->status_message('Skipping TranscriptomeCoverage since annotation_build is not defined');
+        $self->debug_message('Skipping TranscriptomeCoverage since annotation_build is not defined');
         return 1;
     }
     my $alignment_result = $build->alignment_result;
@@ -61,7 +61,7 @@ sub shortcut {
         my $result = Genome::InstrumentData::AlignmentResult::Merged::TranscriptomeCoverage->get_with_lock(%params);
 
         if($result) {
-            $self->status_message('Using existing result ' . $result->__display_name__);
+            $self->debug_message('Using existing result ' . $result->__display_name__);
             return $self->link_result_to_build($result);
         }
     }
@@ -74,12 +74,12 @@ sub execute {
     my $build = $self->build;
     my $pp = $build->processing_profile;
     if ($pp->transcriptome_coverage_annotation_file_basenames eq 'none') {
-        $self->status_message('The annotation file defined in the processing profile is \'none\'.  Transcriptome coverage will be skipped.');
+        $self->debug_message('The annotation file defined in the processing profile is \'none\'.  Transcriptome coverage will be skipped.');
         return 1;
     }
     my $annotation_build = $build->annotation_build;
     unless ($annotation_build) {
-        $self->status_message('Skipping TranscriptomeCoverage since annotation_build is not defined');
+        $self->debug_message('Skipping TranscriptomeCoverage since annotation_build is not defined');
         return 1;
     }
     my $alignment_result = $self->build->alignment_result;

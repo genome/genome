@@ -52,9 +52,9 @@ sub revise_subject_for_ECs {
     $fh_in->close;
     $fh_out->close;
 
-    $self->status_message("Running xdformat on $revised_subject.");
+    $self->debug_message("Running xdformat on $revised_subject.");
     my $rv = system("xdformat", "-p", $revised_subject);
-    $self->status_message("Return value from system command: $rv");
+    $self->debug_message("Return value from system command: $rv");
     confess "Failed during xdformat: $!\n" unless defined $rv and $rv == 0;
 
     return $revised_subject;

@@ -115,7 +115,7 @@ sub execute {
     # produces a reference coverage stats file for each iteration and relative coverage
     unless ($self->verify_progressions) {
         my $progression_array_ref = $self->progression_array_ref;
-        $self->status_message('Progressions look like: '. Data::Dumper::Dumper($progression_array_ref));
+        $self->debug_message('Progressions look like: '. Data::Dumper::Dumper($progression_array_ref));
         #parallelization starts here
         require Workflow::Simple;
 
@@ -227,7 +227,7 @@ sub execute {
         die($self->error_message);
     }
     if ($self->build->add_report($report)) {
-        $self->status_message('Saved report: '. $report);
+        $self->debug_message('Saved report: '. $report);
     } else {
         $self->error_message('Error saving '. $report.'. Error: '. $self->build->error_message);
         die($self->error_message);

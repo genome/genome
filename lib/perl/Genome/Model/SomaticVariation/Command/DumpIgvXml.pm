@@ -208,7 +208,7 @@ sub execute {
        File::Path::make_path($build_outdir) || die "failed to create $build_outdir: $!\n";
     }
 
-    $self->status_message("\n\nWriting IGV XML session files for somatic variation build $somvar_build_id to: $build_outdir");
+    $self->debug_message("\n\nWriting IGV XML session files for somatic variation build $somvar_build_id to: $build_outdir");
 
     #XML blocks to be created.  Each should be of the resource type 'bam' or 'bed'
     my @resources;
@@ -302,12 +302,12 @@ sub execute {
   #Summarize the tracks used for each level
   foreach my $l (sort {$a <=> $b} keys %{$levels}){
     my @bed_files = @{$levels->{$l}};
-    $self->status_message("\n\nLevel $l IGV session file will contain the following tracks (where they are available):");
+    $self->debug_message("\n\nLevel $l IGV session file will contain the following tracks (where they are available):");
     foreach my $bed_file (@bed_files){
-      $self->status_message("$bed_file");
+      $self->debug_message("$bed_file");
     }
   }
-  $self->status_message("\n\n");
+  $self->debug_message("\n\n");
 
   return 1;
 }
@@ -433,7 +433,7 @@ sub generate_track_xml {
 
     #Unless this file is actually present.  Print a warning and return
     unless (-e $resource_file){
-      $self->status_message("BED file not found for this somatic variation build:\n$bed_file\n");
+      $self->debug_message("BED file not found for this somatic variation build:\n$bed_file\n");
       return(0);
     }
   }elsif ($resource_type eq 'junctions' && $pp_type eq 'rna seq'){
@@ -521,11 +521,11 @@ XML
   }
 
   #Summarize values found from genome API
-  #$self->status_message("\n\nbid: $build_id\tmid: $model_id\tpp_type: $pp_type\tref_name: $ref_name");
-  #$self->status_message("subject: $subject_name\tcommon_name: $common_name\ttissue_desc: $tissue_desc\textraction_type: $extraction_type");
-  #$self->status_message("build_dir: $build_dir");
-  #$self->status_message("data_type: $data_type");
-  #$self->status_message("resource_type: $resource_type\tresource_file_url: $resource_file_url");
+  #$self->debug_message("\n\nbid: $build_id\tmid: $model_id\tpp_type: $pp_type\tref_name: $ref_name");
+  #$self->debug_message("subject: $subject_name\tcommon_name: $common_name\ttissue_desc: $tissue_desc\textraction_type: $extraction_type");
+  #$self->debug_message("build_dir: $build_dir");
+  #$self->debug_message("data_type: $data_type");
+  #$self->debug_message("resource_type: $resource_type\tresource_file_url: $resource_file_url");
 
   #Return the xml block and the resource file
   my %result;

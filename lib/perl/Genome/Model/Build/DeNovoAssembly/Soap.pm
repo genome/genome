@@ -292,7 +292,7 @@ sub resolve_assemble_lsf_resource {
 sub before_assemble {
     my ($self, @sx_results) = @_;
 
-    $self->status_message("Soap config file");
+    $self->debug_message("Soap config file");
 
     my %params = $self->processing_profile->assembler_params_as_hash;
 
@@ -306,7 +306,7 @@ sub before_assemble {
     
     my $avg_ins = delete $config_params{insert_size};
     if ( defined $avg_ins ) {  
-        $self->status_message("Using user defined insert size, will ignore calculated insert size defined in instrument data");
+        $self->debug_message("Using user defined insert size, will ignore calculated insert size defined in instrument data");
     }
 
     my $config = "max_rd_len=".delete($config_params{max_rd_len})."\n";
@@ -356,10 +356,10 @@ sub before_assemble {
         }
     }
 
-    $self->status_message('Add libraries to config...OK');
+    $self->debug_message('Add libraries to config...OK');
 
     my $config_file = $self->soap_config_file;
-    $self->status_message("Soap config file: ".$config_file);
+    $self->debug_message("Soap config file: ".$config_file);
     my $fh = eval { Genome::Sys->open_file_for_writing( $config_file ); };
     if ( not $fh ) {
         $self->error_message("Can not open file ($config_file) for writing $@");
@@ -368,7 +368,7 @@ sub before_assemble {
     $fh->print( $config );
     $fh->close;
 
-    $self->status_message("Soap config file...OK");
+    $self->debug_message("Soap config file...OK");
     return $config_file;
 }
 #</ASSEMBLE>#

@@ -66,7 +66,7 @@ sub execute {
         return;
     }
 
-    $self->status_message("Running nastier with command:\n$cmd");
+    $self->debug_message("Running nastier with command:\n$cmd");
 
     my $rv = eval { Genome::Sys->shellcmd( cmd => $cmd ) };
     if( not $rv ) {

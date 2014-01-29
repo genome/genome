@@ -836,24 +836,24 @@ sub input_builds {
 
 sub relink_symlinked_allocations {
     my $self = shift;
-    $self->status_message('Relink symlinked allocations...');
+    $self->debug_message('Relink symlinked allocations...');
 
     my @symlinked_allocations = $self->symlinked_allocations;
-    $self->status_message('Found '.@symlinked_allocations.' symlinked allocations');
+    $self->debug_message('Found '.@symlinked_allocations.' symlinked allocations');
     return 1 if not @symlinked_allocations;
 
     for my $symlinked_allocation ( @symlinked_allocations ) {
-        $self->status_message('Allocation: '.$symlinked_allocation->id);
+        $self->debug_message('Allocation: '.$symlinked_allocation->id);
         my $symlink_name = $symlinked_allocation->{_symlink_name};
-        $self->status_message("Symlink name: $symlink_name");
+        $self->debug_message("Symlink name: $symlink_name");
         my $target_name = $symlinked_allocation->{_target_name};
-        $self->status_message("Target name: $target_name");
+        $self->debug_message("Target name: $target_name");
         if ( $symlinked_allocation->{_target_exists} ) {
-            $self->status_message('Target exists! Skipping...');
+            $self->debug_message('Target exists! Skipping...');
             next;
         }
         if ( $symlinked_allocation->absolute_path eq $symlinked_allocation->{_target_name} ) {
-            $self->status_message('Target name matches absolute path! Skipping...');
+            $self->debug_message('Target name matches absolute path! Skipping...');
             next;
         }
         my $new_target = $symlinked_allocation->absolute_path;
@@ -861,14 +861,14 @@ sub relink_symlinked_allocations {
             $self->error_message('Allocation failed to reload or is still archived. Please correct. Skipping...');
             next;
         }
-        $self->status_message("Remove broken link: $symlink_name TO $target_name");
+        $self->debug_message("Remove broken link: $symlink_name TO $target_name");
         unlink($symlink_name);
-        $self->status_message("Add link: $symlink_name TO $new_target");
+        $self->debug_message("Add link: $symlink_name TO $new_target");
         symlink($new_target, $symlink_name);
         $self->error_message('Failed to relink allocation!') if not -l $symlink_name;
     }
 
-    $self->status_message('Relink symlinked allocations...Done');
+    $self->debug_message('Relink symlinked allocations...Done');
     return 1;
 }
 
@@ -894,7 +894,7 @@ sub add_report {
     if (-d $directory) {
         my $subdir = $directory . '/' . $report->name_to_subdirectory($report->name);
         if (-e $subdir) {
-            $self->status_message("Sub-directory $subdir exists!   Moving it out of the way...");
+            $self->debug_message("Sub-directory $subdir exists!   Moving it out of the way...");
             my $n = 1;
             my $max = 20;
             while ($n < $max and -e $subdir . '.' . $n) {
@@ -917,7 +917,7 @@ sub add_report {
     }
 
     if ($report->save($directory)) {
-        $self->status_message("Saved report to override directory: $directory");
+        $self->debug_message("Saved report to override directory: $directory");
         return 1;
     }
     else {
@@ -1628,7 +1628,7 @@ sub success {
     my $commit_callback;
     $commit_callback = sub {
         $self->the_master_event->cancel_change_subscription('commit', $commit_callback); #only fire once
-        $self->status_message('Firing build success commit callback.');
+        $self->debug_message('Firing build success commit callback.');
         my $result = eval {
             Genome::Search->queue_for_update($self->model);
             $self->model->_trigger_downstream_builds($self);

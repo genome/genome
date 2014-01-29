@@ -219,16 +219,16 @@ sub shortcut {
 
     $self->_resolve_output_directory;
 
-    $self->status_message("Attempting to shortcut filter result");
+    $self->debug_message("Attempting to shortcut filter result");
     unless($self->shortcut_filter){
-        $self->status_message("Could not shortcut filter result.");
+        $self->debug_message("Could not shortcut filter result.");
         return;
     }
 
     if($self->_try_vcf){
-        $self->status_message("Attempting to shortcut vcf result");
+        $self->debug_message("Attempting to shortcut vcf result");
         unless($self->shortcut_vcf){
-            $self->status_message("Could not shortcut vcf result.");
+            $self->debug_message("Could not shortcut vcf result.");
             return;
         }
     }
@@ -239,23 +239,23 @@ sub shortcut {
 sub shortcut_filter {
     my $self = shift;
     my ($params) = $self->params_for_filter_result;
-    $self->status_message("Params for shortcut_filter: " . Data::Dumper::Dumper $params);
+    $self->debug_message("Params for shortcut_filter: " . Data::Dumper::Dumper $params);
     my $result = Genome::Model::Tools::DetectVariants2::Result::Filter->get_with_lock(%$params);
 
     #TODO -- remove this monstrosity once this is pushed and filter_results are backfilled with filter_version=>v1
     unless($result) {
-        $self->status_message("Could not find filter_result, removing filter_version param and checking again");
+        $self->debug_message("Could not find filter_result, removing filter_version param and checking again");
         delete $params->{filter_version};
-        $self->status_message("Params without filter_version");
+        $self->debug_message("Params without filter_version");
         $result = Genome::Model::Tools::DetectVariants2::Result::Filter->get_with_lock(%$params);
         unless($result) {
-            $self->status_message('No existing result found.');
+            $self->debug_message('No existing result found.');
             return;
         }
     }
 
     $self->_result($result);
-    $self->status_message('Using existing result ' . $result->__display_name__);
+    $self->debug_message('Using existing result ' . $result->__display_name__);
     $self->_link_filter_output_directory_to_result;
 
     return 1;
@@ -264,15 +264,15 @@ sub shortcut_filter {
 sub shortcut_vcf {
     my $self = shift;
     my ($params) = $self->params_for_vcf_result;
-    $self->status_message("Params for shortcut_vcf: " . Data::Dumper::Dumper $params);
+    $self->debug_message("Params for shortcut_vcf: " . Data::Dumper::Dumper $params);
     my $result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Filter->get_with_lock(%$params);
     unless($result) {
-        $self->status_message('No existing result found.');
+        $self->debug_message('No existing result found.');
         return;
     }
 
     $self->_vcf_result($result);
-    $self->status_message('Using existing result ' . $result->__display_name__);
+    $self->debug_message('Using existing result ' . $result->__display_name__);
     $self->_link_vcf_output_directory_to_result;
     $self->_link_result_to_previous_result;
 
@@ -286,7 +286,7 @@ sub execute {
     $self->_process_params;
 
     unless($self->shortcut_filter){
-        $self->status_message("Summoning a filter result..");
+        $self->debug_message("Summoning a filter result..");
         $self->_summon_filter_result;
     }
     if($self->_try_vcf){
@@ -331,7 +331,7 @@ sub _summon_vcf_result {
     }
 
     $self->_vcf_result($result);
-    $self->status_message('Generated vcf result.');
+    $self->debug_message('Generated vcf result.');
     $self->_link_vcf_output_directory_to_result;
 
     return 1;
@@ -347,7 +347,7 @@ sub _summon_filter_result {
     }
 
     $self->_result($result);
-    $self->status_message('Generated detector result.');
+    $self->debug_message('Generated detector result.');
     unless(-e $self->output_directory){
         $self->_link_output_directory_to_result;
     }
@@ -377,7 +377,7 @@ sub _link_filter_output_directory_to_result {
     return unless $result;
 
     if(-l $self->output_directory) {
-        $self->status_message("Found link to output directory.");
+        $self->debug_message("Found link to output directory.");
         return 1;
     } elsif (-e $self->output_directory) {
         die $self->error_message("Found something in the place of the output directory, but not a symlink...");

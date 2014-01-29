@@ -56,7 +56,7 @@ sub execute {
     my $self = shift;
 
     if ($self->skip) {
-        $self->status_message('Skipping LoadPulses!');
+        $self->debug_message('Skipping LoadPulses!');
         return 1;
     }
 

@@ -102,7 +102,7 @@ sub execute {
             unless (-e $fpkm_tracking) {
                 die ('Failed to find '. $feature_type .' FPKM file: '. $fpkm_tracking);
             }
-            $self->status_message('Generating FPKM tracking stats for: '. $fpkm_tracking);
+            $self->debug_message('Generating FPKM tracking stats for: '. $fpkm_tracking);
             my $fpkm_tracking_stats_cmd = Genome::Model::Tools::Cufflinks::FpkmTrackingStats->create(
                 fpkm_tracking_file => $fpkm_tracking,
             );
@@ -116,7 +116,7 @@ sub execute {
             $model_stats{$identifier}{$feature_type} = $stats;
         }
     }
-    $self->status_message('Printing output FPKM tracking stats file...');
+    $self->debug_message('Printing output FPKM tracking stats file...');
     my @output_headers = ('model_id',@fpkm_tracking_headers);
     for my $feature_type (keys %feature_types) {
         my $output_file_method = $feature_type .'_fpkm_tracking_stats_tsv_file';
@@ -136,6 +136,6 @@ sub execute {
             $tsv_writer->write_one($stats);
         }
     }
-    $self->status_message('Finished!');
+    $self->debug_message('Finished!');
     return 1;
 }

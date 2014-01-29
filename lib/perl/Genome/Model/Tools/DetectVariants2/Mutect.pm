@@ -43,7 +43,7 @@ EOS
 sub _detect_variants {
     my $self = shift;
 
-    $self->status_message("beginning execute");
+    $self->debug_message("beginning execute");
 
 
     my $output_dir = $self->_temp_staging_directory;
@@ -117,7 +117,7 @@ sub _detect_variants {
     #Scott overrode _run_bed_converter from DetectVariants2::Base below
     #It runs the runs the BED converter twice passing in a parameter that grabs either the passing (hq) or failing (lq) variants from Strelka itself
 
-    $self->status_message("ending execute");
+    $self->debug_message("ending execute");
     return 1;
 }
 

@@ -109,7 +109,7 @@ sub execute {
 
     my $prepare_cmd = 'ulimit -s 100000 && '. $self->executable_for_version("PrepareAllPathsInputs.pl").' PICARD_TOOLS_DIR='.$PICARD_TOOLS_DIR.' DATA_DIR='.$output_dir.'/data PLOIDY='.$self->ploidy.' IN_GROUPS_CSV='.$self->in_group_file.' IN_LIBS_CSV='.$self->in_libs_file;
 
-    $self->status_message("Run PrepareAllPathsInput");
+    $self->debug_message("Run PrepareAllPathsInput");
     Genome::Sys->shellcmd(cmd => $prepare_cmd); 
     if ($? != 0) {
         $self->error_message("Failed to run PrepareAllPathsInput: $@");
@@ -140,13 +140,13 @@ sub execute {
         $cmd = "$cmd CA_MIN_UNIQUE=".$self->ca_min_unique;
     }
 
-    $self->status_message("Run ALLPATHS de novo");
+    $self->debug_message("Run ALLPATHS de novo");
     Genome::Sys->shellcmd(cmd => $cmd);
     if ( $? != 0) {
         $self->error_message("Failed to run ALLPATHS de novo: $@");
         return;
     }
-    $self->status_message("Run ALLPATHS de novo...OK");
+    $self->debug_message("Run ALLPATHS de novo...OK");
 
     return 1;
 }

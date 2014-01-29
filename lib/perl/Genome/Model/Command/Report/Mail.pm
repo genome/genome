@@ -94,14 +94,14 @@ sub create {
                 $self->delete;
                 return;
             }
-            $self->status_message("Found model " . $models[0]->id . " (" . $models[0]->name . ")");
+            $self->debug_message("Found model " . $models[0]->id . " (" . $models[0]->name . ")");
             my $build = $models[0]->last_complete_build;
             unless ($build) {
                 $self->error_message("No complete build for model!");
                 $self->delete;
                 return;
             }
-            $self->status_message("Found build " . $build->id . " from " . $build->date_completed);
+            $self->debug_message("Found build " . $build->id . " from " . $build->date_completed);
             $self->build($build);
         }
     }
@@ -175,9 +175,9 @@ $DB::single = $DB::stopper;
     $report_name =~ s/_/ /g;
     my $subject = 'Genome Model '.$model->id.' "'.$model->name.'" '.$report_name.' Report for Build '.$build->id;
 
-    $self->status_message("Sending email...");
+    $self->debug_message("Sending email...");
     if ($self->send_mail($subject,$html_file,$txt_file)) {
-        $self->status_message("Email sent.");
+        $self->debug_message("Email sent.");
         return 1;
     }
 

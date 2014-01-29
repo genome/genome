@@ -46,7 +46,7 @@ sub resolve_clinseq_subject_labels{
   my $self = shift;
   my @builds = $self->builds;
   
-  $self->status_message("Attempting to resolve distinct clinseq subject names in a human readable format");
+  $self->debug_message("Attempting to resolve distinct clinseq subject names in a human readable format");
 
   my $build_count = scalar(@builds);
 
@@ -333,7 +333,7 @@ sub resolve_clinseq_reference_build{
   my $self = shift;
   my @clinseq_builds = $self->builds;
 
-  $self->status_message("Attempting to resolve a distinct reference sequence build from the input models of all clinseq builds");
+  $self->debug_message("Attempting to resolve a distinct reference sequence build from the input models of all clinseq builds");
   my $reference_build;
   my %reference_builds;
 
@@ -353,7 +353,7 @@ sub resolve_clinseq_reference_build{
     print Dumper %reference_builds;
     die $self->error_message("Found $rb_count reference builds for this group of input builds - must be only one");
   }
-  $self->status_message("\tFound 1: " . $reference_build->__display_name__);
+  $self->debug_message("\tFound 1: " . $reference_build->__display_name__);
 
   return ($reference_build);
 }
@@ -363,7 +363,7 @@ sub resolve_clinseq_annotation_build{
   my $self = shift;
   my @clinseq_builds = $self->builds;
 
-  $self->status_message("Attempting to resolve a distinct reference annotation build from the input models of all clinseq builds");
+  $self->debug_message("Attempting to resolve a distinct reference annotation build from the input models of all clinseq builds");
   my $annotation_build;
   my %annotation_builds;
 
@@ -388,7 +388,7 @@ sub resolve_clinseq_annotation_build{
     print Dumper %annotation_builds;
     die $self->error_message("Found $ab_count annotation builds for this group of input builds - must be only one");
   }
-  $self->status_message("\tFound 1: " . $annotation_build->__display_name__ . " (" . $annotation_build->name . ")");
+  $self->debug_message("\tFound 1: " . $annotation_build->__display_name__ . " (" . $annotation_build->name . ")");
 
   return ($annotation_build);
 }
@@ -485,7 +485,7 @@ sub getModelsBuilds{
     my @models = $mg->models;
     $target_count = scalar(@models);
   }
-  if ($verbose){Genome::Model->status_message("\nSearching for $target_count models/builds");}
+  if ($verbose){Genome::Model->debug_message("\nSearching for $target_count models/builds");}
 
   #Always returns model AND build objects for convenience
   #If a model-group ID or array of model IDs is provided, get the last successful build for each and return that
@@ -506,7 +506,7 @@ sub getModelsBuilds{
         push(@builds, $b);
         push(@models, $m);
       }else{
-        Genome::Model->status_message("\n\tWarning - build $build_id has a status of $status");
+        Genome::Model->debug_message("\n\tWarning - build $build_id has a status of $status");
       }
     }
   }
@@ -572,7 +572,7 @@ sub getModelsBuilds{
       die Genome::Model->error_message("\n\tDid not find the correct number of successful models/builds");
     }
   }
-  if ($verbose){Genome::Model->status_message("\n\tFound $b_count builds and $m_count models");}
+  if ($verbose){Genome::Model->debug_message("\n\tFound $b_count builds and $m_count models");}
 
   #Build a hash that groups each model/build pair together
   my %mb;

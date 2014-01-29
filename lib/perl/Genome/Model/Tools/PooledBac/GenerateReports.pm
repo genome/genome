@@ -204,7 +204,7 @@ sub execute {
     $self->print_used_contigs_report($match_list, $reports_dir."complete_contig_list");
 
     unless ( $self->combined_used_and_orphan_lists() ) {
-	$self->status_message("Failed to create complete_contig_list_with_orphan_contigs list");
+	$self->debug_message("Failed to create complete_contig_list_with_orphan_contigs list");
     }
     return 1;
 }

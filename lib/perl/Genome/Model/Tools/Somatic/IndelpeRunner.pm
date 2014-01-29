@@ -95,14 +95,14 @@ sub execute {
     my ($self) = @_;
 
     if ($self->skip) {
-        $self->status_message("Skipping execution: Skip flag set");
+        $self->debug_message("Skipping execution: Skip flag set");
         return 1;
     }
 
     my $bam_file = $self->bam_file();
     
     unless(-s $bam_file) {
-        $self->status_message("Input bam file $bam_file was not found or had no size.");
+        $self->debug_message("Input bam file $bam_file was not found or had no size.");
         die;
     }
     
@@ -158,7 +158,7 @@ sub execute {
 
     # Skip execution if the filtered_snp_file already exists. In the somatic pipeline, if we have models that already ran through analysis we should have this file. If we have imported bams this will need to run.
     if (-s $filtered_snp_file) {
-        $self->status_message("Filtered snp file $filtered_snp_file already exists. Skipping execution");
+        $self->debug_message("Filtered snp file $filtered_snp_file already exists. Skipping execution");
         return 1;
     }
 

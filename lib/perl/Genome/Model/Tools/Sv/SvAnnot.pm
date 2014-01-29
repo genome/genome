@@ -335,7 +335,7 @@ sub execute {
         }
         $out_fh->print("\n");
     }
-    $self->status_message('SV annotation is done.');
+    $self->debug_message('SV annotation is done.');
     return 1;
 }
 

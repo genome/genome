@@ -55,7 +55,7 @@ sub execute {
 
     if (@input_files) {
         $self->_determine_output_file;
-        $self->status_message("Merging together " . scalar @input_files . " files into " . $self->output_file);
+        $self->debug_message("Merging together " . scalar @input_files . " files into " . $self->output_file);
 
         my $rv = Genome::Sys->cat(
             input_files => \@input_files,
@@ -67,17 +67,17 @@ sub execute {
         }
 
         if ($self->remove_input_files) {
-            $self->status_message("Removing input files!");
+            $self->debug_message("Removing input files!");
             my @unremoved = $self->remove_files(@input_files);
             if (@unremoved) {
                 Carp::confess "Could not remove some input files: " . join(',', @unremoved);
             }
         }
 
-        $self->status_message('Done merging!');
+        $self->debug_message('Done merging!');
     }
     else {
-        $self->status_message("No files to merge!");
+        $self->debug_message("No files to merge!");
     }
 
     return 1;

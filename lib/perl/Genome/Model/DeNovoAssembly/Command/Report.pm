@@ -19,7 +19,7 @@ class Genome::Model::DeNovoAssembly::Command::Report {
 
 sub execute {
     my $self = shift;
-    $self->status_message('De novo assembly report...');
+    $self->debug_message('De novo assembly report...');
 
     my $processing_profile = $self->build->processing_profile;
 
@@ -28,8 +28,8 @@ sub execute {
     my $tools_base_class = $processing_profile->tools_base_class;
     my $metrics_class = $tools_base_class.'::Metrics';
     my $major_contig_length = ( $processing_profile->name =~ /PGA/ ? 300 : 500 );
-    $self->status_message('Assembly directory: '.$self->build->data_directory);
-    $self->status_message('Major contig length: '.$major_contig_length);
+    $self->debug_message('Assembly directory: '.$self->build->data_directory);
+    $self->debug_message('Major contig length: '.$major_contig_length);
     my %metrics_params = (
         assembly_directory => $self->build->data_directory,
         major_contig_length => $major_contig_length,
@@ -66,17 +66,17 @@ sub execute {
     $metrics->set_metric('reads_processed_success', $self->build->reads_processed_success);
 
     # set metrics on build
-    $self->status_message('Set metrics on build...');
+    $self->debug_message('Set metrics on build...');
     for my $metric_name ( $self->build->metric_names ) {
         my $value = $metrics->get_metric($metric_name);
         next if not defined $value;
-        $self->status_message($metric_name.' => '.$value);
+        $self->debug_message($metric_name.' => '.$value);
         $self->build->add_metric(
             name => $metric_name,
             value => $value,
         );
     }
-    $self->status_message('Set metrics on build...OK');
+    $self->debug_message('Set metrics on build...OK');
 
     # save html
     my $genome_dir = Genome->get_base_directory_name;
@@ -99,7 +99,7 @@ sub execute {
     $fh->print($html);
     $fh->close;
 
-    $self->status_message('De novo assembly report...OK');
+    $self->debug_message('De novo assembly report...OK');
     return 1;
 }
 

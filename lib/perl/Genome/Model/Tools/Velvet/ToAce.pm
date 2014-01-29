@@ -163,7 +163,7 @@ sub execute {
         $seekpos = $seq_fh->tell;
     }
 
-    $self->status_message('Finished storing read info');
+    $self->debug_message('Finished storing read info');
 
     if ($self->sqlite_yes) {
         my $sth = $dbh->prepare('create unique index ids on read_info(id)');
@@ -409,12 +409,12 @@ sub execute {
             $read_writer = Genome::Model::Tools::Pcap::Ace::Writer->new($reads_fh)
                 or return;
 
-            $self->status_message("$nContigs contigs are done") if $nContigs % 100 == 0;
+            $self->debug_message("$nContigs contigs are done") if $nContigs % 100 == 0;
         }#if 'CTG'
     }#While loop
     $afg_fh->close;
     $sequences_fh->close;
-    $self->status_message("There are total $nContigs contigs and $nReads reads processed");
+    $self->debug_message("There are total $nContigs contigs and $nReads reads processed");
 
     $writer->write_object({
             type     => 'assembly_tag',

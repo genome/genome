@@ -56,7 +56,7 @@ sub _filter_variants {
         `$sites_cmd`;
     }
     unless(-s $sites_file) {
-        $self->status_message("No denovo sites found to filter. this filter is a no-op, copying file over.");
+        $self->debug_message("No denovo sites found to filter. this filter is a no-op, copying file over.");
         `cp $vcf $output_file`;
         return 1;
     }
@@ -81,7 +81,7 @@ sub _filter_variants {
     my ($r_output) = Genome::Sys->create_temp_file_path();
     $r_fh->print($self->r_code($r_input_path, $r_output));
     $r_fh->close;
-    $self->status_message(join('', `R --vanilla < $r_script_path 2>&1`));
+    $self->debug_message(join('', `R --vanilla < $r_script_path 2>&1`));
     ###output new VCF
     my %ped_hash = $self->make_trios($self->pedigree_file_path, $header_line);
     $self->output_passing_vcf($vcf, $r_output, $self->min_unaffected_pvalue, $output_file, \%ped_hash);
@@ -193,7 +193,7 @@ sub output_passing_vcf {
         if(exists($pass_hash{$vcf_chr}{$vcf_pos})){
             my $DNFT_idx = $self->find_format_field($format, "DNFT");
             unless(defined($DNFT_idx)) {
-                $self->status_message("appending DNFT");
+                $self->debug_message("appending DNFT");
                 $format .= ":DNFT";
             }
             for (my $i=0; $i < scalar(@samples); $i++) {
@@ -270,7 +270,7 @@ sub prepare_r_input {
                 for my $novel_i (@novel_idx) {
                     push @novel, $possible_alleles[$novel_i];
                 }
-                $self->status_message("Selecting bases @novel as novel allele for line: $line\n");
+                $self->debug_message("Selecting bases @novel as novel allele for line: $line\n");
             }
         }
         my $DNGT_idx=$self->find_format_field($format, "DNGT");

@@ -57,10 +57,10 @@ sub _generate_vcf {
             next;
         }
         if(Genome::Model::Tools::DetectVariants2::Result::Vcf->conversion_class_name($detector,$variant_type)){
-            $self->status_message("Generating Vcf");
+            $self->debug_message("Generating Vcf");
             $retval &&= $self->_run_vcf_converter($variant_type);
         } else {
-            $self->status_message("Skipping ".$variant_type." vcf generation for ".$detector);
+            $self->debug_message("Skipping ".$variant_type." vcf generation for ".$detector);
         }
     }
 
@@ -78,7 +78,7 @@ sub _run_vcf_converter {
 
     my $incoming_vcf = $self->incoming_vcf_result->output_dir."/".$type.".vcf.gz";
     unless(-s $incoming_vcf){
-        $self->status_message("Skipping VCF generation, no vcf in the previous result: $incoming_vcf");
+        $self->debug_message("Skipping VCF generation, no vcf in the previous result: $incoming_vcf");
         return 0;
     }
 

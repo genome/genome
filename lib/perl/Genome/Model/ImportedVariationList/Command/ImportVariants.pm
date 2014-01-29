@@ -77,7 +77,7 @@ sub execute {
 
     if ($self->bed_file) {
         my $new_path = $manual_result->output_dir."/".$self->variant_type."s.hq.bed";
-        $self->status_message("Copying bed file to $new_path");
+        $self->debug_message("Copying bed file to $new_path");
         Genome::Sys->copy_file($self->bed_file, $new_path);
         my @allocations = $manual_result->disk_allocations;
         $allocations[0]->reallocate;

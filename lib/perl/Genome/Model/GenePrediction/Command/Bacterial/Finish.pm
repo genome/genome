@@ -348,8 +348,8 @@ sub execute
         }
         my ( $dump_cmd, $dump_dumper );
 
-        $self->status_message("Running ace dump from " . ($self->dev ? "dev" : "prod"));
-        $self->status_message("sequence set id, $ssid : phase, $phase : ace file, $dump_output");
+        $self->debug_message("Running ace dump from " . ($self->dev ? "dev" : "prod"));
+        $self->debug_message("sequence set id, $ssid : phase, $phase : ace file, $dump_output");
         my $rv = Genome::Model::Tools::Bacterial::AceDumpGenes->execute(
             sequence_set_id => $ssid,
             phase => $phase,
@@ -377,7 +377,7 @@ sub execute
 
     if ( $cwd ne $acedb_scripts_path )
     {
-        $self->status_message("Changing directory to $acedb_scripts_path");
+        $self->debug_message("Changing directory to $acedb_scripts_path");
         make_path($acedb_scripts_path) unless -d $acedb_scripts_path;
         chdir($acedb_scripts_path);
     }
@@ -432,7 +432,7 @@ sub execute
 
     if ( $cwd3 ne $acedb_path )
     {
-        $self->status_message("Changing directory to $acedb_path");
+        $self->debug_message("Changing directory to $acedb_path");
         chdir($acedb_path);
     }
 
@@ -607,7 +607,7 @@ sub execute
 
     if ( $cwd2 ne $acedb_scripts_HGMI_files )
     {
-        $self->status_message("Changing directory to $acedb_scripts_HGMI_files");
+        $self->debug_message("Changing directory to $acedb_scripts_HGMI_files");
         chdir($acedb_scripts_HGMI_files);
     }
     my $rtfile_name

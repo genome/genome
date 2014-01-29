@@ -193,7 +193,7 @@ sub execute {
     }
     $prefix .= '.' if $prefix ne q{};
 
-    $self->status_message("Using option string $additional_opts");
+    $self->debug_message("Using option string $additional_opts");
     my $buffer = $self->buffer_size;
 
     my $count = 0;
@@ -210,7 +210,7 @@ sub execute {
         ); 
         if($fields[0] =~ /\./) {
             #probably is HQfiltered input
-            $self->status_message("First column contains a period. Assuming Ken Chen's HQFiltered file format.");
+            $self->debug_message("First column contains a period. Assuming Ken Chen's HQFiltered file format.");
             ($chr1,
                 $chr1_pos,
                 $chr2,
@@ -254,37 +254,37 @@ sub execute {
             if($chr1 eq $chr2) {
                 my $name = "$output_dir/${prefix}${chr1}_${chr1_pos}_${chr2}_${chr2_pos}_Tumor_${type}.q1.png";
                 my $cmd = "$grapher -q 1 -b $buffer -o $name $additional_opts $tumor_bam $chr1 $chr1_pos $chr2_pos";
-                $self->status_message("Running: $cmd");
+                $self->debug_message("Running: $cmd");
                 system($cmd);
                 $name = "$output_dir/${prefix}${chr1}_${chr1_pos}_${chr2}_${chr2_pos}_Normal_${type}.q1.png";
                 $cmd = "$grapher -q 1 -b $buffer  -o $name $additional_opts $normal_bam $chr1 $chr1_pos $chr2_pos";
-                $self->status_message("Running: $cmd");
+                $self->debug_message("Running: $cmd");
                 system($cmd);
                 $name = "$output_dir/${prefix}${chr1}_${chr1_pos}_${chr2}_${chr2_pos}_Tumor_${type}.q0.png";
                 $cmd = "$grapher -q 0 -b $buffer  -o $name $additional_opts $tumor_bam $chr1 $chr1_pos $chr2_pos";
-                $self->status_message("Running: $cmd");
+                $self->debug_message("Running: $cmd");
                 system($cmd);
                 $name = "$output_dir/${prefix}${chr1}_${chr1_pos}_${chr2}_${chr2_pos}_Normal_${type}.q0.png";
                 $cmd = "$grapher -q 0 -b $buffer  -o $name $additional_opts $normal_bam $chr1 $chr1_pos $chr2_pos";
-                $self->status_message("Running: $cmd");
+                $self->debug_message("Running: $cmd");
                 system($cmd);
             }
             else {
                 my $name = "$output_dir/${prefix}${chr1}_${chr1_pos}_${chr2}_${chr2_pos}_Tumor_${type}.q1.png";
                 my $cmd = "$grapher -q 1 -b $buffer -o $name $additional_opts $tumor_bam $chr1 $chr1_pos $chr1_pos $tumor_bam $chr2 $chr2_pos $chr2_pos";
-                $self->status_message("Running: $cmd");
+                $self->debug_message("Running: $cmd");
                 system($cmd);
                 $name = "$output_dir/${prefix}${chr1}_${chr1_pos}_${chr2}_${chr2_pos}_Normal_${type}.q1.png";
                 $cmd = "$grapher -q 1 -b $buffer  -o $name $additional_opts $normal_bam $chr1 $chr1_pos $chr1_pos $normal_bam $chr2 $chr2_pos $chr2_pos";
-                $self->status_message("Running: $cmd");
+                $self->debug_message("Running: $cmd");
                 system($cmd);
                 $name = "$output_dir/${prefix}${chr1}_${chr1_pos}_${chr2}_${chr2_pos}_Tumor_${type}.q0.png";
                 $cmd = "$grapher -q 0 -b $buffer  -o $name $additional_opts $tumor_bam $chr1 $chr1_pos $chr1_pos $tumor_bam $chr2 $chr2_pos $chr2_pos";
-                $self->status_message("Running: $cmd");
+                $self->debug_message("Running: $cmd");
                 system($cmd);
                 $name = "$output_dir/${prefix}${chr1}_${chr1_pos}_${chr2}_${chr2_pos}_Normal_${type}.q0.png";
                 $cmd = "$grapher -q 0 -b $buffer  -o $name $additional_opts $normal_bam $chr1 $chr1_pos $chr1_pos $normal_bam $chr2 $chr2_pos $chr2_pos";
-                $self->status_message("Running: $cmd");
+                $self->debug_message("Running: $cmd");
                 system($cmd);
             }
         }

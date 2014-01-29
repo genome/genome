@@ -284,7 +284,7 @@ sub _create_underlying_metagenomic_models {
         }
 
         if ($metagenomic_alignment_model->reference_sequence_build($metagenomic_reference)){
-            $self->status_message("updated reference sequence build on metagenomic alignment model ".$metagenomic_alignment_model->name);
+            $self->debug_message("updated reference sequence build on metagenomic alignment model ".$metagenomic_alignment_model->name);
         }else{
             $self->error_message("failed to update reference sequence build on metagenomic alignment model ".$metagenomic_alignment_model->name);
             for (@new_objects){
@@ -295,7 +295,7 @@ sub _create_underlying_metagenomic_models {
 
         push @new_objects, $metagenomic_alignment_model;
         $self->add_from_model(from_model=>$metagenomic_alignment_model, role=>'metagenomic_alignment_model');
-        $self->status_message("Created metagenomic alignment model ".$metagenomic_alignment_model->__display_name__);
+        $self->debug_message("Created metagenomic alignment model ".$metagenomic_alignment_model->__display_name__);
     }
 
     return @new_objects;
@@ -337,14 +337,14 @@ sub _create_model_for_type {
     }
 
     if ($model->reference_sequence_build($self->$reference_accessor)){
-        $self->status_message("updated reference sequence build on $type model ".$model->name);
+        $self->debug_message("updated reference sequence build on $type model ".$model->name);
     }else{
         $self->error_message("failed to update reference sequence build on $type model ".$model->name);
         return;
     }
 
     $self->add_from_model(from_model=> $model, role=>$type.'_alignment_model');
-    $self->status_message("Created $type model ".$model->__display_name__);
+    $self->debug_message("Created $type model ".$model->__display_name__);
 
     return $model;
 }
@@ -361,11 +361,11 @@ sub _execute_build {
     my ($self, $build) = @_;
 
     my $model = $build->model;
-    $self->status_message('Build '.$model->__display_name__);
+    $self->debug_message('Build '.$model->__display_name__);
 
     # temp hack for debugging
     my $log_model_name = $model->name;
-    $self->status_message("Starting build for model $log_model_name");
+    $self->debug_message("Starting build for model $log_model_name");
 
     my $screen_model;
     my $screen_build;
@@ -390,7 +390,7 @@ sub _execute_build {
                 value_id => $instrument_data->id 
             );
             if ($screen_assignment) {
-                $self->status_message("Instrument data " . $instrument_data->__display_name__ . " is already assigned to the screening model");
+                $self->debug_message("Instrument data " . $instrument_data->__display_name__ . " is already assigned to the screening model");
             }
             else {
                 my $cmd = 'genome model instrument-data assign --model-id '.$screen_model->id.' --instrument-data-id '.$instrument_data->id;
@@ -403,7 +403,7 @@ sub _execute_build {
                 }
                 my $confirm_screen_assignment = UR::Context->current->reload("Genome::Model::Input", model_id=>$screen_model->id, value_id=>$instrument_data->id);
                 if ($confirm_screen_assignment){
-                    $self->status_message("Added instrument data ".$instrument_data->id." to contamination screen model");
+                    $self->debug_message("Added instrument data ".$instrument_data->id." to contamination screen model");
                 }else{
                     die $self->error_message("Can't find instrument data assignment for ".$instrument_data->id." after attempting to assign to contamination screen model");
                 }
@@ -412,7 +412,7 @@ sub _execute_build {
         }
 
         # BUILD HUMAN CONTAMINATION SCREEN MODEL
-        $self->status_message("Building contamination screen model if necessary");
+        $self->debug_message("Building contamination screen model if necessary");
         $screen_build = $self->build_if_necessary_and_wait($screen_model);
         return if not $screen_build;
 
@@ -420,7 +420,7 @@ sub _execute_build {
         $build->add_from_build(from_build=>$screen_build, role=>'contamination_screen_alignment_build') unless $prev_from_build;;
 
     }else{
-        $self->status_message("Skipping contamination screen for instrument data");
+        $self->debug_message("Skipping contamination screen for instrument data");
     }
 
     # POST-PROCESS THE UNALIGNED READS FROM THE CONTAMINATION SCREEN MODEL
@@ -429,7 +429,7 @@ sub _execute_build {
     if ($self->contamination_screen_pp){
 
         #if we contamination screened, we'll use the alignment results, extract unaligned reads to a fastq and then post-process, create new imported instrument data
-        $self->status_message("Processing and importing instrument data for any new unaligned reads");
+        $self->debug_message("Processing and importing instrument data for any new unaligned reads");
         @screened_assignments = $screen_model->instrument_data_inputs;
         my @post_processed_unaligned_reads;
         for my $assignment (@screened_assignments) {
@@ -442,7 +442,7 @@ sub _execute_build {
                 $self->error_message( "No alignment_results found for instrument data assignment: " . $assignment->__display_name__);
                 return;
             }
-            $self->status_message("Processing instrument data assignment ".$assignment->__display_name__." for unaligned reads import");
+            $self->debug_message("Processing instrument data assignment ".$assignment->__display_name__." for unaligned reads import");
 
             my $alignment_result = $alignment_results[0];
             my @post_processed_unaligned_reads_for_alignment_result = $self->_process_unaligned_reads($alignment_result);
@@ -480,7 +480,7 @@ sub _execute_build {
                     value_id => $instrument_data->id #TODO inst data switch
                 );
                 if ($metagenomic_assignment) {
-                    $self->status_message("Instrument data " . $instrument_data->__display_name__ . " is already assigned to model " . $metagenomic_model->__display_name__);
+                    $self->debug_message("Instrument data " . $instrument_data->__display_name__ . " is already assigned to model " . $metagenomic_model->__display_name__);
                 }
                 else {
                     my $cmd = 'genome model instrument-data assign --model-id '.$metagenomic_model->id.' --instrument-data-id '.$instrument_data->id;
@@ -493,7 +493,7 @@ sub _execute_build {
                     }
                     $metagenomic_assignment = UR::Context->current->reload("Genome::Model::Input", model_id=>$metagenomic_model->id, value_id=>$instrument_data->id);
                     if ($metagenomic_assignment){
-                        $self->status_message("Added instrument data ".$instrument_data->id." to model ".$metagenomic_model->__display_name__);
+                        $self->debug_message("Added instrument data ".$instrument_data->id." to model ".$metagenomic_model->__display_name__);
                     }else{
                         die $self->error_message("Can't find instrument data assignment for ".$instrument_data->id." after attempting to assign to model ".$metagenomic_model->__display_name__);
                     }
@@ -747,7 +747,7 @@ sub _execute_build {
         }
     }
 
-    $self->status_message('Build success!');
+    $self->debug_message('Build success!');
 
     return 1;
 }
@@ -755,23 +755,23 @@ sub _execute_build {
 sub _run_refcov {
     my ($self, $build) = @_;
 
-    $self->status_message('Run Refcov');
+    $self->debug_message('Run Refcov');
 
     my $refcov_output = $build->refcov_output;
-    $self->status_message('Refcov output: '.$refcov_output);
+    $self->debug_message('Refcov output: '.$refcov_output);
     if (-e $refcov_output and -e "$refcov_output.ok"){
-        $self->status_message("Refcov already complete, shortcutting");
+        $self->debug_message("Refcov already complete, shortcutting");
         return 1;
     }
 
     my $sorted_bam = $build->_final_metagenomic_bam;
-    $self->status_message('Metagenomic BAM: '.$sorted_bam);
+    $self->debug_message('Metagenomic BAM: '.$sorted_bam);
     if ( not -s $sorted_bam ) {
         die $self->error_message('Sorted BAM does not exist!');
     }
 
     my $regions_file = $build->metagenomic_reference_regions_file; 
-    $self->status_message('Regions file: '.$regions_file);
+    $self->debug_message('Regions file: '.$regions_file);
     if ( not -s $regions_file ) {
         die $self->error_message("No regions file ($regions_file) does not exist");
     }
@@ -782,7 +782,7 @@ sub _run_refcov {
     $command .= " --stats-file ".$refcov_output;
     $command .= " --min-depth-filter 0";
 
-    $self->status_message($command);
+    $self->debug_message($command);
     my $rv = eval{
         Genome::Sys->shellcmd(
             cmd=>$command,
@@ -799,7 +799,7 @@ sub _run_refcov {
         return;
     }
 
-    $self->status_message('Run Refcov...OK');
+    $self->debug_message('Run Refcov...OK');
 
     return 1;
 }
@@ -807,7 +807,7 @@ sub _run_refcov {
 sub _run_taxonomy_report {
     my ($self, $build) = @_;
 
-    $self->status_message('Run taxonomy report');
+    $self->debug_message('Run taxonomy report');
 
     my $report = Genome::Model::MetagenomicCompositionShotgun::Command::TaxonomyReport->create(build => $build);
     if ( not $report ) {
@@ -820,7 +820,7 @@ sub _run_taxonomy_report {
         return;
     }
 
-    $self->status_message('Run taxonomy report...OK');
+    $self->debug_message('Run taxonomy report...OK');
 
     return 1;
 }
@@ -828,10 +828,10 @@ sub _run_taxonomy_report {
 sub merge_metagenomic_bams{
     my ($self, $meta_bams, $sorted_bam) = @_;
     if (-e $sorted_bam and -e $sorted_bam.".OK"){
-        $self->status_message("sorted metagenomic merged bam already produced, skipping");
+        $self->debug_message("sorted metagenomic merged bam already produced, skipping");
     }else{
         my $merged_bam = $sorted_bam.".name_sorted.bam";
-        $self->status_message("starting sort and merge");
+        $self->debug_message("starting sort and merge");
 
         my $sort_and_merge_meta = Genome::Model::Tools::Sam::SortAndMergeSplitReferenceAlignments->create(
             input_files => $meta_bams,
@@ -845,7 +845,7 @@ sub merge_metagenomic_bams{
             die $self->error_message("Merged bam has no size!");
         }
 
-        $self->status_message("starting position sort of merged bam");
+        $self->debug_message("starting position sort of merged bam");
 
         my $sort_merged_bam = Genome::Model::Tools::Sam::SortBam->create(
             file_name => $merged_bam,
@@ -896,7 +896,7 @@ sub extract_reads_from_bam {
         die $self->error_message("Failed to find expected BAM file $bam\n");
     }
 
-    $self->status_message("Preparing imported instrument data for import path $output_dir");
+    $self->debug_message("Preparing imported instrument data for import path $output_dir");
 #    my $extract_unaligned = Genome::Model::Tools::BioSamtools::BamToUnalignedFastq->create(
 #        bam_file => $bam,
 #        output_directory => $output_dir,
@@ -943,7 +943,7 @@ sub extract_reads_from_bam {
         }
     }
 
-    $self->status_message("Extracted unaligned reads from bam file($bam)");
+    $self->debug_message("Extracted unaligned reads from bam file($bam)");
     return \%original_data_path_to_fastq_files;
 }
 
@@ -956,18 +956,18 @@ sub get_imported_instrument_data_or_upload_paths {  #TODO not finished, not curr
     my $subdir;
 
     # check for previous unaligned reads
-    $self->status_message("Checking for previously imported unaligned and post-processed reads from: $tmp_dir/$subdir");
+    $self->debug_message("Checking for previously imported unaligned and post-processed reads from: $tmp_dir/$subdir");
     for my $path (@paths) {
         my $inst_data = Genome::InstrumentData::Imported->get(original_data_path => $path);
         if ($inst_data) {
-            $self->status_message("imported instrument data already found for path $path, skipping");
+            $self->debug_message("imported instrument data already found for path $path, skipping");
             push @inst_data, $inst_data;
         }
         else {
             for my $sub_path (split(',', $path)) {
                 my $lock = $self->lock($orig_inst_data->id, basename($sub_path));
                 if ($lock) {
-                    $self->status_message("Locked $sub_path successfully.");
+                    $self->debug_message("Locked $sub_path successfully.");
                 } else {
                     die $self->error_message("Failed to lock $sub_path.");
                 }
@@ -979,12 +979,12 @@ sub get_imported_instrument_data_or_upload_paths {  #TODO not finished, not curr
 
     if (@upload_paths) {
         for my $path (@upload_paths) {
-            $self->status_message("planning to upload for $path");
+            $self->debug_message("planning to upload for $path");
         }
         return @upload_paths;
     }
     else {
-        $self->status_message("skipping read processing since all data is already processed and uploaded");
+        $self->debug_message("skipping read processing since all data is already processed and uploaded");
         return @inst_data;
     }
     return \@inst_data, \@upload_paths;
@@ -1021,13 +1021,13 @@ sub upload_instrument_data_and_unlock {
         # Link the actual file to the descriptive location in original_data_path
         my $orig_inst_data = Genome::InstrumentData->get($orig_data_paths_to_fastq_files->{$original_data_path}->{instrument_data_id});
 
-        $self->status_message("uploading new instrument data ...");
+        $self->debug_message("uploading new instrument data ...");
         my @errors;
         my %properties_from_prior;
         for my $property_name (@properties_from_prior) {
             my $value = $orig_inst_data->$property_name;
             no warnings;
-            $self->status_message("Value for $property_name is $value");
+            $self->debug_message("Value for $property_name is $value");
             $properties_from_prior{$property_name} = $value;
         }
 
@@ -1041,7 +1041,7 @@ sub upload_instrument_data_and_unlock {
             source_data_files => $original_data_path,
             import_format => 'illumina fastq',
         );
-        $self->status_message("importing fastq with the following params:" . Data::Dumper::Dumper(\%params));
+        $self->debug_message("importing fastq with the following params:" . Data::Dumper::Dumper(\%params));
 
 
         my $command = Genome::InstrumentData::Command::Import::Fastq->create(%params);
@@ -1052,8 +1052,8 @@ sub upload_instrument_data_and_unlock {
         unless ($result) {
             die $self->error_message( "Error importing data from $original_data_path! " . Genome::InstrumentData::Command::Import::Fastq->error_message() );
         }
-        $self->status_message("committing newly created imported instrument data");
-        $self->status_message("UR_DBI_NO_COMMIT: ".$ENV{UR_DBI_NO_COMMIT});
+        $self->debug_message("committing newly created imported instrument data");
+        $self->debug_message("UR_DBI_NO_COMMIT: ".$ENV{UR_DBI_NO_COMMIT});
         UR::Context->commit(); # warning: most code should NEVER do this in a pipeline
 
         my $instrument_data = Genome::InstrumentData::Imported->get(
@@ -1095,10 +1095,10 @@ sub execute_or_die {
     my ($self, $command) = @_;
     my $class = $command->class;
 
-    $self->status_message("Executing $class, command object details are:\n" . Data::Dumper::Dumper($command));
+    $self->debug_message("Executing $class, command object details are:\n" . Data::Dumper::Dumper($command));
 
     if ($command->execute){
-        $self->status_message("Execution of $class complete.");
+        $self->debug_message("Execution of $class complete.");
         return 1;
     }
     else {
@@ -1123,7 +1123,7 @@ sub symlink {
 
 sub get_bam_and_flagstat_from_build{
     my ($self, $build) = @_;
-    $self->status_message("getting bam and flagstat from build: ".$build->id);
+    $self->debug_message("getting bam and flagstat from build: ".$build->id);
 
     #we have to try two different methods to find the merged bam, one uses the <picard software result id>.bam which is the new way, and the old uses the <build_id>.bam
 
@@ -1173,24 +1173,24 @@ sub build_if_necessary_and_wait {
 
     my (@succeeded_builds, @watched_builds);
     for my $model ( @models ) {
-        $self->status_message('Model: '. $model->__display_name__);
-        $self->status_message('Search for succeeded build');
+        $self->debug_message('Model: '. $model->__display_name__);
+        $self->debug_message('Search for succeeded build');
         my $succeeded_build = $model->last_succeeded_build;
         if ( $succeeded_build and $self->_verify_model_and_build_instrument_data_match($model, $succeeded_build) ) {
-            $self->status_message('Found succeeded build: '.$succeeded_build->__display_name__);
+            $self->debug_message('Found succeeded build: '.$succeeded_build->__display_name__);
             push @succeeded_builds, $succeeded_build;
             next;
         }
-        $self->status_message('No succeeded build');
-        $self->status_message('Search for scheduled or running build');
+        $self->debug_message('No succeeded build');
+        $self->debug_message('Search for scheduled or running build');
         my $watched_build = $self->_find_scheduled_or_running_build_for_model($model);
         if ( not $watched_build ) {
-            $self->status_message('No scheduled or running build');
-            $self->status_message('Start build');
+            $self->debug_message('No scheduled or running build');
+            $self->debug_message('Start build');
             $watched_build = $self->_start_build_for_model($model);
             return if not $watched_build;
         }
-        $self->status_message('Watching build: '.$watched_build->__display_name__);
+        $self->debug_message('Watching build: '.$watched_build->__display_name__);
         push @watched_builds, $watched_build;
     }
 
@@ -1207,7 +1207,7 @@ sub build_if_necessary_and_wait {
 
     if ( @watched_builds ) {
         for my $build ( @watched_builds ) {
-            $self->status_message('Watching build: '.$build->__display_name__);
+            $self->debug_message('Watching build: '.$build->__display_name__);
             $self->wait_for_build($build);
             unless ($build->status eq 'Succeeded') {
                 $self->error_message("Failed to execute build (".$build->__display_name__."). Status: ".$build->status);
@@ -1228,13 +1228,13 @@ sub _verify_model_and_build_instrument_data_match {
     my @build_instrument_data = sort {$a->id cmp $b->id} $build->instrument_data;
     my @model_instrument_data = sort {$a->id cmp $b->id} $model->instrument_data;
 
-    $self->status_message('Model: '.$model->__display_name__);
-    $self->status_message('Model instrument data: '.join(' ', map { $_->id } @model_instrument_data));
-    $self->status_message('Build: '.$build->__display_name__);
-    $self->status_message('Build instrument data: '.join(' ', map { $_->id } @build_instrument_data));
+    $self->debug_message('Model: '.$model->__display_name__);
+    $self->debug_message('Model instrument data: '.join(' ', map { $_->id } @model_instrument_data));
+    $self->debug_message('Build: '.$build->__display_name__);
+    $self->debug_message('Build instrument data: '.join(' ', map { $_->id } @build_instrument_data));
 
     if ( @build_instrument_data != @model_instrument_data ) {
-        $self->status_message('Model and build instrument data count does not match');
+        $self->debug_message('Model and build instrument data count does not match');
         return;
     }
 
@@ -1243,7 +1243,7 @@ sub _verify_model_and_build_instrument_data_match {
         my $model_instrument_data = $model_instrument_data[$i];
 
         if ($build_instrument_data->id ne $model_instrument_data->id) {
-            $self->status_message("Missing instrument data.");
+            $self->debug_message("Missing instrument data.");
             return;
         }
     }
@@ -1256,7 +1256,7 @@ sub _find_scheduled_or_running_build_for_model {
 
     Carp::confess('No model sent to find running or scheduled build') if not $model;
 
-    $self->status_message('Find running or scheduled build for model: '.$model->__display_name__);
+    $self->debug_message('Find running or scheduled build for model: '.$model->__display_name__);
 
     UR::Context->reload('Genome::Model::Build', model_id => $model->id);
 
@@ -1274,7 +1274,7 @@ sub _start_build_for_model {
     Carp::confess('No model sent to start build') if not $model;
 
     my $cmd = 'genome model build start '.$model->id.' --job-dispatch apipe --server-dispatch workflow'; # these are defaults
-    $self->status_message('Cmd: '.$cmd);
+    $self->debug_message('Cmd: '.$cmd);
     my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
     if ( not $rv ) {
         $self->error_message('Failed to execute build start command');
@@ -1304,7 +1304,7 @@ sub wait_for_build {
         }
 
         if ($last_status ne $status or !($time % 300)){
-            $self->status_message("Waiting for build(~$time sec) ".$build->id.", status: $status");
+            $self->debug_message("Waiting for build(~$time sec) ".$build->id.", status: $status");
         }
         sleep $inc;
         $time += 30;
@@ -1364,7 +1364,7 @@ sub _process_unaligned_reads {
         if ($self->dust_unaligned_reads){
             $subdir.='/dusted';
         }
-        $self->status_message("Preparing imported instrument data for import path $tmp_dir/$subdir");
+        $self->debug_message("Preparing imported instrument data for import path $tmp_dir/$subdir");
 
         # proceed extracting and uploading unaligned reads into $tmp_dir/$subdir....
         # resolve the paths at which we will place processed instrument data
@@ -1393,10 +1393,10 @@ sub _process_unaligned_reads {
 
 
         # check for previous unaligned reads
-        $self->status_message("Checking for previously imported unaligned and post-processed reads from: $tmp_dir/$subdir");
+        $self->debug_message("Checking for previously imported unaligned and post-processed reads from: $tmp_dir/$subdir");
         my $se_instdata = Genome::InstrumentData::Imported->get(original_data_path => $expected_se_path);
         if ($se_instdata) {
-            $self->status_message("imported instrument data already found for path $expected_se_path, skipping");
+            $self->debug_message("imported instrument data already found for path $expected_se_path, skipping");
         }
         else {
             $se_lock = $self->lock($instrument_data_id, basename($expected_se_path));
@@ -1408,7 +1408,7 @@ sub _process_unaligned_reads {
 
         my $pe_instdata = Genome::InstrumentData::Imported->get(original_data_path => $expected_pe_path);
         if ($pe_instdata) {
-            $self->status_message("imported instrument data already found for path $expected_pe_path, skipping");
+            $self->debug_message("imported instrument data already found for path $expected_pe_path, skipping");
         }
         elsif ( $instrument_data->is_paired_end ) {
             $pe_lock = $self->lock($instrument_data_id, basename($expected_pe_path));
@@ -1419,12 +1419,12 @@ sub _process_unaligned_reads {
         }
 
         unless (@upload_paths) {
-            $self->status_message("skipping read processing since all data is already processed and uploaded");
+            $self->debug_message("skipping read processing since all data is already processed and uploaded");
             return grep { defined } ($se_instdata, $pe_instdata);
         }
 
         for my $path (@upload_paths) {
-            $self->status_message("planning to upload for $path");
+            $self->debug_message("planning to upload for $path");
         }
 
         # extract
@@ -1432,15 +1432,15 @@ sub _process_unaligned_reads {
         if ( not $create_directory ) {
             die "Failed to create tmp directory ($tmp_dir/$subdir): $@";
         }
-        $self->status_message("Preparing imported instrument data for import path $tmp_dir/$subdir");
-        $self->status_message("Extracting unaligned reads from $bam");
+        $self->debug_message("Preparing imported instrument data for import path $tmp_dir/$subdir");
+        $self->debug_message("Extracting unaligned reads from $bam");
         my $cmd = "genome-perl5.10 -S gmt bio-samtools bam-to-unaligned-fastq --bam-file $bam --output-directory $tmp_dir";
         my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
         if ( not $rv ) {
             die "Failed to extract unaligned reads: $@";
         }
 
-        #$self->status_message("Perl version: $]");
+        #$self->debug_message("Perl version: $]");
         #my $extract_unaligned = Genome::Model::Tools::BioSamtools::BamToUnalignedFastq->create(
         #    bam_file => $bam,
         #    output_directory =>$tmp_dir,
@@ -1457,11 +1457,11 @@ sub _process_unaligned_reads {
         if (@missing){
             die $self->error_message(join(", ", @missing)." unaligned files missing after bam extraction");
         }
-        $self->status_message("Extracted unaligned reads from bam file (@expected_output_fastqs)");
+        $self->debug_message("Extracted unaligned reads from bam file (@expected_output_fastqs)");
 
         # process the fragment data
         if (-e $fragment_unaligned_data_path) {
-            $self->status_message("processind single-end reads...");
+            $self->debug_message("processind single-end reads...");
             my $processed_fastq = $self->_process_unaligned_fastq($fragment_unaligned_data_path, $expected_data_path0);
             unless (-e $expected_data_path0){
                 die $self->error_message("Expected data path does not exist after fastq processing: $expected_data_path0");
@@ -1470,7 +1470,7 @@ sub _process_unaligned_reads {
 
         # process the paired data
         if (-e $forward_unaligned_data_path or -e $reverse_unaligned_data_path) {
-            $self->status_message("processind paired-end reads...");
+            $self->debug_message("processind paired-end reads...");
             unless (-e $forward_unaligned_data_path and -e $reverse_unaligned_data_path) {
                 die "Missing forward and reverse unaligned data?";
             }
@@ -1484,7 +1484,7 @@ sub _process_unaligned_reads {
         }
 
         # upload
-        $self->status_message("uploading new instrument data from the post-processed unaligned reads...");
+        $self->debug_message("uploading new instrument data from the post-processed unaligned reads...");
         my @properties_from_prior = qw/
         run_name
         sequencing_platform
@@ -1498,14 +1498,14 @@ sub _process_unaligned_reads {
         for my $property_name (@properties_from_prior) {
             my $value = $instrument_data->$property_name;
             no warnings;
-            $self->status_message("Value for $property_name is $value");
+            $self->debug_message("Value for $property_name is $value");
             $properties_from_prior{$property_name} = $value;
         }
         $properties_from_prior{subset_name} = $instrument_data->lane;
 
         #my @instrument_data;
         for my $original_data_path (@upload_paths) {
-            $self->status_message("Attempting to upload $original_data_path...");
+            $self->debug_message("Attempting to upload $original_data_path...");
             if ($original_data_path =~ /,/){
                 $properties_from_prior{is_paired_end} = 1;
             }else{
@@ -1526,7 +1526,7 @@ sub _process_unaligned_reads {
                 source_data_files => $original_data_path,
                 import_format => 'illumina fastq',
             );
-            $self->status_message("importing fastq with the following params:" . Data::Dumper::Dumper(\%params));
+            $self->debug_message("importing fastq with the following params:" . Data::Dumper::Dumper(\%params));
 
 
             my $command = Genome::InstrumentData::Command::Import::Fastq->create(%params);
@@ -1537,8 +1537,8 @@ sub _process_unaligned_reads {
             unless ($result) {
                 die $self->error_message( "Error importing data from $original_data_path! " . Genome::InstrumentData::Command::Import::Fastq->error_message() );
             }
-            $self->status_message("committing newly created imported instrument data");
-            $self->status_message("UR_DBI_NO_COMMIT: ".$ENV{UR_DBI_NO_COMMIT});
+            $self->debug_message("committing newly created imported instrument data");
+            $self->debug_message("UR_DBI_NO_COMMIT: ".$ENV{UR_DBI_NO_COMMIT});
             UR::Context->commit(); # warning: most code should NEVER do this in a pipeline
 
             my $new_instrument_data = Genome::InstrumentData::Imported->get($command->generated_instrument_data_id);
@@ -1549,14 +1549,14 @@ sub _process_unaligned_reads {
                 die "Unsaved changes present on instrument data $new_instrument_data->{id} from $original_data_path!!!";
             }
             if (!$new_instrument_data->is_paired_end && $se_lock) {
-                $self->status_message("Attempting to remove lock on $se_lock...");
+                $self->debug_message("Attempting to remove lock on $se_lock...");
                 unless(Genome::Sys->unlock_resource(resource_lock => $se_lock)) {
                     die $self->error_message("Failed to unlock $se_lock.");
                 }
                 undef($se_lock);
             }
             if ($new_instrument_data->is_paired_end && $pe_lock) {
-                $self->status_message("Attempting to remove lock on $pe_lock...");
+                $self->debug_message("Attempting to remove lock on $pe_lock...");
                 unless(Genome::Sys->unlock_resource(resource_lock => $pe_lock)) {
                     die $self->error_message("Failed to unlock $pe_lock.");
                 }
@@ -1584,21 +1584,21 @@ sub _process_unaligned_fastq_pair {
     my $reverse_dusted;
 
     if ($self->dust_unaligned_reads){
-        $self->status_message("Dusting fastq pair $forward, $reverse");
+        $self->debug_message("Dusting fastq pair $forward, $reverse");
         $forward_dusted = "$forward.DUSTED";
         $reverse_dusted = "$reverse.DUSTED";
 
         $self->dust_fastq($forward, $forward_dusted);
         $self->dust_fastq($reverse, $reverse_dusted);
     }else{
-        $self->status_message("skipping dusting");
+        $self->debug_message("skipping dusting");
         $forward_dusted = $forward;
         $reverse_dusted = $reverse;
     }
 
     #run pairwise n-removal
     if ($self->n_removal_threshold){
-        $self->status_message("running remove-n-pairwise on $forward, $reverse");
+        $self->debug_message("running remove-n-pairwise on $forward, $reverse");
         my $cmd = Genome::Model::Tools::Fastq::RemoveNPairwise->create(
             forward_fastq => $forward_dusted,
             reverse_fastq => $reverse_dusted,
@@ -1627,7 +1627,7 @@ sub _process_unaligned_fastq_pair {
         #return the 3 processed fastq files
         return ($forward_out, $reverse_out, $fragment_out);
     }else{
-        $self->status_message("skipping n-removal");
+        $self->debug_message("skipping n-removal");
         Genome::Sys::copy_file($forward_dusted, $forward_out);
         Genome::Sys::copy_file($reverse_dusted, $reverse_out);
         if ($self->dust_unaligned_reads){
@@ -1667,12 +1667,12 @@ sub _process_unaligned_fastq {
         $dusted_fastq = "$fastq_file.DUSTED";
         $self->dust_fastq($fastq_file, $dusted_fastq);
     }else{
-        $self->status_message("skipping dusting $fastq_file");
+        $self->debug_message("skipping dusting $fastq_file");
         $dusted_fastq = $fastq_file;
     }
 
     if ($self->n_removal_threshold){
-        $self->status_message("Running n-removal on file $fastq_file");
+        $self->debug_message("Running n-removal on file $fastq_file");
         my $cmd = Genome::Model::Tools::Fastq::RemoveN->create(
             fastq_file => $dusted_fastq,
             n_removed_file => $output_path,
@@ -1686,7 +1686,7 @@ sub _process_unaligned_fastq {
             die $self->error_message("couldn't execute remove-n command for $dusted_fastq");
         }
     } else {
-        $self->status_message("No n-removal cutoff specified, skipping");
+        $self->debug_message("No n-removal cutoff specified, skipping");
         Genome::Sys->copy_file($dusted_fastq, $output_path);
     }
     if ($self->dust_unaligned_reads){

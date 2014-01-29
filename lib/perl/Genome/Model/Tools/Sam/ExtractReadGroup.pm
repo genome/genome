@@ -102,9 +102,9 @@ sub execute {
     return if not $temp_bam_read_count;
     my $sorted_temp_bam_read_count = $self->_read_count_for_bam($self->output);
     return if not $sorted_temp_bam_read_count;
-    $self->status_message('VERIFY READ COUNTS: READ GROUP BAM v. SORTED READ GROUP BAM');
-    $self->status_message("$temp_bam_read_count reads in READ GROUP BAM: $temp_bam_file");
-    $self->status_message("$sorted_temp_bam_read_count reads in SORTED READ GROUP BAM: $sorted_temp_bam_file");
+    $self->debug_message('VERIFY READ COUNTS: READ GROUP BAM v. SORTED READ GROUP BAM');
+    $self->debug_message("$temp_bam_read_count reads in READ GROUP BAM: $temp_bam_file");
+    $self->debug_message("$sorted_temp_bam_read_count reads in SORTED READ GROUP BAM: $sorted_temp_bam_file");
     if ( $temp_bam_read_count ne $sorted_temp_bam_read_count ) {
         $self->error_message("Sort of read group BAM resulted in different number of reads in the sorted file! $temp_bam_read_count <=> $sorted_temp_bam_read_count");
         return;

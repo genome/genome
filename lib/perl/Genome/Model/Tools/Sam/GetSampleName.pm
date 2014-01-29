@@ -43,7 +43,7 @@ sub execute {
         die sprintf("Found multiple sample names in %s: %s", $self->bam_file, join(', ', @sample_names));
     } else {
         $self->sample_name($sample_names[0]);
-        $self->status_message($self->sample_name);
+        $self->debug_message($self->sample_name);
     }
     return 1;
 }

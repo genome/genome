@@ -303,20 +303,20 @@ sub _execute_build {
     # the subject is a population group
     #
     my $population_group = $build->model->subject;
-    $build->status_message("subject is " . $population_group->__display_name__);
+    $build->debug_message("subject is " . $population_group->__display_name__);
 
     #
     # get the reference sequence
     #
 
     my $reference_build = $build->reference_sequence_build;
-    $build->status_message("reference sequence build: " . $reference_build->__display_name__);
+    $build->debug_message("reference sequence build: " . $reference_build->__display_name__);
 
     my $annotation_build = $self->ensembl_annotation_build;
     if (!defined $annotation_build) {
         die "No ensembl_annotation_build specified for this model, abort.";
     }
-    $build->status_message("ensembl annotation build: " . $annotation_build->__display_name__);
+    $build->debug_message("ensembl annotation build: " . $annotation_build->__display_name__);
 
     if (!$annotation_build->is_compatible_with_reference_sequence_build($reference_build)) {
         die "Reference sequence and annotation builds are incompatible!";
@@ -326,7 +326,7 @@ sub _execute_build {
     #unless(-e $reference_fasta){
     #    die $self->error_message("fasta file for reference build doesn't exist!");
     #}
-    #$build->status_message("reference sequence fasta: " . $reference_fasta);
+    #$build->debug_message("reference sequence fasta: " . $reference_fasta);
 
     #
     # get or create the vcf
@@ -339,7 +339,7 @@ sub _execute_build {
         #preserve a copy of the multisample VCF in the build directory
         my ($path,$name,$vcf_type) = fileparse($build->previous_variant_detection_results,qr{\.vcf\.gz$},qr{\.vcf$});
         my $copied_filename = $build->data_directory . "/previously_detected_variants" . $vcf_type;
-        $self->status_message("Copying build input: " . $build->previous_variant_detection_results. " to $copied_filename");
+        $self->debug_message("Copying build input: " . $build->previous_variant_detection_results. " to $copied_filename");
         my $result = Genome::Sys->copy_file($self->previous_variant_detection_results, $copied_filename);
         unless($result) {
             die $self->error_message("Failed to copy previous variant detection results to the build directory");
@@ -356,13 +356,13 @@ sub _execute_build {
         }
     }
     #notify which VCF
-    $self->status_message("Input VCF: " . $self->multisample_vcf);
-    $self->status_message("Ensembl annotation build: " . $self->ensembl_annotation_build->name);
+    $self->debug_message("Input VCF: " . $self->multisample_vcf);
+    $self->debug_message("Ensembl annotation build: " . $self->ensembl_annotation_build->name);
 
     #Do annotation based on available inputs
     my $annotated_vcf = $self->_annotate_multisample_vcf($self->output_directory);
     if($annotated_vcf) {
-        $self->status_message("Finished annotating the VCF. The following VCF will be used for further analysis: $annotated_vcf"); #the annotate method updates that
+        $self->debug_message("Finished annotating the VCF. The following VCF will be used for further analysis: $annotated_vcf"); #the annotate method updates that
         $self->multisample_vcf($annotated_vcf);
         my $cmd = Genome::Model::Tools::Tabix::Index->create(
             input_file => $annotated_vcf,
@@ -421,17 +421,17 @@ sub _find_or_generate_multisample_vcf {
     #
 
     my @patients = $population_group->members();
-    $build->status_message("found " . scalar(@patients) . " patients");
+    $build->debug_message("found " . scalar(@patients) . " patients");
 
     @samples = $population_group->samples;
-    $build->status_message("found " . scalar(@samples) . " samples");
+    $build->debug_message("found " . scalar(@samples) . " samples");
 
     my @instdata_assn = $build->inputs(name => 'instrument_data');
-    $build->status_message("found " . scalar(@instdata_assn) . " assignments for the current build");
+    $build->debug_message("found " . scalar(@instdata_assn) . " assignments for the current build");
 
     #my @instdata = Genome::InstrumentData->get(id => [ map { $_->value_id } @instdata_assn ]);
     my @instdata = map { $_->value } @instdata_assn;
-    $build->status_message("found " . scalar(@instdata) . " instdata");
+    $build->debug_message("found " . scalar(@instdata) . " instdata");
 
     my @per_sample_alignment_results;
     my @bams;
@@ -461,7 +461,7 @@ sub _find_or_generate_multisample_vcf {
         );
     }
     else {
-        $self->status_message('Gathering alignments...');
+        $self->debug_message('Gathering alignments...');
         my $overall_alignment_result = Genome::InstrumentData::Composite->get_or_create(
             inputs => {
                 instrument_data => \@instdata,
@@ -476,11 +476,11 @@ sub _find_or_generate_multisample_vcf {
         for my $r (@per_sample_alignment_results) {
             $r->add_user(label => 'uses', user => $build);
         }
-        $self->status_message('Found ' . scalar(@per_sample_alignment_results) . ' per-sample alignmnet results.');
+        $self->debug_message('Found ' . scalar(@per_sample_alignment_results) . ' per-sample alignmnet results.');
 
         # used directly by the merge tool until we switch to using the above directly
         @bams = $overall_alignment_result->bam_paths;
-        $self->status_message('Found ' . scalar(@bams) . ' merged BAMs.');
+        $self->debug_message('Found ' . scalar(@bams) . ' merged BAMs.');
         for my $bam (@bams){
             unless (-e $bam){
                 die $self->error_message("Bam file could not be reached at: ".$bam);
@@ -507,7 +507,7 @@ sub _find_or_generate_multisample_vcf {
     #  run bamreadcount to fill-in the blanks
     #
 
-    $self->status_message("Executing detect variants step");
+    $self->debug_message("Executing detect variants step");
 
     my %params;
     $params{snv_detection_strategy} = $self->snv_detection_strategy if $self->snv_detection_strategy;
@@ -555,13 +555,13 @@ sub _find_or_generate_multisample_vcf {
         }
         my $ref_fasta = $reference_build->full_consensus_path("fa");
         my $ped_file = $build->pedigree_file_path->path;
-        $self->status_message("About to run Sequencing QC (IBD)");
-        $self->status_message("Parameters:");
-        $self->status_message("Bams: @bams");
-        $self->status_message("Ped file: $ped_file");
-        $self->status_message("reference fasta: $ref_fasta");
-        $self->status_message("Snp Files: @snp_files");
-        $self->status_message("directory: $output_dir/IBD_QC/");
+        $self->debug_message("About to run Sequencing QC (IBD)");
+        $self->debug_message("Parameters:");
+        $self->debug_message("Bams: @bams");
+        $self->debug_message("Ped file: $ped_file");
+        $self->debug_message("reference fasta: $ref_fasta");
+        $self->debug_message("Snp Files: @snp_files");
+        $self->debug_message("directory: $output_dir/IBD_QC/");
         my $sqc_obj = Genome::Model::Tools::Relationship::SequencingQc->create(
             ped_file=>$ped_file,
             bams=>\@bams,
@@ -579,7 +579,7 @@ sub _find_or_generate_multisample_vcf {
             );
         }
         if($IBD_STATUS eq 'Pass') {
-            $self->status_message("Sequencing-Qc module reports pass, these individuals seem to be related as the ped has described");
+            $self->debug_message("Sequencing-Qc module reports pass, these individuals seem to be related as the ped has described");
         }
 
     }
@@ -597,7 +597,7 @@ sub _find_or_generate_multisample_vcf {
         die $self->error_message("Failed to execute detect variants dispatcher(err:$@) with params:\n".Data::Dumper::Dumper \%params);
     }
 
-    $self->status_message("detect variants command completed successfully");
+    $self->debug_message("detect variants command completed successfully");
 
     return $output_dir . '/snvs.vcf.gz';
 }
@@ -618,10 +618,10 @@ sub get_snp_list_for_something_close_to_this_result {
     if(@results) {
         # We are being pretty permissive here. Take ANY result we got.
         my $snp_list = $results[0]->path("snvs.hq.bed");
-        $self->status_message("Found a snp list at $snp_list");
+        $self->debug_message("Found a snp list at $snp_list");
         return $snp_list;
     } else {
-        $self->status_message("Could not find any DV2::Filter::SnpFilter result object for $bam_path. Widening the search space....");
+        $self->debug_message("Could not find any DV2::Filter::SnpFilter result object for $bam_path. Widening the search space....");
     }
 
     # Find a list of other bams that have this same set of instrument data and reference sequence
@@ -640,7 +640,7 @@ sub get_snp_list_for_something_close_to_this_result {
         if(@results) {
             # We are being pretty permissive here. Take ANY result we got.
             my $snp_list = $results[0]->path("snvs.hq.bed");
-            $self->status_message("Found a snp list at $snp_list");
+            $self->debug_message("Found a snp list at $snp_list");
             return $snp_list;
         }
     }
@@ -661,7 +661,7 @@ sub _vcf_annotate {
         use_version => $self->joinx_version,
     );
     $vcf_annotator->execute || die "Failed to execute Joinx Vcf annotation using db: $annotation_vcf";
-    $self->status_message("Successfully annotated VCF with information from $annotation_vcf");
+    $self->debug_message("Successfully annotated VCF with information from $annotation_vcf");
     return $output_file;
 }
 
@@ -685,7 +685,7 @@ sub _annotate_multisample_vcf {
         #add dbsnp stuff to the vcf
         #FIXME maybe allow info fields that aren't hardcoded at some point in the future
         my $dbsnp_vcf = $self->dbsnp_build->snvs_vcf;
-        $self->status_message("Annotating with dbSNP VCF");
+        $self->debug_message("Annotating with dbSNP VCF");
         my $dbsnp_info_fields = $self->_dbsnp_info_fields_for_version($self->dbsnp_build->version);
         $annotated_vcf = $self->_vcf_annotate($vcf, $dbsnp_vcf, $dbsnp_info_fields);
         #set vcf variable so other predefined annotation sources can use it
@@ -695,12 +695,12 @@ sub _annotate_multisample_vcf {
         #add dbsnp stuff to the vcf
         #FIXME maybe allow info fields that aren't hardcoded at some point in the future
         my $thousand_genomes_vcf = $self->thousand_genomes_build->snvs_vcf;
-        $self->status_message("Annotating with 1000 Genomes VCF");
+        $self->debug_message("Annotating with 1000 Genomes VCF");
         $annotated_vcf = $self->_vcf_annotate($vcf, $thousand_genomes_vcf, "AF=1KGAF:ASN_AF:AMR_AF:AFR_AF:EUR_AF:SNPSOURCE=1KG,per-alt", $annotated_vcf);
     }
     if($self->nhlbi_esp_build) {
         my $nhlbi_vcf = $self->nhlbi_esp_build->snvs_vcf;
-        $self->status_message("Annotating with NHLBI ESP VCF");
+        $self->debug_message("Annotating with NHLBI ESP VCF");
         $annotated_vcf = $self->_vcf_annotate($vcf, $nhlbi_vcf, "MAF=NHLBI_ESP_MAF:DP=NHLBI,per-alt", $annotated_vcf);
     }
     if($annotated_vcf) {
@@ -846,13 +846,13 @@ sub clinical_data_object {
     return $self->_clinical_data_object if $self->_clinical_data_object;
 
     if ($self->clinical_data_file_path) {
-        $self->status_message("Loading clinical data from file " . $self->clinical_data_file_path->path);
+        $self->debug_message("Loading clinical data from file " . $self->clinical_data_file_path->path);
 
         $self->_clinical_data_object(Genome::Model::PhenotypeCorrelation::ClinicalData->from_file(
             $self->clinical_data_file_path->path
             ));
     } else {
-        $self->status_message("Loading clinical data from database using nomenclature " . $self->nomenclature->name);
+        $self->debug_message("Loading clinical data from database using nomenclature " . $self->nomenclature->name);
         $self->_clinical_data_object(Genome::Model::PhenotypeCorrelation::ClinicalData->from_database(
             $self->nomenclature,
             $self->subject->samples
@@ -865,14 +865,14 @@ sub clinical_data_object {
 sub clinical_data_file {
     my ($self) = @_;
     my $cd = $self->clinical_data_object();
-    $self->status_message("preparing clinical data files\n");
+    $self->debug_message("preparing clinical data files\n");
 
     my $clinical_data = $self->output_directory . "/Clinical_Data.txt";
     my $clinical_data_md5 = $self->output_directory . "/Clinical_Data.txt.md5";
 
-    $self->status_message("Writing clinical data to $clinical_data");
+    $self->debug_message("Writing clinical data to $clinical_data");
     my $digest = $cd->to_file($clinical_data);
-    $self->status_message("m5sum of input clinical data: " . $digest . "\n");
+    $self->debug_message("m5sum of input clinical data: " . $digest . "\n");
     my $fh = Genome::Sys->open_file_for_writing($clinical_data_md5);
     $fh->write("$digest\n");
     $fh->close;
@@ -885,9 +885,9 @@ sub sample_intersection {
         my %pop_group_samples = map {$_->name => 1} $self->subject->samples;
         my @vcf_samples = $self->_samples_from_vcf;
         my @clinical_samples = $self->clinical_data_object->sample_names;
-        $self->status_message("Population group contains " . scalar keys(%pop_group_samples) . " samples");
-        $self->status_message("Multisample vcf contains " . scalar @vcf_samples . " samples");
-        $self->status_message("Clinical data file contains " . scalar @clinical_samples . " samples");
+        $self->debug_message("Population group contains " . scalar keys(%pop_group_samples) . " samples");
+        $self->debug_message("Multisample vcf contains " . scalar @vcf_samples . " samples");
+        $self->debug_message("Clinical data file contains " . scalar @clinical_samples . " samples");
 
         # compute the intersection of samples in population group, vcf, and clinical data file
         my $samples_hash = reduce {
@@ -896,7 +896,7 @@ sub sample_intersection {
             } \%pop_group_samples, \@vcf_samples, \@clinical_samples;
 
         my @samples = sort keys %$samples_hash;
-        $self->status_message("The sample intersection contains " . scalar @samples . " samples");
+        $self->debug_message("The sample intersection contains " . scalar @samples . " samples");
 
         $self->_sample_names(\@samples);
     }
@@ -907,7 +907,7 @@ sub sample_list_file {
     my ($self) = @_;
 
     my $sample_file = $self->output_directory . "/Sample_List.txt";
-    $self->status_message("Attempting to generate sample list file: $sample_file");
+    $self->debug_message("Attempting to generate sample list file: $sample_file");
     my $sample_fh = Genome::Sys->open_file_for_writing($sample_file);
 
     my $sample_names = $self->sample_intersection;
@@ -918,11 +918,11 @@ sub sample_list_file {
 
 sub glm_model_file {
     my ($self) = @_;
-    $self->status_message("preparing glm model file\n");
+    $self->debug_message("preparing glm model file\n");
     my $glm_model = $self->output_directory . "/glm-model.txt";
     if(defined($self->glm_config_file)) {
         #copy it over
-        $self->status_message("Copying build input: " . $self->glm_config_file->path . " to $glm_model");
+        $self->debug_message("Copying build input: " . $self->glm_config_file->path . " to $glm_model");
         Genome::Sys->copy_file($self->glm_config_file->path,$glm_model);    #this croaks if it fails
         return $glm_model;
     }

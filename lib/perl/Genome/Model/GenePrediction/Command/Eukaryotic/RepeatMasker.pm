@@ -196,7 +196,7 @@ sub _generate_params {
 sub execute {
     my $self = shift;
 
-    $self->status_message("Preparing to execute repeat masker.");
+    $self->debug_message("Preparing to execute repeat masker.");
 
     $self->_check_input_fasta;
     $self->_set_masked_fasta unless defined $self->masked_fasta;
@@ -224,7 +224,7 @@ sub execute {
     my $cmd_string = join(' ', $executable, $self->_params_to_string(%params));
 
     $self->_execute_repeat_masker($cmd_string);
-    $self->status_message("Successfully executed repeat masker!");
+    $self->debug_message("Successfully executed repeat masker!");
     return 1;
 }
 
@@ -237,7 +237,7 @@ sub _execute_repeat_masker {
     my $rv;
     {
         local $CWD = $self->temp_working_directory;
-        $self->status_message("Executing repeat masker command $cmd_string from " . 
+        $self->debug_message("Executing repeat masker command $cmd_string from " . 
             "working directory " . $self->temp_working_directory);
         $rv = system($cmd_string);
     }
@@ -328,7 +328,7 @@ sub _filter_masked_sequences_from_fasta_file {
         my $n_percent = ($n_count / $total_length) * 100;
         # Need some record of what was excluded
         if ($n_percent > $self->maximum_percent_masked) {
-            $self->status_message("Sequence " . $seq_obj->display_name . " $n_percent % masked, excluding from masked fasta file");
+            $self->debug_message("Sequence " . $seq_obj->display_name . " $n_percent % masked, excluding from masked fasta file");
             $excluded_fasta_io->write_seq($seq_obj);
             next;
         }
@@ -405,7 +405,7 @@ sub _set_masked_fasta {
     my $self = shift;
     my $masked_fasta = $self->fasta_file . ".repeat_masked";
     $self->masked_fasta($masked_fasta);
-    $self->status_message("Masked fasta file path not given, defaulting to " . $self->masked_fasta);
+    $self->debug_message("Masked fasta file path not given, defaulting to " . $self->masked_fasta);
     return 1;
 }
 
@@ -413,7 +413,7 @@ sub _set_ace_file_location {
     my $self = shift;
     my $default_ace_file = $self->fasta_file. ".repeat_masker.ace";
     $self->ace_file_location($default_ace_file);
-    $self->status_message("Ace file is being generated and location not given, defaulting to $default_ace_file");
+    $self->debug_message("Ace file is being generated and location not given, defaulting to $default_ace_file");
     return 1;
 }
 
@@ -421,7 +421,7 @@ sub _set_gff_file_location {
     my $self = shift;
     my $default_gff_file = $self->fasta_file . ".repeat_masker.gff";
     $self->gff_file_location($default_gff_file);
-    $self->status_message("Gff is file is being generated and location not given, defaulting to $default_gff_file");
+    $self->debug_message("Gff is file is being generated and location not given, defaulting to $default_gff_file");
     return 1;
 }
 
@@ -429,16 +429,16 @@ sub _set_excluded_sequence_file_location {
     my $self = shift;
     my $default_file = $self->fasta_file . ".overly_masked";
     $self->overly_masked_sequence_fasta($default_file);
-    $self->status_message("Overly masked fasta file not given, defaulting to " . $self->overly_masked_sequence_fasta);
+    $self->debug_message("Overly masked fasta file not given, defaulting to " . $self->overly_masked_sequence_fasta);
     return 1;
 }
 
 sub _prepare_for_skip {
     my $self = shift;
-    $self->status_message("skip_masking flag is set, copying input fasta to masked fasta location");
+    $self->debug_message("skip_masking flag is set, copying input fasta to masked fasta location");
     my $rv = Genome::Sys->copy_file($self->fasta_file, $self->masked_fasta);
     confess "Trouble executing copy of " . $self->fasta_file . " to " . $self->masked_fasta unless defined $rv and $rv;
-    $self->status_message("Copy of input fasta at " . $self->fasta_file . " to masked fasta path at " .
+    $self->debug_message("Copy of input fasta at " . $self->fasta_file . " to masked fasta path at " .
         $self->masked_fasta . " successful, exiting!");
     return 1;
 }
@@ -453,7 +453,7 @@ sub _set_temp_working_directory {
     );
     chmod(0775, $temp_dir);
     $self->temp_working_directory($temp_dir);
-    $self->status_message("Not given temp working directory, using $temp_dir");
+    $self->debug_message("Not given temp working directory, using $temp_dir");
     return 1;
 }
 
@@ -471,16 +471,16 @@ sub _validate_executable {
 sub _generate_ace_file {
     my $self = shift;
     my @ace_files = glob($self->temp_working_directory."/*ace");
-    $self->status_message("Ace file $ace_files[0]");
+    $self->debug_message("Ace file $ace_files[0]");
 
-    $self->status_message("Fasta " . $self->masked_fasta);
+    $self->debug_message("Fasta " . $self->masked_fasta);
 	my ( $masked_file_name, $dir ) = fileparse($self->masked_fasta);
 	my @masked_file_name = split(/repeat_masker/, $masked_file_name);
 
     #local $CWD = $self->temp_working_directory;
 
 	my $new_ace_file_name = $self->ace_file_location;
-	$self->status_message("Ace file name: ". $new_ace_file_name);
+	$self->debug_message("Ace file name: ". $new_ace_file_name);
 	my $ace_file_fh = IO::File->new($new_ace_file_name, "a");
 	$self->error_message("Could not get handle for ace file($ace_file_fh): $!") and return unless $ace_file_fh;
 
@@ -493,7 +493,7 @@ sub _generate_ace_file {
 			chomp $line;
 			if ($line =~ m/^>(.*)/) {
 		  		$contig_name = $1;
-				$self->status_message("contig_name: ". $contig_name);
+				$self->debug_message("contig_name: ". $contig_name);
 				last;
 			}
 		}

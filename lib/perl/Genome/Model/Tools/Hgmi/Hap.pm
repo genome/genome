@@ -95,7 +95,7 @@ sub execute {
     my $self = shift;
 
     local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
-    $self->status_message("Beginning execution of HAP command");
+    $self->debug_message("Beginning execution of HAP command");
 
     # FIXME I'd like to get rid of the configuration file altogether
     confess "No configuration file found at " . $self->config unless -f $self->config;
@@ -111,7 +111,7 @@ sub execute {
     }
 
     # FIXME This directory structure can really be simplified
-    $self->status_message("Creating directory structure.");
+    $self->debug_message("Creating directory structure.");
 
     # Directory structure is created
     my $dir_builder = Genome::Model::Tools::Hgmi::DirBuilder->create(
@@ -126,7 +126,7 @@ sub execute {
     my $dir_build_rv = $dir_builder->execute;
     confess "Trouble executing directory builder!" unless defined $dir_build_rv and $dir_build_rv == 1;
 
-    $self->status_message("Directories created, now collecting sequence!");
+    $self->debug_message("Directories created, now collecting sequence!");
 
     # FIXME Should not be changing directories like this
     my $next_dir = $config->{path} . "/"
@@ -136,7 +136,7 @@ sub execute {
         . "Sequence/Unmasked";
     confess "Directory does not exist: $next_dir" unless -d $next_dir;
     chdir($next_dir);
-    $self->status_message("Changed directory to $next_dir");
+    $self->debug_message("Changed directory to $next_dir");
 
     # Collect sequence into directory
     # FIXME Add output directory param here so changing directories isn't necessary
@@ -149,7 +149,7 @@ sub execute {
     my $collect_seq_rv = $collect_sequence->execute;
     confess "Trouble executing collect sequence!" unless defined $collect_seq_rv and $collect_seq_rv == 1;
 
-    $self->status_message("Sequence collection done, now naming sequence.");
+    $self->debug_message("Sequence collection done, now naming sequence.");
 
     # Run sequence name tool (what does this do?) 
     my $sequence_name = Genome::Model::Tools::Hgmi::SequenceName->create(
@@ -175,9 +175,9 @@ sub execute {
         . "/Sequence";
     confess "Directory does not exist: $next_dir" unless -d $next_dir;
     chdir($next_dir);
-    $self->status_message("Changed directory to $next_dir");
+    $self->debug_message("Changed directory to $next_dir");
 
-    $self->status_message("Sequence naming complete, now making prediction models.");
+    $self->debug_message("Sequence naming complete, now making prediction models.");
 
     # Making prediction models, which are thrown into current working directory
     # FIXME Add an output directory parameter
@@ -197,9 +197,9 @@ sub execute {
         . $config->{pipe_version};
     confess "Directory does not exist: $next_dir" unless -d $next_dir;
     chdir($next_dir);
-    $self->status_message("Changed directory to $next_dir");
+    $self->debug_message("Changed directory to $next_dir");
 
-    $self->status_message("Prediction models created, now running gene prediction!");
+    $self->debug_message("Prediction models created, now running gene prediction!");
 
     # Create prediction object and execute
     # FIXME Add output directory param, do not rely on current working directory
@@ -218,14 +218,14 @@ sub execute {
     # Skip execution if previous gene prediction execution was successful
     # TODO Can be removed when this is a workflow
     if ($predict->is_valid()) {
-        $self->status_message("Prediction has already been run successfully, continuing!");
+        $self->debug_message("Prediction has already been run successfully, continuing!");
     }
     else {
         my $predict_rv = $predict->execute;
         confess "Trouble executing gene prediction!" unless defined $predict_rv and $predict_rv == 1;
     }
 
-    $self->status_message("Gene prediction run, now starting gene merging!");
+    $self->debug_message("Gene prediction run, now starting gene merging!");
 
     # Create merge object and execute
     my $merge = Genome::Model::Tools::Hgmi::Merge->create(
@@ -243,14 +243,14 @@ sub execute {
     # Skip execution if previous gene merging run was successful
     # TODO Can be removed when this is a workflow
     if ($merge->is_valid) {
-        $self->status_message("Skipping gene merging step, previous execution was successful!");
+        $self->debug_message("Skipping gene merging step, previous execution was successful!");
     }
     else {
         my $merge_rv = $merge->execute;
         confess "Trouble executing gene merging!" unless defined $merge_rv and $merge_rv == 1;
     }
 
-    $self->status_message("Gene merging done, now tagging overlaps.");
+    $self->debug_message("Gene merging done, now tagging overlaps.");
 
     # Overlapping genes aren't properly tagged in merging, so an extra step is run to tag them
     my $tag_overlaps = Genome::Model::Tools::Bacterial::TagOverlaps->create(
@@ -271,9 +271,9 @@ sub execute {
         . "/Annotated_submission";
     confess "Directory does not exist: $next_dir" unless -d $next_dir;
     chdir($next_dir);
-    $self->status_message("Changed directory to $next_dir");
+    $self->debug_message("Changed directory to $next_dir");
 
-    $self->status_message("Overlaps are totally tagged, running rrna screen.");
+    $self->debug_message("Overlaps are totally tagged, running rrna screen.");
 
     # Running rrna screen
     my $rrna_screen = Genome::Model::Tools::Hgmi::RrnaScreen->create(
@@ -285,7 +285,7 @@ sub execute {
     my $rrna_screen_rv = $rrna_screen->execute;
     confess "Trouble executing rrna screen!" unless defined $rrna_screen_rv and $rrna_screen_rv == 1;
 
-    $self->status_message("Rrna screen done, running finishing step.");
+    $self->debug_message("Rrna screen done, running finishing step.");
 
     # Run finish step
     my $finish = Genome::Model::Tools::Hgmi::Finish->create(
@@ -307,15 +307,15 @@ sub execute {
     my $finish_rv = $finish->execute;
     confess "Trouble executing finish step!" unless defined $finish_rv and $finish_rv == 1;
 
-    $self->status_message("Done with finishing!");
+    $self->debug_message("Done with finishing!");
 
     chdir($next_dir);
-    $self->status_message("Changed directory to $next_dir");
+    $self->debug_message("Changed directory to $next_dir");
 
     # Run the core gene check (unless the user says we shouldn't!)
     unless ($self->skip_core_check)
     {
-        $self->status_message("Preparing to run core gene check!");
+        $self->debug_message("Preparing to run core gene check!");
 
         my $core_gene = Genome::Model::Tools::Hgmi::CoreGenes->create(
             cell_type       => $config->{cell_type},
@@ -327,28 +327,28 @@ sub execute {
         confess "Trouble executing core gene check!" unless defined $core_rv and $core_rv == 1;
     }
     else {
-        $self->status_message("Skipping core gene check.");
+        $self->debug_message("Skipping core gene check.");
     }
 
     # If the user wants to skip protein annotation, we're done!
     if($self->skip_protein_annotation) {
-        $self->status_message("Skipping protein annotation!");
+        $self->debug_message("Skipping protein annotation!");
         return 1;
     }
 
     # Also skip PAP if there's no workflow file spepcifed in the config file! 
     unless (defined $config->{workflowxml}) {
-        $self->status_message("No workflow xml path provided in config file, so PAP/BER will not be run. Exiting...");
+        $self->debug_message("No workflow xml path provided in config file, so PAP/BER will not be run. Exiting...");
         return 1;
     }
 
-    $self->status_message("Moving data from mgap to biosql: Hap.pm");
+    $self->debug_message("Moving data from mgap to biosql: Hap.pm");
     $self->mgap_to_biosql($config->{locus_tag}, $merge->sequence_set_id);
 
-    $self->status_message("Creating peptide file: Hap.pm");
+    $self->debug_message("Creating peptide file: Hap.pm");
     $self->get_gene_peps($config->{locus_tag});
 	
-    $self->status_message("Getting ready to run PAP!");
+    $self->debug_message("Getting ready to run PAP!");
 
     my $gram_stain = $config->{gram_stain};
     confess 'Gram stain not specified in config file, cannot start PAP workflow!' unless defined $gram_stain;
@@ -386,7 +386,7 @@ sub execute {
     );
     confess 'Could not create command object for send to pap!' unless $send;
 
-    $self->status_message("Parameters for protein annotation:\n" . Data::Dumper::Dumper($send));
+    $self->debug_message("Parameters for protein annotation:\n" . Data::Dumper::Dumper($send));
     confess 'Could not run pap!' unless $send->execute;
 
     # jcvi product naming goes here.
@@ -418,7 +418,7 @@ sub execute {
             chdir($next_dir)
                 or croak
                 "Failed to change to '$next_dir', from Hap.pm: $OS_ERROR\n\n";
-            $self->status_message("Changed directory to $next_dir");
+            $self->debug_message("Changed directory to $next_dir");
         }
 
         #run /gsc/scripts/gsc/annotation/biosql2ace <locus_tag>

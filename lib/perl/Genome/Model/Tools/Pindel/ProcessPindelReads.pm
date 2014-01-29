@@ -146,7 +146,7 @@ EOS
 sub execute {
     my $self = shift;
     $self->_refseq($self->reference_sequence_input);
-    $self->status_message("Dumping reads from samtools view to temp files due to excessive read depth.") if $self->capture_data;
+    $self->debug_message("Dumping reads from samtools view to temp files due to excessive read depth.") if $self->capture_data;
     print "Dumping reads from samtools view to temp files due to excessive read depth.\n" if  $self->capture_data;
     my $big_output_file = $self->big_output_file;
     my $hq_raw_output_file = $self->hq_raw_output_file;
@@ -517,7 +517,7 @@ sub vaf_filter {
 
     my $override=0;
     unless($tumor_read_support > 0){
-        $self->status_message("Found ".$tumor_read_support." reads in the tumor, but pindel found: " . $reads . " supporting the variant at ".join("\t",($chr,$start,$stop))."\n");
+        $self->debug_message("Found ".$tumor_read_support." reads in the tumor, but pindel found: " . $reads . " supporting the variant at ".join("\t",($chr,$start,$stop))."\n");
         $tumor_read_support =1;
         $override = 1;
     }

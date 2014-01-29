@@ -46,7 +46,7 @@ sub execute {
     my $control_sample = $self->control_aligned_reads_sample;
 
     my ($output_directory) = dirname($output);
-    $self->status_message("Output Directory for pindel-single-genome vcf creation will be: ".$output_directory);
+    $self->debug_message("Output Directory for pindel-single-genome vcf creation will be: ".$output_directory);
 
     my @prop_names = qw(
         pindel_raw_output 
@@ -59,7 +59,7 @@ sub execute {
     my %inputs;
     $inputs{pindel_raw_output} = $pindel_raw;
     $inputs{output_file} = $output;
-    $self->status_message("VCF conversion output will be at: ".$output);
+    $self->debug_message("VCF conversion output will be at: ".$output);
     $inputs{reference_build_id} = $refbuild_id;
     $inputs{aligned_reads_sample} = $target_sample;
     $inputs{control_aligned_reads_sample} = $control_sample if $control_sample;
@@ -97,7 +97,7 @@ sub execute {
         $self->error_message(@errors);
         die "Errors validating workflow\n";
     }
-    $self->status_message("Now launching the vcf-merge workflow.");
+    $self->debug_message("Now launching the vcf-merge workflow.");
     my $result = Workflow::Simple::run_workflow_lsf( $workflow, %inputs);
 
     unless($result){

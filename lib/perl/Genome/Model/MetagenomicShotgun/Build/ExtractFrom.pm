@@ -46,10 +46,10 @@ sub execute {
     my $extraction_type = $self->type;
 
     if ( not defined $sub_build ){
-        $self->status_message("No previous build provided, skipping $extraction_type data extraction");
+        $self->debug_message("No previous build provided, skipping $extraction_type data extraction");
         return;
     }
-    $self->status_message("Extracting $extraction_type reads from ".$sub_build->__display_name__);
+    $self->debug_message("Extracting $extraction_type reads from ".$sub_build->__display_name__);
     my @assignments = $sub_build->instrument_data_inputs;
     my %assignments_and_extracted_instrument_data;
     for my $assignment (@assignments) {
@@ -60,7 +60,7 @@ sub execute {
         if (@alignment_results == 0) {
             die $self->error_message( "no alignment_results found for instrument data assignment: " . $assignment->__display_name__);
         }
-        $self->status_message("processing instrument data assignment ".$assignment->__display_name__." for unaligned reads import");
+        $self->debug_message("processing instrument data assignment ".$assignment->__display_name__." for unaligned reads import");
 
         my $alignment_result = $alignment_results[0];
         my @extracted_instrument_data_for_alignment_result = $self->_extract_data_from_alignment_result(
@@ -113,7 +113,7 @@ sub _extract_data_from_alignment_result{
     if ($filter_duplicates){
         $subdir .= "/deduplicated";
     }
-    $self->status_message("Preparing imported instrument data for import path $tmp_dir/$subdir");
+    $self->debug_message("Preparing imported instrument data for import path $tmp_dir/$subdir");
 
     my $forward_basename = "s_$lane" . "_1_sequence.txt";
     my $reverse_basename = "s_$lane" . "_2_sequence.txt";
@@ -130,10 +130,10 @@ sub _extract_data_from_alignment_result{
 
     my ($se_lock, $pe_lock);
 
-    $self->status_message("Checking for previously imported extracted reads from: $tmp_dir/$subdir");
+    $self->debug_message("Checking for previously imported extracted reads from: $tmp_dir/$subdir");
     my $se_instdata = Genome::InstrumentData::Imported->get(original_data_path => $expected_se_path);
     if ($se_instdata) {
-        $self->status_message("imported instrument data already found for path $expected_se_path, skipping");
+        $self->debug_message("imported instrument data already found for path $expected_se_path, skipping");
     }
     else {
         $se_lock = $self->lock($instrument_data_id, $fragment_basename);
@@ -146,7 +146,7 @@ sub _extract_data_from_alignment_result{
     if ( $instrument_data->is_paired_end ){
         $pe_instdata = Genome::InstrumentData::Imported->get(original_data_path => $expected_pe_path);
         if ($pe_instdata) {
-            $self->status_message("imported instrument data already found for path $expected_pe_path, skipping");
+            $self->debug_message("imported instrument data already found for path $expected_pe_path, skipping");
         }
         else  {
             $pe_lock = $self->lock($instrument_data_id, "s_${lane}_1-2_sequence.txt");
@@ -157,7 +157,7 @@ sub _extract_data_from_alignment_result{
     }
 
     if (!$se_lock and !$pe_lock) {
-        $self->status_message("skipping read processing since all data is already processed and uploaded");
+        $self->debug_message("skipping read processing since all data is already processed and uploaded");
         return grep { defined $_ } ($se_instdata, $pe_instdata);
     }
 
@@ -200,11 +200,11 @@ sub _extract_data_from_alignment_result{
     if (@missing){
         die $self->error_message(join(", ", @missing)." unaligned files missing after bam extraction");
     }
-    $self->status_message("Extracted unaligned reads from bam file (@expected_output_fastqs)");
+    $self->debug_message("Extracted unaligned reads from bam file (@expected_output_fastqs)");
 
     # upload
 
-    $self->status_message("uploading new instrument data from the post-processed unaligned reads...");
+    $self->debug_message("uploading new instrument data from the post-processed unaligned reads...");
     my @properties_from_prior = qw/
         run_name
         sequencing_platform
@@ -218,7 +218,7 @@ sub _extract_data_from_alignment_result{
     for my $property_name (@properties_from_prior) {
         my $value = $instrument_data->$property_name;
         no warnings;
-        $self->status_message("Value for $property_name is $value");
+        $self->debug_message("Value for $property_name is $value");
         $properties_from_prior{$property_name} = $value;
     }
     $properties_from_prior{subset_name} = $instrument_data->lane;
@@ -228,7 +228,7 @@ sub _extract_data_from_alignment_result{
         :  ($fragment_unaligned_data_path);
 
     for my $source_data_files (@source_paths) {
-        $self->status_message("Attempting to upload $source_data_files...");
+        $self->debug_message("Attempting to upload $source_data_files...");
         my $original_data_path;
         if ($source_data_files =~ /,/){
             $properties_from_prior{is_paired_end} = 1;
@@ -243,7 +243,7 @@ sub _extract_data_from_alignment_result{
             source_data_files => $source_data_files,
             import_format => 'sanger fastq',
         );
-        $self->status_message("importing fastq with the following params:" . Data::Dumper::Dumper(\%params));
+        $self->debug_message("importing fastq with the following params:" . Data::Dumper::Dumper(\%params));
 
         my $command = Genome::InstrumentData::Command::Import::Fastq->create(%params);
         unless ($command) {
@@ -253,7 +253,7 @@ sub _extract_data_from_alignment_result{
         unless ($result) {
             die $self->error_message( "Error importing data from $source_data_files! " . Genome::InstrumentData::Command::Import::Fastq->error_message() );
         }
-        $self->status_message("committing newly created imported instrument data");
+        $self->debug_message("committing newly created imported instrument data");
 
         my $new_instrument_data = Genome::InstrumentData::Imported->get($command->generated_instrument_data_id);
         unless ($new_instrument_data) {
@@ -268,14 +268,14 @@ sub _extract_data_from_alignment_result{
             die "unsaved changes present on instrument data $new_instrument_data->{id} from $original_data_path!!!";
         }
         if ( $se_lock ) {
-            $self->status_message("Attempting to remove lock on $se_lock...");
+            $self->debug_message("Attempting to remove lock on $se_lock...");
             unless(Genome::Sys->unlock_resource(resource_lock => $se_lock)) {
                 die $self->error_message("Failed to unlock $se_lock.");
             }
             undef($se_lock);
         }
         if ( $pe_lock ) {
-            $self->status_message("Attempting to remove lock on $pe_lock...");
+            $self->debug_message("Attempting to remove lock on $pe_lock...");
             unless(Genome::Sys->unlock_resource(resource_lock => $pe_lock)) {
                 die $self->error_message("Failed to unlock $pe_lock.");
             }

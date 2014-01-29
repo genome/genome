@@ -74,7 +74,7 @@ sub execute {
  
     my $cmd = "$coverage_cmd $aligned_reads -f $reference > $output_file";
 
-    $self->status_message("Mapcheck coverage command: ".$cmd);
+    $self->debug_message("Mapcheck coverage command: ".$cmd);
     my $report_rv = Genome::Sys->shellcmd(cmd=>$cmd,output_files=>[$output_file],input_files=>[$aligned_reads,$reference]);
     
     my @output_text;

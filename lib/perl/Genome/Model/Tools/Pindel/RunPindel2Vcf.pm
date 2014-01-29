@@ -98,7 +98,7 @@ sub _verify_inputs {
         return;
     }
 
-    $self->status_message("Completed verify_inputs step.");
+    $self->debug_message("Completed verify_inputs step.");
 
     return 1;
 }

@@ -94,7 +94,7 @@ class Genome::Model::Tools::Htseq::Count {
 
 sub _execute_v1 {
     my $self = shift;
-    $self->status_message("Using HTSeq version " . $self->app_version . ', result version ' . $self->result_version . '.');
+    $self->debug_message("Using HTSeq version " . $self->app_version . ', result version ' . $self->result_version . '.');
 
     my @alignment_result = $self->alignment_results;
     if (@alignment_result > 1) {
@@ -104,7 +104,7 @@ sub _execute_v1 {
         Carp::confess("Support for multiple alignment result inputs in the same excution is not implemented yet!");
     }
     my $alignment_result = $alignment_result[0];
-    $self->status_message("Using alignment result: " . $alignment_result->__display_name__);
+    $self->debug_message("Using alignment result: " . $alignment_result->__display_name__);
 
     my $instrument_data = $alignment_result->instrument_data;
     unless ($instrument_data->sample->is_rna) {
@@ -114,7 +114,7 @@ sub _execute_v1 {
             . " is " . $instrument_data->sample->extraction_type . '!'
         );
     }
-    $self->status_message("Sample extraction type: " . $instrument_data->sample->extraction_type);
+    $self->debug_message("Sample extraction type: " . $instrument_data->sample->extraction_type);
 
     my $transcript_strand = $instrument_data->library->transcript_strand;
     unless ($transcript_strand) {
@@ -134,20 +134,20 @@ sub _execute_v1 {
     else {
         die $self->error_message("Unknown transcript_strand $transcript_strand!  expected unstranded, firstread or secondread.");
     }
-    $self->status_message("Strandedness: $transcript_strand (htseq-count stranded: $htseq_stranded_param)");
+    $self->debug_message("Strandedness: $transcript_strand (htseq-count stranded: $htseq_stranded_param)");
     
     my $annotation_build = $alignment_result->annotation_build;
-    $self->status_message("Annotation build: " . $annotation_build->__display_name__);
+    $self->debug_message("Annotation build: " . $annotation_build->__display_name__);
 
     my $gtf_file = $annotation_build->annotation_file('gtf',$annotation_build->reference_sequence->id);
 
-    $self->status_message("Using annotation features from: " . $gtf_file);
+    $self->debug_message("Using annotation features from: " . $gtf_file);
    
     my $htseq_count_path = Genome::Sys->sw_path("htseq", $self->app_version, "htseq-count");
-    $self->status_message("Executable htseq-count " . $self->app_version . " running from $htseq_count_path");
+    $self->debug_message("Executable htseq-count " . $self->app_version . " running from $htseq_count_path");
     
     my $output_dir = $self->output_dir;
-    $self->status_message("Output destination directory: $output_dir");
+    $self->debug_message("Output destination directory: $output_dir");
 
     # The samtools version is not part of the params because it is not yet required for it to vary.
     # If it does need to vary in the future a param should be addeed and backfilled
@@ -156,14 +156,14 @@ sub _execute_v1 {
     # to ever upgrade, and is unlikely to produce different results if it is upgraded.
     my $samtools_version = '0.1.18';
     my $samtools_path = Genome::Sys->sw_path("samtools", $samtools_version);
-    $self->status_message("samtools version: $samtools_version (running from $samtools_path)");
+    $self->debug_message("samtools version: $samtools_version (running from $samtools_path)");
    
     my $tmp = Genome::Sys->create_temp_directory();
 
     my $sorted_bam;
     if ($alignment_result->temp_scratch_directory) {
         # if the AR is in the middle of being built it will have a sorted bam already present in scratch space
-        $self->status_message("found temp_scratch directory ...using a presorted bam available during the alignment process");
+        $self->debug_message("found temp_scratch directory ...using a presorted bam available during the alignment process");
         $sorted_bam = $alignment_result->temp_scratch_directory . '/raw_all_sequences.bam.sort.bam';
         unless (-e $sorted_bam) {
             die $self->error_message("found temp scratch dir but no sorted BAM file $sorted_bam!");
@@ -171,7 +171,7 @@ sub _execute_v1 {
     }
     else {
         # a completed alignment result will need to have a sorted bam created
-        $self->status_message("No temp_scratch_directory found: name sort the BAM in temp space.");
+        $self->debug_message("No temp_scratch_directory found: name sort the BAM in temp space.");
         my $unsorted_bam = $alignment_result->output_dir . '/all_sequences.bam';
         my $sorted_bam_noprefix = "$tmp/all_sequences.namesorted";
         $sorted_bam = $sorted_bam_noprefix . '.bam';
@@ -204,9 +204,9 @@ sub _execute_v1 {
         # This logic is only needed if we are not filtering out unaligned reads,
         # and we are using alignments from tophat before version < 2.0.7.
         # TODO: determine if we should keep this
-        $self->status_message("older tophat bams require cleanup of query names and mate information");
+        $self->debug_message("older tophat bams require cleanup of query names and mate information");
 
-        $self->status_message("cleaning up bam for fixmate");
+        $self->debug_message("cleaning up bam for fixmate");
         my $sorted_cleaned_bam = "$tmp/all_sequences.namesorted.cleaned.bam";
         my $clean_cmd = "$samtools_path view -h $sorted_bam | "
             . ($whitelist_alignments_flags ? " -f $whitelist_alignments_flags " : '')
@@ -218,13 +218,13 @@ sub _execute_v1 {
             . " samtools view -S - -b > $sorted_cleaned_bam";
         Genome::Sys->shellcmd(cmd => $clean_cmd);
 
-        $self->status_message("re-running fixmate with cleaned-up queries and fixmate information");
+        $self->debug_message("re-running fixmate with cleaned-up queries and fixmate information");
         $final_bam = "$tmp/all_sequences.namesorted.cleaned.fixed.bam";
         Genome::Sys->shellcmd(cmd => "$samtools_path fixmate $sorted_cleaned_bam $final_bam");
     }
 
     for my $type (qw/transcript gene/) {
-        $self->status_message("Produce per-$type results...");
+        $self->debug_message("Produce per-$type results...");
         
         # from Malachi's notes in JIRA issue TD-490
         # samtools view -h chr22_tumor_nonstranded_sorted.bam | htseq-count --mode intersection-strict --stranded no --minaqual 1 --type exon --idattr transcript_id - chr22.gff > transcript_tumor_read_counts_table.tsv 

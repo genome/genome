@@ -257,7 +257,7 @@ sub execute {
             $datadir = File::Temp::tempdir("SV_Assembly_XXXXXX", DIR => '/tmp', CLEANUP => 1);
         }
     }
-    $self->status_message("Data directory: $datadir");
+    $self->debug_message("Data directory: $datadir");
     $self->_data_dir($datadir);
 
     my $tigra_sv_cmd = Genome::Sys->swpath('tigra-sv', '0.1');
@@ -269,7 +269,7 @@ sub execute {
     $tigra_sv_cmd .= ' '. $tigra_sv_options . $sv_file . $bam_files . " > " . $out_file;
 
     print "tigra-sv command: $tigra_sv_cmd\n";
-    $self->status_message("tigra-sv command: $tigra_sv_cmd");
+    $self->debug_message("tigra-sv command: $tigra_sv_cmd");
     my $rv = Genome::Sys->shellcmd(
         cmd           => $tigra_sv_cmd,
         input_files   => [$sv_file],
@@ -375,7 +375,7 @@ sub execute {
     $out_fh->close;
     $cm_aln_fh->close if $cm_aln_fh;
     $self->_unc_pred_fh->close if $self->_unc_pred_fh;
-    $self->status_message('AssemblyValidation finished ok.');
+    $self->debug_message('AssemblyValidation finished ok.');
 
     return 1;
 }
@@ -506,7 +506,7 @@ sub _cross_match_validation {
         $self->error_message("Running cross_match for $tigra_sv_name homo failed.\nCommand: $cm_cmd");
         die $self->error_message;
     }
-    $self->status_message("Cross_match for $type contigs: $tigra_sv_name Done");
+    $self->debug_message("Cross_match for $type contigs: $tigra_sv_name Done");
         
     my $makeup_size      = 0; # by default they are zero
     my $concatenated_pos = 0; # by default they are zero
@@ -516,7 +516,7 @@ sub _cross_match_validation {
         $concatenated_pos = 2 * $self->flank_size + $self->pad_local_ref;
     }
 
-    $self->status_message("GetCrossMatchIndel for $tigra_sv_name $type");
+    $self->debug_message("GetCrossMatchIndel for $tigra_sv_name $type");
     my $cm_indel = Genome::Model::Tools::Sv::CrossMatchForIndel->create(
         cross_match_file     => $cm_out,
         local_ref_seq_file   => $ref_fa,

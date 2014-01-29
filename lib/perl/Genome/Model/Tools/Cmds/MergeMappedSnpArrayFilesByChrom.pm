@@ -129,7 +129,7 @@ sub execute {
                     }
                     if ($file eq $infiles[$#infiles] && $data->{$file}{"eof"}) {
                         $output_fh->print("\n");
-                        $self->status_message("Reached the end of all files.");
+                        $self->debug_message("Reached the end of all files.");
                         return;
                     }
                 }

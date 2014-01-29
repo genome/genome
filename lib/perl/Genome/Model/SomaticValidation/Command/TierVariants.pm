@@ -68,12 +68,12 @@ sub should_skip_run {
     }
 
     unless($build->tiering_version) {
-        $self->status_message('No tiering version specified... skipping run.');
+        $self->debug_message('No tiering version specified... skipping run.');
         return 1;
     }
 
     unless($build->annotation_build) {
-        $self->status_message('No annotation build specified... skipping run.');
+        $self->debug_message('No annotation build specified... skipping run.');
         return 1;
     }
 
@@ -91,7 +91,7 @@ sub execute {
 
     return 1 if $self->should_skip_run;
 
-    $self->status_message("executing tier variants step on snvs and indels");
+    $self->debug_message("executing tier variants step on snvs and indels");
 
     for my $qual ('hq', 'lq') {
         TYPE: for my $variant_type ('snv', 'indel') {
@@ -114,7 +114,7 @@ sub execute {
         }
     }
 
-    $self->status_message("Tier Variants step completed");
+    $self->debug_message("Tier Variants step completed");
     return 1;
 }
 

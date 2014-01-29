@@ -54,7 +54,7 @@ sub execute {
     my $tiering_version = $build->tiering_version;
     my $tier_file_location = $anno_build->tiering_bed_files_by_version($tiering_version);
 
-    $self->status_message("Using tiering files from: ".$tier_file_location);
+    $self->debug_message("Using tiering files from: ".$tier_file_location);
 
     unless(-d $output_directory){
         Genome::Sys->create_directory($output_directory);
@@ -127,7 +127,7 @@ sub execute {
 
     Genome::Sys->copy_file($ssmq_dir."/snvs.lq.bed",$lq_tiers."/snvs.lq.bed");
 
-    $self->status_message("Now running fast-tier on somatic-score-mapping-quality lq output.");
+    $self->debug_message("Now running fast-tier on somatic-score-mapping-quality lq output.");
 
     my $tier_cmd = Genome::Model::Tools::FastTier::FastTier->create(
         variant_bed_file => $lq_tiers."/snvs.lq.bed",
@@ -140,7 +140,7 @@ sub execute {
     my $intersect_dir = $output_directory."/intersect_samtools";
     Genome::Sys->create_directory($intersect_dir);
 
-    $self->status_message("Now intersecting tier1 lq results with filtered samtools results.");
+    $self->debug_message("Now intersecting tier1 lq results with filtered samtools results.");
 
     my $intersect_cmd = Genome::Model::Tools::Joinx::Intersect->create(
         input_file_a => $lq_tiers."/snvs.lq.bed.tier1",
@@ -153,7 +153,7 @@ sub execute {
     }
     my $loh_output = $output_directory."/loh";
 
-    $self->status_message("Now checking for loh from intersected results.");
+    $self->debug_message("Now checking for loh from intersected results.");
 
     my $loh_cmd = Genome::Model::SomaticVariation::Command::Loh->create( 
         build => $build, 
@@ -175,7 +175,7 @@ sub execute {
         die $self->error_message("DbSNP bed file does not exist at: ".$dbsnp_file);
     }
 
-    $self->status_message("Now performing dbsnp intersection with file: ".$dbsnp_file);
+    $self->debug_message("Now performing dbsnp intersection with file: ".$dbsnp_file);
 
     my $dbsnp_intersect_cmd = Genome::Model::Tools::Joinx::Intersect->create(
         input_file_a => $loh_output."/snvs.somatic.v2.bed",
@@ -197,14 +197,14 @@ sub execute {
     my $novel_tier2_result = $validation_candidates."/snvs.hq.novel.tier2.v2.bed";
     my $novel_tier3_result = $validation_candidates."/snvs.hq.novel.tier3.v2.bed";
 
-    $self->status_message("Copying results into ".$validation_candidates);
+    $self->debug_message("Copying results into ".$validation_candidates);
 
     Genome::Sys->copy_file($novel_tier1,$novel_tier1_result);
     Genome::Sys->copy_file($novel_tier2,$novel_tier2_result);
     Genome::Sys->copy_file($novel_tier3,$novel_tier3_result);
     Genome::Sys->copy_file($dbsnp_dir."/snvs.hq.bed",$validation_candidates."/snvs.tier1_ssmq.hq.bed");
 
-    $self->status_message("Validation Candidates have been deposited at: ".$validation_candidates);
+    $self->debug_message("Validation Candidates have been deposited at: ".$validation_candidates);
 
     return 1;
 }

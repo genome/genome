@@ -229,7 +229,7 @@ sub execute {
     #my $ref_seq_build = $build->reference_sequence_build;
     #my $ref_seq_fasta = $ref_seq_build->full_consensus_path('fa');
     my $sample_name = $build->tumor_sample->name;
-    $self->status_message('processing build ' . $build->id . ' with sample_name: ' . $sample_name);
+    $self->debug_message('processing build ' . $build->id . ' with sample_name: ' . $sample_name);
     #my $tumor_bam = $build->tumor_bam;
     my $build_dir = $build->data_directory;
 
@@ -291,7 +291,7 @@ sub execute {
     ##------------------------------------------------------
     #remove all but tier 1 sites, if that option is specified
     if($self->tier1_only){
-        $self->status_message("Doing Tiering...");
+        $self->debug_message("Doing Tiering...");
         $current_snv_file = $self->tier_variant_file($current_snv_file);
         $current_indel_file = $self->tier_variant_file($current_indel_file) if $self->process_indels;
     }
@@ -299,7 +299,7 @@ sub execute {
     ##-------------------------------------------------
     #use joinx to remove dbsnp sites
     if(defined($self->dbsnp_filter)){
-        $self->status_message("Applying dbsnp filter...");
+        $self->debug_message("Applying dbsnp filter...");
 
         $current_snv_file = $self->dbsnp_filter_variant_file($current_snv_file);
         $current_indel_file = $self->dbsnp_filter_variant_file($current_indel_file) if $self->process_indels;
@@ -308,7 +308,7 @@ sub execute {
     #-------------------------------------------------
     #remove filter sites specified by the user
     if(defined($self->filter_sites)){
-        $self->status_message('Applying user-supplied filter...');
+        $self->debug_message('Applying user-supplied filter...');
 
         my $filter_sites = $self->prepare_user_filter_sites($self->filter_sites);
 
@@ -321,7 +321,7 @@ sub execute {
     if(defined($self->filter_regions)){
         my $filter_region_file = $self->prepare_user_filter_regions($self->filter_regions);
 
-        $self->status_message("Removing user-specified filter...");
+        $self->debug_message("Removing user-specified filter...");
 
         $current_snv_file = $self->_filter_regions($filter_region_file, $current_snv_file);
         $current_indel_file = $self->_filter_regions($filter_region_file, $current_indel_file) if $self->process_indels;
@@ -331,7 +331,7 @@ sub execute {
     my $notvalidated_snvs_file = "$output_dir/snvs/snvs.notvalidated";
     my $validated_snvs_file = "$output_dir/snvs/snvs.validated";
     #add readcounts
-    $self->status_message("Getting readcounts...");
+    $self->debug_message("Getting readcounts...");
     foreach my $file ($validated_snvs_file,$notvalidated_snvs_file,$current_snv_file){
         if( -s $file ){
             $self->generate_readcounts($file);
@@ -355,12 +355,12 @@ sub execute {
     #-------------------------------------------------
     # look at the new calls that were found in validation, but not in the first build (Case 2 above)
     # in the case of extension experiments, with no previous build, this will be all variants
-    $self->status_message("Gathering new sites...");
+    $self->debug_message("Gathering new sites...");
 
     if (-s $current_snv_file){
         return 1 unless $self->gather_new_sites($current_snv_file);
     } else {
-        $self->status_message("No variants found that were called in the validation, but not found in original genomes");
+        $self->debug_message("No variants found that were called in the validation, but not found in original genomes");
     }
 
     ###process the validated list for examination
@@ -431,7 +431,7 @@ sub parse_prior_variants {
             die $self->error_message('Could not find requested variant list: ' . $variant_list);
         }
 
-        $self->status_message("using variant list: $variant_list");
+        $self->debug_message("using variant list: $variant_list");
         my $variant_fh = Genome::Sys->open_file_for_reading($variant_list);
 
         while( my $line = $variant_fh->getline )
@@ -526,7 +526,7 @@ sub prepare_roi {
     my $self = shift;
     my $feature_list = shift;
 
-    $self->status_message('Using regions in feature list ' . $feature_list->id);
+    $self->debug_message('Using regions in feature list ' . $feature_list->id);
 
     my $roi_bed_file = $feature_list->file_path;
     unless ( -e $roi_bed_file ){
@@ -554,7 +554,7 @@ sub region_limit_variants {
     my $variant_file = shift;
     my $target_regions = shift;
 
-    $self->status_message('Filtering out off-target regions...');
+    $self->debug_message('Filtering out off-target regions...');
 
     my $on_target_file = "$variant_file.on_target";
     my $on_target_fh = Genome::Sys->open_file_for_writing($on_target_file);
@@ -586,7 +586,7 @@ sub tier_variant_file {
     my $variant_file = shift;
 
     unless(-s $variant_file) {
-        $self->status_message('Empty variant file.  Skipping tiering.');
+        $self->debug_message('Empty variant file.  Skipping tiering.');
         return $variant_file;
     }
 
@@ -902,7 +902,7 @@ sub recover_low_coverage_variants {
             die $self->error_message("Failed to dump IGV xml for poorly covered sites.");
         }
 
-        $self->status_message(join("\n",
+        $self->debug_message(join("\n",
             "--------------------------------------------------------------------------------",
             "Sites for review with poor coverage in validation but good coverage in original are here:",
             "    $output_dir/review/poorValCoverage.bed",
@@ -920,7 +920,7 @@ sub gather_new_sites {
 
     #can't run UHC if tumor-only:
     if($build->normal_sample){
-        $self->status_message("Running UHC filter...");
+        $self->debug_message("Running UHC filter...");
         #run the uhc filter to remove solid calls
         my $uhc_cmd = Genome::Model::Tools::Somatic::UltraHighConfidence->create(
             normal_bam_file => $build->normal_bam,
@@ -937,7 +937,7 @@ sub gather_new_sites {
 
 
     #now get the files together for review
-    $self->status_message("Generating Review files...");
+    $self->debug_message("Generating Review files...");
     my $revfile;
     if ( -s "$snv_file.passuhc"){
         $revfile = "$snv_file.passuhc";
@@ -997,7 +997,7 @@ sub gather_new_sites {
         die "Failed to dump IGV xml for poorly covered sites.\n";
     }
 
-    $self->status_message(join("\n",
+    $self->debug_message(join("\n",
         "--------------------------------------------------------------------------------",
         "Sites to review that were not found original genomes, but were found in validation are here:",
         "    $output_dir/review/newcalls.bed.tier1",

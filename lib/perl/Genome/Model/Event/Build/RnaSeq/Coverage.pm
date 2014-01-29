@@ -50,7 +50,7 @@ sub execute {
             return;
         }
     } else {
-        $self->status_message('Coverage requires annotation_reference_transcripts to be set as a processing profile param. SKIPPING COVERAGE!');
+        $self->debug_message('Coverage requires annotation_reference_transcripts to be set as a processing profile param. SKIPPING COVERAGE!');
         return 1;
     }
     my $coverage_directory = $self->build->coverage_directory;

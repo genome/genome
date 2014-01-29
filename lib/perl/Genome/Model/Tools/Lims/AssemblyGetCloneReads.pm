@@ -79,16 +79,16 @@ sub execute {
 
     foreach my $clone_name (@clones) {
 	$clone_name =~ s/\s+$//;
-	$self->status_message("Getting reads for clone: $clone_name\n");
+	$self->debug_message("Getting reads for clone: $clone_name\n");
 
 	#get seq_ids
 	my @ids;
 	unless (@ids = $self->_get_seq_ids($clone_name)) {
-	    $self->status_message("Failed to find any reads for clone: $clone_name");
+	    $self->debug_message("Failed to find any reads for clone: $clone_name");
 	    next;
 	}
 
-	$self->status_message("Found ".scalar @ids." reads");
+	$self->debug_message("Found ".scalar @ids." reads");
 
 	@seq_ids = (@seq_ids, @ids);
 
@@ -210,12 +210,12 @@ sub _dump_data {
     my $qual_out = $self->output_dir.'/'.$clone_name.'.fasta.qual';
 
     unlink $fasta_out, $qual_out;
-    $self->status_message("Dumping fasta\n");
+    $self->debug_message("Dumping fasta\n");
     if (system("seq_dump --input-file $re_ids_file --output type=fasta,file=$fasta_out,maskq=1,maskv=1,nocvl=35")) {
 	$self->error_message("Failed to dump fasta for $clone_name");
 	return;
     }
-    $self->status_message("Dumping quality\n");
+    $self->debug_message("Dumping quality\n");
     if (system ("seq_dump --input-file $re_ids_file --output type=qual,file=$qual_out")) {
 	$self->error_message("Failed to dump qual for $clone_name");
 	return;
@@ -248,7 +248,7 @@ sub _get_clones {
 sub _dump_reads_individually {
     my ($self, $clone_name) = @_;
 
-    $self->status_message("Dumping fasta and qual for $clone_name");
+    $self->debug_message("Dumping fasta and qual for $clone_name");
 
     my $fasta_out = Bio::SeqIO->new(-format => 'fasta', -file => '>'.$self->output_dir.'/'.$clone_name.'.fasta');
     my $qual_out = Bio::SeqIO->new(-format => 'qual', -file => '>'.$self->output_dir.'/'.$clone_name.'.fasta.qual');
@@ -261,11 +261,11 @@ sub _dump_reads_individually {
 	my $seq = GSC::Sequence::Item->get($re_id);
 
 	unless ($seq) {
-	    $self->status_message("Failed to get sequence object for re_id: $re_id");
+	    $self->debug_message("Failed to get sequence object for re_id: $re_id");
 	    next;
 	}
 	unless ($seq->sequence_base_string ge 10) {
-	    $self->status_message("Skipping, read is under 10 bases: ".$seq->gsc_trace_name);
+	    $self->debug_message("Skipping, read is under 10 bases: ".$seq->gsc_trace_name);
 	    next;
 	}
 

@@ -285,7 +285,7 @@ sub _resolve_workflow_for_build {
         if ($ensembl_version >= 67) {
             $run_splice_junction_summary = 1;
         } else {
-            $self->status_message('Skipping SpliceJunctionSummary for annotation build: '. $self->annotation_build);
+            $self->debug_message('Skipping SpliceJunctionSummary for annotation build: '. $self->annotation_build);
         }
     }
     my $output_properties = ['coverage_result','expression_result','metrics_result'];
@@ -704,7 +704,7 @@ sub params_for_alignment {
         test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
         bowtie_version => $self->bowtie_version
     );
-    #$self->status_message('The AlignmentResult parameters are: '. Data::Dumper::Dumper(%params));
+    #$self->debug_message('The AlignmentResult parameters are: '. Data::Dumper::Dumper(%params));
     my @param_set = (\%params);
     return @param_set;
 }

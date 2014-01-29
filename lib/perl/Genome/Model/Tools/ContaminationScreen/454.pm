@@ -46,7 +46,7 @@ sub execute
 
     #create read file
     my $cmd = 'cross_match.test ' . $input_file . ' ' .  $self->database . ' -raw -tags -minmatch 14 -bandwidth 6 -penalty -1 -gap_init -1 -gap_ext -1 > ' . $read_file;
-    $self->status_message('Running: '. $cmd);
+    $self->debug_message('Running: '. $cmd);
     my $rv = system($cmd);
     unless ($rv == 0) {
         $self->error_message("non-zero return value($rv) from command $cmd");
@@ -55,7 +55,7 @@ sub execute
 
     #run parsing script
     my $parse_cmd = $parse_script . ' -input ' . $read_file . ' -output ' . $parsed_file . ' -percent 90 -length 50'; 
-    $self->status_message('Running: ' . $parse_cmd);
+    $self->debug_message('Running: ' . $parse_cmd);
     $rv = system($parse_cmd);
     unless ($rv == 0)
     {

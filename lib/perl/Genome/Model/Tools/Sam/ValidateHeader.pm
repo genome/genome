@@ -39,11 +39,11 @@ sub execute {
     my @rg_result = grep (/\@RG/,@header_lines);
 
     unless ( scalar(@pg_result) > 0 ) {
-        $self->status_message("Input file $input_file does not contain a \@PG record.");
+        $self->debug_message("Input file $input_file does not contain a \@PG record.");
         return;
     }
     unless ( scalar(@rg_result) > 0 ) {
-        $self->status_message("Input file $input_file does not contain a \@RG record.");
+        $self->debug_message("Input file $input_file does not contain a \@RG record.");
         return;
     }
 
@@ -52,16 +52,16 @@ sub execute {
     my $get_read_result = `$get_read_cmd`;
 
     unless ($get_read_result =~ m/RG:Z/) {
-        $self->status_message("Input file $input_file does not contain a RG record.");
+        $self->debug_message("Input file $input_file does not contain a RG record.");
         return; 
     }
 
     unless ($get_read_result =~ m/PG:Z/) {
-        $self->status_message("Input file $input_file does not contain a PG record.");
+        $self->debug_message("Input file $input_file does not contain a PG record.");
         return; 
     }
 
-    #$self->status_message(join("\n",@header_lines));
+    #$self->debug_message(join("\n",@header_lines));
     return 1;
 }
 

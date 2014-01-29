@@ -56,7 +56,7 @@ sub execute {
         $self->error_message("Denovo VCF $denovo_vcf has no size or is not found. Exiting");
         die;
     } elsif (not defined $denovo_vcf) {
-        $self->status_message("Denovo vcf is not defined... no merging will be done in this step.")
+        $self->debug_message("Denovo vcf is not defined... no merging will be done in this step.")
     }
     unless(-s $standard_vcf) {
         $self->error_message("Standard VCF $standard_vcf has no size or is not found. Exiting");
@@ -194,7 +194,7 @@ sub merge_line {
     } 
     $alt = $new_alt;
     $standard_line = join("\t", ($chr, $pos, $id, $ref, $alt, $qual, $filter, $info, $format, @samples)) . "\n";
-    $self->status_message("merged line: $standard_line");
+    $self->debug_message("merged line: $standard_line");
     return $standard_line;
 }
 

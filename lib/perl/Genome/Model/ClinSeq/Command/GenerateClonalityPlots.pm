@@ -73,18 +73,18 @@ sub execute {
     my $chromosome = $self->chromosome;
 
     if (not defined $limit) {
-      $self->status_message("limit is not defined");
+      $self->debug_message("limit is not defined");
     }else{
-      $self->status_message("limit is $limit");
+      $self->debug_message("limit is $limit");
     }
 
     if (not defined $chromosome) {
-      $self->status_message("chromosome filter is not defined");
+      $self->debug_message("chromosome filter is not defined");
     }else{
-      $self->status_message("chromosome filter is $chromosome");
+      $self->debug_message("chromosome filter is $chromosome");
     }
 
-    $self->status_message("Creating clonality plot for $common_name");
+    $self->debug_message("Creating clonality plot for $common_name");
 
     #TODO: Replace all of this with a new process that gets variants from a unified clin-seq BAM read counts result
     #TODO: This step should just run the clonality tool in different ways on different input files.  All of this hacky file manipulation should be removed
@@ -119,14 +119,14 @@ sub execute {
     my $tier2_snv_file = $somatic_effects_dir . "snvs.hq.novel.tier2.v2.bed";
     my $tier3_snv_file = $somatic_effects_dir . "snvs.hq.novel.tier3.v2.bed";
     my $cp_cmd = "cp $tier1_snv_file $tier2_snv_file $tier3_snv_file $output_dir";
-    if ($verbose){$self->status_message("$cp_cmd")};
+    if ($verbose){$self->debug_message("$cp_cmd")};
     Genome::Sys->shellcmd(cmd => $cp_cmd);
 
     #Step 2 - put them together in one file:
     my $snv_file = $output_dir . "allsnvs.hq.novel.tier123.v2.bed";
     my $cat_cmd = "cat $output_dir"."snvs* > $snv_file";
     
-    if ($verbose){$self->status_message("$cat_cmd");}
+    if ($verbose){$self->debug_message("$cat_cmd");}
     Genome::Sys->shellcmd(cmd => $cat_cmd);
     
     #Apply the chromosome filter if specified
@@ -144,7 +144,7 @@ sub execute {
       }
       close(IN);
       close (OUT);
-      $self->status_message("Filtered down to $s variants on chromosome: $chromosome");
+      $self->debug_message("Filtered down to $s variants on chromosome: $chromosome");
       unlink($snv_file);
       Genome::Sys->move_file($file, $snv_file);
     }
@@ -173,7 +173,7 @@ sub execute {
     #Step 3 - take it out of bed format to be fed into bam-readcounts:
     my $adapted_file ="$output_dir"."allsnvs.hq.novel.tier123.v2.bed.adapted";
     my $awk_cmd = "awk \'{OFS=\"\\t\";FS=\"\\t\";}{print \$1,\$3,\$3,\$4}\' $snv_file | sed \'s/\\//\\t/g\' > $adapted_file";
-    if ($verbose){$self->status_message("$awk_cmd");}
+    if ($verbose){$self->debug_message("$awk_cmd");}
     Genome::Sys->shellcmd(cmd => $awk_cmd);
 
     #Define the BAM files.  
@@ -190,7 +190,7 @@ sub execute {
     else {
         $readcounts_outfile = "$adapted_file".".readcounts";
         my $read_counts_cmd = "$script_dir"."borrowed/ndees/give_me_readcounts.pl  --sites_file=$adapted_file --bam_list=\"Tumor:$tumor_bam,Normal:$normal_bam\" --reference_fasta=$data_paths{reference_fasta} --output_file=$readcounts_outfile";
-        if ($verbose){$self->status_message("$read_counts_cmd");}
+        if ($verbose){$self->debug_message("$read_counts_cmd");}
         Genome::Sys->shellcmd(cmd => $read_counts_cmd);
     }
 
@@ -198,7 +198,7 @@ sub execute {
     #perl ~kkanchi/bin/create_pseudo_varscan.pl     allsnvs.hq.novel.tier123.v2.bed.adapted     allsnvs.hq.novel.tier123.v2.bed.adapted.readcounts     >     allsnvs.hq.novel.tier123.v2.bed.adapted.readcounts.varscan
     my $readcounts_varscan_file = "$readcounts_outfile".".varscan";
     my $varscan_format_cmd = "$script_dir"."borrowed/kkanchi/create_pseudo_varscan.pl $adapted_file $readcounts_outfile > $readcounts_varscan_file";
-    if ($verbose){$self->status_message("$varscan_format_cmd");}
+    if ($verbose){$self->debug_message("$varscan_format_cmd");}
     Genome::Sys->shellcmd(cmd => $varscan_format_cmd);
 
     #TODO: Replace steps 4-5 above by using the following script:
@@ -275,7 +275,7 @@ sub execute {
     #my $clustered_data_output_file = $output_dir . $common_name . ".clustered.data.tsv";
     #my $output_image_file2 = "$output_dir"."$common_name".".clonality.clusters.pdf";
     #my $clonality_cmd2 = "gmt validation clonality-plot  --cnvhmm-file=$cnvhmm_file  --output-image=$output_image_file2  --r-script-output-file=$r_script_file  --varscan-file=$varscan_file  --analysis-type=wgs  --sample-id='$uc_common_name'  --plot-clusters  --clustered-data-output-file=$clustered_data_output_file";
-    #if ($verbose){$self->status_message("$clonality_cmd2");}
+    #if ($verbose){$self->debug_message("$clonality_cmd2");}
     #TODO: until the --plot-clusters functionality is more stable, allow a failed exit code
     #Genome::Sys->shellcmd(cmd => $clonality_cmd2, allow_failed_exit_code => 1);
 

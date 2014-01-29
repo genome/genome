@@ -236,7 +236,7 @@ sub execute {
             my @fields = split /\t/,$line;
             my $sample = $fields[0];
             unless (scalar grep { m/^$sample$/ } @all_sample_names) {
-                $self->status_message("Skipping sample $sample. (Sample is not in --bam-list).");
+                $self->debug_message("Skipping sample $sample. (Sample is not in --bam-list).");
                 next;
             }
             if ($vital_status_col) {
@@ -310,7 +310,7 @@ sub execute {
     # check and prepare output directory
     my $output_dir = $self->output_dir . "/";
     unless (-e $output_dir) {
-        $self->status_message("Creating output directory: $output_dir...");
+        $self->debug_message("Creating output directory: $output_dir...");
         unless(mkdir $output_dir) {
             $self->error_message("Failed to create output directory: $!");
             return;

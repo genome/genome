@@ -42,7 +42,7 @@ sub execute {
         App->init;
     }
 
-    $self->status_message ("Updating Seqmgr Projects ..");
+    $self->debug_message ("Updating Seqmgr Projects ..");
     my $project_dir = $self->project_dir;
 
     chdir($project_dir);
@@ -72,7 +72,7 @@ sub execute {
         $p->set_project_status('pooled_bac_done'); 
         
         my $seqmgr_link = $p->seqmgr_link;
-        $self->status_message ("Updating $clone_name ..");
+        $self->debug_message ("Updating $clone_name ..");
 
 	unless (-d "$seqmgr_link/edit_dir" ) {
 	    Genome::Sys->create_directory("$seqmgr_link/edit_dir");

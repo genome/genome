@@ -67,7 +67,7 @@ sub _link_build_to_result {
     Genome::Sys->create_symlink($result->output_dir, File::Spec->join($build->data_directory, 'fusions', $dir_name));
     my $link = $result->add_user(user => $build, label => 'uses');
     if ($link) {
-        $self->status_message("Linked result " . $result->id . " to the build");
+        $self->debug_message("Linked result " . $result->id . " to the build");
     }
     else {
         $self->error_message(

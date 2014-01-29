@@ -34,10 +34,10 @@ sub execute {
 
     unless ($self->sorted_fasta) {
         $self->sorted_fasta($self->input_fasta . '.sorted');
-        $self->status_message("No sorted fasta file provided, defaulting to " . $self->sorted_fasta . "!");
+        $self->debug_message("No sorted fasta file provided, defaulting to " . $self->sorted_fasta . "!");
     }
 
-    $self->status_message("Sorting fasta " . $self->input_fasta . " by sequence name and putting results in " . $self->sorted_fasta);
+    $self->debug_message("Sorting fasta " . $self->input_fasta . " by sequence name and putting results in " . $self->sorted_fasta);
 
     my $input_fh = Genome::Sys->open_file_for_reading($self->input_fasta);
     my $output_fh = Genome::Sys->open_file_for_writing($self->sorted_fasta);
@@ -63,7 +63,7 @@ sub execute {
         }
     }
 
-    $self->status_message("Successfully sorted fasta file " . $self->input_fasta . " by sequence name!");
+    $self->debug_message("Successfully sorted fasta file " . $self->input_fasta . " by sequence name!");
     return 1;
 }
 

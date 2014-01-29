@@ -198,10 +198,10 @@ sub create {
     my @pipe_list;
 
     #check to see if files to align path is a pipe delimited list of files
-    $self->status_message( "Files to align: " . $self->files_to_align_path );
+    $self->debug_message( "Files to align: " . $self->files_to_align_path );
     my $pipe_char_index = index( $self->files_to_align_path, '|' );
 
-    #$self->status_message("Comma index: ".$pipe_char);
+    #$self->debug_message("Comma index: ".$pipe_char);
     if ( $pipe_char_index > -1 ) {
         @pipe_list = split( /\|/, $self->files_to_align_path );
         for my $pipe_file (@pipe_list) {
@@ -221,12 +221,12 @@ sub create {
         #check to see if files to align path is a dir or file
         if ( -f $self->files_to_align_path ) {
 
-            #$self->status_message('Path is a file');
+            #$self->debug_message('Path is a file');
             push @listing, $self->files_to_align_path;
         }
         elsif ( -d $self->files_to_align_path ) {
 
-            #$self->status_message('Path is dir.');
+            #$self->debug_message('Path is dir.');
             @listing = glob( $self->files_to_align_path . '/*' );
         }
         else {
@@ -278,34 +278,34 @@ sub execute {
     my $self = shift;
     $self->dump_status_messages(1);
 
-    $self->status_message("\n");
-    $self->status_message('Running AlignReads with parameters');
-    $self->status_message('-----------------------------------');
-    $self->status_message('Input Files:');
-    $self->status_message( 'Reference sequence file:' . $self->ref_seq_file );
-    $self->status_message(
+    $self->debug_message("\n");
+    $self->debug_message('Running AlignReads with parameters');
+    $self->debug_message('-----------------------------------');
+    $self->debug_message('Input Files:');
+    $self->debug_message( 'Reference sequence file:' . $self->ref_seq_file );
+    $self->debug_message(
         'Files to align path:' . $self->files_to_align_path );
-    $self->status_message(
+    $self->debug_message(
         'Files to align list:' . $self->_files_to_align_list );
-    $self->status_message('');
-    $self->status_message('Output Files:');
-    $self->status_message( 'Alignment file:' . $self->alignment_file );
-    $self->status_message(
+    $self->debug_message('');
+    $self->debug_message('Output Files:');
+    $self->debug_message( 'Alignment file:' . $self->alignment_file );
+    $self->debug_message(
         'Unaligned reads file:' . $self->unaligned_reads_file )
       if defined( $self->unaligned_reads_file );
-    $self->status_message(
+    $self->debug_message(
         'Aligner output messages:' . $self->aligner_output_file )
       if defined( $self->aligner_output_file );
-    $self->status_message('');
-    $self->status_message('Other Parameters:');
-    $self->status_message('Sam only flag:'. $self->sam_only );
-    $self->status_message( 'Align options:' . $self->align_options )
+    $self->debug_message('');
+    $self->debug_message('Other Parameters:');
+    $self->debug_message('Sam only flag:'. $self->sam_only );
+    $self->debug_message( 'Align options:' . $self->align_options )
       if defined( $self->align_options );
-    $self->status_message( 'Upper bound value:' . $self->upper_bound )
+    $self->debug_message( 'Upper bound value:' . $self->upper_bound )
       if defined( $self->upper_bound );
-    $self->status_message( 'BWA version:' . $self->use_version )
+    $self->debug_message( 'BWA version:' . $self->use_version )
       if defined( $self->use_version );
-    $self->status_message("\n");
+    $self->debug_message("\n");
 
     print "Align Reads begun with " . $self->unaligned_reads_file . "\n";
 
@@ -330,15 +330,15 @@ sub execute {
 	## TODO :: clean this mess up
 	my $force_frag_file;
         if ($self->force_fragments) {
-                $self->status_message("Forcing fragments.");
+                $self->debug_message("Forcing fragments.");
                 $force_frag_file = "$tmp_dir/force-frag";
-                $self->status_message("Frag file: ".$force_frag_file);
+                $self->debug_message("Frag file: ".$force_frag_file);
                 my $cmd = "cat ".join(" ",@input_file_list)." > ".$force_frag_file;
-                $self->status_message("Cat command: ".$cmd);
+                $self->debug_message("Cat command: ".$cmd);
                 my @result = `$cmd`;
                 #clear the listing and replace it with the new combined file name for processing
                 @input_file_list = ($force_frag_file);
-                $self->status_message("Listing contains: ".join(" ",@input_file_list) );
+                $self->debug_message("Listing contains: ".join(" ",@input_file_list) );
         }
 
 
@@ -416,8 +416,8 @@ sub execute {
               . $self->aligner_output_file;
         }
 
-	$self->status_message("Running samXe to get the output alignments");
-	$self->status_message("Command: $sam_command_line");
+	$self->debug_message("Running samXe to get the output alignments");
+	$self->debug_message("Command: $sam_command_line");
        #BWA is not nice enough to give us an unaligned output file so we need to
        #filter it out on our own
 
@@ -469,17 +469,17 @@ sub execute {
             my $from_file = $sam_map_output_fh->filename;
 
             if (defined($self->read_group_tag) ) {
-                $self->status_message(">>>Adding readgroup tag.");
+                $self->debug_message(">>>Adding readgroup tag.");
                 my $tagged_sam_file = File::Temp->new( DIR => $tmp_dir, SUFFIX => ".sam" );
                 my $cmd_tag = Genome::Model::Tools::Sam::AddReadGroupTag->create(input_file => $sam_map_output_fh->filename, output_file=>$tagged_sam_file->filename, read_group_tag=>$self->read_group_tag);
                 unless ($cmd_tag->execute) {
                     $self->error_message("Error adding read group tag.");
                 } 
-                $self->status_message("<<<Done adding readgroup tag.");
+                $self->debug_message("<<<Done adding readgroup tag.");
                 $from_file = $tagged_sam_file;
             }
  
-            $self->status_message("Leaving alignment file in sam format. Moving from temp file to final file.");
+            $self->debug_message("Leaving alignment file in sam format. Moving from temp file to final file.");
             my $cmd_move = "mv ".$from_file." ".$self->alignment_file;
             my $rv_move = Genome::Sys->shellcmd( cmd => $cmd_move ); 
             unless ($rv_move) {
@@ -488,7 +488,7 @@ sub execute {
             } 
         } else {
 
-            $self->status_message("Converting from Sam to Bam.");
+            $self->debug_message("Converting from Sam to Bam.");
             my $samtools_import_command_line;
             my @conversion_input_files;
 
@@ -508,7 +508,7 @@ sub execute {
                 push(@conversion_input_files,$self->_ref_seq_index_file);
             }
 
-            $self->status_message( "Merging with cmd: " . $samtools_import_command_line );
+            $self->debug_message( "Merging with cmd: " . $samtools_import_command_line );
             
             Genome::Sys->shellcmd(
                 cmd         => $samtools_import_command_line,
@@ -527,9 +527,9 @@ sub execute {
 
     }
 
-    $self->status_message("Align Reads completed.");
-    $self->status_message("Unaligned reads: ".$self->unaligned_reads_file );
-    $self->status_message("Aligned reads: ".$self->alignment_file );
+    $self->debug_message("Align Reads completed.");
+    $self->debug_message("Unaligned reads: ".$self->unaligned_reads_file );
+    $self->debug_message("Aligned reads: ".$self->alignment_file );
     
     return 1;
 

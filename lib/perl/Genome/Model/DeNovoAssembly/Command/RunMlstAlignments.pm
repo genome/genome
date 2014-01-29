@@ -52,7 +52,7 @@ sub execute {
     my $self = shift;
 
     # validate output dir
-    $self->status_message('Invalid output dir name: '.$self->output_dir) and return if
+    $self->debug_message('Invalid output dir name: '.$self->output_dir) and return if
         not -d $self->output_dir;
 
     # verify sample names and get builds, ids
@@ -77,7 +77,7 @@ sub execute {
             $self->error_message('Failed to run nucmer for sample: '.$build->subject_name);
             return;
         }
-        $self->status_message('Successfully ran nucmer on sample: '.$build->subject_name);
+        $self->debug_message('Successfully ran nucmer on sample: '.$build->subject_name);
 
         # run show-coords
         my $output_file = $self->output_dir.'/'.$build->subject_name.'.alignments.txt';
@@ -98,12 +98,12 @@ sub execute {
             $self->error_message('Failed to execute show-coords');
             return;
         }
-        $self->status_message('Successfully ran show-coords for sample: '.$build->subject_name);
+        $self->debug_message('Successfully ran show-coords for sample: '.$build->subject_name);
     }
 
     # summarize output files
     if ( not $self->summarize_outputs(@output_files) ) {
-        $self->status_message('Failed to summarize alignment results');
+        $self->debug_message('Failed to summarize alignment results');
         return;
     }
 
@@ -194,7 +194,7 @@ sub _validate_samples_and_get_builds {
     if ( @sample_names ) {
         for my $name ( @sample_names ) {
             my $sample = Genome::Sample->get( name => $name );
-            $self->status_message("Skipping .. can not get genome sample for name: $name") and next if
+            $self->debug_message("Skipping .. can not get genome sample for name: $name") and next if
                 not $sample;
             $self->warning_message(
                     'Sample species name: '. $sample->species_name.' does not match ref seq species name: '.$ref_seq_build->species_name.', for sample '.$sample->name
@@ -204,7 +204,7 @@ sub _validate_samples_and_get_builds {
                 subclass_name => $expected_subclass,
                 status        => 'Succeeded',
             );
-            $self->status_message("Skipping .. NO Succeeded de-novo velvet build found for sample: $name") and next if
+            $self->debug_message("Skipping .. NO Succeeded de-novo velvet build found for sample: $name") and next if
                 not @builds;
             push @valid_builds, $builds[-1];#->id;
         }
@@ -214,9 +214,9 @@ sub _validate_samples_and_get_builds {
     if ( $self->query_build_ids ) {
         for my $id ( $self->query_build_ids ) {
             my $build = Genome::Model::Build->get( $id );
-            $self->status_message("Skipping .. failed to get build for id: $id") and next if
+            $self->debug_message("Skipping .. failed to get build for id: $id") and next if
                 not $build;
-            $self->status_message("Skipping .. build $id is not of subclass: $expected_subclass") and next if
+            $self->debug_message("Skipping .. build $id is not of subclass: $expected_subclass") and next if
                 not $build->subclass_name eq $expected_subclass;
             push @valid_builds, $build;
         }
@@ -237,7 +237,7 @@ sub _validate_show_coords_params {
             # eg -I0.5, -I 0.5 or -I=0.5 or -M 500
             my ( $name, $value ) = $param =~ /^(\S)\s?\=?(\d+\.\d+|\d+)$/;
             if ( not $name and not $value ) {
-                $self->status_message("Failed to get valid name and value from param: $param");
+                $self->debug_message("Failed to get valid name and value from param: $param");
                 return;
             }
             $p{$name} = $value;

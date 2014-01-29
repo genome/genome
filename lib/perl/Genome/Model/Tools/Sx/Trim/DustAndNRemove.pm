@@ -23,19 +23,19 @@ sub execute{
     my $self = shift;
     
     my @inputs = $self->input;
-    $self->status_message("DustAndNRemove initial inputs: ".join(", ", @inputs));
+    $self->debug_message("DustAndNRemove initial inputs: ".join(", ", @inputs));
     my @input_files = map { 
         my ($class, $params) = Genome::Model::Tools::Sx::Reader->parse_reader_config($_);
         $params->{file};
     } @inputs;
-    $self->status_message("DustAndNRemove input files: ".join(", ", @input_files));
+    $self->debug_message("DustAndNRemove input files: ".join(", ", @input_files));
     my @outputs = $self->output;
-    $self->status_message("DustAndNRemove initial outputs: ".join(", ", @outputs));
+    $self->debug_message("DustAndNRemove initial outputs: ".join(", ", @outputs));
     my @output_files = map { 
         my ($class, $params) = Genome::Model::Tools::Sx::Writer->parse_writer_config($_);
         $params->{file};
     } @outputs;
-    $self->status_message("DustAndNRemove output files: ".join(", ", @output_files));
+    $self->debug_message("DustAndNRemove output files: ".join(", ", @output_files));
 
     my $dust = $self->dust;
     my $n_removal_threshold = $self->n_removal_threshold;
@@ -74,14 +74,14 @@ sub _process_unaligned_fastq_pair {
     my $reverse_dusted;
 
     if ($self->dust){
-        $self->status_message("Dusting fastq pair $forward, $reverse");
+        $self->debug_message("Dusting fastq pair $forward, $reverse");
         $forward_dusted = "$forward.DUSTED";
         $reverse_dusted = "$reverse.DUSTED";
 
         $self->dust_fastq($forward, $forward_dusted);
         $self->dust_fastq($reverse, $reverse_dusted);
     }else{
-        $self->status_message("skipping dusting");
+        $self->debug_message("skipping dusting");
         $forward_dusted = $forward;
         $reverse_dusted = $reverse;
     }
@@ -89,7 +89,7 @@ sub _process_unaligned_fastq_pair {
     #run pairwise n-removal
     if ($self->n_removal_threshold or $self->non_n_base_threshold){
         $DB::single = 1;
-        $self->status_message("running remove-n-pairwise on $forward, $reverse");
+        $self->debug_message("running remove-n-pairwise on $forward, $reverse");
         my %params= (forward_fastq => $forward_dusted,
             reverse_fastq => $reverse_dusted,
             forward_n_removed_file => $forward_out,
@@ -125,7 +125,7 @@ sub _process_unaligned_fastq_pair {
         #return the 3 processed fastq files
         return ($forward_out, $reverse_out, $fragment_out);
     }else{
-        $self->status_message("skipping n-removal");
+        $self->debug_message("skipping n-removal");
         Genome::Sys->copy_file($forward_dusted, $forward_out);
         Genome::Sys->copy_file($reverse_dusted, $reverse_out);
         if ($self->dust){
@@ -146,12 +146,12 @@ sub _process_unaligned_fastq {
         $dusted_fastq = "$fastq_file.DUSTED";
         $self->dust_fastq($fastq_file, $dusted_fastq);
     }else{
-        $self->status_message("skipping dusting $fastq_file");
+        $self->debug_message("skipping dusting $fastq_file");
         $dusted_fastq = $fastq_file;
     }
 
     if ($self->n_removal_threshold or $self->non_n_base_threshold){
-        $self->status_message("Running n-removal on file $fastq_file");
+        $self->debug_message("Running n-removal on file $fastq_file");
         my %params=( fastq_file => $dusted_fastq,
             n_removed_file => $output_path
         ); 
@@ -169,7 +169,7 @@ sub _process_unaligned_fastq {
             die $self->error_message("couldn't execute remove-n command for $dusted_fastq");
         }
     } else {
-        $self->status_message("No n-removal params specified, skipping");
+        $self->debug_message("No n-removal params specified, skipping");
         Genome::Sys->copy_file($dusted_fastq, $output_path);
     }
     if ($self->dust){

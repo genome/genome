@@ -43,7 +43,7 @@ sub execute {
     $expand_sub_commands = undef;
 
     for my $class_name (@class_names) {
-        $self->status_message("handling $class_name...");
+        $self->debug_message("handling $class_name...");
 
         do {
             eval "use " . $class_name;
@@ -152,11 +152,11 @@ XML
         my $config_path = $module_path . '.galaxy.xml';
 
         if (-e $config_path) {
-            $self->status_message("Moving the old $config_path to .bak...");
+            $self->debug_message("Moving the old $config_path to .bak...");
             rename($config_path, "$config_path.bak") or die "Failed to rename $config_path to $config_path.bak! $!";
         }
 
-        $self->status_message("writing $config_path");
+        $self->debug_message("writing $config_path");
         Genome::Sys->write_file($config_path, $xml);
     }
 

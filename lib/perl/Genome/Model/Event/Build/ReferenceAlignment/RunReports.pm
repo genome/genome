@@ -27,17 +27,17 @@ sub execute {
     my $build = $self->build;
 
     if ($model->read_aligner_name =~ /^Imported$/i) {
-        $self->status_message("This build uses Imported as alinger so skip InputBaseCounts");
+        $self->debug_message("This build uses Imported as alinger so skip InputBaseCounts");
         delete $REPORT_TYPES{InputBaseCounts};
     }
 
     unless (defined $model->dbsnp_build) {
-        $self->status_message("No dbsnp_build defined for model, skipping dbsnp concordance report.");
+        $self->debug_message("No dbsnp_build defined for model, skipping dbsnp concordance report.");
         delete $REPORT_TYPES{DbSnpConcordance};
     } 
 
     unless ($self->validate_gold_snp_path) {
-        $self->status_message("No valid gold_snp_path for the build, skip GoldSnpConcordance report");
+        $self->debug_message("No valid gold_snp_path for the build, skip GoldSnpConcordance report");
         delete $REPORT_TYPES{GoldSnpConcordance};
     }
     
@@ -52,7 +52,7 @@ sub execute {
     for my $report_type (keys %REPORT_TYPES) {
         my $report_class = 'Genome::Model::ReferenceAlignment::Report::' . $report_type;
         my $report_name = 'unknown';
-        $self->status_message("Starting $report_type report.");
+        $self->debug_message("Starting $report_type report.");
 
         my $report_def = $report_class->create(build_id => $build->id);
         unless ($report_def) {
@@ -60,7 +60,7 @@ sub execute {
             die($self->error_message);
         }
         $report_name = $report_def->name;
-        $self->status_message("Defined report with name $report_name");
+        $self->debug_message("Defined report with name $report_name");
         
         my $report = $report_def->generate_report;
         unless ($report) {
@@ -69,12 +69,12 @@ sub execute {
             die($self->error_message);
         } 
         else {
-            $self->status_message("Successfully generated report: $report_name");
+            $self->debug_message("Successfully generated report: $report_name");
         }
-        $self->status_message("About to add report: $report_name to build: ".$self->build->id);
+        $self->debug_message("About to add report: $report_name to build: ".$self->build->id);
         
         if ($build->add_report($report)) {
-            $self->status_message('Saved report: '.$report);
+            $self->debug_message('Saved report: '.$report);
         } 
         else {
             $self->error_message('Error saving '.$report.'. Error: '. $self->build->error_message);
@@ -85,11 +85,11 @@ sub execute {
     ##############################################
     #Summary Report
 
-    $self->status_message('Starting report summary.');
+    $self->debug_message('Starting report summary.');
     my $r = Genome::Model::ReferenceAlignment::Report::Summary->create( build_id => $build->id );
 
     my @templates = $r->report_templates;
-    $self->status_message("Using report templates: ". join(",",@templates));
+    $self->debug_message("Using report templates: ". join(",",@templates));
 
     my $summary_report = $r->generate_report;
 
@@ -97,7 +97,7 @@ sub execute {
         $self->error_message("Failed to save report: ". $summary_report->name .' to '. $build->resolve_reports_directory);
         return;
     }
-    $self->status_message('Report summary complete.');
+    $self->debug_message('Report summary complete.');
 
     return $self->verify_successful_completion;
 }
@@ -108,7 +108,7 @@ sub validate_gold_snp_path {
 
     my $gold_snp_path = $self->build->gold_snp_path;
     unless ($gold_snp_path and -s $gold_snp_path) {
-        $self->status_message('No gold_snp_path provided for the build or it is empty');
+        $self->debug_message('No gold_snp_path provided for the build or it is empty');
         return;
     }
 
@@ -116,7 +116,7 @@ sub validate_gold_snp_path {
     my @columns = split /\s+/, $head;
     
     unless (@columns and @columns == 9) {
-        $self->status_message("Gold snp file: $gold_snp_path is not 9-column format");
+        $self->debug_message("Gold snp file: $gold_snp_path is not 9-column format");
         return;
     }
     return 1;

@@ -220,12 +220,12 @@ sub get_with_lock {
     if ($result && $lock) {
         $result->_lock_name($lock);
 
-        $result->status_message("Cleaning up lock $lock...");
+        $result->debug_message("Cleaning up lock $lock...");
         unless ($result->_unlock) {
             $result->error_message("Failed to unlock after getting software result");
             die "Failed to unlock after getting software result";
         }
-        $result->status_message("Cleanup completed for lock $lock.");
+        $result->debug_message("Cleanup completed for lock $lock.");
     } elsif ($lock) {
         $class->_release_lock_or_die($lock, "Failed to unlock after not finding software result.");
     }
@@ -341,11 +341,11 @@ sub create {
                     . join("\n\t", @files);
             }
             else {
-                $self->status_message("No files in $output_dir.");
+                $self->debug_message("No files in $output_dir.");
             }
         }
         else {
-            $self->status_message("Creating output directory $output_dir...");
+            $self->debug_message("Creating output directory $output_dir...");
             eval {
                 Genome::Sys->create_directory($output_dir)
             };
@@ -776,7 +776,7 @@ sub _lock {
 
     my $lock = Genome::Sys->lock_resource(resource_lock => $resource_lock_name, max_try => 2);
     unless ($lock) {
-        $class->status_message("This data set is still being processed by its creator.  Waiting for existing data lock...");
+        $class->debug_message("This data set is still being processed by its creator.  Waiting for existing data lock...");
         $lock = Genome::Sys->lock_resource(resource_lock => $resource_lock_name, wait_announce_interval => 600);
         unless ($lock) {
             $class->error_message("Failed to get existing data lock!");
@@ -791,7 +791,7 @@ sub _unlock {
     my $self = shift;
 
     my $resource_lock_name = $self->_lock_name;
-    $self->status_message("Cleaning up lock $resource_lock_name...");
+    $self->debug_message("Cleaning up lock $resource_lock_name...");
 
     if (!exists $LOCKS{$resource_lock_name})  {
         $self->error_message("Attempt to unlock $resource_lock_name but this was never locked!");
@@ -807,7 +807,7 @@ sub _unlock {
     }
 
     delete $LOCKS{$resource_lock_name};
-    $self->status_message("Cleanup completed for lock $resource_lock_name.");
+    $self->debug_message("Cleanup completed for lock $resource_lock_name.");
     return 1;
 }
 
@@ -865,7 +865,7 @@ sub generate_expected_metrics {
     for my $name (@names) {
         my $metric = $self->metric(name => $name);
         if ($metric) {
-            $self->status_message(
+            $self->debug_message(
                 $self->display_name . " has metric "
                 . $metric->name
                 . " with value "
@@ -878,7 +878,7 @@ sub generate_expected_metrics {
             $self->error_message("No method $method found!");
             die $self->error_message;
         }
-        $self->status_message(
+        $self->debug_message(
             $self->display_name . " is generating a value for metric "
             . $metric->name
             . "..."
@@ -893,7 +893,7 @@ sub generate_expected_metrics {
             next;
         }
         $self->$metric($value);
-        $self->status_message(
+        $self->debug_message(
             $self->display_name . " has metric "
             . $metric->name
             . " with value "
@@ -948,7 +948,7 @@ sub _resolve_param_value_from_text_by_name_or_id {
 sub _release_lock_or_die {
     my ($class, $lock, $error_message) = @_;
 
-    $class->status_message("Cleaning up lock $lock...");
+    $class->debug_message("Cleaning up lock $lock...");
 
     unless (Genome::Sys->unlock_resource(resource_lock=>$lock)) {
         $class->error_message($error_message);
@@ -956,7 +956,7 @@ sub _release_lock_or_die {
     }
     delete $LOCKS{$lock};
 
-    $class->status_message("Cleanup completed for lock $lock.");
+    $class->debug_message("Cleanup completed for lock $lock.");
 }
 
 # children are things that use this

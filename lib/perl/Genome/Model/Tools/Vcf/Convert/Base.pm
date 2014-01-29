@@ -162,7 +162,7 @@ sub check_tcga_vcf {
                 if ($sample) {
                     my $sample_tcga_name = $sample->extraction_label;
                     if ($sample_tcga_name and $sample_tcga_name =~ /^TCGA\-/) {
-                        $self->status_message("Found TCGA name: $sample_tcga_name for sample: $sample_name");
+                        $self->debug_message("Found TCGA name: $sample_tcga_name for sample: $sample_name");
                         $self->$sample_type($sample_tcga_name);
                         $flag++;
                     }
@@ -592,7 +592,7 @@ sub normalize_indel_location {
     if(length($ref) > length($var)) {
         if (substr($ref,0,1) eq substr($ref, -1, 1)) {
             #normalization possible
-            $self->status_message("normalizing indel...");
+            $self->debug_message("normalizing indel...");
         }
         else {
             #we know this won't normalize, skip the compute heavy process
@@ -602,7 +602,7 @@ sub normalize_indel_location {
     elsif(length($var) > length($ref)) {
         if (substr($var,0,1) eq substr($var, -1, 1)) {
             #normalization possible
-            $self->status_message("normalizing indel...");
+            $self->debug_message("normalizing indel...");
         }
         else {
             #we know this won't normalize, skip the compute heavy process

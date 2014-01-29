@@ -54,7 +54,7 @@ sub create_mutation_relation_plots {
 sub create_survival_plots {
     my $self = shift;
     unless($self->numeric_clinical_data_file and $self->categorical_clinical_data_file){
-        $self->status_message("Skipping survival plots due to lack of clinical data");
+        $self->debug_message("Skipping survival plots due to lack of clinical data");
         return 1;
     }
     my $output_dir = join('/', $self->output_dir, 'survival_plots');

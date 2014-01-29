@@ -375,7 +375,7 @@ sub execute {
 
             #run samtools view, then mpileup to get the readcounts for each snv:
             my $cmd = "samtools view -ub -L $tempdir/snvpos.bed $bam_file | samtools mpileup -f $fasta -q $min_mapping_quality - > $tempdir/snv_mpileup";
-            $self->status_message("Running command: $cmd");
+            $self->debug_message("Running command: $cmd");
 
             my $return = Genome::Sys->shellcmd(
                 cmd => "$cmd",
@@ -387,7 +387,7 @@ sub execute {
 
             #run varscan to parse the samtools file
             $cmd = "java -jar /gsc/scripts/lib/java/VarScan/VarScan.v2.2.9.jar readcounts $tempdir/snv_mpileup --min-coverage 1 --min-base-qual $min_base_quality --output-file $tempdir/snvs.varscan";
-            $self->status_message("Running command: $cmd");
+            $self->debug_message("Running command: $cmd");
 
             $return = Genome::Sys->shellcmd(
                 cmd => "$cmd",
@@ -602,7 +602,7 @@ sub execute {
 
                 #run mpileup to get the readcounts:
                 my $cmd = "samtools mpileup -f $fasta -q 1 -r $F[0]:$F[1]-$F[2]  $bam_file >>$tempdir/pileup";
-                #$self->status_message("Running command: $cmd");
+                #$self->debug_message("Running command: $cmd");
 
                 my $return = Genome::Sys->shellcmd(
                     cmd => "$cmd",
@@ -616,7 +616,7 @@ sub execute {
 
             #run varscan to parse the samtools file
             my $cmd = "java -jar /gsc/scripts/lib/java/VarScan/VarScan.v2.2.9.jar readcounts $tempdir/pileup --min-coverage 1 --min-base-qual $min_base_quality --output-file $tempdir/indels.varscan";
-            $self->status_message("Running command: $cmd");
+            $self->debug_message("Running command: $cmd");
 
             my $return = Genome::Sys->shellcmd(
                 cmd => "$cmd",

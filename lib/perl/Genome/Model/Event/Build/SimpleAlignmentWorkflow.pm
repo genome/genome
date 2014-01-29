@@ -57,23 +57,23 @@ sub execute {
 
     my $workflow_log_directory = $self->build->workflow_log_directory_path;
     Genome::Sys->create_directory($workflow_log_directory);
-    $self->status_message("Created workflow log directory.");
+    $self->debug_message("Created workflow log directory.");
     
     my $merged_file = $self->build->merged_alignment_file;
 
     my @instrument_data = $model->instrument_data;
     my @id_list;
     for my $instrument_data (@instrument_data) {
-        $self->status_message("Found instrument data id: ".$instrument_data->id);
+        $self->debug_message("Found instrument data id: ".$instrument_data->id);
         push(@id_list,$instrument_data->id); 
     }
 
     my $id_string = join(',',@id_list);
    
-    $self->status_message("Reference name: ".$model->reference_sequence_name );
-    $self->status_message("Inst. Id list: ".$id_string );
-    $self->status_message("Merged file: ".$merged_file );
-    $self->status_message("Workflow dir: ".$self->build->data_directory );
+    $self->debug_message("Reference name: ".$model->reference_sequence_name );
+    $self->debug_message("Inst. Id list: ".$id_string );
+    $self->debug_message("Merged file: ".$merged_file );
+    $self->debug_message("Workflow dir: ".$self->build->data_directory );
  
     my $workflow = Genome::Model::Tools::SimpleAlignment::PipelineInstrumentData->create(
         reference_name => $model->reference_sequence_name,
@@ -89,7 +89,7 @@ sub execute {
 
     $workflow->execute();
 
-    $self->status_message("***Done with Build***");
+    $self->debug_message("***Done with Build***");
     return 1;
 }
 

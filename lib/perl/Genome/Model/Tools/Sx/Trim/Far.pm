@@ -130,7 +130,7 @@ sub execute {
     my $output = $self->_init_ouptut;
     return if not $output;
 
-    $self->status_message('Run FAR...');
+    $self->debug_message('Run FAR...');
     my $cmd = $self->build_command;
     $cmd .= ' --source '.$input_params[0]->{file};
     $cmd .= ' --source2 '.$input_params[1]->{file} if $input_params[1];
@@ -138,7 +138,7 @@ sub execute {
     $cmd .= ' --target '.$self->_tmpdir.'/output.fastq',
     my $rv = $self->_run_command($cmd);
     return if not $rv;
-    $self->status_message('Run FAR...OK');
+    $self->debug_message('Run FAR...OK');
 
     my @fastq_files = glob $self->_tmpdir.'/output*.fastq';
     my @outputs = grep { $_ !~ /single/ } @fastq_files;
@@ -146,7 +146,7 @@ sub execute {
         $self->error_message('Failed to find output files! Files in output directory: ');
         return;
     }
-    $self->status_message('Output: '.join(' ', @outputs));
+    $self->debug_message('Output: '.join(' ', @outputs));
     
     my $output_reader = Genome::Model::Tools::Sx::Reader->create(
         config => [ map { $_.':type=sanger' } @outputs ],
@@ -156,7 +156,7 @@ sub execute {
         return;
     }
 
-    $self->status_message('Processing FAR output...');
+    $self->debug_message('Processing FAR output...');
     while ( my $seqs = $output_reader->read ) {
         $output->write($seqs);
     }

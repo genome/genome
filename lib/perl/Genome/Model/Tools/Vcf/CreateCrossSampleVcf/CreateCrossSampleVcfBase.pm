@@ -108,19 +108,19 @@ EOS
 sub generate_result {
     my ($self) = @_;
 
-    $self->status_message("Resolving Builds...");
+    $self->debug_message("Resolving Builds...");
     my $builds = $self->_resolve_builds;
 
-    $self->status_message("Validating Inputs...");
+    $self->debug_message("Validating Inputs...");
     $self->_validate_inputs($builds);
 
-    $self->status_message("Constructing Workflow...");
+    $self->debug_message("Constructing Workflow...");
     my ($workflow, $variant_type_specific_inputs, $region_limiting_specific_inputs) = $self->_construct_workflow;
 
-    $self->status_message("Getting Workflow Inputs...");
+    $self->debug_message("Getting Workflow Inputs...");
     my $inputs = $self->_get_workflow_inputs($builds, $variant_type_specific_inputs, $region_limiting_specific_inputs);
 
-    $self->status_message("Running Workflow...");
+    $self->debug_message("Running Workflow...");
     my $result = Workflow::Simple::run_workflow_lsf($workflow, %$inputs);
 
     unless($result){

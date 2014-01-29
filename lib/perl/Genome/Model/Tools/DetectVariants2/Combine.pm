@@ -88,16 +88,16 @@ sub shortcut {
 
     $self->_resolve_output_directory;
 
-    $self->status_message("Attempting to shortcut combine result");
+    $self->debug_message("Attempting to shortcut combine result");
     unless($self->shortcut_combine){
-        $self->status_message("Could not shortcut combine result.");
+        $self->debug_message("Could not shortcut combine result.");
         return;
     }
 
     if($self->_try_vcf){
-        $self->status_message("Attempting to shortcut vcf result");
+        $self->debug_message("Attempting to shortcut vcf result");
         unless($self->shortcut_vcf){
-            $self->status_message("Could not shortcut vcf result.");
+            $self->debug_message("Could not shortcut vcf result.");
             return;
         }
     }
@@ -110,15 +110,15 @@ sub shortcut_combine {
 
     my ($params) = $self->params_for_combine_result;
     my $result_class = $self->result_class;
-    $self->status_message("Params for shortcut_combine: " . Data::Dumper::Dumper $params);
+    $self->debug_message("Params for shortcut_combine: " . Data::Dumper::Dumper $params);
     my $result = $result_class->get_with_lock(%$params);
     unless($result) {
-        $self->status_message('No existing result found.');
+        $self->debug_message('No existing result found.');
         return;
     }
 
     $self->_result($result);
-    $self->status_message('Using existing result ' . $result->__display_name__);
+    $self->debug_message('Using existing result ' . $result->__display_name__);
     $self->_link_to_combine_result;
 
     return 1;
@@ -127,15 +127,15 @@ sub shortcut_combine {
 sub shortcut_vcf {
     my $self = shift;
     my ($params) = $self->params_for_vcf_result;
-    $self->status_message("Params for shortcut_vcf: " . Data::Dumper::Dumper $params);
+    $self->debug_message("Params for shortcut_vcf: " . Data::Dumper::Dumper $params);
     my $result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine->get_with_lock(%$params);
     unless($result) {
-        $self->status_message('No existing result found.');
+        $self->debug_message('No existing result found.');
         return;
     }
 
     $self->_vcf_result($result);
-    $self->status_message('Using existing result ' . $result->__display_name__);
+    $self->debug_message('Using existing result ' . $result->__display_name__);
     $self->_link_vcf_output_directory_to_result;
 
     return 1;
@@ -148,7 +148,7 @@ sub _try_vcf {
     for my $input_id ($self->input_a_id,$self->input_b_id){
         my $input_result = Genome::Model::Tools::DetectVariants2::Result::Base->get($input_id);
         unless($input_result){
-            $self->status_message("No software-result associated with input_id: ".$input_id);
+            $self->debug_message("No software-result associated with input_id: ".$input_id);
             return 0;
         }
         my $input_vcf_result = $input_result->get_vcf_result;
@@ -167,7 +167,7 @@ sub execute {
     $self->_resolve_output_directory;
 
     unless($self->shortcut_combine){
-        $self->status_message("Summoning a combine result..");
+        $self->debug_message("Summoning a combine result..");
         $self->_summon_combine_result;
     }
     if($self->_try_vcf){
@@ -197,7 +197,7 @@ sub _summon_combine_result {
     }
 
     $self->_result($result);
-    $self->status_message('Generated result.');
+    $self->debug_message('Generated result.');
     $self->_link_to_combine_result;
 
     return 1;
@@ -214,7 +214,7 @@ sub _summon_vcf_result {
     }
 
     $self->_vcf_result($result);
-    $self->status_message('Generated vcf result.');
+    $self->debug_message('Generated vcf result.');
     $self->_link_vcf_output_directory_to_result;
 
     return 1;

@@ -101,12 +101,12 @@ sub create_config_file {
     my $config_file_path = $self->config_file_path;
 
     if (-e $config_file_path) {
-        $self->status_message("Removing existing configuration file at $config_file_path");
+        $self->debug_message("Removing existing configuration file at $config_file_path");
         my $unlink_rv = unlink $config_file_path;
         confess "Trouble removing configuration file at $config_file_path!" unless $unlink_rv;
     }
 
-    $self->status_message("Creating configuration file at $config_file_path");
+    $self->debug_message("Creating configuration file at $config_file_path");
 
 
     my $cell_type = uc($model->domain);
