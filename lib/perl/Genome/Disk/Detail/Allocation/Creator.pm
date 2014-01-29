@@ -49,8 +49,10 @@ sub verify_no_parent_allocation {
 
     if (my $parent_alloc = Genome::Disk::Allocation->get_parent_allocation(
             $self->parameters->allocation_path)) {
-        confess sprintf("Parent allocation (%s) found for %s",
-            $parent_alloc->allocation_path, $self->parameters->allocation_path);
+        confess $self->error_message(sprintf(
+                "Parent allocation (%s) found for %s",
+            $parent_alloc->allocation_path,
+            $self->parameters->allocation_path));
     }
 }
 
@@ -59,8 +61,8 @@ sub verify_no_child_allocations {
 
     unless (Genome::Disk::Allocation->_verify_no_child_allocations(
             $self->parameters->allocation_path)) {
-        confess sprintf("Child allocation found for %s!",
-            $self->parameters->allocation_path);
+        confess $self->error_message(sprintf("Child allocation found for %s!",
+            $self->parameters->allocation_path));
     }
 }
 
