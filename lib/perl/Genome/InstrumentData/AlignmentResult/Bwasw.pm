@@ -968,13 +968,17 @@ sub prepare_reference_sequence_index {
 
     my $staging_dir = $refindex->temp_staging_directory;
 
+    my $aligner_version = $refindex->aligner_version;
+
+    $class->debug_message("Bwasw version $aligner_version is looking for a bwa version $aligner_version index.");
+
     Genome::Sys->create_symlink($refindex->reference_build->get_sequence_dictionary("sam"), $staging_dir ."/all_sequences.dict" );
 
     my $bwa_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_or_create(
         reference_build_id => $refindex->reference_build_id,
         aligner_name       => 'bwa',
         #aligner_params     => $refindex->aligner_params, # none of the aligner params should affect the index step so I think this okay
-        aligner_version    => $refindex->aligner_version,
+        aligner_version    => $aligner_version,
         test_name          => $ENV{GENOME_ALIGNER_INDEX_TEST_NAME},
     );
 
