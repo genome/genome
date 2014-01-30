@@ -857,11 +857,11 @@ sub _verify_no_child_allocations {
     if ($data_source->isa('UR::DataSource::Oracle')) {
         my $fq_table_name = join('.', $owner, $table_name);
         $query_string = sprintf(
-            q(select allocation_path from %s where allocation_path like ? AND rownum <= 1),
+            q(select 1 from %s where allocation_path like ? AND rownum <= 1),
             $fq_table_name);
     } elsif ($data_source->isa('UR::DataSource::Pg') || $data_source->isa('UR::DataSource::SQLite')) {
         $query_string = sprintf(
-            q(select allocation_path from %s where allocation_path like ? LIMIT 1),
+            q(select 1 from %s where allocation_path like ? LIMIT 1),
             $table_name);
     } else {
         $class->error_message("Falling back on old child allocation detection behavior.");
