@@ -10,6 +10,8 @@ use File::Temp;
 use File::Basename;
 use Carp 'confess';
 
+my $GENOME_PATH = Genome->get_base_directory_name;
+
 #my %opts = (l=>500,p=>1000,s=>0,q=>0,n=>0,m=>10,x=>3,P=>-10,G=>-10,S=>0.02,A=>500,Q=>0);
 #getopts('l:d:c:p:r:s:Q:q:t:n:a:b:f:km:MRzv:hD:x:i:P:G:I:A:S:L:',\%opts);
 #die("
@@ -81,11 +83,11 @@ class Genome::Model::Tools::DetectVariants2::Filter::TigraValidation {
         },
         sv_merge_path => {
             is => 'FilePath',
-            default => '/gsc/scripts/opt/genome-stable/lib/perl/Genome/Model/Tools/Sv/MergeAssembledCallsets.pl',
+            default => $GENOME_PATH . '/Model/Tools/Sv/MergeAssembledCallsets.pl',
         },
         sv_annot_path => {
             is => 'FilePath',
-            default => '/gsc/scripts/opt/genome-stable/lib/perl/Genome/Model/Tools/Sv/BreakAnnot.pl',
+            default => $GENOME_PATH . '/Model/Tools/Sv/BreakAnnot.pl',
         },
         # TODO Either point to a specific version of phrap or (even better) use the crossmatch tool
         crossmatch_path => {
@@ -783,7 +785,7 @@ sub _get_sr_dirs {
         }
         my $sr_dir = $sr->output_dir;
         unless ($sr_dir and -d $sr_dir) {
-            $self->error_message("Software result output_dir for chromsome $chr_name does not exist");
+            $self->error_message("Software result output_dir for chromosome $chr_name does not exist");
             die;
         }
         $self->status_message("Chromosome $chr_name gets software_result output_dir: $sr_dir");
