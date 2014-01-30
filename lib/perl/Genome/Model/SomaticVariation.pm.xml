@@ -19,6 +19,8 @@
   
   <link fromOperation="Annotate And Upload Variants" fromProperty="build" toOperation="Create Report" toProperty="somatic_variation_build" />
 
+  <link fromOperation="input connector" fromProperty="required_snv_callers" toOperation="Create Report" toProperty="required_snv_callers" />
+  <link fromOperation="input connector" fromProperty="tiers_to_review" toOperation="Create Report" toProperty="tiers_to_review" />
   <link fromOperation="Create Report" fromProperty="somatic_variation_build" toOperation="output connector" toProperty="somatic_variation_build" />
 
   <operation name="Detect Variants">
@@ -50,6 +52,8 @@
     <inputproperty>annotator_version</inputproperty>
     <inputproperty>regulatory_annotations</inputproperty>
     <inputproperty>get_regulome_db</inputproperty>
+    <inputproperty>required_snv_callers</inputproperty>
+    <inputproperty>tiers_to_review</inputproperty>
     <outputproperty>somatic_variation_build</outputproperty>
   </operationtype>
 
