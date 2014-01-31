@@ -928,7 +928,7 @@ sub _create_model_and_request_build {
         return;
     }
 
-    $self->status_message('Create model and request build...OK');
+    $self->status_message('Create model..OK');
 
     return $model;
 }
