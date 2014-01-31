@@ -845,8 +845,6 @@ sub execute {
     }
     close($OUTFILE);
 
-    `cp -r $tempdir /gscmnt/gc7210/info/medseq/mxie/pan-germline/table2/table2.3/readdepth/test/ztmp`;
-    
     return(1);
 }
 

@@ -83,7 +83,8 @@ plot_vafs = function(file, x_label, main_label_vafs, main_label_covs, gene_i){
   covs = data[gene_i,(sample_vaf_cols-2)] + data[gene_i,(sample_vaf_cols-1)]
   y_max = max(covs) + 20
 
-  boxplot(t(data[gene_i,34]), names=data[gene_i,"default_gene_name"], ylim=c(0,y_max), border="white", color="white", xlab=NA, ylab="Coverage", main=main_label_covs, las=2, xaxt="n")
+  y_label = "Coverage"
+  boxplot(t(data[gene_i,34]), names=data[gene_i,"default_gene_name"], ylim=c(0,y_max), border="white", color="white", xlab=NA, ylab=y_label, main=main_label_covs, las=2, xaxt="n")
   xp = 0
   for (i in gene_i){
     xp = xp+1
@@ -136,7 +137,9 @@ plot_vafs = function(file, x_label, main_label_vafs, main_label_covs, gene_i){
     y_max = 25
   }
 
-  boxplot(t(data[gene_i,34]), names=data[gene_i,"default_gene_name"], ylim=c(0,y_max), border="white", color="white", xlab=x_label, ylab="Variant allele frequency (VAF)", main=main_label_vafs, las=2, xaxt="n")
+  n = length(gene_i)
+  y_label = paste("Variant allele frequency (VAF) [n = ", n, "]", sep="")
+  boxplot(t(data[gene_i,34]), names=data[gene_i,"default_gene_name"], ylim=c(0,y_max), border="white", color="white", xlab=x_label, ylab=y_label, main=main_label_vafs, las=2, xaxt="n")
 
   #Drop the gene labels entirely if there are too many genes
   if (gene_count < 50){
@@ -199,32 +202,48 @@ plot_vafs = function(file, x_label, main_label_vafs, main_label_covs, gene_i){
 #################################################################################################
 #Boxplots of aggregate VAFs for each sample                                                     #
 #################################################################################################
-plot_boxplots = function(outfile, target_gene_i, main_label_vafs){
+plot_boxplots = function(outfile, gene_i, main_label_vafs){
 
   pdf(outfile)
   par(font.lab=2)
   par(font.axis=2)
-  vaf_dist = list(data[target_gene_i,combined_vaf_cols[1]])
+  par(mgp=c(3,1.5,0)) #axis title, axis labels and axis line.
+  vaf_dist = list(data[gene_i,combined_vaf_cols[1]])
+  bp_names = paste(sample_names[1], "\n", "(", round(median(data[gene_i,combined_vaf_cols[1]]),digits=2), "%)", sep="")  
   if (length(sample2_vaf_cols) > 0) { 
-    vaf_dist = list(data[target_gene_i,combined_vaf_cols[1]], data[target_gene_i,combined_vaf_cols[2]]) 
+    vaf_dist = list(data[gene_i,combined_vaf_cols[1]], data[gene_i,combined_vaf_cols[2]])
+    bp_names = c(bp_names, paste(sample_names[2], "\n", "(", round(median(data[gene_i,combined_vaf_cols[2]]),digits=2), "%)", sep=""))
   }
   if (length(sample3_vaf_cols) > 0) { 
-    vaf_dist = list(data[target_gene_i,combined_vaf_cols[1]], data[target_gene_i,combined_vaf_cols[2]], data[target_gene_i,combined_vaf_cols[3]]) 
+    vaf_dist = list(data[gene_i,combined_vaf_cols[1]], data[gene_i,combined_vaf_cols[2]], data[gene_i,combined_vaf_cols[3]]) 
+    bp_names = c(bp_names, paste(sample_names[3], "\n", "(", round(median(data[gene_i,combined_vaf_cols[3]]),digits=2), "%)", sep=""))
   }
   if (length(sample4_vaf_cols) > 0) { 
-    vaf_dist = list(data[target_gene_i,combined_vaf_cols[1]], data[target_gene_i,combined_vaf_cols[2]], data[target_gene_i,combined_vaf_cols[3]], data[target_gene_i,combined_vaf_cols[4]]) 
+    vaf_dist = list(data[gene_i,combined_vaf_cols[1]], data[gene_i,combined_vaf_cols[2]], data[gene_i,combined_vaf_cols[3]], data[gene_i,combined_vaf_cols[4]]) 
+    bp_names = c(bp_names, paste(sample_names[4], "\n", "(", round(median(data[gene_i,combined_vaf_cols[4]]),digits=2), "%)", sep=""))
   }
-  boxplot(vaf_dist, col=sample_colors, names=sample_names, ylab="Variant allele frequency (VAF)", main=main_label_vafs)
+
+  
+
+  n = length(gene_i)
+  y_label = paste("Variant allele frequency (VAF) [n = ", n, "]", sep="")
+
+  boxplot(vaf_dist, col=sample_colors, names=bp_names, ylab=y_label, main=main_label_vafs)
+  abline(h=median(data[gene_i,combined_vaf_cols[1]]), lty=2, lwd=0.5, col=sample_colors[1])
+  if (length(sample2_vaf_cols) > 0) { abline(h=median(data[gene_i,combined_vaf_cols[2]]), lty=2, lwd=0.5, col=sample_colors[2]) }
+  if (length(sample3_vaf_cols) > 0) { abline(h=median(data[gene_i,combined_vaf_cols[3]]), lty=2, lwd=0.5, col=sample_colors[3]) }
+  if (length(sample4_vaf_cols) > 0) { abline(h=median(data[gene_i,combined_vaf_cols[4]]), lty=2, lwd=0.5, col=sample_colors[4]) }
+
   dev.off()
 
 }
 
 
 #################################################################################################
-#VAF/Coverage plots AND Boxplots of distribution                                                #
+#VAF/Coverage plots AND Boxplots of distribution - with different subsets of variants           #
 #################################################################################################
 
-#Plot genes that overlapped the target gene list (e.g. RMG list)
+#Plot variants that overlapped the target gene list (e.g. RMG list)
 target_gene_i = which(data[,target_name] == 1)
 if (length(target_gene_i) > 0){
   outfile1 = paste(outdir, case_name, "_target_gene_vafs.pdf", sep="")
@@ -237,7 +256,7 @@ if (length(target_gene_i) > 0){
   plot_boxplots(outfile2, target_gene_i, main_label)
 }
 
-#Now plot the top 10 VAF genes
+#Plot the top 10 variants (ranked by max tumor vaf observed)
 o = order(data[,"max_tumor_vaf_observed"], decreasing=TRUE)
 target_gene_i = o
 if (length(o) >= 10){
@@ -255,7 +274,20 @@ if (length(target_gene_i) > 0){
   plot_boxplots(outfile2, target_gene_i, main_label)
 }
 
-#Now plot all genes
+#Plot all variants called by at least 2 callers
+target_gene_i = which(data[,"variant_source_caller_count"] > 1)
+if (length(target_gene_i) > 0){
+  outfile1 = paste(outdir, case_name, "_multicaller_vafs.pdf", sep="")
+  outfile2 = paste(outdir, case_name, "_multicaller_vafs_boxplots.pdf", sep="")
+  x_label = "Gene Mutations"
+  main_label = paste("Aggregate VAFs for variants called by >= 2 callers", " (", case_name, ")", sep="")
+  main_label_vafs = "Replicate VAFs for variants called by >= 2 callers"
+  main_label_covs = paste("Replicate coverages for variants called by >= 2 callers", " (", case_name, ")", sep="")
+  plot_vafs(outfile1, x_label, main_label_vafs, main_label_covs, target_gene_i)
+  plot_boxplots(outfile2, target_gene_i, main_label)
+}
+
+#Plot all variants
 o = order(data[,"max_tumor_vaf_observed"], decreasing=TRUE)
 target_gene_i = o
 if (length(target_gene_i) > 0){

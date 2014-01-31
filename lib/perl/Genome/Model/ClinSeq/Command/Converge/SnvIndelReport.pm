@@ -84,10 +84,14 @@ class Genome::Model::ClinSeq::Command::Converge::SnvIndelReport {
               is => 'Number',
               doc => 'Only import this many variants (for testing purposes)',
         },
+        chromosome => {
+              is => 'Text',
+              doc => 'Limit analysis to variants on this chromosome only',
+        },
         clean => {
               is => 'Boolean',
               doc => 'Remove intermediate files from output if you are running in a pipeline',
-        }
+        },
     ],   
     doc => 'converge SNV and InDels from multiple clin-seq builds, annotate, bam-readcount, etc. and summarize into a single spreadsheet',
 };
@@ -172,7 +176,7 @@ sub execute {
   $self->status_message("Producing report for individual: $case_name");
 
   #Print out a table of subject names for reference
-  $self->print_subject_table('-subject_labels'=>$subject_labels);
+  my $subject_table_file = $self->print_subject_table('-subject_labels'=>$subject_labels);
 
   #Gather variants for the tiers specified by the user from each build. Note which build each came from.
   #Get these from the underlying somatic-variation builds.
@@ -185,6 +189,14 @@ sub execute {
   my $variants = $result->{'variants'};
   my $header = $result->{'header'};
   
+  #If no variants were found, warn the user and end here end here
+  unless (keys %{$variants}){
+    my $rm_cmd = "rm -fr $bed_dir $subject_table_file";
+    $self->warning_message("no variants found, no snv-indel report will be created");
+    Genome::Sys->shellcmd(cmd => $rm_cmd);
+    exit 1;
+  }
+
   #Make note of which variants correspond to $self->target_gene_list
   $self->intersect_target_gene_list('-variants'=>$variants);
 
@@ -275,7 +287,7 @@ sub print_subject_table{
 
   close(OUT);
 
-  return;
+  return $outfile;
 }
 
 sub get_case_name{
@@ -375,13 +387,14 @@ sub gather_variants{
       open(NEW, ">$new_file") || die $self->error_message("Could not open new var file: $new_file");
       while(<VAR>){
         $c++;
-        if ($self->test){last if $c > $self->test;}
         chomp($_);
         my @line = split("\t", $_);
         my ($chr, $start, $end, $var)  = ($line[0], $line[1], $line[2], $line[3]);
+        if ($self->chromosome){next unless ($chr eq $self->chromosome);}
         #Make indel format consistent
         $var =~ s/\*/0/g;
         print NEW "$chr\t$start\t$end\t$var\n";
+        if ($self->test){last if $c > $self->test;}
       }
       close(VAR);
       close(NEW);
@@ -394,14 +407,19 @@ sub gather_variants{
     if (-e $anno_file){
       $self->warning_message("Using pre-generated file: $anno_file");
     }else{
-      my $annotate_cmd = Genome::Model::Tools::Annotate::TranscriptVariants->create(
-            variant_bed_file=>$bed_files{$file}{clean_bed_file}, 
-            output_file=>$anno_file,
-            annotation_filter=>'top',
-            reference_transcripts=>$self->annotation_build->name,
-          );
-      my $r1 = $annotate_cmd->execute();
-      die $self->error_message("annotation cmd unsuccessful") unless ($r1);
+      if (-s $bed_files{$file}{clean_bed_file}){
+        my $annotate_cmd = Genome::Model::Tools::Annotate::TranscriptVariants->create(
+              variant_bed_file=>$bed_files{$file}{clean_bed_file}, 
+              output_file=>$anno_file,
+              annotation_filter=>'top',
+              reference_transcripts=>$self->annotation_build->name,
+            );
+        my $r1 = $annotate_cmd->execute();
+        die $self->error_message("annotation cmd unsuccessful") unless ($r1);
+      }else{
+        my $touch_cmd = "touch $anno_file";
+        Genome::Sys->shellcmd(cmd => $touch_cmd);
+      }
     }
     $bed_files{$file}{anno_file} = $anno_file;
 
@@ -624,15 +642,23 @@ sub get_variant_caller_sources{
     push(@files, @files_list);
   }
 
+  my %columns;
   foreach my $file (@files){
     $self->status_message("processing variant caller sources file: $file");
     next unless (-e $file);
     open (SOURCES, $file) || die $self->error_message("could not open variant caller sources file: $file");
     while(<SOURCES>){
       chomp($_);
-      next if ($_ =~ /^coord/);
       my @line = split("\t", $_);
-      my ($chr, $start, $end, $variant, $caller_string) = ($line[1], $line[2], $line[3], $line[4], $line[7]);
+      if ($_ =~ /^coord/){
+        my $p = 0;
+        foreach my $col (@line){
+          $columns{$col}{p} = $p;
+          $p++;
+        }
+        next;
+      }
+      my ($chr, $start, $end, $variant, $caller_string, $tier) = ($line[$columns{'chr'}{p}], $line[$columns{'start'}{p}], $line[$columns{'end'}{p}], $line[$columns{'variant'}{p}], $line[$columns{'callers'}{p}], $line[$columns{'tier'}{p}]);
       $variant =~ s/\*/\-/g;
       $variant =~ s/0/\-/g;
       my ($ref, $var) = split(/\//, $variant);
@@ -658,7 +684,7 @@ sub get_variant_caller_sources{
               $callers->{$caller}=1;
             }
           }else{
-            die $self->error_message("could not match variant to hash: $v") unless $self->test;
+            die $self->error_message("could not match variant to hash: $v $chr $tier") unless (($self->test) || !($self->tiers =~ /$tier/) || ($self->chromosome && ($chr ne $self->chromosome)));
           }
         }
       }elsif ($file =~ /indel\_sources/){
@@ -669,7 +695,7 @@ sub get_variant_caller_sources{
             $callers->{$caller}=1;
           }
         }else{
-          die $self->error_message("could not match variant to hash: $v") unless $self->test;
+          die $self->error_message("could not match variant to hash: $v $chr $tier") unless (($self->test) || !($self->tiers =~ /$tier/) || ($self->chromosome && ($chr ne $self->chromosome)));
         }
       }else{
         die $self->error_message("file not recognized as snv or indel: $file");
@@ -1313,20 +1339,29 @@ sub create_plots{
     my $combined_vaf_col_name = $prefix . "_VAF";
     push(@combined_vaf_cols, $columns{$combined_vaf_col_name}{p} + 1);
     my $libs = $align_builds->{$name}->{libs};
-    foreach my $lib (sort {$libs->{$a}->{rep} <=> $libs->{$b}->{rep}} keys %{$libs}){
-      my $rep = $libs->{$lib}->{rep};
-      my $per_lib_vaf_col = $prefix . "_rep" . $rep . "_VAF";
 
-      die $self->error_message("could not resolve column $per_lib_vaf_col in file $final_filtered_clean_tsv") unless ($columns{$per_lib_vaf_col});
+    if ($self->per_library){
+      #If replicate library analysis is being run define the replicate VAF columns
+      foreach my $lib (sort {$libs->{$a}->{rep} <=> $libs->{$b}->{rep}} keys %{$libs}){
+        my $rep = $libs->{$lib}->{rep};
+        my $per_lib_vaf_col = $prefix . "_rep" . $rep . "_VAF";
 
-      if (defined($rep_vaf_cols{$prefix})){
-        my $cols = $rep_vaf_cols{$prefix}{cols};
-        push (@{$cols}, $columns{$per_lib_vaf_col}{p} + 1);
-      }else{
-        my @cols;
-        push (@cols, $columns{$per_lib_vaf_col}{p} + 1);
-        $rep_vaf_cols{$prefix}{cols} = \@cols;
+        die $self->error_message("could not resolve column $per_lib_vaf_col in file $final_filtered_clean_tsv") unless ($columns{$per_lib_vaf_col});
+
+        if (defined($rep_vaf_cols{$prefix})){
+          my $cols = $rep_vaf_cols{$prefix}{cols};
+          push (@{$cols}, $columns{$per_lib_vaf_col}{p} + 1);
+        }else{
+          my @cols;
+          push (@cols, $columns{$per_lib_vaf_col}{p} + 1);
+          $rep_vaf_cols{$prefix}{cols} = \@cols;
+        }
       }
+    }else{
+      #If replicate library analysis is NOT being run simply use the combined VAF values
+      my @cols;
+      push (@cols, $columns{$combined_vaf_col_name}{p} + 1);
+      $rep_vaf_cols{$prefix}{cols} = \@cols;
     }
   }
 
