@@ -1367,6 +1367,11 @@ sub _launch {
     }
 }
 
+sub _default_job_group {
+    my $user = getpwuid($<);
+    return '/apipe-build/' . $user;
+}
+
 sub _job_group_spec {
     my $params = shift;
     my $job_group_spec;
@@ -1380,8 +1385,7 @@ sub _job_group_spec {
         }
     }
     else {
-        my $user = getpwuid($<);
-        $job_group_spec = ' -g /apipe-build/' . $user;
+        $job_group_spec = ' -g ' . _default_job_group;
     }
     return $job_group_spec;
 }
