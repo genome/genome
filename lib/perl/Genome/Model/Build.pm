@@ -1374,20 +1374,11 @@ sub _default_job_group {
 
 sub _job_group_spec {
     my $params = shift;
-    my $job_group_spec;
+    my $job_group = _default_job_group();
     if (exists $params->{job_group}) {
-        my $job_group = delete $params->{job_group};
-        if ($job_group) {
-            $job_group_spec = " -g $job_group";
-        }
-        else {
-            $job_group_spec = "";
-        }
+        $job_group = delete $params->{job_group};
     }
-    else {
-        $job_group_spec = ' -g ' . _default_job_group;
-    }
-    return $job_group_spec;
+    return ($job_group ? " -g $job_group" : '');
 }
 
 sub _initialize_workflow {
