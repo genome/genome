@@ -1009,9 +1009,9 @@ $Genome::Command::OPTS_SPEC = [
     undef,
     'genome::config::analysisproject::subjectpairing::command',
     undef,
-    'showconfig',
-    undef,
     'addconfigfile',
+    undef,
+    'showconfig',
     undef,
     '>hold',
     [
@@ -1027,6 +1027,8 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    'addmenuitem',
+    undef,
     '>update',
     [
       'help!',
@@ -5908,6 +5910,8 @@ $Genome::Command::OPTS_SPEC = [
           undef,
           'test=s',
           undef,
+          'chromosome=s',
+          'files',
           'clean!',
           undef,
           'tiers=s',
@@ -13283,8 +13287,6 @@ $Genome::Command::OPTS_SPEC = [
           'min-quality-score=s',
           undef,
           'min-vaf=s',
-          undef,
-          'per-library!',
           undef,
           'help!',
           undef
@@ -38538,9 +38540,9 @@ $Genome::Command::OPTS_SPEC = [
       undef,
       'genome::config::analysisproject::subjectpairing::command',
       undef,
-      'showconfig',
-      undef,
       'addconfigfile',
+      undef,
+      'showconfig',
       undef,
       '>hold',
       [
@@ -38556,6 +38558,8 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      'addmenuitem',
+      undef,
       '>update',
       [
         'help!',
