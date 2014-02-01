@@ -1312,20 +1312,7 @@ sub _launch {
         $job_dispatch = $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
     }
 
-    my $job_group_spec;
-    if (exists $params{job_group}) {
-        my $job_group = delete $params{job_group};
-        if ($job_group) {
-            $job_group_spec = " -g $job_group";
-        }
-        else {
-            $job_group_spec = "";
-        }
-    }
-    else {
-        my $user = getpwuid($<);
-        $job_group_spec = ' -g /apipe-build/' . $user;
-    }
+    my $job_group_spec = _job_group_spec(\%params);
 
     # all params should have been deleted (as they were handled)
     die "Bad params!  Expected server_dispatch and job_dispatch!" . Data::Dumper::Dumper(\%params) if %params;
@@ -1380,6 +1367,24 @@ sub _launch {
     }
 }
 
+sub _job_group_spec {
+    my $params = shift;
+    my $job_group_spec;
+    if (exists $params->{job_group}) {
+        my $job_group = delete $params->{job_group};
+        if ($job_group) {
+            $job_group_spec = " -g $job_group";
+        }
+        else {
+            $job_group_spec = "";
+        }
+    }
+    else {
+        my $user = getpwuid($<);
+        $job_group_spec = ' -g /apipe-build/' . $user;
+    }
+    return $job_group_spec;
+}
 
 sub _initialize_workflow {
     #     Create the data and log directories and resolve the workflow for this build.
