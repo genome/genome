@@ -846,6 +846,8 @@ sub _get_group_subdir_from_full_path_and_mount_path {
 sub _verify_no_child_allocations {
     my ($class, $path) = @_;
 
+    return 1 if $ENV{UR_DBI_NO_COMMIT};
+
     $path =~ s/\/+$//;
 
     my $meta        = $class->__meta__;
