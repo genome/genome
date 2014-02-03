@@ -1288,20 +1288,10 @@ sub _launch {
     # ultimately, it will be the specification for parallelization
     # including whether the server is inline, forked, or bsubbed, and the
     # jobs are inline, forked or bsubbed from the server
-    my $server_dispatch;
     my $job_dispatch;
     my $model = $self->model;
 
-    # resolve server_dispatch
-    if (exists($params{server_dispatch})) {
-        $server_dispatch = delete $params{server_dispatch};
-    } elsif ($model->processing_profile->can('server_dispatch') && defined $model->processing_profile->server_dispatch) {
-        $server_dispatch = $model->processing_profile->server_dispatch;
-    } elsif ($model->can('server_dispatch') && defined $model->server_dispatch) {
-        $server_dispatch = $model->server_dispatch;
-    } else {
-        $server_dispatch = $ENV{GENOME_LSF_QUEUE_BUILD_WORKFLOW};
-    }
+    my $server_dispatch = $self->_server_dispatch(\%params);
 
     # resolve job_dispatch
     if (exists($params{job_dispatch})) {
@@ -1365,6 +1355,23 @@ sub _launch {
 
         return 1;
     }
+}
+
+sub _server_dispatch {
+    my $self = shift;
+    my $params = shift;
+    my $model = $self->model;
+    my $server_dispatch;
+    if (exists($params->{server_dispatch})) {
+        $server_dispatch = delete $params->{server_dispatch};
+    } elsif ($model->processing_profile->can('server_dispatch') && defined $model->processing_profile->server_dispatch) {
+        $server_dispatch = $model->processing_profile->server_dispatch;
+    } elsif ($model->can('server_dispatch') && defined $model->server_dispatch) {
+        $server_dispatch = $model->server_dispatch;
+    } else {
+        $server_dispatch = $ENV{GENOME_LSF_QUEUE_BUILD_WORKFLOW};
+    }
+    return $server_dispatch;
 }
 
 sub _default_job_group {
