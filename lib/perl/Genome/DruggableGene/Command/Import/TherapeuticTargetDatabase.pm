@@ -19,13 +19,6 @@ class Genome::DruggableGene::Command::Import::TherapeuticTargetDatabase {
             default => '/tmp/',
             doc => 'Directory where temp files will be created',
         },
-        skip_pubchem => {
-            is => 'Boolean',
-            is_input => 1,
-            is_optional => 1,
-            default => 0,
-            doc => 'Skip _destroy_and_rebuild_pubchem_and_drug_groups step',
-        },
         drugs_crossmatching_url => {
             is => 'Text',
             is_input => 1,
