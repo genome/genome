@@ -121,10 +121,10 @@ sub execute {                               # replace with real execution logic.
 
   ## Load the annotations ##
   if( $snv_annotation_file ) {
-    my %annotations = load_annotations( $snv_annotation_file );
+    my %annotations = $self->load_annotations( $snv_annotation_file );
     my %annotations_with_rsid;
     if ($self->snv_anno_file_with_rsid) {
-        %annotations_with_rsid = load_annotations($self->snv_anno_file_with_rsid)
+        %annotations_with_rsid = $self->load_annotations($self->snv_anno_file_with_rsid)
     }
     my $input = new FileHandle ($snv_file);
     my $lineCounter = 0;
@@ -220,7 +220,7 @@ sub execute {                               # replace with real execution logic.
 
   ## Load the annotations ##
   if( $indel_annotation_file ) {
-    my %annotations = load_annotations( $indel_annotation_file );
+    my %annotations = $self->load_annotations( $indel_annotation_file );
     my $input = new FileHandle ($indel_file);
     my $lineCounter = 0;
 
@@ -333,6 +333,7 @@ sub execute {                               # replace with real execution logic.
 
 sub load_annotations
 {
+    my $self = shift;
     my $annotation_file = shift(@_);
 
     ## Parse the annotation file ##
@@ -361,6 +362,9 @@ sub load_annotations
         my $gene_name = $lineContents[6];
         my $trv_type = $lineContents[13];
         my $key = "$chrom\t$chr_start\t$chr_stop\t$ref\t$var\t$gene_name";
+        if (exists $annotations{$key}) {
+            $self->error_message("We assume one annotation per variant-gene combination, but found a duplicate: $key");
+        }
         $annotations{$key} = "$var_type\t$gene_name\t$trv_type\t$line";
 
     }
