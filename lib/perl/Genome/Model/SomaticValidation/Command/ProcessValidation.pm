@@ -72,7 +72,7 @@ sub execute {
         $self->error_message('Failed to get a snv variant file for this build!');
         die $self->error_message;
     }
-    mkdir($build->data_directory . '/validation/metrics/varscan-process-validation');
+    Genome::Sys->create_directory($build->data_directory . '/validation/metrics/varscan-process-validation');
     my $anno_file = $build->data_directory . '/validation/metrics/varscan-process-validation/variant_list.snvs';
 
     my $bed_to_anno = Genome::Model::Tools::Bed::Convert::BedToAnnotation->create(
