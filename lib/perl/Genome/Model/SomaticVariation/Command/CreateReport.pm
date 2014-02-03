@@ -20,28 +20,15 @@ class Genome::Model::SomaticVariation::Command::CreateReport {
             is => 'Genome::Model::Build::SomaticVariation',
             doc => 'Somactic Variation build',
         },
-#get from input property
-        # igv_reference_name =>{
-            # is => 'Text',
-            # doc => "name of the igv reference to use for review",
-            # example_values => ["reference_build36","b37","mm9"],
-        # },
     ],
     has_optional_input => [
-        # goes away
-        igv_reference_name =>{
-            is => 'Text',
-            doc => "name of the igv reference to use for review",
-            example_values => ["reference_build36","b37","mm9"],
-            default => 'b37',
-        },
         # make pp option
         restrict_to_target_regions =>{
             is => 'Boolean',
             default => 1,
             doc => "only keep snv calls within the target regions. These are pulled from the build if possible",
         },
-        # make pp option
+        # make pp option? - would need to be a featurelist and model input
         target_regions =>{
             is => 'String',
             doc => "path to a target file region. Used in conjunction with --restrict-to-target-regions to limit sites to those appearing in these regions",
@@ -665,6 +652,12 @@ sub annotation_build {
     return $self->somatic_variation_build->annotation_build;
 }
 
+sub reference_sequence_build {
+    my $self = shift;
+
+    return $self->somatic_variation_build->tumor_build->reference_sequence_build;
+}
+
 sub tumor_bam {
     my $self = shift;
 
@@ -680,7 +673,7 @@ sub normal_bam {
 sub ref_seq_fasta {
     my $self = shift;
 
-    return $self->somatic_variation_build->tumor_build->reference_sequence_build->full_consensus_path('fa');
+    return $self->reference_sequence_build->full_consensus_path('fa');
 }
 
 sub snvs_dir {
@@ -986,6 +979,10 @@ sub _create_review_xml {
     my $labels = sprintf('normal %s,tumor %s',
         $self->sample_name, $self->sample_name);
 
+    my $cmd = Genome::Model::Tools::Analysis::ResolveIgvReferenceName->execute(
+        reference_name => $self->reference_sequence_build->name,
+    );
+
     #create the xml file for review
     my $dumpXML = Genome::Model::Tools::Analysis::DumpIgvXmlMulti->create(
         bams            => $bam_files,
@@ -993,7 +990,7 @@ sub _create_review_xml {
         output_file     => $self->review_xml,
         genome_name     => $self->sample_name,
         review_bed_file => $self->review_bed,
-        reference_name  => $self->igv_reference_name,
+        reference_name  => $cmd->igv_reference_name,
     );
     unless ($dumpXML->execute) {
         confess $self->error_message("Failed to create IGV xml file");

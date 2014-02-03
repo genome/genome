@@ -26,7 +26,6 @@ run_test(
     $main_dir,
     somatic_variation_build => $somatic_variation_build,
     target_regions          => "$input_dir/target_regions.bed",
-    igv_reference_name      => 'b37',
     required_snv_callers    => 2,
 );
 

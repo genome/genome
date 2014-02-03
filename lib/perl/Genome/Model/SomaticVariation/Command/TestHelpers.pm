@@ -61,6 +61,7 @@ sub create_test_objects {
         model_id => $tumor_reference_model->id,
         data_directory => $main_dir,
     );
+    $tumor_reference_build->name('GRCh37-lite-build37');
 
     my $tumor_instrument_data = Genome::Test::Factory::InstrumentData::Solexa->setup_object(
         bam_path => File::Spec->join($instrument_data_dir, "139691307_tumor.bam"),

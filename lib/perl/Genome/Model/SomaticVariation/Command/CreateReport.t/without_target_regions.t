@@ -41,7 +41,6 @@ run_test(
     $pkg,
     $main_dir,
     somatic_variation_build => $somatic_variation_build,
-    igv_reference_name      => 'b37',
 );
 
 done_testing();
