@@ -42,10 +42,10 @@ if (length(args) < 7){
 }
 
 #Define sample display colors
-sample_colors = c("dark blue")
-if (length(sample_names) == 2) {sample_colors = c("dark blue","red")}
-if (length(sample_names) == 3) {sample_colors = c("dark blue","red","orange")}
-if (length(sample_names) == 4) {sample_colors = c("dark blue","red4","red","orange")}
+sample_colors = c("blue")
+if (length(sample_names) == 2) {sample_colors = c("blue","red")}
+if (length(sample_names) == 3) {sample_colors = c("blue","red","orange")}
+if (length(sample_names) == 4) {sample_colors = c("blue","red4","red","orange")}
 
 #There must be at least 1 set of sample VAFs
 sample_vaf_cols = sample1_vaf_cols
@@ -210,9 +210,11 @@ plot_boxplots = function(outfile, gene_i, main_label_vafs){
   par(mgp=c(3,1.5,0)) #axis title, axis labels and axis line.
   vaf_dist = list(data[gene_i,combined_vaf_cols[1]])
   bp_names = paste(sample_names[1], "\n", "(", round(median(data[gene_i,combined_vaf_cols[1]]),digits=2), "%)", sep="")  
-  if (length(sample2_vaf_cols) > 0) { 
+  
+  if (length(sample2_vaf_cols) > 0) {
     vaf_dist = list(data[gene_i,combined_vaf_cols[1]], data[gene_i,combined_vaf_cols[2]])
     bp_names = c(bp_names, paste(sample_names[2], "\n", "(", round(median(data[gene_i,combined_vaf_cols[2]]),digits=2), "%)", sep=""))
+    
   }
   if (length(sample3_vaf_cols) > 0) { 
     vaf_dist = list(data[gene_i,combined_vaf_cols[1]], data[gene_i,combined_vaf_cols[2]], data[gene_i,combined_vaf_cols[3]]) 
@@ -228,11 +230,34 @@ plot_boxplots = function(outfile, gene_i, main_label_vafs){
   n = length(gene_i)
   y_label = paste("Variant allele frequency (VAF) [n = ", n, "]", sep="")
 
-  boxplot(vaf_dist, col=sample_colors, names=bp_names, ylab=y_label, main=main_label_vafs)
+  #Starting box plot
+  boxplot(vaf_dist, col=sample_colors, names=bp_names, ylab=y_label, main=main_label_vafs, pch=NA)
+
+  #Individual points and horizontal lines at median of each distribution
+  flank = 0.125
+  xp = 1
+  xpoints = runif(n=length(gene_i), min=(xp-flank), max=(xp+flank))
+  points(x=xpoints, y=data[gene_i,combined_vaf_cols[1]], col="black", pch=16, cex=1)
   abline(h=median(data[gene_i,combined_vaf_cols[1]]), lty=2, lwd=0.5, col=sample_colors[1])
-  if (length(sample2_vaf_cols) > 0) { abline(h=median(data[gene_i,combined_vaf_cols[2]]), lty=2, lwd=0.5, col=sample_colors[2]) }
-  if (length(sample3_vaf_cols) > 0) { abline(h=median(data[gene_i,combined_vaf_cols[3]]), lty=2, lwd=0.5, col=sample_colors[3]) }
-  if (length(sample4_vaf_cols) > 0) { abline(h=median(data[gene_i,combined_vaf_cols[4]]), lty=2, lwd=0.5, col=sample_colors[4]) }
+
+  if (length(sample2_vaf_cols) > 0) { 
+    xp = 2
+    xpoints = runif(n=length(gene_i), min=(xp-flank), max=(xp+flank))
+    points(x=xpoints, y=data[gene_i,combined_vaf_cols[2]], col="black", pch=16, cex=1)
+    abline(h=median(data[gene_i,combined_vaf_cols[2]]), lty=2, lwd=0.5, col=sample_colors[2]) 
+  }
+  if (length(sample3_vaf_cols) > 0) { 
+    xp = 3
+    xpoints = runif(n=length(gene_i), min=(xp-flank), max=(xp+flank))
+    points(x=xpoints, y=data[gene_i,combined_vaf_cols[3]], col="black", pch=16, cex=1)
+    abline(h=median(data[gene_i,combined_vaf_cols[3]]), lty=2, lwd=0.5, col=sample_colors[3]) 
+  }
+  if (length(sample4_vaf_cols) > 0) { 
+    xp = 4
+    xpoints = runif(n=length(gene_i), min=(xp-flank), max=(xp+flank))
+    points(x=xpoints, y=data[gene_i,combined_vaf_cols[4]], col="black", pch=16, cex=1)
+    abline(h=median(data[gene_i,combined_vaf_cols[4]]), lty=2, lwd=0.5, col=sample_colors[4]) 
+  }
 
   dev.off()
 
