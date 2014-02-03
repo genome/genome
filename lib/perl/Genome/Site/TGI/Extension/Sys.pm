@@ -28,6 +28,8 @@ use Params::Validate qw(:types);
 
 require MIME::Lite;
 
+use Genome::Sys::LSF::bsub qw();
+
 #####
 # Methods useful for bsubbing jobs and checking their status
 # FIXME There's a lower level API to LSF that doesn't rely on a the command line 
@@ -45,45 +47,7 @@ sub bsub_and_wait {
 # FIXME This is incomplete and should be expanded to accept more bsub parameters
 sub bsub {
     my $class = shift;
-
-    # this has to be a runtime dependency so it can compile on /gsc/bin/perl...
-    require IPC::System::Simple;
-
-    my %args = Params::Validate::validate(
-        @_, {
-            cmd => { type => (SCALAR | ARRAYREF) },
-            queue => { default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} },
-            job_group => 0,
-            log_file => 0,
-            err_file => 0,
-        }
-    );
-
-    my @bsub_cmd = ('bsub', '-q', $args{queue});
-    if ($args{job_group}) {
-        push @bsub_cmd, '-g', $args{job_group};
-    }
-    if ($args{log_file}) {
-        push @bsub_cmd, '-o', $args{log_file};
-    }
-    if ($args{err_file}) {
-        push @bsub_cmd, '-e', $args{err_file};
-    }
-
-    my $bsub_output;
-    if (ref($args{cmd}) eq 'ARRAY') {
-        push @bsub_cmd, @{$args{cmd}};
-        $bsub_output = eval {IPC::System::Simple::capture(@bsub_cmd)};
-    } else {
-        my $bsub_cmd = join(' ', @bsub_cmd, $args{cmd});
-        $bsub_output = `$bsub_cmd`;
-    }
-
-    my ($job_id) = $bsub_output =~ /Job <(\d+)> is submitted to/;
-    unless ($job_id) {
-        die "Could not get job id from bsub output!";
-    }
-    return $job_id;
+    return Genome::Sys::LSF::bsub::bsub(@_);
 }
 
 sub get_lsf_job_status {
