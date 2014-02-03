@@ -184,8 +184,11 @@ sub execute {                               # replace with real execution logic.
           }
         }
 
-        my @rsid_fields = split(/\t/, $annotations_with_rsid{$key});
-        my $rsid = $rsid_fields[24];
+        my $rsid = "";
+        if (exists $annotations_with_rsid{$key}) {
+            my @rsid_fields = split(/\t/, $annotations_with_rsid{$key});
+            $rsid = $rsid_fields[24];
+        }
 
         my ( $var_type, $gene, $trv_type ) = split( /\t/, $annotations{$key} );
         my $annoline = $annotations{$key};
