@@ -6,7 +6,7 @@ use Test::Builder;
 use Test::Fatal qw(exception);
 use Genome::Sys::LSF::bsub qw();
 
-plan tests => 9;
+plan tests => 10;
 
 do {
     no warnings 'redefine';
@@ -29,6 +29,19 @@ like( exception { Genome::Sys::LSF::bsub::_args(queue => $fake_queue, cmd => 'tr
 is( exception { Genome::Sys::LSF::bsub::_args(queue => $queues[0], cmd => 'true') },
     undef,
     qq('$queues[0]' did not trigger exception));
+
+do {
+    my $_option_mapper = \&Genome::Sys::LSF::bsub::_option_mapper;
+    no warnings 'redefine';
+    local *Genome::Sys::LSF::bsub::_option_mapper = sub {
+        my $option = $_option_mapper->(@_);
+        $option =~ s/^-/-b:/;
+        return $option;
+    };
+    is( Genome::Sys::LSF::bsub::_option_mapper('project'),
+        '-b:P',
+        q('project' arg maps to '-b:P' option with _option_mapper overridden));
+};
 
 is( Genome::Sys::LSF::bsub::_option_mapper('project'),
     '-P',
