@@ -39,29 +39,29 @@ my @cases = (
         [
             email => 'nnutter@genome.wustl.edu',
             cmd => 'true',
-        ], [qw(bsub -u nnutter@genome.wustl.edu true)], 'single option',
+        ], [qw(-u nnutter@genome.wustl.edu true)], 'single option',
     ],[
         [
             email => 'nnutter@genome.wustl.edu',
             project => 'HighPriority',
             cmd => 'true',
-        ], [qw(bsub -u nnutter@genome.wustl.edu -P HighPriority true)], 'multiple options',
+        ], [qw(-u nnutter@genome.wustl.edu -P HighPriority true)], 'multiple options',
     ],[
         [
             hold_job => 0,
             cmd => 'true',
-        ], [qw(bsub true)], 'disabled flag',
+        ], [qw(true)], 'disabled flag',
     ],[
         [
             hold_job => 1,
             cmd => 'true',
-        ], [qw(bsub -H true)], 'enabled flag',
+        ], [qw(-H true)], 'enabled flag',
     ],
 );
 for my $case (@cases) {
     my @input = @{$case->[0]};
     my $expected = $case->[1];
     my $name = $case->[2];
-    my $got = [Genome::Sys::LSF::bsub::_command_builder(@input)];
+    my $got = [Genome::Sys::LSF::bsub::args_builder(@input)];
     is_deeply($got, $expected, $name);
 }

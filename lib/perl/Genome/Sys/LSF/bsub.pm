@@ -11,11 +11,11 @@ our @EXPORT = qw(bsub);
 our @EXPORT_OK = qw(bsub);
 
 sub bsub {
-    my @command = _command_builder(@_);
+    my @args = args_builder(@_);
 
     # lazy load so we don't break /gsc/bin/perl (until we have to)
     require IPC::System::Simple;
-    my @output = IPC::System::Simple::capture(@command);
+    my @output = IPC::System::Simple::capture('bsub', @args);
 
     my $job_id = ($output[-1] =~ /^Job <(\d+)> is submitted to/)[0];
     unless ($job_id) {
@@ -25,7 +25,7 @@ sub bsub {
     return $job_id;
 }
 
-sub _command_builder {
+sub args_builder {
     my %args = _args(@_);
     my $command = delete $args{cmd};
 
@@ -44,76 +44,76 @@ sub _command_builder {
         $command = [$command];
     }
 
-    return ('bsub', @args, @$command);
+    return (@args, @$command);
+}
+
+sub _args {
+    return Params::Validate::validate(@_, _args_spec());
 }
 
 sub _option_mapper {
     my $arg = shift;
-    return {
-        email           => '-u',
-        err_file        => '-e',
-        hold_job        => '-H',
-        job_group       => '-g',
-        log_file        => '-o',
-        project         => '-P',
-        queue           => '-q',
-        send_job_report => '-N',
-    }->{$arg};
-}
-
-sub _args {
-    my %args = Params::Validate::validate(
-        @_, {
-            _flag_spec(),
-            queue => {
-                optional => 1,
-                type => SCALAR,
-                callbacks => {
-                    'valid LSF queue' => \&_valid_lsf_queue,
-                },
-            },
-            project => {
-                optional => 1,
-                type => SCALAR,
-            },
-            email => {
-                optional => 1,
-                type => SCALAR,
-            },
-            err_file => {
-                optional => 1,
-                type => SCALAR,
-            },
-            log_file => {
-                optional => 1,
-                type => SCALAR,
-            },
-            job_group => {
-                optional => 1,
-                type => SCALAR,
-            },
-            cmd => {
-                type => SCALAR | ARRAYREF,
-            },
-        }
-    );
-    return %args;
+    my $spec = _args_spec();
+    if (not exists $spec->{$arg}{option_flag}) {
+        die qq(Could not find option flag for '$arg' in args spec);
+    }
+    return $spec->{$arg}{option_flag};
 }
 
 sub _flags {
-    return sort qw(
-        hold_job
-        send_job_report
-    );
+    my $spec = _args_spec();
+    return grep { $spec->{$_}{type} == BOOLEAN } sort keys %{$spec};
 }
 
-sub _flag_spec {
-    return map {
-        $_ => {
+sub _args_spec {
+    return {
+        hold_job => {
             optional => 1,
+            option_flag => '-H',
             type => BOOLEAN,
-        }
-    } _flags();
+        },
+        send_job_report => {
+            optional => 1,
+            option_flag => '-N',
+            type => BOOLEAN,
+        },
+        queue => {
+            optional => 1,
+            option_flag => '-q',
+            type => SCALAR,
+            callbacks => {
+                'valid LSF queue' => \&_valid_lsf_queue,
+            },
+        },
+        project => {
+            optional => 1,
+            option_flag => '-P',
+            type => SCALAR,
+        },
+        email => {
+            optional => 1,
+            option_flag => '-u',
+            type => SCALAR,
+        },
+        err_file => {
+            optional => 1,
+            option_flag => '-e',
+            type => SCALAR,
+        },
+        log_file => {
+            optional => 1,
+            option_flag => '-o',
+            type => SCALAR,
+        },
+        job_group => {
+            optional => 1,
+            option_flag => '-g',
+            type => SCALAR,
+        },
+        cmd => {
+            type => SCALAR | ARRAYREF,
+        },
+    };
 }
 
 sub _valid_lsf_queue {
