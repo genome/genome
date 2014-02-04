@@ -144,12 +144,6 @@ sub execute {
     my $specify_chr = $self->specify_chr;
     my $output_file = $self->output_file;
 
-    my $db   = "ucsc";
-    my $user = "mgg_admin";
-    my $password = "c\@nc3r";
-    my $dataBase = "DBI:mysql:$db:mysql2";
-    my $dbh = DBI->connect($dataBase, $user, $password) || die "ERROR: Could not connect to database: $! \n";
-
     my (%BK1s,%BK2s,%ROIs,%chrs);
     my @SVs;
     my $header;
@@ -291,8 +285,15 @@ sub execute {
         }
         #Prepare repeatMasker table
         if ($self->repeat_mask) {
+            my $db   = "ucsc";
+            my $user = "mgg_admin";
+            my $password = "c\@nc3r";
+            my $dataBase = "DBI:mysql:$db:mysql2";
+            my $dbh = DBI->connect($dataBase, $user, $password) || die "ERROR: Could not connect to database: $! \n";
+
             my $table = "chr$chr"."_rmsk";
-            my $query = "SELECT genoStart, genoEnd, repClass
+            my $query = 
+                "SELECT genoStart, genoEnd, repClass
                 FROM $table
                 WHERE genoEnd >= ? && genoStart <= ?
                 ORDER BY genoStart";
