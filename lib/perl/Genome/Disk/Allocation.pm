@@ -846,7 +846,7 @@ sub _get_group_subdir_from_full_path_and_mount_path {
 sub _verify_no_child_allocations {
     my ($class, $path) = @_;
 
-    return 1 if $ENV{UR_DBI_NO_COMMIT};
+    return 1 if $ENV{UR_DBI_NO_COMMIT} and not $TESTING_DISK_ALLOCATION;
 
     $path =~ s/\/+$//;
 
