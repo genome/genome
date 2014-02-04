@@ -65,7 +65,7 @@ ok($reference_model, "got reference model");
 my $reference_build = $reference_model->build_by_version('1');
 ok($reference_build, "got reference build");
 
-my $temp_reference_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->create(reference_build=>$reference_build, aligner_version=>$aligner_version, aligner_name=>'bwa', aligner_params=>'');
+my $temp_reference_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_or_create(reference_build=>$reference_build, aligner_version=>$aligner_version, aligner_name=>'bwa', aligner_params=>'');
 
 ok($temp_reference_index, "prepared temporary reference index");
 
