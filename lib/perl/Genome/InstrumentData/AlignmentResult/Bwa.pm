@@ -145,6 +145,32 @@ sub _all_reference_indices {
 sub _intermediate_result {
     my ($self, $params, $index, @input_files) = @_;
 
+    my $aligner_version = $self->aligner_version;
+    if ($aligner_version =~ /^(.*)-i(.*)/) {
+        my $old = $aligner_version;
+        $aligner_version = $1;
+        $self->warning_message("FOR iBWA (BWA $old), USING (IDENTICAL) $aligner_version FOR INTERMEDIATE RESULTS"); 
+    }
+
+    my %intermediate_params = (
+        instrument_data_id           => $self->instrument_data->id,
+        aligner_name                 => $self->aligner_name,
+        aligner_version              => $aligner_version,
+        aligner_params               => $params,
+        aligner_index_id             => $index->id,
+        flagstat_file                => $self->_flagstat_file,
+        instrument_data_segment_type => $self->instrument_data_segment_type,
+        instrument_data_segment_id   => $self->instrument_data_segment_id,
+        samtools_version             => $self->samtools_version,
+        trimmer_name                 => $self->trimmer_name,
+        trimmer_version              => $self->trimmer_version,
+        trimmer_params               => $self->trimmer_params,
+        test_name                    => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+    );
+
+    my $includes = join(' ', map { '-I ' . $_ } UR::Util::used_libs);
+    my $class = 'Genome::InstrumentData::IntermediateAlignmentResult::Command::Bwa';
+
     my @results;
     for my $idx (0..$#input_files) {
         my $path = $input_files[$idx];
@@ -156,33 +182,8 @@ sub _intermediate_result {
             $input_pass = $idx+1;
         }
 
-        my $aligner_version = $self->aligner_version;
-        if ($aligner_version =~ /^(.*)-i(.*)/) {
-            my $old = $aligner_version;
-            $aligner_version = $1;
-            $self->warning_message("FOR iBWA (BWA $old), USING (IDENTICAL) $aligner_version FOR INTERMEDIATE RESULTS"); 
-        }
-
-        my %intermediate_params = (
-            instrument_data_id           => $self->instrument_data->id,
-            aligner_name                 => $self->aligner_name,
-            aligner_version              => $aligner_version,
-            aligner_params               => $params,
-            aligner_index_id             => $index->id,
-            flagstat_file                => $self->_flagstat_file,
-            input_file                   => $path,
-            input_pass                   => $input_pass,
-            instrument_data_segment_type => $self->instrument_data_segment_type,
-            instrument_data_segment_id   => $self->instrument_data_segment_id,
-            samtools_version             => $self->samtools_version,
-            trimmer_name                 => $self->trimmer_name,
-            trimmer_version              => $self->trimmer_version,
-            trimmer_params               => $self->trimmer_params,
-            test_name                    => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
-        );
-
-        my $includes = join(' ', map { '-I ' . $_ } UR::Util::used_libs);
-        my $class = 'Genome::InstrumentData::IntermediateAlignmentResult::Command::Bwa';
+        $intermediate_params{input_file} = $path;
+        $intermediate_params{input_pass} = $input_pass;
         my $parameters = join(', ', map($_ . ' => "' . (defined($intermediate_params{$_}) ? $intermediate_params{$_} : '') . '"', sort keys %intermediate_params));
 
         if(UR::DBI->no_commit()) {
