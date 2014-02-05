@@ -1372,8 +1372,6 @@ sub _launch {
         $job_dispatch = $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
     }
 
-    my $fresh_workflow = delete $params{fresh_workflow};
-
     my $job_group_spec;
     if (exists $params{job_group}) {
         my $job_group = delete $params{job_group};
@@ -1413,9 +1411,6 @@ sub _launch {
     }
     else {
         my $add_args = ($job_dispatch eq 'inline') ? ' --inline' : '';
-        if ($fresh_workflow) {
-            $add_args .= ' --restart';
-        }
 
         # bsub into the queue specified by the dispatch spec
         my $lsf_project = "build" . $self->id;

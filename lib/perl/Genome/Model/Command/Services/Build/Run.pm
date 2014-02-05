@@ -22,11 +22,6 @@ class Genome::Model::Command::Services::Build::Run{
                         id_by => 'build_id',
                         is_optional => 1,
                     },
-            restart => {
-                is => 'Boolean',
-                is_optional => 1,
-                doc => 'Restart a new Workflow Instance. Overrides the default behavior of resuming an existing workflow.'
-            },
             inline => {
                 is => 'Boolean',
                 is_optional => 1,
@@ -113,11 +108,9 @@ sub execute {
     $Workflow::Simple::server_location_file = $loc_file;
 
     my $w = $build->newest_workflow_instance;
-    if ($w && !$self->restart) {
-        if ($w->is_done) {
-            $self->error_message("Workflow Instance is complete, if you are sure you need to restart use the --restart option");
-            return 0;
-        }
+    if ($w && $w->is_done) {
+        $self->error_message("Workflow Instance is complete.");
+        return 0;
     }
 
     eval {
@@ -132,7 +125,7 @@ sub execute {
 
     my $success;
     if ($self->inline) {
-        if ($w && !$self->restart) {
+        if ($w) {
 
             $self->set_not_running($w);
             UR::Context->commit;
@@ -155,7 +148,7 @@ sub execute {
 
         local $ENV{WF_TRACE_UR} = 1;
         local $ENV{WF_TRACE_HUB} = 1;
-        if ($w && !$self->restart) {
+        if ($w) {
 
             $self->set_not_running($w);
             UR::Context->commit;
