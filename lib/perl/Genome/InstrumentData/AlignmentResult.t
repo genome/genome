@@ -23,13 +23,14 @@ class Genome::InstrumentData::IntermediateAlignmentResult::Tester {
 class Genome::InstrumentData::AlignmentResult::Tester {
     is => 'Genome::InstrumentData::AlignmentResult',
 };
-my $iar;
+my $iar_id;
 sub Genome::InstrumentData::AlignmentResult::Tester::_run_aligner { 
     my $self = shift;
 
     # Create IAR to test if they are deleted
-    $iar = Genome::InstrumentData::IntermediateAlignmentResult::Tester->__define__();
+    my $iar = Genome::InstrumentData::IntermediateAlignmentResult::Tester->__define__();
     ok($iar, 'create tester iar');
+    $iar_id = $iar->id;
     $iar->add_user(user => $self, label => 'intermediate result');
     my @users = $iar->users;
     ok(@users, 'alignment result uses the iar');
@@ -66,7 +67,7 @@ isa_ok($alignment_result, 'Genome::InstrumentData::AlignmentResult::Tester');
 # Check that the iar is deleted
 my @users = Genome::SoftwareResult::User->get(user => $alignment_result, label => 'intermediate result');
 ok(!@users, 'alignment result is not using any intermediate results');
-isa_ok($iar, 'UR::DeletedRef');
+ok(!Genome::InstrumentData::IntermediateAlignmentResult::Tester->get($iar_id), 'did not get the intemediate result');
 
 #  define qc result
 my $qc_result = Genome::InstrumentData::AlignmentResult::Merged::BamQc->__define__(alignment_result_id => $alignment_result->id);
