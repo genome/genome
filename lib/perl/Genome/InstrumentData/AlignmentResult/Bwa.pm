@@ -170,7 +170,6 @@ sub _intermediate_result {
     );
 
     my $includes = join(' ', map { '-I ' . $_ } UR::Util::used_libs);
-    my $class = 'Genome::InstrumentData::IntermediateAlignmentResult::Command::Bwa';
 
     my @results;
     for my $idx (0..$#input_files) {
@@ -191,14 +190,15 @@ sub _intermediate_result {
 
         my $parameters = join(', ', map($_ . ' => "' . (defined($intermediate_params{$_}) ? $intermediate_params{$_} : '') . '"', sort keys %intermediate_params));
 
+        my $class = 'Genome::InstrumentData::IntermediateAlignmentResult::Bwa';
         if(UR::DBI->no_commit()) {
-            my $rv = eval "$class->execute($parameters);";
+            my $rv = eval "$class->get_or_create($parameters);";
             if(!$rv or $@) {
                 my $err = $@;
                 die('Failed to generate intermediate result!' . ($err? $err : ' command returned false') );
             }
         } else {
-            my $cmd = qq{$^X $includes -e 'use above "Genome"; $class->execute($parameters); UR::Context->commit;' };
+            my $cmd = qq{$^X $includes -e 'use above "Genome"; $class->get_or_create($parameters); UR::Context->commit;' };
             my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd) };
             if(!$rv or $@) {
                 my $err = $@;
