@@ -76,6 +76,10 @@ subtest "sorted file with header" => sub {
         "1\t177\tA\tC\t228\t24\t9.52%\tM\t240\t37\t13.36%\tM\tGermline\t6.917202812301296E-20\t0.1067345298531505\t144\t96\t25\t12\n",
         "176th line as expected"
     );
+
+    $line = $file_with_header->getline_for_position("X", 2);
+    ok(defined($line), "We found a line with position ('X', 2)");
+    is($file_with_header->{line_number}, 707, "We're on the 707th line");
 };
 
 subtest "unsorted file with header" => sub {

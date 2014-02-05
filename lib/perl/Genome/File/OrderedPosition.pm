@@ -21,7 +21,7 @@ sub new {
     run(
         ["grep", "-v", $HEADER_REGEX, $filename], "|",
         ["sort", "-k2,2", "-n", "-S$sort_memory_gb" . "G"], "|",
-        ["sort", "-k1,1", "-n", "-s", "-S$sort_memory_gb" . "G"],
+        ["sort", "-k1,1", "-s", "-S$sort_memory_gb" . "G"],
         ">", "$sorted_filename"
     );
     my $fh = Genome::Sys->open_file_for_reading($sorted_filename);
@@ -76,22 +76,41 @@ sub getline_for_position {
         @_, {type => OBJECT}, {type => SCALAR}, {type => SCALAR}
     );
 
-    while (
-        $self->{_last_chromosome} <= $chr &&
-        $self->{_last_start_position} < $start
-    ) {
+    while (!$self->reached_position($chr, $start)) {
         return unless $self->getline;
     }
 
-    if (
-        $self->{_last_chromosome} == $chr &&
-        $self->{_last_start_position} == $start
-    ) {
+    if ($self->exactly_reached_position($chr, $start)) {
         return $self->{_last_line};
     }
     else {
         return;
     }
+}
+
+sub exactly_reached_position {
+    my ($self, $chr, $start) = @_;
+
+    if ($self->{_last_chromosome} eq $chr && $self->{_last_start_position} == $start) {
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
+
+sub reached_position {
+    my ($self, $chr, $start) = @_;
+
+    if ($chr gt $self->{_last_chromosome}) {
+        return 0;
+    }
+
+    if ($chr eq $self->{_last_chromosome} && $start > $self->{_last_start_position}) {
+        return 0;
+    }
+
+    return 1;
 }
 
 sub _parse_line {
@@ -108,6 +127,12 @@ sub _parse_line {
     else {
         return;
     }
+}
+
+sub close {
+    my $self = shift;
+
+    $self->{_filehandle}->close;
 }
 
 1;

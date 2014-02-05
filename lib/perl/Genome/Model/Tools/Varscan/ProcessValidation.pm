@@ -101,10 +101,10 @@ sub execute {
     my %stats = ();
 
     ## Load the validation results ##
-    my $validation_results = Genome::File::OrderedPosition->new($validation_file, 10_000);
+    my $validation_results = Genome::File::OrderedPosition->new($validation_file, 2);
 
     ## Load the filtered results ##
-    my $filtered_results = Genome::File::OrderedPosition->new($filtered_validation_file, 10_000) if($filtered_validation_file);
+    my $filtered_results = Genome::File::OrderedPosition->new($filtered_validation_file, 2) if($filtered_validation_file);
 
     ## Parse the variant file ##
     my $input = Genome::Sys->open_file_for_reading($variants_file);
