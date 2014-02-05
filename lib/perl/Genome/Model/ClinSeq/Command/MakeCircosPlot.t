@@ -7,13 +7,13 @@ use Test::More tests => 5;
 
 # this gets a canonical test build, and is set up to not really hit the db
 # we temporarily have it overridden to test against Obi's example
-my $base_dir= $ENV{"GENOME_TEST_INPUTS"} . "Genome-Model-ClinSeq-Command-MakeCircosPlot/2013-12-18";
+my $base_dir= $ENV{"GENOME_TEST_INPUTS"} . "Genome-Model-ClinSeq-Command-MakeCircosPlot/2014-2-5";
 my $expected_output_dir = "$base_dir/expected-output";
 ok(-e $expected_output_dir, "expected output dir exists: $expected_output_dir");
 
 #my $test_ids = Genome::Model::ClinSeq::TestData::load(base_dir => "$base_dir/input_dir");
 #my $test_build_id = $test_ids->{CLINSEQ_BUILD};
-#my $test_build_id = "aee9a31051754702a9c2835d63abc812"; ## temp override
+
 my $test_build_id = "c58e7e54c8104068910af728a796eb44";
 my $test_build = Genome::Model::Build->get($test_build_id);
 ok($test_build, "got test build $test_build_id");
@@ -36,8 +36,8 @@ ok($result, "execution succeeded");
 # verify results
 
 
-    my @differences = `diff $expected_output_dir $actual_output_dir`;
-    is(scalar(@differences), 39, "only expected differences found: diff $expected_output_dir $actual_output_dir")
+    my @differences = `diff -r $expected_output_dir $actual_output_dir`;
+    is(scalar(@differences), 37, "only expected differences found: diff $expected_output_dir $actual_output_dir")
         or do {
             #print "DIFF:\n", @differences;
             # un-comment these to keep the output for debugging 
