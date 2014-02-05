@@ -41,6 +41,4 @@ Genome::Utility::Test::compare_ok(
         },
     ],
 );
-Genome::Sys->shellcmd(cmd => "rm -rf /tmp/last-run-genome-model-export-metadata-op");
-Genome::Sys->copy_file($scrubbed_outfile, "/tmp/last-run-genome-model-export-metadata-op");
 done_testing(4);
