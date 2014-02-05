@@ -144,6 +144,7 @@ sub _all_reference_indices {
 
 sub _intermediate_result {
     my ($self, $params, $index, @input_files) = @_;
+    $self->status_message('Generating intermediate result(s)...');
 
     my $aligner_version = $self->aligner_version;
     if ($aligner_version =~ /^(.*)-i(.*)/) {
@@ -175,15 +176,19 @@ sub _intermediate_result {
     for my $idx (0..$#input_files) {
         my $path = $input_files[$idx];
         my ($input_pass) = $path =~ m/\.bam:(\d)$/;
-        print "INPUT FILE: $path, INPUT PASS: $input_pass\n" . Dumper(\@_);
         if (defined($input_pass)) {
             $path =~ s/\.bam:\d$/\.bam/;
         } else {
             $input_pass = $idx+1;
         }
 
+        $self->status_message('Input pass: '.$input_pass);
+        $self->status_message('Input file: '.$path);
+        $self->status_message('Params: '.Data::Dumper::Dumper(\%intermediate_params));
+
         $intermediate_params{input_file} = $path;
         $intermediate_params{input_pass} = $input_pass;
+
         my $parameters = join(', ', map($_ . ' => "' . (defined($intermediate_params{$_}) ? $intermediate_params{$_} : '') . '"', sort keys %intermediate_params));
 
         if(UR::DBI->no_commit()) {
@@ -201,13 +206,14 @@ sub _intermediate_result {
             }
         }
 
-        my $intermediate_result = Genome::InstrumentData::IntermediateAlignmentResult::Bwa->get_with_lock(%intermediate_params);
+        my $intermediate_result = Genome::InstrumentData::IntermediateAlignmentResult::Bwa->get_with_lock(
+            %intermediate_params
+        );
         unless ($intermediate_result) {
-            confess "Failed to generate IntermediateAlignmentResult for $path, params were: " . Dumper(\%intermediate_params);
+            Carp::confess( $self->error_message("Failed to generate intemdiate result!") );
         }
+        $self->status_message('Intermediate result:  '.$intermediate_result->__display_name__);
         $intermediate_result->add_user(user => $self, label => 'intermediate result');
-
-        $self->debug_message(sprintf("Got/created an intermediate alignment result %s with file path %s", $intermediate_result->id, $intermediate_result->sai_file));
         push(@results, $intermediate_result);
     }
 
@@ -217,6 +223,7 @@ sub _intermediate_result {
         confess sprintf("The following intermediate alignment result(s) have nonexistent or zero-length SAI files -- cannot proceed: %s", $str_bad_ids);
     }
 
+    $self->status_message('Generating intermediate result(s)...done');
     return @results;
 }
 
