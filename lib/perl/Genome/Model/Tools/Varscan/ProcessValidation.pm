@@ -63,7 +63,7 @@ class Genome::Model::Tools::Varscan::ProcessValidation {
 
 sub sub_command_sort_position { 12 }
 
-sub help_brief {                            # keep this to just a few words <---
+sub help_brief {
     "Processes and reports on validation status of a list of variants"
 }
 
@@ -74,19 +74,13 @@ EXAMPLE:    gmt capture process-validation ...
 EOS
 }
 
-sub help_detail {                           # this is what the user will see with the longer version of help. <---
+sub help_detail {
     return <<EOS
 
 EOS
 }
 
-
-################################################################################################
-# Execute - the main program logic
-#
-################################################################################################
-
-sub execute {                               # replace with real execution logic.
+sub execute {
     my $self = shift;
 
     ## Get required parameters ##
