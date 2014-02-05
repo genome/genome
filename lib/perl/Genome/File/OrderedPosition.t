@@ -14,7 +14,7 @@ my $pkg = 'Genome::File::OrderedPosition';
 
 use_ok($pkg);
 
-my $TEST_VERSION = 1;
+my $TEST_VERSION = 2;
 
 # my $data_dir_t = Genome::Utility::Test->data_dir_ok($pkg, $TEST_VERSION);
 my $data_dir = File::Spec->join("/gsc/var/cache/testsuite/data/Genome-File-OrderedPosition", $TEST_VERSION);
@@ -80,7 +80,7 @@ subtest "sorted file with header" => sub {
 
 subtest "unsorted file with header" => sub {
     my $unsorted_file = $pkg->new(File::Spec->join($data_dir, "varscan.snp.unsorted"), 10_000 );
-    compare_ok($unsorted_file->{sorted_filename}, File::Spec->join($data_dir, "varscan.snp"), "Sorting works correctly");
+    compare_ok($unsorted_file->{sorted_filename}, File::Spec->join($data_dir, "varscan.snp.without_header"), "Sorting works correctly");
 };
 
 done_testing();

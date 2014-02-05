@@ -7,25 +7,29 @@ use Params::Validate qw/validate_pos :types/;
 use IPC::Run qw/run/;
 
 use strict;
-use warnings;
+use warnings FATAL => "all";
+
+my $HEADER_REGEX = "^chrom\tposition";
 
 sub new {
-    my ($class, $filename, $memory) = @_;
-    my $temp_file = Genome::Sys->create_temp_file_path();
-    run(["sort", "-k1,1", "-k2,2", "-n", "-S$memory", $filename,], ">", "$temp_file");
-    my $fh = Genome::Sys->open_file_for_reading($temp_file);
-    return $class->fhopen($fh, $filename, $temp_file);
-}
+    my ($class, $filename, $memory_gb) = @_;
 
-sub fhopen {
-    my ($class, $fh, $filename, $sorted_filename) = @_;
+    my $header = _read_header($filename);
 
-    my $name |= "Unknown input stream (possibly stdin)";
+    my $sorted_filename = Genome::Sys->create_temp_file_path();
+    my $sort_memory_gb = $memory_gb / 2;
+    run(
+        ["grep", "-v", $HEADER_REGEX, $filename], "|",
+        ["sort", "-k2,2", "-n", "-S$sort_memory_gb" . "G"], "|",
+        ["sort", "-k1,1", "-n", "-s", "-S$sort_memory_gb" . "G"],
+        ">", "$sorted_filename"
+    );
+    my $fh = Genome::Sys->open_file_for_reading($sorted_filename);
 
     my $self = {
         _filehandle => $fh,
         _last_line => undef,
-        header => undef,
+        header => $header,
         line_number => 0,
         _last_chromosome => undef,
         _last_start_position => undef,
@@ -35,22 +39,23 @@ sub fhopen {
 
     bless $self, $class;
 
-    $self->_read_header;
+    $self->getline();
 
     return $self;
 }
 
 sub _read_header {
-    my $self = shift;
+    my $filename = shift;
 
-    my $line = $self->{_filehandle}->getline;
+    my $fh = Genome::Sys->open_file_for_reading($filename);
+    my $line = $fh->getline;
+    $fh->close;
 
-    if($line =~ m/^chrom\tposition/) {
-        $self->{header} = $line;
-        $self->getline();
+    if($line =~ m/$HEADER_REGEX/) {
+        return $line;
     }
     else {
-        $self->_parse_line($line);
+        return;
     }
 }
 
