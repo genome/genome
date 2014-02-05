@@ -107,13 +107,12 @@ sub execute {
     my $filtered_results = Genome::File::OrderedPosition->new($filtered_validation_file, 2) if($filtered_validation_file);
 
     ## Parse the variant file ##
-    my $input = Genome::Sys->open_file_for_reading($variants_file);
+    my $input = Genome::File::OrderedPosition->new($variants_file, 2);
+    # my $input = Genome::Sys->open_file_for_reading($variants_file);
     my $lineCounter = 0;
 
-    while (<$input>) {
-        chomp;
-        my $line = $_;
-        next unless $line; #skip blank lines
+    while (my $line = $input->getline) {
+        chomp $line;
         $lineCounter++;
 
         my ($chrom, $chr_start, $chr_stop, $ref, $var) = split(/\t/, $line);
@@ -195,7 +194,7 @@ sub execute {
         }
     }
 
-    close($input);
+    $input->close;
 
     close($somatic_fh);
     close($germline_fh);
