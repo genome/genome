@@ -507,7 +507,6 @@ sub create {
     my @iar_users = Genome::SoftwareResult::User->get(user => $self, label => 'intermediate result');
     for my $iar_user ( @iar_users ) {
         my $iar = $iar_user->software_result;
-        print Data::Dumper::Dumper($iar);
         $iar_user->delete;
         $iar->delete;
     }
