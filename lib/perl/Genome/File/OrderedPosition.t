@@ -17,7 +17,7 @@ use_ok($pkg);
 my $TEST_VERSION = 2;
 
 # my $data_dir_t = Genome::Utility::Test->data_dir_ok($pkg, $TEST_VERSION);
-my $data_dir = File::Spec->join("/gsc/var/cache/testsuite/data/Genome-File-OrderedPosition", $TEST_VERSION);
+my $data_dir = File::Spec->join($ENV{GENOME_TEST_INPUTS}, "Genome-File-OrderedPosition", $TEST_VERSION);
 
 subtest "sorted file without header" => sub {
     my $file = $pkg->new(File::Spec->join($data_dir, "varscan.snp.Somatic.strandfilter"), 10_000 );
@@ -33,7 +33,7 @@ subtest "sorted file without header" => sub {
         "First line as expected"
     );
 
-    my $line = $file->getline_for_position(1, 177);
+    $line = $file->getline_for_position(1, 177);
     ok(defined($line), "We found the same line again");
 
     $line = $file->getline();
@@ -55,7 +55,7 @@ subtest "sorted file without header" => sub {
     );
 
     $line = $file->getline_for_position(1, 177);
-    ok(!defined($line), "Line not found (past position)");
+    ok(!defined($line), "Line not found (previous position)");
 
     $line = $file->getline_for_position(1, 444);
     ok(!defined($line), "Line not found (position non-existent)");
