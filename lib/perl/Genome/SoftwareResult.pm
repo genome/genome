@@ -198,7 +198,7 @@ sub get_with_lock {
     }
 
     if (@objects > 1) {
-        $class->error_message("Multiple results returned for SoftwareResult::get_with_lock.  To avoid this, call get_with_lock with enough parameters to uniquely identify a SoftwareResult.");
+        $class->error_message("Multiple results returned for SoftwareResult ${class}::get_with_lock.  To avoid this, call get_with_lock with enough parameters to uniquely identify a SoftwareResult.");
         $class->error_message("Parameters used for the get: " . Data::Dumper::Dumper %is_input . Data::Dumper::Dumper %is_param);
         $class->error_message("Objects gotten: " . Data::Dumper::Dumper @objects);
         $class->_release_lock_or_die($lock, "Failed to unlock during get_with_lock with multiple results.") if $lock;
