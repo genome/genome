@@ -136,6 +136,10 @@ sub _run_aligner {
             $min_insert_size = 28;
         }
 
+        if($min_insert_size < 0){
+            $min_insert_size = 1;
+        }
+
     } else {
         die $self->error_message("_run_aligner called with " . scalar @input_pathnames . " files.  It should only get 1 or 2!");
     }
