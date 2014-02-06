@@ -11,37 +11,24 @@ use warnings;
 use above 'Genome';
 
 use Test::More;
+use File::Compare;
 
 if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
-}
-else {
-    plan tests => 23;
 }
 
 use_ok('Genome::Model::Tools::DetectVariants2::Filter::FalsePositive');
 
 my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-Filter-FalsePositive';
 # v2 adjustment included input/output bed files as a base instead of varscan lines
-my $expected_dir = join('/', $test_data_dir, 'expected.v3');
+my $expected_dir = join('/', $test_data_dir, 'expected.v4');
 
 my $bam_file = join('/', $test_data_dir, 'tumor.tiny.bam');
 my $detector_directory = join('/', $test_data_dir, 'varscan-somatic-2.2.4-.v2');
 my $detector_vcf_directory = join('/', $test_data_dir, 'detector_vcf_result');
 my $input_directory = join('/', $test_data_dir, "input");
 
-my $expected_hq_file = join('/', $expected_dir, 'snvs.hq');
-my $expected_lq_file = join('/', $expected_dir, 'snvs.lq');
-my $expected_readcount_file = join('/', $expected_dir, 'readcounts');
-ok(-s $expected_hq_file, "expected hq file output $expected_hq_file exists");
-ok(-s $expected_lq_file, "expected lq file output $expected_lq_file exists");
-ok(-s $expected_readcount_file, "expected readcount file output $expected_readcount_file exists");
-
-my $output_base = File::Temp::tempdir('DetectVariants2-Filter-FalsePositiveXXXXX', CLEANUP => 1, TMPDIR => 1);
-my $output_dir = $output_base . '/filter';
-my $hq_output = join('/', $output_dir, 'snvs.hq');
-my $lq_output = join('/', $output_dir, 'snvs.lq');
-my $readcount_file = join('/', $output_dir, 'readcounts');
+my $test_output_dir = Genome::Sys->create_temp_directory;
 
 my $vcf_version = Genome::Model::Tools::Vcf->get_vcf_version;
 
@@ -58,14 +45,6 @@ my $detector_result = Genome::Model::Tools::DetectVariants2::Result->__define__(
 );
 $detector_result->lookup_hash($detector_result->calculate_lookup_hash());
 
-my $result_allocation = Genome::Disk::Allocation->create(
-    disk_group_name => $ENV{GENOME_DISK_GROUP_MODELS},
-    kilobytes_requested => 1,
-    allocation_path => 'this_is_a_test',
-    owner_id => $detector_result->id,
-    owner_class_name => $detector_result->class,
-);
-
 my $detector_vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Detector->__define__(
     input => $detector_result,
     output_dir => $detector_vcf_directory,
@@ -73,110 +52,62 @@ my $detector_vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::De
     control_aligned_reads_sample => "TEST-normal",
     vcf_version => $vcf_version,
 );
-$detector_vcf_result->lookup_hash($detector_vcf_result->calculate_lookup_hash());
 
+$detector_vcf_result->lookup_hash($detector_vcf_result->calculate_lookup_hash());
 $detector_result->add_user(user => $detector_vcf_result, label => 'uses');
 
-my $filter_command = Genome::Model::Tools::DetectVariants2::Filter::FalsePositive->create(
-    previous_result_id => $detector_result->id,
-    output_directory => $output_dir,
-    min_strandedness => 0.01,
-    min_var_freq => 0.05,
-    min_var_count => 4,
-    min_read_pos => 0.10,
-    max_mm_qualsum_diff => 50,
-    max_var_mm_qualsum => 0,
-    max_mapqual_diff => 30,
-    max_readlen_diff => 25,
-    min_var_dist_3 => 0.20,
-    min_homopolymer => 5,
-    bam_readcount_version => 0.3,
-    bam_readcount_min_base_quality => 15, 
-);
-$filter_command->dump_status_messages(1);
-isa_ok($filter_command, 'Genome::Model::Tools::DetectVariants2::Filter::FalsePositive', 'created filter command');
-ok($filter_command->execute(), 'executed filter command');
+my $param_str = '--bam-readcount-version 0.3';
+run_test('default_params', $param_str);
 
-ok(-s $hq_output, "hq output exists and has size"); 
-ok(-s $lq_output, "lq output exists and has size"); 
+$param_str .= ' --max-mm-qualsum-diff 100 --min-var-count 3';
+run_test('non_default_params', $param_str);
 
-my $output_diff = Genome::Sys->diff_file_vs_file($expected_hq_file, $hq_output);
-ok(!$output_diff, 'output file matches expected result')
-    or diag("diff:\n" . $output_diff);
+done_testing();
 
-my $filtered_diff = Genome::Sys->diff_file_vs_file($expected_lq_file, $lq_output);
-ok(!$filtered_diff, 'filtered file matches expected result')
-    or diag("diff:\n" . $filtered_diff);
 
-$output_base = File::Temp::tempdir('DetectVariants2-Filter-FalsePositiveXXXXX', CLEANUP => 1, TMPDIR => 1);
-$output_dir = $output_base . '/filter';
-$hq_output = join('/', $output_dir, 'snvs.hq');
-$lq_output = join('/', $output_dir, 'snvs.lq');
-$readcount_file = join('/', $output_dir, 'readcounts');
-my $filter_command2 = Genome::Model::Tools::DetectVariants2::Filter::FalsePositive->create(
-    previous_result_id => $detector_result->id,
-    output_directory => $output_dir,
-    min_strandedness => 0.01,
-    min_var_freq => 0.05,
-    min_var_count => 4,
-    min_read_pos => 0.10,
-    max_mm_qualsum_diff => 50,
-    max_var_mm_qualsum => 0,
-    max_mapqual_diff => 30,
-    max_readlen_diff => 25,
-    min_var_dist_3 => 0.20,
-    min_homopolymer => 5,
-    bam_readcount_version => 0.3,
-    bam_readcount_min_base_quality => 15, 
-);
-$filter_command2->dump_status_messages(1);
-isa_ok($filter_command2, 'Genome::Model::Tools::DetectVariants2::Filter::FalsePositive', 'created second filter command');
-ok($filter_command2->execute(), 'executed second filter command');
+sub run_test {
+    my ($type, $params) = @_;
+    my $output_dir = $test_output_dir."/$type";
+    my $expect_dir = $expected_dir."/$type";
 
-ok(-s $hq_output, "hq output exists and has size"); 
-ok(-s $lq_output, "lq output exists and has size"); 
+    my %params = (
+        previous_result_id => $detector_result->id,
+        output_directory   => $output_dir,
+        params => $params,
+    );
 
-my $output_diff2 = Genome::Sys->diff_file_vs_file($expected_hq_file, $hq_output);
-ok(!$output_diff2, 'output file matches expected result')
-    or diag("diff:\n" . $output_diff2);
+    my $filter_command = Genome::Model::Tools::DetectVariants2::Filter::FalsePositive->create(%params);
+    $filter_command->dump_status_messages(1);
+    isa_ok($filter_command, 'Genome::Model::Tools::DetectVariants2::Filter::FalsePositive', 'created filter command');
+    ok($filter_command->execute(), 'executed filter command');
 
-my $filtered_diff2 = Genome::Sys->diff_file_vs_file($expected_lq_file, $lq_output);
-ok(!$filtered_diff2, 'filtered file matches expected result')
-    or diag("diff:\n" . $filtered_diff2);
+    my %parameters = split /\s+/, $params;
 
-#for this test readcount file was supplied, so nothing to compare to.
-$output_base = File::Temp::tempdir('DetectVariants2-Filter-FalsePositiveXXXXX', CLEANUP => 1, TMPDIR => 1);
-$output_dir = $output_base . '/filter';
-$hq_output = join('/', $output_dir, 'snvs.hq');
-$lq_output = join('/', $output_dir, 'snvs.lq');
-$readcount_file = join('/', $output_dir, 'readcounts');
-my $filter_command3 = Genome::Model::Tools::DetectVariants2::Filter::FalsePositive->create(
-    previous_result_id => $detector_result->id,
-    output_directory => $output_dir,
-    min_strandedness => 0.01,
-    min_var_freq => 0.05,
-    min_var_count => 4,
-    min_read_pos => 0.10,
-    max_mm_qualsum_diff => 50,
-    max_var_mm_qualsum => 0,
-    max_mapqual_diff => 30,
-    max_readlen_diff => 25,
-    min_var_dist_3 => 0.20,
-    min_homopolymer => 5,
-    bam_readcount_version => 0.3,
-    bam_readcount_min_base_quality => 15, 
-);
-$filter_command3->dump_status_messages(1);
-isa_ok($filter_command3, 'Genome::Model::Tools::DetectVariants2::Filter::FalsePositive', 'created second filter command');
-ok($filter_command3->execute(), 'executed second filter command');
+    for my $parameter (keys %parameters) {
+        my $before_value = $parameters{$parameter};
+        $parameter =~ s/^\-\-//;
+        $parameter =~ s/\-/_/g;
+        my $after_value  = $filter_command->$parameter;
+        ok($before_value eq $after_value, "Parameter $parameter set correctly via params string");
+    }
 
-ok(-s $hq_output, "hq output exists and has size"); 
-ok(-s $lq_output, "lq output exists and has size"); 
+    my @files = qw(snvs.hq snvs.lq snvs.hq.bed snvs.lq.bed snvs.vcf.gz);
 
-my $output_diff3 = Genome::Sys->diff_file_vs_file($expected_hq_file, $hq_output);
-ok(!$output_diff3, 'output file matches expected result')
-    or diag("diff:\n" . $output_diff3);
+    for my $file_name (@files) {
+        my $test_output     = $output_dir."/".$file_name;
+        my $expected_output = $expect_dir."/".$file_name;
+        my $msg = "Output: $file_name generated as expected";
 
-my $filtered_diff3 = Genome::Sys->diff_file_vs_file($expected_lq_file, $lq_output);
-ok(!$filtered_diff3, 'filtered file matches expected result')
-    or diag("diff:\n" . $filtered_diff3);
+        if ($file_name =~ /vcf\.gz/) {
+            my $out_md5    = qx(zcat $test_output     | grep -vP '^##fileDate' | md5sum);
+            my $expect_md5 = qx(zcat $expected_output | grep -vP '^##fileDate' | md5sum);
+            ok($out_md5 eq $expect_md5, $msg);
+        }
+        else {
+            is(compare($test_output, $expected_output), 0, $msg);
+        }
+    }
+
+    return 1;
+}
+
