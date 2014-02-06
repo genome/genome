@@ -62,6 +62,12 @@ sub getline {
 
     my $line = $self->{_filehandle}->getline;
     if (defined($line)) {
+        if ($line =~ m/^\s$/) {
+            confess sprintf(
+                'Invalid line (%s) found at line number %s in sorted file %s (based on %s)',
+                $line, $self->{line_number} + 1, $self->{sorted_filename}, $self->{filename}
+            );
+        }
         return $self->_parse_line($line);
     }
     else {
