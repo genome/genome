@@ -79,13 +79,17 @@ sub _get_locus_from_fasta_header {
     my $self = shift;
     
     $self->input_fasta_file;
+    
     #get headers
+	my $output_fh = Genome::Sys->open_file_for_reading($self->raw_output_path) or die "Could not get file handle for " . $self->raw_output_path;
+    
+    my $fasta_header = $output_fh->getline;
+   	chomp $fasta_header;
     
     #check header format 
-    my ($locus, $contig, $start, $stop) = $fasta_header =~ /^\>\w*?\-?(\w+)\_(Contig.*)\s(\d+)\s(\d+)$/; 
+    my ($locus_id) = $fasta_header =~ /^\>\w*?\-?(\w+)_Contig/;
 
     #get locus id and ensure only one exists
-
     return $locus_id;
 }
 
@@ -95,28 +99,97 @@ sub _create_config_files {
     my $self = shift;
 
     my $locus_id = $self->_get_locus_from_fasta_header;
-
-    #replace with real code to produce config files in a config dir in our output directory
-    {
-        Genome/Model/Tools/Ber/AmgapPrepareBER.pm
-            
-            Manually running details:
-            > perl ~/git/xu_script/BER_config_from_txtfile.pl -locus TELCIRDFT Final_BER_Naming.05-15-13.fof
-                
-                This command creates 4 files
-                 TELCIRDFT_asm_feature
-                 TELCIRDFT_asmbl_data
-                 TELCIRDFT_ident2
-                 TELCIRDFT_stan
-                                    
-                                    run the command todos on the 4 files
-                                        > todos TELCIRDFT_*
-    }
     
+    open OUT1,">${locusid}_asm_feature" or die "cann't open the file:$!."; 
+	open OUT2,">${locusid}_asmbl_data" or die "cann't open the file:$!.";
+	open OUT3,">${locusid}_ident2" or die "cann't open the file:$!.";
+	open OUT4,">${locusid}_stan" or die "cann't open the file:$!.";
+	
+	print OUT1 "asmbl_id\tend3\tend5\tfeat_name\tfeat_type\n";
+	print OUT2 "id\tname\ttype\n";
+	print OUT3 "complete\tfeat_name\tlocus\n";
+	print OUT4 "asmbl_data_id\tasmbl_id\tiscurrent\n";
+	my $count=0;
+	my $asmblid=0;
+
+	while(<>)
+	{
+	  my @fea_part;
+	  my @fea_name;
+	  chomp;
+	  my @arr=split('\t',$_);
+	  if($arr[1]!~/^$locusid/)
+	  {
+	    @fea_part=split('-',$arr[1]);
+	    if($fea_part[1]=~/$locusid/)
+	    {
+	      @fea_name=split("_",$fea_part[1]);
+	    }
+	    elsif($fea_part[2]=~/$locusid/)
+	    {
+	      @fea_name=split("_",$fea_part[2]);
+	    }
+	    $fea_name[1]=~s/\D+//i;
+	    if($fea_name[1] != $asmblid)
+	    {
+	      $asmblid=$fea_name[1];
+	      $count++;
+	      print OUT2 $count,"\tContig\tcontig\n";
+	      print OUT4 $count,"\t",$count,"\t","1\n";
+	    }
+	  }
+	  else
+	  {
+	    @fea_part=split('\.',$arr[1]);
+	    @fea_name=split("_",$fea_part[0]);
+	    $fea_name[1]=~s/\D+//i;
+	    if($fea_name[1] !~ $asmblid)
+	    {
+	      $asmblid=$fea_name[1];
+	      $count++;
+	      print OUT2 $count,"\tContig\tcontig\n";
+	      print OUT4 $count,"\t",$count,"\t","1\n";
+	    }
+	  }  
+	
+	#  if($#fea_part==3){$locus=$fea_part[3];}
+	#  else{$locus=$fea_part[2];}
+	  $locus++;
+	  print OUT1 $count,"\t",$arr[3],"\t",$arr[2],"\t",$arr[1],"\tORF\n";
+	  print OUT3 " \t",$arr[1],"\t",$fea_name[0];
+	  printf OUT3 "%05d\n",$locus;
+	}	
+	
     return 1;
+
+#    replace with real code to produce config files in a config dir in our output directory
+#    {
+#        Genome/Model/Tools/Ber/AmgapPrepareBER.pm
+#            
+#            Manually running details:
+#            > perl ~/git/xu_script/BER_config_from_txtfile.pl -locus TELCIRDFT Final_BER_Naming.05-15-13.fof
+#                
+#                This command creates 4 files
+#                 TELCIRDFT_asm_feature
+#                 TELCIRDFT_asmbl_data
+#                 TELCIRDFT_ident2
+#                 TELCIRDFT_stan
+#                                    
+#                                    run the command todos on the 4 files
+#                                        > todos TELCIRDFT_*
+#    }
 }
 
 sub _setup_dirs {
+	
+	my $self = shift;
+
+    my $locus_id = $self->_get_locus_from_fasta_header;
+    
+    mkdir $locus_id;
+    chdir($locus_id) or die "$!";
+    
+    mkdir 
 
 Genome/Model/Tools/Ber/AmgapBerProtName.pm
 
