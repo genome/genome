@@ -16,6 +16,7 @@ use English;
 class Genome::Model::Tools::Predictor::Ber {
     is => 'Genome::Model::Tools::Predictor::Base',
     doc => 'execute BER gene predictor',
+    
 };
 
 sub help_brief
@@ -95,29 +96,43 @@ sub _get_locus_from_fasta_header {
 
 
 sub _create_config_files {
+	
+	#Change locusid => locus_id
 
     my $self = shift;
 
     my $locus_id = $self->_get_locus_from_fasta_header;
     
-    open OUT1,">${locusid}_asm_feature" or die "cann't open the file:$!."; 
+    my $locus=-1;
+    
+    my $OUT1 = Genome::Sys->open_file_for_writing($locus_id.'_asm_feature') or die "failed to open _asm_feature";
+	
+	#change later like OUT1
 	open OUT2,">${locusid}_asmbl_data" or die "cann't open the file:$!.";
 	open OUT3,">${locusid}_ident2" or die "cann't open the file:$!.";
 	open OUT4,">${locusid}_stan" or die "cann't open the file:$!.";
 	
-	print OUT1 "asmbl_id\tend3\tend5\tfeat_name\tfeat_type\n";
+	
+	
+	$OUT1->print("asmbl_id\tend3\tend5\tfeat_name\tfeat_type\n");
+	
+	#change later like OUT1
 	print OUT2 "id\tname\ttype\n";
 	print OUT3 "complete\tfeat_name\tlocus\n";
 	print OUT4 "asmbl_data_id\tasmbl_id\tiscurrent\n";
+	
+	
 	my $count=0;
 	my $asmblid=0;
 
-	while(<>)
-	{
+	my $file = 'FULLPATH Final_BER_Naming.05-15-13.fof';
+	my $fh = Genome::Sys->open_file_for_reading($file) or die "failed to open $file";
+	
+	while (my $line = $fh->getline)  {
 	  my @fea_part;
 	  my @fea_name;
-	  chomp;
-	  my @arr=split('\t',$_);
+	  chomp $line;
+	  my @arr=split('\t',$line);
 	  if($arr[1]!~/^$locusid/)
 	  {
 	    @fea_part=split('-',$arr[1]);
@@ -134,6 +149,8 @@ sub _create_config_files {
 	    {
 	      $asmblid=$fea_name[1];
 	      $count++;
+	      
+	      #change later like OUT1
 	      print OUT2 $count,"\tContig\tcontig\n";
 	      print OUT4 $count,"\t",$count,"\t","1\n";
 	    }
@@ -147,6 +164,8 @@ sub _create_config_files {
 	    {
 	      $asmblid=$fea_name[1];
 	      $count++;
+	      
+	      #change later like OUT1
 	      print OUT2 $count,"\tContig\tcontig\n";
 	      print OUT4 $count,"\t",$count,"\t","1\n";
 	    }
@@ -155,6 +174,8 @@ sub _create_config_files {
 	#  if($#fea_part==3){$locus=$fea_part[3];}
 	#  else{$locus=$fea_part[2];}
 	  $locus++;
+	  
+	  #change later like OUT1
 	  print OUT1 $count,"\t",$arr[3],"\t",$arr[2],"\t",$arr[1],"\tORF\n";
 	  print OUT3 " \t",$arr[1],"\t",$fea_name[0];
 	  printf OUT3 "%05d\n",$locus;
@@ -189,33 +210,48 @@ sub _setup_dirs {
     mkdir $locus_id;
     chdir($locus_id) or die "$!";
     
-    mkdir 
+    mkdir fasta hmm ber
+     
+    ln -s /gscmnt/gc6125/info/annotation/worm_analysis/T_circumcincta/T_circumcincta.14.0.ec.cg.pg/Version_1.0/PAP/Version_1.0/BER/*pep .
+    
+    cd fasta
+	dbshatter ../*pep
+	
+	cd ../../../db/CSV
+	
+	cp /gscmnt/gc6125/info/annotation/worm_analysis/T_circumcincta/T_circumcincta.14.0.ec.cg.pg/Version_1.0/PAP/Version_1.0/BER/Version_1.0/($locus_id)_* .
 
-Genome/Model/Tools/Ber/AmgapBerProtName.pm
-
-Manually running details:
-location is (this is taken from the MGAP pipeline config file that’s made manually )
-/gscmnt/gc9002/info/annotation/BER/autoannotate_v2.5/data/genomes
-
-mkdir TELCIRDFT
-cd TELCIRDFT
-mkdir fasta hmm ber
-ln -s /gscmnt/gc6125/info/annotation/worm_analysis/T_circumcincta/T_circumcincta.14.0.ec.cg.pg/Version_1.0/PAP/Version_1.0/BER/*pep .
-
-cd fasta
-dbshatter ../*pep
-
-cd ../../../db/CSV
-
-cp /gscmnt/gc6125/info/annotation/worm_analysis/T_circumcincta/T_circumcincta.14.0.ec.cg.pg/Version_1.0/PAP/Version_1.0/BER/Version_1.0/TELCIRDFT_* .
-
-cd /gscmnt/gc9002/info/annotation/BER/autoannotate_v2.5/data/genomes/TELCIRDFT/fasta
+	cd /gscmnt/gc9002/info/annotation/BER/autoannotate_v2.5/data/genomes/($locus_id)/fasta
+	
+	
+	#Genome/Model/Tools/Ber/AmgapBerProtName.pm
+	#
+	#Manually running details:
+	#location is (this is taken from the MGAP pipeline config file that’s made manually )
+	#/gscmnt/gc9002/info/annotation/BER/autoannotate_v2.5/data/genomes
+	#
+	#mkdir TELCIRDFT
+	#cd TELCIRDFT
+	#mkdir fasta hmm ber
+	#ln -s /gscmnt/gc6125/info/annotation/worm_analysis/T_circumcincta/T_circumcincta.14.0.ec.cg.pg/Version_1.0/PAP/Version_1.0/BER/*pep .
+	#
+	#cd fasta
+	#dbshatter ../*pep
+	#
+	#cd ../../../db/CSV
+	#
+	#cp /gscmnt/gc6125/info/annotation/worm_analysis/T_circumcincta/T_circumcincta.14.0.ec.cg.pg/Version_1.0/PAP/Version_1.0/BER/Version_1.0/TELCIRDFT_* .
+	#
+	#cd /gscmnt/gc9002/info/annotation/BER/autoannotate_v2.5/data/genomes/TELCIRDFT/fasta
 
 }
 
 sub _prep_input_files {
 
 3. Prep input files for BER
+
+	my $cmd = Genome::Model::Tools::Ber::N|Berxxxxx->create();
+  	my $rv = $cmd->execute;
 
    i) Running blastp & hmmpfam
        Genome/Model/Tools/Ber/BerRunBlastphmmpfam.pm
