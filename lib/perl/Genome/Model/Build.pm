@@ -1281,63 +1281,24 @@ sub _launch {
     local $ENV{UR_COMMAND_DUMP_DEBUG_MESSAGES} = 1;
     local $ENV{UR_DUMP_STATUS_MESSAGES} = 1;
     local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
-
     local $ENV{GENOME_BUILD_ID} = $self->id;
 
     # right now it is "inline" or the name of an LSF queue.
     # ultimately, it will be the specification for parallelization
     # including whether the server is inline, forked, or bsubbed, and the
     # jobs are inline, forked or bsubbed from the server
-    my $server_dispatch;
-    my $job_dispatch;
     my $model = $self->model;
 
-    # resolve server_dispatch
-    if (exists($params{server_dispatch})) {
-        $server_dispatch = delete $params{server_dispatch};
-    } elsif ($model->processing_profile->can('server_dispatch') && defined $model->processing_profile->server_dispatch) {
-        $server_dispatch = $model->processing_profile->server_dispatch;
-    } elsif ($model->can('server_dispatch') && defined $model->server_dispatch) {
-        $server_dispatch = $model->server_dispatch;
-    } else {
-        $server_dispatch = $ENV{GENOME_LSF_QUEUE_BUILD_WORKFLOW};
-    }
-
-    # resolve job_dispatch
-    if (exists($params{job_dispatch})) {
-        $job_dispatch = delete $params{job_dispatch};
-    } elsif ($model->processing_profile->can('job_dispatch') && defined $model->processing_profile->job_dispatch) {
-        $job_dispatch = $model->processing_profile->job_dispatch;
-    } else {
-        $job_dispatch = $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
-    }
-
-    my $job_group_spec;
-    if (exists $params{job_group}) {
-        my $job_group = delete $params{job_group};
-        if ($job_group) {
-            $job_group_spec = " -g $job_group";
-        }
-        else {
-            $job_group_spec = "";
-        }
-    }
-    else {
-        my $user = getpwuid($<);
-        $job_group_spec = ' -g /apipe-build/' . $user;
-    }
+    my $server_dispatch = _server_dispatch($model, \%params);
+    my $job_dispatch = _job_dispatch($model, \%params);
+    my $job_group_spec = _job_group_spec(\%params);
 
     # all params should have been deleted (as they were handled)
     die "Bad params!  Expected server_dispatch and job_dispatch!" . Data::Dumper::Dumper(\%params) if %params;
 
     my $build_event = $self->the_master_event;
 
-    # TODO: send the workflow to the dispatcher instead of having LSF logic here.
     if ($server_dispatch eq 'inline') {
-        # TODO: redirect STDOUT/STDERR to these files
-        #$build_event->output_log_file,
-        #$build_event->error_log_file,
-
         my %args = (
             model_id => $self->model_id,
             build_id => $self->id,
@@ -1380,6 +1341,49 @@ sub _launch {
     }
 }
 
+sub _job_dispatch {
+    my $model = shift;
+    my $params = shift;
+    my $job_dispatch;
+    if (exists($params->{job_dispatch})) {
+        $job_dispatch = delete $params->{job_dispatch};
+    } elsif ($model->processing_profile->can('job_dispatch') && defined $model->processing_profile->job_dispatch) {
+        $job_dispatch = $model->processing_profile->job_dispatch;
+    } else {
+        $job_dispatch = $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
+    }
+    return $job_dispatch;
+}
+
+sub _server_dispatch {
+    my $model = shift;
+    my $params = shift;
+    my $server_dispatch;
+    if (exists($params->{server_dispatch})) {
+        $server_dispatch = delete $params->{server_dispatch};
+    } elsif ($model->processing_profile->can('server_dispatch') && defined $model->processing_profile->server_dispatch) {
+        $server_dispatch = $model->processing_profile->server_dispatch;
+    } elsif ($model->can('server_dispatch') && defined $model->server_dispatch) {
+        $server_dispatch = $model->server_dispatch;
+    } else {
+        $server_dispatch = $ENV{GENOME_LSF_QUEUE_BUILD_WORKFLOW};
+    }
+    return $server_dispatch;
+}
+
+sub _default_job_group {
+    my $user = getpwuid($<);
+    return '/apipe-build/' . $user;
+}
+
+sub _job_group_spec {
+    my $params = shift;
+    my $job_group = _default_job_group();
+    if (exists $params->{job_group}) {
+        $job_group = delete $params->{job_group};
+    }
+    return ($job_group ? " -g $job_group" : '');
+}
 
 sub _initialize_workflow {
     #     Create the data and log directories and resolve the workflow for this build.
