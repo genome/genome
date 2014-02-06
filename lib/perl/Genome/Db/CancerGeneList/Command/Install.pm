@@ -16,7 +16,7 @@ class Genome::Db::CancerGeneList::Command::Install {
 
 sub help_synopsis {
     return <<EOS
-genome db cancer-gene-list install --species=human --branch=1
+genome db cancer-gene-list install --species=human --branch=human-1
 EOS
 }
 
