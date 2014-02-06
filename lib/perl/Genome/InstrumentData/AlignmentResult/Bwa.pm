@@ -8,7 +8,7 @@ use Carp qw/confess/;
 use Genome;
 
 class Genome::InstrumentData::AlignmentResult::Bwa {
-    is => 'Genome::InstrumentData::AlignmentResult',
+    is => 'Genome::InstrumentData::AlignmentResult::WithIntermediateResults',
     has_constant => [
         aligner_name => { value => 'bwa', is_param=>1 },
     ],
@@ -188,33 +188,10 @@ sub _intermediate_result {
         $intermediate_params{input_file} = $path;
         $intermediate_params{input_pass} = $input_pass;
 
-        my $parameters = join(', ', map($_ . ' => "' . (defined($intermediate_params{$_}) ? $intermediate_params{$_} : '') . '"', sort keys %intermediate_params));
-
-        my $class = 'Genome::InstrumentData::IntermediateAlignmentResult::Bwa';
-        if(UR::DBI->no_commit()) {
-            my $rv = eval "$class->get_or_create($parameters);";
-            if(!$rv or $@) {
-                my $err = $@;
-                die('Failed to generate intermediate result!' . ($err? $err : ' command returned false') );
-            }
-        } else {
-            my $cmd = qq{$^X $includes -e 'use above "Genome"; $class->get_or_create($parameters); UR::Context->commit;' };
-            my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd) };
-            if(!$rv or $@) {
-                my $err = $@;
-                die('Failed to generate intermediate result!' . ($err? $err : ' command returned false') );
-            }
-        }
-
-        my $intermediate_result = Genome::InstrumentData::IntermediateAlignmentResult::Bwa->get_with_lock(
-            %intermediate_params
-        );
-        unless ($intermediate_result) {
-            Carp::confess( $self->error_message("Failed to generate intemdiate result!") );
-        }
+        my $intermediate_result = $self->get_or_create_intermediate_result_for_params(\%intermediate_params);
+        return if not $intermediate_result;
         $self->status_message('Intermediate result:  '.$intermediate_result->__display_name__);
-        $intermediate_result->add_user(user => $self, label => 'intermediate result');
-        push(@results, $intermediate_result);
+        push @results, $intermediate_result;
     }
 
     my @bad_results = grep {!-e $_->sai_file || !-s $_->sai_file} @results;

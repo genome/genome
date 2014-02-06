@@ -17,17 +17,39 @@ my $bam_path = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-AlignmentResul
 use_ok('Genome::InstrumentData::AlignmentResult');
 # Test Intermediate AR Class
 class Genome::InstrumentData::IntermediateAlignmentResult::Tester {
-    is=>['Genome::InstrumentData::IntermediateAlignmentResult'],
+    is => ['Genome::InstrumentData::IntermediateAlignmentResult'],
 };
+sub Genome::InstrumentData::IntermediateAlignmentResult::Tester::_run_aligner {
+    my $self = shift;
+    # Copy bam
+    my $copy_ok = Genome::Sys->copy_file($bam_path, $self->temp_staging_directory.'/all_sequences.bam');
+    ok($copy_ok, 'copied bam');
+    return 1;
+}
+# overload these in base IAR to return ours
+our $IAR = Genome::InstrumentData::IntermediateAlignmentResult::Tester->__define__;
+sub Genome::InstrumentData::IntermediateAlignmentResult::create { return $IAR; }
+sub Genome::InstrumentData::IntermediateAlignmentResult::get_or_create { return $IAR; }
+sub Genome::InstrumentData::IntermediateAlignmentResult::get_with_lock { return $IAR; }
+
 # Test AR Class
 class Genome::InstrumentData::AlignmentResult::Tester {
-    is => 'Genome::InstrumentData::AlignmentResult',
+    is => 'Genome::InstrumentData::AlignmentResult::WithIntermediateResults',
 };
-my $iar_id;
 sub Genome::InstrumentData::AlignmentResult::Tester::_run_aligner { 
     my $self = shift;
 
-    # 'Align' [copy] bam for down stream ops
+    # Test get_or_create_intermediate_result_for_params
+    ok(!eval{$self->get_or_create_intermediate_result_for_params();}, 'failed to get or create iar w/o params');
+    ok(!eval{$self->get_or_create_intermediate_result_for_params({});}, 'failed to get or create iar w/o params');
+    ok(!eval{$self->get_or_create_intermediate_result_for_params('params');}, 'failed to get or create iar w/ invalid params');
+    my $iar = $self->get_or_create_intermediate_result_for_params({
+            aligner_name => 'tester',
+        });
+    $IAR = $iar;
+    is($iar, $IAR, 'get or create iar');
+
+    # Copy bam
     my $copy_ok = Genome::Sys->copy_file($bam_path, $self->temp_staging_directory.'/all_sequences.bam');
     ok($copy_ok, 'copied bam');
 
@@ -47,7 +69,7 @@ ok($reference_build, "got reference build");
 
 my $alignment_result = Genome::InstrumentData::AlignmentResult::Tester->create(
     id => -1337,
-    instrument_data_id => $inst_data->id,
+    instrument_data => $inst_data,
     reference_build => $reference_build,
     aligner_name => 'tester',
     aligner_version => '1',
@@ -56,13 +78,9 @@ my $alignment_result = Genome::InstrumentData::AlignmentResult::Tester->create(
 ok($alignment_result, 'defined alignment result');
 isa_ok($alignment_result, 'Genome::InstrumentData::AlignmentResult::Tester');
 
-#  define qc result
-my $qc_result = Genome::InstrumentData::AlignmentResult::Merged::BamQc->__define__(alignment_result_id => $alignment_result->id);
-ok($qc_result, 'define qc result for alienment result');
-ok($alignment_result->add_user(user => $qc_result, label => 'uses'), 'add qc result as user of alignment result');
-
-# delete
-ok($alignment_result->delete, 'delete');
-ok(ref($qc_result) eq 'UR::DeletedRef', 'deleted qc result');
+# Check that the iar is deleted
+my @users = Genome::SoftwareResult::User->get(user => $alignment_result, label => 'intermediate result');
+ok(!@users, 'alignment result is not using any intermediate results');
+isa_ok($IAR, 'UR::DeletedRef', 'intermediate result deleted');
 
 done_testing();

@@ -81,7 +81,7 @@ class Genome::InstrumentData::AlignmentResult {
     ],
     has_param => [
         aligner_name            => {
-                                    is => 'Text', default_value => 'maq',
+                                    is => 'Text',
                                     doc => 'the name of the aligner to use, maq, blat, newbler etc.',
                                 },
         aligner_version         => {
@@ -501,14 +501,6 @@ sub create {
             $self->warning_message("Failed to reallocate my disk allocation: " . $self->_disk_allocation->id);
         }
         $self->output_dir($self->_disk_allocation->absolute_path); #update if was moved
-    }
-
-    # STEP 15: Remove the intermediate alignment results [ira]
-    my @iar_users = Genome::SoftwareResult::User->get(user => $self, label => 'intermediate result');
-    for my $iar_user ( @iar_users ) {
-        my $iar = $iar_user->software_result;
-        $iar_user->delete;
-        $iar->delete;
     }
 
     $self->status_message("Alignment complete.");
