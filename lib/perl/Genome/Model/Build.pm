@@ -1273,66 +1273,6 @@ sub _get_job {
     return shift @jobs;
 }
 
-# TODO Can this be removed now that the restart command is gone?
-sub restart {
-    my $self = shift;
-    my %params = @_;
-
-    $self->status_message('Attempting to restart build: '.$self->id);
-
-    if (delete $params{job_dispatch}) {
-        cluck $self->error_message('job_dispatch cannot be changed on restart');
-    }
-
-    my $user = getpwuid($<);
-    if ($self->run_by ne $user) {
-        croak $self->error_message("Can't restart a build originally started by: " . $self->run_by);
-    }
-
-    my $xmlfile = $self->data_directory . '/build.xml';
-    if (!-e $xmlfile) {
-        croak $self->error_message("Can't find xml file for build (" . $self->id . "): " . $xmlfile);
-    }
-
-    # Check if the build is running
-    my $job = $self->_get_running_master_lsf_job;
-    if ($job) {
-        $self->error_message("Build is currently running. Stop it first, then restart.");
-        return 0;
-    }
-
-    # Since the job is not running, check if there is server location file and rm it
-    my $loc_file = $self->data_directory . '/server_location.txt';
-    if ( -e $loc_file ) {
-        $self->status_message("Removing server location file for dead lsf job: $loc_file");
-        unlink $loc_file;
-    }
-
-    my $w = $self->newest_workflow_instance;
-    if ($w && !$params{fresh_workflow}) {
-        if ($w->is_done) {
-            croak $self->error_message("Workflow Instance is complete");
-        }
-    }
-
-    my $build_event = $self->build_event;
-    for my $unrestartable_status ('Abandoned', 'Unstartable') {
-        if($build_event->event_status eq $unrestartable_status) {
-            $self->error_message("Can't restart a build that was " . lc($unrestartable_status) . ".  Start a new build instead.");
-            return 0;
-        }
-    }
-
-    $build_event->event_status('Scheduled');
-    $build_event->date_completed(undef);
-
-    for my $e ($self->the_events(event_status => ['Running','Failed'])) {
-        $e->event_status('Scheduled');
-    }
-
-    return $self->_launch(%params);
-}
-
 sub _launch {
     my $self = shift;
     my %params = @_;
@@ -1371,8 +1311,6 @@ sub _launch {
     } else {
         $job_dispatch = $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
     }
-
-    my $fresh_workflow = delete $params{fresh_workflow};
 
     my $job_group_spec;
     if (exists $params{job_group}) {
@@ -1413,9 +1351,6 @@ sub _launch {
     }
     else {
         my $add_args = ($job_dispatch eq 'inline') ? ' --inline' : '';
-        if ($fresh_workflow) {
-            $add_args .= ' --restart';
-        }
 
         # bsub into the queue specified by the dispatch spec
         my $lsf_project = "build" . $self->id;

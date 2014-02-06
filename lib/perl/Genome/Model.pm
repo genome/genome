@@ -333,7 +333,7 @@ sub _resolve_workflow_for_build {
         $operation_type->lsf_resource($resource_requirements);
 
         my %opts = (
-            name => $build->id . ' all stages',
+            name => $build->workflow_name,
             input_properties => [ 'build_id' ],
             output_properties => [ 'result' ]
         );
