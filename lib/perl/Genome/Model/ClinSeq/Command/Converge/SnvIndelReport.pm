@@ -92,6 +92,22 @@ class Genome::Model::ClinSeq::Command::Converge::SnvIndelReport {
               is => 'Boolean',
               doc => 'Remove intermediate files from output if you are running in a pipeline',
         },
+        tmp_space => {
+              is => 'Boolean',
+              doc => 'Perform all file I/O in /tmp and copy results to outdir at the end',
+        },
+        _wgs_snv_variant_sources_file => {
+              is => 'FilesystemPath',
+        },
+        _exome_snv_variant_sources_file => {
+              is => 'FilesystemPath',
+        },
+        _wgs_indel_variant_sources_file => {
+              is => 'FilesystemPath',
+        },
+        _exome_indel_variant_sources_file => {
+              is => 'FilesystemPath',
+        },
     ],   
     doc => 'converge SNV and InDels from multiple clin-seq builds, annotate, bam-readcount, etc. and summarize into a single spreadsheet',
 };
@@ -163,8 +179,18 @@ sub __errors__ {
 sub execute {
   my $self = shift;
   my @builds = $self->builds;
+
+  #Add trailing '/' to outdir if needed
   unless ($self->outdir =~ /\/$/){
     my $outdir = $self->outdir . "/";
+    $self->outdir($outdir);
+  }
+
+  #If the user specified, perform all file I/O in /tmp and copy result over at the end
+  my $original_outdir = $self->outdir;
+  if ($self->tmp_space){
+    my $outdir = Genome::Sys->create_temp_directory;
+    $outdir .= "/" unless ($outdir =~ /\/$/);
     $self->outdir($outdir);
   }
 
@@ -253,6 +279,12 @@ sub execute {
   if ($self->clean){
     my $rm_cmd = "rm -fr $bed_dir";
     Genome::Sys->shellcmd(cmd => $rm_cmd);
+  }
+
+  #If the user specified, perform all file I/O in /tmp and copy result over at the end
+  if ($self->tmp_space){
+    my $cp_cmd = "cp -fr " . $self->outdir . "* $original_outdir";
+    Genome::Sys->shellcmd(cmd => $cp_cmd);
   }
 
   print "\n\n";
@@ -632,14 +664,22 @@ sub get_variant_caller_sources{
   }
 
   my @files;
-  foreach my $build (@builds){
-    my $common_name = $build->common_name;
-    my $data_dir = $build->data_directory;
-    my $base_path = $data_dir . "/" . $common_name . "/variant_source_callers";
-    my $exome_base_path = $base_path . "/exome/";
-    my $wgs_base_path = $base_path . "/wgs/";
-    my @files_list = ($exome_base_path."snv_sources.tsv", $wgs_base_path."snv_sources.tsv", $exome_base_path."indel_sources.tsv", $wgs_base_path."indel_sources.tsv");
-    push(@files, @files_list);
+  if ($self->_wgs_snv_variant_sources_file || $self->_exome_snv_variant_sources_file || $self->_wgs_indel_variant_sources_file || $self->_exome_indel_variant_sources_file){
+    die $self->error_message("Do not specify variant source caller files directly if you are processing multiple clin-seq builds") if (scalar(@builds) > 1);
+    push(@files, $self->_wgs_snv_variant_sources_file) if ($self->_wgs_snv_variant_sources_file);
+    push(@files, $self->_exome_snv_variant_sources_file) if ($self->_exome_snv_variant_sources_file);
+    push(@files, $self->_wgs_indel_variant_sources_file) if ($self->_wgs_indel_variant_sources_file);
+    push(@files, $self->_exome_indel_variant_sources_file) if ($self->_exome_indel_variant_sources_file);
+  }else{
+    foreach my $build (@builds){
+      my $common_name = $build->common_name;
+      my $data_dir = $build->data_directory;
+      my $base_path = $data_dir . "/" . $common_name . "/variant_source_callers";
+      my $exome_base_path = $base_path . "/exome/";
+      my $wgs_base_path = $base_path . "/wgs/";
+      my @files_list = ($exome_base_path."snv_sources.tsv", $wgs_base_path."snv_sources.tsv", $exome_base_path."indel_sources.tsv", $wgs_base_path."indel_sources.tsv");
+      push(@files, @files_list);
+    }
   }
 
   my %columns;
