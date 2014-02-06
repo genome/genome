@@ -1298,12 +1298,7 @@ sub _launch {
 
     my $build_event = $self->the_master_event;
 
-    # TODO: send the workflow to the dispatcher instead of having LSF logic here.
     if ($server_dispatch eq 'inline') {
-        # TODO: redirect STDOUT/STDERR to these files
-        #$build_event->output_log_file,
-        #$build_event->error_log_file,
-
         my %args = (
             model_id => $self->model_id,
             build_id => $self->id,
