@@ -95,31 +95,39 @@ sub _get_column_index {
 sub _get_annot_files {
     my $self = shift;
     my $annot_num = $self->annot_build;
-    my $base_dir  = '/gsc/scripts/share/BreakAnnot_file';
-    my $b36_dir   = "$base_dir/human_build36";
-    my $b37_dir   = "$base_dir/human_build37";
-    my $m37_dir   = "$base_dir/mouse_build37";
+    my $b36_dir = Genome::Sys->dbpath("tgi/misc-annotation/human","build36-20130113")."/BreakAnnot";
+    my $b37_dir = Genome::Sys->dbpath("tgi/misc-annotation/human","build37-20130113")."/BreakAnnot";
+    my $m37_dir = Genome::Sys->dbpath("tgi/misc-annotation/mouse","mm9-20130310")."/BreakAnnot";
 
-    my %annot_files = (
+    my %annot_files;
+    if ($annot_num eq '36'){
+      %annot_files = (
         36 => {
             ref_gene => $b36_dir . '/Human.Mar2006.RefSeqGenes.tab',
             seg_dup  => $b36_dir . '/Human.Mar2006.SegDups.tab',
             dbsnp    => $b36_dir . '/dbsnp130.indel.named.csv',
             dbvar    => $b36_dir . '/ncbi36_submitted.gff',
-            cancer_gene => $base_dir . '/Cancer_genes.csv',
-        },
+            cancer_gene => $b36_dir . '/Cancer_genes.csv',
+        }
+      );
+    }elsif($annot_num eq '37'){
+      %annot_files = (
         37 => {
             ref_gene => $b37_dir . '/Human.Feb2009.RefSeqGenes.tab',
             seg_dup  => $b37_dir . '/Human.Feb2009.SegDups.tab',
             dbsnp    => $b37_dir . '/dbsnp132.indel.named.csv',
             dbvar    => $b37_dir . '/GRCh37.remap.all.germline.ucsc.gff',
-            cancer_gene => $base_dir . '/Cancer_genes.csv',
-        },
+            cancer_gene => $b37_dir . '/Cancer_genes.csv',
+        }
+      );
+    }elsif($annot_num eq 'mouse_37'){
+      %annot_files = (  
         mouse_37 => {
             ref_gene    => $m37_dir . '/Mouse.July2007.RefSeqgene.tab',
             cancer_gene => $m37_dir . '/Mouse_Cancer_genes.csv',
-        },
-    );
+        }
+      );
+    }
 
     unless ($annot_files{$annot_num}) {
         die $self->error_message("human build number: $annot_num is not valid");
