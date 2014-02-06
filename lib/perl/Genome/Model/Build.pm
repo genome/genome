@@ -1281,7 +1281,6 @@ sub _launch {
     local $ENV{UR_COMMAND_DUMP_DEBUG_MESSAGES} = 1;
     local $ENV{UR_DUMP_STATUS_MESSAGES} = 1;
     local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
-
     local $ENV{GENOME_BUILD_ID} = $self->id;
 
     # right now it is "inline" or the name of an LSF queue.
@@ -1290,9 +1289,8 @@ sub _launch {
     # jobs are inline, forked or bsubbed from the server
     my $model = $self->model;
 
-    my $server_dispatch = $self->_server_dispatch(\%params);
-    my $job_dispatch = $self->_job_dispatch(\%params);
-
+    my $server_dispatch = _server_dispatch($model, \%params);
+    my $job_dispatch = _job_dispatch($model, \%params);
     my $job_group_spec = _job_group_spec(\%params);
 
     # all params should have been deleted (as they were handled)
@@ -1349,9 +1347,8 @@ sub _launch {
 }
 
 sub _job_dispatch {
-    my $self = shift;
+    my $model = shift;
     my $params = shift;
-    my $model = $self->model;
     my $job_dispatch;
     if (exists($params->{job_dispatch})) {
         $job_dispatch = delete $params->{job_dispatch};
@@ -1364,9 +1361,8 @@ sub _job_dispatch {
 }
 
 sub _server_dispatch {
-    my $self = shift;
+    my $model = shift;
     my $params = shift;
-    my $model = $self->model;
     my $server_dispatch;
     if (exists($params->{server_dispatch})) {
         $server_dispatch = delete $params->{server_dispatch};
