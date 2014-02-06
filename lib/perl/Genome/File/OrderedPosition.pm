@@ -39,8 +39,6 @@ sub new {
 
     bless $self, $class;
 
-    $self->getline();
-
     return $self;
 }
 
@@ -101,6 +99,10 @@ sub exactly_reached_position {
 
 sub reached_position {
     my ($self, $chr, $start) = @_;
+
+    unless (defined($self->{_last_chromosome})) {
+        return 0;
+    }
 
     if ($chr gt $self->{_last_chromosome}) {
         return 0;

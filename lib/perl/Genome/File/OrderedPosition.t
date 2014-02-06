@@ -22,9 +22,12 @@ my $data_dir = File::Spec->join($ENV{GENOME_TEST_INPUTS}, "Genome-File-OrderedPo
 subtest "sorted file without header" => sub {
     my $file = $pkg->new(File::Spec->join($data_dir, "varscan.snp.Somatic.strandfilter"), 10_000 );
     ok(!defined($file->{header}), "We didn't find a header");
-    is($file->{line_number}, 1, "We're on the first line");
 
-    my $line = $file->getline_for_position(1, 177);
+    my $line = $file->getline();
+    ok(defined($line), "We found the next line");
+    is($file->{line_number}, 1, "We found the first line");
+
+    $line = $file->getline_for_position(1, 177);
     ok(defined($line), "We found a line with position (1, 177)");
     is($file->{line_number}, 1, "We found the position (1, 177) on the first line");
     is(
