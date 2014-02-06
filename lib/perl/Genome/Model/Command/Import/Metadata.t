@@ -20,7 +20,7 @@ if ($ARGV[0] && $ARGV[0] eq 'REBUILD') {
     warn "regenerating $expected_log_path...";
 }
 
-my $result = Genome::Model::Command::Import::Metadata->execute(input_path => $input_path, log_path => $actual_log_path, verbose => 1);
+my $result = Genome::Model::Command::Import::Metadata->execute(input_path => $input_path, log_path => $actual_log_path, verbose => 1, skip_file_db_install => 1);
 ok($result, "ran");
 ok(-e $actual_log_path, "actual_log_path $actual_log_path exists");
 
@@ -36,8 +36,5 @@ Genome::Utility::Test::compare_ok(
         },
     ],
 );
-
-Genome::Sys->shellcmd(cmd => "rm -rf /tmp/last-run-genome-model-import-metadata-op");
-Genome::Sys->copy_file($actual_log_path, "/tmp/last-run-genome-model-import-metadata-op");
 
 done_testing(5);

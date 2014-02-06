@@ -41,6 +41,12 @@ class Genome::Model::Command::Import::Metadata {
             is_optional => 1,
             doc => 'verbose output',
         },
+        skip_file_db_install => {
+            is => 'Boolean',
+            default_value => 0,
+            is_optional => 1,
+            doc => 'do not install file based databases from github',
+        },
     ],
     doc => 'import serialized Genome Models, typically from another system instance'
 };
@@ -223,17 +229,23 @@ sub execute {
     #Import file based databases that we need but that are not inputs on models and therefore can not be resolved automatically
     $self->status_message("manually installing some file based databases from github");
 
-    #genome db ucsc install --species=human --branch=human-build37
-    eval { Genome::Db::Ucsc::Command::Install->execute(species => 'human', branch => 'human-build37'); };
-    die $self->error_message("errors installing ucsc db human-build37: $@") if $@;
-    
-    #genome db db-var install --species=human --branch=human-build37
-    eval { Genome::Db::DbVar::Command::Install->execute(species => 'human', branch => 'human-build37'); };
-    die $self->error_message("errors installing dbvar db human-build37: $@") if $@;
+    unless($self->skip_file_db_install){
+      #genome db ucsc install --species=human --branch=human-build37
+      eval { Genome::Db::Ucsc::Command::Install->execute(species => 'human', branch => 'human-build37'); };
+      die $self->error_message("errors installing ucsc db human-build37: $@") if $@;
+      
+      #genome db db-var install --species=human --branch=human-build37
+      eval { Genome::Db::DbVar::Command::Install->execute(species => 'human', branch => 'human-build37'); };
+      die $self->error_message("errors installing dbvar db human-build37: $@") if $@;
 
-    #genome db dbsnp install --species=human --branch=human-build37-132
-    eval { Genome::Db::Dbsnp::Command::Install->execute(species => 'human', branch => 'human-build37-132'); };
-    die $self->error_message("errors installing dbsnp db human-build37-132: $@") if $@;
+      #genome db dbsnp install --species=human --branch=human-build37-132
+      eval { Genome::Db::Dbsnp::Command::Install->execute(species => 'human', branch => 'human-build37-132'); };
+      die $self->error_message("errors installing dbsnp db human-build37-132: $@") if $@;
+
+      #genome db cancer-gene-list install --species=human --branch=human-1
+      eval { Genome::Db::CancerGeneList::Command::Install->execute(species => 'human', branch => 'human-1'); };
+      die $self->error_message("errors installing cancer-gene-list db human-1: $@") if $@;
+    }
 
     $self->status_message("import complete");
     return 1;
