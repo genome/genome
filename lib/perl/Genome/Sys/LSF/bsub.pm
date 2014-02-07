@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Exporter qw(import);
-use IPC::System::Simple qw(capture);
 use Params::Validate qw(:types);
 
 our @EXPORT = qw(bsub);
@@ -15,7 +14,7 @@ sub bsub {
 
     # lazy load so we don't break /gsc/bin/perl (until we have to)
     require IPC::System::Simple;
-    my @output = IPC::System::Simple::capture('bsub', @args);
+    my @output = _capture('bsub', @args);
 
     my $job_id = ($output[-1] =~ /^Job <(\d+)> is submitted to/)[0];
     unless ($job_id) {
@@ -121,9 +120,14 @@ sub _valid_lsf_queue {
 }
 
 sub _queues {
-    my @output = capture('bqueues', '-l');
+    my @output = _capture('bqueues', '-l');
     my @queues = map { (/^QUEUE:\s+(\S+)/)[0] } @output;
     return @queues;
+}
+
+sub _capture {
+    require IPC::System::Simple;
+    return IPC::System::Simple::capture(@_);
 }
 
 1;
