@@ -22,6 +22,7 @@ my $data_dir = File::Spec->join($ENV{GENOME_TEST_INPUTS}, "Genome-File-OrderedPo
 subtest "sorted file without header" => sub {
     my $file = $pkg->new(File::Spec->join($data_dir, "varscan.snp.Somatic.strandfilter"), 10_000 );
     ok(!defined($file->{header}), "We didn't find a header");
+    is($file->{line_number}, 0, "We didn't yet parse any lines");
 
     my $line = $file->getline();
     ok(defined($line), "We found the next line");
