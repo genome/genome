@@ -675,7 +675,7 @@ sub calculateMeanCnvDiff{
     my $bed_cmd_cnvs = "intersectBed -a $features_bed_file -b $cnvs_bed_file -wa -wb > $features_vs_cnv_windows_file";
     Genome::Sys->shellcmd(cmd => $bed_cmd_cnvs);
   }else{
-    Genome::Sys->shelcmd(cmd => "touch $features_vs_cnv_windows_file");
+    Genome::Sys->shellcmd(cmd => "touch $features_vs_cnv_windows_file");
   }
   my $feature_window_overlaps = $self->parseIntersectBed('-file'=>$features_vs_cnv_windows_file);
 
