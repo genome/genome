@@ -108,7 +108,6 @@ sub execute {
 
     ## Parse the variant file ##
     my $input = Genome::File::OrderedPosition->new($variants_file, 2);
-    # my $input = Genome::Sys->open_file_for_reading($variants_file);
     my $lineCounter = 0;
 
     while (my $line = $input->getline) {
