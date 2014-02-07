@@ -7493,8 +7493,6 @@ $Genome::Command::OPTS_SPEC = [
           undef,
           'inline!',
           undef,
-          'restart!',
-          undef,
           'name-pattern=s',
           'files',
           'help!',
