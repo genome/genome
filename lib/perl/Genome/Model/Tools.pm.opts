@@ -8396,6 +8396,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       undef,
       'process-svs!',
       undef,
+      'reference-transcripts=s',
+      'files',
       'required-snv-callers=s',
       undef,
       'restrict-to-target-regions!',
