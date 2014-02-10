@@ -10,6 +10,7 @@ use File::Basename qw(fileparse);
 use Data::Dumper;
 use Date::Manip;
 use List::MoreUtils qw(uniq);
+use File::Grep qw(fgrep);
 
 use Carp;
 
@@ -1007,5 +1008,108 @@ sub best_guess_date_numeric {
     return UnixDate(shift->best_guess_date, "%s"); 
 }
 
+sub creation_grid_job {
+    my $self = shift;
+    my ($creation_build, $lsf_job_id) = $self->creation_build_and_lsf_job_id;
+    unless ($creation_build && $lsf_job_id) {
+        $self->error_message('Failed to find a grid job since the creation build and/or event is lost for software result: '. $self->id);
+        return;
+    }
+    my $project_name = 'build' . $creation_build->id;
+    my $grid_job = Genome::Site::TGI::GridJobsFinished->get(
+        project_name => $project_name,
+        bjob_id => $lsf_job_id,
+    );
+    unless ($grid_job) {
+        $self->error_message('Failed to find grid job with projet '. $project_name .' and bjob_id '. $lsf_job_id);
+        return;
+    }
+    return $grid_job;
+}
+
+sub creation_build_and_lsf_job_id {
+    my $self = shift;
+
+    # Find the disk allocation ID to look for in the LSF error logs
+    my @allocations = $self->disk_allocations;
+    if (scalar(@allocations) != 1) {
+        $self->error_message('Please add logic to handle multiple allocations for a software result!');
+        return;
+    }
+    my $allocation = shift @allocations;
+    my $allocation_id = $allocation->id;
+
+    # Generate an ordered list of builds, search the oldest builds first
+    my @ordered_builds = $self->builds(-order_by => 'date_scheduled');
+    unless ( scalar(@ordered_builds) ) {
+        # There are no direct links to builds, walk through 1st generation children to find builds
+        my @children = $self->children;
+        for my $child (@children) {
+            # TODO: Should reorder after this push, but this will work as a first pass
+            push @ordered_builds, $child->builds(-order_by => 'date_scheduled');
+        }
+        unless ( scalar(@ordered_builds) ) {
+            $self->error_message('Failed to find any builds for software result: '. $self->id);
+            return;
+        }
+    }
+    # The output directory of the software result should be in the LSF error log
+    my $output_dir = $self->output_dir;
+    $self->status_message('For software result '. $self->id .', searching for LSF error log containing output directory: '. $output_dir);
+
+    # Iterate over every build linked to this software result and grep all event error logs
+    my $creation_build;
+    my $creation_lsf_job_id;
+    for ( my $i=0; $i < scalar(@ordered_builds); $i++ ) {
+        my $build = $ordered_builds[$i];
+        $self->status_message('Evaluating build '. $build->id .' as the potential creation build.');
+        my @events = $build->events;
+        for my $event (@events) {
+            my $error_log_file = $event->error_log_file();
+            $self->status_message('Grep through error log: '. $error_log_file);
+            # This requires that one line in the error log ends with the output_dir
+            if (fgrep { /Allocation \($allocation_id\) created at $output_dir$/ } $error_log_file) {
+                $self->status_message('Found disk allocation id '. $allocation_id .' and output_dir '. $output_dir .' in error log '. $error_log_file);
+                unless ($creation_build) {
+                    $creation_build = $build;
+                } else {
+                    $self->error_message('Found multiple potential creation builds: '. $creation_build->id .' and '. $build->id);
+                    return;
+                }
+                unless ($creation_lsf_job_id) {
+                    $creation_lsf_job_id = $event->lsf_job_id;
+                } else {
+                    $self->error_message('Found multiple potential creation lsf job ids: '. $creation_lsf_job_id .' and '. $event->lsf_job_id);
+                    return;
+                }
+            }
+        }
+        unless ($creation_build && $creation_lsf_job_id) {
+            my @instances = $build->child_workflow_instances;
+            for my $instance (@instances) {
+                my $error_log_file = $instance->err_log_file;
+                # TODO: Remove redundany with above, refactor to subroutine? or get common event/instance interface
+                # This requires that one line in the error log ends with the output_dir
+                if (fgrep { /Allocation \($allocation_id\) created at $output_dir$/ } $error_log_file) {
+                    $self->status_message('Found disk allocation id '. $allocation_id .' and output_dir '. $output_dir .' in error log '. $error_log_file);
+                    unless ($creation_build) {
+                        $creation_build = $build;
+                    } else {
+                        $self->error_message('Found multiple potential creation builds: '. $creation_build->id .' and '. $build->id);
+                        return;
+                    }
+                    unless ($creation_lsf_job_id) {
+                        $creation_lsf_job_id = $instance->current->dispatch_identifier;
+                    } else {
+                        $self->error_message('Found multiple potential creation events: '. $creation_lsf_job_id .' and '. $instance->dispatch_identifier);
+                        return;
+                    }
+                }
+            }
+        }
+    }
+    # Return the build and LSF job id most likely to originally have created this software result
+    return ($creation_build, $creation_lsf_job_id);
+}
 
 1;
