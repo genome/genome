@@ -1309,6 +1309,7 @@ sub shellcmd {
     my $dont_create_zero_size_files_for_missing_output =
         delete $params{dont_create_zero_size_files_for_missing_output};
     my $print_status_to_stderr       = delete $params{print_status_to_stderr};
+    my $keep_dbh_connection_open     = delete $params{keep_dbh_connection_open};
 
     $set_pipefail = 1 if not defined $set_pipefail;
     $print_status_to_stderr = 1 if not defined $print_status_to_stderr;
@@ -1361,6 +1362,12 @@ sub shellcmd {
             Carp::croak("CANNOT RUN (missing input directories):     $cmd\n\t"
                         . join("\n\t", @missing_inputs));
         }
+    }
+
+    # disconnect the db handle in case this is about to take awhile
+    if (!$keep_dbh_connection_open and Genome::DataSource::GMSchema->has_default_handle) {
+        $self->debug_message("Disconnecting GMSchema default handle.");
+        Genome::DataSource::GMSchema->disconnect_default_dbh();
     }
 
     if ($ENV{GENOME_SYS_PAUSE_SHELLCMD} and $cmd =~ $ENV{GENOME_SYS_PAUSE_SHELLCMD}) {
