@@ -6,7 +6,6 @@ use warnings;
 use Carp qw(croak);
 use Log::Dispatch qw();
 use Log::Dispatch::Screen::Color qw();
-use Log::Dispatch::Syslog qw();
 use Memoize qw(memoize);
 
 memoize('logger');
@@ -44,12 +43,6 @@ sub logger {
         },
     );
     $logger->add($screen);
-
-    my $syslog = Log::Dispatch::Syslog->new(
-        name => 'syslog',
-        min_level => 'debug',
-    );
-    $logger->add($syslog);
 
     return $logger;
 }
