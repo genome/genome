@@ -93,7 +93,7 @@ sub _get_or_create_model {
     }
 
     #Try to find a model with the same species and processing_profile (annotation source)
-    $model = Genome::Model::ImportedAnnotation->get(species_name => $self->species_name, processing_profile => $self->processing_profile, annotation_import_version => $self->annotation_import_version, reference_sequence_id => $self->reference_sequence_build->id);
+    $model = Genome::Model::ImportedAnnotation->get(species_name => $self->species_name, processing_profile => $self->processing_profile, annotation_import_version => $self->annotation_import_version, reference_sequence_id => $self->reference_sequence_build->model->id);
     return $model if $model;
 
     #Generate a name if one wasn't specified
