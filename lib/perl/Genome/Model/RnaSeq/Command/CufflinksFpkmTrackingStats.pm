@@ -86,7 +86,7 @@ sub execute {
             $annotation_build = $model_annotation_build;
         }
     }
-    my @fpkm_tracking_headers;
+    my %fpkm_tracking_headers;
     my %model_stats;
     for my $build (@builds) {
         my $identifier = $build->model->$method;
@@ -110,13 +110,14 @@ sub execute {
                 die('Failed to execute FpkmTrackingStats for file: '. $fpkm_tracking);
             }
             my $stats = $fpkm_tracking_stats_cmd->_stats_hash_ref;
-            unless (@fpkm_tracking_headers) {
-                @fpkm_tracking_headers = sort keys %{$stats};
+            for my $key (keys %{$stats}) {
+                $fpkm_tracking_headers{$key} = 1;
             }
             $model_stats{$identifier}{$feature_type} = $stats;
         }
     }
     $self->debug_message('Printing output FPKM tracking stats file...');
+    my @fpkm_tracking_headers = keys %fpkm_tracking_headers;
     my @output_headers = ('model_id',@fpkm_tracking_headers);
     for my $feature_type (keys %feature_types) {
         my $output_file_method = $feature_type .'_fpkm_tracking_stats_tsv_file';
@@ -133,6 +134,11 @@ sub execute {
         for my $model_id (sort keys %model_stats) {
             my $stats = $model_stats{$model_id}{$feature_type};
             $stats->{model_id} = $model_id;
+            for my $header (@output_headers) {
+                unless (defined($stats->{$header})) {
+                    $stats->{$header} = 'na';
+                }
+            }
             $tsv_writer->write_one($stats);
         }
     }
