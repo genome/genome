@@ -707,6 +707,36 @@ sub all_allocations {
     return values %allocations;
 }
 
+sub disk_usage_allocations {
+    my $self = shift;
+
+    my @allocations;
+    push @allocations, $self->disk_allocation if $self->disk_allocation;
+
+    push @allocations, $self->user_allocations;
+    push @allocations, $self->symlinked_allocations;
+
+    # Build inputs should not be counted toward the disk usage of a build
+    #push @allocations, $self->input_allocations;
+    push @allocations, $self->event_allocations;
+
+    my %allocations = map { $_->id => $_ } @allocations;
+    my @disk_usage_allocations;
+    my $owner_class;
+    for my $allocation (values %allocations) {
+        $owner_class = $allocation->owner_class_name;
+        next if $owner_class->isa('Genome::InstrumentData');
+        next if $owner_class->isa('Genome::Model::Build') and
+            $allocation->owner_id ne $self->id;
+        next if $owner_class->isa('Genome::Model::Build::ReferenceSequence::AlignerIndex');
+        next if $owner_class->isa('Genome::FeatureList');
+        next if $owner_class->isa('Genome::Model::Tools::DetectVariants2::Result::Manual');
+        next if $owner_class->isa('Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::VariableReadLength::Index');
+        push @disk_usage_allocations, $allocation;
+    }
+    return @disk_usage_allocations;
+}
+
 sub input_allocations {
     my $self = shift;
 
