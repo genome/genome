@@ -274,3 +274,6 @@
 [submodule "vendor/circos"]
 	path = vendor/circos
 	url = https://github.com/genome-vendor/circos.git
+[submodule "verifyBamId"]
+	path = vendor/verifyBamId
+	url = https://github.com/genome-vendor/verifyBamId.git
