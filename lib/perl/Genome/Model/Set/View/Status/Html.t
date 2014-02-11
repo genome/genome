@@ -24,7 +24,6 @@ for my $i (1..2) {
         processing_profile => $pp,
         subject_name => 'human',
         subject_type => 'species_name',
-        user_name => 'apipe',
     ) or die;
 }
 is(@models, 2, "created 2 models");
