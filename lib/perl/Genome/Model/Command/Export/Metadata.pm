@@ -147,6 +147,8 @@ sub execute {
 
     my %defaults = (
         user_name => "genome",
+        created_by => "genome",
+        run_as => "genome",
         run_by => "genome"
     );
 
