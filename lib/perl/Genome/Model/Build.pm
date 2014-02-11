@@ -1321,7 +1321,8 @@ sub _launch {
 
     my $server_dispatch = _server_dispatch($model, \%params);
     my $job_dispatch = _job_dispatch($model, \%params);
-    my $job_group_spec = _job_group_spec(\%params);
+    my $job_group = _job_group(\%params);
+    my $job_group_spec = _job_group_spec($job_group);
 
     # all params should have been deleted (as they were handled)
     die "Bad params!  Expected server_dispatch and job_dispatch!" . Data::Dumper::Dumper(\%params) if %params;
@@ -1406,12 +1407,17 @@ sub _default_job_group {
     return '/apipe-build/' . $user;
 }
 
-sub _job_group_spec {
+sub _job_group {
     my $params = shift;
     my $job_group = _default_job_group();
     if (exists $params->{job_group}) {
         $job_group = delete $params->{job_group};
     }
+    return $job_group;
+}
+
+sub _job_group_spec {
+    my $job_group = shift;
     return ($job_group ? " -g $job_group" : '');
 }
 
