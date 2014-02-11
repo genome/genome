@@ -1346,6 +1346,17 @@ sub _launch {
         my $lsf_project = "build" . $self->id;
         $ENV{'WF_LSF_PROJECT'} = $lsf_project;
 
+        my $bsub_bin = 'bsub';
+        my $genome_bin = $Command::entry_point_bin || 'genome';
+
+        if ($self->_should_run_as && $self->_can_run_as) {
+            # -i simulates login which help prevent this from being abused to
+            # execute arbitrary commands.
+            $self->creation_event->user_name($self->model->run_as);
+            $bsub_bin = [qw(sudo -n -i -u), $self->model->run_as, '--',
+                _sudo_wrapper()];
+        }
+
         my @bsub_args = (
             email    => Genome::Utility::Email::construct_address(),
             err_file => $build_event->error_log_file,
@@ -1360,19 +1371,21 @@ sub _launch {
         }
 
         my @genome_cmd = (
-            'annotate-log',
-            ($Command::entry_point_bin || 'genome'),
-            qw(model services build run),
-            '--model-id' => $model->id,
-            '--build-id' => $self->id,
+            'annotate-log', $genome_bin, qw(model services build run),
         );
+
+        my @genome_args;
+        # args have to be --key=value for _sudo_wrapper()
+        push @genome_args, '--model-id=' . $model->id;
+        push @genome_args, '--build-id=' . $self->id;
         if ($job_dispatch eq 'inline') {
-            push @genome_cmd, '--inline';
+            push @genome_args, '--inline';
         }
 
         my $job_id = $self->_execute_bsub_command(
+            $bsub_bin,
             @bsub_args,
-            cmd => [ @genome_cmd ],
+            cmd => [ @genome_cmd, @genome_args ],
         );
         return unless $job_id;
 
@@ -1381,6 +1394,24 @@ sub _launch {
         return 1;
     }
 }
+
+sub _should_run_as {
+    my $self = shift;
+    return (Genome::Sys->username ne $self->model->run_as);
+}
+
+sub _can_run_as {
+    my $self = shift;
+
+    my $sudo_wrapper = _sudo_wrapper();
+    unless ( -x $sudo_wrapper ) {
+        return;
+    }
+
+    return 1;
+}
+
+sub _sudo_wrapper { '/usr/local/bin/bsub-genome-build' }
 
 sub _job_dispatch {
     my $model = shift;
@@ -1477,7 +1508,7 @@ sub _execute_bsub_command { # here to overload in testing
         return 1;
     }
 
-    my $job_id = eval { Genome::Sys::LSF::bsub::bsub(@cmd) };
+    my $job_id = eval { Genome::Sys::LSF::bsub::run(@cmd) };
     if ($@) {
         $self->error_message("Failed to launch bsub:\n$@\n");
         return;
