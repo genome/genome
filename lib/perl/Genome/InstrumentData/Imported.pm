@@ -245,7 +245,7 @@ sub create {
         $params{import_date} = $date;
     }
     unless (exists $params{user_name}) {
-        my $user = getpwuid($<);
+        my $user = Genome::Sys->username;
         $params{user_name} = $user;
     }
 
