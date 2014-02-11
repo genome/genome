@@ -7,13 +7,14 @@ use Carp qw(croak);
 use File::Spec qw();
 use Sys::Hostname qw(hostname);
 use UR::Util qw();
-use Module::Runtime qw(require_module);
 
 our $VERSION = $Genome::VERSION;
 
 sub import {
     if (my $config = $ENV{GENOME_CONFIG}) {
-        require_module($config);
+        # call the specified configuration module;
+        eval "use $config";
+        die $@ if $@;
     }
     else {
         load_host_config();
