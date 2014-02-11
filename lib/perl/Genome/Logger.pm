@@ -15,7 +15,7 @@ sub logger {
 
     my $logger = Log::Dispatch->new(@_);
 
-    if (-t STDERR && has_color_screen_package()) {
+    if (should_color_screen()) {
         $logger->add(color_screen());
     } else {
         $logger->add(screen());
@@ -32,6 +32,10 @@ sub assert_class_method {
     unless ($class && $class eq __PACKAGE__) {
         croak assert_class_method_error();
     }
+}
+
+sub should_color_screen {
+    return -t STDERR && has_color_screen_package();
 }
 
 sub has_color_screen_package {
