@@ -25,10 +25,10 @@ sub execute {
 
     my @m = $self->models;
     unless (@m) {
-        print STDERR "Using default search for models created by apipe-builder or ebelter...\n";
+        print STDERR "Using default search for models set to run as apipe-builder or ebelter...\n";
         @m = Genome::Model->get(
             'build_requested !=' => '1',
-            user_name => ['apipe-builder', 'ebelter'],
+            run_as => ['apipe-builder', 'ebelter'],
         );
         print STDERR "Found " . @m . " models.\n";
     }
