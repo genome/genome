@@ -385,7 +385,7 @@ sub check_and_update_genotype_input {
     return 1 unless $default_genotype_model;
 
     if (defined $self->genotype_microarray_model_id and $self->genotype_microarray_model_id ne $default_genotype_model->id) {
-        if (defined $self->user_name and $self->user_name eq 'apipe-builder') {
+        if (defined $self->run_as and $self->run_as eq 'apipe-builder') {
             $self->warning_message("Sample " . $self->subject_id . " points to genotype model " . $default_genotype_model->id .
                 ", which disagrees with the genotype model input of this model (" . $self->genotype_microarray_model_id .
                 "), overwriting!");
