@@ -6,6 +6,7 @@ use warnings;
 use Carp qw(croak);
 use Log::Dispatch qw();
 use Log::Dispatch::Screen::Color qw();
+use Log::Dispatch::Screen qw();
 use Memoize qw(memoize);
 
 memoize('logger');
@@ -13,7 +14,13 @@ sub logger {
     assert_class_method(shift);
 
     my $logger = Log::Dispatch->new(@_);
-    $logger->add(color_screen());
+
+    if (-t STDERR) {
+        $logger->add(color_screen());
+    } else {
+        $logger->add(screen());
+    }
+
     return $logger;
 }
 
@@ -56,6 +63,14 @@ sub color_screen {
             },
         },
     );
+}
+
+sub screen {
+    my $screen = Log::Dispatch::Screen->new(
+        name => 'screen',
+        min_level => 'info',
+    );
+    return $screen;
 }
 
 1;
