@@ -5,9 +5,9 @@ use warnings;
 
 use Carp qw(croak);
 use Log::Dispatch qw();
-use Log::Dispatch::Screen::Color qw();
 use Log::Dispatch::Screen qw();
 use Memoize qw(memoize);
+use Module::Runtime qw(module_notional_filename use_package_optimistically);
 
 memoize('logger');
 sub logger {
@@ -15,7 +15,7 @@ sub logger {
 
     my $logger = Log::Dispatch->new(@_);
 
-    if (-t STDERR) {
+    if (-t STDERR && has_color_screen_package()) {
         $logger->add(color_screen());
     } else {
         $logger->add(screen());
@@ -32,6 +32,13 @@ sub assert_class_method {
     unless ($class && $class eq __PACKAGE__) {
         croak assert_class_method_error();
     }
+}
+
+sub has_color_screen_package {
+    # Log::Dispatch::Screen::Color is not a "core" Log::Dispatch module
+    my $name = use_package_optimistically('Log::Dispatch::Screen::Color');
+    my $file = module_notional_filename($name);
+    return $INC{$file};
 }
 
 sub color_screen {
