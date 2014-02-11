@@ -46,7 +46,7 @@ sub execute {
 
         my $model_getter = '_models_for_' . $self->match_type;
         my @models =
-            grep { $_->user_name eq $self->model_user }
+            grep { $_->created_by eq $self->model_user }
             $self->$model_getter(@parts);
 
         my @new_parts =
