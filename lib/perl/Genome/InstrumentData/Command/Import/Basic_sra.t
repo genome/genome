@@ -18,7 +18,7 @@ use Test::More;
 use_ok('Genome::InstrumentData::Command::Import::Basic') or die;
 use_ok('Genome::InstrumentData::Command::Import::WorkFlow::Helpers') or die;
 
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'sra/v1');
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'sra/v2');
 my $source_sra = $test_dir.'/input.sra';
 ok(-s $source_sra, 'source sra exists') or die;
 

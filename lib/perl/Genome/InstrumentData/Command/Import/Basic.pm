@@ -351,10 +351,18 @@ sub _build_workflow_to_import_bam {
     my $workflow = $self->_workflow;
     my $verify_md5_op = $self->_verify_md5_op;
 
-    my $sort_bam_op = $self->_add_operation_to_workflow('sort bam');
+    my $sanitize_bam_op = $self->_add_operation_to_workflow('sanitize bam');
     $workflow->add_link(
         left_operation => $verify_md5_op,
         left_property => 'source_path',
+        right_operation => $sanitize_bam_op,
+        right_property => 'dirty_bam_path',
+    );
+
+    my $sort_bam_op = $self->_add_operation_to_workflow('sort bam');
+    $workflow->add_link(
+        left_operation => $sanitize_bam_op,
+        left_property => 'clean_bam_path',
         right_operation => $sort_bam_op,
         right_property => 'unsorted_bam_path',
     );
@@ -417,10 +425,18 @@ sub _build_workflow_to_import_sra {
         );
     }
 
-    my $sort_bam_op = $self->_add_operation_to_workflow('sort bam');
+    my $sanitize_bam_op = $self->_add_operation_to_workflow('sanitize bam');
     $workflow->add_link(
         left_operation => $sra_to_bam_op,
         left_property => 'bam_path',
+        right_operation => $sanitize_bam_op,
+        right_property => 'dirty_bam_path',
+    );
+
+    my $sort_bam_op = $self->_add_operation_to_workflow('sort bam');
+    $workflow->add_link(
+        left_operation => $sanitize_bam_op,
+        left_property => 'clean_bam_path',
         right_operation => $sort_bam_op,
         right_property => 'unsorted_bam_path',
     );
