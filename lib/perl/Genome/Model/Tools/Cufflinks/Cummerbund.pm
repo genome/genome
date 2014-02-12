@@ -90,6 +90,8 @@ sub execute {
     #print Data::Dumper::Dumper(@comparisons);
 
     # Load Library and Data
+    print $tmp_fh 'library("IRanges")' . "\n";
+    print $tmp_fh 'library("ggplot2")' . "\n";
     print $tmp_fh 'library("cummeRbund")' ."\n";
     if ($self->pdf_report_file) {
         print $tmp_fh 'pdf("'. $self->pdf_report_file .'")' ."\n";
