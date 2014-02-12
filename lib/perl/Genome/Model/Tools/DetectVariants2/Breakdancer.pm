@@ -259,6 +259,7 @@ sub run_breakdancer {
             $params{control_aligned_reads_input} = $self->control_aligned_reads_input
                 if $self->control_aligned_reads_input;
 
+            Genome::Sys->disconnect_default_handles;
             my $output = Workflow::Simple::run_workflow_lsf($op, %params);
 
             unless (defined $output) {

@@ -38358,6 +38358,16 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>analysis-menu',
+    [
+      '>item',
+      [
+        'help!',
+        undef
+      ],
+      'help!',
+      undef
+    ],
     '>analysis-project',
     [
       'copyconfig',

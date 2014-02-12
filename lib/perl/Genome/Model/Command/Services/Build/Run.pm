@@ -141,10 +141,7 @@ sub execute {
         }
 
     } else {
-        if (Genome::DataSource::GMSchema->has_default_handle) {
-            $self->debug_message("Disconnecting GMSchema default handle.");
-            Genome::DataSource::GMSchema->disconnect_default_dbh();
-        }
+        Genome::Sys->disconnect_default_handles;
 
         local $ENV{WF_TRACE_UR} = 1;
         local $ENV{WF_TRACE_HUB} = 1;

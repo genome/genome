@@ -1365,10 +1365,7 @@ sub shellcmd {
     }
 
     # disconnect the db handle in case this is about to take awhile
-    if (!$keep_dbh_connection_open and Genome::DataSource::GMSchema->has_default_handle) {
-        $self->debug_message("Disconnecting GMSchema default handle.");
-        Genome::DataSource::GMSchema->disconnect_default_dbh();
-    }
+    $self->disconnect_default_handles unless $keep_dbh_connection_open;
 
     if ($ENV{GENOME_SYS_PAUSE_SHELLCMD} and $cmd =~ $ENV{GENOME_SYS_PAUSE_SHELLCMD}) {
         my $file = '/tmp/GENOME_SYS_PAUSE.' . $$;
@@ -1516,6 +1513,19 @@ sub shellcmd {
 
     return 1;
 
+}
+
+sub disconnect_default_handles {
+    my $class = shift;
+
+    for my $ds (qw(Genome::DataSource::GMSchema)) {
+        if($ds->has_default_handle) {
+            $class->debug_message("Disconnecting $ds default handle.");
+            $ds->disconnect_default_dbh();
+        }
+    }
+
+    return 1;
 }
 
 sub retry {

@@ -244,6 +244,8 @@ sub _detect_variants {
     $self->_dump_workflow($workflow);
     $self->_dump_dv_cmd;
 
+    Genome::Sys->disconnect_default_handles;
+
     $self->debug_message("Now launching the dispatcher workflow.");
     ## Worklow launches here
     my $result = Workflow::Simple::run_workflow_lsf( $workflow, %{$input});
