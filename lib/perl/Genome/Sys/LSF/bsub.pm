@@ -17,8 +17,6 @@ sub run {
         $executable = [$executable];
     }
 
-    # lazy load so we don't break /gsc/bin/perl (until we have to)
-    require IPC::System::Simple;
     my @output = _capture(@$executable, @args);
 
     my $job_id = ($output[-1] =~ /^Job <(\d+)> is submitted to/)[0];
@@ -135,6 +133,7 @@ sub _queues {
 }
 
 sub _capture {
+    # lazy load so we don't break /gsc/bin/perl (until we have to)
     require IPC::System::Simple;
     return IPC::System::Simple::capture(@_);
 }
