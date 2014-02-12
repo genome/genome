@@ -127,6 +127,7 @@ sub execute {
         $op->parallel_by('bam_files');
         my $output;
         if ($self->model->duplication_handler_name eq 'samtools') {
+            Genome::Sys->disconnect_default_handles;
             $output = Workflow::Simple::run_workflow_lsf(
                 $op,
                 'output_directory' => $ref_cov_dir,
@@ -135,6 +136,7 @@ sub execute {
                 'samtools_version' => $self->model->duplication_handler_version,
             );
         } else {
+            Genome::Sys->disconnect_default_handles;
             $output = Workflow::Simple::run_workflow_lsf(
                 $op,
                 'output_directory' => $ref_cov_dir,

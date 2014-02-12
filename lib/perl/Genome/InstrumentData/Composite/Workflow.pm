@@ -1006,6 +1006,8 @@ sub _run_workflow {
     my $workflow = shift;
     my $inputs = shift;
 
+    Genome::Sys->disconnect_default_handles;
+
     $self->debug_message('Running workflow...');
     my $result = Workflow::Simple::run_workflow_lsf( $workflow, @$inputs);
 
