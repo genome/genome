@@ -21,7 +21,7 @@ class Genome::Disk::Detail::Allocation::Creator {
 sub create_allocation {
     my $self = shift;
 
-    $self->verify_no_parent_or_child_allocations;
+    $self->verify_no_parent_allocation;
     $self->wait_for_database_pause;
 
     my @candidate_volumes = $self->candidate_volumes;
