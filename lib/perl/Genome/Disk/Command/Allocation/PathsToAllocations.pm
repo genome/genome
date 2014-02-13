@@ -42,7 +42,12 @@ sub execute {
         if ($self->filenames) {
             my $file = basename($given_path);
             if (defined $file) {
-                $allocation_path = File::Spec->join($allocation_path, $file);
+                my $new_allocation_path = File::Spec->join($allocation_path, $file);
+                if (-e $new_allocation_path) {
+                    $allocation_path = $new_allocation_path;
+                } else {
+                    $self->warning_message("The file ($file) for the path provided ($given_path) does not seem to exist. Check the base directory below instead, perhaps the filename has a typo?");
+                }
             }
         }
         print join("\t", $allocation->id, $allocation_path) . "\n";
