@@ -22,21 +22,10 @@ sub execute {
 
     my @allocations;
     for my $path ($self->absolute_paths) {
-        my @parts = split(/\//, $path);
-        @parts = @parts[4..$#parts]; # Remove mount path and group subdirectory
-
-        my $allocation;
-        # Try finding allocation by allocation path, removing subdirectories from the end after each attempt
-        while (@parts) {
-            $allocation = Genome::Disk::Allocation->get(allocation_path => join('/', @parts));
-            last if $allocation;
-            @parts = @parts[0..($#parts - 1)];
-        }
-
+        my $allocation = Genome::Disk::Allocation->get_allocation_for_path($path);
         if ($allocation) {
             push @allocations, $allocation;
-        }
-        else {
+        } else {
             $self->warning_message("Found no allocation for path $path");
         }
     }
