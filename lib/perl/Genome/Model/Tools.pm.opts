@@ -8730,6 +8730,23 @@ $Genome::Model::Tools::OPTS_SPEC = [
     'help!',
     undef
   ],
+  '>verify-bam-id',
+  [
+    'vcf=s',
+    'files',
+    'bam=s',
+    'files',
+    'out-prefix=s',
+    'files',
+    'max-depth=s',
+    undef,
+    'precise!',
+    undef,
+    'version=s',
+    'files',
+    'help!',
+    undef
+  ],
   '>methyl-array',
   [
     '>probe-distribution',

@@ -258,3 +258,8 @@ config_instrument_data_analysis_project_bridge_permission [config_instrument_dat
 
 add_bisulfite_column_to_fragment_library [instrument_fragment_library] 2014-01-08T19:32:36Z Adam Coffman <acoffman@genome.wustl.edu># Add support for new column from LIMS
 add_clia_fields_to_analysis_projects [config_analysis_project] 2014-01-17T19:38:02Z Adam Coffman <acoffman@genome.wustl.edu> # add fields needed for launching clia models
+model.model.created_by [model_model] 2014-02-12T19:21:13Z Nathan Nutter <nnutter@linus264.gsc.wustl.edu> # add created_by column to model.model
+@1392314878 2014-02-13T18:07:58Z Nathan Nutter <nnutter@linus264.gsc.wustl.edu># boostrap Adam's changes for AP and add created_by to Model
+
+model.model.run_as.sql [model_model] 2014-02-13T19:47:19Z Nathan Nutter <nnutter@linus264.gsc.wustl.edu># add run_as column to model.model
+@1392321701 2014-02-13T20:01:42Z Nathaniel Nutter <nnutter@genome.wustl.edu> # deploy model.model.run_as.sql

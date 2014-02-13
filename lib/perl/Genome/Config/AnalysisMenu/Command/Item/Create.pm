@@ -57,7 +57,7 @@ sub _determine_file_name {
     my $self = shift;
     my $file = shift;
     my ($file_name, undef, undef) = File::Basename::fileparse($file);
-    return $file_name;
+    return join('_', time, $file_name);
 }
 
 1;

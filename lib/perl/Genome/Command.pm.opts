@@ -19401,6 +19401,23 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>verify-bam-id',
+    [
+      'vcf=s',
+      'files',
+      'bam=s',
+      'files',
+      'out-prefix=s',
+      'files',
+      'max-depth=s',
+      undef,
+      'precise!',
+      undef,
+      'version=s',
+      'files',
+      'help!',
+      undef
+    ],
     '>methyl-array',
     [
       '>probe-distribution',
@@ -38362,6 +38379,19 @@ $Genome::Command::OPTS_SPEC = [
     [
       '>item',
       [
+        '>create',
+        [
+          'file-path=s',
+          undef,
+          'name=s',
+          'files',
+          'color!',
+          undef,
+          'debug!',
+          undef,
+          'help!',
+          undef
+        ],
         'help!',
         undef
       ],
