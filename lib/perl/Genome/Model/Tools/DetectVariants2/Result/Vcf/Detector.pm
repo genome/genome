@@ -68,10 +68,11 @@ sub _run_vcf_converter {
     my $control_aligned_reads_sample = $self->control_aligned_reads_sample;
     my $reference_sequence_build = Genome::Model::Build->get($detector_result->reference_build_id);
     my %params = (
-        input_file => $input_file,
-        output_file => $output_file,
-        aligned_reads_sample => $aligned_reads_sample,
-        sequencing_center => 'WUSTL',
+        input_id                 => $self->input_id,
+        input_file               => $input_file,
+        output_file              => $output_file,
+        aligned_reads_sample     => $aligned_reads_sample,
+        sequencing_center        => 'WUSTL',
         reference_sequence_build => $reference_sequence_build,
     );
     $params{control_aligned_reads_sample} = $control_aligned_reads_sample if $control_aligned_reads_sample;
