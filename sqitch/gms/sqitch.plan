@@ -262,3 +262,4 @@ model.model.created_by [model_model] 2014-02-12T19:21:13Z Nathan Nutter <nnutter
 @1392314878 2014-02-13T18:07:58Z Nathan Nutter <nnutter@linus264.gsc.wustl.edu># boostrap Adam's changes for AP and add created_by to Model
 
 model.model.run_as.sql [model_model] 2014-02-13T19:47:19Z Nathan Nutter <nnutter@linus264.gsc.wustl.edu># add run_as column to model.model
+@1392321701 2014-02-13T20:01:42Z Nathaniel Nutter <nnutter@genome.wustl.edu> # deploy model.model.run_as.sql
