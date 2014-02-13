@@ -3,6 +3,17 @@
 
 BEGIN;
 
-  ALTER TABLE instrument.fragment_library ADD COLUMN bisulfite_conversion varchar(32);
+DO $$
+    BEGIN
+        IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_schema='instrument'
+                AND table_name='fragment_library'
+                AND column_name='bisulfite_conversion'
+        ) THEN
+            ALTER TABLE instrument.fragment_library ADD COLUMN bisulfite_conversion VARCHAR(32);
+        END IF;
+    END;
+$$;
 
 COMMIT;

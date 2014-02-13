@@ -2,6 +2,6 @@
 
 BEGIN;
 
-  ALTER TABLE instrument.fragement_library DROP COLUMN bisulfite_conversion;
+  ALTER TABLE instrument.fragment_library DROP COLUMN bisulfite_conversion;
 
 COMMIT;
