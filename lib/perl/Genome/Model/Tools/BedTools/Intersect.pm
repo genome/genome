@@ -57,6 +57,11 @@ class Genome::Model::Tools::BedTools::Intersect {
             valid_values => ['bed', 'bam'],
             is_optional => 1,
         },
+        header => {
+            is => 'Boolean',
+            doc => 'Whether to reprint the header from file a',
+            default_value => 0,
+        },
     ],
 };
 
@@ -79,7 +84,10 @@ EOS
 
 sub execute {
     my $self = shift;
-
+    if ($self->header) {
+        my $grep_cmd = 'grep "^#" '.$self->input_file_a." > ".$self->output_file;
+        system($grep_cmd);
+    }
     my $a_flag = '-a';
     if ($self->input_file_a_format eq 'bam') {
         $a_flag .= 'bam';
@@ -110,14 +118,17 @@ sub execute {
             $options .= ' -wa -wb';
         }
     }
-    my $cmd = $self->bedtools_path .'/bin/intersectBed '. $options .' '. $a_flag .' '. $self->input_file_a .' -b '. $self->input_file_b .' > '. $self->output_file;
+    my $temp_file = Genome::Sys->create_temp_file_path;
+    my $cmd = $self->bedtools_path .'/bin/intersectBed '. $options .' '. $a_flag .' '. $self->input_file_a .' -b '. $self->input_file_b .' > '. $temp_file;
     Genome::Sys->shellcmd(
         cmd => $cmd,
         input_files => [$self->input_file_a,$self->input_file_b],
-        output_files => [$self->output_file],
+        output_files => [$temp_file],
         skip_if_output_is_present => 0,
         allow_zero_size_output_files => 1,
     );
+    my $cat_cmd = "cat $temp_file >> ".$self->output_file;
+    system($cat_cmd);
     return 1;
 }
 
