@@ -31,8 +31,8 @@ class Genome::Model::Tools::BedTools::Intersect {
         },
         intersection_type => {
             is => 'Text',
-            doc => 'The results to output: "a-only" returns those regions in file A but not overlapped in B; "unique" returns one line for each region in file A that is matched;"overlap_both" returns original A and B entries plus the number of base pairs of overlap between the two features.',
-            valid_values => ['a-only', 'unique', 'overlaps','overlap_both','write_both'],
+            doc => 'The results to output: "a-only" returns those regions in file A but not overlapped in B; "unique" returns one line for each region in file A that is matched;"overlap_both" returns original A and B entries plus the number of base pairs of overlap between the two features. "v" means Only report those entries in A that have _no overlaps_ with B.',
+            valid_values => ['a-only', 'unique', 'overlaps','overlap_both','write_both','v'],
             default_value => $DEFAULT_INTERSECTION_TYPE,
             is_optional => 1,
         },
@@ -116,6 +116,8 @@ sub execute {
             $options .= ' -wao';
         } elsif ($self->intersection_type eq 'write_both') {
             $options .= ' -wa -wb';
+        } elsif ($self->intersection_type eq 'v') {
+            $options .= ' -v';
         }
     }
     my $temp_file = Genome::Sys->create_temp_file_path;
