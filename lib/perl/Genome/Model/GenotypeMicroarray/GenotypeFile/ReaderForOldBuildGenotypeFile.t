@@ -15,7 +15,7 @@ use Test::More;
 
 use_ok('Genome::Model::GenotypeMicroarray::OriginalGenotypeReader') or die;
 my $original_genotype_file_path = $ENV{GENOME_TEST_INPUTS} . '/GenotypeMicroarray/build/-8888.original';
-my $reader = Genome::Model::GenotypeMicroarray::OriginalGenotypeReader->create(
+my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderForOldBuildFile->create(
     input => $original_genotype_file_path,
     filters => ['gc_score:min=0.85',],
 );

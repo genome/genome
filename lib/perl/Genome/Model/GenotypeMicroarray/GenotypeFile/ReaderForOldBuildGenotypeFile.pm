@@ -1,11 +1,11 @@
-package Genome::Model::GenotypeMicroarray::OriginalGenotypeReader;
+package Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderForOldBuildFile;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::GenotypeMicroarray::OriginalGenotypeReader { 
+class Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderForOldBuildFile { 
     is => 'Genome::Utility::IO::SeparatedValueReader',
     has => [
         separator => { default => "\t", },
