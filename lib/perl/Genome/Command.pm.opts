@@ -333,6 +333,8 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>paths-to-allocations',
       [
+        'filenames!',
+        undef,
         'absolute-paths=s@',
         'directories',
         'help!',

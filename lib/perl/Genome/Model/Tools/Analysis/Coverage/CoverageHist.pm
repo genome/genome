@@ -33,11 +33,12 @@ class Genome::Model::Tools::Analysis::Coverage::CoverageHist{
 	    doc => 'output pdf containing histogram',
         },
 
-        coverage_file => {
+        input_coverage_file => {
             is => 'String',
 	    is_optional => 1,
-	    doc => 'path to refcov output file',
+	    doc => 'path to refcov file to use for input',
         },
+
         ]
 };
 
@@ -54,7 +55,7 @@ sub help_detail {
 sub execute {
     my $self = shift;
     my $output_pdf = $self->output_pdf;
-    my $coverage_file = $self->coverage_file;
+    my $coverage_file = $self->input_coverage_file;
 
     my @covs;
     my @headers;
