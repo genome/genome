@@ -10,65 +10,65 @@ my $PI=3.1415927;
 my $f_TransProb=1e-6;
 
 class Genome::Model::Tools::CopyNumber::PurityHmm {
-    is => 'Command',
-    has_input => [
-        purity => {
-            is => 'String',
-            doc => 'purity',
-            default => '0.8',
-        },
-        ploidy => {
-            is => 'String',
-            default => '2',
-            doc => 'ploidy',
-        },
-        mean2x => {
-            is => 'String',
-            doc => 'mean 2x',
-            default => "1",
-        },
-        var => {
-            is => 'String',
-            doc => 'var',
-            default => 1e4,
-        },
-        max_cn => {
-            is => 'String',
-            doc => 'mx cn',
-            default => '4',
-        },
-        cnv_rate => {
-            is => 'String',
-            doc => 'cnv rate',
-            default => 0.0001,
-        },
-        cnv_size => {
-            is => 'String',
-            doc => 'cnv size',
-            default => 0.1,
-        },
-        copy_number_file => {
-            is => 'String',
-            doc => 'Copy number file to operate on',
-        },
-    ],
-    has_transient_optional => [
-        ploidy_p => {
-            doc => 'class variable',
-        },
-        ploidy_q => {
-            doc => 'class variable',
-        },
-        avgState => {
-            doc => 'class variable',
-        },
-        transP => {
-            doc => 'class variable',
-        },
-        ceiling => {
-            doc => 'class variable',
-        },
-    ],
+  is => 'Command',
+  has_input => [
+    purity => {
+      is => 'String',
+      doc => 'purity',
+      default => '0.8',
+    },
+    ploidy => {
+      is => 'String',
+      default => '2',
+      doc => 'ploidy',
+    },
+    mean2x => {
+      is => 'String',
+      doc => 'mean 2x',
+      default => "1",
+    },
+    var => {
+      is => 'String',
+      doc => 'var',
+      default => 1e4,
+    },
+    max_cn => {
+      is => 'String',
+      doc => 'mx cn',
+      default => '4',
+    },
+    cnv_rate => {
+      is => 'String',
+      doc => 'cnv rate',
+      default => 0.0001,
+    },
+    cnv_size => {
+      is => 'String',
+      doc => 'cnv size',
+      default => 0.1,
+    },
+    copy_number_file => {
+      is => 'String',
+      doc => 'Copy number file to operate on',
+    },
+  ],
+  has_transient_optional => [
+    ploidy_p => {
+      doc => 'class variable',
+    },
+    ploidy_q => {
+      doc => 'class variable',
+    },
+    avgState => {
+      doc => 'class variable',
+    },
+    transP => {
+      doc => 'class variable',
+    },
+    ceiling => {
+      doc => 'class variable',
+    },
+  ],
 };
 
 sub printParm {
@@ -165,20 +165,20 @@ sub SegPloidy {
     my ($p_pos,$q_pos);
     for(my $i=0; $i<=$T;$i++){
       if(${$data->{x}}[$i]<$cmStart){
-	#$ploidy_stat_p+=$$state[$i];
-	$ploidy_stat_p+=$adjusted_cns[$i];
-	$count_p++;
+        #$ploidy_stat_p+=$$state[$i];
+        $ploidy_stat_p+=$adjusted_cns[$i];
+        $count_p++;
         $interval_p+=${$data->{x}}[$i];
         $interval_p-=$p_pos if(defined $p_pos);
         $p_pos=${$data->{x}}[$i];
       }
       elsif(${$data->{x}}[$i]>$cmEnd){
-	#$ploidy_stat_q+=$$state[$i];
-	$ploidy_stat_q+=$adjusted_cns[$i];
-	$count_q++;
+        #$ploidy_stat_q+=$$state[$i];
+        $ploidy_stat_q+=$adjusted_cns[$i];
+        $count_q++;
         $interval_q+=${$data->{x}}[$i];
-	$interval_q-=$q_pos if(defined $q_pos);
- 	$q_pos=${$data->{x}}[$i];
+        $interval_q-=$q_pos if(defined $q_pos);
+        $q_pos=${$data->{x}}[$i];
       }
       else{}
     }
@@ -222,7 +222,7 @@ sub ViterbiUpdate {
     my $j=$$state[$i];
     if($TPupdate){
       if(defined $pstate){
-	$transCount[$pstate][$j]++;
+        $transCount[$pstate][$j]++;
       }
       $pstate=$j;
     }
@@ -270,18 +270,18 @@ sub ViterbiUpdate {
     for(my $j=0;$j<=$self->max_cn;$j++){
       my $count=0;
       for(my $k=0;$k<=$self->max_cn;$k++){
-	$count+=$transCount[$j][$k] || 0;
+        $count+=$transCount[$j][$k] || 0;
       }
       if($count>0){
-	$transP[$j]=($count-$transCount[$j][$j])/$count;
+        $transP[$j]=($count-$transCount[$j][$j])/$count;
       }
       else{
-	$transP[$j]=$transP_old[$j];
+        $transP[$j]=$transP_old[$j];
       }
       $transP[$j]=($transP[$j]<$f_TransProb)?$f_TransProb:$transP[$j];   #floor transition prob
     }
     $self->transP(\@transP);
-  }
+}
 }
 
 sub Viterbi {
@@ -297,43 +297,43 @@ sub Viterbi {
   }
   push @delta,\@delta_t;
 
-  my @pdelta_t=@delta_t;
-  my @transP=@{$self->transP};
-  for(my $t=1;$t<=$#{$data->{y}};$t++){
-    @delta_t=();
-    my @phi_t;
+my @pdelta_t=@delta_t;
+my @transP=@{$self->transP};
+for(my $t=1;$t<=$#{$data->{y}};$t++){
+  @delta_t=();
+  my @phi_t;
 
-    my $dist=(${$data->{x}}[$t]-${$data->{x}}[$t-1])/1000000;
-    $dist=($dist<=0)?10:$dist;  #Assuming 10Mb distance if abnormal
-    my $theta=exp(-2*$dist);
+  my $dist=(${$data->{x}}[$t]-${$data->{x}}[$t-1])/1000000;
+  $dist=($dist<=0)?10:$dist;  #Assuming 10Mb distance if abnormal
+  my $theta=exp(-2*$dist);
 
-    for(my $i=0;$i<=$self->max_cn;$i++){
-      my $logObsProb=$self->LogGaussianPDF(${$data->{y}}[$t],$i);
-      my $maxlogprob=$LZERO;
-      my $lab=0;
+  for(my $i=0;$i<=$self->max_cn;$i++){
+    my $logObsProb=$self->LogGaussianPDF(${$data->{y}}[$t],$i);
+    my $maxlogprob=$LZERO;
+    my $lab=0;
 
-      for(my $j=0;$j<=$self->max_cn;$j++){  #previous time point
-	my $transprob;
-	if($TPupdate){
-	  $transprob=($j==$i)?(1-$transP[$j]):$transP[$j]/($self->max_cn);
-	}
-	else{
-	  $transprob=($j==$i)?$theta:(1-$theta)/($self->max_cn);
-	}
-
-	my $logprob=$pdelta_t[$j]+log($transprob);
-	if($logprob>$maxlogprob){
-	  $maxlogprob=$logprob;
-	  $lab=$j;
-	}
+    for(my $j=0;$j<=$self->max_cn;$j++){  #previous time point
+      my $transprob;
+      if($TPupdate){
+        $transprob=($j==$i)?(1-$transP[$j]):$transP[$j]/($self->max_cn);
       }
-      push @delta_t,$maxlogprob+$logObsProb;
-      push @phi_t,$lab;
-    }
-    my @delta_tin=@delta_t;
-    push @delta,\@delta_tin;
+      else{
+        $transprob=($j==$i)?$theta:(1-$theta)/($self->max_cn);
+      }
 
-    push @phi,\@phi_t;
+      my $logprob=$pdelta_t[$j]+log($transprob);
+      if($logprob>$maxlogprob){
+        $maxlogprob=$logprob;
+        $lab=$j;
+      }
+    }
+    push @delta_t,$maxlogprob+$logObsProb;
+    push @phi_t,$lab;
+  }
+  my @delta_tin=@delta_t;
+  push @delta,\@delta_tin;
+
+push @phi,\@phi_t;
     @pdelta_t=@delta_t;
   }
 
@@ -377,68 +377,68 @@ sub ForwardBackword {
   @beta_t0=@alpha_t0;
   push @alpha,\@alpha_t0;  #t=0;
 
-  my $T=$#{$data->{y}}+1;
-  my @palpha_t=@alpha_t0;
-  for(my $t=1;$t<=$T;$t++){
-    my @alpha_t;
+my $T=$#{$data->{y}}+1;
+my @palpha_t=@alpha_t0;
+for(my $t=1;$t<=$T;$t++){
+  my @alpha_t;
 
-    my $dist=($t<$T)?(${$data->{x}}[$t]-${$data->{x}}[$t-1])/1000000:0;
-    $dist=($dist<=0)?10:$dist;  #Assuming 10Mb distant in between if abnormal
-    my $theta=exp(-2*$dist);
+  my $dist=($t<$T)?(${$data->{x}}[$t]-${$data->{x}}[$t-1])/1000000:0;
+  $dist=($dist<=0)?10:$dist;  #Assuming 10Mb distant in between if abnormal
+  my $theta=exp(-2*$dist);
 
-    for(my $j=0;$j<=$self->max_cn;$j++){
-      my $logObsProb=$self->LogGaussianPDF(${$data->{y}}[$t-1],$j);
-      my $sumlogprob=$LZERO;
-      for(my $i=0;$i<=$self->max_cn;$i++){  #previous time point
-	my $transprob;
-	if($TPupdate){
-	  $transprob=($j==$i)?(1-$transP[$i]):$transP[$i]/($self->{max_cn});
-	}
-	else{
-	  $transprob=($j==$i)?$theta:(1-$theta)/($self->max_cn);
-	}
-	$transprob=($transprob<$f_TransProb)?$f_TransProb:$transprob;   #floor transition prob
-
-	my $logprob=$palpha_t[$i]+log($transprob);
-	$sumlogprob=&LAdd($sumlogprob,$logprob);
+  for(my $j=0;$j<=$self->max_cn;$j++){
+    my $logObsProb=$self->LogGaussianPDF(${$data->{y}}[$t-1],$j);
+    my $sumlogprob=$LZERO;
+    for(my $i=0;$i<=$self->max_cn;$i++){  #previous time point
+      my $transprob;
+      if($TPupdate){
+        $transprob=($j==$i)?(1-$transP[$i]):$transP[$i]/($self->{max_cn});
       }
-      push @alpha_t,$sumlogprob+$logObsProb;
+      else{
+        $transprob=($j==$i)?$theta:(1-$theta)/($self->max_cn);
+      }
+      $transprob=($transprob<$f_TransProb)?$f_TransProb:$transprob;   #floor transition prob
+
+      my $logprob=$palpha_t[$i]+log($transprob);
+      $sumlogprob=&LAdd($sumlogprob,$logprob);
     }
-    push @alpha,\@alpha_t;
-    @palpha_t=@alpha_t;
+    push @alpha_t,$sumlogprob+$logObsProb;
+  }
+  push @alpha,\@alpha_t;
+@palpha_t=@alpha_t;
   }
 
   #Backward procedure
   push @beta,\@beta_t0;  #t=T
 
-  my @pbeta_t=@beta_t0;
-  for(my $t=$T-1;$t>=0;$t--){
-    my @beta_t;
-    my $dist=($t==$T-1)?0:(${$data->{x}}[$t+1]-${$data->{x}}[$t])/1000000;
-    $dist=($dist<=0)?10:$dist;  #Assuming 10Mb distant in between if abnormal
-    my $theta=exp(-2*$dist);
+my @pbeta_t=@beta_t0;
+for(my $t=$T-1;$t>=0;$t--){
+  my @beta_t;
+  my $dist=($t==$T-1)?0:(${$data->{x}}[$t+1]-${$data->{x}}[$t])/1000000;
+  $dist=($dist<=0)?10:$dist;  #Assuming 10Mb distant in between if abnormal
+  my $theta=exp(-2*$dist);
 
-    for(my $i=0;$i<=$self->max_cn;$i++){
-      my $sumlogprob=$LZERO;
-      for(my $j=0;$j<=$self->max_cn;$j++){  #previous time point
-	my $logObsProb=$self->LogGaussianPDF(${$data->{y}}[$t],$j);
+  for(my $i=0;$i<=$self->max_cn;$i++){
+    my $sumlogprob=$LZERO;
+    for(my $j=0;$j<=$self->max_cn;$j++){  #previous time point
+      my $logObsProb=$self->LogGaussianPDF(${$data->{y}}[$t],$j);
 
-	my $transprob;
-	if($TPupdate){
-	  $transprob=($j==$i)?(1-$transP[$i]):$transP[$i]/($self->max_cn);
-	}
-	else{
-	  $transprob=($j==$i)?$theta:(1-$theta)/($self->max_cn);
-	}
-	$transprob=($transprob<$f_TransProb)?$f_TransProb:$transprob;   #floor transition prob
-
-	my $logprob=$pbeta_t[$j]+log($transprob)+$logObsProb;
-	$sumlogprob=&LAdd($sumlogprob,$logprob);
+      my $transprob;
+      if($TPupdate){
+        $transprob=($j==$i)?(1-$transP[$i]):$transP[$i]/($self->max_cn);
       }
-      push @beta_t,$sumlogprob;
+      else{
+        $transprob=($j==$i)?$theta:(1-$theta)/($self->max_cn);
+      }
+      $transprob=($transprob<$f_TransProb)?$f_TransProb:$transprob;   #floor transition prob
+
+      my $logprob=$pbeta_t[$j]+log($transprob)+$logObsProb;
+      $sumlogprob=&LAdd($sumlogprob,$logprob);
     }
-    push @beta,\@beta_t;
-    @pbeta_t=@beta_t;
+    push @beta_t,$sumlogprob;
+  }
+  push @beta,\@beta_t;
+@pbeta_t=@beta_t;
   }
   @beta=reverse(@beta);
 
@@ -456,7 +456,7 @@ sub ForwardBackword {
   if($TPupdate){
     for(my $i=0;$i<=$self->max_cn;$i++){
       for(my $j=0;$j<=$self->max_cn;$j++){
-	$eta_ij[$i][$j]=$LZERO;
+        $eta_ij[$i][$j]=$LZERO;
       }
       $eta_i[$i]=$LZERO;
     }
@@ -476,14 +476,14 @@ sub ForwardBackword {
       push @gamma_t,$alpha[$t][$i]+$beta[$t][$i];
       $LogProbSum=&LAdd($LogProbSum,$gamma_t[$i]);
       if($TPupdate && ($t<$T)){
-	for(my $j=0;$j<=$self->max_cn;$j++){
-	  my $logObsProb=$self->LogGaussianPDF(${$data->{y}}[$t],$j);
-	  my $transprob=($j==$i)?(1-$transP[$i]):$transP[$i]/($self->max_cn);
-	  $transprob=($transprob<$f_TransProb)?$f_TransProb:$transprob;   #floor transition prob
+        for(my $j=0;$j<=$self->max_cn;$j++){
+          my $logObsProb=$self->LogGaussianPDF(${$data->{y}}[$t],$j);
+          my $transprob=($j==$i)?(1-$transP[$i]):$transP[$i]/($self->max_cn);
+          $transprob=($transprob<$f_TransProb)?$f_TransProb:$transprob;   #floor transition prob
 
-	  $eta_ij[$i][$j]=&LAdd($eta_ij[$i][$j],$alpha[$t][$i]+log($transprob)+$logObsProb+$beta[$t+1][$j]);
-	}
-	$eta_i[$i]=&LAdd($eta_i[$i],$gamma_t[$i]);
+          $eta_ij[$i][$j]=&LAdd($eta_ij[$i][$j],$alpha[$t][$i]+log($transprob)+$logObsProb+$beta[$t+1][$j]);
+        }
+        $eta_i[$i]=&LAdd($eta_i[$i],$gamma_t[$i]);
       }
     }
     for(my $i=0;$i<=$self->max_cn;$i++){
@@ -494,44 +494,44 @@ sub ForwardBackword {
       $nsample+=$gamma_t[$i];
     }
     push @gamma,\@gamma_t;
-  }
+}
 
-  #update purity
-  if($nsample<10){
-    $self->error_message("Insufficient data for purity estimation!\n");
-  }
-  else{
-    $self->purity($purity_stat/$nsample);
-  }
+#update purity
+if($nsample<10){
+  $self->error_message("Insufficient data for purity estimation!\n");
+}
+else{
+  $self->purity($purity_stat/$nsample);
+}
 
-  for(my $t=1;$t<=$T;$t++){
-    for(my $i=0;$i<=$self->max_cn;$i++){
-      my $mean=$self->purity*($i-2);
-      $varstat+=$gamma[$t-1][$i]*(${$data->{y}}[$t-1]-$mean)**2;
-    }
+for(my $t=1;$t<=$T;$t++){
+  for(my $i=0;$i<=$self->max_cn;$i++){
+    my $mean=$self->purity*($i-2);
+    $varstat+=$gamma[$t-1][$i]*(${$data->{y}}[$t-1]-$mean)**2;
   }
-  #update var
-  $self->var($varstat/$T);
-  $self->var(($self->var<0.01)?0.01:$self->var);
+}
+#update var
+$self->var($varstat/$T);
+$self->var(($self->var<0.01)?0.01:$self->var);
 
-  if($TPupdate){
-    #update transP
-    undef @transP;
-    for(my $i=0;$i<=$self->max_cn;$i++){
-      my $Sum;
-      my $transSum=0;
-      for(my $j=0;$j<=$self->max_cn;$j++){
-	my $prob=exp($eta_ij[$i][$j]-$eta_i[$i]);
-	$Sum+=$prob;
+if($TPupdate){
+  #update transP
+  undef @transP;
+  for(my $i=0;$i<=$self->max_cn;$i++){
+    my $Sum;
+    my $transSum=0;
+    for(my $j=0;$j<=$self->max_cn;$j++){
+      my $prob=exp($eta_ij[$i][$j]-$eta_i[$i]);
+      $Sum+=$prob;
       next if($i==$j);
-	$transSum+=$prob;
-      }
-      my $transprob=$transSum/$Sum;
-      $transprob=($transprob<$f_TransProb)?$f_TransProb:$transprob;   #floor transition prob
-      push @transP,$transprob;
+      $transSum+=$prob;
     }
+    my $transprob=$transSum/$Sum;
+    $transprob=($transprob<$f_TransProb)?$f_TransProb:$transprob;   #floor transition prob
+    push @transP,$transprob;
+  }
 
-    $self->transP(\@transP);
+  $self->transP(\@transP);
   }
 
   return ($LOGScore);
@@ -541,9 +541,14 @@ sub LogGaussianPDF {
   my ($self,$x,$j)=@_;
   $x=$self->Ceiling($x);
   my $m=$self->mean2x*($j/2*$self->purity+1-$self->purity);
-  my $v=$self->var;
-  my $logp=-1/2*log(2*$PI*$v)-($x-$m)**2/(2*$v);
-  return $logp;
+  if($self->var) {
+    my $v=$self->var;
+    my $logp=-1/2*log(2*$PI*$v)-($x-$m)**2/(2*$v);
+    return $logp;
+  }
+  else {
+    return 0;
+  }
 }
 
 sub Ceiling {
@@ -570,19 +575,19 @@ sub LAdd {
 }
 
 sub init {
-    my $self = shift;
-    $self->ceiling($self->mean2x*$self->max_cn*2);
-    my @transP;
-    for(my $i=0;$i<=$self->max_cn;$i++){
-        if($i==2){
-            push @transP,$self->cnv_rate;
-        }
-        else{
-            push @transP,$self->cnv_size;
-        }
+  my $self = shift;
+  $self->ceiling($self->mean2x*$self->max_cn*2);
+  my @transP;
+  for(my $i=0;$i<=$self->max_cn;$i++){
+    if($i==2){
+      push @transP,$self->cnv_rate;
     }
-    $self->transP(\@transP);
-    return 1;
+    else{
+      push @transP,$self->cnv_size;
+    }
+  }
+  $self->transP(\@transP);
+return 1;
 }
 
 1;

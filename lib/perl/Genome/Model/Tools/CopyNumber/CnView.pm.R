@@ -414,6 +414,12 @@ openImageFile = function(name, type, image_width, image_height){
 #Load data
 cnvs=read.table(cnv_file, comment.char="#", header=TRUE)
 segments=read.table(segments_file, sep="\t", as.is=c(1,11), header=TRUE)
+
+if (nrow(cnvs) == 0 || nrow(segments) == 0){
+  print("CNV file or CNV-segments file empty. Skipping CnView.")
+  q();
+}
+
 genes=read.table(gene_file, sep="\t", header=TRUE, as.is=c(1:5,8,10))
 ideo_data = read.table(ideogram_file, sep="\t", header=FALSE, comment.char="#", as.is=c(1,4,5))
 names(ideo_data) = c("chrom","chromStart", "chromEnd", "name", "gieStain")
