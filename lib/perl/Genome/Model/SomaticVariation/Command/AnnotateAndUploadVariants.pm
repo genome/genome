@@ -50,9 +50,8 @@ class Genome::Model::SomaticVariation::Command::AnnotateAndUploadVariants{
         },
         joinx_version => {
             is => "Text",
-            doc => "Version of joinx to use",
-            is_optional => 0,
-            default => 1.6,
+            is_optional => 1,
+            doc => "Version of joinx to use, will be resolved to the latest default if not specified",
         },
         lsf_resource => { 
             is => 'Text',
@@ -67,6 +66,8 @@ sub execute{
     unless ($build){
         die $self->error_message("no build provided!");
     }
+
+    $self->_resolve_joinx_version;
 
     $self->debug_message("Executing Annotate and Upload step");
 
@@ -463,6 +464,13 @@ sub execute{
     $self->debug_message("Metric setting problem: $@") if $@;
 
     return 1;
+}
+
+sub _resolve_joinx_version {
+    my $self = shift;
+    unless (defined $self->joinx_version) {
+        $self->joinx_version(Genome::Model::Tools::Joinx->get_default_version);
+    }
 }
 
 sub _get_db_version {

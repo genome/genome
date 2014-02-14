@@ -56,8 +56,8 @@ class Genome::Model::Tools::Vcf::CreateCrossSampleVcf::CreateCrossSampleVcfBase 
         },
         joinx_version => {
             is => 'Text',
-            doc => 'Joinx version to use in all joinx operations',
-            default => '1.7',
+            is_optional => 1,
+            doc => "Version of joinx to use, will be resolved to the latest default if not specified",
         },
         output_directory => {
             is => 'Text',
@@ -108,6 +108,8 @@ EOS
 sub generate_result {
     my ($self) = @_;
 
+    $self->_resolve_joinx_version;
+
     $self->debug_message("Resolving Builds...");
     my $builds = $self->_resolve_builds;
 
@@ -129,6 +131,13 @@ sub generate_result {
     }
 
     return 1;
+}
+
+sub _resolve_joinx_version {
+    my $self = shift;
+    unless (defined $self->joinx_version) {
+        $self->joinx_version(Genome::Model::Tools::Joinx->get_default_version);
+    }
 }
 
 sub _resolve_builds {

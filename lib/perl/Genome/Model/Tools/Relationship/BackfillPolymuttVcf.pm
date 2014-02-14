@@ -37,7 +37,8 @@ class Genome::Model::Tools::Relationship::BackfillPolymuttVcf {
        },
        joinx_version=> {
            is => "Text",
-           default => '1.7',
+           is_optional => 1,
+           doc => "Version of joinx to use, will be resolved to the latest default if not specified",
        },
        # Roi limiting params
        roi_file => {
@@ -79,6 +80,8 @@ sub help_detail {
 sub execute {
     my $self=shift;
 
+    $self->_resolve_joinx_version;
+
     $self->validate_inputs;
 
     $self->debug_message("Resolving valid builds for the given model group");
@@ -104,6 +107,13 @@ sub execute {
     $self->create_final_vcf;
 
     return 1;
+}
+
+sub _resolve_joinx_version {
+    my $self = shift;
+    unless (defined $self->joinx_version) {
+        $self->joinx_version(Genome::Model::Tools::Joinx->get_default_version);
+    }
 }
 
 sub validate_inputs {
