@@ -129,7 +129,16 @@ sub execute {
         skip_if_output_is_present => 0,
         allow_zero_size_output_files => 1,
     );
-    my $cat_cmd = "cat $temp_file >> ".$self->output_file;
+
+    my ($temp2, $temp2_file) = Genome::Sys->create_temp_file;
+    my $in = Genome::Sys->open_file_for_reading($temp_file);
+    while(my $line = <$in>) {
+        chomp $line;
+        $line =~ s/\s+$//;
+        $temp2->print("$line\n");
+    }
+    $temp2->close;
+    my $cat_cmd = "cat $temp2_file >> ".$self->output_file;
     system($cat_cmd);
     return 1;
 }
