@@ -13178,10 +13178,10 @@ $Genome::Command::OPTS_SPEC = [
         [
           'output-pdf=s',
           'files',
-          'coverage-file=s',
-          'files',
           'debug!',
           undef,
+          'input-coverage-file=s',
+          'files',
           'refalign-model-id=s',
           undef,
           'somatic-validation-model-id=s',
@@ -19811,6 +19811,8 @@ $Genome::Command::OPTS_SPEC = [
             'files',
             'debug!',
             undef,
+            'input-id=s',
+            'files',
             'tcga-version=s',
             [
               '1.1',
@@ -19842,6 +19844,8 @@ $Genome::Command::OPTS_SPEC = [
             'files',
             'debug!',
             undef,
+            'input-id=s',
+            'files',
             'tcga-version=s',
             [
               '1.1',
@@ -19873,6 +19877,8 @@ $Genome::Command::OPTS_SPEC = [
             'files',
             'debug!',
             undef,
+            'input-id=s',
+            'files',
             'tcga-version=s',
             [
               '1.1',
@@ -19904,6 +19910,8 @@ $Genome::Command::OPTS_SPEC = [
             'files',
             'debug!',
             undef,
+            'input-id=s',
+            'files',
             'tcga-version=s',
             [
               '1.1',
@@ -19935,6 +19943,8 @@ $Genome::Command::OPTS_SPEC = [
             'files',
             'debug!',
             undef,
+            'input-id=s',
+            'files',
             'tcga-version=s',
             [
               '1.1',
@@ -19966,6 +19976,8 @@ $Genome::Command::OPTS_SPEC = [
             'files',
             'debug!',
             undef,
+            'input-id=s',
+            'files',
             'tcga-version=s',
             [
               '1.1',
@@ -19997,6 +20009,8 @@ $Genome::Command::OPTS_SPEC = [
             'files',
             'debug!',
             undef,
+            'input-id=s',
+            'files',
             'tcga-version=s',
             [
               '1.1',
@@ -20028,6 +20042,8 @@ $Genome::Command::OPTS_SPEC = [
             'files',
             'debug!',
             undef,
+            'input-id=s',
+            'files',
             'tcga-version=s',
             [
               '1.1',
@@ -20059,6 +20075,8 @@ $Genome::Command::OPTS_SPEC = [
             'files',
             'debug!',
             undef,
+            'input-id=s',
+            'files',
             'tcga-version=s',
             [
               '1.1',
@@ -20090,6 +20108,8 @@ $Genome::Command::OPTS_SPEC = [
             'files',
             'debug!',
             undef,
+            'input-id=s',
+            'files',
             'tcga-version=s',
             [
               '1.1',
@@ -20121,6 +20141,8 @@ $Genome::Command::OPTS_SPEC = [
             'files',
             'debug!',
             undef,
+            'input-id=s',
+            'files',
             'tcga-version=s',
             [
               '1.1',
@@ -20177,6 +20199,8 @@ $Genome::Command::OPTS_SPEC = [
             'files',
             'debug!',
             undef,
+            'input-id=s',
+            'files',
             'tcga-version=s',
             [
               '1.1',
@@ -20208,6 +20232,8 @@ $Genome::Command::OPTS_SPEC = [
             'files',
             'debug!',
             undef,
+            'input-id=s',
+            'files',
             'tcga-version=s',
             [
               '1.1',
@@ -20239,6 +20265,8 @@ $Genome::Command::OPTS_SPEC = [
             'files',
             'debug!',
             undef,
+            'input-id=s',
+            'files',
             'tcga-version=s',
             [
               '1.1',
@@ -20270,6 +20298,8 @@ $Genome::Command::OPTS_SPEC = [
             'files',
             'debug!',
             undef,
+            'input-id=s',
+            'files',
             'tcga-version=s',
             [
               '1.1',
@@ -20301,6 +20331,8 @@ $Genome::Command::OPTS_SPEC = [
             'files',
             'debug!',
             undef,
+            'input-id=s',
+            'files',
             'tcga-version=s',
             [
               '1.1',
@@ -20332,6 +20364,8 @@ $Genome::Command::OPTS_SPEC = [
             'files',
             'debug!',
             undef,
+            'input-id=s',
+            'files',
             'tcga-version=s',
             [
               '1.1',
@@ -20363,6 +20397,8 @@ $Genome::Command::OPTS_SPEC = [
             'files',
             'debug!',
             undef,
+            'input-id=s',
+            'files',
             'tcga-version=s',
             [
               '1.1',
@@ -20394,6 +20430,8 @@ $Genome::Command::OPTS_SPEC = [
             'files',
             'debug!',
             undef,
+            'input-id=s',
+            'files',
             'tcga-version=s',
             [
               '1.1',
@@ -35379,6 +35417,8 @@ $Genome::Command::OPTS_SPEC = [
         'pindel-raw-output=s',
         'files',
         'reference-build-id=s',
+        'files',
+        'tool-path=s',
         'files',
         'aligned-reads-sample=s',
         'files',
