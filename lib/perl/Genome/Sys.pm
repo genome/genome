@@ -2,7 +2,7 @@ package Genome::Sys;
 
 use strict;
 use warnings;
-use autodie qw(chown mkdir);
+use autodie qw(chown);
 use Genome;
 use Cwd;
 use File::Path;
@@ -16,7 +16,8 @@ use List::MoreUtils "each_array";
 use Set::Scalar;
 use Digest::MD5;
 use JSON;
-use Params::Validate qw(:types);
+use Params::Validate qw(:types validate_pos);
+use POSIX qw(EEXIST);
 
 # these are optional but should load immediately when present
 # until we can make the Genome::Utility::Instrumentation optional (Net::Statsd deps)
@@ -843,7 +844,7 @@ sub create_directory {
 # File::Path::make_path says it lets you specify group but it always seemed
 # to be overrided by setgid.  So we are implenting the recursive mkdir here.
 sub make_path {
-    my $path = shift;
+    my ($path) = validate_pos(@_, {type => SCALAR});
 
     my $gid = gidgrnam($ENV{GENOME_SYS_GROUP});
 
@@ -851,11 +852,17 @@ sub make_path {
     for (my $i = 0; $i < @dirs; $i++) {
         my $subpath = File::Spec->catdir(@dirs[0..$i]);
 
-        next if (-d $subpath);
-
-        # autodie is on
-        mkdir $subpath;
-        chown -1, $gid, $subpath;
+        my $rv = mkdir $subpath;
+        if ($rv) {
+            chown -1, $gid, $subpath;
+        } else {
+            if ($! == EEXIST) {
+                next;
+            } else {
+                Carp::confess("While creating path ($path), failed to create " .
+                    "directory ($subpath) because ($!)");
+            }
+        }
     }
 
     unless (-d $path) {
