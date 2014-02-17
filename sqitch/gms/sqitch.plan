@@ -266,3 +266,4 @@ model.model.run_as.sql [model_model] 2014-02-13T19:47:19Z Nathan Nutter <nnutter
 
 rename_clia_to_cle_for_analysis_projects [add_clia_fields_to_analysis_projects] 2014-02-17T21:17:38Z Adam Coffman <acoffman@genome.wustl.edu> # At dlarson's request, we're renaming this field to is_cle
 config.subject_mapping [config_analysis_project subject_pairing] 2014-02-17T22:25:14Z Thomas B. Mooney <tmooney@genome.wustl.edu> # replace subject pairings with subject mappings
+@1392678262 2014-02-17T23:04:23Z Thomas B. Mooney <tmooney@genome.wustl.edu># Replacing subject pairings with more functional subject mappings
