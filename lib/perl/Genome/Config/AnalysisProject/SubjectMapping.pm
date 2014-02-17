@@ -21,6 +21,20 @@ class Genome::Config::AnalysisProject::SubjectMapping {
             is    => 'Genome::Config::AnalysisProject',
             id_by => 'analysis_project_id'
         },
+        subject_bridges => {
+            is => 'Genome::Config::AnalysisProject::SubjectMapping::Subject',
+            reverse_as => 'subject_mapping',
+            is_many => 1,
+        },
+        subjects => {
+            via => 'subject_bridges',
+            to => 'subject',
+        },
+        inputs => {
+            is => 'Genome::Config::AnalysisProject::SubjectMapping::Input',
+            reverse_as => 'subject_mapping',
+            is_many => 1,
+        }
     ]
 };
 

@@ -254,29 +254,25 @@ sub _process_paired_samples {
     die('Must provide an analysis project, a piece of instrument data and a config hash!')
         unless($analysis_project && $instrument_data && $model_hashes);
 
-    my @subject_pairings = Genome::Config::AnalysisProject::SubjectPairing->get(
-        -or => [
-            [ analysis_project => $analysis_project, control_subject => $instrument_data->sample],
-            [ analysis_project => $analysis_project, experimental_subject => $instrument_data->sample]
-        ],
+    my @subject_mappings = Genome::Config::AnalysisProject::SubjectMapping->get(
+        analysis_project => $analysis_project,
+        subjects => $instrument_data->sample
     );
 
-    unless (@subject_pairings) {
-        die(sprintf('Found no pairing information for %s in project %s for a model type that requires pairing!',
+    unless (@subject_mappings) {
+        die(sprintf('Found no mapping information for %s in project %s for a model type that requires mapping!',
             $instrument_data->__display_name__,
             $analysis_project->__display_name__));
     }
 
     return [ map {
-        my $pair = $_;
+        my $mapping = $_;
         map { {
-          experimental_subject => $pair->experimental_subject,
-          control_subject => $pair->control_subject,
-          #TODO - this should be in config or on the pairing object
-          subject => $pair->experimental_subject->source,
+          (map { $_->label => $_->subject } $mapping->subject_bridges),
+          (map { $_->key => $_->value } $mapping->inputs),
           %$_
         } } @$model_hashes
-    } @subject_pairings ];
+    } @subject_mappings ];
 }
 
 sub _get_items_to_process {

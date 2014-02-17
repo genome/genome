@@ -17,6 +17,10 @@ class Genome::Config::AnalysisProject::SubjectMapping::Subject {
         },
     ],
     has => [
+        subject_mapping => {
+            is => 'Genome::Config::AnalysisProject::SubjectMapping',
+            id_by => 'subject_mapping_id',
+        },
         subject => {
             is    => 'Genome::Subject',
             id_by => 'subject_id'
