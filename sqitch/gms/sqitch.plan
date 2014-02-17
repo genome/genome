@@ -271,3 +271,4 @@ config.subject_mapping [config_analysis_project subject_pairing] 2014-02-17T22:2
 
 model.model.run_as_idx [model.model.run_as.sql] 2014-02-17T21:47:44Z Nathaniel Nutter <nnutter@genome.wustl.edu># add index to run_as column
 model.model.created_by_idx [model.model.created_by] 2014-02-17T22:36:09Z Nathaniel Nutter <nnutter@genome.wustl.edu># add index to created_by column
+model.model.drop_uniq_m_m_idun [model_model] 2014-02-17T22:39:34Z Nathaniel Nutter <nnutter@genome.wustl.edu># drop uniq_m_m_idun index
