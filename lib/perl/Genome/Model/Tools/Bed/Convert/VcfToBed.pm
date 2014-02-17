@@ -12,21 +12,29 @@ use Genome::Info::IUB;
 
 class Genome::Model::Tools::Bed::Convert::VcfToBed {
     is => ['Genome::Model::Tools::Bed::Convert'],
+    has => [
+        sample_name => {
+            is => "Text",
+            is_optional => 1,
+            doc => "Name of specific sample to extract from VCF.  If not specified, the first sample will be used",
+        },
+    ],
 };
 
 sub process_source {
     my $self = shift;
     my $vcf_reader = new Genome::File::Vcf::Reader($self->source);
 
+    my $sample_index = _sample_index_for_name($vcf_reader, $self->sample_name);
+
     while(my $entry = $vcf_reader->next) {
         #do something intelligent here
         next if $entry->is_filtered;
-        #for now, only look at the first sample
-        my $ft = $entry->sample_field(0,"FT");
+        my $ft = $entry->sample_field($sample_index,"FT");
         next if(defined $ft and ($ft ne '.' and $ft ne 'PASS'));
 
         #ok, we're converting this bad boy!
-        my $gt = $entry->genotype_for_sample(0);
+        my $gt = $entry->genotype_for_sample($sample_index);
         my @entry_alleles = $entry->alleles;
         my @genotype_alleles = map {$entry_alleles[$_]} $gt->get_alleles;
 
@@ -52,6 +60,17 @@ sub process_source {
         }
     }
     return 1;
+}
+
+sub _sample_index_for_name {
+    my $reader = shift;
+    my $name = shift;
+
+    unless ($name) {
+        return 0;
+    }
+
+    return $reader->header->index_for_sample_name($name);
 }
 
 sub _convert_snv_gt_to_bed {
