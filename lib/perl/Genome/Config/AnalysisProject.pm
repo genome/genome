@@ -42,9 +42,9 @@ class Genome::Config::AnalysisProject {
             is => 'Text',
             doc => 'The user account that will be used to run these models',
         },
-        subject_pairings => {
+        subject_mappings => {
             is_many => 1,
-            is => 'Genome::Config::AnalysisProject::SubjectPairing',
+            is => 'Genome::Config::AnalysisProject::SubjectMapping',
             reverse_as => 'analysis_project',
         },
         analysis_project_bridges => {

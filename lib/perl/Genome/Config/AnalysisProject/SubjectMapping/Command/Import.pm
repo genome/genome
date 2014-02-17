@@ -1,11 +1,11 @@
-package Genome::Config::AnalysisProject::SubjectPairing::Command::Import;
+package Genome::Config::AnalysisProject::SubjectMapping::Command::Import;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Config::AnalysisProject::SubjectPairing::Command::Import {
+class Genome::Config::AnalysisProject::SubjectMapping::Command::Import {
     is => 'Command::V2',
     has_input => [
         analysis_project =>  {
@@ -26,12 +26,12 @@ sub help_brief {
 }
 
 sub help_synopsis {
-    return "genome analysis-project subject-pairing create <analysis_project_id>";
+    return "genome analysis-project subject-mapping import <analysis_project_id> <TSV file path>";
 }
 
 sub help_detail {
     return <<"EOS"
-This command allows you to import subject pairing information for an AnalysisProject in bulk.
+This command allows you to import subject mapping information for an AnalysisProject in bulk.
 
 It expects each line of the file to be formatted as follows:
 control_subject_id<TAB>experimental_subject_id
@@ -49,14 +49,14 @@ sub execute {
 
     my $count = 0;
     while (my $line = $reader->next()) {
-        Genome::Config::AnalysisProject::SubjectPairing->create(
+        Genome::Config::AnalysisProject::SubjectMapping->create(
             %$line,
             analysis_project => $self->analysis_project,
         );
         $count++;
     }
 
-    $self->status_message("Creating $count new sample pairings.");
+    $self->status_message("Creating $count new subject mappings.");
 
     return $count;
 }
