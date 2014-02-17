@@ -270,3 +270,4 @@ config.subject_mapping [config_analysis_project subject_pairing] 2014-02-17T22:2
 @1392678262 2014-02-17T23:04:23Z Thomas B. Mooney <tmooney@genome.wustl.edu># Replacing subject pairings with more functional subject mappings
 
 model.model.run_as_idx [model.model.run_as.sql] 2014-02-17T21:47:44Z Nathaniel Nutter <nnutter@genome.wustl.edu># add index to run_as column
+model.model.created_by_idx [model.model.created_by] 2014-02-17T22:36:09Z Nathaniel Nutter <nnutter@genome.wustl.edu># add index to created_by column
