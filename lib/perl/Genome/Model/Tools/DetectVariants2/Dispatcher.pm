@@ -1039,7 +1039,9 @@ sub _create_bed_from_vcf {
     my $self = shift;
     my $vcf = shift;
 
-    my $rv = Genome::Model::Tools::Bed::Convert::VcfToBed->execute(source => $vcf, output => "$vcf.bed");
+    my $rv = Genome::Model::Tools::Bed::Convert::VcfToBed->execute(source => $vcf, 
+                                                                   output => "$vcf.bed",
+                                                                   sample_name => $self->aligned_reads_sample);
     unless ($rv) {
         $self->error_message("VcfToBed conversion failed");
         die;
