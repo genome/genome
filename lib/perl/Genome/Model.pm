@@ -86,11 +86,17 @@ class Genome::Model {
     ],
     has_optional => [
         user_name => {
-            # TODO: we use created_by in other places to be specific as-to role of the user
-            # This is redundant with the model creation event data.
-            # Adam was going for a rails standard?
             is => 'Text',
-            doc => 'the user who created the model',
+            is_deprecated => 1,
+            doc => 'use created_by (or maybe run_as), accessor overridden for transition to created_by',
+        },
+        created_by => {
+            is => 'Text',
+            doc => 'entity that created the model, accessor overridden for transition to created_by',
+        },
+        run_as => {
+            is => 'Text',
+            doc => 'username to run builds as, accessor overridden for transition to created_by',
         },
         creation_date => {
             # TODO: switch from timestamp to Date when we go Oracle to PostgreSQL
@@ -484,7 +490,10 @@ sub create {
         Carp::confess $reason || $@;
     }
 
-    $self->user_name(Genome::Sys->username) unless $self->user_name;
+    for my $m (qw(run_as created_by)) {
+        $self->$m(Genome::Sys->username) unless $self->$m;
+    }
+
     unless ($self->name) {
         my $name = $self->default_model_name;
         if ($name) {
@@ -806,7 +815,7 @@ sub default_model_name {
     $auto_increment = 1 unless defined $auto_increment;
 
     my $name_template = ($self->subject->name).'.';
-    $name_template .= 'prod-' if (($self->user_name && $self->user_name eq 'apipe-builder') || $params{prod});
+    $name_template .= 'prod-' if (($self->run_as && $self->run_as eq 'apipe-builder') || $params{prod});
 
     my $type_name = $self->processing_profile->type_name;
     my %short_names = (
@@ -1075,5 +1084,50 @@ sub files_ignored_by_build_diff { () }
 #Does this model type require control/experimental (normal/tumor) pairing to work?
 #Used by Analysis Project configuration
 sub requires_pairing { return 0; }
+
+# For transition to created_by
+sub user_name {
+    my $self = shift;
+    if (@_) {
+        return $self->__created_by(@_);
+    } else {
+        # Perl 5.8 does not support //
+        if (defined $self->__created_by) {
+            return $self->__created_by;
+        } else {
+            $self->__user_name;
+        }
+    }
+}
+
+# For transition to created_by
+sub created_by {
+    my $self = shift;
+    if (@_) {
+        return $self->__created_by(@_);
+    } else {
+        # Perl 5.8 does not support //
+        if (defined $self->__created_by) {
+            return $self->__created_by;
+        } else {
+            $self->__user_name;
+        }
+    }
+}
+
+# For transition to created_by
+sub run_as {
+    my $self = shift;
+    if (@_) {
+        return $self->__run_as(@_);
+    } else {
+        # Perl 5.8 does not support //
+        if (defined $self->__run_as) {
+            return $self->__run_as;
+        } else {
+            $self->__user_name;
+        }
+    }
+}
 
 1;

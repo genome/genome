@@ -40,7 +40,8 @@ class Genome::Model::Build::View::Fast::Xml {
                     'aspects' => [
                         'id',
                         'name',
-                        'user_name',
+                        'created_by',
+                        'run_as',
                         {   'name' => 'processing_profile',
                             'perspective' => 'default',
                             'toolkit' => 'xml',

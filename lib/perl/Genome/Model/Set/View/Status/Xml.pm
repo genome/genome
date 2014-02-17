@@ -26,7 +26,8 @@ class Genome::Model::Set::View::Status::Xml {
                             toolkit => 'xml',
                         },
                         'creation_date',
-                        'user_name',
+                        'created_by',
+                        'run_as',
                         {
                             name => 'builds',
                             aspects => [

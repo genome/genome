@@ -24,7 +24,7 @@ my @models;
 my @instrument_data;
 for(1..3) {
     my $m = Genome::Test::Factory::Model::ReferenceAlignment->setup_object(
-        user_name => 'apipe-builder',
+        created_by => 'apipe-builder', # matches default in Genome::Project::Command::Update::Models::model_user
     );
     my $i = Genome::Test::Factory::InstrumentData::Solexa->setup_object();
     $m->add_instrument_data($i);

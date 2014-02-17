@@ -23,7 +23,8 @@ class Genome::Model::View::Status::Xml {
                     subject_class_name => 'Genome::Subject'
                 },
                 'creation_date',
-                'user_name',
+                'created_by',
+                'run_as',
                 'build_requested',
                 'build_needed',
                 'status',
