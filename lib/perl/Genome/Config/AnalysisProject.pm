@@ -33,7 +33,7 @@ class Genome::Config::AnalysisProject {
             default_value => 'Pending',
             valid_values => ['Pending', 'Approved', 'In Progress', 'Completed', 'Archived', 'Hold'],
         },
-        is_clia => {
+        is_cle => {
             is => 'Boolean',
             default_value => 0,
             doc => 'Is this an analysis project for the CLIA Licensed Environment?',
@@ -138,7 +138,7 @@ sub _set_run_as {
 
     return if $self->run_as;
 
-    if ($self->is_clia) {
+    if ($self->is_cle) {
         $self->run_as('clia');
     } else {
         $self->run_as('apipe-builder');
