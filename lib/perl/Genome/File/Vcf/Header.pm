@@ -124,6 +124,19 @@ sub num_samples {
     return $self->_num_sample_names;
 };
 
+sub index_for_sample_name {
+    my $self = shift;
+    my $name = shift;
+    my $counter = 0;
+    for my $sample ($self->sample_names) {
+        if ($sample eq $name) {
+            return $counter;
+        }
+        $counter++;
+    }
+    confess "Sample name $name not found in header";
+}
+
 sub _header_line {
     my $self = shift;
     return "#" . join("\t", column_headers(), $self->sample_names);

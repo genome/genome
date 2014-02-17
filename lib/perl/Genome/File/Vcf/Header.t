@@ -87,6 +87,22 @@ subtest "basic_parse" => sub {
     is($header->filters->{REALLY_BAD}, "Oh no", "REALLY_BAD filter");
 };
 
+subtest "sample_index" => sub {
+    my $header = $pkg->create(lines => \@lines);
+    ok($header, "Parsed header");
+
+    is($header->index_for_sample_name("S1"), 0, "index for S1 is correct");
+    is($header->index_for_sample_name("S2"), 1, "index for S1 is correct");
+    is($header->index_for_sample_name("S3"), 2, "index for S1 is correct");
+};
+
+subtest "sample_index_not_found" => sub {
+    my $header = $pkg->create(lines => \@lines);
+    ok($header, "Parsed header");
+    eval {$header->index_for_sample_name("S0");};
+    ok($@, "Sample index not found is an error");
+};
+
 subtest "to_string" => sub {
     my $header = $pkg->create(lines => \@lines);
     ok($header, "Parsed header");
