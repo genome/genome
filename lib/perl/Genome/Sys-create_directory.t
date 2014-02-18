@@ -19,7 +19,7 @@ do {
     ok($sys_group, "user belongs to GENOME_SYS_GROUP ($sys_group)") or abort;
 
     my $test_group = first { $_ ne $sys_group } get_group_names();
-    ok($test_group, "user belogs to some other group besides GENOME_SYS_GROUP ($sys_group)");
+    ok($test_group, "user belongs to some other group besides GENOME_SYS_GROUP ($sys_group)");
 
     # setup
     my $td_path = File::Temp->newdir();
