@@ -51,6 +51,9 @@ my $cmd = Genome::Model::GenotypeMicroarray::Command::Extract->create(
 ok($cmd, 'create');
 $cmd->dump_status_messages(1);
 ok($cmd->execute, 'execute');
+is($cmd->genotypes_input, 9, 'genotypes_input');
+is($cmd->genotypes_filtered, 0, 'genotypes_filtered');
+is($cmd->genotypes_output, 9, 'genotypes_output');
 is(File::Compare::compare($output, $build->genotype_file_path), 0, 'output file matches');
 
 #print "gvimdiff $output ".$build->genotype_file_path."\n"; <STDIN>;

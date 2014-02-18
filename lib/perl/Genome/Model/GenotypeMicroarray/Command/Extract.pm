@@ -93,12 +93,16 @@ DOC
     },
     has_optional_transient => {
         alleles => { is => 'Hash', },
-        genotypes_loaded => { is => 'Number', default_value => 0, },
-        genotypes_filtered => { is => 'Number', default_value => 0, },
-        genotypes_kept => { is => 'Number', default_value => 0, },
-        genotypes_output => { is => 'Number', default_value => 0, },
+        metrics => { is => 'Hash', },
         source => { is => 'Text', },
         source_type => { is => 'Text', },
+    },
+    has_calculated => {
+        genotypes_input => { is => 'Number', calculate => q( return $self->metrics->{input}; ), },
+        genotypes_filtered => {
+            is => 'Number', calculate => q( return $self->metrics->{input} - $self->metrics->{output}; ), 
+        },
+        genotypes_output => { is => 'Number', calculate => q( return $self->metrics->{output}; ), },
     },
 };
 
@@ -128,7 +132,7 @@ sub execute {
     return if not $writer;
 
     my %metrics = ( input => 0, filtered => 0, output => 0, );
-    GENOTYPE: while ( my $genotype = $reader->next ) {
+    GENOTYPE: while ( my $genotype = $reader->read ) {
         $metrics{input}++;
         for my $filter ( @$filters ) {
             next GENOTYPE if not $filter->filter($genotype);
@@ -136,9 +140,9 @@ sub execute {
         $metrics{output}++;
         $writer->write_one($genotype);
     }
-    $metrics{filtered} = $metrics{input} - $metrics{output};
-    for my $name (qw/ input filtered output /) {
-        $self->status_message("Genotypes $name: ".$metrics{$name});
+    $self->metrics(\%metrics);
+    for my $name ( map { 'genotypes_'.$_ } (qw/ input filtered output /) ) {
+        $self->status_message(ucfirst(join(' ', split('_', $name))).": ".$self->$name);
     }
 
     $self->debug_message('Extract genotytpes...done');
@@ -292,7 +296,7 @@ sub _last_succeeded_build_from_model_for_instrument_data {
         return;
     }
 
-    my @builds = sort { $b->date_completed cmp $a->date_completed } Genome::Model::GenotypeMicroarray->get(
+    my @builds = sort { $b->date_completed cmp $a->date_completed } Genome::Model::Build::GenotypeMicroarray->get(
         instrument_data => [ $instrument_data ],
         reference_sequence_build => $variation_list_build->reference,
         dbsnp_build => $variation_list_build,
