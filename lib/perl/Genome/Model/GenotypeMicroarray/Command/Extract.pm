@@ -5,26 +5,12 @@ use warnings;
 
 use Genome;
 
+require File::Basename;
+
 class Genome::Model::GenotypeMicroarray::Command::Extract {
     is => 'Command::V2',
-    has_optional => [
-        output => {
-            is => 'Text',
-            default_value => '-',
-            doc => 'The output. Defaults to STDOUT.',
-        },
-        fields => {
-            is => 'Text',
-            is_many => 1,
-            default_value => [qw/ chromosome position alleles /],
-            valid_values => [qw/ chromosome position alleles id sample_id log_r_ratio gc_score cnv_value cnv_confidence allele1 allele2 /],
-            doc => 'The fields to output in the genotype file.',
-        },
-        separator => {
-            is => 'Text',
-            default_value => 'tab',
-            doc => 'Field separator of the output. Use "tab" for tab delineated.',
-        },
+    has_optional => {
+        # SOURCE
         model => {
             is => 'Genome::Model',
             doc => 'The genotype model to work with. This will get the most recent succeeded build.',
@@ -33,16 +19,91 @@ class Genome::Model::GenotypeMicroarray::Command::Extract {
             is => 'Genome::Model::Build',
             doc => 'The genotype build to use.',
         },
+        instrument_data => {
+            is => 'Genome::InstrumentData',
+            doc => 'The genotype instrument data to work with.',
+        },
+        sample => {
+            is => 'Genome::Sample',
+            doc => 'The sample instrument data to work with.',
+        },
+        sample_type_priority => {
+            is => 'Text',
+            is_many => 1,
+            default_value => [qw/ defined internal external /],
+            valid_values => [qw/ defined internal external /],
+            doc => 'Priority of the sample type to favor when getting microarray instrumetn data.',
+        },
+        variation_list_build => { # req for sample and instdata
+            is => 'Genome::Model::Build::ImportedVariationList',
+            doc => 'Imported variation list build. Give id from command line. Commonly used:
+                     ID          REFERENCE                   VERSION
+                     106227442   dbSNP-NCBI-human-build36    130
+                     106375969   dbSNP-g1k-human-build37     132',
+        },
+        # OUTPUT
+        output => {
+            is => 'Text',
+            doc => <<DOC
+Output config. Give give key value (key=value) pairs separated by colons (:).
+Defaults to writing all fields with headers as CSV w/ tabs to STDOUT.
+Options:
+
+ file           File to write to. Use '-' for STDOUT.
+ format         Format to output. If undefined, it will be determined by
+                 file extension. Valid vlaues: vcf, csv [character separated values].
+ separator      For CSV, the separator ot use. Default is 'TAB', which writes tab
+                 separated values.
+ headers        Include headers. Use 1 to include, 0 to exclude. Applies only to CSV.
+ print_headers  Write these fields. Applies only to CSV.
+                 Fields: 
+                  id
+                  chromosome
+                  position
+                  sample_id
+                  log_r_ratio
+                  gc_score
+                  cnv_value
+                  cnv_confidence
+                  alleles
+                  allele1
+                  allele2 
+
+                 Deafult fields are chromosome, position and alleles.
+
+Examples:
+             
+ Write to FILE as comma separated values, with headers and all available fields:
+
+  output=FILE:separator=,
+
+ Write to FILE as TAB separated values, without headers and only chromosome, position
+  and alleles fields:
+
+  output=FILE:headers=chromosome,position,alleles:print_headers=0
+
+DOC
+            ,
+        },
         filters => {
             is => 'Text',
             is_many => 1,
             doc => "Filter genotypes. Give name and parameters, if required. Filters:\n gc_scrore => filter by min gc score (Ex: gc_score:min=0.7)\n invalid_iscan_ids => list of invalid iscan snvs compiled by Nate",
         },
-    ],
+    },
+    has_optional_transient => {
+        alleles => { is => 'Hash', },
+        genotypes_loaded => { is => 'Number', default_value => 0, },
+        genotypes_filtered => { is => 'Number', default_value => 0, },
+        genotypes_kept => { is => 'Number', default_value => 0, },
+        genotypes_output => { is => 'Number', default_value => 0, },
+        source => { is => 'Text', },
+        source_type => { is => 'Text', },
+    },
 };
 
 sub help_brief {
-    return 'extract genotype data from a build';
+    return 'extract genotype data from a build or inst data';
 }
 
 sub help_detail {
@@ -52,94 +113,242 @@ HELP
 
 sub execute {
     my $self = shift;
-    $self->debug_message('Extract genotytpes from build...');
+    $self->status_message('Extract genotytpes...');
 
-    my $build = $self->_resolve_build;
-    return if not $build;
+    my $resolve_source = $self->_revsolve_source;
+    return if not $resolve_source;
 
-    my $reader = $self->_open_oringinal_genotype_reader;
+    my $filters = $self->_create_filters;
+    return if not $filters;
+
+    my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->build_reader($self->source, $self->variation_list_build);
     return if not $reader;
 
-    my $output_fh = $self->_open_output;
-    return if not $output_fh;
+    my $writer = Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory->build_writer($self->output);
+    return if not $writer;
 
-    my $sep = ( $self->separator eq 'tab' ? "\t" : $self->separator );
-    my @fields = $self->fields;
-    my ($total, $pass) = (qw/ 0 0 /);
-    GENOTYPE: while ( my $genotype = $reader->read ) {
-        $output_fh->print( join($sep, map { defined $genotype->{$_} ? $genotype->{$_} : 'NA' } @fields)."\n" );
+    my %metrics = ( input => 0, filtered => 0, output => 0, );
+    GENOTYPE: while ( my $genotype = $reader->next ) {
+        $metrics{input}++;
+        for my $filter ( @$filters ) {
+            next GENOTYPE if not $filter->filter($genotype);
+        }
+        $metrics{output}++;
+        $writer->write_one($genotype);
     }
-    $output_fh->flush;
+    $metrics{filtered} = $metrics{input} - $metrics{output};
+    for my $name (qw/ input filtered output /) {
+        $self->status_message("Genotypes $name: ".$metrics{$name});
+    }
 
-    $self->debug_message('Wrote '.$reader->passed.' of '.$reader->total.' genotypes. Output genotypes...OK');
-    $self->debug_message('Done');
+    $self->debug_message('Extract genotytpes...done');
     return 1;
 }
 
-sub _resolve_build {
+sub _revsolve_source {
     my $self = shift;
 
-    if ( $self->build ) {
-        return $self->build;
-    }
-
-    my $model = $self->model;
-    if ( not $model ) {
-        $self->error_message('No model or build given!');
+    my @sources = grep { $self->$_ } (qw/ build model sample instrument_data /);
+    if ( not @sources ) {
+        $self->error_message('No source given! Can be build, model, instrument data or sample.');
         return;
     }
 
-    my $last_succeeded_build = $model->last_succeeded_build;
-    if ( not $last_succeeded_build ) {
-        $self->error_message('No last succeeded build for model! '.$model->id);
-        return;
-    }
+    my $source_method = '_resolve_source_for_'.$sources[0];
+    my $resolve_source = $self->$source_method;
+    return if not $resolve_source;
 
-    return $self->build($last_succeeded_build);
+    return 1;
 }
 
-sub _open_oringinal_genotype_reader {
+sub _resolve_source_for_build {
     my $self = shift;
-    $self->debug_message('Open original genotype file...');
 
-    my $original_genotype_file = $self->build->original_genotype_file_path;
-    $self->debug_message('Original genotype file: '.$original_genotype_file);
-    if ( not -s $original_genotype_file ) {
-        $self->error_message('Original genotype file does not exist!');
+    $self->source($self->build);
+    $self->source_type('build');
+
+    return 1;
+}
+
+sub _resolve_source_for_model {
+    my $self = shift;
+
+    my $build = $self->model->last_succeeded_build;
+    if ( not $build ) {
+        $self->error_message('No last succeeded build for model! '.$build->model->__display_name__);
         return;
     }
 
-    my $reader = Genome::Model::GenotypeMicroarray::OriginalGenotypeReader->create(
-        input => $self->build->original_genotype_file_path,
+    $self->source($build);
+    $self->source_type('build');
+
+    return 1;
+}
+
+sub _resolve_source_for_sample {
+    my ($self) = @_;
+
+    # Get InstData
+    my $sample = $self->sample;
+    my $library = Genome::Library->get(name => $sample->name.'-microarraylib', sample => $sample);
+        #'import_source_name in' => ( $self->use_external ) ? [qw/ BGI bgi Broad broad CSHL cshl external /] : [qw/ wugsc wugc wutgi tgi /],
+    my @instrument_data = Genome::InstrumentData->get(library => $library);
+    if ( not @instrument_data ) {
+        $self->error_message('No microarray instrument data for sample!' .$sample->__display_name__);
+        return;
+    }
+
+    # Restrict by priority
+    my @filtered_instrument_data;
+    for my $priority ( $self->sample_type_priority ) {
+        for my $instrument_data ( @instrument_data ) {
+            my $verification_method = '_is_instrument_data_'.$priority;
+            push @filtered_instrument_data, $instrument_data if $self->$verification_method($instrument_data);
+        }
+    }
+
+    if ( not @filtered_instrument_data ) {
+        $self->error_message('No instrument data found matches the indicated priorities!');
+        return;
+    }
+
+    # Maybe there is a build already
+    my $build;
+    for my $instrument_data ( @filtered_instrument_data ) {
+        $build = $self->_last_succeeded_build_from_model_for_instrument_data($instrument_data);
+        last if $build;
+    }
+
+    if ( $build ) {
+        $self->source($build);
+        $self->source_type('build');
+    }
+    else {
+        $self->source($filtered_instrument_data[$#filtered_instrument_data]);
+        $self->source_type('instrument_data');
+    }
+
+    return 1;
+}
+
+sub _resolve_source_for_instrument_data {
+    my $self = shift;
+
+    my $variation_list_build = $self->variation_list_build;
+    if ( not $variation_list_build ) {
+        $self->error_message('Variation list build is required to get genotypes for an instrument data!');
+        return;
+    }
+
+    # Maybe there is a build already
+    my $instrument_data = $self->instrument_data;
+    my $build = $self->_last_succeeded_build_from_model_for_instrument_data($instrument_data);
+    if ( $build ) {
+        $self->source($build);
+        $self->source_type('build');
+    }
+    else {
+        $self->source($instrument_data);
+        $self->source_type('instrument_data');
+    }
+
+    return 1;
+}
+
+sub _is_instrument_data_default {
+    my ($self, $instrument_data) = @_;
+
+    return 1 if $instrument_data->id eq $instrument_data->sample->default_genotype_data_id;
+    return;
+}
+
+my @internal_source_names = (qw/ wugsc wugc wutgi tgi /);
+sub _is_instrument_data_internal {
+    my ($self, $instrument_data) = @_;
+
+    for my $internal_source_name ( @internal_source_names ) {
+        return 1 if $internal_source_name->import_source_name =~ /^$internal_source_name$/i;
+    }
+
+    return;
+}
+
+sub _is_instrument_data_external {
+    my ($self, $instrument_data) = @_;
+
+    for my $internal_source_name ( @internal_source_names ) {
+        return 1 if $instrument_data->import_source_name !~ /^$internal_source_name$/i;
+    }
+
+    return;
+}
+
+sub _last_succeeded_build_from_model_for_instrument_data {
+    my ($self, $instrument_data) = @_;
+
+    my $variation_list_build = $self->variation_list_build;
+    if ( not $variation_list_build ) {
+        $self->error_message('Variation list build is required to get genotypes!');
+        return;
+    }
+
+    my @builds = sort { $b->date_completed cmp $a->date_completed } Genome::Model::GenotypeMicroarray->get(
+        instrument_data => [ $instrument_data ],
+        reference_sequence_build => $variation_list_build->reference,
+        dbsnp_build => $variation_list_build,
+        status => 'Succeeded',
     );
-    if ( not $reader ) {
-        $self->error_message('Failed to create original genotype file reader.');
-        return;
-    }
-    $self->debug_message('Found headers in genotype file: '. join(', ', $reader->headers));
 
-    $self->debug_message('Open original genotype reader...OK');
-    return $reader;
+    return $builds[0];
 }
+#<>#
 
-sub _open_output {
+#< FILTERS >#
+sub _create_filters {
     my $self = shift;
 
-    $self->debug_message('Open output file...');
+    my @filters;
+    for my $filter_string ( $self->filters ) {
+        $self->debug_message('Filter: '.$filter_string);
+        my ($name, $config) = split(':', $filter_string, 2);
+        my %params;
+        %params = map { split('=') } split(':', $config) if $config;
+        my $filter_class = 'Genome::Model::GenotypeMicroarray::Filter::By'.Genome::Utility::Text::string_to_camel_case($name);
+        my $filter = $filter_class->create(%params);
+        if ( not $filter ) {
+            $self->error_message("Failed to create fitler for $filter_string");
+            return;
+        }
+        push @filters, $filter;
+    }
+
+    return \@filters;
+}
+#<>#
+
+#< OPEN WRITER >#
+sub _open_writer {
+    my $self  = shift;
+    $self->status_message('Open writer...');
 
     my $output = $self->output;
-    unlink $output if -e $output;
-    $self->debug_message('Output file: '.$output);
-    my $output_fh = eval{ Genome::Sys->open_file_for_writing($output); };
-    if ( not $output_fh ) {
-        $self->error_message("Failed to open output file ($output): $@");
-        return;
+    $self->status_message('Output file: '.$output);
+    my $output_format = $self->output_format;
+    $self->status_message('Output format: '.$output_format);
+    my $writer;
+    if ( $output_format eq 'vcf' ) {
+        die "VCF not implmented!";
+    }
+    else {
+        my %writer_params = ( output => $output );
+        $writer_params{ headers} = [ $self->fields ] if $output_format =~ /\-headers$/;
+        $writer = Genome::Utility::IO::Writer->create(%writer_params);
     }
 
-    $self->debug_message('Open output file...OK');
-    return $output_fh;
+    $self->status_message('Open writer...done');
+    return $writer;
 }
-
+#<>#
 
 1;
 

@@ -32,8 +32,6 @@ my $model = Genome::Model::GenotypeMicroarray->__define__(
     name => 'Test Genotype Microarray',
     processing_profile => $pp,
     subject => $sample,
-    #subject_id => $sample->id,
-    #subject_class_name => $sample->class,
 );
 ok($model, 'create genotype microarray model') or return;
 
@@ -47,14 +45,13 @@ my $tempdir = File::Temp::tempdir(CLEANUP => 1);
 my $output = $tempdir.'/-8888.genotypes';
 my $cmd = Genome::Model::GenotypeMicroarray::Command::Extract->create(
     build => $build,
-    output => $output,
+    output => $output.':headers=chromosome,position,alleles:print_headers=0',
     filters => [qw/ gc_score:min=0.7 /],
-    fields => [qw/ chromosome position alleles /],
 );
 ok($cmd, 'create');
 $cmd->dump_status_messages(1);
 ok($cmd->execute, 'execute');
 is(File::Compare::compare($output, $build->genotype_file_path), 0, 'output file matches');
 
-#print "$tempdir\n"; <STDIN>;
+#print "gvimdiff $output ".$build->genotype_file_path."\n"; <STDIN>;
 done_testing();
