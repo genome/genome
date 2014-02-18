@@ -1081,9 +1081,9 @@ sub _extend_namespace_with_command_tree {
 
 sub files_ignored_by_build_diff { () }
 
-#Does this model type require control/experimental (normal/tumor) pairing to work?
-#Used by Analysis Project configuration
-sub requires_pairing { return 0; }
+#Does this model type require mapping of subjects to work?
+#Used by Analysis Project configuration to "pair" somatic samples or otherwise aggregate them for analysis
+sub requires_subject_mapping { return 0; }
 
 # For transition to created_by
 sub user_name {

@@ -64,8 +64,8 @@ sub execute {
             my $config = $analysis_project->get_configuration_profile();
             my $hashes = $self->_prepare_configuration_hashes_for_instrument_data($current_inst_data, $config);
             while (my ($model_type, $model_hashes) = (each %$hashes)) {
-                if ($model_type->requires_pairing) {
-                    $model_hashes = $self->_process_paired_samples($analysis_project, $current_inst_data, $model_hashes);
+                if ($model_type->requires_subject_mapping) {
+                    $model_hashes = $self->_process_mapped_samples($analysis_project, $current_inst_data, $model_hashes);
                 }
                 $self->_process_models($analysis_project, $current_inst_data, $model_type, $model_hashes);
             }
@@ -249,7 +249,7 @@ sub _prepare_configuration_hashes_for_instrument_data {
     return $config_hash;
 }
 
-sub _process_paired_samples {
+sub _process_mapped_samples {
     my ($self, $analysis_project, $instrument_data, $model_hashes) = @_;
     die('Must provide an analysis project, a piece of instrument data and a config hash!')
         unless($analysis_project && $instrument_data && $model_hashes);
