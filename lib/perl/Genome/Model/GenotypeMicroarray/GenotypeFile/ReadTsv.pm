@@ -10,10 +10,6 @@ class Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsv {
     has => {
         separator => { is => 'Text', value => "\t", },
     },
-    has_transient => {
-        alleles => { is => 'Hash', default_value => {}, },
-    },
-
 };
 
 sub read {
