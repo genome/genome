@@ -1365,6 +1365,7 @@ sub _launch {
             project  => $lsf_project,
             queue    => $server_dispatch,
             send_job_report => 1,
+            never_rerunnable => 1,
         );
         unless ($ENV{WF_EXCLUDE_JOB_GROUP}) {
             push @bsub_args, job_group => $job_group;
