@@ -274,3 +274,6 @@ model.model.created_by_idx [model.model.created_by] 2014-02-17T22:36:09Z Nathani
 model.model.drop_uniq_m_m_idun [model_model] 2014-02-17T22:39:34Z Nathaniel Nutter <nnutter@genome.wustl.edu># drop uniq_m_m_idun index
 model.model.drop_m_m_id_user_name_build_requested_index [model.model.index_genome_model_id_user_name_build_requested] 2014-02-17T23:42:32Z Nathaniel Nutter <nnutter@genome.wustl.edu># drop m_m_id_user_name_build_requested_index
 @1392684201 2014-02-18T00:43:22Z Nathaniel Nutter <nnutter@genome.wustl.edu># deploy
+
+remove_is_clia_from_analysis_project [rename_clia_to_cle_for_analysis_projects] 2014-02-18T21:16:54Z Adam Coffman <acoffman@genome.wustl.edu> # now that a new snapshot is out, we can remove this column
+@1392759063 2014-02-18T21:31:04Z Adam Coffman <acoffman@genome.wustl.edu># remove now unused clia column
