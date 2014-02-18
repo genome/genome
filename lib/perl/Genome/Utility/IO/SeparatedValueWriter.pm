@@ -22,6 +22,9 @@ class Genome::Utility::IO::SeparatedValueWriter {
             default => ',',
             doc => 'The value of the separator character.  Default: ","'
         },
+        in_place_of_null_value => {
+            doc => 'Use this in place of an undefined value.',
+        },
         print_headers => {
             is => 'Boolean',
             doc => 'A flag to print the headers on the first line.',
@@ -52,6 +55,11 @@ sub create {
     if ($self->print_headers) {
         $self->output->print( join($self->separator, @$headers)."\n" );
     }
+
+    if ( not defined $self->in_place_of_null_value ) {
+        $self->in_place_of_null_value('');
+    }
+
     return $self;
 }
 
@@ -73,7 +81,7 @@ sub write_one {
     return $self->output->print(
         join(
             $self->separator,
-            map { defined $_ ? $_ : '' } map { $data->{$_} } @{$self->headers}
+            map { defined $_ ? $_ : $self->in_place_of_null_value } map { $data->{$_} } @{$self->headers}
         )."\n"
     );
 }
