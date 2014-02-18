@@ -27,6 +27,7 @@ class Genome::Model::Tools::DetectVariants2::CopyCatSomaticWithBamWindow{
         annotation_version => {
             is => 'Text',
             doc => 'version of the copycat annotation to use',
+            is_optional => 1,
         }
     ],
 };
@@ -66,6 +67,13 @@ sub _detect_variants {
         $per_read_length = 1;
     }
 
+    #annotation-version
+    my $annotation_version;
+    if($params =~ m/--annotation-version/){
+        $params =~ m/--annotation-version\s*(\d+\.?\d?)\s*/;
+        $annotation_version = $1;
+    }
+
     my %input;
 
     # Define a workflow from the static XML at the bottom of this module
@@ -95,7 +103,7 @@ sub _detect_variants {
     $input{tumor_samtools_file} = $self->get_samtools_results($self->aligned_reads_input);
     $input{normal_samtools_file} = $self->get_samtools_results($self->control_aligned_reads_input);
     $input{copycat_output_directory} = $self->_temp_staging_directory;
-    $input{annotation_version} = $self->annotation_version;
+    $input{annotation_version} = $annotation_version;
     $input{reference_build_id} = $self->reference_build_id;
 
     my $log_dir = $self->output_directory;
