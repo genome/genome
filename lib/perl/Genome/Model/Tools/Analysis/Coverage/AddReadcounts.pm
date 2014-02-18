@@ -182,6 +182,7 @@ sub execute {
             min_vaf => $min_vaf,
             max_vaf => $max_vaf,
             indel_size_limit => $indel_size_limit,
+            min_mapping_quality => $min_quality_score,
             );
         unless ($cmd->execute) {
             die "Bam-readcount failed";
