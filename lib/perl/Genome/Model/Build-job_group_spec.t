@@ -7,17 +7,17 @@ use above 'Genome';
 use Genome::Model::Build qw();
 use Genome::Sys qw();
 
-for my $subname (qw(_default_job_group _job_group_spec)) {
+for my $subname (qw(_default_job_group _job_group)) {
     my $fullname = 'Genome::Model::Build::' . $subname;
     no strict 'refs';
     *{"main::$subname"} = \&{$fullname};
 };
 
 do {
-    is(_job_group_spec({ job_group => undef }), '');
-    is(_job_group_spec({ job_group => '' }), '');
-    is(_job_group_spec({ job_group => 'foo' }), ' -g foo');
+    ok(!_job_group({ job_group => undef }));
+    ok(!_job_group({ job_group => '' }));
+    is(_job_group({ job_group => 'foo' }), 'foo');
     my $username = getpwuid($<);
-    is(_job_group_spec({}), ' -g ' . _default_job_group());
-    is(_job_group_spec(), ' -g ' . _default_job_group());
+    is(_job_group({}), _default_job_group());
+    is(_job_group(), _default_job_group());
 };

@@ -9,12 +9,15 @@ use Params::Validate qw(:types);
 our @EXPORT = qw(bsub);
 our @EXPORT_OK = qw(bsub);
 
-sub bsub {
+sub run {
+    my $executable = shift;
     my @args = args_builder(@_);
 
-    # lazy load so we don't break /gsc/bin/perl (until we have to)
-    require IPC::System::Simple;
-    my @output = _capture('bsub', @args);
+    if (ref($executable) ne 'ARRAY') {
+        $executable = [$executable];
+    }
+
+    my @output = _capture(@$executable, @args);
 
     my $job_id = ($output[-1] =~ /^Job <(\d+)> is submitted to/)[0];
     unless ($job_id) {
@@ -22,6 +25,10 @@ sub bsub {
     }
 
     return $job_id;
+}
+
+sub bsub {
+    return run('bsub', @_);
 }
 
 sub args_builder {
@@ -36,7 +43,7 @@ sub args_builder {
         delete $args{$flag};
     }
     if (keys %args) {
-        push @args, map { _option_mapper($_) => $args{$_} } sort keys %args;
+        push @args, map { _option_mapper($_) . $args{$_} } sort keys %args;
     }
 
     if (ref($command) ne 'ARRAY') {
@@ -126,6 +133,7 @@ sub _queues {
 }
 
 sub _capture {
+    # lazy load so we don't break /gsc/bin/perl (until we have to)
     require IPC::System::Simple;
     return IPC::System::Simple::capture(@_);
 }
