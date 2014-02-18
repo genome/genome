@@ -72,7 +72,7 @@ class Genome::Db::Ensembl::Command::Vep {
         },
         condel => {
             is => 'String',
-            doc => 'Add Condel [p]rediction, [s]core or [b]oth',
+            doc => 'WARNING! This option is only valid for older versions of ensembl.  Use "--plugins" instead! Add Condel [p]rediction, [s]core or [b]oth.',
             is_optional => 1,
             valid_values => [qw(p s b)],
             is_input => 1,
@@ -171,6 +171,7 @@ class Genome::Db::Ensembl::Command::Vep {
             is => 'String',
             is_optional => 1,
             is_many => 1,
+            doc => "--custom option(s) to pass on to VEP.  Replace commas with @ symbol"
         },
     ],
 };
