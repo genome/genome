@@ -73,6 +73,16 @@ sub _flags {
 
 sub _args_spec {
     return {
+        rerunnable => {
+            optional => 1,
+            type => BOOLEAN,
+            option_flag => '-r',
+        },
+        never_rerunnable => {
+            optional => 1,
+            type => BOOLEAN,
+            option_flag => '-rn',
+        },
         hold_job => {
             optional => 1,
             option_flag => '-H',
