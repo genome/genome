@@ -30,9 +30,9 @@ class Genome::Model::GenotypeMicroarray::Command::Extract {
         sample_type_priority => {
             is => 'Text',
             is_many => 1,
-            default_value => [qw/ defined internal external /],
-            valid_values => [qw/ defined internal external /],
-            doc => 'Priority of the sample type to favor when getting microarray instrumetn data.',
+            default_value => [qw/ default internal external /],
+            valid_values => [qw/ default internal external /],
+            doc => 'Priority of the sample type to favor when getting microarray instrument data.',
         },
         variation_list_build => { # req for sample and instdata
             is => 'Genome::Model::Build::ImportedVariationList',
@@ -119,7 +119,7 @@ sub execute {
     my $self = shift;
     $self->status_message('Extract genotytpes...');
 
-    my $resolve_source = $self->_revsolve_source;
+    my $resolve_source = $self->resolve_source;
     return if not $resolve_source;
 
     my $filters = $self->_create_filters;
@@ -152,8 +152,10 @@ sub execute {
     return 1;
 }
 
-sub _revsolve_source {
+sub resolve_source {
     my $self = shift;
+
+    return 1 if $self->source;
 
     my @sources = grep { $self->$_ } (qw/ build model sample instrument_data /);
     if ( not @sources ) {
