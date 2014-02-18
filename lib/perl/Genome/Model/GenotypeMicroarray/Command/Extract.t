@@ -54,6 +54,15 @@ ok($cmd->execute, 'execute');
 is($cmd->genotypes_input, 9, 'genotypes_input');
 is($cmd->genotypes_filtered, 0, 'genotypes_filtered');
 is($cmd->genotypes_output, 9, 'genotypes_output');
+my %expected_alleles = (
+    'TC' => 1,
+    'AA' => 1,
+    'CC' => 2,
+    'AG' => 3,
+    'TT' => 1,
+    'GG' => 1,
+);
+is_deeply($cmd->alleles, \%expected_alleles, 'allelels');
 is(File::Compare::compare($output, $build->genotype_file_path), 0, 'output file matches');
 
 #print "gvimdiff $output ".$build->genotype_file_path."\n"; <STDIN>;

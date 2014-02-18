@@ -100,7 +100,7 @@ DOC
     has_calculated => {
         genotypes_input => { is => 'Number', calculate => q( return $self->metrics->{input}; ), },
         genotypes_filtered => {
-            is => 'Number', calculate => q( return $self->metrics->{input} - $self->metrics->{output}; ), 
+            is => 'Number', calculate => q( return $self->metrics->{output} - $self->metrics->{input}; ), 
         },
         genotypes_output => { is => 'Number', calculate => q( return $self->metrics->{output}; ), },
     },
@@ -131,6 +131,7 @@ sub execute {
     my $writer = Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory->build_writer($self->output);
     return if not $writer;
 
+    my %alleles;
     my %metrics = ( input => 0, filtered => 0, output => 0, );
     GENOTYPE: while ( my $genotype = $reader->read ) {
         $metrics{input}++;
@@ -138,9 +139,11 @@ sub execute {
             next GENOTYPE if not $filter->filter($genotype);
         }
         $metrics{output}++;
+        $alleles{ $genotype->{alleles} }++;
         $writer->write_one($genotype);
     }
     $self->metrics(\%metrics);
+    $self->alleles(\%alleles);
     for my $name ( map { 'genotypes_'.$_ } (qw/ input filtered output /) ) {
         $self->status_message(ucfirst(join(' ', split('_', $name))).": ".$self->$name);
     }
