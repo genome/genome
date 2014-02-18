@@ -314,7 +314,7 @@ sub run_breakdancer {
         die;
     }
 
-    if ( $is_ctx ) { # validate the output fastqs and write an md5 for them
+    if ( $is_ctx && $self->_check_fastqs_present) { # validate the output fastqs and write an md5 for them
         $self->debug_message('Validate CTX fastqs...');
         my $validate_fastqs = $self->_validate_ctx_fastqs;
         die if not $validate_fastqs;
@@ -391,7 +391,7 @@ sub params_for_detector_result {
     return $params;
 }
 
-sub _validate_ctx_fastqs {
+sub _check_fastqs_present {
     my $self = shift;
 
     # Get the fastqs [only for ctx]
@@ -400,7 +400,13 @@ sub _validate_ctx_fastqs {
         $self->error_message('Expected fastqs in sv staging output! '.$self->_sv_staging_output);
         return;
     }
+}
 
+
+sub _validate_ctx_fastqs {
+    my $self = shift;
+
+    my @fastqs = grep { -s } glob($self->_sv_staging_output . "*.fastq");
     my $md5sum;
     for my $fastq ( @fastqs ) {
         # Validate fastq
