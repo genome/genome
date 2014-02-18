@@ -62,7 +62,16 @@ isa_ok($writer, 'Genome::Utility::IO::SeparatedValueWriter');
 is($writer->output, 'FILE', 'output is FILE');
 is($writer->separator, ',', 'separator is comma');
 is_deeply($writer->headers, [qw/ chromosome allele1 /], 'headers are correct');
-ok($writer->print_headers, 'print_headers is false');
+ok(!$writer->print_headers, 'print_headers is false');
 is($writer->in_place_of_null_value, "NULL", 'in_place_of_null_value is NULL');
+
+# File w/o key specified, convert TAB to \t
+$writer = Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory->build_writer('FILE:separator=TAB');
+isa_ok($writer, 'Genome::Utility::IO::SeparatedValueWriter');
+is($writer->output, 'FILE', 'output is FILE');
+is($writer->separator, "\t", 'separator is TAB');
+is_deeply($writer->headers, [qw/ chromosome position alleles /], 'headers are correct');
+ok($writer->print_headers, 'print_headers is true');
+is($writer->in_place_of_null_value, "NA", 'in_place_of_null_value is "NA"');
 
 done_testing();

@@ -27,6 +27,7 @@ sub build_writer {
         headers => 'chromosome,position,alleles',
         print_headers => 1,
         in_place_of_null_value => 'NA',
+        ignore_extra_columns => 1,
     );
 
     my %output_params;
@@ -42,7 +43,8 @@ sub build_writer {
             for my $output_config_token ( @output_config_tokens ) {
                 my ($key, $value) = split('=', $output_config_token);
                 if ( not defined $value ) {
-                    $output_params{output} = $value;
+                    $output_params{output} = $key;
+                    next;
                 }
                 if ( exists $output_params{$key} ) {
                     $class->error_message('Duplicate attribute in output config: '.$key);
@@ -63,10 +65,11 @@ sub build_writer {
     elsif ( $format eq 'csv' ) {
         $writer_class = 'Genome::Utility::IO::SeparatedValueWriter';
         for my $default ( keys %csv_defaults ) {
-            if ( not $output_params{$default} ) {
+            if ( not exists $output_params{$default} ) {
                 $output_params{$default} = $csv_defaults{$default};
             }
         }
+        $output_params{separator} = "\t" if $output_params{separator} =~ /^tab$/i;
         $output_params{headers} = [ split(',', $output_params{headers}) ];
     }
     else {
