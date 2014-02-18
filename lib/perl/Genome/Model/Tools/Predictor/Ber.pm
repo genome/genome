@@ -96,8 +96,6 @@ sub _get_locus_from_fasta_header {
 
 
 sub _create_config_files {
-	
-	#Change locusid => locus_id
 
     my $self = shift;
 
@@ -106,20 +104,15 @@ sub _create_config_files {
     my $locus=-1;
     
     my $OUT1 = Genome::Sys->open_file_for_writing($locus_id.'_asm_feature') or die "failed to open _asm_feature";
-	
-	#change later like OUT1
-	open OUT2,">${locusid}_asmbl_data" or die "cann't open the file:$!.";
-	open OUT3,">${locusid}_ident2" or die "cann't open the file:$!.";
-	open OUT4,">${locusid}_stan" or die "cann't open the file:$!.";
-	
-	
+	my $OUT2 = Genome::Sys->open_file_for_writing($locus_id.'_asmbl_data') or die "failed to open _asmbl_data";
+	my $OUT3 = Genome::Sys->open_file_for_writing($locus_id.'_ident2') or die "failed to open _ident2";
+	my $OUT4 = Genome::Sys->open_file_for_writing($locus_id.'_stan') or die "failed to open _stan";
+
 	
 	$OUT1->print("asmbl_id\tend3\tend5\tfeat_name\tfeat_type\n");
-	
-	#change later like OUT1
-	print OUT2 "id\tname\ttype\n";
-	print OUT3 "complete\tfeat_name\tlocus\n";
-	print OUT4 "asmbl_data_id\tasmbl_id\tiscurrent\n";
+	$OUT2->print("id\tname\ttype\n");
+	$OUT3->print("complete\tfeat_name\tlocus\n");
+	$OUT4->print("asmbl_data_id\tasmbl_id\tiscurrent\n");
 	
 	
 	my $count=0;
@@ -133,14 +126,14 @@ sub _create_config_files {
 	  my @fea_name;
 	  chomp $line;
 	  my @arr=split('\t',$line);
-	  if($arr[1]!~/^$locusid/)
+	  if($arr[1]!~/^$locus_id/)
 	  {
 	    @fea_part=split('-',$arr[1]);
-	    if($fea_part[1]=~/$locusid/)
+	    if($fea_part[1]=~/$locus_id/)
 	    {
 	      @fea_name=split("_",$fea_part[1]);
 	    }
-	    elsif($fea_part[2]=~/$locusid/)
+	    elsif($fea_part[2]=~/$locus_id/)
 	    {
 	      @fea_name=split("_",$fea_part[2]);
 	    }
@@ -150,9 +143,8 @@ sub _create_config_files {
 	      $asmblid=$fea_name[1];
 	      $count++;
 	      
-	      #change later like OUT1
-	      print OUT2 $count,"\tContig\tcontig\n";
-	      print OUT4 $count,"\t",$count,"\t","1\n";
+	      $OUT2->print($count,"\tContig\tcontig\n");
+	      $OUT4->print($count,"\t",$count,"\t","1\n");
 	    }
 	  }
 	  else
@@ -165,9 +157,8 @@ sub _create_config_files {
 	      $asmblid=$fea_name[1];
 	      $count++;
 	      
-	      #change later like OUT1
-	      print OUT2 $count,"\tContig\tcontig\n";
-	      print OUT4 $count,"\t",$count,"\t","1\n";
+	      $OUT2->print($count,"\tContig\tcontig\n");
+	      $OUT4->print($count,"\t",$count,"\t","1\n");
 	    }
 	  }  
 	
@@ -175,10 +166,10 @@ sub _create_config_files {
 	#  else{$locus=$fea_part[2];}
 	  $locus++;
 	  
-	  #change later like OUT1
-	  print OUT1 $count,"\t",$arr[3],"\t",$arr[2],"\t",$arr[1],"\tORF\n";
-	  print OUT3 " \t",$arr[1],"\t",$fea_name[0];
-	  printf OUT3 "%05d\n",$locus;
+	  $OUT1->print($count,"\t",$arr[3],"\t",$arr[2],"\t",$arr[1],"\tORF\n");
+	  $OUT3->print(" \t",$arr[1],"\t",$fea_name[0]);
+	  
+	  $OUT3->printf("%05d\n",$locus);
 	}	
 	
     return 1;
@@ -207,21 +198,23 @@ sub _setup_dirs {
 
     my $locus_id = $self->_get_locus_from_fasta_header;
     
-    mkdir $locus_id;
-    chdir($locus_id) or die "$!";
     
-    mkdir fasta hmm ber
+    Genome::Sys->create_directory($locus_id);
      
-    ln -s /gscmnt/gc6125/info/annotation/worm_analysis/T_circumcincta/T_circumcincta.14.0.ec.cg.pg/Version_1.0/PAP/Version_1.0/BER/*pep .
+    map{Genome::Sys->create_directory($locus_id."/$_")}qw(fasta hmm ber);
+     
+    Genome::Sys->create_symlink("/gscmnt/gc6125/info/annotation/worm_analysis/T_circumcincta/T_circumcincta.14.0.ec.cg.pg/Version_1.0/PAP/Version_1.0/BER/*pep", $locus_id);
     
-    cd fasta
-	dbshatter ../*pep
+    chdir($locus_id."/fasta");
+    
+	Genome::Sys->shellcmd(cmd => "dbshatter ../*pep");
 	
-	cd ../../../db/CSV
+	chdir("../../../db/CSV");
 	
-	cp /gscmnt/gc6125/info/annotation/worm_analysis/T_circumcincta/T_circumcincta.14.0.ec.cg.pg/Version_1.0/PAP/Version_1.0/BER/Version_1.0/($locus_id)_* .
+	#Revisit - Multiple file copying?
+	Genome::Sys->copy_file("/gscmnt/gc6125/info/annotation/worm_analysis/T_circumcincta/T_circumcincta.14.0.ec.cg.pg/Version_1.0/PAP/Version_1.0/BER/Version_1.0/($locus_id)_*", .);
 
-	cd /gscmnt/gc9002/info/annotation/BER/autoannotate_v2.5/data/genomes/($locus_id)/fasta
+	chdir("/gscmnt/gc9002/info/annotation/BER/autoannotate_v2.5/data/genomes/($locus_id)/fasta");
 	
 	
 	#Genome/Model/Tools/Ber/AmgapBerProtName.pm
@@ -248,57 +241,59 @@ sub _setup_dirs {
 
 sub _prep_input_files {
 
-3. Prep input files for BER
-
-	my $cmd = Genome::Model::Tools::Ber::N|Berxxxxx->create();
-  	my $rv = $cmd->execute;
-
-   i) Running blastp & hmmpfam
-       Genome/Model/Tools/Ber/BerRunBlastphmmpfam.pm
-
-       Manully running details:
-       > for file in `cat dbshatter.fof`; do ln -s $file $file.fasta; done
-       > ~kpepin/git/staging/run_ber_prep.csh TELCIRDFT
-
-         This step takes some time, overnight, it blasts each gene vs an nr db and runs hmmpfam vs an hmm db.
-
-         Check output and that the hmm and ber fof files created by the script are linked to src dir
-         ls -lt  /gscmnt/gc9002/info/annotation/BER/autoannotate_v2.5/src/*TELCIR*fof
-
-         For the next step you can cd src_dir
-        /gscmnt/gc9002/info/annotation/BER/autoannotate_v2.5/src, but script does it as well.
-
-    ii) Converting blastp & hmmpfam output to btab & htab files respectively
-        
-       Genome/Model/Tools/Ber/BerRunBtabhmmtab.pm
-
-        Details:
-        > ~kpepin/git/staging/run_ber_prep.step2.csh TELCIRDFT
-
-       This will take some time, overnight, as well to parse each of the blastp/hmmpfam files to btab and htab files.
+#3. Prep input files for BER
+#
+#	my $cmd = Genome::Model::Tools::Ber::N|Berxxxxx->create();
+#  	my $rv = $cmd->execute;
+#
+#   i) Running blastp & hmmpfam
+#       Genome/Model/Tools/Ber/BerRunBlastphmmpfam.pm
+#
+#       Manully running details:
+#       > for file in `cat dbshatter.fof`; do ln -s $file $file.fasta; done
+#       > ~kpepin/git/staging/run_ber_prep.csh TELCIRDFT
+#
+#         This step takes some time, overnight, it blasts each gene vs an nr db and runs hmmpfam vs an hmm db.
+#
+#         Check output and that the hmm and ber fof files created by the script are linked to src dir
+#         ls -lt  /gscmnt/gc9002/info/annotation/BER/autoannotate_v2.5/src/*TELCIR*fof
+#
+#         For the next step you can cd src_dir
+#        /gscmnt/gc9002/info/annotation/BER/autoannotate_v2.5/src, but script does it as well.
+#
+#    ii) Converting blastp & hmmpfam output to btab & htab files respectively
+#        
+#       Genome/Model/Tools/Ber/BerRunBtabhmmtab.pm
+#
+#        Details:
+#        > ~kpepin/git/staging/run_ber_prep.step2.csh TELCIRDFT
+#
+#       This will take some time, overnight, as well to parse each of the blastp/hmmpfam files to btab and htab files.
 
 }
 
 sub _run_anno_sqlite {
-4. Run anno-sqlite.bash
-   
-   Genome/Model/Tools/Ber/BerRunAnnoSqlite.pm
-   
-   Manually running details:
-  /gscmnt/gc9002/info/annotation/BER/autoannotate_v2.5/src
-  > bsub -o TELCIRDFT.out -e TELCIRDFT.err -R 'select[type=LINUX64]' ./anno-sqlite.bash  
-  TELCIRDFT 130521 gram-
-
-  This will take X hours to run, depends on how many genes to process. For TELCIRDFT  
-  Processed 25,567 genes
-  Started 08:01am
-  Ended
-
-  To check that the process is running ok
-  1. bjobs | grep gram
-  2. wc /gscmnt/gc9002/info/annotation/BER/autoannotate_v2.5/out/sqlite-locusID-date.dat
-
-Number of sequences in the pep file should be equal to the number of lines in the sqlite dat file.Should do this check in PAP to make sure all is complete.
+	
+	
+#   Run anno-sqlite.bash
+#   
+#   Genome/Model/Tools/Ber/BerRunAnnoSqlite.pm
+#   
+#   Manually running details:
+#  /gscmnt/gc9002/info/annotation/BER/autoannotate_v2.5/src
+#  > bsub -o TELCIRDFT.out -e TELCIRDFT.err -R 'select[type=LINUX64]' ./anno-sqlite.bash  
+#  TELCIRDFT 130521 gram-
+#
+#  This will take X hours to run, depends on how many genes to process. For TELCIRDFT  
+#  Processed 25,567 genes
+#  Started 08:01am
+#  Ended
+#
+#  To check that the process is running ok
+#  1. bjobs | grep gram
+#  2. wc /gscmnt/gc9002/info/annotation/BER/autoannotate_v2.5/out/sqlite-locusID-date.dat
+#
+#Number of sequences in the pep file should be equal to the number of lines in the sqlite dat file.Should do this check in PAP to make sure all is complete.
 
 }
 
