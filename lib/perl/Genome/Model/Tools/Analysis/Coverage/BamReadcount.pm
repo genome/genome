@@ -666,7 +666,7 @@ sub execute {
                         $depth = $readdepth{$key};
 
                         foreach my $base (keys(%{$reads{$key}})){
-                            if($base =~ /INS-\d+-$varbase/){
+                            if($base =~ /INS-\d+-$varbase$/){
                                 $varcount = $reads{$key}{$base};
                             }
                         }
@@ -706,7 +706,7 @@ sub execute {
                         #now check the preceding base
                         my $pkey = join("\t",($chr,$pos-1));
                         foreach my $base (keys(%{$reads{$pkey}})){
-                            if($base =~ /DEL-\d+-$testrefbase/){
+                            if($base =~ /DEL-\d+-$testrefbase$/){
                                 $varcount = $reads{$pkey}{$base};
                             }
                         }
