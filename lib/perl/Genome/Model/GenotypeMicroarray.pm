@@ -166,24 +166,14 @@ sub _execute_build {
     }
     $self->debug_message('DB SNP build: '.$dbsnp_build->__display_name__);
 
-    my $fasta_file = $reference_sequence_build->full_consensus_path('fa');
-    if ( ! -s $fasta_file ) {
-        $self->error_message("Reference sequence has missing or 0 byte fasta file at $fasta_file.");
-        return;
-    }
-    $self->debug_message("Reference fasta file: $fasta_file");
-
     # Original genotype file - has all the info and headers, with positions from this dbsnp
     $self->debug_message('Create original genotype file...');
     my $original_genotype_file = $build->original_genotype_file_path;
     $self->debug_message('Original genotype file: '.$original_genotype_file);
-    my $extract = Genome::InstrumentData::Command::Microarray::Extract->create(
+    my $extract = Genome::Model::GenotypeMicroarray::Command::Extract->create(
         instrument_data => $instrument_data,
         variation_list_build => $dbsnp_build,
-        fields => [qw/ chromosome position alleles id sample_id log_r_ratio gc_score cnv_value cnv_confidence allele1 allele2 /],
-        headers => 1,
-        separator => 'tab',
-        output => $original_genotype_file,
+        output => $original_genotype_file.':separator=TAB:headers=chromosome,position,alleles,id,sample_id,log_r_ratio,gc_score,cnv_value,cnv_confidence,allele1,allele2:print_headers=1',
     );
     if ( not $extract ) {
         $self->error_message('Failed to create command to create original genotype file!');
@@ -223,10 +213,8 @@ sub _execute_build {
     $self->debug_message('Genotype file: '.$genotype_file);
     my $extract_genotypes = Genome::Model::GenotypeMicroarray::Command::Extract->create(
         build => $build,
-        fields => [qw/ chromosome position alleles /],
-        separator => 'tab',
+        output => $genotype_file.':separator=TAB:headers=chromosome,position,alleles:print_headers=0',
         filters => \@filters,
-        output => $genotype_file,
     );
     if ( not $extract_genotypes ) {
         $self->error_message('Failed to create command to create genotype file!');
@@ -271,10 +259,8 @@ sub _execute_build {
     $self->debug_message('Copy number file: '.$copy_number_file);
     my $extract_copy_number = Genome::Model::GenotypeMicroarray::Command::Extract->create(
         build => $build,
-        fields => [qw/ chromosome position log_r_ratio /],
-        separator => 'tab',
+        output => $copy_number_file.':separator=TAB:headers=chromosome,position,log_r_ratio:print_headers=0',
         filters => \@filters,
-        output => $copy_number_file,
     );
     if ( not $extract_copy_number ) {
         $self->error_message('Failed to create command to create copy number file!');

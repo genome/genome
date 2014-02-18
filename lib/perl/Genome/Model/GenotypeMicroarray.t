@@ -1,5 +1,9 @@
 #!/usr/bin/env genome-perl
 
+BEGIN {
+    $ENV{UR_DBI_NO_COMMIT} = 1;
+}
+
 use strict;
 use warnings;
 
@@ -160,6 +164,30 @@ sub test_dependent_cron_ref_align_init {
 sub test_execute_build {
     my $testdir = $ENV{GENOME_TEST_INPUTS} . '/GenotypeMicroarray';
 
+    # ref
+    my %pos_seq = (
+        752566 => 'G',
+        752721 => 'A',
+        798959 => 'G',
+        800007 => 'T',
+        838555 => 'C',
+        846808 => 'C',
+        854250 => 'A',
+        861808 => 'A',
+        861810 => 'T',
+        873558 => 'G',
+        882033 => 'G',
+    );
+    #my $build_37 = Genome::Model::Build::ReferenceSequence->get(name => 'GRCh37-lite-build37');
+    my $build_37 = Genome::Model::Build::ReferenceSequence->__define__(
+        name => '__TEST_REF__',
+    );
+    no warnings;
+    *Genome::Model::Build::ReferenceSequence::sequence = sub{ return $pos_seq{$_[2]}; };
+    *Genome::Model::Build::ReferenceSequence::chromosome_array_ref = sub{ return [qw/ 1 /]; };
+    use warnings;
+    ok($build_37, 'get build_37') or return;
+
     # dbsnp
     my $dbsnp_file = $testdir.'/dbsnp/dbsnp.132';
     my $fl = Genome::Model::Tools::DetectVariants2::Result::Manual->__define__(
@@ -172,6 +200,7 @@ sub test_execute_build {
     ok($fl, 'create dv2 result');
     my $variation_list_build = Genome::Model::Build::ImportedVariationList->__define__(
         model => Genome::Model->get(2868377411),
+        reference => $build_37,
         snv_result => $fl,
         version => 132,
     );
@@ -203,9 +232,6 @@ sub test_execute_build {
     no warnings;
     *Genome::FeatureList::file_path = sub{ return $dbsnp_file };
     use warnings;
-
-    my $build_37 = Genome::Model::Build::ReferenceSequence->get(name => 'GRCh37-lite-build37');
-    ok($build_37, 'get build_37') or return;
 
     my $pp = Genome::ProcessingProfile::GenotypeMicroarray->get(name => 'infinium wugc');
     ok($pp, 'get genotype microarray pp') or return;
