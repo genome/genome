@@ -280,3 +280,5 @@ remove_is_clia_from_analysis_project [rename_clia_to_cle_for_analysis_projects] 
 
 config_analysis_menu_item_description [config_analysis_menu_item] 2014-02-19T14:34:35Z Jim Weible <jweible@linus263.gsc.wustl.edu> # add description column to analysis menu item
 @1392828687 2014-02-19T16:51:28Z Adam Coffman <acoffman@genome.wustl.edu># Add description field to analysis menu items
+
+config.analysismenu_item.description [config_analysismenu_item] 2014-02-19T17:33:46Z Jim Weible <jweible@linus83.gsc.wustl.edu># add description column
