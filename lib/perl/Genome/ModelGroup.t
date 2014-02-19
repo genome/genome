@@ -34,7 +34,6 @@ isa_ok($model_group, 'Genome::ModelGroup');
 my @err = $model_group->__errors__;
 ok(!@err, 'no errors in created group') or diag(map($_->__display_name__, @err));
 is($model_group->name, 'Testsuite_ModelGroup', 'name');
-ok($model_group->convergence_model, 'Auto-generated associated Convergence model'); 
 is_deeply([$model_group->models], [$test_model], 'group has test model');
 is($model_group->model_count, 1, 'group model count');
 my $project = $model_group->project;
@@ -56,7 +55,6 @@ ok(!$model_group->rename(), 'failed to rename w/o name');
 ok(!$model_group->rename('Testsuite_ModelGroup'), 'failed to rename to same name');
 ok($model_group->rename('Testsuite ModelGroup'), 'rename');
 is($model_group->name, 'Testsuite ModelGroup', 'name after rename');
-is($model_group->convergence_model->name, 'Testsuite ModelGroup_convergence', 'convergence model name after rename');
 is($model_group->project->name, 'Testsuite ModelGroup', 'project name after rename');
 
 # add models
