@@ -18,8 +18,8 @@ use Test::More;
 
 use_ok('Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsv') or die;
 use_ok('Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsvAndAnnotate') or die;
+use_ok('Genome::Model::GenotypeMicroarray::GenotypeFile::WriteCsv') or die;
 #use_ok('Genome::Model::GenotypeMicroarray::GenotypeFile::WriteVcf') or die;
-#use_ok('Genome::Model::GenotypeMicroarray::GenotypeFile::WriteCsv') or die;
 
 my $testdir = $ENV{GENOME_TEST_INPUTS} . '/GenotypeMicroarray/';
 my $variation_list_build = _init();
@@ -44,27 +44,26 @@ my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsvAndAnnotate
     snp_id_mapping => \%snp_id_mapping,
 );
 ok($reader, 'create');
-
-#$output = $tmpdir.'/genotypes.read-tsv-and-annotate.vcf';
-#$writer = 
-#output => $output,
-#);
-#ok($writer, 'create writer');
+my $output_tsv = $tmpdir.'/genotypes.tsv';
+my $writer = Genome::Model::GenotypeMicroarray::GenotypeFile::WriteCsv->create(
+    output => $output_tsv,
+);
+ok($writer, 'create writer');
 
 my @genotypes_from_read_tsv_and_annotate;
 my $write_cnt = 0;
 while ( my $genotype = $reader->read ) {
     push @genotypes_from_read_tsv_and_annotate, $genotype;
-    $write_cnt++ #if $writer->write_one($genotype);
+    $write_cnt++ if $writer->write_one($genotype);
 }
 is_deeply(\@genotypes_from_read_tsv_and_annotate, _expected_genotypes(), 'read tsv and annotate genotypes match');
 is($write_cnt, @genotypes_from_read_tsv_and_annotate, 'wrote all genotypes');
-#is(File::Compare
+is(File::Compare::compare($output_tsv, $testdir.'/rw/read-tsv.tsv'), 0, 'read tsv, write to csv output file matches');
 
 ###
 # TSV to VCF
 $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsv->create(
-    input => $testdir.'/rw/read-tsv.tsv',
+    input => $output_tsv,
 );
 ok($reader, 'create');
 
