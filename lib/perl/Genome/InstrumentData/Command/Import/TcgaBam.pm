@@ -987,6 +987,7 @@ sub _cghub_download {
         right_property  => 'done'
     );
 
+    Genome::Sys->disconnect_default_handles;
     my $result = Workflow::Simple::run_workflow_lsf($workflow, %params);
 
     unless ($result) {
