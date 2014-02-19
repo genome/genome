@@ -15,25 +15,30 @@ class Genome::Model::Tools::Vcf::Convert::Base {
     is_abstract => 1,
     has => [
         output_file => {
-            is => 'Text',
+            is  => 'Text',
             doc => "List of mutations, converted to VCF",
         },
+        input_id => {
+            is  => 'Text',
+            doc => "The input DV2 detector software result id",
+            is_optional => 1,
+        },
         input_file => {
-            is => 'Text',
+            is  => 'Text',
             doc => "The file to be converted to VCF" ,
         },
         aligned_reads_sample => {
-            is => 'Text',
+            is  => 'Text',
             doc => "The label to be used for the aligned_reads sample in the VCF header",
         },
         control_aligned_reads_sample => {
-            is => 'Text',
+            is  => 'Text',
             doc => "The label to be used for the aligned_reads sample in the VCF header",
             is_optional => 1,
         },
         reference_sequence_build => {
-            is => 'Genome::Model::Build::ImportedReferenceSequence',
-            doc => 'The reference sequence build used to detect variants',
+            is    => 'Genome::Model::Build::ImportedReferenceSequence',
+            doc   => 'The reference sequence build used to detect variants',
             id_by => 'reference_sequence_build_id',
         },
         reference_sequence_input => {

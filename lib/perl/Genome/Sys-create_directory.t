@@ -9,7 +9,7 @@ use POSIX qw(getgroups);
 
 use Test::More tests => 10;
 
-eval {
+do {
     my $umask = umask;
 
     ok(getgrnam($ENV{GENOME_SYS_GROUP}), 'GENOME_SYS_GROUP is set to existing group') or abort;

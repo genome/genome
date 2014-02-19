@@ -24,7 +24,7 @@ sub load_host_config {
     my @hwords = site_dirs();
     while (@hwords) {
         my $pkg = site_pkg(@hwords);
-        if (UR::Util::load_class_or_file($pkg)) {
+        if (UR::Util::use_package_optimistically($pkg)) {
             last;
         } else {
             pop @hwords;

@@ -55,15 +55,43 @@ is($rna_model_no_auto_assign->instrument_data, undef , 'it did not assign the in
 
 #model with pairing
 my ($data1, $data2, $model_types_somval, $analysis_project) = _generate_som_val_instrument_data();
-Genome::Config::AnalysisProject::SubjectPairing->create(
-    analysis_project => $analysis_project,
-    control_subject => @$data1[1],
-    experimental_subject => @$data2[1]
+my $subject_mapping = Genome::Config::AnalysisProject::SubjectMapping->create(
+    analysis_project => $analysis_project
 );
-Genome::Config::AnalysisProject::SubjectPairing->create(
-    analysis_project => $analysis_project,
-    control_subject => @$data2[1],
-    experimental_subject => @$data1[1]
+
+Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
+    label => 'control_subject',
+    subject_mapping => $subject_mapping,
+    subject => @$data1[1],
+);
+Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
+    label => 'subject',
+    subject_mapping => $subject_mapping,
+    subject => @$data2[1]->source,
+);
+Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
+    label => 'experimental_subject',
+    subject_mapping => $subject_mapping,
+    subject => @$data2[1],
+);
+
+my $subject_mapping2 = Genome::Config::AnalysisProject::SubjectMapping->create(
+    analysis_project => $analysis_project
+);
+Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
+    label => 'control_subject',
+    subject_mapping => $subject_mapping2,
+    subject => @$data2[1],
+);
+Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
+    label => 'subject',
+    subject_mapping => $subject_mapping2,
+    subject => @$data1[1]->source,
+);
+Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
+    label => 'experimental_subject',
+    subject_mapping => $subject_mapping2,
+    subject => @$data1[1],
 );
 
 build_and_run_cmd(@$data1[0], @$data2[0]);
@@ -71,13 +99,13 @@ assert_succeeded(@$data1[0], $model_types_somval);
 assert_succeeded(@$data2[0], $model_types_somval);
 my @models = $analysis_project->models;
 ok(@models, 'it registers created models with the analysis_project');
-ok(scalar(@models) == 2, 'it creates one model per SubjectPairing');
+ok(scalar(@models) == 2, 'it creates one model per SubjectMapping');
 
 #model with pairing - but none set
 ($data1, $data2, $model_types_somval, $analysis_project) = _generate_som_val_instrument_data();
 build_and_run_cmd(@$data1[0], @$data2[0]);
-assert_failed(@$data1[0], 'Found no pairing information');
-assert_failed(@$data2[0], 'Found no pairing information');
+assert_failed(@$data1[0], 'Found no mapping information');
+assert_failed(@$data2[0], 'Found no mapping information');
 
 #inst data with no ap
 my $inst_data_without_a_project = Genome::Test::Factory::InstrumentData::Solexa->setup_object();

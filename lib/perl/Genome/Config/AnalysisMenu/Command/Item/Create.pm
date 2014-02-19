@@ -16,8 +16,12 @@ class Genome::Config::AnalysisMenu::Command::Item::Create {
         },
         file_path => {
             is => 'Path',
-            doc => 'Path to config file'
+            doc => 'Path to config file',
         },
+        description => {
+            is => 'Text',
+            doc => 'Description of the menu item',
+        }
    ],
    doc => 'create Analysis Menu Items',
 };
@@ -26,12 +30,13 @@ sub execute {
     my $self = shift;
     my $name = $self->name;
     my $file_path = $self->file_path;
+    my $description = $self->description;
 
     unless($self->_validate_file($file_path)){
         die $self->error_message("$file_path is invalid");
     }
     my $allocated_file_path = $self->_copy_file_to_allocation($file_path);
-    my $item = Genome::Config::AnalysisMenu::Item->create(name => $name, file_path => $allocated_file_path);
+    my $item = Genome::Config::AnalysisMenu::Item->create(name => $name, file_path => $allocated_file_path, description => $self->description);
     $self->status_message("Successfully created AnalysisMenu Item $name for $file_path");
     return 1;
 }

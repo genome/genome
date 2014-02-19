@@ -21,7 +21,6 @@ my $model = Genome::Model->create(
     processing_profile => $pp,
     subject_name => 'human',
     subject_type => 'species_name',
-    user_name => 'apipe',
 );
 ok($model, 'create model') or die;
 

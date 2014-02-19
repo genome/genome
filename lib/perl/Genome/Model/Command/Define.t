@@ -171,7 +171,8 @@ sub successful_create_model {
         next if ($property_name eq "groups");
         is($model->$property_name,$params{$property_name},$property_name .' model indirect accessor');
     }
-    is($model->user_name,$expected_user_name,'model user_name accesssor');
+    is($model->run_as,$expected_user_name,'model run_as accesssor');
+    is($model->created_by,$expected_user_name,'model created_by accesssor');
     like($model->creation_date,qr/$expected_date/,'model creation_date accessor');
     is($model->processing_profile_id,$pp->id,'model processing_profile_id indirect accessor');
     is($model->type_name,$pp->type_name,'model type_name indirect accessor');

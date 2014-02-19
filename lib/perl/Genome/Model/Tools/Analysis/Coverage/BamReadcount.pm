@@ -92,13 +92,6 @@ class Genome::Model::Tools::Analysis::Coverage::BamReadcount{
         doc => 'if this flag is set, the tool will return the count and frequency of all non-reference reads, not just the frequency of the variant listed. Currently only works on SNVs, will skip indels'
     },
 
-    use_varscan => {
-        is => 'Boolean',
-        is_optional => 1,
-        default => 0,
-        doc => 'use samtools mpilup and varscan readcounts for snv readcounts'
-    },
-
     per_library => {
         is => 'Boolean',
         is_optional => 1,
@@ -139,7 +132,6 @@ sub execute {
     my $min_depth = $self->min_depth;
     my $max_depth = $self->max_depth;
     my $chrom = $self->chrom;
-    my $use_varscan = $self->use_varscan;
 
     #grab the appropriate fasta file
     my $fasta;
@@ -308,11 +300,7 @@ sub execute {
                     $indelVariantHash{$key} = join("\t",($fields[3],$fields[4]));
                 }
                 $foundHash{join("\t",($fields[0],$fields[1],$fields[3],$fields[4]))} = 0;
-                if($use_varscan) {
-                    print INDELFILE join("\t",($fields[0],$fields[1],$fields[2],$fields[3],$fields[4])) . "\n";
-                } else {
-                    print INDELFILE join("\t",($fields[0],$fields[1]-1,$fields[2],$fields[3],$fields[4])) . "\n";
-                }
+                print INDELFILE join("\t",($fields[0],$fields[1]-1,$fields[2],$fields[3],$fields[4])) . "\n";
             }
 
         } else { #snv
@@ -356,104 +344,51 @@ sub execute {
     #------------------------------------------
     #now run the readcounting on snvs
     if( -s "$tempdir/snvpos"){
+        my $return = Genome::Model::Tools::Sam::Readcount->execute(
+            use_version => 0.5,
+            bam_file => $bam_file,
+            minimum_mapping_quality => $min_mapping_quality,
+            minimum_base_quality => $min_base_quality,
+            output_file => "$tempdir/readcounts",
+            reference_fasta => $fasta,
+            region_list => "$tempdir/snvpos",
+            per_library => $self->per_library,
+        );
+        unless($return) {
+            $self->error_message("Failed to execute: Returned $return");
+            die $self->error_message;
+        }
 
-        # use samtools, then varscan for gathering readcounts #
-        if ($use_varscan) {
+        #parse the results
+        my $reader = new Genome::File::BamReadcount::Reader("$tempdir/readcounts");
+        while(my $entry = $reader->next) {
 
-            open(SNVMOD,">$tempdir/snvpos.bed");
-            $inFh = IO::File->new( "$tempdir/snvpos" ) || die "can't open file\n";
+            my $ref_count = 0;
+            my $var_count = 0;
+            my $var_freq = 0;
+            my $knownRef;
+            my $knownVar;
 
-            #convert the snv file to bed
-            while( my $line = $inFh->getline )
-            {
-                chomp($line);
-                my @F = split("\t",$line);
-                $F[1]--;
-                print SNVMOD join("\t",@F) . "\n";
-            }
-            close(SNVMOD);
-
-            #run samtools view, then mpileup to get the readcounts for each snv:
-            my $cmd = "samtools view -ub -L $tempdir/snvpos.bed $bam_file | samtools mpileup -f $fasta -q $min_mapping_quality - > $tempdir/snv_mpileup";
-            $self->debug_message("Running command: $cmd");
-
-            my $return = Genome::Sys->shellcmd(
-                cmd => "$cmd",
-            );
-            unless($return) {
-                $self->error_message("Failed to execute: Returned $return");
-                die $self->error_message;
-            }
-
-            #run varscan to parse the samtools file
-            $cmd = "java -jar /gsc/scripts/lib/java/VarScan/VarScan.v2.2.9.jar readcounts $tempdir/snv_mpileup --min-coverage 1 --min-base-qual $min_base_quality --output-file $tempdir/snvs.varscan";
-            $self->debug_message("Running command: $cmd");
-
-            $return = Genome::Sys->shellcmd(
-                cmd => "$cmd",
-            );
-            unless($return) {
-                $self->error_message("Failed to execute: Returned $return");
-                die $self->error_message;
+            my ($chr, $pos) = ($entry->chromosome, $entry->position);
+            my $key = join("\t", $chr, $pos);
+            if(!(defined($snvVariantHash{$key}))){
+                print STDERR "WARNING: position $chr : $pos not found in input\n";
+                next;
             }
 
-            #read, clean up and print snvs
-            $inFh = IO::File->new( "$tempdir/snvs.varscan" ) || die "can't open varscan snv file\n";
-            while( my $line = $inFh->getline )
-            {
-                chomp($line);
-                next if $line =~ /^chrom/;
-                my ($chr, $pos, $ref, $depth, $q0_depth, @counts) = split("\t",$line); #counts format: base:reads:strands:avg_qual:map_qual:plus_reads:minus_reads
+            my @snvs = split(",",$snvVariantHash{$key});
 
-                my $ref_count = 0;
-                my $var_count = 0;
-                my $var_freq = 0;
-                my $knownRef;
-                my $knownVar;
-
-                if(!(defined($snvVariantHash{join("\t",($chr, $pos))}))){
-                    #print STDERR "WARNING: position $chr : $pos not found in input\n";
-                    next;
-                }
-
-                my @snvs = split(",",$snvVariantHash{join("\t",($chr, $pos))});
-
-                foreach my $pair (@snvs){
-                    my @as = split("\t",$pair);
-                    $knownRef = $as[0];
-                    $knownVar = $as[1];
-                    my $ref_count = 0;
-                    my $var_count = 0;
+            foreach my $pair (@snvs){
+                my @as = split("\t",$pair);
+                $knownRef = $as[0];
+                $knownVar = $as[1];
+                unless($self->per_library) {
                     my $var_freq = 0;
 
-                    #go through each base at that position, grab the correct one
-                    foreach my $count_stats (@counts) {
-                        my ($allele, $count, $strands, $bq, $mq, $plus_reads, $minus_reads) = split /:/, $count_stats;
+                    my ($ref_count, $var_count) = snvCounts($self,$entry, $knownRef, $knownVar);
 
-                        # assume that the ref call is ACTG, not iub
-                        # (assumption looks valid in my files)
-                        if ($allele eq $knownRef){
-                            $ref_count += $count;
-                            next;
-                        }
-
-                        # if we're counting all non-reference reads, not just the specified allele
-                        if($count_non_reference_reads){
-                            unless($allele eq $knownRef){
-                                $var_count += $count;
-                            }
-                            next;
-                        }
-
-                        # if this base is included in the IUB code for
-                        # for the variant, (but doesn't match the ref)
-                        if (matchIub($allele,$knownRef,$knownVar)){
-                            $var_count += $count;
-                        }
-
-                    }
-                    if ($depth ne '0') {
-                        $var_freq = $var_count/$depth * 100;
+                    if ($entry->depth ne '0') {
+                        $var_freq = $var_count/$entry->depth * 100;
                     }
 
                     $foundHash{join("\t",$chr,$pos,$knownRef,$knownVar)} = 1;
@@ -464,110 +399,47 @@ sub execute {
 
                     filterAndPrint($chr, $pos, $knownRef, $knownVar, $ref_count, $var_count, $var_freq,
                         $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);
-
                 }
-            }
-        }
+                else {
+                    my %counts;
+                    my $total_ref = 0;
+                    my $total_var = 0;
+                    my $total_var_freq = 0;
 
-        # else use bam-readcount #
-        else {
-            my $return = Genome::Model::Tools::Sam::Readcount->execute(
-                use_version => 0.5,
-                bam_file => $bam_file,
-                minimum_mapping_quality => $min_mapping_quality,
-                minimum_base_quality => $min_base_quality,
-                output_file => "$tempdir/readcounts",
-                reference_fasta => $fasta,
-                region_list => "$tempdir/snvpos",
-                per_library => $self->per_library,
-            );
-            unless($return) {
-                $self->error_message("Failed to execute: Returned $return");
-                die $self->error_message;
-            }
-
-            #parse the results
-            my $reader = new Genome::File::BamReadcount::Reader("$tempdir/readcounts");
-            while(my $entry = $reader->next) {
-
-                my $ref_count = 0;
-                my $var_count = 0;
-                my $var_freq = 0;
-                my $knownRef;
-                my $knownVar;
-
-                my ($chr, $pos) = ($entry->chromosome, $entry->position);
-                my $key = join("\t", $chr, $pos);
-                if(!(defined($snvVariantHash{$key}))){
-                    print STDERR "WARNING: position $chr : $pos not found in input\n";
-                    next;
-                }
-
-                my @snvs = split(",",$snvVariantHash{$key});
-
-                foreach my $pair (@snvs){
-                    my @as = split("\t",$pair);
-                    $knownRef = $as[0];
-                    $knownVar = $as[1];
-                    unless($self->per_library) {
+                    for my $lib ($entry->libraries) {
                         my $var_freq = 0;
 
-                        my ($ref_count, $var_count) = snvCounts($self,$entry, $knownRef, $knownVar);
+                        my ($ref_count, $var_count) = $self->snvCounts($lib, $knownRef, $knownVar);
 
-                        if ($entry->depth ne '0') {
-                            $var_freq = $var_count/$entry->depth * 100;
+                        if ($lib->depth ne '0') {
+                            $var_freq = $var_count/$lib->depth * 100;
                         }
-
-                        $foundHash{join("\t",$chr,$pos,$knownRef,$knownVar)} = 1;
-
-                        if($count_non_reference_reads){
-                            $knownVar = "NonRef";
-                        }
-
-                        filterAndPrint($chr, $pos, $knownRef, $knownVar, $ref_count, $var_count, $var_freq,
-                            $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);
+                        $counts{$lib->name} = [$ref_count, $var_count, $var_freq];
+                        $total_ref += $ref_count;
+                        $total_var += $var_count;
                     }
-                    else {
-                        my %counts;
-                        my $total_ref = 0;
-                        my $total_var = 0;
-                        my $total_var_freq = 0;
 
-                        for my $lib ($entry->libraries) {
-                            my $var_freq = 0;
 
-                            my ($ref_count, $var_count) = $self->snvCounts($lib, $knownRef, $knownVar);
+                    $foundHash{join("\t",$chr,$pos,$knownRef,$knownVar)} = 1;
 
-                            if ($lib->depth ne '0') {
-                                $var_freq = $var_count/$lib->depth * 100;
+                    if($count_non_reference_reads){
+                        $knownVar = "NonRef";
+                    }
+
+                    if ($entry->depth ne '0') {
+                        $total_var_freq = $total_var/$entry->depth * 100;
+                    }
+                    unless(shouldFilter($total_ref, $total_var, $total_var_freq, $min_depth, $max_depth, $min_vaf, $max_vaf)) {
+                        my @ordered_counts;
+                        for my $count_ref (@counts{@libraries}) {
+                            if(defined $count_ref) {
+                                push @ordered_counts, @$count_ref;
                             }
-                            $counts{$lib->name} = [$ref_count, $var_count, $var_freq];
-                            $total_ref += $ref_count;
-                            $total_var += $var_count;
-                        }
-
-
-                        $foundHash{join("\t",$chr,$pos,$knownRef,$knownVar)} = 1;
-
-                        if($count_non_reference_reads){
-                            $knownVar = "NonRef";
-                        }
-
-                        if ($entry->depth ne '0') {
-                            $total_var_freq = $total_var/$entry->depth * 100;
-                        }
-                        unless(shouldFilter($total_ref, $total_var, $total_var_freq, $min_depth, $max_depth, $min_vaf, $max_vaf)) {
-                            my @ordered_counts;
-                            for my $count_ref (@counts{@libraries}) {
-                                if(defined $count_ref) {
-                                    push @ordered_counts, @$count_ref;
-                                }
-                                else {
-                                    push @ordered_counts, (0,0,0);
-                                }
+                            else {
+                                push @ordered_counts, (0,0,0);
                             }
-                            printLibs($OUTFILE, $chr, $pos, $knownRef, $knownVar, @ordered_counts);
                         }
+                        printLibs($OUTFILE, $chr, $pos, $knownRef, $knownVar, @ordered_counts);
                     }
                 }
             }
@@ -581,235 +453,86 @@ sub execute {
 
     #if there are no indels, skip
     if( -s "$tempdir/indelpos"){
-        if($self->use_varscan) {
-
-            #grab pileups for each indel
-            $inFh = IO::File->new( "$tempdir/indelpos" ) || die "can't open file\n";
-            while( my $line = $inFh->getline )
-            {
-                #convert coordinates to grab the appropriate bases:
-                chomp($line);
-                my @F = split("\t",$line);
-                if($F[3] =~ /0|\-|\*/ ){ #INS
-                    $F[1]--;
-                    $F[2]--;
-                } elsif ($F[4] =~ /0|\-|\*/){ #DEL - get two bases, since the del is placed on the previous base
-                    $F[1] = $F[1] - 2;
-                    $F[2] = $F[1] + 2;
-                } else {
-                    print STDERR "WARNING: bad indel format: $line \n";
-                }
-
-                #run mpileup to get the readcounts:
-                my $cmd = "samtools mpileup -f $fasta -q 1 -r $F[0]:$F[1]-$F[2]  $bam_file >>$tempdir/pileup";
-                #$self->debug_message("Running command: $cmd");
-
-                my $return = Genome::Sys->shellcmd(
-                    cmd => "$cmd",
-                );
-                unless($return) {
-                    $self->error_message("mpileup failure. Tried to run:\n$cmd");
-                    $self->error_message("Returned:\n$return");
-                    die $self->error_message;
-                }
-            }
-
-            #run varscan to parse the samtools file
-            my $cmd = "java -jar /gsc/scripts/lib/java/VarScan/VarScan.v2.2.9.jar readcounts $tempdir/pileup --min-coverage 1 --min-base-qual $min_base_quality --output-file $tempdir/indels.varscan";
-            $self->debug_message("Running command: $cmd");
-
-            my $return = Genome::Sys->shellcmd(
-                cmd => "$cmd",
-            );
-            unless($return) {
-                $self->error_message("Failed to execute: Returned $return");
-                die $self->error_message;
-            }
-
-            my %readdepth;
-            my %reads;
-
-            #store indel counts
-            $inFh = IO::File->new( "$tempdir/indels.varscan" ) || die "can't open varscan file\n";
-            while( my $line = $inFh->getline )
-            {
-                chomp($line);
-                next if $line =~ /^chrom/;
-                my @F =  split("\t",$line);
-
-                my $chr = $F[0];
-                my $pos = $F[1];
-                my $key = join("\t",($chr,$pos));
-
-                $readdepth{$key} = $F[3];
-                for my $i (5..$#F){
-                    if($F[$i] =~ /\:/){ #skip blanks
-                        my @counts = split(":",$F[$i]);
-                        my $base = $counts[0];
-                        $reads{$key}{$base} = $counts[1];
-                    }
-                }
-            }
-
-            #go through the indels we're looking for and grab their depths
-            foreach my $key (keys(%indelVariantHash)){
-                my ($chr, $pos) = split("\t",$key);
-                my ($refbase,$varbase) = split("\t",$indelVariantHash{$key});
-
-                if($refbase =~ /0|\-|\*/ ){ #INS
-                    #insertion is easier, just take the insertion count divided by depth for vaf
-                    my $depth = 0;
-                    my $refcount = 0;
-                    my $varcount = 0;
-
-                    if(defined($readdepth{$key})){
-                        $depth = $readdepth{$key};
-
-                        foreach my $base (keys(%{$reads{$key}})){
-                            if($base =~ /INS-\d+-$varbase/){
-                                $varcount = $reads{$key}{$base};
-                            }
-                        }
-
-                        #all reads will include ref for an insertion in mpileup-land, so
-                        #we subtract the var from the ref
-                        $refcount = $refcount - $varcount;
-                        filterAndPrint($chr, $pos, $refbase, $varbase, $depth-$varcount, $varcount, ($varcount/$depth)*100,
-                            $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);
-                    } else {
-                        #if it wasn't in the pileup, it wasn't covered, so vals will remain zero.
-                        filterAndPrint($chr, $pos, $refbase, $varbase, $refcount, $varcount, 0,
-                            $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);
-                    }
-
-
-                } elsif ($varbase =~ /0|\-|\*/){ #DEL
-                    #deletions are tricky. The deletion gets placed on the previous base, but the ref counts 
-                    #and depth are on the correct base.
-                    my $testrefbase = $refbase;
-                    if (length($refbase) > 1){
-                        $testrefbase = substr($refbase,0,1);
-                    }
-
-                    my $depth = 0;
-                    my $refcount = 0;
-                    my $varcount = 0;
-                    if(defined($readdepth{$key})){
-                        my $depth = $readdepth{$key};
-
-                        #first check the correct base
-                        foreach my $base (keys(%{$reads{$key}})){
-                            if($base eq $testrefbase){
-                                $refcount = $reads{$key}{$base};
-                            }
-                        }
-                        #now check the preceding base
-                        my $pkey = join("\t",($chr,$pos-1));
-                        foreach my $base (keys(%{$reads{$pkey}})){
-                            if($base =~ /DEL-\d+-$testrefbase/){
-                                $varcount = $reads{$pkey}{$base};
-                            }
-                        }
-
-                        filterAndPrint($chr, $pos, $refbase, $varbase, $refcount, $varcount, ($varcount/$depth)*100,
-                            $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);            
-                    } else {
-                        #if it wasn't in the pileup, it wasn't covered, or didn't exist, 
-                        #so ref base goes to depth
-                        filterAndPrint($chr, $pos, $refbase, $varbase, $refcount, $varcount, 0,
-                            $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);
-                    }                
-                } else {
-                    print "WARNING - $refbase/$varbase isn't an indel, how did it get in the indel hash?\n";
-                }
-
-                $foundHash{join("\t",$chr,$pos,$refbase,$varbase)} = 1;
-
-            }
+        my $return = Genome::Model::Tools::Sam::Readcount->execute(
+            use_version => 0.5,
+            bam_file => $bam_file,
+            minimum_mapping_quality => $min_mapping_quality,
+            minimum_base_quality => $min_base_quality,
+            output_file => "$tempdir/readcounts_indel",
+            reference_fasta => $fasta,
+            region_list => "$tempdir/indelpos",
+            insertion_centric => 1,
+            per_library => $self->per_library,
+        );
+        unless($return) {
+            $self->error_message("Failed to execute: Returned $return");
+            die $self->error_message;
         }
-        else {
 
-            my $return = Genome::Model::Tools::Sam::Readcount->execute(
-                use_version => 0.5,
-                bam_file => $bam_file,
-                minimum_mapping_quality => $min_mapping_quality,
-                minimum_base_quality => $min_base_quality,
-                output_file => "$tempdir/readcounts_indel",
-                reference_fasta => $fasta,
-                region_list => "$tempdir/indelpos",
-                insertion_centric => 1,
-                per_library => $self->per_library,
-            );
-            unless($return) {
-                $self->error_message("Failed to execute: Returned $return");
-                die $self->error_message;
+        my $reader = new Genome::File::BamReadcount::Reader("$tempdir/readcounts_indel");
+        while( my $entry = $reader->next) { 
+
+            my $key = join("\t", $entry->chromosome, $entry->position);
+            unless((defined($indelVariantHash{$key}))){
+                next;
+            }
+            my ($knownRef, $knownVar) = split("\t",$indelVariantHash{$key});
+            my $testvarallele;
+            if($knownRef =~ /0|\-|\*/) { #INS
+                $testvarallele = "+$knownVar"
+            } 
+            elsif ($knownVar =~ /0|\-|\*/){ #DEL
+                $testvarallele = "-$knownRef"
+            }
+            else {
+                print "WARNING - $knownRef/$knownVar isn't an indel, how did it get in the indel hash?\n";
             }
 
-            my $reader = new Genome::File::BamReadcount::Reader("$tempdir/readcounts_indel");
-            while( my $entry = $reader->next) { 
-
-                my $key = join("\t", $entry->chromosome, $entry->position);
-                unless((defined($indelVariantHash{$key}))){
-                    next;
-                }
-                my ($knownRef, $knownVar) = split("\t",$indelVariantHash{$key});
-                my $testvarallele;
-                if($knownRef =~ /0|\-|\*/) { #INS
-                    $testvarallele = "+$knownVar"
-                } 
-                elsif ($knownVar =~ /0|\-|\*/){ #DEL
-                    $testvarallele = "-$knownRef"
+            unless($self->per_library) {
+                my $ref_count = 0;
+                my $var_count = 0;
+                ($ref_count, $var_count) = $self->indelCounts($entry, $testvarallele);
+                if ($entry->depth ne '0') {
+                    filterAndPrint($entry->chromosome, $entry->position, $knownRef, $knownVar, $ref_count, $var_count, ($var_count/$entry->depth)*100,
+                        $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);            
                 }
                 else {
-                    print "WARNING - $knownRef/$knownVar isn't an indel, how did it get in the indel hash?\n";
+                    filterAndPrint($entry->chromosome, $entry->position, $knownRef, $knownVar, $ref_count, $var_count, 0,
+                        $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);            
                 }
-
-                unless($self->per_library) {
-                    my $ref_count = 0;
-                    my $var_count = 0;
-                    ($ref_count, $var_count) = $self->indelCounts($entry, $testvarallele);
-                    if ($entry->depth ne '0') {
-                        filterAndPrint($entry->chromosome, $entry->position, $knownRef, $knownVar, $ref_count, $var_count, ($var_count/$entry->depth)*100,
-                            $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);            
+                $foundHash{join("\t",$entry->chromosome,$entry->position,$knownRef,$knownVar)} = 1;
+            }
+            else {
+                my %counts;
+                my $total_ref = 0;
+                my $total_var = 0;
+                my $total_var_freq = 0;
+                for my $lib ($entry->libraries) {
+                    my $var_freq = 0;
+                    my ($ref_count, $var_count) = $self->indelCounts($lib, $testvarallele);
+                    if ($lib->depth ne '0') {
+                        $var_freq = $var_count/$lib->depth * 100;
                     }
-                    else {
-                        filterAndPrint($entry->chromosome, $entry->position, $knownRef, $knownVar, $ref_count, $var_count, 0,
-                            $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);            
-                    }
-                    $foundHash{join("\t",$entry->chromosome,$entry->position,$knownRef,$knownVar)} = 1;
+                    $counts{$lib->name} = [$ref_count, $var_count, $var_freq];
+                    $total_ref += $ref_count;
+                    $total_var += $var_count;
                 }
-                else {
-                    my %counts;
-                    my $total_ref = 0;
-                    my $total_var = 0;
-                    my $total_var_freq = 0;
-                    for my $lib ($entry->libraries) {
-                        my $var_freq = 0;
-                        my ($ref_count, $var_count) = $self->indelCounts($lib, $testvarallele);
-                        if ($lib->depth ne '0') {
-                            $var_freq = $var_count/$lib->depth * 100;
+                $foundHash{join("\t",$entry->chromosome,$entry->position,$knownRef,$knownVar)} = 1;
+                if ($entry->depth ne '0') {
+                    $total_var_freq = $total_var/$entry->depth * 100;
+                }
+                unless(shouldFilter($total_ref, $total_var, $total_var_freq, $min_depth, $max_depth, $min_vaf, $max_vaf)) {
+                    #this is duplicated from above and should be refactored
+                    my @ordered_counts;
+                    for my $count_ref (@counts{@libraries}) {
+                        if(defined $count_ref) {
+                            push @ordered_counts, @$count_ref;
                         }
-                        $counts{$lib->name} = [$ref_count, $var_count, $var_freq];
-                        $total_ref += $ref_count;
-                        $total_var += $var_count;
-                    }
-                    $foundHash{join("\t",$entry->chromosome,$entry->position,$knownRef,$knownVar)} = 1;
-                    if ($entry->depth ne '0') {
-                        $total_var_freq = $total_var/$entry->depth * 100;
-                    }
-                    unless(shouldFilter($total_ref, $total_var, $total_var_freq, $min_depth, $max_depth, $min_vaf, $max_vaf)) {
-                        #this is duplicated from above and should be refactored
-                        my @ordered_counts;
-                        for my $count_ref (@counts{@libraries}) {
-                            if(defined $count_ref) {
-                                push @ordered_counts, @$count_ref;
-                            }
-                            else {
-                                push @ordered_counts, (0,0,0);
-                            }
+                        else {
+                            push @ordered_counts, (0,0,0);
                         }
-                        printLibs($OUTFILE, $entry->chromosome, $entry->position, $knownRef, $knownVar, @ordered_counts);
                     }
+                    printLibs($OUTFILE, $entry->chromosome, $entry->position, $knownRef, $knownVar, @ordered_counts);
                 }
             }
         }

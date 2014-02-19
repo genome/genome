@@ -81,7 +81,7 @@ sub _add_user_if_not_present {
     my $self = shift;
     my $hashref = shift;
 
-    $hashref->{user_name} ||= $self->analysis_project->run_as;
+    $hashref->{run_as} ||= $self->analysis_project->run_as;
 
     return 1;
 }

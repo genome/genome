@@ -923,7 +923,7 @@ sub _cleanup_archive_directory {
     unless ($ENV{UR_DBI_NO_COMMIT}) {
         my ($job_id, $status) = Genome::Sys->bsub_and_wait(
             queue => $ENV{GENOME_ARCHIVE_LSF_QUEUE},
-            cmd => "\"$cmd\"",
+            cmd => "$cmd",
         );
         confess "Failed to execute $cmd via LSF job $job_id, received status $status" unless $status eq 'DONE';
     }

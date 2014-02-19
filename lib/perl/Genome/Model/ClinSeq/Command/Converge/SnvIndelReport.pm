@@ -27,6 +27,10 @@ class Genome::Model::ClinSeq::Command::Converge::SnvIndelReport {
                 doc => 'Human readable name used to refer to the target gene list',
                 default => 'AML_RMG',
         },
+        variant_filter_list => {
+                is => 'FileSystemPath',
+                doc => 'Arbitrary list of variants to filter out.  In "chr start stop ref var" format (space or tab separated). File may have a header or not. Indels should be indicated with a "-" as done in the output of this script.',
+        },
         tiers => {
                 is => 'Text',
                 default => 'tier1,tier2,tier3,tier4',
@@ -171,6 +175,16 @@ sub __errors__ {
                                             );
     }
   }
+  if ($self->variant_filter_list){
+    unless (-e $self->variant_filter_list) {
+      push @errors, UR::Object::Tag->create(
+                                              type => 'error',
+                                              properties => ['variant_filter_list'],
+                                              desc => "File: " . $self->variant_filter_list . " not found",
+
+                                           );
+    }
+  }
 
   return @errors;
 }
@@ -254,6 +268,11 @@ sub execute {
   my $per_lib_header;
   if ($self->per_library){
     $per_lib_header = $self->parse_per_lib_read_counts('-align_builds'=>$align_builds, '-grand_anno_per_lib_count_file'=>$grand_anno_per_lib_count_file, '-variants'=>$variants);
+  }
+  
+  #Apply arbitrary variant filter list
+  if ($self->variant_filter_list){
+    $self->apply_filter_list('-variants'=>$variants);
   }
 
   #Apply some automatic filters:
@@ -499,6 +518,7 @@ sub gather_variants{
       $variants{$v}{tier} = $tier;
       $variants{$v}{ensembl_gene_id} = $ensembl_gene_id;
       $variants{$v}{trv_type} = $trv_type;
+      $variants{$v}{filtered} = 0;
     }
     close(VAR);
   }
@@ -1123,6 +1143,33 @@ sub parse_per_lib_read_counts{
 }
 
 
+sub apply_filter_list{
+  my $self = shift;
+  my %args = @_;
+  my $variants = $args{'-variants'};
+
+  my $filtered_variants = 0;
+  open(VAR, $self->variant_filter_list) || die $self->error_message("could not open file: " . $self->variant_filter_list);
+  while(<VAR>){
+    chomp($_);
+    next if ($_ =~ /chr/);
+    if ($_ =~ /^(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)/){
+      my ($chr, $start, $stop, $ref, $var) = ($1, $2, $3, $4, $5);
+      my $v = $chr . "_$start" . "_$stop" . "_$ref" . "_$var";
+      die $self->error_message("parsed a variant that is not defined in the variant hash") unless $variants->{$v};
+      $variants->{$v}->{filtered} = 1;
+      $filtered_variants++;
+    }
+  }
+
+  $self->status_message("Filtered $filtered_variants variants because they were specified in the variant filter list: " . $self->variant_filter_list);
+
+  close(VAR);
+
+  return;
+}
+
+
 sub apply_variant_filters{
   my $self = shift;
   my %args = @_;
@@ -1134,7 +1181,6 @@ sub apply_variant_filters{
   my $min_tumor_var_supporting_libs = $self->min_tumor_var_supporting_libs;
   
   foreach my $v (keys %{$variants}){
-    $variants->{$v}->{filtered} = 0;
     my $max_normal_vaf_observed = $variants->{$v}->{max_normal_vaf_observed};
     my $max_tumor_vaf_observed = $variants->{$v}->{max_tumor_vaf_observed};
     my $min_coverage_observed = $variants->{$v}->{min_coverage_observed};

@@ -23,7 +23,8 @@ class Genome::Model::View::SearchResult::Xml {
                     toolkit => 'xml'
                 },
                 'creation_date',
-                'user_name',
+                'created_by',
+                'run_as',
                 {
                     name => 'last_complete_build',
                     aspects => [

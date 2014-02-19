@@ -1338,7 +1338,7 @@ sub get_default_alignment_results {
         }
 
         next unless @builds;
-        my @models_by_apipe_builder = grep {$_->user_name =~ /^apipe-builder/} map { $_->model } @builds;
+        my @models_by_apipe_builder = grep {$_->run_as =~ /^apipe-builder/} map { $_->model } @builds;
 
         if (@models_by_apipe_builder) {
             push @ars_by_apipe_builder, $alignment_result;

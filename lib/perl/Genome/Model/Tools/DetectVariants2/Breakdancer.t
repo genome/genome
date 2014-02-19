@@ -84,4 +84,23 @@ $bad_fastq_fh->close;
 ok(!$command->_validate_ctx_fastqs, 'validate ctx fastqs failed b/c of bad fastq');
 #print $command->_sv_staging_output."\n";<STDIN>;
 
+my $no_ctx_working_dir = "$test_base_dir/output2";
+
+my $no_ctx_normal_bam = $test_dir . '/noctx.chr22.tst1_bl.bam';
+my $no_ctx_tumor_bam  = $test_dir . '/noctx.chr22.tst1.bam';
+my $no_ctx_cfg_file   = $test_dir . '/no_ctx_bam_cfg';
+my $command1 = Genome::Model::Tools::DetectVariants2::Breakdancer->create(
+    reference_build_id => $refbuild_id,
+    aligned_reads_input => $no_ctx_tumor_bam,
+    control_aligned_reads_input => $no_ctx_normal_bam,
+    version => $version,
+    params  => '-g -h:-a -q 10 -t -d',  #breakdancer 1.2 and beyond need turn on "-a" flag to output lib info
+    chromosome => $chromosome,
+    output_directory => $no_ctx_working_dir,
+    config_file => $no_ctx_cfg_file,
+);
+ok($command1, 'Created `gmt detect-variants2 breakdancer` command for ctx');
+$command1->dump_status_messages(1);
+ok($command1->execute, 'Executed `gmt detect-variants2 breakdancer` command for ctx');
+
 done_testing();

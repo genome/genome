@@ -19,7 +19,12 @@ class Genome::Config::AnalysisProject::Command::AddMenuItem {
             is_many             => 1,
             doc                 => 'the analysis menu items to associate with this project.',
             require_user_verify => 1,
-        }
+        },
+        reprocess_existing => {
+            is => 'Boolean',
+            default_value => 0,
+            doc => 'Reprocess any existing instrument data with the new config',
+        },
     ],
 };
 
@@ -47,6 +52,10 @@ sub execute {
     if (my $error = $@) {
         $self->error_message('Failed to add to Analysis Project!');
         die($error);
+    }
+
+    if($self->reprocess_existing){
+        $self->_mark_instrument_data_bridges;
     }
 
     return $self->analysis_project;
@@ -81,6 +90,15 @@ sub _add_config_items_to_project {
         );
     }
 
+    return 1;
+}
+
+sub _mark_instrument_data_bridges {
+    my $self = shift;
+    my $analysis_project = $self->analysis_project;
+    for my $bridge ($analysis_project->analysis_project_bridges){
+        $bridge->status('new');
+    }
     return 1;
 }
 

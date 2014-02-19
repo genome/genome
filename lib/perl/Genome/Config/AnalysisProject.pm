@@ -33,7 +33,7 @@ class Genome::Config::AnalysisProject {
             default_value => 'Pending',
             valid_values => ['Pending', 'Approved', 'In Progress', 'Completed', 'Archived', 'Hold'],
         },
-        is_clia => {
+        is_cle => {
             is => 'Boolean',
             default_value => 0,
             doc => 'Is this an analysis project for the CLIA Licensed Environment?',
@@ -42,9 +42,9 @@ class Genome::Config::AnalysisProject {
             is => 'Text',
             doc => 'The user account that will be used to run these models',
         },
-        subject_pairings => {
+        subject_mappings => {
             is_many => 1,
-            is => 'Genome::Config::AnalysisProject::SubjectPairing',
+            is => 'Genome::Config::AnalysisProject::SubjectMapping',
             reverse_as => 'analysis_project',
         },
         analysis_project_bridges => {
@@ -138,7 +138,7 @@ sub _set_run_as {
 
     return if $self->run_as;
 
-    if ($self->is_clia) {
+    if ($self->is_cle) {
         $self->run_as('clia');
     } else {
         $self->run_as('apipe-builder');

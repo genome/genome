@@ -55,7 +55,7 @@ class Genome::Model::Tools::CopyCat::Somatic{
             is => 'String',
             is_optional => 0,
             is_input => 1,
-            doc =>'annotation version to use'
+            doc =>'annotation version to use. (i.e. "1") Run "gmt copy-cat list" to see available versions (and be aware that the list command takes like 3 minutes to complete).'
         },
         tumor_samtools_file => {
             is => 'String',
@@ -86,7 +86,6 @@ class Genome::Model::Tools::CopyCat::Somatic{
             is_optional => 1,
             default => 1,
             doc => "use loess correction to account for gc-bias",
-
         },
         min_width => {
             is => 'Integer',

@@ -89,8 +89,8 @@ sub unarchive {
             ($job_id, $status) = Genome::Sys->bsub_and_wait(
                 queue => $ENV{GENOME_ARCHIVE_LSF_QUEUE},
                 job_group => '/unarchive',
-                log_file => "\"/tmp/$id\"",
-                cmd => "\"$cmd\"",
+                log_file => "/tmp/$id",
+                cmd => $cmd,
             );
 
             for my $signal (@signals) {
