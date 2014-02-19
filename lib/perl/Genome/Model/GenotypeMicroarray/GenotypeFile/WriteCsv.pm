@@ -12,6 +12,10 @@ class Genome::Model::GenotypeMicroarray::GenotypeFile::WriteCsv {
     },
 };
 
+sub default_headers {
+    return [qw/ chromosome position alleles reference id sample_id log_r_ratio gc_score cnv_value cnv_confidence allele1 allele2 /];
+}
+
 sub create {
     my ($class, %params) = @_;
 
@@ -35,7 +39,7 @@ sub _process_params {
         $output_params->{headers} = [ split(',', $fields) ];
     }
     else {
-        $output_params->{headers} = [qw/ chromosome position alleles reference id sample_id log_r_ratio gc_score cnv_value cnv_confidence allele1 allele2 /];
+        $output_params->{headers} = default_headers();
     }
 
     return 1;
