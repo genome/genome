@@ -22,30 +22,25 @@ class Genome::Model::SomaticVariation::Command::CreateReport {
         },
     ],
     has_optional_input => [
-        # make pp option
         restrict_to_target_regions =>{
             is => 'Boolean',
             default => 1,
             doc => "only keep snv calls within the target regions. These are pulled from the build if possible",
         },
-        # make pp option? - would need to be a featurelist and model input
         target_regions =>{
             is => 'String',
             doc => "path to a target file region. Used in conjunction with --restrict-to-target-regions to limit sites to those appearing in these regions",
         },
-        # pp option
         required_snv_callers => {
             is => 'Number',
             doc => "Number of independent algorithms that must call a SNV. If set to 1 (default), all calls are used",
             default => 1,
         },
-        # pp option
         tiers_to_review => {
             is => 'String',
             doc => "comma-separated list of tiers to include in review. (e.g. 1,2,3 will create bed files with tier1, tier2, and tier3)",
             default => 1,
         },
-        # goes away
         sample_name =>{
             is => 'Text',
             is_mutable => 0,
@@ -121,55 +116,37 @@ sub execute {
 
     $self->_output_dir($self->create_allocation());
 
-    # Check if the necessary files exist in this build and put them in the processing location
     my $snv_file   = $self->stage_snv_file();
     my $indel_file = $self->stage_indel_file();
 
-    #--------------------------------------------------------------
-    # munge through SNV file to remove duplicates and fix IUB codes
     $snv_file = $self->clean_file($snv_file, $self->snvs_dir);
     $indel_file = $self->clean_file($indel_file, $self->indels_dir);
 
-    #-------------------------------------------------------
-    # remove regions called by less than the required number of callers
     $snv_file = $self->remove_unsupported_sites($snv_file);
 
-    #-------------------------------------------------
-    # filter out the off-target regions, if target regions are available
     if ($self->restrict_to_target_regions) {
         $snv_file = $self->_filter_off_target_regions($snv_file, $self->snvs_dir);
         $indel_file = $self->_filter_off_target_regions($indel_file, $self->indels_dir);
     }
 
-    #------------------------------------------------------
-    # do annotation
     $snv_file   = $self->annotate($snv_file, $self->snvs_dir);
     $indel_file = $self->annotate($indel_file, $self->indels_dir);
 
-    #-------------------------------------------------------
-    # add tiers
     $self->status_message("Adding tiers");
     $snv_file   = $self->add_tiers($snv_file);
     $indel_file = $self->add_tiers($indel_file);
 
-    #convert back to annotation format (1-based)
     $snv_file = convert_from_zero_to_one_based($snv_file);
     $indel_file = convert_from_zero_to_one_based($indel_file);
 
-    #----------------------------------------------------
-    # add dbsnp/gmaf
     ($snv_file, $indel_file) = $self->_add_dbsnp_and_gmaf($snv_file, $indel_file);
 
     $self->status_message("Getting read counts");
     $snv_file   = $self->add_read_counts($snv_file, $self->snvs_dir);
     $indel_file = $self->add_read_counts($indel_file, $self->indels_dir);
 
-    #------------------------------------------------------
-    # combine the files into one master table
     $self->_create_master_files($snv_file, $indel_file);
 
-    #------------------------------------------------------
-    # now get the files together for review
     $self->_create_review_files();
 
     $self->reallocate();
