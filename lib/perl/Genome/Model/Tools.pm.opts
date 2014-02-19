@@ -2461,6 +2461,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
         undef,
         'min-vaf=s',
         undef,
+        'per-library!',
+        undef,
         'help!',
         undef
       ],
@@ -2495,8 +2497,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
         'min-vaf=s',
         'files',
         'per-library!',
-        undef,
-        'use-varscan!',
         undef,
         'help!',
         undef
