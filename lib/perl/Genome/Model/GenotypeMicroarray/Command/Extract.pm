@@ -50,26 +50,27 @@ Defaults to writing all fields with headers as CSV w/ tabs to STDOUT.
 Options:
 
  file           File to write to. Use '-' for STDOUT.
- format         Format to output. If undefined, it will be determined by
-                 file extension. Valid vlaues: vcf, csv [character separated values].
- separator      For CSV, the separator ot use. Default is 'TAB', which writes tab
-                 separated values.
- headers        Include headers. Use 1 to include, 0 to exclude. Applies only to CSV.
- print_headers  Write these fields. Applies only to CSV.
-                 Fields: 
-                  id
-                  chromosome
-                  position
-                  sample_id
-                  log_r_ratio
-                  gc_score
-                  cnv_value
-                  cnv_confidence
-                  alleles
-                  allele1
-                  allele2 
+ format         Format to output. Valid vlaues: csv [character separated values], vcf
 
-                 Deafult fields are chromosome, position and alleles.
+CSV Options:
+ separator  The separator to use. Default is 'TAB', which writes values separated by tabs.
+ headers    Include headers. Use 1 to include, 0 to exclude.
+ fields     Write these fields. Default writes all.
+             Fields: 
+              id
+              chromosome
+              position
+              sample_id
+              log_r_ratio
+              gc_score
+              cnv_value
+              cnv_confidence
+              alleles
+              allele1
+              allele2 
+
+VCF Options:
+ None.
 
 Examples:
              
