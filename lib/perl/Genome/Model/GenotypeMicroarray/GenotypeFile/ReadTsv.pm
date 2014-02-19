@@ -18,7 +18,6 @@ sub read {
     my $genotype = $self->next;
     return if not $genotype;
 
-    $genotype->{id} = $genotype->{snp_name};
     $genotype->{alleles} = $genotype->{allele1}.$genotype->{allele2};
 
     return $genotype;
