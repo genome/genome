@@ -77,11 +77,17 @@ sub _load_genotypes {
         chomp $line;
         my %genotype;
         @genotype{@headers} = split(',', $line);
+
+        # Set undef attrs to NA
+        for my $attr ( @headers ) {
+            $genotype{$attr} = 'NA' if not defined $genotype{$attr};
+        }
+
         # The id is from the snp mapping or the genotype's snp_name
         if($snp_id_mapping and exists $snp_id_mapping->{ $genotype{snp_name} }) {
-            $genotype{id} = $snp_id_mapping->{ $genotype{snp_name} };
+            $genotype{id} = $snp_id_mapping->{ delete $genotype{snp_name} };
         } else {
-            $genotype{id} = $genotype{snp_name};
+            $genotype{id} = delete $genotype{snp_name};
             $genotype{id} =~ s/^(rs\d+)\D*$/$1/; #borrowed from GSC::Genotyping::normalize_to
         }
 
@@ -91,6 +97,10 @@ sub _load_genotypes {
         }
         $genotype{alleles} = $genotype{allele1}.$genotype{allele2};
         $genotypes->{ $genotype{id} } = \%genotype;
+
+        # Chr and position are from variation list
+        delete $genotype{'chr'};
+        delete $genotype{position};
     }
 
     if ( not %$genotypes ) {
@@ -122,8 +132,8 @@ sub _annotate_genotypes {
 
     my $variant_id_pos = ( $variation_list_build->version and $variation_list_build->version eq 130 ? 8 : 7 );
     my $reference_sequence_build = $variation_list_build->reference;
-    my @order;
-    my $ignored = 0;
+    my %order;
+    my $cnt = 0;
     while ( my $line = $dbsnp_fh->getline ) {
         chomp $line;
         my @tokens = split(/\s+/, $line);
@@ -131,9 +141,8 @@ sub _annotate_genotypes {
         my $genotype = $genotypes->{$variant_id};
         next if not $genotype;
 
-        if ( exists $genotype->{annotated} ) {
-            if ( $genotype->{position} != $tokens[2] ) {
-                $ignored++;
+        if ( exists $order{$variant_id} ) {
+            if ( $genotype->{position} != $tokens[0] or $genotype->{position} != $tokens[2] ) {
                 $genotype->{ignored} = 1;
             }
             next;
@@ -141,18 +150,18 @@ sub _annotate_genotypes {
 
         $genotype->{chromosome} = $tokens[0];
         $genotype->{position} = $tokens[2];
-        $genotype->{'ref'} = $reference_sequence_build->sequence(
+        $genotype->{reference} = $reference_sequence_build->sequence(
             $genotype->{chromosome}, $genotype->{position}, $genotype->{position}
         );
-        $genotype->{annotated} = 1;
-        push @order, $variant_id;
+        $order{$variant_id} = $cnt++;
     }
 
-    $self->_order(\@order);
+    my @order = sort { $order{$a} <=> $order{$b} } grep { !$genotypes->{$_}->{ignored} } keys %order;
     if ( not @order ) {
         $self->error_message("All genotypes are duplicates in variant list! ".$snvs_file);
         return;
     }
+    $self->_order(\@order);
 
     return 1;
 }
