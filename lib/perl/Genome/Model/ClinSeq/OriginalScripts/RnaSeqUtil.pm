@@ -1,4 +1,4 @@
-package Genome::Model::ClinSeq::RnaSeqUtil;
+package Genome::Model::ClinSeq::OriginalScripts::RnaSeqUtil;
 
 #Written by Malachi Griffith
 
@@ -19,8 +19,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 use Genome;
-use Genome::Model::ClinSeq::Util qw(:all);
-#TODO - Make a class.
+use Genome::Model::ClinSeq::OriginalScripts::Util qw(:all);
 
 #################################################################################################################
 #Parse the genes.fpkm_trackin file                                                                              #
