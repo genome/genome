@@ -103,6 +103,8 @@ sub _create_config_files {
     
     my $locus=-1;
     
+    chdir($self->output_directory);
+    
     my $OUT1 = Genome::Sys->open_file_for_writing($locus_id.'_asm_feature') or die "failed to open _asm_feature";
 	my $OUT2 = Genome::Sys->open_file_for_writing($locus_id.'_asmbl_data') or die "failed to open _asmbl_data";
 	my $OUT3 = Genome::Sys->open_file_for_writing($locus_id.'_ident2') or die "failed to open _ident2";
@@ -203,16 +205,16 @@ sub _setup_dirs {
      
     map{Genome::Sys->create_directory($locus_id."/$_")}qw(fasta hmm ber);
      
-    Genome::Sys->create_symlink("/gscmnt/gc6125/info/annotation/worm_analysis/T_circumcincta/T_circumcincta.14.0.ec.cg.pg/Version_1.0/PAP/Version_1.0/BER/*pep", $locus_id);
+#    Genome::Sys->create_symlink("/gscmnt/gc6125/info/annotation/worm_analysis/T_circumcincta/T_circumcincta.14.0.ec.cg.pg/Version_1.0/PAP/Version_1.0/BER/*pep", $locus_id);
     
     chdir($locus_id."/fasta");
     
-	Genome::Sys->shellcmd(cmd => "dbshatter ../*pep");
+	Genome::Sys->shellcmd(cmd => 'dbshatter '.$self->input_fasta_file);
 	
 	chdir("../../../db/CSV");
 	
 	#Revisit - Multiple file copying?
-	Genome::Sys->copy_file("/gscmnt/gc6125/info/annotation/worm_analysis/T_circumcincta/T_circumcincta.14.0.ec.cg.pg/Version_1.0/PAP/Version_1.0/BER/Version_1.0/($locus_id)_*", .);
+	Genome::Sys->copy_file($self->output_directory."/($locus_id)_*", .);
 
 	chdir("/gscmnt/gc9002/info/annotation/BER/autoannotate_v2.5/data/genomes/($locus_id)/fasta");
 	
@@ -241,7 +243,12 @@ sub _setup_dirs {
 
 sub _prep_input_files {
 	
-	my $cmd = Genome::Model::Tools::Ber::BerRunBlastphmmpfam->create();
+	my $cmd = Genome::Model::Tools::Ber::BerRunBlastphmmpfam->create(
+		locus_tag=>$self->_get_locus_from_fasta_header,
+		
+		
+	
+	);
 	mr $rv = $cmd->execute;
 	
 	my $cmd = Genome::Model::Tools::Ber::BerRunBtabhmmtab->create();
