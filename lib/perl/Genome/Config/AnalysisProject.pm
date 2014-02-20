@@ -139,7 +139,7 @@ sub _set_run_as {
     return if $self->run_as;
 
     if ($self->is_cle) {
-        $self->run_as('clia');
+        $self->run_as('cle');
     } else {
         $self->run_as('apipe-builder');
     }
