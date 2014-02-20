@@ -240,6 +240,12 @@ sub _setup_dirs {
 }
 
 sub _prep_input_files {
+	
+	my $cmd = Genome::Model::Tools::Ber::BerRunBlastphmmpfam->create();
+	mr $rv = $cmd->execute;
+	
+	my $cmd = Genome::Model::Tools::Ber::BerRunBtabhmmtab->create();
+	mr $rv = $cmd->execute;
 
 #3. Prep input files for BER
 #
@@ -274,6 +280,7 @@ sub _prep_input_files {
 
 sub _run_anno_sqlite {
 	
+	Genome::Sys->shellcmd(cmd => "bsub -o TELCIRDFT.out -e TELCIRDFT.err -R 'select[type=LINUX64]' ./anno-sqlite.bash ELCIRDFT 130521 gram-";
 	
 #   Run anno-sqlite.bash
 #   
