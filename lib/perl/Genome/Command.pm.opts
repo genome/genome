@@ -639,6 +639,8 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'plugins=s@',
         'files',
+        'custom=s@',
+        'files',
         'species=s',
         'files',
         'terms=s',
@@ -38425,6 +38427,8 @@ $Genome::Command::OPTS_SPEC = [
       [
         '>create',
         [
+          'description=s',
+          'files',
           'file-path=s',
           undef,
           'name=s',
