@@ -33,6 +33,10 @@ sub create {
     return $self;
 }
 
+sub read {
+    return $_[0]->_read_from_reader->();
+}
+
 sub _resolve_read_sub {
     my $self = shift;
 
@@ -40,7 +44,6 @@ sub _resolve_read_sub {
     if ( $reader_class eq 'Genome::File::Vcf::Reader' ) {
         $self->_read_from_reader(
             sub {
-                my $self = shift;
                 return $self->reader->next;
             }
         );
@@ -48,14 +51,9 @@ sub _resolve_read_sub {
     elsif ( $reader_class =~ /^Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsv/ ) {
         $self->_read_from_reader(
             sub {
-                my $self = shift;
-
-                my $genotype = $self->next;
+                my $genotype = $self->reader->read;
                 return if not $genotype;
-
-                $genotype->{alleles} = $genotype->{allele1}.$genotype->{allele2};
-
-                return $genotype;
+                return $self->_convert_genotype_hash_to_vcf_entry($genotype);
             }
         );
     }
@@ -63,7 +61,72 @@ sub _resolve_read_sub {
         Carp::confess('Unknown reader! '.$self->reader);
     }
 
-    return $self->_read_from_reader;
+}
+
+sub _convert_genotype_hash_to_vcf_entry {
+    my ($self, $genotype) = @_;
+
+    $genotype->{identifiers} = [ $genotype->{id} ];
+    $genotype->{chrom} = $genotype->{chromosome};
+    $genotype->{reference_allele} = $genotype->{reference};
+    $genotype->{alternate_alleles} = $self->_alts_for_genotype($genotype);
+    $genotype->{quality} = '.';
+    $genotype->{_filter} = [];
+    $genotype->{info_fields} = {
+        hash => { 
+            map { $_->{id} => $genotype->{ $_->{name} } } # FIXME convert NA to . ??
+            grep { defined $genotype->{$_->{name}} and $genotype->{$_->{name}} ne 'NA' }
+            @{Genome::Model::GenotypeMicroarray::GenotypeFile::DefaultHeader->supported_info_fields}, 
+        },
+        order =>Genome::Model::GenotypeMicroarray::GenotypeFile::DefaultHeader->info_order,
+    };
+    $genotype->{_format} = [ 'GT' ];
+    $genotype->{_sample_data} = [ [ $self->_format_for_genotype($genotype) ] ];
+
+    return bless $genotype, 'Genome::File::Vcf::Entry';
+}
+
+sub _alts_for_genotype {
+    my ($self, $genotype) = @_;
+
+    # alleles are dashes
+    return '.' if $genotype->{allele1} eq '-' and $genotype->{allele2} eq '-';
+
+    # see which match the ref
+    my @alts;
+    for my $allele_key ( map{ 'allele'.$_ } (1..2) ) {
+        next if $genotype->{$allele_key} eq '-';
+        push @alts, $genotype->{$allele_key} if $genotype->{$allele_key} ne $genotype->{reference_allele};
+    }
+
+    # both match!
+    return [] if not @alts;
+    # retrun alts
+    return [ sort { $a cmp $b } @alts ];
+}
+
+sub _format_for_genotype {
+    my ($self, $genotype) = @_;
+
+    my $allele1_matches_ref = $genotype->{allele1} eq $genotype->{reference};
+    my $allele2_matches_ref = $genotype->{allele2} eq $genotype->{reference};
+
+    if ( $genotype->{allele1} eq '-' and $genotype->{allele2} eq '-' ) {
+        return './.';
+    }
+    elsif ( $allele1_matches_ref and $allele2_matches_ref ) { # ref and alleles match
+        return '0/0'; # homozygous ref
+    }
+    elsif ( $allele1_matches_ref or $allele2_matches_ref ) { # ref matches one allele, but alleles are not the same
+        return '0/1'; # heterozygous ref
+    }
+    elsif ( $genotype->{allele1} eq $genotype->{allele2} ) { # alleles match, but not the ref
+        return '1/1'; # homozygous alt
+    }
+    else { # not $allele1_matches_ref and not $allele2_matches_ref
+        return '1/2';
+    }
+
 }
 
 1;
