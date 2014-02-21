@@ -19,7 +19,7 @@ use Test::More;
 use_ok('Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsv') or die;
 use_ok('Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsvAndAnnotate') or die;
 use_ok('Genome::Model::GenotypeMicroarray::GenotypeFile::WriteCsv') or die;
-#use_ok('Genome::Model::GenotypeMicroarray::GenotypeFile::WriteVcf') or die;
+use_ok('Genome::Model::GenotypeMicroarray::GenotypeFile::WriteVcf') or die;
 
 my $testdir = $ENV{GENOME_TEST_INPUTS} . '/GenotypeMicroarray/';
 my $variation_list_build = _init();
@@ -39,7 +39,7 @@ my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
 ###
 # TSV to annotate to TSV
 my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsvAndAnnotate->create(
-    input => $testdir.'/rw/read-tsv-and-annotate.tsv',
+    input => $testdir.'/rw/input.csv',
     variation_list_build => $variation_list_build,
     snp_id_mapping => \%snp_id_mapping,
 );
@@ -58,7 +58,8 @@ while ( my $genotype = $reader->read ) {
 }
 is_deeply(\@genotypes_from_read_tsv_and_annotate, _expected_genotypes(), 'read tsv and annotate genotypes match');
 is($write_cnt, @genotypes_from_read_tsv_and_annotate, 'wrote all genotypes');
-is(File::Compare::compare($output_tsv, $testdir.'/rw/read-tsv.tsv'), 0, 'read tsv, write to csv output file matches');
+is(File::Compare::compare($output_tsv, $testdir.'/rw/output.tsv'), 0, 'read tsv and annotate, write to tsv output file matches');
+#print "gvimdiff $output_tsv $testdir/rw/write.tsv\n"; <STDIN>;
 
 ###
 # TSV to VCF
@@ -66,21 +67,22 @@ $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsv->create(
     input => $output_tsv,
 );
 ok($reader, 'create');
-
-#my $output = $tmpdir.'/genotypes.read-tsv.vcf';
-#my $writer = 
-#output => $output,
-#);
-#ok($writer, 'create writer');
+my $output_vcf = $tmpdir.'/genotypes.vcf';
+$writer = Genome::Model::GenotypeMicroarray::GenotypeFile::WriteVcf->create(
+    output => $output_vcf,
+);
+ok($writer, 'create writer');
 
 my @genotypes_from_read_tsv;
 $write_cnt = 0;
 while ( my $genotype = $reader->read ) {
     push @genotypes_from_read_tsv, $genotype;
-    $write_cnt++ #if $writer->write_one($genotype);
+    $write_cnt++ if $writer->write_one($genotype);
 }
 is_deeply(\@genotypes_from_read_tsv, \@genotypes_from_read_tsv, 'genotypes match');
 is($write_cnt, @genotypes_from_read_tsv, 'wrote all genotypes');
+is(File::Compare::compare($output_vcf, $testdir.'/rw/write.vcf'), 0, 'read tsv, write to vcf output file matches');
+#print "gvimdiff $output_vcf $testdir/rw/write.vcf\n"; <STDIN>;
 
 done_testing();
 
