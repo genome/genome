@@ -38,12 +38,16 @@ my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
 
 ###
 # TSV to annotate to TSV
-my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsvAndAnnotate->create(
+my $genotype_reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsvAndAnnotate->create(
     input => $testdir.'/rw/input.csv',
     variation_list_build => $variation_list_build,
     snp_id_mapping => \%snp_id_mapping,
 );
-ok($reader, 'create');
+ok($genotype_reader, 'create genotype reader to read tsv and annotate');
+my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::Reader->create(
+    reader => $genotype_reader,
+);
+ok($reader, 'create reader');
 my $output_tsv = $tmpdir.'/genotypes.tsv';
 my $writer = Genome::Model::GenotypeMicroarray::GenotypeFile::WriteCsv->create(
     output => $output_tsv,
@@ -63,13 +67,19 @@ is(File::Compare::compare($output_tsv, $testdir.'/rw/output.tsv'), 0, 'read tsv 
 
 ###
 # TSV to VCF
-$reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsv->create(
+$genotype_reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsv->create(
     input => $output_tsv,
 );
-ok($reader, 'create');
+ok($genotype_reader, 'create genotype reader to read tsv');
+$reader = Genome::Model::GenotypeMicroarray::GenotypeFile::Reader->create(
+    reader => $genotype_reader,
+);
+ok($reader, 'create reader');
 my $output_vcf = $tmpdir.'/genotypes.vcf';
+my $header = Genome::Model::GenotypeMicroarray::GenotypeFile::DefaultHeader->header;
 $writer = Genome::Model::GenotypeMicroarray::GenotypeFile::WriteVcf->create(
-    output => $output_vcf,
+    output => $output_vcf, 
+    header => $header,
 );
 ok($writer, 'create writer');
 
@@ -79,6 +89,7 @@ while ( my $genotype = $reader->read ) {
     push @genotypes_from_read_tsv, $genotype;
     $write_cnt++ if $writer->write_one($genotype);
 }
+$writer->close;
 is_deeply(\@genotypes_from_read_tsv, \@genotypes_from_read_tsv, 'genotypes match');
 is($write_cnt, @genotypes_from_read_tsv, 'wrote all genotypes');
 is(File::Compare::compare($output_vcf, $testdir.'/rw/write.vcf'), 0, 'read tsv, write to vcf output file matches');
