@@ -32,7 +32,8 @@ my $genotype_file = eval{ $instrument_data->attributes(attribute_label => 'genot
 ok($genotype_file && -s $genotype_file, 'inst data genotype file');
 
 my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->build_reader($instrument_data, $variation_list_build);
-isa_ok($reader, 'Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsvAndAnnotate');
+ok($reader, 'create reader');
+isa_ok($reader->reader, 'Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsvAndAnnotate');
 
 # Reader for tsv annotated genotype file from build
 my $gm_build = Genome::Model::Build::GenotypeMicroarray->__define__(
@@ -48,6 +49,7 @@ $genotype_file = $gm_build->original_genotype_file_path;
 ok($genotype_file && -s $genotype_file, 'gm build genotype file');
 
 $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->build_reader($gm_build);
-isa_ok($reader, 'Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsv');
+ok($reader, 'create reader');
+isa_ok($reader->reader, 'Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsv');
 
 done_testing();
