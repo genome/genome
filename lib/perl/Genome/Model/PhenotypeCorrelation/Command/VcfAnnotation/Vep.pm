@@ -62,11 +62,13 @@ sub execute {
     my $condel = delete $input_params{condel};
     my $version = delete $input_params{version} || "2_7";
     my $build = $self->_resolve_annotation_build($version);
+
+    my $temp_output = Genome::Sys->create_temp_file_path;
     my %params = (
         %input_params,
         ensembl_annotation_build_id => $build->id,
         input_file => $self->input_file,
-        output_file => $self->output_file,
+        output_file => $temp_output,
         format => "vcf", # input format
         quiet => 1, # shhhh
         vcf => 1, # sets output format to vcf.
@@ -82,8 +84,12 @@ sub execute {
 
     $self->status_message("Running vep with parameters: " . Dumper(\%params));
     my $vep_command = Genome::Db::Ensembl::Command::Vep->create(%params);
+    my $sort_cmd = Genome::Model::Tools::Joinx::Sort->create(
+        input_files => [$temp_output],
+        output_file => $self->output_file
+        );
 
-    return $vep_command->execute();
+    return $vep_command->execute() && $sort_cmd->execute();
 }
 
 1;
