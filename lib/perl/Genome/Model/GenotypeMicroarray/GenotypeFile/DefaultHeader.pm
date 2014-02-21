@@ -44,6 +44,9 @@ our $supported_info_fields = [
         header => ',Number=1,Type=Integer,Description="Original genotype calls">', 
     },
 ];
+sub supported_info_fields {
+    return $supported_info_fields;
+}
 
 my $header_lines;
 sub header_lines {
@@ -56,6 +59,7 @@ sub header_lines {
     for my $field ( @$supported_info_fields ) {
         push @$header_lines, '##INFO=<ID='.$field->{id}.$field->{header};
     }
+    push @$header_lines, '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">';
 
     return $header_lines;
 }
