@@ -537,10 +537,6 @@ sub doAnnotation{
 sub addTiering{
     my ($file, $tier_file_location) = @_;
 
-    unless($file =~ /\.bed/){
-        $file = annoFileToBedFile($file);
-    }
-
     my $newfile = addName($file, "tiered");
 
     #handle zero size files
@@ -859,10 +855,6 @@ sub execute {
       #do annotation
       $snv_file = addTiering($snv_file, $tiering_files);
       $indel_file = addTiering($indel_file, $tiering_files);
-
-      #convert back to annotation format (1-based)
-      $snv_file = bedFileToAnnoFile($snv_file);
-      $indel_file = bedFileToAnnoFile($indel_file);
   }
 
 
