@@ -438,17 +438,9 @@ sub get_vcf_file {
     confess $self->error_message("Couldn't find the snvs.vcf.gz file under directory $dir");
 }
 
-
-sub remove_unsupported_sites {
-    my ($self, $snv_file) = @_;
-
-    if ($self->required_snv_callers == 1) {
-        return $snv_file;
-    }
-    $self->status_message("Removing sites supported by less than %s callers", $self->required_snv_callers);
-
-    #hash all of the sites
-    my $sites = $self->get_site_hash($snv_file);
+sub fill_in_site_hash {
+    my $self = shift;
+    my $sites = shift;
 
     #Look for the callers
     my @dirs = map {basename($_) } glob(
@@ -476,6 +468,20 @@ sub remove_unsupported_sites {
         }
         $infile->close;
     }
+
+    return $sites;
+}
+
+sub remove_unsupported_sites {
+    my ($self, $snv_file) = @_;
+
+    if ($self->required_snv_callers == 1) {
+        return $snv_file;
+    }
+    $self->status_message("Removing sites supported by less than %s callers", $self->required_snv_callers);
+
+    #hash all of the sites
+    my $sites = $self->fill_in_site_hash($self->get_site_hash($snv_file));
 
     my $result_file_path = $self->result_file_path(
         input_file_path => $snv_file,
