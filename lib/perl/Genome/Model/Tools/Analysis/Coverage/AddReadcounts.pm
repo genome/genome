@@ -63,7 +63,7 @@ class Genome::Model::Tools::Analysis::Coverage::AddReadcounts{
 	    doc => 'minimum variant allele frequency required for a site to be reported (0-100)',
         },
 
-        max_vaf => { 
+        max_vaf => {
             is => 'Integer',
             is_optional => 1,
 	    doc => 'maximum variant allele frequency allowed for a site to be reported (0-100)',
@@ -76,7 +76,7 @@ class Genome::Model::Tools::Analysis::Coverage::AddReadcounts{
             default => 4,
         },
 
-        header_prefixes => { 
+        header_prefixes => {
             is => 'String',
             is_optional => 1,
 	    doc => 'Comma-separated list - if the file has a header, three column titles get added for each bam ("ref_count","var_count","VAF"). This specifies a prefix for those columns. (i.e.  "Normal" will lead to "Normal_ref_count","Normal_var_count","Normal_VAF").',
@@ -172,7 +172,7 @@ sub execute {
     unless(defined($chrom)){
         $chrom = "all";
     }
-   
+
 
     my $prefix = 1;
     for my $bam (@bams){
@@ -181,7 +181,7 @@ sub execute {
             bam_file => $bam,
             output_file =>  "$tempdir/$prefix.rcfile",
             variant_file => $variant_file,
-            genome_build => $genome_build, 
+            genome_build => $genome_build,
             chrom => $chrom,
             min_depth  => $min_depth,
             max_depth => $max_depth,
@@ -210,9 +210,9 @@ sub execute {
             my ($chr, $pos, $ref, $var, @counts,) = split("\t",$line);
             $ref = uc($ref);
             $var = uc($var);
-            
+
             my $key = "$chr:$pos:$ref:$var";
-            
+
             #for each base at that pos
             $readcounts{$key} = join(":", @counts);
         }
@@ -237,10 +237,10 @@ sub execute {
         while( my $sline = $inFh->getline )
         {
             chomp($sline);
-            
+
             if($count == 0){ #check for header
                 if($sline =~ /^(#|Hugo_Symbol|Chrom|chromosome|chr\s+)/i){
-                    #good header match                    
+                    #good header match
                     if(defined($header_prefixes[$prefix-1])){
                         my $pre = $header_prefixes[$prefix-1];
                         print OUTFILE join("\t",($sline, map { $pre . "_" . $_ } @count_headers)) . "\n";
@@ -251,8 +251,8 @@ sub execute {
                 }
             };
             $count++;
-            
-            
+
+
             my ($chr, $st, $sp, $ref, $var, @rest) = split("\t",$sline);
 
             $ref =~ s/0/-/g;
@@ -260,10 +260,10 @@ sub execute {
             $var =~ s/0/-/g;
             $var =~ s/\*/-/g;
             $ref = uc($ref);
-            $var = uc($var); 
-            
-            my $key = $chr . ":" . $st . ":" . $ref . ":" . $var;                
-            
+            $var = uc($var);
+
+            my $key = $chr . ":" . $st . ":" . $ref . ":" . $var;
+
             #get the readcount information at this position
             if(exists($readcounts{$key})){
                 my @counts = split(/:/,$readcounts{$key});
@@ -272,7 +272,7 @@ sub execute {
                 print STDERR "didn't find variant $key in bam-readcount output, skipping\n";
             }
             print OUTFILE $sline, "\n";
-            
+
         }
         close(OUTFILE);
         $prefix++;
