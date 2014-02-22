@@ -18277,6 +18277,8 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'processors=s',
         undef,
+        'samtools-file-format=s',
+        'files',
         'tumor-samtools-file=s',
         'files',
         'help!',
