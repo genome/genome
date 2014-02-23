@@ -264,7 +264,7 @@ sub execute {
     if (-s $varscan_file){
       my $clonality_cmd1a = Genome::Model::Tools::Validation::ClonalityPlot->create(cnvhmm_file=>$cnvhmm_file, output_image=>$output_image_file1a, r_script_output_file=>$r_script_file, varscan_file=>$varscan_file, analysis_type=>'wgs', sample_id=>$uc_common_name);
       $clonality_cmd1a->execute();
-
+    
       my $output_image_file1b = "$output_dir"."$common_name".".clonality.cn2.pdf";
       my $clonality_cmd1b = Genome::Model::Tools::Validation::ClonalityPlot->create(cnvhmm_file=>$cnvhmm_file, output_image=>$output_image_file1b, r_script_output_file=>$r_script_file, varscan_file=>$varscan_file, analysis_type=>'wgs', sample_id=>$uc_common_name, plot_only_cn2=>1);
       $clonality_cmd1b->execute();
@@ -299,14 +299,12 @@ sub execute {
       my $output_image_file3a = "$output_dir"."$common_name".".clonality.filtered_snvs.pdf";
       my $clonality_cmd3a = Genome::Model::Tools::Validation::ClonalityPlot->create(cnvhmm_file=>$cnvhmm_file, output_image=>$output_image_file3a, r_script_output_file=>$r_script_file, varscan_file=>$filtered_file, analysis_type=>'wgs', sample_id=>$uc_common_name);
       $clonality_cmd3a->execute();
-
       my $output_image_file3b = "$output_dir"."$common_name".".clonality.filtered_snvs.cn2.pdf";
       my $clonality_cmd3b = Genome::Model::Tools::Validation::ClonalityPlot->create(cnvhmm_file=>$cnvhmm_file, output_image=>$output_image_file3b, r_script_output_file=>$r_script_file, varscan_file=>$filtered_file, analysis_type=>'wgs', sample_id=>$uc_common_name, plot_only_cn2=>1);
       $clonality_cmd3b->execute();
     }else{
       $self->warning_message("Empty filtered snv file: $filtered_file");
     }
-
     #Keep the files that were needed to run the cna-seg and clonality plot steps so that someone can rerun with different parameters 
 
     #Define the output parameter for the cnvhmm so that it can be fed into downstream steps in a workflow

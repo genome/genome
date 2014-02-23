@@ -196,17 +196,17 @@ sub execute {
     Genome::Sys->copy_file("$effects_dir$t1_hq_annotated_top", $new_annotated_top_file);
 
     #Get a column count on the file and use this to determine the correct header for the annotated variant file
-    my @input_headers; 
+    my @input_headers;
     #If empty file, just set header otherwise check number of columns before setting header
     if (-z $new_annotated_file){
-      @input_headers = qw (chr start stop ref_base var_base var_type gene_name transcript_id species transcript_source transcript_version strand transcript_status var_effect_type coding_pos          aa_change ucsc_cons domain all_domains deletion_substructures transcript_error default_gene_name gene_name_source ensembl_gene_id);
+      @input_headers = qw (chr start stop ref_base var_base var_type gene_name transcript_id species transcript_source transcript_version strand transcript_status var_effect_type coding_pos aa_change ucsc_cons domain all_domains deletion_substructures transcript_error default_gene_name gene_name_source ensembl_gene_id);
     }else{
       my $col_count = 0;
       open (TMP, $new_annotated_file) || die "\n\nCould not open variant annotation file: $new_annotated_file\n\n";
       while(<TMP>){
-      chomp($_);
-      my @line = split("\t", $_);
-      $col_count = scalar(@line);
+        chomp($_);
+        my @line = split("\t", $_);
+        $col_count = scalar(@line);
       }
       close(TMP);
 

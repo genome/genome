@@ -5,8 +5,11 @@ use Genome;
 use Data::Dumper;
 use List::MoreUtils qw/ uniq /;
 use Genome::Info::IUB;
+<<<<<<< HEAD
 use Spreadsheet::WriteExcel;
 
+=======
+>>>>>>> gms-pub
 
 class Genome::Model::ClinSeq::Command::Converge::SnvIndelReport {
     is => 'Genome::Model::ClinSeq::Command::Converge::Base',
@@ -70,6 +73,7 @@ class Genome::Model::ClinSeq::Command::Converge::SnvIndelReport {
               default => '-|3_prime_flanking_region|3_prime_untranslated_region|5_prime_flanking_region|5_prime_untranslated_region|intronic|silent|rna|splice_region',
               doc => 'Variants with these transcript variant types will be filtered out of the final coding result.',
         },
+<<<<<<< HEAD
         min_reads_per_lib => {
               is => 'Number',
               default => 0,
@@ -80,6 +84,8 @@ class Genome::Model::ClinSeq::Command::Converge::SnvIndelReport {
               default => 0,
               doc => 'In per library analysis, variants with less than this number of tumor libraries supporting will be filtered out',
         },
+=======
+>>>>>>> gms-pub
         test => {
               is => 'Number',
               doc => 'Only import this many variants (for testing purposes)',
@@ -206,16 +212,24 @@ sub execute {
   #Max normal VAF, Min Coverage
   $self->parse_read_counts('-align_builds'=>$align_builds, '-grand_anno_count_file'=>$grand_anno_count_file, '-variants'=>$variants);
 
+<<<<<<< HEAD
   #print Dumper $variants;
   #Parse the per lib BAM read count info
   my $per_lib_header = $self->parse_per_lib_read_counts('-align_builds'=>$align_builds, '-grand_anno_per_lib_count_file'=>$grand_anno_per_lib_count_file, '-variants'=>$variants);
 
+=======
+>>>>>>> gms-pub
   #Apply some automatic filters:
   #Normal VAF > $self->max_normal_vaf
   #Min coverage > $self->min_coverage (position must be covered at this level across all samples)
   #GMAF > $self->max_gmaf
   $self->apply_variant_filters('-variants'=>$variants);
 
+<<<<<<< HEAD
+=======
+  #print Dumper $variants;
+
+>>>>>>> gms-pub
   #TODO: Make note of which variants lie within a particular set of regions of interest (e.g. nimblegen v3 + AML RMG)
   #TODO: Have option to filter these out
 
@@ -224,7 +238,11 @@ sub execute {
 
 
   #TODO: Write out final tsv files (filtered and unfiltered), a clean version with useless columns removed, and an Excel spreadsheet version of the final file
+<<<<<<< HEAD
   $self->print_final_files('-variants'=>$variants, '-grand_anno_count_file'=>$grand_anno_count_file, '-case_name'=>$case_name, '-align_builds'=>$align_builds, '-per_lib_header'=>$per_lib_header);
+=======
+  $self->print_final_files('-variants'=>$variants, '-grand_anno_count_file'=>$grand_anno_count_file, '-case_name'=>$case_name);
+>>>>>>> gms-pub
 
   #Produce some visualizations for variants in the target gene list as well as all high quality variants, the higher VAF variants etc.
   #If there are two tumors, Produce SciClone plots showing tumor1 vs. tumor2 VAF and with gene names labelled
@@ -738,6 +756,10 @@ sub add_read_counts{
 }
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> gms-pub
 sub add_per_lib_read_counts{
   my $self = shift;
   my %args = @_;
@@ -787,6 +809,14 @@ sub add_per_lib_read_counts{
 }
 
 
+<<<<<<< HEAD
+=======
+
+
+
+
+
+>>>>>>> gms-pub
 sub parse_read_counts{
   my $self = shift;
   my %args = @_;
@@ -880,6 +910,7 @@ sub parse_read_counts{
   return;
 }
 
+<<<<<<< HEAD
 sub parse_per_lib_read_counts{
   my $self = shift;
   my %args = @_;
@@ -1002,6 +1033,8 @@ sub parse_per_lib_read_counts{
   return $per_lib_header;
 }
 
+=======
+>>>>>>> gms-pub
 
 sub apply_variant_filters{
   my $self = shift;
@@ -1011,7 +1044,10 @@ sub apply_variant_filters{
   my $min_tumor_vaf = $self->min_tumor_vaf;
   my $min_coverage = $self->min_coverage;
   my $max_gmaf = $self->max_gmaf;
+<<<<<<< HEAD
   my $min_tumor_var_supporting_libs = $self->min_tumor_var_supporting_libs;
+=======
+>>>>>>> gms-pub
   
   foreach my $v (keys %{$variants}){
     $variants->{$v}->{filtered} = 0;
@@ -1019,8 +1055,12 @@ sub apply_variant_filters{
     my $max_tumor_vaf_observed = $variants->{$v}->{max_tumor_vaf_observed};
     my $min_coverage_observed = $variants->{$v}->{min_coverage_observed};
     my $gmaf = $variants->{$v}->{gmaf};
+<<<<<<< HEAD
     my $tumor_var_supporting_libs = $variants->{$v}->{tumor_var_supporting_libs} if defined($variants->{$v}->{tumor_var_supporting_libs});
   
+=======
+   
+>>>>>>> gms-pub
     #Normal VAF filter
     if ($max_normal_vaf_observed =~ /\d+/){
       $variants->{$v}->{filtered} = 1 if ($max_normal_vaf_observed > $max_normal_vaf);
@@ -1047,10 +1087,13 @@ sub apply_variant_filters{
       $variants->{$v}->{filtered} = 1 if (($gmaf*100) > $max_gmaf);
     }
 
+<<<<<<< HEAD
     #Min library support filter
     if (defined($tumor_var_supporting_libs) && $min_tumor_var_supporting_libs){
       $variants->{$v}->{filtered} = 1 if ($tumor_var_supporting_libs < $min_tumor_var_supporting_libs);
     }
+=======
+>>>>>>> gms-pub
   }
 
   return;
@@ -1063,11 +1106,16 @@ sub print_final_files{
   my $variants = $args{'-variants'};
   my $grand_anno_count_file = $args{'-grand_anno_count_file'};
   my $case_name = $args{'-case_name'};
+<<<<<<< HEAD
   my $align_builds = $args{'-align_builds'};
   my $per_lib_header = $args{'-per_lib_header'};
   my $trv_type_filter = $self->trv_type_filter;
 
 
+=======
+  my $trv_type_filter = $self->trv_type_filter;
+
+>>>>>>> gms-pub
   #Write out final tsv files (filtered and unfiltered), a clean version with useless columns removed, and an Excel spreadsheet version of the final file
   my $final_unfiltered_tsv = $self->outdir . "/$case_name" . "_final_unfiltered.tsv"; #OUT1
   my $final_filtered_tsv = $self->outdir . "/$case_name" . "_final_filtered.tsv"; #OUT2
@@ -1081,7 +1129,11 @@ sub print_final_files{
   open(OUT2, ">$final_filtered_tsv") || die $self->error_message("could not open output file: $final_filtered_tsv");
   open(OUT3, ">$final_filtered_clean_tsv") || die $self->error_message("could not open output file: $final_filtered_clean_tsv");
   open(OUT4, ">$final_filtered_coding_clean_tsv") || die $self->error_message("could not open output file: $final_filtered_coding_clean_tsv");
+<<<<<<< HEAD
  
+=======
+
+>>>>>>> gms-pub
   my @skip = qw (gene_name transcript_species transcript_source transcript_version transcript_status c_position ucsc_cons domain all_domains deletion_substructures transcript_error gene_name_source);
   my %skip_columns;
   foreach my $name (@skip){
@@ -1110,17 +1162,25 @@ sub print_final_files{
       #Print headers for each out file
       my $header_extension = "min_coverage_observed\tmax_normal_vaf_observed\tmax_tumor_vaf_observed\tvariant_source_callers\tvariant_source_caller_count\tfiltered";
       my $full_header = "$_"."\t$header_extension";
+<<<<<<< HEAD
       $full_header .= "\t$per_lib_header" if $per_lib_header;
+=======
+>>>>>>> gms-pub
       print OUT1 "$full_header\n";
       print OUT2 "$full_header\n";
 
       my @include_values = @line[@include_col_pos];
       my $include_values_string = join("\t", @include_values);
       my $short_header = "$include_values_string"."\t$header_extension";
+<<<<<<< HEAD
       $short_header .= "\t$per_lib_header" if $per_lib_header;
       print OUT3 "$short_header\n";
       print OUT4 "$short_header\n";
 
+=======
+      print OUT3 "$short_header\n";
+      print OUT4 "$short_header\n";
+>>>>>>> gms-pub
       next;
     }
 
@@ -1128,6 +1188,7 @@ sub print_final_files{
     my $v = $chr . "_$start" . "_$stop" . "_$ref" . "_$var";
     die $self->error_message("parsed a variant that is not defined in the variant hash") unless $variants->{$v};
 
+<<<<<<< HEAD
     my @per_lib_counts = @{$variants->{$v}->{per_lib_counts}} if defined($variants->{$v}->{per_lib_counts});
     my $per_lib_count_line = join("\t", @per_lib_counts) if defined($variants->{$v}->{per_lib_counts});
 
@@ -1135,6 +1196,10 @@ sub print_final_files{
     my $full_line = "$_\t$line_extension";
     $full_line .= "\t$per_lib_count_line" if defined($per_lib_count_line);
 
+=======
+    my $line_extension = "$variants->{$v}->{min_coverage_observed}\t$variants->{$v}->{max_normal_vaf_observed}\t$variants->{$v}->{max_tumor_vaf_observed}\t$variants->{$v}->{variant_source_callers}\t$variants->{$v}->{variant_source_caller_count}\t$variants->{$v}->{filtered}";
+    my $full_line = "$_\t$line_extension";
+>>>>>>> gms-pub
     print OUT1 "$full_line\n";
     unless ($variants->{$v}->{filtered}){
       print OUT2 "$full_line\n";
@@ -1143,8 +1208,11 @@ sub print_final_files{
     my @include_values = @line[@include_col_pos];
     my $include_values_string = join("\t", @include_values);
     my $short_line = "$include_values_string"."\t$line_extension";
+<<<<<<< HEAD
     $short_line .= "\t$per_lib_count_line" if defined($per_lib_count_line);
 
+=======
+>>>>>>> gms-pub
     unless ($variants->{$v}->{filtered}){
       print OUT3 "$short_line\n";
     }
@@ -1156,11 +1224,16 @@ sub print_final_files{
         print OUT4 "$short_line\n";
       }
     }
+<<<<<<< HEAD
+=======
+
+>>>>>>> gms-pub
   }
   close(ANNO);
   close(OUT1);
   close(OUT2);
   close(OUT3);
+<<<<<<< HEAD
   close(OUT4);
 
   # convert master table to excel
@@ -1214,10 +1287,15 @@ sub print_final_files{
   mkdir($outdir2);
   my $r_cmd2 = "$r_script $final_filtered_coding_clean_tsv \"normal_day0_VAF tumor_day0_VAF tumor_day30_VAF\" \"34 37 40\" \"43 46 49\" \"52 55 58\" " . $self->target_gene_list_name . " " . $outdir2;
   Genome::Sys->shellcmd(cmd => $r_cmd2);
+=======
+>>>>>>> gms-pub
 
   return;
 }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> gms-pub
 1;
 
