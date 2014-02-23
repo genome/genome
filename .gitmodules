@@ -39,7 +39,7 @@
 	url = ssh://git//srv/git/bam-readcount.git
 [submodule "ur"]
 	path = ur
-	url = http://github.com/genome/gms/UR.git 
+	url = http://github.com/genome/UR.git 
 [submodule "workflow"]
 	path = workflow
 	url = http://github.com/genome/tgi-workflow.git
