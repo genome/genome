@@ -39,10 +39,10 @@
 	url = ssh://git//srv/git/bam-readcount.git
 [submodule "ur"]
 	path = ur
-	url = ssh://apipe-review.gsc.wustl.edu:29418/UR
+	url = http://github.com/genome/gms/UR.git 
 [submodule "workflow"]
 	path = workflow
-	url = ssh://apipe-review.gsc.wustl.edu:29418/workflow
+	url = http://github.com/genome/tgi-workflow.git
 [submodule "jenkins"]
 	path = jenkins
 	url = https://github.com/genome/wugc-hudson.git
