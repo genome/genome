@@ -37,7 +37,8 @@ class Genome::Model::Tools::Relationship::BackfillPolymuttVcf {
        },
        joinx_version=> {
            is => "Text",
-           default => '1.7',
+           is_optional => 1,
+           doc => "Version of joinx to use, will be resolved to the latest default if not specified",
        },
        # Roi limiting params
        roi_file => {
@@ -79,31 +80,40 @@ sub help_detail {
 sub execute {
     my $self=shift;
 
+    $self->_resolve_joinx_version;
+
     $self->validate_inputs;
 
-    $self->status_message("Resolving valid builds for the given model group");
+    $self->debug_message("Resolving valid builds for the given model group");
     $self->resolve_valid_builds;
 
-    $self->status_message("Preparing directories");
+    $self->debug_message("Preparing directories");
     $self->prepare_directories;
 
-    $self->status_message("Performing region limiting on the original polymutt variant vcfs if requested");
+    $self->debug_message("Performing region limiting on the original polymutt variant vcfs if requested");
     $self->region_limit_model_group;
 
-    $self->status_message("Resolving the segregating sites file to be used");
+    $self->debug_message("Resolving the segregating sites file to be used");
     my $segregating_sites_file = $self->resolve_segregating_sites_file;
 
-    $self->status_message("Running Polymutt with the segregating sites file");
+    $self->debug_message("Running Polymutt with the segregating sites file");
     $self->run_polymutt_on_segregating_sites($segregating_sites_file);
 
 
-    $self->status_message("Backfilling all original vcfs with force-genotype data");
+    $self->debug_message("Backfilling all original vcfs with force-genotype data");
     $self->combine_individual_vcfs;
 
-    $self->status_message("Combining all backfilled vcfs into one final vcf");
+    $self->debug_message("Combining all backfilled vcfs into one final vcf");
     $self->create_final_vcf;
 
     return 1;
+}
+
+sub _resolve_joinx_version {
+    my $self = shift;
+    unless (defined $self->joinx_version) {
+        $self->joinx_version(Genome::Model::Tools::Joinx->get_default_version);
+    }
 }
 
 sub validate_inputs {
@@ -134,16 +144,16 @@ sub resolve_valid_builds {
                 push @builds, $build;
                 $ok++;
             } else {
-                $self->status_message("Skipping " . $model->name . " (" . $model->id  . ") because builds failed QC and use_qc_failed_builds is not set");
+                $self->debug_message("Skipping " . $model->name . " (" . $model->id  . ") because builds failed QC and use_qc_failed_builds is not set");
                 $bad_builds++;
             }
         } else {
-            $self->status_message("Skipping " . $model->name . " (" . $model->id  . ") because there are no successful builds.");
+            $self->debug_message("Skipping " . $model->name . " (" . $model->id  . ") because there are no successful builds.");
             $no_builds++;
         }
     }
 
-    $self->status_message("Out of " . scalar(@models) . ", $ok are fine, $bad_builds were skipped because of QC, and $no_builds were skipped due to lack of succeeded builds");
+    $self->debug_message("Out of " . scalar(@models) . ", $ok are fine, $bad_builds were skipped because of QC, and $no_builds were skipped due to lack of succeeded builds");
 
     $self->_builds(\@builds);
 
@@ -182,7 +192,7 @@ sub resolve_segregating_sites_file {
 
     my $segregating_sites_file = $self->segregating_sites_file;
     unless($segregating_sites_file) {
-        $self->status_message("No segregating sites file supplied, attempting to make a segregating sites file of all possible sites from Model group outputs...");
+        $self->debug_message("No segregating sites file supplied, attempting to make a segregating sites file of all possible sites from Model group outputs...");
         $segregating_sites_file = $self->assemble_list_of_segregating_sites();
     }
     unless (-s $segregating_sites_file) {
@@ -600,7 +610,7 @@ sub create_final_vcf {
         working_directory => $working_directory,
     );
 
-    $self->status_message("Running joinx vcf-merge to join all backfilled vcfs to output $output_file");
+    $self->debug_message("Running joinx vcf-merge to join all backfilled vcfs to output $output_file");
     unless ($command->execute) {
         die $self->error_message("Failed to run joinx vcf-merge on all backfilled vcfs to output $output_file");
     }
@@ -714,7 +724,7 @@ sub region_limit_model_group {
     $workflow->save_to_xml(OutputFile => $xml_file);
     $xml_file->close();
 
-    $self->status_message("Now launching the region-limiting workflow.");
+    $self->debug_message("Now launching the region-limiting workflow.");
     my $result = Workflow::Simple::run_workflow_lsf( $workflow, %inputs);
 
     unless($result){

@@ -313,29 +313,34 @@ sub execute {
 
     my $snv_merge_file = "$snv_wgs_exome_dir"."snvs.hq.tier1.v1.annotated.compact.tsv";
     my $indel_merge_file = "$indel_wgs_exome_dir"."indels.hq.tier1.v1.annotated.compact.tsv";
+    my %data_out;
 
     open (OUT, ">$snv_merge_file") || die "\n\nCould not open output file: $snv_merge_file\n\n";
     print OUT "coord\tgene_name\tmapped_gene_name\tensembl_gene_id\taa_changes\tref_base\tvar_base\twgs_called\texome_called\n";
-    my %data_out = %{$data_merge{'snv'}};
-    foreach my $coord (sort {$data_out{$a}->{mapped_gene_name} cmp $data_out{$b}->{mapped_gene_name}} keys %data_out){
-      my $wgs_called = 0;
-      if (defined($data_out{$coord}{wgs})){ $wgs_called = 1; }
-      my $exome_called = 0;
-      if (defined($data_out{$coord}{exome})){ $exome_called = 1; }
-      print OUT "$coord\t$data_out{$coord}{gene_name}\t$data_out{$coord}{mapped_gene_name}\t$data_out{$coord}{ensembl_gene_id}\t$data_out{$coord}{aa_changes}\t$data_out{$coord}{ref_base}\t$data_out{$coord}{var_base}\t$wgs_called\t$exome_called\n";
+    if (defined $data_merge{'snv'}) {
+      %data_out = %{$data_merge{'snv'}};
+      foreach my $coord (sort {$data_out{$a}->{mapped_gene_name} cmp $data_out{$b}->{mapped_gene_name}} keys %data_out){
+        my $wgs_called = 0;
+        if (defined($data_out{$coord}{wgs})){ $wgs_called = 1; }
+        my $exome_called = 0;
+        if (defined($data_out{$coord}{exome})){ $exome_called = 1; }
+        print OUT "$coord\t$data_out{$coord}{gene_name}\t$data_out{$coord}{mapped_gene_name}\t$data_out{$coord}{ensembl_gene_id}\t$data_out{$coord}{aa_changes}\t$data_out{$coord}{ref_base}\t$data_out{$coord}{var_base}\t$wgs_called\t$exome_called\n";
+      }
     }
     close(OUT);
     $self->wgs_exome_snv_file($snv_merge_file);
     
     open (OUT, ">$indel_merge_file") || die "\n\nCould not open output file: $indel_merge_file\n\n";
     print OUT "coord\tgene_name\tmapped_gene_name\tensembl_gene_id\taa_changes\tref_base\tvar_base\twgs_called\texome_called\n";
-    %data_out = %{$data_merge{'indel'}};
-    foreach my $coord (sort {$data_out{$a}->{mapped_gene_name} cmp $data_out{$b}->{mapped_gene_name}} keys %data_out){
-      my $wgs_called = 0;
-      if (defined($data_out{$coord}{wgs})){ $wgs_called = 1; }
-      my $exome_called = 0;
-      if (defined($data_out{$coord}{exome})){ $exome_called = 1; }
-      print OUT "$coord\t$data_out{$coord}{gene_name}\t$data_out{$coord}{mapped_gene_name}\t$data_out{$coord}{ensembl_gene_id}\t$data_out{$coord}{aa_changes}\t$data_out{$coord}{ref_base}\t$data_out{$coord}{var_base}\t$wgs_called\t$exome_called\n";
+    if (defined $data_merge{'indel'}) {
+      %data_out = %{$data_merge{'indel'}};
+      foreach my $coord (sort {$data_out{$a}->{mapped_gene_name} cmp $data_out{$b}->{mapped_gene_name}} keys %data_out){
+        my $wgs_called = 0;
+        if (defined($data_out{$coord}{wgs})){ $wgs_called = 1; }
+        my $exome_called = 0;
+        if (defined($data_out{$coord}{exome})){ $exome_called = 1; }
+        print OUT "$coord\t$data_out{$coord}{gene_name}\t$data_out{$coord}{mapped_gene_name}\t$data_out{$coord}{ensembl_gene_id}\t$data_out{$coord}{aa_changes}\t$data_out{$coord}{ref_base}\t$data_out{$coord}{var_base}\t$wgs_called\t$exome_called\n";
+      }
     }
     close(OUT);
     $self->wgs_exome_indel_file($indel_merge_file);

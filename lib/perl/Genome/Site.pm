@@ -7,14 +7,13 @@ use Carp qw(croak);
 use File::Spec qw();
 use Sys::Hostname qw(hostname);
 use UR::Util qw();
+use Module::Runtime qw(require_module);
 
 our $VERSION = $Genome::VERSION;
 
 sub import {
     if (my $config = $ENV{GENOME_CONFIG}) {
-        # call the specified configuration module;
-        eval "use $config";
-        die $@ if $@;
+        require_module($config);
     }
     else {
         load_host_config();
@@ -25,7 +24,7 @@ sub load_host_config {
     my @hwords = site_dirs();
     while (@hwords) {
         my $pkg = site_pkg(@hwords);
-        if (UR::Util::load_class_or_file($pkg)) {
+        if (UR::Util::use_package_optimistically($pkg)) {
             last;
         } else {
             pop @hwords;

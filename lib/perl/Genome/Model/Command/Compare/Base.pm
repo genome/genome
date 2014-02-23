@@ -63,7 +63,7 @@ sub execute {
         Genome::Sys->create_directory($output_dir);
     }
 
-    $self->status_message('Compare variants from build '. $self->old_build->__display_name__ .' to build '. $self->new_build->__display_name__ .'\!');
+    $self->debug_message('Compare variants from build '. $self->old_build->__display_name__ .' to build '. $self->new_build->__display_name__ .'\!');
 
     my $old_dir = $old_build->data_directory;
     my $new_dir = $new_build->data_directory;
@@ -93,7 +93,7 @@ sub execute {
         my $new_only_results_file = $output_subdir_name . '/new-' . $base_name;
         my $common_results_file = $output_subdir_name . '/common-' . $base_name;
         
-        $self->status_message("$relative_name: ...");
+        $self->debug_message("$relative_name: ...");
         
         $self->_compare_files(
             $old_file,

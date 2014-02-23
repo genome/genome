@@ -25,11 +25,6 @@ class Genome::Model::SomaticValidation::Command::ProcessValidation {
             id_by => 'build_id',
         },
     ],
-    has_param => [
-        lsf_resource => {
-            default_value => "-M 30000000 -R 'rusage[tmp=2000 && mem=30000] select[mem>30000 && tmp>2000]'",
-        },
-    ],
     doc => 'final processing of HQ SNV detection results',
 };
 
@@ -72,7 +67,7 @@ sub execute {
         $self->error_message('Failed to get a snv variant file for this build!');
         die $self->error_message;
     }
-    mkdir($build->data_directory . '/validation/metrics/varscan-process-validation');
+    Genome::Sys->create_directory($build->data_directory . '/validation/metrics/varscan-process-validation');
     my $anno_file = $build->data_directory . '/validation/metrics/varscan-process-validation/variant_list.snvs';
 
     my $bed_to_anno = Genome::Model::Tools::Bed::Convert::BedToAnnotation->create(

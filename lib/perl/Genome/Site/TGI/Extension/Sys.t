@@ -261,7 +261,6 @@ my $fifo = $new_dir .'/test_pipe';
 `mkfifo $fifo`;
 $worked = eval { Genome::Sys->create_directory($fifo) };
 ok(!$worked,'failed to create_directory '. $fifo);
-like($@, qr/Can't mkdir\([^\)]+\): File exists/, 'exception message is correct');
 
 # tree removal
 my $dir_tree_root = $new_dir;

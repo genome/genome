@@ -173,7 +173,7 @@ sub execute {                               # replace with real execution logic.
 
                     $extract->dump_status_messages(1);
                     unless ($extract->_resolve_instrument_data){
-                        $self->status_message('Skipping due to no instrument data for sample ' . $model->subject->id);
+                        $self->debug_message('Skipping due to no instrument data for sample ' . $model->subject->id);
                         next;
                     }
                     unless ($extract->execute()) {

@@ -170,7 +170,7 @@ sub execute {
   my $annotation_data_dir = $annotation_build->data_directory;
   my $transcript_info_path = $annotation_data_dir . "/annotation_data/rna_annotation/$reference_build_id-transcript_info.tsv";
   my $gtf_path = $annotation_build->annotation_file('gtf',$reference_build_id);
-  $self->status_message("Getting transcript to gene and gene name mappings from annotation build: $annotation_build_name");
+  $self->debug_message("Getting transcript to gene and gene name mappings from annotation build: $annotation_build_name");
   unless (defined($gtf_path)) {
     $self->error_message("'There is no annotation GTF file defined for annotation_reference_transcripts build: ". $annotation_build->__display_name__);
     die $self->error_message;
@@ -179,7 +179,7 @@ sub execute {
     $self->error_message("'There is no transcript info file for annotation_reference_transcripts build: ". $annotation_build->__display_name__);
     die $self->error_message;
   }
-  $self->status_message("\t$transcript_info_path");
+  $self->debug_message("\t$transcript_info_path");
 
   #Get Ensembl gene ID to name mappings from the annotation build
   my $tmap = $self->loadEnsemblMap('-gtf_path'=>$gtf_path, '-transcript_info_path'=>$transcript_info_path);
@@ -195,13 +195,13 @@ sub execute {
   #Gather all events of all types and store in a single data structure.
   #gene -> sample -> event type
   #Do not allow genes that can not be found by name/id in the ensembl_map
-  $self->status_message("\nBegin aggregating events of all types\n");
+  $self->debug_message("\nBegin aggregating events of all types\n");
   my %targets;
 
   foreach my $clinseq_build (@builds){
     my $clinseq_build_id = $clinseq_build->id;
     my $label = $subject_labels->{$clinseq_build_id}->{name_abr};
-    $self->status_message("Gathering events for clinseq build: $clinseq_build_id (" . $label . ")");
+    $self->debug_message("Gathering events for clinseq build: $clinseq_build_id (" . $label . ")");
 
     #SNVs
     if ($self->snv_label){
@@ -401,7 +401,7 @@ sub override_clinseq_subject_labels{
 sub check_event_labels{
   my $self = shift;
   
-  $self->status_message("Making sure all supplied event labels are unique");
+  $self->debug_message("Making sure all supplied event labels are unique");
   
   my @event_labs;
   push (@event_labs, $self->snv_label) if $self->snv_label;
@@ -447,9 +447,9 @@ sub check_event_labels{
   #Display a summary of labels and their names
   foreach my $label (sort {$event_labs{$a}->{name} cmp $event_labs{$b}->{name}} keys %event_labs){
     my $name = $event_labs{$label}{name};
-    $self->status_message("\t$label -> $name");
+    $self->debug_message("\t$label -> $name");
   }
-  $self->status_message("\n");
+  $self->debug_message("\n");
 
   #Store the labels and their names to a legend file
   my $legend_file = $self->outdir . "/events_legend.txt";
@@ -678,7 +678,7 @@ sub print_final_table{
   my $outfile_numerical = $self->outdir . "/events_final_numerical.tsv";
   my $outfile_labels = $self->outdir . "/events_final_labels.tsv";
 
-  $self->status_message("\nPrinting final table to $outfile\n");
+  $self->debug_message("\nPrinting final table to $outfile\n");
   open (OUT1, ">$outfile") || die $self->error_message("Could not open outfile: $outfile for writing");
   open (OUT2, ">$outfile_categorical") || die $self->error_message("Could not open outfile: $outfile_categorical for writing");
   open (OUT3, ">$outfile_numerical") || die $self->error_message("Could not open outfile: $outfile_numerical for writing");

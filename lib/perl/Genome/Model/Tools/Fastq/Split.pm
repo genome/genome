@@ -90,7 +90,7 @@ sub execute {
 
     if ($self->show_list) {
         for my $file ($self->split_files) {
-            $self->status_message($file);
+            $self->debug_message($file);
         }
     }
 

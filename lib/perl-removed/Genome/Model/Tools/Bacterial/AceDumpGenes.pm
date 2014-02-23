@@ -61,12 +61,12 @@ sub execute {
 
     my $fh;
     if(defined($self->ace_file)) {
-        $self->status_message("writing ace file to". $self->ace_file);
+        $self->debug_message("writing ace file to". $self->ace_file);
         $fh = IO::File->new(">".$self->ace_file);
     }
     else
     {
-        $self->status_message("ace data will be written to stdout");
+        $self->debug_message("ace data will be written to stdout");
         $fh = IO::Handle->new;
         $fh->fdopen(fileno(STDOUT),"w");
     }
@@ -79,7 +79,7 @@ sub execute {
     my $sequence_set = BAP::DB::SequenceSet->retrieve($sequence_set_id);
 
     unless($sequence_set) {
-        $self->status_message("can't retrieve anything for sequence set $sequence_set_id");
+        $self->debug_message("can't retrieve anything for sequence set $sequence_set_id");
         croak;
     }
 

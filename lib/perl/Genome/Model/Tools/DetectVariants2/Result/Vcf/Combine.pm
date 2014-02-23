@@ -81,7 +81,7 @@ sub _run_vcf_converter {
     for my $vcf_result ($self->incoming_vcf_result_a, $self->incoming_vcf_result_b) {
         my $input_vcf = $vcf_result->output_dir."/".$type.".vcf.gz";
         unless(-s $input_vcf){
-            $self->status_message("Skipping VCF generation for type $type, no vcf in the previous result: $input_vcf");
+            $self->debug_message("Skipping VCF generation for type $type, no vcf in the previous result: $input_vcf");
             return 0;
         }
 

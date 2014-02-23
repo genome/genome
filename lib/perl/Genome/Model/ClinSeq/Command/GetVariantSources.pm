@@ -189,9 +189,9 @@ sub execute {
     Genome::Sys->move_file($snv_results_file_sorted, $snv_results_file);
 
     my $indel_count = keys %indels;
-    $self->status_message("Stored $indel_count indels");
+    $self->debug_message("Stored $indel_count indels");
     my $snv_count = keys %snvs;
-    $self->status_message("Stored $snv_count indels");
+    $self->debug_message("Stored $snv_count indels");
 
     #Locate the individual indel/snv files for each caller to use in joinx intersect
     #This should be replaced by a method which somehow determines the appropriate files automatically
@@ -302,7 +302,7 @@ sub execute {
     $self->snv_variant_sources_file($snv_outfile);
   }
 
-  $self->status_message("\n\n");
+  $self->debug_message("\n\n");
 
   return 1;
 }
@@ -353,7 +353,7 @@ sub determineCaller {
     my ($self, $variant_type, $caller_name, $results_file, $caller_file, $outfile) = @_;
 
     if(defined $caller_file) {
-        $self->status_message("Looking for overlapping $variant_type results between:\n$results_file\n$caller_file\n\n");
+        $self->debug_message("Looking for overlapping $variant_type results between:\n$results_file\n$caller_file\n\n");
 
         my $cmd = Genome::Model::Tools::Joinx::Intersect->create(exact_pos=>1, exact_allele=>1, output_file=>$outfile, input_file_a=>$results_file, input_file_b=>$caller_file);
         $cmd->execute();

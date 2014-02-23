@@ -78,7 +78,7 @@ sub _execute_build {
         $self->error_message("Couldn't find model for build id " . $build->build_id . ".");
         return;
     }
-    $self->status_message("Done.");
+    $self->debug_message("Done.");
     return 1;
 }
 

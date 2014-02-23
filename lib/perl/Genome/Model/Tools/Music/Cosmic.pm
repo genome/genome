@@ -182,32 +182,32 @@ sub execute {
     $build = "b37" if ($ref_build =~ m/build37/i);
     my $fh = new FileHandle;
     die "Could not open COSMIC mutation file\n" unless($fh->open($cosmic_mu));
-    $self->status_message("loading and parsing COSMIC database ...\n");
+    $self->debug_message("loading and parsing COSMIC database ...\n");
     my $cosmics = ParseCosmicMutation($fh, $build, \$max_span, $strand_op);
     $fh->close;
     # parse GDSC target drugs file
     my $gfh = new FileHandle;
     die "Could not open GDSC drug targets file\n" unless($gfh->open($gdsc_file));
-    $self->status_message("loading and parsing GDSC drug response database ...\n");
+    $self->debug_message("loading and parsing GDSC drug response database ...\n");
     my $gene_drugs = ParseGdscFile($gfh);
     $gfh->close;
     # parse GDSC drug manova results file
     my $gfh_manova = new FileHandle;
     die "Could not open GDSC MANOVA results file\n" unless($gfh_manova->open($gdsc_manova_file));
-    $self->status_message("loading and parsing GDSC MANOVA results database ...\n");
+    $self->debug_message("loading and parsing GDSC MANOVA results database ...\n");
     my $manova_pout = ParseGdscManovaFile($gfh_manova, $default_ic50, $default_pvalue);
     $gfh_manova->close;
     # parse dGene database file
     my $dgenefh = new FileHandle;
     die "Could not open dGene database file\n" unless($dgenefh->open($dgene_file));
-    $self->status_message("loading and parsing dGene database ...\n");
+    $self->debug_message("loading and parsing dGene database ...\n");
     my $dgene_pout = ParsedGeneFile($dgenefh);
     $dgenefh->close;
     # parse OMIM database
     my $omimaa = {};
     my $fh_omim = new FileHandle;
     die "Could not open OMIM file\n" unless($fh_omim->open($omim_file));
-    $self->status_message("loading and parsing GDSC MANOVA results database ...\n");
+    $self->debug_message("loading and parsing GDSC MANOVA results database ...\n");
     ParseOMIMFile($fh_omim, $omimaa);
     $fh_omim->close;
     # parse maf file and find hits
@@ -218,12 +218,12 @@ sub execute {
     my $outfh = new FileHandle;
     die "Could not open maf file\n"       unless($mfh->open($maf_file));
     die "Could not create output file\n"  unless($outfh->open(">$output_file"));
-    $self->status_message("Comaring to COSMIC database ...\n");
+    $self->debug_message("Comaring to COSMIC database ...\n");
     # Find COSMIC/OMIM/GDSC matches
     FindMatches($mfh, $outfh, \@cosmic_ps, \@manova_ps, \@hash_ps);
     $mfh->close;
     $outfh->close;
-    $self->status_message("Processing Done. \n");
+    $self->debug_message("Processing Done. \n");
     return 1;
 }
 

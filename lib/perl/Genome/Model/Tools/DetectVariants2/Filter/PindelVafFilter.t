@@ -9,11 +9,8 @@ BEGIN {
 };
 
 use above "Genome";
-use File::Temp;
 use Test::More;
-use Data::Dumper;
 use File::Compare;
-use File::Slurp;
 
 if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
@@ -21,81 +18,74 @@ if (Genome::Config->arch_os ne 'x86_64') {
 
 use_ok( 'Genome::Model::Tools::DetectVariants2::Filter::PindelVafFilter');
 
-# This will compare 2 bed files field-by-field, numerically comparing on floats.
-# It's necessary so that implementations that produce slightly different floats
-# (e.g. 64 bit perl vs 32 bit perl) will still compare equally.
-sub compare_files {
-    my ($f1, $f2) = @_;
-
-    my @lines1 = read_file($f1);
-    my @lines2 = read_file($f2);
-
-    while (1) {
-        my $line1 = shift @lines1;
-        my $line2 = shift @lines2;
-        last unless $line1 && $line2;
-
-        my @fields1 = split "\t", $line1;
-        my @fields2 = split "\t", $line2;
-
-        return 1 if scalar @fields1 != scalar @fields2;
-
-        for my $ii (0..$#fields1) {
-            my $f1 = $fields1[$ii];
-            my $f2 = $fields2[$ii];
-
-            # compare numerically if it's a floating point number
-            if ($f1 =~ /^\d\.\d/) {
-                return 1 unless $f1 == $f2;
-            } else {
-                return 1 unless $f1 eq $f2;
-            }
-        }
-    }
-    return 0;
-}
-
 my $refbuild_id = 101947881;
 my $input_directory = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-Filter-PindelVafFilter";
 
 # Updated to v2 to allow for new columns
-my $expected_dir = $input_directory . "/expected/";
-my $tumor_bam_file  = $input_directory. '/true_positive_tumor_validation.bam';
-my $normal_bam_file  = $input_directory. '/true_positive_normal_validation.bam';
-my $test_output_base = File::Temp::tempdir('Genome-Model-Tools-DetectVariants2-Filter-PindelVafFilter-XXXXX', CLEANUP => 1, TMPDIR => 1);
-my $test_output_dir = $test_output_base . '/filter';
-my $detector_directory = $input_directory."/pindel-read-support-v1-";
-my $variant_freq_cutoff = 0.2;
-
-my $hq_output_bed = "$test_output_dir/indels.hq.bed";
-my $lq_output_bed = "$test_output_dir/indels.lq.bed";
-
-my $expected_hq_bed_output = "$expected_dir/indels.hq.bed";
-my $expected_lq_bed_output = "$expected_dir/indels.lq.bed";
+my $expected_dir       = $input_directory . "/expected_1/";
+my $tumor_bam_file     = $input_directory . '/true_positive_tumor_validation.bam';
+my $normal_bam_file    = $input_directory . '/true_positive_normal_validation.bam';
+my $detector_directory = $input_directory . "/pindel-read-support-v1-";
+my $test_output_dir    = Genome::Sys->create_temp_directory;
 
 my $detector_result = Genome::Model::Tools::DetectVariants2::Result->__define__(
-    output_dir => $detector_directory,
-    detector_name => 'test',
-    detector_params => '',
+    output_dir       => $detector_directory,
+    detector_name    => 'test',
+    detector_params  => '',
     detector_version => 'awesome',
-    aligned_reads => $tumor_bam_file,
+    aligned_reads    => $tumor_bam_file,
     control_aligned_reads => $normal_bam_file,
-    reference_build_id => $refbuild_id,
+    reference_build_id    => $refbuild_id,
 );
 $detector_result->lookup_hash($detector_result->calculate_lookup_hash());
 
-my $pindel_vaf_filter = Genome::Model::Tools::DetectVariants2::Filter::PindelVafFilter->create(
-    previous_result_id => $detector_result->id,
-    output_directory => $test_output_dir,
-    variant_freq_cutoff => $variant_freq_cutoff,
-    #capture_data => 1,
-);
+my $param_str;
+run_test('default_params', $param_str);
 
-ok($pindel_vaf_filter, "created PindelVafFilter object");
-ok($pindel_vaf_filter->execute(), "executed PindelVafFilter");
-ok(-s $hq_output_bed ,'HQ bed output exists and has size');
-ok(-e $lq_output_bed,'LQ bed output exists');
-is(compare($hq_output_bed, $expected_hq_bed_output), 0, 'hq bed output matched expected output');
-is(compare($lq_output_bed, $expected_lq_bed_output), 0, 'lq bed output matched expected output');
+$param_str = '--variant-freq-cutoff 0.08';
+run_test('non_default_params', $param_str);
 
-done_testing;
+done_testing();
+
+
+sub run_test {
+    my ($type, $params) = @_;
+    my $output_dir = $test_output_dir."/$type";
+    my $expect_dir = $expected_dir."/$type";
+
+    my %params = (
+        previous_result_id  => $detector_result->id,
+        output_directory    => $output_dir,
+    );
+
+    $params{params} = $params if $params;
+    my $pindel_vaf_filter = Genome::Model::Tools::DetectVariants2::Filter::PindelVafFilter->create(%params);
+  
+    ok($pindel_vaf_filter, "created PindelVafFilter object");
+    ok($pindel_vaf_filter->execute(), "executed PindelVafFilter");
+
+    if ($params) {
+        my %parameters = split /\s+/, $params;
+
+        for my $parameter (keys %parameters) {
+            my $before_value = $parameters{$parameter};
+            $parameter =~ s/^\-\-//;
+            $parameter =~ s/\-/_/g;
+            my $after_value  = $pindel_vaf_filter->$parameter;
+            ok($before_value eq $after_value, "Parameter $parameter set correctly via params string");
+        }
+    }
+    
+    my @files = qw(indels.hq.bed indels.lq.bed);
+
+    for my $file_name (@files) {
+        my $test_output     = $output_dir."/".$file_name;
+        my $expected_output = $expect_dir."/".$file_name;
+        my $msg = "Output: $file_name generated as expected";
+        ok(-s $test_output ,"$file_name exists and has size");
+        is(compare($test_output, $expected_output), 0, $msg);
+    }
+
+    return 1;
+}
+

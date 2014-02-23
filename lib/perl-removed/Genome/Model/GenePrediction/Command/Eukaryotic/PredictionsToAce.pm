@@ -115,7 +115,7 @@ sub execute {
         $self->ace_file($ace_fh->filename);
     }
      
-    $self->status_message("Generating predictions ace file at " . $self->ace_file . " using predictions in " . 
+    $self->debug_message("Generating predictions ace file at " . $self->ace_file . " using predictions in " . 
         $prediction_directory . " and sequence in $sequence_file");
 
     # Pre-fetching all genes now so only one file read is necessary
@@ -311,7 +311,7 @@ sub execute {
     }
 
     $ace_fh->close;
-    $self->status_message("Done, ace file is at " . $self->ace_file);
+    $self->debug_message("Done, ace file is at " . $self->ace_file);
     return 1;
 }
 

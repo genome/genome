@@ -185,7 +185,7 @@ sub do_pap_workflow {
             'interpro_version' => $self->interpro_version(),
         );
 
-        $self->status_message("Kicking off PAP workflow!");
+        $self->debug_message("Kicking off PAP workflow!");
 
         $output = run_workflow_lsf(
             $workflow,
@@ -194,15 +194,15 @@ sub do_pap_workflow {
     }
 
     if (defined $output) {
-        $self->status_message("Protein annotation workflow completed successfully!");
+        $self->debug_message("Protein annotation workflow completed successfully!");
     }
     else {
         for my $error (@Workflow::Simple::ERROR) {
             my @attributes = grep { defined $error->$_ } qw/ dispatch_identifier name start_time end_time exit_code /;
-            $self->status_message(join("\t", @attributes));
-            $self->status_message(join("\t", map {$error->$_} @attributes));
-            $self->status_message($error->stdout);
-            $self->status_message($error->stderr);
+            $self->debug_message(join("\t", @attributes));
+            $self->debug_message(join("\t", map {$error->$_} @attributes));
+            $self->debug_message($error->stdout);
+            $self->debug_message($error->stderr);
         }
         confess 'Protein annotation workflow errors encountered, see above error messages!';
     }

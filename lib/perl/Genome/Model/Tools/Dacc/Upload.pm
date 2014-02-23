@@ -43,10 +43,10 @@ sub rusage {
 sub execute {
     my $self = shift;
 
-    $self->status_message('Upload');
+    $self->debug_message('Upload');
 
     my $dacc_remote_directory = $self->dacc_remote_directory;
-    $self->status_message("Dacc remote directory: $dacc_remote_directory");
+    $self->debug_message("Dacc remote directory: $dacc_remote_directory");
 
     my @files = $self->files;
     for my $file ( @files ) {
@@ -56,7 +56,7 @@ sub execute {
         }
     }
     my $files_string = join(' ', @files);
-    $self->status_message("Files: $files_string");
+    $self->debug_message("Files: $files_string");
 
     if ( $self->launch_to_lsf ) {
         return $self->_launch_to_lsf(@files);
@@ -71,14 +71,14 @@ sub execute {
         $self->error_message("Aspera command failed: $cmd");
         return;
     }
-    $self->status_message('Aspera command OK');
+    $self->debug_message('Aspera command OK');
 
     #This commented out because validation required sshing into the server
     #to determine that file exists but we can no longer ssh into ther server 5/13/11
     #my $upload_ok = $self->validate_files_were_uploaded;
     #return if not $upload_ok;
 
-    $self->status_message('Upload...OK');
+    $self->debug_message('Upload...OK');
 
     return 1;
 }
@@ -86,7 +86,7 @@ sub execute {
 sub validate_files_were_uploaded {
     my $self = shift;
 
-    $self->status_message('Validate files were uploaded');
+    $self->debug_message('Validate files were uploaded');
 
     my $dacc_directory = $self->dacc_directory;
     my @files = $self->files;
@@ -99,18 +99,18 @@ sub validate_files_were_uploaded {
 
     my $error;
     for my $file ( @files ) {
-        $self->status_message('File: '.$file);
+        $self->debug_message('File: '.$file);
         my $size = -s $file;
-        $self->status_message('Size: '.$size);
+        $self->debug_message('Size: '.$size);
         my $file_name = File::Basename::basename($file);
         Carp::confess("Cannot get base name for file: $file") if not $file_name;
-        $self->status_message('File name: '.$file_name);
+        $self->debug_message('File name: '.$file_name);
         if ( not exists $available_files_and_sizes{$file_name} ) {
             $error = 1;
             $self->error_message("Attempted to upload file ($file), but it is not in the DACC directory: $dacc_directory");
             next;
         }
-        $self->status_message('Size on DACC: '.$available_files_and_sizes{$file_name});
+        $self->debug_message('Size on DACC: '.$available_files_and_sizes{$file_name});
         if ( $size != $available_files_and_sizes{$file_name} ) {
             $error = 1;
             $self->error_message("Attempted to upload file ($file), but file size in DACC directory ($dacc_directory) does not match: $size <=> $available_files_and_sizes{$file_name}");
@@ -119,7 +119,7 @@ sub validate_files_were_uploaded {
 
     return if $error;
 
-    $self->status_message('Validate files were uploaded...OK');
+    $self->debug_message('Validate files were uploaded...OK');
 
     return 1;
 }

@@ -258,7 +258,7 @@ sub map_workflow_inputs {
         $value = 'undef' if not defined $value;
         $params .= "$key : $value\n";
     }
-    $self->status_message("Parameters for workflow are: \n$params");
+    $self->debug_message("Parameters for workflow are: \n$params");
 
     return @inputs;
 }

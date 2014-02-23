@@ -93,7 +93,7 @@ sub execute {
     } else {
         $cmd .= sprintf(' -S %s', $sam_file);
     }
-    $self->status_message("SamToBam conversion command: $cmd");
+    $self->debug_message("SamToBam conversion command: $cmd");
     
     my $rv  = Genome::Sys->shellcmd(
         cmd => $cmd, 

@@ -103,7 +103,7 @@ sub execute {
        die;
     }
     if(-d $self->source){
-        $self->status_message("Using ".$self->source." as the pindel directory, proceeding to cat all chroms and run on that.");
+        $self->debug_message("Using ".$self->source." as the pindel directory, proceeding to cat all chroms and run on that.");
         my @grob = glob($self->source."/*");
         my @dirs;
         my $temp_file = Genome::Sys->create_temp_file_path;

@@ -89,7 +89,7 @@ sub execute {
             );
         my @check_subject_ids = map { $_->id } ($input_subject,@other_subjects);
         
-        $self->status_message($input->__display_name__ . ":");
+        $self->debug_message($input->__display_name__ . ":");
 
         my %targets;
         if ($input->isa("Genome::Model::SomaticVariation")) {
@@ -161,39 +161,39 @@ sub execute {
                 delete $models_to_update_not_matched{$candidate->id};
             }
             if (@candidates > 1) {
-                $self->status_message("\tmultiple candidates!!!!!!!!!!!!!!!!!!!!!!!!");
+                $self->debug_message("\tmultiple candidates!!!!!!!!!!!!!!!!!!!!!!!!");
                 $inputs_with_multiple_matches{$input->id} = $input;
                 next;
             }
             elsif (@candidates == 0) {
-                $self->status_message("\tno candidates!!!!!!!!!!!!!!!!!!!!!!!!");
+                $self->debug_message("\tno candidates!!!!!!!!!!!!!!!!!!!!!!!!");
                 $inputs_with_no_matches_correct_type{$input->id} = $input;
                 next;
             }
             
             $model_to_update = $candidates[0];    
 
-            $self->status_message("\tfound clinseq model " . $model_to_update->__display_name__);
+            $self->debug_message("\tfound clinseq model " . $model_to_update->__display_name__);
             if (my $previous_value = $model_to_update->$input_name()) {
                 if ($previous_value == $input) {
-                    $self->status_message("\tvalue already set!!!!!!!!!!!!!!!!!!!");
+                    $self->debug_message("\tvalue already set!!!!!!!!!!!!!!!!!!!");
                     $inputs_matched_with_value_previously_the_same{$input->id} = $input;
                     next;
                 }
                 else {
                     $inputs_matched_with_value_previously_different{$input->id} = $input;
                     if(!$self->force) {
-                        $self->status_message("\tSKIP UPDATE OLD $input_name on " . $model_to_update->__display_name__ . " from " . $previous_value->__display_name__ . " to " . $input->__display_name__ . ".");
+                        $self->debug_message("\tSKIP UPDATE OLD $input_name on " . $model_to_update->__display_name__ . " from " . $previous_value->__display_name__ . " to " . $input->__display_name__ . ".");
                         next;
                     }
                     else {
-                        $self->status_message("\tUPDATE OLD $input_name on " . $model_to_update->__display_name__ . " from " . $previous_value->__display_name__ . " to " . $input->__display_name__ . ".");
+                        $self->debug_message("\tUPDATE OLD $input_name on " . $model_to_update->__display_name__ . " from " . $previous_value->__display_name__ . " to " . $input->__display_name__ . ".");
                     }
                 }
             }
             else {
                 $inputs_matched_with_value_previously_null{$input->id} = $input;
-                $self->status_message("\tset $input_name on " . $model_to_update->__display_name__ . " to " . $input->__display_name__ . ".");
+                $self->debug_message("\tset $input_name on " . $model_to_update->__display_name__ . " to " . $input->__display_name__ . ".");
             }
 
             unless ($self->dry_run) {

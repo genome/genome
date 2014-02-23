@@ -74,7 +74,7 @@ sub execute {
 
     # Skip this step if output exists 
     if (($self->skip_if_output_present)&&(-e $self->multi_lib_output_file)&&(-e $self->single_lib_output_file)) {
-        $self->status_message("Skipping execution: Output is already present and skip_if_output_present is set to true");
+        $self->debug_message("Skipping execution: Output is already present and skip_if_output_present is set to true");
         # Decide whether to use the single or multi lib output file
         if (-s $self->multi_lib_output_file) {
             $self->preferred_output_file($self->multi_lib_output_file);

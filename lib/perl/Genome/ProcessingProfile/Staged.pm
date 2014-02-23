@@ -158,7 +158,7 @@ sub _generate_events_for_build {
         # FIXME why are we attempting to schedule stages that have no classes??
         my @events = $self->_generate_events_for_build_stage($build,$stage_name);
         unless ( @events ) {
-            $self->warning_message(
+            $self->debug_message(
                     'Stage '. $stage_name .' for build ('
                     . $build->build_id .") failed to schedule objects for classes:\n"
                     . join("\n",$self->classes_for_stage($stage_name, $build->model))

@@ -82,7 +82,7 @@ sub _process {
         reference_build=>$self->reference_sequence_build,
     );
 
-    $self->status_message(sprintf("Finding or generating reference build index for aligner %s version %s params %s refbuild %s ",
+    $self->debug_message(sprintf("Finding or generating reference build index for aligner %s version %s params %s refbuild %s ",
                                                 $self->aligner_name, $self->aligner_version,
                                                 $self->aligner_params, $self->reference_sequence_build->id));
 
@@ -128,7 +128,7 @@ sub _process {
         }
     }
 
-    $self->status_message("Complete!");
+    $self->debug_message("Complete!");
     return 1;
 }
 

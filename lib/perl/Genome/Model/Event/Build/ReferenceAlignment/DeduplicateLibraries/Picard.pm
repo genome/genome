@@ -19,7 +19,7 @@ sub shortcut {
     #try to get using the lock in order to wait here in shortcut if another process is creating this alignment result
     my $alignment = $self->build->merged_alignment_result_with_lock;
     unless($alignment) {
-        $self->status_message('No existing alignment found.');
+        $self->debug_message('No existing alignment found.');
         return;
     }
 
@@ -39,7 +39,7 @@ sub execute {
     }
 
     $self->_link_build_to_merged_alignment($alignment);
-    $self->status_message('Generated merged alignment');
+    $self->debug_message('Generated merged alignment');
     return 1;
 }
 
@@ -49,7 +49,7 @@ sub _link_build_to_merged_alignment {
 
     my $link = $alignment->add_user(user => $self->build, label => 'uses');
     if ($link) {
-        $self->status_message("Linked alignment " . $alignment->id . " to the build");
+        $self->debug_message("Linked alignment " . $alignment->id . " to the build");
     }
     else {
         $self->error_message(

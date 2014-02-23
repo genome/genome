@@ -139,7 +139,7 @@ sub _write_to_file {
         ($self->error_message("can't write to $fof_file") and return);
     map{$fh->print($_."\n")}@$files;
     $fh->close;
-    $self->status_message("List of chunk $type files:\n$fof_file");
+    $self->debug_message("List of chunk $type files:\n$fof_file");
 
     return 1;
 }

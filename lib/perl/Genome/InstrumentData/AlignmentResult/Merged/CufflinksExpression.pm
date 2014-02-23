@@ -121,7 +121,7 @@ sub create {
 
 sub _generate_metrics {
     my $self = shift;
-    $self->status_message('Currently there are no metrics recorded for '. __PACKAGE__);
+    $self->debug_message('Currently there are no metrics recorded for '. __PACKAGE__);
     #my $coverage_dir = $self->output_dir;
     #my @metric_files = glob($coverage_dir . "/*_STATS.txt");
     #for my $metric_file (@metric_files) {

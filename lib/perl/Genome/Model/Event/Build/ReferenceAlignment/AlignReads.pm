@@ -422,7 +422,7 @@ sub _process_and_link_alignments_to_build {
         die "Missing build directory???";
     } 
 
-    $self->status_message(
+    $self->debug_message(
         "Build directory: " . $self->build_directory
     );
 
@@ -432,7 +432,7 @@ sub _process_and_link_alignments_to_build {
     my $model = $build->model;
     my $processing_profile = $model->processing_profile;
 
-    $self->status_message("Finding or generating alignments for " . $instrument_data_input->__display_name__);
+    $self->debug_message("Finding or generating alignments for " . $instrument_data_input->__display_name__);
     my @alignments;
     my @errors;
 
@@ -466,7 +466,7 @@ sub _process_and_link_alignments_to_build {
     for my $alignment (@alignments) {
         my $link = $alignment->add_user(user => $build, label => 'uses');
         if ($link) {
-            $self->status_message("Linked alignment " . $alignment->id . " to the build");
+            $self->debug_message("Linked alignment " . $alignment->id . " to the build");
         }
         else {
             $self->error_message(
@@ -478,16 +478,16 @@ sub _process_and_link_alignments_to_build {
         }
     }
 
-    $self->status_message("Generating alignments...");
+    $self->debug_message("Generating alignments...");
     $self->generate_metric($self->metrics_for_class);
 
-    $self->status_message("Verifying...");
+    $self->debug_message("Verifying...");
     unless ($self->verify_successful_completion) {
         $self->error_message("Error verifying completion!");
         return 0;
     }
     
-    $self->status_message("Complete!");
+    $self->debug_message("Complete!");
     return 1;
 }
 

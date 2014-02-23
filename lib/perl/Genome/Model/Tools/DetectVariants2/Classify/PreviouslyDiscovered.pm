@@ -57,19 +57,19 @@ sub _classify_variants {
 
     unless (-s $prior_path){
     
-        $self->status_message("high confidence input is empty, skipping intersection");
+        $self->debug_message("high confidence input is empty, skipping intersection");
         File::Copy::copy($prior_path, $output_file);
         File::Copy::copy($prior_path, $previously_detected_output_file);
         return 1;
     }
     if ($self->skip_filtering) {
-        $self->status_message("Skipping filtering");
+        $self->debug_message("Skipping filtering");
         File::Copy::copy($prior_path, $output_file);
         my $fh = Genome::Sys->open_file_for_writing($previously_detected_output_file);
         $fh->close;
     }
     else {
-        $self->status_message("Not skipping filtering");
+        $self->debug_message("Not skipping filtering");
         my $snv_compare = Genome::Model::Tools::Joinx::Intersect->create(
             input_file_a => $prior_path,
             input_file_b => $previously_discovered_path,

@@ -94,7 +94,7 @@ sub execute
 {
     my $self = shift;
 
-    $self->status_message("Nremoving ".$self->forward_fastq." and ".$self->reverse_fastq." to ".join(", ", ($self->forward_n_removed_file, $self->reverse_n_removed_file,$self->singleton_n_removed_file)));
+    $self->debug_message("Nremoving ".$self->forward_fastq." and ".$self->reverse_fastq." to ".join(", ", ($self->forward_n_removed_file, $self->reverse_n_removed_file,$self->singleton_n_removed_file)));
 
     if ($self->n_removal_threshold and $self->non_n_base_threshold){
         $self->error_message("Both n removal and non n base thresholds are set. Only one option can be set.");
@@ -188,7 +188,7 @@ sub execute
     $self->pairs_passed($pairs_passed);
     $self->singletons_passed($singletons_passed);
 
-    $self->status_message("Passed $pairs_passed pairs and wrote $singletons_passed singletons out"); return 1;
+    $self->debug_message("Passed $pairs_passed pairs and wrote $singletons_passed singletons out"); return 1;
 }
 
 sub read_seq {

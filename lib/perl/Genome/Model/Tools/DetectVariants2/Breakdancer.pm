@@ -156,10 +156,10 @@ sub run_config {
             $self->error_message("Given breakdancer config file $cfg_file is not valid");
             die $self->error_message;
         }
-        $self->status_message("Using given breakdancer config file: $cfg_file");
+        $self->debug_message("Using given breakdancer config file: $cfg_file");
     }
     else {
-        $self->status_message("Run bam2cfg to make breakdancer_config file");
+        $self->debug_message("Run bam2cfg to make breakdancer_config file");
 
         my %params = (
             tumor_bam   => $self->aligned_reads_input,
@@ -179,7 +179,7 @@ sub run_config {
         }
 
         $self->config_file($self->_config_staging_output);
-        $self->status_message(sprintf('%s config is created ok',
+        $self->debug_message(sprintf('%s config is created ok',
                 $self->class_name));
     }
     return 1;
@@ -245,7 +245,7 @@ sub run_breakdancer {
                 @chr_list = $self->chr_list_when_missing_idxstats;
             }
 
-            $self->status_message('chromosome list is '.join ',', @chr_list);
+            $self->debug_message('chromosome list is '.join ',', @chr_list);
 
             my %params = (
                 aligned_reads_input         => $self->aligned_reads_input,
@@ -259,6 +259,7 @@ sub run_breakdancer {
             $params{control_aligned_reads_input} = $self->control_aligned_reads_input
                 if $self->control_aligned_reads_input;
 
+            Genome::Sys->disconnect_default_handles;
             my $output = Workflow::Simple::run_workflow_lsf($op, %params);
 
             unless (defined $output) {
@@ -295,7 +296,7 @@ sub run_breakdancer {
 
     my $cmd = "$breakdancer_path " . $cfg_file . " " . $bd_params . " > "  . $self->_sv_staging_output;
 
-    $self->status_message("EXECUTING BREAKDANCER STEP: $cmd");
+    $self->debug_message("EXECUTING BREAKDANCER STEP: $cmd");
     my $return = Genome::Sys->shellcmd(
         cmd => $cmd,
         input_files  => [$cfg_file],
@@ -313,14 +314,14 @@ sub run_breakdancer {
         die;
     }
 
-    if ( $is_ctx ) { # validate the output fastqs and write an md5 for them
-        $self->status_message('Validate CTX fastqs...');
+    if ( $is_ctx && $self->_check_fastqs_present) { # validate the output fastqs and write an md5 for them
+        $self->debug_message('Validate CTX fastqs...');
         my $validate_fastqs = $self->_validate_ctx_fastqs;
         die if not $validate_fastqs;
-        $self->status_message('Validate CTX fastqs...OK');
+        $self->debug_message('Validate CTX fastqs...OK');
     }
 
-    $self->status_message('breakdancer run finished ok');
+    $self->debug_message('breakdancer run finished ok');
     return 1;
 }
 
@@ -390,7 +391,7 @@ sub params_for_detector_result {
     return $params;
 }
 
-sub _validate_ctx_fastqs {
+sub _check_fastqs_present {
     my $self = shift;
 
     # Get the fastqs [only for ctx]
@@ -399,7 +400,13 @@ sub _validate_ctx_fastqs {
         $self->error_message('Expected fastqs in sv staging output! '.$self->_sv_staging_output);
         return;
     }
+}
 
+
+sub _validate_ctx_fastqs {
+    my $self = shift;
+
+    my @fastqs = grep { -s } glob($self->_sv_staging_output . "*.fastq");
     my $md5sum;
     for my $fastq ( @fastqs ) {
         # Validate fastq

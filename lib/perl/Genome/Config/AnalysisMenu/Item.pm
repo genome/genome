@@ -21,6 +21,9 @@ class Genome::Config::AnalysisMenu::Item {
         file_path => {
             is => 'Text'
         },
+        description => {
+            is => 'Text',
+        },
     ],
 };
 

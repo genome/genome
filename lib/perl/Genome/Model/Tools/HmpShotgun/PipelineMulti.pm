@@ -39,20 +39,20 @@ sub pre_execute {
 
     $self->_operation->log_dir($self->workflow_log_directory);
 
-    $self->status_message("Launching HMP Metagenomic Pipeline");
-    $self->status_message("Using working directory:".$working_dir);
-    $self->status_message("Workflow log directory:".$self->workflow_log_directory);
-    $self->status_message("Delete intermediate files on completion: ".$self->cleanup);
+    $self->debug_message("Launching HMP Metagenomic Pipeline");
+    $self->debug_message("Using working directory:".$working_dir);
+    $self->debug_message("Workflow log directory:".$self->workflow_log_directory);
+    $self->debug_message("Delete intermediate files on completion: ".$self->cleanup);
     
-    $self->status_message("Reads file string: ".$self->reads_files);
+    $self->debug_message("Reads file string: ".$self->reads_files);
     my @reads_files = split(/,/ , $self->reads_files);
     my $list_string = join("\n",@reads_files);
-    $self->status_message("Reads files: \n".$list_string); 
+    $self->debug_message("Reads files: \n".$list_string); 
 	
-    $self->status_message("Reference sequence files string: ".$self->reference_sequences);
+    $self->debug_message("Reference sequence files string: ".$self->reference_sequences);
     my @reference_sequences = split(/,/ , $self->reference_sequences);
     my $list_refseqs = join("\n",@reference_sequences);
-    $self->status_message("Ref seq files: \n".$list_refseqs); 
+    $self->debug_message("Ref seq files: \n".$list_refseqs); 
     
     #for paired end, top hit alignments
     my @reads_and_references;
@@ -71,11 +71,11 @@ sub pre_execute {
     
    
 
-    $self->status_message("Paired end Reads and References");
-    $self->status_message(join("\n",@reads_and_references) );
+    $self->debug_message("Paired end Reads and References");
+    $self->debug_message(join("\n",@reads_and_references) );
     
-    $self->status_message("Fragment Reads and References");
-    $self->status_message(join("\n",@reads_and_references_frags) );
+    $self->debug_message("Fragment Reads and References");
+    $self->debug_message(join("\n",@reads_and_references_frags) );
     
     
     
@@ -83,7 +83,7 @@ sub pre_execute {
     $self->reads_and_references(\@reads_and_references);
     $self->fragment_reads_and_references(\@reads_and_references_frags);
 	
-    $self->status_message("Creating required directories.");
+    $self->debug_message("Creating required directories.");
     Genome::Sys->create_directory("$working_dir");
     Genome::Sys->create_directory("$working_dir/alignments_filtered");
     Genome::Sys->create_directory("$working_dir/alignments_top_hit");
@@ -93,7 +93,7 @@ sub pre_execute {
     Genome::Sys->create_directory("$working_dir/tmp");
     Genome::Sys->create_directory("$working_dir/reports");
 
-    $self->status_message("Pre-execute of Pipeline complete.");
+    $self->debug_message("Pre-execute of Pipeline complete.");
 
     return 1;
 }
@@ -105,13 +105,13 @@ sub post_execute {
     my $cleanup = $self->cleanup;
 
     if ($cleanup) {
-        $self->status_message("Cleaning up intermediate files.");
+        $self->debug_message("Cleaning up intermediate files.");
      
     } else {
-        $self->status_message("Leaving intermediate files behind.");
+        $self->debug_message("Leaving intermediate files behind.");
     }
 
-	$self->status_message("Done.");
+	$self->debug_message("Done.");
     return 1;
 }
 

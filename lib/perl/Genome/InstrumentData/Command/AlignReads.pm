@@ -205,7 +205,7 @@ sub _process_alignments {
     my $mode = shift;
 
     my $instrument_data = $self->_instrument_data;
-    $self->status_message("Finding or generating alignments for " . $instrument_data->__display_name__);
+    $self->debug_message("Finding or generating alignments for " . $instrument_data->__display_name__);
 
     my $alignment = $self->_fetch_alignment_sets($mode);
 
@@ -223,7 +223,7 @@ sub _process_alignments {
         die $self->error_message;
     }
 
-    $self->status_message("Verifying...");
+    $self->debug_message("Verifying...");
     unless ($self->verify_successful_completion($alignment)) {
         $self->error_message("Error verifying completion!");
         return 0;
@@ -232,7 +232,7 @@ sub _process_alignments {
     $self->_link_alignment_to_inputs($alignment);
     $self->result_id($alignment->id);
 
-    $self->status_message("Complete!");
+    $self->debug_message("Complete!");
     return 1;
 }
 

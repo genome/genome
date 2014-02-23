@@ -23,8 +23,22 @@ for s in tumor normal; do
     done
 done
 
-${SCRIPT_DIR}/MergeAssembledCallsets.pl -c -f $ID.allchr.Q40.somatic.assembled.HQfiltered.NEW.fasta -d 200 -h merge.NEW.index 1> $ID.allchr.Q40.somatic.assembled.HQfiltered.NEW.csv 2>$ID.allchr.Q40.somatic.assembled.HQfiltered_out.NEW.csv
+MAC_SCRIPT="${SCRIPT_DIR}/MergeAssembledCallsets.pl"
+if [ -x "$MAC_SCRIPT" ]; then
+    $MAC_SCRIPT -c -f $ID.allchr.Q40.somatic.assembled.HQfiltered.NEW.fasta -d 200 -h merge.NEW.index 1> $ID.allchr.Q40.somatic.assembled.HQfiltered.NEW.csv 2>$ID.allchr.Q40.somatic.assembled.HQfiltered_out.NEW.csv
+else
+    echo "${MAC_SCRIPT}: No such file or directory" 1>&2
+    exit 1
+fi
+
 ${SCRIPT_DIR}/BreakAnnot.pl -A $ID.allchr.Q40.somatic.assembled.HQfiltered.NEW.csv > $ID.allchr.Q40.somatic.assembled.HQfiltered.NEW.csv.annot
-${SCRIPT_DIR}/MergeAssembledCallsets.pl -c -f $ID.ctx.Q40.somatic.assembled.HQfiltered.NEW.fasta -d 500 -h merge_ctx.NEW.index 1> $ID.ctx.Q40.somatic.assembled.HQfiltered.NEW.csv 2> $ID.ctx.Q40.somatic.assembled.HQfiltered_out.NEW.csv
+
+if [ -x "$MAC_SCRIPT" ]; then
+    $MAC_SCRIPT -c -f $ID.ctx.Q40.somatic.assembled.HQfiltered.NEW.fasta -d 500 -h merge_ctx.NEW.index 1> $ID.ctx.Q40.somatic.assembled.HQfiltered.NEW.csv 2> $ID.ctx.Q40.somatic.assembled.HQfiltered_out.NEW.csv
+else
+    echo "${MAC_SCRIPT}: No such file or directory" 1>&2
+    exit 1
+fi
+
 ${SCRIPT_DIR}/BreakAnnot.pl -A $ID.ctx.Q40.somatic.assembled.HQfiltered.NEW.csv > $ID.ctx.Q40.somatic.assembled.HQfiltered.NEW.csv.annot
 cd ..

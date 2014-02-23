@@ -115,7 +115,7 @@ sub execute {
     }
     $cmd .= " " . $self->bam_file;
     
-    $self->status_message("Running command: $cmd");
+    $self->debug_message("Running command: $cmd");
 
     my $return = Genome::Sys->shellcmd(
         cmd => "$cmd",

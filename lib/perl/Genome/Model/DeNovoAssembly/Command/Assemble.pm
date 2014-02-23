@@ -26,13 +26,13 @@ sub execute {
     my $build = $self->build;
     my $processing_profile = $build->processing_profile;
 
-    $self->status_message('Assemble '.$build->__display_name__);
+    $self->debug_message('Assemble '.$build->__display_name__);
 
     my $assembler_class = $processing_profile->assembler_class;
-    $self->status_message('Assembler class: '. $assembler_class);
+    $self->debug_message('Assembler class: '. $assembler_class);
 
     my %assembler_params = $build->assembler_params;
-    $self->status_message('Assembler params: '.Data::Dumper::Dumper(\%assembler_params));
+    $self->debug_message('Assembler params: '.Data::Dumper::Dumper(\%assembler_params));
 
 
     my $before_assemble = $build->before_assemble;
@@ -46,14 +46,14 @@ sub execute {
         $self->error_message("Failed to create de-novo-assemble");
         return;
     }
-    $self->status_message("Created assembler for '$assembler_class'.\n");
+    $self->debug_message("Created assembler for '$assembler_class'.\n");
 
     eval {
         unless ($assemble->execute) {
             $self->error_message("Failed to execute de-novo-assemble execute");
             return;
         }
-        $self->status_message('Assemble...OK');
+        $self->debug_message('Assemble...OK');
     };
     if ($@) {
         $self->error_message($@);

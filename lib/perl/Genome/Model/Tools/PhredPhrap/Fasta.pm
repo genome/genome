@@ -64,7 +64,7 @@ sub execute {
     }
 
     $cmd .= sprintf(' > %s 2> %s ', $self->out, $self->memlog);
-    $self->status_message("Phrap: $cmd");
+    $self->debug_message("Phrap: $cmd");
     my $phrap = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
     if ( not $phrap ) {
         $self->error_message("Phrap failed: $@");

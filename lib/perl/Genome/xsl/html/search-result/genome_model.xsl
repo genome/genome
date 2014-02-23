@@ -51,7 +51,9 @@
                 </xsl:call-template>
           </xsl:variable>
 
-          <strong>Created by: </strong><xsl:value-of select="aspect[@name='user_name']/value"/>
+          <strong>Created by: </strong><xsl:value-of select="aspect[@name='created_by']/value"/>
+          <xsl:text>; </xsl:text>
+          <strong>Run as: </strong><xsl:value-of select="aspect[@name='run_as']/value"/>
           <xsl:text>; </xsl:text>
           <strong>Type: </strong><xsl:value-of select="$model_type"/>
         </p>

@@ -119,7 +119,7 @@ sub _check_read_count {
         $self->error_message("$check does not match.");
         return;
     }
-    $self->status_message("$check matches.");
+    $self->debug_message("$check matches.");
     return 1;
 }
 
@@ -179,7 +179,7 @@ sub _run_aligner {
     # straight into _fix_sam. However, _fix_sam currently seeks back and forth
     # while trying to get a read "set" (all primary and secondary alignments
     # for a pair of reads).
-    # $self->status_message("Running '$full_command' and streaming output.");
+    # $self->debug_message("Running '$full_command' and streaming output.");
     # my $command_output_fh = IO::File->new( "$full_command |" );
 
     # Verify the bwasw logfile.
@@ -198,17 +198,17 @@ sub _run_aligner {
     }
 
     # Fix raw_sequences.sam and write the fixed records to all_sequences.sam.
-    $self->status_message("Fixing flags and mates in merged sam file.");
+    $self->debug_message("Fixing flags and mates in merged sam file.");
 
     my $is_paired = @input_paths == 2 ? 1 : 0;
     my $include_secondary = 1;
     my $mark_secondary_as_duplicate = 0;
 
     $self->_fix_sam($raw_sequences, $all_sequences, $is_paired, $include_secondary, $mark_secondary_as_duplicate);
-    unlink($raw_sequences) || $self->status_message("Could not unlink $raw_sequences.");
+    unlink($raw_sequences) || $self->debug_message("Could not unlink $raw_sequences.");
 
     # Sort all_sequences.sam.
-    $self->status_message("Resorting fixed sam file by coordinate.");
+    $self->debug_message("Resorting fixed sam file by coordinate.");
     $self->_sort_sam($all_sequences);
 
     return 1;
@@ -277,7 +277,7 @@ sub _sort_sam {
 
     # Clean up
     unless (unlink($unsorted_sam)) {
-        $self->status_message("Could not unlink $unsorted_sam.");
+        $self->debug_message("Could not unlink $unsorted_sam.");
     }
 
     return $given_sam;
@@ -308,7 +308,7 @@ sub _fix_sam {
     for my $raw_header (@raw_sequences_headers) {
         unless (grep { index($_, $raw_header) >= 0 } @all_sequences_headers) {
             # Add any unique headers from Bwa to all_sequences.fa
-            $self->status_message("Didn't find '$raw_header' in all_sequences.sam. Adding it. This probably isn't a problem.");
+            $self->debug_message("Didn't find '$raw_header' in all_sequences.sam. Adding it. This probably isn't a problem.");
             print $all_sequences_append_fh "$raw_header\n";
         }
     }
@@ -825,7 +825,7 @@ sub _verify_bwa_bwasw_did_happen {
         ($last_lines[-1] =~ /^\[main\] Real time:/) )
     ) {
         $self->error_message("Last lines of $log_file were unexpected. Dumping last $line_count lines.");
-        $self->status_message($_) for @last_lines;
+        $self->debug_message($_) for @last_lines;
         return;
     }
     return 1;
@@ -840,20 +840,20 @@ sub decomposed_aligner_params {
     my $cpu_count = $self->_available_cpu_count;
     my $processed_param_string = $self->join_aligner_params_hash($param_hash);
 
-    $self->status_message("[decomposed_aligner_params] cpu count is $cpu_count");
-    $self->status_message("[decomposed_aligner_params] bwa bwasw params are: $processed_param_string");
+    $self->debug_message("[decomposed_aligner_params] cpu count is $cpu_count");
+    $self->debug_message("[decomposed_aligner_params] bwa bwasw params are: $processed_param_string");
 
     # Make sure the thread count argument matches the number of CPUs available.
     if ($param_hash->{t} ne $cpu_count) {
         $param_hash->{t} = $cpu_count;
         my $modified_param_string = $self->join_aligner_params_hash($param_hash);
-        $self->status_message("[decomposed_aligner_params] autocalculated CPU requirement, bwa bwasw params modified: $modified_param_string");
+        $self->debug_message("[decomposed_aligner_params] autocalculated CPU requirement, bwa bwasw params modified: $modified_param_string");
     }
 
     if (not exists $param_hash->{M}) {
         $param_hash->{M} = '';
         my $modified_param_string = $self->join_aligner_params_hash($param_hash);
-        $self->status_message("[decomposed_aligner_params] forcing -M, bwa bwasw params modified: $modified_param_string");
+        $self->debug_message("[decomposed_aligner_params] forcing -M, bwa bwasw params modified: $modified_param_string");
     }
 
     my $final_param_string = $self->join_aligner_params_hash($param_hash);
@@ -968,13 +968,17 @@ sub prepare_reference_sequence_index {
 
     my $staging_dir = $refindex->temp_staging_directory;
 
+    my $aligner_version = $refindex->aligner_version;
+
+    $class->debug_message("Bwasw version $aligner_version is looking for a bwa version $aligner_version index.");
+
     Genome::Sys->create_symlink($refindex->reference_build->get_sequence_dictionary("sam"), $staging_dir ."/all_sequences.dict" );
 
     my $bwa_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_or_create(
         reference_build_id => $refindex->reference_build_id,
         aligner_name       => 'bwa',
         #aligner_params     => $refindex->aligner_params, # none of the aligner params should affect the index step so I think this okay
-        aligner_version    => $refindex->aligner_version,
+        aligner_version    => $aligner_version,
         test_name          => $ENV{GENOME_ALIGNER_INDEX_TEST_NAME},
     );
 

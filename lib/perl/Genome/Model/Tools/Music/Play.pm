@@ -316,7 +316,7 @@ sub _run_command {
     my $command = shift;
 
     my $command_name = $command->command_name;
-    $self->status_message('Running ' . $command_name . '...');
+    $self->debug_message('Running ' . $command_name . '...');
     my $rv = eval { $command->execute() };
     if($@) {
         my $error = $@;
@@ -326,7 +326,7 @@ sub _run_command {
         $self->error_message('Command ' . $command_name . ' did not return a true value.');
         return;
     } else {
-        $self->status_message('Completed ' . $command_name . '.');
+        $self->debug_message('Completed ' . $command_name . '.');
         return 1;
     }
 }

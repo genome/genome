@@ -90,18 +90,18 @@ sub _unzip_fastqs {
 
     return 1 if not @zipped_fastqs; # ok
 
-    $self->status_message('Unzip fastqs...');
+    $self->debug_message('Unzip fastqs...');
 
     for my $zipped_fastq ( @zipped_fastqs ) {
         my $cmd = "bunzip2 -f $zipped_fastq";
-        $self->status_message($cmd);
+        $self->debug_message($cmd);
         my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
         if ( not $rv ) {
             $self->error_message("Cannot unzip fastq: $zipped_fastq");
             return;
         }
     }
-    $self->status_message('Unzip fastqs...OK');
+    $self->debug_message('Unzip fastqs...OK');
 
     return 1;
 }
@@ -109,7 +109,7 @@ sub _unzip_fastqs {
 sub _validate_fastq_read_counts {
     my $self = shift;
 
-    $self->status_message('Validate fastq read counts...');
+    $self->debug_message('Validate fastq read counts...');
 
     my $files = $self->_downloaded_data_files;
     my $fwd_read_count = $self->_read_count_for_fastq( $files->{fwd}->{file} );
@@ -121,14 +121,14 @@ sub _validate_fastq_read_counts {
         return;
     }
     $self->_paired_read_count( $fwd_read_count + $rev_read_count );
-    $self->status_message('Paired read count: '.$self->_paired_read_count);
+    $self->debug_message('Paired read count: '.$self->_paired_read_count);
 
     my $singleton_read_count = $self->_read_count_for_fastq( $files->{singleton}->{file} );
     return if not defined $singleton_read_count;
     $self->_singleton_read_count($singleton_read_count);
-    $self->status_message('Singleton read count: '.$self->_singleton_read_count);
+    $self->debug_message('Singleton read count: '.$self->_singleton_read_count);
 
-    $self->status_message('Validate fastq read counts...OK');
+    $self->debug_message('Validate fastq read counts...OK');
 
     return 1;
 }
@@ -156,7 +156,7 @@ sub _get_or_create_singleton_instrument_data {
 
     my @instrument_data = $self->_get_instrument_data;
     if ( @instrument_data == 2 ) {
-        $self->status_message('Got singelton instrument data: '.$instrument_data[1]->id);
+        $self->debug_message('Got singelton instrument data: '.$instrument_data[1]->id);
         $self->_singleton_instrument_data($instrument_data[1]);
         return 1;
     }
@@ -165,7 +165,7 @@ sub _get_or_create_singleton_instrument_data {
         return;
     }
 
-    $self->status_message('Create singelton instrument data');
+    $self->debug_message('Create singelton instrument data');
 
     my $singleton_fastq = $self->_singleton_fastq;
     my $size = -s $singleton_fastq;
@@ -179,7 +179,7 @@ sub _get_or_create_singleton_instrument_data {
     }
     $self->_singleton_instrument_data($singleton_instrument_data);
 
-    $self->status_message('Create singelton instrument data: '.$self->_singleton_instrument_data->id);
+    $self->debug_message('Create singelton instrument data: '.$self->_singleton_instrument_data->id);
 
     return $singleton_instrument_data;
 }
@@ -187,7 +187,7 @@ sub _get_or_create_singleton_instrument_data {
 sub _archive_and_update {
     my $self = shift;
 
-    $self->status_message('Archive and update...');
+    $self->debug_message('Archive and update...');
 
     my $paired_instrument_data = $self->_main_instrument_data;
     my $singleton_instrument_data = $self->_singleton_instrument_data;
@@ -214,7 +214,7 @@ sub _archive_and_update {
     $archive = $self->_create_archive($singleton_instrument_data, $singleton_new_name);
     return if not $archive;
 
-    $self->status_message('Update instrument data...');
+    $self->debug_message('Update instrument data...');
     $paired_instrument_data->description($self->sra_sample_id.' Pairs that have been human screened, Q2 trimmed and deduped from the DACC');
     $paired_instrument_data->original_data_path(join(',', map { $files->{$_}->{file} } (qw/ fwd rev /)));
     $paired_instrument_data->read_count( $self->_paired_read_count );
@@ -223,9 +223,9 @@ sub _archive_and_update {
     $singleton_instrument_data->description($self->sra_sample_id.' Singletons that have been human screened, Q2 trimmed and deduped from the DACC');
     $singleton_instrument_data->original_data_path( $files->{singleton}->{file} );
     $singleton_instrument_data->read_count( $self->_singleton_read_count );
-    $self->status_message('Update instrument data...OK');
+    $self->debug_message('Update instrument data...OK');
 
-    $self->status_message('Archive and update...OK');
+    $self->debug_message('Archive and update...OK');
     
     return 1;
 }
@@ -233,7 +233,7 @@ sub _archive_and_update {
 sub _create_archive {
     my ($self, $instrument_data, @files) = @_;
 
-    $self->status_message('Create archive for '.$instrument_data->id);
+    $self->debug_message('Create archive for '.$instrument_data->id);
 
     Carp::confess('Cannot create archive b/c no instrument data was given') if not $instrument_data;
     Carp::confess('Cannot create archive b/c no files were given') if not @files;
@@ -243,28 +243,28 @@ sub _create_archive {
 
     my $temp_tar_file = $dl_directory.'/temp.tgz';
     unlink $temp_tar_file if -e $temp_tar_file;
-    $self->status_message("Tar-ing files to $temp_tar_file");
+    $self->debug_message("Tar-ing files to $temp_tar_file");
     my $tar_cmd = "tar cvzf $temp_tar_file -C $dl_directory ".join(' ', @files);
-    $self->status_message($tar_cmd);
+    $self->debug_message($tar_cmd);
     my $rv = eval { Genome::Sys->shellcmd(cmd => $tar_cmd); };
     if ( not $rv ) {
         $self->error_message("Tar command failed: $tar_cmd");
         return;
     }
-    $self->status_message("Tar-ing OK");
+    $self->debug_message("Tar-ing OK");
 
     my $archive_path = $instrument_data->archive_path;
     unlink $archive_path if -e $archive_path;
     my $move = $self->_move_file($temp_tar_file, $archive_path);
     return if not $move;
 
-    $self->status_message('Remove original files...');
+    $self->debug_message('Remove original files...');
     for my $file ( @files ) {
         unlink $file;
     }
-    $self->status_message('Remove original files...OK');
+    $self->debug_message('Remove original files...OK');
 
-    $self->status_message('Archive fastqs...OK');
+    $self->debug_message('Archive fastqs...OK');
 
     return 1;
 }

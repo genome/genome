@@ -99,7 +99,7 @@ sub __errors__ {
 
 sub execute {
     my $self = shift;
-    $self->status_message('Velvet metrics...');
+    $self->debug_message('Velvet metrics...');
 
     # tier values
     my ($t1, $t2);
@@ -112,8 +112,8 @@ sub execute {
         $t1 = int ($est_genome_size * 0.2);
         $t2 = int ($est_genome_size * 0.2);
     }
-    $self->status_message('Tier one: 1 to '.$t1);
-    $self->status_message('Tier two: '.$t1.' to '.($t1 + $t2));
+    $self->debug_message('Tier one: 1 to '.$t1);
+    $self->debug_message('Tier two: '.$t1.' to '.($t1 + $t2));
 
     # metrics
     my $metrics = Genome::Model::Tools::Sx::Metrics::Assembly->create(
@@ -125,17 +125,17 @@ sub execute {
 
     # input reads
     my $reads_file = $self->input_collated_fastq_file;
-    $self->status_message('Add reads file: '.$reads_file);
+    $self->debug_message('Add reads file: '.$reads_file);
     my $add_reads = $metrics->add_reads_file_with_q20($reads_file);
     return if not $add_reads;
 
     # reads assembled
-    $self->status_message('Add velvet afg file: '.$self->velvet_afg_file);
+    $self->debug_message('Add velvet afg file: '.$self->velvet_afg_file);
     my $add_read_depth = $self->_add_metrics_from_agp_file($metrics);
     return if not $add_read_depth;
 
     # core gene survey
-    $self->status_message('Check core gene survey result');
+    $self->debug_message('Check core gene survey result');
     my $add_core_gene_survey = $self->_add_core_gene_survey_metrics($metrics);
     return if not $add_core_gene_survey;
     
@@ -149,7 +149,7 @@ sub execute {
     # write file
     my $output_file = $self->output_file;
     unlink $output_file if -e $output_file;
-    $self->status_message('Write output file: '.$output_file);
+    $self->debug_message('Write output file: '.$output_file);
     my $fh = eval{ Genome::Sys->open_file_for_writing($output_file); };
     if ( not $fh ) {
         $self->error_message('Failed to open metrics output file!');
@@ -159,7 +159,7 @@ sub execute {
     $fh->print($text);
     $fh->close;
 
-    $self->status_message('Velvet metrics...DONE');
+    $self->debug_message('Velvet metrics...DONE');
     return 1;
 }
 
@@ -341,7 +341,7 @@ sub _add_core_gene_survey_metrics {
     my ( $self, $metrics ) = @_;
 
     if ( not -s $self->core_gene_survey_file) {
-        $self->status_message("Core gene survey result file not found, so core gene survey metrics will be set");
+        $self->debug_message("Core gene survey result file not found, so core gene survey metrics will be set");
         return 1;
     }
     

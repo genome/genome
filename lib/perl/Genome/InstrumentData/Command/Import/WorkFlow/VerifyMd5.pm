@@ -94,12 +94,12 @@ sub execute {
 
 sub _load_original_md5 {
     my $self = shift;
-    $self->status_message('Load original MD5...');
+    $self->debug_message('Load original MD5...');
 
     my $original_md5_path = $self->original_md5_path;
     my $original_md5_path_size = $self->helpers->file_size($original_md5_path);
     if ( not $original_md5_path_size ) {
-        $self->status_message('No original MD5...skip');
+        $self->debug_message('No original MD5...skip');
         return 1;
     }
 
@@ -109,9 +109,9 @@ sub _load_original_md5 {
         return;
     }
     $self->original_md5($original_md5);
-    $self->status_message("Original MD5: $original_md5");
+    $self->debug_message("Original MD5: $original_md5");
 
-    $self->status_message('Load original MD5...done');
+    $self->debug_message('Load original MD5...done');
     return 1;
 }
 

@@ -11,8 +11,6 @@ use warnings;
 use above "Genome";
 use Test::More;
 
-plan skip_all => "This test requires LSF jobs be submitted, which is kinda flimsy and shouldn't be automatically done";
-
 use_ok('Genome::Sys') or die;
 
 # Submit job that should work

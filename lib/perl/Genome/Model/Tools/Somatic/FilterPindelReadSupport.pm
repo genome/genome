@@ -81,7 +81,7 @@ sub execute {
         die $self->error_message;
     }
     if(-e $self->output_file && $self->skip_if_output_present) {
-        $self->status_message("Found output file at ".$self->output_file." shortcutting past filer.");
+        $self->debug_message("Found output file at ".$self->output_file." shortcutting past filer.");
         return 1;
     }
     my $input = Genome::Sys->open_file_for_reading( $self->read_support_file );

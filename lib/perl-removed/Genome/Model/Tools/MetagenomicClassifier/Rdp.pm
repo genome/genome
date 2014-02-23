@@ -77,7 +77,7 @@ sub execute {
         last if not @seqs;
         my $batch_pos = $batch_cnt * $batch_sz;
         $batch_cnt++;
-        $self->status_message('Batch '.$batch_cnt.' from '.($batch_pos + 1).' to '.($batch_pos + @seqs));
+        $self->debug_message('Batch '.$batch_cnt.' from '.($batch_pos + 1).' to '.($batch_pos + @seqs));
         my $pid = UR::Context::Process->fork();
         if ( not defined $pid ) {
             die 'Cannot fork!';

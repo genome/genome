@@ -110,12 +110,12 @@ sub execute {
     my $self = shift;
 
     if ($self->skip) {
-        $self->status_message("Skipping execution: Skip flag set");
+        $self->debug_message("Skipping execution: Skip flag set");
         return 1;
     }
     
     if (($self->skip_if_output_present)&&(-s $self->output_file)) {
-        $self->status_message("Skipping execution: Output is already present and skip_if_output_present is set to true");
+        $self->debug_message("Skipping execution: Output is already present and skip_if_output_present is set to true");
         return 1;
     }
 

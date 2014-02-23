@@ -55,7 +55,7 @@ sub execute
                                         $self->summary_file ? $self->summary_file : $input_file . '.summary');
     #create read file
     my $cmd = 'cross_match.test ' . $input_file . ' ' .  $self->database . ' -raw -tags -minmatch 16 -minscore ' . $minscore . ' -bandwidth 3 -penalty -1 -gap_init -1 -gap_ext -1 > ' . $read_file;
-    $self->status_message('Running: '. $cmd);
+    $self->debug_message('Running: '. $cmd);
     my $rv = system($cmd);
     unless ($rv == 0) {
         $self->error_message("non-zero return value($rv) from command $cmd");

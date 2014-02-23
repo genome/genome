@@ -62,7 +62,7 @@ sub execute {
 
     my $bed_reader = $self->_create_bed_reader($bam_reader, $temp_bed_directory);
 
-    $self->status_message("Summarizing alignments");
+    $self->debug_message("Summarizing alignments");
     my $stats_summary = $self->summarize_alignments($bam_reader, $bed_reader);
 
     $self->_save_summary($stats_summary, $output_file);
@@ -442,7 +442,7 @@ sub summarize_alignments {
 sub _verify_target_index {
     my($self, $bam_reader) = @_;
 
-    $self->status_message('Verifying target index');
+    $self->debug_message('Verifying target index');
 
     my $header = $bam_reader->header();
 
@@ -467,14 +467,14 @@ sub _open_sorted_bam {
         my $bam_reader = Bio::DB::Bam->open( $self->bam_file );
         my $bam_header = $bam_reader->header;
         if ($bam_header->text =~ m/SO:coordinate/i) {
-            $self->status_message("The bam file is already sorted");
+            $self->debug_message("The bam file is already sorted");
             return $bam_reader; 
         }
     } else {
         die "Can't open bam file ".$self->bam_file.": file does not exist or is not readable";
     }
 
-    $self->status_message('Sorting input bam file');
+    $self->debug_message('Sorting input bam file');
 
     my($sort_fh, $sorted_bam) = File::Temp::tempfile('alignment_summary_sorted_XXXXXX', UNLINK => 1, SUFFIX => '.bam', TMPDIR => 1);
     my $bam_pos_sort = Genome::Model::Tools::Sam::SortBam->create(file_name => $self->bam_file, output_file => $sorted_bam);
@@ -487,7 +487,7 @@ sub _open_sorted_bam {
 sub _resolve_output_file {
     my $self = shift;
 
-    $self->status_message('Resolving output file...');
+    $self->debug_message('Resolving output file...');
 
     unless ( $self->output_directory || $self->output_file) {
         die 'Failed to provide either output_file or output_directory!';
@@ -534,7 +534,7 @@ my @output_headers = qw(
 sub _save_summary {
     my ($self, $stats_summary, $output_file) = @_;
 
-    $self->status_message("Saving summary to output file $output_file");
+    $self->debug_message("Saving summary to output file $output_file");
 
     my $output_fh = Genome::Sys->open_file_for_writing($self->output_file);
     $output_fh->print(join("\t", @output_headers), "\n");
@@ -561,7 +561,7 @@ sub _prepare_split_sorted_bed_files {
 
     $wingspan ||= 0;
 
-    $self->status_message('Preparing sorted bed files...');
+    $self->debug_message('Preparing sorted bed files...');
     # bed file format is
     # chrom start stop name
 
@@ -594,7 +594,7 @@ sub _prepare_split_sorted_bed_files {
 
     # Now sort each file
     foreach my $chrom ( keys %open_handles ) {
-        $self->status_message("Sorting split bed file for chrom $chrom");
+        $self->debug_message("Sorting split bed file for chrom $chrom");
 
         my $read = IO::File->new($self->_unsorted_bed_file_name_for_chrom($temp_dir, $chrom), 'r');
         $read || die "Can't open file ".$self->_unsorted_bed_file_name_for_chrom($temp_dir, $chrom) . "for reading: $!";

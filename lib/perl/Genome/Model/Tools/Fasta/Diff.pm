@@ -54,7 +54,7 @@ $DB::single = $DB::stopper;
         my($fh,$filename) = File::Temp::tempfile;
         my $fseq = $fasta->next_seq();
 
-        $self->status_message("Flattening $fasta_name...\n");
+        $self->debug_message("Flattening $fasta_name...\n");
         for (my $i = 1; $i <= $fseq->length; $i++) {
             $fh->print($fseq->subseq($i,$i),"\n");
         }

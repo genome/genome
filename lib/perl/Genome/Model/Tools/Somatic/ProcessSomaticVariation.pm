@@ -141,6 +141,12 @@ class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
           doc => "override the sample name on the build and use this name instead",
       },
 
+      reference_transcripts => {
+          is => 'Text',
+          is_optional => 1,
+          doc => "use this reference transcript build instead of the one specified in the model (e.g. NCBI-mouse.ensembl/67_37)",
+      },
+
       ],
 };
 
@@ -531,10 +537,6 @@ sub doAnnotation{
 sub addTiering{
     my ($file, $tier_file_location) = @_;
 
-    unless($file =~ /\.bed/){
-        $file = annoFileToBedFile($file);
-    }
-
     my $newfile = addName($file, "tiered");
 
     #handle zero size files
@@ -614,7 +616,13 @@ sub execute {
   my $ref_seq_build_id = $tumor_model->reference_sequence_build->build_id;
   my $ref_seq_build = Genome::Model::Build->get($ref_seq_build_id);
   my $ref_seq_fasta = $ref_seq_build->full_consensus_path('fa');
+
   my $annotation_build_name = $model->annotation_build->name;
+  if(defined $self->reference_transcripts){
+      print STDERR "Model's annotation build overriden. Using " . $self->reference_transcripts . "\n";
+      $annotation_build_name = $self->reference_transcripts;
+  }
+
   my $tiering_files = $model->annotation_build->data_directory . "/annotation_data/tiering_bed_files_v3/";
   my $sample_name;
   if(!defined($self->sample_name)){
@@ -847,10 +855,6 @@ sub execute {
       #do annotation
       $snv_file = addTiering($snv_file, $tiering_files);
       $indel_file = addTiering($indel_file, $tiering_files);
-
-      #convert back to annotation format (1-based)
-      $snv_file = bedFileToAnnoFile($snv_file);
-      $indel_file = bedFileToAnnoFile($indel_file);
   }
 
 

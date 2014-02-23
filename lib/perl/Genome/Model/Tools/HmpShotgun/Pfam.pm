@@ -54,9 +54,9 @@ sub execute {
     $self->dump_warning_messages(1);
 
     my $now = UR::Context->current->now;
-    $self->status_message(">>>Starting Pfam execute() at $now"); 
+    $self->debug_message(">>>Starting Pfam execute() at $now"); 
     $self->final_file("pfam_final_file_path");
-    $self->status_message("<<<Ending Pfam execute() at ".UR::Context->current->now); 
+    $self->debug_message("<<<Ending Pfam execute() at ".UR::Context->current->now); 
     return 1;
 
 }

@@ -121,8 +121,8 @@ sub _check_read_count {
     my $cmd = "$sam_path view -F $flag -c " . $self->temp_staging_directory . "/all_sequences.bam";
     my $filtered_bam_rd_ct = `$cmd`;
 
-    $self->status_message("Overriding _check_read_count: filtering flag $flag from bam read count.");
-    $self->status_message("Actual read count: $bam_rd_ct; filtered read count: $filtered_bam_rd_ct");
+    $self->debug_message("Overriding _check_read_count: filtering flag $flag from bam read count.");
+    $self->debug_message("Actual read count: $bam_rd_ct; filtered read count: $filtered_bam_rd_ct");
 
     return $self->SUPER::_check_read_count($filtered_bam_rd_ct);
 }
@@ -162,7 +162,7 @@ sub _run_aligner {
     }
 
     # Run mem
-    $self->status_message("Running bwa mem.");
+    $self->debug_message("Running bwa mem.");
 
     my $full_command = sprintf '%s mem %s %s %s 2>> %s',
         $cmd_path, $param_string, $reference_fasta_path,
@@ -177,7 +177,7 @@ sub _run_aligner {
     }
 
     # Sort all_sequences.sam.
-    $self->status_message("Resorting all_sequences.sam by coordinate.");
+    $self->debug_message("Resorting all_sequences.sam by coordinate.");
     $self->_sort_sam($out_sam);
 
     return 1;
@@ -188,8 +188,8 @@ sub _stream_bwamem {
     my ($self, $full_command, $all_sequences) = @_;
 
     # Open pipe
-    $self->status_message("RUN: $full_command");
-    $self->status_message("Opening filehandle to stream output.");
+    $self->debug_message("RUN: $full_command");
+    $self->debug_message("Opening filehandle to stream output.");
 
     my $bwamem_fh = IO::File->new("$full_command |");
 
@@ -200,7 +200,7 @@ sub _stream_bwamem {
     }
 
     # Add RG tags
-    $self->status_message("Starting AddReadGroupTag.");
+    $self->debug_message("Starting AddReadGroupTag.");
     my $all_sequences_fh = IO::File->new(">> $all_sequences");
 
     unless ($all_sequences_fh) {
@@ -311,7 +311,7 @@ sub _sort_sam {
 
     # Clean up
     unless (unlink($unsorted_sam)) {
-        $self->status_message("Could not unlink $unsorted_sam.");
+        $self->debug_message("Could not unlink $unsorted_sam.");
     }
 
     return $given_sam;
@@ -339,7 +339,7 @@ sub _verify_bwa_mem_did_happen {
         ($last_lines[-1] =~ /^\[main\] Real time:/) )
     ) {
         $self->error_message("Last lines of $log_file were unexpected. Dumping last $line_count lines.");
-        $self->status_message($_) for @last_lines;
+        $self->debug_message($_) for @last_lines;
         return;
     }
     return 1;
@@ -516,7 +516,9 @@ sub prepare_reference_sequence_index {
 
     my $staging_dir = $refindex->temp_staging_directory;
 
-    $class->status_message("Bwa mem version 0.7.2 is looking for a bwa version 0.7.2 index.");
+    my $aligner_version = $refindex->aligner_version;
+
+    $class->debug_message("Bwa mem version $aligner_version is looking for a bwa version $aligner_version index.");
 
     Genome::Sys->create_symlink($refindex->reference_build->get_sequence_dictionary("sam"), $staging_dir ."/all_sequences.dict" );
 
@@ -524,7 +526,7 @@ sub prepare_reference_sequence_index {
         reference_build_id => $refindex->reference_build_id,
         aligner_name       => 'bwa',
         #aligner_params     => $refindex->aligner_params, # none of the aligner params should affect the index step so I think this okay
-        aligner_version    => $refindex->aligner_version,
+        aligner_version    => $aligner_version,
         test_name          => $ENV{GENOME_ALIGNER_INDEX_TEST_NAME},
     );
 

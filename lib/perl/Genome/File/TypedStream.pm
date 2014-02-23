@@ -22,7 +22,7 @@ sub new {
 sub fhopen {
     my ($class, $fh, $name) = @_;
 
-    $name |= "Unknown input stream (possibly stdin)";
+    $name ||= "Unknown input stream (possibly stdin)";
 
     my $self = {
         _cached_entry => undef,

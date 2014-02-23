@@ -54,9 +54,9 @@ sub execute {
     $self->dump_warning_messages(1);
 
     my $now = UR::Context->current->now;
-    $self->status_message(">>>Starting CoreMetabalome execute() at $now"); 
+    $self->debug_message(">>>Starting CoreMetabalome execute() at $now"); 
     $self->final_file("core_metabolome_final_file_path");
-    $self->status_message("<<<Ending CoreMetabalome execute() at ".UR::Context->current->now); 
+    $self->debug_message("<<<Ending CoreMetabalome execute() at ".UR::Context->current->now); 
     return 1;
 }
 1;

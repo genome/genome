@@ -60,7 +60,7 @@ sub _run_aligner {
         $self->error_message('No aligned or unaligned sam output files were created.');
         return 0;
     }
-    $self->status_message('Soap alignment finished.');
+    $self->debug_message('Soap alignment finished.');
     return 1;
 }
 

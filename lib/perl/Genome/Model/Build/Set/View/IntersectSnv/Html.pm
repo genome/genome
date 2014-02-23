@@ -236,7 +236,7 @@ sub _render_view {
     my $template = $self->_support_file_path("Intersect.html.tt2");
     my $tt = Template->new({ ABSOLUTE => 1 }) || die "$Template::ERROR\n";
 
-    $self->status_message("processing template $template");
+    $self->debug_message("processing template $template");
 
     my $content;
     my $rv = $tt->process($template, { @vars }, \$content) || die $tt->error(), "\n";

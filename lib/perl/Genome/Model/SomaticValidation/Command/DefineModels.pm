@@ -159,7 +159,7 @@ sub execute {
 
     if($self->new_model_group) {
         $self->new_model_group->assign_models(@new_m);
-        $self->status_message('Model group updated: ' . $self->new_model_group->__display_name__);
+        $self->debug_message('Model group updated: ' . $self->new_model_group->__display_name__);
     }
 
     $self->result_models(\@new_m);

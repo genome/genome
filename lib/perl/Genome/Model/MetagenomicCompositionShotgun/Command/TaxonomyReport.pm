@@ -23,13 +23,13 @@ sub execute {
     my $self = shift;
 
     my $build = $self->build;
-    $self->status_message('Metagenomic report for '.$build->__display_name__);
+    $self->debug_message('Metagenomic report for '.$build->__display_name__);
 
     if ( not -d $self->build->reports_directory ) {
         $self->error_message("Build report directory does not exist");
         return;
     }
-    $self->status_message("Report dir: " . $self->build->reports_directory);
+    $self->debug_message("Report dir: " . $self->build->reports_directory);
 
     my $refcov_output = $build->refcov_output;
     if ( not -s $refcov_output ) {
@@ -55,24 +55,24 @@ sub execute {
 sub _generate_taxonomy_report {
     my $self = shift;
 
-    $self->status_message("Generate taxonomy report");
+    $self->debug_message("Generate taxonomy report");
 
-    $self->status_message('Load reference hits');
+    $self->debug_message('Load reference hits');
     my $ref_counts = $self->_load_reference_hits;
     return if not $ref_counts;
-    $self->status_message('Load reference hits...OK');
+    $self->debug_message('Load reference hits...OK');
 
-    $self->status_message('Load taxonomy');
+    $self->debug_message('Load taxonomy');
     my $taxonomy = $self->_load_basic_taxonomy;
     return if not $taxonomy;
-    $self->status_message('Load taxonomy...OK');
+    $self->debug_message('Load taxonomy...OK');
 
     my $viral_taxonomy = {};
     if ( -s $self->build->metagenomic_reference_viral_taxonomy_file ) {
-        $self->status_message('Load viral taxonomy');
+        $self->debug_message('Load viral taxonomy');
         $viral_taxonomy = $self->_load_viral_taxonomy;
         return if not $viral_taxonomy;
-        $self->status_message('Load viral taxonomy...OK');
+        $self->debug_message('Load viral taxonomy...OK');
     }
 
     my %species_counts_hash;
@@ -83,7 +83,7 @@ sub _generate_taxonomy_report {
     my %viral_genus_counts_hash;
     my %viral_species_counts_hash;
 
-    $self->status_message('Open read count file: '.$self->build->read_count_file);
+    $self->debug_message('Open read count file: '.$self->build->read_count_file);
     unlink $self->build->read_count_file if -e $self->build->read_count_file;
     my $read_cnt_o = eval{ Genome::Sys->open_file_for_writing($self->build->read_count_file); };
     if ( not $read_cnt_o ) {
@@ -92,7 +92,7 @@ sub _generate_taxonomy_report {
     }
 
     print $read_cnt_o "Reference Name\t#Reads with hits\tSpecies\tPhyla\tHMP genome\n";
-    $self->status_message('Going through references');
+    $self->debug_message('Going through references');
     for my $ref_id (sort keys %$ref_counts){
         if (($ref_id =~ /^BACT/) or ($ref_id =~ /^ARCH/) or ($ref_id =~ /^EUKY/)){
             my $species= $taxonomy->{$ref_id}->{species} || '';
@@ -124,9 +124,9 @@ sub _generate_taxonomy_report {
         }
     }
     $read_cnt_o->close;
-    $self->status_message('Going through references...OK');
+    $self->debug_message('Going through references...OK');
 
-    $self->status_message("Write taxonomy counts");
+    $self->debug_message("Write taxonomy counts");
     my $species_output_file = $self->build->reports_directory . '/species_count';
     $self->_write_count_and_close($species_output_file, "Species", \%species_counts_hash);
     my $phyla_output_file = $self->build->reports_directory . '/phyla_count';
@@ -141,9 +141,9 @@ sub _generate_taxonomy_report {
     $self->_write_count_and_close($viral_family_output_file, "Viral Family", \%viral_family_counts_hash);
     my $viral_subfamily_output_file = $self->build->reports_directory . '/viral_subfamily_count';
     $self->_write_count_and_close($viral_subfamily_output_file, "Viral Subfamily", \%viral_subfamily_counts_hash);
-    $self->status_message("Write taxonomy counts...OK");
+    $self->debug_message("Write taxonomy counts...OK");
 
-    $self->status_message("Generate taxonomy report...OK");
+    $self->debug_message("Generate taxonomy report...OK");
 
     return 1;
 }
@@ -244,7 +244,7 @@ sub _load_reference_hits {
         $ref_counts_hash{$ref_name}++;
     }
 
-    $self->status_message("Skipped $ignore_unmapped reads without a metagenomic mapping");
+    $self->debug_message("Skipped $ignore_unmapped reads without a metagenomic mapping");
 
     return \%ref_counts_hash;
 }
@@ -252,7 +252,7 @@ sub _load_reference_hits {
 sub _generate_refcov_summary {
     my $self = shift;
 
-    $self->status_message('Generate ref cov summary');
+    $self->debug_message('Generate ref cov summary');
 
     my $read_counts_fh = eval{ Genome::Sys->open_file_for_reading($self->build->read_count_file); };
     if ( not $read_counts_fh ) {
@@ -363,7 +363,7 @@ sub _generate_refcov_summary {
         print $summary_report_fh "$desc\t$phy\t$gen\t$ord\t$hmp\t$new_avg_cov\t$new_avg_breadth\t$total_bp\t$missing_bp\t$reads\n";
     }
 
-    $self->status_message("metagenomic report successfully completed");
+    $self->debug_message("metagenomic report successfully completed");
 
     system("touch ".$self->build->reports_directory."/FINISHED");
 

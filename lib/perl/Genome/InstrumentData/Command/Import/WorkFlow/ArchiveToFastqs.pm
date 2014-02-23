@@ -48,7 +48,7 @@ class Genome::InstrumentData::Command::Import::WorkFlow::ArchiveToFastqs {
 
 sub execute {
     my $self = shift;
-    $self->status_message('Archive to Fastqs...');
+    $self->debug_message('Archive to Fastqs...');
 
     my $archive_to_fastqs_ok = $self->_archive_to_fastqs;
     return if not $archive_to_fastqs_ok;
@@ -59,16 +59,16 @@ sub execute {
     my $cleanup_ok = $self->_cleanup;
     return if not $cleanup_ok;
 
-    $self->status_message('Archive to Fastqs...done');
+    $self->debug_message('Archive to Fastqs...done');
     return 1;
 }
 
 sub _archive_to_fastqs {
     my $self = shift;
-    $self->status_message('Extract...');
+    $self->debug_message('Extract...');
 
     my $archive_path = $self->archive_path;
-    $self->status_message("Archive path: $archive_path");
+    $self->debug_message("Archive path: $archive_path");
 
     my $extractor = Archive::Extract->new(archive => $self->archive_path);
     if ( not $extractor ) {
@@ -95,23 +95,23 @@ sub _archive_to_fastqs {
     $self->extracted_fastqs(\@extracted_fastqs);
 
 
-    $self->status_message('Extract...done');
+    $self->debug_message('Extract...done');
     return 1;
 }
 
 sub _move_extracted_fastqs_to_working_directory {
     my $self = shift;
-    $self->status_message('Move extracted fastqs to working directory...');
+    $self->debug_message('Move extracted fastqs to working directory...');
 
     my @fastq_paths;
     for my $extracted_fastq ( @{$self->extracted_fastqs} ) {
         my $extracted_fastq_path = $self->extract_directory.'/'.$extracted_fastq;
-        $self->status_message("Extracted FASTQ path: ".$extracted_fastq_path);
+        $self->debug_message("Extracted FASTQ path: ".$extracted_fastq_path);
         my $extracted_fastq_basename = File::Basename::basename($extracted_fastq_path);
         my $fastq_path = $self->working_directory.'/'.$extracted_fastq_basename;
         my $move_ok = $self->helpers->move_path($extracted_fastq_path, $fastq_path);
         Carp::confess('Failed to move file!') if not $move_ok;
-        $self->status_message("FASTQ path: ".$fastq_path);
+        $self->debug_message("FASTQ path: ".$fastq_path);
         push @fastq_paths, $fastq_path;
     }
 
@@ -121,7 +121,7 @@ sub _move_extracted_fastqs_to_working_directory {
     }
     $self->fastq_paths(\@fastq_paths);
 
-    $self->status_message('Move extracted fastqs to working directory...done');
+    $self->debug_message('Move extracted fastqs to working directory...done');
     return 1;
 }
 

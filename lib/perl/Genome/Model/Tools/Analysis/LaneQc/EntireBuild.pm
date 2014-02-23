@@ -68,7 +68,7 @@ sub execute {
         $self->error_message("No alignments have Succeeded on the build");
         return;
     }
-    $self->status_message(sprintf "Checking %d lanes", scalar(@events));
+    $self->debug_message(sprintf "Checking %d lanes", scalar(@events));
     for my $instrument_data ($build->instrument_data) {
         my $lane_name = $instrument_data->__display_name__;
         my @alignments = $build->alignment_results_for_instrument_data($instrument_data);

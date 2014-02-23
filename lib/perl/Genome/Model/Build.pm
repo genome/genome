@@ -17,6 +17,7 @@ use Workflow;
 use YAML;
 use Date::Manip;
 
+use Genome::Sys::LSF::bsub qw();
 use Genome::Utility::Email;
 
 class Genome::Model::Build {
@@ -707,6 +708,36 @@ sub all_allocations {
     return values %allocations;
 }
 
+sub disk_usage_allocations {
+    my $self = shift;
+
+    my @allocations;
+    push @allocations, $self->disk_allocation if $self->disk_allocation;
+
+    push @allocations, $self->user_allocations;
+    push @allocations, $self->symlinked_allocations;
+
+    # Build inputs should not be counted toward the disk usage of a build
+    #push @allocations, $self->input_allocations;
+    push @allocations, $self->event_allocations;
+
+    my %allocations = map { $_->id => $_ } @allocations;
+    my @disk_usage_allocations;
+    my $owner_class;
+    for my $allocation (values %allocations) {
+        $owner_class = $allocation->owner_class_name;
+        next if $owner_class->isa('Genome::InstrumentData');
+        next if $owner_class->isa('Genome::Model::Build') and
+            $allocation->owner_id ne $self->id;
+        next if $owner_class->isa('Genome::Model::Build::ReferenceSequence::AlignerIndex');
+        next if $owner_class->isa('Genome::FeatureList');
+        next if $owner_class->isa('Genome::Model::Tools::DetectVariants2::Result::Manual');
+        next if $owner_class->isa('Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::VariableReadLength::Index');
+        push @disk_usage_allocations, $allocation;
+    }
+    return @disk_usage_allocations;
+}
+
 sub input_allocations {
     my $self = shift;
 
@@ -836,24 +867,24 @@ sub input_builds {
 
 sub relink_symlinked_allocations {
     my $self = shift;
-    $self->status_message('Relink symlinked allocations...');
+    $self->debug_message('Relink symlinked allocations...');
 
     my @symlinked_allocations = $self->symlinked_allocations;
-    $self->status_message('Found '.@symlinked_allocations.' symlinked allocations');
+    $self->debug_message('Found '.@symlinked_allocations.' symlinked allocations');
     return 1 if not @symlinked_allocations;
 
     for my $symlinked_allocation ( @symlinked_allocations ) {
-        $self->status_message('Allocation: '.$symlinked_allocation->id);
+        $self->debug_message('Allocation: '.$symlinked_allocation->id);
         my $symlink_name = $symlinked_allocation->{_symlink_name};
-        $self->status_message("Symlink name: $symlink_name");
+        $self->debug_message("Symlink name: $symlink_name");
         my $target_name = $symlinked_allocation->{_target_name};
-        $self->status_message("Target name: $target_name");
+        $self->debug_message("Target name: $target_name");
         if ( $symlinked_allocation->{_target_exists} ) {
-            $self->status_message('Target exists! Skipping...');
+            $self->debug_message('Target exists! Skipping...');
             next;
         }
         if ( $symlinked_allocation->absolute_path eq $symlinked_allocation->{_target_name} ) {
-            $self->status_message('Target name matches absolute path! Skipping...');
+            $self->debug_message('Target name matches absolute path! Skipping...');
             next;
         }
         my $new_target = $symlinked_allocation->absolute_path;
@@ -861,14 +892,14 @@ sub relink_symlinked_allocations {
             $self->error_message('Allocation failed to reload or is still archived. Please correct. Skipping...');
             next;
         }
-        $self->status_message("Remove broken link: $symlink_name TO $target_name");
+        $self->debug_message("Remove broken link: $symlink_name TO $target_name");
         unlink($symlink_name);
-        $self->status_message("Add link: $symlink_name TO $new_target");
+        $self->debug_message("Add link: $symlink_name TO $new_target");
         symlink($new_target, $symlink_name);
         $self->error_message('Failed to relink allocation!') if not -l $symlink_name;
     }
 
-    $self->status_message('Relink symlinked allocations...Done');
+    $self->debug_message('Relink symlinked allocations...Done');
     return 1;
 }
 
@@ -894,7 +925,7 @@ sub add_report {
     if (-d $directory) {
         my $subdir = $directory . '/' . $report->name_to_subdirectory($report->name);
         if (-e $subdir) {
-            $self->status_message("Sub-directory $subdir exists!   Moving it out of the way...");
+            $self->debug_message("Sub-directory $subdir exists!   Moving it out of the way...");
             my $n = 1;
             my $max = 20;
             while ($n < $max and -e $subdir . '.' . $n) {
@@ -917,7 +948,7 @@ sub add_report {
     }
 
     if ($report->save($directory)) {
-        $self->status_message("Saved report to override directory: $directory");
+        $self->debug_message("Saved report to override directory: $directory");
         return 1;
     }
     else {
@@ -1273,66 +1304,6 @@ sub _get_job {
     return shift @jobs;
 }
 
-# TODO Can this be removed now that the restart command is gone?
-sub restart {
-    my $self = shift;
-    my %params = @_;
-
-    $self->status_message('Attempting to restart build: '.$self->id);
-
-    if (delete $params{job_dispatch}) {
-        cluck $self->error_message('job_dispatch cannot be changed on restart');
-    }
-
-    my $user = getpwuid($<);
-    if ($self->run_by ne $user) {
-        croak $self->error_message("Can't restart a build originally started by: " . $self->run_by);
-    }
-
-    my $xmlfile = $self->data_directory . '/build.xml';
-    if (!-e $xmlfile) {
-        croak $self->error_message("Can't find xml file for build (" . $self->id . "): " . $xmlfile);
-    }
-
-    # Check if the build is running
-    my $job = $self->_get_running_master_lsf_job;
-    if ($job) {
-        $self->error_message("Build is currently running. Stop it first, then restart.");
-        return 0;
-    }
-
-    # Since the job is not running, check if there is server location file and rm it
-    my $loc_file = $self->data_directory . '/server_location.txt';
-    if ( -e $loc_file ) {
-        $self->status_message("Removing server location file for dead lsf job: $loc_file");
-        unlink $loc_file;
-    }
-
-    my $w = $self->newest_workflow_instance;
-    if ($w && !$params{fresh_workflow}) {
-        if ($w->is_done) {
-            croak $self->error_message("Workflow Instance is complete");
-        }
-    }
-
-    my $build_event = $self->build_event;
-    for my $unrestartable_status ('Abandoned', 'Unstartable') {
-        if($build_event->event_status eq $unrestartable_status) {
-            $self->error_message("Can't restart a build that was " . lc($unrestartable_status) . ".  Start a new build instead.");
-            return 0;
-        }
-    }
-
-    $build_event->event_status('Scheduled');
-    $build_event->date_completed(undef);
-
-    for my $e ($self->the_events(event_status => ['Running','Failed'])) {
-        $e->event_status('Scheduled');
-    }
-
-    return $self->_launch(%params);
-}
-
 sub _launch {
     my $self = shift;
     my %params = @_;
@@ -1341,65 +1312,25 @@ sub _launch {
     local $ENV{UR_COMMAND_DUMP_DEBUG_MESSAGES} = 1;
     local $ENV{UR_DUMP_STATUS_MESSAGES} = 1;
     local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
-
     local $ENV{GENOME_BUILD_ID} = $self->id;
 
     # right now it is "inline" or the name of an LSF queue.
     # ultimately, it will be the specification for parallelization
     # including whether the server is inline, forked, or bsubbed, and the
     # jobs are inline, forked or bsubbed from the server
-    my $server_dispatch;
-    my $job_dispatch;
     my $model = $self->model;
 
-    # resolve server_dispatch
-    if (exists($params{server_dispatch})) {
-        $server_dispatch = delete $params{server_dispatch};
-    } elsif ($model->processing_profile->can('server_dispatch') && defined $model->processing_profile->server_dispatch) {
-        $server_dispatch = $model->processing_profile->server_dispatch;
-    } elsif ($model->can('server_dispatch') && defined $model->server_dispatch) {
-        $server_dispatch = $model->server_dispatch;
-    } else {
-        $server_dispatch = $ENV{GENOME_LSF_QUEUE_BUILD_WORKFLOW};
-    }
-
-    # resolve job_dispatch
-    if (exists($params{job_dispatch})) {
-        $job_dispatch = delete $params{job_dispatch};
-    } elsif ($model->processing_profile->can('job_dispatch') && defined $model->processing_profile->job_dispatch) {
-        $job_dispatch = $model->processing_profile->job_dispatch;
-    } else {
-        $job_dispatch = $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
-    }
-
-    my $fresh_workflow = delete $params{fresh_workflow};
-
-    my $job_group_spec;
-    if (exists $params{job_group}) {
-        my $job_group = delete $params{job_group};
-        if ($job_group) {
-            $job_group_spec = " -g $job_group";
-        }
-        else {
-            $job_group_spec = "";
-        }
-    }
-    else {
-        my $user = getpwuid($<);
-        $job_group_spec = ' -g /apipe-build/' . $user;
-    }
+    my $server_dispatch = _server_dispatch($model, \%params);
+    my $job_dispatch = _job_dispatch($model, \%params);
+    my $job_group = _job_group(\%params);
+    my $job_group_spec = _job_group_spec($job_group);
 
     # all params should have been deleted (as they were handled)
     die "Bad params!  Expected server_dispatch and job_dispatch!" . Data::Dumper::Dumper(\%params) if %params;
 
     my $build_event = $self->the_master_event;
 
-    # TODO: send the workflow to the dispatcher instead of having LSF logic here.
     if ($server_dispatch eq 'inline') {
-        # TODO: redirect STDOUT/STDERR to these files
-        #$build_event->output_log_file,
-        #$build_event->error_log_file,
-
         my %args = (
             model_id => $self->model_id,
             build_id => $self->id,
@@ -1412,36 +1343,61 @@ sub _launch {
         return $rv;
     }
     else {
-        my $add_args = ($job_dispatch eq 'inline') ? ' --inline' : '';
-        if ($fresh_workflow) {
-            $add_args .= ' --restart';
-        }
-
-        # bsub into the queue specified by the dispatch spec
         my $lsf_project = "build" . $self->id;
         $ENV{'WF_LSF_PROJECT'} = $lsf_project;
-        my $user = Genome::Sys->username;
-        my $lsf_command  = join(' ',
-            'bsub -N -H',
-            '-P', $lsf_project,
-            '-q', $server_dispatch,
-            ($ENV{WF_EXCLUDE_JOB_GROUP} ? '' : $job_group_spec),
-            '-u', Genome::Utility::Email::construct_address(),
-            '-o', $build_event->output_log_file,
-            '-e', $build_event->error_log_file,
-            '"', 
-              'annotate-log',
-              ($Command::entry_point_bin || 'genome'),
-              'model services build run',
-              $add_args,
-              '--model-id', $model->id,
-              '--build-id', $self->id,
-              "1>" . $build_event->output_log_file,
-              "2>" . $build_event->error_log_file,
-            '"'
+
+        my $bsub_bin = 'bsub';
+        my $genome_bin = $Command::entry_point_bin || 'genome';
+
+        if ($self->_should_run_as && $self->_can_run_as) {
+            # -i simulates login which help prevent this from being abused to
+            # execute arbitrary commands.
+            $self->creation_event->user_name($self->model->run_as);
+            $bsub_bin = [qw(sudo -n -i -u), $self->model->run_as, '--',
+                _sudo_wrapper()];
+        }
+
+        my @bsub_args = (
+            email    => Genome::Utility::Email::construct_address(),
+            err_file => $build_event->error_log_file,
+            hold_job => 1,
+            log_file => $build_event->output_log_file,
+            project  => $lsf_project,
+            queue    => $server_dispatch,
+            send_job_report => 1,
+            never_rerunnable => 1,
         );
-        print "************** $lsf_command ***********\n";
-        my $job_id = $self->_execute_bsub_command($lsf_command);
+        unless ($ENV{WF_EXCLUDE_JOB_GROUP}) {
+            push @bsub_args, job_group => $job_group;
+        }
+
+        my @genome_cmd = (
+            'annotate-log', $genome_bin, qw(model services build run),
+        );
+
+        my @genome_args;
+    
+        # args have to be --key=value for _sudo_wrapper()
+        # NOTE: an $add_args value was previously prepended
+        #   my $add_args = ($job_dispatch eq 'inline') ? ' --inline' : '';
+        #   if ($fresh_workflow) {
+        #       $add_args .= ' --restart';
+        #   }
+        push @genome_args, '--model-id=' . $model->id;
+        push @genome_args, '--build-id=' . $self->id;
+        # NOTE: gms-pub previously explicitly redirected output b/c
+        # the OpenLave system wasn't placing log files.
+        #      "1>" . $build_event->output_log_file,
+        #      "2>" . $build_event->error_log_file,
+        if ($job_dispatch eq 'inline') {
+            push @genome_args, '--inline';
+        }
+
+        my $job_id = $self->_execute_bsub_command(
+            $bsub_bin,
+            @bsub_args,
+            cmd => [ @genome_cmd, @genome_args ],
+        );
         return unless $job_id;
 
         $build_event->lsf_job_id($job_id);
@@ -1450,6 +1406,72 @@ sub _launch {
     }
 }
 
+sub _should_run_as {
+    my $self = shift;
+    return (Genome::Sys->username ne $self->model->run_as);
+}
+
+sub _can_run_as {
+    my $self = shift;
+
+    my $sudo_wrapper = _sudo_wrapper();
+    unless ( -x $sudo_wrapper ) {
+        return;
+    }
+
+    return 1;
+}
+
+sub _sudo_wrapper { '/usr/local/bin/bsub-genome-build' }
+
+sub _job_dispatch {
+    my $model = shift;
+    my $params = shift;
+    my $job_dispatch;
+    if (exists($params->{job_dispatch})) {
+        $job_dispatch = delete $params->{job_dispatch};
+    } elsif ($model->processing_profile->can('job_dispatch') && defined $model->processing_profile->job_dispatch) {
+        $job_dispatch = $model->processing_profile->job_dispatch;
+    } else {
+        $job_dispatch = $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
+    }
+    return $job_dispatch;
+}
+
+sub _server_dispatch {
+    my $model = shift;
+    my $params = shift;
+    my $server_dispatch;
+    if (exists($params->{server_dispatch})) {
+        $server_dispatch = delete $params->{server_dispatch};
+    } elsif ($model->processing_profile->can('server_dispatch') && defined $model->processing_profile->server_dispatch) {
+        $server_dispatch = $model->processing_profile->server_dispatch;
+    } elsif ($model->can('server_dispatch') && defined $model->server_dispatch) {
+        $server_dispatch = $model->server_dispatch;
+    } else {
+        $server_dispatch = $ENV{GENOME_LSF_QUEUE_BUILD_WORKFLOW};
+    }
+    return $server_dispatch;
+}
+
+sub _default_job_group {
+    my $user = getpwuid($<);
+    return '/apipe-build/' . $user;
+}
+
+sub _job_group {
+    my $params = shift;
+    my $job_group = _default_job_group();
+    if (exists $params->{job_group}) {
+        $job_group = delete $params->{job_group};
+    }
+    return $job_group;
+}
+
+sub _job_group_spec {
+    my $job_group = shift;
+    return ($job_group ? " -g $job_group" : '');
+}
 
 sub _initialize_workflow {
     #     Create the data and log directories and resolve the workflow for this build.
@@ -1485,7 +1507,7 @@ sub _initialize_workflow {
 }
 
 sub _execute_bsub_command { # here to overload in testing
-    my ($self, $cmd) = @_;
+    my ($self, @cmd) = @_;
 
     local $ENV{UR_DUMP_DEBUG_MESSAGES} = 1;
     local $ENV{UR_COMMAND_DUMP_DEBUG_MESSAGES} = 1;
@@ -1493,50 +1515,40 @@ sub _execute_bsub_command { # here to overload in testing
     local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
 
     if ($ENV{UR_DBI_NO_COMMIT}) {
-        $self->warning_message("Skipping bsub when NO_COMMIT is turned on (job will fail)\n$cmd");
+        $self->warning_message("Skipping bsub when NO_COMMIT is turned on (job will fail)\n");
         return 1;
     }
 
-    my $bsub_output = `$cmd`;
-
-    my $rv = $? >> 8;
-    if ( $rv ) {
-        $self->error_message("Failed to launch bsub (exit code: $rv) command:\n$bsub_output");
+    my $job_id = eval { Genome::Sys::LSF::bsub::run(@cmd) };
+    if ($@) {
+        $self->error_message("Failed to launch bsub:\n$@\n");
         return;
     }
 
-    if ( $bsub_output =~ m/Job <(\d+)>/ ) {
-        my $job_id = $1;
-
-        # create a change record so that if it is "undone" it will kill the job
-        my $bsub_undo = sub {
-            $self->status_message("Killing LSF job ($job_id) for build " . $self->__display_name__ . ".");
-            system("bkill $job_id");
-        };
-        my $lsf_change = UR::Context::Transaction->log_change($self, 'UR::Value', $job_id, 'external_change', $bsub_undo);
-        unless ($lsf_change) {
-            die $self->error_message("Failed to record LSF job submission ($job_id).");
-        }
-
-        # create a commit observer to resume the job when build is committed to database
-        my $process = UR::Context->process;
-        my $commit_observer = $process->add_observer(
-            aspect => 'commit',
-            callback => sub {
-                my $bresume_output = `bresume $job_id`; chomp $bresume_output;
-                $self->status_message($bresume_output) unless ( $bresume_output =~ /^Job <$job_id> is being resumed$/ );
-            },
-        );
-        unless ($commit_observer) {
-            $self->error_message("Failed to add commit observer to resume LSF job ($job_id).");
-        }
-
-        return "$job_id";
+    # create a change record so that if it is "undone" it will kill the job
+    my $bsub_undo = sub {
+        $self->status_message("Killing LSF job ($job_id) for build " . $self->__display_name__ . ".");
+        system("bkill $job_id");
+    };
+    my $lsf_change = UR::Context::Transaction->log_change($self, 'UR::Value', $job_id, 'external_change', $bsub_undo);
+    unless ($lsf_change) {
+        die $self->error_message("Failed to record LSF job submission ($job_id).");
     }
-    else {
-        $self->error_message("Launched busb command, but unable to parse bsub output: $bsub_output");
-        return;
+
+    # create a commit observer to resume the job when build is committed to database
+    my $process = UR::Context->process;
+    my $commit_observer = $process->add_observer(
+        aspect => 'commit',
+        callback => sub {
+            my $bresume_output = `bresume $job_id`; chomp $bresume_output;
+            $self->status_message($bresume_output) unless ( $bresume_output =~ /^Job <$job_id> is being resumed$/ );
+        },
+    );
+    unless ($commit_observer) {
+        $self->error_message("Failed to add commit observer to resume LSF job ($job_id).");
     }
+
+    return "$job_id";
 }
 
 sub initialize {
@@ -1633,7 +1645,7 @@ sub success {
     my $commit_callback;
     $commit_callback = sub {
         $self->the_master_event->cancel_change_subscription('commit', $commit_callback); #only fire once
-        $self->status_message('Firing build success commit callback.');
+        $self->debug_message('Firing build success commit callback.');
         my $result = eval {
             Genome::Search->queue_for_update($self->model);
             $self->model->_trigger_downstream_builds($self);

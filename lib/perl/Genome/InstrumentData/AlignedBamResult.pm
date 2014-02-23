@@ -61,7 +61,7 @@ sub run_flagstat_on_output_bam_path {
     }
 
     my $flagstat_path = $self->bam_flagstat_path;
-    $self->status_message("Flagstat file: $flagstat_path");
+    $self->debug_message("Flagstat file: $flagstat_path");
     my $cmd = "samtools flagstat $bam_path > $flagstat_path";
     my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
     if ( not $rv or not -s $flagstat_path ) {
@@ -70,8 +70,8 @@ sub run_flagstat_on_output_bam_path {
         return;
     }
     my $flagstat = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flagstat_path);
-    $self->status_message('Flagstat output:');
-    $self->status_message( join("\n", map { ' '.$_.': '.$flagstat->{$_} } sort keys %$flagstat) );
+    $self->debug_message('Flagstat output:');
+    $self->debug_message( join("\n", map { ' '.$_.': '.$flagstat->{$_} } sort keys %$flagstat) );
     if ( not $flagstat->{total_reads} > 0 ) {
         $self->error_message('Flagstat determined that there are no reads in bam! '.$bam_path);
         return;
@@ -87,7 +87,7 @@ sub run_md5sum_on_output_bam_path {
 
     my $md5sum = $self->load_md5sum;
     if ( $md5sum ) {
-        $self->status_message("MD5SUM: $md5sum");
+        $self->debug_message("MD5SUM: $md5sum");
         return $md5sum;
     }
 
@@ -96,10 +96,10 @@ sub run_md5sum_on_output_bam_path {
         $self->error_message('Bam file does not exist!');
         return;
     }
-    $self->status_message('Bam path: '.$bam_path);
+    $self->debug_message('Bam path: '.$bam_path);
 
     my $md5_path = $self->bam_md5_path;
-    $self->status_message('MD5SUM path: '.$md5_path);
+    $self->debug_message('MD5SUM path: '.$md5_path);
 
 
     my $cmd = "md5sum $bam_path > $md5_path";
@@ -119,13 +119,13 @@ sub run_md5sum_on_output_bam_path {
 
     $md5sum = $self->load_md5sum;
     return if not $md5sum;
-    $self->status_message("MD5SUM: $md5sum");
+    $self->debug_message("MD5SUM: $md5sum");
 
     $self->status_message('Run MD5SUM on output bam file...done');
     return $md5sum;
 }
 
-sub load_md5sum {
+sub load_md5sum{
     my $self = shift;
 
     my $md5_path = $self->bam_md5_path;

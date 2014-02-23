@@ -142,13 +142,13 @@ sub source_file_format {
 
 sub verify_adequate_disk_space_is_available_for_source_files {
     my ($self, %params) = @_;
-    $self->status_message('Verify adequate disk space is available...');
+    $self->debug_message('Verify adequate disk space is available...');
 
     my $working_directory = delete $params{working_directory};
     Carp::confess('No tmp dir to verify adequate temp space is avaliable!') if not $working_directory;
-    $self->status_message("Tmp dir: $working_directory");
+    $self->debug_message("Tmp dir: $working_directory");
     my $source_files = delete $params{source_files};
-    $self->status_message("Source files: ".join(' ', @$source_files));
+    $self->debug_message("Source files: ".join(' ', @$source_files));
     Carp::confess('No source files to verify temp space!') if not $source_files;
 
     my $df = eval{ Filesys::Df::df($working_directory); };
@@ -157,11 +157,11 @@ sub verify_adequate_disk_space_is_available_for_source_files {
         $self->error_message('Failed to get "df" for temp dir! '.$working_directory);
         return;
     }
-    $self->status_message("Available Kb: ".$df->{bavail});
+    $self->debug_message("Available Kb: ".$df->{bavail});
 
     my $kb_required = $self->kilobytes_required_for_processing_of_source_files(@$source_files);
     return if not $kb_required;
-    $self->status_message("Required Kb: ".$kb_required);
+    $self->debug_message("Required Kb: ".$kb_required);
 
     my $remaining_space = $df->{bavail} - $kb_required;
     if ( $remaining_space < 1024 ) { # 1 Mb
@@ -169,7 +169,7 @@ sub verify_adequate_disk_space_is_available_for_source_files {
         return;
     }
 
-    $self->status_message('Verify adequate disk space is available...done');
+    $self->debug_message('Verify adequate disk space is available...done');
     return 1;
 }
 #<>#
@@ -177,7 +177,7 @@ sub verify_adequate_disk_space_is_available_for_source_files {
 #<SAMTOOLS>#
 sub load_or_run_flagstat {
     my ($self, $bam_path, $flagstat_path) = @_;
-    $self->status_message('Load or run flagstat...');
+    $self->debug_message('Load or run flagstat...');
 
     Carp::confess('No bam path given to run flagstat!') if not $bam_path;
     Carp::confess('Bam path given to run flagstat does not exist!') if not -s $bam_path;
@@ -196,14 +196,14 @@ sub load_or_run_flagstat {
 
 sub run_flagstat {
     my ($self, $bam_path, $flagstat_path) = @_;
-    $self->status_message('Run flagstat...');
+    $self->debug_message('Run flagstat...');
 
     Carp::confess('No bam path given to run flagstat!') if not $bam_path;
     Carp::confess('Bam path given to run flagstat does not exist!') if not -s $bam_path;
 
     $flagstat_path ||= $bam_path.'.flagstat';
-    $self->status_message("Bam path: $bam_path");
-    $self->status_message("Flagstat path: $flagstat_path");
+    $self->debug_message("Bam path: $bam_path");
+    $self->debug_message("Flagstat path: $flagstat_path");
     my $cmd = "samtools flagstat $bam_path > $flagstat_path";
     my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
     if ( not $rv or not -s $flagstat_path ) {
@@ -215,17 +215,17 @@ sub run_flagstat {
     my $flagstat = $self->load_flagstat($flagstat_path);
     return if not $flagstat;
 
-    $self->status_message('Run flagstat...done');
+    $self->debug_message('Run flagstat...done');
     return $flagstat;
 }
 
 sub load_flagstat {
     my ($self, $flagstat_path) = @_;
-    $self->status_message('Load flagstat...');
+    $self->debug_message('Load flagstat...');
 
     Carp::confess('No flagstat path to load!') if not $flagstat_path;
 
-    $self->status_message('Flagstat path: '.$flagstat_path);
+    $self->debug_message('Flagstat path: '.$flagstat_path);
     my $flagstat = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flagstat_path);
     if ( not $flagstat ) {
         $self->error_message('Failed to load flagstat file!');
@@ -241,16 +241,16 @@ sub load_flagstat {
         $flagstat->{is_paired_end} = 0;
     }
 
-    $self->status_message('Flagstat output:');
-    $self->status_message( join("\n", map { ' '.$_.': '.$flagstat->{$_} } sort keys %$flagstat) );
+    $self->debug_message('Flagstat output:');
+    $self->debug_message( join("\n", map { ' '.$_.': '.$flagstat->{$_} } sort keys %$flagstat) );
 
-    $self->status_message('Load flagstat...done');
+    $self->debug_message('Load flagstat...done');
     return $flagstat;
 }
 
 sub validate_bam {
     my ($self, $bam_path, $flagstat_path) = @_;
-    $self->status_message('Validate bam...');
+    $self->debug_message('Validate bam...');
 
     my $flagstat = $self->load_or_run_flagstat($bam_path, $flagstat_path);
     return if not $flagstat;
@@ -272,12 +272,12 @@ sub validate_bam {
 
 sub load_headers_from_bam {
     my ($self, $bam_path) = @_;
-    $self->status_message('Load headers...');
+    $self->debug_message('Load headers...');
 
     Carp::confess('No bam path given to load headers!') if not $bam_path;
     Carp::confess('Bam path given to load headers does not exist!') if not -s $bam_path;
 
-    $self->status_message("Bam path: $bam_path");
+    $self->debug_message("Bam path: $bam_path");
     my $headers_fh = IO::File->new("samtools view -H $bam_path |");
     if ( not $headers_fh ) {
         $self->error_message('Failed to open file handle to samtools command!');
@@ -292,13 +292,13 @@ sub load_headers_from_bam {
     }
     $headers_fh->close;
 
-    $self->status_message('Load headers...done');
+    $self->debug_message('Load headers...done');
     return $headers;
 }
  
 sub read_groups_from_headers {
     my ($self, $rg_headers) = @_;
-    $self->status_message('Read groups from headers...');
+    $self->debug_message('Read groups from headers...');
 
     Carp::confess('No read group headers given to read groups from headers!') if not $rg_headers;
     Carp::confess('Invalid read group headers given to read groups from headers! '.Data::Dumper::Dumper($rg_headers)) unless ref($rg_headers) eq 'ARRAY';
@@ -316,13 +316,13 @@ sub read_groups_from_headers {
         $read_groups_from_headers{ $rg_id } = join("\t", map { $_.':'.$tags{$_} } sort keys %tags);
     }
 
-    $self->status_message('Read groups from headers...done');
+    $self->debug_message('Read groups from headers...done');
     return \%read_groups_from_headers;
 }
 
 sub load_read_groups_from_bam {
     my ($self, $bam_path) = @_;
-    $self->status_message('Load read groups from bam...');
+    $self->debug_message('Load read groups from bam...');
 
     my $headers = $self->load_headers_from_bam($bam_path);
     return if not $headers;
@@ -330,13 +330,13 @@ sub load_read_groups_from_bam {
     my $read_groups_from_headers = $self->read_groups_from_headers($headers->{'@RG'} || []);
     return if not $read_groups_from_headers;
 
-    $self->status_message('Load read groups from bam...done');
+    $self->debug_message('Load read groups from bam...done');
     return [ sort keys %$read_groups_from_headers ];
 }
 
 sub headers_to_string {
     my ($self, $orig_headers) = @_;
-    $self->status_message('Header string from headers...');
+    $self->debug_message('Header string from headers...');
 
     Carp::confess('No headers given to headers to string!') if not $orig_headers;
     Carp::confess('Invalid headers given to headers to string! '.Data::Dumper::Dumper($orig_headers)) if ref($orig_headers) ne 'HASH';
@@ -354,7 +354,7 @@ sub headers_to_string {
         $string .= join("\n", map { $type."\t".$_ } @$tags)."\n";
     }
 
-    $self->status_message('Header string from headers...done');
+    $self->debug_message('Header string from headers...done');
     return $string;
 }
 #<>#
@@ -436,7 +436,7 @@ sub key_value_pairs_to_hash {
 #<MD5>#
 sub load_or_run_md5 {
     my ($self, $path, $md5_path) = @_;
-    $self->status_message('Load or run MD5...');
+    $self->debug_message('Load or run MD5...');
 
     Carp::confess('No path given to run MD5!') if not $path;
     Carp::confess('Path given to run MD5 on does not exist!') if not -s $path;
@@ -455,14 +455,14 @@ sub load_or_run_md5 {
 
 sub run_md5 {
     my ($self, $path, $md5_path) = @_;
-    $self->status_message('Run MD5...');
+    $self->debug_message('Run MD5...');
 
     Carp::confess('No path given to run md5!') if not $path;
     Carp::confess('Path given to run md5 does not exist!') if not -s $path;
 
     $md5_path ||= $path.'.md5';
-    $self->status_message("Path: $path");
-    $self->status_message("MD5 path: $md5_path");
+    $self->debug_message("Path: $path");
+    $self->debug_message("MD5 path: $md5_path");
     my $cmd = "md5sum $path > $md5_path";
     my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
     if ( not $rv or not -s $md5_path ) {
@@ -474,17 +474,17 @@ sub run_md5 {
     my $md5 = $self->load_md5($md5_path);
     return if not $md5;
 
-    $self->status_message('Run MD5...done');
+    $self->debug_message('Run MD5...done');
     return $md5;
 }
 
 sub load_md5 {
     my ($self, $md5_path) = @_;
-    $self->status_message('Load MD5...');
+    $self->debug_message('Load MD5...');
 
     Carp::confess('No MD5 path to load!') if not $md5_path;
 
-    $self->status_message('MD5 path: '.$md5_path);
+    $self->debug_message('MD5 path: '.$md5_path);
     my $fh = Genome::Sys->open_file_for_reading($md5_path);
     if ( not $fh ) {
         $self->error_message('Failed to open MD5 path!');
@@ -505,9 +505,9 @@ sub load_md5 {
         return;
     }
 
-    $self->status_message('MD5: '.$md5);
+    $self->debug_message('MD5: '.$md5);
 
-    $self->status_message('Load MD5...done');
+    $self->debug_message('Load MD5...done');
     return $md5;
 }
 

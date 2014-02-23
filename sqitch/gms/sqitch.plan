@@ -258,3 +258,27 @@ config_instrument_data_analysis_project_bridge_permission [config_instrument_dat
 
 add_bisulfite_column_to_fragment_library [instrument_fragment_library] 2014-01-08T19:32:36Z Adam Coffman <acoffman@genome.wustl.edu># Add support for new column from LIMS
 add_clia_fields_to_analysis_projects [config_analysis_project] 2014-01-17T19:38:02Z Adam Coffman <acoffman@genome.wustl.edu> # add fields needed for launching clia models
+model.model.created_by [model_model] 2014-02-12T19:21:13Z Nathan Nutter <nnutter@linus264.gsc.wustl.edu> # add created_by column to model.model
+@1392314878 2014-02-13T18:07:58Z Nathan Nutter <nnutter@linus264.gsc.wustl.edu># boostrap Adam's changes for AP and add created_by to Model
+
+model.model.run_as.sql [model_model] 2014-02-13T19:47:19Z Nathan Nutter <nnutter@linus264.gsc.wustl.edu># add run_as column to model.model
+@1392321701 2014-02-13T20:01:42Z Nathaniel Nutter <nnutter@genome.wustl.edu> # deploy model.model.run_as.sql
+
+rename_clia_to_cle_for_analysis_projects [add_clia_fields_to_analysis_projects] 2014-02-17T21:17:38Z Adam Coffman <acoffman@genome.wustl.edu> # At dlarson's request, we're renaming this field to is_cle
+@1392672861 2014-02-17T21:34:22Z Adam Coffman <acoffman@genome.wustl.edu># Add is_cle column as first stage of rename process
+config.subject_mapping [config_analysis_project subject_pairing] 2014-02-17T22:25:14Z Thomas B. Mooney <tmooney@genome.wustl.edu> # replace subject pairings with subject mappings
+@1392678262 2014-02-17T23:04:23Z Thomas B. Mooney <tmooney@genome.wustl.edu># Replacing subject pairings with more functional subject mappings
+
+model.model.run_as_idx [model.model.run_as.sql] 2014-02-17T21:47:44Z Nathaniel Nutter <nnutter@genome.wustl.edu># add index to run_as column
+model.model.created_by_idx [model.model.created_by] 2014-02-17T22:36:09Z Nathaniel Nutter <nnutter@genome.wustl.edu># add index to created_by column
+model.model.drop_uniq_m_m_idun [model_model] 2014-02-17T22:39:34Z Nathaniel Nutter <nnutter@genome.wustl.edu># drop uniq_m_m_idun index
+model.model.drop_m_m_id_user_name_build_requested_index [model.model.index_genome_model_id_user_name_build_requested] 2014-02-17T23:42:32Z Nathaniel Nutter <nnutter@genome.wustl.edu># drop m_m_id_user_name_build_requested_index
+@1392684201 2014-02-18T00:43:22Z Nathaniel Nutter <nnutter@genome.wustl.edu># deploy
+
+remove_is_clia_from_analysis_project [rename_clia_to_cle_for_analysis_projects] 2014-02-18T21:16:54Z Adam Coffman <acoffman@genome.wustl.edu> # now that a new snapshot is out, we can remove this column
+@1392759063 2014-02-18T21:31:04Z Adam Coffman <acoffman@genome.wustl.edu># remove now unused clia column
+
+config_analysis_menu_item_description [config_analysis_menu_item] 2014-02-19T14:34:35Z Jim Weible <jweible@linus263.gsc.wustl.edu> # add description column to analysis menu item
+@1392828687 2014-02-19T16:51:28Z Adam Coffman <acoffman@genome.wustl.edu># Add description field to analysis menu items
+
+config.analysismenu_item.description [config_analysismenu_item] 2014-02-19T17:33:46Z Jim Weible <jweible@linus83.gsc.wustl.edu># add description column

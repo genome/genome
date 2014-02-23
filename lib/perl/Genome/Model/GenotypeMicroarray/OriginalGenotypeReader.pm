@@ -37,11 +37,11 @@ sub create {
 
 sub _create_filters {
     my $self = shift;
-    $self->status_message('Create filters...');
+    $self->debug_message('Create filters...');
 
     my @filters;
     for my $filter_string ( $self->filters ) {
-        $self->status_message('Filter: '.$filter_string);
+        $self->debug_message('Filter: '.$filter_string);
         my ($name, $config) = split(':', $filter_string, 2);
         my %params;
         %params = map { split('=') } split(':', $config) if $config;
@@ -55,7 +55,7 @@ sub _create_filters {
     }
     $self->_filters(\@filters);
 
-    $self->status_message('Create '.@filters.' filter(s)...OK');
+    $self->debug_message('Create '.@filters.' filter(s)...OK');
     return 1;
 }
 

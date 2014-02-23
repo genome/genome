@@ -99,7 +99,7 @@ sub execute {
     my $input_file = $self->file_to_mark;
     my $result = $self->marked_file; 
     
-    $self->status_message("Attempting to mark duplicates." );
+    $self->debug_message("Attempting to mark duplicates." );
    
     unless (-e $input_file)  {
        $self->error_message("Source file $input_file not found!");
@@ -113,7 +113,7 @@ sub execute {
     
     #merge those Bam files...BAM!!!
     my $now = UR::Context->current->now;
-    $self->status_message(">>> Beginning mark duplicates at $now");
+    $self->debug_message(">>> Beginning mark duplicates at $now");
 
     my %params = (
         input_file             => $self->file_to_mark,
@@ -169,16 +169,16 @@ sub execute {
     my $picard_cmd = Genome::Model::Tools::Picard::MarkDuplicates->create(%params);
     my $md_rv = $picard_cmd->execute();
     
-    $self->status_message("Mark duplicates return value: $md_rv");
+    $self->debug_message("Mark duplicates return value: $md_rv");
     if ($md_rv != 1) {
         $self->error_message("Mark duplicates error!  Return value: $md_rv");
     } 
     else {
-        $self->status_message("Success.  Duplicates marked in file: $result");
+        $self->debug_message("Success.  Duplicates marked in file: $result");
     }
 
     $now = UR::Context->current->now;
-    $self->status_message("<<< Completing mark duplicates at $now.");
+    $self->debug_message("<<< Completing mark duplicates at $now.");
     
     return 1;
 }

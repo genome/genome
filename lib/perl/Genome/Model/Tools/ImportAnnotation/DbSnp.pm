@@ -114,7 +114,7 @@ sub process_dbsnp
         } # end of the block where we mess with $/
         $fh->close;
     }
-    $self->status_message("variation id at $var_id\n");
+    $self->debug_message("variation id at $var_id\n");
     return 1;
 }
 

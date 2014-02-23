@@ -2,7 +2,7 @@ package Genome::Sys;
 
 use strict;
 use warnings;
-use autodie qw(chown mkdir);
+use autodie qw(chown);
 use Genome;
 use Cwd;
 use File::Path;
@@ -16,7 +16,8 @@ use List::MoreUtils "each_array";
 use Set::Scalar;
 use Digest::MD5;
 use JSON;
-use Params::Validate qw(:types);
+use Params::Validate qw(:types validate_pos);
+use POSIX qw(EEXIST);
 
 # these are optional but should load immediately when present
 # until we can make the Genome::Utility::Instrumentation optional (Net::Statsd deps)
@@ -843,7 +844,7 @@ sub create_directory {
 # File::Path::make_path says it lets you specify group but it always seemed
 # to be overrided by setgid.  So we are implenting the recursive mkdir here.
 sub make_path {
-    my $path = shift;
+    my ($path) = validate_pos(@_, {type => SCALAR});
 
     my $gid = gidgrnam($ENV{GENOME_SYS_GROUP});
 
@@ -851,11 +852,18 @@ sub make_path {
     for (my $i = 0; $i < @dirs; $i++) {
         my $subpath = File::Spec->catdir(@dirs[0..$i]);
 
-        next if (-d $subpath);
-
-        # autodie is on
-        mkdir $subpath;
-        chown -1, $gid, $subpath;
+        my $rv = mkdir $subpath;
+        my $mkdir_errno = $!;
+        if ($rv) {
+            chown -1, $gid, $subpath;
+        } else {
+            if ($mkdir_errno == EEXIST) {
+                next;
+            } else {
+                Carp::confess("While creating path ($path), failed to create " .
+                    "directory ($subpath) because ($!)");
+            }
+        }
     }
 
     unless (-d $path) {
@@ -1309,6 +1317,7 @@ sub shellcmd {
     my $dont_create_zero_size_files_for_missing_output =
         delete $params{dont_create_zero_size_files_for_missing_output};
     my $print_status_to_stderr       = delete $params{print_status_to_stderr};
+    my $keep_dbh_connection_open     = delete $params{keep_dbh_connection_open};
 
     $set_pipefail = 1 if not defined $set_pipefail;
     $print_status_to_stderr = 1 if not defined $print_status_to_stderr;
@@ -1362,6 +1371,9 @@ sub shellcmd {
                         . join("\n\t", @missing_inputs));
         }
     }
+
+    # disconnect the db handle in case this is about to take awhile
+    $self->disconnect_default_handles unless $keep_dbh_connection_open;
 
     if ($ENV{GENOME_SYS_PAUSE_SHELLCMD} and $cmd =~ $ENV{GENOME_SYS_PAUSE_SHELLCMD}) {
         my $file = '/tmp/GENOME_SYS_PAUSE.' . $$;
@@ -1509,6 +1521,19 @@ sub shellcmd {
 
     return 1;
 
+}
+
+sub disconnect_default_handles {
+    my $class = shift;
+
+    for my $ds (qw(Genome::DataSource::GMSchema)) {
+        if($ds->has_default_handle) {
+            $class->debug_message("Disconnecting $ds default handle.");
+            $ds->disconnect_default_dbh();
+        }
+    }
+
+    return 1;
 }
 
 sub retry {

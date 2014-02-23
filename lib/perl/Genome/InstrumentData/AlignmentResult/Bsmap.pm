@@ -110,9 +110,9 @@ sub _run_aligner {
     }
 
     if (@input_pathnames == 1) {
-        $self->status_message("_run_aligner called in single-ended mode.");
+        $self->debug_message("_run_aligner called in single-ended mode.");
     } elsif (@input_pathnames == 2) {
-        $self->status_message("_run_aligner called in paired-end mode.");
+        $self->debug_message("_run_aligner called in paired-end mode.");
         $paired_end = 1;
 
         # get the instrument-data so we can calculate the minimum and maximum insert size
@@ -136,6 +136,10 @@ sub _run_aligner {
             $min_insert_size = 28;
         }
 
+        if($min_insert_size < 0){
+            $min_insert_size = 1;
+        }
+
     } else {
         die $self->error_message("_run_aligner called with " . scalar @input_pathnames . " files.  It should only get 1 or 2!");
     }
@@ -143,7 +147,7 @@ sub _run_aligner {
     ###################################################
     # run the bsmap aligner, output into temp sam file
     ###################################################
-    $self->status_message("Running bsmap aligner.");
+    $self->debug_message("Running bsmap aligner.");
     my $temp_sam_output = $temporary_directory . "/mapped_reads.sam";
 
     #add no-header option for later versions
@@ -174,7 +178,7 @@ sub _run_aligner {
     ###################################################
     # append temp sam file to all_sequences.sam
     ###################################################
-    $self->status_message("Appending mapped_reads.sam to all_sequences.sam.");
+    $self->debug_message("Appending mapped_reads.sam to all_sequences.sam.");
 
     # This will also remove @header lines from the raw sam file. The duplicate
     # headers cause Picard crashes.
@@ -193,7 +197,7 @@ sub _run_aligner {
     ###################################################
     # Sort
     ###################################################
-    $self->status_message("Resorting all_sequences.sam by coordinate.");
+    $self->debug_message("Resorting all_sequences.sam by coordinate.");
     $self->_sort_sam($sam_file);
 
     ###################################################
@@ -214,15 +218,15 @@ sub _run_aligner {
 sub _disconnect_from_db {
     my ($self) = @_;
 
-    $self->status_message("Closing data source db handle...");
+    $self->debug_message("Closing data source db handle...");
     if ($self->__meta__->data_source->has_default_handle) {
         if ($self->__meta__->data_source->disconnect_default_handle) {
-            $self->status_message("Disconnected data source db handle (as expected).");
+            $self->debug_message("Disconnected data source db handle (as expected).");
         } else {
-            $self->status_message("Unable to disconnect data source db handle.");
+            $self->debug_message("Unable to disconnect data source db handle.");
         }
     } else {
-        $self->status_message("Data source db handle already closed.");
+        $self->debug_message("Data source db handle already closed.");
     }
 }
 
@@ -230,9 +234,9 @@ sub _check_db_connection {
     my ($self) = @_;
 
     if ($self->__meta__->data_source->has_default_handle) {
-        $self->status_message("Data source db handle unexpectedly reconnected itself.");
+        $self->debug_message("Data source db handle unexpectedly reconnected itself.");
     } else {
-        $self->status_message("Data source db handle still closed (as expected).");
+        $self->debug_message("Data source db handle still closed (as expected).");
     }
 }
 
@@ -274,7 +278,7 @@ sub _sort_sam {
 
     # Clean up
     unless (unlink($unsorted_sam)) {
-        $self->status_message("Could not unlink $unsorted_sam.");
+        $self->debug_message("Could not unlink $unsorted_sam.");
     }
 
     return $given_sam;
@@ -339,7 +343,7 @@ sub decomposed_aligner_params {
 sub prepare_reference_sequence_index {
     my $class = shift;
 
-    $class->status_message("BSMAP doesn't require index preparation, doing nothing.");
+    $class->debug_message("BSMAP doesn't require index preparation, doing nothing.");
 
     return 0;
 }

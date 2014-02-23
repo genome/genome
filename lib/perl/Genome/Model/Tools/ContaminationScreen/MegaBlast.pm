@@ -61,13 +61,13 @@ print "command:  $mgb\n";
     #Step 1 - exec filter
     my $filtered_file = "$dir/1_$base.filtered";
     my $fmt = "awk '(\$3>=98.0 && \$4>=50)||(\$3>=94.0 && \$4>=100)||(\$3>=90.0 && \$4>=200)' $raw_file > $filtered_file"; 
-    $self->status_message('Running: ' . $fmt);
+    $self->debug_message('Running: ' . $fmt);
     $self->_run_cmd($fmt); 
 
     #Step 2 - sort
     my $sorted_file = "$dir/2_$base.sorted";
     my $srt = "sort $filtered_file > $sorted_file";
-    $self->status_message('Running: ' . $srt);
+    $self->debug_message('Running: ' . $srt);
     $self->_run_cmd($srt); 
 
     #Step 3 - get max
@@ -131,7 +131,7 @@ sub _run_cmd()
 {
     my ($self, $cmd) = @_;
 
-    $self->status_message('Running: '. $cmd);
+    $self->debug_message('Running: '. $cmd);
 
     my $rv = system($cmd);
     unless ($rv == 0)

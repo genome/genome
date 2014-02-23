@@ -138,7 +138,7 @@ sub execute {                               # replace with real execution logic.
                 }
                 else {
                     #assume validation failed
-                    $self->status_message("$status unrecognized as a validation status for $chr $pos. Reporting as a failed validation.");
+                    $self->debug_message("$status unrecognized as a validation status for $chr $pos. Reporting as a failed validation.");
                     $tumor .= ":4";
                 }
 

@@ -110,7 +110,7 @@ sub execute {
             my $merged_file =  $self->accumulated_alignments_dir."/".$library.".bam";
 	        # db disconnect prior to sam merge
             if (Genome::DataSource::GMSchema->has_default_handle) {
-                $self->status_message("Disconnecting GMSchema default handle.");
+                $self->debug_message("Disconnecting GMSchema default handle.");
                 Genome::DataSource::GMSchema->disconnect_default_dbh();
             }
             if (-e $merged_file) {
@@ -121,7 +121,7 @@ sub execute {
             } 
             else {
                 if (Genome::DataSource::GMSchema->has_default_handle) {
-                    $self->status_message("Disconnecting GMSchema default handle.");
+                    $self->debug_message("Disconnecting GMSchema default handle.");
                     Genome::DataSource::GMSchema->disconnect_default_dbh();
                 }
                 my $merge_rv = Genome::Model::Tools::Sam::Merge->execute(

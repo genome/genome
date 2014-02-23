@@ -38,14 +38,14 @@ class Genome::InstrumentData::Command::Import::WorkFlow::SplitBamByReadGroup {
 
 sub execute {
     my $self = shift;
-    $self->status_message('Spilt bam by read group...');
+    $self->debug_message('Spilt bam by read group...');
 
     my $set_headers_and_read_groups = $self->_set_headers_and_read_groups;
     return if not $set_headers_and_read_groups;
 
     my @read_group_ids = $self->read_group_ids;
     if ( not @read_group_ids or @read_group_ids == 1 ) {
-        $self->status_message('Spilting bam by read group is NOT necessary. There is only one read group [or none] in headers.');
+        $self->debug_message('Spilting bam by read group is NOT necessary. There is only one read group [or none] in headers.');
         $self->read_group_bam_paths([ $self->bam_path ]);
         return 1;
     }
@@ -62,7 +62,7 @@ sub execute {
     my $verify_read_count_ok = $self->_verify_read_count;
     return if not $verify_read_count_ok;
 
-    $self->status_message('Spilt bam by read group...done');
+    $self->debug_message('Spilt bam by read group...done');
     return 1;
 }
 
@@ -88,11 +88,11 @@ sub _set_headers_and_read_groups {
 
 sub _open_file_handles_for_each_read_group_bam {
     my ($self, @read_group_ids) = @_;
-    $self->status_message('Open file handle for each read group bam...');
+    $self->debug_message('Open file handle for each read group bam...');
 
     Carp::confess('No read group ids to open bams!') if not @read_group_ids;
 
-    $self->status_message('Read group count: '.@read_group_ids);
+    $self->debug_message('Read group count: '.@read_group_ids);
     my (%read_group_fhs, @read_group_bam_paths);
     for my $read_group_id ( @read_group_ids ){
         my $read_group_bam_path = $self->bam_path;
@@ -108,7 +108,7 @@ sub _open_file_handles_for_each_read_group_bam {
     }
     $self->read_group_bam_paths(\@read_group_bam_paths);
 
-    $self->status_message('Open file handle for each read group bam...done');
+    $self->debug_message('Open file handle for each read group bam...done');
     return \%read_group_fhs;
 }
 
@@ -139,10 +139,10 @@ sub _write_headers_to_read_group_bams {
 
 sub _write_reads {
     my ($self, $read_group_fhs) = @_;
-    $self->status_message('Write reads...');
+    $self->debug_message('Write reads...');
 
     my $bam_path = $self->bam_path;
-    $self->status_message("Bam path: $bam_path");
+    $self->debug_message("Bam path: $bam_path");
     my $bam_fh = IO::File->new("samtools view $bam_path |");
     if ( not $bam_fh ) {
         $self->error_message('Failed to open file handle to samtools command!');
@@ -166,16 +166,16 @@ sub _write_reads {
         $fh->close;
     }
 
-    $self->status_message('Removed reads count: '.$removed_reads_cnt);
+    $self->debug_message('Removed reads count: '.$removed_reads_cnt);
     $self->removed_reads_cnt($removed_reads_cnt);
 
-    $self->status_message('Write reads...done');
+    $self->debug_message('Write reads...done');
     return 1;
 }
 
 sub _verify_read_count {
     my $self = shift;
-    $self->status_message('Verify read count...');
+    $self->debug_message('Verify read count...');
 
     my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
 
@@ -200,16 +200,16 @@ sub _verify_read_count {
     my $original_flagstat = $helpers->load_or_run_flagstat($self->bam_path);
     return if not $original_flagstat;
 
-    $self->status_message('Original bam read count: '.$original_flagstat->{total_reads});
-    $self->status_message('Removed reads count: '.$self->removed_reads_cnt);
-    $self->status_message('Read group bams read count: '.$read_count);
+    $self->debug_message('Original bam read count: '.$original_flagstat->{total_reads});
+    $self->debug_message('Removed reads count: '.$self->removed_reads_cnt);
+    $self->debug_message('Read group bams read count: '.$read_count);
 
     if ( $original_flagstat->{total_reads} - $self->removed_reads_cnt != $read_count ) {
         $self->error_message('Original and read group bam read counts do not match!');
         return;
     }
 
-    $self->status_message('Verify read count...done');
+    $self->debug_message('Verify read count...done');
     return 1;
 }
 

@@ -56,7 +56,7 @@ sub shortcut {
         my %params = $self->params_for_result;
         my $result = Genome::InstrumentData::AlignmentResult::Merged::CufflinksExpression->get_with_lock(%params);
         if($result) {
-            $self->status_message('Using existing result ' . $result->__display_name__);
+            $self->debug_message('Using existing result ' . $result->__display_name__);
             return $self->link_result_to_build($result);
         }
     }

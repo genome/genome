@@ -55,57 +55,57 @@ sub execute {
     );
 
     #create gap.txt file
-    $self->status_message("Creating gap.txt file");
+    $self->debug_message("Creating gap.txt file");
     my $gap = Genome::Model::Tools::Velvet::CreateGapFile->create( %params );
     unless ($gap->execute) {
         $self->error_message("Execute failed to to create gap.txt file");
         return;
     }
-    $self->status_message("Completed creating gap.txt file");
+    $self->debug_message("Completed creating gap.txt file");
 
 
     #create contigs.bases and contigs.quals files
-    $self->status_message("Creating contigs.bases and contigs.quals files");
+    $self->debug_message("Creating contigs.bases and contigs.quals files");
     my $contigs = Genome::Model::Tools::Velvet::CreateContigsFiles->create ( %params );
     unless ($contigs->execute) {
 	$self->error_message("Failed to execute creating contigs.bases and quals files");
 	return;
     }
-    $self->status_message("Completed creating contigs.bases and contigs.qual files");
+    $self->debug_message("Completed creating contigs.bases and contigs.qual files");
     
 
     #create reads.placed and readinfo.txt files
-    $self->status_message("Creating reads.placed and readinfo files");
+    $self->debug_message("Creating reads.placed and readinfo files");
     my $reads = Genome::Model::Tools::Velvet::CreateReadsFiles->create( %params );
     unless ($reads->execute) {
 	$self->error_message("Failed to execute creating reads files");
 	return;
     }
-    $self->status_message("Completed creating reads.placed and readinfo files");
+    $self->debug_message("Completed creating reads.placed and readinfo files");
 
 
     #create reads.unplaced and reads.unplaced.fasta files
-    $self->status_message("Creating reads.unplaced and reads.unplaced.fasta files");
+    $self->debug_message("Creating reads.unplaced and reads.unplaced.fasta files");
     my $unplaced = Genome::Model::Tools::Velvet::CreateUnplacedReadsFiles->create( %params );
     unless ($unplaced->execute) {
 	$self->error_message("Failed to execute creating reads.unplaced files");
 	return;
     }
-    $self->status_message("Completed creating reads.unplaced and reads.unplaced.fasta files");
+    $self->debug_message("Completed creating reads.unplaced and reads.unplaced.fasta files");
 
 
     #create supercontigs.fasta and supercontigs.agp file
-    $self->status_message("Creating supercontigs fasta and agp files");
+    $self->debug_message("Creating supercontigs fasta and agp files");
     my $supercontigs = Genome::Model::Tools::Velvet::CreateSupercontigsFiles->create( %params );
     unless ($supercontigs->execute) {
 	$self->error_message("Failed execute creating of supercontigs files");
 	return;
     }
-    $self->status_message("Completed creating supercontigs.fasta and agp files");
+    $self->debug_message("Completed creating supercontigs.fasta and agp files");
 
 
     # create contigs.cmt file
-    $self->status_message("Creating contigs.cmt file");
+    $self->debug_message("Creating contigs.cmt file");
     my $assembler_version = ( $self->version )
         ? $self->version
         : 'Unknown' ;
@@ -122,7 +122,7 @@ sub execute {
         $self->error_message("Failed to execute creating of contigs.cmt file");
         return;
     }
-    $self->status_message("Completed creating contigs.cmt file");
+    $self->debug_message("Completed creating contigs.cmt file");
 
     return 1;
 }

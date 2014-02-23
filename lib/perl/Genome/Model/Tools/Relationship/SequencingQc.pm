@@ -125,10 +125,10 @@ sub _generate_data {
     my $bed_file;
     if($self->use_this_bed_file) {
         $bed_file = $self->snv_bed;
-        $self->status_message("Using supplied bed file $bed_file");
+        $self->debug_message("Using supplied bed file $bed_file");
     }
     elsif($self->use_1000genomes_build37_sites) {
-        $self->status_message("Using 1000 genomes build37 feature list for sites");
+        $self->debug_message("Using 1000 genomes build37 feature list for sites");
         my $feature_list = Genome::FeatureList->get("BFBC36724C5611E196CDFD9A7F526B77");
         my $temp_feature_file = $feature_list->generate_merged_bed_file();
         my $non_temp_bed_file = $self->output_dir . "/build37_variant_sites.bed";
@@ -137,7 +137,7 @@ sub _generate_data {
 
     }
     elsif($self->use_sites_found_in_any_sample) {
-        $self->status_message("Using sites found in any 1 sample");
+        $self->debug_message("Using sites found in any 1 sample");
         $bed_file = $self->assemble_list_of_snvs($self->snp_files);
     }
     else {
@@ -189,7 +189,7 @@ sub return_pass_or_fail_based_on_ped {
             }
         }
     }
-    $self->status_message(scalar(keys %ped_hash) . " children checked against their parents, all meet the cut off supplied to the filter of " . $self->parent_relationship_cutoff . "%");
+    $self->debug_message(scalar(keys %ped_hash) . " children checked against their parents, all meet the cut off supplied to the filter of " . $self->parent_relationship_cutoff . "%");
     return "Pass";
 }
 
@@ -436,7 +436,7 @@ sub run_n_models_per_pileup {
         $self->error_message(@errors);
         die "Errors validating workflow\n";
     }
-    $self->status_message("Now launching $count mpileup jobs");
+    $self->debug_message("Now launching $count mpileup jobs");
     $DB::single=1;
     my $result = Workflow::Simple::run_workflow_lsf( $workflow, %input_props);
     unless($result) {

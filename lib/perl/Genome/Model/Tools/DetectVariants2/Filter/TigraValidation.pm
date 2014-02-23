@@ -10,6 +10,8 @@ use File::Temp;
 use File::Basename;
 use Carp 'confess';
 
+my $GENOME_PATH = Genome->get_base_directory_name;
+
 #my %opts = (l=>500,p=>1000,s=>0,q=>0,n=>0,m=>10,x=>3,P=>-10,G=>-10,S=>0.02,A=>500,Q=>0);
 #getopts('l:d:c:p:r:s:Q:q:t:n:a:b:f:km:MRzv:hD:x:i:P:G:I:A:S:L:',\%opts);
 #die("
@@ -81,11 +83,11 @@ class Genome::Model::Tools::DetectVariants2::Filter::TigraValidation {
         },
         sv_merge_path => {
             is => 'FilePath',
-            default => '/gsc/scripts/opt/genome-stable/lib/perl/Genome/Model/Tools/Sv/MergeAssembledCallsets.pl',
+            default => $GENOME_PATH . '/Model/Tools/Sv/MergeAssembledCallsets.pl',
         },
         sv_annot_path => {
             is => 'FilePath',
-            default => '/gsc/scripts/opt/genome-stable/lib/perl/Genome/Model/Tools/Sv/BreakAnnot.pl',
+            default => $GENOME_PATH . '/Model/Tools/Sv/BreakAnnot.pl',
         },
         # TODO Either point to a specific version of phrap or (even better) use the crossmatch tool
         crossmatch_path => {
@@ -354,7 +356,7 @@ sub _filter_variants {
     }
 
     if ($self->specify_chr eq 'all') {
-        $self->status_message("Splitting breakdancer input file by chromosome");
+        $self->debug_message("Splitting breakdancer input file by chromosome");
 
         # Split up breakdancer file by chromosome so tigra can be run in parallel
         my $split_obj = $self->_get_split_object; 
@@ -376,7 +378,7 @@ sub _filter_variants {
         
         my $skip_libs    = $self->skip_libraries || $self->_get_skip_libs;
 
-        $self->status_message("Creating workflow to parallelize by chromosome");
+        $self->debug_message("Creating workflow to parallelize by chromosome");
 
         # Create and execute workflow
         require Workflow::Simple;
@@ -398,7 +400,7 @@ sub _filter_variants {
             $op->log_dir($self->workflow_log_directory);
         }
 
-        $self->status_message("Running workflow");
+        $self->debug_message("Running workflow");
 
         my %options = (
             previous_result_id => $self->previous_result_id,
@@ -421,7 +423,7 @@ sub _filter_variants {
         }
 
         # Now merge together all the pass/fail files produced for each chromosome
-        $self->status_message("Merging output files together");
+        $self->debug_message("Merging output files together");
 
         # use outputs in software-result output_dir to generate final outputs
         my $sr_dirs = $self->_get_sr_dirs(@use_chr_list);
@@ -437,7 +439,7 @@ sub _filter_variants {
             Carp::confess 'Could not execute breakdancer merge command!' unless defined $merge_rv and $merge_rv == 1;
         }
 
-        $self->status_message("Running MergeCallSet");
+        $self->debug_message("Running MergeCallSet");
 
         my ($merge_index, $merge_file, $merge_annot, $merge_out, $merge_fa) = 
             map{$self->_temp_staging_directory .'/'.$self->_variant_type.'.merge.'.$_}qw(index file file.annot out fasta);
@@ -469,7 +471,7 @@ sub _filter_variants {
             return 1;
         }
 
-        $self->status_message('Running SvAnnot');
+        $self->debug_message('Running SvAnnot');
         my $ref_build_id = $self->_get_ref_build_id;
 
         if ($ref_build_id) {
@@ -505,7 +507,7 @@ sub _filter_variants {
     }
 
     die "No valid variant file existing\n" unless $variant_file and -e $variant_file;
-    $self->status_message("Parsing params");
+    $self->debug_message("Parsing params");
     $self->parse_params; # goes through the param string, sets object properties
 
     my %bam_files = $self->_check_bam;
@@ -520,7 +522,7 @@ sub _filter_variants {
         $self->_tigra_data_dir($tmp_tigra_dir); 
 
         # Construct tigra command and execute
-        $self->status_message("Making tigra command and executing");
+        $self->debug_message("Making tigra command and executing");
 
         my $sv_output     = $self->_temp_staging_directory . '/' .$self->sv_output_name .'.'. $type;
         my $tigra_options = $self->_get_tigra_options;
@@ -536,7 +538,7 @@ sub _filter_variants {
             $self->error_message("Running tigra_sv failed.\nCommand: $tigra_sv_cmd");
             die;
         }
-        $self->status_message("Done running tigra, now parsing");
+        $self->debug_message("Done running tigra, now parsing");
 
         my $bp_file = $self->breakpoint_seq_file . '.' . $type .'.fa';
         my $bp_io;
@@ -614,7 +616,7 @@ sub _filter_variants {
         $cm_aln_fh->close if $cm_aln_fh;
         push @tmp_tigra_files, $sv_output;
     }
-    $self->status_message("Done validating, now merging multiple tigra outputs into one");
+    $self->debug_message("Done validating, now merging multiple tigra outputs into one");
 
     my $sv_out_file = $self->_temp_staging_directory . '/' . $self->sv_output_name;
     my $input_files = join ',', @tmp_tigra_files;
@@ -626,7 +628,7 @@ sub _filter_variants {
     my $merge_rv = $tigra_merge->execute;
     confess 'Could not merge multiple tigra validation lists' unless defined $merge_rv and $merge_rv == 1;
 
-    $self->status_message("Now mapping tigra output to breakdancer output");
+    $self->debug_message("Now mapping tigra output to breakdancer output");
 
     my $tigra_adaptor_obj = Genome::Model::Tools::Breakdancer::TigraToBreakdancer->create(
         original_breakdancer_file => $variant_file,
@@ -637,7 +639,7 @@ sub _filter_variants {
     my $adaptor_rv = $tigra_adaptor_obj->execute;
     confess 'Could not produce filtered breakdancer files from tigra output!' unless defined $adaptor_rv and $adaptor_rv == 1;
     
-    $self->status_message('TigraValidation finished ok.');
+    $self->debug_message('TigraValidation finished ok.');
     return 1;
 }
 
@@ -669,7 +671,7 @@ sub _breakdancer_input {
         die;
     }
     
-    $self->status_message("Find breakdancer input: $bd_input");
+    $self->debug_message("Find breakdancer input: $bd_input");
     return $bd_input;
 }
 
@@ -786,7 +788,7 @@ sub _get_sr_dirs {
             $self->error_message("Software result output_dir for chromosome $chr_name does not exist");
             die;
         }
-        $self->status_message("Chromosome $chr_name gets software_result output_dir: $sr_dir");
+        $self->debug_message("Chromosome $chr_name gets software_result output_dir: $sr_dir");
 
         #Just check whether software_result output dir is linked to
         #local or not, shortcut or exceute
@@ -800,7 +802,7 @@ sub _get_sr_dirs {
             $self->error_message("Target link dir for Chr $chr_name : $real_dir is not software_result output dir $sr_dir");
             die;
         }
-        $self->status_message("Software_result output dir is correctly linked for Chr $chr_name");
+        $self->debug_message("Software_result output dir is correctly linked for Chr $chr_name");
         $sr_dirs{$chr_name} = $sr_dir;
     }
     return \%sr_dirs;
@@ -820,7 +822,7 @@ sub _get_skip_libs {
             return;
         }
     }
-    $self->status_message("Find breakdancer config: $bd_cfg to get skip libraries");
+    $self->debug_message("Find breakdancer config: $bd_cfg to get skip libraries");
 
     my $normal_bam = $self->control_aligned_reads_input;
     
@@ -842,7 +844,7 @@ sub _get_skip_libs {
         $fh->close;
 
         my $libs = join ",", keys %libs;
-        $self->status_message("Skip libraries : $libs for tigra validation");
+        $self->debug_message("Skip libraries : $libs for tigra validation");
         return $libs;
     }
     else {
@@ -955,7 +957,7 @@ sub _cross_match_validation {
         $self->error_message("Running cross_match for $tigra_sv_name homo failed.\nCommand: $cm_cmd");
         die $self->error_message;
     }
-    $self->status_message("Cross_match for $type contigs: $tigra_sv_name Done");
+    $self->debug_message("Cross_match for $type contigs: $tigra_sv_name Done");
         
     my $makeup_size      = 0; # by default they are zero
     my $concatenated_pos = 0; # by default they are zero
@@ -965,7 +967,7 @@ sub _cross_match_validation {
         $concatenated_pos = 2 * $self->flank_size + $self->pad_local_ref;
     }
 
-    $self->status_message("GetCrossMatchIndel for $tigra_sv_name $type");
+    $self->debug_message("GetCrossMatchIndel for $tigra_sv_name $type");
     my $cm_indel = Genome::Model::Tools::Sv::CrossMatchForIndel->create(
         cross_match_file     => $cm_out,
         local_ref_seq_file   => $ref_fa,

@@ -195,7 +195,7 @@ sub execute
     my $self = shift;
     my $user = Genome::Sys->username;
 
-    $self->status_message("iprpath : ". "/gsc/scripts/pkg/bio/iprscan/iprscan-". $self->ipr_version ."/bin/iprscan");
+    $self->debug_message("iprpath : ". "/gsc/scripts/pkg/bio/iprscan/iprscan-". $self->ipr_version ."/bin/iprscan");
 
     my $runner_count = $self->runner_count;
 
@@ -331,12 +331,12 @@ sub execute
         }
         foreach my $phase (@run_phases)
         {
-            $self->status_message("running phase ". $phase);
+            $self->debug_message("running phase ". $phase);
 #            unless ( defined( $self->skip_blastx )
 #                && ( $phase == 3 ) )
 #            {
 
-                $self->status_message("before phase ". $phase);
+                $self->debug_message("before phase ". $phase);
 
                 if($phase == 1) {
                     $self->phase1();
@@ -353,11 +353,11 @@ sub execute
                 elsif( $phase == 5 ) {
                     $self->phase5();
                 }
-                $self->status_message("after phase ".$phase);
+                $self->debug_message("after phase ".$phase);
                 BAP::DB::DBI->dbi_commit();
                 BAP::DB::DBI->db_Main->disconnect();
 #            }
-            $self->status_message("completed phase ". $phase);
+            $self->debug_message("completed phase ". $phase);
 
         }
 
@@ -471,7 +471,7 @@ sub check_failed_jobs
 sub phase1
 {
     my $self = shift;
-    $self->status_message("in phase_1");
+    $self->debug_message("in phase_1");
     $self->best_per_locus( 'phase_1', 'phase_0' );
 
 }
@@ -479,7 +479,7 @@ sub phase1
 sub phase2
 {
     my $self = shift;
-    $self->status_message("in phase_2");
+    $self->debug_message("in phase_2");
     $self->check_overlapping( 'phase_2', 'phase_1' );
 
 }
@@ -746,7 +746,7 @@ sub tag_redundant
 {
     my $self = shift;
     my ($feature_ref) = @_;
-    #$self->status_message("inside tag_redundant");
+    #$self->debug_message("inside tag_redundant");
     my $is_redundant = sub {
 
         my ( $f, $g ) = @_;
@@ -771,9 +771,9 @@ sub tag_redundant
         }
 
     };
-    #$self->status_message("sending code ref to find_overlaps");
+    #$self->debug_message("sending code ref to find_overlaps");
     $self->find_overlaps( $is_redundant, $feature_ref );
-    #$self->status_message("find_overlaps has been run");
+    #$self->debug_message("find_overlaps has been run");
 
 }
 
@@ -1047,7 +1047,7 @@ sub iprscan
                        'SUFFIX'   => '.temp',);
     my $temp_fn = $temp_fh->filename();
     $temp_fh->close();
-    $self->status_message("temp filename: $temp_fn");
+    $self->debug_message("temp filename: $temp_fn");
     #my $err_fh = File::Temp->new( %network_temp_args, );
     my $err_fh = File::Temp->new( 
                        'TEMPLATE' => 'mgap_XXXXXXXX',
@@ -1055,7 +1055,7 @@ sub iprscan
                        'SUFFIX'   => '.temp',);
     my $err_fn = $err_fh->filename();
     $err_fh->close();
-    $self->status_message("err fn: $err_fn");
+    $self->debug_message("err fn: $err_fn");
     # originally hardcoded to these at various points in the past.
      #'/gscmnt/974/analysis/iprscan16.1/iprscan/bin/iprscan',
      #          '/gscmnt/974/analysis/iprscan16.1/iprscan/bin/iprscan.hacked',
@@ -1076,9 +1076,9 @@ sub iprscan
         "-o $temp_fn",
     );
 
-    $self->status_message("about to run interproscan");
+    $self->debug_message("about to run interproscan");
     my $cmd = join( ' ', @cmd );
-    $self->status_message("ipr cmd: $cmd");
+    $self->debug_message("ipr cmd: $cmd");
     my $pp = PP->run(
         pp_type => 'lsf',
         command => $cmd,
@@ -1092,7 +1092,7 @@ sub iprscan
     $pp->update_stats();
 
     my $exit_status = $pp->stats->[2];
-    $self->status_message("iprscan done $exit_status");
+    $self->debug_message("iprscan done $exit_status");
     if ( $exit_status eq 'EXIT' )
     {
         carp "exit status returned as 'EXIT'. Sleeping";
@@ -1135,7 +1135,7 @@ sub iprscan
 sub best_per_locus
 {
     my $self = shift;
-    #$self->status_message("starting best per locus");
+    #$self->debug_message("starting best per locus");
     my %selected_genes ;
     if(defined($self->_selected_genes)) {
         %selected_genes = %{$self->_selected_genes};
@@ -1148,12 +1148,12 @@ sub best_per_locus
 
     my @sequences = $sequence_set->sequences();
     my @sequence_names = map { $_->sequence_name() } @sequences;
-    #$self->status_message("sequences retrieved, sanity checking...");
+    #$self->debug_message("sequences retrieved, sanity checking...");
     $self->sanity_check_sequences( $current_phase, \@sequence_names );
 
     my @fetched_gene_names = ();
 
-    #$self->status_message("sanity checked, pulling genes out...");
+    #$self->debug_message("sanity checked, pulling genes out...");
     foreach my $sequence (@sequences)
     {
 
@@ -1243,9 +1243,9 @@ sub best_per_locus
 
         foreach my $source ( keys %predicted_by )
         {
-            #$self->status_message("tagging redundant");
+            #$self->debug_message("tagging redundant");
             $self->tag_redundant( \@{ $predicted_by{$source} } );
-            #$self->status_message("tagged redundant");
+            #$self->debug_message("tagged redundant");
 
         }
 
@@ -1261,7 +1261,7 @@ sub best_per_locus
 
         @gene_features
             = grep { !( $_->has_tag('redundant') ); } @gene_features;
-        #$self->status_message("tagging preferred gene features");
+        #$self->debug_message("tagging preferred gene features");
         tag_preferred( \@gene_features );
 
         @gene_features = grep { $_->has_tag('preferred'); } @gene_features;
@@ -1297,7 +1297,7 @@ sub best_per_locus
     $self->sanity_check_genes( $current_phase, $previous_phase,
         \@fetched_gene_names );
 
-    #$self->status_message("finished best per locus");
+    #$self->debug_message("finished best per locus");
 
     return 1;
 }

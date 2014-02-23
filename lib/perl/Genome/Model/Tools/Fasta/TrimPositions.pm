@@ -114,7 +114,7 @@ sub trim_and_write_fasta {
                 $end = ( $end =~ /end/i ) ? $seq_length : $end;
                 $end = ( $end > $seq_length ) ? $seq_length : $end;
                 $end = ( ($seq_length - $end) > $self->extend_trim_to_end_length ) ? $end : $seq_length;
-                $self->status_message("Trimming $id from $start to $end");
+                $self->debug_message("Trimming $id from $start to $end");
                 # fasta
                 for ( $start .. $end ) {
                     $seqs[$_ - 1] = '/';
@@ -141,7 +141,7 @@ sub trim_and_write_fasta {
             }
         }
         if ( length $seq->{seq} < $self->min_contig_length ) {
-            $self->status_message(
+            $self->debug_message(
                 "Removing $id (".(length $seq->{seq})." bp) is less than min length (".$self->min_contig_length.")"
             );
             next;

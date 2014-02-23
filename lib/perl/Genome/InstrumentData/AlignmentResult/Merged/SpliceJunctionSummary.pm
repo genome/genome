@@ -91,7 +91,7 @@ sub create {
 
     # Alignment inputs
     my @alignments = $self->alignment_result->collect_individual_alignments;
-    $self->status_message('Merging '. scalar(@alignments) .' per lane junctions BED12 files...');
+    $self->debug_message('Merging '. scalar(@alignments) .' per lane junctions BED12 files...');
 
     my @alignment_junctions_bed12_files;
     for my $alignment (@alignments) {
@@ -159,7 +159,7 @@ sub _finalize_allocation {
 
 sub _generate_metrics {
     my $self = shift;
-    $self->status_message('Currently no metrics are saved for: '. __PACKAGE__);
+    $self->debug_message('Currently no metrics are saved for: '. __PACKAGE__);
     #my $metrics = shift;
     
     #for my $type_label (keys %{$metrics}) {

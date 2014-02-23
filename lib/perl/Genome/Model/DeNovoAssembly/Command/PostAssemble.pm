@@ -40,7 +40,7 @@ sub execute {
 sub _execute_tool {
     my ( $self, $post_assemble_part ) = @_;
 
-    $self->status_message('Post assemble: '.$post_assemble_part);
+    $self->debug_message('Post assemble: '.$post_assemble_part);
 
     #get tool name, convert to class name
     my ( $tool_name ) = $post_assemble_part =~ /^(\S+)/;
@@ -50,7 +50,7 @@ sub _execute_tool {
         . ucfirst $self->build->processing_profile->assembler_base_name
             . '::' . $class_name;
 
-    $self->status_message('Class: '.$class);
+    $self->debug_message('Class: '.$class);
 
     #get params string, convert to hash, append assembly directory
     my ( $params_string ) = $post_assemble_part =~ /^\S+\s+(.*)/;
@@ -65,12 +65,12 @@ sub _execute_tool {
             my ( $class, $method ) = split ( ':', $value );
             # class should just be build class for now .. enforced at pp creation
             if ( not $class eq 'build' ) {
-                $self->status_message("Skipping running tool, $class_name.  Can not derive tool param value from class, $class.  Expected class to be genome::model::Build but got $class");
+                $self->debug_message("Skipping running tool, $class_name.  Can not derive tool param value from class, $class.  Expected class to be genome::model::Build but got $class");
                 next;
             }
             my $derived_value;
             if ( not $derived_value = $self->$class->$method ) {
-                $self->status_message("Skipping running tool, $class_name.  Failed to get param_value from class, $class, using method, $method");
+                $self->debug_message("Skipping running tool, $class_name.  Failed to get param_value from class, $class, using method, $method");
                 next;
             }
             $derived_value = lc $derived_value if not ref $derived_value; # lc value if values are not HASH OR ARRAY REFS
@@ -80,7 +80,7 @@ sub _execute_tool {
 
     $params{assembly_directory} = $self->build->data_directory;
 
-    $self->status_message('Params: '.Data::Dumper::Dumper(\%params));
+    $self->debug_message('Params: '.Data::Dumper::Dumper(\%params));
 
     my $tool = $class->create(%params);
     unless ( $tool ) {

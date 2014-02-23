@@ -125,7 +125,7 @@ sub execute {
     my $normal_output_file = $output_dir . "/normal.csv";
     my $normal_breakpoint_file = $output_dir . "/normal.bkpt.fa";
     print "Command for gmt sv assembly-validation\nbam-files $normal_bam\noutput-file $normal_output_file\nsv-file $assembly_input\nmin-size-of-confirm-asm-sv 3\nflank_size 200\nbreakpoint_seq_file $normal_breakpoint_file\n--asm-high-coverage\n--reference-file $ref_seq_fasta\n"; ##TEST
-    $self->status_message("Doing assembly validation for normal");
+    $self->debug_message("Doing assembly validation for normal");
     my $normal_assembly_cmd = Genome::Model::Tools::Sv::AssemblyValidation->create(
         bam_files => $normal_bam,
         output_file =>  $normal_output_file,
@@ -142,7 +142,7 @@ sub execute {
     }
     $normal_assembly_cmd->delete;
 
-    $self->status_message("Doing assembly validation for tumor");
+    $self->debug_message("Doing assembly validation for tumor");
     #run tigra on the list of predicted indels in the tumor BAM
     my $tumor_output_file = $output_dir . "/tumor.csv";
     my $tumor_breakpoint_file = $output_dir . "/tumor.bkpt.fa";
@@ -164,7 +164,7 @@ sub execute {
 
     #build contigs for remapping based on the assembly results
     my $contigs_file = $output_dir . "/contigs.fa";
-    $self->status_message("Writing contigs to $contigs_file");
+    $self->debug_message("Writing contigs to $contigs_file");
     my $contig_cmd = Genome::Model::Tools::Validation::BuildRemappingContigs->create(
         input_file => $assembly_input_walleles,
         normal_assembly_file => $normal_output_file,

@@ -137,7 +137,7 @@ sub calculate_estimated_kb_usage {
     my $kb_usage;
 
     if ( $self->is_imported ) {
-        $self->status_message("Kb usage for imported assembly: 5GiB");
+        $self->debug_message("Kb usage for imported assembly: 5GiB");
         return 5_000_000;
     }
 
@@ -360,7 +360,7 @@ sub calculate_average_insert_size {
     #check if insert size is set in processing-profile
     my %assembler_params = $self->processing_profile->assembler_params_as_hash;
     if ( exists $assembler_params{'insert_size'} and $self->processing_profile->assembler_base_name eq 'soap') { #bad
-        $self->status_message("Using insert size set in assembler params");
+        $self->debug_message("Using insert size set in assembler params");
         my $insert_size = $assembler_params{'insert_size'};
         return $insert_size;
     }
@@ -392,7 +392,7 @@ sub calculate_average_insert_size {
     }
 
     unless ( @insert_sizes ) {
-        $self->status_message("No insert sizes found in instrument data for ".$self->description);
+        $self->debug_message("No insert sizes found in instrument data for ".$self->description);
         return;
     }
 
@@ -492,7 +492,7 @@ sub diff_metrics {
 
     for my $metric_name (qw/ bases count /) {
         if ( $metrics_from_file1->$metric_name ne $metrics_from_file2->$metric_name ) {
-            $self->status_message("Metrics differ for $metric_name: ".$metrics_from_file1->$metric_name.' <=> '.$metrics_from_file2->$metric_name);
+            $self->debug_message("Metrics differ for $metric_name: ".$metrics_from_file1->$metric_name.' <=> '.$metrics_from_file2->$metric_name);
             return;
         }
     }

@@ -22,20 +22,20 @@ class Genome::Model::DeNovoAssembly::Build::Assemble {
 
 sub execute {
     my $self = shift;
-    $self->status_message('Assemble...');
+    $self->debug_message('Assemble...');
 
     my $build = $self->build;
-    $self->status_message('Build: '.$build->__display_name__);
+    $self->debug_message('Build: '.$build->__display_name__);
 
     my $assembler_class = $build->processing_profile->assembler_class;
-    $self->status_message('Assembler class: '. $assembler_class);
+    $self->debug_message('Assembler class: '. $assembler_class);
 
     my %assembler_params = $build->assembler_params;
-    $self->status_message('Assembler params: '.Data::Dumper::Dumper(\%assembler_params));
+    $self->debug_message('Assembler params: '.Data::Dumper::Dumper(\%assembler_params));
 
     my @sx_results = $self->sx_results;
     for my $sx_result ( @sx_results ) {
-        $self->status_message('SX result: '.$sx_result->__display_name__);
+        $self->debug_message('SX result: '.$sx_result->__display_name__);
     }
 
     my $before_assemble = $build->before_assemble(@sx_results);
@@ -49,7 +49,7 @@ sub execute {
         $self->error_message("Failed to create de-novo-assemble");
         return;
     }
-    $self->status_message("Created assembler for '$assembler_class'.\n");
+    $self->debug_message("Created assembler for '$assembler_class'.\n");
 
     my $assemble_ok = eval { $assembler->execute; };
     if ( not $assemble_ok ) {
@@ -64,7 +64,7 @@ sub execute {
         return;
     }
 
-    $self->status_message('Assemble...OK');
+    $self->debug_message('Assemble...OK');
     return 1;
 }
 

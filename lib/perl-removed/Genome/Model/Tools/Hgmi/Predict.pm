@@ -222,7 +222,7 @@ sub gather_details
         $analysis_version_num = $cwd[-1]; #HGMI projects
         $hgmi_sequence_dir = join("\/", $cwd, 'Sequence',$locus_tag);
 #        $hgmi_sequence_dir = join("\/", @cwd[0..9],'Sequence',$locus_tag); #HGMI projects
-        $self->status_message("hgmi seq dir: ". $hgmi_sequence_dir); 
+        $self->debug_message("hgmi seq dir: ". $hgmi_sequence_dir); 
     }
     else # HMPP/Enterobacter
     {
@@ -235,7 +235,7 @@ sub gather_details
         $analysis_version_num = $cwd[-1];
         #$hgmi_sequence_dir = join("\/", @cwd[0..10],'Sequence',$locus_tag); 
         $hgmi_sequence_dir = join("\/", $cwd,'Sequence',$locus_tag); 
-        $self->status_message("sequence dir: ". $hgmi_sequence_dir); 
+        $self->debug_message("sequence dir: ". $hgmi_sequence_dir); 
     }
 
     unless (defined($sequence_set_name)) 
@@ -404,11 +404,11 @@ sub is_valid {
         # compare %validation and %params
         print Dumper(\%to_compare,\%validation),"\n";
         if(Compare(\%to_compare,\%validation) ) {
-        $self->status_message("previous valid prediction run exists");
+        $self->debug_message("previous valid prediction run exists");
         return 1;
         }
         else {
-            $self->status_message("$cwd/prediction_valid exists, but contents do not match params");
+            $self->debug_message("$cwd/prediction_valid exists, but contents do not match params");
             return 0;
         }
     }

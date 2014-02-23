@@ -166,10 +166,10 @@ sub create {
 	my @pipe_list;
 
 	#check to see if files to align path is a pipe delimited list of files
-	$self->status_message( "Files to align: " . $self->files_to_align_path );
+	$self->debug_message( "Files to align: " . $self->files_to_align_path );
 	my $pipe_char_index = index( $self->files_to_align_path, '|' );
 
-	#$self->status_message("Comma index: ".$pipe_char);
+	#$self->debug_message("Comma index: ".$pipe_char);
 	if ( $pipe_char_index > -1 ) {
 		@pipe_list = split( /\|/, $self->files_to_align_path );
 		for my $pipe_file (@pipe_list) {
@@ -184,18 +184,18 @@ sub create {
 		}
 	}
 	else {
-		$self->status_message('Checking existence of reads file: >'.$self->files_to_align_path."<");
+		$self->debug_message('Checking existence of reads file: >'.$self->files_to_align_path."<");
 		$self->error_message('Checking existence of reads file: >'.$self->files_to_align_path."<");
 		push @listing, $self->files_to_align_path;
 		#not a pipe delimited list
 		#check to see if files to align path is a dir or file
 		if ( -e $self->files_to_align_path ) {
-			#$self->status_message('Path is a file');
+			#$self->debug_message('Path is a file');
 			#push @listing, $self->files_to_align_path;
 		}
 		elsif ( -d $self->files_to_align_path ) {
 
-			#$self->status_message('Path is dir.');
+			#$self->debug_message('Path is dir.');
 			@listing = glob( $self->files_to_align_path . '/*' );
 		}
 		else {
@@ -309,31 +309,31 @@ sub execute {
 	my $self = shift;
 	$self->dump_status_messages(1);
 
-	$self->status_message("\n");
-	$self->status_message('Running AlignReadsMulti with parameters');
-	$self->status_message('-----------------------------------');
-	$self->status_message('Input Files:');
-	$self->status_message( 'Reference sequence file:' . $self->ref_seq_file );
-	$self->status_message('Files to align path:' . $self->files_to_align_path );
-	$self->status_message('Files to align list:' . join( ",", @{$self->_files_to_align_list} ) );
-	$self->status_message('');
-	$self->status_message('Output Files:');
-	$self->status_message( 'Concise file:' . $self->concise_file );
-	$self->status_message(
+	$self->debug_message("\n");
+	$self->debug_message('Running AlignReadsMulti with parameters');
+	$self->debug_message('-----------------------------------');
+	$self->debug_message('Input Files:');
+	$self->debug_message( 'Reference sequence file:' . $self->ref_seq_file );
+	$self->debug_message('Files to align path:' . $self->files_to_align_path );
+	$self->debug_message('Files to align list:' . join( ",", @{$self->_files_to_align_list} ) );
+	$self->debug_message('');
+	$self->debug_message('Output Files:');
+	$self->debug_message( 'Concise file:' . $self->concise_file );
+	$self->debug_message(
 		'Unaligned reads file:' . $self->unaligned_reads_file )
 	  if defined( $self->unaligned_reads_file );
-	$self->status_message(
+	$self->debug_message(
 		'Aligner output messages:' . $self->aligner_output_file )
 	  if defined( $self->aligner_output_file );
-	$self->status_message('');
-	$self->status_message('Other Parameters:');
-	$self->status_message( 'Align options:' . $self->align_options )
+	$self->debug_message('');
+	$self->debug_message('Other Parameters:');
+	$self->debug_message( 'Align options:' . $self->align_options )
 	  if defined( $self->align_options );
-	$self->status_message( 'Upper bound value:' . $self->upper_bound )
+	$self->debug_message( 'Upper bound value:' . $self->upper_bound )
 	  if defined( $self->upper_bound );
-	$self->status_message( 'BWA version:' . $self->use_version )
+	$self->debug_message( 'BWA version:' . $self->use_version )
 	  if defined( $self->use_version );
-	$self->status_message("\n");
+	$self->debug_message("\n");
 
 	my $tmp_dir;
 
@@ -350,9 +350,9 @@ sub execute {
 
 	#if there is more than one input file, cat them together
 	if ( scalar(@input_file_list) > 1 ) {
-		$self->status_message("Combining reads files.");
+		$self->debug_message("Combining reads files.");
 		my $combined_file = "$tmp_dir/combined_read_files.txt";
-		$self->status_message( "Combined file: " . $combined_file );
+		$self->debug_message( "Combined file: " . $combined_file );
 		my $rv_cat = Genome::Sys->cat(
 			input_files => \@input_file_list,
 			output_file => $combined_file
@@ -364,7 +364,7 @@ sub execute {
 		}
 
 		@input_file_list = ($combined_file);
-		$self->status_message(
+		$self->debug_message(
 			"Listing contains: " . join( " ", @input_file_list ) );
 	}
 
@@ -420,8 +420,8 @@ sub execute {
 	  . $self->concise_file. " 2>>"
 	  . $self->aligner_output_file;
 
-	$self->status_message("Running samXe to get the output alignments");
-	$self->status_message("samXe command: $sam_command_line");
+	$self->debug_message("Running samXe to get the output alignments");
+	$self->debug_message("samXe command: $sam_command_line");
 
 	my $rv_samse =  Genome::Sys->shellcmd( cmd => $sam_command_line );
 

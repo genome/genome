@@ -56,8 +56,8 @@ class Genome::Model::Tools::Vcf::CreateCrossSampleVcf::CreateCrossSampleVcfBase 
         },
         joinx_version => {
             is => 'Text',
-            doc => 'Joinx version to use in all joinx operations',
-            default => '1.7',
+            is_optional => 1,
+            doc => "Version of joinx to use, will be resolved to the latest default if not specified",
         },
         output_directory => {
             is => 'Text',
@@ -108,19 +108,21 @@ EOS
 sub generate_result {
     my ($self) = @_;
 
-    $self->status_message("Resolving Builds...");
+    $self->_resolve_joinx_version;
+
+    $self->debug_message("Resolving Builds...");
     my $builds = $self->_resolve_builds;
 
-    $self->status_message("Validating Inputs...");
+    $self->debug_message("Validating Inputs...");
     $self->_validate_inputs($builds);
 
-    $self->status_message("Constructing Workflow...");
+    $self->debug_message("Constructing Workflow...");
     my ($workflow, $variant_type_specific_inputs, $region_limiting_specific_inputs) = $self->_construct_workflow;
 
-    $self->status_message("Getting Workflow Inputs...");
+    $self->debug_message("Getting Workflow Inputs...");
     my $inputs = $self->_get_workflow_inputs($builds, $variant_type_specific_inputs, $region_limiting_specific_inputs);
 
-    $self->status_message("Running Workflow...");
+    $self->debug_message("Running Workflow...");
     my $result = Workflow::Simple::run_workflow_lsf($workflow, %$inputs);
 
     unless($result){
@@ -129,6 +131,13 @@ sub generate_result {
     }
 
     return 1;
+}
+
+sub _resolve_joinx_version {
+    my $self = shift;
+    unless (defined $self->joinx_version) {
+        $self->joinx_version(Genome::Model::Tools::Joinx->get_default_version);
+    }
 }
 
 sub _resolve_builds {

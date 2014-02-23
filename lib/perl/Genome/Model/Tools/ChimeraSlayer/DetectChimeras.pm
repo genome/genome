@@ -76,26 +76,26 @@ sub execute {
     }
 
     # Nastier
-    $self->status_message("Run nastier...");
+    $self->debug_message("Run nastier...");
     if ( not $nastier->execute ) {
         $self->error_message("Failed to execute Nastier using params: ".$self->nastier_params);
         return;
     }
-    $self->status_message("Run nastier...Done");
+    $self->debug_message("Run nastier...Done");
 
     # Check nastier output...
     if ( not -s $nastier_params{output_file} ) {
-        $self->status_message('Nastier ran successfully, but no alignments found. Cannot run chimera slayer. Exitting.');
+        $self->debug_message('Nastier ran successfully, but no alignments found. Cannot run chimera slayer. Exitting.');
         return 1;
     }
 
     # Chimera slayer
-    $self->status_message("Run chimera slayer...");
+    $self->debug_message("Run chimera slayer...");
     if ( not $chimera_slayer->execute ) {
         $self->error_message("Failed to execute ChimeraSlayer using param: ".$self->chimera_slayer_params);
         return;
     }
-    $self->status_message("Run chimera slayer...Done");
+    $self->debug_message("Run chimera slayer...Done");
 
     # Check output
     my $chimeras = $self->sequences.'.out.CPS.CPC';
@@ -119,11 +119,11 @@ sub build_nastier_params {
     if ( $self->nastier_params ) {
         %params = Genome::Utility::Text::param_string_to_hash( $self->nastier_params );
         if ( $params{query_FASTA} ) {
-            $self->status_message("query_FASTA for nastier will be automatically set by this program");
+            $self->debug_message("query_FASTA for nastier will be automatically set by this program");
             delete $params{query_FASTA};
         }
         if ( $params{output_file} ) {
-            $self->status_message("output_file for nastier will be automatically set by this program");
+            $self->debug_message("output_file for nastier will be automatically set by this program");
             delete $params{output_file};
         }
     }
@@ -142,11 +142,11 @@ sub build_chimera_slayer_params {
     if ( $self->chimera_slayer_params ) {
         %params = Genome::Utility::Text::param_string_to_hash( $self->chimera_slayer_params );
         if ( $params{exec_dir} ) {
-            $self->status_message("exec_dir for ChimeraSlayer will be automatically set by this program");
+            $self->debug_message("exec_dir for ChimeraSlayer will be automatically set by this program");
             delete $params{exec_dir};
         }
         if ( $params{query_NAST} ) {
-            $self->status_message("query_NAST for ChimeraSlayer will be automatically set by this program");
+            $self->debug_message("query_NAST for ChimeraSlayer will be automatically set by this program");
             delete $params{query_NAST};
         }
     }

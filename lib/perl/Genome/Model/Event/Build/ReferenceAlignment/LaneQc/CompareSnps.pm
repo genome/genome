@@ -24,7 +24,7 @@ sub execute {
 
     if ( !$self->validate_gold_snp_path ) {
         # TODO why isn't this a die or a return?
-        $self->status_message("No valid gold_snp_path for the build, aborting compare SNPs!");
+        $self->debug_message("No valid gold_snp_path for the build, aborting compare SNPs!");
     }
 
     my $output_dir = $build->qc_directory;
@@ -170,7 +170,7 @@ sub validate_gold_snp_path {
 
     my $gold_snp_path = $self->build->gold_snp_path;
     unless ($gold_snp_path and -s $gold_snp_path) {
-        $self->status_message('No gold_snp_path provided for the build or it is empty');
+        $self->debug_message('No gold_snp_path provided for the build or it is empty');
         return;
     }
 
@@ -178,7 +178,7 @@ sub validate_gold_snp_path {
     my @columns = split /\s+/, $head;
 
     unless (@columns and @columns == 9) {
-        $self->status_message("Gold snp file: $gold_snp_path is not 9-column format");
+        $self->debug_message("Gold snp file: $gold_snp_path is not 9-column format");
         return;
     }
     return 1;

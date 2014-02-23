@@ -89,7 +89,7 @@ sub execute {
     my $exclude_3prime_vars = $self->exclude_3prime_vars;
 
     # Parse out the variants into a hash with WU annotations
-    $self->status_message( "\nParsing the variant file...\n" );
+    $self->debug_message( "\nParsing the variant file...\n" );
     my %vars = my %all_samples;
     ( -s $variant_file ) or die "Input file does not exist or has zero size\n";
     if( $variant_file =~ m/\.maf$/ ) {
@@ -119,12 +119,12 @@ sub execute {
         $self->status_message( "WARNING: With max-mut-freq = $max_mut_freq, and only $total_num_samples samples, no recurrent variants will pass the filters\n" );
     }
 
-    $self->status_message( "\nLoading transcript lengths based on " . $self->reference_transcripts . "...\n" );
+    $self->debug_message( "\nLoading transcript lengths based on " . $self->reference_transcripts . "...\n" );
     my %tr_95pc_of_length;
     my $anno_dir = Genome::Model::Build::ImportedAnnotation->get( name=>$self->reference_transcripts )->data_directory;
     map{my @c = split(/\t|,/); if($c[8] eq "utr_exon" and $c[17] ne "0"){$tr_95pc_of_length{$c[30]} = ($c[17]*0.95);}}`cat $anno_dir/annotation_data/substructures/*.csv`;
 
-    $self->status_message( "\nLoading 1000G and NHLBI data...\n" );
+    $self->debug_message( "\nLoading 1000G and NHLBI data...\n" );
     # Locate the tabix-indexed file containing variant allele frequencies and dbSNP IDs from 1000G
     my $onekg_file = '/gscmnt/gc6132/info/medseq/1000_genomes/downloads/2012-03-27/ALL.wgs.phase1_release_v3.20101123.snps_indels.sites.vars.gz';
     # Load the NHLBI-exome variant allele frequencies and dbSNP IDs into a hash
@@ -140,7 +140,7 @@ sub execute {
     $nhlbi_fh->close;
 
     # For each variant, run the filters and store pass/fail status
-    $self->status_message( "\nRunning filters on each variant...\n" );
+    $self->debug_message( "\nRunning filters on each variant...\n" );
     foreach my $key ( keys %vars ) {
         my @wu_anno = @{$vars{$key}{wu_anno}};
         my ( $var_type, $gene, $tr_name, $tr_source, $var_class, $c_pos, $domain, $tr_errors ) = ( @wu_anno[5..7,9,13,14,17,20] );
@@ -473,7 +473,7 @@ sub liftover_to_hg19 {
     ( $build37_file ) or die "Couldn't create a temp file. $!";
 
     # Run liftOver using the wrapper that can handle annotation format files
-    $self->status_message( "\nRunning liftOver to remap the provided Build36 variants to Build37...\n" );
+    $self->debug_message( "\nRunning liftOver to remap the provided Build36 variants to Build37...\n" );
     my $lift_cmd = Genome::Model::Tools::LiftOver->create(
         source_file => $build36_file, destination_file => $build37_file,
         input_is_annoformat => 1, lift_direction => "hg18ToHg19",
@@ -491,7 +491,7 @@ sub annotate_to_build37 {
     my ( $self, $build37_file ) = @_;
 
     # Run the Build37 WU annotator
-    $self->status_message( "\nRunning WU Annotator based on build: ". $self->reference_transcripts . "...\n" );
+    $self->debug_message( "\nRunning WU Annotator based on build: ". $self->reference_transcripts . "...\n" );
     my $build37_anno = Genome::Sys->create_temp_file_path;
     ( $build37_anno ) or die "Couldn't create a temp file. $!";
     my $anno_cmd = Genome::Model::Tools::Annotate::TranscriptVariants->create(

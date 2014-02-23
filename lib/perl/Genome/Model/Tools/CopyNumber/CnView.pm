@@ -675,7 +675,7 @@ sub calculateMeanCnvDiff{
     my $bed_cmd_cnvs = "intersectBed -a $features_bed_file -b $cnvs_bed_file -wa -wb > $features_vs_cnv_windows_file";
     Genome::Sys->shellcmd(cmd => $bed_cmd_cnvs);
   }else{
-    Genome::Sys->shelcmd(cmd => "touch $features_vs_cnv_windows_file");
+    Genome::Sys->shellcmd(cmd => "touch $features_vs_cnv_windows_file");
   }
   my $feature_window_overlaps = $self->parseIntersectBed('-file'=>$features_vs_cnv_windows_file);
 
@@ -828,7 +828,7 @@ sub writeBed{
   my $features = $args{'-features'};
   my $file = $args{'-file'};
 
-  $self->status_message("Writing BED file: $file");
+  $self->debug_message("Writing BED file: $file");
   open (BED, ">$file") || die "\n\nCould not open output BED file: $file\n\n";
   my $f_count = 0;
   foreach my $fid (sort keys %{$features}){

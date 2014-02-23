@@ -167,7 +167,7 @@ my $union_vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Combi
     input => $union_result,
     output_dir => $union_vcf_directory,
     variant_type => "snvs",
-    joinx_version => 1.6,
+    joinx_version => 1.8,
 );
 $union_vcf_result->lookup_hash($union_vcf_result->calculate_lookup_hash);
 
@@ -187,7 +187,7 @@ my $intersect_vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::C
     input => $intersect_result,
     output_dir => $intersect_vcf_directory,
     variant_type => "snvs",
-    joinx_version => 1.6,
+    joinx_version => 1.8,
 );
 $intersect_vcf_result->lookup_hash($intersect_vcf_result->calculate_lookup_hash);
 

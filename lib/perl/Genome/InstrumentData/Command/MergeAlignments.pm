@@ -145,15 +145,15 @@ sub shortcut {
     #try to get using the lock in order to wait here in shortcut if another process is creating this alignment result
     my $result = $self->_process_merged_alignment('get_with_lock');
     unless($result) {
-        $self->status_message('No existing alignment found.');
+        $self->debug_message('No existing alignment found.');
         return;
     }
 
-    $self->status_message('Using existing alignment ' . $result->__display_name__);
+    $self->debug_message('Using existing alignment ' . $result->__display_name__);
 
     my $refiner_result = $self->_process_refinement('shortcut', $result);
     unless($refiner_result) {
-        $self->status_message('No existing refinement found.');
+        $self->debug_message('No existing refinement found.');
         return;
     }
 
@@ -168,7 +168,7 @@ sub execute {
         $self->error_message('Failed to generate merged alignment.');
         die $self->error_message;
     }
-    $self->status_message('Generated merged alignment');
+    $self->debug_message('Generated merged alignment');
 
     my $refiner_result = $self->_process_refinement('execute', $result);
     unless($refiner_result) {

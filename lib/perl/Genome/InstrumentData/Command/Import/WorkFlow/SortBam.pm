@@ -37,7 +37,7 @@ class Genome::InstrumentData::Command::Import::WorkFlow::SortBam {
 
 sub execute {
     my $self = shift;
-    $self->status_message('Sort bams...');
+    $self->debug_message('Sort bams...');
 
     my $sort_ok = $self->_sort_bam;
     return if not $sort_ok;
@@ -48,7 +48,7 @@ sub execute {
     my $cleanup_ok = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->remove_paths_and_auxiliary_files($self->unsorted_bam_path);
     return if not $cleanup_ok;
 
-    $self->status_message('Sort bams...done');
+    $self->debug_message('Sort bams...done');
     return 1;
 }
 
@@ -56,13 +56,13 @@ sub _sort_bam {
     my $self = shift;
 
     my $unsorted_bam_path = $self->unsorted_bam_path;
-    $self->status_message("Unsorted bam path: $unsorted_bam_path");
+    $self->debug_message("Unsorted bam path: $unsorted_bam_path");
 
     my $sorted_bam_prefix = $self->sorted_bam_prefix;
-    $self->status_message("Sorted bam prefix: $sorted_bam_prefix");
+    $self->debug_message("Sorted bam prefix: $sorted_bam_prefix");
 
     my $sorted_bam_path = $self->sorted_bam_path;
-    $self->status_message("Sorted bam path: $sorted_bam_path");
+    $self->debug_message("Sorted bam path: $sorted_bam_path");
 
     my $cmd = "samtools sort -m 3000000000 -n $unsorted_bam_path $sorted_bam_prefix";
     my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
@@ -77,7 +77,7 @@ sub _sort_bam {
 
 sub _verify_read_count {
     my $self = shift;
-    $self->status_message('Verify read count...');
+    $self->debug_message('Verify read count...');
 
     my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
     my $unsorted_flagstat = $helpers->load_or_run_flagstat($self->unsorted_bam_path);
@@ -86,15 +86,15 @@ sub _verify_read_count {
     my $sorted_flagstat = $helpers->load_or_run_flagstat($self->sorted_bam_path);
     return if not $sorted_flagstat;
 
-    $self->status_message('Sorted bam read count: '.$sorted_flagstat->{total_reads});
-    $self->status_message('Unsorted bam read count: '.$unsorted_flagstat->{total_reads});
+    $self->debug_message('Sorted bam read count: '.$sorted_flagstat->{total_reads});
+    $self->debug_message('Unsorted bam read count: '.$unsorted_flagstat->{total_reads});
 
     if ( $sorted_flagstat->{total_reads} != $unsorted_flagstat->{total_reads} ) {
         $self->error_message('Sorted and unsorted bam read counts do not match!');
         return;
     }
 
-    $self->status_message('Verify read count...done');
+    $self->debug_message('Verify read count...done');
     return 1;
 }
 

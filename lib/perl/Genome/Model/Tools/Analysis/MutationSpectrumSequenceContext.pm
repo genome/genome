@@ -13,36 +13,36 @@ use Cwd ('getcwd','abs_path');
 class Genome::Model::Tools::Analysis::MutationSpectrumSequenceContext {
     is => ['Command'],
     has => [
-    roi_file => { 
+    roi_file => {
         is  => 'String',
-        is_input=>1, 
+        is_input=>1,
 	is_optional => 0,
         doc => 'name of the input file with SNVs (standard 5 column annotation format) ',
     },
     window_size => {
 	is  => 'String',
-        is_input=>1, 
+        is_input=>1,
 	is_optional => 1,
         default_value => '10',
         doc => 'number of bases before and after each position in ROI file to look',
     },
-    plot_title => { 
+    plot_title => {
         is  => 'String',
-        is_input=>1, 
+        is_input=>1,
         is_optional => 1,
         default_value => 'Mutation Spectrum Sequence Context',
         doc => 'The title of the plot',
     },
-    output_file => { 
+    output_file => {
         is  => 'String',
-        is_input=>1, 
+        is_input=>1,
         is_optional => 0,
         #default_value => 'output.pdf',
         doc => 'The name of pdf file to save the plot to',
     },
     proportiontest => {
 	is  => 'String',
-        is_input=>1, 
+        is_input=>1,
         is_optional => 0,
         #default_value => 'output.pdf',
         doc => 'The name of the file to save the proportion result to',
@@ -80,7 +80,7 @@ sub help_synopsis {
     my $self = shift;
     return <<"EOS"
 gmt analysis mutation-spectrum-sequence-context --roi-file=SJMEL001003-0260.alltier.snv --proportiontest SJMEL001003.prop.test --output-file=SJMEL.pdf --plot-title=SJMEL001003-0260 --window-size=10
- 
+
  build36 refseq fasta  => "/gscmnt/839/info/medseq/reference_sequences/NCBI-human-build36/all_sequences.fasta",
  build37 refseq fasta  => "/gscmnt/ams1102/info/model_data/2869585698/build106942997/all_sequences.fa",
 
@@ -88,8 +88,8 @@ gmt analysis mutation-spectrum-sequence-context --roi-file=SJMEL001003-0260.allt
 EOS
 }
 
-sub help_detail {                           
-    return <<EOS 
+sub help_detail {
+    return <<EOS
     This tool summarizes the mutation spectrum sequence context.  It produces a stacked barplot for each mutation cateogry showing the proportion of bases around the point of interest (position 0) +/- window_size basepairs.  In addition, it also generates 2 barplots showing the background distribution of 4 bases, and compares the proportion of each base at each position with that of the random distribution.
 
 EOS
@@ -99,7 +99,7 @@ sub execute {
     my $self = shift;
     $DB::single = 1;
 
-    
+
     my $ROI_file = $self->roi_file;
     my $window_size = $self->window_size;
     my $plot_output_file = abs_path($self->output_file);
@@ -108,7 +108,7 @@ sub execute {
     my $random_number_seed = $self->random_seed;
     my $ref_seq_fasta = $self->ref_seq;
 
-    die "Ref Seq Fasta: $ref_seq_fasta cannot be found!\n" if(!-e $ref_seq_fasta); 
+    die "Ref Seq Fasta: $ref_seq_fasta cannot be found!\n" if(!-e $ref_seq_fasta);
 
 
     my $plot_title = $self->plot_title;
@@ -119,7 +119,7 @@ sub execute {
 	my ($fh, $tempfile) = Genome::Sys->create_temp_file;
 	$plot_input_file = abs_path($tempfile);
     }
-   
+
 
     if($window_size !~ /^\d+$/) {
 	print STDERR "--window_size $window_size is not a integer!\n";
@@ -130,7 +130,7 @@ sub execute {
     STDERR->print("step1: Calculating Mutation Context based on variants using window_size $window_size\n");
     my ($mutation_context4type,$mutation_context2type) =  generate_mutation_seq_context($ROI_file,$window_size,$ref_seq_fasta);
     STDERR->print("step2: Calculating Background Mutation Context based on $random_trials randomized samplings\n");
-    my ($random_context4type,$random_context2type) = generate_random_seq_context($ref_seq_fasta,$window_size,$random_trials,$random_number_seed); 
+    my ($random_context4type,$random_context2type) = generate_random_seq_context($ref_seq_fasta,$window_size,$random_trials,$random_number_seed);
     make_file4plot_4type("${plot_input_file}.4type",$mutation_context4type,$random_context4type);
     make_file4plot_2type("${plot_input_file}.2type",$mutation_context2type,$random_context2type);
 
@@ -152,9 +152,9 @@ sub execute {
     $R_cmd = qq{ plot_mutation_spectrum_seq_contextV2(input4type="${plot_input_file}.4type",input2type="${plot_input_file}.2type",output_file="$plot_output_file",plot_title="$plot_title") };
     $call = Genome::Model::Tools::R::CallR->create(command=>$R_cmd, library=> "MutationSpectrum.R");
     $call->execute;
-  
-    
-    return 1;                               
+
+
+    return 1;
 }
 
 
@@ -187,7 +187,7 @@ sub generate_mutation_seq_context {
                          };
 
 
-    my $nitrogen_base={ 'A'=>'purine', 
+    my $nitrogen_base={ 'A'=>'purine',
                         'G'=>'purine',
                         'C'=>'pyrimidine',
                         'T'=>'pyrimidine',
@@ -207,7 +207,7 @@ sub generate_mutation_seq_context {
 	chomp $line;
 	my @list = split(/\t/,$line);
 	my ($chr,$pos,$ref,$var) = split(/\_/,$list[3]);
-	
+
 	my $key = join("->",($ref,$var));
 	my $rev_compl=0; #boolean to determine if we should reverse complement a seq
 	if(!exists($mutation_context1->{$key})) {
@@ -229,15 +229,15 @@ sub generate_mutation_seq_context {
 	    $mutation_context2->{$key}->{$relative_pos}->{$pur_pyr}++;
 	    $relative_pos++;
 	}
-	
 
-	
+
+
     }
     $joinx_FH->close;
- 
+
     #returns to 2 hashrefs (1 with all 4 bases, 1 with purine/pyrimidines)
     return ($mutation_context1,$mutation_context2);
-   
+
 }
 
 
@@ -261,7 +261,7 @@ sub generate_random_seq_context {
     my $base_count={'C'=>0, 'A'=>0 }; #keeps track how many trials done for each base of interest
     my $previously_sampled={}; #holds the random number already used to prevent sampling same base twice
 
-    my $nitrogen_base={ 'A'=>'purine', 
+    my $nitrogen_base={ 'A'=>'purine',
                         'G'=>'purine',
                         'C'=>'pyrimidine',
                         'T'=>'pyrimidine',
@@ -306,66 +306,64 @@ sub generate_random_seq_context {
 
 sub prepare_file4_proportion_test_4type {
 
-    my $contextA = shift;  #based on mutation
-    my $contextB = shift;  #based on random
-    my $output_file = shift; 
+  my $contextA = shift;  #based on mutation
+  my $contextB = shift;  #based on random
+  my $output_file = shift;
 
-    #my $tmp_file = "test.proportion.in";
-    my $fh_out = IO::File->new($output_file,"w") or die "Unable to write to $output_file\n";
-    my @mutation_class = keys %$contextA;
-    foreach my $category(@mutation_class) {
-	my ($Base) = $category =~ /([ATCG])->[ATCG]/; 
-	my $Tot_category_size = $contextA->{$category}->{0}->{$Base};
-	my $Tot_background_size = $contextB->{$Base}->{0}->{$Base};  #usually number of random trials
-	foreach my $rel_pos (sort{$a<=>$b} keys %{ $contextA->{$category} } ) {
-	    foreach (qw(A T C G)) {
-		my $count = $contextA->{$category}->{$rel_pos}->{$_} || 0;
-		my $background_count = $contextB->{$Base}->{$rel_pos}->{$_} || 0;
-		$fh_out->print("$category\t$rel_pos\t$_\t$count\t$background_count\t$Tot_category_size\t$Tot_background_size\n");
-	    }
-	    
-	}
+  #my $tmp_file = "test.proportion.in";
+  my $fh_out = IO::File->new($output_file,"w") or die "Unable to write to $output_file\n";
+  my @mutation_class = keys %$contextA;
+  foreach my $category(@mutation_class) {
+    my ($Base) = $category =~ /([ATCG])->[ATCG]/;
+    my $Tot_category_size = $contextA->{$category}->{0}->{$Base} || 0;
+    my $Tot_background_size = $contextB->{$Base}->{0}->{$Base} || 0;  #usually number of random trials
+    if($Tot_category_size) {
+      foreach my $rel_pos (sort{$a<=>$b} keys %{ $contextA->{$category} } ) {
+        foreach (qw(A T C G)) {
+          my $count = $contextA->{$category}->{$rel_pos}->{$_} || 0;
+          my $background_count = $contextB->{$Base}->{$rel_pos}->{$_} || 0;
+          $fh_out->print("$category\t$rel_pos\t$_\t$count\t$background_count\t$Tot_category_size\t$Tot_background_size\n");
+        }
+      }
     }
-    $fh_out->close;
-
-
+  }
+  $fh_out->close;
 }
 
 
 sub prepare_file4_proportion_test_2type {
 
-    my $contextA = shift;  #based on mutation
-    my $contextB = shift;  #based on random
-    my $output_file = shift; 
+  my $contextA = shift; #based on mutation
+  my $contextB = shift; #based on random
+  my $output_file = shift;
 
-    my $nitrogen_base={ 'A'=>'purine', 
-                        'G'=>'purine',
-                        'C'=>'pyrimidine',
-                        'T'=>'pyrimidine',
-                       };
+  my $nitrogen_base={ 'A'=>'purine',
+    'G'=>'purine',
+    'C'=>'pyrimidine',
+    'T'=>'pyrimidine',
+  };
 
 
-    #my $tmp_file = "test.proportion.in";
-    my $fh_out = IO::File->new($output_file,"w") or die "Unable to write to $output_file\n";
-    my @mutation_class = keys %$contextA;
-    foreach my $category(@mutation_class) {
-	my ($Base) = $category =~ /([ATCG])->[ATCG]/; 
-	my $Tot_category_size = $contextA->{$category}->{0}->{ $nitrogen_base->{$Base} } || 0;
-	my $Tot_background_size = $contextB->{$Base}->{0}->{ $nitrogen_base->{$Base} } || 0;
-	foreach my $rel_pos (sort{$a<=>$b} keys %{ $contextA->{$category} } ) {
-	    foreach (qw(purine pyrimidine)) {
-		my $count = $contextA->{$category}->{$rel_pos}->{$_} || 0;
-		my $background_count = $contextB->{$Base}->{$rel_pos}->{$_} || 0;
-		#my $Tot_category_size = $contextA->{$category}->{0}->{$_} || 0;
-		#my $Tot_background_size = $contextB->{$Base}->{0}->{$_} || 0;
-		$fh_out->print("$category\t$rel_pos\t$_\t$count\t$background_count\t$Tot_category_size\t$Tot_background_size\n");
-	    }
-	    
-	}
+  #my $tmp_file = "test.proportion.in";
+  my $fh_out = IO::File->new($output_file,"w") or die "Unable to write to $output_file\n";
+  my @mutation_class = keys %$contextA;
+  foreach my $category(@mutation_class) {
+    my ($Base) = $category =~ /([ATCG])->[ATCG]/;
+    my $Tot_category_size = $contextA->{$category}->{0}->{ $nitrogen_base->{$Base} } || 0;
+    my $Tot_background_size = $contextB->{$Base}->{0}->{ $nitrogen_base->{$Base} } || 0;
+    if($Tot_category_size) {
+      foreach my $rel_pos (sort{$a<=>$b} keys %{ $contextA->{$category} } ) {
+        foreach (qw(purine pyrimidine)) {
+          my $count = $contextA->{$category}->{$rel_pos}->{$_} || 0;
+          my $background_count = $contextB->{$Base}->{$rel_pos}->{$_} || 0;
+          #my $Tot_category_size = $contextA->{$category}->{0}->{$_} || 0;
+          #my $Tot_background_size = $contextB->{$Base}->{0}->{$_} || 0;
+          $fh_out->print("$category\t$rel_pos\t$_\t$count\t$background_count\t$Tot_category_size\t$Tot_background_size\n");
+        }
+      }
     }
-    $fh_out->close;
-
-
+  }
+  $fh_out->close;
 }
 
 
@@ -421,10 +419,10 @@ sub make_file4plot_2type {
 
 sub reverse_complement {
     my $dna = shift;
-    
+
     # reverse the DNA sequence
     my $revcomp = reverse($dna);
-    
+
     # complement the reversed DNA sequence
     $revcomp =~ tr/ACGTacgt/TGCAtgca/;
     return $revcomp;

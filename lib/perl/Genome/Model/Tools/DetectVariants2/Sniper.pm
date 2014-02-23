@@ -49,7 +49,7 @@ EOS
 
 sub _detect_variants {
     my $self = shift;
-    $self->status_message("beginning execute");
+    $self->debug_message("beginning execute");
 
     #sniper1.0.0 does not have indel output anymore. We will always
     #run sniper1.0.0 with vcf as output format by giving "-F vcf" via
@@ -88,7 +88,7 @@ sub _detect_variants {
         $self->warning_message("ALLOWING zero size output file " . $self->_indel_staging_output);
     }
 
-    $self->status_message("ending execute");
+    $self->debug_message("ending execute");
     return $result; 
 }
 

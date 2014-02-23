@@ -55,7 +55,7 @@ sub _run_aligner {
     $aligner_params .= ' --prefix '.$self->temp_scratch_directory.'/OUT';
 
     my $align_cmd = $version_nucmer.' '.$aligner_params.' '.$reference_fasta.' '.$input_fasta;
-    $self->status_message( "Align command: $align_cmd\n" );
+    $self->debug_message( "Align command: $align_cmd\n" );
     Genome::Sys->shellcmd( cmd => $align_cmd );
 
     # check align output file
@@ -68,7 +68,7 @@ sub _run_aligner {
     # convert output to sam format
     my $sam_file = $self->temp_scratch_directory.'/all_sequences.sam';
     if ( not -s $sam_file ) {
-        $self->status_message("Failed to find sam output file: $sam_file");
+        $self->debug_message("Failed to find sam output file: $sam_file");
         return;
     }
     my $sam_fh = IO::File->new(">> $sam_file"); 
@@ -126,12 +126,12 @@ sub postprocess_bam_file {
     my $self = shift;
     # currently not 1:1 input/output ratio so _verify_bam will fail
     # create bam flagstat
-    $self->status_message('Creating flagstat for bam file');
+    $self->debug_message('Creating flagstat for bam file');
     unless( $self->_create_bam_flagstat ) {
         $self->error_message('Failed to create bam flagstat file');
         die $self->error_message;
     }
-    $self->status_message('Indexing bam file');
+    $self->debug_message('Indexing bam file');
     unless($self->_create_bam_index) {
         $self->error_message('Fail to create bam md5');
         die $self->error_message;

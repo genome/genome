@@ -97,7 +97,7 @@ sub generate_report_detail
     my $model = $self->model;
     my $build = $self->build;
 
-    $self->status_message("Running report summary for build ".$build->id.".");
+    $self->debug_message("Running report summary for build ".$build->id.".");
     my $body = IO::String->new();
     die $! unless $body;
     my $summary = $self->get_summary_information($template);
@@ -152,13 +152,13 @@ sub get_summary_information
         }
         $fh->close();
     } else {
-        $self->status_message("Could not locate RefSeqMaq report at $mapcheck_report_file!");
+        $self->debug_message("Could not locate RefSeqMaq report at $mapcheck_report_file!");
     }
 
     ##match goldsnp report
     my %gold_snp_metrics = $self->format_gold_snp_metrics($build);
     if (!%gold_snp_metrics and $build->gold_snp_build) {
-        $self->status_message("Could not generate gold snp metrics, regenerating gold snp concordance and trying again");
+        $self->debug_message("Could not generate gold snp metrics, regenerating gold snp concordance and trying again");
         Genome::Model::ReferenceAlignment::Command::CreateMetrics::GoldSnpConcordance->execute(build => $build);
         %gold_snp_metrics = $self->format_gold_snp_metrics($build);
     }
@@ -177,7 +177,7 @@ sub get_summary_information
     my $dbsnp_filtered_report_file = $build->dbsnp_file_filtered;
     my $dbsnp_unfiltered_report_file = $build->dbsnp_file_unfiltered;
     unless (-e $dbsnp_filtered_report_file and -e $dbsnp_filtered_report_file) {
-        $self->status_message("Did not find dbSNP concordance files, rerunning dbSNP concordance");
+        $self->debug_message("Did not find dbSNP concordance files, rerunning dbSNP concordance");
         Genome::Model::ReferenceAlignment::Command::CreateMetrics::DbSnpConcordance->execute(build => $build);
     }
 
@@ -190,14 +190,14 @@ sub get_summary_information
             $total_unfiltered_snps = $dbsnp_unfiltered_data->{total_snvs};
         }
         else {
-            $self->status_message("Could not extract total unfiltered SNPs from $dbsnp_unfiltered_report_file!");
+            $self->debug_message("Could not extract total unfiltered SNPs from $dbsnp_unfiltered_report_file!");
         }
 
         if (exists $dbsnp_unfiltered_data->{total_concordance}) {
             $unfiltered_dbsnp_concordance = $dbsnp_unfiltered_data->{total_concordance};
         }
         else {
-            $self->status_message("Could not extract unfiltered concordance from $dbsnp_unfiltered_report_file!");
+            $self->debug_message("Could not extract unfiltered concordance from $dbsnp_unfiltered_report_file!");
         }
 
         # get filtered data
@@ -205,19 +205,19 @@ sub get_summary_information
             $total_filtered_snps = $dbsnp_filtered_data->{total_snvs};
         }
         else {
-            $self->status_message("Could not extract total filtered SNPs from $dbsnp_filtered_report_file!");
+            $self->debug_message("Could not extract total filtered SNPs from $dbsnp_filtered_report_file!");
         }
 
         if (exists $dbsnp_filtered_data->{total_concordance}) {
             $filtered_dbsnp_concordance = $dbsnp_filtered_data->{total_concordance};
         } 
         else {
-            $self->status_message("Could not extract filtered concordance from $dbsnp_filtered_report_file!");
+            $self->debug_message("Could not extract filtered concordance from $dbsnp_filtered_report_file!");
         }
     }
     else {
-        $self->status_message("dbSNP filtered report: $dbsnp_filtered_report_file is not available") unless -e $dbsnp_filtered_report_file;
-        $self->status_message("dbSNP unfiltered report: $dbsnp_unfiltered_report_file is not available") unless -e $dbsnp_unfiltered_report_file;
+        $self->debug_message("dbSNP filtered report: $dbsnp_filtered_report_file is not available") unless -e $dbsnp_filtered_report_file;
+        $self->debug_message("dbSNP unfiltered report: $dbsnp_unfiltered_report_file is not available") unless -e $dbsnp_unfiltered_report_file;
     }
 
     my @inputs = $build->model->instrument_data_inputs;
@@ -438,7 +438,7 @@ sub get_summary_information
         files_url => $ENV{GENOME_SYS_SERVICES_FILES_URL},
     };
 
-    $self->status_message("processing template $template");
+    $self->debug_message("processing template $template");
 
     my $rv = $tt->process($template, { @vars }, \$content) || die $tt->error(), "\n";
     if ($rv != 1) {

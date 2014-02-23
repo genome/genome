@@ -86,7 +86,7 @@ GENE:    foreach my $line (@lines) {
         foreach my $t (@tags) {
             if($t->tag_name eq 'Dead') {
                 #print $gene_name , " is dead\n";
-                $self->status_message( $gene_name . " is dead");
+                $self->debug_message( $gene_name . " is dead");
                 next GENE;
             }
         }
@@ -102,18 +102,18 @@ GENE:    foreach my $line (@lines) {
         return 0;
     }
 
-    $self->status_message("have $dead_count dead genes to ignore");
+    $self->debug_message("have $dead_count dead genes to ignore");
     
     # write out new .dat file.
     unless($self->keep_original) {
         # copy original .dat file to "file".orig
         Genome::Sys->copy_file($self->sqlitedatafile,
                                     $self->sqlitedatafile.".orig");
-        $self->status_message("writing out new .dat file");
+        $self->debug_message("writing out new .dat file");
         write_file($self->sqlitedatafile,@non_dead_genes);
     }
     else {
-        $self->status_message("not writing out file");
+        $self->debug_message("not writing out file");
     }
 
     return 1;

@@ -192,18 +192,18 @@ sub attribute_for_file_path {
     my $finish_ok = $self->_finish;
     return if not $finish_ok;
 
-    $self->status_message('Import instrument data...done');
+    $self->debug_message('Import instrument data...done');
     return 1;
 #< Library >#
 sub _resvolve_library {
     my $self = shift;
-    $self->status_message('Resolve library...');
+    $self->debug_message('Resolve library...');
 
     my $sample = $self->sample;
-    $self->status_message('Sample name: '.$sample->name);
-    $self->status_message('Sample id: '.$sample->id);
+    $self->debug_message('Sample name: '.$sample->name);
+    $self->debug_message('Sample id: '.$sample->id);
     my $library_name = $sample->name.'-extlibs';
-    $self->status_message('Library name: '.$library_name);
+    $self->debug_message('Library name: '.$library_name);
     my $library = Genome::Library->get(
         name => $library_name,
         sample => $sample,
@@ -218,9 +218,9 @@ sub _resvolve_library {
             return;
         }
     }
-    $self->status_message('Library id: '.$library->id);
+    $self->debug_message('Library id: '.$library->id);
 
-    $self->status_message('Resolve library...done');
+    $self->debug_message('Resolve library...done');
     return $self->library($library);
 }
 #<>#
@@ -228,11 +228,11 @@ sub _resvolve_library {
 #< Validate Source Files >#
 sub _validate_source_files {
     my $self = shift;
-    $self->status_message('Validate source files...');
+    $self->debug_message('Validate source files...');
 
     my @source_files = $self->source_files;
-    for my $source_file ( @source_files ) { $self->status_message("Source file(s): $source_file"); }
-    $self->status_message("Source file count: ".@source_files);
+    for my $source_file ( @source_files ) { $self->debug_message("Source file(s): $source_file"); }
+    $self->debug_message("Source file count: ".@source_files);
 
     my $resolve_formats_ok = $self->_resolve_start_and_import_format(@source_files);
     return if not $resolve_formats_ok;
@@ -247,15 +247,15 @@ sub _validate_source_files {
     return if not $kilobytes_requested;
     $kilobytes_requested += 51_200; # a little extra
     $self->kilobytes_requested($kilobytes_requested);
-    $self->status_message('Kilobytes requested: '.$self->kilobytes_requested);
+    $self->debug_message('Kilobytes requested: '.$self->kilobytes_requested);
 
-    $self->status_message('Validate source files...done');
+    $self->debug_message('Validate source files...done');
     return 1;
 }
 
 sub _resolve_start_and_import_format {
     my ($self, @source_files) = @_;
-    $self->status_message('Resolve start and import format...');
+    $self->debug_message('Resolve start and import format...');
 
     my %suffixes;
     for my $source_file ( @source_files ) {
@@ -292,7 +292,7 @@ sub _resolve_start_and_import_format {
     }
     my $original_format = $formats[0];
     $self->original_format($original_format);
-    $self->status_message('Start format: '.$self->original_format);
+    $self->debug_message('Start format: '.$self->original_format);
 
     my %original_format_to_import_format = ( # temp, as everything will soon be bam
         fastq => 'sanger fastq',
@@ -301,9 +301,9 @@ sub _resolve_start_and_import_format {
         sra => 'bam',
     );
     $self->import_format( $original_format_to_import_format{$original_format} );
-    $self->status_message('Import format: '.$self->import_format);
+    $self->debug_message('Import format: '.$self->import_format);
 
-    $self->status_message('Resolve start and import format...done');
+    $self->debug_message('Resolve start and import format...done');
     return 1;
 }
 
@@ -331,7 +331,7 @@ sub _resolve_kilobytes_requested {
 sub _create_instrument_data {
     my $self = shift;
 
-    $self->status_message('Checking if source files were previously imported...');
+    $self->debug_message('Checking if source files were previously imported...');
     my %properties = (
         library => $self->library,
         original_data_path => join(',',  $self->source_files),
@@ -341,9 +341,9 @@ sub _create_instrument_data {
         $self->error_message('Found existing instrument data for library and source files. Were these previously imported? Exiting instrument data id: '.$instrument_data->id.', source files: '.$properties{original_data_path});
         return;
     }
-    $self->status_message('Source files were NOT previously imported!');
+    $self->debug_message('Source files were NOT previously imported!');
 
-    $self->status_message('Create instrument data...');
+    $self->debug_message('Create instrument data...');
     $properties{import_format} = $self->import_format;# will soon be 'bam'
     $properties{sequencing_platform} = $self->sequencing_platform;
     $properties{import_source_name} = $self->import_source_name;
@@ -368,7 +368,7 @@ sub _create_instrument_data {
         $self->error_message('Failed to create instrument data!');
         return;
     }
-    $self->status_message('Instrument data id: '.$instrument_data->id);
+    $self->debug_message('Instrument data id: '.$instrument_data->id);
     $instrument_data->add_attribute(attribute_label => 'original_format', attribute_value => $self->original_format);
 
     my $allocation = Genome::Disk::Allocation->create(
@@ -382,15 +382,15 @@ sub _create_instrument_data {
         $self->error_message('Failed to create allocation for instrument data! '.$instrument_data->id);
         return;
     }
-    $self->status_message('Allocation id: '.$allocation->id);
-    $self->status_message('Allocation path: '.$allocation->absolute_path);
+    $self->debug_message('Allocation id: '.$allocation->id);
+    $self->debug_message('Allocation path: '.$allocation->absolute_path);
 
     my $tmp_dir = $allocation->absolute_path.'/tmp';
     Genome::Sys->create_directory($tmp_dir);
     $self->_tmp_dir($tmp_dir);
-    $self->status_message('Allocation tmp path: '.$tmp_dir);
+    $self->debug_message('Allocation tmp path: '.$tmp_dir);
 
-    $self->status_message('Create instrument data...done');
+    $self->debug_message('Create instrument data...done');
     return $self->instrument_data($instrument_data);
 }
 
@@ -417,7 +417,7 @@ sub _transfer_source_files {
 sub _transfer_bam_source_file {
     # TODO add md5
     my $self = shift;
-    $self->status_message('Transfer bam file and run flagstat...');
+    $self->debug_message('Transfer bam file and run flagstat...');
 
     my ($source_file) = $self->source_files;
     my $bam_base_name = 'all_sequences.bam';
@@ -434,19 +434,19 @@ sub _transfer_bam_source_file {
     $self->is_paired_end($flagstat->{is_paired_end});
     $self->final_data_file($bam_file);
 
-    $self->status_message('Transfer bam file and run flagstat...done');
+    $self->debug_message('Transfer bam file and run flagstat...done');
     return 1;
 }
 
 sub _sort_bam {
     my ($self, $bam_file, $sorted_bam_file) = @_;
-    $self->status_message('Sort bam...');
+    $self->debug_message('Sort bam...');
 
-    $self->status_message("Source bam: $bam_file");
+    $self->debug_message("Source bam: $bam_file");
     my $sorted_bam_prefix = $sorted_bam_file;
     $sorted_bam_prefix =~ s/\.bam$//;
-    $self->status_message("Sorted bam prefix: $sorted_bam_prefix");
-    $self->status_message("Sorted bam file: $sorted_bam_file");
+    $self->debug_message("Sorted bam prefix: $sorted_bam_prefix");
+    $self->debug_message("Sorted bam file: $sorted_bam_file");
     my $cmd = "samtools sort -m 3000000000 -n $bam_file $sorted_bam_prefix";
     my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
     if ( not $rv or not -s $sorted_bam_file ) {
@@ -455,13 +455,13 @@ sub _sort_bam {
         return;
     }
 
-    $self->status_message('Sort bam...done');
+    $self->debug_message('Sort bam...done');
     return 1;
 }
 
 sub _verify_and_move_bam {
     my ($self, $bam_file, $new_bam_file) = @_;
-    $self->status_message('Verify and move bam to permanent location...');
+    $self->debug_message('Verify and move bam to permanent location...');
 
     my $flagstat_file = $new_bam_file.'.flagstat';
     my $flagstat = $self->_run_flagstat($bam_file, $flagstat_file);
@@ -469,8 +469,8 @@ sub _verify_and_move_bam {
     $self->read_count($flagstat->{total_reads});
     $self->is_paired_end($flagstat->{is_paired_end});
 
-    $self->status_message('Move bam file to permenant location...');
-    $self->status_message("Permanent bam file: $new_bam_file");
+    $self->debug_message('Move bam file to permenant location...');
+    $self->debug_message("Permanent bam file: $new_bam_file");
     my $move_ok = File::Copy::move($bam_file, $new_bam_file);
     if ( not $move_ok ) {
         $self->error_message('Failed to move the tmp bam file!');
@@ -481,16 +481,16 @@ sub _verify_and_move_bam {
         return;
     }
 
-    $self->status_message('Verify and move bam to permanent location...done');
+    $self->debug_message('Verify and move bam to permanent location...done');
     return $flagstat;
 }
 
 sub _run_flagstat {
     my ($self, $bam_file, $flagstat_file) = @_;
-    $self->status_message('Run and verify flagstat...');
+    $self->debug_message('Run and verify flagstat...');
 
     $flagstat_file ||= $bam_file.'.flagstat';
-    $self->status_message("Flagstat file: $flagstat_file");
+    $self->debug_message("Flagstat file: $flagstat_file");
     my $cmd = "samtools flagstat $bam_file > $flagstat_file";
     my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
     if ( not $rv or not -s $flagstat_file ) {
@@ -499,8 +499,8 @@ sub _run_flagstat {
         return;
     }
     my $flagstat = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flagstat_file);
-    $self->status_message('Flagstat output:');
-    $self->status_message( join("\n", map { ' '.$_.': '.$flagstat->{$_} } sort keys %$flagstat) );
+    $self->debug_message('Flagstat output:');
+    $self->debug_message( join("\n", map { ' '.$_.': '.$flagstat->{$_} } sort keys %$flagstat) );
     if ( not $flagstat->{total_reads} > 0 ) {
         $self->error_message('Flagstat determined that there are no reads in bam! '.$bam_file);
         return;
@@ -518,7 +518,7 @@ sub _run_flagstat {
         $flagstat->{is_paired_end} = 0;
     }
 
-    $self->status_message('Run and verify flagstat...done');
+    $self->debug_message('Run and verify flagstat...done');
     return $flagstat;
 }
 #</TransferBam>#
@@ -527,7 +527,7 @@ sub _run_flagstat {
 sub _transfer_fastq_source_files {
     # TODO determine quality type
     my $self = shift;
-    $self->status_message('Transfer source files...');
+    $self->debug_message('Transfer source files...');
 
     # Derive dest file names and copy/gunzip to tmp dir in allocation
     my @source_files = $self->source_files;
@@ -535,7 +535,7 @@ sub _transfer_fastq_source_files {
     my (@destination_base_names, %read_counts);
     for ( my $i = 0; $i < @source_files; $i++ ) {
         my $source_file = $source_files[$i];
-        $self->status_message("Source file: $source_file");
+        $self->debug_message("Source file: $source_file");
         my $lane = eval{ 
             my $attr = $self->instrument_data->attributes(attribute_label => 'lane');
             return $attr->attribute_value if $attr;
@@ -547,7 +547,7 @@ sub _transfer_fastq_source_files {
             ( @source_files == 1 ? '' : '_'.($i + 1) ),
         );
         my $destination_file = $tmp_dir.'/'.$destination_base_names[$i];
-        $self->status_message("Destination file: $destination_file");
+        $self->debug_message("Destination file: $destination_file");
         my $cmd;
         if ( $source_file =~ /\.gz$/ ) { # zcat
             $cmd = "zcat $source_file | tee $destination_file";
@@ -565,7 +565,7 @@ sub _transfer_fastq_source_files {
         my $read_count = $self->_get_read_count_from_line_count_file($line_count_file);
         return if not $read_count;
         $read_counts{$read_count} = 1;
-        $self->status_message("Read count: $read_count");
+        $self->debug_message("Read count: $read_count");
     }
 
     # Read counts
@@ -578,9 +578,9 @@ sub _transfer_fastq_source_files {
     $self->is_paired_end( @source_files == 2 ? 1 : 0 );
 
     # Tar
-    $self->status_message('Tar fastqs to tmp tar file...');
+    $self->debug_message('Tar fastqs to tmp tar file...');
     my $tar_tmp_file = $tmp_dir.'/archive.tgz';
-    $self->status_message("Tmp tar file: $tar_tmp_file");
+    $self->debug_message("Tmp tar file: $tar_tmp_file");
     my $tar_ok = eval{ Genome::Sys->shellcmd(cmd => "tar cvzfh $tar_tmp_file -C $tmp_dir @destination_base_names"); };
     if ( not $tar_ok ) {
         $self->error_message('Failed to tar fastqs! From cmd: '.$@);
@@ -590,12 +590,12 @@ sub _transfer_fastq_source_files {
         $self->error_message('Tar succeeded, but tar file does not exist!');
         return;
     }
-    $self->status_message('Tar fastqs to tmp tar file...done');
+    $self->debug_message('Tar fastqs to tmp tar file...done');
 
     # Move tar file from tmp to main allocation
-    $self->status_message('Move tmp tar file to permenant file...');
+    $self->debug_message('Move tmp tar file to permenant file...');
     my $tar_file = $self->instrument_data->allocation->absolute_path.'/archive.tgz';
-    $self->status_message("Tar file: $tar_file");
+    $self->debug_message("Tar file: $tar_file");
     my $move_ok = File::Copy::move($tar_tmp_file, $tar_file);
     if ( not $move_ok ) {
         $self->error_message('Failed to move the tmp tar file!');
@@ -605,10 +605,10 @@ sub _transfer_fastq_source_files {
         $self->error_message('Move of the tmp tar file succeeded, but tar file does not exist!');
         return;
     }
-    $self->status_message('Move tmp tar file to permenant file...done');
+    $self->debug_message('Move tmp tar file to permenant file...done');
     $self->final_data_file($tar_file);
 
-    $self->status_message('Transfer source files...done');
+    $self->debug_message('Transfer source files...done');
     return 1;
 }
 
@@ -644,7 +644,7 @@ sub _get_read_count_from_line_count_file {
 #<TransferSRA>#
 sub _transfer_sra_source_file {
     my $self = shift;
-    $self->status_message('Transfer SRA file...');
+    $self->debug_message('Transfer SRA file...');
 
     # TODO mv to start up validation
     my $ncbi_config_file = $ENV{HOME}.'/.ncbi/user-settings.mkfg';
@@ -654,13 +654,13 @@ sub _transfer_sra_source_file {
     }
 
     my ($source_sra_file) = $self->source_files;
-    $self->status_message('Source SRA file: '.$source_sra_file);
+    $self->debug_message('Source SRA file: '.$source_sra_file);
     my $sra_file = $self->instrument_data->allocation->absolute_path.'/all_sequences.sra';
 
     # Check database components
-    $self->status_message('Check SRA database...');
+    $self->debug_message('Check SRA database...');
     my $dbcc_file = $sra_file.'.dbcc';
-    $self->status_message('DBCC file: '.$dbcc_file);
+    $self->debug_message('DBCC file: '.$dbcc_file);
     my $cwd = Cwd::getcwd();
     my ($source_sra_basename, $source_sra_directory) = File::Basename::fileparse($source_sra_file);
     chdir $source_sra_directory;
@@ -678,27 +678,27 @@ sub _transfer_sra_source_file {
     }
     my $sra_has_primary_alignment_info = grep { $_ =~ /PRIMARY_ALIGNMENT/ } @dbcc_lines;
     chdir $cwd;
-    $self->status_message('Check SRA database...done');
+    $self->debug_message('Check SRA database...done');
     
-    $self->status_message('Copy SRA file...');
+    $self->debug_message('Copy SRA file...');
     my $source_sra_file_sz = -s $source_sra_file;
-    $self->status_message('Source SRA file size: '.$source_sra_file_sz);
-    $self->status_message('SRA file: '.$sra_file);
+    $self->debug_message('Source SRA file size: '.$source_sra_file_sz);
+    $self->debug_message('SRA file: '.$sra_file);
     my $copy_sra_ok = File::Copy::copy($source_sra_file, $sra_file);
     my $sra_file_sz = -s $sra_file || 0;
-    $self->status_message('SRA file size: '.$source_sra_file_sz);
+    $self->debug_message('SRA file size: '.$source_sra_file_sz);
     if ( not $copy_sra_ok or $source_sra_file_sz != $sra_file_sz) {
         $self->error_message('Failed to copy SRA file!');
         return;
     }
-    $self->status_message('Copy SRA file...done');
+    $self->debug_message('Copy SRA file...done');
 
     # TODO decrypt
     
-    $self->status_message('Dump aligned bam...');
+    $self->debug_message('Dump aligned bam...');
     my $aligned_bam = $self->_tmp_dir.'/aligned.bam';
     my $unsorted_bam = $aligned_bam; # set now, override if there is a unaligned bam
-    $self->status_message('Aligned bam: '.$aligned_bam);
+    $self->debug_message('Aligned bam: '.$aligned_bam);
     $cmd = "/usr/bin/sam-dump --primary $sra_file | samtools view -h -b -S - > $aligned_bam";
     $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
     if ( not $rv or not -s $aligned_bam ) {
@@ -706,12 +706,12 @@ sub _transfer_sra_source_file {
         $self->error_message('Failed to run sra sam dump aligned bam!');
         return;
     }
-    $self->status_message('Dump aligned bam...done');
+    $self->debug_message('Dump aligned bam...done');
 
     if ( $sra_has_primary_alignment_info ) { # unaligned are already dumped above if there is no alignment info
-        $self->status_message('Dump unaligned from sra to fastq...');
+        $self->debug_message('Dump unaligned from sra to fastq...');
         my $unaligned_fastq = $self->_tmp_dir.'/unaligned.fastq';
-        $self->status_message("Unaligned fastq: $unaligned_fastq");
+        $self->debug_message("Unaligned fastq: $unaligned_fastq");
         $cmd = "/usr/bin/fastq-dump --unaligned --origfmt $sra_file --stdout > $unaligned_fastq";
         $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
         if ( not $rv ) {
@@ -719,10 +719,10 @@ sub _transfer_sra_source_file {
             $self->error_message('Failed to run sra sam dump unaligned fastq!');
             return;
         }
-        $self->status_message('Dump unaligned from sra to fastq...done');
+        $self->debug_message('Dump unaligned from sra to fastq...done');
 
         if ( -s $unaligned_fastq ) {
-            $self->status_message('Convert unaligned fastq to bam...');
+            $self->debug_message('Convert unaligned fastq to bam...');
             my $unaligned_bam = $unaligned_fastq.'.bam';
             my $cmd = "gmt picard fastq-to-sam --fastq $unaligned_fastq --output $unaligned_bam --quality-format Standard --sample-name ".$self->sample->name;
             my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
@@ -731,10 +731,10 @@ sub _transfer_sra_source_file {
                 $self->error_message('Failed to run sam fastq to sam on unaligned fastq!');
                 return;
             }
-            $self->status_message('Convert unaligned fastq to bam...done');
+            $self->debug_message('Convert unaligned fastq to bam...done');
             unlink($unaligned_fastq);
 
-            $self->status_message('Add bam from unaligned fastq to unsorted bam...');
+            $self->debug_message('Add bam from unaligned fastq to unsorted bam...');
             $unsorted_bam = $self->_tmp_dir.'/unsorted.bam';
             $cmd = "samtools merge $unsorted_bam $aligned_bam $unaligned_bam";
             $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
@@ -743,16 +743,16 @@ sub _transfer_sra_source_file {
                 $self->error_message('Failed to run samtools view!');
                 return;
             }
-            $self->status_message('Add bam from unaligned fastq to unsorted bam...done');
+            $self->debug_message('Add bam from unaligned fastq to unsorted bam...done');
             unlink($unaligned_bam);
         }
     }
 
-    $self->status_message('Sort/merge dumped bam(s)...');
+    $self->debug_message('Sort/merge dumped bam(s)...');
     my $sorted_bam_prefix = $self->_tmp_dir.'/all_sequences';
-    $self->status_message("Sorted bam prefix: $sorted_bam_prefix");
+    $self->debug_message("Sorted bam prefix: $sorted_bam_prefix");
     my $sorted_bam_file = $sorted_bam_prefix.'.bam';
-    $self->status_message("Sorted bam file: $sorted_bam_file");
+    $self->debug_message("Sorted bam file: $sorted_bam_file");
     $cmd = "samtools sort -m 3000000000 -n $unsorted_bam $sorted_bam_prefix";
     $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
     if ( not $rv or not -s $sorted_bam_file ) {
@@ -760,7 +760,7 @@ sub _transfer_sra_source_file {
         $self->error_message('Failed to sort bam with samtools!');
         return;
     }
-    $self->status_message('Sort dumped bam...done');
+    $self->debug_message('Sort dumped bam...done');
 
     my $bam_file = $self->instrument_data->allocation->absolute_path.'/all_sequences.bam';
     my $flagstat_file = $bam_file.'.flagstat';
@@ -771,7 +771,7 @@ sub _transfer_sra_source_file {
     $self->is_paired_end($flagstat->{is_paired_end});
     $self->final_data_file($bam_file);
 
-    $self->status_message('Transfer SRA file...done');
+    $self->debug_message('Transfer SRA file...done');
     return 1;
 }
 #</TransferSRA>#
@@ -780,30 +780,30 @@ sub _transfer_sra_source_file {
 sub _finish {
     my $self = shift;
 
-    $self->status_message('Update properties on instrument data...');
+    $self->debug_message('Update properties on instrument data...');
     # File attribute
     my $instrument_data = $self->instrument_data;
     my $file_attribute_label = $self->file_attribute_label;#'bam_path'
     my $file_attribute_value = $self->final_data_file; # support more than one?
-    $self->status_message(ucfirst(join(' ', split('_', $file_attribute_label))).': '.$file_attribute_value);
+    $self->debug_message(ucfirst(join(' ', split('_', $file_attribute_label))).': '.$file_attribute_value);
     $instrument_data->add_attribute(attribute_label => $file_attribute_label, attribute_value => $file_attribute_value);
 
     # Set attributes
     for my $attribute_label (qw/ read_count is_paired_end /) { # more?
         my $attribute_value = $self->$attribute_label;
         next if not defined $attribute_value; # error?
-        $self->status_message(ucfirst(join(' ', split('_', $attribute_label))).': '.$attribute_value);
+        $self->debug_message(ucfirst(join(' ', split('_', $attribute_label))).': '.$attribute_value);
         $instrument_data->add_attribute(attribute_label => $attribute_label, attribute_value => $attribute_value);
     }
-    $self->status_message('Update properties on instrument data...done');
+    $self->debug_message('Update properties on instrument data...done');
 
-    $self->status_message('Remove tmp dir...');
+    $self->debug_message('Remove tmp dir...');
     File::Path::rmtree($self->_tmp_dir, 1);
-    $self->status_message('Remove tmp dir...done');
+    $self->debug_message('Remove tmp dir...done');
 
-    $self->status_message('Reallocate...');
+    $self->debug_message('Reallocate...');
     $self->instrument_data->allocations->reallocate;# with move??
-    $self->status_message('Reallocate...done');
+    $self->debug_message('Reallocate...done');
 
     return 1;
 }
@@ -814,7 +814,7 @@ sub _check_quality_scores {
 
     my $lines_to_validate = 200;
 
-    $self->status_message(sprintf(
+    $self->debug_message(sprintf(
             "Validating sample quality scores from first $lines_to_validate lines of $filename for import format %s.",
             $self->import_format));
 

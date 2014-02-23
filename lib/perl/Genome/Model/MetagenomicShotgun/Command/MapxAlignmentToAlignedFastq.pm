@@ -47,7 +47,7 @@ sub execute{
         }
     }
 
-    $self->status_message("Collecting read names for extracting from instrument data");
+    $self->debug_message("Collecting read names for extracting from instrument data");
     
     my $sorted_reads = IO::File->new("awk ' \$0 !~ /^#/ {print \$3}' ".$self->mapx_alignment." | sort -u |");
     unless ($sorted_reads){
@@ -55,7 +55,7 @@ sub execute{
     }
 
     # dump fastqs
-    $self->status_message("Getting fastq files from source instrument data");
+    $self->debug_message("Getting fastq files from source instrument data");
     my @fastq_files = $instrument_data->dump_sanger_fastq_files;
     unless (@fastq_files){
         die $self->error_message("no fastq files for instrument data");
@@ -82,7 +82,7 @@ sub execute{
         die $self->error_message('Failed to create SX writer for files in output directory: '.$self->output_directory);
     }
 
-    $self->status_message("Extracting aligned reads from source instrument data");
+    $self->debug_message("Extracting aligned reads from source instrument data");
 
     my $cached_read = $sorted_reads->getline;
     while ($cached_read){
@@ -105,7 +105,7 @@ sub execute{
             $cached_read = $read;
         }
     }
-    $self->status_message("Finished extraction");
+    $self->debug_message("Finished extraction");
     return 1;
 }
 

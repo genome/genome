@@ -103,11 +103,11 @@ sub shortcut {
     my $params = $self->params_for_result;
     my $result = Genome::Model::Build::SomaticValidation::IdentifyDnpResult->get_with_lock(%$params);
     unless($result) {
-        $self->status_message('No existing result found.');
+        $self->debug_message('No existing result found.');
         return;
     }
 
-    $self->status_message('Using existing result ' . $result->__display_name__);
+    $self->debug_message('Using existing result ' . $result->__display_name__);
     $self->dnp_result($result);
     $self->_link_to_result;
 

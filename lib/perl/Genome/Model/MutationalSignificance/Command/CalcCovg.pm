@@ -80,7 +80,7 @@ sub shortcut {
     my $result = Genome::Model::Build::SomaticVariation::CalcCovgResult->get_with_lock(%params);
 
     if ($result) {
-        $self->status_message('Using existing result ' .
+        $self->debug_message('Using existing result ' .
                     $result->__display_name__);
         return $self->_link_result_to_build($result);
     }
@@ -92,7 +92,7 @@ sub shortcut {
 sub execute {
     my $self = shift;
 
-    $self->status_message("CalcCovg for build ".$self->somatic_variation_build->id);
+    $self->debug_message("CalcCovg for build ".$self->somatic_variation_build->id);
 
     my $result = Genome::Model::Build::SomaticVariation::CalcCovgResult->get_or_create($self->_collect_params);
 
@@ -102,7 +102,7 @@ sub execute {
     }
 
     my $status = "CalcCovg done";
-    $self->status_message($status);
+    $self->debug_message($status);
     return $self->_link_result_to_build($result);
 }
 

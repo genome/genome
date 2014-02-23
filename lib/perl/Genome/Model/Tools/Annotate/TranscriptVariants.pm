@@ -409,7 +409,7 @@ sub _validate_parameters {
 
     if ($self->build and $self->cache_annotation_data_directory) {
         $self->cache_annotation_data_directory(0);
-        $self->status_message("--cache-annotation-data-directory is currently disabled.  Operating from the annotation data directory instead.");
+        $self->debug_message("--cache-annotation-data-directory is currently disabled.  Operating from the annotation data directory instead.");
     }
 
     my $annotation_filter = $self->annotation_filter( lc $self->annotation_filter );
@@ -431,7 +431,7 @@ sub _print_starting_message {
     # Useful information for debugging...
     my ($date, $time) = split(' ',$self->__context__->now());
     my $host = hostname;
-    $self->status_message("Executing on host $host on $date at $time");
+    $self->debug_message("Executing on host $host on $date at $time");
 }
 
 # generate an iterator for the input list of variants
@@ -644,7 +644,7 @@ sub execute {
     }
 
     if (($self->skip_if_output_present)&&(-s $self->output_file)) {
-        $self->status_message("Skipping execution: Output is already present and skip_if_output_present is set to true");
+        $self->debug_message("Skipping execution: Output is already present and skip_if_output_present is set to true");
         return 1;
     }
 

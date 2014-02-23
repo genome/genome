@@ -68,7 +68,7 @@ sub _run_aligner {
 
     # disconnect the db handle before this long-running event
     if (Genome::DataSource::GMSchema->has_default_handle) {
-        $self->status_message("Disconnecting GMSchema default handle.");
+        $self->debug_message("Disconnecting GMSchema default handle.");
         Genome::DataSource::GMSchema->disconnect_default_dbh();
     }
 
@@ -84,7 +84,7 @@ sub _run_aligner {
     }
 
     my $sai_bytes = -s $sai_file;
-    $self->status_message("Created $sai_file ($sai_bytes bytes)");
+    $self->debug_message("Created $sai_file ($sai_bytes bytes)");
 
     my $md5_file = $self->_create_md5($sai_file);
     unless($md5_file) {
@@ -188,7 +188,7 @@ sub _verify_bwa_aln_did_happen {
     }
 
     if($count eq $expected_count) {
-        $self->status_message('Log reported expected count of ' . $expected_count . ' sequences processed.');
+        $self->debug_message('Log reported expected count of ' . $expected_count . ' sequences processed.');
     } else {
         $self->error_message('Expected to process ' . $expected_count . ' sequences but processed ' . $count);
         return;
@@ -227,7 +227,7 @@ sub _inspect_log_file {
 
     if ($last_line =~ m/$log_regex/) {
         if ( !$check_nonzero || $1 > 0 ) {
-            $self->status_message('The last line of aligner.log matches the expected pattern');
+            $self->debug_message('The last line of aligner.log matches the expected pattern');
             return $1;
         }
     }

@@ -37,14 +37,7 @@
         <link fromOperation="input connector" fromProperty="use_bgzip" toOperation="VarscanConsensus" toProperty="use_bgzip" />
         <link fromOperation="input connector" fromProperty="varscan_version_internal" toOperation="VarscanConsensus" toProperty="version" />
 
-        <link fromOperation="VarscanConsensus" fromProperty="output_file" toOperation="JoinxNormalize" toProperty="input_file" />
-        <link fromOperation="Helper" fromProperty="joinx_output_file" toOperation="JoinxNormalize" toProperty="output_file" />
-        <link fromOperation="input connector" fromProperty="use_bgzip" toOperation="JoinxNormalize" toProperty="use_bgzip" />
-        <link fromOperation="input connector" fromProperty="ref_fasta" toOperation="JoinxNormalize" toProperty="reference" />
-        <link fromOperation="input connector" fromProperty="joinx_version" toOperation="JoinxNormalize" toProperty="use_version" />
-
-        <link fromOperation="JoinxNormalize" fromProperty="output_file" toOperation="output connector" toProperty="output_vcf" />
-
+        <link fromOperation="VarscanConsensus" fromProperty="output_file" toOperation="output connector" toProperty="output_vcf" />
 
         <operation name="GetSampleName">
             <operationtype commandClass="Genome::Model::Tools::Sam::GetSampleName" typeClass="Workflow::OperationType::Command" />
@@ -54,9 +47,6 @@
          </operation>
         <operation name="VarscanConsensus">
             <operationtype commandClass="Genome::Model::Tools::Varscan::Consensus" typeClass="Workflow::OperationType::Command" />
-        </operation>
-        <operation name="JoinxNormalize">
-            <operationtype commandClass="Genome::Model::Tools::Joinx::VcfNormalizeIndels" typeClass="Workflow::OperationType::Command" />
         </operation>
 
         <operation name="RealignWithDindel">

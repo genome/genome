@@ -70,7 +70,7 @@ sub execute {
 
     #write contigs to new ace file
     while ( my $contig = $reader->next_contig ) {
-        $self->status_message("Exporting contig: ".$contig->{name});
+        $self->debug_message("Exporting contig: ".$contig->{name});
         $writer->add_contig( contig => $contig );
     }
 
@@ -78,7 +78,7 @@ sub execute {
     my @tags;
     for my $tag ( @{$reader->contig_tags} ) {
         if ( grep { $tag->{tag_type} eq lc $_ } $self->tags ) {
-            $self->status_message("Excluding tag with type: ".$tag->{tag_type});
+            $self->debug_message("Excluding tag with type: ".$tag->{tag_type});
             next;
         }
         push @tags, $tag;

@@ -38,7 +38,7 @@ class Genome::InstrumentData::Command::Import::WorkFlow::FastqsToBam {
 
 sub execute {
     my $self = shift;
-    $self->status_message('Fastqs to bam...');
+    $self->debug_message('Fastqs to bam...');
 
     my $fastq_to_bam_ok = $self->_fastqs_to_bam;
     return if not $fastq_to_bam_ok;
@@ -49,25 +49,25 @@ sub execute {
     my $cleanup_ok = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->remove_paths_and_auxiliary_files($self->fastq_paths);
     return if not $cleanup_ok;
 
-    $self->status_message('Fastqs to bam...done');
+    $self->debug_message('Fastqs to bam...done');
     return 1;
 }
 
 sub _fastqs_to_bam {
     my $self = shift;
-    $self->status_message('Run picard fastq to sam...');
+    $self->debug_message('Run picard fastq to sam...');
 
     my $sample_name = $self->sample->name;
     my $read_group_name = $sample_name.'-extlibs';
     my @fastqs = $self->fastq_paths;
-    $self->status_message("Fastq 1: $fastqs[0]");
+    $self->debug_message("Fastq 1: $fastqs[0]");
     my $bam_path = $self->bam_path;
     my $cmd = "gmt picard fastq-to-sam --fastq $fastqs[0] --output $bam_path --quality-format Standard --sample-name $sample_name --read-group-name $read_group_name";
     if ( $fastqs[1] ) {
-        $self->status_message("Fastq 2: $fastqs[1]") if $fastqs[1];
+        $self->debug_message("Fastq 2: $fastqs[1]") if $fastqs[1];
         $cmd .= ' --fastq2 '.$fastqs[1]
     }
-    $self->status_message("Bam path: $bam_path");
+    $self->debug_message("Bam path: $bam_path");
 
     my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
     if ( not $rv or not -s $bam_path ) {
@@ -76,22 +76,22 @@ sub _fastqs_to_bam {
         return;
     }
 
-    $self->status_message('Run picard fastq to sam...done');
+    $self->debug_message('Run picard fastq to sam...done');
     return 1;
 }
 
 sub _verify_bam {
     my $self = shift;
-    $self->status_message('Verify bam...');
+    $self->debug_message('Verify bam...');
 
     my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
 
     my $flagstat = $helpers->validate_bam($self->bam_path);
     return if not $flagstat;
 
-    $self->status_message('Bam read count: '.$flagstat->{total_reads});
+    $self->debug_message('Bam read count: '.$flagstat->{total_reads});
 
-    $self->status_message('Verify bam...done');
+    $self->debug_message('Verify bam...done');
     return 1;
 }
 

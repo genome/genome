@@ -132,7 +132,10 @@
         <xsl:value-of select="aspect[@name='creation_date']"/>
       </td>
       <td>
-        <xsl:value-of select="aspect[@name='user_name']"/>
+        <xsl:value-of select="aspect[@name='created_by']"/>
+      </td>
+      <td>
+        <xsl:value-of select="aspect[@name='run_as']"/>
       </td>
       <td>
         <xsl:value-of select="$total_builds"/>
@@ -300,7 +303,14 @@
             <tr>
               <td class="name">created by:
               </td>
-              <td class="value"><xsl:value-of select="aspect[@name='user_name']/value"/>
+              <td class="value"><xsl:value-of select="aspect[@name='created_by']/value"/>
+              </td>
+            </tr>
+
+            <tr>
+              <td class="name">run as:
+              </td>
+              <td class="value"><xsl:value-of select="aspect[@name='run_as']/value"/>
               </td>
             </tr>
 
@@ -853,10 +863,18 @@
             </tr>
             <tr>
               <td class="name">
-                username:
+                run as:
               </td>
               <td class="value">
-                <xsl:value-of select="aspect[@name='user_name']/value"/>
+                <xsl:value-of select="aspect[@name='run_as']/value"/>
+              </td>
+            </tr>
+            <tr>
+              <td class="name">
+                created by:
+              </td>
+              <td class="value">
+                <xsl:value-of select="aspect[@name='created_by']/value"/>
               </td>
             </tr>
             <tr>
@@ -1171,7 +1189,8 @@
             <td>
               <strong>model id: </strong><xsl:value-of select="@id"/>
             </td>
-            <td><strong>username: </strong><xsl:value-of select="aspect[@name='user_name']/value"/></td>
+            <td><strong>run as: </strong><xsl:value-of select="aspect[@name='run_as']/value"/></td>
+            <td><strong>created by: </strong><xsl:value-of select="aspect[@name='created_by']/value"/></td>
             <td class="last"><strong>scheduled: </strong><xsl:value-of select="aspect[@name='creation_date']/value"/></td>
           </tr>
           <tr class="model_row_subheader">

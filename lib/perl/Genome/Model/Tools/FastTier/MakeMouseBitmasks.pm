@@ -173,17 +173,17 @@ sub add_region {
     my $self = shift;
     my ($set,$chr, $start, $stop) = @_;
     if($start > $stop){
-        $self->status_message(" found a record with start > stop! ");
+        $self->debug_message(" found a record with start > stop! ");
         ($stop,$start) = ($start,$stop);
     }
     unless(exists( $set->{$chr})){
-        $self->status_message(" found a chromosome that wasn't in the hash: ".$chr);
+        $self->debug_message(" found a chromosome that wasn't in the hash: ".$chr);
         return;
     }
     if($start >=0 && ($stop < $set->{$chr}->Size-1)){
         $set->{$chr}->Interval_Fill($start,$stop);    
     } else {
-        $self->status_message("Found a weird record off the edge of a chrom");
+        $self->debug_message("Found a weird record off the edge of a chrom");
         return;
     }
 }

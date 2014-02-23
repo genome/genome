@@ -62,7 +62,7 @@ sub _run_aligner {
 
     # disconnect the db handle before this long-running event
     if (Genome::DataSource::GMSchema->has_default_handle) {
-        $self->status_message("Disconnecting GMSchema default handle.");
+        $self->debug_message("Disconnecting GMSchema default handle.");
         Genome::DataSource::GMSchema->disconnect_default_dbh();
     }
 
@@ -120,7 +120,7 @@ sub _check_read_count {
         $self->error_message("$check does not match.");
         return;
     }
-    $self->status_message("$check matches.");
+    $self->debug_message("$check matches.");
     return 1;
 }
 
@@ -387,7 +387,7 @@ sub prepare_reference_sequence_index {
     my $actual_fasta_file = $staged_fasta_file;
 
     if (-l $staged_fasta_file) {
-        $class->status_message(sprintf("Following symlink for fasta file %s", $staged_fasta_file));
+        $class->debug_message(sprintf("Following symlink for fasta file %s", $staged_fasta_file));
         $actual_fasta_file = readlink($staged_fasta_file);
         unless($actual_fasta_file) {
             $class->error_message("Can't read target of symlink $staged_fasta_file");
@@ -463,7 +463,7 @@ sub _get_modified_tophat_params {
 
     #set number of threads automatically
     my $cpu_count = $self->_available_cpu_count;
-    $self->status_message("CPU count is $cpu_count");
+    $self->debug_message("CPU count is $cpu_count");
     if($params =~ /(^| )--num-threads[ =]\d+/) {
         $params =~ s/(^| )--num-threads[ =]\d+/$1--num-threads $cpu_count/;
     } elsif ($params =~ /(^| )-p[ =]\d+/) {

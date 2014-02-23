@@ -89,7 +89,7 @@ sub execute {
     my %chr2idx;
     @chr2idx{@chr_lst} = (1..scalar(@chr_lst)); # last chr (*) maps to undef
     
-    $self->status_message("Comparing files: ". join(",",@files) );
+    $self->debug_message("Comparing files: ". join(",",@files) );
 
     my @data = map {
         my ($name,undef,$ext) = fileparse($_,'\.[^\.]*');
@@ -157,7 +157,7 @@ sub execute {
         $infh->close;
         $outfh->close;
     }
-    $self->status_message("Comparison finished. Outputs placed in '$out_dir'");
+    $self->debug_message("Comparison finished. Outputs placed in '$out_dir'");
 
     return 1;
 }

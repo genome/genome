@@ -385,7 +385,7 @@ sub check_and_update_genotype_input {
     return 1 unless $default_genotype_model;
 
     if (defined $self->genotype_microarray_model_id and $self->genotype_microarray_model_id ne $default_genotype_model->id) {
-        if (defined $self->user_name and $self->user_name eq 'apipe-builder') {
+        if (defined $self->run_as and $self->run_as eq 'apipe-builder') {
             $self->warning_message("Sample " . $self->subject_id . " points to genotype model " . $default_genotype_model->id .
                 ", which disagrees with the genotype model input of this model (" . $self->genotype_microarray_model_id .
                 "), overwriting!");
@@ -414,7 +414,32 @@ sub default_lane_qc_model_name_for_instrument_data {
         $model_name .= '.capture.' . $instrument_data->target_region_set_name;
     }
 
+    if($self->_check_for_existing_model_name($model_name)) {
+        $model_name = $self->_get_incremented_name($model_name);
+    }
+
     return $model_name;
+}
+
+sub _check_for_existing_model_name {
+    my $self = shift;
+    my $model_name = shift;
+    return scalar @{[Genome::Model->get(name => $model_name)]};
+}
+
+sub _get_incremented_name {
+    my $self = shift;
+    my $model_name = shift;
+    my $counter = 1;
+
+    my $format_name = sub {
+        return sprintf("%s-%s", shift, shift);
+    };
+    while ($self->_check_for_existing_model_name($format_name->($model_name, $counter))) {
+            $counter++;
+    }
+
+    return $format_name->($model_name, $counter);
 }
 
 sub default_lane_qc_model_for_instrument_data {
@@ -496,20 +521,20 @@ sub get_or_create_lane_qc_models {
 
         my $existing_model = Genome::Model->get(name => $lane_qc_model_name);
         if ($existing_model) {
-            $self->status_message("Default lane QC model " . $existing_model->__display_name__ . " already exists.");
+            $self->debug_message("Default lane QC model " . $existing_model->__display_name__ . " already exists.");
 
             my @existing_instrument_data = $existing_model->instrument_data;
             unless (@existing_instrument_data) {
                 $existing_model->add_instrument_data($instrument_data);
                 $existing_model->build_requested(1, 'instrument data assigned');
-                $self->status_message("New build requested for lane qc model " . $existing_model->__display_name__ .
+                $self->debug_message("New build requested for lane qc model " . $existing_model->__display_name__ .
                     " because it just had instrument data assigned to it"
                 );
             }
 
             unless ($existing_model->genotype_microarray_model_id) {
                 $self->build_requested(1, 'genotype ' . $subject->default_genotype_data_id . ' data added');
-                $self->status_message("New build requested for lane QC model " . $existing_model->__display_name__ . 
+                $self->debug_message("New build requested for lane QC model " . $existing_model->__display_name__ . 
                     " because it is missing the genotype_microarray input."
                 );
             }

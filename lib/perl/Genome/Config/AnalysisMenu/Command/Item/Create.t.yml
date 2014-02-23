@@ -1,0 +1,8 @@
+rules:
+  sequencing_platform: sanger
+
+models:
+  'Genome::Model::MetagenomicComposition16s':
+    - processing_profile_id: 2591277
+      instrument_data_properties:
+        subject: sample

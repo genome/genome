@@ -31,7 +31,7 @@ sub help_detail {
 sub _execute {
     my $self = shift;
 
-    $self->status_message('Move BAM...');
+    $self->debug_message('Move BAM...');
     
     my $dl_directory = $self->_dl_directory;
     my @bams = glob($dl_directory.'/*.bam');
@@ -56,9 +56,9 @@ sub _execute {
         return;
     }
 
-    $self->status_message('Move BAM...OK');
+    $self->debug_message('Move BAM...OK');
 
-    $self->status_message('Update instrument data...');
+    $self->debug_message('Update instrument data...');
 
     my %metrics = $self->_load_bam_metric_file;
     return if not %metrics;
@@ -73,7 +73,7 @@ sub _execute {
     $instrument_data->read_count($metrics{reads});
     $instrument_data->description($self->sra_sample_id.' BAM of mapped reads from the DACC');
 
-    $self->status_message('Update instrument data...OK');
+    $self->debug_message('Update instrument data...OK');
 
     return 1;
 }
@@ -81,7 +81,7 @@ sub _execute {
 sub _load_bam_metric_file {
     my $self = shift;
 
-    $self->status_message('Load BAM metrics...');
+    $self->debug_message('Load BAM metrics...');
 
     my ($metric_file) = glob($self->_dl_directory.'/*_metric.txt');
     if ( not $metric_file ) {
@@ -105,7 +105,7 @@ sub _load_bam_metric_file {
     my %metrics;
     @metrics{qw/ id reads clusters mapped /} = split(/\s+/, $line);
 
-    $self->status_message('Load BAM metrics...OK');
+    $self->debug_message('Load BAM metrics...OK');
 
     return %metrics;
 

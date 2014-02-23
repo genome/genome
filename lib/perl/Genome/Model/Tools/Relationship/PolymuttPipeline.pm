@@ -151,7 +151,7 @@ sub run_polymutt {
         $self->error_message(@errors);
         die "Errors validating workflow\n";
     }
-    $self->status_message("Now launching 2 polymutt jobs");
+    $self->debug_message("Now launching 2 polymutt jobs");
     my $result = Workflow::Simple::run_workflow_lsf( $workflow, %inputs);
     unless($result) {
         $self->error_message( join("\n", map($_->name . ': ' . $_->error, @Workflow::Simple::ERROR)) );
@@ -266,7 +266,7 @@ sub generate_glfs {
         $self->error_message(@errors);
         die "Errors validating workflow\n";
     }
-    $self->status_message("Now launching glf generation jobs");
+    $self->debug_message("Now launching glf generation jobs");
     my $result = Workflow::Simple::run_workflow_lsf( $workflow, %inputs);
     unless($result) {
         $self->error_message( join("\n", map($_->name . ': ' . $_->error, @Workflow::Simple::ERROR)) );

@@ -54,7 +54,7 @@ sub sub_command_category { 'pipeline steps' }
 sub execute{
     my $self = shift;
 
-    $self->status_message("Executing detect variants step");
+    $self->debug_message("Executing detect variants step");
     my $build = $self->build;
     unless ($build){
         die $self->error_message("no build provided!");
@@ -114,7 +114,7 @@ sub execute{
         #users set below
     }
 
-    $self->status_message("detect variants command completed successfully");
+    $self->debug_message("detect variants command completed successfully");
 
     my $version = 2;
     #my $version = GMT:BED:CONVERT::version();  TODO, something like this instead of hardcoding
@@ -167,7 +167,7 @@ sub execute{
             if (-e $unexpected_filename_output){
                 symlink($unexpected_filename_output, $lq_result);
             } else {
-                $self->status_message("No lq indel file found. Creating an empty file at $lq_result");
+                $self->debug_message("No lq indel file found. Creating an empty file at $lq_result");
                 system("touch $lq_result");
             }
         }
@@ -213,7 +213,7 @@ sub execute{
     $self->hq_snv_file($hq_snv_file);
     $self->lq_snv_file($lq_snv_file);
 
-    $self->status_message("detect variants step completed");
+    $self->debug_message("detect variants step completed");
 
     return 1;
 }

@@ -53,7 +53,7 @@ sub help_detail {
 sub execute {
     my $self = shift;
 
-    $self->status_message("Starting rna masking command, masking sequences in " . $self->fasta_file);
+    $self->debug_message("Starting rna masking command, masking sequences in " . $self->fasta_file);
 
     unless (-e $self->fasta_file) {
         confess 'No fasta file found at ' . $self->fasta_file . '!';
@@ -73,7 +73,7 @@ sub execute {
         $masked_fh->close;
     }
 
-    $self->status_message("Masked sequences are being written to fasta file at " . $self->masked_fasta_file);
+    $self->debug_message("Masked sequences are being written to fasta file at " . $self->masked_fasta_file);
 
     # If no RNA genes are found, there won't be an rna file. This is a valid situation, so if no RNA gene file
     # and the skip flag is set, just copy the input fasta to the masked fasta location. To figure out the path
@@ -83,7 +83,7 @@ sub execute {
     my $rna_file = $file_resolver->($self->prediction_directory);
     unless (-e $rna_file) {
         if ($self->skip_if_no_rna_file) {
-            $self->status_message("No rna predictions file found at $rna_file" .
+            $self->debug_message("No rna predictions file found at $rna_file" .
                 " and skip_if_no_rna_file flag is set to true. Assuming that no rna predictions were" .
                 " made and setting input fasta " . $self->fasta_file . " as masked output fasta!");
 
@@ -92,7 +92,7 @@ sub execute {
                 confess 'Could not copy input fasta ' . $self->fasta_file . ' to ' . $self->masked_fasta_file . "!";
             }
 
-            $self->status_message("Copy successful! Masked fasta file now at " . $self->masked_fasta_file . ", exiting!");
+            $self->debug_message("Copy successful! Masked fasta file now at " . $self->masked_fasta_file . ", exiting!");
             return 1;
         }
         else {
@@ -101,7 +101,7 @@ sub execute {
     }
     
     # This pre-loads all the predictions, which makes grabbing predictions per sequence faster below
-    $self->status_message("Found RNA predictions in $rna_file, now loading them into memory!");
+    $self->debug_message("Found RNA predictions in $rna_file, now loading them into memory!");
     my @rna_predictions = Genome::Prediction::RNAGene->get(
         directory => $self->prediction_directory
     );
@@ -116,12 +116,12 @@ sub execute {
         -format => 'Fasta',
     );
 
-    $self->status_message("Masking sequences in " . $self->fasta_file . " and writing to " . $self->masked_fasta_file);
+    $self->debug_message("Masking sequences in " . $self->fasta_file . " and writing to " . $self->masked_fasta_file);
 
     # Iterate through every sequence in the fasta and find the predictions associated with each one,
     # then mask out sequence associated with an rna prediction
     while (my $seq = $fasta->next_seq()) {
-        $self->status_message("Working on sequence " . $seq->display_id());
+        $self->debug_message("Working on sequence " . $seq->display_id());
         my $seq_id = $seq->display_id();
         my $seq_length = $seq->length();
         my $seq_string = $seq->seq();
@@ -152,7 +152,7 @@ sub execute {
         $masked_fasta->write_seq($masked_seq);
     }
 
-    $self->status_message("All sequences have been masked!");
+    $self->debug_message("All sequences have been masked!");
     return 1;
 }
 

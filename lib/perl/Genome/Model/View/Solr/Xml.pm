@@ -138,7 +138,11 @@ class Genome::Model::View::Solr::Xml {
                     position => 'content',
                 },
                 {
-                    name => 'user_name',
+                    name => 'created_by',
+                    position => 'content',
+                },
+                {
+                    name => 'run_as',
                     position => 'content',
                 },
                 {

@@ -105,9 +105,9 @@ sub execute {                               # replace with real execution logic.
     }
     @vcfnames=();
     @vcffiles=();
-    $self->status_message("Sorting files according to size, loading smallest one into memory first");
+    $self->debug_message("Sorting files according to size, loading smallest one into memory first");
     for my $key (sort {$vcf_size{$a}{'lines'} <=> $vcf_size{$b}{'lines'}} keys %vcf_size) {
-        $self->status_message("File: " . $vcf_size{$key}{'name'} . " Size: " . $vcf_size{$key}{'lines'});
+        $self->debug_message("File: " . $vcf_size{$key}{'name'} . " Size: " . $vcf_size{$key}{'lines'});
         push @vcfnames, $vcf_size{$key}{'name'};
         push @vcffiles, $vcf_size{$key}{'file'};
     }
@@ -205,7 +205,7 @@ sub execute {                               # replace with real execution logic.
                 return 0;
             }
         }
-        $self->status_message("Printing header...");
+        $self->debug_message("Printing header...");
         $self->print_header($output_file, \@header, \@newInfo, \@newFilters);
         
 
@@ -226,7 +226,7 @@ sub execute {                               # replace with real execution logic.
 
             $prev_chr = $chr unless $prev_chr; ## load prev_chr the first time through to prevent weirdness
             if($prev_chr ne $chr) {
-                $self->status_message("Finished with $prev_chr, printing to file...");
+                $self->debug_message("Finished with $prev_chr, printing to file...");
                 $self->print_chromosome($prev_chr, $output_file, $varHash{$prev_chr},  \@vcffiles, $passHash{$prev_chr});
                 delete $varHash{$prev_chr};
                 delete $passHash{$prev_chr};
@@ -311,7 +311,7 @@ sub execute {                               # replace with real execution logic.
 
             
         }
-        $self->status_message("Finished with $prev_chr, printing to file...");
+        $self->debug_message("Finished with $prev_chr, printing to file...");
         $self->print_chromosome($prev_chr, $output_file, $varHash{$prev_chr},  \@vcffiles, $passHash{$prev_chr});
     }
     return 1;

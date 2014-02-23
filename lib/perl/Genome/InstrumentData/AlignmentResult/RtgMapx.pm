@@ -44,12 +44,12 @@ sub _run_aligner {
     my @input_pathnames = @_;
     
     $ENV{'RTG_MEM'} = ($ENV{'TEST_MODE'} ? '1G' : '23G');
-    $self->status_message("RTG Memory limit is $ENV{RTG_MEM}");
+    $self->debug_message("RTG Memory limit is $ENV{RTG_MEM}");
 
     if (@input_pathnames == 1) {
-        $self->status_message("_run_aligner called in single-ended mode.");
+        $self->debug_message("_run_aligner called in single-ended mode.");
     } elsif (@input_pathnames == 2) {
-        $self->status_message("_run_aligner called in paired-end mode.  We don't actually do paired alignment with MapX though; running two passes.");
+        $self->debug_message("_run_aligner called in paired-end mode.  We don't actually do paired alignment with MapX though; running two passes.");
     } else {
         $self->error_message("_run_aligner called with " . scalar @input_pathnames . " files.  It should only get 1 or 2!");
         die $self->error_message;
@@ -87,7 +87,7 @@ sub _run_aligner {
 
         # disconnect db before long-running action 
         if (Genome::DataSource::GMSchema->has_default_handle) {
-            $self->status_message("Disconnecting GMSchema default handle.");
+            $self->debug_message("Disconnecting GMSchema default handle.");
             Genome::DataSource::GMSchema->disconnect_default_dbh();
         }
 
@@ -119,7 +119,7 @@ sub _run_aligner {
 
         my $chunk_size = ($ENV{'TEST_MODE'} ? 200 : 1000000);;
 
-        $self->status_message("Chunking....");
+        $self->debug_message("Chunking....");
         my $chunk_cmd = sprintf("%s -n %s -o %s %s", Genome::Model::Tools::Rtg->path_for_rtg_sdfsplit($self->aligner_version), $chunk_size, $chunk_path, $input_sdf);
         Genome::Sys->shellcmd(
                 cmd                 => $chunk_cmd, 
@@ -145,11 +145,11 @@ sub _run_aligner {
     
         # chunk paths all have numeric names 
         for my $chunk (grep {basename($_) =~ m/^\d+$/} glob($chunk_path . "/*")) {
-            $self->status_message("Adding chunk for analysis ... $chunk");
+            $self->debug_message("Adding chunk for analysis ... $chunk");
             push @chunks, $chunk;
         }
 
-        $self->status_message("Removing original unchunked input sdf");
+        $self->debug_message("Removing original unchunked input sdf");
         rmtree($input_sdf);
         
     }
@@ -189,7 +189,7 @@ sub _run_aligner {
                 );
 
         for (values %output_files) {
-            $self->status_message("Copying $_ into staging...");
+            $self->debug_message("Copying $_ into staging...");
 
             my $output_file = $self->temp_staging_directory . "/" . basename($_);
 
@@ -201,11 +201,11 @@ sub _run_aligner {
             );
         }
     
-        $self->status_message("removing old output to save disk");
+        $self->debug_message("removing old output to save disk");
         rmtree($output_dir);
 
     } 
-    $self->status_message("removing chunks to save disk");
+    $self->debug_message("removing chunks to save disk");
     rmtree($self->temp_scratch_directory . "/chunks");
 
     return 1;
@@ -259,7 +259,7 @@ sub prepare_reference_sequence_index {
 
     my $actual_fasta_file = $staged_fasta_file;    
 
-    $class->status_message("Making an RTG index out of $staged_fasta_file");
+    $class->debug_message("Making an RTG index out of $staged_fasta_file");
 
     my $rtg_path = Genome::Model::Tools::Rtg->path_for_rtg_format($refindex->aligner_version);
 

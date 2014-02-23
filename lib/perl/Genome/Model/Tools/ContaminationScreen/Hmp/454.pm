@@ -64,7 +64,7 @@ sub execute
 
     # Step 1 - create read file
     my $cmd = 'cross_match.test ' . $input_file . ' ' .  $self->database . ' -raw -tags -minmatch 14 -bandwidth 6 -penalty -1 -gap_init -1 -gap_ext -1 > ' . $output_file;
-    $self->status_message('Running: '. $cmd);
+    $self->debug_message('Running: '. $cmd);
     print "454 step 1 - cmd:  $cmd\n";
     my $rv = system($cmd);
 

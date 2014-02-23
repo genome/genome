@@ -51,7 +51,8 @@ sub execute {
         my $current_inst_data = $current_pair->instrument_data;
 
         if(my $skip_reason = $self->should_skip($current_inst_data)) {
-            return $self->_mark_pair_as_skipped($current_pair, $skip_reason);
+            $self->_mark_pair_as_skipped($current_pair, $skip_reason);
+            next;
         }
 
         my $analysis_project = $current_pair->analysis_project;
@@ -63,8 +64,8 @@ sub execute {
             my $config = $analysis_project->get_configuration_profile();
             my $hashes = $self->_prepare_configuration_hashes_for_instrument_data($current_inst_data, $config);
             while (my ($model_type, $model_hashes) = (each %$hashes)) {
-                if ($model_type->requires_pairing) {
-                    $model_hashes = $self->_process_paired_samples($analysis_project, $current_inst_data, $model_hashes);
+                if ($model_type->requires_subject_mapping) {
+                    $model_hashes = $self->_process_mapped_samples($analysis_project, $current_inst_data, $model_hashes);
                 }
                 $self->_process_models($analysis_project, $current_inst_data, $model_type, $model_hashes);
             }
@@ -74,6 +75,8 @@ sub execute {
         $self->error_message($error) if $error;
         $self->_mark_sync_status($current_pair, $error);
     }
+
+    $self->_update_models_for_associated_projects(@instrument_data_analysis_project_pairs);
 
     return 1;
 }
@@ -93,7 +96,6 @@ sub _process_models {
 
         $self->_assign_instrument_data_to_model($model, $instrument_data, $created_new);
         $self->_assign_model_to_analysis_project($analysis_project, $model);
-        $self->_update_models_for_associated_projects($instrument_data);
     }
 }
 
@@ -213,7 +215,6 @@ sub _get_model_for_config_hash {
         die(sprintf("Sorry, but multiple identical models were found: %s", join(',', map { $_->id } @m)));
     };
     #return the model, plus a 'boolean' value indicating if we created a new model
-    push @extra_params, ( user_name => 'apipe-builder' );
     my @model_info =  $m[0] ? ($m[0], 0) : ($class_name->create(@extra_params, %$config), 1);
     return wantarray ? @model_info : $model_info[0];
 }
@@ -248,34 +249,30 @@ sub _prepare_configuration_hashes_for_instrument_data {
     return $config_hash;
 }
 
-sub _process_paired_samples {
+sub _process_mapped_samples {
     my ($self, $analysis_project, $instrument_data, $model_hashes) = @_;
     die('Must provide an analysis project, a piece of instrument data and a config hash!')
         unless($analysis_project && $instrument_data && $model_hashes);
 
-    my @subject_pairings = Genome::Config::AnalysisProject::SubjectPairing->get(
-        -or => [
-            [ analysis_project => $analysis_project, control_subject => $instrument_data->sample],
-            [ analysis_project => $analysis_project, experimental_subject => $instrument_data->sample]
-        ],
+    my @subject_mappings = Genome::Config::AnalysisProject::SubjectMapping->get(
+        analysis_project => $analysis_project,
+        subjects => $instrument_data->sample
     );
 
-    unless (@subject_pairings) {
-        die(sprintf('Found no pairing information for %s in project %s for a model type that requires pairing!',
+    unless (@subject_mappings) {
+        die(sprintf('Found no mapping information for %s in project %s for a model type that requires mapping!',
             $instrument_data->__display_name__,
             $analysis_project->__display_name__));
     }
 
     return [ map {
-        my $pair = $_;
+        my $mapping = $_;
         map { {
-          experimental_subject => $pair->experimental_subject,
-          control_subject => $pair->control_subject,
-          #TODO - this should be in config or on the pairing object
-          subject => $pair->experimental_subject->source,
+          (map { $_->label => $_->subject } $mapping->subject_bridges),
+          (map { $_->key => $_->value } $mapping->inputs),
           %$_
         } } @$model_hashes
-    } @subject_pairings ];
+    } @subject_mappings ];
 }
 
 sub _get_items_to_process {
@@ -307,16 +304,18 @@ sub _assign_model_to_analysis_project {
 
 sub _update_models_for_associated_projects {
     my $self = shift;
-    my $instrument_data = shift;
+    my @instrument_data_analysis_project_pairs = @_;
 
-    my @projects = Genome::Project->get('parts.entity_id' => $instrument_data->id);
+    my @instrument_data_ids = map { $_->instrument_data->id } @instrument_data_analysis_project_pairs;
+
+    my @projects = Genome::Project->get('parts.entity_id' => \@instrument_data_ids);
 
     if(@projects) {
         my $update_cmd = Genome::Project::Command::Update::Models->create(
             projects => \@projects
         );
 
-        die $self->error_message('Failed to update models for project associated with %s', $instrument_data->__display_name__)
+        die $self->error_message('Failed to update models for project associated with %s', join(',', @instrument_data_ids))
             unless $update_cmd->execute();
     }
 

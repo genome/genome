@@ -715,8 +715,12 @@ EOS
         print $gene_fh "$genes_noAmpDel{$gene}\t$gene\n";
     }
     $gene_fh->close;
-
-    my $cancer_annotation_db = Genome::Db->get(id => 'tgi/cancer-annotation/human/build37-20130711.1');
+	if(!$build->cancer_annotation_db){
+	    Genome::Sys->status_message("ERROR: No cancer_annotation_db");
+	    return 1;
+	}
+    my $cancer_annotation_db = $build->cancer_annotation_db;
+    #my $cancer_annotation_db = Genome::Db->get(id => 'tgi/cancer-annotation/human/build37-20130711.1');
     my $annotate_genes_cmd1 = Genome::Model::ClinSeq::Command::AnnotateGenesByCategory->create(
         infile => "$output_directory/raw/genes_noAmpDel.txt",
         cancer_annotation_db => $cancer_annotation_db,

@@ -38,20 +38,20 @@ sub create {
 
     my @readers;
     for my $config ( $self->config ) {
-        $self->status_message('Parsing reader config: '.$config);
+        $self->debug_message('Parsing reader config: '.$config);
         my ($reader_class, $params) = $self->parse_reader_config($config);
         return if not $reader_class;
 
-        $self->status_message('Config: ');
-        $self->status_message('reader: '.$reader_class);
+        $self->debug_message('Config: ');
+        $self->debug_message('reader: '.$reader_class);
         for my $key ( keys %$params ) {
-            $self->status_message($key.' => '.$params->{$key});
+            $self->debug_message($key.' => '.$params->{$key});
         }
         my $cnt = ( exists $params->{cnt} ? delete $params->{cnt} : 1 );
 
         my $reader = eval{ $reader_class->create(%$params) };
         if ( not $reader ) {
-            $self->status_message($@) if $@;
+            $self->debug_message($@) if $@;
             $self->error_message('Failed to create '.$reader_class);
             return;
         }

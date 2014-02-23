@@ -171,7 +171,7 @@ sub _filter_variants {
     }
 
     my $build_id = $self->reference_build_id;
-    $self->status_message("The reference sequence build id is : $build_id");
+    $self->debug_message("The reference sequence build id is : $build_id");
 
     my $novo_idx_obj = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_or_create(
         reference_build_id => $build_id,
@@ -187,7 +187,7 @@ sub _filter_variants {
     unless (-e $novo_idx) {
         die "Found no novocraft index file at $novo_idx for reference build $build_id and aligner version " . $self->novoalign_version;
     }
-    $self->status_message("Found novocraft index file: $novo_idx");
+    $self->debug_message("Found novocraft index file: $novo_idx");
 
     my $skip_count = 0;
     for my $lib (keys %fastqs) {
@@ -253,7 +253,7 @@ sub _filter_variants {
             `mv $librmdupbams[0] $merge_bam`;  #rg header already made during novo2sam step
         }
         else {
-            $self->status_message('Now merge per library rmdup bam files');
+            $self->debug_message('Now merge per library rmdup bam files');
             my $header_file = $prefix . '.header';
             my $header = Genome::Sys->open_file_for_writing($header_file) or die "fail to open $header_file for writing\n";
 
@@ -283,7 +283,7 @@ sub _filter_variants {
 
             #if we get here we didn't find any variants
             $svs_hq_fh->close;
-            $self->status_message('No SVs in svs.hq, skipping run');
+            $self->debug_message('No SVs in svs.hq, skipping run');
             my $output_file = $self->pass_staging_output;
             `touch $output_file`;
             return 1;
@@ -294,7 +294,7 @@ sub _filter_variants {
         die;
     }
 
-    $self->status_message('Now prepare breakdancer config file');
+    $self->debug_message('Now prepare breakdancer config file');
     my $novo_cfg    = "$prefix.novo.cfg";
     my $novo_cfg_fh = Genome::Sys->open_file_for_writing($novo_cfg) or die "failed to open $novo_cfg for writing\n";
 
@@ -311,7 +311,7 @@ sub _filter_variants {
     }
 
     unlink (@bams2remove, @librmdupbams, @novoaligns);
-    $self->status_message('Now run breakdancer');
+    $self->debug_message('Now run breakdancer');
 
     my $bd_out_hq_filtered = $self->pass_staging_output;
     my $bd_out_lq_filtered = $self->fail_staging_output;

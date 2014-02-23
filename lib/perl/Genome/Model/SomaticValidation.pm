@@ -291,6 +291,6 @@ sub default_single_bam_profile {
         name => 'Jun 2012 Single-Bam Validation (single-bam somatic)');
 }
 
-sub requires_pairing { return 1; }
+sub requires_subject_mapping { return 1; }
 
 1;

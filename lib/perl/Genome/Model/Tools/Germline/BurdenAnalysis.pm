@@ -199,7 +199,7 @@ sub execute {                               # replace with real execution logic.
             $pheno_covar_type_hash{$clinical_data_trait_name} = "$covariates\t$analysis_type";
         }
     }
-    $self->status_message("Phenotype/covariates selection: " . Dumper(\%pheno_covar_type_hash));
+    $self->debug_message("Phenotype/covariates selection: " . Dumper(\%pheno_covar_type_hash));
 
     #determine which trv_types to include
     #Note that the natural place to do this is now upstream in gmt vcf vcf-to-burden-matrix. This could still be useful for subsetting files created with that command though
@@ -442,7 +442,7 @@ _END_OF_R_
                 $self->error_message(@errors);
                 die "Errors validating workflow\n";
             }
-            $self->status_message("Now launching burden test jobs");
+            $self->debug_message("Now launching burden test jobs");
             my $result = Workflow::Simple::run_workflow_lsf( $workflow, %inputs);
             unless($result) {
                 $self->error_message( join("\n", map($_->name . ': ' . $_->error, @Workflow::Simple::ERROR)) );
@@ -466,7 +466,7 @@ _END_OF_R_
                     else {
                         $bsub_cmd = "$bsub_base $analysis_data_type $phenotype $gene $permutations:$seed:$p_value_permutations\'";
                     }
-                    $self->status_message("CMD: $bsub_cmd");
+                    $self->debug_message("CMD: $bsub_cmd");
                     system($bsub_cmd);
                 }
             }
@@ -475,7 +475,7 @@ _END_OF_R_
 
     #NOTE When using bsub there's no way to know if all 20000 jobs have finished with the current implementation so rather than crash, just skip the summary
     if(!$self->use_bsub || $self->aggregate_only) {
-        $self->status_message("Now aggregating burden test result files");
+        $self->debug_message("Now aggregating burden test result files");
         my $header;
         my $num_fields;
         my @lines;  #since we won't know if we are NULL or not ahead of time, aggregate the header and lines together and then print

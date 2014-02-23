@@ -42,7 +42,7 @@ sub execute {
 
     #get reads duplicated in ace file
     if ( not $self->_duplicate_reads ) {
-        $self->status_message("Did not find any duplicate reads in ace file: ".$self->ace_in );
+        $self->debug_message("Did not find any duplicate reads in ace file: ".$self->ace_in );
         return 1;
     }
  
@@ -174,7 +174,7 @@ sub _duplicate_reads {
             #print status message
             ++$tc;
             if ( ++$c == 10000 ) {
-                $self->status_message("Checked $tc reads for duplicates");
+                $self->debug_message("Checked $tc reads for duplicates");
                 $c = 0;
             }
         }

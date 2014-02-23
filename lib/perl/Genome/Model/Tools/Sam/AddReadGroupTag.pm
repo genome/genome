@@ -82,10 +82,10 @@ sub execute {
 
     my $read_group_tag = $self->read_group_tag;
 
-    $self->status_message("Attempting to add read group tag $read_group_tag.");
+    $self->debug_message("Attempting to add read group tag $read_group_tag.");
 
     my $now = UR::Context->current->now;
-    $self->status_message(">>> Beginning add read tag at $now");
+    $self->debug_message(">>> Beginning add read tag at $now");
 
     my $rg_added_records = 0;
 
@@ -115,7 +115,7 @@ sub execute {
         $output_fh->close;
     }
     $now = UR::Context->current->now;
-    $self->status_message("<<< Completed add read tag at $now.  Processed $rg_added_records SAM records.");
+    $self->debug_message("<<< Completed add read tag at $now.  Processed $rg_added_records SAM records.");
 
     return 1;
 }

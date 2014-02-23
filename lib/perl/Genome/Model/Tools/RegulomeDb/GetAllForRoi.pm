@@ -65,7 +65,7 @@ sub process_roi {
     my $current_start;
     my $current_stop;
     my $current_score;
-    $self->status_message("Process roi $roi");
+    $self->debug_message("Process roi $roi");
     my $expanded_rois = $self->expand_rois($roi);
     my @positions = split(/\n/, $expanded_rois);
     for my $pos (@positions) {

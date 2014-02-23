@@ -49,7 +49,7 @@ sub _run_aligner {
 
         my $cur_input_fa = $cur_input.".fa";
 # TODO this doesn't work right:
-#        $self->status_message("Converting $cur_input (FastQ) to $cur_input_fa (FastA).");
+#        $self->debug_message("Converting $cur_input (FastQ) to $cur_input_fa (FastA).");
 #        Genome::Sys->shellcmd(
 #            cmd             => "fastq_to_fasta <$cur_input >$cur_input_fa",
 #            input_files     => [ $cur_input ],
@@ -105,7 +105,7 @@ sub _filter_sam_output {
     my ($self, $cur_sam_file, $all_sequences_sam_file) = @_;
 
 #    my $sam_run_output_fh = IO::File->new( $sam_cmd . "|" );
-#    $self->status_message("Running $sam_cmd");
+#    $self->debug_message("Running $sam_cmd");
 #    if ( !$sam_run_output_fh ) {
 #            $self->error_message("Error running $sam_cmd $!");
 #            return;
@@ -116,14 +116,14 @@ sub _filter_sam_output {
         $self->error_message("Error opening current sam file for reading $!");
         return;
     }
-    $self->status_message("Opened $cur_sam_file");
+    $self->debug_message("Opened $cur_sam_file");
 
     my $all_seq_fh = IO::File->new(">>$all_sequences_sam_file");
     if ( !$all_seq_fh ) {
         $self->error_message("Error opening all seq sam file for writing $!");
         return;
     }
-    $self->status_message("Opened $all_sequences_sam_file");
+    $self->debug_message("Opened $all_sequences_sam_file");
     
     while (<$cur_sam_fh>) {
         #write out the aligned map, excluding the default header- all lines starting with @.

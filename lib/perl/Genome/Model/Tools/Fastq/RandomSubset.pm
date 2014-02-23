@@ -90,7 +90,7 @@ sub _create_index {
         $self->_read_2_fhs(\@read_2_fhs);
     }
     $self->_index(\@index);
-    $self->status_message('Finished indexing '. scalar(@index) .' reads from '. scalar(@read_1_fhs) .' files.');
+    $self->debug_message('Finished indexing '. scalar(@index) .' reads from '. scalar(@read_1_fhs) .' files.');
     return 1;
 }
 
@@ -117,8 +117,8 @@ sub _set_limits {
         $self->limit_value($per_file_limit);
         $self->_max_read_per_end(int( ($self->limit_value / $self->_shortest_seq)) + 1);
     }
-    $self->status_message('Creating random subset of fastq(s) with '. $self->limit_type .' '. $self->limit_value .' and a maximum of '. $self->_max_read_per_end .' reads per end');
-    #print $self->status_message ."\n";
+    $self->debug_message('Creating random subset of fastq(s) with '. $self->limit_type .' '. $self->limit_value .' and a maximum of '. $self->_max_read_per_end .' reads per end');
+    #print $self->debug_message ."\n";
     return 1;
 }
 
@@ -185,7 +185,7 @@ sub _generate_fastq_for_read_end {
             die('There was only '. $total_seq .' base pair per end but expecting '. $self->limit_value);
         }
     }
-    $self->status_message('Generated fastq file for read end '. $end  .' with '. $total_seq .' base pair in '. $total_reads .' reads.');
+    $self->debug_message('Generated fastq file for read end '. $end  .' with '. $total_seq .' base pair in '. $total_reads .' reads.');
     return 1;
 
 }

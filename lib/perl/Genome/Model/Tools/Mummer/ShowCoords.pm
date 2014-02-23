@@ -93,7 +93,7 @@ sub execute {
     }
 
     if ( -e $self->output_file ) {
-        $self->status_message('Removing existing output file: '.$self->output_file);
+        $self->debug_message('Removing existing output file: '.$self->output_file);
         unlink $self->output_file;
     }
 
@@ -116,7 +116,7 @@ sub execute {
 
     my $cmd = $versioned_show_coords.$params.' '.$self->input_delta_file.' > '.$self->output_file;
 
-    $self->status_message("Running show-coords with command: $cmd");
+    $self->debug_message("Running show-coords with command: $cmd");
     
     my %run_params = (
         cmd          => $cmd,

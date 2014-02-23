@@ -177,10 +177,18 @@ sub getCnvFiles{
     my @files;
 
     #Find the two input CNV data files in the build dir
+
+    my $cnvs_hq_file;
+
     my $find_cmd1 = "find $data_directory/*/cnv/ -name cnvs.hq";
     if ($verbose){print YELLOW, "\n\t\t$find_cmd1", RESET;}
-    my $cnvs_hq_file = `$find_cmd1`;
-    chomp($cnvs_hq_file);
+    my @tmp1 = `$find_cmd1`;
+    chomp @tmp1;
+    foreach my $path (@tmp1) {
+        if($path !~ /microarray_cnv/) {
+            $cnvs_hq_file = $path;
+        }
+    }
 
     my $cnvs_gene_file;
 

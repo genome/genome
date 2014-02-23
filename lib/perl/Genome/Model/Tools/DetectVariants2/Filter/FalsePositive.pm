@@ -210,14 +210,14 @@ sub _filter_variants {
 
     ## Run BAM readcounts in batch mode to get read counts for all positions in file ##
     my $readcount_file;
-    $self->status_message('Running BAM Readcounts...');
+    $self->debug_message('Running BAM Readcounts...');
 
     ## Build temp file for positions where readcounts are needed ##
     my $temp_path = $self->_temp_scratch_directory."/temp_dump";
     my $tfh = Genome::Sys->open_file_for_writing($temp_path);#Genome::Sys->create_temp_file;
 
     ## Print each line to file in order to get readcounts
-    $self->status_message('Printing variants to temporary region_list file...');
+    $self->debug_message('Printing variants to temporary region_list file...');
     while(my $line = $input->getline) {
         my ($chr, $start, $stop) = split /\t/, $line;
         # Since we read in bed input (0-based start position) and the bed will be 1-based... adjust the start.

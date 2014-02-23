@@ -174,7 +174,7 @@ sub execute {
     my $snv_count = keys %{$snvs};
 
     if ($verbose){
-	  $self->status_message("\n\nSNV count = $snv_count\n$data_type\n$sample_type\n$bam_path\n$ref_fasta\n")
+	  $self->debug_message("\n\nSNV count = $snv_count\n$data_type\n$sample_type\n$bam_path\n$ref_fasta\n")
     }
     my $counts = $self->getBamReadCounts('-snvs'=>$snvs, '-data_type'=>$data_type, '-sample_type'=>$sample_type, '-bam_path'=>$bam_path, '-ref_fasta'=>$ref_fasta, '-verbose'=>$verbose, '-no_fasta_check'=>$no_fasta_check);
     $data->{$bam}->{read_counts} = $counts;
@@ -572,7 +572,7 @@ sub getExpressionValues{
   my $entrez_ensembl_data = $args{'-entrez_ensembl_data'};
   my $ensembl_map = $args{'-ensembl_map'};
 
-  if ($verbose){ $self->status_message("\nGetting expression data from: $build_dir");}
+  if ($verbose){ $self->debug_message("\nGetting expression data from: $build_dir");}
 
   my %e;
 

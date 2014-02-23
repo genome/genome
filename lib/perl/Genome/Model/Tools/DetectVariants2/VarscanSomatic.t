@@ -25,8 +25,7 @@ my $ref_seq_build = Genome::Model::Build::ImportedReferenceSequence->get($refbui
 ok($ref_seq_build, 'human36 reference sequence build') or die;
 
 my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-VarscanSomatic/';
-my $test_base_dir = File::Temp::tempdir('DetectVariants2-VarscanSomaticXXXXX', CLEANUP => 1, TMPDIR => 1);
-my $test_working_dir = "$test_base_dir/output";
+my $test_base_dir = Genome::Sys->create_temp_directory;
 
 my $bam_input = $test_dir . '/alignments/102922275_merged_rmdup.bam';
 my $normal_bam = $test_dir . '/alignments/102922275_merged_rmdup.bam';
@@ -37,43 +36,59 @@ my $normal_bam = $test_dir . '/alignments/102922275_merged_rmdup.bam';
 # Updated to .v8 due to directory structure changes
 # Updated to .v9 due to DetVar2 module
 # Updated to .v14 due to increasing insertion start/stop positions by 1
-my $expected_dir = $test_dir . '/expected.v15/';
+# Updated to .v16 due to add non-default parameter testing 
+my $expected_dir = $test_dir . '/expected.v16/';
 ok(-d $expected_dir, "expected results directory exists");
 
-my $version = '2.3.2'; 
-
-my $command = Genome::Model::Tools::DetectVariants2::VarscanSomatic->create(
-    reference_build_id => $refbuild_id,
-    aligned_reads_input => $bam_input,
-    control_aligned_reads_input => $normal_bam,
-    version => $version,
-    params => "",
-    output_directory => $test_working_dir,
-    aligned_reads_sample => 'TEST',
-    control_aligned_reads_sample => 'TEST_NORMAL',
-);
-ok($command, 'Created `gmt detect-variants varscan-somatic` command');
-$command->dump_status_messages(1);
-ok($command->execute, 'Executed `gmt detect-variants varscan-somatic` command');
-
-my @file_names = qw|    indels.hq
-                        indels.hq.bed
-                        indels.hq.v1.bed
-                        indels.hq.v2.bed
-                        snvs.hq
-                        snvs.hq.bed
-                        snvs.hq.v1.bed
-                        snvs.hq.v2.bed      |;
-
-for my $file_name (@file_names){
-    my $file = $expected_dir."/".$file_name;
-    ok( -e $file, "$file_name exists");
-}
-
-for my $file_name (@file_names){
-    my $output_file = $test_working_dir."/".$file_name;
-    my $expected_file = $expected_dir."/".$file_name;
-    is(compare($output_file, $expected_file), 0, "$output_file output matched expected output");
-}
+run_test('default_params', '');
+run_test('non_default_params', '--min-coverage 2 --min-var-freq 0.02 --p-value 0.02 --somatic-p-value 0.02 --strand-filter 1');
 
 done_testing();
+
+sub run_test {
+    my ($type, $param) = @_;
+    my $version = '2.3.2'; 
+    my $output_dir = $test_base_dir. "/$type";
+    my $expect_dir = $expected_dir . "/$type";
+
+    my %params = (
+        reference_build_id           => $refbuild_id,
+        aligned_reads_input          => $bam_input,
+        control_aligned_reads_input  => $normal_bam,
+        version                      => $version,
+        output_directory             => $output_dir,
+        aligned_reads_sample         => 'TEST',
+        control_aligned_reads_sample => 'TEST_NORMAL',
+    );
+    $params{params} = $param if $param;
+
+    my $command = Genome::Model::Tools::DetectVariants2::VarscanSomatic->create(%params);
+    ok($command, 'Created `gmt detect-variants varscan-somatic` command');
+    $command->dump_status_messages(1);
+    ok($command->execute, 'Executed `gmt detect-variants varscan-somatic` command');
+
+    if ($param) {
+        ok ($command->params eq $param, "parameter string: $param, set correctly");
+    }
+
+    my @file_names = qw|    
+        indels.hq
+        indels.hq.bed
+        indels.hq.v1.bed
+        indels.hq.v2.bed
+        snvs.hq
+        snvs.hq.bed
+        snvs.hq.v1.bed
+        snvs.hq.v2.bed      |;
+
+    for my $file_name (@file_names){
+        my $output_file   = $output_dir."/".$file_name;
+        my $expected_file = $expect_dir."/".$file_name;
+        ok(-e $output_file,   "$type output $file_name exists");
+        ok(-e $expected_file, "$type expect $file_name exists");
+        is(compare($output_file, $expected_file), 0, "$output_file output as expected");
+    }
+    return 1;
+}
+
+

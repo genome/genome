@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 use Carp qw(confess);
+use Memoize qw(memoize);;
 
 class Genome::Disk::Group {
     table_name => 'disk.group',
@@ -126,27 +127,16 @@ sub validate {
     }
 }
 
-my %user_name_cache;
-my %group_name_cache;
-
-# memoizing frontends for user_name and group_name
+memoize('_resolve_user_name');
 sub _resolve_user_name {
     my($self, $uid) = @_;
-
-    unless (exists $user_name_cache{$uid}) {
-        ($user_name_cache{$uid}) = getpwuid($uid);
-    }
-    return $user_name_cache{$uid};
+    return getpwuid($uid);
 }
 
+memoize('_resolve_group_name');
 sub _resolve_group_name {
-    my($self,$gid) = @_;
-
-    unless (exists $group_name_cache{$gid}) {
-        ($group_name_cache{$gid}) = getgrgid($gid);
-    }
-    return $group_name_cache{$gid};
+    my($self, $gid) = @_;
+    return getgrgid($gid);
 }
-
 
 1;

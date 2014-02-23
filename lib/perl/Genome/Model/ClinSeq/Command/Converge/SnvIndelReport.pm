@@ -5,11 +5,8 @@ use Genome;
 use Data::Dumper;
 use List::MoreUtils qw/ uniq /;
 use Genome::Info::IUB;
-<<<<<<< HEAD
 use Spreadsheet::WriteExcel;
 
-=======
->>>>>>> gms-pub
 
 class Genome::Model::ClinSeq::Command::Converge::SnvIndelReport {
     is => 'Genome::Model::ClinSeq::Command::Converge::Base',
@@ -30,9 +27,9 @@ class Genome::Model::ClinSeq::Command::Converge::SnvIndelReport {
                 doc => 'Human readable name used to refer to the target gene list',
                 default => 'AML_RMG',
         },
-        subject_labels_file => {
-                is => 'FilesystemPath',
-                doc => 'Use a custom subjects_legend file.  First run without this option, then copy the legend created, modify and then specify with this option. (use to change order, sample names, etc.)',
+        variant_filter_list => {
+                is => 'FileSystemPath',
+                doc => 'Arbitrary list of variants to filter out.  In "chr start stop ref var" format (space or tab separated). File may have a header or not. Indels should be indicated with a "-" as done in the output of this script.',
         },
         tiers => {
                 is => 'Text',
@@ -73,7 +70,6 @@ class Genome::Model::ClinSeq::Command::Converge::SnvIndelReport {
               default => '-|3_prime_flanking_region|3_prime_untranslated_region|5_prime_flanking_region|5_prime_untranslated_region|intronic|silent|rna|splice_region',
               doc => 'Variants with these transcript variant types will be filtered out of the final coding result.',
         },
-<<<<<<< HEAD
         min_reads_per_lib => {
               is => 'Number',
               default => 0,
@@ -84,13 +80,38 @@ class Genome::Model::ClinSeq::Command::Converge::SnvIndelReport {
               default => 0,
               doc => 'In per library analysis, variants with less than this number of tumor libraries supporting will be filtered out',
         },
-=======
->>>>>>> gms-pub
+        per_library => {
+              is => 'Boolean',
+              doc => 'Do per library bam-readcounting and generate associated statistics, summaries and figures'
+        },
         test => {
               is => 'Number',
               doc => 'Only import this many variants (for testing purposes)',
-        }
-
+        },
+        chromosome => {
+              is => 'Text',
+              doc => 'Limit analysis to variants on this chromosome only',
+        },
+        clean => {
+              is => 'Boolean',
+              doc => 'Remove intermediate files from output if you are running in a pipeline',
+        },
+        tmp_space => {
+              is => 'Boolean',
+              doc => 'Perform all file I/O in /tmp and copy results to outdir at the end',
+        },
+        _wgs_snv_variant_sources_file => {
+              is => 'FilesystemPath',
+        },
+        _exome_snv_variant_sources_file => {
+              is => 'FilesystemPath',
+        },
+        _wgs_indel_variant_sources_file => {
+              is => 'FilesystemPath',
+        },
+        _exome_indel_variant_sources_file => {
+              is => 'FilesystemPath',
+        },
     ],   
     doc => 'converge SNV and InDels from multiple clin-seq builds, annotate, bam-readcount, etc. and summarize into a single spreadsheet',
 };
@@ -154,6 +175,16 @@ sub __errors__ {
                                             );
     }
   }
+  if ($self->variant_filter_list){
+    unless (-e $self->variant_filter_list) {
+      push @errors, UR::Object::Tag->create(
+                                              type => 'error',
+                                              properties => ['variant_filter_list'],
+                                              desc => "File: " . $self->variant_filter_list . " not found",
+
+                                           );
+    }
+  }
 
   return @errors;
 }
@@ -162,8 +193,20 @@ sub __errors__ {
 sub execute {
   my $self = shift;
   my @builds = $self->builds;
-  my $outdir = $self->outdir;
-  $outdir .= "/" unless ($outdir =~ /\/$/);
+
+  #Add trailing '/' to outdir if needed
+  unless ($self->outdir =~ /\/$/){
+    my $outdir = $self->outdir . "/";
+    $self->outdir($outdir);
+  }
+
+  #If the user specified, perform all file I/O in /tmp and copy result over at the end
+  my $original_outdir = $self->outdir;
+  if ($self->tmp_space){
+    my $outdir = Genome::Sys->create_temp_directory;
+    $outdir .= "/" unless ($outdir =~ /\/$/);
+    $self->outdir($outdir);
+  }
 
   #Get human readable names hash, keyed on build id
   my $subject_labels = $self->resolve_clinseq_subject_labels;
@@ -173,7 +216,7 @@ sub execute {
   $self->status_message("Producing report for individual: $case_name");
 
   #Print out a table of subject names for reference
-  $self->print_subject_table('-subject_labels'=>$subject_labels);
+  my $subject_table_file = $self->print_subject_table('-subject_labels'=>$subject_labels);
 
   #Gather variants for the tiers specified by the user from each build. Note which build each came from.
   #Get these from the underlying somatic-variation builds.
@@ -181,13 +224,18 @@ sub execute {
   my $somatic_builds = $self->resolve_somatic_builds;
   my $annotation_build_name = $self->annotation_build->name;
   $self->status_message("Using annotation build: $annotation_build_name");
-  my $result = $self->gather_variants('-somatic_builds'=>$somatic_builds);
+  my $bed_dir = $self->outdir . "bed_files/";
+  my $result = $self->gather_variants('-somatic_builds'=>$somatic_builds, '-bed_dir'=>$bed_dir);
   my $variants = $result->{'variants'};
   my $header = $result->{'header'};
   
-  #TODO: Perform hotspot analysis of critical mutation sites
-  #If these variants are not already in the list, inject them so that all subsequent steps are performed on these sites...
-  #As a starting point create a database of these variants, separate into SNVs and Indels and then tier them
+  #If no variants were found, warn the user and end here end here
+  unless (keys %{$variants}){
+    my $rm_cmd = "rm -fr $bed_dir $subject_table_file";
+    $self->warning_message("no variants found, no snv-indel report will be created");
+    Genome::Sys->shellcmd(cmd => $rm_cmd);
+    exit 1;
+  }
 
   #Make note of which variants correspond to $self->target_gene_list
   $self->intersect_target_gene_list('-variants'=>$variants);
@@ -198,55 +246,71 @@ sub execute {
   #Print a grand table of all annotated variants with extra annotation columns (tier, target gene list)
   my $grand_anno_file = $self->print_grand_anno_table('-variants'=>$variants, '-header'=>$header);
 
+  #TODO: Annotate with information from COSMIC
+
+
   #Identify underlying reference-alignments, sample names, sample common names, and timepoints (if available)
   my $align_builds = $self->get_ref_align_builds('-somatic_builds'=>$somatic_builds);
 
   #Get bam-readcounts for all positions for all BAM files
   my $grand_anno_count_file = $self->add_read_counts('-align_builds'=>$align_builds, '-grand_anno_file'=>$grand_anno_file);
   
-  #TODO: This will need to be done at the level of replicate libraries once that readcounting tool is availble.  For now just use standard bam read counts
-  #Example usage for per-library BAM readcounting from Dave Larson
-  my $grand_anno_per_lib_count_file = $self->add_per_lib_read_counts('-align_builds'=>$align_builds, '-grand_anno_file'=>$grand_anno_count_file);
-
   #Parse the BAM read count info and gather minimal data needed to apply filters:
   #Max normal VAF, Min Coverage
   $self->parse_read_counts('-align_builds'=>$align_builds, '-grand_anno_count_file'=>$grand_anno_count_file, '-variants'=>$variants);
 
-<<<<<<< HEAD
-  #print Dumper $variants;
+  #Get per-library bam-readcounts for all positions for all BAM files
+  my $grand_anno_per_lib_count_file;
+  if ($self->per_library){
+    $grand_anno_per_lib_count_file = $self->add_per_lib_read_counts('-align_builds'=>$align_builds, '-grand_anno_file'=>$grand_anno_count_file);
+  }
   #Parse the per lib BAM read count info
-  my $per_lib_header = $self->parse_per_lib_read_counts('-align_builds'=>$align_builds, '-grand_anno_per_lib_count_file'=>$grand_anno_per_lib_count_file, '-variants'=>$variants);
+  my $per_lib_header;
+  if ($self->per_library){
+    $per_lib_header = $self->parse_per_lib_read_counts('-align_builds'=>$align_builds, '-grand_anno_per_lib_count_file'=>$grand_anno_per_lib_count_file, '-variants'=>$variants);
+  }
+  
+  #Apply arbitrary variant filter list
+  if ($self->variant_filter_list){
+    $self->apply_filter_list('-variants'=>$variants);
+  }
 
-=======
->>>>>>> gms-pub
   #Apply some automatic filters:
-  #Normal VAF > $self->max_normal_vaf
-  #Min coverage > $self->min_coverage (position must be covered at this level across all samples)
-  #GMAF > $self->max_gmaf
   $self->apply_variant_filters('-variants'=>$variants);
 
-<<<<<<< HEAD
-=======
-  #print Dumper $variants;
 
->>>>>>> gms-pub
-  #TODO: Make note of which variants lie within a particular set of regions of interest (e.g. nimblegen v3 + AML RMG)
-  #TODO: Have option to filter these out
-
+  #TODO: Make note of which variants lie within a particular set of regions of interest (e.g. nimblegen v3 + AML RMG).  Have option to filter these out
+  # - Allow for wingspan to be added to these regions
 
   #TODO: Filter out variants falling within false positive regions/genes?
 
+  #TODO: Limit analysis to variants *called in* a particular tumor only (e.g. day0 tumor) - rather than taking the union of calls from all samples
 
-  #TODO: Write out final tsv files (filtered and unfiltered), a clean version with useless columns removed, and an Excel spreadsheet version of the final file
-<<<<<<< HEAD
-  $self->print_final_files('-variants'=>$variants, '-grand_anno_count_file'=>$grand_anno_count_file, '-case_name'=>$case_name, '-align_builds'=>$align_builds, '-per_lib_header'=>$per_lib_header);
-=======
-  $self->print_final_files('-variants'=>$variants, '-grand_anno_count_file'=>$grand_anno_count_file, '-case_name'=>$case_name);
->>>>>>> gms-pub
+  #TODO: Add additional filters for low VAF variants (e.g. if VAF < 10%, require at least 3 callers or support from all three libraries)
 
-  #Produce some visualizations for variants in the target gene list as well as all high quality variants, the higher VAF variants etc.
-  #If there are two tumors, Produce SciClone plots showing tumor1 vs. tumor2 VAF and with gene names labelled
+  #TODO: Get Exome Sequencing Project MAF and filter on this value as well (use existing gmt for this)
 
+
+  #Write out final tsv files (filtered and unfiltered), a clean version with useless columns removed, and an Excel spreadsheet version of the final file
+  my $result_files = $self->print_final_files('-variants'=>$variants, '-grand_anno_count_file'=>$grand_anno_count_file, '-case_name'=>$case_name, '-align_builds'=>$align_builds, '-per_lib_header'=>$per_lib_header);
+
+  #Also for certain sample combinations create custom visualizations using R
+  $self->create_plots('-result_files'=>$result_files, '-align_builds'=>$align_builds, '-case_name'=>$case_name);
+
+  #TODO: If there are two tumors, Produce SciClone plots showing tumor1 vs. tumor2 VAF and with gene names labelled
+
+
+  #If the user specified the --clean option, remove intermediate files from the output dir
+  if ($self->clean){
+    my $rm_cmd = "rm -fr $bed_dir";
+    Genome::Sys->shellcmd(cmd => $rm_cmd);
+  }
+
+  #If the user specified, perform all file I/O in /tmp and copy result over at the end
+  if ($self->tmp_space){
+    my $cp_cmd = "cp -fr " . $self->outdir . "* $original_outdir";
+    Genome::Sys->shellcmd(cmd => $cp_cmd);
+  }
 
   print "\n\n";
 
@@ -266,19 +330,21 @@ sub print_subject_table{
   my %args = @_;
   my $subject_labels = $args{'-subject_labels'};
 
-  my $outfile = $self->outdir . "/subjects_legend.txt";
+  my $outfile = $self->outdir . "subjects_legend.txt";
   open (OUT, ">$outfile") || die $self->error_message("Could not open output file: $outfile for writing");
   print OUT "build_id\tname\tname_abr\torder\n";
   foreach my $bid (sort {$subject_labels->{$a}->{order} <=> $subject_labels->{$b}->{order}} keys %{$subject_labels}){
     my $name = $subject_labels->{$bid}->{name};
+    $name =~ s/\,//g;
     my $name_abr = $subject_labels->{$bid}->{name_abr};
+    $name_abr =~ s/\,//g;
     my $order = $subject_labels->{$bid}->{order};
     print OUT "$bid\t$name\t$name_abr\t$order\n";
   }
 
   close(OUT);
 
-  return;
+  return $outfile;
 }
 
 sub get_case_name{
@@ -328,9 +394,12 @@ sub gather_variants{
   my $self = shift;
   my %args = @_;
   my $somatic_builds = $args{'-somatic_builds'};
+  my $bed_dir = $args{'-bed_dir'};
 
   my $tiers_list = $self->tiers;
   my @tiers = split(",", $tiers_list);
+
+  mkdir ($bed_dir) unless (-e $bed_dir && -d $bed_dir);
 
   #Get bed files to be processed
   my %bed_files;
@@ -358,9 +427,6 @@ sub gather_variants{
     }
   }
 
-  my $bed_dir = $self->outdir . "/bed_files/";
-  mkdir ($bed_dir) unless (-e $bed_dir && -d $bed_dir);
-
   #Make a copy of each desired .bed file.  Perform basic clean-ups and sanity checks
   foreach my $file (sort keys %bed_files){
     my $c = 0;
@@ -378,13 +444,14 @@ sub gather_variants{
       open(NEW, ">$new_file") || die $self->error_message("Could not open new var file: $new_file");
       while(<VAR>){
         $c++;
-        if ($self->test){last if $c > $self->test;}
         chomp($_);
         my @line = split("\t", $_);
         my ($chr, $start, $end, $var)  = ($line[0], $line[1], $line[2], $line[3]);
+        if ($self->chromosome){next unless ($chr eq $self->chromosome);}
         #Make indel format consistent
         $var =~ s/\*/0/g;
         print NEW "$chr\t$start\t$end\t$var\n";
+        if ($self->test){last if $c > $self->test;}
       }
       close(VAR);
       close(NEW);
@@ -397,14 +464,19 @@ sub gather_variants{
     if (-e $anno_file){
       $self->warning_message("Using pre-generated file: $anno_file");
     }else{
-      my $annotate_cmd = Genome::Model::Tools::Annotate::TranscriptVariants->create(
-            variant_bed_file=>$bed_files{$file}{clean_bed_file}, 
-            output_file=>$anno_file,
-            annotation_filter=>'top',
-            reference_transcripts=>$self->annotation_build->name,
-          );
-      my $r1 = $annotate_cmd->execute();
-      die $self->error_message("annotation cmd unsuccessful") unless ($r1);
+      if (-s $bed_files{$file}{clean_bed_file}){
+        my $annotate_cmd = Genome::Model::Tools::Annotate::TranscriptVariants->create(
+              variant_bed_file=>$bed_files{$file}{clean_bed_file}, 
+              output_file=>$anno_file,
+              annotation_filter=>'top',
+              reference_transcripts=>$self->annotation_build->name,
+            );
+        my $r1 = $annotate_cmd->execute();
+        die $self->error_message("annotation cmd unsuccessful") unless ($r1);
+      }else{
+        my $touch_cmd = "touch $anno_file";
+        Genome::Sys->shellcmd(cmd => $touch_cmd);
+      }
     }
     $bed_files{$file}{anno_file} = $anno_file;
 
@@ -452,6 +524,7 @@ sub gather_variants{
       $variants{$v}{tier} = $tier;
       $variants{$v}{ensembl_gene_id} = $ensembl_gene_id;
       $variants{$v}{trv_type} = $trv_type;
+      $variants{$v}{filtered} = 0;
     }
     close(VAR);
   }
@@ -475,7 +548,7 @@ sub print_grand_anno_table{
   my $header = $args{'-header'};
 
   #Also produce a joined annotated file with a single header and all snvs and indels combined
-  my $grand_anno_file = $self->outdir . "/variants.all.anno";
+  my $grand_anno_file = $self->outdir . "variants.all.anno";
   if (-e $grand_anno_file){
     $self->warning_message("using pre-generated file: $grand_anno_file");
   }else{
@@ -512,10 +585,16 @@ sub get_ref_align_builds{
     my $somatic_build = $somatic_builds->{$somatic_build_id}->{build};
     my $normal_build = $somatic_build->normal_build;
     my $normal_subject_name = $normal_build->subject->name;
+    my $normal_subject_common_name = $normal_build->subject->common_name;
+    $normal_subject_common_name =~ s/\,//g;
+    $normal_subject_common_name =~ s/\s+/\_/g;
     my $tumor_build = $somatic_build->tumor_build;
     my $tumor_subject_name = $tumor_build->subject->name;
-    my $normal_refalign_name = $normal_subject_name . "_$build_type"."_normal";
-    my $tumor_refalign_name = $tumor_subject_name . "_$build_type"."_tumor";
+    my $tumor_subject_common_name = $tumor_build->subject->common_name;
+    $tumor_subject_common_name =~ s/\,//g;
+    $tumor_subject_common_name =~ s/\s+/\_/g;
+    my $normal_refalign_name = $normal_subject_name . "_$build_type" . "_" . $normal_subject_common_name;
+    my $tumor_refalign_name = $tumor_subject_name . "_$build_type" . "_" . $tumor_subject_common_name;
     my $normal_bam_path = $normal_build->whole_rmdup_bam_file;
     my $tumor_bam_path = $tumor_build->whole_rmdup_bam_file;
     my @normal_timepoints = $normal_build->subject->attributes(attribute_label => "timepoint", nomenclature => "caTissue");
@@ -539,13 +618,15 @@ sub get_ref_align_builds{
 
     $ref_builds{$normal_refalign_name}{type} = $build_type;
     $ref_builds{$normal_refalign_name}{sample_name} = $normal_subject_name;
+    $ref_builds{$normal_refalign_name}{sample_common_name} = $normal_subject_common_name;
     $ref_builds{$normal_refalign_name}{bam_path} = $normal_bam_path;
-    $ref_builds{$normal_refalign_name}{time_point} = "normal_" . $normal_time_point;
+    $ref_builds{$normal_refalign_name}{time_point} = $normal_subject_common_name . "_" . $normal_time_point;
 
     $ref_builds{$tumor_refalign_name}{type} = $build_type;
     $ref_builds{$tumor_refalign_name}{sample_name} = $tumor_subject_name;
+    $ref_builds{$tumor_refalign_name}{sample_common_name} = $tumor_subject_common_name;
     $ref_builds{$tumor_refalign_name}{bam_path} = $tumor_bam_path;
-    $ref_builds{$tumor_refalign_name}{time_point} = "tumor_" . $tumor_time_point;
+    $ref_builds{$tumor_refalign_name}{time_point} = $tumor_subject_common_name . "_" . $tumor_time_point;
   }
 
   #Set an order on refalign builds (use time points if available, otherwise name)
@@ -609,25 +690,41 @@ sub get_variant_caller_sources{
   }
 
   my @files;
-  foreach my $build (@builds){
-    my $common_name = $build->common_name;
-    my $data_dir = $build->data_directory;
-    my $base_path = $data_dir . "/" . $common_name . "/variant_source_callers";
-    my $exome_base_path = $base_path . "/exome/";
-    my $wgs_base_path = $base_path . "/wgs/";
-    my @files_list = ($exome_base_path."snv_sources.tsv", $wgs_base_path."snv_sources.tsv", $exome_base_path."indel_sources.tsv", $wgs_base_path."indel_sources.tsv");
-    push(@files, @files_list);
+  if ($self->_wgs_snv_variant_sources_file || $self->_exome_snv_variant_sources_file || $self->_wgs_indel_variant_sources_file || $self->_exome_indel_variant_sources_file){
+    die $self->error_message("Do not specify variant source caller files directly if you are processing multiple clin-seq builds") if (scalar(@builds) > 1);
+    push(@files, $self->_wgs_snv_variant_sources_file) if ($self->_wgs_snv_variant_sources_file);
+    push(@files, $self->_exome_snv_variant_sources_file) if ($self->_exome_snv_variant_sources_file);
+    push(@files, $self->_wgs_indel_variant_sources_file) if ($self->_wgs_indel_variant_sources_file);
+    push(@files, $self->_exome_indel_variant_sources_file) if ($self->_exome_indel_variant_sources_file);
+  }else{
+    foreach my $build (@builds){
+      my $common_name = $build->common_name;
+      my $data_dir = $build->data_directory;
+      my $base_path = $data_dir . "/" . $common_name . "/variant_source_callers";
+      my $exome_base_path = $base_path . "/exome/";
+      my $wgs_base_path = $base_path . "/wgs/";
+      my @files_list = ($exome_base_path."snv_sources.tsv", $wgs_base_path."snv_sources.tsv", $exome_base_path."indel_sources.tsv", $wgs_base_path."indel_sources.tsv");
+      push(@files, @files_list);
+    }
   }
 
+  my %columns;
   foreach my $file (@files){
     $self->status_message("processing variant caller sources file: $file");
     next unless (-e $file);
     open (SOURCES, $file) || die $self->error_message("could not open variant caller sources file: $file");
     while(<SOURCES>){
       chomp($_);
-      next if ($_ =~ /^coord/);
       my @line = split("\t", $_);
-      my ($chr, $start, $end, $variant, $caller_string) = ($line[1], $line[2], $line[3], $line[4], $line[7]);
+      if ($_ =~ /^coord/){
+        my $p = 0;
+        foreach my $col (@line){
+          $columns{$col}{p} = $p;
+          $p++;
+        }
+        next;
+      }
+      my ($chr, $start, $end, $variant, $caller_string, $tier) = ($line[$columns{'chr'}{p}], $line[$columns{'start'}{p}], $line[$columns{'end'}{p}], $line[$columns{'variant'}{p}], $line[$columns{'callers'}{p}], $line[$columns{'tier'}{p}]);
       $variant =~ s/\*/\-/g;
       $variant =~ s/0/\-/g;
       my ($ref, $var) = split(/\//, $variant);
@@ -653,7 +750,7 @@ sub get_variant_caller_sources{
               $callers->{$caller}=1;
             }
           }else{
-            die $self->error_message("could not match variant to hash: $v");
+            die $self->error_message("could not match variant to hash: $v $chr $tier") unless (($self->test) || !($self->tiers =~ /$tier/) || ($self->chromosome && ($chr ne $self->chromosome)));
           }
         }
       }elsif ($file =~ /indel\_sources/){
@@ -664,7 +761,7 @@ sub get_variant_caller_sources{
             $callers->{$caller}=1;
           }
         }else{
-          die $self->error_message("could not match variant to hash: $v");
+          die $self->error_message("could not match variant to hash: $v $chr $tier") unless (($self->test) || !($self->tiers =~ /$tier/) || ($self->chromosome && ($chr ne $self->chromosome)));
         }
       }else{
         die $self->error_message("file not recognized as snv or indel: $file");
@@ -737,7 +834,7 @@ sub add_read_counts{
   }
 
   #gmt analysis coverage add-readcounts --bam-files=? --genome-build=? --output-file=? --variant-file=? [--header-prefixes=?] 
-  my $output_file = $self->outdir . "/variants.all.anno.readcounts";
+  my $output_file = $self->outdir . "variants.all.anno.readcounts";
   if (-e $output_file){
     $self->warning_message("using pre-generated bam read count file: $output_file");
   }else{
@@ -752,14 +849,42 @@ sub add_read_counts{
     die $self->error_message("add-readcounts cmd unsuccessful") unless ($r);
   }
 
+  #If there are missing cell relative to the header, fill in with 'NA's
+  my $tmp_file = $output_file . ".tmp";
+  open (TMP_IN, "$output_file") || die $self->error_message("Could not open file: $output_file");
+  open (TMP_OUT, ">$tmp_file" ) || die $self->error_message("Could not open file: $tmp_file");
+  my $header = 1;
+  my $target_cols;
+  while(<TMP_IN>){
+    chomp $_;
+    my @line = split("\t", $_);
+    if ($header){
+      $target_cols = scalar(@line);
+      $header = 0;
+      print TMP_OUT "$_\n";
+      next;
+    }
+    if (scalar(@line) == $target_cols){
+      print TMP_OUT "$_\n";
+    }elsif(scalar(@line) < $target_cols){
+      my $diff = $target_cols - (scalar(@line));
+      my @newvals;
+      push @newvals, 'NA' for (1..$diff);
+      my $newvals_string = join("\t", @newvals);
+      print TMP_OUT "$_\t$newvals_string\n";
+    }else{
+      die $self->error_message("File has more data value in a row than names in the header");
+    }
+  }
+  close(TMP_IN);
+  close(TMP_OUT);
+  my $mv_cmd = "mv $tmp_file $output_file";
+  Genome::Sys->shellcmd(cmd => $mv_cmd);
+
   return ($output_file);
 }
 
 
-<<<<<<< HEAD
-=======
-
->>>>>>> gms-pub
 sub add_per_lib_read_counts{
   my $self = shift;
   my %args = @_;
@@ -787,48 +912,28 @@ sub add_per_lib_read_counts{
   if (-e $output_file){
     $self->warning_message("using pre-generated per-library bam read-count file: $output_file");
   }else{
-    #perl -I /gscuser/dlarson/src/genome/lib/perl/ `which gmt` analysis coverage add-readcounts --bam-file /gscuser/dlarson/src/bam-readcount/test-data/test.bam --genome-build ~dlarson/src/somatic-snv-test-data/ref.fa --variant-file variants_wheader.csv --output-file add_readcount_new5.csv --per-library 
-    
-    my $per_lib_count_cmd = "`which gmt` analysis coverage add-readcounts --bam-files $bam_list --genome-build $reference_fasta --variant-file $grand_anno_file --output-file $output_file --header-prefixes $header_prefixes --per-library";
-    $self->status_message("attempting per library read counting: \n$per_lib_count_cmd");
-    Genome::Sys->shellcmd(cmd => $per_lib_count_cmd);
-
-    #TODO: replace with proper method call once this gets pushed to master
-    #my $add_count_cmd = Genome::Model::Tools::Analysis::Coverage::AddReadcounts->create(
-    #        bam_files=>$bam_list,
-    #        genome_build=>$reference_fasta,
-    #        output_file=>$output_file,
-    #        variant_file=>$grand_anno_file,
-    #        header_prefixes=>$header_prefixes,
-    #      );
-    #my $r = $add_count_cmd->execute();
-    #die $self->error_message("add-readcounts cmd unsuccessful") unless ($r);
+    my $add_count_cmd = Genome::Model::Tools::Analysis::Coverage::AddReadcounts->create(
+            bam_files=>$bam_list,
+            genome_build=>$reference_fasta,
+            output_file=>$output_file,
+            variant_file=>$grand_anno_file,
+            header_prefixes=>$header_prefixes,
+            per_library=>1,
+          );
+    my $r = $add_count_cmd->execute();
+    die $self->error_message("per-lane add-readcounts cmd unsuccessful") unless ($r);
   }
 
   return ($output_file);
 }
 
 
-<<<<<<< HEAD
-=======
-
-
-
-
-
->>>>>>> gms-pub
 sub parse_read_counts{
   my $self = shift;
   my %args = @_;
   my $align_builds = $args{'-align_builds'};
   my $grand_anno_count_file = $args{'-grand_anno_count_file'};
   my $variants = $args{'-variants'};
-
-  my @prefixes;
-  foreach my $name (sort {$align_builds->{$a}->{order} <=> $align_builds->{$b}->{order}} keys  %{$align_builds}){
-    my $prefix = $align_builds->{$name}->{prefix};
-    push(@prefixes, $prefix);
-  }
 
   my %columns;
   my $l = 0;
@@ -845,7 +950,8 @@ sub parse_read_counts{
       #Check for neccessary columns
       my $gmaf_colname = "GMAF";
       die $self->error_message("could not find expected column ($gmaf_colname) in file $grand_anno_count_file") unless($columns{$gmaf_colname});
-      foreach my $prefix (@prefixes){
+      foreach my $name (sort {$align_builds->{$a}->{order} <=> $align_builds->{$b}->{order}} keys  %{$align_builds}){
+        my $prefix = $align_builds->{$name}->{prefix};
         my $ref_count_colname = $prefix . "_ref_count";
         my $var_count_colname = $prefix . "_var_count";
         my $vaf_colname = $prefix . "_VAF";
@@ -866,16 +972,22 @@ sub parse_read_counts{
     my $min_coverage_observed = 10000000000000000;
     my $na_found = 0;
     my @covs;
-    foreach my $prefix (@prefixes){
+    foreach my $name (sort {$align_builds->{$a}->{order} <=> $align_builds->{$b}->{order}} keys  %{$align_builds}){
+      my $prefix = $align_builds->{$name}->{prefix};
+      my $sample_common_name = $align_builds->{$name}->{sample_common_name};
       my $ref_count_colname = $prefix . "_ref_count";
       my $var_count_colname = $prefix . "_var_count";
       my $vaf_colname = $prefix . "_VAF";
-      if ($line[$columns{$vaf_colname}{c}] eq "NA"){
+
+      my $vaf = "NA";
+      $vaf = $line[$columns{$vaf_colname}{c}] if (defined($line[$columns{$vaf_colname}{c}]));
+
+      if ($vaf eq "NA"){
         $na_found = 1;
         push(@covs, "NA");
         next;
       }
-      if ($vaf_colname =~ /normal/){
+      if ($sample_common_name =~ /normal/){
         my $normal_vaf = $line[$columns{$vaf_colname}{c}];
         $max_normal_vaf_observed = $normal_vaf if ($normal_vaf > $max_normal_vaf_observed);
       }else{
@@ -886,8 +998,12 @@ sub parse_read_counts{
       push(@covs, $coverage);
       $min_coverage_observed = $coverage if ($coverage < $min_coverage_observed);
     }
-    $max_normal_vaf_observed = "NA" if $na_found;
-    $min_coverage_observed = "NA" if $na_found;
+
+    if ($na_found){
+      $max_normal_vaf_observed = "NA";
+      $max_tumor_vaf_observed ="NA";
+      $min_coverage_observed = "NA";
+    }
 
     $variants->{$v}->{max_normal_vaf_observed} = $max_normal_vaf_observed;
     $variants->{$v}->{max_tumor_vaf_observed} = $max_tumor_vaf_observed;
@@ -910,7 +1026,6 @@ sub parse_read_counts{
   return;
 }
 
-<<<<<<< HEAD
 sub parse_per_lib_read_counts{
   my $self = shift;
   my %args = @_;
@@ -1033,8 +1148,33 @@ sub parse_per_lib_read_counts{
   return $per_lib_header;
 }
 
-=======
->>>>>>> gms-pub
+
+sub apply_filter_list{
+  my $self = shift;
+  my %args = @_;
+  my $variants = $args{'-variants'};
+
+  my $filtered_variants = 0;
+  open(VAR, $self->variant_filter_list) || die $self->error_message("could not open file: " . $self->variant_filter_list);
+  while(<VAR>){
+    chomp($_);
+    next if ($_ =~ /chr/);
+    if ($_ =~ /^(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)/){
+      my ($chr, $start, $stop, $ref, $var) = ($1, $2, $3, $4, $5);
+      my $v = $chr . "_$start" . "_$stop" . "_$ref" . "_$var";
+      die $self->error_message("parsed a variant that is not defined in the variant hash") unless $variants->{$v};
+      $variants->{$v}->{filtered} = 1;
+      $filtered_variants++;
+    }
+  }
+
+  $self->status_message("Filtered $filtered_variants variants because they were specified in the variant filter list: " . $self->variant_filter_list);
+
+  close(VAR);
+
+  return;
+}
+
 
 sub apply_variant_filters{
   my $self = shift;
@@ -1044,23 +1184,15 @@ sub apply_variant_filters{
   my $min_tumor_vaf = $self->min_tumor_vaf;
   my $min_coverage = $self->min_coverage;
   my $max_gmaf = $self->max_gmaf;
-<<<<<<< HEAD
   my $min_tumor_var_supporting_libs = $self->min_tumor_var_supporting_libs;
-=======
->>>>>>> gms-pub
   
   foreach my $v (keys %{$variants}){
-    $variants->{$v}->{filtered} = 0;
     my $max_normal_vaf_observed = $variants->{$v}->{max_normal_vaf_observed};
     my $max_tumor_vaf_observed = $variants->{$v}->{max_tumor_vaf_observed};
     my $min_coverage_observed = $variants->{$v}->{min_coverage_observed};
     my $gmaf = $variants->{$v}->{gmaf};
-<<<<<<< HEAD
     my $tumor_var_supporting_libs = $variants->{$v}->{tumor_var_supporting_libs} if defined($variants->{$v}->{tumor_var_supporting_libs});
   
-=======
-   
->>>>>>> gms-pub
     #Normal VAF filter
     if ($max_normal_vaf_observed =~ /\d+/){
       $variants->{$v}->{filtered} = 1 if ($max_normal_vaf_observed > $max_normal_vaf);
@@ -1087,13 +1219,10 @@ sub apply_variant_filters{
       $variants->{$v}->{filtered} = 1 if (($gmaf*100) > $max_gmaf);
     }
 
-<<<<<<< HEAD
     #Min library support filter
     if (defined($tumor_var_supporting_libs) && $min_tumor_var_supporting_libs){
       $variants->{$v}->{filtered} = 1 if ($tumor_var_supporting_libs < $min_tumor_var_supporting_libs);
     }
-=======
->>>>>>> gms-pub
   }
 
   return;
@@ -1106,34 +1235,34 @@ sub print_final_files{
   my $variants = $args{'-variants'};
   my $grand_anno_count_file = $args{'-grand_anno_count_file'};
   my $case_name = $args{'-case_name'};
-<<<<<<< HEAD
   my $align_builds = $args{'-align_builds'};
   my $per_lib_header = $args{'-per_lib_header'};
   my $trv_type_filter = $self->trv_type_filter;
 
 
-=======
-  my $trv_type_filter = $self->trv_type_filter;
-
->>>>>>> gms-pub
   #Write out final tsv files (filtered and unfiltered), a clean version with useless columns removed, and an Excel spreadsheet version of the final file
-  my $final_unfiltered_tsv = $self->outdir . "/$case_name" . "_final_unfiltered.tsv"; #OUT1
-  my $final_filtered_tsv = $self->outdir . "/$case_name" . "_final_filtered.tsv"; #OUT2
-  my $final_filtered_clean_tsv = $self->outdir . "/$case_name" . "_final_filtered_clean.tsv"; #OUT3
-  my $final_filtered_coding_clean_tsv = $self->outdir . "/$case_name" . "_final_filtered_coding_clean.tsv"; #OUT4
-  my $final_filtered_clean_xls = $self->outdir . "/$case_name" . "_final_filtered_clean.xls"; #OUT5
-  my $final_filtered_coding_clean_xls = $self->outdir . "/$case_name" . "_final_filtered_coding_clean.xls"; #OUT6
+  my $final_unfiltered_tsv = $self->outdir . "$case_name" . "_final_unfiltered.tsv"; #OUT1
+  my $final_filtered_tsv = $self->outdir . "$case_name" . "_final_filtered.tsv"; #OUT2
+  my $final_filtered_clean_tsv = $self->outdir . "$case_name" . "_final_filtered_clean.tsv"; #OUT3
+  my $final_filtered_coding_clean_tsv = $self->outdir . "$case_name" . "_final_filtered_coding_clean.tsv"; #OUT4
+  my $final_filtered_clean_xls = $self->outdir . "$case_name" . "_final_filtered_clean.xls"; #OUT5
+  my $final_filtered_coding_clean_xls = $self->outdir . "$case_name" . "_final_filtered_coding_clean.xls"; #OUT6
 
   open(ANNO, $grand_anno_count_file) || die $self->error_message("could not open grand anno read counts file: $grand_anno_count_file");
   open(OUT1, ">$final_unfiltered_tsv") || die $self->error_message("could not open output file: $final_unfiltered_tsv");
   open(OUT2, ">$final_filtered_tsv") || die $self->error_message("could not open output file: $final_filtered_tsv");
   open(OUT3, ">$final_filtered_clean_tsv") || die $self->error_message("could not open output file: $final_filtered_clean_tsv");
   open(OUT4, ">$final_filtered_coding_clean_tsv") || die $self->error_message("could not open output file: $final_filtered_coding_clean_tsv");
-<<<<<<< HEAD
- 
-=======
 
->>>>>>> gms-pub
+  #Store the result files paths and pass out to be used in the visualization step
+  my %result_files;
+  $result_files{final_unfiltered_tsv}{path} = $final_unfiltered_tsv;
+  $result_files{final_filtered_tsv}{path} = $final_filtered_tsv;
+  $result_files{final_filtered_clean_tsv}{path} = $final_filtered_clean_tsv;
+  $result_files{final_filtered_coding_clean_tsv}{path} = $final_filtered_coding_clean_tsv;
+  $result_files{final_filtered_clean_xls}{path} = $final_filtered_clean_xls;
+  $result_files{final_filtered_coding_clean_xls}{path} = $final_filtered_coding_clean_xls;
+
   my @skip = qw (gene_name transcript_species transcript_source transcript_version transcript_status c_position ucsc_cons domain all_domains deletion_substructures transcript_error gene_name_source);
   my %skip_columns;
   foreach my $name (@skip){
@@ -1142,10 +1271,20 @@ sub print_final_files{
   my @include_col_pos;
 
   my $header = 1;
+  my $l = 0;
   my %columns;
   while(<ANNO>){
     chomp($_);
     my @line = split("\t", $_);
+
+    #BAM readcount can give empty cells for sites not counted (e.g. indels that are larger than the max size allowed).  Replace empty cells with 'NA'
+    my @tmp_line;
+    foreach my $val (@line){
+      $val = "NA" unless (defined($val));
+      push(@tmp_line, $val);
+    }
+    @line = @tmp_line;
+
     if ($header){
       $header = 0;
       my $c = 0;
@@ -1162,25 +1301,16 @@ sub print_final_files{
       #Print headers for each out file
       my $header_extension = "min_coverage_observed\tmax_normal_vaf_observed\tmax_tumor_vaf_observed\tvariant_source_callers\tvariant_source_caller_count\tfiltered";
       my $full_header = "$_"."\t$header_extension";
-<<<<<<< HEAD
       $full_header .= "\t$per_lib_header" if $per_lib_header;
-=======
->>>>>>> gms-pub
       print OUT1 "$full_header\n";
       print OUT2 "$full_header\n";
 
       my @include_values = @line[@include_col_pos];
       my $include_values_string = join("\t", @include_values);
       my $short_header = "$include_values_string"."\t$header_extension";
-<<<<<<< HEAD
       $short_header .= "\t$per_lib_header" if $per_lib_header;
       print OUT3 "$short_header\n";
       print OUT4 "$short_header\n";
-
-=======
-      print OUT3 "$short_header\n";
-      print OUT4 "$short_header\n";
->>>>>>> gms-pub
       next;
     }
 
@@ -1188,7 +1318,6 @@ sub print_final_files{
     my $v = $chr . "_$start" . "_$stop" . "_$ref" . "_$var";
     die $self->error_message("parsed a variant that is not defined in the variant hash") unless $variants->{$v};
 
-<<<<<<< HEAD
     my @per_lib_counts = @{$variants->{$v}->{per_lib_counts}} if defined($variants->{$v}->{per_lib_counts});
     my $per_lib_count_line = join("\t", @per_lib_counts) if defined($variants->{$v}->{per_lib_counts});
 
@@ -1196,10 +1325,6 @@ sub print_final_files{
     my $full_line = "$_\t$line_extension";
     $full_line .= "\t$per_lib_count_line" if defined($per_lib_count_line);
 
-=======
-    my $line_extension = "$variants->{$v}->{min_coverage_observed}\t$variants->{$v}->{max_normal_vaf_observed}\t$variants->{$v}->{max_tumor_vaf_observed}\t$variants->{$v}->{variant_source_callers}\t$variants->{$v}->{variant_source_caller_count}\t$variants->{$v}->{filtered}";
-    my $full_line = "$_\t$line_extension";
->>>>>>> gms-pub
     print OUT1 "$full_line\n";
     unless ($variants->{$v}->{filtered}){
       print OUT2 "$full_line\n";
@@ -1207,12 +1332,10 @@ sub print_final_files{
 
     my @include_values = @line[@include_col_pos];
     my $include_values_string = join("\t", @include_values);
+
     my $short_line = "$include_values_string"."\t$line_extension";
-<<<<<<< HEAD
     $short_line .= "\t$per_lib_count_line" if defined($per_lib_count_line);
 
-=======
->>>>>>> gms-pub
     unless ($variants->{$v}->{filtered}){
       print OUT3 "$short_line\n";
     }
@@ -1224,16 +1347,12 @@ sub print_final_files{
         print OUT4 "$short_line\n";
       }
     }
-<<<<<<< HEAD
-=======
-
->>>>>>> gms-pub
+    $l++;
   }
   close(ANNO);
   close(OUT1);
   close(OUT2);
   close(OUT3);
-<<<<<<< HEAD
   close(OUT4);
 
   # convert master table to excel
@@ -1273,29 +1392,102 @@ sub print_final_files{
   close(IN);
   $final_filtered_coding_clean_workbook->close();
 
+  return(\%result_files);
+}
+
+sub create_plots{
+  my $self = shift;
+  my %args = @_;
+  my $result_files = $args{'-result_files'};
+  my $align_builds = $args{'-align_builds'};
+  my $case_name = $args{'-case_name'};
+
+  my $final_filtered_clean_tsv = $result_files->{final_filtered_clean_tsv}->{path};
+  my $final_filtered_coding_clean_tsv = $result_files->{final_filtered_coding_clean_tsv}->{path};
+
+  #Get the header for the file to be fed into R to determine per-lib VAF column positions
+  open (TMP, $final_filtered_clean_tsv) || die $self->error_message("Could not open file: $final_filtered_clean_tsv");
+  my $header = <TMP>; 
+  close(TMP);
+  chomp($header);
+  my @cols = split("\t", $header);
+  my $p = 0;
+  my %columns;
+  foreach my $col (@cols){
+    $columns{$col}{p} = $p;
+    $p++;
+  }
+  
   #Set the R script that will process output from this perl script
+  #TODO: Right now, this script will only work for a very particular situation (normal, dayX_tumor, dayY_tumor) - Make it more flexible ...
+  my $build_count = keys %{$align_builds};
+  my @prefixes;
+  my @combined_vaf_cols;
+  my %rep_vaf_cols;
+  #Resolve the names of the samples, and columns containing per_library read counts
+  foreach my $name (sort {$align_builds->{$a}->{order} <=> $align_builds->{$b}->{order}} keys  %{$align_builds}){
+    my $prefix = $align_builds->{$name}->{prefix};
+    push(@prefixes, $prefix);
+    my $combined_vaf_col_name = $prefix . "_VAF";
+    push(@combined_vaf_cols, $columns{$combined_vaf_col_name}{p} + 1);
+    my $libs = $align_builds->{$name}->{libs};
+
+    if ($self->per_library){
+      #If replicate library analysis is being run define the replicate VAF columns
+      foreach my $lib (sort {$libs->{$a}->{rep} <=> $libs->{$b}->{rep}} keys %{$libs}){
+        my $rep = $libs->{$lib}->{rep};
+        my $per_lib_vaf_col = $prefix . "_rep" . $rep . "_VAF";
+
+        die $self->error_message("could not resolve column $per_lib_vaf_col in file $final_filtered_clean_tsv") unless ($columns{$per_lib_vaf_col});
+
+        if (defined($rep_vaf_cols{$prefix})){
+          my $cols = $rep_vaf_cols{$prefix}{cols};
+          push (@{$cols}, $columns{$per_lib_vaf_col}{p} + 1);
+        }else{
+          my @cols;
+          push (@cols, $columns{$per_lib_vaf_col}{p} + 1);
+          $rep_vaf_cols{$prefix}{cols} = \@cols;
+        }
+      }
+    }else{
+      #If replicate library analysis is NOT being run simply use the combined VAF values
+      my @cols;
+      push (@cols, $columns{$combined_vaf_col_name}{p} + 1);
+      $rep_vaf_cols{$prefix}{cols} = \@cols;
+    }
+  }
+
   my $r_script = __FILE__ . '.R';
 
-  #Run the R script to generate some plots from the complete clean tsv file
-  my $outdir1 = $self->outdir . "/filtered_clean/";
-  mkdir($outdir1);
-  my $r_cmd1 = "$r_script $final_filtered_clean_tsv \"normal_day0_VAF tumor_day0_VAF tumor_day30_VAF\" \"34 37 40\" \"43 46 49\" \"52 55 58\" " . $self->target_gene_list_name . " " . $outdir1;
-  Genome::Sys->shellcmd(cmd => $r_cmd1);
+  #Run the R script to generate some per-library readcount and VAF plots from the complete clean tsv file
+  my @vaf_cols;
+  foreach my $prefix (@prefixes){
+    my @vaf_cols_sample = @{$rep_vaf_cols{$prefix}{cols}};
+    my $vaf_cols_sample_string = join(" ", @vaf_cols_sample);
+    push (@vaf_cols, "\"$vaf_cols_sample_string\"");
+  }
+  my $vaf_cols_string = join(" ", @vaf_cols);
+  my $target_gene_list_name = $self->target_gene_list_name;
 
-  #Run the R scripts to generate some plots from the coding clean tsv file
-  my $outdir2 = $self->outdir . "/filtered_coding_clean/";
-  mkdir($outdir2);
-  my $r_cmd2 = "$r_script $final_filtered_coding_clean_tsv \"normal_day0_VAF tumor_day0_VAF tumor_day30_VAF\" \"34 37 40\" \"43 46 49\" \"52 55 58\" " . $self->target_gene_list_name . " " . $outdir2;
-  Genome::Sys->shellcmd(cmd => $r_cmd2);
-=======
->>>>>>> gms-pub
+  if ($self->per_library){
+    my $prefix_string = join(" ", @prefixes);
+    my $combined_vaf_col_string = join(" ", @combined_vaf_cols);
+
+    my $outdir1 = $self->outdir . "filtered_pdfs/";
+    mkdir($outdir1);
+    my $r_cmd1 = "$r_script $case_name $final_filtered_clean_tsv \"$prefix_string\" \"$combined_vaf_col_string\" \"$target_gene_list_name\" $outdir1 $vaf_cols_string";
+    Genome::Sys->shellcmd(cmd => $r_cmd1);
+
+    my $outdir2 = $self->outdir . "filtered_coding_pdfs/";
+    mkdir($outdir2);
+    my $r_cmd2 = "$r_script $case_name $final_filtered_coding_clean_tsv \"$prefix_string\" \"$combined_vaf_col_string\" \"$target_gene_list_name\" $outdir2 $vaf_cols_string";
+    Genome::Sys->shellcmd(cmd => $r_cmd2);
+  }
 
   return;
 }
 
-<<<<<<< HEAD
 
-=======
->>>>>>> gms-pub
+
 1;
 

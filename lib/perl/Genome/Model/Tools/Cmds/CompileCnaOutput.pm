@@ -66,14 +66,14 @@ sub execute {
         unless ($somatic_build) {
             $self->error_message("No succeeded build found for somatic model id $somatic_model_id.");
             if ($self->force) {
-                $self->status_message("Continuing despite the error above, skipping this model");
+                $self->debug_message("Continuing despite the error above, skipping this model");
                 next;
             } else {
                 die;
             }
         }
         my $somatic_build_id = $somatic_build->id or die "No build id found in somatic build object for somatic model id $somatic_model_id.\n";
-        $self->status_message("Last succeeded build for somatic model $somatic_model_id is build $somatic_build_id. ");
+        $self->debug_message("Last succeeded build for somatic model $somatic_model_id is build $somatic_build_id. ");
 
         ## must changed in the new version
         my $cn_data_file = $somatic_build->somatic_workflow_input("copy_number_output") or die "Could not query somatic build for copy number output.\n";
@@ -85,19 +85,19 @@ sub execute {
             if ($window_size == 10000){       
                 my $link_name = "$output_dir/$somatic_model_id.copy_number.csv";
                 if (-e $link_name) {
-                    $self->status_message("Link $link_name already found in dir.\n");
+                    $self->debug_message("Link $link_name already found in dir.\n");
                 } else {
                     `ln -s $cn_data_file $link_name`;
-                    $self->status_message("Link to copy_number_output created.\n");
+                    $self->debug_message("Link to copy_number_output created.\n");
                 }
             } else{
-                $self->status_message("Window size is not 10000... this necessitates regeneration of copy number output for somatic model id $somatic_model_id");
+                $self->debug_message("Window size is not 10000... this necessitates regeneration of copy number output for somatic model id $somatic_model_id");
                 if($self->regenerate_missing_output) {
                     $self->regenerate_cnv_output($somatic_build);
                 }
             }
         } else{
-            $self->status_message("Copy number output not found for build $somatic_build_id. ");
+            $self->debug_message("Copy number output not found for build $somatic_build_id. ");
             if($self->regenerate_missing_output) {
                 $self->regenerate_cnv_output($somatic_build);
             }
@@ -114,7 +114,7 @@ sub regenerate_cnv_output {
     my $output_dir = $self->output_dir;
 
     #get tumor and normal bam files
-    $self->status_message("Build new copy number output file in $output_dir. ");
+    $self->debug_message("Build new copy number output file in $output_dir. ");
     my $tumor_build = $somatic_build_object->tumor_build or die "Cannot find tumor model.\n";
     my $normal_build = $somatic_build_object->normal_build or die "Cannot find normal model.\n";
     my $tumor_bam = $tumor_build->whole_rmdup_bam_file or die "Cannot find tumor .bam.\n";
@@ -128,7 +128,7 @@ sub regenerate_cnv_output {
     my $job = "gmt somatic bam-to-cna --tumor-bam-file $tumor_bam --normal-bam-file $normal_bam --output-file $cn_data_file --window-size " . $self->window_size;
     my $job_name = $somatic_model_id . "_bam2cna";
     my $oo = $job_name . "_stdout"; #print job's STDOUT in the current directory
-    $self->status_message("Submitting job $job_name (bam-to-cna): $job \n");
+    $self->debug_message("Submitting job $job_name (bam-to-cna): $job \n");
     Genome::Sys->shellcmd(cmd => "bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -J $job_name -R 'select[type==LINUX64]' -oo $oo $job");
 
 }

@@ -82,12 +82,12 @@ sub _run_aligner {
 
     my $finished_sam; 
     if (@input_pathnames == 1) {
-        $self->status_message("_run_aligner called in single-ended mode.");
+        $self->debug_message("_run_aligner called in single-ended mode.");
         my $fastq_name = $input_pathnames[0];
         $format_cmd .= " $fastq_name";
         $finished_sam = $output_dir . "/alignments.sam.gz";
     } elsif (@input_pathnames == 2) {
-        $self->status_message("_run_aligner called in paired-end mode.");
+        $self->debug_message("_run_aligner called in paired-end mode.");
         my $left_fastq = $input_pathnames[0];
         my $right_fastq = $input_pathnames[1];
          $format_cmd .= " -l $left_fastq";
@@ -114,16 +114,16 @@ sub _run_aligner {
     my $finished_unmapped_sam = $output_dir . "/unmapped.sam.gz";
     my $unmapped_cmd = "zcat $finished_unmapped_sam | grep -v '^\@' >> $sam_file"; 
     my $bam_cmd="zcat $finished_sam | grep -v '^\@' >> $sam_file";
-    $self->status_message("Trying $format_cmd");
+    $self->debug_message("Trying $format_cmd");
     Genome::Sys->shellcmd(  cmd => $format_cmd, input_files =>[@input_pathnames], output_files => [] );
-    $self->status_message("Trying: $cmd");
+    $self->debug_message("Trying: $cmd");
     Genome::Sys->shellcmd(  cmd => $cmd, input_files =>[], output_files => [$finished_sam] );
-    $self->status_message("Trying: $bam_cmd");
+    $self->debug_message("Trying: $bam_cmd");
     Genome::Sys->shellcmd(  cmd => $bam_cmd, input_files => [$finished_sam], output_files => [$sam_file], skip_if_output_is_present=>0);
-     $self->status_message("Trying: $unmapped_cmd");
+     $self->debug_message("Trying: $unmapped_cmd");
     Genome::Sys->shellcmd(  cmd => $unmapped_cmd, input_files => [$finished_unmapped_sam], output_files => [$sam_file], skip_if_output_is_present=>0);
     if(@input_pathnames == 2) {
-        $self->status_message("Trying: $unmated_cmd");
+        $self->debug_message("Trying: $unmated_cmd");
         Genome::Sys->shellcmd(  cmd => $unmated_cmd, input_files => [$finished_unmated_sam], output_files => [$sam_file], skip_if_output_is_present=>0);
     }
     
@@ -201,7 +201,7 @@ sub prepare_reference_sequence_index {
     my $actual_fasta_file = $staged_fasta_file;
 
     if (-l $staged_fasta_file) {
-        $class->status_message(sprintf("Following symlink for fasta file %s", $staged_fasta_file));
+        $class->debug_message(sprintf("Following symlink for fasta file %s", $staged_fasta_file));
         $actual_fasta_file = readlink($staged_fasta_file);
         unless($actual_fasta_file) {
             $class->error_message("Can't read target of symlink $staged_fasta_file");

@@ -75,7 +75,7 @@ sub execute {
 #ERROR HANDLE ON FAILURE
     $self->error_messages_callback(
         sub{
-            $self->status_message("Removing output files due to error");
+            $self->debug_message("Removing output files due to error");
             unlink $self->output; 
             unlink $self->diff_flank_file if $self->diff_flank_file;
             unlink $self->ref_flank_file if $self->ref_flank_file;
@@ -241,12 +241,12 @@ sub execute {
                 $pre_diff_sequence = substr($ref_flank_sequence, (0 - length( $diff->{pre_diff_sequence} ) ) );
 
                 unless ( length ($pre_diff_sequence) eq length ($diff->{pre_diff_sequence}) ){
-                    $self->status_message("Pre diff sequences are different lengths! Diff not processed!");
+                    $self->debug_message("Pre diff sequences are different lengths! Diff not processed!");
                 }
 
 
                 unless ( $pre_diff_sequence eq $diff->{pre_diff_sequence} ) {
-                    $self->status_message("pre_diff_sequence in diff(".$diff->{type}."-".$diff->{deletion_length}." header:".$diff->{header}." pos:".$diff->{position}.") does not match actual fasta sequence! fasta:$pre_diff_sequence not eq diff:".$diff->{pre_diff_sequence}."  Diff not processed!" );
+                    $self->debug_message("pre_diff_sequence in diff(".$diff->{type}."-".$diff->{deletion_length}." header:".$diff->{header}." pos:".$diff->{position}.") does not match actual fasta sequence! fasta:$pre_diff_sequence not eq diff:".$diff->{pre_diff_sequence}."  Diff not processed!" );
                     $skip_diff = 1;
                 }
             }
@@ -265,7 +265,7 @@ sub execute {
                 }
                 $post_diff_sequence = substr($buffer, $del_length, $length);
                 unless ( $post_diff_sequence eq $diff->{post_diff_sequence} ){
-                    $self->status_message("post_diff_sequence in diff(".$diff->{type}."-".$diff->{deletion_length}." header:".$diff->{header}." pos:".$diff->{position}.") does not match actual fasta sequence! fasta:$post_diff_sequence not eq diff:".$diff->{post_diff_sequence}."  Diff not processed!" );
+                    $self->debug_message("post_diff_sequence in diff(".$diff->{type}."-".$diff->{deletion_length}." header:".$diff->{header}." pos:".$diff->{position}.") does not match actual fasta sequence! fasta:$post_diff_sequence not eq diff:".$diff->{post_diff_sequence}."  Diff not processed!" );
                     $skip_diff = 1;
                 }
             }
@@ -291,7 +291,7 @@ sub execute {
                 $ref_flank_sequence.=$deletion; 
 
                 unless ($ignore_del or $deletion eq $to_delete){ 
-                    $self->status_message( "deleted seq does not equal actual sequence! $deletion != $to_delete  chrom: $current_fasta_header_id position: $write_position $first_part - $deletion - $buffer ". ($diff->{position} + 1) ."\n");
+                    $self->debug_message( "deleted seq does not equal actual sequence! $deletion != $to_delete  chrom: $current_fasta_header_id position: $write_position $first_part - $deletion - $buffer ". ($diff->{position} + 1) ."\n");
                     $skip_diff = 1;
                 }
                 $write_position += length $deletion unless $skip_diff;
@@ -375,7 +375,7 @@ sub execute {
         }
     }
 
-    $self->status_message("Diffs processed successfully: $successful_diffs");
+    $self->debug_message("Diffs processed successfully: $successful_diffs");
 
     $output_stream->close() if $output_stream;
     $ref_flank_stream->close() if $ref_flank_stream;

@@ -110,7 +110,7 @@ sub execute {
     my $self = shift;
 
     my %params = $self->gather_details();
-    $self->status_message("Gathered params, now running merge:\n" . Data::Dumper::Dumper(\%params));
+    $self->debug_message("Gathered params, now running merge:\n" . Data::Dumper::Dumper(\%params));
     my $rv = Genome::Model::GenePrediction::Command::Bacterial::Merge->execute(%params);
 
     unless($rv) {
@@ -307,12 +307,12 @@ sub is_valid {
         my %validation = %{LoadFile("$cwd/merge_valid")};
         print Dumper(\%to_compare,\%validation),"\n";
         if(Compare(\%to_compare,\%validation)) {
-            $self->status_message("previous merge run successful");
+            $self->debug_message("previous merge run successful");
             return 1;
         }
         else
         {
-            $self->status_message("$cwd/merge_valid exists, but doesn't match params");
+            $self->debug_message("$cwd/merge_valid exists, but doesn't match params");
             return 0;
         }
 

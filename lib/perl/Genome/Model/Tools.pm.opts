@@ -2498,8 +2498,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
         'files',
         'per-library!',
         undef,
-        'use-varscan!',
-        undef,
         'help!',
         undef
       ],
@@ -2507,10 +2505,10 @@ $Genome::Model::Tools::OPTS_SPEC = [
       [
         'output-pdf=s',
         'files',
-        'coverage-file=s',
-        'files',
         'debug!',
         undef,
+        'input-coverage-file=s',
+        'files',
         'refalign-model-id=s',
         undef,
         'somatic-validation-model-id=s',
@@ -7602,6 +7600,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       undef,
       'processors=s',
       undef,
+      'samtools-file-format=s',
+      'files',
       'tumor-samtools-file=s',
       'files',
       'help!',
@@ -8398,6 +8398,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       undef,
       'process-svs!',
       undef,
+      'reference-transcripts=s',
+      'files',
       'required-snv-callers=s',
       undef,
       'restrict-to-target-regions!',
@@ -8727,6 +8729,23 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
+    'help!',
+    undef
+  ],
+  '>verify-bam-id',
+  [
+    'vcf=s',
+    'files',
+    'bam=s',
+    'files',
+    'out-prefix=s',
+    'files',
+    'max-depth=s',
+    undef,
+    'precise!',
+    undef,
+    'version=s',
+    'files',
     'help!',
     undef
   ],
@@ -9121,6 +9140,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
           'files',
           'debug!',
           undef,
+          'input-id=s',
+          'files',
           'tcga-version=s',
           [
             '1.1',
@@ -9152,6 +9173,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
           'files',
           'debug!',
           undef,
+          'input-id=s',
+          'files',
           'tcga-version=s',
           [
             '1.1',
@@ -9183,6 +9206,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
           'files',
           'debug!',
           undef,
+          'input-id=s',
+          'files',
           'tcga-version=s',
           [
             '1.1',
@@ -9214,6 +9239,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
           'files',
           'debug!',
           undef,
+          'input-id=s',
+          'files',
           'tcga-version=s',
           [
             '1.1',
@@ -9245,6 +9272,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
           'files',
           'debug!',
           undef,
+          'input-id=s',
+          'files',
           'tcga-version=s',
           [
             '1.1',
@@ -9276,6 +9305,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
           'files',
           'debug!',
           undef,
+          'input-id=s',
+          'files',
           'tcga-version=s',
           [
             '1.1',
@@ -9307,6 +9338,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
           'files',
           'debug!',
           undef,
+          'input-id=s',
+          'files',
           'tcga-version=s',
           [
             '1.1',
@@ -9338,6 +9371,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
           'files',
           'debug!',
           undef,
+          'input-id=s',
+          'files',
           'tcga-version=s',
           [
             '1.1',
@@ -9369,6 +9404,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
           'files',
           'debug!',
           undef,
+          'input-id=s',
+          'files',
           'tcga-version=s',
           [
             '1.1',
@@ -9400,6 +9437,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
           'files',
           'debug!',
           undef,
+          'input-id=s',
+          'files',
           'tcga-version=s',
           [
             '1.1',
@@ -9431,6 +9470,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
           'files',
           'debug!',
           undef,
+          'input-id=s',
+          'files',
           'tcga-version=s',
           [
             '1.1',
@@ -9487,6 +9528,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
           'files',
           'debug!',
           undef,
+          'input-id=s',
+          'files',
           'tcga-version=s',
           [
             '1.1',
@@ -9518,6 +9561,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
           'files',
           'debug!',
           undef,
+          'input-id=s',
+          'files',
           'tcga-version=s',
           [
             '1.1',
@@ -9549,6 +9594,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
           'files',
           'debug!',
           undef,
+          'input-id=s',
+          'files',
           'tcga-version=s',
           [
             '1.1',
@@ -9580,6 +9627,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
           'files',
           'debug!',
           undef,
+          'input-id=s',
+          'files',
           'tcga-version=s',
           [
             '1.1',
@@ -9611,6 +9660,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
           'files',
           'debug!',
           undef,
+          'input-id=s',
+          'files',
           'tcga-version=s',
           [
             '1.1',
@@ -9642,6 +9693,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
           'files',
           'debug!',
           undef,
+          'input-id=s',
+          'files',
           'tcga-version=s',
           [
             '1.1',
@@ -9673,6 +9726,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
           'files',
           'debug!',
           undef,
+          'input-id=s',
+          'files',
           'tcga-version=s',
           [
             '1.1',
@@ -9704,6 +9759,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
           'files',
           'debug!',
           undef,
+          'input-id=s',
+          'files',
           'tcga-version=s',
           [
             '1.1',
@@ -9805,8 +9862,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
         'files',
         'wingspan=s',
         'files',
-        'joinx-version=s',
-        'files',
         'output-directory=s',
         'files',
         'builds=s@',
@@ -9817,6 +9872,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
         undef,
         'allow-multiple-processing-profiles!',
         undef,
+        'joinx-version=s',
+        'files',
         'help!',
         undef
       ],
@@ -9894,8 +9951,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
         'files',
         'wingspan=s',
         'files',
-        'joinx-version=s',
-        'files',
         'output-directory=s',
         'files',
         'builds=s@',
@@ -9906,6 +9961,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
         undef,
         'allow-multiple-processing-profiles!',
         undef,
+        'joinx-version=s',
+        'files',
         'help!',
         undef
       ],
@@ -24689,6 +24746,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'pindel-raw-output=s',
       'files',
       'reference-build-id=s',
+      'files',
+      'tool-path=s',
       'files',
       'aligned-reads-sample=s',
       'files',

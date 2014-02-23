@@ -19,7 +19,13 @@ class Genome::Model::Build::Command::DetermineError {
         display_results => {
             is => 'Boolean',
             default => 1,
-        }
+        },
+        assume_build_status => {
+            is => 'Text',
+            is_optional => 1,
+            doc => 'Treat the build as if it has this status when determining the error. (Useful for finding errors in already-abandoned builds.)',
+            valid_values => ['Failed', 'Unstartable'],
+        },
     ],
     has_optional_output => [
         error_type => {
@@ -61,9 +67,11 @@ HELP
 sub execute {
     my $self = shift;
 
-    if ($self->build->status eq 'Failed') {
+    my $status = $self->assume_build_status || $self->build->status;
+
+    if ($status eq 'Failed') {
         $self->handle_failed();
-    } elsif ($self->build->status eq 'Unstartable') {
+    } elsif ($status eq 'Unstartable') {
         $self->handle_unstartable();
     } else {
         $self->error_message(sprintf("Build (%s) has an unexpected status: %s",
@@ -81,15 +89,25 @@ sub execute {
 sub print_results {
     my $self = shift;
 
-    print "\n";
-    printf "Build: %s\t\t", $self->_color($self->build->id, 'bold');
-    printf "Error Type: %s\t\t", $self->_color($self->error_type, 'bold');
-    printf "Error Date: %s\n", $self->_color($self->error_date, 'bold');
-    printf "Error Source File: %s\n", $self->_color($self->error_source_file, 'bold');
-    printf "Error Source Line: %s\n", $self->_color($self->error_source_line, 'bold');
-    printf "Error Log: %s\n", $self->_color($self->error_log, 'bold');
-    printf "Error Host: %s\n", $self->_color($self->error_host, 'bold');
-    printf "Error Message: %s\n", $self->_color($self->error_text, 'bold');
+    print $self->formatted_results;
+}
+
+sub formatted_results {
+    my $self = shift;
+
+    my $results = join('',
+        "\n",
+        sprintf("Build: %s\t\t", $self->_color($self->build->id, 'bold')),
+        sprintf("Error Type: %s\t\t", $self->_color($self->error_type, 'bold')),
+        sprintf("Error Date: %s\n", $self->_color($self->error_date, 'bold')),
+        sprintf("Error Source File: %s\n", $self->_color($self->error_source_file, 'bold')),
+        sprintf("Error Source Line: %s\n", $self->_color($self->error_source_line, 'bold')),
+        sprintf("Error Log: %s\n", $self->_color($self->error_log, 'bold')),
+        sprintf("Error Host: %s\n", $self->_color($self->error_host, 'bold')),
+        sprintf("Error Message: %s\n", $self->_color($self->error_text, 'bold')),
+    );
+
+    return $results;
 }
 
 sub handle_failed {

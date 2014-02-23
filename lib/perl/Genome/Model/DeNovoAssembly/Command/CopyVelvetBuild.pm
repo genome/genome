@@ -90,7 +90,7 @@ sub _resolve_to_directory {
     my $self = shift;
 
     unless ( -d $self->to ) {
-	$self->status_message("Did not find directory: ".$self->to." will create it");
+	$self->debug_message("Did not find directory: ".$self->to." will create it");
 	Genome::Sys->create_directory( $self->to );
     }
 
@@ -112,7 +112,7 @@ sub _copy_build {
     foreach my $file ( $self->_velvet_files_to_link ) {
 	#check file exists
 	unless ( -e $from . "/$file" ) {
-	    $self->status_message("Could not find file, $file in build directory, skipping linking of this file");
+	    $self->debug_message("Could not find file, $file in build directory, skipping linking of this file");
 	    return; #too strict, this files are really not needed??
 	}
 	#link file
@@ -136,7 +136,7 @@ sub _copy_build {
 	return;
     }
 
-    $self->status_message("Completed copying of build to directory: $to");
+    $self->debug_message("Completed copying of build to directory: $to");
 
     return 1;
 }

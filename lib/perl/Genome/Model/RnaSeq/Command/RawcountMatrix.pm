@@ -141,7 +141,7 @@ sub execute
     
     my $gene_gtf_path = $annotation_build->annotation_file('gtf',$reference_build->id);
 
-    $self->status_message('Loading known genes annotation file: '. $gene_gtf_path);
+    $self->debug_message('Loading known genes annotation file: '. $gene_gtf_path);
 
     # open the gtf file and read it creating a hash of ensemble_id => gene name
 
@@ -171,7 +171,7 @@ sub execute
         $annotation_hash{$ensemble_id} = "$gene_name\t";
     }
 
-    $self->status_message('There are '. scalar(keys %annotation_hash). ' genes in the annotation file: '. $gene_gtf_path);
+    $self->debug_message('There are '. scalar(keys %annotation_hash). ' genes in the annotation file: '. $gene_gtf_path);
 
     # for each rna-seq model open the raw counts file and take out ensemble_id and raw_counts
     # then if the ensemble_id exist in the annotation hash created above append the raw_counts
@@ -194,7 +194,7 @@ sub execute
 
          my $gene_count_tracking = $build->data_directory .'/results/digital_expression_result/gene-counts.tsv';
 
-         $self->status_message('Loading raw count file: '. $gene_count_tracking);
+         $self->debug_message('Loading raw count file: '. $gene_count_tracking);
 
          unless(-e $gene_count_tracking)
          {
@@ -255,7 +255,7 @@ sub execute
 
     # reformat the output file to get rid of the extra tabs at the end of the file
 
-    $self->status_message('Reformating the output file');
+    $self->debug_message('Reformating the output file');
 
     # read the tmp output file
 
@@ -283,7 +283,7 @@ sub execute
     if($boolean)
     {
 
-        $self->status_message('Performing default differential expression analysis with edgeR');
+        $self->debug_message('Performing default differential expression analysis with edgeR');
 
         my $r_script_path = $self ->__meta__->module_path;
         $r_script_path =~ s/\.pm/\.R/;
@@ -293,7 +293,7 @@ sub execute
 
     }
 
-    $self->status_message('Finished!');
+    $self->debug_message('Finished!');
 
     return 1;
 

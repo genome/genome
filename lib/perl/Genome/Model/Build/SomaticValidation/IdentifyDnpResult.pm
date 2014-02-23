@@ -51,7 +51,7 @@ sub create {
         die $self->error_message("Unexpected return value: $rv");
     }
 
-    $self->status_message('All processes completed.');
+    $self->debug_message('All processes completed.');
 
     return $self;
 }

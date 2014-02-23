@@ -82,7 +82,7 @@ sub execute {
 
     my $cfg_cmd = $self->breakdancer_config_command; 
     $cfg_cmd .= ' ' . $self->params . ' ' . $bam_string . ' > '. $out_file;
-    $self->status_message("Breakdancer command: $cfg_cmd");
+    $self->debug_message("Breakdancer command: $cfg_cmd");
 
     {
         local $CWD = $out_dir;  #change current work dir to out_dir so *.insert.histogram can be written there

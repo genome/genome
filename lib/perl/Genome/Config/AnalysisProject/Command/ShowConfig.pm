@@ -63,6 +63,7 @@ sub _format_profile_item {
 }
 
 sub _format_boolean {
+    my $self = shift;
     my $arg = shift;
     return $arg ? '1' : '0';
 }

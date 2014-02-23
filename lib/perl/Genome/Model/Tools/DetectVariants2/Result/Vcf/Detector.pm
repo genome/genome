@@ -34,11 +34,11 @@ sub _generate_vcf {
         my $vcf_module = $self->conversion_class_name($detector_class,$variant_type);
         if($vcf_module){
             $convertable++;
-            $self->status_message("Generating Vcf");
-            $self->status_message("executing $vcf_module on file $variant_file");
+            $self->debug_message("Generating Vcf");
+            $self->debug_message("executing $vcf_module on file $variant_file");
             $retval &&= $self->_run_vcf_converter($vcf_module, $variant_file,$variant_type);
         } else {
-            $self->status_message("Couldn't find a working vcf converter for $detector_class $variant_type");
+            $self->debug_message("Couldn't find a working vcf converter for $detector_class $variant_type");
             next;
         }
 
@@ -68,10 +68,11 @@ sub _run_vcf_converter {
     my $control_aligned_reads_sample = $self->control_aligned_reads_sample;
     my $reference_sequence_build = Genome::Model::Build->get($detector_result->reference_build_id);
     my %params = (
-        input_file => $input_file,
-        output_file => $output_file,
-        aligned_reads_sample => $aligned_reads_sample,
-        sequencing_center => 'WUSTL',
+        input_id                 => $self->input_id,
+        input_file               => $input_file,
+        output_file              => $output_file,
+        aligned_reads_sample     => $aligned_reads_sample,
+        sequencing_center        => 'WUSTL',
         reference_sequence_build => $reference_sequence_build,
     );
     $params{control_aligned_reads_sample} = $control_aligned_reads_sample if $control_aligned_reads_sample;

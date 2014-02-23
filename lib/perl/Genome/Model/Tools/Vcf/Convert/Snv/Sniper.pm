@@ -50,7 +50,7 @@ sub initialize_filehandles {
 
     #Sniper specific VCF output. For now modify this file. Hacky way
     if ($self->vcf_ok) {
-        $self->status_message("Assume this sniper run also gets vcf output");
+        $self->debug_message("Assume this sniper run also gets vcf output");
         my $dir = dirname $input;
         my ($raw_vcf) = glob($dir . "/*raw.vcf"); 
 

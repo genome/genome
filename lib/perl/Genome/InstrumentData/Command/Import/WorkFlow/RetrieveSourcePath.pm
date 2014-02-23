@@ -47,30 +47,30 @@ sub execute {
 
 sub _retrieve_source_path {
     my $self = shift;
-    $self->status_message('Retrieve source path...');
+    $self->debug_message('Retrieve source path...');
 
     my $retrieve_ok = $self->retrieve_path($self->source_path, $self->destination_path);
     return if not $retrieve_ok;
     
-    $self->status_message('Retrieve source path...done');
+    $self->debug_message('Retrieve source path...done');
     return 1;
 }
 
 sub _retrieve_source_md5 {
     my $self = shift;
-    $self->status_message('Retrieve source MD5 path...');
+    $self->debug_message('Retrieve source MD5 path...');
 
     my $md5_path = $self->source_path.'.md5';
     my $md5_size = $self->helpers->file_size($md5_path);
     if ( not $md5_size ) {
-        $self->status_message('Source MD5 path does not exist...skip');
+        $self->debug_message('Source MD5 path does not exist...skip');
         return 1;
     }
 
     my $retrieve_ok = $self->retrieve_path($md5_path, $self->destination_path.'.md5-orig');
     return if not $retrieve_ok;
 
-    $self->status_message('Retrieve source MD5 path...done');
+    $self->debug_message('Retrieve source MD5 path...done');
     return 1;
 }
 
@@ -90,10 +90,10 @@ sub retrieve_path {
 
 sub _retrieve_local_path {
     my ($self, $from, $to) = @_;
-    $self->status_message('Retrieve local path...');
+    $self->debug_message('Retrieve local path...');
 
-    $self->status_message("From: $from");
-    $self->status_message("To: $to");
+    $self->debug_message("From: $from");
+    $self->debug_message("To: $to");
     my $move_ok = File::Copy::copy($from, $to);
     if ( not $move_ok ) {
         $self->error_message('Copy failed!');
@@ -101,24 +101,24 @@ sub _retrieve_local_path {
     }
 
     my $from_sz = -s $from;
-    $self->status_message("From size: $from_sz");
+    $self->debug_message("From size: $from_sz");
     my $to_sz = -s $to;
-    $self->status_message("To size: $to_sz");
+    $self->debug_message("To size: $to_sz");
     if ( not $to_sz or $to_sz != $from_sz ) {
         $self->error_message("Copy succeeded, but destination size is diffeerent from original! $to_sz vs $from_sz");
         return;
     }
 
-    $self->status_message('Retrieve local path...done');
+    $self->debug_message('Retrieve local path...done');
     return 1;
 }
 
 sub _retrieve_remote_path {
     my ($self, $from, $to) = @_;
-    $self->status_message('Retrieve remote path...');
+    $self->debug_message('Retrieve remote path...');
 
-    $self->status_message("From: $from");
-    $self->status_message("To: $to");
+    $self->debug_message("From: $from");
+    $self->debug_message("To: $to");
 
     my $agent = LWP::UserAgent->new;
     my $response = $agent->get($from, ':content_file' => $to);
@@ -129,15 +129,15 @@ sub _retrieve_remote_path {
     }
 
     my $from_sz = $response->headers->content_length;
-    $self->status_message("From size: $from_sz");
+    $self->debug_message("From size: $from_sz");
     my $to_sz = -s $to;
-    $self->status_message("To size: $to_sz");
+    $self->debug_message("To size: $to_sz");
     if ( not $to_sz or $to_sz != $from_sz ) {
         $self->error_message("GET remote path succeeded, but destination size is different from original! $to_sz vs $from_sz");
         return;
     }
 
-    $self->status_message('Retrieve remote path...done');
+    $self->debug_message('Retrieve remote path...done');
     return 1;
 }
 1;

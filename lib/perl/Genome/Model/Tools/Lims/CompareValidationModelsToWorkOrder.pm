@@ -75,7 +75,7 @@ sub display_missing_sample_list {
     my @missing_samples = @_;
 
     if(scalar(@missing_samples) == 0) {
-        $self->status_message("All $type were accounted for.");
+        $self->debug_message("All $type were accounted for.");
     } else {
         if($self->show) {
             $self->warning_message("These $type were not accounted for:");

@@ -28,6 +28,13 @@ for file in tumor normal; do
     #    done
 done
 
-${SCRIPT_DIR}/MergeAssembledCallsets.pl -c -f $ID.HQfiltered.fasta -d 200 -h merge.index 1> $ID.HQfiltered.csv 2>$ID.HQfiltered_out.csv
+MAC_SCRIPT="${SCRIPT_DIR}/MergeAssembledCallsets.pl"
+if [ -x "$MAC_SCRIPT" ]; then
+    $MAC_SCRIPT -c -f $ID.HQfiltered.fasta -d 200 -h merge.index 1> $ID.HQfiltered.csv 2>$ID.HQfiltered_out.csv
+else
+    echo "${MAC_SCRIPT}: No such file or directory" 1>&2
+    exit 1
+fi
+
 ${SCRIPT_DIR}/BreakAnnot.pl -A $ID.HQfiltered.csv > $ID.HQfiltered.csv.annot
 cd ..

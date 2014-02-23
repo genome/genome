@@ -206,7 +206,7 @@ sub _remove_contigs_idx_directories {
 
 	if ( -d $idx_dir ) {
 	    unless ( File::Path::rmtree( $idx_dir ) ){
-		$self->status_message("Attempted to remove contigs index directory but failed: $idx_dir");
+		$self->debug_message("Attempted to remove contigs index directory but failed: $idx_dir");
 	    }
 	}
     }

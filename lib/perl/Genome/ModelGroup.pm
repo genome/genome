@@ -88,22 +88,6 @@ sub create {
     my $self = $class->SUPER::create($bx);
     return if not $self;
 
-    # Convergence model
-    my $define_command = Genome::Model::Command::Define::Convergence->create(
-        %convergence_model_params,
-        model_group_id => $self->id
-    );
-    unless ($define_command->execute == 1) {
-        $self->error_message("Failed to create convergence model associated with this model group");
-        $self->delete;
-        return;
-    }
-    my $convergence_model = Genome::Model->get( $define_command->result_model_id );
-    if ( not $convergence_model ) {
-        $self->error_message('Failed to find convergence model with id from define command: '.$define_command->result_model_id);
-        return;
-    }
-
     return $self;
 }
 

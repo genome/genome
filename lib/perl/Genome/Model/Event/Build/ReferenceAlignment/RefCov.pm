@@ -115,7 +115,7 @@ sub execute {
     # produces a reference coverage stats file for each iteration and relative coverage
     unless ($self->verify_progressions) {
         my $progression_array_ref = $self->progression_array_ref;
-        $self->status_message('Progressions look like: '. Data::Dumper::Dumper($progression_array_ref));
+        $self->debug_message('Progressions look like: '. Data::Dumper::Dumper($progression_array_ref));
         #parallelization starts here
         require Workflow::Simple;
 
@@ -127,6 +127,7 @@ sub execute {
         $op->parallel_by('bam_files');
         my $output;
         if ($self->model->duplication_handler_name eq 'samtools') {
+            Genome::Sys->disconnect_default_handles;
             $output = Workflow::Simple::run_workflow_lsf(
                 $op,
                 'output_directory' => $ref_cov_dir,
@@ -135,6 +136,7 @@ sub execute {
                 'samtools_version' => $self->model->duplication_handler_version,
             );
         } else {
+            Genome::Sys->disconnect_default_handles;
             $output = Workflow::Simple::run_workflow_lsf(
                 $op,
                 'output_directory' => $ref_cov_dir,
@@ -227,7 +229,7 @@ sub execute {
         die($self->error_message);
     }
     if ($self->build->add_report($report)) {
-        $self->status_message('Saved report: '. $report);
+        $self->debug_message('Saved report: '. $report);
     } else {
         $self->error_message('Error saving '. $report.'. Error: '. $self->build->error_message);
         die($self->error_message);

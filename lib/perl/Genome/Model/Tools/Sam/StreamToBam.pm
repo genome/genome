@@ -70,7 +70,7 @@ sub execute {
     my $bam_file = $self->bam_file;
     
     my $cmd = sprintf('%s view -bt %s -o %s -', $samtools, $self->ref_list, $bam_file);
-    $self->status_message("SamToBam conversion command: $cmd");
+    $self->debug_message("SamToBam conversion command: $cmd");
     
     my $bam_fh = IO::File->new("|$cmd");
     unless ($bam_fh) {
@@ -94,32 +94,32 @@ sub execute {
     #watch out disk space, for now hard code maxMemory 2000000000
     if ($self->fix_mate) {
     
-        $self->status_message("Fix-mate running.  First sorting by name to gather up mates");
+        $self->debug_message("Fix-mate running.  First sorting by name to gather up mates");
         my $tmp_file = $bam_file.'.sort';
         #402653184 bytes = 3 Gb 
         Genome::Sys->shellcmd(cmd=>"samtools sort -n -m 402653184 $bam_file $tmp_file",
                                               skip_if_output_is_present=>0,
                                               output_files=>["$tmp_file.bam"]);
     
-        $self->status_message("Removing the unsorted orignal bam file $bam_file");
+        $self->debug_message("Removing the unsorted orignal bam file $bam_file");
         # remove the unsorted bam file
         unlink($bam_file);
 
         
-        $self->status_message("Running fixmate on the sorted file");
+        $self->debug_message("Running fixmate on the sorted file");
         Genome::Sys->shellcmd(cmd=>"$samtools fixmate $tmp_file.bam $tmp_file.fixmate",
                                               skip_if_output_is_present=>0,
                                               output_files=>["$tmp_file.fixmate"]);
-        $self->status_message("Removing the name-sorted, but not fixmated bam file $tmp_file.bam");
+        $self->debug_message("Removing the name-sorted, but not fixmated bam file $tmp_file.bam");
         unlink "$tmp_file.bam";
 
-        $self->status_message("Now restoring the original sort order");
+        $self->debug_message("Now restoring the original sort order");
         Genome::Sys->shellcmd(cmd=>"$samtools sort -m 402653184 $tmp_file.fixmate $tmp_file.fix",
                                               skip_if_output_is_present=>0,
                                               output_files=>["$tmp_file.fix.bam"]);
         $self->error_message("Sort by position failed") and return if $rv or !-s $tmp_file.'.fix.bam';
         
-        $self->status_message("Now removing the fixmated, namesorted bam");
+        $self->debug_message("Now removing the fixmated, namesorted bam");
         unlink "$tmp_file.fixmate";
 
         move "$tmp_file.fix.bam", $bam_file;

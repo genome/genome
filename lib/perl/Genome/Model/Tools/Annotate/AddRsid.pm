@@ -71,7 +71,11 @@ sub execute {
 
         if(defined( $annotation->{$key}) ){
             # there is some assumed symmetry between $var and $dbSNPinfo
-            my @var_alleles = split(/, /, $var);
+            my @tmp1 = split(/, /, $var);
+            my @tmp2 = split(/,/, $var);
+            my @var_alleles = @tmp1;
+            @var_alleles = @tmp2 if (scalar(@tmp2) > scalar(@tmp1));
+
             my @dbSNPids = split_dbSNPBuildID($INFO);
 
             for (my $i = 0; $i < @dbSNPids; $i++) {

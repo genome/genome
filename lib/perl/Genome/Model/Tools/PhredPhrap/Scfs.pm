@@ -31,13 +31,13 @@ sub _files_to_remove {
 sub _handle_input {
     my $self = shift;
 
-    $self->status_message("Verifying SCFs");
+    $self->debug_message("Verifying SCFs");
     my $scf_file = $self->_verify_scfs;
 
-    $self->status_message("SCFs to PHD");
+    $self->debug_message("SCFs to PHD");
     $self->_scf2phd($scf_file);
 
-    $self->status_message("PHD to FASTA and Quality");
+    $self->debug_message("PHD to FASTA and Quality");
     $self->_phd2fnq( $self->default_phd_file );
 
     return 1;

@@ -122,7 +122,7 @@ sub execute {
         $bioseq_out->write_seq($bioseq);
     }
 
-    $self->status_message('Wrote sanitized sequences to '.$self->sanitized_fasta_file);
+    $self->debug_message('Wrote sanitized sequences to '.$self->sanitized_fasta_file);
 
     return 1;
 }

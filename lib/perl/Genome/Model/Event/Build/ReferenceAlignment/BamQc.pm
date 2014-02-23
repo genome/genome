@@ -115,7 +115,7 @@ sub link_result {
     my $link = join('/', $align_result->output_dir, 'bam-qc-'.$result->id);
 
     if (-l $link) {
-        $self->status_message("Already found a symlink here.");
+        $self->debug_message("Already found a symlink here.");
     }
     else {
         Genome::Sys->create_symlink($result->output_dir, $link);

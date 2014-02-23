@@ -67,7 +67,7 @@ sub execute {
     my $self = shift;
 
     if (($self->skip_if_output_present)&&(-s $self->variant_report_output)&&(-s $self->file_summary_report_output)) {
-        $self->status_message("Skipping execution: Output is already present and skip_if_output_present is set to true");
+        $self->debug_message("Skipping execution: Output is already present and skip_if_output_present is set to true");
         return 1;
     }
 
@@ -100,7 +100,7 @@ sub make_report {
     my $html = $transform->{content};
     
     if(Genome::Sys->check_for_path_existence($output)) {
-        $self->status_message("Report html $output exists!   Moving it out of the way...");
+        $self->debug_message("Report html $output exists!   Moving it out of the way...");
         my $n = 1;
         my $max = 20;
         while ($n < $max and Genome::Sys->check_for_path_existence($output . '.' . $n)) {
@@ -124,7 +124,7 @@ sub make_report {
 
     my $build = Genome::Model::Build->get($generator->build_id);
     if ($build->add_report($report)) {
-        $self->status_message('Saved report: '.$report);
+        $self->debug_message('Saved report: '.$report);
     } else {
         $self->error_message('Error saving '.$report.'. Error: '. $build->error_message);
         die($self->error_message);

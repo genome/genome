@@ -138,7 +138,7 @@ sub execute {
         output_files => [$output_file],
         allow_zero_size_output_files => 1,
     );
-    $self->status_message('Done running BAM Readcounts.');
+    $self->debug_message('Done running BAM Readcounts.');
 
     return 1;
 }

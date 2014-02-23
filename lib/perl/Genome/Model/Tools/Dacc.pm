@@ -92,7 +92,7 @@ sub temp_ssh_key {
     my $ssh_key = $self->ssh_key;
     my $temp_dir = $self->temp_dir;
     my $temp_ssh_key = $temp_dir.'/dacc.sshkey';
-    $self->status_message("Temp ssh key: $temp_ssh_key");
+    $self->debug_message("Temp ssh key: $temp_ssh_key");
 
     my $copy_ok = File::Copy::copy($ssh_key, $temp_ssh_key);
     if ( not $copy_ok or not -e $temp_ssh_key ) {
@@ -148,7 +148,7 @@ sub is_host_a_blade {
         $self->error_message('Cannot get hostname');
         return;
     }
-    $self->status_message('Host is: '.$hostname);
+    $self->debug_message('Host is: '.$hostname);
 
     return $hostname =~ /blade/ ? 1 : 0;
 }
@@ -157,7 +157,7 @@ sub is_running_in_lsf {
     my $self = shift;
 
     if ( $ENV{LSB_JOBID} ) {
-        $self->status_message('LSF Job Id: '.$ENV{LSB_JOBID});
+        $self->debug_message('LSF Job Id: '.$ENV{LSB_JOBID});
         return 1;
     }
     else {
@@ -186,7 +186,7 @@ sub _launch_to_lsf {
 
     Carp::confess('No params to launch to LSF') if not @params;
 
-    $self->status_message("Launch to LSF");
+    $self->debug_message("Launch to LSF");
 
     my $logging = '-u '. Genome::Config->user_email;
     my @rusage = $self->rusage;
@@ -205,7 +205,7 @@ sub _launch_to_lsf {
         return;
     }
 
-    $self->status_message("Launch to LSF...OK");
+    $self->debug_message("Launch to LSF...OK");
 
     return 1;
 }

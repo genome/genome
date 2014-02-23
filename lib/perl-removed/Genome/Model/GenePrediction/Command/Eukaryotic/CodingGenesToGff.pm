@@ -36,7 +36,7 @@ sub execute {
     confess "No prediction directory found at $prediction_dir!" unless -d $prediction_dir;
 
     my @coding_genes = Genome::Prediction::CodingGene->get(directory => $prediction_dir);
-    $self->status_message("Found " . scalar @coding_genes . " coding gene predictions in $prediction_dir!");
+    $self->debug_message("Found " . scalar @coding_genes . " coding gene predictions in $prediction_dir!");
 
     my $coding_gene_reader = Genome::Utility::IO::SeparatedValueReader->create(
         input => $prediction_dir.'/coding_genes.csv',
@@ -110,7 +110,7 @@ sub execute {
     }
 
     $output_fh->close;
-    $self->status_message("Successfully completed conversion to gff, output file at " . $self->output_file);
+    $self->debug_message("Successfully completed conversion to gff, output file at " . $self->output_file);
     return 1;
 }
 

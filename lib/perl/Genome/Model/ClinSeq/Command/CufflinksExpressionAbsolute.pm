@@ -140,24 +140,24 @@ sub execute {
   my $reference_build = $rnaseq_build->reference_sequence_build;
   my $reference_build_id = $reference_build->id;
   my $reference_build_name = $reference_build->name;
-  $self->status_message("Processing RNA-seq data that was aligned to: $reference_build_name");
+  $self->debug_message("Processing RNA-seq data that was aligned to: $reference_build_name");
 
   my $annotation_build = $rnaseq_build->model->annotation_build;
   my $annotation_build_name = $annotation_build->name;
   my $annotation_data_dir = $annotation_build->data_directory;
   my $transcript_info_path = $annotation_data_dir . "/annotation_data/rna_annotation/$reference_build_id-transcript_info.tsv";
   my $gtf_path = $annotation_build->annotation_file('gtf',$reference_build_id);
-  $self->status_message("Getting transcript to gene and gene name mappings from annotation build: $annotation_build_name");
+  $self->debug_message("Getting transcript to gene and gene name mappings from annotation build: $annotation_build_name");
   unless (defined($gtf_path)) {
     $self->error_message("'There is no annotation GTF file defined for annotation_reference_transcripts build: ". $annotation_build->__display_name__);
     die $self->error_message;
   }
-  $self->status_message("\t$gtf_path");
+  $self->debug_message("\t$gtf_path");
   unless (-e $transcript_info_path) {
     $self->error_message("'There is no transcript info file for annotation_reference_transcripts build: ". $annotation_build->__display_name__);
     die $self->error_message;
   }
-  $self->status_message("\t$transcript_info_path");
+  $self->debug_message("\t$transcript_info_path");
   my $ensembl_map = $self->loadEnsemblMap('-gtf_path'=>$gtf_path, '-transcript_info_path'=>$transcript_info_path);
 
   #Import a set of gene symbol lists 
@@ -191,7 +191,7 @@ sub execute {
   my $r_cmd_stderr = "$working_dir"."outlierGenesAbsolute.R.stderr";
 
   my $r_cmd = "$outlier_genes_absolute_r_script $working_dir $images_sub_dir " . $self->percent_cutoff . " 1>$r_cmd_stdout 2>$r_cmd_stderr";
-  $self->status_message($r_cmd);
+  $self->debug_message($r_cmd);
   Genome::Sys->shellcmd(cmd => $r_cmd);
 
   #Reorganize the output files into sub-directories

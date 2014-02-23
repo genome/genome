@@ -95,7 +95,7 @@ sub execute {
             $self->error_message( "Failed to create ace file" );
             return;
         }
-        $self->status_message( "Successfully made ace file" );
+        $self->debug_message( "Successfully made ace file" );
     }
 
     #make phdball file
@@ -118,7 +118,7 @@ sub execute {
             $self->error_message( "Failed to create phdball file" );
             return;
         }
-        $self->status_message( "Successfully made phdball file" );
+        $self->debug_message( "Successfully made phdball file" );
     }
 
     return 1;

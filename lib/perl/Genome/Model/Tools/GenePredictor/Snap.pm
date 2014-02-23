@@ -63,7 +63,7 @@ sub execute {
         return 1;
     }
 
-    $self->status_message("Starting Snap prediction wrapper, reading sequences from " . $self->fasta_file);
+    $self->debug_message("Starting Snap prediction wrapper, reading sequences from " . $self->fasta_file);
 
     # Use full path to snap executable, with version, instead of the symlink.
     # This prevents the symlink being changed silently and affecting our output!
@@ -73,11 +73,11 @@ sub execute {
         my $mkdir_rv = make_path($self->raw_output_directory);
         confess "Could not make directory " . $self->raw_output_directory unless $mkdir_rv;
     }
-    $self->status_message("Raw output being placed in " . $self->raw_output_directory);
+    $self->debug_message("Raw output being placed in " . $self->raw_output_directory);
 
     my @models = split(",", $self->model_files);
     confess 'Received no Snap models, not running predictor!' unless @models;
-    $self->status_message("Running Snap " . scalar @models . " times with different model files!");
+    $self->debug_message("Running Snap " . scalar @models . " times with different model files!");
 
     # Construct Snap command and execute for each supplied model file
     for my $model (@models) {
@@ -98,7 +98,7 @@ sub execute {
         push @params, "2> $raw_error";
         my $cmd = join(' ', $snap_path, @params);
 
-        $self->status_message("Executing Snap command: $cmd");
+        $self->debug_message("Executing Snap command: $cmd");
         my $rv = system($cmd);
         confess "Trouble executing Snap!" unless defined $rv and $rv == 0;
         $self->status_message("Done running Snap using model file $model, now parsing output and creating prediction objects");
@@ -135,7 +135,7 @@ sub execute {
                 $current_seq_name = $1;
                 $seq_obj = $self->get_sequence_by_name($current_seq_name);
                 confess "Couldn't get sequence $current_seq_name!" unless $seq_obj;
-                $self->status_message("Parsing predictions from $current_seq_name");
+                $self->debug_message("Parsing predictions from $current_seq_name");
             }
             else {
                 my (
@@ -199,7 +199,7 @@ sub execute {
         $self->status_message("Successfully finished parsing Snap output for model $model and created $total_gene_count objects!");
     }
 
-    $self->status_message("Getting ready for commit, acquiring locks for coding gene, protein, transcript, and exon files...");
+    $self->debug_message("Getting ready for commit, acquiring locks for coding gene, protein, transcript, and exon files...");
     my @locks = $self->lock_files_for_predictions(
         qw/ 
             Genome::Prediction::CodingGene 
@@ -209,7 +209,7 @@ sub execute {
         /
     );
 
-    $self->status_message("Lock acquired, committing");
+    $self->debug_message("Lock acquired, committing");
     my $commit_rv = UR::Context->commit;
     unless (defined $commit_rv and $commit_rv) {
         $self->error_message("Could not perform UR context commit!");

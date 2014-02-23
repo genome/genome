@@ -68,7 +68,7 @@ sub execute {
         die($self->error_message('Found ' . scalar(@bams) . ' from alignment when 1 was expected. This model will probably fail.'));
     }
 
-    $self->status_message("Alignment BAM paths:\n " . join("\n ", @bams));
+    $self->debug_message("Alignment BAM paths:\n " . join("\n ", @bams));
 
     my @results = $result->_merged_results;
 

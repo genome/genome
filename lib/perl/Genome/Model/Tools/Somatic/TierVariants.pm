@@ -183,12 +183,12 @@ sub execute {
     }
 
     if ($self->only_tier_1) {
-        $self->status_message("only_tier_1 flag is set. Skipping tiers 2-4. Exiting.");
+        $self->debug_message("only_tier_1 flag is set. Skipping tiers 2-4. Exiting.");
         return 1;
     }
 
     unless (-e $ucsc_file) {
-        $self->status_message("ucsc file $ucsc_file does not exist. Skipping tiers 2-4. Exiting.");
+        $self->debug_message("ucsc file $ucsc_file does not exist. Skipping tiers 2-4. Exiting.");
         return 1;
     }
 

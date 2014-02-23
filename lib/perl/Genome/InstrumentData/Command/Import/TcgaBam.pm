@@ -928,7 +928,7 @@ sub _create_model_and_request_build {
         return;
     }
 
-    $self->status_message('Create model and request build...OK');
+    $self->status_message('Create model..OK');
 
     return $model;
 }
@@ -987,6 +987,7 @@ sub _cghub_download {
         right_property  => 'done'
     );
 
+    Genome::Sys->disconnect_default_handles;
     my $result = Workflow::Simple::run_workflow_lsf($workflow, %params);
 
     unless ($result) {

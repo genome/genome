@@ -99,9 +99,9 @@ sub _run_command {
     my $cwd = Cwd::getcwd();
     chdir $self->_tmpdir;
 
-    $self->status_message('Run command: '.$cmd);
+    $self->debug_message('Run command: '.$cmd);
     `$cmd`; # must use back ticks b/c of issue with running multiple sx commands in pipes
-    $self->status_message('Exit status from command: '.$?);
+    $self->debug_message('Exit status from command: '.$?);
 
     chdir $cwd;
     if ( $? ) {
@@ -116,7 +116,7 @@ sub _resolve_input_params {
     my $self = shift;
 
     my $cmd_display_name = $self->cmd_display_name;
-    $self->status_message("Check if inputs for $cmd_display_name need to be written...");
+    $self->debug_message("Check if inputs for $cmd_display_name need to be written...");
     my ($required_type, $required_counts) = $self->_required_type_and_counts_for_inputs;
     my @input_configs = $self->input;
     my @input_params;
@@ -130,18 +130,18 @@ sub _resolve_input_params {
     # The input files that are valid must be all the input configs plus match the allowable counts
     if ( @input_configs == @input_params ) {
         if ( not @$required_counts or grep { @input_params == $_ } @$required_counts ) {
-            $self->status_message('Using original inputs!');
+            $self->debug_message('Using original inputs!');
             return @input_params;
         }
     }
 
-    $self->status_message("Must write $cmd_display_name input files...");
+    $self->debug_message("Must write $cmd_display_name input files...");
     my $input = $self->_init_input;
     return if not $input;
 
     my $seqs = $input->read;
     my $cnt = @$seqs; 
-    $self->status_message('Input count: '.$cnt);
+    $self->debug_message('Input count: '.$cnt);
 
     my $format;
     switch ($required_type) {
@@ -158,7 +158,7 @@ sub _resolve_input_params {
         $writer_config[0] .= ':name=fwd';
         push @writer_config, $self->_tmpdir."/input_2.$format:type=$required_type:name=rev";
         $writer_config[1] .= ':qual_file='.$self->_tmpdir."/input_1.qual" if $required_type eq 'phred'; # FIXME this will not always work
-        $self->status_message('Writing input as paired');
+        $self->debug_message('Writing input as paired');
     }
 
     my $input_writer = Genome::Model::Tools::Sx::Writer->create(
@@ -171,7 +171,7 @@ sub _resolve_input_params {
     do {
         $input_writer->write($seqs);
     } while $seqs = $input->read;
-    $self->status_message('Write input...OK');
+    $self->debug_message('Write input...OK');
 
     @input_params = ();
     for my $config ( @writer_config ) {
@@ -200,7 +200,7 @@ sub save_read_processor_output_files {
         if not -d $output_path;
 
     if ( not $output_path = $self->output_path ) {
-        $self->status_message('Failed to derive output path from sx output');
+        $self->debug_message('Failed to derive output path from sx output');
         return;
     }
 
@@ -208,14 +208,14 @@ sub save_read_processor_output_files {
     $output_path .= '/'.$cmd_display_name;
     Genome::Sys->create_directory( $output_path ) if not -d $output_path;
 
-    $self->status_message("Copying $cmd_display_name output files to $output_path");
+    $self->debug_message("Copying $cmd_display_name output files to $output_path");
     my $rv = eval{ File::Copy::Recursive::dircopy( $tmpdir, $output_path ); };
     if ( not $rv ) {
         $self->error_message("Failed to copy $cmd_display_name output files from $tmpdir to $output_path");
         return;
     }
 
-    $self->status_message("Finished copying $cmd_display_name output files from $tmpdir to $output_path");
+    $self->debug_message("Finished copying $cmd_display_name output files from $tmpdir to $output_path");
 
     return 1
 }

@@ -55,7 +55,7 @@ sub execute {
     my $self = shift;
 
     $self->dump_status_messages(1);
-    $self->status_message(">>>Running MergeAlignmentsMulti at ".UR::Context->current->now);
+    $self->debug_message(">>>Running MergeAlignmentsMulti at ".UR::Context->current->now);
     #my $model_id = $self->model_id;
     my $concise_files_ref = $self->concise_files;
     my @concise_files = @$concise_files_ref;
@@ -66,7 +66,7 @@ sub execute {
     my $working_directory = $working_directory_list[0];
     
     #my $working_directory = $self->working_directory;
-    $self->status_message("Working directory: ".$working_directory);
+    $self->debug_message("Working directory: ".$working_directory);
     
     #grep the items based on the sequence name
     my @pe1 = grep(/^.*s_\d_1.*/,@concise_files);
@@ -75,14 +75,14 @@ sub execute {
 	my $pe1_output_file = $working_directory."/pe1_combined_concise_file.txt";
 	my $pe2_output_file = $working_directory."/pe2_combined_concise_file.txt";
     
-    $self->status_message("Merging ".join("\n",@pe1)." into $pe1_output_file");
+    $self->debug_message("Merging ".join("\n",@pe1)." into $pe1_output_file");
     $self->merge($pe1_output_file, \@pe1);
-    $self->status_message("Merging ".join("\n",@pe2)." into $pe2_output_file");
+    $self->debug_message("Merging ".join("\n",@pe2)." into $pe2_output_file");
     $self->merge($pe2_output_file, \@pe2);
     
     $self->paired_end1_concise_file($pe1_output_file);
     $self->paired_end2_concise_file($pe2_output_file);
-    $self->status_message("<<<Completed MergeAlignmentsMulti for testing at at ".UR::Context->current->now);
+    $self->debug_message("<<<Completed MergeAlignmentsMulti for testing at at ".UR::Context->current->now);
     return 1;
 }
 
@@ -100,7 +100,7 @@ sub merge {
     if (defined($rv_check)) {
 	    if ($rv_check == 1) {
 	    	#shortcut this step, all the required files exist.  Quit.
-	    	$self->status_message("Skipping this step.  File exists: $combined_file.  If you would like to regenerate these files, remove them and rerun.");
+	    	$self->debug_message("Skipping this step.  File exists: $combined_file.  If you would like to regenerate these files, remove them and rerun.");
 	   	    return 1;
 	    }
     }
@@ -109,7 +109,7 @@ sub merge {
 	 $self->error_message("*** No files to merge.  Quitting.");
 	 return;
     } elsif ( scalar(@concise_files) == 1) {
-		$self->status_message("Only one alignment file is present.  Not merging, only copying.");
+		$self->debug_message("Only one alignment file is present.  Not merging, only copying.");
 		my $cp_cmd = "cp ".$concise_files[0]." ".$combined_file;
 		my $rv_cp = Genome::Sys->shellcmd(cmd=>$cp_cmd);
 		if ($rv_cp != 1) {
@@ -118,8 +118,8 @@ sub merge {
 		} 
     } else {
 		
-	    $self->status_message("Merging files: ".join("\n",@concise_files) );
-	    $self->status_message("Destination file: ".$combined_file);    
+	    $self->debug_message("Merging files: ".join("\n",@concise_files) );
+	    $self->debug_message("Destination file: ".$combined_file);    
         
             my $rv_cat = Genome::Sys->cat(input_files=>\@concise_files,output_file=>$combined_file);        
 		if ($rv_cat != 1) {

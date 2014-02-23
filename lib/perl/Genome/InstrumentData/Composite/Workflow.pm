@@ -73,7 +73,7 @@ sub _process_strategy {
     my $self = shift;
     my $strategy_string = shift;
 
-    $self->status_message('Analyzing strategy...');
+    $self->debug_message('Analyzing strategy...');
 
     my $strategy = Genome::InstrumentData::Composite::Strategy->create(
         strategy => $strategy_string,
@@ -85,7 +85,7 @@ sub _process_strategy {
         return;
     }
 
-    $self->status_message('Analyzing strategy...OK');
+    $self->debug_message('Analyzing strategy...OK');
     return $tree;
 }
 
@@ -93,7 +93,7 @@ sub _generate_workflow {
     my $self = shift;
     my $tree = shift;
 
-    $self->status_message('Generating workflow...');
+    $self->debug_message('Generating workflow...');
 
     unless(exists $tree->{data}) {
         die $self->error_message('No data specified in input');
@@ -1006,7 +1006,9 @@ sub _run_workflow {
     my $workflow = shift;
     my $inputs = shift;
 
-    $self->status_message('Running workflow...');
+    Genome::Sys->disconnect_default_handles;
+
+    $self->debug_message('Running workflow...');
     my $result = Workflow::Simple::run_workflow_lsf( $workflow, @$inputs);
 
     unless($result){
@@ -1021,8 +1023,8 @@ sub _run_workflow {
         }
     }
 
-    $self->status_message('Produced results: ' . join(', ', @result_ids));
-    $self->status_message('Workflow complete.');
+    $self->debug_message('Produced results: ' . join(', ', @result_ids));
+    $self->debug_message('Workflow complete.');
 
     return @result_ids;
 }

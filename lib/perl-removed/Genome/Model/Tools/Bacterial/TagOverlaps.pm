@@ -89,8 +89,8 @@ sub execute {
             $manual_review_gene = $results->{gene_name};
         }
 
-        $self->status_message("$dead_gene will be tagged as dead.");
-        $self->status_message("$manual_review_gene will be tagged for manual review.");
+        $self->debug_message("$dead_gene will be tagged as dead.");
+        $self->debug_message("$manual_review_gene will be tagged for manual review.");
 
         # Tagging dead gene
         my $dead_coding_gene_results = BAP::DB::CodingGene->search({gene_name => $dead_gene});
@@ -115,10 +115,10 @@ sub execute {
 
     # Check if any no commit flags are set...
     if(exists($ENV{UR_DBI_NO_COMMIT}) && ($ENV{UR_DBI_NO_COMMIT} == 1)) {
-        $self->status_message("UR_DBI_NO_COMMIT set; not commiting changes");
+        $self->debug_message("UR_DBI_NO_COMMIT set; not commiting changes");
     }
     else {
-        $self->status_message("Committing changes to MGAP database.");
+        $self->debug_message("Committing changes to MGAP database.");
         BAP::DB::DBI->dbi_commit();
     }
 

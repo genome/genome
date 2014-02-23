@@ -45,7 +45,7 @@ sub execute {
     # find the bam on the instrument_data object
     my $bam_path = $instrument_data->bam_path;
     confess "Couldn't find bam for instrument_data: $id\n" unless $bam_path;
-    $self->status_message("Found bam_path: $bam_path");
+    $self->debug_message("Found bam_path: $bam_path");
 
     # check to see if a flagstat file already exists
     my $flagstat_file = $bam_path . ".flagstat";
@@ -53,19 +53,19 @@ sub execute {
         $flagstat_file = Genome::Sys->create_temp_file_path();
         # get the flagstat object
         my $flagstat_object = Genome::Model::Tools::Sam::Flagstat->create(bam_file => $bam_path, output_file =>$flagstat_file);
-        $self->status_message("Created flagstat object to create output file: $flagstat_file");
+        $self->debug_message("Created flagstat object to create output file: $flagstat_file");
         # determine the read-count of the bam
         unless($flagstat_object->execute()){
             confess "Failed to run flagstat on bam file at: $bam_path";
         }
-        $self->status_message("Ran flagstat and about to parse output file...");
+        $self->debug_message("Ran flagstat and about to parse output file...");
     } else {
-        $self->status_message("Found existing flagstat and about to parse output file...");
+        $self->debug_message("Found existing flagstat and about to parse output file...");
     }
 
     my $flag_data = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flagstat_file);
     my $read_count = $flag_data->{"total_reads"};
-    $self->status_message("Found $read_count for the bam file at: $bam_path");
+    $self->debug_message("Found $read_count for the bam file at: $bam_path");
 
     # create the read_count attribute on the instrument_data
     my $new_attribute = $instrument_data->add_attribute(
@@ -75,7 +75,7 @@ sub execute {
     if (not $new_attribute){
         confess "Failed to create new read_count attribute on instrument: $id";
     } else {
-        $self->status_message("Everything complete.");
+        $self->debug_message("Everything complete.");
         return 1;
     }
 }

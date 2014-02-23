@@ -165,7 +165,7 @@ sub parse_ped {
         chomp($line);
         my ($family_id, $person_id, $father_id, $mother_id, $sex, $glf_index, $affectation_status) = split "\t", $line;
         unless(exists($ped_hash{$person_id})) {
-            $self->status_message("$person_id found in ped but not vcf. Person will not be analyzed");
+            $self->debug_message("$person_id found in ped but not vcf. Person will not be analyzed");
             next;
         }
         if($affectation_status eq 'A') {

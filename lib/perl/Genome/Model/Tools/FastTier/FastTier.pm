@@ -143,10 +143,10 @@ sub execute {
         $self->_tier4_bed($tiers[3]);
     }
 
-    $self->status_message("Using tier 1 bed file  at ".$self->_tier1_bed ."\n");
-    $self->status_message("Using tier 2 bed file  at ".$self->_tier2_bed ."\n");
-    $self->status_message("Using tier 3 bed file  at ".$self->_tier3_bed ."\n");
-    $self->status_message("Using tier 4 bed file  at ".$self->_tier4_bed ."\n");
+    $self->debug_message("Using tier 1 bed file  at ".$self->_tier1_bed ."\n");
+    $self->debug_message("Using tier 2 bed file  at ".$self->_tier2_bed ."\n");
+    $self->debug_message("Using tier 3 bed file  at ".$self->_tier3_bed ."\n");
+    $self->debug_message("Using tier 4 bed file  at ".$self->_tier4_bed ."\n");
 
     if($self->tiering_version >= 3){
 

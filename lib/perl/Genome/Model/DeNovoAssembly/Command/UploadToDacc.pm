@@ -91,7 +91,7 @@ sub _get_last_succeeeded_build_from_model {
 sub _verify_build {
     my ($self, $build) = @_;
 
-    $self->status_message('Verify assembly length...');
+    $self->debug_message('Verify assembly length...');
     my $assembly_length = $build->assembly_length;
     if ( not defined $assembly_length ) {
         $self->error_message('Assembly length is not defiend for last succeeded build: '.$build->id.'. Cannot upload to the DACC.');
@@ -101,9 +101,9 @@ sub _verify_build {
         $self->error_message('Assembly length is 0 for last succeeded build: '.$build->id.'. Cannot upload to the DACC.');
         return;
     }
-    $self->status_message('Verify assembly length OK: '.$assembly_length);
+    $self->debug_message('Verify assembly length OK: '.$assembly_length);
 
-    $self->status_message('Verify files to upload...');
+    $self->debug_message('Verify files to upload...');
     for my $file_name ( _file_names_to_upload() ) {
         my $file = $build->$file_name;
         if ( not -s $file ) {
@@ -111,9 +111,9 @@ sub _verify_build {
             return;
         }
     }
-    $self->status_message('Verify files to upload...OK');
+    $self->debug_message('Verify files to upload...OK');
 
-    $self->status_message('Get sra sample id...');
+    $self->debug_message('Get sra sample id...');
     my %sra_sample_ids = map { $_->sra_sample_id => 1 } grep { defined $_->sra_sample_id } $build->instrument_data;
     if ( not %sra_sample_ids ) {
         $self->error_message('No sra sample ids found in instrument data for build: '.$build->id);
@@ -125,7 +125,7 @@ sub _verify_build {
         return;
     }
     $self->_sra_sample_id($sra_sample_ids[0]);
-    $self->status_message('Got sra sample id: '.$self->_sra_sample_id);
+    $self->debug_message('Got sra sample id: '.$self->_sra_sample_id);
 
     return 1;
 }
@@ -138,7 +138,7 @@ sub _upload_files {
     die "No sra sample id" if not defined $sra_sample_id;
 
     # md5 file
-    $self->status_message('Open md5 file...');
+    $self->debug_message('Open md5 file...');
     my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
     my $md5_file = $tmpdir.'/'.$sra_sample_id.'.md5';
     my $md5_fh = IO::File->new($md5_file, 'w');
@@ -146,35 +146,35 @@ sub _upload_files {
         $self->error_message('Cannot open md5 file: '.$md5_file);
         return;
     }
-    $self->status_message('Open md5 file...OK');
+    $self->debug_message('Open md5 file...OK');
 
     # go through files, get md5, push to upload
-    $self->status_message('Upload files...');
+    $self->debug_message('Upload files...');
     my %files_and_exts = _files_and_exts();
     my @files_to_upload = ( $md5_file );
     for my $file_name ( sort keys %files_and_exts ) {
         my $file = $build->$file_name;
-        $self->status_message("Checking $file_name...");
+        $self->debug_message("Checking $file_name...");
         if ( not -s $file ) {
             $self->error_message("File $file for $file_name does not have any size.");
             return;
         }
         push @files_to_upload, $file;
-        $self->status_message("Checking $file_name...OK: $file");
+        $self->debug_message("Checking $file_name...OK: $file");
 
-        $self->status_message('MD5 for '.$file);
+        $self->debug_message('MD5 for '.$file);
         my $md5 = $self->_md5_for_file($file);
         return if not defined $md5;
         my $base_name = File::Basename::basename($file);
         my $md5_string = $md5."\t".$sra_sample_id.'_WUGC/'.$base_name;
-        $self->status_message($md5_string);
+        $self->debug_message($md5_string);
         $md5_fh->print("$md5_string\n");
-        $self->status_message('MD5 OK: '.$md5);
+        $self->debug_message('MD5 OK: '.$md5);
     }
     $md5_fh->flush;
     my $aspera = $self->_run_aspera(@files_to_upload);
     return if not $aspera;
-    $self->status_message('Upload files...OK');
+    $self->debug_message('Upload files...OK');
 
     return 1;
 }
@@ -186,24 +186,24 @@ sub _run_aspera {
     die "No sra sample id" if not defined $sra_sample_id;
     my $dest_dir = '/WholeMetagenomic/03-Assembly/PGA/'.$sra_sample_id.'_WUGC/';
 
-    $self->status_message('Aspera key file...');
+    $self->debug_message('Aspera key file...');
     my $key_file = '/gscuser/ebelter/DACC/keys/dacc.ppk';
     if ( not -s $key_file ) {
         $self->error_message("Asepeara key file ($key_file) deos not exist.");
         return;
     }
-    $self->status_message('Aspera key file...OK');
+    $self->debug_message('Aspera key file...OK');
 
     my $files = join(' ', @files);
     my $cmd = "ascp -QTd -l100M -i $key_file $files jmartin\@aspera.hmpdacc.org:$dest_dir";
-    $self->status_message("Aspera: $cmd");
+    $self->debug_message("Aspera: $cmd");
     #my $rv = 1;
     my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
     if ( not $rv ) {
         $self->error_message("Aspera command failed: $cmd");
         return;
     }
-    $self->status_message("Aspera OK");
+    $self->debug_message("Aspera OK");
 
     return 1;
 }

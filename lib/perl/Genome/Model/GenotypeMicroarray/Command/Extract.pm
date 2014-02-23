@@ -52,7 +52,7 @@ HELP
 
 sub execute {
     my $self = shift;
-    $self->status_message('Extract genotytpes from build...');
+    $self->debug_message('Extract genotytpes from build...');
 
     my $build = $self->_resolve_build;
     return if not $build;
@@ -71,8 +71,8 @@ sub execute {
     }
     $output_fh->flush;
 
-    $self->status_message('Wrote '.$reader->passed.' of '.$reader->total.' genotypes. Output genotypes...OK');
-    $self->status_message('Done');
+    $self->debug_message('Wrote '.$reader->passed.' of '.$reader->total.' genotypes. Output genotypes...OK');
+    $self->debug_message('Done');
     return 1;
 }
 
@@ -100,10 +100,10 @@ sub _resolve_build {
 
 sub _open_oringinal_genotype_reader {
     my $self = shift;
-    $self->status_message('Open original genotype file...');
+    $self->debug_message('Open original genotype file...');
 
     my $original_genotype_file = $self->build->original_genotype_file_path;
-    $self->status_message('Original genotype file: '.$original_genotype_file);
+    $self->debug_message('Original genotype file: '.$original_genotype_file);
     if ( not -s $original_genotype_file ) {
         $self->error_message('Original genotype file does not exist!');
         return;
@@ -116,27 +116,27 @@ sub _open_oringinal_genotype_reader {
         $self->error_message('Failed to create original genotype file reader.');
         return;
     }
-    $self->status_message('Found headers in genotype file: '. join(', ', $reader->headers));
+    $self->debug_message('Found headers in genotype file: '. join(', ', $reader->headers));
 
-    $self->status_message('Open original genotype reader...OK');
+    $self->debug_message('Open original genotype reader...OK');
     return $reader;
 }
 
 sub _open_output {
     my $self = shift;
 
-    $self->status_message('Open output file...');
+    $self->debug_message('Open output file...');
 
     my $output = $self->output;
     unlink $output if -e $output;
-    $self->status_message('Output file: '.$output);
+    $self->debug_message('Output file: '.$output);
     my $output_fh = eval{ Genome::Sys->open_file_for_writing($output); };
     if ( not $output_fh ) {
         $self->error_message("Failed to open output file ($output): $@");
         return;
     }
 
-    $self->status_message('Open output file...OK');
+    $self->debug_message('Open output file...OK');
     return $output_fh;
 }
 

@@ -208,16 +208,16 @@ sub shortcut {
 
     $self->_resolve_output_directory;
 
-    $self->status_message("Attempting to shortcut detector result");
+    $self->debug_message("Attempting to shortcut detector result");
     unless($self->shortcut_detector){
-        $self->status_message("Could not shortcut detector result.");
+        $self->debug_message("Could not shortcut detector result.");
         return;
     }
 
     if($self->_try_vcf){
-        $self->status_message("Attempting to shortcut vcf result");
+        $self->debug_message("Attempting to shortcut vcf result");
         unless($self->shortcut_vcf){
-            $self->status_message("Could not shortcut vcf result.");
+            $self->debug_message("Could not shortcut vcf result.");
             return;
         }
     }
@@ -248,15 +248,15 @@ sub _try_vcf {
 sub shortcut_detector {
     my $self = shift;
     my ($params) = $self->params_for_detector_result;
-    $self->status_message("Params for shortcut_detector: " . Data::Dumper::Dumper $params);
+    $self->debug_message("Params for shortcut_detector: " . Data::Dumper::Dumper $params);
     my $result = Genome::Model::Tools::DetectVariants2::Result->get_with_lock(%$params);
     unless($result) {
-        $self->status_message('No existing result found.');
+        $self->debug_message('No existing result found.');
         return;
     }
 
     $self->_result($result);
-    $self->status_message('Using existing result ' . $result->__display_name__);
+    $self->debug_message('Using existing result ' . $result->__display_name__);
     $self->_link_output_directory_to_result;
 
     return 1;
@@ -265,15 +265,15 @@ sub shortcut_detector {
 sub shortcut_vcf {
     my $self = shift;
     my ($params) = $self->params_for_vcf_result;
-    $self->status_message("Params for shortcut_vcf: " . Data::Dumper::Dumper $params);
+    $self->debug_message("Params for shortcut_vcf: " . Data::Dumper::Dumper $params);
     my $result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Detector->get_with_lock(%$params);
     unless($result) {
-        $self->status_message('No existing result found.');
+        $self->debug_message('No existing result found.');
         return;
     }
 
     $self->_vcf_result($result);
-    $self->status_message('Using existing result ' . $result->__display_name__);
+    $self->debug_message('Using existing result ' . $result->__display_name__);
     $self->_link_vcf_output_directory_to_result;
 
     return 1;
@@ -310,7 +310,7 @@ sub _summon_vcf_result {
     }
 
     $self->_vcf_result($result);
-    $self->status_message('Generated vcf result.');
+    $self->debug_message('Generated vcf result.');
     $self->_link_vcf_output_directory_to_result;
 
     return 1;
@@ -326,7 +326,7 @@ sub _summon_detector_result {
     }
 
     $self->_result($result);
-    $self->status_message('Generated detector result.');
+    $self->debug_message('Generated detector result.');
     unless(-e $self->output_directory){
         $self->_link_output_directory_to_result;
     }

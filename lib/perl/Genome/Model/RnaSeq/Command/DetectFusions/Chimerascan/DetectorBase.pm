@@ -40,7 +40,7 @@ class Genome::Model::RnaSeq::Command::DetectFusions::Chimerascan::DetectorBase {
     ],
     has => [
         lsf_resource => {
-            default_value => "-R 'select[type==LINUX64 && mem>32000] span[hosts=1] rusage[mem=32000]' -M 32000000 -n 2",
+            default_value => "-R 'select[type==LINUX64 && mem>32000 && tmp>50000] span[hosts=1] rusage[mem=32000,tmp=50000]' -M 32000000 -n 2",
             is_param => 1,
             is_optional => 1,
             doc => 'default LSF resource expectations',

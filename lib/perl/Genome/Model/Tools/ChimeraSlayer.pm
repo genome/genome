@@ -136,7 +136,7 @@ sub execute {
         return;
     }
 
-    $self->status_message("Running chimera slayer with command:\n $cmd");
+    $self->debug_message("Running chimera slayer with command:\n $cmd");
     #print $cmd."\n"; return 1;
 
     my $rv = eval { Genome::Sys->shellcmd( cmd => $cmd ) };

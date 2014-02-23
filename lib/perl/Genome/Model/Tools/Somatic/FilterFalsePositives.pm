@@ -272,9 +272,9 @@ sub run_filter {
             die;
         }
 
-        $self->status_message('Using existing BAM Readcounts from ' . $readcount_file . '...');
+        $self->debug_message('Using existing BAM Readcounts from ' . $readcount_file . '...');
     } else {
-        $self->status_message('Running BAM Readcounts...');
+        $self->debug_message('Running BAM Readcounts...');
 
         #First, need to create a variant list file to use for generating the readcounts.
         my $input = Genome::Sys->open_file_for_reading($self->variant_file);
@@ -293,7 +293,7 @@ sub run_filter {
         $temp_path =~ s/\:/\\\:/g;
 
         ## Print each line to file, prepending chromosome if necessary ##
-        $self->status_message('Printing variants to temp file...');
+        $self->debug_message('Printing variants to temp file...');
         while(my $line = $input->getline) {
             chomp $line;
             my ($chr, $start, $stop) = split /\t/, $line;
@@ -328,7 +328,7 @@ sub run_filter {
     Genome::Sys->copy_file($readcount_file, $self->output_file . ".readcounts");
 
     my $readcount_fh = Genome::Sys->open_file_for_reading($readcount_file);
-    $self->status_message('Readcounts loaded');
+    $self->debug_message('Readcounts loaded');
 
 
     ## Open the filtered output file ##

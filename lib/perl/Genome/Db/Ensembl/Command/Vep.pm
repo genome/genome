@@ -11,7 +11,7 @@ my ($VEP_DIR) = Cwd::abs_path(__FILE__) =~ /(.*)\//;
 my $VEP_SCRIPT_PATH = $VEP_DIR . "/Vep.d/vep";
 
 #Properties that are local to the wrapper and should not be passed through to the VEP script:
-my @LOCAL_STRING_PROPERTIES = qw(version ensembl_annotation_build_id plugins plugins_version gtf_file reference_build_id);
+my @LOCAL_STRING_PROPERTIES = qw(version ensembl_annotation_build_id plugins plugins_version gtf_file reference_build_id custom);
 my @LOCAL_BOOL_PROPERTIES = qw(gtf_cache hgnc);
 
 class Genome::Db::Ensembl::Command::Vep {
@@ -72,7 +72,7 @@ class Genome::Db::Ensembl::Command::Vep {
         },
         condel => {
             is => 'String',
-            doc => 'Add Condel [p]rediction, [s]core or [b]oth',
+            doc => 'WARNING! This option is only valid for older versions of ensembl.  Use "--plugins" instead! Add Condel [p]rediction, [s]core or [b]oth.',
             is_optional => 1,
             valid_values => [qw(p s b)],
             is_input => 1,
@@ -166,6 +166,12 @@ class Genome::Db::Ensembl::Command::Vep {
             is => 'Boolean',
             default => 0,
             doc => "Don't print the potput of vep to the terminal",
+        },
+        custom => {
+            is => 'String',
+            is_optional => 1,
+            is_many => 1,
+            doc => "--custom option(s) to pass on to VEP.  Replace commas with @ symbol"
         },
     ],
 };
@@ -269,6 +275,13 @@ sub execute {
         }
     }
 
+    my @custom_args;
+    for my $custom ($self->custom) {
+        my @parts = split "@", $custom;
+        push @custom_args, "--custom ".join(",", @parts);
+    }
+    my $custom = join(" ", @custom_args);
+
     my $host_param = defined $ENV{GENOME_DB_ENSEMBL_HOST} ? "--host ".$ENV{GENOME_DB_ENSEMBL_HOST} : "";
     my $user_param = defined $ENV{GENOME_DB_ENSEMBL_USER} ? "--user ".$ENV{GENOME_DB_ENSEMBL_USER} : "";
     my $password_param = defined $ENV{GENOME_DB_ENSEMBL_PASS} ? "--password ".$ENV{GENOME_DB_ENSEMBL_PASS} : "";
@@ -276,10 +289,10 @@ sub execute {
 
     my $cache_result = $self->_get_cache_result($annotation_build);
 
-    my $cmd = "$script_path $string_args $bool_args $plugin_args $host_param $user_param $password_param $port_param";
+    my $cmd = "$script_path $string_args $bool_args $plugin_args $custom $host_param $user_param $password_param $port_param";
 
     if ($cache_result) {
-        $self->status_message("Using VEP cache result ".$cache_result->id);
+        $self->debug_message("Using VEP cache result ".$cache_result->id);
         $cmd = "$cmd --cache --offline --dir ".$temp_config_dir."/";
         foreach my $file (glob $cache_result->output_dir."/*"){
             `ln -s $file $temp_config_dir`;
@@ -289,7 +302,7 @@ sub execute {
         $self->warning_message("No cache result available, running from database");
     }
 
-    $self->status_message("Running command:\n$cmd");
+    $self->debug_message("Running command:\n$cmd");
 
     my %params = (
         cmd=>$cmd,
