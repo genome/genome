@@ -280,9 +280,15 @@ sub execute {
 
 
   #TODO: Make note of which variants lie within a particular set of regions of interest (e.g. nimblegen v3 + AML RMG).  Have option to filter these out
-
+  # - Allow for wingspan to be added to these regions
 
   #TODO: Filter out variants falling within false positive regions/genes?
+
+  #TODO: Limit analysis to variants *called in* a particular tumor only (e.g. day0 tumor) - rather than taking the union of calls from all samples
+
+  #TODO: Add additional filters for low VAF variants (e.g. if VAF < 10%, require at least 3 callers or support from all three libraries)
+
+  #TODO: Get Exome Sequencing Project MAF and filter on this value as well (use existing gmt for this)
 
 
   #Write out final tsv files (filtered and unfiltered), a clean version with useless columns removed, and an Excel spreadsheet version of the final file

@@ -184,7 +184,7 @@ sub execute {
         else {
             if(defined($min_depth) && $min_depth ne "NA") {
                 return 1 if(($ref_count + $var_count) < $min_depth);
-            }      
+            }
             if(defined($max_depth) && $max_depth ne "NA") {
                 return 1 if(($ref_count + $var_count) > $max_depth);
             }
@@ -203,7 +203,6 @@ sub execute {
             $min_depth,$max_depth,$min_vaf,$max_vaf,$OUTFILE) = @_;
         #handle the special case where this value is NA, which means don't filter, but
         #pass everything through. This lets AddReadcounts.pm work correctly.
-
         unless(shouldFilter($ref_count, $var_count, $var_freq, $min_depth, $max_depth, $min_vaf, $max_vaf)) {
             print $OUTFILE "$chr\t$pos\t$knownRef\t$knownVar\t$ref_count\t$var_count\t";
             if ($var_freq eq "NA"){
@@ -359,8 +358,16 @@ sub execute {
             die $self->error_message;
         }
 
+        #sort and dedup the bam-readcount output
+        my $cmd_obj = Genome::Model::Tools::Joinx::Sort->create(
+            input_files => [ "$tempdir/readcounts" ],
+            output_file => "$tempdir/readcounts.sorted",
+            );
+        $cmd_obj->execute;
+        system( "uniq $tempdir/readcounts.sorted >$tempdir/readcounts.sorted.uniq" );
+
         #parse the results
-        my $reader = new Genome::File::BamReadcount::Reader("$tempdir/readcounts");
+        my $reader = new Genome::File::BamReadcount::Reader("$tempdir/readcounts.sorted.uniq");
         while(my $entry = $reader->next) {
 
             my $ref_count = 0;
@@ -469,75 +476,89 @@ sub execute {
             die $self->error_message;
         }
 
-        my $reader = new Genome::File::BamReadcount::Reader("$tempdir/readcounts_indel");
-        while( my $entry = $reader->next) { 
+        #sort and dedup the bam-readcount output
+        my $cmd_obj = Genome::Model::Tools::Joinx::Sort->create(
+            input_files => [ "$tempdir/readcounts_indel" ],
+            output_file => "$tempdir/readcounts_indel.sorted",
+            );
+        $cmd_obj->execute;
+        system( "uniq $tempdir/readcounts_indel.sorted >$tempdir/readcounts_indel.sorted.uniq" );
+
+        #parse the results
+        my $reader = new Genome::File::BamReadcount::Reader("$tempdir/readcounts_indel.sorted.uniq");
+        while( my $entry = $reader->next) {
 
             my $key = join("\t", $entry->chromosome, $entry->position);
             unless((defined($indelVariantHash{$key}))){
                 next;
             }
-            my ($knownRef, $knownVar) = split("\t",$indelVariantHash{$key});
-            my $testvarallele;
-            if($knownRef =~ /0|\-|\*/) { #INS
-                $testvarallele = "+$knownVar"
-            } 
-            elsif ($knownVar =~ /0|\-|\*/){ #DEL
-                $testvarallele = "-$knownRef"
-            }
-            else {
-                print "WARNING - $knownRef/$knownVar isn't an indel, how did it get in the indel hash?\n";
-            }
 
-            unless($self->per_library) {
-                my $ref_count = 0;
-                my $var_count = 0;
-                ($ref_count, $var_count) = $self->indelCounts($entry, $testvarallele);
-                if ($entry->depth ne '0') {
-                    filterAndPrint($entry->chromosome, $entry->position, $knownRef, $knownVar, $ref_count, $var_count, ($var_count/$entry->depth)*100,
-                        $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);            
+            #can be more than one allele at each position
+            my @alleles = split(",",$indelVariantHash{$key});
+            foreach my $allele (@alleles){
+                my ($knownRef, $knownVar) = split("\t",$allele);
+                my $testvarallele;
+                if($knownRef =~ /0|\-|\*/) { #INS
+                    $testvarallele = "+$knownVar"
+                }
+                elsif ($knownVar =~ /0|\-|\*/){ #DEL
+                    $testvarallele = "-$knownRef"
                 }
                 else {
-                    filterAndPrint($entry->chromosome, $entry->position, $knownRef, $knownVar, $ref_count, $var_count, 0,
-                        $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);            
+                    print "WARNING - $knownRef/$knownVar isn't an indel, how did it get in the indel hash?\n";
                 }
-                $foundHash{join("\t",$entry->chromosome,$entry->position,$knownRef,$knownVar)} = 1;
-            }
-            else {
-                my %counts;
-                my $total_ref = 0;
-                my $total_var = 0;
-                my $total_var_freq = 0;
-                for my $lib ($entry->libraries) {
-                    my $var_freq = 0;
-                    my ($ref_count, $var_count) = $self->indelCounts($lib, $testvarallele);
-                    if ($lib->depth ne '0') {
-                        $var_freq = $var_count/$lib->depth * 100;
+
+                unless($self->per_library) {
+                    my $ref_count = 0;
+                    my $var_count = 0;
+                    ($ref_count, $var_count) = $self->indelCounts($entry, $testvarallele);
+                    if ($entry->depth ne '0') {
+                        filterAndPrint($entry->chromosome, $entry->position, $knownRef, $knownVar, $ref_count, $var_count, ($var_count/$entry->depth)*100,
+                                       $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);
                     }
-                    $counts{$lib->name} = [$ref_count, $var_count, $var_freq];
-                    $total_ref += $ref_count;
-                    $total_var += $var_count;
-                }
-                $foundHash{join("\t",$entry->chromosome,$entry->position,$knownRef,$knownVar)} = 1;
-                if ($entry->depth ne '0') {
-                    $total_var_freq = $total_var/$entry->depth * 100;
-                }
-                unless(shouldFilter($total_ref, $total_var, $total_var_freq, $min_depth, $max_depth, $min_vaf, $max_vaf)) {
-                    #this is duplicated from above and should be refactored
-                    my @ordered_counts;
-                    for my $count_ref (@counts{@libraries}) {
-                        if(defined $count_ref) {
-                            push @ordered_counts, @$count_ref;
-                        }
-                        else {
-                            push @ordered_counts, (0,0,0);
-                        }
+                    else {
+                        filterAndPrint($entry->chromosome, $entry->position, $knownRef, $knownVar, $ref_count, $var_count, 0,
+                                       $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);
                     }
-                    printLibs($OUTFILE, $entry->chromosome, $entry->position, $knownRef, $knownVar, @ordered_counts);
+                    $foundHash{join("\t",$entry->chromosome,$entry->position,$knownRef,$knownVar)} = 1;
+                }
+                else {
+                    my %counts;
+                    my $total_ref = 0;
+                    my $total_var = 0;
+                    my $total_var_freq = 0;
+                    for my $lib ($entry->libraries) {
+                        my $var_freq = 0;
+                        my ($ref_count, $var_count) = $self->indelCounts($lib, $testvarallele);
+                        if ($lib->depth ne '0') {
+                            $var_freq = $var_count/$lib->depth * 100;
+                        }
+                        $counts{$lib->name} = [$ref_count, $var_count, $var_freq];
+                        $total_ref += $ref_count;
+                        $total_var += $var_count;
+                    }
+                    $foundHash{join("\t",$entry->chromosome,$entry->position,$knownRef,$knownVar)} = 1;
+                    if ($entry->depth ne '0') {
+                        $total_var_freq = $total_var/$entry->depth * 100;
+                    }
+                    unless(shouldFilter($total_ref, $total_var, $total_var_freq, $min_depth, $max_depth, $min_vaf, $max_vaf)) {
+                        #this is duplicated from above and should be refactored
+                        my @ordered_counts;
+                        for my $count_ref (@counts{@libraries}) {
+                            if(defined $count_ref) {
+                                push @ordered_counts, @$count_ref;
+                            }
+                            else {
+                                push @ordered_counts, (0,0,0);
+                            }
+                        }
+                        printLibs($OUTFILE, $entry->chromosome, $entry->position, $knownRef, $knownVar, @ordered_counts);
+                    }
                 }
             }
         }
     }
-    
+
     #Check all the variants and output those with no output (had 0 reads)
     foreach my $k (keys(%foundHash)){
         unless($foundHash{$k}){
@@ -612,6 +633,6 @@ sub snvCounts {
         if (matchIub($allele,$knownRef,$knownVar)){
             $var_count += $lib->metrics_for($allele)->count;
         }
-    }    
+    }
     return ($ref_count, $var_count);
 }

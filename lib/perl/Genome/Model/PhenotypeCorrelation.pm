@@ -73,9 +73,8 @@ class Genome::Model::PhenotypeCorrelation {
         },
         joinx_version => {
             is => "Text",
-            doc => "Version of joinx to use",
-            is_optional => 0,
-            default => 1.6,
+            doc => "Version of joinx to use, will be resolved to the latest default if not specified",
+            is_optional => 1,
         },
         maximum_maf => {
             is => "Number",
@@ -299,6 +298,8 @@ sub _execute_build {
 
     warn "The logic for building this model is only partly functional!  Contact Human Genomics or put in an APIPE-support ticket..";
 
+    $self->_resolve_joinx_version;
+
     #
     # the subject is a population group
     #
@@ -407,6 +408,13 @@ sub _execute_build {
     }
 
     return 1;
+}
+
+sub _resolve_joinx_version {
+    my $self = shift;
+    unless (defined $self->joinx_version) {
+        $self->joinx_version(Genome::Model::Tools::Joinx->get_default_version);
+    }
 }
 
 sub _find_or_generate_multisample_vcf {

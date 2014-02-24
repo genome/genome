@@ -179,7 +179,7 @@ sub test_cmd {
 
     my $roi_list;
     $roi_list = get_roi_list($test_dir, 'roi.bed') unless $no_region_limiting;
-    my $joinx_version = "1.7";
+    my $joinx_version = "1.8";
     my $varscan_version = "2.3.6";
     my @input_builds = create_test_builds($test_dir);
 

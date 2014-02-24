@@ -853,10 +853,11 @@ sub make_path {
         my $subpath = File::Spec->catdir(@dirs[0..$i]);
 
         my $rv = mkdir $subpath;
+        my $mkdir_errno = $!;
         if ($rv) {
             chown -1, $gid, $subpath;
         } else {
-            if ($! == EEXIST) {
+            if ($mkdir_errno == EEXIST) {
                 next;
             } else {
                 Carp::confess("While creating path ($path), failed to create " .

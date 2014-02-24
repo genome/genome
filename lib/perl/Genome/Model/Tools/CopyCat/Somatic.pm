@@ -69,6 +69,13 @@ class Genome::Model::Tools::CopyCat::Somatic{
             is_input => 1,
             doc =>'samtools file which will be used to find het snp sites and id copy-number neutral regions in normal',
         },
+        samtools_file_format => {
+            is => 'String',
+            is_optional => 1,
+            is_input => 1,
+            doc =>'format of the samtools files. Options are "mpileup" and "vcf"',
+            default => "vcf",
+        },
         processors => {
             is => 'Integer',
             is_optional => 1,
@@ -211,6 +218,7 @@ sub execute {
     print $RFILE "                        minMapability=$min_mapability,\n";
     print $RFILE "                        dumpBins=$dump_bins,\n";
     print $RFILE "                        doGcCorrection=$gcCorr,\n";
+    print $RFILE "                        samtoolsFileFormat=\"" . $self->samtools_file_format ."\",\n";
     print $RFILE "                        normalSamtoolsFile=$normal_samtools_file,\n";
     print $RFILE "                        tumorSamtoolsFile=$tumor_samtools_file)\n";
 

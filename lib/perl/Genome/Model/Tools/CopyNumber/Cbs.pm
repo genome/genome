@@ -1,16 +1,5 @@
 package Genome::Model::Tools::CopyNumber::Cbs;
 
-##############################################################################
-#
-#
-#	AUTHOR:		Chris Miller (cmiller@genome.wustl.edu)
-#
-#	CREATED:	07/11/11
-#
-#	NOTES:  TODO - add array support (from some other scripts lying around)
-#
-##############################################################################
-
 use strict;
 use Genome;
 use IO::File;
