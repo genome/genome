@@ -5,8 +5,6 @@ use warnings;
 
 use Genome;
 
-use Genome::Utility::IO::SeparatedValueWriter;
-
 class Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory { 
     is => 'UR::Singleton',
 };
