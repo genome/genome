@@ -137,9 +137,6 @@ sub execute {
     $snv_file   = $self->add_tiers($snv_file);
     $indel_file = $self->add_tiers($indel_file);
 
-    $snv_file = convert_from_zero_to_one_based($snv_file);
-    $indel_file = convert_from_zero_to_one_based($indel_file);
-
     ($snv_file, $indel_file) = $self->_add_dbsnp_and_gmaf($snv_file, $indel_file);
 
     $self->status_message("Getting read counts");
@@ -209,50 +206,6 @@ sub symlink_into_reports_dir {
         File::Spec->join($self->_build_dir, 'reports', $target_filename));
 }
 
-sub convert_from_zero_to_one_based {
-    my $file = shift;
-
-    #remove bed from name
-    my $newfile = $file;
-    $newfile =~ s/\.bed//g;
-
-    my $outfile = Genome::Sys->open_file_for_writing($newfile);
-    my $infile  = Genome::Sys->open_file_for_reading($file);
-    while (my $line = $infile->getline) {
-        chomp($line);
-        if ($line =~ /^chrom/) {
-            print $outfile $line . "\n";
-            next;
-        }
-
-        print $outfile _zero_to_one_based($line) . "\n";
-    }
-    close($outfile);
-    close($infile);
-    return $newfile;
-}
-
-sub convert_from_one_to_zero_based {
-    my $file = shift;
-
-    #add bed to name
-    my $newfile = $file . ".bed";
-
-    my $outfile = Genome::Sys->open_file_for_writing($newfile);
-    my $infile  = Genome::Sys->open_file_for_reading($file);
-    while (my $line = $infile->getline) {
-        chomp($line);
-        if ($line =~ /^chrom/) {
-            print $outfile $line . "\n";
-            next;
-        }
-        print $outfile _one_to_zero_based($line) . "\n";
-    }
-    close($outfile);
-    close($infile);
-    return $newfile;
-}
-
 sub convert_from_one_based_to_bed_file {
     my ($file, $newfile) = @_;
 
@@ -271,29 +224,6 @@ sub convert_from_one_based_to_bed_file {
     close($infile);
     return $newfile;
 }
-
-sub _zero_to_one_based{
-    my $line = shift;
-
-    my ( $chr, $start, $stop, $ref, @rest ) = split( /\t/, $line );
-
-    if ($ref =~ /\//) {
-        my @alleles = split("/", $ref);
-        $ref = shift @alleles;
-
-        @rest = (@alleles, @rest);
-    }
-
-    if ($ref =~ /^[-0*]/) { #indel INS
-        $stop++;
-    }
-    else { #indel DEL or SNV
-        $start++;
-    }
-
-    return join("\t", ($chr, $start, $stop, $ref, @rest));
-}
-
 
 sub _one_to_zero_based {
     my $line = shift;
@@ -512,10 +442,6 @@ sub annotate {
 
     my $annotation_build_name = $self->annotation_build->name;
 
-    if ($file =~ /.bed$/) {
-        $file = convert_from_zero_to_one_based($file);
-    }
-
     my $newfile = $self->result_file_path(
         input_file_path => $file,
         suffix          => "anno",
@@ -529,7 +455,7 @@ sub annotate {
     }
 
     my $anno_cmd = Genome::Model::Tools::Annotate::TranscriptVariants->create(
-        variant_file          => $file,
+        variant_bed_file      => $file,
         output_file           => $newfile,
         reference_transcripts => $annotation_build_name,
         annotation_filter     => "top",
@@ -547,10 +473,6 @@ sub add_tiers {
     my $outfile            = shift;
 
     my $tier_file_location = File::Spec->join($self->annotation_build->data_directory, 'annotation_data', 'tiering_bed_files_v3');
-
-    unless ($file =~ /\.bed/) {
-        $file = convert_from_one_to_zero_based($file);
-    }
 
     my $newfile;
     if ($outfile) {
