@@ -98,6 +98,7 @@ sub create_test_objects {
         annotation_build => $annotation_build,
     );
     ok($somatic_variation_model->isa("Genome::Model::SomaticVariation"), "Generated a somatic variation model");
+    $somatic_variation_model->subject->name("H_NS-POET0092-4");
 
     my $somatic_variation_build = Genome::Test::Factory::Build->setup_object(
         model_id         => $somatic_variation_model->id,

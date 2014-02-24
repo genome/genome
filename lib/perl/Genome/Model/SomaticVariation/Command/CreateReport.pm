@@ -12,6 +12,7 @@ use File::Basename qw(basename);
 use Carp qw(confess);
 use Params::Validate;
 use YAML;
+use Genome::File::Vcf::Reader;
 
 class Genome::Model::SomaticVariation::Command::CreateReport {
     is => 'Command::V2',
@@ -409,64 +410,42 @@ sub get_site_hash  {
     return \%filter_sites;
 }
 
-##TODO - these two functions are brittle. There needs to be a better way to grab calls for specific callers. Ideally, from the VCF...
-sub get_vcf_file {
-    my $self      = shift;
-    my $dir       = shift;
-
-    my $prefix = $self->_build_dir . "/variants/snv/";
-
-    if ($dir=~/strelka/) {
-        if (-s "$prefix/$dir/snvs.vcf.gz") {
-            return "$prefix/$dir/snvs.vcf.gz";
-        }
-
-    }
-    elsif ($dir=~/varscan/) {
-        if (-s "$prefix/$dir/varscan-high-confidence-v1-d41d8cd98f00b204e9800998ecf8427e/false-positive-v1-05fbf69c10534fd630b99e44ddf73c7f/snvs.vcf.gz") {
-            return "$prefix/$dir/varscan-high-confidence-v1-d41d8cd98f00b204e9800998ecf8427e/false-positive-v1-05fbf69c10534fd630b99e44ddf73c7f/snvs.vcf.gz";
-        }
-    }
-    elsif ($dir=~/sniper/) {
-        if (-s "$prefix/$dir/false-positive-v1-05fbf69c10534fd630b99e44ddf73c7f/somatic-score-mapping-quality-v1-39b60f48b6f8c9e63436a5424305e9fd/snvs.vcf.gz") {
-            return "$prefix/$dir/false-positive-v1-05fbf69c10534fd630b99e44ddf73c7f/somatic-score-mapping-quality-v1-39b60f48b6f8c9e63436a5424305e9fd/snvs.vcf.gz";
-        }
-    }
-    else {
-        confess $self->error_message("Don't know how to find the calls for $prefix/$dir. $dir is neither 'strelka', 'varscan' or 'sniper'.");
-    }
-    confess $self->error_message("Couldn't find the snvs.vcf.gz file under directory $dir");
-}
-
 sub fill_in_site_hash {
     my $self = shift;
     my $sites = shift;
 
-    #Look for the callers
-    my @dirs = map {basename($_) } glob(
-        File::Spec->join($self->_build_dir, 'variants', 'snv', '*'),
-    );
-    #remove non-caller dirs
-    @dirs = grep{ ! /^intersect|^union|^samtools/ } @dirs;
+    my $detailed_snvs_file = File::Spec->join($self->_build_dir, 'variants', 'snvs.detailed.vcf.gz');
+    unless (-s $detailed_snvs_file) {
+        confess $self->error_message("Couldn't find the snvs.detailed.vcf.gz file $detailed_snvs_file");
+    }
+    my $vcf = new Genome::File::Vcf::Reader($detailed_snvs_file);
 
-    #count the number of callers that called each site from the vcfs
-    for my $dir (@dirs) {
-        my $file = $self->get_vcf_file($dir);
-        my $infile = Genome::Sys->open_gzip_file_for_reading($file);
+    my @vcf_sample_names = $vcf->header->sample_names;
 
-        while (my $line = $infile->getline) {
-            chomp $line;
-            next if $line =~ /^#/;
-            my ($chr, $pos, $id, $ref, $var, @rest) = split /\t/, $line;
-            my @vars = split(",", $var);
-            for my $v (@vars) {
-                my $key = join("\t",($chr, $pos-1, $pos, $ref, $v));
-                if (defined($sites->{$key})) {
+    while (my $entry = $vcf->next) {
+        my @sample_data = @{$entry->sample_data};
+        my %sample_dict;
+
+        for my $index (0 .. $#vcf_sample_names) {
+            $sample_dict{$vcf_sample_names[$index]} = $sample_data[$index];
+        }
+
+        my @vars = @{$entry->{alternate_alleles}};
+
+        for my $v (@vars) {
+            my $key = join("\t",($entry->{chrom}, $entry->{position}-1, $entry->{position}, $entry->{reference_allele}, $v));
+            if (defined($sites->{$key})) {
+                if (scalar @{$sample_dict{$self->sample_name . '-[VarscanSomatic]'}}) {
+                    $sites->{$key}++;
+                }
+                if (scalar @{$sample_dict{$self->sample_name . '-[Sniper]'}}) {
+                    $sites->{$key}++;
+                }
+                if (scalar @{$sample_dict{$self->sample_name . '-[Strelka]'}}) {
                     $sites->{$key}++;
                 }
             }
         }
-        $infile->close;
     }
 
     return $sites;
