@@ -134,8 +134,8 @@ sub execute {
     $indel_file = $self->annotate($indel_file, $self->indels_dir);
 
     $self->status_message("Adding tiers");
-    $snv_file   = $self->add_tiers($snv_file);
-    $indel_file = $self->add_tiers($indel_file);
+    $snv_file   = $self->add_tiers($snv_file, $self->snvs_dir);
+    $indel_file = $self->add_tiers($indel_file, $self->indels_dir);
 
     ($snv_file, $indel_file) = $self->_add_dbsnp_and_gmaf($snv_file, $indel_file);
 
@@ -470,17 +470,15 @@ sub annotate {
 sub add_tiers {
     my $self               = shift;
     my $file               = shift;
-    my $outfile            = shift;
+    my $directory    = shift;
 
     my $tier_file_location = File::Spec->join($self->annotation_build->data_directory, 'annotation_data', 'tiering_bed_files_v3');
 
-    my $newfile;
-    if ($outfile) {
-        $newfile = $outfile;
-    }
-    else {
-        $newfile = add_suffix($file, "tiered");
-    }
+    my $newfile = $self->result_file_path(
+        input_file_path => $file,
+        suffix          => "tiered",
+        directory       => $directory,
+    );
 
     #handle zero size files
     if (-z $file) {
