@@ -135,6 +135,11 @@ sub original_genotype_file_path {
     return $self->data_directory.'/'.$self->model->subject->id.'.original';
 }
 
+sub original_genotype_vcf {
+    my $self = shift;
+    return $self->original_genotype_file_path.'.vcf';
+}
+
 sub genotype_file_path {
     my $self = shift;
     return $self->data_directory.'/'.$self->model->subject->id.'.genotype';

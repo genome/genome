@@ -267,6 +267,9 @@ sub test_execute_build {
     ok($model->dbsnp_build, 'set dbsnp build on model');
     ok($build->dbsnp_build, 'set dbsnp build on build');
 
+    my $original_genotype_vcf = $build->original_genotype_vcf;
+    is($original_genotype_vcf, $tempdir.'/'.$sample->id.'.original.vcf', 'oringinal genotype vcf name');
+
     my $original_genotype_file = $build->original_genotype_file_path;
     is($original_genotype_file, $tempdir.'/'.$sample->id.'.original', 'oringinal genotype file name');
     is(File::Compare::compare($original_genotype_file, $example_build->original_genotype_file_path), 0, 'oringinal genotype file matches');
