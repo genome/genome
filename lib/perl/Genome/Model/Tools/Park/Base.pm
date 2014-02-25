@@ -6,6 +6,8 @@ use warnings;
 use Genome;
 use File::Basename qw(dirname);
 use Carp qw(confess);
+use Params::Validate qw(:types validate_pos);
+use IPC::Run qw(start pump finish);
 
 class Genome::Model::Tools::Park::Base {
     is => 'UR::Object',
@@ -15,6 +17,66 @@ class Genome::Model::Tools::Park::Base {
 sub _template_path {
     die 'abstract',
 }
+
+sub _run_rex_process {
+    my ($self, $source_path, $inputs_filename) = validate_pos(@_, 1,
+        {type => SCALAR}, {type => SCALAR});
+
+    my $script_path = $self->_rex_script_path('process start');
+    my $cmd = [$script_path, '--source-path', $source_path,
+        '--inputs-file', $inputs_filename];
+
+    return $self->_run_generic_process($cmd);
+}
+
+sub _run_generic_process {
+    my ($self, $cmd) = validate_pos(@_, 1, {type => ARRAYREF});
+
+    my $in;
+    my $out = "x" x 100_000; # preallocate $out to avoid performance penalty
+    $out = "";
+
+    my $process_uri;
+    eval {
+        my $h = start $cmd, \$in, \$out;
+
+        pump $h until $out =~ /Launching Process (\S*) /;
+        $process_uri = $1;
+        print "$out\n";
+        $out = "";
+
+        finish $h;
+        print "Process completed successfully.\n";
+    };
+    if ($@) {
+        print "$out\n";
+        die "Process FAILED: $@\n";
+    }
+    return $process_uri;
+}
+
+my %REX_COMMAND_SCRIPTS = (
+    'process start' => 'rex_process_start.sh',
+    'process link' => 'rex_process_link.sh',
+);
+
+sub _rex_script_path {
+    my $self = shift;
+    my $command = shift;
+
+    my $script_filename = $REX_COMMAND_SCRIPTS{$command};
+    unless (defined($script_filename)) {
+        confess "Couldn't find script for command ($command)";
+    }
+
+    my $this_dir = dirname(__FILE__);
+    my $full_path = File::Spec->join($this_dir, $script_filename);
+    unless (-x $full_path) {
+        confess "Couldn't execute script ($full_path) for command ($command)";
+    }
+    return $full_path;
+}
+
 
 sub _generate_inputs_file {
     my $self = shift;
