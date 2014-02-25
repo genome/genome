@@ -47,6 +47,7 @@ is($instrument_data->import_format, 'bam', 'import_format is bam');
 is($instrument_data->sequencing_platform, 'solexa', 'sequencing_platform correctly set');
 is($instrument_data->is_paired_end, 0, 'is_paired_end correctly set');
 is($instrument_data->read_count, 148, 'read_count correctly set');
+is($instrument_data->read_length, 232, 'read_length correctly set');
 is(eval{$instrument_data->attributes(attribute_label => 'original_data_path_md5')->attribute_value;}, 'dcd04a5bcb2d18f29c21c25b0f2387e3', 'original_data_path_md5 correctly set');
 my $allocation = $instrument_data->allocations;
 ok($allocation, 'got allocation');
