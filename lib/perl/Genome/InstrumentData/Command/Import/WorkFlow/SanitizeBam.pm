@@ -53,7 +53,7 @@ sub _sort_bam {
     my $clean_bam_path = $self->clean_bam_path;
     $self->debug_message("Clean bam path: $clean_bam_path");
 
-    my $cmd = "/gscmnt/sata810/info/ebelter/scratch/seq-grind/build/bin/seq-grind sanitize --input $dirty_bam_path --output $clean_bam_path";
+    my $cmd = "/usr/bin/seq-grind sanitize --input $dirty_bam_path --output $clean_bam_path";
     my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
     if ( not $rv or not -s $clean_bam_path ) {
         $self->error_message($@) if $@;
