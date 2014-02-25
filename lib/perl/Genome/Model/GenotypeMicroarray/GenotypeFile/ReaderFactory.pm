@@ -5,7 +5,7 @@ use warnings;
 
 use Genome;
 
-use Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsv;
+use Genome::File::Vcf::Reader;
 use Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsvAndAnnotate;
 
 class Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory { 
@@ -17,23 +17,17 @@ sub build_reader {
 
     Carp::confess('Nothing given to build reader!') if not $for;
 
-    my $genotype_reader;
     if ( $for->isa('Genome::InstrumentData') ) {
         Carp::confess('No variation list build given to build reader!') if not $variation_list_build;
-        $genotype_reader = $class->_build_reader_for_instrument_data($for, $variation_list_build);
+        return $class->_build_reader_for_instrument_data($for, $variation_list_build);
     }
     elsif ( $for->isa('Genome::Model::Build::GenotypeMicroarray') ) {
-        $genotype_reader = $class->_build_reader_for_build($for);
+        return $class->_build_reader_for_build($for);
     }
     else {
         Carp::confess('Do not know how to build genotype file reader for source! '.$for->__display_name__);
     }
 
-    my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::Reader->create(
-        reader => $genotype_reader,
-    );
-
-    return $reader;
 }
 
 sub _build_reader_for_instrument_data {
@@ -61,13 +55,26 @@ sub _build_reader_for_instrument_data {
 sub _build_reader_for_build {
     my ($class, $build) = @_;
 
-    # TODO add vcf!
-    my $genotype_file = $build->original_genotype_file_path;
-    my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsv->create(
-        input => $genotype_file,
-    );
+    # VCF
+    my $genotype_file = $build->original_genotype_vcf;
+    if ( -s $genotype_file ) {
+        return Genome::File::Vcf::Reader->new($genotype_file);
+    }
 
-    return $reader;
+    # Use inst data
+    my $instrument_data = $build->instrument_data;
+    if ( not $instrument_data ) {
+        $class->error_message('No instrument data for genotype build! '.$build->id);
+        return;
+    }
+
+    my $variation_list_build = $build->dbsnp_build;
+    if ( not $variation_list_build ) {
+        $class->error_message('No variation list build for genotype build! '.$build->id);
+        return;
+    }
+
+    return $class->_build_reader_for_instrument_data($instrument_data, $variation_list_build);
 }
 
 1;

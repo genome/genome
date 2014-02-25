@@ -15,41 +15,47 @@ use Test::More;
 
 use_ok('Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory') or die;
 
-use_ok('Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsv') or die;
-use_ok('Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsvAndAnnotate') or die;
-
+# Setup
 no warnings;
-*Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsv::create = sub { return bless({}, $_[0]); };
+*Genome::File::TypedStream::new = sub{ return bless({}, $_[0]); };
 *Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsvAndAnnotate::create = sub{ return bless({}, $_[0]); };
 use warnings;
 
-# Reader for tsv non annotated genotype file inst data
 my $variation_list_build = Genome::Model::Build::ImportedVariationList->__define__();
 ok($variation_list_build, 'create variation list build');
+
 my $instrument_data = Genome::InstrumentData::Imported->__define__();
-$instrument_data->add_attribute(attribute_label => 'genotype_file', attribute_value => $ENV{GENOME_TEST_INPUTS}.'/Genome-InstrumentData-Command-Microarray/v2/snpreport/-7777');
+$instrument_data->add_attribute(attribute_label => 'genotype_file', attribute_value => $ENV{GENOME_TEST_INPUTS}.'/GenotypeMicroarray/instdata/snpreport/-7777');
 my $genotype_file = eval{ $instrument_data->attributes(attribute_label => 'genotype_file')->attribute_value; };
 ok($genotype_file && -s $genotype_file, 'inst data genotype file');
 
-my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->build_reader($instrument_data, $variation_list_build);
-ok($reader, 'create reader');
-isa_ok($reader->reader, 'Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsvAndAnnotate');
-
-# Reader for tsv annotated genotype file from build
 my $gm_build = Genome::Model::Build::GenotypeMicroarray->__define__(
     model => Genome::Model::GenotypeMicroarray->__define__(
         processing_profile_id => 2186707,
         subject_id => Genome::Sample->__define__(id => -8888)->id,
     ),
     data_directory => $ENV{GENOME_TEST_INPUTS} . '/GenotypeMicroarray/build/',
-    # original_genotype_file => $self->data_directory.'/'.$self->model->subject->id.'.original';
+    dbsnp_build => $variation_list_build,
 );
 ok($gm_build, '__define__ genotype microarray build');
 $genotype_file = $gm_build->original_genotype_file_path;
 ok($genotype_file && -s $genotype_file, 'gm build genotype file');
+ok($gm_build->add_instrument_data($instrument_data), 'add inst data to gm build');
 
+# Reader for inst data [use inst data tsv - needs annotation]
+my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->build_reader($instrument_data, $variation_list_build);
+ok($reader, 'create reader');
+isa_ok($reader, 'Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsvAndAnnotate');
+
+# Reader for old build [use inst data tsv - needs annotation]
 $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->build_reader($gm_build);
 ok($reader, 'create reader');
-isa_ok($reader->reader, 'Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsv');
+isa_ok($reader, 'Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsvAndAnnotate');
+
+# Reader for build [vcf]
+$gm_build->data_directory($ENV{GENOME_TEST_INPUTS} . '/GenotypeMicroarray/build-vcf/');
+$reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->build_reader($gm_build);
+ok($reader, 'create reader');
+isa_ok($reader, 'Genome::File::Vcf::Reader');
 
 done_testing();
