@@ -28,6 +28,16 @@ sub results_class {
         Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name($read_aligner_name);
 }
 
+sub lsf_queue {
+    my $self = shift;
+
+    if (Genome::Config->can('should_use_alignment_pd') && Genome::Config->should_use_alignment_pd($self->model)) {
+        return $ENV{GENOME_LSF_QUEUE_ALIGNMENT_PROD};
+    } else {
+        return $ENV{GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT};
+    }
+}
+
 sub bsub_rusage {
     my $self = shift;
     my $delegate = $self->results_class;
