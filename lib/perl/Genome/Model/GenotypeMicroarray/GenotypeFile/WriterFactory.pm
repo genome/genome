@@ -5,6 +5,9 @@ use warnings;
 
 use Genome;
 
+use Genome::File::Vcf::Writer;
+use Genome::Utility::IO::SeparatedValueWriter;
+
 class Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory { 
     is => 'UR::Singleton',
 };
@@ -27,12 +30,12 @@ sub build_writer {
 sub _parse_writer_params_string {
     my ($class, $writer_params_string) = @_;
 
-    my %writer_params;
     if ( not $writer_params_string ) { # do the default thing
-        return \%writer_params;
+        #return ( output => '-', format => 'vcf', );
     }
 
     my @writer_config_tokens = split(':', $writer_params_string);
+    my %writer_params;
     if ( @writer_config_tokens == 1 and $writer_config_tokens[0] !~ /=/ ) {
         $writer_params{output} = $writer_config_tokens[0];
     }
@@ -51,19 +54,36 @@ sub _parse_writer_params_string {
         }
     }
 
+    # Use STDOUT if no output
+    $writer_params{output} ||= '-' if not $writer_params{file};
+
+    # Resolve format
+    if ( not $writer_params{format} ) { 
+        # use suffix
+        my ($suffix) = $writer_params{output} =~ /\.(\w+)$/;
+        if ( not $suffix ) {
+            $writer_params{format} = 'vcf';
+        }
+        elsif ( $suffix =~ /tsv/g ) {
+            $writer_params{format} = 'csv';
+        }
+        else {
+            $writer_params{format} = $suffix;
+        }
+    }
+
+    if ( not grep { $writer_params{format} eq  $_ } (qw/ csv vcf /) ) {
+        $class->error_message('Unknown format to write! '. $writer_params{format});
+        return;
+    }
+
     return \%writer_params;
 }
 
 sub _build_writer {
     my ($class, $writer_params) = @_;
 
-    my $format = delete $writer_params->{format} || 'vcf';
-    if ( not grep { $format eq  $_ } (qw/ csv vcf /) ) {
-        $class->error_message('Unknown format to write! '. $format);
-        return;
-    }
-
-    $writer_params->{output} ||= '-' if not $writer_params->{file};
+    my $format = delete $writer_params->{format};
 
     my $method = '_build_'.$format.'_writer';
     return $class->$method($writer_params);
