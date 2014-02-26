@@ -7,6 +7,7 @@ use Genome;
 
 use Data::Compare 'Compare';
 use Data::Dumper 'Dumper';
+require Scalar::Util;
 
 class Genome::Utility::IO::SeparatedValueWriter {
     is => 'Genome::Utility::IO::Writer', 
@@ -67,9 +68,9 @@ sub get_column_count {
     return $_[0]->{_column_count};
 }
 
-sub print { 
-    my $self = shift;
-    return $self->write_one(@_);
+BEGIN {
+    *Genome::Utility::IO::SeparatedValueWriter::print = \&Genome::Utility::IO::SeparatedValueWriter::write_one;
+    *Genome::Utility::IO::SeparatedValueWriter::write = \&Genome::Utility::IO::SeparatedValueWriter::write_one;
 }
 
 sub write_one {
@@ -94,7 +95,8 @@ sub _validate_data_to_write {
         return;
     }
 
-    unless ( ref $data eq 'HASH' ) {
+    my $reftype = Scalar::Util::reftype($data);
+    unless ( $reftype and $reftype eq 'HASH' ) {
         $self->error_message("Need data as an hash ref to 'write_one'. Received:\n".Dumper($data));
         return;
     }
