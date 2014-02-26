@@ -450,7 +450,7 @@ sub getFilePaths_Genome{
   foreach my $b (keys %d){
     my $ref_name = $d{$b}{ref_name};
     unless ($ref_name eq $test_ref_name){
-      print Dumper %d;
+      #print Dumper %d;
       die $self->error_message("\n\nOne or more of the reference build names used to generate BAMs did not match\n\n");
     }
   }
@@ -515,7 +515,7 @@ sub getBamReadCounts{
   #}
   #print Dumper %chr_tid;
 
-  foreach my $snv_pos (keys %{$snvs}){
+  foreach my $snv_pos (sort keys %{$snvs}){
     my %data;
     my $data = \%data;
     $data->{chr} = $snvs->{$snv_pos}->{chr};

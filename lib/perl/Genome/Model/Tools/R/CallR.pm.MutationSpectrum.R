@@ -189,7 +189,6 @@ barplot_facet_mutation_type <- function(data.in,plot_title="Mutation Spectrum",p
 
   if(length(levels(factor(data.in$Sample))) > 2) {
     p <- p + scale_fill_hue();
-    #p <- p + scale_fill_brewer(pal="Set1");
   }else {
     p <- p + scale_fill_manual(value=c("red3","mediumblue"));
   }
@@ -273,36 +272,64 @@ make_dodge_barplot_facet_sample <- function (inputFile,plot_title="",num_row=NUL
   mutation_spectrum$label <- factor(mutation_spectrum$label);
   #separate out the basechange from transiton/transverstion
   mut_spec1 <- subset(mutation_spectrum,grepl("->",Category));
-  #mut_spec1$Category <- factor(mut_spec1$Category);
   mut_spec1$Category <- droplevels(mut_spec1$Category); #drop unused factor 
   mut_spec2 <- subset(mutation_spectrum,grepl("Tran",Category));
   mut_spec2$Category <- droplevels(mut_spec2$Category);
-  #mut_spec2$Category <- factor(mut_spec2$Category);
   
   p <- ggplot(mut_spec1,aes(x=Category,y=percent,fill=Category));
   p <- p + geom_bar(position='dodge',stat="identity",width=0.9);
-  p <- p + geom_bar(position='dodge',stat="identity",width=0.9,colour='black',legend=FALSE);
+  if (packageVersion("ggplot2") <= "0.8.9"){
+    p <- p + geom_bar(position='dodge',stat="identity",width=0.9,colour='black',legend=FALSE);
+  }else{
+    p <- p + geom_bar(position='dodge',stat="identity",width=0.9,colour='black',show_guide=FALSE);
+  }
   if(length(levels(mut_spec1$label)) > 1) { #turn on facet for multiple samples
     p <- p + facet_wrap( ~ label,nrow=num_row,scales='free_x')
   }
   p <- p + theme_bw();
-  p <- p + scale_y_continuous(name='% Total Mutations',limits=c(0,1),formatter="percent");
-  p <- p + scale_fill_brewer(pal="Dark2");
+  if (packageVersion("ggplot2") <= "0.8.9"){
+    p <- p + scale_y_continuous(name='% Total Mutations', limits=c(0,1), formatter="percent");
+  }else{
+    library(scales)
+    p <- p + scale_y_continuous(name='% Total Mutations', limits=c(0,1), labels=percent);
+  }
+  if (packageVersion("ggplot2") <= "0.8.9"){
+    p <- p + scale_fill_brewer(pal="Dark2");
+  }else{
+    p <- p + scale_fill_brewer(palette="Dark2");
+  }
   p <- p + scale_x_discrete(name="");
   p <- p + coord_cartesian(ylim=y_lim);
-  p <- p + opts(title=plot_title,plot.title=theme_text(face="bold",size=16),legend.position = 'none',legend.title=theme_blank(),axis.text.x=theme_text(angle=90));
-
+  if (packageVersion("ggplot2") <= "0.8.9"){
+    p <- p + opts(title=plot_title,plot.title=theme_text(face="bold",size=16),legend.position = 'none',legend.title=theme_blank(),axis.text.x=theme_text(angle=90));
+  }else{
+    p <- p + labs(title=plot_title)
+    p <- p + theme(plot.title=element_text(face="bold",size=16), legend.position = 'none', legend.title=element_blank(), axis.text.x=element_text(angle=90)); 
+  }
   p2 <- ggplot(mut_spec2,aes(x=Category,y=percent,fill=Category));
   p2 <- p2 + geom_bar(position='dodge',stat="identity",width=0.9);
   if(length(levels(mut_spec2$label)) > 1) {  #turn on facet for multiple samples
     p2 <- p2 + facet_wrap( ~ label,nrow=num_row,scales='free_x')
   }
   p2 <- p2 + theme_bw();
-  p2 <- p2 + scale_y_continuous(name='% Total Mutations',limits=c(0,1),formatter="percent");
-  p2 <- p2 + scale_fill_manual(value=c("red3","mediumblue"));
+  if (packageVersion("ggplot2") <= "0.8.9"){
+    p2 <- p2 + scale_y_continuous(name='% Total Mutations', limits=c(0,1), formatter="percent");
+  }else{
+    library(scales)
+    p2 <- p2 + scale_y_continuous(name='% Total Mutations', limits=c(0,1), labels=percent);
+  }
+  if (packageVersion("ggplot2") <= "0.8.9"){
+    p2 <- p2 + scale_fill_manual(value=c("red3","mediumblue"));
+  }else{
+    p2 <- p2 + scale_fill_manual(values=c("red3","mediumblue"));
+  }
   p2 <- p2 + scale_x_discrete(name="");
-  p2 <- p2 + opts(title=plot_title,plot.title=theme_text(face="bold",size=16),legend.position = 'none',legend.title=theme_blank(),axis.text.x=theme_text(angle=90));
-  
+  if (packageVersion("ggplot2") <= "0.8.9"){ 
+    p2 <- p2 + opts(title=plot_title,plot.title=theme_text(face="bold",size=16),legend.position = 'none',legend.title=theme_blank(),axis.text.x=theme_text(angle=90));
+  }else{
+    p2 <- p2 + labs(title=plot_title) 
+    p2 <- p2 + theme(plot.title=element_text(face="bold",size=16), legend.position = 'none', legend.title=element_blank(), axis.text.x=element_text(angle=90)); 
+  }
   if(!is.null(outputFile)) {
     pdf(file=outputFile,width=14,height=10);
     print(p);
@@ -312,8 +339,6 @@ make_dodge_barplot_facet_sample <- function (inputFile,plot_title="",num_row=NUL
   else {
     return(list(a=p,b=p2));
   }
-  
-
 }
 
 
@@ -415,9 +440,6 @@ plot_mutation_spectrum_seq_context <- function(input_file,plot_title=" ",output_
     #return(list(a=p,b=p2));
     return(p);
   }
-
-
-  
 }
 
 plot_mutation_spectrum_seq_contextV2 <- function(input4type,input2type,plot_title=" ",output_file=NULL) {
@@ -431,27 +453,49 @@ plot_mutation_spectrum_seq_contextV2 <- function(input4type,input2type,plot_titl
   #stack barplot with mutation category in different colors
   p1 <- ggplot(data.in,aes(x=factor(V2),y=V4,fill=V3));
   p1 <- p1 + geom_bar(position='stack',stat="identity");
-  p1 <- p1 + geom_bar(position='stack',stat="identity", colour='black',legend=FALSE);
+  if (packageVersion("ggplot2") <= "0.8.9"){
+    p1 <- p1 + geom_bar(position='stack',stat="identity", colour='black', legend=FALSE);
+  }else{
+    p1 <- p1 + geom_bar(position='stack',stat="identity", colour='black', show_guide=FALSE);
+  }
   p1 <- p1 + facet_wrap( ~ V1, scales='free_y',nrow=4);
-  #p1 <- p1 + scale_fill_brewer(pal="Set1",breaks=levels(data.in$V3));
-  p1 <- p1 + scale_fill_manual(name="Base",value=c('A'=colors()[448],'T'=colors()[554],'G'=colors()[195],'C'=colors()[566]));
+  if (packageVersion("ggplot2") <= "0.8.9"){
+    p1 <- p1 + scale_fill_manual(name="Base",value=c('A'=colors()[448],'T'=colors()[554],'G'=colors()[195],'C'=colors()[566]));
+  }else{
+    p1 <- p1 + scale_fill_manual(name="Base",values=c('A'=colors()[448],'T'=colors()[554],'G'=colors()[195],'C'=colors()[566]));
+  }
   p1 <- p1 + scale_x_discrete('Relative Position',expand=c(0,0));
   p1 <- p1 + scale_y_continuous("Number of Mutations",expand=c(0,0));
-  p1 <- p1 + opts(title=plot_title,plot.title = theme_text(size=14, lineheight=.8, face="bold"),axis.text.y=theme_text(colour='black'),axis.text.x=theme_text(colour='black'),panel.grid.major=theme_blank(),panel.grid.minor=theme_blank(),panel.background=theme_rect(fill=colors()[141]),strip.text.x=theme_text(face="bold"),strip.background=theme_rect(fill=colors()[15]));
-
+  if (packageVersion("ggplot2") <= "0.8.9"){
+    p1 <- p1 + opts(title=plot_title,plot.title = theme_text(size=14, lineheight=.8, face="bold"),axis.text.y=theme_text(colour='black'),axis.text.x=theme_text(colour='black'),panel.grid.major=theme_blank(),panel.grid.minor=theme_blank(),panel.background=theme_rect(fill=colors()[141]),strip.text.x=theme_text(face="bold"),strip.background=theme_rect(fill=colors()[15]));
+  }else{
+    p1 <- p1 + labs(title=plot_title)
+    p1 <- p1 + theme(plot.title = element_text(size=14, lineheight=.8, face="bold"), axis.text.y=element_text(colour='black'), axis.text.x=element_text(colour='black'), panel.grid.major=element_blank(), panel.grid.minor=element_blank(), panel.background=element_rect(fill=colors()[141]), strip.text.x=element_text(face="bold"), strip.background=element_rect(fill=colors()[15])); 
+  }
   data.in2<-read.table(input2type,header=F,sep="\t");
   data.in2$V1 = factor(data.in2$V1,levels=c('A','C','A->C','C->A','A->G','C->G','A->T','C->T'));
   #stack barplot with mutation category in different colors
   p2 <- ggplot(data.in2,aes(x=factor(V2),y=V4,fill=V3));
   p2 <- p2 + geom_bar(position='stack',stat="identity");
-  p2 <- p2 + geom_bar(position='stack',stat="identity", colour='black',legend=FALSE);
+  if (packageVersion("ggplot2") <= "0.8.9"){
+    p2 <- p2 + geom_bar(position='stack',stat="identity", colour='black', legend=FALSE);
+  }else{
+    p2 <- p2 + geom_bar(position='stack',stat="identity", colour='black', show_guide=FALSE);
+  }
   p2 <- p2 + facet_wrap( ~ V1, scales='free_y',nrow=4);
-  #p2 <- p2 + scale_fill_brewer(pal="Set1",breaks=levels(data.in2$V3));
-  p2 <- p2 + scale_fill_manual(name="Base",value=c('purine'=colors()[81],'pyrimidine'=colors()[93]));
+  if (packageVersion("ggplot2") <= "0.8.9"){
+    p2 <- p2 + scale_fill_manual(name="Base",value=c('purine'=colors()[81],'pyrimidine'=colors()[93]));
+  }else{
+    p2 <- p2 + scale_fill_manual(name="Base",values=c('purine'=colors()[81],'pyrimidine'=colors()[93]));
+  }
   p2 <- p2 + scale_x_discrete('Relative Position',expand=c(0,0));
   p2 <- p2 + scale_y_continuous("Number of Mutations",expand=c(0,0));
-  p2 <- p2 + opts(title=plot_title,plot.title = theme_text(size=14, lineheight=.8, face="bold"),axis.text.y=theme_text(colour='black'),axis.text.x=theme_text(colour='black'),panel.grid.major=theme_blank(),panel.grid.minor=theme_blank(),panel.background=theme_rect(fill=colors()[141]),strip.text.x=theme_text(face="bold"),strip.background=theme_rect(fill=colors()[15]));
-  
+  if (packageVersion("ggplot2") <= "0.8.9"){
+    p2 <- p2 + opts(title=plot_title,plot.title = theme_text(size=14, lineheight=.8, face="bold"),axis.text.y=theme_text(colour='black'),axis.text.x=theme_text(colour='black'),panel.grid.major=theme_blank(),panel.grid.minor=theme_blank(),panel.background=theme_rect(fill=colors()[141]),strip.text.x=theme_text(face="bold"),strip.background=theme_rect(fill=colors()[15]));
+  }else{
+    p2 <- p2 + labs(title=plot_title)
+    p2 <- p2 + theme(plot.title = element_text(size=14, lineheight=.8, face="bold"), axis.text.y=element_text(colour='black'), axis.text.x=element_text(colour='black'), panel.grid.major=element_blank(), panel.grid.minor=element_blank(), panel.background=element_rect(fill=colors()[141]), strip.text.x=element_text(face="bold"),strip.background=element_rect(fill=colors()[15]));
+  }
   #if output pdf file is not defined, return ggplot object
   #otherwise print the plot to the pdf file.
   if(!is.null(output_file)) {
@@ -462,11 +506,7 @@ plot_mutation_spectrum_seq_contextV2 <- function(input4type,input2type,plot_titl
   }
   else {
     return(list(type4=p1,type2=p2));
-    #return(p);
   }
-
-
-  
 }
 
 compare_prop2populations <- function(input_file,output_file) {

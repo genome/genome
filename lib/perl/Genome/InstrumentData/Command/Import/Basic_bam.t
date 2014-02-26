@@ -21,8 +21,8 @@ use_ok('Genome::InstrumentData::Command::Import::WorkFlow::Helpers') or die;
 my $sample = Genome::Sample->create(name => '__TEST_SAMPLE__');
 ok($sample, 'Create sample');
 
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'bam/v1');
-my $source_bam = $test_dir.'/input.bam';
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'bam/v2');
+my $source_bam = $test_dir.'/test.bam';
 ok(-s $source_bam, 'source bam exists') or die;
 
 my $cmd = Genome::InstrumentData::Command::Import::Basic->create(
@@ -47,6 +47,7 @@ is($instrument_data->import_format, 'bam', 'import_format is bam');
 is($instrument_data->sequencing_platform, 'solexa', 'sequencing_platform correctly set');
 is($instrument_data->is_paired_end, 1, 'is_paired_end correctly set');
 is($instrument_data->read_count, 256, 'read_count correctly set');
+is($instrument_data->read_length, 100, 'read_length correctly set');
 is(eval{$instrument_data->attributes(attribute_label => 'segment_id')->attribute_value;}, 2883581797, 'segment_id correctly set');
 is(eval{$instrument_data->attributes(attribute_label => 'original_data_path_md5')->attribute_value;}, '940825168285c254b58c47399a3e1173', 'original_data_path_md5 correctly set');
 
@@ -54,7 +55,8 @@ my $bam_path = $instrument_data->bam_path;
 ok(-s $bam_path, 'bam path exists');
 is($bam_path, $instrument_data->data_directory.'/all_sequences.bam', 'bam path correctly named');
 is(eval{$instrument_data->attributes(attribute_label => 'bam_path')->attribute_value}, $bam_path, 'set attributes bam path');
-is(File::Compare::compare($bam_path.'.flagstat', $test_dir.'/input.bam.flagstat'), 0, 'flagstat matches');
+is(File::Compare::compare($bam_path, $test_dir.'/test.clean.sorted.bam'), 0, 'bam matches');
+is(File::Compare::compare($bam_path.'.flagstat', $test_dir.'/test.clean.sorted.bam.flagstat'), 0, 'flagstat matches');
 
 my $allocation = $instrument_data->allocations;
 ok($allocation, 'got allocation');

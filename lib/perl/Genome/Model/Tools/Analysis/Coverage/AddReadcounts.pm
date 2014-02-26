@@ -39,6 +39,13 @@ class Genome::Model::Tools::Analysis::Coverage::AddReadcounts{
             default => '1',
         },
 
+	min_base_quality => {
+	    is => 'Integer',
+	    is_optional => 1,
+	    doc => 'minimum base quality of bases in reads to be considered',
+	    default => '0',
+	},
+
         chrom => {
             is => 'String',
             is_optional => 1,
@@ -109,6 +116,7 @@ sub execute {
     my $output_file = $self->output_file;
     my $genome_build = $self->genome_build;
     my $min_quality_score = $self->min_quality_score;
+    my $min_base_quality = $self->min_base_quality;
 
     my $min_vaf = $self->min_vaf;
     my $max_vaf = $self->max_vaf;
@@ -189,6 +197,7 @@ sub execute {
             max_vaf => $max_vaf,
             indel_size_limit => $indel_size_limit,
             min_mapping_quality => $min_quality_score,
+	    min_base_quality => $min_base_quality,
             per_library => $self->per_library,
             );
         unless ($cmd->execute) {

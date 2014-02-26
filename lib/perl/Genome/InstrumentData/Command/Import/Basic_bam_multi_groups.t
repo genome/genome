@@ -21,7 +21,7 @@ use_ok('Genome::InstrumentData::Command::Import::WorkFlow::Helpers') or die;
 my $sample = Genome::Sample->create(name => '__TEST_SAMPLE__');
 ok($sample, 'Create sample');
 
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'bam-rg-multi/v1');
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'bam-rg-multi/v2');
 my $source_bam = $test_dir.'/input.rg-multi.bam';
 ok(-s $source_bam, 'source bam exists') or die;
 
@@ -50,13 +50,14 @@ for my $instrument_data ( @instrument_data ) {
     is($instrument_data->sequencing_platform, 'solexa', 'sequencing_platform correctly set');
     is($instrument_data->is_paired_end, 1, 'is_paired_end correctly set');
     is($instrument_data->read_count, 128, 'read_count correctly set');
+    is($instrument_data->read_length, 100, 'read_length correctly set');
     is($instrument_data->attributes(attribute_label => 'segment_id')->attribute_value, $read_group, 'segment_id correctly set');
 
     my $bam_path = $instrument_data->bam_path;
     ok(-s $bam_path, 'bam path exists');
     is($bam_path, $instrument_data->data_directory.'/all_sequences.bam', 'bam path correctly named');
     is(eval{$instrument_data->attributes(attribute_label => 'bam_path')->attribute_value}, $bam_path, 'set attributes bam path');
-    is(File::Compare::compare($bam_path, $test_dir.'/'.$read_group.'.bam'), 0, 'flagstat matches');
+    is(File::Compare::compare($bam_path, $test_dir.'/'.$read_group.'.bam'), 0, 'bam matches');
     is(File::Compare::compare($bam_path.'.flagstat', $test_dir.'/'.$read_group.'.bam.flagstat'), 0, 'flagstat matches');
 
     my $allocation = $instrument_data->allocations;
@@ -66,5 +67,4 @@ for my $instrument_data ( @instrument_data ) {
     $read_group++;
 }
 
-#print $instrument_data->data_directory."\n";<STDIN>;
 done_testing();

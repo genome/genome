@@ -77,6 +77,7 @@ for my $instrument_data ( @instrument_data ) {
     is($instrument_data->import_format, 'bam', 'import_format is bam');
     is($instrument_data->is_paired_end, 1, 'is_paired_end correctly set');
     is($instrument_data->read_count, 128, 'read_count correctly set');
+    is($instrument_data->read_length, 100, 'read_length correctly set');
     is($instrument_data->attributes(attribute_label => 'index_sequence')->attribute_value, 'ATGCTA', 'index_sequence correctly set');
     is($instrument_data->attributes(attribute_label => 'segment_id')->attribute_value, $read_group, 'segment_id correctly set');
 

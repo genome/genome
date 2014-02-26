@@ -62,7 +62,7 @@ sub parse_line {
         return if $lines =~ /^#/;
         my @columns = split("\t", $lines);
         my ($DP, $MQ) = $columns[7] =~ /DP=(\d+);\S+MQ=(\d+);/;
-        unless ($DP and $MQ) {
+        unless (defined $DP and defined $MQ) {
             $self->warning_message("Failed to get DP and MQ for line:\n$lines");
             return;
         }

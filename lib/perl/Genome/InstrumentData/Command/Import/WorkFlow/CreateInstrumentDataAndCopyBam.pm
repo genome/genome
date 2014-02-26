@@ -87,6 +87,10 @@ sub execute {
     my @instrument_data;
     my @bam_paths = $self->bam_paths;
     for my $bam_path ( @bam_paths ) {
+        # Read length FIXME get from metrics or something else while processing!
+        my $read_length = $self->_determine_read_length_in_bam($bam_path);
+        return if not $read_length;
+
         # Create inst data
         my $instrument_data = $self->_create_instrument_data_for_bam_path($bam_path);
         return if not $instrument_data;
@@ -108,9 +112,11 @@ sub execute {
 
         # Attrs
         $instrument_data->add_attribute(attribute_label => 'bam_path', attribute_value => $final_bam_path);
-        $instrument_data->add_attribute(attribute_label => 'read_count', attribute_value => $flagstat->{total_reads});
         $instrument_data->add_attribute(attribute_label => 'is_paired_end', attribute_value => $flagstat->{is_paired_end});
+        $instrument_data->add_attribute(attribute_label => 'read_count', attribute_value => $flagstat->{total_reads});
+        $instrument_data->add_attribute(attribute_label => 'read_length', attribute_value => $read_length);
 
+        # Reallocate
         $self->debug_message('Reallocate...');
         $instrument_data->allocations->reallocate;# with move??
         $self->debug_message('Reallocate...done');
@@ -229,6 +235,30 @@ sub _create_allocation {
 
     $self->debug_message('Create instrument data for bam path...done');
     return $instrument_data;
+}
+
+sub _determine_read_length_in_bam {
+    my ($self, $bam_path) = @_;
+
+    my $read_length = `samtools view $bam_path | awk '{print \$10}'  | xargs -I{} expr length {} | perl -mstrict -e 'my \$c = 0; my \$t = 0; while (<>) { chomp; \$c++; \$t += \$_; } printf("%d\\n", \$t/\$c);'`;
+    chomp $read_length;
+
+    if ( not $read_length ) {
+        $self->error_message('Failed to get read length from bam! '.$bam_path);
+        return;
+    }
+
+    if ( $read_length !~ /^\d+$/ ) {
+        $self->error_message("Non numeric read length ($read_length) from bam! ".$bam_path);
+        return;
+    }
+
+    if ( $read_length == 0 ) {
+        $self->error_message('Read length for bam is 0! '.$bam_path);
+        return;
+    }
+
+    return $read_length;
 }
 
 1;

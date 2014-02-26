@@ -2455,6 +2455,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
         undef,
         'max-vaf=s',
         undef,
+        'min-base-quality=s',
+        undef,
         'min-depth=s',
         undef,
         'min-quality-score=s',

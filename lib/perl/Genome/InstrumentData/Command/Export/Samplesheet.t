@@ -5,7 +5,7 @@ use above "Genome";
 use Test::More;
 use Genome::Command::Tester qw/run_and_diff/;
 
-run_and_diff(results_version => '2013-09-25');
+run_and_diff(results_version => '2014-02-25');
 done_testing();
 
 # This infers the module to test from the test name,
