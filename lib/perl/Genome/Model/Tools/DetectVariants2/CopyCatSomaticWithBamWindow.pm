@@ -35,6 +35,7 @@ class Genome::Model::Tools::DetectVariants2::CopyCatSomaticWithBamWindow{
 
 sub _detect_variants {
     my $self = shift;
+    my $cnvs = $self->_temp_staging_directory."/cnvs.hq";
 
     ##parse input params string - expected format
     #--bamwindow-version 0.4 --bamwindow-params [-w 10000 -r -l -s]
@@ -122,6 +123,10 @@ sub _detect_variants {
             print Data::Dumper->Dumper(@Workflow::Simple::ERROR), "\n";
         }
         die $self->error_message("Workflow did not return correctly");
+    }
+
+    unless(-e $cnvs){
+        system("touch $cnvs");
     }
 
     return 1;
