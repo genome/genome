@@ -147,6 +147,7 @@ sub _annotate_genotypes {
         $genotype->{identifiers} = [ $genotype->{id} ];
         $genotype->{chromosome} = $tokens[0];
         $genotype->{chrom} = $genotype->{chromosome};
+        delete $genotype->{'chr'};
         $genotype->{position} = $tokens[2];
         $genotype->{reference} = $reference_sequence_build->sequence(
             $genotype->{chromosome}, $genotype->{position}, $genotype->{position}
@@ -156,20 +157,9 @@ sub _annotate_genotypes {
         $genotype->{alternate_alleles} = $self->_alts_for_genotype($genotype);
         $genotype->{quality} = '.';
         $genotype->{_filter} = [];
-        $genotype->{info_fields} = {
-            hash => { 
-                map { $_->{id} => $genotype->{ $_->{name} } } # FIXME convert NA to . ??
-                grep { defined $genotype->{$_->{name}} and $genotype->{$_->{name}} ne 'NA' }
-                @{Genome::Model::GenotypeMicroarray::GenotypeFile::DefaultHeader->supported_info_fields}, 
-            },
-            order =>Genome::Model::GenotypeMicroarray::GenotypeFile::DefaultHeader->info_order,
-        };
-        $genotype->{_format} = [ 'GT' ];
-        $genotype->{_sample_data} = [ [ $self->_format_for_genotype($genotype) ] ];
-
-        # Chr and position are from variation list
-        delete $genotype{'chr'};
-        delete $genotype{position};
+        $genotype->{info_fields} = $self->_info_hash_for_genotype($genotype),
+        $genotype->{_format} = [ $self->_format_for_genotype($genotype) ];
+        $genotype->{_sample_data} = [[]];
 
         # Order
         $order{$variant_id} = $cnt++;
@@ -226,6 +216,20 @@ sub _format_for_genotype {
         return '1/2';
     }
 
+}
+
+sub _info_hash_for_genotype {
+    my ($self, $genotype) = @_;
+
+    my (%info_hash, @order);
+    for my $info_field ( @{Genome::Model::GenotypeMicroarray::GenotypeFile::DefaultHeader->supported_info_fields} ) { 
+        my $value = $genotype->{ $info_field->{name} };
+        next if not defined $value or $value eq 'NA'; # FIXME convert undef/NA to . ??
+        $info_hash{ $info_field->{id} } = $value;
+        push @order, $info_field->{id};
+    }
+
+    return { hash => \%info_hash, order => \@order, };
 }
 
 1;
