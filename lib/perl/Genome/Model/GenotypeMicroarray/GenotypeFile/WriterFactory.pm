@@ -9,73 +9,88 @@ class Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory {
     is => 'UR::Singleton',
 };
 
-sub default_format {
-    return 'vcf';
-}
-
 sub build_writer {
-    my ($class, $output_params_string) = @_;
+    my ($class, $writer_params_string) = @_;
 
-    my $output_params = $class->parse_output_params_string($output_params_string);
-    return if not $output_params;
+    my $writer_params = $class->_parse_writer_params_string($writer_params_string);
+    return if not $writer_params;
 
-    my $writer_class = $class->_resolve_writer_class($output_params);
-    return if not $writer_class;
-
-    my $writer = eval{ $writer_class->create(%$output_params); };
+    my $writer = $class->_build_writer($writer_params);
     if ( not $writer ) {
-        $class->error_message('Failed to open writer! Params: '.Data::Dumper::Dumper($output_params));
+        $class->error_message('Failed to build writer! Params: '.Data::Dumper::Dumper($writer_params));
         return;
     }
 
     return $writer;
 }
 
-sub parse_output_params_string {
-    my ($class, $output_params_string) = @_;
+sub _parse_writer_params_string {
+    my ($class, $writer_params_string) = @_;
 
-    my %output_params;
-    if ( not $output_params_string ) { # do the default thing
-        return \%output_params;
+    my %writer_params;
+    if ( not $writer_params_string ) { # do the default thing
+        return \%writer_params;
     }
 
-    my @output_config_tokens = split(':', $output_params_string);
-    if ( @output_config_tokens == 1 and $output_config_tokens[0] !~ /=/ ) {
-        $output_params{output} = $output_config_tokens[0];
+    my @writer_config_tokens = split(':', $writer_params_string);
+    if ( @writer_config_tokens == 1 and $writer_config_tokens[0] !~ /=/ ) {
+        $writer_params{output} = $writer_config_tokens[0];
     }
     else { 
-        for my $output_config_token ( @output_config_tokens ) {
-            my ($key, $value) = split('=', $output_config_token);
+        for my $writer_config_token ( @writer_config_tokens ) {
+            my ($key, $value) = split('=', $writer_config_token);
             if ( not defined $value ) {
-                $output_params{output} = $key;
+                $writer_params{output} = $key;
                 next;
             }
-            if ( exists $output_params{$key} ) {
-                $class->error_message('Duplicate attribute in output config: '.$key);
+            if ( exists $writer_params{$key} ) {
+                $class->error_message('Duplicate attribute in writer config: '.$key);
                 return;
             }
-            $output_params{$key} = $value;
+            $writer_params{$key} = $value;
         }
     }
 
-    return \%output_params;
+    return \%writer_params;
 }
 
-sub _resolve_writer_class {
-    my ($class, $output_params) = @_;
+sub _build_writer {
+    my ($class, $writer_params) = @_;
 
-    my $format = delete $output_params->{format} || default_format();
-    my %writer_classes = (
-        csv => 'Genome::Model::GenotypeMicroarray::GenotypeFile::WriteCsv',
-        vcf => 'Genome::Model::GenotypeMicroarray::GenotypeFile::WriteVcf',
-    );
-    my $writer_class = $writer_classes{$format};
-    if ( not $writer_class ) {
-        $class->error_message('Unknown output format! '.$format);
+    my $format = delete $writer_params->{format} || 'vcf';
+    if ( not grep { $format eq  $_ } (qw/ csv vcf /) ) {
+        $class->error_message('Unknown format to write! '. $format);
         return;
     }
 
-    return $writer_class;
+    $writer_params->{output} ||= '-' if not $writer_params->{file};
+
+    my $method = '_build_'.$format.'_writer';
+    return $class->$method($writer_params);
+}
+
+sub _build_vcf_writer {
+    my ($class, $writer_params) = @_;
+    my $header = Genome::Model::GenotypeMicroarray::GenotypeFile::DefaultHeader->header;
+    return Genome::File::Vcf::Writer->new( $writer_params->{output}, $header );
+}
+
+sub _build_csv_writer {
+    my ($class, $writer_params) = @_;
+
+    $writer_params->{separator} = "\t" if not $writer_params->{separator} or $writer_params->{separator} =~ /^tab$/i;
+    $writer_params->{print_headers} = delete $writer_params->{headers} if exists $writer_params->{headers};
+    $writer_params->{ignore_extra_columns} = 1;
+
+    my $fields = delete $writer_params->{fields};
+    if ( $fields ) {
+        $writer_params->{headers} = [ split(',', $fields) ];
+    }
+    else {
+        $writer_params->{headers} = [qw/ chromosome position alleles reference id sample_id log_r_ratio gc_score cnv_value cnv_confidence allele1 allele2 /];
+    }
+
+    return Genome::Utility::IO::SeparatedValueWriter->create(%$writer_params);
 }
 
 1;

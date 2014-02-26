@@ -31,26 +31,26 @@ ok(!Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory->build_writer
 ### VCF ###
 # Default is VCF to STDOUT
 my $writer = Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory->build_writer();
-isa_ok($writer, 'Genome::Model::GenotypeMicroarray::GenotypeFile::WriteVcf');
-is($writer->get_original_output, '-', 'output is STDOUT');
+isa_ok($writer, 'Genome::File::Vcf::Writer');
+is($writer->{name}, '-', 'output is STDOUT');
 
 # Output w/o key is specified
 my $output_file = $output_file_generator->();
 $writer = Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory->build_writer($output_file);
-isa_ok($writer, 'Genome::Model::GenotypeMicroarray::GenotypeFile::WriteVcf');
-is($writer->get_original_output, $output_file, "original output is $output_file");
+isa_ok($writer, 'Genome::File::Vcf::Writer');
+is($writer->{name}, $output_file, "original output is $output_file");
 
 # Output and format specified
 $output_file = $output_file_generator->();
 $writer = Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory->build_writer('output='.$output_file.':format=vcf');
-isa_ok($writer, 'Genome::Model::GenotypeMicroarray::GenotypeFile::WriteVcf');
-is($writer->get_original_output, $output_file, "original output is $output_file");
+isa_ok($writer, 'Genome::File::Vcf::Writer');
+is($writer->{name}, $output_file, "original output is $output_file");
 
 ## CSV ###
 # Defaults
 $output_file = $output_file_generator->();
 $writer = Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory->build_writer($output_file.':format=csv:separator=TAB');
-isa_ok($writer, 'Genome::Model::GenotypeMicroarray::GenotypeFile::WriteCsv');
+isa_ok($writer, 'Genome::Utility::IO::SeparatedValueWriter');
 is($writer->get_original_output, $output_file, "original output is $output_file");
 is($writer->separator, "\t", 'separator is TAB');
 is_deeply($writer->headers, Genome::Model::GenotypeMicroarray::GenotypeFile::WriteCsv->default_headers, 'headers are correct');
