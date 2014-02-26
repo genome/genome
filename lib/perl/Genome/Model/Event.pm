@@ -532,6 +532,9 @@ sub bsub_rusage {
     return "-R 'select[model!=Opteron250 && type==LINUX64] span[hosts=1]'";
 }
 
+sub lsf_queue {
+    return $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
+}
 
 #< Scheduling, Abandon >#
 sub schedule {
