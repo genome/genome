@@ -13,8 +13,12 @@ class Genome::Model::Event::Build::ReferenceAlignment::BamQc {
     doc => 'runs BamQc on the bam(s) produced in the alignment step',
 };
 
+sub lsf_queue {
+    return $ENV{GENOME_LSF_QUEUE_BUILD_WORKER};
+}
+
 sub bsub_rusage {
-    return "-q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER}";
+    return '';
 }
 
 sub shortcut {
