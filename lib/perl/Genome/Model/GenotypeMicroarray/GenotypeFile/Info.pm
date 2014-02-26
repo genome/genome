@@ -1,4 +1,4 @@
-package Genome::Model::GenotypeMicroarray::GenotypeFile::DefaultHeader;
+package Genome::Model::GenotypeMicroarray::GenotypeFile::Info;
 
 use strict;
 use warnings;
@@ -7,7 +7,7 @@ use Genome;
 
 use Data::Dumper 'Dumper';
 
-class Genome::Model::GenotypeMicroarray::GenotypeFile::DefaultHeader { 
+class Genome::Model::GenotypeMicroarray::GenotypeFile::Info { 
     is => 'UR::Singleton',
 };
 
@@ -48,29 +48,6 @@ sub supported_info_fields {
     return $supported_info_fields;
 }
 
-my $header_lines;
-sub header_lines {
-
-    return $header_lines if $header_lines;
-
-    $header_lines = [
-        '##fileformat=VCFv4.1',
-    ];
-    for my $field ( @$supported_info_fields ) {
-        push @$header_lines, '##INFO=<ID='.$field->{id}.$field->{header};
-    }
-    push @$header_lines, '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">';
-
-    return $header_lines;
-}
-
-our $header;
-sub header {
-    return $header if $header;
-    $header = Genome::File::Vcf::Header->create(lines => header_lines());
-    return $header;
-}
-
 our $info_order;
 sub info_order { 
     return $info_order if $info_order;
@@ -83,6 +60,26 @@ sub info_names_and_ids {
     return $info_names_and_ids if $info_names_and_ids;
     $info_names_and_ids = { map { $_->{name} => $_->{id} } @$supported_info_fields };
     return $info_names_and_ids;
+}
+
+sub header_for_csv {
+    return [qw/ chromosome position alleles reference id sample_id log_r_ratio gc_score cnv_value cnv_confidence allele1 allele2 /];
+}
+
+sub header_for_vcf {
+    my ($self, @samples) = @_;
+
+    my @header_lines = (
+        '##fileformat=VCFv4.1',
+    );
+    for my $field ( @$supported_info_fields ) {
+        push @header_lines, '##INFO=<ID='.$field->{id}.$field->{header};
+    }
+    push @header_lines, '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">';
+    push @header_lines, '#'.join("\t", Genome::File::Vcf::Header->column_headers, map({ $_->name } @samples));
+
+    my $header = Genome::File::Vcf::Header->create(lines => \@header_lines);
+    return $header;
 }
 
 1;

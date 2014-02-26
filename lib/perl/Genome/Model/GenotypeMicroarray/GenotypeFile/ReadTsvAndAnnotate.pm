@@ -222,7 +222,7 @@ sub _info_hash_for_genotype {
     my ($self, $genotype) = @_;
 
     my (%info_hash, @order);
-    for my $info_field ( @{Genome::Model::GenotypeMicroarray::GenotypeFile::DefaultHeader->supported_info_fields} ) { 
+    for my $info_field ( @{Genome::Model::GenotypeMicroarray::GenotypeFile::Info->supported_info_fields} ) { 
         my $value = $genotype->{ $info_field->{name} };
         next if not defined $value or $value eq 'NA'; # FIXME convert undef/NA to . ??
         $info_hash{ $info_field->{id} } = $value;

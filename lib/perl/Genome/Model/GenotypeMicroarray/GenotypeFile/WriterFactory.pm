@@ -91,8 +91,10 @@ sub _build_writer {
 
 sub _build_vcf_writer {
     my ($class, $writer_params) = @_;
-    my $header = Genome::Model::GenotypeMicroarray::GenotypeFile::DefaultHeader->header;
-    return Genome::File::Vcf::Writer->new( $writer_params->{output}, $header );
+    return Genome::File::Vcf::Writer->new(
+        $writer_params->{output},    
+        Genome::Model::GenotypeMicroarray::GenotypeFile::Info->header_for_vcf,
+    );
 }
 
 sub _build_csv_writer {
@@ -107,7 +109,7 @@ sub _build_csv_writer {
         $writer_params->{headers} = [ split(',', $fields) ];
     }
     else {
-        $writer_params->{headers} = [qw/ chromosome position alleles reference id sample_id log_r_ratio gc_score cnv_value cnv_confidence allele1 allele2 /];
+        $writer_params->{headers} = Genome::Model::GenotypeMicroarray::GenotypeFile::Info->header_for_csv;
     }
 
     return Genome::Utility::IO::SeparatedValueWriter->create(%$writer_params);
