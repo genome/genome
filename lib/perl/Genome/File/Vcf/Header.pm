@@ -20,6 +20,10 @@ my @COLUMN_HEADERS = qw(
     INFO
     FORMAT
 );
+sub column_headers {
+    return @COLUMN_HEADERS;
+}
+
 
 my %VALID_VCF_TYPE_NON_NUMERIC_NUMBERS = (
     'A' => 1, # per alt
@@ -110,7 +114,7 @@ sub to_string {
 
 sub _header_line {
     my $self = shift;
-    return "#" . join("\t", @COLUMN_HEADERS, $self->sample_names);
+    return "#" . join("\t", column_headers(), $self->sample_names);
 }
 
 sub _metainfo_lines {
