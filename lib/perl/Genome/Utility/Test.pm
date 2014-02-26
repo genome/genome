@@ -33,7 +33,7 @@ sub abort {
 sub _compare_ok_parse_args {
     # First two args are always the files.
     # Then accept one scalar argument, the name.
-    # And one HASH ref, the options.
+    # And (optionally) one HASH , the options.
     # Then validate the option names.
     my $file_1 = shift;
     my $file_2 = shift;
