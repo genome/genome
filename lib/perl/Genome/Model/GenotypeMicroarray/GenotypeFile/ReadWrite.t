@@ -16,84 +16,54 @@ require File::Temp;
 require File::Compare;
 use Test::More;
 
-use_ok('Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsv') or die;
-use_ok('Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsvAndAnnotate') or die;
-use_ok('Genome::Model::GenotypeMicroarray::GenotypeFile::WriteCsv') or die;
-use_ok('Genome::Model::GenotypeMicroarray::GenotypeFile::WriteVcf') or die;
+use_ok('Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory') or die;
+use_ok('Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory') or die;
+use_ok('Genome::Model::GenotypeMicroarray::Test') or die;
 
-my $testdir = $ENV{GENOME_TEST_INPUTS} . '/GenotypeMicroarray/';
-my $variation_list_build = _init();
-my %snp_id_mapping = (
-    'rs3094315' => 'rs3094315',
-    'rs3131972' => 'rs3131972',
-    'rs11240777' => 'rs11240777',
-    'rs6681049' => 'rs6681049',
-    'rs4970383' => 'rs4970383',
-    'rs4475691' => 'rs4475691',
-    'rs7537756' => 'rs7537756',
-    'rs1110052' => 'rs1110052',
-    'rs2272756' => 'rs2272756',
-);
+my $testdir = Genome::Model::GenotypeMicroarray::Test::testdir();
 my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
+my %snp_id_mapping;
 
 ###
-# TSV to annotate to TSV
-my $genotype_reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsvAndAnnotate->create(
-    input => $testdir.'/rw/input.csv',
-    variation_list_build => $variation_list_build,
-    snp_id_mapping => \%snp_id_mapping,
+# TSV [inst data] to TSV [old build]
+my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->build_reader(
+    Genome::Model::GenotypeMicroarray::Test::instrument_data(),
+    Genome::Model::GenotypeMicroarray::Test::variation_list_build(),
 );
-ok($genotype_reader, 'create genotype reader to read tsv and annotate');
-my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::Reader->create(
-    reader => $genotype_reader,
-);
-ok($reader, 'create reader');
+ok($reader, 'build reader');
 my $output_tsv = $tmpdir.'/genotypes.tsv';
-my $writer = Genome::Model::GenotypeMicroarray::GenotypeFile::WriteCsv->create(
-    output => $output_tsv,
-);
+my $writer = Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory->build_writer($output_tsv);
 ok($writer, 'create writer');
 
-my @genotypes_from_read_tsv_and_annotate;
-my $write_cnt = 0;
+my @genotypes_from_instdata;
 while ( my $genotype = $reader->read ) {
-    push @genotypes_from_read_tsv_and_annotate, $genotype;
-    $write_cnt++ if $writer->write_one($genotype);
+    $writer->write($genotype);
+    push @genotypes_from_instdata, $genotype;
 }
-is_deeply(\@genotypes_from_read_tsv_and_annotate, _expected_genotypes(), 'read tsv and annotate genotypes match');
-is($write_cnt, @genotypes_from_read_tsv_and_annotate, 'wrote all genotypes');
-is(File::Compare::compare($output_tsv, $testdir.'/rw/output.tsv'), 0, 'read tsv and annotate, write to tsv output file matches');
-#print "gvimdiff $output_tsv $testdir/rw/write.tsv\n"; <STDIN>;
+$writer->output->flush;
+is_deeply(\@genotypes_from_instdata, Genome::Model::GenotypeMicroarray::Test::expected_genotypes(), 'read tsv and annotate genotypes match');
+is(File::Compare::compare($output_tsv, $testdir.'/rw/output.expected.tsv'), 0, 'read tsv and annotate, write to tsv output file matches');
+print "gvimdiff $output_tsv $testdir/rw/output.expected.tsv\n"; <STDIN>;
 
 ###
-# TSV to VCF
-$genotype_reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsv->create(
-    input => $output_tsv,
-);
-ok($genotype_reader, 'create genotype reader to read tsv');
-$reader = Genome::Model::GenotypeMicroarray::GenotypeFile::Reader->create(
-    reader => $genotype_reader,
+# TSV [old build] to VCF
+$reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->build_reader(
+    Genome::Model::GenotypeMicroarray::Test::example_legacy_build(),
 );
 ok($reader, 'create reader');
 my $output_vcf = $tmpdir.'/genotypes.vcf';
-my $header = Genome::Model::GenotypeMicroarray::GenotypeFile::DefaultHeader->header;
-$writer = Genome::Model::GenotypeMicroarray::GenotypeFile::WriteVcf->create(
-    output => $output_vcf, 
-    header => $header,
-);
+$writer = Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory->build_writer($output_vcf);
 ok($writer, 'create writer');
 
-my @genotypes_from_read_tsv;
-$write_cnt = 0;
+my @genotypes_from_legacy_build;
 while ( my $genotype = $reader->read ) {
-    push @genotypes_from_read_tsv, $genotype;
-    $write_cnt++ if $writer->write_one($genotype);
+    $writer->write($genotype);
+    push @genotypes_from_legacy_build, $genotype;
 }
 $writer->close;
-is_deeply(\@genotypes_from_read_tsv, \@genotypes_from_read_tsv, 'genotypes match');
-is($write_cnt, @genotypes_from_read_tsv, 'wrote all genotypes');
-is(File::Compare::compare($output_vcf, $testdir.'/rw/write.vcf'), 0, 'read tsv, write to vcf output file matches');
-#print "gvimdiff $output_vcf $testdir/rw/write.vcf\n"; <STDIN>;
+is_deeply(\@genotypes_from_legacy_build, \@genotypes_from_instdata, 'genotypes match');
+is(File::Compare::compare($output_vcf, $testdir.'/rw/output.expected.vcf'), 0, 'read tsv, write to vcf output file matches');
+#print "gvimdiff $output_vcf $testdir/rw/output.expected.vcf\n"; <STDIN>;
 
 done_testing();
 
@@ -146,133 +116,3 @@ sub _init {
     return $variation_list_build
 }
 
-sub _expected_genotypes {
-    return [
-    {
-        'log_r_ratio' => '-0.3639',
-        'position' => '752566',
-        'cnv_confidence' => 'NA',
-        'cnv_value' => '2.0',
-        'chromosome' => '1',
-        'allele1' => 'A',
-        'id' => 'rs3094315',
-        'gc_score' => '0.8931',
-        'alleles' => 'AG',
-        'reference' => 'A',
-        'allele2' => 'G',
-        'sample_id' => '2879594813',
-    },
-    {
-        'log_r_ratio' => '-0.0539',
-        'position' => '752721',
-        'cnv_confidence' => 'NA',
-        'cnv_value' => '2.0',
-        'chromosome' => '1',
-        'allele1' => 'A',
-        'id' => 'rs3131972',
-        'gc_score' => '0.9256',
-        'alleles' => 'AG',
-        'reference' => 'A',
-        'allele2' => 'G',
-        'sample_id' => '2879594813',
-    },
-    {
-        'log_r_ratio' => '-0.0192',
-        'position' => '798959',
-        'cnv_confidence' => 'NA',
-        'cnv_value' => '2.0',
-        'chromosome' => '1',
-        'allele1' => 'A',
-        'id' => 'rs11240777',
-        'gc_score' => '0.8729',
-        'alleles' => 'AG',
-        'reference' => 'T',
-        'allele2' => 'G',
-        'sample_id' => '2879594813',
-    },
-    {
-        'log_r_ratio' => '0.2960',
-        'position' => '800007',
-        'cnv_confidence' => 'NA',
-        'cnv_value' => '2.0',
-        'chromosome' => '1',
-        'allele1' => 'T',
-        'id' => 'rs6681049',
-        'gc_score' => '0.7156',
-        'alleles' => 'TC',
-        'reference' => 'A',
-        'allele2' => 'C',
-        'sample_id' => '2879594813',
-    },
-    {
-        'log_r_ratio' => '0.4694',
-        'position' => '838555',
-        'cnv_confidence' => 'NA',
-        'cnv_value' => '2.0',
-        'chromosome' => '1',
-        'allele1' => 'C',
-        'id' => 'rs4970383',
-        'gc_score' => '0.8749',
-        'alleles' => 'CC',
-        'reference' => 'C',
-        'allele2' => 'C',
-        'sample_id' => '2879594813',
-    },
-    {
-        'log_r_ratio' => '-0.0174',
-        'position' => '846808',
-        'cnv_confidence' => 'NA',
-        'cnv_value' => '2.0',
-        'chromosome' => '1',
-        'allele1' => 'C',
-        'id' => 'rs4475691',
-        'gc_score' => '0.8480',
-        'alleles' => 'CC',
-        'reference' => 'G',
-        'allele2' => 'C',
-        'sample_id' => '2879594813',
-    },
-    {
-        'log_r_ratio' => '0.0389',
-        'position' => '854250',
-        'cnv_confidence' => 'NA',
-        'cnv_value' => '2.0',
-        'chromosome' => '1',
-        'allele1' => 'A',
-        'id' => 'rs7537756',
-        'gc_score' => '0.8670',
-        'alleles' => 'AA',
-        'reference' => 'A',
-        'allele2' => 'A',
-        'sample_id' => '2879594813',
-    },
-    {
-        'log_r_ratio' => '0.1487',
-        'position' => '873558',
-        'cnv_confidence' => 'NA',
-        'cnv_value' => '2.0',
-        'chromosome' => '1',
-        'allele1' => 'T',
-        'id' => 'rs1110052',
-        'gc_score' => '0.7787',
-        'alleles' => 'TT',
-        'reference' => 'C',
-        'allele2' => 'T',
-        'sample_id' => '2879594813',
-    },
-    {
-        'log_r_ratio' => '-0.0801',
-        'position' => '882033',
-        'cnv_confidence' => 'NA',
-        'cnv_value' => '2.0',
-        'chromosome' => '1',
-        'allele1' => 'G',
-        'id' => 'rs2272756',
-        'gc_score' => '0.8677',
-        'alleles' => 'GG',
-        'reference' => 'G',
-        'allele2' => 'G',
-        'sample_id' => '2879594813',
-    }
-    ];
-}
