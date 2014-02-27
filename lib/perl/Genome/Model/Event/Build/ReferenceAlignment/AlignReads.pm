@@ -45,6 +45,7 @@ sub bsub_rusage {
         instrument_data => $self->instrument_data,
         reference_build => $self->model->reference_sequence_build,
         aligner_params  => $self->model->processing_profile->read_aligner_params,
+        queue           => $self->lsf_queue,
     );
     return $rusage;
 }

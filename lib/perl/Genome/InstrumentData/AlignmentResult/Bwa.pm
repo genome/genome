@@ -25,6 +25,7 @@ sub required_rusage {
     my $instrument_data = delete $p{instrument_data};
     my $aligner_params  = delete $p{aligner_params};
     my $reference_build = delete $p{reference_build};
+    my $queue           = delete $p{queue} || $ENV{GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT};
 
     my $tmp_mb = $class->tmp_megabytes_estimated($instrument_data);
     my $mem_mb = 1024 * 8; 
@@ -43,8 +44,6 @@ sub required_rusage {
     my $tmp_gb = $tmp_mb/1024;
 
     my $user = getpwuid($<);
-    my $queue = $ENV{GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT};
-    $queue = $ENV{GENOME_LSF_QUEUE_ALIGNMENT_PROD} if (Genome::Config->should_use_alignment_pd);
 
     my $host_groups;
     $host_groups = qx(bqueues -l $queue | grep ^HOSTS:);
