@@ -188,7 +188,6 @@ ok($tmp_dir2, "created temp dir ($tmp_dir2)");
 
 my @common_params = (lock_directory => $tmp_dir2, resource_id => "foo", block_sleep => 0);
 
-local $SIG{CHLD} = sub { wait };
 my $child_pid = UR::Context::Process->fork;
 if ($child_pid == 0) { # child thread
     print "CHILD: Locking $tmp_dir2/foo...\n";
