@@ -308,6 +308,21 @@ sub required_rusage {
     ''
 }
 
+sub lsf_queue {
+    my $self = shift;
+
+    # if class overrode then use that
+    if ($self->__lsf_queue) {
+        return $self->__lsf_queue;
+    }
+
+    if (Genome::Config->can('should_use_alignment_pd') && Genome::Config->should_use_alignment_pd($self->model)) {
+        return $ENV{GENOME_LSF_QUEUE_ALIGNMENT_PROD};
+    }
+
+    return $ENV{GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT};
+}
+
 sub required_rusage_for_building_index {
     # override if necessary in subclasses.
     my $class = shift;
@@ -316,7 +331,7 @@ sub required_rusage_for_building_index {
 
     my $select = "select[mem>=10000 && tmp>=15000]";
     my $rusage = "rusage[mem=10000, tmp=15000]";
-    my $options = "-M 10000000 -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER}";
+    my $options = "-M 10000000";
 
     return sprintf("-R '%s %s' %s", $select, $rusage, $options);
 }

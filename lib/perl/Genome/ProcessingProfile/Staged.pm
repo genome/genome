@@ -358,6 +358,10 @@ sub _workflow_for_stage {
             Carp::confess();
         }
 
+        if ($first_event->lsf_queue()) {
+            $lsf_queue = $first_event->lsf_queue();
+        }
+
         $first_operation->operation_type->lsf_resource($first_event->bsub_rusage . $first_event_log_resource);
         $first_operation->operation_type->lsf_queue($lsf_queue);
         $first_operation->operation_type->lsf_project($lsf_project);
