@@ -284,9 +284,10 @@ sub expected_genotypes {
         $genotype->{alternate_alleles} = Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsvAndAnnotate->_alts_for_genotype($genotype);
         $genotype->{quality} = '.';
         $genotype->{_filter} = [];
-        $genotype->{_format} = [Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsvAndAnnotate->_format_for_genotype($genotype)];
         $genotype->{info_fields} = Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsvAndAnnotate->_info_hash_for_genotype($genotype);
-        $genotype->{_sample_data} = [ [] ], #FIXME
+        $genotype->{_format} = [qw/ GT OG /], # FIXME put somewhere else
+        $genotype->{_format_key_to_idx} = { GT => 1, OG => 0, }, # FIXME put somewhere else
+        $genotype->{_sample_data} = Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsvAndAnnotate->_sample_data_for_genotype($genotype)
     }
 
     return $cache{expected_genotypes};
