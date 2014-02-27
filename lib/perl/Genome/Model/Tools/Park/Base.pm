@@ -42,27 +42,37 @@ sub _run_generic_process {
 
     my $in;
     my $out = "x" x 100_000; # preallocate $out to avoid performance penalty
+    my $err = "x" x 100_000;
     $out = "";
+    $err = "";
 
     my $process_uri;
     eval {
-        my $h = start $cmd, \$in, \$out;
+        my $h = start $cmd, \$in, \$out, \$err;
 
-        pump $h until $out =~ /Launching Process (\S*) /;
+        pump $h until $err =~ m/.*Launching Process ([^\s]*) .*/;
         $process_uri = $1;
-        $self->status_message("$out\n");
-        $out = "";
 
-        $self->status_message("\nView the progress of this process with:\n");
+        $self->status_message("$out\n");
+        $self->status_message("$err\n");
+        $out = "";
+        $err = "";
+
+        $self->status_message("View the progress of this process with:\n");
         $self->status_message("    %s %s\n", $self->_rex_script_path('process view'),
             $process_uri);
 
-        finish $h;
-        print "Process completed successfully.\n";
+        if (finish $h) {
+            $self->status_message("Process completed successfully.\n");
+        } else {
+            my $exit_code = $? >> 8;
+            die "Process FAILED: exit code ($exit_code)";
+        }
     };
     if ($@) {
         $self->status_message("$out\n");
-        die "Process FAILED: $@\n";
+        $self->status_message("$err\n");
+        die "$@";
     }
     return $process_uri;
 }
