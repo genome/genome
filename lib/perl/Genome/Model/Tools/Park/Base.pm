@@ -42,14 +42,18 @@ sub _run_generic_process {
 
         pump $h until $out =~ /Launching Process (\S*) /;
         $process_uri = $1;
-        print "$out\n";
+        $self->status_message("$out\n");
         $out = "";
+
+        $self->status_message("\nView the progress of this process with:\n");
+        $self->status_message("    %s %s\n", $self->_rex_script_path('process view'),
+            $process_uri);
 
         finish $h;
         print "Process completed successfully.\n";
     };
     if ($@) {
-        print "$out\n";
+        $self->status_message("$out\n");
         die "Process FAILED: $@\n";
     }
     return $process_uri;
@@ -58,6 +62,7 @@ sub _run_generic_process {
 my %REX_COMMAND_SCRIPTS = (
     'process start' => 'rex_process_start.sh',
     'process link' => 'rex_process_link.sh',
+    'process view' => 'rex_process_view.sh',
 );
 
 sub _rex_script_path {
