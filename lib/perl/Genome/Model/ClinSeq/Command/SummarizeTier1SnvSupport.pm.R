@@ -1,9 +1,9 @@
 #!/usr/bin/env Rscript
 #Written by Malachi Griffith
 args = (commandArgs(TRUE))
-working_dir = args[1]; #Directory where output will be written
-readcounts_file = args[2];  #snvs.hq.tier1.v1.annotated.compact.readcounts.tsv
-gene_expression_file = args[3];  #isoforms.merged.fpkm.expsort.tsv
+working_dir = args[1] #Directory where output will be written
+readcounts_file = args[2]  #snvs.hq.tier1.v1.annotated.compact.readcounts.tsv
+gene_expression_file = args[3]  #isoforms.merged.fpkm.expsort.tsv
 
 #Example execution
 #WGS_vs_Exome_vs_RNAseq_VAF_and_FPKM.R  /gscmnt/sata132/techd/mgriffit/hgs/test/ /gscmnt/sata132/techd/mgriffit/hgs/all1/snv/wgs_exome/snvs.hq.tier1.v1.annotated.compact.readcounts.tsv /gscmnt/sata132/techd/mgriffit/hgs/all1/rnaseq/tumor/absolute/isoforms_merged/isoforms.merged.fpkm.expsort.tsv
@@ -87,17 +87,20 @@ if (length(which(names(readcounts)=="WGS_Tumor_VAF")) & length(which(names(readc
   text3 = paste("R = ", round(pearsonR, digits=2), " (pearson)", sep="")
   
   pdf(file="Tumor_VAF_WGS_vs_RNAseq_scatter.pdf")
-  print({
-    d = ggplot(data=readcounts, aes(x=WGS_Tumor_VAF, y=RNAseq_Tumor_VAF))
-    d + geom_point(aes(colour=Gene_FPKM), size=psize) + scale_colour_gradient('FPKM', low="yellow", high="red") + 
-    xlab("Tumor Variant Allele Frequency (WGS)") + ylab("Tumor Variant Allele Frequency (RNA-seq)") + 
-    xlim(c(0,100)) + ylim(c(0,ypos)) + 
-    opts(title="Detection and RNA expression of variants identified by WGS") +
-    geom_abline(intercept=0, slope=1, linetype=2, size=0.2) +
-    geom_abline(intercept=20, slope=1, linetype=2, size=0.1) +
-    geom_abline(intercept=-20, slope=1, linetype=2, size=0.1) +
-	  geom_text(aes(x2,y2,label = textlist, hjust=0), data.frame(x2=c(0,0,0), y2=c(ypos,ypos-5,ypos-10), textlist=c(text1,text2,text3)))
-  })
+  d = ggplot(data=readcounts, aes(x=WGS_Tumor_VAF, y=RNAseq_Tumor_VAF))
+  d = d + geom_point(aes(colour=Gene_FPKM), size=psize) + scale_colour_gradient('FPKM', low="yellow", high="red")
+  d = d + xlab("Tumor Variant Allele Frequency (WGS)") + ylab("Tumor Variant Allele Frequency (RNA-seq)")
+  d = d + xlim(c(0,100)) + ylim(c(0,ypos))
+  if (packageVersion("ggplot2") <= "0.8.9"){
+    d = d + opts(title="Detection and RNA expression of variants identified by WGS")
+  }else{
+    d = d + labs(title="Detection and RNA expression of variants identified by WGS")
+  }
+  d = d + geom_abline(intercept=0, slope=1, linetype=2, size=0.2)
+  d = d + geom_abline(intercept=20, slope=1, linetype=2, size=0.1)
+  d = d + geom_abline(intercept=-20, slope=1, linetype=2, size=0.1)
+  d = d + geom_text(aes(x2,y2,label = textlist, hjust=0), data.frame(x2=c(0,0,0), y2=c(ypos,ypos-5,ypos-10), textlist=c(text1,text2,text3)))
+  print(d)
   dev.off()
   
   #B.) Read count filtered data
@@ -120,17 +123,20 @@ if (length(which(names(readcounts)=="WGS_Tumor_VAF")) & length(which(names(readc
     text3 = paste("R = ", round(pearsonR, digits=2), " (pearson)", sep="")
 
     pdf(file="Tumor_VAF_WGS_vs_RNAseq_ReadCutoff_scatter.pdf")
-    print({
-      d = ggplot(data=readcounts_cut, aes(x=WGS_Tumor_VAF, y=RNAseq_Tumor_VAF)) 
-      d + geom_point(aes(colour=Gene_FPKM), size=psize) + scale_colour_gradient('FPKM', low="yellow", high="red") + 
-      xlab("Tumor Variant Allele Frequency (WGS)") + ylab("Tumor Variant Allele Frequency (RNA-seq)") + 
-      xlim(c(0,100)) + ylim(c(0,ypos)) + 
-      opts(title="Detection and RNA expression of variants identified by WGS (> rc)") +
-      geom_abline(intercept=0, slope=1, linetype=2, size=0.2) +
-      geom_abline(intercept=20, slope=1, linetype=2, size=0.1) +
-      geom_abline(intercept=-20, slope=1, linetype=2, size=0.1) +
-	  geom_text(aes(x2,y2,label = textlist, hjust=0), data.frame(x2=c(0,0,0), y2=c(ypos,ypos-5,ypos-10), textlist=c(text1,text2,text3)))
-    })
+    d = ggplot(data=readcounts_cut, aes(x=WGS_Tumor_VAF, y=RNAseq_Tumor_VAF)) 
+    d = d + geom_point(aes(colour=Gene_FPKM), size=psize) + scale_colour_gradient('FPKM', low="yellow", high="red") 
+    d = d + xlab("Tumor Variant Allele Frequency (WGS)") + ylab("Tumor Variant Allele Frequency (RNA-seq)")
+    d = d + xlim(c(0,100)) + ylim(c(0,ypos))
+    if (packageVersion("ggplot2") <= "0.8.9"){
+      d = d + opts(title="Detection and RNA expression of variants identified by WGS (> rc)")
+    }else{
+      d = d + labs(title="Detection and RNA expression of variants identified by WGS (> rc)")      
+    }
+    d = d + geom_abline(intercept=0, slope=1, linetype=2, size=0.2)
+    d = d + geom_abline(intercept=20, slope=1, linetype=2, size=0.1)
+    d = d + geom_abline(intercept=-20, slope=1, linetype=2, size=0.1)
+	  d = d + geom_text(aes(x2,y2,label = textlist, hjust=0), data.frame(x2=c(0,0,0), y2=c(ypos,ypos-5,ypos-10), textlist=c(text1,text2,text3)))
+    print(d)
     dev.off()
   }
 }
@@ -155,17 +161,20 @@ if (length(which(names(readcounts)=="Exome_Tumor_VAF")) & length(which(names(rea
   text3 = paste("R = ", round(pearsonR, digits=2), " (pearson)", sep="")
 
   pdf(file="Tumor_VAF_Exome_vs_RNAseq_scatter.pdf")
-  print({
-    d = ggplot(data=readcounts, aes(x=Exome_Tumor_VAF, y=RNAseq_Tumor_VAF))
-    d + geom_point(aes(colour=Gene_FPKM), size=psize) + scale_colour_gradient('FPKM', low="yellow", high="red") + 
-    xlab("Tumor Variant Allele Frequency (Exome)") + ylab("Tumor Variant Allele Frequency (RNA-seq)") + 
-    xlim(c(0,100)) + ylim(c(0,ypos)) + 
-    opts(title="Detection and RNA expression of variants identified by Exome") +
-    geom_abline(intercept=0, slope=1, linetype=2, size=0.2) +
-    geom_abline(intercept=20, slope=1, linetype=2, size=0.1) +
-    geom_abline(intercept=-20, slope=1, linetype=2, size=0.1) +
-  	geom_text(aes(x2,y2,label = textlist, hjust=0), data.frame(x2=c(0,0,0), y2=c(ypos,ypos-5,ypos-10), textlist=c(text1,text2,text3)))
-  })
+  d = ggplot(data=readcounts, aes(x=Exome_Tumor_VAF, y=RNAseq_Tumor_VAF))
+  d = d + geom_point(aes(colour=Gene_FPKM), size=psize) + scale_colour_gradient('FPKM', low="yellow", high="red")
+  d = d + xlab("Tumor Variant Allele Frequency (Exome)") + ylab("Tumor Variant Allele Frequency (RNA-seq)")
+  d = d + xlim(c(0,100)) + ylim(c(0,ypos))
+  if (packageVersion("ggplot2") <= "0.8.9"){
+    d = d + opts(title="Detection and RNA expression of variants identified by Exome")
+  }else{
+    d = d + labs(title="Detection and RNA expression of variants identified by Exome")
+  }
+  d = d + geom_abline(intercept=0, slope=1, linetype=2, size=0.2)
+  d = d + geom_abline(intercept=20, slope=1, linetype=2, size=0.1)
+  d = d + geom_abline(intercept=-20, slope=1, linetype=2, size=0.1)
+	d = d + geom_text(aes(x2,y2,label = textlist, hjust=0), data.frame(x2=c(0,0,0), y2=c(ypos,ypos-5,ypos-10), textlist=c(text1,text2,text3)))
+  print(d)
   dev.off()
   
   #B.) Read count filtered data
@@ -188,17 +197,20 @@ if (length(which(names(readcounts)=="Exome_Tumor_VAF")) & length(which(names(rea
     text3 = paste("R = ", round(pearsonR, digits=2), " (pearson)", sep="")
 
     pdf(file="Tumor_VAF_Exome_vs_RNAseq_ReadCutoff_scatter.pdf")
-    print({
-      d = ggplot(data=readcounts_cut, aes(x=Exome_Tumor_VAF, y=RNAseq_Tumor_VAF)) 
-      d + geom_point(aes(colour=Gene_FPKM), size=psize) + scale_colour_gradient('FPKM', low="yellow", high="red") + 
-      xlab("Tumor Variant Allele Frequency (Exome)") + ylab("Tumor Variant Allele Frequency (RNA-seq)") + 
-      xlim(c(0,100)) + ylim(c(0,ypos)) + 
-      opts(title="Detection and RNA expression of variants identified by Exome (> rc)") +
-      geom_abline(intercept=0, slope=1, linetype=2, size=0.2) +
-      geom_abline(intercept=20, slope=1, linetype=2, size=0.1) +
-      geom_abline(intercept=-20, slope=1, linetype=2, size=0.1) + 
-	    geom_text(aes(x2,y2,label = textlist, hjust=0), data.frame(x2=c(0,0,0), y2=c(ypos,ypos-5,ypos-10), textlist=c(text1,text2,text3)))    
-    })
+    d = ggplot(data=readcounts_cut, aes(x=Exome_Tumor_VAF, y=RNAseq_Tumor_VAF)) 
+    d = d + geom_point(aes(colour=Gene_FPKM), size=psize) + scale_colour_gradient('FPKM', low="yellow", high="red")
+    d = d + xlab("Tumor Variant Allele Frequency (Exome)") + ylab("Tumor Variant Allele Frequency (RNA-seq)")
+    d = d + xlim(c(0,100)) + ylim(c(0,ypos))
+    if (packageVersion("ggplot2") <= "0.8.9"){
+      d = d + opts(title="Detection and RNA expression of variants identified by Exome (> rc)")
+    }else{
+      d = d + labs(title="Detection and RNA expression of variants identified by Exome (> rc)")
+    }
+    d = d + geom_abline(intercept=0, slope=1, linetype=2, size=0.2)
+    d = d + geom_abline(intercept=20, slope=1, linetype=2, size=0.1)
+    d = d + geom_abline(intercept=-20, slope=1, linetype=2, size=0.1)
+	  d = d + geom_text(aes(x2,y2,label = textlist, hjust=0), data.frame(x2=c(0,0,0), y2=c(ypos,ypos-5,ypos-10), textlist=c(text1,text2,text3)))    
+    print(d)
     dev.off()
   }
 }
@@ -219,17 +231,20 @@ if (length(which(names(readcounts)=="WGS_Tumor_VAF")) & length(which(names(readc
   text3 = paste("R = ", round(pearsonR, digits=2), " (pearson)", sep="")
 
   pdf(file="Tumor_VAF_WGS_vs_Exome_scatter.pdf")
-  print({
-    d = ggplot(data=readcounts, aes(x=WGS_Tumor_VAF, y=Exome_Tumor_VAF))
-    d + geom_point(size=psize) + 
-    xlab("Tumor Variant Allele Frequency (WGS)") + ylab("Tumor Variant Allele Frequency (Exome)") + 
-    xlim(c(0,100)) + ylim(c(0,ypos)) + 
-    opts(title="Detection of variants by WGS vs. Exome") +
-    geom_abline(intercept=0, slope=1, linetype=2, size=0.2) +
-    geom_abline(intercept=20, slope=1, linetype=2, size=0.1) +
-    geom_abline(intercept=-20, slope=1, linetype=2, size=0.1) + 
-	geom_text(aes(x2,y2,label = textlist, hjust=0), data.frame(x2=c(0,0,0), y2=c(ypos,ypos-5,ypos-10), textlist=c(text1,text2,text3)))
-  })
+  d = ggplot(data=readcounts, aes(x=WGS_Tumor_VAF, y=Exome_Tumor_VAF))
+  d = d + geom_point(size=psize)
+  d = d + xlab("Tumor Variant Allele Frequency (WGS)") + ylab("Tumor Variant Allele Frequency (Exome)")
+  d = d + xlim(c(0,100)) + ylim(c(0,ypos))
+  if (packageVersion("ggplot2") <= "0.8.9"){
+    d = d + opts(title="Detection of variants by WGS vs. Exome")
+  }else{
+    d = d + labs(title="Detection of variants by WGS vs. Exome")
+  }
+  d = d + geom_abline(intercept=0, slope=1, linetype=2, size=0.2)
+  d = d + geom_abline(intercept=20, slope=1, linetype=2, size=0.1)
+  d = d + geom_abline(intercept=-20, slope=1, linetype=2, size=0.1) 
+	d = d + geom_text(aes(x2,y2,label = textlist, hjust=0), data.frame(x2=c(0,0,0), y2=c(ypos,ypos-5,ypos-10), textlist=c(text1,text2,text3)))
+  print(d)
   dev.off()
   
   #B.) Read count filtered data
@@ -249,17 +264,20 @@ if (length(which(names(readcounts)=="WGS_Tumor_VAF")) & length(which(names(readc
     text3 = paste("R = ", round(pearsonR, digits=2), " (pearson)", sep="")
 
     pdf(file="Tumor_VAF_WGS_vs_Exome_ReadCutoff_scatter.pdf")
-    print({
-      d = ggplot(data=readcounts_cut, aes(x=WGS_Tumor_VAF, y=Exome_Tumor_VAF)) 
-      d + geom_point(size=psize) + 
-      xlab("Tumor Variant Allele Frequency (WGS)") + ylab("Tumor Variant Allele Frequency (Exome)") + 
-      xlim(c(0,100)) + ylim(c(0,ypos)) + 
-      opts(title="Detection of variants by WGS vs. Exome (> rc)") +
-      geom_abline(intercept=0, slope=1, linetype=2, size=0.2) +
-      geom_abline(intercept=20, slope=1, linetype=2, size=0.1) +
-      geom_abline(intercept=-20, slope=1, linetype=2, size=0.1) + 
-	  geom_text(aes(x2,y2,label = textlist, hjust=0), data.frame(x2=c(0,0,0), y2=c(ypos,ypos-5,ypos-10), textlist=c(text1,text2,text3)))
-    })
+    d = ggplot(data=readcounts_cut, aes(x=WGS_Tumor_VAF, y=Exome_Tumor_VAF)) 
+    d = d + geom_point(size=psize)
+    d = d + xlab("Tumor Variant Allele Frequency (WGS)") + ylab("Tumor Variant Allele Frequency (Exome)")
+    d = d + xlim(c(0,100)) + ylim(c(0,ypos))
+    if (packageVersion("ggplot2") <= "0.8.9"){
+      d = d + opts(title="Detection of variants by WGS vs. Exome (> rc)")
+    }else{
+      d = d + labs(title="Detection of variants by WGS vs. Exome (> rc)")
+    }
+    d = d + geom_abline(intercept=0, slope=1, linetype=2, size=0.2)
+    d = d + geom_abline(intercept=20, slope=1, linetype=2, size=0.1)
+    d = d + geom_abline(intercept=-20, slope=1, linetype=2, size=0.1) 
+	  d = d + geom_text(aes(x2,y2,label = textlist, hjust=0), data.frame(x2=c(0,0,0), y2=c(ypos,ypos-5,ypos-10), textlist=c(text1,text2,text3)))
+    print(d)
     dev.off()
   }
 }
@@ -269,50 +287,66 @@ if (exists("gene_expression")){
   if (length(which(names(gene_expression)=="FPKM"))){
   
     #Transform the FPKM values for display purposes
-	gene_expression[,"FPKM_trans"] = log2(gene_expression[,"FPKM"] + var_stabilization)
+	  gene_expression[,"FPKM_trans"] = log2(gene_expression[,"FPKM"] + var_stabilization)
 
-	#Identify the subset of all genes that are mutant
-	mutant_gene_names = unique(readcounts[,"mapped_gene_name"])
-	gene_expression[,"Group"] = "Non-Mutant"
-	i = which(gene_expression[,"mapped_gene_name"] %in% mutant_gene_names)
-	gene_expression[i,"Group"] = "Mutant"
-	mutant_count = length(i)
-	title_text = paste("Expression of non-mutant vs. mutant genes (n = ", mutant_count, ")", sep="")
+    #Identify the subset of all genes that are mutant
+    mutant_gene_names = unique(readcounts[,"mapped_gene_name"])
+    gene_expression[,"Group"] = "Non-Mutant"
+    i = which(gene_expression[,"mapped_gene_name"] %in% mutant_gene_names)
+    gene_expression[i,"Group"] = "Mutant"
+    mutant_count = length(i)
+    title_text = paste("Expression of non-mutant vs. mutant genes (n = ", mutant_count, ")", sep="")
 
-	#Plot distribution of all Gene FPKMs vs. those of mutant genes - Tumor
-	#Boxplot
-	pdf("Tumor_MutantGene_vs_NonMutantGene_FPKM_boxplot.pdf")
-	print ({
-  	  p <- ggplot(gene_expression, aes(factor(Group), FPKM_trans)) 
-      p + geom_boxplot(aes(fill=Group)) + xlab("Gene group") + ylab("FPKM (log2)") + opts(title=title_text)
-	})
-	dev.off()
+    #Plot distribution of all Gene FPKMs vs. those of mutant genes - Tumor
+    #Boxplot
+    pdf("Tumor_MutantGene_vs_NonMutantGene_FPKM_boxplot.pdf")
+    p = ggplot(gene_expression, aes(factor(Group), FPKM_trans)) 
+    p = p + geom_boxplot(aes(fill=Group)) + xlab("Gene group") + ylab("FPKM (log2)")
+    if (packageVersion("ggplot2") <= "0.8.9"){
+      p = p + opts(title=title_text)
+    }else{
+      p = p + labs(title=title_text)
+    }
+    print(p)
+    dev.off()
 
-	#Density plot
-	pdf("Tumor_MutantGene_vs_NonMutantGene_FPKM_density.pdf")
-	print ({
-  	  ggplot(gene_expression, aes(FPKM_trans, fill = Group)) + geom_density(alpha = 0.2) + xlab("FPKM (log2)") + ylab("Density") + opts(title=title_text)
-	})
-	dev.off()
+    #Density plot
+    pdf("Tumor_MutantGene_vs_NonMutantGene_FPKM_density.pdf")
+    p = ggplot(gene_expression, aes(FPKM_trans, fill = Group)) + geom_density(alpha = 0.2) + xlab("FPKM (log2)") + ylab("Density")
+    if (packageVersion("ggplot2") <= "0.8.9"){
+      p = p + opts(title=title_text)
+    }else{
+      p = p + labs(title=title_text)
+    }
+    print(p)
+    dev.off()
 
-	#Repeat these plots using only genes with nonzero expression
-	exp_i = which(gene_expression[,"FPKM"] > 0)
-	ge_i = gene_expression[exp_i,]
-	mutant_count = length(which(ge_i[,"Group"] == "Mutant"))
-	title_text = paste("Expression of expressed non-mutant vs. mutant genes (n = ", mutant_count, ")", sep="")
+    #Repeat these plots using only genes with nonzero expression
+    exp_i = which(gene_expression[,"FPKM"] > 0)
+    ge_i = gene_expression[exp_i,]
+    mutant_count = length(which(ge_i[,"Group"] == "Mutant"))
+    title_text = paste("Expression of expressed non-mutant vs. mutant genes (n = ", mutant_count, ")", sep="")
 
-	pdf("Tumor_MutantGene_vs_NonMutantGene_FPKM_ReadCutoff_boxplot.pdf")
-	print ({
-  	  p <- ggplot(ge_i, aes(factor(Group), FPKM_trans)) 
-  	  p + geom_boxplot(aes(fill=Group)) + xlab("Gene group") + ylab("FPKM (log2) (genes with FPKM > 0)") + opts(title=title_text)
-	})
-	dev.off()
+    pdf("Tumor_MutantGene_vs_NonMutantGene_FPKM_ReadCutoff_boxplot.pdf")
+    p = ggplot(ge_i, aes(factor(Group), FPKM_trans)) 
+    p = p + geom_boxplot(aes(fill=Group)) + xlab("Gene group") + ylab("FPKM (log2) (genes with FPKM > 0)")
+    if (packageVersion("ggplot2") <= "0.8.9"){
+      p = p + opts(title=title_text)
+    }else{
+      p = p + labs(title=title_text)
+    }
+    print(p)
+    dev.off()
 
-	pdf("Tumor_MutantGene_vs_NonMutantGene_FPKM_ReadCutoff_density.pdf")
-	print ({
- 	  ggplot(ge_i, aes(FPKM_trans, fill = Group)) + geom_density(alpha = 0.2) + xlab("FPKM (log2) (genes with FPKM > 0)") + ylab("Density") + opts(title=title_text)
-	})
-	dev.off()
+    pdf("Tumor_MutantGene_vs_NonMutantGene_FPKM_ReadCutoff_density.pdf")
+    p = ggplot(ge_i, aes(FPKM_trans, fill = Group)) + geom_density(alpha = 0.2) + xlab("FPKM (log2) (genes with FPKM > 0)") + ylab("Density") 
+    if (packageVersion("ggplot2") <= "0.8.9"){
+      p = p + opts(title=title_text)
+    }else{
+      p = p + labs(title=title_text)
+    }
+    print(p)
+    dev.off()
   }
 }
 
@@ -326,10 +360,16 @@ plotVafHist = function(dataset, sample_type, data_type){
     y_label = paste("Density (n = ", length(dataset[,colname]), " variants)", sep="")
     dataset[,"VAF"] = dataset[,colname]
     pdf(filename)
-    print({
-      m <- ggplot(dataset, aes(x=VAF)); m + geom_histogram(aes(y = ..density.., fill= ..count..)) + geom_density() + 
-      opts(title=title_text) + xlab(x_label) + ylab(y_label)
-    })
+    m = ggplot(dataset, aes(x=VAF))
+    m = m + geom_histogram(aes(y = ..density.., fill= ..count..))
+    m = m + geom_density()
+    if (packageVersion("ggplot2") <= "0.8.9"){
+      m = m + opts(title=title_text) 
+    }else{
+      m = m + labs(title=title_text) 
+    }
+    m = m + xlab(x_label) + ylab(y_label)
+    print(m)
     dev.off()
   }
 }
@@ -368,9 +408,13 @@ min_cat = min(table(vafs[,"Group"]))
 if (min_cat >= 3){
   y_label = paste("Density (n = ", var_count, " variants)", sep="")
   pdf("Tumor_VAF_AllDataSources_density.pdf")
-  print ({
-    ggplot(vafs, aes(Tumor_VAF, fill = Group)) + geom_density(alpha = 0.2) + xlab("Tumor Variant Allele Frequency") + ylab(y_label) + opts(title="Comparison of variant allele frequencies from each data source")
-  })
+  p = ggplot(vafs, aes(Tumor_VAF, fill = Group)) + geom_density(alpha = 0.2) + xlab("Tumor Variant Allele Frequency") + ylab(y_label)
+  if (packageVersion("ggplot2") <= "0.8.9"){
+    p = p + opts(title="Comparison of variant allele frequencies from each data source")
+  }else{
+    p = p + labs(title="Comparison of variant allele frequencies from each data source")
+  }
+  print(p)
   dev.off()
 }
 
@@ -384,11 +428,17 @@ plotCoverageHist = function(data, ref_rc, var_rc, filename, title_name){
   x_label = paste("Read coverage (median X = ", round(median_cov, digits=1), ")", sep="")
   y_label = paste("Density (n = ", dim(z)[1], " variant positions)", sep="")
   pdf(filename1)
-  print({
-    m <- ggplot(z, aes(x=coverage)); m + geom_histogram(aes(y = ..density.., fill= ..count..)) + geom_density() + 
-    opts(title=title_name) + xlab(x_label) + ylab(y_label)
-  })
+  m = ggplot(z, aes(x=coverage))
+  m = m + geom_histogram(aes(y = ..density.., fill= ..count..)) + geom_density()
+  if (packageVersion("ggplot2") <= "0.8.9"){
+    m = m + opts(title=title_name) 
+  }else{
+    m = m + labs(title=title_name) 
+  }
+  m = m + xlab(x_label) + ylab(y_label)
+  print(m)
   dev.off()
+
   #Remove outliers
   outliers=boxplot(z[,"coverage"], plot=FALSE)$out
   z = z[which(!z[,"coverage"] %in% outliers),]
@@ -396,10 +446,15 @@ plotCoverageHist = function(data, ref_rc, var_rc, filename, title_name){
   x_label = paste("Read coverage (median X = ", round(median_cov, digits=1), ") - Outliers removed", sep="")
   y_label = paste("Density (n = ", dim(z)[1], " variant positions)", sep="")
   pdf(filename2)
-  print({
-    m <- ggplot(z, aes(x=coverage)); m + geom_histogram(aes(y = ..density.., fill= ..count..)) + geom_density() + 
-    opts(title=title_name) + xlab(x_label) + ylab(y_label)
-  })
+  m = ggplot(z, aes(x=coverage))
+  m = m + geom_histogram(aes(y = ..density.., fill= ..count..)) + geom_density()
+  if (packageVersion("ggplot2") <= "0.8.9"){
+    m = m + opts(title=title_name) 
+  }else{
+    m = m + labs(title=title_name) 
+  }
+  m = m + xlab(x_label) + ylab(y_label)
+  print(m)
   dev.off()
 }
 if (length(which(names(readcounts)=="WGS_Tumor_ref_rc"))){
@@ -477,9 +532,16 @@ plotCoverageComparison = function(dataset, sample_type, remove_outliers){
    	  filename = paste(sample_type,"_ReadCoverage_AllDataSources_RmOutliers_density.pdf", sep="")	
     }
     pdf(filename)
-    print ({
-      ggplot(rcs, aes(ReadCounts, fill = DataType)) + geom_density(alpha = 0.2) + xlab(x_label) + ylab(y_label) + opts(title="Comparison of read coverages from each data source") + geom_vline(xintercept=xmedian, linetype=3, color="black", size=0.3) + geom_vline(xintercept=ymedian, linetype=3, color="black", size=0.3) + geom_vline(xintercept=zmedian, linetype=3, color="black", size=0.3)
-    })
+    
+    p = ggplot(rcs, aes(ReadCounts, fill = DataType)) + geom_density(alpha = 0.2)
+    p = p + xlab(x_label) + ylab(y_label)
+    if (packageVersion("ggplot2") <= "0.8.9"){
+      p = p + opts(title="Comparison of read coverages from each data source")
+    }else{
+      p = p + labs(title="Comparison of read coverages from each data source")
+    }
+    p = p + geom_vline(xintercept=xmedian, linetype=3, color="black", size=0.3) + geom_vline(xintercept=ymedian, linetype=3, color="black", size=0.3) + geom_vline(xintercept=zmedian, linetype=3, color="black", size=0.3)
+    print(p)
     dev.off()
   }
 }

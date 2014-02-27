@@ -65,9 +65,15 @@ fpkm_count1 = length(x)
 fpkm_count2 = length(y)
 y_label = paste("Density (n = ", fpkm_count1, " and ", fpkm_count2, " ", type, "s)", sep="")
 pdf("case_vs_control_fpkm_density_prenorm.pdf")
-print ({
-  ggplot(fpkms, aes(FPKM, fill = Sample)) + geom_density(alpha = 0.2) + xlab("FPKM (log2)") + ylab(y_label) + opts(title=main_label)
-})
+if (packageVersion("ggplot2") <= "0.8.9"){
+  print ({
+    ggplot(fpkms, aes(FPKM, fill = Sample)) + geom_density(alpha = 0.2) + xlab("FPKM (log2)") + ylab(y_label) + opts(title=main_label)
+  })
+}else{
+  print ({
+    ggplot(fpkms, aes(FPKM, fill = Sample)) + geom_density(alpha = 0.2) + xlab("FPKM (log2)") + ylab(y_label) + labs(title=main_label)
+  })
+}
 dev.off()
 
 
@@ -116,9 +122,15 @@ fpkm_count1 = length(x)
 fpkm_count2 = length(y)
 y_label = paste("Density (n = ", fpkm_count1, " and ", fpkm_count2, " ", type, "s)", sep="")
 pdf("case_vs_control_fpkm_density_postnorm.pdf")
-print ({
-  ggplot(fpkms, aes(FPKM, fill = Sample)) + geom_density(alpha = 0.2) + xlab("FPKM (log2)") + ylab(y_label) + opts(title=main_label)
-})
+if (packageVersion("ggplot2") <= "0.8.9"){
+  print ({
+    ggplot(fpkms, aes(FPKM, fill = Sample)) + geom_density(alpha = 0.2) + xlab("FPKM (log2)") + ylab(y_label) + opts(title=main_label)
+  })
+}else{
+  print ({
+    ggplot(fpkms, aes(FPKM, fill = Sample)) + geom_density(alpha = 0.2) + xlab("FPKM (log2)") + ylab(y_label) + labs(title=main_label)
+  })
+}
 dev.off()
 
 
@@ -145,10 +157,17 @@ title_text = paste("Distribution of DE values (", type, ")", sep="")
 x_label = paste("Log2 Differential Expression", sep="")
 y_label = paste("Density (n = ", length(de_data[,1]), " ", type,"s)", sep="")
 pdf("case_vs_control_de_hist.pdf")
-print({
-  m <- ggplot(de_data, aes(x=case_vs_control_log2_de)); m + geom_histogram(aes(y = ..density.., fill= ..count..)) + geom_density() + 
-       opts(title=title_text) + xlab(x_label) + ylab(y_label)
-})
+if (packageVersion("ggplot2") <= "0.8.9"){
+  print({
+    m <- ggplot(de_data, aes(x=case_vs_control_log2_de)); m + geom_histogram(aes(y = ..density.., fill= ..count..)) + geom_density() + 
+         opts(title=title_text) + xlab(x_label) + ylab(y_label)
+  })
+}else{
+  print({
+    m <- ggplot(de_data, aes(x=case_vs_control_log2_de)); m + geom_histogram(aes(y = ..density.., fill= ..count..)) + geom_density() + 
+         labs(title=title_text) + xlab(x_label) + ylab(y_label)
+  })
+}
 dev.off();
 
 #Remove 0 vs. 0 comparisons and replot histogram
@@ -158,10 +177,17 @@ title_text = paste("Distribution of DE values (", type, ")", sep="")
 x_label = paste("Log2 Differential Expression (0 vs 0 data points removed)", sep="")
 y_label = paste("Density (n = ", length(de_data[,1]), " ", type,"s)", sep="")
 pdf("case_vs_control_de_filtered_hist.pdf")
-print({
-  m <- ggplot(de_data, aes(x=case_vs_control_log2_de)); m + geom_histogram(aes(y = ..density.., fill= ..count..)) + geom_density() + 
-       opts(title=title_text) + xlab(x_label) + ylab(y_label)
-})
+if (packageVersion("ggplot2") <= "0.8.9"){
+  print({
+    m <- ggplot(de_data, aes(x=case_vs_control_log2_de)); m + geom_histogram(aes(y = ..density.., fill= ..count..)) + geom_density() + 
+         opts(title=title_text) + xlab(x_label) + ylab(y_label)
+  })
+}else{
+  print({
+    m <- ggplot(de_data, aes(x=case_vs_control_log2_de)); m + geom_histogram(aes(y = ..density.., fill= ..count..)) + geom_density() + 
+         labs(title=title_text) + xlab(x_label) + ylab(y_label)
+  })
+}
 dev.off();
 
 #Scatter plot of case vs. control FPKM values after normalization with hq and lq features indicated
