@@ -18,6 +18,14 @@ sub _template_path {
     die 'abstract',
 }
 
+sub _link_process {
+    my ($self, $process_uri, $target) = @_;
+
+    my $link_script = $self->_rex_script_path('process link');
+    Genome::Sys->shellcmd(cmd => "$link_script --process $process_uri --target $target");
+    return;
+}
+
 sub _run_rex_process {
     my ($self, $source_path, $inputs_filename) = validate_pos(@_, 1,
         {type => SCALAR}, {type => SCALAR});
