@@ -173,7 +173,7 @@ sub _execute_build {
     my $extract = Genome::Model::GenotypeMicroarray::Command::Extract->create(
         instrument_data => $instrument_data,
         variation_list_build => $dbsnp_build,
-        output => $original_genotype_file.':separator=TAB:headers=chromosome,position,alleles,id,sample_id,log_r_ratio,gc_score,cnv_value,cnv_confidence,allele1,allele2:print_headers=1',
+        output => $original_genotype_file.':separator=TAB:fields=chromosome,position,alleles,id,sample_id,log_r_ratio,gc_score,cnv_value,cnv_confidence,allele1,allele2:print_headers=1',
     );
     if ( not $extract ) {
         $self->error_message('Failed to create command to create original genotype file!');
@@ -213,7 +213,7 @@ sub _execute_build {
     $self->debug_message('Genotype file: '.$genotype_file);
     my $extract_genotypes = Genome::Model::GenotypeMicroarray::Command::Extract->create(
         build => $build,
-        output => $genotype_file.':separator=TAB:headers=chromosome,position,alleles:print_headers=0',
+        output => $genotype_file.':separator=TAB:fields=chromosome,position,alleles:print_headers=0',
         filters => \@filters,
     );
     if ( not $extract_genotypes ) {
@@ -259,7 +259,7 @@ sub _execute_build {
     $self->debug_message('Copy number file: '.$copy_number_file);
     my $extract_copy_number = Genome::Model::GenotypeMicroarray::Command::Extract->create(
         build => $build,
-        output => $copy_number_file.':separator=TAB:headers=chromosome,position,log_r_ratio:print_headers=0',
+        output => $copy_number_file.':separator=TAB:fields=chromosome,position,log_r_ratio:print_headers=0',
         filters => \@filters,
     );
     if ( not $extract_copy_number ) {
