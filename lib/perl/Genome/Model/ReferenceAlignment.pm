@@ -328,6 +328,17 @@ sub is_lane_qc {
     return 0;
 }
 
+sub build_needed {
+    my $self = shift;
+    my $needed = $self->SUPER::build_neeed;
+
+    if($self->is_lane_qc) {
+        $needed &&= $self->genotype_microarray and $self->genotype_microarray->last_complete_build;
+    }
+
+    return $needed;
+}
+
 # Determines the correct genotype model to use via the official genotype data assigned to the subject
 sub default_genotype_model {
     my $self = shift;
