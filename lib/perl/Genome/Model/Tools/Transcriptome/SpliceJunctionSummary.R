@@ -1,8 +1,8 @@
 #!/usr/bin/env Rscript
 
 args = (commandArgs(TRUE))
-working_dir = args[1];
-annotationName = args[2];
+working_dir = args[1]
+annotationName = args[2]
 
 if (length(args) != 2){
   message_text1 = "Required arguments missing for SpliceJunctionSummary.R"
@@ -86,18 +86,26 @@ observed_ss_counts = table(obs_junction_anno_ensg[,"splice_site"])
 zz=as.data.frame(observed_ss_counts)
 names(zz) = c("SpliceSite", "Count")
 pdf("ObservedJunctions_SpliceSiteUsage_Pie.pdf")
-print({
-	pp <- ggplot(zz, aes(x='', y=Count, fill=SpliceSite)) + geom_bar(width=1) + coord_polar("y") + xlab("") + 	ylab("") + opts(title="Splice site usages in observed exon-exon junctions")
-})
+pp = ggplot(zz, aes(x='', y=Count, fill=SpliceSite)) + geom_bar(width=1) + coord_polar("y") + xlab("") + ylab("") 
+if (packageVersion("ggplot2") <= "0.8.9"){
+  pp = pp + opts(title="Splice site usages in observed exon-exon junctions")
+}else{
+  pp = pp + labs(title="Splice site usages in observed exon-exon junctions")
+}
+print(pp)
 dev.off()
 
 ensg_ss_counts = table(ensg_junction_ss[,"splice_site"])
 zz=as.data.frame(ensg_ss_counts)
 names(zz) = c("SpliceSite", "Count")
 pdf("KnownJunctions_SpliceSiteUsage_Pie.pdf")
-print({
-	pp <- ggplot(zz, aes(x='', y=Count, fill=SpliceSite)) + geom_bar(width=1) + coord_polar("y") + xlab("") + 	ylab("") + opts(title="Splice site usages in known Ensembl exon-exon junctions")
-})
+pp = ggplot(zz, aes(x='', y=Count, fill=SpliceSite)) + geom_bar(width=1) + coord_polar("y") + xlab("") + ylab("")
+if (packageVersion("ggplot2") <= "0.8.9"){
+  pp = pp + opts(title="Splice site usages in known Ensembl exon-exon junctions")
+}else{
+  pp = pp + labs(title="Splice site usages in known Ensembl exon-exon junctions")
+}
+print(pp)
 dev.off()
 
 #Store the observed splice site usage numbers/percentages 
@@ -114,17 +122,27 @@ anchor_counts = table(obs_junction_anno_ensg[,"anchored"])
 zz=as.data.frame(anchor_counts)
 names(zz) = c("AnchorType", "Count")
 pdf("ObservedJunctions_SpliceSiteAnchorTypes_Pie.pdf")
-print({
-	pp <- ggplot(zz, aes(x='', y=Count, fill=AnchorType)) + geom_bar(width=1) + coord_polar("y") + xlab("A = acceptor, D = donor, NDA = Novel donor/acceptor, N = not anchored") + 	ylab("") + opts(title="Splice site anchor types in observed exon-exon junctions")
-})
+pp = ggplot(zz, aes(x='', y=Count, fill=AnchorType)) + geom_bar(width=1) + coord_polar("y") + xlab("A = acceptor, D = donor, NDA = Novel donor/acceptor, N = not anchored") + ylab("")
+if (packageVersion("ggplot2") <= "0.8.9"){
+  pp = pp + opts(title="Splice site anchor types in observed exon-exon junctions")
+}else{
+  pp = pp + labs(title="Splice site anchor types in observed exon-exon junctions")
+}
+print(pp)
 dev.off()
 
 #- Distribution of exon-exon junction read counts
 obs_junction_anno_ensg[,"Read_Count_Log2"] = log2(obs_junction_anno_ensg[,"score"])
 pdf("ObservedJunctions_ReadCounts_Log2_Hist.pdf")
-print({
-	m <- ggplot(obs_junction_anno_ensg, aes(x=Read_Count_Log2)); m + geom_histogram(aes(y = ..density.., fill= ..count..)) + geom_density() + opts(title="Distribution of exon junction read counts") + xlab("Junction Read Count (log2)") + ylab("Frequency")
-})
+m = ggplot(obs_junction_anno_ensg, aes(x=Read_Count_Log2))
+m = m + geom_histogram(aes(y = ..density.., fill= ..count..)) + geom_density()
+m = m + xlab("Junction Read Count (log2)") + ylab("Frequency")
+if (packageVersion("ggplot2") <= "0.8.9"){
+  m = m + opts(title="Distribution of exon junction read counts")
+}else{
+  m = m + labs(title="Distribution of exon junction read counts")
+}
+print(m)
 dev.off()
 
 #- Display junction read count distribution at both the gene and transcript level
@@ -133,10 +151,16 @@ nonzero_count = length(i)
 data = gene_expression[i,c("fid","read_count")]
 data[,"read_count_log2"] = log2(data[,"read_count"]+1)
 pdf("GeneJunctionReadCounts_Log2_Hist.pdf")
-print({
-	ylabel = paste("Frequency (n = ", nonzero_count, " detected genes)", sep="")
-	m <- ggplot(data, aes(x=read_count_log2)); m + geom_histogram(aes(y = ..density.., fill= ..count..)) + geom_density() + opts(title="Distribution of exon junction read counts - Gene level") + xlab("Gene Junction Read Count (log2)") + ylab(ylabel)
-})
+ylabel = paste("Frequency (n = ", nonzero_count, " detected genes)", sep="")
+m = ggplot(data, aes(x=read_count_log2))
+m = m + geom_histogram(aes(y = ..density.., fill= ..count..)) + geom_density()
+m = m + xlab("Gene Junction Read Count (log2)") + ylab(ylabel)
+if (packageVersion("ggplot2") <= "0.8.9"){
+  m = m + opts(title="Distribution of exon junction read counts - Gene level") 
+}else{
+  m = m + labs(title="Distribution of exon junction read counts - Gene level")
+}
+print(m)
 dev.off()
 
 i=which(transcript_expression[,"read_count"] > 0)
@@ -144,10 +168,16 @@ nonzero_count = length(i)
 data = transcript_expression[i,c("fid","read_count")]
 data[,"read_count_log2"] = log2(data[,"read_count"]+1)
 pdf("TranscriptJunctionReadCounts_Log2_Hist.pdf")
-print({
-	ylabel = paste("Frequency (n = ", nonzero_count, " detected transcripts)", sep="")
-	m <- ggplot(data, aes(x=read_count_log2)); m + geom_histogram(aes(y = ..density.., fill= ..count..)) + geom_density() + opts(title="Distribution of exon junction read counts - Transcript level") + xlab("Transcript Junction Read Count (log2)") + ylab(ylabel)
-})
+ylabel = paste("Frequency (n = ", nonzero_count, " detected transcripts)", sep="")
+m = ggplot(data, aes(x=read_count_log2))
+m = m + geom_histogram(aes(y = ..density.., fill= ..count..)) + geom_density()
+m = m + xlab("Transcript Junction Read Count (log2)") + ylab(ylabel)
+if (packageVersion("ggplot2") <= "0.8.9"){
+  m = m + opts(title="Distribution of exon junction read counts - Transcript level")
+}else{
+  m = m + labs(title="Distribution of exon junction read counts - Transcript level")
+}
+print(m)
 dev.off()
 
 #How many junctions, known junctions, transcripts, genes are detected by: >1, >10, >30, >100 reads
@@ -223,35 +253,59 @@ stats[dim(stats)[1]+1,] = c("Percent of junctions reads consumed by top 50% of d
 #- Distribution of known junction counts for each gene and transcript 
 gene_expression[,"known_junction_count_log2"] = log2(gene_expression[,"known_junction_count"]+1)
 pdf("KnownJunctionCounts_Genes_Log2_Hist.pdf")
-print({
-	m <- ggplot(gene_expression, aes(x=known_junction_count_log2)); m + geom_histogram(aes(y = ..density.., fill= ..count..)) + geom_density() + opts(title="Distribution of known junction counts - Gene level") + xlab("Gene Known Junction Read Count (log2)") + ylab("Frequency")
-})
+m = ggplot(gene_expression, aes(x=known_junction_count_log2))
+m = m + geom_histogram(aes(y = ..density.., fill= ..count..)) + geom_density()
+m = m + xlab("Gene Known Junction Read Count (log2)") + ylab("Frequency")
+if (packageVersion("ggplot2") <= "0.8.9"){
+  m = m + opts(title="Distribution of known junction counts - Gene level")
+}else{
+  m = m + labs(title="Distribution of known junction counts - Gene level")
+}
+print(m)
 dev.off()
 
 transcript_expression[,"known_junction_count_log2"] = log2(transcript_expression[,"known_junction_count"]+1)
 pdf("KnownJunctionCounts_Transcripts_Log2_Hist.pdf")
-print({
-	m <- ggplot(transcript_expression, aes(x=known_junction_count_log2)); m + geom_histogram(aes(y = ..density.., fill= ..count..)) + geom_density() + opts(title="Distribution of known junction counts - Transcript level") + xlab("Transcript Known Junction Read Count (log2)") + ylab("Frequency")
-})
+m = ggplot(transcript_expression, aes(x=known_junction_count_log2))
+m = m + geom_histogram(aes(y = ..density.., fill= ..count..)) + geom_density() 
+m = m + xlab("Transcript Known Junction Read Count (log2)") + ylab("Frequency")
+if (packageVersion("ggplot2") <= "0.8.9"){
+  m = m + opts(title="Distribution of known junction counts - Transcript level") 
+}else{
+  m = m + labs(title="Distribution of known junction counts - Transcript level")
+}
+print(m)
 dev.off()
 
 #- Distribution of JPJM values for genes and transcripts
 gene_expression[,"jpjm_log2"] = log2(gene_expression[,"jpjm"]+1)
 pdf("JPJMs_Genes_Log2_Hist.pdf")
-print({
-	i = which(gene_expression[,"jpjm"] > 0)
-	ylabel = paste("Frequency (n = ", length(gene_expression[i,"jpjm_log2"]),")", sep="")
-	m <- ggplot(gene_expression[i,], aes(x=jpjm_log2)); m + geom_histogram(aes(y = ..density.., fill= ..count..)) + geom_density() + opts(title="Distribution of JPJM values - Gene level (non-zero)") + xlab("Log2 JPJM expression (Junction per Junction per Million Reads)") + ylab(ylabel)
-})
+i = which(gene_expression[,"jpjm"] > 0)
+label = paste("Frequency (n = ", length(gene_expression[i,"jpjm_log2"]),")", sep="")
+m = ggplot(gene_expression[i,], aes(x=jpjm_log2))
+m = m + geom_histogram(aes(y = ..density.., fill= ..count..)) + geom_density() 
+m = m + xlab("Log2 JPJM expression (Junction per Junction per Million Reads)") + ylab(ylabel)
+if (packageVersion("ggplot2") <= "0.8.9"){
+  m = m + opts(title="Distribution of JPJM values - Gene level (non-zero)") 
+}else{
+  m = m + labs(title="Distribution of JPJM values - Gene level (non-zero)")
+}
+print(m)
 dev.off()
 
 transcript_expression[,"jpjm_log2"] = log2(transcript_expression[,"jpjm"]+1)
 pdf("JPJMs_Transcripts_Log2_Hist.pdf")
-print({
-	i = which(transcript_expression[,"jpjm"] > 0)
-	ylabel = paste("Frequency (n = ", length(transcript_expression[i,"jpjm_log2"]),")", sep="")
-	m <- ggplot(transcript_expression[i,], aes(x=jpjm_log2)); m + geom_histogram(aes(y = ..density.., fill= ..count..)) + geom_density() + opts(title="Distribution of JPJM values - Transcript level (non-zero)") + xlab("Log2 JPJM expression (Junction per Junction per Million Reads)") + ylab(ylabel)
-})
+i = which(transcript_expression[,"jpjm"] > 0)
+ylabel = paste("Frequency (n = ", length(transcript_expression[i,"jpjm_log2"]),")", sep="")
+m = ggplot(transcript_expression[i,], aes(x=jpjm_log2))
+m = m + geom_histogram(aes(y = ..density.., fill= ..count..)) + geom_density()
+m = m + xlab("Log2 JPJM expression (Junction per Junction per Million Reads)") + ylab(ylabel)
+if (packageVersion("ggplot2") <= "0.8.9"){
+  m = m + opts(title="Distribution of JPJM values - Transcript level (non-zero)")
+}else{
+  m = m + labs(title="Distribution of JPJM values - Transcript level (non-zero)")
+}
+print(m)
 dev.off()
 
 #- How many genes/transcripts exceed a minimum JPJM cutoff value (e.g. >= 1, 10, 30, 100)?
@@ -318,10 +372,16 @@ z[((l*8)+1):(l*9), "MinCoverage"] = "9 (1000X)"
 ylabel = paste("Percent of Gene Junctions Covered (n = ", length(i), " detected genes)", sep="")
 
 pdf("PercentGeneJunctionsCovered_BreadthvsDepth_BoxPlot.pdf")
-print ({
-  p <- ggplot(z, aes(factor(MinCoverage), Breadth))
-  p + geom_boxplot(aes(fill=MinCoverage)) + xlab("Minimum Coverage") + ylab(ylabel) + opts(title="Coverage of junctions of each gene at increasing min cutoffs") + opts(axis.text.x=theme_text(angle=-90))
-})
+p =  ggplot(z, aes(factor(MinCoverage), Breadth))
+p = p + geom_boxplot(aes(fill=MinCoverage))
+p = p + xlab("Minimum Coverage") + ylab(ylabel)
+if (packageVersion("ggplot2") <= "0.8.9"){
+  p = p + opts(title="Coverage of junctions of each gene at increasing min cutoffs") + opts(axis.text.x=theme_text(angle=-90))
+}else{
+  p = p + labs(title="Coverage of junctions of each gene at increasing min cutoffs")
+  p = p + theme(axis.text.x=element_text(angle=-90))
+}
+print(p)
 dev.off() 
 
 #Report some reference numbers to go along with the plot above.  Pick a target of 50% breadth of coverage.  
@@ -362,9 +422,15 @@ z[(length(i)+1):(length(i)+j), "Class"] = "All Known"
 zz = z[which(z[,"Intron_Size"] < 10000),]
 
 pdf("IntronSizes_ObservedVsKnown_Density.pdf")
-print ({
-	ggplot(zz, aes(Intron_Size, fill = Class)) + geom_density(alpha = 0.2) + xlab("Intron Size (bp) (introns > 10000 bp excluded)") + ylab("Density") + opts(title="Observed intron sizes vs. all known intron sizes")
-})
+p = ggplot(zz, aes(Intron_Size, fill = Class))
+p = p + geom_density(alpha = 0.2) 
+p = p + xlab("Intron Size (bp) (introns > 10000 bp excluded)") + ylab("Density") 
+if (packageVersion("ggplot2") <= "0.8.9"){
+  p = p + opts(title="Observed intron sizes vs. all known intron sizes")
+}else{
+  p = p + labs(title="Observed intron sizes vs. all known intron sizes")
+}
+print(p)
 dev.off()
 
 #- Produce a Top N% expressed file - Gene and Transcript level

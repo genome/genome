@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use above 'Genome';
-use Test::More tests => 12;
+use Test::More tests => 22;
 
 # This test was auto-generated because './Model/ClinSeq/Command/SummarizeTier1SnvSupport.pm'
 # had no '.t' file beside it.  Please remove this test if you believe it was
@@ -60,8 +60,12 @@ my $result = $cmd->execute();
 is($result, 1, 'Testing for successful execution.  Expecting 1.  Got: ' . $result);
 
 #Since we can not diff the pdf files, at least check for file creation...
-my $pdf1 = $output_dir . "/exome/summary/Tumor_VAF_AllDataSources_density.pdf";
-ok(-s $pdf1, "Found non-zero PDF file Tumor_VAF_AllDataSources_density.pdf");
+my @pdf_list = qw (Normal_ReadCoverage_AllDataSources_RmOutliers_density.pdf Normal_ReadCoverage_AllDataSources_density.pdf Normal_VAF_Exome_hist.pdf Normal_VariantReadCoverage_Exome_RmOutliers_hist.pdf Normal_VariantReadCoverage_Exome_hist.pdf Tumor_ReadCoverage_AllDataSources_RmOutliers_density.pdf Tumor_ReadCoverage_AllDataSources_density.pdf Tumor_VAF_AllDataSources_density.pdf Tumor_VAF_Exome_hist.pdf Tumor_VariantReadCoverage_Exome_RmOutliers_hist.pdf Tumor_VariantReadCoverage_Exome_hist.pdf);
+
+foreach my $pdf (@pdf_list){
+  my $pdf_path = $output_dir . "/exome/summary/$pdf";
+  ok(-s $pdf_path, "Found non-zero PDF file $pdf");
+}
 
 #Diff the result, if there are differences, store the new result in /tmp for examination
 my $temp_dir = "/tmp/last-summarize-tier1-snv-support/";
@@ -72,5 +76,7 @@ or do {
   Genome::Sys->shellcmd(cmd => "rm -fr $temp_dir");
   Genome::Sys->shellcmd(cmd => "mv $output_dir $temp_dir");
 };
+
+
 
 
