@@ -61,7 +61,10 @@ sub _parse_writer_params_string {
     if ( not $writer_params{format} ) { 
         # use suffix
         my ($suffix) = $writer_params{output} =~ /\.(\w+)$/;
-        if ( not $suffix ) {
+        if ( $writer_params{separator} ) {
+            $writer_params{format} = 'csv';
+        }
+        elsif ( not $suffix ) {
             $writer_params{format} = 'vcf';
         }
         elsif ( $suffix =~ /tsv/g ) {
