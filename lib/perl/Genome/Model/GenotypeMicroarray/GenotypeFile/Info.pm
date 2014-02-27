@@ -5,8 +5,6 @@ use warnings;
 
 use Genome;
 
-use Data::Dumper 'Dumper';
-
 class Genome::Model::GenotypeMicroarray::GenotypeFile::Info { 
     is => 'UR::Singleton',
 };
@@ -67,7 +65,7 @@ sub header_for_csv {
 }
 
 sub header_for_vcf {
-    my ($self, @samples) = @_;
+    my ($self, @sample_names) = @_;
 
     my @header_lines = (
         '##fileformat=VCFv4.1',
@@ -76,7 +74,8 @@ sub header_for_vcf {
         push @header_lines, '##INFO=<ID='.$field->{id}.$field->{header};
     }
     push @header_lines, '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">';
-    push @header_lines, '#'.join("\t", Genome::File::Vcf::Header->column_headers, map({ $_->name } @samples));
+    push @header_lines, '##FORMAT=<ID=AL,Number=1,Type=String,Description="Alleles">';
+    push @header_lines, '#'.join("\t", Genome::File::Vcf::Header->column_headers, @sample_names);
 
     my $header = Genome::File::Vcf::Header->create(lines => \@header_lines);
     return $header;

@@ -32,7 +32,7 @@ my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->bui
 );
 ok($reader, 'build reader');
 my $output_tsv = $tmpdir.'/genotypes.tsv';
-my $writer = Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory->build_writer($output_tsv);
+my $writer = Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory->build_writer($output_tsv.':sample_name=__TEST_SAMPLE__');
 ok($writer, 'create writer');
 
 my @genotypes_from_instdata;
@@ -43,7 +43,7 @@ while ( my $genotype = $reader->read ) {
 $writer->output->flush;
 is_deeply(\@genotypes_from_instdata, Genome::Model::GenotypeMicroarray::Test::expected_genotypes(), 'read tsv and annotate genotypes match');
 is(File::Compare::compare($output_tsv, $testdir.'/rw/output.expected.tsv'), 0, 'read tsv and annotate, write to tsv output file matches');
-print "gvimdiff $output_tsv $testdir/rw/output.expected.tsv\n"; <STDIN>;
+#print "gvimdiff $output_tsv $testdir/rw/output.expected.tsv\n"; <STDIN>;
 
 ###
 # TSV [old build] to VCF
@@ -52,7 +52,7 @@ $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->build_
 );
 ok($reader, 'create reader');
 my $output_vcf = $tmpdir.'/genotypes.vcf';
-$writer = Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory->build_writer($output_vcf);
+$writer = Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory->build_writer($output_vcf.':sample_name=__TEST_SAMPLE__');
 ok($writer, 'create writer');
 
 my @genotypes_from_legacy_build;
