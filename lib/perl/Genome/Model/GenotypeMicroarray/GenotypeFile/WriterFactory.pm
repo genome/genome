@@ -99,7 +99,7 @@ sub _build_vcf_writer {
     my ($class, $writer_params) = @_;
     return Genome::File::Vcf::Writer->new(
         $writer_params->{output},    
-        Genome::Model::GenotypeMicroarray::GenotypeFile::Info->header_for_vcf($writer_params->{sample_name}),
+        Genome::Model::GenotypeMicroarray::GenotypeFile::VcfHelper->header($writer_params->{sample_name}),
     );
 }
 
@@ -116,7 +116,7 @@ sub _build_csv_writer {
         $writer_params->{headers} = [ split(',', $fields) ];
     }
     else {
-        $writer_params->{headers} = Genome::Model::GenotypeMicroarray::GenotypeFile::Info->header_for_csv;
+        $writer_params->{headers} = Genome::Model::GenotypeMicroarray::GenotypeFile::CsvHelper->column_names;
     }
 
     return Genome::Utility::IO::SeparatedValueWriter->create(%$writer_params);

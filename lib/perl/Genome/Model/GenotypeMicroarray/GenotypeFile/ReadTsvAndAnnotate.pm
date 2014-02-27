@@ -44,7 +44,7 @@ sub read {
     $self->_position($position);
 
     return if not defined $id;
-    return bless($self->_genotypes->{$id}, 'Genome::File::Vcf::Entry');
+    return Genome::Model::GenotypeMicroarray::GenotypeFile::VcfHelper->convert_genotype_to_vcf_entry($self->_genotypes->{$id});
 }
 
 sub _load_genotypes {
@@ -95,6 +95,10 @@ sub _load_genotypes {
             $self->error_message('Already have a genotype for snp id: '.Dumper(\%genotype, $genotypes->{ $genotype{id} }));
             return;
         }
+
+        delete $genotype{'chr'};
+        $genotype{alleles} = $genotype{allele1}.$genotype{allele2};
+
         $genotypes->{ $genotype{id} } = \%genotype;
 
     }
@@ -144,22 +148,11 @@ sub _annotate_genotypes {
             next;
         }
 
-        $genotype->{identifiers} = [ $genotype->{id} ];
         $genotype->{chromosome} = $tokens[0];
-        $genotype->{chrom} = $genotype->{chromosome};
-        delete $genotype->{'chr'};
         $genotype->{position} = $tokens[2];
         $genotype->{reference} = $reference_sequence_build->sequence(
             $genotype->{chromosome}, $genotype->{position}, $genotype->{position}
         );
-        $genotype->{reference_allele} = $genotype->{reference};
-        $genotype->{alleles} = $genotype->{allele1}.$genotype->{allele2};
-        $genotype->{alternate_alleles} = $self->_alts_for_genotype($genotype);
-        $genotype->{quality} = '.';
-        $genotype->{_filter} = [];
-        $genotype->{info_fields} = $self->_info_hash_for_genotype($genotype),
-        $genotype->{_format} = [ $self->_format_for_genotype($genotype) ];
-        $genotype->{_sample_data} = [[]];
 
         # Order
         $order{$variant_id} = $cnt++;
@@ -173,63 +166,6 @@ sub _annotate_genotypes {
     $self->_order(\@order);
 
     return 1;
-}
-
-sub _alts_for_genotype {
-    my ($self, $genotype) = @_;
-
-    # alleles are dashes
-    return '.' if $genotype->{allele1} eq '-' and $genotype->{allele2} eq '-';
-
-    # see which match the ref
-    my @alts;
-    for my $allele_key ( map{ 'allele'.$_ } (1..2) ) {
-        next if $genotype->{$allele_key} eq '-';
-        push @alts, $genotype->{$allele_key} if $genotype->{$allele_key} ne $genotype->{reference_allele};
-    }
-
-    # both match!
-    return [] if not @alts;
-    # retrun alts
-    return [ sort { $a cmp $b } @alts ];
-}
-
-sub _format_for_genotype {
-    my ($self, $genotype) = @_;
-
-    my $allele1_matches_ref = $genotype->{allele1} eq $genotype->{reference};
-    my $allele2_matches_ref = $genotype->{allele2} eq $genotype->{reference};
-
-    if ( $genotype->{allele1} eq '-' and $genotype->{allele2} eq '-' ) {
-        return './.';
-    }
-    elsif ( $allele1_matches_ref and $allele2_matches_ref ) { # ref and alleles match
-        return '0/0'; # homozygous ref
-    }
-    elsif ( $allele1_matches_ref or $allele2_matches_ref ) { # ref matches one allele, but alleles are not the same
-        return '0/1'; # heterozygous ref
-    }
-    elsif ( $genotype->{allele1} eq $genotype->{allele2} ) { # alleles match, but not the ref
-        return '1/1'; # homozygous alt
-    }
-    else { # not $allele1_matches_ref and not $allele2_matches_ref
-        return '1/2';
-    }
-
-}
-
-sub _info_hash_for_genotype {
-    my ($self, $genotype) = @_;
-
-    my (%info_hash, @order);
-    for my $info_field ( @{Genome::Model::GenotypeMicroarray::GenotypeFile::Info->supported_info_fields} ) { 
-        my $value = $genotype->{ $info_field->{name} };
-        next if not defined $value or $value eq 'NA'; # FIXME convert undef/NA to . ??
-        $info_hash{ $info_field->{id} } = $value;
-        push @order, $info_field->{id};
-    }
-
-    return { hash => \%info_hash, order => \@order, };
 }
 
 1;

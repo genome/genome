@@ -168,7 +168,7 @@ sub build {
 
 sub expected_genotypes {
     return $cache{expected_genotypes} if $cache{expected_genotypes};
-    $cache{expected_genotypes} = [
+    my @expected_genotypes = (
         {
             'id' => 'rs3094315',
             'chromosome' => '1',
@@ -269,25 +269,15 @@ sub expected_genotypes {
             'gc_score' => '0.8677',
             'log_r_ratio' => '-0.0801',
         },
-    ];
+    );
 
     my $refseq = reference_sequence_build();
-    my $sam = sample();
-    for my $genotype ( @{$cache{expected_genotypes}} ) {
-        $genotype->{sample_id} = $sam->id;
-        #$genotype->{sample_name} = $sam->name;
-        $genotype->{identifiers} = [$genotype->{id}];
-        $genotype->{chrom} = $genotype->{chromosome};
-        $genotype->{reference} = $refseq->sequence($genotype->{chromosome}, $genotype->{position}, $genotype->{position});
-        $genotype->{reference_allele} = $genotype->{reference};
+    my $sample = sample();
+    for my $genotype ( @expected_genotypes ) {
+        $genotype->{sample_id} = $sample->id;
         $genotype->{alleles} = $genotype->{allele1}.$genotype->{allele2};
-        $genotype->{alternate_alleles} = Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsvAndAnnotate->_alts_for_genotype($genotype);
-        $genotype->{quality} = '.';
-        $genotype->{_filter} = [];
-        $genotype->{info_fields} = Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsvAndAnnotate->_info_hash_for_genotype($genotype);
-        $genotype->{_format} = [qw/ GT OG /], # FIXME put somewhere else
-        $genotype->{_format_key_to_idx} = { GT => 1, OG => 0, }, # FIXME put somewhere else
-        $genotype->{_sample_data} = Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsvAndAnnotate->_sample_data_for_genotype($genotype)
+        $genotype->{reference} = $refseq->sequence($genotype->{chromosome}, $genotype->{position}, $genotype->{position});
+        push @{$cache{expected_genotypes}}, Genome::Model::GenotypeMicroarray::GenotypeFile::VcfHelper->convert_genotype_to_vcf_entry($genotype);
     }
 
     return $cache{expected_genotypes};
