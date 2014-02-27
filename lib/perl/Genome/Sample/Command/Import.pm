@@ -116,6 +116,36 @@ sub _load_import_configs {
             individual_attributes => [qw/ gender /],
         },
         {
+            nomenclature => 'LSR',
+            name_regexp => '(LSR\-ER\-[\w\d]+)\-.+',
+            sample_attributes => {
+                extraction_type => {
+                    default_value => "rna",
+                },
+            },
+            taxon_name => 'human',
+       },
+       {
+            nomenclature => 'SRA',
+            name_regexp => '(SRA\-\w+\-[\w\d]+\-[\w\d]+)\-.+',
+            sample_attributes => {
+                extraction_type => {
+                    default_value => "genomic dna",
+                },
+            },
+            taxon_name => 'human',
+       },
+       {
+            nomenclature => 'BRC46',
+            name_regexp => '(BRC46\-BRC[0-9]+)\_.+',
+            sample_attributes => {
+                extraction_type => {
+                    default_value => "rna",
+                },
+            },
+            taxon_name => 'human',
+        },
+        {
             nomenclature => 'TCGA',
             name_regexp => '(TCGA\-[\w\d]+\-[\w\d]+)\-[\w\d]+\-[\w\d]+\-[\w\d]+\-[\w\d]+',
             taxon_name => 'human',
