@@ -90,6 +90,7 @@ sub instrument_data {
         library => $library,
         import_format => 'genotype file',
         sequencing_platform => 'infinium',
+        import_source_name => 'WUGC',
     );
     die 'Failed to define instrument data' if not $cache{instrument_data};
     $cache{instrument_data}->add_attribute(attribute_label => 'genotype_file', attribute_value => testdir().'/instdata/snpreport/genotypes.tsv');
@@ -126,11 +127,13 @@ sub example_build {
 
     my $model = model();
     $cache{example_build} = Genome::Model::Build::GenotypeMicroarray->__define__(
+        id => -222,
         model => $model,
         reference_sequence_build => $model->reference_sequence_build,
         dbsnp_build => $model->dbsnp_build,
         data_directory => testdir().'/build',
     );
+    $cache{example_build}->add_instrument_data( $model->instrument_data );
 
     return $cache{example_build};
 }
@@ -140,6 +143,7 @@ sub example_legacy_build {
 
     my $model = model();
     $cache{example_legacy_build} = Genome::Model::Build::GenotypeMicroarray->__define__(
+        id => -333,
         model => $model,
         reference_sequence_build => $model->reference_sequence_build,
         dbsnp_build => $model->dbsnp_build,
@@ -156,6 +160,7 @@ sub build {
     my $tempdir = File::Temp::tempdir(CLEANUP => 1);
     my $build = Genome::Model::Build::GenotypeMicroarray->create(
         model => $model,
+        instrument_data => $model->instrument_data,
         reference => $model->reference,
         dbsnp_build => $model->dbsnp_build,
         data_directory => $tempdir,
@@ -245,7 +250,6 @@ sub expected_genotypes {
             'cnv_value' => '2.0',
             'gc_score' => '0.8670',
             'log_r_ratio' => '0.0389',
-            'sample_id' => '2879594813',
         },
         {
             'id' => 'rs1110052',
