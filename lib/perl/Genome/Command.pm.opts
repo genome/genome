@@ -4330,7 +4330,7 @@ $Genome::Command::OPTS_SPEC = [
           undef,
           'debug!',
           undef,
-          'debug-file=s',
+          'debug-file-path=s',
           'files',
           'dev!',
           undef,
