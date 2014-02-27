@@ -14,6 +14,7 @@ class Genome::Config::Command::ConfigureQueuedInstrumentData {
             is          => 'Genome::InstrumentData',
             is_many     => 1,
             is_optional => 1,
+            require_user_verify => 0,
             doc         => '[Re]process these instrument data.',
         },
         limit => {

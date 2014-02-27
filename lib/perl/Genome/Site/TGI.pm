@@ -133,6 +133,8 @@ use Genome::Site::TGI::LegacyTime;
 use Genome::Sys;
 use Genome::Site::TGI::Extension::Sys;      # extensions to Genome::Sys
 
+use Genome::Site::TGI::Extension::Logger;
+
 # the old Genome::Config is all deprecated
 # the core stuff about looking up your host config is now in Genome::Site
 use Genome::Site::TGI::LegacyConfig;
