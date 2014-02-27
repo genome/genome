@@ -330,7 +330,7 @@ sub is_lane_qc {
 
 sub build_needed {
     my $self = shift;
-    my $needed = $self->SUPER::build_neeed;
+    my $needed = $self->SUPER::build_needed;
 
     if($self->is_lane_qc) {
         $needed &&= $self->genotype_microarray and $self->genotype_microarray->last_complete_build;
