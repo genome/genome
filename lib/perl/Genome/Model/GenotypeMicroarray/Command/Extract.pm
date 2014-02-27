@@ -12,11 +12,11 @@ class Genome::Model::GenotypeMicroarray::Command::Extract {
     has_optional => {
         # SOURCE
         model => {
-            is => 'Genome::Model',
+            is => 'Genome::Model::GenotypeMicroarray',
             doc => 'The genotype model to work with. This will get the most recent succeeded build.',
         },
         build => {
-            is => 'Genome::Model::Build',
+            is => 'Genome::Model::Build::GenotypeMicroarray',
             doc => 'The genotype build to use.',
         },
         instrument_data => {
@@ -120,6 +120,7 @@ sub execute {
     my $self = shift;
     $self->status_message('Extract genotytpes...');
 
+    $DB::single=1;
     my $resolve_source = $self->resolve_source;
     return if not $resolve_source;
 
@@ -129,19 +130,19 @@ sub execute {
     my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->build_reader($self->source, $self->variation_list_build);
     return if not $reader;
 
-    my $writer = Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory->build_writer($self->output);
+    my $writer = Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory->build_writer($self->output.':sample_name='.$self->sample->name);
     return if not $writer;
 
     my %alleles;
     my %metrics = ( input => 0, filtered => 0, output => 0, );
-    GENOTYPE: while ( my $genotype = $reader->read ) {
+    GENOTYPE: while ( my $genotype = $reader->next ) {
         $metrics{input}++;
         for my $filter ( @$filters ) {
             next GENOTYPE if not $filter->filter($genotype);
         }
         $metrics{output}++;
         $alleles{ $genotype->{alleles} }++;
-        $writer->write_one($genotype);
+        $writer->write($genotype);
     }
     $self->metrics(\%metrics);
     $self->alleles(\%alleles);
@@ -176,6 +177,7 @@ sub _resolve_source_for_build {
 
     $self->source($self->build);
     $self->source_type('build');
+    $self->sample( $self->build->subject );
 
     return 1;
 }
@@ -185,18 +187,26 @@ sub _resolve_source_for_model {
 
     my $build = $self->model->last_succeeded_build;
     if ( not $build ) {
-        $self->error_message('No last succeeded build for model! '.$build->model->__display_name__);
-        return;
+        $self->instrument_data( $self->model->instrument_data );
+        return $self->_resolve_source_for_instrument_data;
     }
 
     $self->source($build);
     $self->source_type('build');
+    $self->sample( $build->subject );
 
     return 1;
 }
 
 sub _resolve_source_for_sample {
     my ($self) = @_;
+
+    # Need variation list build
+    my $variation_list_build = $self->variation_list_build;
+    if ( not $variation_list_build ) {
+        $self->error_message('Variation list build is required to get genotypes for a sample!');
+        return;
+    }
 
     # Get InstData
     my $sample = $self->sample;
@@ -232,10 +242,12 @@ sub _resolve_source_for_sample {
     if ( $build ) {
         $self->source($build);
         $self->source_type('build');
+        $self->sample( $build->subject);
     }
     else {
         $self->source($filtered_instrument_data[$#filtered_instrument_data]);
         $self->source_type('instrument_data');
+        $self->sample( $filtered_instrument_data[$#filtered_instrument_data]->sample );
     }
 
     return 1;
@@ -256,10 +268,12 @@ sub _resolve_source_for_instrument_data {
     if ( $build ) {
         $self->source($build);
         $self->source_type('build');
+        $self->sample( $build->subject);
     }
     else {
         $self->source($instrument_data);
         $self->source_type('instrument_data');
+        $self->sample( $instrument_data->sample );
     }
 
     return 1;
@@ -277,7 +291,7 @@ sub _is_instrument_data_internal {
     my ($self, $instrument_data) = @_;
 
     for my $internal_source_name ( @internal_source_names ) {
-        return 1 if $internal_source_name->import_source_name =~ /^$internal_source_name$/i;
+        return 1 if $instrument_data->import_source_name =~ /^$internal_source_name$/i;
     }
 
     return;
@@ -297,11 +311,6 @@ sub _last_succeeded_build_from_model_for_instrument_data {
     my ($self, $instrument_data) = @_;
 
     my $variation_list_build = $self->variation_list_build;
-    if ( not $variation_list_build ) {
-        $self->error_message('Variation list build is required to get genotypes!');
-        return;
-    }
-
     my @builds = sort { $b->date_completed cmp $a->date_completed } Genome::Model::Build::GenotypeMicroarray->get(
         instrument_data => [ $instrument_data ],
         reference_sequence_build => $variation_list_build->reference,

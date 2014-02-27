@@ -21,14 +21,12 @@ use_ok('Genome::Model::GenotypeMicroarray::Test') or die;
 
 my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
 
-my $instrument_data = Genome::Model::GenotypeMicroarray::Test::instrument_data();
-my $variation_list_build = Genome::Model::GenotypeMicroarray::Test::variation_list_build();
+my $build = Genome::Model::GenotypeMicroarray::Test::example_legacy_build();
 
-# TO TSV
+# LEGACY BUILD TO TSV
 my $output_tsv = $tmpdir.'/genotypes.tsv';
 my $extract = Genome::Model::GenotypeMicroarray::Command::Extract->create(
-    instrument_data => $instrument_data,
-    variation_list_build => $variation_list_build,
+    build => $build,
     output => $output_tsv,
 );
 ok($extract, 'create extract command');
@@ -36,11 +34,10 @@ ok($extract->execute, 'execute extract command');
 my $expected_tsv = Genome::Model::GenotypeMicroarray::Test::testdir().'/extract/expected.tsv';
 is(File::Compare::compare($output_tsv, $expected_tsv), 0, 'genotype tsv matches');
 
-# TO VCF
+# LEGACY BUILD TO VCF
 my $output_vcf = $tmpdir.'/genotypes.vcf';
 $extract = Genome::Model::GenotypeMicroarray::Command::Extract->create(
-    instrument_data => $instrument_data,
-    variation_list_build => $variation_list_build,
+    build => $build,
     output => $output_vcf,
 );
 ok($extract, 'create extract command');
