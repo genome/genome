@@ -77,6 +77,12 @@ sub _parse_writer_params_string {
         return;
     }
 
+    # Require sample name [needed for vcf, not for csv]
+    if ( not $writer_params{sample_name} ) {
+        $class->error_message('No sample name in writer params!');
+        return;
+    }
+
     return \%writer_params;
 }
 
@@ -93,13 +99,14 @@ sub _build_vcf_writer {
     my ($class, $writer_params) = @_;
     return Genome::File::Vcf::Writer->new(
         $writer_params->{output},    
-        Genome::Model::GenotypeMicroarray::GenotypeFile::Info->header_for_vcf,
+        Genome::Model::GenotypeMicroarray::GenotypeFile::Info->header_for_vcf($writer_params->{sample_name}),
     );
 }
 
 sub _build_csv_writer {
     my ($class, $writer_params) = @_;
 
+    delete $writer_params->{sample_name};
     $writer_params->{separator} = "\t" if not $writer_params->{separator} or $writer_params->{separator} =~ /^tab$/i;
     $writer_params->{print_headers} = delete $writer_params->{headers} if exists $writer_params->{headers};
     $writer_params->{ignore_extra_columns} = 1;
