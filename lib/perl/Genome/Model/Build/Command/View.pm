@@ -40,12 +40,6 @@ class Genome::Model::Build::Command::View {
             default_value => 0,
             doc => 'Display build notes.'
         },
-        workflow => {
-            is => 'Boolean',
-            is_optional => 1,
-            default_value => 1,
-            doc => 'Display workflow.',
-        },
     ],
 };
 
@@ -80,21 +74,27 @@ sub write_report {
     my $build = $self->build;
     $self->_display_build($handle, $build);
 
+    if ($self->full) {
+        $self->inputs(1);
+        $self->events(1);
+        $self->notes(1);
+        $self->workflow(1);
+    }
+
     for my $thing (["inputs", "Inputs", "_display_input"],
                    ["events", "Events", "_display_event"],
                    ["notes", "Notes", "_display_note"]) {
         my ($item, $section_name, $method_name) = @{$thing};
-        if($self->full || $self->$item) {
+        if($self->$item) {
             my @items = $build->$item;
             $self->_display_many($handle, $section_name,
                     $method_name, @items);
         }
     }
 
-    if($self->full || $self->workflow) {
-        my $workflow = $self->build->newest_workflow_instance;
-        $self->_display_workflow($handle, $workflow);
-    }
+    my $workflow = $self->build->newest_workflow_instance;
+    $self->_display_workflow($handle, $workflow);
+    $self->_display_logs($handle, $workflow);
 
     1;
 }

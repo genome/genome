@@ -36,7 +36,7 @@ class Genome::Command::WorkflowMixin {
             is => 'Boolean',
             is_optional => 1,
             default_value => 1,
-            doc => 'Display path of error logs for running, crashed, and failed steps, (requires --workflow).',
+            doc => 'Display path of error logs for running, crashed, and failed steps.',
         },
         workflow => {
             is => 'Boolean',
@@ -65,6 +65,8 @@ my %CONNECTOR_NAMES = (
 sub _display_workflow {
     my ($self, $handle, $workflow) = @_;
 
+    return unless $self->workflow;
+
     unless ($self->_display_workflow_header($handle, $workflow)) {
         return 0;
     }
@@ -73,74 +75,8 @@ sub _display_workflow {
     my $datetime_parser = DateTime::Format::Strptime->new(
             pattern => '%Y-%m-%d %H:%M:%S',
             on_error => 'croak');
-    my $unfinished_workflow_steps = [];
-    $self->_display_workflow_children($handle, $workflow, $datetime_parser,
-            $unfinished_workflow_steps);
-
-    if($self->logs) {
-        my @error_log_paths;
-        my @step_names;
-        my @step_statuses;
-        for my $step (@{$unfinished_workflow_steps}) {
-            if($step->current->can('stderr')) {
-                my $error_path = $step->current->stderr || ' ';
-                if(-e $error_path and -s $error_path) {
-                    push(@error_log_paths, $error_path);
-                    push(@step_names, $step->name);
-                    push(@step_statuses, $step->status);
-                }
-            }
-        }
-        if(@error_log_paths) {
-            printf $handle "\n%s\n", $self->_color('Error Logs:', 'bold');
-            for my $i (0..$#error_log_paths) {
-                my $status = $step_statuses[$i];
-                my $name = $step_names[$i];
-                my $length = 22;
-                if(length($name) > $length) {
-                    $name = substr($name, 0, $length-3) . "...";
-                }
-                my $log_path = $error_log_paths[$i];
-
-                # print logfile of running/crashed steps
-                printf $handle "%s %s %s\n",
-                        $self->_status_color($status),
-                        justify($name, 'left', $length),
-                        $log_path;
-
-                $self->_print_error_log_preview($handle, $log_path);
-            }
-        }
-    }
-}
-
-sub _print_error_log_preview {
-    my ($self, $handle, $log_path) = @_;
-
-    my @lines = `grep 'ERROR' $log_path`;
-    my @error_lines = grep {$_ =~ m/ERROR/} @lines;
-
-    my $preview;
-    if (@error_lines) {
-        $preview = $error_lines[0];
-    } else {
-        $preview = `tail -n 1 $log_path`;
-        chomp($preview);
-    }
-
-    # terminate any unfinished color regions in preview
-    $preview .= $self->_color(' ', 'white');
-
-    my $screen_width = $self->get_terminal_width();
-    if (length($preview) > $screen_width - 20) {
-        $preview = substr($preview, 0, $screen_width - 20) . "...";
-    }
-
-    if (@error_lines) {
-        print $handle $self->_color_pair("  First Error", $preview) . "\n";
-    } else {
-        print $handle $self->_color_pair("  Last Line", $preview) . "\n";
-    }
+    $self->_display_workflow_children($handle, $workflow, $datetime_parser);
+    return;
 }
 
 sub _display_workflow_header {
@@ -175,8 +111,7 @@ EOS
 }
 
 sub _display_workflow_children {
-    my ($self, $handle, $workflow, $datetime_parser,
-        $failed_workflow_steps) = @_;
+    my ($self, $handle, $workflow, $datetime_parser) = @_;
 
     print $handle $self->_color_dim($self->_format_workflow_child_line(
             "ID", "Status", "LSF ID", "Start Time", "Time Elapsed", "Name", "Start Time"));
@@ -184,14 +119,14 @@ sub _display_workflow_children {
     my $ie = $workflow->current;
     my $start_time = $self->_clean_up_timestamp($ie->start_time);
     $self->_display_workflow_child($handle, $workflow, $datetime_parser, 0,
-            $failed_workflow_steps, $start_time);
+            $start_time);
 
     1;
 }
 
 sub _display_workflow_child {
     my ($self, $handle, $child, $datetime_parser, $nesting_level,
-            $failed_workflow_steps, $prev_start_time) = @_;
+            $prev_start_time) = @_;
 
     my $status = $child->status;
 
@@ -199,10 +134,6 @@ sub _display_workflow_child {
         $child->start_time, $child->end_time, $status, $datetime_parser);
 
     if ($self->connectors || !$self->_is_connector($child->name)) {
-        if($status eq 'failed' or $status eq 'crashed' or
-           $status eq 'running' or $status eq 'running*') {
-            push(@{$failed_workflow_steps}, $child);
-        }
         print $handle $self->_format_workflow_child_line($child->id, $status,
             $child->current->dispatch_identifier, $start_time, $elapsed_time,
             ('  'x$nesting_level) . $child->name, $prev_start_time);
@@ -500,5 +431,102 @@ sub _clean_up_timestamp {
     $clean_stamp =~ s/\s$//;
     return $clean_stamp;
 }
+
+sub _display_logs {
+    my ($self, $handle, $workflow) = @_;
+
+    return unless $self->logs;
+
+    my @error_log_paths;
+    my @step_names;
+    my @step_statuses;
+    for my $step ($self->unfinished_workflow_steps($workflow)) {
+        if($step->current->can('stderr')) {
+            my $error_path = $step->current->stderr || ' ';
+            if(-e $error_path and -s $error_path) {
+                push(@error_log_paths, $error_path);
+                push(@step_names, $step->name);
+                push(@step_statuses, $step->status);
+            }
+        }
+    }
+
+    if(@error_log_paths) {
+        printf $handle "\n%s\n", $self->_color('Error Logs:', 'bold');
+        for my $i (0..$#error_log_paths) {
+            my $status = $step_statuses[$i];
+            my $name = $step_names[$i];
+            my $length = 22;
+            if(length($name) > $length) {
+                $name = substr($name, 0, $length-3) . "...";
+            }
+            my $log_path = $error_log_paths[$i];
+
+            # print logfile of running/crashed steps
+            printf $handle "%s %s %s\n",
+                    $self->_status_color($status),
+                    justify($name, 'left', $length),
+                    $log_path;
+
+            $self->_print_error_log_preview($handle, $log_path);
+        }
+    }
+    return;
+}
+
+sub unfinished_workflow_steps {
+    my ($self, $workflow) = @_;
+
+    my @bucket;
+    _recursively_find_unfinished_steps($workflow, \@bucket);
+    return @bucket;
+}
+
+sub _recursively_find_unfinished_steps {
+    my ($child, $bucket) = @_;
+    my $status = $child->status;
+
+    if($status eq 'failed' or $status eq 'crashed' or
+       $status eq 'running' or $status eq 'running*') {
+        push(@{$bucket}, $child);
+    }
+
+    if ($child->can('related_instances')) {
+        for my $subchild ($child->related_instances) {
+            _recursively_find_unfinished_steps($subchild, $bucket);
+        }
+    }
+    return;
+}
+
+sub _print_error_log_preview {
+    my ($self, $handle, $log_path) = @_;
+
+    my @lines = `grep 'ERROR' $log_path`;
+    my @error_lines = grep {$_ =~ m/ERROR/} @lines;
+
+    my $preview;
+    if (@error_lines) {
+        $preview = $error_lines[0];
+    } else {
+        $preview = `tail -n 1 $log_path`;
+        chomp($preview);
+    }
+
+    # terminate any unfinished color regions in preview
+    $preview .= $self->_color(' ', 'white');
+
+    my $screen_width = $self->get_terminal_width();
+    if (length($preview) > $screen_width - 20) {
+        $preview = substr($preview, 0, $screen_width - 20) . "...";
+    }
+
+    if (@error_lines) {
+        print $handle $self->_color_pair("  First Error", $preview) . "\n";
+    } else {
+        print $handle $self->_color_pair("  Last Line", $preview) . "\n";
+    }
+}
+
 
 1;
