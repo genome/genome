@@ -90,9 +90,6 @@ sub execute {
     my $tmp_file = Genome::Sys->create_temp_file_path;
     my $output_file = $self->output_file;
 
-    #make sure we can write the output before wasting an hour generating it
-    Genome::Sys->validate_file_for_writing($output_file);
-
     my $cmd = join(" ", $base_cmd, $bam_file, $options_string, " > $tmp_file");
     system($cmd);
     if($@){
