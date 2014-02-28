@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 use Genome::Utility::Text qw(justify find_diff_pos);
+use Params::Validate qw(:types);
 use Workflow;
 
 use DateTime::Format::Strptime;
@@ -13,6 +14,12 @@ use Date::Calc "Delta_DHMS";
 class Genome::Command::WorkflowMixin {
     is => ['Command::V2', 'Genome::Command::ColorMixin'],
     has => [
+        summary_threshold => {
+            is => 'Int',
+            is_optional => 1,
+            default_value => 5,
+            doc => 'Parallel by stages with this many steps will be summarized.  Negative values disable summarizing.'
+        },
         connectors => {
             is => 'Boolean',
             is_optional => 1,
@@ -203,15 +210,152 @@ sub _display_workflow_child {
 
     if ($self->depth < 0 || $nesting_level < $self->depth) {
         if ($child->can('related_instances')) {
-            for my $subchild ($child->related_instances) {
-                $self->_display_workflow_child($handle, $subchild,
-                        $datetime_parser, $nesting_level + 1,
-                        $failed_workflow_steps, $start_time);
+            my @subchildren = $child->related_instances;
+            my $summary_bunches = $self->get_summary_bunches(\@subchildren);
+            for my $bunch (@$summary_bunches) {
+                $self->summarize(
+                    child_bunch => $bunch,
+                    handle => $handle,
+                    datetime_parser => $datetime_parser,
+                    nesting_level => $nesting_level + 1,
+                    start_time => $start_time,
+                );
             }
         }
     }
 
     1;
+}
+
+sub get_summary_bunches {
+    my $self = shift;
+    my $steps = shift;
+
+    my %step_names;
+    for my $step (@$steps) {
+        push @{$step_names{$step->name}}, $step;
+    }
+    return parallel_by_aware_sorted(values %step_names);
+}
+
+
+sub parallel_by_aware_sorted {
+    my @bunches = @_;
+
+    my %parallel_by_bunches;
+    my @normal_bunches;
+    for my $bunch (@bunches) {
+        if ($bunch->[0]->name =~ /(.*) \(Parallel By\)/) {
+            $parallel_by_bunches{$1} = $bunch;
+        } else {
+            push @normal_bunches, $bunch;
+        }
+    }
+
+    my @sorted_bunches = sort sort_by_start_time @normal_bunches;
+
+    my @final_bunches;
+    for my $bunch (@sorted_bunches) {
+        if (exists($parallel_by_bunches{$bunch->[0]->name})) {
+            push @final_bunches, $parallel_by_bunches{$bunch->[0]->name};
+        }
+        push @final_bunches, $bunch;
+    }
+    return \@final_bunches;
+}
+
+sub sort_by_start_time {
+    my $first_time = $a->[0]->start_time;
+    my $second_time = $b->[0]->start_time;
+    if (defined($first_time) and defined($second_time)) {
+        return $first_time cmp $second_time;
+    } elsif (defined($first_time)) {
+        return -1;
+    } elsif (defined($second_time)) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+sub summarize {
+    my $self = shift;
+    my %p = Params::Validate::validate(@_, {
+        child_bunch => { type => ARRAYREF, },
+        handle => { type => HANDLE, },
+        datetime_parser => { isa => 'DateTime::Format::Strptime', },
+        nesting_level => { type => SCALAR, },
+        start_time => { type => SCALAR, },
+    });
+    if ($self->_should_summarize($p{child_bunch})) {
+        $self->_write_summary(
+            child_bunch => $p{child_bunch},
+            handle => $p{handle},
+            nesting_level => $p{nesting_level},
+        );
+    } else {
+        for my $child (@{$p{child_bunch}}) {
+            $self->_display_workflow_child(
+                $p{handle}, $child, $p{datetime_parser},
+                $p{nesting_level}, $p{start_time},
+            );
+        }
+    }
+}
+
+sub _should_summarize {
+    my ($self, $child_bunch) = @_;
+
+    if ((scalar(@$child_bunch) >= $self->summary_threshold) or
+        ($self->summary_threshold == -1)) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+my @STATUSES = qw(
+    new
+    scheduled
+    running
+    running*
+    crashed
+    done
+);
+
+sub _write_summary {
+    my $self = shift;
+    my %p = Params::Validate::validate(@_, {
+        child_bunch => { type => ARRAYREF, },
+        handle => { type => HANDLE, },
+        nesting_level => { type => SCALAR, },
+    });
+
+    my %counts;
+    for my $child (@{$p{child_bunch}}) {
+        my $status = $child->status;
+        $counts{$status}++;
+    }
+    my @strings;
+    for my $status (@STATUSES) {
+        if (exists($counts{$status})) {
+            push @strings, sprintf('%s(%d)',
+                $self->_status_color($status), $counts{$status});
+        }
+        delete $counts{$status};
+    }
+    # tack on any other (new) statuses
+    for my $status (keys %counts) {
+        push @strings, sprintf('%s(%d)',
+            $self->_status_color($status), $counts{$status});
+    }
+
+
+    my $nesting_level = $p{nesting_level};
+    my $handle = $p{handle};
+    printf $handle "%s  %s%s\n",
+        justify(join(' ', @strings), 'right', 64),
+        '  ' x $nesting_level, ($p{child_bunch}->[0])->name;
 }
 
 # -- additional helper functions --
