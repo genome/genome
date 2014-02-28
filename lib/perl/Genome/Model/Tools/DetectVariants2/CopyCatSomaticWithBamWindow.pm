@@ -148,6 +148,25 @@ sub get_samtools_results{
     return "";
 }
 
+sub _promote_staged_data {
+    my $self = shift;
+    my $output_directory = $self->SUPER::_promote_staged_data;
+    Genome::Sys->remove_directory_tree($self->_temp_staging_directory);
+    return $output_directory;
+}
+
+sub _create_temp_directories {
+    my $self = shift;
+    my $staging_tempdir = File::Temp->newdir(
+            "staging-XXXXX",
+            DIR     => $self->output_directory,
+            CLEANUP => 0,
+    );
+    $self->_temp_staging_directory($staging_tempdir->dirname);
+    $self->_temp_scratch_directory(Genome::Sys->create_temp_directory);
+    return 1;
+}
+
 1;
 
 __DATA__
