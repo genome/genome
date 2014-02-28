@@ -139,7 +139,7 @@ sub execute{
         unless (-e $result){
             my $unexpected_filename_output = $command->_sv_hq_output_file;
             unless (-e $unexpected_filename_output){
-                die $self->error_message("Expected hq detected svs file $result, but it does not exist!");
+                die $self->error_message("Expected hq detected snvs file $result, but it does not exist!");
             }
             symlink($unexpected_filename_output, $result);
         }
@@ -150,7 +150,7 @@ sub execute{
         unless (-e $result){
             my $unexpected_filename_output = $command->_cnv_hq_output_file;
             unless (-e $unexpected_filename_output){
-                die $self->error_message("Expected hq detected cnvs file $result, but it does not exist!");
+                die $self->error_message("Expected hq detected snvs file $result, but it does not exist!");
             }
             symlink($unexpected_filename_output, $result);
         }
