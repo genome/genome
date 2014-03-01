@@ -97,6 +97,7 @@ sub _process_models {
 
         $self->_assign_instrument_data_to_model($model, $instrument_data, $created_new);
         $self->_assign_model_to_analysis_project($analysis_project, $model);
+        $self->_request_build_if_necessary($model, $created_new);
     }
 }
 
@@ -117,7 +118,6 @@ sub _assign_instrument_data_to_model {
                 $model->__display_name__));
     }
 
-    $self->_request_build_if_necessary($model, $newly_created);
 }
 
 sub _request_build_if_necessary {
