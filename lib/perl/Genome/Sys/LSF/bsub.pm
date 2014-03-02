@@ -9,6 +9,9 @@ use Params::Validate qw(:types);
 our @EXPORT = qw(bsub);
 our @EXPORT_OK = qw(bsub);
 
+our $BSUB_PATH = `which bsub`;
+our $USE_OPENLAVA = ($BSUB_PATH =~ /openlava/ ? 1 : 0);
+
 sub run {
     my $executable = shift;
     my @args = args_builder(@_);
@@ -81,7 +84,9 @@ sub _args_spec {
         never_rerunnable => {
             optional => 1,
             type => BOOLEAN,
-            option_flag => '-rn',
+            option_flag => ($USE_OPENLAVA ? '' : '-rn'),
+            # openlava does not support this option
+            # it is non-cricitcal, so ignore
         },
         hold_job => {
             optional => 1,
