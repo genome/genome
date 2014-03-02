@@ -69,6 +69,9 @@ my $usage=<<INFO;
 
 INFO
 
+unless ($reference_annotations_dir && $gene_groups && ($build_ids || $model_ids || $model_group_id) && $dgidb_subdir_name && $filter_name && $event_types_list && $outdir){
+  print RED, "\n\nRequired parameter missing", RESET;
+  print GREEN, "\n\n$usage", RESET;
   exit(1);
 }
 
