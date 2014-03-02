@@ -48,6 +48,8 @@ BEGIN {
     import();
 }
 
+$ENV{GENOME_EXECUTION_ID} ||= UR::Object::Type->autogenerate_new_object_id_uuid();
+
 1;
 
 =pod
