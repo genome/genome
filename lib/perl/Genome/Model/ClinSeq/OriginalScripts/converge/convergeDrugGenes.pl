@@ -23,7 +23,6 @@ use Term::ANSIColor qw(:constants);
 use Data::Dumper;
 use above 'Genome';
 use Genome::Model::ClinSeq::OriginalScripts::Util qw(:all);
-use Genome::Model::ClinSeq::Util qw(:all);
 use Genome::Model::ClinSeq::OriginalScripts::Converge qw(:all);
 
 my $reference_annotations_dir = '';
@@ -70,6 +69,9 @@ my $usage=<<INFO;
 
 INFO
 
+unless ($reference_annotations_dir && $gene_groups && ($build_ids || $model_ids || $model_group_id) && $dgidb_subdir_name && $filter_name && $event_types_list && $outdir){
+  print RED, "\n\nRequired parameter missing", RESET;
+  print GREEN, "\n\n$usage", RESET;
   exit(1);
 }
 
