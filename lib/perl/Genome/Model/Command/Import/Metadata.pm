@@ -232,19 +232,19 @@ sub execute {
     unless($self->skip_file_db_install){
       #genome db ucsc install --species=human --branch=human-build37
       eval { Genome::Db::Ucsc::Command::Install->execute(species => 'human', branch => 'human-build37'); };
-      die $self->error_message("errors installing ucsc db human-build37: $@") if $@;
+      $self->warning_message("errors installing ucsc db human-build37: $@") if $@;
       
       #genome db db-var install --species=human --branch=human-build37
       eval { Genome::Db::DbVar::Command::Install->execute(species => 'human', branch => 'human-build37'); };
-      die $self->error_message("errors installing dbvar db human-build37: $@") if $@;
+      $self->warning_message("errors installing dbvar db human-build37: $@") if $@;
 
       #genome db dbsnp install --species=human --branch=human-build37-132
       eval { Genome::Db::Dbsnp::Command::Install->execute(species => 'human', branch => 'human-build37-132'); };
-      die $self->error_message("errors installing dbsnp db human-build37-132: $@") if $@;
+      $self->warning_message("errors installing dbsnp db human-build37-132: $@") if $@;
 
       #genome db cancer-gene-list install --species=human --branch=human-1
       eval { Genome::Db::CancerGeneList::Command::Install->execute(species => 'human', branch => 'human-1'); };
-      die $self->error_message("errors installing cancer-gene-list db human-1: $@") if $@;
+      $self->warning_message("errors installing cancer-gene-list db human-1: $@") if $@;
     }
 
     $self->status_message("import complete");

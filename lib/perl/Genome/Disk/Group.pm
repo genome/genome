@@ -98,8 +98,8 @@ sub _get_single {
 
 # TODO This needs to be removed, site-specific
 my %VALID_NAMES = (
-    systems_benchmarking => 1,
-    reads => 1,
+    $ENV{GENOME_DISK_GROUP_READS} => 1,
+    $ENV{GENOME_DISK_GROUP_BENCHMARKING} => 1,
     $ENV{GENOME_DISK_GROUP_DEV} => 1,
     $ENV{GENOME_DISK_GROUP_REFERENCES} => 1,
     $ENV{GENOME_DISK_GROUP_ALIGNMENTS} => 1,
