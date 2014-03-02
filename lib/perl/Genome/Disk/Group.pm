@@ -98,23 +98,14 @@ sub _get_single {
 
 # TODO This needs to be removed, site-specific
 my %VALID_NAMES = (
-<<<<<<< HEAD
-    info_apipe => 1,
-    info_apipe_ref => 1,
-    info_alignments => 1,
-    info_genome_models => 1,
-    info_apipe_trash => 1,
-    research => 1,
     systems_benchmarking => 1,
     reads => 1,
-=======
     $ENV{GENOME_DISK_GROUP_DEV} => 1,
     $ENV{GENOME_DISK_GROUP_REFERENCES} => 1,
     $ENV{GENOME_DISK_GROUP_ALIGNMENTS} => 1,
     $ENV{GENOME_DISK_GROUP_MODELS} => 1,
     $ENV{GENOME_DISK_GROUP_TRASH} => 1,
     $ENV{GENOME_DISK_GROUP_RESEARCH} => 1,
->>>>>>> master
 );
 sub validate {
     my $self = shift;
