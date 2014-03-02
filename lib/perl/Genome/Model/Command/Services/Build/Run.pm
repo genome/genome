@@ -158,7 +158,7 @@ sub execute {
                 $success = Workflow::Simple::resume_lsf($w->id);
             }
             else {
-                Carp::confess("THIS CODE IS NO LONGER IN MASTER BUT MAY BE NEEDED ON STANDALONE GMS");
+                # THIS CODE IS NO LONGER IN MASTER BUT IS NEEDED ON THE STANDALONE GMS 
                 my %inputs;
                 eval {
                     %inputs = $build->model->map_workflow_inputs($build);
