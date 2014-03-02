@@ -24,7 +24,7 @@ sub _dbi_connect_args {
     my @connection = $self->SUPER::_dbi_connect_args(@_);
 
     my $connect_attr = $connection[3] ||= {};
-    $connect_attr->{AutoCommit} = 0;  # this is set to true on master for unknown reasons
+    $connect_attr->{AutoCommit} = 1;
     $connect_attr->{RaiseError} = 0;
 
     return @connection;
