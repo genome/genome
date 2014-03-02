@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 package Genome::Model::ClinSeq::OriginalScripts::Util;
-=======
-package Genome::Model::ClinSeq::Util;
->>>>>>> gms-pub
 
 #Written by Malachi Griffith
 
