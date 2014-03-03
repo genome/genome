@@ -365,13 +365,14 @@ sub fill_in_site_hash {
         for my $v (@vars) {
             my $key = join("\t",($entry->{chrom}, $entry->{position}-1, $entry->{position}, $entry->{reference_allele}, $v));
             if (defined($sites->{$key})) {
-                if (scalar @{$sample_dict{$self->sample_name . '-[VarscanSomatic]'}}) {
+                my $sample_name = $self->somatic_variation_build->tumor_build->subject->name;
+                if (scalar @{$sample_dict{$sample_name . '-[VarscanSomatic]'}}) {
                     $sites->{$key}++;
                 }
-                if (scalar @{$sample_dict{$self->sample_name . '-[Sniper]'}}) {
+                if (scalar @{$sample_dict{$sample_name . '-[Sniper]'}}) {
                     $sites->{$key}++;
                 }
-                if (scalar @{$sample_dict{$self->sample_name . '-[Strelka]'}}) {
+                if (scalar @{$sample_dict{$sample_name . '-[Strelka]'}}) {
                     $sites->{$key}++;
                 }
             }
