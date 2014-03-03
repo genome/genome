@@ -113,6 +113,11 @@ AUTHS
 sub execute {
     my $self = shift;
 
+    unless ($self->input_files_exist) {
+        $self->status_message("Snvs or indels file not found. Skipping Create Report.");
+        return 1;
+    }
+
     $self->status_message("Processing model with sample_name: " . $self->sample_name);
 
     $self->_output_dir($self->create_allocation());
@@ -590,10 +595,17 @@ sub get_or_create_directory {
     return $path;
 }
 
-sub stage_snv_file {
+sub input_files_exist {
     my $self = shift;
 
-    $self->ensure_snvs_were_processed();
+    return 0 unless $self->snvs_were_processed();
+    return 0 unless $self->indels_were_processed();
+
+    return 1;
+}
+
+sub stage_snv_file {
+    my $self = shift;
 
     my $snv_file = File::Spec->join($self->snvs_dir, 'snvs.hq.bed');
     my $cmd = sprintf('cat %s %s | joinx sort -o %s',
@@ -609,19 +621,21 @@ sub stage_snv_file {
     return $snv_file;
 }
 
-sub ensure_snvs_were_processed {
+sub snvs_were_processed {
     my $self = shift;
 
     my $snv_file = File::Spec->join($self->_build_dir, 'effects', 'snvs.hq.novel.tier1.v2.bed');
     unless (-e $snv_file) {
-        confess $self->error_message("SNV results for %s not found at %s", $self->sample_name, $snv_file);
+        $self->status_message("SNV results for %s not found at %s", $self->sample_name, $snv_file);
+        return 0;
+    }
+    else {
+        return 1;
     }
 }
 
 sub stage_indel_file {
     my $self = shift;
-
-    $self->ensure_indels_were_processed();
 
     my $indel_file = File::Spec->join($self->indels_dir, 'indels.hq.bed');
     my $cmd = sprintf('cat %s %s | joinx sort -o %s',
@@ -637,12 +651,16 @@ sub stage_indel_file {
     return $indel_file;
 }
 
-sub ensure_indels_were_processed {
+sub indels_were_processed {
     my $self = shift;
 
     my $indel_file = File::Spec->join($self->_build_dir, 'effects', 'indels.hq.novel.tier1.v2.bed');
     unless (-e $indel_file) {
-        confess $self->error_message("INDEL results for %s not found at %s", $self->sample_name, $indel_file);
+        $self->status_message("INDEL results for %s not found at %s", $self->sample_name, $indel_file);
+        return 0;
+    }
+    else {
+        return 1;
     }
 }
 
