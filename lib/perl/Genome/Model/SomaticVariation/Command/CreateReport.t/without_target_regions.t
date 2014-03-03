@@ -37,9 +37,12 @@ Genome::Model::Build::Input->create(
     name             => 'target_region_set_name',
 );
 
+my $output_exists = 1;
+
 run_test(
     $pkg,
     $main_dir,
+    $output_exists,
     somatic_variation_build => $somatic_variation_build,
 );
 

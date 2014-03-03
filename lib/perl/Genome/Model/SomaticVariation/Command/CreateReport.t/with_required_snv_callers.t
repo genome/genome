@@ -21,9 +21,12 @@ my $input_dir = File::Spec->join($main_dir, "input");
 
 my $somatic_variation_build = create_test_objects($main_dir);
 
+my $output_exists = 1;
+
 run_test(
     $pkg,
     $main_dir,
+    $output_exists,
     somatic_variation_build => $somatic_variation_build,
     target_regions          => "$input_dir/target_regions.bed",
     required_snv_callers    => 2,

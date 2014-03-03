@@ -120,6 +120,7 @@ sub create_test_objects {
 sub run_test {
     my $pkg = shift;
     my $main_dir = shift;
+    my $output_exists = shift;
     my %params = @_;
 
     my $cmd = $pkg->create(
@@ -128,6 +129,18 @@ sub run_test {
     ok($cmd->isa("Genome::Model::SomaticVariation::Command::CreateReport"), "Generated a somatic variation create report object");
 
     ok($cmd->execute(), 'Command executed');
+
+    if ($output_exists) {
+        test_output_exists($cmd, $main_dir);
+    }
+    else {
+        test_no_output_exists($cmd);
+    }
+}
+
+sub test_output_exists {
+    my $cmd = shift;
+    my $main_dir = shift;
 
     ok(-s $cmd->report, 'Found "report" output: ' . $cmd->report);
     ok(-s $cmd->report_xls, 'Found "report.xls" output'  .  $cmd->report_xls);
@@ -142,6 +155,16 @@ sub run_test {
     compare_ok($cmd->review_bed, File::Spec->join($data_dir, 'review.bed'), 'review.bed is as expected');
 
     ensure_symlinks_in_build_directory($cmd);
+}
+
+sub test_no_output_exists {
+    my $cmd = shift;
+
+    ok(!(-s $cmd->report), 'Did not find "report" output: ' . $cmd->report);
+    ok(!(-s $cmd->report_xls), 'Did not find "report.xls" output'  .  $cmd->report_xls);
+
+    my $review_dir = File::Spec->join($cmd->_output_dir, 'review');
+    ok(!(-d $review_dir), 'Did not find review output directory: ' . $review_dir);
 }
 
 sub ensure_symlinks_in_build_directory {
