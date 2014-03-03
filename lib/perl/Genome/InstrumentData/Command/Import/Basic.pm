@@ -10,6 +10,14 @@ use Workflow::Simple;
 class Genome::InstrumentData::Command::Import::Basic { 
     is => 'Command::V2',
     has_input => [
+        analysis_project => {
+            is => 'Genome::Config::AnalysisProject',
+            doc => 'Analysis project to assign to the created instrument data.',
+        },
+        sample => {
+            is => 'Genome::Sample',
+            doc => 'Sample to use. The external library for the instrument data will be gotten or created.',
+        },
         import_source_name => {
             is => 'Text',
             doc => 'Organiztion name or abbreviation from where the source file(s) were generated or downloaded.',
@@ -18,10 +26,6 @@ class Genome::InstrumentData::Command::Import::Basic {
             is => 'Text',
             is_many => 1,
             doc => 'Source files to import. If importing fastqs, put the file containing the forward [read 1] reads first.',
-        },
-        sample => {
-            is => 'Genome::Sample',
-            doc => 'Sample to use. The external library for the instrument data will be gotten or created.',
         },
     ],
     has_optional_input => [
@@ -186,7 +190,7 @@ sub _create_workflow {
 
     my $workflow = Workflow::Model->create(
         name => 'Import Instrument Data',
-        input_properties => [qw/ working_directory source_paths sample instrument_data_properties /],
+        input_properties => [qw/ analysis_project instrument_data_properties sample source_paths working_directory /],
         output_properties => [qw/ instrument_data /],
     );
     $self->_workflow($workflow);
@@ -247,10 +251,11 @@ sub _gather_inputs_for_workflow {
     my $self = shift;
 
     return {
-        working_directory => $self->_working_directory,
+        analysis_project => $self->analysis_project,
+        instrument_data_properties => $self->_instrument_data_properties,
         sample => $self->sample,
         source_paths => [ $self->source_files ],
-        instrument_data_properties => $self->_instrument_data_properties,
+        working_directory => $self->_working_directory,
     };
 }
 
@@ -314,7 +319,7 @@ sub _build_workflow_to_import_fastq {
     );
 
     my $create_instdata_and_copy_bam = $self->_add_operation_to_workflow('create instrument data and copy bam');
-    for my $property (qw/ sample instrument_data_properties /) {
+    for my $property (qw/ analysis_project sample instrument_data_properties /) {
         $workflow->add_link(
             left_operation => $workflow->get_input_connector,
             left_property => $property,
@@ -376,7 +381,7 @@ sub _build_workflow_to_import_bam {
     );
 
     my $create_instdata_and_copy_bam = $self->_add_operation_to_workflow('create instrument data and copy bam');
-    for my $property (qw/ sample instrument_data_properties /) {
+    for my $property (qw/ analysis_project sample instrument_data_properties /) {
         $workflow->add_link(
             left_operation => $workflow->get_input_connector,
             left_property => $property,
@@ -450,7 +455,7 @@ sub _build_workflow_to_import_sra {
     );
 
     my $create_instdata_and_copy_bam = $self->_add_operation_to_workflow('create instrument data and copy bam');
-    for my $property (qw/ sample instrument_data_properties /) {
+    for my $property (qw/ analysis_project sample instrument_data_properties /) {
         $workflow->add_link(
             left_operation => $workflow->get_input_connector,
             left_property => $property,

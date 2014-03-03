@@ -18,6 +18,9 @@ use Test::More;
 
 use_ok('Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentDataAndCopyBam') or die;
 
+my $analysis_project = Genome::Config::AnalysisProject->create(name => '__TEST_AP__');
+ok($analysis_project, 'create analysis project');
+
 my $sample = Genome::Sample->create(name => '__TEST_SAMPLE__');
 ok($sample, 'Create sample');
 
@@ -38,6 +41,7 @@ ok($md5, 'load source md5');
 # failures
 my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentDataAndCopyBam->create(
     sample => $sample,
+    analysis_project => $analysis_project,
     bam_paths => \@bam_paths,
     instrument_data_properties => { },
     source_md5s => [ $md5 ],
@@ -80,6 +84,7 @@ for my $instrument_data ( @instrument_data ) {
     is($instrument_data->read_length, 100, 'read_length correctly set');
     is($instrument_data->attributes(attribute_label => 'index_sequence')->attribute_value, 'ATGCTA', 'index_sequence correctly set');
     is($instrument_data->attributes(attribute_label => 'segment_id')->attribute_value, $read_group, 'segment_id correctly set');
+    is($instrument_data->analysis_projects, $analysis_project, 'set ana;yis project');
 
     my $bam_path = $instrument_data->bam_path;
     ok(-s $bam_path, 'bam path exists');
@@ -98,6 +103,7 @@ for my $instrument_data ( @instrument_data ) {
 # recreate
 $cmd = Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentDataAndCopyBam->create(
     sample => $sample,
+    analysis_project => $analysis_project,
     bam_paths => \@bam_paths,
     instrument_data_properties => {
         original_data_path => $source_bam, 

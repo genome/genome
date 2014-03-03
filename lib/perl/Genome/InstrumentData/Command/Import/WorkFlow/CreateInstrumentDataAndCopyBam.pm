@@ -20,6 +20,10 @@ class Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentDataAnd
             is => 'Genome::Sample',
             doc => 'Sample to use. The external library for the instrument data will be gotten or created.',
         },
+        analysis_project => {
+            is => 'Genome::Config::AnalysisProject',
+            doc => 'Analysis project to assign to the created instrument data.',
+        },
         instrument_data_properties => {
             is => 'Hash',
             doc => 'Hash of instrument data properties to store.',
@@ -115,6 +119,9 @@ sub execute {
         $instrument_data->add_attribute(attribute_label => 'is_paired_end', attribute_value => $flagstat->{is_paired_end});
         $instrument_data->add_attribute(attribute_label => 'read_count', attribute_value => $flagstat->{total_reads});
         $instrument_data->add_attribute(attribute_label => 'read_length', attribute_value => $read_length);
+
+        # Analysis Project
+        $instrument_data->add_analysis_project_bridge(analysis_project => $self->analysis_project);
 
         # Reallocate
         $self->debug_message('Reallocate...');

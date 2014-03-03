@@ -34,6 +34,10 @@ Sample-02   http://fastqs.org/sample-2.fwd.fastq.gz,http://fastqs.org/sample-2.r
 DOC
 
         },
+        analysis_project => {
+            is => 'Genome::Config::AnalysisProject',
+            doc => 'Analysis project to assign to the created instrument data.',
+        },
     ],
     has_optional => [
         launch_config => {
@@ -232,7 +236,7 @@ sub _resolve_launch_command {
         $cmd_format .= ' ';
     }
 
-    $cmd_format .= 'genome instrument-data import basic --sample name=%{sample_name} --source-files %s --import-source-name %s%s',
+    $cmd_format .= 'genome instrument-data import basic --sample name=%{sample_name} --analysis-project id=%s --source-files %s --import-source-name %s%s',
     $self->_launch_command_format($cmd_format);
 
     return;
@@ -424,6 +428,7 @@ sub _resolve_launch_command_for_import {
 
     my $cmd .= sprintf(
         $cmd_format,
+        $self->analysis_project->id,
         $import->{source_files},
         $import->{sample}->{nomenclature},
         ( 
