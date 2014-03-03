@@ -14,6 +14,7 @@ class Genome::Config::Command::ConfigureQueuedInstrumentData {
             is          => 'Genome::InstrumentData',
             is_many     => 1,
             is_optional => 1,
+            require_user_verify => 0,
             doc         => '[Re]process these instrument data.',
         },
         limit => {
@@ -96,6 +97,8 @@ sub _process_models {
 
         $self->_assign_instrument_data_to_model($model, $instrument_data, $created_new);
         $self->_assign_model_to_analysis_project($analysis_project, $model);
+        $self->_update_model($model);
+        $self->_request_build_if_necessary($model, $created_new);
     }
 }
 
@@ -115,8 +118,15 @@ sub _assign_instrument_data_to_model {
         die(sprintf('Failed to assign %s to %s', $instrument_data->__display_name__,
                 $model->__display_name__));
     }
+}
 
-    $self->_request_build_if_necessary($model, $newly_created);
+sub _update_model {
+    my ($self, $model) = @_;
+    if ($model->can("check_for_updates")) {
+        unless ($model->check_for_updates) {
+            Carp::confess "Could not update model!";
+        }
+    }
 }
 
 sub _request_build_if_necessary {

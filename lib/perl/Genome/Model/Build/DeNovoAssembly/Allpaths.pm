@@ -277,6 +277,8 @@ sub _mem_in_gb {
 
     if ($ENV{UR_DBI_NO_COMMIT}) {
         $mem = 60;
+    } elsif ($egs and $egs >= 3_000_000_000) {
+        $mem = 998; # run on 1TB machine for genomes larger than 3GB
     } elsif ($egs and $egs <= 40_000_000) {
         $mem = 200;
     }

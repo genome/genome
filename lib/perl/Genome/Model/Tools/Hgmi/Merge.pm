@@ -247,7 +247,7 @@ sub gather_details
                    'job_stdout' => $bmg_job_stdout,
                    'job_stderr' => $bmg_job_stderr,
                    'runner_count' => $runner_count,
-                   'debug_file' => $debug_file,
+                   'debug_file_path' => $debug_file,
                    'nr_db' => $self->nr_db,
                    );
 

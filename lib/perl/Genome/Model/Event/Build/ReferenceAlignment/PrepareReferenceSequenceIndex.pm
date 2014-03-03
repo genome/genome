@@ -27,6 +27,10 @@ sub alignment_result_class {
     return 'Genome::InstrumentData::AlignmentResult::' . Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name($read_aligner_name);
 }
 
+sub lsf_queue {
+    return $ENV{GENOME_LSF_QUEUE_BUILD_WORKER};
+}
+
 sub bsub_rusage {
     my $self = shift;
     my $delegate = $self->alignment_result_class;

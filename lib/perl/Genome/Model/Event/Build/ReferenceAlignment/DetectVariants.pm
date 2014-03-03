@@ -9,10 +9,12 @@ class Genome::Model::Event::Build::ReferenceAlignment::DetectVariants{
     is => ['Genome::Model::Event'],
 };
 
-sub bsub_rusage {
-    my $self = shift;
+sub lsf_queue {
+    return $ENV{GENOME_LSF_QUEUE_BUILD_WORKER};
+}
 
-    return "-R 'select[tmp>4000] rusage[tmp=4000]' -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER}";
+sub bsub_rusage {
+    return "-R 'select[tmp>4000] rusage[tmp=4000]'";
 }
 
 sub execute{

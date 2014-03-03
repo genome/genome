@@ -1,4 +1,4 @@
-package Genome::Sample; 
+package Genome::Sample;
 
 use strict;
 use warnings;
@@ -15,22 +15,22 @@ class Genome::Sample {
             calculate_from => 'subject_id',
             calculate => q{ return $subject_id },
         },
-        subject_type => { 
-            is_constant => 1, 
+        subject_type => {
+            is_constant => 1,
             is_classwide => 1,
             value => 'sample_name'
         },
     ],
-    has_optional => [	
-        common_name => { 
+    has_optional => [
+        common_name => {
             is => 'Text',
             via => 'attributes',
             to => 'attribute_value',
             where => [ attribute_label => 'common_name', nomenclature => $default_nomenclature ],
             is_mutable => 1,
-            doc => 'Typically tumor, normal, etc. A very brief description of the sample',                                        
+            doc => 'Typically tumor, normal, etc. A very brief description of the sample',
         },
-        individual_common_name => { 
+        individual_common_name => {
             is => 'Text',
             via => 'source',
             to => 'common_name',
@@ -54,7 +54,7 @@ class Genome::Sample {
         },
         sample_type => {
             calculate_from => 'extraction_type',
-            calculate => q{ 
+            calculate => q{
                 $self = shift;
                 my $new_type = shift;
                 if ($new_type) { $self->extraction_type($new_type); }
@@ -71,54 +71,54 @@ class Genome::Sample {
                 return;
             |,
         },
-        extraction_desc => { 
-            is => 'Text', 
+        extraction_desc => {
+            is => 'Text',
             via => 'attributes',
             to => 'attribute_value',
             where => [ attribute_label => 'extraction_desc', nomenclature => $default_nomenclature ],
             is_mutable => 1,
-            doc => 'Notes specified when the specimen entered this site', 
+            doc => 'Notes specified when the specimen entered this site',
         },
-        cell_type => {         
-            is => 'Text', 
+        cell_type => {
+            is => 'Text',
             via => 'attributes',
             to => 'attribute_value',
             where => [ attribute_label => 'cell_type', nomenclature => $default_nomenclature ],
             is_mutable => 1,
-            doc => 'Typically "primary"' 
+            doc => 'Typically "primary"'
         },
         tissue_label => {
-            is => 'Text', 
+            is => 'Text',
             via => 'attributes',
             to => 'attribute_value',
             where => [ attribute_label => 'tissue_label', nomenclature => $default_nomenclature ],
             is_mutable => 1,
-            doc => 'Identifies/labels the original tissue sample from which this extraction was made' 
+            doc => 'Identifies/labels the original tissue sample from which this extraction was made'
         },
-        tissue_desc => { 
-            is => 'Text', 
+        tissue_desc => {
+            is => 'Text',
             via => 'attributes',
             to => 'attribute_value',
             where => [ attribute_label => 'tissue_desc', nomenclature => $default_nomenclature ],
             is_mutable => 1,
             doc => 'Describes the original tissue sample',
         },
-        organ_name => { 
+        organ_name => {
             is => 'Text',
             via => 'attributes',
             to => 'attribute_value',
             where => [ attribute_label => 'organ_name', nomenclature => $default_nomenclature ],
             is_mutable => 1,
-            doc => 'The name of the organ from which the sample was taken' 
-        }, 
-        disease => { 
+            doc => 'The name of the organ from which the sample was taken'
+        },
+        disease => {
             is => 'Text',
             via => 'attributes',
             to => 'attribute_value',
             where => [ attribute_label => 'disease', nomenclature => $default_nomenclature ],
             is_mutable => 1,
-            doc => 'The name of the disease if present in the sample.', 
-        }, 
+            doc => 'The name of the disease if present in the sample.',
+        },
         default_genotype_data_id => {
             is => 'Number',
             via => 'attributes',
@@ -140,52 +140,52 @@ class Genome::Sample {
             is_mutable => 1,
             doc => 'ID of the source of this sample, either a Genome::Individual or Genome::PopulationGroup',
         },
-        source => { 
+        source => {
             is => 'Genome::SampleSource',
             id_by => 'source_id',
             doc => 'The patient/individual organism or group from which the sample was taken, or the population for pooled samples.',
         },
-        source_type => { 
+        source_type => {
             is => 'Text',
             calculate_from => 'source',
-            calculate => q{ 
+            calculate => q{
                 return unless $source;
-                return $source->subject_type; 
+                return $source->subject_type;
             },
             doc => 'Plain text type of the sample source',
         },
-        source_name => { 
-            via => 'source', 
-            to => 'name', 
+        source_name => {
+            via => 'source',
+            to => 'name',
             doc => 'Name of the sample source',
         },
-        source_common_name => { 
-            via => 'source', 
+        source_common_name => {
+            via => 'source',
             to => 'common_name',
             doc => 'Common name of the sample source',
         },
         # These patient properties are for convenience, since the vast majority of sample
         # sources are of type Genome::Individual
-        patient => { 
-            is => 'Genome::Individual', 
+        patient => {
+            is => 'Genome::Individual',
             id_by => 'source_id',
-            doc => 'The patient/individual organism from which the sample was taken.' 
+            doc => 'The patient/individual organism from which the sample was taken.'
         },
-        patient_name => { 
-            via => 'patient', 
-            to => 'name', 
-            doc => 'The system name for a patient (subset of the sample name)' 
+        patient_name => {
+            via => 'patient',
+            to => 'name',
+            doc => 'The system name for a patient (subset of the sample name)'
         },
-        patient_common_name => { 
-            via => 'patient', 
-            to => 'common_name', 
+        patient_common_name => {
+            via => 'patient',
+            to => 'common_name',
             doc => 'Common name of the patient, eg AML1',
         },
-        age => { 
+        age => {
             is => 'Number',
-            via => 'attributes', 
+            via => 'attributes',
             to => 'attribute_value',
-            where => [ attribute_label => 'age' ], 
+            where => [ attribute_label => 'age' ],
             is_mutable => 1,
             doc => 'Age of the patient at the time of sample taking.',
         },
@@ -197,10 +197,10 @@ class Genome::Sample {
             is_mutable => 1,
             doc => 'BMI of the patient at the time of sample taking.',
         },
-        tcga_name => { 
-            via => 'attributes', 
+        tcga_name => {
+            via => 'attributes',
             to => 'attribute_value',
-            where => [ 'nomenclature like' => 'TCGA%', attribute_label => 'biospecimen_barcode_side'], 
+            where => [ 'nomenclature like' => 'TCGA%', attribute_label => 'biospecimen_barcode_side'],
             is_mutable => 1,
             doc => 'TCGA name of the sample, if available',
         },
@@ -216,25 +216,25 @@ class Genome::Sample {
             to => 'taxon_id',
             doc => 'Taxon id for this sample via the source.',
         },
-        species_name => { 
+        species_name => {
             via => 'taxon',
             to =>  'name',
-            doc => 'Name of the species of the sample source\'s taxonomic category' 
+            doc => 'Name of the species of the sample source\'s taxonomic category'
         },
-        sub_type => { 
-            calculate_from => ['_sub_type1','_sub_type2'], 
-            calculate => q|$_sub_type1 or $_sub_type2| 
-        }, 
-        _sub_type1 => { 
-            via => 'attributes', 
-            to => 'attribute_value', 
-            where => [ attribute_label => 'sub-type' ], 
+        sub_type => {
+            calculate_from => ['_sub_type1','_sub_type2'],
+            calculate => q|$_sub_type1 or $_sub_type2|
+        },
+        _sub_type1 => {
+            via => 'attributes',
+            to => 'attribute_value',
+            where => [ attribute_label => 'sub-type' ],
             is_mutable => 1,
         },
-        _sub_type2 => { 
-            via => 'attributes', 
+        _sub_type2 => {
+            via => 'attributes',
             to => 'attribute_value',
-            where => [ attribute_label => 'subtype' ], 
+            where => [ attribute_label => 'subtype' ],
             is_mutable => 1,
         },
     ],
@@ -244,8 +244,8 @@ class Genome::Sample {
             reverse_as => 'subject',
             doc => 'Models that use this sample',
         },
-        libraries => { 
-            is => 'Genome::Library', 
+        libraries => {
+            is => 'Genome::Library',
             reverse_as => 'sample',
             is_many => 1,
             doc => 'Libraries that were created from the sample',
@@ -274,7 +274,7 @@ sub check_genotype_data {
     my $self = shift;
     my $genotype_instrument_data = shift;
 
-    Carp::confess $self->error_message("No genotype instrument data provided.") 
+    Carp::confess $self->error_message("No genotype instrument data provided.")
         unless $genotype_instrument_data;
 
     Carp::confess $self->error_message("Genotype instrument data is not a Genome::InstrumentData::Imported object.")
@@ -308,7 +308,7 @@ sub set_default_genotype_data {
     if (defined $self->default_genotype_data_id) {
         return 1 if $self->default_genotype_data_id eq $genotype_data_id;
         unless ($allow_overwrite) {
-            Carp::confess "Attempted to overwrite current genotype instrument data id " . $self->default_genotype_data_id . 
+            Carp::confess "Attempted to overwrite current genotype instrument data id " . $self->default_genotype_data_id .
                 " for sample " . $self->id . " with genotype data id $genotype_data_id " .
                 " without setting the overwrite flag!";
         }
@@ -320,7 +320,7 @@ sub set_default_genotype_data {
     unless (@genotype_models) {
         $self->warning_message("Found no default genotype models using sample " . $self->__display_name__);
     }
-    else { 
+    else {
         for my $genotype_model ($self->default_genotype_models) {
             $genotype_model->request_builds_for_dependent_cron_ref_align;
             $self->status_message("Requested builds for reference alignment models dependent on genotype model " . $genotype_model->id);
@@ -332,7 +332,7 @@ sub set_default_genotype_data {
 
 sub default_genotype_models {
     my $self = shift;
-    
+
     my $genotype_data_id = $self->default_genotype_data_id;
     return unless defined $genotype_data_id;
     return if $genotype_data_id eq 'none';

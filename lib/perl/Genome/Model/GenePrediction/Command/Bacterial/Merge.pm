@@ -80,7 +80,7 @@ class Genome::Model::GenePrediction::Command::Bacterial::Merge {
             doc => "only run specified phase (1,2,3,4,or 5)",
             valid_values => ['1', '2', '3', '4', '5'],
         },
-        debug_file => {
+        debug_file_path => {
             is  => 'String',
             doc => "path to debug file",
         },
@@ -263,7 +263,7 @@ sub execute
     }
 
     my $debug_fh   = IO::File->new();
-    my $debug_file = $self->debug_file;
+    my $debug_file = $self->debug_file_path;
     $debug_fh->open(">$debug_file")
         or die "Can't open '$debug_file': $OS_ERROR";
     $self->_debug_fh($debug_fh);

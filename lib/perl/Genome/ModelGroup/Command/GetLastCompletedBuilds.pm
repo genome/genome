@@ -43,6 +43,7 @@ sub execute {
             die $self->error_message("Found no last_completed_build for model " . $model->__display_name__);
         }
     }
+    @builds = sort {$a->date_completed cmp $b->date_completed} @builds;
     $self->builds(\@builds);
 
     if ($self->print_output) {
