@@ -26,6 +26,11 @@ Genome::Sample::Command::Import::_create_import_command_for_config({
                 calculate => sub{ my $_individual_name = shift; $_individual_name =~ s/^TEST\-//i; return $_individual_name; },
             },
         },
+        library_attributes => {
+            transcript_strand => {
+                default_value => "unstranded",
+            },
+        },
     });
 my $meta = Genome::Sample::Command::Import::Test->__meta__;
 ok($meta, 'class meta for command to import test namespace sample');
@@ -57,6 +62,7 @@ my %import_params = (
     extraction_type => 'genomic dna',
     sample_attributes => [qw/ age_baseline=50 mi_baseline=11.45 /],
     individual_attributes => [ 'race=oompa loompa' ],
+    library_attributes => ['transcript_strand=unstranded'],
 );
 my $import = Genome::Sample::Command::Import::Test->create(
     name => $name,
@@ -77,6 +83,7 @@ is($import->_sample->nomenclature, 'TeSt', 'sample nomenclature');
 is($import->_sample->extraction_label, $name, 'sample extraction label');
 is($import->_sample->extraction_type, 'genomic dna', 'sample extraction type');
 is($import->_sample->tissue_desc, 'blood', 'sample tissue');
+is($import->_library->transcript_strand, 'unstranded', 'library attribute');
 is(eval{ $import->_sample->attributes(attribute_label => 'age_baseline')->attribute_value; }, 50, 'sample age_baseline');
 is(eval{ $import->_sample->attributes(attribute_label => 'mi_baseline')->attribute_value; }, 11.45, 'sample mi_baseline');
 is_deeply($import->_sample->source, $import->_individual, 'sample source');
