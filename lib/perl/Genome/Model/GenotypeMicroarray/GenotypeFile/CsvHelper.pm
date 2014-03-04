@@ -10,7 +10,7 @@ class Genome::Model::GenotypeMicroarray::GenotypeFile::CsvHelper {
 };
 
 sub column_names {
-    return [qw/ chromosome position alleles reference id sample_id log_r_ratio gc_score cnv_value cnv_confidence allele1 allele2 /];
+    return [qw/ chromosome position alleles reference id sample_name log_r_ratio gc_score cnv_value cnv_confidence allele1 allele2 /];
 }
 
 1;
