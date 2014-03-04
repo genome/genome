@@ -21,7 +21,7 @@ sub execute {
     my $self = shift;
     my $temp_dir = Genome::Sys->create_temp_directory;
     my $tarball = "$temp_dir/mitel.tar.gz";
-    my $cmd = "wget ".$self->data_url." -O $temp_dir/mitel.tar.gz --no-check-certificate";
+    my $cmd = sprintf(q(curl --silent --insecure --output %s %s), $tarball, $self->data_url);
     Genome::Sys->shellcmd(cmd => $cmd);
 
     $cmd = "tar -xzf $tarball --directory $temp_dir";
