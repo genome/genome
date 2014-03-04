@@ -70,7 +70,7 @@ sub _build_from_vcf_entry {
     $genotype->{allele2} = $alleles[1];
 
     for my $info_field ( @{Genome::Model::GenotypeMicroarray::GenotypeFile::VcfHelper->supported_info_fields} ) {
-        my $value =  $genotype->info( $info_field->{name});
+        my $value =  $genotype->info($info_field->{id});
         $genotype->{$info_field->{name}} = defined $value ? $value : 'NA';
     }
 
