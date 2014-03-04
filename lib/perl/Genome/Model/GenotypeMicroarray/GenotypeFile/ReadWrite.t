@@ -35,8 +35,8 @@ my $entry_factory = Genome::Model::GenotypeMicroarray::GenotypeFile::EntryFactor
 ###
 # TSV [inst data] to TSV [old build]
 my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->build_reader(
-    Genome::Model::GenotypeMicroarray::Test::instrument_data(),
-    Genome::Model::GenotypeMicroarray::Test::variation_list_build(),
+    source => Genome::Model::GenotypeMicroarray::Test::instrument_data(),
+    variation_list_build => Genome::Model::GenotypeMicroarray::Test::variation_list_build(),
 );
 ok($reader, 'build reader');
 my $output_tsv = $tmpdir.'/genotypes.tsv';
@@ -54,7 +54,7 @@ is(File::Compare::compare($output_tsv, $example_legacy_build_orignal_genotype_fi
 
 ###
 # TSV [legacy build] to VCF [new build]
-$reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->build_reader($example_legacy_build);
+$reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->build_reader(source => $example_legacy_build);
 ok($reader, 'create reader');
 my $output_vcf = $tmpdir.'/genotypes.vcf';
 $writer = Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory->build_writer($output_vcf.':sample_name=__TEST_SAMPLE__');
@@ -70,7 +70,7 @@ is(File::Compare::compare($output_vcf, $example_build_original_genotype_file), 0
 
 ###
 # VCF [new build] to CSV [comma]
-$reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->build_reader($example_build);
+$reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->build_reader(source => $example_build);
 ok($reader, 'create reader');
 my $output_csv = $tmpdir.'/genotypes.csv';
 $writer = Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory->build_writer($output_csv.':sample_name=__TEST_SAMPLE__:separator=,');
