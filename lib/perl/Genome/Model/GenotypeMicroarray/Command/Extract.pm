@@ -120,22 +120,32 @@ sub execute {
     my $self = shift;
     $self->status_message('Extract genotytpes...');
 
-    $DB::single=1;
     my $resolve_source = $self->resolve_source;
     return if not $resolve_source;
 
     my $filters = $self->_create_filters;
     return if not $filters;
 
-    my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->build_reader($self->source, $self->variation_list_build);
+    my $entry_factory = Genome::Model::GenotypeMicroarray::GenotypeFile::EntryFactory->create(
+        sample_name => $self->sample->name,
+    );
+    return if not $entry_factory;
+
+    my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->build_reader(
+        source => $self->source,
+        variation_list_build => $self->variation_list_build,
+    );
     return if not $reader;
 
-    my $writer = Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory->build_writer($self->output.':sample_name='.$self->sample->name);
+    my $writer = Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory->build_writer(
+        $self->output.':sample_name='.$self->sample->name,
+    );
     return if not $writer;
 
     my %alleles;
     my %metrics = ( input => 0, filtered => 0, output => 0, );
-    GENOTYPE: while ( my $genotype = $reader->next ) {
+    GENOTYPE: while ( my $prototype = $reader->next ) {
+        my $genotype = $entry_factory->build_entry($prototype);
         $metrics{input}++;
         for my $filter ( @$filters ) {
             next GENOTYPE if not $filter->filter($genotype);
@@ -342,30 +352,6 @@ sub _create_filters {
     }
 
     return \@filters;
-}
-#<>#
-
-#< OPEN WRITER >#
-sub _open_writer {
-    my $self  = shift;
-    $self->status_message('Open writer...');
-
-    my $output = $self->output;
-    $self->status_message('Output file: '.$output);
-    my $output_format = $self->output_format;
-    $self->status_message('Output format: '.$output_format);
-    my $writer;
-    if ( $output_format eq 'vcf' ) {
-        die "VCF not implmented!";
-    }
-    else {
-        my %writer_params = ( output => $output );
-        $writer_params{ headers} = [ $self->fields ] if $output_format =~ /\-headers$/;
-        $writer = Genome::Utility::IO::Writer->create(%writer_params);
-    }
-
-    $self->status_message('Open writer...done');
-    return $writer;
 }
 #<>#
 
