@@ -8,12 +8,9 @@ use strict;
 use warnings;
 
 use Test::More;
-use Data::Dumper;
-require File::Temp;
 require File::Compare;
 
 use above 'Genome';
-
 
 ok(init(), 'succesfully completed init');
 ok(test_dependent_cron_ref_align(), 'successfully completed test_dependent_cron_ref_align');
@@ -161,123 +158,25 @@ sub test_dependent_cron_ref_align_init {
     return 1;
 }
 
-
 sub test_execute_build {
-    my $testdir = $ENV{GENOME_TEST_INPUTS} . '/GenotypeMicroarray';
 
-    # ref
-    my %pos_seq = (
-        752566 => 'G',
-        752721 => 'A',
-        798959 => 'G',
-        800007 => 'T',
-        838555 => 'C',
-        846808 => 'C',
-        854250 => 'A',
-        861808 => 'A',
-        861810 => 'T',
-        873558 => 'G',
-        882033 => 'G',
-    );
-    #my $build_37 = Genome::Model::Build::ReferenceSequence->get(name => 'GRCh37-lite-build37');
-    my $build_37 = Genome::Model::Build::ReferenceSequence->__define__(
-        name => '__TEST_REF__',
-        version => 37,
-    );
-    no warnings;
-    *Genome::Model::Build::ReferenceSequence::sequence = sub{ return $pos_seq{$_[2]}; };
-    *Genome::Model::Build::ReferenceSequence::chromosome_array_ref = sub{ return [qw/ 1 /]; };
-    use warnings;
-    ok($build_37, 'get build_37') or return;
+    my $example_build = Genome::Model::GenotypeMicroarray::Test->example_build;
+    ok($example_build, 'example genotype microarray build');
 
-    # dbsnp
-    my $dbsnp_file = $testdir.'/dbsnp/dbsnp.132';
-    my $fl = Genome::Model::Tools::DetectVariants2::Result::Manual->__define__(
-        description => '__TEST__DBSNP132__',
-        username => 'apipe-tester',
-        file_content_hash => 'c746fb7b7a88712d27cf71f8262dd6e8',
-        output_dir => $testdir.'/dbsnp',
-    );
-    $fl->lookup_hash($fl->calculate_lookup_hash());
-    ok($fl, 'create dv2 result');
-    my $variation_list_build = Genome::Model::Build::ImportedVariationList->__define__(
-        model => Genome::Model->get(2868377411),
-        reference => $build_37,
-        snv_result => $fl,
-        version => 132,
-    );
-    ok($variation_list_build, 'create variation list build');
+    my $build = Genome::Model::GenotypeMicroarray::Test->build;
+    ok($build, 'genotype microarray build');
 
-    my $sample = Genome::Sample->__define__(
-        id => -8888,
-        name => '__TEST__SAMPLE__',
-    );
-    ok($sample, 'create sample');
-    my $library = Genome::Library->__define__(
-        name => $sample->name.'-microarraylib',
-        sample => $sample,
-    );
-    ok($library, 'create library');
-    my $instrument_data = Genome::InstrumentData::Imported->__define__(
-        id => -7777,
-        library => $library,
-        import_format => 'genotype file',
-        sequencing_platform => 'infinium',
-    );
-    ok($instrument_data, 'create instrument data');
-    ok(
-        $instrument_data->add_attribute(attribute_label => 'genotype_file', attribute_value => $testdir.'/instdata/snpreport/-7777'),
-        'add attr to inst data for genotype file',
-    );
-    $sample->default_genotype_data_id($instrument_data->id);
-
-    no warnings;
-    *Genome::FeatureList::file_path = sub{ return $dbsnp_file };
-    use warnings;
-
-    my $pp = Genome::ProcessingProfile::GenotypeMicroarray->get(name => 'infinium wugc');
-    ok($pp, 'get genotype microarray pp') or return;
-
-    my $model = Genome::Model::GenotypeMicroarray->create(
-        name => 'Test Genotype Microarray pp',
-        processing_profile => $pp,
-        subject_id => $sample->id,
-        subject_class_name => $sample->class,
-        reference_sequence_build => $build_37,
-        dbsnp_build => $variation_list_build,
-    );
-    ok($model, 'create genotype microarray model') or return;
-
-    my $example_build = Genome::Model::Build::GenotypeMicroarray->__define__(
-        model => $model,
-        data_directory => $testdir.'/build',
-    );
-    ok($example_build, 'define example genotype microarray build');
-
-    my $tempdir = File::Temp::tempdir(CLEANUP => 1);
-    my $build = Genome::Model::Build::GenotypeMicroarray->create(
-        model => $model,
-        data_directory => $tempdir,
-    );
-    ok($build, 'create genotype microarray build');
-
-    ok(!Genome::Model::GenotypeMicroarray->_execute_build($build), 'execute build failed w/ inst data');
-
-    $model->add_instrument_data($instrument_data);
-    $build->add_instrument_data($instrument_data);
     ok(Genome::Model::GenotypeMicroarray->_execute_build($build), 'execute build');
-    ok($model->dbsnp_build, 'set dbsnp build on model');
-    ok($build->dbsnp_build, 'set dbsnp build on build');
 
     my $original_genotype_vcf = $build->original_genotype_vcf;
-    is($original_genotype_vcf, $tempdir.'/'.$sample->id.'.original.vcf', 'oringinal genotype vcf name');
+    is($original_genotype_vcf, $build->data_directory.'/'.$build->subject->id.'.original.vcf', 'oringinal genotype vcf name');
 
     my $original_genotype_file = $build->original_genotype_file_path;
-    is($original_genotype_file, $tempdir.'/'.$sample->id.'.original', 'oringinal genotype file name');
+    is($original_genotype_file, $build->data_directory.'/'.$build->subject->id.'.original', 'oringinal genotype file name');
     is(File::Compare::compare($original_genotype_file, $example_build->original_genotype_file_path), 0, 'oringinal genotype file matches');
 
     my $genotype_file = $build->genotype_file_path;
-    is($genotype_file, $tempdir.'/'.$sample->id.'.genotype', 'genotype file name');
+    is($genotype_file, $build->data_directory.'/'.$build->subject->id.'.genotype', 'genotype file name');
     is(File::Compare::compare($genotype_file, $example_build->genotype_file_path), 0, 'genotype file matches');
     is(File::Compare::compare($build->formatted_genotype_file_path, $example_build->formatted_genotype_file_path), 0, 'formatted genotype file matches');
 
@@ -286,12 +185,13 @@ sub test_execute_build {
     is(File::Compare::compare($gold2geno_file, $example_build->gold2geno_file_path), 0, 'gold2geno file matches');
 
     my $copy_number_file = $build->copy_number_file_path;
-    is($copy_number_file, $build->data_directory.'/-8888.copynumber', 'copy number file name');
+    is($copy_number_file, $build->data_directory.'/'.$build->subject->id.'.copynumber', 'copy number file name');
     is(File::Compare::compare($copy_number_file, $example_build->copy_number_file_path), 0, 'copy number file matches');
 
     my $snvs_bed = $build->snvs_bed;
     is($snvs_bed, $build->data_directory.'/gold_snp.v2.bed', 'snvs bed name');
-    is(File::Compare::compare($snvs_bed, $testdir.'/build/gold_snp.v2.bed'), 0, 'snvs bed file matches');
+    is(File::Compare::compare($snvs_bed, $example_build->snvs_bed), 0, 'snvs bed file matches');
 
     return 1;
 }
+
