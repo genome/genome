@@ -1399,19 +1399,21 @@ sub shellcmd {
         eval {
                 my ($restore_stdout);
                 if ($redirect_stdout) {
-                    open(my $savedout, '>&', \*STDOUT) || die "Can't dup STDOUT: $!";
+                    no warnings 'once'; # OLDOUT is used only once, not
+                    open(OLDOUT, '>&STDOUT') || die "Can't dup STDOUT: $!";
                     open(STDOUT, '>', $redirect_stdout) || die "Can't redirect stdout to $redirect_stdout: $!";
                     $restore_stdout = UR::Util::on_destroy(sub {
-                        open(STDOUT, '>&', $savedout);
+                        open(STDOUT, '>&OLDOUT');
                     });
                 }
 
                 my ($restore_stderr);
                 if ($redirect_stderr) {
-                    open(my $savederr, '>&', \*STDERR) || die "Can't dup STDERR: $!";
+                    no warnings 'once'; # OLDERR is used only once, not
+                    open(OLDERR, '>&STDERR') || die "Can't dup STDERR: $!";
                     open(STDERR, '>', $redirect_stderr) || die "Can't redirect stderr to $redirect_stderr: $!";
                     $restore_stderr = UR::Util::on_destroy(sub {
-                        open(STDERR, '>&', $savederr);
+                        open(STDERR, '>&OLDERR');
                     });
                 }
 
