@@ -160,11 +160,11 @@ sub test_output_exists {
 sub test_no_output_exists {
     my $cmd = shift;
 
-    ok(!(-s $cmd->report), 'Did not find "report" output: ' . $cmd->report);
-    ok(!(-s $cmd->report_xls), 'Did not find "report.xls" output'  .  $cmd->report_xls);
-
-    my $review_dir = File::Spec->join($cmd->_output_dir, 'review');
-    ok(!(-d $review_dir), 'Did not find review output directory: ' . $review_dir);
+    is($cmd->report, 'skipped', "Report file is 'skipped'");
+    is($cmd->report_xls, 'skipped', "Report xls is 'skipped'");
+    is($cmd->review_dir, 'skipped', "Review directory is 'skipped'");
+    is($cmd->review_bed, 'skipped', "Review bed file is 'skipped'");
+    is($cmd->review_xml, 'skipped', "Review cml file is 'skipped'");
 }
 
 sub ensure_symlinks_in_build_directory {

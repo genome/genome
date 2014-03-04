@@ -52,28 +52,18 @@ class Genome::Model::SomaticVariation::Command::CreateReport {
     has_optional_output => [
         report => {
             is => 'Path',
-            calculate =>  q{ File::Spec->join($_output_dir, 'snvs.indels.annotated') },
-            calculate_from => ['_output_dir'],
         },
         report_xls => {
             is => 'Path',
-            calculate =>  q{ $report . '.xls' },
-            calculate_from => ['report'],
         },
         review_dir => {
             is => 'Path',
-            calculate => q{ File::Spec->join($_output_dir, 'review') },
-            calculate_from => ['_output_dir'],
         },
         review_bed => {
             is => 'Path',
-            calculate =>  q{ File::Spec->join($review_dir, $sample_name . '.bed') },
-            calculate_from => ['review_dir', 'sample_name' ],
         },
         review_xml => {
             is => 'Path',
-            calculate =>  q{ File::Spec->join($review_dir, $sample_name . '.xml') },
-            calculate_from => ['review_dir', 'sample_name' ],
         },
     ],
     has_transient_optional => [
@@ -115,12 +105,22 @@ sub execute {
 
     unless ($self->input_files_exist) {
         $self->status_message("Snvs or indels file not found. Skipping Create Report.");
+        $self->report('skipped');
+        $self->report_xls('skipped');
+        $self->review_dir('skipped');
+        $self->review_bed('skipped');
+        $self->review_xml('skipped');
         return 1;
     }
 
     $self->status_message("Processing model with sample_name: " . $self->sample_name);
 
     $self->_output_dir($self->create_allocation());
+    $self->report(File::Spec->join($self->_output_dir, 'snvs.indels.annotated'));
+    $self->report_xls($self->report . '.xls');
+    $self->review_dir(get_or_create_directory(File::Spec->join($self->_output_dir, 'review')));
+    $self->review_bed(File::Spec->join($self->review_dir, $self->sample_name . '.bed'));
+    $self->review_xml(File::Spec->join($self->review_dir, $self->sample_name . '.xml'));
 
     my $snv_file   = $self->stage_snv_file();
     my $indel_file = $self->stage_indel_file();
@@ -575,13 +575,6 @@ sub indels_dir {
     my $self = shift;
     return get_or_create_directory(
         File::Spec->join($self->_output_dir, 'indels'),
-    );
-}
-
-sub review_dir {
-    my $self = shift;
-    return get_or_create_directory(
-        File::Spec->join($self->_output_dir, 'review'),
     );
 }
 
