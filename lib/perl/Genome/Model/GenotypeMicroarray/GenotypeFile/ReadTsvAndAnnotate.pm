@@ -47,7 +47,7 @@ sub read {
     $self->_position($position);
 
     return if not defined $id;
-    return Genome::Model::GenotypeMicroarray::GenotypeFile::VcfHelper->convert_genotype_to_vcf_entry($self->_genotypes->{$id});
+    return $self->_genotypes->{$id};
 }
 
 sub _load_genotypes {
