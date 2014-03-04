@@ -22,10 +22,13 @@ my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Comma
 my $source_sra = $test_dir.'/input.sra';
 ok(-s $source_sra, 'source sra exists') or die;
 
+my $analysis_project = Genome::Config::AnalysisProject->create(name => '__TEST_AP__');
+ok($analysis_project, 'create analysis project');
 my $sample = Genome::Sample->create(name => '__TEST_SAMPLE__');
 ok($sample, 'Create sample');
 
 my $cmd = Genome::InstrumentData::Command::Import::Basic->create(
+    analysis_project => $analysis_project,
     sample => $sample,
     source_files => [$source_sra],
     import_source_name => 'sra',
@@ -49,6 +52,8 @@ is($instrument_data->is_paired_end, 0, 'is_paired_end correctly set');
 is($instrument_data->read_count, 148, 'read_count correctly set');
 is($instrument_data->read_length, 232, 'read_length correctly set');
 is(eval{$instrument_data->attributes(attribute_label => 'original_data_path_md5')->attribute_value;}, 'dcd04a5bcb2d18f29c21c25b0f2387e3', 'original_data_path_md5 correctly set');
+is($instrument_data->analysis_projects, $analysis_project, 'set analysis project');
+
 my $allocation = $instrument_data->allocations;
 ok($allocation, 'got allocation');
 ok($allocation->kilobytes_requested > 0, 'allocation kb was set');

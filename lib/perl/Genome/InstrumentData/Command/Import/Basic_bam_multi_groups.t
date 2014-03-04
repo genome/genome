@@ -18,6 +18,8 @@ use Test::More;
 use_ok('Genome::InstrumentData::Command::Import::Basic') or die;
 use_ok('Genome::InstrumentData::Command::Import::WorkFlow::Helpers') or die;
 
+my $analysis_project = Genome::Config::AnalysisProject->create(name => '__TEST_AP__');
+ok($analysis_project, 'create analysis project');
 my $sample = Genome::Sample->create(name => '__TEST_SAMPLE__');
 ok($sample, 'Create sample');
 
@@ -26,6 +28,7 @@ my $source_bam = $test_dir.'/input.rg-multi.bam';
 ok(-s $source_bam, 'source bam exists') or die;
 
 my $cmd = Genome::InstrumentData::Command::Import::Basic->create(
+    analysis_project => $analysis_project,
     sample => $sample,
     source_files => [$source_bam],
     import_source_name => 'broad',
@@ -52,6 +55,7 @@ for my $instrument_data ( @instrument_data ) {
     is($instrument_data->read_count, 128, 'read_count correctly set');
     is($instrument_data->read_length, 100, 'read_length correctly set');
     is($instrument_data->attributes(attribute_label => 'segment_id')->attribute_value, $read_group, 'segment_id correctly set');
+    is($instrument_data->analysis_projects, $analysis_project, 'set analysis project');
 
     my $bam_path = $instrument_data->bam_path;
     ok(-s $bam_path, 'bam path exists');

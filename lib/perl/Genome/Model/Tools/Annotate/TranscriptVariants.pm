@@ -610,7 +610,6 @@ sub _main_annotation_loop {
             for my $variant_allele (@variant_alleles) {
                 # annotate variant with this allele
                 $variant->{variant} = $variant_allele;
-                $DB::single = 1;
                 my @transcripts = $annotator->$annotation_method(%$variant);
                 $self->_print_annotation($variant, \@transcripts);
             }

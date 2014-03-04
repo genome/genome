@@ -21,8 +21,12 @@ my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Comma
 my $source_files_tsv = $test_dir.'/info.tsv';
 my @source_files = (qw/ bam1 bam2 bam3 /);
 
+my $analysis_project = Genome::Config::AnalysisProject->create(name => '__TEST_AP__');
+ok($analysis_project, 'create analysis project');
+
 # Sample needed
 my $manager = Genome::InstrumentData::Command::Import::Manager->create(
+    analysis_project => $analysis_project,
     source_files_tsv => $source_files_tsv,
     list_config => "printf %s NOTHING_TO_SEE_HERE;1;2",
     launch_config => "echo %{job_name} LAUNCH!",
@@ -56,6 +60,7 @@ is(@samples, 2, 'define 2 samples');
 
 # Library needed
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
+    analysis_project => $analysis_project,
     source_files_tsv => $source_files_tsv,
     list_config => "printf %s NOTHING_TO_SEE_HERE;1;2",
     launch_config => "echo %{job_name} LAUNCH!",
@@ -88,6 +93,7 @@ is(@libraries, 2, 'define 2 libraries');
 
 # Import needed
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
+    analysis_project => $analysis_project,
     source_files_tsv => $source_files_tsv,
     list_config => "printf %s NOTHING_TO_SEE_HERE;1;2",
 );
@@ -107,6 +113,7 @@ is($manager->_list_status_column, 1, '_list_status_column');
 
 # One has import running, others are needed
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
+    analysis_project => $analysis_project,
     source_files_tsv => $source_files_tsv,
     list_config => 'printf "%s %s\\n%s %s\\n%s %s" TeSt-0000-00.1 pend TeSt-0000-00.2 run TeSt-0000-01.1 run;1;2',
     launch_config => "echo %{job_name} LAUNCH!",
@@ -122,6 +129,7 @@ ok(!grep({ $_->{instrument_data_file} } @$imports_aryref), 'imports aryref does 
 
 # Print commands
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
+    analysis_project => $analysis_project,
     source_files_tsv => $source_files_tsv,
     launch_config => "echo %{job_name} LAUNCH!", # successful imports, will not launch
     show_import_commands => 1,
@@ -147,6 +155,7 @@ is(@inst_data, 3, 'define 3 inst data');
 
 # Fake successful imports by pointing bam_path to existing info.tsv
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
+    analysis_project => $analysis_project,
     source_files_tsv => $source_files_tsv,
     list_config => "printf %s NOTHING_TO_SEE_HERE;1;2",
     launch_config => "echo %{job_name} LAUNCH!", # successful imports, will not launch
@@ -163,15 +172,16 @@ ok(!grep({ $_->{job_status} } @$imports_aryref), 'imports aryref does not have j
 is_deeply(
     [ map { $manager->_resolve_launch_command_for_import($_) } @$imports_aryref ],
     [
-        "echo TeSt-0000-00.1 LAUNCH! genome instrument-data import basic --sample name=TeSt-0000-00 --source-files bam1 --import-source-name TeSt --instrument-data-properties lane='8'",
-        "echo TeSt-0000-00.2 LAUNCH! genome instrument-data import basic --sample name=TeSt-0000-00 --source-files bam2 --import-source-name TeSt --instrument-data-properties lane='8'",
-        "echo TeSt-0000-01.1 LAUNCH! genome instrument-data import basic --sample name=TeSt-0000-01 --source-files bam3 --import-source-name TeSt --instrument-data-properties lane='7'",
+        "echo TeSt-0000-00.1 LAUNCH! genome instrument-data import basic --sample name=TeSt-0000-00 --analysis-project id=".$analysis_project->id." --source-files bam1 --import-source-name TeSt --instrument-data-properties lane='8'",
+        "echo TeSt-0000-00.2 LAUNCH! genome instrument-data import basic --sample name=TeSt-0000-00 --analysis-project id=".$analysis_project->id." --source-files bam2 --import-source-name TeSt --instrument-data-properties lane='8'",
+        "echo TeSt-0000-01.1 LAUNCH! genome instrument-data import basic --sample name=TeSt-0000-01 --analysis-project id=".$analysis_project->id." --source-files bam3 --import-source-name TeSt --instrument-data-properties lane='7'",
      ],
      'launch commands',
 );
 
 # fail - no name column in csv
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
+    analysis_project => $analysis_project,
     source_files_tsv => $test_dir.'/invalid-no-sample-name-column.tsv',
 );
 ok($manager, 'create manager');

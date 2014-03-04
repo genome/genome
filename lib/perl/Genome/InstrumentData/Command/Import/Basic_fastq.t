@@ -25,10 +25,13 @@ my @source_files = (
 );
 is(grep({ -s $_ } @source_files), 2, 'source fastqs exist');
 
+my $analysis_project = Genome::Config::AnalysisProject->create(name => '__TEST_AP__');
+ok($analysis_project, 'create analysis project');
 my $sample = Genome::Sample->create(name => '__TEST_SAMPLE__');
 ok($sample, 'Create sample');
 
 my $cmd = Genome::InstrumentData::Command::Import::Basic->create(
+    analysis_project => $analysis_project,
     sample => $sample,
     source_files => \@source_files,
     import_source_name => 'broad',
@@ -60,6 +63,7 @@ is($instrument_data->read_count, 2000, 'read_count correctly set');
 is($instrument_data->read_length, 75, 'read_length correctly set');
 is(eval{ $instrument_data->attributes(attribute_label => 'lane')->attribute_value }, 2, 'lane correctly set');
 is(eval{ $instrument_data->attributes(attribute_label => 'flow_cell_id')->attribute_value }, 'XXXXXX', 'flow_cell_id correctly set');
+is($instrument_data->analysis_projects, $analysis_project, 'set analysis project');
 
 my $bam_path = $instrument_data->bam_path;
 ok(-s $bam_path, 'bam path exists');
