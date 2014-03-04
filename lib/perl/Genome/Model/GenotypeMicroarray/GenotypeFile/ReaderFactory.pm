@@ -13,19 +13,22 @@ class Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory {
 };
 
 sub build_reader {
-    my ($class, $for, $variation_list_build) = @_;
+    my ($class, %params) = @_;
 
-    Carp::confess('Nothing given to build reader!') if not $for;
+    Carp::confess('Nothing given to build reader!') if not %params;
+    my $source = delete $params{source};
+    Carp::confess('No source given to build reader!') if not $source;
 
-    if ( $for->isa('Genome::InstrumentData') ) {
+    if ( $source->isa('Genome::InstrumentData') ) {
+        my $variation_list_build = delete $params{variation_list_build};
         Carp::confess('No variation list build given to build reader!') if not $variation_list_build;
-        return $class->_build_reader_for_instrument_data($for, $variation_list_build);
+        return $class->_build_reader_for_instrument_data($source, $variation_list_build);
     }
-    elsif ( $for->isa('Genome::Model::Build::GenotypeMicroarray') ) {
-        return $class->_build_reader_for_build($for);
+    elsif ( $source->isa('Genome::Model::Build::GenotypeMicroarray') ) {
+        return $class->_build_reader_for_build($source);
     }
     else {
-        Carp::confess('Do not know how to build genotype file reader for source! '.$for->__display_name__);
+        Carp::confess('Do not know how to build genotype file reader for source! '.$source->__display_name__);
     }
 
 }
