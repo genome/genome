@@ -82,9 +82,11 @@ sub execute {
         my %params = (
             $self->params_for_result,
             expression_directory => $build->expression_directory($self->annotation_reference_transcripts_mode),
-            annotation_build => $build->annotation_build,
             reference_build => $build->reference_sequence_build,
         );
+        if (defined($build->annotation_build)) {
+            $params{annotation_build} = $build->annotation_build;
+        }
         delete($params{test_name});
         unless (Genome::InstrumentData::AlignmentResult::Command::CufflinksExpression->execute(%params)) {
             return;
@@ -103,15 +105,17 @@ sub params_for_result {
     unless ($alignment_result) {
         die $self->error_message('No alignment result found for build: '. $build->id);
     }
-
-    return (
+    my %params = (
         alignment_result_id => $alignment_result->id,
         cufflinks_version => $pp->expression_version,
         cufflinks_params => $pp->expression_params,
-        mask_reference_transcripts => $pp->mask_reference_transcripts,
         annotation_reference_transcripts_mode  => $self->annotation_reference_transcripts_mode,
         test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
     );
+    if ( defined($pp->mask_reference_transcripts) ) {
+        $params{mask_reference_transcripts} = $pp->mask_reference_transcripts;
+    };
+    return %params;
 }
 
 sub link_result_to_build {
