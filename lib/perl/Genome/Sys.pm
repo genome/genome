@@ -1397,19 +1397,24 @@ sub shellcmd {
         $t1 = time();
         my $system_retval;
         eval {
-                open my $savedout, '>&', \*STDOUT || die "Can't dup STDOUT: $!";
-                open my $savederr, '>&', \*STDERR || die "Can't dup STDERR: $!";
-                my $restore = UR::Util::on_destroy(sub {
-                    open(STDOUT, '>&', $savedout);
-                    open(STDERR, '>&', $savederr);
-                });
-
+                my ($restore_stdout);
                 if ($redirect_stdout) {
+                    open my $savedout, '>&', \*STDOUT || die "Can't dup STDOUT: $!";
                     open(STDOUT, '>', $redirect_stdout) || die "Can't redirect stdout to $redirect_stdout: $!";
+                    $restore_stdout = UR::Util::on_destroy(sub {
+                        open(STDOUT, '>&', $savedout);
+                    });
                 }
+
+                my ($restore_stderr);
                 if ($redirect_stderr) {
+                    open my $savederr, '>&', \*STDERR || die "Can't dup STDERR: $!";
                     open(STDERR, '>', $redirect_stderr) || die "Can't redirect stderr to $redirect_stderr: $!";
+                    $restore_stderr = UR::Util::on_destroy(sub {
+                        open(STDERR, '>&', $savederr);
+                    });
                 }
+
                 # Set -o pipefail ensures the command will fail if it contains pipes and intermediate pipes fail.
                 # Export SHELLOPTS ensures that if there are nested "bash -c"'s, each will inherit pipefail
                 my $shellopts_part = 'export SHELLOPTS;';
