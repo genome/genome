@@ -1018,10 +1018,10 @@ sub creation_grid_job {
     my $project_name = 'build' . $creation_build->id;
     my $grid_job = Genome::Site::TGI::GridJobsFinished->get(
         project_name => $project_name,
-        bjob_id => $lsf_job_id,
+        job_id => $lsf_job_id,
     );
     unless ($grid_job) {
-        $self->error_message('Failed to find grid job with projet '. $project_name .' and bjob_id '. $lsf_job_id);
+        $self->error_message('Failed to find grid job with project '. $project_name .' and job_id '. $lsf_job_id);
         return;
     }
     return $grid_job;
