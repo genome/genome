@@ -23,7 +23,7 @@ sub execute {
     my $temp_dir = Genome::Sys->create_temp_directory;
     my $infile = "$temp_dir/census.tsv";
     my $out = Genome::Sys->open_file_for_writing($self->output_file);
-    my $cmd = "wget ".$self->data_url." -O $infile --no-check-certificate";
+    my $cmd = sprintf(q(curl --silent --insecure --output %s %s), $infile, $self->data_url);
     Genome::Sys->shellcmd(cmd => $cmd);
     my $transformed_infile = "$infile.transformed";
     $cmd = "cat $infile | tr  '\n' > $transformed_infile";
