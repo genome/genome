@@ -16,13 +16,21 @@ require File::Temp;
 require File::Compare;
 use Test::More;
 
+use_ok('Genome::Model::GenotypeMicroarray::GenotypeFile::EntryFactory') or die;
 use_ok('Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory') or die;
 use_ok('Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory') or die;
 use_ok('Genome::Model::GenotypeMicroarray::Test') or die;
 
 my $testdir = Genome::Model::GenotypeMicroarray::Test::testdir();
 my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
-my %snp_id_mapping;
+
+my $example_legacy_build = Genome::Model::GenotypeMicroarray::Test::example_legacy_build();
+my $example_legacy_build_orignal_genotype_file = $example_legacy_build->original_genotype_file_path;
+
+my $example_build = Genome::Model::GenotypeMicroarray::Test::example_build();
+my $example_build_original_genotype_file = $testdir.'/rw/output.expected.vcf';
+
+my $entry_factory = Genome::Model::GenotypeMicroarray::GenotypeFile::EntryFactory->create(sample_name => $example_build->subject->name);
 
 ###
 # TSV [inst data] to TSV [old build]
@@ -32,24 +40,21 @@ my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->bui
 );
 ok($reader, 'build reader');
 my $output_tsv = $tmpdir.'/genotypes.tsv';
-my $writer = Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory->build_writer($output_tsv.':sample_name=__TEST_SAMPLE__');
+my $writer = Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory->build_writer($output_tsv.':sample_name=__TEST_SAMPLE__:fields=chromosome,position,alleles,id,sample_id,log_r_ratio,gc_score,cnv_value,cnv_confidence,allele1,allele2'
+);
 ok($writer, 'create writer');
 
 my @genotypes_from_instdata;
 while ( my $genotype = $reader->read ) {
-    $writer->write($genotype);
-    push @genotypes_from_instdata, $genotype;
+    $writer->write( $entry_factory->build_entry($genotype) );
 }
 $writer->output->flush;
-is_deeply(\@genotypes_from_instdata, Genome::Model::GenotypeMicroarray::Test::expected_genotypes(), 'read tsv and annotate genotypes match');
-is(File::Compare::compare($output_tsv, $testdir.'/rw/output.expected.tsv'), 0, 'read tsv and annotate, write to tsv output file matches');
-#print "gvimdiff $output_tsv $testdir/rw/output.expected.tsv\n"; <STDIN>;
+is(File::Compare::compare($output_tsv, $example_legacy_build_orignal_genotype_file), 0, 'read tsv and annotate, write to tsv output file matches');
+#print "gvimdiff $output_tsv $example_legacy_build_orignal_genotype_file\n"; <STDIN>;
 
 ###
-# TSV [old build] to VCF
-$reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->build_reader(
-    Genome::Model::GenotypeMicroarray::Test::example_legacy_build(),
-);
+# TSV [legacy build] to VCF [new build]
+$reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->build_reader($example_legacy_build);
 ok($reader, 'create reader');
 my $output_vcf = $tmpdir.'/genotypes.vcf';
 $writer = Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory->build_writer($output_vcf.':sample_name=__TEST_SAMPLE__');
@@ -57,12 +62,26 @@ ok($writer, 'create writer');
 
 my @genotypes_from_legacy_build;
 while ( my $genotype = $reader->read ) {
-    $writer->write($genotype);
-    push @genotypes_from_legacy_build, $genotype;
+    $writer->write( $entry_factory->build_entry($genotype) );
 }
 $writer->close;
-is_deeply(\@genotypes_from_legacy_build, \@genotypes_from_instdata, 'genotypes match');
-is(File::Compare::compare($output_vcf, $testdir.'/rw/output.expected.vcf'), 0, 'read tsv, write to vcf output file matches');
+is(File::Compare::compare($output_vcf, $example_build_original_genotype_file), 0, 'read tsv, write to vcf output file matches');
 #print "gvimdiff $output_vcf $testdir/rw/output.expected.vcf\n"; <STDIN>;
+
+###
+# VCF [new build] to CSV [comma]
+$reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->build_reader($example_build);
+ok($reader, 'create reader');
+my $output_csv = $tmpdir.'/genotypes.csv';
+$writer = Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory->build_writer($output_csv.':sample_name=__TEST_SAMPLE__:separator=,');
+ok($writer, 'create writer');
+
+my @genotypes_from_build;
+while ( my $genotype = $reader->next ) {
+    $writer->write( $entry_factory->build_entry($genotype) );
+}
+#$writer->close;
+is(File::Compare::compare($output_csv, $testdir.'/rw/output.expected.csv'), 0, 'read tsv, write to vcf output file matches');
+#print "gvimdiff $output_csv $testdir/rw/output.expected.csv\n"; <STDIN>;
 
 done_testing();
