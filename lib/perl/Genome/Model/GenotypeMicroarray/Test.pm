@@ -3,6 +3,7 @@ package Genome::Model::GenotypeMicroarray::Test;
 use strict;
 use warnings;
 
+require File::Temp;
 
 sub testdir {
     return $ENV{GENOME_TEST_INPUTS} . '/GenotypeMicroarray/v2';
@@ -59,7 +60,7 @@ sub variation_list_build { # FIXME upgrade to VCF
         model => $variation_list_model,
         reference => reference_sequence_build(),
         snv_result => $fl,
-        version => 'TEST',
+        version => 'vT',
     );
     die 'Failed to define variation list build' if not $cache{variation_list_build};
 
@@ -126,11 +127,8 @@ sub example_build {
     return $cache{example_build} if $cache{example_build};
 
     my $model = model();
-    $cache{example_build} = Genome::Model::Build::GenotypeMicroarray->__define__(
-        id => -222,
+    $cache{example_build} = Genome::Model::Build::GenotypeMicroarray->create(
         model => $model,
-        reference_sequence_build => $model->reference_sequence_build,
-        dbsnp_build => $model->dbsnp_build,
         data_directory => testdir().'/build',
     );
     $cache{example_build}->add_instrument_data( $model->instrument_data );
@@ -142,11 +140,8 @@ sub example_legacy_build {
     return $cache{example_legacy_build} if $cache{example_legacy_build};
 
     my $model = model();
-    $cache{example_legacy_build} = Genome::Model::Build::GenotypeMicroarray->__define__(
-        id => -333,
+    $cache{example_legacy_build} = Genome::Model::Build::GenotypeMicroarray->create(
         model => $model,
-        reference_sequence_build => $model->reference_sequence_build,
-        dbsnp_build => $model->dbsnp_build,
         data_directory => testdir().'/build-legacy',
     );
     $cache{example_legacy_build}->add_instrument_data( $model->instrument_data );
@@ -160,13 +155,8 @@ sub build {
     my $tempdir = File::Temp::tempdir(CLEANUP => 1);
     my $build = Genome::Model::Build::GenotypeMicroarray->create(
         model => $model,
-        instrument_data => $model->instrument_data,
-        reference => $model->reference,
-        dbsnp_build => $model->dbsnp_build,
         data_directory => $tempdir,
     );
-    ok($build, 'create genotype microarray build');
-    $build->add_instrument_data( $model->instrument_data );
 
     return $build;
 }
