@@ -131,7 +131,6 @@ sub request_builds_for_dependent_cron_ref_align {
     return 1;
 }
 
-
 sub _resolve_resource_requirements_for_build {
     return "-R 'select[mem>4000] rusage[mem=4000]' -M 4000000"
 }
@@ -166,11 +165,48 @@ sub _execute_build {
     }
     $self->debug_message('DB SNP build: '.$dbsnp_build->__display_name__);
 
+    # Original genotype VCF file
+    $self->debug_message('Create original genotype VCF file...');
+    my $original_genotype_vcf_file = $build->original_genotype_vcf_file_path;
+    $self->debug_message('Original genotype file: '.$original_genotype_vcf_file);
+    my $extract = Genome::Model::GenotypeMicroarray::Command::Extract->create(
+        instrument_data => $instrument_data,
+        variation_list_build => $dbsnp_build,
+        output => $original_genotype_vcf_file,
+    );
+    if ( not $extract ) {
+        $self->error_message('Failed to create command to create extract command original genotype VCF file!');
+        return;
+    }
+    $extract->dump_status_messages(1);
+    if ( not $extract->execute ) {
+        $self->error_message('Failed to execute command to create extract command original genotype VCF file!');
+        return;
+    }
+    # Check that genotypes were output
+    if ( $extract->genotypes_output == 0 ) {
+        $self->error_message('Executed extract command to create original genotype VCF file, but no genotypes were output. This means they were filtered or ignored because of ambiguous position.');
+        return;
+    }
+    # Check file exists
+    if ( not -e $original_genotype_vcf_file ) {
+        $self->error_message('Executed extract command to create original genotype VCF file and genotypes were output, but file is gone!');
+        return;
+    }
+    # Check that there are alleles
+    my @alleles = grep { $_ ne '--' } keys %{$extract->alleles};
+    if ( not @alleles ) {
+        $self->error_message('Executed command to create original genotype file, but there are no alleles!');
+
+        return;
+    }
+    $self->debug_message('Create original genotype VCF file...OK');
+
     # Original genotype file - has all the info and headers, with positions from this dbsnp
     $self->debug_message('Create original genotype file...');
     my $original_genotype_file = $build->original_genotype_file_path;
     $self->debug_message('Original genotype file: '.$original_genotype_file);
-    my $extract = Genome::Model::GenotypeMicroarray::Command::Extract->create(
+    $extract = Genome::Model::GenotypeMicroarray::Command::Extract->create(
         instrument_data => $instrument_data,
         variation_list_build => $dbsnp_build,
         output => $original_genotype_file.':separator=TAB:fields=chromosome,position,alleles,id,sample_id,log_r_ratio,gc_score,cnv_value,cnv_confidence,allele1,allele2:print_headers=1',
@@ -192,13 +228,6 @@ sub _execute_build {
     # Check file exists
     if ( not -e $original_genotype_file ) {
         $self->error_message('Executed command to create original genotype file and genotypes were output, but file is gone!');
-        return;
-    }
-    # Check that there are alleles
-    my @alleles = grep { $_ ne '--' } keys %{$extract->alleles};
-    if ( not @alleles ) {
-        $self->error_message('Executed command to create original genotype file, but there are no alleles!');
-
         return;
     }
     $self->debug_message('Create original genotype file...OK');

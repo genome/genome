@@ -168,8 +168,9 @@ sub test_execute_build {
 
     ok(Genome::Model::GenotypeMicroarray->_execute_build($build), 'execute build');
 
-    my $original_genotype_vcf = $build->original_genotype_vcf;
-    is($original_genotype_vcf, $build->data_directory.'/'.$build->subject->id.'.original.vcf', 'oringinal genotype vcf name');
+    my $original_genotype_vcf = $build->original_genotype_vcf_file_path;
+    is($original_genotype_vcf, $build->data_directory.'/'.$build->subject->id.'.original.vcf', 'original genotype vcf name');
+    is(File::Compare::compare($original_genotype_vcf, $example_build->original_genotype_vcf_file_path), 0, 'original VCF file matches');
 
     my $original_genotype_file = $build->original_genotype_file_path;
     is($original_genotype_file, $build->data_directory.'/'.$build->subject->id.'.original', 'oringinal genotype file name');
