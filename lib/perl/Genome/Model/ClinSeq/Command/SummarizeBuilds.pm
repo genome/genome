@@ -495,6 +495,7 @@ sub summarize_clinseq_build {
     if ($id_string =~ /\d+/){
       my $cov_report_url = Genome::Utility::List::join_with_single_slash($ENV{GENOME_SYS_SERVICES_WEB_VIEW_URL}, "/genome/model/build/set/coverage.html?"."$id_string");
       $self->status_message("\nView here:\n$cov_report_url");
+      $self->status_message("\n");
     }
 
 
