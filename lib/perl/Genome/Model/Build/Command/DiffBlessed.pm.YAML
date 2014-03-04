@@ -14,6 +14,6 @@ apipe-test-reference-alignment: 3cf7ca78cee34e15a55c67bc8a1a1d3a
 apipe-test-rnaseq: b69ba763f378448794555c7c290cb46f
 apipe-test-somatic-validation-sv: 7c09daa72f1e4b95a98ae81a657eb0cc 
 apipe-test-somatic-validation: 0642634cdf6b4dbd81de8e5a35d6bd62
-apipe-test-somatic-variation-short: 998ff67bc2734d9e94eee2e9a9f02e6d
-apipe-test-somatic-variation-sv-detection: 136692589
-apipe-test-somatic-variation: c359311e86cf46c08076b97fc4aab123
+apipe-test-somatic-variation-short: f854de8bf0334b68889b2acdf3538ffe
+apipe-test-somatic-variation-sv-detection: fc750038993f45ca98c7cf94af566594
+apipe-test-somatic-variation: e8d1cfb6d6a340aa97b1a1b40b1696e8
