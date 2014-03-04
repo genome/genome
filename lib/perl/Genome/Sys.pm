@@ -1395,11 +1395,11 @@ sub shellcmd {
         $t1 = time();
         my $system_retval;
         eval {
-                open OLDOUT, '>&', \*STDOUT || die "Can't dup STDOUT: $!";
-                open OLDERR, '>&', \*STDERR || die "Can't dup STDERR: $!";
+                open my $savedout, '>&', \*STDOUT || die "Can't dup STDOUT: $!";
+                open my $savederr, '>&', \*STDERR || die "Can't dup STDERR: $!";
                 my $restore = UR::Util::on_destroy(sub {
-                    open(STDOUT, '>&OLDOUT');
-                    open(STDERR, '>&OLDERR');
+                    open(STDOUT, '>&', $savedout);
+                    open(STDERR, '>&', $savederr);
                 });
 
                 if ($redirect_stdout) {
