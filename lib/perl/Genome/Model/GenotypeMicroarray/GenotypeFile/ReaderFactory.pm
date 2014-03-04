@@ -59,7 +59,7 @@ sub _build_reader_for_build {
     my ($class, $build) = @_;
 
     # VCF
-    my $genotype_file = $build->original_genotype_vcf;
+    my $genotype_file = $build->original_genotype_vcf_file_path;
     if ( -s $genotype_file ) {
         return Genome::File::Vcf::Reader->new($genotype_file);
     }
