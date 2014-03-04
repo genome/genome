@@ -5,4 +5,7 @@ unset GENOME_QUERY_POSTGRES
 export UR_DBI_NO_COMMIT=1
 export GE_ENV_NAME="genome-test-env"
 
+export GENOME_SYS_SERVICES_FILES_URL="file:///"
+export GENOME_TEST_URL="${GENOME_SYS_SERVICES_FILES_URL}/${GENOME_TEST_INPUTS}"
+
 exec genome-env "$@"
