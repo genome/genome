@@ -16,7 +16,17 @@ my %SYMLINKS_TO_REMOVE;
 sub lock_resource {
     my ($self,%args) = @_;
 
-    my $total_lock_start_time = Time::HiRes::time();
+    my($resource_lock, $parent_dir) = $self->_resolve_resource_lock_and_parent_dir_for_lock_resource(%args);
+
+    $self->_file_based_lock_resource(
+            %args,
+            resource_lock => $resource_lock,
+            parent_dir => $parent_dir
+        );
+}
+
+sub _resolve_resource_lock_and_parent_dir_for_lock_resource {
+    my($self, %args) = @_;
 
     my $resource_lock = delete $args{resource_lock};
     my ($lock_directory,$resource_id,$parent_dir);
@@ -34,6 +44,18 @@ sub lock_resource {
         $resource_lock = $lock_directory . '/' . $resource_id . ".lock";
         $parent_dir = $lock_directory
     }
+
+    return ($resource_lock, $parent_dir);
+}
+
+sub _file_based_lock_resource {
+    my($self, %args) = @_;
+
+    my $total_lock_start_time = Time::HiRes::time();
+
+    my($resource_lock, $parent_dir)
+        = delete @args{'resource_lock','parent_dir'};
+
     my $wait_on_self = delete $args{wait_on_self} || 0;
     my $basename = File::Basename::basename($resource_lock);
 
@@ -226,15 +248,33 @@ sub is_my_lock_target {
 
 sub unlock_resource {
     my ($self,%args) = @_;
-    my $resource_lock = delete $args{resource_lock};
-    my $force = delete $args{force};
 
-    my ($lock_directory,$resource_id);
+    my $resource_lock = $self->_resolve_resource_lock_for_unlock_resource(%args);
+
+    $self->_file_based_unlock_resource(
+            resource_lock => $resource_lock,
+            %args,
+        );
+}
+
+sub _resolve_resource_lock_for_unlock_resource {
+    my($self, %args) = @_;
+
+    my $resource_lock = $args{resource_lock};
     unless ($resource_lock) {
+        my ($lock_directory,$resource_id);
         $lock_directory =  delete $args{lock_directory} || Carp::croak('Must supply lock_directory to lock resource');
         $resource_id = $args{'resource_id'} || Carp::croak('Must supply resource_id to lock resource');
         $resource_lock = $lock_directory . '/' . $resource_id . ".lock";
     }
+    return $resource_lock;
+}
+
+sub _file_based_unlock_resource {
+    my($self, %args) = @_;
+
+    my $resource_lock = delete $args{resource_lock};
+    my $force = delete $args{force};
 
     my $target = readlink($resource_lock);
     if (!$target) {
