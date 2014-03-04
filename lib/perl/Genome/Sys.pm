@@ -1399,7 +1399,7 @@ sub shellcmd {
         eval {
                 my ($restore_stdout);
                 if ($redirect_stdout) {
-                    open my $savedout, '>&', \*STDOUT || die "Can't dup STDOUT: $!";
+                    open(my $savedout, '>&', \*STDOUT) || die "Can't dup STDOUT: $!";
                     open(STDOUT, '>', $redirect_stdout) || die "Can't redirect stdout to $redirect_stdout: $!";
                     $restore_stdout = UR::Util::on_destroy(sub {
                         open(STDOUT, '>&', $savedout);
@@ -1408,7 +1408,7 @@ sub shellcmd {
 
                 my ($restore_stderr);
                 if ($redirect_stderr) {
-                    open my $savederr, '>&', \*STDERR || die "Can't dup STDERR: $!";
+                    open(my $savederr, '>&', \*STDERR) || die "Can't dup STDERR: $!";
                     open(STDERR, '>', $redirect_stderr) || die "Can't redirect stderr to $redirect_stderr: $!";
                     $restore_stderr = UR::Util::on_destroy(sub {
                         open(STDERR, '>&', $savederr);
