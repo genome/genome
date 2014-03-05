@@ -20,14 +20,14 @@ sub run {
         $executable = [$executable];
     }
 
-    print STDERR "RUN: @$executable @args";
+    print STDERR "RUN: @$executable @args\n";
     my @output = _capture(@$executable, @args);
 
     my $job_id = ($output[-1] =~ /^Job <(\d+)> is submitted to/)[0];
     unless ($job_id) {
         die "Could not get job id from bsub output!";
     }
-    print STDERR $job_id;
+    print STDERR "NEW LSF Job: ", $job_id, "\n";
     return $job_id;
 }
 
