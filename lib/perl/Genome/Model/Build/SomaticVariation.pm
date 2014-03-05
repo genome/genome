@@ -279,6 +279,7 @@ sub files_ignored_by_diff {
         output/Makefile$
         output/task.complete$
         variants/(.*).tbi$
+        reports/review.xml
     );
 }
 
