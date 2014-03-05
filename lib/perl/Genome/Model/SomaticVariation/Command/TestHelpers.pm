@@ -1,4 +1,4 @@
-#!/usr/bin/env genome-perl
+package Genome::Model::SomaticVariation::Command::TestHelpers;
 
 use strict;
 use warnings;

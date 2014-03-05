@@ -9,6 +9,7 @@ BEGIN {
 }
 
 use above 'Genome';
+use Test::More;
 use Genome::Model::SomaticVariation::Command::TestHelpers qw( create_test_objects run_test );
 
 my $TEST_DATA_VERSION = 11;
