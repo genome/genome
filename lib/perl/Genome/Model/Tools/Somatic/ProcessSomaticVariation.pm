@@ -380,8 +380,8 @@ sub getFilterSites{
 
 
 sub removeFilterSites{
-    my ($file,$filterSites) = @_;
-
+    my ($file,$filterSitesRef) = @_;
+    my %filterSites = %{$filterSitesRef};
     my $newfile = addName($file,"filtered");
     #handle zero size files
     if( -z $file ){
@@ -398,7 +398,8 @@ sub removeFilterSites{
         if($ref =~ /\//){
             ( $ref, $var ) = split(/\//, $ref);
         }
-        unless (defined($filterSites->join("\t",($chr, $start, $stop, $ref, $var )))){
+        my $key = join("\t",($chr, $start, $stop, $ref, $var ));
+        unless (defined($filterSites{$key})){
             print FILFILE $line . "\n";
         }
     }
