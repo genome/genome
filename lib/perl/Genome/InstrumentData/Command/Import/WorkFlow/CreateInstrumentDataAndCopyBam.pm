@@ -247,7 +247,7 @@ sub _create_allocation {
 sub _determine_read_length_in_bam {
     my ($self, $bam_path) = @_;
 
-    my $read_length = `samtools view $bam_path | awk '{print \$10}'  | xargs -I{} expr length {} | perl -mstrict -e 'my \$c = 0; my \$t = 0; while (<>) { chomp; \$c++; \$t += \$_; } printf("%d\\n", \$t/\$c);'`;
+    my $read_length = `samtools view $bam_path | head -n 1000 | awk '{print \$10}'  | xargs -I{} expr length {} | perl -mstrict -e 'my \$c = 0; my \$t = 0; while (<>) { chomp; \$c++; \$t += \$_; } printf("%d\\n", \$t/\$c);'`;
     chomp $read_length;
 
     if ( not $read_length ) {
