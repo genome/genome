@@ -1372,7 +1372,9 @@ sub _launch {
         }
 
         my @genome_cmd = (
-            'annotate-log', $genome_bin, qw(model services build run),
+            'prefix-and-tee-output', 
+            $genome_bin,
+            qw(model services build run),
         );
 
         my @genome_args;
@@ -1387,16 +1389,17 @@ sub _launch {
         push @genome_args, '--build-id=' . $self->id;
         # NOTE: gms-pub previously explicitly redirected output b/c
         # the OpenLave system wasn't placing log files.
-        #      "1>" . $build_event->output_log_file,
-        #      "2>" . $build_event->error_log_file,
+        push @genome_args, "1>" . $build_event->output_log_file;
+        push @genome_args, "2>" . $build_event->error_log_file;
         if ($job_dispatch eq 'inline') {
             push @genome_args, '--inline';
         }
 
+        my $cmd = [join(" ", @genome_cmd, @genome_args)];
         my $job_id = $self->_execute_bsub_command(
             $bsub_bin,
             @bsub_args,
-            cmd => [ @genome_cmd, @genome_args ],
+            cmd => $cmd, 
         );
         return unless $job_id;
 
