@@ -2,7 +2,10 @@ package Genome::Db::Tgi::Command::ImportMitelman;
 
 use strict;
 use warnings;
+
 use Genome;
+
+use Genome::Db::Tgi::Command::Util qw(fetch);
 
 class Genome::Db::Tgi::Command::ImportMitelman {
     is => 'Command',
@@ -19,12 +22,11 @@ class Genome::Db::Tgi::Command::ImportMitelman {
 
 sub execute {
     my $self = shift;
-    my $temp_dir = Genome::Sys->create_temp_directory;
-    my $tarball = "$temp_dir/mitel.tar.gz";
-    my $cmd = sprintf(q(curl --silent --insecure --output %s %s), $tarball, $self->data_url);
-    Genome::Sys->shellcmd(cmd => $cmd);
 
-    $cmd = "tar -xzf $tarball --directory $temp_dir";
+    my $temp_dir = Genome::Sys->create_temp_directory;
+    my $tarball = fetch($self->data_url, $temp_dir);
+
+    my $cmd = "tar -xzf $tarball --directory $temp_dir";
     Genome::Sys->shellcmd(cmd => $cmd);
     my $fusion_gene_list = "$temp_dir/molclingene.dat";
     unless (-e $fusion_gene_list) {
