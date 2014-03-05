@@ -782,11 +782,12 @@ sub _trigger_downstream_builds {
     my @downstream_models = $self->downstream_models;
     for my $next_model (@downstream_models) {
         my $latest_build = $next_model->latest_build;
-        if (my @found = $latest_build->input_associations(value_id => $build->id)) {
-            $self->status_message("Downstream model has build " . $latest_build->__display_name__ . ", which already uses this build.");
-            next;  
-        }
-        
+        if ($latest_build) {
+            if (my @found = $latest_build->input_associations(value_id => $build->id)) {
+                $self->status_message("Downstream model has build " . $latest_build->__display_name__ . ", which already uses this build.");
+                next;  
+            }
+        }    
         unless ($next_model->can("auto_build")) {
             $self->status_message("Downstream model " . $next_model->__display_name__ . " is has no auto-build method!  New builds should be started manually as needed.");
             next;
@@ -799,7 +800,7 @@ sub _trigger_downstream_builds {
         }
 
         $self->status_message("Requesting rebuild of subsequent model " . $next_model->__display_name__ . ".");
-        $next_model->build_requested(1, 'auto build after completion of ' . $build->__display_name__); 
+        $next_model->build_requested(1, 'auto build after completion of ' . $build->__display_name__);
     }
 
     return 1;
