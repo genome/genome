@@ -449,25 +449,4 @@ sub region_limiting_output_directory {
     return File::Spec->join($self->output_directory, "region_limited_inputs");
 }
 
-sub _get_samtools_version_and_params {
-    my ($self, $strategy_str) = @_;
-
-    my $strategy = Genome::Model::Tools::DetectVariants2::Strategy->get($strategy_str);
-
-    my @detectors = $strategy->get_detectors();
-    my ($version, $params);
-    for my $detector (@detectors) {
-        if ($detector->{name} eq 'samtools') {
-            if ($version) {
-                die "Multiple samtools steps found in strategy!";
-            } else {
-                $version = $detector->{version};
-                $params = $detector->{params};
-            }
-        }
-    }
-
-    return ($version, $params);
-}
-
 1;
