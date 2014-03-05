@@ -18,20 +18,21 @@ my $LOCKING_CLIENT;
 sub lock_resource {
     my ($self,%args) = @_;
 
-    my($resource_lock, $parent_dir) = $self->_resolve_resource_lock_and_parent_dir_for_lock_resource(%args);
+    @args{'resource_lock', 'parent_dir'} = $self->_resolve_resource_lock_and_parent_dir_for_lock_resource(%args);
 
-    my $lock_client = $self->_start_locking_client;
+    $self->_start_locking_client;
 
-    $self->_file_based_lock_resource(
-            %args,
-            resource_lock => $resource_lock,
-            parent_dir => $parent_dir
-        );
-
-    unless ($self->_new_style_lock($resource_lock)) {
-        $self->unlock_resource(resource_lock => $resource_lock);
-        return;
+    my $nessy_claim = $self->_new_style_lock(%args);
+    unless ($nessy_claim) {
+        $self->error_message("Nessy could not aquire lock for resource lock: $args{resource_lock}");
     }
+
+    my $rv = $self->_file_based_lock_resource( %args );
+
+    if (! $rv and $nessy_claim) {
+        $self->error_message("Nessy aquired lock but file-based did not.  resource_lock: $args{resource_lock}");
+    }
+    return $rv;
 
 }
 
@@ -237,18 +238,41 @@ sub _start_locking_client {
 }
 
 sub _new_style_lock {
-    my($self, $resource_lock) = @_;
+    my($self, %args) = @_;
 
-    if ($LOCKING_CLIENT) {
-        my %user_data;
-        @user_data{'host','pid','lsf_id','user'}
-            = (hostname, $$, ($ENV{'LSB_JOBID'} || 'NONE'), Genome::Sys->username);
-        my $claim = $LOCKING_CLIENT->claim($resource_lock, user_data => \%user_data);
-        $NESSY_LOCKS_TO_REMOVE{$resource_lock} = $claim;
-        return $claim;
-    } else {
-        return 1;
+    return 1 unless $LOCKING_CLIENT;
+
+    my %user_data;
+    @user_data{'host','pid','lsf_id','user'}
+        = (hostname, $$, ($ENV{'LSB_JOBID'} || 'NONE'), Genome::Sys->username);
+
+    my $resource_lock = $args{resource_lock};
+
+    if (not $args{wait_on_self} and $self->_is_holding_nessy_lock($resource_lock)) {
+        $self->warning_message("Looks like I'm waiting on my own lock, forcing unlock...");
+        $self->_new_style_release($resource_lock);
     }
+
+    my $timeout = $self->_new_style_lock_timeout_from_args(%args);
+
+    my $claim = $LOCKING_CLIENT->claim($resource_lock, timeout => $timeout, user_data => \%user_data);
+    $NESSY_LOCKS_TO_REMOVE{$resource_lock} = $claim if $claim;
+    return $claim;
+}
+
+sub _new_style_lock_timeout_from_args {
+    my($self, %args) = @_;
+
+    if (exists($args{max_try}) and exists($args{block_sleep})) {
+        return $args{max_try} * $args{block_sleep};
+    }
+
+    return undef;
+}
+
+sub _is_holding_nessy_lock {
+    my($self, $resource_lock) = @_;
+    return $NESSY_LOCKS_TO_REMOVE{$resource_lock};
 }
 
 sub _resolve_caller_name {
@@ -285,13 +309,15 @@ sub unlock_resource {
 
     my $resource_lock = $self->_resolve_resource_lock_for_unlock_resource(%args);
 
-    $self->_file_based_unlock_resource(
+    my $rv = $self->_file_based_unlock_resource(
             resource_lock => $resource_lock,
             %args,
         );
 
-    $self->_new_style_release($resource_lock);
-
+    unless ($self->_new_style_release($resource_lock)) {
+        $self->error_message("file-based released the lock, but Nessy did not.  resource_lock: $resource_lock");
+    }
+    return $rv;
 }
 
 sub _resolve_resource_lock_for_unlock_resource {
@@ -359,7 +385,13 @@ sub _new_style_release {
 
     if ($LOCKING_CLIENT) {
         my $claim = delete $NESSY_LOCKS_TO_REMOVE{$resource_lock};
-        $claim->release;
+        if ($claim) {
+            $claim->release;
+        } else {
+            $self->error_message("Nessy tried to release, but no claim in slot for resource_lock: $resource_lock");
+        }
+    } else {
+        return 1;
     }
 }
 
