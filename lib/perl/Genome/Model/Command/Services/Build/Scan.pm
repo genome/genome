@@ -3,6 +3,7 @@ package Genome::Model::Command::Services::Build::Scan;
 use strict;
 use warnings;
 use Genome;
+use IPC::System::Simple qw(capture);
 
 class Genome::Model::Command::Services::Build::Scan {
     is => 'Command::V2',
@@ -22,22 +23,26 @@ sub execute {
     my $should_fail_count = 0;
     print join("\t", qw(Build status run_by date_scheduled action))."\n";
     for my $build (@$running_builds) {
-        unless ($self->_has_lsf_jobs($build)){
-            $should_fail_count++;
-            print join("\t", $build->id, $build->status, $build->run_by, $build->date_scheduled, "fail")."\n";
-            if ($self->fix) {
-                eval {
-                    $build->fail;
-                };
-                if ($build->status eq "Failed") {
-                    print sprintf("Failed build %s\n", $build->id);
-                    $failed_build_count++;
-                }
-                else {
-                    print sprintf("Problem failing build %s\n", $build->id);
-                    $failed_to_fail_count++;
+        my $should_fail = 0;
+        eval {
+            $should_fail = $self->_has_lsf_jobs($build);
+            unless ($should_fail){
+                $should_fail_count++;
+                print join("\t", $build->id, $build->status, $build->run_by, $build->date_scheduled, "fail")."\n";
+                if ($self->fix) {
+                    eval {$build->fail};
+                    if ($build->status eq "Failed") {
+                        $failed_build_count++;
+                    }
+                    else {
+                        $failed_to_fail_count++;
+                        die sprintf("Problem failing build %s\n", $build->id);
+                    }
                 }
             }
+        };
+        if ($@) {
+            print sprintf("Problem with build %s: %s\n", $build->id, $@);
         }
     }
     print sprintf("Should fail %d builds\nSuccessfully failed %d builds\nFailed to fail %d builds\n",
@@ -54,17 +59,15 @@ sub _get_running_builds {
 sub _has_lsf_jobs {
     my $self = shift;
     my $build = shift;
-    my $cmd = 'bjobs -u all -P build'.$build->id. ' 2>&1';
-    my $output = `$cmd`;
-    if ($output =~ /^JOBID/) {
+    my @output = eval {capture('bjobs', '-uall', '-Pbuild'.$build->id)};
+    if ($@) {
+        die $self->error_message("Problem running bjobs output");
+    }
+    if (@output) {
         return 1;
     }
-    elsif ($output =~ /^No job found/) {
-        return 0;
-    }
     else {
-        print "Output was:$output\n";
-        die $self->error_message("Problem parsing bjobs output for build ".$build->id);
+        return 0;
     }
 }
 
