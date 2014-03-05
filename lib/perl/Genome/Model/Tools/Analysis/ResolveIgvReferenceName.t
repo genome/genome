@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use above 'Genome';
-use Genome::Model::SomaticVariation::Command::TestHelpers qw( create_test_objects run_test );
+use Test::More;
 
 my $pkg = 'Genome::Model::Tools::Analysis::ResolveIgvReferenceName';
 use_ok($pkg);
