@@ -834,7 +834,7 @@ sub execute {
   #-------------------------------------------------------
   # remove regions called by less than the required number of callers
   unless($self->required_snv_callers == 1){
-      print STDERR "Removing regions supported by less than " . $self->required_snv_callers . " regions...\n";
+      print STDERR "Removing snvs supported by less than " . $self->required_snv_callers . " callers...\n";
       $snv_file = removeUnsupportedSites($snv_file, $self->required_snv_callers, $build_dir);
   }
 
