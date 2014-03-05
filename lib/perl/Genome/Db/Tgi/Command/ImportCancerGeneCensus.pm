@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
-use Genome::Db::Tgi::Command::Util qw(fetch);
+use Genome::File::Fetch qw(fetch);
 
 class Genome::Db::Tgi::Command::ImportCancerGeneCensus {
     is => 'Command',
@@ -22,10 +22,9 @@ class Genome::Db::Tgi::Command::ImportCancerGeneCensus {
 sub execute {
     my $self = shift;
 
-    my $temp_dir = Genome::Sys->create_temp_directory;
     my $out = Genome::Sys->open_file_for_writing($self->output_file);
 
-    my $infile = fetch($self->data_url, $temp_dir);
+    my $infile = fetch($self->data_url);
 
     my $transformed_infile = "$infile.transformed";
     my $cmd = "cat $infile | tr  '\n' > $transformed_infile";

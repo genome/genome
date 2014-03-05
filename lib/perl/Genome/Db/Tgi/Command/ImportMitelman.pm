@@ -5,7 +5,7 @@ use warnings;
 
 use Genome;
 
-use Genome::Db::Tgi::Command::Util qw(fetch);
+use Genome::File::Fetch qw(fetch);
 
 class Genome::Db::Tgi::Command::ImportMitelman {
     is => 'Command',
