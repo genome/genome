@@ -1371,8 +1371,18 @@ sub _launch {
             push @bsub_args, job_group => $job_group;
         }
 
+        my $log_dir_out = File::Basename::dirname($build_event->output_log_file);
+        my $log_dir_err = File::Basename::dirname($build_event->output_log_file);
+        for my $dir ($log_dir_out, $log_dir_err) {
+            if (not -d $dir) {
+                print STDERR "NEW DIR! $dir\n";
+                Genome::Sys->create_directory($dir)
+            }
+        }
         my @genome_cmd = (
-            'prefix-and-tee-output', 
+            'prefix-and-tee-output',
+            $build_event->output_log_file,
+            $build_event->error_log_file,
             $genome_bin,
             qw(model services build run),
         );
@@ -1389,13 +1399,14 @@ sub _launch {
         push @genome_args, '--build-id=' . $self->id;
         # NOTE: gms-pub previously explicitly redirected output b/c
         # the OpenLave system wasn't placing log files.
-        push @genome_args, "1>" . $build_event->output_log_file;
-        push @genome_args, "2>" . $build_event->error_log_file;
+        #push @genome_args, "1>" . $build_event->output_log_file;
+        #push @genome_args, "2>" . $build_event->error_log_file;
         if ($job_dispatch eq 'inline') {
             push @genome_args, '--inline';
         }
 
-        my $cmd = [join(" ", @genome_cmd, @genome_args)];
+        my $cmd = ["bash -c '" . join(" ", @genome_cmd, @genome_args) . "'"];
+        print "print CMD is: @$cmd\n";
         my $job_id = $self->_execute_bsub_command(
             $bsub_bin,
             @bsub_args,
