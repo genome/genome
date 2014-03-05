@@ -25,8 +25,8 @@ sub execute {
     for my $build (@$running_builds) {
         my $should_fail = 0;
         eval {
-            $should_fail = $self->_has_lsf_jobs($build);
-            unless ($should_fail){
+            $should_fail = $self->_build_is_bad($build);
+            if ($should_fail){
                 $should_fail_count++;
                 print join("\t", $build->id, $build->status, $build->run_by, $build->date_scheduled, "fail")."\n";
                 if ($self->fix) {
@@ -48,6 +48,24 @@ sub execute {
     print sprintf("Should fail %d builds\nSuccessfully failed %d builds\nFailed to fail %d builds\n",
             $should_fail_count, $failed_build_count, $failed_to_fail_count);
     return 1;
+}
+
+sub _build_is_bad {
+    my $self = shift;
+    my $build = shift;
+    my $has_jobs = $self->_has_lsf_jobs($build);
+    if ($has_jobs) {
+        return 0;
+    }
+    #Build could have succeeded in between getting the list of running builds and
+    #checking the jobs
+    UR::Context->current->reload($build->the_master_event);
+    if ($build->status eq "Scheduled" or $build->status eq "Running") {
+        return 1;
+    }
+    else {
+        return 0;
+    }
 }
 
 sub _get_running_builds {
