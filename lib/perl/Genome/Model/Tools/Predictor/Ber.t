@@ -32,6 +32,7 @@ my $ber = Genome::Model::Tools::Predictor::Ber->create(
 );
 ok($ber, 'successfully created ber command object');
 
+
 ok($ber->execute, 'successfully executed ber');
 ok(-e $ber->raw_output_path, "raw output file exists at expected location")
     or diag "expected location: " . $ber->raw_output_path;
@@ -53,5 +54,6 @@ compare_ok($ber->dump_output_path, $expected_dump_output, "test dump output matc
 my $ace_file = $ber->ace_file_path;
 ok(-e $ace_file, "ber produced an ace file")
     or diag "ace_file: $ace_file";
+
 
 done_testing();
