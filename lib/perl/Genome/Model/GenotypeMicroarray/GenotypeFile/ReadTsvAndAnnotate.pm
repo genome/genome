@@ -9,9 +9,11 @@ class Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsvAndAnnotate {
     is => 'UR::Object',
     has => {
         input => { is => 'Text', },
-        separator => { is => 'Text', value => "\t", },
         variation_list_build => { is => 'Genome::Model::Build::ImportedVariationList', },
         snp_id_mapping => { is => 'Hash', },
+        _genotype_fh => { is => 'IO::File', },
+        _headers => { is => 'Array', },
+        _sample => { is => 'Genome::Sample', },
         _genotypes => { is => 'Hash', default_value => {}, },
         _order => { is => 'Array', },
         _position => { is => 'Integer', default_value => 0, },
@@ -23,6 +25,15 @@ sub create {
 
     my $self = $class->SUPER::create(@_);
     return if not $self;
+
+    my $open_ok = $self->_open_genotype_file;
+    return if not $open_ok;
+
+    my $headers_ok = $self->_resolve_headers;
+    return if not $headers_ok;
+
+    my $sample_ok = $self->_resolve_sample;
+    return if not $sample_ok;
 
     my $load_genotypes = $self->_load_genotypes;
     return if not $load_genotypes;
@@ -50,7 +61,7 @@ sub read {
     return $self->_genotypes->{$id};
 }
 
-sub _load_genotypes {
+sub _open_genotype_file {
     my $self = shift;
 
     my $genotype_file = $self->input;
@@ -65,49 +76,107 @@ sub _load_genotypes {
         return;
     }
 
-    my $snp_id_mapping = $self->snp_id_mapping;
+    $self->_genotype_fh($genotype_fh);
+
+    return 1;
+}
+
+sub _resolve_headers {
+    my $self = shift;
+
     my $header_line;
+    my $genotype_fh = $self->_genotype_fh;
     do { $header_line = $genotype_fh->getline; } until not $header_line or $header_line =~ /,/;
     if ( not $header_line ) {
         $self->error_message('Failed to get header line for genotype file!');
         return;
     }
+
     chomp $header_line;
     my @headers = map { s/\s/_/g; s/_\-\_top$//i; lc } split(',', $header_line);
+    $self->_headers(\@headers);
 
-    my $genotypes = $self->_genotypes;
-    while ( my $line = $genotype_fh->getline ) {
-        chomp $line;
-        my %genotype;
-        @genotype{@headers} = split(',', $line);
+    return 1;
+}
 
-        # Set undef attrs to NA
-        for my $attr ( @headers ) {
-            $genotype{$attr} = 'NA' if not defined $genotype{$attr};
-        }
+sub _resolve_sample {
+    my $self = shift;
 
-        # The id is from the snp mapping or the genotype's snp_name
-        if($snp_id_mapping and exists $snp_id_mapping->{ $genotype{snp_name} }) {
-            $genotype{id} = $snp_id_mapping->{ delete $genotype{snp_name} };
-        } else {
-            $genotype{id} = delete $genotype{snp_name};
-            $genotype{id} =~ s/^(rs\d+)\D*$/$1/; #borrowed from GSC::Genotyping::normalize_to
-        }
-
-        if ( exists $genotypes->{ $genotype{id} } ) {
-            $self->error_message('Already have a genotype for snp id: '.Dumper(\%genotype, $genotypes->{ $genotype{id} }));
-            return;
-        }
-
-        delete $genotype{'chr'};
-        $genotype{alleles} = $genotype{allele1}.$genotype{allele2};
-
-        $genotypes->{ $genotype{id} } = \%genotype;
-
+    my $genotype = $self->_load_genotype;
+    if ( not $genotype ) {
+        $self->error_message('No genotype found after header!');
+        return;
     }
 
-    if ( not %$genotypes ) {
-        $self->error_message("No genotypes found in input! ".$self->get_original_input);
+    my %sample_params;
+    my $sample_id = $genotype->{sample_id};
+    if ( defined $genotype->{sample_id} ) {
+        $sample_params{id} = $genotype->{sample_id};
+    }
+    elsif ( defined $genotype->{sample_name} ) {
+        $sample_params{name} = $genotype->{sample_name};
+    }
+    else {
+        $self->error_message('No sample id or name in genotype!');
+        return;
+    }
+
+    my $sample = Genome::Sample->get(%sample_params);
+    if ( not $sample ) {
+        $self->error_message('No sample for params! '.Data::Dumper::Dumper(\%sample_params));
+        return;
+    }
+    $self->_sample($sample);
+
+    return 1;
+}
+
+sub _load_genotype {
+    my $self = shift;
+
+    my $line = $self->_genotype_fh->getline;
+    return if not $line;
+
+    chomp $line;
+    my %genotype;
+    @genotype{@{$self->_headers}} = split(',', $line);
+
+    # The id is from the snp mapping or the genotype's snp_name
+    if ( $self->snp_id_mapping and exists $self->snp_id_mapping->{ $genotype{snp_name} }) {
+        $genotype{id} = $self->snp_id_mapping->{ delete $genotype{snp_name} };
+    } else {
+        $genotype{id} = delete $genotype{snp_name};
+        $genotype{id} =~ s/^(rs\d+)\D*$/$1/; #borrowed from GSC::Genotyping::normalize_to
+    }
+
+    if ( exists $self->_genotypes->{ $genotype{id} } ) {
+        Carp::confess( $self->error_message('Already have a genotype for snp id: '.Dumper(\%genotype, $self->genotypes->{ $genotype{id} })) );
+    }
+
+    delete $genotype{'chr'};
+    $genotype{alleles} = $genotype{allele1}.$genotype{allele2};
+
+    $self->_genotypes->{ $genotype{id} } = \%genotype;
+
+    return \%genotype;
+}
+
+sub _load_genotypes {
+    my $self = shift;
+
+    my $snp_id_mapping = $self->snp_id_mapping;
+
+    my $genotype_fh = $self->_genotype_fh;
+    my @headers = @{$self->_headers};
+    my $genotypes = $self->_genotypes;
+
+    my $genotype;
+    do {
+        $genotype = $self->_load_genotype;
+    } while $genotype;
+
+    if ( not %{$self->_genotypes} ) {
+        $self->error_message("No genotypes found in genotype file! ".$self->get_original_input);
         return;
     }
 
