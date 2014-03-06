@@ -112,6 +112,7 @@ sub _build_csv_writer {
     delete $writer_params->{sample_name};
     $writer_params->{separator} = "\t" if not $writer_params->{separator} or $writer_params->{separator} =~ /^tab$/i;
     $writer_params->{print_headers} = delete $writer_params->{headers} if exists $writer_params->{headers};
+    $writer_params->{in_place_of_null_value} = 'NA';
     $writer_params->{ignore_extra_columns} = 1;
 
     my $fields = delete $writer_params->{fields};
