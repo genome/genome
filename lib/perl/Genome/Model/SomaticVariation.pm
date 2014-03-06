@@ -78,7 +78,18 @@ class Genome::Model::SomaticVariation {
             is_optional => 1,
             default_value => 1,
         },
-   ],
+        restrict_to_target_regions =>{
+            is => 'Boolean',
+            is_optional => 1,
+            default => 1,
+            doc => "only keep snv calls within the target regions. These are pulled from the build if possible",
+        },
+        target_regions =>{
+            is => 'String',
+            is_optional => 1,
+            doc => "path to a target file region. Used in conjunction with --restrict-to-target-regions to limit sites to those appearing in these regions",
+        },
+    ],
     has => [
         tumor_model_id => {
             via => 'tumor_model',
@@ -484,6 +495,8 @@ sub map_workflow_inputs {
     push @inputs, get_regulome_db => $self->get_regulome_db;
     push @inputs, required_snv_callers => $self->required_snv_callers;
     push @inputs, tiers_to_review => $self->tiers_to_review;
+    push @inputs, restrict_to_target_regions => $self->restrict_to_target_regions;
+    push @inputs, target_regions => $self->target_regions;
 
     return @inputs;
 }
