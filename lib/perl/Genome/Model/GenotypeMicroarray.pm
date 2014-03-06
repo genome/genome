@@ -124,7 +124,7 @@ sub request_builds_for_dependent_cron_ref_align {
     return 1 unless $sample->class eq 'Genome::Sample';
 
     for my $ref_align ($self->dependent_cron_ref_align) {
-        my @lane_qc = $ref_align->get_or_create_lane_qc_models;
+        my @lane_qc = $ref_align->get_lane_qc_models;
         for (@lane_qc) { $_->build_requested(1) };
         $ref_align->build_requested(1);
     }

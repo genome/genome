@@ -509,7 +509,7 @@ sub qc_type_for_target_region_set_name {
 
 # FIXME This needs to be renamed/refactored. The method name does not accurately describe what
 # this method actually does.
-sub get_or_create_lane_qc_models {
+sub get_lane_qc_models {
     my $self = shift;
 
     my $subject = $self->subject;
@@ -551,49 +551,10 @@ sub get_or_create_lane_qc_models {
             }
 
             push @lane_qc_models, $existing_model;
-            next;
         }
-
-        my $qc_model = Genome::Model::ReferenceAlignment->create(
-            name => $lane_qc_model_name,
-            instrument_data => [$instrument_data],
-            subject_id => $self->subject_id,
-            subject_class_name => $self->subject_class_name,
-            processing_profile_id => $qc_pp_id,
-            auto_assign_inst_data => 0,
-            auto_build_alignments => 0,
-            build_requested => 0,
-            reference_sequence_build => $self->reference_sequence_build,
-        );
-
-        unless ($qc_model) {
-            $self->error_message("Could not create lane qc model for instrument data " . $instrument_data->id);
-            next;
-        }
-
-        # target_region_set_name means this is Capture data whose QC needs RefCov done
-        my $region_of_interest_set_input = $self->inputs(name => 'region_of_interest_set_name');
-        my $target_region_set_name_input = $self->inputs(name => 'target_region_set_name');
-        if ($target_region_set_name_input && $region_of_interest_set_input) {
-            $qc_model->add_input(
-                name => $target_region_set_name_input->name,
-                value_class_name => $target_region_set_name_input->value_class_name,
-                value_id => $target_region_set_name_input->value_id,
-            );
-            $qc_model->add_input(
-                name => $region_of_interest_set_input->name,
-                value_class_name => $region_of_interest_set_input->value_class_name,
-                value_id => $region_of_interest_set_input->value_id,
-            );
-        }
-
-        push @lane_qc_models, $qc_model;
     }
 
-    if (@lane_qc_models == @instrument_data) {
-        return @lane_qc_models;
-    }
-    return;
+    return @lane_qc_models;
 }
 
 sub latest_build_bam_file {
