@@ -24,9 +24,10 @@ class Genome::Model::Tools::DetectVariants2::CopyCatSomaticWithBamWindow{
             is_many => 1,
             doc => 'Chromosomes that bamwindow will filter output to (generally for test purposes)',
         },
+        #TODO: annotation_version is deprecated.  Remove it
         annotation_version => {
             is => 'Text',
-            doc => 'version of the copycat annotation to use',
+            doc => 'version of the copycat annotation to use.  Deprecated',
             is_optional => 1,
         }
     ],
