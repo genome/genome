@@ -71,6 +71,9 @@ class Genome::Model::Tools::Vcf::CrossSample::Base {
         },
     ],
     has_optional_transient => [
+        _reference_sequence_build => {
+            is => 'Genome::Model::Build',
+        },
         reference => {
             is => 'Path',
         },
@@ -164,35 +167,15 @@ sub _validate_inputs {
     my $self = shift;
 
     $self->status_message("Validating Inputs...");
-    if ($self->roi_list) {
-        $self->_validate_roi_list;
-    }
 
     $self->_validate_builds;
     $self->_check_build_files;
     return;
 }
 
-# Early detection for the common problem that the ROI reference_name is not set correctly
-sub _validate_roi_list {
-    my $self = shift;
-
-    my $bed_file = $self->_roi_bed_file;
-    my @chr_lines = `grep chr $bed_file`;
-    my $reference_name = $self->roi_list->reference_name;
-    my $roi_name = $self->_roi_name;
-
-    if (@chr_lines and not ($reference_name =~ m/nimblegen/) ) {
-        die $self->error_message("It looks like your ROI has 'chr' chromosomes but does not have a 'nimblegen' reference name (It is currently $reference_name).\n".
-            "This will result in your variant sets being filtered down to nothing. An example of a fix to this situation: \n".
-            "genome feature-list update '$roi_name' --reference nimblegen-human-buildhg19 (if your reference is hg19)");
-    }
-    return;
-}
-
 sub _roi_bed_file {
     my $self = shift;
-    return $self->roi_list->file_path;
+    return $self->roi_list->resolve_roi_for_reference($self->_reference_sequence_build);
 }
 
 sub _roi_name {
@@ -206,15 +189,16 @@ sub _validate_builds {
     my @builds = $self->builds;
 
     my $first_build = $builds[0];
-    my $reference_sequence = $first_build->reference_sequence_build;
-    $self->reference($reference_sequence->full_consensus_path('fa'));
-    $self->reference_index($reference_sequence->full_consensus_path('fa.fai'));
+    my $ref = $first_build->reference_sequence_build;
+    $self->_reference_sequence_build($ref);
+    $self->reference($ref->full_consensus_path('fa'));
+    $self->reference_index($ref->full_consensus_path('fa.fai'));
     my $pp = $first_build->processing_profile;
     my %validation_params = (
         builds => \@builds,
         builds_can => [qw(reference_sequence_build whole_rmdup_bam_file get_snvs_vcf get_indels_vcf)],
         status => ['Succeeded'],
-        reference_sequence => [$reference_sequence],
+        reference_sequence => [$ref],
     );
     if (!$self->allow_multiple_processing_profiles) {
         $validation_params{'processing_profile'} = [$pp];
