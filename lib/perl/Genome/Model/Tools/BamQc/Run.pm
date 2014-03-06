@@ -227,7 +227,7 @@ sub execute {
         my $flagstat_file = $self->bam_file .'.flagstat';
         if (-e $flagstat_file) {
             unless (symlink($flagstat_file,$flagstat_path)) {
-                die('Failed to create symlinke '. $flagstat_path .' -> '. $flagstat_file);
+                die('Failed to create symlink '. $flagstat_path .' -> '. $flagstat_file);
             }
         } 
         else {
