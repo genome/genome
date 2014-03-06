@@ -38,7 +38,6 @@ class Genome::Model::Build::ReferenceSequence::ConvertedBedResult {
 sub _generate_result {
     my ($self, $staging_directory) = @_;
     my $converted_file_path = File::Spec->join($staging_directory, $self->_target_bed);
-    $DB::single=1;
     my $converted_bed_file = Genome::Model::Build::ReferenceSequence::Converter->convert_bed(
         $self->source_bed, $self->source_reference, $converted_file_path, $self->target_reference);
 

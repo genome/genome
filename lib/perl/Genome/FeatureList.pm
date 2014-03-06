@@ -110,10 +110,6 @@ class Genome::FeatureList {
             is => 'Text',
             doc => 'The path to the temporary dumped copy of the merged post-processed BED file',
         },
-        _converted_bed_file_paths => {
-            is => 'HASH',
-            doc => 'The paths to the temporary dumped copies of merged post-processed BED files converted to other references',
-        },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
@@ -437,32 +433,16 @@ sub generate_converted_bed_file {
 sub converted_bed_file {
     my $self = shift;
     my %args = @_;
-    my $reference = $args{reference};
     if ($self->format eq 'unknown'){
         $self->error_message('Cannot convert BED file with unknown format');
         die $self->error_message;
     }
-
     unless ($self->reference) {
         $self->error_message('Cannot convert BED file without an associated reference');
         die $self->error_message;
     }
 
-    my $converted_bed_files = $self->_converted_bed_file_paths;
-
-    my $result;
-    if(exists $converted_bed_files->{$reference->id}) {
-        $result = $converted_bed_files->{$reference->id};
-        unless(-e $result) { # cached result may have been deleted
-            $result = $self->generate_converted_bed_file(%args);
-        }
-    } else {
-        $result = $self->generate_converted_bed_file(%args);
-    }
-    $converted_bed_files->{$reference->id} = $result;
-    $self->_converted_bed_file_paths($converted_bed_files);
-
-    return $result;
+    return $self->generate_converted_bed_file(%args);
 }
 
 sub _resolve_param_value_from_text_by_name_or_id {
