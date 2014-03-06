@@ -151,7 +151,8 @@ sub _queues {
 sub _capture {
     # lazy load so we don't break /gsc/bin/perl (until we have to)
     require IPC::System::Simple;
-    return IPC::System::Simple::capture(@_);
+    my @parts = grep { $_ ne '' } @_;
+    return IPC::System::Simple::capture(@parts);
 }
 
 1;
