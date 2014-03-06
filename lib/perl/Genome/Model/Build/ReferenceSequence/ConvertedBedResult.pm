@@ -17,22 +17,21 @@ class Genome::Model::Build::ReferenceSequence::ConvertedBedResult {
             is => 'Path',
         },
     ],
-    has => [
-        target_bed => {
-            is_calculated => 1,
-            calculate_from => ['disk_allocations', '_target_bed'],
-            calculate => q|
-                return File::Spec->join($disk_allocations->absolute_path, $_target_bed);
-            |,
-            doc => 'Final converted bed path',
-        },
-    ],
     has_transient => [
         _target_bed => {
             is_calculated => 1,
             calculate => q| return 'converted.bed' |,
         }
     ],
+};
+
+sub target_bed {
+    my $self = shift;
+    my $bed = File::Spec->join($self->disk_allocations->absolute_path, $self->_target_bed);
+    unless (-s $bed) {
+        die $self->error_message("When trying to access target_bed ($bed) , we found that it does not exist or has no size");
+    }
+    return $bed;
 };
 
 sub _generate_result {
