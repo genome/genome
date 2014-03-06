@@ -438,7 +438,6 @@ sub converted_bed_file {
     my $self = shift;
     my %args = @_;
     my $reference = $args{reference};
-    #TODO: add short name and merge options
     if ($self->format eq 'unknown'){
         $self->error_message('Cannot convert BED file with unknown format');
         die $self->error_message;
