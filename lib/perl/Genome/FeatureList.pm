@@ -415,21 +415,23 @@ sub generate_converted_bed_file {
     my $merge = delete($args{merge});
     my $reference = delete($args{reference});
 
-    my $converted_file_path = delete($args{file_path}) || Genome::Sys->create_temp_file_path( $self->id . '.merged.' . $reference->id . '.converted.bed' );
     my $original_file_path;
     if ($merge) {
         $original_file_path = $self->merged_bed_file(%args);
     } else {
         $original_file_path = $self->processed_bed_file(%args);
     }
-    my $converted_bed_file = Genome::Model::Build::ReferenceSequence::Converter->convert_bed($original_file_path, $self->reference, $converted_file_path, $reference);
 
-    unless(-s $converted_bed_file) {
-        $self->error_message('Could not convert to requested reference!');
-        die $self->error_message;
+    my $sr = Genome::Model::Build::ReferenceSequence::ConvertedBedResult->get_or_create(
+        source_bed => $original_file_path, source_reference => $self->reference, target_reference => $reference);
+
+    my $converted_file_path = delete($args{file_path});
+    if (defined $converted_file_path) {
+        Genome::Sys->create_symlink($sr->target_bed, $converted_file_path);
+        return $converted_file_path;
+    } else {
+        return $sr->target_bed;
     }
-
-    return $converted_bed_file;
 }
 
 sub converted_bed_file {
