@@ -10,10 +10,6 @@ use Workflow::Simple;
 class Genome::InstrumentData::Command::Import::Basic { 
     is => 'Command::V2',
     has_input => [
-        analysis_project => {
-            is => 'Genome::Config::AnalysisProject',
-            doc => 'Analysis project to assign to the created instrument data.',
-        },
         sample => {
             is => 'Genome::Sample',
             doc => 'Sample to use. The external library for the instrument data will be gotten or created.',
@@ -29,6 +25,10 @@ class Genome::InstrumentData::Command::Import::Basic {
         },
     ],
     has_optional_input => [
+        analysis_project => {
+            is => 'Genome::Config::AnalysisProject',
+            doc => 'Analysis project to assign to the created instrument data.',
+        },
         description  => {
             is => 'Text',
             doc => 'Description of the data.',
