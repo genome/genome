@@ -172,9 +172,9 @@ ok(!grep({ $_->{job_status} } @$imports_aryref), 'imports aryref does not have j
 is_deeply(
     [ map { $manager->_resolve_launch_command_for_import($_) } @$imports_aryref ],
     [
-        "echo TeSt-0000-00.1 LAUNCH! genome instrument-data import basic --sample name=TeSt-0000-00 --analysis-project id=".$analysis_project->id." --source-files bam1 --import-source-name TeSt --instrument-data-properties lane='8'",
-        "echo TeSt-0000-00.2 LAUNCH! genome instrument-data import basic --sample name=TeSt-0000-00 --analysis-project id=".$analysis_project->id." --source-files bam2 --import-source-name TeSt --instrument-data-properties lane='8'",
-        "echo TeSt-0000-01.1 LAUNCH! genome instrument-data import basic --sample name=TeSt-0000-01 --analysis-project id=".$analysis_project->id." --source-files bam3 --import-source-name TeSt --instrument-data-properties lane='7'",
+        "echo TeSt-0000-00.1 LAUNCH! genome instrument-data import basic --sample name=TeSt-0000-00 --source-files bam1 --import-source-name TeSt --instrument-data-properties lane='8' --analysis-project id=".$analysis_project->id,
+        "echo TeSt-0000-00.2 LAUNCH! genome instrument-data import basic --sample name=TeSt-0000-00 --source-files bam2 --import-source-name TeSt --instrument-data-properties lane='8' --analysis-project id=".$analysis_project->id,
+        "echo TeSt-0000-01.1 LAUNCH! genome instrument-data import basic --sample name=TeSt-0000-01 --source-files bam3 --import-source-name TeSt --instrument-data-properties lane='7' --analysis-project id=".$analysis_project->id,
      ],
      'launch commands',
 );
