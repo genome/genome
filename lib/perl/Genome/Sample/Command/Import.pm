@@ -211,6 +211,18 @@ sub _load_import_configs {
             },
         },
         {
+            nomenclature => 'DREAM',
+            name_regexp => '(DREAM\-[\w\d]+)\-[\w\d]+',
+            taxon_name => 'human',
+            sample_attributes => {
+                extraction_type => {
+                    default_value => "genomic dna",
+                },
+                common_name => {
+                },
+            }
+        },
+        {
             nomenclature => 'WHIM',
             name_regexp => '(WHIM[\d]+)\-[\w\d]+(\-[\w\d]+)*',
             taxon_name => 'human',
