@@ -1286,7 +1286,7 @@ sub _get_running_master_lsf_job {
 }
 
 sub _get_job {
-    use Genome::Model::Command::Services::Build::Scan;
+    use Genome::Sys::LSF::JobIterator;
     my $self = shift;
     my $job_id = shift;
 
