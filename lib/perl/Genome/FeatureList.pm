@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use IPC::System::Simple qw(capture);
 
 class Genome::FeatureList {
     table_name => 'model.feature_list',
@@ -463,14 +464,15 @@ sub _resolve_param_value_from_text_by_name_or_id {
     return @results;
 }
 
-# Early detection for the common problem that the ROI reference_name is not set correctly
-sub _check_roi_list_is_on_correct_reference {
+# Early detection for the common problem that the bed reference_name is not set correctly
+sub _check_bed_list_is_on_correct_reference {
     my $self = shift;
     my $bed_file = $self->file_path;
-    my @chr_lines = `grep --mmax-count=1 chr $bed_file`;
+    # Accept 0 or 1 return codes since grep returns 1 if it does not find anything
+    my @chr_lines = capture([0,1], "grep --max-count=1 chr $bed_file");
 
     if (@chr_lines and not ($self->reference_name =~ m/nimblegen/) ) {
-        die $self->error_message("It looks like your ROI has 'chr' chromosomes but does not have a 'nimblegen' reference name (It is currently %s).\n".
+        die $self->error_message("It looks like your bed has 'chr' chromosomes but does not have a 'nimblegen' reference name (It is currently %s).\n".
             "This will result in your variant sets being filtered down to nothing. An example of a fix to this situation: \n".
             "genome feature-list update '%s' --reference nimblegen-human-buildhg19 (if your reference is hg19)", $self->reference_name, $self->name);
     }
@@ -478,20 +480,20 @@ sub _check_roi_list_is_on_correct_reference {
     return 1;
 }
 
-sub resolve_roi_for_reference {
+sub resolve_bed_for_reference {
     my ($self, $reference_sequence_build) = @_;
 
-    $self->_check_roi_list_is_on_correct_reference;
+    $self->_check_bed_list_is_on_correct_reference;
 
-    my $roi_file;
+    my $bed_file;
     if($self->reference->id eq $reference_sequence_build->id) {
-        $roi_file = $self->file_path;
+        $bed_file = $self->file_path;
     } else {
-        $roi_file = $self->converted_bed_file(
+        $bed_file = $self->converted_bed_file(
             reference => $reference_sequence_build,
         );
     }
-    return $roi_file;
+    return $bed_file;
 }
 
 1;
