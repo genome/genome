@@ -3,7 +3,6 @@ package Genome::Model::Command::Services::Build::Scan;
 use strict;
 use warnings;
 use Genome;
-use IPC::System::Simple qw(capture);
 
 class Genome::Model::Command::Services::Build::Scan {
     is => 'Command::V2',
@@ -77,7 +76,7 @@ sub _get_running_builds {
 sub _has_lsf_jobs {
     my $self = shift;
     my $build = shift;
-    my @output = eval {capture('bjobs', '-uall', '-Pbuild'.$build->id)};
+    my @output = eval {_capture('bjobs', '-uall', '-Pbuild'.$build->id)};
     if ($@) {
         die $self->error_message("Problem running bjobs output");
     }
@@ -87,6 +86,12 @@ sub _has_lsf_jobs {
     else {
         return 0;
     }
+}
+
+sub _capture {
+    # lazy load so we don't break /gsc/bin/perl (until we have to)
+    require IPC::System::Simple;
+    return IPC::System::Simple::capture(@_);
 }
 
 1;
