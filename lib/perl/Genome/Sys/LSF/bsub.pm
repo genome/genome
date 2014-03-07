@@ -3,6 +3,7 @@ package Genome::Sys::LSF::bsub;
 use strict;
 use warnings;
 
+use Genome::Sys;
 use Exporter qw(import);
 use Params::Validate qw(:types);
 
@@ -17,7 +18,7 @@ sub run {
         $executable = [$executable];
     }
 
-    my @output = _capture(@$executable, @args);
+    my @output = Genome::Sys->capture(@$executable, @args);
 
     my $job_id = ($output[-1] =~ /^Job <(\d+)> is submitted to/)[0];
     unless ($job_id) {
@@ -140,12 +141,6 @@ sub _queues {
     my @output = _capture('bqueues', '-l');
     my @queues = map { (/^QUEUE:\s+(\S+)/)[0] } @output;
     return @queues;
-}
-
-sub _capture {
-    # lazy load so we don't break /gsc/bin/perl (until we have to)
-    require IPC::System::Simple;
-    return IPC::System::Simple::capture(@_);
 }
 
 1;

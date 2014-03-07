@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Genome;
-use IPC::System::Simple qw(capture);
 
 class Genome::FeatureList {
     table_name => 'model.feature_list',
@@ -469,7 +468,7 @@ sub _check_bed_list_is_on_correct_reference {
     my $self = shift;
     my $bed_file = $self->file_path;
     # Accept 0 or 1 return codes since grep returns 1 if it does not find anything
-    my @chr_lines = capture([0,1], "grep --max-count=1 chr $bed_file");
+    my @chr_lines = Genome::Sys->capture([0,1], "grep --max-count=1 chr $bed_file");
 
     if (@chr_lines and not ($self->reference_name =~ m/nimblegen/) ) {
         die $self->error_message("It looks like your bed has 'chr' chromosomes but does not have a 'nimblegen' reference name (It is currently %s).\n".
