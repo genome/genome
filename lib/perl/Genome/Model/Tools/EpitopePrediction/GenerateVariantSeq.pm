@@ -74,34 +74,19 @@ sub execute {
                     @wildtype_arr = @arr_wildtype_sequence[ 0 ... 16];
                     $arr_wildtype_sequence[$position]=$mutant_aa;
                     @mutant_arr = @arr_wildtype_sequence[ 0 ... 16];
-                    print $output_fh ">WT.".$protein_arr[6].".".$protein_arr[15]."\n";
-                    print $output_fh ( join "", @wildtype_arr);
-                    print $output_fh "\n";
-                    print $output_fh ">MT.".$protein_arr[6].".".$protein_arr[15]."\n";
-                    print $output_fh ( join "", @mutant_arr);
-                    print $output_fh "\n";
+                    print_wildtype_and_mutant($output_fh, \@wildtype_arr, \@mutant_arr, \@protein_arr);
                 }
                 elsif ($position > ($#arr_wildtype_sequence -8)) {
                     @wildtype_arr = @arr_wildtype_sequence[ $#arr_wildtype_sequence -17 ... $#arr_wildtype_sequence];
                     $arr_wildtype_sequence[$position]=$mutant_aa;
                     @mutant_arr = @arr_wildtype_sequence[ $#arr_wildtype_sequence -17 ... $#arr_wildtype_sequence];
-                    print $output_fh ">WT.".$protein_arr[6].".".$protein_arr[15]."\n";
-                    print $output_fh ( join "", @wildtype_arr);
-                    print $output_fh "\n";
-                    print $output_fh ">MT.".$protein_arr[6].".".$protein_arr[15]."\n";
-                    print $output_fh ( join "", @mutant_arr);
-                    print $output_fh "\n";
+                    print_wildtype_and_mutant($output_fh, \@wildtype_arr, \@mutant_arr, \@protein_arr);
                 }
                 elsif (($position >= 8) && ($position  <= ($#arr_wildtype_sequence -8))) {
                     @wildtype_arr = @arr_wildtype_sequence[ $position-8 ... $position+8];
                     $arr_wildtype_sequence[$position]=$mutant_aa;
                     @mutant_arr = @arr_wildtype_sequence[ $position-8 ... $position+8];
-                    print $output_fh ">WT.".$protein_arr[6].".".$protein_arr[15]."\n";
-                    print $output_fh ( join "", @wildtype_arr);
-                    print $output_fh "\n";
-                    print $output_fh ">MT.".$protein_arr[6].".".$protein_arr[15]."\n";
-                    print $output_fh ( join "", @mutant_arr);
-                    print $output_fh "\n";
+                    print_wildtype_and_mutant($output_fh, \@wildtype_arr, \@mutant_arr, \@protein_arr);
                 }
                 else {
                     print $output_fh "NULL"."\t".$position."\n";
@@ -114,6 +99,27 @@ sub execute {
     close($input_fh);
 
     return 1;
+}
+
+sub print_wildtype_and_mutant {
+    my $output_fh = shift;
+    my $wildtype_arr = shift;
+    my $mutant_arr = shift;
+    my $protein_arr = shift;
+
+    print_fasta_entry($output_fh, "WT", $wildtype_arr, $protein_arr);
+    print_fasta_entry($output_fh, "MT", $mutant_arr, $protein_arr);
+}
+
+sub print_fasta_entry {
+    my $output_fh = shift;
+    my $designation = shift;
+    my $arr = shift;
+    my $protein_arr = shift;
+
+    print $output_fh ">$designation." . $protein_arr->[6] . "." . $protein_arr->[15] . "\n";
+    print $output_fh (join "", @{$arr});
+    print $output_fh "\n";
 }
 
 1;
