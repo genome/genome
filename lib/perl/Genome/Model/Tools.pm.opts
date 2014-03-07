@@ -17744,8 +17744,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
     ],
     '>copy-cat-somatic-with-bam-window',
     [
-      'annotation-version=s',
-      'files',
       'lsf-queue=s',
       'files',
       'lsf-resource=s',
@@ -17758,6 +17756,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'files',
       'alignment-results=s@',
       undef,
+      'annotation-version=s',
+      'files',
       'bamwindow-filter-to-chromosomes=s@',
       'files',
       'color!',
@@ -25308,6 +25308,21 @@ $Genome::Model::Tools::OPTS_SPEC = [
     ],
     '>dedup',
     [
+      '>by-sequence',
+      [
+        'debug!',
+        undef,
+        'input=s@',
+        'files',
+        'input-metrics=s',
+        'files',
+        'output=s@',
+        'files',
+        'output-metrics=s',
+        'files',
+        'help!',
+        undef
+      ],
       '>by-name',
       [
         'debug!',
