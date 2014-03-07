@@ -292,6 +292,10 @@ sub processed_bed_file_content {
         chomp($line);
         $line_no++;
 
+        if(!$bed_file_content && index($line, 'browser') == 0) {
+            next;
+        }
+
         if($self->is_multitracked) {
             if ($line =~ /^track name=tiled_region/ or $line =~ /^track name=probes/) {
                 if ($track_name eq 'tiled_region') {
