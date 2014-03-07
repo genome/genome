@@ -10240,8 +10240,10 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>Brc46',
+      '>Dream',
       [
+        'common-name=s',
+        'files',
         'extraction-type=s',
         'files',
         'name=s',
@@ -10257,16 +10259,10 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>Whim',
+      '>Brc46',
       [
         'extraction-type=s',
-        [
-          'cdna',
-          'genomic dna',
-          'ipr product',
-          'rna',
-          'total rna'
-        ],
+        'files',
         'name=s',
         'files',
         'debug!',
@@ -10299,6 +10295,29 @@ $Genome::Command::OPTS_SPEC = [
         'name=s',
         'files',
         'tissue-label=s',
+        'files',
+        'debug!',
+        undef,
+        'individual-attributes=s@',
+        'files',
+        'library-attributes=s@',
+        'files',
+        'sample-attributes=s@',
+        'files',
+        'help!',
+        undef
+      ],
+      '>Whim',
+      [
+        'extraction-type=s',
+        [
+          'cdna',
+          'genomic dna',
+          'ipr product',
+          'rna',
+          'total rna'
+        ],
+        'name=s',
         'files',
         'debug!',
         undef,
@@ -28507,8 +28526,6 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>copy-cat-somatic-with-bam-window',
       [
-        'annotation-version=s',
-        'files',
         'lsf-queue=s',
         'files',
         'lsf-resource=s',
@@ -28521,6 +28538,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'alignment-results=s@',
         undef,
+        'annotation-version=s',
+        'files',
         'bamwindow-filter-to-chromosomes=s@',
         'files',
         'color!',
@@ -36071,6 +36090,21 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>dedup',
       [
+        '>by-sequence',
+        [
+          'debug!',
+          undef,
+          'input=s@',
+          'files',
+          'input-metrics=s',
+          'files',
+          'output=s@',
+          'files',
+          'output-metrics=s',
+          'files',
+          'help!',
+          undef
+        ],
         '>by-name',
         [
           'debug!',
@@ -38019,14 +38053,14 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>basic',
       [
-        'analysis-project=s',
-        undef,
         'sample=s',
         undef,
         'import-source-name=s',
         'files',
         'source-files=s@',
         'files',
+        'analysis-project=s',
+        undef,
         'description=s',
         'files',
         'instrument-data-properties=s@',
