@@ -26,7 +26,7 @@ sub create {
         $params{headers} = [ split(',', $fields) ];
     }
     else {
-        $params{headers} = Genome::Model::GenotypeMicroarray::GenotypeFile::CsvHelper->column_names;
+        $params{headers} = [qw/ chromosome position alleles reference id sample_name log_r_ratio gc_score cnv_value cnv_confidence allele1 allele2 /];
     }
 
     return $class->SUPER::create(%params);
