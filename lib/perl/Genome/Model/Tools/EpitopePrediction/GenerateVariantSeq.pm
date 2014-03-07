@@ -59,8 +59,7 @@ sub execute {
                 next;
                 #TO DO :print $output_fh $prot_arr[0]."\t".$prot_arr[1]."\t".$prot_arr[2]."\t".$prot_arr[6]."\t".$1."\t".$2."\t".$3."\t".$prot_arr[11]."\t".$arr_wt_seq[$position]."\n";
             }
-
-            if ($1 eq $arr_wt_seq[$position]) {
+            else {
                 my @mt_arr;
                 my @wt_arr;
                 if ($position < 8) {
@@ -102,8 +101,11 @@ sub execute {
             }
         }
     }
+
     close($output_fh);
     close($input_fh);
-1;
+
+    return 1;
 }
-return 1;
+
+1;
