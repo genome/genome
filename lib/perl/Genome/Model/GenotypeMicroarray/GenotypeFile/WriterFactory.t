@@ -12,24 +12,27 @@ use above 'Genome';
 use Test::More;
 
 use_ok('Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory') or die;
+use_ok('Genome::File::Vcf::Header') or die;
+no warnings;
+*Genome::File::Vcf::Header::to_string = sub{ return ''; };
+use warnings;
 
 my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
 my $cnt = 0;
 my $output_file;
+my $header = bless({}, 'Genome::File::Vcf::Header');
 my $writer_params_string_generator = sub{ 
     my %params = @_;
-    $params{sample_name} = '__TEST_SAMPLE__';
     if ( exists $params{output} ) {
         $params{output} = $output_file = $tmpdir.'/FILE'.++$cnt;
     }
-    return join(':', map { join('=', $_, $params{$_}) } keys %params);
+    return ( $header, join(':', map { join('=', $_, $params{$_}) } keys %params) );
 };
 
 ## TEST ERRORS ##
-# Nothing given = needs sample name
+# Nothing given = needs header
 ok(!Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory->build_writer(), 'failed to build writer w/o writer params string');
 
-my $sample_name_str = 'sample_name=__TEST_SAMPLE__';
 # Invalid format
 ok(!Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory->build_writer( $writer_params_string_generator->(format => 'supervcf') ), 'failed to create writer w/ invalid format');
 

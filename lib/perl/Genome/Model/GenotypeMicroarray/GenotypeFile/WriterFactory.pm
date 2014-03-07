@@ -13,11 +13,17 @@ class Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory {
 };
 
 sub build_writer {
-    my ($class, $writer_params_string) = @_;
+    my ($class, $header, $writer_params_string) = @_;
+
+    if ( not $header or not $header->isa('Genome::File::Vcf::Header') ) {
+        $class->error_message('No header given to create writer!');
+        return;
+    }
 
     my $writer_params = $class->_parse_writer_params_string($writer_params_string);
     return if not $writer_params;
 
+    $writer_params->{header} = $header;
     my $writer = $class->_build_writer($writer_params);
     if ( not $writer ) {
         $class->error_message('Failed to build writer! Params: '.Data::Dumper::Dumper($writer_params));
@@ -80,12 +86,6 @@ sub _parse_writer_params_string {
         return;
     }
 
-    # Require sample name [needed for vcf, not for csv]
-    if ( not $writer_params{sample_name} ) {
-        $class->error_message('No sample name in writer params!');
-        return;
-    }
-
     return \%writer_params;
 }
 
@@ -100,10 +100,7 @@ sub _build_writer {
 
 sub _build_vcf_writer {
     my ($class, $writer_params) = @_;
-    return Genome::File::Vcf::Writer->new(
-        $writer_params->{output},    
-        Genome::Model::GenotypeMicroarray::GenotypeFile::VcfHelper->header($writer_params->{sample_name}),
-    );
+    return Genome::File::Vcf::Writer->new($writer_params->{output}, $writer_params->{header});
 }
 
 sub _build_csv_writer {
