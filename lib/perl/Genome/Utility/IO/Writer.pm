@@ -47,6 +47,7 @@ sub create {
         or return;
     
     unless ( $output ) { # STDOUT
+        $self->{_original_output} = '-';
         my $handle = IO::Handle->new();
         $handle->fdopen(fileno(STDOUT), "w");
         $handle->autoflush;

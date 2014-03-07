@@ -9,6 +9,7 @@ use Test::Exception;
 use Genome::Utility::Test 'compare_ok';
 use File::Spec;
 use Sub::Install qw();
+use File::Basename qw(dirname);
 
 BEGIN {
     $ENV{UR_DBI_NO_COMMIT} = 1;
@@ -96,8 +97,9 @@ sub test_rex_script_path {
 sub test_run_generic_process {
     my $test_class = ParkTest->create();
     my $process_uri = '/this/is/a/test/';
-    my $cmd = ['echo', "Here is some text\nLaunching Process $process_uri (some other things)\n"];
-    is($test_class->_run_generic_process($cmd), $process_uri, 
+    my $dir = dirname(__FILE__);
+    my $cmd = [File::Spec->join($dir, 'test.sh')];
+    is($test_class->_run_generic_process($cmd), $process_uri,
         "Got process uri ($process_uri) from run_generic_process");
 }
 

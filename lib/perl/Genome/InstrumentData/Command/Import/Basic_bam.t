@@ -18,6 +18,9 @@ use Test::More;
 use_ok('Genome::InstrumentData::Command::Import::Basic') or die;
 use_ok('Genome::InstrumentData::Command::Import::WorkFlow::Helpers') or die;
 
+my $analysis_project = Genome::Config::AnalysisProject->create(name => '__TEST_AP__');
+ok($analysis_project, 'create analysis project');
+
 my $sample = Genome::Sample->create(name => '__TEST_SAMPLE__');
 ok($sample, 'Create sample');
 
@@ -26,6 +29,7 @@ my $source_bam = $test_dir.'/test.bam';
 ok(-s $source_bam, 'source bam exists') or die;
 
 my $cmd = Genome::InstrumentData::Command::Import::Basic->create(
+    analysis_project => $analysis_project,
     sample => $sample,
     source_files => [$source_bam],
     import_source_name => 'broad',
@@ -50,6 +54,7 @@ is($instrument_data->read_count, 256, 'read_count correctly set');
 is($instrument_data->read_length, 100, 'read_length correctly set');
 is(eval{$instrument_data->attributes(attribute_label => 'segment_id')->attribute_value;}, 2883581797, 'segment_id correctly set');
 is(eval{$instrument_data->attributes(attribute_label => 'original_data_path_md5')->attribute_value;}, '940825168285c254b58c47399a3e1173', 'original_data_path_md5 correctly set');
+is($instrument_data->analysis_projects, $analysis_project, 'set analysis project');
 
 my $bam_path = $instrument_data->bam_path;
 ok(-s $bam_path, 'bam path exists');

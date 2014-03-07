@@ -309,7 +309,7 @@ sub read_groups_from_headers {
     for my $rg_header ( @$rg_headers ) {
         my %tags = map { split(':', $_, 2) } split(/\t/, $rg_header);
         my $rg_id = delete $tags{ID};
-        if ( not $rg_id ) {
+        if ( not defined $rg_id ) {
             $self->error_message("No ID tag in read group header! \@RG\t$rg_header");
             return;
         }

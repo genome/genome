@@ -22,10 +22,13 @@ my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Comma
 my $source_file = $test_dir.'/input.fastq.tgz';
 ok($source_file, 'source archive exists');
 
+my $analysis_project = Genome::Config::AnalysisProject->create(name => '__TEST_AP__');
+ok($analysis_project, 'create analysis project');
 my $sample = Genome::Sample->create(name => '__TEST_SAMPLE__');
 ok($sample, 'Create sample');
 
 my $cmd = Genome::InstrumentData::Command::Import::Basic->create(
+    analysis_project => $analysis_project,
     sample => $sample,
     source_files => [$source_file],
     import_source_name => 'broad',
@@ -50,6 +53,7 @@ is($instrument_data->is_paired_end, 1, 'is_paired_end correctly set');
 is($instrument_data->read_count, 2000, 'read_count correctly set');
 is(eval{ $instrument_data->attributes(attribute_label => 'lane')->attribute_value }, 2, 'lane correctly set');
 is(eval{ $instrument_data->attributes(attribute_label => 'flow_cell_id')->attribute_value }, 'XXXXXX', 'flow_cell_id correctly set');
+is($instrument_data->analysis_projects, $analysis_project, 'set analysis project');
 
 my $bam_path = $instrument_data->bam_path;
 ok(-s $bam_path, 'bam path exists');

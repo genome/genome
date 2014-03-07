@@ -19,6 +19,7 @@ class Genome::Model::RnaSeq {
         },
         annotation_build => {
             is => "Genome::Model::Build::ImportedAnnotation",
+            is_optional => 1,
         },
         target_region_set_name => {
             is => 'Text',

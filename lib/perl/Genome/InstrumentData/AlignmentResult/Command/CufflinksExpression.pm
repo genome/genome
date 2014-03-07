@@ -40,6 +40,7 @@ class Genome::InstrumentData::AlignmentResult::Command::CufflinksExpression {
         mask_reference_transcripts => {
             is => 'Text',
             doc => 'The name of an annotation file of known transcripts to mask during expression estimation.',
+            is_optional => 1,
         },
         annotation_reference_transcripts_mode => {
             is => 'Text',

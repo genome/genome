@@ -3,6 +3,7 @@ package Genome::Sys::LSF::bsub;
 use strict;
 use warnings;
 
+use Genome::Sys;
 use Exporter qw(import);
 use Params::Validate qw(:types);
 
@@ -19,8 +20,6 @@ sub run {
     if (ref($executable) ne 'ARRAY') {
         $executable = [$executable];
     }
-
-    print STDERR "RUN: @$executable @args\n";
     my @output = _capture(@$executable, @args);
 
     my $job_id = ($output[-1] =~ /^Job <(\d+)> is submitted to/)[0];
@@ -143,7 +142,7 @@ sub _valid_lsf_queue {
 }
 
 sub _queues {
-    my @output = _capture('bqueues', '-l');
+    my @output = Genome::Sys->capture('bqueues', '-l');
     my @queues = map { (/^QUEUE:\s+(\S+)/)[0] } @output;
     return @queues;
 }

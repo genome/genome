@@ -692,6 +692,8 @@ sub tar {
     my $input_directory = delete $params{input_directory};
     my $input_pattern = delete $params{input_pattern};
     $input_pattern = '*' unless defined $input_pattern;
+    my $options = delete $params{options};
+    $options = '-cf' unless defined $options;
 
     if (%params) {
         Carp::confess "Extra parameters given to tar method: " . join(', ', sort keys %params);
@@ -720,7 +722,7 @@ sub tar {
         Carp::confess "Cannot create tarball for empty directory $input_directory!";
     }
 
-    my $cmd = "tar -cf $tar_path $input_pattern";
+    my $cmd = "tar $options $tar_path $input_pattern";
     my $rv = Genome::Sys->shellcmd(
         cmd => $cmd,
     );
@@ -1395,19 +1397,26 @@ sub shellcmd {
         $t1 = time();
         my $system_retval;
         eval {
-                open my $savedout, '>&', \*STDOUT || die "Can't dup STDOUT: $!";
-                open my $savederr, '>&', \*STDERR || die "Can't dup STDERR: $!";
-                my $restore = UR::Util::on_destroy(sub {
-                    open(STDOUT, '>&', $savedout);
-                    open(STDERR, '>&', $savederr);
-                });
-
+                my ($restore_stdout);
                 if ($redirect_stdout) {
+                    no warnings 'once'; # OLDOUT is used only once, not
+                    open(OLDOUT, '>&STDOUT') || die "Can't dup STDOUT: $!";
                     open(STDOUT, '>', $redirect_stdout) || die "Can't redirect stdout to $redirect_stdout: $!";
+                    $restore_stdout = UR::Util::on_destroy(sub {
+                        open(STDOUT, '>&OLDOUT');
+                    });
                 }
+
+                my ($restore_stderr);
                 if ($redirect_stderr) {
+                    no warnings 'once'; # OLDERR is used only once, not
+                    open(OLDERR, '>&STDERR') || die "Can't dup STDERR: $!";
                     open(STDERR, '>', $redirect_stderr) || die "Can't redirect stderr to $redirect_stderr: $!";
+                    $restore_stderr = UR::Util::on_destroy(sub {
+                        open(STDERR, '>&OLDERR');
+                    });
                 }
+
                 # Set -o pipefail ensures the command will fail if it contains pipes and intermediate pipes fail.
                 # Export SHELLOPTS ensures that if there are nested "bash -c"'s, each will inherit pipefail
                 my $shellopts_part = 'export SHELLOPTS;';
@@ -1521,6 +1530,14 @@ sub shellcmd {
 
     return 1;
 
+}
+
+sub capture {
+    my $class = shift;
+
+    # lazy load so we don't break /gsc/bin/perl (until we have to)
+    require IPC::System::Simple;
+    return IPC::System::Simple::capture(@_);
 }
 
 sub disconnect_default_handles {

@@ -329,7 +329,7 @@ sub _get_aligner_params_to_generate_annotation_index {
     $aligner_params = $class->_remove_bowtie_version($aligner_params);
  
     # add in the options that tell TopHat that we want to store the index
-    $aligner_params .= "--transcriptome-only";
+    $aligner_params .= " --transcriptome-only";
     $aligner_params .= " --transcriptome-index '$index_prefix'";
 
     # add -G <gtf_file> option to tell TopHat what to make the index out of

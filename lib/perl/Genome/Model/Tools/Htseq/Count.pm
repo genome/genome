@@ -177,7 +177,7 @@ sub _execute_v1 {
         $sorted_bam = $sorted_bam_noprefix . '.bam';
 
         Genome::Sys->shellcmd(
-            cmd => "$samtools_path sort -n -m 402653184 $unsorted_bam $sorted_bam_noprefix",
+            cmd => "$samtools_path sort -n $unsorted_bam $sorted_bam_noprefix",
             input_files => [$unsorted_bam],
             output_files => [$sorted_bam],
         );

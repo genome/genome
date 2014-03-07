@@ -380,8 +380,8 @@ sub getFilterSites{
 
 
 sub removeFilterSites{
-    my ($file,$filterSites) = @_;
-
+    my ($file,$filterSitesRef) = @_;
+    my %filterSites = %{$filterSitesRef};
     my $newfile = addName($file,"filtered");
     #handle zero size files
     if( -z $file ){
@@ -398,7 +398,8 @@ sub removeFilterSites{
         if($ref =~ /\//){
             ( $ref, $var ) = split(/\//, $ref);
         }
-        unless (defined($filterSites->join("\t",($chr, $start, $stop, $ref, $var )))){
+        my $key = join("\t",($chr, $start, $stop, $ref, $var ));
+        unless (defined($filterSites{$key})){
             print FILFILE $line . "\n";
         }
     }
@@ -616,13 +617,11 @@ sub execute {
   my $ref_seq_build_id = $tumor_model->reference_sequence_build->build_id;
   my $ref_seq_build = Genome::Model::Build->get($ref_seq_build_id);
   my $ref_seq_fasta = $ref_seq_build->full_consensus_path('fa');
-
   my $annotation_build_name = $model->annotation_build->name;
   if(defined $self->reference_transcripts){
       print STDERR "Model's annotation build overriden. Using " . $self->reference_transcripts . "\n";
       $annotation_build_name = $self->reference_transcripts;
   }
-
   my $tiering_files = $model->annotation_build->data_directory . "/annotation_data/tiering_bed_files_v3/";
   my $sample_name;
   if(!defined($self->sample_name)){
@@ -835,7 +834,7 @@ sub execute {
   #-------------------------------------------------------
   # remove regions called by less than the required number of callers
   unless($self->required_snv_callers == 1){
-      print STDERR "Removing regions supported by less than " . $self->required_snv_callers . " regions...\n";
+      print STDERR "Removing snvs supported by less than " . $self->required_snv_callers . " callers...\n";
       $snv_file = removeUnsupportedSites($snv_file, $self->required_snv_callers, $build_dir);
   }
 

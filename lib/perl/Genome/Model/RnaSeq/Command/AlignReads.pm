@@ -48,16 +48,19 @@ sub execute {
     my $build = $self->build;
 
     my @instrument_data = $build->instrument_data;
-    my $result = Genome::InstrumentData::Composite->get_or_create(
-        inputs => {
+    my %composite_inputs = (
             instrument_data => \@instrument_data,
             reference_sequence_build => $build->reference_sequence_build,
             picard_version => $build->processing_profile->picard_version,
             trimmer_name => $build->processing_profile->read_trimmer_name,
             trimmer_version => $build->processing_profile->read_trimmer_version,
             trimmer_params => $build->processing_profile->read_trimmer_params,
-            annotation_build => $build->annotation_build,
-        },
+    );
+    if (defined($build->annotation_build)) {
+        $composite_inputs{annotation_build} = $build->annotation_build;
+    }
+    my $result = Genome::InstrumentData::Composite->get_or_create(
+        inputs => \%composite_inputs,
         strategy => $self->_generate_alignment_strategy,
         log_directory => $build->log_directory,
     );
@@ -97,7 +100,11 @@ sub _generate_alignment_strategy {
     my $aligner = 'per-lane-tophat';
     my $aligner_version = $pp->read_aligner_version;
     my $aligner_params = $pp->read_aligner_params;
-    my $strategy = "instrument_data aligned to reference_sequence_build and annotation_build using $aligner $aligner_version [$aligner_params] then merged using picard $picard_version";
+    my $strategy = 'instrument_data aligned to reference_sequence_build';
+    if (defined($self->build->annotation_build)) {
+        $strategy .= ' and annotation_build';
+    }
+    $strategy .= " using $aligner $aligner_version [$aligner_params] then merged using picard $picard_version";
     if (defined($pp->deduplication_handler)) {
         if ($pp->deduplication_handler eq 'picard') {
             $strategy .= ' then deduplicated using '. $pp->deduplication_handler .' '. $picard_version;

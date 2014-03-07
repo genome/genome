@@ -305,14 +305,6 @@ sub add_alt_information_to_vcf_line {
         }
         @gt_values = keys %unique_gt_values;
 
-        # Make sure the number of values we have for everything checks out
-        unless ( (scalar(@ad_values) == scalar (@bq_values)) && (scalar(@ad_values) == scalar (@gt_values)) ){
-            my $error_message = "For this vcf line: $vcf_line\n" . 
-                "Have differing numbers of values for AD " . $sample_values{"AD"} . " and BQ " . $sample_values{"BQ"}. " and GT " . $sample_values{"GT"} . "\n" . 
-                "There should be one AD and BQ value for each alt PLUS the reference. If this is not true, rebuilding your model group will fix this.";
-            die $self->error_message($error_message);
-        }
-
         # If we have information for all alts present, return the line as is
         if (scalar(@new_alt_values) == scalar(@ad_values) && scalar(@new_alt_values) == scalar(@bq_values) ) {
             #$self->status_message("Information is already present for all alts in $vcf_line");

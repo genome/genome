@@ -24,9 +24,11 @@ class Genome::Model::Tools::DetectVariants2::CopyCatSomaticWithBamWindow{
             is_many => 1,
             doc => 'Chromosomes that bamwindow will filter output to (generally for test purposes)',
         },
+        #TODO: annotation_version is deprecated.  Remove it
         annotation_version => {
             is => 'Text',
-            doc => 'version of the copycat annotation to use',
+            doc => 'version of the copycat annotation to use.  Deprecated',
+            is_optional => 1,
         }
     ],
 };
@@ -34,6 +36,7 @@ class Genome::Model::Tools::DetectVariants2::CopyCatSomaticWithBamWindow{
 
 sub _detect_variants {
     my $self = shift;
+    my $cnvs = $self->_temp_staging_directory."/cnvs.hq";
 
     ##parse input params string - expected format
     #--bamwindow-version 0.4 --bamwindow-params [-w 10000 -r -l -s]
@@ -66,6 +69,13 @@ sub _detect_variants {
         $per_read_length = 1;
     }
 
+    #annotation-version
+    my $annotation_version;
+    if($params =~ m/--annotation-version/){
+        $params =~ m/--annotation-version\s*(\d+\.?\d?)\s*/;
+        $annotation_version = $1;
+    }
+
     my %input;
 
     # Define a workflow from the static XML at the bottom of this module
@@ -95,7 +105,7 @@ sub _detect_variants {
     $input{tumor_samtools_file} = $self->get_samtools_results($self->aligned_reads_input);
     $input{normal_samtools_file} = $self->get_samtools_results($self->control_aligned_reads_input);
     $input{copycat_output_directory} = $self->_temp_staging_directory;
-    $input{annotation_version} = $self->annotation_version;
+    $input{annotation_version} = $annotation_version;
     $input{reference_build_id} = $self->reference_build_id;
 
     my $log_dir = $self->output_directory;
@@ -114,6 +124,10 @@ sub _detect_variants {
             print Data::Dumper->Dumper(@Workflow::Simple::ERROR), "\n";
         }
         die $self->error_message("Workflow did not return correctly");
+    }
+
+    unless(-e $cnvs){
+        system("touch $cnvs");
     }
 
     return 1;
@@ -141,6 +155,25 @@ sub get_samtools_results{
         #alternative lookup - maybe later?
     }
     return "";
+}
+
+sub _promote_staged_data {
+    my $self = shift;
+    my $output_directory = $self->SUPER::_promote_staged_data;
+    Genome::Sys->remove_directory_tree($self->_temp_staging_directory);
+    return $output_directory;
+}
+
+sub _create_temp_directories {
+    my $self = shift;
+    my $staging_tempdir = File::Temp->newdir(
+            "staging-XXXXX",
+            DIR     => $self->output_directory,
+            CLEANUP => 0,
+    );
+    $self->_temp_staging_directory($staging_tempdir->dirname);
+    $self->_temp_scratch_directory(Genome::Sys->create_temp_directory);
+    return 1;
 }
 
 1;

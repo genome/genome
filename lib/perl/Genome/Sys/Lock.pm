@@ -12,11 +12,32 @@ use base 'UR::ModuleBase';   # *_message methods, but no constructor
 use Genome::Utility::Instrumentation;
 
 my %SYMLINKS_TO_REMOVE;
+my %NESSY_LOCKS_TO_REMOVE;
+my $LOCKING_CLIENT;
 
 sub lock_resource {
     my ($self,%args) = @_;
 
-    my $total_lock_start_time = Time::HiRes::time();
+    @args{'resource_lock', 'parent_dir'} = $self->_resolve_resource_lock_and_parent_dir_for_lock_resource(%args);
+
+    $self->_start_locking_client;
+
+    my $nessy_claim = $self->_new_style_lock(%args);
+    unless ($nessy_claim) {
+        $self->error_message("Nessy could not aquire lock for resource lock: $args{resource_lock}");
+    }
+
+    my $rv = $self->_file_based_lock_resource( %args );
+
+    if (! $rv and $nessy_claim) {
+        $self->error_message("Nessy aquired lock but file-based did not.  resource_lock: $args{resource_lock}");
+    }
+    return $rv;
+
+}
+
+sub _resolve_resource_lock_and_parent_dir_for_lock_resource {
+    my($self, %args) = @_;
 
     my $resource_lock = delete $args{resource_lock};
     my ($lock_directory,$resource_id,$parent_dir);
@@ -34,6 +55,18 @@ sub lock_resource {
         $resource_lock = $lock_directory . '/' . $resource_id . ".lock";
         $parent_dir = $lock_directory
     }
+
+    return ($resource_lock, $parent_dir);
+}
+
+sub _file_based_lock_resource {
+    my($self, %args) = @_;
+
+    my $total_lock_start_time = Time::HiRes::time();
+
+    my($resource_lock, $parent_dir)
+        = delete @args{'resource_lock','parent_dir'};
+
     my $wait_on_self = delete $args{wait_on_self} || 0;
     my $basename = File::Basename::basename($resource_lock);
 
@@ -195,6 +228,53 @@ END_CONTENT
     return $resource_lock;
 }
 
+sub _start_locking_client {
+    my $class = shift;
+
+    if ($ENV{GENOME_NESSY_SERVER} and ! $LOCKING_CLIENT) {
+        require Nessy::Client;
+        $LOCKING_CLIENT = Nessy::Client->new(url => $ENV{GENOME_NESSY_SERVER});
+    }
+}
+
+sub _new_style_lock {
+    my($self, %args) = @_;
+
+    return 1 unless $LOCKING_CLIENT;
+
+    my %user_data;
+    @user_data{'host','pid','lsf_id','user'}
+        = (hostname, $$, ($ENV{'LSB_JOBID'} || 'NONE'), Genome::Sys->username);
+
+    my $resource_lock = $args{resource_lock};
+
+    if (not $args{wait_on_self} and $self->_is_holding_nessy_lock($resource_lock)) {
+        $self->warning_message("Looks like I'm waiting on my own lock, forcing unlock...");
+        $self->_new_style_release($resource_lock);
+    }
+
+    my $timeout = $self->_new_style_lock_timeout_from_args(%args);
+
+    my $claim = $LOCKING_CLIENT->claim($resource_lock, timeout => $timeout, user_data => \%user_data);
+    $NESSY_LOCKS_TO_REMOVE{$resource_lock} = $claim if $claim;
+    return $claim;
+}
+
+sub _new_style_lock_timeout_from_args {
+    my($self, %args) = @_;
+
+    if (exists($args{max_try}) and exists($args{block_sleep})) {
+        return $args{max_try} * $args{block_sleep};
+    }
+
+    return undef;
+}
+
+sub _is_holding_nessy_lock {
+    my($self, $resource_lock) = @_;
+    return $NESSY_LOCKS_TO_REMOVE{$resource_lock};
+}
+
 sub _resolve_caller_name {
     my ($package, $filename, $line) = @_;
     $package =~ s/::/./g;
@@ -226,15 +306,38 @@ sub is_my_lock_target {
 
 sub unlock_resource {
     my ($self,%args) = @_;
-    my $resource_lock = delete $args{resource_lock};
-    my $force = delete $args{force};
 
-    my ($lock_directory,$resource_id);
+    my $resource_lock = $self->_resolve_resource_lock_for_unlock_resource(%args);
+
+    my $rv = $self->_file_based_unlock_resource(
+            resource_lock => $resource_lock,
+            %args,
+        );
+
+    unless ($self->_new_style_release($resource_lock)) {
+        $self->error_message("file-based released the lock, but Nessy did not.  resource_lock: $resource_lock");
+    }
+    return $rv;
+}
+
+sub _resolve_resource_lock_for_unlock_resource {
+    my($self, %args) = @_;
+
+    my $resource_lock = $args{resource_lock};
     unless ($resource_lock) {
+        my ($lock_directory,$resource_id);
         $lock_directory =  delete $args{lock_directory} || Carp::croak('Must supply lock_directory to lock resource');
         $resource_id = $args{'resource_id'} || Carp::croak('Must supply resource_id to lock resource');
         $resource_lock = $lock_directory . '/' . $resource_id . ".lock";
     }
+    return $resource_lock;
+}
+
+sub _file_based_unlock_resource {
+    my($self, %args) = @_;
+
+    my $resource_lock = delete $args{resource_lock};
+    my $force = delete $args{force};
 
     my $target = readlink($resource_lock);
     if (!$target) {
@@ -277,6 +380,21 @@ sub unlock_resource {
     return 1;
 }
 
+sub _new_style_release {
+    my($self, $resource_lock) = @_;
+
+    if ($LOCKING_CLIENT) {
+        my $claim = delete $NESSY_LOCKS_TO_REMOVE{$resource_lock};
+        if ($claim) {
+            $claim->release;
+        } else {
+            $self->error_message("Nessy tried to release, but no claim in slot for resource_lock: $resource_lock");
+        }
+    } else {
+        return 1;
+    }
+}
+
 # FIXME - I think this is a private function to Filesystem.pm
 sub cleanup_handler_check {
     my $self = shift;
@@ -317,6 +435,28 @@ sub exit_cleanup {
             unlink($sym_to_remove) or warn "Can't unlink $sym_to_remove: $!";
         }
     }
+    if ($LOCKING_CLIENT) {
+        foreach my $resource_lock ( keys %NESSY_LOCKS_TO_REMOVE ) {
+            __PACKAGE__->_new_style_release($resource_lock);
+        }
+        %NESSY_LOCKS_TO_REMOVE = ();
+        undef $LOCKING_CLIENT;
+    }
 }
+
+UR::Context->process->add_observer(
+    aspect => 'sync_databases',
+    callback => sub {
+        my($ctx, $aspect, $sync_db_result) = @_;
+        if ($sync_db_result) {
+            use vars '@CARP_NOT';
+            local @CARP_NOT = (@CARP_NOT, 'UR::Context');
+            foreach my $claim (values %NESSY_LOCKS_TO_REMOVE ) {
+                $claim->validate
+                    || Carp::croak(sprintf('Claim %s failed to verify during commit', $claim->resource_name));
+            }
+        }
+    }
+);
 
 1;

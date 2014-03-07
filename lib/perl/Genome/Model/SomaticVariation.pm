@@ -66,6 +66,29 @@ class Genome::Model::SomaticVariation {
             is => 'Text',
             default_value => "NO_INFO",
         },
+        required_snv_callers => {
+            is => 'Number',
+            doc => "Number of independent algorithms that must call a SNV in order to be included in the final report. If set to 1 (default), all calls are used",
+            is_optional => 1,
+            default_value => 1,
+        },
+        tiers_to_review => {
+            is => 'String',
+            doc => "comma-separated list of tiers to include in the final report. (e.g. 1,2,3 will create bed files with tier1, tier2, and tier3)",
+            is_optional => 1,
+            default_value => 1,
+        },
+        restrict_to_target_regions =>{
+            is => 'Boolean',
+            is_optional => 1,
+            default => 1,
+            doc => "only keep snv calls within the target regions. These are pulled from the build if possible",
+        },
+        target_regions =>{
+            is => 'String',
+            is_optional => 1,
+            doc => "path to a target file region. Used in conjunction with --restrict-to-target-regions to limit sites to those appearing in these regions",
+        },
     ],
     has => [
         tumor_model_id => {
@@ -470,6 +493,10 @@ sub map_workflow_inputs {
     push @inputs, annotator_version => $self->transcript_variant_annotator_version;
     push @inputs, regulatory_annotations => [$self->regulatory_annotations];
     push @inputs, get_regulome_db => $self->get_regulome_db;
+    push @inputs, required_snv_callers => $self->required_snv_callers;
+    push @inputs, tiers_to_review => $self->tiers_to_review;
+    push @inputs, restrict_to_target_regions => $self->restrict_to_target_regions;
+    push @inputs, target_regions => $self->target_regions;
 
     return @inputs;
 }

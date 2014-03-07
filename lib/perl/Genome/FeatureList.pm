@@ -110,10 +110,6 @@ class Genome::FeatureList {
             is => 'Text',
             doc => 'The path to the temporary dumped copy of the merged post-processed BED file',
         },
-        _converted_bed_file_paths => {
-            is => 'HASH',
-            doc => 'The paths to the temporary dumped copies of merged post-processed BED files converted to other references',
-        },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
@@ -415,53 +411,38 @@ sub generate_converted_bed_file {
     my $merge = delete($args{merge});
     my $reference = delete($args{reference});
 
-    my $converted_file_path = delete($args{file_path}) || Genome::Sys->create_temp_file_path( $self->id . '.merged.' . $reference->id . '.converted.bed' );
     my $original_file_path;
     if ($merge) {
         $original_file_path = $self->merged_bed_file(%args);
     } else {
         $original_file_path = $self->processed_bed_file(%args);
     }
-    my $converted_bed_file = Genome::Model::Build::ReferenceSequence::Converter->convert_bed($original_file_path, $self->reference, $converted_file_path, $reference);
 
-    unless(-s $converted_bed_file) {
-        $self->error_message('Could not convert to requested reference!');
-        die $self->error_message;
+    my $sr = Genome::Model::Build::ReferenceSequence::ConvertedBedResult->get_or_create(
+        source_bed => $original_file_path, source_reference => $self->reference, target_reference => $reference);
+
+    my $converted_file_path = delete($args{file_path});
+    if (defined $converted_file_path) {
+        Genome::Sys->create_symlink($sr->target_bed, $converted_file_path);
+        return $converted_file_path;
+    } else {
+        return $sr->target_bed;
     }
-
-    return $converted_bed_file;
 }
 
 sub converted_bed_file {
     my $self = shift;
     my %args = @_;
-    my $reference = $args{reference};
-    #TODO: add short name and merge options
     if ($self->format eq 'unknown'){
         $self->error_message('Cannot convert BED file with unknown format');
         die $self->error_message;
     }
-
     unless ($self->reference) {
         $self->error_message('Cannot convert BED file without an associated reference');
         die $self->error_message;
     }
 
-    my $converted_bed_files = $self->_converted_bed_file_paths;
-
-    my $result;
-    if(exists $converted_bed_files->{$reference->id}) {
-        $result = $converted_bed_files->{$reference->id};
-        unless(-e $result) { # cached result may have been deleted
-            $result = $self->generate_converted_bed_file(%args);
-        }
-    } else {
-        $result = $self->generate_converted_bed_file(%args);
-    }
-    $converted_bed_files->{$reference->id} = $result;
-    $self->_converted_bed_file_paths($converted_bed_files);
-
-    return $result;
+    return $self->generate_converted_bed_file(%args);
 }
 
 sub _resolve_param_value_from_text_by_name_or_id {
@@ -480,6 +461,38 @@ sub _resolve_param_value_from_text_by_name_or_id {
     }
 
     return @results;
+}
+
+# Early detection for the common problem that the bed reference_name is not set correctly
+sub _check_bed_list_is_on_correct_reference {
+    my $self = shift;
+    my $bed_file = $self->file_path;
+    # Accept 0 or 1 return codes since grep returns 1 if it does not find anything
+    my @chr_lines = Genome::Sys->capture([0,1], "grep --max-count=1 chr $bed_file");
+
+    if (@chr_lines and not ($self->reference_name =~ m/nimblegen/) ) {
+        die $self->error_message("It looks like your bed has 'chr' chromosomes but does not have a 'nimblegen' reference name (It is currently %s).\n".
+            "This will result in your variant sets being filtered down to nothing. An example of a fix to this situation: \n".
+            "genome feature-list update '%s' --reference nimblegen-human-buildhg19 (if your reference is hg19)", $self->reference_name, $self->name);
+    }
+
+    return 1;
+}
+
+sub resolve_bed_for_reference {
+    my ($self, $reference_sequence_build) = @_;
+
+    $self->_check_bed_list_is_on_correct_reference;
+
+    my $bed_file;
+    if($self->reference->id eq $reference_sequence_build->id) {
+        $bed_file = $self->file_path;
+    } else {
+        $bed_file = $self->converted_bed_file(
+            reference => $reference_sequence_build,
+        );
+    }
+    return $bed_file;
 }
 
 1;

@@ -67,7 +67,7 @@ is($found_gtf_file, $gtf_file, 'Looked up correct gtf_file');
 my $index_prefix = _join($temp_input_dir, 'all_sequences');
 $annotation_index->aligner_params($starting_aligner_params);
 my $expected_aligner_params =
-    "--transcriptome-only --transcriptome-index '$index_prefix' -G $gtf_file --output-dir";
+    " --transcriptome-only --transcriptome-index '$index_prefix' -G $gtf_file --output-dir";
 my $aligner_params = $class->_get_aligner_params_to_generate_annotation_index(
     $annotation_index, $gtf_file, $index_prefix,
 );

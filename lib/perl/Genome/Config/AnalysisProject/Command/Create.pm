@@ -69,7 +69,7 @@ sub execute {
         $self->error_message('Failed to create Analysis Project!');
         die($error);
     }
-
+    $self->status_message(q{Successfully created '} . $project->name . q{' (} . $project->id . q{).});
     return $project;
 }
 

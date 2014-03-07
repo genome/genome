@@ -22,7 +22,7 @@ sub execute {
     my $temp_dir = Genome::Sys->create_temp_directory;
     my $count = 0;
     for my $url ($self->urls) {
-        `wget -O $temp_dir/$count.vcf.gz --no-check-certificate $url`;
+        system(sprintf(q(curl --silent --insecure --output %s %s), "$temp_dir/$count.vcf.gz", $url));
         $count++;
     }
     `gunzip $temp_dir/*.gz`;

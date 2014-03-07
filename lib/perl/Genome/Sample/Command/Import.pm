@@ -123,6 +123,11 @@ sub _load_import_configs {
                     default_value => "rna",
                 },
             },
+            library_attributes => {
+                transcript_strand => {
+                    default_value => "unstranded",
+                },
+            },
             taxon_name => 'human',
        },
        {
@@ -131,6 +136,11 @@ sub _load_import_configs {
             sample_attributes => {
                 extraction_type => {
                     default_value => "genomic dna",
+                },
+            },
+            library_attributes => {
+                transcript_strand => {
+                    default_value => "unstranded",
                 },
             },
             taxon_name => 'human',
@@ -199,6 +209,18 @@ sub _load_import_configs {
                     },
                 },
             },
+        },
+        {
+            nomenclature => 'DREAM',
+            name_regexp => '(DREAM\-[\w\d]+)\-[\w\d]+',
+            taxon_name => 'human',
+            sample_attributes => {
+                extraction_type => {
+                    default_value => "genomic dna",
+                },
+                common_name => {
+                },
+            }
         },
         {
             nomenclature => 'WHIM',

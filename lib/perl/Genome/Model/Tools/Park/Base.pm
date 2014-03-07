@@ -18,6 +18,14 @@ sub _template_path {
     die 'abstract',
 }
 
+sub _link_process {
+    my ($self, $process_uri, $target) = @_;
+
+    my $link_script = $self->_rex_script_path('process link');
+    Genome::Sys->shellcmd(cmd => "$link_script --process $process_uri --target $target");
+    return;
+}
+
 sub _run_rex_process {
     my ($self, $source_path, $inputs_filename) = validate_pos(@_, 1,
         {type => SCALAR}, {type => SCALAR});
@@ -34,23 +42,37 @@ sub _run_generic_process {
 
     my $in;
     my $out = "x" x 100_000; # preallocate $out to avoid performance penalty
+    my $err = "x" x 100_000;
     $out = "";
+    $err = "";
 
     my $process_uri;
     eval {
-        my $h = start $cmd, \$in, \$out;
+        my $h = start $cmd, \$in, \$out, \$err;
 
-        pump $h until $out =~ /Launching Process (\S*) /;
+        pump $h until $err =~ m/.*Launching Process ([^\s]*) .*/;
         $process_uri = $1;
-        print "$out\n";
-        $out = "";
 
-        finish $h;
-        print "Process completed successfully.\n";
+        $self->status_message("$out\n");
+        $self->status_message("$err\n");
+        $out = "";
+        $err = "";
+
+        $self->status_message("View the progress of this process with:\n");
+        $self->status_message("    %s %s\n", $self->_rex_script_path('process view'),
+            $process_uri);
+
+        if (finish $h) {
+            $self->status_message("Process completed successfully.\n");
+        } else {
+            my $exit_code = $? >> 8;
+            die "Process FAILED: exit code ($exit_code)";
+        }
     };
     if ($@) {
-        print "$out\n";
-        die "Process FAILED: $@\n";
+        $self->status_message("$out\n");
+        $self->status_message("$err\n");
+        die "$@";
     }
     return $process_uri;
 }
@@ -58,6 +80,7 @@ sub _run_generic_process {
 my %REX_COMMAND_SCRIPTS = (
     'process start' => 'rex_process_start.sh',
     'process link' => 'rex_process_link.sh',
+    'process view' => 'rex_process_view.sh',
 );
 
 sub _rex_script_path {

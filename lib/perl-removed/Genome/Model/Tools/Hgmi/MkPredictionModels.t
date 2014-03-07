@@ -5,13 +5,20 @@ use warnings;
 
 use above "Genome";
 use File::Remove qw/ remove /;
-use Test::More tests => 8;
+use Test::More;
+
+my $d2014_03_04 = 1393975522;
+my $d2014_03_11 = 60 * 60 * 24 * 7 + $d2014_03_04;
+if (time > $d2014_03_11) {
+    plan tests => 8;
+} else {
+    plan skip_all => 'disabled for phase 3 disk maintenance';
+}
+
 use File::Temp 'tempdir';
 use Cwd;
 
-BEGIN {
-        use_ok('Genome::Model::Tools::Hgmi::MkPredictionModels');
-}
+use_ok('Genome::Model::Tools::Hgmi::MkPredictionModels');
 
 my $fasta =  $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Hgmi/BIFCATDFT.v1.contigs.newname.fasta";
 ok(-e $fasta, "fasta file exists at $fasta");
