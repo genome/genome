@@ -121,19 +121,7 @@ sub _execute_v1 {
         die $self->error_message("Transcript strand is not set for instrument data " . $instrument_data->__display_name__ . "!"); 
     }
 
-    my $htseq_stranded_param;
-    if ($transcript_strand eq 'unstranded') {
-        $htseq_stranded_param = 'no';
-    }
-    elsif ($transcript_strand eq 'firststrand') {
-        $htseq_stranded_param = 'yes';
-    }
-    elsif ($transcript_strand eq 'secondstrand') {
-        $htseq_stranded_param = 'reverse';
-    }
-    else {
-        die $self->error_message("Unknown transcript_strand $transcript_strand!  expected unstranded, firstread or secondread.");
-    }
+    my $htseq_stranded_param = $self->_htseq_stranded_param($transcript_strand);
     $self->debug_message("Strandedness: $transcript_strand (htseq-count stranded: $htseq_stranded_param)");
     
     my $annotation_build = $alignment_result->annotation_build;
@@ -257,6 +245,24 @@ sub _execute_v1 {
     }
 
     return 1;
+}
+
+sub _htseq_stranded_param {
+    my $self = shift;
+    my $transcript_strand = shift;
+
+    if ($transcript_strand eq 'unstranded') {
+        return 'no';
+    }
+    elsif ($transcript_strand eq 'firststrand') {
+        return 'yes';
+    }
+    elsif ($transcript_strand eq 'secondstrand') {
+        return 'reverse';
+    }
+    else {
+        die $self->error_message("Unknown transcript_strand $transcript_strand!  expected unstranded, firstread or secondread.");
+    }
 }
 
 sub _merge_v1 {
