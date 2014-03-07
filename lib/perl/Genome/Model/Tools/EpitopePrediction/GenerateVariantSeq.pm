@@ -68,29 +68,22 @@ sub execute {
                 #TO DO :print $output_fh $protein_arr[0]."\t".$protein_arr[1]."\t".$protein_arr[2]."\t".$protein_arr[6]."\t".$1."\t".$2."\t".$3."\t".$protein_arr[11]."\t".$arr_wildtype_sequence[$position]."\n";
             }
             else {
-                my @mutant_arr;
-                my @wildtype_arr;
+                my (@mutant_arr, @wildtype_arr);
                 if ($position < 8) {
-                    @wildtype_arr = @arr_wildtype_sequence[ 0 ... 16];
-                    $arr_wildtype_sequence[$position]=$mutant_aa;
-                    @mutant_arr = @arr_wildtype_sequence[ 0 ... 16];
-                    print_wildtype_and_mutant($output_fh, \@wildtype_arr, \@mutant_arr, \@protein_arr);
+                    @wildtype_arr = @mutant_arr = @arr_wildtype_sequence[ 0 ... 16];
                 }
                 elsif ($position > ($#arr_wildtype_sequence -8)) {
-                    @wildtype_arr = @arr_wildtype_sequence[ $#arr_wildtype_sequence -17 ... $#arr_wildtype_sequence];
-                    $arr_wildtype_sequence[$position]=$mutant_aa;
-                    @mutant_arr = @arr_wildtype_sequence[ $#arr_wildtype_sequence -17 ... $#arr_wildtype_sequence];
-                    print_wildtype_and_mutant($output_fh, \@wildtype_arr, \@mutant_arr, \@protein_arr);
+                    @wildtype_arr = @mutant_arr = @arr_wildtype_sequence[ $#arr_wildtype_sequence -17 ... $#arr_wildtype_sequence];
                 }
                 elsif (($position >= 8) && ($position  <= ($#arr_wildtype_sequence -8))) {
-                    @wildtype_arr = @arr_wildtype_sequence[ $position-8 ... $position+8];
-                    $arr_wildtype_sequence[$position]=$mutant_aa;
-                    @mutant_arr = @arr_wildtype_sequence[ $position-8 ... $position+8];
-                    print_wildtype_and_mutant($output_fh, \@wildtype_arr, \@mutant_arr, \@protein_arr);
+                    @wildtype_arr = @mutant_arr = @arr_wildtype_sequence[ $position-8 ... $position+8];
                 }
                 else {
                     print $output_fh "NULL"."\t".$position."\n";
+                    next;
                 }
+                $mutant_arr[$position]=$mutant_aa;
+                print_wildtype_and_mutant($output_fh, \@wildtype_arr, \@mutant_arr, \@protein_arr);
             }
         }
     }
