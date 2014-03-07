@@ -312,7 +312,7 @@ sub processed_bed_file_content {
                 }
                 next;
             } elsif ($line =~ /^track\s.*?name=/) {
-                $self->warning_message('Unknown track name. Including regions.');
+                $self->warning_message("Unknown track name (line $line_no '$line'). Including regions.");
                 $print = 1;
                 next;
             }
