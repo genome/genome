@@ -48,11 +48,19 @@ sub execute {
         chomp $line;
         $line =~ s/[*]$//g;
         my @protein_arr =  split(/\t/, $line);
-        if ( $protein_arr[15] =~ /^p.([A-Z])(\d+)([A-Z])/ && $protein_arr[13] eq $self->trv_type) {
-            my $wildtype_aa = $1;
-            my $position = ($2 - 1);
-            my $mutant_aa = $3;
-            my $wildtype_sequence = $protein_arr[21];
+        next unless $protein_arr[13] eq $self->trv_type;
+        if ( $protein_arr[15] =~ /^p.([A-Z])(\d+)([A-Z])/ ) {
+            my ($wildtype_aa, $position, $mutant_aa) = ($1, $2 - 1, $3);
+            my $wildtype_sequence;
+            if (scalar(@protein_arr) == 22) {
+                $wildtype_sequence = $protein_arr[21];
+            }
+            elsif (scalar(@protein_arr) == 25) {
+                $wildtype_sequence = $protein_arr[24];
+            }
+            else {
+                confess $self->error_message("Protein array not as expected");
+            }
             my @arr_wildtype_sequence = split('',$wildtype_sequence);
 
             if ($wildtype_aa ne $arr_wildtype_sequence[$position]) {
