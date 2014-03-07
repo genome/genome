@@ -175,7 +175,7 @@ sub _validate_inputs {
 
 sub _roi_bed_file {
     my $self = shift;
-    return $self->roi_list->resolve_roi_for_reference($self->_reference_sequence_build);
+    return $self->roi_list->resolve_bed_for_reference($self->_reference_sequence_build);
 }
 
 sub _roi_name {

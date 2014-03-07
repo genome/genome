@@ -203,7 +203,7 @@ sub _get_region_limiting_specific_inputs {
         region_limiting_output_directory => $region_limiting_output_directory,
         roi_name => $self->roi_list->name,
         wingspan => $self->wingspan,
-        region_bed_file => $self->roi_list->resolve_roi_for_reference($reference_sequence_build),
+        region_bed_file => $self->roi_list->resolve_bed_for_reference($reference_sequence_build),
     );
 
     return \%inputs;
