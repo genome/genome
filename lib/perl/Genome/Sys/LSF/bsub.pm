@@ -138,7 +138,7 @@ sub _valid_lsf_queue {
 }
 
 sub _queues {
-    my @output = _capture('bqueues', '-l');
+    my @output = Genome::Sys->capture('bqueues', '-l');
     my @queues = map { (/^QUEUE:\s+(\S+)/)[0] } @output;
     return @queues;
 }
