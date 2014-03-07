@@ -28,7 +28,7 @@ class Genome::Model::Tools::Htseq::Count {
         result_version => {
             # Required by all ::WithSavedResults
             is => 'Integer',
-            valid_values => [1],
+            valid_values => [1, 2],
             default_value => '1',
             doc => 'the version of results, which may iterate as this logic iterates',
         },
@@ -92,6 +92,7 @@ class Genome::Model::Tools::Htseq::Count {
     doc => 'generate htseq results for an (annotation-based) alignment result',
 };
 
+sub _execute_v2 { _execute_v1(@_) }
 sub _execute_v1 {
     my $self = shift;
     $self->debug_message("Using HTSeq version " . $self->app_version . ', result version ' . $self->result_version . '.');
@@ -247,7 +248,25 @@ sub _execute_v1 {
     return 1;
 }
 
-sub _htseq_stranded_param {
+sub _htseq_stranded_param_v2 {
+    my $self = shift;
+    my $transcript_strand = shift;
+
+    if ($transcript_strand eq 'unstranded') {
+        return 'no';
+    }
+    elsif ($transcript_strand eq 'firststrand') {
+        return 'reverse';
+    }
+    elsif ($transcript_strand eq 'secondstrand') {
+        return 'yes';
+    }
+    else {
+        die $self->error_message("Unknown transcript_strand $transcript_strand!  expected unstranded, firstread or secondread.");
+    }
+}
+
+sub _htseq_stranded_param_v1 {
     my $self = shift;
     my $transcript_strand = shift;
 
@@ -265,6 +284,21 @@ sub _htseq_stranded_param {
     }
 }
 
+sub _htseq_stranded_param {
+    my $self = shift;
+
+    if ($self->result_version == 1) {
+        $self->_htseq_stranded_param_v1(@_);
+    }
+    elsif ($self->result_version == 2) {
+        $self->_htseq_stranded_param_v2(@_);
+    }
+    else {
+        die "no _htseq_stranded_param implementation for version " . $self->result_version;
+    }
+}
+
+sub _merge_v2 { _merge_v1(@_) }
 sub _merge_v1 {
     my $self = shift;
     my @underlying = @_;
