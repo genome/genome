@@ -43,13 +43,14 @@ sub execute {
 
 #TODO : Check if the file has header 
 
-    unless(Genome::Model::Tools::Annotate::VariantProtein->execute(
+    my $result = Genome::Model::Tools::Annotate::VariantProtein->execute(
         input_tsv_file  => $input,
         output_tsv_file => $output,
         anno_db         => $self->anno_db,
         version         => $self->version,
-    )) {
-        die;
+    );
+    unless ($result) {
+        confess $self->error_message("Couldn't execute Genome::Model::Tools::Annotate::VariantProtein $!");
     }
 
     return 1;
