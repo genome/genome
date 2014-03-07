@@ -49,7 +49,6 @@ sub execute {
         $line =~ s/[*]$//g;
         my @prot_arr =  split(/\t/, $line);
         if ( $prot_arr[15] =~ /^p.([A-Z])(\d+)([A-Z])/ && $prot_arr[13] eq $self->trv_type) {
-            open(OUT, '>>', $self->output_file) or die $!;
             my $wt_aa = $1;
             my $position = ($2 - 1);
             my $mt_aa = $3;
@@ -58,7 +57,7 @@ sub execute {
 
             if ($1 ne $arr_wt_seq[$position]) {
                 next;
-                #TO DO :print OUT $prot_arr[0]."\t".$prot_arr[1]."\t".$prot_arr[2]."\t".$prot_arr[6]."\t".$1."\t".$2."\t".$3."\t".$prot_arr[11]."\t".$arr_wt_seq[$position]."\n";
+                #TO DO :print $output_fh $prot_arr[0]."\t".$prot_arr[1]."\t".$prot_arr[2]."\t".$prot_arr[6]."\t".$1."\t".$2."\t".$3."\t".$prot_arr[11]."\t".$arr_wt_seq[$position]."\n";
             }
 
             if ($1 eq $arr_wt_seq[$position]) {
@@ -68,42 +67,43 @@ sub execute {
                     @wt_arr = @arr_wt_seq[ 0 ... 16];
                     $arr_wt_seq[$position]=$mt_aa;
                     @mt_arr = @arr_wt_seq[ 0 ... 16];
-                    print OUT ">WT.".$prot_arr[6].".".$prot_arr[15]."\n";
-                    print OUT ( join "", @wt_arr);
-                    print OUT "\n";
-                    print OUT ">MT.".$prot_arr[6].".".$prot_arr[15]."\n";
-                    print OUT ( join "", @mt_arr);
-                    print OUT "\n";
+                    print $output_fh ">WT.".$prot_arr[6].".".$prot_arr[15]."\n";
+                    print $output_fh ( join "", @wt_arr);
+                    print $output_fh "\n";
+                    print $output_fh ">MT.".$prot_arr[6].".".$prot_arr[15]."\n";
+                    print $output_fh ( join "", @mt_arr);
+                    print $output_fh "\n";
                 }
                 elsif ($position > ($#arr_wt_seq -8)) {
                     @wt_arr = @arr_wt_seq[ $#arr_wt_seq -17 ... $#arr_wt_seq];
                     $arr_wt_seq[$position]=$mt_aa;
                     @mt_arr = @arr_wt_seq[ $#arr_wt_seq -17 ... $#arr_wt_seq];
-                    print OUT ">WT.".$prot_arr[6].".".$prot_arr[15]."\n";
-                    print OUT ( join "", @wt_arr);
-                    print OUT "\n";
-                    print OUT ">MT.".$prot_arr[6].".".$prot_arr[15]."\n";
-                    print OUT ( join "", @mt_arr);
-                    print OUT "\n";
+                    print $output_fh ">WT.".$prot_arr[6].".".$prot_arr[15]."\n";
+                    print $output_fh ( join "", @wt_arr);
+                    print $output_fh "\n";
+                    print $output_fh ">MT.".$prot_arr[6].".".$prot_arr[15]."\n";
+                    print $output_fh ( join "", @mt_arr);
+                    print $output_fh "\n";
                 }
                 elsif (($position >= 8) && ($position  <= ($#arr_wt_seq -8))) {
                     @wt_arr = @arr_wt_seq[ $position-8 ... $position+8];
                     $arr_wt_seq[$position]=$mt_aa;
                     @mt_arr = @arr_wt_seq[ $position-8 ... $position+8];
-                    print OUT ">WT.".$prot_arr[6].".".$prot_arr[15]."\n";
-                    print OUT ( join "", @wt_arr);
-                    print OUT "\n";
-                    print OUT ">MT.".$prot_arr[6].".".$prot_arr[15]."\n";
-                    print OUT ( join "", @mt_arr);
-                    print OUT "\n";
+                    print $output_fh ">WT.".$prot_arr[6].".".$prot_arr[15]."\n";
+                    print $output_fh ( join "", @wt_arr);
+                    print $output_fh "\n";
+                    print $output_fh ">MT.".$prot_arr[6].".".$prot_arr[15]."\n";
+                    print $output_fh ( join "", @mt_arr);
+                    print $output_fh "\n";
                 }
                 else {
-                    print OUT "NULL"."\t".$position."\n";
+                    print $output_fh "NULL"."\t".$position."\n";
                 }
-                OUT->close;
             }
         }
     }
+    close($output_fh);
+    close($input_fh);
 1;
 }
 return 1;
