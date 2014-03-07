@@ -1,4 +1,4 @@
-package Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsvAndAnnotate;
+package Genome::Model::GenotypeMicroarray::GenotypeFile::ReadUnannotatedCsv;
 
 use strict;
 use warnings;
@@ -7,7 +7,7 @@ use Genome;
 
 use Genome::File::Vcf::Reader;
 
-class Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsvAndAnnotate { 
+class Genome::Model::GenotypeMicroarray::GenotypeFile::ReadUnannotatedCsv { 
     is => 'UR::Object',
     has => {
         input => { is => 'Text', },

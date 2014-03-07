@@ -19,7 +19,7 @@ use_ok('Genome::Model::GenotypeMicroarray::Test') or die;
 # Setup
 no warnings;
 *Genome::File::TypedStream::new = sub{ return bless({}, $_[0]); };
-*Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsvAndAnnotate::create = sub{ return bless({}, $_[0]); };
+*Genome::Model::GenotypeMicroarray::GenotypeFile::ReadUnannotatedCsv::create = sub{ return bless({}, $_[0]); };
 use warnings;
 
 # Reader for inst data [use inst data tsv - needs annotation]
@@ -30,14 +30,14 @@ my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->bui
     variation_list_build => $variation_list_build,
 );
 ok($reader, 'create reader');
-isa_ok($reader, 'Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsvAndAnnotate');
+isa_ok($reader, 'Genome::Model::GenotypeMicroarray::GenotypeFile::ReadUnannotatedCsv');
 
 # Reader for legacy build [use inst data tsv - needs annotation]
 $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->build_reader(
     source => Genome::Model::GenotypeMicroarray::Test->example_legacy_build,
 );
 ok($reader, 'create reader');
-isa_ok($reader, 'Genome::Model::GenotypeMicroarray::GenotypeFile::ReadTsvAndAnnotate');
+isa_ok($reader, 'Genome::Model::GenotypeMicroarray::GenotypeFile::ReadUnannotatedCsv');
 
 # Reader for build [vcf]
 $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->build_reader(
