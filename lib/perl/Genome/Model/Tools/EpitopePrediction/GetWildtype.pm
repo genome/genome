@@ -5,11 +5,13 @@ use warnings;
 
 use Genome;
 use Workflow;
+use Carp;
+
 class Genome::Model::Tools::EpitopePrediction::GetWildtype {
     is => ['Genome::Model::Tools::EpitopePrediction::Base'],
     has_input => [
         input_tsv_file => {
-        	is => 'Text',
+            is => 'Text',
             doc => 'A tab separated input file from the annotator',
         },
         output_tsv_file => {
@@ -22,7 +24,6 @@ class Genome::Model::Tools::EpitopePrediction::GetWildtype {
             is_optional=> 1,
             doc => 'The name of the annotation database.  Example: NCBI-human.combined-annotation',
         },
-        
         version => {
             is => 'Text',
             is_optional=> 1,
@@ -35,27 +36,23 @@ sub help_brief {
     "Get the Wildtype protein sequence from the specified Annotation Database for the variant proteins which have been annotated",
 }
 
-
 sub execute {
     my $self = shift;
     my $input = $self->input_tsv_file;
     my $output = $self->output_tsv_file;
 
 #TODO : Check if the file has header 
-	
-	unless (Genome::Model::Tools::Annotate::VariantProtein ->execute
-  			 	(
-   					input_tsv_file => $input,
-   					output_tsv_file => $output,
-   					anno_db 		=> $self->anno_db,
-   					version 		=> $self->version
-   				)
-   			)
-   			{die;}
-    
-	
-    
-    return 1;   
+
+    unless(Genome::Model::Tools::Annotate::VariantProtein->execute(
+        input_tsv_file  => $input,
+        output_tsv_file => $output,
+        anno_db         => $self->anno_db,
+        version         => $self->version,
+    )) {
+        die;
+    }
+
+    return 1;
 }
 
 1;
