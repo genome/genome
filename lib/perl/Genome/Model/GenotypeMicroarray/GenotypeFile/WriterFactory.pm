@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 use Genome::File::Vcf::Writer;
-use Genome::Utility::IO::SeparatedValueWriter;
+use Genome::Model::GenotypeMicroarray::GenotypeFile::WriteCsv;
 
 class Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory { 
     is => 'UR::Singleton',
@@ -108,22 +108,7 @@ sub _build_vcf_writer {
 
 sub _build_csv_writer {
     my ($class, $writer_params) = @_;
-
-    delete $writer_params->{sample_name};
-    $writer_params->{separator} = "\t" if not $writer_params->{separator} or $writer_params->{separator} =~ /^tab$/i;
-    $writer_params->{print_headers} = delete $writer_params->{headers} if exists $writer_params->{headers};
-    $writer_params->{in_place_of_null_value} = 'NA';
-    $writer_params->{ignore_extra_columns} = 1;
-
-    my $fields = delete $writer_params->{fields};
-    if ( $fields ) {
-        $writer_params->{headers} = [ split(',', $fields) ];
-    }
-    else {
-        $writer_params->{headers} = Genome::Model::GenotypeMicroarray::GenotypeFile::CsvHelper->column_names;
-    }
-
-    return Genome::Utility::IO::SeparatedValueWriter->create(%$writer_params);
+    return Genome::Model::GenotypeMicroarray::GenotypeFile::WriteCsv->create(%$writer_params);
 }
 
 1;
