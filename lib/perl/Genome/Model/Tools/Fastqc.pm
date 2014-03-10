@@ -78,7 +78,7 @@ sub run_java_vm {
     unless ($cmd) {
         die('Must pass cmd to run_java_vm');
     }
-    my $java_vm_cmd = 'java -Xmx'. $self->maximum_memory .'g -cp '. $cmd;
+    my $java_vm_cmd = 'java -Xmx'. $self->maximum_memory .'g '. $cmd;
     $params{'cmd'} = $java_vm_cmd;
     Genome::Sys->shellcmd(%params);
     return 1;

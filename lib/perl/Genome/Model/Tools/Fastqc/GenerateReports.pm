@@ -94,7 +94,7 @@ sub execute {
         @input_files = split(',',$self->input_files);
     }
     if ( version->parse($self->use_version) < version->parse('0.10.0') ) {
-        my $cmd = $self->fastqc_path .' -Djava.awt.headless=true -Dfastqc.output_dir='. $self->report_directory .' uk.ac.bbsrc.babraham.FastQC.FastQCApplication '. join(' ',@input_files) ;
+        my $cmd = '-cp '. $self->fastqc_path .' -Djava.awt.headless=true -Dfastqc.output_dir='. $self->report_directory .' uk.ac.bbsrc.babraham.FastQC.FastQCApplication '. join(' ',@input_files) ;
         $self->run_java_vm(
             cmd => $cmd,
             input_files => \@input_files,
