@@ -100,7 +100,9 @@ sub execute {
             input_files => \@input_files,
         );
     } else {
-        my $cmd = $self->fastqc_path .'/fastqc  --outdir '. $self->report_directory .' --threads '. $self->threads;
+        my $cmd = $self->fastqc_path . '/fastqc'
+            . ' --outdir '. $self->report_directory
+            . ' --threads '. $self->threads;
         my $files_string = join(' ',@input_files);
         if ($self->quiet) {
             $cmd .= ' --quiet';
