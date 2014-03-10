@@ -43,34 +43,23 @@ sub help_brief {
 sub execute {
     my $self = shift;
 
-    my ($temp_fh_name, $temp_name) = Genome::Sys->create_temp_file();
-    my $version = $self ->version;
-    my $netmhc_cmd;
-    if ($version eq 3.0) {
-        $netmhc_cmd = join( ' ',
+    my $netmhc_path;
+    if ($self->version eq '3.0') {
+        $netmhc_path = '/gsc/bin/netMHC';
+    }
+    elsif ($self->version eq '3.4') {
+        $netmhc_path = '/gscmnt/sata141/techd/jhundal/netMHC/NetMHC3.4/ATTEMPT4/NetMHC/netMHC';
+    }
+
+    my $netmhc_cmd = join( ' ',
             'bsub -q techd -R \'select[mem >4000] rusage[mem=4000]\' -M 4000000 -N',
             '-oo ' . $self->output_file . '_stdout',
-            '/gsc/bin/netMHC',
+            $netmhc_path,
             '-a ' . $self->allele,
             '-l ' . $self->epitope_length,
             $self->fasta_file,
             '-x ' . $self->output_file,
-        );
-    }
-    elsif ($version eq 3.4) {
-        $netmhc_cmd = join ( ' ',
-            'bsub -q techd -R \'select[mem >4000] rusage[mem=4000]\' -M 4000000 -N',
-            '-oo ' . $self->output_file . '_stdout',
-            '/gscmnt/sata141/techd/jhundal/netMHC/NetMHC3.4/ATTEMPT4/NetMHC/netMHC',
-            '-a ' . $self->allele,
-            '-l ' . $self->epitope_length,
-            $self->fasta_file,
-            '-x ' . $self->output_file,
-        );
-    }
-    else {
-        print "Version ".$version. "not supported";
-    }
+    );
 
     Genome::Sys->shellcmd(
         cmd => $netmhc_cmd,
