@@ -7,7 +7,7 @@ use Genome;
 use File::Basename;
 
 my $FASTQC_DEFAULT = '0.10.0';
-my $DEFAULT_MEMORY = 2;
+my $DEFAULT_MEMORY = 250;
 
 class Genome::Model::Tools::Fastqc {
     is  => 'Command',
@@ -20,7 +20,7 @@ class Genome::Model::Tools::Fastqc {
         },
         maximum_memory => {
             is => 'Integer',
-            doc => 'the maximum memory (Gb) to use when running Java VM. default_value='. $DEFAULT_MEMORY,
+            doc => 'the maximum memory (MB) to use when running Java VM',
             is_optional => 1,
             default_value => $DEFAULT_MEMORY,
         },
@@ -78,13 +78,10 @@ sub run_java_vm {
     unless ($cmd) {
         die('Must pass cmd to run_java_vm');
     }
-    my $java_vm_cmd = 'java -Xmx'. $self->maximum_memory .'g '. $cmd;
+    my $java_vm_cmd = 'java -Xmx'. $self->maximum_memory .'m '. $cmd;
     $params{'cmd'} = $java_vm_cmd;
     Genome::Sys->shellcmd(%params);
     return 1;
 }
 
-
-
 1;
-
