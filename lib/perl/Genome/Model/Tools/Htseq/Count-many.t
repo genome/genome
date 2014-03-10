@@ -25,7 +25,10 @@ for (@sr) {
 }
 
 # generate a composite result
-my $cmd = Genome::Model::Tools::Htseq::Count->execute(alignment_results => \@alignment_results);
+my $cmd = Genome::Model::Tools::Htseq::Count->execute(
+    alignment_results => \@alignment_results,
+    result_version => 1,
+);
 ok($cmd, "executed command with two inputs");
 my $result = $cmd->result();
 ok($result, "got result");
