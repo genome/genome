@@ -42,7 +42,7 @@ sub execute {
     #my $tmp_dir = Genome::Sys->create_temp_directory();
 
     my $input_fh = Genome::Sys->open_file_for_reading($self->input_file);
-    my $output_fh = Genome::Sys->open_file_for_writing($self->output_file);
+    Genome::Sys->validate_file_for_writing($self->output_file);
 
     while (my $line = $input_fh->getline) {
         chomp $line;
@@ -79,40 +79,45 @@ sub execute {
                     @wildtype_arr = @mutant_arr = @arr_wildtype_sequence[ $position-8 ... $position+8];
                 }
                 else {
+                    my $output_fh = Genome::Sys->open_file_for_appending($self->output_file);
                     print $output_fh "NULL"."\t".$position."\n";
+                    close($output_fh);
                     next;
                 }
                 $mutant_arr[$position]=$mutant_aa;
-                print_wildtype_and_mutant($output_fh, \@wildtype_arr, \@mutant_arr, \@protein_arr);
+                $self->print_wildtype_and_mutant(\@wildtype_arr, \@mutant_arr, \@protein_arr);
             }
         }
     }
 
-    close($output_fh);
     close($input_fh);
 
     return 1;
 }
 
 sub print_wildtype_and_mutant {
-    my $output_fh = shift;
+    my $self = shift;
     my $wildtype_arr = shift;
     my $mutant_arr = shift;
     my $protein_arr = shift;
 
-    print_fasta_entry($output_fh, "WT", $wildtype_arr, $protein_arr);
-    print_fasta_entry($output_fh, "MT", $mutant_arr, $protein_arr);
+    $self->print_fasta_entry("WT", $wildtype_arr, $protein_arr);
+    $self->print_fasta_entry("MT", $mutant_arr, $protein_arr);
 }
 
 sub print_fasta_entry {
-    my $output_fh = shift;
+    my $self = shift;
     my $designation = shift;
     my $arr = shift;
     my $protein_arr = shift;
 
+    my $output_fh = Genome::Sys->open_file_for_appending($self->output_file);
+
     print $output_fh ">$designation." . $protein_arr->[6] . "." . $protein_arr->[15] . "\n";
     print $output_fh (join "", @{$arr});
     print $output_fh "\n";
+
+    close($output_fh);
 }
 
 1;
