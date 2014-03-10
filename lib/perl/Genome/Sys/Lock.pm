@@ -24,13 +24,13 @@ sub lock_resource {
 
     my $nessy_claim = $self->_new_style_lock(%args);
     unless ($nessy_claim) {
-        $self->error_message("Nessy could not aquire lock for resource lock: $args{resource_lock}");
+        $self->error_message("Nessy could not acquire lock for resource lock: $args{resource_lock}");
     }
 
     my $rv = $self->_file_based_lock_resource( %args );
 
     if (! $rv and $nessy_claim) {
-        $self->error_message("Nessy aquired lock but file-based did not.  resource_lock: $args{resource_lock}");
+        $self->error_message("Nessy acquired lock but file-based did not.  resource_lock: $args{resource_lock}");
     }
     return $rv;
 
