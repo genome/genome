@@ -28,8 +28,8 @@ class Genome::Model::Tools::Htseq::Count {
         result_version => {
             # Required by all ::WithSavedResults
             is => 'Integer',
-            valid_values => [1],
-            default_value => '1',
+            valid_values => [1, 2],
+            default_value => '2',
             doc => 'the version of results, which may iterate as this logic iterates',
         },
         mode => {
@@ -92,6 +92,7 @@ class Genome::Model::Tools::Htseq::Count {
     doc => 'generate htseq results for an (annotation-based) alignment result',
 };
 
+sub _execute_v2 { _execute_v1(@_) }
 sub _execute_v1 {
     my $self = shift;
     $self->debug_message("Using HTSeq version " . $self->app_version . ', result version ' . $self->result_version . '.');
@@ -121,19 +122,7 @@ sub _execute_v1 {
         die $self->error_message("Transcript strand is not set for instrument data " . $instrument_data->__display_name__ . "!"); 
     }
 
-    my $htseq_stranded_param;
-    if ($transcript_strand eq 'unstranded') {
-        $htseq_stranded_param = 'no';
-    }
-    elsif ($transcript_strand eq 'firststrand') {
-        $htseq_stranded_param = 'yes';
-    }
-    elsif ($transcript_strand eq 'secondstrand') {
-        $htseq_stranded_param = 'reverse';
-    }
-    else {
-        die $self->error_message("Unknown transcript_strand $transcript_strand!  expected unstranded, firstread or secondread.");
-    }
+    my $htseq_stranded_param = $self->_htseq_stranded_param($transcript_strand);
     $self->debug_message("Strandedness: $transcript_strand (htseq-count stranded: $htseq_stranded_param)");
     
     my $annotation_build = $alignment_result->annotation_build;
@@ -259,6 +248,57 @@ sub _execute_v1 {
     return 1;
 }
 
+sub _htseq_stranded_param_v2 {
+    my $self = shift;
+    my $transcript_strand = shift;
+
+    if ($transcript_strand eq 'unstranded') {
+        return 'no';
+    }
+    elsif ($transcript_strand eq 'firststrand') {
+        return 'reverse';
+    }
+    elsif ($transcript_strand eq 'secondstrand') {
+        return 'yes';
+    }
+    else {
+        die $self->error_message("Unknown transcript_strand $transcript_strand!  expected unstranded, firstread or secondread.");
+    }
+}
+
+sub _htseq_stranded_param_v1 {
+    my $self = shift;
+    my $transcript_strand = shift;
+
+    if ($transcript_strand eq 'unstranded') {
+        return 'no';
+    }
+    elsif ($transcript_strand eq 'firststrand') {
+        return 'yes';
+    }
+    elsif ($transcript_strand eq 'secondstrand') {
+        return 'reverse';
+    }
+    else {
+        die $self->error_message("Unknown transcript_strand $transcript_strand!  expected unstranded, firstread or secondread.");
+    }
+}
+
+sub _htseq_stranded_param {
+    my $self = shift;
+
+    if ($self->result_version == 1) {
+        $self->_htseq_stranded_param_v1(@_);
+    }
+    elsif ($self->result_version == 2) {
+        $self->_htseq_stranded_param_v2(@_);
+    }
+    else {
+        die "no _htseq_stranded_param implementation for version " . $self->result_version;
+    }
+}
+
+sub _merge_v2 { _merge_v1(@_) }
 sub _merge_v1 {
     my $self = shift;
     my @underlying = @_;
