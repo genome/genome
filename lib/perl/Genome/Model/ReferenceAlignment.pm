@@ -490,17 +490,6 @@ sub qc_processing_profile_id_hashref {
     };
 }
 
-sub qc_processing_profile_id {
-    my $self = shift;
-    my %arg  = @_;
-
-    my $parent_pp_id = delete $arg{parent_pp_id} || $self->processing_profile_id;
-    my $type         = delete $arg{type}         || $self->qc_type_for_target_region_set_name($self->target_region_set_name);
-
-    my $qc_pp_id = $self->qc_processing_profile_id_hashref;
-    return $qc_pp_id->{ $type }{ $parent_pp_id };
-}
-
 sub qc_type_for_target_region_set_name {
     my $class = shift;
     my $target_region_set_name = shift;
@@ -516,12 +505,6 @@ sub get_lane_qc_models {
 
     unless ($subject->default_genotype_data_id) {
         $self->warning_message("Sample is missing default_genotype_data_id cannot create lane QC model.");
-        return;
-    }
-
-    my $qc_pp_id = $self->qc_processing_profile_id;
-    unless ($qc_pp_id) {
-        $self->warning_message("Unable to determine which processing profile to use for lane QC model.");
         return;
     }
 
