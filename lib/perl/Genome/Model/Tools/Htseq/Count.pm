@@ -29,7 +29,7 @@ class Genome::Model::Tools::Htseq::Count {
             # Required by all ::WithSavedResults
             is => 'Integer',
             valid_values => [1, 2],
-            default_value => '1',
+            default_value => '2',
             doc => 'the version of results, which may iterate as this logic iterates',
         },
         mode => {
