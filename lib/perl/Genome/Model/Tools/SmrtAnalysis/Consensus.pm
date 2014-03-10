@@ -102,7 +102,7 @@ class Genome::Model::Tools::SmrtAnalysis::Consensus {
     },
     has_optional_param => [
         lsf_queue => {
-            default_value => 'workflow',
+            default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKFLOW},
         },
         lsf_resource => {
             default_value => '',
@@ -132,12 +132,12 @@ sub execute {
 
     unless ($self->decode_file) {
         my $decode_file = $self->seymour_home .'/analysis/etc/defaultDecode.params';
-        $self->status_message('Using default decode file: '. $decode_file);
+        $self->debug_message('Using default decode file: '. $decode_file);
         $self->decode_file($decode_file);
     }
     unless ($self->consensus_quality_path) {
         my $consensus_quality_path = $self->seymour_home .'/analysis/etc/consensusQual.tsv';
-        $self->status_message('Using default consensus quality file: '. $consensus_quality_path);
+        $self->debug_message('Using default consensus quality file: '. $consensus_quality_path);
         $self->consensus_quality_path($consensus_quality_path);
     }
 
@@ -148,7 +148,7 @@ sub execute {
     for my $contig (@{$contigs}) {
         my $evi_cons_params = $self->resolve_evi_cons_params_for_contig($contig);
         unless ($evi_cons_params) {
-            $self->status_message('There is no need to run consensus on '. $contig .' with '. $self->contig_mean_coverage($contig) .' mean coverage! Skipping consensus!');
+            $self->debug_message('There is no need to run consensus on '. $contig .' with '. $self->contig_mean_coverage($contig) .' mean coverage! Skipping consensus!');
             next;
         }
         my $chunk_size = $self->resolve_chunk_size_for_contig($contig);

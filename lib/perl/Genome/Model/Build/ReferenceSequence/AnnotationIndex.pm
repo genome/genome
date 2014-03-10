@@ -93,7 +93,7 @@ sub aligner_requires_param_masking {
 
     # if aligner params are not required for index, and we can   generically create an index for that version, then filter it out.
     if ($aligner_class->aligner_params_required_for_index) {
-        $class->status_message("This aligner requires a parameter-specific index.  Can't mask params out.");
+        $class->debug_message("This aligner requires a parameter-specific index.  Can't mask params out.");
         return 0;
     }
 
@@ -154,9 +154,9 @@ sub create {
     }
 
     my $aligner_class = 'Genome::InstrumentData::AlignmentResult::'  . Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name($p{aligner_name});
-    $class->status_message("Aligner class name is $aligner_class");
+    $class->debug_message("Aligner class name is $aligner_class");
 
-    $class->status_message(sprintf("Resolved aligner class %s, making sure it's real and can be loaded.", $aligner_class));
+    $class->debug_message(sprintf("Resolved aligner class %s, making sure it's real and can be loaded.", $aligner_class));
     unless ($aligner_class->class) {
         $class->error_message(sprintf("Failed to load aligner class (%s).", $aligner_class));
         return;
@@ -170,7 +170,7 @@ sub create {
     return unless $self;
     $self->aligner_class_name($aligner_class);
 
-    $self->status_message("Prepare staging directories...");
+    $self->debug_message("Prepare staging directories...");
     unless ($self->_prepare_staging_directory) {
         $self->error_message("Failed to prepare working directory");
         return;
@@ -199,11 +199,11 @@ sub check_dependencies {
     );
 
     # if the reference is a compound reference
-    if ($self->reference_build->append_to) {
+    if ($self->reference_build->append_to and $self->_supports_multiple_reference) {
         die('Compound references are not currently supported in '. __PACKAGE__);
         for my $b ($self->reference_build->append_to) { # (append_to is_many)
             $params{reference_build} = $b;
-            $self->status_message("Creating AlignmentIndex for build dependency " . $b->name);
+            $self->debug_message("Creating AlignmentIndex for build dependency " . $b->name);
             my $result = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_or_create(%params);
             unless($result) {
                 $self->error_message("Failed to create AlignmentIndex for dependency " . $b->name);
@@ -233,7 +233,7 @@ sub _prepare_annotation_index {
         return;
     }
 
-    $self->status_message(sprintf("Confirmed non-zero reference fasta file is %s", $reference_fasta_file));
+    $self->debug_message(sprintf("Confirmed non-zero reference fasta file is %s", $reference_fasta_file));
 
     unless ($self->aligner_class_name->prepare_annotation_index($self)) {
         $self->error_message("Failed to prepare annotation index.");
@@ -241,7 +241,7 @@ sub _prepare_annotation_index {
     }
 
     my $output_dir = $self->output_dir || $self->_prepare_output_directory;
-    $self->status_message("Alignment output path is $output_dir");
+    $self->debug_message("Alignment output path is $output_dir");
 
     unless ($self->_promote_data)  {
         $self->error_message("Failed to de-stage data into output path " . $self->output_dir);
@@ -250,7 +250,7 @@ sub _prepare_annotation_index {
 
     $self->_reallocate_disk_allocation;
 
-    $self->status_message("Prepared alignment reference index!");
+    $self->debug_message("Prepared alignment reference index!");
 
     return $self;
 }
@@ -280,12 +280,12 @@ sub resolve_allocation_subdirectory {
     }
     my $directory = join('/', @path_components);
 
-    $self->status_message(sprintf("Resolved allocation subdirectory to %s", $directory));
+    $self->debug_message(sprintf("Resolved allocation subdirectory to %s", $directory));
     return $directory;
 }
 
 sub resolve_allocation_disk_group_name {
-    "info_apipe_ref";
+    $ENV{GENOME_DISK_GROUP_REFERENCES};
 }
 
 sub full_consensus_path {

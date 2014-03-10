@@ -51,7 +51,7 @@ sub create {
         die $self->error_message("Unexpected return value: $rv");
     }
 
-    $self->status_message('All processes completed.');
+    $self->debug_message('All processes completed.');
 
     return $self;
 }
@@ -108,7 +108,7 @@ sub _generate_data {
 sub required_rusage { '' };
 sub _needs_symlinks_followed_when_syncing { 0 };
 sub _working_dir_prefix { 'somatic-validation-result' };
-sub resolve_allocation_disk_group_name { 'info_genome_models' };
+sub resolve_allocation_disk_group_name { $ENV{GENOME_DISK_GROUP_MODELS} };
 
 sub resolve_allocation_subdirectory {
     my $self = shift;

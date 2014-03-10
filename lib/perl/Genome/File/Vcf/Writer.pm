@@ -15,7 +15,6 @@ sub new {
 
 sub fhopen {
     my ($class, $fh, $name, $header) = @_;
-    $name |= "unknown file path";
     confess "No vcf header given to vcf writer!" unless $header;
     $fh->print($header->to_string . "\n");
 

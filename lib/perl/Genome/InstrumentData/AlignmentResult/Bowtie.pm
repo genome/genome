@@ -20,8 +20,8 @@ sub required_arch_os { 'x86_64' }
 
 # fill me in here with what compute resources you need.
 sub required_rusage { 
-    my $queue = 'alignment';
-    $queue = 'alignment-pd' if (Genome::Config->should_use_alignment_pd);
+    my $queue = $ENV{GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT};
+    $queue = $ENV{GENOME_LSF_QUEUE_ALIGNMENT_PROD} if (Genome::Config->should_use_alignment_pd);
     "-R 'select[model!=Opteron250 && type==LINUX64 && tmp>90000 && mem>10000] span[hosts=1] rusage[tmp=90000, mem=10000]' -M 10000000 -n 4 -m $queue -q $queue";
 }
 
@@ -148,7 +148,7 @@ sub prepare_reference_sequence_index {
     my $staging_dir = $refindex->temp_staging_directory;
     my $staged_fasta_file = sprintf("%s/all_sequences.fa", $staging_dir);
 
-    $class->status_message("Doing bowtie indexing.");
+    $class->debug_message("Doing bowtie indexing.");
 
     my $bowtie_file_stem = "";
     my $bowtie_extension = "";

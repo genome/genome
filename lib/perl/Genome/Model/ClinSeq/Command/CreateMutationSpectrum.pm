@@ -64,7 +64,7 @@ sub __errors__ {
 
 sub execute {
   my $self = shift;
-  $self->status_message("Performing mutation spectrum analysis");
+  $self->debug_message("Performing mutation spectrum analysis");
 
   my $build = $self->build;
   my $outdir = $self->outdir;
@@ -120,13 +120,13 @@ sub execute {
   if ($datatype =~ /wgs/i){
     $variant_file = $sub_outdir2 . "snvs.hq.novel.tier123.v2.bed";
     my $snv_cat_cmd = "cat $tier1_snvs $tier2_snvs $tier3_snvs > $variant_file";
-    $self->status_message($snv_cat_cmd);
+    $self->debug_message($snv_cat_cmd);
     Genome::Sys->shellcmd(cmd => $snv_cat_cmd, output_files=>["$variant_file"]);  
   }
   if ($datatype =~ /exome/i){
     $variant_file = $sub_outdir2 . "snvs.hq.novel.tier1.v2.bed";
     my $snv_cat_cmd = "cat $tier1_snvs > $variant_file";
-    $self->status_message($snv_cat_cmd);
+    $self->debug_message($snv_cat_cmd);
     Genome::Sys->shellcmd(cmd => $snv_cat_cmd, output_files=>["$variant_file"]);
   }
 
@@ -134,7 +134,7 @@ sub execute {
   if ($self->max_snvs){
     my $tmp_file = $variant_file . ".tmp";
     my $cmd = "grep -v GL $variant_file > $tmp_file; mv $tmp_file $variant_file; head -n " . $self->max_snvs . " $variant_file > $tmp_file; mv $tmp_file $variant_file";
-    $self->status_message($cmd);
+    $self->debug_message($cmd);
     Genome::Sys->shellcmd(cmd => $cmd);
   }
 
@@ -146,7 +146,7 @@ sub execute {
   #5.) Generate mutation-spectrum-sequence-context result
   my $variant_file2 = $sub_outdir2 . "variants.tsv";
   my $cut_cmd = "cut -f 1-5 $annotated_file > $variant_file2";
-  $self->status_message($cut_cmd);
+  $self->debug_message($cut_cmd);
   Genome::Sys->shellcmd(cmd => $cut_cmd);
 
   my $mssc_file4plot = $sub_outdir2 . $final_name . ".data.tsv";

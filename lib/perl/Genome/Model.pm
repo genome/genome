@@ -86,11 +86,17 @@ class Genome::Model {
     ],
     has_optional => [
         user_name => {
-            # TODO: we use created_by in other places to be specific as-to role of the user
-            # This is redundant with the model creation event data.
-            # Adam was going for a rails standard?
             is => 'Text',
-            doc => 'the user who created the model',
+            is_deprecated => 1,
+            doc => 'use created_by (or maybe run_as), accessor overridden for transition to created_by',
+        },
+        created_by => {
+            is => 'Text',
+            doc => 'entity that created the model, accessor overridden for transition to created_by',
+        },
+        run_as => {
+            is => 'Text',
+            doc => 'username to run builds as, accessor overridden for transition to created_by',
         },
         creation_date => {
             # TODO: switch from timestamp to Date when we go Oracle to PostgreSQL
@@ -318,8 +324,7 @@ sub _resolve_subject {
 sub _resolve_disk_group_name_for_build {
     # This gets called during the build start process when attempting to create a disk allocation.
     # TODO: move into the config to have two disk groups, one for "built" things and one for "imported" things
-    my ($build) = @_;
-    return 'info_genome_models';
+    $ENV{GENOME_DISK_GROUP_MODELS};
 }
 
 # Override in subclasses
@@ -334,7 +339,7 @@ sub _resolve_workflow_for_build {
         $operation_type->lsf_resource($resource_requirements);
 
         my %opts = (
-            name => $build->id . ' all stages',
+            name => $build->workflow_name,
             input_properties => [ 'build_id' ],
             output_properties => [ 'result' ]
         );
@@ -485,7 +490,10 @@ sub create {
         Carp::confess $reason || $@;
     }
 
-    $self->user_name(Genome::Sys->username) unless $self->user_name;
+    for my $m (qw(run_as created_by)) {
+        $self->$m(Genome::Sys->username) unless $self->$m;
+    }
+
     unless ($self->name) {
         my $name = $self->default_model_name;
         if ($name) {
@@ -653,7 +661,7 @@ sub status_with_build {
         $status = 'Build Needed';
     } else {
         $build = $self->current_build;
-        $status = ($build ? $build->status : undef);
+        $status = ($build ? $build->status : 'Buildless');
     }
     return ($status, $build);
 }
@@ -774,11 +782,12 @@ sub _trigger_downstream_builds {
     my @downstream_models = $self->downstream_models;
     for my $next_model (@downstream_models) {
         my $latest_build = $next_model->latest_build;
-        if (my @found = $latest_build->input_associations(value_id => $build->id)) {
-            $self->status_message("Downstream model has build " . $latest_build->__display_name__ . ", which already uses this build.");
-            next;  
-        }
-        
+        if ($latest_build) {
+            if (my @found = $latest_build->input_associations(value_id => $build->id)) {
+                $self->status_message("Downstream model has build " . $latest_build->__display_name__ . ", which already uses this build.");
+                next;  
+            }
+        }    
         unless ($next_model->can("auto_build")) {
             $self->status_message("Downstream model " . $next_model->__display_name__ . " is has no auto-build method!  New builds should be started manually as needed.");
             next;
@@ -791,7 +800,7 @@ sub _trigger_downstream_builds {
         }
 
         $self->status_message("Requesting rebuild of subsequent model " . $next_model->__display_name__ . ".");
-        $next_model->build_requested(1, 'auto build after completion of ' . $build->__display_name__); 
+        $next_model->build_requested(1, 'auto build after completion of ' . $build->__display_name__);
     }
 
     return 1;
@@ -807,7 +816,7 @@ sub default_model_name {
     $auto_increment = 1 unless defined $auto_increment;
 
     my $name_template = ($self->subject->name).'.';
-    $name_template .= 'prod-' if (($self->user_name && $self->user_name eq 'apipe-builder') || $params{prod});
+    $name_template .= 'prod-' if (($self->run_as && $self->run_as eq 'apipe-builder') || $params{prod});
 
     my $type_name = $self->processing_profile->type_name;
     my %short_names = (
@@ -1073,8 +1082,53 @@ sub _extend_namespace_with_command_tree {
 
 sub files_ignored_by_build_diff { () }
 
-#Does this model type require control/experimental (normal/tumor) pairing to work?
-#Used by Analysis Project configuration
-sub requires_pairing { return 0; }
+#Does this model type require mapping of subjects to work?
+#Used by Analysis Project configuration to "pair" somatic samples or otherwise aggregate them for analysis
+sub requires_subject_mapping { return 0; }
+
+# For transition to created_by
+sub user_name {
+    my $self = shift;
+    if (@_) {
+        return $self->__created_by(@_);
+    } else {
+        # Perl 5.8 does not support //
+        if (defined $self->__created_by) {
+            return $self->__created_by;
+        } else {
+            $self->__user_name;
+        }
+    }
+}
+
+# For transition to created_by
+sub created_by {
+    my $self = shift;
+    if (@_) {
+        return $self->__created_by(@_);
+    } else {
+        # Perl 5.8 does not support //
+        if (defined $self->__created_by) {
+            return $self->__created_by;
+        } else {
+            $self->__user_name;
+        }
+    }
+}
+
+# For transition to created_by
+sub run_as {
+    my $self = shift;
+    if (@_) {
+        return $self->__run_as(@_);
+    } else {
+        # Perl 5.8 does not support //
+        if (defined $self->__run_as) {
+            return $self->__run_as;
+        } else {
+            $self->__user_name;
+        }
+    }
+}
 
 1;

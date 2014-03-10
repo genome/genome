@@ -107,19 +107,19 @@ sub execute {
         return;
     }
 
-    $self->status_message('Write quake input: '.$quake_input);
+    $self->debug_message('Write quake input: '.$quake_input);
     my $reader = $self->_input;
     my $seqs = $reader->read;
     my $cnt = @$seqs; 
     do {
         $quake_intput_writer->write($seqs);
     } while $seqs = $reader->read;
-    $self->status_message('Write quake input...OK');
+    $self->debug_message('Write quake input...OK');
 
-    $self->status_message('Run quake');
+    $self->debug_message('Run quake');
     my $quake = $self->_run_quake_command($quake_input);
     return if not $quake;
-    $self->status_message('Run quake..OK');
+    $self->debug_message('Run quake..OK');
 
     my $quake_output = $tmpdir.'/quake.cor.fastq';
 
@@ -131,17 +131,17 @@ sub execute {
         return;
     }
 
-    $self->status_message('Read quake output: '.$quake_output);
+    $self->debug_message('Read quake output: '.$quake_output);
     my $writer = $self->_output;
 
     if ( $cnt == 1 ) { 
-        $self->status_message('Writing as singles');
+        $self->debug_message('Writing as singles');
         while ( my $seq = $quake_output_reader->read ) {
             $writer->write([ $seq ]);
         }
     }
     else { # collect sets
-        $self->status_message('Writing as sets');
+        $self->debug_message('Writing as sets');
         my $regexp = qr{/\d+$|\.[bg]\d+$};
         my @seqs = ( $quake_output_reader->read );
         my $set_id = $seqs[0]->{id};
@@ -160,7 +160,7 @@ sub execute {
         }
         $writer->write(\@seqs) if @seqs;
     }
-    $self->status_message('Read quake output...OK');
+    $self->debug_message('Read quake output...OK');
 
     if ( $self->save_files ) {
         if ( not $self->save_read_processor_output_files ) {
@@ -176,7 +176,7 @@ sub _run_quake_command {
 
     my $cwd = Cwd::getcwd();
     chdir $self->_tmpdir; # quake dumps files in the cwd!
-    $self->status_message('Chdir to: '.$self->_tmpdir);
+    $self->debug_message('Chdir to: '.$self->_tmpdir);
 
     my $cmd = 'quake.py -q 33 -r '.$file;
     my $meta = $self->__meta__;
@@ -194,7 +194,7 @@ sub _run_quake_command {
     my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
 
     chdir $cwd;
-    $self->status_message('Chdir back to: '.$cwd);
+    $self->debug_message('Chdir back to: '.$cwd);
     if ( not $rv ) {
         $self->error_message($@) if $@;
         $self->error_message("Failed to run quake: $cmd");

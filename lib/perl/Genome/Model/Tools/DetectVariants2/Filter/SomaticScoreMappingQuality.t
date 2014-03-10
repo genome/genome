@@ -14,24 +14,20 @@ BEGIN {
     my $archos = `uname -a`;
     if ($archos !~ /64/) {
         plan skip_all => "Must run from 64-bit machine";
-    } else {
-        plan tests => 8;
     }
-};
+}
 
 use_ok( 'Genome::Model::Tools::DetectVariants2::Filter::SomaticScoreMappingQuality');
 
 my $test_data_dir  = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-Filter-SomaticScoreMappingQuality';
-my $refbuild_id = 101947881;
-my $tumor_bam_file  = $test_data_dir . '/flank_tumor_sorted.bam';
-my $normal_bam_file  = $test_data_dir . '/flank_normal_sorted.bam';
+my $refbuild_id    = 101947881;
+my $tumor_bam_file     = $test_data_dir . '/flank_tumor_sorted.bam';
+my $normal_bam_file    = $test_data_dir . '/flank_normal_sorted.bam';
 my $detector_directory = $test_data_dir."/sniper-0.7.3-";
 my $detector_vcf_directory = $test_data_dir."/detector_vcf_result";
-my $expected_output = $test_data_dir."/expected";
+my $expected_output_dir = $test_data_dir."/expected_1";
 
-my $test_output_base = File::Temp::tempdir('Genome-Model-Tools-DetectVariants2-Filter-SomaticScoreMappingQuality-XXXXX', CLEANUP => 1, TMPDIR => 1);
-my $test_output_dir = $test_output_base . '/filter';
-
+my $test_output_dir = Genome::Sys->create_temp_directory;
 my $vcf_version = Genome::Model::Tools::Vcf->get_vcf_version;
 
 my $detector_result = Genome::Model::Tools::DetectVariants2::Result->__define__(
@@ -44,33 +40,74 @@ my $detector_result = Genome::Model::Tools::DetectVariants2::Result->__define__(
     reference_build_id => $refbuild_id,
 );
 $detector_result->lookup_hash($detector_result->calculate_lookup_hash());
-my $detector_vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Detector->__define__(
-        input => $detector_result,
-        output_dir => $detector_vcf_directory,
-        aligned_reads_sample => "TEST",
-        vcf_version => $vcf_version,
-    );
-$detector_vcf_result->lookup_hash($detector_vcf_result->calculate_lookup_hash());
 
+my $detector_vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Detector->__define__(
+    input      => $detector_result,
+    output_dir => $detector_vcf_directory,
+    aligned_reads_sample => "TEST",
+    vcf_version => $vcf_version,
+);
+$detector_vcf_result->lookup_hash($detector_vcf_result->calculate_lookup_hash());
 $detector_result->add_user(user => $detector_vcf_result, label => 'uses');
 
-my $ssmq_object = Genome::Model::Tools::DetectVariants2::Filter::SomaticScoreMappingQuality->create(
-    previous_result_id => $detector_result->id,
-    output_directory    => $test_output_dir,
-);
+my $param_str;
+run_test('default_params', $param_str);
 
-ok($ssmq_object, 'created SomaticScoreMappingQuality object (default mapping & somatic quality)');
-ok($ssmq_object->execute(), 'executed SomaticScoreMappingQuality object');
+$param_str = '--min-mapping-quality 0';
+run_test('non_default_params', $param_str);
 
-my @files = qw| snvs.hq
+done_testing();
+
+
+sub run_test {
+    my ($type, $params) = @_;
+    my $output_dir = $test_output_dir."/$type";
+    my $expect_dir = $expected_output_dir."/$type";
+
+    my %params = (
+        previous_result_id => $detector_result->id,
+        output_directory   => $output_dir,
+    );
+    
+    $params{params} = $params if $params;
+
+    my $ssmq_object = Genome::Model::Tools::DetectVariants2::Filter::SomaticScoreMappingQuality->create(%params);
+    
+    ok($ssmq_object, 'created SomaticScoreMappingQuality object (default mapping & somatic quality)');
+    ok($ssmq_object->execute(), 'executed SomaticScoreMappingQuality object');
+
+    if ($params) {
+        my %parameters = split /\s+/, $params;
+
+        for my $parameter (keys %parameters) {
+            my $before_value = $parameters{$parameter};
+            $parameter =~ s/^\-\-//;
+            $parameter =~ s/\-/_/g;
+            my $after_value  = $ssmq_object->$parameter;
+            ok($before_value eq $after_value, "Parameter $parameter set correctly via params string");
+        }
+    }
+
+    my @files = qw| snvs.hq
                 snvs.lq
                 snvs.hq.bed
-                snvs.lq.bed |;
+                snvs.lq.bed 
+                snvs.vcf.gz |;
 
-for my $file (@files) {
-    my $test_output = $test_output_dir."/".$file;
-    my $expected_output = $expected_output."/".$file;
-    is(compare($test_output,$expected_output),0, "Found no difference between test output: ".$test_output." and expected output:".$expected_output);
+    for my $file (@files) {
+        my $test_output     = $output_dir."/".$file;
+        my $expected_output = $expect_dir."/".$file;
+        my $msg = "Output: $file generated as expected";
+
+        if ($file =~ /vcf\.gz/) {
+            my $out_md5    = qx(zcat $test_output     | grep -vP '^##fileDate' | md5sum);
+            my $expect_md5 = qx(zcat $expected_output | grep -vP '^##fileDate' | md5sum);
+            ok($out_md5 eq $expect_md5, $msg);
+        }
+        else {
+            is(compare($test_output, $expected_output),0, $msg);
+        }
+    }
+
+    return 1;
 }
-
-ok(-s $test_output_dir."/snvs.vcf.gz", " found a vcf");

@@ -117,7 +117,7 @@ sub execute
     #$hgmi_acedb_patha = $self->path. "/".$self->project_type ."/Acedb/". $acedb_version .
     $hgmi_acedb_patha = $self->path. "/Acedb/". $acedb_version .
                         "/ace_files/". $self->locus_tag;
-    $self->status_message("acedb path will be: ".$hgmi_acedb_patha);
+    $self->debug_message("acedb path will be: ".$hgmi_acedb_patha);
 #    $hgmi_acedb_patha = "/gscmnt/278/analysis/HGMI/Acedb/". $acedb_version . 
 #                        "/ace_files/". $self->locus_tag;
 
@@ -151,7 +151,7 @@ sub execute
         my $dirbase = $cwd;
         $dirbase =~ s/Sequence\/Unmasked//;
         my $testval = join("\/",@cwd[0..7]);
-        $self->status_message("is this $testval better\nthan $dirbase ?");
+        $self->debug_message("is this $testval better\nthan $dirbase ?");
         #$Intergenic = join("\/",@cwd[0..7],'Gene_merging',$self->analysis_version,'Hybrid','intergenic');
         $Intergenic = join("\/",$dirbase,'Gene_merging',$self->analysis_version,'Hybrid','intergenic');
         #$BAPseq = join("\/", @cwd[0..7],'BAP',$self->analysis_version,'Sequence');

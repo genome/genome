@@ -35,7 +35,7 @@ class Genome::Model::DeNovoAssembly::Build::ProcessInstrumentData {
 
 sub shortcut {
     my $self = shift;
-    $self->status_message('Process instrument data, attempting to shortcut...');
+    $self->debug_message('Process instrument data, attempting to shortcut...');
 
     my $sx_result_params = $self->_get_sx_result_params;
     return if not $sx_result_params;
@@ -43,19 +43,19 @@ sub shortcut {
     my $result = Genome::InstrumentData::SxResult->get_with_lock(%$sx_result_params);
     if ( $result ) {
         $self->sx_result($result);
-        $self->status_message('SX result found! '.$result->__display_name__);
-        $self->status_message('Shortcutting!');
+        $self->debug_message('SX result found! '.$result->__display_name__);
+        $self->debug_message('Shortcutting!');
         return 1;
     }
     else {
-        $self->status_message('No existing SX result found. Cannot shortcut!');
+        $self->debug_message('No existing SX result found. Cannot shortcut!');
         return;
     }
 }
 
 sub execute {
     my $self = shift;
-    $self->status_message('Process instrument data...');
+    $self->debug_message('Process instrument data...');
 
     my $sx_result_params = $self->_get_sx_result_params;
     return if not $sx_result_params;
@@ -73,11 +73,11 @@ sub execute {
 sub _get_sx_result_params {
     my $self = shift;
 
-    $self->status_message('Build: '.$self->build->__display_name__);
+    $self->debug_message('Build: '.$self->build->__display_name__);
     my $instrument_data = $self->instrument_data;
-    $self->status_message('Instrument data: '.$instrument_data->__display_name__);
+    $self->debug_message('Instrument data: '.$instrument_data->__display_name__);
     my $read_processor = $self->build->processing_profile->read_processor;
-    $self->status_message('Read processor: '.$read_processor);
+    $self->debug_message('Read processor: '.$read_processor);
 
     my $sx_processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(
         processor => $read_processor, # what if no processing is desired?
@@ -90,7 +90,7 @@ sub _get_sx_result_params {
 
     my $sx_result_params = $sx_processor->sx_result_params_for_instrument_data($instrument_data);
     return if not $sx_result_params;
-    $self->status_message('SX reults params: '.Data::Dumper::Dumper($sx_result_params));
+    $self->debug_message('SX reults params: '.Data::Dumper::Dumper($sx_result_params));
 
     return $sx_result_params;
 }

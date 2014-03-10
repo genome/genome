@@ -77,7 +77,7 @@ sub execute {
     my $seq_dict_sam_file = $model->reference_sequence_build->get_sequence_dictionary("sam");
  
     my @instrument_data = $model->instrument_data;
-    $self->status_message("There are " . scalar(@instrument_data) . " id assignemnts for model id $model_id\n");
+    $self->debug_message("There are " . scalar(@instrument_data) . " id assignemnts for model id $model_id\n");
 
     my $build = $model->last_complete_build;
     unless ($build) {
@@ -91,9 +91,9 @@ sub execute {
         push @ids, $instrument_data->id;
     }
 
-    $self->status_message("Beginning per lane merge of the seq dict sam file, the rg rile, pg file, aligned file and unaligned file.");
-    $self->status_message("Per lane seq id's to merge: " . join("\n",@ids));
-    $self->status_message("Working dir sent to workers: " . $self->working_directory);
+    $self->debug_message("Beginning per lane merge of the seq dict sam file, the rg rile, pg file, aligned file and unaligned file.");
+    $self->debug_message("Per lane seq id's to merge: " . join("\n",@ids));
+    $self->debug_message("Working dir sent to workers: " . $self->working_directory);
 
     require Workflow::Simple;
 
@@ -118,7 +118,7 @@ sub execute {
         }
         return;
     } else {
-        $self->status_message("Workflow completed with no errors.");
+        $self->debug_message("Workflow completed with no errors.");
     }
 
     #merge all the bam files
@@ -130,23 +130,23 @@ sub execute {
         my $bam_file_list = join(" I=",@bam_files);
         my $merge_cmd = "java -Xmx2g -cp $ENV{GENOME_SW_LEGACY_JAVA}/samtools/picard-tools-1.04/MergeSamFiles.jar net.sf.picard.sam.MergeSamFiles MSD=true SO=coordinate AS=true VALIDATION_STRINGENCY=SILENT O=$fixmated_file I=$bam_file_list";
 
-        $self->status_message("Merging per lane bams into a single, large fixmated file with: $merge_cmd");
+        $self->debug_message("Merging per lane bams into a single, large fixmated file with: $merge_cmd");
         my $merge_rv = Genome::Sys->shellcmd(cmd=>$merge_cmd,input_files=>\@bam_files,output_files=>[$fixmated_file]);
         if ($merge_rv != 1) {
             die "Merge with command: $merge_cmd failed with rv $merge_rv";
         } else {
-            $self->status_message("Merge succeeded. $fixmated_file created.");
+            $self->debug_message("Merge succeeded. $fixmated_file created.");
         } 
 
     } else {
-        $self->status_message("The bam file: $fixmated_file already exists.  Skipping the generation of this file.");
+        $self->debug_message("The bam file: $fixmated_file already exists.  Skipping the generation of this file.");
     }
 
     my $markdup_file = $self->working_directory."/tcga_markdup.bam";   
     my $metrics_file = $self->working_directory."/markdup.metrics";
     my $log_file = $self->working_directory."/markdup.log";
 
-    $self->status_message("Beginning MarkDuplicates.  Attempting to generate $markdup_file.");
+    $self->debug_message("Beginning MarkDuplicates.  Attempting to generate $markdup_file.");
     if (!-s $markdup_file) { 
         my $markdup_cmd = Genome::Model::Tools::Sam::MarkDuplicates->create(file_to_mark=>$fixmated_file,
             marked_file=>$markdup_file,
@@ -158,14 +158,14 @@ sub execute {
 
         my $markdup_rv = $markdup_cmd->execute();
         if ($markdup_rv ne 1) {
-            $self->status_message("MarkDuplicates Error:  The return value was: ".$markdup_rv);
+            $self->debug_message("MarkDuplicates Error:  The return value was: ".$markdup_rv);
             die;
         } else {
-            $self->status_message("MarkDuplicates succeeded! Return value:".$markdup_rv);
+            $self->debug_message("MarkDuplicates succeeded! Return value:".$markdup_rv);
         }  
 
     } else {
-        $self->status_message("The bam file: $markdup_file already exists.  Skipping the generation of this file.");
+        $self->debug_message("The bam file: $markdup_file already exists.  Skipping the generation of this file.");
     }
 
     $self->final_file($markdup_file);

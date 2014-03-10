@@ -816,9 +816,12 @@ sub display_command_summary_report {
 }
 
 sub append_error {
+    if (@_ < 3 or $_[2] eq '') {
+        Carp::confess("Insufficent args for append_error!");
+    } 
     my $self = shift;
-    my $key = shift || die;
-    my $error = shift || die;
+    my $key = shift;
+    my $error = shift;
 
     my $command_errors = $self->_command_errors;
     push @{$command_errors->{$key}}, $error;
@@ -828,8 +831,11 @@ sub append_error {
 }
 
 sub truncate_error_message {
+    if (@_ < 2) {
+        Carp::confess("Insufficent args for truncate_error_message!");
+    } 
     my $self = shift;
-    my $error = shift || die;
+    my $error = shift;
 
     # truncate errors so they are actually a summary
     ($error) = split("\n", $error);

@@ -54,7 +54,7 @@ class Genome::Model::GenePrediction::Command::Pap::KEGGScan {
         # for this module are any modules it calls!
         blast_lsf_queue => { 
             is => 'Text',
-            default_value => 'long',
+            default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
         },
         blast_lsf_resource => { 
             is => 'Text',
@@ -96,7 +96,7 @@ class Genome::Model::GenePrediction::Command::Pap::KEGGScan {
             default => "-R 'select[mem=8192,type==LINUX64] rusage[mem=8192,tmp=1024]' -M 8192000",
         },
         lsf_queue => {
-            default => 'long',
+            default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
         },
     ],
 };
@@ -233,9 +233,9 @@ sub parse_result {
         ## gene_name (N letters; record M).
         ($gene_name) = split /\s+/, $gene_name; 
 		unless ($main::locus_name) {
-			$self->status_message("gene_name: ". $gene_name);
+			$self->debug_message("gene_name: ". $gene_name);
 			($main::locus_name) = split(/_/, $gene_name);
-			$self->status_message("locus_name: ". $main::locus_name);
+			$self->debug_message("locus_name: ". $main::locus_name);
 		}
 
         ## Some descriptions have EC numbers embedded in them.
@@ -323,7 +323,7 @@ sub archive_result {
 	if (defined($tar_bz2)) {
 		my $parent_dir =  $self->_working_directory."/..";
 		chdir($parent_dir) || confess "Unable to change directory to $parent_dir: $?";
-		$self->status_message("Cwd: ". getcwd);
+		$self->debug_message("Cwd: ". getcwd);
 
 		my $user = $ENV{USER};
 
@@ -335,13 +335,13 @@ sub archive_result {
 		my $tar_dir = $self->_working_directory;
 
 		my $tar_bz_cmd = "tar -C $tar_dir -jcvf $tar_file_name .";
-		$self->status_message("Cmd: ". $tar_bz_cmd);
+		$self->debug_message("Cmd: ". $tar_bz_cmd);
 
 		system($tar_bz_cmd) == 0 
 			|| confess "system $tar_bz_cmd failed: $?";
 
-		$self->status_message("Removing PAP_tmp dir: ". $tar_dir);
-		remove_tree($tar_dir) || $self->status_message("Error removing $tar_dir: ". $?);	
+		$self->debug_message("Removing PAP_tmp dir: ". $tar_dir);
+		remove_tree($tar_dir) || $self->debug_message("Error removing $tar_dir: ". $?);	
 
 	}
 

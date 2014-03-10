@@ -59,6 +59,11 @@ class Genome::Library {
             doc => 'The strand targeted during RNA-seq prep.',
             valid_values => [qw/ unstranded firststrand secondstrand /],
         },
+        bisulfite_conversion => {
+            is => 'Text',
+            len => 32,
+            doc => 'name of the bisulfite conversion kit used if any'
+        },
         taxon_id => {
             is => 'Number',
             via => 'sample',
@@ -119,6 +124,11 @@ sub delete {
     }
 
     return $self->SUPER::delete(@_);
+}
+
+sub is_bisulfite_converted {
+    my $self = shift;
+    return $self->bisulfite_conversion ? 1 : 0;
 }
 
 1;

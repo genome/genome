@@ -208,7 +208,7 @@ sub execute {
        File::Path::make_path($build_outdir) || die "failed to create $build_outdir: $!\n";
     }
 
-    $self->status_message("\n\nWriting IGV XML session files for somatic variation build $somvar_build_id to: $build_outdir");
+    $self->debug_message("\n\nWriting IGV XML session files for somatic variation build $somvar_build_id to: $build_outdir");
 
     #XML blocks to be created.  Each should be of the resource type 'bam' or 'bed'
     my @resources;
@@ -286,8 +286,7 @@ sub execute {
         foreach my $resource (@resources_all){
           #print "Checking $review_file against $resource\n";
           if ($resource=~/$review_file/){
-            my $resource_path=$resource;
-            $resource_path=~s/https\:\/\/gscweb\.gsc\.wustl\.edu//; #Eliminate leading base url
+            my $resource_path = _convert_url_to_path($resource);
             my $cp_cmd = "cp $resource_path $build_outdir";
             if (-e $resource_path){
               Genome::Sys->shellcmd(cmd => $cp_cmd);
@@ -303,14 +302,21 @@ sub execute {
   #Summarize the tracks used for each level
   foreach my $l (sort {$a <=> $b} keys %{$levels}){
     my @bed_files = @{$levels->{$l}};
-    $self->status_message("\n\nLevel $l IGV session file will contain the following tracks (where they are available):");
+    $self->debug_message("\n\nLevel $l IGV session file will contain the following tracks (where they are available):");
     foreach my $bed_file (@bed_files){
-      $self->status_message("$bed_file");
+      $self->debug_message("$bed_file");
     }
   }
-  $self->status_message("\n\n");
+  $self->debug_message("\n\n");
 
   return 1;
+}
+
+sub _convert_url_to_path {
+    my $path = shift;
+    $path =~ s/$ENV{GENOME_SYS_SERVICES_FILES_URL}//;
+    $path = '/' . $path;
+    return $path;
 }
 
 ####################################################################################################
@@ -427,7 +433,7 @@ sub generate_track_xml {
 
     #Unless this file is actually present.  Print a warning and return
     unless (-e $resource_file){
-      $self->status_message("BED file not found for this somatic variation build:\n$bed_file\n");
+      $self->debug_message("BED file not found for this somatic variation build:\n$bed_file\n");
       return(0);
     }
   }elsif ($resource_type eq 'junctions' && $pp_type eq 'rna seq'){
@@ -450,11 +456,10 @@ sub generate_track_xml {
   my $min = "0.0";
   my $max = "100.0";
   my $font_size = 11;
-  my $base_url = "https://gscweb.gsc.wustl.edu";
   my $color_option = "UNEXPECTED_PAIR";
 
   #Set the resource file url path
-  $resource_file_url = "$base_url$resource_file";
+  $resource_file_url = $ENV{GENOME_SYS_SERVICES_FILES_URL} . $resource_file;
 
   #Abbreviate some aspects of the base track name
   if ($tissue_desc =~ /skin\,\s+nos/i){
@@ -484,7 +489,7 @@ sub generate_track_xml {
     my $read_track_name = "$base_track_name Reads";
     my $resource_file_coverage = $resource_file . "_coverage";
 
-    my $resource_file_coverage_url = "$base_url$resource_file_coverage";
+    my $resource_file_coverage_url = $ENV{GENOME_SYS_SERVICES_FILES_URL} . $resource_file_coverage;
 
   $xml=<<XML;
     <Track altColor="0,0,178" autoScale="true" color="175,175,175" colorScale="ContinuousColorScale;0.0;9062.0;255,255,255;175,175,175" displayMode="COLLAPSED" featureVisibilityWindow="-1" fontSize="$font_size" id="$resource_file_coverage_url" name="$coverage_track_name" showDataRange="true" visible="true">
@@ -516,11 +521,11 @@ XML
   }
 
   #Summarize values found from genome API
-  #$self->status_message("\n\nbid: $build_id\tmid: $model_id\tpp_type: $pp_type\tref_name: $ref_name");
-  #$self->status_message("subject: $subject_name\tcommon_name: $common_name\ttissue_desc: $tissue_desc\textraction_type: $extraction_type");
-  #$self->status_message("build_dir: $build_dir");
-  #$self->status_message("data_type: $data_type");
-  #$self->status_message("resource_type: $resource_type\tresource_file_url: $resource_file_url");
+  #$self->debug_message("\n\nbid: $build_id\tmid: $model_id\tpp_type: $pp_type\tref_name: $ref_name");
+  #$self->debug_message("subject: $subject_name\tcommon_name: $common_name\ttissue_desc: $tissue_desc\textraction_type: $extraction_type");
+  #$self->debug_message("build_dir: $build_dir");
+  #$self->debug_message("data_type: $data_type");
+  #$self->debug_message("resource_type: $resource_type\tresource_file_url: $resource_file_url");
 
   #Return the xml block and the resource file
   my %result;
@@ -546,10 +551,10 @@ sub generate_resource_xml {
 
   #Create an XML block like this:
   # <Resources>
-  #   <Resource path="https://gscweb.gsc.wustl.edu/gscmnt/gc7001/info/model_data/2879615516/build114445127/alignments/114469152.bam"/>
-  #   <Resource path="https://gscweb.gsc.wustl.edu/gscmnt/gc7001/info/model_data/2879616958/build114445247/alignments/114445014.bam"/>
-  #   <Resource path="https://gscweb.gsc.wustl.edu/gscmnt/gc2016/info/model_data/2880794613/build115909698/alignments/accepted_hits.bam"/>
-  #   <Resource path="https://gscweb.gsc.wustl.edu/gscmnt/gc2016/info/model_data/2880794613/build115909698/alignments/junctions.bed"/>
+  #   <Resource path="$ENV{GENOME_SYS_SERVICES_FILES_URL}/gscmnt/gc7001/info/model_data/2879615516/build114445127/alignments/114469152.bam"/>
+  #   <Resource path="$ENV{GENOME_SYS_SERVICES_FILES_URL}/gscmnt/gc7001/info/model_data/2879616958/build114445247/alignments/114445014.bam"/>
+  #   <Resource path="$ENV{GENOME_SYS_SERVICES_FILES_URL}/gscmnt/gc2016/info/model_data/2880794613/build115909698/alignments/accepted_hits.bam"/>
+  #   <Resource path="$ENV{GENOME_SYS_SERVICES_FILES_URL}/gscmnt/gc2016/info/model_data/2880794613/build115909698/alignments/junctions.bed"/>
   # </Resources>
 
   my $xml = "  <Resources>";
@@ -664,10 +669,10 @@ sub generate_panel_layout_xml{
 
 #Example IGV XML for 'Resources' section
 # <Resources>
-#   <Resource path="https://gscweb.gsc.wustl.edu/gscmnt/gc7001/info/model_data/2879615516/build114445127/alignments/114469152.bam"/>
-#   <Resource path="https://gscweb.gsc.wustl.edu/gscmnt/gc7001/info/model_data/2879616958/build114445247/alignments/114445014.bam"/>
-#   <Resource path="https://gscweb.gsc.wustl.edu/gscmnt/gc2016/info/model_data/2880794613/build115909698/alignments/accepted_hits.bam"/>
-#   <Resource path="https://gscweb.gsc.wustl.edu/gscmnt/gc2016/info/model_data/2880794613/build115909698/alignments/junctions.bed"/>
+#   <Resource path="$ENV{GENOME_SYS_SERVICES_FILES_URL}/gscmnt/gc7001/info/model_data/2879615516/build114445127/alignments/114469152.bam"/>
+#   <Resource path="$ENV{GENOME_SYS_SERVICES_FILES_URL}/gscmnt/gc7001/info/model_data/2879616958/build114445247/alignments/114445014.bam"/>
+#   <Resource path="$ENV{GENOME_SYS_SERVICES_FILES_URL}/gscmnt/gc2016/info/model_data/2880794613/build115909698/alignments/accepted_hits.bam"/>
+#   <Resource path="$ENV{GENOME_SYS_SERVICES_FILES_URL}/gscmnt/gc2016/info/model_data/2880794613/build115909698/alignments/junctions.bed"/>
 # </Resources>
 
 #Example IGV XML for 'Panel' section.  Data panels have these long random seeming numeric names. Each file should also have a Panel with the name 'FeaturePanel'
@@ -693,16 +698,16 @@ sub generate_panel_layout_xml{
 # </Panel>
 
 #Example IGV XML for a reference alignment or RNA-seq BAM 'Track'
-# <Track altColor="0,0,178" autoScale="true" color="175,175,175" colorScale="ContinuousColorScale;0.0;9062.0;255,255,255;175,175,175" displayMode="COLLAPSED" featureVisibilityWindow="-1" fontSize="10" id="https://gscweb.gsc.wustl.edu/gscmnt/gc2016/info/model_data/2880794613/build115909698/alignments/accepted_hits.bam_coverage" name="RNA-seq Tumor Coverage" showDataRange="true" visible="true">
+# <Track altColor="0,0,178" autoScale="true" color="175,175,175" colorScale="ContinuousColorScale;0.0;9062.0;255,255,255;175,175,175" displayMode="COLLAPSED" featureVisibilityWindow="-1" fontSize="10" id="$ENV{GENOME_SYS_SERVICES_FILES_URL}/gscmnt/gc2016/info/model_data/2880794613/build115909698/alignments/accepted_hits.bam_coverage" name="RNA-seq Tumor Coverage" showDataRange="true" visible="true">
 #   <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="273.0" minimum="0.0" type="LINEAR"/>
 # </Track>
-# <Track altColor="0,0,178" color="0,0,178" colorOption="UNEXPECTED_PAIR" displayMode="EXPANDED" featureVisibilityWindow="-1" fontSize="10" id="https://gscweb.gsc.wustl.edu/gscmnt/gc2016/info/model_data/2880794613/build115909698/alignments/accepted_hits.bam" name="RNA-seq Tumor Reads" showDataRange="true" sortByTag="" visible="true"/>
+# <Track altColor="0,0,178" color="0,0,178" colorOption="UNEXPECTED_PAIR" displayMode="EXPANDED" featureVisibilityWindow="-1" fontSize="10" id="$ENV{GENOME_SYS_SERVICES_FILES_URL}/gscmnt/gc2016/info/model_data/2880794613/build115909698/alignments/accepted_hits.bam" name="RNA-seq Tumor Reads" showDataRange="true" sortByTag="" visible="true"/>
 
 #Example IGV XML for a junctions.bed 'Track'.  These tracks will be placed in the 'FeaturePanel'
-# <Track altColor="0,0,178" color="0,0,178" displayMode="COLLAPSED" featureVisibilityWindow="-1" fontSize="10" height="60" id="https://gscweb.gsc.wustl.edu/gscmnt/gc2016/info/model_data/2880794613/build115909698/alignments/junctions.bed" name="RNA-seq Tumor Junctions" showDataRange="true" visible="true" windowFunction="count"/>
+# <Track altColor="0,0,178" color="0,0,178" displayMode="COLLAPSED" featureVisibilityWindow="-1" fontSize="10" height="60" id="$ENV{GENOME_SYS_SERVICES_FILES_URL}/gscmnt/gc2016/info/model_data/2880794613/build115909698/alignments/junctions.bed" name="RNA-seq Tumor Junctions" showDataRange="true" visible="true" windowFunction="count"/>
 
 #Example IGV XML for a snvs.bed 'Track'
-# <Track altColor="0,0,178" color="0,0,178" displayMode="COLLAPSED" featureVisibilityWindow="-1" fontSize="12" height="45" id="https://gscweb.gsc.wustl.edu/gscmnt/gc8002/info/model_data/2882504846/build119390903/effects/snvs.hq.novel.tier1.v2.bed" name="WGS snvs.hq.novel.tier1" renderer="BASIC_FEATURE" showDataRange="true" sortable="false" visible="true" windowFunction="count"/>
+# <Track altColor="0,0,178" color="0,0,178" displayMode="COLLAPSED" featureVisibilityWindow="-1" fontSize="12" height="45" id="$ENV{GENOME_SYS_SERVICES_FILES_URL}/gscmnt/gc8002/info/model_data/2882504846/build119390903/effects/snvs.hq.novel.tier1.v2.bed" name="WGS snvs.hq.novel.tier1" renderer="BASIC_FEATURE" showDataRange="true" sortable="false" visible="true" windowFunction="count"/>
 
 #Example IGV XML for a 'Regions' of interest section
 # <Regions>

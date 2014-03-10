@@ -179,7 +179,8 @@ sub test_cmd {
 
     my $roi_list;
     $roi_list = get_roi_list($test_dir, 'roi.bed') unless $no_region_limiting;
-    my $joinx_version = "1.7";
+    my $joinx_version = "1.8";
+    my $varscan_version = "2.3.6";
     my @input_builds = create_test_builds($test_dir);
 
     my %params = (
@@ -188,12 +189,17 @@ sub test_cmd {
             wingspan => 500,
             allow_multiple_processing_profiles => undef,
             joinx_version => $joinx_version,
+            varscan_version => $varscan_version,
             builds => \@input_builds,
     );
 
     if ($no_region_limiting){
        delete $params{'roi_list'};
        delete $params{'wingspan'};
+    }
+
+    if ($variant_type ne 'indels') {
+        delete $params{'varscan_version'};
     }
 
     my %sr_params = %params;
@@ -231,7 +237,9 @@ sub test_cmd {
 
 sub get_expected_result {
     my ($variant_type, $result_dir) = @_;
-    return File::Spec->join($result_dir, "$variant_type.merged.vcf.gz");
+    my $expected_result = File::Spec->join($result_dir, "$variant_type.merged.vcf.gz");
+    ok(-s $expected_result, "expected result exists: $expected_result");
+    return $expected_result;
 }
 
 

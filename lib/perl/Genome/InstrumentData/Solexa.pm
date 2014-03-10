@@ -451,7 +451,7 @@ sub dump_sanger_fastq_files {
     my $self = shift;
 
     if (defined $self->bam_path && -s $self->bam_path) {
-       $self->status_message("Now using a bam instead");
+       $self->debug_message("Now using a bam instead");
        return $self->dump_fastqs_from_bam(@_);
     }
 
@@ -467,7 +467,7 @@ sub dump_sanger_fastq_files {
         my $converted_fastq_pathname;
         if ($self->resolve_quality_converter eq 'sol2sanger') {
             $converted_fastq_pathname = $requested_directory . '/' . $self->id . '-sanger-fastq-'. $counter . ".fastq";
-            $self->status_message("Applying sol2sanger quality conversion.  Converting to $converted_fastq_pathname");
+            $self->debug_message("Applying sol2sanger quality conversion.  Converting to $converted_fastq_pathname");
             unless (Genome::Model::Tools::Fastq::Sol2sanger->execute(
                                                                     fastq_file => $illumina_fastq_pathname,
                                                                     sanger_fastq_file => $converted_fastq_pathname)) {
@@ -476,7 +476,7 @@ sub dump_sanger_fastq_files {
             }
         } elsif ($self->resolve_quality_converter eq 'sol2phred') {
             $converted_fastq_pathname = $requested_directory . '/' . $self->id . '-sanger-fastq-'. $counter . ".fastq";
-            $self->status_message("Applying sol2phred quality conversion.  Converting to $converted_fastq_pathname");
+            $self->debug_message("Applying sol2phred quality conversion.  Converting to $converted_fastq_pathname");
 
             unless (Genome::Model::Tools::Fastq::Sol2phred->execute(fastq_file => $illumina_fastq_pathname,
                                                                     phred_fastq_file => $converted_fastq_pathname)) {
@@ -484,7 +484,7 @@ sub dump_sanger_fastq_files {
                 die($self->error_message);
             }
         } elsif ($self->resolve_quality_converter eq 'none') {
-            $self->status_message("No quality conversion required.");
+            $self->debug_message("No quality conversion required.");
             $converted_fastq_pathname = $illumina_fastq_pathname;
         } else {
             $self->error_message("Undefined quality converter requested, I can't proceed");
@@ -499,7 +499,7 @@ sub dump_sanger_fastq_files {
         if (($converted_fastq_pathname ne $illumina_fastq_pathname ) &&
             ($illumina_fastq_pathname =~ m/\/tmp\//)) {
 
-            $self->status_message("Removing original unconverted file from temp space to save disk space:  $illumina_fastq_pathname");
+            $self->debug_message("Removing original unconverted file from temp space to save disk space:  $illumina_fastq_pathname");
             unlink $illumina_fastq_pathname;
         }
         push @converted_pathnames, $converted_fastq_pathname;
@@ -526,9 +526,9 @@ sub dump_trimmed_fastq_files {
         return $self->dump_sanger_fastq_files(%$segment_params, directory => $data_directory, discard_fragments => $discard_fragments);
     }
 
-    $self->status_message('Trimmer name: '.$trimmer_name);
-    $self->status_message('Trimmer version: '.($trimmer_version // 'NULL'));
-    $self->status_message('Trimmer params: '.($trimmer_params // 'NULL'));
+    $self->debug_message('Trimmer name: '.$trimmer_name);
+    $self->debug_message('Trimmer version: '.($trimmer_version // 'NULL'));
+    $self->debug_message('Trimmer params: '.($trimmer_params // 'NULL'));
     my @sx_cmd_parts = $self->_convert_trimmer_to_sx_commands(
         trimmer_name => $params{trimmer_name},
         trimmer_version => $params{trimmer_version},
@@ -536,12 +536,12 @@ sub dump_trimmed_fastq_files {
 
     );
     if ( @sx_cmd_parts ) {
-        $self->status_message('SX processing detected!');
+        $self->debug_message('SX processing detected!');
 
         # Inputs
         my @fastq_pathnames = $self->dump_sanger_fastq_files(%$segment_params); # dies on error
         $sx_cmd_parts[0] .= ' --input '.join(',', map { 'file='. $_ .':type=sanger' } @fastq_pathnames);
-        $self->status_message('SX inputs: '.join(' ', @fastq_pathnames));
+        $self->debug_message('SX inputs: '.join(' ', @fastq_pathnames));
 
         # Outputs and file names
         my (@trimmed_fastq_pathnames, @output);
@@ -563,23 +563,23 @@ sub dump_trimmed_fastq_files {
             @output = $trimmed_fastq_pathnames[0];
         }
         $sx_cmd_parts[$#sx_cmd_parts] .= ' --output '.join(',', @output);
-        $self->status_message('SX outputs: '.join(' ', @trimmed_fastq_pathnames));
+        $self->debug_message('SX outputs: '.join(' ', @trimmed_fastq_pathnames));
 
         # Run SX
         # Assemble command
         my $sx_cmd = join(' | ', map { 'gmt sx '.$_ } @sx_cmd_parts);
-        $self->status_message('SX command: '.$sx_cmd);
+        $self->debug_message('SX command: '.$sx_cmd);
         # Run
         my $cmd_ran_ok = eval{ Genome::Sys->shellcmd(cmd => $sx_cmd); };
         if ( not $cmd_ran_ok ) {
             die $self->error_message('Failed to run SX trim command! '.$sx_cmd);
         }
-        $self->status_message('Run SX command...OK');
+        $self->debug_message('Run SX command...OK');
 
         # Remove original dumped fastqs
         for my $input_fastq_pathname (@fastq_pathnames) {
             if ($input_fastq_pathname =~ m/^\/tmp/) {
-                $self->status_message("Removing original file from after trimming to save space: $input_fastq_pathname");
+                $self->debug_message("Removing original file from after trimming to save space: $input_fastq_pathname");
                 unlink($input_fastq_pathname);
             }
         }
@@ -589,7 +589,7 @@ sub dump_trimmed_fastq_files {
         if (@trimmed_fastq_pathnames == 3){
             my $paired_with_size = grep { -s $_ } @trimmed_fastq_pathnames[0,1];
             if ($paired_with_size == 0){
-                $self->status_message("paired end trimmed files have no size, skipping");
+                $self->debug_message("paired end trimmed files have no size, skipping");
             }elsif($paired_with_size == 1){
                 die $self->error_message("only one trimmed pair file with size, trimming produced bad result!");
             }else{
@@ -598,7 +598,7 @@ sub dump_trimmed_fastq_files {
             if (-s $trimmed_fastq_pathnames[2]){
                 push @paths, $trimmed_fastq_pathnames[2];
             }else{
-                $self->status_message("fragment trimmed file has no size, skipping");
+                $self->debug_message("fragment trimmed file has no size, skipping");
             }
         } else {
             @paths = @trimmed_fastq_pathnames;
@@ -611,7 +611,7 @@ sub dump_trimmed_fastq_files {
     # MAKE A TRIMMER IN THE SX API, AND FALL THROUGH TO THE "ELSE" BLOCK
     # EVENTUALLY, ALL OF THIS IF STATMENT NEEDS TO GO AWAY -SSMITH
 
-    $self->status_message('Preceding w/ non SX processing');
+    $self->debug_message('Preceding w/ non SX processing');
     my @fastq_pathnames = $self->dump_sanger_fastq_files(%$segment_params); # dies on error
     my @trimmed_fastq_pathnames;
     #if the trimmer supports paired end, we just run it once, otherwise we need to loop over the fastqs
@@ -761,7 +761,7 @@ sub dump_trimmed_fastq_files {
             }
 
             if ($input_fastq_pathname =~ m/^\/tmp/) {
-                $self->status_message("Removing original file from before trimming to save space: $input_fastq_pathname");
+                $self->debug_message("Removing original file from before trimming to save space: $input_fastq_pathname");
                 unlink($input_fastq_pathname);
             }
 
@@ -925,7 +925,7 @@ sub resolve_fastq_filenames {
 
     # First check the archive directory and second get the gerald directory
     for my $dir_type (qw(archive_path gerald_directory)) {
-        $self->status_message("Now trying to get fastq from $dir_type for $desc");
+        $self->debug_message("Now trying to get fastq from $dir_type for $desc");
 
         my $directory = $self->$dir_type;
         $directory = $self->validate_fastq_directory($directory, $dir_type);
@@ -1338,7 +1338,7 @@ sub get_default_alignment_results {
         }
 
         next unless @builds;
-        my @models_by_apipe_builder = grep {$_->user_name =~ /^apipe-builder/} map { $_->model } @builds;
+        my @models_by_apipe_builder = grep {$_->run_as =~ /^apipe-builder/} map { $_->model } @builds;
 
         if (@models_by_apipe_builder) {
             push @ars_by_apipe_builder, $alignment_result;
@@ -1375,6 +1375,12 @@ sub get_default_alignment_metrics_hash {
         last;
     }
     return \%metrics;
+}
+
+sub is_capture {
+    my $self = shift;
+
+    return defined $self->target_region_set_name;
 }
 
 

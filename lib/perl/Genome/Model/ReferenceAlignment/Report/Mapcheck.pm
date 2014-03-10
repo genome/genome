@@ -64,7 +64,7 @@ sub get_bam_content {
     my $build = $self->build;
 
     #my $pileup_file = $build->bam_pileup_file;
-    #$self->status_message("Using pileup file $pileup_file to generate Bam coverage.");
+    #$self->debug_message("Using pileup file $pileup_file to generate Bam coverage.");
     #my $coverage = Genome::Model::Tools::Sam::Coverage->create(pileup_file=>$pileup_file);
     my $ref_build = $build->model->reference_sequence_build;
     my $reference_file = $ref_build->full_consensus_path('fa');
@@ -97,16 +97,16 @@ sub get_bam_content {
         }
     }else{
         if ($flagstat_data->{reads_mapped} == 0){
-            $self->status_message("0 mapped reads in merged bam, skipping bam-check");
+            $self->debug_message("0 mapped reads in merged bam, skipping bam-check");
             $skip = 1;
         }
     }
 
     if ($skip){
-        $self->status_message("No bam coverage report generated due to no aligned reads");
+        $self->debug_message("No bam coverage report generated due to no aligned reads");
         return;
     }else{
-        $self->status_message("Using:  Reference File: $reference_file, Aligned Reads File: $aligned_reads");
+        $self->debug_message("Using:  Reference File: $reference_file, Aligned Reads File: $aligned_reads");
         my $coverage = Genome::Model::Tools::Sam::Coverage->create( aligned_reads_file=>$aligned_reads,
             reference_file =>$reference_file,
             return_output =>1,
@@ -115,8 +115,8 @@ sub get_bam_content {
         );
         my $bam_coverage_report = $coverage->execute;
         if (defined($bam_coverage_report) ) {
-            $self->status_message("Bam coverage report successfully generated.");
-            $self->status_message("Bam coverage report string: \n".$bam_coverage_report);
+            $self->debug_message("Bam coverage report successfully generated.");
+            $self->debug_message("Bam coverage report string: \n".$bam_coverage_report);
             return $bam_coverage_report;
         }  else {
             $self->error_message("Could not generate Bam coverage report.");  

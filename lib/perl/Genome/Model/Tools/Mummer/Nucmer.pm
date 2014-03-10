@@ -60,7 +60,7 @@ sub execute {
 
     my $cmd = $version_nucmer.' --prefix '.$self->prefix.' '.$self->reference.' '.$self->query;
 
-    $self->status_message("Running nucmer with command: $cmd");
+    $self->debug_message("Running nucmer with command: $cmd");
 
     my %cmd_params = (
         cmd          => $cmd,

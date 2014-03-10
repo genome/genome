@@ -161,9 +161,9 @@ sub _resolve_subclass_name_for_aligner_name {
 sub verify_os {
     my $class = shift;
     my $actual_os = Genome::Config->arch_os();
-    $class->status_message("OS is $actual_os");
+    $class->debug_message("OS is $actual_os");
     my $required_os = $class->required_arch_os;
-    $class->status_message("Required OS is $required_os");
+    $class->debug_message("Required OS is $required_os");
     unless ($required_os eq $actual_os) {
         confess $class->error_message("This logic can only be run on a $required_os machine!  (running on $actual_os)");
     }
@@ -174,15 +174,15 @@ sub verify_disk_space {
 
     # TODO: move disk_group, estimated_size, allocation and promotion up into the software result logic
     my $estimated_kb_usage = $self->estimated_kb_usage;
-    $self->status_message("Estimated disk for this data set: " . $estimated_kb_usage . " kb");
-    $self->status_message("Check for available disk...");
-    my @available_volumes = Genome::Disk::Volume->get(disk_group_names => "info_alignments"); 
-    $self->status_message("Found " . scalar(@available_volumes) . " disk volumes");
+    $self->debug_message("Estimated disk for this data set: " . $estimated_kb_usage . " kb");
+    $self->debug_message("Check for available disk...");
+    my @available_volumes = Genome::Disk::Volume->get(disk_group_names => $ENV{GENOME_DISK_GROUP_ALIGNMENTS}); 
+    $self->debug_message("Found " . scalar(@available_volumes) . " disk volumes");
     my $unallocated_kb = 0;
     for my $volume (@available_volumes) {
         $unallocated_kb += $volume->unallocated_kb;
     }
-    $self->status_message("Available disk: " . $unallocated_kb . " kb");
+    $self->debug_message("Available disk: " . $unallocated_kb . " kb");
     my $factor = 20;
     unless ($unallocated_kb > ($factor * $estimated_kb_usage)) {
         $self->error_message("NOT ENOUGH DISK SPACE!  This step requires $factor x as much disk as the job will use to be available before starting.");
@@ -240,7 +240,7 @@ sub create {
 
     if (my $output_dir = $self->output_dir) {
         if (-d $output_dir) {
-            $self->status_message("BACKFILL DIRECTORY: $output_dir!");
+            $self->debug_message("BACKFILL DIRECTORY: $output_dir!");
             return $self;
         }
     }
@@ -249,10 +249,10 @@ sub create {
     $self->_prepare_working_and_staging_directories;
 
     # PREPARE THE ALIGNMENT DIRECTORY ON NETWORK DISK
-    $self->status_message("Preparing the output directory...");
-    $self->status_message("Staging disk usage is " . $self->_staging_disk_usage . " KB");
+    $self->debug_message("Preparing the output directory...");
+    $self->debug_message("Staging disk usage is " . $self->_staging_disk_usage . " KB");
     my $output_dir = $self->output_dir || $self->_prepare_output_directory;
-    $self->status_message("Alignment output path is $output_dir");
+    $self->debug_message("Alignment output path is $output_dir");
 
     # symlink the input file in the working directory, drop the full path from the input
     my $symlink_target = $self->temp_scratch_directory . "/" . $self->input_file;
@@ -264,7 +264,7 @@ sub create {
     $self->_run_aligner();
 
     # PROMOTE THE DATA INTO ALIGNMENT DIRECTORY
-    $self->status_message("Moving results to network disk...");
+    $self->debug_message("Moving results to network disk...");
     my $product_path;
     unless($product_path = $self->_promote_data) {
         confess $self->error_message("Failed to de-stage data into alignment directory " . $self->error_message);
@@ -272,7 +272,7 @@ sub create {
     
     # RESIZE THE DISK
     # TODO: move this into the actual original allocation so we don't need to do this 
-    $self->status_message("Resizing the disk allocation...");
+    $self->debug_message("Resizing the disk allocation...");
     if ($self->_disk_allocation) {
         my %params;
         $params{allow_reallocate_with_move} = 0;
@@ -283,7 +283,7 @@ sub create {
         $self->output_dir($self->_disk_allocation->absolute_path); #update if was moved
     }
         
-    $self->status_message("Intermediate alignment result generation complete.");
+    $self->debug_message("Intermediate alignment result generation complete.");
     return $self;
 }
 
@@ -327,7 +327,7 @@ sub _gather_params_for_get_or_create {
 sub _prepare_working_and_staging_directories {
     my $self = shift;
 
-    $self->status_message("Prepare working directories...");
+    $self->debug_message("Prepare working directories...");
 
     unless ($self->_prepare_staging_directory) {
         $self->error_message("Failed to prepare staging directory");
@@ -342,8 +342,8 @@ sub _prepare_working_and_staging_directories {
         confess "Failed to create a temp scrach directory for working files.";
     }
 
-    $self->status_message("Staging path is " . $self->temp_staging_directory);
-    $self->status_message("Working path is " . $self->temp_scratch_directory);
+    $self->debug_message("Staging path is " . $self->temp_staging_directory);
+    $self->debug_message("Working path is " . $self->temp_scratch_directory);
     return 1;
 } 
 
@@ -361,7 +361,7 @@ sub resolve_allocation_subdirectory {
 }
 
 sub resolve_allocation_disk_group_name {
-    return "info_alignments";
+    $ENV{GENOME_DISK_GROUP_ALIGNMENTS};
 }
 
 # this behavior was in the alignment class earlier and was set as changeable in SoftwareResult::Stageable.

@@ -64,9 +64,9 @@ sub execute {
     my $self = shift;
 
     $self->dump_status_messages(1);
-    $self->status_message(">>>Running AlignMetagenomes at ".UR::Context->current->now);
+    $self->debug_message(">>>Running AlignMetagenomes at ".UR::Context->current->now);
     #my $model_id = $self->model_id;
-    $self->status_message("Reads and reference: ".$self->reads_and_references);
+    $self->debug_message("Reads and reference: ".$self->reads_and_references);
 
 	#split between reads and ref on @ sign...
     my @list = split(/\@/,$self->reads_and_references);
@@ -84,19 +84,19 @@ sub execute {
     } elsif ( scalar(@reads_list) == 1) {
     	$reads_basename = File::Basename::basename($reads_list[0]);
     } else {
-    	$self->status_message("Found an invalid number of input read files.  Need 1 or 2. Quitting.");
+    	$self->debug_message("Found an invalid number of input read files.  Need 1 or 2. Quitting.");
     	return;
     }
     
-    $self->status_message("Reads: ".$reads_file);
-    $self->status_message("Reference: ".$reference_sequence);
+    $self->debug_message("Reads: ".$reads_file);
+    $self->debug_message("Reference: ".$reference_sequence);
     
     #my $refseq_basename = File::Basename::basename($reference_sequence);
     my @refseq_path_dirs = split(/\//,$reference_sequence);
     my $refseq_basename = $refseq_path_dirs[-2]; 
     
     #my $refseq_dirname = File::Basename::dirname($reference_sequence);
-    #$self->status_message("Refseq directory: ".$refseq_dirname);
+    #$self->debug_message("Refseq directory: ".$refseq_dirname);
  
  	#switch here on all whether or not to generate a concise alignment only
  	my $subdirectory = "alignments_top_hit";
@@ -117,7 +117,7 @@ sub execute {
     }
     
     #$self->aligned_file($alignment_file);
-    #$self->status_message("<<<Completed AlignMetagenomes for testing at at ".UR::Context->current->now);
+    #$self->debug_message("<<<Completed AlignMetagenomes for testing at at ".UR::Context->current->now);
     #return 1;
     
     #expected output files
@@ -135,10 +135,10 @@ sub execute {
     if (defined($rv_check)) {
 	    if ($rv_check == 1) {
 	    	#shortcut this step, all the required files exist.  Quit.
-	    	$self->status_message("Skipping this step.  Alignments exist for reads file $reads_basename against reference sequence $refseq_basename. If you would like to regenerate these files, remove them and rerun.");
+	    	$self->debug_message("Skipping this step.  Alignments exist for reads file $reads_basename against reference sequence $refseq_basename. If you would like to regenerate these files, remove them and rerun.");
                 $self->aligned_file($alignment_file);
     	        $self->working_directory($parent_directory);
-    	        $self->status_message("<<<Completed alignment at ".UR::Context->current->now);
+    	        $self->debug_message("<<<Completed alignment at ".UR::Context->current->now);
                 return 1;
 	    } 
     } 
@@ -147,8 +147,8 @@ sub execute {
 	my $aligner;
 
     if ($self->generate_concise) { 
-    	$self->status_message("Aligning with Concise option at ".UR::Context->current->now);
-    	$self->status_message("Reads file: ".$reads_file);
+    	$self->debug_message("Aligning with Concise option at ".UR::Context->current->now);
+    	$self->debug_message("Reads file: ".$reads_file);
     	$aligner = Genome::Model::Tools::Bwa::AlignReadsMulti->create(dna_type=>'dna', 
     									align_options=>$alignment_options, 
     									ref_seq_file=>$reference_sequence,
@@ -160,7 +160,7 @@ sub execute {
                                                                         top_hits=>$top_hits,
             							);
     } else {				
-    	$self->status_message("Aligning with standard options at ".UR::Context->current->now);
+    	$self->debug_message("Aligning with standard options at ".UR::Context->current->now);
     	$aligner = Genome::Model::Tools::Bwa::AlignReads->create(dna_type=>'dna', 
     									align_options=>$alignment_options, 
     									ref_seq_file=>$reference_sequence,
@@ -173,7 +173,7 @@ sub execute {
             							);
     }
     															
-    $self->status_message("Aligning at ".UR::Context->current->now);
+    $self->debug_message("Aligning at ".UR::Context->current->now);
     my $rv_aligner = $aligner->execute;
 
     if ($rv_aligner != 1) {
@@ -186,7 +186,7 @@ sub execute {
     	$self->aligned_file($alignment_file);
     	$self->working_directory($parent_directory);
     	Genome::Sys->mark_files_ok(input_files=>\@expected_output_files);
-    	$self->status_message("<<<Completed alignment at ".UR::Context->current->now);
+    	$self->debug_message("<<<Completed alignment at ".UR::Context->current->now);
     	return 1;
     }
     
@@ -204,7 +204,7 @@ sub execute {
     	return;
    }
 
-	$self->status_message("Moving $sorted_file into $alignment_file.");
+	$self->debug_message("Moving $sorted_file into $alignment_file.");
    	my $mv_cmd = "mv $sorted_file $alignment_file";
    	my $rv_mv = Genome::Sys->shellcmd(cmd=>$mv_cmd);
    	if ($rv_mv != 1) {
@@ -216,7 +216,7 @@ sub execute {
     $self->working_directory($parent_directory);
     Genome::Sys->mark_files_ok(input_files=>\@expected_output_files);
     
-    $self->status_message("<<<Completed alignment at ".UR::Context->current->now);
+    $self->debug_message("<<<Completed alignment at ".UR::Context->current->now);
     
     return 1;
 }

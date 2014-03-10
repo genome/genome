@@ -6,33 +6,29 @@ use warnings;
 use Carp qw(croak);
 use File::Spec qw();
 use Sys::Hostname qw(hostname);
+use UR::Util qw();
+use Module::Runtime qw(require_module);
 
 our $VERSION = $Genome::VERSION;
 
 sub import {
     if (my $config = $ENV{GENOME_CONFIG}) {
-        # call the specified configuration module;
-        eval "use $config";
-        die $@ if $@;
+        require_module($config);
     }
     else {
-        my @hwords = site_dirs();
-        while (@hwords) {
-            my $pkg = site_pkg(@hwords);
-            my $filename = module_to_filename($pkg);
-            local $SIG{__DIE__};
-            local $SIG{__WARN__};
-            eval "use $pkg";
-            if ($@ =~ /Can't locate $filename/) {
-                pop @hwords;
-                next;
-            }
-            elsif ($@) {
-                Carp::confess("error in $pkg: $@\n");
-            }
-            else {
-                last;
-            }
+        load_host_config();
+    }
+}
+
+sub load_host_config {
+    my @hwords = site_dirs();
+    while (@hwords) {
+        my $pkg = site_pkg(@hwords);
+        if (UR::Util::use_package_optimistically($pkg)) {
+            last;
+        } else {
+            pop @hwords;
+            next;
         }
     }
 }
@@ -48,18 +44,11 @@ sub site_dirs {
     my @hwords = map { s/-/_/g; $_ } reverse split(/\./, $hostname);
 }
 
-sub module_to_filename {
-    my $module = shift;
-    unless ($module) {
-        croak 'must specify module';
-    }
-    my @path = split(/::/, $module);
-    my $filename = File::Spec->join(@path) . '.pm';
-}
-
 BEGIN {
     import();
 }
+
+$ENV{GENOME_EXECUTION_ID} ||= UR::Object::Type->autogenerate_new_object_id_uuid();
 
 1;
 

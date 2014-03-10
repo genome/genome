@@ -142,7 +142,7 @@ sub resolve_reads_metrics_files {
 
 sub execute {
     my $self = shift;
-    $self->status_message('Allpaths metrics...');
+    $self->debug_message('Allpaths metrics...');
 
     my $scaffolds_efasta = $self->resolve_scaffolds_efasta;
 
@@ -157,8 +157,8 @@ sub execute {
         $t1 = int ($est_genome_size * 0.2);
         $t2 = int ($est_genome_size * 0.2);
     }
-    $self->status_message('Tier one: 1 to '.$t1);
-    $self->status_message('Tier two: '.$t1.' to '.($t1 + $t2));
+    $self->debug_message('Tier one: 1 to '.$t1);
+    $self->debug_message('Tier two: '.$t1.' to '.($t1 + $t2));
 
     # metrics
     my $metrics = Genome::Model::Tools::Sx::Metrics::Assembly->create(
@@ -171,7 +171,7 @@ sub execute {
     # add reads metrics/reads files
     my $add_reads_methods = $self->_add_reads_method;
     for my $file ( @{$self->_reads_files} ) {
-        $self->status_message('Add reads'.( $file =~ /metrics$/ ? ' metrics ' : ' ').'file: '.$file);
+        $self->debug_message('Add reads'.( $file =~ /metrics$/ ? ' metrics ' : ' ').'file: '.$file);
         my $add_reads = $metrics->$add_reads_methods($file);
         return if not $add_reads;
     }
@@ -182,7 +182,7 @@ sub execute {
     );
 
     # add scaffolds
-    $self->status_message('Add scaffolds file: '.$scaffolds_efasta);
+    $self->debug_message('Add scaffolds file: '.$scaffolds_efasta);
     my $reader = Genome::Model::Tools::Sx::PhredEnhancedSeqReader->create(file => $scaffolds_efasta);
     return if not $reader;
     while ( my $seq = $reader->read ) {
@@ -192,18 +192,18 @@ sub execute {
     }
     
     # transform metrics
-    $self->status_message('Transform metrics to text...');
+    $self->debug_message('Transform metrics to text...');
     my $text = $metrics->transform_xml_to('txt');
     if ( not $text ) {
         $self->error_message('Failed to transform metrics to text!');
         return;
     }
-    $self->status_message('Transform metrics to text...OK');
+    $self->debug_message('Transform metrics to text...OK');
 
     # write file
     my $output_file = $self->output_file;
     unlink $output_file if -e $output_file;
-    $self->status_message('Write output file: '.$output_file);
+    $self->debug_message('Write output file: '.$output_file);
     my $fh = eval{ Genome::Sys->open_file_for_writing($output_file); };
     if ( not $fh ) {
         $self->error_message('Failed to open metrics output file!');
@@ -212,7 +212,7 @@ sub execute {
     $fh->print($text);
     $fh->close;
 
-    $self->status_message('Allpaths metrics...OK');
+    $self->debug_message('Allpaths metrics...OK');
     return 1;
 }
 

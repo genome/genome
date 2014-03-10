@@ -49,7 +49,7 @@ sub execute {
     my $infile = $self->input_file;
     my $gene_name_regex = $self->gene_name_regex;
 
-    $self->status_message("Adding DGIDB gene annotation to $infile using genes in this gene name column: $gene_name_regex");
+    $self->debug_message("Adding DGIDB gene annotation to $infile using genes in this gene name column: $gene_name_regex");
 
     my $reader = Genome::Utility::IO::SeparatedValueReader->create(
         input     => $infile,

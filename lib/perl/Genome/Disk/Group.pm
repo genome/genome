@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 use Carp qw(confess);
+use Memoize qw(memoize);;
 
 class Genome::Disk::Group {
     table_name => 'disk.group',
@@ -49,7 +50,7 @@ class Genome::Disk::Group {
         },
     ],
     data_source => 'Genome::DataSource::GMSchema',
-    doc => 'Represents a disk group (eg, info_apipe), which contains any number of disk volumes',
+    doc => "Represents a disk group (eg, $ENV{GENOME_DISK_GROUP_DEV}), which contains any number of disk volumes",
 };
 
 
@@ -97,14 +98,14 @@ sub _get_single {
 
 # TODO This needs to be removed, site-specific
 my %VALID_NAMES = (
-    info_apipe => 1,
-    info_apipe_ref => 1,
-    info_alignments => 1,
-    info_genome_models => 1,
-    info_apipe_trash => 1,
-    research => 1,
-    systems_benchmarking => 1,
-    reads => 1,
+    $ENV{GENOME_DISK_GROUP_READS} => 1,
+    $ENV{GENOME_DISK_GROUP_BENCHMARKING} => 1,
+    $ENV{GENOME_DISK_GROUP_DEV} => 1,
+    $ENV{GENOME_DISK_GROUP_REFERENCES} => 1,
+    $ENV{GENOME_DISK_GROUP_ALIGNMENTS} => 1,
+    $ENV{GENOME_DISK_GROUP_MODELS} => 1,
+    $ENV{GENOME_DISK_GROUP_TRASH} => 1,
+    $ENV{GENOME_DISK_GROUP_RESEARCH} => 1,
 );
 sub validate {
     my $self = shift;
@@ -117,27 +118,16 @@ sub validate {
     }
 }
 
-my %user_name_cache;
-my %group_name_cache;
-
-# memoizing frontends for user_name and group_name
+memoize('_resolve_user_name');
 sub _resolve_user_name {
     my($self, $uid) = @_;
-
-    unless (exists $user_name_cache{$uid}) {
-        ($user_name_cache{$uid}) = getpwuid($uid);
-    }
-    return $user_name_cache{$uid};
+    return getpwuid($uid);
 }
 
+memoize('_resolve_group_name');
 sub _resolve_group_name {
-    my($self,$gid) = @_;
-
-    unless (exists $group_name_cache{$gid}) {
-        ($group_name_cache{$gid}) = getgrgid($gid);
-    }
-    return $group_name_cache{$gid};
+    my($self, $gid) = @_;
+    return getgrgid($gid);
 }
-
 
 1;

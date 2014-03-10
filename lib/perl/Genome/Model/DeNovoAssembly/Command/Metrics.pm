@@ -33,14 +33,14 @@ sub help_detail {
 
 sub execute {
     my $self = shift;
-    $self->status_message('De Novo metrics...');
+    $self->debug_message('De Novo metrics...');
 
-    $self->status_message('Build: '.$self->build->id);
-    $self->status_message('Assembler: '.$self->build->processing_profile->assembler_name);
+    $self->debug_message('Build: '.$self->build->id);
+    $self->debug_message('Assembler: '.$self->build->processing_profile->assembler_name);
     my $metrics_class = $self->build->processing_profile->tools_base_class.'::Metrics';
     my $major_contig_length = ( $self->build->processing_profile->name =~ /PGA/ ? 300 : 500 );
-    $self->status_message('Assembly directory: '.$self->build->data_directory);
-    $self->status_message('Major contig length: '.$major_contig_length);
+    $self->debug_message('Assembly directory: '.$self->build->data_directory);
+    $self->debug_message('Major contig length: '.$major_contig_length);
     my $metrics_tool = $metrics_class->create(
         assembly_directory => $self->build->data_directory,
         major_contig_length => $major_contig_length,
@@ -56,12 +56,12 @@ sub execute {
     }
 
     if ( $self->update_the_db ) {
-        $self->status_message('Update db...');
+        $self->debug_message('Update db...');
         my $save = $self->_update_db($metrics_tool->_metrics);
         return if not $save;
     }
 
-    $self->status_message('Done');
+    $self->debug_message('Done');
     return 1;
 }
 

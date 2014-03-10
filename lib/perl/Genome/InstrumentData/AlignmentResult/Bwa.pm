@@ -8,7 +8,7 @@ use Carp qw/confess/;
 use Genome;
 
 class Genome::InstrumentData::AlignmentResult::Bwa {
-    is => 'Genome::InstrumentData::AlignmentResult',
+    is => 'Genome::InstrumentData::AlignmentResult::WithIntermediateResults',
     has_constant => [
         aligner_name => { value => 'bwa', is_param=>1 },
     ],
@@ -25,6 +25,7 @@ sub required_rusage {
     my $instrument_data = delete $p{instrument_data};
     my $aligner_params  = delete $p{aligner_params};
     my $reference_build = delete $p{reference_build};
+    my $queue           = delete $p{queue} || $ENV{GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT};
 
     my $tmp_mb = $class->tmp_megabytes_estimated($instrument_data);
     my $mem_mb = 1024 * 8; 
@@ -35,7 +36,7 @@ sub required_rusage {
     }
 
     if ($reference_build and $reference_build->id eq '107494762') {
-        $class->status_message(sprintf 'Doubling memory requirements for alignments against %s.', $reference_build->name);
+        $class->debug_message(sprintf 'Doubling memory requirements for alignments against %s.', $reference_build->name);
         $mem_mb *= 2;
     }
 
@@ -43,8 +44,6 @@ sub required_rusage {
     my $tmp_gb = $tmp_mb/1024;
 
     my $user = getpwuid($<);
-    my $queue = 'alignment';
-    $queue = 'alignment-pd' if (Genome::Config->should_use_alignment_pd);
 
     my $host_groups;
     $host_groups = qx(bqueues -l $queue | grep ^HOSTS:);
@@ -127,19 +126,19 @@ sub _all_reference_indices {
     my $b = $self->reference_build;
     if ($self->multiple_reference_mode) {
         do {
-            $self->status_message("Getting reference sequence index for build ".$b->__display_name__);
-            $self->status_message("...using overrides @overrides\n") if @overrides;
+            $self->debug_message("Getting reference sequence index for build ".$b->__display_name__);
+            $self->debug_message("...using overrides @overrides\n") if @overrides;
             my $index = $self->get_reference_sequence_index($b,@overrides);
-            $self->status_message("Index: " . $index->__display_name__);
+            $self->debug_message("Index: " . $index->__display_name__);
             unshift(@indices, $index);
             $b = $b->append_to;
         } while ($b);
     } else {
         # TODO: the above condition works for the single-layer reference too right? -ssmith
-        $self->status_message("Getting reference sequence index for build ".$b->__display_name__);
-        $self->status_message("...using overrides @overrides\n") if @overrides;
+        $self->debug_message("Getting reference sequence index for build ".$b->__display_name__);
+        $self->debug_message("...using overrides @overrides\n") if @overrides;
         my $index = $self->get_reference_sequence_index($b,@overrides);
-        $self->status_message("Index: " . $index->__display_name__);
+        $self->debug_message("Index: " . $index->__display_name__);
         unshift(@indices, $index);
     }
     return @indices;
@@ -147,69 +146,54 @@ sub _all_reference_indices {
 
 sub _intermediate_result {
     my ($self, $params, $index, @input_files) = @_;
+    $self->status_message('Generating intermediate result(s)...');
+
+    my $aligner_version = $self->aligner_version;
+    if ($aligner_version =~ /^(.*)-i(.*)/) {
+        my $old = $aligner_version;
+        $aligner_version = $1;
+        $self->warning_message("FOR iBWA (BWA $old), USING (IDENTICAL) $aligner_version FOR INTERMEDIATE RESULTS"); 
+    }
+
+    my %intermediate_params = (
+        instrument_data_id           => $self->instrument_data->id,
+        aligner_name                 => $self->aligner_name,
+        aligner_version              => $aligner_version,
+        aligner_params               => $params,
+        aligner_index_id             => $index->id,
+        flagstat_file                => $self->_flagstat_file,
+        instrument_data_segment_type => $self->instrument_data_segment_type,
+        instrument_data_segment_id   => $self->instrument_data_segment_id,
+        samtools_version             => $self->samtools_version,
+        trimmer_name                 => $self->trimmer_name,
+        trimmer_version              => $self->trimmer_version,
+        trimmer_params               => $self->trimmer_params,
+        test_name                    => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+    );
+
+    my $includes = join(' ', map { '-I ' . $_ } UR::Util::used_libs);
 
     my @results;
     for my $idx (0..$#input_files) {
         my $path = $input_files[$idx];
         my ($input_pass) = $path =~ m/\.bam:(\d)$/;
-        print "INPUT FILE: $path, INPUT PASS: $input_pass\n" . Dumper(\@_);
         if (defined($input_pass)) {
             $path =~ s/\.bam:\d$/\.bam/;
         } else {
             $input_pass = $idx+1;
         }
 
-        my $aligner_version = $self->aligner_version;
-        if ($aligner_version =~ /^(.*)-i(.*)/) {
-            my $old = $aligner_version;
-            $aligner_version = $1;
-            $self->warning_message("FOR iBWA (BWA $old), USING (IDENTICAL) $aligner_version FOR INTERMEDIATE RESULTS"); 
-        }
+        $self->status_message('Input pass: '.$input_pass);
+        $self->status_message('Input file: '.$path);
+        $self->status_message('Params: '.Data::Dumper::Dumper(\%intermediate_params));
 
-        my %intermediate_params = (
-            instrument_data_id           => $self->instrument_data->id,
-            aligner_name                 => $self->aligner_name,
-            aligner_version              => $aligner_version,
-            aligner_params               => $params,
-            aligner_index_id             => $index->id,
-            flagstat_file                => $self->_flagstat_file,
-            input_file                   => $path,
-            input_pass                   => $input_pass,
-            instrument_data_segment_type => $self->instrument_data_segment_type,
-            instrument_data_segment_id   => $self->instrument_data_segment_id,
-            samtools_version             => $self->samtools_version,
-            trimmer_name                 => $self->trimmer_name,
-            trimmer_version              => $self->trimmer_version,
-            trimmer_params               => $self->trimmer_params,
-            test_name                    => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
-        );
+        $intermediate_params{input_file} = $path;
+        $intermediate_params{input_pass} = $input_pass;
 
-        my $includes = join(' ', map { '-I ' . $_ } UR::Util::used_libs);
-        my $class = 'Genome::InstrumentData::IntermediateAlignmentResult::Command::Bwa';
-        my $parameters = join(', ', map($_ . ' => "' . (defined($intermediate_params{$_}) ? $intermediate_params{$_} : '') . '"', sort keys %intermediate_params));
-
-        if(UR::DBI->no_commit()) {
-            my $rv = eval "$class->execute($parameters);";
-            if(!$rv or $@) {
-                my $err = $@;
-                die('Failed to generate intermediate result!' . ($err? $err : ' command returned false') );
-            }
-        } else {
-            my $cmd = qq{$^X $includes -e 'use above "Genome"; $class->execute($parameters); UR::Context->commit;' };
-            my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd) };
-            if(!$rv or $@) {
-                my $err = $@;
-                die('Failed to generate intermediate result!' . ($err? $err : ' command returned false') );
-            }
-        }
-
-        my $intermediate_result = Genome::InstrumentData::IntermediateAlignmentResult::Bwa->get_with_lock(%intermediate_params);
-        unless ($intermediate_result) {
-            confess "Failed to generate IntermediateAlignmentResult for $path, params were: " . Dumper(\%intermediate_params);
-        }
-
-        $self->status_message(sprintf("Got/created an intermediate alignment result %s with file path %s", $intermediate_result->id, $intermediate_result->sai_file));
-        push(@results, $intermediate_result);
+        my $intermediate_result = $self->get_or_create_intermediate_result_for_params(\%intermediate_params);
+        return if not $intermediate_result;
+        $self->status_message('Intermediate result:  '.$intermediate_result->__display_name__);
+        push @results, $intermediate_result;
     }
 
     my @bad_results = grep {!-e $_->sai_file || !-s $_->sai_file} @results;
@@ -218,10 +202,7 @@ sub _intermediate_result {
         confess sprintf("The following intermediate alignment result(s) have nonexistent or zero-length SAI files -- cannot proceed: %s", $str_bad_ids);
     }
 
-    for my $result (@results) {
-        $result->add_user(user => $self, label => 'uses');
-    }
-
+    $self->status_message('Generating intermediate result(s)...done');
     return @results;
 }
 
@@ -333,7 +314,7 @@ sub _run_aligner {
 
     for my $file (@input_pathnames) {
         if ($file =~ m/^\/tmp\//) {
-            $self->status_message("removing $file to save space!");
+            $self->debug_message("removing $file to save space!");
             unlink($file);
         }
     }
@@ -370,7 +351,7 @@ sub _filter_samxe_output {
 
     my $sam_run_output_fh = IO::File->new( $sam_cmd . "|" );
     binmode $sam_run_output_fh;
-    $self->status_message("Running $sam_cmd");
+    $self->debug_message("Running $sam_cmd");
     if ( !$sam_run_output_fh ) {
             $self->error_message("Error running $sam_cmd $!");
             return;
@@ -380,10 +361,10 @@ sub _filter_samxe_output {
     # UGLY HACK: the multi-aligner code redefines this to zero so it can extract sam files.
     if ($self->supports_streaming_to_bam) {
         $sam_out_fh = $self->_sam_output_fh;
-        $self->status_message("Streaming output through existing file handle");
+        $self->debug_message("Streaming output through existing file handle");
     } else {
         $sam_out_fh = IO::File->new(">>" . $self->temp_scratch_directory . "/all_sequences.sam");
-        $self->status_message("Opened for output ( " . $self->temp_scratch_directory . "/all_sequences.sam )");
+        $self->debug_message("Opened for output ( " . $self->temp_scratch_directory . "/all_sequences.sam )");
     }
     my $add_rg_cmd = Genome::Model::Tools::Sam::AddReadGroupTag->create(
             input_filehandle     => $sam_run_output_fh,
@@ -490,9 +471,9 @@ sub decomposed_aligner_params {
 
     my $cpu_count = $self->_available_cpu_count;
 
-    $self->status_message("[decomposed_aligner_params] cpu count is $cpu_count");
+    $self->debug_message("[decomposed_aligner_params] cpu count is $cpu_count");
 
-    $self->status_message("[decomposed_aligner_params] bwa aln params are: $bwa_aln_params");
+    $self->debug_message("[decomposed_aligner_params] bwa aln params are: $bwa_aln_params");
 
     # Make sure the thread count argument matches the number of CPUs available.
     if (!$bwa_aln_params || $bwa_aln_params !~ m/-t/) {
@@ -501,7 +482,7 @@ sub decomposed_aligner_params {
         $bwa_aln_params =~ s/-t ?\d/-t$cpu_count/;
     }
 
-    $self->status_message("[decomposed_aligner_params] autocalculated CPU requirement, bwa aln params modified: $bwa_aln_params");
+    $self->debug_message("[decomposed_aligner_params] autocalculated CPU requirement, bwa aln params modified: $bwa_aln_params");
 
 
     return ('bwa_aln_params' => $bwa_aln_params, 'bwa_samse_params' => $spar[1], 'bwa_sampe_params' => $spar[2]);
@@ -528,7 +509,7 @@ sub _derive_bwa_sampe_parameters {
 
     # Ignore where we have a -a already specified
     if ($bwa_sampe_params =~ m/\-a\s*(\d+)/) {
-        $self->status_message("Aligner params specify a -a parameter ($1) as upper bound on insert size.");
+        $self->debug_message("Aligner params specify a -a parameter ($1) as upper bound on insert size.");
     } else {
         # come up with an upper bound on insert size.
         my $instrument_data = $self->instrument_data;
@@ -536,9 +517,9 @@ sub _derive_bwa_sampe_parameters {
         my $median_insert   = $instrument_data->resolve_median_insert_size || 0;
         my $upper_bound_on_insert_size= ($sd_above * 5) + $median_insert;
         if($upper_bound_on_insert_size > 0) {
-            $self->status_message("Calculated a valid insert size as $upper_bound_on_insert_size.  This will be used when BWA's internal algorithm can't determine an insert size");
+            $self->debug_message("Calculated a valid insert size as $upper_bound_on_insert_size.  This will be used when BWA's internal algorithm can't determine an insert size");
         } else {
-            $self->status_message("Unable to calculate a valid insert size to run BWA with. Using 600 (hax)");
+            $self->debug_message("Unable to calculate a valid insert size to run BWA with. Using 600 (hax)");
             $upper_bound_on_insert_size= 600;
         }
 
@@ -586,7 +567,7 @@ sub prepare_reference_sequence_index {
     my $actual_fasta_file = $staged_fasta_file;
 
     if (-l $staged_fasta_file) {
-        $class->status_message(sprintf("Following symlink for fasta file %s", $staged_fasta_file));
+        $class->debug_message(sprintf("Following symlink for fasta file %s", $staged_fasta_file));
         $actual_fasta_file = readlink($staged_fasta_file);
         unless($actual_fasta_file) {
             $class->error_message("Can't read target of symlink $staged_fasta_file");
@@ -594,14 +575,14 @@ sub prepare_reference_sequence_index {
         }
     }
 
-    $class->status_message(sprintf("Checking size of fasta file %s", $actual_fasta_file));
+    $class->debug_message(sprintf("Checking size of fasta file %s", $actual_fasta_file));
 
     my $fasta_size = -s $actual_fasta_file;
     my $bwa_index_algorithm = ($fasta_size < 11_000_000) ? "is" : "bwtsw";
     my $bwa_version = $refindex->aligner_version;
     my $bwa_path = Genome::Model::Tools::Bwa->path_for_bwa_version($bwa_version);
 
-    $class->status_message(sprintf("Building a BWA index in %s using %s.  The file size is %s; selecting the %s algorithm to build it.", $staging_dir, $staged_fasta_file, $fasta_size, $bwa_index_algorithm));
+    $class->debug_message(sprintf("Building a BWA index in %s using %s.  The file size is %s; selecting the %s algorithm to build it.", $staging_dir, $staged_fasta_file, $fasta_size, $bwa_index_algorithm));
 
     # Expected output files from bwa index. Bwa index creates files with the
     # following extensions: amb, ann, bwt, pac, and sa; older versions also

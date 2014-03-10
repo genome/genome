@@ -130,9 +130,9 @@ sub execute {
 
     my $fastq_read_count = $self->_read_count_for_fastq(@output_files);
     return if not $fastq_read_count;
-    $self->status_message("VERIFY READ COUNTS: INPUT BAM v. OUTPUT FASTQ(s)");
-    $self->status_message("$bam_read_count reads in INPUT BAM: $input_file");
-    $self->status_message("$fastq_read_count reads in OUTPUT FASTQ(s): ".join(' ', @output_files));
+    $self->debug_message("VERIFY READ COUNTS: INPUT BAM v. OUTPUT FASTQ(s)");
+    $self->debug_message("$bam_read_count reads in INPUT BAM: $input_file");
+    $self->debug_message("$fastq_read_count reads in OUTPUT FASTQ(s): ".join(' ', @output_files));
 
     # RM INPUT BAM
     unlink $input_file if ($unlink_input_bam_on_end && $self->input ne $input_file);

@@ -153,7 +153,7 @@ sub execute {
   #Create mutation diagrams for every transcript (one for the somatic-variation data and one for the cosmic data)
   $self->draw_mutation_diagrams('-somatic_variants_file'=>$filtered_somatic_variants_file, '-cosmic_variants_file'=>$filtered_cosmic_variants_file, '-annotation_build_name'=>$ab_name);
 
-  $self->status_message("\n\nCOMPLETE\n\n");
+  $self->debug_message("\n\nCOMPLETE\n\n");
   return 1;
 }
 
@@ -217,7 +217,7 @@ sub import_somatic_variants{
     if ($self->max_snvs_per_file){
       my $var_count = $self->unique_variant_count('-variant_file'=>$tier1_snv_file);
       if ($var_count > $self->max_snvs_per_file){
-        $self->status_message("Too many variants ... skipping file: $tier1_snv_file");
+        $self->debug_message("Too many variants ... skipping file: $tier1_snv_file");
       }else{
         push(@file_list, $tier1_snv_file);
       }
@@ -232,7 +232,7 @@ sub import_somatic_variants{
     if ($self->max_indels_per_file){
       my $var_count = $self->unique_variant_count('-variant_file'=>$tier1_indel_file);
       if ($var_count > $self->max_indels_per_file){
-        $self->status_message("Too many variants ... skipping file: $tier1_indel_file");        
+        $self->debug_message("Too many variants ... skipping file: $tier1_indel_file");        
       }else{
         push(@file_list, $tier1_indel_file) unless ($var_count > $var_count);
       }
@@ -256,7 +256,7 @@ sub import_somatic_variants{
   }else{
     $merge_cmd = "cat $file_list_string > $complete_variants_file";
   }
-  $self->status_message("\n\n$merge_cmd");
+  $self->debug_message("\n\n$merge_cmd");
   Genome::Sys->shellcmd(cmd => $merge_cmd);
   
   #Create a filtered version of the variants file that removes variants that match the effects type filter
@@ -453,7 +453,7 @@ sub import_cosmic_variants{
 
   #If there is a mutation in a transcript with more than N variants, rescale the counts to max out at $max_var (or perhap convert to log2 scale?)
   my $t_count = keys %trans_var;
-  $self->status_message("Creating filtered Cosmic variants file for $t_count transcripts that had somatic variants");
+  $self->debug_message("Creating filtered Cosmic variants file for $t_count transcripts that had somatic variants");
   open (OUT, ">$filtered_variants_file") || die "\n\nCould not open cosmic variants file for output: $filtered_variants_file\n\n";
   foreach my $tid (sort {$trans_var{$a}->{gene} cmp $trans_var{$b}->{gene}} keys %trans_var){
     my $anno = $trans_var{$tid}{anno};

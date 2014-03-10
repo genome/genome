@@ -22,7 +22,7 @@ sub required_arch_os { 'x86_64' }
 
 sub required_rusage { 
     #"-R 'select[model!=Opteron250 && type==LINUX64 && tmp>90000 && mem>50000] span[hosts=1] rusage[tmp=90000, mem=50000]' -M 50000000 -n 8 -m hmp -q hmp"; #HMP queue params
-    "-R 'select[model!=Opteron250 && type==LINUX64 && tmp>90000 && mem>48000] span[hosts=1] rusage[tmp=90000, mem=48000]' -M 48000000 -n 8 -q alignment";
+    "-R 'select[model!=Opteron250 && type==LINUX64 && tmp>90000 && mem>48000] span[hosts=1] rusage[tmp=90000, mem=48000]' -M 48000000 -n 8 -q $ENV{GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT}";
 }
 
 sub _decomposed_aligner_params {
@@ -36,7 +36,7 @@ sub _decomposed_aligner_params {
     $aligner_params .= " -T $cpu_count";
 
     if (!$self->instrument_data->is_paired_end || $self->force_fragment) {
-        $self->status_message("Running fragment mode.  Params were $aligner_params.  Removing an -E if it exists since that's not applicable to fragment runs.");
+        $self->debug_message("Running fragment mode.  Params were $aligner_params.  Removing an -E if it exists since that's not applicable to fragment runs.");
         $aligner_params =~ s/-E\s?.*?\s+//g;
     }
     
@@ -47,7 +47,7 @@ sub _run_aligner {
     my $self = shift;
     my @input_pathnames = @_;
     $ENV{'RTG_MEM'} = ($ENV{'TEST_MODE'} ? '1G' : '45G');
-    $self->status_message("RTG Memory request is $ENV{RTG_MEM}");
+    $self->debug_message("RTG Memory request is $ENV{RTG_MEM}");
 
     # get refseq info
     my $reference_build = $self->reference_build;
@@ -67,7 +67,7 @@ sub _run_aligner {
 
     # disconnect db before long-running action 
     if (Genome::DataSource::GMSchema->has_default_handle) {
-        $self->status_message("Disconnecting GMSchema default handle.");
+        $self->debug_message("Disconnecting GMSchema default handle.");
         Genome::DataSource::GMSchema->disconnect_default_dbh();
     }
     #STEP 1 - convert input to sdf
@@ -76,14 +76,14 @@ sub _run_aligner {
     my $cmd;
 
     if (@input_pathnames == 1) {
-        $self->status_message("_run_aligner called in single-ended mode.");
+        $self->debug_message("_run_aligner called in single-ended mode.");
         $cmd = sprintf('%s --format=%s --quality-format=sanger -o %s %s',
                         $rtg_fmt,
                         $self->_file_input_option,
                         $prechunk_input_sdf,
                         $input_pathnames[0]);
     } elsif (@input_pathnames == 2) {
-        $self->status_message("_run_aligner called in paired-end mode.");
+        $self->debug_message("_run_aligner called in paired-end mode.");
         $cmd = sprintf('%s --format=%s --quality-format=sanger -o %s -l %s -r %s', #specify paired ends as "l" and "r"
                         $rtg_fmt,
                         $self->_file_input_option,
@@ -111,7 +111,7 @@ sub _run_aligner {
 
     my $chunk_path = $scratch_directory . "/chunks";
 
-    $self->status_message("Chunking....");
+    $self->debug_message("Chunking....");
     my $chunk_size = ($ENV{'TEST_MODE'} ? 200 : 1000000);
     my $chunk_cmd = sprintf("%s -n %s -o %s %s", Genome::Model::Tools::Rtg->path_for_rtg_sdfsplit($self->aligner_version), $chunk_size, $chunk_path, $prechunk_input_sdf);
     Genome::Sys->shellcmd(
@@ -123,11 +123,11 @@ sub _run_aligner {
     my @chunks;
      # chunk paths all have numeric names 
     for my $chunk (grep {basename($_) =~ m/^\d+$/} glob($chunk_path . "/*")) {
-        $self->status_message("Adding chunk for analysis ... $chunk");
+        $self->debug_message("Adding chunk for analysis ... $chunk");
         push @chunks, $chunk;
     }
 
-    $self->status_message("Removing original unchunked input sdf");
+    $self->debug_message("Removing original unchunked input sdf");
     rmtree($prechunk_input_sdf);
 
     for my $input_sdf (@chunks) {
@@ -236,7 +236,7 @@ sub prepare_reference_sequence_index {
 
     my $actual_fasta_file = $staged_fasta_file;    
 
-    $class->status_message("Making an RTG index out of $staged_fasta_file");
+    $class->debug_message("Making an RTG index out of $staged_fasta_file");
 
     my $rtg_path = Genome::Model::Tools::Rtg->path_for_rtg_format($refindex->aligner_version);
 

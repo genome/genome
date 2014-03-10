@@ -7,7 +7,7 @@ use Genome;
 use Workflow;
 
 my $DEFAULT_SEQUENCES = 1_000_000;
-my $DEFAULT_LSF_QUEUE = 'long';
+my $DEFAULT_LSF_QUEUE = $ENV{GENOME_LSF_QUEUE_BUILD_WORKER};
 my $DEFAULT_LSF_RESOURCE = "-M 8000000 -R 'select[type==LINUX64 && mem>8000] rusage[mem=8000] span[hosts=1]'";
 ## number of threads will be prepended at run time
 

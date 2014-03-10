@@ -121,13 +121,13 @@ sub validate_amplicon_processor {
     my ($self, $amplicon_processor) = @_;
 
     return if not $amplicon_processor;
-    $self->status_message('Validate amplicon processor...');
+    $self->debug_message('Validate amplicon processor...');
 
     my @error_msgs;
-    $self->status_message('Amplicon processor: '.$amplicon_processor);
+    $self->debug_message('Amplicon processor: '.$amplicon_processor);
     my @commands = split(/\|/, $amplicon_processor);
     for my $command ( @commands ) {
-        $self->status_message('Validate part: '.$command);
+        $self->debug_message('Validate part: '.$command);
         $command =~ s/^\s+//;
         $command =~ s/\s+$//;
         $command = "gmt sx $command";
@@ -137,7 +137,7 @@ sub validate_amplicon_processor {
         }
     }
 
-    $self->status_message('Validate amplicon processor...DONE');
+    $self->debug_message('Validate amplicon processor...DONE');
     return @error_msgs;
 }
 
@@ -145,7 +145,7 @@ sub validate_chimera_detector {
     my ($self, $detector, $params) = @_;
 
     return if not $detector and not $params;
-    $self->status_message('Validate chimera detector...');
+    $self->debug_message('Validate chimera detector...');
 
     if ( not $detector or not $params ) {
         return ( 'Cannot give chimera detector without params or vice versa!' );
@@ -159,7 +159,7 @@ sub validate_chimera_detector {
     }
 
     my $cmd = "gmt $detector detect-chimeras $params";
-    $self->status_message('Chimera detector command: '.$cmd);
+    $self->debug_message('Chimera detector command: '.$cmd);
     $cmd .= ' -h 2>&1 > /dev/null'; # add help to check for invalid opts, redirect to dev/null
 
     my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd, print_status_to_stderr => 0); };
@@ -167,7 +167,7 @@ sub validate_chimera_detector {
         return 'Failed to validate chimera detector and params!';
     }
 
-    $self->status_message('Validate chimera detector...DONE');
+    $self->debug_message('Validate chimera detector...DONE');
     return;
 }
 
@@ -175,7 +175,7 @@ sub validate_classifier {
     my ($self, $classifier, $params) = @_;
 
     return if not $classifier and not $params;
-    $self->status_message('Validate classifier...');
+    $self->debug_message('Validate classifier...');
 
     if ( not $classifier or not $params ) {
         return ( 'Cannot give chimera detector without params or vice versa!' );
@@ -195,7 +195,7 @@ sub validate_classifier {
         return;
     }
 
-    $self->status_message('Validate classifier...DONE');
+    $self->debug_message('Validate classifier...DONE');
     return 1;
 }
 #<>#
@@ -221,7 +221,7 @@ sub _resolve_workflow_for_build {
     # detect and remove chimeras [optional]
     # report
 
-    $lsf_queue //= 'apipe';
+    $lsf_queue //= $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
     $lsf_project //= 'build' . $build->id;
 
     my $workflow = Workflow::Model->create(

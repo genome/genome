@@ -303,7 +303,7 @@ sub get_amino_acid_pos {
     else
     {
         $status->{aa_position_not_found}++;
-        $self->status_message( "Amino acid position not found for variant: $variant_key" );
+        $self->debug_message( "Amino acid position not found for variant: $variant_key" );
         return;
     }
 

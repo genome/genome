@@ -26,7 +26,7 @@ sub help_brief {
 
 sub execute {
     my $self = shift;
-    $self->status_message('Import sanger instrument data...');
+    $self->debug_message('Import sanger instrument data...');
 
     my ($att, $succ) = (qw/ 0 0 /);
     for my $run_name ( $self->run_names ) {
@@ -34,14 +34,14 @@ sub execute {
         $succ++ if $self->_import_run($run_name);
     }
 
-    $self->status_message('Attempted: '.$att);
-    $self->status_message('Success: '.$succ);
+    $self->debug_message('Attempted: '.$att);
+    $self->debug_message('Success: '.$succ);
     return $succ;
 }
 
 sub _import_run {
     my ($self, $run_name) = @_;
-    $self->status_message("Run name: $run_name");
+    $self->debug_message("Run name: $run_name");
 
     my $sanger = Genome::InstrumentData::Sanger->get($run_name);
     my $created = 0;
@@ -51,7 +51,7 @@ sub _import_run {
             run_name => $run_name,
         );
         if ( not $sanger ) {
-            $self->error_message('Failed to create sanger intrument data for run name: '.$run_name);
+            $self->error_message('Failed to create sanger instrument data for run name: '.$run_name);
             return;
         }
         $created = 1;
@@ -75,13 +75,13 @@ sub _import_run {
 
 sub _dump_to_file_system {
     my ($self, $sanger) = @_;
-    $self->status_message('Dump reads to file system...');
+    $self->debug_message('Dump reads to file system...');
 
     # Allocation get/create
     my $disk_allocation = $sanger->disk_allocation;
     unless ( $disk_allocation ) {
         $disk_allocation = Genome::Disk::Allocation->allocate(
-            disk_group_name => 'info_alignments',
+            disk_group_name => $ENV{GENOME_DISK_GROUP_ALIGNMENTS},
             allocation_path => '/instrument_data/sanger'.$sanger->id,
             kilobytes_requested => 10240, # 10 Mb
             owner_class_name => $sanger->class,
@@ -92,14 +92,14 @@ sub _dump_to_file_system {
             return;
         }
     }
-    $self->status_message('Allocation: '.$disk_allocation->id);
+    $self->debug_message('Allocation: '.$disk_allocation->id);
 
     my $data_dir = $disk_allocation->absolute_path;
     unless ( Genome::Sys->validate_existing_directory($data_dir) ) {
         $self->error_message('Absolute path from disk allocation does not exist for sanger instrument data '.$sanger->id);
         return;
     }
-    $self->status_message('Directory: '.$data_dir);
+    $self->debug_message('Directory: '.$data_dir);
 
     # Read iterator
     my $reads = App::DB::TableRow::Iterator->new(
@@ -113,7 +113,7 @@ sub _dump_to_file_system {
         return;
     }
 
-    $self->status_message('Go through read iterator...');
+    $self->debug_message('Go through read iterator...');
     my %reads; # read_name => library_id
     while ( my $read = $reads->next ) {
         $reads{$read->trace_name} = $read->library_id || 'NA';
@@ -150,8 +150,8 @@ sub _dump_to_file_system {
         unlink $data_dir.'/'.$file if not exists $reads{$read_name};
     }
 
-    $self->status_message("Read count: ".scalar(keys %reads) );
-    $self->status_message("Dump reads to file system...OK");
+    $self->debug_message("Read count: ".scalar(keys %reads) );
+    $self->debug_message("Dump reads to file system...OK");
     return \%reads;
 }
 
@@ -159,8 +159,8 @@ sub _set_unique_read_library {
     my ($self, $sanger, $reads) = @_;
 
     my @library_ids = grep { $_ =~ /^$RE{num}{int}$/ }  values %$reads;
-    $self->status_message('Found '.@library_ids.' libraries');
-    $self->status_message('Using library id: '.$library_ids[0]);
+    $self->debug_message('Found '.@library_ids.' libraries');
+    $self->debug_message('Using library id: '.$library_ids[0]);
     my $library = Genome::Library->get(id => $library_ids[0]);
     if ( not $library ) {
         $self->error_message('Failed to get library for id: '.$library_ids[0]);

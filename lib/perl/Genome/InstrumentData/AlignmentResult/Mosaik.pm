@@ -195,21 +195,21 @@ sub _filter_sam_output {
             $self->error_message("Error opening mosaik output sam file for reading $!");
             return;
     }
-    $self->status_message("Opened $mosaik_output_sam_file");
+    $self->debug_message("Opened $mosaik_output_sam_file");
 
     my $unaligned_fh = IO::File->new( $unaligned_sam_file );
     if ( !$unaligned_fh ) {
             $self->error_message("Error opening unaligned sam file for reading $!");
             return;
     }
-    $self->status_message("Opened $unaligned_sam_file");
+    $self->debug_message("Opened $unaligned_sam_file");
 
     my $all_seq_fh = IO::File->new(">>$all_sequences_sam_file");
     if ( !$all_seq_fh ) {
         $self->error_message("Error opening all seq sam file for writing $!");
         return;
     }
-    $self->status_message("Opened $all_sequences_sam_file");
+    $self->debug_message("Opened $all_sequences_sam_file");
     
     while (<$mosaik_fh>) {
         #write out the aligned map, excluding the default header- all lines starting with @.
@@ -272,13 +272,13 @@ sub prepare_reference_sequence_index {
     my $refindex = shift;
 
     my $staging_dir = $refindex->temp_staging_directory;
-    $class->status_message( "Staging dir: $staging_dir" );
+    $class->debug_message( "Staging dir: $staging_dir" );
     my $staged_fasta_file = sprintf("%s/all_sequences.fa", $staging_dir);
-    $class->status_message( "Staged fasta file: $staged_fasta_file" );
+    $class->debug_message( "Staged fasta file: $staged_fasta_file" );
     my $actual_fasta_file = $staged_fasta_file;
 
     if (-l $staged_fasta_file) {
-        $class->status_message(sprintf("Following symlink for fasta file %s", $staged_fasta_file));
+        $class->debug_message(sprintf("Following symlink for fasta file %s", $staged_fasta_file));
         $actual_fasta_file = readlink($staged_fasta_file);
         unless($actual_fasta_file) {
             $class->error_message("Can't read target of symlink $staged_fasta_file");
@@ -286,14 +286,14 @@ sub prepare_reference_sequence_index {
         } 
     }
 
-    $class->status_message("Building mosaik reference sequence index file");
+    $class->debug_message("Building mosaik reference sequence index file");
 
     #create mosaik reference.dat file
     my $mosaik_path = Genome::Model::Tools::Mosaik->path_for_mosaik_version( $refindex->aligner_version );
     my $ref_index_out_file = sprintf ( "%s/reference_mosaik.dat", $staging_dir );
 
     my $ref_cmd = sprintf ("%sBuild -fr %s -oa %s", $mosaik_path, $staged_fasta_file, $ref_index_out_file);
-    $class->status_message( "Building mosaik reference sequences with command: $ref_cmd" );
+    $class->debug_message( "Building mosaik reference sequences with command: $ref_cmd" );
     my $ref_rv = Genome::Sys->shellcmd(
         cmd => $ref_cmd,
         );
@@ -308,7 +308,7 @@ sub prepare_reference_sequence_index {
     my $jump_file_base_name = sprintf ( "%s/reference_mosaik_jump_"."$hash_size", $staging_dir );
 
     my $jump_cmd = sprintf ( "%sJump -ia %s -hs %s -out %s", $mosaik_path, $ref_index_out_file, $hash_size, $jump_file_base_name );
-    $class->status_message( "Building mosaik jump dbs with command: $jump_cmd" );
+    $class->debug_message( "Building mosaik jump dbs with command: $jump_cmd" );
     my $jump_rv = Genome::Sys->shellcmd(
         cmd => $jump_cmd,
         );

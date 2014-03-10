@@ -305,11 +305,11 @@ write.table(p.segment.smoothed.CNA.object, file="$chrom_filename.segments.p_valu
 		print "Running $script_filename\n";
 		if($chrom eq "20" || $chrom eq "21" || $chrom eq "22" || $chrom eq "Y" || $chrom eq "MT")
 		{
-			system("bsub -q short -R\"select[mem>2000] rusage[mem=2000]\" \"R --no-save < $script_filename\"");			
+			system("bsub -q $ENV{GENOME_LSF_QUEUE_SHORT} -R\"select[mem>2000] rusage[mem=2000]\" \"R --no-save < $script_filename\"");			
 		}
 		else
 		{
-			system("bsub -q long -R\"select[mem>2000] rusage[mem=2000]\" \"R --no-save < $script_filename\"");						
+			system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -R\"select[mem>2000] rusage[mem=2000]\" \"R --no-save < $script_filename\"");						
 		}
 
 		

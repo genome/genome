@@ -22,19 +22,19 @@ sub execute{
     my $self = shift;
 
     my @inputs = $self->input;
-    $self->status_message("FarAndTrimq2 initial inputs: ".join(", ", @inputs));
+    $self->debug_message("FarAndTrimq2 initial inputs: ".join(", ", @inputs));
     my @input_files = map { 
         my ($class, $params) = Genome::Model::Tools::Sx::Reader->parse_reader_config($_);
         $params->{file};
     } @inputs;
-    $self->status_message("FarAndTrimq2 input files: ".join(", ", @input_files));
+    $self->debug_message("FarAndTrimq2 input files: ".join(", ", @input_files));
     my @outputs = $self->output;
-    $self->status_message("FarAndTrimq2 initial outputs: ".join(", ", @outputs));
+    $self->debug_message("FarAndTrimq2 initial outputs: ".join(", ", @outputs));
     my @output_files = map { 
         my ($class, $params) = Genome::Model::Tools::Sx::Writer->parse_writer_config($_);
         $params->{file};
     } @outputs;
-    $self->status_message("FarAndTrimq2 output files: ".join(", ", @output_files));
+    $self->debug_message("FarAndTrimq2 output files: ".join(", ", @output_files));
 
     unless (@input_files == 2){
         die $self->error_message("only paired-end trimming is currently supported, aborting");
@@ -89,14 +89,14 @@ sub execute{
     unless ($trimq2){
         die $self->error_message("could not create trimq2 trimmer");
     }
-    $self->status_message("executing trimq2");
+    $self->debug_message("executing trimq2");
     unless ($trimq2->execute){
         die $self->error_message("Failed to execute trimq2");
     }
     unless ( 3 == grep {-e $_} @output_files){
         die $self->error_message("Failed to get output from far!");
     }
-    $self->status_message("far and trimq2 trimming complete");
+    $self->debug_message("far and trimq2 trimming complete");
     return 1;
 }
 

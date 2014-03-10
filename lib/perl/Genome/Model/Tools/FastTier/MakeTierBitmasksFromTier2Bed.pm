@@ -99,7 +99,7 @@ sub execute {
     my $genome_size = 0;
     my $masked_genome_size = 0;
     for my $ref_chr (@chromosomes) {
-        $self->status_message("Running samtools faidx on $ref_chr");
+        $self->debug_message("Running samtools faidx on $ref_chr");
         unless(open(FAIDX,"samtools faidx $ref $ref_chr |")) {
             die "Couldn't pipe samtools faidx\n";
         }
@@ -167,7 +167,7 @@ sub execute {
         die $self->error_message("Could not locate annotation build id: ".$xscript_version);
     }
 
-    $self->status_message("Using Annotation Build ID: ".$build->id." with the name: ".$build->name."\n");
+    $self->debug_message("Using Annotation Build ID: ".$build->id." with the name: ".$build->name."\n");
 
     printf "Calculated genome size is %u\n", $genome_size;
     printf "Masked genome size is %u\n", $masked_genome_size;
@@ -183,7 +183,7 @@ sub execute {
         my @substructures = Genome::TranscriptStructure->get(chrom_name => $chromosome_name,
                                                 data_directory => $build->_annotation_data_directory);
         $transcript_iterator = $build->transcript_iterator(chrom_name => $chromosome_name);
-        $self->status_message("Parsing $chromosome_name\n");
+        $self->debug_message("Parsing $chromosome_name\n");
         unless($transcript_iterator) {
             warn "No iterator because ", Genome::Transcript->error_message, " Skipping to next\n";
             next;
@@ -251,17 +251,17 @@ sub execute {
         $fh->close;
     }
     print STDERR "Calculated repeatmasker regions\n";
-    $self->status_message("Calculated repeatmasker regions\n");
+    $self->debug_message("Calculated repeatmasker regions\n");
 
     $self->in_place_difference_genomes($tier2, $repeatmasker_regions); #exclude things hitting Tier1
     print STDERR "Calculated Tier2 / repeatmasker\n";
-    $self->status_message("Calculated Tier2 / repeatmasker\n");
+    $self->debug_message("Calculated Tier2 / repeatmasker\n");
     $self->in_place_difference_genomes($tier2, $tier1); #exclude things hitting Tier1
     print STDERR "Calculated (Tier2 / repeatmasker) / Tier1\n";
-    $self->status_message("Calculated (Tier2 / repeatmasker) / Tier1\n");
+    $self->debug_message("Calculated (Tier2 / repeatmasker) / Tier1\n");
     $self->in_place_difference_genomes($tier2, \%genome); #account for masking
     print STDERR "Calculated (Tier2 / repeatmasker) / Tier1 / masked genome\n";
-    $self->status_message("Calculated (Tier2 / repeatmasker) / Tier1 / masked genome\n");
+    $self->debug_message("Calculated (Tier2 / repeatmasker) / Tier1 / masked genome\n");
     printf "Tier2 encompasses %u bases. %f%% of the genome\n", $self->bases_covered($tier2), $self->bases_covered($tier2)/$masked_genome_size * 100;
     $self->write_genome_bitmask($self->tier2_output, $tier2);
 

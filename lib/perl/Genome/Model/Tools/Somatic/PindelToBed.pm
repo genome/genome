@@ -70,7 +70,7 @@ class Genome::Model::Tools::Somatic::PindelToBed {
             default_value => 'rusage[mem=4000] select[type==LINUX64] span[hosts=1] -M 4000000',
         },
         lsf_queue => {
-            default_value => 'long'
+            default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
         }, 
     ],
 };
@@ -103,7 +103,7 @@ sub execute {
        die;
     }
     if(-d $self->source){
-        $self->status_message("Using ".$self->source." as the pindel directory, proceeding to cat all chroms and run on that.");
+        $self->debug_message("Using ".$self->source." as the pindel directory, proceeding to cat all chroms and run on that.");
         my @grob = glob($self->source."/*");
         my @dirs;
         my $temp_file = Genome::Sys->create_temp_file_path;

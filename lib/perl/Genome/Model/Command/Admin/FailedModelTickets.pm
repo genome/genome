@@ -14,6 +14,10 @@ require RT::Client::REST;
 require RT::Client::REST::Ticket;
 require WWW::Mechanize;
 
+BEGIN {
+        $ENV{UR_DBI_NO_COMMIT} = 1;
+}
+
 class Genome::Model::Command::Admin::FailedModelTickets {
     is => 'Genome::Command::Base',
     doc => 'find failed cron models, check that they are in a ticket',
@@ -203,7 +207,7 @@ sub remove_ids_and_paths {
     $formatted_str =~ s/[a-zA-Z0-9.\-_]*[\/][a-zA-Z0-9.\-_\/]*/<path>/g;
 
     # replace things that look like ids
-    $formatted_str =~ s/[0-9a-f]{5,30}/<id>/g;
+    $formatted_str =~ s/[0-9a-f]{5,32}/<id>/g;
 
     return $formatted_str;
 }

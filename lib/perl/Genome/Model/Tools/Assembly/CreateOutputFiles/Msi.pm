@@ -65,7 +65,7 @@ sub execute {
     }
 
     #create sorted msi.contigs.bases and msi.contigs.qual files
-    $self->status_message("Creating msi.contigs.bases and msi.contigs.quals files");
+    $self->debug_message("Creating msi.contigs.bases and msi.contigs.quals files");
     my $contigs = Genome::Model::Tools::Assembly::CreateOutputFiles::ContigsFromAce->create (
 	acefile => $acefile,
 	fasta_out => $self->_contigs_bases_file,
@@ -79,7 +79,7 @@ sub execute {
     sleep(1);
 
     #create msi.readinfo.txt file
-    $self->status_message("Creating msi.readinfo.txt file");
+    $self->debug_message("Creating msi.readinfo.txt file");
     my $readinfo = Genome::Model::Tools::Assembly::CreateOutputFiles::ReadInfo->create (
 	acefile => $acefile,
 	output_file => $self->_read_info_file,
@@ -91,7 +91,7 @@ sub execute {
     }
 
     #create msi.reads.placed file
-    $self->status_message("Creating msi.reads.placed file");
+    $self->debug_message("Creating msi.reads.placed file");
     my $reads_placed = Genome::Model::Tools::Assembly::CreateOutputFiles::ReadsPlaced->create (
 	read_info_file => $self->_read_info_file,
 	gap_file => $self->_gap_file,
@@ -106,7 +106,7 @@ sub execute {
     sleep(1);
 
     #create supercontigs.agp file
-    $self->status_message("Creating msi.supercontigs.agp file");
+    $self->debug_message("Creating msi.supercontigs.agp file");
     my $agp = Genome::Model::Tools::Assembly::CreateOutputFiles::SupercontigsAgp->create (
 	contigs_bases_file => $self->_contigs_bases_file,
 	gap_file => $self->_gap_file,
@@ -119,7 +119,7 @@ sub execute {
     }
 
     #create msi.supercontigs.fasta
-    $self->status_message("Creating msi.supercontigs.fasta file");
+    $self->debug_message("Creating msi.supercontigs.fasta file");
     my $s_fa = Genome::Model::Tools::Assembly::CreateOutputFiles::SupercontigsFasta->create (
 	contigs_bases_file => $self->_contigs_bases_file,
 	gap_file => $self->_gap_file,
@@ -132,7 +132,7 @@ sub execute {
     }
 
     #create msi.stats.txt file
-    $self->status_message("Creating msi.stats.txt file");
+    $self->debug_message("Creating msi.stats.txt file");
     my $class = 'Genome::Model::Tools::Assembly::Stats::'. ucfirst $self->assembler;
     my $stats = $class->create (
 	assembly_directory => $self->assembly_directory,

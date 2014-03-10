@@ -1,0 +1,8 @@
+-- Deploy config.instrument_data_analysis_project_bridge_index_instrument_data_id
+-- requires: config_instrument_data_analysis_project_bridge
+
+BEGIN;
+
+CREATE INDEX instrument_data_analysis_project_bridge_instrument_data_id_idx ON config.instrument_data_analysis_project_bridge (instrument_data_id);
+
+COMMIT;

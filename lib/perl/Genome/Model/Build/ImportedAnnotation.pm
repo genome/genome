@@ -211,13 +211,13 @@ sub get_or_create_roi_bed {
         if ($params{excluded_reference_sequence_patterns}) {
             $exclude_patterns = join("|", sort @{$params{excluded_reference_sequence_patterns}});
                 $name = join("_", $name, $exclude_patterns);
-                $self->status_message('Excluding features that match the pattern: '.$exclude_patterns);
+                $self->debug_message('Excluding features that match the pattern: '.$exclude_patterns);
             }
 
             if ($params{included_feature_type_patterns}) {
                 $include_patterns = join("|", sort @{$params{included_feature_type_patterns}});
                 $name = join("_", $name, $include_patterns);
-                $self->status_message('Including only features that match the pattern: '.$include_patterns);
+                $self->debug_message('Including only features that match the pattern: '.$include_patterns);
             }
 
             if ($params{condense_feature_name}) {

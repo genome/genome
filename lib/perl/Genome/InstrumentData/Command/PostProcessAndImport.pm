@@ -198,7 +198,7 @@ sub execute {
                 $value = $instrument_data->$property_name;
             }
             no warnings;
-            $self->status_message("Value for $property_name is $value");
+            $self->debug_message("Value for $property_name is $value");
             $properties_from_prior{$property_name} = $value;
         }
         $properties_from_prior{subset_name} = $instrument_data->lane;
@@ -230,7 +230,7 @@ sub execute {
         if ($expected_path_fragment and -s $expected_path_fragment){
             $params{source_data_files} = $expected_path_fragment;
             $params{is_paired_end} = 0;
-            $self->status_message("importing fastq with the following params:" . Data::Dumper::Dumper(\%params));
+            $self->debug_message("importing fastq with the following params:" . Data::Dumper::Dumper(\%params));
 
             my $command = Genome::InstrumentData::Command::Import::Fastq->create(%params);
             unless ($command) {
@@ -243,7 +243,7 @@ sub execute {
         }
 
         $self->status_message("committing newly created imported instrument data");
-        $self->status_message("UR_DBI_NO_COMMIT: ".$ENV{UR_DBI_NO_COMMIT});
+        $self->debug_message("UR_DBI_NO_COMMIT: ".$ENV{UR_DBI_NO_COMMIT});
         UR::Context->commit(); # warning: most code should NEVER do this in a pipeline
 
         my @return_inst_data;
@@ -316,21 +316,21 @@ sub _process_unaligned_fastq_pair {
     my $reverse_dusted;
 
     if ($self->dust){
-        $self->status_message("Dusting fastq pair $forward, $reverse");
+        $self->debug_message("Dusting fastq pair $forward, $reverse");
         $forward_dusted = "$forward.DUSTED";
         $reverse_dusted = "$reverse.DUSTED";
 
         $self->dust_fastq($forward, $forward_dusted);
         $self->dust_fastq($reverse, $reverse_dusted);
     }else{
-        $self->status_message("skipping dusting");
+        $self->debug_message("skipping dusting");
         $forward_dusted = $forward;
         $reverse_dusted = $reverse;
     }
 
     #run pairwise n-removal
     if ($self->n_removal_threshold or $self->non_n_base_threshold){
-        $self->status_message("running remove-n-pairwise on $forward, $reverse");
+        $self->debug_message("running remove-n-pairwise on $forward, $reverse");
 	my %params= (forward_fastq => $forward_dusted,
             reverse_fastq => $reverse_dusted,
             forward_n_removed_file => $forward_out,

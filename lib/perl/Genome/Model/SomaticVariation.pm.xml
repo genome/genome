@@ -17,7 +17,13 @@
   
   <link fromOperation="input connector" fromProperty="regulatory_annotations" toOperation="Annotate And Upload Variants" toProperty="regulatory_annotations" />
   
-  <link fromOperation="Annotate And Upload Variants" fromProperty="build_id" toOperation="output connector" toProperty="build_id" />
+  <link fromOperation="Annotate And Upload Variants" fromProperty="build" toOperation="Create Report" toProperty="somatic_variation_build" />
+
+  <link fromOperation="input connector" fromProperty="required_snv_callers" toOperation="Create Report" toProperty="required_snv_callers" />
+  <link fromOperation="input connector" fromProperty="tiers_to_review" toOperation="Create Report" toProperty="tiers_to_review" />
+  <link fromOperation="input connector" fromProperty="restrict_to_target_regions" toOperation="Create Report" toProperty="restrict_to_target_regions" />
+  <link fromOperation="input connector" fromProperty="target_regions" toOperation="Create Report" toProperty="target_regions" />
+  <link fromOperation="Create Report" fromProperty="somatic_variation_build" toOperation="output connector" toProperty="somatic_variation_build" />
 
   <operation name="Detect Variants">
     <operationtype commandClass="Genome::Model::SomaticVariation::Command::DetectVariants" typeClass="Workflow::OperationType::Command" />
@@ -34,9 +40,13 @@
   <operation name="Tier Variants">
     <operationtype commandClass="Genome::Model::SomaticVariation::Command::TierVariants" typeClass="Workflow::OperationType::Command" />
   </operation>
-  
+
   <operation name="Annotate And Upload Variants">
     <operationtype commandClass="Genome::Model::SomaticVariation::Command::AnnotateAndUploadVariants" typeClass="Workflow::OperationType::Command" />
+  </operation>
+
+  <operation name="Create Report">
+    <operationtype commandClass="Genome::Model::SomaticVariation::Command::CreateReport" typeClass="Workflow::OperationType::Command" />
   </operation>
 
   <operationtype typeClass="Workflow::OperationType::Model">
@@ -44,7 +54,11 @@
     <inputproperty>annotator_version</inputproperty>
     <inputproperty>regulatory_annotations</inputproperty>
     <inputproperty>get_regulome_db</inputproperty>
-    <outputproperty>build_id</outputproperty>
+    <inputproperty>required_snv_callers</inputproperty>
+    <inputproperty>tiers_to_review</inputproperty>
+    <inputproperty>restrict_to_target_regions</inputproperty>
+    <inputproperty>target_regions</inputproperty>
+    <outputproperty>somatic_variation_build</outputproperty>
   </operationtype>
 
 </workflow>

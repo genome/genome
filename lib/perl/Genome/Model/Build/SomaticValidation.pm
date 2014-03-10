@@ -208,6 +208,8 @@ sub files_ignored_by_diff {
         variants/svs.hq
         svs\.merge\.index$
         sv/assembly_output\.csv\.index$
+        sv/assembly_input
+        sv/assembly_output.csv
         cnv_graph\.pdf$
         pindel\.config$
         variants/cnv/plot-cnv-[^/]+/[[:xdigit:]]+\.bam\.cnvseg$
@@ -223,6 +225,8 @@ sub files_ignored_by_diff {
         validation/small_indel/indel_files_to_validate
         validation/large_indel/tumor.csv
         validation/large_indel/normal.csv
+        variants/(.*)\.tbi$
+        control_variants_for_loh/(.*)\.tbi$
     );
 }
 sub dirs_ignored_by_diff {
@@ -283,6 +287,30 @@ sub reference_being_replaced_for_input {
     }
 
     return;
+}
+
+sub get_indels_vcf {
+    my $self = shift;
+    return $self->variants_directory . "/indels.vcf.gz";
+}
+
+sub get_snvs_vcf {
+    my $self = shift;
+    return $self->variants_directory . "/snvs.vcf.gz";
+}
+
+sub whole_rmdup_bam_file {
+    my $self = shift;
+    return $self->tumor_bam;
+}
+
+sub variants_directory {
+    my $self = shift;
+    my $expected_directory = $self->data_directory . '/variants';
+    unless (-d $expected_directory) {
+        die $self->error_message("Variants directory does not exist at $expected_directory");
+    }
+    return $expected_directory;
 }
 
 1;

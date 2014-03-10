@@ -39,6 +39,13 @@ class Genome::Model::Tools::Analysis::Coverage::AddReadcounts{
             default => '1',
         },
 
+	min_base_quality => {
+	    is => 'Integer',
+	    is_optional => 1,
+	    doc => 'minimum base quality of bases in reads to be considered',
+	    default => '0',
+	},
+
         chrom => {
             is => 'String',
             is_optional => 1,
@@ -63,7 +70,7 @@ class Genome::Model::Tools::Analysis::Coverage::AddReadcounts{
 	    doc => 'minimum variant allele frequency required for a site to be reported (0-100)',
         },
 
-        max_vaf => { 
+        max_vaf => {
             is => 'Integer',
             is_optional => 1,
 	    doc => 'maximum variant allele frequency allowed for a site to be reported (0-100)',
@@ -76,10 +83,16 @@ class Genome::Model::Tools::Analysis::Coverage::AddReadcounts{
             default => 4,
         },
 
-        header_prefixes => { 
+        header_prefixes => {
             is => 'String',
             is_optional => 1,
 	    doc => 'Comma-separated list - if the file has a header, three column titles get added for each bam ("ref_count","var_count","VAF"). This specifies a prefix for those columns. (i.e.  "Normal" will lead to "Normal_ref_count","Normal_var_count","Normal_VAF").',
+        },
+        per_library => {
+            is => 'Boolean',
+            is_optional => 1,
+            doc => 'whether or not to report counts on a per-library basis',
+            default => 0,
         },
 
 
@@ -103,6 +116,7 @@ sub execute {
     my $output_file = $self->output_file;
     my $genome_build = $self->genome_build;
     my $min_quality_score = $self->min_quality_score;
+    my $min_base_quality = $self->min_base_quality;
 
     my $min_vaf = $self->min_vaf;
     my $max_vaf = $self->max_vaf;
@@ -166,7 +180,7 @@ sub execute {
     unless(defined($chrom)){
         $chrom = "all";
     }
-   
+
 
     my $prefix = 1;
     for my $bam (@bams){
@@ -175,32 +189,41 @@ sub execute {
             bam_file => $bam,
             output_file =>  "$tempdir/$prefix.rcfile",
             variant_file => $variant_file,
-            genome_build => $genome_build, 
+            genome_build => $genome_build,
             chrom => $chrom,
             min_depth  => $min_depth,
             max_depth => $max_depth,
             min_vaf => $min_vaf,
             max_vaf => $max_vaf,
             indel_size_limit => $indel_size_limit,
+            min_mapping_quality => $min_quality_score,
+	    min_base_quality => $min_base_quality,
+            per_library => $self->per_library,
             );
         unless ($cmd->execute) {
             die "Bam-readcount failed";
         }
 
         my %readcounts;
+        my @per_lib_headers;
         #read in the bam-readcount file  and hash each count by position
         my $inFh2 = IO::File->new( "$tempdir/$prefix.rcfile" ) || die "can't open file: $tempdir/$prefix.rcfile\n";
         while( my $line = $inFh2->getline )
         {
             chomp($line);
-            my ($chr, $pos, $ref, $var, $refcount, $varcount, $vaf,) = split("\t",$line);
+            if($line =~ /^#chr/) {
+                $line =~ s/^#//;
+                @per_lib_headers = split("\t",$line);
+                next;
+            }
+            my ($chr, $pos, $ref, $var, @counts,) = split("\t",$line);
             $ref = uc($ref);
             $var = uc($var);
-            
+
             my $key = "$chr:$pos:$ref:$var";
-            
+
             #for each base at that pos
-            $readcounts{$key} = "$refcount:$varcount:$vaf";
+            $readcounts{$key} = join(":", @counts);
         }
 
 
@@ -216,25 +239,29 @@ sub execute {
         }
 
         my $count = 0;
+        my @count_headers = qw( ref_count var_count VAF);
+        if($self->per_library) {
+            @count_headers = @per_lib_headers[4..$#per_lib_headers];
+        }
         while( my $sline = $inFh->getline )
         {
             chomp($sline);
-            
+
             if($count == 0){ #check for header
-                if($sline =~ /^(#|Hugo_Symbol|Chrom|chromosome)/i){
-                    #good header match                    
+                if($sline =~ /^(#|Hugo_Symbol|Chrom|chromosome|chr\s+)/i){
+                    #good header match
                     if(defined($header_prefixes[$prefix-1])){
                         my $pre = $header_prefixes[$prefix-1];
-                        print OUTFILE join("\t",($sline,$pre . "_ref_count", $pre . "_var_count", $pre ."_VAF")) . "\n";
+                        print OUTFILE join("\t",($sline, map { $pre . "_" . $_ } @count_headers)) . "\n";
                     } else {
-                        print OUTFILE join("\t",($sline,"ref_count","var_count","VAF")) . "\n";
+                        print OUTFILE join("\t",($sline,@count_headers)) . "\n";
                     }
                     next;
                 }
             };
             $count++;
-            
-            
+
+
             my ($chr, $st, $sp, $ref, $var, @rest) = split("\t",$sline);
 
             $ref =~ s/0/-/g;
@@ -242,19 +269,19 @@ sub execute {
             $var =~ s/0/-/g;
             $var =~ s/\*/-/g;
             $ref = uc($ref);
-            $var = uc($var); 
-            
-            my $key = $chr . ":" . $st . ":" . $ref . ":" . $var;                
-            
+            $var = uc($var);
+
+            my $key = $chr . ":" . $st . ":" . $ref . ":" . $var;
+
             #get the readcount information at this position
             if(exists($readcounts{$key})){
-                my ($rcnt,$vcnt,$vaf) = split(/:/,$readcounts{$key});
-                $sline = $sline . "\t$rcnt\t$vcnt\t$vaf\n";
+                my @counts = split(/:/,$readcounts{$key});
+                $sline = $sline . "\t" . join("\t", @counts);
             } else {
                 print STDERR "didn't find variant $key in bam-readcount output, skipping\n";
             }
-            print OUTFILE $sline;
-            
+            print OUTFILE $sline, "\n";
+
         }
         close(OUTFILE);
         $prefix++;

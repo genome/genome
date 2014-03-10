@@ -27,12 +27,10 @@ SOURCE_TYPE                 VARCHAR2 (64)                    {null} {null}   NOT
 TAXON_ID                    NUMBER   (10)                    {null} {null}   NOT_SYNCED
 TISSUE_LABEL                VARCHAR2 (64)                    {null} {null}   ok
 TISSUE_NAME                 VARCHAR2 (64)                    {null} {null}   ok [tissue_desc]
-24 properties, 15 to copy, 12 to update (exclude id, name, default_genotype_seq_id)
 =cut
-#TODO SAMPLE_ATTRIBUTES
 
 class Genome::Site::TGI::Synchronize::Classes::OrganismSample {
-    is => 'UR::Object',
+    is => 'Genome::Site::TGI::Synchronize::Classes::LimsBase',
     table_name => 'ORGANISM_SAMPLE',
     id_by => [
         id => { is => 'Number', column_name => 'ORGANISM_SAMPLE_ID', },
@@ -44,7 +42,7 @@ class Genome::Site::TGI::Synchronize::Classes::OrganismSample {
     ],
     has_optional => [	
         common_name             => { is => 'Text', },
-        default_genotype_seq_id => { is => 'Text', },
+        default_genotype_data_id => { is => 'Text', column_name => 'DEFAULT_GENOTYPE_SEQ_ID', },
         extraction_desc         => { is => 'Text', column_name => 'DESCRIPTION', },
         extraction_label        => { is => 'Text', column_name => 'SAMPLE_NAME', },
         extraction_type         => { is => 'Text', column_name => 'SAMPLE_TYPE', },
@@ -56,8 +54,10 @@ class Genome::Site::TGI::Synchronize::Classes::OrganismSample {
     data_source => 'Genome::DataSource::Dwrac',
 };
 
+sub entity_name { return 'sample'; }
+
 sub properties_to_copy {# 15
-    return ( 'id', 'name', 'default_genotype_seq_id', properties_to_keep_updated() );
+    return ( 'id', 'name', 'default_genotype_data_id', properties_to_keep_updated() );
 }
 
 sub properties_to_keep_updated {# 12
@@ -67,6 +67,7 @@ sub properties_to_keep_updated {# 12
         extraction_desc
         extraction_label
         extraction_type
+        nomenclature
         organ_name
         source_id
         tissue_desc

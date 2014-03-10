@@ -47,7 +47,7 @@ sub execute {
     my $self = shift;
 
     $self->dump_status_messages(1);
-    $self->status_message(">>>Running MergeAlignments at ".UR::Context->current->now);
+    $self->debug_message(">>>Running MergeAlignments at ".UR::Context->current->now);
     #my $model_id = $self->model_id;
     my $alignment_files_ref = $self->alignment_files;
     my @alignment_files = @$alignment_files_ref;
@@ -61,8 +61,8 @@ sub execute {
              return;
     } else {
                 
-                $self->status_message("Merging files: ".join("\n",@alignment_files) );
-                $self->status_message("Destination file: ".$merged_file);
+                $self->debug_message("Merging files: ".join("\n",@alignment_files) );
+                $self->debug_message("Destination file: ".$merged_file);
          
                 #get from pp eventually
                 #my $picard_path = "$ENV{GENOME_SW_LEGACY_JAVA}/samtools/picard-tools-1.07/";
@@ -84,12 +84,12 @@ sub execute {
                         $self->error_message("<<<Failed MergeAlignments on picard merge.  Return value: $rv_merge");
                         return;
                 }
-                $self->status_message("Merge complete.");
+                $self->debug_message("Merge complete.");
                 
     }
     
     #Genome::Sys->mark_files_ok(input_files=>\@expected_output_files);
-    $self->status_message("<<<Completed MergeAlignments at ".UR::Context->current->now);
+    $self->debug_message("<<<Completed MergeAlignments at ".UR::Context->current->now);
     return 1;
  
 }

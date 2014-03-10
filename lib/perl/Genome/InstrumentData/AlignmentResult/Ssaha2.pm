@@ -66,7 +66,7 @@ sub _run_aligner {
         $self->error_message('The sam output file is missing or empty.');
         return 0;
     }
-    $self->status_message('SSAHA2 alignment finished.');
+    $self->debug_message('SSAHA2 alignment finished.');
     return 1;
 }
 

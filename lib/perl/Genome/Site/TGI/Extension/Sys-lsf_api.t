@@ -11,15 +11,13 @@ use warnings;
 use above "Genome";
 use Test::More;
 
-plan skip_all => "This test requires LSF jobs be submitted, which is kinda flimsy and shouldn't be automatically done";
-
 use_ok('Genome::Sys') or die;
 
 # Submit job that should work
 my @job_ids;
 my $cmd = 'ls ~';
 my $job_id = Genome::Sys->bsub(
-    queue => 'short',
+    queue => $ENV{GENOME_LSF_QUEUE_SHORT},
     cmd => $cmd,
 );
 ok($job_id, "bsubbed $cmd, got job id back");
@@ -28,7 +26,7 @@ push @job_ids, $job_id;
 # Submit job that should fail
 $cmd = 'exit 1';
 $job_id = Genome::Sys->bsub(
-    queue => 'short',
+    queue => $ENV{GENOME_LSF_QUEUE_SHORT},
     cmd => $cmd
 );
 ok($job_id, "bsubbed $cmd, got job id back");

@@ -24,7 +24,7 @@ sub fastq_input_files {
     my $self = shift;
     my @fastq_files = glob( $self->data_directory."/*input.fastq" );
     unless ( @fastq_files ) {
-        $self->status_message( "Did not find any input fastq files in build data directory" );
+        $self->debug_message( "Did not find any input fastq files in build data directory" );
         return;
     }
     #return join (',', map{$_} @fastq_files );

@@ -14,6 +14,7 @@ use File::Temp;
 use Test::More;
 use above 'Genome';
 use Genome::SoftwareResult;
+use Genome::Utility::Test qw(compare_ok);
 
 my $archos = `uname -a`;
 if ($archos !~ /64/) {
@@ -22,13 +23,13 @@ if ($archos !~ /64/) {
 
 use_ok('Genome::Model::Tools::Mutect');
 
-my $tumor =  $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Mutect/tiny.tumor.bam";
-my $normal = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Mutect/tiny.normal.bam";
-my $expected_out = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Mutect/expected.out";
-my $expected_vcf = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Mutect/expected.vcf";
+my $tumor =  $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Mutect/v2/tiny.tumor.bam";
+my $normal = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Mutect/v2/tiny.normal.bam";
+my $expected_out = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Mutect/v2/expected.out";
+my $expected_vcf = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Mutect/v2/expected.vcf";
 
 #Define path to a custom reference sequence build dir
-my $custom_reference_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Mutect/custom_reference";
+my $custom_reference_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Mutect/v2/custom_reference";
 ok(-e $custom_reference_dir, "Found the custom reference dir: $custom_reference_dir");
 my $fasta = $custom_reference_dir . "/all_sequences.fa";
 ok( -s $fasta, "reference sequence fa file present");
@@ -53,14 +54,7 @@ is($rv, 1, 'Testing for successful execution.  Expecting 1.  Got: '.$rv);
 ok(-s $test_output, "output file created");
 ok(-s $test_vcf, "vcf file created");
 
-my $diff = Genome::Sys->diff_file_vs_file($test_output, $expected_out);
-    ok(!$diff, 'output matched expected result')
-        or diag("diff results:\n" . $diff);
-
-
-my $diff_vcf = Genome::Sys->diff_file_vs_file($test_vcf, $expected_vcf);
-    ok(!$diff_vcf, 'vcf matched expected result')
-        or diag("diff results:\n" . $diff_vcf);
+compare_ok($expected_out, $test_output, name => 'output matched expected result', filters => [ qr/^##.*$/ ] );
+compare_ok($expected_vcf, $test_vcf, name => 'vcf matched expected result', filters => [ qr/^##MuTect.*$/, qr/^##reference.*$/ ] );
 
 done_testing();
-

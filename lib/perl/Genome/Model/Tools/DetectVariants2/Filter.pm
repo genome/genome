@@ -157,7 +157,7 @@ class Genome::Model::Tools::DetectVariants2::Filter {
     ],
     has_param => [
         lsf_queue => {
-            default => 'apipe',
+            default => $ENV{GENOME_LSF_QUEUE_DV2_WORKER},
         },
     ],
 };
@@ -184,24 +184,23 @@ sub _process_params {
 
     if ($self->params) {
         my @param_list = split(" ", $self->params);
-        my($cmd_class,$params) = $self->class->resolve_class_and_params_for_argv(@param_list);
+        my ($cmd_class, $params) = $self->class->resolve_class_and_params_for_argv(@param_list);
         # For each parameter set in params... use the class properties to assign the values
+        
         for my $param_name (keys %$params) {
-            if($self->$param_name) {
-                if(defined $params->{param}) {
-                    if(ref $params->{param} eq 'ARRAY') {
-                       if(scalar @{$params->{param}}) {
-                           die $self->error_message('Param ' . $param_name . ' specified in multiple ways: property: ' . $self->$param_name . ' values and --param ' . @{$params->{param}} . ' values');
-                       } else {
-                            #returned value from params is empty--accept current value
-                       }
-                    } else {
+            if ($self->$param_name) {
+                if (defined $params->{param}) {
+                    if (ref $params->{param} eq 'ARRAY') {
+                        if (scalar @{$params->{param}}) {
+                            die $self->error_message('Param ' . $param_name . ' specified in multiple ways: property: ' . $self->$param_name . ' values and --param ' . @{$params->{param}} . ' values');
+                        }
+                    }
+                    else {
                         die $self->error_message('Param ' . $param_name . ' specified in multiple ways: property: ' . $self->$param_name . ' and --param: ' . $params->{$param_name});
                     }
                 }
-            } else {
-                $self->$param_name($params->{$param_name});
             }
+            $self->$param_name($params->{$param_name});   #overwrite the property value no matter it exists or not
         }
     }
 
@@ -220,16 +219,16 @@ sub shortcut {
 
     $self->_resolve_output_directory;
 
-    $self->status_message("Attempting to shortcut filter result");
+    $self->debug_message("Attempting to shortcut filter result");
     unless($self->shortcut_filter){
-        $self->status_message("Could not shortcut filter result.");
+        $self->debug_message("Could not shortcut filter result.");
         return;
     }
 
     if($self->_try_vcf){
-        $self->status_message("Attempting to shortcut vcf result");
+        $self->debug_message("Attempting to shortcut vcf result");
         unless($self->shortcut_vcf){
-            $self->status_message("Could not shortcut vcf result.");
+            $self->debug_message("Could not shortcut vcf result.");
             return;
         }
     }
@@ -240,23 +239,23 @@ sub shortcut {
 sub shortcut_filter {
     my $self = shift;
     my ($params) = $self->params_for_filter_result;
-    $self->status_message("Params for shortcut_filter: " . Data::Dumper::Dumper $params);
+    $self->debug_message("Params for shortcut_filter: " . Data::Dumper::Dumper $params);
     my $result = Genome::Model::Tools::DetectVariants2::Result::Filter->get_with_lock(%$params);
 
     #TODO -- remove this monstrosity once this is pushed and filter_results are backfilled with filter_version=>v1
     unless($result) {
-        $self->status_message("Could not find filter_result, removing filter_version param and checking again");
+        $self->debug_message("Could not find filter_result, removing filter_version param and checking again");
         delete $params->{filter_version};
-        $self->status_message("Params without filter_version");
+        $self->debug_message("Params without filter_version");
         $result = Genome::Model::Tools::DetectVariants2::Result::Filter->get_with_lock(%$params);
         unless($result) {
-            $self->status_message('No existing result found.');
+            $self->debug_message('No existing result found.');
             return;
         }
     }
 
     $self->_result($result);
-    $self->status_message('Using existing result ' . $result->__display_name__);
+    $self->debug_message('Using existing result ' . $result->__display_name__);
     $self->_link_filter_output_directory_to_result;
 
     return 1;
@@ -265,15 +264,15 @@ sub shortcut_filter {
 sub shortcut_vcf {
     my $self = shift;
     my ($params) = $self->params_for_vcf_result;
-    $self->status_message("Params for shortcut_vcf: " . Data::Dumper::Dumper $params);
+    $self->debug_message("Params for shortcut_vcf: " . Data::Dumper::Dumper $params);
     my $result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Filter->get_with_lock(%$params);
     unless($result) {
-        $self->status_message('No existing result found.');
+        $self->debug_message('No existing result found.');
         return;
     }
 
     $self->_vcf_result($result);
-    $self->status_message('Using existing result ' . $result->__display_name__);
+    $self->debug_message('Using existing result ' . $result->__display_name__);
     $self->_link_vcf_output_directory_to_result;
     $self->_link_result_to_previous_result;
 
@@ -287,7 +286,7 @@ sub execute {
     $self->_process_params;
 
     unless($self->shortcut_filter){
-        $self->status_message("Summoning a filter result..");
+        $self->debug_message("Summoning a filter result..");
         $self->_summon_filter_result;
     }
     if($self->_try_vcf){
@@ -332,7 +331,7 @@ sub _summon_vcf_result {
     }
 
     $self->_vcf_result($result);
-    $self->status_message('Generated vcf result.');
+    $self->debug_message('Generated vcf result.');
     $self->_link_vcf_output_directory_to_result;
 
     return 1;
@@ -348,47 +347,11 @@ sub _summon_filter_result {
     }
 
     $self->_result($result);
-    $self->status_message('Generated detector result.');
+    $self->debug_message('Generated detector result.');
     unless(-e $self->output_directory){
         $self->_link_output_directory_to_result;
     }
     $self->_link_result_to_previous_result;
-
-    return 1;
-}
-
-sub _link_vcf_output_directory_to_result {
-    my $self = shift;
-    $self->status_message("Linking in vcfs from vcf_result");
-
-    my $result = $self->_vcf_result;
-    return unless $result;
-    my @vcfs = glob($result->output_dir."/*.vcf.gz");
-    my $output_directory = $self->output_directory;
-    for my $vcf (@vcfs){
-        my $target = $output_directory . "/" . basename($vcf);
-        $self->status_message("Attempting to link : " .$vcf."  to  ". $target);
-        if(-l $target) {
-            if (readlink($target) eq $vcf) {
-                $self->status_message("Already found a vcf linked in here, and it already has the correct target. Continuing.");
-                next;
-            } else {
-                $self->status_message("Already found a vcf linked in here, unlinking that for you.");
-                unless(unlink($target)){
-                    die $self->error_message("Failed to unlink a link to a vcf at: ".$target);
-                }
-            }
-        } elsif(-e $target){
-            die $self->error_message("Found something that is not a symlink to a vcf!");
-        }
-
-        # Symlink both the vcf and the tabix
-        Genome::Sys->create_symlink($vcf, $target);
-        Genome::Sys->create_symlink("$vcf.tbi", "$target.tbi");
-
-        #added a symlink to our own directory - reallocate the size
-        $self->_result->_reallocate_disk_allocation
-    }
 
     return 1;
 }
@@ -414,7 +377,7 @@ sub _link_filter_output_directory_to_result {
     return unless $result;
 
     if(-l $self->output_directory) {
-        $self->status_message("Found link to output directory.");
+        $self->debug_message("Found link to output directory.");
         return 1;
     } elsif (-e $self->output_directory) {
         die $self->error_message("Found something in the place of the output directory, but not a symlink...");

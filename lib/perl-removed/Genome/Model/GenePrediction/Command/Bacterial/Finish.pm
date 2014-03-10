@@ -17,7 +17,7 @@ use Ace;
 use Ace::Sequence;
 use Carp;
 use File::Path;
-use MIME::Lite;
+use Genome::Utility::Email;
 use File::Path 'make_path';
 
 class Genome::Model::GenePrediction::Command::Bacterial::Finish {
@@ -348,8 +348,8 @@ sub execute
         }
         my ( $dump_cmd, $dump_dumper );
 
-        $self->status_message("Running ace dump from " . ($self->dev ? "dev" : "prod"));
-        $self->status_message("sequence set id, $ssid : phase, $phase : ace file, $dump_output");
+        $self->debug_message("Running ace dump from " . ($self->dev ? "dev" : "prod"));
+        $self->debug_message("sequence set id, $ssid : phase, $phase : ace file, $dump_output");
         my $rv = Genome::Model::Tools::Bacterial::AceDumpGenes->execute(
             sequence_set_id => $ssid,
             phase => $phase,
@@ -377,7 +377,7 @@ sub execute
 
     if ( $cwd ne $acedb_scripts_path )
     {
-        $self->status_message("Changing directory to $acedb_scripts_path");
+        $self->debug_message("Changing directory to $acedb_scripts_path");
         make_path($acedb_scripts_path) unless -d $acedb_scripts_path;
         chdir($acedb_scripts_path);
     }
@@ -432,7 +432,7 @@ sub execute
 
     if ( $cwd3 ne $acedb_path )
     {
-        $self->status_message("Changing directory to $acedb_path");
+        $self->debug_message("Changing directory to $acedb_path");
         chdir($acedb_path);
     }
 
@@ -607,7 +607,7 @@ sub execute
 
     if ( $cwd2 ne $acedb_scripts_HGMI_files )
     {
-        $self->status_message("Changing directory to $acedb_scripts_HGMI_files");
+        $self->debug_message("Changing directory to $acedb_scripts_HGMI_files");
         chdir($acedb_scripts_HGMI_files);
     }
     my $rtfile_name
@@ -806,13 +806,7 @@ sub send_mail
     my $self = shift;
     my ( $ss_id, $ss_name, $user ) = @_;
 
-    my $useraddress = "$user\@genome.wustl.edu";
-
-    my $from = $useraddress;
-    #FIXME remove hard-coded addresses
-    my $to = join( ', ',
-        "$useraddress", 'kpepin@watson.wustl.edu',
-    );
+    my $from = Genome::Utility::Email::construct_address($user);
 
     my $subject = "BAP Finish script mail for MGAP SSID: $ss_id ($ss_name)";
 
@@ -820,15 +814,12 @@ sub send_mail
 The bap_finish_scripts script has finished running MGAP SSID: $ss_id ($ss_name).
 BODY
 
-    my $msg = MIME::Lite->new(
-        From    => $from,
-        To      => $to,
-        Subject => $subject,
-        Data    => $body,
+    Genome::Utility::Email::send(
+        from => $from,
+        to => [ $from, 'kpepin@watson.wustl.edu' ], # FIXME remove hard-coded addresses
+        subject => $subject,
+        body => $body,
     );
-
-    $msg->send();
-
 }
 
 1;

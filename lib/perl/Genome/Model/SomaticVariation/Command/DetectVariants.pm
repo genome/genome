@@ -20,7 +20,7 @@ class Genome::Model::SomaticVariation::Command::DetectVariants{
     ],
     has_param => [
         lsf_queue => {
-            default => 'long',
+            default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
         },
     ],
 };
@@ -28,7 +28,7 @@ class Genome::Model::SomaticVariation::Command::DetectVariants{
 sub execute{
     my $self = shift;
 
-    $self->status_message("Executing detect variants step");
+    $self->debug_message("Executing detect variants step");
     my $build = $self->build;
     unless ($build){
         die $self->error_message("no build provided!");
@@ -86,7 +86,7 @@ sub execute{
         }
     }
 
-    $self->status_message("detect variants command completed successfully");
+    $self->debug_message("detect variants command completed successfully");
 
     my $version = 2;
     #my $version = GMT:BED:CONVERT::version();  TODO, something like this instead of hardcoding
@@ -128,7 +128,7 @@ sub execute{
             if (-e $unexpected_filename_output){
                 symlink($unexpected_filename_output, $lq_result);
             } else {
-                $self->status_message("No lq indel file found. Creating an empty file at $lq_result");
+                $self->debug_message("No lq indel file found. Creating an empty file at $lq_result");
                 system("touch $lq_result");
             }
         }
@@ -139,7 +139,7 @@ sub execute{
         unless (-e $result){
             my $unexpected_filename_output = $command->_sv_hq_output_file;
             unless (-e $unexpected_filename_output){
-                die $self->error_message("Expected hq detected snvs file $result, but it does not exist!");
+                die $self->error_message("Expected hq detected svs file $result, but it does not exist!");
             }
             symlink($unexpected_filename_output, $result);
         }
@@ -150,7 +150,7 @@ sub execute{
         unless (-e $result){
             my $unexpected_filename_output = $command->_cnv_hq_output_file;
             unless (-e $unexpected_filename_output){
-                die $self->error_message("Expected hq detected snvs file $result, but it does not exist!");
+                die $self->error_message("Expected hq detected cnvs file $result, but it does not exist!");
             }
             symlink($unexpected_filename_output, $result);
         }
@@ -158,7 +158,7 @@ sub execute{
 
     $self->_create_tcga_vcfs;
 
-    $self->status_message("detect variants step completed");
+    $self->debug_message("detect variants step completed");
 
     return 1;
 }

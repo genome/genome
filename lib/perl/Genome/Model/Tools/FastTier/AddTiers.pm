@@ -8,13 +8,6 @@ use IO::File;
 class Genome::Model::Tools::FastTier::AddTiers {
     is => 'Command',
     has => [
-        build => {
-            is => 'Integer',
-            is_optional => 1,
-            doc => 'Genome build to use',
-            valid_values => ['36','37'],
-        },
-
         input_file => {
             is => 'String',
             is_optional => 0,
@@ -39,9 +32,9 @@ class Genome::Model::Tools::FastTier::AddTiers {
 
         tier_file_location =>{
             is => 'String',
-            is_optional => 1,
+            is_optional => 0,
             is_input => 1,
-            doc => 'Use this to override the default (v3) tiering files',
+            doc => 'annotation directory containing tiering files',
         },
 
         tiering_version =>{
@@ -58,7 +51,34 @@ sub help_brief {
 }
 
 sub help_detail {
-    "Add tiering information to an existing file. Use --input-is-maf if input is a MAF file."
+    #get a list of currrently available builds and ouput in the help
+    my $listing;
+    my @currently_available_models = Genome::Model->get(subclass_name => 'Genome::Model::ImportedAnnotation');
+    my @currently_available_builds;
+    my @tiering_dirs;
+    foreach my $model (@currently_available_models) {
+        next unless $model;
+        foreach my $build ($model->builds) {
+            if($build and $build->status eq 'Succeeded' and $build->name =~ /ensembl/) {  #probably implicit in the loops, but in case we get undefs in our list
+                if ($build->version !~ /old/ and $model->name and $build->version && ($build->data_directory !~ /gscarchive/)){
+                    push(@currently_available_builds, $model->name . "/" . $build->version . "\n");
+                    push(@tiering_dirs, $build->data_directory . "/annotation_data/tiering_bed_files_v3/");
+                }
+            }
+        }
+    }
+
+    my $i = 0;
+    for($i=0;$i<@tiering_dirs;$i++){
+        my $name = $currently_available_builds[$i];
+        chomp($name);
+        my $dir = $tiering_dirs[$i];
+        chomp($dir);
+
+        $listing .= $name . "\n    " . $dir . "\n";
+    }
+
+    "Add tiering information to an existing file. Use --input-is-maf if input is a MAF file.\n\nCurrently Available Builds and Dirs\n----------------------------------\n$listing\n\n"
 }
 
 sub execute {
@@ -67,21 +87,8 @@ sub execute {
     my $input_file = $self->input_file;
     my $output_file = $self->output_file;
     my $input_is_maf = $self->input_is_maf;
-    my $build = $self->build;
     my $tier_file_location = $self->tier_file_location;
     my $tiering_version = $self->tiering_version;
-
-    unless( defined( $tier_file_location )){
-        if( $build == 36 ){
-            $tier_file_location = "/gscmnt/ams1100/info/model_data/2771411739/build102550711/annotation_data/tiering_bed_files_v3";
-        }
-        elsif ( $build == 37 ){
-            $tier_file_location = "/gscmnt/ams1102/info/model_data/2771411739/build106409619/annotation_data/tiering_bed_files_v3";
-        }
-        else {
-            die("only supports builds 36 or 37");
-        }
-    }
 
     # Create a tmp dir where we'll do the tiering
     my $tempdir = Genome::Sys->create_temp_directory();

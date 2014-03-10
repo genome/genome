@@ -38,7 +38,7 @@ sub resolve_allocation_disk_group_name {
         return $command->resolve_allocation_disk_group_name();
     }
     else {
-        "info_genome_models" 
+        $ENV{GENOME_DISK_GROUP_MODELS};
     }
 }
 
@@ -89,7 +89,7 @@ sub create {
         if ($self->temp_staging_directory) {
             if ($saved_output_dir) {
                 my $actual_output_dir = $self->output_dir;
-                #$command->status_message("SYMLINK $actual_output_dir $saved_output_dir");
+                #$command->debug_message("SYMLINK $actual_output_dir $saved_output_dir");
                 #Genome::Sys->create_symlink($actual_output_dir, $saved_output_dir);
                 $self->output_dir($saved_output_dir);
             }
@@ -175,7 +175,7 @@ sub execute_wrapper {
     #  $command->is_executed(1);
     #  $command->result($command);
     
-    $command->status_message("Execution preceded by check for existing software result.");
+    $command->debug_message("Execution preceded by check for existing software result.");
     my $result_class = $command->class . '::Result';
     my %props = _copyable_properties($command, $result_class);
     delete $props{output_dir};
@@ -187,10 +187,10 @@ sub execute_wrapper {
         );
     }
     if ($command->is_executed) {
-        $command->status_message("New software result saved: " . $result->__display_name__);
+        $command->debug_message("New software result saved: " . $result->__display_name__);
     }
     else {
-        $command->status_message("Existing results found: " . $result->__display_name__);
+        $command->debug_message("Existing results found: " . $result->__display_name__);
     }
 
     # copy properties from the result to the command outputs/changes
@@ -214,7 +214,7 @@ sub execute_wrapper {
     $command->result($result);
     if ($command->can('output_dir')) {
         $command->output_dir($result->output_dir);
-        $command->status_message("Output directory: " . $result->output_dir);
+        $command->debug_message("Output directory: " . $result->output_dir);
     }
 
     return $command if $was_called_as_class_method;

@@ -27,6 +27,10 @@ sub alignment_result_class {
     return 'Genome::InstrumentData::AlignmentResult::' . Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name($read_aligner_name);
 }
 
+sub lsf_queue {
+    return $ENV{GENOME_LSF_QUEUE_BUILD_WORKER};
+}
+
 sub bsub_rusage {
     my $self = shift;
     my $delegate = $self->alignment_result_class;
@@ -62,7 +66,7 @@ sub _process {
         die "Missing build directory???";
     }
 
-    $self->status_message(
+    $self->debug_message(
         "Build directory: " . $self->build_directory
     );
 
@@ -93,7 +97,7 @@ sub _process {
         }
     }
 
-    $self->status_message(sprintf("Finding or generating reference build index for aligner %s version %s params %s refbuild %s ",
+    $self->debug_message(sprintf("Finding or generating reference build index for aligner %s version %s params %s refbuild %s ",
                                                 $params_for_reference{aligner_name}, $params_for_reference{aligner_version},
                                                 $params_for_reference{aligner_params}, $params_for_reference{reference_build}));
 
@@ -125,7 +129,7 @@ sub _process {
 
     my $link = $reference_sequence_index->add_user(user => $build, label => 'uses');
     if ($link) {
-        $self->status_message("Linked reference sequence index " . $reference_sequence_index->id . " to the build");
+        $self->debug_message("Linked reference sequence index " . $reference_sequence_index->id . " to the build");
     }
     else {
         $self->error_message(
@@ -136,13 +140,13 @@ sub _process {
         # TODO: die, but not for now
     }
 
-    $self->status_message("Verifying...");
+    $self->debug_message("Verifying...");
     unless ($self->verify_successful_completion) {
         $self->error_message("Error verifying completion!");
         return 0;
     }
 
-    $self->status_message("Complete!");
+    $self->debug_message("Complete!");
     return 1;
 }
 

@@ -18,9 +18,9 @@ sub execute {
     my $self = shift;
     unless (-d $self->build_directory) {
         $self->create_directory($self->build_directory);
-        $self->status_message("Created build directory: ".$self->build_directory);
+        $self->debug_message("Created build directory: ".$self->build_directory);
     } else {
-        $self->status_message("Build directory exists: ".$self->build_directory);
+        $self->debug_message("Build directory exists: ".$self->build_directory);
     }
     my $build_fastq_directory = $self->build->accumulated_fastq_directory;
     unless (-d $build_fastq_directory) {

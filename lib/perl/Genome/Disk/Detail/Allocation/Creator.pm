@@ -21,7 +21,7 @@ class Genome::Disk::Detail::Allocation::Creator {
 sub create_allocation {
     my $self = shift;
 
-    $self->verify_no_parent_or_child_allocations;
+    $self->verify_no_parent_allocation;
     $self->wait_for_database_pause;
 
     my @candidate_volumes = $self->candidate_volumes;
@@ -49,8 +49,10 @@ sub verify_no_parent_allocation {
 
     if (my $parent_alloc = Genome::Disk::Allocation->get_parent_allocation(
             $self->parameters->allocation_path)) {
-        confess sprintf("Parent allocation (%s) found for %s",
-            $parent_alloc->allocation_path, $self->parameters->allocation_path);
+        confess $self->error_message(sprintf(
+                "Parent allocation (%s) found for %s",
+            $parent_alloc->allocation_path,
+            $self->parameters->allocation_path));
     }
 }
 
@@ -59,8 +61,8 @@ sub verify_no_child_allocations {
 
     unless (Genome::Disk::Allocation->_verify_no_child_allocations(
             $self->parameters->allocation_path)) {
-        confess sprintf("Child allocation found for %s!",
-            $self->parameters->allocation_path);
+        confess $self->error_message(sprintf("Child allocation found for %s!",
+            $self->parameters->allocation_path));
     }
 }
 
@@ -292,10 +294,6 @@ sub _attempt_allocation_creation {
 
 sub create_directory_or_delete_allocation {
     my ($self, $allocation_object) = @_;
-
-    # a restrictive umask can break builds for other users
-    # so force the umask to be friendly
-    umask(0002);
 
     # If we cannot create the directory delete the new allocation
     my $dir;

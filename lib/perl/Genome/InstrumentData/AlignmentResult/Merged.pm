@@ -154,10 +154,10 @@ sub create {
     my $rv = eval {
 
         #TODO In a future version collect relevant alignments from other merged alignment results when available
-        $self->status_message('Collecting alignments for merger...');
+        $self->debug_message('Collecting alignments for merger...');
         my @alignments = $self->collect_individual_alignments;
 
-        $self->status_message('Preparing directories...');
+        $self->debug_message('Preparing directories...');
         $self->_prepare_output_directory; #This gets a disk allocation
         my @tmp_dirs = $self->_prepare_working_directories(\@alignments); #need to keep these in scope while in use
 
@@ -180,9 +180,9 @@ sub create {
                 my $library_merged_bam = join('/', $self->temp_scratch_directory, $sanitized_library_name . '.bam');
                 my $per_library_post_duplication_bam = join('/', $self->temp_scratch_directory, $sanitized_library_name . '-post_dup.bam');
 
-                $self->status_message('Merging alignments for library ' . $library->__display_name__ . '...');
+                $self->debug_message('Merging alignments for library ' . $library->__display_name__ . '...');
                 $self->merge_alignments($bams_per_library->{$library_id}, $library_merged_bam);
-                $self->status_message('Handling duplicates for library' . $library->__display_name__ . '...');
+                $self->debug_message('Handling duplicates for library' . $library->__display_name__ . '...');
                 $self->handle_duplicates($library_merged_bam, $per_library_post_duplication_bam);
                 push @bams_for_final_merge, $per_library_post_duplication_bam;
             }
@@ -193,11 +193,11 @@ sub create {
             }
         }
 
-        $self->status_message('Merging per-library bams...');
+        $self->debug_message('Merging per-library bams...');
         my $final_bam = $self->_final_bam_file;
         $self->merge_alignments(\@bams_for_final_merge, $final_bam);
 
-        $self->status_message("Indexing the final BAM file...");
+        $self->debug_message("Indexing the final BAM file...");
         my $index_cmd = Genome::Model::Tools::Sam::IndexBam->create(
             bam_file    => $final_bam,
             use_version => $self->samtools_version,
@@ -229,7 +229,7 @@ sub create {
         die $self->error_message;
     }
 
-    $self->status_message("Resizing the disk allocation...");
+    $self->debug_message("Resizing the disk allocation...");
     if ($self->_disk_allocation) {
         unless ($self->_disk_allocation->reallocate) {
             $self->warning_message("Failed to reallocate disk allocation: " . $self->_disk_allocation->id);
@@ -238,7 +238,7 @@ sub create {
 
     
 
-    $self->status_message('All processes completed.');
+    $self->debug_message('All processes completed.');
 
     return $self;
 }
@@ -250,7 +250,7 @@ sub collect_individual_alignments {
     my %params;
     for my $property (Genome::InstrumentData::AlignmentResult->__meta__->_legacy_properties(via => 'params')) {
         my $property_name = $property->property_name;
-        next if grep($_ eq $property_name, ('filter_name')); #these are handled below
+        next if grep($_ eq $property_name, ('filter_name', 'test_name')); #these are handled below
         $params{$property_name} = $self->$property_name;
     }
 
@@ -299,6 +299,7 @@ sub collect_individual_alignments {
                 annotation_build_id => ($self->annotation_build_id || undef),
                 instrument_data_id => $i->id,
                 filter_name => ($filters->{$i->id} || undef),
+                test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
                 %$segment_param,
             );
 
@@ -326,7 +327,7 @@ sub required_rusage {
 }
 
 sub resolve_allocation_disk_group_name {
-    return 'info_genome_models';
+    $ENV{GENOME_DISK_GROUP_MODELS};
 }
 
 sub resolve_allocation_kilobytes_requested {
@@ -347,7 +348,7 @@ sub estimated_kb_usage {
     for my $alignment (@$alignments) {
         my @aln_bams = $alignment->alignment_bam_file_paths;
         unless (@aln_bams) {
-            $self->status_message("alignment $alignment has no bams at " . $alignment->output_dir);
+            $self->debug_message("alignment $alignment has no bams at " . $alignment->output_dir);
         }
         push @bams, @aln_bams;
     }
@@ -359,7 +360,7 @@ sub estimated_kb_usage {
 
     for (@bams) {
         my $size = stat($_)->size;
-        $self->status_message("BAM has size: " . $size);
+        $self->debug_message("BAM has size: " . $size);
         $total_size += $size;
     }
 
@@ -418,7 +419,7 @@ sub _promote_validated_data {
     my $staging_dir = $self->temp_staging_directory;
     my $output_dir  = $self->output_dir;
 
-    $self->status_message("Now de-staging data from $staging_dir into $output_dir");
+    $self->debug_message("Now de-staging data from $staging_dir into $output_dir");
 
     for my $staged_file (glob("$staging_dir/*")) {
         my $destination = $staged_file;
@@ -436,7 +437,7 @@ sub _promote_validated_data {
         chmod 0444, $file;
     }
 
-    $self->status_message("Files in $output_dir: \n" . join "\n", glob($output_dir . "/*"));
+    $self->debug_message("Files in $output_dir: \n" . join "\n", glob($output_dir . "/*"));
 
     return $output_dir;
 }
@@ -496,11 +497,11 @@ sub verify_result {
         $output_total += $bam_total;
     }
 
-    $self->status_message('input count: ' . $input_total);
-    $self->status_message('output count: ' . $output_total);
+    $self->debug_message('input count: ' . $input_total);
+    $self->debug_message('output count: ' . $output_total);
 
     if($input_total eq $output_total) {
-        $self->status_message('Counts match.  Verification OK.');
+        $self->debug_message('Counts match.  Verification OK.');
         return 1;
     } else {
         $self->error_message('Counts do not match. Verification failed.');
@@ -548,7 +549,7 @@ sub _bam_flagstat_total {
     }
     my $total = $flagstat_data->{total_reads};
 
-    $self->status_message('flagstat for ' . $bam_file . ' reports ' . $total . ' in total');    
+    $self->debug_message('flagstat for ' . $bam_file . ' reports ' . $total . ' in total');    
     return $total;
 }
 
@@ -663,7 +664,7 @@ sub create_bam_md5 {
     my $md5_file = $bam_file.'.md5';
     my $cmd = "md5sum $bam_file > $md5_file";
 
-    $self->status_message("Creating md5 file for the BAM file...");
+    $self->debug_message("Creating md5 file for the BAM file...");
 
     Genome::Sys->shellcmd(
         cmd                        => $cmd, 
@@ -680,7 +681,7 @@ sub _cleanup {
 
     return unless $self->_disk_allocation;
 
-    $self->status_message('Now deleting allocation with owner_id = ' . $self->id);
+    $self->debug_message('Now deleting allocation with owner_id = ' . $self->id);
     my $allocation = $self->_disk_allocation;
     if ($allocation) {
         my $path = $allocation->absolute_path;

@@ -3,7 +3,7 @@ Build Overview of Model [% model.name %]
 ============================================================
 
 HTML version of this report: 
-https://gscweb.gsc.wustl.edu[% build.data_directory %]reports/Build_Overview/report.html
+[% files_url %][% build.data_directory %]reports/Build_Overview/report.html
 [% count=1; %]
 
 Build Details

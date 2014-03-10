@@ -26,10 +26,10 @@ sub create_name {
 }
 
 use Genome::Config::AnalysisProject;
-my $old_get_config_method = \&Genome::Config::AnalysisProject::get_configuration_reader;
+my $old_get_config_method = \&Genome::Config::AnalysisProject::get_configuration_profile;
 
 no warnings qw(redefine);
-*Genome::Config::AnalysisProject::get_configuration_reader = sub {
+*Genome::Config::AnalysisProject::get_configuration_profile = sub {
     my $self = shift;
     if ($self->{__dummy_config_hash__}) {
         return bless { config => $self->{__dummy_config_hash__} },

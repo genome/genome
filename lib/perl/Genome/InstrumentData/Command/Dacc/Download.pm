@@ -35,7 +35,7 @@ sub help_detail {
 sub execute {
     my $self = shift;
 
-    $self->status_message('Download '.$self->sra_sample_id.' '.$self->format);
+    $self->debug_message('Download '.$self->sra_sample_id.' '.$self->format);
 
     if ( not $self->_is_host_a_blade ) {
         $self->error_message('To download from the DACC, this command must be run on a blade');
@@ -76,7 +76,7 @@ sub execute {
     $self->_launch_import; # no error check
     $self->_main_instrument_data->description('downloaded');
 
-    $self->status_message('Download...OK');
+    $self->debug_message('Download...OK');
 
     return 1;
 }
@@ -96,15 +96,15 @@ sub _is_host_a_blade {
 sub _run_aspera {
     my $self = shift;
 
-    $self->status_message('Run aspera...');
+    $self->debug_message('Run aspera...');
 
     my $dl_directory = $self->_dl_directory;
     if ( -d $dl_directory ) {
         # we tried dl'ing already - blow this dir away, ignore errors
-        $self->status_message('Remove previous download directory: '.$dl_directory);
+        $self->debug_message('Remove previous download directory: '.$dl_directory);
         File::Path::rmtree($dl_directory);
         Carp::confess('Tried to remove download directory, but could not') if -d $dl_directory;
-        $self->status_message('Removing previous download directory...OK');
+        $self->debug_message('Removing previous download directory...OK');
     }
 
     my $absolute_path = $self->_absolute_path;
@@ -122,14 +122,14 @@ sub _run_aspera {
     my $exclude = join(' ', map { '-E *'.$_.'*' } grep { $self->format ne $_ } $self->valid_formats);
 
     my $cmd = "ascp -QTd -l100M -i $key_file $exclude $user\@aspera.hmpdacc.org:$dacc_location/$sra_sample_id ".$absolute_path;
-    $self->status_message($cmd);
+    $self->debug_message($cmd);
     my $rv = eval { Genome::Sys->shellcmd(cmd => $cmd); };
     if ( not $rv ) {
         $self->error_message("Aspera command failed: $cmd");
         return;
     }
 
-    $self->status_message('Run aapera...OK');
+    $self->debug_message('Run aapera...OK');
 
     return 1;
 }
@@ -150,11 +150,11 @@ sub _launch_import {
         $logging = '-u '. Genome::Config->user_email;
     }
 
-    my $cmd = "bsub -q long $logging genome instrument-data dacc import $sub_command_format $sra_sample_id";
+    my $cmd = "bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} $logging genome instrument-data dacc import $sub_command_format $sra_sample_id";
     if ( not $self->validate_md5 ) {
         $cmd .= ' --novalidate-md5';
     }
-    $self->status_message('Launch import: '.$cmd);
+    $self->debug_message('Launch import: '.$cmd);
     my $rv = eval { Genome::Sys->shellcmd(cmd => $cmd); };
     if ( not $rv ) {
         $self->error_message('Failed to launch import: '.$@);

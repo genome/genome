@@ -18,11 +18,12 @@ use File::Compare;
 my $class = 'Genome::Model::Tools::DetectVariants2::CopyCatSomaticWithBamWindow';
 use_ok($class);
 
-my $test_version = 1;
+my $test_version = 2;
 my $test_dir = File::Spec->join(Genome::Utility::Test->data_dir($class), "v$test_version");
 ok(-e $test_dir, "Test directory $test_dir exists");
 
-my $params = '[--bamwindow-version 0.4 --bamwindow-params {-w 10000 -r -l -s -q 1} --copycat-params {--per-read-length --per-library}]';
+my $annotation_version = 0;
+my $params = "[--bamwindow-version 0.4 --bamwindow-params {-w 10000 -r -l -s -q 1} --copycat-params {--per-read-length --per-library} --annotation-version $annotation_version ]";
 my $refbuild_id = 106942997;
 my $output_directory = Genome::Sys->create_temp_directory();
 
@@ -100,10 +101,9 @@ for my $file (@non_diffable_files){
 sub _create_test_annotation_data{
     my $reference_build_id = shift;
     my $annotation_dir = shift;
-    my $version = 'copycat_somatic.t_test_set';
     my $reference_build = Genome::Model::Build->get($reference_build_id);
     my $cmd = Genome::Model::Tools::CopyCat::AddAnnotationData->create(
-        version => $version,
+        version => $annotation_version,
         data_directory => $annotation_dir,
         reference_sequence => $reference_build,
     );

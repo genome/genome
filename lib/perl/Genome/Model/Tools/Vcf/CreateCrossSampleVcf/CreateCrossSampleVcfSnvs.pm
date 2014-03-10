@@ -8,6 +8,15 @@ use File::Spec;
 
 class Genome::Model::Tools::Vcf::CreateCrossSampleVcf::CreateCrossSampleVcfSnvs {
     is => 'Genome::Model::Tools::Vcf::CreateCrossSampleVcf::CreateCrossSampleVcfBase',
+    has_optional_input => [
+        samtools_version => {
+            is => 'Text',
+        },
+        samtools_pileup_params => {
+            is => 'Text',
+            default => '-A -B',
+        },
+    ],
     has => [
         variant_type => {
             is_constant => 1,
@@ -19,7 +28,8 @@ class Genome::Model::Tools::Vcf::CreateCrossSampleVcf::CreateCrossSampleVcfSnvs 
 sub execute {
     my ($self) = @_;
 
-    $self->status_message("Resolving Builds...");
+    Genome::Sys->create_directory($self->output_directory);
+    $self->debug_message("Resolving Builds...");
     my $builds = $self->_resolve_builds();
     my %params = (
         builds => $builds,
@@ -35,7 +45,7 @@ sub execute {
        delete $params{'wingspan'};
     }
     my $software_result = Genome::Model::Tools::Vcf::CreateCrossSampleVcf::CreateCrossSampleVcfSnvs::Result->get_or_create(%params);
-    $self->status_message("Got or created software result with id "
+    $self->debug_message("Got or created software result with id "
         . $software_result->id . " (test_name='" . $software_result->test_name . "')");
     Genome::Sys->symlink_directory($software_result->output_dir,
         $self->output_directory);
@@ -59,16 +69,20 @@ sub _get_workflow_xml {
 sub _get_variant_type_specific_inputs {
     my $self = shift;
 
-    my @builds = $self->builds;
-    my $pp = ($builds[0])->processing_profile;
-    my ($samtools_version, $samtools_params) = $self->_get_samtools_version_and_params($pp->snv_detection_strategy);
-
+    $self->_resolve_samtools_version();
     my %inputs = (
-        build_clumps => $self->build_clumps,
-        samtools_version => $samtools_version,
-        samtools_params => $samtools_params,
+        samtools_version => $self->samtools_version,
+        samtools_params => $self->samtools_pileup_params,
     );
     return \%inputs;
+}
+
+sub _resolve_samtools_version {
+    my $self = shift;
+    if (!defined($self->samtools_version)) {
+        $self->samtools_version(Genome::Model::Tools::Sam->default_samtools_version);
+    }
+    return $self->samtools_version;
 }
 
 1;

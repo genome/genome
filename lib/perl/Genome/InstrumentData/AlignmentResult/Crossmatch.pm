@@ -109,7 +109,7 @@ sub _run_aligner {
                         "Possibly didn't end with .fq so couldn't extract name?");
                     $self->die($self->error_message);
                 }
-                $self->status_message("Iteration $minor of splitting fq '$input_file' into '".$chunk{'qual_infile'}."' and '".$chunk{'fasta_infile'}."'.");
+                $self->debug_message("Iteration $minor of splitting fq '$input_file' into '".$chunk{'qual_infile'}."' and '".$chunk{'fasta_infile'}."'.");
 
                 my $out_seq_obj = Bio::SeqIO->new(
                     -file   => ">".$chunk{'fasta_infile'},
@@ -184,7 +184,7 @@ sub _run_aligner {
                         $self->error_message("Error opening sam output file for writing $!");
                         return;
                     }
-                    $self->status_message("For converting, opened ".$cv->{'sam_output'});
+                    $self->debug_message("For converting, opened ".$cv->{'sam_output'});
                     ### The following was adapted from code by Nancy Hansen <nhansen@mail.nih.gov>
 
                     ##########################################################
@@ -304,14 +304,14 @@ sub _filter_sam_output {
             $self->error_message("Error opening output sam file for reading: $!");
             return;
     }
-    $self->status_message("Opened $aligned_sam_file");
+    $self->debug_message("Opened $aligned_sam_file");
 
     my $all_seq_fh = IO::File->new(">>$all_sequences_sam_file");
     if ( !$all_seq_fh ) {
         $self->error_message("Error opening all seq sam file for writing: $!");
         return;
     }
-    $self->status_message("Opened $all_sequences_sam_file");
+    $self->debug_message("Opened $all_sequences_sam_file");
     
     while (<$aligned_fh>) {
         #write out the aligned map, excluding the default header- all lines starting with @.
@@ -419,6 +419,6 @@ sub _sam_string {
 sub prepare_reference_sequence_index {
     my $class = shift;
 
-    $class->status_message("Crossmatch doesn't need any index made, doing nothing.");
+    $class->debug_message("Crossmatch doesn't need any index made, doing nothing.");
 
 }

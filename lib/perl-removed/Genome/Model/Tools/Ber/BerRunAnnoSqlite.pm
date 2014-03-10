@@ -197,7 +197,7 @@ sub gather_details
 		      '-e',
 		      $bsubannoerr,
 		      '-q',
-		      'long',
+		      $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
               '-M',
               '8000000',
 		      '-n',

@@ -8,6 +8,8 @@ use Sort::Naturally qw(nsort);
 use Genome::Info::IUB;
 use Spreadsheet::WriteExcel;
 use File::Basename;
+use File::Path qw(make_path remove_tree);
+
 
 class Genome::Model::Tools::Validation::ProcessSomaticValidation {
   is => 'Command',
@@ -490,7 +492,7 @@ sub addTiering{
     return($newfile);
 }
 
-sub getReadcounts{
+sub getReadcountsOld{
     my ($file, $ref_seq_fasta, @bams) = @_;
     #todo - should check if input is bed and do coversion if necessary
 
@@ -518,14 +520,45 @@ sub getReadcounts{
     return("$file.rcnt");
 }
 
+
+sub getReadcounts{
+    my ($file, $ref_seq_fasta, $bams, $labels) = @_;
+    #todo - should check if input is bed and do coversion if necessary
+
+    my $output_file = "$file.rcnt";
+    if( -s $file ){
+        my $bamfiles = join(",",@$bams);
+	my $header = join(",",@$labels);
+
+        #get readcounts from the tumor bam only
+        my $rc_cmd = Genome::Model::Tools::Analysis::Coverage::AddReadcounts->create(
+            bam_files => $bamfiles,
+            output_file => $output_file,
+            variant_file => $file,
+            genome_build => $ref_seq_fasta,
+            header_prefixes => $header,
+            indel_size_limit => 4,
+            );
+        unless ($rc_cmd->execute) {
+            die "Failed to obtain readcounts for file $file.\n";
+        }
+    } else {
+        `touch $output_file`;
+    }
+
+    return($output_file);
+}
 ###############################################################################################################
 sub execute {
+
+  $DB::single = 1;
   my $self = shift;
   my $output_dir = $self->output_dir;
   $output_dir =~ s/(\/)+$//; # Remove trailing forward-slashes if any
 
-  if(!(-e $output_dir)){
-      mkdir($output_dir);
+  #make the outputdir if it doesn't exist
+  if(!-d $output_dir){
+      make_path($output_dir);
   }
 
   unless(defined($self->somatic_validation_build_id) || defined($self->somatic_validation_model_id)){
@@ -538,15 +571,15 @@ sub execute {
   if(defined($self->somatic_validation_model_id)){
       $model = Genome::Model->get( $self->somatic_validation_model_id );
       print STDERR "ERROR: Could not find a model with ID: " . $self->somatic_validation_model_id . "\n" unless( defined $model );
-      print STDERR "ERROR: Output directory not found: $output_dir\n" unless( -e $output_dir );
-      return undef unless( defined $model && -e $output_dir );
+      print STDERR "ERROR: Output directory not found: $output_dir\n" unless( -d $output_dir );
+      return undef unless( defined $model && -d $output_dir );
       $build = $model->last_succeeded_build;
   } elsif(defined($self->somatic_validation_build_id)){
       $build = Genome::Model::Build->get( $self->somatic_validation_build_id );
       $model = $build->model;
       print STDERR "ERROR: Could not find a model with ID: " . $self->somatic_validation_model_id . "\n" unless( defined $model );
-      print STDERR "ERROR: Output directory not found: $output_dir\n" unless( -e $output_dir );
-      return undef unless( defined $model && -e $output_dir );      
+      print STDERR "ERROR: Output directory not found: $output_dir\n" unless( -d $output_dir );
+      return undef unless( defined $model && -d $output_dir );      
   }
 
   unless( defined($build) ){
@@ -592,12 +625,26 @@ sub execute {
       $sample_name = $self->sample_name;
   }
 
+  
   print STDERR "processing model with sample_name: " . $sample_name . "\n";
+  #retrieve validation BAMs
   my $tumor_bam = $build->tumor_bam;
   my $normal_bam;
   unless($self->tumor_only){
       $normal_bam = $build->normal_bam;
   }
+  #retrieve wgs/wxs BAMs from somatic_variation model
+  my $som_var_bam_files=[];
+  my $som_var_labels=[];
+  if(defined $self->somatic_variation_model_id){
+      ($som_var_bam_files,$som_var_labels) = process_somatic_variation_models($self->somatic_variation_model_id,$sample_name);
+  
+  }
+
+
+
+
+
   my $build_dir = $build->data_directory;
 
 
@@ -614,10 +661,10 @@ sub execute {
       $sample_name = $newname;
   }
   #make the directory structure
-  mkdir "$output_dir/$sample_name";
-  mkdir "$output_dir/$sample_name/snvs" unless( -e "$output_dir/$sample_name/snvs" );
-  mkdir "$output_dir/$sample_name/indels" unless( -e "$output_dir/$sample_name/indels" );
-  mkdir "$output_dir/review" unless( -e "$output_dir/review" || !($self->create_review_files));
+  make_path("$output_dir/$sample_name");
+  make_path("$output_dir/$sample_name/snvs") unless( -d "$output_dir/$sample_name/snvs" );
+  make_path("$output_dir/$sample_name/indels") unless( -d "$output_dir/$sample_name/indels" );
+  make_path("$output_dir/review") unless( -d "$output_dir/review" || !($self->create_review_files));
   `ln -s $build_dir $output_dir/$sample_name/build_directory`;
 
 
@@ -761,10 +808,15 @@ sub execute {
 
   ##------------------------------------------------------
   # do annotation
+
+  my $x=1;
   for($i=0;$i<@snv_files;$i++){
-     $snv_files[$i] = doAnnotation($snv_files[$i], $annotation_build_name);
+      $snv_files[$i] = doAnnotation($snv_files[$i], $annotation_build_name);
+      my $x=1;
   }
   $indel_file = doAnnotation($indel_file, $annotation_build_name);
+
+
   # #for testing
   # for($i=0;$i<@snv_files;$i++){
   #    $snv_files[$i] =~ s/\.bed//g;
@@ -851,17 +903,49 @@ sub execute {
       print STDERR "Getting readcounts...\n";
       if(!(defined($tumor_bam)) || !(-s $tumor_bam)){
           print STDERR "Tumor bam not found - skipping readcounting\n";
-      } else {
+      } 
+      else {
+	  #getting readcounts for SNV files
           for($i=0;$i<@snv_files;$i++){
+	      my @bamfiles=();
+	      my @labels=();
+	      if(scalar(@$som_var_bam_files)) { #if user specified som_var_model; grab readcounts from that first
+		  push(@bamfiles, @$som_var_bam_files);
+		  push(@labels,('somvar_Normal','somvar_Tumor')); #manually label the header #default is more suited for IGV xml crap
+	      }
+
               if(!defined($normal_bam) || $self->tumor_only){
-                  $snv_files[$i] = getReadcounts($snv_files[$i], $ref_seq_fasta, $tumor_bam);
-              } else {
-                  $snv_files[$i] = getReadcounts($snv_files[$i], $ref_seq_fasta, $normal_bam, $tumor_bam);
+		  push(@bamfiles,$tumor_bam);
+		  push(@labels,'val_Tumor');
+              } elsif(defined($normal_bam) && !$self->tumor_only) {
+		  push(@bamfiles,($normal_bam,$tumor_bam));
+		  push(@labels,('val_Normal','val_Tumor'));
               }
+	      $snv_files[$i] = getReadcounts($snv_files[$i], $ref_seq_fasta, \@bamfiles, \@labels);
+	      
           }
+
+	  #grab readcount for indels from the som_varmodel
+	  if(scalar(@$som_var_bam_files)) { #if user specified som_var_model
+	      my @bamfiles=();
+	      my @labels=();
+	      push(@bamfiles, @$som_var_bam_files);
+	      push(@labels,('somvar_Normal','somvar_Tumor')); #manually label the header #default is more suited for IGV xml crap
+	      $indel_file = getReadcounts($indel_file, $ref_seq_fasta, \@bamfiles,\@labels );
+
+
+	  }
 
           #we can grab more accurate indel readcounts from the intermediate files, but only if the indel realignment was done
           #realigned
+	  my $get_tumor_only;
+	  if(!defined($normal_bam) || $self->tumor_only){
+	      $get_tumor_only=1;
+	  }elsif(defined($normal_bam) && !$self->tumor_only) {
+	      $get_tumor_only=0;
+	  }
+
+          
           if($small_indel_file =~ /final_output/){
               my %counts;
               #first small indels
@@ -874,21 +958,50 @@ sub execute {
                   my $key = join("\t",@F[0..4]);
                   $F[9] =~ s/%//g;
                   $F[13] =~ s/%//g;
-                  $counts{$key} = join("\t",(@F[7..9],@F[11..13]));
+
+		  if($get_tumor_only){
+		      $counts{$key} = join("\t",@F[11..13]);  #only grab tumor readcount
+		  }else {
+		      $counts{$key} = join("\t",(@F[7..9],@F[11..13]));  #grab both normal and tumor read count
+		  }
+                  #$counts{$key} = join("\t",(@F[7..9],@F[11..13]));
               }
               #then large indels
-              $inFh = IO::File->new( $large_indel_file ) || die "can't open small indel file\n";
+              $large_indel_file =~ s/\.adapted//g;
+              $inFh = IO::File->new( $large_indel_file ) || die "can't open large indel file\n";
               while( my $line = $inFh->getline ){
                   chomp($line);
                   my @F = split("\t",$line);
-
                   next if($line =~ /^chrom/ || !($line =~ /Somatic/));
-                  my $key = join("\t",@F[0..4]);
-                  $counts{$key} = join("\t",($F[22]-$F[9], $F[9], $F[23], $F[27]-$F[20], $F[20], $F[28]));
+
+                  my @comp = split("_",$F[0]);
+                  my $key = $comp[0];
+                  
+                  if($comp[1] =~ /(\d+)\(\d+\)/){
+                      $key = $key . "\t" . $1;
+                  } else {
+                      print STDERR "WARNING: unable to parse \"$F[0]\"\n";
+                      next;
+                  }
+                  if($comp[2] =~ /\d+\((\d+)\)/){
+                      $key = $key . "\t" . $1;
+                  } else {
+                      print STDERR "WARNING: unable to parse \"$F[0]\"\n";
+                      next;
+                  }
+                  $key = $key . "\t" . $comp[5] . "\t" . $comp[6];
+                  print STDERR $key . "\n";
+                  if($get_tumor_only){
+		      $counts{$key} = join("\t",($F[27]-$F[21], $F[21], $F[28]));
+		  }else {
+		      $counts{$key} = join("\t",($F[22]-$F[11], $F[11], $F[23], $F[27]-$F[21], $F[21], $F[28]));
+		  }
+
               }
 
+	      my $header = join("\t",qw(val_Normal_ref_count val_Normal_var_count val_Normal_VAF val_Tumor_ref_count val_Tumor_var_count val_Tumor_VAF));
               open(OUTFILE,">$indel_file.rcnt");
-              my $header = join("\t",qw(Normal_ref_count Normal_var_count Normal_VAF Tumor_ref_count Tumor_var_count Tumor_VAF));
+	      $header = join("\t",qw(val_Tumor_ref_count val_Tumor_var_count val_Tumor_VAF)) if($get_tumor_only);
 
               $inFh = IO::File->new( $indel_file ) || die "can't open small indel file\n";
               while( my $line = $inFh->getline ){
@@ -904,17 +1017,34 @@ sub execute {
                   if(defined($counts{$key})){
                       print OUTFILE join("\t",(@F)) . "\t" . $counts{$key} . "\n";
                   } else {
-                      print OUTFILE join("\t",(@F)) . "\tNA\tNA\tNA\tNA\tNA\tNA\n";
+		      my $NA_string;
+		      if($get_tumor_only) { 
+			  $NA_string = "\tNA\tNA\tNA\n";
+		      }else {
+			  $NA_string = "\tNA\tNA\tNA\tNA\tNA\tNA\n";
+		      }
+		      print OUTFILE join("\t",(@F)) . $NA_string;
                   }
               }
-              $indel_file = addName($indel_file,"rcnt");
+	      if($indel_file =~ /\.rcnt$/) { #if a file name already ends in rcnt change the new file name to avoid *.rcnt.rcnt
+		  rename("$indel_file.rcnt", $indel_file);		  
+	      }else {
+		  $indel_file = addName($indel_file,"rcnt"); #if a file name does not end in rcnt, append rcnt suffix
+	      }
 
           } else { #not realigned, use bam-readcount
+	      my @bamfiles=();
+	      my @labels=();
+
               if(!defined($normal_bam) || $self->tumor_only){
-                  $indel_file = getReadcounts($indel_file, $ref_seq_fasta, $tumor_bam);
-              } else {
-                  $indel_file = getReadcounts($indel_file, $ref_seq_fasta, $normal_bam, $tumor_bam);
+		  push(@bamfiles,$tumor_bam);
+		  push(@labels,'val_Tumor');
+              } elsif(defined($normal_bam) && !$self->tumor_only) {
+		  push(@bamfiles,($normal_bam,$tumor_bam));
+		  push(@labels,('val_Normal','val_Tumor'));
               }
+	      $indel_file = getReadcounts($indel_file, $ref_seq_fasta, \@bamfiles,\@labels );
+
           }
       }
   }
@@ -1002,48 +1132,26 @@ sub execute {
       `rm -f $output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp`;
       `rm -f $output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp2`;
 
-      my @bam_files;
-      my @labels;
-
+      my $bam_files;
+      my $labels;
 
       #add bam files from som-var model, if specified
       if(defined $self->somatic_variation_model_id){
-          my $var_model = Genome::Model->get( $self->somatic_variation_model_id );
-          if (!( defined $var_model )){
-              print STDERR "ERROR: Could not find a model with ID: " . $self->somatic_validation_model_id . "\n";
-          } else {
-              my $tvar_build = $var_model->tumor_model->last_succeeded_build;
-              my $nvar_build = $var_model->normal_model->last_succeeded_build;
-              if (!( defined $nvar_build ) || !(defined $tvar_build) ){
-                  print STDERR "ERROR: Could not find a succeeded refalign builds from model ID: " . $self->somatic_validation_model_id . "\n";
-              } else {                  
-                  my $tbam = $tvar_build->whole_rmdup_bam_file;
-                  my $nbam = $nvar_build->whole_rmdup_bam_file;
-                  
-                  if (!( -s $tbam && -s $nbam)){
-                      print STDERR "couldn't resolve bam files for somatic variation model";
-                  } else {
-                      
-                      push(@bam_files, $nbam);
-                      push(@bam_files, $tbam);
-                      push(@labels, "original normal $sample_name");
-                      push(@labels, "original tumor $sample_name");
-                  }
-              }
-          }
+	  push(@$bam_files,@$som_var_bam_files);
+	  push(@$labels,@$som_var_labels);
       }
 
       
      # add bam files from this model
       if($self->tumor_only){
-          push(@bam_files, $tumor_bam);
-          push(@labels, "tumor $sample_name");
+          push(@$bam_files, $tumor_bam);
+          push(@$labels, "tumor $sample_name");
       } else {
-          push(@bam_files, $normal_bam);
-          push(@bam_files, $tumor_bam);
+          push(@$bam_files, $normal_bam);
+          push(@$bam_files, $tumor_bam);
 
-          push(@labels, "normal $sample_name");
-          push(@labels, "tumor $sample_name");
+          push(@$labels, "normal $sample_name");
+          push(@$labels, "tumor $sample_name");
       }
 
       my $igv_reference_name = "b37"; #default
@@ -1056,8 +1164,8 @@ sub execute {
 
       #create the xml file for review
       my $dumpXML = Genome::Model::Tools::Analysis::DumpIgvXmlMulti->create(
-          bams => join(",",@bam_files),
-          labels => join(",",@labels),
+          bams => join(",",@$bam_files),
+          labels => join(",",@$labels),
           output_file => "$output_dir/review/$sample_name.xml",
           genome_name => $sample_name,
           review_bed_file => "$output_dir/review/$sample_name.bed",
@@ -1129,6 +1237,50 @@ sub indel_files {
         $large_indel_file = "$build_dir/variants/indels.hq.bed";
         print STDERR $large_indel_file . "\n";
     }
+    print STDERR "indel1: " . $large_indel_file . "\n";
     return ($small_indel_file,$large_indel_file);
 }
+
+
+
+sub process_somatic_variation_models {
+#takes a somatic var model ID and returns the path to the 
+#parent BAM files and labels
+
+    my $som_var_model_id = shift;
+    my $sample_name = shift;   #som_var probably has its own sample name, but need to be consistent with validation model
+
+    my $var_model = Genome::Model->get($som_var_model_id);
+
+
+    my @bam_files;
+    my @labels;
+    my $som_var_obj={};
+    if(!defined($var_model)){
+	print STDERR "ERROR: Could not find a model with ID: $som_var_model_id\n";
+    }
+    else {
+	my $tvar_build = $var_model->tumor_model->last_succeeded_build;
+	my $nvar_build = $var_model->normal_model->last_succeeded_build;
+	if(!defined($nvar_build) || !defined($tvar_build) ){
+	    print STDERR "ERROR: Could not find a succeeded refalign builds from model ID: $som_var_model_id\n";
+	}
+	else {                  
+	    my $tbam = $tvar_build->whole_rmdup_bam_file;
+	    my $nbam = $nvar_build->whole_rmdup_bam_file;
+	    if (!-s $tbam && !-s $nbam){
+		print STDERR "couldn't resolve bam files for somatic variation model";
+	    } else {
+		push(@bam_files, ($nbam,$tbam));
+		push(@labels, "original normal $sample_name","original tumor $sample_name" );
+	    }
+	}
+    }
+
+
+    return (\@bam_files,\@labels);
+
+}
+
+
 1;

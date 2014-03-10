@@ -88,7 +88,7 @@ sub execute {
     my $variant_matrix = $self->variant_matrix;
     my $cleanup = $self->cleanup_intermediate_files || 0;
 
-    $self->status_message("Cleanup is set to $cleanup");
+    $self->debug_message("Cleanup is set to $cleanup");
 
     my $work_dir_obj = File::Temp->newdir(
         'ParallelClinicalCorrelation-intermediate-XXXXX',
@@ -132,10 +132,10 @@ sub execute {
     my $submatrices = $split_cmd->execute;
     confess "Failed to split variant matrix $variant_matrix!" unless @$submatrices;
 
-    $self->status_message("Split $variant_matrix into " . scalar(@$submatrices) . " submatrices, creating workflow.");
+    $self->debug_message("Split $variant_matrix into " . scalar(@$submatrices) . " submatrices, creating workflow.");
 
     if ($ENV{WF_USE_FLOW}) {
-        $self->status_message("Sleeping 90 seconds for NFS cache.");
+        $self->debug_message("Sleeping 90 seconds for NFS cache.");
         sleep(90);
     }
 
@@ -157,7 +157,7 @@ sub execute {
     $op->parallel_by('variant_matrix');
     $op->log_dir($log_dir);
 
-    $self->status_message("Executing workflow...");
+    $self->debug_message("Executing workflow...");
     my $output = Workflow::Simple::run_workflow_lsf($op, %params);
     unless (defined $output) {
         $self->error_message("Workflow execution failed!");
@@ -168,22 +168,22 @@ sub execute {
         $self->error_message(join("\n", @error));
         confess $self->error_message;
     }
-    $self->status_message("Workflow completed, merging intermediate results...");
+    $self->debug_message("Workflow completed, merging intermediate results...");
 
     my @glm_results = nsort glob("$sub_results_dir/*.glm.tsv");
     my @categorical_results = nsort glob("$sub_results_dir/*.categorical.tsv");
 
     if (@glm_results) {
-        $self->status_message("Merging " .scalar(@glm_results). " glm results");
+        $self->debug_message("Merging " .scalar(@glm_results). " glm results");
         my $merged_glm_fh = Genome::Sys->open_file_for_writing($glm_output_file);
         $self->_merge_results($merged_glm_fh, @glm_results);
         $self->glm_output_file($glm_output_file);
     }
     else {
-        $self->status_message("No glm results produced");
+        $self->debug_message("No glm results produced");
     }
     if (@categorical_results) {
-        $self->status_message("Merging " .scalar(@categorical_results). " categorical results");
+        $self->debug_message("Merging " .scalar(@categorical_results). " categorical results");
         my $tempfile = "$categorical_output_file.tmp";
         my $merged_categorical_fh = Genome::Sys->open_file_for_writing($tempfile);
         $self->_merge_results($merged_categorical_fh, @categorical_results);
@@ -193,11 +193,11 @@ sub execute {
         $self->categorical_output_file($categorical_output_file);
     }
     else {
-        $self->status_message("No categorical results produced");
+        $self->debug_message("No categorical results produced");
     }
 
 
-    $self->status_message("Parallel Clinical Correlation completed successfully.");
+    $self->debug_message("Parallel Clinical Correlation completed successfully.");
 
     return 1;
 };
@@ -220,7 +220,7 @@ sub _merge_results {
 
     # input/output file handles
     my @ifhs = map {Genome::Sys->open_file_for_reading($_)} @files;
-    $self->status_message("Opened " . scalar(@ifhs) . " intermediate files for merging.");
+    $self->debug_message("Opened " . scalar(@ifhs) . " intermediate files for merging.");
 
     my $header = $ifhs[0]->getline();
     for my $i (1..$#ifhs) {
@@ -235,7 +235,7 @@ sub _merge_results {
 
     $ofh->write($header);
     for my $i (0..$#ifhs) {
-        $self->status_message("Processing file $i of " . scalar(@ifhs));
+        $self->debug_message("Processing file $i of " . scalar(@ifhs));
         my $ifh = $ifhs[$i];
         while (my $line = $ifh->getline()) {
             $ofh->write($line);

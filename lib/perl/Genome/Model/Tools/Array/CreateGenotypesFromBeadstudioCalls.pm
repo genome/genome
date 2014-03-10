@@ -176,7 +176,7 @@ sub convert_to_genotype {
         my ($bin,$chr, $start0, $pos, $snp_id, $score, $strand, $observed_alleles) = $csv->fields();
 
         next if($bin =~ /^\#bin/xi); #skip header
-        $chr =~ s/^chr//;   #adjust from UCSC chromsome notation
+        $chr =~ s/^chr//;   #adjust from UCSC chromosome notation
         $chr =~ s/^M$/MT/; #further adjust chr
         if(exists($calls->{$snp_id}) && !exists($prev_scanned_probe{$snp_id})) {
             #Expecting forward strand calls

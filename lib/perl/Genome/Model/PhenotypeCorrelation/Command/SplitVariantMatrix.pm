@@ -25,8 +25,24 @@ class Genome::Model::PhenotypeCorrelation::Command::SplitVariantMatrix {
             doc => "The maximum number of columns allowed in any given output file",
             default_value => 5000,
         },
+        max_output_files => {
+            is => "Number",
+            doc => "The maximum number of output files (may override the value of max_cols_per_file for large inputs)",
+            default_value => 1000,
+        },
     ],
 };
+
+sub _compute_actual_cols_per_file {
+    my ($self, $n_cols) = @_;
+    my $max_cols = $self->max_cols_per_file;
+    my $n_files = int(ceil($n_cols / $max_cols));
+    if ($n_files > $self->max_output_files) {
+        $n_files = $self->max_output_files;
+        $max_cols = int(ceil($n_cols / $self->max_output_files));
+    }
+    return ($max_cols, $n_files);
+}
 
 sub execute {
     my ($self) = @_;
@@ -34,7 +50,6 @@ sub execute {
     my $delim = "\t";
     my $input_file = $self->input_file;
     my $prefix = $self->output_prefix;
-    my $max_cols_per_file = $self->max_cols_per_file;
 
     die "Can't split an empty vcf matrix!" unless -s $input_file;
     my $ifh = Genome::Sys->open_file_for_reading($input_file);
@@ -42,10 +57,11 @@ sub execute {
     chomp $header_line;
     my @header_fields = split($delim, $header_line);
     my $n_cols = scalar(@header_fields) - 1;
-    # Maybe we only "split" into 1 file. Oh well
-    my $n_files = int(ceil($n_cols / $max_cols_per_file));
 
-    $self->status_message("Splitting $input_file: $n_cols columns into $n_files files...\n");
+    my ($max_cols_per_file, $n_files) = $self->_compute_actual_cols_per_file($n_cols);
+
+    $self->status_message("Splitting $input_file: $n_cols columns into "
+        . "$n_files files with $max_cols_per_file cols each...\n");
 
     # array of n_files arrayrefs containing [start, stop] column for each file
     # note that the column indices will start from 1 since we have row names

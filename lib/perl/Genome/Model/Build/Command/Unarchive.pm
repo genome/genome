@@ -66,6 +66,10 @@ sub _execute {
             # Wait for all jobs to finish and gather status
             my %statuses = Genome::Sys->wait_for_lsf_jobs(@job_ids);
             %job_statuses = (%job_statuses, %statuses);
+
+            # since unarchives are happening in another process we need to reload them
+            my $ids = [map { $_->id } @allocations];
+            UR::Context->current->reload('Genome::Disk::Allocation', id => $ids);
         }
 
         # Old builds may have allocations symlinked to the data dir, and they may are archived, or the link is broken
@@ -79,7 +83,12 @@ sub _execute {
             $self->debug_message("Unarchives for symlinked allocations scheduled, waiting for completion");
             my %symlinked_allocation_job_statuses = Genome::Sys->wait_for_lsf_jobs(@symlinked_allocation_job_ids);
             %job_statuses = (%job_statuses, %symlinked_allocation_job_statuses);
+
+            # since unarchives are happening in another process we need to reload them
+            my $ids = [map { $_->id } @symlinked_allocations_that_need_unarchiving];
+            UR::Context->current->reload('Genome::Disk::Allocation', id => $ids);
         }
+
 
         # Relink broken symlinked allocations
         $build->relink_symlinked_allocations();
@@ -153,7 +162,7 @@ sub _bsub_unarchives {
             '--lab', $lab, '--requestor', $requestor,
         );
         my $job_id = Genome::Sys->bsub(
-            queue => 'long',
+            queue => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
             cmd => \@cmd,
             log_file => "$log_file_dir/$allocation_id.out",
             err_file => "$log_file_dir/$allocation_id.err",

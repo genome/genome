@@ -53,7 +53,7 @@ sub execute {
     my $netmhc_cmd;
     if ($version eq 3.0)
     	{
-		$netmhc_cmd = 'bsub -q techd -u jhundal@genome.wustl.edu -R \'select[mem >4000] rusage[mem=4000]\' -M 4000000 -N -oo'.
+		$netmhc_cmd = 'bsub -q techd -R \'select[mem >4000] rusage[mem=4000]\' -M 4000000 -N -oo'.
     				  $self->output_file.'_stdout'.
     				  ' /gsc/bin/netMHC -a '.
     				   $self->allele .
@@ -66,7 +66,7 @@ sub execute {
    elsif ($version eq 3.4)
 
 	{
-		$netmhc_cmd = 'bsub -q techd -u jhundal@genome.wustl.edu -R \'select[mem >4000] rusage[mem=4000]\' -M 4000000 -N -oo'.
+		$netmhc_cmd = 'bsub -q techd -R \'select[mem >4000] rusage[mem=4000]\' -M 4000000 -N -oo'.
                                   $self->output_file.'_stdout'.
                                   ' /gscmnt/sata141/techd/jhundal/netMHC/NetMHC3.4/ATTEMPT4/NetMHC/netMHC  -a '.
                                    $self->allele .

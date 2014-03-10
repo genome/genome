@@ -154,14 +154,4 @@ sub input_to_tsv {
     return 1;
 }
 
-sub import_tsv {
-    my $self = shift;
-    my $genes_outfile_path = $self->genes_outfile;
-    my $citation = $self->_create_citation('Ensembl', $self->version, $self->citation_base_url, $self->citation_site_url, $self->citation_text, 'Ensembl');
-    my @gene_name_reports = $self->import_genes($genes_outfile_path, $citation); #Imports gene names and related info to Dgidb and returns gene_name_report objects
-    #We don't actually need to do anything with these objects, the data is ready to be commited to the database but will not be committed until after the execute finishes
-
-    return 1;
-}
-
 1;

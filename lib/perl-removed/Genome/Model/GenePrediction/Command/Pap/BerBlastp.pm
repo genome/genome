@@ -48,20 +48,13 @@ class Genome::Model::GenePrediction::Command::Pap::BerBlastp {
                      is_output => 1,
                    },
         lsf_queue => { is_param => 1,
-                       default_value => 'long',
+                       default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
         },
         lsf_resource => { is_param => 1,
                           default_value => 'rusage[tmp=100]',
         },
     ],
 };
-
-#operation Genome::Model::GenePrediction::Command::Pap::BerBlastp {
-#    input        => [ 'sequence_names', 'fastadir','blastp_query', 'berdirpath' ],
-#    output       => [ 'success'],
-#    lsf_queue    => 'long',
-#    lsf_resource => 'rusage[tmp=100]'
-#};
 
 sub sub_command_sort_position { 10 }
 
@@ -86,14 +79,14 @@ sub execute {
 
     my $blp_err_path = $self->berdirpath;
     $blp_err_path =~ s/ber/bsubERRfiles/;
-    $self->status_message('getting ready to run this stuff');
+    $self->debug_message('getting ready to run this stuff');
     unless(-d $blp_err_path)
     {
         warn "creating directory $blp_err_path for error files";
         mkdir($blp_err_path);
     }
 
-    $self->status_message('starting run of blastp...');
+    $self->debug_message('starting run of blastp...');
     foreach my $seqname (@{$self->sequence_names})
     {
 
@@ -124,7 +117,7 @@ sub execute {
         write_file($blp_err_path."/bsub.err.blp.".$seqname,
                    $blastp_err);
     }    
-    $self->status_message('blastp done.');
+    $self->debug_message('blastp done.');
     $self->success(1);
     return 1;
 

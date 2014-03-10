@@ -13,7 +13,7 @@ Example: 2774516127
 =cut
 
 class Genome::Site::TGI::Synchronize::Classes::PopulationGroup { 
-    is => 'UR::Object',
+    is => 'Genome::Site::TGI::Synchronize::Classes::LimsBase',
     table_name => 'POPULATION_GROUP',
     id_by => [
         id => { is => 'Number', column_name => 'PG_ID' },
@@ -39,6 +39,8 @@ class Genome::Site::TGI::Synchronize::Classes::PopulationGroup {
     data_source => 'Genome::DataSource::Dwrac',
 };
 
+sub entity_name { return 'population group'; }
+
 sub properties_to_copy {# 4
     return ( 'id', 'member_ids', properties_to_keep_updated() );
 }
@@ -49,10 +51,6 @@ sub properties_to_keep_updated {# 3
         taxon_id
         description
     /);
-}
-
-sub lims_property_name_to_genome_property_name {
-    return $_[1];
 }
 
 1;

@@ -117,7 +117,7 @@ sub _resolve_workflow_for_build {
     my $lsf_project = shift;
 
     if (!defined $lsf_queue || $lsf_queue eq '' || $lsf_queue eq 'inline') {
-        $lsf_queue = 'apipe';
+        $lsf_queue = $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
     }
     if (!defined $lsf_project || $lsf_project eq '') {
         $lsf_project = 'build' . $build->id;
@@ -158,7 +158,7 @@ sub _generate_events_for_build {
         # FIXME why are we attempting to schedule stages that have no classes??
         my @events = $self->_generate_events_for_build_stage($build,$stage_name);
         unless ( @events ) {
-            $self->warning_message(
+            $self->debug_message(
                     'Stage '. $stage_name .' for build ('
                     . $build->build_id .") failed to schedule objects for classes:\n"
                     . join("\n",$self->classes_for_stage($stage_name, $build->model))
@@ -356,6 +356,10 @@ sub _workflow_for_stage {
         if (!defined($first_event->bsub_rusage)) {
             print Data::Dumper::Dumper($first_event);
             Carp::confess();
+        }
+
+        if ($first_event->lsf_queue()) {
+            $lsf_queue = $first_event->lsf_queue();
         }
 
         $first_operation->operation_type->lsf_resource($first_event->bsub_rusage . $first_event_log_resource);

@@ -21,7 +21,7 @@ TAXON_ID       NUMBER   (10)                    {null} NOT NULL ok
 =cut
 
 class Genome::Site::TGI::Synchronize::Classes::OrganismIndividual {
-    is => 'UR::Object',
+    is => 'Genome::Site::TGI::Synchronize::Classes::LimsBase',
     table_name => 'ORGANISM_INDIVIDUAL',
     id_by => [
         id => { is => 'Number', len => 10, column_name => 'ORGANISM_ID' },
@@ -43,6 +43,8 @@ class Genome::Site::TGI::Synchronize::Classes::OrganismIndividual {
     ],
     data_source => 'Genome::DataSource::Dwrac',
 };
+
+sub entity_name { return 'individual'; }
 
 sub properties_to_copy {# 12
     return ( 'id', properties_to_keep_updated() );

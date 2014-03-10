@@ -17,6 +17,7 @@ use Workflow;
 use YAML;
 use Date::Manip;
 
+use Genome::Sys::LSF::bsub qw();
 use Genome::Utility::Email;
 
 class Genome::Model::Build {
@@ -243,6 +244,13 @@ class Genome::Model::Build {
 sub __display_name__ {
     my $self = shift;
     return $self->id . ' of ' . $self->model->name;
+}
+
+sub model_class {
+    my $self = shift;
+    my $model_class = $self->class;
+    $model_class =~ s/::Model::Build/::Model/;
+    return $model_class;
 }
 
 sub data_set_path {
@@ -540,115 +548,77 @@ sub _cpu_slot_usage_breakdown {
     my %steps;
 
     my $workflow_instance = $self->newest_workflow_instance;
-    if (1) { #($workflow_instance) {
-        my $bx;
-        if (@params) {
-            if ($params[0] =~ /event_type/) {
-                $params[0] =~ s/event_type/name/;
-            }
-            $bx = Workflow::Operation::Instance->define_boolexpr(@params);
+    my $bx;
+    if (@params) {
+        if ($params[0] =~ /event_type/) {
+            $params[0] =~ s/event_type/name/;
         }
-
-
-        my @all_children;
-        my @queue = $workflow_instance;
-
-        while ( my $next = shift @queue ) {
-            my @children = $next->related_instances;
-            push @all_children, @children;
-            push @queue,        @children;
-        }
-
-        for my $op_inst (@all_children) {
-            if ($bx and not $bx->evaluate($op_inst)) {
-                warn "skipping $op_inst $op_inst->{name}...\n";
-                next;
-            }
-            my $op = $op_inst->operation;
-            my $op_name = $op->name;
-            my $op_type = $op->operation_type;
-
-            if ($op_type->class eq 'Workflow::OperationType::Model') {
-                # don't double count
-                #print "\tskipping workflow model instance...\n";
-                next;
-            }
-
-            if ($op_type->can('lsf_queue') and defined($op_type->lsf_queue) and ($op_type->lsf_queue eq 'workflow' or $op_type->lsf_queue eq $ENV{WF_SERVER_QUEUE})) {
-                # skip jobs which run in workflow because they internally run another workflow
-                #print "\tskipping workflow queue job...\n";
-                next;
-            }
-
-            my $cpus = 1;
-            my $rusage = ($op_type->can('lsf_resource') ? $op_type->lsf_resource : undef);
-            if (defined($rusage)) {
-                if ($rusage =~ /(?<!\S)-n\s+(\S+)/) {
-                    $cpus = $1;
-                    #warn "MULTIPLE CPUS: $cpus on $op_name!\n";
-                }
-            }
-
-            my $eclass;
-            if ($op_type->can('command_class_name')) {
-                $eclass = $op_type->command_class_name;
-            }
-
-            my $d1    = Date::Manip::ParseDate( $op_inst->end_time );
-            my $d2    = Date::Manip::ParseDate( $op_inst->start_time );
-            my $delta = Date::Manip::DateCalc( $d2, $d1 );
-            my $value = Date::Manip::Delta_Format( $delta, 1, "%mt" );
-
-            if ($value eq '') {
-                #print "null value for " . $op_inst->start_time . " - " . $op_inst->end_time . "\n";
-                $value = 0; # for crashed/incomplete steps
-            }
-
-            if ($cpus eq '') {
-                die "null cpus??? resource was $rusage\n";
-            }
-
-            #print "$op_type\t$op_name\t$rusage\t$cpus\n";# . $op_inst->start_time . "\t" . $op_inst->end_time . "\t$value\n";
-
-            my $key         = $op_inst->name;
-            $key =~ s/ \d+$//;
-            $steps{$key}{sum} ||= 0;
-            $steps{$key}{count} ||= 0;
-            $steps{$key}{sum} += $value * $cpus;
-            $steps{$key}{count} += $cpus;
-        }
+        $bx = Workflow::Operation::Instance->define_boolexpr(@params);
     }
-    else {
-        my @events = $self->events(@_);
-        my $s = 0;
-        for my $event (@events) {
-            # the master event has an elapsed time for the whole process: don't double count
-            next if (ref($event) eq 'Genome::Model::Event::Build');
 
-            # this would be a method on event, but we won't keep it that long
-            # it's just good enough to do the calc for the grant 2011-01-30 -ss
-            my $cores;
-            if (ref($event) =~ /deduplicate/i) {
-                $cores = 4;
-            }
-            elsif (ref($event) =~ /AlignReads/) {
-                $cores = 4;
-            }
-            else {
-                $cores = 1;
-            }
-            my $e = UR::Time->datetime_to_time($event->date_completed)
-                    -
-                    UR::Time->datetime_to_time($event->date_scheduled);
-            if ($e < 0) {
-                warn "event " . $event->__display_name__ . " has negative elapsed time!";
-                next;
-            }
 
-            my $name = $event->event_type;
-            $steps{$name}{sum} += ($e * $cores/60);
-            $steps{$name}{count} += $cores
+    my @all_children;
+    my @queue = $workflow_instance;
+
+    while ( my $next = shift @queue ) {
+        my @children = $next->related_instances;
+        push @all_children, @children;
+        push @queue,        @children;
+    }
+
+    for my $op_inst (@all_children) {
+        if ($bx and not $bx->evaluate($op_inst)) {
+            warn "skipping $op_inst $op_inst->{name}...\n";
+            next;
         }
+        my $op = $op_inst->operation;
+        my $op_name = $op->name;
+        my $op_type = $op->operation_type;
+
+        if ($op_type->class eq 'Workflow::OperationType::Model') {
+            # don't double count
+            next;
+        }
+
+        if ($op_type->can('lsf_queue') and defined($op_type->lsf_queue)
+            and $op_type->lsf_queue eq $ENV{GENOME_LSF_QUEUE_BUILD_WORKFLOW}
+        ) {
+            # skip jobs which run in workflow because they internally run another workflow
+            next;
+        }
+
+        my $cpus = 1;
+        my $rusage = ($op_type->can('lsf_resource') ? $op_type->lsf_resource : undef);
+        if (defined($rusage)) {
+            if ($rusage =~ /(?<!\S)-n\s+(\S+)/) {
+                $cpus = $1;
+            }
+        }
+
+        my $eclass;
+        if ($op_type->can('command_class_name')) {
+            $eclass = $op_type->command_class_name;
+        }
+
+        my $d1    = Date::Manip::ParseDate( $op_inst->end_time );
+        my $d2    = Date::Manip::ParseDate( $op_inst->start_time );
+        my $delta = Date::Manip::DateCalc( $d2, $d1 );
+        my $value = Date::Manip::Delta_Format( $delta, 1, "%mt" );
+
+        if ($value eq '') {
+            $value = 0; # for crashed/incomplete steps
+        }
+
+        if ($cpus eq '') {
+            die "null cpus??? resource was $rusage\n";
+        }
+
+        my $key         = $op_inst->name;
+        $key =~ s/ \d+$//;
+        $steps{$key}{sum} ||= 0;
+        $steps{$key}{count} ||= 0;
+        $steps{$key}{sum} += $value * $cpus;
+        $steps{$key}{count} += $cpus;
     }
 
     return \%steps;
@@ -736,6 +706,36 @@ sub all_allocations {
 
     my %allocations = map { $_->id => $_ } @allocations;
     return values %allocations;
+}
+
+sub disk_usage_allocations {
+    my $self = shift;
+
+    my @allocations;
+    push @allocations, $self->disk_allocation if $self->disk_allocation;
+
+    push @allocations, $self->user_allocations;
+    push @allocations, $self->symlinked_allocations;
+
+    # Build inputs should not be counted toward the disk usage of a build
+    #push @allocations, $self->input_allocations;
+    push @allocations, $self->event_allocations;
+
+    my %allocations = map { $_->id => $_ } @allocations;
+    my @disk_usage_allocations;
+    my $owner_class;
+    for my $allocation (values %allocations) {
+        $owner_class = $allocation->owner_class_name;
+        next if $owner_class->isa('Genome::InstrumentData');
+        next if $owner_class->isa('Genome::Model::Build') and
+            $allocation->owner_id ne $self->id;
+        next if $owner_class->isa('Genome::Model::Build::ReferenceSequence::AlignerIndex');
+        next if $owner_class->isa('Genome::FeatureList');
+        next if $owner_class->isa('Genome::Model::Tools::DetectVariants2::Result::Manual');
+        next if $owner_class->isa('Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::VariableReadLength::Index');
+        push @disk_usage_allocations, $allocation;
+    }
+    return @disk_usage_allocations;
 }
 
 sub input_allocations {
@@ -867,24 +867,24 @@ sub input_builds {
 
 sub relink_symlinked_allocations {
     my $self = shift;
-    $self->status_message('Relink symlinked allocations...');
+    $self->debug_message('Relink symlinked allocations...');
 
     my @symlinked_allocations = $self->symlinked_allocations;
-    $self->status_message('Found '.@symlinked_allocations.' symlinked allocations');
+    $self->debug_message('Found '.@symlinked_allocations.' symlinked allocations');
     return 1 if not @symlinked_allocations;
 
     for my $symlinked_allocation ( @symlinked_allocations ) {
-        $self->status_message('Allocation: '.$symlinked_allocation->id);
+        $self->debug_message('Allocation: '.$symlinked_allocation->id);
         my $symlink_name = $symlinked_allocation->{_symlink_name};
-        $self->status_message("Symlink name: $symlink_name");
+        $self->debug_message("Symlink name: $symlink_name");
         my $target_name = $symlinked_allocation->{_target_name};
-        $self->status_message("Target name: $target_name");
+        $self->debug_message("Target name: $target_name");
         if ( $symlinked_allocation->{_target_exists} ) {
-            $self->status_message('Target exists! Skipping...');
+            $self->debug_message('Target exists! Skipping...');
             next;
         }
         if ( $symlinked_allocation->absolute_path eq $symlinked_allocation->{_target_name} ) {
-            $self->status_message('Target name matches absolute path! Skipping...');
+            $self->debug_message('Target name matches absolute path! Skipping...');
             next;
         }
         my $new_target = $symlinked_allocation->absolute_path;
@@ -892,14 +892,14 @@ sub relink_symlinked_allocations {
             $self->error_message('Allocation failed to reload or is still archived. Please correct. Skipping...');
             next;
         }
-        $self->status_message("Remove broken link: $symlink_name TO $target_name");
+        $self->debug_message("Remove broken link: $symlink_name TO $target_name");
         unlink($symlink_name);
-        $self->status_message("Add link: $symlink_name TO $new_target");
+        $self->debug_message("Add link: $symlink_name TO $new_target");
         symlink($new_target, $symlink_name);
         $self->error_message('Failed to relink allocation!') if not -l $symlink_name;
     }
 
-    $self->status_message('Relink symlinked allocations...Done');
+    $self->debug_message('Relink symlinked allocations...Done');
     return 1;
 }
 
@@ -925,7 +925,7 @@ sub add_report {
     if (-d $directory) {
         my $subdir = $directory . '/' . $report->name_to_subdirectory($report->name);
         if (-e $subdir) {
-            $self->status_message("Sub-directory $subdir exists!   Moving it out of the way...");
+            $self->debug_message("Sub-directory $subdir exists!   Moving it out of the way...");
             my $n = 1;
             my $max = 20;
             while ($n < $max and -e $subdir . '.' . $n) {
@@ -948,7 +948,7 @@ sub add_report {
     }
 
     if ($report->save($directory)) {
-        $self->status_message("Saved report to override directory: $directory");
+        $self->debug_message("Saved report to override directory: $directory");
         return 1;
     }
     else {
@@ -1017,7 +1017,7 @@ sub start {
 
         # Creates a workflow for the build
         # TODO Initialize workflow shouldn't take arguments
-        unless ($self->_initialize_workflow($params{job_dispatch} || $ENV{WF_JOB_QUEUE})) {
+        unless ($self->_initialize_workflow($params{job_dispatch} || $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT})) {
             Carp::croak "Build " . $self->__display_name__ . " could not initialize workflow!";
         }
 
@@ -1304,66 +1304,6 @@ sub _get_job {
     return shift @jobs;
 }
 
-# TODO Can this be removed now that the restart command is gone?
-sub restart {
-    my $self = shift;
-    my %params = @_;
-
-    $self->status_message('Attempting to restart build: '.$self->id);
-
-    if (delete $params{job_dispatch}) {
-        cluck $self->error_message('job_dispatch cannot be changed on restart');
-    }
-
-    my $user = getpwuid($<);
-    if ($self->run_by ne $user) {
-        croak $self->error_message("Can't restart a build originally started by: " . $self->run_by);
-    }
-
-    my $xmlfile = $self->data_directory . '/build.xml';
-    if (!-e $xmlfile) {
-        croak $self->error_message("Can't find xml file for build (" . $self->id . "): " . $xmlfile);
-    }
-
-    # Check if the build is running
-    my $job = $self->_get_running_master_lsf_job;
-    if ($job) {
-        $self->error_message("Build is currently running. Stop it first, then restart.");
-        return 0;
-    }
-
-    # Since the job is not running, check if there is server location file and rm it
-    my $loc_file = $self->data_directory . '/server_location.txt';
-    if ( -e $loc_file ) {
-        $self->status_message("Removing server location file for dead lsf job: $loc_file");
-        unlink $loc_file;
-    }
-
-    my $w = $self->newest_workflow_instance;
-    if ($w && !$params{fresh_workflow}) {
-        if ($w->is_done) {
-            croak $self->error_message("Workflow Instance is complete");
-        }
-    }
-
-    my $build_event = $self->build_event;
-    for my $unrestartable_status ('Abandoned', 'Unstartable') {
-        if($build_event->event_status eq $unrestartable_status) {
-            $self->error_message("Can't restart a build that was " . lc($unrestartable_status) . ".  Start a new build instead.");
-            return 0;
-        }
-    }
-
-    $build_event->event_status('Scheduled');
-    $build_event->date_completed(undef);
-
-    for my $e ($self->the_events(event_status => ['Running','Failed'])) {
-        $e->event_status('Scheduled');
-    }
-
-    return $self->_launch(%params);
-}
-
 sub _launch {
     my $self = shift;
     my %params = @_;
@@ -1372,65 +1312,25 @@ sub _launch {
     local $ENV{UR_COMMAND_DUMP_DEBUG_MESSAGES} = 1;
     local $ENV{UR_DUMP_STATUS_MESSAGES} = 1;
     local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
-
     local $ENV{GENOME_BUILD_ID} = $self->id;
 
     # right now it is "inline" or the name of an LSF queue.
     # ultimately, it will be the specification for parallelization
     # including whether the server is inline, forked, or bsubbed, and the
     # jobs are inline, forked or bsubbed from the server
-    my $server_dispatch;
-    my $job_dispatch;
     my $model = $self->model;
 
-    # resolve server_dispatch
-    if (exists($params{server_dispatch})) {
-        $server_dispatch = delete $params{server_dispatch};
-    } elsif ($model->processing_profile->can('server_dispatch') && defined $model->processing_profile->server_dispatch) {
-        $server_dispatch = $model->processing_profile->server_dispatch;
-    } elsif ($model->can('server_dispatch') && defined $model->server_dispatch) {
-        $server_dispatch = $model->server_dispatch;
-    } else {
-        $server_dispatch = $ENV{WF_SERVER_QUEUE};
-    }
-
-    # resolve job_dispatch
-    if (exists($params{job_dispatch})) {
-        $job_dispatch = delete $params{job_dispatch};
-    } elsif ($model->processing_profile->can('job_dispatch') && defined $model->processing_profile->job_dispatch) {
-        $job_dispatch = $model->processing_profile->job_dispatch;
-    } else {
-        $job_dispatch = 'apipe';
-    }
-
-    my $fresh_workflow = delete $params{fresh_workflow};
-
-    my $job_group_spec;
-    if (exists $params{job_group}) {
-        my $job_group = delete $params{job_group};
-        if ($job_group) {
-            $job_group_spec = " -g $job_group";
-        }
-        else {
-            $job_group_spec = "";
-        }
-    }
-    else {
-        my $user = getpwuid($<);
-        $job_group_spec = ' -g /apipe-build/' . $user;
-    }
+    my $server_dispatch = _server_dispatch($model, \%params);
+    my $job_dispatch = _job_dispatch($model, \%params);
+    my $job_group = _job_group(\%params);
+    my $job_group_spec = _job_group_spec($job_group);
 
     # all params should have been deleted (as they were handled)
     die "Bad params!  Expected server_dispatch and job_dispatch!" . Data::Dumper::Dumper(\%params) if %params;
 
     my $build_event = $self->the_master_event;
 
-    # TODO: send the workflow to the dispatcher instead of having LSF logic here.
     if ($server_dispatch eq 'inline') {
-        # TODO: redirect STDOUT/STDERR to these files
-        #$build_event->output_log_file,
-        #$build_event->error_log_file,
-
         my %args = (
             model_id => $self->model_id,
             build_id => $self->id,
@@ -1443,35 +1343,75 @@ sub _launch {
         return $rv;
     }
     else {
-        my $add_args = ($job_dispatch eq 'inline') ? ' --inline' : '';
-        if ($fresh_workflow) {
-            $add_args .= ' --restart';
-        }
-
-        # bsub into the queue specified by the dispatch spec
         my $lsf_project = "build" . $self->id;
         $ENV{'WF_LSF_PROJECT'} = $lsf_project;
-        my $lsf_command  = join(' ',
-            'bsub -N -H',
-            '-P', $lsf_project,
-            '-q', $server_dispatch,
-            ($ENV{WF_EXCLUDE_JOB_GROUP} ? '' : $job_group_spec),
-            '-u', Genome::Utility::Email::construct_address(),
-            '-o', $build_event->output_log_file,
-            '-e', $build_event->error_log_file,
-            '"', 
-              'annotate-log',
-              ($Command::entry_point_bin || 'genome'),
-              'model services build run',
-              $add_args,
-              '--model-id', $model->id,
-              '--build-id', $self->id,
-              "1>" . $build_event->output_log_file,
-              "2>" . $build_event->error_log_file,
-            '"'
+
+        my $bsub_bin = 'bsub';
+        my $genome_bin = $Command::entry_point_bin || 'genome';
+
+        if ($self->_should_run_as && $self->_can_run_as) {
+            # -i simulates login which help prevent this from being abused to
+            # execute arbitrary commands.
+            $self->creation_event->user_name($self->model->run_as);
+            $bsub_bin = [qw(sudo -n -i -u), $self->model->run_as, '--',
+                _sudo_wrapper()];
+        }
+
+        my @bsub_args = (
+            email    => Genome::Utility::Email::construct_address(),
+            err_file => $build_event->error_log_file,
+            hold_job => 1,
+            log_file => $build_event->output_log_file,
+            project  => $lsf_project,
+            queue    => $server_dispatch,
+            send_job_report => 1,
+            never_rerunnable => 1,
         );
-        print "************** $lsf_command ***********\n";
-        my $job_id = $self->_execute_bsub_command($lsf_command);
+        unless ($ENV{WF_EXCLUDE_JOB_GROUP}) {
+            push @bsub_args, job_group => $job_group;
+        }
+
+        my $log_dir_out = File::Basename::dirname($build_event->output_log_file);
+        my $log_dir_err = File::Basename::dirname($build_event->output_log_file);
+        for my $dir ($log_dir_out, $log_dir_err) {
+            if (not -d $dir) {
+                print STDERR "NEW DIR! $dir\n";
+                Genome::Sys->create_directory($dir)
+            }
+        }
+        my @genome_cmd = (
+            'prefix-and-tee-output',
+            $build_event->output_log_file,
+            $build_event->error_log_file,
+            $genome_bin,
+            qw(model services build run),
+        );
+
+        my @genome_args;
+    
+        # args have to be --key=value for _sudo_wrapper()
+        # NOTE: an $add_args value was previously prepended
+        #   my $add_args = ($job_dispatch eq 'inline') ? ' --inline' : '';
+        #   if ($fresh_workflow) {
+        #       $add_args .= ' --restart';
+        #   }
+        push @genome_args, '--model-id=' . $model->id;
+        push @genome_args, '--build-id=' . $self->id;
+        # NOTE: gms-pub previously explicitly redirected output b/c
+        # the OpenLave system wasn't placing log files.
+        #push @genome_args, "1>" . $build_event->output_log_file;
+        #push @genome_args, "2>" . $build_event->error_log_file;
+        if ($job_dispatch eq 'inline') {
+            push @genome_args, '--inline';
+        }
+
+        my $cmd = ["bash -c '" . join(" ", @genome_cmd, @genome_args) . "'"];
+        print "print CMD is: @$cmd\n";
+        my $job_id = $self->_execute_bsub_command(
+            $bsub_bin,
+            @bsub_args,
+            cmd => $cmd, 
+        );
         return unless $job_id;
 
         $build_event->lsf_job_id($job_id);
@@ -1480,11 +1420,77 @@ sub _launch {
     }
 }
 
+sub _should_run_as {
+    my $self = shift;
+    return (Genome::Sys->username ne $self->model->run_as);
+}
+
+sub _can_run_as {
+    my $self = shift;
+
+    my $sudo_wrapper = _sudo_wrapper();
+    unless ( -x $sudo_wrapper ) {
+        return;
+    }
+
+    return 1;
+}
+
+sub _sudo_wrapper { '/usr/local/bin/bsub-genome-build' }
+
+sub _job_dispatch {
+    my $model = shift;
+    my $params = shift;
+    my $job_dispatch;
+    if (exists($params->{job_dispatch})) {
+        $job_dispatch = delete $params->{job_dispatch};
+    } elsif ($model->processing_profile->can('job_dispatch') && defined $model->processing_profile->job_dispatch) {
+        $job_dispatch = $model->processing_profile->job_dispatch;
+    } else {
+        $job_dispatch = $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
+    }
+    return $job_dispatch;
+}
+
+sub _server_dispatch {
+    my $model = shift;
+    my $params = shift;
+    my $server_dispatch;
+    if (exists($params->{server_dispatch})) {
+        $server_dispatch = delete $params->{server_dispatch};
+    } elsif ($model->processing_profile->can('server_dispatch') && defined $model->processing_profile->server_dispatch) {
+        $server_dispatch = $model->processing_profile->server_dispatch;
+    } elsif ($model->can('server_dispatch') && defined $model->server_dispatch) {
+        $server_dispatch = $model->server_dispatch;
+    } else {
+        $server_dispatch = $ENV{GENOME_LSF_QUEUE_BUILD_WORKFLOW};
+    }
+    return $server_dispatch;
+}
+
+sub _default_job_group {
+    my $user = getpwuid($<);
+    return '/apipe-build/' . $user;
+}
+
+sub _job_group {
+    my $params = shift;
+    my $job_group = _default_job_group();
+    if (exists $params->{job_group}) {
+        $job_group = delete $params->{job_group};
+    }
+    return $job_group;
+}
+
+sub _job_group_spec {
+    my $job_group = shift;
+    return ($job_group ? " -g $job_group" : '');
+}
 
 sub _initialize_workflow {
     #     Create the data and log directories and resolve the workflow for this build.
     my $self = shift;
-    my $optional_lsf_queue = shift || 'apipe';
+    my $optional_lsf_queue = shift || $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
 
     Genome::Sys->create_directory( $self->data_directory )
         or return;
@@ -1498,10 +1504,10 @@ sub _initialize_workflow {
 
     ## so developers dont fail before the workflow changes get deployed to /gsc/scripts
     # NOTE: Genome::Config is obsolete, so this code must work when it is not installed as well.
-    if ($workflow->can('notify_url') and Genome::Config->can("base_web_uri")) {
+    if ($workflow->can('notify_url') and $ENV{GENOME_SYS_SERVICES_WEB_VIEW_URL}) {
         require UR::Object::View::Default::Xsl;
 
-        my $cachetrigger = Genome::Config->base_web_uri;
+        my $cachetrigger = $ENV{GENOME_SYS_SERVICES_WEB_VIEW_URL};
         $cachetrigger =~ s/view$/cachetrigger/;
 
         my $url = $cachetrigger . '/' . UR::Object::View::Default::Xsl::type_to_url(ref($self)) . '/status.html?id=' . $self->id;
@@ -1515,7 +1521,7 @@ sub _initialize_workflow {
 }
 
 sub _execute_bsub_command { # here to overload in testing
-    my ($self, $cmd) = @_;
+    my ($self, @cmd) = @_;
 
     local $ENV{UR_DUMP_DEBUG_MESSAGES} = 1;
     local $ENV{UR_COMMAND_DUMP_DEBUG_MESSAGES} = 1;
@@ -1523,50 +1529,40 @@ sub _execute_bsub_command { # here to overload in testing
     local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
 
     if ($ENV{UR_DBI_NO_COMMIT}) {
-        $self->warning_message("Skipping bsub when NO_COMMIT is turned on (job will fail)\n$cmd");
+        $self->warning_message("Skipping bsub when NO_COMMIT is turned on (job will fail)\n");
         return 1;
     }
 
-    my $bsub_output = `$cmd`;
-
-    my $rv = $? >> 8;
-    if ( $rv ) {
-        $self->error_message("Failed to launch bsub (exit code: $rv) command:\n$bsub_output");
+    my $job_id = eval { Genome::Sys::LSF::bsub::run(@cmd) };
+    if ($@) {
+        $self->error_message("Failed to launch bsub:\n$@\n");
         return;
     }
 
-    if ( $bsub_output =~ m/Job <(\d+)>/ ) {
-        my $job_id = $1;
-
-        # create a change record so that if it is "undone" it will kill the job
-        my $bsub_undo = sub {
-            $self->status_message("Killing LSF job ($job_id) for build " . $self->__display_name__ . ".");
-            system("bkill $job_id");
-        };
-        my $lsf_change = UR::Context::Transaction->log_change($self, 'UR::Value', $job_id, 'external_change', $bsub_undo);
-        unless ($lsf_change) {
-            die $self->error_message("Failed to record LSF job submission ($job_id).");
-        }
-
-        # create a commit observer to resume the job when build is committed to database
-        my $process = UR::Context->process;
-        my $commit_observer = $process->add_observer(
-            aspect => 'commit',
-            callback => sub {
-                my $bresume_output = `bresume $job_id`; chomp $bresume_output;
-                $self->status_message($bresume_output) unless ( $bresume_output =~ /^Job <$job_id> is being resumed$/ );
-            },
-        );
-        unless ($commit_observer) {
-            $self->error_message("Failed to add commit observer to resume LSF job ($job_id).");
-        }
-
-        return "$job_id";
+    # create a change record so that if it is "undone" it will kill the job
+    my $bsub_undo = sub {
+        $self->status_message("Killing LSF job ($job_id) for build " . $self->__display_name__ . ".");
+        system("bkill $job_id");
+    };
+    my $lsf_change = UR::Context::Transaction->log_change($self, 'UR::Value', $job_id, 'external_change', $bsub_undo);
+    unless ($lsf_change) {
+        die $self->error_message("Failed to record LSF job submission ($job_id).");
     }
-    else {
-        $self->error_message("Launched busb command, but unable to parse bsub output: $bsub_output");
-        return;
+
+    # create a commit observer to resume the job when build is committed to database
+    my $process = UR::Context->process;
+    my $commit_observer = $process->add_observer(
+        aspect => 'commit',
+        callback => sub {
+            my $bresume_output = `bresume $job_id`; chomp $bresume_output;
+            $self->status_message($bresume_output) unless ( $bresume_output =~ /^Job <$job_id> is being resumed$/ );
+        },
+    );
+    unless ($commit_observer) {
+        $self->error_message("Failed to add commit observer to resume LSF job ($job_id).");
     }
+
+    return "$job_id";
 }
 
 sub initialize {
@@ -1663,7 +1659,7 @@ sub success {
     my $commit_callback;
     $commit_callback = sub {
         $self->the_master_event->cancel_change_subscription('commit', $commit_callback); #only fire once
-        $self->status_message('Firing build success commit callback.');
+        $self->debug_message('Firing build success commit callback.');
         my $result = eval {
             Genome::Search->queue_for_update($self->model);
             $self->model->_trigger_downstream_builds($self);
@@ -2160,9 +2156,7 @@ sub full_path_to_relative {
 # Override in subclasses!
 sub files_ignored_by_diff {
     my $self = shift;
-    my $model_class = $self->class;
-    $model_class =~ s/::Model::Build/::Model/;
-    return $model_class->files_ignored_by_build_diff($self);
+    return $self->model_class->files_ignored_by_build_diff($self);
 }
 
 # Returns a list of directories that should be ignored by the diffing done by compare_output
@@ -2190,12 +2184,27 @@ sub metrics_ignored_by_diff {
 # files that have timestamps or other changing fields in them that an md5sum can't handle.
 # Each suffix should have a method called diff_<SUFFIX> that'll contain the logic.
 sub regex_for_custom_diff {
-    return (
+    my $self = shift;
+
+    # Standard custom differs
+    my @regex_for_custom_diff = (
         hq     => '\.hq$',
         gz     => '(?<!\.vcf)\.gz$',
         vcf    => '\.vcf$',
         vcf_gz => '\.vcf\.gz$',
     );
+
+    # Addition custom differs
+    my $model_class = $self->model_class;
+    if ( $model_class->can('addtional_regex_for_custom_diff') ) {
+        my @addtional_regex_for_custom_diff = $model_class->addtional_regex_for_custom_diff;
+        if ( @addtional_regex_for_custom_diff % 2 != 0 ) {
+            Carp::confess('Invalid addtional_regex_for_custom_diff! '.Data::Dumper::Dumper(\@addtional_regex_for_custom_diff));
+        }
+        push @regex_for_custom_diff, @addtional_regex_for_custom_diff;
+    }
+
+    return @regex_for_custom_diff;
 }
 
 sub matching_regex_for_custom_diff {
@@ -2242,7 +2251,6 @@ sub diff_vcf_gz {
     my $second_md5 = qx(zcat $second_file | grep -vP '^##fileDate' | md5sum);
     return ($first_md5 eq $second_md5 ? 1 : 0);
 }
-
 
 # This method takes another build id and compares that build against this one. It gets
 # a list of all the files in both builds and attempts to find pairs of corresponding
@@ -2343,10 +2351,18 @@ sub compare_output {
         elsif (keys %matching_regex_for_custom_diff == 1) {
             my ($key) = keys %matching_regex_for_custom_diff;
             my $method = "diff_$key";
-            unless($self->can($method)) {
-                die "Custom diff method ($method) not implemented on class (" . $self->class . ").\n";
+            # Check build class first
+            if ($self->can($method)) {
+                $diff_result = $self->$method($abs_path, $other_abs_path);
             }
-            $diff_result = $self->$method($abs_path, $other_abs_path);
+            # then model class
+            elsif ($self->model_class->can($method)) {
+                $diff_result = $self->model_class->$method($abs_path, $other_abs_path);
+            }
+            # cannot find it..die
+            else {
+                die "Custom diff method ($method) not implemented in " . $self->class . " or ".$self->model_class."!\n";
+            }
         }
         else {
             my $file_md5 = Genome::Sys->md5sum($abs_path);

@@ -57,7 +57,7 @@ sub execute {
     for my $set ( 1 .. 2 ) { #run fwd/rev in separate dirs
         Genome::Sys->create_directory( $self->_tmpdir."/$set" );
     }
-    $self->status_message('Running EulerEC in '.$self->_tmpdir );
+    $self->debug_message('Running EulerEC in '.$self->_tmpdir );
 
     #Input reader
     my $reader = $self->_input;
@@ -93,11 +93,11 @@ sub execute {
     for my $set ( 1 .. 2 ) {
         #EulerEC outputs to cwd
         chdir $self->_tmpdir."/$set";
-        $self->status_message('chdir to '.$self->_tmpdir."/$set to run EulerEC");
+        $self->debug_message('chdir to '.$self->_tmpdir."/$set to run EulerEC");
         if ( -s 'euler.fasta' ) {
             my $env_var = 'EUSRC=' . $ENV{GENOME_SW} . '/euler/euler-sr-ec-2.0.2 MACHTYPE=x86_64';#set env
             my $cmd = $env_var.' EulerEC.pl euler.fasta '.$self->_euler_cmd_params;
-            $self->status_message("Running EulerEC for set $set with command: $cmd");
+            $self->debug_message("Running EulerEC for set $set with command: $cmd");
             ### THS IS DOESN'T SEEM WORK WITH STRINGS OF MULTIPLE SX CMDS WILL LOOK INTO IT ###
             #my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
             #if (! $rv ) {
@@ -106,12 +106,12 @@ sub execute {
             #}
             my $rv = `$cmd`;
             chdir $cwd;
-            $self->status_message("EulerEC output message:\n$rv");
+            $self->debug_message("EulerEC output message:\n$rv");
         } else {
-            $self->status_message("Skipping running EulerEC for set $set, input fasta is empty");
+            $self->debug_message("Skipping running EulerEC for set $set, input fasta is empty");
         }
         chdir $cwd;
-        $self->status_message("Switching back to original dir: $cwd");
+        $self->debug_message("Switching back to original dir: $cwd");
     }
 
     #euler 1 output reader
@@ -129,7 +129,7 @@ sub execute {
     my $euler_2_seq_reader;
     my $two_qual_reader;
     if ( -s $self->_tmpdir.'/2/fixed/euler.fasta' ) {
-        $self->status_message("Creating set 2 EulerEC output reader");
+        $self->debug_message("Creating set 2 EulerEC output reader");
         $euler_2_seq_reader = Genome::Model::Tools::Sx::PhredSeqReader->create(
             file => $self->_tmpdir.'/2/fixed/euler.fasta',
         );
@@ -187,12 +187,12 @@ sub _fastq_from_seq_qual {
     my ( $self, $seq, $qual ) = @_;
 
     #check seq/qual from same read
-    $self->status_message('Got read '.$seq->{id}.' from fasta but read '.$qual->{id}.' from qual') and return
+    $self->debug_message('Got read '.$seq->{id}.' from fasta but read '.$qual->{id}.' from qual') and return
         if not $seq->{id} eq $qual->{id};
 
     #check seq length == qual length
     if ( length($seq->{seq}) != length($qual->{qual}) ) {
-        $self->status_message('Fasta and qual lengths do not match for read id: '.$seq->{id});
+        $self->debug_message('Fasta and qual lengths do not match for read id: '.$seq->{id});
         #make all sanger 33/phred 0
         $qual->{qual} = '!' x (length($seq->{seq}));
     }

@@ -202,14 +202,14 @@ sub execute_pcap
 {
     my ($self) = @_;
 
-    $self->status_message("Creating assembly directories");
+    $self->debug_message("Creating assembly directories");
     unless ($self->create_project_directories)
     {
         $self->error_message("Failed to create assembly directories");
         return;
     }
 
-    $self->status_message("Resolving data needs");
+    $self->debug_message("Resolving data needs");
     #print "Resolving data needs\n";
     unless ($self->resolve_data_needs)
     {
@@ -217,7 +217,7 @@ sub execute_pcap
         return;
     }
 
-    $self->status_message("Resolving pcap run type");
+    $self->debug_message("Resolving pcap run type");
     unless ($self->resolve_pcap_run_type)
     {
         $self->error_message("Failed to resolve pcap run type");
@@ -227,7 +227,7 @@ sub execute_pcap
 
     if ($self->make_fake_phds and $self->make_fake_phds =~ /YES/)
     {
-        $self->status_message("Creating fake phd files");
+        $self->debug_message("Creating fake phd files");
         unless ($self->create_fake_phds ('file'))
         {
             $self->error_message("Failed to create jobs for phd files");
@@ -236,35 +236,35 @@ sub execute_pcap
 
     if ($self->make_phd_ball and $self->make_phd_ball =~ /YES/)
     {
-        $self->status_message("Creating phd ball");
+        $self->debug_message("Creating phd ball");
         unless ($self->create_fake_phds ('ball'))
         {
             $self->error_message ("Failed to submit jobs for phd ball");
         }
     }
 
-    $self->status_message("Creating input/pcap fof file");
+    $self->debug_message("Creating input/pcap fof file");
     unless ($self->create_pcap_input_fasta_fof)
     {
         $self->error_message("Failed to create input/pcap fof file");
         return;
     }
 
-    $self->status_message("Creating constraint file");
+    $self->debug_message("Creating constraint file");
     unless ($self->create_constraint_file)
     {
         $self->error_message("Failed to create constraint file");
         return;
     }
 
-    $self->status_message("Running pcap.rep");
+    $self->debug_message("Running pcap.rep");
     unless ($self->run_pcap)
     {
         $self->error_message("Pcap.rep failed to run");
         return;
     }
 
-    $self->status_message("Running bdocs");
+    $self->debug_message("Running bdocs");
     unless ($self->run_bdocs)
     {
         $self->error_message("bdocs failed to run");
@@ -272,35 +272,35 @@ sub execute_pcap
     }
 
 
-    $self->status_message("Running bclean");
+    $self->debug_message("Running bclean");
     unless ($self->run_bclean)
     {
         $self->error_message("bclean failed to run");
         return;
     }
 
-    $self->status_message("Running bcontig");
+    $self->debug_message("Running bcontig");
     unless ($self->run_bcontig)
     {
         $self->error_message("bcontig failed to run");
         return;
     }
 
-    $self->status_message("Checking for results file");
+    $self->debug_message("Checking for results file");
     unless ($self->check_for_results_file)
     {
         $self->error_message("Could not complete check for results file");
         return;
     }
 
-    $self->status_message("Running bconsen");
+    $self->debug_message("Running bconsen");
     unless ($self->run_bconsen)
     {
         $self->error_message("bconsen failed to run");
         return;
     }
 
-    $self->status_message("Running bform");
+    $self->debug_message("Running bform");
     unless ($self->run_bform)
     {
         $self->error_message("Failed to run bform");
@@ -309,25 +309,25 @@ sub execute_pcap
 
     #CREATE POST ASSEMBLY FILES
 
-    $self->status_message("creating gap file");
+    $self->debug_message("creating gap file");
     unless ($self->create_gap_file)
     {
         $self->error_message("failed to create gap file") and return;
     }
 
-    $self->status_message("creating agp file");
+    $self->debug_message("creating agp file");
     unless ($self->create_agp_file)
     {
         $self->error_message("failed to create agp file") and return;
     }
 
-    $self->status_message("creating supercontigs fasta file");
+    $self->debug_message("creating supercontigs fasta file");
     unless ($self->create_sctg_fa_file)
     {
         $self->error_message("failed to create supercontigs fasta file") and return;
     }
 
-    $self->status_message("adding wa tags to ace");
+    $self->debug_message("adding wa tags to ace");
     unless ($self->add_wa_tags_to_ace)
     {
         $self->error_message("failed to add WA tags to ace") and return;
@@ -336,7 +336,7 @@ sub execute_pcap
     #CREATE POST ASSEMBLY FILES
 
 
-#    $self->status_message("Creating readinfo.txt and insert_sizes files");
+#    $self->debug_message("Creating readinfo.txt and insert_sizes files");
 #    unless ($self->create_post_asm_files)
 #    {
 #	$self->error_message("Failed to create post assembly files");
@@ -346,7 +346,7 @@ sub execute_pcap
     #CREATE STATS
 
 
-    $self->status_message("processing stats");
+    $self->debug_message("processing stats");
     unless ($self->generate_stats)
     {
         $self->error_message("Failed to create stats");
@@ -354,7 +354,7 @@ sub execute_pcap
     }
 
 
-#    $self->status_message("creating stats files");
+#    $self->debug_message("creating stats files");
 #    unless ($self->create_stats_files)
 #    {
 #	$self->error_message("failed to create stats files") and return;
@@ -363,16 +363,16 @@ sub execute_pcap
 #    sleep 180;#give stats file jobs time to complete
 
 
-#    $self->status_message("Creating stats");
+#    $self->debug_message("Creating stats");
 #    unless ($self->create_stats)
 #    {
 #	$self->error_message("failed to run stats");
 #    }
-#    $self->status_message("Creating stats");
+#    $self->debug_message("Creating stats");
 
     #CLEAN UP
 
-    $self->status_message("Assembly done .. cleanin up");
+    $self->debug_message("Assembly done .. cleanin up");
     unless ($self->clean_up)
     {
         $self->error_message("Assembly done but ailed to clean up");
@@ -409,24 +409,17 @@ sub create_project_directories
 
     my $path = $self->{project_path};
 
-    umask 002;
-    mkdir "$path" unless -d $path;
-
-    unless (-d "$path")
+    my @subdirs = qw(edit_dir input output phd_dir chromat_dir blastdb acefiles ftp read_dump 454_processed);
+    foreach my $sub_dir ('', @subdirs)
     {
-        $self->error_message ("failed to create $path : $!");
-        return;
-    }
+        my $dirpath = "$path/$sub_dir";
+        next if -d $dirpath;
 
-    foreach my $sub_dir (qw/ edit_dir input output phd_dir chromat_dir blastdb acefiles ftp read_dump 454_processed/)
-    {
-        next if -d "$path/$sub_dir";
+        eval { Genome::Sys->create_directory($dirpath) };
 
-        mkdir "$path/$sub_dir";
-
-        unless (-d "$path/$sub_dir")
+        unless (-d $dirpath)
         {
-            $self->error_message ("failed to create $path/$sub_dir : $!");
+            $self->error_message ("failed to create $dirpath: $!");
             return;
         }
     }
@@ -652,7 +645,7 @@ sub create_fake_phds
         (
             pp_type => 'lsf',
             command => $cmd,
-            q       => 'long',
+            q       => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
             J       => "$fasta.MAKE_PHD",
             n       => 1,
             u       => Genome::Config->user_email,
@@ -1165,7 +1158,7 @@ sub run_pcap
 
     my $pcap_prog = $self->{pcap_prog_type};
 
-    $self->status_message("Running ".$pcap_prog.' '.$self->{pcap_root_name}.' '.$self->_get_pcap_params);
+    $self->debug_message("Running ".$pcap_prog.' '.$self->{pcap_root_name}.' '.$self->_get_pcap_params);
 
     my $ec = system ($pcap_prog.' '.$self->{pcap_root_name}.' '.$self->_get_pcap_params);
 
@@ -1192,7 +1185,7 @@ sub run_bdocs
     $self->error_mesage("Could not change dir") and return
     unless ( chdir ("$dir/edit_dir") );
 
-    $self->status_message("Running ".$bdocs_prog.' '.$self->{pcap_root_name}.' '.$self->_get_bdocs_params);
+    $self->debug_message("Running ".$bdocs_prog.' '.$self->{pcap_root_name}.' '.$self->_get_bdocs_params);
 
     #my $ec = system ($bdocs_prog.' '.$self->{pcap_root_name}.' '.$self->_get_bdocs_params);
     my $cmdline = $bdocs_prog.' '.$self->{pcap_root_name}.' '.$self->_get_bdocs_params;
@@ -1214,7 +1207,7 @@ sub run_bclean
     $self->error_mesage("Could not change dir") and return
     unless ( chdir ("$dir/edit_dir") );
 
-    $self->status_message("Running ".$bclean_prog.' '.$self->{pcap_root_name}.' '.$self->_get_bclean_params);
+    $self->debug_message("Running ".$bclean_prog.' '.$self->{pcap_root_name}.' '.$self->_get_bclean_params);
 
     my $ec = system ($bclean_prog.' '.$self->{pcap_root_name}.' '.$self->_get_bclean_params);
 
@@ -1235,7 +1228,7 @@ sub run_bcontig
     $self->error_mesage("Could not change dir") and return
     unless ( chdir ("$dir/edit_dir") );
 
-    $self->status_message("Running ".$bcontig_prog.' '.$self->{pcap_root_name}.' '.$self->_get_bcontig_params);
+    $self->debug_message("Running ".$bcontig_prog.' '.$self->{pcap_root_name}.' '.$self->_get_bcontig_params);
 
     #my $ec = system ($bcontig_prog.' '.$self->{pcap_root_name}.' '.$self->_get_bcontig_params);
     my $cmdline = $bcontig_prog.' '.$self->{pcap_root_name}.' '.$self->_get_bcontig_params;
@@ -1307,7 +1300,7 @@ sub run_bconsen
     $self->error_mesage("Could not change dir") and return
     unless ( chdir ("$dir/edit_dir") );
 
-    $self->status_message("Running ".$bconsen_prog.' '.$self->{pcap_root_name}.' '.$self->_get_bconsen_params);
+    $self->debug_message("Running ".$bconsen_prog.' '.$self->{pcap_root_name}.' '.$self->_get_bconsen_params);
 
     #my $ec = system ($bconsen_prog.' '.$self->{pcap_root_name}.' '.$self->_get_bconsen_params);
     my $cmdline = $bconsen_prog.' '.$self->{pcap_root_name}.' '.$self->_get_bconsen_params;
@@ -1328,7 +1321,7 @@ sub run_bform
     $self->error_mesage("Could not change dir") and return
     unless ( chdir("$dir/edit_dir") );
 
-    $self->status_message("Running ".'bform '.$self->{pcap_root_name}.'.pcap '.$self->_get_bform_params);
+    $self->debug_message("Running ".'bform '.$self->{pcap_root_name}.'.pcap '.$self->_get_bform_params);
 
     my $ec = system ('bform '.$self->{pcap_root_name}.'.pcap '.$self->_get_bform_params);
 

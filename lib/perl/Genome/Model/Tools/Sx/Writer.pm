@@ -38,14 +38,14 @@ sub create {
 
     my @writers;
     for my $config ( $self->config ) {
-        $self->status_message('Parsing writer config: '.$config);
+        $self->debug_message('Parsing writer config: '.$config);
         my ($writer_class, $params) = $self->parse_writer_config($config);
         return if not $writer_class;
 
-        $self->status_message('Config: ');
-        $self->status_message('writer => '.$writer_class);
+        $self->debug_message('Config: ');
+        $self->debug_message('writer => '.$writer_class);
         for my $key ( keys %$params ) {
-            $self->status_message($key.' => '.$params->{$key});
+            $self->debug_message($key.' => '.$params->{$key});
         }
 
         my $writer = $writer_class->create(%$params);
@@ -58,7 +58,7 @@ sub create {
 
     my $strategy = $self->_resolve_strategy(@writers);
     return if not $strategy;
-    $self->status_message('Write strategy: '.$self->{_strategy});
+    $self->debug_message('Write strategy: '.$self->{_strategy});
 
     return $self;
 }

@@ -56,9 +56,9 @@ sub execute {
     my $self = shift;
 
     $self->dump_status_messages(1);
-    $self->status_message(">>>Running AlignWrapper at ".UR::Context->current->now);
-    $self->status_message("Ref seq: ".$self->reference_name);
-    $self->status_message("Working directory: ".$self->working_directory);
+    $self->debug_message(">>>Running AlignWrapper at ".UR::Context->current->now);
+    $self->debug_message("Ref seq: ".$self->reference_name);
+    $self->debug_message("Working directory: ".$self->working_directory);
    
     #get these from pp  
     my %alignment_params = (
@@ -81,14 +81,14 @@ sub execute {
     
     $alignment->find_or_generate_alignment_data;
          	
-    $self->status_message("\n************ Alignment object: ".Dumper($alignment) );
+    $self->debug_message("\n************ Alignment object: ".Dumper($alignment) );
     
     #resolve this from alignment object    
     my $alignment_file = $alignment->output_dir."/all_sequences.bam";
-    $self->status_message("Setting aligned file to: $alignment_file");  	
+    $self->debug_message("Setting aligned file to: $alignment_file");  	
     $self->aligned_file($alignment_file);
      
-    $self->status_message("<<<Completed alignment at ".UR::Context->current->now);
+    $self->debug_message("<<<Completed alignment at ".UR::Context->current->now);
     
     return 1;
 }

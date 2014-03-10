@@ -226,9 +226,10 @@ sub classification_files {
 
 #< Process instrument data >#
 sub sx_result_params_for_instrument_data {
-    my ($self, @instrument_data) = @_;
+    my ($self, $instrument_data) = @_;
 
-    Carp::confess('No instrument data to get sx result params!') if not @instrument_data;
+    Carp::confess('No instrument data to get sx result for instrument data!') if not $instrument_data;
+    Carp::confess('Multiple instrument data to get sx result for instrument data!') if @_ > 2;
 
     my @amplicon_sets = $self->amplicon_sets_for_processing;
     return if not @amplicon_sets;
@@ -272,49 +273,85 @@ sub sx_result_params_for_instrument_data {
     }
 
     return (
-        instrument_data_id => ( @instrument_data > 1 ? [ map { $_->id } @instrument_data ] : $instrument_data[0]->id ),
+        instrument_data_id => $instrument_data->id,
         read_processor => join(' | ', @read_processor),
         output_file_config => \@output_file_configs,
     );
 }
 
-sub process_instrument_data {
+sub get_or_create_sx_result_for_instrument_data {
     my ($self, $instrument_data) = @_;
-    $self->status_message('Process instrument data...');
+    $self->debug_message('Get or create SX result for instrument data...');
 
-    Carp::confess('No instrument data given to process!') if not $instrument_data;
+    Carp::confess('No instrument data to get sx result for instrument data!') if not $instrument_data;
 
     my %sx_result_params = $self->sx_result_params_for_instrument_data($instrument_data);
     return if not %sx_result_params;
+    $self->debug_message('SX result Params: '.Data::Dumper::Dumper(\%sx_result_params));
 
     my $sx_result = Genome::InstrumentData::SxResult->get_or_create(%sx_result_params);
+    $self->debug_message('SX result: '.( $sx_result ? $sx_result->id : 'NA' ));
+    return $sx_result;
+}
+
+sub process_instrument_data {
+    my ($self, $instrument_data) = @_;
+    $self->debug_message('Process instrument data...');
+
+    Carp::confess('No instrument data given to process!') if not $instrument_data;
+    $self->debug_message('Instrument data: '.$instrument_data->id);
+
+    my $sx_result = $self->get_or_create_sx_result_for_instrument_data($instrument_data);
     if ( not $sx_result ) {
-        $self->error_message('Failed to create SX result!');
+        $self->error_message('Failed to get or create SX result!');
         return;
     }
+    $self->debug_message('SX result: '.$sx_result->id);
 
     $sx_result->add_user(user => $self, label => 'sx_result');
 
-    $self->status_message('Process instrument data...OK');
+    $self->debug_message('Process instrument data...OK');
     return 1;
+}
+
+sub get_sx_result_for_instrument_data {
+    my ($self, $instrument_data) = @_;
+    $self->debug_message('Get SX result for instrument data...');
+
+    Carp::confess('No instrument data to get sx result for instrument data!') if not $instrument_data;
+
+    my %sx_result_params = $self->sx_result_params_for_instrument_data($instrument_data);
+    return if not %sx_result_params;
+    $self->debug_message('SX result Params: '.Data::Dumper::Dumper(\%sx_result_params));
+
+    my $sx_result = Genome::InstrumentData::SxResult->get_with_lock(%sx_result_params);
+    $self->debug_message('SX result: '.( $sx_result ? $sx_result->id : 'NA' ));
+    return $sx_result;
 }
 
 sub merge_processed_instrument_data {
     my $self = shift;
-    $self->status_message('Merge processed instrument data...');
+    $self->debug_message('Merge processed instrument data...');
 
     my @amplicon_sets = $self->amplicon_sets_for_processing;
     return if not @amplicon_sets;
 
     my @instrument_data = $self->instrument_data;
-    my %sx_result_params = $self->sx_result_params_for_instrument_data(@instrument_data);
-    return if not %sx_result_params;
+    $self->debug_message('Instrument data: '.join(' ', map { $_->id } @instrument_data));
+    $self->debug_message('Instrument data count: '.@instrument_data);
 
-    my @sx_results = Genome::InstrumentData::SxResult->get(%sx_result_params);
-    if ( not @sx_results or @sx_results != @instrument_data ) {
-        $self->error_message('Failed to find sx results for instrument data!');
-        return;
+    my @sx_results;
+    for my $instrument_data ( @instrument_data ) {
+        my $sx_result = $self->get_sx_result_for_instrument_data($instrument_data);
+        if ( not $sx_result ) {
+            $self->error_message('Failed to get SX result for instrument data! '.$instrument_data->id);
+            return;
+        }
+        push @sx_results, $sx_result;
     }
+
+    $self->debug_message('SX results: '.join(' ', map { $_->id } @sx_results));
+    $self->debug_message('SX result count: '.@sx_results);
 
     my %metrics = (
         input => Genome::Model::Tools::Sx::Metrics::Basic->create(),
@@ -325,20 +362,28 @@ sub merge_processed_instrument_data {
         return;
     }
 
-    for my $sx_result ( @sx_results ) {
-        $self->status_message('Merge sequences for SX result: '.$sx_result->id);
+    SX_RESULT: for my $sx_result ( @sx_results ) {
+        $self->debug_message('Merge sequences for SX result: '.$sx_result->id);
         for my $amplicon_set ( @amplicon_sets ) {
             my $sx_processed_fastq_file = $sx_result->output_dir.'/'.$amplicon_set->base_name_for('processed_fastq');
             next if not -s $sx_processed_fastq_file; # ok
 
-            $self->status_message('Amplicon set: '.$amplicon_set->name);
-            $self->status_message('SX result:    '.$sx_result->id.' '.$sx_result->output_dir);
+            $self->debug_message('Amplicon set: '.$amplicon_set->name);
+            $self->debug_message('SX result:    '.$sx_result->id.' '.$sx_result->output_dir);
+
+            my %sx_metrics = $sx_result->load_metrics; # metrics were not set on older results
+            return if not %sx_metrics;
+
+            if ( $sx_metrics{output_count} == 0 ) {
+                $self->debug_message('No sequences in SX result...skipping');
+                next SX_RESULT;
+            }
 
             my $reader = Genome::Model::Tools::Sx::Reader->create(config => [ $sx_processed_fastq_file ]);
             Carp::confess('Failed to open fastq reader for processed sx result fastq! '.$sx_processed_fastq_file) if not $reader;
 
             my $processed_fasta_file = $amplicon_set->processed_fasta_file;
-            $self->status_message('Processed fasta:    '.$processed_fasta_file);
+            $self->debug_message('Processed fasta:    '.$processed_fasta_file);
             my $writer = Genome::Model::Tools::Sx::PhredWriter->create(
                 file => $processed_fasta_file,
                 qual_file => $amplicon_set->processed_qual_file,
@@ -353,10 +398,10 @@ sub merge_processed_instrument_data {
             }
         }
 
-        $self->status_message('Merge metrics for SX result: '.$sx_result->id);
+        $self->debug_message('Merge metrics for SX result: '.$sx_result->id);
         for my $type (qw/ input output /) {
             my $metrics_file_method = 'read_processor_'.$type.'_metric_file';
-            my $metrics_file = $sx_result->output_dir.'/'.$sx_result->$metrics_file_method;
+            my $metrics_file = $sx_result->$metrics_file_method;
             if ( not -s $metrics_file ) {
                 $self->error_message("No $type metrics file for SX result! ".$sx_result->output_dir);
                 return;
@@ -379,11 +424,11 @@ sub merge_processed_instrument_data {
     $self->amplicons_processed_success( 
         $amplicons_attempted > 0 ?  sprintf('%.2f', $amplicons_processed / $amplicons_attempted) : 0
     );
-    $self->status_message('Attempted: '.$amplicons_attempted);
-    $self->status_message('Processed: '.$amplicons_processed);
-    $self->status_message('Success:   '.($self->amplicons_processed_success * 100).'%');
+    $self->debug_message('Attempted: '.$amplicons_attempted);
+    $self->debug_message('Processed: '.$amplicons_processed);
+    $self->debug_message('Success:   '.($self->amplicons_processed_success * 100).'%');
 
-    $self->status_message('Merge processed instrument data...');
+    $self->debug_message('Merge processed instrument data...');
     return 1;
 }
 #<>#
@@ -391,7 +436,7 @@ sub merge_processed_instrument_data {
 #< Remove Chimeras >#
 sub detect_and_remove_chimeras {
     my $self = shift;
-    $self->status_message('Detect and remove chimeras...');
+    $self->debug_message('Detect and remove chimeras...');
 
     if ( not $self->processing_profile->chimera_detector ) {
         $self->error_message('Tried to detect and remove chimeras, but there is not a chimera detector on the processing profile!');
@@ -400,12 +445,12 @@ sub detect_and_remove_chimeras {
 
     my $amplicons_classified = $self->amplicons_classified;
     if ( not defined $amplicons_classified ) {
-        $self->error_message('Cannot deteect and remove chimeras because "amplicons classified" metric is not set!');
+        $self->error_message('Cannot detect and remove chimeras because "amplicons classified" metric is not set!');
         return;
     }
 
     if ( $amplicons_classified == 0 ) {
-        $self->status_message("No amplicons were successfully classified, skipping detect and remove chimeras.");
+        $self->debug_message("No amplicons were successfully classified, skipping detect and remove chimeras.");
         return 1;
     }
 
@@ -420,12 +465,12 @@ sub detect_and_remove_chimeras {
         $self->error_message("No value for amplicons processed.  Cannot remove chimeras!");
         return;
     } elsif ($amplicons_processed == 0) {
-        $self->status_message('amplicons processed is 0.  Skipping chimera removal.');
+        $self->debug_message('amplicons processed is 0.  Skipping chimera removal.');
         return 1;
     }
 
-    $self->status_message('Chimera detector: '.$self->processing_profile->chimera_detector);
-    $self->status_message('Chimera detector params: '.$self->processing_profile->chimera_detector_params);
+    $self->debug_message('Chimera detector: '.$self->processing_profile->chimera_detector);
+    $self->debug_message('Chimera detector params: '.$self->processing_profile->chimera_detector_params);
     my $detector = $self->processing_profile->chimera_detector;
     my $chimera_reader_class = 'Genome::Model::Tools::'.Genome::Utility::Text::string_to_camel_case(join(' ', split('-', $detector))).'::Reader';
 
@@ -433,10 +478,10 @@ sub detect_and_remove_chimeras {
     for my $amplicon_set ( @amplicon_sets ) {
         my $fasta_file = $amplicon_set->oriented_fasta_file;
         next if not -s $fasta_file; # ok, not error
-        $self->status_message('Amplicon set'.$amplicon_set->name) if $amplicon_set->name;
+        $self->debug_message('Amplicon set'.$amplicon_set->name) if $amplicon_set->name;
 
         # DETECT
-        $self->status_message('Detect chimeras...');
+        $self->debug_message('Detect chimeras...');
         my $fasta_base_name = File::Basename::basename($fasta_file);
         my $sequences = $amplicon_set->chimera_dir.'/'.$fasta_base_name;
         symlink($fasta_file, $sequences);
@@ -446,17 +491,17 @@ sub detect_and_remove_chimeras {
         }
         my $chimera_file = $amplicon_set->chimera_file;
         my $cmd = "gmt $detector detect-chimeras --sequences $sequences --chimeras $chimera_file ".$self->processing_profile->chimera_detector_params;
-        $self->status_message('Detect chimeras command: '.$cmd);
+        $self->debug_message('Detect chimeras command: '.$cmd);
         my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
         if ( not $rv ) {
             $self->error_message($@) if $@;
             $self->error_message('Failed to detect chimeras!');
             return;
         }
-        $self->status_message('Detect chimeras...OK');
+        $self->debug_message('Detect chimeras...OK');
 
         # REMOVE
-        $self->status_message('Remove chimeras...');
+        $self->debug_message('Remove chimeras...');
 
         # chimera free seq writer
         my $writer = $amplicon_set->seq_writer_for('chimera_free');
@@ -485,7 +530,7 @@ sub detect_and_remove_chimeras {
         }
         $classification_fh->close;
 
-        $self->status_message('Remove chimeras...OK');
+        $self->debug_message('Remove chimeras...OK');
     }
 
     if ( $amplicons_classified != $metrics{input} ) {
@@ -497,13 +542,18 @@ sub detect_and_remove_chimeras {
     $self->amplicons_chimeric($amplicons_chimeric);
     $self->amplicons_chimeric_percent( sprintf('%.2f', $amplicons_chimeric / $amplicons_classified) );
 
-    $self->status_message('Classifed and oriented: '.$self->amplicons_classified);
-    $self->status_message('Chimeric:               '.$self->amplicons_chimeric);
-    $self->status_message('Chimeric percent:       '.($self->amplicons_chimeric_percent * 100).'%');
-    #$self->status_message('Total passed:           '.$self->amplicons_passed);
-    #$self->status_message('Total passed:           '.$self->amplicons_passed);
+    $self->debug_message('Summary of metrics:');
+    $self->debug_message('Attempted:          '.$self->amplicons_attempted);
+    $self->debug_message('Processed:          '.$self->amplicons_processed);
+    $self->debug_message('Processed success:  '.sprintf('%.2f', $self->amplicons_processed_success));
+    $self->debug_message('Classified:         '.$self->amplicons_classified);
+    $self->debug_message('Classified success: '.sprintf('%.2f', $self->amplicons_classified_success));
+    $self->debug_message('Oriented:           '.$self->amplicons_oriented);
+    $self->debug_message('Oriented success:   '.sprintf('%.2f', $self->amplicons_oriented_success));
+    $self->debug_message('Chimeric:           '.$self->amplicons_chimeric);
+    $self->debug_message('Chimeric percent:   '.($self->amplicons_chimeric_percent * 100).'%');
 
-    $self->status_message('Detect and remove chimeras...OK');
+    $self->debug_message('Detect and remove chimeras...OK');
     return 1;
 }
 #<>#
@@ -511,7 +561,7 @@ sub detect_and_remove_chimeras {
 #< Orient >#
 sub orient_amplicons {
     my $self = shift;
-    $self->status_message('Orient amplicons...');
+    $self->debug_message('Orient amplicons...');
 
     my $amplicons_classified = $self->amplicons_classified;
     if ( not defined $amplicons_classified ) {
@@ -520,7 +570,9 @@ sub orient_amplicons {
     }
 
     if ( $amplicons_classified == 0 ) {
-        $self->status_message("No amplicons were successfully classified, skipping orient.");
+        $self->debug_message("No amplicons were successfully classified, skipping orient.");
+        $self->amplicons_oriented(0);
+        $self->amplicons_oriented_success(0.00);
         return 1;
     }
 
@@ -561,26 +613,35 @@ sub orient_amplicons {
         $self->error_message("Found $no_classification amplicons without classifications, but $classification_error amplicons failed to classify.");
     }
 
-    $self->status_message('Summary of metrics:');
-    $self->status_message('Attempted:         '.$self->amplicons_attempted);
-    $self->status_message('Processed:         '.$self->amplicons_processed);
-    $self->status_message('Processed success: '.sprintf('%.2f', $self->amplicons_processed_success));
-    $self->status_message('Oriented:          '.$self->amplicons_oriented);
-    $self->status_message('Oriented success:  '.sprintf('%.2f', $self->amplicons_oriented_success));
+    $self->debug_message('Summary of metrics:');
+    $self->debug_message('Attempted:          '.$self->amplicons_attempted);
+    $self->debug_message('Processed:          '.$self->amplicons_processed);
+    $self->debug_message('Processed success:  '.sprintf('%.2f', $self->amplicons_processed_success));
+    $self->debug_message('Classified:         '.$self->amplicons_classified);
+    $self->debug_message('Classified success: '.sprintf('%.2f', $self->amplicons_classified_success));
+    $self->debug_message('Oriented:           '.$self->amplicons_oriented);
+    $self->debug_message('Oriented success:   '.sprintf('%.2f', $self->amplicons_oriented_success));
 
-    $self->status_message('Orient amplicons...OK');
+    $self->debug_message('Orient amplicons...OK');
     return 1;
 }
 
 #< Classify >#
 sub classify_amplicons {
     my $self = shift;
-    $self->status_message('Classify amplicons...');
+    $self->debug_message('Classify amplicons...');
 
-    my $attempted = $self->amplicons_attempted;
-    if ( not defined $attempted ) {
-        $self->error_message('No value for amplicons attempted set. Cannot classify.');
+    my $amplicons_processed = $self->amplicons_processed;
+    if ( not defined $amplicons_processed ) {
+        $self->error_message('Cannot classify amplicons because "amplicons processed" metric is not set!');
         return;
+    }
+
+    if ( $amplicons_processed == 0 ) {
+        $self->debug_message("No amplicons were successfully processed, skipping classify.");
+        $self->amplicons_classified(0);
+        $self->amplicons_classified_success(0.00);
+        return 1;
     }
 
     my @amplicon_sets = $self->amplicon_sets;
@@ -592,9 +653,9 @@ sub classify_amplicons {
     my $classifier = $self->processing_profile->classifier;
     $classifier =~ s/_/\-/g;
     $classifier =~ s/\d\-\d$//; # rm version from classifier
-    $self->status_message('Classifier: '.$classifier);
+    $self->debug_message('Classifier: '.$classifier);
     my $classifier_params = $self->processing_profile->classifier_params;
-    $self->status_message('Classifier params: '.$classifier_params);
+    $self->debug_message('Classifier params: '.$classifier_params);
 
     my %metrics;
     @metrics{qw/ attempted success error total /} = (qw/ 0 0 0 0 /);
@@ -626,43 +687,39 @@ sub classify_amplicons {
         }
     }
 
-    $self->amplicons_processed($metrics{total});
-    $self->amplicons_processed_success( 
-        defined $attempted and $attempted > 0 ?  sprintf('%.2f', $metrics{total} / $attempted) : 0 
-    );
     $self->amplicons_classified($metrics{success});
     $self->amplicons_classified_success( 
         $metrics{total} > 0 ?  sprintf('%.2f', $metrics{success} / $metrics{total}) : 0
     );
     $self->amplicons_classification_error($metrics{error});
 
-    $self->status_message('Summary of metrics:');
-    $self->status_message('Attempted:  '.$self->amplicons_attempted);
-    $self->status_message('Processed:  '.$self->amplicons_processed);
-    $self->status_message('Success:    '.sprintf('%.2f', $self->amplicons_processed_success));
-    $self->status_message('Classified: '.$self->amplicons_classified);
-    $self->status_message('Error:      '.$self->amplicons_classification_error);
-    $self->status_message('Success:    '.($self->amplicons_classified_success * 100).'%');
+    $self->debug_message('Summary of metrics:');
+    $self->debug_message('Attempted:         '.$self->amplicons_attempted);
+    $self->debug_message('Processed:         '.$self->amplicons_processed);
+    $self->debug_message('Processed success: '.sprintf('%.2f', $self->amplicons_processed_success));
+    $self->debug_message('Classified: '.$self->amplicons_classified);
+    $self->debug_message('Error:      '.$self->amplicons_classification_error);
+    $self->debug_message('Success:    '.($self->amplicons_classified_success * 100).'%');
 
-    $self->status_message('Classify amplicons...OK');
+    $self->debug_message('Classify amplicons...OK');
     return 1;
 }
 
 #< Reports >#
 sub generate_reports {
     my $self = shift;
-    $self->status_message('Generate reports...');
+    $self->debug_message('Generate reports...');
     
     my @report_names = (qw/ summary /);
     push @report_names, 'composition' if not $self->model->is_for_qc;
 
     for my $report_name ( @report_names ) {
-        $self->status_message(ucfirst($report_name).' report...');
+        $self->debug_message(ucfirst($report_name).' report...');
         $self->_generate_and_save_report($report_name);
-        $self->status_message(ucfirst($report_name).' report...OK');
+        $self->debug_message(ucfirst($report_name).' report...OK');
     }
 
-    $self->status_message('Generate reports...OK');
+    $self->debug_message('Generate reports...OK');
     return 1;
 }
 
@@ -743,14 +800,14 @@ sub _generate_and_save_report {
 #< QC Email >#
 sub perform_post_success_actions {
     my $self = shift;
-    $self->status_message('Post success actions');
+    $self->debug_message('Post success actions');
 
-    $self->status_message('Check if model is for QC: '.$self->model_name);
+    $self->debug_message('Check if model is for QC: '.$self->model_name);
     if ( not $self->model->is_for_qc ) {
-        $self->status_message('Model is not for QC. Not sending confirmation email');
+        $self->debug_message('Model is not for QC. Not sending confirmation email');
         return 1;
     }
-    $self->status_message('This model is QC');
+    $self->debug_message('This model is QC');
 
     # Make sure there is only one run and region represented
     my @instrument_data = $self->instrument_data;
@@ -783,7 +840,7 @@ sub perform_post_success_actions {
         $expected_cnt++;
     }
     if ( @instrument_data != $expected_cnt ) {
-        $self->status_message('Not sending email for MC16s QC model. Have '.@instrument_data." instrument data, but expected $expected_cnt\.");
+        $self->debug_message('Not sending email for MC16s QC model. Have '.@instrument_data." instrument data, but expected $expected_cnt\.");
         return 1;
     }
 
@@ -800,20 +857,19 @@ sub perform_post_success_actions {
     $msg .= 'Processed:       '.$self->amplicons_processed."\n";
     $msg .= 'Success :        '.(100 * $self->amplicons_processed_success)."%\n";
     $msg .= "\n-APIPE";
-    $self->status_message($msg);
+    $self->debug_message($msg);
 
-    if ( not $ENV{UR_DBI_NO_COMMIT} ) { # do not send mail when in dev mode
+    if ( 0 ) {  # sending email report is disabled - all recepients declined getting it anymore
         Mail::Sendmail::sendmail(
-            To => 'esodergr@genome.wustl.edu, kmihindu@genome.wustl.edu', 
-            #To => 'ebelter@genome.wustl.edu', 
-            Cc => 'ebelter@genome.wustl.edu', 
-            From => 'apipe@genome.wustl.edu', 
+            To => '',
+            Cc => '',
+            From => $ENV{GENOME_EMAIL_PIPELINE},
             Subject => 'MC16s QC Build is Done',
             Message => $msg,
         );
+        $self->debug_message('Sent email report');
     }
 
-    $self->status_message('Sent email to Erica (esodergren) and Kathie (kmihindu)');
 
     return 1;
 }
@@ -884,16 +940,16 @@ sub diff_rdp {
         last if not $classification2;
         $classification2_cnt++;
         if ( $classification1->{id} ne $classification2->{id} ) {
-            $self->status_message("RDP differs at id: ".$classification1->{id}.' <=> '.$classification2->{id});
+            $self->debug_message("RDP differs at id: ".$classification1->{id}.' <=> '.$classification2->{id});
             return;
         }
         if ( $classification1->{complemented} ne $classification2->{complemented} ) {
-            $self->status_message("RDP differs at complemented: ".$classification1->{complemented}.' <=> '.$classification2->{complemented});
+            $self->debug_message("RDP differs at complemented: ".$classification1->{complemented}.' <=> '.$classification2->{complemented});
             return;
         }
         for my $rank (qw/ domain phylum order class family genus /) {
             if ( $classification1->{$rank}->{id} ne $classification2->{$rank}->{id} ) {
-                $self->status_message("RDP differs at $rank: ".$classification1->{$rank}->{id}.' <=> '.$classification2->{$rank}->{id});
+                $self->debug_message("RDP differs at $rank: ".$classification1->{$rank}->{id}.' <=> '.$classification2->{$rank}->{id});
                 return;
             }
         }
@@ -918,7 +974,7 @@ sub diff_metrics {
 
     for my $metric_name (qw/ bases count /) {
         if ( $metrics_from_file1->$metric_name ne $metrics_from_file2->$metric_name ) {
-            $self->status_message("Metrics differ for $metric_name: ".$metrics_from_file1->$metric_name.' <=> '.$metrics_from_file2->$metric_name);
+            $self->debug_message("Metrics differ for $metric_name: ".$metrics_from_file1->$metric_name.' <=> '.$metrics_from_file2->$metric_name);
             return;
         }
     }

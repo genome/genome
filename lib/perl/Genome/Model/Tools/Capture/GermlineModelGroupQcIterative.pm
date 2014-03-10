@@ -145,9 +145,7 @@ sub execute {                               # replace with real execution logic.
 
                 if(!$self->summary_file && ( (! -e $genofile) || !$skip_if_output_present) ) {
                     my %extract_params = (
-                        output => $genofile,
-                        fields => [qw(chromosome position alleles id)],
-                        sample => $model->subject,
+                        output => $genofile.':separator=TAB:headers=chromosome,position,alleles,id:print_headers=0',
                         ($self->whitelist_snps_file?(filters => ['whitelist:whitelist_snps_file='.$self->whitelist_snps_file]):()),
                     );
 
@@ -158,14 +156,15 @@ sub execute {                               # replace with real execution logic.
                     }
 
                     if ($self->use_external) {
-                        $extract_params{use_external} = $self->use_external,
+                        $extract_params{sample} = $model->subject;
+                        $extract_params{sample_type_priority} = [qw/ external /];
                     } elsif ($build->can('genotype_microarray_build') && $build->genotype_microarray_build) {
                         $extract_params{instrument_data} = $build->genotype_microarray_build->instrument_data;
                     } elsif ($build->subject->can('default_genotype_data_id') && $build->subject->default_genotype_data_id) {
                         $extract_params{instrument_data} = Genome::InstrumentData::Imported->get($build->subject->default_genotype_data_id);
                     }
 
-                    my $extract = Genome::InstrumentData::Command::Microarray::Extract->create(%extract_params);
+                    my $extract = Genome::Model::GenotypeMicroarray::Command::Extract->create(%extract_params);
                     unless ($extract) {
                         $self->error_message("Failed to create Extract Microarray for sample " . $model->subject_name);
                         return;
@@ -173,7 +172,7 @@ sub execute {                               # replace with real execution logic.
 
                     $extract->dump_status_messages(1);
                     unless ($extract->_resolve_instrument_data){
-                        $self->status_message('Skipping due to no instrument data for sample ' . $model->subject->id);
+                        $self->debug_message('Skipping due to no instrument data for sample ' . $model->subject->id);
                         next;
                     }
                     unless ($extract->execute()) {

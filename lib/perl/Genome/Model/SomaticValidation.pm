@@ -134,6 +134,11 @@ class Genome::Model::SomaticValidation {
         normal_sample => {
             is => 'Genome::Sample',
         },
+        known_sites => {
+            is => 'Genome::Model::Build::ImportedVariationList',
+            is_many => 1,
+            doc => 'Build[s] of known variants to use in when refining with GATK best practices.',
+        },
     ],
     has_optional => [
         region_of_interest_set_name => {
@@ -270,7 +275,7 @@ sub default_filenames{
     my $self = shift;
 
     my %default_filenames = (
-        targeted_snv_validation => 'targeted.snvs.validation',
+        targeted_snv_validation => 'validation/metrics/targeted.snvs.validation',
     );
 
     return %default_filenames;
@@ -286,6 +291,6 @@ sub default_single_bam_profile {
         name => 'Jun 2012 Single-Bam Validation (single-bam somatic)');
 }
 
-sub requires_pairing { return 1; }
+sub requires_subject_mapping { return 1; }
 
 1;

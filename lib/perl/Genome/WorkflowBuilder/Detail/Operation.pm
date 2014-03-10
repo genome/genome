@@ -55,6 +55,10 @@ sub input_properties {}
 sub output_properties {}
 sub operation_type_attributes {}
 
+sub is_input_property {}
+sub is_output_property {}
+sub is_many_property {}
+
 
 # ------------------------------------------------------------------------------
 # Public methods
@@ -88,28 +92,10 @@ sub from_xml_file {
 }
 
 sub from_xml_filename {
-    my ($class, $filename) = shift;
+    my ($class, $filename) = @_;
 
     my $fh = Genome::Sys->open_file_for_reading($filename);
     return $class->from_xml_file($fh);
-}
-
-sub is_input_property {
-    my ($self, $property_name) = @_;
-    return $self->command->__meta__->properties(property_name => $property_name,
-        is_input => 1);
-}
-
-sub is_output_property {
-    my ($self, $property_name) = @_;
-    return $self->command->__meta__->properties(property_name => $property_name,
-        is_output => 1);
-}
-
-sub is_many_property {
-    my ($self, $property_name) = @_;
-    return $self->command->__meta__->properties(property_name => $property_name,
-        is_many => 1);
 }
 
 sub operation_type {
@@ -123,6 +109,10 @@ sub operation_type {
 # Inherited methods
 # ------------------------------------------------------------------------------
 
+sub notify_input_link {}
+
+sub notify_output_link {}
+
 sub get_xml {
     my $self = shift;
 
@@ -131,7 +121,7 @@ sub get_xml {
     my $doc = XML::LibXML::Document->new();
     $doc->setDocumentElement($self->get_xml_element);
 
-    return $doc->toString();
+    return $doc->toString(1);
 }
 
 sub get_xml_element {

@@ -25,7 +25,7 @@ sub execute {
 
     my $bed_fh = Genome::Sys->open_file_for_reading($self->bed_file);
     my $offset = 0;
-    unless ($self->one_based_start) {
+    if ($self->one_based_start) {
         $offset = 1;
     }
     my $sum;

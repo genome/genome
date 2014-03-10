@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::RnaSeq::Command::DetectFusions::Chimerascan::DetectorBase {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     is_abstract => 1,
     has_input => [
         detector_version => {
@@ -17,16 +17,30 @@ class Genome::Model::RnaSeq::Command::DetectFusions::Chimerascan::DetectorBase {
             is => 'Text',
             doc => 'parameters for the chosen fusion detector',
         },
-        annotation_build => {
-            is => 'Genome::Model::Build::ImportedAnnotation',
+        bowtie_version => {
+            is => 'Text',
+            doc => 'the version of bowtie chimerascan will use',
         },
         build => {
             is => "Genome::Model::Build::RnaSeq",
+            is_output => 1,
+        },
+        reuse_bam => {
+            is => 'Boolean',
+            doc => 'Should we reuse the bams from alignment (experimental)',
+        },
+    ],
+    has_optional_output => [
+        software_result => {
+            is => 'Genome::SoftwareResult',
+        },
+        bedpe_file => {
+            is => 'Path',
         },
     ],
     has => [
         lsf_resource => {
-            default_value => "-R 'select[type==LINUX64 && mem>32000] span[hosts=1] rusage[mem=32000]' -M 32000000 -n 2",
+            default_value => "-R 'select[type==LINUX64 && mem>32000 && tmp>50000] span[hosts=1] rusage[mem=32000,tmp=50000]' -M 32000000 -n 2",
             is_param => 1,
             is_optional => 1,
             doc => 'default LSF resource expectations',
@@ -61,6 +75,8 @@ sub _fetch_result {
     my $result = $result_class->$method(
             test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
             version => $self->detector_version,
+            reuse_bam => $self->reuse_bam,
+            bowtie_version => $self->bowtie_version,
             alignment_result => $self->build->alignment_result,
             detector_params => $self->detector_params,
             annotation_build => $self->build->annotation_build,
@@ -69,7 +85,8 @@ sub _fetch_result {
     );
 
     if ($result){
-        $self->_link_build_to_result($result);
+        $self->software_result($result);
+        $self->bedpe_file($result->bedpe_file);
         return 1;
     }
 

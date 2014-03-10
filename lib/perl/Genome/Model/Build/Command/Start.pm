@@ -187,6 +187,7 @@ sub create_and_start_build {
     }
     else {
         if ($@) {
+            print "Exception is $@";
             $self->append_error($model->__display_name__, $@);
         }
         else {

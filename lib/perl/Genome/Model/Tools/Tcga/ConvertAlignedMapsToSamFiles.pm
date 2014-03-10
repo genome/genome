@@ -49,7 +49,7 @@ sub execute {
     die "Model $model_id is not defined. Quitting." unless defined($model);
      
     my @instrument_data = $model->instrument_data;
-    $self->status_message("There are " . scalar(@instrument_data) . " id assignemnts for model id $model_id\n");
+    $self->debug_message("There are " . scalar(@instrument_data) . " id assignemnts for model id $model_id\n");
     my $build = $model->last_complete_build;
     unless ($build) {
         die "No successful build of model " . $model->__display_name;
@@ -65,8 +65,8 @@ sub execute {
         push (@alignments, "$idid|$alignment_directory");
     }
 
-    $self->status_message("Alignment info sent to workers: ".join("\n",@alignments));
-    $self->status_message("Working dir sent to workers: ".$self->working_directory);
+    $self->debug_message("Alignment info sent to workers: ".join("\n",@alignments));
+    $self->debug_message("Working dir sent to workers: ".$self->working_directory);
 
     require Workflow::Simple;
 
@@ -90,7 +90,7 @@ sub execute {
         }
         return;
     } else {
-        $self->status_message("Workflow completed with no errors.");
+        $self->debug_message("Workflow completed with no errors.");
     }
 
 

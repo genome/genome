@@ -828,7 +828,7 @@ sub writeBed{
   my $features = $args{'-features'};
   my $file = $args{'-file'};
 
-  $self->status_message("Writing BED file: $file");
+  $self->debug_message("Writing BED file: $file");
   open (BED, ">$file") || die "\n\nCould not open output BED file: $file\n\n";
   my $f_count = 0;
   foreach my $fid (sort keys %{$features}){

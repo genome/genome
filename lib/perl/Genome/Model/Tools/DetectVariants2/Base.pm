@@ -236,7 +236,7 @@ sub _create_directories {
             return;
         }
 
-        $self->status_message("Created directory: $output_directory");
+        $self->debug_message("Created directory: $output_directory");
         chmod 02775, $output_directory;
     }
 
@@ -279,7 +279,7 @@ sub _generate_standard_files {
         
         for my $variant_file ($self->_snv_staging_output) {
             if(Genome::Sys->check_for_path_existence($variant_file)) {
-                $self->status_message("executing $bed_snv_module on file $variant_file");
+                $self->debug_message("executing $bed_snv_module on file $variant_file");
                 $retval &&= $self->_run_bed_converter($bed_snv_module, $variant_file);
             }  
         }
@@ -290,7 +290,7 @@ sub _generate_standard_files {
         
         for my $variant_file ($self->_indel_staging_output) {
             if(Genome::Sys->check_for_path_existence($variant_file)) {
-                $self->status_message("executing $indel_module on file $variant_file");
+                $self->debug_message("executing $indel_module on file $variant_file");
                 $retval &&= $self->_run_bed_converter($indel_module, $variant_file);
             }  
         }
@@ -347,12 +347,12 @@ sub _promote_staged_data {
     my $staging_dir = $self->_temp_staging_directory;
     my $output_dir  = $self->output_directory;
 
-    $self->status_message("Now de-staging data from $staging_dir into $output_dir"); 
+    $self->debug_message("Now de-staging data from $staging_dir into $output_dir"); 
 
     my $call = sprintf("rsync -avz %s/* %s", $staging_dir, $output_dir);
 
     my $rv = system($call);
-    $self->status_message("Running Rsync: $call");
+    $self->debug_message("Running Rsync: $call");
 
     unless ($rv == 0) {
         $self->error_message("Did not get a valid return from rsync, rv was $rv for call $call.  Cleaning up and bailing out");
@@ -365,7 +365,7 @@ sub _promote_staged_data {
         chmod 02775, $subdir;
     }
 
-    $self->status_message("Files in $output_dir: \n" . join "\n", glob($output_dir . "/*"));
+    $self->debug_message("Files in $output_dir: \n" . join "\n", glob($output_dir . "/*"));
 
     return $output_dir;
 }
@@ -384,3 +384,41 @@ sub line_count {
     my ($answer)  = split /\s/,$result;
     return $answer
 }
+
+sub _link_vcf_output_directory_to_result {
+    my $self = shift;
+    $self->debug_message("Linking in vcfs from vcf_result");
+
+    my $result = $self->_vcf_result;
+    return unless $result;
+    my @vcfs = glob($result->output_dir."/*.vcf.gz");
+    my $output_directory = $self->output_directory;
+    for my $vcf (@vcfs){
+        for my $file ($vcf, "$vcf.tbi") {
+            my $target = $output_directory . "/" . basename($file);
+
+            $self->debug_message("Attempting to link : " .$file."  to  ". $target);
+            if(-l $target) {
+                if (readlink($target) eq $file) {
+                    $self->debug_message("Already found a file linked in here, and it already has the correct target. Continuing.");
+                    next;
+                } else {
+                    $self->debug_message("Found previous file linked in here, unlinking that for you.");
+                    unless(unlink($target)){
+                        die $self->error_message("Failed to unlink a link at: ".$target);
+                    }
+                }
+            } elsif(-e $target) {
+                die $self->error_message("Found something in place of the symlink.");
+            }
+            Genome::Sys->create_symlink($file, $target);
+
+            #added a symlink to our own directory - reallocate the size
+            $self->_result->_reallocate_disk_allocation;
+        }
+    }
+
+    return 1;
+}
+
+1;

@@ -90,7 +90,7 @@ sub execute {
     unless ($total_chunks <= $self->max_chunks) {
         $chunk_size = ceil(($total_bases / $self->max_chunks) * 1.1);  # This is to allow some wiggle room, since each fasta won't
                                                                        # have exactly the maximum number the bases
-        $self->status_message("Increasing fasta chunk size from " . $self->max_bases_per_file . " to $chunk_size. This prevents the " .
+        $self->debug_message("Increasing fasta chunk size from " . $self->max_bases_per_file . " to $chunk_size. This prevents the " .
             "total number of split fastas from exceeding " . $self->max_chunks . " (would have been $total_chunks).");
     }
 
@@ -101,7 +101,7 @@ sub execute {
     my $current_chunk_size = 0;
     my $output_directory = $self->output_directory;
 
-    $self->status_message("Creating smaller fasta files in $output_directory containing sequence " .
+    $self->debug_message("Creating smaller fasta files in $output_directory containing sequence " .
         "from $fasta_file_path and each having no more than $chunk_size bases");
 
     unless (-d $output_directory) {
@@ -137,8 +137,8 @@ sub execute {
 
     $self->fasta_files(\@filenames);
     $self->genome_size($total_bases);
-    $self->status_message("Created $counter fasta files in $output_directory.");
-    $self->status_message("Altogether, there are $total_bases bases of sequence!");
+    $self->debug_message("Created $counter fasta files in $output_directory.");
+    $self->debug_message("Altogether, there are $total_bases bases of sequence!");
     return 1;
 }
 1;

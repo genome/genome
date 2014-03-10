@@ -134,7 +134,7 @@ sub execute {                               # replace with real execution logic.
 						## Launch SE ##
 						print "$fastq_file1\tbowtie SE\n";
 						my $alignment_outfile1 = $alignment_dir . "/s_" . $lane . "_sequence.$aligner";			# span[hosts=1]  -n 4
-						system("bsub -q alignment -R\"select[type==LINUX64 && model != Opteron250 && mem>4000] rusage[mem=4000]\" -M 6000000 -oo $alignment_outfile1.log bowtie $bowtie_params --unfq $alignment_outfile1.unmapped.fastq --maxfq $alignment_outfile1.multiple.fastq $reference $fastq_file1 $alignment_outfile1");
+						system("bsub -q $ENV{GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT} -R\"select[type==LINUX64 && model != Opteron250 && mem>4000] rusage[mem=4000]\" -M 6000000 -oo $alignment_outfile1.log bowtie $bowtie_params --unfq $alignment_outfile1.unmapped.fastq --maxfq $alignment_outfile1.multiple.fastq $reference $fastq_file1 $alignment_outfile1");
 					}
 					elsif($aligner eq "novoalign")
 					{
@@ -150,7 +150,7 @@ sub execute {                               # replace with real execution logic.
 						print "$fastq_file1 \t$read_len bp\tnovoalign SE\n";
 						my $alignment_outfile = $alignment_dir . "/s_" . $lane . "_sequence.$aligner";
 
-						system("bsub -q long -R\"select[type==LINUX64 && model != Opteron250 && mem>12000] rusage[mem=12000]\" -M 20000000 -oo $alignment_outfile.log \"$path_to_novoalign $novoalign_params -d $reference -f $fastq_file1 >$alignment_outfile\"");
+						system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -R\"select[type==LINUX64 && model != Opteron250 && mem>12000] rusage[mem=12000]\" -M 20000000 -oo $alignment_outfile.log \"$path_to_novoalign $novoalign_params -d $reference -f $fastq_file1 >$alignment_outfile\"");
 					}					
 
 				}
@@ -181,11 +181,11 @@ sub execute {                               # replace with real execution logic.
 						## Launch SE ##
 						print "$fastq_file1\tbowtie SE\n";
 						my $alignment_outfile1 = $alignment_dir . "/s_" . $lane . "_1_sequence.$aligner";
-						system("bsub -q long -R\"select[type==LINUX64 && model != Opteron250 && mem>4000] rusage[mem=4000] span[hosts=1]\" -n 4 -M 6000000 -oo $alignment_outfile1.log bowtie $bowtie_params --unfq $alignment_outfile1.unmapped.fastq --maxfq $alignment_outfile1.multiple.fastq $reference $fastq_file1 $alignment_outfile1");
+						system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -R\"select[type==LINUX64 && model != Opteron250 && mem>4000] rusage[mem=4000] span[hosts=1]\" -n 4 -M 6000000 -oo $alignment_outfile1.log bowtie $bowtie_params --unfq $alignment_outfile1.unmapped.fastq --maxfq $alignment_outfile1.multiple.fastq $reference $fastq_file1 $alignment_outfile1");
 
 						print "$fastq_file2\tbowtie SE\n";
 						my $alignment_outfile2 = $alignment_dir . "/s_" . $lane . "_2_sequence.$aligner";
-						system("bsub -q long -R\"select[type==LINUX64 && model != Opteron250 && mem>4000] rusage[mem=4000] span[hosts=1]\" -n 4 -M 6000000 -oo $alignment_outfile2.log bowtie $bowtie_params --unfq $alignment_outfile2.unmapped.fastq --maxfq $alignment_outfile2.multiple.fastq $reference $fastq_file2 $alignment_outfile2");
+						system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -R\"select[type==LINUX64 && model != Opteron250 && mem>4000] rusage[mem=4000] span[hosts=1]\" -n 4 -M 6000000 -oo $alignment_outfile2.log bowtie $bowtie_params --unfq $alignment_outfile2.unmapped.fastq --maxfq $alignment_outfile2.multiple.fastq $reference $fastq_file2 $alignment_outfile2");
 					}
 					elsif($aligner eq "novoalign")
 					{
@@ -194,22 +194,11 @@ sub execute {                               # replace with real execution logic.
 						## Think about setting -l 50 for 75 bp reads
 						## Launch SE ##
 						my $reference = $novoalign_reference;
-						#$novoalign_params = "-a -l 50 -t 240" if($read_length >= 70);	
-
-#						print "$fastq_file1\tnovoalign SE\n";
-#						my $alignment_outfile1 = $alignment_dir . "/s_" . $lane . "_1_sequence.$aligner";
-#						system("bsub -q long -R\"select[type==LINUX64 && model != Opteron250 && mem>12000] rusage[mem=12000]\" -M 20000000 -oo $alignment_outfile1.log \"$path_to_novoalign $novoalign_params -d $reference -f $fastq_file1 >$alignment_outfile1\"");
-
-#						print "$fastq_file2\tnovoalign SE\n";
-#						my $alignment_outfile2 = $alignment_dir . "/s_" . $lane . "_2_sequence.$aligner";
-#						system("bsub -q long -R\"select[type==LINUX64 && model != Opteron250 && mem>12000] rusage[mem=12000]\" -M 20000000 -oo $alignment_outfile2.log \"$path_to_novoalign $novoalign_params -d $reference -f $fastq_file2 >$alignment_outfile2\"");
-
 						## Novoalign PE ##
-
 						print "$fastq_file1 $fastq_file2\t$read_len1 bp\tnovoalign PE\n";
 						my $alignment_outfile = $alignment_dir . "/s_" . $lane . "_sequence.$aligner";
 
-						system("bsub -q long -R\"select[type==LINUX64 && model != Opteron250 && mem>12000] rusage[mem=12000]\" -M 20000000 -oo $alignment_outfile.log \"$path_to_novoalign $novoalign_params -d $reference -f $fastq_file1 $fastq_file2 >$alignment_outfile\"");
+						system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -R\"select[type==LINUX64 && model != Opteron250 && mem>12000] rusage[mem=12000]\" -M 20000000 -oo $alignment_outfile.log \"$path_to_novoalign $novoalign_params -d $reference -f $fastq_file1 $fastq_file2 >$alignment_outfile\"");
 					}
 				}
 			}
@@ -303,7 +292,7 @@ sub execute {                               # replace with real execution logic.
 							my $reference = $bowtie_reference;
 
 							## Launch SE ##
-							system("bsub -q long -R\"select[type==LINUX64 && mem>4000] rusage[mem=4000]\" -M 6000000 -oo $alignment_outfile.log bowtie $bowtie_params --unfq $alignment_outfile.unmapped.fastq --maxfq $alignment_outfile.multiple.fastq $reference $output_fastq $alignment_outfile");
+							system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -R\"select[type==LINUX64 && mem>4000] rusage[mem=4000]\" -M 6000000 -oo $alignment_outfile.log bowtie $bowtie_params --unfq $alignment_outfile.unmapped.fastq --maxfq $alignment_outfile.multiple.fastq $reference $output_fastq $alignment_outfile");
 
 							## Launch PE ##
 							if($end_type eq "PE" && $lane_pairs{"$flowcell.$lane"} eq "2")
@@ -312,7 +301,6 @@ sub execute {                               # replace with real execution logic.
 								my $file2 = $output_fastq;
 								$file2 =~ s/1\_sequence\.fastq/2\_sequence\.fastq/;
 								my $paired_outfile = $flowcell_dir . "/" . $aligner . "_out/" . "s_" . $lane . "_paired.bowtie";
-							#	system("bsub -q long -R\"select[type==LINUX64 && mem>4000] rusage[mem=4000]\" -oo $paired_outfile.log bowtie -m 1 -p 4 -I 50 -X 450 --unfq $paired_outfile.unmapped.fastq --maxfq $paired_outfile.multiple.fastq $reference -1 $file1 -2 $file2 $paired_outfile");
 							}
 						}
 						elsif($aligner eq "novoalign")
@@ -322,7 +310,7 @@ sub execute {                               # replace with real execution logic.
 							my $reference = $novoalign_reference;
 							$novoalign_params = "-a -l 50 -t 240" if($read_length >= 70);	
 
-							system("bsub -q alignment -R\"select[type==LINUX64 && mem>12000] rusage[mem=12000]\" -M 20000000 -oo $alignment_outfile.log \"$path_to_novoalign $novoalign_params -d $reference -f $output_fastq >$alignment_outfile\"");
+							system("bsub -q $ENV{GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT} -R\"select[type==LINUX64 && mem>12000] rusage[mem=12000]\" -M 20000000 -oo $alignment_outfile.log \"$path_to_novoalign $novoalign_params -d $reference -f $output_fastq >$alignment_outfile\"");
 
 							## Launch PE ##
 							if($end_type eq "PE" && $lane_pairs{"$flowcell.$lane"} eq "2")
@@ -332,7 +320,6 @@ sub execute {                               # replace with real execution logic.
 								my $file2 = $output_fastq;
 								$file2 =~ s/1\_sequence\.fastq/2\_sequence\.fastq/;
 								my $paired_outfile = $flowcell_dir . "/" . $aligner . "_out/" . "s_" . $lane . "_paired.novoalign";
-								#system("bsub -q alignment -R\"select[type==LINUX64 && mem>12000] rusage[mem=12000]\" -M 20000000 -oo $paired_outfile.log \"$path_to_novoalign $novoalign_params -d $reference -f $file1 $file2 >$paired_outfile\"");
 							}
 						}
 					}

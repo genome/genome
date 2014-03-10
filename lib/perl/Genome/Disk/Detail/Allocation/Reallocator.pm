@@ -56,13 +56,13 @@ sub reallocate {
     my $actual_kb_requested = List::Util::max($kb_used,
         $self->kilobytes_requested);
     if ($self->grow_only && ($actual_kb_requested <= $old_kb_requested)) {
-        $allocation_object->status_message(
+        $allocation_object->debug_message(
             "Not changing kilobytes_requested, because grow_only = 1 & "
             . "actual usage < original_kilobytes_requested");
         return 1;
     }
     if ($actual_kb_requested > $self->kilobytes_requested) {
-        $allocation_object->status_message(sprintf(
+        $allocation_object->debug_message(sprintf(
                 "Setting kilobytes_requested to %s based on `du` "
                 . "for allocation %s", $actual_kb_requested,
                 $allocation_object->id));

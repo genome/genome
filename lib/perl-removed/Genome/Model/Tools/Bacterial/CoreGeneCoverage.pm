@@ -102,7 +102,7 @@ my %BLASTER_FOR_SURVEY_TYPE = (
 
 sub execute {
     my $self = shift;
-    $self->status_message("Running core gene coverage command");
+    $self->debug_message("Running core gene coverage command");
 
     my $params = $XD_FORMAT_PARAMS_FOR_SURVEY_TYPE{$self->survey_type};
     # TODO Make sure this is a tool that others can install, otherwise turn this into a genome tool
@@ -140,10 +140,10 @@ sub execute {
             if not $rv;
     }
     else {
-    $self->status_message("bsubbing blastp command: $blastp_cmd");
+    $self->debug_message("bsubbing blastp command: $blastp_cmd");
     my $blastp_job = PP::LSF->create(
         command => $blastp_cmd,
-        q => 'long',
+        q => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
         o => $bsubout,
         e => $bsuberr,
     );
@@ -155,7 +155,7 @@ sub execute {
     }
 
 
-    $self->status_message("Blastp done, parsing");
+    $self->debug_message("Blastp done, parsing");
 
     # TODO Change into a module call
     # run parse_blast_results_percid_fraction_oflength on the output
@@ -184,7 +184,7 @@ sub execute {
         return 0;
     }
 
-    $self->status_message("Done parsing, calculating core gene coverage percentage");
+    $self->debug_message("Done parsing, calculating core gene coverage percentage");
 
     my @core_gene_lines = read_file( $cov_pid_out );
     #@core_gene_lines = grep /====/
@@ -213,7 +213,7 @@ sub execute {
     else {
         if (-e $self->output_file) {
             unlink $self->output_file;
-            $self->status_message('Removed existing output file at ' . $self->output_file);
+            $self->debug_message('Removed existing output file at ' . $self->output_file);
         }
         $output_fh = IO::File->new($self->output_file, 'w');
     }
@@ -224,19 +224,19 @@ sub execute {
     #$output_fh->print("Core gene count: $core_gene_count\n");
     #$output_fh->print("Query count: $query_count\n");
     
-    $self->status_message("Perc of Coregenes present in this assembly: $coregene_pct \%");
-    $self->status_message("Number of Core Groups present in this assembly: $core_groups");
-    #$self->status_message("Core gene count: $core_gene_count");
-    #$self->status_message("Query count: $query_count");
+    $self->debug_message("Perc of Coregenes present in this assembly: $coregene_pct \%");
+    $self->debug_message("Number of Core Groups present in this assembly: $core_groups");
+    #$self->debug_message("Core gene count: $core_gene_count");
+    #$self->debug_message("Query count: $query_count");
 
     if($core_pct <= $self->minimum_percent_coverage) {
         $output_fh->print("Core gene test FAILED!\n");
-        $self->status_message("Core gene test FAILED!");
+        $self->debug_message("Core gene test FAILED!");
         $self->_passed(0);
     }
     else {
         $output_fh->print("Core gene test PASSED\n");
-        $self->status_message("Core gene test PASSED");
+        $self->debug_message("Core gene test PASSED");
         $self->_passed(1);
     }
 
@@ -270,7 +270,7 @@ sub execute {
 	## We will remove the existing Cov_30_PID_30.out.gz from earlier run before gzip'ing the Cov_30_PID_30.out file
         if ( -e $cov_pid_out.'.out.gz') {
                 unlink $cov_pid_out.'.out.gz';
-		$self->status_message('Removed existing Cov_30_PID_30.out.gz file');
+		$self->debug_message('Removed existing Cov_30_PID_30.out.gz file');
 	}
 	my $gzip_rv = IPC::Run::run (
 			'gzip',

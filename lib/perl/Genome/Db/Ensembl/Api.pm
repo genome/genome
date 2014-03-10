@@ -29,28 +29,14 @@ sub create {
 
     my $temp_directory_path = $self->temp_staging_directory;
 
+    $self->download_vep($version, $temp_directory_path);
+    
     for my $package_name (@package_names){
         my $tar_url = $base_url;
         $tar_url =~ s/PACKAGENAME/$package_name/;
         $tar_url =~ s/VERSION/$version/;
         my $tar_file = join("/", $temp_directory_path, "$package_name.tar.gz");
-        my $extracted_directory = join("/", $temp_directory_path, $package_name);
-        my $wget_command = "wget $tar_url -O $tar_file";
-        my $rv = Genome::Sys->shellcmd(cmd => $wget_command, output_files =>  [$tar_file]);
-        unless($rv){
-            $self->error_message("Failed to download $package_name");
-            $self->delete;
-            return;
-        }
-
-        my $extract_command = "tar -xzf $tar_file -C $temp_directory_path";
-        $rv = Genome::Sys->shellcmd(cmd => $extract_command, input_files =>   [$tar_file], output_directories => [$extracted_directory]);
-        unless($rv){
-            $self->error_message("Failed to extract $tar_file");
-            $self->delete;
-            return;
-        }
-
+        $self->download_and_extract($tar_url, $tar_file, $temp_directory_path, $package_name);
     }
 
     $self->status_message("Finished downloading ensembl API");
@@ -61,6 +47,45 @@ sub create {
 
     return $self;
 
+}
+
+sub download_and_extract {
+    my $self = shift;
+    my $tar_url = shift;
+    my $tar_file = shift;
+    my $extract_path = shift;
+    my $extracted_directory_name = shift;
+
+    my $extracted_directory = join("/", $extract_path, $extracted_directory_name);
+    
+    my $wget_command = "wget $tar_url -O $tar_file";
+    my $rv = Genome::Sys->shellcmd(cmd => $wget_command, output_files =>  [$tar_file]);
+    unless($rv){
+        $self->error_message("Failed to download $tar_file");
+        $self->delete;
+        return $rv;
+    }
+
+    my $extract_command = "tar -xzf $tar_file -C $extract_path";
+    $rv = Genome::Sys->shellcmd(cmd => $extract_command, input_files =>   [$tar_file], output_directories => [$extracted_directory]);
+    unless($rv){
+        $self->error_message("Failed to download and extract $tar_file");
+        $self->delete;
+        return;
+    }
+    return 1;
+}
+
+sub download_vep {
+    my $self = shift;
+    my $version = shift;
+    my $download_path = shift;
+
+    my $vep_name = "variant_effect_predictor";
+    my $tar_url = "'http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-tools/scripts/$vep_name.tar.gz?root=ensembl&pathrev=branch-ensembl-VERSION&view=tar'";
+    $tar_url =~ s/VERSION/$version/;
+
+    return $self->download_and_extract($tar_url, $download_path."/$vep_name.tar.gz", $download_path, $vep_name);
 }
 
 sub package_names {
@@ -78,7 +103,7 @@ sub resolve_allocation_subdirectory {
 }
 
 sub resolve_allocation_disk_group_name {
-    return 'info_genome_models';
+    $ENV{GENOME_DISK_GROUP_MODELS};
 }
 
 sub prepend_api_path_and_execute {
@@ -99,5 +124,10 @@ sub prepend_api_path_and_execute {
     return $rv;
 }
 
+sub vep_script {
+    my $self = shift;
+    my $script_name = shift;
+    return join("/", $self->output_dir, "variant_effect_predictor", $script_name);
+}
 1;
 

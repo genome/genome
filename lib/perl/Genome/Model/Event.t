@@ -304,7 +304,7 @@ sub do_bsub {
     if ($return_value != 0 && $return_value != 1) {
         die;
     }
-    my $bsub_cmd = 'bsub -q short -H ';
+    my $bsub_cmd = "bsub -q $ENV{GENOME_LSF_QUEUE_SHORT} -H ";
     if ($bsub_args) {
         $bsub_cmd .= $bsub_args;
     }

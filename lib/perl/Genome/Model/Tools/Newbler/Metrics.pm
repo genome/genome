@@ -97,7 +97,7 @@ sub __errors__ {
 
 sub execute {
     my $self = shift;
-    $self->status_message('Newbler metrics...');
+    $self->debug_message('Newbler metrics...');
 
     # tier values
     my ($t1, $t2);
@@ -110,8 +110,8 @@ sub execute {
         $t1 = int ($est_genome_size * 0.2);
         $t2 = int ($est_genome_size * 0.2);
     }
-    $self->status_message('Tier one: 1 to '.$t1);
-    $self->status_message('Tier two: '.$t1.' to '.($t1 + $t2));
+    $self->debug_message('Tier one: 1 to '.$t1);
+    $self->debug_message('Tier two: '.$t1.' to '.($t1 + $t2));
 
     # metrics
     my $metrics = Genome::Model::Tools::Sx::Metrics::Assembly->create(
@@ -122,19 +122,19 @@ sub execute {
     $self->_metrics($metrics);
 
     # add contigs
-    $self->status_message('Add metrics from 454AllContigs.fna file');
+    $self->debug_message('Add metrics from 454AllContigs.fna file');
     my $add_contigs_ok = $self->_metrics_from_newbler_contigs_file( $metrics );
     return if not $add_contigs_ok;
 
     # input reads
     for my $reads_file ( $self->input_fastq_files ) {
-        $self->status_message('Add reads file: '.$reads_file);
+        $self->debug_message('Add reads file: '.$reads_file);
         my $add_reads = $metrics->add_reads_file_with_q20($reads_file);
         return if not $add_reads;
     }
 
     # assembled reads
-    $self->status_message('Add read status metrics: ');
+    $self->debug_message('Add read status metrics: ');
     my $add_read_depth = $self->_metrics_from_newb_read_status_file($metrics);
     return if not $add_read_depth;
 
@@ -148,7 +148,7 @@ sub execute {
     # write file
     my $output_file = $self->output_file;
     unlink $output_file if -e $output_file;
-    $self->status_message('Write output file: '.$output_file);
+    $self->debug_message('Write output file: '.$output_file);
     my $fh = eval{ Genome::Sys->open_file_for_writing($output_file); };
     if ( not $fh ) {
         $self->error_message('Failed to open metrics output file!');
@@ -157,7 +157,7 @@ sub execute {
     $fh->print($text);
     $fh->close;
 
-    $self->status_message('Velvet metrics...DONE');
+    $self->debug_message('Velvet metrics...DONE');
     return 1;
 }
 
@@ -166,7 +166,7 @@ sub _scaffolding_info_from_newbler {
 
     my %scaffolds;
     if ( not -s $self->scaffolds_agp_file ) { 
-        $self->status_message('No newbler scaffolds file found, assuming assembly is not scaffolded');
+        $self->debug_message('No newbler scaffolds file found, assuming assembly is not scaffolded');
         return \%scaffolds;
     }
 

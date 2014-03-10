@@ -57,7 +57,7 @@ sub execute {
         );
 
         unless (@patient_instdata) {
-            $self->status_message("No instrument data for patient " . $patient->__display_name__ . " on the target set yet.  Cannot update the model until we have logic to check the workorder");
+            $self->debug_message("No instrument data for patient " . $patient->__display_name__ . " on the target set yet.  Cannot update the model until we have logic to check the workorder");
             next;
         }
 
@@ -77,7 +77,7 @@ sub execute {
         }
 
         if (@instdata_tumor and @instdata_normal) {
-            $self->status_message("Some data found for both samples.  Any other instata may be for other models.");
+            $self->debug_message("Some data found for both samples.  Any other instata may be for other models.");
             next;
         }
 
@@ -92,12 +92,12 @@ sub execute {
             if (%tumor_equiv_samples) {
                 my @has_instdata = grep { $tumor_equiv_samples{$_->sample->id} } @instdata_unknown;
                 if (@has_instdata == 0) {
-                    $self->status_message("unknown instrument data in are not suitable swaps for the tumor");
+                    $self->debug_message("unknown instrument data in are not suitable swaps for the tumor");
                 }
                 else {
                     my %sample_ids = map { $_->sample_id => 1 } @has_instdata;
                     if (keys(%sample_ids) > 1) {
-                        $self->status_message("ambiguous replacement inst data for the tumor");
+                        $self->debug_message("ambiguous replacement inst data for the tumor");
                     }
                     else {
                         # probably add the instrument data too
@@ -125,7 +125,7 @@ sub execute {
                 }
             }
             else {
-                $self->status_message("No equivalent tumor data found for model " . $model->__display_name__);
+                $self->debug_message("No equivalent tumor data found for model " . $model->__display_name__);
             }
         }
 
@@ -140,12 +140,12 @@ sub execute {
             if (%normal_equiv_samples) {
                 my @has_instdata = grep { $normal_equiv_samples{$_->sample->id} } @instdata_unknown;
                 if (@has_instdata == 0) {
-                    $self->status_message("unknown instrument data in are not suitable swaps for the normal");
+                    $self->debug_message("unknown instrument data in are not suitable swaps for the normal");
                 }
                 else {
                     my %sample_ids = map { $_->sample_id => 1 } @has_instdata;
                     if (keys(%sample_ids) > 1) {
-                        $self->status_message("ambiguous replacement instdata for the normal");
+                        $self->debug_message("ambiguous replacement instdata for the normal");
                     }
                     else {
                         my ($new_sample_id) = keys(%sample_ids);
@@ -171,7 +171,7 @@ sub execute {
                 }
             }
             else {
-                $self->status_message("No equivalent normal data found for model " . $model->__display_name__);
+                $self->debug_message("No equivalent normal data found for model " . $model->__display_name__);
             }
         }
     }

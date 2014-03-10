@@ -5,6 +5,8 @@ use warnings;
 use Genome;
 use Carp;
 
+use Genome::Utility::List;
+
 our $VERSION = 4; #cribbing code from Malachi's G::M::ClinSeq::Comand::DumpIgvXml and its version is 4
 
 class Genome::File::IgvXml {
@@ -32,7 +34,7 @@ class Genome::File::IgvXml {
         },
         base_url => {
             is => 'String',
-            default => "https://gscweb.gsc.wustl.edu",
+            default => $ENV{GENOME_SYS_SERVICES_FILES_URL},
             doc => 'base url for all file paths. Will be prepended.',
         },
         font_size => {
@@ -82,8 +84,8 @@ sub add_bam_track {
     $options{name} ||= $options{file};
     my $coverage_track_name = "$options{name} Coverage";
     my $read_track_name = "$options{name} Reads";
-    my $resource_file_coverage_url = $self->base_url . $options{file} . "_coverage";
-    my $resource_file_url = $self->base_url . $options{file};
+    my $resource_file_coverage_url = Genome::Utility::List::join_with_single_slash($self->base_url, $options{file} . "_coverage");
+    my $resource_file_url = Genome::Utility::List::join_with_single_slash($self->base_url, $options{file});
     my $font_size = $options{font_size} || $self->font_size;
     my $color_option = $options{color_option} || $self->color_option;
     my $max = defined $options{max_depth} ? $options{max_depth} : 100;
@@ -106,7 +108,7 @@ sub add_bed_track {
         croak "No name passed to add_bam_track\n";
     }
     $options{name} ||= $options{file};
-    my $resource_file_url = $self->base_url . $options{file};
+    my $resource_file_url = Genome::Utility::List::join_with_single_slash($self->base_url, $options{file});
     my $font_size = $options{font_size} || $self->font_size;
     my $bed_track_name = $options{name};
     my $xml=<<XML;
@@ -123,7 +125,7 @@ sub add_junction_track {
         croak "No name passed to add_bam_track\n";
     }
     $options{name} ||= $options{file};
-    my $resource_file_url = $self->base_url . $options{file};
+    my $resource_file_url = Genome::Utility::List::join_with_single_slash($self->base_url, $options{file});
     my $font_size = $options{font_size} || $self->font_size;
     my $read_track_name = $options{name};
 

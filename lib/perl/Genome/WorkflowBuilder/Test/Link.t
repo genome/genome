@@ -2,6 +2,7 @@ use strict;
 use warnings;
 
 use above 'Genome';
+use Test::Exception;
 use Test::More;
 
 
@@ -78,26 +79,15 @@ subtest 'Output Connector' => sub {
 };
 
 
-subtest 'Valid Operation Type' => sub {
-    my $link_with_invalid_source = Genome::WorkflowBuilder::Link->create(
+subtest 'Valid Operation Type for Notify' => sub {
+    dies_ok { Genome::WorkflowBuilder::Link->create(
         source => 'INVALID_OPERATION', source_property => 'foo',
-        destination_property => 'bar'
-    );
-    eval {
-        diag "Expect one error message about invalid source here:";
-        $link_with_invalid_source->validate;
-    };
-    ok($@, 'invalid source operation fails to validate');
+        destination_property => 'bar') }, 'invalid source operation dies';
 
-    my $link_with_invalid_destination = Genome::WorkflowBuilder::Link->create(
+    dies_ok { Genome::WorkflowBuilder::Link->create(
         source_property => 'foo',
-        destination => 'INVALID_OPERATION', destination_property => 'bar'
-    );
-    eval {
-        diag "Expect one error message about invalid destination here:";
-        $link_with_invalid_destination->validate;
-    };
-    ok($@, 'invalid destination operation fails to validate');
+        destination => 'INVALID_OPERATION', destination_property => 'bar') },
+        'invalid destination operation dies';
 };
 
 subtest 'Source Property Valid' => sub {
@@ -157,6 +147,37 @@ subtest 'Parallel-By Data Source is_many' => sub {
     };
 
     ok($@, 'non is_many properties cannot be linked to parallelBy input');
+};
+
+# This tests that one can have a parallel_by operation with one singular input and one parallel_by is_many input
+subtest 'Parallel-By Link Plus Single Link' => sub {
+    my $source_op = Genome::WorkflowBuilder::Command->create(
+        name => 'source op',
+        command => 'Genome::WorkflowBuilder::Test::DummyCommand'
+    );
+    my $destination_op = Genome::WorkflowBuilder::Command->create(
+        name => 'destination op',
+        command => 'Genome::WorkflowBuilder::Test::DummyCommandTwoInputs',
+        parallel_by => 'input',
+    );
+
+    my $link_many = Genome::WorkflowBuilder::Link->create(
+        source => $source_op, source_property => 'many_output',
+        destination => $destination_op, destination_property => 'input'
+    );
+    ok($link_many->validate, "parallelBy link validates");
+
+    my $link_single = Genome::WorkflowBuilder::Link->create(
+        source => $source_op, source_property => 'single_output',
+        destination => $destination_op, destination_property => 'input_two'
+    );
+    ok($link_single->validate, "single link validates");
+
+    my $expected_xml_many = '<link fromOperation="source op" fromProperty="many_output" toOperation="destination op" toProperty="input"/>';
+    my $expected_xml_single = '<link fromOperation="source op" fromProperty="single_output" toOperation="destination op" toProperty="input_two"/>';
+
+    is($link_many->get_xml, $expected_xml_many, 'parallelBy link produces expected xml');
+    is($link_single->get_xml, $expected_xml_single, 'single link produces expected xml');
 };
 
 done_testing();

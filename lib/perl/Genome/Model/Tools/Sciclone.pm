@@ -255,6 +255,9 @@ sub execute {
     # my $only_label_highest_peak = $self->only_label_highest_peak;
     my $plot_only_cn2 = $self->plot_only_cn2;
     my $overlay_clusters = $self->overlay_clusters;
+    unless($do_clustering){
+        $overlay_clusters = 0;
+    }
     my $show_title = $self->show_title;
     my $plot_size_3d = $self->plot_size_3d;
     my $overlay_error_bars = $self->overlay_error_bars;

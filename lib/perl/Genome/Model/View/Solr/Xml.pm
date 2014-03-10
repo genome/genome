@@ -5,6 +5,8 @@ use warnings;
 
 use Genome;
 
+use Genome::Utility::List;
+
 class Genome::Model::View::Solr::Xml {
     is => 'Genome::View::Solr::Xml',
     has_field => [
@@ -102,7 +104,7 @@ class Genome::Model::View::Solr::Xml {
             calculate => sub {
                 my $build = $_[0]->last_succeeded_build();
                 return 'none' if !$build;
-                return join ('/','https://gscweb.gsc.wustl.edu', $build->data_directory());
+                return Genome::Utility::List::join_with_single_slash($ENV{GENOME_SYS_SERVICES_FILES_URL}, $build->data_directory());
             },
         },
         display_label3 => {
@@ -117,7 +119,7 @@ class Genome::Model::View::Solr::Xml {
                 my $data_dir = $build->data_directory() || return 'none';
                 my $report_pathname = join('/', $data_dir, 'reports', 'Summary', 'report.html');
                 if (! -e $report_pathname) { return 'none'; }
-                my $summary = join('', 'https://gscweb.gsc.wustl.edu', $report_pathname);
+                my $summary = Genome::Utility::List::join_with_single_slash($ENV{GENOME_SYS_SERVICES_FILES_URL}, $report_pathname);
             },
         },
         default_aspects => {
@@ -136,7 +138,11 @@ class Genome::Model::View::Solr::Xml {
                     position => 'content',
                 },
                 {
-                    name => 'user_name',
+                    name => 'created_by',
+                    position => 'content',
+                },
+                {
+                    name => 'run_as',
                     position => 'content',
                 },
                 {

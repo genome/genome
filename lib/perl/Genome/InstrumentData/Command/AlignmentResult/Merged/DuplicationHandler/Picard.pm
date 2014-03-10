@@ -59,7 +59,7 @@ sub execute {
     }
 
     if (Genome::DataSource::GMSchema->has_default_handle) {
-        $self->status_message("Disconnecting GMSchema default handle.");
+        $self->debug_message("Disconnecting GMSchema default handle.");
         Genome::DataSource::GMSchema->disconnect_default_dbh();
     }
 

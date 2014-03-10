@@ -1,4 +1,5 @@
 package Genome::Env::GENOME_EXECUTION_ID;
+use base 'Genome::Env::Required';
 
 =pod
 

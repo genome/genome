@@ -22,11 +22,6 @@ class Genome::Model::Command::Services::Build::Run{
                         id_by => 'build_id',
                         is_optional => 1,
                     },
-            restart => {
-                is => 'Boolean',
-                is_optional => 1,
-                doc => 'Restart a new Workflow Instance. Overrides the default behavior of resuming an existing workflow.'
-            },
             inline => {
                 is => 'Boolean',
                 is_optional => 1,
@@ -113,11 +108,9 @@ sub execute {
     $Workflow::Simple::server_location_file = $loc_file;
 
     my $w = $build->newest_workflow_instance;
-    if ($w && !$self->restart) {
-        if ($w->is_done) {
-            $self->error_message("Workflow Instance is complete, if you are sure you need to restart use the --restart option");
-            return 0;
-        }
+    if ($w && $w->is_done) {
+        $self->error_message("Workflow Instance is complete.");
+        return 0;
     }
 
     eval {
@@ -133,7 +126,7 @@ sub execute {
     my $success;
     eval {
         if ($self->inline) {
-            if ($w && !$self->restart) {
+            if ($w) {
 
                 $self->set_not_running($w);
                 UR::Context->commit;
@@ -149,25 +142,23 @@ sub execute {
             }
 
         } else {
-            if (Genome::DataSource::GMSchema->has_default_handle) {
-                $self->status_message("Disconnecting GMSchema default handle.");
-                Genome::DataSource::GMSchema->disconnect_default_dbh();
-            }
+            Genome::Sys->disconnect_default_handles;
 
             local $ENV{WF_TRACE_UR} = 1;
             local $ENV{WF_TRACE_HUB} = 1;
-            if ($w && !$self->restart) {
+            if ($w) {
 
                 $self->set_not_running($w);
                 UR::Context->commit;
                 if (Workflow::DataSource::InstanceSchema->has_default_handle) {
-                    $self->status_message("Disconnecting InstanceSchema default handle.");
+                    $self->debug_message("Disconnecting InstanceSchema default handle.");
                     Workflow::DataSource::InstanceSchema->disconnect_default_dbh();
                 }
 
                 $success = Workflow::Simple::resume_lsf($w->id);
             }
             else {
+                # THIS CODE IS NO LONGER IN MASTER BUT IS NEEDED ON THE STANDALONE GMS 
                 my %inputs;
                 eval {
                     %inputs = $build->model->map_workflow_inputs($build);
@@ -185,11 +176,9 @@ sub execute {
                     $xmlfile,
                     %inputs
                 );
-                print "past run\n";
             }
         }
     };
-    print "past eval\n";
     
     # Failed a stage/step - send report
     unless ( $success ) {
@@ -208,7 +197,19 @@ sub execute {
         unless ( @errors ) {
             print STDERR "Can't convert workflow errors to build errors\n";
             print STDERR Data::Dumper->new([\@Workflow::Simple::ERROR],['ERROR'])->Dump;
-            return $self->_post_build_failure("Can't convert workflow errors to build errors");
+
+            my $error = '[Unable to automatically determine error.]';
+            eval {
+                my $determine_error_command = Genome::Model::Build::Command::DetermineError->create(
+                    build => $build,
+                    assume_build_status => 'Failed',
+                    display_results => 0,
+                    color => 0,
+                );
+                $determine_error_command->execute();
+                $error = $determine_error_command->formatted_results;
+            };
+            return $self->_post_build_failure($error);
         }
         unless ( $build->fail(@errors) ) {
             return $self->_failed_build_fail(@errors);
@@ -229,7 +230,7 @@ sub execute {
 
     require UR::Object::View::Default::Xsl;
 
-    my $cachetrigger = Genome::Config->base_web_uri;
+    my $cachetrigger = $ENV{GENOME_SYS_SERVICES_WEB_VIEW_URL};
     $cachetrigger =~ s/view$/cachetrigger/;
 
     my $url = $cachetrigger . '/' . UR::Object::View::Default::Xsl::type_to_url     (ref($build)) . '/status.html?id=' . $build->id;

@@ -53,11 +53,11 @@ sub execute {
     UR::Context->object_cache_size_lowwater($low);
     UR::Context->object_cache_size_highwater($high);
 
-    $self->status_message("Merging predictions into files in " . $self->prediction_directory);
+    $self->debug_message("Merging predictions into files in " . $self->prediction_directory);
 
     # Get meta object for each prediction type, grab attributes of the object (except for directory)
     TYPE: for my $type ($self->prediction_types) {
-        $self->status_message("*** Working on $type ***");
+        $self->debug_message("*** Working on $type ***");
         my $meta = $type->__meta__;
         my @attributes = map { $_->property_name } $meta->_legacy_properties;
         @attributes = grep { $_ ne 'directory' } @attributes;
@@ -68,7 +68,7 @@ sub execute {
                 next TEMP_DIR;
             }
 
-            $self->status_message("Looking at predictions in $temp_dir");
+            $self->debug_message("Looking at predictions in $temp_dir");
             my @temp_objects = $type->get(
                 directory => $temp_dir,
             );
@@ -93,10 +93,10 @@ sub execute {
             confess "Could not commit changes for $type!" unless defined $rv and $rv;
         }
 
-        $self->status_message("Done with $type!");
+        $self->debug_message("Done with $type!");
     }
 
-    $self->status_message("Successfully merged all files!");
+    $self->debug_message("Successfully merged all files!");
     return 1;
 }
 

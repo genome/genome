@@ -73,7 +73,7 @@ class Genome::Model::Tools::Somatic::FilterMouseBases {
        },
        lsf_queue => {
             is_param => 1,
-            default_value => 'long',
+            default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
        },
        skip => {
            is => 'Boolean',
@@ -93,13 +93,13 @@ class Genome::Model::Tools::Somatic::FilterMouseBases {
 };
 
 sub help_brief {
-    return "This module removes predicted SNVs that match the homologous base in mouse";
+    return "This module removes predicted SNVs that match the homologous base in mouse.";
 }
 
 sub help_synopsis {
     my $self = shift;
     return <<"EOS"
-    gmt somatic filter-mouse-bases --variant-file my.snvs.bed --output-file my.snvs.filtered.bed
+    gmt somatic filter-mouse-bases --variant-file my.snvs.anno --output-file my.snvs.filtered.bed
 EOS
 }
 
@@ -156,13 +156,14 @@ sub execute {
     {
             chomp;
             my $line = $_;
+            if($line =~ /^chrom/){
+		next;}
+			
             $lineCounter++;
 
             $stats{'num_variants'}++;
             
-	    (my $chrom, my $chr_start, my $chr_stop, my $alleles) = split(/\t/, $line);
-	    my ($ref, $cns) = split(/\//, $alleles);
-            my $var = iupac_to_base($ref, $cns);
+	    (my $chrom, my $chr_start, my $chr_stop, my $ref, my $var) = split(/\t/, $line);
 
 	    my $key = join(":", $chrom, $chr_start, $chr_stop, $ref, $var);
 	    
@@ -241,13 +242,11 @@ sub get_mouse_bases
     {
             chomp;
             my $line = $_;
-            $lineCounter++;
+            if($line =~ /^chrom/){
+		next;}
+	    $lineCounter++;
             
-    	    (my $chrom, my $chr_start, my $chr_stop, my $alleles) = split(/\t/, $line);
-	    my ($ref, $cns) = split(/\//, $alleles);
-	    my $var = iupac_to_base($ref, $cns);
-            
-	    $var = iupac_to_base($ref, $var);
+    	    (my $chrom, my $chr_start, my $chr_stop, my $ref, my $var) = split(/\t/, $line);
 	    my $id_string = join(":", $chrom, $chr_start, $chr_stop, $ref, $var);
 	    
 	    $chr_start-- if($chr_start == $chr_stop);	## Adjust for bed ##

@@ -233,14 +233,14 @@ sub _filter_sam_output {
             $self->error_message("Error opening bfast output sam file for reading $!");
             return;
     }
-    $self->status_message("Opened $aligned_sam_file");
+    $self->debug_message("Opened $aligned_sam_file");
 
     my $all_seq_fh = IO::File->new(">>$all_sequences_sam_file");
     if ( !$all_seq_fh ) {
         $self->error_message("Error opening all seq sam file for writing $!");
         return;
     }
-    $self->status_message("Opened $all_sequences_sam_file");
+    $self->debug_message("Opened $all_sequences_sam_file");
     
     while (<$aligned_fh>) {
         #write out the aligned map, excluding the default header- all lines starting with @.

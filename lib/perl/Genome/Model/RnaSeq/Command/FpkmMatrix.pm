@@ -158,7 +158,7 @@ sub execute {
         }
         $gene_gtf_path = $tmp_gtf_path;
     }
-    $self->status_message('Loading known genes annotation file: '. $gene_gtf_path);
+    $self->debug_message('Loading known genes annotation file: '. $gene_gtf_path);
     my $gene_gff_reader = Genome::Utility::IO::GffReader->create(
         input => $gene_gtf_path,
     );
@@ -172,7 +172,7 @@ sub execute {
         $gene_transcripts{$attributes->{gene_id}}{transcript_id}{$attributes->{transcript_id}} = {};
         $gene_transcripts{$attributes->{gene_id}}{gene_name} = $attributes->{gene_name};
     }
-    $self->status_message('There are '. scalar(keys %gene_transcripts) .' genes in annotation file: '. $gene_gtf_path);
+    $self->debug_message('There are '. scalar(keys %gene_transcripts) .' genes in annotation file: '. $gene_gtf_path);
     my @fpkm_tracking_headers;
     for my $build (@builds) {
         for my $feature_type (keys %feature_types) {
@@ -208,10 +208,10 @@ sub execute {
                     }
                 }
             }
-            $self->status_message('There are '. $match .' matching '. $feature_type .'s in FPKM file: '. $fpkm_tracking);
+            $self->debug_message('There are '. $match .' matching '. $feature_type .'s in FPKM file: '. $fpkm_tracking);
         }
     }
-    $self->status_message('Printing output FPKM tsv files...');
+    $self->debug_message('Printing output FPKM tsv files...');
     my %tsv_writers;
     if ($self->as_table) {
         my $model_data_key = 'model_'. $self->model_identifier;
@@ -334,6 +334,6 @@ sub execute {
             );
         }
     }
-    $self->status_message('Finished!');
+    $self->debug_message('Finished!');
     return 1;
 }

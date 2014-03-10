@@ -152,7 +152,7 @@ class Genome::Model::Tools::DetectVariants2::Detector {
     ],
     has_param => [
         lsf_queue => {
-            default => 'apipe',
+            default => $ENV{GENOME_LSF_QUEUE_DV2_WORKER},
         },
     ],
     doc => 'This is the base class for all detector classes',
@@ -208,16 +208,16 @@ sub shortcut {
 
     $self->_resolve_output_directory;
 
-    $self->status_message("Attempting to shortcut detector result");
+    $self->debug_message("Attempting to shortcut detector result");
     unless($self->shortcut_detector){
-        $self->status_message("Could not shortcut detector result.");
+        $self->debug_message("Could not shortcut detector result.");
         return;
     }
 
     if($self->_try_vcf){
-        $self->status_message("Attempting to shortcut vcf result");
+        $self->debug_message("Attempting to shortcut vcf result");
         unless($self->shortcut_vcf){
-            $self->status_message("Could not shortcut vcf result.");
+            $self->debug_message("Could not shortcut vcf result.");
             return;
         }
     }
@@ -248,15 +248,15 @@ sub _try_vcf {
 sub shortcut_detector {
     my $self = shift;
     my ($params) = $self->params_for_detector_result;
-    $self->status_message("Params for shortcut_detector: " . Data::Dumper::Dumper $params);
+    $self->debug_message("Params for shortcut_detector: " . Data::Dumper::Dumper $params);
     my $result = Genome::Model::Tools::DetectVariants2::Result->get_with_lock(%$params);
     unless($result) {
-        $self->status_message('No existing result found.');
+        $self->debug_message('No existing result found.');
         return;
     }
 
     $self->_result($result);
-    $self->status_message('Using existing result ' . $result->__display_name__);
+    $self->debug_message('Using existing result ' . $result->__display_name__);
     $self->_link_output_directory_to_result;
 
     return 1;
@@ -265,15 +265,15 @@ sub shortcut_detector {
 sub shortcut_vcf {
     my $self = shift;
     my ($params) = $self->params_for_vcf_result;
-    $self->status_message("Params for shortcut_vcf: " . Data::Dumper::Dumper $params);
+    $self->debug_message("Params for shortcut_vcf: " . Data::Dumper::Dumper $params);
     my $result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Detector->get_with_lock(%$params);
     unless($result) {
-        $self->status_message('No existing result found.');
+        $self->debug_message('No existing result found.');
         return;
     }
 
     $self->_vcf_result($result);
-    $self->status_message('Using existing result ' . $result->__display_name__);
+    $self->debug_message('Using existing result ' . $result->__display_name__);
     $self->_link_vcf_output_directory_to_result;
 
     return 1;
@@ -310,7 +310,7 @@ sub _summon_vcf_result {
     }
 
     $self->_vcf_result($result);
-    $self->status_message('Generated vcf result.');
+    $self->debug_message('Generated vcf result.');
     $self->_link_vcf_output_directory_to_result;
 
     return 1;
@@ -326,7 +326,7 @@ sub _summon_detector_result {
     }
 
     $self->_result($result);
-    $self->status_message('Generated detector result.');
+    $self->debug_message('Generated detector result.');
     unless(-e $self->output_directory){
         $self->_link_output_directory_to_result;
     }
@@ -455,36 +455,6 @@ sub _link_output_directory_to_result {
     return 1;
 }
 
-sub _link_vcf_output_directory_to_result {
-    my $self = shift;
-    $self->status_message("Linking in vcfs from vcf_result");
-
-    my $result = $self->_vcf_result;
-    return unless $result;
-    my @vcfs = glob($result->output_dir."/*.vcf.gz");
-    my $output_directory = $self->output_directory;
-    for my $vcf (@vcfs){
-        my $target = $output_directory . "/" . basename($vcf);
-        $self->status_message("Attempting to link : " .$vcf."  to  ". $target);
-        if(-l $target) {
-            if (readlink($target) eq $vcf) {
-                $self->status_message("Already found a vcf linked in here, and it already has the correct target. Continuing.");
-                next;
-            } else {
-                $self->status_message("Already found a vcf linked in here, unlinking that for you.");
-                unless(unlink($target)){
-                    die $self->error_message("Failed to unlink a link to a vcf at: ".$target);
-                }
-            }
-        } elsif(-e $target) {
-            die $self->error_message("Found something in place of the vcf symlink.");
-        }
-        # Symlink both the vcf and the tabix
-        Genome::Sys->create_symlink($vcf, $target);
-        Genome::Sys->create_symlink("$vcf.tbi", "$target.tbi");
-    }
-    return 1;
-}
 
 # Given a line of output from this detector, parse and return the chromosome, position, reference, and variant
 # The position must be converted to the same position that a bed would consider the STOP position

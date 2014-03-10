@@ -142,14 +142,14 @@ sub execute {
   my $reference_build = $self->case_build->reference_sequence_build;
   my $reference_build_id = $reference_build->id;
   my $reference_build_name = $reference_build->name;
-  $self->status_message("Processing RNA-seq data that was aligned to: $reference_build_name");
+  $self->debug_message("Processing RNA-seq data that was aligned to: $reference_build_name");
 
   my $annotation_build = $self->case_build->model->annotation_build;
   my $annotation_build_name = $annotation_build->name;
   my $annotation_data_dir = $annotation_build->data_directory;
   my $transcript_info_path = $annotation_data_dir . "/annotation_data/rna_annotation/$reference_build_id-transcript_info.tsv";
   my $gtf_path = $annotation_build->annotation_file('gtf',$reference_build_id);
-  $self->status_message("Getting transcript to gene and gene name mappings from annotation build: $annotation_build_name");
+  $self->debug_message("Getting transcript to gene and gene name mappings from annotation build: $annotation_build_name");
   unless (defined($gtf_path)) {
     $self->error_message("'There is no annotation GTF file defined for annotation_reference_transcripts build: ". $annotation_build->__display_name__);
     die $self->error_message;
@@ -158,16 +158,16 @@ sub execute {
     $self->error_message("'There is no transcript info file for annotation_reference_transcripts build: ". $annotation_build->__display_name__);
     die $self->error_message;
   }
-  $self->status_message("\t$transcript_info_path");
+  $self->debug_message("\t$transcript_info_path");
 
   my $ensembl_map = $self->loadEnsemblMap('-gtf_path'=>$gtf_path, '-transcript_info_path'=>$transcript_info_path);
 
   #Get Entrez and Ensembl data for gene name mappings
-  $self->status_message("Load entrez and ensembl gene data");
+  $self->debug_message("Load entrez and ensembl gene data");
   my $entrez_ensembl_data = $self->loadEntrezEnsemblData(-cancer_db => $cancer_annotation_db);
 
   #Parse the isoform fpkm files, create cleaner transcript level versions of these files and store them in the output dir
-  $self->status_message("Parse transcript FPKM files from Cufflinks");
+  $self->debug_message("Parse transcript FPKM files from Cufflinks");
   my $fpkm;
   my $case_isoforms_file_sorted = "$transcripts_outdir"."case.transcripts.fpkm.namesort.tsv";
   $fpkm = $self->parseFpkmFile('-infile'=>$case_fpkm_file, '-outfile'=>$case_isoforms_file_sorted, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>$ensembl_map, '-verbose'=>0);
@@ -175,17 +175,17 @@ sub execute {
   $fpkm = $self->parseFpkmFile('-infile'=>$control_fpkm_file, '-outfile'=>$control_isoforms_file_sorted, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>$ensembl_map, '-verbose'=>0);
 
   #Create gene-level files where the transcript level values are merged
-  $self->status_message("Assemble gene estimates by merging Cufflinks transcript results");
+  $self->debug_message("Assemble gene estimates by merging Cufflinks transcript results");
   my $case_isoforms_merged_file_sorted = "$genes_outdir"."case.genes.fpkm.namesort.tsv";
   $fpkm = $self->mergeIsoformsFile('-infile'=>$case_fpkm_file, '-status_file'=>$case_status_file, '-outfile'=>$case_isoforms_merged_file_sorted, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>$ensembl_map, '-verbose'=>0);
   my $control_isoforms_merged_file_sorted = "$genes_outdir"."control.genes.fpkm.namesort.tsv";
   $fpkm = $self->mergeIsoformsFile('-infile'=>$control_fpkm_file, '-status_file'=>$control_status_file, '-outfile'=>$control_isoforms_merged_file_sorted, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>$ensembl_map, '-verbose'=>0);
 
   #Create a file containing basic gene ids, names, etc. along with FPKM values for case and control
-  $self->status_message("Create transcript DE file");
+  $self->debug_message("Create transcript DE file");
   $fpkm = ();
   my $transcript_de_file = $self->create_de('-outdir'=>$transcripts_outdir, '-type'=>'transcript', '-case_file'=>$case_isoforms_file_sorted, '-control_file'=>$control_isoforms_file_sorted, '-fpkm'=>$fpkm);
-  $self->status_message("Create gene DE file");
+  $self->debug_message("Create gene DE file");
   $fpkm = ();
   my $gene_de_file = $self->create_de('-outdir'=>$genes_outdir, '-type'=>'gene', '-case_file'=>$case_isoforms_merged_file_sorted, '-control_file'=>$control_isoforms_merged_file_sorted, '-fpkm'=>$fpkm);
  
@@ -199,19 +199,19 @@ sub execute {
   #Feed this file into an R script that performs the actual differential expression analysis:
 
   #genes
-  $self->status_message("\nPerforming gene-level DE analysis in R"); 
+  $self->debug_message("\nPerforming gene-level DE analysis in R"); 
   my $gene_r_stderr = $genes_outdir . "CufflinksDifferentialExpression.pm.R.stderr";
   my $gene_r_stdout = $genes_outdir . "CufflinksDifferentialExpression.pm.R.stdout";
   my $r_cmd_gene = "$r_de_script $genes_outdir $gene_de_file 'gene' '$case_label' '$control_label' 2>$gene_r_stderr 1>$gene_r_stdout";
-  $self->status_message($r_cmd_gene);
+  $self->debug_message($r_cmd_gene);
   Genome::Sys->shellcmd(cmd => $r_cmd_gene);
 
   #transcripts
-  $self->status_message("\nPerforming transcript-level DE analysis in R"); 
+  $self->debug_message("\nPerforming transcript-level DE analysis in R"); 
   my $transcript_r_stderr = $transcripts_outdir . "CufflinksDifferentialExpression.pm.R.stderr";
   my $transcript_r_stdout = $transcripts_outdir . "CufflinksDifferentialExpression.pm.R.stdout";
   my $r_cmd_transcript = "$r_de_script $transcripts_outdir $transcript_de_file 'transcript' '$case_label' '$control_label' 2>$transcript_r_stderr 1>$transcript_r_stdout";
-  $self->status_message($r_cmd_transcript);
+  $self->debug_message($r_cmd_transcript);
   Genome::Sys->shellcmd(cmd => $r_cmd_transcript);
 
   #Set outputs

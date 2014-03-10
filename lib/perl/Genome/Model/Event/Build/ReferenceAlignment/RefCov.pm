@@ -8,6 +8,9 @@ use warnings;
 
 use Genome;
 
+use Genome::Utility::List;
+use Genome::Utility::Email;
+
 class Genome::Model::Event::Build::ReferenceAlignment::RefCov {
     is => ['Genome::Model::Event'],
     has => [
@@ -112,7 +115,7 @@ sub execute {
     # produces a reference coverage stats file for each iteration and relative coverage
     unless ($self->verify_progressions) {
         my $progression_array_ref = $self->progression_array_ref;
-        $self->status_message('Progressions look like: '. Data::Dumper::Dumper($progression_array_ref));
+        $self->debug_message('Progressions look like: '. Data::Dumper::Dumper($progression_array_ref));
         #parallelization starts here
         require Workflow::Simple;
 
@@ -124,6 +127,7 @@ sub execute {
         $op->parallel_by('bam_files');
         my $output;
         if ($self->model->duplication_handler_name eq 'samtools') {
+            Genome::Sys->disconnect_default_handles;
             $output = Workflow::Simple::run_workflow_lsf(
                 $op,
                 'output_directory' => $ref_cov_dir,
@@ -132,6 +136,7 @@ sub execute {
                 'samtools_version' => $self->model->duplication_handler_version,
             );
         } else {
+            Genome::Sys->disconnect_default_handles;
             $output = Workflow::Simple::run_workflow_lsf(
                 $op,
                 'output_directory' => $ref_cov_dir,
@@ -224,7 +229,7 @@ sub execute {
         die($self->error_message);
     }
     if ($self->build->add_report($report)) {
-        $self->status_message('Saved report: '. $report);
+        $self->debug_message('Saved report: '. $report);
     } else {
         $self->error_message('Error saving '. $report.'. Error: '. $self->build->error_message);
         die($self->error_message);
@@ -247,19 +252,24 @@ sub execute {
     my $fh = Genome::Sys->open_file_for_writing( $report_file );
     $fh->print( $xslt->{content} );
     $fh->close;
-    my $mail_dest = 'jwalker@genome.wustl.edu,twylie@genome.wustl.edu';
-    my $link = 'https://gscweb.gsc.wustl.edu'. $report_file;
-    my $sender = Mail::Sender->new({
-        smtp => 'gscsmtp.wustl.edu',
-        from => 'jwalker@genome.wustl.edu',
-        replyto => 'jwalker@genome.wustl.edu',
-    });
-    $sender->MailMsg({
-        to => $mail_dest,
+
+    my $link = Genome::Utility::List::join_with_single_slash($ENV{GENOME_SYS_SERVICES_FILES_URL}, $report_file);
+    send_email_report(
+        to => undef,  # don't actually send the email anymore
         subject => 'Genome Model '. $self->model->name .' Reference Coverage Report for Build '. $self->build->id,
-        msg => $link,
-    });
+        body => $link,
+    );
+
     return $self->verify_successful_completion;
+}
+
+sub send_email_report {
+    my $self = shift;
+    my %params = @_;
+
+    if ($params{to}) {
+        Genome::Utility::Email::send(%params);
+    }
 }
 
 sub progression_stats_files {

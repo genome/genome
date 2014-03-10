@@ -7,6 +7,7 @@ use Genome;
 use Params::Validate qw();
 use Set::Scalar qw();
 use JSON;
+use List::MoreUtils qw();
 
 
 class Genome::WorkflowBuilder::DAG {
@@ -85,6 +86,24 @@ sub operation_named {
     return;
 }
 
+sub is_input_property {
+    my ($self, $property_name) = @_;
+
+    return List::MoreUtils::any {$property_name eq $_} $self->input_properties;
+}
+
+sub is_output_property {
+    my ($self, $property_name) = @_;
+
+    return List::MoreUtils::any {$property_name eq $_} $self->output_properties;
+}
+
+sub is_many_property {
+    my ($self, $property_name) = @_;
+    # XXX There may not be an easy way to determine this.
+    return;
+}
+
 
 # ------------------------------------------------------------------------------
 # Inherited Methods
@@ -95,7 +114,8 @@ sub from_xml_element {
 
     my $self = $class->create(
         name => $element->getAttribute('name'),
-        log_dir => $element->getAttribute('logDir')
+        log_dir => $element->getAttribute('logDir'),
+        parallel_by => $element->getAttribute('parallelBy'),
     );
 
     $self->_add_operations_from_xml_element($element);
@@ -114,21 +134,23 @@ sub get_xml_element {
         $element->setAttribute('logDir', $self->log_dir);
     }
 
-    map {$element->addChild($_->get_xml_element)} $self->operations;
-    map {$element->addChild($_->get_xml_element)} $self->links;
+    map {$element->addChild($_->get_xml_element)}
+        sort {$a->name cmp $b->name} $self->operations;
+    map {$element->addChild($_->get_xml_element)}
+        sort {$a->sort_key cmp $b->sort_key} $self->links;
 
     return $element;
 }
 
 sub input_properties {
     my $self = shift;
-    return $self->_property_names_from_links('external_input',
+    return sort $self->_property_names_from_links('external_input',
         'source_property');
 }
 
 sub output_properties {
     my $self = shift;
-    return $self->_property_names_from_links('external_output',
+    return sort $self->_property_names_from_links('external_output',
         'destination_property');
 }
 
@@ -264,8 +286,7 @@ sub _validate_mandatory_inputs {
     unless ($mandatory_inputs->is_empty) {
         die $self->error_message(sprintf(
             "%d mandatory input(s) missing in DAG: %s",
-            $mandatory_inputs->size,
-            Data::Dumper::Dumper($mandatory_inputs->members)
+            $mandatory_inputs->size, $mandatory_inputs
         ));
     }
 }

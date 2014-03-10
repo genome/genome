@@ -83,7 +83,7 @@ sub execute {
         $result->add_user(label => 'fast-tier tier-bitmasks', user => $self->build);
     }
 
-    $self->status_message("Using TierBitmasks result: ".$result->id);
+    $self->debug_message("Using TierBitmasks result: ".$result->id);
 
     foreach my $path ($result->result_paths) {
         Genome::Sys->create_symlink(

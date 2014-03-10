@@ -33,15 +33,6 @@ sub dev_mode {
     return $dev_mode;
 }
 
-sub base_web_uri {
-
-    if (Genome::Config::dev_mode()) {
-        return 'https://aims-dev.gsc.wustl.edu/view';
-    } else {
-        return 'https://imp.gsc.wustl.edu/view';
-    }
-}
-
 sub auth_user {
 
     my ($class, $u) = @_;
@@ -54,7 +45,7 @@ sub auth_user {
 }
 
 sub domain {
-    return 'genome.wustl.edu';
+    return $ENV{GENOME_EMAIL_DOMAIN};
 }
 
 sub user_email {
@@ -168,10 +159,13 @@ sub _use_model_subclasses {
 sub should_use_alignment_pd {
     my $self = shift;
     my $model = shift;
-    my $username = Genome::Sys->username;
-    my $model_username = ($model ? $model->user_name : '');
 
-    return ($username =~ /^apipe/ or $model_username =~ /^apipe/);
+    if ($model) {
+        return ($model->run_as =~ /^apipe/);
+    } else {
+        my $username = Genome::Sys->username;
+        return ($username =~ /^apipe/);
+    }
 }
 
 

@@ -27,6 +27,7 @@ class Genome::InstrumentData::AlignmentResult::Merged::CufflinksExpression {
         mask_reference_transcripts => {
             is => 'Text',
             doc => 'The name of an annotation file of known transcripts to mask during expression estimation.',
+            is_optional => 1,
         },
         annotation_reference_transcripts_mode => {
             is => 'Text',
@@ -69,7 +70,7 @@ sub resolve_allocation_subdirectory {
 }
 
 sub resolve_allocation_disk_group_name {
-    return 'info_genome_models';
+    $ENV{GENOME_DISK_GROUP_MODELS};
 }
 
 sub _staging_disk_usage {
@@ -97,16 +98,19 @@ sub create {
     }
     $self->_log_directory($log_dir);
     my $expression_directory = $self->temp_staging_directory;
-    unless (Genome::InstrumentData::AlignmentResult::Command::CufflinksExpression->execute(
+    my %params = (
         alignment_result => $alignment_result,
         reference_build => $alignment_result->reference_build,
-        annotation_build => $alignment_result->annotation_build,
         expression_directory => $expression_directory,
         cufflinks_params => $self->cufflinks_params,
         cufflinks_version => $self->cufflinks_version,
         mask_reference_transcripts =>$self->mask_reference_transcripts,
         annotation_reference_transcripts_mode => $self->annotation_reference_transcripts_mode,
-    )) {
+    );
+    if (defined($alignment_result->annotation_build)) {
+        $params{annotation_build} = $alignment_result->annotation_build;
+    }
+    unless (Genome::InstrumentData::AlignmentResult::Command::CufflinksExpression->execute(%params)) {
         return;
     }
 
@@ -121,7 +125,7 @@ sub create {
 
 sub _generate_metrics {
     my $self = shift;
-    $self->status_message('Currently there are no metrics recorded for '. __PACKAGE__);
+    $self->debug_message('Currently there are no metrics recorded for '. __PACKAGE__);
     #my $coverage_dir = $self->output_dir;
     #my @metric_files = glob($coverage_dir . "/*_STATS.txt");
     #for my $metric_file (@metric_files) {

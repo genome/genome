@@ -1,7 +1,13 @@
 <?xml version='1.0' standalone='yes'?>
 <workflow name="MergeAndBackfillIndelVcf">
+    <!-- Filter out lines with no real calls -->
+    <link fromOperation="input connector" fromProperty="build_clumps" toOperation="FilterNonCalls" toProperty="build_clump" />
+    <operation name="FilterNonCalls" parallelBy='build_clump'>
+        <operationtype commandClass="Genome::Model::Tools::Vcf::CreateCrossSampleVcf::FilterNonCalls" typeClass="Workflow::OperationType::Command" />
+    </operation>
+
     <!-- InitialVcfMerge -->
-    <link fromOperation="input connector" fromProperty="vcf_files" toOperation="InitialVcfMerge" toProperty="input_files" />
+    <link fromOperation="FilterNonCalls" fromProperty="filtered_vcf" toOperation="InitialVcfMerge" toProperty="input_files" />
     <link fromOperation="input connector" fromProperty="use_bgzip" toOperation="InitialVcfMerge" toProperty="use_bgzip" />
     <link fromOperation="input connector" fromProperty="joinx_version" toOperation="InitialVcfMerge" toProperty="use_version" />
     <link fromOperation="input connector" fromProperty="segregating_sites_vcf_file" toOperation="InitialVcfMerge" toProperty="output_file" />
@@ -15,34 +21,30 @@
     <operation name="BackfillIndelVcf" parallelBy='input_bam'>
         <link fromOperation="input connector" fromProperty="input_bam" toOperation="GetSampleName" toProperty="bam_file" />
 
-        <link fromOperation="GetSampleName" fromProperty="sample_name" toOperation="CreateOutputDirectory" toProperty="sample_name" />
-        <link fromOperation="input connector" fromProperty="base_directory" toOperation="CreateOutputDirectory" toProperty="base_directory" />
+        <link fromOperation="GetSampleName" fromProperty="sample_name" toOperation="Helper" toProperty="sample_name" />
+        <link fromOperation="input connector" fromProperty="base_directory" toOperation="Helper" toProperty="base_directory" />
 
-        <link fromOperation="CreateOutputDirectory" fromProperty="output_directory" toOperation="RealignWithDindel" toProperty="output_directory" />
+        <link fromOperation="Helper" fromProperty="output_directory" toOperation="RealignWithDindel" toProperty="output_directory" />
         <link fromOperation="input connector" fromProperty="input_bam" toOperation="RealignWithDindel" toProperty="input_bam" />
         <link fromOperation="input connector" fromProperty="ref_fasta" toOperation="RealignWithDindel" toProperty="ref_fasta" />
         <link fromOperation="input connector" fromProperty="input_vcf" toOperation="RealignWithDindel" toProperty="input_vcf" />
 
-        <link fromOperation="CreateOutputDirectory" fromProperty="output_directory" toOperation="DetermineVarscanOptions" toProperty="output_directory" />
-
         <link fromOperation="RealignWithDindel" fromProperty="output_bam" toOperation="VarscanConsensus" toProperty="bam_file" />
-        <link fromOperation="DetermineVarscanOptions" fromProperty="output_file" toOperation="VarscanConsensus" toProperty="output_file" />
-        <link fromOperation="DetermineVarscanOptions" fromProperty="output_vcf" toOperation="VarscanConsensus" toProperty="output_vcf" />
+        <link fromOperation="Helper" fromProperty="varscan_output_file" toOperation="VarscanConsensus" toProperty="output_file" />
+        <link fromOperation="Helper" fromProperty="output_vcf" toOperation="VarscanConsensus" toProperty="output_vcf" />
         <link fromOperation="GetSampleName" fromProperty="sample_name" toOperation="VarscanConsensus" toProperty="vcf_sample_name" />
         <link fromOperation="input connector" fromProperty="ref_fasta" toOperation="VarscanConsensus" toProperty="ref_fasta" />
         <link fromOperation="input connector" fromProperty="use_bgzip" toOperation="VarscanConsensus" toProperty="use_bgzip" />
+        <link fromOperation="input connector" fromProperty="varscan_version_internal" toOperation="VarscanConsensus" toProperty="version" />
 
         <link fromOperation="VarscanConsensus" fromProperty="output_file" toOperation="output connector" toProperty="output_vcf" />
 
         <operation name="GetSampleName">
             <operationtype commandClass="Genome::Model::Tools::Sam::GetSampleName" typeClass="Workflow::OperationType::Command" />
         </operation>
-        <operation name="CreateOutputDirectory">
-            <operationtype commandClass="Genome::Model::Tools::Vcf::CreateCrossSampleVcf::CreateOutputDirectory" typeClass="Workflow::OperationType::Command" />
-        </operation>
-        <operation name="DetermineVarscanOptions">
-            <operationtype commandClass="Genome::Model::Tools::Vcf::CreateCrossSampleVcf::DetermineVarscanOptions" typeClass="Workflow::OperationType::Command" />
-        </operation>
+        <operation name="Helper">
+            <operationtype commandClass="Genome::Model::Tools::Vcf::CreateCrossSampleVcf::BackfillIndelVcfHelper" typeClass="Workflow::OperationType::Command" />
+         </operation>
         <operation name="VarscanConsensus">
             <operationtype commandClass="Genome::Model::Tools::Varscan::Consensus" typeClass="Workflow::OperationType::Command" />
         </operation>
@@ -100,10 +102,12 @@
         </operation>
 
         <operationtype typeClass="Workflow::OperationType::Model">
+            <inputproperty>varscan_version_internal</inputproperty>
             <inputproperty>input_bam</inputproperty>
             <inputproperty>ref_fasta</inputproperty>
             <inputproperty>input_vcf</inputproperty>
             <inputproperty>use_bgzip</inputproperty>
+            <inputproperty>joinx_version</inputproperty>
             <inputproperty>base_directory</inputproperty>
 
             <outputproperty>output_vcf</outputproperty>
@@ -113,6 +117,8 @@
     <link fromOperation="input connector" fromProperty="input_bams" toOperation="BackfillIndelVcf" toProperty="input_bam" />
     <link fromOperation="input connector" fromProperty="ref_fasta" toOperation="BackfillIndelVcf" toProperty="ref_fasta" />
     <link fromOperation="input connector" fromProperty="use_bgzip" toOperation="BackfillIndelVcf" toProperty="use_bgzip" />
+    <link fromOperation="input connector" fromProperty="varscan_version" toOperation="BackfillIndelVcf" toProperty="varscan_version_internal" />
+    <link fromOperation="input connector" fromProperty="joinx_version" toOperation="BackfillIndelVcf" toProperty="joinx_version" />
     <link fromOperation="input connector" fromProperty="output_directory" toOperation="BackfillIndelVcf" toProperty="base_directory" />
     <link fromOperation="BackfillIndelVcf" fromProperty="output_vcf" toOperation="FinalVcfMerge" toProperty="input_files" />
 
@@ -131,7 +137,7 @@
 
     <operationtype typeClass="Workflow::OperationType::Model">
         <!-- InitialVcfMerge -->
-        <inputproperty>vcf_files</inputproperty>
+        <inputproperty>build_clumps</inputproperty>
         <inputproperty>use_bgzip</inputproperty>
         <inputproperty>joinx_version</inputproperty>
         <inputproperty>segregating_sites_vcf_file</inputproperty>
@@ -143,6 +149,7 @@
         <inputproperty>input_bams</inputproperty>
         <inputproperty>ref_fasta</inputproperty>
         <inputproperty>output_directory</inputproperty>
+        <inputproperty>varscan_version</inputproperty>
 
         <!-- FinalVcfMerge -->
         <inputproperty>final_vcf_merge_working_directory</inputproperty>

@@ -120,7 +120,7 @@ sub run_fast_tier {
             die $self->error_message("Failed to execute fast tier command(err: $snv_err) with params:\n" . Data::Dumper::Dumper(\%params));
         }
     }else{
-        $self->status_message("No detected variants for $file, skipping tiering");
+        $self->debug_message("No detected variants for $file, skipping tiering");
         map {Genome::Sys->copy_file($file, $_)}($tier1_path, $tier2_path, $tier3_path, $tier4_path);
     }
 
@@ -133,7 +133,7 @@ sub available_versions { return (1,2,3); }
 
 sub _needs_symlinks_followed_when_syncing { 0 };
 sub _working_dir_prefix { 'dv2-tiering' };
-sub resolve_allocation_disk_group_name { 'info_genome_models' };
+sub resolve_allocation_disk_group_name { $ENV{GENOME_DISK_GROUP_MODELS} };
 
 sub resolve_allocation_subdirectory {
     my $self = shift;

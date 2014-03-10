@@ -85,7 +85,7 @@ sub execute {
                 my $miss_count = `wc -l $miss`;
                 ($miss_count) = $miss_count =~ m/^(\d+)/;
 
-                $self->status_message('Found ' . $hit_count . ' variants in the target set for ' . $f . '. (' . sprintf("%.3f", ($hit_count / ($hit_count+$miss_count))*100) . '%)');
+                $self->debug_message('Found ' . $hit_count . ' variants in the target set for ' . $f . '. (' . sprintf("%.3f", ($hit_count / ($hit_count+$miss_count))*100) . '%)');
             }
         }
 
@@ -113,7 +113,7 @@ sub execute {
                 die $self->error_message('Failed to generate manual result');
             }
 
-            $self->status_message('Generated manual result for ' . $variant_type . ': ' . $manual_result_cmd->manual_result->id);
+            $self->debug_message('Generated manual result for ' . $variant_type . ': ' . $manual_result_cmd->manual_result->id);
             my $accessor = $variant_type . '_variant_list';
             $self->$accessor($manual_result_cmd->manual_result);
         }

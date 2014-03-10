@@ -36,7 +36,7 @@ sub help_detail { return 'Given an instrument data id, QIDFGM, PIDFA or PIDFA\'s
 
 sub execute {
     my $self = shift;
-    $self->status_message('Fix PIDFA params for '.$self->instrument_data_type.'...');
+    $self->debug_message('Fix PIDFA params for '.$self->instrument_data_type.'...');
 
     my $starting_point_method = $self->_get_init_method;
     return if not $starting_point_method;
@@ -44,10 +44,10 @@ sub execute {
     my ($prior, $pidfa, $qidfgm, $sequence_item) = $self->$starting_point_method; # qidfgm is optional!
     return if not $prior and $pidfa;
 
-    $self->status_message('PIDFA: '.$pidfa->id);
-    $self->status_message('QIDFGM: '.( $qidfgm ? $qidfgm->id : 'NA'));
-    $self->status_message('Prior PSE id: '.$prior->id);
-    $self->status_message('Prior process: '.$prior->process_to);
+    $self->debug_message('PIDFA: '.$pidfa->id);
+    $self->debug_message('QIDFGM: '.( $qidfgm ? $qidfgm->id : 'NA'));
+    $self->debug_message('Prior PSE id: '.$prior->id);
+    $self->debug_message('Prior process: '.$prior->process_to);
 
     if ( not grep { $prior->process_to eq $_ } $self->valid_prior_processes ) {
         $self->error_message('Invalid prior process for '.$self->instrument_data_type.'!');
@@ -56,14 +56,14 @@ sub execute {
 
     $sequence_item = $self->_get_sequence_item_from_prior($prior) if not $sequence_item;
     return if not $sequence_item;
-    $self->status_message('Instrument data: '.$sequence_item->id);
+    $self->debug_message('Instrument data: '.$sequence_item->id);
 
     my %params_to_fix = (
         instrument_data_id => $sequence_item->id,
         instrument_data_type => $self->instrument_data_type,
     );
     if ( $qidfgm ) {
-        $self->status_message('FIX QIDFGM params...');
+        $self->debug_message('FIX QIDFGM params...');
         my $fixed = $self->_fix_params_for($qidfgm, \%params_to_fix);
         if ( not $fixed ) {
             $self->error_message('Failed to fix params for QIDFGM!');
@@ -72,14 +72,14 @@ sub execute {
     }
 
     $self->_additional_params_to_fix(\%params_to_fix, $sequence_item);
-    $self->status_message('FIX PIDFA params...');
+    $self->debug_message('FIX PIDFA params...');
     my $fixed = $self->_fix_params_for($pidfa, \%params_to_fix);
     if ( not $fixed ) {
         $self->error_message('Failed to fix params for PIDFA!');
         return;
     }
 
-    $self->status_message('Done');
+    $self->debug_message('Done');
     return 1;
 }
 
@@ -279,13 +279,13 @@ sub _fix_param {
 
     # Remove extra params
     my @params = GSC::PSEParam->get(pse_id => $pidfa->id, param_name => $param_name);
-    $self->status_message(ucfirst($param_display_name).' params: '.@params);
+    $self->debug_message(ucfirst($param_display_name).' params: '.@params);
     for ( my $i = 1; $i < $#params; $i++ ) {
         $params[$i]->delete;
     }
 
     # Make sure the one left over is correct, if not delete and create a new one
-    $self->status_message("Current $param_display_name: ".( @params ? $params[0]->param_value : 'NULL' ));
+    $self->debug_message("Current $param_display_name: ".( @params ? $params[0]->param_value : 'NULL' ));
     if ( not @params or $params[0]->param_value ne $param_value ) {
         $params[0]->delete if @params;
         my $new_param = GSC::PSEParam->create(
@@ -298,7 +298,7 @@ sub _fix_param {
             $self->error_message("Failed to create new param for $param_name!");
             return;
         }
-        $self->status_message("New $param_display_name: $new_param_value");
+        $self->debug_message("New $param_display_name: $new_param_value");
     }
 
     return 1;

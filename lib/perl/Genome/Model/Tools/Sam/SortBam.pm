@@ -56,7 +56,7 @@ sub execute {
         $real_output_file .= ".sorted";	
     }
 
-    $self->status_message(sprintf("attempting to sort %s into file with prefix %s", $self->file_name, $real_output_file));
+    $self->debug_message(sprintf("attempting to sort %s into file with prefix %s", $self->file_name, $real_output_file));
 
     my $sort_params = ($self->name_sort ? " -n " : "");
     $sort_params .= ' -m '. $self->maximum_memory;

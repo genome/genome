@@ -22,7 +22,7 @@ my $all_expected_file = "$expected_dir/output.all.bed";
 my $hq_expected_file = "$expected_dir/output.hq.bed";
 my $lq_expected_file = "$expected_dir/output.lq.bed";
 
-my $input_file = "$test_dir/snvs.hq";
+my $input_file = "$test_dir/snvs.v1.1.4.hq"; #updated to same as v1.1.4 output to check results look good.
 
 diag("Testing without any filtering");
 test_conversion($all_expected_file, source => $input_file);

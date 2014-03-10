@@ -98,7 +98,6 @@ class Genome::Disk::Allocation {
             is => 'DateTime',
             len => 11,
             default_value => &_default_archive_after_time,
-            is_optional => 1,
             doc => 'After this time, this allocation is subject to being archived'
         },
         timeline_events => {
@@ -847,6 +846,8 @@ sub _get_group_subdir_from_full_path_and_mount_path {
 sub _verify_no_child_allocations {
     my ($class, $path) = @_;
 
+    return 1 if $ENV{UR_DBI_NO_COMMIT} and not $TESTING_DISK_ALLOCATION;
+
     $path =~ s/\/+$//;
 
     my $meta        = $class->__meta__;
@@ -857,9 +858,13 @@ sub _verify_no_child_allocations {
 
     if ($data_source->isa('UR::DataSource::Oracle')) {
         my $fq_table_name = join('.', $owner, $table_name);
-        $query_string = sprintf(q(select * from %s where allocation_path like ? AND rownum <= 1), $fq_table_name);
+        $query_string = sprintf(
+            q(select 1 from %s where allocation_path like ? AND rownum <= 1),
+            $fq_table_name);
     } elsif ($data_source->isa('UR::DataSource::Pg') || $data_source->isa('UR::DataSource::SQLite')) {
-        $query_string = sprintf(q(select * from %s where allocation_path like ? LIMIT 1), $table_name);
+        $query_string = sprintf(
+            q(select 1 from %s where allocation_path like ? LIMIT 1),
+            $table_name);
     } else {
         $class->error_message("Falling back on old child allocation detection behavior.");
         return !($class->get_child_allocations($path));
@@ -947,7 +952,7 @@ sub _cleanup_archive_directory {
     unless ($ENV{UR_DBI_NO_COMMIT}) {
         my ($job_id, $status) = Genome::Sys->bsub_and_wait(
             queue => $ENV{GENOME_ARCHIVE_LSF_QUEUE},
-            cmd => "\"$cmd\"",
+            cmd => "$cmd",
         );
         confess "Failed to execute $cmd via LSF job $job_id, received status $status" unless $status eq 'DONE';
     }
@@ -1076,7 +1081,7 @@ sub _default_archive_after_time {
 sub _get_trash_folder {
     my $self = shift;
 
-    my @dv = Genome::Disk::Volume->get(disk_group_names => 'info_apipe_trash');
+    my @dv = Genome::Disk::Volume->get(disk_group_names => $ENV{GENOME_DISK_GROUP_TRASH});
     my %trash_map = map {
        $self->_extract_aggr($_->physical_path) => File::Spec->join($_->mount_path, '.trash');
     } @dv;

@@ -25,11 +25,6 @@ class Genome::Model::SomaticValidation::Command::ProcessValidation {
             id_by => 'build_id',
         },
     ],
-    has_param => [
-        lsf_resource => {
-            default_value => "-M 30000000 -R 'rusage[tmp=2000 && mem=30000] select[mem>30000 && tmp>2000]'",
-        },
-    ],
     doc => 'final processing of HQ SNV detection results',
 };
 
@@ -72,8 +67,9 @@ sub execute {
         $self->error_message('Failed to get a snv variant file for this build!');
         die $self->error_message;
     }
+    Genome::Sys->create_directory($build->data_directory . '/validation/metrics/varscan-process-validation');
+    my $anno_file = $build->data_directory . '/validation/metrics/varscan-process-validation/variant_list.snvs';
 
-    my $anno_file = $build->data_directory . '/variant_list.snvs';
     my $bed_to_anno = Genome::Model::Tools::Bed::Convert::BedToAnnotation->create(
         snv_file => $snv_variant_file,
         output => $anno_file,
@@ -94,7 +90,7 @@ sub execute {
         $self->error_message('Failed to find original filtered file to use for ProcessValidation run. This step requires that the final SNV result contain a Varscan output.');
         return 1;
     }
-
+    
     my $process_validation = Genome::Model::Tools::Varscan::ProcessValidation->create(
         validation_file => $validation_original_file[0],
         filtered_validation_file => $filtered_original_file,

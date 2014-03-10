@@ -24,7 +24,7 @@ class Genome::Model::RnaSeq::Command::BamQc {
     ],
     has_param => [
         lsf_queue => {
-            default => 'long',
+            default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
         },
     ],
     has_optional_output => [
@@ -52,7 +52,7 @@ sub shortcut {
     my $result = Genome::InstrumentData::AlignmentResult::Merged::BamQc->get_with_lock(%params);
 
     if($result) {
-        $self->status_message('Using existing result ' . $result->__display_name__);
+        $self->debug_message('Using existing result ' . $result->__display_name__);
         return $self->link_result_to_build($result);
     } else {
         return;

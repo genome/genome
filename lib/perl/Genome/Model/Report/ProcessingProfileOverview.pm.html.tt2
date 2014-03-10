@@ -21,7 +21,7 @@
           <dt>[% USE String(item) %] [% String.replace('_', ' ')  %]:</dt>
           <dd>
       [% IF item == 'reference_sequence_name'; %]
- <a href="https://gscweb.gsc.wustl.edu/gscmnt/420/info/symlinks/reference_sequences/[% pprofile.$item %]" target=_blank>[% pprofile.$item %]</a>
+ <a href="[% files_url %]gscmnt/420/info/symlinks/reference_sequences/[% pprofile.$item %]" target=_blank>[% pprofile.$item %]</a>
       [% ELSE; %]
             [% pprofile.$item %]
       [% END; %]

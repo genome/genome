@@ -133,7 +133,7 @@ class Genome::Model::Tools::Pindel::RunPindel {
     # Make workflow choose 64 bit blades
     has_param => [
         lsf_queue => {
-            default_value => 'apipe'
+            default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT},
         }, 
         lsf_resource => {
             default_value => "-M 12000000 -R 'select[type==LINUX64 && mem>12000] rusage[mem=12000]'",
@@ -151,13 +151,38 @@ class Genome::Model::Tools::Pindel::RunPindel {
 };
 
 # FIXME make this the real deployed path
+my $env_path = $ENV{GENOME_SW};
+my $old_pindel2vcf_path = $env_path . "/pindel2vcf/0.1.9/pindel2vcf-0.1.9";
+
 my %PINDEL_VERSIONS = (
-    '0.2'    => $ENV{GENOME_SW} . '/pindel/0.2/pindel',
-    '0.2.4d' => $ENV{GENOME_SW} .'/pindel/0.2.4d/pindel',
-    '0.2.4t' => '/usr/bin/pindel0.2.4t',
-    '0.3'    => $ENV{GENOME_SW} .'/pindel/0.3/pindel',
-    '0.4'    => $ENV{GENOME_SW} .'/pindel/0.4/pindel',
-    '0.5'    => $ENV{GENOME_SW} .'/pindel/0.5/pindel',
+    '0.2'    => {
+        pindel_path     => $env_path . '/pindel/0.2/pindel',
+        pindel2vcf_path => $old_pindel2vcf_path,
+    },
+    '0.2.4d' => {
+        pindel_path     => $env_path .'/pindel/0.2.4d/pindel',
+        pindel2vcf_path => '/usr/bin/pindel2vcf0.2.4o',
+    },       
+    '0.2.4t' => {
+        pindel_path     => '/usr/bin/pindel0.2.4t',
+        pindel2vcf_path => '/usr/bin/pindel2vcf0.2.4o',
+    },
+    '0.2.5'  => {
+        pindel_path     => '/usr/bin/pindel0.2.5',
+        pindel2vcf_path => '/usr/bin/pindel2vcf0.2.5',
+    },
+    '0.3' => {
+        pindel_path     => $env_path .'/pindel/0.3/pindel',
+        pindel2vcf_path => $old_pindel2vcf_path,
+    },
+    '0.4' => {
+        pindel_path     => $env_path .'/pindel/0.4/pindel',
+        pindel2vcf_path => $old_pindel2vcf_path,
+    },
+    '0.5' => {
+        pindel_path     => $env_path .'/pindel/0.5/pindel',
+        pindel2vcf_path => $old_pindel2vcf_path,
+    },
 );
 
 sub help_synopsis {
@@ -226,7 +251,7 @@ sub _verify_inputs {
         }
     }
 
-    $self->status_message("Completed verify_inputs step.");
+    $self->debug_message("Completed verify_inputs step.");
 
     return 1;
 }
@@ -246,12 +271,9 @@ sub _create_directories {
             return;
         }
 
-        $self->status_message("Created directory: $output_directory");
+        $self->debug_message("Created directory: $output_directory");
         chmod 02775, $output_directory;
     }
-
-    #$self->_temp_staging_directory(Genome::Sys->create_temp_directory);
-    #$self->_temp_scratch_directory(Genome::Sys->create_temp_directory);
 
     return 1;
 }
@@ -398,7 +420,7 @@ sub _run_pindel_for_chromosome {
     $reference_sequence_for_chrom =~ s/fasta$/fa/;
     $reference_sequence_for_chrom =~ s/\/opt\/fscache//;
     unless (-e $reference_sequence_for_chrom) {
-        $self->status_message("No per-chromosome reference fasta found, falling back to all_sequences.fa");
+        $self->debug_message("No per-chromosome reference fasta found, falling back to all_sequences.fa");
         $reference_sequence_for_chrom = $self->reference_sequence_input;
         $reference_sequence_for_chrom =~ s/fasta$/fa/;
         $reference_sequence_for_chrom =~ s/\/opt\/fscache//;
@@ -441,10 +463,20 @@ sub path_for_pindel_version {
     my $version = shift;
 
     if (defined $PINDEL_VERSIONS{$version}) {
-        return $PINDEL_VERSIONS{$version};
+        return $PINDEL_VERSIONS{$version}->{pindel_path};
     }
-    die('No path for pindel version '. $version);
+    die 'No pindel path for pindel version: '. $version;
 }
+
+sub path_for_pindel2vcf_version {
+    my ($class, $version) = @_;
+
+    if (defined $PINDEL_VERSIONS{$version}) {
+        return $PINDEL_VERSIONS{$version}->{pindel2vcf_path};
+    }
+    die 'No pindel2vcf path for pindel version: '. $version;
+}
+
 
 sub default_pindel_version {
     die "default pindel version: $DEFAULT_VERSION is not valid" unless $PINDEL_VERSIONS{$DEFAULT_VERSION};

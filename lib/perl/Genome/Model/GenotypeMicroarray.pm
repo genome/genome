@@ -131,28 +131,27 @@ sub request_builds_for_dependent_cron_ref_align {
     return 1;
 }
 
-
 sub _resolve_resource_requirements_for_build {
     return "-R 'select[mem>4000] rusage[mem=4000]' -M 4000000"
 }
 
 sub _execute_build {
     my ($self, $build) = @_;
-    $self->status_message('Execute genotype microarray build '.$build->__display_name__);
+    $self->debug_message('Execute genotype microarray build '.$build->__display_name__);
 
     my $instrument_data = $build->instrument_data;
     if ( not $instrument_data ) {
         $self->error_message('No instrument data for genotype microarray build '.$build->__display_name__);
         return;
     }
-    $self->status_message('Instrument data: '.$instrument_data->id.' '.$instrument_data->sequencing_platform);
+    $self->debug_message('Instrument data: '.$instrument_data->id.' '.$instrument_data->sequencing_platform);
 
     my $reference_sequence_build = $build->model->reference_sequence_build;
     if ( not $reference_sequence_build ) {
         $self->error_message('No reference sequence build for '.$build->__display_name__);
         return;
     }
-    $self->status_message('Reference sequence build: '.$reference_sequence_build->__display_name__);
+    $self->debug_message('Reference sequence build: '.$reference_sequence_build->__display_name__);
 
     my $dbsnp_build = $build->dbsnp_build;
     if ( not $dbsnp_build ) {
@@ -164,26 +163,53 @@ sub _execute_build {
         $build->dbsnp_build($dbsnp_build);
         $build->model->dbsnp_build($dbsnp_build);
     }
-    $self->status_message('DB SNP build: '.$dbsnp_build->__display_name__);
+    $self->debug_message('DB SNP build: '.$dbsnp_build->__display_name__);
 
-    my $fasta_file = $reference_sequence_build->full_consensus_path('fa');
-    if ( ! -s $fasta_file ) {
-        $self->error_message("Reference sequence has missing or 0 byte fasta file at $fasta_file.");
-        return;
-    }
-    $self->status_message("Reference fasta file: $fasta_file");
-
-    # Original genotype file - has all the info and headers, with positions from this dbsnp
-    $self->status_message('Create original genotype file...');
-    my $original_genotype_file = $build->original_genotype_file_path;
-    $self->status_message('Original genotype file: '.$original_genotype_file);
-    my $extract = Genome::InstrumentData::Command::Microarray::Extract->create(
+    # Original genotype VCF file
+    $self->debug_message('Create original genotype VCF file...');
+    my $original_genotype_vcf_file = $build->original_genotype_vcf_file_path;
+    $self->debug_message('Original genotype file: '.$original_genotype_vcf_file);
+    my $extract = Genome::Model::GenotypeMicroarray::Command::Extract->create(
         instrument_data => $instrument_data,
         variation_list_build => $dbsnp_build,
-        fields => [qw/ chromosome position alleles id sample_id log_r_ratio gc_score cnv_value cnv_confidence allele1 allele2 /],
-        headers => 1,
-        separator => 'tab',
-        output => $original_genotype_file,
+        output => $original_genotype_vcf_file,
+    );
+    if ( not $extract ) {
+        $self->error_message('Failed to create command to create extract command original genotype VCF file!');
+        return;
+    }
+    $extract->dump_status_messages(1);
+    if ( not $extract->execute ) {
+        $self->error_message('Failed to execute command to create extract command original genotype VCF file!');
+        return;
+    }
+    # Check that genotypes were output
+    if ( $extract->genotypes_output == 0 ) {
+        $self->error_message('Executed extract command to create original genotype VCF file, but no genotypes were output. This means they were filtered or ignored because of ambiguous position.');
+        return;
+    }
+    # Check file exists
+    if ( not -e $original_genotype_vcf_file ) {
+        $self->error_message('Executed extract command to create original genotype VCF file and genotypes were output, but file is gone!');
+        return;
+    }
+    # Check that there are alleles
+    my @alleles = grep { $_ ne '--' } keys %{$extract->alleles};
+    if ( not @alleles ) {
+        $self->error_message('Executed command to create original genotype file, but there are no alleles!');
+
+        return;
+    }
+    $self->debug_message('Create original genotype VCF file...OK');
+
+    # Original genotype file - has all the info and headers, with positions from this dbsnp
+    $self->debug_message('Create original genotype file...');
+    my $original_genotype_file = $build->original_genotype_file_path;
+    $self->debug_message('Original genotype file: '.$original_genotype_file);
+    $extract = Genome::Model::GenotypeMicroarray::Command::Extract->create(
+        instrument_data => $instrument_data,
+        variation_list_build => $dbsnp_build,
+        output => $original_genotype_file.':separator=TAB:fields=chromosome,position,alleles,id,sample_id,log_r_ratio,gc_score,cnv_value,cnv_confidence,allele1,allele2:print_headers=1',
     );
     if ( not $extract ) {
         $self->error_message('Failed to create command to create original genotype file!');
@@ -204,29 +230,20 @@ sub _execute_build {
         $self->error_message('Executed command to create original genotype file and genotypes were output, but file is gone!');
         return;
     }
-    # Check that there are alleles
-    my @alleles = grep { $_ ne '--' } keys %{$extract->alleles};
-    if ( not @alleles ) {
-        $self->error_message('Executed command to create original genotype file, but there are no alleles!');
-
-        return;
-    }
-    $self->status_message('Create original genotype file...OK');
+    $self->debug_message('Create original genotype file...OK');
 
     # Filters for extracting from the above original file
     my @filters = (qw/ gc_score:min=0.7 /); 
     push @filters, 'invalid_iscan_ids' if $reference_sequence_build->version eq '36';
 
     # Genotype file. No headers, tab sep with chrom, pos and alleles
-    $self->status_message('Create genotype file...');
+    $self->debug_message('Create genotype file...');
     my $genotype_file = $build->genotype_file_path;
-    $self->status_message('Genotype file: '.$genotype_file);
+    $self->debug_message('Genotype file: '.$genotype_file);
     my $extract_genotypes = Genome::Model::GenotypeMicroarray::Command::Extract->create(
         build => $build,
-        fields => [qw/ chromosome position alleles /],
-        separator => 'tab',
+        output => $genotype_file.':separator=TAB:fields=chromosome,position,alleles:print_headers=0',
         filters => \@filters,
-        output => $genotype_file,
     );
     if ( not $extract_genotypes ) {
         $self->error_message('Failed to create command to create genotype file!');
@@ -241,13 +258,13 @@ sub _execute_build {
         $self->error_message('Executed command to create genotype file, but file is empty! '.$genotype_file);
         return;
     }
-    $self->status_message('Create genotype file...OK');
+    $self->debug_message('Create genotype file...OK');
 
     # Nutter made this file name, so we will link to it
-    $self->status_message('Link genotpe file to gold2geno file...');
-    $self->status_message('Genotype file: '.$genotype_file);
+    $self->debug_message('Link genotype file to gold2geno file...');
+    $self->debug_message('Genotype file: '.$genotype_file);
     my $gold2geno_file = $build->gold2geno_file_path;
-    $self->status_message('Gold2geno file: '.$gold2geno_file);
+    $self->debug_message('Gold2geno file: '.$gold2geno_file);
 
     # Make a relative symlink if they are in the same directory. I think this
     # will always be the case but since gold2geno_file_path is not locally
@@ -263,18 +280,16 @@ sub _execute_build {
         $self->error_message('Failed to link genotype file to gold2geno file!');
         return;
     }
-    $self->status_message('Link genotpe file to gold2geno file...OK');
+    $self->debug_message('Link genotype file to gold2geno file...OK');
 
     # Copy number file. No headers, tab sep with chrom, pos and log r ratio
-    $self->status_message('Create copy number file...');
+    $self->debug_message('Create copy number file...');
     my $copy_number_file = $build->copy_number_file_path;
-    $self->status_message('Copy number file: '.$copy_number_file);
+    $self->debug_message('Copy number file: '.$copy_number_file);
     my $extract_copy_number = Genome::Model::GenotypeMicroarray::Command::Extract->create(
         build => $build,
-        fields => [qw/ chromosome position log_r_ratio /],
-        separator => 'tab',
+        output => $copy_number_file.':separator=TAB:fields=chromosome,position,log_r_ratio:print_headers=0',
         filters => \@filters,
-        output => $copy_number_file,
     );
     if ( not $extract_copy_number ) {
         $self->error_message('Failed to create command to create copy number file!');
@@ -289,7 +304,7 @@ sub _execute_build {
         $self->error_message('Executed command to create copy number file, but file is empty! '.$copy_number_file);
         return;
     }
-    $self->status_message('Create copy number file...OK');
+    $self->debug_message('Create copy number file...OK');
 
     # TODO bdericks: I'm guessing that second genotype file is supposed to be the replicate. It should be changed
     # to be the actual replicate when we know how to figure it out.
@@ -297,7 +312,7 @@ sub _execute_build {
     # file to fix a bug where it would not read from the "second" file when switching chromosomes and the next position
     # is numerically higher than the last position
     my $snp_array_file = $build->formatted_genotype_file_path;
-    $self->status_message("Create snp array (gold) file: ".$snp_array_file);
+    $self->debug_message("Create snp array (gold) file: ".$snp_array_file);
     my $gold_snp = Genome::Model::GenotypeMicroarray::Command::CreateGoldSnpFileFromGenotypes->create(
         genotype_file => $genotype_file,
         output_file => $snp_array_file,
@@ -316,11 +331,11 @@ sub _execute_build {
         $self->error_message("Executed gold snp tool, but snp array file ($snp_array_file) does not exist");
         return;
     }
-    $self->status_message("Create snp array (gold) file...OK");
+    $self->debug_message("Create snp array (gold) file...OK");
 
-    $self->status_message('Create gold snp bed file...');
+    $self->debug_message('Create gold snp bed file...');
     my $snvs_bed = $build->snvs_bed;
-    $self->status_message('Gold snp bed file: '.$snvs_bed);
+    $self->debug_message('Gold snp bed file: '.$snvs_bed);
     my $gold_snp_bed = Genome::Model::GenotypeMicroarray::Command::CreateGoldSnpBed->create(
         input_file => $snp_array_file,
         output_file => $snvs_bed,
@@ -339,9 +354,9 @@ sub _execute_build {
         $self->error_message("Executed 'create gold snp bed', but snvs bed file ($snvs_bed) does not exist");
         return;
     }
-    $self->status_message("Create gold snp bed file...OK");
+    $self->debug_message("Create gold snp bed file...OK");
 
-    $self->status_message('Execute genotype microarray build...OK');
+    $self->debug_message('Execute genotype microarray build...OK');
     return 1;
 }
 

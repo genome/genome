@@ -49,7 +49,7 @@ sub execute {
         return 1;
     }
 
-    $self->status_message("Running trnascan on sequence in " . $self->fasta_file);
+    $self->debug_message("Running trnascan on sequence in " . $self->fasta_file);
 
     unless (-d $self->raw_output_directory) {
         my $mk_rv = make_path($self->raw_output_directory);
@@ -66,7 +66,7 @@ sub execute {
     my $raw_output_file = $raw_output_fh->filename;
     $raw_output_fh->close;
     chmod(0666, $raw_output_file);
-    $self->status_message("Raw output being written to $raw_output_file");
+    $self->debug_message("Raw output being written to $raw_output_file");
 
     # Construct command and parameters/switches
     my @params;
@@ -77,12 +77,12 @@ sub execute {
     push @params, "2> $raw_output_file.error ";
    
     my $cmd = join(" ", $self->trnascan_install_path, @params);
-    $self->status_message("Preparing to run Trnascan-SE: $cmd");
+    $self->debug_message("Preparing to run Trnascan-SE: $cmd");
     
     # FIXME Replace with Genome::Sys->shellcmd
     my $rv = system($cmd);
     confess 'Trouble executing tRNAscan!' unless defined $rv and $rv == 0;
-    $self->status_message("Done executing tRNAscan, now parsing output");
+    $self->debug_message("Done executing tRNAscan, now parsing output");
 
     # Parse output and create UR objects
     $raw_output_fh = IO::File->new($raw_output_file, 'r');
@@ -90,7 +90,7 @@ sub execute {
     while (my $line = $raw_output_fh->getline) {
         chomp $line;
         my ($seq_name, $trna_num, $begin, $end, $type, $codon, $intron_begin, $intron_end, $score) = split(/\s+/, $line);
-        $self->status_message("Parsing $seq_name");
+        $self->debug_message("Parsing $seq_name");
 
         my $strand = 1;
         $strand = -1 if $begin > $end;
@@ -116,7 +116,7 @@ sub execute {
         );
     }
 
-    $self->status_message("Parsing done, getting locks and committing!");
+    $self->debug_message("Parsing done, getting locks and committing!");
     my @locks = $self->lock_files_for_predictions(qw/ Genome::Prediction::RNAGene /);
     UR::Context->commit;
     $self->release_prediction_locks(@locks);

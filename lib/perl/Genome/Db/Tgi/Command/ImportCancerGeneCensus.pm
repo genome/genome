@@ -2,7 +2,9 @@ package Genome::Db::Tgi::Command::ImportCancerGeneCensus;
 
 use strict;
 use warnings;
+
 use Genome;
+use Genome::File::Fetch qw(fetch);
 
 class Genome::Db::Tgi::Command::ImportCancerGeneCensus {
     is => 'Command',
@@ -20,13 +22,12 @@ class Genome::Db::Tgi::Command::ImportCancerGeneCensus {
 sub execute {
     my $self = shift;
 
-    my $temp_dir = Genome::Sys->create_temp_directory;
-    my $infile = "$temp_dir/census.tsv";
     my $out = Genome::Sys->open_file_for_writing($self->output_file);
-    my $cmd = "wget ".$self->data_url." -O $infile --no-check-certificate";
-    Genome::Sys->shellcmd(cmd => $cmd);
+
+    my $infile = fetch($self->data_url);
+
     my $transformed_infile = "$infile.transformed";
-    $cmd = "cat $infile | tr  '\n' > $transformed_infile";
+    my $cmd = "cat $infile | tr  '\n' > $transformed_infile";
     Genome::Sys->shellcmd(cmd => $cmd);
 
     my $in = Genome::Utility::IO::SeparatedValueReader->create(

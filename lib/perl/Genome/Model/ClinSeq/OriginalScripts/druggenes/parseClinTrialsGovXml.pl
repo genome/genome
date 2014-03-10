@@ -45,7 +45,7 @@ use Genome::Model::ClinSeq::Util qw(:all);
 my $lib_dir;
 BEGIN{
   if (abs_path($0) =~ /(.*\/).*\/.*\.pl/){
-    $lib_dir = $1."/drug-genes";
+    $lib_dir = $1."/druggenes";
   }
 }
 use lib $lib_dir;

@@ -202,7 +202,7 @@ sub _construct_blast_command {
         $self->output_file,
     );
 
-    $self->status_message("<= $cmd =>");
+    $self->debug_message("<= $cmd =>");
 
     return $cmd;
 }

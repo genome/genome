@@ -88,7 +88,7 @@ sub execute {
 sub convert_to_bed {
     my $self = shift;
     my $snv_file = shift;
-    $self->status_message("Converting input to dbsnp");
+    $self->debug_message("Converting input to dbsnp");
     my $temp_bed_file = Genome::Sys->create_temp_file_path;
     my $temp_sorted_file = Genome::Sys->create_temp_file_path;
     my $temp_headless_file = Genome::Sys->create_temp_file_path;

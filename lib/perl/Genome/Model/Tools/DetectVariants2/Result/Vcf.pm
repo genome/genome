@@ -104,7 +104,7 @@ sub _tabix_index_vcf {
         my $vcf;
         eval { $vcf = $self->get_vcf($type); };
         if ($@ and not defined $vcf) {
-            $self->status_message("Vcf for type $type not found, skipping");
+            $self->debug_message("Vcf for type $type not found, skipping");
             next;
         }
 
@@ -137,7 +137,7 @@ sub conversion_class_name {
         $vcf_module->__meta__;
     };
     if($@){
-        $self->status_message("Did not find vcf converter for: ".$vcf_module);
+        $self->debug_message("Did not find vcf converter for: ".$vcf_module);
         return undef;
     }
     return $vcf_module;
@@ -148,7 +148,7 @@ sub get_vcf {
     my $type = shift;
     my $file = $self->output_dir."/".$type.".vcf.gz";
     unless(-e $file){
-        die $self->status_message("Cannot find a vcf in this result for ".$type." variants at: ".$file);
+        die $self->debug_message("Cannot find a vcf in this result for ".$type." variants at: ".$file);
         return;
     }
     return $file;
@@ -173,7 +173,7 @@ sub _working_dir_prefix {
 }
 
 sub resolve_allocation_disk_group_name { 
-    return "info_genome_models";
+    $ENV{GENOME_DISK_GROUP_MODELS};
 }
 
 sub allocation_subdir_prefix {
@@ -203,7 +203,7 @@ sub resolve_allocation_subdirectory {
 sub _reallocate_disk_allocation {
     my $self = shift;
     my $allocation = $self->_disk_allocation;
-    $self->status_message('Resizing the disk allocation...');
+    $self->debug_message('Resizing the disk allocation...');
     my $rv = eval { $allocation->reallocate };
     my $error = $@;
     if ($rv != 1) {
@@ -270,7 +270,7 @@ sub _remove_existing_vcf {
         my $file = $path."/".$type.".vcf.gz";
         push @existing_vcfs, $file if (-e $file and -l $file);
     }
-    $self->status_message("Found no existing vcfs.") unless @existing_vcfs;
+    $self->debug_message("Found no existing vcfs.") unless @existing_vcfs;
 
     map { $self->unlink_existing_vcf($_); } @existing_vcfs;
 
@@ -288,7 +288,7 @@ sub unlink_existing_vcf {
         unless(unlink $file){
             die $self->error_message("Could not unlink vcf link at: ".$file);
         }
-        $self->status_message("Unlinked vcf symlink.");
+        $self->debug_message("Unlinked vcf symlink.");
     }
     return 1;
 }

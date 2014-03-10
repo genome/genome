@@ -3,8 +3,10 @@ package Genome::InstrumentData::SxResult;
 use strict;
 use warnings;
 
-use Sys::Hostname;
 use Genome;
+
+require List::Util;
+use Sys::Hostname;
 
 class Genome::InstrumentData::SxResult {
     is => 'Genome::SoftwareResult::Stageable',
@@ -38,6 +40,12 @@ class Genome::InstrumentData::SxResult {
             doc => 'The SX output file config. See "gmt sx --h" for help.',
         },
     ],
+    has_metric => [
+        input_bases => { is => 'Text', doc => 'Number of bases from input.', },
+        input_count => { is => 'Text', doc => 'Number of sequences from input.', },
+        output_bases => { is => 'Text', doc => 'Number of bases in output.', },
+        output_count => { is => 'Text', doc => 'Number of sequences in output.', },
+    ],
     has => [
         instrument_data => {
             is => 'Genome::InstrumentData',
@@ -58,6 +66,11 @@ class Genome::InstrumentData::SxResult {
         },
     ],
 };
+
+sub metric_names {
+    my $self = shift;
+    return map { $_->property_name } grep { $_->is_metric } $self->__meta__->properties;
+}
 
 sub _error {
     my ($self, $msg) = @_;
@@ -80,6 +93,9 @@ sub create {
 
     my $run_sx = $self->_run_sx(@sx_command_parts);
     return $self->_error('Failed to run SX!') if not $run_sx; 
+
+    my $set_metrics = $self->set_metrics;
+    return $self->_error('Failed to set metrics!') if not $set_metrics; 
 
     my $verify_output_files = $self->_verify_output_files;
     return $self->_error('Failed to verify SX output files!') if not $verify_output_files; 
@@ -157,13 +173,11 @@ sub _run_sx {
     my @sx_cmd_parts = map { 'gmt sx '.$_ } @read_processor_parts;
     $sx_cmd_parts[0] .= ' --input '.join(',', @$inputs);
     $sx_cmd_parts[0] .= ' --input-metrics '.
-    $self->temp_staging_directory.'/'.
-    $self->read_processor_input_metric_file;
+    $self->temp_staging_input_metric_file;
     my $num_parts = scalar @read_processor_parts;
     $sx_cmd_parts[$num_parts-1] .= ' --output '.$output;
     $sx_cmd_parts[$num_parts-1] .= ' --output-metrics '.
-    $self->temp_staging_directory.'/'.
-    $self->read_processor_output_metric_file;
+    $self->temp_staging_output_metric_file;
 
     if (Genome::DataSource::GMSchema->has_default_handle) {
         $self->debug_message("Disconnecting GMSchema default handle.");
@@ -180,10 +194,85 @@ sub _run_sx {
     return 1;
 }
 
-sub _verify_output_files {
+sub set_metrics {
     my $self = shift;
 
-    $self->status_message('Verify output files...');
+    my @metric_names = map { $_->property_name } grep { $_->is_metric } $self->__meta__->properties;
+    my @metrics_undefined = grep { not defined $self->$_ } @metric_names;
+    return 1 if not @metrics_undefined;
+
+    $self->debug_message('Set metrics...');
+
+    my %metrics = $self->load_metrics;
+    return if not %metrics;
+
+    for my $metric_name ( @metrics_undefined ) {
+        $self->$metric_name($metrics{$metric_name});
+        $self->debug_message( sprintf('%s: %s', ucfirst( join(' ', split('_', $metric_name))), $self->$metric_name) );
+    }
+
+    $self->debug_message('Set metrics...OK');
+    return 1;
+}
+
+sub load_metrics {
+    my $self = shift;
+
+    my %metrics;
+    for my $type (qw/ input output /) {
+        my $metric_file_method = 'read_processor_'.$type.'_metric_file';
+        my $metric_file = $self->$metric_file_method;
+        if ( not $metric_file or not -s $metric_file ) {
+            $metric_file_method = 'temp_staging_'.$type.'_metric_file';
+            $metric_file = $self->$metric_file_method;
+            if ( not $metric_file or not -s $metric_file ) {
+                $self->error_message(ucfirst($type).' metric file not created!');
+                return;
+            }
+        }
+
+        my $metrics = Genome::Model::Tools::Sx::Metrics::Basic->from_file($metric_file);
+        if ( not $metrics ) {
+            $self->error_message('Failed to create SX metrics from file! '.$metric_file);
+            return;
+        }
+
+        for my $metric_name (qw/ bases count /) {
+            my $metric_value = $metrics->$metric_name;
+            if ( not defined $metric_value ) {
+                $self->error_message("No $metric_name in metrics! ".Data::Dumper::Dumper($metrics));
+                return;
+            }
+            $metrics{$type.'_'.$metric_name} = $metric_value;
+        }
+    }
+
+    return %metrics;
+}
+
+sub _verify_output_files {
+    my $self = shift;
+    $self->debug_message('Verify output files...');
+
+    # Check that we processed something...
+    my $read_count = List::Util::sum( grep { defined } map { $_->read_count } $self->instrument_data );
+    if ( defined $read_count and $read_count > 1  ) {
+        # Instdata has reads. Make sure some were read in.
+        # Can't check read_count == input_count b/c might have done a coverage limiter which 
+        #  would stop the reading
+        if ( $self->input_count == 0 ) {
+            $self->error_message("Input count is 0! Failed to process any sequences!");
+            return;
+        }
+    }
+
+    my $output_count = $self->output_count;
+    if ( $output_count == 0 ) {
+        $self->debug_message('SX ran correctly, but all sequences were filtered out. The output files are empty.');
+        return 1;
+    }
+
+    # TODO run a  validator?
     my @output_files = $self->read_processor_output_files;
     my $existing_cnt = 0;
     foreach my $output_file (@output_files) {
@@ -199,18 +288,8 @@ sub _verify_output_files {
         $self->error_message('No output files were created!');
         return;
     }
-    if (not -s $self->temp_staging_directory.'/'.
-            $self->read_processor_output_metric_file) {
-        $self->error_message('Output metrics file not created');
-        return;
-    }
-    if (not -s $self->temp_staging_directory.'/'.
-            $self->read_processor_input_metric_file) {
-        $self->error_message('Input metrics file not created');
-        return;
-    }
 
-    $self->status_message('Verify output files...OK');
+    $self->debug_message('Verify output files...OK');
     return 1;
 }
 
@@ -225,19 +304,52 @@ sub resolve_allocation_subdirectory {
 }
 
 sub resolve_allocation_disk_group_name {
-    return 'info_genome_models';
+    $ENV{GENOME_DISK_GROUP_MODELS};
 }
 
-sub read_processor_output_metric_file {
+sub resolve_base_name_from_instrument_data {
+    my $self = shift;
+    return $self->instrument_data_id;
+}
+
+sub read_processor_input_metric_file_base_name {
+    my $self = shift;
+    my $base = $self->resolve_base_name_from_instrument_data;
+    return "$base.input_metrics";
+}
+
+sub temp_staging_input_metric_file {
+    my $self = shift;
+    my $temp_staging_directory = $self->temp_staging_directory;
+    return if not $temp_staging_directory or not -d $temp_staging_directory;
+    return $temp_staging_directory.'/'.$self->read_processor_input_metric_file_base_name;
+}
+
+sub read_processor_input_metric_file {
+    my $self = shift;
+    my $output_dir = $self->output_dir;
+    return if not $output_dir or not -d $output_dir;
+    return $output_dir.'/'.$self->read_processor_input_metric_file_base_name;
+}
+
+sub read_processor_output_metric_file_base_name {
     my $self = shift;
     my $base = $self->resolve_base_name_from_instrument_data;
     return "$base.output_metrics";
 }
 
-sub read_processor_input_metric_file {
+sub temp_staging_output_metric_file {
     my $self = shift;
-    my $base = $self->resolve_base_name_from_instrument_data;
-    return "$base.input_metrics";
+    my $temp_staging_directory = $self->temp_staging_directory;
+    return if not $temp_staging_directory or not -d $temp_staging_directory;
+    return $temp_staging_directory.'/'.$self->read_processor_output_metric_file_base_name;
+}
+
+sub read_processor_output_metric_file {
+    my $self = shift;
+    my $output_dir = $self->output_dir;
+    return if not $output_dir or not -d $output_dir;
+    return $output_dir.'/'.$self->read_processor_output_metric_file_base_name;
 }
 
 sub read_processor_output_files {
@@ -345,12 +457,6 @@ sub get_output_file_count {
         $self->error_message("Couldn't resolve output file count");
         die $self->error_message;
     }
-}
-
-sub resolve_base_name_from_instrument_data {
-    my $self = shift;
-    
-    return $self->instrument_data_id;
 }
 
 1;

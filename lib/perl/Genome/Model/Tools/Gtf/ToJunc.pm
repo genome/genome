@@ -58,7 +58,7 @@ sub execute {
     
     my $gene_label_key = 'gene_'. $self->gene_label;
     my %transcript_id_to_gene_label;
-    $self->status_message('Mapping transcript_id to '. $gene_label_key .' from GTF file \''. $self->gtf_file .'\'');
+    $self->debug_message('Mapping transcript_id to '. $gene_label_key .' from GTF file \''. $self->gtf_file .'\'');
     while (my $data = $gff_reader->next_with_attributes_hash_ref) {
         my $attributes = delete($data->{attributes_hash_ref});
         my $transcript_id = $attributes->{transcript_id};
@@ -76,7 +76,7 @@ sub execute {
     $gff_reader->input->close;
     
     my $tmp_bed12_file = Genome::Sys->create_temp_file_path('gtf_to_bed12.bed');
-    $self->status_message('Converting GTF format file \''. $self->gtf_file .'\' to BED12 format file \''. $tmp_bed12_file .'\'');
+    $self->debug_message('Converting GTF format file \''. $self->gtf_file .'\' to BED12 format file \''. $tmp_bed12_file .'\'');
     my $gtf_to_bed12_cmd = Genome::Model::Tools::Gtf::ToBed12->execute(
         bed12_file => $tmp_bed12_file,
         gtf_file => $self->gtf_file,
@@ -86,7 +86,7 @@ sub execute {
         headers => Genome::Utility::IO::BedReader->bed12_headers,
     );
     my %junc;
-    $self->status_message('Generating junctions from BED12 format file \''. $tmp_bed12_file .'\'');
+    $self->debug_message('Generating junctions from BED12 format file \''. $tmp_bed12_file .'\'');
     while (my $bed12_data = $bed12_reader->next) {
         unless (
             ($bed12_data->{'chrom'} =~ /\w+/) &&

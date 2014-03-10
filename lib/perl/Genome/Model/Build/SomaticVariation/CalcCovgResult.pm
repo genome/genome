@@ -45,7 +45,7 @@ sub create {
     $self->_prepare_staging_directory;
     $self->_prepare_output_directory;
 
-    $self->status_message("CalcCovg for build ".$self->somatic_variation_build->id);
+    $self->debug_message("CalcCovg for build ".$self->somatic_variation_build->id);
 
     my $rv = $self->_run_calc_covg_helper;
     unless ($rv) {
@@ -55,7 +55,7 @@ sub create {
     }
 
     my $status = "CalcCovg done";
-    $self->status_message($status);
+    $self->debug_message($status);
 
     $self->_promote_data;
     $self->_reallocate_disk_allocation;
@@ -75,7 +75,7 @@ sub resolve_allocation_subdirectory {
 }
 
 sub resolve_allocation_disk_group_name {
-    return 'info_genome_models';
+    $ENV{GENOME_DISK_GROUP_MODELS};
 }
 
 sub output_file {

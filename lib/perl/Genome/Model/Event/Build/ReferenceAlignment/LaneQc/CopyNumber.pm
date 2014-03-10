@@ -58,11 +58,11 @@ sub validate_gold_snp_path {
 
     my $gold_snp_path = $self->build->gold_snp_path;
     unless ($gold_snp_path) {
-        $self->status_message('No gold_snp_path provided for the build');
+        $self->debug_message('No gold_snp_path provided for the build');
         return;
     }
     unless (-s $gold_snp_path) {
-        $self->status_message('gold_snp_path is empty ' . $gold_snp_path);
+        $self->debug_message('gold_snp_path is empty ' . $gold_snp_path);
         return;
     }
 
@@ -70,7 +70,7 @@ sub validate_gold_snp_path {
     my @columns = split /\s+/, $head;
 
     unless (@columns and @columns == 9) {
-        $self->status_message("Gold snp file: $gold_snp_path is not 9-column format");
+        $self->debug_message("Gold snp file: $gold_snp_path is not 9-column format");
         return;
     }
     return 1;

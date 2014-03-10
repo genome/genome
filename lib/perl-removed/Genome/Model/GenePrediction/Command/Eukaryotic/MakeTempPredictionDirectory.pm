@@ -43,7 +43,7 @@ sub help_detail {
 
 sub execute {
     my $self = shift;
-    $self->status_message("Creating temporary directory for gene predictions in " . $self->base_prediction_directory);
+    $self->debug_message("Creating temporary directory for gene predictions in " . $self->base_prediction_directory);
     my $fasta = $self->fasta_file;
     my ($fasta_name) = basename($self->fasta_file);
 
@@ -56,7 +56,7 @@ sub execute {
     );
     chmod(0775, $temp_dir);
     $self->temp_prediction_directory($temp_dir);
-    $self->status_message("Temporary directory created at $temp_dir");
+    $self->debug_message("Temporary directory created at $temp_dir");
     return 1;
 }
 

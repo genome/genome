@@ -94,12 +94,12 @@ sub __errors__ {
 
 sub execute {
     my $self = shift;
-    $self->status_message('Create contigs bases file...');
+    $self->debug_message('Create contigs bases file...');
 
-    $self->status_message('Input sequences file: '.$self->input_file);
+    $self->debug_message('Input sequences file: '.$self->input_file);
     my $in = Genome::Model::Tools::Sx::PhredReader->create(file => $self->input_file);
     return if not $in;
-    $self->status_message('Output contigs bases file: '.$self->output_file);
+    $self->debug_message('Output contigs bases file: '.$self->output_file);
     my $out = Genome::Model::Tools::Sx::PhredWriter->create(file => $self->output_file);
     return if not $out;
 
@@ -118,7 +118,7 @@ sub execute {
     }
     $out->close;
 
-    $self->status_message('Create contigs bases file...OK');
+    $self->debug_message('Create contigs bases file...OK');
     return 1;
 }
 

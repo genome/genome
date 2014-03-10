@@ -28,7 +28,7 @@ sub execute {
     my $output = $self->_init_ouptut;
     return if not $output;
 
-    $self->status_message('Run dust on '.@input_params.' files');
+    $self->debug_message('Run dust on '.@input_params.' files');
     my $cmd = $self->build_command;
     my @output_configs;
     for my $input_params ( @input_params ) {
@@ -38,8 +38,8 @@ sub execute {
         $output_config .= ":type=phred";
         push @output_configs, $output_config;
 
-        $self->status_message('Dust:   '.$input_params->{file});
-        $self->status_message('Output: '.$output_file);
+        $self->debug_message('Dust:   '.$input_params->{file});
+        $self->debug_message('Output: '.$output_file);
 
         $cmd .= ' '.$input_params->{file}.' > '.$output_file;
         my $rv = $self->_run_command($cmd);
@@ -50,7 +50,7 @@ sub execute {
             return;
         }
     }
-    $self->status_message('Run dust...OK');
+    $self->debug_message('Run dust...OK');
 
     my $output_reader = Genome::Model::Tools::Sx::Reader->create(config => \@output_configs);
     if ( not $output_reader ) {
@@ -58,7 +58,7 @@ sub execute {
         return;
     }
 
-    $self->status_message('Processing dust output...');
+    $self->debug_message('Processing dust output...');
     while ( my $seqs = $output_reader->read ) {
         $output->write($seqs);
     }

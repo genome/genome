@@ -47,30 +47,31 @@ $igv_file2->add_bam_track(file => $fake_bam);
 $igv_file2->add_bed_track(file => $fake_bed);
 $igv_file2->add_junction_track(file => $fake_junctions);
 
-my $expected_xml = <<XML;
+my $expected_xml = <<"XML";
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <Session genome="b37" locus="12:25398182-25398361" version="4">
   <Resources>
-    <Resource path="https://gscweb.gsc.wustl.edu/some/fake.bam"/>
-    <Resource path="https://gscweb.gsc.wustl.edu/some/fake.bed"/>
-    <Resource path="https://gscweb.gsc.wustl.edu/some/junctions.txt"/>
+    <Resource path="$ENV{GENOME_SYS_SERVICES_FILES_URL}some/fake.bam"/>
+    <Resource path="$ENV{GENOME_SYS_SERVICES_FILES_URL}some/fake.bed"/>
+    <Resource path="$ENV{GENOME_SYS_SERVICES_FILES_URL}some/junctions.txt"/>
   </Resources>
   <Panel name="Panel 1">
-    <Track altColor="0,0,178" autoScale="true" color="175,175,175" colorScale="ContinuousColorScale;0.0;9062.0;255,255,255;175,175,175" displayMode="COLLAPSED" featureVisibilityWindow="-1" fontSize="10" id="https://gscweb.gsc.wustl.edu/some/fake.bam_coverage" name="/some/fake.bam Coverage" showDataRange="true" visible="true">
+    <Track altColor="0,0,178" autoScale="true" color="175,175,175" colorScale="ContinuousColorScale;0.0;9062.0;255,255,255;175,175,175" displayMode="COLLAPSED" featureVisibilityWindow="-1" fontSize="10" id="$ENV{GENOME_SYS_SERVICES_FILES_URL}some/fake.bam_coverage" name="/some/fake.bam Coverage" showDataRange="true" visible="true">
       <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="100" minimum="0" type="LINEAR"/>
     </Track>
-    <Track altColor="0,0,178" color="0,0,178" colorOption="UNEXPECTED_PAIR" displayMode="EXPANDED" featureVisibilityWindow="-1" fontSize="10" id="https://gscweb.gsc.wustl.edu/some/fake.bam" name="/some/fake.bam Reads" showDataRange="true" sortByTag="" visible="true"/>
+    <Track altColor="0,0,178" color="0,0,178" colorOption="UNEXPECTED_PAIR" displayMode="EXPANDED" featureVisibilityWindow="-1" fontSize="10" id="$ENV{GENOME_SYS_SERVICES_FILES_URL}some/fake.bam" name="/some/fake.bam Reads" showDataRange="true" sortByTag="" visible="true"/>
   </Panel>
   <Panel name="FeaturePanel">
     <Track altColor="0,0,178" color="0,0,178" displayMode="COLLAPSED" featureVisibilityWindow="-1" fontSize="10" id="Reference sequence" name="Reference sequence" showDataRange="true" sortable="false" visible="true"/>
     <Track altColor="0,0,178" color="0,0,178" colorScale="ContinuousColorScale;0.0;160.0;255,255,255;0,0,178" displayMode="COLLAPSED" featureVisibilityWindow="-1" fontSize="10" height="35" id="b37 Genes" name="Gene" renderer="BASIC_FEATURE" showDataRange="true" sortable="false" visible="true" windowFunction="count"/>
-    <Track altColor="0,0,178" color="0,0,178" displayMode="COLLAPSED" featureVisibilityWindow="-1" fontSize="10" height="45" id="https://gscweb.gsc.wustl.edu/some/fake.bed" name="/some/fake.bed" renderer="BASIC_FEATURE" showDataRange="true" sortable="false" visible="true" windowFunction="count"/>    <Track altColor="0,0,178" color="0,0,178" displayMode="COLLAPSED" featureVisibilityWindow="-1" fontSize="10" height="60" id="https://gscweb.gsc.wustl.edu/some/junctions.txt" name="/some/junctions.txt" showDataRange="true" visible="true" windowFunction="count"/>
+    <Track altColor="0,0,178" color="0,0,178" displayMode="COLLAPSED" featureVisibilityWindow="-1" fontSize="10" height="45" id="$ENV{GENOME_SYS_SERVICES_FILES_URL}some/fake.bed" name="/some/fake.bed" renderer="BASIC_FEATURE" showDataRange="true" sortable="false" visible="true" windowFunction="count"/>    <Track altColor="0,0,178" color="0,0,178" displayMode="COLLAPSED" featureVisibilityWindow="-1" fontSize="10" height="60" id="$ENV{GENOME_SYS_SERVICES_FILES_URL}some/junctions.txt" name="/some/junctions.txt" showDataRange="true" visible="true" windowFunction="count"/>
   </Panel>
   <PanelLayout dividerFractions="0.000,0.450"/>
 </Session>
 XML
 
-is($expected_xml, $igv_file2->xml,"XML with Bam file, junction file and bed file as expected.");
+$expected_xml =~ s/FILES_URL/$ENV{GENOME_SYS_SERVICES_FILES_URL}/g;
+is($igv_file2->xml, $expected_xml, "XML with Bam file, junction file and bed file as expected.");
 
 my $path3 = Genome::Sys->create_temp_file_path;
 my $igv_file3 = Genome::File::IgvXml->create(id => $path3, font_size => 10, genome => 'b37');
@@ -78,27 +79,27 @@ $igv_file3->add_bam_track(file => $fake_bam);
 $igv_file3->add_bed_track(file => $fake_bed);
 $igv_file3->add_junction_track(file => $fake_junctions);
 
-my $expected_xml2 = <<XML;
+my $expected_xml2 = <<"XML";
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <Session genome="b37" locus="1:2-5" version="4">
   <Resources>
-    <Resource path="https://gscweb.gsc.wustl.edu/some/fake.bam"/>
-    <Resource path="https://gscweb.gsc.wustl.edu/some/fake.bed"/>
-    <Resource path="https://gscweb.gsc.wustl.edu/some/junctions.txt"/>
+    <Resource path="$ENV{GENOME_SYS_SERVICES_FILES_URL}some/fake.bam"/>
+    <Resource path="$ENV{GENOME_SYS_SERVICES_FILES_URL}some/fake.bed"/>
+    <Resource path="$ENV{GENOME_SYS_SERVICES_FILES_URL}some/junctions.txt"/>
   </Resources>
   <Panel name="Panel 1">
-    <Track altColor="0,0,178" autoScale="true" color="175,175,175" colorScale="ContinuousColorScale;0.0;9062.0;255,255,255;175,175,175" displayMode="COLLAPSED" featureVisibilityWindow="-1" fontSize="10" id="https://gscweb.gsc.wustl.edu/some/fake.bam_coverage" name="/some/fake.bam Coverage" showDataRange="true" visible="true">
+    <Track altColor="0,0,178" autoScale="true" color="175,175,175" colorScale="ContinuousColorScale;0.0;9062.0;255,255,255;175,175,175" displayMode="COLLAPSED" featureVisibilityWindow="-1" fontSize="10" id="$ENV{GENOME_SYS_SERVICES_FILES_URL}some/fake.bam_coverage" name="/some/fake.bam Coverage" showDataRange="true" visible="true">
       <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="100" minimum="0" type="LINEAR"/>
     </Track>
-    <Track altColor="0,0,178" color="0,0,178" colorOption="UNEXPECTED_PAIR" displayMode="EXPANDED" featureVisibilityWindow="-1" fontSize="10" id="https://gscweb.gsc.wustl.edu/some/fake.bam" name="/some/fake.bam Reads" showDataRange="true" sortByTag="" visible="true"/>
+    <Track altColor="0,0,178" color="0,0,178" colorOption="UNEXPECTED_PAIR" displayMode="EXPANDED" featureVisibilityWindow="-1" fontSize="10" id="$ENV{GENOME_SYS_SERVICES_FILES_URL}some/fake.bam" name="/some/fake.bam Reads" showDataRange="true" sortByTag="" visible="true"/>
   </Panel>
   <Panel name="FeaturePanel">
     <Track altColor="0,0,178" color="0,0,178" displayMode="COLLAPSED" featureVisibilityWindow="-1" fontSize="10" id="Reference sequence" name="Reference sequence" showDataRange="true" sortable="false" visible="true"/>
     <Track altColor="0,0,178" color="0,0,178" colorScale="ContinuousColorScale;0.0;160.0;255,255,255;0,0,178" displayMode="COLLAPSED" featureVisibilityWindow="-1" fontSize="10" height="35" id="b37 Genes" name="Gene" renderer="BASIC_FEATURE" showDataRange="true" sortable="false" visible="true" windowFunction="count"/>
-    <Track altColor="0,0,178" color="0,0,178" displayMode="COLLAPSED" featureVisibilityWindow="-1" fontSize="10" height="45" id="https://gscweb.gsc.wustl.edu/some/fake.bed" name="/some/fake.bed" renderer="BASIC_FEATURE" showDataRange="true" sortable="false" visible="true" windowFunction="count"/>    <Track altColor="0,0,178" color="0,0,178" displayMode="COLLAPSED" featureVisibilityWindow="-1" fontSize="10" height="60" id="https://gscweb.gsc.wustl.edu/some/junctions.txt" name="/some/junctions.txt" showDataRange="true" visible="true" windowFunction="count"/>
+    <Track altColor="0,0,178" color="0,0,178" displayMode="COLLAPSED" featureVisibilityWindow="-1" fontSize="10" height="45" id="$ENV{GENOME_SYS_SERVICES_FILES_URL}some/fake.bed" name="/some/fake.bed" renderer="BASIC_FEATURE" showDataRange="true" sortable="false" visible="true" windowFunction="count"/>    <Track altColor="0,0,178" color="0,0,178" displayMode="COLLAPSED" featureVisibilityWindow="-1" fontSize="10" height="60" id="$ENV{GENOME_SYS_SERVICES_FILES_URL}some/junctions.txt" name="/some/junctions.txt" showDataRange="true" visible="true" windowFunction="count"/>
   </Panel>
   <PanelLayout dividerFractions="0.000,0.450"/>
 </Session>
 XML
 
-is($expected_xml2, $igv_file3->xml("1:2-5"),"XML with Bam file, junction file and bed file with custom locus as expected.");
+is($igv_file3->xml("1:2-5"), $expected_xml2,"XML with Bam file, junction file and bed file with custom locus as expected.");

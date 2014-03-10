@@ -278,6 +278,8 @@ sub files_ignored_by_diff {
         cnv_graph\.pdf$
         output/Makefile$
         output/task.complete$
+        variants/(.*).tbi$
+        reports/review.xml
     );
 }
 

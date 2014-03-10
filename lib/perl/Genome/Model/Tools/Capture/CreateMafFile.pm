@@ -5,12 +5,13 @@ package Genome::Model::Tools::Capture::CreateMafFile;     # rename this when you
 #
 #  AUTHOR:   Dan Koboldt (dkoboldt@genome.wustl.edu)
 #
-#  CREATED:  12/09/2009 by D.K.
-#  MODIFIED: 06/27/2012 by ckandoth
+#  CREATED:  12/09/2009 by dkoboldt
+#  MODIFIED: 03/02/2014 by ckandoth
 #
 #  NOTES:
 #  11/30/2010, ckandoth: MAF standard variant classifications are now used
 #  06/27/2012, ckandoth: Added support for DNP/TNP/ONP by changing code_to_var_allele
+#  03/02/2014, ckandoth: Fixed unused input --source, changed defaults, and added MAF v2.4 support
 #
 #####################################################################################################################################
 
@@ -32,12 +33,12 @@ class Genome::Model::Tools::Capture::CreateMafFile {
     indel_file  => { is => 'Text', doc => "File of Indels to include", is_optional => 1 },
     indel_annotation_file => { is => 'Text', doc => "Indels with WU annotations", is_optional => 1 },
     somatic_status => { is => 'Text', doc => "Predicted somatic status of variant (Germline/Somatic/LOH) [Somatic]", is_optional => 1 },
-    genome_build  => { is => 'Text', doc => "Reference genome build used for coordinates [36]", is_optional => 1 },
+    genome_build  => { is => 'Text', doc => "Reference genome build used for coordinates [37]", is_optional => 1 },
     phase  => { is => 'Text', doc => "Project Phase [Phase_IV]", is_optional => 1 },
     tumor_sample  => { is => 'Text', doc => "Tumor sample name [Tumor]", is_optional => 1 },
     normal_sample  => { is => 'Text', doc => "Normal sample name [Normal]", is_optional => 1 },
-    source  => { is => 'Text', doc => "Library source (PCR/Capture) [Capture]", is_optional => 1 },
-    platform  => { is => 'Text', doc => "Sequencing platform [Illumina GAIIx]", is_optional => 1 },
+    source  => { is => 'Text', doc => "Library source (WGS/WXS/WGA/RNA-Seq) [WXS]", is_optional => 1 },
+    platform  => { is => 'Text', doc => "Sequencing platform [Illumina HiSeq]", is_optional => 1 },
     center  => { is => 'Text', doc => "Sequencing center [genome.wustl.edu]", is_optional => 1 },
     normal_gt_field  => { is => 'Text', doc => "1-based column number of field containing the normal genotype", is_optional => 1 },
     tumor_gt_field  => { is => 'Text', doc => "1-based column number of field containing the tumor genotype", is_optional => 1 },
@@ -78,10 +79,10 @@ sub execute {                               # replace with real execution logic.
   my $indel_annotation_file = $self->indel_annotation_file;
 
   ## Declare parameter defaults ##
-  my $genome_build = "36";
+  my $genome_build = "37";
   my $phase = "Phase_IV";
-  my $source = "Capture";
-  my $platform = "Illumina GAIIx";
+  my $source = "WXS";
+  my $platform = "Illumina HiSeq";
   my $center = "genome.wustl.edu";
   my $somatic_status = "Somatic";
   my $tumor_sample = "Tumor";
@@ -114,6 +115,7 @@ sub execute {                               # replace with real execution logic.
                 "Match_Norm_Validation_Allele1\tMatch_Norm_Validation_Allele2\t",
                 "Verification_Status\tValidation_Status\tMutation_Status\tSequencing_Phase\t",
                 "Sequence_Source\tValidation_Method\tScore\tBAM_File\tSequencer\t",
+                "Tumor_Sample_UUID\tMatched_Norm_Sample_UUID\t",
                 "chromosome_name\tstart\tstop\treference\tvariant\ttype\tgene_name\t",
                 "transcript_name\ttranscript_species\ttranscript_source\ttranscript_version\t",
                 "strand\ttranscript_status\ttrv_type\tc_position\tamino_acid_change\tucsc_cons\t",
@@ -184,27 +186,28 @@ sub execute {                               # replace with real execution logic.
           }
         }
 
-        my @rsid_fields = split(/\t/, $annotations_with_rsid{$key});
-        my $rsid = $rsid_fields[24];
+        my @rsid_fields = split(/\t/, $annotations_with_rsid{$key}) if($annotations_with_rsid{$key});
+        my $rsid = ( $rsid_fields[24] ? $rsid_fields[24] : "" );
 
         my ( $var_type, $gene, $trv_type ) = split( /\t/, $annotations{$key} );
         my $annoline = $annotations{$key};
         $annoline =~ s/$var_type\t$gene\t$trv_type\t//;
         my $var_class = trv_to_mutation_type( $trv_type );
         my $maf_line = "$gene\t0\t$center\t$genome_build\t$chrom\t$chr_start\t$chr_stop\t+\t";
-        $maf_line .=  "$var_class\t$var_type\t$ref\t";
-        $maf_line .=  "$tumor_allele1\t$tumor_allele2\t";
-        $maf_line .=  "$rsid\t\t"; #dbSNP
-        $maf_line .=  "$tumor_sample\t$normal_sample\t$normal_allele1\t$normal_allele2\t";
-        $maf_line .=  "\t\t\t\t"; # Validation alleles
-        $maf_line .=  "Unknown\tUnknown\t$somatic_status\t";
-        $maf_line .=  "$phase\tCapture\t";
-        $maf_line .=  "\t"; # Val method
-        $maf_line .=  "1\t"; # Score
-        $maf_line .=  "dbGAP\t";
-        $maf_line .=  "$platform\t" . $annoline . "\n";
+        $maf_line .= "$var_class\t$var_type\t$ref\t";
+        $maf_line .= "$tumor_allele1\t$tumor_allele2\t";
+        $maf_line .= "$rsid\t\t"; #dbSNP
+        $maf_line .= "$tumor_sample\t$normal_sample\t";
+        $maf_line .= "$normal_allele1\t$normal_allele2\t";
+        $maf_line .= "\t\t\t\t"; # Validation alleles
+        $maf_line .= "Unknown\tUntested\t$somatic_status\t"; # Verification, Validation, Mutation Status
+        $maf_line .= "$phase\t$source\t";
+        $maf_line .= "none\t"; # Val method
+        $maf_line .= "\t\t"; # Score, BAM file (unused columns)
+        $maf_line .= "$platform\t\t\t"; # Sequencer, and tumor/normal sample UUIDs
+        $maf_line .= "$annoline\n"; # Append the WU annotations
 
-        print OUTFILE "$maf_line";
+        print OUTFILE $maf_line;
       }
       else
       {
@@ -298,18 +301,20 @@ sub execute {                               # replace with real execution logic.
           }
 
           my $maf_line =  "$gene\t0\t$center\t$genome_build\t$chrom\t$chr_start\t$chr_stop\t+\t";
-          $maf_line .=  "$var_class\t$var_type\t$ref\t";
-          $maf_line .=  "$tumor_allele1\t$tumor_allele2\t";
-          $maf_line .=  "\t\t"; #dbSNP
-          $maf_line .=  "$tumor_sample\t$normal_sample\t$normal_allele1\t$normal_allele2\t";
-          $maf_line .=  "\t\t\t\t"; # Validation alleles
-          $maf_line .=  "Unknown\tUnknown\t$somatic_status\t";
-          $maf_line .=  "$phase\tCapture\t";
-          $maf_line .=  "\t"; # Val method
-          $maf_line .=  "1\t"; # Score
-          $maf_line .=  "dbGAP\t";
-          $maf_line .=  "$platform\t" . $annoline . "\n";
-          print OUTFILE "$maf_line";
+          $maf_line .= "$var_class\t$var_type\t$ref\t";
+          $maf_line .= "$tumor_allele1\t$tumor_allele2\t";
+          $maf_line .= "\t\t"; #dbSNP
+          $maf_line .= "$tumor_sample\t$normal_sample\t";
+          $maf_line .= "$normal_allele1\t$normal_allele2\t";
+          $maf_line .= "\t\t\t\t"; # Validation alleles
+          $maf_line .= "Unknown\tUntested\t$somatic_status\t"; # Verification, Validation, Mutation Status
+          $maf_line .= "$phase\t$source\t";
+          $maf_line .= "none\t"; # Val method
+          $maf_line .= "\t\t"; # Score, BAM file (unused columns)
+          $maf_line .= "$platform\t\t\t"; # Sequencer, and tumor/normal sample UUIDs
+          $maf_line .= "$annoline\n"; # Append the WU annotations
+
+          print OUTFILE $maf_line;
       }
       else
       {
@@ -343,7 +348,7 @@ sub load_annotations
         my $line = $_;
         next if( $line =~ m/chromosome_name/ );
         $lineCounter++;
-             
+
         my @lineContents = split( /\t/, $line );
         my $chrom = $lineContents[0];
         my $chr_start = $lineContents[1];

@@ -56,7 +56,7 @@ sub execute {
                     return;
                 }
                 #print Data::Dumper::Dumper($rg_info);
-                $self->status_message(sprintf("Opening bam file for writing for RG ID %s library %s platform unit %s", $rg_info->{id}, $rg_info->{library_name}, $rg_info->{platform_unit}));
+                $self->debug_message(sprintf("Opening bam file for writing for RG ID %s library %s platform unit %s", $rg_info->{id}, $rg_info->{library_name}, $rg_info->{platform_unit}));
                 print $self->output_directory, "\n";
                 my $path = sprintf("%s/%s", $self->output_directory, $rg_info->{library_name});
                 unless (-d $path) {

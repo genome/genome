@@ -5,6 +5,8 @@ use strict;
 
 use Genome;
 use File::Slurp 'read_file';
+use IPC::System::Simple qw(capture);
+use Try::Tiny;
 
 class Genome::Model::Build::Command::DetermineError {
     is => 'Genome::Command::Base',
@@ -17,7 +19,13 @@ class Genome::Model::Build::Command::DetermineError {
         display_results => {
             is => 'Boolean',
             default => 1,
-        }
+        },
+        assume_build_status => {
+            is => 'Text',
+            is_optional => 1,
+            doc => 'Treat the build as if it has this status when determining the error. (Useful for finding errors in already-abandoned builds.)',
+            valid_values => ['Failed', 'Unstartable'],
+        },
     ],
     has_optional_output => [
         error_type => {
@@ -59,9 +67,11 @@ HELP
 sub execute {
     my $self = shift;
 
-    if ($self->build->status eq 'Failed') {
+    my $status = $self->assume_build_status || $self->build->status;
+
+    if ($status eq 'Failed') {
         $self->handle_failed();
-    } elsif ($self->build->status eq 'Unstartable') {
+    } elsif ($status eq 'Unstartable') {
         $self->handle_unstartable();
     } else {
         $self->error_message(sprintf("Build (%s) has an unexpected status: %s",
@@ -79,15 +89,25 @@ sub execute {
 sub print_results {
     my $self = shift;
 
-    print "\n";
-    printf "Build: %s\t\t", $self->_color($self->build->id, 'bold');
-    printf "Error Type: %s\t\t", $self->_color($self->error_type, 'bold');
-    printf "Error Date: %s\n", $self->_color($self->error_date, 'bold');
-    printf "Error Source File: %s\n", $self->_color($self->error_source_file, 'bold');
-    printf "Error Source Line: %s\n", $self->_color($self->error_source_line, 'bold');
-    printf "Error Log: %s\n", $self->_color($self->error_log, 'bold');
-    printf "Error Host: %s\n", $self->_color($self->error_host, 'bold');
-    printf "Error Message: %s\n", $self->_color($self->error_text, 'bold');
+    print $self->formatted_results;
+}
+
+sub formatted_results {
+    my $self = shift;
+
+    my $results = join('',
+        "\n",
+        sprintf("Build: %s\t\t", $self->_color($self->build->id, 'bold')),
+        sprintf("Error Type: %s\t\t", $self->_color($self->error_type, 'bold')),
+        sprintf("Error Date: %s\n", $self->_color($self->error_date, 'bold')),
+        sprintf("Error Source File: %s\n", $self->_color($self->error_source_file, 'bold')),
+        sprintf("Error Source Line: %s\n", $self->_color($self->error_source_line, 'bold')),
+        sprintf("Error Log: %s\n", $self->_color($self->error_log, 'bold')),
+        sprintf("Error Host: %s\n", $self->_color($self->error_host, 'bold')),
+        sprintf("Error Message: %s\n", $self->_color($self->error_text, 'bold')),
+    );
+
+    return $results;
 }
 
 sub handle_failed {
@@ -95,8 +115,26 @@ sub handle_failed {
 
     $self->error_type("Failed");
 
-    my $workflow = $self->build->newest_workflow_instance;
-    $self->handle_failed_from_logs($workflow);
+    try {
+        my $workflow = $self->build->newest_workflow_instance;
+        $self->handle_failed_from_logs($workflow);
+    } catch {
+        my $error_log = find_error_log($self->build->log_directory);
+        if (defined $error_log)  {
+            $self->set_status_from_log_file($error_log);
+        }
+    };
+}
+
+sub find_error_log {
+    my ($log_dir) = @_;
+    try {
+        my @logs = capture(qw(grep -l ERROR), $log_dir);
+        chomp @logs;
+        return $logs[0];
+    } catch {
+        return;
+    };
 }
 
 sub handle_failed_from_logs {
@@ -106,27 +144,35 @@ sub handle_failed_from_logs {
     for my $failed_step (@failed_steps) {
         if ($failed_step->current->can('stderr') and my $error_log = $failed_step->current->stderr) {
             if (-e $error_log and -s $error_log) {
-                my ($error_source_file, $error_source_line, $error_host, $error_date, $error_text) = parse_error_log($error_log);
-                $self->error_log($error_log);
 
-                $self->error_source_file($error_source_file) if $error_source_file;
-                $self->error_source_line($error_source_line) if $error_source_line;
-                $self->error_text($error_text) if $error_text;
-                $self->error_host($error_host) if $error_host;
+                $self->set_status_from_log_file($error_log);
 
                 # if we can't determine the date from the log file, try the workflow step.
-                unless ($error_date) {
+                unless ($self->error_date) {
                     if ($failed_step->end_time) {
-                        $error_date = $failed_step->end_time;
+                        $self->error_date($failed_step->end_time);
                     } elsif ($failed_step->start_time) {
-                        $error_date = "Sometime After " . $failed_step->start_time;
+                        $self->error_date("Sometime After " . $failed_step->start_time);
                     }
                 }
-                $self->error_date($error_date) if $error_date;
                 return;
             }
         }
     }
+}
+
+sub set_status_from_log_file {
+    my $self = shift;
+    my ($error_log) = @_;
+
+    my ($error_source_file, $error_source_line, $error_host, $error_date, $error_text) = parse_error_log($error_log);
+    $self->error_log($error_log);
+
+    $self->error_source_file($error_source_file) if $error_source_file;
+    $self->error_source_line($error_source_line) if $error_source_line;
+    $self->error_text($error_text) if $error_text;
+    $self->error_host($error_host) if $error_host;
+    $self->error_date($error_date) if $error_date;
 }
 
 sub parse_error_log {

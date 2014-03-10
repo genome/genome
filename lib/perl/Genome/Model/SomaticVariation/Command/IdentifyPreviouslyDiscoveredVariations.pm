@@ -23,7 +23,7 @@ class Genome::Model::SomaticVariation::Command::IdentifyPreviouslyDiscoveredVari
     ],
     has_param => [
         lsf_queue => {
-            default => 'apipe',
+            default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT},
         },
     ],
 };
@@ -77,7 +77,7 @@ sub execute {
 
     my $build = $self->build;
 
-    $self->status_message("Comparing detected variants to previously discovered variations");
+    $self->debug_message("Comparing detected variants to previously discovered variations");
 
     my ($snv_result, $indel_result);
 
@@ -94,10 +94,10 @@ sub execute {
 
     if ($build->snv_detection_strategy){
         my @params = $self->params_for_result('snv');
-        $self->status_message(Data::Dumper::Dumper(\@params));
+        $self->debug_message(Data::Dumper::Dumper(\@params));
         if(@params) {
             my $result = Genome::Model::Tools::DetectVariants2::Classify::PreviouslyDiscovered->get_or_create(@params);
-            $self->status_message("Using result from get_or_create ".$result->id);
+            $self->debug_message("Using result from get_or_create ".$result->id);
             $self->link_result_to_build($result);
         } elsif($snv_result) {
 
@@ -134,19 +134,19 @@ sub execute {
                     unless ($snv_rv){
                         die $self->error_message("Failed to execute snv comparison(err: $snv_err )");
                     }
-                    $self->status_message("Intersection against previously discovered snv feature list complete");
+                    $self->debug_message("Intersection against previously discovered snv feature list complete");
                     File::Copy::copy($snv_output_tmp_file, $novel_detected_snv_path);
                     File::Copy::copy($previously_detected_output_tmp_file, $previously_detected_snv_path);
                 }
                 else{
-                    $self->status_message("high confidence snv output is empty, skipping intersection");
+                    $self->debug_message("high confidence snv output is empty, skipping intersection");
                     Genome::Sys->create_directory($build->data_directory."/novel");
                     File::Copy::copy($detected_snv_path, $novel_detected_snv_path);
                     File::Copy::copy($detected_snv_path, $previously_detected_snv_path);
                 }
             }
             else {
-                $self->status_message("Skipping filtering");
+                $self->debug_message("Skipping filtering");
                 Genome::Sys->create_directory($build->data_directory."/novel");
                 File::Copy::copy($detected_snv_path, $novel_detected_snv_path);
                 my $fh = Genome::Sys->open_file_for_writing($previously_detected_snv_path);
@@ -154,7 +154,7 @@ sub execute {
             }
         }
         else{
-            $self->status_message("No snv feature list found on previously discovered variations build, skipping snv intersection");
+            $self->debug_message("No snv feature list found on previously discovered variations build, skipping snv intersection");
             $self->skip_run('snv');
         }
     }
@@ -197,24 +197,24 @@ sub execute {
                 unless ($indel_rv){
                     die $self->error_message("failed to execute indel comparison(err: $indel_err )");
                 }
-                $self->status_message("intersection against previously discovered indel feature list complete");
+                $self->debug_message("intersection against previously discovered indel feature list complete");
                 File::Copy::copy($indel_output_tmp_file, $novel_detected_indel_path);
                 File::Copy::copy($previously_detected_output_tmp_file, $previously_detected_indel_path);
             }
             else{
-                $self->status_message("high confidence indel output is empty, skipping intersection");
+                $self->debug_message("high confidence indel output is empty, skipping intersection");
                 Genome::Sys->create_directory($build->data_directory."/novel");
                 File::Copy::copy($detected_indel_path, $novel_detected_indel_path);
                 File::Copy::copy($detected_indel_path, $previously_detected_indel_path);
             }
         }
         else{
-            $self->status_message("No indel feature list found on previously discovered variations build, skipping indel intersection");
+            $self->debug_message("No indel feature list found on previously discovered variations build, skipping indel intersection");
             $self->skip_run('indel');
         }
     }
 
-    $self->status_message("Identify Previously Discovered Variations step completed");
+    $self->debug_message("Identify Previously Discovered Variations step completed");
     return 1;
 }
 
@@ -227,7 +227,7 @@ sub should_skip_run {
     }
 
     unless(defined($build->model->snv_detection_strategy) or defined($build->model->indel_detection_strategy)){
-        $self->status_message("No SNV or indel detection strategy, skipping identify previously discovered variants.");
+        $self->debug_message("No SNV or indel detection strategy, skipping identify previously discovered variants.");
         return 1;
     }
 
@@ -316,7 +316,7 @@ sub link_result_to_build {
     my $result = shift;
     my $build = $self->build;
 
-    $self->status_message('Linking result ' . $result->id . ' to build.');
+    $self->debug_message('Linking result ' . $result->id . ' to build.');
     $result->add_user(user => $build, label => 'uses');
     Genome::Sys->create_directory($build->data_directory."/novel");
 

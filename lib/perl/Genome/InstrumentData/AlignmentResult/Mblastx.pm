@@ -61,10 +61,10 @@ sub _run_aligner {
     my $self = shift;
     my @input_pathnames = @_;
     if ( @input_pathnames == 1 ) {
-        $self->status_message("_run_aligner called in single-ended mode.");
+        $self->debug_message("_run_aligner called in single-ended mode.");
     } 
     elsif ( @input_pathnames == 2 ) {
-        $self->status_message("_run_aligner called in paired-end mode.  We don't actually do paired alignment with MBlastx though; running two passes.");
+        $self->debug_message("_run_aligner called in paired-end mode.  We don't actually do paired alignment with MBlastx though; running two passes.");
     }
     else {
         die $self->error_message( "_run_aligner called with ".scalar(@input_pathnames)." files.  It should only get 1 or 2!" );
@@ -117,7 +117,7 @@ sub _run_aligner {
                 $mblastx, $input_fasta, $output_file, $mblastx_aligner_params );
 
         local $ENV{MBLASTX_DATADIR} = $reference_mblastx_path;
-        $self->status_message("mblastx data dir variable set to $ENV{MBLASTX_DATADIR}");
+        $self->debug_message("mblastx data dir variable set to $ENV{MBLASTX_DATADIR}");
         
         Genome::Sys->shellcmd(
                 cmd                       => $cmd,
@@ -153,10 +153,10 @@ sub _prepare_reference_sequences {
 
     my $dir = $reference_build->data_directory . '/mblastx';
     if ( -e $dir ) {
-        $self->status_message("Found reference data at: $dir");
+        $self->debug_message("Found reference data at: $dir");
         return 1;
     }
-    $self->status_message("No reference data found at: $dir");
+    $self->debug_message("No reference data found at: $dir");
     mkpath($dir);
     my $ref_basename = File::Basename::fileparse( $reference_build->full_consensus_path('fa') );
     my $reference_fasta_path = sprintf( "%s/%s", $reference_build->data_directory, $ref_basename );
@@ -185,7 +185,7 @@ sub _prepare_reference_sequences {
             skip_if_output_is_present => 0,
     );
 
-    $self->status_message("Reference data generation complete at: $dir");
+    $self->debug_message("Reference data generation complete at: $dir");
     my $dat_file = $dir."/BLOSUM62_6_26.dat";
     my $dat_file_source = $VERSIONS{$self->aligner_version} . "/BLOSUM62_6_26.dat";
     unless(-e $dat_file){

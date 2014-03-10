@@ -70,14 +70,14 @@ sub execute {
 
         #find XNs in consensus
         if ( my @xns_positions = $self->xn_positions_from_consensus(\@padded_consensus) ) {
-            $self->status_message('Processing '.$contig->{name});
+            $self->debug_message('Processing '.$contig->{name});
             for my $xns_pos_base ( @xns_positions ) {
                 my ( $xns_pos, $xns_base ) = split ( ' ', $xns_pos_base );
-                $self->status_message("Found $xns_base at consensus position $xns_pos");
+                $self->debug_message("Found $xns_base at consensus position $xns_pos");
 
                 #pick new consensus from bases called by reads at cons position
                 my $new_base = $self->new_base_for_xns($contig, $xns_pos);
-                $self->status_message("Got $new_base to replace $xns_base");
+                $self->debug_message("Got $new_base to replace $xns_base");
                 
                 #update padded consensus with new base
                 my $new_padded_cons = $self->update_padded_consensus(
@@ -112,11 +112,11 @@ sub execute {
 
     #transfer tags if any
     if ( $reader->contig_tags ) {
-        $self->status_message("Transfering contig tags");
+        $self->debug_message("Transfering contig tags");
         $writer->add_contig_tags( $reader->contig_tags );
     }
 
-    $self->status_message("Writing new ace file .. may take a few minutes");
+    $self->debug_message("Writing new ace file .. may take a few minutes");
 
     $writer->close;
 

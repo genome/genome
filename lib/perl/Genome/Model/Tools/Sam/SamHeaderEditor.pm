@@ -132,9 +132,9 @@ sub execute {
  
    #see note in create() for explanation of 'main' package definition.
    my $she = new main::edu::wustl::genome::samtools::SamHeaderEditor($self->input_sam_file, $self->output_sam_file);
-   $self->status_message("Created SamHeaderEditor");
+   $self->debug_message("Created SamHeaderEditor");
    my $rg_field_result = $she->setReadGroupName($self->seq_id_field);  #this should also be the id of the read group
-   $self->status_message("Called setReadGroupName.  Return value: $rg_field_result");
+   $self->debug_message("Called setReadGroupName.  Return value: $rg_field_result");
  
    my $rg_result = $she->addReadGroup( 
                          $self->seq_id_field, #the id of the read group is the first field 
@@ -147,7 +147,7 @@ sub execute {
                          $self->date_run_field,
                          $self->genome_center_field, 
                     );
-   $self->status_message("Called addReadGroup.  Return value: $rg_result");
+   $self->debug_message("Called addReadGroup.  Return value: $rg_result");
    
    #The order of the following parameters is important.  Do not change unless you change the corresponding Java class!
    my $aa_result = $she->addAttributes(  
@@ -160,10 +160,10 @@ sub execute {
                          $self->aligner_version_field
                       );
    
-   $self->status_message("Called addAttributes.  Return value: $aa_result");
+   $self->debug_message("Called addAttributes.  Return value: $aa_result");
    
    $she->execute();
-   $self->status_message("SamHeaderEditor execute() complete.");
+   $self->debug_message("SamHeaderEditor execute() complete.");
    
    my $result = 1; 
    return $result;

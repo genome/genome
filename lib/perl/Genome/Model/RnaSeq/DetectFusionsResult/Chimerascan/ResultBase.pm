@@ -6,29 +6,33 @@ use warnings;
 use above 'Genome';
 use Genome::Utility::List 'in';
 use File::Path qw();
-
-# these are the options which you must specify to us in the
-# fusion-detection-strategy part of the processing-profile
-our %OUR_OPTIONS_VALIDATORS = (
-        '--bowtie-version' => '_validate_bowtie_version',
-        '--reuse-bam' => '_validate_reuse_bam',
-);
+use File::Spec;
 
 class Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::ResultBase {
     is => "Genome::Model::RnaSeq::DetectFusionsResult",
     has_input => [
         original_bam_paths => {
             is => "Text",
+
             is_many => 1,
             doc => "The path(s) to the original instrument_data BAM files."
-        }
+        },
+        reuse_bam => {
+            is => 'Boolean',
+        },
+        bowtie_version => {
+            is => 'Text',
+        },
+    ],
+    has => [
+        bedpe_file => {
+            is => 'Path',
+            calculate_from => 'disk_allocations',
+            calculate => q| File::Spec->join($disk_allocations->absolute_path, 'chimeras.bedpe'); |,
+
+        },
     ],
 };
-
-our %INDIRECT_PARAMETER_VALIDATORS = (
-        '--bowtie-version' => '_validate_bowtie_version',
-        '--reuse-bam' => '_validate_reuse_bam',
-);
 
 sub _run_chimerascan {
     my ($bowtie_version, $c_pargs, $c_opts) = @_;
@@ -51,16 +55,14 @@ sub create {
     $self->_prepare_output_directory();
     $self->_prepare_staging_directory();
 
-    my ($bowtie_version, $reuse_bam, $c_opts) = $self->_resolve_options($self->detector_params);
-
-    my ($fastq1, $fastq2, $qname_sorted_bam) = $self->_resolve_original_files($reuse_bam);
-    my $index_dir = $self->_resolve_index_dir($bowtie_version);
+    my ($fastq1, $fastq2, $qname_sorted_bam) = $self->_resolve_original_files($self->reuse_bam);
+    my $index_dir = $self->_resolve_index_dir($self->bowtie_version);
 
     my $c_pargs = $self->_resolve_chimerascan_positional_arguments($index_dir, $fastq1, $fastq2);
 
-    $self->_prepare_to_run_chimerascan($bowtie_version, $reuse_bam, $fastq1, $fastq2, $qname_sorted_bam);
+    $self->_prepare_to_run_chimerascan($self->bowtie_version, $self->reuse_bam, $fastq1, $fastq2, $qname_sorted_bam);
 
-    $self->_run_chimerascan($bowtie_version, $c_pargs, $c_opts);
+    $self->_run_chimerascan($self->bowtie_version, $c_pargs, $self->detector_params);
 
     # cleanup $fastq1, $fastq2, and $qname_sorted_bam?
     if (-f $fastq1) {
@@ -118,18 +120,22 @@ sub _resolve_original_fastq_files {
 
     # queryname sort each BAM and get fastq1 and fastq2 from /tmp queryname sorted BAMs
     my (@fastq1_files, @fastq2_files);
+    my $counter = 0; #make sure the original_fastq names are unique
     for my $bam_path (@original_bam_paths) {
-        my $tmp_dir = Genome::Sys->create_temp_directory();
-
-        my $queryname_sorted_bam = File::Spec->join($tmp_dir,
+        my $queryname_sorted_bam = File::Spec->join($self->temp_staging_directory,
                 'original_queryname_sorted.bam');
         $self->_qname_sort_bam($bam_path, $queryname_sorted_bam);
 
-        my $fastq1 = File::Spec->join($tmp_dir, "original_fastq1");
-        my $fastq2 = File::Spec->join($tmp_dir, "original_fastq2");
+        my $fastq1 = File::Spec->join($self->temp_staging_directory, "original_fastq1.$counter");
+        my $fastq2 = File::Spec->join($self->temp_staging_directory, "original_fastq2.$counter");
+        $counter++;
 
         # make fastqs from the qname sorted bam
         $self->_convert_bam_to_fastqs($queryname_sorted_bam, $fastq1, $fastq2);
+
+        unless(unlink($queryname_sorted_bam)){
+            $self->debug_message("Failed to remove temporary sorted bam file: $queryname_sorted_bam.  Reason: $!");
+        }
 
         push @fastq1_files, $fastq1;
         push @fastq2_files, $fastq2;
@@ -154,41 +160,14 @@ sub _resolve_original_fastq_files {
         output_files => [$fastq2],
     );
 
-    return ($fastq1, $fastq2);
-}
-
-# return our options (hash) and the options for chimerascan (string)
-sub _resolve_options {
-    my ($self, $params) = @_;
-
-    my %our_opts;
-    # go through and remove our options from the params
-    for my $name (keys %OUR_OPTIONS_VALIDATORS) {
-        # \Q$foo\E ensures that regex symbols are 'quoted'
-        if($params and $params =~ m/(\s*\Q$name\E[=\s]([^\s]*)\s*)/) {
-            my $str = $1;
-            my $val = $2;
-            $params =~ s/\Q$str\E/ /;
-
-            my $validation_method_name = $OUR_OPTIONS_VALIDATORS{$name};
-            $self->$validation_method_name($val, $params); # dies if invalid
-
-            $our_opts{$name} = $val;
-        } else {
-            my $t = q(Could not find parameter named '%s' in param string '%s');
-            die(sprintf($t, $name, $params || ''));
+    #cleanup temporary fastq files
+    foreach my $fastq (@fastq1_files, @fastq2_files){
+        unless(unlink($fastq)){
+            $self->debug_message("Failed to remove temporary fastq file: $fastq.  Reason: $!");
         }
     }
-    return ($our_opts{'--bowtie-version'}, $our_opts{'--reuse-bam'}, $params);
-}
 
-sub _resolve_chimerascan_positional_arguments {
-    my ($self, $index_dir, $fastq1, $fastq2) = @_;
-
-    my $output_directory = $self->temp_staging_directory;
-
-    my @c_pargs = ($index_dir, $fastq1, $fastq2, $output_directory);
-    return \@c_pargs;
+    return ($fastq1, $fastq2);
 }
 
 sub _prepare_to_run_chimerascan {
@@ -196,26 +175,26 @@ sub _prepare_to_run_chimerascan {
 
     if ($reuse_bam) {
         my $tmp_dir = $self->_symlink_in_fastqs($fastq1, $fastq2);
-        $self->status_message("Attempting to reuse BAMs from pipeline");
+        $self->debug_message("Attempting to reuse BAMs from pipeline");
 
         my $reusable_dir = File::Spec->join($self->temp_staging_directory,
                 'reusable');
         Genome::Sys->create_directory($reusable_dir);
 
-        $self->status_message("Creating the reheadered bam.");
+        $self->debug_message("Creating the reheadered bam.");
         my $reheadered_bam = $self->_create_reheadered_bam($reusable_dir,
                 $bowtie_version, $qname_sorted_bam);
 
-        $self->status_message("Creating the 'both mates mapped' bam.");
+        $self->debug_message("Creating the 'both mates mapped' bam.");
         my ($both_mates_bam, $sorted_both_mates_bam, $sorted_both_mates_index) =
                 $self->_create_both_mates_bam($reusable_dir, $reheadered_bam);
 
-        $self->status_message("Creating the unmapped fastqs.");
+        $self->debug_message("Creating the unmapped fastqs.");
         my ($unmapped_1, $unmapped_2) =
                 $self->_create_unmapped_fastqs($reusable_dir, $reheadered_bam);
         unlink($reheadered_bam);
 
-        $self->status_message("Symlinking reusable parts into Chimerascan working dir.");
+        $self->debug_message("Symlinking reusable parts into Chimerascan working dir.");
         $self->_symlink_in_files($tmp_dir, $both_mates_bam, $unmapped_1,
                 $unmapped_2, $sorted_both_mates_bam, $sorted_both_mates_index);
     }
@@ -302,7 +281,7 @@ sub _symlink_in_fastqs {
 sub _create_both_mates_bam {
     my ($self, $reusable_dir, $reheadered_bam) = @_;
 
-    $self->status_message("Filtering to only reads where both mates map (for aligned_reads.bam)");
+    $self->debug_message("Filtering to only reads where both mates map (for aligned_reads.bam)");
     my $both_mates_bam = File::Spec->join($reusable_dir, 'both_mates.bam');
     my $view_cmd = "samtools view -F 12 -b -h $reheadered_bam > $both_mates_bam";
     Genome::Sys->shellcmd(
@@ -311,7 +290,7 @@ sub _create_both_mates_bam {
         output_files => [$both_mates_bam],
     );
 
-    $self->status_message("Sorting both_mates_bam by position");
+    $self->debug_message("Sorting both_mates_bam by position");
     my $sorted_both_mates_bam = File::Spec->join($reusable_dir, 'sorted_both_mates.bam');
     my $rv = Genome::Model::Tools::Picard::SortSam->execute(
         input_file => $both_mates_bam,
@@ -324,7 +303,7 @@ sub _create_both_mates_bam {
     }
 
     # create index
-    $self->status_message("Indexing BAM: $sorted_both_mates_bam");
+    $self->debug_message("Indexing BAM: $sorted_both_mates_bam");
     my $sorted_both_mates_index = $sorted_both_mates_bam . '.bai';
     my $index_cmd = Genome::Model::Tools::Picard::BuildBamIndex->create(
         input_file => $sorted_both_mates_bam,
@@ -343,7 +322,7 @@ sub _create_both_mates_bam {
 sub _create_reheadered_bam {
     my ($self, $reusable_dir, $bowtie_version, $qname_sorted_bam) = @_;
 
-    $self->status_message("Creating bam re-headered with transcripts from the chimerascan-index");
+    $self->debug_message("Creating bam re-headered with transcripts from the chimerascan-index");
     my $index = $self->_get_index($bowtie_version);
     my $seqdict_file = $index->get_sequence_dictionary;
     my $new_bam_header = $self->_get_new_bam_header($reusable_dir, $qname_sorted_bam, $seqdict_file);
@@ -390,7 +369,7 @@ sub _create_unmapped_fastqs {
     my ($self, $reusable_dir, $reheadered_bam) = @_;
 
     # Run samtools to filter, include only reads where one or both mates didn't map (primary and non-primary).
-    $self->status_message("Filtering to get all the other reads.");
+    $self->debug_message("Filtering to get all the other reads.");
     my $not_both_mates_bam = File::Spec->join($reusable_dir, 'not_both_mates.bam');
     # sam format specifies bitmask 4 = read itself unmapped and 8 = read's mate is unmapped (we want either of them)
     my $gawk_cmd = q{substr($1, 0, 1) == "@" || and($2, 4) || and($2, 8)};
@@ -402,7 +381,7 @@ sub _create_unmapped_fastqs {
         output_files => [$not_both_mates_bam],
     );
 
-    $self->status_message("Generating the unaligned fastqs from $not_both_mates_bam");
+    $self->debug_message("Generating the unaligned fastqs from $not_both_mates_bam");
     my $unmapped_1 = File::Spec->join($reusable_dir, 'unmapped_1');
     my $unmapped_2 = File::Spec->join($reusable_dir, 'unmapped_2');
 
@@ -438,52 +417,13 @@ sub _symlink_in_files {
             File::Spec->join($self->temp_staging_directory, 'sorted_aligned_reads.bam.bai'));
 }
 
-# return the detector params (sent directly to detector) and a hash of
-# indirect parameters
-sub _preprocess_detector_params {
-    my ($self, $params) = @_;
+sub _resolve_chimerascan_positional_arguments {
+    my ($self, $index_dir, $fastq1, $fastq2) = @_;
 
-    my %indirect_parameters;
-    for my $name (keys %OUR_OPTIONS_VALIDATORS) {
-        # \Q$foo\E ensures that regex symbols are 'quoted'
-        if($params and $params =~ m/(\s*\Q$name\E[=\s]([^\s]*)\s*)/) {
-            my $str = $1;
-            my $val = $2;
-            $params =~ s/\Q$str\E/ /;
+    my $output_directory = $self->temp_staging_directory;
 
-            my $validation_method_name = $OUR_OPTIONS_VALIDATORS{$name};
-            $self->$validation_method_name($val, $params); # dies if invalid
-
-            $indirect_parameters{$name} = $val;
-        } else {
-            die(sprintf("Couldn't find parameter named \"%s\" in \"%s\"",
-                    $name, $params || ''));
-        }
-    }
-    return $params, \%indirect_parameters;
-}
-
-sub _validate_bowtie_version {
-    my ($self, $val, $params) = @_;
-
-    my $bowtie_version = $val ||
-            die("You must supply a bowtie version in the detector parameters " .
-                "in the form of \"--bowtie-version=<version>\" Got detector " .
-                "parameters: [\"$params\"]");
-    my ($major_version) = split(/\./, $bowtie_version);
-    if ($major_version ne 0) {
-        die("Currently chimerascan only supports bowtie major version 0, " .
-            "not $major_version");
-    }
-}
-
-sub _validate_reuse_bam {
-    my ($self, $val, $params) = @_;
-
-    unless ($val eq 1 or $val eq 0) {
-        die "You must specify either 1 (true) or 0 (false) for parameter " .
-                \"--reuse-bam\", you specified \"$val\"";
-    }
+    my @c_pargs = ($index_dir, $fastq1, $fastq2, $output_directory);
+    return \@c_pargs;
 }
 
 sub _staging_disk_usage {
@@ -502,7 +442,7 @@ sub _resolve_index_dir {
     my $index = $self->_get_index($bowtie_version);
 
     if ($index) {
-        $self->status_message(sprintf('Registering software result %s as a user ' .
+        $self->debug_message(sprintf('Registering software result %s as a user ' .
                 'of the generated index (%s)', $self->id, $index->id));
         $index->add_user(user => $self, label => 'uses');
     } else {

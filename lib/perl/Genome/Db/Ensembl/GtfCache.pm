@@ -52,7 +52,9 @@ sub create {
     $self->gtf_content_hash(Genome::Sys->md5sum($self->gtf_file_path));
     $self->lookup_hash($self->calculate_lookup_hash); #reset after modifying file_content_hash
 
-    my $script_path = $VEP_SCRIPT_PATH.$self->vep_version.".pl";
+    my $annotation_api = Genome::Db::Ensembl::Api->get_or_create(version => $self->version);
+    
+    my $script_path = $self->_resolve_vep_script_path($annotation_api);
     my $reference_build = Genome::Model::Build->get($self->reference_build_id);
     my $reference_build_temp_path = Genome::Sys->create_temp_directory;
     #Create a symlink to the reference sequence because the script creates a .index file next to the fasta file and
@@ -65,7 +67,6 @@ sub create {
         input_files => [$self->gtf_file_path],
     );
 
-    my $annotation_api = Genome::Db::Ensembl::Api->get_or_create(version => $self->version);
     unless ($annotation_api) {
         $self->error_message("Couldn't get ensembl api for version ".$self->version);
         return;
@@ -79,6 +80,19 @@ sub create {
     $self->_promote_data;
     $self->_reallocate_disk_allocation;
     return $self;
+}
+
+sub _resolve_vep_script_path {
+    my $self = shift;
+    my $api = shift;
+    my $script_path = $api->vep_script("gtf2vep.pl");
+    if (-s $script_path) {
+        return $script_path;
+    }
+    else {
+        $self->warning_message("Ensembl api ".$api->id." did not have a VEP script");
+    }
+    return $VEP_SCRIPT_PATH.$self->vep_version.".pl";
 }
 
 sub _modify_params_for_lookup_hash {
@@ -160,7 +174,7 @@ sub resolve_allocation_subdirectory {
 }
 
 sub resolve_allocation_disk_group_name {
-    return 'info_genome_models';
+    $ENV{GENOME_DISK_GROUP_MODELS};
 }
 
 1;

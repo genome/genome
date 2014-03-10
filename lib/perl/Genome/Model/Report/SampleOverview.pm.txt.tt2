@@ -5,7 +5,7 @@ Sample Overview of [% sample.name %]
 This report based on information from Build [% build.id %], created [% time_now %].
 
 HTML version of this report: 
-https://gscweb.gsc.wustl.edu[% build.data_directory %]/reports/Sample_Overview/report.html
+[% files_url %][% build.data_directory %]/reports/Sample_Overview/report.html
 [% count=1; %]
 
 Sample Details

@@ -85,6 +85,13 @@ class Genome::Model::Build::ReferenceAlignment {
             is => 'Genome::Model::Build::ImportedVariationList',
             id_by => 'dbsnp_build_id',
         },
+        target_region_set_name => {
+            is => 'Text',
+            via => 'inputs',
+            to => 'value_id',
+            where => [name=>'target_region_set_name'],
+            is_optional => 1,
+        },
     ],
     has_transient_optional => [
         _unfiltered_snv_file => {
@@ -210,13 +217,27 @@ sub check_genotype_input {
         unless ($self->genotype_microarray_build) {
             my $desc;
             if ($self->model->genotype_microarray_model) {
-                $desc = 'model has genotype_microarray input but build is missing it';
+                $desc = 'The model has its genotype_microarray(_model) input but this build is missing its genotype_microarray(_build).';
+                if ($self->model->genotype_microarray_model->last_succeeded_build) {
+                    $desc .= q(  The genotype_microarray(_model) has a succeeded build.  Why wasn't it used?);
+                } else {
+                    $desc .= q(  The genotype_microarray(_model) does not have a succeeded build.);
+                }
             }
             elsif ($self->subject->default_genotype_data_id) {
-                $desc = 'subject has default_genotype_data but build and model are missing genotype_microarray input';
+                my $data = $self->subject->default_genotype_data;
+                my @projects = $data->analysis_projects;
+                my @models = $self->subject->default_genotype_models;
+                if (@models) {
+                    $desc = q(Model's subject has a default genotype data and models exist for it.  Why wasn't one of them used?);
+                } elsif (!@models && @projects) {
+                    $desc = q(Model's subject has a default genotype data but no models exist for it despite the fact that analysis projects are associated with the data.);
+                } elsif (!@models && !@projects) {
+                    $desc = q(Model's subject has a default genotype data but no models exist for it and no analysis projects are associated with the data.);
+                }
             }
             else {
-                $desc = 'no genotype_microarray input found';
+                $desc = q(A genotype_microarray input is required for lane QC models and no default was specified for the model's subject.);
             }
             push @tags, UR::Object::Tag->create(
                 type => 'error',
@@ -739,7 +760,7 @@ sub whole_rmdup_bam_flagstat_file {
     my $flag_file = $bam_file . '.flagstat';
 
     unless (-s $flag_file) {
-        $self->status_message("Create bam flagstat file: $flag_file");
+        $self->debug_message("Create bam flagstat file: $flag_file");
         my $cmd = Genome::Model::Tools::Sam::Flagstat->create(
             bam_file       => $bam_file,
             output_file    => $flag_file,
@@ -886,16 +907,16 @@ sub accumulate_maps {
         my $maq_version = $model->read_aligner_version;
         system "gmt maq vmerge --maplist $maplist --pipe $result_file --version $maq_version &";
 
-        $self->status_message("gmt maq vmerge --maplist $maplist --pipe $result_file --version $maq_version &");
+        $self->debug_message("gmt maq vmerge --maplist $maplist --pipe $result_file --version $maq_version &");
         my $start_time = time;
         until (-p "$result_file" or ( (time - $start_time) > 100) )  {
-            $self->status_message("Waiting for pipe...");
+            $self->debug_message("Waiting for pipe...");
             sleep(5);
         }
         unless (-p "$result_file") {
             die "Failed to make pipe? $!";
         }
-        $self->status_message("Streaming into file $result_file.");
+        $self->debug_message("Streaming into file $result_file.");
         $self->warning_message("mapmerge complete.  output filename is $result_file");
         chmod 00664, $result_file;
     }
@@ -1025,13 +1046,13 @@ sub delete {
 sub eviscerate {
     my $self = shift;
     
-    $self->status_message('Entering eviscerate for build:' . $self->id);
+    $self->debug_message('Entering eviscerate for build:' . $self->id);
 
     if($self->merged_alignment_result) {
         my $merged_alignment_result = $self->merged_alignment_result;
 
         if (-l $self->accumulated_alignments_directory && readlink($self->accumulated_alignments_directory) eq $merged_alignment_result->output_dir) {
-           $self->status_message("Unlinking symlink to merged alignment result: " . $self->accumulated_alignments_directory);
+           $self->debug_message("Unlinking symlink to merged alignment result: " . $self->accumulated_alignments_directory);
             unless(unlink($self->accumulated_alignments_directory)) {
                 $self->error_message("could not remove symlink to merged alignment result path");
                 return;
@@ -1040,7 +1061,7 @@ sub eviscerate {
 
         my @users = $merged_alignment_result->users(user => $self);
         map($_->delete, @users);
-        $self->status_message('Removed self as user of merged alignment result.');
+        $self->debug_message('Removed self as user of merged alignment result.');
         return 1;
     } else {
 
@@ -1048,11 +1069,11 @@ sub eviscerate {
         my $alignment_path = ($alignment_alloc ? $alignment_alloc->absolute_path :  $self->accumulated_alignments_directory);
 
         if (!-d $alignment_path && !-l $self->accumulated_alignments_directory) {
-            $self->status_message("Nothing to do, alignment path doesn't exist and this build has no alignments symlink.  Skipping out.");
+            $self->debug_message("Nothing to do, alignment path doesn't exist and this build has no alignments symlink.  Skipping out.");
             return;
         }
 
-        $self->status_message("Removing tree $alignment_path");
+        $self->debug_message("Removing tree $alignment_path");
         if (-d $alignment_path) {
             my @in_use = glob($alignment_path . '/*.in_use');
             if(scalar @in_use) {
@@ -1075,7 +1096,7 @@ sub eviscerate {
         }
 
         if (-l $self->accumulated_alignments_directory && readlink($self->accumulated_alignments_directory) eq $alignment_path ) {
-            $self->status_message("Unlinking symlink: " . $self->accumulated_alignments_directory);
+            $self->debug_message("Unlinking symlink: " . $self->accumulated_alignments_directory);
             unless(unlink($self->accumulated_alignments_directory)) {
                 $self->error_message("could not remove symlink to deallocated accumulated alignments path");
                 return;
@@ -1517,6 +1538,7 @@ sub files_ignored_by_diff {
         variants/dispatcher.cmd
         variants/(.*).err
         variants/(.*).out
+        variants/(.*).tbi$
     );
 }
 

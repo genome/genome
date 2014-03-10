@@ -54,9 +54,9 @@ sub execute {
     $self->dump_warning_messages(1);
 
     my $now = UR::Context->current->now;
-    $self->status_message(">>>Starting Unaligned execute() at $now"); 
+    $self->debug_message(">>>Starting Unaligned execute() at $now"); 
     $self->final_file("unaligned_final_file_path");
-    $self->status_message("<<<Ending Unaligned execute() at ".UR::Context->current->now); 
+    $self->debug_message("<<<Ending Unaligned execute() at ".UR::Context->current->now); 
     return 1;
 
 }

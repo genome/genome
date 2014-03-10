@@ -53,15 +53,15 @@ sub execute {
     while (my $seq = $reader->next_seq) { 
         my $id = $seq->id;
         if ($blacklist_regex and $id =~ $blacklist_regex) {
-            $self->status_message("skipping $id because it matches the blacklist pattern");
+            $self->debug_message("skipping $id because it matches the blacklist pattern");
             next;
         }
         elsif ($whitelist_regex and not $id =~ $whitelist_regex) {
-            $self->status_message("skipping $id because it does not match the whitelist pattern");
+            $self->debug_message("skipping $id because it does not match the whitelist pattern");
             next;
         }
         elsif ($verbose) {
-            $self->status_message("keeping $id");
+            $self->debug_message("keeping $id");
         }
         $writer->write_seq($seq);
     }

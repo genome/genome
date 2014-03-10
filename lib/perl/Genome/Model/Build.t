@@ -28,6 +28,8 @@ class Genome::Model::Test {
     is => 'Genome::ModelDeprecated',
 };
 sub Genome::Model::Test::_execute_build { return 1 };
+sub Genome::Model::Test::files_ignored_by_build_diff { return 'meh'; }
+sub Genome::Model::Test::addtional_regex_for_custom_diff { return ( 'blah' => '^blah$' ); }
 
 class Genome::Model::Build::Test {
     is => 'Genome::Model::Build',
@@ -35,6 +37,7 @@ class Genome::Model::Build::Test {
         metric1 => { is_metric => 1, },
    ],
 };
+
 my $build_meta = Genome::Model::Build::Test->__meta__;
 ok($build_meta, 'build meta') or die;
 my $metric1_property = $build_meta->property_meta_for_name('metric1');
@@ -92,6 +95,7 @@ my $build = Genome::Model::Build->create(
 );
 ok($build, 'Created build') or die;
 isa_ok($build, 'Genome::Model::Build::Test', 'build subclass automagically generated');
+is(Genome::Model::Build::Test->model_class, $model->class, 'build model_class');
 ok($build->the_master_event, 'master event created');
 is($build->model->id, $model->id, 'indirect model accessor');
 is($build->status, 'New', 'status set to New');
@@ -150,6 +154,18 @@ ok(!$build->fail, 'Failed to fail an abandoned build');
 ok(!$build->success, 'Failed to success an abandoned build');
 
 # DIFF
+my @files_ignored_by_build_diff = $build->files_ignored_by_diff;
+my %regex_for_custom_diff = Genome::Model::Build::Test->regex_for_custom_diff;
+my %expected_regex_for_custom_diff = (
+    hq     => '\.hq$',
+    gz     => '(?<!\.vcf)\.gz$',
+    vcf    => '\.vcf$',
+    vcf_gz => '\.vcf\.gz$',
+    blah => '^blah$',
+);
+is_deeply(\%regex_for_custom_diff, \%expected_regex_for_custom_diff, 'regex_for_custom_diff plus additional');
+
+is_deeply(\@files_ignored_by_build_diff, ['meh'], 'files_ignored_by_diff');
 my $build2 = Genome::Model::Build::Test->create(
     model => $model,
     data_directory => $tmpdir, # TODO actually test file diffs?

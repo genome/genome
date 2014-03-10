@@ -187,7 +187,7 @@ sub dump_some_regions {
                 $out_fh->print(">$chr:$bed_start-$bed_stop:$hap\t$length\n"); 
                 my $fasta_seq = substr($ref, $start, $length);
                 $self->print_and_flush($fasta_seq, $out_fh);
-                $self->status_message("Dumped 22:$bed_start-$bed_stop to fasta\n");
+                $self->debug_message("Dumped 22:$bed_start-$bed_stop to fasta\n");
             }
         }
     }
@@ -231,7 +231,7 @@ sub read_region_of_fasta {
     my $fasta = shift;
     my ($chr, $start_stop) = split ":", $region;
     my $cmd = "samtools faidx $fasta $region";  #FIXME use the stupid auto samtools version decider at some point
-    $self->status_message("ref command: $cmd");
+    $self->debug_message("ref command: $cmd");
     chomp(my @ref_string = `$cmd`);    
     shift @ref_string;
     my $return_string = join("", @ref_string);

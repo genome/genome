@@ -55,15 +55,43 @@ is($rna_model_no_auto_assign->instrument_data, undef , 'it did not assign the in
 
 #model with pairing
 my ($data1, $data2, $model_types_somval, $analysis_project) = _generate_som_val_instrument_data();
-Genome::Config::AnalysisProject::SubjectPairing->create(
-    analysis_project => $analysis_project,
-    control_subject => @$data1[1],
-    experimental_subject => @$data2[1]
+my $subject_mapping = Genome::Config::AnalysisProject::SubjectMapping->create(
+    analysis_project => $analysis_project
 );
-Genome::Config::AnalysisProject::SubjectPairing->create(
-    analysis_project => $analysis_project,
-    control_subject => @$data2[1],
-    experimental_subject => @$data1[1]
+
+Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
+    label => 'control_subject',
+    subject_mapping => $subject_mapping,
+    subject => @$data1[1],
+);
+Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
+    label => 'subject',
+    subject_mapping => $subject_mapping,
+    subject => @$data2[1]->source,
+);
+Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
+    label => 'experimental_subject',
+    subject_mapping => $subject_mapping,
+    subject => @$data2[1],
+);
+
+my $subject_mapping2 = Genome::Config::AnalysisProject::SubjectMapping->create(
+    analysis_project => $analysis_project
+);
+Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
+    label => 'control_subject',
+    subject_mapping => $subject_mapping2,
+    subject => @$data2[1],
+);
+Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
+    label => 'subject',
+    subject_mapping => $subject_mapping2,
+    subject => @$data1[1]->source,
+);
+Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
+    label => 'experimental_subject',
+    subject_mapping => $subject_mapping2,
+    subject => @$data1[1],
 );
 
 build_and_run_cmd(@$data1[0], @$data2[0]);
@@ -71,40 +99,58 @@ assert_succeeded(@$data1[0], $model_types_somval);
 assert_succeeded(@$data2[0], $model_types_somval);
 my @models = $analysis_project->models;
 ok(@models, 'it registers created models with the analysis_project');
-ok(scalar(@models) == 2, 'it creates one model per SubjectPairing');
+ok(scalar(@models) == 2, 'it creates one model per SubjectMapping');
 
 #model with pairing - but none set
 ($data1, $data2, $model_types_somval, $analysis_project) = _generate_som_val_instrument_data();
 build_and_run_cmd(@$data1[0], @$data2[0]);
-assert_failed(@$data1[0], 'Found no pairing information');
-assert_failed(@$data2[0], 'Found no pairing information');
+assert_failed(@$data1[0], 'Found no mapping information');
+assert_failed(@$data2[0], 'Found no mapping information');
 
 #inst data with no ap
 my $inst_data_without_a_project = Genome::Test::Factory::InstrumentData::Solexa->setup_object();
-build_and_run_cmd($inst_data_without_a_project);
-assert_failed($inst_data_without_a_project, "doesn't have an analysis project!");
+my $cmd = build_and_run_cmd($inst_data_without_a_project);
+ok($cmd->status_message =~ /Found no items to process/, 'no analysis project is a no-op');
+
+#skipped data
+($rna_instrument_data, $model_types) = generate_rna_seq_instrument_data();
+$rna_instrument_data->ignored(1);
+build_and_run_cmd($rna_instrument_data);
+assert_skipped($rna_instrument_data);
+
 done_testing();
 
+sub assert_skipped {
+    my $inst_data = shift;
+
+    my ($bridge) = $inst_data->analysis_project_bridges;
+    ok($bridge->status eq 'skipped', 'it should mark the inst data as skipped');
+    ok($bridge->reason, 'a reason for being skipped was specified');
+    is($bridge->fail_count, 0, 'a fail count was not set');
+}
 
 sub assert_failed {
     my $inst_data = shift;
     my $error = shift;
-    ok($inst_data->tgi_lims_status eq 'failed', 'it should mark the inst data as failed');
-    ok($inst_data->attributes(attribute_label => 'tgi_lims_fail_count'), 'it should set the fail count');
-    ok($inst_data->attributes(attribute_label => 'tgi_lims_fail_message'), 'it should set the fail message');
+    my ($bridge) = $inst_data->analysis_project_bridges;
+    ok($bridge->status eq 'failed', 'it should mark the inst data as failed');
+    ok($bridge->fail_count, 'it should set the fail count');
+    ok($bridge->reason, 'it should set the fail message');
     if ($error) {
-        ok($inst_data->attributes(attribute_label => 'tgi_lims_fail_message')->value =~ $error, 'it should set the correct error message');
+        ok($bridge->reason =~ $error, 'it should set the correct error message');
     }
 }
 
 sub assert_succeeded {
     my $inst_data = shift;
     my $model_types = shift;
+    my ($bridge) = $inst_data->analysis_project_bridges;
 
-    ok($inst_data->tgi_lims_status eq 'processed', 'it should mark the inst data as succeeded');
-    ok(!$inst_data->attributes(attribute_label => 'tgi_lims_fail_count'), 'it should remove the fail count');
+    ok($bridge->status eq 'processed', 'it should mark the inst data as succeeded');
+    is($bridge->fail_count, 0, 'it should remove the fail count');
     for my $model_instance ($inst_data->models) {
         ok($model_instance->build_requested, 'it sets build requested on constructed models');
+        is($model_instance->user_name, 'apipe-builder');
     }
     for my $model_type (@$model_types) {
         ok(
@@ -122,7 +168,7 @@ sub build_and_run_cmd {
 
     ok($cmd, 'created the command successfully');
     ok($cmd->execute(), 'command ran successfully');
-    return;
+    return $cmd;
 }
 
 sub generate_rna_seq_instrument_data {
@@ -141,7 +187,11 @@ sub generate_rna_seq_instrument_data {
         }
     );
 
-    $inst_data->analysis_project_id($ap->id);
+    Genome::Config::AnalysisProject::InstrumentDataBridge->create(
+        instrument_data => $inst_data,
+        analysis_project => $ap,
+    );
+
     return ($inst_data, ['Genome::Model::RnaSeq']);
 }
 
@@ -151,6 +201,7 @@ sub _rna_seq_config_hash {
         processing_profile_id       => 2819506,
         annotation_build_id         => 124434505,
         reference_sequence_build_id => 106942997,
+        user_name => 'apipe-builder',
         instrument_data_properties  => {
             subject => 'sample',
             target_region_set_name => 'target_region_set_name'
@@ -205,8 +256,13 @@ sub _generate_som_val_instrument_data {
         }
     );
 
-    $inst_data_1->analysis_project_id($ap->id);
-    $inst_data_2->analysis_project_id($ap->id);
+    for my $inst_data ($inst_data_1, $inst_data_2) {
+        Genome::Config::AnalysisProject::InstrumentDataBridge->create(
+            instrument_data => $inst_data,
+            analysis_project => $ap,
+        );
+    }
+
     return ([$inst_data_1, $sample_1], [$inst_data_2, $sample_2], ['Genome::Model::SomaticValidation'], $ap);
 }
 
@@ -215,5 +271,6 @@ sub _som_val_config_hash {
         processing_profile_id       => 2656116,
         annotation_build_id         => 124434505,
         reference_sequence_build_id => 106942997,
+        user_name                   => 'apipe-builder',
     };
 }

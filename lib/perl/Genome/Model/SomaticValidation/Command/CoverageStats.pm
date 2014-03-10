@@ -28,7 +28,7 @@ class Genome::Model::SomaticValidation::Command::CoverageStats {
     ],
     has_param => [
         lsf_queue => {
-            default => 'long',
+            default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
         },
     ],
     has_optional_output => [
@@ -53,7 +53,7 @@ sub shortcut {
     my $self = shift;
 
     unless($self->should_run) {
-        $self->status_message('Sample not specified on build; skipping.');
+        $self->debug_message('Sample not specified on build; skipping.');
         return 1;
     }
 
@@ -61,7 +61,7 @@ sub shortcut {
     my $result = Genome::InstrumentData::AlignmentResult::Merged::CoverageStats->get_with_lock(%params);
 
     if($result) {
-        $self->status_message('Using existing result ' . $result->__display_name__);
+        $self->debug_message('Using existing result ' . $result->__display_name__);
         return $self->link_result_to_build($result);
     } else {
         return;
@@ -73,7 +73,7 @@ sub execute {
     my $build = $self->build;
 
     unless($self->should_run) {
-        $self->status_message('Sample not specified on build; skipping.');
+        $self->debug_message('Sample not specified on build; skipping.');
         return 1;
     }
 
@@ -118,7 +118,7 @@ sub _reference_sequence_matches {
 
     unless ($roi_reference->is_compatible_with($reference)) {
         if(Genome::Model::Build::ReferenceSequence::Converter->get(source_reference_build => $roi_reference, destination_reference_build => $reference)) {
-            $self->status_message('Will run converter on ROI list.');
+            $self->debug_message('Will run converter on ROI list.');
         } else {
             $self->error_message('reference sequence: ' . $reference->name . ' does not match the reference on the region of interest: ' . $roi_reference->name);
             return;

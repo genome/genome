@@ -14,13 +14,15 @@ use Test::More tests => 6;
 
 use_ok('Genome::Model::Tools::Varscan::ProcessValidation');
 
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Varscan-ProcessValidation';
+my $version = "v2";
+
+my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Varscan-ProcessValidation' . "/$version";
+print $test_data_dir . "\n";
 my $variants_file = join('/', $test_data_dir, 'variant_list.snp');
 my $validation_file = join('/', $test_data_dir, 'varscan.snp');
 my $filtered_validation_file = join('/', $test_data_dir, 'varscan.snp.Somatic.strandfilter');
 
-my $expected_result_dir = join('/', $test_data_dir, '1');
-my $expected_output_file = join('/', $expected_result_dir, 'targeted_snvs.validation');
+my $expected_output_file = join('/', $test_data_dir, 'targeted_snvs.validation');
 
 my $tmpdir = File::Temp::tempdir('Varscan-ProcessValidationXXXXX', CLEANUP => 1, TMPDIR => 1);
 my $output_file = join('/', $tmpdir, 'targeted_snvs.validation');
@@ -33,9 +35,11 @@ my $validation_command = Genome::Model::Tools::Varscan::ProcessValidation->creat
     output_file => $output_file,
     output_plot => 1,
 );
+
 isa_ok($validation_command, 'Genome::Model::Tools::Varscan::ProcessValidation', 'created validation command');
 ok($validation_command->execute(), 'executed validation command');
 
+`cp $output_file $test_data_dir`;
 my $output_diff = Genome::Sys->diff_file_vs_file($expected_output_file, $output_file);
 ok(!$output_diff, 'output file matches expected result')
     or diag("diff:\n" . $output_diff);

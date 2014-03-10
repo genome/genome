@@ -64,7 +64,7 @@ sub execute {
     my $sv_file = $self->_resolve_svs_input();
     unless( $sv_file ) {
         #This is okay for "discovery" and "extension" validation runs.
-        $self->status_message('Skipping SV validation due to lack of inputs.');
+        $self->debug_message('Skipping SV validation due to lack of inputs.');
         $self->skip(1);
         return 1;
     }
@@ -77,14 +77,14 @@ sub execute {
     my $normal_val_bam = $build->normal_bam;
 
     unless($normal_val_bam) {
-        $self->status_message('Skipping SV validation due to lack of normal BAM.');
+        $self->debug_message('Skipping SV validation due to lack of normal BAM.');
         $self->skip(1);
         return 1;
     }
 
     my ($merged_output_file, $merged_fasta_file) = $self->_generate_merged_callset();
     unless (-s $merged_fasta_file) {
-        $self->status_message('Skipping SV validation due to empty merged fasta file.');
+        $self->debug_message('Skipping SV validation due to empty merged fasta file.');
         $self->skip(1);
         return 1;
     }

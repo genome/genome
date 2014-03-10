@@ -14,7 +14,7 @@ use Test::More;
 use_ok('Genome::Disk::Command::Allocation::Create') or die;
 
 my $cmd = Genome::Disk::Command::Allocation::Create->create(
-    disk_group_name => 'info_apipe',
+    disk_group_name => $ENV{GENOME_DISK_GROUP_DEV},
     allocation_path => 'allocation/create/test',
     kilobytes_requested => 100,
     owner_class_name => 'UR::Object',

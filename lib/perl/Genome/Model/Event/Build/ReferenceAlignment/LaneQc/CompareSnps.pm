@@ -24,7 +24,7 @@ sub execute {
 
     if ( !$self->validate_gold_snp_path ) {
         # TODO why isn't this a die or a return?
-        $self->status_message("No valid gold_snp_path for the build, aborting compare SNPs!");
+        $self->debug_message("No valid gold_snp_path for the build, aborting compare SNPs!");
     }
 
     my $output_dir = $build->qc_directory;
@@ -34,6 +34,11 @@ sub execute {
     }
 
     my $geno_path = $self->resolve_geno_path_for_build($build);
+
+    unless (-s $geno_path) {
+        $self->warning_message("Genotype file is empty: $geno_path. Joinx intersect did not find any intersection.");
+        return 1;
+    }
 
     #TODO: Remove Over-Ambiguous Glob
     my @variant_files = glob($build->variants_directory . '/snv/samtools-*/snvs.hq');
@@ -153,8 +158,8 @@ sub resolve_geno_path_for_build {
         $geno_path = $build->gold_snp_build->gold2geno_file_path;
     }
 
-    unless ( -s $geno_path ) {
-        die $self->error_message("Genotype file missing/empty: $geno_path");
+    unless ( -e $geno_path ) {
+        die $self->error_message("Genotype file missing: $geno_path");
     }
 
     return $geno_path;
@@ -165,7 +170,7 @@ sub validate_gold_snp_path {
 
     my $gold_snp_path = $self->build->gold_snp_path;
     unless ($gold_snp_path and -s $gold_snp_path) {
-        $self->status_message('No gold_snp_path provided for the build or it is empty');
+        $self->debug_message('No gold_snp_path provided for the build or it is empty');
         return;
     }
 
@@ -173,7 +178,7 @@ sub validate_gold_snp_path {
     my @columns = split /\s+/, $head;
 
     unless (@columns and @columns == 9) {
-        $self->status_message("Gold snp file: $gold_snp_path is not 9-column format");
+        $self->debug_message("Gold snp file: $gold_snp_path is not 9-column format");
         return;
     }
     return 1;

@@ -14,7 +14,7 @@ class Genome::Model::Tools::DetectVariants2::Result::Combine::UnionSv{
 
 sub _needs_symlinks_followed_when_syncing { 0 };
 sub _working_dir_prefix { 'union-sv' };
-sub resolve_allocation_disk_group_name { 'info_genome_models' };
+sub resolve_allocation_disk_group_name { $ENV{GENOME_DISK_GROUP_MODELS} };
 sub allocation_subdir_prefix { 'union_sv' };
 sub _variant_type { 'svs' };
 
@@ -43,13 +43,13 @@ sub _combine_variants {
         }
     }
 
-    $self->status_message("Now make copy to sv merge outputs");
+    $self->debug_message("Now make copy to sv merge outputs");
     
     for my $dir ($dir_a, $dir_b) {
-        $self->status_message("dir is $dir");
+        $self->debug_message("dir is $dir");
         my $subclass_name = $self->_get_sr_name($dir, 'subclass_name');
         if ($subclass_name =~ /Combine\:\:UnionSv/) {
-            $self->status_message("This is a union directory: $dir");
+            $self->debug_message("This is a union directory: $dir");
             $self->_copy_file($dir);
             next;
         }

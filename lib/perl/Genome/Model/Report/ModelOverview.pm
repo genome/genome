@@ -121,6 +121,7 @@ sub generate_report_detail {
         sample             => $sample,
         project_list       => \@project_list,
         model_build_list   => \@model_build_list,
+        files_url          => $ENV{GENOME_SYS_SERVICES_FILES_URL},
     );
 
     my $tt = Template->new({

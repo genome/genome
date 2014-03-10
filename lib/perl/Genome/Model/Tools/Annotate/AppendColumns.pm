@@ -58,7 +58,7 @@ sub execute {
 
     my $in = Genome::Sys->open_file_for_reading($self->additional_columns_file);
 
-    $self->status_message("Reading in additional columns");
+    $self->debug_message("Reading in additional columns");
     my $chrom_column = $self->chrom_column - 1;
     my $start_column = $self->start_column - 1;
     my $stop_column = $self->stop_column - 1;
@@ -89,7 +89,7 @@ sub execute {
     my $header_line = <$in>;
     chomp $header_line;
     $out->print($header_line.$extra_header."\n");
-    $self->status_message("Writing final output file");
+    $self->debug_message("Writing final output file");
     while(my $line = <$in>) {
         chomp $line;
         my @fields = split (/\t/, $line);

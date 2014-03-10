@@ -26,9 +26,9 @@ sub execute {
     my $self = shift;
     my $now = UR::Context->current->now;
   
-    $self->status_message("Starting DeduplicateLibraries::Samtools");
+    $self->debug_message("Starting DeduplicateLibraries::Samtools");
     my $alignments_dir = $self->resolve_accumulated_alignments_path;
-    $self->status_message("Accumulated alignments directory: ".$alignments_dir);
+    $self->debug_message("Accumulated alignments directory: ".$alignments_dir);
    
     unless (-e $alignments_dir) { 
        $self->error_message("Alignments dir didn't get allocated/created, can't continue '$alignments_dir':  $!");
@@ -38,11 +38,11 @@ sub execute {
     #my $bam_merged_output_file = $alignments_dir."/".$self->model->subject_name."_merged_rmdup.bam";
     my $bam_merged_output_file = $self->build->whole_rmdup_bam_file; 
     if (-e $bam_merged_output_file) {
-        $self->status_message("A merged and rmdup'd bam file has been found at: $bam_merged_output_file");
-        $self->status_message("If you would like to regenerate this file, please delete it and rerun.");
+        $self->debug_message("A merged and rmdup'd bam file has been found at: $bam_merged_output_file");
+        $self->debug_message("If you would like to regenerate this file, please delete it and rerun.");
         $now = UR::Context->current->now;
-        $self->status_message("Skipping the rest of DeduplicateLibraries::Samtools at $now");
-        $self->status_message("*** All processes skipped. ***");
+        $self->debug_message("Skipping the rest of DeduplicateLibraries::Samtools at $now");
+        $self->debug_message("*** All processes skipped. ***");
         return 1;
     } 
 
@@ -63,31 +63,31 @@ sub execute {
         my @alignments = $build->alignment_results_for_instrument_data($instrument_data);
         for my $alignment (@alignments) {
             my @bams = $alignment->alignment_bam_file_paths;
-            $self->status_message("bam file paths: ". @bams);
+            $self->debug_message("bam file paths: ". @bams);
 
             push @{$library_alignments{$library}}, @bams;  #for the dedup step
             push @all_alignments, @bams;                   #for the whole genome map file
         }
     }
     
-    $self->status_message("Starting SAM dedup workflow with params:");
+    $self->debug_message("Starting SAM dedup workflow with params:");
     #prepare the input for parallelization
     my @list_of_library_alignments;
     for my $library_key ( keys %library_alignments ) {
 	my @read_set_list = @{$library_alignments{$library_key}};	
-        $self->status_message("Library: ".$library_key." Read sets count: ". scalar(@read_set_list) ."\n");
+        $self->debug_message("Library: ".$library_key." Read sets count: ". scalar(@read_set_list) ."\n");
         if (scalar(@read_set_list)>0) {
             my %library_alignments_item = ( $library_key => \@read_set_list );  
             push @list_of_library_alignments, \%library_alignments_item;
         } 
         else {
-            $self->status_message("Not including library: $library_key because it is empty.");
+            $self->debug_message("Not including library: $library_key because it is empty.");
         } 
     }
-    $self->status_message("Size of library alignments: ".@list_of_library_alignments ); 
+    $self->debug_message("Size of library alignments: ".@list_of_library_alignments ); 
 
     if (scalar(@list_of_library_alignments)==0) {
-        $self->status_message("None of the libraries contain data.  Quitting.");
+        $self->debug_message("None of the libraries contain data.  Quitting.");
         return; 
     }
 
@@ -107,7 +107,7 @@ sub execute {
 
     # db disconnect prior to long operation
     if (Genome::DataSource::GMSchema->has_default_handle) {
-        $self->status_message("Disconnecting GMSchema default handle.");
+        $self->debug_message("Disconnecting GMSchema default handle.");
         Genome::DataSource::GMSchema->disconnect_default_dbh();
     }
 
@@ -144,13 +144,13 @@ sub execute {
    #remove original library input files
    my @original_to_remove_files = grep {$_ !~ m/rmdup/ }<$alignments_dir/*.bam>;
    for (@original_to_remove_files) {
-        $self->status_message("Removing intermediate library file $_");
+        $self->debug_message("Removing intermediate library file $_");
         unlink($_);
    }
  
    #merge those Bam files...BAM!!!
    $now = UR::Context->current->now;
-   $self->status_message(">>> Beginning Bam merge at $now.");
+   $self->debug_message(">>> Beginning Bam merge at $now.");
    #my $bam_merged_output_file = $alignments_dir."/".$self->model->subject_name."_merged_rmdup.bam";
 
    my @bam_files = <$alignments_dir/*_merged_rmdup.bam>;
@@ -161,7 +161,7 @@ sub execute {
     #        #if the bam file name contains the string '_rmdup.bam', remove it from the list of files to merge
     #        my $substring_index = index($each_bam, "_rmdup.bam");
     #        unless ($substring_index == -1) {
-    #                $self->status_message($bam_files[$i]. " will not be merged.");
+    #                $self->debug_message($bam_files[$i]. " will not be merged.");
    #                delete $bam_files[$i];
    #         }		
    #         $i++;
@@ -179,20 +179,20 @@ sub execute {
    ); 
 
    $now = UR::Context->current->now;
-   $self->status_message("<<< Completing Bam merge at $now.");
+   $self->debug_message("<<< Completing Bam merge at $now.");
 
    #remove intermediate files
    $now = UR::Context->current->now;
-   $self->status_message(">>> Removing intermediate files at $now");
+   $self->debug_message(">>> Removing intermediate files at $now");
 
     #delete everything except big dedup bam file and index 
     my @all_files = <$alignments_dir/*>;
     for my $each_bam_file (@all_files) {
         if ( ($each_bam_file eq $bam_merged_output_file) || ($each_bam_file eq $bam_merged_output_file.".bai" ) ) {   
-            $self->status_message("Keeping $each_bam_file");
+            $self->debug_message("Keeping $each_bam_file");
         } 
         else {
-            $self->status_message("Executing unlink command on $each_bam_file");
+            $self->debug_message("Executing unlink command on $each_bam_file");
             my $rm_rv1 = unlink($each_bam_file);
             unless ($rm_rv1 == 1) {
                 $self->error_message("There was a problem with the bam remove command: $rm_rv1");
@@ -203,13 +203,13 @@ sub execute {
     $self->create_bam_md5;
 
     for my $file (grep {-f $_} glob($build->accumulated_alignments_directory . "/*")) {
-        $self->status_message("Setting $file to read-only");
+        $self->debug_message("Setting $file to read-only");
         chmod 0444, $file;
     }
 
     $now = UR::Context->current->now;
-    $self->status_message("<<< Completed removing intermediate files at $now");
-    $self->status_message("*** All processes completed. ***");
+    $self->debug_message("<<< Completed removing intermediate files at $now");
+    $self->debug_message("*** All processes completed. ***");
 
     return $self->verify_successful_completion();
 }
@@ -232,7 +232,7 @@ sub verify_successful_completion {
 sub calculate_required_disk_allocation_kb {
     my $self = shift;
 
-    $self->status_message("calculating how many bam files will get incorporated...");
+    $self->debug_message("calculating how many bam files will get incorporated...");
     
     my $build = $self->build;
     my @instrument_data = $build->instrument_data;

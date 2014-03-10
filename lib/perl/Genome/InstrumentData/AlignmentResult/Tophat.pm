@@ -122,17 +122,17 @@ sub create {
     return unless ($self);
 
     my $rv = eval {
-        $self->status_message('Preparing directories...');
+        $self->debug_message('Preparing directories...');
         $self->_prepare_output_directory(); #This gets a disk allocation
         my @tmp_dirs = $self->_prepare_working_directories(); #need to keep these in scope while in use
 
-        $self->status_message('Collecting FASTQs...');
+        $self->debug_message('Collecting FASTQs...');
         my ($left_fastqs, $right_fastqs, $unaligned_bams) = $self->_gather_input_fastqs;
 
-        $self->status_message('Running Tophat...');
+        $self->debug_message('Running Tophat...');
         $self->_run_aligner($left_fastqs, $right_fastqs);
 
-        $self->status_message('Merging and calculating stats...');
+        $self->debug_message('Merging and calculating stats...');
         $self->_merge_and_calculate_stats($unaligned_bams);
 
         $self->_promote_validated_data;
@@ -149,14 +149,14 @@ sub create {
         die $self->error_message;
     }
 
-    $self->status_message("Resizing the disk allocation...");
+    $self->debug_message("Resizing the disk allocation...");
     if ($self->_disk_allocation) {
         unless ($self->_disk_allocation->reallocate) {
             $self->warning_message("Failed to reallocate disk allocation: " . $self->_disk_allocation->id);
         }
     }
 
-    $self->status_message('All processes completed.');
+    $self->debug_message('All processes completed.');
 
     return $self;
 }
@@ -166,7 +166,7 @@ sub _cleanup {
 
     return unless $self->_disk_allocation;
 
-    $self->status_message('Now deleting allocation with owner_id = ' . $self->id);
+    $self->debug_message('Now deleting allocation with owner_id = ' . $self->id);
     my $allocation = $self->_disk_allocation;
     if ($allocation) {
         my $path = $allocation->absolute_path;
@@ -193,7 +193,7 @@ sub _prepare_output_directory {
 
     unless($allocation) {
         my %allocation_parameters = (
-            disk_group_name => 'info_genome_models',
+            disk_group_name => $ENV{GENOME_DISK_GROUP_MODELS},
             allocation_path => $subdir,
             owner_class_name => $self->class,
             owner_id => $self->id,
@@ -411,7 +411,7 @@ sub _run_aligner {
         my $aligner_log = $self->temp_staging_directory . '/tophat.aligner_output';
         if(-e $aligner_log) {
             my $log_text = Genome::Sys->read_file($aligner_log);
-            $self->status_message("Aligner log:\n" . $log_text);
+            $self->debug_message("Aligner log:\n" . $log_text);
         }
 
         die($error);
@@ -489,7 +489,7 @@ sub _promote_validated_data {
     my $staging_dir = $self->temp_staging_directory;
     my $output_dir  = $self->output_dir;
 
-    $self->status_message("Now de-staging data from $staging_dir into $output_dir");
+    $self->debug_message("Now de-staging data from $staging_dir into $output_dir");
 
     for my $staged_file (glob("$staging_dir/*")) {
         my $destination = $staged_file;
@@ -507,7 +507,7 @@ sub _promote_validated_data {
         chmod 0444, $file;
     }
 
-    $self->status_message("Files in $output_dir: \n" . join "\n", glob($output_dir . "/*"));
+    $self->debug_message("Files in $output_dir: \n" . join "\n", glob($output_dir . "/*"));
 
     return $output_dir;
 }

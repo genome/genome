@@ -123,7 +123,7 @@ class Genome::Model::Tools::Pindel::RunPindelModelGroup {
     # Make workflow choose 64 bit blades
     has_param => [
         lsf_queue => {
-            default_value => 'apipe'
+            default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT},
         }, 
         lsf_resource => {
             default_value => "-M 12000000 -R 'select[type==LINUX64 && mem>12000] rusage[mem=12000]'",
@@ -203,7 +203,7 @@ sub _verify_inputs {
     }
 
 
-    $self->status_message("Completed verify_inputs step.");
+    $self->debug_message("Completed verify_inputs step.");
 
     return 1;
 }
@@ -223,7 +223,7 @@ sub _create_directories {
             return;
         }
 
-        $self->status_message("Created directory: $output_directory");
+        $self->debug_message("Created directory: $output_directory");
         chmod 02775, $output_directory;
     }
 
@@ -376,7 +376,7 @@ sub _run_pindel_for_chromosome {
     $reference_sequence_for_chrom =~ s/fasta$/fa/;
     $reference_sequence_for_chrom =~ s/\/opt\/fscache//;
     unless (-e $reference_sequence_for_chrom) {
-        $self->status_message("No per-chromosome reference fasta found, falling back to all_sequences.fa");
+        $self->debug_message("No per-chromosome reference fasta found, falling back to all_sequences.fa");
         $reference_sequence_for_chrom = $self->reference_sequence_input;
         $reference_sequence_for_chrom =~ s/fasta$/fa/;
         $reference_sequence_for_chrom =~ s/\/opt\/fscache//;

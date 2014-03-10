@@ -51,14 +51,18 @@ sub execute {
     my $output 		= $self->output_spreadsheet;
     my $clusters 	= $self->input_cluster_number;
     
-    
+    unless (-s $annotation) {
+        $self->warning_message("input_intersect_file: $annotation is not valid");
+        return 1;
+    }
+
     my ($sorted_temp_fh, $sorted_temp_name) = Genome::Sys->create_temp_file();
     
     my $cmd = 'head -'.$clusters.' '.$annotation .'> '.$sorted_temp_name;
     
     Genome::Sys->shellcmd(
         cmd => $cmd,
-        input_files => [$self->input_intersect_file],
+        input_files  => [$annotation],
         output_files => [$sorted_temp_name],
         skip_if_output_is_present => 0,
     );

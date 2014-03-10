@@ -144,12 +144,12 @@ sub existing_data_files {
 sub _get_sample {
     my $self = shift;
 
-    $self->status_message('Get sample...');
+    $self->debug_message('Get sample...');
 
     my $sample = Genome::Sample->get(name => $self->sra_sample_id);
     return if not defined $sample;
     $self->_sample($sample);
-    $self->status_message('Sample: '.join(' ',  map { $sample->$_ } (qw/ id name /)));
+    $self->debug_message('Sample: '.join(' ',  map { $sample->$_ } (qw/ id name /)));
 
     my $library = $self->_get_or_create_library;
     return if not $library;
@@ -167,7 +167,7 @@ sub _create_sample {
         return;
     }
 
-    $self->status_message("Create sample for $sra_sample_id");
+    $self->debug_message("Create sample for $sra_sample_id");
 
     my $sample = Genome::Sample->create(
         name => $sra_sample_id,
@@ -184,12 +184,12 @@ sub _create_sample {
         return;
     }
     $self->_sample( $sample );
-    $self->status_message('Sample: '.join(' ',  map { $sample->$_ } (qw/ id name /)));
+    $self->debug_message('Sample: '.join(' ',  map { $sample->$_ } (qw/ id name /)));
 
     my $library = $self->_get_or_create_library;
     return if not $library;
 
-    $self->status_message('Create sample...OK');
+    $self->debug_message('Create sample...OK');
 
     return $self->_sample;
 }
@@ -216,7 +216,7 @@ sub _get_or_create_library {
     }
     $self->_library($library);
 
-    $self->status_message('Library: '.join(' ',  map { $self->_library->$_ } (qw/ id name /)));
+    $self->debug_message('Library: '.join(' ',  map { $self->_library->$_ } (qw/ id name /)));
 
     return $self->_library;
 }
@@ -246,8 +246,8 @@ sub _get_instrument_data {
         return if not $allocation;
     }
 
-    $self->status_message('Instrument data: '.join(' ', map { $_->id } @instrument_data));
-    $self->status_message('Absolute path: '.$self->_absolute_path );
+    $self->debug_message('Instrument data: '.join(' ', map { $_->id } @instrument_data));
+    $self->debug_message('Absolute path: '.$self->_absolute_path );
 
     return @instrument_data;
 }
@@ -257,7 +257,7 @@ sub _create_instrument_data {
 
     Carp::confess('No kb to request when creating instrument data.') if not $params{kilobytes_requested};
 
-    $self->status_message('Create instrument data...');
+    $self->debug_message('Create instrument data...');
 
     my @instrument_data = $self->_get_instrument_data;
     my $instrument_data = Genome::InstrumentData::Imported->create(
@@ -283,7 +283,7 @@ sub _create_instrument_data {
     my $allocation = $self->_create_instrument_data_allocation(%params);
     return if not $allocation;
 
-    $self->status_message('Create instrument data: '.$instrument_data->id);
+    $self->debug_message('Create instrument data: '.$instrument_data->id);
 
     return $instrument_data;
 }
@@ -291,7 +291,7 @@ sub _create_instrument_data {
 sub _create_instrument_data_allocation {
     my ($self, %params) = @_;
 
-    $self->status_message('Create instrument data allocation...');
+    $self->debug_message('Create instrument data allocation...');
 
     my $instrument_data = $params{instrument_data};
     Carp::confess('No instrument data given to create allocation') if not $instrument_data;
@@ -301,14 +301,14 @@ sub _create_instrument_data_allocation {
 
     my $allocation = $instrument_data->allocations;
     if ( defined $allocation ) {
-        $self->status_message('Allocation already exists for instrument data: '.$instrument_data->id);
+        $self->debug_message('Allocation already exists for instrument data: '.$instrument_data->id);
         return;
     }
 
     $allocation = Genome::Disk::Allocation->allocate(
         owner_id => $instrument_data->id,
         owner_class_name => $instrument_data->class,
-        disk_group_name => 'info_alignments',
+        disk_group_name => $ENV{GENOME_DISK_GROUP_ALIGNMENTS},
         allocation_path => 'instrument_data/imported/'.$instrument_data->id,
         kilobytes_requested => $kilobytes_requested,
     );
@@ -322,7 +322,7 @@ sub _create_instrument_data_allocation {
         $self->error_message('No allocation for instrument data: '.$instrument_data->id);
     }
 
-    $self->status_message('Create instrument data allocation...OK');
+    $self->debug_message('Create instrument data allocation...OK');
 
     return $allocation;
 }
@@ -332,10 +332,10 @@ sub _create_instrument_data_allocation {
 sub _validate_md5 {
     my $self = shift;
 
-    $self->status_message('Validate MD5...');
+    $self->debug_message('Validate MD5...');
 
     if ( not $self->validate_md5 ) {
-        $self->status_message('Skip validate md5...');
+        $self->debug_message('Skip validate md5...');
         return 1;
     }
 
@@ -368,7 +368,7 @@ sub _validate_md5 {
 sub _update_library {
     my $self = shift;
 
-    $self->status_message('Update library...');
+    $self->debug_message('Update library...');
 
     my $dl_directory = $self->_dl_directory;
     if ( not -d $dl_directory ) {
@@ -378,7 +378,7 @@ sub _update_library {
 
     my @xml_files = glob($dl_directory.'/*.xml');
     if ( not @xml_files ) { # ok
-        $self->status_message('Attempt to update library, but no XMLs in download directory. This is OK.');
+        $self->debug_message('Attempt to update library, but no XMLs in download directory. This is OK.');
         return 1;
     }
 
@@ -427,10 +427,10 @@ sub _move_file {
     Carp::confess("Cannot move $file b/c it does not exist!") if not -e $file;
     Carp::confess("Cannot move $file to $new_file b/c no new file was given!") if not $new_file;
 
-    $self->status_message("Move $file to $new_file");
+    $self->debug_message("Move $file to $new_file");
 
     my $size = -s $file;
-    $self->status_message("Size: $size");
+    $self->debug_message("Size: $size");
 
     my $move_ok = File::Copy::move($file, $new_file);
     if ( not $move_ok ) {
@@ -448,7 +448,7 @@ sub _move_file {
         return;
     }
 
-    $self->status_message("Move...OK");
+    $self->debug_message("Move...OK");
 
     return 1;
 }

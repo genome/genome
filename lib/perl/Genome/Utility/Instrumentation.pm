@@ -10,8 +10,6 @@ package Genome::Utility::Instrumentation;
 use strict;
 use warnings;
 
-use Genome;
-
 use Net::Statsd;
 use Time::HiRes;
 

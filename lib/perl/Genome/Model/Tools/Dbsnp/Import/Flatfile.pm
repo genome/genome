@@ -108,8 +108,8 @@ my @fd_order = qw(
 
 sub execute {
     my $self = shift;
-    $self->status_message("Processing file ".$self->flatfile);
-    $self->status_message("Using reference_coordinates $self->reference_coordinates");
+    $self->debug_message("Processing file ".$self->flatfile);
+    $self->debug_message("Using reference_coordinates $self->reference_coordinates");
 
     if ($self->contig_name_translation_file) {
         my %translate;

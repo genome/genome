@@ -99,7 +99,7 @@ sub execute {
             $junction_fh->print($junction_processed_file ."\n");
             $transcripts_fh->print($transcript_processed_file ."\n");
         }else{
-            $self->status_message("No succeeded build for model ".$model->name.", skipping.");
+            $self->debug_message("No succeeded build for model ".$model->name.", skipping.");
         }
 
     } 
@@ -148,7 +148,7 @@ sub execute {
 sub gene_annotation{
     my $self = shift;
     my ($annot) = @_;
-    $self->status_message("processing $annot");
+    $self->debug_message("processing $annot");
     my $annoth = IO::File->new($annot);
     my $chr = $self->chrom;
     my $start = $self->start;
@@ -193,7 +193,7 @@ sub gene_annotation{
 sub transcript_annotation{
     my $self = shift;
     my ($annot) = @_;
-    $self->status_message("processing $annot");
+    $self->debug_message("processing $annot");
     my $annoth = IO::File->new($annot);
 
     my $locus_chrom = $self->chrom;
@@ -224,7 +224,7 @@ sub transcript_annotation{
 sub repeat_mask{
     my $self = shift;
     my ($mask) = @_;
-    $self->status_message("processing $mask");
+    $self->debug_message("processing $mask");
     my $maskh = IO::File->new($mask);
 
     my $start = $self->start;
@@ -259,7 +259,7 @@ sub repeat_mask{
 sub junctions{
     my $self = shift;
     my ($junct) = @_;
-    $self->status_message("processing $junct");
+    $self->debug_message("processing $junct");
     my $juncth = IO::File->new($junct);
 
     my $chr = $self->chrom;
@@ -301,7 +301,7 @@ sub junctions{
 sub cufflinks{
     my $self = shift;
     my ($cuff) = @_;
-    $self->status_message("processing $cuff");
+    $self->debug_message("processing $cuff");
     my $cuffh = IO::File->new($cuff);
     
     my $chr = $self->chrom;

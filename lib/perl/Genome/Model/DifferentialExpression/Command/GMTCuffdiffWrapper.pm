@@ -53,7 +53,7 @@ sub software_result_type {
 sub _execute {
     my ($self, $output_dir) = @_;
 
-    $self->status_message("Executing cuffdiff with output_directory set to: $output_dir\n");
+    $self->debug_message("Executing cuffdiff with output_directory set to: $output_dir\n");
     if ($self->_execute_gmt_cuffdiff($output_dir)) {
         return 1;
     } else {
@@ -67,7 +67,7 @@ sub _finalize {
     my ($self, $result) = @_;
 
     my $output_directory = $result->output_dir;
-    $self->status_message(
+    $self->debug_message(
         sprintf("Symlinking results from %s to %s",
             $output_directory, $self->output_directory)
     );

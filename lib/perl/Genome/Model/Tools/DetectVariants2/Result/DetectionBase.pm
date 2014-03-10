@@ -136,7 +136,7 @@ sub create {
         die $error;
     }
 
-    $self->status_message("Resizing the disk allocation...");
+    $self->debug_message("Resizing the disk allocation...");
     if ($self->_disk_allocation) {
         my $result = eval { $self->_disk_allocation->reallocate };
         if($@ or not $result) {
@@ -164,7 +164,7 @@ sub _check_instance_output {
             my $archive_name = "old_$sub_dir.tar.gz";
             die $class->error_message("Archive already exists, $parent_dir/$archive_name.") if (-e "$parent_dir/$archive_name");
 
-            $class->status_message('Archiving old non-software-result ' . $instance_output . " to $archive_name.");
+            $class->debug_message('Archiving old non-software-result ' . $instance_output . " to $archive_name.");
             system("cd $parent_dir && tar -zcvf $archive_name $sub_dir && rm -rf $sub_dir");
         }
         # In this case, a symlink exists...
@@ -185,6 +185,11 @@ sub _check_instance_output {
                     "If it is determined that the allocation has been orphaned then the allocation will need to be removed.",
                 );
                 die $class->error_message(join(' ', @error_message));
+            }
+            # If a test name is set, we can remove the symlink and proceed
+            elsif ($result and defined $result->test_name and -l $instance_output) {
+                $class->warning_message("The software result for the existing symlink has a test name set; removing symlink.");
+                unlink $instance_output;
             }
             elsif ($result and not $allocation) {
                 # A result without an allocation... this really shouldn't ever happen, unless someone deleted the allocation row from the database?
@@ -283,7 +288,7 @@ sub _prepare_output_directory {
 
     unless($allocation) {
         my %allocation_parameters = (
-            disk_group_name => 'info_genome_models',
+            disk_group_name => $ENV{GENOME_DISK_GROUP_MODELS},
             allocation_path => $subdir,
             owner_class_name => $self->class,
             owner_id => $self->id,
@@ -321,7 +326,7 @@ sub _cleanup {
 
     return unless $self->_disk_allocation;
 
-    $self->status_message('Now deleting allocation with owner_id = ' . $self->id);
+    $self->debug_message('Now deleting allocation with owner_id = ' . $self->id);
     my $allocation = $self->_disk_allocation;
     $allocation->deallocate if $allocation;
 }

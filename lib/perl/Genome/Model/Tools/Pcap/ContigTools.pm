@@ -650,12 +650,12 @@ sub merge
 
 sub _get_ace_object
 {
-    Carp::confess('This method (_get_ace_object) was removed because it interacted with GSC classes. Contact apipe@genome.wustl.edu if you need this functionality.');
+    Carp::confess("This method (_get_ace_object) was removed because it interacted with GSC classes. Contact $ENV{GENOME_EMAIL_PIPELINE} if you need this functionality.");
 }
 
 sub _get_phd_object
 {
-    Carp::confess('This method (_get_phd_object) was removed because it interacted with GSC classes. Contact apipe@genome.wustl.edu if you need this functionality.');
+    Carp::confess("This method (_get_phd_object) was removed because it interacted with GSC classes. Contact $ENV{GENOME_EMAIL_PIPELINE} if you need this functionality.");
 }
 
 sub _calculate_split_region
@@ -1392,7 +1392,7 @@ sub _transfer_consensus_tags
 #This split functions handles all fileio, PSE creation, etc.
 sub read_data_and_split_contig
 {
-    Carp::confess('This method (read_data_and_split_contig) was removed because it interacted with GSC classes. Contact apipe@genome.wustl.edu if you need this functionality.');
+    Carp::confess("This method (read_data_and_split_contig) was removed because it interacted with GSC classes. Contact $ENV{GENOME_EMAIL_PIPELINE} if you need this functionality.");
 }
 
 sub complement
@@ -1469,12 +1469,12 @@ sub complement
 
 sub read_data_and_complement_contig
 {
-    Carp::confess('This method (read_data_and_complement_contig) was removed because it interacted with GSC classes. Contact apipe@genome.wustl.edu if you need this functionality.');
+    Carp::confess("This method (read_data_and_complement_contig) was removed because it interacted with GSC classes. Contact $ENV{GENOME_EMAIL_PIPELINE} if you need this functionality.");
 }
 
 sub read_data_and_merge_contigs
 {
-    Carp::confess('This method (read_data_and_merge_contigs) was removed because it interacted with GSC classes. Contact apipe@genome.wustl.edu if you need this functionality.');
+    Carp::confess("This method (read_data_and_merge_contigs) was removed because it interacted with GSC classes. Contact $ENV{GENOME_EMAIL_PIPELINE} if you need this functionality.");
 }
 
 sub remove_reads

@@ -73,7 +73,7 @@ sub execute {
     my $temp_dir = Genome::Sys->base_temp_directory();
 
     my $output_file = join("/", $temp_dir, "/unsorted.bed");
-    $self->status_message("Using reference coordinates ".$self->reference_coordinates);
+    $self->debug_message("Using reference coordinates ".$self->reference_coordinates);
 
     for my $chromosome ($self->chromosome_names){
         my $flatfile = $self->filename_pattern;

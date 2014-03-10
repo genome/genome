@@ -37,14 +37,14 @@ sub execute {
     #TODO: add in base_limit stuff here as well
     #$self->_setup_base_limit;
 
-    $self->status_message('Merge instrument data');
+    $self->debug_message('Merge instrument data');
     INST_DATA: for my $instrument_data (@instrument_data) {
         $self->_update_metrics($instrument_data);
             
         #last INST_DATA if $self->_has_base_limit_been_reached;
     }
 
-    $self->status_message('Merge instrument data...OK');
+    $self->debug_message('Merge instrument data...OK');
 
     my $reads_attempted = $self->_input_count;
     my $reads_processed = $self->_output_count;
@@ -52,11 +52,11 @@ sub execute {
     $self->output_build->add_metric(name => 'reads_attempted', value => $reads_attempted);
     $self->output_build->add_metric(name => 'reads_processed', value => $reads_processed);
     $self->output_build->add_metric(name => 'reads_processed_success', value => $reads_processed_success);
-    $self->status_message('Reads attempted: '.$reads_attempted);
-    $self->status_message('Reads processed: '.$reads_processed);
-    $self->status_message('Reads processed success: '.($reads_processed_success * 100).'%');
+    $self->debug_message('Reads attempted: '.$reads_attempted);
+    $self->debug_message('Reads processed: '.$reads_processed);
+    $self->debug_message('Reads processed success: '.($reads_processed_success * 100).'%');
 
-    $self->status_message('Merge instrument data...OK');
+    $self->debug_message('Merge instrument data...OK');
     return 1;
 }
 
@@ -66,7 +66,7 @@ sub _setup_base_limit {
     my $base_limit = $self->output_build->calculate_base_limit_from_coverage;
     return 1 if not defined $base_limit;
 
-    $self->status_message('Setting base limit to: '.$base_limit);
+    $self->debug_message('Setting base limit to: '.$base_limit);
     $self->_original_base_limit($base_limit);
     $self->_base_limit($base_limit);
 
@@ -76,12 +76,12 @@ sub _setup_base_limit {
 sub _update_metrics {
     my $self = shift;
     my $instrument_data = shift;
-    $self->status_message('Update metrics...');
+    $self->debug_message('Update metrics...');
 
     for my $type (qw/ input output /) {
         my $metrics_file_method = $type.'_metrics_file_for_instrument_data';
         my $metrics_file = $self->output_build->$metrics_file_method($instrument_data);
-        $self->status_message(ucfirst($type)." file: $metrics_file");
+        $self->debug_message(ucfirst($type)." file: $metrics_file");
         if ( not -s $metrics_file ) {
             Carp::confess("No metrics file ($metrics_file) from read processor command.");
         }
@@ -97,11 +97,11 @@ sub _update_metrics {
             my $metric = $self->$metric_method;
             my $new_metric = $metric + $metrics->$name;
             $self->$metric_method($new_metric);
-            $self->status_message("Update $type $name from $metric to $new_metric");
+            $self->debug_message("Update $type $name from $metric to $new_metric");
         }
     }
 
-    $self->status_message('Update metrics...OK');
+    $self->debug_message('Update metrics...OK');
     return 1;
 }
 
@@ -110,17 +110,17 @@ sub _has_base_limit_been_reached {
 
     return if not defined $self->_base_limit;
 
-    $self->status_message('Original base limit: '.$self->_original_base_limit);
-    $self->status_message('Bases processed: '.$self->_output_bases);
+    $self->debug_message('Original base limit: '.$self->_original_base_limit);
+    $self->debug_message('Bases processed: '.$self->_output_bases);
     my $current_base_limit = $self->_original_base_limit - $self->_output_bases;
     $self->_base_limit($current_base_limit);
     if ( $current_base_limit <= 0 ) {
-        $self->status_message('Reached base limit. Stop processing!');
+        $self->debug_message('Reached base limit. Stop processing!');
         return 1;
     }
-    $self->status_message('New base limit: '.$self->_base_limit);
+    $self->debug_message('New base limit: '.$self->_base_limit);
 
-    $self->status_message('Base limit not reached. Continue processing.');
+    $self->debug_message('Base limit not reached. Continue processing.');
     return;
 }
 

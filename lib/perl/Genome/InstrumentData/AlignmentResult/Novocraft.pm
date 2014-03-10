@@ -103,7 +103,7 @@ sub _strip_header {
             die;
     }
     
-    $self->status_message("Removing Novocraft generated header from SAM file.");
+    $self->debug_message("Removing Novocraft generated header from SAM file.");
     while (<$novocraft_output_fh>) {
             #write out the aligned map, excluding the default header- all lines starting with @.
             my $first_char = substr($_,0,1);

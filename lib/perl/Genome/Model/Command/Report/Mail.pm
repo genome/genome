@@ -40,11 +40,11 @@ sub help_brief {
 
 sub help_synopsis {
     return <<EOS
-genome model report mail --build-id 12345 --report-name "Summary" --to dlarson\@genome.wustl.edu,charris\@genome.wustl.edu
+genome model report mail --build-id 12345 --report-name "Summary" --to user1\@example.com,user2\@example.com
 
-genome model report run -b 12345 -r "DbSnp" --to reseq\@genome.wustl.edu
+genome model report run -b 12345 -r "DbSnp" --to user\@example.com
 
-genome model report run -b 12345 -r "GoldSnp" --to reseq\@genome.wustl.edu --directory /gscuser/jpeck/reports
+genome model report run -b 12345 -r "GoldSnp" --to user\@example.com --directory /homedirs/username/reports
 
 EOS
 }
@@ -94,14 +94,14 @@ sub create {
                 $self->delete;
                 return;
             }
-            $self->status_message("Found model " . $models[0]->id . " (" . $models[0]->name . ")");
+            $self->debug_message("Found model " . $models[0]->id . " (" . $models[0]->name . ")");
             my $build = $models[0]->last_complete_build;
             unless ($build) {
                 $self->error_message("No complete build for model!");
                 $self->delete;
                 return;
             }
-            $self->status_message("Found build " . $build->id . " from " . $build->date_completed);
+            $self->debug_message("Found build " . $build->id . " from " . $build->date_completed);
             $self->build($build);
         }
     }
@@ -175,9 +175,9 @@ $DB::single = $DB::stopper;
     $report_name =~ s/_/ /g;
     my $subject = 'Genome Model '.$model->id.' "'.$model->name.'" '.$report_name.' Report for Build '.$build->id;
 
-    $self->status_message("Sending email...");
+    $self->debug_message("Sending email...");
     if ($self->send_mail($subject,$html_file,$txt_file)) {
-        $self->status_message("Email sent.");
+        $self->debug_message("Email sent.");
         return 1;
     }
 
@@ -200,7 +200,7 @@ sub send_mail {
                     {
                             smtp => 'gscsmtp.wustl.edu',
                             to => $recipients,
-                            from => 'apipe@genome.wustl.edu',
+                            from => $ENV{GENOME_EMAIL_PIPELINE},
                             subject => $subject,
                             multipart => 'related',
                             on_error => 'die',

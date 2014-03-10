@@ -32,7 +32,7 @@ class Genome::Model::Tools::Predictor::FastaChunker {
         },
         lsf_queue => { 
             is_param => 1, 
-            default_value => 'short',
+            default_value => $ENV{GENOME_LSF_QUEUE_SHORT},
         },
         lsf_resource => { 
             is_param => 1, 
@@ -76,7 +76,7 @@ sub execute {
         die "Could not create reader for fasta file $input_file";
     }
 
-    $self->status_message("Splitting up fasta file " . $self->input_fasta_file . " into chunks containing no more than $chunk_size sequences!");
+    $self->debug_message("Splitting up fasta file " . $self->input_fasta_file . " into chunks containing no more than $chunk_size sequences!");
     my $chunk_fh;
     my $seq_out;
     my $seq_count = 0;
@@ -99,7 +99,7 @@ sub execute {
     }
 
     $self->fasta_files(\@output_files);
-    $self->status_messages("Done splitting up input fasta, created " . scalar @output_files . " chunks");
+    $self->debug_messages("Done splitting up input fasta, created " . scalar @output_files . " chunks");
     return 1;
 }
  

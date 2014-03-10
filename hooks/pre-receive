@@ -1,0 +1,73 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings FATAL => qw(all);
+
+use IPC::System::Simple qw(capture);
+
+# This pre-receive hook comes from jira issue AR-206 The idea is to prevent a
+# naive git commit -a from updating submodules in genome.git that should never
+# be updated by a regular user.
+# See githooks(5) for more information.
+
+my @user_whitelist  = exists $ENV{GENOMECI_USER_WHITELIST}
+    ? (split /:/, $ENV{GENOMECI_USER_WHITELIST})
+    : qw( apipe-tester );
+my @protected_dirs  = qw( ur workflow );
+my @protected_heads = qw( master );
+
+my $user_name = getpwuid($>);
+exit 0 if grep {$user_name eq $_} @user_whitelist;
+
+my $exit_status = 0;
+while (my $change = next_change()) {
+    my $protected = grep {$change->{'ref_name'} eq "refs/heads/$_"} @protected_heads;
+
+    if (not $protected) { }
+
+    elsif (change_creates_branch($change)) { }
+
+    elsif (change_delete_branch($change)) {
+        printf "*** %s is not allowed to delete %s\n", $user_name, $change->{'ref_name'};
+        $exit_status++;
+    }
+
+    elsif ( my @modified_dirs = get_modified_dirs($change, @protected_dirs) ) {
+        printf "*** %s is not allowed to modify %s on %s\n",
+            $user_name, join(', ', @modified_dirs), $change->{'ref_name'};
+        $exit_status++;
+    }
+}
+
+exit $exit_status;
+
+sub next_change {
+    my $record = <STDIN>;
+    return unless $record;
+
+    chomp $record;
+
+    my %record;
+    @record{'old_value', 'new_value', 'ref_name'} = split / /, $record;
+    return \%record;
+}
+
+sub change_creates_branch {
+    my ($change) = @_;
+    return $change->{old_value} eq '0000000000000000000000000000000000000000';
+}
+
+sub change_delete_branch {
+    my ($change) = @_;
+    return $change->{new_value} eq '0000000000000000000000000000000000000000';
+}
+
+sub get_modified_dirs {
+    my ($change, @dirs_to_check) = @_;
+
+    my @modified_dirs = capture(
+        git => 'diff', '--name-only', @{$change}{'old_value', 'new_value'}, '--', @dirs_to_check);
+
+    chomp @modified_dirs;
+    return @modified_dirs;
+}

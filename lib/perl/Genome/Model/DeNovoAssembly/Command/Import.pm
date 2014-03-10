@@ -22,7 +22,7 @@ sub execute {
     my $target_dir = $build->data_directory.'/assembly_files';
     Genome::Sys->create_directory($target_dir);
 
-    $self->status_message('Copying files from '
+    $self->debug_message('Copying files from '
         . $build->model->import_location . " to $target_dir\n");
 
     for my $name ( $self->_required_file_names ) {
@@ -32,14 +32,14 @@ sub execute {
             next;
         }
         Genome::Sys->copy_file( $file, "$target_dir/$name");
-        $self->status_message("Copied $file to $target_dir");
+        $self->debug_message("Copied $file to $target_dir");
     }
 
     for my $name ( $self->_optional_file_names ) {
         my $file = $build->model->import_location."/$name";
         if ( -e $file ) {
             Genome::Sys->copy_file( $file, "$target_dir/$name");
-            $self->status_message("Copied $file to $target_dir");
+            $self->debug_message("Copied $file to $target_dir");
         }
     }
 

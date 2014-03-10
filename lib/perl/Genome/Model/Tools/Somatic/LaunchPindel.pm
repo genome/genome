@@ -7,6 +7,7 @@ use Genome;
 use Carp;
 use IO::File;
 use Genome::Info::IUB;
+use Genome::Utility::Email;
 
 class Genome::Model::Tools::Somatic::LaunchPindel{
     is => 'Command',
@@ -83,16 +84,16 @@ sub execute {
     my $output = $self->output_dir;
     Genome::Sys->create_directory($output);  #this seems to be a no op if it exists
     
-        my $email_address = $ENV{'LOGNAME'} . "\@genome.wustl.edu";
-        $self->status_message("sending a completion mail to: $email_address");
+        my $email_address = Genome::Utility::Email::construct_address($ENV{'LOGNAME'});
+        $self->debug_message("sending a completion mail to: $email_address");
         my $include;
         if($INC[0] !~ m/noarch/) {
             my $newlib  = $INC[0];
             $include = "-I $newlib";
-            $self->status_message("using $newlib include on bsub");
+            $self->debug_message("using $newlib include on bsub");
         }
         my $reference_build_id=$self->reference_sequence_build;
-        print `bsub -u $email_address -N -q workflow "perl $include -S gmt detect-variants2 dispatcher --aligned-reads-input $tumor_bam    --control-aligned-reads-input $normal_bam --reference-build-id $reference_build_id --output-directory $output --indel-detection-strategy 'pindel 0.4 filtered by pindel-somatic-calls v1 then pindel-read-support v1'"`;
+        print `bsub -u $email_address -N -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKFLOW} "perl $include -S gmt detect-variants2 dispatcher --aligned-reads-input $tumor_bam    --control-aligned-reads-input $normal_bam --reference-build-id $reference_build_id --output-directory $output --indel-detection-strategy 'pindel 0.4 filtered by pindel-somatic-calls v1 then pindel-read-support v1'"`;
         return 1;
     }
 1;

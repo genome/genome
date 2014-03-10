@@ -7,6 +7,7 @@ use Genome;
 
 use Data::Compare 'Compare';
 use Data::Dumper 'Dumper';
+require Scalar::Util;
 
 class Genome::Utility::IO::SeparatedValueWriter {
     is => 'Genome::Utility::IO::Writer', 
@@ -21,6 +22,9 @@ class Genome::Utility::IO::SeparatedValueWriter {
             type => 'String',
             default => ',',
             doc => 'The value of the separator character.  Default: ","'
+        },
+        in_place_of_null_value => {
+            doc => 'Use this in place of an undefined value.',
         },
         print_headers => {
             is => 'Boolean',
@@ -52,6 +56,11 @@ sub create {
     if ($self->print_headers) {
         $self->output->print( join($self->separator, @$headers)."\n" );
     }
+
+    if ( not defined $self->in_place_of_null_value ) {
+        $self->in_place_of_null_value('');
+    }
+
     return $self;
 }
 
@@ -59,9 +68,9 @@ sub get_column_count {
     return $_[0]->{_column_count};
 }
 
-sub print { 
-    my $self = shift;
-    return $self->write_one(@_);
+BEGIN {
+    *Genome::Utility::IO::SeparatedValueWriter::print = \&Genome::Utility::IO::SeparatedValueWriter::write_one;
+    *Genome::Utility::IO::SeparatedValueWriter::write = \&Genome::Utility::IO::SeparatedValueWriter::write_one;
 }
 
 sub write_one {
@@ -73,7 +82,7 @@ sub write_one {
     return $self->output->print(
         join(
             $self->separator,
-            map { defined $_ ? $_ : '' } map { $data->{$_} } @{$self->headers}
+            map { defined $_ ? $_ : $self->in_place_of_null_value } map { $data->{$_} } @{$self->headers}
         )."\n"
     );
 }
@@ -86,7 +95,8 @@ sub _validate_data_to_write {
         return;
     }
 
-    unless ( ref $data eq 'HASH' ) {
+    my $reftype = Scalar::Util::reftype($data);
+    unless ( $reftype and $reftype eq 'HASH' ) {
         $self->error_message("Need data as an hash ref to 'write_one'. Received:\n".Dumper($data));
         return;
     }

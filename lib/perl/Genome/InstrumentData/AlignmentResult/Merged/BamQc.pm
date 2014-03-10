@@ -81,7 +81,7 @@ sub resolve_allocation_subdirectory {
 }
 
 sub resolve_allocation_disk_group_name {
-    return 'info_genome_models';
+    $ENV{GENOME_DISK_GROUP_MODELS};
 }
 
 sub _staging_disk_usage {
@@ -185,7 +185,7 @@ sub create {
 sub _generate_metrics {
     my ($self, $metrics, $flag) = @_;
 
-    $self->status_message('Set bamqc metrics');
+    $self->debug_message('Set bamqc metrics');
 
     for my $type_label (keys %{$metrics}) {
         # Currently, do not store insert size, quality by cycle, or mean quality histograms
@@ -216,7 +216,7 @@ sub _generate_metrics {
 
     # Now fill in alignment metrics
     return 1 unless $flag;
-    $self->status_message('Set several alignment metrics');
+    $self->debug_message('Set several alignment metrics');
     
     my %metrics_to_add;
     my $align_result = $self->alignment_result;

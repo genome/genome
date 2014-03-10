@@ -8,7 +8,7 @@ use Bio::SeqIO;
 
 use File::Temp;
 use File::Basename;
-use Test::More;
+use Test::More skip_all => 1;
 
 BEGIN {
     local $/ = undef;

@@ -71,8 +71,7 @@ class Genome::Model::Tools::HmpShotgun::FilterResults {
         },
         lsf_queue => {
                 is_param => 1,
-                value => 'bigmem'
-                #value => 'long',
+                value => $ENV{GENOME_LSF_QUEUE_BIGMEM},
                 }	
         ],
         has_param => [
@@ -96,17 +95,17 @@ sub execute {
     my $self = shift;
 
     $self->dump_status_messages(1);
-    $self->status_message(">>>Running FilterResults at ".UR::Context->current->now);
+    $self->debug_message(">>>Running FilterResults at ".UR::Context->current->now);
     #my $model_id = $self->model_id;
-    $self->status_message("Aligned Bam File for refseq1: ".$self->reference1_top_hit_alignment_file);
-    $self->status_message("Aligned Bam File for refseq2: ".$self->reference2_top_hit_alignment_file);
+    $self->debug_message("Aligned Bam File for refseq1: ".$self->reference1_top_hit_alignment_file);
+    $self->debug_message("Aligned Bam File for refseq2: ".$self->reference2_top_hit_alignment_file);
     
-    $self->status_message("Paired end 1 concise file: ".$self->paired_end1_concise_file);
-    $self->status_message("Paired end 2 concise file: ".$self->paired_end2_concise_file);
+    $self->debug_message("Paired end 1 concise file: ".$self->paired_end1_concise_file);
+    $self->debug_message("Paired end 2 concise file: ".$self->paired_end2_concise_file);
     
-    $self->status_message("Header: ".$self->sam_header);
+    $self->debug_message("Header: ".$self->sam_header);
     
-    $self->status_message("Taxonomy file: ".$self->taxonomy_file);
+    $self->debug_message("Taxonomy file: ".$self->taxonomy_file);
     
     my $working_directory = $self->working_directory."/alignments_filtered/";
     my $report_directory = $self->working_directory."/reports/";
@@ -133,8 +132,8 @@ sub execute {
         $self->read_count_file($read_count_file);
         $self->other_hits_file("some_other_hits_file_tbd");
  
-    	$self->status_message("Expected output files exist.  Skipping processing.");
-    	$self->status_message("<<<Completed FilterResults at ".UR::Context->current->now);
+    	$self->debug_message("Expected output files exist.  Skipping processing.");
+    	$self->debug_message("<<<Completed FilterResults at ".UR::Context->current->now);
     	return 1;
     }
 
@@ -145,15 +144,15 @@ sub execute {
     my $cmd = "/gsc/var/tmp/perl-5.10.0/bin/perl64 /gscmnt/sata409/research/mmitreva/sabubuck/HMP_CLINICAL_SAMPLES_JAN_2010/SCRIPTS/merge_unique_top_hit_sam.no_phyla_counts.pl -sam1 ".$self->reference1_top_hit_alignment_file." -sam2 ". $self->reference2_top_hit_alignment_file."  -taxonomy ".$self->taxonomy_file." -sam_concise1 ".$self->paired_end1_concise_file." -sam_concise2 ".$self->paired_end2_concise_file." -sam_combined_out $filtered_alignment_file_no_header  -read_count_output $read_count_file  -phyla_output $phyla_file  -genus_output $genus_file";
     
      														
-    $self->status_message("FilterResults cmd: $cmd");
+    $self->debug_message("FilterResults cmd: $cmd");
 
-    $self->status_message("Running filter at ".UR::Context->current->now);
+    $self->debug_message("Running filter at ".UR::Context->current->now);
     my $rv_filter = Genome::Sys->shellcmd(cmd=>$cmd);
   
     if ( $rv_filter != 1) {
         $self->error_message("<<<Failed FilterResults on filter script.  Return value: $rv_filter");
     } 
-    $self->status_message("Completed filter at ".UR::Context->current->now);
+    $self->debug_message("Completed filter at ".UR::Context->current->now);
     
     my @input_files = ( $self->sam_header, $filtered_alignment_file_no_header );
     my $rv_cat = Genome::Sys->cat(input_files=>\@input_files,output_file=>$filtered_alignment_file); 
@@ -161,9 +160,9 @@ sub execute {
     if ( $rv_cat != 1) {
         $self->error_message("<<<Failed FilterResults on header cat.  Return value: $rv_cat");
     } 
-    $self->status_message("Completed cat.");
+    $self->debug_message("Completed cat.");
  
-    $self->status_message("Converting from sam to bam file: $filtered_alignment_file to $filtered_alignment_file_unsorted_bam");
+    $self->debug_message("Converting from sam to bam file: $filtered_alignment_file to $filtered_alignment_file_unsorted_bam");
     my $picard_path = "$ENV{GENOME_SW_LEGACY_JAVA}/samtools/picard-tools-1.07/";
     my $cmd_convert = "java -Xmx2g -cp $picard_path/SamFormatConverter.jar net.sf.picard.sam.SamFormatConverter VALIDATION_STRINGENCY=SILENT I=$filtered_alignment_file O=$filtered_alignment_file_unsorted_bam";  
     #my $cmd_convert = "samtools view -bS $ > $merged_alignment_files_per_refseq_sam";
@@ -174,7 +173,7 @@ sub execute {
         return;
     }
 
-    $self->status_message("Starting bam sort.");
+    $self->debug_message("Starting bam sort.");
     my $cmd_sort = Genome::Model::Tools::Sam::SortBam->create(file_name=>$filtered_alignment_file_unsorted_bam, output_file=>$filtered_alignment_file_bam);
     my $rv_sort = $cmd_sort->execute;
  
@@ -191,12 +190,12 @@ sub execute {
     
     
     #clean up
-    $self->status_message("Removing intermediate files.");
+    $self->debug_message("Removing intermediate files.");
     unlink($filtered_alignment_file);
     unlink($filtered_alignment_file_unsorted_bam);
     unlink($filtered_alignment_file_no_header);
     
-    $self->status_message("<<<Completed FilterResults at ".UR::Context->current->now);
+    $self->debug_message("<<<Completed FilterResults at ".UR::Context->current->now);
     
     return 1;
 }

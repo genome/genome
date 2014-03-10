@@ -89,7 +89,7 @@ sub execute {
         my $subject_tissue_desc = $subject->tissue_desc || "NULL";
         my $patient_common_name = $subject->individual_common_name || "NULL";
 
-        $self->status_message("\nProcessing somatic-variation build: $somvar_build_id ($patient_common_name, $subject_name, $subject_tissue_desc, $subject_common_name)");
+        $self->debug_message("\nProcessing somatic-variation build: $somvar_build_id ($patient_common_name, $subject_name, $subject_tissue_desc, $subject_common_name)");
 
         #Get the tumor and normal sample names
         my $tumor_sample = $somvar_build->tumor_model->subject->name;
@@ -146,7 +146,7 @@ sub merge_simplified_vcfs {
         die $self->error_message("Failed to run joinx vcf merge");
     }
 
-    $self->status_message("$snv_vcf and $indel_vcf merged into $output_vcf");
+    $self->debug_message("$snv_vcf and $indel_vcf merged into $output_vcf");
 
     return 1;
 }
@@ -185,7 +185,7 @@ sub resolve_vcf_filename{
   push(@names, "passing.somatic." . $type . ".vcf");
   my $filename = join("_", @names);
 
-  $self->status_message("Writing simplified VCF to file: $filename");
+  $self->debug_message("Writing simplified VCF to file: $filename");
   return $self->outdir . "/$filename";
 }
 
@@ -217,7 +217,7 @@ sub find_vcf_file {
         $self->error_message("Could not find VCF file in $data_dir");
         return;
     }
-    $self->status_message("Found VCF file: $vcf_file");
+    $self->debug_message("Found VCF file: $vcf_file");
     return $vcf_file;  
 }
 
@@ -302,7 +302,7 @@ sub simplify_vcf{
   close(VCF1);
   close(VCF2);
 
-  $self->status_message("Found " . $variant_count . " total variants, of which " . $passing_variant_count . " pass all filters in the tumor");
+  $self->debug_message("Found " . $variant_count . " total variants, of which " . $passing_variant_count . " pass all filters in the tumor");
 
   unless ($header_found){
     $self->error_message("Could not find VCF header line in file $infile");

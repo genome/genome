@@ -57,11 +57,6 @@ sub execute {
                 $totals{na}++;
                 $instrument_data_status = 'na';
             }
-            else { # Synced, but does not have tgi_lims_status...create!
-                $instrument_data->add_attribute(attribute_label => 'tgi_lims_status', attribute_value => 'new');
-                $totals{synced_missing_status}++;
-                $instrument_data_status = 'new';
-            }
         }
         $statuses{ $instrument_data_type.'('.$instrument_data_status.')' }++;
         $statuses{total}++;
@@ -84,21 +79,19 @@ sub execute {
 sub _resolve_instrument_data_and_qidfgms {
     my $self = shift;
 
-    my %instrument_data_params = (
-        'attributes.attribute_label' => 'tgi_lims_status',
-    );
+    my %instrument_data_params;
     $instrument_data_params{id} = [ map { $_->id } $self->instrument_data ] if $self->instrument_data;
 
     # Get 'new' instrument data
     my %new_instrument_data = map { $_->id => $_ } Genome::InstrumentData->get(
         %instrument_data_params,
-        'attributes.attribute_value' => [qw/ new /],
+        'analysis_project_bridges.status' => [qw/ new /],
     );
 
     # Get 'failed' instrument data
     my %failed_instrument_data = map { $_->id => $_ } Genome::InstrumentData->get(
         %instrument_data_params,
-        'attributes.attribute_value' => [qw/ failed /],
+        'analysis_project_bridges.status' => [qw/ failed /],
     );
     # Get the inprogress QIDFGMs mapped to instrument data
     my %qidfgm_params = (

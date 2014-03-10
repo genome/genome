@@ -12,7 +12,7 @@ class Genome::Model::Tools::DetectVariants2::Result::Combine::UnionuniqueSnv{
 
 sub _needs_symlinks_followed_when_syncing { 0 };
 sub _working_dir_prefix { 'unionunique-snv' };
-sub resolve_allocation_disk_group_name { 'info_genome_models' };
+sub resolve_allocation_disk_group_name { $ENV{GENOME_DISK_GROUP_MODELS} };
 sub allocation_subdir_prefix { 'unionunique_snv' };
 sub _variant_type { 'snvs' };
 
@@ -50,7 +50,7 @@ sub _validate_output {
     my $lq_output_file = $self->temp_staging_directory."/".$variant_type.".lq.bed";
 
     unless (-e $input_a_file and -e $input_b_file and -e $hq_output_file and -e $lq_output_file) {
-        $self->status_message("Skipping _validate_output because not all bed files exist. This may be a vcf-only detector/filter strategy");
+        $self->debug_message("Skipping _validate_output because not all bed files exist. This may be a vcf-only detector/filter strategy");
         return 1;
     }
 

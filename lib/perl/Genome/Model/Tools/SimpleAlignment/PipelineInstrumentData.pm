@@ -32,19 +32,19 @@ sub pre_execute {
 
     $self->_operation->log_dir($self->working_directory);
 
-    $self->status_message("Launching Pipeline with InstrumentData.");
-    $self->status_message("Using working directory:".$working_dir);
-    $self->status_message("Workflow log directory:".$self->working_directory);
-    $self->status_message("Delete intermediate files on completion: ".$self->cleanup);
+    $self->debug_message("Launching Pipeline with InstrumentData.");
+    $self->debug_message("Using working directory:".$working_dir);
+    $self->debug_message("Workflow log directory:".$self->working_directory);
+    $self->debug_message("Delete intermediate files on completion: ".$self->cleanup);
     
-    $self->status_message("Instrument data ids: ".$self->instrument_data_id);
+    $self->debug_message("Instrument data ids: ".$self->instrument_data_id);
     my @id_files = split(/,/ , $self->instrument_data_id);
     my $list_string = join("\n",@id_files);
-    $self->status_message("Listing instrument data ids: \n".$list_string); 
-    #$self->status_message("Creating required directories.");
+    $self->debug_message("Listing instrument data ids: \n".$list_string); 
+    #$self->debug_message("Creating required directories.");
     $self->instrument_data_id(\@id_files);
 
-    $self->status_message("Pre-execute of Pipeline complete.");
+    $self->debug_message("Pre-execute of Pipeline complete.");
 
     return 1;
 }
@@ -56,13 +56,13 @@ sub post_execute {
     my $cleanup = $self->cleanup;
 
     if ($cleanup) {
-        $self->status_message("Cleaning up intermediate files.");
+        $self->debug_message("Cleaning up intermediate files.");
      
     } else {
-        $self->status_message("Leaving intermediate files behind.");
+        $self->debug_message("Leaving intermediate files behind.");
     }
 
-	$self->status_message("Done.");
+	$self->debug_message("Done.");
     return 1;
 }
 

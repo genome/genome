@@ -38,7 +38,7 @@ class Genome::Model::Tools::Breakdancer::SplitFiles {
         create_other => {
             is => "Boolean",
             default => 1,
-            doc => 'Whether or not to restrict to canonical chromsomes plus an "other" chromosome',
+            doc => 'Whether or not to restrict to canonical chromosomes plus an "other" chromosome',
         },
     ],
 };
@@ -76,7 +76,7 @@ sub execute {
         $self->output_file_template($self->output_file_template . 'CHR');
     }
 
-    $self->status_message("Split files being written to " . $self->output_directory);
+    $self->debug_message("Split files being written to " . $self->output_directory);
 
     my $split_index = $self->split_column eq 'chr1' ? 0 : 3;
     my $input_fh = IO::File->new($self->input_file, 'r');
@@ -118,7 +118,7 @@ sub execute {
                 $output_handles{$chrom} = $output_fh;
                 $output_fh->print($header);
                 push @files, $file_name;
-                $self->status_message("Created output file $file_name");
+                $self->debug_message("Created output file $file_name");
             }
         }
 

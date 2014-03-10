@@ -5,13 +5,17 @@ use strict;
 
 use Genome;
 use Workflow;
+use Date::Format;
 
-my $DEFAULT_VERSION = '0.5';
-my $PINDEL_COMMAND = 'pindel';
 
 class Genome::Model::Tools::Pindel::RunPindel2Vcf {
     is => ['Command'],
     has => [
+        tool_path => {
+            is => 'String',
+            is_input => 1,
+            doc => 'pindel2vcf tool path',
+        },
         aligned_reads_sample => {
             is => 'String',
             is_input => 1,
@@ -55,7 +59,7 @@ class Genome::Model::Tools::Pindel::RunPindel2Vcf {
     ],
     has_param => [
         lsf_queue => {
-            default_value => 'apipe',
+            default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT},
         },
         lsf_resource => {
             default_value => "-M 16000000 -R 'select[type==LINUX64 && mem>16000] rusage[mem=16000]'",
@@ -63,7 +67,6 @@ class Genome::Model::Tools::Pindel::RunPindel2Vcf {
     ],
 };
 
-my $pindel2vcf_path = $ENV{GENOME_SW} . "/pindel2vcf/0.1.9/pindel2vcf-0.1.9";
 
 sub help_synopsis {
     my $self = shift;
@@ -101,7 +104,7 @@ sub _verify_inputs {
         return;
     }
 
-    $self->status_message("Completed verify_inputs step.");
+    $self->debug_message("Completed verify_inputs step.");
 
     return 1;
 }
@@ -112,11 +115,15 @@ sub _run_pindel2vcf {
     my $refseq = $self->_refseq;
     my $rs     = Genome::Model::Build::ImportedReferenceSequence->get($self->reference_build_id);
     my $refseq_name = $rs->name;
-    my ($sec,$min,$hour,$mday,$mon,$year) = localtime(time);
-    my $date       = $year . "/" . ($mon+1) . "/" . $mday . "-" . $hour . ":" . $min . ":" . $sec;
+
+    my $time = time;
+    my $template = "%y/%m/%d-%H:%M:%S";
+    my $date = time2str($template, $time);
+
     my $pindel_raw = $self->pindel_raw_output;
     my $output     = $self->output_file;
 
+    my $pindel2vcf_path = $self->tool_path;
     my $cmd    = $pindel2vcf_path . " -p ".$pindel_raw." -r ". $refseq . " -R " . $refseq_name . " -d " . $date . " -v " . $output.'.tmp';
     my $result = Genome::Sys->shellcmd(cmd => $cmd);
 

@@ -56,7 +56,7 @@ sub execute{
 
     # db disconnect to avoid Oracle failures killing our long running stuff
     if (Genome::DataSource::GMSchema->has_default_handle) {
-        $self->status_message("Disconnecting GMSchema default handle.");
+        $self->debug_message("Disconnecting GMSchema default handle.");
         Genome::DataSource::GMSchema->disconnect_default_dbh();
     }
 
@@ -71,7 +71,7 @@ sub execute{
                                       DIR => $scratch_dir,
                                       TEMPLATE => 'import-interpro_iprscan-output-text_XXXXX');
     for my $fasta_file (keys %fastas){
-        $self->status_message("Dealing with fasta $fasta_file");
+        $self->debug_message("Dealing with fasta $fasta_file");
         my $iprscan_temp = File::Temp->new(UNLINK => 0,
                                            DIR => $scratch_dir,
                                            TEMPLATE => 'import-interpro_iprscan-result_XXXXXX');
@@ -89,7 +89,7 @@ sub execute{
     #TODO: Restart failed jobs correctly
     my @restart_commands = $self->_find_restart_commands($output_text->filename, $iprscan_dir); 
     for my $cmd (@restart_commands){
-        $self->status_message("Restarting job with command: $cmd");
+        $self->debug_message("Restarting job with command: $cmd");
         Genome::Sys->shellcmd(cmd => $cmd) or die "iprscan restart failed for:\n $cmd\n $!"; 
     }
 

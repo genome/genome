@@ -215,15 +215,15 @@ sub execute {
               }
          }
     }
-    $self->status_message("nNNP candidate number: $n");
+    $self->debug_message("nNNP candidate number: $n");
     my ($t_begin, $t_end);
     $t_begin=time();
-    $self->status_message("Begin find_dnp_from_candidate: $t_begin");
+    $self->debug_message("Begin find_dnp_from_candidate: $t_begin");
   
     my @result=$self->find_dnp_from_candidate(\@candidate);
 
     $t_end=time();
-    $self->status_message("Finish find_dnp_from_candidate: $t_end");
+    $self->debug_message("Finish find_dnp_from_candidate: $t_end");
 
     # open FILEHANDLE for output bed format and anno format
     my $bedfile_hc = IO::File->new($self->bed_hc_file, "w");
@@ -249,7 +249,7 @@ sub execute {
 
     # Do bam-readcount to check the mapping quality of each bases
     $t_end=time();
-    $self->status_message("Begin make tmp readcount file: $t_end");
+    $self->debug_message("Begin make tmp readcount file: $t_end");
      
     my ($tfh,$temp_path) = Genome::Sys->create_temp_file;
     unless($tfh) {
@@ -276,14 +276,14 @@ sub execute {
     }
     $tfh->close;
     $t_end=time();
-    $self->status_message("Begin run readcount: $t_end");
+    $self->debug_message("Begin run readcount: $t_end");
     my %count_line;
     my $readcount_command=sprintf("%s %s -l %s %s|",$self->readcount_path, $self->bam_readcount_params, $temp_path,$self->bam_file);
-    $self->status_message("Running: $readcount_command");
+    $self->debug_message("Running: $readcount_command");
     my $readcounts = IO::File->new("$readcount_command") or die "can't open the file $readcount_command due to $!";
     my @readcounts= $readcounts->getlines;
     $t_end=time();
-    $self->status_message("End read readcount: $t_end");
+    $self->debug_message("End read readcount: $t_end");
 
     my $total_readcount=scalar(@readcounts);
     for my $count_line (@readcounts){
@@ -295,11 +295,11 @@ sub execute {
         $self->error_message("Error running $ENV{GENOME_SW}/samtools/readcount/readcount-v0.2/bam-readcount");
         die;
     }
-    $self->status_message("The number of total sites for readcount: $total_readcount");
+    $self->debug_message("The number of total sites for readcount: $total_readcount");
     $t_end=time();
-    $self->status_message("Begin parsing readcount and print outfile: $t_end");
+    $self->debug_message("Begin parsing readcount and print outfile: $t_end");
     my $total_result= scalar(@result);
-    $self->status_message("The number of total sites before readcount: $total_result");
+    $self->debug_message("The number of total sites before readcount: $total_result");
 
     # separate high and low confidence sites
     # For BWA, if (somatic_score >=40 && mapping_quality>=40) is fullfilled in any base of DNP/TNP, the DNP/TNP is high confidence
@@ -334,7 +334,7 @@ sub execute {
                         }
                         next EACH;
                     }else{
-                        $self->status_message("cannot find $result in READCOUNT");
+                        $self->debug_message("cannot find $result in READCOUNT");
                     }
                 }else{
                     my @somatic_scores=split/\,/, $somatic_score;
@@ -355,7 +355,7 @@ sub execute {
                              }
                         }
                     }else{
-                        $self->status_message("cannot find $result in READCOUNT");
+                        $self->debug_message("cannot find $result in READCOUNT");
                     }
                 }
             }
@@ -366,10 +366,10 @@ sub execute {
     }
     $bedfile_hc->close; $annofile_hc->close; $bedfile_lc->close; $annofile_lc->close;
     $t_end=time();
-    $self->status_message("End parsing readcount and print outfile: $t_end");
+    $self->debug_message("End parsing readcount and print outfile: $t_end");
     if (($t_end-$t_begin) > 0) {
         my $avg = $total_result/($t_end-$t_begin);
-        $self->status_message("Average speed is $avg sites per second");
+        $self->debug_message("Average speed is $avg sites per second");
     }
     return 1;
 }

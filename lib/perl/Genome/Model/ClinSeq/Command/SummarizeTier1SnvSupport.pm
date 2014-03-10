@@ -42,7 +42,7 @@ sub positions_files {
 sub execute {
   my $self = shift;
   if ($self->verbose){
-    $self->status_message("starting summarize tier1 snvs with " . Data::Dumper::Dumper($self));
+    $self->debug_message("starting summarize tier1 snvs with " . Data::Dumper::Dumper($self));
   }
   my $wgs_build = $self->wgs_build;
   my $exome_build = $self->exome_build;
@@ -57,7 +57,7 @@ sub execute {
   my $read_counts_summary_script = __FILE__ . '.R'; #"$script_dir"."snv/WGS_vs_Exome_vs_RNAseq_VAF_and_FPKM.R";
 
   if ($verbose){
-    $self->status_message("Positions files are " . Data::Dumper::Dumper(\@positions_files));
+    $self->debug_message("Positions files are " . Data::Dumper::Dumper(\@positions_files));
   }
 
   foreach my $positions_file (@positions_files){
@@ -97,7 +97,7 @@ sub execute {
     push (@params, ('verbose' => $verbose));
 
     if ($verbose){
-      $self->status_message("Params for GetBamReadCounts are " . Data::Dumper::Dumper({ @params }));
+      $self->debug_message("Params for GetBamReadCounts are " . Data::Dumper::Dumper({ @params }));
     }
     my $bam_rc_cmd = Genome::Model::ClinSeq::Command::GetBamReadCounts->create(@params);
 
@@ -115,7 +115,7 @@ sub execute {
     close(POS);
     unless($positions_count > 0){
       if ($verbose){
-        $self->status_message("\n\nNo SNV positions found, skipping summary");
+        $self->debug_message("\n\nNo SNV positions found, skipping summary");
       }
       next();
     }
@@ -139,7 +139,7 @@ sub execute {
     $rc_summary_cmd .= " 1>$rc_summary_stdout 2>$rc_summary_stderr";
 
     #Summarize the BAM readcounts results for candidate variants - produce descriptive statistics, figures etc.
-    if ($verbose){ $self->status_message("\n\n$rc_summary_cmd"); }
+    if ($verbose){ $self->debug_message("\n\n$rc_summary_cmd"); }
     mkdir($output_stats_dir);
     Genome::Sys->shellcmd(cmd => $rc_summary_cmd);
   }

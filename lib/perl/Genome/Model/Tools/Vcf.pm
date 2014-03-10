@@ -23,8 +23,9 @@ use Genome;
 #19: Sort normalized indels (numeric)
 #20: Switch to natural sorting of normalized indels and change null GT from '.' to './.'
 #21: Tabix index all vcf results
+#22: For samtools (pileup) snv vcf convert, change null ALT from '.' to 'N'
 
-my $VCF_VERSION = "21";
+my $VCF_VERSION = "22";
 
 class Genome::Model::Tools::Vcf {
     is => ['Command'],

@@ -27,7 +27,7 @@ class Genome::Wiki::Document::View::Solr::Xml {
 
                 my $title = $_[0]->title();
                 $title =~ s/\%22//g;
-                return join ('/', 'https://gscweb.gsc.wustl.edu/wiki',$title); 
+                return join ('', $ENV{GENOME_SYS_SERVICES_WIKI_URL}, $title);
             },
         },
         display_label1 => {

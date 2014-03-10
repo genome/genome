@@ -49,21 +49,21 @@ sub _output_metrics_file {
 sub execute {
     my $self = shift;
 
-    $self->status_message('Prepare instrument data for '.$self->build->description);
+    $self->debug_message('Prepare instrument data for '.$self->build->description);
 
-    $self->status_message('Verify instrument data...');
+    $self->debug_message('Verify instrument data...');
     my @instrument_data = $self->build->instrument_data;
     unless ( @instrument_data ) {
         $self->error_message("Failed to prepare instrument data. Build does not have any.");
         return;
     }
-    $self->status_message('Verify instrument data...OK');
+    $self->debug_message('Verify instrument data...OK');
 
     $self->_setup_base_limit;
 
     my @existing_assembler_input_files = $self->build->existing_assembler_input_files;
     if ( @existing_assembler_input_files ) {
-        $self->status_message('Removing existing assembler input files');
+        $self->debug_message('Removing existing assembler input files');
         for my $file ( @existing_assembler_input_files ) {
             unlink $file;
             if ( -e $file ) {
@@ -73,7 +73,7 @@ sub execute {
         }
     }
 
-    $self->status_message('Process instrument data');
+    $self->debug_message('Process instrument data');
     INST_DATA: for my $instrument_data ( reverse @instrument_data ) {
         my $process_ok = $self->_process_instrument_data($instrument_data);
         return if not $process_ok;
@@ -81,15 +81,15 @@ sub execute {
         return if not $update_metrics;
         last INST_DATA if $self->_has_base_limit_been_reached;
     }
-    $self->status_message('Process instrument data...OK');
+    $self->debug_message('Process instrument data...OK');
 
-    $self->status_message('Verify assembler input files');
+    $self->debug_message('Verify assembler input files');
     @existing_assembler_input_files = $self->build->existing_assembler_input_files;
     if ( not @existing_assembler_input_files ) {
         $self->error_message('No assembler input files were created!');
         return;
     }
-    $self->status_message('Verify assembler input files...OK');
+    $self->debug_message('Verify assembler input files...OK');
 
     my $reads_attempted = $self->_input_count;
     my $reads_processed = $self->_output_count;
@@ -97,11 +97,11 @@ sub execute {
     $self->build->add_metric(name => 'reads_attempted', value => $reads_attempted);
     $self->build->add_metric(name => 'reads_processed', value => $reads_processed);
     $self->build->add_metric(name => 'reads_processed_success', value => $reads_processed_success);
-    $self->status_message('Reads attempted: '.$reads_attempted);
-    $self->status_message('Reads processed: '.$reads_processed);
-    $self->status_message('Reads processed success: '.($reads_processed_success * 100).'%');
+    $self->debug_message('Reads attempted: '.$reads_attempted);
+    $self->debug_message('Reads processed: '.$reads_processed);
+    $self->debug_message('Reads processed success: '.($reads_processed_success * 100).'%');
 
-    $self->status_message('Prepare instrument data...OK');
+    $self->debug_message('Prepare instrument data...OK');
     return 1;
 }
 
@@ -111,7 +111,7 @@ sub _setup_base_limit {
     my $base_limit = $self->build->calculate_base_limit_from_coverage;
     return 1 if not defined $base_limit;
 
-    $self->status_message('Setting base limit to: '.$base_limit);
+    $self->debug_message('Setting base limit to: '.$base_limit);
     $self->_original_base_limit($base_limit);
     $self->_base_limit($base_limit);
 
@@ -120,12 +120,12 @@ sub _setup_base_limit {
 
 sub _update_metrics {
     my $self = shift;
-    $self->status_message('Update metrics...');
+    $self->debug_message('Update metrics...');
 
     for my $type (qw/ input output /) {
         my $metrics_file_method = '_'.$type.'_metrics_file';
         my $metrics_file = $self->$metrics_file_method;
-        $self->status_message(ucfirst($type)." file: $metrics_file");
+        $self->debug_message(ucfirst($type)." file: $metrics_file");
         if ( not -s $metrics_file ) {
             Carp::confess("No metrics file ($metrics_file) from read processor command.");
         }
@@ -141,11 +141,11 @@ sub _update_metrics {
             my $metric = $self->$metric_method;
             my $new_metric = $metric + $metrics->$name;
             $self->$metric_method($new_metric);
-            $self->status_message("Update $type $name from $metric to $new_metric");
+            $self->debug_message("Update $type $name from $metric to $new_metric");
         }
     }
 
-    $self->status_message('Update metrics...OK');
+    $self->debug_message('Update metrics...OK');
     return 1;
 }
 
@@ -154,23 +154,23 @@ sub _has_base_limit_been_reached {
 
     return if not defined $self->_base_limit;
 
-    $self->status_message('Original base limit: '.$self->_original_base_limit);
-    $self->status_message('Bases processed: '.$self->_output_bases);
+    $self->debug_message('Original base limit: '.$self->_original_base_limit);
+    $self->debug_message('Bases processed: '.$self->_output_bases);
     my $current_base_limit = $self->_original_base_limit - $self->_output_bases;
     $self->_base_limit($current_base_limit);
     if ( $current_base_limit <= 0 ) {
-        $self->status_message('Reached base limit. Stop processing!');
+        $self->debug_message('Reached base limit. Stop processing!');
         return 1;
     }
-    $self->status_message('New base limit: '.$self->_base_limit);
+    $self->debug_message('New base limit: '.$self->_base_limit);
 
-    $self->status_message('Base limit not reached. Continue processing.');
+    $self->debug_message('Base limit not reached. Continue processing.');
     return;
 }
 
 sub _process_instrument_data {
     my ($self, $instrument_data) = @_;
-    $self->status_message('Process: '.join(' ', map { $instrument_data->$_ } (qw/ class id/)));
+    $self->debug_message('Process: '.join(' ', map { $instrument_data->$_ } (qw/ class id/)));
 
     # Output files
     my @output_files = $self->build->read_processor_output_files_for_instrument_data($instrument_data);
@@ -250,12 +250,12 @@ sub _process_instrument_data {
         if ( $read_count and $read_length ) {
             my $inst_data_input_bases = $read_count * $read_length;
             if ( $inst_data_input_bases > $current_base_limit ) {
-                $self->status_message('Sorting input reads by average base quality');
+                $self->debug_message('Sorting input reads by average base quality');
                 push @read_processor_parts, 'sort by-avg-qual';
             }
         }
 
-        $self->status_message("Limiting bases by base count of $current_base_limit");
+        $self->debug_message("Limiting bases by base count of $current_base_limit");
         push @read_processor_parts, 'limit by-bases --bases '.$current_base_limit;
     }
 
@@ -272,7 +272,7 @@ sub _process_instrument_data {
     # Run
     my $sx_cmd = join(' | ', @sx_cmd_parts);
 
-    my $rv = eval{ Genome::Sys->shellcmd(cmd => $sx_cmd); };
+    my $rv = eval{ Genome::Sys->shellcmd(cmd => $sx_cmd, set_pipefail => 1,); };
     if ( not $rv ) {
         $self->error_message('Failed to execute gmt sx command: '.$@);
         return;

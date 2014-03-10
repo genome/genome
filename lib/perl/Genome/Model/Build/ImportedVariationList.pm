@@ -110,14 +110,14 @@ sub snvs_file {
         $self->warning_message("No snv result for " . $self->__display_name__);
         return;
     }
-    $self->status_message("Found SNV result: " . $snv_result->__display_name__);
+    $self->debug_message("Found SNV result: " . $snv_result->__display_name__);
 
     my $snvs_file_path = join('/', $snv_result->output_dir, "snvs.hq.$format");
     unless (-e $snvs_file_path) {
         $self->error_message("SNVs file not found: $snvs_file_path");
         return;
     }
-    $self->status_message("Found SNV file path: " . $snvs_file_path);
+    $self->debug_message("Found SNV file path: " . $snvs_file_path);
 
     return $snvs_file_path;
 }

@@ -39,6 +39,7 @@ sub source {
 
 sub execute {
     my $self = shift;
+    my $input_id       = $self->input_id;
     my $output         = $self->output_file;
     my $pindel_raw     = $self->input_file;
     my $refbuild_id    = $self->reference_sequence_build->id;
@@ -46,9 +47,23 @@ sub execute {
     my $control_sample = $self->control_aligned_reads_sample;
 
     my ($output_directory) = dirname($output);
-    $self->status_message("Output Directory for pindel vcf creation will be: ".$output_directory);
+    $self->debug_message("Output Directory for pindel vcf creation will be: ".$output_directory);
+
+    my $pindel2vcf_path;
+    if ($input_id) {
+        my $sr = Genome::SoftwareResult->get($input_id);
+        my $pindel_version  = $sr->detector_version;
+        $pindel2vcf_path = Genome::Model::Tools::Pindel::RunPindel->path_for_pindel2vcf_version($pindel_version);
+        die 'Failed to get pindel2vcf_path for pindel version: '. $pindel_version unless $pindel2vcf_path;
+    }
+    else {
+        my $default_pindel_version = Genome::Model::Tools::Pindel::RunPindel->default_pindel_version;
+        $pindel2vcf_path = Genome::Model::Tools::Pindel::RunPindel->path_for_pindel2vcf_version($default_pindel_version);
+        $self->debug_message("pindel2vcf tool: $pindel2vcf_path used for default pindel version: $default_pindel_version");
+    }
 
     my @prop_names = qw(
+        tool_path
         pindel_raw_output 
         output_file
         reference_build_id
@@ -56,14 +71,17 @@ sub execute {
     );
     push @prop_names, 'control_aligned_reads_sample' if $control_sample;
 
-    my %inputs;
-    $inputs{pindel_raw_output} = $pindel_raw;
-    $inputs{output_file} = $output;
-    $self->status_message("VCF conversion output will be at: ".$output);
-    $inputs{reference_build_id}   = $refbuild_id;
-    $inputs{aligned_reads_sample} = $target_sample;
+    my %inputs = (
+        tool_path            => $pindel2vcf_path,
+        pindel_raw_output    => $pindel_raw,
+        output_file          => $output,
+        reference_build_id   => $refbuild_id,
+        aligned_reads_sample => $target_sample,
+    );
     $inputs{control_aligned_reads_sample} = $control_sample if $control_sample;
 
+    $self->debug_message("VCF conversion output will be at: ".$output);
+    
     my $workflow = Workflow::Model->create(
         name => 'Multi-Vcf Merge',
         input_properties  => \@prop_names,        
@@ -97,7 +115,7 @@ sub execute {
         $self->error_message(@errors);
         die "Errors validating workflow\n";
     }
-    $self->status_message("Now launching the vcf-merge workflow.");
+    $self->debug_message("Now launching the vcf-merge workflow.");
     my $result = Workflow::Simple::run_workflow_lsf( $workflow, %inputs);
 
     unless($result){

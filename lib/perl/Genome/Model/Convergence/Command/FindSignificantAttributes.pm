@@ -113,9 +113,9 @@ sub execute {
     my $arff_file = $self->data_file;
     if(Genome::Sys->check_for_path_existence($arff_file)) {
         #TODO How do we know this data file has anything to do with the build in question?
-        $self->status_message('Found data file ' . $arff_file . ' for use in analysis.');
+        $self->debug_message('Found data file ' . $arff_file . ' for use in analysis.');
     } else {
-        $self->status_message('Generating data file ' . $arff_file . ' for use in analysis.');
+        $self->debug_message('Generating data file ' . $arff_file . ' for use in analysis.');
 
         $self->generate_data_file(@applicable_subbuilds) or return;
     }

@@ -128,7 +128,7 @@ sub _expected_md5_files_for_sff {
 sub _validate {
     my $self = shift;
 
-    $self->status_message('Validate md5...');
+    $self->debug_message('Validate md5...');
 
     my %dacc_md5 = $self->_load_dacc_md5;
     return if not %dacc_md5;
@@ -147,7 +147,7 @@ sub _validate {
         }
     }
 
-    $self->status_message('Validate md5...OK');
+    $self->debug_message('Validate md5...OK');
 
     return 1;
 }
@@ -156,7 +156,7 @@ sub _validate {
 sub _load_dacc_md5 {
     my $self = shift;
 
-    $self->status_message('Load DACC md5...');
+    $self->debug_message('Load DACC md5...');
 
     my $cwd = Cwd::cwd();
     my $directory = $self->_directory;
@@ -196,7 +196,7 @@ sub _load_dacc_md5 {
 
     chdir $cwd;
 
-    $self->status_message('Load DACC md5...OK');
+    $self->debug_message('Load DACC md5...OK');
 
     return %files_and_md5;
 }
@@ -204,7 +204,7 @@ sub _load_dacc_md5 {
 sub _load_confirmed_md5 {
     my $self = shift;
 
-    $self->status_message('Load confirmed md5...');
+    $self->debug_message('Load confirmed md5...');
 
     my $md5_file = $self->confirmed_md5_file;
     if ( not -e $md5_file ) {
@@ -218,7 +218,7 @@ sub _load_confirmed_md5 {
         return;
     }
 
-    $self->status_message('Load confirmed md5...OK');
+    $self->debug_message('Load confirmed md5...OK');
 
     return %files_and_md5;
 }
@@ -249,7 +249,7 @@ sub _load_md5 {
 sub _generate {
     my $self = shift;
 
-    $self->status_message('Generate md5...');
+    $self->debug_message('Generate md5...');
 
     my $md5_file = $self->confirmed_md5_file;
     unlink $md5_file if -e $md5_file;
@@ -261,7 +261,7 @@ sub _generate {
     for my $file ( sort { $a cmp $b } $self->data_files ) {
         my $file_name = File::Basename::basename($file);
         my $cmd = "md5sum $file_name >> $md5_file";
-        $self->status_message("MD5 command: $cmd");
+        $self->debug_message("MD5 command: $cmd");
         my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
         if ( not $rv ) {
             $self->error_message("Failed to run md5sum on $file: $@");
@@ -271,7 +271,7 @@ sub _generate {
 
     chdir $cwd;
 
-    $self->status_message('Generate md5...OK');
+    $self->debug_message('Generate md5...OK');
 
     return 1;
 }

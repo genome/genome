@@ -41,10 +41,10 @@ HELP
 sub execute {
     my $self = shift;
 
-    $self->status_message('Import SOAP assembly from the DACC');
+    $self->debug_message('Import SOAP assembly from the DACC');
 
     my $output_dir_and_file_prefix = $self->output_dir_and_file_prefix;
-    $self->status_message('Output directory and file prefix: '.$output_dir_and_file_prefix);
+    $self->debug_message('Output directory and file prefix: '.$output_dir_and_file_prefix);
     my ($file_prefix, $output_dir) = File::Basename::fileparse($output_dir_and_file_prefix);
     if ( not -d $output_dir ) {
         $self->error_message("Invalid output directory: $output_dir does not exist");
@@ -52,9 +52,9 @@ sub execute {
     }
     my $edit_dir = $output_dir.'/edit_dir';
     mkdir $edit_dir if not -d $edit_dir;
-    $self->status_message('Output directory: '.$output_dir);
-    $self->status_message('Edit directory: '.$edit_dir);
-    $self->status_message('File prefix: '.$file_prefix);
+    $self->debug_message('Output directory: '.$output_dir);
+    $self->debug_message('Edit directory: '.$edit_dir);
+    $self->debug_message('File prefix: '.$file_prefix);
 
     my @center_names = (qw/ Baylor LANL /);
     my ($center_name) = grep { $file_prefix =~ /$_/ } @center_names;
@@ -62,10 +62,10 @@ sub execute {
         $self->error_message("Cannot determine center name from file prefix: $file_prefix");
         return;
     }
-    $self->status_message('Center name: '.$center_name);
+    $self->debug_message('Center name: '.$center_name);
 
     my $dacc_directory = $self->import_location;
-    $self->status_message('DACC directory: '.$dacc_directory);
+    $self->debug_message('DACC directory: '.$dacc_directory);
     my $dacc_downloader = Genome::Model::Tools::Dacc::Download->create(
         dacc_directory => $dacc_directory,
         destination => $edit_dir,
@@ -82,7 +82,7 @@ sub execute {
         return;
     }
 
-    $self->status_message('Determining files to download');
+    $self->debug_message('Determining files to download');
     my $exts = {
         scafSeq => {
             required => 0,
@@ -125,17 +125,17 @@ sub execute {
         $exts->{$ext}->{file} = $available_pga_file;
     }
     my @files_to_download = map { $exts->{$_}->{file} } grep { $exts->{$_}->{file} } @exts;
-    $self->status_message("Files to download: @files_to_download");
+    $self->debug_message("Files to download: @files_to_download");
 
-    $self->status_message("Executing downloader");
+    $self->debug_message("Executing downloader");
     $dacc_downloader->files(\@files_to_download);
     if ( not $dacc_downloader->execute ) {
         $self->error_message('DACC downloader failed to execute');
         return;
     }
-    $self->status_message("Executing downloader...OK");
+    $self->debug_message("Executing downloader...OK");
 
-    $self->status_message("Rename files");
+    $self->debug_message("Rename files");
     for my $ext ( @exts ) {
         next if not defined $exts->{$ext}->{file}; # OK
         my $file_name = $exts->{$ext}->{file};
@@ -148,9 +148,9 @@ sub execute {
         my $to_base_name = $file_name;
         $to_base_name =~ s/PGA/$center_name/;
         my $to = $destination_dir.'/'.$to_base_name;
-        $self->status_message("Move $ext file");
-        $self->status_message("From $from to $to");
-        $self->status_message("Size: $size");
+        $self->debug_message("Move $ext file");
+        $self->debug_message("From $from to $to");
+        $self->debug_message("Size: $size");
         my $move = File::Copy::move($from, $to);
         if ( not $move ) {
             $self->error_message('Move failed: '.$!);
@@ -161,11 +161,11 @@ sub execute {
             $self->error_message("Move succeeded, but file ($to) now has different size: $size <=> ".(defined $new_size ? $new_size : 'undef'));
             return;
         }
-        $self->status_message("Move $ext file...OK");
+        $self->debug_message("Move $ext file...OK");
     }
-    $self->status_message("Rename files...OK");
+    $self->debug_message("Rename files...OK");
 
-    $self->status_message('Import SOAP assembly...OK');
+    $self->debug_message('Import SOAP assembly...OK');
 
     return 1;
 }

@@ -13,7 +13,7 @@ class Genome::Model::Tools::DetectVariants2::Polymutt {
     is => ['Genome::Model::Tools::DetectVariants2::Detector'],
     has_param => [
         lsf_queue=> {
-            default => "workflow",
+            default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKFLOW},
         },
     ],
 };
@@ -245,7 +245,7 @@ sub run_polymutt {
         $self->error_message(@errors);
         die "Errors validating workflow\n";
     }
-    $self->status_message("Now launching 2 polymutt jobs");
+    $self->debug_message("Now launching 2 polymutt jobs");
     my $result = Workflow::Simple::run_workflow_lsf( $workflow, %inputs);
     unless($result) {
         $self->error_message( join("\n", map($_->name . ': ' . $_->error, @Workflow::Simple::ERROR)) );
@@ -362,7 +362,7 @@ sub generate_glfs {
         $self->error_message(@errors);
         die "Errors validating workflow\n";
     }
-    $self->status_message("Now launching glf generation jobs");
+    $self->debug_message("Now launching glf generation jobs");
     my $result = Workflow::Simple::run_workflow_lsf( $workflow, %inputs);
     unless($result) {
         $self->error_message( join("\n", map($_->name . ': ' . $_->error, @Workflow::Simple::ERROR)) );

@@ -100,7 +100,7 @@ sub execute {                               # replace with real execution logic.
     }
     $input->close; #done creating the bit vector representation of the genome
 
-    $self->status_message("Parsing regions...");
+    $self->debug_message("Parsing regions...");
 
     if($regions_file) {
         ## Parse the alignment blocks ##
@@ -128,7 +128,7 @@ sub execute {                               # replace with real execution logic.
             $genome{$chrom}->Interval_Fill($start-1, $stop-1);
         }
         $lineCounter = $input->input_line_number;
-        $self->status_message("$lineCounter regions loaded\n");
+        $self->debug_message("$lineCounter regions loaded\n");
         $input->close;
     }
 

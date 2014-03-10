@@ -71,12 +71,9 @@ sub execute {
     my $tmp_file = Genome::Sys->create_temp_file_path;
     # This is only required to run perl5.10.1 or greater required by Bio-SamTools
 
-    my $cmd = sprintf('genome-perl5.10 -S gmt bio-samtools list-chromosomes --input-file "%s" --output-file "%s"', $seq_dict, $tmp_file);
-    Genome::Sys->shellcmd(
-        cmd => $cmd,
-        input_files => [$seq_dict],
-        output_files => [$tmp_file],
-    );
+    my $cmd = Genome::Model::Tools::BioSamtools::ListChromosomes->execute(
+        input_file => $seq_dict,
+        output_file => $tmp_file);
 
     my @chromosomes;
     my $fh = Genome::Sys->open_file_for_reading($tmp_file);
@@ -97,11 +94,13 @@ sub execute {
     my $xml_path = $module_path;
     $xml_path =~ s/\.pm/\.xml/;
     my $workflow = Workflow::Operation->create_from_xml($xml_path);
+    Genome::Sys->create_directory($dirname."/annotate_reference_genome_logs");
+    $workflow->log_dir($dirname."/annotate_reference_genome_logs");
     my @errors = $workflow->validate;
     unless ($workflow->is_valid) {
         die('Errors encountered while validating workflow '. $xml_path ."\n". join("\n", @errors));
     }
-    my $output = Workflow::Simple::run_workflow_lsf($xml_path,%params);
+    my $output = Workflow::Simple::run_workflow_lsf($workflow, %params);
     unless (defined $output) {
         @errors = @Workflow::Simple::ERROR;
         for (@errors) {

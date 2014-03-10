@@ -69,7 +69,7 @@ sub create {
 
 sub _create_targets {
     my $self = shift;
-    $self->status_message('Run realigner target creator...');
+    $self->debug_message('Run realigner target creator...');
 
     my $intervals_file = $self->intervals_file;
     my %target_creator_params = (
@@ -79,7 +79,7 @@ sub _create_targets {
         output_intervals => $intervals_file,
     );
     $target_creator_params{known} = $self->known_sites_indel_vcfs if @{$self->known_sites_indel_vcfs};
-    $self->status_message('Params: '.Data::Dumper::Dumper(\%target_creator_params));
+    $self->debug_message('Params: '.Data::Dumper::Dumper(\%target_creator_params));
 
     my $target_creator = Genome::Model::Tools::Gatk::RealignerTargetCreator->create(%target_creator_params);
     if ( not $target_creator ) {
@@ -96,15 +96,15 @@ sub _create_targets {
         $self->error_message('Ran target creator, but failed to make an intervals file!');
         return;
     }
-    $self->status_message('Intervals file: '.$intervals_file);
+    $self->debug_message('Intervals file: '.$intervals_file);
 
-    $self->status_message('Run realigner target creator...done');
+    $self->debug_message('Run realigner target creator...done');
     return 1;
 }
 
 sub _realign_indels {
     my $self = shift;
-    $self->status_message('Run indel realigner...');
+    $self->debug_message('Run indel realigner...');
 
     my $bam_path = $self->bam_path;
     my %realigner_params = (
@@ -117,7 +117,7 @@ sub _realign_indels {
         target_intervals_are_sorted => 1,
     );
     $realigner_params{known} = $self->known_sites_indel_vcfs if @{$self->known_sites_indel_vcfs};
-    $self->status_message('Params: '.Data::Dumper::Dumper(\%realigner_params));
+    $self->debug_message('Params: '.Data::Dumper::Dumper(\%realigner_params));
 
     my $realigner = Genome::Model::Tools::Gatk::IndelRealigner->create(%realigner_params);
     if ( not $realigner ) {
@@ -134,9 +134,9 @@ sub _realign_indels {
         $self->error_message('Ran indel realigner, but failed to create the output bam!');
         return;
     }
-    $self->status_message('Bam file: '.$bam_path);
+    $self->debug_message('Bam file: '.$bam_path);
 
-    $self->status_message('Run indel realigner...done');
+    $self->debug_message('Run indel realigner...done');
     return 1;
 }
 

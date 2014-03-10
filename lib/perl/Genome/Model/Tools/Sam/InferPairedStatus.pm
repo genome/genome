@@ -94,7 +94,7 @@ sub execute {
 
     $self->is_paired_end($flagstat->{'reads_paired_in_sequencing'} > 0);
     my $friendly_paired_status = $self->is_paired_end? 'PAIRED' : 'FRAGMENT';
-    $self->status_message("Inferred paired status: $friendly_paired_status");
+    $self->debug_message("Inferred paired status: $friendly_paired_status");
 
     return 1;
 }

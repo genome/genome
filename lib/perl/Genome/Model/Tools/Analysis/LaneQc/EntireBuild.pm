@@ -68,7 +68,7 @@ sub execute {
         $self->error_message("No alignments have Succeeded on the build");
         return;
     }
-    $self->status_message(sprintf "Checking %d lanes", scalar(@events));
+    $self->debug_message(sprintf "Checking %d lanes", scalar(@events));
     for my $instrument_data ($build->instrument_data) {
         my $lane_name = $instrument_data->__display_name__;
         my @alignments = $build->alignment_results_for_instrument_data($instrument_data);
@@ -101,7 +101,7 @@ sub execute {
 samtools pileup -vc -f $reference $alignment_file | perl -pe '\@F = split /\\t/; \\\$_=q{} unless(\\\$F[7] > 2);' > $dir/$lane_name.var
 gmt analysis lane-qc compare-snps --genotype-file $genotype_file --variant-file $dir/$lane_name.var > $dir/$lane_name.var.compare_snps
 COMMANDS
-                print `bsub -N -u $user\@genome.wustl.edu -R 'select[type==LINUX64]' "$command"`;
+                print `bsub -N -u $user\@$ENV{GENOME_EMAIL_DOMAIN} -R 'select[type==LINUX64]' "$command"`;
                 #print $command,"\n";
             }
         }

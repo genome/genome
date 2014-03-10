@@ -21,7 +21,7 @@ class Genome::Model::SomaticValidation::Command::Loh {
     ],
     has_param => [
         lsf_queue => {
-            default => 'apipe',
+            default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT},
         },
     ],
 };
@@ -42,7 +42,7 @@ sub shortcut {
     #my $result = Genome::Model::Tools::DetectVariants2::Classify::Loh->get_with_lock(@params);
     #return unless $result;
 
-    #$self->status_message('Using existing result: ' . $result->id);
+    #$self->debug_message('Using existing result: ' . $result->id);
 
     #return $self->link_result_to_build($result);
 }
@@ -63,7 +63,7 @@ sub execute {
         die $self->error_message('Failed to gather params to generate result');
     }
 
-    $self->status_message("Identify LOH step completed");
+    $self->debug_message("Identify LOH step completed");
     return 1;
 }
 
@@ -76,22 +76,22 @@ sub should_skip_run {
     }
 
     unless(defined($build->model->loh_version)){
-        $self->status_message("No LOH version was found, skipping LOH detection!");
+        $self->debug_message("No LOH version was found, skipping LOH detection!");
         return 1;
     }
 
     unless(defined($build->model->snv_detection_strategy)){
-        $self->status_message("No SNV Detection Strategy, skipping LOH.");
+        $self->debug_message("No SNV Detection Strategy, skipping LOH.");
         return 1;
     }
 
     unless(defined($build->model->loh_snv_detection_strategy)) {
-        $self->status_message("No LOH SNV detection strategy, skipping LOH");
+        $self->debug_message("No LOH SNV detection strategy, skipping LOH");
         return 1;
     }
 
     unless($build->normal_sample) {
-        $self->status_message('No control to compare against, skipping LOH');
+        $self->debug_message('No control to compare against, skipping LOH');
         return 1;
     }
 

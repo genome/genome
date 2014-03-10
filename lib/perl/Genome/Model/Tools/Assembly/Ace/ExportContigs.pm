@@ -74,13 +74,13 @@ sub execute {
     $self->directory(cwd()) unless $self->directory;
 
     my $acefiles; #array ref
-    $self->status_message("Validating ace files(s)");
+    $self->debug_message("Validating ace files(s)");
     unless (($acefiles) = $self->get_valid_input_acefiles()) {
 	$self->error_message("Failed to validate ace input(s)");
 	return;
     }
 
-    $self->status_message("Validating contigs list");
+    $self->debug_message("Validating contigs list");
     unless ( $self->contigs_list or $self->contigs ) {
         $self->error_message("You must supply a contig name or a list of contigs");
         return;
@@ -91,7 +91,7 @@ sub execute {
 	return;
     }
 
-    $self->status_message("Filtering contigs in ace file(s)");
+    $self->debug_message("Filtering contigs in ace file(s)");
     my $new_aces; #array ref
     unless (($new_aces) = $self->filter_ace_files($acefiles, $contig_names, 'export')) {
 	$self->error_message("Failed to parse ace files");
@@ -99,7 +99,7 @@ sub execute {
     }
 
     if ($self->merge) {
-	$self->status_message("Merging ace files");
+	$self->debug_message("Merging ace files");
 	unless ($self->merge_acefiles(acefiles => $new_aces)) {
 	    $self->error_message("Failed to merge ace files");
 	    return;

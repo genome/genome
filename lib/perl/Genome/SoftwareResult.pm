@@ -10,6 +10,7 @@ use File::Basename qw(fileparse);
 use Data::Dumper;
 use Date::Manip;
 use List::MoreUtils qw(uniq);
+use File::Grep qw(fgrep);
 
 use Carp;
 
@@ -198,7 +199,7 @@ sub get_with_lock {
     }
 
     if (@objects > 1) {
-        $class->error_message("Multiple results returned for SoftwareResult::get_with_lock.  To avoid this, call get_with_lock with enough parameters to uniquely identify a SoftwareResult.");
+        $class->error_message("Multiple results returned for SoftwareResult ${class}::get_with_lock.  To avoid this, call get_with_lock with enough parameters to uniquely identify a SoftwareResult.");
         $class->error_message("Parameters used for the get: " . Data::Dumper::Dumper %is_input . Data::Dumper::Dumper %is_param);
         $class->error_message("Objects gotten: " . Data::Dumper::Dumper @objects);
         $class->_release_lock_or_die($lock, "Failed to unlock during get_with_lock with multiple results.") if $lock;
@@ -220,12 +221,12 @@ sub get_with_lock {
     if ($result && $lock) {
         $result->_lock_name($lock);
 
-        $result->status_message("Cleaning up lock $lock...");
+        $result->debug_message("Cleaning up lock $lock...");
         unless ($result->_unlock) {
             $result->error_message("Failed to unlock after getting software result");
             die "Failed to unlock after getting software result";
         }
-        $result->status_message("Cleanup completed for lock $lock.");
+        $result->debug_message("Cleanup completed for lock $lock.");
     } elsif ($lock) {
         $class->_release_lock_or_die($lock, "Failed to unlock after not finding software result.");
     }
@@ -341,11 +342,11 @@ sub create {
                     . join("\n\t", @files);
             }
             else {
-                $self->status_message("No files in $output_dir.");
+                $self->debug_message("No files in $output_dir.");
             }
         }
         else {
-            $self->status_message("Creating output directory $output_dir...");
+            $self->debug_message("Creating output directory $output_dir...");
             eval {
                 Genome::Sys->create_directory($output_dir)
             };
@@ -776,7 +777,7 @@ sub _lock {
 
     my $lock = Genome::Sys->lock_resource(resource_lock => $resource_lock_name, max_try => 2);
     unless ($lock) {
-        $class->status_message("This data set is still being processed by its creator.  Waiting for existing data lock...");
+        $class->debug_message("This data set is still being processed by its creator.  Waiting for existing data lock...");
         $lock = Genome::Sys->lock_resource(resource_lock => $resource_lock_name, wait_announce_interval => 600);
         unless ($lock) {
             $class->error_message("Failed to get existing data lock!");
@@ -791,7 +792,7 @@ sub _unlock {
     my $self = shift;
 
     my $resource_lock_name = $self->_lock_name;
-    $self->status_message("Cleaning up lock $resource_lock_name...");
+    $self->debug_message("Cleaning up lock $resource_lock_name...");
 
     if (!exists $LOCKS{$resource_lock_name})  {
         $self->error_message("Attempt to unlock $resource_lock_name but this was never locked!");
@@ -807,7 +808,7 @@ sub _unlock {
     }
 
     delete $LOCKS{$resource_lock_name};
-    $self->status_message("Cleanup completed for lock $resource_lock_name.");
+    $self->debug_message("Cleanup completed for lock $resource_lock_name.");
     return 1;
 }
 
@@ -865,7 +866,7 @@ sub generate_expected_metrics {
     for my $name (@names) {
         my $metric = $self->metric(name => $name);
         if ($metric) {
-            $self->status_message(
+            $self->debug_message(
                 $self->display_name . " has metric "
                 . $metric->name
                 . " with value "
@@ -878,7 +879,7 @@ sub generate_expected_metrics {
             $self->error_message("No method $method found!");
             die $self->error_message;
         }
-        $self->status_message(
+        $self->debug_message(
             $self->display_name . " is generating a value for metric "
             . $metric->name
             . "..."
@@ -893,7 +894,7 @@ sub generate_expected_metrics {
             next;
         }
         $self->$metric($value);
-        $self->status_message(
+        $self->debug_message(
             $self->display_name . " has metric "
             . $metric->name
             . " with value "
@@ -966,7 +967,7 @@ sub _resolve_param_value_from_text_by_name_or_id {
 sub _release_lock_or_die {
     my ($class, $lock, $error_message) = @_;
 
-    $class->status_message("Cleaning up lock $lock...");
+    $class->debug_message("Cleaning up lock $lock...");
 
     unless (Genome::Sys->unlock_resource(resource_lock=>$lock)) {
         $class->error_message($error_message);
@@ -974,7 +975,7 @@ sub _release_lock_or_die {
     }
     delete $LOCKS{$lock};
 
-    $class->status_message("Cleanup completed for lock $lock.");
+    $class->debug_message("Cleanup completed for lock $lock.");
 }
 
 # children are things that use this
@@ -1025,5 +1026,108 @@ sub best_guess_date_numeric {
     return UnixDate(shift->best_guess_date, "%s"); 
 }
 
+sub creation_grid_job {
+    my $self = shift;
+    my ($creation_build, $lsf_job_id) = $self->creation_build_and_lsf_job_id;
+    unless ($creation_build && $lsf_job_id) {
+        $self->error_message('Failed to find a grid job since the creation build and/or event is lost for software result: '. $self->id);
+        return;
+    }
+    my $project_name = 'build' . $creation_build->id;
+    my $grid_job = Genome::Site::TGI::GridJobsFinished->get(
+        project_name => $project_name,
+        job_id => $lsf_job_id,
+    );
+    unless ($grid_job) {
+        $self->error_message('Failed to find grid job with project '. $project_name .' and job_id '. $lsf_job_id);
+        return;
+    }
+    return $grid_job;
+}
+
+sub creation_build_and_lsf_job_id {
+    my $self = shift;
+
+    # Find the disk allocation ID to look for in the LSF error logs
+    my @allocations = $self->disk_allocations;
+    if (scalar(@allocations) != 1) {
+        $self->error_message('Please add logic to handle multiple allocations for a software result!');
+        return;
+    }
+    my $allocation = shift @allocations;
+    my $allocation_id = $allocation->id;
+
+    # Generate an ordered list of builds, search the oldest builds first
+    my @ordered_builds = $self->builds(-order_by => 'date_scheduled');
+    unless ( scalar(@ordered_builds) ) {
+        # There are no direct links to builds, walk through 1st generation children to find builds
+        my @children = $self->children;
+        for my $child (@children) {
+            # TODO: Should reorder after this push, but this will work as a first pass
+            push @ordered_builds, $child->builds(-order_by => 'date_scheduled');
+        }
+        unless ( scalar(@ordered_builds) ) {
+            $self->error_message('Failed to find any builds for software result: '. $self->id);
+            return;
+        }
+    }
+    # The output directory of the software result should be in the LSF error log
+    my $output_dir = $self->output_dir;
+    $self->status_message('For software result '. $self->id .', searching for LSF error log containing output directory: '. $output_dir);
+
+    # Iterate over every build linked to this software result and grep all event error logs
+    my $creation_build;
+    my $creation_lsf_job_id;
+    for ( my $i=0; $i < scalar(@ordered_builds); $i++ ) {
+        my $build = $ordered_builds[$i];
+        $self->status_message('Evaluating build '. $build->id .' as the potential creation build.');
+        my @events = $build->events;
+        for my $event (@events) {
+            my $error_log_file = $event->error_log_file();
+            $self->status_message('Grep through error log: '. $error_log_file);
+            # This requires that one line in the error log ends with the output_dir
+            if (fgrep { /Allocation \($allocation_id\) created at $output_dir$/ } $error_log_file) {
+                $self->status_message('Found disk allocation id '. $allocation_id .' and output_dir '. $output_dir .' in error log '. $error_log_file);
+                unless ($creation_build) {
+                    $creation_build = $build;
+                } else {
+                    $self->error_message('Found multiple potential creation builds: '. $creation_build->id .' and '. $build->id);
+                    return;
+                }
+                unless ($creation_lsf_job_id) {
+                    $creation_lsf_job_id = $event->lsf_job_id;
+                } else {
+                    $self->error_message('Found multiple potential creation lsf job ids: '. $creation_lsf_job_id .' and '. $event->lsf_job_id);
+                    return;
+                }
+            }
+        }
+        unless ($creation_build && $creation_lsf_job_id) {
+            my @instances = $build->child_workflow_instances;
+            for my $instance (@instances) {
+                my $error_log_file = $instance->err_log_file;
+                # TODO: Remove redundany with above, refactor to subroutine? or get common event/instance interface
+                # This requires that one line in the error log ends with the output_dir
+                if (fgrep { /Allocation \($allocation_id\) created at $output_dir$/ } $error_log_file) {
+                    $self->status_message('Found disk allocation id '. $allocation_id .' and output_dir '. $output_dir .' in error log '. $error_log_file);
+                    unless ($creation_build) {
+                        $creation_build = $build;
+                    } else {
+                        $self->error_message('Found multiple potential creation builds: '. $creation_build->id .' and '. $build->id);
+                        return;
+                    }
+                    unless ($creation_lsf_job_id) {
+                        $creation_lsf_job_id = $instance->current->dispatch_identifier;
+                    } else {
+                        $self->error_message('Found multiple potential creation events: '. $creation_lsf_job_id .' and '. $instance->dispatch_identifier);
+                        return;
+                    }
+                }
+            }
+        }
+    }
+    # Return the build and LSF job id most likely to originally have created this software result
+    return ($creation_build, $creation_lsf_job_id);
+}
 
 1;

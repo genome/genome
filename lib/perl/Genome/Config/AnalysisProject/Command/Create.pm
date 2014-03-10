@@ -13,11 +13,24 @@ class Genome::Config::AnalysisProject::Command::Create {
             doc                 => 'the name of the analysis project to create',
             shell_args_position => 1
         },
-        analysis_menu_item => {
-            is          => 'Genome::Config::AnalysisMenuItem',
+        is_cle => {
+            is => 'Boolean',
             is_optional => 1,
-            doc         => 'the analysis menu item to associate with this project. default value is all available processing',
-            default     => '702fb86975c64ffb8b965898e7c4c5ad'
+            default_value => 0,
+            doc => 'If specified, this will flag this analysis project as being CLIA-related. All models will be created accordingly.',
+        },
+        no_config => {
+            is => 'Boolean',
+            is_optional => 1,
+            default_value => 0,
+            doc => 'If specified, you will not be prompted for any menu items and the project will be created without config.'
+        },
+        analysis_menu_items => {
+            is                  => 'Genome::Config::AnalysisMenu::Item',
+            is_optional         => 1,
+            is_many             => 1,
+            doc                 => 'the analysis menu items to associate with this project.',
+            require_user_verify => 1,
         }
     ],
 };
@@ -40,30 +53,69 @@ EOS
 sub execute {
     my $self = shift;
 
-    my $existing = Genome::Config::AnalysisProject->get(name => $self->name);
-    if ($existing) {
-        die "An Analysis Project with the name " . $self->name
-            . " already exists! Please choose a unique name";
-    }
+    $self->_validate_name($self->name);
+    my $project = Genome::Config::AnalysisProject->create(
+        name => $self->name,
+        is_cle => $self->is_cle,
+    );
+    die('No project created!') unless $project;
 
-    my $ap;
     eval {
-        $ap = Genome::Config::AnalysisProject->create(
-            name => $self->name,
-            _analysis_menu_item_id => $self->analysis_menu_item->id,
-        );
+        my $menu_items = $self->_get_menu_items();
+        my $config_items = $self->_add_config_items_to_project($project, $menu_items);
     };
     if (my $error = $@) {
-        $ap->delete();
+        $project->delete() if $project;
         $self->error_message('Failed to create Analysis Project!');
         die($error);
     }
+    $self->status_message(q{Successfully created '} . $project->name . q{' (} . $project->id . q{).});
+    return $project;
+}
 
-    UR::Context->commit();
-    $self->status_message('Successfully created analysis project ' . $ap->name .
-        ' ID: ' . $ap->id);
+sub _validate_name {
+    my $self = shift;
+    my $name = shift;
 
-    return $ap;
+    my $existing = Genome::Config::AnalysisProject->get(name => $name);
+    if ($existing) {
+        die "An Analysis Project with the name " . $name
+        . " already exists! Please choose a unique name";
+    }
+}
+
+sub _get_menu_items {
+    my $self = shift;
+
+    if ($self->analysis_menu_items()) {
+        return [$self->analysis_menu_items];
+    } elsif ($self->no_config()) {
+        return [];
+    } else {
+        my $class_name = 'Genome::Config::AnalysisMenu::Item';
+        return [$self->resolve_param_value_from_cmdline_text(
+                {
+                    name => 'analysis_menu_items',
+                    class => $class_name,
+                    value => [$class_name->get()],
+                }
+            )];
+    }
+}
+
+sub _add_config_items_to_project {
+    my $self = shift;
+    my $project = shift;
+    my $menu_items = shift;
+
+    for (@$menu_items) {
+        Genome::Config::Profile::Item->create(
+            analysis_menu_item => $_,
+            analysis_project => $project,
+        );
+    }
+
+    return 1;
 }
 
 1;

@@ -54,10 +54,10 @@ sub execute {
 
     # Return
     if ($test_bit == 1) {
-        $self->status_message("Passed all checks.");
+        $self->debug_message("Passed all checks.");
     }
     else {
-        $self->status_message("Failed to validate!");
+        $self->debug_message("Failed to validate!");
     }
     print $self->bit_to_tests($test_bit) if ($self->verbose || $test_bit > 1);
 
@@ -120,11 +120,11 @@ sub header_check {
     if ($rg_count == $data_count) {
         $msg .= "PASS (found $rg_count read group(s))";
         $flag = $self->test_to_bit('Header');
-        $self->status_message($msg) if ($self->verbose);
+        $self->debug_message($msg) if ($self->verbose);
     }
     else {
         $msg .= "FAIL (only found $rg_count read group(s), expected $data_count!)";
-        $self->status_message($msg);
+        $self->debug_message($msg);
         return $flag;
     }
 
@@ -144,7 +144,7 @@ sub qc_check {
             $msg .= "FAIL (empty or does not exist!)";
             $flag = 0;
         }
-        $self->status_message($msg) if ($self->verbose || $msg =~ /FAIL/);
+        $self->debug_message($msg) if ($self->verbose || $msg =~ /FAIL/);
     }
     return $flag;
 }
@@ -181,7 +181,7 @@ sub metagenomic_check {
     else {
         $msg .= "FAIL (empty file)";
     }
-    $self->status_message($msg) if ($self->verbose || $msg =~ /FAIL/);
+    $self->debug_message($msg) if ($self->verbose || $msg =~ /FAIL/);
 
     return $flag;
 }

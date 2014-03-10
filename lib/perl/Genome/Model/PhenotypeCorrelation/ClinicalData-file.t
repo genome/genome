@@ -78,6 +78,7 @@ EOS
 );
 
 $cd = $pkg->from_filehandle($binary);
+is($cd->subject_column_header, "Sample_Name", "subject_column_header is set");
 is_deeply([sort $cd->sample_names], ['A'..'E'], "sample names are correct");
 ok($cd, "Created clinical data object");
 eval { $cd->convert_attr_to_factor("T1", levels => [undef, "high"]) };

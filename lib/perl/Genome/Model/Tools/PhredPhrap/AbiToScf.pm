@@ -91,7 +91,7 @@ sub execute {
     }
     
     my $cmd = sprintf('phred-gasp %s -c', join(' ', map { sprintf('-%s %s', $_, $phred_gasp_params{$_}) } keys %phred_gasp_params));
-    $self->status_message("RUNNING:\n $cmd");
+    $self->debug_message("RUNNING:\n $cmd");
     if ( system($cmd) ) {
         $self->error_message("Failed to run phred-gasp: $@");
         return;

@@ -143,7 +143,7 @@ sub _filter_sam_output {
     my ($self, $cur_sam_file, $all_sequences_sam_file) = @_;
 
 #    my $sam_run_output_fh = IO::File->new( $sam_cmd . "|" );
-#    $self->status_message("Running $sam_cmd");
+#    $self->debug_message("Running $sam_cmd");
 #    if ( !$sam_run_output_fh ) {
 #            $self->error_message("Error running $sam_cmd $!");
 #            return;
@@ -154,14 +154,14 @@ sub _filter_sam_output {
         $self->error_message("Error opening current sam file for reading $!");
         return;
     }
-    $self->status_message("Opened $cur_sam_file");
+    $self->debug_message("Opened $cur_sam_file");
 
     my $all_seq_fh = IO::File->new(">>$all_sequences_sam_file");
     if ( !$all_seq_fh ) {
         $self->error_message("Error opening all seq sam file for writing $!");
         return;
     }
-    $self->status_message("Opened $all_sequences_sam_file");
+    $self->debug_message("Opened $all_sequences_sam_file");
     
     while (<$cur_sam_fh>) {
         #write out the aligned map, excluding the default header- all lines starting with @.
@@ -190,7 +190,7 @@ sub fillmd_for_sam {
 sub prepare_reference_sequence_index {
     my $class = shift;
 
-    $class->status_message("CLC doesn't need any index made, doing nothing.");
+    $class->debug_message("CLC doesn't need any index made, doing nothing.");
 
 }
 

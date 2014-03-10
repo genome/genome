@@ -87,7 +87,7 @@ sub execute {
 sub sort_bed {
     my $self = shift;
     my $snv_file = shift;
-    $self->status_message("Sorting input snv file");
+    $self->debug_message("Sorting input snv file");
     my $temp_sorted_file = Genome::Sys->create_temp_file_path;
     my @snv_files = ($snv_file);
     my $sort_cmd = Genome::Model::Tools::Joinx::Sort->create( input_files => \@snv_files, output_file => $temp_sorted_file);

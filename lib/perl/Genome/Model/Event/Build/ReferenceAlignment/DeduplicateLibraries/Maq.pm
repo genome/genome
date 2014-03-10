@@ -22,9 +22,9 @@ sub execute {
     my $self = shift;
     my $now = UR::Context->current->now;
   
-    $self->status_message("Starting DeduplicateLibraries::Maq");
+    $self->debug_message("Starting DeduplicateLibraries::Maq");
     my $alignments_dir = $self->resolve_accumulated_alignments_path;
-    $self->status_message("Accumulated alignments directory: ".$alignments_dir);
+    $self->debug_message("Accumulated alignments directory: ".$alignments_dir);
    
     unless (-e $alignments_dir) { 
        $self->error_message("Alignments dir didn't get allocated/created, can't continue '$alignments_dir':  $!");
@@ -54,24 +54,24 @@ sub execute {
         }
     }
     
-    $self->status_message("Starting dedup workflow with params:");
+    $self->debug_message("Starting dedup workflow with params:");
     #prepare the input for parallelization
     my @list_of_library_alignments;
     for my $library_key ( keys %library_alignments ) {
 	    my @read_set_list = @{$library_alignments{$library_key}};	
-        $self->status_message("Library: ".$library_key." Read sets count: ". scalar(@read_set_list) ."\n");
+        $self->debug_message("Library: ".$library_key." Read sets count: ". scalar(@read_set_list) ."\n");
         if (scalar(@read_set_list)>0) {
             my %library_alignments_item = ( $library_key => \@read_set_list );  
             push @list_of_library_alignments, \%library_alignments_item;
         } 
         else {
-            $self->status_message("Not including library: $library_key because it is empty.");
+            $self->debug_message("Not including library: $library_key because it is empty.");
         } 
     }
-    $self->status_message("Size of library alignments: ".@list_of_library_alignments ); 
+    $self->debug_message("Size of library alignments: ".@list_of_library_alignments ); 
 
     if (scalar(@list_of_library_alignments)==0) {
-        $self->status_message("None of the libraries contain data.  Quitting.");
+        $self->debug_message("None of the libraries contain data.  Quitting.");
         return; 
     }
 
@@ -86,7 +86,7 @@ sub execute {
 
     # db disconnect prior to long operation
     if (Genome::DataSource::GMSchema->has_default_handle) {
-        $self->status_message("Disconnecting GMSchema default handle.");
+        $self->debug_message("Disconnecting GMSchema default handle.");
         Genome::DataSource::GMSchema->disconnect_default_dbh();
     }
     
@@ -124,7 +124,7 @@ sub execute {
  
    #merge those Bam files...BAM!!!
    $now = UR::Context->current->now;
-   $self->status_message(">>> Beginning Bam merge at $now.");
+   $self->debug_message(">>> Beginning Bam merge at $now.");
    my $sam_path = Genome::Model::Tools::Sam->path_for_samtools_version($self->model->merger_version);
    my $bam_merge_tool = $sam_path.' merge';
    my $bam_index_tool = $sam_path.' index';
@@ -144,7 +144,7 @@ sub execute {
             #if the bam file name contains the string '_rmdup.bam', remove it from the list of files to merge
             my $substring_index = index($each_bam, "_rmdup.bam");
             unless ($substring_index == -1) {
-                    $self->status_message($bam_files[$i]. " will not be merged.");
+                    $self->debug_message($bam_files[$i]. " will not be merged.");
                     delete $bam_files[$i];
             }		
             $i++;
@@ -155,9 +155,9 @@ sub execute {
        } 
        elsif (scalar(@bam_files) == 1) {
             my $single_file = shift(@bam_files);
-            $self->status_message("Only one bam file has been found at: $alignments_dir. Not merging, only renaming.");
+            $self->debug_message("Only one bam file has been found at: $alignments_dir. Not merging, only renaming.");
             #my $rename_cmd = "mv ".$single_file." ".$bam_non_merged_output_file;
-            $self->status_message("Renaming Bam file from $single_file to $bam_merged_output_file");
+            $self->debug_message("Renaming Bam file from $single_file to $bam_merged_output_file");
             my $bam_rename_rv = move($single_file,$bam_merged_output_file); 
             unless ($bam_rename_rv==1) {
                     $self->error_message("Bam file rename error!  Return value: $bam_rename_rv");
@@ -168,18 +168,18 @@ sub execute {
             } 
        } 
        else {
-            $self->status_message("Multiple Bam files found.  Bam files to merge: ".join(",",@bam_files) );
+            $self->debug_message("Multiple Bam files found.  Bam files to merge: ".join(",",@bam_files) );
             my $merger_params = $self->model->merger_params;
             $bam_merge_tool .= " $merger_params" if $merger_params;
             my $bam_merge_cmd = "$bam_merge_tool $bam_merged_output_file ".join(" ",@bam_files); 
-            $self->status_message("Bam merge command: $bam_merge_cmd");
+            $self->debug_message("Bam merge command: $bam_merge_cmd");
 
             #my $bam_merge_rv = system($bam_merge_cmd);
             my $bam_merge_rv = Genome::Sys->shellcmd(cmd=>$bam_merge_cmd,
                                                                      input_files=>\@bam_files,
                                                                      output_files=>[$bam_merged_output_file],
                                                                     );
-            $self->status_message("Bam merge return value: $bam_merge_rv");
+            $self->debug_message("Bam merge return value: $bam_merge_rv");
             unless ($bam_merge_rv == 1) {
                     $self->error_message("Bam merge error!  Return value: $bam_merge_rv");
             } 
@@ -191,7 +191,7 @@ sub execute {
 
        my $bam_index_rv;
        if (defined $bam_final) {
-            $self->status_message("Indexing bam file: $bam_final");
+            $self->debug_message("Indexing bam file: $bam_final");
             my $bam_index_cmd = $bam_index_tool ." ". $bam_final;
             #$bam_index_rv = system($bam_index_cmd);
             $bam_index_rv = Genome::Sys->shellcmd(cmd=>$bam_index_cmd,
@@ -203,7 +203,7 @@ sub execute {
             } 
             else {
                     #indexing success
-                    $self->status_message("Bam indexed successfully.");
+                    $self->debug_message("Bam indexed successfully.");
             }
        }  
        else {
@@ -212,15 +212,15 @@ sub execute {
        }
 
        $now = UR::Context->current->now;
-       $self->status_message("<<< Completing Bam merge at $now.");
+       $self->debug_message("<<< Completing Bam merge at $now.");
 
        #remove intermediate files
        $now = UR::Context->current->now;
-       $self->status_message(">>> Removing intermediate files at $now");
+       $self->debug_message(">>> Removing intermediate files at $now");
        
        #remove bam files 
        for my $each_bam_file (@bam_files) {
-            $self->status_message("Executing unlink command on $each_bam_file and $each_bam_file.bai");
+            $self->debug_message("Executing unlink command on $each_bam_file and $each_bam_file.bai");
             my $rm_rv1 = unlink($each_bam_file);
             my $rm_rv2 = unlink($each_bam_file.".bai"); #remove each index as well
             unless ($rm_rv1 == 1) {
@@ -234,15 +234,15 @@ sub execute {
    } #end else for Bam merge process
 
    $now = UR::Context->current->now;
-   $self->status_message("<<< Completed removing intermediate files at $now");
+   $self->debug_message("<<< Completed removing intermediate files at $now");
 
    #starting map merge of all library maps 
    $now = UR::Context->current->now;
-   $self->status_message(">>> Beginning mapmerge at $now .");
+   $self->debug_message(">>> Beginning mapmerge at $now .");
    my $out_filepath = $alignments_dir;
 
    my @libraries =  keys %library_alignments; 
-   $self->status_message("Libraries: ".join(",",@libraries));
+   $self->debug_message("Libraries: ".join(",",@libraries));
    my @maps_to_merge;
    my $cmd;
    for my $library (@libraries) {
@@ -258,7 +258,7 @@ sub execute {
        $cmd ="$maq_pathname mapmerge ". $self->build->whole_rmdup_map_file ." ".join(" ",@maps_to_merge);
    }
 
-   $self->status_message("Executing $cmd at $now.");
+   $self->debug_message("Executing $cmd at $now.");
    #my $rv = system($cmd);
    my $rv = Genome::Sys->shellcmd(  cmd=>$cmd,
                                                     output_files=>[$self->build->whole_rmdup_map_file],
@@ -272,13 +272,13 @@ sub execute {
    $self->create_bam_md5;
 
     for my $file (grep {-f $_} glob($build->accumulated_alignments_directory . "/*")) {
-        $self->status_message("Setting $file to read-only");
+        $self->debug_message("Setting $file to read-only");
         chmod 0444, $file;
     }
 
     $now = UR::Context->current->now;
-    $self->status_message("<<< Completed mapmerge at $now .");
-    $self->status_message("*** All processes completed. ***");
+    $self->debug_message("<<< Completed mapmerge at $now .");
+    $self->debug_message("*** All processes completed. ***");
 
     return $self->verify_successful_completion();
 }
@@ -300,7 +300,7 @@ sub verify_successful_completion {
 sub calculate_required_disk_allocation_kb {
     my $self = shift;
 
-    $self->status_message("calculating how many map files will get incorporated");
+    $self->debug_message("calculating how many map files will get incorporated");
     my $build = $self->build;
     my @instrument_data = $build->instrument_data;
     my @build_maps;

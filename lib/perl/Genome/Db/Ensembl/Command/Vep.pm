@@ -10,6 +10,10 @@ use File::Basename;
 my ($VEP_DIR) = Cwd::abs_path(__FILE__) =~ /(.*)\//;
 my $VEP_SCRIPT_PATH = $VEP_DIR . "/Vep.d/vep";
 
+#Properties that are local to the wrapper and should not be passed through to the VEP script:
+my @LOCAL_STRING_PROPERTIES = qw(version ensembl_annotation_build_id plugins plugins_version gtf_file reference_build_id custom);
+my @LOCAL_BOOL_PROPERTIES = qw(gtf_cache hgnc);
+
 class Genome::Db::Ensembl::Command::Vep {
     is => 'Command::V2',
     doc => 'Run VEP',
@@ -68,7 +72,7 @@ class Genome::Db::Ensembl::Command::Vep {
         },
         condel => {
             is => 'String',
-            doc => 'Add Condel [p]rediction, [s]core or [b]oth',
+            doc => 'WARNING! This option is only valid for older versions of ensembl.  Use "--plugins" instead! Add Condel [p]rediction, [s]core or [b]oth.',
             is_optional => 1,
             valid_values => [qw(p s b)],
             is_input => 1,
@@ -116,8 +120,7 @@ class Genome::Db::Ensembl::Command::Vep {
         },
         hgnc => {
             is => 'Boolean',
-            doc => 'Adds the HGNC gene identifier (where available) to the output.',
-            default_value => 0,
+            doc => 'NOTE: this option is ignored. The gene symbol (e.g. HGNC) will always be printed',
             is_optional => 1,
             is_input => 1,
         },
@@ -164,6 +167,12 @@ class Genome::Db::Ensembl::Command::Vep {
             default => 0,
             doc => "Don't print the potput of vep to the terminal",
         },
+        custom => {
+            is => 'String',
+            is_optional => 1,
+            is_many => 1,
+            doc => "--custom option(s) to pass on to VEP.  Replace commas with @ symbol"
+        },
     ],
 };
 
@@ -193,7 +202,7 @@ EOS
 
 sub _open_input_file {
     my $self = shift;
-    my $input_file = $self->input_file;
+    my $input_file = shift;
     return Genome::Sys->open_file_for_reading($input_file) if $input_file ne '-';
 
     my $ioh = new IO::Handle;
@@ -217,66 +226,14 @@ sub execute {
         return;
     }
 
-    unless ($annotation_build->get_api_paths) {
-        $self->error_message("Could not find ensembl api in ImportedAnnotation build with id ".$annotation_build->id);
-    }
+    my $ensembl_version_number = Genome::Db::Ensembl::Command::Import::Run->ensembl_version_string($annotation_build->ensembl_version);
+    my $script_path = $self->_resolve_vep_script_path($ensembl_version_number);
 
     my $format = $self->format;
     my $input_file= $self->input_file;
 
-    # sanity check for ensembl input, since some of us are unable to
-    # keep our zero and one-based annotation files straight, and VEP
-    # fails cryptically when given one-based indels
-
     if ($format eq "ensembl"){
-        my $inFh = $self->_open_input_file;
-        my $tfh;
-        my $tmpfile;
-
-        # If we are reading from stdin, we won't be able to reopen the input, so dump
-        # to a temp file while verifying the format
-        if ($input_file eq '-') {
-            ($tfh, $tmpfile) = Genome::Sys->create_temp_file;
-        }
-
-        while( my $line = $inFh->getline )
-        {
-            $tfh->print($line) if $tfh;
-
-            chomp($line);
-            my @F = split("\t",$line);
-
-            #skip headers and blank lines
-            next if $line =~/^#/;
-            next if $line =~/^Chr/;
-            next if $line =~/^$/;
-
-            my @vars = split("/",$F[3]);
-            #check SNVs
-            if(($vars[0] =~ /^\w$/) && ($vars[1] =~ /^\w$/)){
-                unless ($F[1] == $F[2]){
-                    die ("Ensembl variant format is 1-based. This line doesn't appear valid:\n$line\n");
-                }
-            }
-            #indel insertion
-            elsif(($vars[0] =~ /^-$/) && ($vars[1] =~ /\w+/)){
-                unless ($F[1] == $F[2]+1){
-                    die ("This insertion is not in valid Ensembl format:\n$line\n");
-                }
-            }
-            #indel deletion
-            elsif(($vars[0] =~ /\w+/) && ($vars[1] =~ /^-$/)){
-                unless ($F[1]+length($vars[0])-1 == $F[2]){
-                    die ("This deletion is not in valid Ensembl format:\n$line\n");
-                }
-            }
-            else{
-                die ("This variant is not in valid Ensembl format:\n$line\n");
-            }
-        }
-        close($inFh);
-
-        $input_file = $tmpfile if $tmpfile;
+        $input_file = $self->_verify_ensembl_input($input_file);
     }
 
     # If bed format is input, we do a conversion to ensembl format. This is necessary
@@ -288,147 +245,11 @@ sub execute {
     # 1  978  980  ACT/-
 
     if ($format eq "bed"){
-        #create a tmp file for ensembl file
-        my ($tfh,$tmpfile) = Genome::Sys->create_temp_file;
-        unless($tfh) {
-            die $self->error_message("Unable to create temporary file $!");
-        }
-
-        #convert the bed file
-        my $inFh = $self->_open_input_file;
-        while( my $line = $inFh->getline ){
-            chomp($line);
-            my @F = split("\t",$line);
-
-            #skip headers and blank lines
-            next if $line =~/^#/;
-            next if $line =~/^Chr/;
-            next if $line =~/^$/;
-
-            #accept ref/var alleles as either slash or tab sep (A/C or A\tC)
-            my @vars;
-            my @suffix;
-            if($F[3] =~ /\//){
-                @vars = split(/\//,$F[3]);
-                @suffix = @F[4..(@F-1)]
-            }
-            else {
-                @vars = @F[3..4];
-                @suffix = @F[5..(@F-1)]
-            }
-            $vars[0] =~ s/\*/-/g;
-            $vars[0] =~ s/0/-/g;
-            $vars[1] =~ s/\*/-/g;
-            $vars[1] =~ s/0/-/g;
-
-            #check SNVs
-            if(($vars[0] =~ /^\w$/) && ($vars[1] =~ /^\w$/)){
-                unless ($F[1] == $F[2]-1){
-                    die ("BED variant format is 0-based. This line doesn't appear valid:\n$line\n");
-                }
-                $F[1]++;
-            }
-            #indel insertion
-            elsif(($vars[0] =~ /^-$/) && ($vars[1] =~ /\w+/)){
-                unless ($F[1] == $F[2]){
-                    die ("This insertion is not in valid BED format:\n$line\n");
-                }
-                #increment the start position
-                $F[1]++;
-            }
-            #indel deletion
-            elsif(($vars[0] =~ /\w+/) && ($vars[1] =~ /^-$/)){
-                unless ($F[1]+length($vars[0]) == $F[2]){
-                    die ("This deletion is not in valid BED format:\n$line\n");
-                }
-                #increment the start position
-                $F[1]++;
-            }
-            else {
-                die ("This variant is not in valid BED format:\n$line\n");
-            }
-            $tfh->print(join("\t",(@F[0..2],join("/",@vars),"+",@suffix)) . "\n");
-        }
-
+        $input_file = $self->_convert_bed_to_ensembl_input($input_file);
         $format = "ensembl";
-        $input_file = $tmpfile;
     }
 
-    my $script_path = $VEP_SCRIPT_PATH.$self->{version}.".pl";
-    my $string_args = "";
-
-    #UR magic to get the string and boolean property lists
-    my $meta = $self->__meta__;
-    my @all_bool_args = $meta->properties(
-        class_name => __PACKAGE__,
-        data_type => 'Boolean');
-    my @all_string_args = $meta->properties(
-        class_name => __PACKAGE__,
-        data_type => 'String');
-
-    my $count = 0;
-    foreach my $arg (@all_string_args) {
-        if ($arg->property_name eq 'version') {
-            splice @all_string_args, $count, 1;
-            last;
-        }
-        $count++;
-    }
-
-    $count = 0;
-    foreach my $arg (@all_string_args) {
-        if ($arg->property_name eq 'ensembl_annotation_build_id') {
-            splice @all_string_args, $count, 1;
-            last;
-        }
-        $count++;
-    }
-
-    $count = 0;
-    foreach my $arg (@all_string_args) {
-        if ($arg->property_name eq 'plugins') {
-            splice @all_string_args, $count, 1;
-            last;
-        }
-        $count++;
-    }
-
-    $count = 0;
-    foreach my $arg (@all_string_args) {
-        if ($arg->property_name eq 'plugins_version') {
-            splice @all_string_args, $count, 1;
-            last;
-        }
-        $count++;
-    }
-
-    $count = 0;
-    foreach my $arg (@all_string_args) {
-        if ($arg->property_name eq 'gtf_file') {
-            splice @all_string_args, $count, 1;
-            last;
-        }
-        $count++;
-    }
-
-    $count = 0;
-    foreach my $arg (@all_string_args) {
-        if ($arg->property_name eq 'reference_build_id') {
-            splice @all_string_args, $count, 1;
-            last;
-        }
-        $count++;
-    }
-
-
-    $string_args = join( ' ',
-        map {
-            my $name = $_->property_name;
-            my $value = $self->$name;
-            defined($value) ? ("--".($name)." ".$value) : ()
-        } @all_string_args
-    );
-
+    my $string_args = $self->_get_string_args;
     #have to replace these arg, because it may have changed (from bed -> ensembl)
     $string_args =~ s/--format (\w+)/--format $format/;
     # the vep script does not understand --input_file - as read from stdin.
@@ -436,24 +257,8 @@ sub execute {
     my $input_file_arg = $input_file eq '-' ? "" : "--input_file $input_file";
     $string_args =~ s/--input_file ([^\s]+)/$input_file_arg/;
 
-    $count = 0;
-    foreach my $arg (@all_bool_args) {
-        if ($arg->property_name eq 'gtf_cache') {
-            splice @all_bool_args, $count, 1;
-            last;
-        }
-        $count++;
-    }
+    my $bool_args = $self->_get_bool_args;
 
-
-    my $bool_args = "";
-    $bool_args = join (' ',
-        map {
-            my $name = $_->property_name;
-            my $value = $self->$name;
-            $value ? ("--".($name)) : ()
-        } @all_bool_args
-    );
 
     my $temp_config_dir = Genome::Sys->create_temp_directory;
     my $plugin_args = "";
@@ -465,44 +270,334 @@ sub execute {
         Genome::Sys->create_directory($temp_plugins_dir);
         Genome::Sys->create_directory($temp_plugins_config_dir);
         foreach my $plugin ($self->plugins) {
-            my @plugin_fields = split /\@/, $plugin;
-            my $plugin_name = $plugin_fields[0];
-            my $plugin_source_file = "$plugins_source_dir/$plugin_name.pm";
-            if (-e $plugin_source_file){
-                Genome::Sys->copy_file($plugin_source_file, "$temp_plugins_dir/$plugin_name.pm");
-            }
-            my $plugin_dir = "$plugins_source_dir/config/$plugin_name";
-            my $temp_plugin_config_dir = "$temp_plugins_config_dir/$plugin_name/config";
-            if (-d $plugin_dir) {
-                `cp -r $plugin_dir $temp_plugins_config_dir`;
-                foreach my $config_file (glob "$temp_plugin_config_dir/*") {
-                    my $sed_cmd = "s|path/to/config/|$temp_plugins_config_dir/|";
-                    `sed "$sed_cmd" $config_file > $config_file.new; mv $config_file.new $config_file`;
-                }
-            }
-            $plugin =~ s|PLUGIN_DIR|$temp_plugin_config_dir|;
-            $plugin_args .= " --plugin $plugin";
-            $plugin_args =~ s/\@/,/g;
+            $plugin_args = $self->_append_plugin_to_plugin_args($plugin, $plugin_args, $temp_plugins_dir, 
+                                                                $temp_plugins_config_dir, $plugins_source_dir);
         }
     }
+
+    my @custom_args;
+    for my $custom ($self->custom) {
+        my @parts = split "@", $custom;
+        push @custom_args, "--custom ".join(",", @parts);
+    }
+    my $custom = join(" ", @custom_args);
 
     my $host_param = defined $ENV{GENOME_DB_ENSEMBL_HOST} ? "--host ".$ENV{GENOME_DB_ENSEMBL_HOST} : "";
     my $user_param = defined $ENV{GENOME_DB_ENSEMBL_USER} ? "--user ".$ENV{GENOME_DB_ENSEMBL_USER} : "";
     my $password_param = defined $ENV{GENOME_DB_ENSEMBL_PASS} ? "--password ".$ENV{GENOME_DB_ENSEMBL_PASS} : "";
     my $port_param = defined $ENV{GENOME_DB_ENSEMBL_PORT} ? "--port ".$ENV{GENOME_DB_ENSEMBL_PORT} : "";
-    my $cache_param;
+
+    my $cache_result = $self->_get_cache_result($annotation_build);
+
+    my $cmd = "$script_path $string_args $bool_args $plugin_args $custom $host_param $user_param $password_param $port_param";
+
+    if ($cache_result) {
+        $self->debug_message("Using VEP cache result ".$cache_result->id);
+        $cmd = "$cmd --cache --offline --dir ".$temp_config_dir."/";
+        foreach my $file (glob $cache_result->output_dir."/*"){
+            `ln -s $file $temp_config_dir`;
+        }
+    }
+    else {
+        $self->warning_message("No cache result available, running from database");
+    }
+
+    $self->debug_message("Running command:\n$cmd");
+
+    my %params = (
+        cmd=>$cmd,
+        output_files => [$self->{output_file}],
+        skip_if_output_is_present => 0,
+    );
+    $params{input_files} = [$input_file] unless $input_file eq '-';
+    $params{redirect_stdout} = '/dev/null' if $self->quiet;
+
+    $annotation_build->prepend_api_path_and_execute(
+        %params
+    );
+    return 1;
+}
+
+sub _get_string_args {
+    my $self = shift;
+    my $meta = $self->__meta__;
+    
+    my @all_string_args = $meta->properties(
+        class_name => __PACKAGE__,
+        data_type => 'String');
+
+    for my $local_property (@LOCAL_STRING_PROPERTIES) {
+        @all_string_args = $self->_remove_arg($local_property, @all_string_args);
+    }
+
+    my $string_args = join( ' ',
+        map {
+            my $name = $_->property_name;
+            my $value = $self->$name;
+            defined($value) ? ("--".($name)." ".$value) : ()
+        } @all_string_args
+    );
+
+    return $string_args;
+}
+
+sub _get_bool_args {
+    my $self = shift;
+    my $meta = $self->__meta__;
+    my @all_bool_args = $meta->properties(
+        class_name => __PACKAGE__,
+        data_type => 'Boolean');
+
+    for my $local_property (@LOCAL_BOOL_PROPERTIES) {
+        @all_bool_args = $self->_remove_arg($local_property, @all_bool_args);
+    }
+
+    my @extra_args;
+    
+    if ($self->_get_ensembl_version >= 74) {
+        push @extra_args, "symbol";
+    }
+    else {
+        push @extra_args, "hgnc";
+    }
+
+    my $bool_args = "";
+    my @args_strings = map {
+        my $name = $_->property_name;
+        my $value = $self->$name;
+        $value ? ("--".($name)) : ()
+    } @all_bool_args;
+
+    my @extra_args_strings = map {
+        "--".$_;
+    } @extra_args;
+
+    $bool_args = join (' ',
+        @args_strings, @extra_args_strings
+    );
+
+    return $bool_args;
+}
+
+sub _get_ensembl_version {
+    my $self = shift;
+
+    my $annotation_build = Genome::Model::Build::ImportedAnnotation->get($self->ensembl_annotation_build_id);
+
+    return Genome::Db::Ensembl::Command::Import::Run->ensembl_version_string($annotation_build->ensembl_version);
+}
+
+sub _remove_arg {
+    my $self = shift;
+    my $property_name = shift;
+    my @all_string_args = @_;
+    my $count = 0;
+    foreach my $arg (@all_string_args) {
+        if ($arg->property_name eq $property_name) {
+            splice @all_string_args, $count, 1;
+            last;
+        }
+        $count++;
+    }
+    return @all_string_args;
+}
+
+sub _append_plugin_to_plugin_args {
+    my $self = shift;
+    my $plugin = shift;
+    my $plugin_args = shift;
+    my $temp_plugins_dir = shift;
+    my $temp_plugins_config_dir = shift;
+    my $plugins_source_dir = shift;
+
+    my @plugin_fields = split /\@/, $plugin;
+    my $plugin_name = $plugin_fields[0];
+    my $plugin_source_file = "$plugins_source_dir/$plugin_name.pm";
+    if (-e $plugin_source_file){
+        Genome::Sys->copy_file($plugin_source_file, "$temp_plugins_dir/$plugin_name.pm");
+    }
+    my $plugin_dir = "$plugins_source_dir/config/$plugin_name";
+    my $temp_plugin_config_dir = "$temp_plugins_config_dir/$plugin_name/config";
+    if (-d $plugin_dir) {
+        `cp -r $plugin_dir $temp_plugins_config_dir`;
+        foreach my $config_file (glob "$temp_plugin_config_dir/*") {
+            my $sed_cmd = "s|path/to/config/|$temp_plugins_config_dir/|";
+            `sed "$sed_cmd" $config_file > $config_file.new; mv $config_file.new $config_file`;
+        }
+    }
+    $plugin =~ s|PLUGIN_DIR|$temp_plugin_config_dir|;
+    $plugin_args .= " --plugin $plugin";
+    $plugin_args =~ s/\@/,/g;
+
+    return $plugin_args;
+}
+
+sub _species_lookup {
+    my ($self, $species) = @_;
+
+    if ($species eq "homo_sapiens") {
+        return "human";
+    }
+    else {
+        return $species;
+    }
+}
+
+sub _resolve_vep_script_path {
+    my $self = shift;
+    my $version = shift;
+
+    my $api = Genome::Db::Ensembl::Api->get_or_create(version => $version);
+    if (defined $api) {
+        my $script_path = $api->vep_script("variant_effect_predictor.pl");
+        if (-s $script_path) {
+            return $script_path;
+        }
+        else {
+            $self->warning_message("Ensembl api ".$api->id." did not have VEP script");
+        }
+    }
+    else {
+        $self->warning_message("Could not find ensembl api version ".$version);
+    }
+    
+    return $VEP_SCRIPT_PATH.$self->{version}.".pl";
+}
+
+sub _verify_ensembl_input {
+    my $self = shift;
+    my $input_file = shift;
+    my $inFh = $self->_open_input_file($input_file);
+    my $tfh;
+    my $tmpfile;
+
+    # If we are reading from stdin, we won't be able to reopen the input, so dump
+    # to a temp file while verifying the format
+    if ($input_file eq '-') {
+        ($tfh, $tmpfile) = Genome::Sys->create_temp_file;
+    }
+
+    while( my $line = $inFh->getline )
+    {
+        $tfh->print($line) if $tfh;
+
+        chomp($line);
+        my @F = split("\t",$line);
+
+        #skip headers and blank lines
+        next if $line =~/^#/;
+        next if $line =~/^Chr/;
+        next if $line =~/^$/;
+
+        my @vars = split("/",$F[3]);
+        #check SNVs
+        if(($vars[0] =~ /^\w$/) && ($vars[1] =~ /^\w$/)){
+            unless ($F[1] == $F[2]){
+                die ("Ensembl variant format is 1-based. This line doesn't appear valid:\n$line\n");
+            }
+        }
+        #indel insertion
+        elsif(($vars[0] =~ /^-$/) && ($vars[1] =~ /\w+/)){
+            unless ($F[1] == $F[2]+1){
+                die ("This insertion is not in valid Ensembl format:\n$line\n");
+            }
+        }
+        #indel deletion
+        elsif(($vars[0] =~ /\w+/) && ($vars[1] =~ /^-$/)){
+            unless ($F[1]+length($vars[0])-1 == $F[2]){
+                die ("This deletion is not in valid Ensembl format:\n$line\n");
+            }
+        }
+        else{
+            die ("This variant is not in valid Ensembl format:\n$line\n");
+        }
+    }
+    close($inFh);
+
+    $input_file = $tmpfile if $tmpfile;
+
+    return $input_file;
+}
+
+sub _convert_bed_to_ensembl_input {
+    my $self = shift;
+    my $input_file = shift;
+
+    #create a tmp file for ensembl file
+    my ($tfh,$tmpfile) = Genome::Sys->create_temp_file;
+    unless($tfh) {
+        die $self->error_message("Unable to create temporary file $!");
+    }
+
+    #convert the bed file
+    my $inFh = $self->_open_input_file($self->input_file);
+    while( my $line = $inFh->getline ){
+        chomp($line);
+        my @F = split("\t",$line);
+
+        #skip headers and blank lines
+        next if $line =~/^#/;
+        next if $line =~/^Chr/;
+        next if $line =~/^$/;
+
+        #accept ref/var alleles as either slash or tab sep (A/C or A\tC)
+        my @vars;
+        my @suffix;
+        if($F[3] =~ /\//){
+            @vars = split(/\//,$F[3]);
+            @suffix = @F[4..(@F-1)]
+        }
+        else {
+            @vars = @F[3..4];
+            @suffix = @F[5..(@F-1)]
+        }
+        $vars[0] =~ s/\*/-/g;
+        $vars[0] =~ s/0/-/g;
+        $vars[1] =~ s/\*/-/g;
+        $vars[1] =~ s/0/-/g;
+
+        #check SNVs
+        if(($vars[0] =~ /^\w$/) && ($vars[1] =~ /^\w$/)){
+            unless ($F[1] == $F[2]-1){
+                die ("BED variant format is 0-based. This line doesn't appear valid:\n$line\n");
+            }
+            $F[1]++;
+        }
+        #indel insertion
+        elsif(($vars[0] =~ /^-$/) && ($vars[1] =~ /\w+/)){
+            unless ($F[1] == $F[2]){
+                die ("This insertion is not in valid BED format:\n$line\n");
+            }
+            #increment the start position
+            $F[1]++;
+        }
+        #indel deletion
+        elsif(($vars[0] =~ /\w+/) && ($vars[1] =~ /^-$/)){
+            unless ($F[1]+length($vars[0]) == $F[2]){
+                die ("This deletion is not in valid BED format:\n$line\n");
+            }
+            #increment the start position
+            $F[1]++;
+        }
+        else {
+            die ("This variant is not in valid BED format:\n$line\n");
+        }
+        $tfh->print(join("\t",(@F[0..2],join("/",@vars),"+",@suffix)) . "\n");
+    }
+    close($inFh);
+    return $tmpfile;
+}
+
+sub _get_cache_result {
+    my $self = shift;
+    my $annotation_build = shift;
+
     my $ensembl_version = Genome::Db::Ensembl::Command::Import::Run->ensembl_version_string($annotation_build->version);
 
     my $cache_result;
     my %cache_result_params;
     $cache_result_params{version} = $ensembl_version;
-    my $rename_species = $self->_species_lookup($self->species);
-    if ($rename_species) {
-        $cache_result_params{species} = $rename_species;
-    }
-    else {
-        $cache_result_params{species} = $self->species;
-    }
+    $cache_result_params{species} = $self->_species_lookup($self->species);
     $cache_result_params{test_name} = $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME};
     if ($self->gtf_cache) {
         $cache_result_params{reference_build_id} = $self->reference_build_id;
@@ -526,48 +621,7 @@ sub execute {
         };
     }
 
-    my $cmd = "$script_path $string_args $bool_args $plugin_args $host_param $user_param $password_param $port_param";
-
-    if ($cache_result) {
-        $self->status_message("Using VEP cache result ".$cache_result->id);
-        $cmd = "$cmd --cache --dir ".$temp_config_dir."/";
-        foreach my $file (glob $cache_result->output_dir."/*"){
-            `ln -s $file $temp_config_dir`;
-        }
-        if ($self->gtf_cache) {
-            $cmd = "$cmd --offline";
-        }
-    }
-    else {
-        $self->warning_message("No cache result available, running from database");
-    }
-
-    $self->status_message("Running command:\n$cmd");
-
-    my %params = (
-        cmd=>$cmd,
-        output_files => [$self->{output_file}],
-        skip_if_output_is_present => 0,
-    );
-    $params{input_files} = [$input_file] unless $input_file eq '-';
-    $params{redirect_stdout} = '/dev/null' if $self->quiet;
-
-    $annotation_build->prepend_api_path_and_execute(
-        %params
-    );
-    return 1;
+    return $cache_result;
 }
-
-sub _species_lookup {
-    my ($self, $species) = @_;
-
-    if ($species eq "homo_sapiens") {
-        return "human";
-    }
-    else {
-        return;
-    }
-}
-
 
 1;

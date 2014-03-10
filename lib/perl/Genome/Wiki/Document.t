@@ -4,7 +4,7 @@
 use above "Genome";
 use Data::Dumper;
 
-use Test::More tests => 5;
+use Test::More skip_all => 'disabled since depends on logging into a wiki'; #tests => 5;
 
 use_ok('Genome::Wiki::Document');
 

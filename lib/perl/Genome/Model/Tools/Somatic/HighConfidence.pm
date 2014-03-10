@@ -73,7 +73,7 @@ class Genome::Model::Tools::Somatic::HighConfidence {
        },
        lsf_queue => {
             is_param => 1,
-            default_value => 'long',
+            default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
        },
        skip => {
            is => 'Boolean',
@@ -117,12 +117,12 @@ sub execute {
     my $self = shift;
 
     if ($self->skip) {
-        $self->status_message("Skipping execution: Skip flag set");
+        $self->debug_message("Skipping execution: Skip flag set");
         return 1;
     }
     
     if (($self->skip_if_output_present)&&(-s $self->output_file)) {
-        $self->status_message("Skipping execution: Output is already present and skip_if_output_present is set to true");
+        $self->debug_message("Skipping execution: Output is already present and skip_if_output_present is set to true");
         return 1;
     }
 
@@ -186,7 +186,7 @@ sub execute {
 
     #Run readcount program 
     my $readcount_command = sprintf("%s %s -l %s %s |",$self->readcount_path, $self->bam_readcount_params, $temp_path, $self->tumor_bam_file);
-    $self->status_message("Running: $readcount_command");
+    $self->debug_message("Running: $readcount_command");
     my $readcounts = IO::File->new($readcount_command);
 
     while(my $count_line = $readcounts->getline) {
@@ -199,7 +199,7 @@ sub execute {
 
         #check if the sniper line was present in the readcount output
         while($vchr ne $chr && $vstart != $pos && @sniper_lines) {
-            $self->status_message("Skipped $current_variant");
+            $self->debug_message("Skipped $current_variant");
             
             $current_variant = shift @sniper_lines;
             last unless $current_variant;

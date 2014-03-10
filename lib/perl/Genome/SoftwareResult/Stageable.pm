@@ -85,12 +85,12 @@ sub _promote_data {
         die $self->error_message("staging_dir not set");
     }
 
-    $self->status_message("Now de-staging data from $staging_dir into $output_dir"); 
+    $self->debug_message("Now de-staging data from $staging_dir into $output_dir"); 
 
     my $cp_params = 'r';
     $cp_params .= 'L' if ($self->_needs_symlinks_followed_when_syncing);
     my $copy_cmd = sprintf("cp -$cp_params %s/* %s/", $staging_dir, $output_dir);
-    $self->status_message("Running cp: $copy_cmd");
+    $self->debug_message("Running cp: $copy_cmd");
     my $copy_exit_code = system($copy_cmd);
 
     if ($copy_exit_code != 0) {
@@ -101,7 +101,7 @@ sub _promote_data {
         my $rsync_cmd = sprintf("rsync %s %s/* %s/", $rsync_params, $staging_dir, $output_dir);
 
         my $rsync_exit_code = system($rsync_cmd);
-        $self->status_message("Running Rsync: $rsync_cmd");
+        $self->debug_message("Running Rsync: $rsync_cmd");
 
         unless ($rsync_exit_code == 0) {
             $self->error_message("Did not get a valid return from rsync, exit code was $rsync_exit_code for call $rsync_cmd.  Cleaning up and bailing out");
@@ -124,7 +124,7 @@ sub _promote_data {
         chmod 0444, $file;
     }
 
-    $self->status_message("Files in $output_dir: \n" . join "\n", glob($output_dir . "/*"));
+    $self->debug_message("Files in $output_dir: \n" . join "\n", glob($output_dir . "/*"));
 
     return $output_dir;
 }
@@ -133,10 +133,10 @@ sub _reallocate_disk_allocation {
     my $self = shift;
     my $allocation = $self->disk_allocations;
     unless ($allocation) {
-        $self->status_message("No allocations to resize/reallocate.");
+        $self->debug_message("No allocations to resize/reallocate.");
         return 1;
     }
-    $self->status_message('Resizing the disk allocation...');
+    $self->debug_message('Resizing the disk allocation...');
     my $rv = eval { $allocation->reallocate };
     my $error = $@;
     if (!$rv) {

@@ -39,7 +39,7 @@ if (@ARGV and $ARGV[0] eq 'LIMS_INFO_TEST'){
 }elsif ($ARGV[0]){
   die "unexpected cmdline options @ARGV: expected nothing or 'LIMS_INFO_TEST', got " . $ARGV[0];
 }else{
-  $expected_data_directory = $ENV{"GENOME_TEST_INPUTS"} . '/Genome-Model-ClinSeq-Command-SummarizeBuilds/2013-07-11b';
+  $expected_data_directory = $ENV{"GENOME_TEST_INPUTS"} . '/Genome-Model-ClinSeq-Command-SummarizeBuilds/2014-03-04';
   ok(-d $expected_data_directory, "found expected data directory: $expected_data_directory") or die;
   $cmd = Genome::Model::ClinSeq::Command::SummarizeBuilds->create(builds=>[$b], outdir=>$temp_dir, skip_lims_reports=>1);
 }

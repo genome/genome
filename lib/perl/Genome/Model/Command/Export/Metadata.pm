@@ -137,7 +137,7 @@ sub execute {
 
     # Get the disk groups
 
-    my @group_names = qw/info_alignments info_apipe info_genome_models info_apipe_ref/;
+    my @group_names = ($ENV{GENOME_DISK_GROUP_ALIGNMENTS}, $ENV{GENOME_DISK_GROUP_DEV}, $ENV{GENOME_DISK_GROUP_MODELS}, $ENV{GENOME_DISK_GROUP_REFERENCES});
     my @groups = Genome::Disk::Group->get(group_name => \@group_names);
     for my $group (@groups) {
         $self->add_to_dump_queue($group, \%queue, \%exclude, \%sanitize_map);
@@ -147,6 +147,8 @@ sub execute {
 
     my %defaults = (
         user_name => "genome",
+        created_by => "genome",
+        run_as => "genome",
         run_by => "genome"
     );
 

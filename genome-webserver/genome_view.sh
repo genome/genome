@@ -41,4 +41,4 @@ export GENOME_VIEW_CACHE
 
 echo "starting server from $0 with GENOME_DEV_MODE=$GENOME_DEV_MODE" >>$LOGFILE
 
-exec /gsc/bin/plackup $OPTIONS >>$LOGFILE 2>&1
+exec /gsc/scripts/bin/genome-plackup $OPTIONS >>$LOGFILE 2>&1

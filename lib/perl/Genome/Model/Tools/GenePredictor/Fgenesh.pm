@@ -47,11 +47,11 @@ sub execute {
     my $self = shift;
 
     if ($self->skip_execution) {
-        $self->status_message("Skip execution flag is set, exiting.");
+        $self->debug_message("Skip execution flag is set, exiting.");
         return 1;
     }
 
-    $self->status_message("Running fgenesh gene predictor on sequence in " . $self->fasta_file .
+    $self->debug_message("Running fgenesh gene predictor on sequence in " . $self->fasta_file .
         " using model file " . $self->model_file . "!");
 
     my @features;
@@ -69,12 +69,12 @@ sub execute {
 
     my $output_file = $self->get_temp_file_in_directory($self->raw_output_directory, 'fgenesh_raw_output_XXXXXX');
     confess "Could not create temp file in " . $self->raw_output_directory unless defined $output_file;
-    $self->status_message("Raw output being written to $output_file");
+    $self->debug_message("Raw output being written to $output_file");
 
     my %gene_count_by_seq;
     my $total_gene_count = 0;
     while (my $seq = $seqio->next_seq()) {
-        $self->status_message("Now parsing predictions from sequence " . $seq->id());
+        $self->debug_message("Now parsing predictions from sequence " . $seq->id());
 
         # TODO Need to get raw output capture to work correctly...
         my $factory = Bio::Tools::Run::Fgenesh->new(
@@ -258,7 +258,7 @@ sub execute {
         }
     }
 
-    $self->status_message("Getting locks for protein, transcript, exon, and coding gene files");
+    $self->debug_message("Getting locks for protein, transcript, exon, and coding gene files");
     my @locks = $self->lock_files_for_predictions(
         qw/ 
             Genome::Prediction::Protein 
@@ -268,14 +268,14 @@ sub execute {
         /
     );
 
-    $self->status_message("Lock acquired, committing!");
+    $self->debug_message("Lock acquired, committing!");
     my $commit_rv = UR::Context->commit;
     unless (defined $commit_rv and $commit_rv) {
         $self->error_message("Could not perform UR context commit!");
         confess $self->error_message;
     }
 
-    $self->status_message("Changed committed, releasing locks");
+    $self->debug_message("Changed committed, releasing locks");
     $self->release_prediction_locks(@locks);
 
     $self->status_message("Fgenesh parsing complete, predicted $total_gene_count genes!");

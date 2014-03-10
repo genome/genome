@@ -8,7 +8,7 @@ use Test::More;
 use above "Genome";
 use Carp::Always;
 
-my $class = 'Genome::Config::Handler';
+my $class = 'Genome::Config::Parser';
 
 use_ok($class);
 

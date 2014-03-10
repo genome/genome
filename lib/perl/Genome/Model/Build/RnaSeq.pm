@@ -17,7 +17,8 @@ class Genome::Model::Build::RnaSeq {
     has => [
         annotation_build => {
             is => "Genome::Model::Build::ImportedAnnotation",
-            is_input => 1
+            is_input => 1,
+            is_optional => 1,
         },
         reference_sequence_build => {
             is => "Genome::Model::Build::ReferenceSequence",
@@ -250,14 +251,14 @@ sub delete {
 sub eviscerate {
     my $self = shift;
     
-    $self->status_message('Entering eviscerate for build:' . $self->id);
+    $self->debug_message('Entering eviscerate for build:' . $self->id);
 
 
     if($self->alignment_result) {
         my $alignment_result = $self->alignment_result;
 
         if (-l $self->accumulated_alignments_directory && readlink($self->accumulated_alignments_directory) eq $alignment_result->output_dir) {
-           $self->status_message("Unlinking symlink to alignment result: " . $self->accumulated_alignments_directory);
+           $self->debug_message("Unlinking symlink to alignment result: " . $self->accumulated_alignments_directory);
             unless(unlink($self->accumulated_alignments_directory)) {
                 $self->error_message("could not remove symlink to alignment result path");
                 return;
@@ -266,16 +267,16 @@ sub eviscerate {
 
         my @users = $alignment_result->users(user => $self);
         map($_->delete, @users);
-        $self->status_message('Removed self as user of alignment result.');
+        $self->debug_message('Removed self as user of alignment result.');
     } else {
         my $alignment_alloc = $self->accumulated_alignments_disk_allocation;
         my $alignment_path = ($alignment_alloc ? $alignment_alloc->absolute_path :  $self->accumulated_alignments_directory);
 
         if (!-d $alignment_path && !-l $self->accumulated_alignments_directory) {
-            $self->status_message("Nothing to do, alignment path doesn't exist and this build has no alignments symlink.");
+            $self->debug_message("Nothing to do, alignment path doesn't exist and this build has no alignments symlink.");
         }
 
-        $self->status_message("Removing tree $alignment_path");
+        $self->debug_message("Removing tree $alignment_path");
         if (-d $alignment_path) {
             rmtree($alignment_path);
             if (-d $alignment_path) {
@@ -292,7 +293,7 @@ sub eviscerate {
         }
 
         if (-l $self->accumulated_alignments_directory && readlink($self->accumulated_alignments_directory) eq $alignment_path ) {
-            $self->status_message("Unlinking symlink: " . $self->accumulated_alignments_directory);
+            $self->debug_message("Unlinking symlink: " . $self->accumulated_alignments_directory);
             unless(unlink($self->accumulated_alignments_directory)) {
                 $self->error_message("could not remove symlink to deallocated accumulated alignments path");
                 return;
@@ -317,7 +318,7 @@ sub eviscerate {
     for my $item (keys %directories) {
         my $directory = $directories{$item};
         if (-d $directory) {
-            $self->status_message("removing $item directory");
+            $self->debug_message("removing $item directory");
             rmtree($directory);
             if (-d $directory) {
                 $self->error_message("$item path $directory still exists after evisceration attempt, something went wrong.");
@@ -386,7 +387,20 @@ sub regex_for_custom_diff {
     my $self = shift;
 
     my @regexes_from_base_class = $self->SUPER::regex_for_custom_diff;
-    return (@regexes_from_base_class, 'bam_without_regard_to_header', '\.bam$');
+    return (@regexes_from_base_class,
+        'bam_without_regard_to_header' => '\.bam$',
+        'via_md5' => '\.fa$',
+        'via_md5' => '\.ebwt$',
+    );
+}
+
+sub diff_via_md5 {
+    my ($self, $first_file, $second_file) = @_;
+
+    my $first_md5  = `md5sum $first_file`;
+    my $second_md5 = `md5sum $second_file`;
+    return 1 if $first_md5 eq $second_md5;
+    return 0;
 }
 
 sub diff_bam_without_regard_to_header {
@@ -402,6 +416,7 @@ sub files_ignored_by_diff {
     my $self = shift;
 
     return (
+        '.fai$',
         'build.xml',
         '.pdf$',
         '.png$',
@@ -419,9 +434,9 @@ sub files_ignored_by_diff {
         '-PicardGC_summary.txt',
         File::Spec->join('metrics', 'PicardRnaSeqMetrics.txt'),
 
-        File::Spec->join('fusions', 'runconfig.xml'),
-        File::Spec->join('fusions', 'sorted_aligned_reads.bam'),
-        File::Spec->join('fusions', 'sorted_aligned_reads.bam.bai'),
+        'fusions.*Index.*',
+        'fusions.*runconfig.xml',
+        'fusions.*sorted_aligned_reads.bam.*',
     );
 }
 

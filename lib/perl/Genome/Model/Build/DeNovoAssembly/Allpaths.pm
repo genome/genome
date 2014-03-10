@@ -124,11 +124,11 @@ sub _allpaths_in_libs_file {
 sub before_assemble {
     my $self = shift;
     my @sx_results = @_;
-    $self->status_message("Allpaths config files");
+    $self->debug_message("Allpaths config files");
 
     my %params = $self->processing_profile->assembler_params_as_hash;
 
-    $self->status_message("Generating Allpaths in_group.csv and in_libs.csv");
+    $self->debug_message("Generating Allpaths in_group.csv and in_libs.csv");
     my $in_group = "file_name,\tlibrary_name,\tgroup_name";
 
     my $in_libs = "library_name,\tproject_name,\torganism_name,\ttype,\tpaired,\tfrag_size,\tfrag_stddev,\tinsert_size,\tinsert_stddev,\tread_orientation,\tgenomic_start,\tgenomic_end";
@@ -181,7 +181,7 @@ sub before_assemble {
 
     my $in_group_file = $self->_allpaths_in_group_file;
     unlink $in_group_file if -e $in_group_file;
-    $self->status_message("Allpaths in_group file: ".$in_group_file);
+    $self->debug_message("Allpaths in_group file: ".$in_group_file);
     my $fh = eval { Genome::Sys->open_file_for_writing( $in_group_file); };
     if (not $fh) {
         $self->error_message("Can not open file ($in_group_file) for writing $@");
@@ -189,11 +189,11 @@ sub before_assemble {
     }
     $fh->print($in_group);
     $fh->close;
-    $self->status_message("Allpaths in_group file...OK");
+    $self->debug_message("Allpaths in_group file...OK");
 
     my $in_libs_file = $self->_allpaths_in_libs_file;
     unlink $in_libs_file if -e $in_libs_file;
-    $self->status_message("Allpaths in_libs file: ".$in_libs_file);
+    $self->debug_message("Allpaths in_libs file: ".$in_libs_file);
     $fh = eval { Genome::Sys->open_file_for_writing( $in_libs_file); };
     if (not $fh) {
         $self->error_message("Can not open file ($in_libs_file) for writing $@");
@@ -201,7 +201,7 @@ sub before_assemble {
     }
     $fh->print($in_libs);
     $fh->close;
-    $self->status_message("Allpaths in_libs file...OK");
+    $self->debug_message("Allpaths in_libs file...OK");
 }
 
 sub assembler_params {
@@ -277,6 +277,8 @@ sub _mem_in_gb {
 
     if ($ENV{UR_DBI_NO_COMMIT}) {
         $mem = 60;
+    } elsif ($egs and $egs >= 3_000_000_000) {
+        $mem = 998; # run on 1TB machine for genomes larger than 3GB
     } elsif ($egs and $egs <= 40_000_000) {
         $mem = 200;
     }
@@ -285,8 +287,8 @@ sub _mem_in_gb {
 
 sub resolve_assemble_lsf_queue {
     my $self = shift;
-    my $queue = 'assembly';
-    $queue = 'alignment-pd' if $ENV{UR_DBI_NO_COMMIT};
+    my $queue = $ENV{GENOME_LSF_QUEUE_ASSEMBLY};
+    $queue = $ENV{GENOME_LSF_QUEUE_ALIGNMENT_PROD} if $ENV{UR_DBI_NO_COMMIT};
     return $queue;
 }
 

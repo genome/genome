@@ -61,20 +61,20 @@ sub execute {
     if ( $self->list ) {
         # list
         $method = '_list';
-        $self->status_message('List mc16s files');
+        $self->debug_message('List mc16s files');
     }
     else {
         # copy
         Genome::Sys->validate_existing_directory( $self->destination )
             or return;
         $method = '_copy';
-        $self->status_message('Copy mc16s files to '.$self->destination);
+        $self->debug_message('Copy mc16s files to '.$self->destination);
     }
 
     my $file_method = $self->file_type.'_file';
     my @builds = $self->_builds;
     return if not @builds;
-    $self->status_message('Found '.@builds.' builds');
+    $self->debug_message('Found '.@builds.' builds');
     for my $build ( @builds ) {
         # aa backward compatibility
         if ( $build->type_name eq 'metagenomic composition 16s' ) {
@@ -97,7 +97,7 @@ sub execute {
         }
     }
 
-    $self->status_message('Done');
+    $self->debug_message('Done');
 
     return 1;
 }

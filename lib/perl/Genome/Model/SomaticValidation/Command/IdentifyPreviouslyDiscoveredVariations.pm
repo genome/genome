@@ -21,7 +21,7 @@ class Genome::Model::SomaticValidation::Command::IdentifyPreviouslyDiscoveredVar
     ],
     has_param => [
         lsf_queue => {
-            default => 'apipe',
+            default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT},
         },
     ],
 };
@@ -73,7 +73,7 @@ sub execute {
 
     my $build = $self->build;
 
-    $self->status_message("Comparing detected variants to previously discovered variations");
+    $self->debug_message("Comparing detected variants to previously discovered variations");
 
     my ($snv_result, $indel_result);
 
@@ -97,7 +97,7 @@ sub execute {
             }
             $self->link_result_to_build($result);
         } else {
-            $self->status_message("No snv result found on previously discovered variations build, skipping snv intersection");
+            $self->debug_message("No snv result found on previously discovered variations build, skipping snv intersection");
         }
     }
 
@@ -110,11 +110,11 @@ sub execute {
             }
             $self->link_result_to_build($result);
         } else {
-            $self->status_message("No indel result found on previously discovered variations build, skipping indel intersection");
+            $self->debug_message("No indel result found on previously discovered variations build, skipping indel intersection");
         }
     }
 
-    $self->status_message("Identify Previously Discovered Variations step completed");
+    $self->debug_message("Identify Previously Discovered Variations step completed");
     return 1;
 }
 
@@ -127,7 +127,7 @@ sub should_skip_run {
     }
 
     unless(defined($build->model->snv_detection_strategy) or defined($build->model->indel_detection_strategy)){
-        $self->status_message("No SNV or indel detection strategy, skipping identify previously discovered variants.");
+        $self->debug_message("No SNV or indel detection strategy, skipping identify previously discovered variants.");
         return 1;
     }
 
@@ -177,7 +177,7 @@ sub link_result_to_build {
     my $result = shift;
     my $build = $self->build;
 
-    $self->status_message('Linking result ' . $result->id . ' to build.');
+    $self->debug_message('Linking result ' . $result->id . ' to build.');
     $result->add_user(user => $build, label => $result->variant_type . '_identify_previously_discovered_result');
     Genome::Sys->create_directory($build->data_directory."/novel");
 

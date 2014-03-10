@@ -95,7 +95,7 @@ sub _validate_inputs {
     }
     #output pcap style ace file
     if ( -s $self->pcap_scaffold_ace_file ) {
-        $self->status_message( "Removing existing pcap ace out file: ".$self->pcap_scaffold_ace_file );
+        $self->debug_message( "Removing existing pcap ace out file: ".$self->pcap_scaffold_ace_file );
     }
 
     return 1;
@@ -104,7 +104,7 @@ sub _validate_inputs {
 sub _write_pcap_style_ace {
     my ( $self, $scaffolds ) = @_;
 
-    $self->status_message( "Found scaffold agp file or file was supplied, generating scaffolded pcap ace file" );
+    $self->debug_message( "Found scaffold agp file or file was supplied, generating scaffolded pcap ace file" );
 
     my $fh = Genome::Sys->open_file_for_reading( $self->newb_ace_file );
     unlink $self->pcap_scaffold_ace_file.'.int';

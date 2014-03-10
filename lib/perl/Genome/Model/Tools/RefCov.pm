@@ -258,7 +258,7 @@ class Genome::Model::Tools::RefCov {
         lsf_queue => {
             doc => 'When run in parallel, the LSF queue to submit jobs to.',
             is_optional => 1,
-            default_value => 'apipe',
+            default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT},
         },
         lsf_resource => {
             doc => 'When run in parallel, the resource request necessary to run jobs on LSF.',
@@ -575,14 +575,14 @@ sub fai {
 sub _load_roi_stats {
     my $self = shift;
     my $alignments = $self->alignments;
-    $self->status_message('Loading ROI Reference Stats...');
+    $self->debug_message('Loading ROI Reference Stats...');
     my $roi_stats = Genome::Model::Tools::RefCov::Reference::Stats->create(
         bam => $alignments->bio_db_bam,
         bam_index => $alignments->bio_db_index,
         bed_file => $self->roi_file_path,
     );
     $self->_roi_stats($roi_stats);
-    $self->status_message('Finished loading ROI Reference Stats!');
+    $self->debug_message('Finished loading ROI Reference Stats!');
     return $roi_stats;
 }
 
@@ -597,13 +597,13 @@ sub roi_stats {
 sub _load_genome_stats {
     my $self = shift;
     my $alignments = $self->alignments;
-    $self->status_message('Loading Genome Reference Stats...');
+    $self->debug_message('Loading Genome Reference Stats...');
     my $genome_stats = Genome::Model::Tools::RefCov::Reference::Stats->create(
         bam => $alignments->bio_db_bam,
         bam_index => $alignments->bio_db_index,
     );
     $self->_genome_stats($genome_stats);
-    $self->status_message('Finished loading Genome Reference Stats!');
+    $self->debug_message('Finished loading Genome Reference Stats!');
     return $genome_stats;
 }
 
@@ -681,7 +681,7 @@ sub region_sequence_array_ref {
 
     my $fai = $self->fai;
     my $id = $region->{id};
-    #$self->status_message('Fetching sequence for region '. $id);
+    #$self->debug_message('Fetching sequence for region '. $id);
     my $dna_string = $fai->fetch($id);
     if ( !defined($dna_string) || ( length($dna_string) != $region->{length} )  ) {
         die('Failed to fetch the proper length ('. $region->{length} .') dna.  Fetched '. length($dna_string) .' bases for region: '. $region->{id});
@@ -726,7 +726,7 @@ sub region_alignment_count {
         $index->fetch( $bam, $tid, ($region->{start} - 1), $region->{end},$alignment_count_callback);
     };
     if ($@) {
-        $self->status_message($@);
+        $self->debug_message($@);
     }
     return ($alignment_count,$forward_strand,$reverse_strand);
 }
@@ -739,7 +739,7 @@ sub region_coverage_array_ref {
     my $bam = $alignments->bio_db_bam;
     my $index = $alignments->bio_db_index;
     my $tid = $alignments->tid_for_chr($region->{chrom});
-    #$self->status_message('Fetching coverage for region '. $region->{id});
+    #$self->debug_message('Fetching coverage for region '. $region->{id});
     my $coverage;
     if ($self->min_base_quality || $self->min_mapping_quality) {
         $coverage = $self->region_coverage_with_quality_filter($region);
@@ -1013,7 +1013,7 @@ sub resolve_stats_file_headers {
 
 sub validate_chromosome_names {
     my $self = shift;
-    $self->status_message('Validate chromosomes...');
+    $self->debug_message('Validate chromosomes...');
     my $roi = $self->roi;
     my $refcov_bam = $self->alignments;
     for my $chr ($roi->chromosomes) {
@@ -1022,10 +1022,10 @@ sub validate_chromosome_names {
         };
         if ($@) {
             my $err = $@;
-            die('Failed to validate chromsomes in ROI '. $self->roi_file_format .' file '. $self->roi_file_path .' with alignment '. $self->alignment_file_format .' file '. $self->alignment_file_path .' with error:' ."\n". $err);
+            die('Failed to validate chromosomes in ROI '. $self->roi_file_format .' file '. $self->roi_file_path .' with alignment '. $self->alignment_file_format .' file '. $self->alignment_file_path .' with error:' ."\n". $err);
         }
     }
-    $self->status_message('Validate chromosomes...OK');
+    $self->debug_message('Validate chromosomes...OK');
     return 1;
 }
 
@@ -1073,7 +1073,7 @@ sub generate_coverage_stats {
             $self->_relative_coverage_hash_ref($relative_coverage_hash_ref);
         }
     } else {
-        $self->status_message('Region '. $region->{name} .' for chr/reference '. $region->{chrom} .' is longer than the defined maximum_roi_length '. $self->maximum_roi_length. '!  A window approach will be used with a '. $self->window_size .' offset.');
+        $self->debug_message('Region '. $region->{name} .' for chr/reference '. $region->{chrom} .' is longer than the defined maximum_roi_length '. $self->maximum_roi_length. '!  A window approach will be used with a '. $self->window_size .' offset.');
         my @region_gaps;
         my $offset = $self->window_size;
 
@@ -1093,10 +1093,10 @@ sub generate_coverage_stats {
                 $new_end = $end;
             }
             my $id = $seq_id .':'. $new_start .'-'. $new_end;
-            $self->status_message('Evaluating new sub-region: '. $id);
-            #$self->status_message(arena_table());
-            #$self->status_message('Total Coverage Stats Size: '. total_size($coverage_stats));
-            #$self->status_message('Total Region Gaps Size: '. total_size(\@region_gaps));
+            $self->debug_message('Evaluating new sub-region: '. $id);
+            #$self->debug_message(arena_table());
+            #$self->debug_message('Total Coverage Stats Size: '. total_size($coverage_stats));
+            #$self->debug_message('Total Region Gaps Size: '. total_size(\@region_gaps));
             my $new_region = {
                 name => $id,
                 start => $new_start,
@@ -1106,22 +1106,22 @@ sub generate_coverage_stats {
                 length => (($new_end - $new_start) + 1),
             };
             my $coverage_array_ref = $self->region_coverage_array_ref($new_region);
-            #$self->status_message('Total Coverage Size: '. total_size($coverage_array_ref));
+            #$self->debug_message('Total Coverage Size: '. total_size($coverage_array_ref));
             $brief_stat->calculate_coverage_stats(
                 min_depth => $min_depth,
                 coverage => $coverage_array_ref,
                 name => $new_region->{name},
             );
-            #$self->status_message('Total Window Stat Size: '. total_size($brief_stat));
+            #$self->debug_message('Total Window Stat Size: '. total_size($brief_stat));
             $bases_covered += $brief_stat->total_covered_bases;
             $discarded_bases += $brief_stat->min_depth_discarded_bases;
             my $filtered_coverage = $brief_stat->min_depth_filtered_coverage;
-            #$self->status_message('Total Window Stat with Min Depth Filter Size: '. total_size($brief_stat));
+            #$self->debug_message('Total Window Stat with Min Depth Filter Size: '. total_size($brief_stat));
             $coverage_stats->add_data($filtered_coverage);
 
             #The offset should be zero-based start coordinate
             my @window_gaps = $brief_stat->generate_gaps( ($new_start - 1) );
-            #$self->status_message('Total Window Stat with Gaps Size: '. total_size($brief_stat));
+            #$self->debug_message('Total Window Stat with Gaps Size: '. total_size($brief_stat));
             if (@window_gaps) {
                 if (@region_gaps) {
                     my $last_gap = $region_gaps[-1];
@@ -1140,7 +1140,7 @@ sub generate_coverage_stats {
             my $gap_length = $gap->[1] - $gap->[0];
             $gap_stats->add_data($gap_length);
         }
-        #$self->status_message('Total Gap Stats Size: '. total_size($gap_stats));
+        #$self->debug_message('Total Gap Stats Size: '. total_size($gap_stats));
         $stat->{_coverage_pdl} = undef;
         $stat->name($region->{name});
         # [0] Percent of Reference Bases Covered
@@ -1198,7 +1198,7 @@ sub generate_coverage_stats {
 
 sub print_roi_coverage {
     my $self = shift;
-    $self->status_message('Printing ROI Coverage...');
+    $self->debug_message('Printing ROI Coverage...');
 
     if ($self->validate_chromosomes) {
         $self->validate_chromosome_names;
@@ -1220,7 +1220,7 @@ sub print_roi_coverage {
     my $region_count;
     while (my $region = $roi->next_region) {
         unless ($region_count++ % 10000) {
-            $self->status_message('Processed '. $region_count .' ROI...');
+            $self->debug_message('Processed '. $region_count .' ROI...');
         }
         my $sequence_array_ref;
         # TODO: Add a windowing method for gc content, G+C evaluation will fail at ~50Mb regions..
@@ -1234,7 +1234,7 @@ sub print_roi_coverage {
             my $stat = $self->generate_coverage_stats($region,$min_depth);
             my $data = $stat->stats_hash_ref;
             if ($self->evaluate_gc_content) {
-                #$self->status_message('Evaluating GC content of '. $data->{name} .' '. $region->{id});
+                #$self->debug_message('Evaluating GC content of '. $data->{name} .' '. $region->{id});
                 # TODO: getting the coverage array ref back from the stat object will not work with windows
                 my $coverage_array_ref = $stat->min_depth_filtered_coverage;
                 my $gc_data = $self->evaluate_region_gc_content($sequence_array_ref,$coverage_array_ref);
@@ -1306,7 +1306,7 @@ sub print_roi_coverage {
         }
     }
     $writer->output->close;
-    $self->status_message('Copying Temporary Coverage File...');
+    $self->debug_message('Copying Temporary Coverage File...');
     Genome::Sys->copy_file($temp_stats_file, $self->stats_file);
 
     if ($self->merge_by && $self->merged_stats_file) {
@@ -1339,7 +1339,7 @@ sub print_roi_coverage {
         }
         # TODO: print a total depth per relative_position file
     }
-    $self->status_message('Print ROI Coverage...OK');
+    $self->debug_message('Print ROI Coverage...OK');
     return 1;
 }
 
@@ -1349,7 +1349,7 @@ sub evaluate_region_gc_content {
     my $sequence = shift;
     my $coverage = shift;
 
-    #$self->status_message('Loading GC Reference Coverage...');
+    #$self->debug_message('Loading GC Reference Coverage...');
     my $nucleotide_coverage = $self->nucleotide_coverage;
     $nucleotide_coverage->calculate_nucleotide_coverage(
         sequence => $sequence,
@@ -1358,7 +1358,7 @@ sub evaluate_region_gc_content {
     unless ($nucleotide_coverage) {
         die('Failed to create GC coverage!');
     }
-    #$self->status_message('Finished loading GC Reference Coverage...');
+    #$self->debug_message('Finished loading GC Reference Coverage...');
     my $gc_hash_ref = $nucleotide_coverage->gc_hash_ref;
     return $gc_hash_ref;
 }

@@ -9,16 +9,18 @@ class Genome::Model::Event::Build::ReferenceAlignment::DetectVariants{
     is => ['Genome::Model::Event'],
 };
 
-sub bsub_rusage {
-    my $self = shift;
+sub lsf_queue {
+    return $ENV{GENOME_LSF_QUEUE_BUILD_WORKER};
+}
 
-    return "-R 'select[tmp>4000] rusage[tmp=4000]' -q long";
+sub bsub_rusage {
+    return "-R 'select[tmp>4000] rusage[tmp=4000]'";
 }
 
 sub execute{
     my $self = shift;
 
-    $self->status_message("Executing detect variants step");
+    $self->debug_message("Executing detect variants step");
     my $build = $self->build;
 
     my $processing_profile = $build->processing_profile;
@@ -63,7 +65,7 @@ sub execute{
         }
     }
 
-    $self->status_message("detect variants command completed successfully");
+    $self->debug_message("detect variants command completed successfully");
 
     return 1;
 }

@@ -14,7 +14,7 @@ class Genome::Model::SomaticVariation::Command::AnnotateAndUploadVariants{
         build_id => {
             is => 'Text',
             is_input => 1,
-            is_output => 1,
+            # is_output => 1,
             doc => 'build id of SomaticVariation model',
         },
         annotator_version => {
@@ -27,6 +27,7 @@ class Genome::Model::SomaticVariation::Command::AnnotateAndUploadVariants{
         build => {
             is => 'Genome::Model::Build::SomaticVariation',
             id_by => 'build_id',
+            is_output => 1,
         },
         regulatory_annotations => {
             is => 'Genome::FeatureList',
@@ -43,16 +44,15 @@ class Genome::Model::SomaticVariation::Command::AnnotateAndUploadVariants{
     ],
     has_param => [
         lsf_queue => {
-            default => 'apipe',
+            default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT},
         },
         lsf_resource => {
             default => "-M 20000000 -R 'select[mem>20000] rusage[mem=20000]'",
         },
         joinx_version => {
             is => "Text",
-            doc => "Version of joinx to use",
-            is_optional => 0,
-            default => 1.6,
+            is_optional => 1,
+            doc => "Version of joinx to use, will be resolved to the latest default if not specified",
         },
         lsf_resource => { 
             is => 'Text',
@@ -68,7 +68,9 @@ sub execute{
         die $self->error_message("no build provided!");
     }
 
-    $self->status_message("Executing Annotate and Upload step");
+    $self->_resolve_joinx_version;
+
+    $self->debug_message("Executing Annotate and Upload step");
 
     my $version = 2;
     #my $version = GMT:BED:CONVERT::version();  TODO, something like this instead of hardcoding
@@ -151,7 +153,7 @@ sub execute{
     for my $key (keys %files){
         my $variant_file = $files{$key};
         unless ($variant_file){
-            $self->status_message("No detection strategy for $key. Skipping annotation and upload");
+            $self->debug_message("No detection strategy for $key. Skipping annotation and upload");
         }
         unless (-e $variant_file){
             die $self->error_message("File expected for annotating $key at $variant_file does not exist!  Failing");
@@ -179,7 +181,7 @@ sub execute{
                     $annotation_params{output_file} = "$final_output_file.non-dedup";
                 }
 
-                $self->status_message("Creating TranscriptVariants object with parameters: " . Dumper \%annotation_params);
+                $self->debug_message("Creating TranscriptVariants object with parameters: " . Dumper \%annotation_params);
                 my $annotation_command = Genome::Model::Tools::Annotate::TranscriptVariants->create(%annotation_params);
                 unless ($annotation_command){
                     die $self->error_message("Failed to create annotate command for $key. Params:\n".Data::Dumper::Dumper(\%annotation_params));
@@ -215,7 +217,7 @@ sub execute{
             }
         }
         else{
-            $self->status_message("No variants present for $key, skipping annotation and upload");
+            $self->debug_message("No variants present for $key, skipping annotation and upload");
             File::Copy::copy($variant_file, $annotated_file);
             File::Copy::copy($variant_file, "$annotated_file.top");
             File::Copy::copy($variant_file, $uploaded_file);
@@ -223,7 +225,7 @@ sub execute{
     }
 
     #Annotate vcfs with dbsnp ids
-    $self->status_message("Adding dbsnp ids to vcf");
+    $self->debug_message("Adding dbsnp ids to vcf");
     
     if ($build->previously_discovered_variations_build) {
         my $annotation_vcf = $build->previously_discovered_variations_build->snvs_vcf;
@@ -243,7 +245,7 @@ sub execute{
                     info => $info,
                     use_version => $self->joinx_version,
                 ) || die "Failed to execute Joinx Vcf annotation using db: $annotation_vcf";
-                $self->status_message("Successfully annotated VCF with information from $annotation_vcf");
+                $self->debug_message("Successfully annotated VCF with information from $annotation_vcf");
             }
             foreach my $annotation_prefix ("snvs.hq.tier1", "snvs.hq.tier2") {
                 my $annotation_top_file = $build->data_set_path("effects/$annotation_prefix", $annotation_output_version, "annotated.top");
@@ -251,7 +253,7 @@ sub execute{
                 my $vcf_file = $vcf_files{"snvs.hq"};
                 $vcf_file = $vcf_file.".annotated.vcf.gz";
                 $vcf_file =~ s/vcf.gz.//;
-                $self->status_message("Adding rsid column for $annotation_prefix from vcf file ".$vcf_file);
+                $self->debug_message("Adding rsid column for $annotation_prefix from vcf file ".$vcf_file);
                 my $rv = Genome::Model::Tools::Annotate::AddRsid->execute(
                     anno_file => $annotation_top_file,
                     vcf_file => $vcf_file,
@@ -265,7 +267,7 @@ sub execute{
     }
     
     #Annotate SVs. Need to handle mouse vs human and human 36 vs 37
-    $self->status_message("Executing sv annotation");
+    $self->debug_message("Executing sv annotation");
 
     my $species_name = $build->subject->species_name;
     
@@ -382,7 +384,7 @@ sub execute{
         }
         
         my $cmd = "echo \"$header\" > $final_name; cat ".$build->data_directory."/effects/snvs.hq.$count.bed >> $final_name";
-        $self->status_message("Running command $cmd");
+        $self->debug_message("Running command $cmd");
         `$cmd`;
 
         my @in_files;
@@ -421,7 +423,7 @@ sub execute{
     #upload variants
 
     ##upload metrics
-    $self->status_message("Uploading metrics");
+    $self->debug_message("Uploading metrics");
     eval{
         my ($tier3_snvs, $tier4_snvs, $tier3_indels, $tier4_indels, $svs);
         $tier3_snvs = $build->data_set_path("effects/snvs.hq.novel.tier3",$version,'bed');
@@ -460,9 +462,16 @@ sub execute{
             $build->set_metric("sv_count", $number_of_svs);
         }
     }; 
-    $self->status_message("Metric setting problem: $@") if $@;
+    $self->debug_message("Metric setting problem: $@") if $@;
 
     return 1;
+}
+
+sub _resolve_joinx_version {
+    my $self = shift;
+    unless (defined $self->joinx_version) {
+        $self->joinx_version(Genome::Model::Tools::Joinx->get_default_version);
+    }
 }
 
 sub _get_db_version {
@@ -499,7 +508,7 @@ sub _get_human_sv_annot_file {
     }
 
     return unless $type and $dbsnp_version;
-    $self->status_message("Getting annotation files for species $species of version $type, dbsnp version $dbsnp_version");
+    $self->debug_message("Getting annotation files for species $species of version $type, dbsnp version $dbsnp_version");
     my $segdup = Genome::Db->get(source_name => 'ucsc', database_name => $species, external_version => $type);
     my $dbsnp = Genome::Db->get(source_name => 'genome-db-dbsnp', database_name => "$species/$type", external_version => $dbsnp_version);
     my $dbvar = Genome::Db->get(source_name => 'dbvar', database_name => $species, external_version => $type);

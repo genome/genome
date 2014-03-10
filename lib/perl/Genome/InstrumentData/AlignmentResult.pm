@@ -81,7 +81,7 @@ class Genome::InstrumentData::AlignmentResult {
     ],
     has_param => [
         aligner_name            => {
-                                    is => 'Text', default_value => 'maq',
+                                    is => 'Text',
                                     doc => 'the name of the aligner to use, maq, blat, newbler etc.',
                                 },
         aligner_version         => {
@@ -308,6 +308,21 @@ sub required_rusage {
     ''
 }
 
+sub lsf_queue {
+    my $self = shift;
+
+    # if class overrode then use that
+    if ($self->__lsf_queue) {
+        return $self->__lsf_queue;
+    }
+
+    if (Genome::Config->can('should_use_alignment_pd') && Genome::Config->should_use_alignment_pd($self->model)) {
+        return $ENV{GENOME_LSF_QUEUE_ALIGNMENT_PROD};
+    }
+
+    return $ENV{GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT};
+}
+
 sub required_rusage_for_building_index {
     # override if necessary in subclasses.
     my $class = shift;
@@ -316,7 +331,7 @@ sub required_rusage_for_building_index {
 
     my $select = "select[mem>=10000 && tmp>=15000]";
     my $rusage = "rusage[mem=10000, tmp=15000]";
-    my $options = "-M 10000000 -q long";
+    my $options = "-M 10000000";
 
     return sprintf("-R '%s %s' %s", $select, $rusage, $options);
 }
@@ -365,9 +380,9 @@ sub create {
 
     # STEP 1: verify the architecture on which we're running
     my $actual_os = Genome::Config->arch_os();
-    $class->status_message("OS is $actual_os");
+    $class->debug_message("OS is $actual_os");
     my $required_os = $class->required_arch_os;
-    $class->status_message("Required OS is $required_os");
+    $class->debug_message("Required OS is $required_os");
     unless ($required_os eq $actual_os) {
         die $class->error_message("This logic can only be run on a $required_os machine!  (running on $actual_os)");
     }
@@ -378,7 +393,7 @@ sub create {
 
     if (my $output_dir = $self->output_dir) {
         if (-d $output_dir) {
-            $self->status_message("BACKFILL DIRECTORY: $output_dir!");
+            $self->debug_message("BACKFILL DIRECTORY: $output_dir!");
             return $self;
         }
     }
@@ -386,15 +401,15 @@ sub create {
     # STEP 3: ENSURE WE WILL PROBABLY HAVE DISK SPACE WHEN ALIGNMENT COMPLETES
     # TODO: move disk_group, estimated_size, allocation and promotion up into the software result logic
     my $estimated_kb_usage = $self->estimated_kb_usage;
-    $self->status_message("Estimated disk for this data set: " . $estimated_kb_usage . " kb");
-    $self->status_message("Check for available disk...");
-    my @available_volumes = Genome::Disk::Volume->get(disk_group_names => "info_alignments");
-    $self->status_message("Found " . scalar(@available_volumes) . " disk volumes");
+    $self->debug_message("Estimated disk for this data set: " . $estimated_kb_usage . " kb");
+    $self->debug_message("Check for available disk...");
+    my @available_volumes = Genome::Disk::Volume->get(disk_group_names => $ENV{GENOME_DISK_GROUP_ALIGNMENTS});
+    $self->debug_message("Found " . scalar(@available_volumes) . " disk volumes");
     my $unallocated_kb = 0;
     for my $volume (@available_volumes) {
         $unallocated_kb += $volume->unallocated_kb;
     }
-    $self->status_message("Available disk: " . $unallocated_kb . " kb");
+    $self->debug_message("Available disk: " . $unallocated_kb . " kb");
     my $factor = 20;
     unless ($unallocated_kb > ($factor * $estimated_kb_usage)) {
         $self->error_message("NOT ENOUGH DISK SPACE!  This step requires $factor x as much disk as the job will use to be available before starting.");
@@ -402,13 +417,13 @@ sub create {
     }
 
     # STEP 4: PREPARE THE STAGING DIRECTORY
-    $self->status_message("Prepare working directories...");
+    $self->debug_message("Prepare working directories...");
     $self->_prepare_working_and_staging_directories;
-    $self->status_message("Staging path is " . $self->temp_staging_directory);
-    $self->status_message("Working path is " . $self->temp_scratch_directory);
+    $self->debug_message("Staging path is " . $self->temp_staging_directory);
+    $self->debug_message("Working path is " . $self->temp_scratch_directory);
 
     # STEP 5: PREPARE REFERENCE SEQUENCES
-    $self->status_message("Preparing the reference sequences...");
+    $self->debug_message("Preparing the reference sequences...");
     unless($self->_prepare_reference_sequences) {
         $self->error_message("Reference sequences are invalid.  We can't proceed:  " . $self->error_message);
         die $self->error_message();
@@ -425,14 +440,14 @@ sub create {
 
         # STEP 7: PREPARE THE ALIGNMENT FILE (groups file, sequence dictionary)
         # this also prepares the bam output pipe and crams the alignment headers through it.
-        $self->status_message("Preparing the all_sequences.sam in scratch");
+        $self->debug_message("Preparing the all_sequences.sam in scratch");
         unless ($self->prepare_scratch_sam_file) {
             $self->error_message("Failed to prepare the scratch sam file with groups and sequence dictionary");
             die $self->error_message;
         }
 
         # STEP 7: RUN THE ALIGNER
-        $self->status_message("Running aligner...");
+        $self->debug_message("Running aligner...");
         unless ($self->run_aligner(@inputs)) {
             $self->error_message("Failed to collect inputs and/or run the aligner!");
             die $self->error_message;
@@ -442,7 +457,7 @@ sub create {
         if ($self->supports_streaming_to_bam) {
             $self->close_out_streamed_bam_file;
         } else {
-            $self->status_message("Constructing a BAM file (if necessary)...");
+            $self->debug_message("Constructing a BAM file (if necessary)...");
             unless( $self->create_BAM_in_staging_directory()) {
                 $self->error_message("Call to create_BAM_in_staging_directory failed.\n");
                 die $self->error_message;
@@ -452,7 +467,7 @@ sub create {
 
     if ($@) {
         my $error = $@;
-        $self->status_message("Oh no!  Caught an exception while in the critical point where the BAM pipe was open: $@");
+        $self->error_message("Oh no!  Caught an exception while in the critical point where the BAM pipe was open: $@");
         if (defined $self->_sam_output_fh) {
             eval {
                 $self->_sam_output_fh->close;
@@ -466,24 +481,24 @@ sub create {
     }
 
     # STEP 9-10, validate BAM file (if necessary)
-    $self->status_message("Postprocessing & Sanity Checking BAM file (if necessary)...");
+    $self->debug_message("Postprocessing & Sanity Checking BAM file (if necessary)...");
     unless ($self->postprocess_bam_file()) {
         $self->error_message("Postprocess BAM file failed");
         die $self->error_message;
     }
 
     # STEP 11: COMPUTE ALIGNMENT METRICS
-    $self->status_message("Computing alignment metrics...");
+    $self->debug_message("Computing alignment metrics...");
     $self->_compute_alignment_metrics();
 
     # STEP 12: PREPARE THE ALIGNMENT DIRECTORY ON NETWORK DISK
-    $self->status_message("Preparing the output directory...");
-    $self->status_message("Staging disk usage is " . $self->_staging_disk_usage . " KB");
+    $self->debug_message("Preparing the output directory...");
+    $self->debug_message("Staging disk usage is " . $self->_staging_disk_usage . " KB");
     my $output_dir = $self->output_dir || $self->_prepare_output_directory;
-    $self->status_message("Alignment output path is $output_dir");
+    $self->debug_message("Alignment output path is $output_dir");
 
     # STEP 13: PROMOTE THE DATA INTO ALIGNMENT DIRECTORY
-    $self->status_message("Moving results to network disk...");
+    $self->debug_message("Moving results to network disk...");
     my $product_path;
     unless($product_path= $self->_promote_data) {
         $self->error_message("Failed to de-stage data into alignment directory " . $self->error_message);
@@ -492,7 +507,7 @@ sub create {
 
     # STEP 14: RESIZE THE DISK
     # TODO: move this into the actual original allocation so we don't need to do this
-    $self->status_message("Resizing the disk allocation...");
+    $self->debug_message("Resizing the disk allocation...");
     if ($self->_disk_allocation) {
         my %params;
         $params{allow_reallocate_with_move} = 0;
@@ -553,20 +568,20 @@ sub prepare_scratch_sam_file {
 
     my @input_files = ($seq_dict, $groups_input_file);
 
-    $self->status_message("Cat-ing together: ".join("\n",@input_files). "\n to output file ".$scratch_sam_file);
+    $self->debug_message("Cat-ing together: ".join("\n",@input_files). "\n to output file ".$scratch_sam_file);
     my $cat_rv = Genome::Sys->cat(input_files=>\@input_files,output_file=>$scratch_sam_file);
     if ($cat_rv ne 1) {
         $self->error_message("Error during cat of alignment sam files! Return value $cat_rv");
         die $self->error_message;
     }
     else {
-        $self->status_message("Cat of sam files successful.");
+        $self->debug_message("Cat of sam files successful.");
     }
 
     if ($self->supports_streaming_to_bam) {
         my $ref_list  = $self->reference_build->full_consensus_sam_index_path($self->samtools_version);
         my $sam_cmd = sprintf("| %s view -S -b -o %s - ", Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version), $self->temp_scratch_directory . "/raw_all_sequences.bam");
-        $self->status_message("Opening $sam_cmd");
+        $self->debug_message("Opening $sam_cmd");
 
         $self->_sam_output_fh(IO::File->new($sam_cmd));
         unless ($self->_sam_output_fh()) {
@@ -629,10 +644,10 @@ sub _extract_input_read_group_bam {
 sub collect_inputs {
     my $self = shift;
 
-    $self->status_message("Unpacking reads...");
+    $self->debug_message("Unpacking reads...");
 
     if ($self->requires_fastqs_to_align) {
-        $self->status_message('Requires fastqs to align');
+        $self->debug_message('Requires fastqs to align');
         return $self->_extract_input_fastq_filenames;
     } 
 
@@ -650,7 +665,7 @@ sub collect_inputs {
 
     # maybe we want to extract a read group from that bam and deal with that instead...
     if (defined $self->instrument_data_segment_id) {
-        $self->status_message('Extract input read group bam');
+        $self->debug_message('Extract input read group bam');
         $bam_file = $self->_extract_input_read_group_bam;
         unless ($bam_file) {
             $self->error_message(sprintf('Failed to extract read group (%s) into temporary BAM.', $self->instrument_data_segment_id));
@@ -659,15 +674,15 @@ sub collect_inputs {
     }
 
     # Some old imported bam does not have is_paired_end set, patch for now
-    $self->status_message("Checking if this read group is paired end...");
+    $self->debug_message("Checking if this read group is paired end...");
     my $paired = $instr_data->is_paired_end;
 
     # Should !$paired be !defined($paired)?
     if ((!$paired || defined $self->instrument_data_segment_id) && $instr_data->can('import_format') && $instr_data->import_format eq 'bam') {
         if (defined $self->instrument_data_segment_id) {
-            $self->status_message(sprintf('Inferring paired end status for "%s" segment...', $self->instrument_data_segment_id));
+            $self->debug_message(sprintf('Inferring paired end status for "%s" segment...', $self->instrument_data_segment_id));
         } else {
-            $self->status_message('Inferring paired end status...');
+            $self->debug_message('Inferring paired end status...');
         }
 
         my $output_file = $bam_file . '.flagstat';
@@ -691,11 +706,11 @@ sub collect_inputs {
                 'Trying to infer paired end status on mixed data (%.2f%% paired), not sure which to choose!',
                 100 * $percent_paired));
         } elsif ($percent_paired >= 0.9) {
-            $self->status_message('Setting paired end status to true.');
+            $self->debug_message('Setting paired end status to true.');
             $self->_is_inferred_paired_end(1);
             $paired = 1;
         } else {
-            $self->status_message('Setting paired end status to false.');
+            $self->debug_message('Setting paired end status to false.');
             $self->_is_inferred_paired_end(0);
             $paired = 0;
         }
@@ -708,7 +723,7 @@ sub collect_inputs {
 sub run_aligner {
     my ($self, @inputs) = @_;
 
-    $self->status_message("Got " . scalar(@inputs) . " input files");
+    $self->debug_message("Got " . scalar(@inputs) . " input files");
     if (@inputs > 3) {
         $self->error_message("We don't support aligning with more than 3 inputs (the first 2 are treated as PE and last 1 is treated as SE)");
         die $self->error_message;
@@ -717,7 +732,7 @@ sub run_aligner {
     # Perform N-removal if requested
     
     if ($self->n_remove_threshold) {
-        $self->status_message("Running N-remove.  Threshold is " . $self->n_remove_threshold);
+        $self->debug_message("Running N-remove.  Threshold is " . $self->n_remove_threshold);
 
         my @n_removed_fastqs;
 
@@ -731,18 +746,18 @@ sub run_aligner {
 
             my $passed = $n_remove_cmd->passed_read_count();
             my $failed = $n_remove_cmd->failed_read_count();
-            $self->status_message("N removal complete: Passed $passed reads & Failed $failed reads");
+            $self->debug_message("N removal complete: Passed $passed reads & Failed $failed reads");
             if ($passed > 0) {
                 push @n_removed_fastqs, $n_removed_file;
             }
 
             if ($input_pathname =~ m/^\/tmp/) {
-                $self->status_message("Removing original file before N removal to save space: $input_pathname");
+                $self->debug_message("Removing original file before N removal to save space: $input_pathname");
                 unlink($input_pathname);
             }
         }
         if (@inputs == 1 && @n_removed_fastqs == 2) {
-            $self->status_message("NOTE: An entire side of the read pairs was filtered away after n-removal.  We'll be running in SE mode from here on out.");
+            $self->debug_message("NOTE: An entire side of the read pairs was filtered away after n-removal.  We'll be running in SE mode from here on out.");
         }
 
         if (@inputs == 0) {
@@ -772,22 +787,22 @@ sub run_aligner {
         elsif ($filter_name eq 'reverse-only') {
             @passes = ( [ pop @inputs ] );
         }
-        $self->status_message("Running the aligner with the $filter_name filter.");
+        $self->debug_message("Running the aligner with the $filter_name filter.");
     }
     elsif ($self->force_fragment) {
-        $self->status_message("Running the aligner in force-fragment mode.");
+        $self->debug_message("Running the aligner in force-fragment mode.");
         @passes = map { [ $_ ] } @inputs;
     }
     elsif (@inputs == 3) {
-        $self->status_message("Running aligner twice: once for PE & once for SE");
+        $self->debug_message("Running aligner twice: once for PE & once for SE");
         @passes = ( [ $inputs[0], $inputs[1] ], [ $inputs[2] ] );
     }
     elsif (@inputs == 2) {
-        $self->status_message("Running aligner in PE mode");
+        $self->debug_message("Running aligner in PE mode");
         @passes = ( \@inputs );
     }
     elsif (@inputs == 1) {
-        $self->status_message("Running aligner in SE mode");
+        $self->debug_message("Running aligner in SE mode");
         @passes = ( \@inputs );
     }
 
@@ -822,7 +837,7 @@ sub run_aligner {
     $self->_fastq_read_count($fastq_rd_ct);
 
     for my $pass (@passes) {
-        $self->status_message("Aligning @$pass...");
+        $self->debug_message("Aligning @$pass...");
         # note that the _run_aligner method must _append_ to any existing all_sequences.sam file
         # in case it is not being run on the first pass
         unless ($self->_run_aligner(@$pass)) {
@@ -843,7 +858,7 @@ sub run_aligner {
 
     for (@inputs) {
        if ($_ =~ m/^\/tmp\/.*\.fastq$/) {
-           $self->status_message("Unlinking fastq file to save space now that we've aligned: $_");
+           $self->debug_message("Unlinking fastq file to save space now that we've aligned: $_");
            unlink($_);
        }
     }
@@ -888,33 +903,32 @@ sub determine_input_read_count_from_bam {
 
 sub close_out_streamed_bam_file {
     my $self = shift;
-    $self->status_message("Closing bam file...");
+    $self->debug_message("Closing bam file...");
     $self->_sam_output_fh->flush;
     $self->_sam_output_fh->close;
     $self->_sam_output_fh(undef);
 
-    $self->status_message("Sorting by name to do fixmate...");
+    $self->debug_message("Sorting by name to do fixmate...");
     my $bam_file = $self->temp_scratch_directory . "/raw_all_sequences.bam";
     my $final_bam_file = $self->temp_staging_directory . "/all_sequences.bam";
     my $samtools = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
 
     my $tmp_file = $bam_file.'.sort';
-    #402653184 bytes = 3 Gb
-    my $rv = system "$samtools sort -n -m 402653184 $bam_file $tmp_file";
+    my $rv = system "$samtools sort -n $bam_file $tmp_file";
     $self->error_message("Sort by name failed") and return if $rv or !-s $tmp_file.'.bam';
-    $self->status_message("unlinking original bam file $bam_file.");
+    $self->debug_message("unlinking original bam file $bam_file.");
     unlink $bam_file;
 
     # TODO: run htseq here
     # We need a way to have down-stream steps run before their predecessor cleans-up.
 
-    $self->status_message("Now running fixmate");
+    $self->debug_message("Now running fixmate");
     $rv = system "$samtools fixmate $tmp_file.bam $tmp_file.fixmate";
     $self->error_message("fixmate failed") and return if $rv or !-s $tmp_file.'.fixmate';
     unlink "$tmp_file.bam";
 
-    $self->status_message("Now putting things back in chr/pos order");
-    $rv = system "$samtools sort -m 402653184 $tmp_file.fixmate $tmp_file.fix";
+    $self->debug_message("Now putting things back in chr/pos order");
+    $rv = system "$samtools sort $tmp_file.fixmate $tmp_file.fix";
     $self->error_message("Sort by position failed") and return if $rv or !-s $tmp_file.'.fix.bam';
 
     unlink "$tmp_file.fixmate";
@@ -942,24 +956,24 @@ sub postprocess_bam_file {
     my $output_file = $bam_file . '.flagstat';
 
     #STEPS 8:  CREATE BAM.FLAGSTAT
-    $self->status_message("Creating all_sequences.bam.flagstat ...");
+    $self->debug_message("Creating all_sequences.bam.flagstat ...");
     die unless $self->_create_bam_flagstat($bam_file, $output_file);
 
     #STEPS 9: VERIFY BAM IS NOT TRUNCATED BY FLAGSTAT
-    $self->status_message("Verifying the bam...");
+    $self->debug_message("Verifying the bam...");
     unless ($self->_verify_bam) {
         $self->error_message('Fail to verify the bam');
         die $self->error_message;
     }
 
     #request by RT#62311 for submission and data integrity
-    $self->status_message('Creating all_sequences.bam.md5 ...');
+    $self->debug_message('Creating all_sequences.bam.md5 ...');
     unless ($self->_create_bam_md5) {
         $self->error_message('Fail to create bam md5');
         die $self->error_message;
     }
 
-    $self->status_message("Indexing BAM file ...");
+    $self->debug_message("Indexing BAM file ...");
     unless($self->_create_bam_index) {
         $self->error_message('Fail to create bam md5');
         die $self->error_message;
@@ -1118,7 +1132,7 @@ sub _check_read_count {
         $self->error_message("$check does not match.");
         return;
     }
-    $self->status_message("$check matches.");
+    $self->debug_message("$check matches.");
     return 1;
 }
 
@@ -1148,19 +1162,19 @@ sub _promote_validated_data {
     my $staging_dir = $self->temp_staging_directory;
     my $output_dir  = $self->output_dir;
 
-    $self->status_message("Now de-staging data from $staging_dir into $output_dir");
+    $self->debug_message("Now de-staging data from $staging_dir into $output_dir");
 
     my $copy_cmd = sprintf("cp -rL %s/* %s/", $staging_dir, $output_dir);
-    $self->status_message("Running cp: $copy_cmd");
+    $self->debug_message("Running cp: $copy_cmd");
     my $copy_exit_code = system($copy_cmd);
 
     if ($copy_exit_code != 0) {
 
-        $self->status_message("Copy failed, attempting rsync");
+        $self->debug_message("Copy failed, attempting rsync");
 
         my $rsync_cmd = sprintf("rsync -avzL %s/* %s/", $staging_dir, $output_dir);
 
-        $self->status_message("Running Rsync: $rsync_cmd");
+        $self->debug_message("Running Rsync: $rsync_cmd");
         my $rsync_exit_code = system($rsync_cmd);
 
         unless ($rsync_exit_code == 0) {
@@ -1180,7 +1194,7 @@ sub _promote_validated_data {
         chmod 0444, $file;
     }
 
-    $self->status_message("Files in $output_dir: \n" . join "\n", glob($output_dir . "/*"));
+    $self->debug_message("Files in $output_dir: \n" . join "\n", glob($output_dir . "/*"));
 
     return $output_dir;
 }
@@ -1205,15 +1219,15 @@ sub _process_sam_files {
     my $unaligned_input_file = $self->temp_scratch_directory . "/all_sequences_unaligned.sam";
 
     if (-s $unaligned_input_file) {
-        $self->status_message("Looks like there are unaligned reads not in the main input file.  ");
+        $self->debug_message("Looks like there are unaligned reads not in the main input file.  ");
         my @input_files = ($sam_input_file, $unaligned_input_file);
-        $self->status_message("Cat-ing the unaligned list $unaligned_input_file to the sam file $sam_input_file");
+        $self->debug_message("Cat-ing the unaligned list $unaligned_input_file to the sam file $sam_input_file");
         my $cat_rv = Genome::Sys->cat(input_files=>[$unaligned_input_file],output_file=>$sam_input_file,append_mode=>1);
         if ($cat_rv ne 1) {
             $self->error_message("Error during cat of alignment sam files! Return value $cat_rv");
             die $self->error_message;
         } else {
-            $self->status_message("Cat of sam files successful.");
+            $self->debug_message("Cat of sam files successful.");
         }
 
         unlink($unaligned_input_file);
@@ -1233,9 +1247,9 @@ sub _process_sam_files {
             $self->error_message("Adding read group to sam file failed!");
             die $self->error_message;
         }
-        $self->status_message("Read group add completed, new file is $per_lane_sam_file_rg");
+        $self->debug_message("Read group add completed, new file is $per_lane_sam_file_rg");
 
-        $self->status_message("Removing non-read-group combined sam file: " . $sam_input_file);
+        $self->debug_message("Removing non-read-group combined sam file: " . $sam_input_file);
         unlink($sam_input_file);
     }
 
@@ -1294,7 +1308,7 @@ sub _process_sam_files {
         die $self->error_message;
     }
 
-    $self->status_message("Conversion successful.  File is: $per_lane_bam_file");
+    $self->debug_message("Conversion successful.  File is: $per_lane_bam_file");
     return 1;
 }
 
@@ -1386,7 +1400,7 @@ sub resolve_allocation_subdirectory {
 }
 
 sub resolve_allocation_disk_group_name {
-    return "info_alignments";
+    $ENV{GENOME_DISK_GROUP_ALIGNMENTS};
 }
 
 
@@ -1431,15 +1445,15 @@ sub _extract_input_fastq_filenames {
     else {
         # FIXME - getting a warning about undefined string with 'eq'
         if (! defined($self->filter_name)) {
-            $self->status_message('No special filter for this input');
+            $self->debug_message('No special filter for this input');
         }
         elsif ($self->filter_name eq 'forward-only') {
             # forward reads only
-            $self->status_message('forward-only filter applied for this input');
+            $self->debug_message('forward-only filter applied for this input');
         }
         elsif ($self->filter_name eq 'reverse-only') {
             # reverse reads only
-            $self->status_message('reverse-only filter applied for this input');
+            $self->debug_message('reverse-only filter applied for this input');
         }
         else {
             die 'Unsupported filter: "' . $self->filter_name . '"!';
@@ -1531,7 +1545,7 @@ sub get_or_create_sequence_dictionary {
     my $self = shift;
 
     my $species = "unknown";
-    $self->status_message("Sample id: ".$self->instrument_data->sample_id);
+    $self->debug_message("Sample id: ".$self->instrument_data->sample_id);
     my $sample = Genome::Sample->get($self->instrument_data->sample_id);
     if ( defined($sample) ) {
         $species =  $sample->species_name;
@@ -1540,7 +1554,7 @@ sub get_or_create_sequence_dictionary {
         }
     }
 
-    $self->status_message("Species from alignment: ".$species);
+    $self->debug_message("Species from alignment: ".$species);
 
     my $ref_build = $self->reference_build;
     my $seq_dict = $ref_build->get_sequence_dictionary("sam",$species,$self->picard_version);
@@ -1582,8 +1596,8 @@ sub construct_groups_file {
     my $rg_tag = "\@RG\tID:$id_tag\tPL:$platform\tPU:$pu_tag\tLB:$lib_tag\tPI:$insert_size_for_header\tDS:$description_for_header\tDT:$date_run_tag\tSM:$sample_tag\tCN:WUGSC\n";
     my $pg_tag = "\@PG\tID:$id_tag\tVN:$aligner_version_tag\tCL:$aligner_cmd\n";
 
-    $self->status_message("RG: $rg_tag");
-    $self->status_message("PG: $pg_tag");
+    $self->debug_message("RG: $rg_tag");
+    $self->debug_message("PG: $pg_tag");
 
     my $header_groups_fh = IO::File->new(">>".$output_file) || die "failed opening groups file for writing";
     print $header_groups_fh $rg_tag;
@@ -1678,11 +1692,11 @@ sub _derive_insert_size_bounds {
     }
     
     if (!defined $upper || $upper <= 0) {
-        $self->status_message("Calculated upper bound on insert size is undef or less than 0, defaulting to $up_default");
+        $self->debug_message("Calculated upper bound on insert size is undef or less than 0, defaulting to $up_default");
         $upper = $up_default;
     }
     if (!defined $lower || not $median || $lower < 0 || $lower > $upper) {
-        $self->status_message("Calculated lower bound on insert size is undef or invalid, defaulting to $low_default");
+        $self->debug_message("Calculated lower bound on insert size is undef or invalid, defaulting to $low_default");
         $lower = $low_default;
     }
     return ($lower, $upper);

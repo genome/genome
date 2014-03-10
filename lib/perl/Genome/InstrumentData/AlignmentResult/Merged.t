@@ -99,19 +99,8 @@ my $existing_alignment_result = Genome::InstrumentData::AlignmentResult::Merged-
 is($existing_alignment_result, $merged_alignment_result, 'got back the previously created result');
 
 my @filtered_params = (
-     aligner_name=>$aligner_name,
-     aligner_version=>$aligner_version,
-     samtools_version=>$samtools_version,
-     picard_version=>$picard_version,
-     reference_build => $reference_build,
-
-     merger_name => 'picard',
-     merger_version => $picard_version,
-     duplication_handler_name => 'picard',
-     duplication_handler_version => $picard_version,
-     instrument_data_id => [map($_->id, @instrument_data)],
-     filter_name => [$instrument_data[0]->id . ':forward-only', $instrument_data[1]->id . ':forward-only'],
-     test_name => 'merged_unit_test', 
+    @params,
+    filter_name => [$instrument_data[0]->id . ':forward-only', $instrument_data[1]->id . ':forward-only'],
 );
 
 my $filtered_alignment_result = Genome::InstrumentData::AlignmentResult::Merged->get_or_create(@filtered_params);
@@ -141,19 +130,8 @@ my $gotten_alignment_result = Genome::InstrumentData::AlignmentResult::Merged->g
 is($gotten_alignment_result, $existing_alignment_result, 'using get returns same result as get_or_create');
 
 my @segmented_params = (
-     aligner_name=>$aligner_name,
-     aligner_version=>$aligner_version,
-     samtools_version=>$samtools_version,
-     picard_version=>$picard_version,
-     reference_build => $reference_build,
-
-     merger_name => 'picard',
-     merger_version => $picard_version,
-     duplication_handler_name => 'picard',
-     duplication_handler_version => $picard_version,
-     instrument_data_id => [map($_->id, @instrument_data)],
-     instrument_data_segment => [$instrument_data[0]->id . ':test:read_group', $instrument_data[0]->id . ':test2:read_group'],
-     test_name => 'merged_unit_test', 
+    @params, 
+    instrument_data_segment => [$instrument_data[0]->id . ':test:read_group', $instrument_data[0]->id . ':test2:read_group'],
 );
 
 my $segmented_alignment_result = eval {
@@ -171,20 +149,23 @@ sub generate_individual_alignment_results {
     my @instrument_data = @_;
 
     my @alignment_results;
+    my %params = (
+        subclass_name    => $alignment_result_class_name,
+        module_version   => '12345',
+        aligner_name     => $aligner_name,
+        aligner_version  => $aligner_version,
+        samtools_version => $samtools_version,
+        picard_version   => $picard_version,
+        reference_build  => $reference_build,
+    );
 
     for my $i (0,1) {
         my $alignment_result = $alignment_result_class_name->__define__(
-            id => -8765432+ $i,
-            output_dir => $expected_shortcut_path . $i,
+            %params,
+            id                 => -8765432+$i,
+            output_dir         => $expected_shortcut_path . $i,
             instrument_data_id => $instrument_data[$i]->id,
-            subclass_name => $alignment_result_class_name,
-            module_version => '12345',
-            aligner_name=>$aligner_name,
-            aligner_version=>$aligner_version,
-            samtools_version=>$samtools_version,
-            picard_version=>$picard_version,
-            reference_build => $reference_build,
-            test_name => 'merged_unit_test',
+            #test_name => 'merged_unit_test',
         );
         $alignment_result->lookup_hash($alignment_result->calculate_lookup_hash());
 
@@ -195,17 +176,11 @@ sub generate_individual_alignment_results {
     #also produce "fitered" versions--although these really point to the same locations
     for my $i (0,1) {
         my $alignment_result = $alignment_result_class_name->__define__(
-            id => -98765432+ $i,
-            output_dir => $expected_shortcut_path . $i,
+            %params,
+            id                 => -98765432+$i,
+            output_dir         => $expected_shortcut_path . $i,
             instrument_data_id => $instrument_data[$i]->id,
-            subclass_name => $alignment_result_class_name,
-            module_version => '12345',
-            aligner_name=>$aligner_name,
-            aligner_version=>$aligner_version,
-            samtools_version=>$samtools_version,
-            picard_version=>$picard_version,
-            reference_build => $reference_build,
-            test_name => 'merged_unit_test',
+            #test_name => 'merged_unit_test',
             filter_name => 'forward-only',
         );
         $alignment_result->lookup_hash($alignment_result->calculate_lookup_hash());

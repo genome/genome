@@ -1,9 +1,9 @@
 
 [4mUSAGE[0m
  [1mgenome model define rna-seq[0m [--auto-assign-inst-data] [--auto-build-alignments]
-    --processing-profile=? --reference-sequence-build=? --annotation-build=?
-    [--add-to-projects=?[,?]] [--instrument-data=?[,?]] [--subject=?] [--groups=?[,?]]
-    [--model-name=?] [--target-region-set-name=?]
+    --processing-profile=? --reference-sequence-build=? [--add-to-projects=?[,?]]
+    [--instrument-data=?[,?]] [--subject=?] [--annotation-build=?] [--groups=?[,?]]
+    [--model-name=?] [--target-region-set-name=?] [--cancer-annotation-db=?]
 
 [4mSYNOPSIS[0m
   genome model define rna-seq \
@@ -16,8 +16,6 @@
     Processing profile to be used by model, can provide either a name or an ID 
   [1mreference-sequence-build[0m
     (undocumented) 
-  [1mannotation-build[0m
-    (undocumented) 
 
 [4mOPTIONAL INPUTS[0m
   [1madd-to-projects[0m
@@ -27,12 +25,16 @@
   [1msubject[0m
     Subject for the model, can provide either a name or an id. If instrument data is provided and
     this is not, an attempt will be made to resolve it based on the provided instrument data 
+  [1mannotation-build[0m
+    (undocumented) 
   [1mgroups[0m
     Model groups to put the newly created model into 
   [1mmodel-name[0m
     User meaningful name for this model, a default is used if none is provided 
   [1mtarget-region-set-name[0m
     limits the assignment of instrument data by default to only data with a matching TRSN 
+  [1mcancer-annotation-db[0m
+    db of cancer annotation (see 'genome db list' for latest version of desired database) 
 
 [4mOPTIONAL PARAMS[0m
   [1mauto-assign-inst-data[0m

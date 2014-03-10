@@ -1,0 +1,29 @@
+%syntax-version=1.0.0-b2
+%project=workflow
+
+empty_db 2013-11-07T21:36:02Z Anthony Brummett <abrummet@genome.wustl.edu> # brand new database
+workflow_schema [empty_db] 2013-11-07T21:55:48Z Anthony Brummett <abrummet@genome.wustl.edu> # workflow schema
+workflow_schema_permission [workflow_schema] 2013-11-07T21:59:13Z Anthony Brummett <abrummet@genome.wustl.edu> # workflow schema permissions
+workflow_instance_execution [workflow_schema] 2013-11-07T22:02:46Z Anthony Brummett <abrummet@genome.wustl.edu> # instance_execution table
+workflow_instance_execution_permission [workflow_instance_execution] 2013-11-08T22:33:55Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on workflow_instance_execution
+workflow_plan [workflow_schema] 2013-11-08T17:13:55Z Anthony Brummett <abrummet@genome.wustl.edu># add table plan
+workflow_plan_permission [workflow_plan] 2013-11-08T22:34:03Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on workflow_plan
+workflow_instance [workflow_plan workflow_instance_execution] 2013-11-08T17:18:27Z Anthony Brummett <abrummet@genome.wustl.edu> # table workflow.instance
+workflow_instance_permission [workflow_instance] 2013-11-08T22:33:48Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on workflow_instance
+workflow_execution_metric [workflow_instance_execution] 2013-11-08T17:29:39Z Anthony Brummett <abrummet@genome.wustl.edu> # add table workflow.execution_metric
+workflow_service [workflow_schema] 2013-11-08T17:37:13Z Anthony Brummett <abrummet@genome.wustl.edu> # add table workflow.service
+workflow_service_permission [workflow_service] 2013-11-08T22:34:13Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on workflow_service
+workflow_historian [workflow_schema] 2013-11-08T17:40:45Z Anthony Brummett <abrummet@genome.wustl.edu> # ad table workflow.historian
+workflow_historian_permission [workflow_historian] 2013-11-08T22:33:31Z Anthony Brummett <abrummet@genome.wustl.edu> # permission on workflow_historian
+workflow_execution_metric_index_workflow_execution_id [workflow_execution_metric] 2013-11-08T17:47:42Z Anthony Brummett <abrummet@genome.wustl.edu> # index workflow.execution_metric.workflow_execution_id
+workflow_instance_execution_index_workflow_execution_id [workflow_instance_execution] 2013-11-08T17:56:03Z Anthony Brummett <abrummet@genome.wustl.edu> # index workflow.instance_execution.workflow_execution_id
+workflow_instance_index_name [workflow_instance] 2013-11-08T21:00:50Z Anthony Brummett <abrummet@genome.wustl.edu> # index on workflow.instance.name
+workflow_instance_index_name_workflow_instance_id [workflow_instance] 2013-11-08T21:04:39Z Anthony Brummett <abrummet@genome.wustl.edu> # index on workflow.instance.(name, workflow_instance_id)
+workflow_instance_index_parent_execution_id [workflow_instance] 2013-11-08T21:06:56Z Anthony Brummett <abrummet@genome.wustl.edu> # index on workflow.instance.parent_execution_id
+workflow_instance_index_parent_instance_id [workflow_instance] 2013-11-08T21:08:56Z Anthony Brummett <abrummet@genome.wustl.edu> # index on workflow.instance.parent_instance_id
+workflow_instance_index_peer_instance_id [workflow_instance] 2013-11-08T21:10:48Z Anthony Brummett <abrummet@genome.wustl.edu> # index on workflow.instance.peer_instance_id
+workflow_instance_index_workflow_plan_id [workflow_instance] 2013-11-08T21:12:43Z Anthony Brummett <abrummet@genome.wustl.edu> # index on workflow.instance.workflow_plan_id
+workflow_instance_index_name_pattern [workflow_instance] 2013-11-08T21:21:06Z Anthony Brummett <abrummet@genome.wustl.edu> # index on workflow.instance.name
+workflow_instance_execution_index_workflow_instance_id [workflow_instance_execution] 2013-11-08T22:15:11Z Anthony Brummett <abrummet@genome.wustl.edu> # index on workflow.instance_execution.workflow_instance_id
+workflow_service_index_hostname_port_start_time_process_id_username [workflow_service] 2013-11-08T22:25:58Z Anthony Brummett <abrummet@genome.wustl.edu> # index on workflow.service.(hostname, port, start_time, process_id, username)
+@production-copy-dev 2013-11-21T16:59:20Z Anthony Brummett <abrummet@genome.wustl.edu> # Copy of production schema before running any tests

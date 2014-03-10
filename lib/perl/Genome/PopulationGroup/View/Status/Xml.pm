@@ -49,7 +49,8 @@ class Genome::PopulationGroup::View::Status::Xml {
                                             toolkit => 'xml'
                                         },
                                         'creation_date',
-                                        'user_name',
+                                        'created_by',
+                                        'run_as',
                                         {
                                             name => 'last_succeeded_build',
                                             aspects => [ 'id', 'data_directory', 'status', ],

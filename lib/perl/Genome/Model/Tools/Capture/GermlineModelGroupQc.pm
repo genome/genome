@@ -84,6 +84,9 @@ sub execute {
         die "$ref_name isn't NCBI-human-build36 or GRCh37-lite-build37\n";
     }
 
+    my $extract_params = $self->_resolve_gm_extract_command_params;
+    return if not $extract_params;
+
     foreach my $model (@models) {
         my $subject_name = $model->subject_name || next;
         warn "$subject_name isn't a sample\n" and next unless $model->subject->isa('Genome::Sample');
@@ -102,16 +105,16 @@ sub execute {
                 next;
             }
             if(!$self->summary_file && ( (! -e $genofile) || !$skip_if_output_present) ) {
-                my $extract = Genome::InstrumentData::Command::Microarray::Extract->create(
-                    output => $genofile,
-                    fields => [qw(chromosome position alleles id)],
-                    variation_list_build => Genome::Model::ImportedVariationList->dbsnp_build_for_reference($model->reference_sequence_build),
+                my $extract = Genome::Model::GenotypeMicroarray::Command::Extract->create(
                     sample => $model->subject,
-                    use_default => $self->use_default,
-                    use_external => $self->use_external,
-                    ($self->whitelist_snps_file?(filters => ['whitelist:whitelist_snps_file='.$self->whitelist_snps_file]):()),
+                    variation_list_build => Genome::Model::ImportedVariationList->dbsnp_build_for_reference($model->reference_sequence_build),
+                    output => $genofile.':separator=TAB:headers=chromosome,position,alleles,id:print_headers=0',
+                    %$extract_params
                 );
-                unless ($extract->_resolve_instrument_data($model->subject)){
+                unless ($extract->resolve_source){
+                    $self->warning_message(
+                        'Failed to resolve genotype build or instrumetn data for '.$model->subject->name.'skipping...'
+                    );
                     next;
                 }
                 unless ($extract) {
@@ -153,6 +156,32 @@ sub execute {
         close(ALL_MODELS);
     }
     return 1;
+}
+
+sub _resolve_gm_extract_command_params {
+    my $self = shift;
+
+    my %extract_params;
+
+    # Sample type priority
+    if ( $self->use_default and $self->use_external ) {
+        $self->error_message('Specifying use_default and use_external at the same time is not allowed! Please pick one or neither.');
+        return;
+    }
+
+    if ( $self->use_default ) {
+        $extract_params{sample_type_priority} = [ 'default' ];
+    }
+    elsif ( $self->use_external ) {
+        $extract_params{sample_type_priority} = [ 'external' ];
+    }
+
+    # Filters
+    if ( $self->whitelist_snps_file ) {
+        $extract_params{filters} = [ 'whitelist:whitelist_snps_file='.$self->whitelist_snps_file ];
+    }
+
+    return \%extract_params;
 }
 
 sub byChrPos {

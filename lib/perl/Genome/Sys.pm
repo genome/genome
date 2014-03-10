@@ -2,7 +2,7 @@ package Genome::Sys;
 
 use strict;
 use warnings;
-use autodie qw(chown mkdir);
+use autodie qw(chown);
 use Genome;
 use Cwd;
 use File::Path;
@@ -16,7 +16,8 @@ use List::MoreUtils "each_array";
 use Set::Scalar;
 use Digest::MD5;
 use JSON;
-use Params::Validate qw(:types);
+use Params::Validate qw(:types validate_pos);
+use POSIX qw(EEXIST);
 
 # these are optional but should load immediately when present
 # until we can make the Genome::Utility::Instrumentation optional (Net::Statsd deps)
@@ -691,6 +692,8 @@ sub tar {
     my $input_directory = delete $params{input_directory};
     my $input_pattern = delete $params{input_pattern};
     $input_pattern = '*' unless defined $input_pattern;
+    my $options = delete $params{options};
+    $options = '-cf' unless defined $options;
 
     if (%params) {
         Carp::confess "Extra parameters given to tar method: " . join(', ', sort keys %params);
@@ -719,7 +722,7 @@ sub tar {
         Carp::confess "Cannot create tarball for empty directory $input_directory!";
     }
 
-    my $cmd = "tar -cf $tar_path $input_pattern";
+    my $cmd = "tar $options $tar_path $input_pattern";
     my $rv = Genome::Sys->shellcmd(
         cmd => $cmd,
     );
@@ -843,7 +846,7 @@ sub create_directory {
 # File::Path::make_path says it lets you specify group but it always seemed
 # to be overrided by setgid.  So we are implenting the recursive mkdir here.
 sub make_path {
-    my $path = shift;
+    my ($path) = validate_pos(@_, {type => SCALAR});
 
     my $gid = gidgrnam($ENV{GENOME_SYS_GROUP});
 
@@ -851,11 +854,18 @@ sub make_path {
     for (my $i = 0; $i < @dirs; $i++) {
         my $subpath = File::Spec->catdir(@dirs[0..$i]);
 
-        next if (-d $subpath);
-
-        # autodie is on
-        mkdir $subpath;
-        chown -1, $gid, $subpath;
+        my $rv = mkdir $subpath;
+        my $mkdir_errno = $!;
+        if ($rv) {
+            chown -1, $gid, $subpath;
+        } else {
+            if ($mkdir_errno == EEXIST) {
+                next;
+            } else {
+                Carp::confess("While creating path ($path), failed to create " .
+                    "directory ($subpath) because ($!)");
+            }
+        }
     }
 
     unless (-d $path) {
@@ -1309,6 +1319,7 @@ sub shellcmd {
     my $dont_create_zero_size_files_for_missing_output =
         delete $params{dont_create_zero_size_files_for_missing_output};
     my $print_status_to_stderr       = delete $params{print_status_to_stderr};
+    my $keep_dbh_connection_open     = delete $params{keep_dbh_connection_open};
 
     $set_pipefail = 1 if not defined $set_pipefail;
     $print_status_to_stderr = 1 if not defined $print_status_to_stderr;
@@ -1363,6 +1374,9 @@ sub shellcmd {
         }
     }
 
+    # disconnect the db handle in case this is about to take awhile
+    $self->disconnect_default_handles unless $keep_dbh_connection_open;
+
     if ($ENV{GENOME_SYS_PAUSE_SHELLCMD} and $cmd =~ $ENV{GENOME_SYS_PAUSE_SHELLCMD}) {
         my $file = '/tmp/GENOME_SYS_PAUSE.' . $$;
         $self->warning_message("RUN MANUALLY (and remove $file afterward): $cmd");
@@ -1383,19 +1397,26 @@ sub shellcmd {
         $t1 = time();
         my $system_retval;
         eval {
-                open my $savedout, '>&', \*STDOUT || die "Can't dup STDOUT: $!";
-                open my $savederr, '>&', \*STDERR || die "Can't dup STDERR: $!";
-                my $restore = UR::Util::on_destroy(sub {
-                    open(STDOUT, '>&', $savedout);
-                    open(STDERR, '>&', $savederr);
-                });
-
+                my ($restore_stdout);
                 if ($redirect_stdout) {
+                    no warnings 'once'; # OLDOUT is used only once, not
+                    open(OLDOUT, '>&STDOUT') || die "Can't dup STDOUT: $!";
                     open(STDOUT, '>', $redirect_stdout) || die "Can't redirect stdout to $redirect_stdout: $!";
+                    $restore_stdout = UR::Util::on_destroy(sub {
+                        open(STDOUT, '>&OLDOUT');
+                    });
                 }
+
+                my ($restore_stderr);
                 if ($redirect_stderr) {
+                    no warnings 'once'; # OLDERR is used only once, not
+                    open(OLDERR, '>&STDERR') || die "Can't dup STDERR: $!";
                     open(STDERR, '>', $redirect_stderr) || die "Can't redirect stderr to $redirect_stderr: $!";
+                    $restore_stderr = UR::Util::on_destroy(sub {
+                        open(STDERR, '>&OLDERR');
+                    });
                 }
+
                 # Set -o pipefail ensures the command will fail if it contains pipes and intermediate pipes fail.
                 # Export SHELLOPTS ensures that if there are nested "bash -c"'s, each will inherit pipefail
                 my $shellopts_part = 'export SHELLOPTS;';
@@ -1509,6 +1530,27 @@ sub shellcmd {
 
     return 1;
 
+}
+
+sub capture {
+    my $class = shift;
+
+    # lazy load so we don't break /gsc/bin/perl (until we have to)
+    require IPC::System::Simple;
+    return IPC::System::Simple::capture(@_);
+}
+
+sub disconnect_default_handles {
+    my $class = shift;
+
+    for my $ds (qw(Genome::DataSource::GMSchema)) {
+        if($ds->has_default_handle) {
+            $class->debug_message("Disconnecting $ds default handle.");
+            $ds->disconnect_default_dbh();
+        }
+    }
+
+    return 1;
 }
 
 sub retry {

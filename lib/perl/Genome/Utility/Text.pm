@@ -289,39 +289,29 @@ sub justify {
     $fill = $fill || " ";
     $spacer = " " unless defined($spacer);
 
+    $field_width = max($field_width, width($string));
+
+    my $add_left = "$fill"x$field_width . $spacer;
+    my $add_right = $spacer . "$fill"x$field_width;
+    my $add_width = length($add_left);
+
     my $num_spaces_needed = $field_width - width($string);
-    my $fill_string = "$fill"x$num_spaces_needed;
-
-    if($num_spaces_needed > 0) {
-        if(width($spacer) > $num_spaces_needed) {
-            $spacer = substr($spacer, 0, $num_spaces_needed);
-        }
-        $num_spaces_needed -= width($spacer);
-        my $result = $string . $spacer;
-        if($num_spaces_needed == 0) {
-            return $result;
-        }
+    my $left_index;
+    if ($kind eq 'left') {
+        $left_index = $add_width;
+    } elsif ($kind eq 'right') {
+        $left_index = $add_width - $num_spaces_needed;
+    } elsif ($kind eq 'center') {
+        $left_index = $add_width - floor($num_spaces_needed/2);
     } else {
-        return $string;
-    }
-
-    my $format;
-    if($kind eq 'left') {
-        $format = "%s" . $spacer .
-                substr($fill_string, -1 * $num_spaces_needed);
-    } elsif($kind eq 'right') {
-        $format = substr($fill_string, 0, $num_spaces_needed ) .
-                $spacer . "%s";
-    } elsif($kind eq 'center') {
-        my $left_spaces = floor($num_spaces_needed/2);
-        my $right_spaces = $num_spaces_needed - $left_spaces;
-        $format = substr($fill_string, 0, $left_spaces) .  "%s" .
-                  substr($fill_string, -1 * $right_spaces)
-    } else {
-        Carp::croak("kind argument must be one of 'left',".
+        carp::croak("kind argument must be one of 'left',".
                     " 'right', or 'center', not '$kind'");
     }
-    return sprintf($format, $string);
+
+    my $full_string = $add_left . $string . $add_right;
+
+    my $color_spaces = length($string) - width($string);
+    return substr($full_string, $left_index, $field_width + $color_spaces);
 }
 
 sub _next_foundation {

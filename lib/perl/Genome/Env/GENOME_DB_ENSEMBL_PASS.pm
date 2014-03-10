@@ -1,3 +1,4 @@
+package Genome::Env::GENOME_DB_ENSEMBL_PASS;
 =pod
 
 =head1 NAME

@@ -248,7 +248,6 @@ sub loadEntrezEnsemblData {
   }
   my $clinseq_annotations_dir = $cancer_db->data_directory;
 
-  my $taxon_id;
   my $entrez_dir;
   my $ensembl_dir;
   my $ucsc_dir;
@@ -266,40 +265,6 @@ sub loadEntrezEnsemblData {
   $ucsc_dir = $clinseq_annotations_dir . "/UcscGene/";
   unless (-e $ucsc_dir) {
       $ucsc_dir = $clinseq_annotations_dir . '/ucsc/';
-  }
-
-  # TODO: this is used because the data files contain records from multiple species
-  # Filter down the data set for each cancer db to the appropriate species,
-  # so this additional filtering isn't needed.
-  if ($species eq 'human') {
-    $taxon_id = 9606;
-  }
-  elsif ($species eq 'mouse') {
-    $taxon_id = 10090;
-  }
-  
-
-  #Parse Entrez flatfiles and Ensembl files from BioMart
-  #ftp://ftp.ncbi.nih.gov/gene/DATA/gene2accession.gz
-  #ftp://ftp.ncbi.nih.gov/gene/DATA/gene_info.gz
-  if (0) {
-    my @xfiles;
-    if ($species eq 'human') {
-        $taxon_id = '9606';
-        my $clinseq_annotations_dir = $cancer_db->data_directory; #"/gscmnt/sata132/techd/mgriffit/reference_annotations/";
-        #$clinseq_annotations_dir = "/gscmnt/sata132/techd/mgriffit/reference_annotations/";
-        $entrez_dir = $clinseq_annotations_dir . "EntrezGene/";
-        $ensembl_dir = $clinseq_annotations_dir . "/EnsemblGene/";
-        $ucsc_dir = $clinseq_annotations_dir . "/UcscGene/";
-        @xfiles = qw (Ensembl_Genes_Human_v70.txt Ensembl_Genes_Human_v69.txt Ensembl_Genes_Human_v68.txt Ensembl_Genes_Human_v67.txt Ensembl_Genes_Human_v66.txt Ensembl_Genes_Human_v65.txt Ensembl_Genes_Human_v64.txt Ensembl_Genes_Human_v63.txt Ensembl_Genes_Human_v62.txt Ensembl_Genes_Human_v61.txt Ensembl_Genes_Human_v60.txt Ensembl_Genes_Human_v59.txt Ensembl_Genes_Human_v58.txt Ensembl_Genes_Human_v56.txt Ensembl_Genes_Human_v55.txt Ensembl_Genes_Human_v54.txt Ensembl_Genes_Human_v53.txt Ensembl_Genes_Human_v52.txt Ensembl_Genes_Human_v51.txt);
-    } elsif ($species eq 'mouse') {
-        $taxon_id = '10090';
-        my $clinseq_annotations_dir = "/gscmnt/sata132/techd/solexa/jwalker/RNAseq/annotation/mm9/";
-        $entrez_dir = $clinseq_annotations_dir . 'entrez/';
-        $ensembl_dir = $clinseq_annotations_dir . 'ensembl/';
-        $ucsc_dir = $clinseq_annotations_dir . 'ucsc/';
-        @xfiles = qw (ensembl_v64_id_to_gene_name.txt ensembl_v63_id_to_gene_name.txt ensembl_v62_id_to_gene_name.txt ensembl_v61_id_to_gene_name.txt ensembl_v60_id_to_gene_name.txt ensembl_v59_id_to_gene_name.txt ensembl_v58_id_to_gene_name.txt ensembl_v57_id_to_gene_name.txt ensembl_v56_id_to_gene_name.txt ensembl_v55_id_to_gene_name.txt ensembl_v54_id_to_gene_name.txt ensembl_v53_id_to_gene_name.txt ensembl_v52_id_to_gene_name.txt ensembl_v51_id_to_gene_name.txt ensembl_v50_id_to_gene_name.txt);
-    }
   }
 
   my %edata;
@@ -336,11 +301,6 @@ sub loadEntrezEnsemblData {
       next();
     }
     my @line = split("\t", $_);
-    my $tax_id = uc($line[0]);
-    #Skip all non-human records
-    unless ($tax_id eq $taxon_id){
-      next();
-    }
     my $entrez_id = uc($line[1]);
     my $symbol = uc($line[2]);
     my $synonyms = uc($line[4]);
@@ -424,11 +384,6 @@ sub loadEntrezEnsemblData {
       next();
     }
     my @line = split("\t", $_);
-    my $tax_id = uc($line[0]);
-    #Skip all non-human records
-    unless ($tax_id eq $taxon_id){
-      next();
-    }
     my $entrez_id = uc($line[1]);
     my $prot_id = uc($line[5]);
     my $genome_id = uc($line[7]);

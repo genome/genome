@@ -41,31 +41,31 @@ sub execute {
     );
 
     #create contigs.bases files
-    $self->status_message("Creating contigs fasta file");
+    $self->debug_message("Creating contigs fasta file");
     my $contigs = Genome::Model::Tools::Soap::CreateContigsBasesFile->create( %params );
     unless ($contigs->execute) {
         $self->error_message("Failed to successfully execute creating contigs fasta file");
         return;
     }
-    $self->status_message("Finished creating contigs fasta file");
+    $self->debug_message("Finished creating contigs fasta file");
 
     #create supercontigs fasta file
-    $self->status_message("Creating supercontigs fasta file");
+    $self->debug_message("Creating supercontigs fasta file");
     my $supercontigs = Genome::Model::Tools::Soap::CreateSupercontigsFastaFile->create( %params );
     unless ($supercontigs->execute) {
         $self->error_message("Failed to successfully execute creating scaffolds fasta file");
         return;
     }
-    $self->status_message("Finished creating scaffolds fasta file");
+    $self->debug_message("Finished creating scaffolds fasta file");
 
     #create supercontigs agp file
-    $self->status_message("Creating supercontigs agp file");
+    $self->debug_message("Creating supercontigs agp file");
     my $agp = Genome::Model::Tools::Soap::CreateSupercontigsAgpFile->create( %params );
     unless ($agp->execute) {
         $self->error_message("Failed to successfully execute creating agp file");
         return;
     }
-    $self->status_message("Finished creating agp file");
+    $self->debug_message("Finished creating agp file");
     
     return 1;
 }

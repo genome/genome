@@ -122,10 +122,10 @@ sub start {
     my $self = shift;
     unless ($self->_result) {
         my $workflow = $self->workflow;
-        $self->status_message("Generated workflow successfully!");
+        $self->debug_message("Generated workflow successfully!");
 
         my %inputs = $self->gather_inputs;
-        $self->status_message("Gathered inputs, now executing workflow!");
+        $self->debug_message("Gathered inputs, now executing workflow!");
 
         my $result;
         if ($self->run_inline) {
@@ -140,7 +140,7 @@ sub start {
 
         $self->_result($result);
         $self->bio_seq_features($result->{bio_seq_features});
-        $self->status_message("Workflow complete, generated " . scalar $self->bio_seq_features . " Bio::SeqFeature objects!");
+        $self->debug_message("Workflow complete, generated " . scalar $self->bio_seq_features . " Bio::SeqFeature objects!");
     }
 
     return $self->_result;

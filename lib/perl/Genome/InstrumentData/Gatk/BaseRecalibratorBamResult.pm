@@ -71,7 +71,7 @@ sub create {
 
 sub _get_or_create_base_recalibrator_result {
     my $self = shift;
-    $self->status_message('Get or create base recalibrator result...');
+    $self->debug_message('Get or create base recalibrator result...');
 
     my %base_recalibrator_params = $self->base_recalibrator_params;
     my $base_recalibrator_result = Genome::InstrumentData::Gatk::BaseRecalibratorResult->get_or_create(%base_recalibrator_params);
@@ -85,9 +85,9 @@ sub _get_or_create_base_recalibrator_result {
         $self->error_message('Got base recalibrator result, but failed to find the recalibration table file!');
         return;
     }
-    $self->status_message('Recalibration table file: '.$recalibration_table_file);
+    $self->debug_message('Recalibration table file: '.$recalibration_table_file);
 
-    $self->status_message('Get or create base recalibrator result...done');
+    $self->debug_message('Get or create base recalibrator result...done');
     return $base_recalibrator_result;
 }
 
@@ -128,7 +128,7 @@ sub base_recalibrator_result {
 
 sub _print_reads {
     my $self = shift;
-    $self->status_message('Print reads...');
+    $self->debug_message('Print reads...');
 
     my $tmp_dir = $self->output_dir.'/tmp';
     my $mkdir = eval{ Genome::Sys->create_directory($tmp_dir); };
@@ -159,11 +159,11 @@ sub _print_reads {
         $self->error_message('Ran print reads, but failed to create the output bam!');
         return;
     }
-    $self->status_message('Bam file: '.$bam_path);
+    $self->debug_message('Bam file: '.$bam_path);
 
     File::Path::rmtree($tmp_dir);
 
-    $self->status_message('Print reads...done');
+    $self->debug_message('Print reads...done');
     return 1;
 }
 

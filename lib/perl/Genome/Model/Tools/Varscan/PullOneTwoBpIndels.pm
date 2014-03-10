@@ -365,7 +365,7 @@ sub execute {
     my $normal_purity = $self->normal_purity;
     my $varscan_params = "--validation 1 --somatic-p-value 1.0e-02 --p-value 0.10 --min-coverage 8 --min-var-freq $min_freq --normal-purity $normal_purity";
     my $default_varscan_params = "--validation 1 --somatic-p-value 1.0e-02 --p-value 0.10 --min-coverage 8 --min-var-freq 0.08 --normal-purity 1";
-    my $bsub = 'bsub -q long -R "select[type==LINUX64 && mem>16000 && tmp>10000] rusage[mem=16000, tmp=10000]" -M 16000000 ';
+    my $bsub = qq(bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -R "select[type==LINUX64 && mem>16000 && tmp>10000] rusage[mem=16000, tmp=10000]" -M 16000000 );
 
     # put several jobs into array @cmds
     my @cmds;
@@ -375,14 +375,14 @@ sub execute {
             push(@cmds,"$bsub -J varscan_validation_tumnor \'gmt varscan validation --normal-bam $realigned_normal_bam_file --tumor-bam $realigned_tumor_bam_file --output-indel $output_indel.tumnor --output-snp $output_snp.tumnor --reference $reference --varscan-params \"$varscan_params\"\'");
             push(@cmds, "$bsub -J varscan_validation_relnor \'gmt varscan validation --normal-bam $realigned_normal_bam_file --tumor-bam $realigned_relapse_bam_file --output-indel $output_indel.relnor --output-snp $output_snp.relnor --reference $reference --varscan-params \"$varscan_params\"\'");
             push(@cmds,"$bsub -J varscan_validation_reltum \'gmt varscan validation --normal-bam $realigned_tumor_bam_file --tumor-bam $realigned_relapse_bam_file --output-indel $output_indel.reltum --output-snp $output_snp.reltum --reference $reference --varscan-params \"$varscan_params\"\'");
-            push(@cmds,"$bsub -N -u $user\@genome.wustl.edu -J varscan_process_validation_tumnor -w \'ended(JOB0))\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel.tumnor --validation-snp-file $output_snp.tumnor --variants-file $small_indel_list_nobed --output-file $final_output_file.tumnor\'");
-            push(@cmds,"$bsub -N -u $user\@genome.wustl.edu -J varscan_process_validation_relnor -w \'ended(JOB1)\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel.relnor --validation-snp-file $output_snp.relnor --variants-file $small_indel_list_nobed --output-file $final_output_file.relnor\'");
-            push(@cmds,"$bsub -N -u $user\@genome.wustl.edu -J varscan_process_validation_reltum -w \'ended(JOB2)\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel.reltum --validation-snp-file $output_snp.reltum --variants-file $small_indel_list_nobed --output-file $final_output_file.reltum\'");
+            push(@cmds,"$bsub -N -u $user\@$ENV{GENOME_EMAIL_DOMAIN} -J varscan_process_validation_tumnor -w \'ended(JOB0))\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel.tumnor --validation-snp-file $output_snp.tumnor --variants-file $small_indel_list_nobed --output-file $final_output_file.tumnor\'");
+            push(@cmds,"$bsub -N -u $user\@$ENV{GENOME_EMAIL_DOMAIN} -J varscan_process_validation_relnor -w \'ended(JOB1)\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel.relnor --validation-snp-file $output_snp.relnor --variants-file $small_indel_list_nobed --output-file $final_output_file.relnor\'");
+            push(@cmds,"$bsub -N -u $user\@$ENV{GENOME_EMAIL_DOMAIN} -J varscan_process_validation_reltum -w \'ended(JOB2)\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel.reltum --validation-snp-file $output_snp.reltum --variants-file $small_indel_list_nobed --output-file $final_output_file.reltum\'");
         }
         else {
             push(@cmds,"$bsub -J varscan_validation \'gmt varscan validation --normal-bam $realigned_normal_bam_file --tumor-bam $realigned_tumor_bam_file --output-indel $output_indel --output-snp $output_snp --reference $reference --varscan-params \"$varscan_params\"\'");
 
-            push(@cmds,"$bsub -N -u $user\@genome.wustl.edu -J varscan_process_validation -w \'ended(JOB0)\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel --validation-snp-file $output_snp --variants-file $small_indel_list_nobed --output-file $final_output_file\'");
+            push(@cmds,"$bsub -N -u $user\@$ENV{GENOME_EMAIL_DOMAIN} -J varscan_process_validation -w \'ended(JOB0)\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel --validation-snp-file $output_snp --variants-file $small_indel_list_nobed --output-file $final_output_file\'");
         }
     }
     elsif ($self->relapse_bam) {
@@ -405,9 +405,9 @@ sub execute {
         push(@cmds,"$bsub -J varscan_validation_relnor -w \'ended(JOB3) && ended(JOB5)\' \'gmt varscan validation --normal-bam $realigned_normal_bam_file --tumor-bam $realigned_relapse_bam_file --output-indel $output_indel.relnor --output-snp $output_snp.relnor --reference $reference --varscan-params \"$default_varscan_params\"\'");
         push(@cmds,"$bsub -J varscan_validation_reltum -w \'ended(JOB4) && ended(JOB5)\' \'gmt varscan validation --normal-bam $realigned_tumor_bam_file --tumor-bam $realigned_relapse_bam_file --output-indel $output_indel.reltum --output-snp $output_snp.reltum --reference $reference --varscan-params \"$default_varscan_params\"\'");
 
-        push(@cmds,"$bsub -N -u $user\@genome.wustl.edu -J varscan_process_validation_tumnor -w \'ended(JOB6)\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel.tumnor --validation-snp-file $output_snp.tumnor --variants-file $small_indel_list_nobed --output-file $final_output_file.tumnor\'");
-        push(@cmds,"$bsub -N -u $user\@genome.wustl.edu -J varscan_process_validation_relnor -w \'ended(JOB7)\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel.relnor --validation-snp-file $output_snp.relnor --variants-file $small_indel_list_nobed --output-file $final_output_file.relnor\'");
-        push(@cmds,"$bsub -N -u $user\@genome.wustl.edu -J varscan_process_validation_reltum -w \'ended(JOB8)\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel.reltum --validation-snp-file $output_snp.reltum --variants-file $small_indel_list_nobed --output-file $final_output_file.reltum\'");
+        push(@cmds,"$bsub -N -u $user\@$ENV{GENOME_EMAIL_DOMAIN} -J varscan_process_validation_tumnor -w \'ended(JOB6)\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel.tumnor --validation-snp-file $output_snp.tumnor --variants-file $small_indel_list_nobed --output-file $final_output_file.tumnor\'");
+        push(@cmds,"$bsub -N -u $user\@$ENV{GENOME_EMAIL_DOMAIN} -J varscan_process_validation_relnor -w \'ended(JOB7)\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel.relnor --validation-snp-file $output_snp.relnor --variants-file $small_indel_list_nobed --output-file $final_output_file.relnor\'");
+        push(@cmds,"$bsub -N -u $user\@$ENV{GENOME_EMAIL_DOMAIN} -J varscan_process_validation_reltum -w \'ended(JOB8)\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel.reltum --validation-snp-file $output_snp.reltum --variants-file $small_indel_list_nobed --output-file $final_output_file.reltum\'");
     }
     else{
         # This was added so things are testable for now

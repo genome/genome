@@ -60,7 +60,7 @@ sub _valid_values_for {
 
 sub execute {
     my $self = shift;
-    $self->status_message('Update genome and gsc taxons...');
+    $self->debug_message('Update genome and gsc taxons...');
 
     my @property_names = (qw/ domain estimated_genome_size gram_stain_category /);
     my @property_names_to_update = grep { defined $self->$_ } @property_names;
@@ -70,7 +70,7 @@ sub execute {
     }
 
     for my $taxon ( $self->taxons ) {
-        $self->status_message('Taxon: '.join(' ', map { $taxon->$_ } (qw/ id name /)));
+        $self->debug_message('Taxon: '.join(' ', map { $taxon->$_ } (qw/ id name /)));
 
         my $gsc_taxon = Genome::Site::TGI::Taxon->get(id => $taxon->id);
         if ( not $gsc_taxon ) {
@@ -80,7 +80,7 @@ sub execute {
 
         for my $name ( @property_names_to_update ) {
             my $value = $self->$name;
-            $self->status_message(
+            $self->debug_message(
                 sprintf(
                     " Update genome %s from %s to %s",
                     $name, ($taxon->$name || 'NULL'), $value,
@@ -88,7 +88,7 @@ sub execute {
             );
             $taxon->$name($value) if not defined $taxon->$name or $taxon->$name ne $value;
 
-            $self->status_message(
+            $self->debug_message(
                 sprintf(" Update gsc %s from %s to %s\n",
                     $name, ($gsc_taxon->$name || 'NULL'), $value,
                 )
@@ -97,7 +97,7 @@ sub execute {
         }
     }
 
-    $self->status_message('Done');
+    $self->debug_message('Done');
     return 1;
 }
 

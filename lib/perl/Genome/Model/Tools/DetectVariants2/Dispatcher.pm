@@ -100,7 +100,7 @@ class Genome::Model::Tools::DetectVariants2::Dispatcher {
     ],
     has_param => [
         lsf_queue => {
-            default_value => 'long'
+            default_value => $ENV{GENOME_LSF_QUEUE_DV2_WORKFLOW},
         },
     ],
     doc => 'generate complex variant detection results'
@@ -196,11 +196,11 @@ sub _detect_variants {
                 my $details = $plan->{$detector}{$version}{$variant_type}[0];
                 my $detector_class = $details->{class};
                 if ($detector_class->_supports_cross_sample_detection($version,$variant_type,$details->{params})) {
-                    $self->status_message("detector $detector supports MULTI-sample detection with $details->{version} [$details->{params}]\n");
+                    $self->debug_message("detector $detector supports MULTI-sample detection with $details->{version} [$details->{params}]\n");
                     $multi_sample_detector_count++;
                 }
                 else {
-                    $self->status_message("detector $detector supports SINGLE-sample detection with $details->{version} [$details->{params}]\n");
+                    $self->debug_message("detector $detector supports SINGLE-sample detection with $details->{version} [$details->{params}]\n");
                     $single_sample_detector_count++;
                 }
             }
@@ -244,7 +244,9 @@ sub _detect_variants {
     $self->_dump_workflow($workflow);
     $self->_dump_dv_cmd;
 
-    $self->status_message("Now launching the dispatcher workflow.");
+    Genome::Sys->disconnect_default_handles;
+
+    $self->debug_message("Now launching the dispatcher workflow.");
     ## Worklow launches here
     my $result = Workflow::Simple::run_workflow_lsf( $workflow, %{$input});
 
@@ -759,11 +761,11 @@ sub add_detectors_and_filters {
                         right_operation => $detector_operation,
                         right_property => '_previous_output_directory',
                     );
-                    #$self->status_message('Blocker found for ' . $detector_operation->name);
+                    #$self->debug_message('Blocker found for ' . $detector_operation->name);
                 } else {
                     #This is a candidate to block on for others
                     $instance->{_detector_operation} = $detector_operation;
-                    #$self->status_message('No blocker found for ' . $detector_operation->name);
+                    #$self->debug_message('No blocker found for ' . $detector_operation->name);
                 }
 
                 # create filter operations
@@ -946,7 +948,7 @@ sub _create_directories {
                 return;
             }
 
-            $self->status_message("Created directory: $output_directory");
+            $self->debug_message("Created directory: $output_directory");
             chmod 02775, $output_directory;
         }
     }
@@ -1107,7 +1109,7 @@ sub _generate_standard_files {
             }
 
             unless ($found_lq_bed) {
-                $self->status_message("Found no lq.bed files to union. Skipping LqUnion.");
+                $self->debug_message("Found no lq.bed files to union. Skipping LqUnion.");
                 return 1;
             }
 

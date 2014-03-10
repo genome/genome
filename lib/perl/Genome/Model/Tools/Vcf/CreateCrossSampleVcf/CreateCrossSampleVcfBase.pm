@@ -46,7 +46,7 @@ class Genome::Model::Tools::Vcf::CreateCrossSampleVcf::CreateCrossSampleVcfBase 
         },
         wingspan => {
             is => 'Text',
-            is_optional => 1,
+            default => 0,
             doc => 'Set this to add a wingspan to region limiting',
         },
         allow_multiple_processing_profiles => {
@@ -56,8 +56,8 @@ class Genome::Model::Tools::Vcf::CreateCrossSampleVcf::CreateCrossSampleVcfBase 
         },
         joinx_version => {
             is => 'Text',
-            doc => 'Joinx version to use in all joinx operations',
-            default => '1.7',
+            is_optional => 1,
+            doc => "Version of joinx to use, will be resolved to the latest default if not specified",
         },
         output_directory => {
             is => 'Text',
@@ -108,19 +108,21 @@ EOS
 sub generate_result {
     my ($self) = @_;
 
-    $self->status_message("Resolving Builds...");
+    $self->_resolve_joinx_version;
+
+    $self->debug_message("Resolving Builds...");
     my $builds = $self->_resolve_builds;
 
-    $self->status_message("Validating Inputs...");
+    $self->debug_message("Validating Inputs...");
     $self->_validate_inputs($builds);
 
-    $self->status_message("Constructing Workflow...");
+    $self->debug_message("Constructing Workflow...");
     my ($workflow, $variant_type_specific_inputs, $region_limiting_specific_inputs) = $self->_construct_workflow;
 
-    $self->status_message("Getting Workflow Inputs...");
+    $self->debug_message("Getting Workflow Inputs...");
     my $inputs = $self->_get_workflow_inputs($builds, $variant_type_specific_inputs, $region_limiting_specific_inputs);
 
-    $self->status_message("Running Workflow...");
+    $self->debug_message("Running Workflow...");
     my $result = Workflow::Simple::run_workflow_lsf($workflow, %$inputs);
 
     unless($result){
@@ -129,6 +131,13 @@ sub generate_result {
     }
 
     return 1;
+}
+
+sub _resolve_joinx_version {
+    my $self = shift;
+    unless (defined $self->joinx_version) {
+        $self->joinx_version(Genome::Model::Tools::Joinx->get_default_version);
+    }
 }
 
 sub _resolve_builds {
@@ -191,11 +200,10 @@ sub _get_region_limiting_specific_inputs {
     my $reference_sequence_build = $builds[0]->reference_sequence_build;
     my %inputs = (
         variant_type => $self->variant_type,
-        builds => \@builds,
         region_limiting_output_directory => $region_limiting_output_directory,
         roi_name => $self->roi_list->name,
         wingspan => $self->wingspan,
-        region_bed_file => $self->get_roi_file($reference_sequence_build),
+        region_bed_file => $self->roi_list->resolve_bed_for_reference($reference_sequence_build),
     );
 
     return \%inputs;
@@ -204,10 +212,7 @@ sub _get_region_limiting_specific_inputs {
 sub _get_non_region_limiting_specific_inputs {
     my $self = shift;
     my @vcf_files = $self->_get_vcf_files;
-    my %inputs = (
-            vcf_files => \@vcf_files,
-    );
-
+    my %inputs;
     return \%inputs
 }
 
@@ -218,35 +223,12 @@ sub _get_vcf_files {
     return map{$_->$accessor} @builds;
 }
 
-# Early detection for the common problem that the ROI reference_name is not set correctly
-sub _check_roi_list {
-    my $self = shift;
-
-    my $bed_file = $self->roi_list->file_path;
-    my @chr_lines = `grep chr $bed_file`;
-    my $reference_name = $self->roi_list->reference_name;
-    my $roi_name = $self->roi_list->name;
-
-    #if (@chr_lines and not ($reference_name =~ m/nimblegen/) ) {
-    if (@chr_lines and not ($reference_name =~ m/nimblegen/) ) {
-        die $self->error_message("It looks like your ROI has 'chr' chromosomes but does not have a 'nimblegen' reference name (It is currently $reference_name).\n".
-            "This will result in your variant sets being filtered down to nothing. An example of a fix to this situation: \n".
-            "genome feature-list update '$roi_name' --reference nimblegen-human-buildhg19 (if your reference is hg19)");
-    }
-
-    return 1;
-}
-
 sub _validate_inputs {
     my ($self, $builds) = @_;
 
     Genome::Sys->create_directory($self->output_directory);
     unless(-d $self->output_directory) {
         die $self->error_message("Unable to find output directory: " . $self->output_directory);
-    }
-
-    if ($self->roi_list) {
-        $self->_check_roi_list;
     }
 
     $self->_validate_builds($builds);
@@ -314,6 +296,8 @@ sub _get_workflow_inputs {
     $self->prepare_vcf_merge_working_directories();
 
     my %inputs = (
+        build_clumps => $self->build_clumps,
+
         # InitialVcfMerge
         use_bgzip => 1,
         joinx_version => $self->joinx_version,
@@ -360,9 +344,11 @@ sub _get_build_clump {
     my $clump = Genome::Model::Tools::Vcf::CreateCrossSampleVcf::BuildClump->create(
         backfilled_vcf      => $dir."/".$self->variant_type.".backfilled.vcf.gz",
         bam_file            => $build->whole_rmdup_bam_file,
-        pileup_output_file => $dir."/".$sample.".for_".$self->variant_type.".pileup.gz",
+        pileup_output_file  => $dir."/".$sample.".for_".$self->variant_type.".pileup.gz",
         sample              => $sample,
         vcf_file            => $self->_get_vcf_from_build($build),
+        filtered_vcf        => $dir."/".$self->variant_type.".non_calls_removed.vcf.gz",
+        build_id            => $build->id,
     );
 
     return $clump;
@@ -380,37 +366,6 @@ sub _get_vcf_from_build {
         my $accessor = $self->get_vcf_accessor;
         return $build->$accessor;
     }
-}
-
-sub get_roi_file {
-    my ($self, $reference_sequence_build) = @_;
-
-    my $roi_file;
-    if(defined($self->roi_list)) {
-        my $roi_list = $self->roi_list;
-
-        if($roi_list->reference->id eq $reference_sequence_build->id) {
-            $roi_file = $roi_list->file_path;
-        } else {
-            my $file_path = join("/", $self->output_directory,
-                    "converted_roi.bed");
-            $roi_file = $roi_list->converted_bed_file(
-                    reference => $reference_sequence_build,
-                    file_path => $file_path,
-            );
-            unless(-s $roi_file) {
-                $self->error_message(
-                            sprintf("%s is missing or has no size... Failed ".
-                                    "to convert %s to reference %s.",
-                            $file_path,
-                            $roi_list->name,
-                            $reference_sequence_build->name)
-                );
-                die $self->error_message();
-            }
-        }
-    }
-    return $roi_file;
 }
 
 sub prepare_vcf_merge_working_directories {
@@ -438,27 +393,6 @@ sub prepare_region_limiting_output_directory {
 sub region_limiting_output_directory {
     my $self = shift;
     return File::Spec->join($self->output_directory, "region_limited_inputs");
-}
-
-sub _get_samtools_version_and_params {
-    my ($self, $strategy_str) = @_;
-
-    my $strategy = Genome::Model::Tools::DetectVariants2::Strategy->get($strategy_str);
-
-    my @detectors = $strategy->get_detectors();
-    my ($version, $params);
-    for my $detector (@detectors) {
-        if ($detector->{name} eq 'samtools') {
-            if ($version) {
-                die "Multiple samtools steps found in strategy!";
-            } else {
-                $version = $detector->{version};
-                $params = $detector->{params};
-            }
-        }
-    }
-
-    return ($version, $params);
 }
 
 1;

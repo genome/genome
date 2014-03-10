@@ -82,7 +82,7 @@ sub execute {
     }
 
     #get contig lengths from input ace file
-    $self->status_message( "Determining old scaffolds" );
+    $self->debug_message( "Determining old scaffolds" );
     my $contig_lengths;
     if ( not $contig_lengths = $self->_get_unpadded_contig_lengths( $self->acefile ) ) {
         $self->error_message( "Failed to get contig lengths from input ace file" );
@@ -90,7 +90,7 @@ sub execute {
     }
  
     #determine new scaffolds
-    $self->status_message( "Determining new scaffolds" );
+    $self->debug_message( "Determining new scaffolds" );
     my $new_scaffolds;
     if ( not $new_scaffolds = $self->_determine_new_scaffolds( $contig_lengths ) ) {
         $self->error_message( "Failed to determine new scaffolds" );
@@ -98,16 +98,16 @@ sub execute {
     }
     
     #make partial ace of new scaffolds
-    $self->status_message( "Writing new scaffolds" );
+    $self->debug_message( "Writing new scaffolds" );
     my ($partial_ace, $contigs, $reads ) = $self->_write_new_scaffolds( $self->acefile, $new_scaffolds );
 
     #update DS line .. needed for older newbler ace files .. and update read and contig counts
-    $self->status_message( "Updating DS line and writing new ace file: ace.msi" );
+    $self->debug_message( "Updating DS line and writing new ace file: ace.msi" );
     my $final_ace = $self->_update_ds_line_write_wa_tags( $partial_ace, $contigs, $reads );
 
     #TODO sort this ace file numerically by contig number
 
-    $self->status_message( "Done" );
+    $self->debug_message( "Done" );
     return 1;
 }
 
@@ -186,7 +186,7 @@ sub _set_new_scaffolds_file {
 
 sub _run_auto_report {
     my $self = shift;
-    $self->status_message("Running consed auto report");
+    $self->debug_message("Running consed auto report");
     my $acefile = $self->acefile;
     if (system("consed -ace $acefile -autoreport")) {
 	$self->error_message("Failed to run consed auto report on ace file: $acefile");
@@ -237,11 +237,11 @@ sub _check_for_contigs_to_complement {
     }
     if ($contigs_to_complement) {
 	if ($self->auto_report) {
-	    $self->status_message("\n\nConsed autoreport suggests that the following contigs must be complemented:\n".
+	    $self->debug_message("\n\nConsed autoreport suggests that the following contigs must be complemented:\n".
 				  "\t$contigs_to_complement .. please complement these contigs in the ace file and run the program again\nExiting");
 	}
 	if ($self->scaffold_file) {
-	    $self->status_message("\nPlease complement the following contigs in the ace file: $contigs_to_complement\n".
+	    $self->debug_message("\nPlease complement the following contigs in the ace file: $contigs_to_complement\n".
 				  "Then remove c from contig numbers then run the program again to reflect correct compelementation in post assembly files");
 	}
 	return;
@@ -400,7 +400,7 @@ sub _create_new_scaffolds {
     $gap_fh->close;
 
     unless ( $new_scaf_names ) {
-        $self->status_message( "Could not get any new scaffolds .. check scaffolds file to make sure contigs match or set min-contig-length lower because all contigs may have been filtered out" );
+        $self->debug_message( "Could not get any new scaffolds .. check scaffolds file to make sure contigs match or set min-contig-length lower because all contigs may have been filtered out" );
         return;
     }
 

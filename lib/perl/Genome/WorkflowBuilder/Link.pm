@@ -31,6 +31,21 @@ class Genome::WorkflowBuilder::Link {
 };
 
 
+sub create {
+    my $class = shift;
+
+    my $self = $class->SUPER::create(@_);
+
+    if ($self->source) {
+        $self->source->notify_output_link($self);
+    }
+    if ($self->destination) {
+        $self->destination->notify_input_link($self);
+    }
+
+    return $self;
+}
+
 # ------------------------------------------------------------------------------
 # Inherited Methods
 # ------------------------------------------------------------------------------
@@ -61,7 +76,7 @@ sub validate {
 
     # make sure x_property is in x as appropriate input/output
     $self->_validate_source_property;
-    $self->_validate_output_property;
+    $self->_validate_destination_property;
 
     # if dest operation is parallel by dest_property, make sure that source_property is_many
     $self->_validate_parallel_by_destination;
@@ -92,10 +107,37 @@ sub external_output {
     return !defined($self->destination);
 }
 
+sub sort_key {
+    my $self = shift;
+    return sprintf("%s|%s|%s|%s",
+        $self->_source_name, $self->_destination_name,
+        $self->source_property, $self->destination_property);
+}
+
 
 # ------------------------------------------------------------------------------
 # Private Methods
 # ------------------------------------------------------------------------------
+
+sub _source_name {
+    my $self = shift;
+
+    if ($self->source) {
+        return $self->source->name;
+    } else {
+        return 'input connector';
+    }
+}
+
+sub _destination_name {
+    my $self = shift;
+
+    if ($self->destination) {
+        return $self->destination->name;
+    } else {
+        return 'output connector';
+    }
+}
 
 sub _operation_name {
     my ($self, $operation, $default) = @_;
@@ -128,6 +170,7 @@ sub _validate_general_operation_type {
         }
     }
 
+    return 1;
 }
 
 sub _validate_source_property {
@@ -141,27 +184,32 @@ sub _validate_source_property {
             ));
         }
     }
+
+    return 1;
 }
 
-sub _validate_output_property {
+sub _validate_destination_property {
     my $self = shift;
 
     if (defined($self->destination)) {
         unless ($self->destination->is_input_property(
                 $self->destination_property)) {
             die $self->error_message(sprintf(
-"Destination property '%s' from operation (%s) is not an output",
+"Destination property '%s' from operation (%s) is not an input or param",
                     $self->destination_property, $self->destination->name
             ));
         }
     }
+
+    return 1;
 }
 
 sub _validate_parallel_by_destination {
     my $self = shift;
 
     if (defined($self->source) && defined($self->destination)) {
-        if (defined($self->destination->parallel_by)) {
+        if (defined($self->destination->parallel_by) &&
+            $self->destination->parallel_by eq $self->destination_property) {
             unless ($self->source->is_many_property($self->source_property)) {
                 die $self->error_message(sprintf(
                     "Source property '%s' (%s) is not is_many for parallel_by "
@@ -172,6 +220,8 @@ sub _validate_parallel_by_destination {
             }
         }
     }
+
+    return 1;
 }
 
 

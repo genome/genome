@@ -59,18 +59,18 @@ sub execute {
     my $self = shift;
 
     if ($self->skip_execution) {
-        $self->status_message("Skip execution flag is set, exiting.");
+        $self->debug_message("Skip execution flag is set, exiting.");
         return 1;
     }
 
-    $self->status_message("Running rfamscan on sequence in " . $self->fasta_file);
+    $self->debug_message("Running rfamscan on sequence in " . $self->fasta_file);
 
     # Figure out the exact path to the executable instead of relying on a symlink in /gsc/scripts/bin, which
     # prevents silent upgrades from changing the executable we use!
     my $program_dir = $self->rfam_install_path . '/rfam-' . $self->version . '/';
     my $program_path = $program_dir . 'rfam_scan.pl';
     confess "No rfam_scan program found at $program_path!" unless -e $program_path;
-    $self->status_message("Using rfamscan executable at $program_path");
+    $self->debug_message("Using rfamscan executable at $program_path");
 
     unless (-d $self->raw_output_directory) {
         my $mkdir_rv = make_path($self->raw_output_directory);
@@ -88,7 +88,7 @@ sub execute {
     my $raw_output_file = $raw_output_fh->filename;
     $raw_output_fh->close;
     chmod(0666, $raw_output_file);
-    $self->status_message("Raw output being placed in $raw_output_file");
+    $self->debug_message("Raw output being placed in $raw_output_file");
 
     # Create a list of parameters and then create the command string
     my @params;
@@ -98,7 +98,7 @@ sub execute {
     push @params, $self->fasta_file;
     
     my $cmd = join(" ", $program_path, @params);
-    $self->status_message("Preparing to execute rfam_scan: $cmd");
+    $self->debug_message("Preparing to execute rfam_scan: $cmd");
 
     # rfam scan requires that an environment variable be set to execute...
     $ENV{RFAM_DIR} = $program_dir;
@@ -108,14 +108,14 @@ sub execute {
 
     my $output_fh = IO::File->new($raw_output_file, 'r');
     confess "Couldn't get file handle for $raw_output_file for raw output parsing!" unless $output_fh;
-    $self->status_message("Execution of rfamscan complete, now parsing output");
+    $self->debug_message("Execution of rfamscan complete, now parsing output");
 
     # Parse output and create RNAGene objects
     my %sequence_counts;
     while (my $line = $output_fh->getline) {
         chomp $line;
         my ($sequence_id, $start, $end, $accession, $model_start, $model_end, $bit_score, $rfam_id) = split(/\s+/, $line);
-        $self->status_message("Parsing sequence $sequence_id");
+        $self->debug_message("Parsing sequence $sequence_id");
 
         my $strand = 1;
         if ($start > $end) {
@@ -147,7 +147,7 @@ sub execute {
         );
     }
 
-    $self->status_message("Acquiring necessary locks and committing!");
+    $self->debug_message("Acquiring necessary locks and committing!");
     my @locks = $self->lock_files_for_predictions(qw/ Genome::Prediction::RNAGene /);
     UR::Context->commit;
     $self->release_prediction_locks(@locks);

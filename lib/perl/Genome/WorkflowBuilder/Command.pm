@@ -14,7 +14,31 @@ class Genome::WorkflowBuilder::Command {
             is => 'Command',
         },
     ],
+    has_optional => [
+        lsf_queue => {
+            is => 'String',
+        },
+        lsf_project => {
+            is => 'String',
+        },
+        lsf_resource => {
+            is => 'String',
+        },
+    ],
 };
+
+sub create {
+    my $class = shift;
+    my $self = $class->SUPER::create(@_);
+
+    eval sprintf("require %s", $self->command);
+    my $error = $@;
+    if ($error) {
+        Carp::confess(sprintf("Failed to load command class (%s)",
+                $self->command));
+    }
+    return $self;
+}
 
 
 # ------------------------------------------------------------------------------
@@ -28,13 +52,8 @@ sub from_xml_element {
     return $class->create(
         name => $element->getAttribute('name'),
         command => $command_class,
+        parallel_by => $element->getAttribute('parallelBy'),
     );
-}
-
-sub input_properties {
-    my $self = shift;
-    return map {$_->property_name} $self->command->__meta__->properties(
-        is_input => 1, is_optional => 0);
 }
 
 my %_EXPECTED_ATTRIBUTES = (
@@ -42,15 +61,30 @@ my %_EXPECTED_ATTRIBUTES = (
     lsf_queue => 'lsfQueue',
     lsf_resource => 'lsfResource',
 );
+sub input_properties {
+    my $self = shift;
+    my @result = map {$_->property_name} $self->command->__meta__->properties(
+        is_input => 1, is_optional => 0);
+    push @result, grep {!exists $_EXPECTED_ATTRIBUTES{$_}} map {$_->property_name} $self->command->__meta__->properties(
+        is_param => 1, is_optional => 0);
+    return sort @result;
+}
+
 sub operation_type_attributes {
     my $self = shift;
     my %attributes = (
         commandClass => $self->command,
     );
-    for my $command_property (keys(%_EXPECTED_ATTRIBUTES)) {
-        my $value = $self->_get_attribue_from_command($command_property);
+    for my $name (keys(%_EXPECTED_ATTRIBUTES)) {
+        my $value;
+        if (defined($self->$name)) {
+            $value = $self->$name;
+        } else {
+            $value = $self->_get_attribue_from_command($name);
+        }
+
         if (defined($value)) {
-            $attributes{$_EXPECTED_ATTRIBUTES{$command_property}} = $value;
+            $attributes{$_EXPECTED_ATTRIBUTES{$name}} = $value;
         }
     }
     return %attributes;
@@ -58,7 +92,7 @@ sub operation_type_attributes {
 
 sub output_properties {
     my $self = shift;
-    return map {$_->property_name} $self->command->__meta__->properties(
+    return sort map {$_->property_name} $self->command->__meta__->properties(
         is_output => 1);
 }
 
@@ -76,6 +110,26 @@ sub validate {
                     $self->parallel_by));
         }
     }
+}
+
+sub is_input_property {
+    my ($self, $property_name) = @_;
+    return $self->command->__meta__->properties(
+            property_name => $property_name, is_input => 1)
+        || $self->command->__meta__->properties(
+            property_name => $property_name, is_param => 1);
+}
+
+sub is_output_property {
+    my ($self, $property_name) = @_;
+    return $self->command->__meta__->properties(property_name => $property_name,
+        is_output => 1);
+}
+
+sub is_many_property {
+    my ($self, $property_name) = @_;
+    return $self->command->__meta__->properties(property_name => $property_name,
+        is_many => 1);
 }
 
 

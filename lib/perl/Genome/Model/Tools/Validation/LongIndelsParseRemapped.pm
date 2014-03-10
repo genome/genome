@@ -55,7 +55,7 @@ sub execute {
 
     #get readcounts from the tumor sample
     my $tumor_rc_file = $output_dir . "/tumor_counts.mm80.csv";
-    $self->status_message("Starting count contigs for tumor");
+    $self->debug_message("Starting count contigs for tumor");
     my $tumor_rc_cmd = Genome::Model::Tools::Validation::CountContigs->create(
         bam_file => $self->tumor_bam,
         contig_fasta_file => $self->contigs_file,
@@ -68,7 +68,7 @@ sub execute {
 
     #get readcounts from the normal sample
     my $normal_rc_file = $output_dir . "/normal_counts.mm80.csv";
-    $self->status_message("Starting count contigs for normal");
+    $self->debug_message("Starting count contigs for normal");
     my $normal_rc_cmd = Genome::Model::Tools::Validation::CountContigs->create(
         bam_file => $self->normal_bam,
         contig_fasta_file => $self->contigs_file,
@@ -81,7 +81,7 @@ sub execute {
 
     #combine the readcounts to do somatic calling
     my $calls_file = $output_dir . "/combined_counts.csv";
-    $self->status_message("Starting combine counts");
+    $self->debug_message("Starting combine counts");
     my $calls_cmd = Genome::Model::Tools::Validation::CombineCounts->create(
         count_files => join(",",$normal_rc_file,$tumor_rc_file),
         file_labels => join(",","normal","tumor"),
@@ -100,7 +100,7 @@ sub execute {
     #create an annotate-able list of somatic calls, getting ref and var bases from the contigs
     #gmt annotate adaptor indel-contig --contig-count-file /gscmnt/sata204/info/medseq/prc1/validation/Indel_analysis/lcm3/long_indels/combined_counts_somatic.csv --contig-fasta-file /gscmnt/sata204/info/medseq/prc1/validation/Indel_analysis/lcm3/long_indels/contigs.fa --output-file /gscmnt/sata204/info/medseq/prc1/validation/Indel_analysis/lcm3/long_indels/combined_counts_somatic.csv.indel.contig
     my $adapted_somatic_calls = $somatic_calls_file . ".adapted";
-    $self->status_message("Running gmt annotate adaptor indel-contig");
+    $self->debug_message("Running gmt annotate adaptor indel-contig");
     my $adaptor_cmd = Genome::Model::Tools::Annotate::Adaptor::IndelContig->create(
         contig_count_file => $somatic_calls_file,
         contig_fasta_file => $self->contigs_file,
@@ -117,7 +117,7 @@ sub execute {
 
     #convert annotation file to bed format for fast tiering
     my $somatic_bed_file = $adapted_somatic_calls . ".bed";
-    $self->status_message("Running gmt bed convert indel annotation-to-bed");
+    $self->debug_message("Running gmt bed convert indel annotation-to-bed");
     my $convert_cmd = Genome::Model::Tools::Bed::Convert::Indel::AnnotationToBed->create(
         source => $adapted_somatic_calls,
         output => $somatic_bed_file,
@@ -128,7 +128,7 @@ sub execute {
 
     #fast tier bed format indel list
     my $tier1_calls = $somatic_bed_file . ".tier1";
-    $self->status_message("Running gmt fast-tier fast-tier");
+    $self->debug_message("Running gmt fast-tier fast-tier");
     my $tiering_cmd = Genome::Model::Tools::FastTier::FastTier->create(
         variant_bed_file => $somatic_bed_file,
         tier_file_location => $self->tier_file_location,

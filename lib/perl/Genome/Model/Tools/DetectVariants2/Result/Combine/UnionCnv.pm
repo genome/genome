@@ -12,7 +12,7 @@ class Genome::Model::Tools::DetectVariants2::Result::Combine::UnionCnv{
 
 sub _needs_symlinks_followed_when_syncing { 0 };
 sub _working_dir_prefix { 'union-cnv' };
-sub resolve_allocation_disk_group_name { 'info_genome_models' };
+sub resolve_allocation_disk_group_name { $ENV{GENOME_DISK_GROUP_MODELS} };
 sub allocation_subdir_prefix { 'union_cnv' };
 sub _variant_type { 'cnvs' };
 
@@ -32,7 +32,7 @@ sub _combine_variants {
     else {
         die $self->error_message("Cnv Union operation found two cnv files, but this module currently only passes one forward.");
     }
-    $self->status_message("Completed copying cnvs.hq file into output directory.");
+    $self->debug_message("Completed copying cnvs.hq file into output directory.");
     return 1;
 }
 

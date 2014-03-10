@@ -33,7 +33,7 @@ class Genome::Model::SomaticValidation::Command::AnnotateVariants {
     ],
     has_param => [
         lsf_queue => {
-            default => 'apipe',
+            default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT},
         },
         snv_tiers_to_annotate => {
             is => 'Array',
@@ -50,18 +50,18 @@ sub execute {
     my $self = shift;
     my $build = $self->build;
 
-    $self->status_message("Executing Annotate step");
+    $self->debug_message("Executing Annotate step");
 
 
     my $annotation_directory = $build->data_directory . '/annotations';
-    $self->status_message(sprintf("Creating annotation directory at %s",
+    $self->debug_message(sprintf("Creating annotation directory at %s",
             $annotation_directory));
     Genome::Sys->create_directory($annotation_directory);
 
-    $self->status_message("Annotating SNVs");
+    $self->debug_message("Annotating SNVs");
     $self->annotate_snvs($annotation_directory);
 
-    $self->status_message("Annotation complete.");
+    $self->debug_message("Annotation complete.");
 
     return 1;
 }
@@ -82,7 +82,7 @@ sub annotate_snvs {
     for my $tier (@{$self->snv_tiers_to_annotate}) {
         TYPE:
         for my $type (qw(hq lq)) {
-            $self->status_message(sprintf("Annotating tier %s %s SNVs", $tier, $type));
+            $self->debug_message(sprintf("Annotating tier %s %s SNVs", $tier, $type));
 
             my $temp_output_path = Genome::Sys->create_temp_file_path();
 
@@ -90,12 +90,12 @@ sub annotate_snvs {
             my $tiering_result;
             eval{$tiering_result = $tiering_user->software_result};
             if($@){
-                $self->status_message(sprintf('No tiering result found for %s... skipping', $type));
+                $self->debug_message(sprintf('No tiering result found for %s... skipping', $type));
                 next TYPE;
             }
 
             my $input_path = $self->get_input_path_for_tier($tiering_result, $tier, $type);
-            $self->status_message(sprintf('Preparing to annotate file: %s',
+            $self->debug_message(sprintf('Preparing to annotate file: %s',
                     $input_path));
 
             unless (defined $input_path) {
@@ -114,7 +114,7 @@ sub annotate_snvs {
                                                           $input_path);
 
             unless (-s $input_path) {
-                $self->status_message(sprintf('Skipping annotation for empty file %s',
+                $self->debug_message(sprintf('Skipping annotation for empty file %s',
                         $input_path));
                 Genome::Sys->write_file($output_path, '');
                 next TYPE;
@@ -129,7 +129,7 @@ sub annotate_snvs {
                 output_file => $temp_output_path,
             );
 
-            $self->status_message(sprintf(
+            $self->debug_message(sprintf(
                     'Executing GMT:AnnotateTranscriptVariants with parameters: %s',
                     join('', Data::Dumper::Dumper(%annotation_params))));
 

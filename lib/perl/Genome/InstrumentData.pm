@@ -102,25 +102,16 @@ class Genome::InstrumentData {
         },
     ],
     has_optional => [
-        tgi_lims_status => { # TODO rename!
-            is => 'Text',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            is_many => 0,
-            where => [ attribute_label => 'tgi_lims_status' ],
+        analysis_project_bridges => {
+            is => 'Genome::Config::AnalysisProject::InstrumentDataBridge',
+            reverse_as => 'instrument_data',
+            is_many => 1,
         },
-        analysis_project_id => {
-            is => 'Text',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            is_many => 0,
-            where => [ attribute_label => 'analysis_project_id' ],
-        },
-        analysis_project => {
+        analysis_projects => {
             is => 'Genome::Config::AnalysisProject',
-            id_by => 'analysis_project_id',
+            via => 'analysis_project_bridges',
+            to => 'analysis_project',
+            is_many => 1,
         },
         original_est_fragment_size => {
             is => 'Integer',
@@ -264,7 +255,7 @@ sub create {
     eval{ ($bx, @extra) = $class->define_boolexpr(@_); };
     return if not $bx;
     if ( @extra and @extra % 2 == 1 ) {
-        $class->error_message("Odd number of attributes sent to create intrument data: ".Data::Dumper::Dumper(\@extra));
+        $class->error_message("Odd number of attributes sent to create instrument data: ".Data::Dumper::Dumper(\@extra));
         return;
     }
     my %extra = @extra;
@@ -296,15 +287,14 @@ sub delete {
     my ($expunge_status) = $self->_expunge_assignments;
     return unless $expunge_status;
 
-    #finally, clean up the instrument data
-    for my $attr ( $self->attributes ) {
-        $attr->delete;
-    }
-
     $self->_create_deallocate_observer;
 
     for my $attribute ($self->attributes) {
         $attribute->delete;
+    }
+
+    for my $bridge ($self->analysis_project_bridges) {
+        $bridge->delete;
     }
 
     return $self->SUPER::delete;
@@ -330,7 +320,8 @@ sub _expunge_assignments{
     for my $model (@models) {
         $model->remove_instrument_data($self);
         my $display_name = $self->__display_name__;
-        push(@{$affected_users{$model->user_name}->{join(" ", $display_name, $self->id)}}, $model->id);
+        push(@{$affected_users{$model->created_by}->{join(" ", $display_name, $self->id)}}, $model->id);
+        push(@{$affected_users{$model->run_as}->{join(" ", $display_name, $self->id)}}, $model->id);
     }
 
     # There may be builds using this instrument data even though it had previously been unassigned from the model
@@ -534,124 +525,3 @@ sub __display_name__ {
 }
 
 1;
-
-__END__
-s:
-_sls_fwd_read_length
-_sls_read_length
-_sls_rev_read_length
-adaptor_path	attributes
-analysis_software_version	attributes
-archive_path	attributes
-bam_path	attributes
-clusters	attributes
-cycles
-fastqc_path	attributes
-filt_error_rate_avg
-flow_cell
-flow_cell_id	attributes
-fwd_clusters	attributes
-fwd_filt_aligned_clusters_pct	attributes
-fwd_filt_error_rate_avg
-fwd_kilobases_read	attributes
-fwd_read_length	attributes
-fwd_run_type	attributes
-fwd_seq_id	attributes
-gc_bias_path	attributes
-gerald_directory	attributes
-index_sequence	attributes
-is_external	attributes
-is_paired_end
-lane	attributes
-median_insert_size
-old_filt_error_rate_avg	attributes
-old_fwd_filt_error_rate_avg	attributes
-old_median_insert_size	attributes
-old_rev_filt_error_rate_avg	attributes
-old_sd_above_insert_size	attributes
-old_sd_below_insert_size	attributes
-project
-project_name	attributes
-read_1_pct_mismatch
-read_2_pct_mismatch
-read_count
-read_length	attributes
-rev_clusters	attributes
-rev_filt_aligned_clusters_pct	attributes
-rev_filt_error_rate_avg
-rev_kilobases_read	attributes
-rev_read_length	attributes
-rev_run_type	attributes
-rev_seq_id	attributes
-run_type	attributes
-sd_above_insert_size
-sd_below_insert_size
-sd_insert_size
-sequencing_platform
-short_name
-subclass_name
-target_region_set_name	attributes
-
-i:
-barcode	attributes
-base_count	attributes
-blacklisted_segments	attributes
-description	attributes
-fragment_count	attributes
-full_name
-fwd_read_length	attributes
-genotype_file	attributes
-import_date	attributes
-import_format	attributes
-import_source_name	attributes
-is_paired_end	attributes
-median_insert_size	attributes
-original_data_path	attributes
-read_count	attributes
-read_length	attributes
-reference_sequence_build
-reference_sequence_build_id	attributes
-rev_read_length	attributes
-sd_above_insert_size	attributes
-source	sample
-source_id	source
-source_name	source
-sra_accession	attributes
-sra_sample_id	attributes
-subclass_name
-target_region_set_name	attributes
-user_name	attributes
-
-f:
-_fasta_file
-_qual_file
-beads_loaded	attributes
-copies_per_bead	attributes
-fc_id	attributes
-incoming_dna_name	attributes
-index_sequence	attributes
-is_paired_end	attributes
-key_pass_wells	attributes
-predicted_recovery_beads	attributes
-read_count	attributes
-region_id	attributes
-region_number	attributes
-research_project	attributes
-sample_set	attributes
-sequencing_platform
-sff_file	attributes
-ss_id	attributes
-subclass_name
-supernatant_beads	attributes
-total_bases_read	attributes
-total_key_pass	attributes
-total_raw_wells	attributes
-total_reads	attributes
-
-g:
-disk_allocation
-read_count
-research_project	attributes
-sequencing_platform
-subclass_name
-

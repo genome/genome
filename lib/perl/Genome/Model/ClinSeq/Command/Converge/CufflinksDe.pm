@@ -86,7 +86,7 @@ sub get_de_matrix{
   my $labels = $args{'-labels'};
   my %data;
   
-  $self->status_message("Creating de matrix: $outfile");
+  $self->debug_message("Creating de matrix: $outfile");
 
   my $gene_col;
   foreach my $build_id (keys %{$files}){
@@ -169,7 +169,7 @@ sub converge_de_data{
   my $de_matrix = $args{'-de_matrix'};
   my %data;
   
-  $self->status_message("Creating matrix: $outfile");
+  $self->debug_message("Creating matrix: $outfile");
 
   #Example input
   # tracking_id mapped_gene_name  gene_id biotype locus case_fpkm case_fpkm_conf_hi case_fpkm_conf_lo case_fpkm_status  control_fpkm  control_fpkm_conf_hi  control_fpkm_conf_lo  control_fpkm_status case_vs_control_log2_de case_vs_control_de_lq case_vs_control_de_hq

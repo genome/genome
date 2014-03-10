@@ -156,7 +156,7 @@ sub _resolve_resource_requirements_for_build {
 }
 
 sub _resolve_disk_group_name_for_build {
-    return ($_[0]->is_rederivable ? 'info_genome_models' : 'info_apipe_ref');
+    return ($_[0]->is_rederivable ? $ENV{GENOME_DISK_GROUP_MODELS} : $ENV{GENOME_DISK_GROUP_REFERENCES});
 }
 
 sub _execute_build {
@@ -182,19 +182,19 @@ sub _execute_build {
         return;
     }
 
-    $self->status_message('Promoting files to final location.');
+    $self->debug_message('Promoting files to final location.');
     for my $staged_file (glob($output_directory . '/*')) {
         my ($vol, $dir, $file_base) = File::Spec->splitpath($staged_file);
         my $final_file = join('/', $build_directory, $file_base);
         rename($staged_file, $final_file);
     }
 
-    $self->status_message('Creating sequence dictionaries');
+    $self->debug_message('Creating sequence dictionaries');
     return unless $self->_create_sequence_dictionary($build);
 
     # Reallocate to amount of space actually consumed if the build has an associated allocation and that allocation
     # has an absolute path the same as this build's data_path
-    $self->status_message("Reallocating.");
+    $self->debug_message("Reallocating.");
     if (defined($build->disk_allocation)) {
         unless($build->disk_allocation->reallocate) {
             $self->error_message("Reallocation failed.");
@@ -207,7 +207,7 @@ sub _execute_build {
         $self->error_message("Could not create manifest file");
     }
 
-    $self->status_message("Done.");
+    $self->debug_message("Done.");
     return 1;
 }
 
@@ -222,7 +222,7 @@ sub _copy_fasta_file {
         $primary_fasta_path = File::Spec->catfile($output_directory, 'all_sequences.fa');
     }
 
-    $self->status_message("Copying primary fasta file");
+    $self->debug_message("Copying primary fasta file");
 
     #If an error occurs here about refusing to write to an existing file, that was most likely on a re-run of the build
     #and the original error can be found earlier in the logs.  To restart, clear files out of the build directory.
@@ -241,7 +241,7 @@ sub _copy_fasta_file {
 
     my $remap_file = $build->fasta_file . ".remap";
     if (-s $remap_file) {
-        $self->status_message("Remapping file found. Copying $remap_file...");
+        $self->debug_message("Remapping file found. Copying $remap_file...");
         my $destination = $primary_fasta_path . ".remap";
         unless (Genome::Sys->copy_file($remap_file, $destination)) {
             $self->error_message("Failed to copy $remap_file to $destination");
@@ -250,7 +250,7 @@ sub _copy_fasta_file {
     }
 
     if ($build->can('append_to') && $build->append_to) {
-        $self->status_message("Copying full fasta file");
+        $self->debug_message("Copying full fasta file");
         my $full_fasta_path = File::Spec->catfile($output_directory, 'all_sequences.fa');
         my $cmd = Genome::Model::Tools::Fasta::Concat->create(
             input_files => [
@@ -267,7 +267,7 @@ sub _copy_fasta_file {
         push(@fastas, $full_fasta_path);
     }
 
-    $self->status_message("Doing samtools faidx.");
+    $self->debug_message("Doing samtools faidx.");
     my $samtools_path = Genome::Model::Tools::Sam->path_for_samtools_version(); #uses default version if none passed
 
     for my $fasta (@fastas) {
@@ -287,11 +287,11 @@ sub _copy_fasta_file {
     chomp $sequence_count;
 
     if ($build->skip_bases_files) {
-        $self->status_message("Skipping creation of $sequence_count bases files for fasta.");
+        $self->debug_message("Skipping creation of $sequence_count bases files for fasta.");
     } elsif ($sequence_count > 1024) {
-        $self->status_message("You have requested creation of bases files, but there are $sequence_count sequences in the primary fasta file. Creating bases files when there are thousands or millions of sequences is potentially dangerous.")
+        $self->debug_message("You have requested creation of bases files, but there are $sequence_count sequences in the primary fasta file. Creating bases files when there are thousands or millions of sequences is potentially dangerous.")
     } else {
-        $self->status_message("Making $sequence_count bases files from fasta.");
+        $self->debug_message("Making $sequence_count bases files from fasta.");
         my $rv = $self->_make_bases_files($primary_fasta_path, $output_directory);
 
         unless($rv) {
@@ -420,7 +420,7 @@ sub _list_bases_files {
     if (-e "$fa.fai") {
         my $sequence_count = `wc -l < $fa.fai`;
         chomp $sequence_count;
-        #$self->status_message("There were $sequence_count bases in $fa.fai")
+        #$self->debug_message("There were $sequence_count bases in $fa.fai")
     }
 
     if (!($build->skip_bases_files) and !($sequence_count > 1024) and $fa and -e $fa){

@@ -59,7 +59,7 @@ class Genome::Model::Tools::BioSamtools::AlignmentSummary {
         lsf_queue => {
             doc => 'When run in parallel, the LSF queue to submit jobs to.',
             is_optional => 1,
-            default_value => 'apipe',
+            default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT},
         },
         lsf_resource => {
             doc => 'When run in parallel, the resource request necessary to run jobs on LSF.',

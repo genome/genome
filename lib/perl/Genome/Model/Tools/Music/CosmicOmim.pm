@@ -149,8 +149,8 @@ sub execute {
     my $verbose = $self->verbose;
     my $wuheaders = $self->wu_annotation_headers;
 
-    $self->status_message("Using $omimaa as omima db file");
-    $self->status_message("Using $cosmic_dir as cosmic db folder");
+    $self->debug_message("Using $omimaa as omima db file");
+    $self->debug_message("Using $cosmic_dir as cosmic db folder");
 
     my $aa_range = $self->aa_range;
     my $nuc_range = $self->nuc_range;

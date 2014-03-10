@@ -107,9 +107,9 @@ sub _run_aligner {
     # you should die.
     
     if (@input_pathnames == 1) {
-        $self->status_message("_run_aligner called in single-ended mode.");
+        $self->debug_message("_run_aligner called in single-ended mode.");
     } elsif (@input_pathnames == 2) {
-        $self->status_message("_run_aligner called in paired-end mode.");
+        $self->debug_message("_run_aligner called in paired-end mode.");
     } else {
         $self->error_message("_run_aligner called with " . scalar @input_pathnames . " files.  It should only get 1 or 2!");
         die $self->error_message;
@@ -191,7 +191,7 @@ sub prepare_reference_sequence_index {
     my $actual_fasta_file = $staged_fasta_file;
 
     if (-l $staged_fasta_file) {
-        $class->status_message(sprintf("Following symlink for fasta file %s", $staged_fasta_file));
+        $class->debug_message(sprintf("Following symlink for fasta file %s", $staged_fasta_file));
         $actual_fasta_file = readlink($staged_fasta_file);
         unless($actual_fasta_file) {
             $class->error_message("Can't read target of symlink $staged_fasta_file");

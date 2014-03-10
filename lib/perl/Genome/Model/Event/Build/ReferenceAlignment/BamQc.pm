@@ -13,8 +13,12 @@ class Genome::Model::Event::Build::ReferenceAlignment::BamQc {
     doc => 'runs BamQc on the bam(s) produced in the alignment step',
 };
 
+sub lsf_queue {
+    return $ENV{GENOME_LSF_QUEUE_BUILD_WORKER};
+}
+
 sub bsub_rusage {
-    return '-q long';
+    return '';
 }
 
 sub shortcut {
@@ -80,6 +84,18 @@ sub params_for_result {
     #read length takes long time to run and seems not useful for illumina/solexa data
     my $read_length = $instr_data->sequencing_platform =~ /^solexa$/i ? 0 : 1;
 
+    my $error_rate = 1;
+
+    if ($pp->can('read_aligner_name')
+        and $pp->can('read_aligner_version')
+        and defined $pp->read_aligner_name
+        and defined $pp->read_aligner_version
+        and ($pp->read_aligner_name eq 'bwamem')
+        and ($pp->read_aligner_version eq '0.7.5a')
+    ) {
+        $error_rate = 0;
+    }
+
     return (
         alignment_result_id => $self->_alignment_result->id,
         picard_version      => $picard_version,
@@ -87,7 +103,7 @@ sub params_for_result {
         fastqc_version      => Genome::Model::Tools::Fastqc->default_fastqc_version,
         samstat_version     => Genome::Model::Tools::SamStat::Base->default_samstat_version,
         error_rate_version  => Genome::Model::Tools::BioSamtools::ErrorRate->default_errorrate_version,
-        error_rate          => 1,
+        error_rate          => $error_rate,
         read_length         => $read_length,
         test_name           => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
     );
@@ -103,7 +119,7 @@ sub link_result {
     my $link = join('/', $align_result->output_dir, 'bam-qc-'.$result->id);
 
     if (-l $link) {
-        $self->status_message("Already found a symlink here.");
+        $self->debug_message("Already found a symlink here.");
     }
     else {
         Genome::Sys->create_symlink($result->output_dir, $link);
