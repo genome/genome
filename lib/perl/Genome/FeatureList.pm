@@ -236,19 +236,19 @@ sub transform_zero_to_one_based {
     my $bed_file_content;
 
     my $fh = Genome::Sys->open_file_for_reading($file);
+    my $line_no = 0;
     while(my $line = <$fh>) {
         chomp($line);
+        $line_no++;
+
         if($is_multitracked) {
             if ($line =~ /^track/) {
                 $bed_file_content .= "$line\n";
                 next;
             }
         }
-        my @entry = split("\t",$line);
-        unless (scalar(@entry) >= 3) {
-            my $error_message = 'At least three fields are required in BED format files.  Error with line: '. $line;
-            die($error_message);
-        }
+
+        my @entry = $class->_parse_entry($line, $line_no);
         $entry[1]++;
         $bed_file_content .= join("\t",@entry) ."\n";
     }
@@ -287,8 +287,15 @@ sub processed_bed_file_content {
     my $print = 1;
     my $bed_file_content;
     my $name_counter = 0;
+    my $line_no = 0;
     while(my $line = <$fh>) {
         chomp($line);
+        $line_no++;
+
+        if(!$bed_file_content && index($line, 'browser') == 0) {
+            next;
+        }
+
         if($self->is_multitracked) {
             if ($line =~ /^track name=tiled_region/ or $line =~ /^track name=probes/) {
                 if ($track_name eq 'tiled_region') {
@@ -305,17 +312,14 @@ sub processed_bed_file_content {
                 }
                 next;
             } elsif ($line =~ /^track\s.*?name=/) {
-                $self->warning_message('Unknown track name. Including regions.');
+                $self->warning_message("Unknown track name (line $line_no '$line'). Including regions.");
                 $print = 1;
                 next;
             }
         }
+
         if ($print) {
-            my @entry = split("\t",$line);
-            unless (scalar(@entry) >= 3) {
-                $self->error_message('At least three fields are required in BED format files.  Error with line: '. $line);
-                die($self->error_message);
-            }
+            my @entry = $self->_parse_entry($line, $line_no);
             if (!defined($entry[3])) {
                 $entry[3] = $entry[0] .':'. $entry[1] .'-'. $entry[2];
             }
@@ -339,6 +343,17 @@ sub processed_bed_file_content {
         }
     }
     return $bed_file_content;
+}
+
+sub _parse_entry {
+    my ($self, $line, $line_no) = @_;
+
+    my @entry = split("\t", $line);
+    unless (scalar(@entry) >= 3) {
+        die $self->error_message("At least three fields are required in BED format files.  Error with line $line_no:\n$line\n\n");
+    }
+
+    return @entry;
 }
 
 sub processed_bed_file {
