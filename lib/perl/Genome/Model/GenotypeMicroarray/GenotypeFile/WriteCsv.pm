@@ -10,6 +10,10 @@ use Genome::Utility::IO::SeparatedValueWriter;
 
 class Genome::Model::GenotypeMicroarray::GenotypeFile::WriteCsv { 
     is => 'Genome::Utility::IO::SeparatedValueWriter',
+    has => {
+        _format_types => { is => 'Array', },
+        _sample_name => { is => 'Text', },
+    },
 };
 
 sub create {
@@ -29,18 +33,41 @@ sub create {
         $params{headers} = [qw/ chromosome position alleles reference id sample_name log_r_ratio gc_score cnv_value cnv_confidence allele1 allele2 /];
     }
 
-    return $class->SUPER::create(%params);
+    my $header = delete $params{header};
+    if ( not $header ) {
+        $class->error_message('No header given!');
+        return;
+    }
+
+    my $self = $class->SUPER::create(%params);
+    return if not $self;
+
+    $self->{_sample_name} = ($header->sample_names)[0];
+    $self->{_format_types} = [ keys %{$header->format_types} ];
+
+    return $self;
 }
 
 sub write {
     my ($self, $entry) = @_;
 
-    $self->write_one($entry);
-    return;
+    #my $alleles = $entry->sample_field($sample_names[0]);
 
-    my %genotype;
-    #$self->write_one(\%genotype);
-    
+    my %genotype = (
+        id => $entry->{identifiers}->[0],
+        chromosome => $entry->{chrom},
+        position => $entry->{position},
+        reference => $entry->{reference_allele},
+        sample_name => $self->_sample_name,
+    );
+
+    for my $format_type ( @{$self->_format_types} ) {
+        $genotype{ Genome::Model::GenotypeMicroarray->format_name_for_id($format_type) } = $entry->sample_field(0, $format_type);
+    }
+    @genotype{qw/ allele1 allele2 /} = split(//, $genotype{alleles});
+
+    $self->write_one(\%genotype);
+
     return 1;
 }
 

@@ -90,6 +90,46 @@ sub _additional_parts_for_default_name {
     return ( $instrument_data->import_source_name, $instrument_data->sequencing_platform, $self->refseq_name );
 }
 
+our $format_types = {
+    GT => {
+        id => 'GT',
+        name => 'genotype',
+        header => ',Number=1,Type=String,Description="Genotype">',
+    },
+    ALLELES => {
+        id => 'ALLELES',
+        name => 'alleles',
+        header => ',Number=1,Type=String,Description="Alleles called from the microarray chip">',
+    },
+    CNV_CONF => {
+        id => 'CNV_CONF',
+        name => 'cnv_confidence',
+        header => ',Number=1,Type=Float,Description="CNV Confidence">',
+    },
+    CNV_VAL => {
+        id => 'CNV_VAL',
+        name => 'cnv_value',
+        header => ',Number=1,Type=Float,Description="CNV Value">',
+    },
+    LOG_R => {
+        id => 'LOG_R',
+        name => 'log_r_ratio',
+        header => ',Number=1,Type=Float,Description="Log R Ratio">',
+    },
+    GC_SCORE => {
+        id => 'GC_SCORE',
+        name => 'gc_score',
+        header => ',Number=1,Type=Float,Description="GC Score">',
+    },
+};
+sub format_types {
+    return values %$format_types;
+}
+
+sub format_name_for_id {
+    return $format_types->{$_[1]}->{name};
+}
+
 sub dependent_cron_ref_align {
     my $self = shift;
 

@@ -20,45 +20,8 @@ class Genome::Model::GenotypeMicroarray::GenotypeFile::ReadUnannotatedCsv {
         _genotypes => { is => 'Hash', default_value => {}, },
         _entries => { is => 'Array', },
         _position => { is => 'Integer', default_value => 0, },
-        _vcf_header => { is => 'Genome::File::Vcf::Header', },
     },
 };
-
-our @supported_format_fields = (
-    {
-        name => 'genotype',
-        id => 'GT',
-        header => ',Number=1,Type=String,Description="Genotype">',
-    },
-    {
-        name => 'alleles',
-        id => 'ALLELES',
-        header => ',Number=1,Type=String,Description="Alleles called from the microarray chip">',
-    },
-    {
-        name => 'cnv_confidence',
-        id => 'CC',
-        header => ',Number=1,Type=Float,Description="CNV Confidence">',
-    },
-    {
-        name => 'cnv_value',
-        id => 'CV',
-        header => ',Number=1,Type=Float,Description="CNV Value">',
-    },
-    {
-        name => 'log_r_ratio',
-        id => 'LR',
-        header => ',Number=1,Type=Float,Description="Log R Ratio">',
-    },
-    {
-        name => 'gc_score',
-        id => 'GC',
-        header => ',Number=1,Type=Float,Description="GC Score">',
-    },
-);
-sub supported_format_fields {
-    return @supported_format_fields;
-}
 
 sub create {
     my $class = shift;
@@ -206,12 +169,15 @@ sub _annotate_vcf_header {
     $header->add_sample_name($self->_sample->name);
 
     # Add sample format fields
-    for my $field ( $self->supported_format_fields ) {
+    for my $field ( Genome::Model::GenotypeMicroarray->format_types ) {
         $header->add_format_str('<ID='.$field->{id}.$field->{header});
     }
 
     # Set back on reader
     $self->_vcf_reader->{header} = $header;
+
+    # Keep header here, too
+    $self->{header} = $header;
 
     return 1;
 }
@@ -293,17 +259,13 @@ sub _annotate_genotypes {
         $genotype->{genotype} = $self->_gt_for_genotype($genotype, $entry);
 
         # Add genotype data to entry
-        for my $field ( $self->supported_format_fields ) {
-            $entry->{ $field->{name} } = $genotype->{ $field->{name}  };
+        for my $field ( Genome::Model::GenotypeMicroarray->format_types ) {
             $entry->add_format_field($field->{id});
             $entry->set_sample_field(0, $field->{id}, $genotype->{ $field->{name} });
         }
 
         # Use entry for genotype
         $genotypes->{$variant_id}->{seen}++;
-
-        # Add sample id
-        $entry->{sample_id} = $self->_sample->id;
 
         # Push to entries to maintain order
         push @entries, $entry;
