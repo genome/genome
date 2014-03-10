@@ -95,7 +95,8 @@ sub execute {
 
     #If the repo/branch directory already exists, do nothing
     if (-e $fulldir && -d $fulldir){
-      die $self->error_message("It appears that this branch has already been cloned to $fulldir.  Aborting.  Delete it if you want to clone from scratch.");
+      $self->warning_message("It appears that this branch has already been cloned to $fulldir.  Aborting.  Delete it if you want to clone from scratch.");
+      return 1;
     }
 
     #Attempt to clone the specified git branch into the desired sub-directory of the database directory specified by $ENV{$GENOME_DB}
