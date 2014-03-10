@@ -1046,7 +1046,7 @@ sub _commit_unless_testing {
 }
 
 sub _default_archive_after_time {
-    DateTime->now(time_zone => 'local')->add(years => 1)->strftime('%F %T');
+    DateTime->now(time_zone => 'local')->add(years => 1)->strftime('%F 00:00:00');
 }
 
 sub _get_trash_folder {
