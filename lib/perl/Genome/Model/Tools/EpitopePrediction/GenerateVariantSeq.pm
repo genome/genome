@@ -27,6 +27,11 @@ class Genome::Model::Tools::EpitopePrediction::GenerateVariantSeq {
             # the current code only works on missense. Will need furthur development for other trv_types.
             default_value => $DEFAULT_TRV_TYPE,
         },
+        length => {
+            is => 'Number',
+            doc => 'The length of the peptide sequences',
+            valid_values => [17, 21, 31],
+        },
     ],
 };
 
@@ -69,14 +74,15 @@ sub execute {
             }
             else {
                 my (@mutant_arr, @wildtype_arr);
-                if ($position < 8) {
-                    @wildtype_arr = @mutant_arr = @arr_wildtype_sequence[ 0 ... 16];
+                my $midpoint = ($self->length - 1) / 2;
+                if ($position < $midpoint) {
+                    @wildtype_arr = @mutant_arr = @arr_wildtype_sequence[ 0 ... ($self->length - 1) ];
                 }
-                elsif ($position > ($#arr_wildtype_sequence -8)) {
-                    @wildtype_arr = @mutant_arr = @arr_wildtype_sequence[ $#arr_wildtype_sequence -17 ... $#arr_wildtype_sequence];
+                elsif ($position > ($#arr_wildtype_sequence - $midpoint)) {
+                    @wildtype_arr = @mutant_arr = @arr_wildtype_sequence[ ($#arr_wildtype_sequence - $self->length) ... $#arr_wildtype_sequence];
                 }
-                elsif (($position >= 8) && ($position  <= ($#arr_wildtype_sequence -8))) {
-                    @wildtype_arr = @mutant_arr = @arr_wildtype_sequence[ $position-8 ... $position+8];
+                elsif (($position >= $midpoint) && ($position  <= ($#arr_wildtype_sequence - $midpoint))) {
+                    @wildtype_arr = @mutant_arr = @arr_wildtype_sequence[ ($position - $midpoint) ... ($position + $midpoint) ];
                 }
                 else {
                     my $output_fh = Genome::Sys->open_file_for_appending($self->output_file);
@@ -84,7 +90,7 @@ sub execute {
                     close($output_fh);
                     next;
                 }
-                $mutant_arr[$position]=$mutant_aa;
+                $mutant_arr[$midpoint]=$mutant_aa;
                 $self->print_wildtype_and_mutant(\@wildtype_arr, \@mutant_arr, \@protein_arr);
             }
         }
