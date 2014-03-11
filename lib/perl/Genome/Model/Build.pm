@@ -1406,7 +1406,6 @@ sub _launch {
         }
 
         my $cmd = ["bash -c '" . join(" ", @genome_cmd, @genome_args) . "'"];
-        print "print CMD is: @$cmd\n";
         my $job_id = $self->_execute_bsub_command(
             $bsub_bin,
             @bsub_args,
