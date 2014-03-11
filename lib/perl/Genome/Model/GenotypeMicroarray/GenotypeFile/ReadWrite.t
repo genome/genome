@@ -38,8 +38,8 @@ my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->bui
 ok($reader, 'build reader');
 my $output_tsv = $tmpdir.'/genotypes.tsv';
 my $writer = Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory->build_writer(
-    $reader->{header},
-    $output_tsv.':sample_name=__TEST_SAMPLE__',
+    header => $reader->{header},
+    string => $output_tsv,
 );
 ok($writer, 'create writer');
 
@@ -58,8 +58,8 @@ ok($reader, 'create reader');
 
 my $output_vcf = $tmpdir.'/genotypes.vcf';
 $writer = Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory->build_writer(
-    $reader->{header},
-    $output_vcf.':sample_name=__TEST_SAMPLE__',
+    header => $reader->{header},
+    string => $output_vcf,
 );
 ok($writer, 'create writer');
 
@@ -77,8 +77,8 @@ $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->build_
 ok($reader, 'create reader');
 my $output_csv = $tmpdir.'/genotypes.csv';
 $writer = Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory->build_writer(
-    $reader->{header},
-    $output_csv.':sample_name=__TEST_SAMPLE__:separator=,',
+    header => $reader->{header},
+    string => $output_csv.':separator=,',
 );
 ok($writer, 'create writer');
 
@@ -86,7 +86,6 @@ my @genotypes_from_build;
 while ( my $genotype = $reader->next ) {
     $writer->write($genotype);
 }
-#$writer->close;
 is(File::Compare::compare($output_csv, $testdir.'/rw/output.expected.csv'), 0, 'read tsv, write to vcf output file matches');
 #print "gvimdiff $output_csv $testdir/rw/output.expected.csv\n"; <STDIN>;
 

@@ -13,14 +13,21 @@ class Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory {
 };
 
 sub build_writer {
-    my ($class, $header, $writer_params_string) = @_;
+    my ($class, %params) = @_;
 
+    my $header = delete $params{header};
     if ( not $header or not $header->isa('Genome::File::Vcf::Header') ) {
         $class->error_message('No header given to create writer!');
         return;
     }
 
-    my $writer_params = $class->_parse_writer_params_string($writer_params_string);
+    my $string = delete $params{string};
+    if ( %params ) {
+        $class->error_message('Unknwon params sent to build writer! '.Data::Dumper::Dumper(\%params));
+        return;
+    }
+
+    my $writer_params = $class->_parse_params_string($string);
     return if not $writer_params;
 
     $writer_params->{header} = $header;
@@ -33,14 +40,10 @@ sub build_writer {
     return $writer;
 }
 
-sub _parse_writer_params_string {
-    my ($class, $writer_params_string) = @_;
+sub _parse_params_string {
+    my ($class, $string) = @_;
 
-    if ( not $writer_params_string ) { # do the default thing
-        #return ( output => '-', format => 'vcf', );
-    }
-
-    my @writer_config_tokens = split(':', $writer_params_string);
+    my @writer_config_tokens = split(':', $string);
     my %writer_params;
     if ( @writer_config_tokens == 1 and $writer_config_tokens[0] !~ /=/ ) {
         $writer_params{output} = $writer_config_tokens[0];
