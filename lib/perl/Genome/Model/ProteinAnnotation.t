@@ -56,4 +56,36 @@ ok($workflow, 'generated workflow for protein annotation build');
 
 $workflow->validate();
 
+
+
+$pp = Genome::ProcessingProfile::ProteinAnnotation->create(
+    name => 'protein annotation Ber test profile',
+    strategy => 'Ber',
+    chunk_size => 10,
+    dump_predictions_to_file => 1,
+    dump_predictions_to_biosql => 1,
+);
+ok($pp, 'created test processing profile for protein annotation');
+
+$model = Genome::Model::ProteinAnnotation->create(
+    subject => $taxon,
+    processing_profile => $pp,
+    name => 'Ber test model',
+    input_fasta_file => $fasta_file,
+); 
+ok($model, 'created test model for protein annotation');
+
+$build = Genome::Model::Build->__define__(
+    data_directory => $temp_output_dir,
+    model => $model,
+);
+ok($build, 'created test build for protein annotation');
+ok($build->data_directory, 'build has a data directory');
+
+$workflow = $model->_resolve_workflow_for_build($build, 'inline');
+ok($workflow, 'generated workflow for protein annotation build');
+
+$workflow->validate();
+
+
 done_testing();
