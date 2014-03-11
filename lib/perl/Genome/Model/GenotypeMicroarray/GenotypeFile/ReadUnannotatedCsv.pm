@@ -201,7 +201,7 @@ sub _load_genotype {
     }
 
     if ( exists $self->_genotypes->{ $genotype{id} } ) {
-        Carp::confess( $self->error_message('Already have a genotype for snp id: '.Dumper(\%genotype, $self->genotypes->{ $genotype{id} })) );
+        Carp::confess( $self->error_message('Already have a genotype for snp id: '.Data::Dumper::Dumper(\%genotype, $self->genotypes->{ $genotype{id} })) );
     }
 
     delete $genotype{'chr'};
