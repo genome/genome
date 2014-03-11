@@ -307,7 +307,7 @@ sub _assign_model_to_analysis_project {
     my $self = shift;
     my $analysis_project = shift;
     my $model = shift;
-    die('Must specify an anlysis project and a model!') unless $analysis_project && $model;
+    die('Must specify an analysis project and a model!') unless $analysis_project && $model;
 
     return $analysis_project->model_group->assign_models($model);
 }
