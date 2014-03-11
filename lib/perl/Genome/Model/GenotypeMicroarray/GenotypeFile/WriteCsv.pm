@@ -43,7 +43,7 @@ sub create {
     return if not $self;
 
     $self->{_sample_name} = ($header->sample_names)[0];
-    $self->{_format_types} = [ keys %{$header->format_types} ];
+    $self->{_format_types} = [ keys %{$header->format_types} ] if $header->format_types;
 
     return $self;
 }
