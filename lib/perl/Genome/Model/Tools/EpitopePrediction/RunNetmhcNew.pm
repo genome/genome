@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use IPC::Run qw(run);
 
 class Genome::Model::Tools::EpitopePrediction::RunNetmhcNew {
     is => ['Genome::Model::Tools::EpitopePrediction::Base'],
@@ -19,6 +20,10 @@ class Genome::Model::Tools::EpitopePrediction::RunNetmhcNew {
         output_file => {
             is => 'Text',
             doc => 'Output file containing raw output from Netmhc epitope prediction',
+        },
+        stdout_file => {
+            is => 'Text',
+            doc => 'Stdout file from Netmhc epitope prediction',
         },
         epitope_length => {
             is => 'Text',
@@ -52,8 +57,6 @@ sub execute {
     }
 
     my $netmhc_cmd = join( ' ',
-            'bsub -q techd -R \'select[mem >4000] rusage[mem=4000]\' -M 4000000 -N',
-            '-oo ' . $self->output_file . '_stdout',
             $netmhc_path,
             '-a ' . $self->allele,
             '-l ' . $self->epitope_length,
@@ -61,12 +64,7 @@ sub execute {
             '-x ' . $self->output_file,
     );
 
-    Genome::Sys->shellcmd(
-        cmd => $netmhc_cmd,
-        input_files => [$self->fasta_file],
-#        output_files => [$self->output_file],
-        skip_if_output_is_present => 0,
-    );
+    run([$netmhc_cmd], '>', $self->stdout_file);
 
     return 1;
 }
