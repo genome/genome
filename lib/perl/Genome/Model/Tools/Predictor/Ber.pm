@@ -3,20 +3,59 @@ package Genome::Model::Tools::Predictor::Ber;
 use strict;
 use warnings;
 use Genome;
+use Workflow::Simple;
 use Command;
 use Getopt::Long;
 
 use Carp;
-use File::Path qw(mkpath);
+use File::Path qw(remove_tree);
 use File::Spec;
 use Cwd;
-use YAML qw( LoadFile );
 use English;
+
+BEGIN {
+    $ENV{WF_USE_FLOW} = 1;
+}
 
 class Genome::Model::Tools::Predictor::Ber {
     is => 'Genome::Model::Tools::Predictor::Base',
     doc => 'execute BER gene predictor',
-    
+    has => [
+        ber_version => {
+            is => 'Text',
+            value => 'v2.5',
+            doc => 'Version of Ber to use',
+        },
+        version => {
+            is => 'Text',
+            value => 'v2.5',
+            doc => 'Version of Ber to use',
+        },
+        cleanup => {
+            is => 'Boolean',
+            default_value => 1,
+            doc => 'cleanup intermediate files',
+        },
+        ber_source_path => {
+            is => 'DirectoryPath',
+            value => '/gscmnt/gc9002/info/annotation/BER/autoannotate_v2.5',
+            doc => 'Source of BER',
+        },
+        lsf_queue => {
+            is_param => 1,
+            default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
+        },
+        lsf_resource => {
+            is => 'Text',
+            default => "-M 4000000 -R 'select[type==LINUX64 && mem>4000] rusage[mem=4000]'",
+        },
+    ],
+    has_transient_optional => [
+        _locus_id => {
+            is => 'Text',
+        },
+    ],
+
 };
 
 sub help_brief
@@ -45,322 +84,471 @@ sub requires_chunking {
 sub run_predictor {
     my $self = shift;
 
-    $self->status_message("Starting BER");
-    $self->status_message("Creating kegg output directory at " . $self->output_directory);
-
-    if (-d $self->output_directory) {
-        $self->warning_message("Existing output directory found at " . $self->output_directory . ", removing!");
-        my $rv = system("rm -rf " . $self->output_directory);
-        confess "Could not remove " . $self->output_directory unless defined $rv and $rv == 0;
+    if(-e $self->final_report_file) {
+        $self->status_message("Final report already exists\n");
+        return 0;
     }
 
-    make_path($self->output_directory);
-    chmod(0775, $self->output_directory);
+    $self->status_message("Starting BER");
+   
+    my ($blastp_fasta_files, $hmmpfam_fasta_files) = $self->setup or croak "failed to setup BER config";
 
+    my %inputs = (
+        'output_directory' => $self->output_directory,
+        'blastp_fasta_files'  => $blastp_fasta_files,
+        'hmmpfam_fasta_files' => $hmmpfam_fasta_files,
+        'ber_source_path'  => $self->ber_source_path,
+        'gram_stain'       => $self->gram_stain ? $self->gram_stain : 'negative',
+        'locus_id'         => $self->locus_id,
+        'lsf_queue'        => $self->lsf_queue,
+        'lsf_resource'     => $self->lsf_resource,
 
+    );
 
-#Requirements for re-run: Not in any modules
-#-If we rerun BER we usually delete the sqlite db that exists
-#-If we run BER more than one time on same genome and have diff data sets then can’t use same config files. Can’t change the locus tag becuase gene name is the same for those that still exist.
-#-Can overwrite config files with new name list.
+    $self->status_message("found ".@$blastp_fasta_files." fasta files for blastp\n");
+    $self->status_message("found ".@$hmmpfam_fasta_files." fasta files for hmmpfam\n");
+    my $workflow = $self->generate_work_flow( (@$blastp_fasta_files != 0 ?  1 : 0), @$hmmpfam_fasta_files != 0 ? 1 : 0);
+    $self->status_message("starting workflow\n");
+    my $result = Workflow::Simple::run_workflow_lsf($workflow, %inputs);
+    unless ($result) {
+        croak "Error running BER workflow\n" . join("\n", map { $_->name . ": " . $_->error } @Workflow::Simple::ERROR);
+    }
+    unlink $self->raw_output_path if(-e $self->raw_output_path);
+    Genome::Sys->create_symlink($result->{output_file},$self->raw_output_path);
+    $self->status_message("finished running BER workflow\n");
 
-
-    $self->_create_config_files();
-    $self->_setup_dirs();
-    $self->_prep_input_files();
-    $self->_run_anno_sqlite();
-    $self->_finish();
-    
-
+    $self->write_final_report;
+    $self->cleanup_files if($self->cleanup);
 
     return 1;
+}
+
+sub generate_work_flow {
+    my $self = shift;
+    my ($blastp, $hmmpfam) = @_;
+
+    my $workflow = Workflow::Model->create(
+        name => 'Predictor::Ber',
+        input_properties => [ 'output_directory', 
+                              'blastp_fasta_files', 
+                              'hmmpfam_fasta_files', 
+                              'gram_stain', 
+                              'ber_source_path', 
+                              'locus_id',
+                              'lsf_queue',
+                              'lsf_resource',
+                          ],
+        output_properties => ['output_file'],
+    );
+
+    unless (-d $self->log_directory) {
+        Genome::Sys->create_directory($self->log_directory);
+    }
+    $workflow->log_dir($self->log_directory);
+    my $blastp_operation;
+    if ($blastp) {
+        $self->status_message("create workflow operation for blastp\n");
+    
+        $blastp_operation = $workflow->add_operation(
+            name => 'BER blastp',
+            operation_type => Workflow::OperationType::Command->create(
+                command_class_name => 'Genome::Model::Tools::Predictor::Ber::Blastp',
+            ),
+            parallel_by => 'input_fasta_file'
+        );
+        $workflow->add_link(
+            left_operation => $workflow->get_input_connector,
+            left_property => 'blastp_fasta_files',
+            right_operation => $blastp_operation,
+            right_property => 'input_fasta_file',
+        );
+        
+        $workflow->add_link(
+            left_operation => $workflow->get_input_connector,
+            left_property => 'output_directory',
+            right_operation => $blastp_operation,
+            right_property => 'output_directory',
+        );
+        $workflow->add_link(
+            left_operation => $workflow->get_input_connector,
+            left_property => 'ber_source_path',
+            right_operation => $blastp_operation,
+            right_property => 'ber_source_path',
+        );
+        $workflow->add_link(
+            left_operation => $workflow->get_input_connector,
+            left_property => 'lsf_queue',
+            right_operation => $blastp_operation,
+            right_property => 'lsf_queue',
+        );
+        $workflow->add_link(
+            left_operation => $workflow->get_input_connector,
+            left_property => 'lsf_resource',
+            right_operation => $blastp_operation,
+            right_property => 'lsf_resource',
+        );
+    }
+
+    my $hmmpfam_operation;
+    if ($hmmpfam) {
+        $self->status_message("create workflow operation for hmmpfam\n");
+    
+        $hmmpfam_operation = $workflow->add_operation(
+            name => 'BER hmmpfam',
+            operation_type => Workflow::OperationType::Command->create(
+                command_class_name => 'Genome::Model::Tools::Predictor::Ber::Hmmpfam',
+            ),
+            parallel_by => 'input_fasta_file'
+        );
+        $workflow->add_link(
+            left_operation => $workflow->get_input_connector,
+            left_property => 'hmmpfam_fasta_files',
+            right_operation => $hmmpfam_operation,
+            right_property => 'input_fasta_file',
+        );
+        
+        $workflow->add_link(
+            left_operation => $workflow->get_input_connector,
+            left_property => 'output_directory',
+            right_operation => $hmmpfam_operation,
+            right_property => 'output_directory',
+        );
+        $workflow->add_link(
+            left_operation => $workflow->get_input_connector,
+            left_property => 'ber_source_path',
+            right_operation => $hmmpfam_operation,
+            right_property => 'ber_source_path',
+        );
+        $workflow->add_link(
+            left_operation => $workflow->get_input_connector,
+            left_property => 'lsf_queue',
+            right_operation => $hmmpfam_operation,
+            right_property => 'lsf_queue',
+        );
+        $workflow->add_link(
+            left_operation => $workflow->get_input_connector,
+            left_property => 'lsf_resource',
+            right_operation => $hmmpfam_operation,
+            right_property => 'lsf_resource',
+        );
+    }
+    my $converge_operation;
+    if ($blastp_operation and $hmmpfam_operation) {
+        $converge_operation = $workflow->add_operation(
+            name => 'converge',
+            operation_type => Workflow::OperationType::Converge->create(
+                input_properties => ['btab_file', 'htab_file'],
+                output_properties => ['result'],
+            ),
+        );
+        $workflow->add_link(
+            left_operation => $blastp_operation,
+            left_property => 'btab_file',
+            right_operation => $converge_operation,
+            right_property => 'btab_file',
+        );
+        $workflow->add_link(
+            left_operation => $hmmpfam_operation,
+            left_property => 'htab_file',
+            right_operation => $converge_operation,
+            right_property => 'htab_file',
+        );
+    }
+    elsif ($blastp_operation) {
+        $converge_operation = $blastp_operation
+    }
+    elsif ($hmmpfam_operation) {
+        $converge_operation = $hmmpfam_operation
+    }
+
+    $self->status_message("create workflow operation for annotation\n");
+    my $annotate_operation = $workflow->add_operation(
+        name => 'BER annotation',
+        operation_type => Workflow::OperationType::Command->create(
+            command_class_name => 'Genome::Model::Tools::Predictor::Ber::Annotate',
+        ),
+    );
+    $workflow->add_link(
+        left_operation => $converge_operation,
+        left_property => 'result',
+        right_operation => $annotate_operation,
+        right_property => 'converge_result',
+    ) if($converge_operation);
+    $workflow->add_link(
+        left_operation => $workflow->get_input_connector,
+        left_property => 'output_directory',
+        right_operation => $annotate_operation,
+        right_property => 'output_directory',
+    );
+    $workflow->add_link(
+        left_operation => $workflow->get_input_connector,
+        left_property => 'ber_source_path',
+        right_operation => $annotate_operation,
+        right_property => 'ber_source_path',
+    );
+    $workflow->add_link(
+        left_operation => $workflow->get_input_connector,
+        left_property => 'ber_source_path',
+        right_operation => $annotate_operation,
+        right_property => 'ber_source_path',
+    );
+    $workflow->add_link(
+        left_operation => $workflow->get_input_connector,
+        left_property => 'locus_id',
+        right_operation => $annotate_operation,
+        right_property => 'locus_id',
+    );
+    $workflow->add_link(
+        left_operation => $workflow->get_input_connector,
+        left_property => 'gram_stain',
+        right_operation => $annotate_operation,
+        right_property => 'gram_stain',
+    );
+    $workflow->add_link(
+        left_operation => $annotate_operation,
+        left_property => 'output_file',
+        right_operation => $workflow->get_output_connector,
+        right_property => 'output_file',
+    );
+
+    my @errors = $workflow->validate;
+    if (@errors) {
+        die "Could not validate workflow:\n" . join("\n", @errors);
+    }
+    return $workflow;
+}
+
+sub locus_id {
+    my $self=shift;
+    return defined $self->_locus_id ? $self->_locus_id : $self->_get_locus_from_fasta_header;
 }
 
 sub _get_locus_from_fasta_header {
     my $self = shift;
     
-    $self->input_fasta_file;
-    
     #get headers
-	my $output_fh = Genome::Sys->open_file_for_reading($self->raw_output_path) or die "Could not get file handle for " . $self->raw_output_path;
+    my $output_fh = Genome::Sys->open_file_for_reading($self->input_fasta_file) 
+        or die "Could not get file handle for " . $self->input_fasta_file;
     
     my $fasta_header = $output_fh->getline;
-   	chomp $fasta_header;
+    chomp $fasta_header;
     
     #check header format 
     my ($locus_id) = $fasta_header =~ /^\>\w*?\-?(\w+)_Contig/;
 
+    $self->_locus_id($locus_id);
     #get locus id and ensure only one exists
     return $locus_id;
 }
 
 
-sub _create_config_files {
+sub setup {
+    my $self = shift;
+    my $locusid = $self->locus_id;
+    my $config_dir =$self->output_directory.'/';
 
+    $self->status_message("setting up inputs, creating fasta files and checking hmm and ber files\n");
+    #to satisfy the Ber software it expects a directory in its data path
+    my $ber_genomes_dir = $self->ber_source_path.'/data/genomes/'.$locusid;
+    Genome::Sys->create_symlink($config_dir, $ber_genomes_dir) unless(-l $ber_genomes_dir);
+    #and cleanup any previous run of this locus
+    unlink $self->ber_source_path.'/data/db/SQLite/'.$locusid if(-e $self->ber_source_path.'/data/db/SQLite/'.$locusid);
+
+    Genome::Sys->create_directory($self->fasta_dir);
+    Genome::Sys->create_directory($self->hmm_dir);
+    Genome::Sys->create_directory($self->ber_dir);
+
+    my $asm_file = $locusid.'_asm_feature';
+    unlink $config_dir.$asm_file if(-e $config_dir.$asm_file);
+    my $asm_fh = Genome::Sys->open_file_for_writing($config_dir.$asm_file) 
+        or croak "cann't open the file:$!.";
+    my $asmbl_file = $locusid.'_asmbl_data';
+    unlink $config_dir.$asmbl_file if(-e $config_dir.$asmbl_file);
+    my $asmbl_fh = Genome::Sys->open_file_for_writing($config_dir.$asmbl_file) 
+        or croak "cann't open the file:$!.";
+    my $ident2_file = $locusid.'_ident2';
+    unlink $config_dir.$ident2_file if(-e $config_dir.$ident2_file);
+    my $ident2_fh = Genome::Sys->open_file_for_writing($config_dir.$ident2_file) 
+        or croak "cann't open the file:$!.";
+    my $stan_file = $locusid.'_stan';    
+    unlink $config_dir.$stan_file if(-e $config_dir.$stan_file);
+    my $stan_fh = Genome::Sys->open_file_for_writing($config_dir.$stan_file) 
+        or croak "cann't open the file:$!.";
+
+    $asm_fh->print(join("\t", qw(asmbl_id end3 end5 feat_name feat_type))."\r\n");
+    $asmbl_fh->print(join("\t", qw(id name type))."\r\n");
+    $ident2_fh->print(join("\t", qw(complete feat_name locus))."\r\n");
+    $stan_fh->print(join("\t", qw(asmbl_data_id asmbl_id iscurrent))."\r\n");
+
+    my $count=0;
+    my $asmblid=0;
+    my @blastp_files;
+    my @hmmpfam_files;
+
+    my $seq_in = Bio::SeqIO->new(-file => $self->input_fasta_file, -format => 'Fasta')
+        or croak "failed to open: ".$self->input_fasta_file;
+    while (my $seq = $seq_in->next_seq()) {
+        my $contig = $seq->primary_id;
+        my ($start, $stop) = split(/\s+/, $seq->desc);
+        my $locus_count = sprintf("%05d", $count);
+        $asm_fh->print(join("\t", ($count, $start, $stop, $contig, 'ORF'))."\r\n");
+        $asmbl_fh->print(join("\t", ($count, 'Contig','contig'))."\r\n");
+        $ident2_fh->print(join("\t", (' ', $contig, $locusid.$locus_count))."\r\n");
+        $stan_fh->print(join("\t", ($count, $count, 1))."\r\n");
+        $count++;
+
+        my $gene_file = $self->fasta_dir.$contig.'.fasta';
+        push(@blastp_files, $gene_file) unless(Genome::Model::Tools::Predictor::Ber::Blastp->validate_output(
+            Genome::Model::Tools::Predictor::Ber::Blastp->blastp_file_name($config_dir, $contig),
+            Genome::Model::Tools::Predictor::Ber::Blastp->btab_file_name($config_dir, $contig)));
+        push(@hmmpfam_files, $gene_file) unless(Genome::Model::Tools::Predictor::Ber::Hmmpfam->validate_output(
+            Genome::Model::Tools::Predictor::Ber::Hmmpfam->hmmpfam_file_name($config_dir, $contig),
+            Genome::Model::Tools::Predictor::Ber::Hmmpfam->htab_file_name($config_dir, $contig)));
+
+        next if(-e $gene_file and -s $gene_file);
+
+        my $seq_out = Bio::SeqIO->new(-file => ">$gene_file", -format => 'Fasta');
+        $seq_out->write_seq($seq);
+        $seq_out->close;
+    }
+
+    $asm_fh->close;
+    $asmbl_fh->close;
+    $ident2_fh->close;
+    $stan_fh->close;
+
+    #link these files into the BER data directories also, BLAH!
+    my $ber_db_csv_dir = $self->ber_source_path.'/data/db/CSV/';
+    Genome::Sys->create_symlink($config_dir.$asm_file, $ber_db_csv_dir.$asm_file) unless(-l $ber_db_csv_dir.$asm_file);
+    Genome::Sys->create_symlink($config_dir.$asmbl_file, $ber_db_csv_dir.$asmbl_file) unless(-l $ber_db_csv_dir.$asmbl_file);
+    Genome::Sys->create_symlink($config_dir.$ident2_file, $ber_db_csv_dir.$ident2_file) unless(-l $ber_db_csv_dir.$ident2_file);
+    Genome::Sys->create_symlink($config_dir.$stan_file, $ber_db_csv_dir.$stan_file) unless(-l $ber_db_csv_dir.$stan_file); 
+    
+    return (\@blastp_files, \@hmmpfam_files);
+}
+
+sub final_report_file {
     my $self = shift;
 
-    my $locus_id = $self->_get_locus_from_fasta_header;
-    
-    my $locus=-1;
-    
-    chdir($self->output_directory);
-    
-    my $OUT1 = Genome::Sys->open_file_for_writing($locus_id.'_asm_feature') or die "failed to open _asm_feature";
-	my $OUT2 = Genome::Sys->open_file_for_writing($locus_id.'_asmbl_data') or die "failed to open _asmbl_data";
-	my $OUT3 = Genome::Sys->open_file_for_writing($locus_id.'_ident2') or die "failed to open _ident2";
-	my $OUT4 = Genome::Sys->open_file_for_writing($locus_id.'_stan') or die "failed to open _stan";
-
-	
-	$OUT1->print("asmbl_id\tend3\tend5\tfeat_name\tfeat_type\n");
-	$OUT2->print("id\tname\ttype\n");
-	$OUT3->print("complete\tfeat_name\tlocus\n");
-	$OUT4->print("asmbl_data_id\tasmbl_id\tiscurrent\n");
-	
-	
-	my $count=0;
-	my $asmblid=0;
-
-	my $file = 'FULLPATH Final_BER_Naming.05-15-13.fof';
-	my $fh = Genome::Sys->open_file_for_reading($file) or die "failed to open $file";
-	
-	while (my $line = $fh->getline)  {
-	  my @fea_part;
-	  my @fea_name;
-	  chomp $line;
-	  my @arr=split('\t',$line);
-	  if($arr[1]!~/^$locus_id/)
-	  {
-	    @fea_part=split('-',$arr[1]);
-	    if($fea_part[1]=~/$locus_id/)
-	    {
-	      @fea_name=split("_",$fea_part[1]);
-	    }
-	    elsif($fea_part[2]=~/$locus_id/)
-	    {
-	      @fea_name=split("_",$fea_part[2]);
-	    }
-	    $fea_name[1]=~s/\D+//i;
-	    if($fea_name[1] != $asmblid)
-	    {
-	      $asmblid=$fea_name[1];
-	      $count++;
-	      
-	      $OUT2->print($count,"\tContig\tcontig\n");
-	      $OUT4->print($count,"\t",$count,"\t","1\n");
-	    }
-	  }
-	  else
-	  {
-	    @fea_part=split('\.',$arr[1]);
-	    @fea_name=split("_",$fea_part[0]);
-	    $fea_name[1]=~s/\D+//i;
-	    if($fea_name[1] !~ $asmblid)
-	    {
-	      $asmblid=$fea_name[1];
-	      $count++;
-	      
-	      $OUT2->print($count,"\tContig\tcontig\n");
-	      $OUT4->print($count,"\t",$count,"\t","1\n");
-	    }
-	  }  
-	
-	#  if($#fea_part==3){$locus=$fea_part[3];}
-	#  else{$locus=$fea_part[2];}
-	  $locus++;
-	  
-	  $OUT1->print($count,"\t",$arr[3],"\t",$arr[2],"\t",$arr[1],"\tORF\n");
-	  $OUT3->print(" \t",$arr[1],"\t",$fea_name[0]);
-	  
-	  $OUT3->printf("%05d\n",$locus);
-	}	
-	
-    return 1;
-
-#    replace with real code to produce config files in a config dir in our output directory
-#    {
-#        Genome/Model/Tools/Ber/AmgapPrepareBER.pm
-#            
-#            Manually running details:
-#            > perl ~/git/xu_script/BER_config_from_txtfile.pl -locus TELCIRDFT Final_BER_Naming.05-15-13.fof
-#                
-#                This command creates 4 files
-#                 TELCIRDFT_asm_feature
-#                 TELCIRDFT_asmbl_data
-#                 TELCIRDFT_ident2
-#                 TELCIRDFT_stan
-#                                    
-#                                    run the command todos on the 4 files
-#                                        > todos TELCIRDFT_*
-#    }
+    return $self->output_directory.'/'.$self->locus_id.'-final-report.txt';
 }
 
-sub _setup_dirs {
-	
-	my $self = shift;
+sub write_final_report {
+    my $self = shift;
 
-    my $locus_id = $self->_get_locus_from_fasta_header;
-    
-    
-    Genome::Sys->create_directory($locus_id);
-     
-    map{Genome::Sys->create_directory($locus_id."/$_")}qw(fasta hmm ber);
-     
-#    Genome::Sys->create_symlink("/gscmnt/gc6125/info/annotation/worm_analysis/T_circumcincta/T_circumcincta.14.0.ec.cg.pg/Version_1.0/PAP/Version_1.0/BER/*pep", $locus_id);
-    
-    chdir($locus_id."/fasta");
-    
-	Genome::Sys->shellcmd(cmd => 'dbshatter '.$self->input_fasta_file);
-	
-	chdir("../../../db/CSV");
-	
-	#Revisit - Multiple file copying?
-	Genome::Sys->copy_file($self->output_directory."/($locus_id)_*", .);
+    my $config_dir =$self->output_directory.'/';
+    my $dat_line_count = Genome::Sys->line_count($self->raw_output_path);
+    my $no_blast_hits=0;
+    my $no_domain_hits=0;
+    my $total_genes=0;
+    my $seq_in = Bio::SeqIO->new(-file => $self->input_fasta_file, -format => 'Fasta')
+        or croak "failed to open: ".$self->input_fasta_file;
+    while (my $seq = $seq_in->next_seq()) {
+        my $contig = $seq->primary_id;
 
-	chdir("/gscmnt/gc9002/info/annotation/BER/autoannotate_v2.5/data/genomes/($locus_id)/fasta");
-	
-	
-	#Genome/Model/Tools/Ber/AmgapBerProtName.pm
-	#
-	#Manually running details:
-	#location is (this is taken from the MGAP pipeline config file that’s made manually )
-	#/gscmnt/gc9002/info/annotation/BER/autoannotate_v2.5/data/genomes
-	#
-	#mkdir TELCIRDFT
-	#cd TELCIRDFT
-	#mkdir fasta hmm ber
-	#ln -s /gscmnt/gc6125/info/annotation/worm_analysis/T_circumcincta/T_circumcincta.14.0.ec.cg.pg/Version_1.0/PAP/Version_1.0/BER/*pep .
-	#
-	#cd fasta
-	#dbshatter ../*pep
-	#
-	#cd ../../../db/CSV
-	#
-	#cp /gscmnt/gc6125/info/annotation/worm_analysis/T_circumcincta/T_circumcincta.14.0.ec.cg.pg/Version_1.0/PAP/Version_1.0/BER/Version_1.0/TELCIRDFT_* .
-	#
-	#cd /gscmnt/gc9002/info/annotation/BER/autoannotate_v2.5/data/genomes/TELCIRDFT/fasta
-
+        $no_blast_hits++ if(-z Genome::Model::Tools::Predictor::Ber::Blastp->btab_file_name($config_dir, $contig) and
+                                Genome::Model::Tools::Predictor::Ber::Blastp->no_blast_hits(
+                                    Genome::Model::Tools::Predictor::Ber::Blastp->blastp_file_name($config_dir, $contig),
+                                    Genome::Model::Tools::Predictor::Ber::Blastp->btab_file_name($config_dir, $contig)
+                                    )
+                                );
+        $no_domain_hits++ if(-z Genome::Model::Tools::Predictor::Ber::Hmmpfam->htab_file_name($config_dir, $contig) and
+                                 Genome::Model::Tools::Predictor::Ber::Hmmpfam->no_domain_hits(
+                                     Genome::Model::Tools::Predictor::Ber::Hmmpfam->hmmpfam_file_name($config_dir, $contig),
+                                     Genome::Model::Tools::Predictor::Ber::Hmmpfam->htab_file_name($config_dir, $contig)
+                                     )
+                                 );
+        $total_genes++;
+    }
+    
+    my $final_fh = Genome::Sys->open_file_for_writing($self->final_report_file);
+    $final_fh->print("BER Final Report for ".$self->locus_id."\n");
+    $final_fh->print("number of input sequences: $total_genes\n");
+    $final_fh->print("number of sequences with no blastp hits: $no_blast_hits or ". sprintf("%.2f", $no_blast_hits/$total_genes *100)."\n");
+    $final_fh->print("number of sequences with no hmmpfam hits: $no_domain_hits or ". sprintf("%.2f", $no_domain_hits/$total_genes *100)."\n");
+    $final_fh->print("number of sequences in BER annotation output: $dat_line_count or ". sprintf("%.2f", $dat_line_count/$total_genes *100)."\n");
+    $final_fh->close;
+    
+    return;
 }
 
-sub _prep_input_files {
-	
-	my $cmd = Genome::Model::Tools::Ber::BerRunBlastphmmpfam->create(
-		locus_tag=>$self->_get_locus_from_fasta_header,
-		
-		
-	
-	);
-	mr $rv = $cmd->execute;
-	
-	my $cmd = Genome::Model::Tools::Ber::BerRunBtabhmmtab->create();
-	mr $rv = $cmd->execute;
 
-#3. Prep input files for BER
-#
-#	my $cmd = Genome::Model::Tools::Ber::N|Berxxxxx->create();
-#  	my $rv = $cmd->execute;
-#
-#   i) Running blastp & hmmpfam
-#       Genome/Model/Tools/Ber/BerRunBlastphmmpfam.pm
-#
-#       Manully running details:
-#       > for file in `cat dbshatter.fof`; do ln -s $file $file.fasta; done
-#       > ~kpepin/git/staging/run_ber_prep.csh TELCIRDFT
-#
-#         This step takes some time, overnight, it blasts each gene vs an nr db and runs hmmpfam vs an hmm db.
-#
-#         Check output and that the hmm and ber fof files created by the script are linked to src dir
-#         ls -lt  /gscmnt/gc9002/info/annotation/BER/autoannotate_v2.5/src/*TELCIR*fof
-#
-#         For the next step you can cd src_dir
-#        /gscmnt/gc9002/info/annotation/BER/autoannotate_v2.5/src, but script does it as well.
-#
-#    ii) Converting blastp & hmmpfam output to btab & htab files respectively
-#        
-#       Genome/Model/Tools/Ber/BerRunBtabhmmtab.pm
-#
-#        Details:
-#        > ~kpepin/git/staging/run_ber_prep.step2.csh TELCIRDFT
-#
-#       This will take some time, overnight, as well to parse each of the blastp/hmmpfam files to btab and htab files.
-
-}
-
-sub _run_anno_sqlite {
-	
-	Genome::Sys->shellcmd(cmd => "bsub -o TELCIRDFT.out -e TELCIRDFT.err -R 'select[type=LINUX64]' ./anno-sqlite.bash ELCIRDFT 130521 gram-";
-	
-#   Run anno-sqlite.bash
-#   
-#   Genome/Model/Tools/Ber/BerRunAnnoSqlite.pm
-#   
-#   Manually running details:
-#  /gscmnt/gc9002/info/annotation/BER/autoannotate_v2.5/src
-#  > bsub -o TELCIRDFT.out -e TELCIRDFT.err -R 'select[type=LINUX64]' ./anno-sqlite.bash  
-#  TELCIRDFT 130521 gram-
-#
-#  This will take X hours to run, depends on how many genes to process. For TELCIRDFT  
-#  Processed 25,567 genes
-#  Started 08:01am
-#  Ended
-#
-#  To check that the process is running ok
-#  1. bjobs | grep gram
-#  2. wc /gscmnt/gc9002/info/annotation/BER/autoannotate_v2.5/out/sqlite-locusID-date.dat
-#
-#Number of sequences in the pep file should be equal to the number of lines in the sqlite dat file.Should do this check in PAP to make sure all is complete.
-
-}
-
-sub _finish {
-Genome/Model/Tools/Ber/BerRunFinish.pm
-    
-   This above module has a lot of stuff that’s very specific to MGAP pipeline. To me, this may not be of much use except the ace file generation part.
-
-   Additional info:
-   In house script to do the above:
-   ~kpepin/scripts/parse_dat2ace.pl sqlite-locusID-date.dat > sqlite-locusID-date.dat.ace
-
-   Parse into acedb and redump new .tbl file to get naming issues that need to be resolved
-
-}
 
 # Should contain all code necessary to parse the raw output of the predictor.
 sub parse_output {
-    die "Override in subclasses of " . __PACKAGE__;
+    return 1;
 }
 
 # Any filtering logic should go here.
 sub filter_results {
-    die "Override in subclasses of " . __PACKAGE__;
+    return 1;
 }
 
-# Should return a path to the file that should be executed using the current value of version.
-sub tool_path_for_version {
-	#possibly move version control into here
-    die "Override in subclasses of " . __PACKAGE__;
-}
-    
 # Should create an ace file from the raw output of the predictor
 sub create_ace_file {
-	#~kpepin/scripts/parse_dat2ace.pl [sample.dat]>[sample.dat.ace]
-	#find out which variable represents "sample"
-    die "Override in subclasses of " . __PACKAGE__;
-}
-
-sub read_config
-{
     my $self = shift;
-    
-    my $conf = $self->config;
-    unless(-f $conf)
-    {
-        carp "no config file $conf ... AmgapBerProtName.pm \n\n";
-        return undef;
+    unlink $self->ace_file_path if(-e $self->ace_file_path);
+    my $fh = Genome::Sys->open_file_for_reading($self->raw_output_path);
+    my $ace_fh = Genome::Sys->open_file_for_writing($self->ace_file_path);
+
+    while (my $line = $fh->getline) {
+        chomp $line;
+        my ($gene, $desc) = split(/\t/, $line);
+        $ace_fh->print("Sequence \"$gene\"\nBER_product   \"$desc\"\n\n");
     }
 
-    my $confhash = LoadFile($conf);
-
+    $fh->close;
+    $ace_fh->close;
     return 1;
+}
+
+sub cleanup_files {
+    my $self = shift;
+    my $error = remove_tree($self->fasta_dir,
+                             $self->ber_dir,
+                             $self->hmm_dir,
+                             $self->log_directory);
+    croak "failed to remove directories" unless($error);
+    
+    return 1;
+}
+
+sub fasta_dir {
+    shift->output_directory.'/fasta/';
+}
+
+sub ber_dir {
+    shift->output_directory.'/ber/';
+}
+
+sub hmm_dir {
+    shift->output_directory.'/hmm/';
+}
+
+
+sub log_directory {
+    my $self = shift;
+    return join('/', $self->output_directory, 'logs');
+}
+
+sub debug_output_path {
+    my $self = shift;
+    return join('/', $self->output_directory, 'ber.debug');
+}
+
+sub dump_output_path {
+    my $self = shift;
+    return join('/', $self->output_directory, 'ber.output');
+}
+
+sub ace_file_path {
+    my $self = shift;
+    return join('/', $self->output_directory, 'ber.ace');
+}
+
+sub raw_output_path {
+    my $self = shift;
+    return join('/', $self->output_directory, 'ber.dat');
 }
 
 1;
