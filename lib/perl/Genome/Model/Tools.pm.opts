@@ -6935,7 +6935,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       ],
       'result-version=s',
       [
-        1
+        1,
+        2
       ],
       'mode=s',
       [
