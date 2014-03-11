@@ -139,9 +139,7 @@ sub print_fasta_entry {
     if ($self->key_file) {
         my $lookup_key = $designation . "_" . $i;
         my $identifier = "$designation." . $protein_arr->[6] . "." . $wildtype_aa . ($position + 1) . $mutant_aa . "\n";
-        my $key_fh = Genome::Sys->open_file_for_appending($self->key_file);
-        print $key_fh "$lookup_key\t$identifier\n";
-        close($key_fh);
+        $self->print_key_file_entry($designation, $protein_arr, $wildtype_aa, $mutant_aa, $position, $lookup_key);
         $fasta_defline = ">$lookup_key";
         $fasta_sequence = (join "", @{$arr});
     }
@@ -155,6 +153,22 @@ sub print_fasta_entry {
     print $output_fh "$fasta_sequence\n";
 
     close($output_fh);
+}
+
+sub print_key_file_entry {
+    my $self = shift;
+    my $designation = shift;
+    my $protein_arr = shift;
+    my $wildtype_aa = shift;
+    my $mutant_aa = shift;
+    my $position = shift;
+    my $lookup_key = shift;
+
+    my $identifier = "$designation." . $protein_arr->[6] . "." . $wildtype_aa . ($position + 1) . $mutant_aa . "\n";
+
+    my $key_fh = Genome::Sys->open_file_for_appending($self->key_file);
+    print $key_fh "$lookup_key\t$identifier\n";
+    close($key_fh);
 }
 
 1;
