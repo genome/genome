@@ -51,8 +51,6 @@ sub create {
 sub write {
     my ($self, $entry) = @_;
 
-    #my $alleles = $entry->sample_field($sample_names[0]);
-
     my %genotype = (
         id => $entry->{identifiers}->[0],
         chromosome => $entry->{chrom},
@@ -62,7 +60,9 @@ sub write {
     );
 
     for my $format_type ( @{$self->_format_types} ) {
-        $genotype{ Genome::Model::GenotypeMicroarray->format_name_for_id($format_type) } = $entry->sample_field(0, $format_type);
+        my $value = $entry->sample_field(0, $format_type);
+        $value = 'NA' if not defined $value or $value eq '.';
+        $genotype{ Genome::Model::GenotypeMicroarray->format_name_for_id($format_type) } = $value;
     }
     @genotype{qw/ allele1 allele2 /} = split(//, $genotype{alleles});
 
