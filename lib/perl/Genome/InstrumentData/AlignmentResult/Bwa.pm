@@ -27,6 +27,7 @@ sub required_rusage {
     my $reference_build = delete $p{reference_build};
     my $queue           = delete $p{queue} || $ENV{GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT};
 
+
     my $tmp_mb = $class->tmp_megabytes_estimated($instrument_data);
     my $mem_mb = 1024 * 8; 
     my $cpus = 2;
@@ -45,8 +46,7 @@ sub required_rusage {
 
     my $user = getpwuid($<);
 
-    my $host_groups;
-    $host_groups = qx(bqueues -l $queue | grep ^HOSTS:);
+    my ($host_groups) = grep {m/^HOSTS:/} Genome::Sys->capture('bqueues', '-l', $queue);
     if ($host_groups =~ /all hosts/) {
         $host_groups = '';
     }
@@ -64,10 +64,9 @@ sub required_rusage {
     #check to see if our resource requests are feasible (This uses "maxmem" to check theoretical availability)
     #factor of four is based on current six jobs per host policy this should be revisited later
     my $select_check = "select[ncpus >= $cpus && maxmem >= " . ($mem_mb * 4) . " && maxgtmp >= $tmp_gb] span[hosts=1]";
-    my $select_cmd = "bhosts -R '$select_check' $host_groups | grep ^blade";
+    my $select_cmd = "bhosts -R '$select_check' $host_groups";
 
-    my @selected_blades = qx($select_cmd);
-
+    my @selected_blades = grep {m/^blade/} Genome::Sys->capture($select_cmd);
     if (@selected_blades) {
         return $required_usage;
     } else {
