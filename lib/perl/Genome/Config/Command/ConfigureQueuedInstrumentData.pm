@@ -309,6 +309,7 @@ sub _assign_model_to_analysis_project {
     my $model = shift;
     die('Must specify an analysis project and a model!') unless $analysis_project && $model;
 
+    $analysis_project->add_model_bridge(model => $model);
     return $analysis_project->model_group->assign_models($model);
 }
 
