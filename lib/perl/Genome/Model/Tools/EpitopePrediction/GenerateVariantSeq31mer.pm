@@ -55,7 +55,10 @@ sub execute {
 			my $wt_aa = $1;
 			my $position = ($2 - 1);
 			my $mt_aa = $3;
-			my $wt_seq = $prot_arr[21];
+            my $wt_seq;
+			if (scalar (@prot_arr) == 22){$wt_seq = $prot_arr[21];}
+			elsif (scalar (@prot_arr) == 25) {$wt_seq = $prot_arr[24];}
+			else { print "File format incorrect.Please check columns";}
 			my @arr_wt_seq = split('',$wt_seq);
 
     		if ($1 ne $arr_wt_seq[$position])
