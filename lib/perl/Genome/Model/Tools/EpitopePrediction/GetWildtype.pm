@@ -9,6 +9,7 @@ use Carp;
 
 class Genome::Model::Tools::EpitopePrediction::GetWildtype {
     is => ['Genome::Model::Tools::EpitopePrediction::Base'],
+    doc => "Get the Wildtype protein sequence from the specified Annotation Database for the variant proteins which have been annotated",
     has_input => [
         input_tsv_file => {
             is => 'Text',
@@ -31,10 +32,6 @@ class Genome::Model::Tools::EpitopePrediction::GetWildtype {
         },
     ],
 };
-
-sub help_brief {
-    "Get the Wildtype protein sequence from the specified Annotation Database for the variant proteins which have been annotated",
-}
 
 sub execute {
     my $self = shift;
