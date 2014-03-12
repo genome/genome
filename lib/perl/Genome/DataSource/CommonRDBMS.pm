@@ -68,13 +68,12 @@ sub _make_db_pause_function {
 sub _check_pg_version {
     my $class = shift;
 
-    my $required_pg_version = '2.19.3';
+    use version 0.77; my $required_pg_version = version->parse('v2.19.3');
     require DBD::Pg;
-    my $pg_version = $DBD::Pg::VERSION;
-    if (($pg_version ne $required_pg_version) && !defined $ENV{'LIMS_PERL'}) {
+    if (($DBD::Pg::VERSION < $required_pg_version) && !defined $ENV{'LIMS_PERL'}) {
         my $error_message = "**** INCORRECT POSTGRES DRIVER VERSION ****\n" .
             "You are using a Perl version that includes an incorrect DBD::Pg driver.\n" .
-            "You are running $pg_version and need to be running $required_pg_version.\n" .
+            "You are running $DBD::Pg::VERSION and need to be running $required_pg_version.\n" .
             "Your sync has been aborted to protect data integrity in the Postgres database.\n" .
             "Please be sure you are using 'genome-perl' and not /gsc/bin/perl.\n\n\n" .
             "This event has been logged with apipe; if you are unsure of why you received this message\n" .
