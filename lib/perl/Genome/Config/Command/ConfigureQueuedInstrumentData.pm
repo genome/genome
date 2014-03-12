@@ -106,14 +106,19 @@ sub _assign_instrument_data_to_model {
     my ($self, $model, $instrument_data, $newly_created) = @_;
 
     #if a model is newly created, we want to assign all applicable instrument data to it
+    my $cmd;
     my %params_hash = (model => $model);
     if ($newly_created && $model->auto_assign_inst_data) {
-        $params_hash{all} = 1;
+        $cmd = Genome::Model::Command::InstrumentData::Assign::AllCompatible->create(
+            model => $model
+        );
     } else {
-        $params_hash{instrument_data} = [$instrument_data];
+        $cmd = Genome::Model::Command::InstrumentData::Assign::Expression->create(
+            model => $model,
+            instrument_data => [$instrument_data]
+        );
     }
 
-    my $cmd = Genome::Model::Command::InstrumentData::Assign->create(%params_hash);
     unless ($cmd->execute()) {
         die(sprintf('Failed to assign %s to %s', $instrument_data->__display_name__,
                 $model->__display_name__));

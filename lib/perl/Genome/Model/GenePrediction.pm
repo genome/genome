@@ -291,9 +291,8 @@ sub find_or_create_assembly_model {
 
             $self->status_message("Successfully created assembly model with ID $model_id, now assigning data!");
 
-            my $assembly_assign_obj = Genome::Model::Command::InstrumentData::Assign->create(
+            my $assembly_assign_obj = Genome::Model::Command::InstrumentData::Assign::AllCompatible->create(
                 model => $assembly_model,
-                all => 1,
             );
             unless ($assembly_assign_obj) {
                 $self->error_message("Could not create instrument data assignment object!");
