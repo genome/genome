@@ -57,7 +57,7 @@ class Genome::Sys::Gateway {
 
 sub _supported_protocols {
     my $self = shift;
-    return ('nfs','s3','ssh','ftp','http');
+    return ('ftp','nfs','ssh','http','s3');
 }
 
 sub attach {
