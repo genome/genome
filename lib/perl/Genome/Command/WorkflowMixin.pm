@@ -436,6 +436,7 @@ sub _display_logs {
     my ($self, $handle, $workflow) = @_;
 
     return unless $self->logs;
+    return unless $workflow;
 
     my @error_log_paths;
     my @step_names;
