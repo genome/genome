@@ -49,7 +49,7 @@ $extract = Genome::Model::GenotypeMicroarray::Command::Extract->create(
 );
 ok($extract, 'create extract command');
 ok($extract->execute, 'execute extract command');
-my $expected_vcf = Genome::Model::GenotypeMicroarray::Test::testdir().'/extract/expected.vcf';
+my $expected_vcf = Genome::Model::GenotypeMicroarray::Test::testdir().'/extract/expected-from-instdata.vcf';
 is(File::Compare::compare($output_vcf, $expected_vcf), 0, 'genotype vcf matches');
 is_deeply($extract->alleles, { 'TC' => 1, 'AA' => 1, 'CC' => 2, 'AG' => 3, 'TT' => 1, 'GG' => 1 }, 'alleles match');
 is($extract->genotypes_input, 9, 'genotypes input');
