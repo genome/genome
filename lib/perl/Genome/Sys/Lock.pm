@@ -29,7 +29,7 @@ sub lock_resource {
 
     my $rv = $self->_file_based_lock_resource( %args );
 
-    if (! $rv and $nessy_claim) {
+    if (! $rv and $nessy_claim and $LOCKING_CLIENT) {
         $self->error_message("Nessy acquired lock but file-based did not.  resource_lock: $args{resource_lock}");
     }
     return $rv;
