@@ -179,7 +179,9 @@ sub get_with_lock {
     my @objects = $class->_faster_get(@_);
     unless (@objects) {
         my $subclass = $params_processed->{subclass};
-        unless ($lock = $subclass->_lock(@_)) {
+
+        my $lookup_hash = $subclass->calculate_lookup_hash_from_arguments(@_);
+        unless ($lock = $subclass->_lock($lookup_hash)) {
             die "Failed to get a lock for " . Dumper(@_);
         }
 
@@ -287,7 +289,9 @@ sub create {
     }
 
     my $lock;
-    unless ($lock = $class->_lock(@_)) {
+
+    my $lookup_hash = $class->calculate_lookup_hash_from_arguments(@_);
+    unless ($lock = $class->_lock($lookup_hash)) {
         die "Failed to get a lock for " . Dumper(@_);
     }
 
@@ -768,8 +772,12 @@ sub delete {
 
 sub _lock {
     my $class = shift;
+    my $lookup_hash = shift;
 
-    my $lookup_hash = $class->calculate_lookup_hash_from_arguments(@_);
+    unless (length($lookup_hash) == 32 && $lookup_hash =~ /^\w+$/) {
+        croak 'lookup_hash required as second argument';
+    }
+
     my $resource_lock_name = $class->_resolve_lock_name($lookup_hash);
 
     # if we're already locked, just increment the lock count
