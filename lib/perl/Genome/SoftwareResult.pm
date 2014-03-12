@@ -773,6 +773,7 @@ sub delete {
 sub _lock {
     my $class = shift;
     my $lookup_hash = _validate_lookup_hash(shift);
+    my $wait = shift || 1;
 
     my $resource_lock_name = $class->_resolve_lock_name($lookup_hash);
 
@@ -781,7 +782,7 @@ sub _lock {
     return $resource_lock_name if ($LOCKS{$resource_lock_name} > 1);
 
     my $lock = Genome::Sys->lock_resource(resource_lock => $resource_lock_name, max_try => 2);
-    unless ($lock) {
+    if (!$lock && $wait) {
         $class->debug_message("This data set is still being processed by its creator.  Waiting for existing data lock...");
         $lock = Genome::Sys->lock_resource(resource_lock => $resource_lock_name, wait_announce_interval => 600);
         unless ($lock) {
