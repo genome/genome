@@ -38,7 +38,7 @@ my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->bui
 ok($reader, 'build reader');
 my $output_tsv = $tmpdir.'/genotypes.tsv';
 my $writer = Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory->build_writer(
-    header => $reader->{header},
+    header => $reader->header,
     string => $output_tsv,
 );
 ok($writer, 'create writer');
@@ -58,7 +58,7 @@ ok($reader, 'create reader');
 
 my $output_vcf = $tmpdir.'/genotypes.vcf';
 $writer = Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory->build_writer(
-    header => $reader->{header},
+    header => $reader->header,
     string => $output_vcf,
 );
 ok($writer, 'create writer');
@@ -77,7 +77,7 @@ $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->build_
 ok($reader, 'create reader');
 my $output_csv = $tmpdir.'/genotypes.csv';
 $writer = Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory->build_writer(
-    header => $reader->{header},
+    header => $reader->header,
     string => $output_csv.':separator=,',
 );
 ok($writer, 'create writer');

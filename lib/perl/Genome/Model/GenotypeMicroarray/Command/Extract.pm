@@ -133,7 +133,7 @@ sub execute {
     return if not $reader;
 
     my $writer = Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory->build_writer(
-        header => $reader->{header},
+        header => $reader->header,
         string => $self->output,
     );
     return if not $writer;

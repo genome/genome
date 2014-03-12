@@ -16,12 +16,21 @@ class Genome::Model::GenotypeMicroarray::GenotypeFile::ReadUnannotatedCsv {
         _vcf_reader => { is => 'Genome::File::Vcf::Reader', },
         _genotype_fh => { is => 'IO::File', },
         _headers => { is => 'Array', },
-        _sample => { is => 'Genome::Sample', },
         _genotypes => { is => 'Hash', default_value => {}, },
         _entries => { is => 'Array', },
         _position => { is => 'Integer', default_value => 0, },
     },
 };
+
+sub header {
+    my ($self, $header) = @_;
+
+    if ( $header ) {
+        $self->_vcf_reader->header($header);
+    }
+
+    return $self->_vcf_reader->header;
+}
 
 sub create {
     my $class = shift;
@@ -35,20 +44,8 @@ sub create {
     my $headers_ok = $self->_resolve_headers;
     return if not $headers_ok;
 
-    my $sample_ok = $self->_resolve_sample;
-    return if not $sample_ok;
-
     my $open_vcf_reader = $self->_open_vcf_reader;
     return if not $open_vcf_reader;
-
-    my $annotate_vcf_header = $self->_annotate_vcf_header;
-    return if not $annotate_vcf_header;
-
-    my $load_genotypes = $self->_load_genotypes;
-    return if not $load_genotypes;
-
-    my $annotate_genotypes = $self->_annotate_genotypes;
-    return if not $annotate_genotypes;
 
     return $self;
 }
@@ -58,6 +55,14 @@ BEGIN {
 }
 sub read {
     my $self = shift;
+
+    if ( $self->_position == 0 ) {
+        my $load_genotypes = $self->_load_genotypes;
+        die if not $load_genotypes;
+
+        my $annotate_genotypes = $self->_annotate_genotypes;
+        die if not $annotate_genotypes;
+    }
 
     my $position = $self->_position;
     my $entry;
@@ -124,60 +129,6 @@ sub _resolve_headers {
     chomp $header_line;
     my @headers = map { s/\s/_/g; s/_\-\_top$//i; lc } split(',', $header_line);
     $self->_headers(\@headers);
-
-    return 1;
-}
-
-sub _resolve_sample {
-    my $self = shift;
-
-    my $genotype = $self->_load_genotype;
-    if ( not $genotype ) {
-        $self->error_message('No genotype found after header!');
-        return;
-    }
-
-    my %sample_params;
-    my $sample_id = $genotype->{sample_id};
-    if ( defined $genotype->{sample_id} ) {
-        $sample_params{id} = $genotype->{sample_id};
-    }
-    elsif ( defined $genotype->{sample_name} ) {
-        $sample_params{name} = $genotype->{sample_name};
-    }
-    else {
-        $self->error_message('No sample id or name in genotype!');
-        return;
-    }
-
-    my $sample = Genome::Sample->get(%sample_params);
-    if ( not $sample ) {
-        $self->error_message('No sample for params! '.Data::Dumper::Dumper(\%sample_params));
-        return;
-    }
-    $self->_sample($sample);
-
-    return 1;
-}
-
-sub _annotate_vcf_header {
-    my $self = shift;
-
-    my $header = $self->_vcf_reader->{header};
-
-    # Add sample name
-    $header->add_sample_name($self->_sample->name);
-
-    # Add sample format fields
-    for my $field ( Genome::Model::GenotypeMicroarray->format_types ) {
-        $header->add_format_str('<ID='.$field->{id}.$field->{header});
-    }
-
-    # Set back on reader
-    $self->_vcf_reader->{header} = $header;
-
-    # Keep header here, too
-    $self->{header} = $header;
 
     return 1;
 }

@@ -16,12 +16,6 @@ use Test::More;
 use_ok('Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory') or die;
 use_ok('Genome::Model::GenotypeMicroarray::Test') or die;
 
-# Setup
-no warnings;
-*Genome::File::TypedStream::new = sub{ return bless({}, $_[0]); };
-*Genome::Model::GenotypeMicroarray::GenotypeFile::ReadUnannotatedCsv::create = sub{ return bless({}, $_[0]); };
-use warnings;
-
 # Reader for inst data [use inst data tsv - needs annotation]
 my $instrument_data = Genome::Model::GenotypeMicroarray::Test->instrument_data;
 my $variation_list_build = Genome::Model::GenotypeMicroarray::Test->variation_list_build;
