@@ -56,15 +56,15 @@ sub execute {
         $netmhc_path = '/gscmnt/sata141/techd/jhundal/netMHC/NetMHC3.4/ATTEMPT4/NetMHC/netMHC';
     }
 
-    my $netmhc_cmd = join( ' ',
+    my @netmhc_cmd = (
             $netmhc_path,
-            '-a ' . $self->allele,
-            '-l ' . $self->epitope_length,
+            '-a', $self->allele,
+            '-l', $self->epitope_length,
             $self->fasta_file,
-            '-x ' . $self->output_file,
+            '-x', $self->output_file,
     );
 
-    run([$netmhc_cmd], '>', $self->stdout_file);
+    run(\@netmhc_cmd, ">", $self->stdout_file);
 
     return 1;
 }
