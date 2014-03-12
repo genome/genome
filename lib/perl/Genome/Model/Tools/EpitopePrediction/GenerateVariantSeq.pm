@@ -109,14 +109,14 @@ sub execute {
                         i           => $i,
                     );
                     if ($self->key_file) {
-                        $self->print_key_file_entry( {
+                        $self->print_key_file_entry(
                             designation => $designation,
                             protein_arr => \@protein_arr,
                             wildtype_aa => $wildtype_aa,
                             mutant_aa   => $mutant_aa,
                             position    => $position,
                             lookup_key  => $lookup_key,
-                        });
+                        );
                     }
                 }
             }
@@ -157,7 +157,7 @@ sub print_key_file_entry {
     my $self = shift;
     my %params = @_;
 
-    my $identifier = $params{designation} . $params{protein_arr}->[6] . "." . $params{wildtype_aa} . ($params{position} + 1) . $params{mutant_aa} . "\n";
+    my $identifier = $params{designation} . $params{protein_arr}->[6] . "." . $params{wildtype_aa} . ($params{position} + 1) . $params{mutant_aa};
 
     my $key_fh = Genome::Sys->open_file_for_appending($self->key_file);
     print $key_fh $params{lookup_key} . "\t$identifier\n";
