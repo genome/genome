@@ -93,42 +93,111 @@ sub execute {
     } else {
         @input_files = split(',',$self->input_files);
     }
+
+    if ($self->contaminants) {
+        push @input_files, $self->contaminants;
+    }
+
     if ( version->parse($self->use_version) < version->parse('0.10.0') ) {
-        my $cmd = $self->fastqc_path .' -Djava.awt.headless=true -Dfastqc.output_dir='. $self->report_directory .' uk.ac.bbsrc.babraham.FastQC.FastQCApplication '. join(' ',@input_files) ;
+        my $cmd = '-cp '. $self->fastqc_path .' -Djava.awt.headless=true -Dfastqc.output_dir='. $self->report_directory .' uk.ac.bbsrc.babraham.FastQC.FastQCApplication '. join(' ',@input_files) ;
         $self->run_java_vm(
             cmd => $cmd,
             input_files => \@input_files,
         );
-    } else {
-        my $cmd = $self->fastqc_path .'/fastqc  --outdir '. $self->report_directory .' --threads '. $self->threads;
-        my $files_string = join(' ',@input_files);
-        if ($self->quiet) {
-            $cmd .= ' --quiet';
-        }
-        if ($self->contaminants) {
-            push @input_files, $self->contaminants;
-            $cmd .= ' --contaminants '. $self->contaminants;
-        }
-        unless ($self->group) {
-            $cmd .= ' --nogroup';
-        }
-        if ($self->extract) {
-            $cmd .= ' --extract';
-        } else {
-            $cmd .= ' --noextract';
-        }
-        if ($self->casava) {
-            $cmd .= ' --casava';
-        }
-        if ($self->format) {
-            $cmd .= ' --format '. $self->format;
-        }
-        $cmd .= ' '. $files_string;
-        Genome::Sys->shellcmd(
-            cmd => $cmd,
+    } elsif ($self->use_version eq '0.10.0') {
+        my @cmd = $self->v_0_10_0_command();
+        $self->run_java_vm(
+            cmd => join(' ', @cmd, @input_files),
             input_files => \@input_files,
-            set_pipefail => 1,
         );
+    } else {
+        die 'unknown version: ' . $self->use_version;
     }
+
     return 1;
+}
+
+sub v_0_10_0_command {
+    # This was copied from /gsc/pkg/bio/fastqc/FastQC-0.10.0/fastqc and
+    # stripped down for our use case so that we could override memory usage.
+
+    my $self = shift;
+
+    my $path = $self->path_for_fastqc_version('0.10.0');
+    if ($ENV{CLASSPATH}) {
+        $ENV{CLASSPATH} .= ":$path:$path/sam-1.32.jar:$path/jbzip2-0.9.jar";
+    } else {
+        $ENV{CLASSPATH} = "$path:$path/sam-1.32.jar:$path/jbzip2-0.9.jar";
+    }
+
+    my @java_args;
+
+    # Now parse any additional options
+
+    my $outdir = $self->report_directory;
+    if ($outdir) {
+        unless(-e $outdir and -d $outdir) {
+            die "Specified output directory '$outdir' does not exist\n";
+        }
+
+        push @java_args ,"-Dfastqc.output_dir=$outdir";
+    }
+
+    my $contaminant = $self->contaminants;
+    if ($contaminant)  {
+        unless (-e $contaminant and -r $contaminant) {
+            die "Contaminant file '$contaminant' did not exist, or could not be read\n";
+        }
+        push @java_args ,"-Dfastqc.contaminant_file=$contaminant";
+    }
+
+    my $threads = $self->threads;
+    if ($threads) {
+        if ($threads < 1) {
+            die "Number of threads must be a positive integer";
+        }
+
+        push @java_args ,"-Dfastqc.threads=$threads";
+        # -Xmx is set by run_java_vm
+    }
+
+    if ($self->quiet) {
+        push @java_args ,'-Dfastqc.quiet=true';
+    }
+
+    if ($self->casava) {
+        push @java_args ,'-Dfastqc.casava=true';
+    }
+
+    unless ($self->group) {
+        push @java_args ,'-Dfastqc.nogroup=true';
+    }
+
+    my $unzip = $self->extract;
+    if (defined $unzip) {
+        if ($unzip) {
+            $unzip = 'true';
+        }
+        else {
+            $unzip = 'false';
+        }
+
+        push @java_args,"-Dfastqc.unzip=$unzip";
+    }
+
+    my $format = $self->format;
+    if ($format) {
+        unless ($format eq 'bam' || $format eq 'sam' || $format eq 'fastq' || $format eq 'sam_mapped' || $format eq 'bam_mapped') {
+            die "Unrecognised sequence format '$format', acceptale formats are bam,sam,bam_mapped,sam_mapped and fastq\n";
+        }
+
+        push @java_args,"-Dfastqc.sequence_format=$format";
+    }
+
+    # This is set internally as well, but on some JREs it doesn't
+    # pick up the internally set value properly, so we'll set it
+    # outside as well which should work.
+    push @java_args, '-Djava.awt.headless=true';
+
+    return @java_args, 'uk.ac.bbsrc.babraham.FastQC.FastQCApplication';
 }

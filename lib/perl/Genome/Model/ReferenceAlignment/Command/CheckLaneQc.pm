@@ -18,7 +18,7 @@ sub execute {
     my $self = shift;
     
     for my $model ($self->genome_models) {
-        my @lane_qc_models = $model->get_or_create_lane_qc_models;
+        my @lane_qc_models = $model->get_lane_qc_models;
         if (!@lane_qc_models) {
             $self->print_message('Model (' . $model->__display_name__ . ') is missing lane QC models!');
         }

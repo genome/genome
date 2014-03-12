@@ -138,6 +138,17 @@ class Genome::Model {
             is_many => 0,
             where => [ header_text => 'apipe_cron_status' ],
         },
+        analysis_project_bridges => {
+            is => 'Genome::Config::AnalysisProject::ModelBridge',
+            reverse_as => 'model',
+            is_many => 1,
+        },
+        analysis_projects => {
+            is => 'Genome::Config::AnalysisProject',
+            via => 'analysis_project_bridges',
+            to => 'analysis_project',
+            is_many => 1,
+        },
     ],
     has_many_optional_deprecated => [
         instrument_data => {

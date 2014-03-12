@@ -282,3 +282,5 @@ config_analysis_menu_item_description [config_analysis_menu_item] 2014-02-19T14:
 @1392828687 2014-02-19T16:51:28Z Adam Coffman <acoffman@genome.wustl.edu># Add description field to analysis menu items
 
 config.analysismenu_item.description [config_analysismenu_item] 2014-02-19T17:33:46Z Jim Weible <jweible@linus83.gsc.wustl.edu># add description column
+config_analysis_project_model_bridge [config_analysis_project model_model] 2014-03-11T13:44:24Z Thomas B. Mooney <tmooney@genome.wustl.edu># New entity to explicitly link Analysis Projects to Models
+@1394561252 2014-03-11T18:07:32Z Thomas B. Mooney <tmooney@genome.wustl.edu># deployed new AnalysisProject-Model bridge

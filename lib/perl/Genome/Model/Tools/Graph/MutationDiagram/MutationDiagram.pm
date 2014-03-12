@@ -58,7 +58,7 @@ sub new {
         my ($model_name, $version) = split('/', $self->{_reference_transcripts});
         my $model = Genome::Model->get(name => $model_name);
         unless ($model){
-            $self->error_message("couldn't get reference transcripts set for $model_name");
+            print STDERR "ERROR: couldn't get reference transcripts set for $model_name\n";
             return;
         }
         my $build = $model->build_by_version($version);

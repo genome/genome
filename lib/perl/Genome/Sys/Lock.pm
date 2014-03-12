@@ -24,17 +24,25 @@ sub lock_resource {
 
     my $nessy_claim = $self->_new_style_lock(%args);
     unless ($nessy_claim) {
-        $self->error_message("Nessy could not aquire lock for resource lock: $args{resource_lock}");
+        $self->error_message("Nessy could not acquire lock for resource lock: $args{resource_lock}");
     }
 
     my $rv = $self->_file_based_lock_resource( %args );
 
-    if (! $rv and $nessy_claim) {
-        $self->error_message("Nessy aquired lock but file-based did not.  resource_lock: $args{resource_lock}");
-    }
+    $self->_lock_resource_report_inconsistent_locks($args{resource_lock}, $rv, $nessy_claim);
+
     return $rv;
 
 }
+
+sub _lock_resource_report_inconsistent_locks {
+    my($self, $resource_lock, $file_lock, $nessy_claim) = @_;
+
+    if (! $file_lock and $nessy_claim and $LOCKING_CLIENT) {
+        $self->error_message("Nessy acquired lock but file-based did not.  resource_lock: $resource_lock");
+    }
+}
+
 
 sub _resolve_resource_lock_and_parent_dir_for_lock_resource {
     my($self, %args) = @_;

@@ -96,7 +96,7 @@ sub _process_models {
                 $model->id, ($created_new ? 'created' : 'found'), $instrument_data->id ));
 
         $self->_assign_instrument_data_to_model($model, $instrument_data, $created_new);
-        $self->_assign_model_to_analysis_project($analysis_project, $model);
+        $self->_assign_model_to_analysis_project($analysis_project, $model, $created_new);
         $self->_update_model($model);
         $self->_request_build_if_necessary($model, $created_new);
     }
@@ -307,8 +307,11 @@ sub _assign_model_to_analysis_project {
     my $self = shift;
     my $analysis_project = shift;
     my $model = shift;
-    die('Must specify an anlysis project and a model!') unless $analysis_project && $model;
+    my $created_new = shift;
 
+    die('Must specify an analysis project and a model!') unless $analysis_project && $model;
+
+    $analysis_project->add_model_bridge(model => $model) if $created_new;
     return $analysis_project->model_group->assign_models($model);
 }
 

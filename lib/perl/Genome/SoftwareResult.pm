@@ -1073,21 +1073,21 @@ sub creation_build_and_lsf_job_id {
     }
     # The output directory of the software result should be in the LSF error log
     my $output_dir = $self->output_dir;
-    $self->status_message('For software result '. $self->id .', searching for LSF error log containing output directory: '. $output_dir);
+    $self->debug_message('For software result '. $self->id .', searching for LSF error log containing output directory: '. $output_dir);
 
     # Iterate over every build linked to this software result and grep all event error logs
     my $creation_build;
     my $creation_lsf_job_id;
     for ( my $i=0; $i < scalar(@ordered_builds); $i++ ) {
         my $build = $ordered_builds[$i];
-        $self->status_message('Evaluating build '. $build->id .' as the potential creation build.');
+        $self->debug_message('Evaluating build '. $build->id .' as the potential creation build.');
         my @events = $build->events;
         for my $event (@events) {
             my $error_log_file = $event->error_log_file();
-            $self->status_message('Grep through error log: '. $error_log_file);
+            $self->debug_message('Grep through error log: '. $error_log_file);
             # This requires that one line in the error log ends with the output_dir
             if (fgrep { /Allocation \($allocation_id\) created at $output_dir$/ } $error_log_file) {
-                $self->status_message('Found disk allocation id '. $allocation_id .' and output_dir '. $output_dir .' in error log '. $error_log_file);
+                $self->debug_message('Found disk allocation id '. $allocation_id .' and output_dir '. $output_dir .' in error log '. $error_log_file);
                 unless ($creation_build) {
                     $creation_build = $build;
                 } else {
@@ -1103,9 +1103,10 @@ sub creation_build_and_lsf_job_id {
             }
         }
         unless ($creation_build && $creation_lsf_job_id) {
-            my @instances = $build->child_workflow_instances;
-            for my $instance (@instances) {
-                my $error_log_file = $instance->err_log_file;
+            my @instances = ($build->newest_workflow_instance, $build->child_workflow_instances);
+            my @ie = map { $_->current } @instances;
+            for my $ie (@ie) {
+                my $error_log_file = $ie->stderr;
                 # TODO: Remove redundany with above, refactor to subroutine? or get common event/instance interface
                 # This requires that one line in the error log ends with the output_dir
                 if (fgrep { /Allocation \($allocation_id\) created at $output_dir$/ } $error_log_file) {
@@ -1117,9 +1118,9 @@ sub creation_build_and_lsf_job_id {
                         return;
                     }
                     unless ($creation_lsf_job_id) {
-                        $creation_lsf_job_id = $instance->current->dispatch_identifier;
+                        $creation_lsf_job_id = $ie->dispatch_identifier;
                     } else {
-                        $self->error_message('Found multiple potential creation events: '. $creation_lsf_job_id .' and '. $instance->dispatch_identifier);
+                        $self->error_message('Found multiple potential creation events: '. $creation_lsf_job_id .' and '. $ie->dispatch_identifier);
                         return;
                     }
                 }

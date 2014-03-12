@@ -490,17 +490,6 @@ sub qc_processing_profile_id_hashref {
     };
 }
 
-sub qc_processing_profile_id {
-    my $self = shift;
-    my %arg  = @_;
-
-    my $parent_pp_id = delete $arg{parent_pp_id} || $self->processing_profile_id;
-    my $type         = delete $arg{type}         || $self->qc_type_for_target_region_set_name($self->target_region_set_name);
-
-    my $qc_pp_id = $self->qc_processing_profile_id_hashref;
-    return $qc_pp_id->{ $type }{ $parent_pp_id };
-}
-
 sub qc_type_for_target_region_set_name {
     my $class = shift;
     my $target_region_set_name = shift;
@@ -509,19 +498,13 @@ sub qc_type_for_target_region_set_name {
 
 # FIXME This needs to be renamed/refactored. The method name does not accurately describe what
 # this method actually does.
-sub get_or_create_lane_qc_models {
+sub get_lane_qc_models {
     my $self = shift;
 
     my $subject = $self->subject;
 
     unless ($subject->default_genotype_data_id) {
         $self->warning_message("Sample is missing default_genotype_data_id cannot create lane QC model.");
-        return;
-    }
-
-    my $qc_pp_id = $self->qc_processing_profile_id;
-    unless ($qc_pp_id) {
-        $self->warning_message("Unable to determine which processing profile to use for lane QC model.");
         return;
     }
 
@@ -551,49 +534,10 @@ sub get_or_create_lane_qc_models {
             }
 
             push @lane_qc_models, $existing_model;
-            next;
         }
-
-        my $qc_model = Genome::Model::ReferenceAlignment->create(
-            name => $lane_qc_model_name,
-            instrument_data => [$instrument_data],
-            subject_id => $self->subject_id,
-            subject_class_name => $self->subject_class_name,
-            processing_profile_id => $qc_pp_id,
-            auto_assign_inst_data => 0,
-            auto_build_alignments => 0,
-            build_requested => 0,
-            reference_sequence_build => $self->reference_sequence_build,
-        );
-
-        unless ($qc_model) {
-            $self->error_message("Could not create lane qc model for instrument data " . $instrument_data->id);
-            next;
-        }
-
-        # target_region_set_name means this is Capture data whose QC needs RefCov done
-        my $region_of_interest_set_input = $self->inputs(name => 'region_of_interest_set_name');
-        my $target_region_set_name_input = $self->inputs(name => 'target_region_set_name');
-        if ($target_region_set_name_input && $region_of_interest_set_input) {
-            $qc_model->add_input(
-                name => $target_region_set_name_input->name,
-                value_class_name => $target_region_set_name_input->value_class_name,
-                value_id => $target_region_set_name_input->value_id,
-            );
-            $qc_model->add_input(
-                name => $region_of_interest_set_input->name,
-                value_class_name => $region_of_interest_set_input->value_class_name,
-                value_id => $region_of_interest_set_input->value_id,
-            );
-        }
-
-        push @lane_qc_models, $qc_model;
     }
 
-    if (@lane_qc_models == @instrument_data) {
-        return @lane_qc_models;
-    }
-    return;
+    return @lane_qc_models;
 }
 
 sub latest_build_bam_file {

@@ -63,10 +63,15 @@ class Genome::Config::AnalysisProject {
             via => 'instrument_data',
             to => 'sample',
         },
+        model_bridges => {
+            is => 'Genome::Config::AnalysisProject::ModelBridge',
+            reverse_as => 'analysis_project',
+            is_many => 1,
+        },
         models => {
             is => 'Genome::Model',
-            to => 'models',
-            via => 'model_group',
+            via => 'model_bridges',
+            to => 'model',
             is_many => 1,
         },
         config_items => {
