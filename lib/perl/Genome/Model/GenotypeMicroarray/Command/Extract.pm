@@ -60,7 +60,7 @@ CSV Options:
               id
               chromosome
               position
-              sample_id
+              sample_name
               log_r_ratio
               gc_score
               cnv_value
