@@ -273,14 +273,8 @@ sub _htseq_stranded_param_v1 {
     if ($transcript_strand eq 'unstranded') {
         return 'no';
     }
-    elsif ($transcript_strand eq 'firststrand') {
-        return 'yes';
-    }
-    elsif ($transcript_strand eq 'secondstrand') {
-        return 'reverse';
-    }
     else {
-        die $self->error_message("Unknown transcript_strand $transcript_strand!  expected unstranded, firstread or secondread.");
+        die $self->error_message("Htseq::Count v1 only supports unstranded libraries, use v2 instead.");
     }
 }
 
