@@ -769,7 +769,8 @@ sub delete {
 sub _lock {
     my $class = shift;
 
-    my $resource_lock_name = $class->_resolve_lock_name(@_);
+    my $lookup_hash = $class->calculate_lookup_hash_from_arguments(@_);
+    my $resource_lock_name = $class->_resolve_lock_name($lookup_hash);
 
     # if we're already locked, just increment the lock count
     $LOCKS{$resource_lock_name} += 1;
@@ -814,10 +815,14 @@ sub _unlock {
 
 sub _resolve_lock_name {
     my $class = shift;
-    my $class_string = $class->class;
+    my $lookup_hash = shift;
 
-    my $lookup_hash = $class->calculate_lookup_hash_from_arguments(@_);
-    my $resource_lock_name = $ENV{GENOME_LOCK_DIR} . "/genome/$class_string/" .  $lookup_hash;
+    unless (length($lookup_hash) == 32 && $lookup_hash =~ /^\w+$/) {
+        croak 'lookup_hash required as second argument';
+    }
+
+    my $class_string = $class->class;
+    return $ENV{GENOME_LOCK_DIR} . "/genome/$class_string/" .  $lookup_hash;
 }
 
 # override _resolve_lock_name (for testing) to append username and time
