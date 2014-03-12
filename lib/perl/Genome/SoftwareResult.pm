@@ -793,28 +793,35 @@ sub _lock {
     return $lock;
 }
 
-sub _unlock {
-    my $self = shift;
+sub _unlock_resource {
+    my $class = shift;
+    my $resource_lock_name = shift;
 
-    my $resource_lock_name = $self->_lock_name;
-    $self->debug_message("Cleaning up lock $resource_lock_name...");
+    $class->debug_message("Cleaning up lock $resource_lock_name...");
 
     if (!exists $LOCKS{$resource_lock_name})  {
-        $self->error_message("Attempt to unlock $resource_lock_name but this was never locked!");
-        die $self->error_message;
+        $class->error_message("Attempt to unlock $resource_lock_name but this was never locked!");
+        die $class->error_message;
     }
     $LOCKS{$resource_lock_name} -= 1;
 
     return 1 if ($LOCKS{$resource_lock_name} >= 1);
 
     unless (Genome::Sys->unlock_resource(resource_lock=>$resource_lock_name)) {
-        $self->error_message("Couldn't unlock $resource_lock_name.  error message was " . $self->error_message);
-        die $self->error_message;
+        $class->error_message("Couldn't unlock $resource_lock_name.  error message was " . $class->error_message);
+        die $class->error_message;
     }
 
     delete $LOCKS{$resource_lock_name};
-    $self->debug_message("Cleanup completed for lock $resource_lock_name.");
+    $class->debug_message("Cleanup completed for lock $resource_lock_name.");
     return 1;
+}
+
+sub _unlock {
+    my $self = shift;
+
+    my $resource_lock_name = $self->_lock_name;
+    $self->_unlock_resource($resource_lock_name);
 }
 
 sub _resolve_lock_name {
