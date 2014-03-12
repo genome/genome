@@ -772,11 +772,7 @@ sub delete {
 
 sub _lock {
     my $class = shift;
-    my $lookup_hash = shift;
-
-    unless (length($lookup_hash) == 32 && $lookup_hash =~ /^\w+$/) {
-        croak 'lookup_hash required as second argument';
-    }
+    my $lookup_hash = _validate_lookup_hash(shift);
 
     my $resource_lock_name = $class->_resolve_lock_name($lookup_hash);
 
@@ -823,14 +819,18 @@ sub _unlock {
 
 sub _resolve_lock_name {
     my $class = shift;
-    my $lookup_hash = shift;
-
-    unless (length($lookup_hash) == 32 && $lookup_hash =~ /^\w+$/) {
-        croak 'lookup_hash required as second argument';
-    }
+    my $lookup_hash = _validate_lookup_hash(shift);
 
     my $class_string = $class->class;
     return $ENV{GENOME_LOCK_DIR} . "/genome/$class_string/" .  $lookup_hash;
+}
+
+sub _validate_lookup_hash {
+    my $lookup_hash = shift;
+    unless (length($lookup_hash) == 32 && $lookup_hash =~ /^[\d\w]+$/) {
+        croak "invalid lookup_hash: $lookup_hash";
+    }
+    return $lookup_hash;
 }
 
 # override _resolve_lock_name (for testing) to append username and time
