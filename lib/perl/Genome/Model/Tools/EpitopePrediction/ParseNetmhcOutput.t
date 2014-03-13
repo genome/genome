@@ -22,19 +22,19 @@ sub test_for_output_type {
     my ($output_type, $test_dir, $netmhc_file, $key_file) = @_;
 
     my $expected_output = File::Spec->join($test_dir, "parsed_file." . $output_type);
-    my $output_file = Genome::Sys->create_temp_file_path;
+    my $output_dir = Genome::Sys->create_temp_directory;
 
     my $cmd = $class->create(
         netmhc_file => $netmhc_file,
+        output_directory => $output_dir,
         key_file => $key_file,
-        parsed_file => $output_file,
         output_type => $output_type,
     );
     ok($cmd, "Created a command for output type $output_type");
 
     ok($cmd->execute, "Command executed for output type $output_type");
 
-    compare_ok($output_file, $expected_output, "Output file is as expected for output type $output_type");
+    compare_ok($cmd->parsed_file, $expected_output, "Output file is as expected for output type $output_type");
 }
 
 done_testing();

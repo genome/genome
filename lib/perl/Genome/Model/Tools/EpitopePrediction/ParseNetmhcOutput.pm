@@ -13,8 +13,16 @@ class Genome::Model::Tools::EpitopePrediction::ParseNetmhcOutput {
             doc => 'Raw output file from Netmhc',
         },
         parsed_file => {
-            is  => 'Text',
+            is => 'Text',
+            is_output=> 1,
             doc => 'File to write the parsed output',
+            is_calculated => 1,
+            calculate_from => ['output_directory'],
+            calculate => q| return File::Spec->join($output_directory, "parsed.out"); |,
+        },
+        output_directory => {
+            is => 'Text',
+            doc => 'Location of the output',
         },
         output_type => {
             is => 'Text',
