@@ -47,16 +47,8 @@ sub execute {
     my $key_hash = $self->key_hash();
     my ($netmhc_results, $epitope_seq) = $self->make_hashes_from_input($key_hash);
 
-    print $output_fh join("\t",
-        "Gene Name",
-        "Point Mutation",
-        "Sub-peptide Position",
-        "MT score",
-        "WT score",
-        "MT epitope seq",
-        "WT epitope seq",
-        "Fold change")
-        . "\n";
+    $self->print_header($output_fh);
+
     my $protein_type = 'MT';
     for my $protein_name (sort keys %{$netmhc_results->{$protein_type}}) {
         for my $variant_aa (sort keys %{$netmhc_results->{$protein_type}->{$protein_name}}) {
@@ -84,6 +76,22 @@ sub execute {
     }
 
     return 1;
+}
+
+sub print_header {
+    my $self      = shift;
+    my $output_fh = shift;
+
+    print $output_fh join("\t",
+        "Gene Name",
+        "Point Mutation",
+        "Sub-peptide Position",
+        "MT score",
+        "WT score",
+        "MT epitope seq",
+        "WT epitope seq",
+        "Fold change"
+    ) . "\n";
 }
 
 sub print_output_line {
