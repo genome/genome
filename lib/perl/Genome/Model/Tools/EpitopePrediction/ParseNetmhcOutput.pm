@@ -37,41 +37,15 @@ sub help_brief {
 
 sub execute {
     my $self = shift;
-    my %netmhc_results;
-    my %epitope_seq;
+
     my %position_score;
 
     my $type      = $self->output_type;
     my $input_fh  = Genome::Sys->open_file_for_reading($self->netmhc_file);
     my $output_fh = Genome::Sys->open_file_for_writing($self->parsed_file);
 
-    my %key_hash = %{$self->key_hash()};
-
-    while (my $line = $input_fh->getline) {
-        chomp $line;
-
-        if ($line =~ /^Entry/) {
-            my @result_arr = split(/\t/, $line);
-
-            my $position         = $result_arr[1];
-            my $score            = $result_arr[3];
-            my $epitope          = $result_arr[2];
-            my $protein_new_name = $result_arr[0];
-
-            if (exists($key_hash{$protein_new_name})) {
-                my $protein = $key_hash{$protein_new_name}{'name'};
-                my @protein_arr = split(/\./, $protein);
-
-                my $protein_type = $protein_arr[0];
-                my $protein_name = $protein_arr[1];
-                my $variant_aa   = $protein_arr[3];
-
-                $netmhc_results{$protein_type}{$protein_name}{$variant_aa}{$position} = $score;
-                $epitope_seq{$protein_type}{$protein_name}{$variant_aa}{$position}    = $epitope;
-
-            }
-        }
-    }
+    my $key_hash = $self->key_hash();
+    my ($netmhc_results, $epitope_seq) = $self->make_hashes_from_input($key_hash);
 
     print $output_fh join("\t",
         "Gene Name",
@@ -83,14 +57,12 @@ sub execute {
         "WT epitope seq",
         "Fold change")
         . "\n";
-    my $rnetmhc_results = \%netmhc_results;
-    my $epitope_seq     = \%epitope_seq;
     my @score_arr;
     my $protein_type = 'MT';
     my @positions;
-    for my $protein_name (sort keys %{$rnetmhc_results->{$protein_type}}) {
-        for my $variant_aa (sort keys %{$rnetmhc_results->{$protein_type}->{$protein_name}}) {
-            %position_score = %{$netmhc_results{$protein_type}{$protein_name}{$variant_aa}};
+    for my $protein_name (sort keys %{$netmhc_results->{$protein_type}}) {
+        for my $variant_aa (sort keys %{$netmhc_results->{$protein_type}->{$protein_name}}) {
+            %position_score = %{$netmhc_results->{$protein_type}{$protein_name}{$variant_aa}};
             @positions = sort {$position_score{$a} <=> $position_score{$b}} keys %position_score;
             my $total_positions = scalar @positions;
 
@@ -105,13 +77,13 @@ sub execute {
 
                         print $output_fh join("\t", $protein_name, $variant_aa, $positions[$i], $position_score{$positions[$i]})
                             . "\t";
-                        print $output_fh $rnetmhc_results->{'WT'}->{$protein_name}->{$variant_aa}->{$positions[$i]} . "\t";
+                        print $output_fh $netmhc_results->{'WT'}->{$protein_name}->{$variant_aa}->{$positions[$i]} . "\t";
 
                         print $output_fh $epitope_seq->{'MT'}->{$protein_name}->{$variant_aa}->{$positions[$i]} . "\t";
                         print $output_fh $epitope_seq->{'WT'}->{$protein_name}->{$variant_aa}->{$positions[$i]} . "\t";
 
                         my $fold_change =
-                            $rnetmhc_results->{'WT'}->{$protein_name}->{$variant_aa}->{$positions[$i]} /
+                            $netmhc_results->{'WT'}->{$protein_name}->{$variant_aa}->{$positions[$i]} /
                             $position_score{$positions[$i]};
                         my $rounded_FC = sprintf("%.3f", $fold_change);
                         print $output_fh $rounded_FC . "\n";
@@ -121,12 +93,12 @@ sub execute {
             if ($type eq 'top') {
 
                 print $output_fh join("\t", $protein_name, $variant_aa, $positions[0], $position_score{$positions[0]}) . "\t";
-                print $output_fh $rnetmhc_results->{'WT'}->{$protein_name}->{$variant_aa}->{$positions[0]} . "\t";
+                print $output_fh $netmhc_results->{'WT'}->{$protein_name}->{$variant_aa}->{$positions[0]} . "\t";
 
                 print $output_fh $epitope_seq->{'MT'}->{$protein_name}->{$variant_aa}->{$positions[0]} . "\t";
                 print $output_fh $epitope_seq->{'WT'}->{$protein_name}->{$variant_aa}->{$positions[0]} . "\t";
                 my $fold_change =
-                    $rnetmhc_results->{'WT'}->{$protein_name}->{$variant_aa}->{$positions[0]} / $position_score{$positions[0]};
+                    $netmhc_results->{'WT'}->{$protein_name}->{$variant_aa}->{$positions[0]} / $position_score{$positions[0]};
                 my $rounded_FC = sprintf("%.3f", $fold_change);
                 print $output_fh $rounded_FC . "\n";
             }
@@ -138,6 +110,7 @@ sub execute {
 
 sub key_hash {
     my $self = shift;
+
     my $key_fh = Genome::Sys->open_file_for_reading($self->key_file);
 
     my %key_hash;
@@ -155,6 +128,44 @@ sub key_hash {
     close($key_fh);
 
     return \%key_hash;
+}
+
+sub make_hashes_from_input {
+    my $self     = shift;
+    my $key_hash = shift;
+
+    my $input_fh  = Genome::Sys->open_file_for_reading($self->netmhc_file);
+
+    my (%netmhc_results, %epitope_seq);
+    while (my $line = $input_fh->getline) {
+        chomp $line;
+
+        if ($line =~ /^Entry/) {
+            my @result_arr = split(/\t/, $line);
+
+            my $position         = $result_arr[1];
+            my $score            = $result_arr[3];
+            my $epitope          = $result_arr[2];
+            my $protein_new_name = $result_arr[0];
+
+            if (exists($key_hash->{$protein_new_name})) {
+                my $protein = $key_hash->{$protein_new_name}{'name'};
+                my @protein_arr = split(/\./, $protein);
+
+                my $protein_type = $protein_arr[0];
+                my $protein_name = $protein_arr[1];
+                my $variant_aa   = $protein_arr[3];
+
+                $netmhc_results{$protein_type}{$protein_name}{$variant_aa}{$position} = $score;
+                $epitope_seq{$protein_type}{$protein_name}{$variant_aa}{$position}    = $epitope;
+
+            }
+        }
+    }
+
+    close($input_fh);
+
+    return \%netmhc_results, \%epitope_seq;
 }
 
 1;
