@@ -211,6 +211,12 @@ sub _lookup_version {
             log_format => 'new',
             index_type => 'skips_reverse',
         },
+        '0.7.7' => {
+            path       => '/usr/bin/bwa0.7.7',
+            features   => ['bam_input', 'bwasw', 'mem', 'supplementary_alignment_flag'],
+            log_format => 'new',
+            index_type => 'skips_reverse',
+        },
         # If you are adding a new version of bwa, it likely has the following features:
         #   features   => ['bam_input', 'bwasw', 'mem'],
         #   log_format => 'new',
