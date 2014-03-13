@@ -44,25 +44,8 @@ sub execute {
     my $type      = $self->output_type;
     my $input_fh  = Genome::Sys->open_file_for_reading($self->netmhc_file);
     my $output_fh = Genome::Sys->open_file_for_writing($self->parsed_file);
-    my $key_fh    = Genome::Sys->open_file_for_reading($self->key_file);
 
-    ### HASH FOR KEY FILE LOOKUP#####
-
-    my %list_hash;
-    while (my $keyline = $key_fh->getline) {
-        chomp $keyline;
-
-        #Entry_1	>WT.GSTP1.R187W
-        #	$list_hash{$keyline}  = ();
-        my ($new_name, $original_name) = split(/\t/, $keyline);
-        $original_name =~ s/>//g;
-        #	print $original_name."\n";
-        $list_hash{$new_name} = ();
-        $list_hash{$new_name}{'name'} = $original_name;
-
-    }
-#		print Dumper %list_hash;
-    #########
+    my %key_hash = %{$self->key_hash()};
 
     while (my $line = $input_fh->getline) {
         chomp $line;
@@ -76,9 +59,9 @@ sub execute {
             my $epitope          = $result_arr[2];
             my $protein_new_name = $result_arr[0];
 
-            if (exists($list_hash{$protein_new_name})) {
+            if (exists($key_hash{$protein_new_name})) {
                 #print $_."\n";
-                my $protein = $list_hash{$protein_new_name}{'name'};
+                my $protein = $key_hash{$protein_new_name}{'name'};
                 my @protein_arr = split(/\./, $protein);
 
                 #print Dumper(@protein_arr);
@@ -165,6 +148,27 @@ sub execute {
     }
 
     return 1;
+}
+
+sub key_hash {
+    my $self = shift;
+    my $key_fh = Genome::Sys->open_file_for_reading($self->key_file);
+
+    my %key_hash;
+    while (my $keyline = $key_fh->getline) {
+        chomp $keyline;
+
+        #Entry_1	>WT.GSTP1.R187W
+        my ($new_name, $original_name) = split(/\t/, $keyline);
+        $original_name =~ s/>//g;
+        $key_hash{$new_name} = ();
+        $key_hash{$new_name}{'name'} = $original_name;
+
+    }
+
+    close($key_fh);
+
+    return \%key_hash;
 }
 
 1;
