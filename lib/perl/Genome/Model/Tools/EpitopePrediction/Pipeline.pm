@@ -14,6 +14,35 @@ class Genome::Model::Tools::EpitopePrediction::Pipeline {
             is => 'Text',
             doc => 'the directory where you want results stored',
         },
+        #TODO fill out docs
+        input_tsv_file => {
+            is => 'Text',
+            doc => '',
+        },
+        anno_db => {
+            is => 'Text',
+            doc => '',
+        },
+        anno_db_version => {
+            is => 'Text',
+            doc => '',
+        },
+        length => {
+            is => 'Text',
+            doc => '',
+        },
+        allele => {
+            is => 'Text',
+            doc => '',
+        },
+        epitope_length => {
+            is => 'Text',
+            doc => '',
+        },
+        netmhc_version => {
+            is => 'Text',
+            doc => '',
+        },
     ],
 };
 
