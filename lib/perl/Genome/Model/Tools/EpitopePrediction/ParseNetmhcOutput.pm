@@ -49,10 +49,9 @@ sub execute {
 
     while (my $line = $input_fh->getline) {
         chomp $line;
-        if ($line =~ /^Entry/) {
 
+        if ($line =~ /^Entry/) {
             my @result_arr = split(/\t/, $line);
-            #print Dumper(@result_arr);
 
             my $position         = $result_arr[1];
             my $score            = $result_arr[3];
@@ -60,11 +59,8 @@ sub execute {
             my $protein_new_name = $result_arr[0];
 
             if (exists($key_hash{$protein_new_name})) {
-                #print $_."\n";
                 my $protein = $key_hash{$protein_new_name}{'name'};
                 my @protein_arr = split(/\./, $protein);
-
-                #print Dumper(@protein_arr);
 
                 my $protein_type = $protein_arr[0];
                 my $protein_name = $protein_arr[1];
@@ -90,59 +86,51 @@ sub execute {
     my $rnetmhc_results = \%netmhc_results;
     my $epitope_seq     = \%epitope_seq;
     my @score_arr;
-    for my $k1 (sort keys %$rnetmhc_results) {
-        my @positions;
-        if ($k1 eq 'MT') {
-            #  print "$k1\t";
+    my $protein_type = 'MT';
+    my @positions;
+    for my $k2 (sort keys %{$rnetmhc_results->{$protein_type}}) {
+        #print "$k2\t";
+        for my $k3 (sort keys %{$rnetmhc_results->{$protein_type}->{$k2}}) {
+            #print "\t$k3";
+            %position_score = %{$netmhc_results{$protein_type}{$k2}{$k3}};
+            @positions = sort {$position_score{$a} <=> $position_score{$b}} keys %position_score;
+            my $total_positions = scalar @positions;
 
-            for my $k2 (sort keys %{$rnetmhc_results->{$k1}}) {
-                #print "$k2\t";
+            if ($type eq 'all') {
 
-                for my $k3 (sort keys %{$rnetmhc_results->{$k1}->{$k2}}) {
-                    #print "\t$k3";
-                    %position_score = %{$netmhc_results{$k1}{$k2}{$k3}};
-                    @positions = sort {$position_score{$a} <=> $position_score{$b}} keys %position_score;
-                    my $total_positions = scalar @positions;
+                for (my $i = 0; $i < $total_positions; $i++) {
 
-                    if ($type eq 'all') {
+                    if ($epitope_seq->{'MT'}->{$k2}->{$k3}->{$positions[$i]} ne
+                        $epitope_seq->{'WT'}->{$k2}->{$k3}->{$positions[$i]})
+                        # Filtering if mutant amino acid present
+                    {
 
-                        for (my $i = 0; $i < $total_positions; $i++) {
+                        print $output_fh join("\t", $k2, $k3, $positions[$i], $position_score{$positions[$i]})
+                            . "\t";
+                        print $output_fh $rnetmhc_results->{'WT'}->{$k2}->{$k3}->{$positions[$i]} . "\t";
 
-                            if ($epitope_seq->{'MT'}->{$k2}->{$k3}->{$positions[$i]} ne
-                                $epitope_seq->{'WT'}->{$k2}->{$k3}->{$positions[$i]})
-                                # Filtering if mutant amino acid present
-                            {
+                        print $output_fh $epitope_seq->{'MT'}->{$k2}->{$k3}->{$positions[$i]} . "\t";
+                        print $output_fh $epitope_seq->{'WT'}->{$k2}->{$k3}->{$positions[$i]} . "\t";
 
-                                print $output_fh join("\t", $k2, $k3, $positions[$i], $position_score{$positions[$i]})
-                                    . "\t";
-                                print $output_fh $rnetmhc_results->{'WT'}->{$k2}->{$k3}->{$positions[$i]} . "\t";
-
-                                print $output_fh $epitope_seq->{'MT'}->{$k2}->{$k3}->{$positions[$i]} . "\t";
-                                print $output_fh $epitope_seq->{'WT'}->{$k2}->{$k3}->{$positions[$i]} . "\t";
-
-                                my $fold_change =
-                                    $rnetmhc_results->{'WT'}->{$k2}->{$k3}->{$positions[$i]} /
-                                    $position_score{$positions[$i]};
-                                my $rounded_FC = sprintf("%.3f", $fold_change);
-                                print $output_fh $rounded_FC . "\n";
-                            }
-                        }
-                    }
-                    if ($type eq 'top') {
-
-                        print $output_fh join("\t", $k2, $k3, $positions[0], $position_score{$positions[0]}) . "\t";
-                        print $output_fh $rnetmhc_results->{'WT'}->{$k2}->{$k3}->{$positions[0]} . "\t";
-
-                        print $output_fh $epitope_seq->{'MT'}->{$k2}->{$k3}->{$positions[0]} . "\t";
-                        print $output_fh $epitope_seq->{'WT'}->{$k2}->{$k3}->{$positions[0]} . "\t";
                         my $fold_change =
-                            $rnetmhc_results->{'WT'}->{$k2}->{$k3}->{$positions[0]} / $position_score{$positions[0]};
+                            $rnetmhc_results->{'WT'}->{$k2}->{$k3}->{$positions[$i]} /
+                            $position_score{$positions[$i]};
                         my $rounded_FC = sprintf("%.3f", $fold_change);
                         print $output_fh $rounded_FC . "\n";
                     }
-
                 }
+            }
+            if ($type eq 'top') {
 
+                print $output_fh join("\t", $k2, $k3, $positions[0], $position_score{$positions[0]}) . "\t";
+                print $output_fh $rnetmhc_results->{'WT'}->{$k2}->{$k3}->{$positions[0]} . "\t";
+
+                print $output_fh $epitope_seq->{'MT'}->{$k2}->{$k3}->{$positions[0]} . "\t";
+                print $output_fh $epitope_seq->{'WT'}->{$k2}->{$k3}->{$positions[0]} . "\t";
+                my $fold_change =
+                    $rnetmhc_results->{'WT'}->{$k2}->{$k3}->{$positions[0]} / $position_score{$positions[0]};
+                my $rounded_FC = sprintf("%.3f", $fold_change);
+                print $output_fh $rounded_FC . "\n";
             }
         }
     }
