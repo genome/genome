@@ -224,6 +224,7 @@ sub load_flagstat {
     $self->debug_message('Load flagstat...');
 
     Carp::confess('No flagstat path to load!') if not $flagstat_path;
+    Carp::confess('Flagstat file is empty!') if not -s $flagstat_path;
 
     $self->debug_message('Flagstat path: '.$flagstat_path);
     my $flagstat = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flagstat_path);
@@ -233,7 +234,11 @@ sub load_flagstat {
     }
 
     # FIXME What is paired end?
-    if ( $flagstat->{reads_paired_in_sequencing} > 0 and $flagstat->{reads_marked_as_read1} == $flagstat->{reads_marked_as_read2} ) {
+    if($flagstat_path =~ /\.paired\.bam\.flagstat$/) {
+        $flagstat->{is_paired_end} = 1;
+    } elsif($flagstat_path =~ /\.singleton\.bam\.flagstat$/) {
+        $flagstat->{is_paired_end} = 0;
+    } elsif ( $flagstat->{reads_paired_in_sequencing} > 0 and $flagstat->{reads_marked_as_read1} == $flagstat->{reads_marked_as_read2} ) {
         # Only set paired end if read1 and read2 are equal
         $flagstat->{is_paired_end} = 1;
     }

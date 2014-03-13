@@ -30,6 +30,7 @@ my @bam_paths;
 for my $bam_base_name (qw/ 2883581797.bam 2883581798.bam /) {
     my $bam_path = $tmp_dir.'/'.$bam_base_name;
     Genome::Sys->create_symlink($test_dir.'/'.$bam_base_name, $bam_path);
+    Genome::Sys->create_symlink($test_dir.'/'.$bam_base_name.'.flagstat', $bam_path.'.flagstat');
     ok(-s $bam_path, 'linked bam path') or die;
     push @bam_paths, $bam_path
 }
@@ -71,7 +72,7 @@ my @instrument_data_attributes = Genome::InstrumentDataAttribute->get(
 );
 my @instrument_data = Genome::InstrumentData::Imported->get(id => [ map { $_->instrument_data_id } @instrument_data_attributes ]);
 @instrument_data = sort { $a->attributes(attribute_label => 'segment_id')->attribute_value cmp $b->attributes(attribute_label => 'segment_id')->attribute_value } @instrument_data;
-is(@instrument_data, 2, "got instrument data for md5 $md5") or die;;
+is(@instrument_data, 2, "got instrument data for md5 $md5");
 my $read_group = 2883581797;
 for my $instrument_data ( @instrument_data ) {
     is($instrument_data->subset_name, 'unknown', 'subset_name correctly set');

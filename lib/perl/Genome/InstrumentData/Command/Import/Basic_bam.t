@@ -24,7 +24,7 @@ ok($analysis_project, 'create analysis project');
 my $sample = Genome::Sample->create(name => '__TEST_SAMPLE__');
 ok($sample, 'Create sample');
 
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'bam/v2');
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'bam/v3');
 my $source_bam = $test_dir.'/test.bam';
 ok(-s $source_bam, 'source bam exists') or die;
 
@@ -50,10 +50,10 @@ is($instrument_data->original_data_path, $source_bam, 'original_data_path correc
 is($instrument_data->import_format, 'bam', 'import_format is bam');
 is($instrument_data->sequencing_platform, 'solexa', 'sequencing_platform correctly set');
 is($instrument_data->is_paired_end, 1, 'is_paired_end correctly set');
-is($instrument_data->read_count, 256, 'read_count correctly set');
+is($instrument_data->read_count, 252, 'read_count correctly set');
 is($instrument_data->read_length, 100, 'read_length correctly set');
 is(eval{$instrument_data->attributes(attribute_label => 'segment_id')->attribute_value;}, 2883581797, 'segment_id correctly set');
-is(eval{$instrument_data->attributes(attribute_label => 'original_data_path_md5')->attribute_value;}, '940825168285c254b58c47399a3e1173', 'original_data_path_md5 correctly set');
+is(eval{$instrument_data->attributes(attribute_label => 'original_data_path_md5')->attribute_value;}, 'f81fbc3d3a6b57d11e60b016bb2c950c', 'original_data_path_md5 correctly set');
 is($instrument_data->analysis_projects, $analysis_project, 'set analysis project');
 
 my $bam_path = $instrument_data->bam_path;
