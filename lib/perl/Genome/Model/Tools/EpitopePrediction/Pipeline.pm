@@ -12,7 +12,6 @@ class Genome::Model::Tools::EpitopePrediction::Pipeline {
     has => [
         output_directory => {
             is => 'Text',
-            is_optional => 0,
             doc => 'the directory where you want results stored',
         },
     ],
@@ -53,13 +52,38 @@ sub _construct_workflow {
 
 sub _validate_inputs {
     my $self = shift;
-    die $self->error_message('TODO: Validate inputs if needed');
+
+    unless (-s $self->input_tsv_file) {
+        die $self->error_message("Input tsv file %s does not exist or has no size", $self->input_tsv_file);
+    }
+
+    unless (Genome::Sys->create_directory($self->output_directory)) {
+        die $self->error_message("Coult not create directory (%s)", $self->output_directory);
+    }
+
+    # TODO make sure anno db makes sense
+    # TODO make sure anno db version makes sense
+    # TODO make sure length makes sense
+    # TODO make sure allele makes sense
+    # TODO make sure epitope_length makes sense
+    # TODO make sure netmhc_version makes sense
+    die $self->error_message('TODO: Validate inputs');
+
+    return 1;
 }
 
 sub _get_workflow_inputs {
     my $self = shift;
-    die $self->error_message('TODO: Fill in the input hash for the workflow -- all input connector properties must be set');
+
     my %inputs = (
+        input_tsv_file => $self->input_tsv_file,
+        output_directory => $self->output_directory,
+        anno_db => $self->anno_db,
+        anno_db_version => $self->anno_db_version,
+        length => $self->length,
+        allele => $self->allele,
+        epitope_length => $self->epitope_length,
+        netmhc_version => $self->netmhc_version,
     );
 
     return \%inputs;
