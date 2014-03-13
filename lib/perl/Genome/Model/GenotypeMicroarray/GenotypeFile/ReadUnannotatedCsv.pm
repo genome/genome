@@ -196,7 +196,6 @@ sub _annotate_genotypes {
     while ( my $entry = $vcf_reader->next ) {
        # Skip INDELs
         if ( $entry->has_indel ) {
-            $self->warning_message('Skipping INDEL: '.$entry->to_string);
             next;
         }
 
