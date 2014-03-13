@@ -57,55 +57,47 @@ sub execute {
         "WT epitope seq",
         "Fold change")
         . "\n";
-    my @score_arr;
     my $protein_type = 'MT';
-    my @positions;
     for my $protein_name (sort keys %{$netmhc_results->{$protein_type}}) {
         for my $variant_aa (sort keys %{$netmhc_results->{$protein_type}->{$protein_name}}) {
             %position_score = %{$netmhc_results->{$protein_type}{$protein_name}{$variant_aa}};
-            @positions = sort {$position_score{$a} <=> $position_score{$b}} keys %position_score;
+            my @positions = sort {$position_score{$a} <=> $position_score{$b}} keys %position_score;
             my $total_positions = scalar @positions;
 
             if ($type eq 'all') {
-
                 for (my $i = 0; $i < $total_positions; $i++) {
 
                     if ($epitope_seq->{'MT'}->{$protein_name}->{$variant_aa}->{$positions[$i]} ne
                         $epitope_seq->{'WT'}->{$protein_name}->{$variant_aa}->{$positions[$i]})
                         # Filtering if mutant amino acid present
                     {
-
-                        print $output_fh join("\t", $protein_name, $variant_aa, $positions[$i], $position_score{$positions[$i]})
-                            . "\t";
-                        print $output_fh $netmhc_results->{'WT'}->{$protein_name}->{$variant_aa}->{$positions[$i]} . "\t";
-
-                        print $output_fh $epitope_seq->{'MT'}->{$protein_name}->{$variant_aa}->{$positions[$i]} . "\t";
-                        print $output_fh $epitope_seq->{'WT'}->{$protein_name}->{$variant_aa}->{$positions[$i]} . "\t";
-
-                        my $fold_change =
-                            $netmhc_results->{'WT'}->{$protein_name}->{$variant_aa}->{$positions[$i]} /
-                            $position_score{$positions[$i]};
-                        my $rounded_FC = sprintf("%.3f", $fold_change);
-                        print $output_fh $rounded_FC . "\n";
+                        my $position = $positions[$i];
+                        $self->print_output_line($output_fh, $protein_name, $variant_aa, $position, $position_score{$position}, $netmhc_results, $epitope_seq);
                     }
                 }
             }
             if ($type eq 'top') {
-
-                print $output_fh join("\t", $protein_name, $variant_aa, $positions[0], $position_score{$positions[0]}) . "\t";
-                print $output_fh $netmhc_results->{'WT'}->{$protein_name}->{$variant_aa}->{$positions[0]} . "\t";
-
-                print $output_fh $epitope_seq->{'MT'}->{$protein_name}->{$variant_aa}->{$positions[0]} . "\t";
-                print $output_fh $epitope_seq->{'WT'}->{$protein_name}->{$variant_aa}->{$positions[0]} . "\t";
-                my $fold_change =
-                    $netmhc_results->{'WT'}->{$protein_name}->{$variant_aa}->{$positions[0]} / $position_score{$positions[0]};
-                my $rounded_FC = sprintf("%.3f", $fold_change);
-                print $output_fh $rounded_FC . "\n";
+                my $position = $positions[0];
+                $self->print_output_line($output_fh, $protein_name, $variant_aa, $position, $position_score{$position}, $netmhc_results, $epitope_seq);
             }
         }
     }
 
     return 1;
+}
+
+sub print_output_line {
+    my ($self, $output_fh, $protein_name, $variant_aa, $position, $position_score, $netmhc_results, $epitope_seq) = @_;
+
+    print $output_fh join("\t", $protein_name, $variant_aa, $position, $position_score) . "\t";
+    print $output_fh $netmhc_results->{'WT'}->{$protein_name}->{$variant_aa}->{$position} . "\t";
+
+    print $output_fh $epitope_seq->{'MT'}->{$protein_name}->{$variant_aa}->{$position} . "\t";
+    print $output_fh $epitope_seq->{'WT'}->{$protein_name}->{$variant_aa}->{$position} . "\t";
+    my $fold_change =
+        $netmhc_results->{'WT'}->{$protein_name}->{$variant_aa}->{$position} / $position_score;
+    my $rounded_FC = sprintf("%.3f", $fold_change);
+    print $output_fh $rounded_FC . "\n";
 }
 
 sub key_hash {
