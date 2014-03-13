@@ -4,10 +4,37 @@ use strict;
 use warnings;
 
 use above 'Genome';
-use Test::More tests => 1;
+use Test::More;
+use Genome::Utility::Test qw(compare_ok);
 
-# This test was auto-generated because './Model/Tools/EpitopePrediction/ParseNetmhcOutput.pm'
-# had no '.t' file beside it.  Please remove this test if you believe it was
-# created unnecessarily.  This is a bare minimum test that just compiles Perl
-# and the UR class.
-use_ok('Genome::Model::Tools::EpitopePrediction::ParseNetmhcOutput');
+my $TEST_DATA_VERSION = 1;
+my $class = 'Genome::Model::Tools::EpitopePrediction::ParseNetmhcOutput';
+use_ok($class);
+
+my $test_dir = Genome::Utility::Test->data_dir_ok($class, $TEST_DATA_VERSION);
+my $netmhc_file = File::Spec->join($test_dir, "netmhc_file.xls");
+my $key_file = File::Spec->join($test_dir, "key_file.txt");
+for my $output_type (qw(all top)) {
+    test_for_output_type($output_type, $test_dir, $netmhc_file, $key_file);
+}
+
+sub test_for_output_type {
+    my ($output_type, $test_dir, $netmhc_file, $key_file) = @_;
+
+    my $expected_output = File::Spec->join($test_dir, "parsed_file." . $output_type);
+    my $output_file = Genome::Sys->create_temp_file_path;
+
+    my $cmd = $class->create(
+        netmhc_file => $netmhc_file,
+        key_file => $key_file,
+        parsed_file => $output_file,
+        output_type => $output_type,
+    );
+    ok($cmd, "Created a command for output type $output_type");
+
+    ok($cmd->execute, "Command executed for output type $output_type");
+
+    compare_ok($output_file, $expected_output, "Output file is as expected for output type $output_type");
+}
+
+done_testing();
