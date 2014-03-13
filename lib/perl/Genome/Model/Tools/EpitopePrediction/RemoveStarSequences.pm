@@ -12,9 +12,17 @@ class Genome::Model::Tools::EpitopePrediction::RemoveStarSequences {
             is => 'Text',
             doc => 'Input Fasta format file',
         },
+        output_directory => {
+            is => 'Text',
+            doc => 'Location of the output',
+        },
         output_file => {
             is => 'Text',
+            is_output=> 1,
             doc => 'The output FASTA file after removing star sequences',
+            is_calculated => 1,
+            calculate_from => ['output_directory'],
+            calculate => q| return File::Spec->join($output_directory, "variant_sequences_filtered.fasta"); |,
         },
     ],
 };
