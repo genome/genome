@@ -97,7 +97,7 @@ for my $common_name (@common_names) {
       my $model_name = "RefAlign - $common_name - $sample_type - $reference_sequence_build_shortname - $annotation_reference_build_shortname - $refalign_processing_profile_shortname";
       print "\n\n# $new_model_count. Tumor RefAlign Model\t$subject_name\t$common_name\t$refalign_processing_profile_name ($refalign_processing_profile_id)";
       print "\ngenome model define reference-alignment  --model-name='$model_name'  --reference-sequence-build=$reference_sequence_build  --annotation-reference-build=$annotation_reference_build  --subject='$subject_name'  --processing-profile-name='$refalign_processing_profile_name'";
-      print "\ngenome model instrument-data assign  --model-id=''  --all";
+      print "\ngenome model instrument-data assign all-compatible --model-id=''";
       print "\ngenome model build start ''";
     }
 
@@ -107,7 +107,7 @@ for my $common_name (@common_names) {
       my $model_name = "RefAlign - $common_name - $sample_type - $reference_sequence_build_shortname - $annotation_reference_build_shortname - $refalign_processing_profile_shortname";
       print "\n\n# $new_model_count. Normal RefAlign Model\t$subject_name\t$common_name\t$refalign_processing_profile_name ($refalign_processing_profile_id)";
       print "\ngenome model define reference-alignment  --model-name='$model_name'  --reference-sequence-build=$reference_sequence_build  --annotation-reference-build=$annotation_reference_build  --subject='$subject_name'  --processing-profile-name='$refalign_processing_profile_name'";
-      print "\ngenome model instrument-data assign  --model-id=''  --all";
+      print "\ngenome model instrument-data assign all-compatible --model-id=''";
       print "\ngenome model build start ''";
     }
 

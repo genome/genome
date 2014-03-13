@@ -118,7 +118,7 @@ sub execute {                               # replace with real execution logic.
 
 				## Assign instrument data to model ##
 
-#				my $cmd = "genome model instrument-data assign --model-id $model_id --instrument-data-id $id";
+#				my $cmd = "genome model instrument-data assign expression --model $model_id --instrument-data $id";
 				
 				## Build the model ##
 				
