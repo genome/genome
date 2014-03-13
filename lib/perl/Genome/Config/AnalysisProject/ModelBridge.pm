@@ -28,4 +28,14 @@ class Genome::Config::AnalysisProject::ModelBridge {
     ],
 };
 
+__PACKAGE__->add_observer(aspect => 'create', callback => \&_is_created);
+
+sub _is_created {
+    my $self = shift;
+    Genome::Timeline::Event::AnalysisProject->model_created(
+        $self->model->id,
+        $self->analysis_project,
+    );
+}
+
 1;

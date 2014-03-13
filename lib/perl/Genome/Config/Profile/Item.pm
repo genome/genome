@@ -35,6 +35,8 @@ class Genome::Config::Profile::Item {
     ],
 };
 
+__PACKAGE__->add_observer(aspect => 'create', callback => \&_is_created);
+
 sub file_path {
     my $self = shift;
 
@@ -108,5 +110,13 @@ sub _get_concrete_file_path {
 }
 
 sub _get_size_in_kb { return ((-s $_[1])/1024) + 1; }
+
+sub _is_created {
+    my $self = shift;
+    Genome::Timeline::Event::AnalysisProject->config_added(
+        $self->id,
+        $self->analysis_project,
+    );
+}
 
 1;
