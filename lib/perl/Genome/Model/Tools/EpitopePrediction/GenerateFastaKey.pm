@@ -12,9 +12,17 @@ class Genome::Model::Tools::EpitopePrediction::GenerateFastaKey {
             is => 'Text',
             doc => 'The input FASTA file with 21mer sequences for wildtype(WT) and mutant(MT) proteins generated using \'gmt epitope-prediction generat-variant-seq21mer\'',
         },
+        output_directory => {
+            is => 'Text',
+            doc => 'Location of the output',
+        },
         output_file => {
-            is  => 'Text',
+            is => 'Text',
+            is_output=> 1,
             doc => 'The output Key file for lookup',
+            is_calculated => 1,
+            calculate_from => ['output_directory'],
+            calculate => q| return File::Spec->join($output_directory, "snvs_wildtype.tsv"); |,
         },
     ],
 };
