@@ -15,10 +15,17 @@ class Genome::Model::Tools::EpitopePrediction::GetWildtype {
             is => 'Text',
             doc => 'A tab separated input file from the annotator',
         },
+        output_directory => {
+            is => 'Text',
+            doc => 'Location of the output',
+        },
         output_tsv_file => {
             is => 'Text',
             is_output=> 1,
             doc => 'A tab separated output file with the amino acid sequences both wildtype and mutant',
+            is_calculated => 1,
+            calculate_from => ['output_directory'],
+            calculate => q| return File::Spec->join($output_directory, "snvs_wildtype.tsv"); |,
         },
         anno_db => {
             is => 'Text',
