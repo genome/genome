@@ -1,4 +1,4 @@
-package Genome::Model::Tools::EpitopePrediction::GenerateVariantSeq;
+package Genome::Model::Tools::EpitopePrediction::GenerateVariantSequences;
 
 use strict;
 use warnings;
@@ -9,7 +9,7 @@ use Workflow;
 my $DEFAULT_TRV_TYPE = 'missense';
 
 
-class Genome::Model::Tools::EpitopePrediction::GenerateVariantSeq {
+class Genome::Model::Tools::EpitopePrediction::GenerateVariantSequences {
     is => 'Genome::Model::Tools::EpitopePrediction::Base',
     has_input => [
         input_file => {

@@ -8,7 +8,7 @@ use Test::More;
 use Genome::Utility::Test qw(compare_ok);
 
 my $TEST_DATA_VERSION = 1;
-my $class = 'Genome::Model::Tools::EpitopePrediction::GenerateVariantSeq';
+my $class = 'Genome::Model::Tools::EpitopePrediction::GenerateVariantSequences';
 use_ok($class);
 
 my $test_dir = Genome::Utility::Test->data_dir_ok($class, $TEST_DATA_VERSION);
