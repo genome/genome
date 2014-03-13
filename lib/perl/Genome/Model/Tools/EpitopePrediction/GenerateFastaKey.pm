@@ -22,7 +22,7 @@ class Genome::Model::Tools::EpitopePrediction::GenerateFastaKey {
             doc => 'The output Key file for lookup',
             is_calculated => 1,
             calculate_from => ['output_directory'],
-            calculate => q| return File::Spec->join($output_directory, "snvs_wildtype.tsv"); |,
+            calculate => q| return File::Spec->join($output_directory, "variant_sequences.key"); |,
         },
     ],
 };
