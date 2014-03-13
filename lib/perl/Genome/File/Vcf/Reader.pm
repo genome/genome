@@ -24,6 +24,16 @@ while (my $entry = $reader->next) {
 
 =cut
 
+sub header {
+    my ($self, $header) = @_;
+
+    if ( $header ) {
+        $self->{header} = $header;
+    }
+
+    return $self->{header};
+}
+
 sub _parse_header {
     my $self = shift;
     my @lines;
@@ -43,7 +53,7 @@ sub _parse_header {
         }
     }
     confess "No vcf header found in file $name" unless @lines;
-    $self->{header} = Genome::File::Vcf::Header->create(lines => \@lines);
+    $self->header( Genome::File::Vcf::Header->create(lines => \@lines) ); 
 }
 
 sub _next_entry {

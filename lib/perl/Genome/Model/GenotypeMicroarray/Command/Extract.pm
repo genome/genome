@@ -60,7 +60,7 @@ CSV Options:
               id
               chromosome
               position
-              sample_id
+              sample_name
               log_r_ratio
               gc_score
               cnv_value
@@ -118,18 +118,13 @@ HELP
 
 sub execute {
     my $self = shift;
-    $self->status_message('Extract genotytpes...');
+    $self->status_message('Extract genotypes...');
 
     my $resolve_source = $self->resolve_source;
     return if not $resolve_source;
 
     my $filters = $self->_create_filters;
     return if not $filters;
-
-    my $entry_factory = Genome::Model::GenotypeMicroarray::GenotypeFile::EntryFactory->create(
-        sample_name => $self->sample->name,
-    );
-    return if not $entry_factory;
 
     my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->build_reader(
         source => $self->source,
@@ -138,20 +133,20 @@ sub execute {
     return if not $reader;
 
     my $writer = Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory->build_writer(
-        $self->output.':sample_name='.$self->sample->name,
+        header => $reader->header,
+        string => $self->output,
     );
     return if not $writer;
 
     my %alleles;
     my %metrics = ( input => 0, filtered => 0, output => 0, );
-    GENOTYPE: while ( my $prototype = $reader->next ) {
-        my $genotype = $entry_factory->build_entry($prototype);
+    GENOTYPE: while ( my $genotype = $reader->next ) {
         $metrics{input}++;
         for my $filter ( @$filters ) {
             next GENOTYPE if not $filter->filter($genotype);
         }
         $metrics{output}++;
-        $alleles{ $genotype->{alleles} }++;
+        $alleles{ $genotype->sample_field(0, 'ALLELES') }++;
         $writer->write($genotype);
     }
     $self->metrics(\%metrics);
@@ -160,7 +155,7 @@ sub execute {
         $self->status_message(ucfirst(join(' ', split('_', $name))).": ".$self->$name);
     }
 
-    $self->debug_message('Extract genotytpes...done');
+    $self->debug_message('Extract genotypes...done');
     return 1;
 }
 

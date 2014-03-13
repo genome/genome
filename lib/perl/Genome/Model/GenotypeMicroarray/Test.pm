@@ -6,7 +6,7 @@ use warnings;
 require File::Temp;
 
 sub testdir {
-    return $ENV{GENOME_TEST_INPUTS} . '/GenotypeMicroarray/v2';
+    return $ENV{GENOME_TEST_INPUTS} . '/GenotypeMicroarray/v3';
 }
 
 my %cache;
@@ -39,7 +39,18 @@ sub reference_sequence_build {
     return $cache{reference_sequence_build};
 }
 
-sub variation_list_build { # FIXME upgrade to VCF
+sub variation_list_model {
+    return $cache{variation_list_model} if $cache{variation_list_model};
+
+    $cache{variation_list_model} = Genome::Model::ImportedVariationList->__define__(
+        name => '__TEST_DBSNP__',
+        subject => Genome::Taxon->__define__(name => '__TEST_HUMAN__'),
+    );
+
+    return $cache{variation_list_model};
+}
+
+sub variation_list_build {
     return $cache{variation_list_build} if $cache{variation_list_build};
 
     my $dbsnp_file = testdir().'/dbsnp/dbsnp.132';
@@ -51,13 +62,8 @@ sub variation_list_build { # FIXME upgrade to VCF
     );
     $fl->lookup_hash($fl->calculate_lookup_hash());
 
-    my $variation_list_model = Genome::Model::ImportedVariationList->__define__(
-        name => '__TEST_DBSNP__',
-        subject => Genome::Taxon->__define__(name => '__TEST_HUMAN__'),
-    );
-
     $cache{variation_list_build} = Genome::Model::Build::ImportedVariationList->__define__(
-        model => $variation_list_model,
+        model => variation_list_model(),
         reference => reference_sequence_build(),
         snv_result => $fl,
         version => 'vT',

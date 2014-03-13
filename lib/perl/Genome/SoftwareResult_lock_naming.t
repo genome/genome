@@ -49,7 +49,9 @@ sub get_lock_name {
     my $bar = Genome::Bar->create(id => $bar_id);
     my $bar_memory_address = "".$bar;
 
-    my $foo_lock = Genome::SoftwareResult::_resolve_lock_name('Genome::Foo', bar => $bar, string => $string);
+    my $class = 'Genome::Foo';
+    my $lookup_hash = $class->calculate_lookup_hash_from_arguments(bar => $bar, string => $string);
+    my $foo_lock = $class->_resolve_lock_name($lookup_hash);
     ok($foo_lock, 'got a lock name');
     $bar->delete;
 

@@ -675,8 +675,7 @@ sub _create_directory_closure {
             chmod(02775, $dir);
         }
         else {
-            print STDERR "Could not create allocation directcory at $path!\n";
-            print "$@\n" if $@;
+            $class->error_message("Could not create allocation directory at $path!\n$@");
         }
     };
 }
@@ -686,7 +685,7 @@ sub _remove_directory_closure {
     my ($class, $path) = @_;
     return sub {
         if (-d $path and not $ENV{UR_DBI_NO_COMMIT}) {
-            print STDERR "Removing allocation directory $path\n";
+            $class->debug_message("Removing allocation directory $path");
             my $rv = Genome::Sys->remove_directory_tree($path);
             unless (defined $rv and $rv == 1) {
                 Carp::cluck "Could not remove allocation directory $path!";
@@ -713,7 +712,7 @@ sub _mark_for_deletion_closure {
         my $rv = opendir(my $dh, $path);
         closedir $dh if ($rv);
         if (-d $path and not $ENV{UR_DBI_NO_COMMIT}) {
-            print STDERR "Marking directory at $path as deallocated\n";
+            $class->debug_message("Marking directory at $path as deallocated");
             system("touch $path/ALLOCATION_DELETED");
         }
     };
@@ -736,7 +735,7 @@ sub _mark_read_only_closure {
             }
         };
 
-        print STDERR "Marking directory at $path read-only\n";
+        $class->debug_message("Marking directory at $path read-only");
         File::Find::find(\&mark_read_only, $path);
     };
 }
@@ -758,7 +757,7 @@ sub _set_default_permissions_closure {
             }
         };
 
-        print STDERR "Setting permissions to defaults for $path\n";
+        $class->debug_message("Setting permissions to defaults for $path");
         File::Find::find(\&set_default_perms, $path);
     };
 }

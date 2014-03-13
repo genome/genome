@@ -3957,6 +3957,8 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>fix-orhpaned-allocations-for-dv2-results',
       [
+        'dry-run!',
+        undef,
         'build=s',
         undef,
         'help!',

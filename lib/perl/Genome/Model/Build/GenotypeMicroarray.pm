@@ -60,6 +60,7 @@ sub validate_for_start_methods {
             inputs_have_compatible_reference
             instrument_data_assigned
             validate_has_reference_alignment
+            validate_dbsnp_build
     /);
 }
 
@@ -76,6 +77,30 @@ sub validate_has_reference_alignment {
     }
     return @tags;
 
+}
+
+sub validate_dbsnp_build {
+    my $self = shift;
+
+    my $variation_list_build = $self->dbsnp_build;
+    if ( not $variation_list_build ) {
+        return UR::Object::Tag->create(
+            type => 'error',
+            properties => ['dbsnp_build'],
+            desc => 'No DB Snp build specified for build!',
+        );
+    }
+
+    my $snvs_vcf = $variation_list_build->snvs_vcf;
+    if ( not defined $snvs_vcf or not -s $snvs_vcf ) {
+        return UR::Object::Tag->create(
+            type => 'error',
+            properties => ['dbsnp_build'],
+            desc => 'DB Snp build ('.$variation_list_build->__display_name__.') does not have a SNVS VCF!',
+        );
+    }
+
+    return;
 }
 
 sub perform_post_success_actions {
