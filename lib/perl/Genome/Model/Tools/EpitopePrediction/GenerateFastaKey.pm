@@ -1,10 +1,10 @@
-package Genome::Model::Tools::EpitopePrediction::FastaKey;
+package Genome::Model::Tools::EpitopePrediction::GenerateFastaKey;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::Model::Tools::EpitopePrediction::FastaKey {
+class Genome::Model::Tools::EpitopePrediction::GenerateFastaKey {
     is => 'Genome::Model::Tools::EpitopePrediction::Base',
     doc => "Generates a key file to lookup original protein names in the output file of NetMHC 3.4 from the original 21-mer FASTA file for wildtype(WT) and mutant(MT) proteins",
     has_input => [
