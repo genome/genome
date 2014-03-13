@@ -88,11 +88,9 @@ sub execute {
     my @score_arr;
     my $protein_type = 'MT';
     my @positions;
-    for my $k2 (sort keys %{$rnetmhc_results->{$protein_type}}) {
-        #print "$k2\t";
-        for my $k3 (sort keys %{$rnetmhc_results->{$protein_type}->{$k2}}) {
-            #print "\t$k3";
-            %position_score = %{$netmhc_results{$protein_type}{$k2}{$k3}};
+    for my $protein_name (sort keys %{$rnetmhc_results->{$protein_type}}) {
+        for my $variant_aa (sort keys %{$rnetmhc_results->{$protein_type}->{$protein_name}}) {
+            %position_score = %{$netmhc_results{$protein_type}{$protein_name}{$variant_aa}};
             @positions = sort {$position_score{$a} <=> $position_score{$b}} keys %position_score;
             my $total_positions = scalar @positions;
 
@@ -100,20 +98,20 @@ sub execute {
 
                 for (my $i = 0; $i < $total_positions; $i++) {
 
-                    if ($epitope_seq->{'MT'}->{$k2}->{$k3}->{$positions[$i]} ne
-                        $epitope_seq->{'WT'}->{$k2}->{$k3}->{$positions[$i]})
+                    if ($epitope_seq->{'MT'}->{$protein_name}->{$variant_aa}->{$positions[$i]} ne
+                        $epitope_seq->{'WT'}->{$protein_name}->{$variant_aa}->{$positions[$i]})
                         # Filtering if mutant amino acid present
                     {
 
-                        print $output_fh join("\t", $k2, $k3, $positions[$i], $position_score{$positions[$i]})
+                        print $output_fh join("\t", $protein_name, $variant_aa, $positions[$i], $position_score{$positions[$i]})
                             . "\t";
-                        print $output_fh $rnetmhc_results->{'WT'}->{$k2}->{$k3}->{$positions[$i]} . "\t";
+                        print $output_fh $rnetmhc_results->{'WT'}->{$protein_name}->{$variant_aa}->{$positions[$i]} . "\t";
 
-                        print $output_fh $epitope_seq->{'MT'}->{$k2}->{$k3}->{$positions[$i]} . "\t";
-                        print $output_fh $epitope_seq->{'WT'}->{$k2}->{$k3}->{$positions[$i]} . "\t";
+                        print $output_fh $epitope_seq->{'MT'}->{$protein_name}->{$variant_aa}->{$positions[$i]} . "\t";
+                        print $output_fh $epitope_seq->{'WT'}->{$protein_name}->{$variant_aa}->{$positions[$i]} . "\t";
 
                         my $fold_change =
-                            $rnetmhc_results->{'WT'}->{$k2}->{$k3}->{$positions[$i]} /
+                            $rnetmhc_results->{'WT'}->{$protein_name}->{$variant_aa}->{$positions[$i]} /
                             $position_score{$positions[$i]};
                         my $rounded_FC = sprintf("%.3f", $fold_change);
                         print $output_fh $rounded_FC . "\n";
@@ -122,13 +120,13 @@ sub execute {
             }
             if ($type eq 'top') {
 
-                print $output_fh join("\t", $k2, $k3, $positions[0], $position_score{$positions[0]}) . "\t";
-                print $output_fh $rnetmhc_results->{'WT'}->{$k2}->{$k3}->{$positions[0]} . "\t";
+                print $output_fh join("\t", $protein_name, $variant_aa, $positions[0], $position_score{$positions[0]}) . "\t";
+                print $output_fh $rnetmhc_results->{'WT'}->{$protein_name}->{$variant_aa}->{$positions[0]} . "\t";
 
-                print $output_fh $epitope_seq->{'MT'}->{$k2}->{$k3}->{$positions[0]} . "\t";
-                print $output_fh $epitope_seq->{'WT'}->{$k2}->{$k3}->{$positions[0]} . "\t";
+                print $output_fh $epitope_seq->{'MT'}->{$protein_name}->{$variant_aa}->{$positions[0]} . "\t";
+                print $output_fh $epitope_seq->{'WT'}->{$protein_name}->{$variant_aa}->{$positions[0]} . "\t";
                 my $fold_change =
-                    $rnetmhc_results->{'WT'}->{$k2}->{$k3}->{$positions[0]} / $position_score{$positions[0]};
+                    $rnetmhc_results->{'WT'}->{$protein_name}->{$variant_aa}->{$positions[0]} / $position_score{$positions[0]};
                 my $rounded_FC = sprintf("%.3f", $fold_change);
                 print $output_fh $rounded_FC . "\n";
             }
