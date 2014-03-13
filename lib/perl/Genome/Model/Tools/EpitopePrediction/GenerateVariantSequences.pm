@@ -31,6 +31,7 @@ class Genome::Model::Tools::EpitopePrediction::GenerateVariantSequences {
             is => 'Number',
             doc => 'The length of the peptide sequences',
             valid_values => [17, 21, 31],
+            default_value => 21,
         },
     ],
 };
