@@ -1394,7 +1394,11 @@ sub has_microarray_build {
       return 0;
   }
   if($base_model->tumor_model->genotype_microarray && $base_model->normal_model->genotype_microarray) {
+    if($base_model->tumor_model->genotype_microarray->last_succeeded_build && $base_model->normal_model->genotype_microarray->last_succeeded_build) {
       return 1;
+    } else {
+      return 0;
+    }
   } else {
       return 0;
   }
