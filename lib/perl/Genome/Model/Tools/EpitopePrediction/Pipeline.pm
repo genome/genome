@@ -17,8 +17,8 @@ class Genome::Model::Tools::EpitopePrediction::Pipeline {
     ],
 };
 
-sub generate_result {
-    my ($self) = @_;
+sub execute {
+    my $self = shift;
 
     $self->debug_message("Validating Inputs...");
     $self->_validate_inputs();
