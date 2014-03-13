@@ -7,7 +7,7 @@ use above 'Genome';
 use Test::More;
 use Genome::Utility::Test qw(compare_ok);
 
-my $class = 'Genome::Model::Tools::EpitopePrediction::RunNetmhcNew';
+my $class = 'Genome::Model::Tools::EpitopePrediction::RunNetmhc';
 my $TEST_DATA_VERSION= 1;
 use_ok($class);
 

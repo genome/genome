@@ -1,4 +1,4 @@
-package Genome::Model::Tools::EpitopePrediction::RunNetmhcNew;
+package Genome::Model::Tools::EpitopePrediction::RunNetmhc;
 
 use strict;
 use warnings;
@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 use IPC::Run qw(run);
 
-class Genome::Model::Tools::EpitopePrediction::RunNetmhcNew {
+class Genome::Model::Tools::EpitopePrediction::RunNetmhc {
     is => ['Genome::Model::Tools::EpitopePrediction::Base'],
     has_input => [
         allele => {
