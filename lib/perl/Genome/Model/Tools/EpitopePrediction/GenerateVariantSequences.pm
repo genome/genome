@@ -16,9 +16,16 @@ class Genome::Model::Tools::EpitopePrediction::GenerateVariantSequences {
             is => 'Text',
             doc => 'The input file is a tab-separated (TSV) output file from gmt annotate variant-protein. For more info, gmt annotate variant-protein --help',
         },
+        output_directory => {
+            is => 'Text',
+            doc => 'The output location',
+        },
         output_file => {
             is => 'Text',
             doc => 'The output FASTA file to write 21mer sequences for wildtype(WT) and mutant(MT) proteins',
+            is_calculated => 1,
+            calculate_from => ['output_directory'],
+            calculate => q| return File::Spec->join($output_directory, "variant_sequences_unfiltered.fa");|,
         },
         trv_type => {
             is => 'Text',

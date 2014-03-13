@@ -21,18 +21,18 @@ sub test_for_length {
     my ($length, $test_dir, $input_file) = @_;
 
     my $expected_output = File::Spec->join($test_dir, "output_" . $length ."mer");
-    my $output_file = Genome::Sys->create_temp_file_path;
+    my $output_dir = Genome::Sys->create_temp_directory;
 
     my $cmd = $class->create(
         input_file => $input_file,
-        output_file => $output_file,
+        output_directory => $output_dir,
         length => $length,
     );
     ok($cmd, "Created a command for length $length");
 
     ok($cmd->execute, "Command executed for length $length");
 
-    compare_ok($output_file, $expected_output, "Output file is as expected for length $length");
+    compare_ok($cmd->output_file, $expected_output, "Output file is as expected for length $length");
 }
 
 done_testing();
