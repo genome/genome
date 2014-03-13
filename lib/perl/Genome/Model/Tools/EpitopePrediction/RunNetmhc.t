@@ -27,13 +27,13 @@ sub test_for_version {
     my ($version, $allele, $test_dir, $netmhc_file) = @_;
 
     my $expected_output = File::Spec->join($test_dir, "expected.$version.xls");
-    my $output_file = Genome::Sys->create_temp_file_path;
+    my $output_dir = Genome::Sys->create_temp_directory;
     my $stdout_file = Genome::Sys->create_temp_file_path;
 
     my $cmd = $class->create(
         allele => $allele,
         fasta_file => $input_fasta,
-        output_file => $output_file,
+        output_directory => $output_dir,
         epitope_length => 9,
         stdout_file => $stdout_file,
         version => $version,
@@ -42,7 +42,7 @@ sub test_for_version {
 
     ok($cmd->execute, "Command executed for version $version");
 
-    compare_ok($output_file, $expected_output, filters => ['^NetMHC version.*'], name => "File output as expected for version $version");
+    compare_ok($cmd->output_file, $expected_output, filters => ['^NetMHC version.*'], name => "File output as expected for version $version");
 }
 
 done_testing();
