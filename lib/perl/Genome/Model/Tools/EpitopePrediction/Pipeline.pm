@@ -135,7 +135,6 @@ sub _validate_inputs {
     # TODO make sure allele makes sense
     # TODO make sure epitope_length makes sense
     # TODO make sure netmhc_version makes sense
-    die $self->error_message('TODO: Validate inputs');
 
     return 1;
 }
