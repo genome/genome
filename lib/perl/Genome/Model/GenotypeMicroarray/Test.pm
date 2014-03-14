@@ -137,7 +137,6 @@ sub example_build {
         model => $model,
         data_directory => testdir().'/build',
     );
-    $cache{example_build}->add_instrument_data( $model->instrument_data );
 
     return $cache{example_build};
 }
@@ -150,7 +149,6 @@ sub example_legacy_build {
         model => $model,
         data_directory => testdir().'/build-legacy',
     );
-    $cache{example_legacy_build}->add_instrument_data( $model->instrument_data );
 
     return $cache{example_legacy_build};
 }
