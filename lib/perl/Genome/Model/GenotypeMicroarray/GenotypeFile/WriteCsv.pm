@@ -5,7 +5,6 @@ use warnings;
 
 use Genome;
 
-use Genome::File::Vcf::Writer;
 use Genome::Utility::IO::SeparatedValueWriter;
 
 class Genome::Model::GenotypeMicroarray::GenotypeFile::WriteCsv { 
