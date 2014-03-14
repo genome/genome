@@ -12,31 +12,81 @@ BEGIN {
 use above 'Genome';
 use Test::More;
 use Genome::Utility::Test qw(compare_ok);
+use Genome::Test::Factory::Model::SomaticVariation;
+use Genome::Test::Factory::Build;
 
 my $TEST_DATA_VERSION = 1;
 my $class = 'Genome::Model::Tools::EpitopePrediction::Pipeline';
 use_ok($class);
 
 my $test_dir = Genome::Utility::Test->data_dir_ok($class, $TEST_DATA_VERSION);
-my $input_file = File::Spec->join($test_dir, "input.tsv");
 my $expected_output = File::Spec->join($test_dir, "parsed_file.all");
-my $output_dir = Genome::Sys->create_temp_directory;
 
-my $cmd = $class->create(
-    input_tsv_file => $input_file,
-    output_directory => $output_dir,
-    allele =>'HLA-A02:01',
-    epitope_length => 9,
-    output_filter => 'all',
-    anno_db => 'NCBI-human.ensembl',
-    anno_db_version => '67_37l_v2',
-);
+subtest "with tsv file" => sub {
+    my $input_file = File::Spec->join($test_dir, "input.tsv");
+    my $output_dir = Genome::Sys->create_temp_directory;
 
-ok($cmd, "Created a command");
+    my $cmd = $class->create(
+        input_tsv_file => $input_file,
+        output_directory => $output_dir,
+        allele =>'HLA-A02:01',
+        epitope_length => 9,
+        output_filter => 'all',
+        anno_db => 'NCBI-human.ensembl',
+        anno_db_version => '67_37l_v2',
+        sample_name => 'test',
+    );
 
-ok($cmd->execute, "Command executed");
-$DB::single=1;
+    ok($cmd, "Created a command");
 
-compare_ok(File::Spec->join($cmd->output_directory, 'HLA-A02:01.9.netmhc.parsed.all'), $expected_output, "Output file is as expected");
+    ok($cmd->execute, "Command executed");
+
+    compare_ok(File::Spec->join($cmd->output_directory, $cmd->final_output_file_name), $expected_output, "Output file is as expected");
+};
+
+subtest "with somatic variation build" => sub {
+    my $output_dir = Genome::Sys->create_temp_directory;
+    my $normal_model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object();
+    ok($normal_model->isa("Genome::Model::ReferenceAlignment"), "Generated a reference alignment model for normal");
+
+    my $tumor_model  = Genome::Test::Factory::Model::ReferenceAlignment->setup_object(
+        subject_id            => $normal_model->subject_id,
+        processing_profile_id => $normal_model->processing_profile->id,
+    );
+    ok($tumor_model->isa("Genome::Model::ReferenceAlignment"), "Generated a reference alignment model for tumor");
+
+    my $somatic_variation_model = Genome::Test::Factory::Model::SomaticVariation->setup_object(
+        normal_model     => $normal_model,
+        tumor_model      => $tumor_model,
+    );
+    ok($somatic_variation_model->isa("Genome::Model::SomaticVariation"), "Generated a somatic variation model");
+    $somatic_variation_model->subject->name("H_NS-POET0092-4");
+
+    my $somatic_variation_build = Genome::Test::Factory::Build->setup_object(
+        model_id         => $somatic_variation_model->id,
+        data_directory   => $test_dir,
+        status           => "Succeeded",
+    );
+    ok($somatic_variation_build->isa("Genome::Model::Build::SomaticVariation"), "Generated a somatic variation build");
+
+    my $cmd = $class->create(
+        somatic_variation_build => $somatic_variation_build,
+        output_directory => $output_dir,
+        allele =>'HLA-A02:01',
+        epitope_length => 9,
+        output_filter => 'all',
+        anno_db => 'NCBI-human.ensembl',
+        anno_db_version => '67_37l_v2',
+    );
+
+    ok($cmd, "Created a command");
+
+    ok($cmd->execute, "Command executed");
+
+    is($cmd->sample_name, 'H_NS-POET0092-4', "Sample name set correctly");
+
+    compare_ok(File::Spec->join($cmd->output_directory, $cmd->final_output_file_name), $expected_output, "Output file is as expected");
+};
+
 
 done_testing();
