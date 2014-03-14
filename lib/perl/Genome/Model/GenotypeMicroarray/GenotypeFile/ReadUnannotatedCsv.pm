@@ -218,8 +218,15 @@ sub _annotate_genotypes {
         # Skip if not in variation list
         next if not $genotype;
 
-        # Store order and seen
-        $genotypes->{$variant_id}->{order} = ++$cnt;
+        if ( $genotypes->{$variant_id}->{seen} ) {
+            # remove order value if seen
+            delete $genotypes->{$variant_id}->{order};
+        }
+        else {
+            # set order
+            $genotypes->{$variant_id}->{order} = ++$cnt;
+        }
+        # increment seen
         $genotypes->{$variant_id}->{seen}++;
 
         # Save line to create vcf entry
@@ -227,7 +234,7 @@ sub _annotate_genotypes {
         $genotypes->{$variant_id}->{line} = $line;
     }
 
-    my @order = map { $_->{id} } sort { $a->{order} <=> $b->{order} } grep { $_->{seen} == 1 } values %$genotypes;
+    my @order = map { $_->{id} } sort { $a->{order} <=> $b->{order} } grep { exists $_->{order} } values %$genotypes;
     $self->_order(\@order);
     if ( not @order ) {
         $self->error_message("All genotypes are duplicates in variant list! ".$vcf_reader->{name});
