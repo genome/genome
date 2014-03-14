@@ -43,6 +43,12 @@ class Genome::Model::Tools::EpitopePrediction::Pipeline {
             is => 'Text',
             doc => '',
         },
+        output_filter => {
+            is => 'Text',
+            doc =>
+                'Type of epitopes to report in the final output - select \'top\' to report the top epitopes in terms of fold changes,  \'all\' to report all predictions ',
+            valid_values => ['top', 'all'],
+        },
     ],
 };
 
@@ -113,6 +119,7 @@ sub _get_workflow_inputs {
         allele => $self->allele,
         epitope_length => $self->epitope_length,
         netmhc_version => $self->netmhc_version,
+        output_filter => $self->output_filter,
     );
 
     return \%inputs;
