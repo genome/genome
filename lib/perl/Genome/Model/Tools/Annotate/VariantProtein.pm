@@ -51,11 +51,15 @@ sub execute {
     my @new_headers = @{$headers};
     push @new_headers, 'wildtype_amino_acid_sequence';
     #push @new_headers, 'mutant_amino_acid_sequence';
+    Genome::Sys->validate_file_for_writing($self->output_tsv_file);
     my $writer = Genome::Utility::IO::SeparatedValueWriter->create(
         output => $self->output_tsv_file,
         separator => "\t",
         headers => \@new_headers,
     );
+    unless (defined($writer)) {
+        die $self->error_message("Couldn't create SeparatedValueWriter " . $self->output_tsv_file . ": " . $!);
+    }
     my %binned_by_chr;
     my %sources;
     my %versions;
