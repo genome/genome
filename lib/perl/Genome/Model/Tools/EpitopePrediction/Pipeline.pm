@@ -61,6 +61,12 @@ class Genome::Model::Tools::EpitopePrediction::Pipeline {
                 'Type of epitopes to report in the final output - select \'top\' to report the top epitopes in terms of fold changes,  \'all\' to report all predictions ',
             valid_values => ['top', 'all'],
         },
+        sample_name => {
+            is => 'Text',
+            doc => 'The sample name of the file being processed',
+            is_optional => 1,
+            default_value => '',
+        },
     ],
 };
 
@@ -112,6 +118,7 @@ sub _validate_inputs {
                 'snvs.hq.tier1.v1.annotated.top.header'
             )
         );
+        $self->sample_name($self->somatic_variation_build->subject_name);
     }
 
     unless (-s $self->input_tsv_file) {
@@ -146,6 +153,7 @@ sub _get_workflow_inputs {
         epitope_length => $self->epitope_length,
         netmhc_version => $self->netmhc_version,
         output_filter => $self->output_filter,
+        sample_name => $self->sample_name,
     );
 
     return \%inputs;

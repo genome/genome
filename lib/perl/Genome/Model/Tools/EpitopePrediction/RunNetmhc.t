@@ -35,6 +35,7 @@ sub test_for_version {
         output_directory => $output_dir,
         epitope_length => 9,
         version => $version,
+        sample_name => 'test',
     );
     ok($cmd, "Created command for version $version");
 
