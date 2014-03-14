@@ -290,7 +290,7 @@ sub Annotation {
         chomp $line;
         next if $line =~/^chromosome/;
         my @fields = split /\t/, $line;
-        my ($hugo,$transcript_name,$class,$aa_change) = @fields[6,7,13,15];
+        my ($hugo,$transcript_name,$class,$c_position,$aa_change) = @fields[6,7,13,14,15];
         unless(defined($transcript_name) && $transcript_name !~ /^\s*$/ && $transcript_name ne '-') {
             next;
         }
@@ -302,6 +302,11 @@ sub Annotation {
 
             my ($transcript, @domains) = $self->_get_transcript_and_domains($transcript_name);
             next unless $transcript;
+
+            if($aa_change =~ /^e/ && $c_position !~ /NULL/) {
+                #this is a splice site mutation
+                $res_start = c_position_to_amino_acid_pos($c_position);
+            }
 
             $self->_add_mutation(
                 hugo => $hugo,
@@ -520,3 +525,13 @@ sub sort_domain {
         return $sort_val;
     }
 }
+
+sub c_position_to_amino_acid_pos {
+    my ($c_position) = @_;
+    ($c_position) = split(/[\+\-]/, $c_position); #ignore +1 etc and change info
+    $c_position =~ s/[^0-9]//g; #strip off c.
+    my $aa_pos = sprintf("%d", ($c_position / 3));
+    return $aa_pos;
+}
+
+1;
