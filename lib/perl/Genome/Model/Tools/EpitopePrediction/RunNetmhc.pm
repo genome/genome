@@ -21,10 +21,6 @@ class Genome::Model::Tools::EpitopePrediction::RunNetmhc {
             is => 'Text',
             doc => 'Location of the output',
         },
-        stdout_file => {
-            is => 'Text',
-            doc => 'Stdout file from Netmhc epitope prediction',
-        },
         epitope_length => {
             is => 'Text',
             doc => 'Length of subpeptides to predict',
@@ -44,6 +40,15 @@ class Genome::Model::Tools::EpitopePrediction::RunNetmhc {
             calculate_from => ['output_directory', 'allele', 'epitope_length'],
             calculate => q| return File::Spec->join($output_directory, "$allele.$epitope_length.netmhc.xls"); |,
         },
+    ],
+    has => [
+        stdout_file => {
+            is => 'Text',
+            doc => 'Stdout file from Netmhc epitope prediction',
+            calculate_from => ['output_directory', 'allele', 'epitope_length'],
+            calculate => q| return File::Spec->join($output_directory, "$allele.$epitope_length.netmhc.stdout"); |,
+        },
+
     ],
 };
 

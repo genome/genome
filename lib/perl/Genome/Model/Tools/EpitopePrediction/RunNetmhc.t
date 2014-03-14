@@ -28,14 +28,12 @@ sub test_for_version {
 
     my $expected_output = File::Spec->join($test_dir, "expected.$version.xls");
     my $output_dir = Genome::Sys->create_temp_directory;
-    my $stdout_file = Genome::Sys->create_temp_file_path;
 
     my $cmd = $class->create(
         allele => $allele,
         fasta_file => $input_fasta,
         output_directory => $output_dir,
         epitope_length => 9,
-        stdout_file => $stdout_file,
         version => $version,
     );
     ok($cmd, "Created command for version $version");
