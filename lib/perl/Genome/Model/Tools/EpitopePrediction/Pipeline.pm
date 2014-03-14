@@ -17,31 +17,38 @@ class Genome::Model::Tools::EpitopePrediction::Pipeline {
         #TODO fill out docs
         input_tsv_file => {
             is => 'Text',
+            is_optional => 1,
             doc => '',
         },
         anno_db => {
             is => 'Text',
-            doc => '',
+            is_optional => 1,
+            doc => 'The name of the annotation database to use for retrieving the wildtypes.  Example: NCBI-human.combined-annotation',
         },
         anno_db_version => {
             is => 'Text',
-            doc => '',
+            is_optional => 1,
+            doc => 'The version of the annotation databaseto use for retrieving the wildtypes. Example: 54_36p_v2',
         },
-        length => {
+        peptide_sequence_length => {
             is => 'Text',
-            doc => '',
+            doc => 'The length of the peptide sequences to be used when generating variant sequences',
+            valid_values => [17, 21, 31],
+            default_value => 21,
         },
         allele => {
             is => 'Text',
-            doc => '',
+            doc => 'Allele name to be used for epitope prediction with NetMHC',
         },
         epitope_length => {
             is => 'Text',
-            doc => '',
+            doc => 'Length of subpeptides to predict with NetMHC',
         },
         netmhc_version => {
             is => 'Text',
-            doc => '',
+            doc => 'The NetMHC version to use',
+            valid_values => ['3.0','3.4'],
+            default_value => '3.4',
         },
         output_filter => {
             is => 'Text',
@@ -115,7 +122,7 @@ sub _get_workflow_inputs {
         output_directory => $self->output_directory,
         anno_db => $self->anno_db,
         anno_db_version => $self->anno_db_version,
-        length => $self->length,
+        length => $self->peptide_sequence_length,
         allele => $self->allele,
         epitope_length => $self->epitope_length,
         netmhc_version => $self->netmhc_version,
