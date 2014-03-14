@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 use Genome;
+use File::Basename qw/fileparse/;
 
 class Genome::Model::Tools::EpitopePrediction::ParseNetmhcOutput {
     is        => ['Genome::Model::Tools::EpitopePrediction::Base'],
@@ -11,14 +12,6 @@ class Genome::Model::Tools::EpitopePrediction::ParseNetmhcOutput {
         netmhc_file => {
             is  => 'Text',
             doc => 'Raw output file from Netmhc',
-        },
-        parsed_file => {
-            is => 'Text',
-            is_output=> 1,
-            doc => 'File to write the parsed output',
-            is_calculated => 1,
-            calculate_from => ['output_directory'],
-            calculate => q| return File::Spec->join($output_directory, "parsed.out"); |,
         },
         output_directory => {
             is => 'Text',
@@ -34,7 +27,17 @@ class Genome::Model::Tools::EpitopePrediction::ParseNetmhcOutput {
             is  => 'Text',
             doc => 'Key file for lookup of FASTA IDs'
         },
-
+    ],
+    has_output => [
+        parsed_file => {
+            is => 'Text',
+            doc => 'File to write the parsed output',
+            calculate_from => ['output_directory', 'netmhc_file', 'output_type'],
+            calculate => q|
+                my ($filename, $directories, $suffix) = File::Basename::fileparse($netmhc_file, '.xls');
+                return File::Spec->join($output_directory, "$filename.parsed.$output_type");
+            |,
+        },
     ],
 };
 

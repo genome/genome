@@ -19,14 +19,6 @@ class Genome::Model::Tools::EpitopePrediction::GetWildtype {
             is => 'Text',
             doc => 'Location of the output',
         },
-        output_tsv_file => {
-            is => 'Text',
-            is_output=> 1,
-            doc => 'A tab separated output file with the amino acid sequences both wildtype and mutant',
-            is_calculated => 1,
-            calculate_from => ['output_directory'],
-            calculate => q| return File::Spec->join($output_directory, "snvs_wildtype.tsv"); |,
-        },
         anno_db => {
             is => 'Text',
             is_optional=> 1,
@@ -38,6 +30,14 @@ class Genome::Model::Tools::EpitopePrediction::GetWildtype {
             doc => 'The version of the annotation database. Example: 54_36p_v2',
         },
     ],
+    has_output => {
+        output_tsv_file => {
+            is => 'Text',
+            doc => 'A tab separated output file with the amino acid sequences both wildtype and mutant',
+            calculate_from => ['output_directory'],
+            calculate => q| return File::Spec->join($output_directory, "snvs_wildtype.tsv"); |,
+        },
+    },
 };
 
 sub execute {

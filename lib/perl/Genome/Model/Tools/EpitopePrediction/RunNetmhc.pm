@@ -21,14 +21,6 @@ class Genome::Model::Tools::EpitopePrediction::RunNetmhc {
             is => 'Text',
             doc => 'Location of the output',
         },
-        output_file => {
-            is => 'Text',
-            is_output=> 1,
-            doc => 'Output file containing raw output from Netmhc epitope prediction',
-            is_calculated => 1,
-            calculate_from => ['output_directory', 'allele', 'epitope_length'],
-            calculate => q| return File::Spec->join($output_directory, "$allele.$epitope_length.netmhc.xls"); |,
-        },
         stdout_file => {
             is => 'Text',
             doc => 'Stdout file from Netmhc epitope prediction',
@@ -43,6 +35,14 @@ class Genome::Model::Tools::EpitopePrediction::RunNetmhc {
             valid_values => ['3.0','3.4'],
             default_value => '3.4',
             is_optional => 1,
+        },
+    ],
+    has_output => [
+        output_file => {
+            is => 'Text',
+            doc => 'Output file containing raw output from Netmhc epitope prediction',
+            calculate_from => ['output_directory', 'allele', 'epitope_length'],
+            calculate => q| return File::Spec->join($output_directory, "$allele.$epitope_length.netmhc.xls"); |,
         },
     ],
 };

@@ -20,13 +20,6 @@ class Genome::Model::Tools::EpitopePrediction::GenerateVariantSequences {
             is => 'Text',
             doc => 'The output location',
         },
-        output_file => {
-            is => 'Text',
-            doc => 'The output FASTA file to write 21mer sequences for wildtype(WT) and mutant(MT) proteins',
-            is_calculated => 1,
-            calculate_from => ['output_directory'],
-            calculate => q| return File::Spec->join($output_directory, "variant_sequences_unfiltered.fa");|,
-        },
         trv_type => {
             is => 'Text',
             is_optional => 1,
@@ -39,6 +32,14 @@ class Genome::Model::Tools::EpitopePrediction::GenerateVariantSequences {
             doc => 'The length of the peptide sequences',
             valid_values => [17, 21, 31],
             default_value => 21,
+        },
+    ],
+    has_output => [
+        output_file => {
+            is => 'Text',
+            doc => 'The output FASTA file to write 21mer sequences for wildtype(WT) and mutant(MT) proteins',
+            calculate_from => ['output_directory'],
+            calculate => q| return File::Spec->join($output_directory, "variant_sequences_unfiltered.fa");|,
         },
     ],
 };

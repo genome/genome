@@ -16,9 +16,10 @@ class Genome::Model::Tools::EpitopePrediction::RemoveStarSequences {
             is => 'Text',
             doc => 'Location of the output',
         },
+    ],
+    has_output => [
         output_file => {
             is => 'Text',
-            is_output=> 1,
             doc => 'The output FASTA file after removing star sequences',
             is_calculated => 1,
             calculate_from => ['output_directory'],

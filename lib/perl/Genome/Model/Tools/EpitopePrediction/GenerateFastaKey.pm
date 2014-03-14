@@ -16,11 +16,11 @@ class Genome::Model::Tools::EpitopePrediction::GenerateFastaKey {
             is => 'Text',
             doc => 'Location of the output',
         },
+    ],
+    has_output => [
         output_file => {
             is => 'Text',
-            is_output=> 1,
             doc => 'The output Key file for lookup',
-            is_calculated => 1,
             calculate_from => ['output_directory'],
             calculate => q| return File::Spec->join($output_directory, "variant_sequences.key"); |,
         },
