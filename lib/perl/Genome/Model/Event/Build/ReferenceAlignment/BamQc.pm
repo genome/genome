@@ -91,7 +91,7 @@ sub params_for_result {
         and defined $pp->read_aligner_name
         and defined $pp->read_aligner_version
         and ($pp->read_aligner_name eq 'bwamem')
-        and ($pp->read_aligner_version eq '0.7.5a')
+        and ($pp->read_aligner_version =~ /^0\.7\.(5a|7)$/)
     ) {
         $error_rate = 0;
     }
