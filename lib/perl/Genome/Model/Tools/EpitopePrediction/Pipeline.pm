@@ -65,7 +65,6 @@ class Genome::Model::Tools::EpitopePrediction::Pipeline {
             is => 'Text',
             doc => 'The sample name of the file being processed',
             is_optional => 1,
-            default_value => '',
         },
     ],
 };
@@ -120,6 +119,11 @@ sub _validate_inputs {
         );
         $self->sample_name($self->somatic_variation_build->subject_name);
     }
+    else {
+        unless (defined($self->sample_name)) {
+            die $self->error_message("Sample name must be defined if no somatic variation build is given")
+        }
+    }
 
     unless (-s $self->input_tsv_file) {
         die $self->error_message("Input tsv file %s does not exist or has no size", $self->input_tsv_file);
@@ -156,6 +160,12 @@ sub _get_workflow_inputs {
     );
 
     return \%inputs;
+}
+
+sub final_output_file_name {
+    my $self = shift;
+
+    return join ('.', $self->sample_name, $self->allele, $self->epitope_length, 'netmhc', 'parsed', $self->output_filter);
 }
 
 1;
