@@ -552,7 +552,6 @@ sub pass_sample {
     my $parsed_vcf_line = shift;
     my $sample_name = shift;
 
-    $self->debug_message("Entering pass sample\n");
     $self->set_format_field($parsed_vcf_line, $sample_name,
         $self->filter_sample_format_tag, "PASS");
 
@@ -713,7 +712,6 @@ sub fail_sample {
     my $sample_name = shift;
     my $filter_reason = shift;
 
-    $self->debug_message("Entering fail sample\n");
     $self->set_format_field($parsed_vcf_line, $sample_name,
         $self->filter_sample_format_tag, $filter_reason,
         append => 1, is_filter_fail => 1);

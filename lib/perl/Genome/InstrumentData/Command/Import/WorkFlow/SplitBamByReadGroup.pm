@@ -25,8 +25,9 @@ class Genome::InstrumentData::Command::Import::WorkFlow::SplitBamByReadGroup {
     ],
     has_optional_transient => [
         headers => { is => 'Array', },
-        read_groups_and_headers => { is => 'Hash', },
+        read_groups_and_headers => { is => 'Hash', default => {} },
         removed_reads_cnt => { is => 'Number', },
+        _read_group_fhs => { is => 'HASH', default => {} },
     ],
     has_optional_calculated => [
         read_group_ids => {
@@ -44,19 +45,8 @@ sub execute {
     return if not $set_headers_and_read_groups;
 
     my @read_group_ids = $self->read_group_ids;
-    if ( not @read_group_ids or @read_group_ids == 1 ) {
-        $self->debug_message('Spilting bam by read group is NOT necessary. There is only one read group [or none] in headers.');
-        $self->read_group_bam_paths([ $self->bam_path ]);
-        return 1;
-    }
 
-    my $read_group_fhs = $self->_open_file_handles_for_each_read_group_bam(@read_group_ids);
-    return if not $read_group_fhs;
-
-    my $write_headers_ok = $self->_write_headers_to_read_group_bams($read_group_fhs);
-    return if not $write_headers_ok;
-
-    my $write_reads_ok = $self->_write_reads($read_group_fhs);
+    my $write_reads_ok = $self->_write_reads();
     return if not $write_reads_ok;
 
     my $verify_read_count_ok = $self->_verify_read_count;
@@ -86,59 +76,9 @@ sub _set_headers_and_read_groups {
     return 1;
 }
 
-sub _open_file_handles_for_each_read_group_bam {
-    my ($self, @read_group_ids) = @_;
-    $self->debug_message('Open file handle for each read group bam...');
-
-    Carp::confess('No read group ids to open bams!') if not @read_group_ids;
-
-    $self->debug_message('Read group count: '.@read_group_ids);
-    my (%read_group_fhs, @read_group_bam_paths);
-    for my $read_group_id ( @read_group_ids ){
-        my $read_group_bam_path = $self->bam_path;
-        $read_group_bam_path =~ s/\.bam$//;
-        $read_group_bam_path .= '.'.$read_group_id.'.bam';
-        push @read_group_bam_paths, $read_group_bam_path;
-        my $fh = IO::File->new("| samtools view -S -b -o $read_group_bam_path -");
-        if ( not $fh ) {
-            $self->error_message('Failed to open file handle to samtools command!');
-            return;
-        }
-        $read_group_fhs{$read_group_id} = $fh;
-    }
-    $self->read_group_bam_paths(\@read_group_bam_paths);
-
-    $self->debug_message('Open file handle for each read group bam...done');
-    return \%read_group_fhs;
-}
-
-sub _write_headers_to_read_group_bams {
-    my ($self, $read_group_fhs) = @_;
-
-    Carp::confess('No read group fhs to write headers to read group bams!') if not $read_group_fhs;
-
-    my $headers = $self->headers;
-    Carp::confess('No headers to write to read group bams!') if not $headers;
-
-    my $read_groups_and_headers = $self->read_groups_and_headers;
-    Carp::confess('No read groups and headers to write headers to read group bams!') if not $read_groups_and_headers;
-
-    my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
-    my $headers_as_string = $helpers->headers_to_string($headers);
-    return if not $headers_as_string;
-
-    for my $read_group_id ( keys %$read_group_fhs ) {
-        $read_group_fhs->{$read_group_id}->print( $headers_as_string );
-        $read_group_fhs->{$read_group_id}->print(
-            join("\t", '@RG', 'ID:'.$read_group_id, $read_groups_and_headers->{$read_group_id})."\n"
-        );
-    }
-
-    return 1;
-}
 
 sub _write_reads {
-    my ($self, $read_group_fhs) = @_;
+    my ($self) = @_;
     $self->debug_message('Write reads...');
 
     my $bam_path = $self->bam_path;
@@ -150,19 +90,46 @@ sub _write_reads {
     }
 
     my $removed_reads_cnt = 0;
+    my $previous_line;
+    my $previous_id;
+    my $previous_read_group_id;
     while ( my $line = $bam_fh->getline ) {
         my @tokens = split(/\t/, $line);
-        if ( $tokens[1] & 0x100 ) { # secondary alignment
-            $removed_reads_cnt++;
-            next;
-        }
+        my $id = $tokens[0];
+
         $line =~ m/\sRG:Z:(.*?)\s/;
         my $read_group_id = $1;
         $read_group_id //= 'unknown';
-        $read_group_fhs->{$read_group_id}->print($line);
+
+        unless($previous_line) {
+            $previous_line = $line;
+            $previous_id = $id;
+            $previous_read_group_id = $read_group_id;
+            next;
+        }
+
+        if($id eq $previous_id and $previous_read_group_id eq $read_group_id) {
+            my $fh = $self->_fh_for_read_group_and_pairedness($read_group_id, 'paired');
+            $fh->print($previous_line, $line);
+            undef $previous_line;
+            undef $previous_id;
+            undef $previous_read_group_id;
+        } else {
+            my $fh = $self->_fh_for_read_group_and_pairedness($previous_read_group_id, 'singleton');
+            $fh->print($previous_line);
+
+            $previous_line = $line;
+            $previous_id = $id;
+            $previous_read_group_id = $read_group_id;
+        }
     }
 
-    for my $fh ( $bam_fh, values %$read_group_fhs ) {
+    if($previous_line) {
+        my $fh = $self->_fh_for_read_group_and_pairedness($previous_read_group_id, 'singleton');
+        $fh->print($previous_line);
+    }
+
+    for my $fh ( $bam_fh, values %{$self->_read_group_fhs} ) {
         $fh->close;
     }
 
@@ -210,6 +177,64 @@ sub _verify_read_count {
     }
 
     $self->debug_message('Verify read count...done');
+    return 1;
+}
+
+sub _fh_for_read_group_and_pairedness {
+    my ($self, $read_group, $pairedness) = @_;
+
+    my $fhs = $self->_read_group_fhs;
+    my $key = join('*', $read_group, $pairedness);
+    unless(exists $fhs->{$key}) {
+        $fhs->{$key} = $self->_open_fh_for_read_group_and_pairedness($read_group, $pairedness);
+        $self->_read_group_fhs($fhs);
+    }
+
+    return $fhs->{$key};
+}
+
+sub _open_fh_for_read_group_and_pairedness {
+    my ($self, $read_group_id, $pairedness) = @_;
+
+    my $read_group_bam_path = $self->bam_path;
+    $read_group_bam_path =~ s/\.bam$//;
+    $read_group_bam_path = join('.', $read_group_bam_path, $read_group_id, $pairedness, 'bam');
+    my $fh = IO::File->new("| samtools view -S -b -o $read_group_bam_path -");
+    if ( not $fh ) {
+        $self->error_message('Failed to open file handle to samtools command!');
+        return;
+    }
+
+    $self->_write_headers_for_read_group($fh, $read_group_id);
+
+    my @read_group_bam_paths = $self->read_group_bam_paths;
+    push @read_group_bam_paths, $read_group_bam_path;
+    $self->read_group_bam_paths(\@read_group_bam_paths);
+
+    return $fh;
+}
+
+sub _write_headers_for_read_group {
+    my ($self, $fh, $read_group_id) = @_;
+
+    my $headers = $self->headers;
+    Carp::confess('No headers to write to read group bams!') if not $headers;
+
+    my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
+    my $headers_as_string = $helpers->headers_to_string($headers);
+    return if not $headers_as_string;
+
+    $fh->print( $headers_as_string );
+
+    my $read_groups_and_headers = $self->read_groups_and_headers;
+    unless(exists $read_groups_and_headers->{$read_group_id}) {
+        $read_groups_and_headers->{$read_group_id} = join("\t", 'CN:NA',);
+    }
+
+    $fh->print(
+        join("\t", '@RG', 'ID:'.$read_group_id, $read_groups_and_headers->{$read_group_id})."\n"
+    );
+
     return 1;
 }
 

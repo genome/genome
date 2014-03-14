@@ -104,16 +104,19 @@ sub execute {
         my $allcoation = $self->_create_allocation($instrument_data, $bam_path);
         return if not $allcoation;
 
-        # Move bam
+        # Flagstat
+        my $flagstat_path = $bam_path.'.flagstat';
+        $self->debug_message("Flagstat path: $flagstat_path");
+        my $flagstat = $helpers->load_flagstat($flagstat_path);
+        return if not $flagstat;
+
+        # Move bam and flagstat
         my $final_bam_path = $instrument_data->data_directory.'/all_sequences.bam';
         my $move_ok = $helpers->move_path($bam_path, $final_bam_path);
         return if not $move_ok;
-
-        # Flagstat
-        my $flagstat_path = $final_bam_path.'.flagstat';
-        $self->debug_message("Flagstat path: $flagstat_path");
-        my $flagstat = $helpers->validate_bam($final_bam_path, $flagstat_path);
-        return if not $flagstat;
+        my $final_flagstat_path = $final_bam_path . '.flagstat';
+        $move_ok = $helpers->move_path($flagstat_path, $final_flagstat_path);
+        return if not $move_ok;
 
         # Attrs
         $instrument_data->add_attribute(attribute_label => 'bam_path', attribute_value => $final_bam_path);

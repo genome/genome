@@ -17,7 +17,7 @@ class Genome::Model::GenotypeMicroarray::GenotypeFile::ReadUnannotatedCsv {
         _genotype_fh => { is => 'IO::File', },
         _headers => { is => 'Array', },
         _genotypes => { is => 'Hash', default_value => {}, },
-        _entries => { is => 'Array', },
+        _order => { is => 'Array', },
         _position => { is => 'Integer', default_value => 0, },
     },
 };
@@ -53,10 +53,11 @@ sub create {
 BEGIN {
     *next = \&read;
 }
+
 sub read {
     my $self = shift;
 
-    if ( $self->_position == 0 ) {
+    if ( not defined $self->_order ) {
         my $load_genotypes = $self->_load_genotypes;
         die if not $load_genotypes;
 
@@ -64,14 +65,31 @@ sub read {
         die if not $annotate_genotypes;
     }
 
-    my $position = $self->_position;
-    my $entry;
-    do {
-        $entry = $self->_entries->[$position++];
-    } until not $entry or $self->_genotypes->{ $entry->{identifiers}->[0] }->{seen} == 1;
-    $self->_position($position);
+    while ( my $variant_id = shift @{$self->_order} ) {
+        my $entry = $self->_create_vcf_entry( $self->_genotypes->{$variant_id} );
+        return $entry if $entry;
+    }
 
-    return if not defined $entry;
+    return;
+}
+
+sub _create_vcf_entry {
+    my ($self, $genotype) = @_;
+
+    my $entry = Genome::File::Vcf::Entry->new($self->header, $genotype->{line});
+
+    # Skip INDELs
+    return if $entry->has_indel;
+
+    # Add GT to genotype
+    $genotype->{genotype} = $self->_gt_for_genotype($genotype, $entry);
+
+    # Add genotype data to entry
+    for my $field ( Genome::Model::GenotypeMicroarray->format_types ) {
+        $entry->add_format_field($field->{id});
+        $entry->set_sample_field(0, $field->{id}, $genotype->{ $field->{name} });
+    }
+
     return $entry;
 }
 
@@ -191,41 +209,30 @@ sub _annotate_genotypes {
     my $genotypes = $self->_genotypes;
     Carp::confess('No genotypes!') if not $genotypes or not %$genotypes;
 
-    my @entries;
     my $vcf_reader = $self->_vcf_reader;
-    while ( my $entry = $vcf_reader->next ) {
-       # Skip INDELs
-        if ( $entry->has_indel ) {
-            next;
-        }
-
-        my $variant_id = $entry->{identifiers}->[0];
+    my $cnt = 0;
+    while ( my $line = $vcf_reader->_getline ) {
+        my ($variant_id) = split(',', (split(/\t/, $line))[2]);
         my $genotype = $genotypes->{$variant_id};
 
         # Skip if not in variation list
         next if not $genotype;
 
-        # Add GT to genotype
-        $genotype->{genotype} = $self->_gt_for_genotype($genotype, $entry);
-
-        # Add genotype data to entry
-        for my $field ( Genome::Model::GenotypeMicroarray->format_types ) {
-            $entry->add_format_field($field->{id});
-            $entry->set_sample_field(0, $field->{id}, $genotype->{ $field->{name} });
-        }
-
-        # Use entry for genotype
+        # Store order and seen
+        $genotypes->{$variant_id}->{order} = ++$cnt;
         $genotypes->{$variant_id}->{seen}++;
 
-        # Push to entries to maintain order
-        push @entries, $entry;
+        # Save line to create vcf entry
+        chomp $line;
+        $genotypes->{$variant_id}->{line} = $line;
     }
 
-    if ( not @entries ) {
+    my @order = map { $_->{id} } sort { $a->{order} <=> $b->{order} } grep { $_->{seen} == 1 } values %$genotypes;
+    $self->_order(\@order);
+    if ( not @order ) {
         $self->error_message("All genotypes are duplicates in variant list! ".$vcf_reader->{name});
         return;
     }
-    $self->_entries(\@entries);
 
     return 1;
 }

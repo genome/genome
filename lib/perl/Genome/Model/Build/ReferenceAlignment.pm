@@ -880,47 +880,7 @@ sub duplicates_map_file {
 sub accumulate_maps {
     my $self=shift;
 
-    my $model = $self->model;
-    my $result_file;
-
-    #replace 999999 with the cut off value... 
-    #2761337261 is an old AML2 model with newer data
-    if ($model->id < 0 || $model->id >= 2766822526 || $model->id == 2761337261) {
-        $result_file = $self->resolve_accumulated_alignments_filename;
-    } 
-    else {
-        my @all_map_lists;
-        my @chromosomes = $model->reference_sequence_build->subreference_names;
-        foreach my $c (@chromosomes) {
-            my $a_ref_seq = Genome::Model::RefSeq->get(model_id => $model->id, ref_seq_name=>$c);
-            my @map_list = $a_ref_seq->combine_maplists;
-            push (@all_map_lists, @map_list);
-        }
-
-        $result_file = '/tmp/mapmerge_'. $model->genome_model_id;
-        $self->warning_message("Performing a complete mapmerge for $result_file \n"); 
-
-        my ($fh,$maplist) = File::Temp::tempfile;
-        $fh->print(join("\n",@all_map_lists),"\n");
-        $fh->close;
-
-        my $maq_version = $model->read_aligner_version;
-        system "gmt maq vmerge --maplist $maplist --pipe $result_file --version $maq_version &";
-
-        $self->debug_message("gmt maq vmerge --maplist $maplist --pipe $result_file --version $maq_version &");
-        my $start_time = time;
-        until (-p "$result_file" or ( (time - $start_time) > 100) )  {
-            $self->debug_message("Waiting for pipe...");
-            sleep(5);
-        }
-        unless (-p "$result_file") {
-            die "Failed to make pipe? $!";
-        }
-        $self->debug_message("Streaming into file $result_file.");
-        $self->warning_message("mapmerge complete.  output filename is $result_file");
-        chmod 00664, $result_file;
-    }
-    return $result_file;
+    return $self->resolve_accumulated_alignments_filename;
 }
 
 sub maq_version_for_pp_parameter {
@@ -945,14 +905,6 @@ sub maq_version_for_pp_parameter {
     return $version;
 }
 
-sub path_for_maq_version {
-    my $self = shift;
-    my $pp_param = shift;
-
-    my $version = $self->maq_version_for_pp_parameter($pp_param);
-    return Genome::Model::Tools::Maq->path_for_maq_version($version);
-}
-
 sub resolve_accumulated_alignments_filename {
     my $self = shift;
 
@@ -971,30 +923,7 @@ sub resolve_accumulated_alignments_filename {
         return $alignments_dir . "/mixed_library_submaps/$ref_seq_id.map";
     } 
     else {
-        my @files = glob("$alignments_dir/mixed_library_submaps/*.map");
-        my $tmp_map_file = Genome::Sys->create_temp_file_path('ACCUMULATED_ALIGNMENTS-'. $self->model_id .'.map');
-        if (-e $tmp_map_file) {
-            unless (unlink $tmp_map_file) {
-                $self->error_message('Could not unlink existing temp file '. $tmp_map_file .": $!");
-                die($self->error_message);
-            }
-        }
-        require POSIX;
-        unless (POSIX::mkfifo($tmp_map_file, 0700)) {
-            $self->error_message("Can not create named pipe ". $tmp_map_file .":  $!");
-            die($self->error_message);
-        }
-        my $cmd = "$aligner_path mapmerge $tmp_map_file " . join(" ", @files) . " &";
-        my $rv = Genome::Sys->shellcmd(
-                                                       cmd => $cmd,
-                                                       input_files => \@files,
-                                                       output_files => [$tmp_map_file],
-                                                   );
-        unless ($rv) {
-            $self->error_message('Failed to execute mapmerge command '. $cmd);
-            die($self->error_message);
-        }
-        return $tmp_map_file;
+        die $self->error_message("failed to find accumulated alignments filename");
     }
 }
 

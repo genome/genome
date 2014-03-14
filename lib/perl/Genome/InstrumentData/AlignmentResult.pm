@@ -1488,44 +1488,6 @@ sub _extract_input_fastq_filenames {
     return @input_fastq_pathnames;
 }
 
-
-sub input_bfq_filenames {
-    my $self = shift;
-    my @input_fastq_pathnames = @_;
-
-    my @input_bfq_pathnames;
-    if ($self->_input_bfq_pathnames) {
-        @input_bfq_pathnames = @{$self->_input_bfq_pathnames};
-        for my $input_bfq (@input_bfq_pathnames) {
-            unless (-s $input_bfq) {
-                $self->error_message('Missing or zero size sanger bfq file: '. $input_bfq);
-                die $self->error_message;
-            }
-        }
-    }
-    else {
-        my $counter = 0;
-        for my $input_fastq_pathname (@input_fastq_pathnames) {
-            my $input_bfq_pathname = Genome::Sys->create_temp_file_path('sanger-bfq-'. $counter++);
-            #Do we need remove sanger fastq here ?
-            unless (Genome::Model::Tools::Maq::Fastq2bfq->execute(
-                    fastq_file => $input_fastq_pathname,
-                    bfq_file   => $input_bfq_pathname,
-                )) {
-                $self->error_message('Failed to execute fastq2bfq quality conversion.');
-                die $self->error_message;
-            }
-            unless (-s $input_bfq_pathname) {
-                $self->error_message('Failed to validate the conversion of sanger fastq file '. $input_fastq_pathname .' to sanger bfq.');
-                die $self->error_message;
-            }
-            push @input_bfq_pathnames, $input_bfq_pathname;
-        }
-        $self->_input_bfq_pathnames(\@input_bfq_pathnames);
-    }
-    return @input_bfq_pathnames;
-}
-
 sub _prepare_reference_sequences {
     my $self = shift;
     my $reference_build = $self->reference_build;

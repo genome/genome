@@ -87,6 +87,9 @@ class Genome::Config::AnalysisProject {
     ],
 };
 
+__PACKAGE__->add_observer(aspect => 'is_cle', callback => \&_is_updated);
+__PACKAGE__->add_observer(aspect => 'status', callback => \&_is_updated);
+
 sub __display_name__ {
     my $self = shift;
     return sprintf('%s (%s)', $self->name, $self->id);
@@ -148,6 +151,15 @@ sub _set_run_as {
     } else {
         $self->run_as('apipe-builder');
     }
+}
+
+sub _is_updated {
+    my ($self, $aspect, $old_val, $new_val) = @_;
+    my $method = $aspect eq 'is_cle' ? 'cle_changed' : 'status_changed';
+    Genome::Timeline::Event::AnalysisProject->$method(
+        "$old_val:$new_val",
+        $self,
+    );
 }
 
 1;

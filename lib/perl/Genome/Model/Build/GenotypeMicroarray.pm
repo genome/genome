@@ -82,7 +82,23 @@ sub validate_has_reference_alignment {
 sub validate_dbsnp_build {
     my $self = shift;
 
+    # FIXME do not use default! set in CQID from AP!
     my $variation_list_build = $self->dbsnp_build;
+    if ( not $variation_list_build ) {
+        $variation_list_build = Genome::Model::ImportedVariationList->dbsnp_build_for_reference($self->reference_sequence_build);
+        if ( not $variation_list_build ) {
+            return UR::Object::Tag->create(
+                type => 'error',
+                properties => ['dbsnp_build'],
+                desc => 'No DB Snp build specified for build!',
+            );
+        }
+        $self->dbsnp_build($variation_list_build);
+        $self->model->dbsnp_build($variation_list_build);
+    }
+
+    # This is the real logic to check dbsnp [varition list] build 
+    #my $variation_list_build = $build->dbsnp_build;
     if ( not $variation_list_build ) {
         return UR::Object::Tag->create(
             type => 'error',
