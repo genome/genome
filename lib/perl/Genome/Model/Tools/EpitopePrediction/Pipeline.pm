@@ -15,6 +15,11 @@ class Genome::Model::Tools::EpitopePrediction::Pipeline {
             doc => 'the directory where you want results stored',
         },
         #TODO fill out docs
+        somatic_variation_build => {
+            is => 'Genome::Model::Build::SomaticVariation',
+            is_optional => 1,
+            doc => '',
+        },
         input_tsv_file => {
             is => 'Text',
             is_optional => 1,
@@ -94,6 +99,20 @@ sub _construct_workflow {
 
 sub _validate_inputs {
     my $self = shift;
+
+    if (!defined($self->somatic_variation_build) && !defined($self->input_tsv_file)) {
+        die $self->error_message("Either somatic variation build or input tsv file needs to be provided");
+    }
+
+    if (defined($self->somatic_variation_build)) {
+        $self->input_tsv_file(
+            File::Spec->join(
+                $self->somatic_variation_build->data_directory,
+                'effects',
+                'snvs.hq.tier1.v1.annotated.top.header'
+            )
+        );
+    }
 
     unless (-s $self->input_tsv_file) {
         die $self->error_message("Input tsv file %s does not exist or has no size", $self->input_tsv_file);
