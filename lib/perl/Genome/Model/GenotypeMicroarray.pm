@@ -210,8 +210,7 @@ sub _execute_build {
     my $original_genotype_vcf_file = $build->original_genotype_vcf_file_path;
     $self->debug_message('Original genotype file: '.$original_genotype_vcf_file);
     my $extract = Genome::Model::GenotypeMicroarray::Command::Extract->create(
-        instrument_data => $instrument_data,
-        variation_list_build => $dbsnp_build,
+        build => $build,
         output => $original_genotype_vcf_file,
     );
     if ( not $extract ) {
@@ -247,8 +246,7 @@ sub _execute_build {
     my $original_genotype_file = $build->original_genotype_file_path;
     $self->debug_message('Original genotype file: '.$original_genotype_file);
     $extract = Genome::Model::GenotypeMicroarray::Command::Extract->create(
-        instrument_data => $instrument_data,
-        variation_list_build => $dbsnp_build,
+        build => $build,
         output => $original_genotype_file.':separator=TAB:fields=chromosome,position,alleles,id,sample_name,log_r_ratio,gc_score,cnv_value,cnv_confidence,allele1,allele2:print_headers=1',
     );
     if ( not $extract ) {
