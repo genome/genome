@@ -28,11 +28,12 @@ sub execute {
         $self->_total_command_count($self->_total_command_count + 1);
         my $transaction = UR::Context::Transaction->begin();
         my $successful = eval {$build->stop};
+        my $exception = $@;
         if ($successful and $transaction->commit) {
             $self->status_message("Successfully stopped build (" . $build->__display_name__ . ").");
         }
         else {
-            $self->append_error($build->__display_name__, "Failed to stop build: $@.");
+            $self->append_error($build->__display_name__, "Failed to stop build: $exception.");
             $transaction->rollback();
         }
     }
