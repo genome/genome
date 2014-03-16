@@ -2019,18 +2019,6 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>report',
-    [
-      '>summary',
-      [
-        'debug!',
-        undef,
-        'help!',
-        undef
-      ],
-      'help!',
-      undef
-    ],
     '>remove',
     [
       'processing-profile=s',
@@ -24019,37 +24007,6 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'ca-min-unique=s',
         undef,
-        'help!',
-        undef
-      ],
-      'help!',
-      undef
-    ],
-    '>db',
-    [
-      '>import-allele-freq',
-      [
-        'dir=s',
-        'directories',
-        'group=s',
-        'files',
-        'debug!',
-        undef,
-        'help!',
-        undef
-      ],
-      '>query-dbsnp',
-      [
-        'chr=s',
-        'files',
-        'coord=s',
-        'files',
-        'dbsnp-version=s',
-        'files',
-        'debug!',
-        undef,
-        'query-result=s',
-        'files',
         'help!',
         undef
       ],
