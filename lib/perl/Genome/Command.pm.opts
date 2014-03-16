@@ -1889,12 +1889,10 @@ $Genome::Command::OPTS_SPEC = [
       [
         'name=s',
         'files',
-        'append-event-steps=s',
+        'reference-sequence-name=s',
         'files',
         'based-on=s',
         undef,
-        'reference-sequence-name=s',
-        'files',
         'describe!',
         undef,
         'help!',
@@ -2015,18 +2013,6 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'primer-seq-forward=s',
         'files',
-        'help!',
-        undef
-      ],
-      'help!',
-      undef
-    ],
-    '>report',
-    [
-      '>summary',
-      [
-        'debug!',
-        undef,
         'help!',
         undef
       ],
@@ -16639,23 +16625,6 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>hmp-shotgun',
     [
-      '>align-metagenomes',
-      [
-        'instrument-data-id=s',
-        'files',
-        'lsf-resource=s',
-        'files',
-        'reference-name=s',
-        'files',
-        'working-directory=s',
-        'files',
-        'aligned-file=s',
-        'files',
-        'debug!',
-        undef,
-        'help!',
-        undef
-      ],
       '>align-metagenomes-multi',
       [
         'lsf-resource=s',
@@ -19222,23 +19191,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      'help!',
-      undef
-    ],
-    '>parallel-command',
-    [
-      'command-list=s',
-      'files',
-      'log-path=s',
-      'files',
-      'lsf-resource=s',
-      'files',
-      'debug!',
-      undef,
-      'log-file=s',
-      'files',
-      'output-file=s',
-      'files',
       'help!',
       undef
     ],
@@ -24061,37 +24013,6 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>db',
-    [
-      '>import-allele-freq',
-      [
-        'dir=s',
-        'directories',
-        'group=s',
-        'files',
-        'debug!',
-        undef,
-        'help!',
-        undef
-      ],
-      '>query-dbsnp',
-      [
-        'chr=s',
-        'files',
-        'coord=s',
-        'files',
-        'dbsnp-version=s',
-        'files',
-        'debug!',
-        undef,
-        'query-result=s',
-        'files',
-        'help!',
-        undef
-      ],
-      'help!',
-      undef
-    ],
     '>sequence',
     [
       'chromosome=s',
@@ -28536,62 +28457,6 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>simple-alignment',
-    [
-      '>align-wrapper',
-      [
-        'instrument-data-id=s',
-        'files',
-        'lsf-resource=s',
-        'files',
-        'reference-name=s',
-        'files',
-        'working-directory=s',
-        'files',
-        'aligned-file=s',
-        'files',
-        'debug!',
-        undef,
-        'help!',
-        undef
-      ],
-      '>merge-alignments',
-      [
-        'alignment-files=s',
-        undef,
-        'lsf-resource=s',
-        'files',
-        'merged-file=s',
-        'files',
-        'working-directory=s',
-        undef,
-        'debug!',
-        undef,
-        'help!',
-        undef
-      ],
-      '>pipeline-instrument-data',
-      [
-        'instrument-data-id=s',
-        'files',
-        'merged-file=s',
-        'files',
-        'reference-name=s',
-        'files',
-        'working-directory=s',
-        'files',
-        'cleanup!',
-        undef,
-        'debug!',
-        undef,
-        'merged-file-path=s',
-        'files',
-        'help!',
-        undef
-      ],
-      'help!',
-      undef
-    ],
     '>bam-window',
     [
       'bam-file=s',
@@ -31351,28 +31216,6 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>ssaha',
-    [
-      '>align-to-genome',
-      [
-        'output-file=s',
-        'files',
-        'query-file=s',
-        'files',
-        'cdna=s',
-        'files',
-        'debug!',
-        undef,
-        'reference=s',
-        'files',
-        'ssaha2-params=s',
-        'files',
-        'help!',
-        undef
-      ],
-      'help!',
-      undef
-    ],
     '>fastq',
     [
       '>dust',
@@ -31741,6 +31584,28 @@ $Genome::Command::OPTS_SPEC = [
           'help!',
           undef
         ],
+        'help!',
+        undef
+      ],
+      'help!',
+      undef
+    ],
+    '>ssaha',
+    [
+      '>align-to-genome',
+      [
+        'output-file=s',
+        'files',
+        'query-file=s',
+        'files',
+        'cdna=s',
+        'files',
+        'debug!',
+        undef,
+        'reference=s',
+        'files',
+        'ssaha2-params=s',
+        'files',
         'help!',
         undef
       ],
@@ -35261,84 +35126,6 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>synthesizer',
-    [
-      '>size-bam',
-      [
-        'bam-file=s',
-        'files',
-        'filtered-bam-file=s',
-        'files',
-        'read-size-bin=s',
-        'files',
-        'help!',
-        undef
-      ],
-      '>annotate-cluster',
-      [
-        'cluster-bed-file=s',
-        'files',
-        'annotation-bed-file=s',
-        'files',
-        'annotation-name=s',
-        'files',
-        'output-tsv-file=s',
-        'files',
-        'help!',
-        undef
-      ],
-      '>stats-generator',
-      [
-        'coverage-stats-file=s',
-        'files',
-        'sized-bam-file=s',
-        'files',
-        'head-bin-flagstat-file=s',
-        'files',
-        'output-stats-file=s',
-        'files',
-        'output-clusters-file=s',
-        'files',
-        'output-subclusters-file=s',
-        'files',
-        'output-subcluster-intersect-file=s',
-        'files',
-        'subcluster-min-mapzero=s',
-        'files',
-        'help!',
-        undef
-      ],
-      '>cluster-generator',
-      [
-        'sized-bam-file=s',
-        'files',
-        'zenith-depth=s',
-        'files',
-        'minimum-depth=s',
-        'files',
-        'stats-file=s',
-        'files',
-        'bed-file=s',
-        'files',
-        'help!',
-        undef
-      ],
-      '>spreadsheet',
-      [
-        'input-stats-file=s',
-        'files',
-        'input-intersect-file=s',
-        'files',
-        'output-spreadsheet=s',
-        'files',
-        'input-cluster-number=s',
-        'files',
-        'help!',
-        undef
-      ],
-      'help!',
-      undef
-    ],
     '>soap',
     [
       '>fasta-to-agp',
@@ -35509,6 +35296,84 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'debug!',
         undef,
+        'help!',
+        undef
+      ],
+      'help!',
+      undef
+    ],
+    '>synthesizer',
+    [
+      '>size-bam',
+      [
+        'bam-file=s',
+        'files',
+        'filtered-bam-file=s',
+        'files',
+        'read-size-bin=s',
+        'files',
+        'help!',
+        undef
+      ],
+      '>annotate-cluster',
+      [
+        'cluster-bed-file=s',
+        'files',
+        'annotation-bed-file=s',
+        'files',
+        'annotation-name=s',
+        'files',
+        'output-tsv-file=s',
+        'files',
+        'help!',
+        undef
+      ],
+      '>stats-generator',
+      [
+        'coverage-stats-file=s',
+        'files',
+        'sized-bam-file=s',
+        'files',
+        'head-bin-flagstat-file=s',
+        'files',
+        'output-stats-file=s',
+        'files',
+        'output-clusters-file=s',
+        'files',
+        'output-subclusters-file=s',
+        'files',
+        'output-subcluster-intersect-file=s',
+        'files',
+        'subcluster-min-mapzero=s',
+        'files',
+        'help!',
+        undef
+      ],
+      '>cluster-generator',
+      [
+        'sized-bam-file=s',
+        'files',
+        'zenith-depth=s',
+        'files',
+        'minimum-depth=s',
+        'files',
+        'stats-file=s',
+        'files',
+        'bed-file=s',
+        'files',
+        'help!',
+        undef
+      ],
+      '>spreadsheet',
+      [
+        'input-stats-file=s',
+        'files',
+        'input-intersect-file=s',
+        'files',
+        'output-spreadsheet=s',
+        'files',
+        'input-cluster-number=s',
+        'files',
         'help!',
         undef
       ],
@@ -37210,19 +37075,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      'help!',
-      undef
-    ],
-    '>parallel-command-runner',
-    [
-      'command-list=s',
-      undef,
-      'log-path=s',
-      'files',
-      'debug!',
-      undef,
-      'log-file=s',
-      'files',
       'help!',
       undef
     ],
