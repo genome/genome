@@ -76,7 +76,7 @@ sub _run_aligner {
 
     foreach my $bif (@ref_files) {
         unless (-e $bif) {
-            $self->error_message("Index $bif does not exist. Please create Bfast indexes in the correct location, or implement Genome::InstrumentData::Alignment->resolve_reference_build() in this module.");
+            $self->error_message("Index $bif does not exist. Please create Bfast indexes in the correct location");
             $self->die($self->error_message);
         }
     }
