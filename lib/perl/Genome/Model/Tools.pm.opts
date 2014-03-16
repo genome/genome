@@ -13224,37 +13224,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
     'help!',
     undef
   ],
-  '>db',
-  [
-    '>import-allele-freq',
-    [
-      'dir=s',
-      'directories',
-      'group=s',
-      'files',
-      'debug!',
-      undef,
-      'help!',
-      undef
-    ],
-    '>query-dbsnp',
-    [
-      'chr=s',
-      'files',
-      'coord=s',
-      'files',
-      'dbsnp-version=s',
-      'files',
-      'debug!',
-      undef,
-      'query-result=s',
-      'files',
-      'help!',
-      undef
-    ],
-    'help!',
-    undef
-  ],
   '>sequence',
   [
     'chromosome=s',
