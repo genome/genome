@@ -1,8 +1,10 @@
 #CLINSEQ CODE PATHS
-/gscmnt/sata206/techd/git/genome/lib/perl/Genome/Model/ClinSeq/original-scripts/
+/gscmnt/sata206/techd/git/genome/lib/perl/Genome/Model/ClinSeq/Commands/*.pm *.t
+/gscmnt/sata206/techd/git/genome/lib/perl/Genome/Model/ClinSeq/Commands/Converge/*.pm *.t
 /gscmnt/sata206/techd/git/genome/lib/perl/Genome/ProcessingProfile/ClinSeq.pm
 /gscmnt/sata206/techd/git/genome/lib/perl/Genome/ProcessingProfile/ClinSeq.t
 /gscmnt/sata206/techd/git/genome/lib/perl/Genome/Model/ClinSeq.pm
+/gscmnt/sata206/techd/git/genome/lib/perl/Genome/Model/ClinSeq.t
 
 #CLINSEQ DATA PATHS
 #(data files used by the pipeline - not the input data, but annotation data, etc.)
