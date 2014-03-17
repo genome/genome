@@ -47,8 +47,6 @@ sub execute {
     my $out_dir = $self->output_directory;
     `mkdir $out_dir`;
 
-#if ($ARGV[3]=~/\w/) { $filename_vcf_somatic=$ARGV[2];} else { $filename_vcf_somatic=""; }
-
     my %mapping = (
         "TTT" => "F",
         "TTC" => "F",
@@ -123,12 +121,10 @@ sub execute {
 
         my $filename_ = $filename;
 
-        #$filename_="pr;
 
         open( OUT,     ">$out_dir/proteome-indel.fasta" );
         open( OUT_MOD, ">$out_dir/proteome-indel-mod.fasta" );
 
-        #open (OUT_FS,">$filename-frame-shift.fasta");
         open( LOG,     ">$out_dir/proteome-indel.log" );
         open( LOG_MOD, ">$out_dir/proteome-mod-indel.log" );
         open( STAT,    ">$out_dir/proteome-mod-indel.stat" );
@@ -173,19 +169,6 @@ sub execute {
 
         my %descriptions = ();
 
-        #if (open (IN,"$filename_-descriptions.txt"))
-        #{
-        #	while ($line=<IN>)
-        #	{
-        #		chomp($line);
-        #		if ($line=~/^([^\t]+)\t([^\t]+)/)
-        #		{
-        #			$descriptions{$1}=$2;
-        #		}
-        #	}
-        #	close(IN);
-        #}
-
         my %vcf_old         = ();
         my %vcf_new         = ();
         my %vcf_type        = ();
@@ -196,11 +179,8 @@ sub execute {
         my $both_vcf        = 0;
         my $both_vcf_differ = 0;
 
-        #print "open $filename_vcf_somatic\n"; <STDIN>;
-
         if ( open( IN, "$filename_vcf_somatic" ) ) {
 
-            #open (OUT_ONLY,">$filename_vcf_somatic-somatic_only.vcf");
             while ( $line = <IN> ) {
                 chomp($line);
                 print $line, "\n";
@@ -222,12 +202,6 @@ sub execute {
                       "new=$new", "\t", "qaul=$qaul", "\t", "anno=$anno", "\t",
                       "type=$type", "\n";
 
-#<STDIN>;
-#if ($vcf_old{"$chr#$pos"}=~/\w/)
-#{
-#	if ($vcf_new{"$chr#$pos"}!~/^$new$/)
-#	{
-#print LOG_MOD qq!$chr $pos: germline:$vcf_old{"$chr#$pos"}->$vcf_new{"$chr#$pos"} somatic:$old->$new\n!;
                     $vcf_old{"$chr#$pos"} = $old;
                     $vcf_new{"$chr#$pos"} = $new;
                     if ( $type eq "SOMATIC" ) { $vcf_type{"$chr#$pos"} = "S"; }
@@ -235,34 +209,15 @@ sub execute {
 
                     $vcf_anno{"$chr#$pos"} = $anno;
 
-                    #print OUT_ONLY qq!$line\n!;
                     $somatic_only++;
-
-                    #		$both_vcf_differ++;
-                    #	}
-                    #	$both_vcf++;
-                    #}
-                    #else
-                    #{
-                    #	$vcf_old{"$chr#$pos"}=$old;
-                    #	$vcf_new{"$chr#$pos"}=$new;
-                    #	$vcf_type{"$chr#$pos"}="S";
-                    #	$vcf_anno{"$chr#$pos"}=$anno;
-                    #print OUT_ONLY qq!$line\n!;
-                    #	$somatic_only++;
-                    #}
-                    #print qq!$chr#$pos#$new\n!;
                 }
                 else { print LOG_MOD qq!Error parsing: $line!; }
             }
             close(IN);
-
-            #close(OUT_ONLY);
         }
 
         foreach my $chr ( sort keys %chr ) {
 
-            #$chr="chr9";
             print qq!$chr\n!;
             if ( open( IN, "$dir/$chr.fa" ) ) {
                 print qq!opened $chr\n!;
@@ -295,8 +250,6 @@ sub execute {
                         my $name     = $1;
                         my $modified = 0;
 
-                        #print LOG qq!\n$name: $bed{$name}\n!;
-                        #print qq!\n$name: $bed{$name}\n!;
                         if ( $bed{$name} =~
 /^([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)$/
                           )
@@ -309,15 +262,6 @@ sub execute {
                             my $segment_starts           = "$12,";
                             my $segment_lengths_extended = "$11,";
                             my $segment_starts_extended  = "$12,";
-
-#if ($strand=~/\+/) { if ($segment_lengths_extended=~s/([0-9]+)\,$//) { my $temp=$1; $temp+=100; $segment_lengths_extended.="$temp,"; } }
-#else
-#{
-#	if ($segment_lengths_extended=~s/^([0-9]+)\,//) { my $temp=$1; $temp+=100; $segment_lengths_extended="$temp,$segment_lengths_extended,"; }
-#	if ($segment_starts_extended=~s/^([0-9]+)\,//) { my $temp=$1; $temp-=100; $segment_starts_extended="$temp,$segment_starts_extended,"; }
-#}
-
-#print LOG qq!$segment_lengths $segment_lengths_extended   $segment_starts $segment_starts_extended\n!;
 
                             my $seq_original     = "";
                             my $segment_starts_  = $segment_starts;
@@ -342,7 +286,6 @@ sub execute {
                                     }
                                     $seq_original .= $seq_;
 
-                  #print LOG qq!$start+$segment_start,$segment_length: $seq_\n!;
                                 }
                                 else {
                                     print LOG qq!Error parsing $bed{$name}\n!;
@@ -364,12 +307,7 @@ sub execute {
                             my $num_indel           = 0;
                             my $segment_start_first = 0;
 
-                            #my $find_indel;
                             $segment_start_first = 0;
-
-         #$segment_starts_=$segment_starts_extended;
-         #$segment_lengths_=$segment_lengths_extended;
-         #make modification for the reference genome based on the indel and snps
 
                             for (
                                 my $i = length($seq_original) - 1 ;
@@ -379,18 +317,13 @@ sub execute {
                             {
                                 my $var_pos = $seq_chr_pos{$i};
 
-                                #print $chr,"\t",$var_pos,"\n";
                                 if ( defined $vcf_old{"$chr#$var_pos"} ) {
 
-                                    #print "finding indel\n";
                                     print $name,    "\n";
                                     print $var_pos, "\n";
                                     print $vcf_old{"$chr#$var_pos"}, "\n";
                                     print $vcf_new{"$chr#$var_pos"}, "\n";
 
-#<STDIN>;
-#print substr($seq_original,$i-1,3),"->",$vcf_old{"$chr#$var_pos"},"->",$vcf_new{"$chr#$var_pos"},"\n";
-#<STDIN>;
                                     my $leno;
                                     my $lenn;
                                     if ( $vcf_old{"$chr#$var_pos"} eq "-" ) {
@@ -492,13 +425,9 @@ sub execute {
                                         {
                                             my $left_3 = ( $i + 1 ) % 3;
 
-                                        #print "i=$i\n";
-                                        #print substr($seq_original,$i,40),"\n";
                                             my $int_3s =
                                               int( ( $i + 1 ) / 3 ) + 1;
 
-                                            #print "int_3s=$int_3s\n";
-                                            #<STDIN>;
                                             my $int_3e =
                                               int( ( $i + $leno + 1 ) / 3 ) + 1;
                                             if ( $inframe == 1 ) {
@@ -554,8 +483,6 @@ sub execute {
                                         }
                                     }
 
-                                    #print $description_,"\n";
-                                    #if($leno != $lenn) { $num_fs++; }
 
                                     my $seql = substr( $seq, 0, $i );
                                     print $seql, "\n";
@@ -576,11 +503,6 @@ sub execute {
                             my $name_ = $name;
                             $name_ =~ s/\-[^\-]+$//;
 
-                            #print "orignal sequence\n";
-                            #print $seq_original,"\n";
-                            #print "modified sequence\n";
-                            #print $seq,"\n";
-                            #my $gene=$name; $gene=~s/^[^\-]+\-//;
                             my $protein          = "";
                             my $protein_original = "";
 
@@ -608,13 +530,9 @@ sub execute {
                                 }
                             }
 
-                            #$modified=0;
-                            #my $modified_somatic=0;
                             my $stop_found    = 0;
                             my $triplet_count = 0;
 
-                            #my $frame_shift=0;
-                            #if ($description_=~/\w/) { $description_.="; "; }
                             for (
                                 my $n = 0 ;
                                 $n < length($seq) and $stop_found == 0 ;
@@ -623,7 +541,6 @@ sub execute {
                             {
                                 my $n_ = $n + 2;
 
-                                #my $triplet_count_=$triplet_count+1;
                                 my $triplet = substr( $seq, $n, 3 );
                                 if ( length($triplet) == 3 ) {
 
@@ -631,7 +548,6 @@ sub execute {
                                         $mapping{$triplet} = "X";
                                     }
 
-#print LOG_MOD qq!$name $triplet_type $n-$n_: $triplet_old->$triplet - $triplet_count_:$mapping{$triplet_old}->$mapping{$triplet}\n!;
                                     if ( $mapping{$triplet} =~ /\*/ ) {
                                         $stop_found = 1;
                                     }
@@ -641,27 +557,13 @@ sub execute {
                                 $triplet_count++;
                             }
 
-                     #$proteins_count++;
-                     #$protein_modifications_count+=$modified;
-                     #$protein_modifications_distr[$modified]++;
-                     #$protein_modifications_count_somatic+=$modified_somatic;
-                     #$protein_modifications_distr_somatic[$modified_somatic]++;
                             $protein_original =~ s/\*$//;
-
-                            #print "protein original\n";
-                            #print $protein_original,"\n";
-                            #<STDIN>;
 
                             if ( $protein_original =~ /^([^\*]+)\*.*$/ ) {
                                 print LOG
 qq!Error: Stop codon found in middle of sequence:$name \n$protein_original\n!;
                                 $protein_original = "";
                             }
-
-#if (length($protein_original)>6 and $protein_original!~/^\*/)
-#	{
-#	print OUT qq!>$name (MAP:$chr:$start$strand $segment_lengths $segment_starts)\n$protein_original\n!;
-#	}
 
                             $protein =~ s/\*$//;
                             $protein =~ s/^([^\*]+)\*.*$//;
@@ -670,7 +572,6 @@ qq!Error: Stop codon found in middle of sequence:$name \n$protein_original\n!;
                                 && ( $num_indel == 1 ) )
                             {
 
-                                #$proteins_modified++;
                                 print "original protein\n";
                                 print $protein_original, "\n";
                                 print "modified protein\n";
@@ -683,7 +584,6 @@ qq!Error: Stop codon found in middle of sequence:$name \n$protein_original\n!;
 qq!>$name (MAP:$chr:$start$strand $segment_lengths $segment_starts)\n$protein_original\n!;
                                     $description_ .= ")";
 
-#print LOG_MOD qq!>$name-indel $descriptions{$name} (MAP:$chr:$start$strand $segment_lengths $segment_starts) $description_\n$protein\n!;
                                     print OUT_MOD
 qq!>$name-indel (MAP:$chr:$start$strand $segment_lengths $segment_starts) $description_\n$protein\n!;
                                 }
@@ -705,11 +605,9 @@ qq!>$name-indel (MAP:$chr:$start$strand $segment_lengths $segment_starts) $descr
         print STAT
 qq!\nnumber of modifications\tnumber of proteins\tnumber of proteins (somatic variants)\n!;
 
-#for (my $k=0;$k<=100;$k++) { print STAT qq!$k\t$protein_modifications_distr[$k]\t$protein_modifications_distr_somatic[$k]\n!; }
         close(OUT);
         close(OUT_MOD);
 
-        #close(OUT_FS);
         close(LOG);
         close(LOG_MOD);
         close(STAT);
