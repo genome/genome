@@ -130,38 +130,31 @@ sub execute {
     $ifh->close;
 
     my (%vcf_old, %vcf_new, %vcf_type, %vcf_anno);
-
     my $vcf_ifh = Genome::Sys->open_file_for_reading($filename_vcf_somatic);
     while (my $line = $vcf_ifh->getline ) {
         chomp($line);
         print $line, "\n";
-        if ( $line =~
-            /^([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)/
-        )
-        {
-            my $chr  = "chr$1";
-            my $pos  = $2;
-            my $id   = $3;
-            my $old  = $4;
-            my $new  = $5;
-            my $qaul = $6;
-            my $anno = $7;
-            my $type = $8;
-            $pos--;
-            $new =~ s/\,.*$//;    #####
-            print "pos=$pos", "\t", "id=$id", "\t", "old=$old", "\t",
-            "new=$new", "\t", "qaul=$qaul", "\t", "anno=$anno", "\t",
-            "type=$type", "\n";
+        my @fields = split("\t", $line);
+        my $chr  = "chr" . $fields[0];
+        my $pos  = $fields[1];
+        my $id   = $fields[2];
+        my $old  = $fields[3];
+        my $new  = $fields[4];
+        my $qaul = $fields[5];
+        my $anno = $fields[6];
+        my $type = $fields[7];
+        $pos--;
+        $new =~ s/\,.*$//;    #####
+        print "pos=$pos", "\t", "id=$id", "\t", "old=$old", "\t",
+        "new=$new", "\t", "qaul=$qaul", "\t", "anno=$anno", "\t",
+        "type=$type", "\n";
 
-            $vcf_old{"$chr#$pos"} = $old;
-            $vcf_new{"$chr#$pos"} = $new;
-            if ( $type eq "SOMATIC" ) { $vcf_type{"$chr#$pos"} = "S"; }
-            else                      { $vcf_type{"$chr#$pos"} = "G"; }
+        $vcf_old{"$chr#$pos"} = $old;
+        $vcf_new{"$chr#$pos"} = $new;
+        if ( $type eq "SOMATIC" ) { $vcf_type{"$chr#$pos"} = "S"; }
+        else                      { $vcf_type{"$chr#$pos"} = "G"; }
 
-            $vcf_anno{"$chr#$pos"} = $anno;
-
-        }
-        else { print LOG_MOD qq!Error parsing: $line!; }
+        $vcf_anno{"$chr#$pos"} = $anno;
     }
     $vcf_ifh->close;
 
