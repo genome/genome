@@ -122,71 +122,57 @@ sub execute {
     my %bed                                     = ();
     my %seq                                     = ();
 
-    if ( open( IN, "$filename" ) ) {
-        while ( $line = <IN> ) {
-            chomp($line);
-            if ( $line =~
-                /^([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)$/
-            )
-            {
-                my $chr  = $1;
-                my $name = $4;
-                $bed{$name} = $line;
-                $chr{$chr} .= "#$name#";
-            }
-            else { print LOG qq!Error parsing: $line!; }
+    my $ifh = Genome::Sys->open_file_for_reading($filename);
+    while (my $line = $ifh->getline) { 
+        chomp($line);
+        if ( $line =~
+            /^([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)$/
+        )
+        {
+            my $chr  = $1;
+            my $name = $4;
+            $bed{$name} = $line;
+            $chr{$chr} .= "#$name#";
         }
-        close(IN);
+        else { print LOG qq!Error parsing: $line!; }
     }
+    $ifh->close;
 
-    my %descriptions = ();
+    my (%vcf_old, %vcf_new, %vcf_type, %vcf_anno);
 
-    my %vcf_old         = ();
-    my %vcf_new         = ();
-    my %vcf_type        = ();
-    my %vcf_anno        = ();
-    my $germline_vcf    = 0;
-    my $germline_only   = 0;
-    my $somatic_only    = 0;
-    my $both_vcf        = 0;
-    my $both_vcf_differ = 0;
+    my $vcf_ifh = Genome::Sys->open_file_for_reading($filename_vcf_somatic);
+    while (my $line = $vcf_ifh->getline ) {
+        chomp($line);
+        print $line, "\n";
+        if ( $line =~
+            /^([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)/
+        )
+        {
+            my $chr  = "chr$1";
+            my $pos  = $2;
+            my $id   = $3;
+            my $old  = $4;
+            my $new  = $5;
+            my $qaul = $6;
+            my $anno = $7;
+            my $type = $8;
+            $pos--;
+            $new =~ s/\,.*$//;    #####
+            print "pos=$pos", "\t", "id=$id", "\t", "old=$old", "\t",
+            "new=$new", "\t", "qaul=$qaul", "\t", "anno=$anno", "\t",
+            "type=$type", "\n";
 
-    if ( open( IN, "$filename_vcf_somatic" ) ) {
+            $vcf_old{"$chr#$pos"} = $old;
+            $vcf_new{"$chr#$pos"} = $new;
+            if ( $type eq "SOMATIC" ) { $vcf_type{"$chr#$pos"} = "S"; }
+            else                      { $vcf_type{"$chr#$pos"} = "G"; }
 
-        while ( $line = <IN> ) {
-            chomp($line);
-            print $line, "\n";
-            if ( $line =~
-                /^([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)/
-            )
-            {
-                my $chr  = "chr$1";
-                my $pos  = $2;
-                my $id   = $3;
-                my $old  = $4;
-                my $new  = $5;
-                my $qaul = $6;
-                my $anno = $7;
-                my $type = $8;
-                $pos--;
-                $new =~ s/\,.*$//;    #####
-                print "pos=$pos", "\t", "id=$id", "\t", "old=$old", "\t",
-                "new=$new", "\t", "qaul=$qaul", "\t", "anno=$anno", "\t",
-                "type=$type", "\n";
+            $vcf_anno{"$chr#$pos"} = $anno;
 
-                $vcf_old{"$chr#$pos"} = $old;
-                $vcf_new{"$chr#$pos"} = $new;
-                if ( $type eq "SOMATIC" ) { $vcf_type{"$chr#$pos"} = "S"; }
-                else                      { $vcf_type{"$chr#$pos"} = "G"; }
-
-                $vcf_anno{"$chr#$pos"} = $anno;
-
-                $somatic_only++;
-            }
-            else { print LOG_MOD qq!Error parsing: $line!; }
         }
-        close(IN);
+        else { print LOG_MOD qq!Error parsing: $line!; }
     }
+    $vcf_ifh->close;
 
     foreach my $chr ( sort keys %chr ) {
 
