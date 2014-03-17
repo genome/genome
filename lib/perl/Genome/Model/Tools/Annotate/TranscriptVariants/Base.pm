@@ -499,15 +499,14 @@ sub _apply_indel_and_translate{
     }
     my $sequence = "";
     $sequence = $structure->phase_bases_before if $structure->phase_bases_before ne 'NULL';
-    Genome::Model::Tools::Sequence->class();
     for my $substructure (@structures) {
         if ($substructure->structure_type eq 'flank') {
-            my $flank_sequence = Genome::Model::Tools::Sequence::lookup_sequence(
-                    chromosome => $chrom_name,
-                    start => $substructure->structure_start,
-                    stop => $substructure->structure_stop,
-                    build => $self->get_reference_build_for_transcript($substructure),
-                    );
+            my $reference_build = $self->get_reference_build_for_transcript($substructure);
+            my $flank_sequence = $reference_build->sequence(
+                $chrom_name,
+                $substructure->structure_start,
+                $substructure->structure_stop,
+            );
             die "Unsuccessfully executed sequence fetch" unless $flank_sequence;
             if ($structure->transcript_strand eq '-1'){
                 $flank_sequence = $self->reverse_complement($flank_sequence);
@@ -1022,12 +1021,12 @@ sub transcripts {
             unless ($variant{reference} eq '-') {
                 my $chrom = $variant{chromosome_name};
                 my $species = $substruct->transcript_species;
-                my $ref_seq = Genome::Model::Tools::Sequence::lookup_sequence(
-                                  chromosome => $chrom,
-                                  start => $variant_start,
-                                  stop => $variant_stop,
-                                  species => $species,
-                              );
+                my $reference_build = $self->get_reference_build_for_transcript($substruct);
+                my $ref_seq = $reference_build->sequence(
+                    $chrom,
+                    $variant_start,
+                    $variant_stop,
+                );
 
                 unless ($ref_seq eq $variant{reference}) {
                     $self->warning_message("Sequence on variant on chromosome $chrom between $variant_start and $variant_stop does not match $species reference!");
