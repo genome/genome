@@ -32,19 +32,13 @@ class Genome::Model::Tools::EpitopePrediction::FrameShift {
 
 sub execute {
     my $self = shift;
-    my $filename              = "";
-    my $filename_vcf_germline = "";
-    my $filename_vcf_somatic  = "";
-    my $dir                   = ".";
 
-    $filename = $self->bed_file;
-    $dir = $self->database_directory;
-    $filename_vcf_somatic = $self->vcf_file;
-
-    my @dir_vcf = split( /\//, $filename_vcf_somatic );
+    my $filename = $self->bed_file;
+    my $dir = $self->database_directory;
+    my $filename_vcf_somatic = $self->vcf_file;
 
     my $out_dir = $self->output_directory;
-    `mkdir $out_dir`;
+    Genome::Sys->create_directory($out_dir);
 
     my %mapping = (
         "TTT" => "F",
@@ -116,9 +110,6 @@ sub execute {
         "GGG" => "G"
     );
 
-    my $filename_ = $filename;
-
-
     open( OUT,     ">$out_dir/proteome-indel.fasta" );
     open( OUT_MOD, ">$out_dir/proteome-indel-mod.fasta" );
 
@@ -126,22 +117,6 @@ sub execute {
     open( LOG_MOD, ">$out_dir/proteome-mod-indel.log" );
     open( STAT,    ">$out_dir/proteome-mod-indel.stat" );
 
-    my $proteins_count                          = 0;
-    my $proteins_modified                       = 0;
-    my $count_stop_removed                      = 0;
-    my $count_stop_introduced                   = 0;
-    my $count_stop_removed_somatic              = 0;
-    my $count_stop_introduced_somatic           = 0;
-    my $protein_modifications_count             = 0;
-    my @protein_modifications_distr             = ();
-    my $protein_modifications_count_somatic     = 0;
-    my @protein_modifications_distr_somatic     = ();
-    my $count_variant_in_exon                   = 0;
-    my $count_variant_in_exon_somatic           = 0;
-    my $count_variant_in_exon_old_error         = 0;
-    my $count_variant_in_exon_old_error_somatic = 0;
-    my $count_variant_in_exon_nonsyn            = 0;
-    my $count_variant_in_exon_nonsyn_somatic    = 0;
     my $line                                    = "";
     my %chr                                     = ();
     my %bed                                     = ();
