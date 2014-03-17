@@ -28,6 +28,12 @@ class Genome::Model::Command::InstrumentData::Assign::Base {
             doc => 'used internally by the command to hold already-assigned IDs for the model',
         },
     ],
+    has_optional_output => [
+        newly_added_data => {
+            is => 'Genome::InstrumentData',
+            is_many => 1,
+        },
+    ],
 };
 
 sub execute {
@@ -104,6 +110,8 @@ sub _assign_instrument_data {
         $model->__display_name__,
         ( $filter ? (' with filter ' . $filter) : '')
     );
+
+    $self->add_newly_added_data($instrument_data);
 
     return 1;
 }
