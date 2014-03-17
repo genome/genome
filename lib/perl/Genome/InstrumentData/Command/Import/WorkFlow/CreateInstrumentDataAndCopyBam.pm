@@ -20,6 +20,11 @@ class Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentDataAnd
             is => 'Genome::Sample',
             doc => 'Sample to use. The external library for the instrument data will be gotten or created.',
         },
+        library => {
+            is => 'Genome::Library',
+            is_optional => 1,
+            doc => 'Library to use. The library for the instrument data will be gotten or created.',
+        },
         analysis_project => {
             is => 'Genome::Config::AnalysisProject',
             is_optional => 1,
@@ -44,7 +49,6 @@ class Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentDataAnd
     ],
     has_transient_optional => [
     instrument_data_subset_name => { is => 'Text', },
-        library => { is => 'Genome::Library', },
         kilobytes_requested => { is => 'Number', },
     ],
     has_calculated => [
@@ -85,7 +89,9 @@ sub execute {
     my $was_not_imported = $self->helpers->ensure_original_data_path_md5s_were_not_previously_imported($self->source_md5s);
     return if not $was_not_imported;
 
-    my $library = $self->_resvolve_library;
+    my $library = defined($self->library)
+        ? $self->library
+        : $self->_resvolve_library;
     return if not $library;
 
     my $helpers = $self->helpers;
