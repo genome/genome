@@ -8,7 +8,7 @@ use Test::More;
 use Genome::Utility::Test qw(compare_ok);
 
 my $class = 'Genome::Model::Tools::EpitopePrediction::FrameShift';
-my $TEST_DATA_VERSION= 1;
+my $TEST_DATA_VERSION = 2;
 use_ok($class);
 
 my $test_dir = Genome::Utility::Test->data_dir_ok($class, $TEST_DATA_VERSION);
@@ -31,6 +31,8 @@ ok($cmd->execute, "Command executed");
 
 my $output_file = "$output_dir/proteome-indel.fasta";
 my $output_file_mod = "$output_dir/proteome-indel-mod.fasta";
+ok (-s $output_file, "Output file exists with size");
+ok (-s $output_file_mod, "Output file mod exists with size");
 compare_ok($output_file, $expected_output, "Output file is as expected");
 compare_ok($output_file_mod, $expected_output_mod, "Output file mod is as expected");
 
