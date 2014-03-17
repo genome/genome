@@ -193,13 +193,9 @@ sub execute {
 
                 my @fields = split("\t", $bed{$name});
                 my $start                    = $fields[1];
-                my $end                      = $fields[2];
                 my $strand                   = $fields[5];
-                my $num                      = $fields[9];
                 my $segment_lengths          = $fields[10] . ",";
                 my $segment_starts           = $fields[11] . ",";
-                my $segment_lengths_extended = $fields[10] . ",";
-                my $segment_starts_extended  = $fields[11] . ",";
 
                 my $seq_original     = "";
                 my $segment_starts_  = $segment_starts;
@@ -235,17 +231,7 @@ sub execute {
                 $seq_original_rc =~ tr/ATCG/TAGC/;
 
                 my $description_        = "";
-                my %variants            = ();
-                my %variants_           = ();
-                my %variants2           = ();
-                my %variants2_          = ();
-                my $variant_loc         = "";
-                my $seqment_lengths_sum = 0;
-                my $seqment_count       = 0;
                 my $num_indel           = 0;
-                my $segment_start_first = 0;
-
-                $segment_start_first = 0;
 
                 for (
                     my $i = length($seq_original) - 1 ;
@@ -469,8 +455,6 @@ sub execute {
                 }
 
                 my $stop_found    = 0;
-                my $triplet_count = 0;
-
                 for (
                     my $n = 0 ;
                     $n < length($seq) and $stop_found == 0 ;
@@ -491,8 +475,6 @@ sub execute {
                         }
                         $protein .= $mapping{$triplet};
                     }
-
-                    $triplet_count++;
                 }
 
                 $protein_original =~ s/\*$//;
