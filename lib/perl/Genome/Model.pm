@@ -181,11 +181,6 @@ class Genome::Model {
             doc => 'Versions of a model over time, with varying quantities of evidence',
             where => [ -order_by => '-date_scheduled', ],
         },
-        input_associations => {
-            is => 'Genome::Model::Input',
-            reverse_as => 'model',
-            doc => 'links to data currently assigned to the model for processing',
-        },
         downstream_model_associations => {
             is => 'Genome::Model::Input',
             reverse_as => '_model_value',
@@ -198,12 +193,17 @@ class Genome::Model {
             doc => 'models which use this model as an input',
         },
 
-        # TODO: there is currently a deprecated inputs() which is like input_associations which must go away
-        #inputs => {
-        #    via => 'input_associations',
-        #    to => 'value',
-        #    doc => 'data currently assigned to the model for processing',
-        #},
+        inputs => {
+            is => 'Genome::Model::Input',
+            reverse_as => 'model',
+            is_many => 1,
+            doc => 'links to data currently assigned to the model for processing',
+        },
+        input_values => {
+            via => 'inputs',
+            to => 'value',
+            doc => 'data currently assigned to the model for processing',
+        },
 
         # TODO: For these to work efficiently we would need last_complete_build to not suck.
         #output_associations => {
@@ -260,14 +260,6 @@ class Genome::Model {
             # this must be here instead of in ::ModelDeprecated becuase it has a db column
             # this really means "auto build when instrument data is added"
             is => 'Boolean',
-        },
-        inputs => {
-            # replaced by input_associations above, which distinguishes between
-            # the association and the actual input
-            is => 'Genome::Model::Input',
-            reverse_as => '_model',
-            is_many => 1,
-            doc => 'links to data currently assigned to the model for processing',
         },
         project_parts => {
             # TODO: the new naming convention was project_associations to prevent confusion
@@ -755,6 +747,7 @@ sub real_input_properties {
     my @properties;
     for my $input_property ( sort { $a->property_name cmp $b->property_name } grep { $_->{is_input} or ( $_->via and $_->via eq 'inputs' ) } $meta->property_metas ) {
         my $property_name = $input_property->property_name;
+        next if $property_name eq 'input_values';
         my %property = (
             name => $property_name,
             is_optional => $input_property->is_optional,

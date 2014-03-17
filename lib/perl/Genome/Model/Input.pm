@@ -22,7 +22,6 @@ class Genome::Model::Input {
         model_id => {
             is => 'Text',
             len => 32,
-            is_deprecated => 1,
         },
         name => {
             is => 'VARCHAR2',
@@ -51,21 +50,6 @@ class Genome::Model::Input {
         _model_value => {
             is => 'Genome::Model',
             id_by => 'value_id',
-        },
-    ],
-    has_deprecated => [
-        # this is the mate to model "inputs" intead of "input_associations"
-        # the former is ambiguous, the later distinguishes between input_associations and input_values
-        _model => {
-            is => 'Genome::Model',
-            id_by => 'model_id',
-        },
-
-        # this sort of thing only existed for listers and is no longer needed with the dot syntax
-        # remove when possible
-        model_name => {
-            via => 'model',
-            to => 'name',
         },
     ],
     schema_name => 'GMSchema',

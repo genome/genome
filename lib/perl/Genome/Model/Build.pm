@@ -98,11 +98,11 @@ class Genome::Model::Build {
     ],
     has_many_optional => [
         input_values => {
-            via => 'input_associations',
+            via => 'inputs',
             to => 'value',
             doc => "The values associated with a build's input associations.",
         },
-        input_associations => {
+        inputs => {
             is => 'Genome::Model::Build::Input',
             reverse_as => 'build',
             doc => 'Links between a build and its input values, including the specification of which input the value satisfies.'
@@ -121,7 +121,7 @@ class Genome::Model::Build {
 
         instrument_data  => {
             is => 'Genome::InstrumentData',
-            via => 'input_associations',
+            via => 'inputs',
             to => 'value',
             is_mutable => 1,
             where => [ name => 'instrument_data' ],
@@ -193,8 +193,6 @@ class Genome::Model::Build {
         }, 
     ],
     has_many_optional_deprecated => [
-        inputs => { is => 'Genome::Model::Build::Input', via => '__self__', to => 'input_associations' },
-        
         # the_* ?
         # I don't believe anythign which uses events actually needs these
         the_events => { is => 'Genome::Model::Event', to => '_events', via => '__self__' },
