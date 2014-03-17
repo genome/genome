@@ -25,6 +25,7 @@ class Genome::Model::Tools::EpitopePrediction::ParseNetmhcOutput {
         },
         key_file => {
             is  => 'Text',
+            is_optional => 1,
             doc => 'Key file for lookup of FASTA IDs'
         },
         netmhc_version => {
