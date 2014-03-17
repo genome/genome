@@ -117,24 +117,15 @@ sub execute {
     open( LOG_MOD, ">$out_dir/proteome-mod-indel.log" );
     open( STAT,    ">$out_dir/proteome-mod-indel.stat" );
 
-    my $line                                    = "";
-    my %chr                                     = ();
-    my %bed                                     = ();
-    my %seq                                     = ();
-
+    my (%chr, %bed);
     my $ifh = Genome::Sys->open_file_for_reading($filename);
-    while (my $line = $ifh->getline) { 
-        chomp($line);
-        if ( $line =~
-            /^([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)$/
-        )
-        {
-            my $chr  = $1;
-            my $name = $4;
-            $bed{$name} = $line;
-            $chr{$chr} .= "#$name#";
-        }
-        else { print LOG qq!Error parsing: $line!; }
+    while (my $line = $ifh->getline) {
+        chomp $line;
+        my @fields = split("\t", $line);
+        my $chr  = $fields[0];
+        my $name = $fields[3];
+        $bed{$name} = $line;
+        $chr{$chr} .= "#$name#";
     }
     $ifh->close;
 
