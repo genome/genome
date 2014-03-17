@@ -318,7 +318,6 @@ sub _last_succeeded_build_from_model_for_instrument_data {
     my $variation_list_build = $self->variation_list_build;
     my @builds = sort { $b->date_completed cmp $a->date_completed } Genome::Model::Build::GenotypeMicroarray->get(
         instrument_data => [ $instrument_data ],
-        reference_sequence_build => $variation_list_build->reference,
         dbsnp_build => $variation_list_build,
         status => 'Succeeded',
     );

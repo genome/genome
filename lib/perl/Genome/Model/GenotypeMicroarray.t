@@ -90,16 +90,18 @@ sub test_dependent_cron_ref_align_init {
 
     my $build_36 = Genome::Model::Build::ReferenceSequence->get(name => 'NCBI-human-build36');
     isa_ok($build_36, 'Genome::Model::Build::ReferenceSequence', 'build_36') or return;
+    my $dbsnp_36 = Genome::Model::ImportedVariationList->dbsnp_build_for_reference($build_36); # FIXME!
 
     my $build_37 = Genome::Model::Build::ReferenceSequence->get(name => 'GRCh37-lite-build37');
     isa_ok($build_37, 'Genome::Model::Build::ReferenceSequence', 'build_37') or return;
+    my $dbsnp_37 = Genome::Model::ImportedVariationList->dbsnp_build_for_reference($build_37); # FIXME!
 
     my $gm_m = Genome::Model::GenotypeMicroarray->create(
         name => 'Test Genotype Microarray',
         processing_profile => $gm_pp,
         subject_id => $subject->id,
         subject_class_name => $subject->class,
-        reference_sequence_build => $build_36,
+        dbsnp_build => $dbsnp_36,
         instrument_data => [$genotype_data],
     );
     isa_ok($gm_m, 'Genome::Model::GenotypeMicroarray', 'gm_m') or return;
@@ -109,7 +111,7 @@ sub test_dependent_cron_ref_align_init {
         processing_profile => $gm_pp,
         subject_id => $subject->id,
         subject_class_name => $subject->class,
-        reference_sequence_build => $build_36,
+        dbsnp_build => $dbsnp_36,
     );
     isa_ok($alt_gm_m, 'Genome::Model::GenotypeMicroarray', 'alt_gm_m') or return;
 

@@ -105,6 +105,7 @@ for my $sub_command (@sub_commands) {
     next unless -e $actual_dir;
 
     my @diff = `diff -r $expected_out $actual_out`;
+    #print "diff -r $expected_out $actual_out\n"; <STDIN>;
     is(scalar(@diff), 0, "no differences between actual output and expected output for $sub_command")
         or do {
             for(@diff) { diag($_) };

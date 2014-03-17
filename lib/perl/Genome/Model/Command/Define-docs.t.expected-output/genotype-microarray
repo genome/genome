@@ -1,15 +1,15 @@
 
 [4mUSAGE[0m
- [1mgenome model define genotype-microarray[0m --processing-profile-name=? --reference=?
-    [--auto-assign-inst-data] [--subject-name=?] [--auto-build-alignments] --processing-profile=?
-    [--add-to-projects=?[,?]] [--instrument-data=?[,?]] [--subject=?] [--groups=?[,?]]
-    [--model-name=?]
+ [1mgenome model define genotype-microarray[0m --processing-profile-name=?
+    --variation-list-build=? [--auto-assign-inst-data] [--subject-name=?] [--auto-build-alignments]
+    --processing-profile=? [--add-to-projects=?[,?]] [--instrument-data=?[,?]] [--subject=?]
+    [--groups=?[,?]] [--model-name=?]
 
 [4mSYNOPSIS[0m
 genome model define genotype-microarray 
   --subject-name SAMPLE_NAME 
   --processing-profile-name PROCESSING_PROFILE_NAME 
-  --reference GRCh37-lite-build37
+  --variation-list-build GRCh37-lite-build37
 
 [4mREQUIRED INPUTS[0m
   [1mprocessing-profile[0m
@@ -18,8 +18,8 @@ genome model define genotype-microarray
 [4mREQUIRED PARAMS[0m
   [1mprocessing-profile-name[0m
     (undocumented) 
-  [1mreference[0m
-    reference sequence build for this model 
+  [1mvariation-list-build[0m
+    Variation list [DBSNP] build for this model. 
 
 [4mOPTIONAL INPUTS[0m
   [1madd-to-projects[0m
