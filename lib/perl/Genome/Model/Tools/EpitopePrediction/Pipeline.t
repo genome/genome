@@ -88,5 +88,27 @@ subtest "with somatic variation build" => sub {
     compare_ok(File::Spec->join($cmd->output_directory, $cmd->final_output_file_name), $expected_output, "Output file is as expected");
 };
 
+subtest "with NetMHC version 3.0" => sub {
+    my $input_file = File::Spec->join($test_dir, "input.tsv");
+    my $output_dir = Genome::Sys->create_temp_directory;
+    $expected_output = File::Spec->join($test_dir, "parsed_file.3.0.all");
 
+    my $cmd = $class->create(
+        input_tsv_file => $input_file,
+        output_directory => $output_dir,
+        allele =>'A0201',
+        epitope_length => 9,
+        output_filter => 'all',
+        anno_db => 'NCBI-human.ensembl',
+        anno_db_version => '67_37l_v2',
+        sample_name => 'test',
+        netmhc_version => '3.0',
+    );
+
+    ok($cmd, "Created a command");
+
+    ok($cmd->execute, "Command executed");
+
+    compare_ok(File::Spec->join($cmd->output_directory, $cmd->final_output_file_name), $expected_output, "Output file is as expected");
+};
 done_testing();
