@@ -12,16 +12,19 @@ my $class = 'Genome::Model::Tools::EpitopePrediction::ParseNetmhcOutput';
 use_ok($class);
 
 my $test_dir = Genome::Utility::Test->data_dir_ok($class, $TEST_DATA_VERSION);
-my $netmhc_file = File::Spec->join($test_dir, "netmhc_file.xls");
 my $key_file = File::Spec->join($test_dir, "key_file.txt");
-for my $output_type (qw(all top)) {
-    test_for_output_type($output_type, $test_dir, $netmhc_file, $key_file);
+
+for my $netmhc_version (qw(3.0 3.4)) {
+    my $netmhc_file = File::Spec->join($test_dir, "netmhc_file.$netmhc_version.xls");
+    for my $output_type (qw(all top)) {
+        test_for_output_type($output_type, $test_dir, $netmhc_file, $netmhc_version, $key_file);
+    }
 }
 
 sub test_for_output_type {
-    my ($output_type, $test_dir, $netmhc_file, $key_file) = @_;
+    my ($output_type, $test_dir, $netmhc_file, $netmhc_version, $key_file) = @_;
 
-    my $expected_output = File::Spec->join($test_dir, "parsed_file." . $output_type);
+    my $expected_output = File::Spec->join($test_dir, "parsed_file.$netmhc_version.$output_type");
     my $output_dir = Genome::Sys->create_temp_directory;
 
     my $cmd = $class->create(
@@ -29,6 +32,7 @@ sub test_for_output_type {
         output_directory => $output_dir,
         key_file => $key_file,
         output_type => $output_type,
+        netmhc_version => $netmhc_version,
     );
     ok($cmd, "Created a command for output type $output_type");
 

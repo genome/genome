@@ -27,6 +27,13 @@ class Genome::Model::Tools::EpitopePrediction::ParseNetmhcOutput {
             is  => 'Text',
             doc => 'Key file for lookup of FASTA IDs'
         },
+        netmhc_version => {
+            is => 'Text',
+            doc => 'NetMHC version to use',
+            valid_values => ['3.0','3.4'],
+            default_value => '3.4',
+            is_optional => 1,
+        },
     ],
     has_output => [
         parsed_file => {
@@ -55,7 +62,7 @@ sub execute {
     my $input_fh  = Genome::Sys->open_file_for_reading($self->netmhc_file);
     my $output_fh = Genome::Sys->open_file_for_writing($self->parsed_file);
 
-    my $key_hash = $self->key_hash();
+    my $key_hash = $self->key_hash() if $self->netmhc_version eq '3.4';
     my ($netmhc_results, $epitope_seq) = $self->make_hashes_from_input($key_hash);
 
     $self->print_header($output_fh);
@@ -151,27 +158,32 @@ sub make_hashes_from_input {
     while (my $line = $input_fh->getline) {
         chomp $line;
 
-        if ($line =~ /^Entry/) {
-            my @result_arr = split(/\t/, $line);
+        my @result_arr = split(/\t/, $line);
 
-            my $position         = $result_arr[1];
-            my $score            = $result_arr[3];
-            my $epitope          = $result_arr[2];
-            my $protein_new_name = $result_arr[0];
+        my $position         = $result_arr[1];
+        my $score            = $result_arr[3];
+        my $epitope          = $result_arr[2];
+        my $protein_new_name = $result_arr[0];
 
+        my (@protein_arr);
+        if ($self->netmhc_version eq '3.4' && $line =~ /^Entry/) {
             if (exists($key_hash->{$protein_new_name})) {
                 my $protein = $key_hash->{$protein_new_name}{'name'};
-                my @protein_arr = split(/\./, $protein);
-
-                my $protein_type = $protein_arr[0];
-                my $protein_name = $protein_arr[1];
-                my $variant_aa   = $protein_arr[3];
-
-                $netmhc_results{$protein_type}{$protein_name}{$variant_aa}{$position} = $score;
-                $epitope_seq{$protein_type}{$protein_name}{$variant_aa}{$position}    = $epitope;
-
+                @protein_arr = split(/\./, $protein);
             }
         }
+        elsif ( $self->netmhc_version eq '3.0' && ( ($line =~ /^MT/) || ($line =~ /^WT/) ) )  {
+            @protein_arr = split (/\./,$protein_new_name);
+        }
+        else {
+            next;
+        }
+        my $protein_type = $protein_arr[0];
+        my $protein_name = $protein_arr[1];
+        my $variant_aa =  $protein_arr[3];
+
+        $netmhc_results{$protein_type}{$protein_name}{$variant_aa}{$position} = $score;
+        $epitope_seq{$protein_type}{$protein_name}{$variant_aa}{$position} = $epitope;
     }
 
     close($input_fh);
