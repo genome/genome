@@ -41,7 +41,7 @@ is_deeply(\@solexa_id, \@compatible_id, 'overload compatible instrument data');
 
 # Fails
 my $assign = Genome::Model::Command::InstrumentData::Assign::AllCompatible->create();
-ok(!$assign, 'create w/o model fails');
+ok(!$assign->execute, 'create w/o model fails');
 
 # Success
 $assign = Genome::Model::Command::InstrumentData::Assign::AllCompatible->create(
