@@ -205,348 +205,342 @@ sub execute {
                 my $name     = $1;
                 my $modified = 0;
 
-                if ( $bed{$name} =~
-                    /^([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)$/
+                my (undef, $start, $end, undef, undef, $strand, undef, undef, undef, $num, $segment_lengths, $segment_starts) = split("\t", $bed{$name});
+
+
+                # TODO else { print LOG qq!Error parsing $bed{$name}\n!; }
+                $segment_lengths .= ",";
+                $segment_starts .= ",";
+                my $segment_lengths_extended = $segment_lengths;
+                my $segment_starts_extended  = $segment_starts;
+
+                my $seq_original     = "";
+                my $segment_starts_  = $segment_starts;
+                my $segment_lengths_ = $segment_lengths;
+                my $accu_c           = 0;
+                while ( $segment_starts_ =~ s/^([0-9\-]+)\,// ) {
+                    my $segment_start = $1;
+                    if ( $segment_lengths_ =~ s/^([0-9]+)\,// ) {
+                        my $segment_length = $1;
+
+                        my $seq_ = substr $sequence,
+                        $start + $segment_start, $segment_length;
+                        for (
+                            my $pos = 1 ;
+                            $pos <= $segment_length ;
+                            $pos++
+                        )
+                        {
+                            $seq_chr_pos{$accu_c} =
+                            $start + $segment_start + $pos - 1;
+                            $accu_c++;
+                        }
+                        $seq_original .= $seq_;
+
+                    }
+                    else {
+                        print LOG qq!Error parsing $bed{$name}\n!;
+                    }
+                }
+
+                my $seq             = $seq_original;
+                my $seq_original_rc = reverse $seq_original;
+                $seq_original_rc =~ tr/ATCG/TAGC/;
+
+                my $description_        = "";
+                my %variants            = ();
+                my %variants_           = ();
+                my %variants2           = ();
+                my %variants2_          = ();
+                my $variant_loc         = "";
+                my $seqment_lengths_sum = 0;
+                my $seqment_count       = 0;
+                my $num_indel           = 0;
+                my $segment_start_first = 0;
+
+                $segment_start_first = 0;
+
+                for (
+                    my $i = length($seq_original) - 1 ;
+                    $i >= 0 ;
+                    $i--
                 )
                 {
-                    my $start                    = $2;
-                    my $end                      = $3;
-                    my $strand                   = $6;
-                    my $num                      = $10;
-                    my $segment_lengths          = "$11,";
-                    my $segment_starts           = "$12,";
-                    my $segment_lengths_extended = "$11,";
-                    my $segment_starts_extended  = "$12,";
+                    my $var_pos = $seq_chr_pos{$i};
 
-                    my $seq_original     = "";
-                    my $segment_starts_  = $segment_starts;
-                    my $segment_lengths_ = $segment_lengths;
-                    my $accu_c           = 0;
-                    while ( $segment_starts_ =~ s/^([0-9\-]+)\,// ) {
-                        my $segment_start = $1;
-                        if ( $segment_lengths_ =~ s/^([0-9]+)\,// ) {
-                            my $segment_length = $1;
+                    if ( defined $vcf_old{"$chr#$var_pos"} ) {
 
-                            my $seq_ = substr $sequence,
-                            $start + $segment_start, $segment_length;
-                            for (
-                                my $pos = 1 ;
-                                $pos <= $segment_length ;
-                                $pos++
-                            )
-                            {
-                                $seq_chr_pos{$accu_c} =
-                                $start + $segment_start + $pos - 1;
-                                $accu_c++;
-                            }
-                            $seq_original .= $seq_;
+                        print $name,    "\n";
+                        print $var_pos, "\n";
+                        print $vcf_old{"$chr#$var_pos"}, "\n";
+                        print $vcf_new{"$chr#$var_pos"}, "\n";
 
+                        my $leno;
+                        my $lenn;
+                        if ( $vcf_old{"$chr#$var_pos"} eq "-" ) {
+                            $leno = 0;
                         }
                         else {
-                            print LOG qq!Error parsing $bed{$name}\n!;
+                            $leno =
+                            length( $vcf_old{"$chr#$var_pos"} );
                         }
-                    }
+                        if ( $vcf_new{"$chr#$var_pos"} eq "-" ) {
+                            $lenn = 0;
+                        }
+                        else {
+                            $lenn =
+                            length( $vcf_new{"$chr#$var_pos"} );
+                        }
+                        $num_indel++;
+                        my $inframe;
+                        if ( abs( $leno - $lenn ) % 3 == 0 ) {
+                            $inframe = 1;
+                        }
+                        else { $inframe = 0; }
+                        if ( $strand =~ /\-/ ) {
 
-                    my $seq             = $seq_original;
-                    my $seq_original_rc = reverse $seq_original;
-                    $seq_original_rc =~ tr/ATCG/TAGC/;
-
-                    my $description_        = "";
-                    my %variants            = ();
-                    my %variants_           = ();
-                    my %variants2           = ();
-                    my %variants2_          = ();
-                    my $variant_loc         = "";
-                    my $seqment_lengths_sum = 0;
-                    my $seqment_count       = 0;
-                    my $num_indel           = 0;
-                    my $segment_start_first = 0;
-
-                    $segment_start_first = 0;
-
-                    for (
-                        my $i = length($seq_original) - 1 ;
-                        $i >= 0 ;
-                        $i--
-                    )
-                    {
-                        my $var_pos = $seq_chr_pos{$i};
-
-                        if ( defined $vcf_old{"$chr#$var_pos"} ) {
-
-                            print $name,    "\n";
-                            print $var_pos, "\n";
-                            print $vcf_old{"$chr#$var_pos"}, "\n";
-                            print $vcf_new{"$chr#$var_pos"}, "\n";
-
-                            my $leno;
-                            my $lenn;
-                            if ( $vcf_old{"$chr#$var_pos"} eq "-" ) {
-                                $leno = 0;
-                            }
-                            else {
-                                $leno =
-                                length( $vcf_old{"$chr#$var_pos"} );
-                            }
-                            if ( $vcf_new{"$chr#$var_pos"} eq "-" ) {
-                                $lenn = 0;
-                            }
-                            else {
-                                $lenn =
-                                length( $vcf_new{"$chr#$var_pos"} );
-                            }
-                            $num_indel++;
-                            my $inframe;
-                            if ( abs( $leno - $lenn ) % 3 == 0 ) {
-                                $inframe = 1;
-                            }
-                            else { $inframe = 0; }
-                            if ( $strand =~ /\-/ ) {
-
-                                if ( $vcf_new{"$chr#$var_pos"} eq "-" )
-                                {
-                                    my $rev_pos =
-                                    length($seq_original) -
-                                    $i -
-                                    $leno;
-                                    my $left_3 = ( $rev_pos + 1 ) % 3;
-                                    my $int_3s =
-                                    int( ( $rev_pos + 1 ) / 3 ) + 1;
-                                    my $int_3e = int(
-                                        ( $rev_pos + $leno + 1 ) / 3 ) +
-                                    1;
-                                    if ( $inframe == 1 ) {
-                                        $description_ .=
-                                        "(DEL:" 
-                                        . $chr . "-"
-                                        . $var_pos . "-"
-                                        . $leno . "-"
-                                        . $vcf_type{"$chr#$var_pos"}
-                                        . ":"
-                                        . $int_3s
-                                        . "in_frame_del";
-                                    }
-                                    else {
-                                        $description_ .=
-                                        "(DEL:" 
-                                        . $chr . "-"
-                                        . $var_pos . "-"
-                                        . $leno . "-"
-                                        . $vcf_type{"$chr#$var_pos"}
-                                        . ":"
-                                        . $int_3s . "fs";
-                                    }
-                                }
-
-                                else {
-                                    my $rev_pos =
-                                    length($seq_original) -
-                                    $i -
-                                    $leno;
-                                    my $left_3 = ( $rev_pos + 1 ) % 3;
-                                    my $int_3s =
-                                    int( ( $rev_pos + 1 ) / 3 ) + 1;
-                                    my $int_3e = int(
-                                        ( $rev_pos + $lenn + 1 ) / 3 ) +
-                                    1;
-                                    if ( $inframe == 1 ) {
-                                        $description_ .=
-                                        "(INS:" 
-                                        . $chr . "-"
-                                        . $var_pos . "-"
-                                        . $lenn . "-"
-                                        . $vcf_type{"$chr#$var_pos"}
-                                        . ":"
-                                        . $int_3s . "-"
-                                        . $int_3e
-                                        . "in_frame_ins";
-                                    }
-                                    else {
-                                        $description_ .=
-                                        "(INS:" 
-                                        . $chr . "-"
-                                        . $var_pos . "-"
-                                        . $lenn . "-"
-                                        . $vcf_type{"$chr#$var_pos"}
-                                        . ":"
-                                        . $int_3s . "fs";
-                                    }
-                                }
-
-                            }
-
-                            else {
-                                if ( $vcf_new{"$chr#$var_pos"} eq "-" )
-                                {
-                                    my $left_3 = ( $i + 1 ) % 3;
-
-                                    my $int_3s =
-                                    int( ( $i + 1 ) / 3 ) + 1;
-
-                                    my $int_3e =
-                                    int( ( $i + $leno + 1 ) / 3 ) + 1;
-                                    if ( $inframe == 1 ) {
-                                        $description_ .=
-                                        "(DEL:" 
-                                        . $chr . "-"
-                                        . $var_pos . "-"
-                                        . $leno . "-"
-                                        . $vcf_type{"$chr#$var_pos"}
-                                        . ":"
-                                        . $int_3s
-                                        . "in_frame_del";
-                                    }
-                                    else {
-                                        $description_ .=
-                                        "(DEL:" 
-                                        . $chr . "-"
-                                        . $var_pos . "-"
-                                        . $leno . "-"
-                                        . $vcf_type{"$chr#$var_pos"}
-                                        . ":"
-                                        . $int_3s . "fs";
-                                    }
+                            if ( $vcf_new{"$chr#$var_pos"} eq "-" )
+                            {
+                                my $rev_pos =
+                                length($seq_original) -
+                                $i -
+                                $leno;
+                                my $left_3 = ( $rev_pos + 1 ) % 3;
+                                my $int_3s =
+                                int( ( $rev_pos + 1 ) / 3 ) + 1;
+                                my $int_3e = int(
+                                    ( $rev_pos + $leno + 1 ) / 3 ) +
+                                1;
+                                if ( $inframe == 1 ) {
+                                    $description_ .=
+                                    "(DEL:" 
+                                    . $chr . "-"
+                                    . $var_pos . "-"
+                                    . $leno . "-"
+                                    . $vcf_type{"$chr#$var_pos"}
+                                    . ":"
+                                    . $int_3s
+                                    . "in_frame_del";
                                 }
                                 else {
-                                    my $left_3 = ( $i + 1 ) % 3;
-                                    my $int_3s =
-                                    int( ( $i + 1 ) / 3 ) + 1;
-                                    my $int_3e =
-                                    int( ( $i + $lenn + 1 ) / 3 ) + 1;
-                                    if ( $inframe == 1 ) {
-                                        $description_ .=
-                                        "(INS:" 
-                                        . $chr . "-"
-                                        . $var_pos . "-"
-                                        . $lenn . "-"
-                                        . $vcf_type{"$chr#$var_pos"}
-                                        . ":"
-                                        . $int_3s . "-"
-                                        . $int_3e
-                                        . "in_frame_ins";
-                                    }
-                                    else {
-                                        $description_ .=
-                                        "(INS:" 
-                                        . $chr . "-"
-                                        . $var_pos . "-"
-                                        . $lenn . "-"
-                                        . $vcf_type{"$chr#$var_pos"}
-                                        . ":"
-                                        . $int_3s . "fs";
-                                    }
+                                    $description_ .=
+                                    "(DEL:" 
+                                    . $chr . "-"
+                                    . $var_pos . "-"
+                                    . $leno . "-"
+                                    . $vcf_type{"$chr#$var_pos"}
+                                    . ":"
+                                    . $int_3s . "fs";
                                 }
                             }
 
-
-                            my $seql = substr( $seq, 0, $i );
-                            print $seql, "\n";
-                            my $seqr =
-                            substr( $seq, $i + $leno,
-                                length($seq) - length($seql) - $leno );
-
-                            if ( $lenn >= 1 ) {
-                                $seq =
-                                $seql
-                                . $vcf_new{"$chr#$var_pos"}
-                                . $seqr;
+                            else {
+                                my $rev_pos =
+                                length($seq_original) -
+                                $i -
+                                $leno;
+                                my $left_3 = ( $rev_pos + 1 ) % 3;
+                                my $int_3s =
+                                int( ( $rev_pos + 1 ) / 3 ) + 1;
+                                my $int_3e = int(
+                                    ( $rev_pos + $lenn + 1 ) / 3 ) +
+                                1;
+                                if ( $inframe == 1 ) {
+                                    $description_ .=
+                                    "(INS:" 
+                                    . $chr . "-"
+                                    . $var_pos . "-"
+                                    . $lenn . "-"
+                                    . $vcf_type{"$chr#$var_pos"}
+                                    . ":"
+                                    . $int_3s . "-"
+                                    . $int_3e
+                                    . "in_frame_ins";
+                                }
+                                else {
+                                    $description_ .=
+                                    "(INS:" 
+                                    . $chr . "-"
+                                    . $var_pos . "-"
+                                    . $lenn . "-"
+                                    . $vcf_type{"$chr#$var_pos"}
+                                    . ":"
+                                    . $int_3s . "fs";
+                                }
                             }
-                            else { $seq = $seql . $seqr; }
+
                         }
+
+                        else {
+                            if ( $vcf_new{"$chr#$var_pos"} eq "-" )
+                            {
+                                my $left_3 = ( $i + 1 ) % 3;
+
+                                my $int_3s =
+                                int( ( $i + 1 ) / 3 ) + 1;
+
+                                my $int_3e =
+                                int( ( $i + $leno + 1 ) / 3 ) + 1;
+                                if ( $inframe == 1 ) {
+                                    $description_ .=
+                                    "(DEL:" 
+                                    . $chr . "-"
+                                    . $var_pos . "-"
+                                    . $leno . "-"
+                                    . $vcf_type{"$chr#$var_pos"}
+                                    . ":"
+                                    . $int_3s
+                                    . "in_frame_del";
+                                }
+                                else {
+                                    $description_ .=
+                                    "(DEL:" 
+                                    . $chr . "-"
+                                    . $var_pos . "-"
+                                    . $leno . "-"
+                                    . $vcf_type{"$chr#$var_pos"}
+                                    . ":"
+                                    . $int_3s . "fs";
+                                }
+                            }
+                            else {
+                                my $left_3 = ( $i + 1 ) % 3;
+                                my $int_3s =
+                                int( ( $i + 1 ) / 3 ) + 1;
+                                my $int_3e =
+                                int( ( $i + $lenn + 1 ) / 3 ) + 1;
+                                if ( $inframe == 1 ) {
+                                    $description_ .=
+                                    "(INS:" 
+                                    . $chr . "-"
+                                    . $var_pos . "-"
+                                    . $lenn . "-"
+                                    . $vcf_type{"$chr#$var_pos"}
+                                    . ":"
+                                    . $int_3s . "-"
+                                    . $int_3e
+                                    . "in_frame_ins";
+                                }
+                                else {
+                                    $description_ .=
+                                    "(INS:" 
+                                    . $chr . "-"
+                                    . $var_pos . "-"
+                                    . $lenn . "-"
+                                    . $vcf_type{"$chr#$var_pos"}
+                                    . ":"
+                                    . $int_3s . "fs";
+                                }
+                            }
+                        }
+
+
+                        my $seql = substr( $seq, 0, $i );
+                        print $seql, "\n";
+                        my $seqr =
+                        substr( $seq, $i + $leno,
+                            length($seq) - length($seql) - $leno );
+
+                        if ( $lenn >= 1 ) {
+                            $seq =
+                            $seql
+                            . $vcf_new{"$chr#$var_pos"}
+                            . $seqr;
+                        }
+                        else { $seq = $seql . $seqr; }
+                    }
+                }
+
+                my $name_ = $name;
+                $name_ =~ s/\-[^\-]+$//;
+
+                my $protein          = "";
+                my $protein_original = "";
+
+                if ( $strand =~ /\-/ ) {
+                    my $seq_ = reverse $seq;
+                    $seq = $seq_;
+                    $seq =~ tr/ATCG/TAGC/;
+                    $seq_         = reverse $seq_original;
+                    $seq_original = $seq_;
+                    $seq_original =~ tr/ATCG/TAGC/;
+                }
+
+                for (
+                    my $n = 0 ;
+                    $n < length($seq_original) ;
+                    $n = $n + 3
+                )
+                {
+                    my $triplet = substr( $seq_original, $n, 3 );
+                    if ( length($triplet) == 3 ) {
+                        if ( $mapping{$triplet} !~ /[\w\*]/ ) {
+                            $mapping{$triplet} = "X";
+                        }
+                        $protein_original .= $mapping{$triplet};
+                    }
+                }
+
+                my $stop_found    = 0;
+                my $triplet_count = 0;
+
+                for (
+                    my $n = 0 ;
+                    $n < length($seq) and $stop_found == 0 ;
+                    $n = $n + 3
+                )
+                {
+                    my $n_ = $n + 2;
+
+                    my $triplet = substr( $seq, $n, 3 );
+                    if ( length($triplet) == 3 ) {
+
+                        if ( $mapping{$triplet} !~ /[\w\*]/ ) {
+                            $mapping{$triplet} = "X";
+                        }
+
+                        if ( $mapping{$triplet} =~ /\*/ ) {
+                            $stop_found = 1;
+                        }
+                        $protein .= $mapping{$triplet};
                     }
 
-                    my $name_ = $name;
-                    $name_ =~ s/\-[^\-]+$//;
+                    $triplet_count++;
+                }
 
-                    my $protein          = "";
-                    my $protein_original = "";
+                $protein_original =~ s/\*$//;
 
-                    if ( $strand =~ /\-/ ) {
-                        my $seq_ = reverse $seq;
-                        $seq = $seq_;
-                        $seq =~ tr/ATCG/TAGC/;
-                        $seq_         = reverse $seq_original;
-                        $seq_original = $seq_;
-                        $seq_original =~ tr/ATCG/TAGC/;
-                    }
+                if ( $protein_original =~ /^([^\*]+)\*.*$/ ) {
+                    print LOG
+                    qq!Error: Stop codon found in middle of sequence:$name \n$protein_original\n!;
+                    $protein_original = "";
+                }
 
-                    for (
-                        my $n = 0 ;
-                        $n < length($seq_original) ;
-                        $n = $n + 3
-                    )
+                $protein =~ s/\*$//;
+                $protein =~ s/^([^\*]+)\*.*$//;
+
+                if (   ( $protein ne $protein_original )
+                    && ( $num_indel == 1 ) )
+                {
+
+                    print "original protein\n";
+                    print $protein_original, "\n";
+                    print "modified protein\n";
+                    print $protein, "\n";
+
+                    if ( length($protein) > 6
+                            and $protein !~ /^\*/ )
                     {
-                        my $triplet = substr( $seq_original, $n, 3 );
-                        if ( length($triplet) == 3 ) {
-                            if ( $mapping{$triplet} !~ /[\w\*]/ ) {
-                                $mapping{$triplet} = "X";
-                            }
-                            $protein_original .= $mapping{$triplet};
-                        }
-                    }
+                        print OUT
+                        qq!>$name (MAP:$chr:$start$strand $segment_lengths $segment_starts)\n$protein_original\n!;
+                        $description_ .= ")";
 
-                    my $stop_found    = 0;
-                    my $triplet_count = 0;
-
-                    for (
-                        my $n = 0 ;
-                        $n < length($seq) and $stop_found == 0 ;
-                        $n = $n + 3
-                    )
-                    {
-                        my $n_ = $n + 2;
-
-                        my $triplet = substr( $seq, $n, 3 );
-                        if ( length($triplet) == 3 ) {
-
-                            if ( $mapping{$triplet} !~ /[\w\*]/ ) {
-                                $mapping{$triplet} = "X";
-                            }
-
-                            if ( $mapping{$triplet} =~ /\*/ ) {
-                                $stop_found = 1;
-                            }
-                            $protein .= $mapping{$triplet};
-                        }
-
-                        $triplet_count++;
-                    }
-
-                    $protein_original =~ s/\*$//;
-
-                    if ( $protein_original =~ /^([^\*]+)\*.*$/ ) {
-                        print LOG
-                        qq!Error: Stop codon found in middle of sequence:$name \n$protein_original\n!;
-                        $protein_original = "";
-                    }
-
-                    $protein =~ s/\*$//;
-                    $protein =~ s/^([^\*]+)\*.*$//;
-
-                    if (   ( $protein ne $protein_original )
-                        && ( $num_indel == 1 ) )
-                    {
-
-                        print "original protein\n";
-                        print $protein_original, "\n";
-                        print "modified protein\n";
-                        print $protein, "\n";
-
-                        if ( length($protein) > 6
-                                and $protein !~ /^\*/ )
-                        {
-                            print OUT
-                            qq!>$name (MAP:$chr:$start$strand $segment_lengths $segment_starts)\n$protein_original\n!;
-                            $description_ .= ")";
-
-                            print OUT_MOD
-                            qq!>$name-indel (MAP:$chr:$start$strand $segment_lengths $segment_starts) $description_\n$protein\n!;
-                        }
-
+                        print OUT_MOD
+                        qq!>$name-indel (MAP:$chr:$start$strand $segment_lengths $segment_starts) $description_\n$protein\n!;
                     }
 
                 }
-                else { print LOG qq!Error parsing $bed{$name}\n!; }
+
             }
         }
         else { print LOG qq!Error in name $chr: $line\n!; }
