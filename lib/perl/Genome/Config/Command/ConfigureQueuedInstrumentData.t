@@ -39,7 +39,7 @@ $config_hash->{auto_assign_inst_data} = 1;
 my $rna_model = Genome::Model::RnaSeq->create(%{$config_hash});
 build_and_run_cmd($rna_instrument_data);
 assert_succeeded($rna_instrument_data, $model_types);
-is($rna_model->instrument_data->id, $rna_instrument_data->id, 'it assigned the instrument data to the existing model');
+is_deeply([$rna_model->instrument_data], [], 'it does not assign the instrument data to an existing model outside the analysis project');
 
 #existing model without auto assign inst data set
 ($rna_instrument_data, $model_types) = generate_rna_seq_instrument_data();

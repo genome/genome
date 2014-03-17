@@ -64,7 +64,8 @@ sub execute {
         eval {
             my $config = $analysis_project->get_configuration_profile();
             my $hashes = $self->_prepare_configuration_hashes_for_instrument_data($current_inst_data, $config);
-            while (my ($model_type, $model_hashes) = (each %$hashes)) {
+            for my $model_type (keys %$hashes) {
+                my $model_hashes = $hashes->{$model_type};
                 if ($model_type->requires_subject_mapping) {
                     $model_hashes = $self->_process_mapped_samples($analysis_project, $current_inst_data, $model_hashes);
                 }
@@ -90,13 +91,13 @@ sub _process_models {
     my $model_list = shift;
 
     for my $model_instance (@$model_list) {
-        my ($model, $created_new) = $self->_get_model_for_config_hash($model_type, $model_instance);
+        my ($model, $created_new) = $self->_get_model_for_config_hash($model_type, $model_instance, $analysis_project);
 
         $self->status_message(sprintf('Model: %s %s for instrument data: %s.',
                 $model->id, ($created_new ? 'created' : 'found'), $instrument_data->id ));
 
-        $self->_assign_instrument_data_to_model($model, $instrument_data, $created_new);
         $self->_assign_model_to_analysis_project($analysis_project, $model, $created_new);
+        $self->_assign_instrument_data_to_model($model, $instrument_data, $created_new);
         $self->_update_model($model);
         $self->_request_build_if_necessary($model, $created_new);
     }
@@ -107,14 +108,24 @@ sub _assign_instrument_data_to_model {
 
     #if a model is newly created, we want to assign all applicable instrument data to it
     my %params_hash = (model => $model);
+    my $executed_all_ok = 1;
     if ($newly_created && $model->auto_assign_inst_data) {
-        $params_hash{all} = 1;
+        for my $analysis_project ($model->analysis_projects) {
+            my $cmd = Genome::Model::Command::InstrumentData::Assign::AnalysisProject->create(
+                model => $model,
+                analysis_project => $analysis_project,
+            );
+            $executed_all_ok &&= $cmd->execute;
+        }
     } else {
-        $params_hash{instrument_data} = [$instrument_data];
+        my $cmd = Genome::Model::Command::InstrumentData::Assign::Expression->create(
+            model => $model,
+            instrument_data => [$instrument_data]
+        );
+        $executed_all_ok &&= $cmd->execute;
     }
 
-    my $cmd = Genome::Model::Command::InstrumentData::Assign->create(%params_hash);
-    unless ($cmd->execute()) {
+    unless ($executed_all_ok) {
         die(sprintf('Failed to assign %s to %s', $instrument_data->__display_name__,
                 $model->__display_name__));
     }
@@ -208,6 +219,7 @@ sub _get_model_for_config_hash {
     my $self = shift;
     my $class_name = shift;
     my $config = shift;
+    my $analysis_project = shift;
 
     my %read_config = %$config;
     for my $key (keys %read_config) {
@@ -219,7 +231,7 @@ sub _get_model_for_config_hash {
 
     my @extra_params = (auto_assign_inst_data => 1);
 
-    my @m = $class_name->get(@extra_params, %read_config);
+    my @m = $class_name->get(@extra_params, %read_config, analysis_projects => [$analysis_project]);
 
     if (scalar(@m) > 1) {
         die(sprintf("Sorry, but multiple identical models were found: %s", join(',', map { $_->id } @m)));
