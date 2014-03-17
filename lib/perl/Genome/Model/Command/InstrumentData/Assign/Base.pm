@@ -81,7 +81,7 @@ sub _assign_instrument_data {
             $instrument_data->id,
             $model->__display_name__,
         );
-        return 1;
+        return 0;
     }
     $assigned_instrument_data->{ $instrument_data->id }++;
 
