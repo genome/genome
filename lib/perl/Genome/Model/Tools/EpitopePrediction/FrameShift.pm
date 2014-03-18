@@ -248,22 +248,8 @@ sub execute {
                         print $vcf_old{"$chr#$var_pos"}, "\n";
                         print $vcf_new{"$chr#$var_pos"}, "\n";
 
-                        my $leno;
-                        my $lenn;
-                        if ( $vcf_old{"$chr#$var_pos"} eq "-" ) {
-                            $leno = 0;
-                        }
-                        else {
-                            $leno =
-                            length( $vcf_old{"$chr#$var_pos"} );
-                        }
-                        if ( $vcf_new{"$chr#$var_pos"} eq "-" ) {
-                            $lenn = 0;
-                        }
-                        else {
-                            $lenn =
-                            length( $vcf_new{"$chr#$var_pos"} );
-                        }
+                        my $leno = $vcf_old{"$chr#$var_pos"} eq "-" ? 0 : length( $vcf_old{"$chr#$var_pos"} );
+                        my $lenn = $vcf_new{"$chr#$var_pos"} eq "-" ? 0 : length( $vcf_new{"$chr#$var_pos"} );
                         $num_indel++;
                         my $inframe;
                         if ( abs( $leno - $lenn ) % 3 == 0 ) {
