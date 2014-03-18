@@ -94,10 +94,6 @@ sub create {
             return;
         }
     }
-    #TODO: Validate that all models have a Succeeded build or at minimum an Alignment Result and Cufflinks output
-    unless ($self->_validate_rna_seq_succeeded_build) {
-        return;
-    }
     return $self;
 }
 
@@ -268,6 +264,12 @@ sub _resolve_workflow_for_build {
 
     my $input_connector = $workflow->get_input_connector;
     my $output_connector = $workflow->get_output_connector;
+
+    #TODO: Validate that all models have a Succeeded build or at minimum an Alignment Result and Cufflinks output
+    unless ($self->_validate_rna_seq_succeeded_build) {
+        die "One or more input rnaseq models do not have a succeeded build. "
+            ."Please check your input models to make sure they have all succeeded.";
+    }
 
     # Convergence
     my $transcript_convergence_name = $self->transcript_convergence_name;
