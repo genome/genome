@@ -42,7 +42,7 @@ class Genome::Model::Command::Define::Base {
 sub inputs_for_model_class {
     return sort { $a->property_name cmp $b->property_name } 
     grep {
-        $_->property_name ne 'instrument_data'
+        $_->property_name ne 'instrument_data' and $_->property_name ne 'input_values'
     } grep { 
         $_->via and $_->via eq 'inputs'
     } $_[0]->__meta__->property_meta_for_name('_model_class')->default_value->__meta__->property_metas;
