@@ -253,36 +253,27 @@ sub execute {
                         $num_indel++;
                         my $inframe = ( abs( $length_old - $length_new ) % 3 == 0 ) ? 1 : 0;
                         my $frame_type = $inframe == 1 ? 'in_frame_del' : 'fs';
-                        my ($indel_type, $length, $int, $type);
+                        my ($int_3s, $int_3e);
                         if ( $strand =~ /\-/ ) {
                             my $rev_pos = length($seq_original) - $i - $length_old;
-                            my $int_3s = int( ( $rev_pos + 1 ) / 3 ) + 1;
-                            if ( $vcf_new{"$chr#$var_pos"} eq "-" ) {
-                                $indel_type = 'DEL';
-                                $length = $length_old;
-                                $int = $int_3s;
-                            }
-                            else {
-                                my $int_3e = int( ( $rev_pos + $length_new + 1 ) / 3 ) + 1;
-                                $indel_type = 'INS';
-                                $length = $length_new;
-                                $int = $inframe == 1 ? "$int_3s-$int_3e" : $int_3s;
-                            }
+                            $int_3s = int( ( $rev_pos + 1 ) / 3 ) + 1;
+                            $int_3e = int( ( $rev_pos + $length_new + 1 ) / 3 ) + 1;
                         }
 
                         else {
-                            my $int_3s = int( ( $i + 1 ) / 3 ) + 1;
-                            if ( $vcf_new{"$chr#$var_pos"} eq "-" ) {
-                                $indel_type = 'DEL';
-                                $length = $length_old;
-                                $int = $int_3s;
-                            }
-                            else {
-                                my $int_3e = int( ( $i + $length_new + 1 ) / 3 ) + 1;
-                                $indel_type = 'INS';
-                                $length = $length_new;
-                                $int = $inframe == 1 ? "$int_3s-$int_3e" : $int_3s;
-                            }
+                            $int_3s = int( ( $i + 1 ) / 3 ) + 1;
+                            $int_3e = int( ( $i + $length_new + 1 ) / 3 ) + 1;
+                        }
+                        my ($indel_type, $length, $int);
+                        if ( $vcf_new{"$chr#$var_pos"} eq "-" ) {
+                            $indel_type = 'DEL';
+                            $length = $length_old;
+                            $int = $int_3s;
+                        }
+                        else {
+                            $indel_type = 'INS';
+                            $length = $length_new;
+                            $int = $inframe == 1 ? "$int_3s-$int_3e" : $int_3s;
                         }
                         $description_ .=
                         "($indel_type:"
