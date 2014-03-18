@@ -114,7 +114,6 @@ sub execute {
     open( OUT_MOD, ">$out_dir/proteome-indel-mod.fasta" );
 
     open( LOG,     ">$out_dir/proteome-indel.log" );
-    open( LOG_MOD, ">$out_dir/proteome-mod-indel.log" );
 
     my (%chr, %bed);
     my $ifh = Genome::Sys->open_file_for_reading($filename);
@@ -142,6 +141,11 @@ sub execute {
         my $qaul = $fields[5];
         my $anno = $fields[6];
         my $type = $fields[7];
+        unless (defined $chr and defined $pos and defined $id and defined $old 
+                and defined $new and defined $qaul and defined $anno and defined $type) {
+            die $self->error_message("Failed to parse line: ($line)");
+        }
+
         $pos--;
         $new =~ s/\,.*$//;    #####
         print "pos=$pos", "\t", "id=$id", "\t", "old=$old", "\t",
@@ -380,5 +384,4 @@ sub execute {
     close(OUT_MOD);
 
     close(LOG);
-    close(LOG_MOD);
 }
