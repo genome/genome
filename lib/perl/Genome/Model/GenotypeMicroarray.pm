@@ -135,7 +135,6 @@ sub dependent_cron_ref_align {
     my @ref_align_models = Genome::Model::ReferenceAlignment->get(
         subject_id => [map { $_->id } @subjects],
         reference_sequence_build => $self->reference_sequence_build,
-        auto_assign_inst_data => 1, # our current way of saying auto-build, later to be a project relationship
     );
 
     # limit to models with a compatible reference sequence build
