@@ -261,12 +261,6 @@ sub execute {
                                 $int = $int_3s;
                                 $indel_type = 'DEL';
                                 $length = $length_old;
-                                if ( $inframe == 1 ) {
-                                    $frame_type = "in_frame_del";
-                                }
-                                else {
-                                    $frame_type = "fs";
-                                }
                             }
                             else {
                                 my $int_3e = int( ( $rev_pos + $length_new + 1 ) / 3 ) + 1;
@@ -274,29 +268,20 @@ sub execute {
                                 $length = $length_new;
                                 if ( $inframe == 1 ) {
                                     $int  = "$int_3s-$int_3e";
-                                    $frame_type = "in_frame_ins";
                                 }
                                 else {
                                     $int  = $int_3s;
-                                    $frame_type = "fs";
                                 }
                             }
                         }
 
                         else {
-                            my $left_3 = ( $i + 1 ) % 3;
                             my $int_3s = int( ( $i + 1 ) / 3 ) + 1;
                             if ( $vcf_new{"$chr#$var_pos"} eq "-" ) {
                                 my $int_3e = int( ( $i + $length_old + 1 ) / 3 ) + 1;
                                 $indel_type = 'DEL';
                                 $int = $int_3s;
                                 $length = $length_old;
-                                if ( $inframe == 1 ) {
-                                    $frame_type = "in_frame_del";
-                                }
-                                else {
-                                    $frame_type = "fs";
-                                }
                             }
                             else {
                                 my $int_3e = int( ( $i + $length_new + 1 ) / 3 ) + 1;
@@ -304,11 +289,9 @@ sub execute {
                                 $length = $length_new;
                                 if ( $inframe == 1 ) {
                                     $int  = "$int_3s-$int_3e";
-                                    $frame_type = "in_frame_ins";
                                 }
                                 else {
                                     $int  = $int_3s;
-                                    $frame_type = "fs";
                                 }
                             }
                         }
