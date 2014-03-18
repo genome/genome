@@ -258,41 +258,30 @@ sub execute {
                             my $rev_pos = length($seq_original) - $i - $length_old;
                             my $int_3s = int( ( $rev_pos + 1 ) / 3 ) + 1;
                             if ( $vcf_new{"$chr#$var_pos"} eq "-" ) {
-                                $int = $int_3s;
                                 $indel_type = 'DEL';
                                 $length = $length_old;
+                                $int = $int_3s;
                             }
                             else {
                                 my $int_3e = int( ( $rev_pos + $length_new + 1 ) / 3 ) + 1;
                                 $indel_type = 'INS';
                                 $length = $length_new;
-                                if ( $inframe == 1 ) {
-                                    $int  = "$int_3s-$int_3e";
-                                }
-                                else {
-                                    $int  = $int_3s;
-                                }
+                                $int = $inframe == 1 ? "$int_3s-$int_3e" : $int_3s;
                             }
                         }
 
                         else {
                             my $int_3s = int( ( $i + 1 ) / 3 ) + 1;
                             if ( $vcf_new{"$chr#$var_pos"} eq "-" ) {
-                                my $int_3e = int( ( $i + $length_old + 1 ) / 3 ) + 1;
                                 $indel_type = 'DEL';
-                                $int = $int_3s;
                                 $length = $length_old;
+                                $int = $int_3s;
                             }
                             else {
                                 my $int_3e = int( ( $i + $length_new + 1 ) / 3 ) + 1;
                                 $indel_type = 'INS';
                                 $length = $length_new;
-                                if ( $inframe == 1 ) {
-                                    $int  = "$int_3s-$int_3e";
-                                }
-                                else {
-                                    $int  = $int_3s;
-                                }
+                                $int = $inframe == 1 ? "$int_3s-$int_3e" : $int_3s;
                             }
                         }
                         $description_ .=
