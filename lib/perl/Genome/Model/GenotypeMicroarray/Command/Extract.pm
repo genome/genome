@@ -94,7 +94,7 @@ DOC
     },
     has_optional_transient => {
         alleles => { is => 'Hash', },
-        metrics => { is => 'Hash', },
+        metrics => { is => 'Hash', default_value => { input => 0, output => 0, }, },
         source => { is => 'Text', },
         source_type => { is => 'Text', },
     },
@@ -122,6 +122,8 @@ sub execute {
 
     my $resolve_source = $self->resolve_source;
     return if not $resolve_source;
+
+    return 1 if $self->_vcf_is_requested_and_available;
 
     my $filters = $self->_create_filters;
     return if not $filters;
@@ -323,6 +325,27 @@ sub _last_succeeded_build_from_model_for_instrument_data {
     );
 
     return $builds[0];
+}
+#<>#
+
+#<>#
+sub _vcf_is_requested_and_available {
+    my $self = shift;
+
+    my $writer_params = Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory->parse_params_string($self->output);
+    return if not $writer_params;
+
+    return if $writer_params->{format} ne 'vcf';
+
+    my $source = $self->source;
+    return if not $source->isa('Genome::Model::Build::GenotypeMicroarray');
+
+    my $genotype_file = $source->original_genotype_vcf_file_path;
+    return if not -s $genotype_file;
+
+    $self->status_message('VCF file already available from build: '. $genotype_file);
+
+    return 1;
 }
 #<>#
 

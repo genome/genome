@@ -23,7 +23,7 @@ my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
 
 my $build = Genome::Model::GenotypeMicroarray::Test::example_build();
 
-# LEGACY BUILD TO TSV
+# BUILD TO TSV
 my $output_tsv = $tmpdir.'/genotypes.tsv';
 my $extract = Genome::Model::GenotypeMicroarray::Command::Extract->create(
     build => $build,
@@ -38,7 +38,7 @@ is($extract->genotypes_input, 9, 'genotypes input');
 is($extract->genotypes_output, 9, 'genotypes output');
 is($extract->genotypes_filtered, 0, 'genotypes filtered');
 
-# LEGACY BUILD TO VCF
+# BUILD TO VCF => NO OP
 my $output_vcf = $tmpdir.'/genotypes.vcf';
 $extract = Genome::Model::GenotypeMicroarray::Command::Extract->create(
     build => $build,
@@ -47,10 +47,10 @@ $extract = Genome::Model::GenotypeMicroarray::Command::Extract->create(
 ok($extract, 'create extract command');
 ok($extract->execute, 'execute extract command');
 my $expected_vcf = Genome::Model::GenotypeMicroarray::Test::testdir().'/extract/expected-from-build.vcf';
-is(File::Compare::compare($output_vcf, $expected_vcf), 0, 'genotype vcf matches');
-is_deeply($extract->alleles, { 'TC' => 1, 'AA' => 1, 'CC' => 2, 'AG' => 3, 'TT' => 1, 'GG' => 1 }, 'alleles match');
-is($extract->genotypes_input, 9, 'genotypes input');
-is($extract->genotypes_output, 9, 'genotypes output');
-is($extract->genotypes_filtered, 0, 'genotypes filtered');
+ok(!-s $output_vcf, 'genotype vcf output not created');
+is_deeply($extract->alleles, undef, 'no alleles b/c vcf exists');
+is($extract->genotypes_input, 0, 'no genotypes input b/c vcf exists');
+is($extract->genotypes_output, 0, 'no genotypes output b/c vcf exists');
+is($extract->genotypes_filtered, 0, 'no genotypes filtered b/c vcf exists');
 
 done_testing();
