@@ -248,19 +248,19 @@ sub execute {
                         print $vcf_old{"$chr#$var_pos"}, "\n";
                         print $vcf_new{"$chr#$var_pos"}, "\n";
 
-                        my $leno = $vcf_old{"$chr#$var_pos"} eq "-" ? 0 : length( $vcf_old{"$chr#$var_pos"} );
-                        my $lenn = $vcf_new{"$chr#$var_pos"} eq "-" ? 0 : length( $vcf_new{"$chr#$var_pos"} );
+                        my $length_old = $vcf_old{"$chr#$var_pos"} eq "-" ? 0 : length( $vcf_old{"$chr#$var_pos"} );
+                        my $length_new = $vcf_new{"$chr#$var_pos"} eq "-" ? 0 : length( $vcf_new{"$chr#$var_pos"} );
                         $num_indel++;
-                        my $inframe = ( abs( $leno - $lenn ) % 3 == 0 ) ? 1 : 0;
+                        my $inframe = ( abs( $length_old - $length_new ) % 3 == 0 ) ? 1 : 0;
                         my $frame_type = $inframe == 1 ? 'in_frame_del' : 'fs';
                         my ($indel_type, $length, $int, $type);
                         if ( $strand =~ /\-/ ) {
-                            my $rev_pos = length($seq_original) - $i - $leno;
+                            my $rev_pos = length($seq_original) - $i - $length_old;
                             my $int_3s = int( ( $rev_pos + 1 ) / 3 ) + 1;
                             if ( $vcf_new{"$chr#$var_pos"} eq "-" ) {
                                 $int = $int_3s;
                                 $indel_type = 'DEL';
-                                $length = $leno;
+                                $length = $length_old;
                                 if ( $inframe == 1 ) {
                                     $frame_type = "in_frame_del";
                                 }
@@ -269,9 +269,9 @@ sub execute {
                                 }
                             }
                             else {
-                                my $int_3e = int( ( $rev_pos + $lenn + 1 ) / 3 ) + 1;
+                                my $int_3e = int( ( $rev_pos + $length_new + 1 ) / 3 ) + 1;
                                 $indel_type = 'INS';
-                                $length = $lenn;
+                                $length = $length_new;
                                 if ( $inframe == 1 ) {
                                     $int  = "$int_3s-$int_3e";
                                     $frame_type = "in_frame_ins";
@@ -287,10 +287,10 @@ sub execute {
                             my $left_3 = ( $i + 1 ) % 3;
                             my $int_3s = int( ( $i + 1 ) / 3 ) + 1;
                             if ( $vcf_new{"$chr#$var_pos"} eq "-" ) {
-                                my $int_3e = int( ( $i + $leno + 1 ) / 3 ) + 1;
+                                my $int_3e = int( ( $i + $length_old + 1 ) / 3 ) + 1;
                                 $indel_type = 'DEL';
                                 $int = $int_3s;
-                                $length = $leno;
+                                $length = $length_old;
                                 if ( $inframe == 1 ) {
                                     $frame_type = "in_frame_del";
                                 }
@@ -299,9 +299,9 @@ sub execute {
                                 }
                             }
                             else {
-                                my $int_3e = int( ( $i + $lenn + 1 ) / 3 ) + 1;
+                                my $int_3e = int( ( $i + $length_new + 1 ) / 3 ) + 1;
                                 $indel_type = 'INS';
-                                $length = $lenn;
+                                $length = $length_new;
                                 if ( $inframe == 1 ) {
                                     $int  = "$int_3s-$int_3e";
                                     $frame_type = "in_frame_ins";
@@ -325,10 +325,10 @@ sub execute {
                         my $seql = substr( $seq, 0, $i );
                         print $seql, "\n";
                         my $seqr =
-                        substr( $seq, $i + $leno,
-                            length($seq) - length($seql) - $leno );
+                        substr( $seq, $i + $length_old,
+                            length($seq) - length($seql) - $length_old );
 
-                        if ( $lenn >= 1 ) {
+                        if ( $length_new >= 1 ) {
                             $seq =
                             $seql
                             . $vcf_new{"$chr#$var_pos"}
