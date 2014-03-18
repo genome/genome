@@ -251,148 +251,76 @@ sub execute {
                         my $leno = $vcf_old{"$chr#$var_pos"} eq "-" ? 0 : length( $vcf_old{"$chr#$var_pos"} );
                         my $lenn = $vcf_new{"$chr#$var_pos"} eq "-" ? 0 : length( $vcf_new{"$chr#$var_pos"} );
                         $num_indel++;
-                        my $inframe;
-                        if ( abs( $leno - $lenn ) % 3 == 0 ) {
-                            $inframe = 1;
-                        }
-                        else { $inframe = 0; }
+                        my $inframe = ( abs( $leno - $lenn ) % 3 == 0 ) ? 1 : 0;
+                        my $frame_type = $inframe == 1 ? 'in_frame_del' : 'fs';
+                        my ($indel_type, $length, $int, $type);
                         if ( $strand =~ /\-/ ) {
-
-                            if ( $vcf_new{"$chr#$var_pos"} eq "-" )
-                            {
-                                my $rev_pos =
-                                length($seq_original) -
-                                $i -
-                                $leno;
-                                my $left_3 = ( $rev_pos + 1 ) % 3;
-                                my $int_3s =
-                                int( ( $rev_pos + 1 ) / 3 ) + 1;
-                                my $int_3e = int(
-                                    ( $rev_pos + $leno + 1 ) / 3 ) +
-                                1;
+                            my $rev_pos = length($seq_original) - $i - $leno;
+                            my $int_3s = int( ( $rev_pos + 1 ) / 3 ) + 1;
+                            if ( $vcf_new{"$chr#$var_pos"} eq "-" ) {
+                                $int = $int_3s;
+                                $indel_type = 'DEL';
+                                $length = $leno;
                                 if ( $inframe == 1 ) {
-                                    $description_ .=
-                                    "(DEL:" 
-                                    . $chr . "-"
-                                    . $var_pos . "-"
-                                    . $leno . "-"
-                                    . $vcf_type{"$chr#$var_pos"}
-                                    . ":"
-                                    . $int_3s
-                                    . "in_frame_del";
+                                    $frame_type = "in_frame_del";
                                 }
                                 else {
-                                    $description_ .=
-                                    "(DEL:" 
-                                    . $chr . "-"
-                                    . $var_pos . "-"
-                                    . $leno . "-"
-                                    . $vcf_type{"$chr#$var_pos"}
-                                    . ":"
-                                    . $int_3s . "fs";
+                                    $frame_type = "fs";
                                 }
                             }
-
                             else {
-                                my $rev_pos =
-                                length($seq_original) -
-                                $i -
-                                $leno;
-                                my $left_3 = ( $rev_pos + 1 ) % 3;
-                                my $int_3s =
-                                int( ( $rev_pos + 1 ) / 3 ) + 1;
-                                my $int_3e = int(
-                                    ( $rev_pos + $lenn + 1 ) / 3 ) +
-                                1;
+                                my $int_3e = int( ( $rev_pos + $lenn + 1 ) / 3 ) + 1;
+                                $indel_type = 'INS';
+                                $length = $lenn;
                                 if ( $inframe == 1 ) {
-                                    $description_ .=
-                                    "(INS:" 
-                                    . $chr . "-"
-                                    . $var_pos . "-"
-                                    . $lenn . "-"
-                                    . $vcf_type{"$chr#$var_pos"}
-                                    . ":"
-                                    . $int_3s . "-"
-                                    . $int_3e
-                                    . "in_frame_ins";
+                                    $int  = "$int_3s-$int_3e";
+                                    $frame_type = "in_frame_ins";
                                 }
                                 else {
-                                    $description_ .=
-                                    "(INS:" 
-                                    . $chr . "-"
-                                    . $var_pos . "-"
-                                    . $lenn . "-"
-                                    . $vcf_type{"$chr#$var_pos"}
-                                    . ":"
-                                    . $int_3s . "fs";
+                                    $int  = $int_3s;
+                                    $frame_type = "fs";
                                 }
                             }
-
                         }
 
                         else {
-                            if ( $vcf_new{"$chr#$var_pos"} eq "-" )
-                            {
-                                my $left_3 = ( $i + 1 ) % 3;
-
-                                my $int_3s =
-                                int( ( $i + 1 ) / 3 ) + 1;
-
-                                my $int_3e =
-                                int( ( $i + $leno + 1 ) / 3 ) + 1;
+                            my $left_3 = ( $i + 1 ) % 3;
+                            my $int_3s = int( ( $i + 1 ) / 3 ) + 1;
+                            if ( $vcf_new{"$chr#$var_pos"} eq "-" ) {
+                                my $int_3e = int( ( $i + $leno + 1 ) / 3 ) + 1;
+                                $indel_type = 'DEL';
+                                $int = $int_3s;
+                                $length = $leno;
                                 if ( $inframe == 1 ) {
-                                    $description_ .=
-                                    "(DEL:" 
-                                    . $chr . "-"
-                                    . $var_pos . "-"
-                                    . $leno . "-"
-                                    . $vcf_type{"$chr#$var_pos"}
-                                    . ":"
-                                    . $int_3s
-                                    . "in_frame_del";
+                                    $frame_type = "in_frame_del";
                                 }
                                 else {
-                                    $description_ .=
-                                    "(DEL:" 
-                                    . $chr . "-"
-                                    . $var_pos . "-"
-                                    . $leno . "-"
-                                    . $vcf_type{"$chr#$var_pos"}
-                                    . ":"
-                                    . $int_3s . "fs";
+                                    $frame_type = "fs";
                                 }
                             }
                             else {
-                                my $left_3 = ( $i + 1 ) % 3;
-                                my $int_3s =
-                                int( ( $i + 1 ) / 3 ) + 1;
-                                my $int_3e =
-                                int( ( $i + $lenn + 1 ) / 3 ) + 1;
+                                my $int_3e = int( ( $i + $lenn + 1 ) / 3 ) + 1;
+                                $indel_type = 'INS';
+                                $length = $lenn;
                                 if ( $inframe == 1 ) {
-                                    $description_ .=
-                                    "(INS:" 
-                                    . $chr . "-"
-                                    . $var_pos . "-"
-                                    . $lenn . "-"
-                                    . $vcf_type{"$chr#$var_pos"}
-                                    . ":"
-                                    . $int_3s . "-"
-                                    . $int_3e
-                                    . "in_frame_ins";
+                                    $int  = "$int_3s-$int_3e";
+                                    $frame_type = "in_frame_ins";
                                 }
                                 else {
-                                    $description_ .=
-                                    "(INS:" 
-                                    . $chr . "-"
-                                    . $var_pos . "-"
-                                    . $lenn . "-"
-                                    . $vcf_type{"$chr#$var_pos"}
-                                    . ":"
-                                    . $int_3s . "fs";
+                                    $int  = $int_3s;
+                                    $frame_type = "fs";
                                 }
                             }
                         }
-
+                        $description_ .=
+                        "($indel_type:"
+                        . $chr . "-"
+                        . $var_pos . "-"
+                        . $length . "-"
+                        . $vcf_type{"$chr#$var_pos"}
+                        . ":"
+                        . $int
+                        . $frame_type;
 
                         my $seql = substr( $seq, 0, $i );
                         print $seql, "\n";
