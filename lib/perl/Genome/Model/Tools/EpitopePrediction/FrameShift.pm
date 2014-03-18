@@ -115,7 +115,6 @@ sub execute {
 
     open( LOG,     ">$out_dir/proteome-indel.log" );
     open( LOG_MOD, ">$out_dir/proteome-mod-indel.log" );
-    open( STAT,    ">$out_dir/proteome-mod-indel.stat" );
 
     my (%chr, %bed);
     my $ifh = Genome::Sys->open_file_for_reading($filename);
@@ -376,16 +375,10 @@ sub execute {
 
         $database_fh->close;
     }
-    print STAT qq!
-    done; 
-    !;
-    print STAT
-    qq!\nnumber of modifications\tnumber of proteins\tnumber of proteins (somatic variants)\n!;
 
     close(OUT);
     close(OUT_MOD);
 
     close(LOG);
     close(LOG_MOD);
-    close(STAT);
 }
