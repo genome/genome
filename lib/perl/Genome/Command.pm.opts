@@ -7565,27 +7565,65 @@ $Genome::Command::OPTS_SPEC = [
     [
       '>assign',
       [
-        'model=s',
-        undef,
-        'instrument-data=s@',
-        undef,
-        'flow-cell-id=s',
-        'files',
-        'all!',
-        undef,
-        'include-imported!',
-        undef,
-        'filter=s',
+        '>all-compatible',
         [
-          'forward-only',
-          'reverse-only'
+          'model=s',
+          undef,
+          'force!',
+          undef,
+          'include-imported!',
+          undef,
+          'newly-added-data=s@',
+          undef,
+          'maximum-allowed-error=s',
+          undef,
+          'help!',
+          undef
         ],
-        'all-within-maximum-allowed-error!',
-        undef,
-        'maximum-allowed-error=s',
-        undef,
-        'force!',
-        undef,
+        '>expression',
+        [
+          'model=s',
+          undef,
+          'filter=s',
+          [
+            'forward-only',
+            'reverse-only'
+          ],
+          'force!',
+          undef,
+          'newly-added-data=s@',
+          undef,
+          'instrument-data=s@',
+          undef,
+          'help!',
+          undef
+        ],
+        '>analysis-project',
+        [
+          'analysis-project=s',
+          undef,
+          'model=s',
+          undef,
+          'force!',
+          undef,
+          'newly-added-data=s@',
+          undef,
+          'help!',
+          undef
+        ],
+        '>flowcell',
+        [
+          'model=s',
+          undef,
+          'force!',
+          undef,
+          'newly-added-data=s@',
+          undef,
+          'flow-cell-id=s',
+          'files',
+          'help!',
+          undef
+        ],
         'help!',
         undef
       ],
@@ -8012,7 +8050,7 @@ $Genome::Command::OPTS_SPEC = [
       [
         'processing-profile-name=s',
         'files',
-        'reference=s',
+        'variation-list-build=s',
         undef,
         'auto-assign-inst-data!',
         undef,
@@ -13064,21 +13102,6 @@ $Genome::Command::OPTS_SPEC = [
           'help!',
           undef
         ],
-        '>search-runs',
-        [
-          'debug!',
-          undef,
-          'print-location=s',
-          'files',
-          'region-id=s',
-          'files',
-          'run-name=s',
-          'files',
-          'sample-name=s',
-          'files',
-          'help!',
-          undef
-        ],
         '>show-stats',
         [
           'output-dir=s',
@@ -17636,13 +17659,6 @@ $Genome::Command::OPTS_SPEC = [
         'abbreviated',
         'summary'
       ],
-      'help!',
-      undef
-    ],
-    '>auto-build',
-    [
-      'debug!',
-      undef,
       'help!',
       undef
     ],
@@ -23661,13 +23677,6 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>import',
-    [
-      'debug!',
-      undef,
-      'help!',
-      undef
-    ],
     '>shrimp2',
     [
       'debug!',
@@ -24010,30 +24019,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      'help!',
-      undef
-    ],
-    '>sequence',
-    [
-      'chromosome=s',
-      'files',
-      'start=s',
-      undef,
-      'stop=s',
-      undef,
-      'build-id=s',
-      undef,
-      'debug!',
-      undef,
-      'sequence=s',
-      undef,
-      'species=s',
-      [
-        'human',
-        'mouse'
-      ],
-      'version=s',
-      'files',
       'help!',
       undef
     ],
@@ -24962,15 +24947,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      'help!',
-      undef
-    ],
-    '>multi-aligner',
-    [
-      'debug!',
-      undef,
-      'use-version=s',
-      undef,
       'help!',
       undef
     ],
@@ -26148,13 +26124,6 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>recurrence',
-    [
-      'debug!',
-      undef,
-      'help!',
-      undef
-    ],
     '>epitope-prediction',
     [
       '>generate-variant-seq21mer',
@@ -26355,29 +26324,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      'help!',
-      undef
-    ],
-    '>detect-variants',
-    [
-      'reference-sequence-input=s',
-      'files',
-      'capture-set-input=s',
-      'files',
-      'debug!',
-      undef,
-      'indel-params=s',
-      'files',
-      'output-directory=s',
-      'files',
-      'snv-params=s',
-      'files',
-      'sv-params=s',
-      'files',
-      'version=s',
-      undef,
-      'aligned-reads-input=s',
-      'files',
       'help!',
       undef
     ],
@@ -27386,20 +27332,6 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'files=s@',
         'files',
-        'help!',
-        undef
-      ],
-      'help!',
-      undef
-    ],
-    '>text',
-    [
-      '>model-to-text',
-      [
-        'model-id=s',
-        'files',
-        'debug!',
-        undef,
         'help!',
         undef
       ],
@@ -28431,6 +28363,20 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'control-aligned-reads-input=s',
         'files',
+        'help!',
+        undef
+      ],
+      'help!',
+      undef
+    ],
+    '>text',
+    [
+      '>model-to-text',
+      [
+        'model-id=s',
+        'files',
+        'debug!',
+        undef,
         'help!',
         undef
       ],
@@ -33503,21 +33449,6 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>copy-eland-alignments',
-    [
-      'flowcell-id=s',
-      'files',
-      'outdir=s',
-      'files',
-      'debug!',
-      undef,
-      'fastq!',
-      undef,
-      'lanes=s@',
-      'files',
-      'help!',
-      undef
-    ],
     '>novocraft',
     [
       '>novoalign',
@@ -33612,15 +33543,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      'help!',
-      undef
-    ],
-    '>novoalign',
-    [
-      'debug!',
-      undef,
-      'version=s',
-      undef,
       'help!',
       undef
     ],
@@ -37421,12 +37343,14 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>basic',
       [
-        'sample=s',
-        undef,
         'import-source-name=s',
         'files',
         'source-files=s@',
         'files',
+        'sample=s',
+        undef,
+        'library=s',
+        undef,
         'analysis-project=s',
         undef,
         'description=s',
