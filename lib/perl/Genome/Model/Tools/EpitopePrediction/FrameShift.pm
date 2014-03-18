@@ -28,6 +28,18 @@ class Genome::Model::Tools::EpitopePrediction::FrameShift {
             doc => '',
         },
     ],
+    has_calculated => [
+        output_file => {
+            is  => 'File',
+            calculate_from => ['output_directory'],
+            calculate => q|return File::Spec->join($output_directory, 'proteome-indel.fasta'); |,
+        },
+        output_mod_file => {
+            is  => 'File',
+            calculate_from => ['output_directory'],
+            calculate => q|return File::Spec->join($output_directory, 'proteome-indel-mod.fasta'); |,
+        },
+    ],
 };
 
 sub execute {
@@ -110,8 +122,8 @@ sub execute {
         "GGG" => "G"
     );
 
-    open( OUT,     ">$out_dir/proteome-indel.fasta" );
-    open( OUT_MOD, ">$out_dir/proteome-indel-mod.fasta" );
+    my $ofh = Genome::Sys->open_file_for_writing($self->output_file);
+    my $modfh = Genome::Sys->open_file_for_writing($self->output_mod_file);
 
     open( LOG,     ">$out_dir/proteome-indel.log" );
 
@@ -364,12 +376,11 @@ sub execute {
                     if ( length($protein) > 6
                             and $protein !~ /^\*/ )
                     {
-                        print OUT
-                        qq!>$name (MAP:$chr:$start$strand $segment_lengths $segment_starts)\n$protein_original\n!;
+                        $ofh->print(qq!>$name (MAP:$chr:$start$strand $segment_lengths $segment_starts)\n$protein_original\n!);
+
                         $description_ .= ")";
 
-                        print OUT_MOD
-                        qq!>$name-indel (MAP:$chr:$start$strand $segment_lengths $segment_starts) $description_\n$protein\n!;
+                        $modfh->print(qq!>$name-indel (MAP:$chr:$start$strand $segment_lengths $segment_starts) $description_\n$protein\n!);
                     }
 
                 }
@@ -380,8 +391,8 @@ sub execute {
         $database_fh->close;
     }
 
-    close(OUT);
-    close(OUT_MOD);
+    $ofh->close;
+    $modfh->close;
 
     close(LOG);
 }
