@@ -8,7 +8,18 @@ use File::Basename qw(dirname basename);
 
 class Genome::Model::GenotypeMicroarray{
     is => 'Genome::ModelDeprecated',
-    has_param => [
+    has_input => {
+        dbsnp_build_id => {
+            is => 'Text',
+            to => 'value_id',
+            where => [ name => 'dbsnp_build', value_class_name => 'Genome::Model::Build::ImportedVariationList' ],
+            is_many => 0,
+            is_mutable => 1,
+            is_optional => 1,
+            doc => 'dbsnp build that this model is built against'
+        },
+    },
+    has_param => {
         input_format => {
             doc => 'file format, defaults to "wugc", which is currently the only format supported',
             valid_values => ['wugc'],
@@ -18,8 +29,17 @@ class Genome::Model::GenotypeMicroarray{
             doc => 'the type of microarray instrument',
             valid_values => [qw/ affymetrix illumina infinium plink unknown /],
         },
-    ],
-    has => [
+    },
+    has => {
+        dbsnp_build => {
+            is => 'Genome::Model::Build::ImportedVariationList',
+            id_by => 'dbsnp_build_id',
+        },
+        dbsnp_version => { 
+            is => 'Text',
+            via => 'dbsnp_build',
+            to => 'version',
+        },
         reference_sequence_build => {
             is => 'Genome::Model::Build::ImportedReferenceSequence',
             via => 'dbsnp_build', 
@@ -34,32 +54,16 @@ class Genome::Model::GenotypeMicroarray{
             is => 'Text',
             via => 'reference_sequence_build',
             to => 'name',
-       },
-       refseq_version => { 
-           is => 'Text',
+        },
+        refseq_version => { 
+            is => 'Text',
             via => 'reference_sequence_build',
             to => 'version',
         },
-        dbsnp_build_id => {
-            is => 'Text',
-            via => 'inputs',
-            to => 'value_id',
-            where => [ name => 'dbsnp_build', value_class_name => 'Genome::Model::Build::ImportedVariationList' ],
-            is_many => 0,
-            is_mutable => 1,
-            is_optional => 1,
-            doc => 'dbsnp build that this model is built against'
-        },
-        dbsnp_build => {
-            is => 'Genome::Model::Build::ImportedVariationList',
-            id_by => 'dbsnp_build_id',
-        },
-        dbsnp_version => { 
-            is => 'Text',
-            via => 'dbsnp_build',
-            to => 'version',
-        },
-    ],
+    },
+    has_calculated => {
+        genotype_vcf => { is => 'Text', doc => 'Returns the VCF file name if exists, or NA if not.', },
+    },
 };
 
 sub sequencing_platform { return 'genotype file'; }
@@ -124,6 +128,18 @@ sub format_types {
 
 sub format_name_for_id {
     return $format_types->{$_[1]}->{name};
+}
+
+sub genotype_vcf {
+    my $self = shift;
+
+    my $build = $self->last_succeeded_build;
+    return 'NO_SUCCEESSFUL_BUILD' if not $build;
+
+    my $vcf = $build->original_genotype_vcf_file_path;
+    return 'NO_VCF_FOR_BUILD' if not -s $vcf;
+
+    return $vcf;
 }
 
 sub dependent_cron_ref_align {
