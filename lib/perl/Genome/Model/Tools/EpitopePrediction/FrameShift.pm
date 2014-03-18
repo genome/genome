@@ -245,7 +245,7 @@ sub execute {
                 my $seq_original_rc = reverse $seq_original;
                 $seq_original_rc =~ tr/ATCG/TAGC/;
 
-                my $description_        = "";
+                my $description        = "";
                 my $num_indel           = 0;
 
                 for (
@@ -290,8 +290,8 @@ sub execute {
                             $length = $length_new;
                             $int = $inframe == 1 ? "$int_3s-$int_3e" : $int_3s;
                         }
-                        $description_ .= sprintf(
-                            "(%s:%s-%s-%s-%s:%s%s",
+                        $description .= sprintf(
+                            "(%s:%s-%s-%s-%s:%s%s)",
                             $indel_type, $chr, $var_pos, $length, $vcf_type{"$chr#$var_pos"}, $int, $frame_type
                         );
 
@@ -377,10 +377,7 @@ sub execute {
                             and $protein !~ /^\*/ )
                     {
                         $ofh->print(qq!>$name (MAP:$chr:$start$strand $segment_lengths $segment_starts)\n$protein_original\n!);
-
-                        $description_ .= ")";
-
-                        $modfh->print(qq!>$name-indel (MAP:$chr:$start$strand $segment_lengths $segment_starts) $description_\n$protein\n!);
+                        $modfh->print(qq!>$name-indel (MAP:$chr:$start$strand $segment_lengths $segment_starts) $description\n$protein\n!);
                     }
 
                 }
