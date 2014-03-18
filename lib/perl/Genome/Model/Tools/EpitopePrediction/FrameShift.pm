@@ -275,34 +275,18 @@ sub execute {
                             $length = $length_new;
                             $int = $inframe == 1 ? "$int_3s-$int_3e" : $int_3s;
                         }
-                        $description_ .=
-                        "($indel_type:"
-                        . $chr . "-"
-                        . $var_pos . "-"
-                        . $length . "-"
-                        . $vcf_type{"$chr#$var_pos"}
-                        . ":"
-                        . $int
-                        . $frame_type;
+                        $description_ .= sprintf(
+                            "(%s:%s-%s-%s-%s:%s%s",
+                            $indel_type, $chr, $var_pos, $length, $vcf_type{"$chr#$var_pos"}, $int, $frame_type
+                        );
 
                         my $seql = substr( $seq, 0, $i );
                         print $seql, "\n";
-                        my $seqr =
-                        substr( $seq, $i + $length_old,
-                            length($seq) - length($seql) - $length_old );
+                        my $seqr = substr( $seq, $i + $length_old, length($seq) - length($seql) - $length_old );
 
-                        if ( $length_new >= 1 ) {
-                            $seq =
-                            $seql
-                            . $vcf_new{"$chr#$var_pos"}
-                            . $seqr;
-                        }
-                        else { $seq = $seql . $seqr; }
+                        $seq = $length_new >= 1 ? $seql . $vcf_new{"$chr#$var_pos"} . $seqr :  $seql . $seqr;
                     }
                 }
-
-                my $name_ = $name;
-                $name_ =~ s/\-[^\-]+$//;
 
                 my $protein          = "";
                 my $protein_original = "";
