@@ -8,14 +8,12 @@ use Genome;
 use Genome::File::Vcf::Reader;
 
 class Genome::Model::GenotypeMicroarray::GenotypeFile::ReadUnannotatedCsv { 
-    is => 'UR::Object',
+    is => 'Genome::Model::GenotypeMicroarray::GenotypeFile::FromInstDataReader',
     has => {
         input => { is => 'Text', },
         variation_list_build => { is => 'Genome::Model::Build::ImportedVariationList', },
         snp_id_mapping => { is => 'Hash', },
         _vcf_reader => { is => 'Genome::File::Vcf::Reader', },
-        _genotype_fh => { is => 'IO::File', },
-        _headers => { is => 'Array', },
         _genotypes => { is => 'Hash', default_value => {}, },
         _order => { is => 'Array', },
         _position => { is => 'Integer', default_value => 0, },
@@ -37,12 +35,6 @@ sub create {
 
     my $self = $class->SUPER::create(@_);
     return if not $self;
-
-    my $open_genotype_file = $self->_open_genotype_file;
-    return if not $open_genotype_file;
-
-    my $headers_ok = $self->_resolve_headers;
-    return if not $headers_ok;
 
     my $open_vcf_reader = $self->_open_vcf_reader;
     return if not $open_vcf_reader;
@@ -87,7 +79,9 @@ sub _create_vcf_entry {
     # Add genotype data to entry
     for my $field ( Genome::Model::GenotypeMicroarray->format_types ) {
         $entry->add_format_field($field->{id});
-        $entry->set_sample_field(0, $field->{id}, $genotype->{ $field->{name} });
+        my $value = $genotype->{ $field->{name} };
+        $value = '.' if not defined $value or $value eq '';
+        $entry->set_sample_field(0, $field->{id}, $value);
     }
 
     return $entry;
@@ -113,72 +107,30 @@ sub _open_vcf_reader {
     return 1;
 }
 
-sub _open_genotype_file {
-    my $self = shift;
-
-    my $genotype_file = $self->input;
-    if ( not -s $genotype_file ) {
-        $self->error_message('Genotype file file does not exist! '.$genotype_file);
-        return;
-    }
-
-    my $genotype_fh = eval{ Genome::Sys->open_file_for_reading($genotype_file); };
-    if ( not $genotype_fh ) {
-        $self->error_message("Failed to open reader for genotype file: $genotype_file): $@");
-        return;
-    }
-
-    $self->_genotype_fh($genotype_fh);
-
-    return 1;
-}
-
-sub _resolve_headers {
-    my $self = shift;
-
-    my $header_line;
-    my $genotype_fh = $self->_genotype_fh;
-    do { $header_line = $genotype_fh->getline; } until not $header_line or $header_line =~ /,/;
-    if ( not $header_line ) {
-        $self->error_message('Failed to get header line for genotype file!');
-        return;
-    }
-
-    chomp $header_line;
-    my @headers = map { s/\s/_/g; s/_\-\_top$//i; lc } split(',', $header_line);
-    $self->_headers(\@headers);
-
-    return 1;
-}
-
 sub _load_genotype {
     my $self = shift;
 
-    my $line = $self->_genotype_fh->getline;
-    return if not $line;
-
-    chomp $line;
-    my %genotype;
-    @genotype{@{$self->_headers}} = split(',', $line);
+    my $genotype = $self->SUPER::next;
+    return if not $genotype;
 
     # The id is from the snp mapping or the genotype's snp_name
-    if ( $self->snp_id_mapping and exists $self->snp_id_mapping->{ $genotype{snp_name} }) {
-        $genotype{id} = $self->snp_id_mapping->{ delete $genotype{snp_name} };
+    if ( $self->snp_id_mapping and exists $self->snp_id_mapping->{ $genotype->{snp_name} }) {
+        $genotype->{id} = $self->snp_id_mapping->{ delete $genotype->{snp_name} };
     } else {
-        $genotype{id} = delete $genotype{snp_name};
-        $genotype{id} =~ s/^(rs\d+)\D*$/$1/; #borrowed from GSC::Genotyping::normalize_to
+        $genotype->{id} = delete $genotype->{snp_name};
+        $genotype->{id} =~ s/^(rs\d+)\D*$/$1/; #borrowed from GSC::Genotyping::normalize_to
     }
 
-    if ( exists $self->_genotypes->{ $genotype{id} } ) {
-        Carp::confess( $self->error_message('Already have a genotype for snp id: '.Data::Dumper::Dumper(\%genotype, $self->genotypes->{ $genotype{id} })) );
+    if ( exists $self->_genotypes->{ $genotype->{id} } ) {
+        Carp::confess( $self->error_message('Already have a genotype for snp id: '.Data::Dumper::Dumper($genotype, $self->genotypes->{ $genotype->{id} })) );
     }
 
-    delete $genotype{'chr'};
-    $genotype{alleles} = $genotype{allele1}.$genotype{allele2};
+    delete $genotype->{'chr'};
+    $genotype->{alleles} = $genotype->{allele1}.$genotype->{allele2};
 
-    $self->_genotypes->{ $genotype{id} } = \%genotype;
+    $self->_genotypes->{ $genotype->{id} } = $genotype;
 
-    return \%genotype;
+    return $genotype;
 }
 
 sub _load_genotypes {
@@ -186,10 +138,7 @@ sub _load_genotypes {
 
     my $snp_id_mapping = $self->snp_id_mapping;
 
-    my $genotype_fh = $self->_genotype_fh;
-    my @headers = @{$self->_headers};
     my $genotypes = $self->_genotypes;
-
     my $genotype;
     do {
         $genotype = $self->_load_genotype;
