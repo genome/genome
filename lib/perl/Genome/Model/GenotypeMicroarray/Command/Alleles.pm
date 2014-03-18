@@ -5,82 +5,96 @@ use warnings;
 
 use Genome;
 
+require List::Util;
+
 class Genome::Model::GenotypeMicroarray::Command::Alleles {
     is => 'Command::V2',
-    has_optional => [
+    has_optional => {
         model => {
             is => 'Genome::Model',
-            doc => 'The genotype model to work with. This will get the most recent succeeded build.',
+            doc => 'The genotype model to use. This will get the genotype file from the instrument data.',
         },
         build => {
             is => 'Genome::Model::Build',
-            doc => 'The genotype build to use.',
+            doc => 'The genotype build to use. This will get the genotype file from the instrument data.',
         },
-    ],
+        instrument_data => {
+            is => 'Genome::InstrumentData',
+            doc => 'The genotype instrument data to use. This will get its genotype file.',
+        },
+    },
+    has_optional_transient => {
+        alleles => { is => 'Hash', doc => 'Alleles and number of times observed.', },
+    },
+    has_calculated => {
+        total_genotypes => { is => 'Integer', doc => 'Total genotpypes observed.', },
+    },
 };
 
-sub help_brief { return 'Show the alleles counts in the original genotype file.'; }
-sub hlep_detail { return help_brief(); }
+sub help_brief { return 'Get the alleles counts from the instrument data genotype file.'; }
+sub help_detail { return help_brief(); }
+
+sub total_genotypes {
+    my $self = shift;
+
+    my $alleles = $self->alleles;
+    return 0 if not $alleles;
+
+    return List::Util::sum( values %$alleles );
+}
 
 sub execute {
     my $self = shift;
-    $self->debug_message('Genotype alleles...');
 
-    my $build = $self->_resolve_build;
-    return if not $build;
+    my $instdata = $self->_resolve_instrument_data;
+    return if not $instdata;
 
-    my $original_genotype_file_path = $build->original_genotype_file_path;
-    if ( not $original_genotype_file_path or not -s $original_genotype_file_path ) {
-        $self->error_message('Original genotype file does not exist! '.$original_genotype_file_path);
+    my $genotype_file = $instdata->genotype_file;
+    if ( not $genotype_file or not -s $genotype_file ) {
+        $self->error_message('Instrument data genotype file does not exist! '.$genotype_file);
         return;
     }
 
-    my $reader = Genome::Model::GenotypeMicroarray::OriginalGenotypeReader->create(
-        input => $build->original_genotype_file_path,
+    my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::FromInstDataReader->create(
+        input => $genotype_file,
     );
     if ( not $reader ) {
-        $self->error_message('Failed to create original genotype file reader.');
+        $self->error_message('Failed to open genotype file! '.$genotype_file);
         return;
     }
 
     my %alleles;
-    while ( my $genotype = $reader->read ) {
-        $alleles{ $genotype->{alleles} }++;
+    while ( my $genotype = $reader->next ) {
+        $alleles{ $genotype->{allele1} . $genotype->{allele2} }++;
     }
+    $self->alleles(\%alleles);
 
-    $self->debug_message('Alleles and instances:');
+    print "Alleles and observed counts:\n";
     for my $alleles ( sort keys %alleles ) {
         print join(' ', $alleles, $alleles{$alleles})."\n";
     }
-    $self->debug_message('Total genotypes: '.$reader->total);
+    print "Total genotypes: ".$self->total_genotypes."\n";
     
-    $self->debug_message('Done');
     return 1;
 };
 
-sub _resolve_build {
+sub _resolve_instrument_data {
     my $self = shift;
 
+    my $instdata = $self->instrument_data;
+    return $instdata if $instdata;
+
     if ( $self->build ) {
-        return $self->build;
+        return $self->build->instrument_data;
     }
 
     my $model = $self->model;
-    if ( not $model ) {
-        $self->error_message('No model or build given!');
-        return;
+    if ( $model ) {
+        return $self->build->instrument_data;
     }
 
-    my $build = $model->last_succeeded_build;
-    if ( not $build ) {
-        $build = $model->latest_build;
-        if ( not $build ) {
-            $self->error_message('No last succeeded or latest build for model! '.$model->id);
-            return;
-        }
-    }
-
-    return $self->build($build);
+    $self->error_message('No model, build, or instrument data given!');
+    return;
 }
 
 1;
