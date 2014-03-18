@@ -2275,21 +2275,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>search-runs',
-      [
-        'debug!',
-        undef,
-        'print-location=s',
-        'files',
-        'region-id=s',
-        'files',
-        'run-name=s',
-        'files',
-        'sample-name=s',
-        'files',
-        'help!',
-        undef
-      ],
       '>show-stats',
       [
         'output-dir=s',
@@ -6847,13 +6832,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'abbreviated',
       'summary'
     ],
-    'help!',
-    undef
-  ],
-  '>auto-build',
-  [
-    'debug!',
-    undef,
     'help!',
     undef
   ],
@@ -12872,13 +12850,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
     'help!',
     undef
   ],
-  '>import',
-  [
-    'debug!',
-    undef,
-    'help!',
-    undef
-  ],
   '>shrimp2',
   [
     'debug!',
@@ -13221,30 +13192,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
-    'help!',
-    undef
-  ],
-  '>sequence',
-  [
-    'chromosome=s',
-    'files',
-    'start=s',
-    undef,
-    'stop=s',
-    undef,
-    'build-id=s',
-    undef,
-    'debug!',
-    undef,
-    'sequence=s',
-    undef,
-    'species=s',
-    [
-      'human',
-      'mouse'
-    ],
-    'version=s',
-    'files',
     'help!',
     undef
   ],
@@ -14173,15 +14120,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
-    'help!',
-    undef
-  ],
-  '>multi-aligner',
-  [
-    'debug!',
-    undef,
-    'use-version=s',
-    undef,
     'help!',
     undef
   ],
@@ -15359,13 +15297,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
     'help!',
     undef
   ],
-  '>recurrence',
-  [
-    'debug!',
-    undef,
-    'help!',
-    undef
-  ],
   '>epitope-prediction',
   [
     '>generate-variant-seq21mer',
@@ -15566,29 +15497,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
-    'help!',
-    undef
-  ],
-  '>detect-variants',
-  [
-    'reference-sequence-input=s',
-    'files',
-    'capture-set-input=s',
-    'files',
-    'debug!',
-    undef,
-    'indel-params=s',
-    'files',
-    'output-directory=s',
-    'files',
-    'snv-params=s',
-    'files',
-    'sv-params=s',
-    'files',
-    'version=s',
-    undef,
-    'aligned-reads-input=s',
-    'files',
     'help!',
     undef
   ],
@@ -16597,20 +16505,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'files',
       'files=s@',
       'files',
-      'help!',
-      undef
-    ],
-    'help!',
-    undef
-  ],
-  '>text',
-  [
-    '>model-to-text',
-    [
-      'model-id=s',
-      'files',
-      'debug!',
-      undef,
       'help!',
       undef
     ],
@@ -17642,6 +17536,20 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'files',
       'control-aligned-reads-input=s',
       'files',
+      'help!',
+      undef
+    ],
+    'help!',
+    undef
+  ],
+  '>text',
+  [
+    '>model-to-text',
+    [
+      'model-id=s',
+      'files',
+      'debug!',
+      undef,
       'help!',
       undef
     ],
@@ -22714,21 +22622,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
     'help!',
     undef
   ],
-  '>copy-eland-alignments',
-  [
-    'flowcell-id=s',
-    'files',
-    'outdir=s',
-    'files',
-    'debug!',
-    undef,
-    'fastq!',
-    undef,
-    'lanes=s@',
-    'files',
-    'help!',
-    undef
-  ],
   '>novocraft',
   [
     '>novoalign',
@@ -22823,15 +22716,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
-    'help!',
-    undef
-  ],
-  '>novoalign',
-  [
-    'debug!',
-    undef,
-    'version=s',
-    undef,
     'help!',
     undef
   ],
