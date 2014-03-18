@@ -146,6 +146,7 @@ sub unarchive {
         );
         Genome::Timeline::Event::Allocation->unarchived($self->reason,
             $allocation_object);
+        $allocation_object->('active');
     }
 
     $allocation_object->_cleanup_archive_directory($archive_path);
