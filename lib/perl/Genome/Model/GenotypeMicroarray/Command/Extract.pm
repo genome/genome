@@ -118,7 +118,7 @@ HELP
 
 sub execute {
     my $self = shift;
-    $self->status_message('Extract genotypes...');
+    $self->debug_message('Extract genotypes...');
 
     my $resolve_source = $self->resolve_source;
     return if not $resolve_source;
@@ -154,7 +154,7 @@ sub execute {
     $self->metrics(\%metrics);
     $self->alleles(\%alleles);
     for my $name ( map { 'genotypes_'.$_ } (qw/ input filtered output /) ) {
-        $self->status_message(ucfirst(join(' ', split('_', $name))).": ".$self->$name);
+        $self->debug_message(ucfirst(join(' ', split('_', $name))).": ".$self->$name);
     }
 
     $self->debug_message('Extract genotypes...done');
