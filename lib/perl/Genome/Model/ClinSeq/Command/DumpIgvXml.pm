@@ -159,10 +159,10 @@ sub execute {
     my $starting_locus = "";
     if ($reference_genome_name=~/GRCh37\-lite\-build37/){ #Assumes that if name is "like" this you want b37
       $genome_build = "b37";
-      $starting_locus = "12:25398182-25398361";
+      $starting_locus = "17:7569720-7592868";
     }elsif ($reference_genome_name=~/GRCh37\-lite\-human\-build37/){ #Assumes that if name is "like" this you want b37
       $genome_build = "b37";
-      $starting_locus = "12:25398182-25398361";
+      $starting_locus = "17:7569720-7592868";
     }else{
       die $self->error_message("Unrecognized reference genome name ($reference_genome_name) supplied to DumpIgvXml.pm");
     }
