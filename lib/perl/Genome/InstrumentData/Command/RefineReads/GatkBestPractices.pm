@@ -40,7 +40,7 @@ sub shortcut {
 
     # Get base recalibrator result
     my $base_recalibrator_result = $self->_get_base_recalibrator_result;
-    if ( not $indel_realigner_result ) {
+    if ( not $base_recalibrator_result ) {
         $self->debug_message('Failed to find base recalibrator result, cannot shortcut!');
         return;
     }
