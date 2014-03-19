@@ -11,36 +11,18 @@ BEGIN {
 
 use above 'Genome';
 
-use Data::Dumper;
 require File::Temp;
-require File::Compare;
 use Test::More;
 
-use_ok('Genome::Model::GenotypeMicroarray::Command::Extract') or die;
+use_ok('Genome::Model::GenotypeMicroarray::Command::ExtractToVcf') or die;
 use_ok('Genome::Model::GenotypeMicroarray::Test') or die;
 
 my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
-
 my $build = Genome::Model::GenotypeMicroarray::Test::example_build();
-
-# BUILD TO TSV
-my $output_tsv = $tmpdir.'/genotypes.tsv';
-my $extract = Genome::Model::GenotypeMicroarray::Command::Extract->create(
-    build => $build,
-    output => $output_tsv,
-);
-ok($extract, 'create extract command');
-ok($extract->execute, 'execute extract command');
-my $expected_tsv = Genome::Model::GenotypeMicroarray::Test::testdir().'/extract/expected.tsv';
-is(File::Compare::compare($output_tsv, $expected_tsv), 0, 'genotype tsv matches');
-is_deeply($extract->alleles, { 'TC' => 1, 'AA' => 1, 'CC' => 2, 'AG' => 3, 'TT' => 1, 'GG' => 1 }, 'alleles match');
-is($extract->genotypes_input, 9, 'genotypes input');
-is($extract->genotypes_output, 9, 'genotypes output');
-is($extract->genotypes_filtered, 0, 'genotypes filtered');
 
 # BUILD TO VCF => NO OP
 my $output_vcf = $tmpdir.'/genotypes.vcf';
-$extract = Genome::Model::GenotypeMicroarray::Command::Extract->create(
+my $extract = Genome::Model::GenotypeMicroarray::Command::ExtractToVcf->create(
     build => $build,
     output => $output_vcf,
 );

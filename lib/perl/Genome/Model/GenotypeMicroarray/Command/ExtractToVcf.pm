@@ -1,4 +1,4 @@
-package Genome::Model::GenotypeMicroarray::Command::Extract;
+package Genome::Model::GenotypeMicroarray::Command::ExtractToVcf;
 
 use strict;
 use warnings;
@@ -7,7 +7,7 @@ use Genome;
 
 require File::Basename;
 
-class Genome::Model::GenotypeMicroarray::Command::Extract {
+class Genome::Model::GenotypeMicroarray::Command::ExtractToVcf {
     is => 'Command::V2',
     has_optional => {
         # SOURCE
@@ -44,47 +44,7 @@ class Genome::Model::GenotypeMicroarray::Command::Extract {
         # OUTPUT
         output => {
             is => 'Text',
-            doc => <<DOC
-Output config. Give give key value (key=value) pairs separated by colons (:).
-Defaults to writing all fields with headers as CSV w/ tabs to STDOUT.
-Options:
-
- file           File to write to. Use '-' for STDOUT.
- format         Format to output. Valid vlaues: csv [character separated values], vcf
-
-CSV Options:
- separator  The separator to use. Default is 'TAB', which writes values separated by tabs.
- headers    Include headers. Use 1 to include, 0 to exclude.
- fields     Write these fields. Default writes all.
-             Fields: 
-              id
-              chromosome
-              position
-              sample_name
-              log_r_ratio
-              gc_score
-              cnv_value
-              cnv_confidence
-              alleles
-              allele1
-              allele2 
-
-VCF Options:
- None.
-
-Examples:
-             
- Write to FILE as comma separated values, with headers and all available fields:
-
-  output=FILE:separator=,
-
- Write to FILE as TAB separated values, without headers and only chromosome, position
-  and alleles fields:
-
-  output=FILE:headers=chromosome,position,alleles:print_headers=0
-
-DOC
-            ,
+            doc => 'Output to write VCF.',
         },
         filters => {
             is => 'Text',
@@ -118,7 +78,7 @@ HELP
 
 sub execute {
     my $self = shift;
-    $self->debug_message('Extract genotypes...');
+    $self->debug_message('Extract genotypes to VCF...');
 
     my $resolve_source = $self->resolve_source;
     return if not $resolve_source;
@@ -157,7 +117,7 @@ sub execute {
         $self->debug_message(ucfirst(join(' ', split('_', $name))).": ".$self->$name);
     }
 
-    $self->debug_message('Extract genotypes...done');
+    $self->debug_message('Extract genotypes to VCF...done');
     return 1;
 }
 
