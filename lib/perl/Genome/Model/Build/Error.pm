@@ -143,7 +143,7 @@ sub create_from_workflow_errors {
 sub _validate_error {
     my ($class, $error) = @_;
 
-    unless ( $error->path_name ) { 
+    unless ( $error->can('path_name') and $error->path_name ) {
         $class->error_message("No path name found in error: ".$error->id);
         $class->error_message( Dumper($error) );
         return;
