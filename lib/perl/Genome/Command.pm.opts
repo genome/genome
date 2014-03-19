@@ -3732,9 +3732,11 @@ $Genome::Command::OPTS_SPEC = [
     [
       '>alleles',
       [
-        'model=s',
-        undef,
         'build=s',
+        undef,
+        'instrument-data=s',
+        undef,
+        'model=s',
         undef,
         'help!',
         undef
@@ -3817,6 +3819,31 @@ $Genome::Command::OPTS_SPEC = [
         ],
         'variation-list-build=s',
         undef,
+        'help!',
+        undef
+      ],
+      '>list',
+      [
+        'show=s',
+        'files',
+        'style=s',
+        [
+          'text',
+          'csv',
+          'tsv',
+          'pretty',
+          'html',
+          'xml',
+          'newtext'
+        ],
+        'csv-delimiter=s',
+        'files',
+        'noheaders!',
+        undef,
+        'order-by=s',
+        'files',
+        'filter=s',
+        'files',
         'help!',
         undef
       ],
