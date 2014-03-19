@@ -334,7 +334,8 @@ sub _generate_lane_qc_instrument_data {
         instrument_data => [$genotype_data],
     );
 
-    my $gmb = Genome::Model::Build->create(model_id => $genotype_microarray_model->id, data_directory => '/tmp');
+    my $tmp_dir = Genome::Sys->create_temp_directory;
+    my $gmb = Genome::Model::Build->create(model_id => $genotype_microarray_model->id, data_directory => $tmp_dir);
     $gmb->success();
 
 
