@@ -160,6 +160,7 @@ sub execute {
 
     foreach my $chr ( sort keys %chr ) {
 
+        #Get the reference sequence
         print qq!$chr\n!;
         my $database_fh = Genome::Sys->open_file_for_reading("$dir/$chr.fa");
         print qq!opened $chr\n!;
@@ -188,6 +189,7 @@ sub execute {
             my $temp = $chr{$chr};
             my %seq_chr_pos;
 
+            #For each protein in the bed file, get the sequence from the reference sequence
             while ( $temp =~ s/^#([^#]+)#// ) {
                 my $name     = $1;
 
@@ -201,6 +203,7 @@ sub execute {
                 my $segment_starts_  = $segment_starts;
                 my $segment_lengths_ = $segment_lengths;
                 my $accu_c           = 0;
+                #For each exon in the protein, get the sequence from the reference sequence
                 while ( $segment_starts_ =~ s/^([0-9\-]+)\,// ) {
                     my $segment_start = $1;
                     if ( $segment_lengths_ =~ s/^([0-9]+)\,// ) {
@@ -208,6 +211,17 @@ sub execute {
 
                         my $seq_ = substr $sequence,
                         $start + $segment_start, $segment_length;
+                        #For each base in the protein, record the mapping between the position in the protein and the absolute
+                        #position on the reference chromosome (e.g. position 4 [0-based] of a protein that is at
+                        #position 2 [1-based] on a segment that starts at position 6 [0-based] relative to
+                        #the protein start, which starts at chr3 pos 10 [0-based] maps to chr3 pos 17 [0-based]:
+                        #  $seq_chr_pos{4} = 10 + 6 + 2 - 1 = 17
+                        #  line from bed file:
+                        #  chr3  10  20  ENSP1-FAKE  .  +  10  20  0  2  3,5  0,6
+                        #  start (0-based, relative to reference):     10 11 12 13 14 15 16 |17| 18 19 20
+                        #  segment_start (0-based, relative to start): 0   1  2  3  4  5 |6|  7   8  9 10
+                        #  pos (1-based, relative to segment_start:    1   2  3           1  |2|  3  4  5
+                        #  accu_c (0-based, relative to start):        0   1  2           3  |4|  5  6  7
                         for (
                             my $pos = 1 ;
                             $pos <= $segment_length ;
@@ -227,12 +241,15 @@ sub execute {
                 }
 
                 my $seq             = $seq_original;
+                #This reverse complemented seq is never used???
                 my $seq_original_rc = reverse $seq_original;
                 $seq_original_rc =~ tr/ATCG/TAGC/;
 
                 my $description_        = "";
                 my $num_indel           = 0;
 
+                #Starting at the end of the original protein seq, look for variants starting
+                #inside the protein seq.
                 for (
                     my $i = length($seq_original) - 1 ;
                     $i >= 0 ;
@@ -251,8 +268,9 @@ sub execute {
                         my $length_old = $vcf_old{"$chr#$var_pos"} eq "-" ? 0 : length( $vcf_old{"$chr#$var_pos"} );
                         my $length_new = $vcf_new{"$chr#$var_pos"} eq "-" ? 0 : length( $vcf_new{"$chr#$var_pos"} );
                         $num_indel++;
+                        #if the difference in length is a multiple of 3, then it is in-frame
                         my $inframe = ( abs( $length_old - $length_new ) % 3 == 0 ) ? 1 : 0;
-                        my $frame_type = $inframe == 1 ? 'in_frame_del' : 'fs';
+                        my $frame_type = $inframe == 1 ? 'in_frame_del' : 'fs'; #Why is it always del??
                         my ($int_3s, $int_3e);
                         if ( $strand =~ /\-/ ) {
                             my $rev_pos = length($seq_original) - $i - $length_old;
@@ -265,7 +283,7 @@ sub execute {
                             $int_3e = int( ( $i + $length_new + 1 ) / 3 ) + 1;
                         }
                         my ($indel_type, $length, $int);
-                        if ( $vcf_new{"$chr#$var_pos"} eq "-" ) {
+                        if ( $vcf_new{"$chr#$var_pos"} eq "-" ) {  #Does not handle complex indels properly
                             $indel_type = 'DEL';
                             $length = $length_old;
                             $int = $int_3s;
