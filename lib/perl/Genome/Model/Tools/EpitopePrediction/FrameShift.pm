@@ -28,6 +28,18 @@ class Genome::Model::Tools::EpitopePrediction::FrameShift {
             doc => '',
         },
     ],
+    has_calculated => [
+        output_file => {
+            is  => 'File',
+            calculate_from => ['output_directory'],
+            calculate => q|return File::Spec->join($output_directory, 'proteome-indel.fasta'); |,
+        },
+        output_mod_file => {
+            is  => 'File',
+            calculate_from => ['output_directory'],
+            calculate => q|return File::Spec->join($output_directory, 'proteome-indel-mod.fasta'); |,
+        },
+    ],
 };
 
 sub execute {
@@ -110,12 +122,10 @@ sub execute {
         "GGG" => "G"
     );
 
-    open( OUT,     ">$out_dir/proteome-indel.fasta" );
-    open( OUT_MOD, ">$out_dir/proteome-indel-mod.fasta" );
+    my $ofh = Genome::Sys->open_file_for_writing($self->output_file);
+    my $modfh = Genome::Sys->open_file_for_writing($self->output_mod_file);
 
     open( LOG,     ">$out_dir/proteome-indel.log" );
-    open( LOG_MOD, ">$out_dir/proteome-mod-indel.log" );
-    open( STAT,    ">$out_dir/proteome-mod-indel.stat" );
 
     my (%chr, %bed);
     my $ifh = Genome::Sys->open_file_for_reading($filename);
@@ -143,6 +153,11 @@ sub execute {
         my $qaul = $fields[5];
         my $anno = $fields[6];
         my $type = $fields[7];
+        unless (defined $chr and defined $pos and defined $id and defined $old 
+                and defined $new and defined $qaul and defined $anno and defined $type) {
+            die $self->error_message("Failed to parse line: ($line)");
+        }
+
         $pos--;
         $new =~ s/\,.*$//;    #####
         print "pos=$pos", "\t", "id=$id", "\t", "old=$old", "\t",
@@ -245,7 +260,7 @@ sub execute {
                 my $seq_original_rc = reverse $seq_original;
                 $seq_original_rc =~ tr/ATCG/TAGC/;
 
-                my $description_        = "";
+                my $description        = "";
                 my $num_indel           = 0;
 
                 #Starting at the end of the original protein seq, look for variants starting
@@ -293,8 +308,8 @@ sub execute {
                             $length = $length_new;
                             $int = $inframe == 1 ? "$int_3s-$int_3e" : $int_3s;
                         }
-                        $description_ .= sprintf(
-                            "(%s:%s-%s-%s-%s:%s%s",
+                        $description .= sprintf(
+                            "(%s:%s-%s-%s-%s:%s%s)",
                             $indel_type, $chr, $var_pos, $length, $vcf_type{"$chr#$var_pos"}, $int, $frame_type
                         );
 
@@ -379,12 +394,8 @@ sub execute {
                     if ( length($protein) > 6
                             and $protein !~ /^\*/ )
                     {
-                        print OUT
-                        qq!>$name (MAP:$chr:$start$strand $segment_lengths $segment_starts)\n$protein_original\n!;
-                        $description_ .= ")";
-
-                        print OUT_MOD
-                        qq!>$name-indel (MAP:$chr:$start$strand $segment_lengths $segment_starts) $description_\n$protein\n!;
+                        $ofh->print(qq!>$name (MAP:$chr:$start$strand $segment_lengths $segment_starts)\n$protein_original\n!);
+                        $modfh->print(qq!>$name-indel (MAP:$chr:$start$strand $segment_lengths $segment_starts) $description\n$protein\n!);
                     }
 
                 }
@@ -394,16 +405,9 @@ sub execute {
 
         $database_fh->close;
     }
-    print STAT qq!
-    done; 
-    !;
-    print STAT
-    qq!\nnumber of modifications\tnumber of proteins\tnumber of proteins (somatic variants)\n!;
 
-    close(OUT);
-    close(OUT_MOD);
+    $ofh->close;
+    $modfh->close;
 
     close(LOG);
-    close(LOG_MOD);
-    close(STAT);
 }
