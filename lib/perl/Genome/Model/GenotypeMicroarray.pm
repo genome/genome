@@ -218,7 +218,6 @@ sub _execute_build {
 
     ###
     # Original genotype files: VCF and TSV
-    $self->debug_message('Create original genotype files...');
     my $create_og_files = Genome::Model::GenotypeMicroarray::Build::CreateOriginalGenotypeFiles->create(
         build => $build,
     );
@@ -231,37 +230,6 @@ sub _execute_build {
         $self->error_message('Failed to execute command to create extract command original genotype VCF file!');
         return;
     }
-
-    # Check that genotypes were output
-    if ( $create_og_files->genotypes_output == 0 ) {
-        $self->error_message('Executed extract command to create original genotype VCF file, but no genotypes were output. This means they were filtered or ignored because of ambiguous position.');
-        return;
-    }
-
-    # Check VCF exists
-    my $original_genotype_vcf_file = $build->original_genotype_vcf_file_path;
-    $self->debug_message('Original genotype file VCF: '.$original_genotype_vcf_file);
-    if ( not -e $original_genotype_vcf_file ) {
-        $self->error_message('Executed extract command to create original genotype VCF file and genotypes were output, but file is gone!');
-        return;
-    }
-
-    # Check TSV exists
-    my $original_genotype_file = $build->original_genotype_file_path;
-    $self->debug_message('Original genotype file TSV: '.$original_genotype_file);
-        if ( not -e $original_genotype_file ) {
-        $self->error_message('Executed command to create original genotype file and genotypes were output, but file is gone!');
-        return;
-    }
-
-    # Check that there are alleles
-    my @alleles = grep { $_ ne '--' } keys %{$create_og_files->alleles};
-    if ( not @alleles ) {
-        $self->error_message('Executed command to create original genotype file, but there are no alleles!');
-
-        return;
-    }
-    $self->debug_message('Create original genotype files...OK');
 
     ###
     # Filters for extracting from the above original file
