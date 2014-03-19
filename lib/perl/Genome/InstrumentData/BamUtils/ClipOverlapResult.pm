@@ -88,7 +88,23 @@ sub create {
 
     $self->status_message('Reference: '.$self->reference_build->id);
 
+    unless ($self->_run_clip_overlap) {
+        $self->delete;
+        return;
+    }
+
+    my $allocation = $self->disk_allocations;
+    eval { $allocation->reallocate }; # FIXME pasted from GATk... I don't think this is needed? Should happen automatically
+
     return $self;
+}
+
+sub _run_clip_overlap {
+    my $self = shift;
+
+    # TODO call a gmt here, or something
+
+    return 1;
 }
 
 1;
