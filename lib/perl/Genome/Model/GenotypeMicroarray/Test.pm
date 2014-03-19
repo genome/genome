@@ -6,7 +6,7 @@ use warnings;
 require File::Temp;
 
 sub testdir {
-    return $ENV{GENOME_TEST_INPUTS} . '/GenotypeMicroarray/v3';
+    return $ENV{GENOME_TEST_INPUTS} . '/GenotypeMicroarray/v4';
 }
 
 my %cache;
