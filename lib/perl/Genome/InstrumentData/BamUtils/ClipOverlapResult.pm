@@ -101,8 +101,33 @@ sub create {
 
 sub _run_clip_overlap {
     my $self = shift;
+ 
+    my $output_bam_path; #TODO figure out who specifies output
 
-    # TODO call a gmt here, or something
+    my %clip_overlap_params = (
+        version => $self->version,
+        input_bam => $self->input_bam_path,
+        output_bam => $output_bam_path,
+    );
+    $self->status_message('Params: '.Data::Dumper::Dumper(\%clip_overlap_params));
+
+    my $clip_overlap = Genome::Model::Tools::BamUtils::ClipOverlap->create(%clip_overlap_params);
+    if ( not $clip_overlap ) {
+        $self->error_message('Failed to create clip overlap command!');
+        return;
+    }
+
+    if ( not eval{ $clip_overlap->execute; } ) {
+        $self->error_message($@) if $@;
+        $self->error_message('Failed to execute clip overlap command!');
+        return;
+    }
+
+    if ( not -s $output_bam_path) {
+        $self->error_message('Ran clip overlap command, but failed to make a output bam with size!');
+        return;
+    }
+    $self->status_message('Output bam: ' . $output_bam_path);
 
     return 1;
 }
