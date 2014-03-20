@@ -15,6 +15,7 @@ sub reference_sequence_build {
 
     $cache{reference_sequence_build} = Genome::Model::Build::ReferenceSequence->__define__(
         name => '__TEST_REF__',
+        version => '37',
     );
     die 'Failed to define reference sequence build' if not $cache{reference_sequence_build};
 
