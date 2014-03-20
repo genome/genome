@@ -5,7 +5,7 @@ use warnings;
 
 use Genome;
 
-use Genome::InstrumentData::BamUtils::ClipOverlapResult;
+use Genome::InstrumentData::BamUtil::ClipOverlapResult;
 require Genome::Utility::Text;
 
 class Genome::InstrumentData::Command::RefineReads::ClipOverlap {
@@ -18,7 +18,7 @@ class Genome::InstrumentData::Command::RefineReads::ClipOverlap {
         params => { is => 'Text', },
     ],
     has_optional_transient => [
-        clip_overlap_result => { is => 'Genome::InstrumentData::BamUtils::ClipOverlapResult', },
+        clip_overlap_result => { is => 'Genome::InstrumentData::BamUtil::ClipOverlapResult', },
     ],
 };
 
@@ -64,7 +64,7 @@ sub _load_result {
     # Check accessor
     return $self->clip_overlap_result if $self->clip_overlap_result;
 
-    my $result_class = 'Genome::InstrumentData::BamUtils::ClipOverlapResult';
+    my $result_class = 'Genome::InstrumentData::BamUtil::ClipOverlapResult';
     $self->debug_message('Class: '.$result_class);
     $self->debug_message('Method: '.$retrieval_method);
 

@@ -1,11 +1,11 @@
-package Genome::InstrumentData::BamUtils::ClipOverlapResult;
+package Genome::InstrumentData::BamUtil::ClipOverlapResult;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::InstrumentData::BamUtils::ClipOverlapResult {
+class Genome::InstrumentData::BamUtil::ClipOverlapResult {
     is => 'Genome::InstrumentData::AlignedBamResult',
     has_input => [
         bam_source => { # PROVIDES bam_path SHOULD be in aligned bam result, but would be incompatible with AR::Merged
@@ -15,7 +15,7 @@ class Genome::InstrumentData::BamUtils::ClipOverlapResult {
     has_param => [
         version => {
             is => 'Text',
-            doc => 'Version of BamUtils to use.',
+            doc => 'Version of BamUtil to use.',
             valid_values => [qw/ /], #TODO
         },
     ],
@@ -48,7 +48,7 @@ sub instrument_data { # SHOULD be in AlignedBamResult, but would be incompatible
 sub resolve_allocation_subdirectory {
     my $self = shift;
     my $class = $self->class;
-    $class =~ s/^Genome::InstrumentData::BamUtils:://;
+    $class =~ s/^Genome::InstrumentData::BamUtil:://;
     $class =~ s/Result$//;
     return sprintf(
         "model_data/gatk/%s-%s-%s-%s-%s", 
@@ -111,7 +111,7 @@ sub _run_clip_overlap {
     );
     $self->status_message('Params: '.Data::Dumper::Dumper(\%clip_overlap_params));
 
-    my $clip_overlap = Genome::Model::Tools::BamUtils::ClipOverlap->create(%clip_overlap_params);
+    my $clip_overlap = Genome::Model::Tools::BamUtil::ClipOverlap->create(%clip_overlap_params);
     if ( not $clip_overlap ) {
         $self->error_message('Failed to create clip overlap command!');
         return;
