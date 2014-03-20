@@ -42,6 +42,8 @@ my %model_files = (
     'F_hepatica_v1.0.allpaths.pg.mk2.hmm'   => 'sn_fh1mk2',
     'Tnativa.rf.gd.cgmkv2.hmm'              => 'sn_tn1cgmk2',
     'Tnativa.rf.gd.mkv2.hmm'                => 'sn_tn1mk2',
+    'Oostertagi_pbj_cgmkv2.hmm'             => 'sn_oo1cgmk2',
+    'Oostertagi_pbj.mkv2.hmm'               => 'sn_oo1mk2',
 );
 
 
