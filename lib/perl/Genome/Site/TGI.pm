@@ -2,6 +2,9 @@ package Genome::Site::TGI;
 use strict;
 use warnings;
 
+# do this first so we get usage metrics even if something crashes below
+use Genome::Site::TGI::UsageLog;
+
 BEGIN {
     my @shell_vars = qw(
         GENOME_DB
