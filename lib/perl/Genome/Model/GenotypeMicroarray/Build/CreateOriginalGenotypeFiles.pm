@@ -36,7 +36,6 @@ sub execute {
         return;
     }
 
-    $DB::single = 1;
     my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->build_reader(
         source => $build,
     );
@@ -60,7 +59,7 @@ sub execute {
 
     my %alleles;
     my $genotypes_output = 0;
-    GENOTYPE: while ( my $genotype = $reader->next ) {
+    GENOTYPE: while ( my $genotype = $reader->read ) {
         $vcf_writer->write($genotype);
         $tsv_writer->write($genotype);
         $alleles{ $genotype->sample_field(0, 'ALLELES') }++;
