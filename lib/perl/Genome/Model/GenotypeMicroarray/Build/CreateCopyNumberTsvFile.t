@@ -25,8 +25,8 @@ ok(-s $build->original_genotype_file_path, 'linked original genotype file') or d
 my $cmd = Genome::Model::GenotypeMicroarray::Build::CreateCopyNumberTsvFile->create(
     build => $build,
 );
-ok($cmd, 'create original genotype files command');
-ok($cmd->execute, 'execute original genotype files command');
+ok($cmd, 'create copy number file command');
+ok($cmd->execute, 'execute copy number file command');
 
 is(File::Compare::compare($build->copy_number_file_path, $example_build->copy_number_file_path), 0, 'copy number file matches');
 
