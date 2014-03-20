@@ -273,38 +273,24 @@ sub _execute_build {
         return;
     }
 
-    # TODO bdericks: I'm guessing that second genotype file is supposed to be the replicate. It should be changed
-    # to be the actual replicate when we know how to figure it out.
-    # abrummet: This is the only place in the tree where this Command is used.  I've stripped out the second input
-    # file to fix a bug where it would not read from the "second" file when switching chromosomes and the next position
-    # is numerically higher than the last position
-    my $snp_array_file = $build->formatted_genotype_file_path;
-    $self->debug_message("Create snp array (gold) file: ".$snp_array_file);
-    my $gold_snp = Genome::Model::GenotypeMicroarray::Command::CreateGoldSnpFileFromGenotypes->create(
-        genotype_file => $build->genotype_file_path,
-        output_file => $snp_array_file,
-        reference_sequence_build => $reference_sequence_build, 
+    my $gold_snp_cmd = Genome::Model::GenotypeMicroarray::Build::CreateGoldSnpFile->create(
+        build => $build,
     );
-    if ( not $gold_snp ) {
+    if ( not $gold_snp_cmd ) {
         $self->error_message("Cannot create gold snp tool.");
         return;
     }
-    $gold_snp->dump_status_messages(1);
-    if ( not $gold_snp->execute ) {
+    $gold_snp_cmd->dump_status_messages(1);
+    if ( not $gold_snp_cmd->execute ) {
         $self->error_message("Cannot execute gold snp tool");
         return;
     }
-    if ( not -s $snp_array_file ) {
-        $self->error_message("Executed gold snp tool, but snp array file ($snp_array_file) does not exist");
-        return;
-    }
-    $self->debug_message("Create snp array (gold) file...OK");
 
     $self->debug_message('Create gold snp bed file...');
     my $snvs_bed = $build->snvs_bed;
     $self->debug_message('Gold snp bed file: '.$snvs_bed);
     my $gold_snp_bed = Genome::Model::GenotypeMicroarray::Command::CreateGoldSnpBed->create(
-        input_file => $snp_array_file,
+        input_file => $build->formatted_genotype_file_path,
         output_file => $snvs_bed,
         reference => $reference_sequence_build,
     );
@@ -314,7 +300,7 @@ sub _execute_build {
     }
     $gold_snp_bed->dump_status_messages(1);
     unless ($gold_snp_bed->execute) {
-        $self->error_message("Could not generate gold snp bed file at $snvs_bed from snp array file $snp_array_file");
+        $self->error_message("Could not generate gold snp bed file at $snvs_bed from snp array file");
         return;
     }
     if ( not -s $snvs_bed ) {
