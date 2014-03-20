@@ -3,25 +3,23 @@ package Genome::Model::GenotypeMicroarray::GenotypeFile::FromInstDataReader;
 use strict;
 use warnings;
 
-use Genome;
+use parent 'Genome::Model::GenotypeMicroarray::GenotypeFile::FromBaseReader';
+
+sub source_type {
+    return 'instrument_data';
+}
+
+sub get_genotype_file {
+    my $self = shift;
+    return $self->{instrument_data}->genotype_file;
+}
 
 sub create {
-    my ($class, %params) = @_;
+    my $class = shift;
 
-    my $self = bless(\%params, $class);
+    my $self = $class->SUPER::create(@_);
+    return if not $self;
 
-    if ( not $self->{instrument_data} ) {
-        $class->error_message('No instrument data given to open instrument data reader!');
-        return;
-    }
-
-    my $open_genotype_fh_ok = $self->_open_genotype_fh;
-    return if not $open_genotype_fh_ok;
-
-    my $resolve_headers = $self->_resolve_headers;
-    return if not $resolve_headers;
-
-    # Set the snp id mapping, if given a variation list build
     if ( $self->{variation_list_build} ) {
         $self->{snp_id_mapping} = Genome::InstrumentData::Microarray->get_snpid_hash_for_variant_list(
             $self->{instrument_data}, $self->{variation_list_build}
@@ -30,27 +28,6 @@ sub create {
     $self->{snp_id_mapping} ||= {};
 
     return $self;
-}
-
-sub _open_genotype_fh {
-    my $self = shift;
-
-    my $genotype_file = eval{ $self->{instrument_data}->attributes(attribute_label => 'genotype_file')->attribute_value; };
-    if ( not $genotype_file or not -s $genotype_file ) {
-        $self->error_message('No genotype file for instrument data! '.Data::Dumper::Dumper($self->{instrument_data}));
-        return;
-    }
-
-    my $fh = eval { Genome::Sys->open_file_for_reading($genotype_file) };
-    if (!$fh or $@) {
-        $self->error_message("Can't open file $genotype_file for reading: $@");
-        return;
-    }
-
-    $self->{genotype_file} = $genotype_file;
-    $self->{genotype_fh} = $fh;
-
-    return 1;
 }
 
 sub _resolve_headers {
@@ -64,7 +41,7 @@ sub _resolve_headers {
     }
 
     chomp $header_line;
-    my @headers = map { s/\s/_/g; s/_\-\_top$//i; lc } split(',', $header_line);
+    my @headers = map { s/\s/_/g; s/_\-\_top$//i; lc } split($self->{delimiter}, $header_line);
     $self->{headers} = \@headers;
 
     return 1;
@@ -73,20 +50,15 @@ sub _resolve_headers {
 sub read {
     my $self = shift;
 
-    my $line = $self->{genotype_fh}->getline;
-    return if not $line;
-    chomp $line;
+    my $genotype = $self->SUPER::read;
+    return if not $genotype;
 
-    my %genotype;
-    @genotype{ @{$self->{headers}} } = split(',', $line);
-
-    # The id is from the snp mapping or the genotype's snp_name
-    $genotype{id} = delete $genotype{snp_name};
-    if ( exists $self->{snp_id_mapping}->{ $genotype{id} }) {
-        $genotype{id} = $self->{snp_id_mapping}->{ $genotype{id} };
+    $genotype->{id} = delete $genotype->{snp_name}; # set snp name as id
+    if ( exists $self->{snp_id_mapping}->{ $genotype->{id} }) { # get corrected id
+        $genotype->{id} = $self->{snp_id_mapping}->{ $genotype->{id} };
     }
 
-    return \%genotype;
+    return $genotype;
 }
 
 1;
