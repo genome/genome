@@ -47,7 +47,6 @@ sub read {
     my $self = shift;
 
     if ( not defined $self->_order ) {
-    $DB::single = 1;
         my $load_genotypes = $self->_load_genotypes;
         die if not $load_genotypes;
 
