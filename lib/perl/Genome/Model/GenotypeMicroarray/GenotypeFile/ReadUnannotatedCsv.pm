@@ -10,9 +10,6 @@ use Genome::File::Vcf::Reader;
 class Genome::Model::GenotypeMicroarray::GenotypeFile::ReadUnannotatedCsv { 
     is => 'Genome::Model::GenotypeMicroarray::GenotypeFile::FromInstDataReader',
     has => {
-        input => { is => 'Text', },
-        variation_list_build => { is => 'Genome::Model::Build::ImportedVariationList', },
-        snp_id_mapping => { is => 'Hash', },
         _vcf_reader => { is => 'Genome::File::Vcf::Reader', },
         _genotypes => { is => 'Hash', default_value => {}, },
         _order => { is => 'Array', },
@@ -50,6 +47,7 @@ sub read {
     my $self = shift;
 
     if ( not defined $self->_order ) {
+    $DB::single = 1;
         my $load_genotypes = $self->_load_genotypes;
         die if not $load_genotypes;
 
@@ -110,16 +108,8 @@ sub _open_vcf_reader {
 sub _load_genotype {
     my $self = shift;
 
-    my $genotype = $self->SUPER::next;
+    my $genotype = $self->SUPER::read;
     return if not $genotype;
-
-    # The id is from the snp mapping or the genotype's snp_name
-    if ( $self->snp_id_mapping and exists $self->snp_id_mapping->{ $genotype->{snp_name} }) {
-        $genotype->{id} = $self->snp_id_mapping->{ delete $genotype->{snp_name} };
-    } else {
-        $genotype->{id} = delete $genotype->{snp_name};
-        $genotype->{id} =~ s/^(rs\d+)\D*$/$1/; #borrowed from GSC::Genotyping::normalize_to
-    }
 
     if ( exists $self->_genotypes->{ $genotype->{id} } ) {
         Carp::confess( $self->error_message('Already have a genotype for snp id: '.Data::Dumper::Dumper($genotype, $self->genotypes->{ $genotype->{id} })) );
