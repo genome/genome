@@ -36,19 +36,17 @@ sub create {
     my $open_vcf_reader = $self->_open_vcf_reader;
     return if not $open_vcf_reader;
 
+    my $load_genotypes = $self->_load_genotypes;
+    return if not $load_genotypes;
+
+    my $annotate_genotypes = $self->_annotate_genotypes;
+    return if not $annotate_genotypes;
+
     return $self;
 }
 
 sub read {
     my $self = shift;
-
-    if ( not defined $self->_order ) {
-        my $load_genotypes = $self->_load_genotypes;
-        die if not $load_genotypes;
-
-        my $annotate_genotypes = $self->_annotate_genotypes;
-        die if not $annotate_genotypes;
-    }
 
     while ( my $variant_id = shift @{$self->_order} ) {
         my $entry = $self->_create_vcf_entry( $self->_genotypes->{$variant_id} );
@@ -106,10 +104,6 @@ sub _load_genotype {
     my $genotype = $self->SUPER::read;
     return if not $genotype;
 
-    if ( exists $self->_genotypes->{ $genotype->{id} } ) {
-        Carp::confess( $self->error_message('Already have a genotype for snp id: '.Data::Dumper::Dumper($genotype, $self->genotypes->{ $genotype->{id} })) );
-    }
-
     delete $genotype->{'chr'};
     $genotype->{alleles} = $genotype->{allele1}.$genotype->{allele2};
 
@@ -147,28 +141,25 @@ sub _annotate_genotypes {
     my $cnt = 0;
     while ( my $line = $vcf_reader->_getline ) {
         my ($variant_id) = split(',', (split(/\t/, $line))[2]);
-        my $genotype = $genotypes->{$variant_id};
 
         # Skip if not in variation list
-        next if not $genotype;
+        next if not $genotypes->{$variant_id};
 
-        if ( $genotypes->{$variant_id}->{seen} ) {
-            # remove order value if seen
-            delete $genotypes->{$variant_id}->{order};
+        if ( exists $genotypes->{$variant_id}->{order} ) {
+            # remove if seen
+            delete $genotypes->{$variant_id};
+            next;
         }
-        else {
-            # set order
-            $genotypes->{$variant_id}->{order} = ++$cnt;
-        }
-        # increment seen
-        $genotypes->{$variant_id}->{seen}++;
+
+        # set order
+        $genotypes->{$variant_id}->{order} = ++$cnt;
 
         # Save line to create vcf entry
         chomp $line;
         $genotypes->{$variant_id}->{line} = $line;
     }
 
-    my @order = map { $_->{id} } sort { $a->{order} <=> $b->{order} } grep { exists $_->{order} } values %$genotypes;
+    my @order = map { $_->{id} } sort { $a->{order} <=> $b->{order} } values %$genotypes;
     $self->_order(\@order);
     if ( not @order ) {
         $self->error_message("All genotypes are duplicates in variant list! ".$vcf_reader->{name});
