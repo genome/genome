@@ -66,23 +66,3 @@ ok($get_result, "Able to get the result that we created");
 is($get_result->id, $result->id, "Ids match");
 
 done_testing();
-
-=cut 
-my $version = "1";
-my $data_dir = Genome::Utility::Test->data_dir_ok($class, $version);
-
-my $in = File::Spec->join($data_dir, "testClipOverlapCoord.sam");
-my $expected_out = File::Spec->join($data_dir, "testClipOverlapCoord.expected.sam");
-my $out = Genome::Sys->create_temp_file_path;
-
-my $cmd = $class->create(
-    input_bam => $in,
-    output_bam => $out,
-);
-
-ok($cmd, "Command was created correctly");
-ok($cmd->execute, "Command was executed successfuly");
-ok(-s $out, "Output file exists");
-compare_ok($out, $expected_out, "Output file was as expected");
-
-done_testing;
