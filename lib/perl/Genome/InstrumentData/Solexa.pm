@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 use File::Basename;
 
+use List::MoreUtils qw(uniq);
 
 class Genome::InstrumentData::Solexa {
     is => ['Genome::InstrumentData', 'Genome::Searchable'],
@@ -1311,9 +1312,12 @@ sub get_default_alignment_metrics { #means BWA
 sub get_default_alignment_results {
     my $self = shift;
 
+    my @alignment_results = $self->alignment_results_from_analysis_projects;
+    return @alignment_results if @alignment_results;
+
     # Get alignment results for this inst data and the default aligner name, newest first
     my $pp = Genome::ProcessingProfile::ReferenceAlignment->default_profile;
-    my @alignment_results = sort {$b->best_guess_date cmp $a->best_guess_date} Genome::InstrumentData::AlignmentResult->get(
+    @alignment_results = sort {$b->best_guess_date cmp $a->best_guess_date} Genome::InstrumentData::AlignmentResult->get(
         instrument_data_id => $self->id,
         aligner_name       => $pp->read_aligner_name,
     );
@@ -1361,6 +1365,30 @@ sub get_default_alignment_results {
     # lowest priority, in some rare cases, no LIMS eland metrics, no apipe-builder metrics.
     # Maybe we should not allow this to be used as default result.
     return @ars_by_others;
+}
+
+sub alignment_results_from_analysis_projects {
+    my $self = shift;
+
+    my @aps = $self->analysis_projects;
+    return unless scalar(@aps);
+
+    my @inputs = Genome::Model::Input->get(value_id => $self->id, 'model.analysis_projects.id' => [map $_->id, @aps]);
+    return unless scalar(@inputs);
+
+    my @alignment_results;
+    for my $input (@inputs) {
+        my $build = $input->model->last_complete_build;
+        next unless $build;
+        next unless Genome::Model::Build::Input->get(value_id => $self->id, build_id => $build->id);
+
+        push @alignment_results,
+            grep { $_->instrument_data_id eq $self->id }
+            grep { $_->isa('Genome::InstrumentData::AlignmentResult') }
+            $build->all_results;
+    }
+
+    return uniq(@alignment_results);
 }
 
 #This method is used in GSC::IndexIllumina to get bwa alignment metrics to retire eland

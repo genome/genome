@@ -44,20 +44,9 @@ sub build_reader {
 sub _build_reader_for_instrument_data {
     my ($class, $instrument_data, $variation_list_build) = @_;
 
-    my $genotype_file = eval{ $instrument_data->attributes(attribute_label => 'genotype_file')->attribute_value; };
-    if ( not $genotype_file or not -s $genotype_file ) {
-        $class->error_message('No genotype file for instrument data! '.$instrument_data->id);
-        return;
-    }
-
-    my $snp_id_mapping = Genome::InstrumentData::Microarray->get_snpid_hash_for_variant_list(
-        $instrument_data, $variation_list_build
-    );
-
     my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReadUnannotatedCsv->create(
-        input => $genotype_file,
+        instrument_data => $instrument_data,
         variation_list_build => $variation_list_build,
-        snp_id_mapping => $snp_id_mapping,
     );
 
     $current_sample_name = $instrument_data->sample->name;

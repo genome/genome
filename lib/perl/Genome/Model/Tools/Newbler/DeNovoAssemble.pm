@@ -73,6 +73,8 @@ EOS
 sub execute {
     my $self = shift;
 
+    print $self->output_directory."\n";
+
     my $command;
     if ( not $command = $self->_build_assemble_command ) {
         $self->error_message( "Failed to build assemble command" );
@@ -82,6 +84,10 @@ sub execute {
     if ( system( "$command" ) ) {
         $self->error_message( "Failed to run de-novo-assemble command: $command" );
         return;
+    }
+
+    if( $self->_update_phdball_file ) {
+	$self->status_message("Successfully updated chemistry in phdball file" );
     }
 
     return 1;
@@ -137,6 +143,31 @@ sub _build_assemble_command {
     $cmd .= $input_fastqs;
 
     return $cmd;
+}
+
+sub _update_phdball_file {
+    my $self = shift;
+
+    my $phdball_file = $self->output_directory.'/consed/phdball_dir/phd.ball.1';
+    return if not -s $phdball_file;
+
+    my $renamed_file = $phdball_file.'.orig';
+    rename $phdball_file, $renamed_file;
+    
+    my $reader = Genome::Sys->open_file_for_reading( $renamed_file );
+    my $writer = Genome::Sys->open_file_for_writing( $phdball_file );
+    while( my $line = $reader->getline ) {
+	if( $line =~ /^CHEM/ ) {
+	    $line = "CHEM: solexa\n" if $line =~ /unknown/;
+	}
+	$writer->print( $line );
+    }
+    $reader->close;
+    $writer->close;
+
+    unlink $renamed_file;
+
+    return 1;
 }
 
 1

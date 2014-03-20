@@ -6,19 +6,45 @@ use warnings;
 use Genome;
 
 class Genome::Model::GenotypeMicroarray::GenotypeFile::FromInstDataReader {
-    is => 'Genome::Utility::IO::SeparatedValueReader',
+    is => 'Genome::Utility::IO::Reader',
+    has_optional => {
+        variation_list_build => { is => 'Genome::Model::Build::ImportedVariationList', },
+        snp_id_mapping => { is => 'Hash', },
+        headers => { is => 'Array', },
+    },
 };
 
 sub create {
     my ($class, %params) = @_;
 
-    $params{headers} = []; # holder
+    my $instrument_data = delete $params{instrument_data};
+    if ( not $instrument_data ) {
+        $class->error_message('No instrument data given to open instrument data reader!');
+        return;
+    }
+
+    my $genotype_file = eval{ $instrument_data->attributes(attribute_label => 'genotype_file')->attribute_value; };
+    if ( not $genotype_file or not -s $genotype_file ) {
+        $class->error_message('No genotype file for instrument data! '.Data::Dumper::Dumper($instrument_data));
+        return;
+    }
+
+    $params{input} = $genotype_file;
 
     my $self = $class->SUPER::create(%params);
     return if not $self;
 
     my $resolve_headers = $self->_resolve_headers;
     return if not $resolve_headers;
+
+    # Set the snp id mapping, if given a variation list build
+    if ( $self->variation_list_build ) {
+        $self->snp_id_mapping( 
+            Genome::InstrumentData::Microarray->get_snpid_hash_for_variant_list(
+                $instrument_data, $self->variation_list_build
+            )
+        );
+    }
 
     return $self;
 }
@@ -40,8 +66,26 @@ sub _resolve_headers {
     return 1;
 }
 
-BEGIN {
-    *read = \&Genome::Utility::IO::SeparatedValueReader::next;
+sub read {
+    my $self = shift;
+
+    # Getline genotype
+    my $line = $self->getline;
+    return if not $line;
+    chomp $line;
+
+    my %genotype;
+    @genotype{ @{$self->headers} } = split(',', $line);
+
+    # The id is from the snp mapping or the genotype's snp_name
+    if ( $self->snp_id_mapping and exists $self->snp_id_mapping->{ $genotype{snp_name} }) {
+        $genotype{id} = $self->snp_id_mapping->{ delete $genotype{snp_name} };
+    } else {
+        $genotype{id} = delete $genotype{snp_name};
+        $genotype{id} =~ s/^(rs\d+)\D*$/$1/; #borrowed from GSC::Genotyping::normalize_to
+    }
+
+    return \%genotype;
 }
 
 1;

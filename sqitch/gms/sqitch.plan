@@ -287,3 +287,6 @@ config_analysis_project_model_bridge [config_analysis_project model_model] 2014-
 
 analysis_project_event_logging [timeline_base_permission] 2014-03-11T19:19:34Z Adam Coffman <acoffman@genome.wustl.edu> # add event logging to apconfig
 @1394748172 2014-03-13T22:02:53Z Adam Coffman <acoffman@genome.wustl.edu># Add event logging tables for APConfig
+
+instrument.fragment_library_unique_name [instrument_fragment_library] 2014-03-20T13:20:15Z Thomas B. Mooney <tmooney@genome.wustl.edu> # prevent future duplicate libraries
+@1395323767 2014-03-20T13:56:08Z Thomas B. Mooney <tmooney@genome.wustl.edu># Add unique constraint to library.full_name

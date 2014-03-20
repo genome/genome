@@ -17,11 +17,14 @@ use_ok('Genome::Model::GenotypeMicroarray::GenotypeFile::FromInstDataReader') or
 use_ok('Genome::Model::GenotypeMicroarray::Test') or die;
 
 my $instdata = Genome::Model::GenotypeMicroarray::Test->instrument_data();
+my $variation_list_build = Genome::Model::GenotypeMicroarray::Test->variation_list_build();
 
 my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::FromInstDataReader->create(
-    input => $instdata->genotype_file,
+    instrument_data => $instdata,
+    variation_list_build => $variation_list_build,
 );
 ok($reader, 'create reader');
+ok(!$reader->snp_id_mapping, 'no snp id mapping available'); #FIXME create and test
 
 my $cnt = 0;
 while ( my $genotype = $reader->read ) {

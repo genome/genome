@@ -49,22 +49,13 @@ sub execute {
     my $instdata = $self->_resolve_instrument_data;
     return if not $instdata;
 
-    my $genotype_file = $instdata->genotype_file;
-    if ( not $genotype_file or not -s $genotype_file ) {
-        $self->error_message('Instrument data genotype file does not exist! '.$genotype_file);
-        return;
-    }
-
     my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::FromInstDataReader->create(
-        input => $genotype_file,
+        instrument_data => $instdata,
     );
-    if ( not $reader ) {
-        $self->error_message('Failed to open genotype file! '.$genotype_file);
-        return;
-    }
+    return if  not $reader;
 
     my %alleles;
-    while ( my $genotype = $reader->next ) {
+    while ( my $genotype = $reader->read ) {
         $alleles{ $genotype->{allele1} . $genotype->{allele2} }++;
     }
     $self->alleles(\%alleles);
