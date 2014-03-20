@@ -14,7 +14,7 @@ unless ($archos =~ /64/) {
 
 use_ok ( 'Genome::Model::Tools::Newbler::DeNovoAssemble' ) or die;
 
-my $version = 'v1';
+my $version = 'v2';
 my $test_suite_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Newbler/DeNovoAssemble-'.$version;
 ok ( -d $test_suite_dir, 'Test suite dir exists' ) or die;
 
