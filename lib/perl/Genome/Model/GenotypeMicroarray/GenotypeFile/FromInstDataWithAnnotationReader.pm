@@ -1,4 +1,4 @@
-package Genome::Model::GenotypeMicroarray::GenotypeFile::ReadUnannotatedCsv;
+package Genome::Model::GenotypeMicroarray::GenotypeFile::FromInstDataWithAnnotationReader;
 
 use strict;
 use warnings;
@@ -7,7 +7,7 @@ use Genome;
 
 use Genome::File::Vcf::Reader;
 
-class Genome::Model::GenotypeMicroarray::GenotypeFile::ReadUnannotatedCsv { 
+class Genome::Model::GenotypeMicroarray::GenotypeFile::FromInstDataWithAnnotationReader { 
     is => 'Genome::Model::GenotypeMicroarray::GenotypeFile::FromInstDataReader',
     has => {
         _vcf_reader => { is => 'Genome::File::Vcf::Reader', },
