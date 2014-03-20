@@ -6,10 +6,11 @@ use warnings;
 use Genome;
 
 class Genome::Model::GenotypeMicroarray::GenotypeFile::FromInstDataReader {
-    is => 'Genome::Utility::IO::SeparatedValueReader',
+    is => 'Genome::Utility::IO::Reader',
     has_optional => {
         variation_list_build => { is => 'Genome::Model::Build::ImportedVariationList', },
         snp_id_mapping => { is => 'Hash', },
+        headers => { is => 'Array', },
     },
 };
 
@@ -18,7 +19,7 @@ sub create {
 
     my $instrument_data = delete $params{instrument_data};
     if ( not $instrument_data ) {
-        $class->error_message('No instrument data given to open instruemnt data reader!');
+        $class->error_message('No instrument data given to open instrument data reader!');
         return;
     }
 
@@ -29,8 +30,6 @@ sub create {
     }
 
     $params{input} = $genotype_file;
-
-    $params{headers} = []; # holder
 
     my $self = $class->SUPER::create(%params);
     return if not $self;
@@ -46,7 +45,6 @@ sub create {
             )
         );
     }
-
 
     return $self;
 }
@@ -71,19 +69,23 @@ sub _resolve_headers {
 sub read {
     my $self = shift;
 
-    # Get next genotype
-    my $genotype = $self->next;
-    return if not $genotype;
+    # Getline genotype
+    my $line = $self->getline;
+    return if not $line;
+    chomp $line;
+
+    my %genotype;
+    @genotype{ @{$self->headers} } = split(',', $line);
 
     # The id is from the snp mapping or the genotype's snp_name
-    if ( $self->snp_id_mapping and exists $self->snp_id_mapping->{ $genotype->{snp_name} }) {
-        $genotype->{id} = $self->snp_id_mapping->{ delete $genotype->{snp_name} };
+    if ( $self->snp_id_mapping and exists $self->snp_id_mapping->{ $genotype{snp_name} }) {
+        $genotype{id} = $self->snp_id_mapping->{ delete $genotype{snp_name} };
     } else {
-        $genotype->{id} = delete $genotype->{snp_name};
-        $genotype->{id} =~ s/^(rs\d+)\D*$/$1/; #borrowed from GSC::Genotyping::normalize_to
+        $genotype{id} = delete $genotype{snp_name};
+        $genotype{id} =~ s/^(rs\d+)\D*$/$1/; #borrowed from GSC::Genotyping::normalize_to
     }
 
-    return $genotype;
+    return \%genotype;
 }
 
 1;
