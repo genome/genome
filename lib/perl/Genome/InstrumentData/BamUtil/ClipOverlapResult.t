@@ -37,6 +37,7 @@ Sub::Install::reinstall_sub({
 
 my $bam_source = $input_result_class->__define__();
 
+# Since we are mocking up an input result, point to a make sure we point to a file
 Sub::Install::reinstall_sub({
     into => $input_result_class,
     as => 'bam_path',
