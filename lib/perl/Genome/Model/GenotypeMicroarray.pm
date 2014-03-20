@@ -196,112 +196,80 @@ sub _resolve_resource_requirements_for_build {
     return "-R 'select[mem>4000] rusage[mem=4000]' -M 4000000"
 }
 
-sub _execute_build {
+#< Work Flow >#
+sub map_workflow_inputs {
     my ($self, $build) = @_;
-    $self->debug_message('Execute genotype microarray build '.$build->__display_name__);
+    my @instrument_data = $build->instrument_data;
+    return (
+        build => $build,
+    );
+}
 
-    my $instrument_data = $build->instrument_data;
-    if ( not $instrument_data ) {
-        $self->error_message('No instrument data for genotype microarray build '.$build->__display_name__);
-        return;
-    }
-    $self->debug_message('Instrument data: '.$instrument_data->id.' '.$instrument_data->sequencing_platform);
+sub _resolve_workflow_for_build {
+    my ($self, $build, $lsf_queue, $lsf_project) = @_;
 
-    my $reference_sequence_build = $build->model->reference_sequence_build;
-    if ( not $reference_sequence_build ) {
-        $self->error_message('No reference sequence build for '.$build->__display_name__);
-        return;
-    }
-    $self->debug_message('Reference sequence build: '.$reference_sequence_build->__display_name__);
+    $lsf_queue //= $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
+    $lsf_project //= 'build' . $build->id;
 
-    my $dbsnp_build = $build->dbsnp_build;
-    if ( not $dbsnp_build ) {
-        $dbsnp_build = Genome::Model::ImportedVariationList->dbsnp_build_for_reference($reference_sequence_build);
-        if ( not $dbsnp_build ) {
-            $self->error_message('No dbsnp build for '.$build->__display_name__);
+    my $workflow = Workflow::Model->create(
+        name => $build->workflow_name,
+        input_properties => [qw/ build /],
+        output_properties => [qw/ build /],
+        log_dir => $build->log_directory,
+    );
+
+    my $previous_op = $workflow->get_input_connector;
+    my $add_operation = sub{
+        my ($name) = @_;
+        my $command_class_name = 'Genome::Model::GenotypeMicroarray::Build::'.join('', map { ucfirst } split(' ', $name));
+        my $operation_type = Workflow::OperationType::Command->create(command_class_name => $command_class_name);
+        if ( not $operation_type ) {
+            $self->error_message("Failed to create work flow operation for $name");
             return;
         }
-        $build->dbsnp_build($dbsnp_build);
-        $build->model->dbsnp_build($dbsnp_build);
-    }
-    $self->debug_message('DB SNP build: '.$dbsnp_build->__display_name__);
+        $operation_type->lsf_queue($lsf_queue);
+        $operation_type->lsf_project($lsf_project);
 
-    ###
-    # Original genotype files: VCF and TSV
-    my $create_og_files = Genome::Model::GenotypeMicroarray::Build::CreateOriginalGenotypeFiles->create(
-        build => $build,
+        my $operation = $workflow->add_operation(
+            name => $name,
+            operation_type => $operation_type,
+        );
+
+        $workflow->add_link(
+            left_operation => $previous_op,
+            left_property => 'build',
+            right_operation => $operation,
+            right_property => 'build',
+        );
+
+        return $operation;
+    };
+
+    my $create_og_files_op = $add_operation->('create original genotype files');
+    $previous_op = $create_og_files_op;
+
+    my $create_filtered_genotype_file_op = $add_operation->('create filtered genotype tsv file');
+    $previous_op = $create_filtered_genotype_file_op;
+
+    my $create_copy_number_file = $add_operation->('create copy number tsv file');
+    $previous_op = $create_copy_number_file;
+
+    my $create_gold_snp_file_op = $add_operation->('create gold snp file');
+    $previous_op = $create_gold_snp_file_op;
+
+    my $create_gold_snp_bed_file_op = $add_operation->('create gold snp bed file');
+    $previous_op = $create_gold_snp_bed_file_op;
+
+    $workflow->add_link(
+        left_operation => $previous_op,
+        left_property => 'build',
+        right_operation => $workflow->get_output_connector,
+        right_property => 'build',
     );
-    if ( not $create_og_files ) {
-        $self->error_message('Failed to create command to create extract command original genotype VCF file!');
-        return;
-    }
-    $create_og_files->dump_status_messages(1);
-    if ( not $create_og_files->execute ) {
-        $self->error_message('Failed to execute command to create extract command original genotype VCF file!');
-        return;
-    }
 
-    ###
-    # Filters for extracting from the above original file
-    my @filters = (qw/ gc_score:min=0.7 /); 
-    push @filters, 'invalid_iscan_ids' if $reference_sequence_build->version eq '36';
-
-    my $create_filtered_genotype_file = Genome::Model::GenotypeMicroarray::Build::CreateFilteredGenotypeTsvFile->create(
-        build => $build,
-    );
-    if ( not $create_filtered_genotype_file ) {
-        $self->error_message('Failed to create command to create genotype file!');
-        return;
-    }
-    $create_filtered_genotype_file->dump_status_messages(1);
-    if ( not $create_filtered_genotype_file->execute ) {
-        $self->error_message('Failed to execute command to create genotype file!');
-        return;
-    }
-
-    # Copy number file. No headers, tab sep with chrom, pos and log r ratio
-    my $create_copy_number_file = Genome::Model::GenotypeMicroarray::Build::CreateCopyNumberTsvFile->create(
-        build => $build,
-    );
-    if ( not $create_copy_number_file ) {
-        $self->error_message('Failed to create command to create copy number file!');
-        return;
-    }
-    $create_copy_number_file->dump_status_messages(1);
-    if ( not $create_copy_number_file->execute ) {
-        $self->error_message('Failed to execute command to create copy number file!');
-        return;
-    }
-
-    my $gold_snp_cmd = Genome::Model::GenotypeMicroarray::Build::CreateGoldSnpFile->create(
-        build => $build,
-    );
-    if ( not $gold_snp_cmd ) {
-        $self->error_message("Cannot create gold snp tool.");
-        return;
-    }
-    $gold_snp_cmd->dump_status_messages(1);
-    if ( not $gold_snp_cmd->execute ) {
-        $self->error_message("Cannot execute gold snp tool");
-        return;
-    }
-
-    my $gold_snp_bed_cmd = Genome::Model::GenotypeMicroarray::Command::CreateGoldSnpBed->create(
-        build => $build,
-    );
-    if ( not $gold_snp_bed_cmd ) {
-        $self->error_message('Failed to create gold snp bed tool!');
-        return;
-    }
-    $gold_snp_bed_cmd->dump_status_messages(1);
-    unless ($gold_snp_bed_cmd->execute) {
-        $self->error_message("Could not generate gold snp bed file!");
-        return;
-    }
-
-    $self->debug_message('Execute genotype microarray build...OK');
-    return 1;
+    return $workflow;
 }
+#<>#
 
 1;
 
