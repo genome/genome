@@ -6,7 +6,6 @@ use warnings;
 use Genome;
 
 use Genome::InstrumentData::BamUtil::ClipOverlapResult;
-require Genome::Utility::Text;
 
 class Genome::InstrumentData::Command::RefineReads::ClipOverlap {
     is => 'Command::V2',
