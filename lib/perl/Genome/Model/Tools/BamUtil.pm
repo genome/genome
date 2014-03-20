@@ -20,18 +20,13 @@ class Genome::Model::Tools::BamUtil {
             default => $DEFAULT_VERSION,
         },
     ],
-    # has_param => [
-        # lsf_resource => {
-            # default => '-M 16777216 rusage[mem=16384] select[type==LINUX64 & mem > 16384] span[hosts=1]',
-        # },
-    # ],
 };
 
 sub help_brief {
     "tools to work with BamUtil"
 }
 
-sub help_detail {                           # This is what the user will see with --help <---
+sub help_detail {
     return <<EOS
 
 EOS
@@ -40,7 +35,6 @@ EOS
 sub bamutil_versions {
     my %BAMUTIL_VERSIONS = (
         '1.0.11' => File::Spec->join('', 'gscuser', 'ssiebert', 'bamUtil', $BAMUTIL_COMMAND)
-        # '2986' => $ENV{GENOME_SW} . '/gatk/GenomeAnalysisTK-1.0.2986/' . $GATK_COMMAND,
     );
     return %BAMUTIL_VERSIONS;
 }
