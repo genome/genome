@@ -82,32 +82,5 @@ sub execute {
     return 1;
 }
 
-sub X_resolve_genotype_files {
-    my $self = shift;
-    if (defined $self->genotype_file_1 or $self->genotype_build_1) {
-        unless (defined $self->genotype_file_1 and -f $self->genotype_file_1) {
-            my $file1 = $self->genotype_build_1->genotype_file_path;
-            Carp::confess 'Could not resolve genotype file from build ' . $self->genotype_build_id_1 unless -f $file1;
-            $self->genotype_file_1($file1);
-        }
-    }
-    else {
-        Carp::confess 'Need to provide either a build or a file path for first bit of genotype data';
-    }
-
-    if (defined $self->genotype_file_2 or $self->genotype_build_2) {
-        unless (defined $self->genotype_file_2 and -f $self->genotype_file_2) {
-            my $file2 = $self->genotype_build_2->genotype_file_path;
-            Carp::confess 'Could not resolve genotype file from build ' . $self->genotype_build_id_2 unless -f $file2;
-            $self->genotype_file_2($file2);
-        }
-    }
-    else {
-        Carp::confess 'Need to provide either a build or a file path for second bit of genotype data';
-    }
-
-    return 1;
-}
-
 1;
 
