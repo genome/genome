@@ -677,45 +677,6 @@ sub collect_inputs {
     $self->debug_message("Checking if this read group is paired end...");
     my $paired = $instr_data->is_paired_end;
 
-    # Should !$paired be !defined($paired)?
-    if ((!$paired || defined $self->instrument_data_segment_id) && $instr_data->can('import_format') && $instr_data->import_format eq 'bam') {
-        if (defined $self->instrument_data_segment_id) {
-            $self->debug_message(sprintf('Inferring paired end status for "%s" segment...', $self->instrument_data_segment_id));
-        } else {
-            $self->debug_message('Inferring paired end status...');
-        }
-
-        my $output_file = $bam_file . '.flagstat';
-        unless (-s $output_file) {
-            $output_file = $self->temp_scratch_directory . '/import_bam.flagstat';
-            die unless $self->_create_bam_flagstat($bam_file, $output_file);
-        }
-        my $stats = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($output_file);
-        die $self->error_message('Failed to get flagstat data on input bam: '. $bam_file) unless $stats;
-
-        # I guess ideally we would align both paired end and fragment if this
-        # were not 100% but we can't do that yet. I don't know at what point we
-        # should flip $paired to true but I don't think it should be based on a
-        # raw count nor based on non-zero.
-        my $percent_paired = $stats->{reads_paired_in_sequencing} / $stats->{total_reads};
-
-        # Boundaries were arbitrarily chosen, feel free to adjust as a matter
-        # of policy.
-        if ($percent_paired > 0.1 && $percent_paired < 0.9) {
-            die $self->error_message(sprintf(
-                'Trying to infer paired end status on mixed data (%.2f%% paired), not sure which to choose!',
-                100 * $percent_paired));
-        } elsif ($percent_paired >= 0.9) {
-            $self->debug_message('Setting paired end status to true.');
-            $self->_is_inferred_paired_end(1);
-            $paired = 1;
-        } else {
-            $self->debug_message('Setting paired end status to false.');
-            $self->_is_inferred_paired_end(0);
-            $paired = 0;
-        }
-    }
-
     return ("$bam_file:1", "$bam_file:2") if $paired;
     return ("$bam_file:0");
 }
