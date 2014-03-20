@@ -20,7 +20,10 @@ class Genome::InstrumentData::BamUtil::ClipOverlapResult {
         },
     ],
     has_constant => [
-        _tmpdir => {  calculate => q| return File::Temp::tempdir(CLEANUP => 1); |, },
+        output_bam_path => {
+            calculate_from => ['temp_staging_directory'],
+            calculate => q| File::Spec->join($temp_staging_directory, 'clipped.bam'); |,
+        },
         # from inputs
         input_bam_path => { 
             via => 'bam_source',
@@ -101,13 +104,11 @@ sub create {
 
 sub _run_clip_overlap {
     my $self = shift;
- 
-    my $output_bam_path; #TODO figure out who specifies output
 
     my %clip_overlap_params = (
         version => $self->version,
         input_bam => $self->input_bam_path,
-        output_bam => $output_bam_path,
+        output_bam => $self->output_bam_path,
     );
     $self->status_message('Params: '.Data::Dumper::Dumper(\%clip_overlap_params));
 
@@ -123,11 +124,19 @@ sub _run_clip_overlap {
         return;
     }
 
-    if ( not -s $output_bam_path) {
+    $self->_validate_results;
+    return 1;
+}
+
+sub _validate_results {
+    my $self = shift;
+
+    if ( not -s $self->output_bam_path) {
         $self->error_message('Ran clip overlap command, but failed to make a output bam with size!');
         return;
     }
-    $self->status_message('Output bam: ' . $output_bam_path);
+
+    $self->status_message('Output bam: ' . $self->output_bam_path);
 
     return 1;
 }
