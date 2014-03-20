@@ -1317,7 +1317,7 @@ sub get_default_alignment_results {
 
     # Get alignment results for this inst data and the default aligner name, newest first
     my $pp = Genome::ProcessingProfile::ReferenceAlignment->default_profile;
-    my @alignment_results = sort {$b->best_guess_date cmp $a->best_guess_date} Genome::InstrumentData::AlignmentResult->get(
+    @alignment_results = sort {$b->best_guess_date cmp $a->best_guess_date} Genome::InstrumentData::AlignmentResult->get(
         instrument_data_id => $self->id,
         aligner_name       => $pp->read_aligner_name,
     );
