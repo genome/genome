@@ -11,7 +11,7 @@ BEGIN {
 
 use above 'Genome';
 
-require File::Compare;
+use Genome::Utility::Test qw(compare_ok);
 use Test::More;
 
 use_ok('Genome::Model::GenotypeMicroarray::Build::CreateOriginalGenotypeFiles') or die;
@@ -25,8 +25,8 @@ my $extract = Genome::Model::GenotypeMicroarray::Build::CreateOriginalGenotypeFi
 ok($extract, 'create original genotype files command');
 ok($extract->execute, 'execute original genotype files command');
 
-is(File::Compare::compare($build->original_genotype_vcf_file_path, $example_build->original_genotype_vcf_file_path), 0, 'vcf matches');
-is(File::Compare::compare($build->original_genotype_file_path, $example_build->original_genotype_file_path), 0, 'tsv matches');
+compare_ok($build->original_genotype_vcf_file_path, $example_build->original_genotype_vcf_file_path, "vcf matches");
+compare_ok($build->original_genotype_file_path, $example_build->original_genotype_file_path, "tsv matches");
 is_deeply($extract->alleles, { 'TC' => 1, 'AA' => 1, 'CC' => 2, 'AG' => 3, 'TT' => 1, 'GG' => 1 }, 'alleles match');
 is($extract->genotypes_output, 9, 'no genotypes output b/c vcf exists');
 

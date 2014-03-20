@@ -39,10 +39,6 @@ sub create {
     return $self;
 }
 
-BEGIN {
-    *next = \&read;
-}
-
 sub read {
     my $self = shift;
 

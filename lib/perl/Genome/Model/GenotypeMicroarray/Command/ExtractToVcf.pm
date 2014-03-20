@@ -102,7 +102,7 @@ sub execute {
 
     my %alleles;
     my %metrics = ( input => 0, filtered => 0, output => 0, );
-    GENOTYPE: while ( my $genotype = $reader->next ) {
+    GENOTYPE: while ( my $genotype = $reader->read ) {
         $metrics{input}++;
         for my $filter ( @$filters ) {
             next GENOTYPE if not $filter->filter($genotype);

@@ -76,14 +76,16 @@ sub create {
 
     my $sep = $self->separator;
 
+    my $regexp;
     if ($self->is_regex){ 
         # Adding -1 as the LIMIT argument to split ensures that the correct # of values on the line 
         #  are returned, regardless of empty trailing results
-        $self->{_split} = sub{ return _strip_quotes(split(/$sep/, $_[0], -1)) };
+        $regexp = qr/$sep/;
     }
     else {
-        $self->{_split} = sub{ return _strip_quotes(split(/\Q$sep\E/, $_[0], -1)) };
+        $regexp = qr/\Q$sep\E/;
     }
+    $self->{_split} = sub{ return _strip_quotes(split($regexp, $_[0], -1)) };
 
     if (defined($self->ignore_lines_starting_with)) {
         my $char = $self->ignore_lines_starting_with;
