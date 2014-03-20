@@ -295,30 +295,18 @@ sub _execute_build {
     $self->debug_message('Link genotype file to gold2geno file...OK');
 
     # Copy number file. No headers, tab sep with chrom, pos and log r ratio
-    $self->debug_message('Create copy number file...');
-    my $copy_number_file = $build->copy_number_file_path;
-    $self->debug_message('Copy number file: '.$copy_number_file);
-    my $extract_copy_number = Genome::Model::GenotypeMicroarray::Command::ExtractToCsv->create(
+    my $create_copy_number_file = Genome::Model::GenotypeMicroarray::Build::CreateCopyNumberTsvFile->create(
         build => $build,
-        output => $copy_number_file,
-        fields => [qw/ chromosome position log_r_ratio /],
-        headers => 0, 
-        filters => \@filters,
     );
-    if ( not $extract_copy_number ) {
+    if ( not $create_copy_number_file ) {
         $self->error_message('Failed to create command to create copy number file!');
         return;
     }
-    $extract_copy_number->dump_status_messages(1);
-    if ( not $extract_copy_number->execute ) {
+    $create_copy_number_file->dump_status_messages(1);
+    if ( not $create_copy_number_file->execute ) {
         $self->error_message('Failed to execute command to create copy number file!');
         return;
     }
-    if ( not -s $copy_number_file ) {
-        $self->error_message('Executed command to create copy number file, but file is empty! '.$copy_number_file);
-        return;
-    }
-    $self->debug_message('Create copy number file...OK');
 
     # TODO bdericks: I'm guessing that second genotype file is supposed to be the replicate. It should be changed
     # to be the actual replicate when we know how to figure it out.
