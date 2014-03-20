@@ -246,53 +246,18 @@ sub _execute_build {
     my @filters = (qw/ gc_score:min=0.7 /); 
     push @filters, 'invalid_iscan_ids' if $reference_sequence_build->version eq '36';
 
-    # Genotype file. No headers, tab sep with chrom, pos and alleles
-    $self->debug_message('Create genotype file...');
-    my $genotype_file = $build->genotype_file_path;
-    $self->debug_message('Genotype file: '.$genotype_file);
-    my $extract_genotypes = Genome::Model::GenotypeMicroarray::Command::ExtractToCsv->create(
+    my $create_filtered_genotype_file = Genome::Model::GenotypeMicroarray::Build::CreateFilteredGenotypeTsvFile->create(
         build => $build,
-        output => $genotype_file,
-        fields => [qw/ chromosome position alleles /],
-        headers => 0,
-        filters => \@filters,
     );
-    if ( not $extract_genotypes ) {
+    if ( not $create_filtered_genotype_file ) {
         $self->error_message('Failed to create command to create genotype file!');
         return;
     }
-    $extract_genotypes->dump_status_messages(1);
-    if ( not $extract_genotypes->execute ) {
+    $create_filtered_genotype_file->dump_status_messages(1);
+    if ( not $create_filtered_genotype_file->execute ) {
         $self->error_message('Failed to execute command to create genotype file!');
         return;
     }
-    if ( not -s $genotype_file ) {
-        $self->error_message('Executed command to create genotype file, but file is empty! '.$genotype_file);
-        return;
-    }
-    $self->debug_message('Create genotype file...OK');
-
-    # Nutter made this file name, so we will link to it
-    $self->debug_message('Link genotype file to gold2geno file...');
-    $self->debug_message('Genotype file: '.$genotype_file);
-    my $gold2geno_file = $build->gold2geno_file_path;
-    $self->debug_message('Gold2geno file: '.$gold2geno_file);
-
-    # Make a relative symlink if they are in the same directory. I think this
-    # will always be the case but since gold2geno_file_path is not locally
-    # defined I will check. Relative is better in case build's allocation is
-    # moved or archived -> unarchived.
-    if (dirname($genotype_file) eq dirname($gold2geno_file)) {
-        Genome::Sys->create_symlink(basename($genotype_file), $gold2geno_file);
-    } else {
-        Genome::Sys->create_symlink($genotype_file, $gold2geno_file);
-    }
-
-    if ( not -l $gold2geno_file  or not -s $gold2geno_file ) {
-        $self->error_message('Failed to link genotype file to gold2geno file!');
-        return;
-    }
-    $self->debug_message('Link genotype file to gold2geno file...OK');
 
     # Copy number file. No headers, tab sep with chrom, pos and log r ratio
     my $create_copy_number_file = Genome::Model::GenotypeMicroarray::Build::CreateCopyNumberTsvFile->create(
@@ -316,7 +281,7 @@ sub _execute_build {
     my $snp_array_file = $build->formatted_genotype_file_path;
     $self->debug_message("Create snp array (gold) file: ".$snp_array_file);
     my $gold_snp = Genome::Model::GenotypeMicroarray::Command::CreateGoldSnpFileFromGenotypes->create(
-        genotype_file => $genotype_file,
+        genotype_file => $build->genotype_file_path,
         output_file => $snp_array_file,
         reference_sequence_build => $reference_sequence_build, 
     );
