@@ -77,6 +77,8 @@ sub create {
     my $self = $class->SUPER::create(@_);
     return if not $self;
 
+    my $prepare_staging_directory = $self->_prepare_staging_directory;
+
     my $prepare_output_directory = eval{ $self->_prepare_output_directory; };
     if ( not $prepare_output_directory ) {
         $self->error_message($@) if $@;

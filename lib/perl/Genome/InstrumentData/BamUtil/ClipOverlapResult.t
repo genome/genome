@@ -16,16 +16,33 @@ use Genome::Test::Factory::Build;
 use Test::More;
 
 my $class = 'Genome::InstrumentData::BamUtil::ClipOverlapResult';
+my $tool_class = 'Genome::Model::Tools::BamUtil::ClipOverlap';
+my $input_result_class = 'Genome::InstrumentData::AlignmentResult::Merged';
 use_ok($class) or die;
+use_ok($tool_class) or die;
+use_ok($input_result_class) or die;
 
+# make a file with some content
+my $bam_path = Genome::Sys->create_temp_file_path;
+my $bfh = Genome::Sys->open_file_for_writing($bam_path);
+$bfh->print('Some data\n');
+$bfh->close;
 
+# We are not testing the tool, so make the execute just create an output file
 Sub::Install::reinstall_sub({
-    into => $class, # TODO should this be the result->execute instead?
-    as => '_run_clip_overlap',
-    code => sub { return 1; },
+    into => $tool_class,
+    as => 'execute',
+    code => sub { my $self = shift; Genome::Sys->copy_file($self->input_bam, $self->output_bam); },
 });
 
-my $bam_source = Genome::InstrumentData::AlignmentResult::Merged->__define__();
+my $bam_source = $input_result_class->__define__();
+
+Sub::Install::reinstall_sub({
+    into => $input_result_class,
+    as => 'bam_path',
+    code => sub { return $bam_path; },
+});
+
 my $test_dir = Genome::Sys->create_temp_directory;
 
 my $reference_model = Genome::Test::Factory::Model::ImportedReferenceSequence->setup_object();
