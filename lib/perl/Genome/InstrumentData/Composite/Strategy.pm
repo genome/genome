@@ -111,8 +111,10 @@ sub grammar {
         deduplicate: "then" "deduplicated" "using" deduplicator
             { $item[4]; }
 
-        refine: "then" "refined" "to" known_sites "using" refiner
+        refine: "then" "refined" "to" known_sites "using" refiner refine(?)
             { $item[6]->{known_sites} = $item[4]; $item[6]; }
+        | "then" "refined" "using" refiner refine(?)
+            { $item[4]; }
 
         api_version: "api" version
             { $item[2]; }
