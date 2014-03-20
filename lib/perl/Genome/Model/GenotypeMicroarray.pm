@@ -286,28 +286,18 @@ sub _execute_build {
         return;
     }
 
-    $self->debug_message('Create gold snp bed file...');
-    my $snvs_bed = $build->snvs_bed;
-    $self->debug_message('Gold snp bed file: '.$snvs_bed);
-    my $gold_snp_bed = Genome::Model::GenotypeMicroarray::Command::CreateGoldSnpBed->create(
-        input_file => $build->formatted_genotype_file_path,
-        output_file => $snvs_bed,
-        reference => $reference_sequence_build,
+    my $gold_snp_bed_cmd = Genome::Model::GenotypeMicroarray::Command::CreateGoldSnpBed->create(
+        build => $build,
     );
-    if ( not $gold_snp_bed ) {
+    if ( not $gold_snp_bed_cmd ) {
         $self->error_message('Failed to create gold snp bed tool!');
         return;
     }
-    $gold_snp_bed->dump_status_messages(1);
-    unless ($gold_snp_bed->execute) {
-        $self->error_message("Could not generate gold snp bed file at $snvs_bed from snp array file");
+    $gold_snp_bed_cmd->dump_status_messages(1);
+    unless ($gold_snp_bed_cmd->execute) {
+        $self->error_message("Could not generate gold snp bed file!");
         return;
     }
-    if ( not -s $snvs_bed ) {
-        $self->error_message("Executed 'create gold snp bed', but snvs bed file ($snvs_bed) does not exist");
-        return;
-    }
-    $self->debug_message("Create gold snp bed file...OK");
 
     $self->debug_message('Execute genotype microarray build...OK');
     return 1;
