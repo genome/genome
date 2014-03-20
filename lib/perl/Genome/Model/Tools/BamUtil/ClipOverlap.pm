@@ -8,12 +8,6 @@ class Genome::Model::Tools::BamUtil::ClipOverlap {
     doc => "Run BamUtil with the 'ClipOverlap' tool",
     is => 'Genome::Model::Tools::BamUtil',
     has_input => [
-        known => {
-            is => 'Text',
-            doc => 'The file of known indels',
-            is_optional => 1,
-            is_many => 1,
-        },
         input_bam => {
             is => 'Text',
             doc => 'The path to the original bam you would like to be clipped',
