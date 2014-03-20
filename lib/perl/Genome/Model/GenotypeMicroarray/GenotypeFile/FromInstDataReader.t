@@ -24,12 +24,14 @@ my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::FromInstDataReader
     variation_list_build => $variation_list_build,
 );
 ok($reader, 'create reader');
-ok(!$reader->snp_id_mapping, 'no snp id mapping available'); #FIXME create and test
+is_deeply($reader->{snp_id_mapping}, {}, 'no snp id mapping available'); #FIXME create and test
 
-my $cnt = 0;
+my %cnts;
 while ( my $genotype = $reader->read ) {
-    $cnt++ if %$genotype;
+    $cnts{total}++;
+    $cnts{id_ok}++ if $genotype->{id};
+    $cnts{no_snp_name}++ if not $genotype->{snp_name};
 }
-is($cnt, 10, 'read 10 genotypes');
+is_deeply(\%cnts, { map { $_ => 10 } (qw/ total id_ok no_snp_name /) }, 'genotypes ok');
 
 done_testing();
