@@ -3797,7 +3797,37 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>extract',
+      '>extract-to-csv',
+      [
+        'build=s',
+        undef,
+        'fields=s@',
+        [
+          'chromosome',
+          'position',
+          'alleles',
+          'reference',
+          'id',
+          'sample_name',
+          'log_r_ratio',
+          'gc_score',
+          'cnv_value',
+          'cnv_confidence',
+          'allele1',
+          'allele2'
+        ],
+        'filters=s@',
+        'files',
+        'headers!',
+        undef,
+        'output=s',
+        'files',
+        'separator=s',
+        'files',
+        'help!',
+        undef
+      ],
+      '>extract-to-vcf',
       [
         'build=s',
         undef,
