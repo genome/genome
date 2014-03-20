@@ -130,6 +130,16 @@ sub format_name_for_id {
     return $format_types->{$_[1]}->{name};
 }
 
+sub genotype_filters {
+    # FIXME put in processing profile [or the like]
+    my $self = shift;
+
+    my @filters = (qw/ gc_score:min=0.7 /); 
+    push @filters, 'invalid_iscan_ids' if $self->reference_sequence_build->version eq '36';
+
+    return \@filters;
+}
+
 sub genotype_vcf {
     my $self = shift;
 
