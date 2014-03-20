@@ -17,7 +17,7 @@ class Genome::InstrumentData::Command::RefineReads::ClipOverlap {
         params => { is => 'Text', },
     ],
     has_optional_transient => [
-        clip_overlap_result => { is => 'Genome::InstrumentData::BamUtil::ClipOverlapResult', },
+        result => { is => 'Genome::InstrumentData::BamUtil::ClipOverlapResult', },
     ],
 };
 
@@ -60,14 +60,14 @@ sub _get_or_create_clip_overlap_result {
     my $self = shift;
 
     # Check accessor
-    return $self->clip_overlap_result if $self->clip_overlap_result;
+    return $self->result if $self->result;
 
     my $result_class = 'Genome::InstrumentData::BamUtil::ClipOverlapResult';
     my %params = $self->_params_for_result;
     my $result = $result_class->get_or_create(%params);
     return if not $result; # let caller handle error/status
 
-    $self->clip_overlap_result($result);
+    $self->result($result);
 
     return $result;
 }
@@ -78,6 +78,7 @@ sub _params_for_result {
     my %params = (
         version => $self->version,
         bam_source => $self->bam_source,
+        reference_build => $self->bam_source->reference_build,
         # FIXME more needed here probably, params?
     );
 
