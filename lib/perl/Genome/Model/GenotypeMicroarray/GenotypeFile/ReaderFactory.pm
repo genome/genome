@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 use Genome::File::Vcf::Reader;
-use Genome::Model::GenotypeMicroarray::GenotypeFile::FromInstDataWithAnnotationReader;
+use Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderForInstDataWithAnnotation;
 
 class Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory { 
     is => 'UR::Singleton',
@@ -44,7 +44,7 @@ sub build_reader {
 sub _build_reader_for_instrument_data {
     my ($class, $instrument_data, $variation_list_build) = @_;
 
-    my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::FromInstDataWithAnnotationReader->create(
+    my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderForInstDataWithAnnotation->create(
         instrument_data => $instrument_data,
         variation_list_build => $variation_list_build,
     );

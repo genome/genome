@@ -13,12 +13,12 @@ use above 'Genome';
 
 use Test::More;
 
-use_ok('Genome::Model::GenotypeMicroarray::GenotypeFile::FromBuildOriginalTsvReader') or die;
+use_ok('Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderForBuildOriginalTsv') or die;
 use_ok('Genome::Model::GenotypeMicroarray::Test') or die;
 
 my $build = Genome::Model::GenotypeMicroarray::Test->example_build();
 
-my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::FromBuildOriginalTsvReader->create(
+my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderForBuildOriginalTsv->create(
     build => $build,
 );
 ok($reader, 'create reader');

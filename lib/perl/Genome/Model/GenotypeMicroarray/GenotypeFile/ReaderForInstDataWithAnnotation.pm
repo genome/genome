@@ -1,30 +1,20 @@
-package Genome::Model::GenotypeMicroarray::GenotypeFile::FromInstDataWithAnnotationReader;
+package Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderForInstDataWithAnnotation;
 
 use strict;
 use warnings;
 
-use Genome;
+use parent 'Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderForInstData';
 
 use Genome::File::Vcf::Reader;
-
-class Genome::Model::GenotypeMicroarray::GenotypeFile::FromInstDataWithAnnotationReader { 
-    is => 'Genome::Model::GenotypeMicroarray::GenotypeFile::FromInstDataReader',
-    has => {
-        _vcf_reader => { is => 'Genome::File::Vcf::Reader', },
-        _genotypes => { is => 'Hash', default_value => {}, },
-        _order => { is => 'Array', },
-        _position => { is => 'Integer', default_value => 0, },
-    },
-};
 
 sub header {
     my ($self, $header) = @_;
 
     if ( $header ) {
-        $self->_vcf_reader->header($header);
+        $self->{_vcf_reader}->header($header);
     }
 
-    return $self->_vcf_reader->header;
+    return $self->{_vcf_reader}->header;
 }
 
 sub create {
@@ -48,8 +38,8 @@ sub create {
 sub read {
     my $self = shift;
 
-    while ( my $variant_id = shift @{$self->_order} ) {
-        my $entry = $self->_create_vcf_entry( $self->_genotypes->{$variant_id} );
+    while ( my $variant_id = shift @{$self->{_order}} ) {
+        my $entry = $self->_create_vcf_entry( $self->{_genotypes}->{$variant_id} );
         return $entry if $entry;
     }
 
@@ -93,7 +83,7 @@ sub _open_vcf_reader {
         $self->error_message("Failed to open SNVs VCF file! $snvs_vcf");
         return;
     }
-    $self->_vcf_reader($vcf_reader);
+    $self->{_vcf_reader} = $vcf_reader;
 
     return 1;
 }
@@ -107,7 +97,7 @@ sub _load_genotype {
     delete $genotype->{'chr'};
     $genotype->{alleles} = $genotype->{allele1}.$genotype->{allele2};
 
-    $self->_genotypes->{ $genotype->{id} } = $genotype;
+    $self->{_genotypes}->{ $genotype->{id} } = $genotype;
 
     return $genotype;
 }
@@ -115,15 +105,13 @@ sub _load_genotype {
 sub _load_genotypes {
     my $self = shift;
 
-    my $snp_id_mapping = $self->snp_id_mapping;
-
-    my $genotypes = $self->_genotypes;
+    my $genotypes = $self->{_genotypes};
     my $genotype;
     do {
         $genotype = $self->_load_genotype;
     } while $genotype;
 
-    if ( not %{$self->_genotypes} ) {
+    if ( not %{$self->{_genotypes}} ) {
         $self->error_message("No genotypes found in genotype file! ".$self->get_original_input);
         return;
     }
@@ -134,10 +122,10 @@ sub _load_genotypes {
 sub _annotate_genotypes {
     my $self = shift;
 
-    my $genotypes = $self->_genotypes;
+    my $genotypes = $self->{_genotypes};
     Carp::confess('No genotypes!') if not $genotypes or not %$genotypes;
 
-    my $vcf_reader = $self->_vcf_reader;
+    my $vcf_reader = $self->{_vcf_reader};
     my $cnt = 0;
     while ( my $line = $vcf_reader->_getline ) {
         my ($variant_id) = split(',', (split(/\t/, $line))[2]);
@@ -160,7 +148,7 @@ sub _annotate_genotypes {
     }
 
     my @order = map { $_->{id} } sort { $a->{order} <=> $b->{order} } values %$genotypes;
-    $self->_order(\@order);
+    $self->{_order} = \@order;
     if ( not @order ) {
         $self->error_message("All genotypes are duplicates in variant list! ".$vcf_reader->{name});
         return;

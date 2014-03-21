@@ -1,9 +1,9 @@
-package Genome::Model::GenotypeMicroarray::GenotypeFile::FromInstDataReader;
+package Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderForInstData;
 
 use strict;
 use warnings;
 
-use parent 'Genome::Model::GenotypeMicroarray::GenotypeFile::FromBaseReader';
+use parent 'Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderForBase';
 
 sub source_type {
     return 'instrument_data';
@@ -11,7 +11,15 @@ sub source_type {
 
 sub get_genotype_file {
     my $self = shift;
-    return $self->{instrument_data}->genotype_file;
+    return $self->instrument_data->genotype_file;
+}
+
+sub variation_list_build {
+    return $_[0]->{variation_list_build};
+}
+
+sub instrument_data {
+    return $_[0]->{instrument_data};
 }
 
 sub create {
@@ -20,9 +28,9 @@ sub create {
     my $self = $class->SUPER::create(@_);
     return if not $self;
 
-    if ( $self->{variation_list_build} ) {
+    if ( $self->variation_list_build ) {
         $self->{snp_id_mapping} = Genome::InstrumentData::Microarray->get_snpid_hash_for_variant_list(
-            $self->{instrument_data}, $self->{variation_list_build}
+            $self->instrument_data, $self->variation_list_build
         );
     }
     $self->{snp_id_mapping} ||= {};

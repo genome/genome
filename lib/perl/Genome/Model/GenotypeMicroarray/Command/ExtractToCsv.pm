@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 
 require File::Basename;
+use Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderForBuildOriginalTsv
 
 class Genome::Model::GenotypeMicroarray::Command::ExtractToCsv {
     is => 'Command::V2',
@@ -69,18 +70,12 @@ sub execute {
     my $self = shift;
     $self->debug_message('Extract genotypes to CSV...');
 
-    my $genotype_file = $self->build->original_genotype_file_path;
-    if ( not -s $genotype_file ) {
-        $self->error_message('Original genotype file does not exist! '.$genotype_file);
-        return;
-    }
-
     my $filters = $self->_create_filters;
     return if not $filters;
 
-    my $reader = Genome::Utility::IO::SeparatedValueReader->create(
-        input => $genotype_file,
-        separator => "\t",
+    my $build = $self->build;
+    my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderForBuildOriginalTsv->create(
+        build => $build,
     );
     return if not $reader;
 
@@ -94,21 +89,26 @@ sub execute {
     );
     return if not $writer;
 
-    #my $reference_sequence_build = $self->build->reference_sequence_build;
+    my $write_sub = sub { $writer->write($_[0]); };
+    if ( grep { $_ eq 'reference' } $self->fields and not grep { $_ eq 'reference' } @{$reader->{headers}} ) {
+        # Add the refence base if requested to legacy build files
+        my $reference_sequence_build = $build->reference_sequence_build;
+        $write_sub = sub{
+            $_[0]->{reference} = $reference_sequence_build->sequence(
+                $_[0]->{chromosome}, $_[0]->{position}, $_[0]->{position},
+            );
+            $writer->write($_[0]);
+        };
+    }
+
     my %metrics = ( input => 0, filtered => 0, output => 0, );
-    GENOTYPE: while ( my $genotype = $reader->next ) {
-        $genotype->{reference} = 'NA' if not $genotype->{reference};
-        #if ( not $genotype->{reference} ) {
-        #    $genotype->{reference} = $reference_sequence_build->sequence(
-        #        $genotype->{chromosome}, $genotype->{position}, $genotype->{position},
-        #    );
-        #}
+    GENOTYPE: while ( my $genotype = $reader->read ) {
         $metrics{input}++;
         for my $filter ( @$filters ) {
             next GENOTYPE if not $filter->filter($genotype);
         }
         $metrics{output}++;
-        $writer->write($genotype);
+        $write_sub->($genotype);
     }
     $self->metrics(\%metrics);
     for my $name ( map { 'genotypes_'.$_ } (qw/ input filtered output /) ) {
@@ -139,6 +139,8 @@ sub _create_filters {
 
     return \@filters;
 }
+
+
 
 1;
 

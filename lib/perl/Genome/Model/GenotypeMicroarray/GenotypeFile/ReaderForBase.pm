@@ -1,4 +1,4 @@
-package Genome::Model::GenotypeMicroarray::GenotypeFile::FromBaseReader;
+package Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderForBase;
 
 use strict;
 use warnings;
@@ -17,7 +17,7 @@ sub create {
 
     my $source_type = $self->source_type;
     if ( not $self->{$source_type} ) {
-        print STDERR "No $source_type given to open genotype file reader!";
+        $self->error_message("No $source_type given to open genotype file reader!");
         return;
     }
 
@@ -37,7 +37,7 @@ sub _open_genotype_fh {
 
     my $genotype_file = $self->get_genotype_file;
     if ( not $genotype_file or not -s $genotype_file ) {
-        print STDERR 'No original genotype file for build! '.Dumper($self->{ $self->source_type });
+        $self->error_message('No original genotype file for build! '.Dumper($self->{ $self->source_type }));
         return;
     }
 
@@ -63,6 +63,17 @@ sub read {
     @genotype{ @{$self->{headers}} } = split($self->{delimiter}, $line);
 
     return \%genotype;
+}
+
+sub error_message {
+    my ($self, $msg) = @_;
+
+    return $self->{_error_msg} if not defined $msg;
+
+    print STDERR "$msg\n";
+    $self->{_error_msg} = $msg;
+
+    return $self->{_error_msg};
 }
 
 1;

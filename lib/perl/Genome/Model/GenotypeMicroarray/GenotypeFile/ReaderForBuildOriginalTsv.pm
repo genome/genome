@@ -1,9 +1,9 @@
-package Genome::Model::GenotypeMicroarray::GenotypeFile::FromBuildOriginalTsvReader;
+package Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderForBuildOriginalTsv;
 
 use strict;
 use warnings;
 
-use parent 'Genome::Model::GenotypeMicroarray::GenotypeFile::FromBaseReader';
+use parent 'Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderForBase';
 
 sub source_type {
     return 'build';
@@ -19,7 +19,7 @@ sub _resolve_headers {
 
     my $header_line = $self->{genotype_fh}->getline;
     if ( not $header_line ) {
-        $self->error_message('Failed to get header line for genotype file!');
+        $self->error_message("Failed to get header line for genotype file!");
         return;
     }
 

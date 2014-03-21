@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 
+use Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderForInstData;
 require List::Util;
 
 class Genome::Model::GenotypeMicroarray::Command::Alleles {
@@ -49,7 +50,7 @@ sub execute {
     my $instdata = $self->_resolve_instrument_data;
     return if not $instdata;
 
-    my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::FromInstDataReader->create(
+    my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderForInstData->create(
         instrument_data => $instdata,
     );
     return if  not $reader;

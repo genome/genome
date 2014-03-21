@@ -7,7 +7,7 @@ use above 'Genome';
 
 use Test::More;
 
-use_ok('Genome::Model::GenotypeMicroarray::GenotypeFile::FromInstDataWithAnnotationReader') or die;
+use_ok('Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderForInstDataWithAnnotation') or die;
 use_ok('Genome::File::Vcf::Entry') or die;
 
 sub build_test {
@@ -17,7 +17,7 @@ sub build_test {
     my $entry = bless({ reference_allele => $reference_allele, alternate_alleles => $alternate_alleles }, 'Genome::File::Vcf::Entry');
 
     return sub { 
-        my $gt = Genome::Model::GenotypeMicroarray::GenotypeFile::FromInstDataWithAnnotationReader->_gt_for_genotype($genotype, $entry);
+        my $gt = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderForInstDataWithAnnotation->_gt_for_genotype($genotype, $entry);
         is($gt, $expected_gt, 'correct GT '.$gt.' for alleles: '.$genotype->{allele1}.$genotype->{allele2});
         is_deeply($entry->{alternate_alleles}, $expected_alts, 'correct alternate alleles: '.join('', @{$entry->{alternate_alleles}}));
     };

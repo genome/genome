@@ -13,13 +13,13 @@ use above 'Genome';
 
 use Test::More;
 
-use_ok('Genome::Model::GenotypeMicroarray::GenotypeFile::FromInstDataReader') or die;
+use_ok('Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderForInstData') or die;
 use_ok('Genome::Model::GenotypeMicroarray::Test') or die;
 
 my $instdata = Genome::Model::GenotypeMicroarray::Test->instrument_data();
 my $variation_list_build = Genome::Model::GenotypeMicroarray::Test->variation_list_build();
 
-my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::FromInstDataReader->create(
+my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderForInstData->create(
     instrument_data => $instdata,
     variation_list_build => $variation_list_build,
 );
