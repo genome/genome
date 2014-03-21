@@ -147,7 +147,7 @@ sub _annotate_genotypes {
         $genotypes->{$variant_id}->{line} = $line;
     }
 
-    my @order = map { $_->{id} } sort { $a->{order} <=> $b->{order} } values %$genotypes;
+    my @order = map { $_->{id} } sort { $a->{order} <=> $b->{order} } grep { exists $_->{order} } values %$genotypes;
     $self->{_order} = \@order;
     if ( not @order ) {
         $self->error_message("All genotypes are duplicates in variant list! ".$vcf_reader->{name});
