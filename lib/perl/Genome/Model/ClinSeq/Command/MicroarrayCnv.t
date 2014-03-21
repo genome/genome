@@ -11,7 +11,6 @@ BEGIN {
 
 use above "Genome";
 use Test::More;
-use Genome::Model::ClinSeq::Command::MicroarrayCnv;
 
 use_ok('Genome::Model::ClinSeq::Command::MicroarrayCnv') or die;
  
