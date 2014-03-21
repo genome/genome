@@ -43,44 +43,16 @@ sub new {
         _annotation_format => $arg{annotation_format},
         _basename => $arg{basename} || '',
         _output_suffix => $arg{suffix} || '',
-        _reference_transcripts => $arg{reference_transcripts} || '',
-        _annotation_build_id => $arg{annotation_build_id} || '',
+        _domain_provider => $arg{domain_provider},
         _output_directory => $arg{output_directory} || '.',
         _vep_frequency_field => $arg{vep_frequency_field},
         _max_display_freq => $arg{max_display_freq},
         _lolli_shape => $arg{lolli_shape},
     };
 
-    if ($self->{_annotation_build_id}) {
-        $self->{_build} = Genome::Model::Build->get($self->{_annotation_build_id});
-    }
-    elsif ($self->{_reference_transcripts}) {
-        my ($model_name, $version) = split('/', $self->{_reference_transcripts});
-        my $model = Genome::Model->get(name => $model_name);
-        unless ($model){
-            print STDERR "ERROR: couldn't get reference transcripts set for $model_name\n";
-            return;
-        }
-        my $build = $model->build_by_version($version);
-        $self->{_build} = $build;
-    }
-    else {
-        confess "No value supplied for reference_transcripts or annotation_build_id, abort!";
-    }
-
-    unless ($self->{_build}){
-        $self->error_message("couldn't load reference trascripts set");
-        return;
-    }
-    $self->{_reference_build_id} = $self->{_build}->reference_sequence_id;
-    print STDERR "Using reference transcripts " . $self->{_build}->name . "\n";
-
-    $self->{_domain_provider} = Genome::Model::Tools::Graph::MutationDiagram::AnnotationBuild->create(build => $self->{_build});
-
     my @custom_domains =();
     if(defined($arg{custom_domains})) {
     }
-
 
     my @hugos = ();
     if (defined($arg{hugos})) {
@@ -104,8 +76,6 @@ sub new {
     $self->MakeDiagrams();
     return $self;
 }
-
-
 
 sub _add_mutation {
     my ($self, %params) = @_;
@@ -285,20 +255,6 @@ sub Annotation {
 
         }
     }
-}
-
-sub get_protein_length{
-    my $self = shift; #TODO: this is not at all kosher, inuitive, or good.  Fix it when this becomes a UR object
-    my $transcript_name = shift;
-    my $build = $self->{_build};
-    my $transcript;
-    for my $dir ($build->determine_data_directory){
-        $transcript = Genome::Transcript->get(data_directory => $dir, transcript_name => $transcript_name, reference_build_id => $self->{_reference_build_id});
-        last if $transcript;
-    }
-    return 0 unless $transcript;
-    return 0 unless $transcript->protein;
-    return length($transcript->protein->amino_acid_seq);
 }
 
 sub Data {

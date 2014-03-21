@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 use Genome::Model::Tools::Graph::MutationDiagram::MutationDiagram;
+use Carp qw(confess);
 
 class Genome::Model::Tools::Graph::MutationDiagram {
     is => 'Command',
@@ -96,12 +97,11 @@ sub execute {
     my $anno_file = $self->annotation;
     if($anno_file) {
         my %params = (
+            domain_provider => $self->resolve_domain_provider,
             annotation => $anno_file,
             annotation_format => $self->annotation_format,
-            annotation_build_id => $self->annotation_build_id,
             hugos => $self->genes,
             custom_domains => $self->custom_domains,
-            reference_transcripts => $self->reference_transcripts,
             output_directory => $self->output_directory,
             basename => $self->file_prefix,
             suffix => $self->file_suffix,
@@ -109,16 +109,6 @@ sub execute {
             max_display_freq => $self->max_display_frequency,
             lolli_shape => $self->lolli_shape,
         );
-        if ($self->annotation_build_id) {
-            $params{annotation_build_id} = $self->annotation_build_id;
-        }
-        elsif ($self->reference_transcripts) {
-            $params{reference_transcripts} = $self->reference_transcripts;
-        }
-        else {
-            $self->error_message("Must provide either annotation_build_id or reference_transcripts");
-            return;
-        }
 
         my $anno_obj = new Genome::Model::Tools::Graph::MutationDiagram::MutationDiagram(
             %params);
@@ -130,6 +120,33 @@ sub execute {
     return 1;
 }
 
+sub resolve_domain_provider {
+    my $self = shift;
+
+    my $build;
+    if ($self->annotation_build_id) {
+        $build = Genome::Model::Build->get($self->annotation_build_id);
+    }
+    elsif ($self->reference_transcripts) {
+        my ($model_name, $version) = split('/', $self->reference_transcripts);
+        my $model = Genome::Model->get(name => $model_name);
+        unless ($model){
+            print STDERR "ERROR: couldn't get reference transcripts set for $model_name\n";
+            return;
+        }
+        $build = $model->build_by_version($version);
+    }
+    else {
+        confess "No value supplied for reference_transcripts or annotation_build_id, abort!";
+    }
+
+    unless ($build){
+        $self->error_message("couldn't load reference trascripts set");
+        return;
+    }
+
+    return Genome::Model::Tools::Graph::MutationDiagram::AnnotationBuild->create(build => $build);
+}
 
 1;
 
