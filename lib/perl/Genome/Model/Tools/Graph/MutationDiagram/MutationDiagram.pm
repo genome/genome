@@ -336,7 +336,6 @@ sub MakeDiagrams {
 
 sub Draw {
     my ($self, $svg_fh, $hugo, $transcript, $length, $domains, $mutations) = @_;
-    $DB::single = 1;
     my $document = Genome::Model::Tools::Graph::MutationDiagram::MutationDiagram::View->new(width=>'800',height=>'600',
         'viewport' => {x => 0, y => 0,
             width => 800,

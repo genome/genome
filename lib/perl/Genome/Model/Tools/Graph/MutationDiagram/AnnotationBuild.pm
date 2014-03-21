@@ -36,7 +36,6 @@ sub get_domains {
         warn "No transcript found for $transcript_name";
         return;
     }
-$DB::single=1;
     my @domains = $self->SUPER::get_domains;
     for my $feature (@features) {
         my ($source, @domain_name_parts) = split(/_/, $feature->name);
