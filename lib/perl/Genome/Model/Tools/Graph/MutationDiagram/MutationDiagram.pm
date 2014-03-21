@@ -24,28 +24,16 @@ use Genome::Model::Tools::Graph::MutationDiagram::MutationDiagram::Mutation;
 use Genome::Model::Tools::Graph::MutationDiagram::MutationDiagram::Legend;
 use Genome::Model::Tools::Graph::MutationDiagram::MutationDiagram::LayoutManager;
 
-my @VEP_MUTATION_PRIORITY = (
-    'ESSENTIAL_SPLICE_SITE',
-    'FRAMESHIFT_CODING',
-    'STOP_GAINED',
-    'NON_SYNONYMOUS_CODING'
-);
-
-my %VEP_MUTATION_PRIORITIES;
-@VEP_MUTATION_PRIORITIES{@VEP_MUTATION_PRIORITY} = 0..$#VEP_MUTATION_PRIORITY;
-
 #------------------------------------------------
 sub new {
     my ($class, %arg) = @_;
 
     my $self = {
-        _mutation_file => $arg{annotation} || '',
-        _annotation_format => $arg{annotation_format},
         _basename => $arg{basename} || '',
         _output_suffix => $arg{suffix} || '',
         _domain_provider => $arg{domain_provider},
+        _mutation_provider => $arg{mutation_provider},
         _output_directory => $arg{output_directory} || '.',
-        _vep_frequency_field => $arg{vep_frequency_field},
         _max_display_freq => $arg{max_display_freq},
         _lolli_shape => $arg{lolli_shape},
     };
@@ -63,33 +51,24 @@ sub new {
     }
     $self->{_hugos} = \@hugos;
     bless($self, ref($class) || $class);
-    die "No mutation file passed to $class" unless $arg{annotation};
-
-    if ($self->{_annotation_format} eq 'vep') {
-        $self->_parse_vep_annotation;
-    }
-    elsif ($self->{_annotation_format} eq 'tgi') {
-        $self->Annotation;
-    } else {
-        die "Unknown annotation file format $self->{_annotation_format}";
-    }
+    $self->_add_mutations($self->{_mutation_provider}, $self->{_domain_provider});
     $self->MakeDiagrams();
     return $self;
 }
 
 sub _add_mutation {
-    my ($self, %params) = @_;
+    my ($self, $params) = @_;
     $self->{_data} = {} unless defined $self->{_data};
     my $data = $self->{_data};
 
-    my $hugo = $params{hugo};
-    my $transcript_name = $params{transcript_name};
-    my $protein_length = $params{protein_length};
-    my $protein_position = $params{protein_position};
-    my $mutation = $params{mutation};
-    my $class = $params{class};
-    my $domains = $params{domains};
-    my $frequency = $params{frequency} || 1;
+    my $hugo = $params->{hugo};
+    my $transcript_name = $params->{transcript_name};
+    my $protein_length = $params->{protein_length};
+    my $protein_position = $params->{protein_position};
+    my $mutation = $params->{mutation};
+    my $class = $params->{class};
+    my $domains = $params->{domains};
+    my $frequency = $params->{frequency} || 1;
 
     print STDERR "Adding mutation $hugo $transcript_name $mutation\n";
 
@@ -120,28 +99,11 @@ sub argmin(@) { # really perl?
     return $minidx;
 }
 
-sub _get_vep_mutation_class {
-    my $type = shift;
-    my @types = split(",", $type);
-    my @type_matches = grep {defined $VEP_MUTATION_PRIORITIES{$_}} @types;
-    return $type unless @type_matches;
-    my @priorities = @VEP_MUTATION_PRIORITIES{@type_matches};
-    my $idx = argmin(@priorities);
-    return $type_matches[$idx];
-}
 
-sub _get_vep_extra_fields_hash {
-    my $extra = shift;
-    return { map { split("=") } split(";", $extra) }
-}
-
-sub _parse_vep_annotation {
+sub _add_mutations {
     my $self = shift;
-
-    my $build = $self->{_build};
-    my $vep_file = $self->{_mutation_file};
-    my $fh = Genome::Sys->open_file_for_reading($vep_file);
-    print STDERR "Parsing VEP annotation file...\n";
+    my $mutation_provider = shift;
+    my $domain_provider = shift;
 
     my $graph_all = $self->{_hugos}->[0] eq 'ALL' ? 1 : 0;
     my %hugos;
@@ -149,44 +111,16 @@ sub _parse_vep_annotation {
         %hugos = map {$_ => 1} @{$self->{_hugos}}; #convert array to hashset
     }
 
-    my $header = $fh->getline;
-    chomp $header;
-
-    while(my $line = $fh->getline) {
-        chomp $line;
-        my @fields = split("\t", $line);
-        my ($hugo,$transcript_name,$class,$protein_pos,$aa_change) = @fields[3,4,6,9,10];
-        next unless(defined($transcript_name) && $transcript_name !~ /^\s*$/);
-
-        if($graph_all || exists($hugos{$hugo})) {
-            $class = _get_vep_mutation_class($class);
-            my ($domains_ref, $amino_acid_length) = $self->get_domains_and_amino_acid_length($transcript_name);
+    while (my $mutation = $mutation_provider->next) {
+        if($graph_all || exists($hugos{$mutation->{hugo}})) {
+            my ($domains_ref, $amino_acid_length) = $self->get_domains_and_amino_acid_length($mutation->{transcript_name});
             my @domains = @$domains_ref;
             if (scalar @domains == 0) {
                 next;
             }
-
-            #add to the data hash for later graphing
-            my ($orig_aa, $new_aa) = split("/", $aa_change);
-            $orig_aa |= '';
-            $new_aa |= '';
-            my $mutation = join($protein_pos, $orig_aa, $new_aa);
-            next if $mutation eq '--';
-            my $extra = _get_vep_extra_fields_hash($fields[-1]);
-            my $frequency = 1;
-            $frequency = $extra->{$self->{_vep_frequency_field}} if exists $extra->{$self->{_vep_frequency_field}};
-            next if !$frequency;
-
-            $self->_add_mutation(
-                hugo => $hugo,
-                transcript_name => $transcript_name,
-                protein_length => $amino_acid_length,
-                protein_position => $protein_pos,
-                mutation => $mutation,
-                class => $class,
-                domains => \@domains,
-                frequency => $frequency
-            );
+            $mutation->{domains} = $domains_ref;
+            $mutation->{protein_length} = $amino_acid_length;
+            $self->_add_mutation($mutation);       
         }
     }
 }
@@ -197,64 +131,6 @@ sub get_domains_and_amino_acid_length {
     my @domains = $self->{_domain_provider}->get_domains($transcript_name);
     my $amino_acid_length = $self->{_domain_provider}->get_amino_acid_length($transcript_name);
     return (\@domains, $amino_acid_length);
-}
-
-sub Annotation {
-    #loads from annotation file format
-    my $self = shift;
-
-    my $build = $self->{_build};
-    my $annotation_file = $self->{_mutation_file};
-    my $fh = new FileHandle;
-    unless($fh->open("$annotation_file")) {
-        die "Could not open annotation file $annotation_file";
-    }
-    print STDERR "Parsing annotation file...\n";
-    my %data;
-    my $graph_all = $self->{_hugos}->[0] eq 'ALL' ? 1 : 0;
-    my %hugos;
-    unless($graph_all) {
-        %hugos = map {$_ => 1} @{$self->{_hugos}}; #convert array to hashset
-    }
-
-    Genome::Model::Tools::Annotate::AminoAcidChange->class();  # Get the module loaded
-    while(my $line = $fh->getline) {
-        chomp $line;
-        next if $line =~/^chromosome/;
-        my @fields = split /\t/, $line;
-        my ($hugo,$transcript_name,$class,$c_position,$aa_change) = @fields[6,7,13,14,15];
-        unless(defined($transcript_name) && $transcript_name !~ /^\s*$/ && $transcript_name ne '-') {
-            next;
-        }
-
-        if($graph_all || exists($hugos{$hugo})) {
-            my ($residue1, $res_start, $residue2, $res_stop, $new_residue) = @{Genome::Model::Tools::Annotate::AminoAcidChange::check_amino_acid_change_string(amino_acid_change_string => $aa_change)};
-            my $mutation = $aa_change;
-            $mutation =~ s/p\.//g;
-
-            my ($domains_ref, $amino_acid_length) = $self->get_domains_and_amino_acid_length($transcript_name);
-            my @domains = @$domains_ref;
-            if (scalar @domains == 0) {
-                next;
-            }
-
-            if($aa_change =~ /^e/ && $c_position !~ /NULL/) {
-                #this is a splice site mutation
-                $res_start = c_position_to_amino_acid_pos($c_position);
-            }
-
-            $self->_add_mutation(
-                hugo => $hugo,
-                transcript_name => $transcript_name,
-                protein_length => $amino_acid_length,
-                protein_position => $res_start,
-                mutation => $mutation,
-                class => $class,
-                domains => \@domains
-            );
-
-        }
-    }
 }
 
 sub Data {
@@ -446,12 +322,6 @@ sub sort_domain {
     }
 }
 
-sub c_position_to_amino_acid_pos {
-    my ($c_position) = @_;
-    ($c_position) = split(/[\+\-]/, $c_position); #ignore +1 etc and change info
-    $c_position =~ s/[^0-9]//g; #strip off c.
-    my $aa_pos = sprintf("%d", ($c_position / 3));
-    return $aa_pos;
-}
+
 
 1;

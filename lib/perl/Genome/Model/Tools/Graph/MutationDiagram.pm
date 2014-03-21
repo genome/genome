@@ -98,14 +98,12 @@ sub execute {
     if($anno_file) {
         my %params = (
             domain_provider => $self->resolve_domain_provider,
-            annotation => $anno_file,
-            annotation_format => $self->annotation_format,
+            mutation_provider => $self->resolve_mutation_provider,
             hugos => $self->genes,
             custom_domains => $self->custom_domains,
             output_directory => $self->output_directory,
             basename => $self->file_prefix,
             suffix => $self->file_suffix,
-            vep_frequency_field => $self->vep_frequency_field,
             max_display_freq => $self->max_display_frequency,
             lolli_shape => $self->lolli_shape,
         );
@@ -118,6 +116,25 @@ sub execute {
         return;
     }
     return 1;
+}
+
+sub resolve_mutation_provider {
+    my $self = shift;
+
+    if ($self->annotation_format eq 'vep') {
+        return Genome::Model::Tools::Graph::MutationDiagram::VepMutationProvider->create(
+           input_file => $self->annotation,
+           vep_frequency_field => $self->vep_frequency_field,
+        );
+    }
+    elsif ($self->annotation_format eq 'tgi') {
+        return Genome::Model::Tools::Graph::MutationDiagram::TgiMutationProvider->create(
+            input_file => $self->annotation,
+        );
+    }
+    else {
+        die $self->error_message("Unrecognized annotation format");
+    }
 }
 
 sub resolve_domain_provider {
