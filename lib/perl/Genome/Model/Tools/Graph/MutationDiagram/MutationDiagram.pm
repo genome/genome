@@ -43,50 +43,16 @@ sub new {
         _annotation_format => $arg{annotation_format},
         _basename => $arg{basename} || '',
         _output_suffix => $arg{suffix} || '',
-        _reference_transcripts => $arg{reference_transcripts} || '',
-        _annotation_build_id => $arg{annotation_build_id} || '',
+        _domain_provider => $arg{domain_provider},
         _output_directory => $arg{output_directory} || '.',
         _vep_frequency_field => $arg{vep_frequency_field},
         _max_display_freq => $arg{max_display_freq},
         _lolli_shape => $arg{lolli_shape},
     };
 
-    if ($self->{_annotation_build_id}) {
-        $self->{_build} = Genome::Model::Build->get($self->{_annotation_build_id});
-    }
-    elsif ($self->{_reference_transcripts}) {
-        my ($model_name, $version) = split('/', $self->{_reference_transcripts});
-        my $model = Genome::Model->get(name => $model_name);
-        unless ($model){
-            print STDERR "ERROR: couldn't get reference transcripts set for $model_name\n";
-            return;
-        }
-        my $build = $model->build_by_version($version);
-        $self->{_build} = $build;
-    }
-    else {
-        confess "No value supplied for reference_transcripts or annotation_build_id, abort!";
-    }
-
-    unless ($self->{_build}){
-        $self->error_message("couldn't load reference trascripts set");
-        return;
-    }
-    $self->{_reference_build_id} = $self->{_build}->reference_sequence_id;
-    print STDERR "Using reference transcripts " . $self->{_build}->name . "\n";
-
     my @custom_domains =();
     if(defined($arg{custom_domains})) {
-        my @domain_specification = split(',',$arg{custom_domains});
-
-        while(@domain_specification) {
-            my %domain = (type => "CUSTOM");
-            @domain{qw(name start end)} = splice @domain_specification,0,3;
-            push @custom_domains, \%domain;
-        }
     }
-
-    $self->{_custom_domains} = \@custom_domains;
 
     my @hugos = ();
     if (defined($arg{hugos})) {
@@ -109,52 +75,6 @@ sub new {
     }
     $self->MakeDiagrams();
     return $self;
-}
-
-sub _get_transcript_and_domains {
-    my ($self, $transcript_name) = @_;
-    my $build = $self->{_build};
-    my @features;
-    my $transcript;
-    for my $data_directory ($build->determine_data_directory){
-        my $t = Genome::Transcript->get(
-            data_directory => $data_directory,
-            transcript_name => $transcript_name,
-            reference_build_id => $self->{_reference_build_id}
-            );
-        next unless $t;
-        $transcript = $t;
-        push(@features, Genome::InterproResult->get(
-            data_directory => $data_directory,
-            transcript_name => $transcript_name,
-            chrom_name => $transcript->chrom_name
-            ));
-    }
-    if (!defined $transcript) {
-        warn "No transcript found for $transcript_name";
-        return;
-    }
-
-    my @domains;
-    for my $feature (@features) {
-        my ($source, @domain_name_parts) = split(/_/, $feature->name);
-        # Some domain names are underbar delimited, but sources aren't.
-        # Reassemble the damn domain name if necessary
-        my $domain_name;
-        if (scalar (@domain_name_parts) > 1){
-            $domain_name = join("_", @domain_name_parts);
-        }else{
-            $domain_name = pop @domain_name_parts;
-        }
-        push @domains, {
-            name => $domain_name,
-            source => $source,
-            start => $feature->start,
-            end => $feature->stop
-        };
-    }
-    push(@domains, @{$self->{_custom_domains}}) if $self->{_custom_domains}->[0];
-    return $transcript, @domains;
 }
 
 sub _add_mutation {
@@ -240,8 +160,12 @@ sub _parse_vep_annotation {
 
         if($graph_all || exists($hugos{$hugo})) {
             $class = _get_vep_mutation_class($class);
-            my ($transcript, @domains) = $self->_get_transcript_and_domains($transcript_name);
-            next unless $transcript;
+            my ($domains_ref, $amino_acid_length) = $self->get_domains_and_amino_acid_length($transcript_name);
+            my @domains = @$domains_ref;
+            if (scalar @domains == 0) {
+                next;
+            }
+
             #add to the data hash for later graphing
             my ($orig_aa, $new_aa) = split("/", $aa_change);
             $orig_aa |= '';
@@ -256,7 +180,7 @@ sub _parse_vep_annotation {
             $self->_add_mutation(
                 hugo => $hugo,
                 transcript_name => $transcript_name,
-                protein_length => $transcript->amino_acid_length,
+                protein_length => $amino_acid_length,
                 protein_position => $protein_pos,
                 mutation => $mutation,
                 class => $class,
@@ -265,6 +189,14 @@ sub _parse_vep_annotation {
             );
         }
     }
+}
+
+sub get_domains_and_amino_acid_length {
+    my $self = shift;
+    my $transcript_name = shift;
+    my @domains = $self->{_domain_provider}->get_domains($transcript_name);
+    my $amino_acid_length = $self->{_domain_provider}->get_amino_acid_length($transcript_name);
+    return (\@domains, $amino_acid_length);
 }
 
 sub Annotation {
@@ -300,8 +232,11 @@ sub Annotation {
             my $mutation = $aa_change;
             $mutation =~ s/p\.//g;
 
-            my ($transcript, @domains) = $self->_get_transcript_and_domains($transcript_name);
-            next unless $transcript;
+            my ($domains_ref, $amino_acid_length) = $self->get_domains_and_amino_acid_length($transcript_name);
+            my @domains = @$domains_ref;
+            if (scalar @domains == 0) {
+                next;
+            }
 
             if($aa_change =~ /^e/ && $c_position !~ /NULL/) {
                 #this is a splice site mutation
@@ -311,7 +246,7 @@ sub Annotation {
             $self->_add_mutation(
                 hugo => $hugo,
                 transcript_name => $transcript_name,
-                protein_length => $transcript->amino_acid_length,
+                protein_length => $amino_acid_length,
                 protein_position => $res_start,
                 mutation => $mutation,
                 class => $class,
@@ -320,20 +255,6 @@ sub Annotation {
 
         }
     }
-}
-
-sub get_protein_length{
-    my $self = shift; #TODO: this is not at all kosher, inuitive, or good.  Fix it when this becomes a UR object
-    my $transcript_name = shift;
-    my $build = $self->{_build};
-    my $transcript;
-    for my $dir ($build->determine_data_directory){
-        $transcript = Genome::Transcript->get(data_directory => $dir, transcript_name => $transcript_name, reference_build_id => $self->{_reference_build_id});
-        last if $transcript;
-    }
-    return 0 unless $transcript;
-    return 0 unless $transcript->protein;
-    return length($transcript->protein->amino_acid_seq);
 }
 
 sub Data {
@@ -371,7 +292,6 @@ sub MakeDiagrams {
 
 sub Draw {
     my ($self, $svg_fh, $hugo, $transcript, $length, $domains, $mutations) = @_;
-    $DB::single = 1;
     my $document = Genome::Model::Tools::Graph::MutationDiagram::MutationDiagram::View->new(width=>'800',height=>'600',
         'viewport' => {x => 0, y => 0,
             width => 800,
