@@ -8,6 +8,7 @@ class Genome::Model::Tools::Graph::MutationDiagram::DomainProvider {
     has => [
         custom_domains => {
             is => "String",
+            is_optional => 1,
         },
     ],
 };
