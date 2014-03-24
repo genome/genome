@@ -290,3 +290,6 @@ analysis_project_event_logging [timeline_base_permission] 2014-03-11T19:19:34Z A
 
 instrument.fragment_library_unique_name [instrument_fragment_library] 2014-03-20T13:20:15Z Thomas B. Mooney <tmooney@genome.wustl.edu> # prevent future duplicate libraries
 @1395323767 2014-03-20T13:56:08Z Thomas B. Mooney <tmooney@genome.wustl.edu># Add unique constraint to library.full_name
+
+config_profile_item.status [config_profile_item] 2014-03-20T20:24:41Z Jim Weible <jweible@linus263.gsc.wustl.edu> # add status column to config.profile_item
+@1395674405 2014-03-24T15:20:06Z Jim Weible <jweible@linuscs125># Add status to config.profile_item
