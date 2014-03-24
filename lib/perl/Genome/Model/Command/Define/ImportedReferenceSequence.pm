@@ -20,7 +20,7 @@ class Genome::Model::Command::Define::ImportedReferenceSequence {
             len => 64,
             doc => 'The species name of the reference.  This value must correspond to a species name found in the gsc.organism_taxon table.'
         },
-        allosomes => {
+        allosome_names => {
             is => 'Text',
             doc => 'A comma-separated list of the names of chromosomes that should be treated as non-autosomal',
             default_value => "X,Y,MT",
@@ -331,7 +331,7 @@ sub _create_build {
     my @build_parameters = (
         model_id => $model->id,
         fasta_file => $self->fasta_file,
-        allosomes => $self->allosomes,
+        allosome_names => $self->allosome_names,
     );
 
     if ($self->use_default_sequence_uri) {
