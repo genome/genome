@@ -289,14 +289,22 @@ sub failed_workflow_steps {
     my $failed_steps = [];
     workflow_visitor($workflow, $failed_steps);
 
-    return sort {step_time($a) cmp step_time($b)} @$failed_steps;
+    return sort {
+        normalize_parent_id($a->parent_instance_id) <=> normalize_parent_id($b->parent_instance_id) ||
+        step_time($a) cmp step_time($b)
+    } @$failed_steps;
 }
 
 sub step_time {
     my $step = shift;
     return $step->end_time if $step->end_time;
-    return $step->start_time if $step->start_time;
+    return 's' . $step->start_time if $step->start_time;
     return 'Unknown';
+}
+
+sub normalize_parent_id {
+    my $parent_id = shift;
+    return $parent_id ? -1 : 1;
 }
 
 sub workflow_visitor {
