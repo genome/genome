@@ -141,7 +141,7 @@ sub handle_failed_from_logs {
     my ($self, $workflow) = @_;
 
     my @failed_steps = failed_workflow_steps($workflow);
-    for my $failed_step (reverse @failed_steps) {
+    for my $failed_step (@failed_steps) {
         if ($failed_step->current->can('stderr') and my $error_log = $failed_step->current->stderr) {
             if (-e $error_log and -s $error_log) {
 
