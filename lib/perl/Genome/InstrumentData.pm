@@ -5,6 +5,8 @@ use warnings;
 
 use Genome;
 
+use List::MoreUtils qw(uniq);
+
 class Genome::InstrumentData {
     is => 'Genome::Notable',
     table_name => 'instrument.data',

@@ -6,8 +6,6 @@ use warnings;
 use Genome;
 use File::Basename;
 
-use List::MoreUtils qw(uniq);
-
 class Genome::InstrumentData::Solexa {
     is => ['Genome::InstrumentData', 'Genome::Searchable'],
     has_constant => [
