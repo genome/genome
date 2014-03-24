@@ -19,6 +19,7 @@ class Genome::ModelGroup::Command::GenerateReport {
         base_url => {
             is => 'Text',
             doc => 'Server with CSS and JS resources',
+            default_value => $ENV{GENOME_SYS_SERVICES_SEARCH_URL},
         },
         perspective => {
             is => 'Text',
