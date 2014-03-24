@@ -516,6 +516,29 @@ sub lane_qc_dir {
     }
 }
 
+sub alignment_results_from_analysis_projects {
+    my $self = shift;
+
+    my @aps = $self->analysis_projects;
+    return unless scalar(@aps);
+
+    my @inputs = Genome::Model::Input->get(value_id => $self->id, 'model.analysis_projects.id' => [map $_->id, @aps]);
+    return unless scalar(@inputs);
+
+    my @alignment_results;
+    for my $input (@inputs) {
+        my $build = $input->model->last_complete_build;
+        next unless $build;
+        next unless Genome::Model::Build::Input->get(value_id => $self->id, build_id => $build->id);
+
+        push @alignment_results,
+            grep { $_->instrument_data_id eq $self->id }
+            grep { $_->isa('Genome::InstrumentData::AlignmentResult') }
+            $build->all_results;
+    }
+
+    return uniq(@alignment_results);
+}
 
 sub __display_name__ {
     my $self = shift;
