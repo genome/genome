@@ -112,9 +112,30 @@ sub grammar {
             { $item[4]; }
 
         refine: "then" "refined" "to" known_sites "using" refiner refine(?)
-            { $item[6]->{known_sites} = $item[4]; $item[6]; }
+            {
+                $return = $item[6];
+                $item[6]->{known_sites} = $item[4];
+                my $leaf = $item[6];
+                if(@{$item[7]}) {
+                    my $next = $item[7][0];
+                    $leaf->{then} = $next;
+                    $next->{type} = 'refine';
+                    $leaf = $next;
+                }
+
+            }
         | "then" "refined" "using" refiner refine(?)
-            { $item[4]; }
+            {
+                $return = $item[4];
+                my $leaf = $item[4];
+                if(@{$item[5]}) {
+                    my $next = $item[5][0];
+                    $leaf->{then} = $next;
+                    $next->{type} = 'refine';
+                    $leaf = $next;
+                }
+
+            }
 
         api_version: "api" version
             { $item[2]; }
