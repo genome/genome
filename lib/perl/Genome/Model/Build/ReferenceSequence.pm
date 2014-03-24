@@ -51,6 +51,10 @@ class Genome::Model::Build::ReferenceSequence {
             is => 'Text',
         },
 
+        allosome_names => {
+            is => 'Text',
+        },
+
         derived_from => {
             is => 'Genome::Model::Build::ReferenceSequence',
             doc => 'Identifies the parent build from which this one is derived, if any.',
