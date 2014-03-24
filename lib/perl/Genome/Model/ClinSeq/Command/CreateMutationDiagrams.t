@@ -14,7 +14,7 @@ BEGIN {
 };
 
 use above "Genome";
-use Test::More tests=>8;
+use Test::More tests=>9;
 use Genome::Model::ClinSeq::Command::CreateMutationDiagrams;
 use Data::Dumper;
 use Genome::Model::ClinSeq::TestData;
@@ -77,3 +77,5 @@ or do {
   Genome::Sys->shellcmd(cmd => "rm -fr /tmp/last-create-mutation-diagrams-result/");
   Genome::Sys->shellcmd(cmd => "mv $temp_dir /tmp/last-create-mutation-diagrams-result");
 };
+
+ok(UR::Context->commit(), 'generated data is valid for save');
