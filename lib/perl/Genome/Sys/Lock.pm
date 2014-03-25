@@ -48,6 +48,11 @@ sub _lock_resource_report_inconsistent_locks {
         Genome::Logger->debugf($t, 'File', 'Nessy');
         return;
     }
+
+    if ($file_lock and $nessy_claim) {
+        Genome::Utility::Instrumentation::increment('sys.lock.locked_both');
+        return;
+    }
 }
 
 
