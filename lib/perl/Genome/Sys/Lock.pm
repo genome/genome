@@ -23,9 +23,7 @@ sub lock_resource {
     $self->_start_locking_client;
 
     my $nessy_claim = $self->_new_style_lock(%args);
-
-    my $rv = $self->_file_based_lock_resource( %args );
-
+    my $rv = $self->_file_based_lock_resource(%args);
     $self->_lock_resource_report_inconsistent_locks($args{resource_lock}, $rv, $nessy_claim);
 
     return $rv;
