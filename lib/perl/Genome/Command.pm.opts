@@ -11271,6 +11271,23 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>cnmops',
+      [
+        'outdir=s',
+        'files',
+        'tumor-refalign=s',
+        undef,
+        'normal-refalign=s',
+        undef,
+        'clinseq-model=s',
+        undef,
+        'roi-bed=s',
+        'files',
+        'test!',
+        undef,
+        'help!',
+        undef
+      ],
       '>cn-path-scan',
       [
         'output-directory=s',
