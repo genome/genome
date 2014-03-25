@@ -23,9 +23,6 @@ sub lock_resource {
     $self->_start_locking_client;
 
     my $nessy_claim = $self->_new_style_lock(%args);
-    unless ($nessy_claim) {
-        $self->error_message("Nessy could not acquire lock for resource lock: $args{resource_lock}");
-    }
 
     my $rv = $self->_file_based_lock_resource( %args );
 
@@ -44,6 +41,11 @@ sub _lock_resource_report_inconsistent_locks {
 
     if ($nessy_claim and !$file_lock) {
         $self->error_message(sprintf($t, 'Nessy', 'File'));
+        return;
+    }
+
+    if ($file_lock and !$nessy_claim) {
+        $self->error_message(sprintf($t, 'File', 'Nessy'));
         return;
     }
 }
