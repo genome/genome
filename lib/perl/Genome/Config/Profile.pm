@@ -29,7 +29,7 @@ sub create_from_analysis_project {
 
     my @config_rule_maps = map {
         Genome::Config::Translator->get_rule_model_map_from_config($_)
-    } $analysis_project->config_items;
+    } grep{$_->status ne 'disabled'} $analysis_project->config_items;
 
     return $class->create(
         config_rule_maps => \@config_rule_maps,

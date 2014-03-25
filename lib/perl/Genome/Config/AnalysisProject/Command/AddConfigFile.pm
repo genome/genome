@@ -17,7 +17,12 @@ class Genome::Config::AnalysisProject::Command::AddConfigFile {
             is                  => 'Path',
             doc                 => 'path to the config file',
             shell_args_position => 2,
-        }
+        },
+        store_only => {
+            is => 'Boolean',
+            doc => 'If set, the config file will only be stored (it will not be used for processing).  Defaults to 0',
+            default_value => 0,
+        },
     ],
 };
 
@@ -37,10 +42,12 @@ EOS
 
 sub execute {
     my $self = shift;
+    my $status = $self->store_only ? 'disabled' : 'active';
 
     return Genome::Config::Profile::Item->create_from_file_path(
         file_path => $self->config_file,
         analysis_project => $self->analysis_project,
+        status => $status,
     );
 }
 
