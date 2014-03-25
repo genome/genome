@@ -38,8 +38,11 @@ sub lock_resource {
 sub _lock_resource_report_inconsistent_locks {
     my($self, $resource_lock, $file_lock, $nessy_claim) = @_;
 
-    if (! $file_lock and $nessy_claim and $LOCKING_CLIENT) {
+    return unless $LOCKING_CLIENT;
+
+    if (! $file_lock and $nessy_claim) {
         $self->error_message("Nessy acquired lock but file-based did not.  resource_lock: $resource_lock");
+        return;
     }
 }
 
