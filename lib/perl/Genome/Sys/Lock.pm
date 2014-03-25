@@ -38,11 +38,13 @@ sub _lock_resource_report_inconsistent_locks {
     my $t = "%s-lock acquired but %s-based did not: $resource_lock";
 
     if ($nessy_claim and !$file_lock) {
+        Genome::Utility::Instrumentation::increment('sys.lock.locked_nessy_only');
         $self->error_message(sprintf($t, 'Nessy', 'File'));
         return;
     }
 
     if ($file_lock and !$nessy_claim) {
+        Genome::Utility::Instrumentation::increment('sys.lock.locked_file_only');
         $self->error_message(sprintf($t, 'File', 'Nessy'));
         return;
     }
