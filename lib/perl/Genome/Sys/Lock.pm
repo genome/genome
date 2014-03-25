@@ -42,7 +42,7 @@ sub _lock_resource_report_inconsistent_locks {
 
     my $t = "%s-lock acquired but %s-based did not: $resource_lock";
 
-    if (! $file_lock and $nessy_claim) {
+    if ($nessy_claim and !$file_lock) {
         $self->error_message(sprintf($t, 'Nessy', 'File'));
         return;
     }
