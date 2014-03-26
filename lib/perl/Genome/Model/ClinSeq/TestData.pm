@@ -26,7 +26,7 @@ sub load {
     my %params = @_;
     my %ids;
     #default base_dir
-    my $base_dir = $ENV{GENOME_TEST_INPUTS}."Genome-Model-ClinSeq-TestData/2013-09-12";
+    my $base_dir = $ENV{GENOME_TEST_INPUTS}."Genome-Model-ClinSeq-TestData/2014-03-26";
 
     if ($params{base_dir}) {
         $base_dir = delete $params{base_dir};
