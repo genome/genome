@@ -12,10 +12,22 @@ BEGIN {
 use Test::More;
 use above "Genome";
 
+use Genome::Utility::Test;
 use Genome::Test::Factory::InstrumentData::Solexa;
+use Genome::Test::Factory::Model::ImportedVariationList;
+use Genome::Test::Factory::Model::ImportedReferenceSequence;
+use Genome::Test::Factory::Build;
 
-use_ok('Genome::InstrumentData::Composite::Workflow')
-  or die('test cannot continue');
+my $TEST_DATA_VERSION = 1;
+
+my $pkg = 'Genome::InstrumentData::Composite::Workflow';
+use_ok($pkg) or die('test cannot continue');
+
+my $data_dir = Genome::Utility::Test->data_dir_ok($pkg, $TEST_DATA_VERSION);
+my $tmp_dir = Genome::Sys->create_temp_directory();
+for my $file (qw/all_sequences.fa all_sequences.dict 9999.bam 9999.bam.bai indels.hq.vcf/) {
+    Genome::Sys->create_symlink(File::Spec->join($data_dir,$file), File::Spec->join($tmp_dir, $file));
+}
 
 my $instrument_data_1 = Genome::Test::Factory::InstrumentData::Solexa->setup_object(
     flow_cell_id => '12345ABXX',
@@ -150,7 +162,87 @@ subtest "simple alignments of different samples with merge" => sub {
     is_deeply([sort @results, $merge_result, $merge_result2], [sort @ad3_results], 'found expected alignment and merge results');
 };
 
+subtest "simple alignments of different samples with merge and gatk refine" => sub {
+    my $ref_model = Genome::Test::Factory::Model::ImportedReferenceSequence->setup_object();
+    my $ref_refine = Genome::Model::Build::ImportedReferenceSequence->__define__(
+        model => $ref_model,
+        name => 'Test Ref Build v1',
+        data_directory => $tmp_dir,
+        fasta_file => File::Spec->join($tmp_dir, 'all_sequences.fa'),
+    );
 
+    $params_for_result{reference_build_id} = $ref_refine->id;
+    my $merge_result_refine = construct_merge_result(@instrument_data);
+    Sub::Install::reinstall_sub({
+        into => 'Genome::InstrumentData::AlignmentResult::Merged',
+        as => 'bam_path',
+        code => sub { File::Spec->join($tmp_dir, '9999.bam') },
+    });
+
+    my $aligner_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->__define__(
+        'aligner_version' => '0.5.9',
+        'aligner_name' => 'bwa',
+        'aligner_params' => '',
+        'reference_build' => $ref_refine,
+    );
+
+    my @alignment_results;
+    for my $instrument_data_id (qw/-23 -24 -28/) {
+        my $alignment_result = Genome::InstrumentData::AlignmentResult->__define__(
+            'reference_build_id' => $ref_refine->id,
+            'samtools_version' => 'r599',
+            'aligner_params' => '-t 4 -q 5::',
+            'aligner_name' => 'bwa',
+            'aligner_version' => '0.5.9',
+            'picard_version' => '1.29',
+            'instrument_data_id' => $instrument_data_id,
+        );
+        push @alignment_results, $alignment_result;
+    }
+    Sub::Install::reinstall_sub({
+        into => 'Genome::SoftwareResult',
+        as => '_faster_get',
+        code => sub { my $class = shift; $class->get(@_) },
+    });
+
+    my $indel_result = Genome::Model::Tools::DetectVariants2::Result::Manual->__define__(
+        id => 9997,
+        output_dir => $tmp_dir,
+        original_file_path => File::Spec->join($tmp_dir, 'indels.hq.vcf'),
+    );
+    my $variation_list_build = Genome::Model::Build::ImportedVariationList->__define__(
+        id => 9998,
+        indel_result => $indel_result,
+    );
+    ok($variation_list_build, "created ImportedVariationList build");
+
+    my $ad4 = Genome::InstrumentData::Composite::Workflow->create(
+        inputs => {
+            inst => \@instrument_data,
+            ref => $ref_refine,
+            force_fragment => 0,
+            variant_list => [$variation_list_build],
+        },
+        strategy => '
+            inst aligned to ref using bwa 0.5.9 [-t 4 -q 5::]
+            then merged using picard 1.29
+            then deduplicated using picard 1.29
+            then refined to variant_list using gatk-best-practices 2.4 [-et NO_ET]
+            api v1
+        ',
+    );
+    isa_ok(
+        $ad4,
+        'Genome::InstrumentData::Composite::Workflow',
+        'created dispatcher for simple alignments of different samples with merge and gatk refine'
+    );
+
+    ok($ad4->execute, 'executed dispatcher for simple alignments of different samples with merge and gatk refine');
+    my @ad4_result_ids = $ad4->_result_ids;
+    my @ad4_results = Genome::SoftwareResult->get(\@ad4_result_ids);
+    my $gatk_result = Genome::InstrumentData::Gatk::BaseRecalibratorBamResult->get(reference_fasta => $ref_refine->fasta_file);
+    is_deeply([sort @alignment_results, $gatk_result], [sort @ad4_results], 'found expected alignment and gatk results');
+};
 
 sub construct_merge_result {
     my @id = @_;
