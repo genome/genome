@@ -1,29 +1,11 @@
-package Genome::Model::SomaticValidation::Command::CoverageStats;
+package Genome::Model::SomaticValidation::Command::VerifyBam;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::Model::SomaticValidation::Command::CoverageStats {
+class Genome::Model::SomaticValidation::Command::VerifyBam {
     is => ['Command::V2'],
-    has_input => [
-        merged_alignment_result_id => {
-            is => 'Text',
-        },
-        build_id => {
-            is => 'Text',
-        },
-    ],
-    has => [
-        build => {
-            is => 'Genome::Model::Build::SomaticValidation',
-            id_by => 'build_id',
-        },
-        aligned_bam_result => {
-            is => 'Genome::InstrumentData::AlignedBamResult',
-            id_by => 'merged_alignment_result_id',
-        },
-    ],
     has_transient_optional_output => [
         result => {
             is => 'Genome::InstrumentData::VerifyBamIdResult',
@@ -73,15 +55,12 @@ sub execute {
 sub should_run {
     my $self = shift;
 
-    unless (defined $self->aligned_bam_result) {
+    unless ($self->SUPER::should_run) {
         return 0;
     }
 
-    if (defined $self->aligned_bam_result->instrument_data->sample->default_genotype_data) {
-        return 1;
-    }
-    else {
-        $self->debug_message('No default genotype data for sample '.$self->aligned_bam_result->instrument_data->sample->__display_name__.' Skipping VerifyBamId');
+    unless (defined $self->sample_for_mode->default_genotype_data) {
+        $self->debug_message('No default genotype data for sample '.$self->sample_for_mode->__display_name__.' Skipping VerifyBamId');
         return 0;
     }
 }
@@ -89,12 +68,12 @@ sub should_run {
 sub params_for_result {
     my $self = shift;
     my $genotype_vcf = Genome::InstrumentData::GenotypeVcf->get_or_create(
-        sample => $self->aligned_bam_result->instrument_data->sample,
+        sample => $self->sample_for_mode,
         known_sites_build => $self->build->previously_discovered_variations_build,
         filters => ["chromosome:exclude=".$self->build->previously_discovered_variations_build->reference_sequence_build->allosome_names],
     );
     my %params = (
-        aligned_bam_result_id => $self->merged_alignment_result_id,
+        aligned_bam_result_id => $self->alignment_result_for_mode,
         max_depth => 1000,
         precise => 1,
         version => $self->build->verify_bam_id_version,
@@ -108,15 +87,9 @@ sub params_for_result {
 sub link_result_to_build {
     my $self = shift;
     my $result = shift;
-    my $build = $self->build;
-
-    my $link = join('/', $build->data_directory, 'verifyBamId', $self->merged_alignment_result_id);
-    my $label = join('_', 'verify_bam_id');
-    Genome::Sys->create_symlink($result->output_dir, $link);
-    $result->add_user(label => $label, user => $build);
     $self->result($result);
     $self->add_metrics_to_build;
-    return 1;
+    return $self->SUPER::link_result_to_build($result, "verifyBamId", "verify_bam_id");
 }
 
 sub add_metrics_to_build {

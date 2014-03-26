@@ -5,15 +5,13 @@
   <link fromOperation="input connector" fromProperty="build_id" toOperation="Detect Variants" toProperty="build_id" />
   <link fromOperation="input connector" fromProperty="tumor_mode" toOperation="Reference Coverage Stats (Tumor)" toProperty="mode" />
   <link fromOperation="input connector" fromProperty="normal_mode" toOperation="Reference Coverage Stats (Normal)" toProperty="mode" />
-
+  <link fromOperation="input connector" fromProperty="tumor_mode" toOperation="Verify Bam (Tumor)" toProperty="mode" />
+  <link fromOperation="input connector" fromProperty="normal_mode" toOperation="Verify Bam (Normal)" toProperty="mode" />
   <link fromOperation="Alignments" fromProperty="build_id" toOperation="Reference Coverage Stats (Tumor)" toProperty="build_id" />
   <link fromOperation="Alignments" fromProperty="build_id" toOperation="Reference Coverage Stats (Normal)" toProperty="build_id" />
 
   <link fromOperation="Alignments" fromProperty="build_id" toOperation="Verify Bam (Tumor)" toProperty="build_id" />
-  <link fromOperation="Alignments" fromProperty="merged_alignment_result_id" toOperation="Verify Bam (Tumor)" toProperty="merged_alignment_result_id" />
-
   <link fromOperation="Alignments" fromProperty="build_id" toOperation="Verify Bam (Normal)" toProperty="build_id" />
-  <link fromOperation="Alignments" fromProperty="control_merged_alignment_result_id" toOperation="Verify Bam (Normal)" toProperty="merged_alignment_result_id" />
   
   <link fromOperation="Reference Coverage Stats (Tumor)" fromProperty="result" toOperation="output connector" toProperty="tumor_reference_coverage_result"/>
   <link fromOperation="Reference Coverage Stats (Normal)" fromProperty="result" toOperation="output connector" toProperty="normal_reference_coverage_result"/>
@@ -184,6 +182,8 @@
     <outputproperty>build_id</outputproperty>
     <outputproperty>sv_validation_output</outputproperty>
     <outputproperty>large_indel_build_id</outputproperty>
+    <outputproperty>tumor_verify_bam_result</outputproperty>
+    <outputproperty>normal_verify_bam_result</outputproperty>
 
   </operationtype>
 
