@@ -54,7 +54,7 @@ sub execute {
 
     # Try to shortcut
     my $shortcut = $self->shortcut;
-    return 1 if $shortcut;
+    return $shortcut if $shortcut;
 
     # [Get or] Create indel aligner result
     my $indel_realigner_result = $self->_get_or_create_indel_realigner_result;
