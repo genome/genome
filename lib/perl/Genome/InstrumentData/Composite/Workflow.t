@@ -9,7 +9,7 @@ BEGIN {
     $ENV{NO_LSF} = 1;
 }
 
-use Test::More tests => 10;
+use Test::More;
 use above "Genome";
 
 use Genome::Test::Factory::InstrumentData::Solexa;
@@ -78,73 +78,77 @@ $result_3->lookup_hash($result_3->calculate_lookup_hash());
 
 my $merge_result2 = construct_merge_result($instrument_data_3);
 
-my $log_directory = Genome::Sys->create_temp_directory();
-my $ad = Genome::InstrumentData::Composite::Workflow->create(
-    inputs => {
-        inst => \@instrument_data,
-        ref => $ref,
-        force_fragment => 0,
-    },
-    strategy => 'inst aligned to ref using bwa 0.5.9 [-t 4 -q 5::] api v1',
-    log_directory => $log_directory,
-);
-isa_ok(
-    $ad,
-    'Genome::InstrumentData::Composite::Workflow',
-    'created dispatcher for simple alignments'
-);
+subtest 'simple alignments' => sub {
+    my $log_directory = Genome::Sys->create_temp_directory();
+    my $ad = Genome::InstrumentData::Composite::Workflow->create(
+        inputs => {
+            inst => \@instrument_data,
+            ref => $ref,
+            force_fragment => 0,
+        },
+        strategy => 'inst aligned to ref using bwa 0.5.9 [-t 4 -q 5::] api v1',
+        log_directory => $log_directory,
+    );
+    isa_ok(
+        $ad,
+        'Genome::InstrumentData::Composite::Workflow',
+        'created dispatcher for simple alignments'
+    );
 
 
-ok($ad->execute, 'executed dispatcher for simple alignments');
+    ok($ad->execute, 'executed dispatcher for simple alignments');
 
-my @ad_result_ids = $ad->_result_ids;
-my @ad_results = Genome::SoftwareResult->get(\@ad_result_ids);
-is_deeply([sort @results], [sort @ad_results], 'found expected alignment results');
+    my @ad_result_ids = $ad->_result_ids;
+    my @ad_results = Genome::SoftwareResult->get(\@ad_result_ids);
+    is_deeply([sort @results], [sort @ad_results], 'found expected alignment results');
+};
 
 my $merge_result = construct_merge_result(@instrument_data);
 
-my $ad2 = Genome::InstrumentData::Composite::Workflow->create(
-    inputs => {
-        inst => \@instrument_data,
-        ref => $ref,
-        force_fragment => 0,
-    },
-    strategy => 'inst aligned to ref using bwa 0.5.9 [-t 4 -q 5::] then merged using picard 1.29 then deduplicated using picard 1.29 api v1',
-);
-isa_ok(
-    $ad2,
-    'Genome::InstrumentData::Composite::Workflow',
-    'created dispatcher for simple alignments with merge'
-);
+subtest 'simple alignments with merge' => sub {
+    my $ad2 = Genome::InstrumentData::Composite::Workflow->create(
+        inputs => {
+            inst => \@instrument_data,
+            ref => $ref,
+            force_fragment => 0,
+        },
+        strategy => 'inst aligned to ref using bwa 0.5.9 [-t 4 -q 5::] then merged using picard 1.29 then deduplicated using picard 1.29 api v1',
+    );
+    isa_ok(
+        $ad2,
+        'Genome::InstrumentData::Composite::Workflow',
+        'created dispatcher for simple alignments with merge'
+    );
 
-ok($ad2->execute, 'executed dispatcher for simple alignments with merge');
-my @ad2_result_ids = $ad2->_result_ids;
-my @ad2_results = Genome::SoftwareResult->get(\@ad2_result_ids);
-is_deeply([sort @results, $merge_result], [sort @ad2_results], 'found expected alignment and merge results');
-
+    ok($ad2->execute, 'executed dispatcher for simple alignments with merge');
+    my @ad2_result_ids = $ad2->_result_ids;
+    my @ad2_results = Genome::SoftwareResult->get(\@ad2_result_ids);
+    is_deeply([sort @results, $merge_result], [sort @ad2_results], 'found expected alignment and merge results');
+};
 
 push @instrument_data, $instrument_data_3;
 push @results, $result_3;
 
-my $ad3 = Genome::InstrumentData::Composite::Workflow->create(
-    inputs => {
-        inst => \@instrument_data,
-        ref => $ref,
-        force_fragment => 0,
-    },
-    strategy => 'inst aligned to ref using bwa 0.5.9 [-t 4 -q 5::] then merged using picard 1.29 then deduplicated using picard 1.29 api v1',
-);
-isa_ok(
-    $ad3,
-    'Genome::InstrumentData::Composite::Workflow',
-    'created dispatcher for simple alignments of different samples with merge'
-);
+subtest "simple alignments of different samples with merge" => sub {
+    my $ad3 = Genome::InstrumentData::Composite::Workflow->create(
+        inputs => {
+            inst => \@instrument_data,
+            ref => $ref,
+            force_fragment => 0,
+        },
+        strategy => 'inst aligned to ref using bwa 0.5.9 [-t 4 -q 5::] then merged using picard 1.29 then deduplicated using picard 1.29 api v1',
+    );
+    isa_ok(
+        $ad3,
+        'Genome::InstrumentData::Composite::Workflow',
+        'created dispatcher for simple alignments of different samples with merge'
+    );
 
-ok($ad3->execute, 'executed dispatcher for simple alignments of different samples with merge');
-my @ad3_result_ids = $ad3->_result_ids;
-my @ad3_results = Genome::SoftwareResult->get(\@ad3_result_ids);
-is_deeply([sort @results, $merge_result, $merge_result2], [sort @ad3_results], 'found expected alignment and merge results');
-
+    ok($ad3->execute, 'executed dispatcher for simple alignments of different samples with merge');
+    my @ad3_result_ids = $ad3->_result_ids;
+    my @ad3_results = Genome::SoftwareResult->get(\@ad3_result_ids);
+    is_deeply([sort @results, $merge_result, $merge_result2], [sort @ad3_results], 'found expected alignment and merge results');
+};
 
 
 
@@ -185,3 +189,5 @@ sub construct_merge_result {
 
     return $merge_result;
 }
+
+done_testing();
