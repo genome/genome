@@ -17,6 +17,7 @@ sub shortcut {
     my $self = shift;
 
     unless ($self->should_run) {
+        $self->debug_message("Skipping VerifyBam id");
         return 1;
     }
 
@@ -70,7 +71,7 @@ sub params_for_result {
     my $genotype_vcf = Genome::InstrumentData::GenotypeVcf->get_or_create(
         sample => $self->sample_for_mode,
         known_sites_build => $self->build->previously_discovered_variations_build,
-        filters => ["chromosome:exclude=".$self->build->previously_discovered_variations_build->reference_sequence_build->allosome_names],
+        filters => ["chromosome:exclude=".$self->build->previously_discovered_variations_build->reference->allosome_names],
     );
     my %params = (
         aligned_bam_result_id => $self->alignment_result_for_mode,
