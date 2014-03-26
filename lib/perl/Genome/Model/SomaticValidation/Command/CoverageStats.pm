@@ -8,24 +8,8 @@ use File::Path qw(rmtree);
 use Genome;
 
 class Genome::Model::SomaticValidation::Command::CoverageStats {
-    is => ['Command::V2'],
-    has_input => [
-        build_id => {
-            is => 'Number',
-            doc => 'ID of the SomaticValidation build upon which to run coverage stats',
-        },
-        mode => {
-            is => 'Text',
-            valid_values => ['tumor', 'normal'],
-        },
-    ],
-    has => [
-        build => {
-            is => 'Genome::Model::Build::SomaticValidation',
-            id_by => 'build_id',
-            doc => 'The build upon which to run coverage stats',
-        },
-    ],
+    is => ['Genome::Model::SomaticValidation::Command::WithMode'],
+
     has_param => [
         lsf_queue => {
             default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
@@ -132,13 +116,7 @@ sub should_run {
     my $self = shift;
 
     return unless $self->build->region_of_interest_set;
-
-    my $mode = $self->mode;
-
-    my $sample_acc = $mode . '_sample';
-
-    return $self->build->$sample_acc;
-
+    return $self->SUPER::should_run;
 }
 
 sub params_for_result {
@@ -146,16 +124,7 @@ sub params_for_result {
     my $build = $self->build;
     my $pp = $build->processing_profile;
 
-    my $alignment_result;
-    if($self->mode eq 'tumor') {
-        $alignment_result = $build->merged_alignment_result;
-    } else {
-        $alignment_result = $build->control_merged_alignment_result;
-    }
-
-    unless($alignment_result) {
-        die $self->error_message('No alignment result found for ' . $self->mode);
-    }
+    my $alignment_result = $self->alignment_result_for_mode;
 
     my $fl = $build->region_of_interest_set;
 
@@ -188,16 +157,8 @@ sub params_for_result {
 sub link_result_to_build {
     my $self = shift;
     my $result = shift;
-    my $build = $self->build;
-
-    my $link = join('/', $build->data_directory, 'coverage', $self->mode);
-    my $label = join('_', 'coverage_stats', $self->mode);
-    Genome::Sys->create_symlink($result->output_dir, $link);
-    $result->add_user(label => $label, user => $build);
-
     $self->reference_coverage_result($result);
-
-    return 1;
+    return $self->SUPER::link_result_to_build($result, "coverage", "coverage_stats");
 }
 
 1;
