@@ -11,8 +11,8 @@ class Genome::InstrumentData::VerifyBamIdResult {
         aligned_bam_result_id => {
             is => 'Text',
         },
-        genotype_build_id => {
-            is => 'Text',
+        genotype_vcf_result => {
+            is => 'Genome::InstrumentData::GenotypeVcf',
         },
         on_target_list => {
             is => "Genome::FeatureList",
@@ -79,21 +79,9 @@ sub _resolve_bam_file {
 
 sub _resolve_vcf_file {
     my $self = shift;
-    my $genotype_build = Genome::Model::Build::GenotypeMicroarray->get(id => $self->genotype_build_id);
-
-    $self->_error("Could not find genotype build for id ".$self->genotype_build_id) unless $genotype_build;
-    my $vcf = Genome::Sys->create_temp_file_path;
-    my $params = {
-        build => $genotype_build,
-        variation_list_build => $genotype_build->dbsnp_build,
-        output => $vcf,
-    };
-    if ($genotype_build->reference_sequence_build->allosome_names) {
-        $params->{filters} = ["chromosome:exclude=".$genotype_build->reference_sequence_build->allosome_names];
-    }
-    my $rv = Genome::Model::GenotypeMicroarray::Command::ExtractToVcf->execute($params);
-    unless ($rv and -s $vcf) {
-        $self->_error("Could not get vcf file for ".Data::Dumper::Dumper($params));
+    my $vcf = $self->genotype_vcf_result->vcf_path;
+    unless (-s $vcf) {
+        $self->_error("Could not get vcf file for genotype vcf".$self->genotype_vcf_result);
     }
     return $self->_clean_vcf($vcf);
 }
