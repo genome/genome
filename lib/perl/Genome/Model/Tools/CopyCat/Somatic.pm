@@ -226,7 +226,7 @@ sub execute {
     print $RFILE "                        dumpBins=$dump_bins,\n";
     print $RFILE "                        doGcCorrection=$gcCorr,\n";
     print $RFILE "                        samtoolsFileFormat=\"" . $self->samtools_file_format ."\",\n";
-    print $RFILE "                        purity=\"" . $tumor_purity ."\",\n";
+    print $RFILE "                        purity=" . $tumor_purity .",\n";
     print $RFILE "                        normalSamtoolsFile=$normal_samtools_file,\n";
     print $RFILE "                        tumorSamtoolsFile=$tumor_samtools_file)\n";
 
