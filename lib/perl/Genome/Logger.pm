@@ -76,6 +76,16 @@ sub color_screen {
     );
 }
 
+my @levels = keys %Log::Dispatch::LEVELS;
+for my $level (@levels) {
+    my $name = join('::', __PACKAGE__, $level);
+    no strict 'refs';
+    *{$name} = sub {
+        my $class = shift;
+        return $class->logger->$level(@_);
+    };
+}
+
 sub screen {
     my $screen = Log::Dispatch::Screen->new(
         name => 'screen',
