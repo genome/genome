@@ -69,7 +69,7 @@ foreach my $pdf (@pdf_list){
 
 #Diff the result, if there are differences, store the new result in /tmp for examination
 my $temp_dir = "/tmp/last-summarize-tier1-snv-support/";
-my @diff = `diff -x '*.pdf' -x '*.R' -x '.stderr' -x '.stdout' -r $expected_out $output_dir`;
+my @diff = `diff -x '*.pdf' -x '*.R' -x '*.stderr' -x '*.stdout' -r $expected_out $output_dir`;
 is(scalar(@diff), 0, "only expected differences")
 or do {
   for (@diff) { diag($_) }
