@@ -10,8 +10,19 @@ class Genome::Model::SomaticValidation::Command::CoverageStats {
         merged_alignment_result_id => {
             is => 'Text',
         },
+        build_id => {
+            is => 'Text',
+        },
+    ],
+    has => [
         build => {
             is => 'Genome::Model::Build::SomaticValidation',
+            id_by => 'build_id',
+        },
+    ],
+    has_transient_optional_output => [
+        result => {
+            is => 'Genome::InstrumentData::VerifyBamIdResult',
         },
     ],
 };
@@ -74,6 +85,7 @@ sub link_result_to_build {
     my $label = join('_', 'verify_bam_id');
     Genome::Sys->create_symlink($result->output_dir, $link);
     $result->add_user(label => $label, user => $build);
+    $self->result($result);
     $self->add_metrics_to_build;
     return 1;
 }
