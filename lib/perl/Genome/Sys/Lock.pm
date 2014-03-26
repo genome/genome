@@ -23,12 +23,7 @@ sub lock_resource {
     $self->_start_locking_client;
 
     my $nessy_claim = $self->_new_style_lock(%args);
-    unless ($nessy_claim) {
-        $self->error_message("Nessy could not acquire lock for resource lock: $args{resource_lock}");
-    }
-
-    my $rv = $self->_file_based_lock_resource( %args );
-
+    my $rv = $self->_file_based_lock_resource(%args);
     $self->_lock_resource_report_inconsistent_locks($args{resource_lock}, $rv, $nessy_claim);
 
     return $rv;
@@ -38,8 +33,25 @@ sub lock_resource {
 sub _lock_resource_report_inconsistent_locks {
     my($self, $resource_lock, $file_lock, $nessy_claim) = @_;
 
-    if (! $file_lock and $nessy_claim and $LOCKING_CLIENT) {
-        $self->error_message("Nessy acquired lock but file-based did not.  resource_lock: $resource_lock");
+    return unless $LOCKING_CLIENT;
+
+    my $t = "%s-lock acquired but %s-based did not: $resource_lock";
+
+    if ($nessy_claim and !$file_lock) {
+        Genome::Utility::Instrumentation::increment('sys.lock.locked_nessy_only');
+        Genome::Logger->debugf($t, 'Nessy', 'File');
+        return;
+    }
+
+    if ($file_lock and !$nessy_claim) {
+        Genome::Utility::Instrumentation::increment('sys.lock.locked_file_only');
+        Genome::Logger->debugf($t, 'File', 'Nessy');
+        return;
+    }
+
+    if ($file_lock and $nessy_claim) {
+        Genome::Utility::Instrumentation::increment('sys.lock.locked_both');
+        return;
     }
 }
 
