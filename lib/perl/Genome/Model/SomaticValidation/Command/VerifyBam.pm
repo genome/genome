@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::SomaticValidation::Command::VerifyBam {
-    is => ['Command::V2'],
+    is => ['Genome::Model::SomaticValidation::Command::WithMode'],
     has_transient_optional_output => [
         result => {
             is => 'Genome::InstrumentData::VerifyBamIdResult',
