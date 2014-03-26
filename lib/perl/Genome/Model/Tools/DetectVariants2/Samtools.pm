@@ -245,8 +245,20 @@ sub create_snv_indel_output_file {
     }
     map{$_->close}($vcf_fh, $snv_fh, $indel_fh, $head_fh, $sani_fh);
 
-    Genome::Sys->cat(input_files => [$header_file, $snv_tmp],   output_file => $snv_file);
-    Genome::Sys->cat(input_files => [$header_file, $indel_tmp], output_file => $indel_file);
+    if (-z $snv_tmp) {
+        $self->warning_message("snv output is empty");
+        `touch $snv_file`;
+    }
+    else {
+        Genome::Sys->cat(input_files => [$header_file, $snv_tmp],   output_file => $snv_file);
+    }
+    if (-z $indel_tmp) {
+        $self->warning_message("indel output is empty");
+        `touch $indel_file`;
+    }
+    else {
+        Genome::Sys->cat(input_files => [$header_file, $indel_tmp], output_file => $indel_file);
+    }
 
     return 1;
 }
