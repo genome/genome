@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 3;
+use Test::More tests => 4;
 
 use Memoize qw();
 
@@ -29,4 +29,16 @@ subtest 'color screen' => sub {
 
     my $logger = Genome::Logger->logger();
     isa_ok($logger->output('screen'), 'Log::Dispatch::Screen::Color');
+};
+
+subtest 'context independent memoize' => sub {
+    plan tests => 3;
+
+    my $sl = Genome::Logger->logger();
+    ok($sl, 'got logger in scalar context');
+
+    my ($ll) = Genome::Logger->logger();
+    ok($ll, 'got logger in list context');
+
+    is($sl, $ll, 'both loggers are the same');
 };
