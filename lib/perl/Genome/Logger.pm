@@ -9,7 +9,7 @@ use Log::Dispatch::Screen qw();
 use Memoize qw(memoize);
 use Module::Runtime qw(module_notional_filename use_package_optimistically);
 
-memoize('logger');
+memoize('logger', LIST_CACHE => 'MERGE');
 sub logger {
     assert_class_method(shift);
 
