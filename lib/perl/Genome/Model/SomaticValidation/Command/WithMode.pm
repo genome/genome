@@ -28,8 +28,6 @@ class Genome::Model::SomaticValidation::Command::WithMode {
 sub should_run {
     my $self = shift;
 
-    return unless $self->build->region_of_interest_set;
-
     return $self->sample_for_mode;
 }
 
