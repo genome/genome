@@ -80,7 +80,7 @@ sub setup_objects {
         software_result => $vcf_result,
         name => "filters_1",
         value_class_name => "UR::Value",
-        value_id => "chromosome::exclude=X,Y,MT",
+        value_id => "chromosome:exclude=X,Y,MT",
     );
 
     my $on_target_bed = File::Spec->join($test_dir, "on_target.bed");
