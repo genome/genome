@@ -68,13 +68,10 @@ sub should_run {
 
 sub params_for_result {
     my $self = shift;
-    my $genotype_vcf = Genome::InstrumentData::GenotypeVcf->get_or_create(
+    my %params = (
         sample => $self->sample_for_mode,
         known_sites_build => $self->build->previously_discovered_variations_build,
-        filters => ["chromosome:exclude=".$self->build->previously_discovered_variations_build->reference->allosome_names],
-    );
-    my %params = (
-        genotype_vcf_result => $genotype_vcf,
+        genotype_filters => ["chromosome:exclude=".$self->build->previously_discovered_variations_build->reference->allosome_names],
         aligned_bam_result_id => $self->alignment_result_for_mode->id,
         max_depth => 1000,
         precise => 1,

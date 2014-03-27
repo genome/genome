@@ -11,15 +11,22 @@ class Genome::InstrumentData::VerifyBamIdResult {
         aligned_bam_result_id => {
             is => 'Text',
         },
-        genotype_vcf_result => {
-            is => 'Genome::InstrumentData::GenotypeVcf',
-        },
         on_target_list => {
             is => "Genome::FeatureList",
             is_optional => 1,
         },
+        sample => {
+            is => "Genome::Sample",
+        },
+        known_sites_build => {
+            is => "Genome::Model::Build::ImportedVariationList",
+        },
     ],
     has_param => [
+        genotype_filters => {
+            is => 'Text',
+            is_many => 1,
+        },
         max_depth => {
             is => "Integer",
         },
@@ -79,11 +86,27 @@ sub _resolve_bam_file {
 
 sub _resolve_vcf_file {
     my $self = shift;
-    my $vcf = $self->genotype_vcf_result->vcf_path;
+    my $genotype_vcf_result = $self->_resolve_genotype_vcf_result;
+    my $vcf = $genotype_vcf_result->vcf_path;
     unless (-s $vcf) {
-        $self->_error("Could not get vcf file for genotype vcf".$self->genotype_vcf_result);
+        $self->_error("Could not get vcf file for genotype vcf".$genotype_vcf_result);
     }
     return $self->_clean_vcf($vcf);
+}
+
+sub _resolve_genotype_vcf_result {
+    my $self = shift;
+
+    my %params = (
+        sample => $self->sample,
+        known_sites_build => $self->known_sites_build,
+    );
+    if ($self->genotype_filters) {
+        $params{filters} = [$self->genotype_filters];
+    }
+    my $result = Genome::InstrumentData::GenotypeVcf->get_or_create(%params);
+    $self->_error("Could not get or create genotype vcf result") unless $result;
+    return $result;
 }
 
 sub _clean_vcf {

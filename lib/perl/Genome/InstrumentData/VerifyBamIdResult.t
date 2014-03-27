@@ -22,12 +22,14 @@ use_ok($package);
 
 my $test_dir = Genome::Utility::Test->data_dir_ok($package, "v1");
 
-my ($instrument_data_1, $vcf_result, $on_target_feature_list) = setup_objects($test_dir);
+my ($instrument_data_1, $sample, $dbsnp_build, $on_target_feature_list) = setup_objects($test_dir);
 
 subtest test_on_target => sub{
     my $sr = Genome::InstrumentData::VerifyBamIdResult->create(
+        sample => $sample,
+        known_sites_build => $dbsnp_build,
+        genotype_filters => ["chromosome:exclude=X,Y,MT"],
         aligned_bam_result_id => $instrument_data_1->id,
-        genotype_vcf_result => $vcf_result,
         on_target_list => $on_target_feature_list,
         max_depth => 20,
         precise => 0,
@@ -38,8 +40,10 @@ subtest test_on_target => sub{
 
 subtest test_no_intersect => sub{
     my $sr = Genome::InstrumentData::VerifyBamIdResult->create(
+        sample => $sample,
+        known_sites_build => $dbsnp_build,
+        genotype_filters => ["chromosome:exclude=X,Y,MT"],
         aligned_bam_result_id => $instrument_data_1->id,
-        genotype_vcf_result => $vcf_result,
         max_depth => 20,
         precise => 0,
         version => "20120620",
@@ -78,15 +82,15 @@ sub setup_objects {
     );
     Genome::SoftwareResult::Input->create(
         software_result => $vcf_result,
-        name => "filters_1",
-        value_class_name => "UR::Value",
+        name => "filters-0",
         value_id => "chromosome:exclude=X,Y,MT",
     );
+    $vcf_result->lookup_hash($vcf_result->calculate_lookup_hash);
 
     my $on_target_bed = File::Spec->join($test_dir, "on_target.bed");
     my $on_target_feature_list = Genome::FeatureList->create(
         file_path => $on_target_bed,
         file_content_hash => Genome::Sys->md5sum($on_target_bed),
     );
-    return ($bam_result_1, $vcf_result, $on_target_feature_list);
+    return ($bam_result_1, $genotype_data->sample, $build->dbsnp_build, $on_target_feature_list);
 }
