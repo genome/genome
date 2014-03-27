@@ -7183,6 +7183,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       undef,
       'samtools-file-format=s',
       'files',
+      'tumor-purity=s',
+      undef,
       'tumor-samtools-file=s',
       'files',
       'help!',
