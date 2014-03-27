@@ -151,13 +151,17 @@ sub shortcut {
 
     $self->debug_message('Using existing alignment ' . $result->__display_name__);
 
+    unless($self->refiner_name) {
+        return $result;
+    }
+
     my $refiner_result = $self->_process_refinement('shortcut', $result);
     unless($refiner_result) {
         $self->debug_message('No existing refinement found.');
         return;
     }
 
-    return ref($refiner_result)? $refiner_result : $result;
+    return $refiner_result;
 }
 
 sub execute {
@@ -170,13 +174,17 @@ sub execute {
     }
     $self->debug_message('Generated merged alignment');
 
+    unless ($self->refiner_name) {
+        return $result;
+    }
+
     my $refiner_result = $self->_process_refinement('execute', $result);
     unless($refiner_result) {
         $self->error_message('Failed to generate refinement.');
         die $self->error_message;
     }
 
-    return ref($refiner_result)? $refiner_result : $result;
+    return $refiner_result;
 }
 
 sub _process_merged_alignment {
