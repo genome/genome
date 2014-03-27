@@ -43,27 +43,6 @@ class Genome::InstrumentData::Command::MergeAlignments {
             is_optional => 1,
             doc => 'Version of the duplication handler to use',
         },
-        refiner_name => {
-            is => 'Text',
-            is_optional => 1,
-            doc => 'Name of the refiner to use',
-        },
-        refiner_version => {
-            is => 'Text',
-            is_optional => 1,
-            doc => 'Version of the refiner to use',
-        },
-        refiner_params => {
-            is => 'Text',
-            is_optional => 1,
-            doc => 'Params for the refiner to use',
-        },
-        refiner_known_sites_ids => {
-            is => 'Text',
-            is_many => 1,
-            is_optional => 1,
-            doc => 'ID of the variant list to use for refinement',
-        },
         samtools_version => {
             is => 'Text',
             doc => 'The version of Samtools to use when needed by mergers/deduplicators',
@@ -151,17 +130,7 @@ sub shortcut {
 
     $self->debug_message('Using existing alignment ' . $result->__display_name__);
 
-    unless($self->refiner_name) {
-        return $result;
-    }
-
-    my $refiner_result = $self->_process_refinement('shortcut', $result);
-    unless($refiner_result) {
-        $self->debug_message('No existing refinement found.');
-        return;
-    }
-
-    return $refiner_result;
+    return $result;
 }
 
 sub execute {
@@ -174,25 +143,7 @@ sub execute {
     }
     $self->debug_message('Generated merged alignment');
 
-    unless ($self->refiner_name) {
-        return $result;
-    }
-
-    my $refiner_result = Genome::InstrumentData::Command::RefineAlignments->execute(
-        merge_result => $result,
-        refiner_name => $self->refiner_name,
-        refiner_version => $self->refiner_version,
-        refiner_params => $self->refiner_params,
-        refiner_known_sites_ids => [$self->refiner_known_sites_ids],
-    );
-    unless($refiner_result) {
-        $self->error_message('Failed to generate refinement.');
-        die $self->error_message;
-    }
-
-    $self->result_id($refiner_result->result_id) if $refiner_result;
-
-    return $refiner_result;
+    return $result;
 }
 
 sub _process_merged_alignment {

@@ -7,9 +7,15 @@ use Genome;
 class Genome::InstrumentData::Command::RefineAlignments {
     is => ['Command::V2'],
     has_input => [
-        merge_result => {
-            is => 'Genome::InstrumentData::AlignmentResult::Merged',
+        input_result_id => {
+            is => 'Text',
+            doc => 'The result generated/found when running the command',
+        },
+        input_result => {
+            is => 'Genome::SoftwareResult',
+            is_optional => 1,
             doc => 'The merge result to be merged',
+            id_by => 'input_result_id',
         },
         refiner_name => {
             is => 'Text',
@@ -71,7 +77,7 @@ sub bsub_rusage {
 sub execute {
     my $self = shift;
 
-    my $refiner_result = $self->_process_refinement('execute', $self->merge_result);
+    my $refiner_result = $self->_process_refinement('execute', $self->input_result);
     unless($refiner_result) {
         $self->error_message('Failed to generate refinement.');
         die $self->error_message;

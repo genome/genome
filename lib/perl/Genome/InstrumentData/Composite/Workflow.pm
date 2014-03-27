@@ -107,9 +107,11 @@ sub _generate_workflow {
 
     my ($merge_operations, $merge_inputs) = $self->_generate_merge_operations($tree, \@alignment_objects);
 
-    my $inputs = [@$index_inputs, @$object_inputs, @$merge_inputs];
+    my ($refinement_operations, $refinement_inputs) = $self->_generate_refinement_operations($tree, \@alignment_objects);
 
-    return $self->_generate_master_workflow($index_operations, $object_workflows, $merge_operations, $inputs, \@alignment_objects, $tree->{api_version});
+    my $inputs = [@$index_inputs, @$object_inputs, @$merge_inputs, @$refinement_inputs];
+
+    return $self->_generate_master_workflow($index_operations, $object_workflows, $merge_operations, $refinement_operations, $inputs, \@alignment_objects, $tree->{api_version});
 }
 
 my %VERSIONS = (
@@ -513,7 +515,13 @@ sub _general_workflow_input_properties {
 sub _merge_workflow_input_properties {
     my $self = shift;
 
-    return qw(merger_name merger_version merger_params duplication_handler_name duplication_handler_version duplication_handler_params refiner_name refiner_version refiner_params refiner_known_sites_ids samtools_version);
+    return qw(merger_name merger_version merger_params duplication_handler_name duplication_handler_version duplication_handler_params samtools_version);
+}
+
+sub _refinement_workflow_input_properties {
+    my $self = shift;
+
+    return qw(refiner_name refiner_version refiner_params refiner_known_sites_ids);
 }
 
 sub _index_workflow_input_properties {
@@ -650,13 +658,6 @@ sub _generate_merge_operations {
                     m_duplication_handler_params => $next_op->{params},
                     m_duplication_handler_version => $next_op->{version}
                 );
-            } elsif($next_op->{type} eq 'refine') {
-                push @inputs, (
-                    m_refiner_name => $next_op->{name},
-                    m_refiner_params => $next_op->{params},
-                    m_refiner_version => $next_op->{version},
-                    m_refiner_known_sites_ids => [ map { $_->id } @{($self->inputs)->{$next_op->{known_sites}}} ],
-                );
             }
         }
 
@@ -674,6 +675,45 @@ sub _generate_merge_operations {
     }
 
     return (\%merge_operations, \@inputs);
+}
+
+sub _generate_refinement_operations {
+    my $self = shift;
+    my $tree = shift;
+    my $alignment_objects = shift;
+
+    my %refinement_operations;
+    my @inputs;
+
+    if(exists $tree->{then}) {
+        my $merge_tree = $tree->{then};
+        my $next_op = $merge_tree;
+        while(exists $next_op->{then}) {
+            $next_op = $next_op->{then};
+
+            if($next_op->{type} eq 'refine') {
+                push @inputs, (
+                    m_refiner_name => $next_op->{name},
+                    m_refiner_params => $next_op->{params},
+                    m_refiner_version => $next_op->{version},
+                    m_refiner_known_sites_ids => [ map { $_->id } @{($self->inputs)->{$next_op->{known_sites}}} ],
+                );
+                if($self->merge_group eq 'all') {
+                    #this case is a simplification for efficiency
+                    $refinement_operations{all} = $self->_generate_refinement_operation($merge_tree, 'all');
+                } else {
+                    my %groups;
+                    for my $o (@$alignment_objects) {
+                        $groups{ $self->_merge_group_for_alignment_object($o) }++;
+                    }
+
+                    %refinement_operations = map (($_ => $self->_generate_refinement_operation($merge_tree, $_)), sort keys %groups);
+                }
+            }
+        }
+    }
+
+    return (\%refinement_operations, \@inputs);
 }
 
 sub _merge_group_for_alignment_object {
@@ -724,16 +764,43 @@ sub _generate_merge_operation {
     return $operation;
 }
 
+my $_refinealignments_command_id;
+my $_generate_refinement_operation_tmpl;
+sub _generate_refinement_operation {
+    my $self = shift;
+    my $merge_tree = shift;
+    my $grouping = shift;
+
+    unless ($_generate_refinement_operation_tmpl) {
+        $_generate_refinement_operation_tmpl = UR::BoolExpr::Template->resolve('Workflow::Operation', 'id','name','workflow_operationtype_id')->get_normalized_template_equivalent();
+        $_refinealignments_command_id = Workflow::OperationType::Command->get('Genome::InstrumentData::Command::RefineAlignments')->id;
+    }
+
+    my $operation = Workflow::Operation->create(
+        $_generate_refinement_operation_tmpl->get_rule_for_values(
+                UR::Object::Type->autogenerate_new_object_id_urinternal(),
+                'refine_' . $grouping,
+                $_refinealignments_command_id
+        )
+
+        #name => 'merge_' . $grouping,
+        #operation_type => $_mergealignments_command_id
+    );
+
+    return $operation;
+}
+
 sub _generate_master_workflow {
     my $self = shift;
     my $index_operations = shift;
     my $object_workflows = shift;
     my $merge_operations = shift;
+    my $refinement_operations = shift;
     my $inputs = shift;
     my $alignment_objects = shift;
     my $api_version = shift;
 
-    my ($input_properties_list, $output_properties_list) = $self->_inputs_and_outputs_for_master_workflow($index_operations, $object_workflows, $merge_operations);
+    my ($input_properties_list, $output_properties_list) = $self->_inputs_and_outputs_for_master_workflow($index_operations, $object_workflows, $merge_operations, $refinement_operations);
 
     my $master_workflow = Workflow::Model->create(
         name => 'Master Alignment Dispatcher',
@@ -773,6 +840,14 @@ sub _generate_master_workflow {
         $self->_wire_object_workflows_to_merge_operations($master_workflow, $object_workflows, $merge_operations, $alignment_objects);
     }
 
+    if(%$refinement_operations) {
+        for my $refinement_operation (values %$refinement_operations) {
+            $self->_wire_refinement_operation_to_master_workflow($master_workflow, $block_operation, $refinement_operation);
+        }
+
+        $self->_wire_merge_to_refinement_operations($master_workflow, $merge_operations, $refinement_operations);
+    }
+
     #add the global inputs
     my $api_inputs = $self->inputs_for_api_version($api_version);
     my %inputs = (%$api_inputs, %{ $self->inputs });
@@ -789,6 +864,7 @@ sub _inputs_and_outputs_for_master_workflow {
     my $index_operations = shift;
     my $object_workflows = shift;
     my $merge_operations = shift;
+    my $refinement_operations = shift;
 
     my %input_properties;
     my %output_properties;
@@ -808,6 +884,18 @@ sub _inputs_and_outputs_for_master_workflow {
         }
 
         for my $op (values %$merge_operations) {
+            for my $prop (@{ $op->operation_type->output_properties }) {
+               $output_properties{join('_', $prop, $op->name)}++;
+            }
+        }
+    }
+
+    if(%$refinement_operations) {
+        for my $prop ($self->_refinement_workflow_input_properties) {
+            $input_properties{$prop}++;
+        }
+
+        for my $op (values %$refinement_operations) {
             for my $prop (@{ $op->operation_type->output_properties }) {
                $output_properties{join('_', $prop, $op->name)}++;
             }
@@ -943,6 +1031,55 @@ sub _wire_merge_operation_to_master_workflow {
 
     return 1;
 }
+sub _wire_refinement_operation_to_master_workflow {
+    my $self = shift;
+    my $master_workflow = shift;
+    my $block_operation = shift; #unused by merge operations
+    my $refinement = shift;
+
+    my $master_input_connector = $master_workflow->get_input_connector;
+    my $master_output_connector = $master_workflow->get_output_connector;
+
+    $refinement->workflow_model($master_workflow);
+
+    for my $property ($self->_refinement_workflow_input_properties) {
+        $self->_add_link_to_workflow($master_workflow,
+            left_workflow_operation_id => $master_input_connector->id,
+            left_property => 'm_' . $property,
+            right_workflow_operation_id => $refinement->id,
+            right_property => $property,
+        );
+    }
+
+    for my $property (@{ $refinement->operation_type->output_properties }) {
+        $self->_add_link_to_workflow($master_workflow,
+            left_workflow_operation_id => $refinement->id,
+            left_property => $property,
+            right_workflow_operation_id => $master_output_connector->id,
+            right_property => 'm_' . join('_', $property, $refinement->name),
+        );
+    }
+
+    return 1;
+}
+
+sub _wire_merge_to_refinement_operations {
+    my $self = shift;
+    my $master_workflow = shift;
+    my $merge_operations = shift;
+    my $refinement_operations = shift;
+
+    for my $key (keys %$merge_operations ) {
+        $self->_add_link_to_workflow($master_workflow,
+            left_workflow_operation_id => $merge_operations->{$key}->id,
+            left_property => 'result_id',
+            right_workflow_operation_id => $refinement_operations->{$key}->id,
+            right_property => 'input_result_id',
+        );
+    }
+
+    return 1;
+}
 
 sub _wire_object_workflows_to_merge_operations {
     my $self = shift;
@@ -996,7 +1133,6 @@ sub _wire_object_workflows_to_merge_operations {
             );
         }
     }
-
 
     return 1;
 }

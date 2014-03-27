@@ -241,7 +241,7 @@ subtest "simple alignments of different samples with merge and gatk refine" => s
     my @ad4_result_ids = $ad4->_result_ids;
     my @ad4_results = Genome::SoftwareResult->get(\@ad4_result_ids);
     my $gatk_result = Genome::InstrumentData::Gatk::BaseRecalibratorBamResult->get(reference_fasta => $ref_refine->fasta_file);
-    is_deeply([sort @alignment_results, $gatk_result], [sort @ad4_results], 'found expected alignment and gatk results');
+    is_deeply([sort @alignment_results, $merge_result_refine, $gatk_result], [sort @ad4_results], 'found expected alignment and gatk results');
 };
 
 sub construct_merge_result {
