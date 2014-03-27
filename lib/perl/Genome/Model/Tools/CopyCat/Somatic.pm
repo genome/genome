@@ -85,7 +85,7 @@ class Genome::Model::Tools::CopyCat::Somatic{
         dump_bins => {
             is => 'Boolean',
             is_optional => 1,
-            default => 0,
+            default => 1,
             doc => "write out the corrected bins to a file (pre-segmentation)"
         },
         do_gc_correction => {
