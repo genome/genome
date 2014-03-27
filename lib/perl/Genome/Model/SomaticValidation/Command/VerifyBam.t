@@ -40,8 +40,10 @@ sub test_metrics {
     my $build = shift;
     my $mode = shift;
     for my $metric(qw(freemix chipmix)) {
-        my $value = $build->get_metric($metric."-".$mode);
-        ok(defined $value, "Metric $metric-$mode is defined: $value");
+        my $metric_name = "$metric-$mode";
+        my $value = $build->get_metric($metric_name);
+        ok(defined $value, "Metric $metric_name is defined: $value");
+        ok($value ne "NA", "Metric $metric_name is not NA");
     }
 }
 
@@ -65,8 +67,11 @@ sub setup_objects {
                                                                 snv_result => $dbsnp_result);
     $dbsnp_build->reference->allosome_names("X,Y,MT");
 
-    my $merged_result = Genome::Test::Factory::InstrumentData::MergedAlignmentResult->setup_object(
+    my $merged_result1 = Genome::Test::Factory::InstrumentData::MergedAlignmentResult->setup_object(
         bam_path => File::Spec->join($test_dir, "1.bam"),
+    );
+    my $merged_result2 = Genome::Test::Factory::InstrumentData::MergedAlignmentResult->setup_object(
+        bam_path => File::Spec->join($test_dir, "2.bam"),
     );
 
     my $pp = Genome::Test::Factory::ProcessingProfile::SomaticValidation->setup_object(
@@ -79,8 +84,8 @@ sub setup_objects {
                                                             );
     my $build = Genome::Test::Factory::Build->setup_object(model_id => $model->id);
 
-    Genome::SoftwareResult::User->create(software_result => $merged_result, user => $build, label => "merged_alignment");
-    Genome::SoftwareResult::User->create(software_result => $merged_result, user => $build, label => "control_merged_alignment");
+    Genome::SoftwareResult::User->create(software_result => $merged_result1, user => $build, label => "merged_alignment");
+    Genome::SoftwareResult::User->create(software_result => $merged_result2, user => $build, label => "control_merged_alignment");
 
     return $build;
 }
