@@ -69,7 +69,7 @@ sub _resolve_bam_file {
     my $self = shift;
     my $bam_result = Genome::InstrumentData::AlignedBamResult->get($self->aligned_bam_result_id);
 
-    $self->_error("Could not find instrument data for id ".$self->aligned_bam_result_id) unless $bam_result;
+    $self->_error("Could not find alignment result for id ".$self->aligned_bam_result_id) unless $bam_result;
     my $path = $bam_result->bam_path;
     unless (-s $path) {
         $self->_error("Could not get bam file for ".$bam_result->id);
