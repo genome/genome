@@ -69,7 +69,17 @@ sub link_result_to_build {
     my $label = join('_', $label_base, $self->mode);
     Genome::Sys->create_symlink($result->output_dir, $link);
     $result->add_user(label => $label, user => $build);
+    $self->add_metrics_to_build($result);
+    return 1;
+}
 
+sub add_metrics_to_build {
+    my $self = shift;
+    my $result = shift;
+
+    for my $metric (map {$_->metric_name} $result->metrics) {
+        $self->build->set_metric($metric."-".$self->mode, $result->$metric);
+    }
     return 1;
 }
 
