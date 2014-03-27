@@ -6,7 +6,7 @@ use Genome;
 use Sys::Hostname;
 
 class Genome::InstrumentData::GenotypeVcf {
-    is => 'Genome::SoftwareResult',
+    is => 'Genome::SoftwareResult::Stageable',
     has_input => [
         sample => {
             is => 'Genome::Sample',
@@ -32,7 +32,8 @@ sub create {
     my $class = shift;
     my $self = $class->SUPER::create(@_);
 
-    my $vcf = $self->vcf_path;
+    $self->_error("Failed to prepare staging directory") unless $self->_prepare_staging_directory;
+    my $vcf = File::Spec->join($self->temp_staging_directory, $self->vcf_file_name);
     my $params = {
         sample => $self->sample,
         variation_list_build => $self->known_sites_build,
@@ -41,16 +42,25 @@ sub create {
     if ($self->filters) {
         $params->{filters} = [$self->filters];
     }
-    my $rv = Genome::Model::GenotypeMicroarray::Command::ExtractToVcf->execute($params);
+    my $rv = Genome::Model::GenotypeMicroarray::Command::ExtractToVcf->execute(%{$params});
     unless ($rv and -s $vcf) {
         $self->_error("Could not get vcf file for ".Data::Dumper::Dumper($params));
     }
+
+    $self->_prepare_output_directory;
+    $self->_promote_data;
+    $self->_reallocate_disk_allocation;
     return $self;
+}
+
+sub vcf_file_name {
+    my $self = shift;
+    return "genotype.vcf";
 }
 
 sub vcf_path {
     my $self = shift;
-    return File::Spec->join($self->output_dir, "genotype.vcf");
+    return File::Spec->join($self->output_dir, $self->vcf_file_name);
 }
 
 sub resolve_allocation_subdirectory {
