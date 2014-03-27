@@ -208,12 +208,10 @@ subtest "simple alignments of different samples with merge and gatk refine" => s
     });
 
     my $indel_result = Genome::Model::Tools::DetectVariants2::Result::Manual->__define__(
-        id => 9997,
         output_dir => $tmp_dir,
         original_file_path => File::Spec->join($tmp_dir, 'indels.hq.vcf'),
     );
     my $variation_list_build = Genome::Model::Build::ImportedVariationList->__define__(
-        id => 9998,
         indel_result => $indel_result,
     );
     ok($variation_list_build, "created ImportedVariationList build");
