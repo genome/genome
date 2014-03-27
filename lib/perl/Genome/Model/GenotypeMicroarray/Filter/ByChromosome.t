@@ -17,6 +17,6 @@ my $filter = Genome::Model::GenotypeMicroarray::Filter::ByChromosome->create(exc
 my $variant1 = {chrom => "1"};
 my $variant2 = {chrom => "Y"};
 ok($filter->filter($variant1), "Variant on chrom1 is not filtered");
-ok($filter->filter($variant2), "Variant on chrom Y is filtered");
+ok(!$filter->filter($variant2), "Variant on chrom Y is filtered");
 
 done_testing;

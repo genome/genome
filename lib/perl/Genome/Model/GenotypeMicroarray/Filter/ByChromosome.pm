@@ -27,11 +27,11 @@ sub create {
 
 sub filter {
     my ($self, $variant) = @_;
-    if (grep {$variant->{chrom}} $self->exclude_list) {
-        return 1;
+    if(grep {$_ eq $variant->{chrom}} $self->exclude_list) {
+        return;
     }
 
-    return;
+    return 1;
 }
 
 1;
