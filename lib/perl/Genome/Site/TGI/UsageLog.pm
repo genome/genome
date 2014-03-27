@@ -64,10 +64,10 @@ sub git_revision {
     my $genome_path = abs_path($INC{'Genome.pm'});
 
     my $work_tree = ($genome_path =~ /^(.*)\/lib\/perl\/Genome.pm$/)[0];
-    return unless $work_tree;
+    return '' unless $work_tree;
 
     my $stdout = qx(git --git-dir "$work_tree/.git" rev-parse HEAD 2> /dev/null);
-    return unless $stdout;
+    return '' unless $stdout;
 
     chomp $stdout;
     return $stdout;
