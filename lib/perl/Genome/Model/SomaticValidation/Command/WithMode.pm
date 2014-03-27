@@ -60,7 +60,12 @@ sub link_result_to_build {
     my $label_base = shift;
     my $build = $self->build;
 
-    my $link = join('/', $build->data_directory, $subdir_name, $self->mode);
+    my $base_dir = File::Spec->join($build->data_directory, $subdir_name);
+    unless (-e $base_dir) {
+        Genome::Sys->create_directory($base_dir);
+    }
+
+    my $link = File::Spec->join($base_dir, $self->mode);
     my $label = join('_', $label_base, $self->mode);
     Genome::Sys->create_symlink($result->output_dir, $link);
     $result->add_user(label => $label, user => $build);
