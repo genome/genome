@@ -37,6 +37,14 @@ class Genome::InstrumentData::VerifyBamIdResult {
             is => "Text",
         },
     ],
+    has_metric => [
+        freemix => {
+            is => "UR::Value::Number",
+        },
+        chipmix => {
+            is => "UR::Value::Number",
+        },
+    ],
 };
 
 sub _error {
@@ -54,11 +62,27 @@ sub create {
 
     $self->_error("Failed to run verifyBamID") unless $self->_run_verify_bam_id;
 
+
     $self->_prepare_output_directory;
     $self->_promote_data;
     $self->_reallocate_disk_allocation;
+    
+    $self->_error("Failed to add metrics") unless $self->_add_metrics;
 
     return $self;
+}
+
+sub _add_metrics {
+    my $self = shift;
+    my $self_sm = File::Spec->join($self->output_dir, "output.selfSM");
+    my $in = Genome::Utility::IO::SeparatedValueReader->create(
+        separator => "\t",
+        input => $self_sm,
+    );
+    my $metrics = $in->next;
+    $self->freemix($metrics->{FREEMIX});
+    $self->chipmix($metrics->{CHIPMIX});
+    return 1;
 }
 
 sub _run_verify_bam_id {

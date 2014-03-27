@@ -36,6 +36,7 @@ subtest test_on_target => sub{
         version => "20120620",
     );
     ok($sr, "Software result was created ok");
+    test_metrics($sr);
 };
 
 subtest test_no_intersect => sub{
@@ -49,9 +50,17 @@ subtest test_no_intersect => sub{
         version => "20120620",
     );
     ok($sr, "Software result was created ok");
+    test_metrics($sr);
 };
 
 done_testing;
+
+sub test_metrics {
+    my $result = shift;
+    ok(defined $result->freemix, "Freemix is defined");
+    ok($result->freemix ne "NA", "Freemix is not NA");
+    ok(defined $result->chipmix, "Chipmix is defined");
+}
 
 sub setup_objects {
     my $test_dir = shift;
