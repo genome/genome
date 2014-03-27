@@ -55,7 +55,6 @@ sub setup_objects {
                                                                 snv_result => $dbsnp_result);
     $dbsnp_build->reference->allosome_names("X,Y,MT");
 
-    my $alignment_strategy = "FAKE";
     my $merged_result = Genome::Test::Factory::InstrumentData::MergedAlignmentResult->setup_object(
         bam_path => File::Spec->join($test_dir, "1.bam"),
     );
