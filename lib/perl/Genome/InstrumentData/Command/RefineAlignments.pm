@@ -117,7 +117,6 @@ sub _process_refinement {
     }
 
     $self->result_id($result->id) if $result;
-    $DB::single=1;
     return $result;
 }
 
