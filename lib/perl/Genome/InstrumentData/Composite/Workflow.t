@@ -188,7 +188,8 @@ subtest "simple alignments of different samples with merge and gatk refine" => s
     );
 
     my @alignment_results;
-    for my $instrument_data_id (qw/-23 -24 -28/) {
+    for my $instrument_data (@three_instrument_data) {
+        my $instrument_data_id = $instrument_data->id;
         my $alignment_result = Genome::InstrumentData::AlignmentResult->__define__(
             'reference_build_id' => $ref_refine->id,
             'samtools_version' => 'r599',
