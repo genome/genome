@@ -73,8 +73,8 @@ class Genome::Model::Tools::CopyCat::Somatic{
             is => 'String',
             is_optional => 1,
             is_input => 1,
-            doc =>'format of the samtools files. Options are "mpileup" and "vcf"',
-            default => "vcf",
+            doc =>'format of the samtools files. Options are "10colPileup" and "VCF". If anything else is specified, it will attempt to infer the type from the header of the file',
+            default => "unknown",
         },
         processors => {
             is => 'Integer',
