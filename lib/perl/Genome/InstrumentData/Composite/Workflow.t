@@ -88,6 +88,7 @@ my $result_3 = Genome::InstrumentData::AlignmentResult::Bwa->__define__(
 );
 $result_3->lookup_hash($result_3->calculate_lookup_hash());
 my @one_instrument_data = ($instrument_data_3);
+my @three_instrument_data = (@two_instrument_data, @one_instrument_data);
 my $merge_result_one_inst_data = construct_merge_result(@one_instrument_data);
 
 subtest 'simple alignments' => sub {
@@ -138,7 +139,6 @@ subtest 'simple alignments with merge' => sub {
     is_deeply([sort @results, $merge_result_two_inst_data], [sort @ad2_results], 'found expected alignment and merge results');
 };
 
-my @three_instrument_data = (@two_instrument_data, @one_instrument_data);
 push @results, $result_3;
 
 subtest "simple alignments of different samples with merge" => sub {
@@ -242,6 +242,88 @@ subtest "simple alignments of different samples with merge and gatk refine" => s
     my @ad4_results = Genome::SoftwareResult->get(\@ad4_result_ids);
     my @gatk_results = Genome::InstrumentData::Gatk::BaseRecalibratorBamResult->get(reference_fasta => $ref_refine->fasta_file);
     is_deeply([sort @alignment_results, $merge_result_refine_one_inst_data, $merge_result_refine_two_inst_data, @gatk_results], [sort @ad4_results], 'found expected alignment and gatk results');
+};
+
+subtest "simple alignments of different samples with merge and clip overlap" => sub {
+    my $ref_model = Genome::Test::Factory::Model::ImportedReferenceSequence->setup_object();
+    my $ref_refine = Genome::Model::Build::ImportedReferenceSequence->__define__(
+        model => $ref_model,
+        name => 'Test Ref Build v1',
+        data_directory => $tmp_dir,
+        fasta_file => File::Spec->join($tmp_dir, 'all_sequences.fa'),
+    );
+
+    $params_for_result{reference_build_id} = $ref_refine->id;
+    my $merge_result_refine_one_inst_data = construct_merge_result(@one_instrument_data);
+    my $merge_result_refine_two_inst_data = construct_merge_result(@two_instrument_data);
+    Sub::Install::reinstall_sub({
+        into => 'Genome::InstrumentData::AlignmentResult::Merged',
+        as => 'bam_path',
+        code => sub { File::Spec->join($tmp_dir, '9999.bam') },
+    });
+
+    my $aligner_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->__define__(
+        'aligner_version' => '0.5.9',
+        'aligner_name' => 'bwa',
+        'aligner_params' => '',
+        'reference_build' => $ref_refine,
+    );
+
+    my @alignment_results;
+    for my $instrument_data (@three_instrument_data) {
+        my $instrument_data_id = $instrument_data->id;
+        my $alignment_result = Genome::InstrumentData::AlignmentResult->__define__(
+            'reference_build_id' => $ref_refine->id,
+            'samtools_version' => 'r599',
+            'aligner_params' => '-t 4 -q 5::',
+            'aligner_name' => 'bwa',
+            'aligner_version' => '0.5.9',
+            'picard_version' => '1.29',
+            'instrument_data_id' => $instrument_data_id,
+        );
+        push @alignment_results, $alignment_result;
+    }
+    Sub::Install::reinstall_sub({
+        into => 'Genome::SoftwareResult',
+        as => '_faster_get',
+        code => sub { my $class = shift; $class->get(@_) },
+    });
+
+    my $indel_result = Genome::Model::Tools::DetectVariants2::Result::Manual->__define__(
+        output_dir => $tmp_dir,
+        original_file_path => File::Spec->join($tmp_dir, 'indels.hq.vcf'),
+    );
+    my $variation_list_build = Genome::Model::Build::ImportedVariationList->__define__(
+        indel_result => $indel_result,
+    );
+    ok($variation_list_build, "created ImportedVariationList build");
+
+    my $ad5 = Genome::InstrumentData::Composite::Workflow->create(
+        inputs => {
+            inst => \@three_instrument_data,
+            ref => $ref_refine,
+            force_fragment => 0,
+            variant_list => [$variation_list_build],
+        },
+        strategy => '
+            inst aligned to ref using bwa 0.5.9 [-t 4 -q 5::]
+            then merged using picard 1.29
+            then deduplicated using picard 1.29
+            then refined using clip-overlap 1.0.11
+            api v1
+        ',
+    );
+    isa_ok(
+        $ad5,
+        'Genome::InstrumentData::Composite::Workflow',
+        'created dispatcher for simple alignments of different samples with merge and clip_overlap refine'
+    );
+
+    ok($ad5->execute, 'executed dispatcher for simple alignments of different samples with merge and clip_overlap refine');
+    my @ad5_result_ids = $ad5->_result_ids;
+    my @ad5_results = Genome::SoftwareResult->get(\@ad5_result_ids);
+    my @clip_overlap_results = Genome::InstrumentData::BamUtil::ClipOverlapResult->get(bam_source => [$merge_result_refine_one_inst_data, $merge_result_refine_two_inst_data]);
+    is_deeply([sort @alignment_results, $merge_result_refine_one_inst_data, $merge_result_refine_two_inst_data, @clip_overlap_results], [sort @ad5_results], 'found expected alignment and clip_overlap results');
 };
 
 sub construct_merge_result {

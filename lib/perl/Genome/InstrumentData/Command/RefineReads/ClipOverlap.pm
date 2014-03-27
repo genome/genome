@@ -16,6 +16,9 @@ class Genome::InstrumentData::Command::RefineReads::ClipOverlap {
     has_optional => [
         params => { is => 'Text', },
     ],
+    has_many_optional => [
+        known_sites => { is => 'Genome::Model::Build::ImportedVariationList', }, # FIXME not needed... add stuff to a base class and make this optional (but required for gatk)
+    ],
     has_optional_transient => [
         result => { is => 'Genome::InstrumentData::BamUtil::ClipOverlapResult', },
     ],
