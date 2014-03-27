@@ -74,10 +74,11 @@ sub params_for_result {
         filters => ["chromosome:exclude=".$self->build->previously_discovered_variations_build->reference->allosome_names],
     );
     my %params = (
-        aligned_bam_result_id => $self->alignment_result_for_mode,
+        genotype_vcf_result => $genotype_vcf,
+        aligned_bam_result_id => $self->alignment_result_for_mode->id,
         max_depth => 1000,
         precise => 1,
-        version => $self->build->verify_bam_id_version,
+        version => $self->build->model->verify_bam_id_version,
     );
     if (defined $self->build->target_region_set) {
         $params{on_target_list} = $self->build->target_region_set;
