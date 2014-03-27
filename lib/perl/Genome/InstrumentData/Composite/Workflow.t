@@ -45,7 +45,7 @@ my $instrument_data_2 = Genome::Test::Factory::InstrumentData::Solexa->setup_obj
     id => '-24',
 );
 
-my @instrument_data = ($instrument_data_1, $instrument_data_2);
+my @two_instrument_data = ($instrument_data_1, $instrument_data_2);
 
 my $ref = Genome::Model::Build::ReferenceSequence->get_by_name('GRCh37-lite-build37');
 
@@ -59,7 +59,7 @@ my %params_for_result = (
 );
 
 my @results;
-for my $i (@instrument_data) {
+for my $i (@two_instrument_data) {
     my $r = Genome::InstrumentData::AlignmentResult::Bwa->__define__(
         %params_for_result,
         instrument_data_id => $i->id,
@@ -87,14 +87,14 @@ my $result_3 = Genome::InstrumentData::AlignmentResult::Bwa->__define__(
     instrument_data_id => $instrument_data_3->id,
 );
 $result_3->lookup_hash($result_3->calculate_lookup_hash());
-
-my $merge_result2 = construct_merge_result($instrument_data_3);
+my @one_instrument_data = ($instrument_data_3);
+my $merge_result_one_inst_data = construct_merge_result(@one_instrument_data);
 
 subtest 'simple alignments' => sub {
     my $log_directory = Genome::Sys->create_temp_directory();
     my $ad = Genome::InstrumentData::Composite::Workflow->create(
         inputs => {
-            inst => \@instrument_data,
+            inst => \@two_instrument_data,
             ref => $ref,
             force_fragment => 0,
         },
@@ -115,12 +115,12 @@ subtest 'simple alignments' => sub {
     is_deeply([sort @results], [sort @ad_results], 'found expected alignment results');
 };
 
-my $merge_result = construct_merge_result(@instrument_data);
+my $merge_result_two_inst_data = construct_merge_result(@two_instrument_data);
 
 subtest 'simple alignments with merge' => sub {
     my $ad2 = Genome::InstrumentData::Composite::Workflow->create(
         inputs => {
-            inst => \@instrument_data,
+            inst => \@two_instrument_data,
             ref => $ref,
             force_fragment => 0,
         },
@@ -135,16 +135,16 @@ subtest 'simple alignments with merge' => sub {
     ok($ad2->execute, 'executed dispatcher for simple alignments with merge');
     my @ad2_result_ids = $ad2->_result_ids;
     my @ad2_results = Genome::SoftwareResult->get(\@ad2_result_ids);
-    is_deeply([sort @results, $merge_result], [sort @ad2_results], 'found expected alignment and merge results');
+    is_deeply([sort @results, $merge_result_two_inst_data], [sort @ad2_results], 'found expected alignment and merge results');
 };
 
-push @instrument_data, $instrument_data_3;
+my @three_instrument_data = (@two_instrument_data, @one_instrument_data);
 push @results, $result_3;
 
 subtest "simple alignments of different samples with merge" => sub {
     my $ad3 = Genome::InstrumentData::Composite::Workflow->create(
         inputs => {
-            inst => \@instrument_data,
+            inst => \@three_instrument_data,
             ref => $ref,
             force_fragment => 0,
         },
@@ -159,7 +159,7 @@ subtest "simple alignments of different samples with merge" => sub {
     ok($ad3->execute, 'executed dispatcher for simple alignments of different samples with merge');
     my @ad3_result_ids = $ad3->_result_ids;
     my @ad3_results = Genome::SoftwareResult->get(\@ad3_result_ids);
-    is_deeply([sort @results, $merge_result, $merge_result2], [sort @ad3_results], 'found expected alignment and merge results');
+    is_deeply([sort @results, $merge_result_two_inst_data, $merge_result_one_inst_data], [sort @ad3_results], 'found expected alignment and merge results');
 };
 
 subtest "simple alignments of different samples with merge and gatk refine" => sub {
@@ -172,7 +172,8 @@ subtest "simple alignments of different samples with merge and gatk refine" => s
     );
 
     $params_for_result{reference_build_id} = $ref_refine->id;
-    my $merge_result_refine = construct_merge_result(@instrument_data);
+    my $merge_result_refine_one_inst_data = construct_merge_result(@one_instrument_data);
+    my $merge_result_refine_two_inst_data = construct_merge_result(@two_instrument_data);
     Sub::Install::reinstall_sub({
         into => 'Genome::InstrumentData::AlignmentResult::Merged',
         as => 'bam_path',
@@ -218,7 +219,7 @@ subtest "simple alignments of different samples with merge and gatk refine" => s
 
     my $ad4 = Genome::InstrumentData::Composite::Workflow->create(
         inputs => {
-            inst => \@instrument_data,
+            inst => \@three_instrument_data,
             ref => $ref_refine,
             force_fragment => 0,
             variant_list => [$variation_list_build],
@@ -240,8 +241,8 @@ subtest "simple alignments of different samples with merge and gatk refine" => s
     ok($ad4->execute, 'executed dispatcher for simple alignments of different samples with merge and gatk refine');
     my @ad4_result_ids = $ad4->_result_ids;
     my @ad4_results = Genome::SoftwareResult->get(\@ad4_result_ids);
-    my $gatk_result = Genome::InstrumentData::Gatk::BaseRecalibratorBamResult->get(reference_fasta => $ref_refine->fasta_file);
-    is_deeply([sort @alignment_results, $merge_result_refine, $gatk_result], [sort @ad4_results], 'found expected alignment and gatk results');
+    my @gatk_results = Genome::InstrumentData::Gatk::BaseRecalibratorBamResult->get(reference_fasta => $ref_refine->fasta_file);
+    is_deeply([sort @alignment_results, $merge_result_refine_one_inst_data, $merge_result_refine_two_inst_data, @gatk_results], [sort @ad4_results], 'found expected alignment and gatk results');
 };
 
 sub construct_merge_result {
