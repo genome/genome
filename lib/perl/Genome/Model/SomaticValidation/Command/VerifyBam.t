@@ -31,9 +31,19 @@ for my $mode (qw(normal tumor)) {
     ok($command->execute, "Executed command");
     my $directory = File::Spec->join($validation_build->data_directory, "verifyBamId", $mode);
     ok(-s File::Spec->join($directory, "output.selfSM"), ".selfSM file has size");
+    test_metrics($validation_build, $mode);
 }
 
 done_testing;
+
+sub test_metrics {
+    my $build = shift;
+    my $mode = shift;
+    for my $metric(qw(freemix chipmix)) {
+        my $value = $build->get_metric($metric."-".$mode);
+        ok(defined $value, "Metric $metric-$mode is defined: $value");
+    }
+}
 
 sub setup_objects {
     my $sample1 = Genome::Test::Factory::Sample->setup_object();

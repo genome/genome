@@ -87,12 +87,18 @@ sub link_result_to_build {
     my $self = shift;
     my $result = shift;
     $self->result($result);
-    $self->add_metrics_to_build;
+    $self->add_metrics_to_build($result);
     return $self->SUPER::link_result_to_build($result, "verifyBamId", "verify_bam_id");
 }
 
 sub add_metrics_to_build {
     my $self = shift;
+    my $result = shift;
+
+    for my $metric (qw(freemix chipmix)) {
+        $self->build->set_metric($metric."-".$self->mode, $result->$metric);
+    }
+
     return 1;
 }
 
