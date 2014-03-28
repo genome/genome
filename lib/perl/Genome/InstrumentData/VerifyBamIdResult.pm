@@ -8,8 +8,8 @@ use Sys::Hostname;
 class Genome::InstrumentData::VerifyBamIdResult {
     is => 'Genome::SoftwareResult::Stageable',
     has_input => [
-        aligned_bam_result_id => {
-            is => 'Text',
+        aligned_bam_result => {
+            is => 'Genome::InstrumentData::AlignedBamResult',
         },
         on_target_list => {
             is => "Genome::FeatureList",
@@ -98,9 +98,8 @@ sub _run_verify_bam_id {
 
 sub _resolve_bam_file {
     my $self = shift;
-    my $bam_result = Genome::InstrumentData::AlignedBamResult->get($self->aligned_bam_result_id);
+    my $bam_result = $self->aligned_bam_result;
 
-    $self->_error("Could not find alignment result for id ".$self->aligned_bam_result_id) unless $bam_result;
     my $path = $bam_result->bam_path;
     unless (-s $path) {
         $self->_error("Could not get bam file for ".$bam_result->id);

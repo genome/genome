@@ -72,7 +72,7 @@ sub params_for_result {
         sample => $self->sample_for_mode,
         known_sites_build => $self->build->previously_discovered_variations_build,
         genotype_filters => ["chromosome:exclude=".$self->build->previously_discovered_variations_build->reference->allosome_names],
-        aligned_bam_result_id => $self->alignment_result_for_mode->id,
+        aligned_bam_result => $self->alignment_result_for_mode,
         max_depth => 1000,
         precise => 1,
         version => $self->build->model->verify_bam_id_version,
