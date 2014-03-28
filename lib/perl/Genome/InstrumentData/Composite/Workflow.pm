@@ -773,7 +773,7 @@ sub _generate_refinement_operation {
 
     unless ($_generate_refinement_operation_tmpl) {
         $_generate_refinement_operation_tmpl = UR::BoolExpr::Template->resolve('Workflow::Operation', 'id','name','workflow_operationtype_id')->get_normalized_template_equivalent();
-        $_refinealignments_command_id = Workflow::OperationType::Command->get('Genome::InstrumentData::Command::RefineAlignments')->id;
+        $_refinealignments_command_id = Workflow::OperationType::Command->get('Genome::InstrumentData::Command::RefineReads')->id;
     }
 
     my $operation = Workflow::Operation->create(
