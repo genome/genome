@@ -40,7 +40,11 @@ class Genome::InstrumentData::Composite::Workflow {
         log_directory => {
             is => 'Text',
             doc => 'Where to write the workflow logs',
-        }
+        },
+        refiners => {
+            is => 'ArrayRef',
+            doc => 'the refiner strategiers used in the workflow',
+        },
     ],
 };
 
@@ -521,7 +525,18 @@ sub _merge_workflow_input_properties {
 sub _refinement_workflow_input_properties {
     my $self = shift;
 
-    return qw(refiner_name refiner_version refiner_params refiner_known_sites_ids);
+    my @refiners = @{$self->refiners};
+
+    my @base_names = qw(refiner_name refiner_version refiner_params refiner_known_sites_ids);
+
+    my @input_properties;
+    for my $refiner (@refiners) {
+        for my $base_name (@base_names) {
+            push @input_properties, join("_", $base_name, $refiner);
+        }
+    }
+
+    return @input_properties;
 }
 
 sub _index_workflow_input_properties {
@@ -685,6 +700,8 @@ sub _generate_refinement_operations {
     my %refinement_operations;
     my @inputs;
 
+    my @refiners;
+
     if(exists $tree->{then}) {
         my $merge_tree = $tree->{then};
         my $next_op = $merge_tree;
@@ -692,28 +709,44 @@ sub _generate_refinement_operations {
             $next_op = $next_op->{then};
 
             if($next_op->{type} eq 'refine') {
+                my $refiner = $next_op->{name};
+                if (grep { $_ eq $refiner } @refiners) {
+                    die $self->error_message("Refiner $refiner is used more than once");
+                }
+                push @refiners, $refiner;
                 push @inputs, (
-                    m_refiner_name => $next_op->{name},
-                    m_refiner_params => $next_op->{params},
-                    m_refiner_version => $next_op->{version},
-                    m_refiner_known_sites_ids => [ map { $_->id } @{($self->inputs)->{$next_op->{known_sites}}} ],
+                    'm_refiner_name_' . $refiner => $next_op->{name},
+                    'm_refiner_params_' . $refiner => $next_op->{params},
+                    'm_refiner_version_' . $refiner => $next_op->{version},
+                    'm_refiner_known_sites_ids_' . $refiner => [ map { $_->id } @{($self->inputs)->{$next_op->{known_sites}}} ],
                 );
                 if($self->merge_group eq 'all') {
                     #this case is a simplification for efficiency
-                    $refinement_operations{all} = $self->_generate_refinement_operation($merge_tree, 'all');
+                    my $key = $self->refiner_key("all", $refiner);
+                    $refinement_operations{$key} = $self->_generate_refinement_operation($merge_tree, $key);
                 } else {
                     my %groups;
                     for my $o (@$alignment_objects) {
                         $groups{ $self->_merge_group_for_alignment_object($o) }++;
                     }
 
-                    %refinement_operations = map (($_ => $self->_generate_refinement_operation($merge_tree, $_)), sort keys %groups);
+                    for my $group (sort keys %groups) {
+                        my $key = $self->refiner_key($group, $refiner);
+                        $refinement_operations{$key} = $self->_generate_refinement_operation($merge_tree, $key);
+                    }
                 }
             }
         }
     }
 
+    $self->refiners(\@refiners);
+
     return (\%refinement_operations, \@inputs);
+}
+
+sub refiner_key {
+    my ($self, $group, $refiner_name) = @_;
+    return join ("_", $group, $refiner_name);
 }
 
 sub _merge_group_for_alignment_object {
@@ -769,7 +802,7 @@ my $_generate_refinement_operation_tmpl;
 sub _generate_refinement_operation {
     my $self = shift;
     my $merge_tree = shift;
-    my $grouping = shift;
+    my $refiner = shift;
 
     unless ($_generate_refinement_operation_tmpl) {
         $_generate_refinement_operation_tmpl = UR::BoolExpr::Template->resolve('Workflow::Operation', 'id','name','workflow_operationtype_id')->get_normalized_template_equivalent();
@@ -779,12 +812,9 @@ sub _generate_refinement_operation {
     my $operation = Workflow::Operation->create(
         $_generate_refinement_operation_tmpl->get_rule_for_values(
                 UR::Object::Type->autogenerate_new_object_id_urinternal(),
-                'refine_' . $grouping,
+                'refine_' . $refiner,
                 $_refinealignments_command_id
         )
-
-        #name => 'merge_' . $grouping,
-        #operation_type => $_mergealignments_command_id
     );
 
     return $operation;
@@ -891,7 +921,8 @@ sub _inputs_and_outputs_for_master_workflow {
     }
 
     if(%$refinement_operations) {
-        for my $prop ($self->_refinement_workflow_input_properties) {
+        my @refiners;
+        for my $prop ($self->_refinement_workflow_input_properties()) {
             $input_properties{$prop}++;
         }
 
@@ -1043,11 +1074,20 @@ sub _wire_refinement_operation_to_master_workflow {
     $refinement->workflow_model($master_workflow);
 
     for my $property ($self->_refinement_workflow_input_properties) {
+        my $left_property = "m_$property";
+
+        # FIXME this is really dumb.
+        # Remove the _refiner-name from the end
+        my $right_property = $property;
+        my $refiners = $self->refiners;
+        for my $refiner (@$refiners) {
+            $right_property =~ s/_$refiner//;
+        }
         $self->_add_link_to_workflow($master_workflow,
             left_workflow_operation_id => $master_input_connector->id,
-            left_property => 'm_' . $property,
+            left_property => $left_property,
             right_workflow_operation_id => $refinement->id,
-            right_property => $property,
+            right_property => $right_property,
         );
     }
 
@@ -1068,14 +1108,18 @@ sub _wire_merge_to_refinement_operations {
     my $master_workflow = shift;
     my $merge_operations = shift;
     my $refinement_operations = shift;
+    my $refiner_names = $self->refiners;
 
-    for my $key (keys %$merge_operations ) {
-        $self->_add_link_to_workflow($master_workflow,
-            left_workflow_operation_id => $merge_operations->{$key}->id,
-            left_property => 'result_id',
-            right_workflow_operation_id => $refinement_operations->{$key}->id,
-            right_property => 'input_result_id',
-        );
+    for my $group_key (keys %$merge_operations ) {
+        for my $refiner_name (@$refiner_names) {
+            my $refiner_key = $self->refiner_key($group_key, $refiner_name);
+            $self->_add_link_to_workflow($master_workflow,
+                left_workflow_operation_id => $merge_operations->{$group_key}->id,
+                left_property => 'result_id',
+                right_workflow_operation_id => $refinement_operations->{$refiner_key}->id,
+                right_property => 'input_result_id',
+            );
+        }
     }
 
     return 1;
