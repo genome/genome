@@ -42,7 +42,7 @@
 	url = ssh://apipe-review.gsc.wustl.edu:29418/UR
 [submodule "workflow"]
 	path = workflow
-	url = https://github.com/nnutter/tgi-workflow.git
+	url = https://github.com/genome/tgi-workflow.git
 [submodule "jenkins"]
 	path = jenkins
 	url = https://github.com/genome/wugc-hudson.git
