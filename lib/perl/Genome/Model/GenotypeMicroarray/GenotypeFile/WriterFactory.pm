@@ -27,7 +27,7 @@ sub build_writer {
         return;
     }
 
-    my $writer_params = $class->_parse_params_string($string);
+    my $writer_params = $class->parse_params_string($string);
     return if not $writer_params;
 
     $writer_params->{header} = $header;
@@ -40,7 +40,7 @@ sub build_writer {
     return $writer;
 }
 
-sub _parse_params_string {
+sub parse_params_string {
     my ($class, $string) = @_;
 
     my @writer_config_tokens = split(':', $string);

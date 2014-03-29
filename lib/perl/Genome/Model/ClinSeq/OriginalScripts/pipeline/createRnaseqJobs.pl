@@ -314,14 +314,14 @@ foreach my $sample (@final_samples){
 
   #Example commands to be created
   #genome model define rna-seq  --processing-profile='Human GRCh37/Ensembl 58_37c_v2 - TopHat v1.4.0 - Cufflinks v1.3.0 - Picard v1.52 - Mask rRNA_MT - FAR Trim SPIA Allow Ns Min 25bp - reference only'  --reference-sequence-build=106942997  --subject='H_JG-3631-S.10804'  --model-name='LUC4 - PP2694793 - cDNA capture'
-  #genome model instrument-data assign --model=''  --all
+  #genome model instrument-data assign all-compatible --model=''
   #genome model build start ''
 
 
   $output{$s}{sort_name} = $sort_name;
   $output{$s}{header} = "\n#Common_name = $common_name, Individual_name = $individual_name, Sample_name = $sample_name, Sample_common_name = $sample_common_name, Cell_type = $cell_type, Tissue_desc = $tissue_desc";
   $output{$s}{clinseq_cmd} = "\ngenome model define rna-seq  --processing-profile='$pp_id'  --reference-sequence-build='$reference_sequence_build_id'  --annotation-build='$annotation_build'  --subject='$sample_name'  --model-name='$model_name'";
-  $output{$s}{id_cmd} = "\ngenome model instrument-data assign --model='$model_name'  --all";
+  $output{$s}{id_cmd} = "\ngenome model instrument-data assign all-compatible --model='$model_name'";
   $output{$s}{build_cmd} = "\ngenome model build start '$model_name'\n";
 }
 

@@ -393,7 +393,7 @@ sub _execute_build {
                 $self->debug_message("Instrument data " . $instrument_data->__display_name__ . " is already assigned to the screening model");
             }
             else {
-                my $cmd = 'genome model instrument-data assign --model-id '.$screen_model->id.' --instrument-data-id '.$instrument_data->id;
+                my $cmd = 'genome model instrument-data assign expression --model '.$screen_model->id.' --instrument-data '.$instrument_data->id;
                 if ($assignment->filter_desc){
                     $cmd.=' --filter '.$assignment->filter_desc;
                 }
@@ -483,7 +483,7 @@ sub _execute_build {
                     $self->debug_message("Instrument data " . $instrument_data->__display_name__ . " is already assigned to model " . $metagenomic_model->__display_name__);
                 }
                 else {
-                    my $cmd = 'genome model instrument-data assign --model-id '.$metagenomic_model->id.' --instrument-data-id '.$instrument_data->id;
+                    my $cmd = 'genome model instrument-data assign expression --model '.$metagenomic_model->id.' --instrument-data '.$instrument_data->id;
                     if ($filter_desc){
                         $cmd.=' --filter '.$filter_desc;
                     }

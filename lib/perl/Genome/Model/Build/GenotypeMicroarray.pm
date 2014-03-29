@@ -8,30 +8,6 @@ use Genome;
 class Genome::Model::Build::GenotypeMicroarray {
     is => 'Genome::Model::Build',
     has => [
-       reference_sequence_build_id => {
-            is => 'Text',
-            via => 'inputs',
-            to => 'value_id',
-            where => [ name => 'reference_sequence_build', value_class_name => 'Genome::Model::Build::ImportedReferenceSequence' ],
-            is_many => 0,
-            is_mutable => 1, # TODO: make this non-optional once backfilling is complete and reference placeholder is deleted
-            is_optional => 1,
-            doc => 'reference sequence to align against'
-        },
-        reference_sequence_build => {
-            is => 'Genome::Model::Build::ImportedReferenceSequence',
-            id_by => 'reference_sequence_build_id',
-        },
-        refseq_name => { 
-            is => 'Text',
-            via => 'reference_sequence_build',
-            to => 'name',
-        },
-        refseq_version => { 
-            is => 'Text',
-            via => 'reference_sequence_build',
-            to => 'version',
-        },
         dbsnp_build_id => {
             is => 'Text',
             via => 'inputs',
@@ -51,6 +27,26 @@ class Genome::Model::Build::GenotypeMicroarray {
             via => 'dbsnp_build',
             to => 'version',
         },
+        reference_sequence_build => {
+            is => 'Genome::Model::Build::ImportedReferenceSequence',
+            via => 'dbsnp_build', 
+            to => 'reference'
+        },
+        reference_sequence_build_id => {
+            is => 'Text',
+            via => 'reference_sequence_build',
+            to => 'id',
+        },
+        refseq_name => { 
+            is => 'Text',
+            via => 'reference_sequence_build',
+            to => 'name',
+       },
+       refseq_version => { 
+           is => 'Text',
+            via => 'reference_sequence_build',
+            to => 'version',
+        },
     ],
 };
 
@@ -59,46 +55,14 @@ sub validate_for_start_methods {
             validate_inputs_have_values
             inputs_have_compatible_reference
             instrument_data_assigned
-            validate_has_reference_alignment
             validate_dbsnp_build
     /);
-}
-
-sub validate_has_reference_alignment {
-    my $self = shift;
-    my @tags;
-    my $reference_sequence_build = $self->model->reference_sequence_build;
-    unless ($reference_sequence_build) {
-        push @tags, UR::Object::Tag->create(
-            type => 'error',
-            properties => ['reference_sequence_build'],
-            desc => 'no reference_sequence_build specified for build',
-        );
-    }
-    return @tags;
-
 }
 
 sub validate_dbsnp_build {
     my $self = shift;
 
-    # FIXME do not use default! set in CQID from AP!
     my $variation_list_build = $self->dbsnp_build;
-    if ( not $variation_list_build ) {
-        $variation_list_build = Genome::Model::ImportedVariationList->dbsnp_build_for_reference($self->reference_sequence_build);
-        if ( not $variation_list_build ) {
-            return UR::Object::Tag->create(
-                type => 'error',
-                properties => ['dbsnp_build'],
-                desc => 'No DB Snp build specified for build!',
-            );
-        }
-        $self->dbsnp_build($variation_list_build);
-        $self->model->dbsnp_build($variation_list_build);
-    }
-
-    # This is the real logic to check dbsnp [varition list] build 
-    #my $variation_list_build = $build->dbsnp_build;
     if ( not $variation_list_build ) {
         return UR::Object::Tag->create(
             type => 'error',
@@ -107,12 +71,22 @@ sub validate_dbsnp_build {
         );
     }
 
+    # Need SNVs VCF
     my $snvs_vcf = $variation_list_build->snvs_vcf;
     if ( not defined $snvs_vcf or not -s $snvs_vcf ) {
         return UR::Object::Tag->create(
             type => 'error',
             properties => ['dbsnp_build'],
             desc => 'DB Snp build ('.$variation_list_build->__display_name__.') does not have a SNVS VCF!',
+        );
+    }
+
+    # Make sure dbsnp has reference
+    if ( not $variation_list_build->reference ) {
+        return UR::Object::Tag->create(
+            type => 'error',
+            properties => ['reference_sequence_build'],
+            desc => 'DB Snp build does not have a reference sequence build!',
         );
     }
 

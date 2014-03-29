@@ -20,6 +20,7 @@ class Genome::Model::SomaticVariation::Command::CreateReport {
         somatic_variation_build => {
             is => 'Genome::Model::Build::SomaticVariation',
             doc => 'Somactic Variation build',
+            is_output => 1,
         },
     ],
     has_optional_input => [

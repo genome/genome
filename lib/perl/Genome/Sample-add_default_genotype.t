@@ -11,6 +11,7 @@ use above "Genome";
 
 use_ok('Genome::Sample') or die;
 use_ok('Genome::Model::GenotypeMicroarray') or die;
+use_ok('Genome::Model::GenotypeMicroarray::Test') or die;
 use_ok('Genome::Model::ReferenceAlignment') or die;
 use_ok('Genome::InstrumentData::Imported') or die;
 
@@ -25,7 +26,7 @@ ok($genotype_data, 'Made test genotype data');
 isa_ok($genotype_data, 'Genome::InstrumentData::Imported');
 
 # Create ref seq build, used to make genotype model and ref align model
-my $ref_seq_build = create_ref_seq_build($sample->taxon);
+my $ref_seq_build = Genome::Model::GenotypeMicroarray::Test->reference_sequence_build;
 ok($ref_seq_build, 'Made test ref seq build');
 
 # Create test genotype model
@@ -157,7 +158,7 @@ sub create_genotype_model {
     return unless $pp;
 
     my $model = Genome::Model::GenotypeMicroarray->create(
-        reference_sequence_build_id => $ref_seq_build->id,
+        dbsnp_build => Genome::Model::GenotypeMicroarray::Test->variation_list_build,
         processing_profile_id => $pp->id,
         name => 'test genotype model',
         subject_id => $sample->id,

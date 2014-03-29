@@ -166,6 +166,20 @@ sub set_status_from_log_file {
     my ($error_log) = @_;
 
     my ($error_source_file, $error_source_line, $error_host, $error_date, $error_text) = parse_error_log($error_log);
+    unless($error_source_file || $error_source_line || $error_host || $error_date || $error_text) {
+        my $output_log = $error_log;
+        $output_log =~ s/\.err$/.out/;
+
+        if(-e $output_log and -s _) {
+            #Look for LSF errors
+            ($error_source_file, $error_source_line, $error_host, $error_date, $error_text) = parse_output_log($output_log);
+            if($error_text) {
+                $error_log = $output_log; #only prefer .out files if we got a result
+            }
+        }
+    }
+
+
     $self->error_log($error_log);
 
     $self->error_source_file($error_source_file) if $error_source_file;
@@ -195,6 +209,30 @@ sub parse_error_log {
         } elsif ($date_removed_text =~ m/(ERROR.*)/) {
             $error_text = $1;
         }
+    }
+
+    return ($error_source_file, $error_source_line, $error_host, $error_date, $error_text);
+}
+
+sub parse_output_log {
+    my $filename = shift;
+
+    my ($error_source_file, $error_source_line, $error_host, $error_date, $error_text);
+    my $file_text = Genome::Sys->read_file($filename);
+
+    if($file_text =~ /(TERM_\w+:.+$)/m) {
+        $error_text = $1;
+
+        if($file_text =~ /Results reported at (.*)$/m) {
+            $error_date = $1;
+        }
+
+        if($file_text =~ /Job was executed on host\(s\) <([^>]+)>/) {
+            $error_host = $1;
+        }
+
+        $error_source_file = 'n/a';
+        $error_source_line = 'n/a';
     }
 
     return ($error_source_file, $error_source_line, $error_host, $error_date, $error_text);
@@ -251,14 +289,22 @@ sub failed_workflow_steps {
     my $failed_steps = [];
     workflow_visitor($workflow, $failed_steps);
 
-    return sort {step_time($a) cmp step_time($b)} @$failed_steps;
+    return sort {
+        normalize_parent_id($a->parent_instance_id) <=> normalize_parent_id($b->parent_instance_id) ||
+        step_time($a) cmp step_time($b)
+    } @$failed_steps;
 }
 
 sub step_time {
     my $step = shift;
     return $step->end_time if $step->end_time;
-    return $step->start_time if $step->start_time;
+    return 's' . $step->start_time if $step->start_time;
     return 'Unknown';
+}
+
+sub normalize_parent_id {
+    my $parent_id = shift;
+    return $parent_id ? -1 : 1;
 }
 
 sub workflow_visitor {

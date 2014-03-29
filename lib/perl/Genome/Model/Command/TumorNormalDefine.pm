@@ -93,6 +93,18 @@ EOS
 sub execute {
     my $self = shift;
 
+    my $model_group = Genome::ModelGroup->create(
+        name => $self->model_group_name,
+    );
+
+    unless ($model_group) {
+        $self->error_message('Failed to create model group for name: '.
+            $self->model_group_name);
+        return;
+    }
+    $self->status_message('Created model group:');
+    $self->status_message('ID: ' . $model_group->id . ', NAME: ' . $model_group->name);
+
     my @reference_alignment_models = $self->reference_alignment_models;
     $self->status_message("Found %d Reference Alignment Models.",
         scalar(@reference_alignment_models));
@@ -117,10 +129,11 @@ sub execute {
         push @new_models, $new_model;
     }
 
-    Genome::ModelGroup::Command::Create->execute(
-        models => \@new_models,
-        name => $self->model_group_name,
+    $self->status_message('Assigning %d to group (%s).',
+        scalar(@new_models),
+        $model_group->name,
     );
+    $model_group->assign_models(@new_models);
 
     return 1;
 }

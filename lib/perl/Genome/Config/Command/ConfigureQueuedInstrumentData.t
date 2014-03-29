@@ -9,6 +9,7 @@ use above "Genome";
 use Carp::Always;
 
 use Genome::Test::Factory::InstrumentData::Solexa;
+use Genome::Test::Factory::InstrumentData::Imported;
 use Genome::Test::Factory::AnalysisProject;
 use Genome::Test::Factory::Individual;
 use Genome::Test::Factory::Library;
@@ -39,7 +40,7 @@ $config_hash->{auto_assign_inst_data} = 1;
 my $rna_model = Genome::Model::RnaSeq->create(%{$config_hash});
 build_and_run_cmd($rna_instrument_data);
 assert_succeeded($rna_instrument_data, $model_types);
-is($rna_model->instrument_data->id, $rna_instrument_data->id, 'it assigned the instrument data to the existing model');
+is_deeply([$rna_model->instrument_data], [], 'it does not assign the instrument data to an existing model outside the analysis project');
 
 #existing model without auto assign inst data set
 ($rna_instrument_data, $model_types) = generate_rna_seq_instrument_data();
@@ -117,6 +118,17 @@ ok($cmd->status_message =~ /Found no items to process/, 'no analysis project is 
 $rna_instrument_data->ignored(1);
 build_and_run_cmd($rna_instrument_data);
 assert_skipped($rna_instrument_data);
+
+#lane_qc and genotype handling
+my ($sans_data, $plus_data, $model_types) = _generate_lane_qc_instrument_data();
+build_and_run_cmd($sans_data, $plus_data);
+assert_succeeded($plus_data, $model_types);
+my ($plus_model) = $plus_data->models;
+ok($plus_model->build_requested, 'Lane QC model with genotype data has build requested');
+ok($plus_model->genotype_microarray, 'Lane QC model with genotype data has genotype_microarray model');
+my ($sans_model) = $sans_data->models;
+ok(!$sans_model->build_requested, 'Lane QC model without genotype data does not have build requested');
+ok(!$sans_model->genotype_microarray, 'Lane QC model without genotype data does not have genotype_microarray model');
 
 done_testing();
 
@@ -272,5 +284,87 @@ sub _som_val_config_hash {
         annotation_build_id         => 124434505,
         reference_sequence_build_id => 106942997,
         user_name                   => 'apipe-builder',
+    };
+}
+
+sub _generate_lane_qc_instrument_data {
+    my $genotype_sample = Genome::Test::Factory::Sample->setup_object();
+
+    my $genotype_library => Genome::Test::Factory::Library->setup_object(
+        sample_id => $genotype_sample, 
+    );
+
+    my $genotype_data = Genome::Test::Factory::InstrumentData::Imported->setup_object(
+        library => $genotype_library,
+    );
+
+    #Lane QC stuff sans genotype data
+    my $sans_sample = Genome::Test::Factory::Sample->setup_object();
+
+    my $sans_library = Genome::Test::Factory::Library->setup_object(
+        sample_id => $sans_sample, 
+    );
+
+    my $sans_data = Genome::Test::Factory::InstrumentData::Solexa->setup_object(
+        library => $sans_library,
+        run_name => 'sans',
+        subset_name => 3,
+    );
+
+    #Lane QC stuff plus genotype data
+    my $plus_sample = Genome::Test::Factory::Sample->setup_object(
+        extraction_type => 'genomic_dna',
+        default_genotype_data_id => , $genotype_data->id,
+    );
+
+    my $plus_library = Genome::Test::Factory::Library->setup_object(
+        sample_id => $plus_sample, 
+    );
+
+    my $plus_data = Genome::Test::Factory::InstrumentData::Solexa->setup_object(
+        library => $plus_library,
+        run_name => 'plus',
+        subset_name => 2,
+    );
+
+    my $genotype_microarray_model = Genome::Model::GenotypeMicroarray->create(
+        processing_profile_id => '2166945',
+        dbsnp_build_id => 127786607,
+        subject => $genotype_sample,
+        instrument_data => [$genotype_data],
+    );
+
+    my $tmp_dir = Genome::Sys->create_temp_directory;
+    my $gmb = Genome::Model::Build->create(model_id => $genotype_microarray_model->id, data_directory => $tmp_dir);
+    $gmb->success();
+
+
+    for my $inst_data ($sans_data, $plus_data) {
+        my $ap = Genome::Test::Factory::AnalysisProject->setup_object(
+            config_hash => {
+                'Genome::Model::ReferenceAlignment' => _ref_align_config_hash()
+            }
+        );
+
+        Genome::Config::AnalysisProject::InstrumentDataBridge->create(
+            instrument_data => $inst_data,
+            analysis_project => $ap,
+        );
+    }
+
+    return ($sans_data, $plus_data, ['Genome::Model::ReferenceAlignment']); 
+}
+
+
+sub _ref_align_config_hash {
+    return {
+        processing_profile_id => '2653572',
+        reference_sequence_build_id => '106942997',
+        user_name                   => 'apipe-builder',
+        auto_assign_inst_data => 0,
+        instrument_data_properties  => {
+            subject => 'sample',
+            instrument_data => ['__self__'],
+        }
     };
 }

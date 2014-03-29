@@ -38,6 +38,7 @@ subtest "basic_parse" => sub {
     ok($header, "Parsed header");
 
     is($header->fileformat, "VCFv4.1", "fileformat");
+    is($header->num_samples, 3, "got 3 samples");
     is(scalar $header->sample_names, 3, "got 3 samples");
     is_deeply([$header->sample_names], ["S1", "S2", "S3"], "Sample names parsed");
 

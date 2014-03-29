@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::Library {
-    is => [ "Genome::Notable", "Genome::Searchable" ],
+    is => [ "Genome::Notable", "Genome::Searchable", "Genome::Utility::ObjectWithLockedConstruction" ],
     table_name => 'instrument.fragment_library',
     id_generator => '-uuid',
     id_by => [
@@ -129,6 +129,12 @@ sub delete {
 sub is_bisulfite_converted {
     my $self = shift;
     return $self->bisulfite_conversion ? 1 : 0;
+}
+
+sub lock_id {
+    my $class = shift;
+    my %args = @_;
+    return $args{name};
 }
 
 1;

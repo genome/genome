@@ -9,7 +9,7 @@ use Log::Dispatch::Screen qw();
 use Memoize qw(memoize);
 use Module::Runtime qw(module_notional_filename use_package_optimistically);
 
-memoize('logger');
+memoize('logger', LIST_CACHE => 'MERGE');
 sub logger {
     assert_class_method(shift);
 
@@ -74,6 +74,22 @@ sub color_screen {
             },
         },
     );
+}
+
+my @levels = keys %Log::Dispatch::LEVELS;
+for my $level (@levels) {
+    my $name = join('::', __PACKAGE__, $level);
+    my $namef = $name . 'f';
+    no strict 'refs';
+    *{$name} = sub {
+        my $class = shift;
+        return $class->logger->$level(@_);
+    };
+    *{$namef} = sub {
+        my $class = shift;
+        # sprintf inspects argument number
+        return $class->logger->$level(sprintf(shift, @_));
+    };
 }
 
 sub screen {

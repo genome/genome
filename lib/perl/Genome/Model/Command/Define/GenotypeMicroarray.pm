@@ -9,15 +9,15 @@ use Carp;
 class Genome::Model::Command::Define::GenotypeMicroarray {
     is => 'Genome::Model::Command::Define::HelperDeprecated',
     has => [
-        reference => {
-            is => 'Genome::Model::Build::ImportedReferenceSequence',
-            id_by => 'reference_id',
-            doc => 'reference sequence build for this model',
+        variation_list_build => {
+            is => 'Genome::Model::Build::ImportedVariationList',
+            id_by => 'variation_list_build_id',
+            doc => 'Variation list [DBSNP] build for this model.',
         },
-        reference_id => {
+        variation_list_build_id => {
             is => 'Text',
             is_input => 1,
-            doc => 'id of reference build',
+            doc => 'Variation list [DBSNP] build ID for this model.',
         },
     ],
 };
@@ -27,7 +27,7 @@ sub help_synopsis {
 genome model define genotype-microarray 
   --subject-name SAMPLE_NAME 
   --processing-profile-name PROCESSING_PROFILE_NAME 
-  --reference GRCh37-lite-build37
+  --variation-list-build GRCh37-lite-build37
 EOS
 }
 
@@ -37,7 +37,7 @@ sub help_detail {
 
 sub type_specific_parameters_for_create {
     my $self = shift;
-    return ($self->SUPER::type_specific_parameters_for_create, reference_sequence_build => $self->reference);
+    return ($self->SUPER::type_specific_parameters_for_create, dbsnp_build => $self->variation_list_build);
 }
 
 sub execute {

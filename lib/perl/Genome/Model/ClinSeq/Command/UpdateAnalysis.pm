@@ -926,7 +926,7 @@ sub check_for_missing_and_excluded_data{
       $self->status_message("\tName: $model_name ($model_id)");  
       $self->status_message("\tWARNING -> Model: $model_id appears to be missing the following instrument data: $id_string");
       $self->status_message("\tYou should consider performing the following update before proceeding:");
-      $self->status_message("\tgenome model instrument-data assign --instrument-data='$id_string'  --model=$model_id\n\t\t\tgenome model build start $model_id");
+      $self->status_message("\tgenome model instrument-data assign expression --instrument-data='$id_string'  --model=$model_id\n\t\t\tgenome model build start $model_id");
     }
   }
 

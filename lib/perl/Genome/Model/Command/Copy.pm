@@ -217,7 +217,7 @@ sub execute {
     my $copied_model_pairs = $self->copied_model_pairs_as_hash();
 
     if ($self->recurse or %indirect_overrides) {
-        my @input_assoc = $new_model->input_associations();
+        my @input_assoc = $new_model->inputs();
         my $n = 0;
         for my $assoc (@input_assoc) {
             my $input_name = $assoc->name;

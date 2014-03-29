@@ -2,6 +2,9 @@ package Genome::Site::TGI;
 use strict;
 use warnings;
 
+# do this first so we get usage metrics even if something crashes below
+use Genome::Site::TGI::UsageLog;
+
 BEGIN {
     my @shell_vars = qw(
         GENOME_DB
@@ -114,13 +117,6 @@ BEGIN { $INC{ "UR/Time.pm"} = "no" };
 
 # a unique ID for each program execution.  Used got logging saves to the database
 $ENV{GENOME_EXECUTION_ID} = UR::Object::Type->autogenerate_new_object_id_uuid();
-
-# If running either the genome or gmt command, log the arguments, user,
-# host, etc in a log file
-if ($0 =~ /(?:gmt|genome)(?:5\.12\.1)?$/ and not `grep log_command $0`) {
-    require Genome::Site::TGI::Security;
-    Genome::Site::TGI::Security::log_command(@ARGV);
-}
 
 # this keeps available parts of the UR pre-0.01 API we still use
 use UR::ObjectV001removed;

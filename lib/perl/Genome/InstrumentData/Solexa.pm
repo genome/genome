@@ -6,7 +6,6 @@ use warnings;
 use Genome;
 use File::Basename;
 
-
 class Genome::InstrumentData::Solexa {
     is => ['Genome::InstrumentData', 'Genome::Searchable'],
     has_constant => [
@@ -1311,9 +1310,12 @@ sub get_default_alignment_metrics { #means BWA
 sub get_default_alignment_results {
     my $self = shift;
 
+    my @alignment_results = $self->alignment_results_from_analysis_projects;
+    return @alignment_results if @alignment_results;
+
     # Get alignment results for this inst data and the default aligner name, newest first
     my $pp = Genome::ProcessingProfile::ReferenceAlignment->default_profile;
-    my @alignment_results = sort {$b->best_guess_date cmp $a->best_guess_date} Genome::InstrumentData::AlignmentResult->get(
+    @alignment_results = sort {$b->best_guess_date cmp $a->best_guess_date} Genome::InstrumentData::AlignmentResult->get(
         instrument_data_id => $self->id,
         aligner_name       => $pp->read_aligner_name,
     );

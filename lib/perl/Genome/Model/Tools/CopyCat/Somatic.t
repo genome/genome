@@ -41,7 +41,7 @@ my $cmd = Genome::Model::Tools::CopyCat::Somatic->create(
     per_read_length => 1,
     normal_samtools_file => $normal_samtools_file,
     tumor_samtools_file => $tumor_samtools_file,
-    samtools_file_format => "mpileup",
+    samtools_file_format => "unknown",
     reference_build_id => $reference_build_id,
     annotation_version => $version,
 );

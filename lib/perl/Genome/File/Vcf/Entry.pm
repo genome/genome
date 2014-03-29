@@ -577,7 +577,7 @@ params:
 
 sub sample_field {
     my ($self, $sample_idx, $field_name) = @_;
-    my $n_samples = scalar $self->{header}->sample_names;
+    my $n_samples = $self->{header}->num_samples;
     confess "Invalid sample index $sample_idx (have $n_samples samples): "
         unless ($sample_idx >= 0 && $sample_idx <= $n_samples);
 
@@ -623,7 +623,7 @@ sub set_sample_field {
     my ($self, $sample_idx, $field_name, $value) = @_;
 
     my $sample_data = $self->sample_data;
-    my $n_samples = scalar $self->{header}->sample_names;
+    my $n_samples = $self->{header}->num_samples;
     confess "Invalid sample index $sample_idx (have $n_samples samples): "
         unless ($sample_idx >= 0 && $sample_idx <= $n_samples);
 

@@ -54,6 +54,10 @@ class Genome::File::Vcf::Header {
             doc => 'The sample names found in the vcf header',
             is_many => 1,
         },
+        _num_sample_names => {
+            is => 'Integer',
+            doc => 'Number of samples in vcf header',
+        },
         fileformat => {
             is => 'Text',
             doc => 'The vcf spec version for this header/file',
@@ -111,6 +115,14 @@ sub to_string {
         );
     return join("\n", @lines);
 }
+
+sub num_samples {
+    my $self = shift;
+    unless (defined $self->_num_sample_names) {
+        $self->_num_sample_names(scalar $self->sample_names);
+    }
+    return $self->_num_sample_names;
+};
 
 sub _header_line {
     my $self = shift;

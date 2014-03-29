@@ -146,7 +146,8 @@ sub archive {
         Genome::Timeline::Event::Allocation->archived(
             'archived',
             $allocation_object,
-        )
+        );
+        $allocation_object->status('archived');
     }
 
     # Never make filesystem changes if no commit is enabled

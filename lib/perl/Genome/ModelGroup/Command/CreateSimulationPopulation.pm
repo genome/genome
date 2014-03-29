@@ -162,8 +162,7 @@ sub execute {
             $self->status_message("Model Creation Command Failure: $@");
             $self->cleanup_cruft($sample_name, $import_cmd->import_allocation_id);
         }
-        $DB::single=1;
-        my $id_cmd = Genome::Model::Command::InstrumentData::Assign->create(
+        my $id_cmd = Genome::Model::Command::InstrumentData::Assign::Expression->create(
             model=>$model,
             instrument_data=>[$import_cmd->_inst_data],
         );

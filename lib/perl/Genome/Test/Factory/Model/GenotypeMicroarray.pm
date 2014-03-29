@@ -7,11 +7,11 @@ use warnings;
 
 use Genome;
 use Genome::Test::Factory::ProcessingProfile::GenotypeMicroarray;
-use Genome::Test::Factory::Model::ReferenceSequence;
+use Genome::Test::Factory::Model::ImportedVariationList;
 use Genome::Test::Factory::Build;
 use Genome::Test::Factory::Sample;
 
-our @required_params = qw(reference_sequence_build subject_id);
+our @required_params = qw(dbsnp_build subject_id);
 
 sub generate_obj {
     my $self = shift;
@@ -25,8 +25,8 @@ sub create_processing_profile_id {
     return $p->id;
 }
 
-sub create_reference_sequence_build {
-    my $m = Genome::Test::Factory::Model::ReferenceSequence->setup_object;
+sub create_dbsnp_build {
+    my $m = Genome::Test::Factory::Model::ImportedVariationList->setup_object;
     my $b = Genome::Test::Factory::Build->setup_object(model_id => $m->id);
     return $b;
 }

@@ -106,7 +106,7 @@ sub execute {
                         $model->tumor_sample($new_sample);
 
                         for my $instdata (@has_instdata){
-                            my $assign = Genome::Model::Command::InstrumentData::Assign->create(
+                            my $assign = Genome::Model::Command::InstrumentData::Assign::Expression->create(
                                 instrument_data => [$instdata], 
                                 model => $model,
                                 );
@@ -152,7 +152,7 @@ sub execute {
                         my $new_sample = Genome::Sample->get($new_sample_id);
                         $model->normal_sample($new_sample);
                         for my $instdata (@has_instdata){
-                            my $assign = Genome::Model::Command::InstrumentData::Assign->create(
+                            my $assign = Genome::Model::Command::InstrumentData::Assign::Expression->create(
                                 instrument_data => [$instdata], 
                                 model => $model,
                                 );

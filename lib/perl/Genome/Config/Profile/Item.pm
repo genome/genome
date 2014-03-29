@@ -32,6 +32,11 @@ class Genome::Config::Profile::Item {
             is => 'Genome::Config::AnalysisProject',
             id_by => 'analysis_project_id',
         },
+        status => {
+            is => 'Text',
+            valid_values => [qw/ disabled active /],
+            is_optional => 1,
+        },
     ],
 };
 

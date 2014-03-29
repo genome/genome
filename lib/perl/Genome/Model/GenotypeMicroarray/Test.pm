@@ -6,7 +6,7 @@ use warnings;
 require File::Temp;
 
 sub testdir {
-    return $ENV{GENOME_TEST_INPUTS} . '/GenotypeMicroarray/v3';
+    return $ENV{GENOME_TEST_INPUTS} . '/GenotypeMicroarray/v4';
 }
 
 my %cache;
@@ -15,6 +15,7 @@ sub reference_sequence_build {
 
     $cache{reference_sequence_build} = Genome::Model::Build::ReferenceSequence->__define__(
         name => '__TEST_REF__',
+        version => '37',
     );
     die 'Failed to define reference sequence build' if not $cache{reference_sequence_build};
 
@@ -109,19 +110,27 @@ sub instrument_data {
     return $cache{instrument_data};
 }
 
+sub processing_profile {
+    return $cache{pp} if $cache{pp};
+
+    $cache{pp} = Genome::ProcessingProfile::GenotypeMicroarray->__define__(
+        name => '__TEST_PP__ wugc',
+    );
+
+    return $cache{pp};
+}
+
 sub model {
     return $cache{model} if $cache{model};
 
     my $instrument_data = instrument_data();
     my $sample = $instrument_data->sample;
-    my $pp = Genome::ProcessingProfile::GenotypeMicroarray->__define__(name => '__TEST_PP__');
     $cache{model} = Genome::Model::GenotypeMicroarray->create(
         name => 'Test Genotype Microarray pp',
-        processing_profile => $pp,
+        processing_profile => processing_profile(),
         subject => $sample,
         subject_id => $sample->id,
         subject_class_name => $sample->class,
-        reference_sequence_build => reference_sequence_build(),
         dbsnp_build => variation_list_build(),
     );
     $cache{model}->add_instrument_data($instrument_data);

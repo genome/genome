@@ -73,8 +73,8 @@ class Genome::Model::Tools::CopyCat::Somatic{
             is => 'String',
             is_optional => 1,
             is_input => 1,
-            doc =>'format of the samtools files. Options are "mpileup" and "vcf"',
-            default => "vcf",
+            doc =>'format of the samtools files. Options are "10colPileup" and "VCF". If anything else is specified, it will attempt to infer the type from the header of the file',
+            default => "unknown",
         },
         processors => {
             is => 'Integer',
@@ -85,7 +85,7 @@ class Genome::Model::Tools::CopyCat::Somatic{
         dump_bins => {
             is => 'Boolean',
             is_optional => 1,
-            default => 0,
+            default => 1,
             doc => "write out the corrected bins to a file (pre-segmentation)"
         },
         do_gc_correction => {
@@ -106,6 +106,12 @@ class Genome::Model::Tools::CopyCat::Somatic{
             default => 0.60,
             doc => "the minimum mapability needed to include a window",
         },
+        tumor_purity => {
+            is => 'Number',
+            is_optional => 1,
+            default => 1,
+            doc => "the estimated fraction of the tumor sample composed of tumor cells (as opposed to normal admixture)",
+        }
         ]
 };
 
@@ -133,6 +139,7 @@ sub execute {
     my $dump_bins = $self->dump_bins;
     my $min_width = $self->min_width;
     my $min_mapability = $self->min_mapability;
+    my $tumor_purity = $self->tumor_purity;
 
 
     #get annotation directory
@@ -219,6 +226,7 @@ sub execute {
     print $RFILE "                        dumpBins=$dump_bins,\n";
     print $RFILE "                        doGcCorrection=$gcCorr,\n";
     print $RFILE "                        samtoolsFileFormat=\"" . $self->samtools_file_format ."\",\n";
+    print $RFILE "                        purity=" . $tumor_purity .",\n";
     print $RFILE "                        normalSamtoolsFile=$normal_samtools_file,\n";
     print $RFILE "                        tumorSamtoolsFile=$tumor_samtools_file)\n";
 

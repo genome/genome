@@ -42,7 +42,7 @@
 	url = http://github.com/genome/UR.git 
 [submodule "workflow"]
 	path = workflow
-	url = http://github.com/genome/tgi-workflow.git
+	url = https://github.com/genome/tgi-workflow.git
 [submodule "jenkins"]
 	path = jenkins
 	url = https://github.com/genome/wugc-hudson.git

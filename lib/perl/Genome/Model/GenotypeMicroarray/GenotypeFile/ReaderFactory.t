@@ -24,14 +24,14 @@ my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->bui
     variation_list_build => $variation_list_build,
 );
 ok($reader, 'create reader');
-isa_ok($reader, 'Genome::Model::GenotypeMicroarray::GenotypeFile::ReadUnannotatedCsv');
+isa_ok($reader, 'Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderForInstDataWithAnnotation');
 
 # Reader for legacy build [use inst data tsv - needs annotation]
 $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->build_reader(
     source => Genome::Model::GenotypeMicroarray::Test->example_legacy_build,
 );
 ok($reader, 'create reader');
-isa_ok($reader, 'Genome::Model::GenotypeMicroarray::GenotypeFile::ReadUnannotatedCsv');
+isa_ok($reader, 'Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderForInstDataWithAnnotation');
 
 # Reader for build [vcf]
 $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->build_reader(
