@@ -893,6 +893,10 @@ sub _generate_master_workflow {
         }
 
         $self->_wire_merge_to_refinement_operations($master_workflow, $merge_operations, $refinement_operations);
+
+        if (scalar(@{$self->refiners}) == 2) {
+            $self->_wire_refinement_to_refinement_operations($master_workflow, $merge_operations, $refinement_operations);
+        }
     }
 
     #add the global inputs
@@ -1135,6 +1139,29 @@ sub _wire_merge_to_refinement_operations {
 
     return 1;
 }
+
+sub _wire_refinement_to_refinement_operations {
+    my $self = shift;
+    my $master_workflow = shift;
+    my $merge_operations = shift;
+    my $refinement_operations = shift;
+    my @refiner_names = @{$self->refiners};
+
+    for my $group_key (keys %$merge_operations ) {
+        my $refiner1_key = $self->refiner_key($group_key, $refiner_names[0]);
+        my $refiner2_key = $self->refiner_key($group_key, $refiner_names[1]);
+
+        $self->_add_link_to_workflow($master_workflow,
+            left_workflow_operation_id => $refinement_operations->{$refiner1_key}->id,
+            left_property => 'result_id',
+            right_workflow_operation_id => $refinement_operations->{$refiner2_key}->id,
+            right_property => 'input_result_id',
+        );
+    }
+
+    return 1;
+}
+
 
 sub _wire_object_workflows_to_merge_operations {
     my $self = shift;
