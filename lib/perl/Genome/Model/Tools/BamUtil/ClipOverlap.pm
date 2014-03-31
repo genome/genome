@@ -16,6 +16,11 @@ class Genome::Model::Tools::BamUtil::ClipOverlap {
             is => 'Text',
             doc => "The path to the clipped bam/sam",
         },
+        index_bam => {
+            is => 'Boolean',
+            default => 1,
+            doc => 'Index the bam after alignment.'
+        },
         file_format => {
             is => 'Text',
             default => 'bam',
@@ -44,6 +49,14 @@ sub execute {
 
     unless (Genome::Sys->shellcmd(cmd => $command)) {
         die $self->error_message("Failed to execute $command");
+    }
+
+    if ($self->index_bam && $self->file_format eq 'bam') {
+        my $clipped_bam = $self->output_file;
+        die $self->error_message("Couldn't find clipped bam at $clipped_bam!") unless -f $clipped_bam;
+
+        my $rv = Genome::Model::Tools::Sam::IndexBam->execute(bam_file => $clipped_bam);
+        die $self->error_message("Failed to run gmt sam index-bam on $clipped_bam") unless $rv->result == 1;
     }
 
     return 1;
