@@ -522,21 +522,37 @@ sub _merge_workflow_input_properties {
     return qw(merger_name merger_version merger_params duplication_handler_name duplication_handler_version duplication_handler_params samtools_version);
 }
 
+my $REFINEMENT_INPUT_PROPERTY_SEPARATOR = ':';
+
+sub _base_refinement_workflow_input_properties {
+    my $self = shift;
+
+    return qw(refiner_name refiner_version refiner_params refiner_known_sites_ids);
+}
+
 sub _refinement_workflow_input_properties {
     my $self = shift;
 
     my @refiners = @{$self->refiners};
 
-    my @base_names = qw(refiner_name refiner_version refiner_params refiner_known_sites_ids);
+    my @base_names = $self->_base_refinement_workflow_input_properties;
 
     my @input_properties;
     for my $refiner (@refiners) {
         for my $base_name (@base_names) {
-            push @input_properties, join("_", $base_name, $refiner);
+            push @input_properties, $self->_construct_refiner_input_property($base_name, $refiner);
         }
     }
 
     return @input_properties;
+}
+
+sub _construct_refiner_input_property {
+    my $self = shift;
+    my $property = shift;
+    my $refiner = shift;
+
+    return join($REFINEMENT_INPUT_PROPERTY_SEPARATOR, $property, $refiner);
 }
 
 sub _index_workflow_input_properties {
@@ -715,10 +731,10 @@ sub _generate_refinement_operations {
                 }
                 push @refiners, $refiner;
                 push @inputs, (
-                    'm_refiner_name_' . $refiner => $next_op->{name},
-                    'm_refiner_params_' . $refiner => $next_op->{params},
-                    'm_refiner_version_' . $refiner => $next_op->{version},
-                    'm_refiner_known_sites_ids_' . $refiner => [ map { $_->id } @{($self->inputs)->{$next_op->{known_sites}}} ],
+                    $self->_construct_refiner_input_property('m_refiner_name', $refiner)   => $next_op->{name},
+                    $self->_construct_refiner_input_property('m_refiner_params', $refiner)  => $next_op->{params},
+                    $self->_construct_refiner_input_property('m_refiner_version', $refiner) => $next_op->{version},
+                    $self->_construct_refiner_input_property('m_refiner_known_sites_ids', $refiner) => [ map { $_->id } @{($self->inputs)->{$next_op->{known_sites}}} ],
                 );
                 if($self->merge_group eq 'all') {
                     #this case is a simplification for efficiency
@@ -871,8 +887,9 @@ sub _generate_master_workflow {
     }
 
     if(%$refinement_operations) {
-        for my $refinement_operation (values %$refinement_operations) {
-            $self->_wire_refinement_operation_to_master_workflow($master_workflow, $block_operation, $refinement_operation);
+        while (my ($refiner_key, $refinement_operation) = each %$refinement_operations) {
+            my $refiner = (split("_", $refiner_key))[1];
+            $self->_wire_refinement_operation_to_master_workflow($master_workflow, $block_operation, $refinement_operation, $refiner);
         }
 
         $self->_wire_merge_to_refinement_operations($master_workflow, $merge_operations, $refinement_operations);
@@ -1067,22 +1084,16 @@ sub _wire_refinement_operation_to_master_workflow {
     my $master_workflow = shift;
     my $block_operation = shift; #unused by merge operations
     my $refinement = shift;
+    my $refiner = shift;
 
     my $master_input_connector = $master_workflow->get_input_connector;
     my $master_output_connector = $master_workflow->get_output_connector;
 
     $refinement->workflow_model($master_workflow);
 
-    for my $property ($self->_refinement_workflow_input_properties) {
-        my $left_property = "m_$property";
-
-        # FIXME this is really dumb.
-        # Remove the _refiner-name from the end
+    for my $property ($self->_base_refinement_workflow_input_properties) {
+        my $left_property = "m_" . $self->_construct_refiner_input_property($property, $refiner);
         my $right_property = $property;
-        my $refiners = $self->refiners;
-        for my $refiner (@$refiners) {
-            $right_property =~ s/_$refiner//;
-        }
         $self->_add_link_to_workflow($master_workflow,
             left_workflow_operation_id => $master_input_connector->id,
             left_property => $left_property,
