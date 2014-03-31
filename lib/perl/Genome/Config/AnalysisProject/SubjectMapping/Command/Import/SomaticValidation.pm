@@ -26,7 +26,7 @@ sub help_brief {
 }
 
 sub help_synopsis {
-    return "genome analysis-project subject-mapping import somatic-validation <analysis_project_id> <TSV file path>";
+    return "genome config analysis-project subject-mapping import somatic-validation <analysis_project_id> <TSV file path>";
 }
 
 sub help_detail {
@@ -34,7 +34,7 @@ sub help_detail {
 This command allows you to import subject mapping information for an AnalysisProject in bulk.
 
 It expects each line of the file to be formatted as follows:
-gexperimental_subject_id	control_subject_id	snv_variant_list_id	indel_variant_list_id	sv_variant_list_id
+experimental_subject_id	control_subject_id	snv_variant_list_id	indel_variant_list_id	sv_variant_list_id
 EOS
 }
 
