@@ -230,16 +230,10 @@ sub _dump_and_link_instrument_data {
 
     my $chromat_dir = $self->chromat_dir;
     for my $instrument_data ( @instrument_data ) {
-        # dump
-        unless ( $instrument_data->dump_to_file_system ) {
+        my $full_path = $instrument_data->full_path;
+        if ( not $full_path or not -s $full_path ) {
             $self->error_message(
-                sprintf(
-                    'Error dumping instrument data (%s <Id> %s) assigned to model (%s <Id> %s)',
-                    $instrument_data->run_name,
-                    $instrument_data->id,
-                    $self->build->model->name,
-                    $self->build->model->id,
-                )
+                'Instrument data full path does not exist! Pleasee contact support for assistance. '.$instrument_data->id,
             );
             return;
         }

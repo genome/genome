@@ -36,19 +36,5 @@ sub full_path {
     return $disk_allocation->absolute_path;
 }
 
-sub dump_to_file_system {
-    my $self = shift;
-
-    my $rv = eval { 
-        Genome::Sys->shellcmd(
-            cmd => 'gmt lims import-sanger-runs '.$self->id,
-        );
-    };
-    return 1 if $rv;
-
-    $self->error_message('Failed to dump reads to file system for run '.$self->id);
-    return;
-}
-
 1;
 
