@@ -79,7 +79,14 @@ sub matches {
 
     my $file_path = $item->file_path;
 
-    return `grep $query $file_path`;
+    open(my $fh, '-|', 'grep', '-l', $query, $file_path)
+        or die $self->error_message("Failed to grep %s: %s", $file_path, $!);
+
+    if(<$fh>) {
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
 1;
