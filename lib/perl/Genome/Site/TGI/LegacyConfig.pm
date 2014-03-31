@@ -55,36 +55,10 @@ sub user_email {
     return join('@', $user, Genome::Config::domain());
 }
 
-
-sub admin_notice_users {
-    qw/abrummet jeldred ssmith apipe-run/;
-}
-
 sub namespaces {
 #    my @ns = (qw/BAP Command EGAP GAP Genome MGAP PAP UR Workflow/);
     my @ns = (qw/Genome UR Workflow/);
     return @ns;
-}
-
-# operating directories
-
-sub deploy_path {
-
-    if (Genome::Config::dev_mode()) {
-        return '/tmp/gsc/scripts/lib/perl';
-    } else {
-        return '/gsc/scripts/lib/perl';
-    }
-}
-
-sub snapshot_paths {
-
-    my @snapshot_paths = (
-        '/gsc/scripts/opt/passed-model-tests',
-        '/gsc/scripts/opt/passed-unit-tests'
-    );
-
-    return @snapshot_paths;
 }
 
 sub reference_sequence_directory {
@@ -93,20 +67,6 @@ sub reference_sequence_directory {
 
 sub root_directory {
     $ENV{GENOME_MODEL_ROOT} || '/gscmnt/gc4096/info/symlinks';
-}
-
-sub data_directory {
-     $ENV{GENOME_MODEL_DATA} || '/gscmnt/sata835/info/medseq';
-}
-
-# data
-
-sub alignment_data_directory {
-    return shift->data_directory . '/alignment_data';
-}
-
-sub model_comparison_data_directory {
-    return shift->data_directory . '/model_comparison_data';
 }
 
 # reflection of the different types of models, and their related processing profiles and builds
