@@ -46,7 +46,7 @@ sub execute {
 
     # Try to shortcut
     my $shortcut = $self->shortcut;
-    return 1 if $shortcut;
+    return $shortcut if $shortcut;
 
     # [Get or] Create clip overlap result
     my $clip_overlap_result = $self->_get_or_create_clip_overlap_result;
