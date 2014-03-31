@@ -157,9 +157,6 @@ my @lims_whitelist = (
         ['Genome/Model/Tools/Lims/ApipeBridge/FixPidfaParamsForGenotype.pm', 25],
         ['Genome/Model/Tools/Lims/ApipeBridge/InstrumentDataStatus.pm', 115],
     ],
-    'GSC::Sequence::Genome' => [
-        ['Genome/Model/Tools/Snp/GetDbsnps.pm', 282],
-    ],
     'GSC::Clone' => [
         ['Genome/Site/TGI/objects-load.t', 13],
         ['Genome/Site/TGI/use-gscapp-in-modules-fails.t', 17],
