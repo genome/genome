@@ -246,7 +246,7 @@ subtest "simple alignments of different samples with merge and clip overlap" => 
     );
 };
 
-subtest "simple alignments of different samples with merge and clip overlap" => sub {
+subtest "simple alignments of different samples with merge, gatk and clip overlap" => sub {
     my $ref_refine = construct_reference($tmp_dir);
 
     my $merge_result_refine_one_inst_data = construct_merge_result(\@one_instrument_data, $ref_refine);
@@ -296,7 +296,7 @@ subtest "simple alignments of different samples with merge and clip overlap" => 
     is_deeply(
         [sort @alignment_results, $merge_result_refine_one_inst_data, $merge_result_refine_two_inst_data, @clip_overlap_results, @gatk_results],
         [sort @ad6_results],
-        'found expected alignment and clip_overlap results'
+        'found expected alignment, gatk and clip_overlap results'
     );
 };
 
