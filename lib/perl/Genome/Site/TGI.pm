@@ -148,23 +148,12 @@ use Genome::Site::TGI::Observers;
 
 # A white-list of GSC modules which can be used on the /usr/bin/perl interpreter
 my @lims_whitelist = (
-    'GSC::PSE' => [
-        ['Genome/Model/Tools/Lims/ApipeBridge/FixPidfaParamsForBase.pm', 89],
-        ['Genome/Model/Tools/Lims/ApipeBridge/FixPidfaParamsForBase.pm', 118],
-        ['Genome/Model/Tools/Lims/ApipeBridge/FixPidfaParamsForGenotype.pm', 25],
-    ],
     'GSC::Clone' => [
         ['Genome/Site/TGI/objects-load.t', 13],
         ['Genome/Site/TGI/use-gscapp-in-modules-fails.t', 17],
     ],
-    'GSC::Genotyping::External' => [
-        ['Genome/Model/Tools/Lims/ApipeBridge/UpdateGenomeGenotypes', 48],
-    ],
-    'GSC::Genotyping::Internal::Illumina' => [
-        ['Genome/Model/Tools/Lims/ApipeBridge/UpdateGenomeGenotypes', 48],
-    ],
     'App::DB::TableRow::Iterator' => [
-        ['Genome/Model/Tools/Lims/ImportSangerRuns.pm', 105],
+        ['Genome/Site/TGI/Synchronize/Classes/SangerRun.pm', 56],
     ],
     'GSC::Setup::CaptureSet' => [
         ['Genome/Site/TGI/CaptureSet.pm', 110],
