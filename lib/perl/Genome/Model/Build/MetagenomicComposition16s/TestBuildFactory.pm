@@ -150,7 +150,6 @@ sub instrument_data_sanger {
     die 'Failed to create instrument data sanger!' if not $entities{instrument_data_sanger};
 
     no warnings qw/ once redefine /;
-    *Genome::InstrumentData::Sanger::dump_to_file_system = sub{ 1; };
     *Genome::InstrumentData::Sanger::full_path = sub{ $ENV{GENOME_TEST_INPUTS} . '/Genome-Model/MetagenomicComposition16sSanger/inst_data/'.$entities{instrument_data_sanger}->id; };
     use warnings;
 
