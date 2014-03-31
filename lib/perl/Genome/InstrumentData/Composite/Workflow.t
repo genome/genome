@@ -306,6 +306,63 @@ subtest "simple alignments of different samples with merge, gatk and clip overla
     );
 };
 
+subtest "simple alignments of different samples with merge, clip overlap and gatk" => sub {
+    my $ref_refine = construct_reference($tmp_dir);
+
+    my $merge_result_refine_one_inst_data = construct_merge_result(\@one_instrument_data, $ref_refine);
+    my $merge_result_refine_two_inst_data = construct_merge_result(\@two_instrument_data, $ref_refine);
+    Sub::Install::reinstall_sub({
+        into => 'Genome::InstrumentData::AlignmentResult::Merged',
+        as => 'bam_path',
+        code => sub { File::Spec->join($tmp_dir, '9999.bam') },
+    });
+
+    my $aligner_index = construct_aligner_index($ref_refine);
+
+    my @alignment_results = @{construct_alignment_results(\@three_instrument_data, $ref_refine)};
+
+    my $variation_list_build = construct_variation_list($tmp_dir);
+    ok($variation_list_build, "created ImportedVariationList build");
+
+    my $ad6 = Genome::InstrumentData::Composite::Workflow->create(
+        inputs => {
+            inst => \@three_instrument_data,
+            ref => $ref_refine,
+            force_fragment => 0,
+            variant_list => [$variation_list_build],
+        },
+        strategy => '
+            inst aligned to ref using bwa 0.5.9 [-t 4 -q 5::]
+            then merged using picard 1.29
+            then deduplicated using picard 1.29
+            then refined using clip-overlap 1.0.11
+            then refined to variant_list using gatk-best-practices 2.4 [-et NO_ET]
+            api v1
+        ',
+    );
+    isa_ok(
+        $ad6,
+        'Genome::InstrumentData::Composite::Workflow',
+        'created dispatcher for simple alignments of different samples with merge and clip_overlap refine'
+    );
+
+    ok($ad6->execute, 'executed dispatcher for simple alignments of different samples with merge and clip_overlap refine');
+    my @ad6_result_ids = $ad6->_result_ids;
+    my @ad6_results = Genome::SoftwareResult->get(\@ad6_result_ids);
+    my @clip_overlap_results = Genome::InstrumentData::BamUtil::ClipOverlapResult->get(
+        bam_source => [$merge_result_refine_one_inst_data, $merge_result_refine_two_inst_data]
+    );
+    my @gatk_results = Genome::InstrumentData::Gatk::BaseRecalibratorBamResult->get(
+        reference_fasta => $ref_refine->fasta_file,
+        known_sites => [$variation_list_build],
+    );
+    is_deeply(
+        [sort @alignment_results, $merge_result_refine_one_inst_data, $merge_result_refine_two_inst_data, @clip_overlap_results, @gatk_results],
+        [sort @ad6_results],
+        'found expected alignment, clip_overlap and gatk results'
+    );
+};
+
 
 
 
