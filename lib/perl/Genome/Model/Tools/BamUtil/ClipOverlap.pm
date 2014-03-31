@@ -8,13 +8,18 @@ class Genome::Model::Tools::BamUtil::ClipOverlap {
     doc => "Run BamUtil with the 'ClipOverlap' tool",
     is => 'Genome::Model::Tools::BamUtil',
     has_input => [
-        input_bam => {
+        input_file => {
             is => 'Text',
-            doc => 'The path to the original bam you would like to be clipped',
+            doc => 'The path to the original bam/sam you would like to be clipped',
         },
-        output_bam => {
+        output_file => {
             is => 'Text',
-            doc => "The path to the clipped bam",
+            doc => "The path to the clipped bam/sam",
+        },
+        file_format => {
+            is => 'Text',
+            default => 'bam',
+            valid_values => ['sam', 'bam'],
         },
     ],
 };
@@ -48,16 +53,16 @@ sub clipoverlap_creator_command {
     my $self = shift;
     my $bamutil_command = $self->base_command;
     $bamutil_command .= " clipoverlap";
-    $bamutil_command .= " --in " . $self->input_bam;
-    $bamutil_command .= " --out " . $self->output_bam;
+    $bamutil_command .= " --in " . $self->input_file;
+    $bamutil_command .= " --out " . $self->output_file;
     return $bamutil_command;
 }
 
 sub _check_inputs {
     my $self = shift;
 
-    Genome::Sys->validate_file_for_reading($self->input_bam);
-    Genome::Sys->validate_file_for_writing($self->output_bam);
+    Genome::Sys->validate_file_for_reading($self->input_file);
+    Genome::Sys->validate_file_for_writing($self->output_file);
 
     return 1;
 }

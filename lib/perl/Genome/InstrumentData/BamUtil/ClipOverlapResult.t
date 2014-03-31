@@ -32,7 +32,7 @@ $bfh->close;
 Sub::Install::reinstall_sub({
     into => $tool_class,
     as => 'execute',
-    code => sub { my $self = shift; Genome::Sys->copy_file($self->input_bam, $self->output_bam); },
+    code => sub { my $self = shift; Genome::Sys->copy_file($self->input_file, $self->output_file); },
 });
 
 my $bam_source = $input_result_class->__define__();

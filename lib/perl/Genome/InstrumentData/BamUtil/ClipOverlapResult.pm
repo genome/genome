@@ -104,8 +104,8 @@ sub _run_clip_overlap {
 
     my %clip_overlap_params = (
         version => $self->version,
-        input_bam => $self->input_bam_path,
-        output_bam => $self->bam_path,
+        input_file => $self->input_bam_path,
+        output_file => $self->bam_path,
     );
     $self->status_message('Params: '.Data::Dumper::Dumper(\%clip_overlap_params));
 

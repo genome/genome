@@ -24,8 +24,9 @@ my $expected_out = File::Spec->join($data_dir, "testClipOverlapCoord.expected.sa
 my $out = Genome::Sys->create_temp_file_path;
 
 my $cmd = $class->create(
-    input_bam => $in,
-    output_bam => $out,
+    input_file => $in,
+    output_file => $out,
+    file_format => 'sam',
 );
 
 ok($cmd, "Command was created correctly");
