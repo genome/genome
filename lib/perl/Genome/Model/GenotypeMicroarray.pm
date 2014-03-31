@@ -208,8 +208,8 @@ sub map_workflow_inputs {
 sub _resolve_workflow_for_build {
     my ($self, $build, $lsf_queue, $lsf_project) = @_;
 
-    $lsf_queue //= $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
-    $lsf_project //= 'build' . $build->id;
+    $lsf_queue = $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT} unless defined($lsf_queue);
+    $lsf_project = 'build' . $build->id unless defined($lsf_project);
 
     my $workflow = Workflow::Model->create(
         name => $build->workflow_name,
