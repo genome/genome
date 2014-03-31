@@ -148,9 +148,6 @@ use Genome::Site::TGI::Observers;
 
 # A white-list of GSC modules which can be used on the /usr/bin/perl interpreter
 my @lims_whitelist = (
-    'GSC::PSEParam' => [
-        ['Genome/Model/Tools/Lims/ApipeBridge/InstrumentDataStatus.pm', 109],
-    ],
     'GSC::PSE' => [
         ['Genome/Model/Tools/Lims/ApipeBridge/FixPidfaParamsForBase.pm', 89],
         ['Genome/Model/Tools/Lims/ApipeBridge/FixPidfaParamsForBase.pm', 118],
