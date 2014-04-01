@@ -61,7 +61,7 @@ my $subject_mapping = Genome::Config::AnalysisProject::SubjectMapping->create(
 );
 
 Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
-    label => 'control_subject',
+    label => 'normal_sample',
     subject_mapping => $subject_mapping,
     subject => @$data1[1],
 );
@@ -71,7 +71,7 @@ Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
     subject => @$data2[1]->source,
 );
 Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
-    label => 'experimental_subject',
+    label => 'tumor_sample',
     subject_mapping => $subject_mapping,
     subject => @$data2[1],
 );
@@ -80,7 +80,7 @@ my $subject_mapping2 = Genome::Config::AnalysisProject::SubjectMapping->create(
     analysis_project => $analysis_project
 );
 Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
-    label => 'control_subject',
+    label => 'normal_sample',
     subject_mapping => $subject_mapping2,
     subject => @$data2[1],
 );
@@ -90,7 +90,7 @@ Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
     subject => @$data1[1]->source,
 );
 Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
-    label => 'experimental_subject',
+    label => 'tumor_sample',
     subject_mapping => $subject_mapping2,
     subject => @$data1[1],
 );
