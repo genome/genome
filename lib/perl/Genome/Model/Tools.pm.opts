@@ -2247,27 +2247,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>run-refcov',
-      [
-        'aligner=s',
-        'files',
-        'bed-file=s',
-        'files',
-        'output-dir=s',
-        'files',
-        'samples-file=s',
-        'files',
-        'debug!',
-        undef,
-        'min-depth=s',
-        'files',
-        'reference=s',
-        'files',
-        'wingspan=s',
-        'files',
-        'help!',
-        undef
-      ],
       '>sam-to-bam',
       [
         'aligner=s',
@@ -10756,21 +10735,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>compile-readcounts',
-    [
-      'output-file=s',
-      'files',
-      'readcounts=s',
-      'files',
-      'variants-file=s',
-      'files',
-      'debug!',
-      undef,
-      'other-alleles=s',
-      'files',
-      'help!',
-      undef
-    ],
     '>consensus',
     [
       'bam-file=s',
@@ -17670,33 +17634,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>get-dbsnps',
-    [
-      'chromosome=s',
-      'files',
-      'debug!',
-      undef,
-      'gff!',
-      undef,
-      'list=s',
-      undef,
-      'organism=s',
-      'files',
-      'out=s',
-      'files',
-      'ref=s',
-      'files',
-      'refseq-fasta=s',
-      undef,
-      'start=s',
-      undef,
-      'stop=s',
-      undef,
-      'var=s',
-      'files',
-      'help!',
-      undef
-    ],
     '>intersect',
     [
       'delimiter1=s',
@@ -21704,13 +21641,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>import-sanger-runs',
-    [
-      'run-names=s@',
-      'files',
-      'help!',
-      undef
-    ],
     '>compare-validation-models-to-work-order',
     [
       'show=s',
@@ -21724,15 +21654,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
     ],
     '>apipe-bridge',
     [
-      '>instrument-data-status',
-      [
-        'summary-only!',
-        undef,
-        'instrument-data=s@',
-        undef,
-        'help!',
-        undef
-      ],
       '>fix-pse-params-for-solexa',
       [
         'instrument-data-id=s',
