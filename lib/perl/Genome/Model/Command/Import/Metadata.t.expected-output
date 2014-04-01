@@ -341,8 +341,10 @@
 ## IMPORTING Genome::Model::Build::Input 106942997	UR::Value	GRC	prefix: bless( {"build_id" => 106942997,"value_class_name" => "UR::Value","value_id" => "GRC","name" => "prefix","id" => "106942997\tUR::Value\tGRC\tprefix","filter_desc" => undef}, 'Genome::Model::Build::Input' )
 ## FOUND Genome::Model::Build::Input 106942997	UR::Value	GRCh37-lite	assembly_name: 106942997 UR::Value GRCh37-lite assembly_name
 ## FOUND Genome::Model::Build::Input 106942997	UR::Value	GRCh37-lite-build37	build_name: 106942997 UR::Value GRCh37-lite-build37 build_name
+## FOUND Genome::Model::Build::Input 106942997	UR::Value	X,Y,MT	allosome_names: 106942997 UR::Value X,Y,MT allosome_names
 ## FOUND Genome::Model::Build::Input 106942997	UR::Value	ftp://ftp.ncbi.nih.gov/genbank/genomes/Eukaryotes/vertebrates_mammals/Homo_sapiens/GRCh37/special_requests/GRCh37-lite.fa.gz	sequence_uri: 106942997 UR::Value ftp://ftp.ncbi.nih.gov/genbank/genomes/Eukaryotes/vertebrates_mammals/Homo_sapiens/GRCh37/special_requests/GRCh37-lite.fa.gz sequence_uri
 ## IMPORTING Genome::Model::Build::Input 108563338	UR::Value	/home/archive/nimble.fa	fasta_file: bless( {"build_id" => 108563338,"value_class_name" => "UR::Value","value_id" => "/home/archive/nimble.fa","name" => "fasta_file","id" => "108563338\tUR::Value\t/home/archive/nimble.fa\tfasta_file","filter_desc" => undef}, 'Genome::Model::Build::Input' )
+## FOUND Genome::Model::Build::Input 108563338	UR::Value	X,Y,MT	allosome_names: 108563338 UR::Value X,Y,MT allosome_names
 ## FOUND Genome::Model::Build::Input 108563338	UR::Value	hg19	version: 108563338 UR::Value hg19 version
 ## FOUND Genome::Model::Build::Input 108563338	UR::Value	https://genome.wustl.edu/view/genome/model/build/reference-sequence/consensus.fasta?id=108563338//all_sequences.bam	sequence_uri: 108563338 UR::Value https://genome.wustl.edu/view/genome/model/build/reference-sequence/consensus.fasta?id=108563338//all_sequences.bam sequence_uri
 ## FOUND Genome::Model::Build::Input 108563338	UR::Value	nimblegen	prefix: 108563338 UR::Value nimblegen prefix
