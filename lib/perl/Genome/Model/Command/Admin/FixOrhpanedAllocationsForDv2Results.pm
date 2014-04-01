@@ -49,7 +49,7 @@ sub execute {
         my $p = File::Spec->catdir(@d[4..$#d]);
         my $a = Genome::Disk::Allocation->get(allocation_path => $p);
 
-        next unless $a->owner_class_name->isa('Genome::Model::Tools::DetectVariants2::Result::Base');
+        next unless $a && $a->owner_class_name->isa('Genome::Model::Tools::DetectVariants2::Result::Base');
 
         my $lookup_hash = (split /-/, $s)[-1];
         my $owner_lock = $a->owner_class_name->_lock($lookup_hash, undef);
