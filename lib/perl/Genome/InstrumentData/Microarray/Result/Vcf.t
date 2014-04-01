@@ -17,19 +17,19 @@ use Genome::Test::Factory::InstrumentData::Imported;
 use Genome::Test::Factory::Model::ImportedVariationList;
 use Genome::Test::Factory::Build;
 
-my $package = 'Genome::InstrumentData::GenotypeVcf';
+my $package = 'Genome::InstrumentData::Microarray::Result::Vcf';
 
 use_ok($package);
 my $test_dir = Genome::Utility::Test->data_dir_ok($package, "v1");
 
 my ($sample, $dbsnp_build) = setup_objects();
 
-my $result = Genome::InstrumentData::GenotypeVcf->get_or_create(
+my $result = Genome::InstrumentData::Microarray::Result::Vcf->get_or_create(
                                 sample => $sample,
                                 known_sites_build => $dbsnp_build,
                                 filters => ["chromosome:exclude=X,Y,MT"],
                             );
-ok($result->isa("Genome::InstrumentData::GenotypeVcf"), "GenotypeVcf result was created");
+ok($result->isa("Genome::InstrumentData::Microarray::Result::Vcf"), "Vcf result was created");
 ok(-s $result->vcf_path, "Vcf in result has size");
 compare_ok($result->vcf_path, File::Spec->join($test_dir, "expected.vcf"), "Vcf matched expected output");
 

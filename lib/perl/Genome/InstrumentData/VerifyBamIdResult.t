@@ -84,7 +84,7 @@ sub setup_objects {
     $build->dbsnp_build->version("fake");
     $build->dbsnp_build->snv_result($dbsnp_result);
 
-    my $vcf_result = Genome::InstrumentData::GenotypeVcf->__define__(
+    my $vcf_result = Genome::InstrumentData::Microarray::Result::Vcf->__define__(
         sample => $genotype_data->sample,
         known_sites_build => $build->dbsnp_build,
         output_dir => $test_dir,

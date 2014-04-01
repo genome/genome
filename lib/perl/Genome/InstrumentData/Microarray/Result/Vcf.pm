@@ -1,11 +1,11 @@
-package Genome::InstrumentData::GenotypeVcf;
+package Genome::InstrumentData::Microarray::Result::Vcf;
 
 use strict;
 use warnings;
 use Genome;
 use Sys::Hostname;
 
-class Genome::InstrumentData::GenotypeVcf {
+class Genome::InstrumentData::Microarray::Result::Vcf {
     is => 'Genome::SoftwareResult::Stageable',
     has_input => [
         sample => {

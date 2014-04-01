@@ -127,7 +127,7 @@ sub _resolve_genotype_vcf_result {
     if ($self->genotype_filters) {
         $params{filters} = [$self->genotype_filters];
     }
-    my $result = Genome::InstrumentData::GenotypeVcf->get_or_create(%params);
+    my $result = Genome::InstrumentData::Microarray::Result::Vcf->get_or_create(%params);
     $self->_error("Could not get or create genotype vcf result") unless $result;
     return $result;
 }
