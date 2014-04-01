@@ -246,6 +246,10 @@ END_CONTENT
     Genome::Utility::Instrumentation::timing('lock_resource_attempts.total',
         $lock_attempts);
 
+    # I don't think the conditional is actually needed but being safe
+    if ($resource_lock) {
+        Genome::Utility::Instrumentation::increment('sys.lock.lock.success');
+    }
     return $resource_lock;
 }
 
@@ -402,6 +406,8 @@ sub _file_based_unlock_resource {
 
     delete $SYMLINKS_TO_REMOVE{$resource_lock};
     $self->cleanup_handler_check();
+
+    Genome::Utility::Instrumentation::increment('sys.lock.unlock.success');
     return 1;
 }
 
