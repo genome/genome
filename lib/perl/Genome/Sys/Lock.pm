@@ -184,6 +184,7 @@ sub _file_based_lock_resource {
         if ($lsf_id ne "NONE") {
             my ($job_info,$events) = Genome::Model::Event->lsf_state($lsf_id);
                  unless ($job_info) {
+                     Genome::Utility::Instrumentation::increment('sys.lock.lock.found_orphan');
                      $self->warning_message("Invalid lock for resource $resource_lock\n"
                                             ." lock info was:\n". $info_content ."\n"
                                             ."Removing old resource lock $resource_lock\n");
@@ -362,6 +363,7 @@ sub _file_based_unlock_resource {
     my $target = readlink($resource_lock);
     if (!$target) {
         if ($! == ENOENT) {
+            Genome::Utility::Instrumentation::increment('sys.lock.unlock.stolen_from_me');
             $self->error_message("Tried to unlock something that's not locked -- $resource_lock.");
             Carp::croak($self->error_message);
         } else {
@@ -377,6 +379,7 @@ sub _file_based_unlock_resource {
         unless ($self->is_my_lock_target($target)) {
              my $basename = File::Basename::basename($target);
              my $expected_details = $self->_resolve_lock_owner_details;
+             Genome::Utility::Instrumentation::increment('sys.lock.unlock.stolen_from_me');
              $self->error_message("This lock does not look like it belongs to me.  $basename does not match $expected_details.");
              delete $SYMLINKS_TO_REMOVE{$resource_lock}; # otherwise the lock would be forcefully cleaned up when process exits
              Carp::croak($self->error_message);
@@ -385,12 +388,14 @@ sub _file_based_unlock_resource {
 
     my $unlink_rv = unlink($resource_lock);
     if (!$unlink_rv) {
+        Genome::Utility::Instrumentation::increment('sys.lock.unlock.unlink_failed');
         $self->error_message("Failed to remove lock symlink '$resource_lock':  $!");
         Carp::croak($self->error_message);
     }
 
     my $rmdir_rv = File::Path::rmtree($target);
     if (!$rmdir_rv) {
+        Genome::Utility::Instrumentation::increment('sys.lock.unlock.rmtree_failed');
         $self->error_message("Failed to remove lock symlink target '$target', but we successfully unlocked.");
         Carp::croak($self->error_message);
     }
