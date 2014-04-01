@@ -185,6 +185,62 @@ class Genome::Model::SomaticValidation {
     },
 };
 
+sub add_target_region_set {
+    my $self = shift;
+
+    my $trs = Genome::FeatureList->get(@_) or die 'Failed to get FeatureList';
+    $self->target_region_set($trs);
+}
+
+sub add_region_of_interest_set {
+    my $self = shift;
+
+    my $rois = Genome::FeatureList->get(@_) or die 'Failed to get FeatureList';
+    $self->region_of_interest_set($rois);
+}
+
+sub add_snv_variant_list {
+    my $self = shift;
+
+    my $variant_list = Genome::SoftwareResult->get(@_);
+    $self->snv_variant_list($variant_list);
+}
+
+sub add_sv_variant_list {
+    my $self = shift;
+
+    my $variant_list = Genome::SoftwareResult->get(@_);
+    $self->sv_variant_list($variant_list);
+}
+
+sub add_indel_variant_list {
+    my $self = shift;
+
+    my $variant_list = Genome::SoftwareResult->get(@_);
+    $self->indel_variant_list($variant_list);
+}
+
+sub add_previously_discovered_variations_build {
+    my $self = shift;
+
+    my $build = Genome::Model::Build->get(@_);
+    $self->previously_discovered_variations_build($build);
+}
+
+sub add_annotation_build {
+    my $self = shift;
+
+    my $build = Genome::Model::Build->get(@_);
+    $self->annotation_build($build);
+}
+
+sub add_reference_sequence_build {
+    my $self = shift;
+
+    my $build = Genome::Model::Build->get(@_);
+    $self->reference_sequence_build($build);
+}
+
 sub _validate_required_for_start_properties {
     my $self = shift;
 
