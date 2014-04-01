@@ -38,7 +38,7 @@ experimental_subject_id	control_subject_id	snv_variant_list_id	indel_variant_lis
 EOS
 }
 
-my @subjects = ('experimental_subject_id', 'control_subject_id');
+my @subjects = ('tumor_subject', 'normal_subject');
 my @inputs = ('snv_variant_list_id', 'indel_variant_list_id', 'sv_variant_list_id');
 
 sub execute {
