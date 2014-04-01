@@ -140,7 +140,7 @@ class Genome::Model::SomaticValidation {
             doc => 'Build[s] of known variants to use in when refining with GATK best practices.',
         },
     ],
-    has_optional => [
+    has_optional_mutable => [
         region_of_interest_set_name => {
             is => 'Text',
             via => 'region_of_interest_set',
@@ -151,17 +151,30 @@ class Genome::Model::SomaticValidation {
             via => 'target_region_set',
             to => 'name',
         },
-        experimental_subject => {
-            is => 'Genome::Sample',
-            via => '__self__',
-            to => 'tumor_sample'
+        snv_variant_list_id => {
+            via => 'snv_variant_list',
+            to => 'id',
         },
-        control_subject => {
-            is => 'Genome::Sample',
-            via => '__self__',
-            to => 'normal_sample'
+        indel_variant_list_id => {
+            via => 'indel_variant_list',
+            to => 'id',
         },
-
+        sv_variant_list_id => {
+            via => 'sv_variant_list',
+            to => 'id',
+        },
+        previously_discovered_variations_build_id => {
+            via => 'previously_discovered_variations_build',
+            to => 'id'
+        },
+        annotation_build_id => {
+            via => 'annotation_build',
+            to => 'id'
+        },
+        reference_sequence_build_id => {
+            via => 'reference_sequence_build',
+            to => 'id'
+        },
     ],
     has_transient_constant_optional => {
         sequencing_platform => {
