@@ -64,8 +64,6 @@ if(length(args) != 5) {
 }
  
 library(cn.mops)
-library(snow)
-library(RUnit)
  
 tumor_bam = args[1]
 normal_bam = args[2]
