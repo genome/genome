@@ -3,7 +3,7 @@ package Genome::Model::Tools::Relationship::HomozygousRecessive;
 use strict;
 use warnings;
 use Data::Dumper;
-use Genome;           
+use Genome;
 use Genome::Info::IUB;
 use Genome::Utility::Vcf qw(get_vcf_header open_vcf_file);
 use POSIX;

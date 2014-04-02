@@ -3,7 +3,7 @@ package Genome::Model::Tools::Relationship::PolymuttDenovoFilter;
 use strict;
 use warnings;
 use Data::Dumper;
-use Genome;           
+use Genome;
 use Genome::Info::IUB;
 use POSIX;
 our $VERSION = '0.01';
@@ -30,7 +30,7 @@ class Genome::Model::Tools::Relationship::PolymuttDenovoFilter {
         is_optional=>1,
         doc=>'the lowest quality reads to use in the calculation. default q20',
         default=>"20",
-    },   
+    },
     min_unaffected_pvalue=> {
         is_optional=>1,
         doc=>"the minimum binomial test result from unaffected members to pass through the filter",
