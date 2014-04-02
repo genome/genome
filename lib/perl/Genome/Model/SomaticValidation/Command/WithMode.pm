@@ -6,6 +6,7 @@ use Genome;
 
 class Genome::Model::SomaticValidation::Command::WithMode {
     is => 'Command::V2',
+    is_abstract => 1,
     has_input => [
         build_id => {
             is => 'Number',
@@ -40,6 +41,8 @@ sub sample_for_mode {
 
 sub alignment_result_for_mode {
     my $self = shift;
+    return unless $self->should_run;
+
     my $alignment_result;
     if($self->mode eq 'tumor') {
         $alignment_result = $self->build->merged_alignment_result;
@@ -58,6 +61,8 @@ sub link_result_to_build {
     my $result = shift;
     my $subdir_name = shift;
     my $label_base = shift;
+    return unless $self->should_run();
+
     my $build = $self->build;
 
     my $base_dir = File::Spec->join($build->data_directory, $subdir_name);
