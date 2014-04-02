@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 
 use above 'Genome';
-use Test::More skip_all => 'skip until R library dependencies are tested';
+use Test::More;
 use strict;
 use warnings;
 
@@ -15,7 +15,7 @@ my $pkg = 'Genome::Model::Tools::CopyNumber::Cnmops';
 use_ok($pkg);
 
 #Define the test where expected results are stored
-my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "Genome-Model-Tools-CopyNumber-Cnmops/2014-03-21/";
+my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "Genome-Model-Tools-CopyNumber-Cnmops/2014-04-02/";
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 my $temp_dir = Genome::Sys->create_temp_directory();
