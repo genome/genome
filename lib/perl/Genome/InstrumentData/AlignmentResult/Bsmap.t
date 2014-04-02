@@ -237,19 +237,11 @@ sub generate_fake_instrument_data {
         lane => '1',
         median_insert_size => '22',
         sd_insert_size => '34',
-        #median_insert_size => '195', # XXX huge datasets
-        #sd_below_insert_size => '38',
-        #sd_above_insert_size => '32',
-        #median_insert_size => '196', # XXX more huge datasets
-        #sd_below_insert_size => '22',
-        #sd_above_insert_size => '78',
         run_name => '110101_TEST',
         subset_name => 4,
         run_type => 'Paired',
         gerald_directory => $fastq_directory,
         bam_path => $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-AlignmentResult-Bwa/input.bam'
-        #bam_path => '/gscuser/iferguso/bsmap_scratch/newcrashing.bam' # huge datasets
-        #bam_path => '/gscuser/iferguso/bsmap_scratch/crashing.bam' # more huge datasets
     );
     ok($instrument_data, 'create instrument data: '.$instrument_data->id);
     ok($instrument_data->is_paired_end, 'instrument data is paired end');
