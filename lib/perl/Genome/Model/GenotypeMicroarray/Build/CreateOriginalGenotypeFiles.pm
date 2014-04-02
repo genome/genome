@@ -7,7 +7,7 @@ use Genome;
 
 class Genome::Model::GenotypeMicroarray::Build::CreateOriginalGenotypeFiles {
     is => 'Command::V2',
-    has => {
+    has_input_output => {
         build => { is => 'Genome::Model::Build::GenotypeMicroarray', },
     },
     has_optional_transient => {
