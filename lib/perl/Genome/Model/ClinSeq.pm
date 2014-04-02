@@ -376,6 +376,13 @@ sub map_workflow_inputs {
       push @inputs, microarray_cnv_dir => $microarray_cnv_dir;
     }
 
+    #ExomeCNV
+    if ($exome_build) {
+      my $exome_cnv_dir = $patient_dir . "/cnv/exome_cnv/";
+      push @dirs, $exome_cnv_dir;
+      push @inputs, exome_cnv_dir => $exome_cnv_dir;
+    }
+
     #SummarizeSvs
     if ($wgs_build){
       my $sv_dir = $patient_dir . "/sv/";
@@ -508,6 +515,10 @@ sub _resolve_workflow_for_build {
       push @output_properties, 'microarray_cnv_result';
   }
 
+  if ($build->exome_build) {
+      push @output_properties, 'exome_cnv_result';
+  }
+
   if ($build->normal_rnaseq_build){
       push @output_properties, 'normal_tophat_junctions_absolute_result';
       push @output_properties, 'normal_cufflinks_expression_absolute_result';
@@ -520,8 +531,6 @@ sub _resolve_workflow_for_build {
       push @output_properties, 'gene_category_tophat_result';
       push @output_properties, 'dgidb_cufflinks_result';
       push @output_properties, 'dgidb_tophat_result';
-  }
-  if ($build->tumor_rnaseq_build){
       if(-e $build->tumor_rnaseq_build->data_directory . '/fusions/filtered_chimeras.bedpe'){
           if ($build->wgs_build){
               if(-e $build->wgs_build->data_directory . '/effects/svs.hq.annotated'){
@@ -530,6 +539,7 @@ sub _resolve_workflow_for_build {
           }
       }
   }
+
   if ($build->normal_rnaseq_build and $build->tumor_rnaseq_build){
       push @output_properties, 'cufflinks_differential_expression_result';
       push @output_properties, 'gene_category_coding_de_up_result';
@@ -879,7 +889,7 @@ sub _resolve_workflow_for_build {
     $add_link->($run_cn_view_op, 'result', $output_connector, 'run_cn_view_result');
   }
 
-  #RunMicroarrayCNV - produce cnv plots with microarray results
+  #RunMicroarrayCNV - produce cnv plots using microarray results
   my $microarray_cnv_op;
   if ($self->has_microarray_build()) {
     my $msg = "Call somatic copy number changes using microarray calls";
@@ -887,6 +897,16 @@ sub _resolve_workflow_for_build {
     $add_link->($input_connector, 'microarray_cnv_dir', $microarray_cnv_op, 'outdir');
     $add_link->($input_connector, 'model', $microarray_cnv_op, 'clinseq_model');
     $add_link->($microarray_cnv_op, 'result', $output_connector, 'microarray_cnv_result');
+  }
+
+  #RunExomeCNV - produce cnv plots using WEx results
+  my $exome_cnv_op;
+  if ($build->exome_build) {
+    my $msg = "Call somatic copy number changes using exome data";
+    $exome_cnv_op = $add_step->($msg, "Genome::Model::Tools::CopyNumber::Cnmops");
+    $add_link->($input_connector, 'exome_cnv_dir', $exome_cnv_op, 'outdir');
+    $add_link->($input_connector, 'model', $exome_cnv_op, 'clinseq_model');
+    $add_link->($exome_cnv_op, 'result', $output_connector, 'exome_cnv_result');
   }
 
   #SummarizeCnvs - Generate a summary of CNV results, copy cnvs.hq, cnvs.png, single-bam copy number plot PDF, etc. to the cnv directory
