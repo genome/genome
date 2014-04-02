@@ -76,7 +76,6 @@ sub help_detail {
     'Use polymutt to force-genotype all segregating sites and produce one final vcf'
 }
 
-#/gscuser/dlarson/src/polymutt.0.01/bin/polymutt -p 20000492.ped -d 20000492.dat -g 20000492.glfindex --minMapQuality 1 --nthreads 4 --vcf 20000492.standard.vcf
 sub execute {
     my $self=shift;
 

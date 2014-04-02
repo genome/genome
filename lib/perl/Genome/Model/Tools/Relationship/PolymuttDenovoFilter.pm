@@ -47,7 +47,7 @@ sub help_brief {
 
 sub help_detail {
 }
-#/gscuser/dlarson/src/polymutt.0.01/bin/polymutt -p 20000492.ped -d 20000492.dat -g 20000492.glfindex --minMapQuality 1 --nthreads 4 --vcf 20000492.standard.vcf
+
 sub execute {
     $DB::single=1;
     my $self=shift;
