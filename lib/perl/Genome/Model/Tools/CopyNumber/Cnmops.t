@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 
 use above 'Genome';
-use Test::More;
+use Test::More skip_all => 'skip until R library dependencies are tested';
 use strict;
 use warnings;
 
