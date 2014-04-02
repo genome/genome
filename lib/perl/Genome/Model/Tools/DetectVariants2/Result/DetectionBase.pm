@@ -7,6 +7,7 @@ use Sys::Hostname;
 use File::Path 'rmtree';
 
 use Genome;
+use Genome::Utility::Instrumentation qw();
 
 class Genome::Model::Tools::DetectVariants2::Result::DetectionBase {
     is => ['Genome::Model::Tools::DetectVariants2::Result::Base'],
@@ -184,6 +185,7 @@ sub _check_instance_output {
                     "This is either because the software result is currently being generated or because the allocation has been orphaned.",
                     "If it is determined that the allocation has been orphaned then the allocation will need to be removed.",
                 );
+                Genome::Utility::Instrumentation::increment('dv2.result.found_orphaned_allocation');
                 die $class->error_message(join(' ', @error_message));
             }
             # If a test name is set, we can remove the symlink and proceed
@@ -193,6 +195,7 @@ sub _check_instance_output {
             }
             elsif ($result and not $allocation) {
                 # A result without an allocation... this really shouldn't ever happen, unless someone deleted the allocation row from the database?
+                Genome::Utility::Instrumentation::increment('dv2.result.found_orphaned_result');
                 die $class->error_message("Found a software result (" . $result->__display_name__ . ") that has output directory " .
                     "($instance_output) but no allocation.");
             }
@@ -200,6 +203,7 @@ sub _check_instance_output {
                 # Finding a result and an allocation means either:
                 # 1) This work was already done, but for whatever reason we didn't find the software result before we decided to do the work.
                 # 2) We're doing different work but pointing it at a place where work has already been done for something else. Can't replace it.
+                Genome::Utility::Instrumentation::increment('dv2.result.found_duplicate');
                 die $class->error_message("Found allocation and software result for path $instance_output, cannot create new result!");
             }
             elsif (!$result && !$allocation && -l $instance_output && ! -e $allocation_dir) {
