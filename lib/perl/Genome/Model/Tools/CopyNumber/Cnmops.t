@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 
 use above 'Genome';
-use Test::More skip_all => 'skip until cnmops is added to genome-snapshot-deps';
+use Test::More;
 use strict;
 use warnings;
 
