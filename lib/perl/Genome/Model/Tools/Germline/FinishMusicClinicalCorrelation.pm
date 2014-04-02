@@ -250,8 +250,6 @@ sub execute {                               # replace with real execution logic.
 		die;
 	}
 	$temp_path_R =~ s/\:/\\\:/g;
-#$temp_path_R = '/gscuser/wschierd/Deleteme/poop.R';
-#open($tfh_R, ">$temp_path_R") or die "Can't open output file: $!\n";
 
 #	print $tfh_R 'sink("/dev/null")'."\n";
 	print $tfh_R "genome=\"$project_name\";"."\n";
