@@ -49,7 +49,7 @@ class Genome::Model::GenotypeMicroarray::Command::ExtractToVcf {
         filters => {
             is => 'Text',
             is_many => 1,
-            doc => "Filter genotypes. Give name and parameters, if required. Filters:\n gc_scrore => filter by min gc score (Ex: gc_score:min=0.7)\n invalid_iscan_ids => list of invalid iscan snvs compiled by Nate",
+            doc => "Filter genotypes. Give name and parameters, if required. Filters:\n gc_scrore => filter by min gc score (Ex: gc_score:min=0.7)\n invalid_iscan_ids => list of invalid iscan snvs compiled by Nate\nchromosome => exclude genotypes on a list of chromosomes (Ex: chromosome:exclude=X,Y,MT)",
         },
     },
     has_optional_transient => {

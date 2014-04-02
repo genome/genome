@@ -67,6 +67,10 @@ class Genome::Model::SomaticValidation {
             is => 'Text',
             doc => 'version of varscan to use in the post-variant detection validation processes',
         },
+        verify_bam_id_version => {
+            is => 'Text',
+            doc => 'version of verifyBamId to use',
+        },
 
         #RefCov parameters
         refcov_wingspan_values => {

@@ -2,12 +2,12 @@
 [4mUSAGE[0m
  [1mgenome model define imported-reference-sequence[0m --processing-profile-name=?
     [--auto-assign-inst-data] [--auto-build-alignments] --fasta-file=? --processing-profile=?
-    --processing-profile-id=? --species-name=? [--add-to-projects=?[,?]] [--append-to=?]
-    [--instrument-data=?[,?]] [--subject=?] [--combine=?[,?]] [--groups=?[,?]] [--skip-bases-files]
-    [--on-warning=?] [--job-dispatch=?] [--server-dispatch=?] [--is-rederivable] [--build-name=?]
-    [--sequence-uri=?] [--use-default-sequence-uri] [--assembly-name=?] [--desc=?]
-    [--derived-from=?] [--prefix=?] [--generate-sequence-uri] [--version=?] [--model-name=?]
-    [--subject-name=?]
+    --processing-profile-id=? --species-name=? --allosome-names=? [--add-to-projects=?[,?]]
+    [--append-to=?] [--instrument-data=?[,?]] [--subject=?] [--combine=?[,?]] [--groups=?[,?]]
+    [--skip-bases-files] [--on-warning=?] [--job-dispatch=?] [--server-dispatch=?]
+    [--is-rederivable] [--build-name=?] [--sequence-uri=?] [--use-default-sequence-uri]
+    [--assembly-name=?] [--desc=?] [--derived-from=?] [--prefix=?] [--generate-sequence-uri]
+    [--version=?] [--model-name=?] [--subject-name=?]
 
 [4mSYNOPSIS[0m
 genome model define imported-reference-sequence --species-name=human --prefix=NCBI --fasta-file=/gscuser/person/fastafile.fasta
@@ -24,6 +24,9 @@ genome model define imported-reference-sequence --species-name=human --prefix=NC
   [1mspecies-name[0m
     The species name of the reference.	This value must correspond to a species name found in the
     gsc.organism_taxon table. 
+  [1mallosome-names[0m
+    A comma-separated list of the names of chromosomes that should be treated as non-autosomal 
+    Default value 'X,Y,MT' if not specified
 
 [4mREQUIRED PARAMS[0m
   [1mprocessing-profile-name[0m
