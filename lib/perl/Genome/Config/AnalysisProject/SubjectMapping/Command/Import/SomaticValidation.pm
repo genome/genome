@@ -31,10 +31,16 @@ sub help_synopsis {
 
 sub help_detail {
     return <<"EOS"
-This command allows you to import subject mapping information for an AnalysisProject in bulk.
+This command allows you to import subject mapping information for an AnalysisProject in bulk via a TSV file.
 
-It expects each line of the file to be formatted as follows:
-experimental_subject_id	control_subject_id	snv_variant_list_id	indel_variant_list_id	sv_variant_list_id
+It expects the file to be in a 5 column, tab separated format with the following columns:
+
+tumor_subject_id normal_subject_id snv_variant_list_id indel_variant_list_id sv_variant_list_id
+
+All columns but tumor_subject_id are optional and can be left blank, though the tab separators must be present.
+This is useful for setting up single-sample validation models.
+A header is optional and should be preceeded with a '#' if present.
+
 EOS
 }
 
