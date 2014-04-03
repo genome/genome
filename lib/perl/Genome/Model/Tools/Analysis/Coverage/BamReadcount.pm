@@ -107,7 +107,7 @@ sub help_brief {
 }
 
 sub help_detail {
-    "get readcounts. make pretty"
+    "This is a wrapper for bam-readcount. This tool takes in a BAM file and a list of positions in a variant-file and gets the read-depths at those positions. The 'variant-file' needs to be in the 1-based format. For SNV's this means that 'start' and 'stop' positions are the same. For other variants like INDEL's the start and stop are different. Refer to http://www.biostars.org/p/84686/ if you need more detail regarding this."
 }
 
 
