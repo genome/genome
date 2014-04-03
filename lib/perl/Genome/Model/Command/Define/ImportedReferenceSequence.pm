@@ -107,7 +107,7 @@ class Genome::Model::Command::Define::ImportedReferenceSequence {
 };
 
 sub help_synopsis {
-    return "genome model define imported-reference-sequence --species-name=human --prefix=NCBI --fasta-file=/gscuser/person/fastafile.fasta\n"
+    return "genome model define imported-reference-sequence --species-name=human --prefix=NCBI --fasta-file=/path/to/fastafile.fasta\n"
 }
 
 sub help_detail {
