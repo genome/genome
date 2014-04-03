@@ -115,14 +115,14 @@ sub _assign_instrument_data_to_model {
                 model => $model,
                 analysis_project => $analysis_project,
             );
-            $executed_all_ok &&= $cmd->execute;
+            $executed_all_ok &&= eval{ $cmd->execute; };
         }
     } else {
         my $cmd = Genome::Model::Command::InstrumentData::Assign::Expression->create(
             model => $model,
             instrument_data => [$instrument_data]
         );
-        $executed_all_ok &&= $cmd->execute;
+        $executed_all_ok &&= eval{ $cmd->execute };
     }
 
     unless ($executed_all_ok) {
