@@ -1,4 +1,4 @@
-package Genome::Model::ClinSeq::Command::UpdateAnalysis;
+package Genome::Model::ClinSeq::Command::Advise;
 
 #Written by Malachi Griffith
 
@@ -11,7 +11,7 @@ my $cancer_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("cancer
 my $misc_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("misc_annotation_db")->default_value;
 my $cosmic_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("cosmic_annotation_db")->default_value;
 
-class Genome::Model::ClinSeq::Command::UpdateAnalysis {
+class Genome::Model::ClinSeq::Command::Advise {
     is => 'Command::V2',
     has_optional => [
         individual => { 
@@ -201,16 +201,16 @@ sub help_synopsis {
 Creating or updating a clin-seq analysis involves the following three basic steps:
 
 Step 1. Summarize the current default processing profiles and inputs:
-genome model clin-seq update-analysis  --display-defaults
+genome model clin-seq advise --display-defaults
 
 Step 2. Examine available samples for your individual:
-genome model clin-seq update-analysis  --individual='2878747495'
-genome model clin-seq update-analysis  --individual='H_KA-306905'
-genome model clin-seq update-analysis  --individual='common_name=AML103'
+genome model clin-seq advise  --individual='2878747495'
+genome model clin-seq advise  --individual='H_KA-306905'
+genome model clin-seq advise  --individual='common_name=AML103'
 
-Step 3: Run the update-analysis component to determine what models need to be created:
-genome model clin-seq update-analysis  --individual='H_KA-306905' --samples='id in [2878747496,2878747497,2879495575]'
-genome model clin-seq update-analysis  --individual='H_KA-306905' --samples='name in ["H_KA-306905-1121472","H_KA-306905-1121474","H_KA-306905-S.4294"]'
+Step 3: Run the advise component to determine what models need to be created:
+genome model clin-seq advise  --individual='H_KA-306905' --samples='id in [2878747496,2878747497,2879495575]'
+genome model clin-seq advise  --individual='H_KA-306905' --samples='name in ["H_KA-306905-1121472","H_KA-306905-1121474","H_KA-306905-S.4294"]'
 
 All processing-profile and build input parameters can be specified by ID, name, etc. and should resolve
 
