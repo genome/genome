@@ -82,8 +82,9 @@ sub add_metrics_to_build {
     my $self = shift;
     my $result = shift;
 
-    for my $metric (map {$_->metric_name} $result->metrics) {
-        $self->build->set_metric($metric."-".$self->mode, $result->$metric);
+    for my $metric ($result->metrics) {
+        my $name = $metric->metric_name;
+        $self->build->set_metric($name."-".$self->mode, $metric->metric_value);
     }
     return 1;
 }
