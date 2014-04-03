@@ -7,7 +7,7 @@ use Genome;
 use Carp qw/confess/;
 use Sys::Hostname;
 
-my $DEFAULT_VER = '1.6';
+my $DEFAULT_VER = '1.8';
 my $MINIMUM_VER_FOR_RLIB = 1.5;
 
 class Genome::Model::Tools::Joinx {
