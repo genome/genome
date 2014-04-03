@@ -79,7 +79,7 @@ if(args[5] == "--test") {
 gr<-get_capture_regions()
 RD<-get_read_counts()
 
-ref_analysis_norm <- referencecn.mops(RD[,1], RD[,2], segAlgorithm="DNAcopy")
+ref_analysis_norm <- referencecn.mops(RD[,1], RD[,2], segAlgorithm="fastseg")
 ref_analysis_norm_file = paste(out_dir, "/cnmops.ref_analysis_norm.Robject", sep = "")
 if(length(cnvr(ref_analysis_norm)) != 0) {
   ref_analysis_norm <- cn.mops:::.replaceNames(ref_analysis_norm, colnames(ref_analysis_norm@normalizedData),"tumor")
