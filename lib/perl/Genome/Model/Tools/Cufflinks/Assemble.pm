@@ -41,6 +41,19 @@ class Genome::Model::Tools::Cufflinks::Assemble {
     ],
 };
 
+sub command {
+    my $self = shift;
+    my ($params) = @_;
+
+    my $cmd = $self->cufflinks_path
+        . ' --no-update-check '
+        . $params .' '
+        . $self->input_file
+        . ' > '. $self->assembler_output_file
+        . ' 2>&1';
+
+    return $cmd;
+}
 
 sub execute {
     my $self = shift;
@@ -82,9 +95,9 @@ sub execute {
         # TODO: should we parse the params to see if -q or -v are already defined?
         $params .= ' -q ';
     }
-    my $cmd = $self->cufflinks_path .' '. $params .' '. $self->input_file .' > '. $self->assembler_output_file .' 2>&1';
+
     Genome::Sys->shellcmd(
-        cmd => $cmd,
+        cmd => $self->command($params),
         input_files => [$self->input_file],
         output_files => \@output_files,
     );
