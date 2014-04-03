@@ -12,7 +12,7 @@ if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
 }
 else {
-    plan tests => 3;
+    plan tests => 4;
 }
 
 use_ok('Genome::Model::Tools::Cufflinks::Assemble');
@@ -36,6 +36,7 @@ my $expression = Genome::Model::Tools::Cufflinks::Assemble->create(
    params => '--frag-len-mean=250 --frag-len-std-dev=20 --min-frags-per-transfrag=1',
 );
 isa_ok($expression,'Genome::Model::Tools::Cufflinks::Assemble');
+like($expression->command, qr/--no-update-check/, 'Do not check for updates while running cufflinks');
 ok($expression->execute,'execute command '. $expression->command_name);
 
 # See above comment on comparing expected output files
