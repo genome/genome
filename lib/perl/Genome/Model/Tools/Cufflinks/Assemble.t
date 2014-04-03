@@ -12,7 +12,7 @@ if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
 }
 else {
-    plan tests => 3;
+    plan tests => 4;
 }
 
 use_ok('Genome::Model::Tools::Cufflinks::Assemble');
