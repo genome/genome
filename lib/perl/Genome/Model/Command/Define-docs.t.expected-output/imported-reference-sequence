@@ -10,7 +10,7 @@
     [--version=?] [--model-name=?] [--subject-name=?]
 
 [4mSYNOPSIS[0m
-genome model define imported-reference-sequence --species-name=human --prefix=NCBI --fasta-file=/gscuser/person/fastafile.fasta
+genome model define imported-reference-sequence --species-name=human --prefix=NCBI --fasta-file=/path/to/fastafile.fasta
 
 [4mREQUIRED INPUTS[0m
   [1mfasta-file[0m
