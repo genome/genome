@@ -161,4 +161,9 @@ sub link_result_to_build {
     return $self->SUPER::link_result_to_build($result, "coverage", "coverage_stats");
 }
 
+sub add_metrics_to_build {
+    #override parent method so metrics aren't added
+    return 1;
+}
+
 1;
