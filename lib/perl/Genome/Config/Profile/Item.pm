@@ -45,7 +45,7 @@ __PACKAGE__->add_observer(aspect => 'create', callback => \&_is_created);
 sub file_path {
     my $self = shift;
 
-    if ($self->_is_concrete) {
+    if ($self->is_concrete) {
         return $self->_get_concrete_file_path();
     } else {
         return $self->analysis_menu_item->file_path;
@@ -55,7 +55,7 @@ sub file_path {
 sub concretize {
     my $self = shift;
 
-    return if $self->_is_concrete();
+    return if $self->is_concrete();
 
     my $original_file_path = $self->file_path;
     return $self->_create_allocation_for_file($original_file_path);
@@ -100,7 +100,7 @@ sub _copy_file_to_allocation {
     return $destination_file_path;
 }
 
-sub _is_concrete { return defined(shift->allocation); }
+sub is_concrete { return defined(shift->allocation); }
 
 sub _get_concrete_file_path {
     my $self = shift;

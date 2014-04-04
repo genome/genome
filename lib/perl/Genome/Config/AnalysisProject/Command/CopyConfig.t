@@ -57,7 +57,7 @@ ok($cmd->execute(), 'command executed successfully');
 
 my @newly_created_profile_items = $target_project->config_items;
 is(scalar(@newly_created_profile_items), 2, 'it should copy over both types of config profile items');
-is((grep { $_->_is_concrete } @newly_created_profile_items), 1,
+is((grep { $_->is_concrete } @newly_created_profile_items), 1,
     'one of the items should be concrete');
 is((grep { $_->analysis_menu_item } @newly_created_profile_items), 1,
     'one of the items should be an analysis menu item');

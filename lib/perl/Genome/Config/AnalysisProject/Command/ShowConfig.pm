@@ -56,7 +56,7 @@ sub _format_profile_item {
 
     return sprintf($self->_line_template(100),
         $item->file_path,
-        $self->_format_boolean($item->_is_concrete),
+        $self->_format_boolean($item->is_concrete),
         $self->_format_boolean($item->analysis_menu_item),
         $item->analysis_menu_item ? $item->analysis_menu_item->name : '');
 

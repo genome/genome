@@ -27,13 +27,13 @@ my $profile_item_from_menu_item = Genome::Config::Profile::Item->create(
     analysis_menu_item => $menu_item,
 );
 
-ok(!$profile_item_from_menu_item->_is_concrete, 'it shouldnt start as concrete when made from a menu item');
+ok(!$profile_item_from_menu_item->is_concrete, 'it shouldnt start as concrete when made from a menu item');
 is($menu_item_file, $profile_item_from_menu_item->file_path, 'it should point to the original menu item file');
 is($profile_item_from_menu_item->allocation, undef, 'it should not have an allocation yet');
 
 $profile_item_from_menu_item->concretize();
 
-ok($profile_item_from_menu_item->_is_concrete, 'it should now be concretized');
+ok($profile_item_from_menu_item->is_concrete, 'it should now be concretized');
 ok($profile_item_from_menu_item->allocation, 'it should now have an allocation');
 ok($menu_item_file ne $profile_item_from_menu_item->file_path, 'it should no longer point to the menu item');
 is(Genome::Sys->read_file($profile_item_from_menu_item->file_path), $menu_item_contents, 'the new file should match the menu item');
@@ -47,7 +47,7 @@ my $profile_item_from_file = Genome::Config::Profile::Item->create_from_file_pat
     file_path => $custom_config_file_path,
 );
 
-ok($profile_item_from_file->_is_concrete, 'it should start out as concrete');
+ok($profile_item_from_file->is_concrete, 'it should start out as concrete');
 ok($profile_item_from_file->allocation, 'it should start out with an allocation');
 ok($profile_item_from_file->file_path ne $custom_config_file_path, 'it should not point to the original file');
 is(Genome::Sys->read_file($profile_item_from_file->file_path), $custom_config_file_contents, 'it should copy the original file to the new location');
