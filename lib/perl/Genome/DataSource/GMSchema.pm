@@ -18,15 +18,45 @@ class Genome::DataSource::GMSchema {
     ],
 };
 
-BEGIN {
-    my($name, $path, $suffix) = File::Basename::fileparse($0, '.pm','.t','.pl');
-    my $testdb_dirname = File::Spec->catdir($path, $name) . '/';
+#BEGIN {
+#    my($name, $path, $suffix) = File::Basename::fileparse($0, '.pm','.t','.pl');
+#    $path .= '.testdb';
+#    my $testdb_dirname = File::Spec->catdir($path, $name) . '/';
+#    my $testdb_dirname = $0 . '.testdb/';
+    
     if ($ENV{GENOME_TEST_FILLDB}) {
-        $ENV{UR_TEST_FILLDB} = "dbi:SQLite:dbname=$testdb_dirname";
+#        $ENV{UR_TEST_FILLDB} = "dbi:SQLite:dbname=$testdb_dirname";
+#        $ENV{UR_TEST_FILLDB} = "dbi:Pg:dbname=genometest;host=10.0.108.127;user=genome;password=genome";
+#        Genome::DataSource::GMSchema->alternate_db_dsn( "dbi:Pg:dbname=genometest;host=10.0.108.127;user=genome;password=genome");
+        Genome::DataSource::GMSchema->alternate_db_dsn( "dbi:Pg:dbname=genometest;host=linus146;port=5434;user=genome;password=genome");
     }
     if ($ENV{GENOME_TEST_USEDB}) {
-        $ENV{GENOME_DS_GMSCHEMA_TYPE} = 'UR::DataSource::SQLite';
-        $ENV{GENOME_DS_GMSCHEMA_SERVER} = $testdb_dirname;
+        $ENV{GENOME_DS_GMSCHEMA_TYPE} = 'UR::DataSource::Pg';
+        $ENV{GENOME_DS_GMSCHEMA_SERVER} = 'dbname=genometest;host=10.0.108.127';
+        $ENV{GENOME_DS_GMSCHEMA_LOGIN} = 'genome';
+        $ENV{GENOME_DS_GMSCHEMA_AUTH} = 'genome';
+#        $ENV{GENOME_DS_GMSCHEMA_TYPE} = 'UR::DataSource::SQLite';
+#        $ENV{GENOME_DS_GMSCHEMA_SERVER} = $testdb_dirname;
+    }
+#}
+
+
+{
+    my %table_name_to_class_name_map = (
+        'config.analysis_menu_item' => 'Genome::Config::AnalysisMenu::Item',
+    );
+
+    sub _lookup_class_for_table_name {
+        my($self, $table_name) = @_;
+
+        my $class_name = $table_name_to_class_name_map{$table_name};
+        
+        if ($class_name) {
+            $class_name->class;
+        } else {
+            $class_name = $self->SUPER::_lookup_class_for_table_name($table_name);
+        }
+        return $class_name;
     }
 }
 
