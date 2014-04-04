@@ -34,7 +34,7 @@ EOS
 
 sub bamutil_versions {
     my %BAMUTIL_VERSIONS = (
-        '1.0.11' => File::Spec->join('', 'gscuser', 'ssiebert', 'bamUtil', $BAMUTIL_COMMAND)
+        '1.0.11' => $BAMUTIL_COMMAND . '1.0.11',
     );
     return %BAMUTIL_VERSIONS;
 }
