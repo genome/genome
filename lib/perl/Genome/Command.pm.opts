@@ -13146,6 +13146,27 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>concordance',
+      [
+        'snp-file=s',
+        'files',
+        'bam-file-1=s',
+        'files',
+        'bam-file-2=s',
+        'files',
+        'debug!',
+        undef,
+        'model-id-1=s',
+        'files',
+        'model-id-2=s',
+        'files',
+        'output-file=s',
+        'files',
+        'reference-genome=s',
+        'files',
+        'help!',
+        undef
+      ],
       '>coverage',
       [
         '>add-readcounts',
