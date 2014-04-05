@@ -9,7 +9,7 @@ apipe-test-gene-prediction-eukaryotic: 41f7045d104846ed9096453b3a0510af
 apipe-test-mc16s-454: 135304826
 apipe-test-mc16s-sanger: 133668184
 apipe-test-refalign-germline-short: 4beb0bea46f544409c8c6119b6145359
-apipe-test-reference-alignment-lane-qc: 291da14cab2d494492a9b9bf9f0e71ec
+apipe-test-reference-alignment-lane-qc: 4c04509c4a6e4415ac93bbf30144487f
 apipe-test-reference-alignment: 15e173f891424e259e6c1b1b528a1f52
 apipe-test-rnaseq: b69ba763f378448794555c7c290cb46f
 apipe-test-somatic-validation-sv: fffb30616b1141c69a309b9dc2af9a1e
