@@ -18097,6 +18097,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
         'files',
         'reference-build-id=s',
         'files',
+        'sample-name=s',
+        'files',
         'source=s',
         'files',
         'output=s',
