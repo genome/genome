@@ -191,7 +191,7 @@ subtest "simple alignments of different samples with merge and gatk refine" => s
         known_sites => [$variation_list_build],
     );
     is_deeply(
-        [sort @alignment_results, $merge_result_refine_one_inst_data, $merge_result_refine_two_inst_data, @gatk_results],
+        [sort @alignment_results, @gatk_results],
         [sort @ad4_results],
         'found expected alignment and gatk results'
     );
@@ -243,7 +243,7 @@ subtest "simple alignments of different samples with merge and clip overlap" => 
         bam_source => [$merge_result_refine_one_inst_data, $merge_result_refine_two_inst_data]
     );
     is_deeply(
-        [sort @alignment_results, $merge_result_refine_one_inst_data, $merge_result_refine_two_inst_data, @clip_overlap_results],
+        [sort @alignment_results, @clip_overlap_results],
         [sort @ad5_results],
         'found expected alignment and clip_overlap results'
     );
@@ -300,9 +300,9 @@ subtest "simple alignments of different samples with merge, gatk and clip overla
         bam_source => \@gatk_results,
     );
     is_deeply(
-        [sort @alignment_results, $merge_result_refine_one_inst_data, $merge_result_refine_two_inst_data, @clip_overlap_results, @gatk_results],
+        [sort @alignment_results, @clip_overlap_results],
         [sort @ad6_results],
-        'found expected alignment, gatk and clip_overlap results'
+        'found expected alignment and clip_overlap results'
     );
 };
 
@@ -349,17 +349,14 @@ subtest "simple alignments of different samples with merge, clip overlap and gat
     ok($ad6->execute, 'executed dispatcher for simple alignments of different samples with merge and clip_overlap refine');
     my @ad6_result_ids = $ad6->_result_ids;
     my @ad6_results = Genome::SoftwareResult->get(\@ad6_result_ids);
-    my @clip_overlap_results = Genome::InstrumentData::BamUtil::ClipOverlapResult->get(
-        bam_source => [$merge_result_refine_one_inst_data, $merge_result_refine_two_inst_data]
-    );
     my @gatk_results = Genome::InstrumentData::Gatk::BaseRecalibratorBamResult->get(
         reference_fasta => $ref_refine->fasta_file,
         known_sites => [$variation_list_build],
     );
     is_deeply(
-        [sort @alignment_results, $merge_result_refine_one_inst_data, $merge_result_refine_two_inst_data, @clip_overlap_results, @gatk_results],
+        [sort @alignment_results, @gatk_results],
         [sort @ad6_results],
-        'found expected alignment, clip_overlap and gatk results'
+        'found expected alignment and gatk results'
     );
 };
 

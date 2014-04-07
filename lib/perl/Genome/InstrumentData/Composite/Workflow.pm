@@ -43,7 +43,11 @@ class Genome::InstrumentData::Composite::Workflow {
         },
         refiners => {
             is => 'ArrayRef',
-            doc => 'the refiner strategiers used in the workflow',
+            doc => 'the refiner strategies used in the workflow',
+        },
+        last_refiner => {
+            is => 'Text',
+            doc => 'the last refiner strategy used in the workflow',
         },
     ],
 };
@@ -55,6 +59,7 @@ sub execute {
     die unless $tree;
 
     my ($workflow, $inputs) = $self->_generate_workflow($tree);
+    $DB::single=1;
     $self->_workflow($workflow);
 
     if($self->log_directory) {
@@ -755,7 +760,10 @@ sub _generate_refinement_operations {
         }
     }
 
-    $self->refiners(\@refiners);
+    if (defined (@refiners)) {
+        $self->refiners(\@refiners);
+        $self->last_refiner($refiners[$#refiners]);
+    }
 
     return (\%refinement_operations, \@inputs);
 }
@@ -880,7 +888,7 @@ sub _generate_master_workflow {
 
     if(%$merge_operations) {
         for my $merge_operation (values %$merge_operations) {
-            $self->_wire_merge_operation_to_master_workflow($master_workflow, $block_operation, $merge_operation);
+            $self->_wire_merge_operation_to_master_workflow($master_workflow, $block_operation, $merge_operation, $refinement_operations);
         }
 
         $self->_wire_object_workflows_to_merge_operations($master_workflow, $object_workflows, $merge_operations, $alignment_objects);
@@ -934,20 +942,24 @@ sub _inputs_and_outputs_for_master_workflow {
             $input_properties{$prop}++;
         }
 
-        for my $op (values %$merge_operations) {
-            for my $prop (@{ $op->operation_type->output_properties }) {
-               $output_properties{join('_', $prop, $op->name)}++;
+        unless (%$refinement_operations) {
+            for my $op (values %$merge_operations) {
+                for my $prop (@{ $op->operation_type->output_properties }) {
+                   $output_properties{join('_', $prop, $op->name)}++;
+                }
             }
         }
     }
 
     if(%$refinement_operations) {
-        my @refiners;
         for my $prop ($self->_refinement_workflow_input_properties()) {
             $input_properties{$prop}++;
         }
 
-        for my $op (values %$refinement_operations) {
+        my $last_refiner = $self->last_refiner;
+        my @last_refinement_keys = grep { $_ =~ $last_refiner } keys %$refinement_operations;
+        for my $refinement_key (@last_refinement_keys) {
+            my $op = $refinement_operations->{$refinement_key};
             for my $prop (@{ $op->operation_type->output_properties }) {
                $output_properties{join('_', $prop, $op->name)}++;
             }
@@ -1057,6 +1069,7 @@ sub _wire_merge_operation_to_master_workflow {
     my $master_workflow = shift;
     my $block_operation = shift; #unused by merge operations
     my $merge = shift;
+    my $refinements = shift;
 
     my $master_input_connector = $master_workflow->get_input_connector;
     my $master_output_connector = $master_workflow->get_output_connector;
@@ -1072,13 +1085,15 @@ sub _wire_merge_operation_to_master_workflow {
         );
     }
 
-    for my $property (@{ $merge->operation_type->output_properties }) {
-        $self->_add_link_to_workflow($master_workflow,
-            left_workflow_operation_id => $merge->id,
-            left_property => $property,
-            right_workflow_operation_id => $master_output_connector->id,
-            right_property => 'm_' . join('_', $property, $merge->name),
-        );
+    unless (%$refinements) {
+        for my $property (@{ $merge->operation_type->output_properties }) {
+            $self->_add_link_to_workflow($master_workflow,
+                left_workflow_operation_id => $merge->id,
+                left_property => $property,
+                right_workflow_operation_id => $master_output_connector->id,
+                right_property => 'm_' . join('_', $property, $merge->name),
+            );
+        }
     }
 
     return 1;
@@ -1106,13 +1121,15 @@ sub _wire_refinement_operation_to_master_workflow {
         );
     }
 
-    for my $property (@{ $refinement->operation_type->output_properties }) {
-        $self->_add_link_to_workflow($master_workflow,
-            left_workflow_operation_id => $refinement->id,
-            left_property => $property,
-            right_workflow_operation_id => $master_output_connector->id,
-            right_property => 'm_' . join('_', $property, $refinement->name),
-        );
+    if ($refiner eq $self->last_refiner) {
+        for my $property (@{ $refinement->operation_type->output_properties }) {
+            $self->_add_link_to_workflow($master_workflow,
+                left_workflow_operation_id => $refinement->id,
+                left_property => $property,
+                right_workflow_operation_id => $master_output_connector->id,
+                right_property => 'm_' . join('_', $property, $refinement->name),
+            );
+        }
     }
 
     return 1;
