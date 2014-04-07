@@ -14,6 +14,7 @@ fi
 
 unset WF_USE_FLOW
 unset GENOME_QUERY_POSTGRES
+export GENOME_LOG_USAGE=0
 export UR_DBI_NO_COMMIT=1
 export GE_ENV_NAME="genome-test-env"
 
