@@ -30,6 +30,13 @@ class Genome::Model::Tools::Bed::Convert {
             is_optional => 1,
         },
     ],
+    has_param => [
+        one_based => {
+            is => "Boolean",
+            default => 0,
+            doc => "Generate a one-based bed file (some tools such as bam-readcount want that).",
+        },
+    ],
     has_optional => [
         detector_style_input => {
             is => 'String',
@@ -165,6 +172,9 @@ sub format_line {
     # push - if quality and/or depth fields are missing
     while (@values < 6) {
         push(@values, '-');
+    }
+    if ($self->one_based) {
+        $values[1] += 1;
     }
     return join("\t", @values);
 }
