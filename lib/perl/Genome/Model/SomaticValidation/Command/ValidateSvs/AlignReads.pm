@@ -116,12 +116,12 @@ sub execute {
         my $sample = $i[0]->sample;
         if($sample eq $build->tumor_sample) {
             $self->merged_alignment_result_id($r->id);
-            $self->merged_bam_path($r->merged_alignment_bam_path);
+            $self->merged_bam_path($r->bam_file);
             $r->add_user(label => 'sv_validation_merged_alignment', user => $build);
             Genome::Sys->create_symlink($r->output_dir, $build_alignment_dir . '/tumor');
         } elsif ($sample eq $build->normal_sample) {
             $self->control_merged_alignment_result_id($r->id);
-            $self->control_merged_bam_path($r->merged_alignment_bam_path);
+            $self->control_merged_bam_path($r->bam_file);
             $r->add_user(label => 'sv_validation_control_merged_alignment', user => $build);
             Genome::Sys->create_symlink($r->output_dir, $build_alignment_dir . '/normal');
         } else {

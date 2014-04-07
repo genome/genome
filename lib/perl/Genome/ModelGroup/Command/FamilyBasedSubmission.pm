@@ -83,7 +83,7 @@ sub execute {
         my @results = $build->results;
         for my $result (@results) {
             if ($result->class eq "Genome::InstrumentData::AlignmentResult::Merged") {
-                push @bams, $result->merged_alignment_bam_path;
+                push @bams, $result->bam_file;
             }
         }
         my @base_bam_name = map {basename($_)} @bams;

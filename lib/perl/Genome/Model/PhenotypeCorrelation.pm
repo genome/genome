@@ -615,7 +615,7 @@ sub _find_or_generate_multisample_vcf {
 sub get_snp_list_for_something_close_to_this_result {
     my ($self, $alignment_result) = @_;
     my $return_snp_file;
-    my $bam_path = $alignment_result->merged_alignment_bam_path;
+    my $bam_path = $alignment_result->bam_file;
     my $reference_build_id = $alignment_result->reference_build->id;
 
     # Try to find a snplist that was run with this bam
@@ -640,7 +640,7 @@ sub get_snp_list_for_something_close_to_this_result {
 
     # For every bam you found, look for an existing useable snp list
     for my $alignment_result (@more_alignment_results) {
-        $bam_path = $alignment_result->merged_alignment_bam_path;
+        $bam_path = $alignment_result->bam_file;
         my @results = Genome::Model::Tools::DetectVariants2::Result::Filter->get(
             filter_name => "Genome::Model::Tools::DetectVariants2::Filter::SnpFilter",
             reference_build_id => $reference_build_id,

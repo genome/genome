@@ -675,7 +675,7 @@ sub whole_rmdup_bam_file {
 
     my $merged_alignment = $self->merged_alignment_result;
     if($merged_alignment) {
-        return $merged_alignment->merged_alignment_bam_path;
+        return $merged_alignment->bam_file;
     }
 
     #for BAMs produced prior to merged alignment results
