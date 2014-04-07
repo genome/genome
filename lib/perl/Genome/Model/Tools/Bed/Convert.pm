@@ -12,6 +12,7 @@ my $CURRENT_VERSION = "v2";
 my @COMPATIBLE_PREVIOUS_VERSIONS = ( "v1" );
 
 class Genome::Model::Tools::Bed::Convert {
+    is_abstract => 1,
     is => ['Command'],
     has_input => [
         source => {
