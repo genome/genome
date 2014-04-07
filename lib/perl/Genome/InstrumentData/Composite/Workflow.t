@@ -98,7 +98,7 @@ subtest 'simple alignments' => sub {
 };
 
 subtest 'simple alignments with merge' => sub {
-   my $ad2 = Genome::InstrumentData::Composite::Workflow->create(
+   my $ad = Genome::InstrumentData::Composite::Workflow->create(
         inputs => {
             inst => \@two_instrument_data,
             ref => $ref,
@@ -107,19 +107,20 @@ subtest 'simple alignments with merge' => sub {
         strategy => 'inst aligned to ref using bwa 0.5.9 [-t 4 -q 5::] then merged using picard 1.29 then deduplicated using picard 1.29 api v1',
     );
     isa_ok(
-        $ad2,
+        $ad,
         'Genome::InstrumentData::Composite::Workflow',
         'created dispatcher for simple alignments with merge'
     );
 
-    ok($ad2->execute, 'executed dispatcher for simple alignments with merge');
-    my @ad2_result_ids = $ad2->_result_ids;
-    my @ad2_results = Genome::SoftwareResult->get(\@ad2_result_ids);
-    is_deeply([sort @alignment_result_two_inst_data, $merge_result_two_inst_data], [sort @ad2_results], 'found expected alignment and merge results');
+    ok($ad->execute, 'executed dispatcher for simple alignments with merge');
+    my @ad_result_ids = $ad->_result_ids;
+    my @ad_results = Genome::SoftwareResult->get(\@ad_result_ids);
+    is_deeply([sort @alignment_result_two_inst_data, $merge_result_two_inst_data], [sort @ad_results], 'found expected alignment and merge results');
+    check_result_bam(@ad_results);
 };
 
 subtest "simple alignments of different samples with merge" => sub {
-    my $ad3 = Genome::InstrumentData::Composite::Workflow->create(
+    my $ad = Genome::InstrumentData::Composite::Workflow->create(
         inputs => {
             inst => \@three_instrument_data,
             ref => $ref,
@@ -128,15 +129,16 @@ subtest "simple alignments of different samples with merge" => sub {
         strategy => 'inst aligned to ref using bwa 0.5.9 [-t 4 -q 5::] then merged using picard 1.29 then deduplicated using picard 1.29 api v1',
     );
     isa_ok(
-        $ad3,
+        $ad,
         'Genome::InstrumentData::Composite::Workflow',
         'created dispatcher for simple alignments of different samples with merge'
     );
 
-    ok($ad3->execute, 'executed dispatcher for simple alignments of different samples with merge');
-    my @ad3_result_ids = $ad3->_result_ids;
-    my @ad3_results = Genome::SoftwareResult->get(\@ad3_result_ids);
-    is_deeply([sort @alignment_result_three_inst_data, $merge_result_two_inst_data, $merge_result_one_inst_data], [sort @ad3_results], 'found expected alignment and merge results');
+    ok($ad->execute, 'executed dispatcher for simple alignments of different samples with merge');
+    my @ad_result_ids = $ad->_result_ids;
+    my @ad_results = Genome::SoftwareResult->get(\@ad_result_ids);
+    is_deeply([sort @alignment_result_three_inst_data, $merge_result_two_inst_data, $merge_result_one_inst_data], [sort @ad_results], 'found expected alignment and merge results');
+    check_result_bam(@ad_results);
 };
 
 subtest "simple alignments of different samples with merge and gatk refine" => sub {
@@ -162,7 +164,7 @@ subtest "simple alignments of different samples with merge and gatk refine" => s
     my $variation_list_build = construct_variation_list($tmp_dir);
     ok($variation_list_build, "created ImportedVariationList build");
 
-    my $ad4 = Genome::InstrumentData::Composite::Workflow->create(
+    my $ad = Genome::InstrumentData::Composite::Workflow->create(
         inputs => {
             inst => \@three_instrument_data,
             ref => $ref_refine,
@@ -178,23 +180,24 @@ subtest "simple alignments of different samples with merge and gatk refine" => s
         ',
     );
     isa_ok(
-        $ad4,
+        $ad,
         'Genome::InstrumentData::Composite::Workflow',
         'created dispatcher for simple alignments of different samples with merge and gatk refine'
     );
 
-    ok($ad4->execute, 'executed dispatcher for simple alignments of different samples with merge and gatk refine');
-    my @ad4_result_ids = $ad4->_result_ids;
-    my @ad4_results = Genome::SoftwareResult->get(\@ad4_result_ids);
+    ok($ad->execute, 'executed dispatcher for simple alignments of different samples with merge and gatk refine');
+    my @ad_result_ids = $ad->_result_ids;
+    my @ad_results = Genome::SoftwareResult->get(\@ad_result_ids);
     my @gatk_results = Genome::InstrumentData::Gatk::BaseRecalibratorBamResult->get(
         reference_fasta => $ref_refine->fasta_file,
         known_sites => [$variation_list_build],
     );
     is_deeply(
         [sort @alignment_results, @gatk_results],
-        [sort @ad4_results],
+        [sort @ad_results],
         'found expected alignment and gatk results'
     );
+    check_result_bam(@ad_results);
 };
 
 subtest "simple alignments of different samples with merge and clip overlap" => sub {
@@ -215,7 +218,7 @@ subtest "simple alignments of different samples with merge and clip overlap" => 
     my $variation_list_build = construct_variation_list($tmp_dir);
     ok($variation_list_build, "created ImportedVariationList build");
 
-    my $ad5 = Genome::InstrumentData::Composite::Workflow->create(
+    my $ad = Genome::InstrumentData::Composite::Workflow->create(
         inputs => {
             inst => \@three_instrument_data,
             ref => $ref_refine,
@@ -231,22 +234,23 @@ subtest "simple alignments of different samples with merge and clip overlap" => 
         ',
     );
     isa_ok(
-        $ad5,
+        $ad,
         'Genome::InstrumentData::Composite::Workflow',
         'created dispatcher for simple alignments of different samples with merge and clip_overlap refine'
     );
 
-    ok($ad5->execute, 'executed dispatcher for simple alignments of different samples with merge and clip_overlap refine');
-    my @ad5_result_ids = $ad5->_result_ids;
-    my @ad5_results = Genome::SoftwareResult->get(\@ad5_result_ids);
+    ok($ad->execute, 'executed dispatcher for simple alignments of different samples with merge and clip_overlap refine');
+    my @ad_result_ids = $ad->_result_ids;
+    my @ad_results = Genome::SoftwareResult->get(\@ad_result_ids);
     my @clip_overlap_results = Genome::InstrumentData::BamUtil::ClipOverlapResult->get(
         bam_source => [$merge_result_refine_one_inst_data, $merge_result_refine_two_inst_data]
     );
     is_deeply(
         [sort @alignment_results, @clip_overlap_results],
-        [sort @ad5_results],
+        [sort @ad_results],
         'found expected alignment and clip_overlap results'
     );
+    check_result_bam(@ad_results);
 };
 
 subtest "simple alignments of different samples with merge, gatk and clip overlap" => sub {
@@ -267,7 +271,7 @@ subtest "simple alignments of different samples with merge, gatk and clip overla
     my $variation_list_build = construct_variation_list($tmp_dir);
     ok($variation_list_build, "created ImportedVariationList build");
 
-    my $ad6 = Genome::InstrumentData::Composite::Workflow->create(
+    my $ad = Genome::InstrumentData::Composite::Workflow->create(
         inputs => {
             inst => \@three_instrument_data,
             ref => $ref_refine,
@@ -284,14 +288,14 @@ subtest "simple alignments of different samples with merge, gatk and clip overla
         ',
     );
     isa_ok(
-        $ad6,
+        $ad,
         'Genome::InstrumentData::Composite::Workflow',
         'created dispatcher for simple alignments of different samples with merge and clip_overlap refine'
     );
 
-    ok($ad6->execute, 'executed dispatcher for simple alignments of different samples with merge and clip_overlap refine');
-    my @ad6_result_ids = $ad6->_result_ids;
-    my @ad6_results = Genome::SoftwareResult->get(\@ad6_result_ids);
+    ok($ad->execute, 'executed dispatcher for simple alignments of different samples with merge and clip_overlap refine');
+    my @ad_result_ids = $ad->_result_ids;
+    my @ad_results = Genome::SoftwareResult->get(\@ad_result_ids);
     my @gatk_results = Genome::InstrumentData::Gatk::BaseRecalibratorBamResult->get(
         reference_fasta => $ref_refine->fasta_file,
         known_sites => [$variation_list_build],
@@ -301,9 +305,10 @@ subtest "simple alignments of different samples with merge, gatk and clip overla
     );
     is_deeply(
         [sort @alignment_results, @clip_overlap_results],
-        [sort @ad6_results],
+        [sort @ad_results],
         'found expected alignment and clip_overlap results'
     );
+    check_result_bam(@ad_results);
 };
 
 subtest "simple alignments of different samples with merge, clip overlap and gatk" => sub {
@@ -324,7 +329,7 @@ subtest "simple alignments of different samples with merge, clip overlap and gat
     my $variation_list_build = construct_variation_list($tmp_dir);
     ok($variation_list_build, "created ImportedVariationList build");
 
-    my $ad6 = Genome::InstrumentData::Composite::Workflow->create(
+    my $ad = Genome::InstrumentData::Composite::Workflow->create(
         inputs => {
             inst => \@three_instrument_data,
             ref => $ref_refine,
@@ -341,23 +346,24 @@ subtest "simple alignments of different samples with merge, clip overlap and gat
         ',
     );
     isa_ok(
-        $ad6,
+        $ad,
         'Genome::InstrumentData::Composite::Workflow',
         'created dispatcher for simple alignments of different samples with merge and clip_overlap refine'
     );
 
-    ok($ad6->execute, 'executed dispatcher for simple alignments of different samples with merge and clip_overlap refine');
-    my @ad6_result_ids = $ad6->_result_ids;
-    my @ad6_results = Genome::SoftwareResult->get(\@ad6_result_ids);
+    ok($ad->execute, 'executed dispatcher for simple alignments of different samples with merge and clip_overlap refine');
+    my @ad_result_ids = $ad->_result_ids;
+    my @ad_results = Genome::SoftwareResult->get(\@ad_result_ids);
     my @gatk_results = Genome::InstrumentData::Gatk::BaseRecalibratorBamResult->get(
         reference_fasta => $ref_refine->fasta_file,
         known_sites => [$variation_list_build],
     );
     is_deeply(
         [sort @alignment_results, @gatk_results],
-        [sort @ad6_results],
+        [sort @ad_results],
         'found expected alignment and gatk results'
     );
+    check_result_bam(@ad_results);
 };
 
 
@@ -471,6 +477,15 @@ sub construct_merge_result {
     $merge_result->lookup_hash($merge_result->calculate_lookup_hash());
 
     return $merge_result;
+}
+
+sub check_result_bam {
+    my @results = @_;
+
+    for my $result (@results) {
+        next if ($result->isa("Genome::InstrumentData::AlignmentResult::Bwa"));
+        ok($result->bam_file, "Got a bam file from the " . $result->class . " result");
+    }
 }
 
 done_testing();

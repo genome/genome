@@ -129,7 +129,7 @@ sub create {
     $self->_prepare_staging_directory;
 
     my $bed_file = $self->_dump_bed_file;
-    my $bam_file = $self->alignment_result->merged_alignment_bam_path;
+    my $bam_file = $self->alignment_result->bam_file;
 
     die $self->error_message("Bed File ($bed_file) is missing") unless -s $bed_file;
     die $self->error_message("Bam File ($bam_file) is missing") unless -s $bam_file;
