@@ -12,12 +12,7 @@ use Genome::Utility::Instrumentation qw();
 
 my $command = -e $0 ? join(' ', abs_path($0), @ARGV) : join(' ', $0, @ARGV);
 
-# Could also check UR_DBI_NO_COMMIT but I think checking $is_test and
-# $is_perl_dash_c are more likely to filter out just our tests.  Our tests
-# could generates 100s of rows per minute since they run many separate processes.
-my $is_test = $0 =~ /\.t$/;
-my $is_perl_dash_c = $0 =~ /\.pm$/;
-if (!$is_test && !$is_perl_dash_c) {
+if (!exists $ENV{GENOME_LOG_USAGE} || $ENV{GENOME_LOG_USAGE}) {
     record_usage(
         recorded_at  => 'now',
         hostname     => hostname(),
