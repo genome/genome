@@ -44,13 +44,23 @@ sub _test_file {
     my ($fh, $path) = Genome::Sys->create_temp_file();
 
     for(1..$number_of_mappings) {
-        $fh->printf("%s\t%s\t%s\t%s\t%s\n",
-            Genome::Test::Factory::Sample->setup_object()->id,
-            Genome::Test::Factory::Sample->setup_object()->id,
-            Genome::Model::Tools::DetectVariants2::Result::Manual->__define__()->id,
-            Genome::Model::Tools::DetectVariants2::Result::Manual->__define__()->id,
-            Genome::Model::Tools::DetectVariants2::Result::Manual->__define__()->id
-        );
+        if ($_ % 2 == 0) {
+            $fh->printf("%s\t%s\t%s\t%s\t%s\n",
+                Genome::Test::Factory::Sample->setup_object()->id,
+                Genome::Test::Factory::Sample->setup_object()->id,
+                Genome::Model::Tools::DetectVariants2::Result::Manual->__define__()->id,
+                Genome::Model::Tools::DetectVariants2::Result::Manual->__define__()->id,
+                Genome::Model::Tools::DetectVariants2::Result::Manual->__define__()->id
+            );
+        } else {
+            $fh->printf("%s\t%s\t%s\t%s\t%s\n",
+                Genome::Test::Factory::Sample->setup_object()->name,
+                Genome::Test::Factory::Sample->setup_object()->name,
+                Genome::Model::Tools::DetectVariants2::Result::Manual->__define__()->id,
+                Genome::Model::Tools::DetectVariants2::Result::Manual->__define__()->id,
+                Genome::Model::Tools::DetectVariants2::Result::Manual->__define__()->id
+            );
+        }
     }
 
     $fh->close();

@@ -35,7 +35,7 @@ This command allows you to import subject mapping information for an AnalysisPro
 
 It expects the file to be in a 5 column, tab separated format with the following columns:
 
-tumor_subject_id normal_subject_id snv_variant_list_id indel_variant_list_id sv_variant_list_id
+tumor_subject normal_subject snv_variant_list_id indel_variant_list_id sv_variant_list_id
 
 All columns but tumor_subject_id are optional and can be left blank, though the tab separators must be present.
 This is useful for setting up single-sample validation models.
@@ -62,9 +62,9 @@ sub execute {
         my $mapping = Genome::Config::AnalysisProject::SubjectMapping->create(analysis_project => $self->analysis_project);
 
         for(@subjects) {
-            my $subject_id = $line->{$_};
-            next unless $subject_id;
-            $self->_create_subject($mapping, $_, $subject_id);
+            my $subject_identifier = $line->{$_};
+            next unless $subject_identifier;
+            $self->_create_subject($mapping, $_, $subject_identifier);
         }
 
         for(@inputs) {
@@ -85,10 +85,11 @@ sub _create_subject {
     my $self = shift;
     my $mapping = shift;
     my $label = shift;
-    my $subject_id = shift;
+    my $subject_identifier = shift;
 
-    my $subject = Genome::Subject->get($subject_id);
-    die($self->error_message("Unable to find a subject with ID: %s", $subject_id)) unless $subject_id;
+    my $subject = Genome::Subject->get($subject_identifier);
+    $subject = Genome::Subject->get(name => $subject_identifier) unless $subject;
+    die($self->error_message("Unable to find a subject from identifier: %s", $subject_identifier)) unless $subject_identifier;
     Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
         subject_mapping => $mapping,
         subject_id => $subject,
