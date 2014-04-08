@@ -38,13 +38,18 @@ test_locking(successful => 1,
     lock_directory => $tmp_dir,
     resource_id => $bogus_id,);
 
-test_locking(successful => 0,
-    wait_on_self => 1,
-    message => 'failed lock resource_id '. $bogus_id,
-    lock_directory => $tmp_dir,
-    resource_id => $bogus_id,
-    max_try => 1,
-    block_sleep => 3,);
+{
+    # Override is_my_lock_target so this doesn't carp for trying to lock same
+    # resource twice.  This replaces the old option to wait_on_self.
+    no warnings 'redefine';
+    local *Genome::Sys::Lock::is_my_lock_target = sub { 0 };
+    test_locking(successful => 0,
+        message => 'failed lock resource_id '. $bogus_id,
+        lock_directory => $tmp_dir,
+        resource_id => $bogus_id,
+        max_try => 1,
+        block_sleep => 3,);
+}
 
 ok(Genome::Sys->unlock_resource(
         lock_directory => $tmp_dir,
@@ -58,14 +63,19 @@ my $init_lsf_job_id = $ENV{'LSB_JOBID'};
         message => 'lock resource with bogus lsf_job_id',
         lock_directory => $tmp_dir,
         resource_id => $bogus_id,);
-    test_locking(
-        successful=> 1,
-        wait_on_self => 1,
-        message => 'lock resource with removing invalid lock with bogus lsf_job_id first',
-        lock_directory => $tmp_dir,
-        resource_id => $bogus_id,
-        max_try => 1,
-        block_sleep => 3,);
+    {
+        # Override is_my_lock_target so this doesn't carp for trying to lock same
+        # resource twice.  This replaces the old option to wait_on_self.
+        no warnings 'redefine';
+        local *Genome::Sys::Lock::is_my_lock_target = sub { 0 };
+        test_locking(
+            successful=> 1,
+            message => 'lock resource with removing invalid lock with bogus lsf_job_id first',
+            lock_directory => $tmp_dir,
+            resource_id => $bogus_id,
+            max_try => 1,
+            block_sleep => 3,);
+    }
     ok(Genome::Sys->unlock_resource(
             lock_directory => $tmp_dir,
             resource_id => $bogus_id,
@@ -81,13 +91,18 @@ my $init_lsf_job_id = $ENV{'LSB_JOBID'};
                 lock_directory => $tmp_dir,
                 resource_id => $bogus_id,
             ),'lock resource with real lsf_job_id');
-        ok(!Genome::Sys->lock_resource(
-                lock_directory => $tmp_dir,
-                resource_id => $bogus_id,
-                max_try => 1,
-                block_sleep => 3,
-                wait_on_self => 1,
-            ),'failed lock resource with real lsf_job_id blocking');
+        {
+            # Override is_my_lock_target so this doesn't carp for trying to lock same
+            # resource twice.  This replaces the old option to wait_on_self.
+            no warnings 'redefine';
+            local *Genome::Sys::Lock::is_my_lock_target = sub { 0 };
+            ok(!Genome::Sys->lock_resource(
+                    lock_directory => $tmp_dir,
+                    resource_id => $bogus_id,
+                    max_try => 1,
+                    block_sleep => 3,
+                ),'failed lock resource with real lsf_job_id blocking');
+        }
         ok(Genome::Sys->unlock_resource(
                 lock_directory => $tmp_dir,
                 resource_id => $bogus_id,
@@ -209,9 +224,6 @@ else { # parent thread
 }
 
 ok(Genome::Sys->lock_resource(@common_params, max_try => 2), 'locked temp dir once child process finished');
-ok(Genome::Sys->lock_resource(@common_params, max_try => 2), 'locked temp dir even though I already locked it');
-my ($last_warning) = Genome::Sys::Lock->warning_message;
-is($last_warning, "Looks like I'm waiting on my own lock, forcing unlock...", 'got warning about waiting on own lock');
 
 done_testing();
 

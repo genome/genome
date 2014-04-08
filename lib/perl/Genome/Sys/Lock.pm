@@ -87,7 +87,6 @@ sub _file_based_lock_resource {
     my($resource_lock, $parent_dir)
         = delete @args{'resource_lock','parent_dir'};
 
-    my $wait_on_self = delete $args{wait_on_self} || 0;
     my $basename = File::Basename::basename($resource_lock);
 
     my $block_sleep = delete $args{block_sleep};
@@ -162,10 +161,9 @@ sub _file_based_lock_resource {
             Carp::croak($self->error_message);
         }
 
-        if (not $wait_on_self and $self->is_my_lock_target($target)) {
-            $self->warning_message("Looks like I'm waiting on my own lock, forcing unlock...");
-            $self->unlock_resource(resource_lock => $resource_lock, force => 1);
-            next;
+        if ($self->is_my_lock_target($target)) {
+            $self->error_message("Tried to lock resource more than once: $resource_lock");
+            Carp::croak($self->error_message);
         }
 
         my $target_basename = File::Basename::basename($target);
@@ -273,9 +271,9 @@ sub _new_style_lock {
 
     my $resource_lock = $args{resource_lock};
 
-    if (not $args{wait_on_self} and $self->_is_holding_nessy_lock($resource_lock)) {
-        $self->warning_message("Looks like I'm waiting on my own lock, forcing unlock...");
-        $self->_new_style_release($resource_lock);
+    if ($self->_is_holding_nessy_lock($resource_lock)) {
+        $self->error_message("Tried to lock resource more than once: $resource_lock");
+        Carp::croak($self->error_message);
     }
 
     my $timeout = $self->_new_style_lock_timeout_from_args(%args);
