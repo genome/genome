@@ -45,6 +45,10 @@ class Genome::InstrumentData::Composite::Workflow {
             is => 'ArrayRef',
             doc => 'the refiner strategies used in the workflow',
         },
+        first_refiner => {
+            is => 'Text',
+            doc => 'the first refiner strategy used in the workflow',
+        },
         last_refiner => {
             is => 'Text',
             doc => 'the last refiner strategy used in the workflow',
@@ -762,6 +766,7 @@ sub _generate_refinement_operations {
 
     if (defined (@refiners)) {
         $self->refiners(\@refiners);
+        $self->first_refiner($refiners[0]);
         $self->last_refiner($refiners[$#refiners]);
     }
 
@@ -1143,15 +1148,14 @@ sub _wire_merge_to_refinement_operations {
     my $refiner_names = $self->refiners;
 
     for my $group_key (keys %$merge_operations ) {
-        for my $refiner_name (@$refiner_names) {
-            my $refiner_key = $self->refiner_key($group_key, $refiner_name);
-            $self->_add_link_to_workflow($master_workflow,
-                left_workflow_operation_id => $merge_operations->{$group_key}->id,
-                left_property => 'result_id',
-                right_workflow_operation_id => $refinement_operations->{$refiner_key}->id,
-                right_property => 'input_result_id',
-            );
-        }
+        my $refiner_name = $self->first_refiner;
+        my $refiner_key = $self->refiner_key($group_key, $refiner_name);
+        $self->_add_link_to_workflow($master_workflow,
+            left_workflow_operation_id => $merge_operations->{$group_key}->id,
+            left_property => 'result_id',
+            right_workflow_operation_id => $refinement_operations->{$refiner_key}->id,
+            right_property => 'input_result_id',
+        );
     }
 
     return 1;
