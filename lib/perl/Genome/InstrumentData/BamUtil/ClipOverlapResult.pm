@@ -121,8 +121,12 @@ sub _run_clip_overlap {
         return;
     }
 
-    $self->_validate_results;
-    return 1;
+    if ($self->_validate_results) {
+        return 1;
+    }
+    else {
+        return;
+    }
 }
 
 sub _validate_results {
