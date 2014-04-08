@@ -29,7 +29,7 @@ class Genome::Model::Tools::Sciclone {
         sample_names => {
             is => 'Text',
             doc => "comma separated list - Sample name to be put on graphs",
-            is_optional => 1,
+            is_optional => 0,
             is_input => 1,
         },
 
@@ -182,7 +182,7 @@ class Genome::Model::Tools::Sciclone {
             is_optional => 1,
             default => 1,
         },
-        
+
         plot_size_3d => {
             is => 'Integer',
             doc => 'size in pixels of the square 3d plots',
@@ -193,14 +193,14 @@ class Genome::Model::Tools::Sciclone {
             is => 'Integer',
             doc => 'maximum number of clusters to allow (# of clusters is also initialized to this value)',
             is_optional => 1,
-            default => 10, 
+            default => 10,
         },
         save_image_file => {
             is => 'Text',
             doc => "filename to which the R session will be saved",
             is_optional => 1,
             is_input => 1,
-            is_output => 1            
+            is_output => 1
         }
 
         ],
@@ -324,9 +324,9 @@ sub execute {
     my @sampleNames = split(",",$sample_names);
     my $sampleNames = '"' . join('","',@sampleNames) . '"';
 
-
     #--- clustering command ---
     my $cmd = 'sc = sciClone(vafs=list(' . join(",",@variantVars) . ")";
+
     $cmd = $cmd . ", sampleNames=c(" . $sampleNames . ")";
 
     if(defined($cn_files)){
@@ -344,7 +344,7 @@ sub execute {
 	}
     }
 
-    
+
     if(defined($regions_to_exclude)){
 	my @regFiles =  split(",",$regions_to_exclude);
         my $i=0;
@@ -364,7 +364,7 @@ sub execute {
     if(defined($self->maximum_clusters)){
         $cmd = $cmd . ", maximumClusters=" . $self->maximum_clusters;
     }
- 
+
 
     if(defined($tumor_purities)){
         print "tp: " . $tumor_purities . "\n";
@@ -490,9 +490,9 @@ sub execute {
         if(@sampleNames < 3){
             die("can't do 3d plotting without at least 3 samples")
         }
-        
+
         my @combs = combine(3,@sampleNames);
-        my @lists = map { join ",", @$_ } @combs; 
+        my @lists = map { join ",", @$_ } @combs;
         my $count = 1;
         foreach my $list (@lists){
             my @samp = split(",",$list);
@@ -502,7 +502,7 @@ sub execute {
             print $rfile ")\n";
             $count++;
         }
-        
+
     }
 
     close $rfile;
