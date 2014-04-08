@@ -17635,6 +17635,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
     [
       '>annotation-to-bed',
       [
+        'one-based!',
+        undef,
         'debug!',
         undef,
         'detector-style-input=s',
@@ -17673,6 +17675,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       [
         '>annotation-to-bed',
         [
+          'one-based!',
+          undef,
           'debug!',
           undef,
           'detector-style-input=s',
@@ -17688,6 +17692,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
         ],
         '>gatk-germline-indel-to-bed',
         [
+          'one-based!',
+          undef,
           'debug!',
           undef,
           'detector-style-input=s',
@@ -17703,6 +17709,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
         ],
         '>gatk-germline-indel-unified-genotyper-to-bed',
         [
+          'one-based!',
+          undef,
           'debug!',
           undef,
           'detector-style-input=s',
@@ -17718,6 +17726,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
         ],
         '>gatk-somatic-indel-to-bed',
         [
+          'one-based!',
+          undef,
           'debug!',
           undef,
           'detector-style-input=s',
@@ -17733,6 +17743,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
         ],
         '>maq-to-bed',
         [
+          'one-based!',
+          undef,
           'debug!',
           undef,
           'detector-style-input=s',
@@ -17752,6 +17764,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
           'files',
           'lsf-resource=s',
           'files',
+          'one-based!',
+          undef,
           'debug!',
           undef,
           'detector-style-input=s',
@@ -17777,6 +17791,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
           'files',
           'lsf-resource=s',
           'files',
+          'one-based!',
+          undef,
           'debug!',
           undef,
           'detector-style-input=s',
@@ -17798,6 +17814,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
         ],
         '>samtools-to-bed',
         [
+          'one-based!',
+          undef,
           'debug!',
           undef,
           'detector-style-input=s',
@@ -17813,6 +17831,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
         ],
         '>sniper-to-bed',
         [
+          'one-based!',
+          undef,
           'debug!',
           undef,
           'detector-style-input=s',
@@ -17828,6 +17848,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
         ],
         '>strelka-to-bed',
         [
+          'one-based!',
+          undef,
           'debug!',
           undef,
           'detector-style-input=s',
@@ -17848,6 +17870,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
         ],
         '>varscan-somatic-to-bed',
         [
+          'one-based!',
+          undef,
           'debug!',
           undef,
           'detector-style-input=s',
@@ -17863,6 +17887,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
         ],
         '>varscan-somatic-validation-to-bed',
         [
+          'one-based!',
+          undef,
           'debug!',
           undef,
           'detector-style-input=s',
@@ -17878,6 +17904,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
         ],
         '>varscan-to-bed',
         [
+          'one-based!',
+          undef,
           'debug!',
           undef,
           'detector-style-input=s',
@@ -17898,6 +17926,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       [
         '>annotation-to-bed',
         [
+          'one-based!',
+          undef,
           'debug!',
           undef,
           'detector-style-input=s',
@@ -17913,6 +17943,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
         ],
         '>gatk-germline-snv-to-bed',
         [
+          'one-based!',
+          undef,
           'debug!',
           undef,
           'detector-style-input=s',
@@ -17928,6 +17960,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
         ],
         '>maq-to-bed',
         [
+          'one-based!',
+          undef,
           'debug!',
           undef,
           'detector-style-input=s',
@@ -17943,6 +17977,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
         ],
         '>meth-ratio-to-bed',
         [
+          'one-based!',
+          undef,
           'debug!',
           undef,
           'detector-style-input=s',
@@ -17958,6 +17994,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
         ],
         '>mutect-to-bed',
         [
+          'one-based!',
+          undef,
           'debug!',
           undef,
           'detector-style-input=s',
@@ -17978,6 +18016,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
         ],
         '>rtg-snp-to-bed',
         [
+          'one-based!',
+          undef,
           'debug!',
           undef,
           'detector-style-input=s',
@@ -17993,6 +18033,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
         ],
         '>samtools-to-bed',
         [
+          'one-based!',
+          undef,
           'debug!',
           undef,
           'detector-style-input=s',
@@ -18008,6 +18050,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
         ],
         '>sniper-to-bed',
         [
+          'one-based!',
+          undef,
           'debug!',
           undef,
           'detector-style-input=s',
@@ -18023,6 +18067,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
         ],
         '>strelka-to-bed',
         [
+          'one-based!',
+          undef,
           'debug!',
           undef,
           'detector-style-input=s',
@@ -18043,6 +18089,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
         ],
         '>varscan-somatic-to-bed',
         [
+          'one-based!',
+          undef,
           'debug!',
           undef,
           'detector-style-input=s',
@@ -18058,6 +18106,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
         ],
         '>varscan-somatic-validation-to-bed',
         [
+          'one-based!',
+          undef,
           'debug!',
           undef,
           'detector-style-input=s',
@@ -18073,6 +18123,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
         ],
         '>varscan-to-bed',
         [
+          'one-based!',
+          undef,
           'debug!',
           undef,
           'detector-style-input=s',
@@ -18091,6 +18143,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       ],
       '>vcf-to-bed',
       [
+        'one-based!',
+        undef,
         'debug!',
         undef,
         'detector-style-input=s',
