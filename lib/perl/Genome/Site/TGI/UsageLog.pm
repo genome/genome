@@ -12,17 +12,33 @@ use Genome::Utility::Instrumentation qw();
 
 my $command = -e $0 ? join(' ', abs_path($0), @ARGV) : join(' ', $0, @ARGV);
 
-if (!exists $ENV{GENOME_LOG_USAGE} || $ENV{GENOME_LOG_USAGE}) {
-    record_usage(
-        recorded_at  => 'now',
-        hostname     => hostname(),
-        username     => (getpwuid($<))[0],
-        genome_path  => abs_path($INC{'Genome.pm'}),
-        perl_path    => abs_path($^X),
-        command      => $command,
-        perl5lib     => $ENV{PERL5LIB},
-        git_revision => git_revision(),
-    );
+sub import {
+    if (should_record_usage()) {
+        my $hostname  = hostname();
+        my $is_blade  = $hostname =~ /blade[0-9-]+\.gsc\.wustl\.edu/;
+        my $is_gmt    = index(basename($0), 'gmt')    == 0;
+        my $is_genome = index(basename($0), 'genome') == 0;
+        if (  !$is_blade
+            || $is_blade && ($is_gmt || $is_genome)
+        ) {
+            record_usage(
+                recorded_at  => 'now',
+                hostname     => $hostname,
+                username     => (getpwuid($<))[0],
+                genome_path  => genome_path(),
+                perl_path    => abs_path($^X),
+                command      => $command,
+                perl5lib     => $ENV{PERL5LIB},
+                git_revision => git_revision(),
+            );
+        }
+    }
+}
+
+my $should_record_usage;
+sub should_record_usage {
+    return if $should_record_usage++;
+    return !exists $ENV{GENOME_LOG_USAGE} || $ENV{GENOME_LOG_USAGE};
 }
 
 sub record_usage {
@@ -55,8 +71,16 @@ sub log_dbi {
     return $rv;
 }
 
+sub genome_path {
+    unless ($INC{'Genome.pm'}) {
+        return '';
+    }
+    return abs_path($INC{'Genome.pm'});
+}
+
 sub git_revision {
-    my $genome_path = abs_path($INC{'Genome.pm'});
+    my $genome_path = genome_path();
+    return '' unless $genome_path;
 
     my $work_tree = ($genome_path =~ /^(.*)\/lib\/perl\/Genome.pm$/)[0];
     return '' unless $work_tree;
