@@ -17,7 +17,7 @@ if (!exists $ENV{GENOME_LOG_USAGE} || $ENV{GENOME_LOG_USAGE}) {
         recorded_at  => 'now',
         hostname     => hostname(),
         username     => (getpwuid($<))[0],
-        genome_path  => abs_path($INC{'Genome.pm'}),
+        genome_path  => genome_path(),
         perl_path    => abs_path($^X),
         command      => $command,
         perl5lib     => $ENV{PERL5LIB},
@@ -55,8 +55,16 @@ sub log_dbi {
     return $rv;
 }
 
+sub genome_path {
+    unless ($INC{'Genome.pm'}) {
+        return '';
+    }
+    return abs_path($INC{'Genome.pm'});
+}
+
 sub git_revision {
-    my $genome_path = abs_path($INC{'Genome.pm'});
+    my $genome_path = genome_path();
+    return '' unless $genome_path;
 
     my $work_tree = ($genome_path =~ /^(.*)\/lib\/perl\/Genome.pm$/)[0];
     return '' unless $work_tree;
