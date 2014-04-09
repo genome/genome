@@ -191,6 +191,10 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
               is_optional => 1,
               doc => "expression matching models which should be ignored",
         },
+        allow_imported => {
+              is => 'Boolean',
+              doc => 'Allow imported instrument data to be included',
+        },
    ],
     doc => 'evaluate models/builds for an individual and help create/update a clinseq model that meets requested criteria',
 };
@@ -2206,6 +2210,14 @@ sub check_instrument_data{
   return $samples_with_matching_data;
 }
 
+sub originally_imported_from_bam {
+    my ($instrument_data) = @_;
+    return Genome::InstrumentDataAttribute->get(
+        instrument_data_id => $instrument_data->id,
+        attribute_label    => 'import_format',
+        attribute_value    => 'bam'
+    );
+}
 
 #Take an array of instrument data objects and return an amended array that removes certain instrument data if specified by the user with the --instrument_data_to_exclude parameter
 sub exclude_instrument_data{
@@ -2238,7 +2250,8 @@ sub exclude_instrument_data{
   #TODO:  The following method may miss 'Solexa' instrument data that is imported but is not properly classed as 'Solexa' ...
   my @tmp2;
   foreach my $instrument_data (@instrument_data){
-    next unless ($instrument_data->class eq "Genome::InstrumentData::Solexa");
+    next unless ($instrument_data->class eq "Genome::InstrumentData::Solexa")
+        || ($self->allow_imported && originally_imported_from_bam($instrument_data));
 
     #TODO: Problem with the approach ... Some Solexa data produced here has been duplicated as 'imported data'
     #Its hard to tell the difference between this and real imported data that was not produced here. :(
@@ -2260,7 +2273,9 @@ sub exclude_instrument_data{
   #Now skip instrument data that has an index defined but where that index is defined as 'unknown'
   my @tmp3;
   foreach my $instrument_data (@instrument_data){
-    my $index = $instrument_data->index_sequence;
+    my $index = $instrument_data->can('index_sequence')
+        ?  $instrument_data->index_sequence
+        : undef;
     if ($index){
       next if ($index =~ /unknown/i);
     }
