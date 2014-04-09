@@ -2,6 +2,7 @@ package Genome::Model::Build::RunsDV2;
 
 use strict;
 use warnings FATAL => 'all';
+use Cwd qw(abs_path);
 
 class Genome::Model::Build::RunsDV2 {
     is_abstract => 1,
@@ -9,22 +10,27 @@ class Genome::Model::Build::RunsDV2 {
 
 sub get_detailed_indels_vcf {
     my $self = shift;
-    return File::Spec->join($self->variants_directory, "indels.detailed.vcf.gz");
+    return $self->_get_variant_file("indels.detailed.vcf.gz");
 }
 
 sub get_detailed_snvs_vcf {
     my $self = shift;
-    return File::Spec->join($self->variants_directory, "snvs.detailed.vcf.gz");
+    return $self->_get_variant_file("snvs.detailed.vcf.gz");
 }
 
 sub get_indels_vcf {
     my $self = shift;
-    return File::Spec->join($self->variants_directory, "indels.vcf.gz");
+    return $self->_get_variant_file("indels.vcf.gz");
 }
 
 sub get_snvs_vcf {
     my $self = shift;
-    return File::Spec->join($self->variants_directory, "snvs.vcf.gz");
+    return $self->_get_variant_file("snvs.vcf.gz");
+}
+
+sub _get_variant_file {
+    my ($self, $filename) = @_;
+    return File::Spec->join($self->variants_directory, $filename);
 }
 
 sub variants_directory {
@@ -41,5 +47,29 @@ sub variants_directory {
             return $dir if -d $dir;
         }
         die $self->error_message("Variants directory does not exist at $expected_directory");
+    }
+}
+
+sub get_detailed_indels_vcf_result {
+    my $self = shift;
+    return _get_result_for_file($self->get_detailed_indels_vcf());
+}
+
+sub get_detailed_snvs_vcf_result {
+    my $self = shift;
+    return _get_result_for_file($self->get_detailed_snvs_vcf());
+}
+
+sub _get_result_for_file {
+    my $path = shift;
+    my $allocation = Genome::Disk::Allocation->get_allocation_for_path(abs_path($path));
+    my $candidate = $allocation->owner;
+
+    my $expected_isa = 'Genome::Model::Tools::DetectVariants2::Result::Vcf';
+    if ($candidate->isa($expected_isa)) {
+        return $candidate;
+    } else {
+        die sprintf("The owner (%s) of allocation (%s) for path (%s) isn't a subclass of (%s) as expected.",
+            ref($candidate), $allocation->id, $path, $expected_isa);
     }
 }
