@@ -41,12 +41,20 @@ sub execute {
 
 sub resolve_snv_vcf_result {
     my $self = shift;
-    return $self->build->get_detailed_snvs_vcf_result;
+    my $result = eval {$self->build->get_detailed_snvs_vcf_result};
+    if ($@) {
+        $self->debug_message("No snv result found on build %s", $self->build->id);
+    }
+    return $result;
 }
 
 sub resolve_indel_vcf_result {
     my $self = shift;
-    return $self->build->get_detailed_indels_vcf_result;
+    my $result = $self->build->get_detailed_indels_vcf_result;
+    if ($@) {
+        $self->debug_message("No indel result found on build %s", $self->build->id);
+    }
+    return $result;
 }
 1;
 
