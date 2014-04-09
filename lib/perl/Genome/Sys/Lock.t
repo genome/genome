@@ -207,6 +207,9 @@ my $child_pid = UR::Context::Process->fork;
 if ($child_pid == 0) { # child thread
     print "CHILD: Locking $tmp_dir2/foo...\n";
     my $child_lock = Genome::Sys->lock_resource(@common_params, max_try => 0);
+    unless ($child_lock) {
+        Carp::croak('CHILD: Failed to get lock.');
+    }
     print "CHILD: Sleeping for two seconds...\n";
     sleep(2);
     print "CHILD: Unlocking $tmp_dir2/foo...\n";
