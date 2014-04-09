@@ -18,6 +18,9 @@ my $LOCKING_CLIENT;
 sub lock_resource {
     my ($self,%args) = @_;
 
+    $args{block_sleep} = 60 unless defined $args{block_sleep};
+    $args{max_try} = 7200 unless defined $args{max_try};
+
     @args{'resource_lock', 'parent_dir'} = $self->_resolve_resource_lock_and_parent_dir_for_lock_resource(%args);
 
     $self->_start_locking_client;
@@ -90,9 +93,15 @@ sub _file_based_lock_resource {
     my $basename = File::Basename::basename($resource_lock);
 
     my $block_sleep = delete $args{block_sleep};
-    $block_sleep = 60 unless defined $block_sleep;
+    unless (defined $block_sleep) {
+        croak('block_sleep not defined');
+    }
+
     my $max_try = delete $args{max_try};
-    $max_try = 7200 unless defined $max_try;
+    unless (defined $max_try) {
+        croak('max_try not defined');
+    }
+
     my $wait_announce_interval = delete $args{wait_announce_interval};
     $wait_announce_interval = 0 unless defined $wait_announce_interval;
 
