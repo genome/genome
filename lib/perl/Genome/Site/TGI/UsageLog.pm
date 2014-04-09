@@ -14,16 +14,25 @@ my $command = -e $0 ? join(' ', abs_path($0), @ARGV) : join(' ', $0, @ARGV);
 
 sub import {
     if (should_record_usage()) {
-        record_usage(
-            recorded_at  => 'now',
-            hostname     => hostname(),
-            username     => (getpwuid($<))[0],
-            genome_path  => genome_path(),
-            perl_path    => abs_path($^X),
-            command      => $command,
-            perl5lib     => $ENV{PERL5LIB},
-            git_revision => git_revision(),
-        );
+        my $hostname  = hostname();
+        my $is_blade  = $hostname =~ /blade[0-9-]+\.gsc\.wustl\.edu/;
+        my $is_gmt    = index(basename($0), 'gmt')    == 0;
+        my $is_genome = index(basename($0), 'genome') == 0;
+        if (  !$is_blade
+            || $is_blade && $is_gmt
+            || $is_blade && $is_genome
+        ) {
+            record_usage(
+                recorded_at  => 'now',
+                hostname     => $hostname,
+                username     => (getpwuid($<))[0],
+                genome_path  => genome_path(),
+                perl_path    => abs_path($^X),
+                command      => $command,
+                perl5lib     => $ENV{PERL5LIB},
+                git_revision => git_revision(),
+            );
+        }
     }
 }
 
