@@ -153,6 +153,17 @@ class Genome::Disk::Allocation {
     id_generator => '-uuid',
 };
 
+sub creation_time {
+    my $self = shift;
+    if ($self->__creation_time) {
+        return $self->__creation_time;
+    }
+    # we should probably just backfill creation_time but to avoid uninitialized
+    # value warnings we can set the default here to epoch
+    my $epoch = Date::Format::time2str(UR::Context::date_template(), 0);
+    return $epoch;
+}
+
 our $CREATE_DUMMY_VOLUMES_FOR_TESTING = 1;
 our @PATHS_TO_REMOVE; # Keeps track of paths created when no commit is on
 

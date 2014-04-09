@@ -103,6 +103,7 @@ my %params = (
 my $allocation = Genome::Disk::Allocation->create(%params);
 ok($allocation, 'successfully created test allocation');
 ok($allocation->archive_after_time, 'archive_after_time should be set automatically on creation');
+ok($allocation->creation_time, 'creation_time should have value');
 
 # Try to make another allocation that's a subdir of the first, which should fail
 $params{allocation_path} .= '/subdir';
