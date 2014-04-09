@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::Build::SomaticValidation {
-    is => 'Genome::Model::Build',
+    is => ['Genome::Model::Build', 'Genome::Model::Build::RunsDV2'],
     has_optional => [
         reference_sequence_build => {
             is => 'Genome::Model::Build::ReferenceSequence', via => 'inputs', to => 'value', where => [name => 'reference_sequence_build'],
@@ -289,38 +289,9 @@ sub reference_being_replaced_for_input {
     return;
 }
 
-sub get_detailed_indels_vcf {
-    my $self = shift;
-    my $result = File::Spec->join($self->variants_directory, "indels.detailed.vcf.gz");
-}
-
-sub get_detailed_snvs_vcf {
-    my $self = shift;
-    return File::Spec->join($self->variants_directory, "snvs.detailed.vcf.gz");
-}
-
-sub get_indels_vcf {
-    my $self = shift;
-    return $self->variants_directory . "/indels.vcf.gz";
-}
-
-sub get_snvs_vcf {
-    my $self = shift;
-    return $self->variants_directory . "/snvs.vcf.gz";
-}
-
 sub whole_rmdup_bam_file {
     my $self = shift;
     return $self->tumor_bam;
-}
-
-sub variants_directory {
-    my $self = shift;
-    my $expected_directory = $self->data_directory . '/variants';
-    unless (-d $expected_directory) {
-        die $self->error_message("Variants directory does not exist at $expected_directory");
-    }
-    return $expected_directory;
 }
 
 1;

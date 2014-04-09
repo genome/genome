@@ -7,7 +7,7 @@ use Genome;
 use File::Basename;
 
 class Genome::Model::Build::SomaticVariation {
-    is => 'Genome::Model::Build',
+    is => ['Genome::Model::Build', 'Genome::Model::Build::RunsDV2'],
     has => [
         snv_detection_strategy => {
             is => 'Text',
@@ -413,35 +413,6 @@ sub path_to_individual_output {
         }
     }
     return $answer;
-}
-
-sub get_detailed_indels_vcf {
-    my $self = shift;
-    my $result = File::Spec->join($self->variants_directory, "indels.detailed.vcf.gz");
-}
-
-sub get_detailed_snvs_vcf {
-    my $self = shift;
-    return File::Spec->join($self->variants_directory, "snvs.detailed.vcf.gz");
-}
-
-sub get_indels_vcf {
-    my $self = shift;
-    return File::Spec->join($self->variants_directory, "indels.vcf.gz");
-}
-
-sub get_snvs_vcf {
-    my $self = shift;
-    return File::Spec->join($self->variants_directory, "snvs.vcf.gz");
-}
-
-sub variants_directory {
-    my $self = shift;
-    my $expected_directory = $self->data_directory . '/variants';
-    unless (-d $expected_directory) {
-        die $self->error_message("Variants directory does not exist at $expected_directory");
-    }
-    return $expected_directory;
 }
 
 1;

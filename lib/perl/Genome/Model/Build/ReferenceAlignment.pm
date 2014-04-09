@@ -15,7 +15,7 @@ use Carp;
 use Math::Trig;
 
 class Genome::Model::Build::ReferenceAlignment {
-    is => 'Genome::Model::Build',
+    is => ['Genome::Model::Build', 'Genome::Model::Build::RunsDV2'],
     is_abstract => 1,
     subclassify_by => 'subclass_name',
     has => [
@@ -424,26 +424,6 @@ sub get_alignment_bams {
     return map { $_->alignment_bam_file_paths } $self->get_alignments;
 }
 
-sub get_detailed_indels_vcf {
-    my $self = shift;
-    my $result = File::Spec->join($self->variants_directory, "indels.detailed.vcf.gz");
-}
-
-sub get_detailed_snvs_vcf {
-    my $self = shift;
-    return File::Spec->join($self->variants_directory, "snvs.detailed.vcf.gz");
-}
-
-sub get_indels_vcf {
-    my $self = shift;
-    return $self->variants_directory . "/indels.vcf.gz";
-}
-
-sub get_snvs_vcf {
-    my $self = shift;
-    return $self->variants_directory . "/snvs.vcf.gz";
-}
-
 sub calculate_estimated_kb_usage {
     my $self = shift;
     my $model = $self->model;
@@ -584,22 +564,6 @@ sub filtered_snvs_bed {
     return $self->get_variant_bed_file($name, $ver);
 }
 
-
-sub variants_directory {
-    my $self = shift;
-
-    my $expected_directory = $self->data_directory . '/variants';
-    return $expected_directory if -d $expected_directory;
-
-    #for compatibility with previously existing builds
-    my @dir_names = ('snp_related_metrics', 'sam_snp_related_metrics', 'maq_snp_related_metrics', 'var-scan_snp_related_metrics');
-    for my $dir_name (@dir_names) {
-        my $dir = $self->data_directory . '/' . $dir_name;
-        return $dir if -d $dir;
-    }
-
-    return $expected_directory; #new builds should use current location
-}
 
 sub log_directory {
     my $self = shift;
