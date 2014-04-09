@@ -7,7 +7,7 @@ use Genome;
 
 my $DEFAULT_VER = '0.4';
 
-class Genome::Model::Tools::Sam::Readcount{
+class Genome::Model::Tools::Sam::Readcount {
     is  => 'Command',
     has_optional_input => [
         use_version => {
