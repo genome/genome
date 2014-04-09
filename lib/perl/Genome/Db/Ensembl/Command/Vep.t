@@ -12,33 +12,43 @@ use above "Genome";
 use Genome::Utility::Test qw(command_execute_ok compare_ok);
 use Test::More;
 
-use_ok("Genome::Db::Ensembl::Command::Vep");
+my $pkg = "Genome::Db::Ensembl::Command::Vep";
+use_ok($pkg);
 
-my $INPUT_VERSION = '2';
-my $OUTPUT_VERSION = '4';
-my $input_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Db-Ensembl-Vep';
-my $expected_data_dir = $input_data_dir . '/expected_output';
-my $expected_output_file = $expected_data_dir.'/output.'.$OUTPUT_VERSION;
+my $TEST_VERSION = 3;
+my $test_dir = Genome::Utility::Test->data_dir_ok($pkg, $TEST_VERSION);
 
-my $output_file = Genome::Sys->create_temp_file_path;
-my $cmd_1 = Genome::Db::Ensembl::Command::Vep->create(
-    input_file => $input_data_dir."/input.".$INPUT_VERSION,
-    format => "ensembl",
-    output_file => $output_file,
-    sift => "b",
-    regulatory => 1,
-    plugins => ["Condel\@PLUGIN_DIR\@b\@2"],
-    ensembl_annotation_build_id => "d00a39c84382427fa0efdec3229e8f5f",
-    quiet => 1,
-    hgnc => 1,
-);
+for my $format ('ensembl', 'vcf') {
+    my $input_file = File::Spec->join($test_dir, "input.$format");
+    my $expected_output_file = File::Spec->join($test_dir, "output.$format");
+    my $output_file = Genome::Sys->create_temp_file_path;
 
-isa_ok($cmd_1, 'Genome::Db::Ensembl::Command::Vep');
-Genome::Sys->dump_status_messages(0);
-command_execute_ok($cmd_1,
-    { error_messages => [],
-      status_messages => undef, },
-    'execute');
-ok(-s $output_file, 'output file is non-zero');
-compare_ok($expected_output_file, $output_file, filters => [qr(^## Output produced at.*$), qr(^## Using cache in.*$)]);
+    my %params = (
+        input_file => $input_file,
+        format => $format,
+        output_file => $output_file,
+        sift => "b",
+        regulatory => 1,
+        plugins => ["Condel\@PLUGIN_DIR\@b\@2"],
+        ensembl_annotation_build_id => "d00a39c84382427fa0efdec3229e8f5f",
+        quiet => 1,
+        hgnc => 1,
+    );
+
+    if ($format eq 'vcf') {
+        $params{'vcf'} = 1;
+    }
+
+    my $cmd_1 = Genome::Db::Ensembl::Command::Vep->create(%params);
+
+    isa_ok($cmd_1, 'Genome::Db::Ensembl::Command::Vep');
+    Genome::Sys->dump_status_messages(0);
+    command_execute_ok($cmd_1,
+        { error_messages => [],
+            status_messages => undef, },
+        'execute');
+    ok(-s $output_file, 'output file is non-zero');
+    # if ($format eq 'vcf') { Genome::Sys->copy_file($output_file, $expected_output_file); } # FIXME
+    compare_ok($expected_output_file, $output_file, filters => [qr(^## Output produced at.*$), qr(^## Using cache in.*$)]);
+}
 done_testing();
