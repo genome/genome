@@ -18,10 +18,18 @@ use_ok($pkg);
 my $TEST_VERSION = 3;
 my $test_dir = Genome::Utility::Test->data_dir_ok($pkg, $TEST_VERSION);
 
-for my $format ('ensembl', 'vcf') {
-    my $input_file = File::Spec->join($test_dir, "input.$format");
-    my $expected_output_file = File::Spec->join($test_dir, "output.$format");
+for my $file_type ('ensembl', 'vcf', 'vcf.gz') {
+    my $input_file = File::Spec->join($test_dir, "input.$file_type");
+    my $expected_output_file = File::Spec->join($test_dir, "output.$file_type");
     my $output_file = Genome::Sys->create_temp_file_path;
+
+    # We have different input and output files, but we still tell the tool we are 'vcf'
+    my $format;
+    if ($file_type eq "vcf.gz") {
+        $format = "vcf";
+    } else {
+        $format = $file_type;
+    }
 
     my %params = (
         input_file => $input_file,
@@ -35,7 +43,7 @@ for my $format ('ensembl', 'vcf') {
         hgnc => 1,
     );
 
-    if ($format eq 'vcf') {
+    if ($file_type eq 'vcf' || $file_type eq 'vcf.gz') {
         $params{'vcf'} = 1;
     }
 
@@ -48,7 +56,6 @@ for my $format ('ensembl', 'vcf') {
             status_messages => undef, },
         'execute');
     ok(-s $output_file, 'output file is non-zero');
-    # if ($format eq 'vcf') { Genome::Sys->copy_file($output_file, $expected_output_file); } # FIXME
     compare_ok($expected_output_file, $output_file, filters => [qr(^## Output produced at.*$), qr(^## Using cache in.*$)]);
 }
 done_testing();
