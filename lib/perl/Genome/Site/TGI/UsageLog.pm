@@ -19,8 +19,7 @@ sub import {
         my $is_gmt    = index(basename($0), 'gmt')    == 0;
         my $is_genome = index(basename($0), 'genome') == 0;
         if (  !$is_blade
-            || $is_blade && $is_gmt
-            || $is_blade && $is_genome
+            || $is_blade && ($is_gmt || $is_genome)
         ) {
             record_usage(
                 recorded_at  => 'now',
