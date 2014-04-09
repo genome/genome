@@ -12,7 +12,7 @@ use Genome::Utility::Instrumentation qw();
 
 my $command = -e $0 ? join(' ', abs_path($0), @ARGV) : join(' ', $0, @ARGV);
 
-if (!exists $ENV{GENOME_LOG_USAGE} || $ENV{GENOME_LOG_USAGE}) {
+if (should_record_usage()) {
     record_usage(
         recorded_at  => 'now',
         hostname     => hostname(),
@@ -23,6 +23,10 @@ if (!exists $ENV{GENOME_LOG_USAGE} || $ENV{GENOME_LOG_USAGE}) {
         perl5lib     => $ENV{PERL5LIB},
         git_revision => git_revision(),
     );
+}
+
+sub should_record_usage {
+    return !exists $ENV{GENOME_LOG_USAGE} || $ENV{GENOME_LOG_USAGE};
 }
 
 sub record_usage {
