@@ -18,6 +18,11 @@ class Genome::Model::Tools::Bed::Convert::VcfToBed {
             is_optional => 1,
             doc => "Name of specific sample to extract from VCF.  If not specified, the first sample will be used",
         },
+        remove_filtered_calls => {
+            is => 'Boolean',
+            default => 1,
+            doc => "Do not convert calls with a filtered status",
+        }
     ],
 };
 
@@ -28,10 +33,11 @@ sub process_source {
     my $sample_index = _sample_index_for_name($vcf_reader, $self->sample_name);
 
     while(my $entry = $vcf_reader->next) {
-        #do something intelligent here
-        next if $entry->is_filtered;
-        my $ft = $entry->sample_field($sample_index,"FT");
-        next if(defined $ft and ($ft ne '.' and $ft ne 'PASS'));
+        if ($self->remove_filtered_calls) {
+            next if $entry->is_filtered;
+            my $ft = $entry->sample_field($sample_index,"FT");
+            next if(defined $ft and ($ft ne '.' and $ft ne 'PASS'));
+        }
 
         #ok, we're converting this bad boy!
         my $gt = $entry->genotype_for_sample($sample_index);
