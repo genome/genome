@@ -424,6 +424,16 @@ sub get_alignment_bams {
     return map { $_->alignment_bam_file_paths } $self->get_alignments;
 }
 
+sub get_detailed_indels_vcf {
+    my $self = shift;
+    my $result = File::Spec->join($self->variants_directory, "indels.detailed.vcf.gz");
+}
+
+sub get_detailed_snvs_vcf {
+    my $self = shift;
+    return File::Spec->join($self->variants_directory, "snvs.detailed.vcf.gz");
+}
+
 sub get_indels_vcf {
     my $self = shift;
     return $self->variants_directory . "/indels.vcf.gz";
@@ -573,6 +583,7 @@ sub filtered_snvs_bed {
     }
     return $self->get_variant_bed_file($name, $ver);
 }
+
 
 sub variants_directory {
     my $self = shift;

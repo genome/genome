@@ -289,6 +289,16 @@ sub reference_being_replaced_for_input {
     return;
 }
 
+sub get_detailed_indels_vcf {
+    my $self = shift;
+    my $result = File::Spec->join($self->variants_directory, "indels.detailed.vcf.gz");
+}
+
+sub get_detailed_snvs_vcf {
+    my $self = shift;
+    return File::Spec->join($self->variants_directory, "snvs.detailed.vcf.gz");
+}
+
 sub get_indels_vcf {
     my $self = shift;
     return $self->variants_directory . "/indels.vcf.gz";
