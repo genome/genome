@@ -12,20 +12,24 @@ use Genome::Utility::Instrumentation qw();
 
 my $command = -e $0 ? join(' ', abs_path($0), @ARGV) : join(' ', $0, @ARGV);
 
-if (should_record_usage()) {
-    record_usage(
-        recorded_at  => 'now',
-        hostname     => hostname(),
-        username     => (getpwuid($<))[0],
-        genome_path  => genome_path(),
-        perl_path    => abs_path($^X),
-        command      => $command,
-        perl5lib     => $ENV{PERL5LIB},
-        git_revision => git_revision(),
-    );
+sub import {
+    if (should_record_usage()) {
+        record_usage(
+            recorded_at  => 'now',
+            hostname     => hostname(),
+            username     => (getpwuid($<))[0],
+            genome_path  => genome_path(),
+            perl_path    => abs_path($^X),
+            command      => $command,
+            perl5lib     => $ENV{PERL5LIB},
+            git_revision => git_revision(),
+        );
+    }
 }
 
+my $should_record_usage;
 sub should_record_usage {
+    return if $should_record_usage++;
     return !exists $ENV{GENOME_LOG_USAGE} || $ENV{GENOME_LOG_USAGE};
 }
 
