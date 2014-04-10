@@ -15,6 +15,13 @@ my %SYMLINKS_TO_REMOVE;
 my %NESSY_LOCKS_TO_REMOVE;
 my $LOCKING_CLIENT;
 
+# clear_state() can be used after fork() to get a "clean" lock state.
+sub clear_state {
+    %SYMLINKS_TO_REMOVE = ();
+    %NESSY_LOCKS_TO_REMOVE = ();
+    undef $LOCKING_CLIENT;
+}
+
 sub lock_resource {
     my ($self,%args) = @_;
 

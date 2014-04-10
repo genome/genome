@@ -12,15 +12,18 @@ BEGIN {
 };
 
 use above 'Genome';
+use Carp qw(croak);
 use Data::Dumper;
 use File::Path;
+use File::Slurp;
 use File::Spec;
 use File::Temp;
-use Test::More;
-use POSIX ":sys_wait_h";
-use File::Slurp;
-use Time::HiRes qw(gettimeofday);
+use IO::Handle qw();
 use MIME::Base64;
+use POSIX ":sys_wait_h";
+use Socket qw(AF_UNIX SOCK_STREAM PF_UNSPEC);
+use Test::More;
+use Time::HiRes qw(gettimeofday);
 
 require_ok('Genome::Sys::Lock');
 
@@ -263,4 +266,71 @@ sub print_event {
 
     print $fh $tp, "\n";
     print $tp, "\n";
+}
+
+sub fork_lock_resource {
+    my %args = @_;
+
+    socketpair(my $CHILD, my $PARENT, AF_UNIX, SOCK_STREAM, PF_UNSPEC)
+        or die "socketpair: $!";
+
+    $CHILD->autoflush(1);
+    $PARENT->autoflush(1);
+
+    my $pid = UR::Context::Process->fork();
+    if ($pid) {
+        close $PARENT;
+        waitfor($CHILD, 'READY');
+        $CHILD->say('LOCK');
+        my $lock = getline($CHILD);
+        $CHILD->say('ACK');
+
+        close $CHILD;
+        waitpid($pid, 0);
+
+        return $lock;
+    } else {
+        close $CHILD;
+        Genome::Sys::Lock->clear_state();
+        $PARENT->say('READY');
+
+        waitfor($PARENT, 'LOCK');
+        my $lock = Genome::Sys::Lock->lock_resource(%args);
+        $PARENT->say($lock);
+
+        waitfor($PARENT, 'ACK');
+        if ($lock) {
+            Genome::Sys::Lock->unlock_resource(resource_lock => $lock);
+        }
+        close $PARENT;
+        exit(0);
+    }
+}
+
+sub getline {
+    my $handle = shift;
+    unless ($handle) {
+        croak('handle required');
+    }
+    my $line = <$handle>;
+    chomp $line;
+    return $line;
+}
+
+sub waitfor {
+    my ($handle, $message) = @_;
+    unless ($handle) {
+        croak('handle required');
+    }
+    unless (defined $message) {
+        croak('message required');
+    }
+    my $line = getline($handle);
+    unless ($line) {
+        croak("empty message");
+    }
+    unless ($line eq $message) {
+        croak("unexpected message: $line");
+    }
+    return 1;
 }
