@@ -113,6 +113,8 @@ for my $child (1...$children) {
     if ($pid = UR::Context::Process->fork()) {
         push @pids, $pid;
     } else {
+        Genome::Sys::Lock->clear_state();
+
         my $output_offset = $child;
         my $tempdir = $base_dir;
         my $output_file = $tempdir . "/" . $output_offset;
@@ -191,6 +193,8 @@ my @common_params = (lock_directory => $tmp_dir2, resource_id => "foo", block_sl
 my $child_sleep = Genome::Sys::Lock->min_timeout() + 2;
 my $child_pid = UR::Context::Process->fork;
 if ($child_pid == 0) { # child thread
+    Genome::Sys::Lock->clear_state();
+
     print "CHILD: Locking $tmp_dir2/foo...\n";
     my $child_lock = Genome::Sys->lock_resource(@common_params, max_try => 0);
     unless ($child_lock) {
