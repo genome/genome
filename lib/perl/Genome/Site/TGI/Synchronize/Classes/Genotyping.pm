@@ -97,7 +97,7 @@ sub create_in_genome {
     my $genome_object = $genome_class->create(%params); 
     return if not $genome_object;
 
-    my $new_genotype_file = eval{ Genome::InstrumentData::Microarray->update_genotype_file($genome_object, $genotype_file); };
+    my $new_genotype_file = Genome::InstrumentData::Microarray->update_genotype_file($genome_object, $genotype_file);
     if ( not $new_genotype_file ) {
         Carp::confess "$@\nFailed to update genotype_file: $genotype_file on instrument data: ".$genome_object->id;
     }

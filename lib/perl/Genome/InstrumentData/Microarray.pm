@@ -132,7 +132,7 @@ sub _copy_genotype_file {
     # resize the allocation based on what is stored there.
     my $realloc = eval{ $disk_allocation->reallocate(allow_reallocate_with_move => 1); };
     if (not $realloc) {
-        die $self->error_message('Failed to reallocate instrument data ('.$disk_allocation->owner_id.')');
+        $self->status_message('Failed to reallocate instrument data ('.$disk_allocation->owner_id.'), continuing...');
     }
 
     return $new_genotype_file;
