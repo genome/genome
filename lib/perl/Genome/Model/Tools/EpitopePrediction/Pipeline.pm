@@ -110,18 +110,31 @@ sub _validate_inputs {
     }
 
     if (defined($self->somatic_variation_build)) {
-        $self->input_tsv_file(
-            File::Spec->join(
+        if (defined($self->input_tsv_file)) {
+            die $self->error_message("Custom tsv file cannot be used in combination with somatic variation build");
+        }
+        else {
+            my $tsv_file = File::Spec->join(
                 $self->somatic_variation_build->data_directory,
                 'effects',
                 'snvs.hq.tier1.v1.annotated.top.header'
-            )
-        );
-        $self->sample_name($self->somatic_variation_build->subject_name);
+            );
+            $self->status_message("Somatic variation build given. Setting input_tsv_file to $tsv_file");
+            $self->input_tsv_file($tsv_file);
+        }
+
+        if (defined($self->sample_name)) {
+            die $self->error_message("Custom sample name cannot be used in combination with somatic variation build");
+        }
+        else {
+            my $sample_name = $self->somatic_variation_build->subject_name;
+            $self->status_message("Somatic variation build given. Setting sample name to $sample_name");
+            $self->sample_name($sample_name);
+        }
     }
     else {
-        unless (defined($self->sample_name)) {
-            die $self->error_message("Sample name must be defined if no somatic variation build is given")
+        unless (defined($self->sample_name) && defined($self->input_tsv_file)) {
+            die $self->error_message("Sample name and input tsv file must both be defined if no somatic variation build is given")
         }
     }
 
