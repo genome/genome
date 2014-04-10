@@ -992,9 +992,9 @@ sub execute {
                   $key = $key . "\t" . $comp[5] . "\t" . $comp[6];
                   print STDERR $key . "\n";
                   if($get_tumor_only){
-		      $counts{$key} = join("\t",($F[27]-$F[21], $F[21], $F[28]));
+		      $counts{$key} = join("\t",($F[27]-$F[21], $F[21], $F[28]*100));
 		  }else {
-		      $counts{$key} = join("\t",($F[22]-$F[11], $F[11], $F[23], $F[27]-$F[21], $F[21], $F[28]));
+		      $counts{$key} = join("\t",($F[22]-$F[11], $F[11], $F[23]*100, $F[27]-$F[21], $F[21], $F[28]*100));
 		  }
 
               }
