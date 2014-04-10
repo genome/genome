@@ -46,8 +46,8 @@ sub variants_directory {
             my $dir = File::Spec->join($self->data_directory, $dir_name);
             return $dir if -d $dir;
         }
-        die $self->error_message("Variants directory does not exist at $expected_directory");
     }
+    return $expected_directory;
 }
 
 sub get_detailed_indels_vcf_result {
