@@ -29,8 +29,7 @@ sub shortcut {
     $self->debug_message('Attempting to shortcut...');
 
     my $result_class = 'Genome::InstrumentData::BamUtil::ClipOverlapResult';
-    my %params = $self->_params_for_result;
-    my $result = $result_class->get_with_lock(%params);
+    my $result = $result_class->get_with_lock($self->_params_for_result);
 
     if ( not $result ) {
         $self->debug_message('Failed to find clip overlap result, cannot shortcut!');

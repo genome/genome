@@ -53,31 +53,17 @@ sub bsub_rusage {
     return "-R 'select[model!=Opteron250 && type==LINUX64] span[hosts=1] rusage[tmp=90000:mem=16000]' -M 16000000";
 }
 
-# sub shortcut {
-    # my $self = shift;
+sub shortcut {
+    my $self = shift;
 
-    # #try to get using the lock in order to wait here in shortcut if another process is creating this alignment result
-    # my $result = $self->_process_merged_alignment('get_with_lock');
-    # unless($result) {
-        # $self->debug_message('No existing alignment found.');
-        # return;
-    # }
-
-    # $self->debug_message('Using existing alignment ' . $result->__display_name__);
-
-    # my $refiner_result = $self->_process_refinement('shortcut', $result);
-    # unless($refiner_result) {
-        # $self->debug_message('No existing refinement found.');
-        # return;
-    # }
-
-    # return ref($refiner_result)? $refiner_result : $result;
-# }
+    #try to get using the lock in order to wait here in shortcut if another process is creating this alignment result
+    return $self->_process_refinement('shortcut');
+}
 
 sub execute {
     my $self = shift;
 
-    my $refiner_result = $self->_process_refinement('execute', $self->input_result);
+    my $refiner_result = $self->_process_refinement('execute');
     unless($refiner_result) {
         $self->error_message('Failed to generate refinement.');
         die $self->error_message;
@@ -89,25 +75,15 @@ sub execute {
 sub _process_refinement {
     my $self = shift;
     my $mode = shift;
-    my $merged_result = shift;
 
     unless($self->refiner_name) {
         return 1;
     }
 
-    my @known_sites_ids = $self->refiner_known_sites_ids;
-    my @known_sites = Genome::Model::Build::ImportedVariationList->get(id => \@known_sites_ids);
-    my %params = (
-        version => $self->refiner_version,
-        params => $self->refiner_params,
-        known_sites => \@known_sites,
-        bam_source => $merged_result
-    );
-
     my $cmd_class_name = $self->_refiner_for_name($self->refiner_name);
-    my $cmd = $cmd_class_name->create(%params);
+    my $cmd = $cmd_class_name->create($self->_params);
     if ( not $cmd ) {
-        $self->error_message("Failed to create refiner command $cmd_class_name with params ".Data::Dumper::Dumper(\%params));
+        $self->error_message("Failed to create refiner command $cmd_class_name with params ".Data::Dumper::Dumper({$self->_params}));
         return;
     }
     my $result = eval { $cmd->$mode; };
@@ -126,6 +102,20 @@ sub _refiner_for_name {
 
     $name =~ s/-/_/g;
     return 'Genome::InstrumentData::Command::RefineReads::' . Genome::Utility::Text::string_to_camel_case($name);
+}
+
+sub _params {
+    my $self = shift;
+
+    my @known_sites_ids = $self->refiner_known_sites_ids;
+    my @known_sites = Genome::Model::Build::ImportedVariationList->get(id => \@known_sites_ids);
+
+    return  (
+        version => $self->refiner_version,
+        params => $self->refiner_params,
+        known_sites => \@known_sites,
+        bam_source => $self->input_result,
+    );
 }
 
 1;
