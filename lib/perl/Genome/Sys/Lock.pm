@@ -244,7 +244,7 @@ END_CONTENT
                         $self->status_message('Sleeping for one hour...');
                         sleep 60 * 60;
                  }
-                     $self->unlock_resource(resource_lock => $resource_lock, force => 1);
+                     $self->_file_based_unlock_resource(resource_lock => $resource_lock, force => 1);
                      #maybe warn here before stealing the lock...
                }
            }
