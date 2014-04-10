@@ -132,9 +132,13 @@ for my $child (1...$children) {
 
         my $fh = new IO::File(">>$output_file");
 
+        my $lock_hold_time = 2;
+        my $block_sleep = 1;
+        my $max_try = 2 * int($lock_hold_time / $block_sleep + 1) * $children;
         my $lock = Genome::Sys->lock_resource(
             resource_lock => $resource,
-            block_sleep   => 1,
+            block_sleep   => $block_sleep,
+            max_try       => $max_try,
             wait_announce_interval => 30,
         );
         unless ($lock) {
@@ -148,7 +152,7 @@ for my $child (1...$children) {
         #someone else has given up the lock, but before it had a chance to report that it did.
         select(undef, undef, undef, 0.50);
         print_event($fh, "LOCK_SUCCESS", "Successfully got a lock" );
-        sleep 2;
+        sleep $lock_hold_time;
 
         unless (Genome::Sys->unlock_resource(resource_lock => $resource)) {
             print_event($fh, "UNLOCK_FAIL", "Failed to release a lock" );
