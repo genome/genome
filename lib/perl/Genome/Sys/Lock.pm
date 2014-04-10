@@ -97,6 +97,12 @@ sub _file_based_lock_resource {
 
     my($resource_lock, $parent_dir)
         = delete @args{'resource_lock','parent_dir'};
+    unless ($resource_lock) {
+        croak('resource_lock not set');
+    }
+    unless ($parent_dir) {
+        croak('parent_dir not set');
+    }
 
     my $basename = File::Basename::basename($resource_lock);
 
@@ -405,6 +411,9 @@ sub _file_based_unlock_resource {
     my($self, %args) = @_;
 
     my $resource_lock = delete $args{resource_lock};
+    unless ($resource_lock) {
+        carp('resource_lock is not set');
+    }
     my $force = delete $args{force};
 
     my $target = readlink($resource_lock);
