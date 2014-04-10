@@ -239,6 +239,20 @@ sub test_locking_forked {
 }
 
 sub fork_lock_resource {
+    my $sub = sub { Genome::Sys::Lock->lock_resource(@_) };
+    my $undo = sub { Genome::Sys::Lock->unlock_resource(@_) };
+    return fork_to_lock($sub, $undo, @_);
+}
+
+sub fork_to_lock {
+    my $sub = shift;
+    unless ($sub) {
+        croak('sub is not set');
+    }
+    my $undo = shift;
+    unless ($undo) {
+        croak('undo is not set');
+    }
     my %args = @_;
 
     socketpair(my $CHILD, my $PARENT, AF_UNIX, SOCK_STREAM, PF_UNSPEC)
@@ -265,12 +279,12 @@ sub fork_lock_resource {
         $PARENT->say('READY');
 
         waitfor($PARENT, 'LOCK');
-        my $lock = Genome::Sys::Lock->lock_resource(%args);
+        my $lock = $sub->(%args);
         $PARENT->say($lock);
 
         waitfor($PARENT, 'ACK');
         if ($lock) {
-            Genome::Sys::Lock->unlock_resource(resource_lock => $lock);
+            $undo->(resource_lock => $lock);
         }
         close $PARENT;
         exit(0);
