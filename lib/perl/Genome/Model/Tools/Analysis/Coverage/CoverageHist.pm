@@ -39,6 +39,11 @@ class Genome::Model::Tools::Analysis::Coverage::CoverageHist{
 	    doc => 'path to refcov file to use for input',
         },
 
+        output_coverage_stats_file => {
+            is => 'String',
+	    is_optional => 1,
+	    doc => 'File into which mean and median depth values will be output',
+        },
         ]
 };
 
@@ -71,7 +76,7 @@ sub execute {
         my @a = glob("$dir/reference_coverage/wingspan_0/*_STATS.tsv");
         if(@a){
             push(@covs, $a[0]);
-            push(@headers, "");
+            push(@headers, "Sample");
         }
 
 
@@ -146,10 +151,22 @@ sub execute {
         print $rfile 'hist(a$V6, breaks=seq(0,max(a$V6)+10,10),' . "col=\"darkgreen\",main=\"$headers[$i] Coverage of Target Regions\", ylab=\"Number of regions\", xlab=\"depth of coverage\")\n";
         print $rfile 'hist(a$V6, breaks=seq(0,max(a$V6)+10,10),' . "col=\"darkgreen\",main=\"$headers[$i] Coverage of Target Regions\", ylab=\"Number of regions\", xlab=\"depth of coverage\"," . 'xlim=c(0, sort(a$V6)[round(length(a$V6)*0.99)]))' . "\n";
         print $rfile "mtext(\"zoom to 99% of regions\")\n";
+
+        if(defined($self->output_coverage_stats_file)){
+            print $rfile 'write.table(data.frame(sample="' . $headers[$i] . '", median_coverage=median(a$V6), mean_coverage=mean(a$V6)), file="' . $self->output_coverage_stats_file . '", sep="\t", quote=F, row.names=F';
+            if($i>0){
+                print $rfile ', col.names=F, append=TRUE)' . "\n";
+            } else {
+                print $rfile ')' . "\n";
+            }
+        }
+        
         print $rfile 'print(paste("Median Coverage:",median(a$V6)))' . "\n";
         print $rfile 'print(paste("Mean Coverage:",mean(a$V6)))' . "\n";
-
     }
+
+
+
     print $rfile "dev.off()\n";
     close($rfile);
 
