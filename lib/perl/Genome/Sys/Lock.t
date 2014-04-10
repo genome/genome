@@ -56,18 +56,29 @@ my $init_lsf_job_id = $ENV{'LSB_JOBID'};
 {
     local $ENV{'LSB_JOBID'};
     $ENV{'LSB_JOBID'} = 1;
-    test_locking(successful => 1,
-        message => 'lock resource with bogus lsf_job_id',
-        lock_directory => $tmp_dir,
-        resource_id => $bogus_id,);
-
-    test_locking_forked(
-        successful=> 1,
-        message => 'lock resource with removing invalid lock with bogus lsf_job_id first',
+    my ($resource_lock, $parent_dir) = Genome::Sys::Lock->_resolve_resource_lock_and_parent_dir_for_lock_resource(
         lock_directory => $tmp_dir,
         resource_id => $bogus_id,
+    );
+    my $lock = Genome::Sys::Lock->_file_based_lock_resource(
+        resource_lock => $resource_lock,
+        parent_dir => $parent_dir,
         max_try => 1,
-        block_sleep => 3,);
+        block_sleep => 3,
+        wait_announce_interval => 0,
+    );
+    ok($lock, 'lock resource with bogus lsf_job_id');
+
+    $lock = fork_to_lock(
+        sub { Genome::Sys::Lock->_file_based_lock_resource(@_) },
+        sub { Genome::Sys::Lock->_file_based_unlock_resource(@_) },
+        resource_lock => $resource_lock,
+        parent_dir => $parent_dir,
+        max_try => 1,
+        block_sleep => 3,
+        wait_announce_interval => 0,
+    );
+    ok($lock, 'lock resource with removing invalid lock with bogus lsf_job_id first');
 
 # TODO: add skip test but if we are on a blade, lets see that the locking works correctly
 # Above the test is that old bogus locks can get removed when the lsf_job_id no longer exists
