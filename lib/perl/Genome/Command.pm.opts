@@ -6148,6 +6148,8 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'ignore-models-matching=s',
         'files',
+        'allow-imported!',
+        undef,
         'ref-align-pp=s',
         undef,
         'wgs-somatic-variation-pp=s',
@@ -28994,6 +28996,8 @@ $Genome::Command::OPTS_SPEC = [
         '>vcf-to-bed',
         [
           'one-based!',
+          undef,
+          'remove-filtered-calls!',
           undef,
           'debug!',
           undef,
