@@ -81,7 +81,7 @@ my $merged_alignment_result = Genome::InstrumentData::AlignmentResult::Merged->c
 isa_ok($merged_alignment_result, 'Genome::InstrumentData::AlignmentResult::Merged', 'produced merged alignment result');
 
 my $expected_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-AlignmentResult-Merged/expected';
-my $diff = Genome::Sys->diff_file_vs_file($merged_alignment_result->merged_alignment_bam_path, join('/', $expected_dir, '-120573001.bam'));
+my $diff = Genome::Sys->diff_file_vs_file($merged_alignment_result->bam_file, join('/', $expected_dir, '-120573001.bam'));
 ok(!$diff, 'merged bam matches expected result')
     or diag("diff:\n". $diff);
 
@@ -107,7 +107,7 @@ my $filtered_alignment_result = Genome::InstrumentData::AlignmentResult::Merged-
 isa_ok($filtered_alignment_result, 'Genome::InstrumentData::AlignmentResult::Merged', 'produced merged alignment result with filter applied');
 
 #same expected files since we faked the alignment results to use the same data
-my $filtered_diff = Genome::Sys->diff_file_vs_file($filtered_alignment_result->merged_alignment_bam_path, join('/', $expected_dir, '-120573001.bam'));
+my $filtered_diff = Genome::Sys->diff_file_vs_file($filtered_alignment_result->bam_file, join('/', $expected_dir, '-120573001.bam'));
 ok(!$filtered_diff, 'merged bam matches expected result')
     or diag("diff:\n". $filtered_diff);
 

@@ -79,7 +79,7 @@ sub execute {
 
     for my $r (@results) {
         $self->merged_alignment_result_id($r->id);
-        $self->merged_bam_path($r->merged_alignment_bam_path);
+        $self->merged_bam_path($r->bam_file);
         $r->add_user(label => 'merged_alignment', user => $build);
         Genome::Sys->create_symlink($r->output_dir, $build_alignment_dir);
 

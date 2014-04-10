@@ -277,3 +277,6 @@
 [submodule "verifyBamId"]
 	path = vendor/verifyBamId
 	url = https://github.com/genome-vendor/verifyBamId.git
+[submodule "vendor/bamUtil"]
+	path = vendor/bamUtil
+	url = https://github.com/genome-vendor/bamUtil.git

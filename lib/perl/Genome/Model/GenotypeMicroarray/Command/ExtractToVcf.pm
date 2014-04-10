@@ -83,11 +83,8 @@ sub execute {
     my $resolve_source = $self->resolve_source;
     return if not $resolve_source;
 
-    return 1 if $self->_vcf_is_requested_and_available;
-
     my $filters = $self->_create_filters;
     return if not $filters;
-
     my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->build_reader(
         source => $self->source,
         variation_list_build => $self->variation_list_build,
@@ -199,23 +196,9 @@ sub _resolve_source_for_sample {
         return;
     }
 
-    # Maybe there is a build already
-    my $build;
-    for my $instrument_data ( @filtered_instrument_data ) {
-        $build = $self->_last_succeeded_build_from_model_for_instrument_data($instrument_data);
-        last if $build;
-    }
-
-    if ( $build ) {
-        $self->source($build);
-        $self->source_type('build');
-        $self->sample( $build->subject);
-    }
-    else {
-        $self->source($filtered_instrument_data[$#filtered_instrument_data]);
-        $self->source_type('instrument_data');
-        $self->sample( $filtered_instrument_data[$#filtered_instrument_data]->sample );
-    }
+    $self->source($filtered_instrument_data[$#filtered_instrument_data]);
+    $self->source_type('instrument_data');
+    $self->sample( $filtered_instrument_data[$#filtered_instrument_data]->sample );
 
     return 1;
 }

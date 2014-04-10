@@ -110,7 +110,7 @@ sub _fetch_control_snv_result {
     return unless $build->model->loh_snv_detection_strategy;
 
     my $alignment_result = $build->control_merged_alignment_result;
-    my $bam = $alignment_result->merged_alignment_bam_path;
+    my $bam = $alignment_result->bam_file;
 
     my $dir = $build->data_directory .'/control_variants_for_loh';
     Genome::Sys->create_directory($dir);

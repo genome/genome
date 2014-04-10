@@ -305,13 +305,13 @@ sub generate_glfs {
     my (@outputs, @inputs);
     $inputs{ref_fasta} = $alignments[0]->reference_build->full_consensus_path("fa");
 
-#    my $bam_path = $a->merged_alignment_bam_path;
+#    my $bam_path = $a->bam_file;
     for (my $i =0; $i < scalar(@alignments); $i++) {
         $DB::single=1;
         my @instrument_data = $alignments[$i]->instrument_data;
         my $output_name = $self->output_directory . "/" . $instrument_data[0]->sample_name . ".glf";
         push @outputs, $output_name;
-        $inputs{"bam_$i"}=$alignments[$i]->merged_alignment_bam_path;
+        $inputs{"bam_$i"}=$alignments[$i]->bam_file;
         $inputs{"output_glf_$i"}=$output_name;
         push @inputs, ("bam_$i", "output_glf_$i");
     }

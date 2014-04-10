@@ -567,7 +567,7 @@ sub get_all_sample_names_and_bam_paths {
         for my $alignment_result ($self->alignment_results) {
             my $sample_name = $self->find_sample_name_for_alignment_result($alignment_result);
             push @sample_names, $sample_name;
-            push @bam_paths, $alignment_result->merged_alignment_bam_path;
+            push @bam_paths, $alignment_result->bam_file;
         }
     } else {
         push @bam_paths, $self->aligned_reads_input;
@@ -598,7 +598,7 @@ sub add_per_bam_params_to_input {
         if (-f $bam_path) {
             $inputs{"bam_${sample_name}"} = $bam_path;
         } else {
-            die "merged_alignment_bam_path does not exist: $bam_path";
+            die "bam_file does not exist: $bam_path";
         }
         $inputs{"readcounts_${sample_name}"} = $readcount_file;
     }

@@ -38,6 +38,6 @@ $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->build_
     source => Genome::Model::GenotypeMicroarray::Test->example_build,
 );
 ok($reader, 'create reader');
-isa_ok($reader, 'Genome::File::Vcf::Reader');
+isa_ok($reader, 'Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderForInstDataWithAnnotation');
 
 done_testing();

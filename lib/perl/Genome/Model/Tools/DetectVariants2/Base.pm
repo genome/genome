@@ -198,7 +198,7 @@ sub _verify_inputs {
 
     my $errors = 0;
     for my $result (@alignment_results,@control_alignment_results) { 
-        my $bam = $result->merged_alignment_bam_path; 
+        my $bam = $result->bam_file; 
         unless (Genome::Sys->validate_file_for_reading($bam)) {
             $self->error_message("BAM file unreadable: $bam for " . $result->__display_name__);
             $errors++;

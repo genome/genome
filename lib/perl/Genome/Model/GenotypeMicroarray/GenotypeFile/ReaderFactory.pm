@@ -57,13 +57,6 @@ sub _build_reader_for_instrument_data {
 sub _build_reader_for_build {
     my ($class, $build) = @_;
 
-    # VCF
-    my $genotype_file = $build->original_genotype_vcf_file_path;
-    if ( -s $genotype_file ) {
-        $current_sample_name = $build->subject->name;
-        return Genome::File::Vcf::Reader->new($genotype_file);
-    }
-
     # Use inst data
     my $instrument_data = $build->instrument_data;
     if ( not $instrument_data ) {

@@ -65,7 +65,7 @@ sub setup_data {
     my $refseq = Genome::Model::Build::ReferenceSequence->get_by_name('NCBI-human-build36');
 
     my $merged_result = Genome::InstrumentData::AlignmentResult::Merged->__define__(
-        id => '-10000', #hardcoded so calculated 'merged_alignment_bam_path' returns expected result
+        id => '-10000', #hardcoded so calculated 'bam_file' returns expected result
         output_dir => ($data_dir . '/merged_result'),
         reference_build => $refseq,
     );

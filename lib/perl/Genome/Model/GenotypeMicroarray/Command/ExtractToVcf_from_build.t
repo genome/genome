@@ -29,10 +29,5 @@ my $extract = Genome::Model::GenotypeMicroarray::Command::ExtractToVcf->create(
 ok($extract, 'create extract command');
 ok($extract->execute, 'execute extract command');
 my $expected_vcf = Genome::Model::GenotypeMicroarray::Test::testdir().'/extract/expected-from-build.vcf';
-ok(!-s $output_vcf, 'genotype vcf output not created');
-is_deeply($extract->alleles, undef, 'no alleles b/c vcf exists');
-is($extract->genotypes_input, 0, 'no genotypes input b/c vcf exists');
-is($extract->genotypes_output, 0, 'no genotypes output b/c vcf exists');
-is($extract->genotypes_filtered, 0, 'no genotypes filtered b/c vcf exists');
 
 done_testing();
