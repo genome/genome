@@ -63,10 +63,13 @@ sub get_detailed_snvs_vcf_result {
 sub _get_result_for_file {
     my $path = shift;
     my $allocation = Genome::Disk::Allocation->get_allocation_for_path(abs_path($path));
-    my $candidate = $allocation->owner;
+    unless (defined $allocation) {
+        die sprintf("The allocation for path %s doesn't exist", $path);
+    }
 
+    my $candidate = $allocation->owner;
     my $expected_isa = 'Genome::Model::Tools::DetectVariants2::Result::Vcf';
-    if ($candidate->isa($expected_isa)) {
+    if (defined $candidate and $candidate->isa($expected_isa)) {
         return $candidate;
     } else {
         die sprintf("The owner (%s) of allocation (%s) for path (%s) isn't a subclass of (%s) as expected.",
