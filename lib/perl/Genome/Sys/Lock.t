@@ -41,18 +41,12 @@ test_locking(successful => 1,
     lock_directory => $tmp_dir,
     resource_id => $bogus_id,);
 
-{
-    # Override is_my_lock_target so this doesn't carp for trying to lock same
-    # resource twice.  This replaces the old option to wait_on_self.
-    no warnings 'redefine';
-    local *Genome::Sys::Lock::is_my_lock_target = sub { 0 };
-    test_locking(successful => 0,
-        message => 'failed lock resource_id '. $bogus_id,
-        lock_directory => $tmp_dir,
-        resource_id => $bogus_id,
-        max_try => 1,
-        block_sleep => 3,);
-}
+test_locking_forked(successful => 0,
+    message => 'failed lock resource_id '. $bogus_id,
+    lock_directory => $tmp_dir,
+    resource_id => $bogus_id,
+    max_try => 1,
+    block_sleep => 3,);
 
 ok(Genome::Sys->unlock_resource(
         lock_directory => $tmp_dir,
@@ -66,23 +60,15 @@ my $init_lsf_job_id = $ENV{'LSB_JOBID'};
         message => 'lock resource with bogus lsf_job_id',
         lock_directory => $tmp_dir,
         resource_id => $bogus_id,);
-    {
-        # Override is_my_lock_target so this doesn't carp for trying to lock same
-        # resource twice.  This replaces the old option to wait_on_self.
-        no warnings 'redefine';
-        local *Genome::Sys::Lock::is_my_lock_target = sub { 0 };
-        test_locking(
-            successful=> 1,
-            message => 'lock resource with removing invalid lock with bogus lsf_job_id first',
-            lock_directory => $tmp_dir,
-            resource_id => $bogus_id,
-            max_try => 1,
-            block_sleep => 3,);
-    }
-    ok(Genome::Sys->unlock_resource(
-            lock_directory => $tmp_dir,
-            resource_id => $bogus_id,
-        ), 'unlock resource_id '. $bogus_id);
+
+    test_locking_forked(
+        successful=> 1,
+        message => 'lock resource with removing invalid lock with bogus lsf_job_id first',
+        lock_directory => $tmp_dir,
+        resource_id => $bogus_id,
+        max_try => 1,
+        block_sleep => 3,);
+
 # TODO: add skip test but if we are on a blade, lets see that the locking works correctly
 # Above the test is that old bogus locks can get removed when the lsf_job_id no longer exists
 # We should test that while an lsf_job_id does exist (ie. our current job) we still hold the lock
@@ -94,18 +80,14 @@ my $init_lsf_job_id = $ENV{'LSB_JOBID'};
                 lock_directory => $tmp_dir,
                 resource_id => $bogus_id,
             ),'lock resource with real lsf_job_id');
-        {
-            # Override is_my_lock_target so this doesn't carp for trying to lock same
-            # resource twice.  This replaces the old option to wait_on_self.
-            no warnings 'redefine';
-            local *Genome::Sys::Lock::is_my_lock_target = sub { 0 };
-            ok(!Genome::Sys->lock_resource(
-                    lock_directory => $tmp_dir,
-                    resource_id => $bogus_id,
-                    max_try => 1,
-                    block_sleep => 3,
-                ),'failed lock resource with real lsf_job_id blocking');
-        }
+
+        ok(!fork_lock_resource(
+                lock_directory => $tmp_dir,
+                resource_id => $bogus_id,
+                max_try => 1,
+                block_sleep => 3,
+            ),'failed lock resource with real lsf_job_id blocking');
+
         ok(Genome::Sys->unlock_resource(
                 lock_directory => $tmp_dir,
                 resource_id => $bogus_id,
@@ -266,6 +248,23 @@ sub print_event {
 
     print $fh $tp, "\n";
     print $tp, "\n";
+}
+
+sub test_locking_forked {
+    my %params = @_;
+    my $successful = delete $params{successful};
+    die unless defined($successful);
+    my $message = delete $params{message};
+    die unless defined($message);
+
+    my $lock = fork_lock_resource(%params);
+    if ($successful) {
+        ok($lock,$message);
+        if ($lock) { return $lock; }
+    } else {
+        ok(!$lock,$message);
+    }
+    return;
 }
 
 sub fork_lock_resource {
