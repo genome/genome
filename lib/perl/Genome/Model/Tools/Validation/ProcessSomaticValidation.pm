@@ -977,7 +977,7 @@ sub execute {
                   my @comp = split("_",$F[0]);
                   my $key = $comp[0];
                   
-                  if($comp[1] =~ /(\d+)\(\d+\)/){
+                  if($comp[1] =~ /\d+\((\d+)\)/){
                       $key = $key . "\t" . $1;
                   } else {
                       print STDERR "WARNING: unable to parse \"$F[0]\"\n";
