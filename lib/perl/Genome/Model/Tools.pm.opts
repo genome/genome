@@ -18145,6 +18145,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       [
         'one-based!',
         undef,
+        'remove-filtered-calls!',
+        undef,
         'debug!',
         undef,
         'detector-style-input=s',
