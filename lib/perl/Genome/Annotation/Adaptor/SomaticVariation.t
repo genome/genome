@@ -18,13 +18,26 @@ use_ok($pkg);
 
 my ($build, $result1, $result2, $snv_vcf_result, $indel_vcf_result) = setup_objects();
 
-my $cmd = Genome::Annotation::Adaptor::SomaticVariation->create(build => $build);
-ok($cmd->isa('Genome::Annotation::Adaptor::SomaticVariation'), "Command created correctly");
-ok($cmd->execute, "Command executed successfully");
-is_deeply([$cmd->bam_results], [$result1, $result2], "Bam results set as expected");
-is_deeply($cmd->snv_vcf_result, $snv_vcf_result, "Snvs vcf result set as expected");
-is_deeply($cmd->indel_vcf_result, $indel_vcf_result, "Indel vcf result set as expected");
-is_deeply($cmd->annotation_build, $build->annotation_build, "Annotation build set as expected");
+subtest "No vcf results" => sub {
+    my $cmd = Genome::Annotation::Adaptor::SomaticVariation->create(build => $build);
+    ok($cmd->isa('Genome::Annotation::Adaptor::SomaticVariation'), "Command created correctly");
+    ok($cmd->execute, "Command executed successfully");
+    is_deeply([$cmd->bam_results], [$result1, $result2], "Bam results set as expected");
+    is_deeply($cmd->annotation_build, $build->annotation_build, "Annotation build set as expected");
+    is($cmd->snv_vcf_result, undef, "snv vcf result is not defined");
+    is($cmd->indel_vcf_result, undef, "indel vcf result is not defined");
+};
+
+subtest "With vcf results" => sub {
+    add_vcf_results($snv_vcf_result, $indel_vcf_result);
+    my $cmd2 = Genome::Annotation::Adaptor::SomaticVariation->create(build => $build);
+    ok($cmd2->isa('Genome::Annotation::Adaptor::SomaticVariation'), "Command created correctly");
+    ok($cmd2->execute, "Command executed successfully");
+    is_deeply([$cmd2->bam_results], [$result1, $result2], "Bam results set as expected");
+    is_deeply($cmd2->annotation_build, $build->annotation_build, "Annotation build set as expected");
+    is_deeply($cmd2->snv_vcf_result, $snv_vcf_result, "Snvs vcf result set as expected");
+    is_deeply($cmd2->indel_vcf_result, $indel_vcf_result, "Indel vcf result set as expected");
+};
 
 done_testing();
 
@@ -46,7 +59,21 @@ sub setup_objects {
 
     my $snv_vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine->__define__;
     my $indel_vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine->__define__;
+    
+    reinstall_sub({
+        into => "Genome::Model::Build::RunsDV2",
+        as => "variants_directory",
+        code => sub { my $self = shift;
+                      my $tempdir = Genome::Sys->create_temp_directory;
+                      return $tempdir;
+        },
+    });
 
+    return ($build, $result, $result, $snv_vcf_result, $indel_vcf_result);
+}
+
+sub add_vcf_results {
+    my ($snv_vcf_result, $indel_vcf_result) = @_;
     reinstall_sub({
         into => "Genome::Model::Build::RunsDV2",
         as => "get_detailed_snvs_vcf_result",
@@ -62,6 +89,6 @@ sub setup_objects {
         },
     });
 
-    return ($build, $result, $result, $snv_vcf_result, $indel_vcf_result);
+
 }
 

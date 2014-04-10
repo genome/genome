@@ -42,17 +42,19 @@ sub execute {
 sub resolve_snv_vcf_result {
     my $self = shift;
     my $result = eval {$self->build->get_detailed_snvs_vcf_result};
-    if ($@) {
-        $self->debug_message("No snv result found on build %s", $self->build->id);
+    my $error = $@;
+    if ($error) {
+        $self->debug_message("No snv result found on build %s:\n%s", $self->build->id, $error);
     }
     return $result;
 }
 
 sub resolve_indel_vcf_result {
     my $self = shift;
-    my $result = $self->build->get_detailed_indels_vcf_result;
-    if ($@) {
-        $self->debug_message("No indel result found on build %s", $self->build->id);
+    my $result = eval {$self->build->get_detailed_indels_vcf_result};
+    my $error = $@;
+    if ($error) {
+        $self->debug_message("No indel result found on build %s:\n%s", $self->build->id, $error);
     }
     return $result;
 }
