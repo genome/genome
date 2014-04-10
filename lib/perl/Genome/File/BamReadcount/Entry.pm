@@ -123,5 +123,9 @@ sub alleles {
     }
 }
 
+sub to_string {
+    my $self = shift;
+    return $self->{_source_string};
+}
 
 1;

@@ -23,6 +23,7 @@ subtest 'Regular reporting' => sub {
     my $allele_metrics = $new_entry->metrics_for("T");
     ok($allele_metrics, "Able to retrieve metrics for base 'T'");
     is($allele_metrics->allele, 'T', "Reported allele matches expected");
+    is($new_entry->to_string, $test_string, "Got original string");
 };
 
 subtest 'Per-lib reporting' => sub {
