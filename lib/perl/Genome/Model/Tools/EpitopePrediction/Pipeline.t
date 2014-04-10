@@ -41,7 +41,7 @@ subtest "with tsv file" => sub {
 
     ok($cmd->execute, "Command executed");
 
-    compare_ok(File::Spec->join($cmd->output_directory, $cmd->final_output_file_name), $expected_output, "Output file is as expected");
+    compare_ok($cmd->final_output_file, $expected_output, "Output file is as expected");
 };
 
 subtest "with somatic variation build" => sub {
@@ -85,7 +85,7 @@ subtest "with somatic variation build" => sub {
 
     is($cmd->sample_name, 'H_NS-POET0092-4', "Sample name set correctly");
 
-    compare_ok(File::Spec->join($cmd->output_directory, $cmd->final_output_file_name), $expected_output, "Output file is as expected");
+    compare_ok($cmd->final_output_file, $expected_output, "Output file is as expected");
 };
 
 subtest "with NetMHC version 3.0" => sub {
@@ -109,6 +109,6 @@ subtest "with NetMHC version 3.0" => sub {
 
     ok($cmd->execute, "Command executed");
 
-    compare_ok(File::Spec->join($cmd->output_directory, $cmd->final_output_file_name), $expected_output, "Output file is as expected");
+    compare_ok($cmd->final_output_file, $expected_output, "Output file is as expected");
 };
 done_testing();

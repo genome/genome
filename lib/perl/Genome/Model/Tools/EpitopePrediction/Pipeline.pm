@@ -162,10 +162,11 @@ sub _get_workflow_inputs {
     return \%inputs;
 }
 
-sub final_output_file_name {
+sub final_output_file {
     my $self = shift;
 
-    return join ('.', $self->sample_name, $self->allele, $self->epitope_length, 'netmhc', 'parsed', $self->output_filter);
+    my $file_name = join ('.', $self->sample_name, $self->allele, $self->epitope_length, 'netmhc', 'parsed', $self->output_filter);
+    return File::Spec->join($self->output_directory, $file_name);
 }
 
 1;
