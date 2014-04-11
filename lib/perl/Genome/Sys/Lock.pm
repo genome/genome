@@ -20,7 +20,6 @@ sub lock_resource {
 
     $args{block_sleep} = 60 unless defined $args{block_sleep};
     $args{max_try} = 7200 unless defined $args{max_try};
-    $args{wait_announce_interval} = 0 unless defined $args{wait_announce_interval};
 
     @args{'resource_lock', 'parent_dir'} = $self->_resolve_resource_lock_and_parent_dir_for_lock_resource(%args);
 
@@ -104,9 +103,7 @@ sub _file_based_lock_resource {
     }
 
     my $wait_announce_interval = delete $args{wait_announce_interval};
-    unless (defined $wait_announce_interval) {
-        croak('wait_announce_interval not defined');
-    }
+    $wait_announce_interval = 0 unless defined $wait_announce_interval;
 
     my $owner_details = $self->_resolve_lock_owner_details;
     my $lock_dir_template = sprintf("lock-%s--%s_XXXX",$basename,$owner_details);
@@ -288,37 +285,10 @@ sub _new_style_lock {
         Carp::croak($self->error_message);
     }
 
-    my $timeout = delete $args{block_sleep};
-    unless (defined $timeout) {
-        croak('block_sleep not defined');
-    }
+    my $timeout = $self->_new_style_lock_timeout_from_args(%args);
 
-    my $max_try = delete $args{max_try};
-    unless (defined $max_try) {
-        croak('max_try not defined');
-    }
-
-    my $wait_announce_interval = delete $args{wait_announce_interval};
-    unless (defined $wait_announce_interval) {
-        croak('wait_announce_interval not defined');
-    }
-
-    my $info_content = join("\n", map { $_ . ': ' . $user_data{$_} } keys %user_data);
-    my $initial_time = time;
-    my $last_wait_announce_time = $initial_time;
-    my $claim;
-    while (!($claim = $LOCKING_CLIENT->claim($resource_lock, timeout => $timeout, user_data => \%user_data))) {
-        my $time = time;
-        my $elapsed_time = $time - $last_wait_announce_time;
-        if ($elapsed_time >= $wait_announce_interval) {
-            $last_wait_announce_time = $time;
-            my $total_elapsed_time = $time - $initial_time;
-            $self->status_message("waiting (total_elapsed_time = $total_elapsed_time seconds) on lock for resource '$resource_lock'. lock_info is:\n$info_content");
-        }
-        return undef unless $max_try--;
-    }
-
-    $NESSY_LOCKS_TO_REMOVE{$resource_lock} = $claim;
+    my $claim = $LOCKING_CLIENT->claim($resource_lock, timeout => $timeout, user_data => \%user_data);
+    $NESSY_LOCKS_TO_REMOVE{$resource_lock} = $claim if $claim;
     return $claim;
 }
 
