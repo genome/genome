@@ -45,7 +45,7 @@ Both tumor and normal subject can be specified by either ID or Name.
 EOS
 }
 
-my @subjects = ('tumor_subject', 'normal_subject');
+my @subjects = ('tumor_sample', 'normal_sample');
 my @inputs = ('snv_variant_list_id', 'indel_variant_list_id', 'sv_variant_list_id');
 
 sub execute {
