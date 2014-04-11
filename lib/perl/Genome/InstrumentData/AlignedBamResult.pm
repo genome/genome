@@ -50,6 +50,10 @@ class Genome::InstrumentData::AlignedBamResult {
     ],
 };
 
+sub instrument_data {
+    die 'Abstract';
+}
+
 sub run_flagstat_on_output_bam_path {
     my $self = shift;
     $self->status_message('Run flagstat on output bam file...');
@@ -140,6 +144,23 @@ sub load_md5sum{
     $md5_fh->close;
 
     return $md5sum;
+}
+
+sub sample_name {
+    my $self = shift;
+
+    my $sample_names = Set::Scalar->new();
+
+    my @instrument_data = $self->instrument_data;
+    for my $id (@instrument_data) {
+        $sample_names->insert($id->sample_name);
+    }
+    if ($sample_names->size == 1) {
+        return ($sample_names->members)[0];
+    } else {
+        die sprintf("I expected one sample name but found %d: (%s)",
+            $sample_names->size, join(', ', $sample_names->members));
+    }
 }
 
 1;

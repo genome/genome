@@ -62,3 +62,8 @@ sub _run {
     return;
 }
 
+sub sample_name {
+    my $self = shift;
+
+    return $self->aligned_bam_result->sample_name;
+}
