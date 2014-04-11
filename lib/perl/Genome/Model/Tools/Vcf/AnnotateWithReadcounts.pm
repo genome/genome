@@ -1,4 +1,4 @@
-package Genome::Annotation::AddReadcount;
+package Genome::Model::Tools::Vcf::AnnotateWithReadcounts;
 
 use strict;
 use warnings;
@@ -12,7 +12,7 @@ use MIME::Base64 qw(encode_base64);
 my $RC_TAG = 'BRCT';
 my $RC_HEADER = sprintf('<ID=%s,Number=1,Type=String,Description="Bam readcount line, gzipped then base-64 encoded">',$RC_TAG);
 
-class Genome::Annotation::AddReadcount {
+class Genome::Model::Tools::Vcf::AnnotateWithReadcounts {
     is => 'Command::V2',
     has_input => [
         vcf_file => {
