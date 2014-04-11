@@ -25,6 +25,7 @@ class Genome::Model::Tools::EpitopePrediction::GenerateVariantSequences {
             is_optional => 1,
             doc => 'The type of mutation you want to output eg missense,nonsense',
             # the current code only works on missense. Will need furthur development for other trv_types.
+            valid_values => [$DEFAULT_TRV_TYPE],
             default_value => $DEFAULT_TRV_TYPE,
         },
         peptide_sequence_length => {
@@ -53,7 +54,6 @@ sub help_brief {
 
 sub execute {
     my $self = shift;
-    #my $tmp_dir = Genome::Sys->create_temp_directory();
 
     my $input_fh = Genome::Sys->open_file_for_reading($self->input_file);
     Genome::Sys->validate_file_for_writing($self->output_file);
@@ -79,7 +79,6 @@ sub execute {
 
             if ($wildtype_aa ne $arr_wildtype_sequence[$position]) {
                 next;
-                #TO DO :print $output_fh $protein_arr[0]."\t".$protein_arr[1]."\t".$protein_arr[2]."\t".$protein_arr[6]."\t".$1."\t".$2."\t".$3."\t".$protein_arr[11]."\t".$arr_wildtype_sequence[$position]."\n";
             }
             else {
                 my (@mutant_arr, @wildtype_arr);
