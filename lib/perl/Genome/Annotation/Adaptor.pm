@@ -38,6 +38,10 @@ sub execute {
     return 1;
 }
 
+sub resolve_bam_results {
+    die 'Abstract';
+}
+
 sub resolve_snv_vcf_result {
     my $self = shift;
     my $result = eval {$self->build->get_detailed_snvs_vcf_result};
@@ -57,5 +61,11 @@ sub resolve_indel_vcf_result {
     }
     return $result;
 }
+
+sub resolve_annotation_build {
+    die 'Abstract';
+}
+
+
 1;
 
