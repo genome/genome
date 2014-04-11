@@ -25,7 +25,7 @@ class Genome::Model::Tools::EpitopePrediction::RunNetmhc {
             is => 'Text',
             doc => 'Length of subpeptides to predict',
         },
-        version => {
+        netmhc_version => {
             is => 'Text',
             doc => 'NetMHC version to use',
             valid_values => ['3.0','3.4'],
@@ -66,10 +66,10 @@ sub execute {
     my $self = shift;
 
     my $netmhc_path;
-    if ($self->version eq '3.0') {
+    if ($self->netmhc_version eq '3.0') {
         $netmhc_path = '/gsc/bin/netMHC';
     }
-    elsif ($self->version eq '3.4') {
+    elsif ($self->netmhc_version eq '3.4') {
         $netmhc_path = '/gscmnt/sata141/techd/jhundal/netMHC/NetMHC3.4/ATTEMPT4/NetMHC/netMHC';
     }
 

@@ -19,7 +19,7 @@
   <link fromOperation="input connector" fromProperty="output_directory" toOperation="Run NetMHC" toProperty="output_directory" />
   <link fromOperation="input connector" fromProperty="allele" toOperation="Run NetMHC" toProperty="allele" />
   <link fromOperation="input connector" fromProperty="epitope_length" toOperation="Run NetMHC" toProperty="epitope_length" />
-  <link fromOperation="input connector" fromProperty="netmhc_version" toOperation="Run NetMHC" toProperty="version" />
+  <link fromOperation="input connector" fromProperty="netmhc_version" toOperation="Run NetMHC" toProperty="netmhc_version" />
   <link fromOperation="input connector" fromProperty="sample_name" toOperation="Run NetMHC" toProperty="sample_name" />
   <link fromOperation="Remove Star Sequences" fromProperty="output_file" toOperation="Run NetMHC" toProperty="fasta_file" />
 
