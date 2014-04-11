@@ -31,7 +31,6 @@ class Genome::Annotation::Adaptor {
 
 sub execute {
     my $self = shift;
-    my $results = $self->resolve_bam_results;
     $self->bam_results($self->resolve_bam_results);
     $self->snv_vcf_result($self->resolve_snv_vcf_result);
     $self->indel_vcf_result($self->resolve_indel_vcf_result);
@@ -39,14 +38,34 @@ sub execute {
     return 1;
 }
 
+sub resolve_bam_results {
+    die 'Abstract';
+}
+
 sub resolve_snv_vcf_result {
     my $self = shift;
-    return $self->build->get_detailed_snvs_vcf_result;
+    my $result = eval {$self->build->get_detailed_snvs_vcf_result};
+    my $error = $@;
+    if ($error) {
+        $self->debug_message("No snv result found on build %s:\n%s", $self->build->id, $error);
+    }
+    return $result;
 }
 
 sub resolve_indel_vcf_result {
     my $self = shift;
-    return $self->build->get_detailed_indels_vcf_result;
+    my $result = eval {$self->build->get_detailed_indels_vcf_result};
+    my $error = $@;
+    if ($error) {
+        $self->debug_message("No indel result found on build %s:\n%s", $self->build->id, $error);
+    }
+    return $result;
 }
+
+sub resolve_annotation_build {
+    die 'Abstract';
+}
+
+
 1;
 
