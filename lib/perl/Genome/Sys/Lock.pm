@@ -4,7 +4,7 @@ use warnings;
 use Time::HiRes;
 use File::Basename;
 use MIME::Lite;
-use Carp;
+use Carp qw(carp croak);
 use File::Temp;
 use Sys::Hostname qw/hostname/;
 use Genome;
@@ -20,6 +20,7 @@ sub lock_resource {
 
     $args{block_sleep} = 60 unless defined $args{block_sleep};
     $args{max_try} = 7200 unless defined $args{max_try};
+    $args{wait_announce_interval} = 0 unless defined $args{wait_announce_interval};
 
     @args{'resource_lock', 'parent_dir'} = $self->_resolve_resource_lock_and_parent_dir_for_lock_resource(%args);
 
@@ -103,7 +104,9 @@ sub _file_based_lock_resource {
     }
 
     my $wait_announce_interval = delete $args{wait_announce_interval};
-    $wait_announce_interval = 0 unless defined $wait_announce_interval;
+    unless (defined $wait_announce_interval) {
+        croak('wait_announce_interval not defined');
+    }
 
     my $owner_details = $self->_resolve_lock_owner_details;
     my $lock_dir_template = sprintf("lock-%s--%s_XXXX",$basename,$owner_details);
@@ -286,6 +289,11 @@ sub _new_style_lock {
     }
 
     my $timeout = $self->_new_style_lock_timeout_from_args(%args);
+    my $wait_announce_interval = delete $args{wait_announce_interval};
+    unless (defined $wait_announce_interval) {
+        croak('wait_announce_interval not defined');
+    }
+
 
     my $claim = $LOCKING_CLIENT->claim($resource_lock, timeout => $timeout, user_data => \%user_data);
     $NESSY_LOCKS_TO_REMOVE{$resource_lock} = $claim if $claim;
