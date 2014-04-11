@@ -64,17 +64,17 @@ sub execute {
         my @protein_arr =  split(/\t/, $line);
         next unless $protein_arr[13] eq $self->trv_type;
         if ( $protein_arr[15] =~ /^p.([A-Z])(\d+)([A-Z])/ ) {
-            my ($wildtype_aa, $position, $mutant_aa) = ($1, $2 - 1, $3);
+            my ($wildtype_amino_acid, $position, $mutant_amino_acid) = ($1, $2 - 1, $3);
             my $wildtype_sequence = $self->get_wildtype_sequence(@protein_arr);
             my @arr_wildtype_sequence = split('',$wildtype_sequence);
 
-            if ($wildtype_aa ne $arr_wildtype_sequence[$position]) {
+            if ($wildtype_amino_acid ne $arr_wildtype_sequence[$position]) {
                 next;
             }
             else {
                 my @mutant_arr = my @wildtype_arr = $self->get_wildtype_subsequence_for_printing($position, @arr_wildtype_sequence);
                 my $midpoint = ($self->peptide_sequence_length - 1) / 2;
-                $mutant_arr[$midpoint]=$mutant_aa;
+                $mutant_arr[$midpoint] = $mutant_amino_acid;
                 $self->print_to_output(\@wildtype_arr, \@mutant_arr, \@protein_arr, $position);
             }
         }
@@ -114,19 +114,48 @@ sub get_wildtype_subsequence_for_printing {
     my $position = shift;
     my @arr_wildtype_sequence = @_;
 
+    # We want to extract a subset from @arr_wildtype_sequence that is
+    # $self->peptide_sequence_length long so that the $position ends
+    # up in the middle of the subsequence.
+    # If the $position is too far toward the beginning or end of
+    # @arr_wildtype_sequence there aren't enough amino acids on one side
+    # to achieve this.
+
     my @wildtype_arr;
-    my $midpoint = ($self->peptide_sequence_length - 1) / 2;
-    if ($position < $midpoint) {
+    my $one_flanking_sequence_length = ($self->peptide_sequence_length - 1) / 2;
+    if (distance_from_start($position, @arr_wildtype_sequence) < $one_flanking_sequence_length) {
         @wildtype_arr = @arr_wildtype_sequence[ 0 ... ($self->peptide_sequence_length - 1) ];
     }
-    elsif ($position > ($#arr_wildtype_sequence - $midpoint)) {
+    elsif (distance_from_end($position, @arr_wildtype_sequence) < $one_flanking_sequence_length) {
         @wildtype_arr = @arr_wildtype_sequence[ ($#arr_wildtype_sequence - $self->peptide_sequence_length) ... $#arr_wildtype_sequence];
     }
-    elsif (($position >= $midpoint) && ($position  <= ($#arr_wildtype_sequence - $midpoint))) {
-        @wildtype_arr = @arr_wildtype_sequence[ ($position - $midpoint) ... ($position + $midpoint) ];
+    elsif (
+        (distance_from_start($position, @arr_wildtype_sequence) >= $one_flanking_sequence_length) &&
+        (distance_from_end($position, @arr_wildtype_sequence) >= $one_flanking_sequence_length)
+    ) {
+        @wildtype_arr = @arr_wildtype_sequence[ ($position - $one_flanking_sequence_length) ... ($position + $one_flanking_sequence_length) ];
+    }
+    else {
+        $self->warning_message("Length of wildtype sequence is shorter than desired peptide length of output. Skipping position $position");
     }
 
     return @wildtype_arr;
+}
+
+#This subroutine is a bit funky but it was designed that way to mirror
+#distance_from_end to increase code readability from the caller's perspective
+sub distance_from_start {
+    my $position = shift;
+    my @array = @_;
+
+    return $position;
+}
+
+sub distance_from_end {
+    my $position = shift;
+    my @array = @_;
+
+    return $#array - $position;
 }
 
 sub get_wildtype_sequence {
