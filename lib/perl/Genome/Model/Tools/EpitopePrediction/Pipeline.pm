@@ -69,6 +69,10 @@ class Genome::Model::Tools::EpitopePrediction::Pipeline {
     ],
 };
 
+sub command_class_prefix {
+    return "Genome::Model::Tools::EpitopePrediction";
+}
+
 sub execute {
     my $self = shift;
 
@@ -82,7 +86,7 @@ sub execute {
     my $inputs = $self->_get_workflow_inputs();
 
     $self->debug_message("Running Workflow...");
-    my $result = Workflow::Simple::run_workflow_lsf($workflow, %$inputs);
+    my $result = $workflow->execute(%$inputs);
 
     unless($result){
         $self->error_message( join("\n", map($_->name . ': ' . $_->error, @Workflow::Simple::ERROR)) );
@@ -95,11 +99,226 @@ sub execute {
 sub _construct_workflow {
     my ($self) = @_;
 
-    my $xml = __FILE__ . '.xml';
-    my $workflow = Workflow::Operation->create_from_xml($xml);
-    $workflow->log_dir($self->output_directory);
+    # my $xml = __FILE__ . '.xml';
+    # my $workflow = Workflow::Operation->create_from_xml($xml);
+    # $workflow->log_dir($self->output_directory);
+
+    my $workflow = Genome::WorkflowBuilder::DAG->create(
+        name => 'EpitopePredictionWorkflow',
+        log_dir => $self->output_directory,
+    );
+
+    my $get_wildtype_command = $self->_attach_get_wildtype_command($workflow);
+    my $generate_variant_sequences_command = $self->_attach_generate_variant_sequences_command($workflow);
+    my $remove_star_sequences_command = $self->_attach_remove_star_sequences_command($workflow);
+    my $generate_fasta_key_command = $self->_attach_generate_fasta_key_command($workflow);
+    my $run_netmhc_command = $self->_attach_run_netmhc_command($workflow);
+    my $parse_netmhc_command = $self->_attach_parse_netmhc_command($workflow);
+
+    $workflow->create_link(
+        source => $get_wildtype_command,
+        source_property => 'output_tsv_file',
+        destination => $generate_variant_sequences_command,
+        destination_property => 'input_file',
+    );
+    $workflow->create_link(
+        source => $generate_variant_sequences_command,
+        source_property => 'output_file',
+        destination => $remove_star_sequences_command,
+        destination_property => 'input_file',
+    );
+    $workflow->create_link(
+        source => $remove_star_sequences_command,
+        source_property => 'output_file',
+        destination => $generate_fasta_key_command,
+        destination_property => 'input_file',
+    );
+    $workflow->create_link(
+        source => $remove_star_sequences_command,
+        source_property => 'output_file',
+        destination => $run_netmhc_command,
+        destination_property => 'fasta_file',
+    );
+    $workflow->create_link(
+        source => $run_netmhc_command,
+        source_property => 'output_file',
+        destination => $parse_netmhc_command,
+        destination_property => 'netmhc_file',
+    );
+    $workflow->create_link(
+        source => $generate_fasta_key_command,
+        source_property => 'output_file',
+        destination => $parse_netmhc_command,
+        destination_property => 'key_file',
+    );
+
+    $workflow->connect_output(
+        output_property => 'output_file',
+        source => $parse_netmhc_command,
+        source_property => 'parsed_file',
+    );
 
     return $workflow;
+}
+
+sub _attach_get_wildtype_command {
+    my $self = shift;
+    my $workflow = shift;
+
+    my $get_wildtype_command = Genome::WorkflowBuilder::Command->create(
+        name => 'GetWildTypeCommand',
+        command => $self->get_wildtype_command_name,
+    );
+    $workflow->add_operation($get_wildtype_command);
+    $self->_add_common_inputs($workflow, $get_wildtype_command);
+    for my $property (qw/input_tsv_file anno_db anno_db_version/) {
+        $workflow->connect_input(
+            input_property => $property,
+            destination => $get_wildtype_command,
+            destination_property => $property,
+        );
+    }
+    return $get_wildtype_command;
+}
+
+sub _attach_generate_variant_sequences_command {
+    my $self = shift;
+    my $workflow = shift;
+
+    my $generate_variant_sequences_command = Genome::WorkflowBuilder::Command->create(
+        name => 'GenerateVariantSequencesCommand',
+        command => $self->generate_variant_sequences_command_name,
+    );
+    $workflow->add_operation($generate_variant_sequences_command);
+    $self->_add_common_inputs($workflow, $generate_variant_sequences_command);
+    for my $property (qw/peptide_sequence_length/) {
+        $workflow->connect_input(
+            input_property => $property,
+            destination => $generate_variant_sequences_command,
+            destination_property => $property,
+        );
+    }
+    return $generate_variant_sequences_command;
+}
+
+sub _attach_remove_star_sequences_command {
+    my $self = shift;
+    my $workflow = shift;
+
+    my $remove_star_sequences_command = Genome::WorkflowBuilder::Command->create(
+        name => 'RemoveStarSequencesCommand',
+        command => $self->remove_star_sequences_command_name,
+    );
+    $workflow->add_operation($remove_star_sequences_command);
+    $self->_add_common_inputs($workflow, $remove_star_sequences_command);
+    return $remove_star_sequences_command;
+}
+
+sub _attach_generate_fasta_key_command {
+    my $self = shift;
+    my $workflow = shift;
+
+    my $generate_fasta_key_command = Genome::WorkflowBuilder::Command->create(
+        name => 'GenerateFastaKeyCommand',
+        command => $self->generate_fasta_key_command_name,
+    );
+    $workflow->add_operation($generate_fasta_key_command);
+    $self->_add_common_inputs($workflow, $generate_fasta_key_command);
+    return $generate_fasta_key_command;
+}
+
+sub _attach_run_netmhc_command {
+    my $self = shift;
+    my $workflow = shift;
+
+    my $run_netmhc_command = Genome::WorkflowBuilder::Command->create(
+        name => 'RunNetMHCCommand',
+        command => $self->run_netmhc_command_name,
+    );
+    $workflow->add_operation($run_netmhc_command);
+    $self->_add_common_inputs($workflow, $run_netmhc_command);
+    for my $property (qw/allele epitope_length netmhc_version sample_name/) {
+        $workflow->connect_input(
+            input_property => $property,
+            destination => $run_netmhc_command,
+            destination_property => $property,
+        );
+    }
+    return $run_netmhc_command;
+}
+
+sub _attach_parse_netmhc_command{
+    my $self = shift;
+    my $workflow = shift;
+
+    my $parse_netmhc_command = Genome::WorkflowBuilder::Command->create(
+        name => 'ParseNetMHCCommand',
+        command => $self->parse_netmhc_command_name,
+    );
+    $workflow->add_operation($parse_netmhc_command);
+    $self->_add_common_inputs($workflow, $parse_netmhc_command);
+    for my $property (qw/output_filter netmhc_version/) {
+        $workflow->connect_input(
+            input_property => $property,
+            destination => $parse_netmhc_command,
+            destination_property => $property,
+        );
+    }
+    return $parse_netmhc_command;
+}
+
+sub get_wildtype_command_name {
+    my $self = shift;
+
+    return $self->command_class_prefix . "::GetWildtype";
+}
+
+sub generate_variant_sequences_command_name {
+    my $self = shift;
+
+    return $self->command_class_prefix . "::GenerateVariantSequences";
+}
+
+sub remove_star_sequences_command_name {
+    my $self = shift;
+
+    return $self->command_class_prefix . "::RemoveStarSequences";
+}
+
+sub generate_fasta_key_command_name {
+    my $self = shift;
+
+    return $self->command_class_prefix . "::GenerateFastaKey";
+}
+
+sub run_netmhc_command_name {
+    my $self = shift;
+
+    return $self->command_class_prefix . "::RunNetmhc";
+}
+
+sub parse_netmhc_command_name {
+    my $self = shift;
+
+    return $self->command_class_prefix . "::ParseNetmhcOutput";
+}
+
+sub _add_common_inputs {
+    my $self = shift;
+    my $workflow = shift;
+    my $command = shift;
+
+    my @common_inputs = qw(
+        output_directory
+    );
+
+    for my $prop_name (@common_inputs) {
+        $workflow->connect_input(
+            input_property => $prop_name,
+            destination => $command,
+            destination_property => $prop_name,
+        );
+    }
 }
 
 sub _validate_inputs {
