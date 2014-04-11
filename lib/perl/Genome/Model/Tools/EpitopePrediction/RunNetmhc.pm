@@ -65,13 +65,7 @@ sub help_brief {
 sub execute {
     my $self = shift;
 
-    my $netmhc_path;
-    if ($self->netmhc_version eq '3.0') {
-        $netmhc_path = '/gsc/bin/netMHC';
-    }
-    elsif ($self->netmhc_version eq '3.4') {
-        $netmhc_path = '/gscmnt/sata141/techd/jhundal/netMHC/NetMHC3.4/ATTEMPT4/NetMHC/netMHC';
-    }
+    my $netmhc_path = $self->netmhc_path;
 
     my @netmhc_cmd = (
             $netmhc_path,
@@ -83,7 +77,32 @@ sub execute {
 
     run(\@netmhc_cmd, ">", $self->stdout_file);
 
+    $self->validate_output();
+
     return 1;
+}
+
+sub netmhc_path {
+    my $self = shift;
+
+    my %netmhc_path_of_version = (
+        '3.0' => '/gsc/bin/netMHC',
+        '3.4' => '/gscmnt/sata141/techd/jhundal/netMHC/NetMHC3.4/ATTEMPT4/NetMHC/netMHC',
+    );
+
+    return $netmhc_path_of_version{$self->netmhc_version};
+}
+
+sub validate_output {
+    my $self = shift;
+
+    unless (-s $self->output_file) {
+        die $self->error_message("Output file %s does not exist or has no size after processing", $self->output_file);
+    };
+
+    unless (-s $self->stdout_file) {
+        die $self->error_message("Stdout file %s does not exist or has no size after processing", $self->stdout_file);
+    };
 }
 
 1;
