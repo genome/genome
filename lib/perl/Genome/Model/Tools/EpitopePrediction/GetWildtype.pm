@@ -45,8 +45,6 @@ sub execute {
     my $input = $self->input_tsv_file;
     my $output = $self->output_tsv_file;
 
-#TODO : Check if the file has header 
-
     my $result = Genome::Model::Tools::Annotate::VariantProtein->execute(
         input_tsv_file  => $input,
         output_tsv_file => $output,

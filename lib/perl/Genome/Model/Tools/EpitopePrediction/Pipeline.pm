@@ -364,13 +364,6 @@ sub _validate_inputs {
         die $self->error_message("Coult not create directory (%s)", $self->output_directory);
     }
 
-    # TODO make sure anno db makes sense
-    # TODO make sure anno db version makes sense
-    # TODO make sure length makes sense
-    # TODO make sure allele makes sense
-    # TODO make sure epitope_length makes sense
-    # TODO make sure netmhc_version makes sense
-
     return 1;
 }
 
