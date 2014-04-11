@@ -7,6 +7,7 @@ use strict;
 use warnings;
 
 $Genome::Sys::IS_TESTING=1;
+$ENV{GENOME_NESSY_SERVER} = 'http://nessy.gsc.wustl.edu';
 BEGIN {
     $ENV{UR_DBI_NO_COMMIT} = 1;
 };
