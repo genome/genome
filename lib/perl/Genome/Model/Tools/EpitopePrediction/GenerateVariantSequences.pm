@@ -72,32 +72,25 @@ sub execute {
                 next;
             }
             else {
-                my (@mutant_arr, @wildtype_arr);
+                my @mutant_arr = my @wildtype_arr = $self->get_wildtype_subsequence_for_printing($position, @arr_wildtype_sequence);
                 my $midpoint = ($self->peptide_sequence_length - 1) / 2;
-                if ($position < $midpoint) {
-                    @wildtype_arr = @mutant_arr = @arr_wildtype_sequence[ 0 ... ($self->peptide_sequence_length - 1) ];
-                }
-                elsif ($position > ($#arr_wildtype_sequence - $midpoint)) {
-                    @wildtype_arr = @mutant_arr = @arr_wildtype_sequence[ ($#arr_wildtype_sequence - $self->peptide_sequence_length) ... $#arr_wildtype_sequence];
-                }
-                elsif (($position >= $midpoint) && ($position  <= ($#arr_wildtype_sequence - $midpoint))) {
-                    @wildtype_arr = @mutant_arr = @arr_wildtype_sequence[ ($position - $midpoint) ... ($position + $midpoint) ];
+                $mutant_arr[$midpoint]=$mutant_aa;
+
+                if (@mutant_arr) {
+                    for my $designation ('WT', 'MT') {
+                        my $arr = $designation eq 'WT' ? \@wildtype_arr : \@mutant_arr;
+                        $self->print_fasta_entry(
+                            designation => $designation,
+                            arr         => $arr,
+                            protein_arr => \@protein_arr,
+                        );
+                    }
                 }
                 else {
                     my $output_fh = Genome::Sys->open_file_for_appending($self->output_file);
                     print $output_fh "NULL"."\t".$position."\n";
                     close($output_fh);
                     next;
-                }
-                $mutant_arr[$midpoint]=$mutant_aa;
-
-                for my $designation ('WT', 'MT') {
-                    my $arr = $designation eq 'WT' ? \@wildtype_arr : \@mutant_arr;
-                    $self->print_fasta_entry(
-                        designation => $designation,
-                        arr         => $arr,
-                        protein_arr => \@protein_arr,
-                    );
                 }
             }
         }
@@ -106,6 +99,26 @@ sub execute {
     close($input_fh);
 
     return 1;
+}
+
+sub get_wildtype_subsequence_for_printing {
+    my $self = shift;
+    my $position = shift;
+    my @arr_wildtype_sequence = @_;
+
+    my @wildtype_arr;
+    my $midpoint = ($self->peptide_sequence_length - 1) / 2;
+    if ($position < $midpoint) {
+        @wildtype_arr = @arr_wildtype_sequence[ 0 ... ($self->peptide_sequence_length - 1) ];
+    }
+    elsif ($position > ($#arr_wildtype_sequence - $midpoint)) {
+        @wildtype_arr = @arr_wildtype_sequence[ ($#arr_wildtype_sequence - $self->peptide_sequence_length) ... $#arr_wildtype_sequence];
+    }
+    elsif (($position >= $midpoint) && ($position  <= ($#arr_wildtype_sequence - $midpoint))) {
+        @wildtype_arr = @arr_wildtype_sequence[ ($position - $midpoint) ... ($position + $midpoint) ];
+    }
+
+    return @wildtype_arr;
 }
 
 sub get_wildtype_sequence {
