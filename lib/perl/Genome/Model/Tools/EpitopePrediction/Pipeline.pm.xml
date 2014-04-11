@@ -8,7 +8,7 @@
 
   <link fromOperation="Get Wildtype" fromProperty="output_tsv_file" toOperation="Generate Variant Sequences" toProperty="input_file" />
   <link fromOperation="input connector" fromProperty="output_directory" toOperation="Generate Variant Sequences" toProperty="output_directory" />
-  <link fromOperation="input connector" fromProperty="length" toOperation="Generate Variant Sequences" toProperty="length" />
+  <link fromOperation="input connector" fromProperty="peptide_sequence_length" toOperation="Generate Variant Sequences" toProperty="peptide_sequence_length" />
 
   <link fromOperation="input connector" fromProperty="output_directory" toOperation="Remove Star Sequences" toProperty="output_directory" />
   <link fromOperation="Generate Variant Sequences" fromProperty="output_file" toOperation="Remove Star Sequences" toProperty="input_file" />
@@ -55,7 +55,7 @@
     <inputproperty>output_directory</inputproperty>
     <inputproperty>anno_db</inputproperty>
     <inputproperty>anno_db_version</inputproperty>
-    <inputproperty>length</inputproperty>
+    <inputproperty>peptide_sequence_length</inputproperty>
     <inputproperty>allele</inputproperty>
     <inputproperty>epitope_length</inputproperty>
     <inputproperty>netmhc_version</inputproperty>

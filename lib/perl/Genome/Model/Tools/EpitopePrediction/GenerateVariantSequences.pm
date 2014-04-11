@@ -27,7 +27,7 @@ class Genome::Model::Tools::EpitopePrediction::GenerateVariantSequences {
             # the current code only works on missense. Will need furthur development for other trv_types.
             default_value => $DEFAULT_TRV_TYPE,
         },
-        length => {
+        peptide_sequence_length => {
             is => 'Number',
             doc => 'The length of the peptide sequences',
             valid_values => [17, 21, 31],
@@ -83,12 +83,12 @@ sub execute {
             }
             else {
                 my (@mutant_arr, @wildtype_arr);
-                my $midpoint = ($self->length - 1) / 2;
+                my $midpoint = ($self->peptide_sequence_length - 1) / 2;
                 if ($position < $midpoint) {
-                    @wildtype_arr = @mutant_arr = @arr_wildtype_sequence[ 0 ... ($self->length - 1) ];
+                    @wildtype_arr = @mutant_arr = @arr_wildtype_sequence[ 0 ... ($self->peptide_sequence_length - 1) ];
                 }
                 elsif ($position > ($#arr_wildtype_sequence - $midpoint)) {
-                    @wildtype_arr = @mutant_arr = @arr_wildtype_sequence[ ($#arr_wildtype_sequence - $self->length) ... $#arr_wildtype_sequence];
+                    @wildtype_arr = @mutant_arr = @arr_wildtype_sequence[ ($#arr_wildtype_sequence - $self->peptide_sequence_length) ... $#arr_wildtype_sequence];
                 }
                 elsif (($position >= $midpoint) && ($position  <= ($#arr_wildtype_sequence - $midpoint))) {
                     @wildtype_arr = @mutant_arr = @arr_wildtype_sequence[ ($position - $midpoint) ... ($position + $midpoint) ];

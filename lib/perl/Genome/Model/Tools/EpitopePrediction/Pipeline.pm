@@ -164,7 +164,7 @@ sub _get_workflow_inputs {
         output_directory => $self->output_directory,
         anno_db => $self->anno_db,
         anno_db_version => $self->anno_db_version,
-        length => $self->peptide_sequence_length,
+        peptide_sequence_length => $self->peptide_sequence_length,
         allele => $self->allele,
         epitope_length => $self->epitope_length,
         netmhc_version => $self->netmhc_version,

@@ -26,7 +26,7 @@ sub test_for_length {
     my $cmd = $class->create(
         input_file => $input_file,
         output_directory => $output_dir,
-        length => $length,
+        peptide_sequence_length => $length,
     );
     ok($cmd, "Created a command for length $length");
 
