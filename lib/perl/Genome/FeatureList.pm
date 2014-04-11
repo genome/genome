@@ -510,4 +510,37 @@ sub resolve_bed_for_reference {
     return $bed_file;
 }
 
+sub get_tabix_and_gzipped_bed_file {
+    my $self = shift;
+
+    if ($self->format eq 'unknown') {
+        die $self->error_message("Cannot convert format of BED file with unknown format");
+    }
+
+    return $self->gzip_and_tabix_bed($self->file_path);
+}
+
+sub gzip_and_tabix_bed {
+    my $class = shift;
+    my $file = shift;
+
+    Genome::Sys->validate_file_for_reading($file);
+    my $gzipped_file = Genome::Sys->create_temp_file_path;
+
+    unless ( Genome::Sys->gzip_file($file, $gzipped_file) ) {
+        die $class->error_message("Failed to gzip file ($file) to ($gzipped_file)");
+    }
+
+    my $tabix_cmd = Genome::Model::Tools::Tabix::Index->create(
+        input_file => $gzipped_file,
+        preset => 'bed',
+    );
+
+    unless ($tabix_cmd->execute) {
+        die $class->error_message("Failed to tabix index file ($gzipped_file)");
+    }
+
+    return $gzipped_file;
+}
+
 1;

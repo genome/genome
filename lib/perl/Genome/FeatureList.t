@@ -46,6 +46,17 @@ my $diff = Genome::Sys->diff_file_vs_file($test_bed_file, $file_path);
 ok(!$diff, 'returned file matches expected file')
     or diag("diff:\n" . $diff);
 
+# Test gzipping and tabix indexing
+my $gzipped_file = $feature_list->get_tabix_and_gzipped_bed_file;
+my $tabix_file = "$gzipped_file.tbi";
+my $expected_gzipped_file = "$test_dir/expected.bed.gz";
+my $expected_tabix_file = "$expected_gzipped_file.tbi";
+
+ok(-s $gzipped_file, "Gzipped file exists");
+compare_ok($gzipped_file, $expected_gzipped_file, "gzipped file ($gzipped_file) is as expected ($expected_gzipped_file)");
+ok(-s $tabix_file, "Tabix index exists");
+compare_ok($tabix_file, $expected_tabix_file, "tabix file ($tabix_file) is as expected ($expected_tabix_file)");
+
 my $merged_file = $feature_list->merged_bed_file;
 ok(-s $merged_file, 'merged file created');
 my $merged_diff = Genome::Sys->diff_file_vs_file($merged_file, $test_merged_bed_file);
