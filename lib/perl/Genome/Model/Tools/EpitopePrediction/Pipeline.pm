@@ -14,16 +14,15 @@ class Genome::Model::Tools::EpitopePrediction::Pipeline {
             is => 'Text',
             doc => 'the directory where you want results stored',
         },
-        #TODO fill out docs
         somatic_variation_build => {
             is => 'Genome::Model::Build::SomaticVariation',
             is_optional => 1,
-            doc => '',
+            doc => 'The somatic variation build to use for analysis',
         },
         input_tsv_file => {
             is => 'Text',
             is_optional => 1,
-            doc => '',
+            doc => 'The custom input tsv file to use for analysis if no somatic variation build is used',
         },
         anno_db => {
             is => 'Text',
