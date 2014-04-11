@@ -16,7 +16,7 @@ class Genome::FeatureList {
     has => [
         name => {
             is => 'Text',
-            len => 200,
+            len => 1500,
         },
         format => {
             is => 'Text',
