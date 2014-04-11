@@ -20,7 +20,7 @@ my $cmd = $class->create(
     input_tsv_file => $input_file,
     output_directory => $output_dir,
     anno_db =>'NCBI-human.ensembl',
-    version => '67_37l_v2'
+    anno_db_version => '67_37l_v2'
 );
 
 ok($cmd->execute, "Command executed");

@@ -4,7 +4,7 @@
   <link fromOperation="input connector" fromProperty="input_tsv_file" toOperation="Get Wildtype" toProperty="input_tsv_file" />
   <link fromOperation="input connector" fromProperty="output_directory" toOperation="Get Wildtype" toProperty="output_directory" />
   <link fromOperation="input connector" fromProperty="anno_db" toOperation="Get Wildtype" toProperty="anno_db" />
-  <link fromOperation="input connector" fromProperty="anno_db_version" toOperation="Get Wildtype" toProperty="version" />
+  <link fromOperation="input connector" fromProperty="anno_db_version" toOperation="Get Wildtype" toProperty="anno_db_version" />
 
   <link fromOperation="Get Wildtype" fromProperty="output_tsv_file" toOperation="Generate Variant Sequences" toProperty="input_file" />
   <link fromOperation="input connector" fromProperty="output_directory" toOperation="Generate Variant Sequences" toProperty="output_directory" />

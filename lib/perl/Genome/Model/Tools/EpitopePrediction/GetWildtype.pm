@@ -24,7 +24,7 @@ class Genome::Model::Tools::EpitopePrediction::GetWildtype {
             is_optional=> 1,
             doc => 'The name of the annotation database.  Example: NCBI-human.combined-annotation',
         },
-        version => {
+        anno_db_version => {
             is => 'Text',
             is_optional=> 1,
             doc => 'The version of the annotation database. Example: 54_36p_v2',
@@ -51,7 +51,7 @@ sub execute {
         input_tsv_file  => $input,
         output_tsv_file => $output,
         anno_db         => $self->anno_db,
-        version         => $self->version,
+        version => $self->anno_db_version,
     );
     unless ($result) {
         confess $self->error_message("Couldn't execute Genome::Model::Tools::Annotate::VariantProtein $!");
@@ -66,4 +66,4 @@ __END__
 gmt annotate variant-protein 
 --input-tsv-file=Shared-Somatic-Tier1-Missense-d42m1.fullAnnotation_withHeader.tsv 
 --output-tsv-file=Shared-Somatic-Tier1-Missense-d42m1.fullAnnotation_withHeader_WT.tsv 
---anno-db=NCBI-mouse.combined-annotation --version=58_37k_v2
+--anno-db=NCBI-mouse.combined-annotation --anno-db-version=58_37k_v2
