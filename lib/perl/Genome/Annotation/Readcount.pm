@@ -5,7 +5,7 @@ use warnings FATAL => 'all';
 use Genome;
 
 class Genome::Annotation::Readcount {
-    is => 'Command::V2',
+    is => 'Genome::Annotation::Detail::Command',
     has_input => [
         aligned_bam_result => {
             is => 'Genome::InstrumentData::AlignedBamResult',
@@ -64,21 +64,4 @@ sub execute {
 
     $self->software_result(Genome::Annotation::Readcount::Result->get_or_create($self->input_hash));
     return 1;
-}
-
-sub input_names {
-    my $self = shift;
-
-    my @properties = $self->__meta__->properties(class_name => __PACKAGE__);
-    return map {$_->property_name} grep {$_->is_input} @properties;
-}
-
-sub input_hash {
-    my $self = shift;
-
-    my %hash;
-    for my $input_name ($self->input_names) {
-        $hash{$input_name} = $self->$input_name;
-    }
-    return %hash;
 }
