@@ -294,8 +294,19 @@ sub _new_style_lock {
         croak('wait_announce_interval not defined');
     }
 
-
+    my $info_content = join("\n", map { $_ . ': ' . $user_data{$_} } keys %user_data);
+    my $claim_warning = '';
+    my $initial_time = time();
+    my $wait_announce_timer = AnyEvent->timer(
+        after => $wait_announce_interval,
+        interval => $wait_announce_interval,
+        cb => sub {
+            my $total_elapsed_time = time() - $initial_time;
+            $self->status_message("waiting (total_elapsed_time = $total_elapsed_time seconds) on lock for resource '$resource_lock': $claim_warning. lock_info is:\n$info_content");
+        },
+    );
     my $claim = $LOCKING_CLIENT->claim($resource_lock, timeout => $timeout, user_data => \%user_data);
+    undef $wait_announce_timer;
     $NESSY_LOCKS_TO_REMOVE{$resource_lock} = $claim if $claim;
     return $claim;
 }
