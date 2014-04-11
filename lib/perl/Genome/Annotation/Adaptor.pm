@@ -31,7 +31,6 @@ class Genome::Annotation::Adaptor {
 
 sub execute {
     my $self = shift;
-    my $results = $self->resolve_bam_results;
     $self->bam_results($self->resolve_bam_results);
     $self->snv_vcf_result($self->resolve_snv_vcf_result);
     $self->indel_vcf_result($self->resolve_indel_vcf_result);
