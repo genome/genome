@@ -39,7 +39,9 @@ ok(-d $sub_dir,$sub_dir .' is a directory');
 test_locking(successful => 1,
     message => 'lock resource_id '. $bogus_id,
     lock_directory => $tmp_dir,
-    resource_id => $bogus_id,);
+    resource_id => $bogus_id,
+    max_try => 1,
+    block_sleep => 3,);
 
 test_locking_forked(successful => 0,
     message => 'failed lock resource_id '. $bogus_id,
@@ -90,6 +92,8 @@ my $init_lsf_job_id = $ENV{'LSB_JOBID'};
         ok(Genome::Sys->lock_resource(
                 lock_directory => $tmp_dir,
                 resource_id => $bogus_id,
+                max_try => 1,
+                block_sleep => 3,
             ),'lock resource with real lsf_job_id');
 
         ok(!fork_lock_resource(
