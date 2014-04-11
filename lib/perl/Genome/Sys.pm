@@ -1178,6 +1178,24 @@ sub file_is_gzipped {
     }
 }
 
+sub gzip_file {
+    my ($class, $input_file, $target_file) = @_;
+
+    unless (-e $input_file) {
+        die $class->error_message("Input file ($input_file) does not exist");
+    }
+    Genome::Sys->validate_file_for_writing($target_file);
+
+    my $bgzip_cmd = "bgzip -c $input_file > $target_file";
+    Genome::Sys->shellcmd(cmd => $bgzip_cmd);
+
+    unless (-e $target_file) {
+        die $class->error_message("Target file ($target_file) does not exist after bgzipping");
+    }
+
+    return $target_file;
+}
+
 # Follows a symlink chain to reach the final file, accounting for relative symlinks along the way
 sub follow_symlink {
     my $self = shift;

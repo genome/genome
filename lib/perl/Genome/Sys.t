@@ -6,6 +6,7 @@ use Test::More;
 
 use Genome::Sys;
 use File::Temp;
+use Genome::Utility::Test qw(compare_ok);
 
 sub mdir($) {
     system "mkdir -p $_[0]";
@@ -114,11 +115,22 @@ sub test_sudo_username {
 sub test_file_operations {
     my $gzip_path = Genome::Sys->create_temp_file_path;
     ok ($gzip_path, "Got a tmp path");
-    my $gzip_fh = Genome::Sys->open_gzip_file_for_writing($gzip_path);
-    ok ($gzip_fh, "got a gzip fh");
+    my $unzipped_path = Genome::Sys->create_temp_file_path;
+    ok ($unzipped_path, "Got a tmp path");
 
-    $gzip_fh->print("Testing");
-    $gzip_fh->close;
+    my $gzip_fh = Genome::Sys->open_gzip_file_for_writing($gzip_path);
+    my $unzipped_fh = Genome::Sys->open_file_for_writing($unzipped_path);
+
+    for my $fh ($gzip_fh , $unzipped_fh) {
+        ok ($fh, "got a fh");
+        $fh->print("Testing");
+        $fh->close;
+    }
+
+    my $zipped_path = Genome::Sys->create_temp_file_path;
+    Genome::Sys->gzip_file($unzipped_path, $zipped_path);
+    ok(-s $zipped_path, "Successfully gzipped file ($unzipped_path) to ($zipped_path)");
+    compare_ok($gzip_path, $zipped_path, "open_gzip_file_for_writing ($gzip_path) and gzip_file ($zipped_path) results match");
 
     my $gzip_type = Genome::Sys->file_type($gzip_path);
     is($gzip_type, "gzip", "The file type is gzip");
