@@ -10,7 +10,7 @@ class Genome::Model::Tools::EpitopePrediction::GenerateFastaKey {
     has_input => [
         input_file => {
             is => 'Text',
-            doc => 'The input FASTA file with 21mer sequences for wildtype(WT) and mutant(MT) proteins generated using \'gmt epitope-prediction generat-variant-seq21mer\'',
+            doc => 'The input FASTA file with 21mer sequences for wildtype(WT) and mutant(MT) proteins generated using \'gmt epitope-prediction generate-variant-seq21mer\' and filtered using \'gmt epitope-prediction remove-star-sequences\'',
         },
         output_directory => {
             is => 'Text',
