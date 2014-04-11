@@ -31,7 +31,7 @@ sub test_for_output_type {
         netmhc_file => $netmhc_file,
         output_directory => $output_dir,
         key_file => $key_file,
-        output_type => $output_type,
+        output_filter => $output_type,
         netmhc_version => $netmhc_version,
     );
     ok($cmd, "Created a command for output type $output_type");

@@ -24,7 +24,7 @@
   <link fromOperation="Remove Star Sequences" fromProperty="output_file" toOperation="Run NetMHC" toProperty="fasta_file" />
 
   <link fromOperation="input connector" fromProperty="output_directory" toOperation="Parse NetMHC Output" toProperty="output_directory" />
-  <link fromOperation="input connector" fromProperty="output_filter" toOperation="Parse NetMHC Output" toProperty="output_type" />
+  <link fromOperation="input connector" fromProperty="output_filter" toOperation="Parse NetMHC Output" toProperty="output_filter" />
   <link fromOperation="input connector" fromProperty="netmhc_version" toOperation="Parse NetMHC Output" toProperty="netmhc_version" />
   <link fromOperation="Run NetMHC" fromProperty="output_file" toOperation="Parse NetMHC Output" toProperty="netmhc_file" />
   <link fromOperation="Generate Fasta Key" fromProperty="output_file" toOperation="Parse NetMHC Output" toProperty="key_file" />

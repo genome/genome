@@ -17,7 +17,7 @@ class Genome::Model::Tools::EpitopePrediction::ParseNetmhcOutput {
             is => 'Text',
             doc => 'Location of the output',
         },
-        output_type => {
+        output_filter => {
             is => 'Text',
             doc =>
                 'Type of epitopes to report in the final output - select \'top\' to report the top epitopes in terms of fold changes,  \'all\' to report all predictions ',
@@ -40,10 +40,10 @@ class Genome::Model::Tools::EpitopePrediction::ParseNetmhcOutput {
         parsed_file => {
             is => 'Text',
             doc => 'File to write the parsed output',
-            calculate_from => ['output_directory', 'netmhc_file', 'output_type'],
+            calculate_from => ['output_directory', 'netmhc_file', 'output_filter'],
             calculate => q|
                 my ($filename, $directories, $suffix) = File::Basename::fileparse($netmhc_file, '.xls');
-                return File::Spec->join($output_directory, "$filename.parsed.$output_type");
+                return File::Spec->join($output_directory, "$filename.parsed.$output_filter");
             |,
         },
     ],
@@ -59,7 +59,7 @@ sub execute {
 
     my %position_score;
 
-    my $type      = $self->output_type;
+    my $type      = $self->output_filter;
     my $input_fh  = Genome::Sys->open_file_for_reading($self->netmhc_file);
     my $output_fh = Genome::Sys->open_file_for_writing($self->parsed_file);
 
