@@ -75,23 +75,7 @@ sub execute {
                 my @mutant_arr = my @wildtype_arr = $self->get_wildtype_subsequence_for_printing($position, @arr_wildtype_sequence);
                 my $midpoint = ($self->peptide_sequence_length - 1) / 2;
                 $mutant_arr[$midpoint]=$mutant_aa;
-
-                if (@mutant_arr) {
-                    for my $designation ('WT', 'MT') {
-                        my $arr = $designation eq 'WT' ? \@wildtype_arr : \@mutant_arr;
-                        $self->print_fasta_entry(
-                            designation => $designation,
-                            arr         => $arr,
-                            protein_arr => \@protein_arr,
-                        );
-                    }
-                }
-                else {
-                    my $output_fh = Genome::Sys->open_file_for_appending($self->output_file);
-                    print $output_fh "NULL"."\t".$position."\n";
-                    close($output_fh);
-                    next;
-                }
+                $self->print_to_output(\@wildtype_arr, \@mutant_arr, \@protein_arr, $position);
             }
         }
     }
@@ -99,6 +83,30 @@ sub execute {
     close($input_fh);
 
     return 1;
+}
+
+sub print_to_output {
+    my $self = shift;
+    my $wildtype_arr_ref = shift;
+    my $mutant_arr_ref = shift;
+    my $protein_arr_ref = shift;
+    my $position = shift;
+
+    if ($wildtype_arr_ref) {
+        for my $designation ('WT', 'MT') {
+            my $arr = $designation eq 'WT' ? $wildtype_arr_ref : $mutant_arr_ref;
+            $self->print_fasta_entry(
+                designation => $designation,
+                arr         => $arr,
+                protein_arr => $protein_arr_ref,
+            );
+        }
+    }
+    else {
+        my $output_fh = Genome::Sys->open_file_for_appending($self->output_file);
+        print $output_fh "NULL"."\t".$position."\n";
+        close($output_fh);
+    }
 }
 
 sub get_wildtype_subsequence_for_printing {
