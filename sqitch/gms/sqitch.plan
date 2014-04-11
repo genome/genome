@@ -293,3 +293,6 @@ instrument.fragment_library_unique_name [instrument_fragment_library] 2014-03-20
 
 config_profile_item.status [config_profile_item] 2014-03-20T20:24:41Z Jim Weible <jweible@linus263.gsc.wustl.edu> # add status column to config.profile_item
 @1395674405 2014-03-24T15:20:06Z Jim Weible <jweible@linuscs125># Add status to config.profile_item
+
+widen_name_column_for_feature_lists [model_feature_list] 2014-04-11T17:09:16Z Adam Coffman <acoffman@genome.wustl.edu> # We need to widen this column from 200 characters
+@1397236439 2014-04-11T17:14:00Z Adam Coffman <acoffman@genome.wustl.edu># Widen name column for feature lists
