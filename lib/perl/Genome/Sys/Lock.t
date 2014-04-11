@@ -40,6 +40,7 @@ test_locking(successful => 1,
     message => 'lock resource_id '. $bogus_id,
     lock_directory => $tmp_dir,
     resource_id => $bogus_id,
+    wait_announce_interval => 10,
     max_try => 1,
     block_sleep => 3,);
 
@@ -47,6 +48,7 @@ test_locking_forked(successful => 0,
     message => 'failed lock resource_id '. $bogus_id,
     lock_directory => $tmp_dir,
     resource_id => $bogus_id,
+    wait_announce_interval => 10,
     max_try => 1,
     block_sleep => 3,);
 
@@ -65,9 +67,9 @@ my $init_lsf_job_id = $ENV{'LSB_JOBID'};
     my $lock = Genome::Sys::Lock->_file_based_lock_resource(
         resource_lock => $resource_lock,
         parent_dir => $parent_dir,
+        wait_announce_interval => 10,
         max_try => 1,
         block_sleep => 3,
-        wait_announce_interval => 0,
     );
     ok($lock, 'lock resource with bogus lsf_job_id');
 
@@ -76,9 +78,9 @@ my $init_lsf_job_id = $ENV{'LSB_JOBID'};
         sub { Genome::Sys::Lock->_file_based_unlock_resource(@_) },
         resource_lock => $resource_lock,
         parent_dir => $parent_dir,
+        wait_announce_interval => 10,
         max_try => 1,
         block_sleep => 3,
-        wait_announce_interval => 0,
     );
     ok($lock, 'lock resource with removing invalid lock with bogus lsf_job_id first');
 
@@ -92,6 +94,7 @@ my $init_lsf_job_id = $ENV{'LSB_JOBID'};
         ok(Genome::Sys->lock_resource(
                 lock_directory => $tmp_dir,
                 resource_id => $bogus_id,
+                wait_announce_interval => 10,
                 max_try => 1,
                 block_sleep => 3,
             ),'lock resource with real lsf_job_id');
@@ -99,6 +102,7 @@ my $init_lsf_job_id = $ENV{'LSB_JOBID'};
         ok(!fork_lock_resource(
                 lock_directory => $tmp_dir,
                 resource_id => $bogus_id,
+                wait_announce_interval => 10,
                 max_try => 1,
                 block_sleep => 3,
             ),'failed lock resource with real lsf_job_id blocking');
@@ -139,11 +143,12 @@ for my $child (1...$children) {
         my $lock_hold_time = 2;
         my $block_sleep = 1;
         my $max_try = 2 * int($lock_hold_time / $block_sleep + 1) * $children;
+        my $wait_announce_interval = 2* $children * $lock_hold_time;
         my $lock = Genome::Sys->lock_resource(
             resource_lock => $resource,
             block_sleep   => $block_sleep,
             max_try       => $max_try,
-            wait_announce_interval => 30,
+            wait_announce_interval => $wait_announce_interval,
         );
         unless ($lock) {
             print_event($fh, "LOCK_FAIL", "Failed to get a lock" );
