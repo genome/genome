@@ -1397,7 +1397,8 @@ sub summarize_library_quality_reports_for_build {
             my $id_summary_file = $build_outdir . $subject_name . "_LIMS_Sample_Sequence_QC_" . $report . "." . $format;
             next if (-e $id_summary_file); #Shortcut for testing purposes
             my $tmp_file = $build_outdir . $rf_file . "." . $format;
-            my $id_list_cmd = "PATH=/gsc/bin/:\$PATH illumina_info --sample $subject_name --report $report --format $format 1>/dev/null 2>/dev/null";
+            my $id_list_cmd = "PATH=/gsc/bin/:\$PATH illumina_info --sample $subject_name --report $report --format $format";
+            #my $id_list_cmd = "PATH=/gsc/bin/:\$PATH illumina_info --sample $subject_name --report $report --format $format 1>/dev/null 2>/dev/null";
             unless ($self->skip_lims_reports){
                 Genome::Sys->shellcmd(cmd => $id_list_cmd, allow_failed_exit_code => 1);
                 if (-e $tmp_file){
