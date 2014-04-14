@@ -221,7 +221,7 @@ sub _load_source_files_tsv {
 
     $self->_imports(\@imports);
 
-    return $info_reader->error_message;#if $info_reader->error_mesasge;
+    return $info_reader->error_message;
 
     return;
 }
@@ -269,7 +269,13 @@ sub _load_samples {
 
     my $imports = $self->_imports;
     my %sample_names_seen;
-    for my $import ( @$imports ) {
+    IMPORT: for my $import ( @$imports ) {
+        # check source files
+        for my $source_file ( split(',', $import->{source_files}) ) {
+            next if -s $source_file;
+            $self->error_message("Source file ($source_file) for sample ($import->{sample_name}) does not exist!");
+            next IMPORT;
+        }
         # sample name, number and job name
         my $sample_name = $import->{sample_name};
         $import->{sample_number} = ++$sample_names_seen{$sample_name};
@@ -286,9 +292,9 @@ sub _load_samples {
         );
         $import->{libraries} = \@libraries if @libraries; 
     }
-
     $self->_imports($imports);
 
+    return if $self->error_message;
     return 1;
 }
 

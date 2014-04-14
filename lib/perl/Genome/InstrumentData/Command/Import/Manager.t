@@ -10,6 +10,8 @@ use strict;
 use warnings;
 
 use above "Genome";
+
+require Cwd;
 use Data::Dumper;
 require Digest::MD5;
 require Genome::Utility::Test;
@@ -17,7 +19,9 @@ use Test::More;
 
 use_ok('Genome::InstrumentData::Command::Import::Manager') or die;
 
+my $cwd = Cwd::getcwd();
 my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import::Manager', 'v1');
+chdir $test_dir;
 my $source_files_tsv = $test_dir.'/info.tsv';
 my @source_files = (qw/ bam1 bam2 bam3 /);
 
@@ -188,4 +192,23 @@ ok($manager, 'create manager');
 ok(!$manager->execute, 'execute failed');
 is($manager->error_message, 'Property \'source_files_tsv\': No "sample_name" column in sample info file! '.$manager->source_files_tsv, 'correct error');
 
+# fail - extra column name column in csv
+$manager = Genome::InstrumentData::Command::Import::Manager->create(
+    analysis_project => $analysis_project,
+    source_files_tsv => $test_dir.'/invalid-format.tsv',
+);
+ok($manager, 'create manager');
+ok(!$manager->execute, 'execute failed');
+like($manager->error_message, qr/Property 'source_files_tsv': Expected 3 values, got 4 on line 3 in/, 'correct error');
+
+# fail - source file does not exist
+$manager = Genome::InstrumentData::Command::Import::Manager->create(
+    analysis_project => $analysis_project,
+    source_files_tsv => $test_dir.'/source-file-does-not-exist.tsv',
+);
+ok($manager, 'create manager');
+ok(!$manager->execute, 'execute failed');
+is($manager->error_message, 'Source file (bam4) for sample (TeSt-0000-01) does not exist!', 'correct error');
+
+chdir $cwd;
 done_testing();
