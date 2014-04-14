@@ -147,8 +147,8 @@ sub summarize_clinseq_build {
     Genome::Sys->create_directory($summary_dir);
 
     my $stats_file = $summary_dir . "Stats.tsv";
-    open (STATS, ">$stats_file") || die "\n\nCould not open output file: $stats_file\n\n";
-    print STATS "Question\tAnswer\tData_Type\tAnalysis_Type\tStatistic_Type\tExtra_Description\n";
+    open (my $stats_fh, ">$stats_file") || die "\n\nCould not open output file: $stats_file\n\n";
+    print $stats_fh "Question\tAnswer\tData_Type\tAnalysis_Type\tStatistic_Type\tExtra_Description\n";
 
     my $model = $clinseq_build->model;
 
@@ -194,10 +194,10 @@ sub summarize_clinseq_build {
      $instdata_counts{$key} = $value;
     }
 
-    print STATS "Tumor Genomic DNA Instrument Data Count\t$instdata_counts{tumordna}\tlims\tClinseq Build Summary\tCount\tNumber of lanes of instrument data generated for tumor genomic DNA\n";
-    print STATS "Normal Genomic DNA Instrument Data Count\t$instdata_counts{normaldna}\tlims\tClinseq Build Summary\tCount\tNumber of lanes of instrument data generated for normal genomic DNA\n";
-    print STATS "Tumor RNA Instrument Data Count\t$instdata_counts{tumorrna}\tlims\tClinseq Build Summary\tCount\tNumber of lanes of instrument data generated for tumor RNA\n";
-    print STATS "Normal RNA Instrument Data Count\t$instdata_counts{normalrna}\tlims\tClinseq Build Summary\tCount\tNumber of lanes of instrument data generated for normal RNA\n";
+    print $stats_fh "Tumor Genomic DNA Instrument Data Count\t$instdata_counts{tumordna}\tlims\tClinseq Build Summary\tCount\tNumber of lanes of instrument data generated for tumor genomic DNA\n";
+    print $stats_fh "Normal Genomic DNA Instrument Data Count\t$instdata_counts{normaldna}\tlims\tClinseq Build Summary\tCount\tNumber of lanes of instrument data generated for normal genomic DNA\n";
+    print $stats_fh "Tumor RNA Instrument Data Count\t$instdata_counts{tumorrna}\tlims\tClinseq Build Summary\tCount\tNumber of lanes of instrument data generated for tumor RNA\n";
+    print $stats_fh "Normal RNA Instrument Data Count\t$instdata_counts{normalrna}\tlims\tClinseq Build Summary\tCount\tNumber of lanes of instrument data generated for normal RNA\n";
 
     #Locations of useful methods need to do the following:
     #... /Genome/lib/perl/Genome/IntrumentData.pm
@@ -327,7 +327,7 @@ sub summarize_clinseq_build {
         total_snp_positions_found_filtered snp_positions_in_dbsnp snp_positions_not_in_dbsnp overall_dbsnp_concordance
         build_id)));
     for my $build (@builds) {
-        $self->summarize_haploid_coverage_for_build($build);
+        $self->summarize_haploid_coverage_for_build($build, $stats_fh);
     }
 
     #Obtain the read duplication rate for each WGS BAM file from the Reference alignment models - note that duplication rate is defined on a per library basis (as it should be)
@@ -340,40 +340,11 @@ sub summarize_clinseq_build {
         sequence_amount_gbp haploid_coverage sample_total_single_read_count sample_mapped_read_percent
         sample_properly_paired_read_percent sample_duplicate_read_percent)));
     for my $build (@builds) {
-        $self->summarize_sample_and_library_metrics_for_build($build);
+        $self->summarize_sample_and_library_metrics_for_build($build, $stats_fh);
     }
 
-    #Generate APIPE instrument data reports (including quality metrics) for each sample
-    #e.g.
-    #genome instrument-data list solexa --filter sample_name='H_LF-10-0372-09-131-1135122'  --show='id,flow_cell_id,lane,sample_name,library_name,read_length,is_paired_end,clusters,median_insert_size,sd_above_insert_size,target_region_set_name,fwd_filt_error_rate_avg,rev_filt_error_rate_avg' --style=csv
-    $self->status_message("\n\nSample sequencing metrics from APIPE");
-    my %samples_processed;
-    for my $build (@builds) {
-        my $subject_name = $build->subject->name;
-
-        #Only process each sample once
-        unless ($samples_processed{$subject_name}){
-            $samples_processed{$subject_name} = 1;
-
-            $self->summarize_instrument_data_reports_for_build($build, $build_outdir);
-        }
-    }
-
-    #Generate LIMS library quality reports (including alignment and quality metrics) for each flowcell associated with each sample
-    #e.g.
-    #illumina_info --sample H_KA-306905-S.4294 --report library --format tsv
-    $self->status_message("\n\nSample sequencing metrics from LIMS");
-    $self->status_message("See results files in: $build_outdir\n");
-    %samples_processed = ();
-    for my $build (@builds) {
-        my $subject_name = $build->subject->name;
-        #Only process each sample once
-        unless ($samples_processed{$subject_name}){
-            $samples_processed{$subject_name} = 1;
-
-            $self->summarize_library_quality_reports_for_build($build, $build_outdir);
-        }
-    }
+    $self->generate_APIPE_reports(\@builds, $build_outdir, $stats_fh);
+    $self->generate_LIMS_reports(\@builds, $build_outdir);
 
     #Summarize exome coverage statistics for each WGS/Exome reference alignment model
     # cd /gscmnt/gc8001/info/model_data/2882774248/build120412367/reference_coverage/wingspan_0
@@ -478,8 +449,8 @@ sub summarize_clinseq_build {
       $self->status_message("min_coverage\troi_count\tmin_breadth_count_"."$min_breadth\tmin_breadth_count_percent_"."$min_breadth\taverage_median_coverage");
       foreach my $min_cov (sort {$a <=> $b} keys %covs){
         $self->status_message("$min_cov\t$covs{$min_cov}{count}\t$covs{$min_cov}{min_breadth_count}\t$covs{$min_cov}{min_breadth_count_percent}\t$covs{$min_cov}{avg_median_coverage}");
-        print STATS "Median ROI Coverage at >= $min_cov X\t$covs{$min_cov}{avg_median_coverage}\t$common_name\tClinseq Build Summary\tAverage\tAverage of Median Exon Coverage Values at a Min Coverage of $min_cov for $common_name $extraction_type data\n";
-        print STATS "Percent ROI Coverage at >= $min_cov X and >= $min_breadth % breadth\t$covs{$min_cov}{min_breadth_count_percent}\t$common_name\tClinseq Build Summary\tAverage\tPercent of Exons Covered at a Min Coverage of $min_cov and Min Breadth of $min_breadth for $common_name $extraction_type data\n";
+        print $stats_fh "Median ROI Coverage at >= $min_cov X\t$covs{$min_cov}{avg_median_coverage}\t$common_name\tClinseq Build Summary\tAverage\tAverage of Median Exon Coverage Values at a Min Coverage of $min_cov for $common_name $extraction_type data\n";
+        print $stats_fh "Percent ROI Coverage at >= $min_cov X and >= $min_breadth % breadth\t$covs{$min_cov}{min_breadth_count_percent}\t$common_name\tClinseq Build Summary\tAverage\tPercent of Exons Covered at a Min Coverage of $min_cov and Min Breadth of $min_breadth for $common_name $extraction_type data\n";
       }
     }
 
@@ -518,180 +489,12 @@ sub summarize_clinseq_build {
     #$ENV{GENOME_SYS_SERVICES_FILES_URL}/$build_dir/bam-qc/
     #$ENV{GENOME_SYS_SERVICES_FILES_URL}/$build_dir/junctions/summary/
 
-    $self->status_message("\n\nGet basic RNA-seq alignment stats");
-    $self->status_message("\nsample\ttotal_reads\ttotal_reads_mapped_percent\tunmapped_reads_percent\tfragment_size_mean\tfragment_size_std\tpercent_coding_bases\tpercent_utr_bases\tpercent_intronic_bases\tpercent_intergenic_bases\tpercent_ribosomal_bases\tbuild_id");
+    
     for my $build (@builds) {
       next unless $self->_is_rna_seq_build($build);
-
-      my $build_id = $build->id;
-      my $build_dir = $build->data_directory;
-      my $common_name = "[UNDEF common_name]";
-      my $tissue_desc = "[UNDEF tissue_desc]";
-      my $extraction_type = "[UNDEF extraction_type]";
-      my $subject = $build->subject;
-      my $subject_name = $subject->name;
-      if ($subject->can("common_name")){
-        $common_name = $subject->common_name;
-      }
-      if ($subject->can("tissue_desc")){
-        $tissue_desc = $subject->tissue_desc;
-      }
-      if ($subject->can("extraction_type")){
-        $extraction_type = $subject->extraction_type;
-      }
-
-      #TODO: The alignment stats file will be moved in new versions of the RNA-seq pipeline.  The following code will need to be updated to find this file
-      #In new builds it should be possible to identify this file via an API call similar to the following.  Refer to Jason Walker for details
-      #$rna_seq_build->alignment_stats_file;
-      my $alignment_stats_file;
-      my $as_file1 = $build_dir . "/alignments/alignment_stats.txt";
-      my $as_file2 = $build_dir . "/alignment_stats/alignment_stats.txt";
-      $alignment_stats_file = $as_file1 if (-e $as_file1);
-      $alignment_stats_file = $as_file2 if (-e $as_file2);
-
-      my $total_top_alignments = 0;
-      my $total_top_spliced_alignments = 0;
-      my $mt_top_alignments = 0;
-
-      my $total_reads = "n/a";
-      my $unmapped_reads_p = "n/a";
-      my $total_reads_mapped_p = "n/a";
-      if (-e $alignment_stats_file){
-        my $unmapped_reads = "n/a";
-        my $total_reads_mapped = "n/a";
-        open (ALIGN, "$alignment_stats_file");
-        while(<ALIGN>){
-          chomp($_);
-          my @line = split("\t", $_);
-          if ($_ =~ /Total\s+Reads\:\s+(\d+)/){
-            $total_reads = $1;
-          }
-          if ($_ =~ /Unmapped\s+Reads\:\s+(\d+)/){
-            $unmapped_reads = $1;
-          }
-          if ($_ =~ /Total\s+Reads\s+Mapped\:\s+(\d+)/){
-            $total_reads_mapped = $1;
-          }
-          if ($total_reads =~ /\d+/ && $unmapped_reads =~ /\d+/ && $total_reads_mapped =~ /\d+/){
-            if ($total_reads > 0){
-              $unmapped_reads_p = sprintf("%.2f", ($unmapped_reads/$total_reads)*100);
-              $total_reads_mapped_p = sprintf("%.2f", ($total_reads_mapped/$total_reads)*100);
-            }
-          }
-          if (scalar(@line) == 9){
-            next if ($line[0] =~ /^chr$/);
-            $total_top_alignments += $line[1];
-            $total_top_spliced_alignments += $line[2];
-            if ($line[0] eq "MT"){
-              $mt_top_alignments = $line[1];
-            }
-          }
-        }
-        close (ALIGN);
-      }else{
-        $self->status_message("Could not find alignment_stats.txt file for build: $build_id");
-      }
-      my $spliced_alignments_p = "n/a";
-      my $mt_alignments_p = "n/a";
-      if ($total_top_alignments){
-        $spliced_alignments_p = sprintf("%.2f", (($total_top_spliced_alignments/$total_top_alignments)*100));
-        $mt_alignments_p = sprintf("%.2f", (($mt_top_alignments/$total_top_alignments)*100));
-      }
-
-      #/gscmnt/gc2016/info/model_data/2880794613/build115909698/expression/cufflinks.out
-      my $cufflinks_out_file = $build_dir . "/expression/cufflinks.out";
-      my $frag_size_mean = "n/a";
-      my $frag_size_std = "n/a";
-      if (-e $cufflinks_out_file){
-        open (CUFF, "$cufflinks_out_file");
-        while(<CUFF>){
-          chomp($_);
-          if ($_ =~ /Estimated\s+Mean\:\s+(\S+)/){
-            $frag_size_mean = $1;
-          }
-          if ($_ =~ /Estimated\s+Std\s+Dev\:\s+(\S+)/){
-            $frag_size_std = $1;
-          }
-        }
-        close(CUFF);
-      }else{
-        $self->status_message("Could not find cufflinks.out file for build: $build_id");
-      }
-
-      #/gscmnt/gc2016/info/model_data/2880794613/build115909698/metrics/PicardRnaSeqMetrics.txt
-      my $picard_metrics_file = $build_dir . "/metrics/PicardRnaSeqMetrics.txt";
-      my $pct_ribosomal_bases = "n/a";
-      my $pct_coding_bases = "n/a";
-      my $pct_utr_bases = "n/a";
-      my $pct_intronic_bases = "n/a";
-      my $pct_intergenic_bases = "n/a";
-      if (-e $picard_metrics_file){
-        open (PIC, "$picard_metrics_file");
-        while(<PIC>){
-          chomp($_);
-          next if ($_ =~ /^\#/);
-          my @line = split("\t", $_);
-          if (scalar(@line) == 22){
-            if ($_ =~ /^\d+/){
-              $pct_ribosomal_bases = sprintf("%.2f", $line[10]*100);
-              $pct_coding_bases = sprintf("%.2f", $line[11]*100);
-              $pct_utr_bases = sprintf("%.2f", $line[12]*100);
-              $pct_intronic_bases = sprintf("%.2f", $line[13]*100);
-              $pct_intergenic_bases = sprintf("%.2f", $line[14]*100);
-            }
-          }
-        }
-        close(PIC);
-      }else{
-        $self->status_message("Could not find PicardRnaSeqMetrics.txt file for build: $build_id");
-      }
-
       #Summarize RNA-seq metrics for each build
-      $self->status_message("$subject_name ($common_name | $tissue_desc | $extraction_type)\t$total_reads\t$total_reads_mapped_p\t$unmapped_reads_p\t$frag_size_mean\t$frag_size_std\t$pct_coding_bases\t$pct_utr_bases\t$pct_intronic_bases\t$pct_intergenic_bases\t$pct_ribosomal_bases\t$build_id");
-      print STATS "RNA-seq Total Reads\t$total_reads\t$common_name\tClinseq Build Summary\tCount\tTotal RNA-seq reads for $common_name $extraction_type data\n";
-
-      print STATS "RNA-seq Percent Spliced Alignments\t$spliced_alignments_p\t$common_name\tClinseq Build Summary\tPercent\tPercent of RNA-seq reads mapped across splice junctions for $common_name $extraction_type data\n";
-      print STATS "RNA-seq Percent MT Alignments\t$mt_alignments_p\t$common_name\tClinseq Build Summary\tPercent\tPercent of RNA-seq reads mapped to the MT chromosome for $common_name $extraction_type data\n";
-      print STATS "RNA-seq Percent Reads Mapped\t$total_reads_mapped_p\t$common_name\tClinseq Build Summary\tPercent\tPercent of RNA-seq reads mapped for $common_name $extraction_type data\n";
-      print STATS "RNA-seq Percent Reads UnMapped\t$unmapped_reads_p\t$common_name\tClinseq Build Summary\tPercent\tPercent of RNA-seq reads unmapped for $common_name $extraction_type data\n";
-      print STATS "RNA-seq Mean Fragment Size\t$frag_size_mean\t$common_name\tClinseq Build Summary\tFloat\tMean cDNA fragment size inferred from RNA-seq reads for $common_name $extraction_type data\n";
-      print STATS "RNA-seq StDev of Fragment Size\t$frag_size_std\t$common_name\tClinseq Build Summary\tFloat\tStandard deviation of cDNA fragment size inferred from RNA-seq reads for $common_name $extraction_type data\n";
-      print STATS "RNA-seq Percent Coding Bases\t$pct_coding_bases\t$common_name\tClinseq Build Summary\tPercent\tPercent of all mapped RNA-seq reads corresponding to coding regions for $common_name $extraction_type data\n";
-      print STATS "RNA-seq Percent UTR Bases\t$pct_utr_bases\t$common_name\tClinseq Build Summary\tPercent\tPercent of all mapped RNA-seq reads corresponding to UTR regions for $common_name $extraction_type data\n";
-      print STATS "RNA-seq Percent Intronic Bases\t$pct_intronic_bases\t$common_name\tClinseq Build Summary\tPercent\tPercent of all mapped RNA-seq reads corresponding to intronic regions for $common_name $extraction_type data\n";
-      print STATS "RNA-seq Percent Intergenic Bases\t$pct_intergenic_bases\t$common_name\tClinseq Build Summary\tPercent\tPercent of all mapped RNA-seq reads corresponding to intergenic regions for $common_name $extraction_type data\n";
-      print STATS "RNA-seq Percent Ribosomal Bases\t$pct_ribosomal_bases\t$common_name\tClinseq Build Summary\tPercent\tPercent of all mapped RNA-seq reads corresponding to coding ribosomal for $common_name $extraction_type data\n";
-
-
-      #Display URLs to some handy locations in the RNA-seq build
-      if (-e "$build_dir/bam-qc/"){
-        $self->status_message("\nRNA-seq BAM-QC results:\n"
-                                . Genome::Utility::List::join_with_single_slash($ENV{GENOME_SYS_SERVICES_FILES_URL},
-                                                                                "$build_dir/bam-qc/"));
-      }
-      if (-e "$build_dir/junctions/summary/"){
-        $self->status_message("\nRNA-seq junction summary results:\n"
-                                . Genome::Utility::List::join_with_single_slash($ENV{GENOME_SYS_SERVICES_FILES_URL},
-                                                                                "$build_dir/junctions/summary/"));
-      }
-
-      my @rnaseq_files_to_copy;
-      push (@rnaseq_files_to_copy, "$build_dir/metrics/PicardRnaSeqMetrics.png");
-      push (@rnaseq_files_to_copy, "$build_dir/metrics/PicardRnaSeqChart.pdf");
-      push (@rnaseq_files_to_copy, "$build_dir/junctions/summary/PercentGeneJunctionsCovered_BreadthvsDepth_BoxPlot.pdf");
-      push (@rnaseq_files_to_copy, "$build_dir/junctions/summary/ObservedJunctions_SpliceSiteAnchorTypes_Pie.pdf");
-      push (@rnaseq_files_to_copy, "$build_dir/junctions/summary/ObservedJunctions_SpliceSiteUsage_Pie.pdf");
-      push (@rnaseq_files_to_copy, "$build_dir/junctions/summary/TranscriptJunctionReadCounts_Log2_Hist.pdf");
-      push (@rnaseq_files_to_copy, "$build_dir/bam-qc/*.pdf");
-      push (@rnaseq_files_to_copy, "$build_dir/bam-qc/*.html");
-
-      #Make copies of read locations .png and end bias plots for convenience
-      foreach my $file (@rnaseq_files_to_copy){
-        my $cp_cmd = "cp $file $build_outdir";
-        Genome::Sys->shellcmd(cmd => $cp_cmd, allow_failed_exit_code => 1);
-      }
+      $self->get_rnaseq_metrics($build, $build_outdir, $stats_fh);
     }
-
 
     #Summarize basic stats for the WGS and Exome somatic variation models - try using metrics object of somatic variation build?
     #e.g. number of tier 1,2,3,4 SNVs and InDels (both 'novel' and 'previously known')
@@ -769,15 +572,15 @@ sub summarize_clinseq_build {
 
       $self->status_message("$pp_name\t$tier1_snv_count\t$tier2_snv_count\t$tier3_snv_count\t$tier4_snv_count\t$tier1_indel_count\t$tier2_indel_count\t$tier3_indel_count\t$tier4_indel_count\t$sv_count\t$build_id");
 
-      print STATS "SomVar Tier1 SNV Count\t$tier1_snv_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation tier 1 SNV count for $common_name $extraction_type data\n";
-      print STATS "SomVar Tier2 SNV Count\t$tier2_snv_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation tier 2 SNV count for $common_name $extraction_type data\n";
-      print STATS "SomVar Tier3 SNV Count\t$tier3_snv_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation tier 3 SNV count for $common_name $extraction_type data\n";
-      print STATS "SomVar Tier4 SNV Count\t$tier4_snv_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation tier 4 SNV count for $common_name $extraction_type data\n";
-      print STATS "SomVar Tier1 INDEL Count\t$tier1_indel_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation tier 1 INDEL count for $common_name $extraction_type data\n";
-      print STATS "SomVar Tier2 INDEL Count\t$tier2_indel_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation tier 2 INDEL count for $common_name $extraction_type data\n";
-      print STATS "SomVar Tier3 INDEL Count\t$tier3_indel_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation tier 3 INDEL count for $common_name $extraction_type data\n";
-      print STATS "SomVar Tier4 INDEL Count\t$tier4_indel_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation tier 4 INDEL count for $common_name $extraction_type data\n";
-      print STATS "SomVar SV Count\t$sv_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation SV count for $common_name $extraction_type data\n";
+      print $stats_fh "SomVar Tier1 SNV Count\t$tier1_snv_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation tier 1 SNV count for $common_name $extraction_type data\n";
+      print $stats_fh "SomVar Tier2 SNV Count\t$tier2_snv_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation tier 2 SNV count for $common_name $extraction_type data\n";
+      print $stats_fh "SomVar Tier3 SNV Count\t$tier3_snv_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation tier 3 SNV count for $common_name $extraction_type data\n";
+      print $stats_fh "SomVar Tier4 SNV Count\t$tier4_snv_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation tier 4 SNV count for $common_name $extraction_type data\n";
+      print $stats_fh "SomVar Tier1 INDEL Count\t$tier1_indel_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation tier 1 INDEL count for $common_name $extraction_type data\n";
+      print $stats_fh "SomVar Tier2 INDEL Count\t$tier2_indel_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation tier 2 INDEL count for $common_name $extraction_type data\n";
+      print $stats_fh "SomVar Tier3 INDEL Count\t$tier3_indel_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation tier 3 INDEL count for $common_name $extraction_type data\n";
+      print $stats_fh "SomVar Tier4 INDEL Count\t$tier4_indel_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation tier 4 INDEL count for $common_name $extraction_type data\n";
+      print $stats_fh "SomVar SV Count\t$sv_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation SV count for $common_name $extraction_type data\n";
     }
 
     #Summarize SV annotation file from somatic variation results
@@ -937,7 +740,7 @@ sub summarize_clinseq_build {
       }
       $self->status_message("$subject_name ($common_name | $tissue_desc | $extraction_type)\t$bam_file");
     }
-    close(STATS);
+    close($stats_fh);
 
     return 1;
 }
@@ -1005,6 +808,7 @@ sub summarize_sample {
 sub summarize_haploid_coverage_for_build {
     my $self = shift;
     my $build = shift;
+    my $stats_fh = shift;
 
     #Only perform the following for reference alignment builds!
     return unless $self->_is_reference_alignment_build($build);
@@ -1135,10 +939,10 @@ sub summarize_haploid_coverage_for_build {
         $data_type = $sequence_type . "_" . $subject_name;
     }
 
-    print STATS "Data amount (Gbp)\t$gbp\t$data_type\tClinseq Build Summary\tFloat\tData amount (Gbp) for $sequence_type $common_name data\n";
-    print STATS "Haploid coverage\t$haploid_coverage\t$data_type\tClinseq Build Summary\tFloat\tHaploid coverage for $sequence_type $common_name data\n";
-    print STATS "Gold SNP Concordance\t$gold_filtered_het_snp_percent_concordance\t$data_type\tClinseq Build Summary\tPercent\tSNP array vs. sequencing SNP concordance (gold, filtered, het, snps) for $sequence_type $common_name data\n";
-    print STATS "dbSNP SNP Concordance\t$overall_dbsnp_concordance\t$data_type\tClinseq Build Summary\tPercent\tdbSNP vs. sequencing SNP concordance for $sequence_type $common_name data\n";
+    print $stats_fh "Data amount (Gbp)\t$gbp\t$data_type\tClinseq Build Summary\tFloat\tData amount (Gbp) for $sequence_type $common_name data\n";
+    print $stats_fh "Haploid coverage\t$haploid_coverage\t$data_type\tClinseq Build Summary\tFloat\tHaploid coverage for $sequence_type $common_name data\n";
+    print $stats_fh "Gold SNP Concordance\t$gold_filtered_het_snp_percent_concordance\t$data_type\tClinseq Build Summary\tPercent\tSNP array vs. sequencing SNP concordance (gold, filtered, het, snps) for $sequence_type $common_name data\n";
+    print $stats_fh "dbSNP SNP Concordance\t$overall_dbsnp_concordance\t$data_type\tClinseq Build Summary\tPercent\tdbSNP vs. sequencing SNP concordance for $sequence_type $common_name data\n";
 
     return 1;
 }
@@ -1146,6 +950,7 @@ sub summarize_haploid_coverage_for_build {
 sub summarize_sample_and_library_metrics_for_build {
     my $self = shift;
     my $build = shift;
+    my $stats_fh = shift;
 
     return unless $self->_is_reference_alignment_build($build);
 
@@ -1232,10 +1037,10 @@ sub summarize_sample_and_library_metrics_for_build {
         $data_type = $sequence_type . "_" . $subject_name;
     }
 
-    print STATS "Total Single Read Count\t$sample_total_single_read_count\t$data_type\tClinseq Build Summary\tCount\tTotal single read count for $sequence_type $common_name data\n";
-    print STATS "Percent Reads Mapped\t$sample_mapped_read_percent\t$data_type\tClinseq Build Summary\tPercent\tRead mapping percent for $sequence_type $common_name data\n";
-    print STATS "Percent Reads Properly Paired\t$sample_properly_paired_read_percent\t$data_type\tClinseq Build Summary\tPercent\tPercent of reads that are properly paired for $sequence_type $common_name data\n";
-    print STATS "Read Duplication Rate (sample level)\t$sample_duplicate_read_percent\t$data_type\tClinseq Build Summary\tPercent\tPercent read duplication at sample level (all libraries combined) for $sequence_type $common_name data\n";
+    print $stats_fh "Total Single Read Count\t$sample_total_single_read_count\t$data_type\tClinseq Build Summary\tCount\tTotal single read count for $sequence_type $common_name data\n";
+    print $stats_fh "Percent Reads Mapped\t$sample_mapped_read_percent\t$data_type\tClinseq Build Summary\tPercent\tRead mapping percent for $sequence_type $common_name data\n";
+    print $stats_fh "Percent Reads Properly Paired\t$sample_properly_paired_read_percent\t$data_type\tClinseq Build Summary\tPercent\tPercent of reads that are properly paired for $sequence_type $common_name data\n";
+    print $stats_fh "Read Duplication Rate (sample level)\t$sample_duplicate_read_percent\t$data_type\tClinseq Build Summary\tPercent\tPercent read duplication at sample level (all libraries combined) for $sequence_type $common_name data\n";
 
     my $alignments_dir = $build_dir . "/alignments/";
 
@@ -1268,14 +1073,275 @@ sub summarize_sample_and_library_metrics_for_build {
         }
         close (METRICS);
     }
-
     return 1;
 }
 
-sub summarize_instrument_data_reports_for_build {
+
+sub get_rnaseq_metrics {
+    my $self = shift;
+    my $rnaseq_build = shift;
+    my $build_outdir = shift;
+    my $stats_fh = shift;
+    my $rnaseq_build_id = $rnaseq_build->id;
+    my $rnaseq_build_dir = $rnaseq_build->data_directory;
+    my $common_name = "[UNDEF common_name]";
+    my $tissue_desc = "[UNDEF tissue_desc]";
+    my $extraction_type = "[UNDEF extraction_type]";
+    my $subject = $rnaseq_build->subject;
+    my $subject_name = $subject->name;
+    if ($subject->can("common_name")){
+      $common_name = $subject->common_name;
+    }
+    if ($subject->can("tissue_desc")){
+      $tissue_desc = $subject->tissue_desc;
+    }
+    if ($subject->can("extraction_type")){
+      $extraction_type = $subject->extraction_type;
+    }
+    $self->status_message("\n\nGet basic RNA-seq alignment stats");
+    $self->status_message("\nsample");
+    $self->status_message("$subject_name ($common_name | $tissue_desc | $extraction_type)");    $self->get_rnaseq_alignment_stats($common_name, $extraction_type, $rnaseq_build, 
+          $rnaseq_build_dir, $rnaseq_build_id, $stats_fh);
+    $self->get_cufflinks_metrics($common_name, $extraction_type, $rnaseq_build_dir,
+          $rnaseq_build_id, $stats_fh);
+    $self->get_picard_metrics($common_name, $extraction_type, $rnaseq_build_dir, 
+          $rnaseq_build_id, $stats_fh);
+    $self->copy_from_rnaseq_build($rnaseq_build_dir, $build_outdir);
+    $self->display_handy_rnaseq_urls($rnaseq_build_dir);
+}
+
+sub display_handy_rnaseq_urls {
+    my $self = shift;
+    my $build_dir = shift;
+    #display urls to some handy locations in the rna-seq build
+    if (-e "$build_dir/bam-qc/"){
+      $self->status_message("\nRNA-seq BAM-QC results:\n"
+        . Genome::Utility::List::join_with_single_slash($ENV{GENOME_SYS_SERVICES_FILES_URL},
+          "$build_dir/bam-qc/"));
+    }
+    if (-e "$build_dir/junctions/summary/"){
+      $self->status_message("\nRNA-seq junction summary results:\n"
+        . Genome::Utility::List::join_with_single_slash($ENV{GENOME_SYS_SERVICES_FILES_URL},
+          "$build_dir/junctions/summary/"));
+    }
+}
+
+sub get_rnaseq_alignment_stats {
+    my $self = shift;
+    my $common_name = shift;
+    my $extraction_type = shift;
+    my $rnaseq_build = shift;
+    my $build_dir = shift;
+    my $build_id = shift;
+    my $stats_fh = shift;
+    
+    my $alignment_stats_file = $rnaseq_build->alignment_stats_file();
+    my $total_top_alignments = 0;
+    my $total_top_spliced_alignments = 0;
+    my $mt_top_alignments = 0;
+
+    my $total_reads = "n/a";
+    my $unmapped_reads_p = "n/a";
+    my $total_reads_mapped_p = "n/a";
+    if (-e $alignment_stats_file){
+      my $unmapped_reads = "n/a";
+      my $total_reads_mapped = "n/a";
+      open (ALIGN, "$alignment_stats_file");
+      while(<ALIGN>){
+        chomp($_);
+        my @line = split("\t", $_);
+        if ($_ =~ /Total\s+Reads\:\s+(\d+)/){
+          $total_reads = $1;
+        }
+        if ($_ =~ /Unmapped\s+Reads\:\s+(\d+)/){
+          $unmapped_reads = $1;
+        }
+        if ($_ =~ /Total\s+Reads\s+Mapped\:\s+(\d+)/){
+          $total_reads_mapped = $1;
+        }
+        if ($total_reads =~ /\d+/ && $unmapped_reads =~ /\d+/ && $total_reads_mapped =~ /\d+/){
+          if ($total_reads > 0){
+            $unmapped_reads_p = sprintf("%.2f", ($unmapped_reads/$total_reads)*100);
+            $total_reads_mapped_p = sprintf("%.2f", ($total_reads_mapped/$total_reads)*100);
+          }
+        }
+        if (scalar(@line) == 9){
+          next if ($line[0] =~ /^chr$/);
+          $total_top_alignments += $line[1];
+          $total_top_spliced_alignments += $line[2];
+          if ($line[0] eq "MT"){
+            $mt_top_alignments = $line[1];
+          }
+        }
+      }
+      close (ALIGN);
+    }else{
+      $self->status_message("Could not find alignment_stats.txt file for build: $build_id");
+    }
+    my $spliced_alignments_p = "n/a";
+    my $mt_alignments_p = "n/a";
+    if ($total_top_alignments){
+      $spliced_alignments_p = sprintf("%.2f", (($total_top_spliced_alignments/$total_top_alignments)*100));
+      $mt_alignments_p = sprintf("%.2f", (($mt_top_alignments/$total_top_alignments)*100));
+    }
+    print $stats_fh "RNA-seq Total Reads\t$total_reads\t$common_name\tClinseq Build Summary\tCount\tTotal RNA-seq reads for $common_name $extraction_type data\n";
+    print $stats_fh "RNA-seq Percent Spliced Alignments\t$spliced_alignments_p\t$common_name\tClinseq Build Summary\tPercent\tPercent of RNA-seq reads mapped across splice junctions for $common_name $extraction_type data\n";
+    print $stats_fh "RNA-seq Percent MT Alignments\t$mt_alignments_p\t$common_name\tClinseq Build Summary\tPercent\tPercent of RNA-seq reads mapped to the MT chromosome for $common_name $extraction_type data\n";
+    print $stats_fh "RNA-seq Percent Reads Mapped\t$total_reads_mapped_p\t$common_name\tClinseq Build Summary\tPercent\tPercent of RNA-seq reads mapped for $common_name $extraction_type data\n";
+    print $stats_fh "RNA-seq Percent Reads UnMapped\t$unmapped_reads_p\t$common_name\tClinseq Build Summary\tPercent\tPercent of RNA-seq reads unmapped for $common_name $extraction_type data\n";
+    $self->status_message("total_reads\ttotal_reads_mapped_percent\tunmapped_reads_percent");
+    $self->status_message("$total_reads\t$total_reads_mapped_p\t$unmapped_reads_p");
+}
+
+sub get_cufflinks_metrics {
+    my $self = shift;
+    my $common_name = shift;
+    my $extraction_type = shift;
+    my $build_dir = shift;
+    my $build_id = shift;
+    my $stats_fh = shift;
+    
+    #/gscmnt/gc2016/info/model_data/2880794613/build115909698/expression/cufflinks.out
+    my $cufflinks_out_file = $build_dir . "/expression/cufflinks.out";
+    my $frag_size_mean = "n/a";
+    my $frag_size_std = "n/a";
+    if (-e $cufflinks_out_file){
+      open (CUFF, "$cufflinks_out_file");
+      while(<CUFF>){
+        chomp($_);
+        if ($_ =~ /Estimated\s+Mean\:\s+(\S+)/){
+          $frag_size_mean = $1;
+        }
+        if ($_ =~ /Estimated\s+Std\s+Dev\:\s+(\S+)/){
+          $frag_size_std = $1;
+        }
+      }
+      close(CUFF);
+    }else{
+      $self->status_message("Could not find cufflinks.out file for build: $build_id");
+    }
+    print $stats_fh "RNA-seq Mean Fragment Size\t$frag_size_mean\t$common_name\tClinseq Build Summary\tFloat\tMean cDNA fragment size inferred from RNA-seq reads for $common_name $extraction_type data\n";
+    print $stats_fh "RNA-seq StDev of Fragment Size\t$frag_size_std\t$common_name\tClinseq Build Summary\tFloat\tStandard deviation of cDNA fragment size inferred from RNA-seq reads for $common_name $extraction_type data\n";
+    $self->status_message("fragment_size_mean\tfragment_size_std");
+    $self->status_message("$frag_size_mean\t$frag_size_std");
+}
+
+sub get_picard_metrics {
+    my $self = shift;
+    my $common_name = shift;
+    my $extraction_type = shift;
+    my $build_dir = shift;
+    my $build_id = shift;
+    my $stats_fh = shift;
+    #/gscmnt/gc2016/info/model_data/2880794613/build115909698/metrics/PicardRnaSeqMetrics.txt
+    my $picard_metrics_file = $build_dir . "/metrics/PicardRnaSeqMetrics.txt";
+    my $pct_ribosomal_bases = "n/a";
+    my $pct_coding_bases = "n/a";
+    my $pct_utr_bases = "n/a";
+    my $pct_intronic_bases = "n/a";
+    my $pct_intergenic_bases = "n/a";
+    if (-e $picard_metrics_file){
+      open (PIC, "$picard_metrics_file");
+      while(<PIC>){
+        chomp($_);
+        next if ($_ =~ /^\#/);
+        my @line = split("\t", $_);
+        if (scalar(@line) == 22){
+          if ($_ =~ /^\d+/){
+            $pct_ribosomal_bases = sprintf("%.2f", $line[10]*100);
+            $pct_coding_bases = sprintf("%.2f", $line[11]*100);
+            $pct_utr_bases = sprintf("%.2f", $line[12]*100);
+            $pct_intronic_bases = sprintf("%.2f", $line[13]*100);
+            $pct_intergenic_bases = sprintf("%.2f", $line[14]*100);
+          }
+        }
+      }
+      close(PIC);
+    }else{
+      $self->status_message("Could not find PicardRnaSeqMetrics.txt file for build: $build_id");
+    }
+    print $stats_fh "RNA-seq Percent Coding Bases\t$pct_coding_bases\t$common_name\tClinseq Build Summary\tPercent\tPercent of all mapped RNA-seq reads corresponding to coding regions for $common_name $extraction_type data\n";
+    print $stats_fh "RNA-seq Percent UTR Bases\t$pct_utr_bases\t$common_name\tClinseq Build Summary\tPercent\tPercent of all mapped RNA-seq reads corresponding to UTR regions for $common_name $extraction_type data\n";
+    print $stats_fh "RNA-seq Percent Intronic Bases\t$pct_intronic_bases\t$common_name\tClinseq Build Summary\tPercent\tPercent of all mapped RNA-seq reads corresponding to intronic regions for $common_name $extraction_type data\n";
+    print $stats_fh "RNA-seq Percent Intergenic Bases\t$pct_intergenic_bases\t$common_name\tClinseq Build Summary\tPercent\tPercent of all mapped RNA-seq reads corresponding to intergenic regions for $common_name $extraction_type data\n";
+    print $stats_fh "RNA-seq Percent Ribosomal Bases\t$pct_ribosomal_bases\t$common_name\tClinseq Build Summary\tPercent\tPercent of all mapped RNA-seq reads corresponding to coding ribosomal for $common_name $extraction_type data\n";
+    $self->status_message("percent_coding_bases\tpercent_utr_bases\tpercent_intronic_bases\tpercent_intergenic_bases\tpercent_ribosomal_bases");
+    $self->status_message("$pct_coding_bases\t$pct_utr_bases\t$pct_intronic_bases\t$pct_intergenic_bases\t$pct_ribosomal_bases");
+    $self->status_message("build_id\n$build_id");
+}
+
+sub copy_from_rnaseq_build {
+    my $self = shift;
+    my $build_dir = shift;
+    my $build_outdir = shift;
+
+    my @rnaseq_files_to_copy;
+    push (@rnaseq_files_to_copy, "$build_dir/metrics/PicardRnaSeqMetrics.png");
+    push (@rnaseq_files_to_copy, "$build_dir/metrics/PicardRnaSeqChart.pdf");
+    push (@rnaseq_files_to_copy, "$build_dir/junctions/summary/PercentGeneJunctionsCovered_BreadthvsDepth_BoxPlot.pdf");
+    push (@rnaseq_files_to_copy, "$build_dir/junctions/summary/ObservedJunctions_SpliceSiteAnchorTypes_Pie.pdf");
+    push (@rnaseq_files_to_copy, "$build_dir/junctions/summary/ObservedJunctions_SpliceSiteUsage_Pie.pdf");
+    push (@rnaseq_files_to_copy, "$build_dir/junctions/summary/TranscriptJunctionReadCounts_Log2_Hist.pdf");
+    push (@rnaseq_files_to_copy, "$build_dir/bam-qc/*.pdf");
+    push (@rnaseq_files_to_copy, "$build_dir/bam-qc/*.html");
+    my $rnaseq_metrics_dir =  $build_outdir . "/rnaseq/";
+    Genome::Sys->shellcmd(cmd => "mkdir $rnaseq_metrics_dir");
+    
+    #Make copies of read locations .png and end bias plots for convenience
+    foreach my $file (@rnaseq_files_to_copy){
+      my $cp_cmd = "cp $file $rnaseq_metrics_dir";
+      Genome::Sys->shellcmd(cmd => $cp_cmd, allow_failed_exit_code => 1);
+    }
+}
+
+#Generate LIMS library quality reports (including alignment and quality metrics) for each flowcell associated with each sample
+#e.g. illumina_info --sample H_KA-306905-S.4294 --report library --format tsvsub 
+sub generate_LIMS_reports {
+    my $self = shift;
+    my $builds = shift;
+    my $build_outdir = shift;
+    my %samples_processed = ();
+    my $lims_outdir = $build_outdir . "/LIMS_reports/";
+    Genome::Sys->shellcmd(cmd=> "mkdir $lims_outdir");
+    $self->status_message("\n\nSample sequencing metrics from LIMS");
+    $self->status_message("See results files in: $build_outdir\n");
+    for my $build (@$builds) {
+        my $subject_name = $build->subject->name;
+        #Only process each sample once
+        unless ($samples_processed{$subject_name}){
+            $samples_processed{$subject_name} = 1;
+            $self->summarize_library_quality_reports_for_build($build, $lims_outdir);
+        }
+    }
+}
+
+#Generate APIPE instrument data reports (including quality metrics) for each sample
+#e.g. genome instrument-data list solexa --filter sample_name='H_LF-10-0372-09-131-1135122'  --show='id,flow_cell_id,lane,sample_name,library_name,read_length,is_paired_end,clusters,median_insert_size,sd_above_insert_size,target_region_set_name,fwd_filt_error_rate_avg,rev_filt_error_rate_avg' --style=csv
+sub generate_APIPE_reports {
+    my $self = shift;
+    my $builds = shift;
+    my $build_outdir = shift;
+    my $stats_fh = shift;
+    
+    my $apipe_outdir = $build_outdir . "/APIPE_reports/";
+    Genome::Sys->shellcmd(cmd=> "mkdir $apipe_outdir");
+    $self->status_message("\n\nSample sequencing metrics from APIPE");
+    my %samples_processed;
+    for my $build (@$builds) {
+        my $subject_name = $build->subject->name;
+        #Only process each sample once
+        unless ($samples_processed{$subject_name}){
+            $samples_processed{$subject_name} = 1;
+            $self->summarize_apipe_instrument_data_reports($build, $apipe_outdir, $stats_fh);
+        }
+    }
+}
+
+sub summarize_apipe_instrument_data_reports {
     my $self = shift;
     my $build = shift;
     my $build_outdir = shift;
+    my $stats_fh = shift;
 
     return unless $self->_is_reference_alignment_build($build);
 
@@ -1310,9 +1376,7 @@ sub summarize_instrument_data_reports_for_build {
     $self->status_message("\n");
     $self->_run_solexa_lister($subject_name, 'csv', $id_sample_summary_file_csv);
     $self->_run_solexa_lister($subject_name, 'html', $id_sample_summary_file_html);
-
     $self->status_message("\nSample: $subject_name ($common_name | $tissue_desc | $extraction_type)");
-
     #Parse the csv file and store as tsv in the main output
     my ($insert_size_sum, $insert_size_count, $avg_insert_size, $fwd_error_rate_sum, $fwd_error_rate_count, $avg_fwd_error_rate, $rev_error_rate_sum, $rev_error_rate_count, $avg_rev_error_rate) = (0,0,0,0,0,0,0,0,0);
     if (-e $id_sample_summary_file_csv){
@@ -1350,18 +1414,17 @@ sub summarize_instrument_data_reports_for_build {
     }else{
         $avg_rev_error_rate = "n/a";
     }
-    print STATS "Average Library Insert Size\t$avg_insert_size\t$common_name\tClinseq Build Summary\tAverage\tAverage of library-by-library median insert sizes for $common_name $extraction_type data\n";
-    print STATS "Forward Read Average Error Rate\t$avg_fwd_error_rate\t$common_name\tClinseq Build Summary\tAverage\tAverage of library-by-library sequencing forward read error rates for $common_name $extraction_type data\n";
-    print STATS "Reverse Read Average Error Rate\t$avg_rev_error_rate\t$common_name\tClinseq Build Summary\tAverage\tAverage of library-by-library sequencing reverse read error rates for $common_name $extraction_type data\n";
+    print $stats_fh "Average Library Insert Size\t$avg_insert_size\t$common_name\tClinseq Build Summary\tAverage\tAverage of library-by-library median insert sizes for $common_name $extraction_type data\n";
+    print $stats_fh "Forward Read Average Error Rate\t$avg_fwd_error_rate\t$common_name\tClinseq Build Summary\tAverage\tAverage of library-by-library sequencing forward read error rates for $common_name $extraction_type data\n";
+    print $stats_fh "Reverse Read Average Error Rate\t$avg_rev_error_rate\t$common_name\tClinseq Build Summary\tAverage\tAverage of library-by-library sequencing reverse read error rates for $common_name $extraction_type data\n";
 }
 
 sub summarize_library_quality_reports_for_build {
     my $self = shift;
     my $build = shift;
-    my $build_outdir = shift;
+    my $outdir = shift;
 
     return unless $self->_is_reference_alignment_build($build);
-
     return if $self->skip_lims_reports;
 
     my @formats = qw (csv tsv html);
@@ -1389,14 +1452,14 @@ sub summarize_library_quality_reports_for_build {
     }
 
     my $previous_cwd = Cwd::getcwd();
-    chdir($build_outdir); #illumina_info writes to cwd
+    chdir($outdir); #illumina_info writes to cwd
 
     foreach my $format (@formats){
         foreach my $report (@reports){
             my $rf_file = $rf{$report}{file};
-            my $id_summary_file = $build_outdir . $subject_name . "_LIMS_Sample_Sequence_QC_" . $report . "." . $format;
+            my $id_summary_file = $outdir . $subject_name . "_LIMS_Sample_Sequence_QC_" . $report . "." . $format;
             next if (-e $id_summary_file); #Shortcut for testing purposes
-            my $tmp_file = $build_outdir . $rf_file . "." . $format;
+            my $tmp_file = $outdir . $rf_file . "." . $format;
             my $id_list_cmd = "PATH=/gsc/bin/:\$PATH illumina_info --sample $subject_name --report $report --format $format";
             #my $id_list_cmd = "PATH=/gsc/bin/:\$PATH illumina_info --sample $subject_name --report $report --format $format 1>/dev/null 2>/dev/null";
             unless ($self->skip_lims_reports){
@@ -1407,9 +1470,7 @@ sub summarize_library_quality_reports_for_build {
             }
         }
     }
-
     chdir($previous_cwd);
-
     return 1;
 }
 
