@@ -15,7 +15,7 @@ use Test::More;
 use_ok('Genome::Model::ClinSeq::Command::MicroarrayCnv') or die;
  
 #Define the test where expected results are stored
-my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "Genome-Model-ClinSeq-Command-MicroarrayCnv/2013-12-30/";
+my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "Genome-Model-ClinSeq-Command-MicroarrayCnv/2014-04-14/";
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 my $temp_dir = Genome::Sys->create_temp_directory();
