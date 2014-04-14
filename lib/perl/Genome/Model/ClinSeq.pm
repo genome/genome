@@ -336,7 +336,7 @@ sub map_workflow_inputs {
       #Check for ChimeraScan fusion results
       if(-e $tumor_rnaseq_build->data_directory . '/fusions/filtered_chimeras.bedpe'){
           #copy over fusion files to this dir even if SV calls do not exist.
-          my $tumor_filtered_fusion_dir = $patient_dir . '/rnaseq/fusions/tumor';
+          my $tumor_filtered_fusion_dir = $patient_dir . '/rnaseq/tumor/fusions';
           push @dirs, $tumor_filtered_fusion_dir;
           if ($wgs_build){
             #Check for SV calls file
@@ -1352,9 +1352,9 @@ sub copy_fusion_files {
   my $tumor_unfiltered_fusion_file =  $rnaseq_build_dir . '/fusions/Genome_Model_RnaSeq_DetectFusionsResult_Chimerascan_VariableReadLength_Result/chimeras.bedpe';
   my $tumor_filtered_fusion_file =  $rnaseq_build_dir . '/fusions/filtered_chimeras.bedpe';
   my $tumor_filtered_annotated_fusion_file =  $rnaseq_build_dir . '/fusions/filtered_chimeras.catanno.bedpe';
-  my $clinseq_tumor_unfiltered_fusion_file = $class->patient_dir($build) . '/rnaseq/fusions/tumor/chimeras.bedpe';
-  my $clinseq_tumor_filtered_fusion_file = $class->patient_dir($build) . '/rnaseq/fusions/tumor/filtered_chimeras.bedpe';
-  my $clinseq_tumor_filtered_annotated_fusion_file = $class->patient_dir($build) . '/rnaseq/fusions/tumor/filtered_chimeras.catanno.bedpe';
+  my $clinseq_tumor_unfiltered_fusion_file = $class->patient_dir($build) . '/rnaseq/tumor/fusions/chimeras.bedpe';
+  my $clinseq_tumor_filtered_fusion_file = $class->patient_dir($build) . '/rnaseq/tumor/fusions/filtered_chimeras.bedpe';
+  my $clinseq_tumor_filtered_annotated_fusion_file = $class->patient_dir($build) . '/rnaseq/tumor/fusions/filtered_chimeras.catanno.bedpe';
   if(-e $tumor_unfiltered_fusion_file) {
       unless(Genome::Sys->copy_file($tumor_unfiltered_fusion_file, $clinseq_tumor_unfiltered_fusion_file)) {
          die "unable to copy $tumor_unfiltered_fusion_file";
