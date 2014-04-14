@@ -203,6 +203,7 @@ ok($tmp_dir2, "created temp dir ($tmp_dir2)");
 
 my @common_params = (lock_directory => $tmp_dir2, resource_id => "foo", block_sleep => 0);
 
+my $child_sleep = Genome::Sys::Lock->min_timeout() + 2;
 my $child_pid = UR::Context::Process->fork;
 if ($child_pid == 0) { # child thread
     print "CHILD: Locking $tmp_dir2/foo...\n";
@@ -211,7 +212,7 @@ if ($child_pid == 0) { # child thread
         Carp::croak('CHILD: Failed to get lock.');
     }
     print "CHILD: Sleeping for two seconds...\n";
-    sleep(2);
+    sleep($child_sleep);
     print "CHILD: Unlocking $tmp_dir2/foo...\n";
     Genome::Sys->unlock_resource(resource_lock => $child_lock);
     print "CHILD: Exiting...\n";

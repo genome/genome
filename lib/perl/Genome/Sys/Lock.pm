@@ -300,14 +300,24 @@ sub _new_style_lock {
     return $claim;
 }
 
+sub min_timeout {
+    return 5;
+}
 sub _new_style_lock_timeout_from_args {
     my($self, %args) = @_;
 
-    if (exists($args{max_try}) and exists($args{block_sleep})) {
-        return $args{max_try} * $args{block_sleep};
+    my $block_sleep = delete $args{block_sleep} || 0;
+
+    my $max_try = delete $args{max_try} || 0;
+
+    my $min_timeout = min_timeout();
+    my $timeout = $max_try * $block_sleep;
+    unless ($timeout > $min_timeout) {
+        $timeout = $min_timeout;
+        carp("increasing timeout to minimum ($min_timeout)");
     }
 
-    return undef;
+    return $timeout;
 }
 
 sub _is_holding_nessy_lock {
