@@ -185,39 +185,6 @@ for (@event_log) {
     printf("%s\t%s\t%s\n", $_->{etime}, $_->{pid}, $_->{event});
 }
 
-my $tmp_dir2 = Genome::Sys->create_temp_directory();
-ok($tmp_dir2, "created temp dir ($tmp_dir2)");
-
-my @common_params = (lock_directory => $tmp_dir2, resource_id => "foo", block_sleep => 0);
-
-my $child_sleep = Genome::Sys::Lock->min_timeout() + 2;
-my $child_pid = UR::Context::Process->fork;
-if ($child_pid == 0) { # child thread
-    Genome::Sys::Lock->clear_state();
-
-    print "CHILD: Locking $tmp_dir2/foo...\n";
-    my $child_lock = Genome::Sys->lock_resource(@common_params, max_try => 0);
-    unless ($child_lock) {
-        Carp::croak('CHILD: Failed to get lock.');
-    }
-    print "CHILD: Sleeping for two seconds...\n";
-    sleep($child_sleep);
-    print "CHILD: Unlocking $tmp_dir2/foo...\n";
-    Genome::Sys->unlock_resource(resource_lock => $child_lock);
-    print "CHILD: Exiting...\n";
-    exit 0;
-}
-else { # parent thread
-    sleep(1);
-    print "PARENT: Trying to lock $tmp_dir2/foo...\n";
-    my $parent_lock = Genome::Sys->lock_resource(@common_params, max_try => 0);
-    is($parent_lock, undef, 'correctly failed to get lock on temp dir while child process has it locked');
-
-    waitpid($child_pid, 0);
-}
-
-ok(Genome::Sys->lock_resource(@common_params, max_try => 2), 'locked temp dir once child process finished');
-
 done_testing();
 
 ###
