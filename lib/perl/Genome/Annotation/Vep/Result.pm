@@ -62,7 +62,7 @@ sub _run {
     delete $params{test_name};
 
     my $vep_command = Genome::Db::Ensembl::Command::Vep->create(
-        input_file => $self->input_vcf_result->get_vcf($self->variant_type),
+        input_file => $self->input_vcf_result->output_file_path,
         output_file => File::Spec->join($self->temp_staging_directory, $self->output_filename),
         ensembl_annotation_build_id => $self->ensembl_annotation_build_id,
         custom => \@custom_annotation_inputs,

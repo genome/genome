@@ -40,7 +40,7 @@ sub generate_test_cmd {
     my $input_vcf_result = $input_result_class->__define__();
     Sub::Install::reinstall_sub({
         into => $input_result_class,
-        as => 'get_vcf',
+        as => 'output_file_path',
         code => sub {return 'some_file.vcf.gz';},
     });
 
