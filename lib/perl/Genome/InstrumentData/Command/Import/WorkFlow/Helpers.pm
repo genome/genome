@@ -55,7 +55,7 @@ sub kilobytes_required_for_processing_of_source_files {
     for my $source_file ( @source_files ) {
         my $size = $self->file_size($source_file);
         if ( not $size ) {
-            $self->error_message('Source file does have any size! '.$source_file);
+            $self->error_message('Source file does not have any size! '.$source_file);
             return;
         }
 
