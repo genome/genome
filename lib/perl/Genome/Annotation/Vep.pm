@@ -28,7 +28,7 @@ class Genome::Annotation::Vep {
     ],
     has_optional_output => [
         software_result => {
-            is => 'Genome::Annotation::Readcount::Result',
+            is => 'Genome::Annotation::Vep::Result',
             doc => 'The software result created during command execution',
         },
     ],

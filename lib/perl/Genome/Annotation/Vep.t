@@ -12,7 +12,6 @@ use above "Genome";
 use Sub::Install;
 use Genome::Test::Factory::InstrumentData::MergedAlignmentResult;
 use Genome::Model::Tools::DetectVariants2::Result::Vcf;
-use Genome::Model::Tools::Sam::Readcount;
 use Genome::Model::Tools::Bed::Convert::VcfToBed;
 use Genome::Annotation::Detail::TestHelpers qw(test_cmd_and_result_are_in_sync);
 
