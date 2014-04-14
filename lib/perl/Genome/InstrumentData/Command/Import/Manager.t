@@ -135,7 +135,7 @@ ok(!grep({ $_->{instrument_data_file} } @$imports_aryref), 'imports aryref does 
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
     analysis_project => $analysis_project,
     source_files_tsv => $source_files_tsv,
-    launch_config => "echo %{job_name} LAUNCH! TMP-KB>%{tmp_kb} TMP-MB=%{tmp_mb}", # successful imports, will not launch
+    launch_config => "echo %{job_name} LAUNCH! TMP=%{tmp}", # successful imports, will not launch
     show_import_commands => 1,
 );
 ok($manager, 'create manager');
@@ -162,7 +162,7 @@ $manager = Genome::InstrumentData::Command::Import::Manager->create(
     analysis_project => $analysis_project,
     source_files_tsv => $source_files_tsv,
     list_config => "printf %s NOTHING_TO_SEE_HERE;1;2",
-    launch_config => "echo %{job_name} LAUNCH! TMP-KB>%{tmp_kb} TMP-MB=%{tmp_mb}", # successful imports, will not launch
+    launch_config => "echo %{job_name} LAUNCH! TMP=%{tmp}", # successful imports, will not launch
 );
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');
@@ -176,9 +176,9 @@ ok(!grep({ $_->{job_status} } @$imports_aryref), 'imports aryref does not have j
 is_deeply(
     [ map { $manager->_resolve_launch_command_for_import($_) } @$imports_aryref ],
     [
-        "echo TeSt-0000-00.1 LAUNCH! TMP-KB>1024 TMP-MB=1 genome instrument-data import basic --sample name=TeSt-0000-00 --source-files bam1.bam --import-source-name TeSt --instrument-data-properties lane='8' --analysis-project id=".$analysis_project->id,
-        "echo TeSt-0000-00.2 LAUNCH! TMP-KB>1024 TMP-MB=1 genome instrument-data import basic --sample name=TeSt-0000-00 --source-files bam2.bam --import-source-name TeSt --instrument-data-properties lane='8' --analysis-project id=".$analysis_project->id,
-        "echo TeSt-0000-01.1 LAUNCH! TMP-KB>1024 TMP-MB=1 genome instrument-data import basic --sample name=TeSt-0000-01 --source-files bam3.bam --import-source-name TeSt --instrument-data-properties lane='7' --analysis-project id=".$analysis_project->id,
+        "echo TeSt-0000-00.1 LAUNCH! TMP=1 genome instrument-data import basic --sample name=TeSt-0000-00 --source-files bam1.bam --import-source-name TeSt --instrument-data-properties lane='8' --analysis-project id=".$analysis_project->id,
+        "echo TeSt-0000-00.2 LAUNCH! TMP=1 genome instrument-data import basic --sample name=TeSt-0000-00 --source-files bam2.bam --import-source-name TeSt --instrument-data-properties lane='8' --analysis-project id=".$analysis_project->id,
+        "echo TeSt-0000-01.1 LAUNCH! TMP=1 genome instrument-data import basic --sample name=TeSt-0000-01 --source-files bam3.bam --import-source-name TeSt --instrument-data-properties lane='7' --analysis-project id=".$analysis_project->id,
      ],
      'launch commands',
 );

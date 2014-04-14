@@ -84,7 +84,7 @@ DOC
         _launch_command_has_job_name => { is => 'Boolean', default_value => 0, },
         _launch_command_substitutions => { 
             is => 'Hash', 
-            default_value => { map { $_ => qr/%{$_}/ } (qw/ job_name sample_name tmp_kb tmp_mb /), },
+            default_value => { map { $_ => qr/%{$_}/ } (qw/ job_name sample_name tmp /), },
         },
     ],
 };
@@ -273,8 +273,8 @@ sub _load_samples {
         # get disk space required [checks if source files exist]
         my $disk_space_required = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->kilobytes_required_for_processing_of_source_files( split(',', $import->{source_files}) );
         return if Genome::InstrumentData::Command::Import::WorkFlow::Helpers->error_message;
-        $import->{tmp_kb} = ( $disk_space_required < 1024 ) ? 1024 : $disk_space_required;
-        $import->{tmp_mb} = sprintf('%i', $import->{tmp_kb} / 1024);
+        $disk_space_required = 1024 if $disk_space_required < 1023;
+        $import->{tmp} = sprintf('%i', $disk_space_required / 1024);
         # sample name, number and job name
         my $sample_name = $import->{sample_name};
         $import->{sample_number} = ++$sample_names_seen{$sample_name};
