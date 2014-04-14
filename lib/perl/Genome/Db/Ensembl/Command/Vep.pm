@@ -215,32 +215,11 @@ sub _open_input_file {
 sub execute {
     my $self = shift;
 
-    my $format = $self->format;
-    my $input_file= $self->input_file;
-
-    if ($format eq "ensembl"){
-        $input_file = $self->_verify_ensembl_input($input_file);
-    }
-
-    # If bed format is input, we do a conversion to ensembl format. This is necessary
-    # because ensembl has some weird conventions. (Most notably, an insertion is
-    # represented by changing the start base to the end base + 1 and a deletion is represented by
-    # the numbers of the nucleotides of the bases being affected:
-    #
-    # 1  123  122  -/ACGT
-    # 1  978  980  ACT/-
-
-    if ($format eq "bed"){
-        $input_file = $self->_convert_bed_to_ensembl_input($input_file);
-        $format = "ensembl";
-    }
-
+    $self->resolve_format_and_input_file;
     my $string_args = $self->_get_string_args;
-    #have to replace these arg, because it may have changed (from bed -> ensembl)
-    $string_args =~ s/--format (\w+)/--format $format/;
     # the vep script does not understand --input_file - as read from stdin.
     # instead, we must leave out the --input_file arg to get that behavior.
-    my $input_file_arg = $input_file eq '-' ? "" : "--input_file $input_file";
+    my $input_file_arg = $self->input_file eq '-' ? "" : sprintf("--input_file %s", $self->input_file);
     $string_args =~ s/--input_file ([^\s]+)/$input_file_arg/;
 
     my $bool_args = $self->_get_bool_args;
@@ -295,7 +274,7 @@ sub execute {
         output_files => [$self->{output_file}],
         skip_if_output_is_present => 0,
     );
-    $params{input_files} = [$input_file] unless $input_file eq '-';
+    $params{input_files} = [$self->input_file] unless $self->input_file eq '-';
     $params{redirect_stdout} = '/dev/null' if $self->quiet;
 
     $self->annotation_build->prepend_api_path_and_execute(
@@ -322,6 +301,30 @@ sub annotation_build {
         die $self->error_message("Could not find ImportedAnnotation build with id ".$self->ensembl_annotation_build_id);
     }
     return $build;
+}
+
+sub resolve_format_and_input_file {
+    my $self = shift;
+    my ($format, $input_file);
+    if ($self->format eq "ensembl") {
+        $input_file = $self->_verify_ensembl_input($self->input_file);
+        $format = $self->format;
+    } elsif ($self->format eq "bed") {
+        # If bed format is input, we do a conversion to ensembl format. This is necessary
+        # because ensembl has some weird conventions. (Most notably, an insertion is
+        # represented by changing the start base to the end base + 1 and a deletion is represented by
+        # the numbers of the nucleotides of the bases being affected:
+        #
+        # 1  123  122  -/ACGT
+        # 1  978  980  ACT/-
+        $input_file = $self->_convert_bed_to_ensembl_input($self->input_file);
+        $format = "ensembl";
+    } else {
+        $input_file = $self->input_file;
+        $format = $self->format;
+    }
+    $self->input_file($input_file);
+    $self->format($format);
 }
 
 sub _get_string_args {
