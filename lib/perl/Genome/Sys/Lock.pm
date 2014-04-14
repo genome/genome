@@ -4,7 +4,7 @@ use warnings;
 use Time::HiRes;
 use File::Basename;
 use MIME::Lite;
-use Carp;
+use Carp qw(carp croak);
 use File::Temp;
 use Sys::Hostname qw/hostname/;
 use Genome;
@@ -15,11 +15,19 @@ my %SYMLINKS_TO_REMOVE;
 my %NESSY_LOCKS_TO_REMOVE;
 my $LOCKING_CLIENT;
 
+# clear_state() can be used after fork() to get a "clean" lock state.
+sub clear_state {
+    %SYMLINKS_TO_REMOVE = ();
+    %NESSY_LOCKS_TO_REMOVE = ();
+    undef $LOCKING_CLIENT;
+}
+
 sub lock_resource {
     my ($self,%args) = @_;
 
     $args{block_sleep} = 60 unless defined $args{block_sleep};
     $args{max_try} = 7200 unless defined $args{max_try};
+    $args{wait_announce_interval} = 0 unless defined $args{wait_announce_interval};
 
     @args{'resource_lock', 'parent_dir'} = $self->_resolve_resource_lock_and_parent_dir_for_lock_resource(%args);
 
@@ -89,6 +97,12 @@ sub _file_based_lock_resource {
 
     my($resource_lock, $parent_dir)
         = delete @args{'resource_lock','parent_dir'};
+    unless ($resource_lock) {
+        croak('resource_lock not set');
+    }
+    unless ($parent_dir) {
+        croak('parent_dir not set');
+    }
 
     my $basename = File::Basename::basename($resource_lock);
 
@@ -103,7 +117,9 @@ sub _file_based_lock_resource {
     }
 
     my $wait_announce_interval = delete $args{wait_announce_interval};
-    $wait_announce_interval = 0 unless defined $wait_announce_interval;
+    unless (defined $wait_announce_interval) {
+        croak('wait_announce_interval not defined');
+    }
 
     my $owner_details = $self->_resolve_lock_owner_details;
     my $lock_dir_template = sprintf("lock-%s--%s_XXXX",$basename,$owner_details);
@@ -228,7 +244,7 @@ END_CONTENT
                         $self->status_message('Sleeping for one hour...');
                         sleep 60 * 60;
                  }
-                     $self->unlock_resource(resource_lock => $resource_lock, force => 1);
+                     $self->_file_based_unlock_resource(resource_lock => $resource_lock, force => 1);
                      #maybe warn here before stealing the lock...
                }
            }
@@ -286,20 +302,46 @@ sub _new_style_lock {
     }
 
     my $timeout = $self->_new_style_lock_timeout_from_args(%args);
+    my $wait_announce_interval = delete $args{wait_announce_interval};
+    unless (defined $wait_announce_interval) {
+        croak('wait_announce_interval not defined');
+    }
 
+    my $info_content = join("\n", map { $_ . ': ' . $user_data{$_} } keys %user_data);
+    my $claim_warning = '';
+    my $initial_time = time();
+    my $wait_announce_timer = AnyEvent->timer(
+        after => $wait_announce_interval,
+        interval => $wait_announce_interval,
+        cb => sub {
+            my $total_elapsed_time = time() - $initial_time;
+            $self->status_message("waiting (total_elapsed_time = $total_elapsed_time seconds) on lock for resource '$resource_lock': $claim_warning. lock_info is:\n$info_content");
+        },
+    );
     my $claim = $LOCKING_CLIENT->claim($resource_lock, timeout => $timeout, user_data => \%user_data);
+    undef $wait_announce_timer;
     $NESSY_LOCKS_TO_REMOVE{$resource_lock} = $claim if $claim;
     return $claim;
 }
 
+sub min_timeout {
+    return 5;
+}
 sub _new_style_lock_timeout_from_args {
     my($self, %args) = @_;
 
-    if (exists($args{max_try}) and exists($args{block_sleep})) {
-        return $args{max_try} * $args{block_sleep};
+    my $block_sleep = delete $args{block_sleep} || 0;
+
+    my $max_try = delete $args{max_try} || 0;
+
+    my $min_timeout = min_timeout();
+    my $timeout = $max_try * $block_sleep;
+    unless ($timeout > $min_timeout) {
+        $timeout = $min_timeout;
+        carp("increasing timeout to minimum ($min_timeout)");
     }
 
-    return undef;
+    return $timeout;
 }
 
 sub _is_holding_nessy_lock {
@@ -369,6 +411,9 @@ sub _file_based_unlock_resource {
     my($self, %args) = @_;
 
     my $resource_lock = delete $args{resource_lock};
+    unless ($resource_lock) {
+        carp('resource_lock is not set');
+    }
     my $force = delete $args{force};
 
     my $target = readlink($resource_lock);
