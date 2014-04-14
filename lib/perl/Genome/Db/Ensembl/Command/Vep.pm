@@ -214,8 +214,6 @@ sub _open_input_file {
 
 sub execute {
     my $self = shift;
-    my $ensembl_version_number = Genome::Db::Ensembl::Command::Import::Run->ensembl_version_string($annotation_build->ensembl_version);
-    my $script_path = $self->_resolve_vep_script_path($ensembl_version_number);
 
     my $format = $self->format;
     my $input_file= $self->input_file;
@@ -277,7 +275,7 @@ sub execute {
 
     my $cache_result = $self->_get_cache_result($self->annotation_build);
 
-    my $cmd = "$script_path $string_args $bool_args $plugin_args $custom $host_param $user_param $password_param $port_param";
+    my $cmd = join(" ", $self->script_path, $string_args, $bool_args, $plugin_args, $custom, $host_param, $user_param, $password_param, $port_param);
 
     if ($cache_result) {
         $self->debug_message("Using VEP cache result ".$cache_result->id);
@@ -304,6 +302,13 @@ sub execute {
         %params
     );
     return 1;
+}
+
+sub script_path {
+    my $self = shift;
+    my $ensembl_version_number = Genome::Db::Ensembl::Command::Import::Run->ensembl_version_string($self->annotation_build->ensembl_version);
+    my $script_path = $self->_resolve_vep_script_path($ensembl_version_number);
+    return $script_path;
 }
 
 sub annotation_build {
