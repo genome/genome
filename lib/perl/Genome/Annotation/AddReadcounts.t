@@ -14,6 +14,7 @@ use Set::Scalar;
 use Genome::Model::Tools::DetectVariants2::Result::Vcf;
 use Genome::Model::Tools::Vcf::AnnotateWithReadcounts;
 use Genome::Annotation::AddReadcounts::Result;
+use Genome::Annotation::Detail::TestHelpers qw(test_cmd_and_result_are_in_sync);
 
 use Test::More;
 
@@ -24,7 +25,6 @@ my ($cmd, $tool_args) = generate_test_cmd();
 
 ok($cmd->execute(), 'Command executed');
 is(ref($cmd->software_result), 'Genome::Annotation::AddReadcounts::Result', 'Found software result after execution');
-test_cmd_and_result_are_in_sync($cmd);
 
 my $expected_tool_args = {
     vcf_file => 'test_vcf',
@@ -32,16 +32,9 @@ my $expected_tool_args = {
 };
 is_deeply($tool_args, $expected_tool_args, 'Called Genome::Model::Tools::Vcf::AnnotateWithReadcounts with expected args');
 
+test_cmd_and_result_are_in_sync($cmd);
+
 done_testing();
-
-sub test_cmd_and_result_are_in_sync {
-    my $cmd = shift;
-
-    my $cmd_set = Set::Scalar->new($cmd->input_names);
-    my $sr_set = Set::Scalar->new($cmd->software_result->param_names,
-        $cmd->software_result->metric_names, $cmd->software_result->input_names);
-    is_deeply($cmd_set - $sr_set, Set::Scalar->new(), 'All command inputs are persisted SoftwareResult properties');
-}
 
 sub generate_test_cmd {
     my $tool_args = {}; # gets filled in by $cmd->execute()
