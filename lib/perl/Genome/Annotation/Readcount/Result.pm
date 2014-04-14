@@ -50,6 +50,7 @@ sub _run {
     # Sam::Readcount doesn't accept variant_type
     my %params = $self->param_hash;
     delete $params{variant_type};
+    delete $params{test_name};
 
     Genome::Model::Tools::Sam::Readcount->execute(
         bam_file => $self->aligned_bam_result->bam_file,

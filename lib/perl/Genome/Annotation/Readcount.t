@@ -25,16 +25,17 @@ my $cmd = generate_test_cmd();
 
 ok($cmd->execute(), 'Command executed');
 is(ref($cmd->software_result), 'Genome::Annotation::Readcount::Result', 'Found software result after execution');
-test_params_are_cmd_inputs($cmd);
+test_cmd_and_result_are_in_sync($cmd);
 
 done_testing();
 
-sub test_params_are_cmd_inputs {
+sub test_cmd_and_result_are_in_sync {
     my $cmd = shift;
 
-    my $input_set = Set::Scalar->new($cmd->input_names);
-    my $params_set = Set::Scalar->new($cmd->software_result->param_names);
-    is_deeply($params_set - $input_set, Set::Scalar->new(), 'All params are also command inputs');
+    my $cmd_set = Set::Scalar->new($cmd->input_names);
+    my $sr_set = Set::Scalar->new($cmd->software_result->param_names,
+        $cmd->software_result->metric_names, $cmd->software_result->input_names);
+    is_deeply($cmd_set - $sr_set, Set::Scalar->new(), 'All command inputs are persisted SoftwareResult properties');
 }
 
 sub generate_test_cmd {

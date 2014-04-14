@@ -33,18 +33,84 @@ sub resolve_allocation_disk_group_name {
 
 sub param_names {
     my $self = shift;
+    return ($self->is_many_param_names, $self->is_not_many_param_names);
+}
 
-    my @properties = $self->__meta__->properties(class_name => __PACKAGE__);
-    return map {$_->property_name} grep {$_->is_param} @properties;
+sub is_many_param_names {
+    my $self = shift;
+
+    return map {$_->property_name} $self->__meta__->properties(is_many => 1, is_param => 1);
+}
+
+sub is_not_many_param_names {
+    my $self = shift;
+
+    my @names = map {$_->property_name} $self->__meta__->properties(is_many => 0, is_param => 1);
+    my $names = Set::Scalar->new(@names);
+    for my $name ($self->is_many_param_names, $self->is_many_input_names, $self->is_many_metric_names) {
+        $names->delete($name . "_count");
+        $names->delete($name . "_md5");
+    }
+    return $names->members();
 }
 
 sub param_hash {
     my $self = shift;
 
     my %hash;
-    for my $param_name ($self->param_names) {
+    for my $param_name ($self->is_many_param_names) {
+        $hash{$param_name} = [$self->$param_name];
+    }
+    for my $param_name ($self->is_not_many_param_names) {
         $hash{$param_name} = $self->$param_name;
     }
     return %hash;
 }
 
+sub metric_names {
+    my $self = shift;
+
+    return ($self->is_not_many_metric_names, $self->is_many_metric_names);
+}
+
+sub is_not_many_metric_names {
+    my $self = shift;
+
+    return map {$_->property_name} $self->__meta__->properties(is_many => 0, is_metric => 1);
+}
+
+sub is_many_metric_names {
+    my $self = shift;
+
+    return map {$_->property_name} $self->__meta__->properties(is_many => 1, is_metric => 1);
+}
+
+sub input_names {
+    my $self = shift;
+    return ($self->is_many_input_names, $self->is_not_many_input_names);
+}
+
+sub is_many_input_names {
+    my $self = shift;
+
+    return map {$_->property_name} $self->__meta__->properties(is_many => 1, is_input => 1);
+}
+
+sub is_not_many_input_names {
+    my $self = shift;
+
+    return map {$_->property_name} $self->__meta__->properties(is_many => 0, is_input => 1);
+}
+
+sub input_hash {
+    my $self = shift;
+
+    my %hash;
+    for my $input_name ($self->is_many_input_names) {
+        $hash{$input_name} = [$self->$input_name];
+    }
+    for my $input_name ($self->is_not_many_input_names) {
+        $hash{$input_name} = $self->$input_name;
+    }
+    return %hash;
+}
