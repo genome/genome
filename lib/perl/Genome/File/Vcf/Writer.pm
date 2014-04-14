@@ -10,7 +10,13 @@ use warnings;
 
 sub new {
     my ($class, $path, $header) = @_;
-    return $class->fhopen(Genome::Sys->open_file_for_writing($path), $path, $header);
+    my $fh;
+    if ($path =~ m/\.gz$/) {
+        $fh = Genome::Sys->open_gzip_file_for_writing($path);
+    } else {
+        $fh = Genome::Sys->open_file_for_writing($path);
+    }
+    return $class->fhopen($fh, $path, $header);
 }
 
 sub fhopen {
