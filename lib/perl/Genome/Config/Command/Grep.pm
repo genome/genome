@@ -73,7 +73,7 @@ sub matches {
     my $self = shift;
     my $item = shift;
 
-    return if $self->only_concrete and not $item->_is_concrete;
+    return if $self->only_concrete and not $item->is_concrete;
 
     my $query = $self->query;
 
