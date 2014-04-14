@@ -54,7 +54,7 @@ The import commands will be printed to the screen [on STDERR] if:
 Example for LSF
  Launch the job into group /me/mygroup and logging to /users/me/logs/%{job_name}
 
- bsub -J %{job_name} -g /me/mygroup -oo /users/me/logs/%{job_name}
+ bsub -J %{job_name} -g /me/mygroup -oo /users/me/logs/%{job_name} -M 16000000 -R 'select [mem>16000 & tmp>%{tmp}] rsuage[mem=16000,tmp=%{tmp}]'
 
 DOC
         },
@@ -84,7 +84,7 @@ DOC
         _launch_command_has_job_name => { is => 'Boolean', default_value => 0, },
         _launch_command_substitutions => { 
             is => 'Hash', 
-            default_value => { map { $_ => qr/%{$_}/ } (qw/ job_name sample_name /), },
+            default_value => { map { $_ => qr/%{$_}/ } (qw/ job_name sample_name tmp_kb tmp_mb /), },
         },
     ],
 };
@@ -270,12 +270,11 @@ sub _load_samples {
     my $imports = $self->_imports;
     my %sample_names_seen;
     IMPORT: for my $import ( @$imports ) {
-        # check source files
-        for my $source_file ( split(',', $import->{source_files}) ) {
-            next if -s $source_file;
-            $self->error_message("Source file ($source_file) for sample ($import->{sample_name}) does not exist!");
-            next IMPORT;
-        }
+        # get disk space required [checks if source files exist]
+        my $disk_space_required = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->kilobytes_required_for_processing_of_source_files( split(',', $import->{source_files}) );
+        return if Genome::InstrumentData::Command::Import::WorkFlow::Helpers->error_message;
+        $import->{tmp_kb} = ( $disk_space_required < 1024 ) ? 1024 : $disk_space_required;
+        $import->{tmp_mb} = sprintf('%i', $import->{tmp_kb} / 1024);
         # sample name, number and job name
         my $sample_name = $import->{sample_name};
         $import->{sample_number} = ++$sample_names_seen{$sample_name};

@@ -22,8 +22,8 @@ use_ok('Genome::InstrumentData::Command::Import::Manager') or die;
 my $cwd = Cwd::getcwd();
 my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import::Manager', 'v1');
 chdir $test_dir;
-my $source_files_tsv = $test_dir.'/info.tsv';
-my @source_files = (qw/ bam1 bam2 bam3 /);
+my $source_files_tsv = $test_dir.'/source-files.tsv';
+my @source_files = map { $_.'.bam' } (qw/ bam1 bam2 bam3 /);
 
 my $analysis_project = Genome::Config::AnalysisProject->create(name => '__TEST_AP__');
 ok($analysis_project, 'create analysis project');
@@ -135,7 +135,7 @@ ok(!grep({ $_->{instrument_data_file} } @$imports_aryref), 'imports aryref does 
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
     analysis_project => $analysis_project,
     source_files_tsv => $source_files_tsv,
-    launch_config => "echo %{job_name} LAUNCH!", # successful imports, will not launch
+    launch_config => "echo %{job_name} LAUNCH! TMP-KB>%{tmp_kb} TMP-MB=%{tmp_mb}", # successful imports, will not launch
     show_import_commands => 1,
 );
 ok($manager, 'create manager');
@@ -162,7 +162,7 @@ $manager = Genome::InstrumentData::Command::Import::Manager->create(
     analysis_project => $analysis_project,
     source_files_tsv => $source_files_tsv,
     list_config => "printf %s NOTHING_TO_SEE_HERE;1;2",
-    launch_config => "echo %{job_name} LAUNCH!", # successful imports, will not launch
+    launch_config => "echo %{job_name} LAUNCH! TMP-KB>%{tmp_kb} TMP-MB=%{tmp_mb}", # successful imports, will not launch
 );
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');
@@ -176,9 +176,9 @@ ok(!grep({ $_->{job_status} } @$imports_aryref), 'imports aryref does not have j
 is_deeply(
     [ map { $manager->_resolve_launch_command_for_import($_) } @$imports_aryref ],
     [
-        "echo TeSt-0000-00.1 LAUNCH! genome instrument-data import basic --sample name=TeSt-0000-00 --source-files bam1 --import-source-name TeSt --instrument-data-properties lane='8' --analysis-project id=".$analysis_project->id,
-        "echo TeSt-0000-00.2 LAUNCH! genome instrument-data import basic --sample name=TeSt-0000-00 --source-files bam2 --import-source-name TeSt --instrument-data-properties lane='8' --analysis-project id=".$analysis_project->id,
-        "echo TeSt-0000-01.1 LAUNCH! genome instrument-data import basic --sample name=TeSt-0000-01 --source-files bam3 --import-source-name TeSt --instrument-data-properties lane='7' --analysis-project id=".$analysis_project->id,
+        "echo TeSt-0000-00.1 LAUNCH! TMP-KB>1024 TMP-MB=1 genome instrument-data import basic --sample name=TeSt-0000-00 --source-files bam1.bam --import-source-name TeSt --instrument-data-properties lane='8' --analysis-project id=".$analysis_project->id,
+        "echo TeSt-0000-00.2 LAUNCH! TMP-KB>1024 TMP-MB=1 genome instrument-data import basic --sample name=TeSt-0000-00 --source-files bam2.bam --import-source-name TeSt --instrument-data-properties lane='8' --analysis-project id=".$analysis_project->id,
+        "echo TeSt-0000-01.1 LAUNCH! TMP-KB>1024 TMP-MB=1 genome instrument-data import basic --sample name=TeSt-0000-01 --source-files bam3.bam --import-source-name TeSt --instrument-data-properties lane='7' --analysis-project id=".$analysis_project->id,
      ],
      'launch commands',
 );
@@ -208,7 +208,7 @@ $manager = Genome::InstrumentData::Command::Import::Manager->create(
 );
 ok($manager, 'create manager');
 ok(!$manager->execute, 'execute failed');
-is($manager->error_message, 'Source file (bam4) for sample (TeSt-0000-01) does not exist!', 'correct error');
+is( Genome::InstrumentData::Command::Import::WorkFlow::Helpers->error_message, 'Source file does not have any size! bam4.bam', 'correct error');
 
 chdir $cwd;
 done_testing();
