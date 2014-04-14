@@ -214,18 +214,6 @@ sub _open_input_file {
 
 sub execute {
     my $self = shift;
-    # check for imported annotation build
-    unless($self->ensembl_annotation_build_id) {
-        $self->error_message("No ensembl annotation build specified");
-        return;
-    }
-    my $annotation_build = Genome::Model::Build::ImportedAnnotation->get($self->ensembl_annotation_build_id);
-
-    unless ($annotation_build) {
-        $self->error_message("Could not find ImportedAnnotation build with id ".$self->ensembl_annotation_build_id);
-        return;
-    }
-
     my $ensembl_version_number = Genome::Db::Ensembl::Command::Import::Run->ensembl_version_string($annotation_build->ensembl_version);
     my $script_path = $self->_resolve_vep_script_path($ensembl_version_number);
 
@@ -287,7 +275,7 @@ sub execute {
     my $password_param = defined $ENV{GENOME_DB_ENSEMBL_PASS} ? "--password ".$ENV{GENOME_DB_ENSEMBL_PASS} : "";
     my $port_param = defined $ENV{GENOME_DB_ENSEMBL_PORT} ? "--port ".$ENV{GENOME_DB_ENSEMBL_PORT} : "";
 
-    my $cache_result = $self->_get_cache_result($annotation_build);
+    my $cache_result = $self->_get_cache_result($self->annotation_build);
 
     my $cmd = "$script_path $string_args $bool_args $plugin_args $custom $host_param $user_param $password_param $port_param";
 
@@ -312,10 +300,23 @@ sub execute {
     $params{input_files} = [$input_file] unless $input_file eq '-';
     $params{redirect_stdout} = '/dev/null' if $self->quiet;
 
-    $annotation_build->prepend_api_path_and_execute(
+    $self->annotation_build->prepend_api_path_and_execute(
         %params
     );
     return 1;
+}
+
+sub annotation_build {
+    my $self = shift;
+    unless($self->ensembl_annotation_build_id) {
+        die $self->error_message("No ensembl annotation build specified");
+    }
+    my $build = Genome::Model::Build::ImportedAnnotation->get($self->ensembl_annotation_build_id);
+
+    unless ($build) {
+        die $self->error_message("Could not find ImportedAnnotation build with id ".$self->ensembl_annotation_build_id);
+    }
+    return $build;
 }
 
 sub _get_string_args {
