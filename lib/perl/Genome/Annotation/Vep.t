@@ -10,11 +10,11 @@ BEGIN {
 
 use above "Genome";
 use Sub::Install;
-use Set::Scalar;
 use Genome::Test::Factory::InstrumentData::MergedAlignmentResult;
 use Genome::Model::Tools::DetectVariants2::Result::Vcf;
 use Genome::Model::Tools::Sam::Readcount;
 use Genome::Model::Tools::Bed::Convert::VcfToBed;
+use Genome::Annotation::Detail::TestHelpers qw(test_cmd_and_result_are_in_sync);
 
 use Test::More;
 
@@ -25,17 +25,10 @@ use_ok('Genome::Db::Ensembl::Command::Vep') or die;
 my $cmd = generate_test_cmd();
 ok($cmd->execute(), 'Command executed');
 is(ref($cmd->software_result), 'Genome::Annotation::Vep::Result', 'Found software result after execution');
-test_params_are_cmd_inputs($cmd);
+
+test_cmd_and_result_are_in_sync($cmd);
 
 done_testing();
-
-sub test_params_are_cmd_inputs {
-    my $cmd = shift;
-
-    my $input_set = Set::Scalar->new($cmd->input_names);
-    my $params_set = Set::Scalar->new($cmd->software_result->param_names);
-    is_deeply($params_set - $input_set, Set::Scalar->new(), 'All params are also command inputs');
-}
 
 sub generate_test_cmd {
     Sub::Install::reinstall_sub({
