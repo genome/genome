@@ -17,17 +17,16 @@ class Genome::Model::Tools::Vcf::AnnotateWithReadcounts {
     has_input => [
         vcf_file => {
             is => 'File',
+            doc => 'The vcf (gzipped or not) file that is to be annotated.',
         },
-        readcount_files => {
+        readcount_file_and_sample_idx => {
             is => 'File',
             is_many => 1,
-        },
-        sample_names => {
-            is => 'Text',
-            is_many => 1,
+            doc => 'The readcount file and what sample-column it should be annotated into.  <filename>:<sample_index>',
         },
         output_file => {
             is_output => 1,
+            doc => 'The output file, should end in ".vcf" or ".vcf.gz".  If ".vcf.gz" the output will be zipped using bgzip.',
         },
     ],
 };
@@ -38,17 +37,18 @@ sub execute {
     my ($vcf_reader, $vcf_writer, $readcount_readers) = $self->get_file_objects();
 
     my %readcount_entries;
-    for my $sample_name ($self->sample_names) {
-        $readcount_entries{$sample_name} = $readcount_readers->{$sample_name}->next;
+    my @sample_idxs = keys %{$readcount_readers};
+    for my $sample_idx (@sample_idxs) {
+        $readcount_entries{$sample_idx} = $readcount_readers->{$sample_idx}->next;
     }
 
     while (my $vcf_entry = $vcf_reader->next) {
         $vcf_entry->add_format_field($RC_TAG);
-        for my $sample_name ($self->sample_names) {
-            my $readcount_entry = $readcount_entries{$sample_name};
+        for my $sample_idx (@sample_idxs) {
+            my $readcount_entry = $readcount_entries{$sample_idx};
             if (entries_match($readcount_entry, $vcf_entry)) {
-                add_readcount_to_vcf_entry($readcount_entry, $vcf_entry, $sample_name);
-                $readcount_entries{$sample_name} = $readcount_readers->{$sample_name}->next;
+                add_readcount_to_vcf_entry($readcount_entry, $vcf_entry, $sample_idx);
+                $readcount_entries{$sample_idx} = $readcount_readers->{$sample_idx}->next;
             }
         }
         $vcf_writer->write($vcf_entry);
@@ -66,13 +66,22 @@ sub get_file_objects {
 
     my $vcf_writer = Genome::File::Vcf::Writer->new($self->output_file, $header);
     my %readcount_readers;
-    my $counter = 0;
-    for my $sample_name ($self->sample_names) {
-        $readcount_readers{$sample_name} = Genome::File::BamReadcount::Reader->new(
-            $self->readcount_file_for_index($counter));
-        $counter++;
+    for my $sample_idx (keys %{$self->readcount_filenames}) {
+        $readcount_readers{$sample_idx} = Genome::File::BamReadcount::Reader->new(
+            $self->readcount_filenames->{$sample_idx});
     }
     return ($vcf_reader, $vcf_writer, \%readcount_readers);
+}
+
+sub readcount_filenames {
+    my $self = shift;
+
+    my %result;
+    for my $value ($self->readcount_file_and_sample_idx) {
+        my ($filename, $sample_idx) = split(/:/, $value);
+        $result{$sample_idx} = $filename;
+    }
+    return \%result;
 }
 
 sub entries_match {
@@ -88,11 +97,10 @@ sub entries_match {
 }
 
 sub add_readcount_to_vcf_entry {
-    my ($readcount_entry, $vcf_entry, $sample_name) = @_;
+    my ($readcount_entry, $vcf_entry, $sample_idx) = @_;
 
-    my $sample_index = $vcf_entry->{header}->index_for_sample_name($sample_name);
     my $readcount_line = process_readcount_line($readcount_entry->to_string);
-    $vcf_entry->set_sample_field($sample_index, $RC_TAG, $readcount_line);
+    $vcf_entry->set_sample_field($sample_idx, $RC_TAG, $readcount_line);
     return;
 }
 
@@ -103,12 +111,4 @@ sub process_readcount_line {
     return encode_base64($zipped, '');
 }
 
-sub readcount_file_for_index {
-    my $self = shift;
-    my $index = shift;
-    my @files = $self->readcount_files;
-    return $files[$index];
-}
-
 1;
-

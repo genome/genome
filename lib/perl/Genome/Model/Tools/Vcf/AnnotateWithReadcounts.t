@@ -11,30 +11,44 @@ use warnings;
 use above "Genome";
 use Test::More;
 use Genome::Utility::Test qw(compare_ok);
+use Genome::File::Vcf::Differ;
 
 my $pkg = 'Genome::Model::Tools::Vcf::AnnotateWithReadcounts';
 
 use_ok($pkg);
 my $data_dir = Genome::Utility::Test->data_dir_ok($pkg, "v1");
 
-my $out = Genome::Sys->create_temp_file_path;
-my $cmd = Genome::Annotation::AddReadcount->create(
-    vcf_file => File::Spec->join($data_dir, "1.vcf.gz"),
-    readcount_files => [
-        File::Spec->join($data_dir, 'test1.rc.tsv'),
-        File::Spec->join($data_dir, 'test2.rc.tsv'),
-    ],
-    sample_names => [
-        'TEST-patient1-somval_tumor1',
-        'TEST-patient1-somval_normal1',
-    ],
-    output_file => $out,
-);
-ok($cmd->isa("Genome::Annotation::AddReadcount"), "Command created ok");
-ok($cmd->execute, "Command executed ok");
+subtest "output vcf" => sub {
+    my $out = Genome::Sys->create_temp_file_path;
+    run($out);
+    my $expected_out = File::Spec->join($data_dir, "expected.vcf");
+    compare_ok($expected_out, $out, "Vcf was written correctly");
+};
 
-my $expected_out = File::Spec->join($data_dir, "expected.vcf");
-compare_ok($expected_out, $out, "Vcf was written correctly");
+subtest "output gzipped vcf" => sub {
+    my $out = Genome::Sys->create_temp_file_path . '.gz';
+    run($out);
+
+    my $expected_out = File::Spec->join($data_dir, "expected.vcf.gz");
+    my $differ = Genome::File::Vcf::Differ->new($out, $expected_out);
+    is($differ->diff, undef, "Found No differences between $out and (expected) $expected_out");
+};
 
 done_testing;
+
+sub run {
+    my $out = shift;
+
+    my $cmd = $pkg->create(
+        vcf_file => File::Spec->join($data_dir, "1.vcf.gz"),
+        readcount_file_and_sample_idx => [
+            sprintf("%s:0", File::Spec->join($data_dir, 'test1.rc.tsv')),
+            sprintf("%s:2", File::Spec->join($data_dir, 'test2.rc.tsv')),
+        ],
+        output_file => $out,
+    );
+    ok($cmd->isa($pkg), "Command created ok");
+    ok($cmd->execute, "Command executed ok");
+
+}
 
