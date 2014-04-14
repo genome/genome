@@ -5,7 +5,7 @@ use warnings FATAL => 'all';
 use Genome;
 use Sys::Hostname;
 
-class Genome::Annotation::Readcount::Result {
+class Genome::Annotation::Vep::Result {
     is => 'Genome::SoftwareResult::Stageable',
     has_input => [
         ensembl_annotation_build_id => {
@@ -57,7 +57,6 @@ sub create {
 sub _run {
     my $self = shift;
 
-    my %params = $self->param_hash;
     my $roi_input = join("@", $self->target_region_set->get_tabix_and_gzipped_bed_file,
         "ROI",
         "bed",
@@ -71,6 +70,10 @@ sub _run {
         "0",
     );
     my @custom_annotation_inputs = ($roi_input, $segdup_input);
+
+    my %params = $self->param_hash;
+    delete $params{variant_type};
+    delete $params{test_name};
 
     my $vep_command = Genome::Db::Ensembl::Command::Vep->create(
         input_file => $self->input_vcf_result->get_vcf($self->variant_type),
