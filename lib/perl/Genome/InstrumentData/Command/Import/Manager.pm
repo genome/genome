@@ -218,7 +218,10 @@ sub _load_source_files_tsv {
             push @{$import->{instrument_data_attributes}}, $attr."='".$value."'";
         }
     }
+
     $self->_imports(\@imports);
+
+    return $info_reader->error_message;#if $info_reader->error_mesasge;
 
     return;
 }
