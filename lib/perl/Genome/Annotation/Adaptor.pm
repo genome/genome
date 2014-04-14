@@ -63,9 +63,9 @@ sub resolve_indel_vcf_result {
 }
 
 sub resolve_annotation_build {
-    die 'Abstract';
+    my $self = shift;
+    return $self->build->annotation_build;
 }
-
 
 1;
 

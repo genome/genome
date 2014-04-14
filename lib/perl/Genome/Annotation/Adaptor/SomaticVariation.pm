@@ -22,10 +22,4 @@ sub resolve_bam_results {
     return \@bam_results;
 }
 
-sub resolve_annotation_build {
-    my $self = shift;
-    return $self->build->annotation_build;
-}
-
 1;
-
