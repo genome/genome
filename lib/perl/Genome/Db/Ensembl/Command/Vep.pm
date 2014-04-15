@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 use Cwd;
 use IO::Handle;
-use File::Basename;
+use File::Basename qw(dirname);
 
 my ($VEP_DIR) = Cwd::abs_path(__FILE__) =~ /(.*)\//;
 my $VEP_SCRIPT_PATH = $VEP_DIR . "/Vep.d/vep";
@@ -179,6 +179,10 @@ class Genome::Db::Ensembl::Command::Vep {
             is => 'String',
             doc => "temporary to put cache and config files expected by vep",
         },
+        _plugins_workspace => {
+            is => 'String',
+            doc => "path to plugins config directory in workspace",
+        },
     ],
 };
 
@@ -307,6 +311,23 @@ sub resolve_format_and_input_file {
     $self->format($format);
 }
 
+sub plugins_workspace {
+    my $self = shift;
+    unless (defined $self->_plugins_workspace) {
+        if ($self->plugins) {
+            my $temp_plugins_dir = File::Spec->join($self->workspace, "Plugins", "config");
+            Genome::Sys->create_directory($temp_plugins_dir);
+            $self->_plugins_workspace($temp_plugins_dir);
+        }
+    }
+    return $self->_plugins_workspace;
+}
+
+sub plugins_source_dir {
+    my $self = shift;
+    return sprintf("/usr/lib/vepplugins-%s", $self->plugins_version);
+}
+
 sub string_args {
     my $self = shift;
     my $meta = $self->__meta__;
@@ -387,14 +408,8 @@ sub plugin_args {
     my $self = shift;
     my @plugin_strings;
     if ($self->plugins) {
-        my $temp_plugins_dir = File::Spec->join($self->workspace, "Plugins");
-        my $temp_plugins_config_dir = File::Spec->join($temp_plugins_dir, "config");
-        my $plugins_source_dir = sprintf("/usr/lib/vepplugins-%s", $self->plugins_version);
-        Genome::Sys->create_directory($temp_plugins_dir);
-        Genome::Sys->create_directory($temp_plugins_config_dir);
         foreach my $plugin ($self->plugins) {
-            push @plugin_strings, $self->_plugin_to_plugin_args($plugin, $temp_plugins_dir,
-                $temp_plugins_config_dir, $plugins_source_dir);
+            push @plugin_strings, $self->_plugin_to_plugin_args($plugin),
         }
     }
     return join(" ", @plugin_strings);
@@ -454,29 +469,33 @@ sub _remove_arg {
 sub _plugin_to_plugin_args {
     my $self = shift;
     my $plugin = shift;
-    my $temp_plugins_dir = shift;
-    my $temp_plugins_config_dir = shift;
-    my $plugins_source_dir = shift;
 
     my @plugin_fields = split /\@/, $plugin;
     my $plugin_name = $plugin_fields[0];
-    my $plugin_source_file = "$plugins_source_dir/$plugin_name.pm";
+    my $plugin_source_file = File::Spec->join($self->plugins_source_dir, "$plugin_name.pm");
     if (-e $plugin_source_file){
-        Genome::Sys->copy_file($plugin_source_file, "$temp_plugins_dir/$plugin_name.pm");
+        Genome::Sys->copy_file($plugin_source_file, File::Spec->join(dirname($self->plugins_workspace), "$plugin_name.pm"));
     }
-    my $plugin_dir = "$plugins_source_dir/config/$plugin_name";
-    my $temp_plugin_config_dir = "$temp_plugins_config_dir/$plugin_name/config";
+    my $plugin_dir = File::Spec->join($self->plugins_source_dir, "config", $plugin_name);
     if (-d $plugin_dir) {
-        `cp -r $plugin_dir $temp_plugins_config_dir`;
-        foreach my $config_file (glob "$temp_plugin_config_dir/*") {
-            my $sed_cmd = "s|path/to/config/|$temp_plugins_config_dir/|";
-            `sed "$sed_cmd" $config_file > $config_file.new; mv $config_file.new $config_file`;
+        my $cp_cmd = sprintf("cp -r %s %s", $plugin_dir, $self->plugins_workspace);
+        Genome::Sys->shellcmd(cmd => $cp_cmd);
+        foreach my $config_file (glob File::Spec->join($self->_config_dir_for_plugin($plugin_name), "*.conf")) {
+            my $sed_cmd = "s|path/to/config/|".$self->_config_dir_for_plugin($plugin_name)."/|";
+            `sed -i "$sed_cmd" $config_file`;
         }
     }
-    $plugin =~ s|PLUGIN_DIR|$temp_plugin_config_dir|;
+    my $path = $self->_config_dir_for_plugin($plugin_name);
+    $plugin =~ s|PLUGIN_DIR|$path|;
     $plugin =~ s/\@/,/g;
 
     return "--plugin $plugin";
+}
+
+sub _config_dir_for_plugin {
+    my $self = shift;
+    my $plugin_name= shift;
+    return File::Spec->join($self->plugins_workspace, $plugin_name, "config");
 }
 
 sub _species_lookup {
