@@ -232,12 +232,6 @@ sub execute {
         }
     }
 
-    my @custom_args;
-    for my $custom ($self->custom) {
-        my @parts = split "@", $custom;
-        push @custom_args, "--custom ".join(",", @parts);
-    }
-    my $custom = join(" ", @custom_args);
 
     my $host_param = defined $ENV{GENOME_DB_ENSEMBL_HOST} ? "--host ".$ENV{GENOME_DB_ENSEMBL_HOST} : "";
     my $user_param = defined $ENV{GENOME_DB_ENSEMBL_USER} ? "--user ".$ENV{GENOME_DB_ENSEMBL_USER} : "";
@@ -246,7 +240,7 @@ sub execute {
 
     my $cache_result = $self->_get_cache_result($self->annotation_build);
 
-    my $cmd = join(" ", $self->script_path, $self->string_args, $self->bool_args, $plugin_args, $custom, $host_param, $user_param, $password_param, $port_param);
+    my $cmd = join(" ", $self->script_path, $self->string_args, $self->bool_args, $plugin_args, $self->custom_args, $host_param, $user_param, $password_param, $port_param);
 
     if ($cache_result) {
         $self->debug_message("Using VEP cache result ".$cache_result->id);
@@ -383,6 +377,16 @@ sub bool_args {
     );
 
     return $bool_args;
+}
+
+sub custom_args {
+    my $self = shift;
+    my @custom_args;
+    for my $custom ($self->custom) {
+        my @parts = split "@", $custom;
+        push @custom_args, "--custom ".join(",", @parts);
+    }
+    return join(" ", @custom_args);
 }
 
 sub _get_ensembl_version {
