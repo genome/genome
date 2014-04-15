@@ -226,7 +226,7 @@ sub execute {
     my $self = shift;
 
     $self->resolve_format_and_input_file;
-
+    $self->stage_plugins;
 
     my $cmd = $self->command;
     $self->run_command($cmd);
@@ -311,21 +311,30 @@ sub resolve_format_and_input_file {
     $self->format($format);
 }
 
+sub stage_plugins {
+    my $self = shift;
+    if ($self->plugins) {
+        for my $plugin($self->plugins) {
+            my $p = Genome::Db::Ensembl::VepPlugin->create(
+                descriptor => $plugin,
+                version => $self->plugins_version,
+                staging_directory => $self->plugins_workspace,
+            );
+            $p->stage;
+        }
+    }
+}
+
 sub plugins_workspace {
     my $self = shift;
     unless (defined $self->_plugins_workspace) {
         if ($self->plugins) {
-            my $temp_plugins_dir = File::Spec->join($self->workspace, "Plugins", "config");
+            my $temp_plugins_dir = File::Spec->join($self->workspace, "Plugins");
             Genome::Sys->create_directory($temp_plugins_dir);
             $self->_plugins_workspace($temp_plugins_dir);
         }
     }
     return $self->_plugins_workspace;
-}
-
-sub plugins_source_dir {
-    my $self = shift;
-    return sprintf("/usr/lib/vepplugins-%s", $self->plugins_version);
 }
 
 sub string_args {
@@ -408,8 +417,13 @@ sub plugin_args {
     my $self = shift;
     my @plugin_strings;
     if ($self->plugins) {
-        foreach my $plugin ($self->plugins) {
-            push @plugin_strings, $self->_plugin_to_plugin_args($plugin),
+        for my $plugin($self->plugins) {
+            my $p = Genome::Db::Ensembl::VepPlugin->create(
+                descriptor => $plugin,
+                version => $self->plugins_version,
+                staging_directory => $self->plugins_workspace,
+            );
+            push @plugin_strings, $p->command_line_args;
         }
     }
     return join(" ", @plugin_strings);
@@ -464,38 +478,6 @@ sub _remove_arg {
         $count++;
     }
     return @all_string_args;
-}
-
-sub _plugin_to_plugin_args {
-    my $self = shift;
-    my $plugin = shift;
-
-    my @plugin_fields = split /\@/, $plugin;
-    my $plugin_name = $plugin_fields[0];
-    my $plugin_source_file = File::Spec->join($self->plugins_source_dir, "$plugin_name.pm");
-    if (-e $plugin_source_file){
-        Genome::Sys->copy_file($plugin_source_file, File::Spec->join(dirname($self->plugins_workspace), "$plugin_name.pm"));
-    }
-    my $plugin_dir = File::Spec->join($self->plugins_source_dir, "config", $plugin_name);
-    if (-d $plugin_dir) {
-        my $cp_cmd = sprintf("cp -r %s %s", $plugin_dir, $self->plugins_workspace);
-        Genome::Sys->shellcmd(cmd => $cp_cmd);
-        foreach my $config_file (glob File::Spec->join($self->_config_dir_for_plugin($plugin_name), "*.conf")) {
-            my $sed_cmd = "s|path/to/config/|".$self->_config_dir_for_plugin($plugin_name)."/|";
-            `sed -i "$sed_cmd" $config_file`;
-        }
-    }
-    my $path = $self->_config_dir_for_plugin($plugin_name);
-    $plugin =~ s|PLUGIN_DIR|$path|;
-    $plugin =~ s/\@/,/g;
-
-    return "--plugin $plugin";
-}
-
-sub _config_dir_for_plugin {
-    my $self = shift;
-    my $plugin_name= shift;
-    return File::Spec->join($self->plugins_workspace, $plugin_name, "config");
 }
 
 sub _species_lookup {
