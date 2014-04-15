@@ -174,6 +174,12 @@ class Genome::Db::Ensembl::Command::Vep {
             doc => "--custom option(s) to pass on to VEP.  Replace commas with @ symbol"
         },
     ],
+    has_transient_optional => [
+        _workspace => {
+            is => 'String',
+            doc => "temporary to put cache and config files expected by vep",
+        },
+    ],
 };
 
 sub help_brief {
@@ -217,9 +223,8 @@ sub execute {
 
     $self->resolve_format_and_input_file;
 
-    my $temp_config_dir = Genome::Sys->create_temp_directory;
 
-    my $cmd = $self->command($temp_config_dir);
+    my $cmd = $self->command;
     $self->run_command($cmd);
 
     return 1;
@@ -245,10 +250,17 @@ sub run_command {
 
 sub command {
     my $self = shift;
-    my $temp_config_dir = shift;
     return join(" ", $self->script_path, $self->string_args, $self->bool_args,
-            $self->plugin_args($temp_config_dir), $self->custom_args,
-            $self->db_connect_args, $self->cache_args($temp_config_dir));
+            $self->plugin_args, $self->custom_args,
+            $self->db_connect_args, $self->cache_args);
+}
+
+sub workspace {
+    my $self = shift;
+    unless (defined $self->_workspace) {
+        $self->_workspace(Genome::Sys->create_temp_directory);
+    }
+    return $self->_workspace;
 }
 
 sub script_path {
@@ -373,10 +385,9 @@ sub custom_args {
 
 sub plugin_args {
     my $self = shift;
-    my $temp_config_dir = shift;
     my $plugin_args = "";
     if ($self->plugins) {
-        my $temp_plugins_dir = File::Spec->join($temp_config_dir, "Plugins");
+        my $temp_plugins_dir = File::Spec->join($self->workspace, "Plugins");
         my $temp_plugins_config_dir = File::Spec->join($temp_plugins_dir, "config");
         my $plugins_source_dir = sprintf("/usr/lib/vepplugins-%s", $self->plugins_version);
         Genome::Sys->create_directory($temp_plugins_dir);
@@ -391,16 +402,16 @@ sub plugin_args {
 
 sub cache_args {
     my $self = shift;
-    my $temp_config_dir = shift;
     my $cache_args = "";
 
     my $cache_result = $self->_get_cache_result($self->annotation_build);
 
     if ($cache_result) {
         $self->debug_message("Using VEP cache result ".$cache_result->id);
-        $cache_args = "--cache --offline --dir ".$temp_config_dir."/";
+        $cache_args = "--cache --offline --dir ".$self->workspace."/";
         foreach my $file (glob $cache_result->output_dir."/*"){
-            `ln -s $file $temp_config_dir`;
+            my $cmd = sprintf("ln -s %s %s", $file, $self->workspace);
+            Genome::Sys->shellcmd(cmd => $cmd);
         }
     }
     else {
