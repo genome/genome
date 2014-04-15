@@ -10,79 +10,33 @@ use warnings;
 
 use above "Genome";
 use Test::More;
-use Test::Deep;
 use Sub::Install qw(reinstall_sub);
-use Genome::Test::Factory::Model::SomaticValidation;
+use Genome::Annotation::Adaptor::TestHelpers qw(test_accessors_with_vcf_results test_accessors_without_vcf_results setup_results);
 
 my $pkg = "Genome::Annotation::Adaptor::SomaticValidation";
 use_ok($pkg);
 
-my ($build, $bam_result1, $bam_result2, $snv_vcf_result, $indel_vcf_result) = setup_objects();
-
 subtest "With and without vcf results" => sub {
-    my $cmd = $pkg->create(build => $build);
-    ok($cmd->isa("$pkg"), "Command created correctly");
-    ok($cmd->execute, "Command executed successfully");
-    cmp_bag([$cmd->bam_results], [$bam_result1, $bam_result2], "Bam results set as expected");
-    is_deeply($cmd->annotation_build, $build->annotation_build, "Annotation build set as expected");
-    is($cmd->snv_vcf_result, undef, "snv vcf result is not defined");
-    is($cmd->indel_vcf_result, undef, "indel vcf result is not defined");
+    my $build = Genome::Model::Build::SomaticValidation->__define__();
+    my ($bam_result1, $bam_result2, $snv_vcf_result, $indel_vcf_result) = setup_results();
 
-    add_vcf_results($snv_vcf_result, $indel_vcf_result);
-    my $cmd2 = $pkg->create(build => $build);
-    ok($cmd2->isa("$pkg"), "Command created correctly");
-    ok($cmd2->execute, "Command executed successfully");
-    cmp_bag([$cmd2->bam_results], [$bam_result1, $bam_result2], "Bam results set as expected");
-    is_deeply($cmd2->annotation_build, $build->annotation_build, "Annotation build set as expected");
-    is_deeply($cmd2->snv_vcf_result, $snv_vcf_result, "Snvs vcf result set as expected when vcf results are added");
-    is_deeply($cmd2->indel_vcf_result, $indel_vcf_result, "Indel vcf result set as expected when vcf results are added");
+    reinstall_sub( {
+        into => $build->class,
+        as => 'control_merged_alignment_result',
+        code => sub {my $self = shift;
+            return $bam_result1;
+        },
+    });
+    reinstall_sub( {
+        into => $build->class,
+        as => 'merged_alignment_result',
+        code => sub {my $self = shift;
+            return $bam_result2;
+        },
+    });
+
+    test_accessors_without_vcf_results($pkg, $build, $bam_result1, $bam_result2, $snv_vcf_result, $indel_vcf_result);
+    test_accessors_with_vcf_results($pkg, $build, $bam_result1, $bam_result2, $snv_vcf_result, $indel_vcf_result);
 };
 
 done_testing();
-
-sub setup_objects {
-    #my $build = Genome::Test::Factory::Model::SomaticValidation->setup_somatic_validation_build;
-    my $build = Genome::Model::Build::SomaticValidation->__define__();
-    my $result1 = Genome::InstrumentData::AlignmentResult::Merged->__define__();
-    my $result2 = Genome::InstrumentData::AlignmentResult::Merged->__define__();
-    reinstall_sub( {
-        into => 'Genome::Model::Build::SomaticValidation',
-        as => 'control_merged_alignment_result',
-        code => sub {my $self = shift;
-            return $result1;
-        },
-    });
-    reinstall_sub( {
-        into => 'Genome::Model::Build::SomaticValidation',
-        as => 'merged_alignment_result',
-        code => sub {my $self = shift;
-            return $result2;
-        },
-    });
-
-    my $snv_vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine->__define__;
-    my $indel_vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine->__define__;
-
-    return ($build, $result1, $result2, $snv_vcf_result, $indel_vcf_result);
-}
-
-sub add_vcf_results {
-    my ($snv_vcf_result, $indel_vcf_result) = @_;
-    reinstall_sub({
-        into => "Genome::Model::Build::RunsDV2",
-        as => "get_detailed_snvs_vcf_result",
-        code => sub { my $self = shift;
-                      return $snv_vcf_result;
-        },
-    });
-    reinstall_sub({
-        into => "Genome::Model::Build::RunsDV2",
-        as => "get_detailed_indels_vcf_result",
-        code => sub { my $self = shift;
-                      return $indel_vcf_result;
-        },
-    });
-
-
-}
-
