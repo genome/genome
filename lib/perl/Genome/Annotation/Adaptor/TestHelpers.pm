@@ -16,7 +16,7 @@ our @EXPORT_OK = qw(
 );
 
 sub test_accessor {
-    my ($pkg, $build, $add_vcf_results, $bam_result1, $bam_result2, $snv_vcf_result, $indel_vcf_result) = @_;
+    my ($pkg, $build, $bam_result1, $bam_result2, $snv_vcf_result, $indel_vcf_result, $add_vcf_results) = @_;
 
     # This will run in two modes, with vcf results and without vcf results added
     if ($add_vcf_results) {
@@ -37,13 +37,11 @@ sub test_accessor {
 }
 
 sub test_accessors_without_vcf_results {
-    my ($pkg, $build, $bam_result1, $bam_result2, $snv_vcf_result, $indel_vcf_result) = @_;
-    test_accessor($pkg, $build, 0, $bam_result1, $bam_result2, $snv_vcf_result, $indel_vcf_result);
+    test_accessor(@_, 0);
 }
 
 sub test_accessors_with_vcf_results {
-    my ($pkg, $build, $bam_result1, $bam_result2, $snv_vcf_result, $indel_vcf_result) = @_;
-    test_accessor($pkg, $build, 1, $bam_result1, $bam_result2, $snv_vcf_result, $indel_vcf_result);
+    test_accessor(@_, 1);
 }
 
 sub setup_results {
