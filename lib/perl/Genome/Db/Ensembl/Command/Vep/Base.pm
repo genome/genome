@@ -261,11 +261,13 @@ sub run_command {
     $params{input_files} = [$self->input_file] unless $self->input_file eq '-';
     $params{redirect_stdout} = '/dev/null' if $self->quiet;
 
-    $self->run_with_api(%params);
+    $self->api->prepend_api_path_and_execute(%params);
 }
 
-sub run_with_api {
-    die "Must implement run_with_api";
+sub api {
+    my $self = shift;
+    return Genome::Db::Ensembl::Api->get_or_create(version => $self->ensembl_version,
+        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME});
 }
 
 sub command {
