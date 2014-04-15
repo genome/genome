@@ -8435,6 +8435,17 @@ $Genome::Model::Tools::OPTS_SPEC = [
   ],
   '>vcf',
   [
+    '>annotate-with-readcounts',
+    [
+      'vcf-file=s',
+      'files',
+      'readcount-file-and-sample-idx=s@',
+      'files',
+      'output-file=s',
+      'files',
+      'help!',
+      undef
+    ],
     '>backfill',
     [
       'merged-positions-file=s',
