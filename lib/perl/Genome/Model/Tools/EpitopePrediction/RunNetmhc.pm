@@ -5,6 +5,8 @@ use warnings;
 
 use Genome;
 use IPC::Run qw(run);
+use IPC::System::Simple qw(capture);
+use List::Util qw(first);
 
 class Genome::Model::Tools::EpitopePrediction::RunNetmhc {
     is => ['Genome::Model::Tools::EpitopePrediction::Base'],
@@ -65,7 +67,11 @@ sub help_brief {
 sub execute {
     my $self = shift;
 
-    my $netmhc_path = $self->netmhc_path;
+    unless($self->is_valid_allele_for_netmhc_version($self->allele, $self->netmhc_version)) {
+        die $self->error_message("Allele %s not valid for NetMHC version %s", $self->allele, $self->netmhc_version);
+    }
+
+    my $netmhc_path = $self->netmhc_path_for_version($self->netmhc_version);
 
     my @netmhc_cmd = (
             $netmhc_path,
@@ -82,15 +88,42 @@ sub execute {
     return 1;
 }
 
-sub netmhc_path {
-    my $self = shift;
+sub netmhc_path_for_version {
+    my $class = shift;
+    my $netmhc_version = shift;
 
     my %netmhc_path_of_version = (
         '3.0' => '/gsc/bin/netMHC',
         '3.4' => '/gscmnt/sata141/techd/jhundal/netMHC/NetMHC3.4/ATTEMPT4/NetMHC/netMHC',
     );
 
-    return $netmhc_path_of_version{$self->netmhc_version};
+    return $netmhc_path_of_version{$netmhc_version};
+}
+
+sub is_valid_allele_for_netmhc_version {
+    my $class = shift;
+    my $allele = shift;
+    my $netmhc_version = shift;
+
+    my @valid_alleles = $class->get_valid_alleles_for_netmhc_version($netmhc_version);
+    if (first {$_ eq $allele} @valid_alleles) {
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
+
+sub get_valid_alleles_for_netmhc_version {
+    my $class = shift;
+    my $netmhc_version = shift;
+
+    my $netmhc_path = $class->netmhc_path_for_version($netmhc_version);
+
+    my $netmhc_cmd = "$netmhc_path -A";
+
+    my @alleles = split("\n", capture($netmhc_cmd));
+    return @alleles;
 }
 
 sub validate_output {

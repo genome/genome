@@ -360,7 +360,6 @@ sub _validate_inputs {
         die $self->error_message("Coult not create directory (%s)", $self->output_directory);
     }
 
-    # TODO make sure allele makes sense
     my $annotation_model = Genome::Model::Tools::Annotate::VariantProtein->get_model_for_anno_db($self->anno_db);
     unless ($annotation_model) {
         die $self->error_message("Anno DB invalid: " . $self->anno_db);
@@ -368,6 +367,10 @@ sub _validate_inputs {
 
     unless (Genome::Model::Tools::Annotate::VariantProtein->get_build_for_model_and_anno_db_version($annotation_model, $self->anno_db_version)) {
         die $self->error_message("Anno DB version invalid: " . $self->anno_db_version);
+    }
+
+    unless (Genome::Model::Tools::EpitopePrediction::RunNetmhc->is_valid_allele_for_netmhc_version($self->allele, $self->netmhc_version)) {
+        die $self->error_message("Allele %s not valid for NetMHC version %s", $self->allele, $self->netmhc_version);
     }
 
     return 1;
