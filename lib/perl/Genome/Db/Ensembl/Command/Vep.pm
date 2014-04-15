@@ -508,7 +508,6 @@ sub _resolve_vep_script_path {
     else {
         $self->warning_message("Could not find ensembl api version ".$version);
     }
-    
     return $VEP_SCRIPT_PATH.$self->{version}.".pl";
 }
 
