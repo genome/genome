@@ -219,11 +219,16 @@ sub execute {
 
     my $temp_config_dir = Genome::Sys->create_temp_directory;
 
-    my $cmd = join(" ", $self->script_path, $self->string_args, $self->bool_args,
-                    $self->plugin_args($temp_config_dir), $self->custom_args,
-                    $self->db_connect_args, $self->cache_args($temp_config_dir));
+    my $cmd = $self->command($temp_config_dir);
+    $self->run_command($cmd);
 
-    $self->debug_message("Running command:\n$cmd");
+    return 1;
+}
+
+sub run_command {
+    my $self = shift;
+    my $cmd = shift;
+    $self->debug_message("Running command:\n%s", $cmd);
 
     my %params = (
         cmd=>$cmd,
@@ -236,7 +241,14 @@ sub execute {
     $self->annotation_build->prepend_api_path_and_execute(
         %params
     );
-    return 1;
+}
+
+sub command {
+    my $self = shift;
+    my $temp_config_dir = shift;
+    return join(" ", $self->script_path, $self->string_args, $self->bool_args,
+            $self->plugin_args($temp_config_dir), $self->custom_args,
+            $self->db_connect_args, $self->cache_args($temp_config_dir));
 }
 
 sub script_path {
