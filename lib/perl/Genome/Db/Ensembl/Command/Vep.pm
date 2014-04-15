@@ -227,16 +227,16 @@ sub execute {
 
     $self->resolve_format_and_input_file;
     $self->stage_plugins;
+    $self->stage_cache;
 
-    my $cmd = $self->command;
-    $self->run_command($cmd);
+    $self->run_command();
 
     return 1;
 }
 
 sub run_command {
     my $self = shift;
-    my $cmd = shift;
+    my $cmd = $self->command;
     $self->debug_message("Running command:\n%s", $cmd);
 
     my %params = (
@@ -323,6 +323,11 @@ sub stage_plugins {
             $p->stage;
         }
     }
+}
+
+sub stage_cache {
+    my $self = shift;
+    $self->cache->stage($self->workspace);
 }
 
 sub plugins_workspace {
@@ -433,15 +438,10 @@ sub cache_args {
     my $self = shift;
     my $cache_args = "";
 
-    my $cache_result = $self->_get_cache_result($self->annotation_build);
-
+    my $cache_result = $self->cache;
     if ($cache_result) {
         $self->debug_message("Using VEP cache result ".$cache_result->id);
         $cache_args = "--cache --offline --dir ".$self->workspace."/";
-        foreach my $file (glob $cache_result->output_dir."/*"){
-            my $cmd = sprintf("ln -s %s %s", $file, $self->workspace);
-            Genome::Sys->shellcmd(cmd => $cmd);
-        }
     }
     else {
         $self->warning_message("No cache result available, running from database");
@@ -635,11 +635,10 @@ sub _convert_bed_to_ensembl_input {
     return $tmpfile;
 }
 
-sub _get_cache_result {
+sub cache {
     my $self = shift;
-    my $annotation_build = shift;
 
-    my $ensembl_version = Genome::Db::Ensembl::Command::Import::Run->ensembl_version_string($annotation_build->version);
+    my $ensembl_version = Genome::Db::Ensembl::Command::Import::Run->ensembl_version_string($self->annotation_build->version);
 
     my $cache_result;
     my %cache_result_params;
