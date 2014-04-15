@@ -76,6 +76,7 @@ sub execute {
             $versions{$data->{transcript_version}} = 1;
         }
     };
+
     my $anno_db = $self->anno_db;
     unless ($anno_db) {
         my @sources = keys %sources;
@@ -94,25 +95,19 @@ sub execute {
         my $species = $species[0];
         $anno_db = 'NCBI-'. $species .'.'. $source;
     }
-    my $model = Genome::Model->get(name => $anno_db);
-    unless ($model) {
-        $self->error_message('Failed to find annotation model by name '. $anno_db);
-        die($self->error_message);
-    }
+
     my $version = $self->version;
     unless ($version) {
         my @versions = keys %versions;
         if (@versions ne 1) {
-            $self->error_message('Multiple versions found: '. Data::Dumper::Dumper(@versions));
-            die($self->error_message);
+            die $self->error_message('Multiple versions found: '. Data::Dumper::Dumper(@versions));
         }
         $version = $versions[0];
     }
-    my $build = $model->build_by_version($version);
-    unless ($build) {
-        $self->error_message('Failed to find annotation build by version '. $version);
-        die($self->error_message);
-    }
+
+    my $model = $self->get_model_for_anno_db($anno_db);
+    my $build = $self->get_build_for_model_and_anno_db_version($model, $version);
+
     for my $chr (keys %binned_by_chr) {
         my $ti = $build->transcript_iterator(chrom_name => $chr);
         my $transcript_window =  Genome::Utility::Window::Transcript->create(iterator => $ti);
@@ -136,6 +131,32 @@ sub execute {
         }
     }
     return 1;
+}
+
+sub get_model_for_anno_db {
+    my $class = shift;
+    my $anno_db = shift;
+
+    my $model = Genome::Model->get(name => $anno_db);
+    unless ($model) {
+        $class->error_message('Failed to find annotation model by name '. $anno_db);
+        die($class->error_message);
+    }
+
+    return $model;
+}
+
+sub get_build_for_model_and_anno_db_version {
+    my $class = shift;
+    my $model = shift;
+    my $version = shift;
+
+    my $build = $model->build_by_version($version);
+    unless ($build) {
+        die $class->error_message('Failed to find annotation build by version '. $version);
+    }
+
+    return $build;
 }
 
 1;

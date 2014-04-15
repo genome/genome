@@ -98,10 +98,6 @@ sub execute {
 sub _construct_workflow {
     my ($self) = @_;
 
-    # my $xml = __FILE__ . '.xml';
-    # my $workflow = Workflow::Operation->create_from_xml($xml);
-    # $workflow->log_dir($self->output_directory);
-
     my $workflow = Genome::WorkflowBuilder::DAG->create(
         name => 'EpitopePredictionWorkflow',
         log_dir => $self->output_directory,
@@ -364,12 +360,15 @@ sub _validate_inputs {
         die $self->error_message("Coult not create directory (%s)", $self->output_directory);
     }
 
-    # TODO make sure anno db makes sense
-    # TODO make sure anno db version makes sense
-    # TODO make sure length makes sense
     # TODO make sure allele makes sense
-    # TODO make sure epitope_length makes sense
-    # TODO make sure netmhc_version makes sense
+    my $annotation_model = Genome::Model::Tools::Annotate::VariantProtein->get_model_for_anno_db($self->anno_db);
+    unless ($annotation_model) {
+        die $self->error_message("Anno DB invalid: " . $self->anno_db);
+    }
+
+    unless (Genome::Model::Tools::Annotate::VariantProtein->get_build_for_model_and_anno_db_version($annotation_model, $self->anno_db_version)) {
+        die $self->error_message("Anno DB version invalid: " . $self->anno_db_version);
+    }
 
     return 1;
 }
