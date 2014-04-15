@@ -216,10 +216,6 @@ sub execute {
     my $self = shift;
 
     $self->resolve_format_and_input_file;
-    my $string_args = $self->_get_string_args;
-
-    my $bool_args = $self->_get_bool_args;
-
 
     my $temp_config_dir = Genome::Sys->create_temp_directory;
     my $plugin_args = "";
@@ -250,7 +246,7 @@ sub execute {
 
     my $cache_result = $self->_get_cache_result($self->annotation_build);
 
-    my $cmd = join(" ", $self->script_path, $string_args, $bool_args, $plugin_args, $custom, $host_param, $user_param, $password_param, $port_param);
+    my $cmd = join(" ", $self->script_path, $self->string_args, $self->bool_args, $plugin_args, $custom, $host_param, $user_param, $password_param, $port_param);
 
     if ($cache_result) {
         $self->debug_message("Using VEP cache result ".$cache_result->id);
@@ -323,7 +319,7 @@ sub resolve_format_and_input_file {
     $self->format($format);
 }
 
-sub _get_string_args {
+sub string_args {
     my $self = shift;
     my $meta = $self->__meta__;
     
@@ -351,7 +347,7 @@ sub _get_string_args {
     return $string_args;
 }
 
-sub _get_bool_args {
+sub bool_args {
     my $self = shift;
     my $meta = $self->__meta__;
     my @all_bool_args = $meta->properties(
