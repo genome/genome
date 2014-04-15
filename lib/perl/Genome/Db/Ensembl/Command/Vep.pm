@@ -219,15 +219,9 @@ sub execute {
 
     my $temp_config_dir = Genome::Sys->create_temp_directory;
 
-    my $host_param = defined $ENV{GENOME_DB_ENSEMBL_HOST} ? "--host ".$ENV{GENOME_DB_ENSEMBL_HOST} : "";
-    my $user_param = defined $ENV{GENOME_DB_ENSEMBL_USER} ? "--user ".$ENV{GENOME_DB_ENSEMBL_USER} : "";
-    my $password_param = defined $ENV{GENOME_DB_ENSEMBL_PASS} ? "--password ".$ENV{GENOME_DB_ENSEMBL_PASS} : "";
-    my $port_param = defined $ENV{GENOME_DB_ENSEMBL_PORT} ? "--port ".$ENV{GENOME_DB_ENSEMBL_PORT} : "";
-
     my $cmd = join(" ", $self->script_path, $self->string_args, $self->bool_args,
                     $self->plugin_args($temp_config_dir), $self->custom_args,
-                    $host_param, $user_param, $password_param, $port_param,
-                    $self->cache_args($temp_config_dir));
+                    $self->db_connect_args, $self->cache_args($temp_config_dir));
 
     $self->debug_message("Running command:\n$cmd");
 
@@ -401,6 +395,14 @@ sub cache_args {
         $self->warning_message("No cache result available, running from database");
     }
     return $cache_args;
+}
+
+sub db_connect_args {
+    my $host_param = defined $ENV{GENOME_DB_ENSEMBL_HOST} ? "--host ".$ENV{GENOME_DB_ENSEMBL_HOST} : "";
+    my $user_param = defined $ENV{GENOME_DB_ENSEMBL_USER} ? "--user ".$ENV{GENOME_DB_ENSEMBL_USER} : "";
+    my $password_param = defined $ENV{GENOME_DB_ENSEMBL_PASS} ? "--password ".$ENV{GENOME_DB_ENSEMBL_PASS} : "";
+    my $port_param = defined $ENV{GENOME_DB_ENSEMBL_PORT} ? "--port ".$ENV{GENOME_DB_ENSEMBL_PORT} : "";
+    return join(" ", $host_param, $user_param, $password_param, $port_param);
 }
 
 sub _get_ensembl_version {
