@@ -19,10 +19,10 @@ class Genome::Model::ClinSeq {
         normal_rnaseq_model     => { is => 'Genome::Model::RnaSeq', doc => 'rnaseq model for normal rna-seq data' },
         de_model                => { is => 'Genome::Model::DifferentialExpression', doc => 'differential-expression for tumor vs normal rna-seq data' },
 
-        cancer_annotation_db    => { is => 'Genome::Db::Tgi::CancerAnnotation', default_value => $DEFAULT_CANCER_ANNOTATION_DB_ID }, 
+        cancer_annotation_db    => { is => 'Genome::Db::Tgi::CancerAnnotation', default_value => $DEFAULT_CANCER_ANNOTATION_DB_ID },
         misc_annotation_db      => { is => 'Genome::Db::Tgi::MiscAnnotation', default_value => $DEFAULT_MISC_ANNOTATION_DB_ID },
         cosmic_annotation_db    => { is => 'Genome::Db::Cosmic', default_value => $DEFAULT_COSMIC_ANNOTATION_DB_ID },
-        
+
         force                   => { is => 'Boolean', doc => 'skip sanity checks on input models' },
 
         #processing_profile      => { is => 'Genome::ProcessingProfile::ClinSeq', id_by => 'processing_profile_id', default_value => { } },
@@ -86,10 +86,10 @@ sub _help_synopsis {
     my $self = shift;
     return <<"EOS"
 
-    genome processing-profile create clin-seq  --name 'November 2011 Clinical Sequencing' 
+    genome processing-profile create clin-seq  --name 'November 2011 Clinical Sequencing'
 
     genome model define clin-seq  --processing-profile='November 2011 Clinical Sequencing'  --wgs-model=2882504846 --exome-model=2882505032 --tumor-rnaseq-model=2880794613
-    
+
     # Automatically builds if/when the models have a complete underlying build
 EOS
 }
@@ -207,7 +207,7 @@ sub map_workflow_inputs {
   my $exome_build         = $build->exome_build;
   my $tumor_rnaseq_build  = $build->tumor_rnaseq_build;
   my $normal_rnaseq_build = $build->normal_rnaseq_build;
-  
+
   # set during build initialization
   my $common_name         = $build->common_name;
   unless ($common_name) {
@@ -236,7 +236,7 @@ sub map_workflow_inputs {
       misc_annotation_db => $misc_annotation_db,
       cosmic_annotation_db => $cosmic_annotation_db,
   );
-  
+
   my $annotation_build = $self->_resolve_annotation;
   push @inputs, annotation_build => $annotation_build;
 
@@ -287,8 +287,8 @@ sub map_workflow_inputs {
     push @dirs, $mutation_diagram_dir;
     push @inputs, (
         mutation_diagram_outdir => $mutation_diagram_dir,
-        mutation_diagram_collapse_variants=>1, 
-        mutation_diagram_max_snvs_per_file=>1500, 
+        mutation_diagram_collapse_variants=>1,
+        mutation_diagram_max_snvs_per_file=>1500,
         mutation_diagram_max_indels_per_file=>1500,
     );
   }
@@ -359,7 +359,7 @@ sub map_workflow_inputs {
     if ($wgs_build){
       my $clonality_dir = $patient_dir . "/clonality/";
       push @dirs, $clonality_dir;
-      push @inputs, clonality_dir => $clonality_dir;      
+      push @inputs, clonality_dir => $clonality_dir;
     }
 
     #RunCnView
@@ -368,7 +368,7 @@ sub map_workflow_inputs {
       push @dirs, $cnv_dir;
       push @inputs, cnv_dir => $cnv_dir;
     }
-    
+
     #RunMicroArrayCnView
     if ($self->has_microarray_build()) {
       my $microarray_cnv_dir = $patient_dir . "/cnv/microarray_cnv/";
@@ -403,7 +403,7 @@ sub map_workflow_inputs {
     #AnnotateGenesByCategory
     push @inputs, 'gene_name_columns' => ['mapped_gene_name'];
     push @inputs, 'gene_name_regex' => 'mapped_gene_name';
-    
+
     #MakeCircosPlot
     if ($wgs_build){
       my $circos_dir = $patient_dir . "/circos";
@@ -416,7 +416,7 @@ sub map_workflow_inputs {
       my $snv_indel_report_dir = $patient_dir . "/snv_indel_report";
       my $target_gene_list = $cancer_annotation_db->data_directory . "/CancerGeneCensus/cancer_gene_census_ensgs.tsv";
       my $target_gene_list_name = "CancerGeneCensus";
- 
+
       push @dirs, $snv_indel_report_dir;
       push @inputs, snv_indel_report_dir => $snv_indel_report_dir;
       push @inputs, snv_indel_report_clean => 1;
@@ -425,8 +425,8 @@ sub map_workflow_inputs {
       push @inputs, snv_indel_report_target_gene_list_name => $target_gene_list_name;
       push @inputs, snv_indel_report_tiers => 'tier1';
     }
-    
-    # For now it works to create directories here because the data_directory has been allocated.  
+
+    # For now it works to create directories here because the data_directory has been allocated.
     #It is possible that this would not happen until later, which would mess up assigning inputs to many of the commands.
     for my $dir (@dirs) {
       Genome::Sys->create_directory($dir);
@@ -455,7 +455,7 @@ sub _resolve_workflow_for_build {
   # automatically take all inputs that method will assign.
   my %inputs = $self->map_workflow_inputs($build);
   my @input_properties = sort keys %inputs;
- 
+
   # This must be updated for each new tool added which is "terminal" in the workflow!
   # (too bad it can't just be inferred from a dynamically expanding output connector)
   my @output_properties = qw(
@@ -464,7 +464,7 @@ sub _resolve_workflow_for_build {
   );
 
   if ($build->wgs_build) {
-      push @output_properties, qw( 
+      push @output_properties, qw(
           summarize_wgs_tier1_snv_support_result
           summarize_svs_result
           summarize_cnvs_result
@@ -510,7 +510,7 @@ sub _resolve_workflow_for_build {
       push @output_properties, 'import_snvs_indels_result';
       push @output_properties, 'converge_snv_indel_report_result';
   }
-  
+
   if ($self->has_microarray_build()) {
       push @output_properties, 'microarray_cnv_result';
   }
@@ -551,7 +551,7 @@ sub _resolve_workflow_for_build {
 
   my $workflow = Workflow::Model->create(
       name => $build->workflow_name,
-      input_properties  => \@input_properties, 
+      input_properties  => \@input_properties,
       output_properties => \@output_properties,
   );
 
@@ -561,7 +561,7 @@ sub _resolve_workflow_for_build {
   my $input_connector  = $workflow->get_input_connector;
   my $output_connector = $workflow->get_output_connector;
 
-  my %steps_by_name; 
+  my %steps_by_name;
   my $step = 0;
   my $add_step;
   my $add_link;
@@ -572,7 +572,7 @@ sub _resolve_workflow_for_build {
       if (substr($cmd,0,2) eq '::') {
           $cmd = 'Genome::Model::ClinSeq::Command' . $cmd;
       }
-      
+
       unless ($cmd->can("execute")) {
           die "bad command $cmd!";
       }
@@ -593,16 +593,16 @@ sub _resolve_workflow_for_build {
       # should this be default behavior for commands in a model's namespace?
       my $cmeta = $cmd->__meta__;
       for my $pname (qw/
-          cancer_annotation_db 
-          misc_annotation_db 
+          cancer_annotation_db
+          misc_annotation_db
           cosmic_annotation_db
       /) {
           my $pmeta = $cmeta->property($pname);
           if ($pmeta) {
-              $add_link->($input_connector, $pname, $op, $pname);            
+              $add_link->($input_connector, $pname, $op, $pname);
           }
       }
-          
+
       return $op;
   };
 
@@ -611,7 +611,7 @@ sub _resolve_workflow_for_build {
   $add_link = sub {
       my ($from_op, $from_p, $to_op, $to_p) = @_;
       $to_p = $from_p if not defined $to_p;
-      
+
       if (ref($to_p) eq 'ARRAY') {
           Carp::confess("the 'to' property in a link cannot be a list!");
       }
@@ -656,7 +656,7 @@ sub _resolve_workflow_for_build {
               die "expected \$op2,['p1','p2',...],\$op2,['p3','p4'],...";
           }
           unless (ref($from_props) eq 'ARRAY') {
-              die "expected the second param (and every even param) in converge to be an arrayref of property names"; 
+              die "expected the second param (and every even param) in converge to be an arrayref of property names";
           }
           $input_count += scalar(@$from_props);
           if ($name) {
@@ -684,7 +684,7 @@ sub _resolve_workflow_for_build {
               output_properties => ['outputs'],
           )
       );
-      
+
       # create links
       my $input_n = 0;
       while (@params2) {
@@ -781,7 +781,7 @@ sub _resolve_workflow_for_build {
         $add_link->($input_connector, 'exome_build', $mutation_diagram_op, 'builds');
     }
     $add_link->($mutation_diagram_op,'result',$output_connector,'mutation_diagram_result');
-    
+
     for my $p (qw/outdir collapse_variants max_snvs_per_file max_indels_per_file/) {
         my $input_name = 'mutation_diagram_' . $p;
         $add_link->($input_connector,$input_name,$mutation_diagram_op,$p);
@@ -795,7 +795,7 @@ sub _resolve_workflow_for_build {
     $normal_tophat_junctions_absolute_op = $add_step->($msg, 'Genome::Model::ClinSeq::Command::TophatJunctionsAbsolute');
     $add_link->($input_connector, 'normal_rnaseq_build', $normal_tophat_junctions_absolute_op, 'build');
     $add_link->($input_connector, 'normal_tophat_junctions_absolute_dir', $normal_tophat_junctions_absolute_op, 'outdir');
-    $add_link->($normal_tophat_junctions_absolute_op, 'result', $output_connector, 'normal_tophat_junctions_absolute_result'); 
+    $add_link->($normal_tophat_junctions_absolute_op, 'result', $output_connector, 'normal_tophat_junctions_absolute_result');
   }
   #TophatJunctionsAbsolute - Run tophat junctions absolute analysis on tumor
   my $tumor_tophat_junctions_absolute_op;
@@ -804,7 +804,7 @@ sub _resolve_workflow_for_build {
     $tumor_tophat_junctions_absolute_op = $add_step->($msg, 'Genome::Model::ClinSeq::Command::TophatJunctionsAbsolute');
     $add_link->($input_connector, 'tumor_rnaseq_build', $tumor_tophat_junctions_absolute_op, 'build');
     $add_link->($input_connector, 'tumor_tophat_junctions_absolute_dir', $tumor_tophat_junctions_absolute_op, 'outdir');
-    $add_link->($tumor_tophat_junctions_absolute_op, 'result', $output_connector, 'tumor_tophat_junctions_absolute_result'); 
+    $add_link->($tumor_tophat_junctions_absolute_op, 'result', $output_connector, 'tumor_tophat_junctions_absolute_result');
   }
 
   #CufflinksExpressionAbsolute - Run cufflinks expression absolute analysis on normal
@@ -815,7 +815,7 @@ sub _resolve_workflow_for_build {
     $add_link->($input_connector, 'normal_rnaseq_build', $normal_cufflinks_expression_absolute_op, 'build');
     $add_link->($input_connector, 'normal_cufflinks_expression_absolute_dir', $normal_cufflinks_expression_absolute_op, 'outdir');
     $add_link->($input_connector, 'cufflinks_percent_cutoff', $normal_cufflinks_expression_absolute_op, 'percent_cutoff');
-    $add_link->($normal_cufflinks_expression_absolute_op, 'result', $output_connector, 'normal_cufflinks_expression_absolute_result'); 
+    $add_link->($normal_cufflinks_expression_absolute_op, 'result', $output_connector, 'normal_cufflinks_expression_absolute_result');
   }
   #CufflinksExpressionAbsolute - Run cufflinks expression absolute analysis on tumor
   my $tumor_cufflinks_expression_absolute_op;
@@ -865,7 +865,7 @@ sub _resolve_workflow_for_build {
   my $igv_session_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::DumpIgvXml");
   $add_link->($input_connector, 'build_as_array', $igv_session_op, 'builds');
   $add_link->($input_connector, 'igv_session_dir', $igv_session_op, 'outdir');
-  $add_link->($igv_session_op, 'result', $output_connector, 'igv_session_result'); 
+  $add_link->($igv_session_op, 'result', $output_connector, 'igv_session_result');
 
   #GenerateClonalityPlots - Run clonality analysis and produce clonality plots
   my $clonality_op;
@@ -875,7 +875,7 @@ sub _resolve_workflow_for_build {
     $add_link->($input_connector, 'wgs_build', $clonality_op, 'somatic_var_build');
     $add_link->($input_connector, 'clonality_dir', $clonality_op, 'output_dir');
     $add_link->($input_connector, 'common_name', $clonality_op, 'common_name');
-    $add_link->($clonality_op, 'result', $output_connector, 'clonality_result'); 
+    $add_link->($clonality_op, 'result', $output_connector, 'clonality_result');
   }
 
   #RunCnView - Produce copy number results with run-cn-view.  Relies on clonality step already having been run
@@ -910,7 +910,7 @@ sub _resolve_workflow_for_build {
   }
 
   #SummarizeCnvs - Generate a summary of CNV results, copy cnvs.hq, cnvs.png, single-bam copy number plot PDF, etc. to the cnv directory
-  #This step relies on the generate-clonality-plots step already having been run 
+  #This step relies on the generate-clonality-plots step already having been run
   #It also relies on run-cn-view step having been run already
   my $summarize_cnvs_op;
   if ($build->wgs_build){
@@ -1102,7 +1102,7 @@ sub _resolve_workflow_for_build {
     $add_link->($input_connector, 'verbose', $summarize_tier1_snv_support_op);
     $add_link->($summarize_tier1_snv_support_op, 'result', $output_connector, "summarize_${run}_tier1_snv_support_result");
   }
-  
+
   #MakeCircosPlot - Creates a Circos plot to summarize the data using MakeCircosPlot.pm
   #Currently WGS data is a minimum requirement for Circos plot generation.
   my $make_circos_plot_op;
@@ -1147,7 +1147,7 @@ sub _resolve_workflow_for_build {
     }
 
     #If this is a build of a test model, perform a faster analysis (e.g. apipe-test-clinseq-wer)
-    my $model_name = $self->name; 
+    my $model_name = $self->name;
     if ($self->name =~ /^apipe\-test/){
       $add_link->($input_connector, 'snv_indel_report_tiers', $converge_snv_indel_report_op, 'tiers');
     }
@@ -1157,7 +1157,7 @@ sub _resolve_workflow_for_build {
 
   # REMINDER:
   # For new steps be sure to add their result to the output connector if they do not feed into another step.
-  # When you do that, expand the list of output properties above. 
+  # When you do that, expand the list of output properties above.
 
   my @errors = $workflow->validate();
   if (@errors) {
@@ -1195,7 +1195,7 @@ sub _infer_candidate_subjects_from_input_models {
       $patient = $input_model->subject->patient;
     }
     $subjects{ $patient->id } = $patient;
-     
+
     if ($input_model->can("tumor_model")) {
       $subjects{ $input_model->tumor_model->subject->patient->id } = $input_model->tumor_model->subject->patient;
     }
@@ -1305,7 +1305,7 @@ sub diff_circos_conf {
 }
 
 # Below are some methods to retrieve files from a build
-# Ideally they would be tied to creation of these file paths, but they currently 
+# Ideally they would be tied to creation of these file paths, but they currently
 # throw an exception if the files don't exist. Consider another approach...
 sub patient_dir {
   my ($class, $build) = @_;
@@ -1337,7 +1337,7 @@ sub snv_variant_source_file {
          }
      }
      else {
-         $exception = $class->error_message("$data_type sub-directory not found in $source."); 
+         $exception = $class->error_message("$data_type sub-directory not found in $source.");
      }
   }
   else {
@@ -1377,7 +1377,7 @@ sub clonality_dir {
 
   my $patient_dir = $class->patient_dir($build);
   my $clonality_dir = $patient_dir . "/clonality";
-  
+
   unless(-d $clonality_dir) {
       die $class->error_message("Clonality directory does not exist. Expected: $clonality_dir");
   }
