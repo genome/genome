@@ -217,10 +217,6 @@ sub execute {
 
     $self->resolve_format_and_input_file;
     my $string_args = $self->_get_string_args;
-    # the vep script does not understand --input_file - as read from stdin.
-    # instead, we must leave out the --input_file arg to get that behavior.
-    my $input_file_arg = $self->input_file eq '-' ? "" : sprintf("--input_file %s", $self->input_file);
-    $string_args =~ s/--input_file ([^\s]+)/$input_file_arg/;
 
     my $bool_args = $self->_get_bool_args;
 
@@ -346,6 +342,11 @@ sub _get_string_args {
             defined($value) ? ("--".($name)." ".$value) : ()
         } @all_string_args
     );
+
+    # the vep script does not understand --input_file - as read from stdin.
+    # instead, we must leave out the --input_file arg to get that behavior.
+    my $input_file_arg = $self->input_file eq '-' ? "" : sprintf("--input_file %s", $self->input_file);
+    $string_args =~ s/--input_file ([^\s]+)/$input_file_arg/;
 
     return $string_args;
 }
