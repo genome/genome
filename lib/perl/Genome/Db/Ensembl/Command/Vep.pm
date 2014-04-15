@@ -385,7 +385,7 @@ sub custom_args {
 
 sub plugin_args {
     my $self = shift;
-    my $plugin_args = "";
+    my @plugin_strings;
     if ($self->plugins) {
         my $temp_plugins_dir = File::Spec->join($self->workspace, "Plugins");
         my $temp_plugins_config_dir = File::Spec->join($temp_plugins_dir, "config");
@@ -393,11 +393,11 @@ sub plugin_args {
         Genome::Sys->create_directory($temp_plugins_dir);
         Genome::Sys->create_directory($temp_plugins_config_dir);
         foreach my $plugin ($self->plugins) {
-            $plugin_args = $self->_append_plugin_to_plugin_args($plugin, $plugin_args, $temp_plugins_dir,
+            push @plugin_strings, $self->_plugin_to_plugin_args($plugin, $temp_plugins_dir,
                 $temp_plugins_config_dir, $plugins_source_dir);
         }
     }
-    return $plugin_args;
+    return join(" ", @plugin_strings);
 }
 
 sub cache_args {
@@ -451,10 +451,9 @@ sub _remove_arg {
     return @all_string_args;
 }
 
-sub _append_plugin_to_plugin_args {
+sub _plugin_to_plugin_args {
     my $self = shift;
     my $plugin = shift;
-    my $plugin_args = shift;
     my $temp_plugins_dir = shift;
     my $temp_plugins_config_dir = shift;
     my $plugins_source_dir = shift;
@@ -475,10 +474,9 @@ sub _append_plugin_to_plugin_args {
         }
     }
     $plugin =~ s|PLUGIN_DIR|$temp_plugin_config_dir|;
-    $plugin_args .= " --plugin $plugin";
-    $plugin_args =~ s/\@/,/g;
+    $plugin =~ s/\@/,/g;
 
-    return $plugin_args;
+    return "--plugin $plugin";
 }
 
 sub _species_lookup {
