@@ -45,7 +45,7 @@ sub execute {
     my $input = $self->input_tsv_file;
     my $output = $self->output_tsv_file;
 
-#TODO : Check if the file has header 
+    $self->validate_input_tsv_file();
 
     my $result = Genome::Model::Tools::Annotate::VariantProtein->execute(
         input_tsv_file  => $input,
@@ -58,6 +58,14 @@ sub execute {
     }
 
     return 1;
+}
+sub validate_input_tsv_file {
+    my $self = shift;
+
+    # Ensure that the input_tsv_file has a header
+    unless (Genome::Model::Tools::Annotate::TranscriptVariants->file_has_header($self->input_tsv_file)) {
+        die $self->error_message("The input_tsv_file does not have a header: %s", $self->input_tsv_file);
+    }
 }
 
 1;
