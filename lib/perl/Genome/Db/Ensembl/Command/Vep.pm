@@ -176,11 +176,11 @@ class Genome::Db::Ensembl::Command::Vep {
     ],
     has_transient_optional => [
         _workspace => {
-            is => 'String',
+            is => 'Text',
             doc => "temporary to put cache and config files expected by vep",
         },
         _plugins_workspace => {
-            is => 'String',
+            is => 'Text',
             doc => "path to plugins config directory in workspace",
         },
     ],
