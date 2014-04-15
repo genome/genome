@@ -218,40 +218,16 @@ sub execute {
     $self->resolve_format_and_input_file;
 
     my $temp_config_dir = Genome::Sys->create_temp_directory;
-    my $plugin_args = "";
-    if ($self->plugins) {
-        my $temp_plugins_dir = "$temp_config_dir/Plugins";
-        my $temp_plugins_config_dir = "$temp_plugins_dir/config";
-        my $plugins_version = $self->plugins_version;
-        my $plugins_source_dir = "/usr/lib/vepplugins-$plugins_version/";
-        Genome::Sys->create_directory($temp_plugins_dir);
-        Genome::Sys->create_directory($temp_plugins_config_dir);
-        foreach my $plugin ($self->plugins) {
-            $plugin_args = $self->_append_plugin_to_plugin_args($plugin, $plugin_args, $temp_plugins_dir, 
-                                                                $temp_plugins_config_dir, $plugins_source_dir);
-        }
-    }
-
 
     my $host_param = defined $ENV{GENOME_DB_ENSEMBL_HOST} ? "--host ".$ENV{GENOME_DB_ENSEMBL_HOST} : "";
     my $user_param = defined $ENV{GENOME_DB_ENSEMBL_USER} ? "--user ".$ENV{GENOME_DB_ENSEMBL_USER} : "";
     my $password_param = defined $ENV{GENOME_DB_ENSEMBL_PASS} ? "--password ".$ENV{GENOME_DB_ENSEMBL_PASS} : "";
     my $port_param = defined $ENV{GENOME_DB_ENSEMBL_PORT} ? "--port ".$ENV{GENOME_DB_ENSEMBL_PORT} : "";
 
-    my $cache_result = $self->_get_cache_result($self->annotation_build);
-
-    my $cmd = join(" ", $self->script_path, $self->string_args, $self->bool_args, $plugin_args, $self->custom_args, $host_param, $user_param, $password_param, $port_param);
-
-    if ($cache_result) {
-        $self->debug_message("Using VEP cache result ".$cache_result->id);
-        $cmd = "$cmd --cache --offline --dir ".$temp_config_dir."/";
-        foreach my $file (glob $cache_result->output_dir."/*"){
-            `ln -s $file $temp_config_dir`;
-        }
-    }
-    else {
-        $self->warning_message("No cache result available, running from database");
-    }
+    my $cmd = join(" ", $self->script_path, $self->string_args, $self->bool_args,
+                    $self->plugin_args($temp_config_dir), $self->custom_args,
+                    $host_param, $user_param, $password_param, $port_param,
+                    $self->cache_args($temp_config_dir));
 
     $self->debug_message("Running command:\n$cmd");
 
@@ -387,6 +363,44 @@ sub custom_args {
         push @custom_args, "--custom ".join(",", @parts);
     }
     return join(" ", @custom_args);
+}
+
+sub plugin_args {
+    my $self = shift;
+    my $temp_config_dir = shift;
+    my $plugin_args = "";
+    if ($self->plugins) {
+        my $temp_plugins_dir = File::Spec->join($temp_config_dir, "Plugins");
+        my $temp_plugins_config_dir = File::Spec->join($temp_plugins_dir, "config");
+        my $plugins_source_dir = sprintf("/usr/lib/vepplugins-%s", $self->plugins_version);
+        Genome::Sys->create_directory($temp_plugins_dir);
+        Genome::Sys->create_directory($temp_plugins_config_dir);
+        foreach my $plugin ($self->plugins) {
+            $plugin_args = $self->_append_plugin_to_plugin_args($plugin, $plugin_args, $temp_plugins_dir,
+                $temp_plugins_config_dir, $plugins_source_dir);
+        }
+    }
+    return $plugin_args;
+}
+
+sub cache_args {
+    my $self = shift;
+    my $temp_config_dir = shift;
+    my $cache_args = "";
+
+    my $cache_result = $self->_get_cache_result($self->annotation_build);
+
+    if ($cache_result) {
+        $self->debug_message("Using VEP cache result ".$cache_result->id);
+        $cache_args = "--cache --offline --dir ".$temp_config_dir."/";
+        foreach my $file (glob $cache_result->output_dir."/*"){
+            `ln -s $file $temp_config_dir`;
+        }
+    }
+    else {
+        $self->warning_message("No cache result available, running from database");
+    }
+    return $cache_args;
 }
 
 sub _get_ensembl_version {
