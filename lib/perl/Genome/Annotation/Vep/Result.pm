@@ -8,7 +8,7 @@ use Sys::Hostname;
 class Genome::Annotation::Vep::Result {
     is => 'Genome::Annotation::Detail::Result',
     has_input => [
-        ensembl_annotation_build_id => {
+        ensembl_version => {
             is => 'String',
         },
         target_region_set => {
@@ -61,10 +61,10 @@ sub _run {
     delete $params{variant_type};
     delete $params{test_name};
 
-    my $vep_command = Genome::Db::Ensembl::Command::Vep->create(
+    my $vep_command = Genome::Db::Ensembl::Command::Run::Vep->create(
         input_file => $self->input_vcf_result->output_file_path,
         output_file => File::Spec->join($self->temp_staging_directory, $self->output_filename),
-        ensembl_annotation_build_id => $self->ensembl_annotation_build_id,
+        ensembl_version => $self->ensembl_version,
         custom => \@custom_annotation_inputs,
         %params,
     );

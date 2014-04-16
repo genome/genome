@@ -7,7 +7,7 @@ use Genome;
 class Genome::Annotation::Vep {
     is => 'Genome::Annotation::Detail::Command',
     has_input => [
-        ensembl_annotation_build_id => {
+        ensembl_version => {
             is => 'String',
         },
         target_region_set => {
