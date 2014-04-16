@@ -101,8 +101,8 @@ sub execute {
 	    Genome::Sys->copy_file($self->candidate_fusion_infile , "$output_directory/raw/CandidateSvCodingFusions.tsv");
 	}
     ###Fusions
-    if(my $tumor_rnaseq_build = $build->tumor_rnaseq_build && -e $dataDir."/rnaseq/fusions/tumor/filtered_chimeras.bedpe"){
-        Genome::Sys->copy_file($dataDir."/rnaseq/fusions/tumor/filtered_chimeras.bedpe", "$output_directory/raw/filtered_chimeras.bedpe");
+    if(my $tumor_rnaseq_build = $build->tumor_rnaseq_build && -e $dataDir."/rnaseq/tumor/fusions/filtered_chimeras.bedpe"){
+        Genome::Sys->copy_file($dataDir."/rnaseq/tumor/fusions/filtered_chimeras.bedpe", "$output_directory/raw/filtered_chimeras.bedpe");
 	}
 	###Deletions and Focal Amplifications
     Genome::Sys->copy_file("$dataDir/clonality/cnaseq.cnvhmm", "$output_directory/raw/cnaseq.cnvhmm");
@@ -284,7 +284,7 @@ thickness     = 2
 EOS
 
 ###Fusions
-        if(my $tumor_rnaseq_build = $build->tumor_rnaseq_build && -e $dataDir."/rnaseq/fusions/tumor/filtered_chimeras.bedpe"){
+        if(my $tumor_rnaseq_build = $build->tumor_rnaseq_build && -e $dataDir."/rnaseq/tumor/fusions/filtered_chimeras.bedpe"){
             my $fusions = Genome::Sys->read_file("$output_directory/raw/filtered_chimeras.bedpe");
             my $fusions_fh = Genome::Sys->open_file_for_writing("$output_directory/data/filtered_chimeras.bedpe");
            while ($fusions =~ /(\d+|X|Y)\s(\d+)\s(\d+)\s(\d+|X|Y)\s(\d+)\s(\d+)\s+\w+\s\d+\s[+|-]\s[+|-]\s(\S+):(\S+)/g) {
