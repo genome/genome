@@ -366,14 +366,11 @@ sub summarize_clinseq_build {
       next unless $self->_is_reference_alignment_build($build);
 
       my $build_dir = $build->data_directory;
-      my $common_name = "[UNDEF common_name]";
       my $tissue_desc = "[UNDEF tissue_desc]";
       my $extraction_type = "[UNDEF extraction_type]";
       my $subject = $build->subject;
       my $subject_name = $subject->name;
-      if ($subject->can("common_name")){
-        $common_name = $subject->common_name;
-      }
+      my $common_name = $self->_get_subject_common_name($subject);
       if ($subject->can("tissue_desc")){
         $tissue_desc = $subject->tissue_desc;
       }
@@ -516,21 +513,16 @@ sub summarize_clinseq_build {
       my $m = $build->model;
       my $pp = $m->processing_profile;
       my $pp_name = $pp->name;
-      my $data_type = $self->_determine_wgs_or_exome_for_build($build);
+      my $data_type = $self->_determine_wgs_or_exome_for_build($build, \%data_types);
 
       next unless $self->_is_somatic_variation_build($build);
 
       my $build_id = $build->id;
-      my $common_name = "[UNDEF common_name]";
       my $tissue_desc = "[UNDEF tissue_desc]";
       my $extraction_type = "[UNDEF extraction_type]";
       my $subject = $build->subject;
       my $subject_name = $subject->name;
-      if ($subject->can("common_name")){
-        if ($subject->common_name){
-          $common_name = $subject->common_name;
-        }
-      }
+      my $common_name = $self->_get_subject_common_name($subject);
       if ($subject->can("tissue_desc")){
         if ($subject->tissue_desc){
           $tissue_desc = $subject->tissue_desc;
@@ -601,7 +593,7 @@ sub summarize_clinseq_build {
       my $m = $build->model;
       my $pp = $m->processing_profile;
       my $pp_name = $pp->name;
-      my $data_type = $self->_determine_wgs_or_exome_for_build($build);
+      my $data_type = $self->_determine_wgs_or_exome_for_build($build, \%data_types);
       next unless ($self->_is_somatic_variation_build($build) && $data_type eq "WGS");
 
       my $build_id = $build->id;
@@ -659,10 +651,7 @@ sub summarize_clinseq_build {
       my $pp_name = $pp->name;
       my $subject = $build->subject;
       my $subject_name = $subject->name;
-      my $common_name = "[UNDEF common_name]";
-      if ($subject->can("common_name")){
-        $common_name = $subject->common_name;
-      }
+      my $common_name = $self->_get_subject_common_name($subject);
 
       next unless $self->_is_rna_seq_build($build);
 
@@ -719,16 +708,11 @@ sub summarize_clinseq_build {
 
       my $build_id = $build->id;
       my $build_dir = $build->data_directory;
-      my $common_name = "[UNDEF common_name]";
       my $tissue_desc = "[UNDEF tissue_desc]";
       my $extraction_type = "[UNDEF extraction_type]";
       my $subject = $build->subject;
       my $subject_name = $subject->name;
-      if ($subject->can("common_name")){
-        if ($subject->common_name){
-          $common_name = $subject->common_name;
-        }
-      }
+      my $common_name = $self->_get_subject_common_name($subject);
       if ($subject->can("tissue_desc")){
         if ($subject->tissue_desc){
           $tissue_desc = $subject->tissue_desc;
@@ -826,16 +810,11 @@ sub summarize_haploid_coverage_for_build {
 
     my $build_type = $build->type_name;
     my $build_dir = $build->data_directory;
-    my $common_name = "[UNDEF sample common_name]";
     my $tissue_desc = "[UNDEF tissue_desc]";
     my $extraction_type = "[UNDEF extraction_type]";
     my $subject = $build->subject;
     my $subject_name = $subject->name;
-    if ($subject->can("common_name")){
-        if ($subject->common_name){
-            $common_name = $subject->common_name;
-        }
-    }
+    my $common_name = $self->_get_subject_common_name($subject);
     if ($subject->can("tissue_desc")){
         if ($subject->tissue_desc){
             $tissue_desc = $subject->tissue_desc;
@@ -967,16 +946,11 @@ sub summarize_sample_and_library_metrics_for_build {
 
     my $build_type = $build->type_name;
     my $build_dir = $build->data_directory;
-    my $common_name = "[UNDEF common_name]";
     my $tissue_desc = "[UNDEF tissue_desc]";
     my $extraction_type = "[UNDEF extraction_type]";
     my $subject = $build->subject;
     my $subject_name = $subject->name;
-    if ($subject->can("common_name")){
-        if ($subject->common_name){
-            $common_name = $subject->common_name;
-        }
-    }
+    my $common_name = $self->_get_subject_common_name($subject);
     if ($subject->can("tissue_desc")){
         if ($subject->tissue_desc){
             $tissue_desc = $subject->tissue_desc;
@@ -1095,14 +1069,11 @@ sub get_rnaseq_metrics {
     my $stats_fh = shift;
     my $rnaseq_build_id = $rnaseq_build->id;
     my $rnaseq_build_dir = $rnaseq_build->data_directory;
-    my $common_name = "[UNDEF common_name]";
     my $tissue_desc = "[UNDEF tissue_desc]";
     my $extraction_type = "[UNDEF extraction_type]";
     my $subject = $rnaseq_build->subject;
     my $subject_name = $subject->name;
-    if ($subject->can("common_name")){
-      $common_name = $subject->common_name;
-    }
+    my $common_name = $self->_get_subject_common_name($subject);
     if ($subject->can("tissue_desc")){
       $tissue_desc = $subject->tissue_desc;
     }
