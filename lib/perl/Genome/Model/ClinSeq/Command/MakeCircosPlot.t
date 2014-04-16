@@ -14,7 +14,7 @@ ok(-e $expected_output_dir, "expected output dir exists: $expected_output_dir");
 #my $test_ids = Genome::Model::ClinSeq::TestData::load(base_dir => "$base_dir/input_dir");
 #my $test_build_id = $test_ids->{CLINSEQ_BUILD};
 
-my $test_build_id = "c58e7e54c8104068910af728a796eb44";
+my $test_build_id = "2c3b80e180724fc9be38cdb9403c772a";
 my $test_build = Genome::Model::Build->get($test_build_id);
 ok($test_build, "got test build $test_build_id");
 
