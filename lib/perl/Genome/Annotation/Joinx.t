@@ -20,13 +20,13 @@ use Genome::Annotation::Detail::TestHelpers qw(test_cmd_and_result_are_in_sync);
 
 use Test::More;
 
-my $cmd_class = 'Genome::Annotation::JoinxVcfAnnotate';
+my $cmd_class = 'Genome::Annotation::Joinx';
 use_ok($cmd_class) or die;
 use_ok('Genome::Model::Tools::Joinx::VcfAnnotate') or die;
 
 my $cmd = generate_test_cmd();
 ok($cmd->execute(), 'Command executed');
-is(ref($cmd->software_result), 'Genome::Annotation::JoinxVcfAnnotate::Result', 'Found software result after execution');
+is(ref($cmd->software_result), 'Genome::Annotation::Joinx::Result', 'Found software result after execution');
 
 test_cmd_and_result_are_in_sync($cmd);
 

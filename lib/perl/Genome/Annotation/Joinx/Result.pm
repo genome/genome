@@ -1,11 +1,11 @@
-package Genome::Annotation::JoinxVcfAnnotate::Result;
+package Genome::Annotation::Joinx::Result;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 use File::Spec;
 
-class Genome::Annotation::JoinxVcfAnnotate::Result {
+class Genome::Annotation::Joinx::Result {
     is => 'Genome::Annotation::Detail::Result',
     has_input => [
         annotation_builds => {

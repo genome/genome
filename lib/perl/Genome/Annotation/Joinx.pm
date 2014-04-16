@@ -1,10 +1,10 @@
-package Genome::Annotation::JoinxVcfAnnotate;
+package Genome::Annotation::Joinx;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::Annotation::JoinxVcfAnnotate {
+class Genome::Annotation::Joinx {
     is => 'Genome::Annotation::Detail::Command',
     has_input => [
         annotation_builds => {
@@ -26,7 +26,7 @@ class Genome::Annotation::JoinxVcfAnnotate {
     ],
     has_optional_output => [
         software_result => {
-            is => 'Genome::Annotation::JoinxVcfAnnotate::Result',
+            is => 'Genome::Annotation::Joinx::Result',
             doc => 'The software result created during command execution',
         },
     ],
@@ -35,6 +35,6 @@ class Genome::Annotation::JoinxVcfAnnotate {
 sub execute {
     my $self = shift;
 
-    $self->software_result(Genome::Annotation::JoinxVcfAnnotate::Result->get_or_create($self->input_hash));
+    $self->software_result(Genome::Annotation::Joinx::Result->get_or_create($self->input_hash));
     return 1;
 }
