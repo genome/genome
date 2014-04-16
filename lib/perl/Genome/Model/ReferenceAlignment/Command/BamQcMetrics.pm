@@ -69,7 +69,8 @@ sub execute {
         $output_basename = $self->output_directory .'/'. $self->build_id;
     }
     unless (@labels) {
-        die $self->error_message('No BamQc output found for instrument data. Unable to run SummarizeAsText on BamQC output for build: '. $self->build_id);
+        $self->warning_message('No BamQc output found for instrument data. Unable to run SummarizeAsText on BamQC output for build: '. $self->build_id);
+        return 0;
     }
     unless (Genome::Model::Tools::BamQc::SummarizeAsText->execute(
         labels => join(',',@labels),
