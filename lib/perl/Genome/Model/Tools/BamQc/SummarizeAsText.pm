@@ -108,6 +108,7 @@ sub execute {
             my $error_rate_reader = Genome::Utility::IO::SeparatedValueReader->create(
                 input => $error_rate_file,
                 separator => "\t",
+                ignore_lines_starting_with => '#',
             );
             while (my $error_rate_data = $error_rate_reader->next) {
                 if ($error_rate_data->{position} eq 'SUM') {
