@@ -166,6 +166,10 @@ sub summarize_clinseq_build {
     $exome_normal_refalign_build = $exome_somvar_build->normal_build if ($exome_somvar_build);
     $exome_tumor_refalign_build = $exome_somvar_build->tumor_build if ($exome_somvar_build);
 
+    #set the build types
+    my %data_types;
+    $self->_set_data_types($clinseq_build, \%data_types);
+
     #Gather all builds into a single array
     my @builds = ($wgs_normal_refalign_build, $wgs_tumor_refalign_build, $wgs_somvar_build, $exome_normal_refalign_build, $exome_tumor_refalign_build, $exome_somvar_build, $tumor_rnaseq_build, $normal_rnaseq_build, $clinseq_build);
     @builds = grep { $_ } @builds;
@@ -345,6 +349,13 @@ sub summarize_clinseq_build {
 
     $self->generate_APIPE_reports(\@builds, $build_outdir, $stats_fh);
     $self->generate_LIMS_reports(\@builds, $build_outdir);
+
+    #Get BAMQC results for all ref-align builds
+    for my $build (@builds) {
+        next unless $self->_is_reference_alignment_build($build);
+        $self->get_bamqc_results($build, $build_outdir, \%data_types);
+        $self->get_perlane_bamqc_results($build, $build_outdir, \%data_types);
+    }
 
     #Summarize exome coverage statistics for each WGS/Exome reference alignment model
     # cd /gscmnt/gc8001/info/model_data/2882774248/build120412367/reference_coverage/wingspan_0
@@ -1100,13 +1111,14 @@ sub get_rnaseq_metrics {
     }
     $self->status_message("\n\nGet basic RNA-seq alignment stats");
     $self->status_message("\nsample");
-    $self->status_message("$subject_name ($common_name | $tissue_desc | $extraction_type)");    $self->get_rnaseq_alignment_stats($common_name, $extraction_type, $rnaseq_build, 
+    $self->status_message("$subject_name ($common_name | $tissue_desc | $extraction_type)");
+    $self->get_rnaseq_alignment_stats($common_name, $extraction_type, $rnaseq_build, 
           $rnaseq_build_dir, $rnaseq_build_id, $stats_fh);
     $self->get_cufflinks_metrics($common_name, $extraction_type, $rnaseq_build_dir,
           $rnaseq_build_id, $stats_fh);
     $self->get_picard_metrics($common_name, $extraction_type, $rnaseq_build_dir, 
           $rnaseq_build_id, $stats_fh);
-    $self->copy_from_rnaseq_build($rnaseq_build_dir, $build_outdir);
+    $self->copy_from_rnaseq_build($rnaseq_build_dir, $build_outdir, $common_name);
     $self->display_handy_rnaseq_urls($rnaseq_build_dir);
 }
 
@@ -1274,6 +1286,7 @@ sub copy_from_rnaseq_build {
     my $self = shift;
     my $build_dir = shift;
     my $build_outdir = shift;
+    my $common_name = shift;
 
     my @rnaseq_files_to_copy;
     push (@rnaseq_files_to_copy, "$build_dir/metrics/PicardRnaSeqMetrics.png");
@@ -1284,8 +1297,8 @@ sub copy_from_rnaseq_build {
     push (@rnaseq_files_to_copy, "$build_dir/junctions/summary/TranscriptJunctionReadCounts_Log2_Hist.pdf");
     push (@rnaseq_files_to_copy, "$build_dir/bam-qc/*.pdf");
     push (@rnaseq_files_to_copy, "$build_dir/bam-qc/*.html");
-    my $rnaseq_metrics_dir =  $build_outdir . "/rnaseq/";
-    Genome::Sys->shellcmd(cmd => "mkdir $rnaseq_metrics_dir");
+    my $rnaseq_metrics_dir =  $build_outdir . "/rnaseq/$common_name/";
+    Genome::Sys->shellcmd(cmd => "mkdir -p $rnaseq_metrics_dir");
     
     #Make copies of read locations .png and end bias plots for convenience
     foreach my $file (@rnaseq_files_to_copy){
@@ -1301,16 +1314,19 @@ sub generate_LIMS_reports {
     my $builds = shift;
     my $build_outdir = shift;
     my %samples_processed = ();
-    my $lims_outdir = $build_outdir . "/LIMS_reports/";
-    Genome::Sys->shellcmd(cmd=> "mkdir $lims_outdir");
     $self->status_message("\n\nSample sequencing metrics from LIMS");
     $self->status_message("See results files in: $build_outdir\n");
     for my $build (@$builds) {
-        my $subject_name = $build->subject->name;
+        next unless ($build->model->subject->class eq "Genome::Sample");
+        my $subject = $build->subject;
+        my $subject_name = $subject->name;
+        my $common_name = $self->_get_subject_common_name($subject);
         #Only process each sample once
         unless ($samples_processed{$subject_name}){
             $samples_processed{$subject_name} = 1;
-            $self->summarize_library_quality_reports_for_build($build, $lims_outdir);
+            my $lims_sample_outdir = $build_outdir . "/LIMS_reports/$common_name/";
+            Genome::Sys->shellcmd(cmd=> "mkdir -p $lims_sample_outdir");
+            $self->summarize_library_quality_reports_for_build($build, $lims_sample_outdir);
         }
     }
 }
@@ -1323,16 +1339,19 @@ sub generate_APIPE_reports {
     my $build_outdir = shift;
     my $stats_fh = shift;
     
-    my $apipe_outdir = $build_outdir . "/APIPE_reports/";
-    Genome::Sys->shellcmd(cmd=> "mkdir $apipe_outdir");
     $self->status_message("\n\nSample sequencing metrics from APIPE");
     my %samples_processed;
     for my $build (@$builds) {
-        my $subject_name = $build->subject->name;
+        next unless ($build->model->subject->class eq "Genome::Sample");
+        my $subject = $build->subject;
+        my $subject_name = $subject->name;
+        my $common_name = $self->_get_subject_common_name($subject);
         #Only process each sample once
         unless ($samples_processed{$subject_name}){
             $samples_processed{$subject_name} = 1;
-            $self->summarize_apipe_instrument_data_reports($build, $apipe_outdir, $stats_fh);
+            my $apipe_sample_outdir = $build_outdir . "/APIPE_reports/$common_name/";
+            Genome::Sys->shellcmd(cmd=> "mkdir -p $apipe_sample_outdir");
+            $self->summarize_apipe_instrument_data_reports($build, $apipe_sample_outdir, $stats_fh);
         }
     }
 }
@@ -1346,16 +1365,11 @@ sub summarize_apipe_instrument_data_reports {
     return unless $self->_is_reference_alignment_build($build);
 
     my $build_dir = $build->data_directory;
-    my $common_name = "[UNDEF common_name]";
     my $tissue_desc = "[UNDEF tissue_desc]";
     my $extraction_type = "[UNDEF extraction_type]";
     my $subject = $build->subject;
     my $subject_name = $subject->name;
-    if ($subject->can("common_name")){
-        if ($subject->common_name){
-            $common_name = $subject->common_name;
-        }
-    }
+    my $common_name = $self->_get_subject_common_name($subject);
     if ($subject->can("tissue_desc")){
         if ($subject->tissue_desc){
             $tissue_desc = $subject->tissue_desc;
@@ -1419,6 +1433,49 @@ sub summarize_apipe_instrument_data_reports {
     print $stats_fh "Reverse Read Average Error Rate\t$avg_rev_error_rate\t$common_name\tClinseq Build Summary\tAverage\tAverage of library-by-library sequencing reverse read error rates for $common_name $extraction_type data\n";
 }
 
+#Get the per-lane bam QC results for refalign builds.
+sub get_perlane_bamqc_results {
+    my $self = shift;
+    my $build = shift;
+    my $outdir = shift;
+    my $data_types = shift;
+    my $build_type = $self->_determine_wgs_or_exome_for_build($build, $data_types);
+    $build_type = lc $build_type;
+    my $subject = $build->subject;
+    my $common_name = $self->_get_subject_common_name($subject);
+    my $qc_dir = $outdir . "/$build_type/per_lane_bam_qc/$common_name";
+    Genome::Sys->shellcmd(cmd => "mkdir -p $qc_dir");
+    my $bam_qc_metrics = Genome::Model::ReferenceAlignment::Command::InstrumentDataAlignmentBams->create(
+            build_id => $build->id, outdir => $qc_dir);
+    my %lane_bamqc_path;
+    $bam_qc_metrics->get_lane_bamqc_path($build, \%lane_bamqc_path);
+    foreach my $lane  (keys(%lane_bamqc_path)) {
+        if($lane_bamqc_path{$lane} ne "-") {
+            my $perlane_bamqc_results_dir = $lane_bamqc_path{$lane};
+            my $perlane_bamqc_op_dir = $qc_dir . "/lane" . $lane . "/";
+            Genome::Sys->shellcmd(cmd => "mkdir -p $perlane_bamqc_op_dir");
+            Genome::Sys->shellcmd(cmd => "cp -rf $perlane_bamqc_results_dir/* $perlane_bamqc_op_dir");
+        }
+    }
+}
+
+#Get the bam QC results for refalign builds.
+sub get_bamqc_results {
+    my $self = shift;
+    my $build = shift;
+    my $outdir = shift;
+    my $data_types = shift;
+    my $build_type = $self->_determine_wgs_or_exome_for_build($build, $data_types);
+    $build_type = lc $build_type;
+    my $subject = $build->subject;
+    my $common_name = $self->_get_subject_common_name($subject);
+    my $qc_dir = $outdir . "/$build_type/summary_bam_qc/$common_name";
+    Genome::Sys->shellcmd(cmd => "mkdir -p $qc_dir");
+    my $bam_qc_metrics = Genome::Model::ReferenceAlignment::Command::BamQcMetrics->create(
+            build_id => $build->id, output_directory => $qc_dir);
+    $bam_qc_metrics->execute();
+}
+
 sub summarize_library_quality_reports_for_build {
     my $self = shift;
     my $build = shift;
@@ -1436,14 +1493,11 @@ sub summarize_library_quality_reports_for_build {
     $rf{run}{file} = "run";
 
     my $build_dir = $build->data_directory;
-    my $common_name = "[UNDEF common_name]";
     my $tissue_desc = "[UNDEF tissue_desc]";
     my $extraction_type = "[UNDEF extraction_type]";
     my $subject = $build->subject;
     my $subject_name = $subject->name;
-    if ($subject->can("common_name")){
-        $common_name = $subject->common_name;
-    }
+    my $common_name = $self->_get_subject_common_name($subject);
     if ($subject->can("tissue_desc")){
         $tissue_desc = $subject->tissue_desc;
     }
@@ -1474,6 +1528,18 @@ sub summarize_library_quality_reports_for_build {
     return 1;
 }
 
+sub _get_subject_common_name {
+    my $self = shift;
+    my $subject = shift;
+    my $common_name = "[UNDEF common_name]";
+    if ($subject->can("common_name")){
+        if ($subject->common_name){
+            $common_name = $subject->common_name;
+        }
+    }
+    return $common_name;
+}
+
 sub _run_solexa_lister {
     my $self = shift;
     my $sample_name = shift;
@@ -1493,11 +1559,48 @@ sub _run_solexa_lister {
     return 1;
 }
 
+sub _set_data_types {
+    my $self = shift;
+    my $clinseq_build = shift;
+    my $data_types = shift;
+    my $wgs_somvar_build = $clinseq_build->wgs_build;
+    my $exome_somvar_build = $clinseq_build->exome_build;
+    my $tumor_rnaseq_build = $clinseq_build->tumor_rnaseq_build;
+    my $normal_rnaseq_build = $clinseq_build->normal_rnaseq_build;
+    my $wgs_normal_refalign_build = $wgs_somvar_build->normal_build if ($wgs_somvar_build);
+    my $wgs_tumor_refalign_build = $wgs_somvar_build->tumor_build if ($wgs_somvar_build);
+    my $exome_normal_refalign_build = $exome_somvar_build->normal_build if ($exome_somvar_build);
+    my $exome_tumor_refalign_build = $exome_somvar_build->tumor_build if ($exome_somvar_build);
+    if($wgs_tumor_refalign_build) {
+        $data_types->{$wgs_tumor_refalign_build->id} = "WGS";
+    }
+    if($wgs_normal_refalign_build) {
+        $data_types->{$wgs_normal_refalign_build->id} = "WGS";
+    }
+    if($exome_tumor_refalign_build) {
+        $data_types->{$exome_tumor_refalign_build->id} = "Exome";
+    }
+    if($exome_normal_refalign_build) {
+        $data_types->{$exome_normal_refalign_build->id} = "Exome";
+    }
+    if($tumor_rnaseq_build) {
+        $data_types->{$tumor_rnaseq_build->id} = "RNAseq";
+    }
+    if($normal_rnaseq_build) {
+        $data_types->{$normal_rnaseq_build->id} = "RNAseq";
+    }
+}
+
 sub _determine_wgs_or_exome_for_build {
     my $self = shift;
     my $build = shift;
-
+    my $data_types = shift;
     my $m = $build->model;
+    my $id = $build->id;
+    if(defined $data_types->{$id}) {
+        return $data_types->{$id};
+    }
+    
     my $pp = $m->processing_profile;
     my $pp_name = $pp->name;
     my $data_type = "Unknown";
