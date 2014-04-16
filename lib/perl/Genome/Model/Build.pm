@@ -1350,7 +1350,8 @@ sub _launch {
         if ($self->_should_run_as && $self->_can_run_as) {
             # -i simulates login which help prevent this from being abused to
             # execute arbitrary commands.
-            $self->creation_event->user_name($self->model->run_as);
+            my $run_as = $self->model->run_as;
+            $_->user_name($run_as) for $self->events;
             $bsub_bin = [qw(sudo -n -i -u), $self->model->run_as, '--',
                 _sudo_wrapper()];
         }
