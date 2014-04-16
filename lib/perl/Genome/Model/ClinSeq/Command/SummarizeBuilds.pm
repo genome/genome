@@ -1286,7 +1286,7 @@ sub generate_LIMS_reports {
     my $build_outdir = shift;
     my %samples_processed = ();
     $self->status_message("\n\nSample sequencing metrics from LIMS");
-    $self->status_message("See results files in: $build_outdir\n");
+    #$self->status_message("See results files in: $build_outdir\n");
     for my $build (@$builds) {
         next unless ($build->model->subject->class eq "Genome::Sample");
         my $subject = $build->subject;
