@@ -13,18 +13,18 @@ use Sub::Install;
 use Set::Scalar;
 use Genome::Model::Tools::DetectVariants2::Result::Vcf;
 use Genome::Model::Tools::Vcf::AnnotateWithReadcounts;
-use Genome::Annotation::AddReadcounts::Result;
+use Genome::Annotation::Readcount::Result;
 use Genome::Annotation::Detail::TestHelpers qw(test_cmd_and_result_are_in_sync);
 
 use Test::More;
 
-my $cmd_class = 'Genome::Annotation::AddReadcounts';
+my $cmd_class = 'Genome::Annotation::Readcount';
 use_ok($cmd_class) or die;
 
 my ($cmd, $tool_args) = generate_test_cmd();
 
 ok($cmd->execute(), 'Command executed');
-is(ref($cmd->software_result), 'Genome::Annotation::AddReadcounts::Result', 'Found software result after execution');
+is(ref($cmd->software_result), 'Genome::Annotation::Readcount::Result', 'Found software result after execution');
 
 my $expected_tool_args = {
     vcf_file => 'test_vcf',
@@ -56,11 +56,11 @@ sub generate_test_cmd {
         code => sub {return 'test_vcf';},
     });
 
-    my $rc_result1 = Genome::Annotation::Readcount::Result->__define__();
-    my $rc_result2 = Genome::Annotation::Readcount::Result->__define__();
+    my $rc_result1 = Genome::Annotation::RunBamReadcount::Result->__define__();
+    my $rc_result2 = Genome::Annotation::RunBamReadcount::Result->__define__();
 
     Sub::Install::reinstall_sub({
-        into => 'Genome::Annotation::AddReadcounts::Result',
+        into => 'Genome::Annotation::Readcount::Result',
         as => 'readcount_file_and_sample_idxs',
         code => sub {my $self = shift; return ['rc_file1:1', 'rc_file2:2'];},
     });

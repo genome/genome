@@ -1,10 +1,10 @@
-package Genome::Annotation::AddReadcounts::Result;
+package Genome::Annotation::Readcount::Result;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::Annotation::AddReadcounts::Result {
+class Genome::Annotation::Readcount::Result {
     is => 'Genome::Annotation::Detail::Result',
 
     has_input => [
@@ -12,7 +12,7 @@ class Genome::Annotation::AddReadcounts::Result {
             is => 'Genome::Model::Tools::DetectVariants2::Result::Vcf',
         },
         readcount_results => {
-            is => 'Genome::Annotation::Readcount::Result',
+            is => 'Genome::Annotation::RunBamReadcount::Result',
             is_many => 1,
         },
     ],
