@@ -65,7 +65,7 @@ my $init_lsf_job_id = $ENV{'LSB_JOBID'};
         lock_directory => $tmp_dir,
         resource_id => $bogus_id,
     );
-    my $lock = Genome::Sys::Lock->_file_based_lock_resource(
+    my $lock = Genome::Sys::FileLock->lock(
         resource_lock => $resource_lock,
         parent_dir => $parent_dir,
         wait_announce_interval => 10,
@@ -75,8 +75,8 @@ my $init_lsf_job_id = $ENV{'LSB_JOBID'};
     ok($lock, 'lock resource with bogus lsf_job_id');
 
     $lock = fork_to_lock(
-        sub { Genome::Sys::Lock->_file_based_lock_resource(@_) },
-        sub { Genome::Sys::Lock->_file_based_unlock_resource(@_) },
+        sub { Genome::Sys::FileLock->lock(@_) },
+        sub { Genome::Sys::FileLock->unlock(@_) },
         resource_lock => $resource_lock,
         parent_dir => $parent_dir,
         wait_announce_interval => 10,
@@ -322,7 +322,9 @@ sub getline {
         croak('handle required');
     }
     my $line = <$handle>;
-    chomp $line;
+    if ($line) {
+        chomp $line;
+    }
     return $line;
 }
 
