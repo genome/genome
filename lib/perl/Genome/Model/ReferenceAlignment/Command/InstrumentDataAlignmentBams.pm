@@ -54,18 +54,19 @@ sub execute {
     return 1;
 }
 
+#fills a hash reference, lane_bamqcpath, key is the lane
 sub get_lane_bamqc_path {
     my $self = shift;
     my $build = shift;
-    my $lane_bamqcpath_ref = shift;
-    my %lane_bamqcpath = %$lane_bamqcpath_ref;
+    my $lane_bamqcpath = shift;
     for my $instrument_data ($build->instrument_data) {
         my $instrument_data_id = $instrument_data->id;
+        my $flow_cell_id = eval { $instrument_data->flow_cell_id } || '-';
         my $lane = eval { $instrument_data->lane } || '-';
         my ($alignment_result) = $build->alignment_results_for_instrument_data($instrument_data);
         #Get the latest bamqc result
         my $bamqc_path = $self->_get_bamqc_path($alignment_result);
-        $lane_bamqcpath{$lane} = $bamqc_path;
+        $lane_bamqcpath->{$lane} = $bamqc_path;
     }
 }
 
