@@ -10,11 +10,13 @@ class Genome::Annotation::Vep {
         ensembl_version => {
             is => 'String',
         },
-        target_region_set => {
-            is => 'Genome::FeatureList',
-        },
-        segmental_duplications_list => {
-            is => 'Genome::FeatureList',
+        feature_list_ids_and_tags => {
+            is => 'String',
+            is_many => 1,
+            doc => 'List of feature lists to be annotated in the 
+                    INFO field, along with the tag to be used
+                    e.g. 12345:SEGDUP,58676:ROI
+                    The id and tag should be separated by a colon',
         },
         input_vcf_result => {
             is => 'Genome::SoftwareResult',

@@ -56,9 +56,8 @@ sub generate_test_cmd {
 
     my %params = (
         input_vcf_result => $input_vcf_result,
-        target_region_set => $roi,
-        segmental_duplications_list => $segdup,
         ensembl_version => "1",
+        feature_list_ids_and_tags => [join(":", $roi->id, "ROI"),join(":", $segdup->id, "SEGDUP")],
         variant_type => 'snvs',
         format => 'vcf',
         polyphen => 'b',

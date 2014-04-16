@@ -11,11 +11,9 @@ class Genome::Annotation::Vep::Result {
         ensembl_version => {
             is => 'String',
         },
-        target_region_set => {
-            is => 'Genome::FeatureList',
-        },
-        segmental_duplications_list => {
-            is => 'Genome::FeatureList',
+        feature_list_ids_and_tags => {
+            is => 'String',
+            is_many => 1,
         },
         input_vcf_result => {
             is => 'Genome::SoftwareResult',
@@ -43,19 +41,18 @@ sub output_file_path {
 sub _run {
     my $self = shift;
 
-    my $roi_input = join("@", $self->target_region_set->get_tabix_and_gzipped_bed_file,
-        "ROI",
-        "bed",
-        "overlap",
-        "0",
-    );
-    my $segdup_input = join("@", $self->segmental_duplications_list->get_tabix_and_gzipped_bed_file,
-        "SEGDUP",
-        "bed",
-        "overlap",
-        "0",
-    );
-    my @custom_annotation_inputs = ($roi_input, $segdup_input);
+    my @custom_annotation_inputs;
+    for my $feature_list_and_tag ($self->feature_list_ids_and_tags) {
+        my ($id, $tag) = split(":", $feature_list_and_tag);
+        my $feature_list = Genome::FeatureList->get($id);
+        push @custom_annotation_inputs, join("@",
+            $feature_list->get_tabix_and_gzipped_bed_file,
+            $tag,
+            "bed",
+            "overlap",
+            "0",
+        );
+    }
 
     my %params = $self->param_hash;
     delete $params{variant_type};
