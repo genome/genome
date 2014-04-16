@@ -59,11 +59,12 @@ sub generate_test_cmd {
         ensembl_version => "1",
         feature_list_ids_and_tags => [join(":", $roi->id, "ROI"),join(":", $segdup->id, "SEGDUP")],
         variant_type => 'snvs',
-        format => 'vcf',
         polyphen => 'b',
         sift => 'b',
         condel => 'b',
-        quiet => 1,
+        plugins_version => 0,
+        species => "alien",
+        terms => "ensembl",
     );
     my $cmd = $cmd_class->create(%params);
     return $cmd

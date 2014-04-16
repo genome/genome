@@ -18,14 +18,26 @@ class Genome::Annotation::Vep::Result {
         input_vcf_result => {
             is => 'Genome::SoftwareResult',
         },
+        species => {
+            is => 'String',
+        },
     ],
     has_param => [
         variant_type => { is => 'Text', },
-        format => { is => 'String', },
         polyphen => { is => 'String', },
         sift => { is => 'String', },
         condel => { is => 'String', },
-        quiet => { is => 'String', },
+        terms => {is => 'String', },
+        regulatory => {is => 'Boolean',},
+        gene => {is => 'Boolean',},
+        most_severe => {is => 'Boolean',},
+        per_gene => {is => 'Boolean',},
+        hgnc => {is => 'Boolean',},
+        coding_only => {is => 'Boolean',},
+        canonical => {is => 'Boolean',},
+        plugins => {is => 'String',
+                    is_many => 1},
+        plugins_version => {is => 'String',},
     ],
 };
 
@@ -63,6 +75,9 @@ sub _run {
         output_file => File::Spec->join($self->temp_staging_directory, $self->output_filename),
         ensembl_version => $self->ensembl_version,
         custom => \@custom_annotation_inputs,
+        format => "vcf",
+        vcf => 1,
+        quiet => 0,
         %params,
     );
 
