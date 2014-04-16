@@ -19,9 +19,10 @@ use Test::More;
 
 my $cmd_class = 'Genome::Annotation::Vep';
 use_ok($cmd_class) or die;
-use_ok('Genome::Db::Ensembl::Command::Vep') or die;
+use_ok('Genome::Db::Ensembl::Command::Run::Vep') or die;
 
 my $cmd = generate_test_cmd();
+ok($cmd->isa('Genome::Annotation::Vep'), "Command created correctly");
 ok($cmd->execute(), 'Command executed');
 is(ref($cmd->software_result), 'Genome::Annotation::Vep::Result', 'Found software result after execution');
 
@@ -31,7 +32,7 @@ done_testing();
 
 sub generate_test_cmd {
     Sub::Install::reinstall_sub({
-        into => 'Genome::Db::Ensembl::Command::Vep',
+        into => 'Genome::Db::Ensembl::Command::Run::Vep',
         as => 'execute',
         code => sub {my $self = shift; my $file = $self->output_file; `touch $file`; return 1;},
     });
@@ -50,22 +51,20 @@ sub generate_test_cmd {
         code => sub { return 'somepath'},
     });
 
-    my $ensembl_annotation_build = Genome::Model::Build::ImportedAnnotation->__define__(id => 'testing');
-    my $ensembl_annotation_build_id = $ensembl_annotation_build->id;
     my $roi = Genome::FeatureList->__define__();
     my $segdup = Genome::FeatureList->__define__();
 
     my %params = (
         input_vcf_result => $input_vcf_result,
-        ensembl_annotation_build_id => $ensembl_annotation_build_id,
-        target_region_set => $roi,
-        segmental_duplications_list => $segdup,
+        ensembl_version => "1",
+        feature_list_ids_and_tags => [join(":", $roi->id, "ROI"),join(":", $segdup->id, "SEGDUP")],
         variant_type => 'snvs',
-        format => 'vcf',
         polyphen => 'b',
         sift => 'b',
         condel => 'b',
-        quiet => 1,
+        plugins_version => 0,
+        species => "alien",
+        terms => "ensembl",
     );
     my $cmd = $cmd_class->create(%params);
     return $cmd

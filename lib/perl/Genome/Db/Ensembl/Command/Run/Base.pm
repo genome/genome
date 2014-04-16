@@ -1,4 +1,4 @@
-package Genome::Db::Ensembl::Command::Vep::Base;
+package Genome::Db::Ensembl::Command::Run::Base;
 
 use strict;
 use warnings;
@@ -10,7 +10,7 @@ use File::Basename qw(dirname);
 my ($VEP_DIR) = Cwd::abs_path(__FILE__) =~ /(.*)\//;
 my $VEP_SCRIPT_PATH = $VEP_DIR . "/Vep.d/vep";
 
-class Genome::Db::Ensembl::Command::Vep::Base {
+class Genome::Db::Ensembl::Command::Run::Base {
     is => 'Command::V2',
     doc => 'Run VEP',
     attributes_have => [

@@ -12,7 +12,7 @@ use above "Genome";
 use Genome::Utility::Test qw(command_execute_ok compare_ok);
 use Test::More;
 
-my $pkg = "Genome::Db::Ensembl::Command::Vep::Run";
+my $pkg = "Genome::Db::Ensembl::Command::Run::Vep";
 use_ok($pkg);
 
 my $TEST_VERSION = 1;
@@ -47,9 +47,9 @@ for my $file_type ('ensembl', 'vcf', 'vcf.gz') {
         $params{'vcf'} = 1;
     }
 
-    my $cmd_1 = Genome::Db::Ensembl::Command::Vep::Run->create(%params);
+    my $cmd_1 = Genome::Db::Ensembl::Command::Run::Vep->create(%params);
 
-    isa_ok($cmd_1, 'Genome::Db::Ensembl::Command::Vep::Run');
+    isa_ok($cmd_1, 'Genome::Db::Ensembl::Command::Run::Vep');
     Genome::Sys->dump_status_messages(0);
     command_execute_ok($cmd_1,
         { error_messages => [],
