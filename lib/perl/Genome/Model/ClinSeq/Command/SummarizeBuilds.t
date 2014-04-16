@@ -54,7 +54,7 @@ $log->print(join("\n", @output));
 
 print "\n\nDiffing results from this run to the expected results here:\n\t$expected_data_directory\n";
 my @diff = `diff -r $expected_data_directory $temp_dir`;
-is(@diff, 5, "no differences from expected results and actual other than the 5 lines corresponding to the random temp dir statement")
+is(@diff, 0, "no differences from expected results.")
   or do { 
       diag("differences are:");
       diag(@diff);
