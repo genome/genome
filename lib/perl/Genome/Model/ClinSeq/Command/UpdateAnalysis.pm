@@ -1014,7 +1014,7 @@ sub get_genotype_microarray_model_id{
     my $microarray_model_id = $model->id;
 
     #Make sure the genotype microarray model is on the specified version of the reference genome
-    next unless ($model->reference_sequence_build->id eq $self->reference_sequence_build->id);
+    next unless ($model->reference_sequence_build->is_compatible_with($self->reference_sequence_build));
 
     #TODO: Make sure the genotype microarray model is using the specified version of dbSNP?  Skip this test for now...
     #if ($model->can("dbsnp_build")){
