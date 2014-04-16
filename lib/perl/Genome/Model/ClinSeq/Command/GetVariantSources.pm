@@ -212,7 +212,8 @@ sub execute {
     my @varscan_indel_paths = glob("${build_dir}/variants/indel/varscan-*/indels.hq.bed");
     $indel_varscan_original_results_file = $self->checkResultFile('-paths'=>\@varscan_indel_paths, '-caller'=>"varscan");
 
-    my ($snv_strelka_original_results_file, $snv_sniper_original_results_file, $snv_varscan_original_results_file);
+    my ($snv_strelka_original_results_file, $snv_sniper_original_results_file, 
+          $snv_varscan_original_results_file,  $snv_samtools_original_results_file);
 
     #Create a list of possible snv file paths
     my @strelka_snv_paths = glob("${build_dir}/variants/snv/strelka-*/snvs.hq.bed");
@@ -223,6 +224,9 @@ sub execute {
 
     my @varscan_snv_paths = glob("${build_dir}/variants/snv/varscan-*/snvs.hq.bed");
     $snv_varscan_original_results_file = $self->checkResultFile('-paths'=>\@varscan_snv_paths, '-caller'=>"varscan");
+
+    my @samtools_snv_paths = glob("${build_dir}/variants/snv/samtools-*/snvs.hq.bed");
+    $snv_samtools_original_results_file = $self->checkResultFile('-paths'=>\@samtools_snv_paths, '-caller'=>"varscan");
 
     #Sort the caller result BED files using joinx and store in a temporary file and use that to run joinx intersect
     my $indel_strelka_results_file =  Genome::Sys->create_temp_file_path("indel_strelka_sorted");
@@ -239,6 +243,8 @@ sub execute {
     $self->joinxSortFile($snv_sniper_original_results_file, $snv_sniper_results_file);
     my $snv_varscan_results_file =  Genome::Sys->create_temp_file_path("snv_varscan_sorted");
     $self->joinxSortFile($snv_varscan_original_results_file, $snv_varscan_results_file);
+    my $snv_samtools_results_file =  Genome::Sys->create_temp_file_path("snv_samtools_sorted");
+    $self->joinxSortFile($snv_samtools_original_results_file, $snv_samtools_results_file);
 
     #Use 'joinx intersect' to determine which indels in the merged/union file are found in each individual caller's results file
     #gmt joinx intersect a.bed b.bed [--output-file=n.bed] --exact-pos --exact-allele
@@ -250,6 +256,7 @@ sub execute {
     my $snv_strelka_outfile = $build_outdir . "snv_strelka.bed";
     my $snv_sniper_outfile = $build_outdir . "snv_sniper.bed";
     my $snv_varscan_outfile = $build_outdir . "snv_varscan.bed";
+    my $snv_samtools_outfile = $build_outdir . "snv_samtools.bed";
 
     $self->determineCaller("indel","strelka", $indel_results_file, $indel_strelka_results_file, $indel_strelka_outfile);
     $self->determineCaller("indel","gatk", $indel_results_file, $indel_gatk_results_file, $indel_gatk_outfile);
@@ -259,6 +266,7 @@ sub execute {
     $self->determineCaller("snv","strelka", $snv_results_file, $snv_strelka_results_file, $snv_strelka_outfile);
     $self->determineCaller("snv","sniper", $snv_results_file, $snv_sniper_results_file, $snv_sniper_outfile);
     $self->determineCaller("snv","varscan", $snv_results_file, $snv_varscan_results_file, $snv_varscan_outfile);
+    $self->determineCaller("snv","samtools", $snv_results_file, $snv_samtools_results_file, $snv_varscan_outfile);
 
     #Print out a new file containing the extra source columns
     open (INDEL_OUT, ">$indel_outfile") || die "\n\nCould not open $indel_outfile\n\n";
@@ -278,16 +286,17 @@ sub execute {
     close(INDEL_OUT);
 
     open (SNV_OUT, ">$snv_outfile") || die "\n\nCould not open $snv_outfile\n\n";
-    print SNV_OUT "coord\tchr\tstart\tend\tvariant\tscore1\tscore2\tcallers\tstrelka\tsniper\tvarscan\ttier\n";
+    print SNV_OUT "coord\tchr\tstart\tend\tvariant\tscore1\tscore2\tcallers\tstrelka\tsniper\tvarscan\tsamtools\ttier\n";
     foreach my $snv (sort {$snvs{$a}->{coord_string} cmp $snvs{$b}->{coord_string}} keys %snvs){
       my @callers = sort keys %{$snv_caller{$snvs{$snv}{variant_string}}};
-      my $strelka=0; my $sniper=0; my $varscan=0;
+      my $strelka=0; my $sniper=0; my $varscan=0;my $samtools = 0;
       foreach my $caller (@callers){
         if ($caller eq 'strelka'){$strelka=1;}
         if ($caller eq 'sniper'){$sniper=1;}
         if ($caller eq 'varscan'){$varscan=1;}
+        if ($caller eq 'samtools'){$samtools=1;}
       }
-      print SNV_OUT "$snvs{$snv}{coord_string}\t$snvs{$snv}{line}\t",join(",",@callers),"\t$strelka\t$sniper\t$varscan\t$snvs{$snv}{tier}\n";
+      print SNV_OUT "$snvs{$snv}{coord_string}\t$snvs{$snv}{line}\t",join(",",@callers),"\t$strelka\t$sniper\t$varscan\t$samtools\t$snvs{$snv}{tier}\n";
     }
     close(INDEL_OUT);
 
