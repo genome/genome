@@ -8,8 +8,8 @@ use File::Spec;
 class Genome::Annotation::JoinxVcfAnnotate::Result {
     is => 'Genome::Annotation::Detail::Result',
     has_input => [
-        annotation_file => {
-            is => 'String',
+        annotation_build => {
+            is => 'Genome::Model::Build::ImportedVariationList',
         },
         input_vcf_result => {
             is => 'Genome::SoftwareResult',
@@ -47,7 +47,7 @@ sub _run {
 
     my $vcf_annotator = Genome::Model::Tools::Joinx::VcfAnnotate->create(
         input_file      => $input_file,
-        annotation_file => $self->annotation_file,
+        annotation_file => $self->annotation_build->snvs_vcf,
         output_file     => $output_file,
         use_bgzip       => 1,
         info_fields     => $info_string,

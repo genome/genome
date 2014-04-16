@@ -7,8 +7,8 @@ use Genome;
 class Genome::Annotation::JoinxVcfAnnotate {
     is => 'Genome::Annotation::Detail::Command',
     has_input => [
-        annotation_file => {
-            is => 'String',
+        annotation_build => {
+            is => 'Genome::Model::Build::ImportedVariationList',
         },
         input_vcf_result => {
             is => 'Genome::SoftwareResult',
