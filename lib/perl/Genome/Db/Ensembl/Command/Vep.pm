@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::Db::Ensembl::Command::Vep {
-    is => 'Genome::Db::Ensembl::Command::Vep::Base',
+    is => 'Genome::Db::Ensembl::Command::Run::Base',
     has => [
         ensembl_annotation_build_id => {
             is => 'String',
