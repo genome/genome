@@ -25,6 +25,7 @@ class Genome::Utility::IO::SeparatedValueWriter {
         },
         in_place_of_null_value => {
             doc => 'Use this in place of an undefined value.',
+            default_value => '',
         },
         print_headers => {
             is => 'Boolean',
@@ -55,10 +56,6 @@ sub create {
     $self->{_column_count} = scalar @$headers;
     if ($self->print_headers) {
         $self->output->print( join($self->separator, @$headers)."\n" );
-    }
-
-    if ( not defined $self->in_place_of_null_value ) {
-        $self->in_place_of_null_value('');
     }
 
     return $self;
