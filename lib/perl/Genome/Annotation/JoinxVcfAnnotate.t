@@ -56,7 +56,7 @@ sub generate_test_cmd {
     });
     my %params = (
         input_vcf_result => $input_vcf_result,
-        annotation_build  => $annotation_build,
+        annotation_builds  => [$annotation_build],
         variant_type     => 'snvs',
         info_string      => 'test',
         joinx_version    => '1.8',
