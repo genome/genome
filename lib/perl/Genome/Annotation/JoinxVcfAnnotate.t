@@ -11,6 +11,8 @@ BEGIN {
 use above "Genome";
 use Sub::Install;
 use Genome::Test::Factory::InstrumentData::MergedAlignmentResult;
+use Genome::Test::Factory::Model::ImportedVariationList;
+use Genome::Test::Factory::Build;
 use Genome::Model::Tools::DetectVariants2::Result::Vcf;
 use Genome::Model::Tools::Sam::Readcount;
 use Genome::Model::Tools::Bed::Convert::VcfToBed;
@@ -45,12 +47,16 @@ sub generate_test_cmd {
         code => sub {return 'some_file.vcf.gz';},
     });
 
-    my $annotation_file = Genome::Sys->create_temp_file_path;
-    `touch $annotation_file`;
-    
+    my $model = Genome::Test::Factory::Model::ImportedVariationList->setup_object();
+    my $annotation_build = Genome::Test::Factory::Build->setup_object(model_id => $model->id);
+    Sub::Install::reinstall_sub({
+        into => 'Genome::Model::Build::ImportedVariationList',
+        as => 'snvs_vcf',
+        code => sub {return 1},
+    });
     my %params = (
         input_vcf_result => $input_vcf_result,
-        annotation_file  => $annotation_file,
+        annotation_builds  => [$annotation_build],
         variant_type     => 'snvs',
         info_string      => 'test',
         joinx_version    => '1.8',
