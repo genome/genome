@@ -1,4 +1,4 @@
-# % Last Change: Wed Apr 16 11:00 AM 2014 C
+# % Last Change: Wed Apr 16 03:00 PM 2014 C
 package Genome::Model::Tools::Analysis::Concordance;
 
 use strict;
@@ -119,8 +119,7 @@ sub execute {
     # create temp directory for munging
     my $inFile;
     my $outFile;
-#    my $tempdir = "tmp/";
-    my $tempdir = Genome::Sys->create_temp_directory("/tmp/");
+    my $tempdir = Genome::Sys->create_temp_directory();
     $tempdir or die "Unable to create temporary directory $!";
 #    unless($tempdir) {
 #        my $self->error_message("Unable to create temporary file $!");
@@ -133,7 +132,7 @@ sub execute {
         reference_fasta => $reference_genome,
         region_list => $snp_file,
 #        minimum_mapping_quality => $min_mapping_quality,
-        output_file => "readcount_temp_file_1",
+        output_file => "$tempdir/readcount_temp_file_1",
     );
 
     my $bam_readcount_2 = Genome::Model::Tools::Sam::Readcount->execute(
@@ -141,13 +140,13 @@ sub execute {
         reference_fasta => $reference_genome,
         region_list => $snp_file,
 #        minimum_mapping_quality => $min_mapping_quality,
-        output_file => "readcount_temp_file_2",
+        output_file => "$tempdir/readcount_temp_file_2",
     );
 
     # parse in perl # dump to temp directory
     # for i in *rct; do echo $i; cat $i | tr ":" "\t" | cut -f1-3,19,20,33,34,47,48,61,62,75,76 > $i.txt; done
-    my $parse_file_1 = Genome::Sys->open_file_for_writing("parse_file_1");
-    my $open_readcount_1 = Genome::Sys->open_file_for_reading("readcount_temp_file_1");
+    my $parse_file_1 = Genome::Sys->open_file_for_writing("$tempdir/parse_file_1");
+    my $open_readcount_1 = Genome::Sys->open_file_for_reading("$tempdir/readcount_temp_file_1");
     while (my $line = $open_readcount_1->getline){
         $line =~ tr/:/\t/;
         my @field = split(/\t/,$line);
@@ -156,8 +155,8 @@ sub execute {
     $open_readcount_1->close;
     $parse_file_1->close;
 
-    my $parse_file_2 = Genome::Sys->open_file_for_writing("parse_file_2");
-    my $open_readcount_2 = Genome::Sys->open_file_for_reading("readcount_temp_file_2");
+    my $parse_file_2 = Genome::Sys->open_file_for_writing("$tempdir/parse_file_2");
+    my $open_readcount_2 = Genome::Sys->open_file_for_reading("$tempdir/readcount_temp_file_2");
     while (my $line = $open_readcount_2->getline){
         $line =~ tr/:/\t/;
         my @field = split(/\t/,$line);
@@ -168,7 +167,7 @@ sub execute {
 
     # run R script and output # goes in temp dir
     my $r_script_file = '/gscuser/tli/gc3018/bin/snp.R';
-    my $cmd_1 = "Rscript $r_script_file 'parse_file_1' 'r_output_file_1'";
+    my $cmd_1 = "Rscript $r_script_file '$tempdir/parse_file_1' '$tempdir/r_output_file_1'";
     my $return_1 = Genome::Sys->shellcmd(
         cmd => "$cmd_1",
     );
@@ -177,7 +176,7 @@ sub execute {
         die $self->error_message;
     }
 
-    my $cmd_2 = "Rscript $r_script_file 'parse_file_2' 'r_output_file_2'";
+    my $cmd_2 = "Rscript $r_script_file '$tempdir/parse_file_2' '$tempdir/r_output_file_2'";
     my $return_2 = Genome::Sys->shellcmd(
         cmd => "$cmd_2",
     );
@@ -188,8 +187,8 @@ sub execute {
 
     # output using bash
     my $comp_sh = '/gscuser/tli/gc3018/bin/2way_comp.sh';
-    my $normal = "r_output_file_1";
-    my $pre = "r_output_file_2";
+    my $normal = "$tempdir/r_output_file_1";
+    my $pre = "$tempdir/r_output_file_2";
     #if (-e $output_file) {
     if (-e $normal && -e $pre) {
         my $cmd_3 = "bash $comp_sh $normal $pre $output_file";
@@ -197,9 +196,9 @@ sub execute {
         system($cmd_3);
     }
 
-    unlink glob('readcount_temp_file_*');
-    unlink glob('parse_file_*');
-    unlink glob('r_output_file_*');
+#    unlink glob('readcount_temp_file_*');
+#    unlink glob('parse_file_*');
+#    unlink glob('r_output_file_*');
 }
 
 1;
