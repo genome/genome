@@ -18,13 +18,13 @@ use Genome::Annotation::Detail::TestHelpers qw(test_cmd_and_result_are_in_sync);
 
 use Test::More;
 
-my $cmd_class = 'Genome::Annotation::Readcount';
+my $cmd_class = 'Genome::Annotation::RunBamReadcount';
 use_ok($cmd_class) or die;
 
 my $cmd = generate_test_cmd();
 
 ok($cmd->execute(), 'Command executed');
-is(ref($cmd->software_result), 'Genome::Annotation::Readcount::Result', 'Found software result after execution');
+is(ref($cmd->software_result), 'Genome::Annotation::RunBamReadcount::Result', 'Found software result after execution');
 test_cmd_and_result_are_in_sync($cmd);
 
 done_testing();

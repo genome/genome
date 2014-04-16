@@ -1,11 +1,11 @@
-package Genome::Annotation::Readcount::Result;
+package Genome::Annotation::RunBamReadcount::Result;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 use Sys::Hostname;
 
-class Genome::Annotation::Readcount::Result {
+class Genome::Annotation::RunBamReadcount::Result {
     is => 'Genome::Annotation::Detail::Result',
     has_input => [
         aligned_bam_result => {
