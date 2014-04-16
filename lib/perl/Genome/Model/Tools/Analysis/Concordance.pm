@@ -1,4 +1,4 @@
-# % Last Change: Thu Apr 03 03:00 PM 2014 C
+# % Last Change: Wed Apr 16 11:00 AM 2014 C
 package Genome::Model::Tools::Analysis::Concordance;
 
 use strict;
@@ -197,8 +197,8 @@ sub execute {
         system($cmd_3);
     }
 
-    unlink glob('parse_file_1');
-    unlink glob('parse_file_2');
+    unlink glob('readcount_temp_file_*');
+    unlink glob('parse_file_*');
     unlink glob('r_output_file_*');
 }
 
