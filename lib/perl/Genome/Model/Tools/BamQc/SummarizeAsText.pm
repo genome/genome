@@ -192,7 +192,7 @@ sub execute {
             $summary_data{PCT_DUPLICATION} = $mrkdup_metrics->{$lib}{PERCENT_DUPLICATION};
             $summary_data{ESTIMATED_LIBRARY_SIZE} = $mrkdup_metrics->{$lib}{ESTIMATED_LIBRARY_SIZE};
         }
-        if($lib == undef && $self->labels_are_instrument_data_ids) {
+        if(!defined($lib) and $self->labels_are_instrument_data_ids) {
             $self->status_message("Looking up the library name");
             my $instrument_data = Genome::InstrumentData->get($label);
             unless($instrument_data) {
