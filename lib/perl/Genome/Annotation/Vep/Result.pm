@@ -45,8 +45,13 @@ class Genome::Annotation::Vep::Result {
     ],
 };
 
-sub output_filename {
+sub output_filename_base {
     return 'vep.vcf';
+}
+
+sub output_filename {
+    my $self = shift;
+    return $self->output_filename_base.'.gz';
 }
 
 sub _run {
@@ -72,10 +77,11 @@ sub _run {
     if ($self->hgvs) {
         $params{fasta} = $self->reference_build->fasta_file;
     }
-
+    my $vep_output_file = File::Spec->join($self->temp_staging_directory, $self->output_filename_base);
+    my $final_output_file = File::Spec->join($self->temp_staging_directory, $self->output_filename);
     my $vep_command = Genome::Db::Ensembl::Command::Run::Vep->create(
         input_file => $self->input_result->output_file_path,
-        output_file => File::Spec->join($self->temp_staging_directory, $self->output_filename),
+        output_file => $vep_output_file,
         ensembl_version => $self->ensembl_version,
         custom => \@custom_annotation_inputs,
         format => "vcf",
@@ -87,6 +93,12 @@ sub _run {
     unless ($vep_command->execute) {
         die $self->error_message("Failed to execute vep");
     }
+
+    Genome::Sys->gzip_file($vep_output_file, $final_output_file);
+    Genome::Model::Tools::Tabix::Index->execute(
+        input_file => $final_output_file,
+        preset => 'vcf',
+    );
 
     return;
 }
