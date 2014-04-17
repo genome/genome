@@ -7,7 +7,7 @@ use Genome;
 class Genome::Annotation::Joinx {
     is => 'Genome::Annotation::Detail::Command',
     has_input => [
-        annotation_builds => {
+        known_variants => {
             is => 'Genome::Model::Build::ImportedVariationList',
             is_many => 1,
         },
@@ -17,7 +17,7 @@ class Genome::Annotation::Joinx {
         info_string => {
             is => 'Text',
         },
-        joinx_version => {
+        version => {
             is => 'Text',
         },
     ],

@@ -8,7 +8,7 @@ use File::Spec;
 class Genome::Annotation::Joinx::Result {
     is => 'Genome::Annotation::Detail::Result',
     has_input => [
-        annotation_builds => {
+        known_variants => {
             is => 'Genome::Model::Build::ImportedVariationList',
             is_many => 1,
         },
@@ -20,7 +20,7 @@ class Genome::Annotation::Joinx::Result {
         info_string => {
             is => 'Text',
         },
-        joinx_version => {
+        version => {
             is => 'Text',
         },
     ],
@@ -32,11 +32,11 @@ sub output_filename {
 
 sub _run {
     my $self = shift;
-    my @annotation_builds = $self->annotation_builds;
-    if (scalar @annotation_builds != 1) {
+    my @known_variants = $self->known_variants;
+    if (scalar @known_variants != 1) {
         die "We don't currently support more than one annotation vcf";
     }
-    my $annotation_build = $annotation_builds[0];
+    my $annotation_build = $known_variants[0];
 
     my $input_file  = $self->input_result->output_file_path;
     my $output_file = File::Spec->join($self->temp_staging_directory, $self->output_filename);
@@ -50,7 +50,7 @@ sub _run {
         use_bgzip       => 1,
         info_fields     => $info_string,
         info            => $info,
-        use_version     => $self->joinx_version,
+        use_version     => $self->version,
     );
 
     unless ($vcf_annotator->execute) {

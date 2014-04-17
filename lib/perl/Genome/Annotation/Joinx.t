@@ -48,7 +48,7 @@ sub generate_test_cmd {
     });
 
     my $model = Genome::Test::Factory::Model::ImportedVariationList->setup_object();
-    my $annotation_build = Genome::Test::Factory::Build->setup_object(model_id => $model->id);
+    my $known_variants = Genome::Test::Factory::Build->setup_object(model_id => $model->id);
     Sub::Install::reinstall_sub({
         into => 'Genome::Model::Build::ImportedVariationList',
         as => 'snvs_vcf',
@@ -56,10 +56,10 @@ sub generate_test_cmd {
     });
     my %params = (
         input_result => $input_result,
-        annotation_builds  => [$annotation_build],
+        known_variants  => [$known_variants],
         variant_type     => 'snvs',
         info_string      => 'test',
-        joinx_version    => '1.8',
+        version          => '1.8',
     );
 
     my $cmd = $cmd_class->create(%params);
