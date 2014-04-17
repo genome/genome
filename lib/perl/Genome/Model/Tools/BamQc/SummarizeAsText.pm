@@ -94,6 +94,25 @@ sub _load_alignment_summary_metrics {
     return $as_metrics;
 }
 
+sub _load_mark_duplicates_metrics {
+    my $self = shift;
+    my $output_dir = shift;
+
+    my ($mrkdup_file) = glob($output_dir .'/*.metrics');
+    my $mrkdup_metrics;
+    my $lib;
+    if ($mrkdup_file) {
+        $mrkdup_metrics = Genome::Model::Tools::Picard::MarkDuplicates->parse_file_into_metrics_hashref($mrkdup_file);
+        my @libs = sort keys %{$mrkdup_metrics};
+        if (scalar(@libs) > 1) {
+            die('Unable to handle multiple library BAM files!');
+        }
+        $lib = $libs[0];
+        $mrkdup_metrics = $mrkdup_metrics->{$lib};
+    }
+    return ($mrkdup_metrics, $lib);
+}
+
 sub execute {
     my $self = shift;
 
@@ -120,18 +139,7 @@ sub execute {
 
         my $as_metrics = $self->_load_alignment_summary_metrics($output_dir);
         
-        # Load MarkDuplicates Metrics
-        my ($mrkdup_file) = glob($output_dir .'/*.metrics');
-        my $mrkdup_metrics;
-        my $lib;
-        if ($mrkdup_file) {
-            $mrkdup_metrics = Genome::Model::Tools::Picard::MarkDuplicates->parse_file_into_metrics_hashref($mrkdup_file);
-            my @libs = sort keys %{$mrkdup_metrics};
-            if (scalar(@libs) > 1) {
-                die('Unable to handle multiple library BAM files!');
-            }
-            $lib = $libs[0];
-        }
+        my($mrkdup_metrics, $lib) = $self->_load_mark_duplicates_metrics($output_dir);
         
         # Load Error Rate Metrics
         my ($error_rate_file) = glob($output_dir .'/*-ErrorRate.tsv');
@@ -220,8 +228,8 @@ sub execute {
             ESTIMATED_LIBRARY_SIZE => 'na',
         );
         if ($mrkdup_metrics && $lib) {
-            $summary_data{PCT_DUPLICATION} = $mrkdup_metrics->{$lib}{PERCENT_DUPLICATION};
-            $summary_data{ESTIMATED_LIBRARY_SIZE} = $mrkdup_metrics->{$lib}{ESTIMATED_LIBRARY_SIZE};
+            $summary_data{PCT_DUPLICATION} = $mrkdup_metrics->{PERCENT_DUPLICATION};
+            $summary_data{ESTIMATED_LIBRARY_SIZE} = $mrkdup_metrics->{ESTIMATED_LIBRARY_SIZE};
         }
         if(!defined($lib) and $self->labels_are_instrument_data_ids) {
             $self->status_message("Looking up the library name");
