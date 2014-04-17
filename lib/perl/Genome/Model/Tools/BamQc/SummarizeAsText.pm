@@ -190,6 +190,17 @@ sub _load_gc_bias_metrics {
     return $gc_metrics;
 }
 
+sub _load_quality_distribution {
+    my($self, $label_dir, $qd_data) = @_;
+
+    my ($qd_file) = glob($label_dir->directory .'/*.quality_distribution_metrics');
+    my $qd_histo = Genome::Model::Tools::Picard->parse_metrics_file_into_histogram_hashref($qd_file);
+    for my $quality_key (keys %{$qd_histo}) {
+        my $quality = $qd_histo->{$quality_key}{QUALITY};
+        $qd_data->{$quality}{$label_dir->label} = $qd_histo->{$quality_key}{COUNT_OF_Q};
+    }
+}
+
 sub execute {
     my $self = shift;
 
@@ -221,13 +232,7 @@ sub execute {
         
         my $gc_metrics = $self->_load_gc_bias_metrics($label_dir, \%gc_data, \%gc_windows);
 
-        # Load Quality Distribution
-        my ($qd_file) = glob($label_dir->directory .'/*.quality_distribution_metrics');
-        my $qd_histo = Genome::Model::Tools::Picard->parse_metrics_file_into_histogram_hashref($qd_file);
-        for my $quality_key (keys %{$qd_histo}) {
-            my $quality = $qd_histo->{$quality_key}{QUALITY};
-            $qd_data{$quality}{$label_dir->label} = $qd_histo->{$quality_key}{COUNT_OF_Q};
-        }
+        $self->_load_quality_distribution($label_dir, \%qd_data);
 
         # Load Quality by Cycle
         my ($qc_file) = glob($label_dir->directory .'/*.quality_by_cycle_metrics');
