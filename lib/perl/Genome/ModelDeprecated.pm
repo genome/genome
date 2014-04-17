@@ -660,23 +660,18 @@ sub compatible_instrument_data {
     my $self = shift;
     my %params;
 
-    my $subject_type_class;
+    $params{sequencing_platform} = $self->sequencing_platform if $self->sequencing_platform;
     if (my @samples = $self->get_all_possible_samples)  {
         my @sample_ids = map($_->id, @samples);
         %params = (
                    sample_id => \@sample_ids,
                );
-        $params{sequencing_platform} = $self->sequencing_platform if $self->sequencing_platform;
     } else {
         %params = (
                    $self->subject_type => $self->subject_name,
                );
-        $subject_type_class = $self->instrument_data_class_name;
     }
-    unless ($subject_type_class) {
-        $subject_type_class = 'Genome::InstrumentData';
-    }
-    my @compatible_instrument_data = $subject_type_class->get(%params);
+    my @compatible_instrument_data = Genome::InstrumentData->get(%params);
 
     if($params{sequencing_platform} and $params{sequencing_platform} eq 'solexa') {
         # FASTQs with 0 reads crash in alignment.  Don't assign them. -??
