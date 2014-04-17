@@ -30,12 +30,6 @@ sub output_filename {
     return 'bam-readcount-output.tsv';
 }
 
-sub output_file_path {
-    my $self = shift;
-
-    return File::Spec->join($self->output_dir, $self->output_filename);
-}
-
 sub _run {
     my $self = shift;
 

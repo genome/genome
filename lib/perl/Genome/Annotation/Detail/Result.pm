@@ -14,8 +14,13 @@ class Genome::Annotation::Detail::Result {
     ],
 };
 
-sub output_file_path {
+sub output_filename {
     die "Abstract";
+}
+
+sub output_file_path {
+    my $self = shift;
+    return File::Spec->join($self->output_dir, $self->output_filename);
 }
 
 sub create {
