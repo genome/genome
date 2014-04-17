@@ -67,5 +67,5 @@ sub resolve_annotation_build {
     return $self->build->annotation_build;
 }
 
-1;
 
+1;
