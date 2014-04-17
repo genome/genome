@@ -25,8 +25,7 @@ class Genome::Model::Tools::BamQc::SummarizeAsText {
     ],
 };
 
-
-sub execute {
+sub _validate_labels_and_directories {
     my $self = shift;
 
     my $labels_string = $self->labels;
@@ -34,9 +33,15 @@ sub execute {
     
     my $directories_string = $self->directories;
     my @directories = split(',',$directories_string);
-    unless (scalar(@labels) == scalar(@directories)) {
-        die('Unbalanced input labels and directories!');
-    }
+    return scalar(@labels) == scalar(@directories);
+}
+
+sub execute {
+    my $self = shift;
+
+    $self->_validate_labels_and_directories()
+        or die 'Unbalanced input labels and directories!';
+
     my @summary_headers = qw/
                                 LABEL
                                 READS
@@ -74,6 +79,8 @@ sub execute {
     my %qd_data;
 
     my %qc_data;
+    my @labels = split(',', $self->labels);
+    my @directories = split(',', $self->directories);
     for (my $i = 0; $i< scalar(@labels); $i++) {
         my $label = $labels[$i];
         my $output_dir = $directories[$i];
