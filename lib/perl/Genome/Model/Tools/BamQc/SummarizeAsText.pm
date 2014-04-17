@@ -240,6 +240,31 @@ sub _write_error_tsv_file {
     return 1;
 }
 
+sub _write_consolidate_histogram_of_normalized_coverage_per_gc_window {
+    my($self, $gc_windows, $gc_data) = @_;
+
+    my $gc_summary = $self->output_basename .'-GcBias.tsv';
+    if (-e $gc_summary) {
+        unlink($gc_summary);
+    }
+    my @gc_headers = ('GC','WINDOWS',$self->_labels_list);
+    my $gc_data_writer = Genome::Utility::IO::SeparatedValueWriter->create(
+        output => $gc_summary,
+        separator => "\t",
+        headers => \@gc_headers,
+    );
+    for my $gc_bin (sort {$a <=> $b} keys %$gc_windows)  {
+        my %data = (
+            GC => $gc_bin,
+            WINDOWS => $gc_windows->{$gc_bin},
+        );
+        for my $label ($self->_labels_list) {
+            $data{$label} = $gc_data->{$gc_bin}{$label}{NORMALIZED_COVERAGE} || 0;
+        }
+        $gc_data_writer->write_one(\%data);
+    }
+}
+
 sub execute {
     my $self = shift;
 
@@ -317,28 +342,8 @@ sub execute {
     
     $self->_write_error_tsv_file(\%error_rate_by_position);
 
-    # Write a consolidate histogram of normalized coverage per GC window
-    my $gc_summary = $self->output_basename .'-GcBias.tsv';
-    if (-e $gc_summary) {
-        unlink($gc_summary);
-    }
-    my @gc_headers = ('GC','WINDOWS',$self->_labels_list);
-    my $gc_data_writer = Genome::Utility::IO::SeparatedValueWriter->create(
-        output => $gc_summary,
-        separator => "\t",
-        headers => \@gc_headers,
-    );
-    for my $gc_bin (sort {$a <=> $b} keys %gc_windows)  {
-        my %data = (
-            GC => $gc_bin,
-            WINDOWS => $gc_windows{$gc_bin},
-        );
-        for my $label ($self->_labels_list) {
-            $data{$label} = $gc_data{$gc_bin}{$label}{NORMALIZED_COVERAGE} || 0;
-        }
-        $gc_data_writer->write_one(\%data);
-    }
-    
+    $self->_write_consolidate_histogram_of_normalized_coverage_per_gc_window(\%gc_windows, \%gc_data);
+
     # Write a consolidate histogram of base quality
     my $qd_summary = $self->output_basename .'-QualityDistribution.tsv';
     if (-e $qd_summary) {
