@@ -82,6 +82,18 @@ sub _create_metrics_summary_writer {
     return $summary_writer;
 }
 
+sub _load_alignment_summary_metrics {
+    my $self = shift;
+    my $output_dir = shift;
+
+    my ($as_file) = glob($output_dir .'/*alignment_summary_metrics');
+    unless ($as_file) {
+        die ('Failed to find Picard alignment_summary_metrics in directory: '. $output_dir);
+    }
+    my $as_metrics = Genome::Model::Tools::Picard::CollectAlignmentSummaryMetrics->parse_file_into_metrics_hashref($as_file);
+    return $as_metrics;
+}
+
 sub execute {
     my $self = shift;
 
@@ -106,13 +118,7 @@ sub execute {
         my $label = $labels[$i];
         my $output_dir = $directories[$i];
 
-        # Load Alignment Metrics
-        my ($as_file) = glob($output_dir .'/*alignment_summary_metrics');
-        unless ($as_file) {
-            die ('Failed to find Picard alignment_summary_metrics in directory: '. $output_dir);
-        }
-        my $as_metrics = Genome::Model::Tools::Picard::CollectAlignmentSummaryMetrics->parse_file_into_metrics_hashref($as_file);
-
+        my $as_metrics = $self->_load_alignment_summary_metrics($output_dir);
         
         # Load MarkDuplicates Metrics
         my ($mrkdup_file) = glob($output_dir .'/*.metrics');
