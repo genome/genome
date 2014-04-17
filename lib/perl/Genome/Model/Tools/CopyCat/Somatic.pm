@@ -112,7 +112,12 @@ class Genome::Model::Tools::CopyCat::Somatic{
             default => 1,
             doc => "the estimated fraction of the tumor sample composed of tumor cells (as opposed to normal admixture)",
         }
-        ]
+    ],
+    has_param => [
+        lsf_resource => {
+            default_value => "-M 8000000 -R 'select[mem>8000] rusage[mem=8000]'",
+        },
+    ],
 };
 
 sub help_brief {
