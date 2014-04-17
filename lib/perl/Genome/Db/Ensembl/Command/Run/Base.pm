@@ -132,6 +132,19 @@ class Genome::Db::Ensembl::Command::Run::Base {
             is_optional => 1,
             is_vep_param => 1,
         },
+        hgvs => {
+            is => 'Boolean',
+            doc => 'Output hgvs terms.  Must provide a reference fasta to use this option',
+            default_value => 0,
+            is_optional => 1,
+            is_vep_param => 1,
+        },
+        fasta => {
+            is => 'String',
+            doc => 'Reference fasta file',
+            is_optional => 1,
+            is_vep_param => 1
+        },
         hgnc => {
             is => 'Boolean',
             doc => 'NOTE: this option is ignored. The gene symbol (e.g. HGNC) will always be printed',

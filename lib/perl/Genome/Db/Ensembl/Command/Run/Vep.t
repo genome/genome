@@ -15,7 +15,7 @@ use Test::More;
 my $pkg = "Genome::Db::Ensembl::Command::Run::Vep";
 use_ok($pkg);
 
-my $TEST_VERSION = 1;
+my $TEST_VERSION = 2;
 my $test_dir = Genome::Utility::Test->data_dir_ok($pkg, $TEST_VERSION);
 
 for my $file_type ('ensembl', 'vcf', 'vcf.gz') {
@@ -41,6 +41,8 @@ for my $file_type ('ensembl', 'vcf', 'vcf.gz') {
         ensembl_version => "74",
         quiet => 1,
         hgnc => 1,
+        hgvs => 1,
+        fasta => "/gscmnt/ams1102/info/model_data/2869585698/build106942997/all_sequences.fa",
     );
 
     if ($file_type eq 'vcf' || $file_type eq 'vcf.gz') {
