@@ -201,6 +201,17 @@ sub _load_quality_distribution {
     }
 }
 
+sub _load_quality_by_cycle {
+    my($self, $label_dir, $qc_data) = @_;
+
+    my ($qc_file) = glob($label_dir->directory .'/*.quality_by_cycle_metrics');
+    my $qc_histo = Genome::Model::Tools::Picard->parse_metrics_file_into_histogram_hashref($qc_file);
+    for my $cycle_key (keys %{$qc_histo}) {
+        my $cycle = $qc_histo->{$cycle_key}{CYCLE};
+        $qc_data->{$cycle}{$label_dir->label} = $qc_histo->{$cycle_key}{MEAN_QUALITY};
+    }
+}
+
 sub execute {
     my $self = shift;
 
@@ -234,13 +245,7 @@ sub execute {
 
         $self->_load_quality_distribution($label_dir, \%qd_data);
 
-        # Load Quality by Cycle
-        my ($qc_file) = glob($label_dir->directory .'/*.quality_by_cycle_metrics');
-        my $qc_histo = Genome::Model::Tools::Picard->parse_metrics_file_into_histogram_hashref($qc_file);
-        for my $cycle_key (keys %{$qc_histo}) {
-            my $cycle = $qc_histo->{$cycle_key}{CYCLE};
-            $qc_data{$cycle}{$label_dir->label} = $qc_histo->{$cycle_key}{MEAN_QUALITY};
-        }
+        $self->_load_quality_by_cycle($label_dir, \%qc_data);
         
         # TODO: We need summary metrics per category and/or read direction
         # The below summary metrics only apply to paired-end libraries
