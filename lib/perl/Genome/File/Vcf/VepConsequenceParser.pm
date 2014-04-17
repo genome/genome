@@ -112,4 +112,19 @@ sub format_transcripts {
     return join(",", map {$self->_format_transcript($_)} @flat_transcripts);
 }
 
+sub transcripts {
+    my ($self, $entry, $allele) = @_;
+
+    my $processed_entry = $self->process_entry($entry);
+    my $transcripts = $processed_entry->{$allele};
+    return @{$transcripts};
+}
+
+sub canonical_transcripts {
+    my ($self, $entry, $allele) = @_;
+
+    my @transcripts = @{$self->process_entry($entry)->{$allele}};
+    return grep {$_->{'canonical'} eq 'YES'} @transcripts;
+}
+
 1;
