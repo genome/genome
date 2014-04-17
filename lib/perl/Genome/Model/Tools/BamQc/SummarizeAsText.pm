@@ -313,6 +313,32 @@ sub _write_consolidate_histogram_of_base_quality_by_cycle {
     }
 }
 
+sub _write_consolidate_histogram_of_insert_sizes_by_read_orientation_direction {
+    my($self, $is_directions, $is_data) = @_;
+
+    for my $direction (sort keys %$is_directions) {
+        my $is_summary = $self->output_basename .'-'. uc($direction) .'-InsertSize.tsv';
+        if (-e $is_summary) {
+            unlink $is_summary;
+        }
+        my @is_headers =('INSERT_SIZE',$self->_labels_list);
+        my $is_data_writer = Genome::Utility::IO::SeparatedValueWriter->create(
+            output => $is_summary,
+            separator => "\t",
+            headers => \@is_headers,
+        );
+        for my $is_size (sort {$a <=> $b} keys %$is_data) {
+            my %data = (
+                INSERT_SIZE  => $is_size,
+            );
+            for my $label ($self->_labels_list) {
+                $data{$label} = $is_data->{$is_size}{$direction}{$label} || 0;
+            }
+            $is_data_writer->write_one(\%data);
+        }
+    }
+}
+
 sub execute {
     my $self = shift;
 
@@ -396,28 +422,8 @@ sub execute {
 
     $self->_write_consolidate_histogram_of_base_quality_by_cycle(\%qc_data);
 
-    # Write a consolidate histogram of insert sizes by read orientation/direction
-    for my $direction (sort keys %is_directions) {
-        my $is_summary = $self->output_basename .'-'. uc($direction) .'-InsertSize.tsv';
-        if (-e $is_summary) {
-            unlink $is_summary;
-        }
-        my @is_headers =('INSERT_SIZE',$self->_labels_list);
-        my $is_data_writer = Genome::Utility::IO::SeparatedValueWriter->create(
-            output => $is_summary,
-            separator => "\t",
-            headers => \@is_headers,
-        );
-        for my $is_size (sort {$a <=> $b} keys %is_data) {
-            my %data = (
-                INSERT_SIZE  => $is_size,
-            );
-            for my $label ($self->_labels_list) {
-                $data{$label} = $is_data{$is_size}{$direction}{$label} || 0;
-            }
-            $is_data_writer->write_one(\%data);
-        }
-    }
+    $self->_write_consolidate_histogram_of_insert_sizes_by_read_orientation_direction(\%is_directions, \%is_data);
+
     return 1;
 }
 
