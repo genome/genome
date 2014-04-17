@@ -26,14 +26,14 @@ class Genome::Annotation::RunBamReadcount::Result {
     ],
 };
 
-sub readcount_filename {
+sub output_filename {
     return 'bam-readcount-output.tsv';
 }
 
-sub readcount_file {
+sub output_file_path {
     my $self = shift;
 
-    return File::Spec->join($self->output_dir, $self->readcount_filename);
+    return File::Spec->join($self->output_dir, $self->output_filename);
 }
 
 sub _run {
@@ -55,7 +55,7 @@ sub _run {
     Genome::Model::Tools::Sam::Readcount->execute(
         bam_file => $self->aligned_bam_result->bam_file,
         reference_fasta => $self->aligned_bam_result->reference_fasta,
-        output_file => File::Spec->join($self->temp_staging_directory, $self->readcount_filename),
+        output_file => File::Spec->join($self->temp_staging_directory, $self->output_filename),
         region_list => $region_list,
         %params,
     );

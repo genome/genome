@@ -5,8 +5,13 @@ use warnings FATAL => 'all';
 use Genome;
 
 class Genome::Annotation::Detail::Result {
+    is_abstract => 1,
     is => 'Genome::SoftwareResult::Stageable',
 };
+
+sub output_file_path {
+    die "Abstract";
+}
 
 sub create {
     my $class = shift;
