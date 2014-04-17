@@ -28,12 +28,25 @@ class Genome::Model::Tools::BamQc::SummarizeAsText {
 sub _validate_labels_and_directories {
     my $self = shift;
 
+    my @labels = $self->_labels_list;
+    my @directories = $self->_directories_list;
+    return scalar(@labels) == scalar(@directories);
+}
+
+sub _labels_list {
+    my $self = shift;
+
     my $labels_string = $self->labels;
     my @labels = split(',',$labels_string);
-    
+    return @labels;
+}
+
+sub _directories_list {
+    my $self = shift;
+
     my $directories_string = $self->directories;
     my @directories = split(',',$directories_string);
-    return scalar(@labels) == scalar(@directories);
+    return @directories;
 }
 
 sub _create_metrics_summary_writer {
@@ -87,8 +100,8 @@ sub execute {
     my %qd_data;
 
     my %qc_data;
-    my @labels = split(',', $self->labels);
-    my @directories = split(',', $self->directories);
+    my @labels = $self->_labels_list;
+    my @directories = $self->_directories_list;
     for (my $i = 0; $i< scalar(@labels); $i++) {
         my $label = $labels[$i];
         my $output_dir = $directories[$i];
