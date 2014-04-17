@@ -29,8 +29,6 @@ class Genome::Model::Tools::BamQc::SummarizeAsText {
 sub execute {
     my $self = shift;
 
-    my $output_basename = $self->output_basename;
-    
     my $labels_string = $self->labels;
     my @labels = split(',',$labels_string);
     
@@ -57,7 +55,7 @@ sub execute {
                                 AT_DROPOUT
                                 GC_DROPOUT
                             /;
-    my $summary_file = $output_basename .'-MetricsSummary.tsv';
+    my $summary_file = $self->output_basename .'-MetricsSummary.tsv';
     if (-e $summary_file) {
         unlink $summary_file;
     }
@@ -211,7 +209,7 @@ sub execute {
     # Error tsv file, wait till the end so we know the maximum position
     for my $read_end (keys %error_rate_by_position) {
         my @error_rate_by_position_headers = ('position',@labels);
-        my $error_rate_file = $output_basename .'-ErrorRateByPositionRead'. $read_end .'.tsv';
+        my $error_rate_file = $self->output_basename .'-ErrorRateByPositionRead'. $read_end .'.tsv';
         if (-e $error_rate_file) {
             unlink $error_rate_file;
         }
@@ -232,7 +230,7 @@ sub execute {
     }
 
     # Write a consolidate histogram of normalized coverage per GC window
-    my $gc_summary = $output_basename .'-GcBias.tsv';
+    my $gc_summary = $self->output_basename .'-GcBias.tsv';
     if (-e $gc_summary) {
         unlink($gc_summary);
     }
@@ -254,7 +252,7 @@ sub execute {
     }
     
     # Write a consolidate histogram of base quality
-    my $qd_summary = $output_basename .'-QualityDistribution.tsv';
+    my $qd_summary = $self->output_basename .'-QualityDistribution.tsv';
     if (-e $qd_summary) {
         unlink $qd_summary;
     }
@@ -275,7 +273,7 @@ sub execute {
     }
 
     # Write a consolidate histogram of base quality by cycle
-    my $qc_summary = $output_basename .'-QualityByCycle.tsv';
+    my $qc_summary = $self->output_basename .'-QualityByCycle.tsv';
     if (-e $qc_summary) {
         unlink $qc_summary;
     }
@@ -297,7 +295,7 @@ sub execute {
 
     # Write a consolidate histogram of insert sizes by read orientation/direction
     for my $direction (sort keys %is_directions) {
-        my $is_summary = $output_basename .'-'. uc($direction) .'-InsertSize.tsv';
+        my $is_summary = $self->output_basename .'-'. uc($direction) .'-InsertSize.tsv';
         if (-e $is_summary) {
             unlink $is_summary;
         }
