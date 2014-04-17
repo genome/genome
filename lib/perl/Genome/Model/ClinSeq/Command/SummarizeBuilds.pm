@@ -497,7 +497,7 @@ sub summarize_clinseq_build {
     #$ENV{GENOME_SYS_SERVICES_FILES_URL}/$build_dir/bam-qc/
     #$ENV{GENOME_SYS_SERVICES_FILES_URL}/$build_dir/junctions/summary/
 
-    
+
     for my $build (@builds) {
       next unless $self->_is_rna_seq_build($build);
       #Summarize RNA-seq metrics for each build
@@ -1083,11 +1083,11 @@ sub get_rnaseq_metrics {
     $self->status_message("\n\nGet basic RNA-seq alignment stats");
     $self->status_message("\nsample");
     $self->status_message("$subject_name ($common_name | $tissue_desc | $extraction_type)");
-    $self->get_rnaseq_alignment_stats($common_name, $extraction_type, $rnaseq_build, 
+    $self->get_rnaseq_alignment_stats($common_name, $extraction_type, $rnaseq_build,
           $rnaseq_build_dir, $rnaseq_build_id, $stats_fh);
     $self->get_cufflinks_metrics($common_name, $extraction_type, $rnaseq_build_dir,
           $rnaseq_build_id, $stats_fh);
-    $self->get_picard_metrics($common_name, $extraction_type, $rnaseq_build_dir, 
+    $self->get_picard_metrics($common_name, $extraction_type, $rnaseq_build_dir,
           $rnaseq_build_id, $stats_fh);
     $self->copy_from_rnaseq_build($rnaseq_build_dir, $build_outdir, $common_name);
     $self->display_handy_rnaseq_urls($rnaseq_build_dir);
@@ -1117,7 +1117,7 @@ sub get_rnaseq_alignment_stats {
     my $build_dir = shift;
     my $build_id = shift;
     my $stats_fh = shift;
-    
+
     my $alignment_stats_file = $rnaseq_build->alignment_stats_file();
     my $total_top_alignments = 0;
     my $total_top_spliced_alignments = 0;
@@ -1183,7 +1183,7 @@ sub get_cufflinks_metrics {
     my $build_dir = shift;
     my $build_id = shift;
     my $stats_fh = shift;
-    
+
     #/gscmnt/gc2016/info/model_data/2880794613/build115909698/expression/cufflinks.out
     my $cufflinks_out_file = $build_dir . "/expression/cufflinks.out";
     my $frag_size_mean = "n/a";
@@ -1270,7 +1270,7 @@ sub copy_from_rnaseq_build {
     push (@rnaseq_files_to_copy, "$build_dir/bam-qc/*.html");
     my $rnaseq_metrics_dir =  $build_outdir . "/rnaseq/$common_name/";
     Genome::Sys->shellcmd(cmd => "mkdir -p $rnaseq_metrics_dir");
-    
+
     #Make copies of read locations .png and end bias plots for convenience
     foreach my $file (@rnaseq_files_to_copy){
       my $cp_cmd = "cp $file $rnaseq_metrics_dir";
@@ -1279,7 +1279,7 @@ sub copy_from_rnaseq_build {
 }
 
 #Generate LIMS library quality reports (including alignment and quality metrics) for each flowcell associated with each sample
-#e.g. illumina_info --sample H_KA-306905-S.4294 --report library --format tsvsub 
+#e.g. illumina_info --sample H_KA-306905-S.4294 --report library --format tsvsub
 sub generate_LIMS_reports {
     my $self = shift;
     my $builds = shift;
@@ -1309,7 +1309,7 @@ sub generate_APIPE_reports {
     my $builds = shift;
     my $build_outdir = shift;
     my $stats_fh = shift;
-    
+
     $self->status_message("\n\nSample sequencing metrics from APIPE");
     my %samples_processed;
     for my $build (@$builds) {
@@ -1571,7 +1571,7 @@ sub _determine_wgs_or_exome_for_build {
     if(defined $data_types->{$id}) {
         return $data_types->{$id};
     }
-    
+
     my $pp = $m->processing_profile;
     my $pp_name = $pp->name;
     my $data_type = "Unknown";
