@@ -147,7 +147,7 @@ sub _load_import_configs {
        },
        {
             nomenclature => 'BRC46',
-            name_regexp => '(BRC46\-BRC[0-9]+)\_.+',
+            name_regexp => '(BRC46\-(BRC|CSB)[0-9]+)\_.+',
             sample_attributes => {
                 extraction_type => {
                     default_value => "rna",
