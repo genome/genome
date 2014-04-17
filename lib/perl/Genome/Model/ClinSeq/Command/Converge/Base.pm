@@ -4,6 +4,7 @@ use warnings;
 use Genome;
 use Genome::Model::ClinSeq; #Needed temporarily to deal with the hack to add build->common_name to the clinseq model/build object
 use Data::Dumper;
+use List::MoreUtils qw/ uniq /;
 
 class Genome::Model::ClinSeq::Command::Converge::Base {
     is => 'Command::V2',
@@ -450,9 +451,7 @@ sub get_clinseq_file{
   return(\%file);
 }
 
-####################################################################################################################
-#getModels - get an array of models and builds from a model group id, array of model ids, or array of build ids    #
-####################################################################################################################
+
 sub getModelsBuilds{
   my %args = @_;
   my $builds_ref = $args{'-builds'};
@@ -588,6 +587,224 @@ sub getModelsBuilds{
 
   return(\%models_builds);
 }
+
+
+sub get_case_name{
+  my $self = shift;
+  my @builds = $self->builds;
+
+  #First attempt to find a common name
+  my %common_names;
+  my $final_common_name;
+  foreach my $build (@builds){
+    my $name = $self->get_final_common_name('-clinseq_build'=>$build);
+    $common_names{$name}=1 if $name;
+    $final_common_name = $name;
+  }
+  my $ncn = keys %common_names;
+  if ($ncn > 1){
+    die $self->error_message("$ncn cases found among these builds, this tool is meant to operate on builds from a single individual");
+  }
+
+  #Second attempt to find a name
+  my %names;
+  my $final_name;
+  foreach my $build (@builds){
+    my $name = $self->get_final_name('-clinseq_build'=>$build);
+    $names{$name}=1 if $name;
+    $final_name = $name;
+  }
+  my $nn = keys %names;
+  if ($nn > 1){
+    die $self->error_message("$nn cases found among these builds, this tool is meant to operate on builds from a single individual");
+  }
+
+  my $resolved_name;
+  if ($final_common_name){
+    $resolved_name = $final_common_name;
+  }elsif($final_name){
+    $resolved_name = $final_name
+  }else{
+    die $self->error_message("could not find an individual common_name or name in these builds");
+  }
+
+  return $resolved_name;
+}
+
+
+sub get_ref_align_builds{
+  my $self = shift;
+  my %args = @_;
+  my $somatic_builds = $args{'-somatic_builds'};
+
+  my %ref_builds;
+
+  my $sort_on_time_point = 0;
+
+  foreach my $somatic_build_id (keys %{$somatic_builds}){
+    my $build_type = $somatic_builds->{$somatic_build_id}->{type};
+    my $somatic_build = $somatic_builds->{$somatic_build_id}->{build};
+    my $normal_build = $somatic_build->normal_build;
+    my $normal_subject_name = $normal_build->subject->name;
+    my $normal_subject_common_name = $normal_build->subject->common_name;
+    $normal_subject_common_name =~ s/\,//g;
+    $normal_subject_common_name =~ s/\s+/\_/g;
+    my $tumor_build = $somatic_build->tumor_build;
+    my $tumor_subject_name = $tumor_build->subject->name;
+    my $tumor_subject_common_name = $tumor_build->subject->common_name;
+    $tumor_subject_common_name =~ s/\,//g;
+    $tumor_subject_common_name =~ s/\s+/\_/g;
+    my $normal_refalign_name = $normal_subject_name . "_$build_type" . "_" . $normal_subject_common_name;
+    my $tumor_refalign_name = $tumor_subject_name . "_$build_type" . "_" . $tumor_subject_common_name;
+    my $normal_bam_path = $normal_build->whole_rmdup_bam_file;
+    my $tumor_bam_path = $tumor_build->whole_rmdup_bam_file;
+    my @normal_timepoints = $normal_build->subject->attributes(attribute_label => "timepoint", nomenclature => "caTissue");
+    my @tumor_timepoints = $tumor_build->subject->attributes(attribute_label => "timepoint", nomenclature => "caTissue");
+
+    my $normal_time_point = "day0";
+    if (@normal_timepoints){
+      $normal_time_point = $normal_timepoints[0]->attribute_value;
+      $normal_time_point =~ s/\s+//g;
+      $sort_on_time_point = 1;
+    }
+    $normal_refalign_name .= "_$normal_time_point";
+
+    my $tumor_time_point = "day0";
+    if (@tumor_timepoints){
+      $tumor_time_point = $tumor_timepoints[0]->attribute_value;
+      $tumor_time_point =~ s/\s+//g;
+      $sort_on_time_point = 1;
+    }
+    $tumor_refalign_name .= "_$tumor_time_point";
+
+    $ref_builds{$normal_refalign_name}{type} = $build_type;
+    $ref_builds{$normal_refalign_name}{sample_name} = $normal_subject_name;
+    $ref_builds{$normal_refalign_name}{sample_common_name} = $normal_subject_common_name;
+    $ref_builds{$normal_refalign_name}{bam_path} = $normal_bam_path;
+    $ref_builds{$normal_refalign_name}{time_point} = $normal_subject_common_name . "_" . $normal_time_point;
+
+    $ref_builds{$tumor_refalign_name}{type} = $build_type;
+    $ref_builds{$tumor_refalign_name}{sample_name} = $tumor_subject_name;
+    $ref_builds{$tumor_refalign_name}{sample_common_name} = $tumor_subject_common_name;
+    $ref_builds{$tumor_refalign_name}{bam_path} = $tumor_bam_path;
+    $ref_builds{$tumor_refalign_name}{time_point} = $tumor_subject_common_name . "_" . $tumor_time_point;
+  }
+
+  #Set an order on refalign builds (use time points if available, otherwise name)
+  my $o = 0;
+  if ($sort_on_time_point){
+    foreach my $name (sort {$ref_builds{$a}->{time_point} cmp $ref_builds{$b}->{time_point}} keys %ref_builds){
+      $o++;
+      $ref_builds{$name}{order} = $o;
+    }
+  }else{
+    foreach my $name (sort keys %ref_builds){
+      $o++;
+      $ref_builds{$name}{order} = $o;
+    }
+  }
+
+  return(\%ref_builds);
+}
+
+
+sub add_read_counts{
+  my $self = shift;
+  my %args = @_;
+  my $align_builds = $args{'-align_builds'};
+  my $grand_anno_file = $args{'-anno_file'};
+
+  my @bam_files;
+  my @time_points;
+  my @samples;
+  my @names;
+  foreach my $name (sort {$align_builds->{$a}->{order} <=> $align_builds->{$b}->{order}} keys  %{$align_builds}){
+    push(@bam_files, $align_builds->{$name}->{bam_path});
+    push(@time_points, $align_builds->{$name}->{time_point});
+    push(@samples, $align_builds->{$name}->{sample_name});
+    push(@names, $name);
+  }
+  my $bam_list = join(",", @bam_files);
+
+  #Get the reference fasta
+  my $reference_build = $self->resolve_clinseq_reference_build;
+  my $reference_fasta = $reference_build->full_consensus_path('fa');
+
+  #Determine header prefixes to use. In order of preference if all are unique: (time_points, samples, names)
+  my @prefixes;
+  my @unique_time_points = uniq @time_points;
+  my @unique_samples = uniq @samples;
+  my @unique_names = uniq @names;
+  if (scalar(@unique_time_points) == scalar(@time_points)){
+    @prefixes = @time_points;
+  }elsif(scalar(@unique_samples) == scalar(@samples)){
+    @prefixes = @samples;
+  }elsif(scalar(@unique_names) == scalar(@names)){
+    @prefixes = @names;
+  }else{
+    die $self->error_message("could not resolve unique prefixes for add-readcounts");
+  }
+  my $header_prefixes = join(",", @prefixes);
+
+  #Record the header prefix chosen on the align_builds object
+  foreach my $name (sort {$align_builds->{$a}->{order} <=> $align_builds->{$b}->{order}} keys  %{$align_builds}){
+    my $prefix = shift @prefixes;
+    $align_builds->{$name}->{prefix} = $prefix;
+  }
+
+  #gmt analysis coverage add-readcounts --bam-files=? --genome-build=? --output-file=? --variant-file=? [--header-prefixes=?] 
+  my $output_file = $self->outdir . "variants.all.anno.readcounts";
+  if (-e $output_file){
+    $self->warning_message("using pre-generated bam read count file: $output_file");
+  }else{
+    my $add_count_cmd = Genome::Model::Tools::Analysis::Coverage::AddReadcounts->create(
+            bam_files=>$bam_list,
+            genome_build=>$reference_fasta,
+            output_file=>$output_file,
+            variant_file=>$grand_anno_file,
+            header_prefixes=>$header_prefixes,
+          );
+    my $r = $add_count_cmd->execute();
+    die $self->error_message("add-readcounts cmd unsuccessful") unless ($r);
+  }
+
+  #If there are missing cells relative to the header, fill in with 'NA's
+  my $tmp_file = $output_file . ".tmp";
+  open (TMP_IN, "$output_file") || die $self->error_message("Could not open file: $output_file");
+  open (TMP_OUT, ">$tmp_file" ) || die $self->error_message("Could not open file: $tmp_file");
+  my $header = 1;
+  my $target_cols;
+  while(<TMP_IN>){
+    chomp $_;
+    my @line = split("\t", $_);
+    if ($header){
+      $target_cols = scalar(@line);
+      $header = 0;
+      print TMP_OUT "$_\n";
+      next;
+    }
+    if (scalar(@line) == $target_cols){
+      print TMP_OUT "$_\n";
+    }elsif(scalar(@line) < $target_cols){
+      my $diff = $target_cols - (scalar(@line));
+      my @newvals;
+      push @newvals, 'NA' for (1..$diff);
+      my $newvals_string = join("\t", @newvals);
+      print TMP_OUT "$_\t$newvals_string\n";
+    }else{
+      die $self->error_message("File has more data value in a row than names in the header");
+    }
+  }
+  close(TMP_IN);
+  close(TMP_OUT);
+  my $mv_cmd = "mv $tmp_file $output_file";
+  Genome::Sys->shellcmd(cmd => $mv_cmd);
+
+  return ($output_file);
+}
+
+
+
 
 1;
 
