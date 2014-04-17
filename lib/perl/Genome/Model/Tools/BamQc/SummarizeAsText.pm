@@ -113,6 +113,28 @@ sub _load_mark_duplicates_metrics {
     return ($mrkdup_metrics, $lib);
 }
 
+sub _load_error_rate_metrics {
+    my($self, $label_dir, $error_rate_by_position) = @_;
+
+    my ($error_rate_file) = glob($label_dir->directory .'/*-ErrorRate.tsv');
+    my %error_rate_sum;
+    if ($error_rate_file) {
+        my $error_rate_reader = Genome::Utility::IO::SeparatedValueReader->create(
+            input => $error_rate_file,
+            separator => "\t",
+            ignore_lines_starting_with => '#',
+        );
+        while (my $error_rate_data = $error_rate_reader->next) {
+            if ($error_rate_data->{position} eq 'SUM') {
+                $error_rate_sum{$error_rate_data->{read_end}} = $error_rate_data;
+            } else {
+                $error_rate_by_position->{$error_rate_data->{read_end}}{$error_rate_data->{position}}{$label_dir->label} = $error_rate_data->{error_rate};
+            }
+        }
+    }
+    return \%error_rate_sum;
+}
+
 sub _listify_labels_and_directories {
     my $self = shift;
     my @labels = $self->_labels_list;
@@ -143,29 +165,14 @@ sub execute {
     my %qd_data;
 
     my %qc_data;
+
     foreach my $label_dir ( $self->_listify_labels_and_directories()) {
 
         my $as_metrics = $self->_load_alignment_summary_metrics($label_dir);
         
         my($mrkdup_metrics, $lib) = $self->_load_mark_duplicates_metrics($label_dir);
         
-        # Load Error Rate Metrics
-        my ($error_rate_file) = glob($label_dir->directory .'/*-ErrorRate.tsv');
-        my %error_rate_sum;
-        if ($error_rate_file) {
-            my $error_rate_reader = Genome::Utility::IO::SeparatedValueReader->create(
-                input => $error_rate_file,
-                separator => "\t",
-                ignore_lines_starting_with => '#',
-            );
-            while (my $error_rate_data = $error_rate_reader->next) {
-                if ($error_rate_data->{position} eq 'SUM') {
-                    $error_rate_sum{$error_rate_data->{read_end}} = $error_rate_data;
-                } else {
-                    $error_rate_by_position{$error_rate_data->{read_end}}{$error_rate_data->{position}}{$label_dir->label} = $error_rate_data->{error_rate};
-                }
-            }
-        }
+        my $error_rate_sum = $self->_load_error_rate_metrics($label_dir, \%error_rate_by_position);
         
         # Load Insert Size Metrics
         my ($is_file) = glob($label_dir->directory .'/*.insert_size_metrics');
@@ -224,8 +231,8 @@ sub execute {
             PCT_READS_ALIGNED => $as_metrics->{'CATEGORY-PAIR'}{PCT_PF_READS_ALIGNED},
             ALIGNED_BASES => $as_metrics->{'CATEGORY-PAIR'}{PF_ALIGNED_BASES},
             PCT_CHIMERAS => $as_metrics->{'CATEGORY-PAIR'}{PCT_CHIMERAS},
-            ERROR_RATE_READ_1 => $error_rate_sum{1}->{error_rate},
-            ERROR_RATE_READ_2 => $error_rate_sum{2}->{error_rate},
+            ERROR_RATE_READ_1 => $error_rate_sum->{1}->{error_rate},
+            ERROR_RATE_READ_2 => $error_rate_sum->{2}->{error_rate},
             MEDIAN_INSERT_SIZE => $is_metrics->{'PAIR_ORIENTATION-FR'}{MEDIAN_INSERT_SIZE},
             MEAN_INSERT_SIZE => $is_metrics->{'PAIR_ORIENTATION-FR'}{MEAN_INSERT_SIZE},
             STANDARD_DEVIATION => $is_metrics->{'PAIR_ORIENTATION-FR'}{STANDARD_DEVIATION},
