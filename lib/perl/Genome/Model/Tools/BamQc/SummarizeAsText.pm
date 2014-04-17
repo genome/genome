@@ -212,6 +212,34 @@ sub _load_quality_by_cycle {
     }
 }
 
+sub _write_error_tsv_file {
+    my($self, $error_rate_by_position) = @_;
+
+    # Error tsv file, wait till the end so we know the maximum position
+    for my $read_end (keys %$error_rate_by_position) {
+        my @error_rate_by_position_headers = ('position',$self->_labels_list);
+        my $error_rate_file = $self->output_basename .'-ErrorRateByPositionRead'. $read_end .'.tsv';
+        if (-e $error_rate_file) {
+            unlink $error_rate_file;
+        }
+        my $writer = Genome::Utility::IO::SeparatedValueWriter->create(
+            output => $error_rate_file,
+            separator => "\t",
+            headers => \@error_rate_by_position_headers,
+        );
+        for my $position (sort {$a <=> $b} keys %{$error_rate_by_position->{$read_end}}) {
+            my %data = (
+                position => $position,
+            );
+            for my $label ($self->_labels_list) {
+                $data{$label} = $error_rate_by_position->{$read_end}{$position}{$label} || 0;
+            }
+            $writer->write_one(\%data);
+        }
+    }
+    return 1;
+}
+
 sub execute {
     my $self = shift;
 
@@ -287,28 +315,7 @@ sub execute {
         $summary_writer->write_one(\%summary_data);
     }
     
-    # Error tsv file, wait till the end so we know the maximum position
-    for my $read_end (keys %error_rate_by_position) {
-        my @error_rate_by_position_headers = ('position',$self->_labels_list);
-        my $error_rate_file = $self->output_basename .'-ErrorRateByPositionRead'. $read_end .'.tsv';
-        if (-e $error_rate_file) {
-            unlink $error_rate_file;
-        }
-        my $writer = Genome::Utility::IO::SeparatedValueWriter->create(
-            output => $error_rate_file,
-            separator => "\t",
-            headers => \@error_rate_by_position_headers,
-        );
-        for my $position (sort {$a <=> $b} keys %{$error_rate_by_position{$read_end}}) {
-            my %data = (
-                position => $position,
-            );
-            for my $label ($self->_labels_list) {
-                $data{$label} = $error_rate_by_position{$read_end}{$position}{$label} || 0;
-            }
-            $writer->write_one(\%data);
-        }
-    }
+    $self->_write_error_tsv_file(\%error_rate_by_position);
 
     # Write a consolidate histogram of normalized coverage per GC window
     my $gc_summary = $self->output_basename .'-GcBias.tsv';
