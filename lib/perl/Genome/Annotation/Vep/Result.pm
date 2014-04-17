@@ -21,6 +21,9 @@ class Genome::Annotation::Vep::Result {
         species => {
             is => 'String',
         },
+        reference_build => {
+            is => 'Genome::Model::Build::ReferenceSequence',
+        },
     ],
     has_param => [
         variant_type => { is => 'Text', },
@@ -38,6 +41,7 @@ class Genome::Annotation::Vep::Result {
         plugins => {is => 'String',
                     is_many => 1},
         plugins_version => {is => 'String',},
+        hgvs => {is => 'Boolean',},
     ],
 };
 
@@ -64,6 +68,10 @@ sub _run {
     my %params = $self->param_hash;
     delete $params{variant_type};
     delete $params{test_name};
+
+    if ($self->hgvs) {
+        $params{fasta} = $self->reference_build->fasta_file;
+    }
 
     my $vep_command = Genome::Db::Ensembl::Command::Run::Vep->create(
         input_file => $self->input_result->output_file_path,
