@@ -147,6 +147,26 @@ sub _listify_labels_and_directories {
     return @rv;
 }
 
+sub _load_insert_size_metrics {
+    my($self, $label_dir, $insert_size_data, $insert_size_directions) = @_;
+
+    # Load Insert Size Metrics
+    my ($is_file) = glob($label_dir->directory .'/*.insert_size_metrics');
+    my $is_metrics = Genome::Model::Tools::Picard::CollectInsertSizeMetrics->parse_file_into_metrics_hashref($is_file);
+
+    # Load Insert Size Histogram
+    my $is_histo = Genome::Model::Tools::Picard::CollectInsertSizeMetrics->parse_metrics_file_into_histogram_hashref($is_file);
+
+    for my $is_key (keys %{$is_histo}) {
+        my $is_size = $is_histo->{$is_key}{insert_size};
+        for my $direction (grep {$_ !~ /^insert_size$/} keys %{$is_histo->{$is_key}}) {
+            $insert_size_data->{$is_size}{$direction}{$label_dir->label} = $is_histo->{$is_key}{$direction};
+            $insert_size_directions->{$direction} = 1;
+        }
+    }
+    return $is_metrics;
+}
+
 sub execute {
     my $self = shift;
 
@@ -174,20 +194,7 @@ sub execute {
         
         my $error_rate_sum = $self->_load_error_rate_metrics($label_dir, \%error_rate_by_position);
         
-        # Load Insert Size Metrics
-        my ($is_file) = glob($label_dir->directory .'/*.insert_size_metrics');
-        my $is_metrics = Genome::Model::Tools::Picard::CollectInsertSizeMetrics->parse_file_into_metrics_hashref($is_file);
-        
-        # Load Insert Size Histogram
-        my $is_histo = Genome::Model::Tools::Picard::CollectInsertSizeMetrics->parse_metrics_file_into_histogram_hashref($is_file);
-
-        for my $is_key (keys %{$is_histo}) {
-            my $is_size = $is_histo->{$is_key}{insert_size};
-            for my $direction (grep {$_ !~ /^insert_size$/} keys %{$is_histo->{$is_key}}) {
-                $is_data{$is_size}{$direction}{$label_dir->label} = $is_histo->{$is_key}{$direction};
-                $is_directions{$direction} = 1;
-            }
-        }
+        my $is_metrics = $self->_load_insert_size_metrics($label_dir, \%is_data, \%is_directions);
         
         # Load G+C Bias Metrics
         my ($gc_file) = glob($label_dir->directory .'/*-PicardGC_metrics.txt');
