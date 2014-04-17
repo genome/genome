@@ -289,6 +289,30 @@ sub _write_consolidate_histogram_of_base_quality {
     }
 }
 
+sub _write_consolidate_histogram_of_base_quality_by_cycle {
+    my($self, $qc_data) = @_;
+
+    my $qc_summary = $self->output_basename .'-QualityByCycle.tsv';
+    if (-e $qc_summary) {
+        unlink $qc_summary;
+    }
+    my @qc_headers = ('CYCLE',$self->_labels_list);
+    my $qc_data_writer = Genome::Utility::IO::SeparatedValueWriter->create(
+        output => $qc_summary,
+        separator => "\t",
+        headers => \@qc_headers,
+    );
+    for my $cycle (sort {$a <=> $b} keys %$qc_data) {
+        my %data = (
+            'CYCLE' => $cycle,
+        );
+        for my $label ($self->_labels_list) {
+            $data{$label} = $qc_data->{$cycle}{$label};
+        }
+        $qc_data_writer->write_one(\%data);
+    }
+}
+
 sub execute {
     my $self = shift;
 
@@ -370,26 +394,7 @@ sub execute {
 
     $self->_write_consolidate_histogram_of_base_quality(\%qd_data);
 
-    # Write a consolidate histogram of base quality by cycle
-    my $qc_summary = $self->output_basename .'-QualityByCycle.tsv';
-    if (-e $qc_summary) {
-        unlink $qc_summary;
-    }
-    my @qc_headers = ('CYCLE',$self->_labels_list);
-    my $qc_data_writer = Genome::Utility::IO::SeparatedValueWriter->create(
-        output => $qc_summary,
-        separator => "\t",
-        headers => \@qc_headers,
-    );
-    for my $cycle (sort {$a <=> $b} keys %qc_data) {
-        my %data = (
-            'CYCLE' => $cycle,
-        );
-        for my $label ($self->_labels_list) {
-            $data{$label} = $qc_data{$cycle}{$label};
-        }
-        $qc_data_writer->write_one(\%data);
-    }
+    $self->_write_consolidate_histogram_of_base_quality_by_cycle(\%qc_data);
 
     # Write a consolidate histogram of insert sizes by read orientation/direction
     for my $direction (sort keys %is_directions) {
