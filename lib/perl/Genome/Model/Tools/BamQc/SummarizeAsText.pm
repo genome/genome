@@ -167,6 +167,29 @@ sub _load_insert_size_metrics {
     return $is_metrics;
 }
 
+sub _load_gc_bias_metrics {
+    my($self, $label_dir, $gc_data, $gc_windows) = @_;
+
+    my ($gc_summary) = glob($label_dir->directory .'/*-PicardGC_summary.txt');
+    my $gc_metrics = Genome::Model::Tools::Picard::CollectGcBiasMetrics->parse_file_into_metrics_hashref($gc_summary);
+
+    my ($gc_file) = glob($label_dir->directory .'/*-PicardGC_metrics.txt');
+    my $gc_data_this_file = Genome::Model::Tools::Picard::CollectGcBiasMetrics->parse_file_into_metrics_hashref($gc_file);
+    for my $gc_key (keys %{$gc_data_this_file}) {
+        my $gc_bin = $gc_data_this_file->{$gc_key}{GC};
+        $gc_data->{$gc_bin}{$label_dir->label}{NORMALIZED_COVERAGE} = $gc_data_this_file->{$gc_key}{NORMALIZED_COVERAGE};
+        unless ($gc_windows->{$gc_bin}) {
+            $gc_windows->{$gc_bin} = $gc_data_this_file->{$gc_key}{WINDOWS};
+        } else {
+            unless ($gc_windows->{$gc_bin} == $gc_data_this_file->{$gc_key}{WINDOWS}) {
+                die ($label_dir->label .' '. $gc_key);
+            }
+        }
+    }
+
+    return $gc_metrics;
+}
+
 sub execute {
     my $self = shift;
 
@@ -196,22 +219,7 @@ sub execute {
         
         my $is_metrics = $self->_load_insert_size_metrics($label_dir, \%is_data, \%is_directions);
         
-        # Load G+C Bias Metrics
-        my ($gc_file) = glob($label_dir->directory .'/*-PicardGC_metrics.txt');
-        my ($gc_summary) = glob($label_dir->directory .'/*-PicardGC_summary.txt');
-        my $gc_metrics = Genome::Model::Tools::Picard::CollectGcBiasMetrics->parse_file_into_metrics_hashref($gc_summary);
-        my $gc_data = Genome::Model::Tools::Picard::CollectGcBiasMetrics->parse_file_into_metrics_hashref($gc_file);
-        for my $gc_key (keys %{$gc_data}) {
-            my $gc_bin = $gc_data->{$gc_key}{GC};
-            $gc_data{$gc_bin}{$label_dir->label}{NORMALIZED_COVERAGE} = $gc_data->{$gc_key}{NORMALIZED_COVERAGE};
-            unless ($gc_windows{$gc_bin}) {
-                $gc_windows{$gc_bin} = $gc_data->{$gc_key}{WINDOWS};
-            } else {
-                unless ($gc_windows{$gc_bin} == $gc_data->{$gc_key}{WINDOWS}) {
-                    die ($label_dir->label .' '. $gc_key);
-                }
-            }
-        }
+        my $gc_metrics = $self->_load_gc_bias_metrics($label_dir, \%gc_data, \%gc_windows);
 
         # Load Quality Distribution
         my ($qd_file) = glob($label_dir->directory .'/*.quality_distribution_metrics');
