@@ -84,11 +84,11 @@ sub _create_metrics_summary_writer {
 
 sub _load_alignment_summary_metrics {
     my $self = shift;
-    my $output_dir = shift;
+    my $label_dir = shift;
 
-    my ($as_file) = glob($output_dir .'/*alignment_summary_metrics');
+    my ($as_file) = glob($label_dir->directory .'/*alignment_summary_metrics');
     unless ($as_file) {
-        die ('Failed to find Picard alignment_summary_metrics in directory: '. $output_dir);
+        die ('Failed to find Picard alignment_summary_metrics in directory: '. $label_dir->directory);
     }
     my $as_metrics = Genome::Model::Tools::Picard::CollectAlignmentSummaryMetrics->parse_file_into_metrics_hashref($as_file);
     return $as_metrics;
@@ -96,9 +96,9 @@ sub _load_alignment_summary_metrics {
 
 sub _load_mark_duplicates_metrics {
     my $self = shift;
-    my $output_dir = shift;
+    my $label_dir = shift;
 
-    my ($mrkdup_file) = glob($output_dir .'/*.metrics');
+    my ($mrkdup_file) = glob($label_dir->directory .'/*.metrics');
     my $mrkdup_metrics;
     my $lib;
     if ($mrkdup_file) {
@@ -111,6 +111,18 @@ sub _load_mark_duplicates_metrics {
         $mrkdup_metrics = $mrkdup_metrics->{$lib};
     }
     return ($mrkdup_metrics, $lib);
+}
+
+sub _listify_labels_and_directories {
+    my $self = shift;
+    my @labels = $self->_labels_list;
+    my @directories = $self->_directories_list;
+
+    my @rv;
+    for (my $i = 0; $i < @labels; $i++) {
+        push @rv, Genome::Model::Tools::BamQc::SummarizeAsText::LabelDirectoryPair->new($labels[$i], $directories[$i]);
+    }
+    return @rv;
 }
 
 sub execute {
@@ -131,18 +143,14 @@ sub execute {
     my %qd_data;
 
     my %qc_data;
-    my @labels = $self->_labels_list;
-    my @directories = $self->_directories_list;
-    for (my $i = 0; $i< scalar(@labels); $i++) {
-        my $label = $labels[$i];
-        my $output_dir = $directories[$i];
+    foreach my $label_dir ( $self->_listify_labels_and_directories()) {
 
-        my $as_metrics = $self->_load_alignment_summary_metrics($output_dir);
+        my $as_metrics = $self->_load_alignment_summary_metrics($label_dir);
         
-        my($mrkdup_metrics, $lib) = $self->_load_mark_duplicates_metrics($output_dir);
+        my($mrkdup_metrics, $lib) = $self->_load_mark_duplicates_metrics($label_dir);
         
         # Load Error Rate Metrics
-        my ($error_rate_file) = glob($output_dir .'/*-ErrorRate.tsv');
+        my ($error_rate_file) = glob($label_dir->directory .'/*-ErrorRate.tsv');
         my %error_rate_sum;
         if ($error_rate_file) {
             my $error_rate_reader = Genome::Utility::IO::SeparatedValueReader->create(
@@ -154,13 +162,13 @@ sub execute {
                 if ($error_rate_data->{position} eq 'SUM') {
                     $error_rate_sum{$error_rate_data->{read_end}} = $error_rate_data;
                 } else {
-                    $error_rate_by_position{$error_rate_data->{read_end}}{$error_rate_data->{position}}{$label} = $error_rate_data->{error_rate};
+                    $error_rate_by_position{$error_rate_data->{read_end}}{$error_rate_data->{position}}{$label_dir->label} = $error_rate_data->{error_rate};
                 }
             }
         }
         
         # Load Insert Size Metrics
-        my ($is_file) = glob($output_dir .'/*.insert_size_metrics');
+        my ($is_file) = glob($label_dir->directory .'/*.insert_size_metrics');
         my $is_metrics = Genome::Model::Tools::Picard::CollectInsertSizeMetrics->parse_file_into_metrics_hashref($is_file);
         
         # Load Insert Size Histogram
@@ -169,48 +177,48 @@ sub execute {
         for my $is_key (keys %{$is_histo}) {
             my $is_size = $is_histo->{$is_key}{insert_size};
             for my $direction (grep {$_ !~ /^insert_size$/} keys %{$is_histo->{$is_key}}) {
-                $is_data{$is_size}{$direction}{$label} = $is_histo->{$is_key}{$direction};
+                $is_data{$is_size}{$direction}{$label_dir->label} = $is_histo->{$is_key}{$direction};
                 $is_directions{$direction} = 1;
             }
         }
         
         # Load G+C Bias Metrics
-        my ($gc_file) = glob($output_dir .'/*-PicardGC_metrics.txt');
-        my ($gc_summary) = glob($output_dir .'/*-PicardGC_summary.txt');
+        my ($gc_file) = glob($label_dir->directory .'/*-PicardGC_metrics.txt');
+        my ($gc_summary) = glob($label_dir->directory .'/*-PicardGC_summary.txt');
         my $gc_metrics = Genome::Model::Tools::Picard::CollectGcBiasMetrics->parse_file_into_metrics_hashref($gc_summary);
         my $gc_data = Genome::Model::Tools::Picard::CollectGcBiasMetrics->parse_file_into_metrics_hashref($gc_file);
         for my $gc_key (keys %{$gc_data}) {
             my $gc_bin = $gc_data->{$gc_key}{GC};
-            $gc_data{$gc_bin}{$label}{NORMALIZED_COVERAGE} = $gc_data->{$gc_key}{NORMALIZED_COVERAGE};
+            $gc_data{$gc_bin}{$label_dir->label}{NORMALIZED_COVERAGE} = $gc_data->{$gc_key}{NORMALIZED_COVERAGE};
             unless ($gc_windows{$gc_bin}) {
                 $gc_windows{$gc_bin} = $gc_data->{$gc_key}{WINDOWS};
             } else {
                 unless ($gc_windows{$gc_bin} == $gc_data->{$gc_key}{WINDOWS}) {
-                    die ($label .' '. $gc_key);
+                    die ($label_dir->label .' '. $gc_key);
                 }
             }
         }
 
         # Load Quality Distribution
-        my ($qd_file) = glob($output_dir .'/*.quality_distribution_metrics');
+        my ($qd_file) = glob($label_dir->directory .'/*.quality_distribution_metrics');
         my $qd_histo = Genome::Model::Tools::Picard->parse_metrics_file_into_histogram_hashref($qd_file);
         for my $quality_key (keys %{$qd_histo}) {
             my $quality = $qd_histo->{$quality_key}{QUALITY};
-            $qd_data{$quality}{$label} = $qd_histo->{$quality_key}{COUNT_OF_Q};
+            $qd_data{$quality}{$label_dir->label} = $qd_histo->{$quality_key}{COUNT_OF_Q};
         }
 
         # Load Quality by Cycle
-        my ($qc_file) = glob($output_dir .'/*.quality_by_cycle_metrics');
+        my ($qc_file) = glob($label_dir->directory .'/*.quality_by_cycle_metrics');
         my $qc_histo = Genome::Model::Tools::Picard->parse_metrics_file_into_histogram_hashref($qc_file);
         for my $cycle_key (keys %{$qc_histo}) {
             my $cycle = $qc_histo->{$cycle_key}{CYCLE};
-            $qc_data{$cycle}{$label} = $qc_histo->{$cycle_key}{MEAN_QUALITY};
+            $qc_data{$cycle}{$label_dir->label} = $qc_histo->{$cycle_key}{MEAN_QUALITY};
         }
         
         # TODO: We need summary metrics per category and/or read direction
         # The below summary metrics only apply to paired-end libraries
         my %summary_data = (
-            LABEL => $label,
+            LABEL => $label_dir->label,
             READS => $as_metrics->{'CATEGORY-PAIR'}{PF_READS},
             READS_ALIGNED => $as_metrics->{'CATEGORY-PAIR'}{PF_READS_ALIGNED},
             PCT_READS_ALIGNED => $as_metrics->{'CATEGORY-PAIR'}{PCT_PF_READS_ALIGNED},
@@ -233,9 +241,9 @@ sub execute {
         }
         if(!defined($lib) and $self->labels_are_instrument_data_ids) {
             $self->status_message("Looking up the library name");
-            my $instrument_data = Genome::InstrumentData->get($label);
+            my $instrument_data = Genome::InstrumentData->get($label_dir->label);
             unless($instrument_data) {
-                $self->error_message("Unable to find Instrument data for id: $label");
+                $self->error_message("Unable to find Instrument data for id: " . $label_dir->label);
             }
             else {
                 my $library_name = $instrument_data->library_name;
@@ -249,7 +257,7 @@ sub execute {
     
     # Error tsv file, wait till the end so we know the maximum position
     for my $read_end (keys %error_rate_by_position) {
-        my @error_rate_by_position_headers = ('position',@labels);
+        my @error_rate_by_position_headers = ('position',$self->_labels_list);
         my $error_rate_file = $self->output_basename .'-ErrorRateByPositionRead'. $read_end .'.tsv';
         if (-e $error_rate_file) {
             unlink $error_rate_file;
@@ -263,7 +271,7 @@ sub execute {
             my %data = (
                 position => $position,
             );
-            for my $label (@labels) {
+            for my $label ($self->_labels_list) {
                 $data{$label} = $error_rate_by_position{$read_end}{$position}{$label} || 0;
             }
             $writer->write_one(\%data);
@@ -275,7 +283,7 @@ sub execute {
     if (-e $gc_summary) {
         unlink($gc_summary);
     }
-    my @gc_headers = ('GC','WINDOWS',@labels);
+    my @gc_headers = ('GC','WINDOWS',$self->_labels_list);
     my $gc_data_writer = Genome::Utility::IO::SeparatedValueWriter->create(
         output => $gc_summary,
         separator => "\t",
@@ -286,7 +294,7 @@ sub execute {
             GC => $gc_bin,
             WINDOWS => $gc_windows{$gc_bin},
         );
-        for my $label (@labels) {
+        for my $label ($self->_labels_list) {
             $data{$label} = $gc_data{$gc_bin}{$label}{NORMALIZED_COVERAGE} || 0;
         }
         $gc_data_writer->write_one(\%data);
@@ -297,7 +305,7 @@ sub execute {
     if (-e $qd_summary) {
         unlink $qd_summary;
     }
-    my @qd_headers = ('QUALITY',@labels);
+    my @qd_headers = ('QUALITY',$self->_labels_list);
     my $qd_data_writer = Genome::Utility::IO::SeparatedValueWriter->create(
         output => $qd_summary,
         separator => "\t",
@@ -307,7 +315,7 @@ sub execute {
         my %data = (
             'QUALITY' => $quality
         );
-        for my $label (@labels) {
+        for my $label ($self->_labels_list) {
             $data{$label} = $qd_data{$quality}{$label};
         }
         $qd_data_writer->write_one(\%data);
@@ -318,7 +326,7 @@ sub execute {
     if (-e $qc_summary) {
         unlink $qc_summary;
     }
-    my @qc_headers = ('CYCLE',@labels);
+    my @qc_headers = ('CYCLE',$self->_labels_list);
     my $qc_data_writer = Genome::Utility::IO::SeparatedValueWriter->create(
         output => $qc_summary,
         separator => "\t",
@@ -328,7 +336,7 @@ sub execute {
         my %data = (
             'CYCLE' => $cycle,
         );
-        for my $label (@labels) {
+        for my $label ($self->_labels_list) {
             $data{$label} = $qc_data{$cycle}{$label};
         }
         $qc_data_writer->write_one(\%data);
@@ -340,7 +348,7 @@ sub execute {
         if (-e $is_summary) {
             unlink $is_summary;
         }
-        my @is_headers =('INSERT_SIZE',@labels);
+        my @is_headers =('INSERT_SIZE',$self->_labels_list);
         my $is_data_writer = Genome::Utility::IO::SeparatedValueWriter->create(
             output => $is_summary,
             separator => "\t",
@@ -350,7 +358,7 @@ sub execute {
             my %data = (
                 INSERT_SIZE  => $is_size,
             );
-            for my $label (@labels) {
+            for my $label ($self->_labels_list) {
                 $data{$label} = $is_data{$is_size}{$direction}{$label} || 0;
             }
             $is_data_writer->write_one(\%data);
@@ -359,6 +367,21 @@ sub execute {
     return 1;
 }
 
+
+package Genome::Model::Tools::BamQc::SummarizeAsText::LabelDirectoryPair;
+
+sub new {
+    my($class, $label, $directory) = @_;
+    return bless [$label, $directory], $class;
+}
+
+sub label {
+    return shift->[0];
+}
+
+sub directory {
+    return shift->[1];
+}
 
 
 1;
