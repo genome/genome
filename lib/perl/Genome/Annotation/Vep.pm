@@ -18,6 +18,7 @@ class Genome::Annotation::Vep {
                     e.g. 12345:SEGDUP,58676:ROI
                     The id and tag should be separated by a colon',
         },
+        reference_build => {is => 'Genome::Model::Build::ReferenceSequence'},
         species => { is => 'Text', },
         variant_type => { is => 'Text', },
         polyphen => { is => 'String', },
@@ -35,6 +36,7 @@ class Genome::Annotation::Vep {
                     is_many => 1,
                     is_optional => 1},
         plugins_version => {is => 'String',},
+        hgvs => {is => 'Boolean', },
     ],
     has_optional_output => [
         software_result => {

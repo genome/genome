@@ -10,7 +10,8 @@ BEGIN {
 
 use above "Genome";
 use Sub::Install;
-use Genome::Test::Factory::InstrumentData::MergedAlignmentResult;
+use Genome::Test::Factory::Model::ReferenceSequence;
+use Genome::Test::Factory::Build;
 use Genome::Model::Tools::DetectVariants2::Result::Vcf;
 use Genome::Model::Tools::Bed::Convert::VcfToBed;
 use Genome::Annotation::Detail::TestHelpers qw(test_cmd_and_result_are_in_sync);
@@ -54,6 +55,9 @@ sub generate_test_cmd {
     my $roi = Genome::FeatureList->__define__();
     my $segdup = Genome::FeatureList->__define__();
 
+    my $model = Genome::Test::Factory::Model::ReferenceSequence->setup_object;
+    my $reference_sequence_build = Genome::Test::Factory::Build->setup_object(model_id => $model->id);
+
     my %params = (
         input_result => $input_result,
         ensembl_version => "1",
@@ -65,6 +69,8 @@ sub generate_test_cmd {
         plugins_version => 0,
         species => "alien",
         terms => "ensembl",
+        hgvs => 1,
+        reference_build => $reference_sequence_build,
     );
     my $cmd = $cmd_class->create(%params);
     return $cmd
