@@ -36,11 +36,8 @@ sub _validate_labels_and_directories {
     return scalar(@labels) == scalar(@directories);
 }
 
-sub execute {
+sub _create_metrics_summary_writer {
     my $self = shift;
-
-    $self->_validate_labels_and_directories()
-        or die 'Unbalanced input labels and directories!';
 
     my @summary_headers = qw/
                                 LABEL
@@ -69,6 +66,17 @@ sub execute {
         separator => "\t",
         headers => \@summary_headers,
     );
+    return $summary_writer;
+}
+
+sub execute {
+    my $self = shift;
+
+    $self->_validate_labels_and_directories()
+        or die 'Unbalanced input labels and directories!';
+
+    my $summary_writer = $self->_create_metrics_summary_writer();
+
     my %error_rate_by_position;
     my %is_data;
     my %is_directions;
