@@ -8,7 +8,7 @@ class Genome::Annotation::Readcount::Result {
     is => 'Genome::Annotation::Detail::Result',
 
     has_input => [
-        input_vcf_result => {
+        input_result => {
             is => 'Genome::Model::Tools::DetectVariants2::Result::Vcf',
         },
         readcount_results => {
@@ -49,7 +49,7 @@ sub _run {
 sub input_vcf_file {
     my $self = shift;
 
-    return $self->input_vcf_result->get_vcf($self->variant_type),
+    return $self->input_result->get_vcf($self->variant_type),
 }
 
 sub readcount_file_and_sample_idxs {

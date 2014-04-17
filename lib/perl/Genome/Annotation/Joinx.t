@@ -40,7 +40,7 @@ sub generate_test_cmd {
     });
 
     my $input_result_class = 'Genome::Model::Tools::DetectVariants2::Result';
-    my $input_vcf_result = $input_result_class->__define__();
+    my $input_result = $input_result_class->__define__();
     Sub::Install::reinstall_sub({
         into => $input_result_class,
         as => 'output_file_path',
@@ -55,7 +55,7 @@ sub generate_test_cmd {
         code => sub {return 1},
     });
     my %params = (
-        input_vcf_result => $input_vcf_result,
+        input_result => $input_result,
         annotation_builds  => [$annotation_build],
         variant_type     => 'snvs',
         info_string      => 'test',

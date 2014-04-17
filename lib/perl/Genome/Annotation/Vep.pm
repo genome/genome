@@ -18,9 +18,6 @@ class Genome::Annotation::Vep {
                     e.g. 12345:SEGDUP,58676:ROI
                     The id and tag should be separated by a colon',
         },
-        input_vcf_result => {
-            is => 'Genome::SoftwareResult',
-        },
         species => { is => 'Text', },
         variant_type => { is => 'Text', },
         polyphen => { is => 'String', },

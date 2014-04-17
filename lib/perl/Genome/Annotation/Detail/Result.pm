@@ -7,6 +7,11 @@ use Genome;
 class Genome::Annotation::Detail::Result {
     is_abstract => 1,
     is => 'Genome::SoftwareResult::Stageable',
+    has_input => [
+        input_result => {
+            is => 'Genome::SoftwareResult',
+        },
+    ],
 };
 
 sub output_file_path {

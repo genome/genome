@@ -38,7 +38,7 @@ sub generate_test_cmd {
     });
 
     my $input_result_class = 'Genome::Model::Tools::DetectVariants2::Result';
-    my $input_vcf_result = $input_result_class->__define__();
+    my $input_result = $input_result_class->__define__();
     Sub::Install::reinstall_sub({
         into => $input_result_class,
         as => 'output_file_path',
@@ -55,7 +55,7 @@ sub generate_test_cmd {
     my $segdup = Genome::FeatureList->__define__();
 
     my %params = (
-        input_vcf_result => $input_vcf_result,
+        input_result => $input_result,
         ensembl_version => "1",
         feature_list_ids_and_tags => [join(":", $roi->id, "ROI"),join(":", $segdup->id, "SEGDUP")],
         variant_type => 'snvs',

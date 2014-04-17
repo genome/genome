@@ -15,7 +15,7 @@ class Genome::Annotation::Vep::Result {
             is => 'String',
             is_many => 1,
         },
-        input_vcf_result => {
+        input_result => {
             is => 'Genome::SoftwareResult',
         },
         species => {
@@ -71,7 +71,7 @@ sub _run {
     delete $params{test_name};
 
     my $vep_command = Genome::Db::Ensembl::Command::Run::Vep->create(
-        input_file => $self->input_vcf_result->output_file_path,
+        input_file => $self->input_result->output_file_path,
         output_file => File::Spec->join($self->temp_staging_directory, $self->output_filename),
         ensembl_version => $self->ensembl_version,
         custom => \@custom_annotation_inputs,

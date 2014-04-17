@@ -46,7 +46,7 @@ sub generate_test_cmd {
         bam_file => 1,
         reference_fasta => 1,
     );
-    my $vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine->__define__();
+    my $input_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine->__define__();
     Sub::Install::reinstall_sub({
         into => 'Genome::Model::Tools::DetectVariants2::Result::Vcf',
         as => 'get_vcf',
@@ -55,7 +55,7 @@ sub generate_test_cmd {
 
     my %params = (
         aligned_bam_result => $aligned_bam_result,
-        vcf_result => $vcf_result,
+        input_result => $input_result,
         variant_type => 'snvs',
         use_version => 0.5,
     );

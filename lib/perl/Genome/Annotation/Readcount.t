@@ -67,7 +67,7 @@ sub generate_test_cmd {
 
     my %params = (
         readcount_results => [$rc_result1, $rc_result2],
-        input_vcf_result => $vcf_result,
+        input_result => $vcf_result,
         variant_type => 'snvs',
     );
     my $cmd = $cmd_class->create(%params);

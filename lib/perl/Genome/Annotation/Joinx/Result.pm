@@ -12,9 +12,6 @@ class Genome::Annotation::Joinx::Result {
             is => 'Genome::Model::Build::ImportedVariationList',
             is_many => 1,
         },
-        input_vcf_result => {
-            is => 'Genome::SoftwareResult',
-        },
     ],
     has_param => [
         variant_type => { 
@@ -46,7 +43,7 @@ sub _run {
     }
     my $annotation_build = $annotation_builds[0];
 
-    my $input_file  = $self->input_vcf_result->output_file_path;
+    my $input_file  = $self->input_result->output_file_path;
     my $output_file = File::Spec->join($self->temp_staging_directory, $self->output_filename);
     my $info_string = $self->info_string;
     my $info        = $info_string ? 1 : 0;

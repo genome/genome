@@ -11,13 +11,13 @@ class Genome::Annotation::RunBamReadcount {
             is => 'Genome::InstrumentData::AlignedBamResult',
             doc => 'The bam result used to calculate read counts',
         },
-        vcf_result => {
+        input_result => {
             is => 'Genome::Model::Tools::DetectVariants2::Result::Vcf',
             doc => "The vcf result that will provide positions where read count information will be generated",
         },
         variant_type => {
             is => 'Text',
-            doc => "The type of variant the vcf_result represents",
+            doc => "The type of variant the input_result represents",
             valid_values => ['snvs', 'indels'],
         },
         use_version => {

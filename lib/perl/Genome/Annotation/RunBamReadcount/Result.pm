@@ -11,7 +11,7 @@ class Genome::Annotation::RunBamReadcount::Result {
         aligned_bam_result => {
             is => 'Genome::InstrumentData::AlignedBamResult',
         },
-        vcf_result => {
+        input_result => {
             is => 'Genome::Model::Tools::DetectVariants2::Result::Vcf',
         },
     ],
@@ -42,7 +42,7 @@ sub _run {
     my $region_list = Genome::Sys->create_temp_file_path();
     Genome::Model::Tools::Bed::Convert::VcfToBed->execute(
         remove_filtered_calls => 0,
-        source => $self->vcf_result->get_vcf($self->variant_type),
+        source => $self->input_result->get_vcf($self->variant_type),
         output => $region_list,
         one_based => 1,
     );

@@ -6,7 +6,7 @@ use warnings FATAL => 'all';
 class Genome::Annotation::Readcount {
     is => 'Genome::Annotation::Detail::Command',
     has_input => [
-        input_vcf_result => {
+        input_result => {
             is => 'Genome::Model::Tools::DetectVariants2::Result::Vcf',
         },
         variant_type => {

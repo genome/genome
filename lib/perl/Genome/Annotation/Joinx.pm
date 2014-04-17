@@ -11,9 +11,6 @@ class Genome::Annotation::Joinx {
             is => 'Genome::Model::Build::ImportedVariationList',
             is_many => 1,
         },
-        input_vcf_result => {
-            is => 'Genome::SoftwareResult',
-        },
         variant_type => { 
             is => 'Text', 
         },
