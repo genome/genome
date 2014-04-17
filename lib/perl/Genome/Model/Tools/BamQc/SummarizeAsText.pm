@@ -265,6 +265,30 @@ sub _write_consolidate_histogram_of_normalized_coverage_per_gc_window {
     }
 }
 
+sub _write_consolidate_histogram_of_base_quality {
+    my($self, $qd_data) = @_;
+
+    my $qd_summary = $self->output_basename .'-QualityDistribution.tsv';
+    if (-e $qd_summary) {
+        unlink $qd_summary;
+    }
+    my @qd_headers = ('QUALITY',$self->_labels_list);
+    my $qd_data_writer = Genome::Utility::IO::SeparatedValueWriter->create(
+        output => $qd_summary,
+        separator => "\t",
+        headers => \@qd_headers,
+    );
+    for my $quality (sort {$a <=> $b} keys %$qd_data) {
+        my %data = (
+            'QUALITY' => $quality
+        );
+        for my $label ($self->_labels_list) {
+            $data{$label} = $qd_data->{$quality}{$label};
+        }
+        $qd_data_writer->write_one(\%data);
+    }
+}
+
 sub execute {
     my $self = shift;
 
@@ -344,26 +368,7 @@ sub execute {
 
     $self->_write_consolidate_histogram_of_normalized_coverage_per_gc_window(\%gc_windows, \%gc_data);
 
-    # Write a consolidate histogram of base quality
-    my $qd_summary = $self->output_basename .'-QualityDistribution.tsv';
-    if (-e $qd_summary) {
-        unlink $qd_summary;
-    }
-    my @qd_headers = ('QUALITY',$self->_labels_list);
-    my $qd_data_writer = Genome::Utility::IO::SeparatedValueWriter->create(
-        output => $qd_summary,
-        separator => "\t",
-        headers => \@qd_headers,
-    ); 
-    for my $quality (sort {$a <=> $b} keys %qd_data) {
-        my %data = (
-            'QUALITY' => $quality
-        );
-        for my $label ($self->_labels_list) {
-            $data{$label} = $qd_data{$quality}{$label};
-        }
-        $qd_data_writer->write_one(\%data);
-    }
+    $self->_write_consolidate_histogram_of_base_quality(\%qd_data);
 
     # Write a consolidate histogram of base quality by cycle
     my $qc_summary = $self->output_basename .'-QualityByCycle.tsv';
