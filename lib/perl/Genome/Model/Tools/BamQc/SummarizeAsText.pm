@@ -136,7 +136,6 @@ sub execute {
         my ($gc_file) = glob($output_dir .'/*-PicardGC_metrics.txt');
         my ($gc_summary) = glob($output_dir .'/*-PicardGC_summary.txt');
         my $gc_metrics = Genome::Model::Tools::Picard::CollectGcBiasMetrics->parse_file_into_metrics_hashref($gc_summary);
-        $DB::single=1;
         my $gc_data = Genome::Model::Tools::Picard::CollectGcBiasMetrics->parse_file_into_metrics_hashref($gc_file);
         for my $gc_key (keys %{$gc_data}) {
             my $gc_bin = $gc_data->{$gc_key}{GC};
