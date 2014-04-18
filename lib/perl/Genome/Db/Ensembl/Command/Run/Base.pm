@@ -200,6 +200,12 @@ class Genome::Db::Ensembl::Command::Run::Base {
             is_many => 1,
             doc => "--custom option(s) to pass on to VEP.  Replace commas with @ symbol"
         },
+        pick => {
+            is => 'Boolean',
+            is_optional => 1,
+            is_vep_param => 1,
+            doc => 'Pick one best transcript',
+        },
     ],
     has_transient_optional => [
         _workspace => {
@@ -273,7 +279,6 @@ sub run_command {
     );
     $params{input_files} = [$self->input_file] unless $self->input_file eq '-';
     $params{redirect_stdout} = '/dev/null' if $self->quiet;
-
     $self->api->prepend_api_path_and_execute(%params);
 }
 
