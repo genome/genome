@@ -3,6 +3,7 @@ package Genome::Model::Tools::Graph::MutationDiagram::TgiMutationProvider;
 use strict;
 use warnings;
 use Genome;
+use Genome::Model::Tools::Annotate::AminoAcidChange;
 
 class Genome::Model::Tools::Graph::MutationDiagram::TgiMutationProvider {
     is => 'Genome::Model::Tools::Graph::MutationDiagram::MutationProvider',
@@ -36,7 +37,8 @@ sub next {
     while (my $data = $self->reader->next) {
         my %params;
         my $transcript_name = $data->{transcript_name};
-        next unless defined($transcript_name) && $transcript_name !~ /^\s*$/ && $transcript_name ne '-';
+        #If the file DOES have headers then the SeparatedValueReader will return the header line. Make sure to check for this and move on if it happens.
+        next unless defined($transcript_name) && $transcript_name !~ /^\s*$/ && $transcript_name ne '-' && $transcript_name ne 'transcript_name';
         my ($residue1, $res_start, $residue2, $res_stop, $new_residue) = @{Genome::Model::Tools::Annotate::AminoAcidChange::check_amino_acid_change_string(amino_acid_change_string => $data->{aa_change})};
         my $mutation = $data->{aa_change};
         $mutation =~ s/p\.//g;
