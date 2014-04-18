@@ -18,13 +18,16 @@ use Genome::Annotation::Detail::TestHelpers qw(test_cmd_and_result_are_in_sync);
 
 use Test::More;
 
-my $cmd_class = 'Genome::Annotation::Readcount';
+my $cmd_class = 'Genome::Annotation::BamReadcount::Annotate';
 use_ok($cmd_class) or die;
+
+my $result_class = 'Genome::Annotation::BamReadcount::AnnotateResult';
+use_ok($result_class) or die;
 
 my ($cmd, $tool_args) = generate_test_cmd();
 
 ok($cmd->execute(), 'Command executed');
-is(ref($cmd->software_result), 'Genome::Annotation::Readcount::Result', 'Found software result after execution');
+is(ref($cmd->output_result), $result_class, 'Found software result after execution');
 
 my $expected_tool_args = {
     vcf_file => 'test_vcf',
@@ -49,25 +52,25 @@ sub generate_test_cmd {
             $tool_args->{readcount_file_and_sample_idx} = [$self->readcount_file_and_sample_idx];
     }});
 
-    my $vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine->__define__();
+    my $input_result = $result_class->__define__();
     Sub::Install::reinstall_sub({
-        into => 'Genome::Model::Tools::DetectVariants2::Result::Vcf',
-        as => 'get_vcf',
+        into => 'Genome::Annotation::Detail::Result',
+        as => 'output_file_path',
         code => sub {return 'test_vcf';},
     });
 
-    my $rc_result1 = Genome::Annotation::RunBamReadcount::Result->__define__();
-    my $rc_result2 = Genome::Annotation::RunBamReadcount::Result->__define__();
+    my $rc_result1 = Genome::Annotation::BamReadcount::RunResult->__define__();
+    my $rc_result2 = Genome::Annotation::BamReadcount::RunResult->__define__();
 
     Sub::Install::reinstall_sub({
-        into => 'Genome::Annotation::Readcount::Result',
+        into => 'Genome::Annotation::BamReadcount::AnnotateResult',
         as => 'readcount_file_and_sample_idxs',
         code => sub {my $self = shift; return ['rc_file1:1', 'rc_file2:2'];},
     });
 
     my %params = (
         readcount_results => [$rc_result1, $rc_result2],
-        input_result => $vcf_result,
+        input_result => $input_result,
         variant_type => 'snvs',
     );
     my $cmd = $cmd_class->create(%params);

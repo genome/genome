@@ -18,14 +18,17 @@ use Genome::Annotation::Detail::TestHelpers qw(test_cmd_and_result_are_in_sync);
 
 use Test::More;
 
-my $cmd_class = 'Genome::Annotation::Vep';
+my $cmd_class = 'Genome::Annotation::Vep::Run';
 use_ok($cmd_class) or die;
+
+my $result_class = 'Genome::Annotation::Vep::RunResult';
+use_ok($result_class) or die;
 use_ok('Genome::Db::Ensembl::Command::Run::Vep') or die;
 
 my $cmd = generate_test_cmd();
-ok($cmd->isa('Genome::Annotation::Vep'), "Command created correctly");
+ok($cmd->isa($cmd_class), "Command created correctly");
 ok($cmd->execute(), 'Command executed');
-is(ref($cmd->software_result), 'Genome::Annotation::Vep::Result', 'Found software result after execution');
+is(ref($cmd->output_result), $result_class, 'Found software result after execution');
 
 test_cmd_and_result_are_in_sync($cmd);
 
@@ -38,22 +41,20 @@ sub generate_test_cmd {
         code => sub {my $self = shift; my $file = $self->output_file; `touch $file`; return 1;},
     });
 
-    my $input_result_class = 'Genome::Model::Tools::DetectVariants2::Result';
-    my $input_result = $input_result_class->__define__();
+    my $input_result = $result_class->__define__();
     Sub::Install::reinstall_sub({
-        into => $input_result_class,
+        into => 'Genome::Annotation::Detail::Result',
         as => 'output_file_path',
         code => sub {return 'some_file.vcf.gz';},
     });
 
+    my $roi = Genome::FeatureList->__define__();
+    my $segdup = Genome::FeatureList->__define__();
     Sub::Install::reinstall_sub({
         into => "Genome::FeatureList",
         as => 'get_tabix_and_gzipped_bed_file',
         code => sub { return 'somepath'},
     });
-
-    my $roi = Genome::FeatureList->__define__();
-    my $segdup = Genome::FeatureList->__define__();
 
     my $model = Genome::Test::Factory::Model::ReferenceSequence->setup_object;
     my $reference_sequence_build = Genome::Test::Factory::Build->setup_object(model_id => $model->id);

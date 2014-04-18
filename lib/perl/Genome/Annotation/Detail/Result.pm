@@ -12,6 +12,12 @@ class Genome::Annotation::Detail::Result {
             is => 'Genome::SoftwareResult',
         },
     ],
+    has_param => [
+        variant_type => {
+            is => 'Text',
+            valid_values => ['snvs', 'indels'],
+        },
+    ],
 };
 
 sub output_filename {

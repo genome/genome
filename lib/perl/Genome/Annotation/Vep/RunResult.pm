@@ -1,11 +1,11 @@
-package Genome::Annotation::Vep::Result;
+package Genome::Annotation::Vep::RunResult;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 use Sys::Hostname;
 
-class Genome::Annotation::Vep::Result {
+class Genome::Annotation::Vep::RunResult {
     is => 'Genome::Annotation::Detail::Result',
     has_input => [
         ensembl_version => {
@@ -15,9 +15,6 @@ class Genome::Annotation::Vep::Result {
             is => 'String',
             is_many => 1,
         },
-        input_result => {
-            is => 'Genome::SoftwareResult',
-        },
         species => {
             is => 'String',
         },
@@ -26,7 +23,6 @@ class Genome::Annotation::Vep::Result {
         },
     ],
     has_param => [
-        variant_type => { is => 'Text', },
         polyphen => { is => 'String', },
         sift => { is => 'String', },
         condel => { is => 'String', },

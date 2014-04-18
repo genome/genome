@@ -10,6 +10,18 @@ class Genome::Annotation::Detail::Command {
     has_input => [
         input_result => {
             is => 'Genome::SoftwareResult',
+            doc => "The software result created by the previously run command",
+        },
+        variant_type => {
+            is => 'Text',
+            valid_values => ['snvs', 'indels'],
+            doc => "The type of variant the input_result represents",
+        },
+    ],
+    has_optional_output => [
+        output_result => {
+            is => 'Genome::Annotation::Detail::Result',
+            doc => 'The software result created during command execution',
         },
     ],
 };

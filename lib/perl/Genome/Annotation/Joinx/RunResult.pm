@@ -1,11 +1,11 @@
-package Genome::Annotation::Joinx::Result;
+package Genome::Annotation::Joinx::RunResult;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 use File::Spec;
 
-class Genome::Annotation::Joinx::Result {
+class Genome::Annotation::Joinx::RunResult {
     is => 'Genome::Annotation::Detail::Result',
     has_input => [
         known_variants => {
@@ -14,9 +14,6 @@ class Genome::Annotation::Joinx::Result {
         },
     ],
     has_param => [
-        variant_type => { 
-            is => 'Text', 
-        },
         info_string => {
             is => 'Text',
         },

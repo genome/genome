@@ -1,26 +1,17 @@
-package Genome::Annotation::RunBamReadcount;
+package Genome::Annotation::BamReadcount::Run;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::Annotation::RunBamReadcount {
+class Genome::Annotation::BamReadcount::Run {
     is => 'Genome::Annotation::Detail::Command',
     has_input => [
         aligned_bam_result => {
             is => 'Genome::InstrumentData::AlignedBamResult',
             doc => 'The bam result used to calculate read counts',
         },
-        input_result => {
-            is => 'Genome::Model::Tools::DetectVariants2::Result::Vcf',
-            doc => "The vcf result that will provide positions where read count information will be generated",
-        },
-        variant_type => {
-            is => 'Text',
-            doc => "The type of variant the input_result represents",
-            valid_values => ['snvs', 'indels'],
-        },
-        use_version => {
+        version => {
             is  => 'Version',
             doc => "bam-readcount version to be used.",
         },
@@ -50,18 +41,12 @@ class Genome::Annotation::RunBamReadcount {
             doc => "do not include reads containing insertions after the current position in per-base counts. This is the -i parameter in version 0.5.",
         },
     ],
-    has_optional_output => [
-        software_result => {
-            is => 'Genome::Annotation::RunBamReadcount::Result',
-            doc => 'The software result created during command execution',
-        },
-    ],
 };
 
 sub execute {
     my $self = shift;
-    die "You must supply a version greater than or equal to 0.5" unless $self->use_version >= 0.5;
+    die "You must supply a version greater than or equal to 0.5" unless $self->version >= 0.5;
 
-    $self->software_result(Genome::Annotation::RunBamReadcount::Result->get_or_create($self->input_hash));
+    $self->output_result(Genome::Annotation::BamReadcount::RunResult->get_or_create($self->input_hash));
     return 1;
 }

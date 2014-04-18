@@ -1,10 +1,10 @@
-package Genome::Annotation::Vep;
+package Genome::Annotation::Vep::Run;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::Annotation::Vep {
+class Genome::Annotation::Vep::Run {
     is => 'Genome::Annotation::Detail::Command',
     has_input => [
         ensembl_version => {
@@ -20,7 +20,6 @@ class Genome::Annotation::Vep {
         },
         reference_build => {is => 'Genome::Model::Build::ReferenceSequence'},
         species => { is => 'Text', },
-        variant_type => { is => 'Text', },
         polyphen => { is => 'String', },
         sift => { is => 'String', },
         condel => { is => 'String', },
@@ -38,17 +37,11 @@ class Genome::Annotation::Vep {
         plugins_version => {is => 'String',},
         hgvs => {is => 'Boolean', },
     ],
-    has_optional_output => [
-        software_result => {
-            is => 'Genome::Annotation::Vep::Result',
-            doc => 'The software result created during command execution',
-        },
-    ],
 };
 
 sub execute {
     my $self = shift;
 
-    $self->software_result(Genome::Annotation::Vep::Result->get_or_create($self->input_hash));
+    $self->output_result(Genome::Annotation::Vep::RunResult->get_or_create($self->input_hash));
     return 1;
 }

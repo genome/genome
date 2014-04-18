@@ -1,23 +1,19 @@
-package Genome::Annotation::RunBamReadcount::Result;
+package Genome::Annotation::BamReadcount::RunResult;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 use Sys::Hostname;
 
-class Genome::Annotation::RunBamReadcount::Result {
+class Genome::Annotation::BamReadcount::RunResult {
     is => 'Genome::Annotation::Detail::Result',
     has_input => [
         aligned_bam_result => {
             is => 'Genome::InstrumentData::AlignedBamResult',
         },
-        input_result => {
-            is => 'Genome::Model::Tools::DetectVariants2::Result::Vcf',
-        },
     ],
     has_param => [
-        use_version => { is  => 'Version', },
-        variant_type => { is => 'Text', },
+        version => { is  => 'Version', },
         minimum_mapping_quality => { is => 'Integer', },
         minimum_base_quality => { is => 'Integer', },
         max_count => { is  => 'Integer', },
@@ -36,12 +32,12 @@ sub _run {
     my $region_list = Genome::Sys->create_temp_file_path();
     Genome::Model::Tools::Bed::Convert::VcfToBed->execute(
         remove_filtered_calls => 0,
-        source => $self->input_result->get_vcf($self->variant_type),
+        source => $self->input_result->output_file_path,
         output => $region_list,
         one_based => 1,
     );
 
-    # Sam::Readcount doesn't accept variant_type
+    # Sam::Readcount doesn't accept variant_type or test_name
     my %params = $self->param_hash;
     delete $params{variant_type};
     delete $params{test_name};
@@ -51,6 +47,7 @@ sub _run {
         reference_fasta => $self->aligned_bam_result->reference_fasta,
         output_file => File::Spec->join($self->temp_staging_directory, $self->output_filename),
         region_list => $region_list,
+        use_version => delete $params{version},
         %params,
     );
 

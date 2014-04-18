@@ -18,13 +18,16 @@ use Genome::Annotation::Detail::TestHelpers qw(test_cmd_and_result_are_in_sync);
 
 use Test::More;
 
-my $cmd_class = 'Genome::Annotation::RunBamReadcount';
+my $cmd_class = 'Genome::Annotation::BamReadcount::Run';
 use_ok($cmd_class) or die;
+
+my $result_class = 'Genome::Annotation::BamReadcount::RunResult';
+use_ok($result_class) or die;
 
 my $cmd = generate_test_cmd();
 
 ok($cmd->execute(), 'Command executed');
-is(ref($cmd->software_result), 'Genome::Annotation::RunBamReadcount::Result', 'Found software result after execution');
+is(ref($cmd->output_result), $result_class, 'Found software result after execution');
 test_cmd_and_result_are_in_sync($cmd);
 
 done_testing();
@@ -46,10 +49,10 @@ sub generate_test_cmd {
         bam_file => 1,
         reference_fasta => 1,
     );
-    my $input_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine->__define__();
+    my $input_result = $result_class->__define__();
     Sub::Install::reinstall_sub({
-        into => 'Genome::Model::Tools::DetectVariants2::Result::Vcf',
-        as => 'get_vcf',
+        into => 'Genome::Annotation::Detail::Result',
+        as => 'output_file_path',
         code => sub {return 1;},
     });
 
@@ -57,7 +60,7 @@ sub generate_test_cmd {
         aligned_bam_result => $aligned_bam_result,
         input_result => $input_result,
         variant_type => 'snvs',
-        use_version => 0.5,
+        version => 0.5,
     );
     my $cmd = $cmd_class->create(%params);
     return $cmd

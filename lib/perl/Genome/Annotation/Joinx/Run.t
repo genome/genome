@@ -10,7 +10,6 @@ BEGIN {
 
 use above "Genome";
 use Sub::Install;
-use Genome::Test::Factory::InstrumentData::MergedAlignmentResult;
 use Genome::Test::Factory::Model::ImportedVariationList;
 use Genome::Test::Factory::Build;
 use Genome::Model::Tools::DetectVariants2::Result::Vcf;
@@ -20,13 +19,17 @@ use Genome::Annotation::Detail::TestHelpers qw(test_cmd_and_result_are_in_sync);
 
 use Test::More;
 
-my $cmd_class = 'Genome::Annotation::Joinx';
+my $cmd_class = 'Genome::Annotation::Joinx::Run';
 use_ok($cmd_class) or die;
+
+my $result_class = 'Genome::Annotation::Joinx::RunResult';
+use_ok($result_class) or die;
+
 use_ok('Genome::Model::Tools::Joinx::VcfAnnotate') or die;
 
 my $cmd = generate_test_cmd();
 ok($cmd->execute(), 'Command executed');
-is(ref($cmd->software_result), 'Genome::Annotation::Joinx::Result', 'Found software result after execution');
+is(ref($cmd->output_result), $result_class, 'Found software result after execution');
 
 test_cmd_and_result_are_in_sync($cmd);
 
@@ -39,10 +42,9 @@ sub generate_test_cmd {
         code => sub {my $self = shift; my $file = $self->output_file; `touch $file`; return 1;},
     });
 
-    my $input_result_class = 'Genome::Model::Tools::DetectVariants2::Result';
-    my $input_result = $input_result_class->__define__();
+    my $input_result = $result_class->__define__();
     Sub::Install::reinstall_sub({
-        into => $input_result_class,
+        into => 'Genome::Annotation::Detail::Result',
         as => 'output_file_path',
         code => sub {return 'some_file.vcf.gz';},
     });
