@@ -254,7 +254,6 @@ sub unlock {
     return 1;
 }
 
-# clear_state() can be used after fork() to get a "clean" lock state.
 sub clear_state {
     %SYMLINKS_TO_REMOVE = ();
 }

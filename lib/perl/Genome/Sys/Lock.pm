@@ -15,6 +15,62 @@ my %backends = (
     'Genome::Sys::FileLock' => 1
 );
 
+=item lock_resource()
+
+Keyword Arguments:
+
+=over
+
+=item resource_lock
+
+C<resource_lock> is the path to the file representing the lock for some
+resource.
+
+=item block_sleep
+
+C<block_sleep> specifies the the number of seconds to sleep between attempts to
+acquire the lock.
+
+Default value: 60
+
+=item max_try
+
+C<max_try> specifies the number of retries to attempt to acquire the lock.
+
+Default value: 7200
+
+=item wait_announce_interval
+
+C<wait_announce_interval> specifies the interval in seconds between status
+updates indicating the contentious lock.  A zero value means to announce every attempt.
+
+Default value: 0
+
+=back
+
+Returns:
+
+=over
+
+=item On Success
+
+When C<lock()> acquired a lock on the resource it returns the lock path, i.e.
+C<resource_lock>.
+
+=item On Timeout
+
+When C<lock()> is not able to acquire a lock on the resource within C<max_try>
+(+1) attempts it returns C<undef>.
+
+=item On Failure
+
+When C<lock()> fails to create the lock, for reasons other than contention,
+then C<lock()> will C<croak()>.
+
+=back
+
+=cut
+
 sub lock_resource {
     my $self = shift;
     my %args = with_default_lock_resource_args(@_);
@@ -47,6 +103,21 @@ sub lock_resource {
 
 }
 
+=item unlock_resource()
+
+Keyword Arguments:
+
+=over
+
+=item resource_lock
+
+C<resource_lock> is the path to the file representing the lock for some
+resource.
+
+=back
+
+=cut
+
 sub unlock_resource {
     my $self = shift;
     my %args = with_default_unlock_resource_args(@_);
@@ -58,6 +129,12 @@ sub unlock_resource {
 
     return $rv;
 }
+
+=item clear_state()
+
+C<clear_state()> can be used after fork() to get a "clean" lock state.
+
+=cut
 
 sub clear_state {
     for my $backend (keys %backends) {
