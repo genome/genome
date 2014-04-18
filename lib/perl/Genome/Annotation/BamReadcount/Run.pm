@@ -13,31 +13,32 @@ class Genome::Annotation::BamReadcount::Run {
         },
         version => {
             is  => 'Version',
+            example_values => ['0.5'],
             doc => "bam-readcount version to be used.",
         },
         minimum_mapping_quality => {
             is => 'Integer',
-            default => 0,
+            example_values => [0],
             doc => "filter reads with mapping quality less than this. This is the -q parameter.",
         },
         minimum_base_quality => {
             is => 'Integer',
-            default => 0,
+            example_values => [0],
             doc => "don't include reads where the base quality is less than this. This is the -b parameter. This is only available in versions 0.3 and later.",
         },
         max_count => {
             is  => 'Integer',
-            default => 10_000_000,
+            example_values => [10_000_000],
             doc => "max depth to avoid excessive memory. This is the -d parameter in version 0.5.",
         },
         per_library => {
             is  => 'Bool',
-            default => 0,
+            example_values => [0],
             doc => "report results per library. This is the -p parameter in version 0.5.",
         },
         insertion_centric => {
             is  => 'Bool',
-            default => 0,
+            example_values => [0],
             doc => "do not include reads containing insertions after the current position in per-base counts. This is the -i parameter in version 0.5.",
         },
     ],

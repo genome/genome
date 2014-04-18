@@ -61,6 +61,11 @@ sub generate_test_cmd {
         input_result => $input_result,
         variant_type => 'snvs',
         version => 0.5,
+        per_library => 1,
+        minimum_mapping_quality => 0,
+        minimum_base_quality => 0,
+        max_count => 1,
+        insertion_centric => 1,
     );
     my $cmd = $cmd_class->create(%params);
     return $cmd
