@@ -72,9 +72,9 @@ sub execute {
                 next;
             }
             else {
-                my @mutant_arr = my @wildtype_arr = $self->get_wildtype_subsequence_for_printing($position, @arr_wildtype_sequence);
-                my $midpoint = ($self->peptide_sequence_length - 1) / 2;
-                $mutant_arr[$midpoint] = $mutant_amino_acid;
+                my ($mutation_position, @wildtype_arr) = $self->get_wildtype_subsequence_for_printing($position, @arr_wildtype_sequence);
+                my @mutant_arr = @wildtype_arr;
+                $mutant_arr[$mutation_position] = $mutant_amino_acid;
                 $self->print_to_output(\@wildtype_arr, \@mutant_arr, \@protein_arr, $position);
             }
         }
@@ -121,25 +121,28 @@ sub get_wildtype_subsequence_for_printing {
     # @arr_wildtype_sequence there aren't enough amino acids on one side
     # to achieve this.
 
-    my @wildtype_arr;
+    my (@wildtype_arr, $mutation_position);
     my $one_flanking_sequence_length = ($self->peptide_sequence_length - 1) / 2;
     if (distance_from_start($position, @arr_wildtype_sequence) < $one_flanking_sequence_length) {
         @wildtype_arr = @arr_wildtype_sequence[ 0 ... ($self->peptide_sequence_length - 1) ];
+        $mutation_position = $position;
     }
     elsif (distance_from_end($position, @arr_wildtype_sequence) < $one_flanking_sequence_length) {
         @wildtype_arr = @arr_wildtype_sequence[ ($#arr_wildtype_sequence - $self->peptide_sequence_length + 1) ... $#arr_wildtype_sequence];
+        $mutation_position = $self->peptide_sequence_length - distance_from_end($position, @arr_wildtype_sequence) - 1;
     }
     elsif (
         (distance_from_start($position, @arr_wildtype_sequence) >= $one_flanking_sequence_length) &&
         (distance_from_end($position, @arr_wildtype_sequence) >= $one_flanking_sequence_length)
     ) {
         @wildtype_arr = @arr_wildtype_sequence[ ($position - $one_flanking_sequence_length) ... ($position + $one_flanking_sequence_length) ];
+        $mutation_position = ($self->peptide_sequence_length - 1) / 2;
     }
     else {
         $self->warning_message("Length of wildtype sequence is shorter than desired peptide length of output. Skipping position $position");
     }
 
-    return @wildtype_arr;
+    return $mutation_position, @wildtype_arr;
 }
 
 #This subroutine is a bit funky but it was designed that way to mirror

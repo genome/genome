@@ -37,4 +37,21 @@ sub test_for_length {
     compare_ok($cmd->output_file, $expected_output, "Output file is as expected for length $length");
 }
 
+subtest 'input file with mutations and relative end and beginning of full sequence' => sub {
+    my $input_file_2 = File::Spec->join($test_dir, "input_2.tsv");
+    my $output_dir = Genome::Sys->create_temp_directory;
+    my $expected_output = File::Spec->join($test_dir, "output_2_21mer");
+
+    my $cmd = $class->create(
+        input_file => $input_file_2,
+        output_directory => $output_dir,
+        peptide_sequence_length => 21,
+    );
+    ok($cmd, "Created a command");
+
+    ok($cmd->execute, "Command executed");
+
+    compare_ok($cmd->output_file, $expected_output, "Output file is as expected");
+};
+
 done_testing();
