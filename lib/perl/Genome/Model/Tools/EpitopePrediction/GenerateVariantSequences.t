@@ -14,7 +14,9 @@ use_ok($class);
 my $test_dir = Genome::Utility::Test->data_dir_ok($class, $TEST_DATA_VERSION);
 my $input_file = File::Spec->join($test_dir, "input.tsv");
 for my $length (qw(17 21 31)) {
-    test_for_length($length, $test_dir, $input_file);
+    subtest "input file with length $length" => sub {
+        test_for_length($length, $test_dir, $input_file);
+    };
 }
 
 sub test_for_length {

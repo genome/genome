@@ -127,7 +127,7 @@ sub get_wildtype_subsequence_for_printing {
         @wildtype_arr = @arr_wildtype_sequence[ 0 ... ($self->peptide_sequence_length - 1) ];
     }
     elsif (distance_from_end($position, @arr_wildtype_sequence) < $one_flanking_sequence_length) {
-        @wildtype_arr = @arr_wildtype_sequence[ ($#arr_wildtype_sequence - $self->peptide_sequence_length) ... $#arr_wildtype_sequence];
+        @wildtype_arr = @arr_wildtype_sequence[ ($#arr_wildtype_sequence - $self->peptide_sequence_length + 1) ... $#arr_wildtype_sequence];
     }
     elsif (
         (distance_from_start($position, @arr_wildtype_sequence) >= $one_flanking_sequence_length) &&
