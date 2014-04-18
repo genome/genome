@@ -7066,6 +7066,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
     [
       'annotation-version=s',
       'files',
+      'lsf-resource=s',
+      'files',
       'normal-window-file=s',
       'files',
       'output-directory=s',
