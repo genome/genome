@@ -33,7 +33,7 @@ sub _run {
     if (scalar @known_variants != 1) {
         die "We don't currently support more than one annotation vcf";
     }
-    my $annotation_build = $known_variants[0];
+    my $known_variants = $known_variants[0];
 
     my $input_file  = $self->input_result->output_file_path;
     my $output_file = File::Spec->join($self->temp_staging_directory, $self->output_filename);
@@ -42,7 +42,7 @@ sub _run {
 
     my $vcf_annotator = Genome::Model::Tools::Joinx::VcfAnnotate->create(
         input_file      => $input_file,
-        annotation_file => $annotation_build->snvs_vcf,
+        annotation_file => $known_variants->snvs_vcf,
         output_file     => $output_file,
         use_bgzip       => 1,
         info_fields     => $info_string,
