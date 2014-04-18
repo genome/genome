@@ -338,7 +338,7 @@ sub _validate_inputs {
         }
 
         if (defined($self->sample_name)) {
-            die $self->error_message("Custom sample name cannot be used in combination with somatic variation build");
+            $self->status_message("Custom sample name provided. Using custom sample name %s instead of somatic variation build sample name", $self->sample_name);
         }
         else {
             my $sample_name = $self->somatic_variation_build->subject_name;
