@@ -29,6 +29,16 @@ sub output_file_path {
     return File::Spec->join($self->output_dir, $self->output_filename);
 }
 
+sub input_result_file_path {
+    my $self = shift;
+
+    if ($self->input_result->can('output_file_path')) {
+        return $self->input_result->output_file_path;
+    } else {
+        return $self->input_result->get_vcf($self->variant_type);
+    }
+}
+
 sub create {
     my $class = shift;
     my $self = $class->SUPER::create(@_);

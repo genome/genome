@@ -76,7 +76,7 @@ sub _run {
     my $vep_output_file = File::Spec->join($self->temp_staging_directory, $self->output_filename_base);
     my $final_output_file = File::Spec->join($self->temp_staging_directory, $self->output_filename);
     my $vep_command = Genome::Db::Ensembl::Command::Run::Vep->create(
-        input_file => $self->input_result->output_file_path,
+        input_file => $self->input_result_file_path,
         output_file => $vep_output_file,
         ensembl_version => $self->ensembl_version,
         custom => \@custom_annotation_inputs,

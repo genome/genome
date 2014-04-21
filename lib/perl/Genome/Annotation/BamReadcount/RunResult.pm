@@ -32,7 +32,7 @@ sub _run {
     my $region_list = Genome::Sys->create_temp_file_path();
     Genome::Model::Tools::Bed::Convert::VcfToBed->execute(
         remove_filtered_calls => 0,
-        source => $self->input_result->output_file_path,
+        source => $self->input_result_file_path,
         output => $region_list,
         one_based => 1,
     );

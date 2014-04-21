@@ -19,7 +19,10 @@ sub dag {
     #   build_id
     #   input_result  (Genome::SoftwareResult that has a
     #                  'output_file_path' accessor that refers
-    #                  to a .vcf or .vcf.gz file.)
+    #                  to a .vcf or .vcf.gz file. or a 'get_vcf'
+    #                  accessor which takes a 'variant_type'
+    #                  argument to refer to a .vcf or .vcf.gz
+    #                  file)
     # DAG OUTPUTS:
     #   software_result (Same requirements as <input_result>)
     die "Abstract";

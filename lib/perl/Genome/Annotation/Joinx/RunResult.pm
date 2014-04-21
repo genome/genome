@@ -35,7 +35,7 @@ sub _run {
     }
     my $known_variants = $known_variants[0];
 
-    my $input_file  = $self->input_result->output_file_path;
+    my $input_file  = $self->input_result_file_path;
     my $output_file = File::Spec->join($self->temp_staging_directory, $self->output_filename);
     my $info_string = $self->info_string;
     my $info        = $info_string ? 1 : 0;
