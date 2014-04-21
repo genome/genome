@@ -5,6 +5,7 @@ use warnings FATAL => 'all';
 use Genome;
 
 class Genome::Annotation::Plan::Base {
+    is => 'Genome::Annotation::ComponentBase',
     has => [
         name => {
             is => 'Text',
@@ -54,7 +55,9 @@ sub as_hashref {
 sub validate {
     my $self = shift;
     $self->validate_self;
-    $self->object->validate;
+    if (my $object = $self->object) {
+        $object->validate();
+    }
 }
 
 sub validate_self {
@@ -102,8 +105,11 @@ sub factory {
 
 sub validate_children {
     my $self = shift;
-    for my $child ($self->children) {
-        $child->validate;
+    my %child_hash = $self->children;
+    for my $children_of_category (values %child_hash) {
+        for my $child (@{$children_of_category}) {
+            $child->validate;
+        }
     }
 }
 
