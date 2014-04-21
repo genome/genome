@@ -42,7 +42,8 @@ sub create_from_hashref {
     my $class = shift;
     my $hashref = shift;
 
-    my $self = $class->SUPER::create(name => 'root');
+    my $self = $class->SUPER::create(name => 'root',
+        params => {});
     my @expert_plans;
     for my $expert_name (keys %{$hashref->{experts}}) {
         push @expert_plans, Genome::Annotation::Plan::ExpertPlan->create(

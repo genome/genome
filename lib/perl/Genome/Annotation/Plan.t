@@ -34,7 +34,7 @@ my $expected_hashref = {
                 e2_p2 => 'something else'
             }
         },
-        params    => undef,
+        params    => {},
         reporters => {
             reporter_alpha => {
                 filters      => {
