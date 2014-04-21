@@ -8,6 +8,7 @@ use Memoize qw();
 use File::Spec;
 use File::Basename qw(dirname);
 use Cwd qw(abs_path);
+use Params::Validate qw(validate_pos);
 
 sub search_path {
     return [map {'Genome::Annotation::' . $_} @{search_dirs()}];
@@ -54,10 +55,11 @@ sub names {
 }
 
 sub get_object {
-    my ($self, $accessor, $name) = @_;
+    my ($self, $accessor, $name, $params) = validate_pos(@_, 1, 1, 1, 1);
 
     if (exists $self->_load($accessor)->{$name}) {
-        return $self->_load($accessor)->{$name};
+        my $pkg = $self->_load($accessor)->{$name};
+        return $pkg->create(%{$params});
     } else {
         confess sprintf("No $accessor with name ($name) available $accessor are:\n    %s\n",
             join("\n    ", $self->names($accessor)));
