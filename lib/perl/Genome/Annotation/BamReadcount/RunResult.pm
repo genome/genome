@@ -6,7 +6,7 @@ use Genome;
 use Sys::Hostname;
 
 class Genome::Annotation::BamReadcount::RunResult {
-    is => 'Genome::Annotation::Detail::Result',
+    is => 'Genome::Annotation::ResultBase',
     has_input => [
         aligned_bam_result => {
             is => 'Genome::InstrumentData::AlignedBamResult',

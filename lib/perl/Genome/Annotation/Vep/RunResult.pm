@@ -6,7 +6,7 @@ use Genome;
 use Sys::Hostname;
 
 class Genome::Annotation::Vep::RunResult {
-    is => 'Genome::Annotation::Detail::Result',
+    is => 'Genome::Annotation::ResultBase',
     has_input => [
         ensembl_version => {
             is => 'String',

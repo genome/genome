@@ -1,4 +1,4 @@
-package Genome::Annotation::Detail::TestHelpers;
+package Genome::Annotation::TestHelpers;
 
 use strict;
 use warnings;

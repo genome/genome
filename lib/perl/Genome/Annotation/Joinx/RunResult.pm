@@ -6,7 +6,7 @@ use Genome;
 use File::Spec;
 
 class Genome::Annotation::Joinx::RunResult {
-    is => 'Genome::Annotation::Detail::Result',
+    is => 'Genome::Annotation::ResultBase',
     has_input => [
         known_variants => {
             is => 'Genome::Model::Build::ImportedVariationList',

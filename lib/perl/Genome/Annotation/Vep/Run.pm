@@ -5,7 +5,7 @@ use warnings FATAL => 'all';
 use Genome;
 
 class Genome::Annotation::Vep::Run {
-    is => 'Genome::Annotation::Detail::Command',
+    is => 'Genome::Annotation::CommandBase',
     has_input => [
         ensembl_version => {
             is => 'String',

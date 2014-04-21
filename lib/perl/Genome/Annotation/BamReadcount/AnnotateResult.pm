@@ -5,7 +5,7 @@ use warnings FATAL => 'all';
 use Genome;
 
 class Genome::Annotation::BamReadcount::AnnotateResult {
-    is => 'Genome::Annotation::Detail::Result',
+    is => 'Genome::Annotation::ResultBase',
     has_input => [
         readcount_results => {
             is => 'Genome::Annotation::BamReadcount::RunResult',

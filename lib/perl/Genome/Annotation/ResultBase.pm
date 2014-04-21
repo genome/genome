@@ -1,10 +1,10 @@
-package Genome::Annotation::Detail::Result;
+package Genome::Annotation::ResultBase;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::Annotation::Detail::Result {
+class Genome::Annotation::ResultBase {
     is_abstract => 1,
     is => 'Genome::SoftwareResult::Stageable',
     has_input => [

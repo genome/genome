@@ -5,7 +5,7 @@ use warnings FATAL => 'all';
 use Genome;
 
 class Genome::Annotation::Joinx::Run {
-    is => 'Genome::Annotation::Detail::Command',
+    is => 'Genome::Annotation::CommandBase',
     has_input => [
         known_variants => {
             is => 'Genome::Model::Build::ImportedVariationList',

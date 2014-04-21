@@ -13,7 +13,7 @@ use Sub::Install;
 use Set::Scalar;
 use Genome::Model::Tools::DetectVariants2::Result::Vcf;
 use Genome::Model::Tools::Vcf::AnnotateWithReadcounts;
-use Genome::Annotation::Detail::TestHelpers qw(test_cmd_and_result_are_in_sync);
+use Genome::Annotation::TestHelpers qw(test_cmd_and_result_are_in_sync);
 
 use Test::More;
 
@@ -53,7 +53,7 @@ sub generate_test_cmd {
 
     my $input_result = $result_class->__define__();
     Sub::Install::reinstall_sub({
-        into => 'Genome::Annotation::Detail::Result',
+        into => 'Genome::Annotation::ResultBase',
         as => 'output_file_path',
         code => sub {return 'test_vcf';},
     });
