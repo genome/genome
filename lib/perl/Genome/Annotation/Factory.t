@@ -17,7 +17,7 @@ use_ok($pkg) || die;
 
 my $factory = $pkg->create();
 my $expected_names = Set::Scalar->new('bam-readcount', 'vep');
-my $got_names = Set::Scalar->new($factory->expert_names);
+my $got_names = Set::Scalar->new($factory->names('experts'));
 is_deeply($expected_names-$got_names, Set::Scalar->new(), 'Found all expected expert names');
 
 done_testing();

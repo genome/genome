@@ -19,7 +19,7 @@ sub search_dirs {
     for my $candidate (glob(File::Spec->join($this_dir,'*'))) {
         push @dirs, $candidate if -d $candidate;
     }
-    return [map {File::Spec->abs2rel($_, $this_dir)} @dirs];
+    return [$this_dir, (map {File::Spec->abs2rel($_, $this_dir)} @dirs)];
 }
 
 use Module::Pluggable
@@ -37,81 +37,32 @@ use Module::Pluggable
 use Module::Pluggable
     require => 1,
     search_path => search_path(),
-    only => qr(Gatherer$),
-    sub_name => 'gatherers';
+    only => qr(Interpreter$),
+    sub_name => 'interpreters';
 
 use Module::Pluggable
     require => 1,
     search_path => search_path(),
-    only => qr(View$),
-    sub_name => 'views';
+    only => qr(Reporter$),
+    sub_name => 'reporters';
 
 class Genome::Annotation::Factory {};
 
-sub expert_names {
-    my $self = shift;
-    return $self->_names('experts');
-}
-
-sub get_expert {
-    my $self = shift;
-    my $name = shift;
-    my $class = $self->_get('experts', $name);
-    return $class->create(@_);
-}
-
-sub filter_names {
-    my $self = shift;
-    return $self->_names('filters');
-}
-
-sub get_filter {
-    my $self = shift;
-    my $name = shift;
-    my $class = $self->_get('filters', $name);
-    return $class->create(@_);
-}
-
-sub gatherer_names {
-    my $self = shift;
-    return $self->_names('gatherers');
-}
-
-sub get_gatherer {
-    my $self = shift;
-    my $name = shift;
-    my $class = $self->_get('gatherers', $name);
-    return $class->create(@_);
-}
-
-sub view_names {
-    my $self = shift;
-    return $self->_names('views');
-}
-
-sub get_view {
-    my $self = shift;
-    my $name = shift;
-    my $class = $self->_get('views', $name);
-    return $class->create(@_);
-}
-
-sub _names {
+sub names {
     my ($self, $accessor) = @_;
     return keys %{$self->_load($accessor)};
 }
 
-sub _get {
+sub get_object {
     my ($self, $accessor, $name) = @_;
 
     if (exists $self->_load($accessor)->{$name}) {
         return $self->_load($accessor)->{$name};
     } else {
-        confess sprintf("No $accessor with name ($name) available $accessor are:\n    %s",
-            join("\n    ", $self->_names($accessor)));
+        confess sprintf("No $accessor with name ($name) available $accessor are:\n    %s\n",
+            join("\n    ", $self->names($accessor)));
     }
 }
-Memoize::memoize('_get');
 
 sub _load {
     my ($self, $accessor) = @_;
@@ -128,6 +79,5 @@ sub _load {
     }
     return \%plugins;
 }
-Memoize::memoize('_load');
 
 1;
