@@ -306,6 +306,7 @@ sub _prepare {
     while ( my $seq = $reader->read ) {
         $writer->write($seq) or return;
     }
+    $reader->close;
     
     return 1;
 }
@@ -314,7 +315,7 @@ sub _trim {
     my ($self, $amplicon) = @_;
 
     my $fasta_file = $self->edit_dir.'/'.$amplicon->{name}.'.fasta';
-    return unless -s $fasta_file; # ok
+    return 1 if not -s $fasta_file; # ok
 
     my $trim3 = Genome::Model::Tools::Fasta::Trim::Trim3->create(
         fasta_file => $fasta_file,
@@ -327,7 +328,7 @@ sub _trim {
     }
     $trim3->execute; # ok
 
-    next unless -s $fasta_file; # ok
+    return 1 if not -s $fasta_file; # ok
 
     my $screen = Genome::Model::Tools::Fasta::ScreenVector->create(
         fasta_file => $fasta_file,
@@ -338,16 +339,20 @@ sub _trim {
     }
     $screen->execute; # ok
 
-    next unless -s $fasta_file; # ok
+    return 1 if not -s $fasta_file; # ok
 
     my $reader = Genome::Model::Tools::Sx::PhredReader->create(
         file => $fasta_file,
         qual_file => $fasta_file.'.qual',
     );
-    return if not $reader;
+    if ( not $reader ) { # not ok
+        $self->error_message('Failed to open trimmed and screened fasta! '.$fasta_file);
+        return;
+    }
     while ( my $seq = $reader->read ) {
         $self->_processed_reads_fasta_and_qual_writer->write($seq) or return;
     }
+    $reader->close;
  
     return 1;
 }
@@ -356,7 +361,7 @@ sub _assemble {
     my ($self, $amplicon, %assembler_params) = @_;
 
     my $fasta_file = $self->edit_dir.'/'.$amplicon->{name}.'.fasta';
-    next unless -s $fasta_file; # ok
+    return 1 if not -s $fasta_file; # ok
 
     my $phrap = Genome::Model::Tools::PhredPhrap::Fasta->create(
         fasta_file => $fasta_file,
