@@ -86,6 +86,10 @@ class Genome::WorkOrder {
                 is => 'Integer',
                 len => 10,
         },
+        analysis_project => {
+            is => 'Genome::Config::AnalysisProject',
+            id_by => 'analysis_project_id',
+        },
         items => {
             is => 'Genome::WorkOrderItem',
             is_many => 1,
