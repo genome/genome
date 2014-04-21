@@ -11,7 +11,7 @@ use Cwd qw(abs_path);
 use Params::Validate qw(validate_pos);
 
 sub search_path {
-    return [map {'Genome::Annotation::' . $_} @{search_dirs()}];
+    return ['Genome::Annotation', (map {'Genome::Annotation::' . $_} @{search_dirs()})];
 }
 
 sub search_dirs {
@@ -20,7 +20,7 @@ sub search_dirs {
     for my $candidate (glob(File::Spec->join($this_dir,'*'))) {
         push @dirs, $candidate if -d $candidate;
     }
-    return [$this_dir, (map {File::Spec->abs2rel($_, $this_dir)} @dirs)];
+    return [map {File::Spec->abs2rel($_, $this_dir)} @dirs];
 }
 
 use Module::Pluggable
