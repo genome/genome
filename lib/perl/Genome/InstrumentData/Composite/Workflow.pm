@@ -140,6 +140,10 @@ my %VERSIONS = (
         picard_version => '1.42',
         samtools_version => 'r599',
     },
+    'v4' => {
+        picard_version => '1.85',
+        samtools_version => 'r982',
+    },
 );
 
 sub inputs_for_api_version {
