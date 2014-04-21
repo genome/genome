@@ -95,7 +95,7 @@ sub transcript {
     if (scalar(@transcripts) == 1) {
         $transcript = $transcripts[0];
     }
-    elsif (scalar(@transcripts) > 1)){
+    elsif (scalar(@transcripts) > 1) {
         my @canonical_transcripts = $vep_parser->canonical_transcripts($entry, $variant_allele);
         if (scalar(@canonical_transcripts) == 1) {
             $transcript = $canonical_transcripts[0];
