@@ -44,12 +44,14 @@ DOC
         launch_config => {
             is => 'Text',
             doc => <<DOC
-Launch imports [if needed] using this command. Insert '%{job_name}' into the command so the manager can monitor status.
+Launch imports [if needed] using this command. Insert '%{job_name}' place holder into the command so the manager can monitor status.
  
 The import commands will be printed to the screen [on STDERR] if:
  launch config is not given
  launch config does not have a '%{job_name}' in it
  list config is not given
+
+ The temp space required can also be filled in be using '%{tmp}' placeholder.
 
 Example for LSF
  Launch the job into group /me/mygroup and logging to /users/me/logs/%{job_name}
