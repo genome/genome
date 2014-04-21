@@ -6,7 +6,6 @@ use Genome;
 
 class Genome::Annotation::Adaptor {
     is => 'Command::V2',
-    is_abstract => 1,
     has_input => [
         build => {
             is => 'Genome::Model::Build::RunsDV2',
@@ -39,7 +38,29 @@ sub execute {
 }
 
 sub resolve_bam_results {
-    die 'Abstract';
+    my $self = shift;
+
+    if ($self->build->isa('Genome::Model::Build::SomaticVariation')) {
+        return $self->_resolve_bam_results_variation;
+    } elsif ($self->build->isa('Genome::Model::Build::SomaticValidation')) {
+        return $self->_resolve_bam_results_validation;
+    } else {
+        die "This adaptor can only work on SomaticValidation or SomaticVariation type builds";
+    }
+}
+
+sub _resolve_bam_results_variation {
+    my $self = shift;
+    my @bam_results;
+    for my $type qw(normal_build tumor_build) {
+        push @bam_results, $self->build->$type->merged_alignment_result;
+    }
+    return \@bam_results;
+}
+
+sub _resolve_bam_results_validation {
+    my $self = shift;
+    return [ $self->build->control_merged_alignment_result, $self->build->merged_alignment_result ];
 }
 
 sub resolve_snv_vcf_result {

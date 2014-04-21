@@ -14,7 +14,7 @@ use Genome::Test::Factory::Model::SomaticVariation;
 use Sub::Install qw(reinstall_sub);
 use Genome::Annotation::Adaptor::TestHelpers qw(test_accessors_with_vcf_results test_accessors_without_vcf_results setup_results);
 
-my $pkg = "Genome::Annotation::Adaptor::SomaticVariation";
+my $pkg = "Genome::Annotation::Adaptor";
 use_ok($pkg);
 
 subtest "With and without vcf results" => sub {
