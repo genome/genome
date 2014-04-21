@@ -56,5 +56,14 @@ sub read {
     return $seq;
 }
 
+sub close {
+    my $self = shift;
+
+    $self->{_seq_reader}->close if $self->{_seq_reader};
+    $self->{_qual_reader}->close if $self->{_qual_reader};
+
+    return 1;
+}
+
 1;
 

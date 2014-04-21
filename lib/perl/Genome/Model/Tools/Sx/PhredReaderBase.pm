@@ -41,5 +41,13 @@ sub _parse_io {
     return ($id, $desc, $data);
 }
 
+sub close {
+    my $self = shift;
+
+    $self->{_file}->close if $self->{_file};
+
+    return 1;
+}
+
 1;
 
