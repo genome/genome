@@ -5,6 +5,7 @@ use warnings FATAL => 'all';
 use Genome;
 
 class Genome::Annotation::ExpertBase {
+    is => 'Genome::Annotation::ComponentBase',
     is_abstract => 1,
 };
 
