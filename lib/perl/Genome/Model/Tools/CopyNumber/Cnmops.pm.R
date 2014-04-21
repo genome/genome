@@ -24,6 +24,7 @@ get_read_counts <- function()
   values(X) <- cbind(values(X.tum), values(X.nor))
   X <- normalizeGenome(X)
   save(X, file = paste(out_dir, "/cnmops.RD.Robject", sep = ""))
+  seqlevels(X, force = TRUE)<-c(1:22, "X", "Y")
   return(X)
 }
 
@@ -83,7 +84,7 @@ RD<-get_read_counts()
 ref_analysis_norm <- referencecn.mops(RD[,1], RD[,2], segAlgorithm="DNAcopy")
 ref_analysis_norm_file = paste(out_dir, "/cnmops.ref_analysis_norm.Robject", sep = "")
 if(length(cnvr(ref_analysis_norm)) != 0) {
-  ref_analysis_norm <- cn.mops:::.replaceNames(ref_analysis_norm, colnames(ref_analysis_norm@normalizedData),"tumor")
+  ref_analysis_norm <- cn.mops:::.replaceNames(ref_analysis_norm, colnames(ref_analysis_norm@normalizedData),"CnMops_tumor_normal")
 }
 save(ref_analysis_norm, file=ref_analysis_norm_file)
 plot_segments()

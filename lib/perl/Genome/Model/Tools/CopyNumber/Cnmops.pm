@@ -143,8 +143,8 @@ sub execute {
   my $normal_bam = $self->get_refalign_bam($normal_refalign);
   my $ROI_bed = $self->get_ROI_bed($tumor_refalign);
   $self->call_cnmops($tumor_bam, $normal_bam, $ROI_bed);
-  print "\nbams are $tumor_bam , $normal_bam";
-  print "\nROI bed is $ROI_bed";
+  $self->status_message("\nCnmops tumor, normal bams are $tumor_bam , $normal_bam");
+  $self->status_message("\nROI bed is $ROI_bed");
   return 1;
 }
 
