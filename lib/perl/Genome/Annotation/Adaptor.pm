@@ -22,9 +22,6 @@ class Genome::Annotation::Adaptor {
         indel_vcf_result => {
             is => 'Genome::Model::Tools::DetectVariants2::Result::Vcf',
         },
-        annotation_build => {
-            is => 'Genome::Model::Build::ImportedAnnotation',
-        },
     ],
 };
 
@@ -33,7 +30,6 @@ sub execute {
     $self->bam_results($self->resolve_bam_results);
     $self->snv_vcf_result($self->resolve_snv_vcf_result);
     $self->indel_vcf_result($self->resolve_indel_vcf_result);
-    $self->annotation_build($self->resolve_annotation_build);
     return 1;
 }
 
@@ -82,11 +78,5 @@ sub resolve_indel_vcf_result {
     }
     return $result;
 }
-
-sub resolve_annotation_build {
-    my $self = shift;
-    return $self->build->annotation_build;
-}
-
 
 1;

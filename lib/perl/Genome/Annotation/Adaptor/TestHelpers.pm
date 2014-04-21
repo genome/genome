@@ -30,7 +30,6 @@ sub test_accessor {
     ok($cmd->isa("$pkg"), "Command created correctly");
     ok($cmd->execute, "Command executed successfully");
     cmp_bag([$cmd->bam_results], [$bam_result1, $bam_result2], "Bam results set as expected");
-    is_deeply($cmd->annotation_build, $build->annotation_build, "Annotation build set as expected");
 
     is_deeply($cmd->snv_vcf_result, $snv_vcf_result, "Snvs vcf result is as expected");
     is_deeply($cmd->indel_vcf_result, $indel_vcf_result, "Indel vcf result is as expected");
