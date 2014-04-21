@@ -26,13 +26,16 @@ sub test_accessor {
         $indel_vcf_result = undef;
     }
 
-    my $cmd = $pkg->create(build => $build);
+    my $cmd = $pkg->create(build => $build, variant_type => 'snvs');
     ok($cmd->isa("$pkg"), "Command created correctly");
     ok($cmd->execute, "Command executed successfully");
     cmp_bag([$cmd->bam_results], [$bam_result1, $bam_result2], "Bam results set as expected");
+    is_deeply($cmd->vcf_result, $snv_vcf_result, "Snvs vcf result is as expected");
 
-    is_deeply($cmd->snv_vcf_result, $snv_vcf_result, "Snvs vcf result is as expected");
-    is_deeply($cmd->indel_vcf_result, $indel_vcf_result, "Indel vcf result is as expected");
+    # now again for indels
+    $cmd = $pkg->create(build => $build, variant_type => 'indels');
+    $cmd->execute;
+    is_deeply($cmd->vcf_result, $indel_vcf_result, "Indels vcf result is as expected");
 }
 
 sub test_accessors_without_vcf_results {

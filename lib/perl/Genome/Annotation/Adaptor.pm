@@ -10,16 +10,17 @@ class Genome::Annotation::Adaptor {
         build => {
             is => 'Genome::Model::Build::RunsDV2',
         },
+        variant_type => {
+            is => 'Text',
+            valid_values => ['snvs', 'indels'],
+        }
     ],
     has_output => [
         bam_results => {
             is_many => 1,
             is => 'Genome::InstrumentData::AlignedBamResult',
         },
-        snv_vcf_result => {
-            is => 'Genome::Model::Tools::DetectVariants2::Result::Vcf',
-        },
-        indel_vcf_result => {
+        vcf_result => {
             is => 'Genome::Model::Tools::DetectVariants2::Result::Vcf',
         },
     ],
@@ -28,8 +29,7 @@ class Genome::Annotation::Adaptor {
 sub execute {
     my $self = shift;
     $self->bam_results($self->resolve_bam_results);
-    $self->snv_vcf_result($self->resolve_snv_vcf_result);
-    $self->indel_vcf_result($self->resolve_indel_vcf_result);
+    $self->vcf_result($self->resolve_vcf_result);
     return 1;
 }
 
@@ -59,22 +59,15 @@ sub _resolve_bam_results_validation {
     return [ $self->build->control_merged_alignment_result, $self->build->merged_alignment_result ];
 }
 
-sub resolve_snv_vcf_result {
+sub resolve_vcf_result {
     my $self = shift;
-    my $result = eval {$self->build->get_detailed_snvs_vcf_result};
-    my $error = $@;
-    if ($error) {
-        $self->debug_message("No snv result found on build %s:\n%s", $self->build->id, $error);
-    }
-    return $result;
-}
 
-sub resolve_indel_vcf_result {
-    my $self = shift;
-    my $result = eval {$self->build->get_detailed_indels_vcf_result};
+    my $accessor = sprintf('get_detailed_%s_vcf_result', $self->variant_type);
+    my $result = eval {$self->build->$accessor};
     my $error = $@;
     if ($error) {
-        $self->debug_message("No indel result found on build %s:\n%s", $self->build->id, $error);
+        $self->debug_message("No %s result found on build %s:\n%s",
+            $self->variant_type, $self->build->id, $error);
     }
     return $result;
 }
