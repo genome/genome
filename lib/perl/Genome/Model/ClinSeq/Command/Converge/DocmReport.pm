@@ -15,7 +15,7 @@ class Genome::Model::ClinSeq::Command::Converge::DocmReport {
         },
         docm_variants_file => {
                is => 'FilesystemPath',
-               doc => 'Variant file (first five columns: chr, start, end, ref, var)',
+               doc => 'Tab delimited variant file with a header. First five columns: chromosome_name,start,stop,reference,variant. Also a column named primary that indicates whether the site is permuted (1) or not (0).',
         },
     ],
     has_optional_input => [
@@ -339,7 +339,7 @@ sub parse_read_counts{
   #- What is the mean and median coverage across all positions?
   my $summary_file = $self->outdir . "summary.tsv";
   open (SUMMARY, ">$summary_file") || die "\n\nCould not open new summary file: $summary_file\n\n";
-  print SUMMARY "sample\tposition_count\tpositions_covered\tsupported_variants\tcoverage_sum\tcoverage_mean\tcoverage_median\n";
+  print SUMMARY "sample\tposition_count\tpositions_covered_10x\tpositions_covered_50x\tpositions_covered_100x\tpositions_covered_500x\tpositions_covered_1000x\tsupported_variants\tcoverage_sum\tcoverage_mean\tcoverage_median\n";
   
   my %summary;
   foreach my $name (sort {$align_builds->{$a}->{order} <=> $align_builds->{$b}->{order}} keys  %{$align_builds}){
@@ -348,7 +348,11 @@ sub parse_read_counts{
 
     my $supported_variants = 0;
     my $position_count = 0;
-    my $positions_covered = 0;
+    my $positions_covered_10x = 0;
+    my $positions_covered_50x = 0;
+    my $positions_covered_100x = 0;
+    my $positions_covered_500x = 0;
+    my $positions_covered_1000x = 0;
     my $coverage_sum = 0;
     my @grand_cov;
 
@@ -375,7 +379,11 @@ sub parse_read_counts{
       }else{
         my $coverage = $ref + $var;
         $supported_variants++ if ($var >= $self->min_var_support);
-        $positions_covered++ if ($coverage >= $self->min_coverage);
+        $positions_covered_10x++ if ($coverage >= 10);
+        $positions_covered_50x++ if ($coverage >= 50);
+        $positions_covered_100x++ if ($coverage >= 100);
+        $positions_covered_500x++ if ($coverage >= 500);
+        $positions_covered_1000x++ if ($coverage >= 1000);
         push(@grand_cov, $coverage);
         $coverage_sum += $coverage;
       }
@@ -386,7 +394,7 @@ sub parse_read_counts{
     my @grand_cov_sort = sort {$a <=> $b} @grand_cov;
     my $center = sprintf("%.0f", ($position_count/2));
     my $coverage_median = $grand_cov_sort[$center];
-    print SUMMARY "$prefix\t$position_count\t$positions_covered\t$supported_variants\t$coverage_sum\t$coverage_mean\t$coverage_median\n";
+    print SUMMARY "$prefix\t$position_count\t$positions_covered_10x\t$positions_covered_50x\t$positions_covered_100x\t$positions_covered_500x\t$positions_covered_1000x\t$supported_variants\t$coverage_sum\t$coverage_mean\t$coverage_median\n";
   }
   close SUMMARY;
 
