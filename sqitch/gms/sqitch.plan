@@ -296,3 +296,6 @@ config_profile_item.status [config_profile_item] 2014-03-20T20:24:41Z Jim Weible
 
 widen_name_column_for_feature_lists [model_feature_list] 2014-04-11T17:09:16Z Adam Coffman <acoffman@genome.wustl.edu> # We need to widen this column from 200 characters
 @1397236439 2014-04-11T17:14:00Z Adam Coffman <acoffman@genome.wustl.edu># Widen name column for feature lists
+
+subject.subject.unique_sample_names [subject_subject] 2014-04-22T18:04:03Z Thomas B. Mooney <tmooney@genome.wustl.edu> # add a unique constraint on sample names
+@1398190764 2014-04-22T18:19:25Z Thomas B. Mooney <tmooney@genome.wustl.edu># Add a unique constraint on sample names.
