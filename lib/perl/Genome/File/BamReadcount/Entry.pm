@@ -3,6 +3,9 @@ package Genome::File::BamReadcount::Entry;
 use Genome;
 use Genome::File::BamReadcount::LibraryMetrics;
 use Genome::File::BamReadcount::AlleleMetrics;
+use IO::Compress::Gzip qw(gzip);
+use IO::Uncompress::Gunzip qw(gunzip);
+use MIME::Base64 qw(encode_base64 decode_base64);
 
 use strict;
 use warnings;
@@ -128,4 +131,18 @@ sub to_string {
     return $self->{_source_string};
 }
 
+sub encode {
+    my $line = shift;
+    my $zipped;
+    gzip \$line => \$zipped, Minimal => 1;
+    return encode_base64($zipped, '');
+}
+
+sub decode {
+    my $line = shift;
+    my $decoded = decode_base64($line);
+    my $unzipped;
+    gunzip \$decoded => \$unzipped;
+    return $unzipped;
+}
 1;

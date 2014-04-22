@@ -11,6 +11,7 @@ BEGIN {
 use above 'Genome';
 use Genome::File::Vcf::Entry;
 use Test::More;
+use Test::Exception;
 
 my $pkg = 'Genome::Annotation::FTKeepFilter';
 use_ok($pkg);
@@ -19,6 +20,7 @@ subtest "pass" => sub {
     my $filter = $pkg->create(
         sample_index => 0,
     );
+    lives_ok(sub {$filter->validate}, "Filter validates ok");
 
     my $ft_value = "PASS";
     my $entry = create_entry($ft_value);
@@ -43,6 +45,7 @@ subtest "pass more than one filter" => sub {
         sample_index => 0,
         keep_filter_values => \@keep_filter_values
     );
+    lives_ok(sub {$filter->validate}, "Filter validates ok");
 
     my $ft_value = "PASS";
     my $entry = create_entry($ft_value);
@@ -67,6 +70,11 @@ subtest "pass more than one filter" => sub {
     $ft_value = "PASS;other";
     $entry = create_entry($ft_value);
     ok($filter->process_entry($entry), "Entry $ft_value passes filter " . join(";", @keep_filter_values));
+};
+
+subtest "underspecified filter" => sub {
+    my $filter = $pkg->create;
+    dies_ok(sub {$filter->validate}, "Filter does not validate");
 };
 
 sub create_vcf_header {
