@@ -73,7 +73,7 @@ sub execute{
 
     my $tumor_bam = $self->bam_path;
     unless (-e $tumor_bam){
-        die $self->error_message("No tumor bam found for somatic model");
+        die $self->error_message("No tumor bam found for somatic model. Tried to access it at path: $tumor_bam");
     }
     $params{aligned_reads_input} = $tumor_bam;
 
