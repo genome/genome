@@ -13,16 +13,16 @@ use Genome::File::Vcf::Entry;
 use Genome::File::BamReadcount::Entry;
 use Test::Exception;
 use Test::More;
-use Genome::Annotation::BamReadcount::TestHelper;
+use Genome::Annotation::BamReadcount::TestHelper qw(bam_readcount_line create_entry);
 
 my $pkg = 'Genome::Annotation::BamReadcount::MinCoverageFilter';
 use_ok($pkg);
-my $bam_readcount_line = Genome::Annotation::BamReadcount::TestHelper::bam_readcount_line();
+
 subtest "pass" => sub {
     my $min_coverage = 300;
     my $filter = $pkg->create(min_coverage => $min_coverage, sample_index => 0);
     lives_ok(sub {$filter->validate}, "Filter validates");
-    my $entry = create_entry($bam_readcount_line);
+    my $entry = create_entry(bam_readcount_line);
     ok($filter->process_entry($entry), "Entry passes filter with min_coverage $min_coverage");
 };
 
@@ -31,7 +31,7 @@ subtest "fail" => sub {
     my $filter = $pkg->create(min_coverage => $min_coverage, sample_index => 0);
     lives_ok(sub {$filter->validate}, "Filter validates");
 
-    my $entry = create_entry($bam_readcount_line);
+    my $entry = create_entry(bam_readcount_line);
     ok(!$filter->process_entry($entry), "Entry does not pass filter with min_coverage $min_coverage");
 
     $entry = create_entry("");
@@ -42,10 +42,5 @@ subtest "under-specified parameters" => sub {
     my $filter = $pkg->create();
     dies_ok(sub {$filter->validate}, "Filter without enough parameters does not validate");
 };
-
-sub create_entry {
-    my $line = shift;
-    return Genome::Annotation::BamReadcount::TestHelper::create_entry($line);
-}
 
 done_testing();

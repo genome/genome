@@ -1,4 +1,6 @@
 package Genome::Annotation::BamReadcount::TestHelper;
+use Exporter 'import';
+@EXPORT_OK = qw(bam_readcount_line create_entry);
 
 sub create_vcf_header {
     my $header_txt = <<EOS;
