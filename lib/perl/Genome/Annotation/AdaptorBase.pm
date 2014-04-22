@@ -8,8 +8,8 @@ class Genome::Annotation::AdaptorBase {
     is => 'Command::V2',
     is_abstract => 1,
     has_input => [
-        build => {
-            is => 'Genome::Model::Build::RunsDV2',
+        build_id => {
+            is => 'Text',
         },
         variant_type => {
             is => 'Text',
@@ -29,6 +29,11 @@ class Genome::Annotation::AdaptorBase {
 
 sub shortcut {
     #TODO
+}
+
+sub build {
+    my $self = shift;
+    return Genome::Model::Build->get($self->build_id);
 }
 
 sub execute {

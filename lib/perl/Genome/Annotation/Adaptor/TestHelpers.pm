@@ -44,14 +44,14 @@ sub test_accessor {
         $indel_vcf_result = undef;
     }
 
-    my $cmd = Genome::Annotation::TestAdaptor->create(build => $build, variant_type => 'snvs');
+    my $cmd = Genome::Annotation::TestAdaptor->create(build_id => $build->id, variant_type => 'snvs');
     ok($cmd, "Command created correctly");
     ok($cmd->execute, "Command executed successfully");
     cmp_bag([$cmd->bam_results], [$bam_result1, $bam_result2], "Bam results set as expected");
     is_deeply($cmd->vcf_result, $snv_vcf_result, "Snvs vcf result is as expected");
 
     # now again for indels
-    $cmd = Genome::Annotation::TestAdaptor->create(build => $build, variant_type => 'indels');
+    $cmd = Genome::Annotation::TestAdaptor->create(build_id => $build->id, variant_type => 'indels');
     $cmd->execute;
     is_deeply($cmd->vcf_result, $indel_vcf_result, "Indels vcf result is as expected");
 }
