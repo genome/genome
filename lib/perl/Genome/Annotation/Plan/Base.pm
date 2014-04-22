@@ -34,6 +34,7 @@ sub as_hashref {
         my %children = $self->children;
         for my $child_category (keys %children) {
             my @child_plans = @{$children{$child_category}};
+            $body{$child_category} = {};
             for my $child_plan (@child_plans) {
                 my $child_hashref = $child_plan->as_hashref;
                 for my $key (keys %{$child_hashref}) {

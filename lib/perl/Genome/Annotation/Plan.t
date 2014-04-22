@@ -63,6 +63,7 @@ my $expected_hashref = {
                 }
             },
             reporter_beta  => {
+                filters => {},
                 interpreters => { interpreter_x => {
                         ix_p1 => 'something',
                         ix_p2 => 'something else'

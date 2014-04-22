@@ -16,7 +16,7 @@ BEGIN {
 my $pkg = 'Genome::Annotation::Plan';
 use_ok($pkg) || die;
 
-sub test_bad_yaml {
+sub test_bad_plan {
     my $name = shift;
     my $error_regex = shift;
 
@@ -28,6 +28,15 @@ sub test_bad_yaml {
 
     throws_ok sub {$plan->validate();}, $error_regex,
         "Validation fails for invalid plan ($name).";
+}
+
+sub test_bad_yaml {
+    my $name = shift;
+    my $filename = $name . '.yaml';
+
+    my $plan_file = plan_file($filename);
+    throws_ok sub {$pkg->create_from_file($plan_file);}, qr(invalid information),
+        "create_from_file fails for invalid yaml ($name).";
 }
 
 sub plan_file {
@@ -151,13 +160,15 @@ sub plan_file {
     1;
 }
 
-test_bad_yaml('missing_expert', qr(expert_missing) );
-test_bad_yaml('missing_filter', qr(filter_missing) );
-test_bad_yaml('missing_interpreter', qr(interpreter_missing) );
-test_bad_yaml('missing_reporter', qr(reporter_missing) );
+test_bad_plan('missing_expert', qr(expert_missing) );
+test_bad_plan('missing_filter', qr(filter_missing) );
+test_bad_plan('missing_interpreter', qr(interpreter_missing) );
+test_bad_plan('missing_reporter', qr(reporter_missing) );
 
-test_bad_yaml('misspelled_parameter', qr(bad_parameter_name) );
+test_bad_plan('misspelled_parameter', qr(bad_parameter_name) );
 
-test_bad_yaml('invalid_reporter', qr(interpreters do not match) );
-test_bad_yaml('invalid_experts', qr(do not match experts required) );
+test_bad_plan('invalid_reporter', qr(interpreters do not match) );
+test_bad_plan('invalid_experts', qr(do not match experts required) );
+
+test_bad_yaml('invalid_yaml');
 done_testing();

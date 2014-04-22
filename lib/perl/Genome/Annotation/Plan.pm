@@ -6,6 +6,7 @@ use Genome;
 use YAML;
 use Params::Validate qw(validate_pos);
 use Set::Scalar;
+use Data::Compare qw(Compare);
 
 class Genome::Annotation::Plan {
     is => 'Genome::Annotation::Plan::Base',
@@ -50,7 +51,16 @@ sub create_from_file {
 
     my ($hashref, undef, undef) = YAML::LoadFile($file);
 
-    return $class->create_from_hashref($hashref);
+    my $self = $class->create_from_hashref($hashref);
+
+    my $understood_hashref = $self->as_hashref->{root};
+    delete $understood_hashref->{params}; # Root level params are not currently used
+    unless(Compare($understood_hashref, $hashref)) {
+        die $self->error_message("Problems encountered when loading the YAML. File contains invalid information for the plan. Parsed file contents: (%s) Understood file contents: (%s)",
+            Data::Dumper::Dumper($hashref), Data::Dumper::Dumper($understood_hashref) );
+    }
+
+    return $self;
 }
 
 sub create_from_hashref {
