@@ -1,11 +1,12 @@
-package Genome::Annotation::Adaptor;
+package Genome::Annotation::AdaptorBase;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::Annotation::Adaptor {
+class Genome::Annotation::AdaptorBase {
     is => 'Command::V2',
+    is_abstract => 1,
     has_input => [
         build => {
             is => 'Genome::Model::Build::RunsDV2',
@@ -26,23 +27,30 @@ class Genome::Annotation::Adaptor {
     ],
 };
 
+sub shortcut {
+    #TODO
+}
+
 sub execute {
     my $self = shift;
-    $self->bam_results($self->resolve_bam_results);
-    $self->vcf_result($self->resolve_vcf_result);
+    $self->resolve_bam_results;
+    $self->resolve_vcf_result;
+    $self->resolve_plan_attributes;
     return 1;
 }
 
 sub resolve_bam_results {
     my $self = shift;
 
+    my $results;
     if ($self->build->isa('Genome::Model::Build::SomaticVariation')) {
-        return $self->_resolve_bam_results_variation;
+        $results = $self->_resolve_bam_results_variation;
     } elsif ($self->build->isa('Genome::Model::Build::SomaticValidation')) {
-        return $self->_resolve_bam_results_validation;
+        $results = $self->_resolve_bam_results_validation;
     } else {
         die "This adaptor can only work on SomaticValidation or SomaticVariation type builds";
     }
+    $self->bam_results($results);
 }
 
 sub _resolve_bam_results_variation {
@@ -56,7 +64,7 @@ sub _resolve_bam_results_variation {
 
 sub _resolve_bam_results_validation {
     my $self = shift;
-    return [ $self->build->control_merged_alignment_result, $self->build->merged_alignment_result ];
+    return [$self->build->control_merged_alignment_result, $self->build->merged_alignment_result];
 }
 
 sub resolve_vcf_result {
@@ -69,7 +77,17 @@ sub resolve_vcf_result {
         $self->debug_message("No %s result found on build %s:\n%s",
             $self->variant_type, $self->build->id, $error);
     }
-    return $result;
+    $self->vcf_result($result);
+}
+
+sub resolve_plan_attributes {
+    my $self = shift;
+
+    my $annotation_plan = $self->build->annotation_plan;
+    my $specific_plan = $annotation_plan->get_plan($self->category, $self->name);
+    for my $name (keys %{$specific_plan->params}) {
+        $self->$name($specific_plan->params->{$name});
+    }
 }
 
 1;

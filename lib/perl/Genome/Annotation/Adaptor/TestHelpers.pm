@@ -15,8 +15,26 @@ our @EXPORT_OK = qw(
     setup_results
 );
 
+{
+    package Genome::Annotation::TestAdaptor;
+
+    use strict;
+    use warnings FATAL => 'all';
+    use Genome;
+
+    class Genome::Annotation::TestAdaptor {
+        is => 'Genome::Annotation::AdaptorBase',
+    };
+
+    sub resolve_plan_attributes {
+        return;
+    }
+
+    1;
+}
+
 sub test_accessor {
-    my ($pkg, $build, $bam_result1, $bam_result2, $snv_vcf_result, $indel_vcf_result, $add_vcf_results) = @_;
+    my ($build, $bam_result1, $bam_result2, $snv_vcf_result, $indel_vcf_result, $add_vcf_results) = @_;
 
     # This will run in two modes, with vcf results and without vcf results added
     if ($add_vcf_results) {
@@ -26,14 +44,14 @@ sub test_accessor {
         $indel_vcf_result = undef;
     }
 
-    my $cmd = $pkg->create(build => $build, variant_type => 'snvs');
-    ok($cmd->isa("$pkg"), "Command created correctly");
+    my $cmd = Genome::Annotation::TestAdaptor->create(build => $build, variant_type => 'snvs');
+    ok($cmd, "Command created correctly");
     ok($cmd->execute, "Command executed successfully");
     cmp_bag([$cmd->bam_results], [$bam_result1, $bam_result2], "Bam results set as expected");
     is_deeply($cmd->vcf_result, $snv_vcf_result, "Snvs vcf result is as expected");
 
     # now again for indels
-    $cmd = $pkg->create(build => $build, variant_type => 'indels');
+    $cmd = Genome::Annotation::TestAdaptor->create(build => $build, variant_type => 'indels');
     $cmd->execute;
     is_deeply($cmd->vcf_result, $indel_vcf_result, "Indels vcf result is as expected");
 }
