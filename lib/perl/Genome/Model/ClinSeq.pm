@@ -896,6 +896,7 @@ sub _resolve_workflow_for_build {
     $microarray_cnv_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::MicroarrayCnv");
     $add_link->($input_connector, 'microarray_cnv_dir', $microarray_cnv_op, 'outdir');
     $add_link->($input_connector, 'model', $microarray_cnv_op, 'clinseq_model');
+    $add_link->($input_connector, 'annotation_build', $microarray_cnv_op, 'annotation_build_id');
     $add_link->($microarray_cnv_op, 'result', $output_connector, 'microarray_cnv_result');
   }
 
@@ -906,6 +907,7 @@ sub _resolve_workflow_for_build {
     $exome_cnv_op = $add_step->($msg, "Genome::Model::Tools::CopyNumber::Cnmops");
     $add_link->($input_connector, 'exome_cnv_dir', $exome_cnv_op, 'outdir');
     $add_link->($input_connector, 'model', $exome_cnv_op, 'clinseq_model');
+    $add_link->($input_connector, 'annotation_build', $exome_cnv_op, 'annotation_build_id');
     $add_link->($exome_cnv_op, 'result', $output_connector, 'exome_cnv_result');
   }
 
