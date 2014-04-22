@@ -4,6 +4,7 @@ use Data::Dumper;
 use Carp qw/confess/;
 use Genome;
 use List::Util qw/first/;
+use Genome::File::Vcf::Genotype;
 
 use strict;
 use warnings;
