@@ -352,4 +352,29 @@ subtest "get genotype for sample" => sub {
     ok($@, "Getting a genotype for an out-of-bounds sample index is an error");
 };
 
+subtest "get alt bases for sample" => sub {
+    my @fields = ('1', 99, '.', 'CG', 'CA,C', '.', '.', '.', 'GT:DP:FT', '0/1', '0/0', '0/2', '1/2', './.');
+    my $entry_txt = join("\t", @fields);
+    my $entry = $pkg->new($header, $entry_txt);
+    ok($entry, "Created entry");
+
+    my %expected_bases_for_sample = (
+        0 => ['CA'],
+        1 => [],
+        2 => ['C'],
+        3 => ['CA', 'C'],
+        4 => [],
+    );
+
+    while( my ($sample_index, $expected_bases) = each %expected_bases_for_sample ) {
+        my @retrieved_bases = $entry->alt_bases_for_sample($sample_index);
+        is_deeply(\@retrieved_bases, $expected_bases, "The alt bases for sample $sample_index were determined correctly");
+    }
+
+    # eval {
+        # my $non_genotype = $entry->genotype_for_sample(3);
+    # };
+    # ok($@, "Getting a genotype for an out-of-bounds sample index is an error");
+};
+
 done_testing();

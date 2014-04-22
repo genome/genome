@@ -723,6 +723,27 @@ sub genotype_for_sample {
     return Genome::File::Vcf::Genotype->new($self->{reference_allele}, $alts, $gt);
 }
 
+=item C<alt_bases_for_sample>
+
+Returns an array of nuclotides for the alternate alleles for a given sample
+
+params:
+    $sample_index - sample index
+
+=back
+
+=cut
+
+sub alt_bases_for_sample {
+    my ($self, $sample_index) = @_;
+
+    my $genotype = $self->genotype_for_sample($sample_index);
+    my @entry_allele_nucleotides = $self->alleles;
+    my @alt_allele_pointers = grep { $_ ne '.' && $_ != 0 } $genotype->get_alleles;
+    my @alt_allele_nucleotides = map {$entry_allele_nucleotides[$_]} @alt_allele_pointers;
+    return @alt_allele_nucleotides;
+}
+
 =item C<to_string>
 
 Returns a string representation of the entry in VCF format.
