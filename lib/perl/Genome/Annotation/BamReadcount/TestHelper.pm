@@ -2,6 +2,9 @@ package Genome::Annotation::BamReadcount::TestHelper;
 use Exporter 'import';
 @EXPORT_OK = qw(bam_readcount_line create_entry);
 
+use Genome::File::Vcf::Entry;
+use Genome::File::BamReadcount::Entry;
+
 sub create_vcf_header {
     my $header_txt = <<EOS;
 ##fileformat=VCFv4.1
@@ -29,7 +32,7 @@ sub create_entry {
         10,             # POS
         '.',            # ID
         'A',            # REF
-        '.',            # ALT
+        'G',            # ALT
         '10.3',         # QUAL
         'PASS',         # FILTER
         'A=B;C=8,9;E',  # INFO

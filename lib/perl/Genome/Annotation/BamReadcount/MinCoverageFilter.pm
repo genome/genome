@@ -6,13 +6,10 @@ use Genome;
 use List::Util qw/first/;
 
 class Genome::Annotation::BamReadcount::MinCoverageFilter {
-    is => 'Genome::Annotation::FilterBase',
+    is => 'Genome::Annotation::BamReadcount::FilterBase',
     has => {
         min_coverage => {
             is => 'Number',
-        },
-        sample_index => {
-            is => 'Integer',
         },
     },
 };
@@ -35,16 +32,6 @@ sub process_entry {
         return 1;
     }
     return 0;
-}
-
-sub get_readcount_entry {
-    my $self = shift;
-    my $entry = shift;
-
-    my $bam_readcount_string = $entry->sample_field($self->sample_index, 'BRCT');
-    return unless $bam_readcount_string;
-    return Genome::File::BamReadcount::Entry->new(
-        Genome::File::BamReadcount::Entry::decode($bam_readcount_string));
 }
 
 1;

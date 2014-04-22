@@ -9,8 +9,6 @@ BEGIN {
 }
 
 use above 'Genome';
-use Genome::File::Vcf::Entry;
-use Genome::File::BamReadcount::Entry;
 use Test::Exception;
 use Test::More;
 use Genome::Annotation::BamReadcount::TestHelper qw(bam_readcount_line create_entry);
