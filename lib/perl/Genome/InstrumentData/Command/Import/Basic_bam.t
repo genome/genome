@@ -21,8 +21,10 @@ use_ok('Genome::InstrumentData::Command::Import::WorkFlow::Helpers') or die;
 my $analysis_project = Genome::Config::AnalysisProject->create(name => '__TEST_AP__');
 ok($analysis_project, 'create analysis project');
 
-my $sample = Genome::Sample->create(name => '__TEST_SAMPLE__');
-ok($sample, 'Create sample');
+my $library = Genome::Library->create(
+    name => '__TEST_SAMPLE__-extlibs', sample => Genome::Sample->create(name => '__TEST_SAMPLE__')
+);
+ok($library, 'Create library');
 
 my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'bam/v3');
 my $source_bam = $test_dir.'/test.bam';
@@ -30,7 +32,7 @@ ok(-s $source_bam, 'source bam exists') or die;
 
 my $cmd = Genome::InstrumentData::Command::Import::Basic->create(
     analysis_project => $analysis_project,
-    sample => $sample,
+    library => $library,
     source_files => [$source_bam],
     import_source_name => 'broad',
     instrument_data_properties => [qw/ lane=2 flow_cell_id=XXXXXX /],

@@ -14,6 +14,10 @@ class Genome::InstrumentData::Command::Import::Basic {
             is => 'Text',
             doc => 'Organiztion name or abbreviation from where the source file(s) were generated or downloaded.',
         },
+        library => {
+            is => 'Genome::Library',
+            doc => 'Library to use.  It must exist.',
+        },
         source_files => {
             is => 'Text',
             is_many => 1,
@@ -21,14 +25,6 @@ class Genome::InstrumentData::Command::Import::Basic {
         },
     ],
     has_optional_input => [
-        sample => {
-            is => 'Genome::Sample',
-            doc => 'Sample to use. The external library for the instrument data will be gotten or created.',
-        },
-        library => {
-            is => 'Genome::Library',
-            doc => 'Library to use.  Implies using the sample of the library.',
-        },
         analysis_project => {
             is => 'Genome::Config::AnalysisProject',
             doc => 'Analysis project to assign to the created instrument data.',
@@ -82,9 +78,6 @@ sub execute {
     my $self = shift;
     $self->status_message('Import instrument data...');
 
-    my $sample_provided = $self->_resolve_sample_from_library_if_necessary;
-    return if not $sample_provided;
-
     my $instdat_props_ok = $self->_resolve_instrument_data_properties;
     return if not $instdat_props_ok;
 
@@ -111,38 +104,6 @@ sub execute {
     die 'Run wf failed!' if not $success;
 
     $self->status_message('Import instrument data...done');
-    return 1;
-}
-
-sub _resolve_sample_from_library_if_necessary {
-    my $self = shift;
-    $self->status_message('Checking sample...');
-
-    if ( $self->library && $self->sample ) {
-        if ($self->library->sample_id ne $self->sample->id) {
-            $self->error_message(sprintf "Library '%s' does not match sample '%s'",
-                $self->library->name,
-                $self->sample->name);
-            return;
-        }
-    }
-    elsif ( $self->library ) {
-        $self->sample( $self->library->sample );
-        unless ( $self->sample ) {
-            $self->error_message('Sample could not be resolved from library.');
-            return;
-        }
-    }
-    elsif ( $self->sample ) {
-        # No additional check required
-        # The library will be resolved in the workflow
-        # Fall through to successful return
-    }
-    else {
-        $self->error_message('No sample or library specified. Please specify either a sample or a library.');
-        return;
-    }
-
     return 1;
 }
 
@@ -229,7 +190,7 @@ sub _create_workflow {
 
     my $workflow = Workflow::Model->create(
         name => 'Import Instrument Data',
-        input_properties => [qw/ analysis_project instrument_data_properties sample library source_paths working_directory /],
+        input_properties => [qw/ analysis_project instrument_data_properties library source_paths working_directory /],
         output_properties => [qw/ instrument_data /],
     );
     $self->_workflow($workflow);
@@ -292,7 +253,6 @@ sub _gather_inputs_for_workflow {
     return {
         analysis_project => $self->analysis_project,
         instrument_data_properties => $self->_instrument_data_properties,
-        sample => $self->sample,
         library => $self->library,
         source_paths => [ $self->source_files ],
         working_directory => $self->_working_directory,
@@ -336,7 +296,7 @@ sub _build_workflow_to_import_fastq {
     }
 
     my $fastqs_to_bam_op = $self->_add_operation_to_workflow('fastqs to bam');
-    for my $property (qw/ working_directory sample /) {
+    for my $property (qw/ working_directory library /) {
         $workflow->add_link(
             left_operation => $workflow->get_input_connector,
             left_property => $property,
@@ -359,7 +319,7 @@ sub _build_workflow_to_import_fastq {
     );
 
     my $create_instdata_and_copy_bam = $self->_add_operation_to_workflow('create instrument data and copy bam');
-    for my $property (qw/ analysis_project sample library instrument_data_properties /) {
+    for my $property (qw/ analysis_project library instrument_data_properties /) {
         $workflow->add_link(
             left_operation => $workflow->get_input_connector,
             left_property => $property,
@@ -421,7 +381,7 @@ sub _build_workflow_to_import_bam {
     );
 
     my $create_instdata_and_copy_bam = $self->_add_operation_to_workflow('create instrument data and copy bam');
-    for my $property (qw/ analysis_project sample library instrument_data_properties /) {
+    for my $property (qw/ analysis_project library instrument_data_properties /) {
         $workflow->add_link(
             left_operation => $workflow->get_input_connector,
             left_property => $property,
@@ -495,7 +455,7 @@ sub _build_workflow_to_import_sra {
     );
 
     my $create_instdata_and_copy_bam = $self->_add_operation_to_workflow('create instrument data and copy bam');
-    for my $property (qw/ analysis_project sample library instrument_data_properties /) {
+    for my $property (qw/ analysis_project library instrument_data_properties /) {
         $workflow->add_link(
             left_operation => $workflow->get_input_connector,
             left_property => $property,

@@ -16,14 +16,9 @@ class Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentDataAnd
             is_many => 1,
             doc => 'The paths of the bams to verify and move.',
         },
-        sample => {
-            is => 'Genome::Sample',
-            doc => 'Sample to use. The external library for the instrument data will be gotten or created.',
-        },
         library => {
             is => 'Genome::Library',
-            is_optional => 1,
-            doc => 'Library to use. The library for the instrument data will be gotten or created.',
+            doc => 'Library to use. The library must exist.',
         },
         analysis_project => {
             is => 'Genome::Config::AnalysisProject',
@@ -151,35 +146,6 @@ sub execute {
 
     $self->debug_message('Create instrument data and copy bam...done');
     return 1;
-}
-
-sub _resvolve_library {
-    my $self = shift;
-    $self->debug_message('Resolve library...');
-
-    my $sample = $self->sample;
-    $self->debug_message('Sample name: '.$sample->name);
-    $self->debug_message('Sample id: '.$sample->id);
-    my $library_name = $sample->name.'-extlibs';
-    $self->debug_message('Library name: '.$library_name);
-    my $library = Genome::Library->get(
-        name => $library_name,
-        sample => $sample,
-    );
-    if ( not $library ) {
-        $library = Genome::Library->create(
-            name => $library_name,
-            sample => $sample,
-        );
-        if ( not $library ) {
-            $self->error_message('Failed to get or create external library for sample! '.$sample->id);
-            return;
-        }
-    }
-    $self->debug_message('Library id: '.$library->id);
-
-    $self->debug_message('Resolve library...done');
-    return $self->library($library);
 }
 
 sub _create_instrument_data_for_bam_path {

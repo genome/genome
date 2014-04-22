@@ -21,19 +21,25 @@ class Genome::InstrumentData::Command::Import::WorkFlow::FastqsToBam {
             is_many => 1,
             doc => 'Paths of the fastq[s] to convert to a bam.',
         },
-        sample => {
-            is => 'Genome::Sample',
-            doc => 'The sample name to use and then derive the read group name.',
+        library => {
+            is => 'Genome::Library',
+            doc => 'The library name to use and then derive the read group name.',
         },
     ],
     has_output => [ 
         bam_path => {
             is => 'Text',
-            calculate_from => [qw/ working_directory sample /],
-            calculate => q( return $working_directory.'/'.$sample->name.'.bam'; ),
+            calculate_from => [qw/ working_directory sample_name /],
+            calculate => q( return $working_directory.'/'.$sample_name.'.bam'; ),
             doc => 'The path of the bam.',
         },
     ],
+    has_calculated => {
+        sample_name => {
+            calculate_from => [qw/ library /],
+            calculate => q( return $library->sample->name ),
+        },
+    },
 };
 
 sub execute {
@@ -57,8 +63,8 @@ sub _fastqs_to_bam {
     my $self = shift;
     $self->debug_message('Run picard fastq to sam...');
 
-    my $sample_name = $self->sample->name;
-    my $read_group_name = $sample_name.'-extlibs';
+    my $sample_name = $self->sample_name;
+    my $read_group_name = $self->library->name;
     my @fastqs = $self->fastq_paths;
     $self->debug_message("Fastq 1: $fastqs[0]");
     my $bam_path = $self->bam_path;
