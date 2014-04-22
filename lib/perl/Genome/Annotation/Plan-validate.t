@@ -58,6 +58,28 @@ sub plan_file {
 }
 
 {
+    package Genome::Annotation::AnotherTestInterpreter;
+
+    use strict;
+    use warnings FATAL => 'all';
+    use Genome;
+
+    class Genome::Annotation::AnotherTestInterpreter {
+        is => 'Genome::Annotation::InterpreterBase',
+        has => [
+            ix_p1 => {},
+            ix_p2 => {},
+        ],
+    };
+
+    sub name {
+        "interpreter_y";
+    }
+
+    1;
+}
+
+{
     package Genome::Annotation::TestReporter;
 
     use strict;
@@ -74,6 +96,10 @@ sub plan_file {
 
     sub name {
         "reporter_alpha";
+    }
+
+    sub requires_interpreters {
+        return qw(interpreter_x);
     }
 
     1;
@@ -108,4 +134,5 @@ test_bad_yaml('missing_reporter', qr(reporter_missing) );
 
 test_bad_yaml('misspelled_parameter', qr(bad_parameter_name) );
 
+test_bad_yaml('invalid_reporter', qr(interpreters do not match) );
 done_testing();

@@ -3,6 +3,7 @@ package Genome::Annotation::Plan::ReporterPlan;
 use strict;
 use warnings FATAL => 'all';
 use Genome;
+use Set::Scalar;
 
 class Genome::Annotation::Plan::ReporterPlan {
     is => 'Genome::Annotation::Plan::Base',
@@ -58,6 +59,25 @@ sub create_from_hashref {
     $self->interpreter_plans(\@interpreter_plans);
 
     return $self;
+}
+
+sub validate_self {
+    my $self = shift;
+    $self->SUPER::validate_self(@_);
+
+    my $needed = Set::Scalar->new($self->object->requires_interpreters);
+    my $have = Set::Scalar->new(map {$_->name} $self->interpreter_plans);
+    unless($needed->is_equal($have)) {
+        if (my $still_needed = $needed - $have) {
+            $self->error_message("Interpreters required by reporter (%s) but not provided: (%s)",
+                $self->name, join(",", $still_needed->members));
+        }
+        if (my $not_needed = $have - $needed) {
+            $self->error_message("Interpreters provided by plan but not rquired by reporter (%s): (%s)",
+                $self->name, join(",", $not_needed->members));
+        }
+        die $self->error_message("Provided interpreters and required interpreters do not match");
+    }
 }
 
 1;

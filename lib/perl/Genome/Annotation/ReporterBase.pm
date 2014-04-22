@@ -13,4 +13,8 @@ sub name {
     die "abstract";
 }
 
+sub requires_interpreters {
+    die "abstract - must return a list of one or more interpreter names";
+}
+
 1;
