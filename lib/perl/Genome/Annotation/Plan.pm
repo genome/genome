@@ -5,6 +5,7 @@ use warnings;
 use Genome;
 use YAML;
 use Params::Validate qw(validate_pos);
+use Set::Scalar;
 
 class Genome::Annotation::Plan {
     is => 'Genome::Annotation::Plan::Base',
@@ -76,6 +77,38 @@ sub create_from_hashref {
     $self->reporter_plans(\@reporter_plans);
 
     return $self;
+}
+
+sub validate_self {
+    my $self = shift;
+    $self->SUPER::validate_self(@_);
+
+    my $have = Set::Scalar->new(map {$_->name} $self->expert_plans);
+    my $total_needed = Set::Scalar->new();
+    my $failed = 0;
+    for my $reporter_plan ($self->reporter_plans) {
+        my $needed = Set::Scalar->new();
+        for my $plan ($reporter_plan->interpreter_plans, $reporter_plan->filter_plans) {
+            $needed->insert($plan->object->requires_experts);
+        }
+        $total_needed += $needed;
+
+        if (my $still_needed = $needed - $have) {
+            $failed = 1;
+            $self->error_message("Experts required by reporter (%s) but not provided: (%s)",
+                $reporter_plan->name, join(",", $still_needed->members));
+        }
+    }
+
+    if (my $not_needed = $have - $total_needed) {
+            $failed = 1;
+        $self->error_message("Experts provided by plan but not required by any reporters: (%s)",
+            join(",", $not_needed->members));
+    }
+
+    if ($failed) {
+        die $self->error_message("Experts provided by plan do not match experts required");
+    }
 }
 
 1;

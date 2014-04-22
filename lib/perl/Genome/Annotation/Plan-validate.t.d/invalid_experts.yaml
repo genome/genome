@@ -1,0 +1,13 @@
+experts:
+    expert_two:
+        e1_p1: something
+        e1_p2: something else
+reporters:
+    reporter_alpha:
+        interpreters:
+            interpreter_x:
+                ix_p1: something
+                ix_p2: something else
+        params:
+            ra_p1: something
+            ra_p2: something else

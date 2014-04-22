@@ -73,7 +73,7 @@ sub validate_self {
                 $self->name, join(",", $still_needed->members));
         }
         if (my $not_needed = $have - $needed) {
-            $self->error_message("Interpreters provided by plan but not rquired by reporter (%s): (%s)",
+            $self->error_message("Interpreters provided by plan but not required by reporter (%s): (%s)",
                 $self->name, join(",", $not_needed->members));
         }
         die $self->error_message("Provided interpreters and required interpreters do not match");

@@ -9,4 +9,8 @@ class Genome::Annotation::InterpreterBase {
     is_abstract => 1,
 };
 
+sub requires_experts {
+    return ();
+}
+
 1;

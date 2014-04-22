@@ -54,6 +54,10 @@ sub plan_file {
         "interpreter_x";
     }
 
+    sub requires_experts {
+        return qw(expert_one);
+    }
+
     1;
 }
 
@@ -123,6 +127,26 @@ sub plan_file {
     sub name {
         "expert_one";
     }
+}
+
+{
+    package Genome::Annotation::AnotherTestExpert;
+
+    use strict;
+    use warnings FATAL => 'all';
+    use Genome;
+
+    class Genome::Annotation::AnotherTestExpert {
+        is => 'Genome::Annotation::ExpertBase',
+        has => [
+            e1_p1 => {},
+            e1_p2 => {},
+        ],
+    };
+
+    sub name {
+        "expert_two";
+    }
 
     1;
 }
@@ -135,4 +159,5 @@ test_bad_yaml('missing_reporter', qr(reporter_missing) );
 test_bad_yaml('misspelled_parameter', qr(bad_parameter_name) );
 
 test_bad_yaml('invalid_reporter', qr(interpreters do not match) );
+test_bad_yaml('invalid_experts', qr(do not match experts required) );
 done_testing();
