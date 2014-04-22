@@ -8,7 +8,7 @@ use Genome;
 my $default_nomenclature = $ENV{GENOME_NOMENCLATURE_DEFAULT};
 
 class Genome::Sample {
-    is => ['Genome::Subject','Genome::Searchable'],
+    is => ['Genome::Subject','Genome::Searchable', 'Genome::Utility::ObjectWithLockedConstruction'],
     has => [
         sample_id => {
             is => 'Text',
@@ -359,6 +359,12 @@ sub delete {
     }
 
     return $self->SUPER::delete;
+}
+
+sub lock_id {
+    my $class = shift;
+    my %args = @_;
+    return $args{name};
 }
 
 1;
