@@ -6,8 +6,6 @@ use Genome;
 use Genome::File::BamReadcount::Reader;
 use Genome::File::Vcf::Reader;
 use Genome::File::Vcf::Writer;
-use IO::Compress::Gzip qw(gzip);
-use MIME::Base64 qw(encode_base64);
 
 my $RC_TAG = 'BRCT';
 my $RC_HEADER = sprintf('<ID=%s,Number=1,Type=String,Description="Bam readcount line, gzipped then base-64 encoded">',$RC_TAG);
@@ -99,16 +97,10 @@ sub entries_match {
 sub add_readcount_to_vcf_entry {
     my ($readcount_entry, $vcf_entry, $sample_idx) = @_;
 
-    my $readcount_line = process_readcount_line($readcount_entry->to_string);
+    my $readcount_line = Genome::File::BamReadcount::Entry::encode($readcount_entry->to_string);
     $vcf_entry->set_sample_field($sample_idx, $RC_TAG, $readcount_line);
     return;
 }
 
-sub process_readcount_line {
-    my $line = shift;
-    my $zipped;
-    gzip \$line => \$zipped, Minimal => 1;
-    return encode_base64($zipped, '');
-}
 
 1;

@@ -80,7 +80,7 @@ sub bam_readcount_line {
 
 sub create_bam_readcount_string {
     my $readcount_line = shift;
-    return Genome::Model::Tools::Vcf::AnnotateWithReadcounts::process_readcount_line($readcount_line);
+    return Genome::File::BamReadcount::Entry::encode($readcount_line);
 }
 
 done_testing();
