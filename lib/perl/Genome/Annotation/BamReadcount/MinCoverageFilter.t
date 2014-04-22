@@ -10,18 +10,19 @@ BEGIN {
 
 use above 'Genome';
 use Genome::File::Vcf::Entry;
+use Genome::File::BamReadcount::Entry;
 use Test::More;
 
 my $pkg = 'Genome::Annotation::BamReadcount::MinCoverageFilter';
 use_ok($pkg);
 
-#subtest "pass" => sub {
-#    my $min_coverage = 300;
-#    my $filter = $pkg->create(min_coverage => $min_coverage);
+subtest "pass" => sub {
+    my $min_coverage = 300;
+    my $filter = $pkg->create(min_coverage => $min_coverage);
 
-#    my $entry = create_entry(bam_readcount_line());
-#    ok($filter->process_entry($entry), "Entry passes filter with min_coverage $min_coverage");
-#};
+    my $entry = create_entry(bam_readcount_line());
+    ok($filter->process_entry($entry), "Entry passes filter with min_coverage $min_coverage");
+};
 
 #subtest "fail" => sub {
 #    my $min_coverage = 400;
