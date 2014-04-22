@@ -37,6 +37,12 @@ class Genome::Model::Tools::CopyNumber::Cnmops {
     default_value => 0,
     is_optional => 1,
   },
+  annotation_build_id => {
+    is => 'Genome::Model::Build::ImportedAnnotation',
+    doc => 'Supply an annotation build id (e.g., 124434505 for NCBI-human.ensembl/67_37l_v2)',
+    default_value => '124434505',
+    is_optional => 1,
+  },
   ],
   doc => 'Call CNVs on refalign models(especially Exome) using CnMops',
 };
@@ -134,6 +140,20 @@ sub call_cnmops {
   Genome::Sys->shellcmd(cmd => $cnmops_rcmd);
 }
 
+sub annotate_cnvs {
+  my $self = shift;
+  my $cnmops_bed = $self->outdir . "/cnmops.cnv.bed";
+  if(-e $cnmops_bed) {
+    my $cnmops_bedpe = $self->outdir . "/cnmops.cnv.bedpe";
+    my $cnmops_annotated = $self->outdir . "/cnmops.cnv.bedpe.annotated";
+    my $create_bedpe_cmd = "awk \'!/chr/ { print \"cnv\t\"\$1\"\t\"\$2\"\t\"\$2\"\t\"\$1\"\t\"\$3\"\t\"\$3\"\tNA\tNA\t+\" }\' $cnmops_bed > $cnmops_bedpe";
+    Genome::Sys->shellcmd(cmd=>$create_bedpe_cmd);
+    my $annotate = Genome::Model::Tools::Annotate::Sv::Transcripts->create(input_file => $cnmops_bedpe,
+          output_file => $cnmops_annotated, print_flanking_genes => 1, annotation_build=>$self->annotation_build_id);
+    $annotate->execute();
+  }
+}
+
 sub execute {
   my $self = shift;
   my $normal_refalign;
@@ -145,6 +165,7 @@ sub execute {
   $self->call_cnmops($tumor_bam, $normal_bam, $ROI_bed);
   $self->status_message("\nCnmops tumor, normal bams are $tumor_bam , $normal_bam");
   $self->status_message("\nROI bed is $ROI_bed");
+  $self->annotate_cnvs();
   return 1;
 }
 
