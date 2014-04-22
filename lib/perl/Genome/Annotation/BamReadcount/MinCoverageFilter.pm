@@ -19,7 +19,7 @@ sub name {
 }
 
 sub requires_experts {
-    return ();
+    return ('bam-readcount');
 }
 
 sub process_entry {

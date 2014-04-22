@@ -13,6 +13,14 @@ class Genome::Annotation::BamReadcount::Vaf {
     ],
 };
 
+sub name {
+    return 'min-vaf';
+}
+
+sub requires_experts {
+    return ('bam-readcount');
+}
+
 sub process_entry {
     my $self = shift;
     my $entry = shift;
