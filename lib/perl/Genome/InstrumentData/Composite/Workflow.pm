@@ -274,7 +274,7 @@ sub _alignment_objects {
 
     for my $i (@segmentable_data) {
         my @segments = $i->get_segments();
-        if (@segments > 1 && $read_aligner_name ne 'imported' && $i->isa('Genome::InstrumentData::Imported')) {
+        if (@segments > 0 && $read_aligner_name ne 'imported' && $i->isa('Genome::InstrumentData::Imported')) {
             for my $seg (@segments) {
                 push @instrument_data_output, [
                     $i,
