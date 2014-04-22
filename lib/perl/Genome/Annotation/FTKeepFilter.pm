@@ -14,7 +14,7 @@ class Genome::Annotation::FTKeepFilter {
             default_value => ['PASS'],
         },
         sample_index => {
-            is => 'Text',
+            is => 'Integer',
         },
     },
 };
