@@ -25,5 +25,13 @@ subtest "pass" => sub {
     ok($filter->process_entry($entry), "Entry passes filter with min_vaf $min_vaf");
 };
 
+subtest "fail" => sub {
+    my $min_vaf = 100;
+    my $filter = $pkg->create(min_vaf => $min_vaf, sample_index => 0);
+    lives_ok(sub {$filter->validate}, "Filter validates");
+    my $entry = create_entry(bam_readcount_line);
+    ok(!$filter->process_entry($entry), "Entry fails filter with min_vaf $min_vaf");
+};
+
 done_testing;
 
