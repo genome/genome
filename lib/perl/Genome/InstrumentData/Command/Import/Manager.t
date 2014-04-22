@@ -20,7 +20,7 @@ use Test::More;
 use_ok('Genome::InstrumentData::Command::Import::Manager') or die;
 
 my $cwd = Cwd::getcwd();
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import::Manager', 'v1');
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import::Manager', 'v2');
 chdir $test_dir;
 my $source_files_tsv = $test_dir.'/source-files.tsv';
 my @source_files = map { $_.'.bam' } (qw/ bam1 bam2 bam3 /);
@@ -28,7 +28,7 @@ my @source_files = map { $_.'.bam' } (qw/ bam1 bam2 bam3 /);
 my $analysis_project = Genome::Config::AnalysisProject->create(name => '__TEST_AP__');
 ok($analysis_project, 'create analysis project');
 
-# Sample needed
+# Library needed
 my $manager = Genome::InstrumentData::Command::Import::Manager->create(
     analysis_project => $analysis_project,
     source_files_tsv => $source_files_tsv,
@@ -39,58 +39,28 @@ ok($manager, 'create manager');
 ok($manager->execute, 'execute');
 
 my $imports_aryref = $manager->_imports;
-is_deeply([ map { $_->{status} } @$imports_aryref ], [qw/ no_sample no_sample no_sample /], 'imports aryref status');
-is_deeply([ map { $_->{sample_name} } @$imports_aryref ], [qw/ TeSt-0000-00 TeSt-0000-00 TeSt-0000-01 /], 'imports aryref sample_name');
-is_deeply([ map { $_->{source_files} } @$imports_aryref ], \@source_files, 'imports aryref source_files');
-is_deeply([ map { $_->{instrument_data_attributes} } @$imports_aryref ], [ ["lane=\'8\'"], ["lane=\'8\'"], ["lane=\'7\'"], ], 'imports aryref instrument_data_attributes');
-is_deeply([ map { $_->{job_name} } @$imports_aryref ], [qw/ TeSt-0000-00.1 TeSt-0000-00.2 TeSt-0000-01.1 /], 'imports aryref job_name');
-ok(!grep({ $_->{job_status} } @$imports_aryref), 'imports aryref does not have job_status');
-ok(!grep({ $_->{sample} } @$imports_aryref), 'imports aryref does not have sample');
-ok(!grep({ $_->{libraries} } @$imports_aryref), 'imports aryref does not have library');
-ok(!grep({ $_->{instrument_data} } @$imports_aryref), 'imports aryref does not have instrument_data');
-ok(!grep({ $_->{instrument_data_file} } @$imports_aryref), 'imports aryref does not have instrument_data_file');
-
-# Define samples
-my $base_sample_name = 'TeSt-0000-0';
-my @samples;
-for (0..1) { 
-    push @samples, Genome::Sample->__define__(
-        id => -111 + $_,
-        name => $base_sample_name.$_,
-        nomenclature => 'TeSt',
-    );
-}
-is(@samples, 2, 'define 2 samples');
-
-# Library needed
-$manager = Genome::InstrumentData::Command::Import::Manager->create(
-    analysis_project => $analysis_project,
-    source_files_tsv => $source_files_tsv,
-    list_config => "printf %s NOTHING_TO_SEE_HERE;1;2",
-    launch_config => "echo %{job_name} LAUNCH!",
-);
-ok($manager, 'create manager');
-ok($manager->execute, 'execute');
-
-$imports_aryref = $manager->_imports;
 is_deeply([ map { $_->{status} } @$imports_aryref ], [qw/ no_library no_library no_library /], 'imports aryref status');
-is_deeply([ map { $_->{sample_name} } @$imports_aryref ], [qw/ TeSt-0000-00 TeSt-0000-00 TeSt-0000-01 /], 'imports aryref sample_name');
+is_deeply([ map { $_->{library_name} } @$imports_aryref ], [qw/ TeSt-0000-00-extlibs TeSt-0000-00-extlibs TeSt-0000-01-extlibs /], 'imports aryref library_name');
 is_deeply([ map { $_->{source_files} } @$imports_aryref ], \@source_files, 'imports aryref source_files');
 is_deeply([ map { $_->{instrument_data_attributes} } @$imports_aryref ], [ ["lane=\'8\'"], ["lane=\'8\'"], ["lane=\'7\'"], ], 'imports aryref instrument_data_attributes');
-is_deeply([ map { $_->{job_name} } @$imports_aryref ], [qw/ TeSt-0000-00.1 TeSt-0000-00.2 TeSt-0000-01.1 /], 'imports aryref job_name');
-is_deeply([ map { $_->{sample} } @$imports_aryref ], [$samples[0], $samples[0], $samples[1]], 'imports aryref sample');
+is_deeply([ map { $_->{job_name} } @$imports_aryref ], [qw/ TeSt-0000-00-extlibs.1 TeSt-0000-00-extlibs.2 TeSt-0000-01-extlibs.1 /], 'imports aryref job_name');
 ok(!grep({ $_->{libraries} } @$imports_aryref), 'imports aryref does not have library');
 ok(!grep({ $_->{job_status} } @$imports_aryref), 'imports aryref does not have job_status');
 ok(!grep({ $_->{instrument_data} } @$imports_aryref), 'imports aryref does not have instrument_data');
 ok(!grep({ $_->{instrument_data_file} } @$imports_aryref), 'imports aryref does not have instrument_data_file');
 
 # Define libraries
+my $base_sample_name = 'TeSt-0000-0';
 my @libraries;
 for (0..1) { 
     push @libraries, Genome::Library->__define__(
         id => -222 + $_,
         name => $base_sample_name.$_.'-extlibs',
-        sample => $samples[$_]
+        sample => Genome::Sample->__define__(
+            id => -111 + $_,
+            name => $base_sample_name.$_,
+            nomenclature => 'TeSt',
+        ),
     );
 }
 is(@libraries, 2, 'define 2 libraries');
@@ -106,7 +76,7 @@ ok($manager->execute, 'execute');
 
 $imports_aryref = $manager->_imports;
 is_deeply([ map { $_->{status} } @$imports_aryref ], [qw/ needed needed needed /], 'imports aryref status');
-is_deeply([ map { @{$_->{libraries}} } @$imports_aryref ], [$libraries[0], $libraries[0], $libraries[1]], 'imports aryref library');
+is_deeply([ map { @{$_->{library}} } @$imports_aryref ], [$libraries[0], $libraries[0], $libraries[1]], 'imports aryref library');
 ok(!grep({ $_->{job_status} } @$imports_aryref), 'imports aryref does not have job_status');
 ok(!grep({ $_->{instrument_data} } @$imports_aryref), 'imports aryref does not have instrument_data');
 ok(!grep({ $_->{instrument_data_file} } @$imports_aryref), 'imports aryref does not have instrument_data_file');
@@ -119,7 +89,7 @@ is($manager->_list_status_column, 1, '_list_status_column');
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
     analysis_project => $analysis_project,
     source_files_tsv => $source_files_tsv,
-    list_config => 'printf "%s %s\\n%s %s\\n%s %s" TeSt-0000-00.1 pend TeSt-0000-00.2 run TeSt-0000-01.1 run;1;2',
+    list_config => 'printf "%s %s\\n%s %s\\n%s %s" TeSt-0000-00-extlibs.1 pend TeSt-0000-00-extlibs.2 run TeSt-0000-01-extlibs.1 run;1;2',
     launch_config => "echo %{job_name} LAUNCH!",
 );
 ok($manager, 'create manager');
@@ -146,7 +116,7 @@ my @inst_data;
 for my $import_hashref ( @$imports_aryref ) {
     my $inst_data = Genome::InstrumentData::Imported->__define__(
         original_data_path => $import_hashref->{source_files},
-        sample => $import_hashref->{sample},
+        library => $import_hashref->{library}->[0],
         subset_name => '1-XXXXXX',
         sequencing_platform => 'solexa',
         import_format => 'bam',
@@ -157,7 +127,7 @@ for my $import_hashref ( @$imports_aryref ) {
 }
 is(@inst_data, 3, 'define 3 inst data');
 
-# Fake successful imports by pointing bam_path to existing info.tsv
+# Fake successful imports by pointing bam_path to existing source_files.tsv
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
     analysis_project => $analysis_project,
     source_files_tsv => $source_files_tsv,
@@ -176,21 +146,21 @@ ok(!grep({ $_->{job_status} } @$imports_aryref), 'imports aryref does not have j
 is_deeply(
     [ map { $manager->_resolve_launch_command_for_import($_) } @$imports_aryref ],
     [
-        "echo TeSt-0000-00.1 LAUNCH! TMP=1 genome instrument-data import basic --sample name=TeSt-0000-00 --source-files bam1.bam --import-source-name TeSt --instrument-data-properties lane='8' --analysis-project id=".$analysis_project->id,
-        "echo TeSt-0000-00.2 LAUNCH! TMP=1 genome instrument-data import basic --sample name=TeSt-0000-00 --source-files bam2.bam --import-source-name TeSt --instrument-data-properties lane='8' --analysis-project id=".$analysis_project->id,
-        "echo TeSt-0000-01.1 LAUNCH! TMP=1 genome instrument-data import basic --sample name=TeSt-0000-01 --source-files bam3.bam --import-source-name TeSt --instrument-data-properties lane='7' --analysis-project id=".$analysis_project->id,
-     ],
-     'launch commands',
+    "echo TeSt-0000-00-extlibs.1 LAUNCH! TMP=1 genome instrument-data import basic --library name=TeSt-0000-00-extlibs --source-files bam1.bam --import-source-name TeSt --instrument-data-properties lane='8' --analysis-project id=".$analysis_project->id,
+    "echo TeSt-0000-00-extlibs.2 LAUNCH! TMP=1 genome instrument-data import basic --library name=TeSt-0000-00-extlibs --source-files bam2.bam --import-source-name TeSt --instrument-data-properties lane='8' --analysis-project id=".$analysis_project->id,
+    "echo TeSt-0000-01-extlibs.1 LAUNCH! TMP=1 genome instrument-data import basic --library name=TeSt-0000-01-extlibs --source-files bam3.bam --import-source-name TeSt --instrument-data-properties lane='7' --analysis-project id=".$analysis_project->id,
+    ],
+    'launch commands',
 );
 
 # fail - no name column in csv
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
     analysis_project => $analysis_project,
-    source_files_tsv => $test_dir.'/invalid-no-sample-name-column.tsv',
+    source_files_tsv => $test_dir.'/invalid-no-library-name-column.tsv',
 );
 ok($manager, 'create manager');
 ok(!$manager->execute, 'execute failed');
-is($manager->error_message, 'Property \'source_files_tsv\': No "sample_name" column in sample info file! '.$manager->source_files_tsv, 'correct error');
+is($manager->error_message, 'Property \'source_files_tsv\': No "library_name" column in source files tsv! '.$manager->source_files_tsv, 'correct error');
 
 # fail - extra column name column in csv
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
