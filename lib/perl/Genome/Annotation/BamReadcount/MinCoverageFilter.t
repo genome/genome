@@ -11,6 +11,7 @@ BEGIN {
 use above 'Genome';
 use Genome::File::Vcf::Entry;
 use Genome::File::BamReadcount::Entry;
+use Test::Exception;
 use Test::More;
 
 my $pkg = 'Genome::Annotation::BamReadcount::MinCoverageFilter';
@@ -18,22 +19,28 @@ use_ok($pkg);
 
 subtest "pass" => sub {
     my $min_coverage = 300;
-    my $filter = $pkg->create(min_coverage => $min_coverage);
-
+    my $filter = $pkg->create(min_coverage => $min_coverage, sample_index => 0);
+    lives_ok(sub {$filter->validate}, "Filter validates");
     my $entry = create_entry(bam_readcount_line());
     ok($filter->process_entry($entry), "Entry passes filter with min_coverage $min_coverage");
 };
 
-#subtest "fail" => sub {
-#    my $min_coverage = 400;
-#    my $filter = $pkg->create(min_coverage => $min_coverage);
+subtest "fail" => sub {
+    my $min_coverage = 400;
+    my $filter = $pkg->create(min_coverage => $min_coverage, sample_index => 0);
+    lives_ok(sub {$filter->validate}, "Filter validates");
 
-#    my $entry = create_entry(bam_readcount_line());
-#    ok(!$filter->process_entry($entry), "Entry does not pass filter with min_coverage $min_coverage");
+    my $entry = create_entry(bam_readcount_line());
+    ok(!$filter->process_entry($entry), "Entry does not pass filter with min_coverage $min_coverage");
 
-#    my $entry = create_entry("");
-#    ok(!$filter->process_entry($entry), "Entry without coverage does not pass filter with min_coverage $min_coverage");
-#};
+    my $entry = create_entry("");
+    ok(!$filter->process_entry($entry), "Entry without coverage does not pass filter with min_coverage $min_coverage");
+};
+
+subtest "under-specified parameters" => sub {
+    my $filter = $pkg->create();
+    dies_ok(sub {$filter->validate}, "Filter without enough parameters does not validate");
+};
 
 sub create_vcf_header {
     my $header_txt = <<EOS;
@@ -81,6 +88,7 @@ sub bam_readcount_line {
 
 sub create_bam_readcount_string {
     my $readcount_line = shift;
+    return "" unless ($readcount_line);
     return Genome::File::BamReadcount::Entry::encode($readcount_line);
 }
 
