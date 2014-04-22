@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Genome;
 use YAML;
+use Params::Validate qw(validate_pos);
 
 class Genome::Annotation::Plan {
     is => 'Genome::Annotation::Plan::Base',
@@ -18,6 +19,19 @@ class Genome::Annotation::Plan {
         },
     ],
 };
+
+sub get_plan {
+    my ($self, $category, $name) = validate_pos(@_, 1, 1, 1);
+
+    my $accessor = sprintf("%s_plans", $category);
+    my @category_plans = $self->$accessor;
+    for my $plan (@category_plans) {
+        if ($plan->name eq $name) {
+            return $plan;
+        }
+    }
+    die "Couldn't find plan of category ($category) and name ($name)";
+}
 
 sub object {
     # return the master workflow generator

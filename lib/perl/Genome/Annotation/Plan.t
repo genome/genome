@@ -79,4 +79,13 @@ my $expected_hashref = {
 is_deeply($plan->as_hashref, $expected_hashref, "Got expected hashref from 'as_hashref'.");
 is_deeply($pkg->create_from_hashref($plan->as_hashref->{root})->as_hashref, $plan->as_hashref, "Roundtrip test successful.");
 
+my $expert_one_plan = $plan->get_plan('expert', 'expert_one');
+is($expert_one_plan->name, 'expert_one', "Got correct plan ('expert_one') from get_plan");
+
+my $reporter_alpha_plan = $plan->get_plan('reporter', 'reporter_alpha');
+is($reporter_alpha_plan->name, 'reporter_alpha', "Got correct plan ('reporter_alpha') from get_plan");
+
+throws_ok sub {$plan->get_plan('bad_category', 'bad_name');}, qr(bad_category), "Dies when given a bad category";
+throws_ok sub {$plan->get_plan('expert', 'bad_name');}, qr(bad_name), "Dies when given a bad name";
+
 done_testing();
