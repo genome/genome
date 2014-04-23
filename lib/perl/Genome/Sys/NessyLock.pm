@@ -15,9 +15,16 @@ my $LOCKING_CLIENT;
 sub translate_lock_args {
     my ($class, %args) = @_;
 
+    my $block_sleep = delete $args{block_sleep};
+
     $args{timeout} = $class->_new_style_lock_timeout_from_args(
-        block_sleep => delete $args{block_sleep},
+        block_sleep => $block_sleep,
         max_try     => delete $args{max_try},
+    );
+
+    $args{wait_announce_interval} = _translate_wait_announce_interval(
+        block_sleep => $block_sleep,
+        wait_announce_interval => delete $args{wait_announce_interval},
     );
 
     return %args;
@@ -134,6 +141,23 @@ sub _new_style_lock_timeout_from_args {
     }
 
     return $timeout;
+}
+
+sub _translate_wait_announce_interval {
+    my (%args) = @_;
+
+    my $block_sleep = delete $args{block_sleep};
+    my $wait_announce_interval = delete $args{wait_announce_interval};
+
+    if ($wait_announce_interval) {
+        return $wait_announce_interval;
+    }
+
+    if ($block_sleep) {
+        return $block_sleep;
+    }
+
+    croak 'cannot translate wait_announce_interval';
 }
 
 sub release_all {
