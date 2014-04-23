@@ -204,7 +204,7 @@ END_CONTENT
 sub unlock {
     my($self, %args) = @_;
 
-    @args{'resource_lock', 'parent_dir'} = _resolve_resource_lock_and_parent_dir_for_lock_resource(%args);
+    $args{resource_lock} = $self->_resolve_resource_lock_for_unlock_resource(%args);
 
     my $resource_lock = delete $args{resource_lock};
     unless ($resource_lock) {
