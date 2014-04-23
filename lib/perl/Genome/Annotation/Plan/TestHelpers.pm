@@ -1,6 +1,22 @@
 # This package just defines some classes so you can create plan yaml files that are valid.
 package Genome::Annotation::Plan::TestHelpers;
 
+use Sub::Install qw(reinstall_sub);
+use Exporter 'import';
+
+our @EXPORT_OK = qw(
+    set_what_interpreter_x_requires
+);
+
+sub set_what_interpreter_x_requires {
+    my @what = @_;
+    reinstall_sub( {
+        into => 'Genome::Annotation::TestInterpreter',
+        as => 'requires_experts',
+        code => sub {return @what;},
+    });
+}
+
 {
     package Genome::Annotation::TestInterpreter;
 
