@@ -77,9 +77,8 @@ sub lock_resource {
 
     my %locks;
     for my $backend (keys %backends) {
-        my %lock_args = $backend->translate_lock_args(%args);
-
-        my $lock = $backend->lock(%lock_args);
+        my @lock_args = $backend->translate_lock_args(%args);
+        my $lock = $backend->lock(@lock_args);
         if ($lock) {
             $locks{$backend} = $lock;
         }
@@ -87,8 +86,8 @@ sub lock_resource {
         my $mandatory = $backends{$backend};
         if ($mandatory && !$lock) {
             for (keys %locks) {
-                my %unlock_args = $backend->translate_unlock_args(%args);
-                $_->unlock(%unlock_args);
+                my @unlock_args = $backend->translate_unlock_args(%args);
+                $_->unlock(@unlock_args);
             }
             return;
         }
@@ -128,8 +127,8 @@ sub unlock_resource {
 
     my $rv;
     for my $backend (keys %backends) {
-        my %unlock_args = $backend->translate_unlock_args(%args);
-        $rv = $backend->unlock(%unlock_args);
+        my @unlock_args = $backend->translate_unlock_args(%args);
+        $rv = $backend->unlock(@unlock_args);
     }
 
     return $rv;
