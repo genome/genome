@@ -179,6 +179,10 @@ class Genome::Model::SomaticValidation {
             via => 'reference_sequence_build',
             to => 'id'
         },
+        known_sites_id => {
+            via => 'known_sites',
+            to => 'id',
+        },
     ],
     has_transient_constant_optional => {
         sequencing_platform => {
@@ -243,6 +247,22 @@ sub add_reference_sequence_build {
 
     my $build = Genome::Model::Build->get(@_);
     $self->reference_sequence_build($build);
+}
+
+sub _add_known_site {
+    my $self = shift;
+
+    my @builds = Genome::Model::Build->get(@_);
+    map $self->add_input(name => 'known_sites', value => $_), @builds;
+}
+
+sub known_sites_id {
+    my $self = shift;
+    if(@_) {
+        $self->_add_known_site(id => $_[0]);
+    }
+
+    return $self->__known_sites_id;
 }
 
 sub _validate_required_for_start_properties {
