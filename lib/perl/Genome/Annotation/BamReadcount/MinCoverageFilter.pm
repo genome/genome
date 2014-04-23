@@ -26,12 +26,23 @@ sub process_entry {
     my ($self, $entry) = @_;
 
     my $readcount_entry = $self->get_readcount_entry($entry);
-    return 0 unless $readcount_entry;
+    return return_hash($entry, 0) unless $readcount_entry;
 
     if ($readcount_entry->depth >= $self->min_coverage) {
-        return 1;
+        return return_hash($entry, 1);
     }
-    return 0;
+    return return_hash($entry, 0);
+}
+
+sub return_hash {
+    my $entry = shift;
+    my $pass = shift;
+
+    my %return_hash;
+    for my $alt (@{$entry->{alternate_alleles}}) {
+        $return_hash{$alt} = $pass;
+    }
+    return %return_hash;
 }
 
 1;
