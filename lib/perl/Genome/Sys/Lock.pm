@@ -226,8 +226,10 @@ sub _resolve_resource_lock_for_unlock_resource {
     return $resource_lock;
 }
 
+my $cleanup_handler_installed;
 sub cleanup_handler_check {
     my $self = shift;
+    return if $cleanup_handler_installed++;
     $SIG{'INT'} = \&INT_cleanup;
     $SIG{'TERM'} = \&INT_cleanup;
     $SIG{'HUP'} = \&INT_cleanup;
