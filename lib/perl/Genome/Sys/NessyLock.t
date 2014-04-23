@@ -8,15 +8,15 @@ use List::Util qw(shuffle);
 
 $ENV{GENOME_NESSY_SERVER} = 'http://nessy.gsc.wustl.edu/';
 
-my $resource_lock = 'NessLock.t/' . random_string();
-diag 'resource_lock = ' . $resource_lock;
+my $resource_name = 'NessLock.t/' . random_string();
+diag 'resource = ' . $resource_name;
 
 my $resource = Genome::Sys::NessyLock->lock(
-    resource_lock => $resource_lock,
+    resource => $resource_name,
     timeout => 5,
     wait_announce_interval => 10,
 );
-is($resource, $resource_lock, 'locked a Nessy resource');
+is($resource, $resource_name, 'locked a Nessy resource');
 
 my $unlocked = Genome::Sys::NessyLock->unlock(resource_lock => $resource);
 is($unlocked, 1, 'unlocked a Nessy resource');

@@ -15,9 +15,9 @@ my $LOCKING_CLIENT;
 sub lock {
     my($self, %args) = @_;
 
-    my $resource_lock = $args{resource_lock};
-    unless (defined $resource_lock) {
-        croak('resource_lock not defined');
+    my $resource = $args{resource};
+    unless (defined $resource) {
+        croak('resource not defined');
     }
 
     my $timeout = delete $args{timeout};
@@ -37,8 +37,8 @@ sub lock {
     @user_data{'host','pid','lsf_id','user'}
         = (hostname, $$, ($ENV{'LSB_JOBID'} || 'NONE'), Genome::Sys->username);
 
-    if ($self->_is_holding_nessy_lock($resource_lock)) {
-        $self->error_message("Tried to lock resource more than once: $resource_lock");
+    if ($self->_is_holding_nessy_lock($resource)) {
+        $self->error_message("Tried to lock resource more than once: $resource");
         Carp::croak($self->error_message);
     }
 
@@ -50,30 +50,30 @@ sub lock {
         interval => $wait_announce_interval,
         cb => sub {
             my $total_elapsed_time = time() - $initial_time;
-            $self->status_message("waiting (total_elapsed_time = $total_elapsed_time seconds) on lock for resource '$resource_lock': $claim_warning. lock_info is:\n$info_content");
+            $self->status_message("waiting (total_elapsed_time = $total_elapsed_time seconds) on lock for resource '$resource': $claim_warning. lock_info is:\n$info_content");
         },
     );
-    my $claim = $LOCKING_CLIENT->claim($resource_lock, timeout => $timeout, user_data => \%user_data);
+    my $claim = $LOCKING_CLIENT->claim($resource, timeout => $timeout, user_data => \%user_data);
     undef $wait_announce_timer;
-    $NESSY_LOCKS_TO_REMOVE{$resource_lock} = $claim if $claim;
+    $NESSY_LOCKS_TO_REMOVE{$resource} = $claim if $claim;
 
-    return $resource_lock;
+    return $resource;
 }
 
 sub unlock {
     my($self, %args) = @_;
 
-    my $resource_lock = delete $args{resource_lock};
-    unless ($resource_lock) {
-        carp('resource_lock is not set');
+    my $resource = delete $args{resource};
+    unless ($resource) {
+        carp('resource is not set');
     }
 
     if ($LOCKING_CLIENT) {
-        my $claim = delete $NESSY_LOCKS_TO_REMOVE{$resource_lock};
+        my $claim = delete $NESSY_LOCKS_TO_REMOVE{$resource};
         if ($claim) {
             $claim->release;
         } else {
-            $self->error_message("Nessy tried to release, but no claim in slot for resource_lock: $resource_lock");
+            $self->error_message("Nessy tried to release, but no claim in slot for resource: $resource");
         }
     } else {
         return 1;
@@ -89,9 +89,9 @@ sub clear_state {
 sub release_all {
     my $class = shift;
 
-    foreach my $resource_lock ( keys %NESSY_LOCKS_TO_REMOVE ) {
-        warn("Removing remaining lock: '$resource_lock'") unless $ENV{'HARNESS_ACTIVE'};
-        __PACKAGE__->unlock($resource_lock); # NessyLock
+    foreach my $resource ( keys %NESSY_LOCKS_TO_REMOVE ) {
+        warn("Removing remaining lock: '$resource'") unless $ENV{'HARNESS_ACTIVE'};
+        __PACKAGE__->unlock($resource); # NessyLock
     }
     %NESSY_LOCKS_TO_REMOVE = ();
     undef $LOCKING_CLIENT;
@@ -112,11 +112,16 @@ sub translate_lock_args {
         wait_announce_interval => delete $args{wait_announce_interval},
     );
 
+    $args{resource} = delete $args{resource_lock};
+
     return %args;
 }
 
 sub translate_unlock_args {
     my ($class, %args) = @_;
+
+    $args{resource} = delete $args{resource_lock};
+
     return %args;
 }
 
@@ -135,8 +140,8 @@ sub _start_locking_client {
 
 sub has_lock { _is_holding_nessy_lock(@_) }
 sub _is_holding_nessy_lock {
-    my($self, $resource_lock) = @_;
-    return $NESSY_LOCKS_TO_REMOVE{$resource_lock};
+    my($self, $resource) = @_;
+    return $NESSY_LOCKS_TO_REMOVE{$resource};
 }
 
 sub min_timeout {
