@@ -19,6 +19,8 @@ my %SYMLINKS_TO_REMOVE;
 sub lock {
     my($self, %args) = @_;
 
+    @args{'resource_lock', 'parent_dir'} = _resolve_resource_lock_and_parent_dir_for_lock_resource(%args);
+
     my $total_lock_start_time = Time::HiRes::time();
 
     my($resource_lock, $parent_dir)
@@ -201,6 +203,8 @@ END_CONTENT
 
 sub unlock {
     my($self, %args) = @_;
+
+    @args{'resource_lock', 'parent_dir'} = _resolve_resource_lock_and_parent_dir_for_lock_resource(%args);
 
     my $resource_lock = delete $args{resource_lock};
     unless ($resource_lock) {
