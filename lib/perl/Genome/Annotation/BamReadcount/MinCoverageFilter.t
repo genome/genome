@@ -16,12 +16,22 @@ use Genome::Annotation::BamReadcount::TestHelper qw(bam_readcount_line create_en
 my $pkg = 'Genome::Annotation::BamReadcount::MinCoverageFilter';
 use_ok($pkg);
 
+my %pass = (
+    G => 1,
+    C => 1,
+);
+
+my %fail = (
+    G => 0,
+    C => 0,
+);
+
 subtest "pass" => sub {
     my $min_coverage = 300;
     my $filter = $pkg->create(min_coverage => $min_coverage, sample_index => 0);
     lives_ok(sub {$filter->validate}, "Filter validates");
     my $entry = create_entry(bam_readcount_line);
-    ok($filter->process_entry($entry), "Entry passes filter with min_coverage $min_coverage");
+    is_deeply({$filter->process_entry($entry)}, \%pass, "Entry passes filter with min_coverage $min_coverage");
 };
 
 subtest "fail" => sub {
@@ -30,10 +40,10 @@ subtest "fail" => sub {
     lives_ok(sub {$filter->validate}, "Filter validates");
 
     my $entry = create_entry(bam_readcount_line);
-    ok(!$filter->process_entry($entry), "Entry does not pass filter with min_coverage $min_coverage");
+    is_deeply({$filter->process_entry($entry)}, \%fail, "Entry does not pass filter with min_coverage $min_coverage");
 
     $entry = create_entry("");
-    ok(!$filter->process_entry($entry), "Entry without coverage does not pass filter with min_coverage $min_coverage");
+    is_deeply({$filter->process_entry($entry)}, \%fail, "Entry without coverage does not pass filter with min_coverage $min_coverage");
 };
 
 subtest "under-specified parameters" => sub {
