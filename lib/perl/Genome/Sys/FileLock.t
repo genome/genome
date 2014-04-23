@@ -92,13 +92,13 @@ my $init_lsf_job_id = $ENV{'LSB_JOBID'};
         skip 'only test the state of the lsf job if we are running on a blade with a job id',
         3 unless ($init_lsf_job_id);
         $ENV{'LSB_JOBID'} = $init_lsf_job_id;
-        ok(Genome::Sys::FileLock->lock(Genome::Sys::Lock::with_default_lock_resource_args(
+        ok(Genome::Sys::FileLock->lock(
                 lock_directory => $tmp_dir,
                 resource_id => $bogus_id,
                 wait_announce_interval => 10,
                 max_try => 1,
                 block_sleep => 3,
-            )),'lock resource with real lsf_job_id');
+            ),'lock resource with real lsf_job_id');
 
         ok(!fork_lock_resource(
                 lock_directory => $tmp_dir,
@@ -146,12 +146,11 @@ for my $child (1...$children) {
         my $max_try = 2 * int($lock_hold_time / $block_sleep + 1) * $children;
         my $wait_announce_interval = 2* $children * $lock_hold_time;
         my $lock = Genome::Sys::FileLock->lock(
-            Genome::Sys::Lock::with_default_lock_resource_args(
             resource_lock => $resource,
             block_sleep   => $block_sleep,
             max_try       => $max_try,
             wait_announce_interval => $wait_announce_interval,
-        ));
+        );
         unless ($lock) {
             print_event($fh, "LOCK_FAIL", "Failed to get a lock" );
             $fh->close;
@@ -224,8 +223,7 @@ sub test_locking {
     my $message = delete $params{message};
     die unless defined($message);
 
-    my $lock = Genome::Sys::FileLock->lock(
-        Genome::Sys::Lock::with_default_lock_resource_args(%params));
+    my $lock = Genome::Sys::FileLock->lock(%params);
     if ($successful) {
         ok($lock,$message);
         if ($lock) { return $lock; }
@@ -268,7 +266,7 @@ sub test_locking_forked {
 }
 
 sub fork_lock_resource {
-    my $sub = sub { Genome::Sys::FileLock->lock(Genome::Sys::Lock::with_default_lock_resource_args(@_)) };
+    my $sub = sub { Genome::Sys::FileLock->lock(@_) };
     my $undo = sub { Genome::Sys::FileLock->unlock(Genome::Sys::Lock::with_default_unlock_resource_args(@_)) };
     return fork_to_lock($sub, $undo, @_);
 }
