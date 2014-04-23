@@ -17,5 +17,8 @@ class Genome::Annotation::BamReadcount::Adaptor {
     ],
 };
 
+sub name {
+    "bam-readcount";
+}
 
 1;

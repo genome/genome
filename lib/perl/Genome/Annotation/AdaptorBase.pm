@@ -35,6 +35,10 @@ class Genome::Annotation::AdaptorBase {
     ],
 };
 
+sub name {
+    die "Abstract";
+}
+
 sub shortcut {
     #TODO
 }
@@ -97,7 +101,7 @@ sub resolve_plan_attributes {
     my $self = shift;
 
     my $annotation_plan = $self->build->annotation_plan;
-    my $specific_plan = $annotation_plan->get_plan($self->category, $self->name);
+    my $specific_plan = $annotation_plan->get_plan('expert', $self->name);
     for my $name (keys %{$specific_plan->params}) {
         $self->$name($specific_plan->params->{$name});
     }
