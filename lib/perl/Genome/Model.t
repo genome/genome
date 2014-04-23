@@ -10,11 +10,33 @@ use warnings;
 
 use above "Genome";
 use Genome::Utility::Test qw(is_equal_set);
+use Genome::Test::Factory::Model::ReferenceAlignment;
 
 require File::Temp;
 use Test::More;
+use Test::Fatal qw(exception);
 
 use_ok('Genome::Model') or die;
+
+subtest 'validate created_by and run_as' => sub {
+    plan tests => 4;
+
+    my $model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object();
+
+    is($model->run_as(Genome::Sys->username),
+        Genome::Sys->username,
+        'set run_as to current user');
+    like(exception { $model->run_as('abcdefg') },
+        qr/run_as/,
+        'threw exception when trying to set run_as to an invalid_user');
+
+    is($model->created_by(Genome::Sys->username),
+        Genome::Sys->username,
+        'set created_by to current user');
+    like(exception { $model->created_by('abcdefg') },
+        qr/created_by/,
+        'threw exception when trying to set created_by to an invalid_user');
+};
 
 # SUB CLASS TO TEST GENOME::MODEL
 class Genome::Model::TestyMcTesterson {

@@ -30,7 +30,7 @@ subtest 'validate_run_as' => sub {
     $model->run_as(Genome::Sys->username);
     is($build->validate_run_as(), undef, 'validate_run_as should return empty for current user');
 
-    $model->run_as('abcdefg');
+    $model->{run_as} = 'abcdefg';
     my $error = $build->validate_run_as();
     ok($error, 'validate_run_as should return an error tag for fake user');
     is_deeply([$error->properties], ['run_as'], 'error was on the run_as property');

@@ -1094,7 +1094,11 @@ sub user_name { created_by(@_) }
 sub created_by {
     my $self = shift;
     if (@_) {
-        return $self->__created_by(@_);
+        my $username = shift;
+        unless (Genome::Sys::User->get(username => $username)) {
+            croak "invalid username for created_by: $username";
+        }
+        return $self->__created_by($username);
     } else {
         # Perl 5.8 does not support //
         if (defined $self->__created_by) {
@@ -1109,7 +1113,11 @@ sub created_by {
 sub run_as {
     my $self = shift;
     if (@_) {
-        return $self->__run_as(@_);
+        my $username = shift;
+        unless (Genome::Sys::User->get(username => $username)) {
+            croak "invalid username for run_as: $username";
+        }
+        return $self->__run_as($username);
     } else {
         # Perl 5.8 does not support //
         if (defined $self->__run_as) {
