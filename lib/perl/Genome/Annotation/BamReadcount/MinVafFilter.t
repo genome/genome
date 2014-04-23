@@ -33,5 +33,14 @@ subtest "fail" => sub {
     ok(!$filter->process_entry($entry), "Entry fails filter with min_vaf $min_vaf");
 };
 
+subtest "fail heterozygous non-reference sample" => sub {
+    my $min_vaf = 90;
+    my $filter = $pkg->create(min_vaf => $min_vaf, sample_index => 1);
+    lives_ok(sub {$filter->validate}, "Filter validates");
+    my $entry = create_entry(bam_readcount_line);
+    ok(!$filter->process_entry($entry), "Entry fails filter with min_vaf $min_vaf");
+    cmp_ok($filter->calculate_vaf($entry, 'C'), '<', 0.3, "VAF is very low");
+};
+
 done_testing;
 

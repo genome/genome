@@ -25,21 +25,19 @@ sub process_entry {
     my $self = shift;
     my $entry = shift;
 
-    my @alt_alleles = $entry->alt_bases_for_sample($self->sample_index);
-    my $vaf = $self->calculate_vaf($entry, @alt_alleles);
+    my @alt_alleles = sort $entry->alt_bases_for_sample($self->sample_index);
+    my $vaf = $self->calculate_vaf($entry, $alt_alleles[0]);
     return $vaf >= $self->min_vaf;
 }
 
 sub calculate_vaf {
     my $self = shift;
-    my ($entry, @alt_alleles) = @_;
+    my ($entry, $alt_allele) = @_;
     my $bam_readcount_entry = $self->get_readcount_entry($entry);
 
     my $var_count = 0;
     for my $lib ($bam_readcount_entry->libraries) {
-        for my $allele (@alt_alleles) {
-            $var_count += $lib->metrics_for($allele)->count;
-        }
+        $var_count += $lib->metrics_for($alt_allele)->count;
     }
 
     return $var_count / $bam_readcount_entry->depth * 100;
