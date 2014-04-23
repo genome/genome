@@ -26,21 +26,9 @@ sub translate_lock_args {
 sub lock {
     my($self, %args) = @_;
 
-    $self->_start_locking_client;
-    return 1 unless $LOCKING_CLIENT;
-
-    my %user_data;
-    @user_data{'host','pid','lsf_id','user'}
-        = (hostname, $$, ($ENV{'LSB_JOBID'} || 'NONE'), Genome::Sys->username);
-
     my $resource_lock = $args{resource_lock};
     unless (defined $resource_lock) {
         croak('resource_lock not defined');
-    }
-
-    if ($self->_is_holding_nessy_lock($resource_lock)) {
-        $self->error_message("Tried to lock resource more than once: $resource_lock");
-        Carp::croak($self->error_message);
     }
 
     my $timeout = delete $args{timeout};
@@ -51,6 +39,18 @@ sub lock {
     my $wait_announce_interval = delete $args{wait_announce_interval};
     unless (defined $wait_announce_interval) {
         croak('wait_announce_interval not defined');
+    }
+
+    $self->_start_locking_client;
+    return 1 unless $LOCKING_CLIENT;
+
+    my %user_data;
+    @user_data{'host','pid','lsf_id','user'}
+        = (hostname, $$, ($ENV{'LSB_JOBID'} || 'NONE'), Genome::Sys->username);
+
+    if ($self->_is_holding_nessy_lock($resource_lock)) {
+        $self->error_message("Tried to lock resource more than once: $resource_lock");
+        Carp::croak($self->error_message);
     }
 
     my $info_content = join("\n", map { $_ . ': ' . $user_data{$_} } keys %user_data);
