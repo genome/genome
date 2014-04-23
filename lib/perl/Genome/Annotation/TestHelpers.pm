@@ -14,6 +14,8 @@ use Sub::Install qw(reinstall_sub);
 use Set::Scalar;
 use Params::Validate qw(validate validate_pos :types);
 use Genome::Test::Factory::Model::SomaticVariation;
+use Genome::Test::Factory::InstrumentData::Solexa;
+use Genome::Test::Factory::InstrumentData::MergedAlignmentResult;
 use Genome::Utility::Test;
 
 use Exporter 'import';
@@ -47,9 +49,9 @@ sub get_test_somatic_variation_build {
     return get_test_somatic_variation_build_from_files(
         bam1 => File::Spec->join($test_dir, 'bam1.bam'),
         bam2 => File::Spec->join($test_dir, 'bam2.bam'),
-        reference_fasta => File::Spec->join($test_dir, 'reference.fa'),
-        snvs_vcf => File::Spec->join($test_dir, 'snvs_vcf.vcf.gz'),
-        indels_vcf => File::Spec->join($test_dir, 'indels_vcf.vcf.gz'),
+        reference_fasta => File::Spec->join($test_dir, 'reference.fasta'),
+        snvs_vcf => File::Spec->join($test_dir, 'snvs.vcf.gz'),
+        indels_vcf => File::Spec->join($test_dir, 'indels.vcf.gz'),
         plan_file => $plan_file,
     );
 }
@@ -146,8 +148,21 @@ sub setup_vcf_results {
 
 sub setup_bam_results {
     my ($bam1, $bam2, $reference_fasta) = validate_pos(@_, 1, 1, 1);
-    my $bam_result1 = Genome::InstrumentData::AlignmentResult::Merged->__define__();
-    my $bam_result2 = Genome::InstrumentData::AlignmentResult::Merged->__define__();
+    my $bam_result1 = Genome::Test::Factory::InstrumentData::MergedAlignmentResult->setup_object();
+    my $bam_result2 = Genome::Test::Factory::InstrumentData::MergedAlignmentResult->setup_object();
+
+    my %bam_result_to_sample_name = (
+        $bam_result1->id => get_sample_name($bam1),
+        $bam_result2->id => get_sample_name($bam2),
+    );
+    reinstall_sub( {
+        into => 'Genome::InstrumentData::AlignmentResult::Merged',
+        as => 'sample_name',
+        code => sub {my $self = shift;
+            return $bam_result_to_sample_name{$self->id};
+        },
+    });
+
 
     my %result_to_bam_file = (
         $bam_result1->id => $bam1,
@@ -167,4 +182,10 @@ sub setup_bam_results {
     });
 
     return ($bam_result1, $bam_result2);
+}
+
+sub get_sample_name {
+    my $bam = shift;
+    my $cmd = Genome::Model::Tools::Sam::GetSampleName->execute(bam_file => $bam);
+    return $cmd->sample_name;
 }
