@@ -11856,6 +11856,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'test!',
         undef,
+        'annotation-build-id=s',
+        undef,
         'help!',
         undef
       ],
