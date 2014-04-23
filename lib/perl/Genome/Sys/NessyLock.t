@@ -18,7 +18,7 @@ my $resource = Genome::Sys::NessyLock->lock(
 );
 is($resource, $resource_name, 'locked a Nessy resource');
 
-my $unlocked = Genome::Sys::NessyLock->unlock(resource_lock => $resource);
+my $unlocked = Genome::Sys::NessyLock->unlock($resource);
 is($unlocked, 1, 'unlocked a Nessy resource');
 
 sub random_string {

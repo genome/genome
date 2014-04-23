@@ -61,9 +61,7 @@ sub lock {
 }
 
 sub unlock {
-    my($self, %args) = @_;
-
-    my $resource = delete $args{resource};
+    my ($self, $resource) = @_;
     unless ($resource) {
         carp('resource is not set');
     }
@@ -119,10 +117,7 @@ sub translate_lock_args {
 
 sub translate_unlock_args {
     my ($class, %args) = @_;
-
-    $args{resource} = delete $args{resource_lock};
-
-    return %args;
+    return delete $args{resource_lock};
 }
 
 sub is_enabled {
