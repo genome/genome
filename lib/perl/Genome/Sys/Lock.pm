@@ -142,6 +142,20 @@ sub clear_state {
     }
 }
 
+=item release_all()
+
+C<release_all()> should release all locks managed by this process.  This should
+not be called under normal circumstances.  Instead unlock each lock
+individually.
+
+=cut
+
+sub release_all {
+    for my $backend (keys %backends) {
+        $backend->release_all();
+    }
+}
+
 sub _lock_resource_report_inconsistent_locks {
     my($self, $resource_lock, $file_lock, $nessy_claim) = @_;
 
