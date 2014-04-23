@@ -74,7 +74,8 @@ sub lock {
     my $claim = $LOCKING_CLIENT->claim($resource_lock, timeout => $timeout, user_data => \%user_data);
     undef $wait_announce_timer;
     $NESSY_LOCKS_TO_REMOVE{$resource_lock} = $claim if $claim;
-    return $claim;
+
+    return $resource_lock;
 }
 
 sub unlock {
