@@ -23,6 +23,9 @@ sub lock {
         = (hostname, $$, ($ENV{'LSB_JOBID'} || 'NONE'), Genome::Sys->username);
 
     my $resource_lock = $args{resource_lock};
+    unless (defined $resource_lock) {
+        croak('resource_lock not defined');
+    }
 
     if ($self->_is_holding_nessy_lock($resource_lock)) {
         $self->error_message("Tried to lock resource more than once: $resource_lock");
