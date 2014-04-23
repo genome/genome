@@ -130,10 +130,9 @@ sub execute {
     if($self->insertion_centric) {
         $command .= " -i";
     }
-        
 
     Genome::Sys->shellcmd(
-        cmd => "$command > $output_file 2> /dev/null",
+        cmd => "$command > $output_file",
         input_files => [$bam, $reference, $region_file],
         output_files => [$output_file],
         allow_zero_size_output_files => 1,
