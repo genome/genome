@@ -53,10 +53,10 @@ test_locking_forked(successful => 0,
     max_try => 1,
     block_sleep => 3,);
 
-ok(Genome::Sys::FileLock->unlock(Genome::Sys::Lock::with_default_unlock_resource_args(
+ok(Genome::Sys::FileLock->unlock(
         lock_directory => $tmp_dir,
         resource_id => $bogus_id,
-    )), 'unlock resource_id '. $bogus_id);
+    ), 'unlock resource_id '. $bogus_id);
 my $init_lsf_job_id = $ENV{'LSB_JOBID'};
 {
     local $ENV{'LSB_JOBID'};
@@ -108,10 +108,10 @@ my $init_lsf_job_id = $ENV{'LSB_JOBID'};
                 block_sleep => 3,
             ),'failed lock resource with real lsf_job_id blocking');
 
-        ok(Genome::Sys::FileLock->unlock(Genome::Sys::Lock::with_default_unlock_resource_args(
+        ok(Genome::Sys::FileLock->unlock(
                 lock_directory => $tmp_dir,
                 resource_id => $bogus_id,
-            )), 'unlock resource_id '. $bogus_id);
+            ), 'unlock resource_id '. $bogus_id);
     };
 }
 
@@ -164,9 +164,7 @@ for my $child (1...$children) {
         print_event($fh, "LOCK_SUCCESS", "Successfully got a lock" );
         sleep $lock_hold_time;
 
-        unless (Genome::Sys::FileLock->unlock(
-                Genome::Sys::Lock::with_default_unlock_resource_args(
-                resource_lock => $resource))) {
+        unless (Genome::Sys::FileLock->unlock(resource_lock => $resource)) {
             print_event($fh, "UNLOCK_FAIL", "Failed to release a lock" );
             $fh->close;
             exit(1);
@@ -267,7 +265,7 @@ sub test_locking_forked {
 
 sub fork_lock_resource {
     my $sub = sub { Genome::Sys::FileLock->lock(@_) };
-    my $undo = sub { Genome::Sys::FileLock->unlock(Genome::Sys::Lock::with_default_unlock_resource_args(@_)) };
+    my $undo = sub { Genome::Sys::FileLock->unlock(@_) };
     return fork_to_lock($sub, $undo, @_);
 }
 

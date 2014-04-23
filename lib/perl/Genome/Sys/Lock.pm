@@ -120,7 +120,7 @@ resource.
 
 sub unlock_resource {
     my $self = shift;
-    my %args = with_default_unlock_resource_args(@_);
+    my %args = @_;
 
     my $rv;
     for my $backend (keys %backends) {
@@ -209,10 +209,9 @@ sub with_default_lock_resource_args {
     $args{block_sleep} = 60 unless defined $args{block_sleep};
     $args{max_try} = 7200 unless defined $args{max_try};
     $args{wait_announce_interval} = 0 unless defined $args{wait_announce_interval};
+
     return %args;
 }
-
-sub with_default_unlock_resource_args {}
 
 sub _resolve_resource_lock_for_unlock_resource {
     my($self, %args) = @_;
