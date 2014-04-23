@@ -12,24 +12,6 @@ use base 'UR::ModuleBase';   # *_message methods, but no constructor
 my %NESSY_LOCKS_TO_REMOVE;
 my $LOCKING_CLIENT;
 
-sub translate_lock_args {
-    my ($class, %args) = @_;
-
-    my $block_sleep = delete $args{block_sleep};
-
-    $args{timeout} = $class->_new_style_lock_timeout_from_args(
-        block_sleep => $block_sleep,
-        max_try     => delete $args{max_try},
-    );
-
-    $args{wait_announce_interval} = _translate_wait_announce_interval(
-        block_sleep => $block_sleep,
-        wait_announce_interval => delete $args{wait_announce_interval},
-    );
-
-    return %args;
-}
-
 sub lock {
     my($self, %args) = @_;
 
@@ -104,6 +86,35 @@ sub clear_state {
     undef $LOCKING_CLIENT;
 }
 
+sub release_all {
+    my $class = shift;
+
+    foreach my $resource_lock ( keys %NESSY_LOCKS_TO_REMOVE ) {
+        warn("Removing remaining lock: '$resource_lock'") unless $ENV{'HARNESS_ACTIVE'};
+        __PACKAGE__->unlock($resource_lock); # NessyLock
+    }
+    %NESSY_LOCKS_TO_REMOVE = ();
+    undef $LOCKING_CLIENT;
+}
+
+sub translate_lock_args {
+    my ($class, %args) = @_;
+
+    my $block_sleep = delete $args{block_sleep};
+
+    $args{timeout} = $class->_new_style_lock_timeout_from_args(
+        block_sleep => $block_sleep,
+        max_try     => delete $args{max_try},
+    );
+
+    $args{wait_announce_interval} = _translate_wait_announce_interval(
+        block_sleep => $block_sleep,
+        wait_announce_interval => delete $args{wait_announce_interval},
+    );
+
+    return %args;
+}
+
 sub is_enabled {
     return $ENV{GENOME_NESSY_SERVER} ? 1 : 0;
 }
@@ -159,17 +170,6 @@ sub _translate_wait_announce_interval {
     }
 
     croak 'cannot translate wait_announce_interval';
-}
-
-sub release_all {
-    my $class = shift;
-
-    foreach my $resource_lock ( keys %NESSY_LOCKS_TO_REMOVE ) {
-        warn("Removing remaining lock: '$resource_lock'") unless $ENV{'HARNESS_ACTIVE'};
-        __PACKAGE__->unlock($resource_lock); # NessyLock
-    }
-    %NESSY_LOCKS_TO_REMOVE = ();
-    undef $LOCKING_CLIENT;
 }
 
 UR::Context->process->add_observer(
