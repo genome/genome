@@ -72,32 +72,6 @@ sub validate_self {
     $self->validate_children;
 }
 
-sub validate_params {
-    my $self = shift;
-
-    if (my @errors = $self->__errors__) {
-        $self->print_errors(@errors);
-        die $self->error_message("%s (%s) failed validation", $self->part, $self->name);
-    }
-}
-
-sub print_errors {
-    my ($self, @errors) = @_;
-
-    for my $error (@errors) {
-        my @properties = $error->properties;
-        $self->error_message("Property " .
-            join(',', map { "'$_'" } @properties) .
-            ': ' . $error->desc);
-    }
-    return;
-}
-
-sub part {
-    my $self = shift;
-    return (split(/::/, $self->class))[-1];
-}
-
 sub object {
     my $self = shift;
     return $self->factory->get_object($self->category,
