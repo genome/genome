@@ -262,6 +262,9 @@ sub clear_state {
     %SYMLINKS_TO_REMOVE = ();
 }
 
+sub translate_lock_args { shift; return @_ }
+sub translate_unlock_args { shift; return @_ }
+
 sub _resolve_caller_name {
     my ($package, $filename, $line) = @_;
     $package =~ s/::/./g;

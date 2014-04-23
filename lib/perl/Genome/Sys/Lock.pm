@@ -78,16 +78,15 @@ sub lock_resource {
     my @locks;
     for my $backend (keys %backends) {
         my $mandatory = $backends{$backend};
-        if ($backend->can('translate_lock_args')) {
-            %args = $backend->translate_lock_args(%args);
-        }
-        my $lock = $backend->lock(%args);
+        my %lock_args = $backend->translate_lock_args(%args);
+        my $lock = $backend->lock(%lock_args);
         if ($lock) {
             push @locks, $lock;
         }
         if ($mandatory && !$lock) {
             while (pop @locks) {
-                $_->unlock(%args);
+                my %unlock_args = $backend->translate_unlock_args(%args);
+                $_->unlock(%unlock_args);
             }
             return;
         }
@@ -127,7 +126,8 @@ sub unlock_resource {
 
     my $rv;
     for my $backend (keys %backends) {
-        $rv = $backend->unlock(%args);
+        my %unlock_args = $backend->translate_unlock_args(%args);
+        $rv = $backend->unlock(%unlock_args);
     }
 
     return $rv;

@@ -115,6 +115,11 @@ sub translate_lock_args {
     return %args;
 }
 
+sub translate_unlock_args {
+    my ($class, %args) = @_;
+    return %args;
+}
+
 sub is_enabled {
     return $ENV{GENOME_NESSY_SERVER} ? 1 : 0;
 }
