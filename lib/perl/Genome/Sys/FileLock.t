@@ -24,7 +24,6 @@ use POSIX ":sys_wait_h";
 use Socket qw(AF_UNIX SOCK_STREAM PF_UNSPEC);
 use Test::More;
 use Time::HiRes qw(gettimeofday);
-use Genome::Sys::Lock;
 
 require_ok('Genome::Sys::FileLock');
 
@@ -61,7 +60,7 @@ my $init_lsf_job_id = $ENV{'LSB_JOBID'};
 {
     local $ENV{'LSB_JOBID'};
     $ENV{'LSB_JOBID'} = 1;
-    my ($resource_lock, $parent_dir) = Genome::Sys::Lock::_resolve_resource_lock_and_parent_dir_for_lock_resource(
+    my ($resource_lock, $parent_dir) = Genome::Sys::FileLock::_resolve_resource_lock_and_parent_dir_for_lock_resource(
         lock_directory => $tmp_dir,
         resource_id => $bogus_id,
     );

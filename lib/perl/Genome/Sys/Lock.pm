@@ -179,30 +179,6 @@ sub _lock_resource_report_inconsistent_locks {
     }
 }
 
-
-sub _resolve_resource_lock_and_parent_dir_for_lock_resource {
-    my %args = @_;
-
-    my $resource_lock = delete $args{resource_lock};
-    my ($lock_directory,$resource_id,$parent_dir);
-    if ($resource_lock) {
-        $parent_dir = File::Basename::dirname($resource_lock);
-        Genome::Sys->create_directory($parent_dir);
-        unless (-d $parent_dir) {
-            Carp::croak("failed to make parent directory $parent_dir for lock $resource_lock!: $!");
-        }
-    }
-    else {
-        $lock_directory =  delete $args{lock_directory} || Carp::croak('Must supply lock_directory to lock resource');
-        Genome::Sys->create_directory($lock_directory);
-        $resource_id = $args{'resource_id'} || Carp::croak('Must supply resource_id to lock resource');
-        $resource_lock = $lock_directory . '/' . $resource_id . ".lock";
-        $parent_dir = $lock_directory
-    }
-
-    return ($resource_lock, $parent_dir);
-}
-
 sub with_default_lock_resource_args {
     my %args = @_;
 
@@ -211,19 +187,6 @@ sub with_default_lock_resource_args {
     $args{wait_announce_interval} = 0 unless defined $args{wait_announce_interval};
 
     return %args;
-}
-
-sub _resolve_resource_lock_for_unlock_resource {
-    my($self, %args) = @_;
-
-    my $resource_lock = $args{resource_lock};
-    unless ($resource_lock) {
-        my ($lock_directory,$resource_id);
-        $lock_directory =  delete $args{lock_directory} || Carp::croak('Must supply lock_directory to lock resource');
-        $resource_id = $args{'resource_id'} || Carp::croak('Must supply resource_id to lock resource');
-        $resource_lock = $lock_directory . '/' . $resource_id . ".lock";
-    }
-    return $resource_lock;
 }
 
 my $cleanup_handler_installed;
