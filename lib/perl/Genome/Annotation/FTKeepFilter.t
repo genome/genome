@@ -16,6 +16,16 @@ use Test::Exception;
 my $pkg = 'Genome::Annotation::FTKeepFilter';
 use_ok($pkg);
 
+my %pass_return_values = (
+    C => 1,
+    G => 1,
+);
+
+my %fail_return_values = (
+    C => 0,
+    G => 0,
+);
+
 subtest "pass" => sub {
     my $filter = $pkg->create(
         sample_index => 0,
@@ -24,19 +34,19 @@ subtest "pass" => sub {
 
     my $ft_value = "PASS";
     my $entry = create_entry($ft_value);
-    ok($filter->process_entry($entry), "Entry $ft_value passes filter PASS");
+    is_deeply({$filter->process_entry($entry)}, \%pass_return_values, "Entry $ft_value passes filter PASS");
 
     $ft_value = "fail";
     $entry = create_entry($ft_value);
-    ok(!$filter->process_entry($entry), "Entry $ft_value doesn't pass filter PASS");
+    is_deeply({$filter->process_entry($entry)}, \%fail_return_values, "Entry $ft_value doesn't pass filter PASS");
 
     $ft_value = ".";
     $entry = create_entry($ft_value);
-    ok(!$filter->process_entry($entry), "Entry $ft_value doesn't pass filter PASS");
+    is_deeply({$filter->process_entry($entry)}, \%fail_return_values, "Entry $ft_value doesn't pass filter PASS");
 
     $ft_value = "";
     $entry = create_entry($ft_value);
-    ok(!$filter->process_entry($entry), "Entry $ft_value doesn't pass filter PASS");
+    is_deeply({$filter->process_entry($entry)}, \%fail_return_values, "Entry $ft_value doesn't pass filter PASS");
 };
 
 subtest "pass more than one filter" => sub {
@@ -49,27 +59,27 @@ subtest "pass more than one filter" => sub {
 
     my $ft_value = "PASS";
     my $entry = create_entry($ft_value);
-    ok($filter->process_entry($entry), "Entry $ft_value passes filter " . join(";", @keep_filter_values));
+    is_deeply({$filter->process_entry($entry)}, \%pass_return_values, "Entry $ft_value passes filter " . join(";", @keep_filter_values));
 
     $ft_value = "FalsePositive";
     $entry = create_entry($ft_value);
-    ok($filter->process_entry($entry), "Entry $ft_value passes filter " . join(";", @keep_filter_values));
+    is_deeply({$filter->process_entry($entry)}, \%pass_return_values, "Entry $ft_value passes filter " . join(";", @keep_filter_values));
 
     $ft_value = "PASS;FalsePositive";
     $entry = create_entry($ft_value);
-    ok($filter->process_entry($entry), "Entry $ft_value passes filter " . join(";", @keep_filter_values));
+    is_deeply({$filter->process_entry($entry)}, \%pass_return_values, "Entry $ft_value passes filter " . join(";", @keep_filter_values));
 
     $ft_value = "other";
     $entry = create_entry($ft_value);
-    ok(!$filter->process_entry($entry), "Entry $ft_value doesn't pass filter " . join(";", @keep_filter_values));
+    is_deeply({$filter->process_entry($entry)}, \%fail_return_values, "Entry $ft_value doesn't pass filter " . join(";", @keep_filter_values));
 
     $ft_value = ".";
     $entry = create_entry($ft_value);
-    ok(!$filter->process_entry($entry), "Entry $ft_value doesn't pass filter " . join(";", @keep_filter_values));
+    is_deeply({$filter->process_entry($entry)}, \%fail_return_values, "Entry $ft_value doesn't pass filter " . join(";", @keep_filter_values));
 
     $ft_value = "PASS;other";
     $entry = create_entry($ft_value);
-    ok($filter->process_entry($entry), "Entry $ft_value passes filter " . join(";", @keep_filter_values));
+    is_deeply({$filter->process_entry($entry)}, \%pass_return_values, "Entry $ft_value passes filter " . join(";", @keep_filter_values));
 };
 
 subtest "underspecified filter" => sub {
@@ -103,7 +113,7 @@ sub create_entry {
         10,             # POS
         '.',            # ID
         'A',            # REF
-        '.',            # ALT
+        'C,G',            # ALT
         '10.3',         # QUAL
         'PASS',         # FILTER
         'A=B;C=8,9;E',  # INFO
