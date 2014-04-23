@@ -6,7 +6,7 @@ use Genome;
 
 # these are used below, and are also used in the documentation on commands in the tree
 # to provide the most useful examples possible
-our $DEFAULT_CANCER_ANNOTATION_DB_ID    = 'tgi/cancer-annotation/human/build37-20140205.1';
+our $DEFAULT_CANCER_ANNOTATION_DB_ID    = 'tgi/cancer-annotation/human/build37-20131010.1';
 our $DEFAULT_MISC_ANNOTATION_DB_ID      = 'tgi/misc-annotation/human/build37-20130113.1';
 our $DEFAULT_COSMIC_ANNOTATION_DB_ID    = 'cosmic/65.1';
 
@@ -383,15 +383,6 @@ sub map_workflow_inputs {
       push @inputs, exome_cnv_dir => $exome_cnv_dir;
     }
 
-    my $docm_variants_file = $self->_get_docm_variants_file($self->cancer_annotation_db);
-    #Make DOCM report
-    if (($exome_build or $wgs_build) and $docm_variants_file) {
-      my $docm_report_dir = $patient_dir . "/docm_report/";
-      push @dirs, $docm_report_dir;
-      push @inputs, docm_report_dir => $docm_report_dir;
-      push @inputs, docm_variants_file => $docm_variants_file;
-    }
-
     #SummarizeSvs
     if ($wgs_build){
       my $sv_dir = $patient_dir . "/sv/";
@@ -526,11 +517,6 @@ sub _resolve_workflow_for_build {
 
   if ($build->exome_build) {
       push @output_properties, 'exome_cnv_result';
-  }
-
-  if (($build->exome_build or $build->wgs_build)
-          and $self->_get_docm_variants_file($self->cancer_annotation_db)) {
-      push @output_properties, 'docm_report_result';
   }
 
   if ($build->normal_rnaseq_build){
@@ -923,18 +909,6 @@ sub _resolve_workflow_for_build {
     $add_link->($input_connector, 'model', $exome_cnv_op, 'clinseq_model');
     $add_link->($input_connector, 'annotation_build', $exome_cnv_op, 'annotation_build_id');
     $add_link->($exome_cnv_op, 'result', $output_connector, 'exome_cnv_result');
-  }
-
-  #RunDOCMReport
-  my $docm_report_op;
-  if (($build->exome_build or $build->wgs_build)
-        and $self->_get_docm_variants_file($self->cancer_annotation_db)) {
-    my $msg = "Produce a report using DOCM";
-    $docm_report_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::Converge::DocmReport");
-    $add_link->($input_connector, 'docm_report_dir', $docm_report_op, 'outdir');
-    $add_link->($input_connector, 'build', $docm_report_op, 'builds');
-    $add_link->($input_connector, 'docm_variants_file', $docm_report_op, 'docm_variants_file');
-    $add_link->($docm_report_op, 'result', $output_connector, 'docm_report_result');
   }
 
   #SummarizeCnvs - Generate a summary of CNV results, copy cnvs.hq, cnvs.png, single-bam copy number plot PDF, etc. to the cnv directory
@@ -1450,19 +1424,6 @@ sub has_microarray_build {
     }
   } else {
       return 0;
-  }
-}
-
-sub _get_docm_variants_file {
-  my $self = shift;
-  my $cancer_annotation_db = shift;
-  my $cad_data_directory = $cancer_annotation_db->data_directory;
-  my $docm_variants_file = $cad_data_directory . "/DOCM/DOCM_v0.1.tsv";
-  if(-e $docm_variants_file ) {
-    return $docm_variants_file;
-  } else {
-    $self->status_message("Unable to find DOCM variants file in cancer annotation db directory $docm_variants_file");
-    return 0;
   }
 }
 

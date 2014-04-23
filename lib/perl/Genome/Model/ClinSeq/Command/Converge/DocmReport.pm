@@ -41,7 +41,6 @@ class Genome::Model::ClinSeq::Command::Converge::DocmReport {
         },
         tmp_space => {
               is => 'Boolean',
-              default => 1,
               doc => 'Perform all file I/O in /tmp and copy results to outdir at the end',
         },
         test => {
