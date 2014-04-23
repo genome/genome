@@ -97,7 +97,7 @@ sub lock_resource {
         $self->_lock_resource_report_inconsistent_locks($args{resource_lock}, $rv, $nessy_claim);
     }
 
-    $self->cleanup_handler_check();
+    $self->_cleanup_handler_check();
 
     return $args{resource_lock};
 
@@ -156,6 +156,20 @@ sub release_all {
     }
 }
 
+sub with_default_lock_resource_args {
+    my %args = @_;
+
+    $args{block_sleep} = 60 unless defined $args{block_sleep};
+    $args{max_try} = 7200 unless defined $args{max_try};
+    $args{wait_announce_interval} = 0 unless defined $args{wait_announce_interval};
+
+    return %args;
+}
+
+########################################################################
+# Private
+########################################################################
+
 sub _lock_resource_report_inconsistent_locks {
     my($self, $resource_lock, $file_lock, $nessy_claim) = @_;
 
@@ -179,29 +193,19 @@ sub _lock_resource_report_inconsistent_locks {
     }
 }
 
-sub with_default_lock_resource_args {
-    my %args = @_;
-
-    $args{block_sleep} = 60 unless defined $args{block_sleep};
-    $args{max_try} = 7200 unless defined $args{max_try};
-    $args{wait_announce_interval} = 0 unless defined $args{wait_announce_interval};
-
-    return %args;
-}
-
-my $cleanup_handler_installed;
-sub cleanup_handler_check {
+my $_cleanup_handler_installed;
+sub _cleanup_handler_check {
     my $self = shift;
-    return if $cleanup_handler_installed++;
-    $SIG{'INT'} = \&INT_cleanup;
-    $SIG{'TERM'} = \&INT_cleanup;
-    $SIG{'HUP'} = \&INT_cleanup;
-    $SIG{'ABRT'} = \&INT_cleanup;
-    $SIG{'QUIT'} = \&INT_cleanup;
-    $SIG{'SEGV'} = \&INT_cleanup;
+    return if $_cleanup_handler_installed++;
+    $SIG{'INT'} = \&_INT_cleanup;
+    $SIG{'TERM'} = \&_INT_cleanup;
+    $SIG{'HUP'} = \&_INT_cleanup;
+    $SIG{'ABRT'} = \&_INT_cleanup;
+    $SIG{'QUIT'} = \&_INT_cleanup;
+    $SIG{'SEGV'} = \&_INT_cleanup;
 }
 
-sub INT_cleanup {
+sub _INT_cleanup {
     release_all();
     print STDERR "INT/TERM cleanup activated in Genome::Sys::Lock\n";
     Carp::confess;
