@@ -1053,6 +1053,7 @@ sub validate_for_start_methods {
     # Be very wary of removing any of these as many subclasses use SUPER::validate_for_start_methods.
     # Each method should return tags.
     my @methods = (
+        'validate_run_as',
         # 'validate_inputs_have_values' should be checked first.
         'validate_inputs_have_values',
         'inputs_have_compatible_reference',
@@ -1117,6 +1118,21 @@ sub validate_instrument_data{
         }
     }
     return @tags;
+}
+
+sub validate_run_as {
+    my $self = shift;
+
+    return unless $self->_should_run_as && $self->_can_run_as;
+
+    my $user = Genome::Sys::User->get(username => $self->model->run_as);
+    return if $user;
+
+    return UR::Object::Tag->create(
+        type => 'error',
+        properties => ['run_as'],
+        desc => "run_as user not found: " . $self->model->run_as,
+    );
 }
 
 sub validate_inputs_have_values {
