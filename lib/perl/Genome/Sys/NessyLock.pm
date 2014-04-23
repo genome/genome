@@ -32,7 +32,11 @@ sub lock {
         Carp::croak($self->error_message);
     }
 
-    my $timeout = $self->_new_style_lock_timeout_from_args(%args);
+    my $timeout = delete $args{timeout};
+    unless (defined $timeout) {
+        croak('timeout not defined');
+    }
+
     my $wait_announce_interval = delete $args{wait_announce_interval};
     unless (defined $wait_announce_interval) {
         croak('wait_announce_interval not defined');
