@@ -76,6 +76,22 @@ package Genome::Annotation::Plan::TestHelpers;
 }
 
 {
+    package Genome::Annotation::TestAdaptor;
+
+    use strict;
+    use warnings FATAL => 'all';
+    use Genome;
+
+    class Genome::Annotation::TestAdaptor {
+        is => 'Genome::Annotation::AdaptorBase',
+        has_planned_output => [
+            e1_p1 => {},
+            e1_p2 => {},
+        ],
+    };
+}
+
+{
     package Genome::Annotation::TestExpert;
 
     use strict;
@@ -92,6 +108,10 @@ package Genome::Annotation::Plan::TestHelpers;
 
     sub name {
         "expert_one";
+    }
+
+    sub adaptor_class {
+        'Genome::Annotation::TestAdaptor',
     }
 }
 
@@ -112,6 +132,10 @@ package Genome::Annotation::Plan::TestHelpers;
 
     sub name {
         "expert_two";
+    }
+
+    sub adaptor_class {
+        'Genome::Annotation::TestAdaptor',
     }
 
     1;

@@ -56,6 +56,11 @@ sub as_hashref {
 sub validate {
     my $self = shift;
     $self->validate_self;
+    $self->validate_object;
+}
+
+sub validate_object {
+    my $self = shift;
     if (my $object = $self->object) {
         $object->validate();
     }

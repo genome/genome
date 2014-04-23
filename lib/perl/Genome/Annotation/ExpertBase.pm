@@ -9,6 +9,19 @@ class Genome::Annotation::ExpertBase {
     is_abstract => 1,
 };
 
+sub adaptor_class {
+    my $self = shift;
+    my @parts = split(/::/, $self->class);
+    pop @parts;
+    my $result = join('::', @parts, 'Adaptor');
+    if ($result->isa('Genome::Annotation::AdaptorBase')) {
+        return $result;
+    } else {
+        die $self->error_message("Couldn't find an adaptor for expert (%s) at (%s)",
+            $self->class, $result);
+    }
+}
+
 sub dag {
     #   Must return a Genome::WorkflowBuilder::DAG
     # these usually just consist of a build_adaptor

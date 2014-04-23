@@ -34,5 +34,9 @@ sub print_errors {
     return;
 }
 
+sub part {
+    my $self = shift;
+    return (split(/::/, $self->class))[-1];
+}
 
 1;
