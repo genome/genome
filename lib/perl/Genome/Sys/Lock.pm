@@ -237,19 +237,13 @@ sub cleanup_handler_check {
 }
 
 sub INT_cleanup {
-    exit_cleanup();
+    release_all();
     print STDERR "INT/TERM cleanup activated in Genome::Sys::Lock\n";
     Carp::confess;
 }
 
 END {
-    exit_cleanup();
+    release_all();
 };
-
-sub exit_cleanup {
-    for my $backend (keys %backends) {
-        $backend->release_all();
-    }
-}
 
 1;
