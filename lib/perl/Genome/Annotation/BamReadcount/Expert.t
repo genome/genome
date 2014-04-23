@@ -6,6 +6,7 @@ use warnings FATAL => 'all';
 use Test::More;
 use above 'Genome';
 use File::Slurp qw(write_file);
+use Genome::File::Vcf::Differ;
 use Genome::Utility::Test qw(compare_ok);
 use Genome::Annotation::TestHelpers qw(
     get_test_somatic_variation_build
@@ -37,6 +38,12 @@ my $build = get_test_somatic_variation_build($VERSION, File::Spec->join($test_di
 my $expert = $pkg->create();
 my $dag = $expert->dag();
 test_dag_xml($dag);
+
+my $output = $dag->execute(build_id => $build->id, variant_type => 'snvs');
+my $expected_vcf = File::Spec->join($test_dir, "expected.vcf.gz");
+my $vcf_path = $output->{output_result}->output_file_path;
+my $differ = Genome::File::Vcf::Differ->new($vcf_path, $expected_vcf);
+is($differ->diff, undef, "Found No differences between $vcf_path and (expected) $expected_vcf");
 
 done_testing();
 
