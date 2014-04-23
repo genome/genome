@@ -78,6 +78,9 @@ sub lock_resource {
     my @locks;
     for my $backend (keys %backends) {
         my $mandatory = $backends{$backend};
+        if ($backend->can('translate_lock_args')) {
+            %args = $backend->translate_lock_args(%args);
+        }
         my $lock = $backend->lock(%args);
         if ($lock) {
             push @locks, $lock;

@@ -12,6 +12,17 @@ use base 'UR::ModuleBase';   # *_message methods, but no constructor
 my %NESSY_LOCKS_TO_REMOVE;
 my $LOCKING_CLIENT;
 
+sub translate_lock_args {
+    my ($class, %args) = @_;
+
+    $args{timeout} = $class->_new_style_lock_timeout_from_args(
+        block_sleep => delete $args{block_sleep},
+        max_try     => delete $args{max_try},
+    );
+
+    return %args;
+}
+
 sub lock {
     my($self, %args) = @_;
 
