@@ -1090,21 +1090,7 @@ sub files_ignored_by_build_diff { () }
 sub requires_subject_mapping { return 0; }
 
 # For transition to created_by
-sub user_name {
-    my $self = shift;
-    if (@_) {
-        return $self->__created_by(@_);
-    } else {
-        # Perl 5.8 does not support //
-        if (defined $self->__created_by) {
-            return $self->__created_by;
-        } else {
-            $self->__user_name;
-        }
-    }
-}
-
-# For transition to created_by
+sub user_name { created_by(@_) }
 sub created_by {
     my $self = shift;
     if (@_) {
