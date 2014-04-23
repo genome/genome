@@ -25,9 +25,20 @@ sub process_entry {
     my $self = shift;
     my $entry = shift;
 
-    my @alt_alleles = sort $entry->alt_bases_for_sample($self->sample_index);
-    my $vaf = $self->calculate_vaf($entry, $alt_alleles[0]);
-    return $vaf >= $self->min_vaf;
+    my %return_values;
+    for my $alt_allele (@{$entry->{alternate_alleles}}) {
+        $return_values{$alt_allele} = 0;
+    }
+
+    my @sample_alt_alleles = sort $entry->alt_bases_for_sample($self->sample_index);
+    for my $sample_alt_allele (@sample_alt_alleles) {
+        my $vaf = $self->calculate_vaf($entry, $sample_alt_allele);
+        if ($vaf >= $self->min_vaf) {
+            $return_values{$sample_alt_allele} = 1;
+        }
+    }
+
+    return %return_values;
 }
 
 sub calculate_vaf {
