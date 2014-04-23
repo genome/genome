@@ -49,7 +49,7 @@ sub lock {
     }
 
     $self->_start_locking_client;
-    return 1 unless $LOCKING_CLIENT;
+    return unless $LOCKING_CLIENT;
 
     my %user_data;
     @user_data{'host','pid','lsf_id','user'}
