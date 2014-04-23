@@ -122,6 +122,7 @@ sub release_all {
     my $class = shift;
 
     foreach my $resource_lock ( keys %NESSY_LOCKS_TO_REMOVE ) {
+        warn("Removing remaining lock: '$resource_lock'") unless $ENV{'HARNESS_ACTIVE'};
         __PACKAGE__->unlock($resource_lock); # NessyLock
     }
     %NESSY_LOCKS_TO_REMOVE = ();
