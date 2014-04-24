@@ -281,7 +281,11 @@ sub _resolve_lock_owner_details {
     return $lock_details;
 }
 
-sub has_lock { is_my_lock_target(@_) }
+sub has_lock {
+    my ($class, $resource_lock) = @_;
+    return $SYMLINKS_TO_REMOVE{$resource_lock};
+}
+
 sub is_my_lock_target {
     my $class = shift;
     my $target = shift;
