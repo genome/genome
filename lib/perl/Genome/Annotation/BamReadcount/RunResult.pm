@@ -4,6 +4,7 @@ use strict;
 use warnings FATAL => 'all';
 use Genome;
 use Sys::Hostname;
+use IPC::Run qw(run);
 
 class Genome::Annotation::BamReadcount::RunResult {
     is => 'Genome::Annotation::ResultBase',
@@ -29,13 +30,7 @@ sub output_filename {
 sub _run {
     my $self = shift;
 
-    my $region_list = Genome::Sys->create_temp_file_path();
-    Genome::Model::Tools::Bed::Convert::VcfToBed->execute(
-        remove_filtered_calls => 0,
-        source => $self->input_result_file_path,
-        output => $region_list,
-        one_based => 1,
-    );
+    my $region_list = $self->make_region_file($self->input_result_file_path);
 
     # Sam::Readcount doesn't accept variant_type or test_name
     my %params = $self->param_hash;
@@ -59,3 +54,15 @@ sub sample_name {
 
     return $self->aligned_bam_result->sample_name;
 }
+
+sub make_region_file {
+    my ($self, $vcf_file) = @_;
+    my $region_list = Genome::Sys->create_temp_file_path();
+
+    run(['zgrep', '-v', '^#', $vcf_file], '|',
+        ['awk', 'BEGIN{OFS="\t";} {print $1,$2,$2}'], '>',
+        $region_list);
+
+    return $region_list;
+}
+
