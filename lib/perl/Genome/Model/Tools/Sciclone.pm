@@ -35,7 +35,7 @@ class Genome::Model::Tools::Sciclone {
 
         regions_to_exclude => {
             is => 'Text',
-            doc => "comma separated list - regions to exclude (first 3 cols are chr,st,sp). Commonly used for LOH calls",
+            doc => "comma separated list - regions to exclude (first 3 cols are chr,st,sp). Commonly used for LOH calls.",
             is_optional => 1,
             is_input => 1,
         },
