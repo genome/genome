@@ -5,7 +5,6 @@ use warnings;
 
 use Carp qw(carp croak);
 
-use Genome::Sys;
 use Genome::Sys::FileLock;
 use Genome::Sys::NessyLock;
 
