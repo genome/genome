@@ -19,7 +19,6 @@ class Genome::InstrumentData::Command::Import::WorkFlow::SanitizeBam {
             calculate_from => [qw/ dirty_bam_path /],
             calculate => q{
                 $dirty_bam_path =~ s/(\.bam)$/.clean$1/;
-                $dirty_bam_path; 
                 return $dirty_bam_path;
             },
             doc => 'The path of the clean bam.',
