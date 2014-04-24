@@ -169,15 +169,28 @@ sub format_line {
     if (@values < 5) {
         croak "Not enough fields to write bed file in input: ".join("\t", @values);
     }
+    if ($self->should_increment_start($values[3], $values[4])) {
+        $values[1] += 1;
+    }
     splice(@values,3,2, join('/', @values[3,4]));
     # push - if quality and/or depth fields are missing
     while (@values < 6) {
         push(@values, '-');
     }
-    if ($self->one_based) {
-        $values[1] += 1;
-    }
     return join("\t", @values);
+}
+
+# We only need to increment the start position when requesting one-based output and only for snvs
+sub should_increment_start {
+    my ($self, $ref, $alt) = @_;
+    if ($self->one_based) {
+        if ( (length($ref) == 1) and ($ref ne '*') and
+            (length($alt) == 1) and ($alt ne '*') ) {
+            return 1;
+        }
+    }
+
+    return 0;
 }
 
 sub write_bed_line {
