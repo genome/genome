@@ -9,12 +9,6 @@ use Genome::Sys;
 use Genome::Sys::FileLock;
 use Genome::Sys::NessyLock;
 
-# backend => mandatory
-my %backends = (
-    'Genome::Sys::NessyLock' => 0,
-    'Genome::Sys::FileLock' => 1
-);
-
 =item lock_resource()
 
 Keyword Arguments:
@@ -76,15 +70,14 @@ sub lock_resource {
     my %args = with_default_lock_resource_args(@_);
 
     my %locks;
-    for my $backend (keys %backends) {
+    for my $backend (backends()) {
         my @lock_args = $backend->translate_lock_args(%args);
         my $lock = $backend->lock(@lock_args);
         if ($lock) {
             $locks{$backend} = $lock;
         }
 
-        my $mandatory = $backends{$backend};
-        if ($mandatory && !$lock) {
+        if (is_mandatory($backend) && !$lock) {
             for (keys %locks) {
                 my @unlock_args = $backend->translate_unlock_args(%args);
                 $_->unlock(@unlock_args);
@@ -126,7 +119,7 @@ sub unlock_resource {
     my %args = @_;
 
     my $rv;
-    for my $backend (keys %backends) {
+    for my $backend (backends()) {
         my @unlock_args = $backend->translate_unlock_args(%args);
         $rv = $backend->unlock(@unlock_args);
     }
@@ -141,7 +134,7 @@ C<clear_state()> can be used after fork() to get a "clean" lock state.
 =cut
 
 sub clear_state {
-    for my $backend (keys %backends) {
+    for my $backend (backends()) {
         $backend->clear_state();
     }
 }
@@ -155,7 +148,7 @@ individually.
 =cut
 
 sub release_all {
-    for my $backend (keys %backends) {
+    for my $backend (backends()) {
         $backend->release_all();
     }
 }
@@ -168,6 +161,34 @@ sub with_default_lock_resource_args {
     $args{wait_announce_interval} = 0 unless defined $args{wait_announce_interval};
 
     return %args;
+}
+
+# backend => mandatory
+my %backends = (
+    'Genome::Sys::NessyLock' => 0,
+    'Genome::Sys::FileLock' => 1
+);
+
+sub is_mandatory {
+    my $name = shift;
+    return $backends{$name};
+}
+
+sub backends {
+    return keys %backends;
+}
+
+sub add_backend {
+    my ($class, $name, $mandatory) = @_;
+    $backends{$name} = $mandatory;
+    return 1;
+}
+
+sub remove_backend {
+    my ($class, $name) = @_;
+    return unless exists $backends{$name};
+    delete $backends{$name};
+    return 1;
 }
 
 ########################################################################
