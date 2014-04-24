@@ -337,7 +337,7 @@ sub _resolve_resource_lock_for_unlock_resource {
     my $resource_lock = $args{resource_lock};
     unless ($resource_lock) {
         my ($lock_directory,$resource_id);
-        $lock_directory =  delete $args{lock_directory} || Carp::croak('Must supply lock_directory to lock resource');
+        $lock_directory =  delete $args{lock_directory} || Carp::croak('Must supply lock_directory to unlock resource');
         $resource_id = $args{'resource_id'} || Carp::croak('Must supply resource_id to lock resource');
         $resource_lock = $lock_directory . '/' . $resource_id . ".lock";
     }
