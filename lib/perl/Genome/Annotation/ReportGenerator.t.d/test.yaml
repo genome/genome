@@ -1,0 +1,37 @@
+experts:
+    expert_one:
+        e1_p1: something
+        e1_p2: something else
+    expert_two:
+        e2_p1: something
+        e2_p2: something else
+reporters:
+    reporter_alpha:
+        filters:
+            filter_one:
+                f1_p1: 2
+                f1_p2: something else
+            filter_two:
+                f2_p1: something
+                f2_p2: something else
+        interpreters:
+            interpreter_x:
+                ix_p1: something
+                ix_p2: something else
+            interpreter_y:
+                ix_p1: something
+                ix_p2: something else
+        params:
+            ra_p1: something
+            ra_p2: something else
+    reporter_gamma:
+        interpreters:
+            interpreter_x:
+                ix_p1: something
+                ix_p2: something else
+            interpreter_y:
+                ix_p1: something
+                ix_p2: something else
+        params:
+            rc_p1: something
+            rc_p2: something else
