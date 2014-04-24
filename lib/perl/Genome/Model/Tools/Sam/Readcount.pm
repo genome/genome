@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use File::Touch qw(touch);
 
 my $DEFAULT_VER = '0.4';
 
@@ -104,12 +105,16 @@ sub execute {
     unless (-s $reference) {
         die $self->error_message("Reference fasta $reference does not exist or does not have size");
     }
-    my $region_file = $self->region_list;
-    unless (-s $region_file) {
-        die $self->error_message("Region list provided $region_file does not exist or does not have size");
-    }
+
     my $output_file = $self->output_file;
     Genome::Sys->validate_file_for_writing($output_file);
+
+    my $region_file = $self->region_list;
+    unless (-s $region_file) {
+        $self->warning_message("Region list provided $region_file does not exist or does not have size. Skipping run and touching output ($output_file).");
+        touch($output_file);
+        return 1;
+    }
 
     my $command = $self->readcount_path . " $bam -f $reference -l $region_file";
     if ($self->minimum_mapping_quality) {
