@@ -68,7 +68,7 @@ sub add_misc_update {
         return;
     }
 
-    return $self->SUPER::add_misc_update($misc_update);
+    return $self->__add_misc_update($misc_update);
 }
 
 sub perform_update {
