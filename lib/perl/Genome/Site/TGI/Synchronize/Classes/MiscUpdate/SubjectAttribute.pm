@@ -54,23 +54,6 @@ sub get_or_create_from_misc_updates {
     return $self;
 }
 
-sub add_misc_update {
-    my ($self, $misc_update) = @_;
-
-    if ( not $misc_update ) {
-        $self->error_message('No misc update given to add!');
-        return;
-    }
-
-    for my $attr ( $self->__meta__->id_property_names ) {
-        next if defined $self->$attr and $self->$attr eq $misc_update->$attr;
-        $self->error_message("Mismatch in id property ($attr) when adding misc update! Values do not match! ".$self->$attr." vs ".$misc_update->$attr);
-        return;
-    }
-
-    return $self->SUPER::add_misc_update($misc_update);
-}
-
 sub perform_update {
     my $self = shift;
     my $method = '_'.lc($self->description);
