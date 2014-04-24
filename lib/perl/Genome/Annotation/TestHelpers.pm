@@ -17,6 +17,8 @@ use Genome::Test::Factory::Model::SomaticVariation;
 use Genome::Test::Factory::InstrumentData::Solexa;
 use Genome::Test::Factory::InstrumentData::MergedAlignmentResult;
 use Genome::Utility::Test;
+use File::Slurp qw(write_file);
+use Genome::Utility::Test qw(compare_ok);
 
 use Exporter 'import';
 
@@ -24,6 +26,8 @@ our @EXPORT_OK = qw(
     test_cmd_and_result_are_in_sync
     get_test_somatic_variation_build
     get_test_somatic_variation_build_from_files
+    test_dag_xml
+    test_dag_execute
 );
 
 sub test_cmd_and_result_are_in_sync {
@@ -188,4 +192,20 @@ sub get_sample_name {
     my $bam = shift;
     my $cmd = Genome::Model::Tools::Sam::GetSampleName->execute(bam_file => $bam);
     return $cmd->sample_name;
+}
+
+sub test_dag_xml {
+    my ($dag, $expected_xml) = @_;
+    my $xml_path = Genome::Sys->create_temp_file_path;
+    write_file($xml_path, $dag->get_xml);
+    compare_ok($xml_path, $expected_xml, "Xml looks as expected");
+}
+
+sub test_dag_execute {
+    my ($dag, $expected_vcf, $variant_type, $build) = @_;
+    my $output = $dag->execute(build_id => $build->id, variant_type => $variant_type);
+    my $vcf_path = $output->{output_result}->output_file_path;
+    if ($variant_type eq "indels") { `cp $vcf_path $expected_vcf` }
+    my $differ = Genome::File::Vcf::Differ->new($vcf_path, $expected_vcf);
+    is($differ->diff, undef, "Found No differences between $vcf_path and (expected) $expected_vcf");
 }

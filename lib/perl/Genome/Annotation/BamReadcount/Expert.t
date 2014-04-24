@@ -10,6 +10,8 @@ use Genome::File::Vcf::Differ;
 use Genome::Utility::Test qw(compare_ok);
 use Genome::Annotation::TestHelpers qw(
     get_test_somatic_variation_build
+    test_dag_xml
+    test_dag_execute
 );
 use Genome::Annotation::Plan::TestHelpers qw(
     set_what_interpreter_x_requires
@@ -24,7 +26,8 @@ BEGIN {
 my $pkg = 'Genome::Annotation::BamReadcount::Expert';
 use_ok($pkg) || die;
 
-my $VERSION = 1; # Bump this each time test data changes
+my $VERSION = 2; # Bump these each time test data changes
+my $BUILD_VERSION = 1;
 my $test_dir = Genome::Utility::Test->data_dir($pkg, "v$VERSION");
 if (-d $test_dir) {
     note "Found test directory ($test_dir)";
@@ -33,24 +36,15 @@ if (-d $test_dir) {
 }
 
 set_what_interpreter_x_requires('bam-readcount');
-my $build = get_test_somatic_variation_build($VERSION, File::Spec->join($test_dir, 'plan.yaml'));
 
 my $expert = $pkg->create();
 my $dag = $expert->dag();
-test_dag_xml($dag);
+my $expected_xml = File::Spec->join($test_dir, 'expected.xml');
+test_dag_xml($dag, $expected_xml);
 
-my $output = $dag->execute(build_id => $build->id, variant_type => 'snvs');
-my $expected_vcf = File::Spec->join($test_dir, "expected.vcf.gz");
-my $vcf_path = $output->{output_result}->output_file_path;
-my $differ = Genome::File::Vcf::Differ->new($vcf_path, $expected_vcf);
-is($differ->diff, undef, "Found No differences between $vcf_path and (expected) $expected_vcf");
+my $variant_type = 'snvs';
+my $expected_vcf = File::Spec->join($test_dir, "expected_$variant_type.vcf.gz");
+my $build = get_test_somatic_variation_build($BUILD_VERSION, File::Spec->join($test_dir, 'plan.yaml'));
+test_dag_execute($dag, $expected_vcf, $variant_type, $build);
 
 done_testing();
-
-sub test_dag_xml {
-    my $dag = shift;
-    my $xml_path = Genome::Sys->create_temp_file_path;
-    write_file($xml_path, $dag->get_xml);
-    my $expected_xml = File::Spec->join($test_dir, 'expected.xml');
-    compare_ok($xml_path, $expected_xml, "Xml looks as expected");
-}
