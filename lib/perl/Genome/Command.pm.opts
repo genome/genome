@@ -6434,6 +6434,13 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>split-on-library',
+    [
+      'model=s',
+      undef,
+      'help!',
+      undef
+    ],
     '>diff',
     [
       'first-revision=s',
