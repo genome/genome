@@ -152,7 +152,7 @@ sub _new_style_lock_timeout_from_args {
 
     my $min_timeout = min_timeout();
     my $timeout = $max_try * $block_sleep;
-    unless ($timeout > $min_timeout) {
+    unless ($timeout >= $min_timeout) {
         $timeout = $min_timeout;
         carp("increasing timeout to minimum ($min_timeout)");
     }
