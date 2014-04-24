@@ -118,10 +118,13 @@ sub unlock_resource {
     my $class = shift;
     my %args = @_;
 
-    my $rv;
+    my $rv = 1;
     for my $backend (backends()) {
         my @unlock_args = $backend->translate_unlock_args(%args);
-        $rv = $backend->unlock(@unlock_args);
+        my $unlocked = $backend->unlock(@unlock_args);
+        if (is_mandatory($backend)) {
+            $rv = $rv && $unlocked;
+        }
     }
 
     return $rv;
