@@ -72,7 +72,7 @@ then C<lock()> will C<croak()>.
 =cut
 
 sub lock_resource {
-    my $self = shift;
+    my $class = shift;
     my %args = with_default_lock_resource_args(@_);
 
     my %locks;
@@ -97,10 +97,10 @@ sub lock_resource {
     my $rv = Genome::Sys::FileLock->has_lock($args{resource_lock});
 
     if (Genome::Sys::NessyLock->is_enabled) {
-        $self->_lock_resource_report_inconsistent_locks($args{resource_lock}, $rv, $nessy_claim);
+        $class->_lock_resource_report_inconsistent_locks($args{resource_lock}, $rv, $nessy_claim);
     }
 
-    $self->_cleanup_handler_check();
+    $class->_cleanup_handler_check();
 
     return $args{resource_lock};
 
@@ -122,7 +122,7 @@ resource.
 =cut
 
 sub unlock_resource {
-    my $self = shift;
+    my $class = shift;
     my %args = @_;
 
     my $rv;
@@ -175,7 +175,7 @@ sub with_default_lock_resource_args {
 ########################################################################
 
 sub _lock_resource_report_inconsistent_locks {
-    my($self, $resource_lock, $file_lock, $nessy_claim) = @_;
+    my($class, $resource_lock, $file_lock, $nessy_claim) = @_;
 
     my $t = "%s-lock acquired but %s-based did not: $resource_lock";
 
@@ -199,7 +199,7 @@ sub _lock_resource_report_inconsistent_locks {
 
 my $_cleanup_handler_installed;
 sub _cleanup_handler_check {
-    my $self = shift;
+    my $class = shift;
     return if $_cleanup_handler_installed++;
     $SIG{'INT'} = \&_INT_cleanup;
     $SIG{'TERM'} = \&_INT_cleanup;

@@ -13,7 +13,7 @@ my %NESSY_LOCKS_TO_REMOVE;
 my $LOCKING_CLIENT;
 
 sub lock {
-    my($self, %args) = @_;
+    my($class, %args) = @_;
 
     my $resource = $args{resource};
     unless (defined $resource) {
@@ -30,16 +30,16 @@ sub lock {
         croak('wait_announce_interval not defined');
     }
 
-    $self->_start_locking_client;
+    $class->_start_locking_client;
     return unless $LOCKING_CLIENT;
 
     my %user_data;
     @user_data{'host','pid','lsf_id','user'}
         = (hostname, $$, ($ENV{'LSB_JOBID'} || 'NONE'), Genome::Sys->username);
 
-    if ($self->_is_holding_nessy_lock($resource)) {
-        $self->error_message("Tried to lock resource more than once: $resource");
-        Carp::croak($self->error_message);
+    if ($class->_is_holding_nessy_lock($resource)) {
+        $class->error_message("Tried to lock resource more than once: $resource");
+        Carp::croak($class->error_message);
     }
 
     my $info_content = join("\n", map { $_ . ': ' . $user_data{$_} } keys %user_data);
@@ -50,7 +50,7 @@ sub lock {
         interval => $wait_announce_interval,
         cb => sub {
             my $total_elapsed_time = time() - $initial_time;
-            $self->status_message("waiting (total_elapsed_time = $total_elapsed_time seconds) on lock for resource '$resource': $claim_warning. lock_info is:\n$info_content");
+            $class->status_message("waiting (total_elapsed_time = $total_elapsed_time seconds) on lock for resource '$resource': $claim_warning. lock_info is:\n$info_content");
         },
     );
     my $claim = $LOCKING_CLIENT->claim($resource, timeout => $timeout, user_data => \%user_data);
@@ -61,7 +61,7 @@ sub lock {
 }
 
 sub unlock {
-    my ($self, $resource) = @_;
+    my ($class, $resource) = @_;
     unless ($resource) {
         carp('resource is not set');
     }
@@ -71,7 +71,7 @@ sub unlock {
         if ($claim) {
             $claim->release;
         } else {
-            $self->error_message("Nessy tried to release, but no claim in slot for resource: $resource");
+            $class->error_message("Nessy tried to release, but no claim in slot for resource: $resource");
         }
     } else {
         return 1;
@@ -135,7 +135,7 @@ sub _start_locking_client {
 
 sub has_lock { _is_holding_nessy_lock(@_) }
 sub _is_holding_nessy_lock {
-    my($self, $resource) = @_;
+    my($class, $resource) = @_;
     return $NESSY_LOCKS_TO_REMOVE{$resource};
 }
 
@@ -144,7 +144,7 @@ sub min_timeout {
 }
 
 sub _new_style_lock_timeout_from_args {
-    my($self, %args) = @_;
+    my($class, %args) = @_;
 
     my $block_sleep = delete $args{block_sleep} || 0;
 
