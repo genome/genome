@@ -68,6 +68,7 @@ sub is_blacklisted {
     my $file = shift;
     my @blacklist = (
         qr(Db/Ensembl/Command/Vep.d/),
+        qr(Db/Ensembl/Command/Run/Vep.d/),
         qr(Site/CLIA.pm$),
         qr(Site/CLIA.t$),
     );
