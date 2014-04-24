@@ -34,22 +34,47 @@ sub execute {
     my $vcf_reader = Genome::File::Vcf::Reader->new($self->vcf_file);
     while (my $entry = $vcf_reader->next) {
         for my $reporter_plan ($self->plan->reporter_plans) {
-            my $filter_results = initialize_filters($entry);
-            for my $filter_plan ($reporter_plan->filter_plans) {
-                combine($filter_results, {$filter_plan->object->process_entry($entry)});
-            }
-            my @passed_alleles = grep {$filter_results->{$_} == 1} keys %$filter_results;
-            my %interpretations;
-            for my $interpreter_plan ($reporter_plan->interpreter_plans) {
-                $interpretations{$interpreter_plan->object->name} = {$interpreter_plan->object->process_entry($entry, \@passed_alleles)};
-            }
-            $reporter_plan->object->report(\%interpretations);
+            process_entry_for_reporter($entry, $reporter_plan);
         }
     }
     for my $reporter_plan ($self->plan->reporter_plans) {
         $reporter_plan->object->finalize();
     }
     return 1;
+}
+
+sub process_entry_for_reporter {
+    my $entry = shift;
+    my $reporter_plan = shift;
+
+    my @passed_alleles = passed_alleles($entry, $reporter_plan->filter_plans);
+    my $interpretations = interpretations($entry, [$reporter_plan->interpreter_plans], \@passed_alleles);
+    $reporter_plan->object->report($interpretations);
+}
+
+sub passed_alleles {
+    my $entry = shift;
+    my @filter_plans = @_;
+
+    my $filter_results = initialize_filters($entry);
+    for my $filter_plan (@filter_plans) {
+        combine($filter_results, {$filter_plan->object->process_entry($entry)});
+    }
+
+    return grep {$filter_results->{$_} == 1} keys %$filter_results;
+}
+
+sub interpretations {
+    my $entry = shift;
+    my $interpreter_plans = shift;
+    my $passed_alleles = shift;
+
+    my %interpretations;
+    for my $interpreter_plan (@$interpreter_plans) {
+        $interpretations{$interpreter_plan->object->name} = {$interpreter_plan->object->process_entry($entry, $passed_alleles)};
+    }
+
+    return \%interpretations;
 }
 
 sub initialize_filters {
