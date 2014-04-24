@@ -14,6 +14,11 @@ class Genome::Annotation::Plan::Base {
             is => 'HASH',
         },
     ],
+    has_optional_transient => [
+        cached_object => {
+            is => 'Genome::Annotation::ComponentBase',
+        },
+    ],
 };
 
 sub category {
@@ -74,8 +79,11 @@ sub validate_self {
 
 sub object {
     my $self = shift;
-    return $self->factory->get_object($self->category,
-        $self->name, $self->params);
+    unless ($self->cached_object) {
+        $self->cached_object($self->factory->get_object($self->category,
+            $self->name, $self->params));
+    }
+    return $self->cached_object;
 }
 
 sub factory {
