@@ -1296,6 +1296,7 @@ sub files_ignored_by_build_diff {
         reports/Build_Succeeded/report.xml
         logs/.*
         .*.R$
+        .*.Robject$
         .*.pdf$
         .*.jpg$
         .*.jpeg$
