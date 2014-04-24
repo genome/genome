@@ -12,6 +12,16 @@ sub name {
     return 'position';
 }
 
+sub available_fields {
+    return qw/
+        chromosome_name
+        start
+        stop
+        reference
+        variant
+    /;
+}
+
 sub process_entry {
     my $self = shift;
     my $entry = shift;

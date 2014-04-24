@@ -10,11 +10,21 @@ class Genome::Annotation::VepInterpreter {
 };
 
 sub name {
-    return 'vep';
+    return 'single-vep';
 }
 
 sub requires_experts {
     return ('single-vep');
+}
+
+sub available_fields {
+    return qw/
+        transcript_name
+        trv_type
+        amino_acid_change
+        default_gene_name
+        ensembl_gene_id
+    /;
 }
 
 sub process_entry {
