@@ -7,6 +7,11 @@ use Genome;
 class Genome::Annotation::ReporterBase {
     is => 'Genome::Annotation::ComponentBase',
     is_abstract => 1,
+    has => [
+        file_name => {
+            is => 'Text',
+        },
+    ],
     has_transient_optional => [
         _output_fh => {},
     ],
@@ -23,7 +28,7 @@ sub requires_interpreters {
 sub initialize {
     my $self = shift;
     my $output_dir = shift;
-    my $fh = Genome::Sys->open_file_for_writing(File::Spec->join($output_dir, $self->name));
+    my $fh = Genome::Sys->open_file_for_writing(File::Spec->join($output_dir, $self->file_name));
     $self->_output_fh($fh);
 }
 

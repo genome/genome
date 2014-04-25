@@ -17,7 +17,7 @@ use_ok($pkg);
 
 my $data_dir = __FILE__.".d";
 
-my $reporter = Genome::Annotation::SimpleReporter->create();
+my $reporter = Genome::Annotation::SimpleReporter->create(file_name => 'simple');
 ok($reporter, "Reporter created successfully");
 
 my $output_dir = Genome::Sys->create_temp_directory();
