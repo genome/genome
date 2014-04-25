@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use above 'Genome';
-use Test::More tests => 10;
+use Test::More;
 use Data::Dumper;
 
 #test use first and quit if it doesn't work
@@ -67,3 +67,33 @@ eval {
     $file_obj->divide_into_chunks(5,6);
 };
 ok($@,"Bad specific chunk number throws as expected");
+
+subtest "Chunk seq by size 3" => sub {
+    my @chunks = $file_obj->divide_sequence_into_chunks_of_size("2", 3);
+    # 10bp ref
+    my @expected = (
+        ['2', 1, 3],
+        ['2', 4, 6],
+        ['2', 7, 9],
+        ['2', 10, 10],
+        );
+
+    is_deeply(\@chunks, \@expected, "got expected chunks")
+        or diag("Expected: " . Dumper(\@expected) . "\nObserved: " . Dumper(\@chunks));
+};
+
+subtest "Chunk seq by size 4" => sub {
+    my @chunks = $file_obj->divide_sequence_into_chunks_of_size("2", 4);
+    # 10bp ref
+    my @expected = (
+        ['2', 1, 4],
+        ['2', 5, 8],
+        ['2', 9, 10],
+        );
+
+
+    is_deeply(\@chunks, \@expected, "got expected chunks")
+        or diag("Expected: " . Dumper(\@expected) . "\nObserved: " . Dumper(\@chunks));
+};
+
+done_testing();
