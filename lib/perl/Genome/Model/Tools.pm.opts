@@ -23086,6 +23086,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'files',
       'min-points-to-plot=s',
       'files',
+      'min-width=s',
+      'files',
       'output-basename=s',
       'files',
       'plot-y-max=s',
