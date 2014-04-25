@@ -26,7 +26,7 @@ BEGIN {
 my $pkg = 'Genome::Annotation::BamReadcount::Expert';
 use_ok($pkg) || die;
 
-my $VERSION = 2; # Bump these each time test data changes
+my $VERSION = 3; # Bump these each time test data changes
 my $BUILD_VERSION = 1;
 my $test_dir = Genome::Utility::Test->data_dir($pkg, "v$VERSION");
 if (-d $test_dir) {
