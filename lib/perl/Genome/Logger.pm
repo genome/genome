@@ -3,7 +3,7 @@ package Genome::Logger;
 use strict;
 use warnings;
 
-use Carp qw(croak);
+use Carp qw();
 use Log::Dispatch qw();
 use Log::Dispatch::Screen qw();
 use Memoize qw(memoize);
@@ -30,7 +30,7 @@ sub assert_class_method {
 
     # to ensure memoize works we are strict about this
     unless ($class && $class eq __PACKAGE__) {
-        croak assert_class_method_error();
+        Carp::croak assert_class_method_error();
     }
 }
 
@@ -43,6 +43,14 @@ sub has_color_screen_package {
     my $name = use_package_optimistically('Log::Dispatch::Screen::Color');
     my $file = module_notional_filename($name);
     return $INC{$file};
+}
+
+sub screen {
+    my $screen = Log::Dispatch::Screen->new(
+        name => 'screen',
+        min_level => 'info',
+    );
+    return $screen;
 }
 
 sub color_screen {
@@ -83,21 +91,36 @@ for my $level (@levels) {
     no strict 'refs';
     *{$name} = sub {
         my $class = shift;
-        return $class->logger->$level(@_);
+        $class->logger->$level(@_);
+        return join(' ', @_);
     };
     *{$namef} = sub {
         my $class = shift;
         # sprintf inspects argument number
-        return $class->logger->$level(sprintf(shift, @_));
+        my $message = sprintf(shift, @_);
+        $class->$name($message);
     };
 }
 
-sub screen {
-    my $screen = Log::Dispatch::Screen->new(
-        name => 'screen',
-        min_level => 'info',
-    );
-    return $screen;
+sub croak {
+    my $class = shift;
+    my $level = shift;
+
+    unless ($class->can($level)) {
+        Carp::croak "invalid level: $level";
+    }
+
+    Carp::croak $class->$level(@_);
+}
+
+sub fatal {
+    my $class = shift;
+    $class->croak('critical', @_);
+}
+
+sub fatalf {
+    my $class = shift;
+    $class->croak('criticalf', @_);
 }
 
 1;
