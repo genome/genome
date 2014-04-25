@@ -1,11 +1,13 @@
 use strict;
 use warnings;
 
+BEGIN {
+    $ENV{GENOME_NESSY_SERVER} = 'http://nessy.gsc.wustl.edu/';
+};
+
 use above 'Genome';
 use Test::More tests => 7;
 use List::Util qw(shuffle);
-
-$ENV{GENOME_NESSY_SERVER} = 'http://nessy.gsc.wustl.edu/';
 
 my @backends = sort Genome::Sys::Lock->backends;
 is(scalar(@backends), 2, 'got two backends');
