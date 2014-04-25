@@ -14,8 +14,7 @@ with qw(Genome::Sys::Lock::Backend);
 
 has 'url' => (is => 'ro', isa => 'Str');
 has 'client' => (is => 'ro', isa => 'Nessy::Client', lazy_build => 1);
-
-my %NESSY_LOCKS_TO_REMOVE;
+has 'claims' => (is => 'rw', isa => 'ArrayRef', auto_deref => 1);
 
 sub lock {
     my ($self, %args) = @_;
@@ -59,7 +58,7 @@ sub lock {
     );
     my $claim = $self->client->claim($resource, timeout => $timeout, user_data => \%user_data);
     undef $wait_announce_timer;
-    $NESSY_LOCKS_TO_REMOVE{$resource} = $claim if $claim;
+    $self->add_claim($resource => $claim) if $claim;
 
     return $resource;
 }
@@ -71,7 +70,8 @@ sub unlock {
     }
 
     if ($self->has_client) {
-        my $claim = delete $NESSY_LOCKS_TO_REMOVE{$resource};
+        my $claim = $self->claim($resource);
+        $self->remove_claim($claim);
         if ($claim) {
             $claim->release;
         } else {
@@ -85,18 +85,19 @@ sub unlock {
 # clear_state() can be used after fork() to get a "clean" lock state.
 sub clear_state {
     my $self = shift;
-    %NESSY_LOCKS_TO_REMOVE = ();
+    $self->clear_claims();
     $self->clear_client();
 }
 
 sub release_all {
     my $self = shift;
 
-    foreach my $resource ( keys %NESSY_LOCKS_TO_REMOVE ) {
+    for my $claim ( $self->claims ) {
+        my $resource = $claim->resource_name;
         warn("Removing remaining lock: '$resource'") unless $ENV{'HARNESS_ACTIVE'};
         __PACKAGE__->unlock($resource); # NessyLock
     }
-    %NESSY_LOCKS_TO_REMOVE = ();
+    $self->clear_claims();
     $self->clear_client();
 }
 
@@ -141,10 +142,32 @@ sub _build_client {
     return;
 }
 
+sub add_claim {
+    my ($self, $resource, $claim) = @_;
+    $self->claims([$self->claims, $claim]);
+}
+
+sub remove_claim {
+    my ($self, $claim) = @_;
+    my @claims = grep { $_ ne $claim } $self->claims;
+    $self->claims(\@claims);
+}
+
+sub clear_claims {
+    my ($self) = @_;
+    $self->claims([]);
+}
+
+sub claim {
+    my ($self, $resource) = @_;
+    my ($claim) = grep { $_->resource_name eq $resource } $self->claims;
+    return $claim;
+}
+
 sub has_lock { _is_holding_nessy_lock(@_) }
 sub _is_holding_nessy_lock {
     my ($self, $resource) = @_;
-    return $NESSY_LOCKS_TO_REMOVE{$resource};
+    return $self->claim($resource) ? 1 : 0;
 }
 
 sub min_timeout {
@@ -184,20 +207,5 @@ sub _translate_wait_announce_interval {
 
     croak 'cannot translate wait_announce_interval';
 }
-
-UR::Context->process->add_observer(
-    aspect => 'sync_databases',
-    callback => sub {
-        my ($ctx, $aspect, $sync_db_result) = @_;
-        if ($sync_db_result) {
-            use vars '@CARP_NOT';
-            local @CARP_NOT = (@CARP_NOT, 'UR::Context');
-            foreach my $claim (values %NESSY_LOCKS_TO_REMOVE ) {
-                $claim->validate
-                    || Carp::croak(sprintf('Claim %s failed to verify during commit', $claim->resource_name));
-            }
-        }
-    }
-);
 
 __PACKAGE__->meta->make_immutable();
