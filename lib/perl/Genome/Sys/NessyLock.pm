@@ -13,7 +13,7 @@ my %NESSY_LOCKS_TO_REMOVE;
 my $LOCKING_CLIENT;
 
 sub lock {
-    my($class, %args) = @_;
+    my ($class, %args) = @_;
 
     my $resource = $args{resource};
     unless (defined $resource) {
@@ -135,7 +135,7 @@ sub _start_locking_client {
 
 sub has_lock { _is_holding_nessy_lock(@_) }
 sub _is_holding_nessy_lock {
-    my($class, $resource) = @_;
+    my ($class, $resource) = @_;
     return $NESSY_LOCKS_TO_REMOVE{$resource};
 }
 
@@ -144,7 +144,7 @@ sub min_timeout {
 }
 
 sub _new_style_lock_timeout_from_args {
-    my($class, %args) = @_;
+    my ($class, %args) = @_;
 
     my $block_sleep = delete $args{block_sleep} || 0;
 
@@ -180,7 +180,7 @@ sub _translate_wait_announce_interval {
 UR::Context->process->add_observer(
     aspect => 'sync_databases',
     callback => sub {
-        my($ctx, $aspect, $sync_db_result) = @_;
+        my ($ctx, $aspect, $sync_db_result) = @_;
         if ($sync_db_result) {
             use vars '@CARP_NOT';
             local @CARP_NOT = (@CARP_NOT, 'UR::Context');
