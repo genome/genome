@@ -281,6 +281,8 @@ sub _resolve_lock_owner_details {
     return $lock_details;
 }
 
+sub is_mandatory { 1 }
+
 sub has_lock {
     my ($class, $resource_lock) = @_;
     return $SYMLINKS_TO_REMOVE{$resource_lock};

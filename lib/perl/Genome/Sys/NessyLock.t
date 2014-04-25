@@ -1,24 +1,27 @@
 use strict;
 use warnings;
 
-use above 'Genome';
+use Genome::Sys::NessyLock;
 use Test::More tests => 2;
 
 use List::Util qw(shuffle);
 
-$ENV{GENOME_NESSY_SERVER} = 'http://nessy.gsc.wustl.edu/';
-
 my $resource_name = 'NessLock.t/' . random_string();
 diag 'resource = ' . $resource_name;
 
-my $resource = Genome::Sys::NessyLock->lock(
+my $n = Genome::Sys::NessyLock->new(
+    url => 'http://nessy.gsc.wustl.edu/',
+    is_mandatory => 1,
+);
+
+my $resource = $n->lock(
     resource => $resource_name,
     timeout => 5,
     wait_announce_interval => 10,
 );
 is($resource, $resource_name, 'locked a Nessy resource');
 
-my $unlocked = Genome::Sys::NessyLock->unlock($resource);
+my $unlocked = $n->unlock($resource);
 is($unlocked, 1, 'unlocked a Nessy resource');
 
 sub random_string {

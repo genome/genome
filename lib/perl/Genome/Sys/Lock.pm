@@ -85,10 +85,12 @@ sub lock_resource {
         }
     }
 
-    my $nessy_claim = Genome::Sys::NessyLock->has_lock($args{resource_lock});
+    my ($nessylock) = grep { $_->can('blessed') && $_->blessed eq 'Genome::Sys::NessyLock' } backends();
+
+    my $nessy_claim = $nessylock->has_lock($args{resource_lock});
     my $rv = Genome::Sys::FileLock->has_lock($args{resource_lock});
 
-    if (Genome::Sys::NessyLock->is_enabled) {
+    if ($nessylock->is_enabled) {
         $class->_lock_resource_report_inconsistent_locks($args{resource_lock}, $rv, $nessy_claim);
     }
 
@@ -166,31 +168,28 @@ sub with_default_lock_resource_args {
 }
 
 # backend => mandatory
-my %backends = (
-    'Genome::Sys::FileLock' => 1,
-    'Genome::Sys::NessyLock' => 0,
+my @backends = (
+    'Genome::Sys::FileLock',
+    Genome::Sys::NessyLock->new(url => 'http://nessy.gsc.wustl.edu/', is_mandatory => 0),
 );
 
 sub is_mandatory {
-    my $name = shift;
-    return $backends{$name};
+    my $backend = shift;
+    return $backend->is_mandatory();
 }
 
 sub backends {
-    return keys %backends;
+    return @backends;
 }
 
 sub add_backend {
-    my ($class, $name, $mandatory) = @_;
-    $backends{$name} = $mandatory;
-    return 1;
+    my ($class, $backend) = @_;
+    push @backends, $backend;
 }
 
 sub remove_backend {
-    my ($class, $name) = @_;
-    return unless exists $backends{$name};
-    delete $backends{$name};
-    return 1;
+    my ($class, $backend) = @_;
+    @backends = grep { $_ ne $backend } @backends;
 }
 
 ########################################################################
