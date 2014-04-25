@@ -25,7 +25,6 @@ sub initialize {
     my $output_dir = shift;
     my $fh = Genome::Sys->open_file_for_writing(File::Spec->join($output_dir, $self->name));
     $self->_output_fh($fh);
-    $self->print_headers;
 }
 
 sub finalize {
@@ -33,7 +32,4 @@ sub finalize {
     $self->_output_fh->close;
 }
 
-sub print_headers {
-    #implement in subclass if you want to print a header
-}
 1;

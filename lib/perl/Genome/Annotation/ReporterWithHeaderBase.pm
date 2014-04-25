@@ -15,6 +15,14 @@ class Genome::Annotation::ReporterWithHeaderBase {
     }
 };
 
+sub initialize {
+    my $self = shift;
+    my $output_dir = shift;
+
+    $self->SUPER::initialize($output_dir);
+    $self->print_headers();
+}
+
 sub headers {
     die "abstract";
 }
