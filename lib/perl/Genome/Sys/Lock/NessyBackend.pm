@@ -1,4 +1,4 @@
-package Genome::Sys::NessyLock;
+package Genome::Sys::Lock::NessyBackend;
 
 use strict;
 use warnings;
@@ -94,7 +94,7 @@ sub release_all {
     for my $claim ( $self->claims ) {
         my $resource = $claim->resource_name;
         warn("Removing remaining lock: '$resource'") unless $ENV{'HARNESS_ACTIVE'};
-        __PACKAGE__->unlock($resource); # NessyLock
+        __PACKAGE__->unlock($resource);
     }
     $self->clear_claims();
     $self->clear_client();

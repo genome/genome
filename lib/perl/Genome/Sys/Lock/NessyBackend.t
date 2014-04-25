@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Genome::Sys::NessyLock;
+use Genome::Sys::Lock::NessyBackend;
 use Test::More tests => 2;
 
 use List::Util qw(shuffle);
@@ -9,7 +9,7 @@ use List::Util qw(shuffle);
 my $resource_name = 'NessLock.t/' . random_string();
 diag 'resource = ' . $resource_name;
 
-my $n = Genome::Sys::NessyLock->new(
+my $n = Genome::Sys::Lock::NessyBackend->new(
     url => 'http://nessy.gsc.wustl.edu/',
     is_mandatory => 1,
 );

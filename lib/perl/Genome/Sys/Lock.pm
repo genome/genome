@@ -6,7 +6,7 @@ use warnings;
 use Carp qw(carp croak);
 
 use Genome::Sys::FileLock;
-use Genome::Sys::NessyLock;
+use Genome::Sys::Lock::NessyBackend;
 
 =item lock_resource()
 
@@ -85,7 +85,7 @@ sub lock_resource {
         }
     }
 
-    my ($nessylock) = grep { $_->can('blessed') && $_->blessed eq 'Genome::Sys::NessyLock' } backends();
+    my ($nessylock) = grep { $_->can('blessed') && $_->blessed eq 'Genome::Sys::Lock::NessyBackend' } backends();
 
     my $nessy_claim = $nessylock->has_lock($args{resource_lock});
     my $rv = Genome::Sys::FileLock->has_lock($args{resource_lock});
@@ -167,7 +167,7 @@ sub with_default_lock_resource_args {
     return %args;
 }
 
-my $nessylock = Genome::Sys::NessyLock->new(
+my $nessylock = Genome::Sys::Lock::NessyBackend->new(
     url => 'http://nessy.gsc.wustl.edu/',
     is_mandatory => 0,
 );
