@@ -12,6 +12,8 @@ use base 'UR::ModuleBase';   # *_message methods, but no constructor
 use Mouse;
 with qw(Genome::Sys::Lock::Backend);
 
+has 'url' => (is => 'ro', isa => 'Str');
+
 my %NESSY_LOCKS_TO_REMOVE;
 my $LOCKING_CLIENT;
 
@@ -124,15 +126,16 @@ sub translate_unlock_args {
 }
 
 sub is_enabled {
-    return $ENV{GENOME_NESSY_SERVER} ? 1 : 0;
+    my $self = shift;
+    return $self->url ? 1 : 0;
 }
 
 sub _start_locking_client {
     my $self = shift;
 
-    if ($ENV{GENOME_NESSY_SERVER} and ! $LOCKING_CLIENT) {
+    if ($self->url and ! $LOCKING_CLIENT) {
         require Nessy::Client;
-        $LOCKING_CLIENT = Nessy::Client->new(url => $ENV{GENOME_NESSY_SERVER});
+        $LOCKING_CLIENT = Nessy::Client->new(url => $self->url);
     }
 }
 
