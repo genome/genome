@@ -98,7 +98,6 @@ sub release_all {
         warn("Removing remaining lock: '$resource'") unless $ENV{'HARNESS_ACTIVE'};
         $self->unlock($resource);
     }
-    $self->clear_client();
 }
 
 sub translate_lock_args {
