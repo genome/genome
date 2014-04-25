@@ -34,6 +34,8 @@ subtest 'color screen' => sub {
 subtest 'context independent memoize' => sub {
     plan tests => 3;
 
+    Memoize::flush_cache('Genome::Logger::logger');
+
     my $sl = Genome::Logger->logger();
     ok($sl, 'got logger in scalar context');
 
