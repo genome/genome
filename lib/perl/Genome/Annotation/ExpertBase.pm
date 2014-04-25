@@ -3,6 +3,7 @@ package Genome::Annotation::ExpertBase;
 use strict;
 use warnings FATAL => 'all';
 use Genome;
+use Params::Validate qw(validate :types);
 
 class Genome::Annotation::ExpertBase {
     is => 'Genome::Annotation::ComponentBase',
@@ -47,6 +48,36 @@ sub dag {
     # DAG OUTPUTS:
     #   software_result (Same requirements as <input_result>)
     die "Abstract";
+}
+
+sub _link {
+    my $self = shift;
+    my %p = validate(@_, {
+        dag => {isa => 'Genome::WorkflowBuilder::DAG'},
+        adaptor => {isa => 'Genome::WorkflowBuilder::Command'},
+        previous => {type => OBJECT | UNDEF},
+        target => {isa => 'Genome::WorkflowBuilder::Command'},
+    });
+
+    if (defined $p{previous}) {
+        $p{dag}->create_link(
+            source => $p{previous},
+            source_property => 'output_result',
+            destination => $p{target},
+            destination_property => 'input_result',
+        );
+    }
+
+    for my $name ($p{target}->command->input_names) {
+        next if $name eq 'input_result';
+        next unless $p{adaptor}->command->can($name);
+        $p{dag}->create_link(
+            source => $p{adaptor},
+            source_property => $name,
+            destination => $p{target},
+            destination_property => $name,
+        );
+    }
 }
 
 1;

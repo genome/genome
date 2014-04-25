@@ -5,7 +5,6 @@ use warnings FATAL => 'all';
 use Genome;
 use Genome::WorkflowBuilder::DAG;
 use Genome::WorkflowBuilder::Command;
-use Params::Validate qw(validate :types);
 
 class Genome::Annotation::BamReadcount::Expert {
     is => 'Genome::Annotation::ExpertBase',
@@ -43,7 +42,7 @@ sub dag {
         destination => $run_op,
         destination_property => 'aligned_bam_result',
     );
-    _link(dag => $dag,
+    $self->_link(dag => $dag,
           adaptor => $build_adaptor_op,
           previous => $build_adaptor_op,
           target => $run_op,
@@ -57,7 +56,7 @@ sub dag {
         destination => $annotate_op,
         destination_property => 'readcount_results',
     );
-    _link(dag => $dag,
+    $self->_link(dag => $dag,
           adaptor => $build_adaptor_op,
           previous => $build_adaptor_op,
           target => $annotate_op,
@@ -86,33 +85,6 @@ sub annotate_op {
     );
 }
 
-sub _link {
-    my %p = validate(@_, {
-        dag => {isa => 'Genome::WorkflowBuilder::DAG'},
-        adaptor => {isa => 'Genome::WorkflowBuilder::Command'},
-        previous => {type => OBJECT | UNDEF},
-        target => {isa => 'Genome::WorkflowBuilder::Command'},
-    });
 
-    if (defined $p{previous}) {
-        $p{dag}->create_link(
-            source => $p{previous},
-            source_property => 'output_result',
-            destination => $p{target},
-            destination_property => 'input_result',
-        );
-    }
-
-    for my $name ($p{target}->command->input_names) {
-        next if $name eq 'input_result';
-        next unless $p{adaptor}->command->can($name);
-        $p{dag}->create_link(
-            source => $p{adaptor},
-            source_property => $name,
-            destination => $p{target},
-            destination_property => $name,
-        );
-    }
-}
 
 1;
