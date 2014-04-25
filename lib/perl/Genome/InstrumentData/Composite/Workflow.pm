@@ -612,8 +612,11 @@ sub _generate_operation {
 
     # TODO WF now has better support for customizing this, so this hack could be replaced
     # Use PerLaneTophat class to override default lsf_resource
-    if ($action->{name} eq 'per-lane-tophat') {
-        $action_class_bases->{align} = 'Genome::InstrumentData::Command::AlignReads::PerLaneTophat';
+    my $aligner_name = $action->{name};
+
+    if ($aligner_name eq 'per-lane-tophat' or $aligner_name eq 'star') {
+        my $subclass_name = 'Genome::InstrumentData::AlignmentResult'->_resolve_subclass_name_for_aligner_name($aligner_name);
+        $action_class_bases->{align} = 'Genome::InstrumentData::Command::AlignReads::'.$subclass_name;
     }
 
     my $class_name = $action_class_bases->{$action->{type}};
