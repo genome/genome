@@ -3,7 +3,7 @@ package Genome::Logger;
 use strict;
 use warnings;
 
-use Carp qw(croak);
+use Carp qw();
 use Log::Dispatch qw();
 use Log::Dispatch::Screen qw();
 use Memoize qw(memoize);
@@ -30,7 +30,7 @@ sub assert_class_method {
 
     # to ensure memoize works we are strict about this
     unless ($class && $class eq __PACKAGE__) {
-        croak assert_class_method_error();
+        Carp::croak assert_class_method_error();
     }
 }
 
@@ -100,6 +100,17 @@ for my $level (@levels) {
         my $message = sprintf(shift, @_);
         $class->$name($message);
     };
+}
+
+sub croak {
+    my $class = shift;
+    my $level = shift;
+
+    unless ($class->can($level)) {
+        Carp::croak "invalid level: $level";
+    }
+
+    Carp::croak $class->$level(@_);
 }
 
 1;
