@@ -57,9 +57,11 @@ sub lock {
     );
     my $claim = $self->client->claim($resource, timeout => $timeout, user_data => \%user_data);
     undef $wait_announce_timer;
-    $self->add_claim($resource => $claim) if $claim;
-
-    return $resource;
+    if ($claim) {
+        $self->add_claim($resource => $claim);
+        return $resource;
+    }
+    return;
 }
 
 sub unlock {
