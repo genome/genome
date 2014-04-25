@@ -129,18 +129,6 @@ sub unlock_resource {
     return $rv;
 }
 
-=item clear_state()
-
-C<clear_state()> can be used after fork() to get a "clean" lock state.
-
-=cut
-
-sub clear_state {
-    for my $backend (backends()) {
-        $backend->clear_state();
-    }
-}
-
 =item release_all()
 
 C<release_all()> should release all locks managed by this process.  This should

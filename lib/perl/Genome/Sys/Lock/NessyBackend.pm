@@ -83,13 +83,6 @@ sub unlock {
     }
 }
 
-# clear_state() can be used after fork() to get a "clean" lock state.
-sub clear_state {
-    my $self = shift;
-    $self->clear_claims();
-    $self->clear_client();
-}
-
 sub release_all {
     my $self = shift;
 
