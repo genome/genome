@@ -113,4 +113,14 @@ sub croak {
     Carp::croak $class->$level(@_);
 }
 
+sub fatal {
+    my $class = shift;
+    $class->croak('critical', @_);
+}
+
+sub fatalf {
+    my $class = shift;
+    $class->croak('criticalf', @_);
+}
+
 1;

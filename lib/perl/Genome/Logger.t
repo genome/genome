@@ -46,8 +46,8 @@ subtest 'context independent memoize' => sub {
     is($sl, $ll, 'both loggers are the same');
 };
 
-subtest 'croak' => sub {
-    plan tests => 2;
+subtest 'exceptions' => sub {
+    plan tests => 4;
 
     Memoize::flush_cache('Genome::Logger::logger');
     my $logger = Genome::Logger->logger();
@@ -59,4 +59,10 @@ subtest 'croak' => sub {
 
     like(exception { Genome::Logger->croak('foo', $message) },
         qr/^invalid level/, 'exception thrown for invalid level');
+
+    like(exception { Genome::Logger->fatal($message) },
+        qr/^$message/, 'exception thrown with message');
+
+    like(exception { Genome::Logger->fatalf($message) },
+        qr/^$message/, 'exception thrown with message');
 };
