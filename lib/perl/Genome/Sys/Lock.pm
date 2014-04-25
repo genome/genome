@@ -167,7 +167,8 @@ sub with_default_lock_resource_args {
 
 # backend => mandatory
 my %backends = (
-    'Genome::Sys::FileLock' => 1
+    'Genome::Sys::FileLock' => 1,
+    'Genome::Sys::NessyLock' => 0,
 );
 
 sub is_mandatory {
