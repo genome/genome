@@ -91,12 +91,14 @@ for my $level (@levels) {
     no strict 'refs';
     *{$name} = sub {
         my $class = shift;
-        return $class->logger->$level(@_);
+        $class->logger->$level(@_);
+        return join(' ', @_);
     };
     *{$namef} = sub {
         my $class = shift;
         # sprintf inspects argument number
-        return $class->logger->$level(sprintf(shift, @_));
+        my $message = sprintf(shift, @_);
+        $class->$name($message);
     };
 }
 
