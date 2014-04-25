@@ -6,7 +6,7 @@ use warnings;
 use Carp qw(carp croak);
 
 use Genome::Sys::FileLock;
-use Genome::Sys::NessyLock;
+use Genome::Sys::Lock::NessyBackend;
 
 =item lock_resource()
 
@@ -85,10 +85,10 @@ sub lock_resource {
         }
     }
 
-    my $nessy_claim = Genome::Sys::NessyLock->has_lock($args{resource_lock});
-    my $rv = Genome::Sys::FileLock->has_lock($args{resource_lock});
-
-    if (Genome::Sys::NessyLock->is_enabled) {
+    my ($nessylock) = grep { $_->can('blessed') && $_->blessed eq 'Genome::Sys::Lock::NessyBackend' } backends();
+    if ($nessylock) {
+        my $nessy_claim = $nessylock->has_lock($args{resource_lock});
+        my $rv = Genome::Sys::FileLock->has_lock($args{resource_lock});
         $class->_lock_resource_report_inconsistent_locks($args{resource_lock}, $rv, $nessy_claim);
     }
 
@@ -129,18 +129,6 @@ sub unlock_resource {
     return $rv;
 }
 
-=item clear_state()
-
-C<clear_state()> can be used after fork() to get a "clean" lock state.
-
-=cut
-
-sub clear_state {
-    for my $backend (backends()) {
-        $backend->clear_state();
-    }
-}
-
 =item release_all()
 
 C<release_all()> should release all locks managed by this process.  This should
@@ -165,32 +153,47 @@ sub with_default_lock_resource_args {
     return %args;
 }
 
-# backend => mandatory
-my %backends = (
-    'Genome::Sys::FileLock' => 1,
-    'Genome::Sys::NessyLock' => 0,
-);
+my @backends = ('Genome::Sys::FileLock');
+if ($ENV{GENOME_NESSY_SERVER}) {
+    my $nessylock = Genome::Sys::Lock::NessyBackend->new(
+        url => 'http://nessy.gsc.wustl.edu/',
+        is_mandatory => 0,
+    );
+    push @backends, $nessylock;
+
+    UR::Context->process->add_observer(
+        aspect => 'sync_databases',
+        callback => sub {
+            my ($ctx, $aspect, $sync_db_result) = @_;
+            if ($sync_db_result) {
+                use vars '@CARP_NOT';
+                local @CARP_NOT = (@CARP_NOT, 'UR::Context');
+                foreach my $claim ($nessylock->claims) {
+                    $claim->validate
+                        || Carp::croak(sprintf('Claim %s failed to verify during commit', $claim->resource_name));
+                }
+            }
+        }
+    );
+}
 
 sub is_mandatory {
-    my $name = shift;
-    return $backends{$name};
+    my $backend = shift;
+    return $backend->is_mandatory();
 }
 
 sub backends {
-    return keys %backends;
+    return @backends;
 }
 
 sub add_backend {
-    my ($class, $name, $mandatory) = @_;
-    $backends{$name} = $mandatory;
-    return 1;
+    my ($class, $backend) = @_;
+    push @backends, $backend;
 }
 
 sub remove_backend {
-    my ($class, $name) = @_;
-    return unless exists $backends{$name};
-    delete $backends{$name};
-    return 1;
+    my ($class, $backend) = @_;
+    @backends = grep { $_ ne $backend } @backends;
 }
 
 ########################################################################
