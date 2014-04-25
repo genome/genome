@@ -9,6 +9,9 @@ use Sys::Hostname qw(hostname);
 use Genome::Sys;
 use base 'UR::ModuleBase';   # *_message methods, but no constructor
 
+use Mouse;
+with qw(Genome::Sys::Lock::Backend);
+
 my %NESSY_LOCKS_TO_REMOVE;
 my $LOCKING_CLIENT;
 
@@ -192,4 +195,4 @@ UR::Context->process->add_observer(
     }
 );
 
-1;
+__PACKAGE__->meta->make_immutable();
