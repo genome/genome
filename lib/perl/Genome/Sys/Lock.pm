@@ -68,19 +68,24 @@ sub lock_resource {
     my $class = shift;
     my %args = with_default_lock_resource_args(@_);
 
-    my %locks;
+    my @locks;
+    my $unwind = sub {
+        for my $pair (@locks) {
+            my ($backend, $resource_lock) = @$pair;
+            my @unlock_args = $backend->translate_unlock_args(resource_lock => $resource_lock);
+            $backend->unlock(@unlock_args);
+        }
+    };
+
     for my $backend (backends()) {
         my @lock_args = $backend->translate_lock_args(%args);
         my $lock = $backend->lock(@lock_args);
         if ($lock) {
-            $locks{$backend} = $lock;
+            push @locks, [$backend, $lock];
         }
 
         if (is_mandatory($backend) && !$lock) {
-            for (keys %locks) {
-                my @unlock_args = $backend->translate_unlock_args(%args);
-                $_->unlock(@unlock_args);
-            }
+            $unwind->();
             return;
         }
     }

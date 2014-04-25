@@ -6,7 +6,7 @@ BEGIN {
 };
 
 use above 'Genome';
-use Test::More tests => 7;
+use Test::More tests => 8;
 use List::Util qw(shuffle);
 
 my @backends = sort Genome::Sys::Lock->backends;
@@ -125,6 +125,34 @@ subtest 'mandatory backend unlock does cause failures' => sub {
     ok(!$nessylock->has_lock($resource_lock), 'confirmed NessyBackend does not have the lock');
 
     Genome::Sys::FileLock->unlock(resource_lock => $resource_lock);
+};
+
+subtest 'mandatory twin NessyBackends' => sub {
+    plan tests => 2;
+
+    my @backends = (
+        Genome::Sys::Lock::NessyBackend->new(
+            url => 'http://nessy.gsc.wustl.edu/',
+            is_mandatory => 1,
+        ),
+        Genome::Sys::Lock::NessyBackend->new(
+            url => 'http://nessy.gsc.wustl.edu/',
+            is_mandatory => 1,
+        ),
+    );
+    no warnings 'redefine';
+    local *Genome::Sys::Lock::backends = sub { @backends };
+    use warnings 'redefine';
+
+    my $resource_lock = 'Lock.t/' . random_string();
+    my $lock = Genome::Sys::Lock->lock_resource(
+        resource_lock => $resource_lock,
+        block_sleep => 5,
+        max_try => 0,
+        wait_announce_interval => 10,
+    );
+    is($lock, undef, 'failed to get lock');
+    ok(!(grep { $_->has_lock($resource_lock) } @backends), 'neither backend locked the resource');
 };
 
 sub random_string {
