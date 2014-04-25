@@ -86,11 +86,9 @@ sub lock_resource {
     }
 
     my ($nessylock) = grep { $_->can('blessed') && $_->blessed eq 'Genome::Sys::Lock::NessyBackend' } backends();
-
-    my $nessy_claim = $nessylock->has_lock($args{resource_lock});
-    my $rv = Genome::Sys::FileLock->has_lock($args{resource_lock});
-
-    if ($nessylock->is_enabled) {
+    if ($nessylock) {
+        my $nessy_claim = $nessylock->has_lock($args{resource_lock});
+        my $rv = Genome::Sys::FileLock->has_lock($args{resource_lock});
         $class->_lock_resource_report_inconsistent_locks($args{resource_lock}, $rv, $nessy_claim);
     }
 
