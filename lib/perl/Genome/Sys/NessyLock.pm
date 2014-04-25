@@ -6,8 +6,8 @@ use warnings;
 use Carp qw(carp croak);
 use Sys::Hostname qw(hostname);
 
+use Genome::Logger;
 use Genome::Sys;
-use base 'UR::ModuleBase';   # *_message methods, but no constructor
 
 use Mouse;
 with qw(Genome::Sys::Lock::Backend);
@@ -41,8 +41,7 @@ sub lock {
         = (hostname, $$, ($ENV{'LSB_JOBID'} || 'NONE'), Genome::Sys->username);
 
     if ($self->_is_holding_nessy_lock($resource)) {
-        $self->blessed->error_message("Tried to lock resource more than once: $resource");
-        Carp::croak($self->blessed->error_message);
+        Genome::Logger->fatal("Tried to lock resource more than once: $resource");
     }
 
     my $info_content = join("\n", map { $_ . ': ' . $user_data{$_} } keys %user_data);
@@ -53,7 +52,7 @@ sub lock {
         interval => $wait_announce_interval,
         cb => sub {
             my $total_elapsed_time = time() - $initial_time;
-            $self->blessed->status_message("waiting (total_elapsed_time = $total_elapsed_time seconds) on lock for resource '$resource': $claim_warning. lock_info is:\n$info_content");
+            Genome::Logger->notice("waiting (total_elapsed_time = $total_elapsed_time seconds) on lock for resource '$resource': $claim_warning. lock_info is:\n$info_content");
         },
     );
     my $claim = $self->client->claim($resource, timeout => $timeout, user_data => \%user_data);
@@ -75,7 +74,7 @@ sub unlock {
         if ($claim) {
             $claim->release;
         } else {
-            $self->blessed->error_message("Nessy tried to release, but no claim in slot for resource: $resource");
+            Genome::Logger->error("Nessy tried to release, but no claim in slot for resource: $resource");
         }
     } else {
         return 1;
