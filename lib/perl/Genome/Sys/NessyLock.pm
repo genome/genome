@@ -13,9 +13,9 @@ use Mouse;
 with qw(Genome::Sys::Lock::Backend);
 
 has 'url' => (is => 'ro', isa => 'Str');
+has 'client' => (is => 'ro', isa => 'Nessy::Client', lazy_build => 1);
 
 my %NESSY_LOCKS_TO_REMOVE;
-my $LOCKING_CLIENT;
 
 sub lock {
     my ($self, %args) = @_;
@@ -35,8 +35,7 @@ sub lock {
         croak('wait_announce_interval not defined');
     }
 
-    $self->_start_locking_client;
-    return unless $LOCKING_CLIENT;
+    return unless $self->client;
 
     my %user_data;
     @user_data{'host','pid','lsf_id','user'}
@@ -58,7 +57,7 @@ sub lock {
             $self->blessed->status_message("waiting (total_elapsed_time = $total_elapsed_time seconds) on lock for resource '$resource': $claim_warning. lock_info is:\n$info_content");
         },
     );
-    my $claim = $LOCKING_CLIENT->claim($resource, timeout => $timeout, user_data => \%user_data);
+    my $claim = $self->client->claim($resource, timeout => $timeout, user_data => \%user_data);
     undef $wait_announce_timer;
     $NESSY_LOCKS_TO_REMOVE{$resource} = $claim if $claim;
 
@@ -71,7 +70,7 @@ sub unlock {
         carp('resource is not set');
     }
 
-    if ($LOCKING_CLIENT) {
+    if ($self->has_client) {
         my $claim = delete $NESSY_LOCKS_TO_REMOVE{$resource};
         if ($claim) {
             $claim->release;
@@ -85,8 +84,9 @@ sub unlock {
 
 # clear_state() can be used after fork() to get a "clean" lock state.
 sub clear_state {
+    my $self = shift;
     %NESSY_LOCKS_TO_REMOVE = ();
-    undef $LOCKING_CLIENT;
+    $self->clear_client();
 }
 
 sub release_all {
@@ -97,7 +97,7 @@ sub release_all {
         __PACKAGE__->unlock($resource); # NessyLock
     }
     %NESSY_LOCKS_TO_REMOVE = ();
-    undef $LOCKING_CLIENT;
+    $self->clear_client();
 }
 
 sub translate_lock_args {
@@ -130,13 +130,15 @@ sub is_enabled {
     return $self->url ? 1 : 0;
 }
 
-sub _start_locking_client {
+sub _build_client {
     my $self = shift;
 
-    if ($self->url and ! $LOCKING_CLIENT) {
+    if ($self->url) {
         require Nessy::Client;
-        $LOCKING_CLIENT = Nessy::Client->new(url => $self->url);
+        return Nessy::Client->new(url => $self->url);
     }
+
+    return;
 }
 
 sub has_lock { _is_holding_nessy_lock(@_) }
