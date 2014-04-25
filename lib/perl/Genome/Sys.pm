@@ -1139,10 +1139,7 @@ sub open_gzip_file_for_reading {
     $self->validate_file_for_reading($file)
         or return;
 
-    #check file type for gzip or symlink to a gzip
-    my $file_type = $self->file_type($file);
-    #debian bug #522441 - `file` can report gzip files as any of these....
-    if ($file_type ne "gzip" && $file_type ne "Sun" && $file_type ne "Minix") {
+    unless ($self->file_is_gzipped($file)) {
         Carp::croak("File ($file) is not a gzip file");
     }
 
@@ -1171,7 +1168,7 @@ sub file_is_gzipped {
     my $file_type = $self->file_type($filename);
 
     #NOTE: debian bug #522441 - `file` can report gzip files as any of these....
-    if ($file_type eq "gzip" or $file_type eq "Sun" or $file_type eq "Minix") {
+    if ($file_type eq "gzip" or $file_type eq "Sun" or $file_type eq "Minix" or $file_type eq 'GRand') {
         return 1;
     } else {
         return 0;
