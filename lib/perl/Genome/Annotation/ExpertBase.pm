@@ -22,6 +22,14 @@ sub adaptor_class {
     }
 }
 
+sub build_adaptor_operation {
+    my $self = shift;
+    return Genome::WorkflowBuilder::Command->create(
+        name => 'Get inputs from build',
+        command => $self->adaptor_class,
+    );
+}
+
 sub dag {
     #   Must return a Genome::WorkflowBuilder::DAG
     # these usually just consist of a build_adaptor
