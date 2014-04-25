@@ -36,9 +36,14 @@ sub lock {
 
     return unless $self->client;
 
-    my %user_data;
-    @user_data{'host','pid','lsf_id','user'}
-        = (hostname, $$, ($ENV{'LSB_JOBID'} || 'NONE'), Genome::Sys->username);
+    my %user_data = (
+        host => hostname,
+        pid => $$,
+        lsf_id => ($ENV{LSB_JOBID} || 'NONE'),
+        user => Genome::Sys->username,
+        genome_build_id => ($ENV{GENOME_BUILD_ID} || 'NONE'),
+        lsf_project => ($ENV{WF_LSF_PROJECT} || 'NONE'),
+    );
 
     if ($self->_is_holding_nessy_lock($resource)) {
         Genome::Logger->fatal("Tried to lock resource more than once: $resource");
