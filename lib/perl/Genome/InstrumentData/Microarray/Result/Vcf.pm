@@ -24,7 +24,6 @@ class Genome::InstrumentData::Microarray::Result::Vcf {
 sub _error {
     my ($self, $msg) = @_;
     $self->error_message($msg);
-    $self->delete;
     die $self->error_message;
 }
 
