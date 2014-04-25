@@ -45,6 +45,14 @@ sub has_color_screen_package {
     return $INC{$file};
 }
 
+sub screen {
+    my $screen = Log::Dispatch::Screen->new(
+        name => 'screen',
+        min_level => 'info',
+    );
+    return $screen;
+}
+
 sub color_screen {
     my $screen = Log::Dispatch::Screen::Color->new(
         name => 'screen',
@@ -90,14 +98,6 @@ for my $level (@levels) {
         # sprintf inspects argument number
         return $class->logger->$level(sprintf(shift, @_));
     };
-}
-
-sub screen {
-    my $screen = Log::Dispatch::Screen->new(
-        name => 'screen',
-        min_level => 'info',
-    );
-    return $screen;
 }
 
 1;
