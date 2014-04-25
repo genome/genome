@@ -1,130 +1,258 @@
 use strict;
 use warnings;
 
-BEGIN {
-    $ENV{GENOME_NESSY_SERVER} = 'http://nessy.gsc.wustl.edu/';
-};
-
 use above 'Genome';
-use Test::More tests => 7;
+
+use Genome::Sys::Lock::MockBackend;
+use List::MoreUtils qw(all);
 use List::Util qw(shuffle);
+use Test::More tests => 10;
 
-my @backends = sort Genome::Sys::Lock->backends;
-is(scalar(@backends), 2, 'got two backends');
+########################################################################
+# Locking
+########################################################################
 
-my ($filelock) = grep { $_ eq 'Genome::Sys::FileLock' } @backends;
-ok($filelock->is_mandatory(), 'FileLock is mandatory');
+subtest 'shared mandatory both lock' => sub {
+    plan tests => 2;
 
-my ($nessylock) = grep { $_->can('blessed') } @backends;
-ok(!$nessylock->is_mandatory(), 'NessyBackend is optional');
-
-subtest 'optional backend lock does not cause failures' => sub {
-    plan tests => 6;
-
+    my $locks = {};
+    my @backends = (
+        Genome::Sys::Lock::MockBackend->new(),
+        Genome::Sys::Lock::MockBackend->new(),
+    );
     no warnings 'redefine';
-    local *Genome::Sys::Lock::NessyBackend::lock = sub { 0 };
+    local *Genome::Sys::Lock::backends = sub { @backends };
     use warnings 'redefine';
 
     my $resource_lock = 'Lock.t/' . random_string();
     my $lock = Genome::Sys::Lock->lock_resource(
         resource_lock => $resource_lock,
-        block_sleep => 5,
-        max_try => 0,
-        wait_announce_interval => 10,
     );
-
-    is($lock, $resource_lock, 'got lock even though NessyBackend failed');
-    ok(Genome::Sys::FileLock->has_lock($resource_lock), 'confirmed FileLock has the lock');
-    ok(!$nessylock->has_lock($resource_lock), 'confirmed NessyBackend does not have the lock');
-
-    my $unlocked = Genome::Sys::Lock->unlock_resource(
-        resource_lock => $lock,
-    );
-    ok($unlocked, 'unlocked');
-    ok(!Genome::Sys::FileLock->has_lock($resource_lock), 'confirmed FileLock does not have the lock');
-    ok(!$nessylock->has_lock($resource_lock), 'confirmed NessyBackend does not have the lock');
+    is($lock, $resource_lock, 'got the lock');
+    ok((all { $_->has_lock($resource_lock) } @backends), 'both backends locked the resource');
 };
 
-subtest 'mandatory backend lock does cause failures' => sub {
+subtest 'shared mandatory fails to lock' => sub {
+    plan tests => 2;
+
+    my $locks = {};
+    my @backends = (
+        Genome::Sys::Lock::MockBackend->new()
+            ->locks($locks),
+        Genome::Sys::Lock::MockBackend->new()
+            ->locks($locks),
+    );
+    no warnings 'redefine';
+    local *Genome::Sys::Lock::backends = sub { @backends };
+    use warnings 'redefine';
+
+    my $resource_lock = 'Lock.t/' . random_string();
+    my $lock = Genome::Sys::Lock->lock_resource(
+        resource_lock => $resource_lock,
+    );
+    is($lock, undef, 'failed to get lock');
+    ok(!(grep { $_->has_lock($resource_lock) } @backends), 'neither backend locked the resource');
+};
+
+subtest 'first optional fails to lock' => sub {
     plan tests => 3;
 
+    my @backends = (
+        Genome::Sys::Lock::MockBackend->new()
+            ->set_always('lock', undef)
+            ->set_always('is_mandatory', 0),
+        Genome::Sys::Lock::MockBackend->new(),
+    );
+
     no warnings 'redefine';
-    local *Genome::Sys::FileLock::lock = sub { 0 };
+    local *Genome::Sys::Lock::backends = sub { @backends };
     use warnings 'redefine';
 
     my $resource_lock = 'Lock.t/' . random_string();
     my $lock = Genome::Sys::Lock->lock_resource(
         resource_lock => $resource_lock,
-        block_sleep => 5,
-        max_try => 0,
-        wait_announce_interval => 10,
     );
-
-    is($lock, undef, 'failed to get lock');
-    ok(!Genome::Sys::FileLock->has_lock($resource_lock), 'confirmed FileLock does not have the lock');
-    ok(!$nessylock->has_lock($resource_lock), 'confirmed NessyBackend does not have the lock');
+    is($lock, $resource_lock, 'got the lock');
+    ok(!(all { $_->has_lock($resource_lock) } @backends), 'both backends did not lock the resource');
+    ok((grep { $_->has_lock($resource_lock) } @backends), 'one backend did lock the resource');
 };
 
-subtest 'optional backend unlock does not cause failures' => sub {
-    plan tests => 6;
+subtest 'second optional fails to lock' => sub {
+    plan tests => 3;
+
+    my @backends = (
+        Genome::Sys::Lock::MockBackend->new(),
+        Genome::Sys::Lock::MockBackend->new()
+            ->set_always('lock', undef)
+            ->set_always('is_mandatory', 0),
+    );
+    no warnings 'redefine';
+    local *Genome::Sys::Lock::backends = sub { @backends };
+    use warnings 'redefine';
 
     my $resource_lock = 'Lock.t/' . random_string();
     my $lock = Genome::Sys::Lock->lock_resource(
         resource_lock => $resource_lock,
-        block_sleep => 5,
-        max_try => 0,
-        wait_announce_interval => 10,
     );
-
-    is($lock, $resource_lock, 'got lock');
-    ok(Genome::Sys::FileLock->has_lock($resource_lock), 'confirmed FileLock has the lock');
-    ok($nessylock->has_lock($resource_lock), 'confirmed NessyBackend has the lock');
-
-    do {
-        no warnings 'redefine';
-        local *Genome::Sys::Lock::NessyBackend::unlock = sub { 0 };
-        use warnings 'redefine';
-
-        my $unlocked = Genome::Sys::Lock->unlock_resource(
-            resource_lock => $lock,
-        );
-        ok($unlocked, 'unlocked');
-    };
-    ok(!Genome::Sys::FileLock->has_lock($resource_lock), 'confirmed FileLock does not have the lock');
-    ok($nessylock->has_lock($resource_lock), 'confirmed NessyBackend still has the lock');
-
-    $nessylock->unlock($resource_lock);
+    is($lock, $resource_lock, 'got the lock');
+    ok(!(all { $_->has_lock($resource_lock) } @backends), 'both backends did not lock the resource');
+    ok((grep { $_->has_lock($resource_lock) } @backends), 'one backend did lock the resource');
 };
 
-subtest 'mandatory backend unlock does cause failures' => sub {
-    plan tests => 6;
+########################################################################
+# Unlocking
+########################################################################
+
+subtest 'first optional fails to lock, then unlock' => sub {
+    plan tests => 3;
+
+    my @backends = (
+        Genome::Sys::Lock::MockBackend->new(),
+        Genome::Sys::Lock::MockBackend->new()
+            ->set_always('lock', undef)
+            ->set_always('is_mandatory', 0),
+    );
+    no warnings 'redefine';
+    local *Genome::Sys::Lock::backends = sub { @backends };
+    use warnings 'redefine';
 
     my $resource_lock = 'Lock.t/' . random_string();
     my $lock = Genome::Sys::Lock->lock_resource(
         resource_lock => $resource_lock,
-        block_sleep => 5,
-        max_try => 0,
-        wait_announce_interval => 10,
     );
+    is($lock, $resource_lock, 'got the lock');
 
-    is($lock, $resource_lock, 'got lock');
-    ok(Genome::Sys::FileLock->has_lock($resource_lock), 'confirmed FileLock has the lock');
-    ok($nessylock->has_lock($resource_lock), 'confirmed NessyBackend has the lock');
+    my $unlocked = Genome::Sys::Lock->unlock_resource(
+        resource_lock => $resource_lock,
+    );
+    ok($unlocked, 'unlocked');
+    ok(!(all { $_->has_lock($resource_lock) } @backends), 'both backends do not have resource lock');
+};
 
-    do {
-        no warnings 'redefine';
-        local *Genome::Sys::FileLock::unlock = sub { 0 };
-        use warnings 'redefine';
+subtest 'second optional fails to lock, then unlock' => sub {
+    plan tests => 3;
 
-        my $unlocked = Genome::Sys::Lock->unlock_resource(
-            resource_lock => $lock,
-        );
-        ok(!$unlocked, 'unlock failed');
-    };
-    ok(Genome::Sys::FileLock->has_lock($resource_lock), 'confirmed FileLock still has the lock');
-    ok(!$nessylock->has_lock($resource_lock), 'confirmed NessyBackend does not have the lock');
+    my @backends = (
+        Genome::Sys::Lock::MockBackend->new()
+            ->set_always('lock', undef)
+            ->set_always('is_mandatory', 0),
+        Genome::Sys::Lock::MockBackend->new(),
+    );
+    no warnings 'redefine';
+    local *Genome::Sys::Lock::backends = sub { @backends };
+    use warnings 'redefine';
 
-    Genome::Sys::FileLock->unlock(resource_lock => $resource_lock);
+    my $resource_lock = 'Lock.t/' . random_string();
+    my $lock = Genome::Sys::Lock->lock_resource(
+        resource_lock => $resource_lock,
+    );
+    is($lock, $resource_lock, 'got the lock');
+
+    my $unlocked = Genome::Sys::Lock->unlock_resource(
+        resource_lock => $resource_lock,
+    );
+    ok($unlocked, 'unlocked');
+    ok(!(all { $_->has_lock($resource_lock) } @backends), 'both backends do not have resource lock');
+};
+
+subtest 'with both locked, first optional fails to unlock' => sub {
+    plan tests => 3;
+
+    my @backends = (
+        Genome::Sys::Lock::MockBackend->new()
+            ->set_always('unlock', undef)
+            ->set_always('is_mandatory', 0),
+        Genome::Sys::Lock::MockBackend->new(),
+    );
+    no warnings 'redefine';
+    local *Genome::Sys::Lock::backends = sub { @backends };
+    use warnings 'redefine';
+
+    my $resource_lock = 'Lock.t/' . random_string();
+    my $lock = Genome::Sys::Lock->lock_resource(
+        resource_lock => $resource_lock,
+    );
+    is($lock, $resource_lock, 'got the lock');
+
+    my $unlocked = Genome::Sys::Lock->unlock_resource(
+        resource_lock => $resource_lock,
+    );
+    ok($unlocked, 'unlocked');
+    ok(!(all { $_->has_lock($resource_lock) } grep { $_->is_mandatory } @backends), 'mandatory backend does not have resource lock');
+};
+
+subtest 'with both locked, second optional fails to unlock' => sub {
+    plan tests => 3;
+
+    my @backends = (
+        Genome::Sys::Lock::MockBackend->new(),
+        Genome::Sys::Lock::MockBackend->new()
+            ->set_always('unlock', undef)
+            ->set_always('is_mandatory', 0),
+    );
+    no warnings 'redefine';
+    local *Genome::Sys::Lock::backends = sub { @backends };
+    use warnings 'redefine';
+
+    my $resource_lock = 'Lock.t/' . random_string();
+    my $lock = Genome::Sys::Lock->lock_resource(
+        resource_lock => $resource_lock,
+    );
+    is($lock, $resource_lock, 'got the lock');
+
+    my $unlocked = Genome::Sys::Lock->unlock_resource(
+        resource_lock => $resource_lock,
+    );
+    ok($unlocked, 'unlocked');
+    ok(!(all { $_->has_lock($resource_lock) } grep { $_->is_mandatory } @backends), 'mandatory backend does not have resource lock');
+};
+
+subtest 'with both locked, first mandatory fails to unlock' => sub {
+    plan tests => 2;
+
+    my @backends = (
+        Genome::Sys::Lock::MockBackend->new()
+            ->set_always('unlock', undef),
+        Genome::Sys::Lock::MockBackend->new(),
+    );
+    no warnings 'redefine';
+    local *Genome::Sys::Lock::backends = sub { @backends };
+    use warnings 'redefine';
+
+    my $resource_lock = 'Lock.t/' . random_string();
+    my $lock = Genome::Sys::Lock->lock_resource(
+        resource_lock => $resource_lock,
+    );
+    is($lock, $resource_lock, 'got the lock');
+
+    my $unlocked = Genome::Sys::Lock->unlock_resource(
+        resource_lock => $resource_lock,
+    );
+    ok(!$unlocked, 'unlocked failed');
+};
+
+subtest 'with both locked, second mandatory fails to unlock' => sub {
+    plan tests => 2;
+
+    my @backends = (
+        Genome::Sys::Lock::MockBackend->new(),
+        Genome::Sys::Lock::MockBackend->new()
+            ->set_always('unlock', undef),
+    );
+    no warnings 'redefine';
+    local *Genome::Sys::Lock::backends = sub { @backends };
+    use warnings 'redefine';
+
+    my $resource_lock = 'Lock.t/' . random_string();
+    my $lock = Genome::Sys::Lock->lock_resource(
+        resource_lock => $resource_lock,
+    );
+    is($lock, $resource_lock, 'got the lock');
+
+    my $unlocked = Genome::Sys::Lock->unlock_resource(
+        resource_lock => $resource_lock,
+    );
+    ok(!$unlocked, 'unlocked failed');
 };
 
 sub random_string {
