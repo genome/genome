@@ -39,6 +39,12 @@ sub name {
     die "Abstract";
 }
 
+sub resolve_expert_specific_attributes_from_build {
+    my $self = shift;
+    # This may be defined in subclasses
+    return;
+}
+
 sub shortcut {
     #TODO
 }
@@ -53,6 +59,7 @@ sub execute {
     $self->resolve_bam_results;
     $self->resolve_output_result;
     $self->resolve_plan_attributes;
+    $self->resolve_expert_specific_attributes_from_build;
     return 1;
 }
 
