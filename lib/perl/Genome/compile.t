@@ -71,6 +71,7 @@ sub is_blacklisted {
         qr(Genome/Db/Ensembl/Command/Run/Vep.d/),
         qr(Genome/Site/CLIA.pm$),
         qr(Genome/Site/CLIA.t$),
+        qr(Genome/Site/TGI/Extension/),
     );
     return grep { $file =~ /$_/ } @blacklist;
 }
