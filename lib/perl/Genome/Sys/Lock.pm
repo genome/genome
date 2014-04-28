@@ -218,8 +218,7 @@ sub _cleanup_handler_check {
 
 sub _INT_cleanup {
     release_all();
-    print STDERR "INT/TERM cleanup activated in Genome::Sys::Lock\n";
-    Carp::confess;
+    Carp::confess("INT/TERM cleanup activated in Genome::Sys::Lock");
 }
 
 END {
