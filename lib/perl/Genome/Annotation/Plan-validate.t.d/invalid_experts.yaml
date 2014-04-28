@@ -1,7 +1,7 @@
 experts:
     expert_two:
-        e1_p1: something
-        e1_p2: something else
+        e2_p1: something
+        e2_p2: something else
 reporters:
     reporter_alpha:
         interpreters:

@@ -71,10 +71,14 @@ sub set_what_interpreter_x_requires {
     class Genome::Annotation::AnotherTestInterpreter {
         is => 'Genome::Annotation::InterpreterBase',
         has => [
-            ix_p1 => {},
-            ix_p2 => {},
+            iy_p1 => {},
+            iy_p2 => {},
         ],
     };
+
+    sub requires_experts {
+        return qw(expert_one expert_two);
+    }
 
     sub name {
         "interpreter_y";
@@ -144,6 +148,32 @@ sub set_what_interpreter_x_requires {
         else {
             return "-";
         }
+    }
+
+    1;
+}
+
+{
+    package Genome::Annotation::AnotherTestReporter;
+
+    use strict;
+    use warnings FATAL => 'all';
+    use Genome;
+
+    class Genome::Annotation::AnotherTestReporter {
+        is => 'Genome::Annotation::ReporterBase',
+        has => [
+            rb_p1 => {},
+            rb_p2 => {},
+        ],
+    };
+
+    sub name {
+        "reporter_beta";
+    }
+
+    sub requires_interpreters {
+        return qw(interpreter_x interpreter_y);
     }
 
     1;
@@ -220,10 +250,6 @@ sub set_what_interpreter_x_requires {
         "expert_one";
     }
 
-    sub adaptor_class {
-        'Genome::Annotation::TestAdaptor',
-    }
-
     1;
 }
 
@@ -277,8 +303,8 @@ sub set_what_interpreter_x_requires {
     class Genome::Annotation::AnotherTestExpert {
         is => 'Genome::Annotation::ExpertBase',
         has => [
-            e1_p1 => {},
-            e1_p2 => {},
+            e2_p1 => {},
+            e2_p2 => {},
         ],
     };
 
@@ -299,8 +325,8 @@ sub set_what_interpreter_x_requires {
     class Genome::Annotation::ExpertTwoAdaptor {
         is => 'Genome::Annotation::AdaptorBase',
         has_planned_output => [
-            e1_p1 => {},
-            e1_p2 => {},
+            e2_p1 => {},
+            e2_p2 => {},
         ],
     };
 

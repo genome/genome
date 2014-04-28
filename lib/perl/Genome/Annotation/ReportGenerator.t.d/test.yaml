@@ -19,8 +19,8 @@ reporters:
                 ix_p1: something
                 ix_p2: something else
             interpreter_y:
-                ix_p1: something
-                ix_p2: something else
+                iy_p1: something
+                iy_p2: something else
         params:
             file_name: reporter_alpha
             ra_p1: something
@@ -31,8 +31,8 @@ reporters:
                 ix_p1: something
                 ix_p2: something else
             interpreter_y:
-                ix_p1: something
-                ix_p2: something else
+                iy_p1: something
+                iy_p2: something else
         params:
             file_name: reporter_gamma
             rc_p1: something

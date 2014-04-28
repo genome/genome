@@ -6,8 +6,8 @@ reporters:
     reporter_alpha:
         interpreters:
             interpreter_y:
-                ix_p1: something
-                ix_p2: something else
+                iy_p1: something
+                iy_p2: something else
         params:
             ra_p1: something
             ra_p2: something else
