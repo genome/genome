@@ -57,9 +57,16 @@ sub names {
 sub get_object {
     my ($self, $accessor, $name, $params) = validate_pos(@_, 1, 1, 1, 1);
 
+    my $pkg = $self->get_class($accessor, $name);
+    return $pkg->create(%{$params});
+}
+
+sub get_class {
+    my ($self, $accessor, $name) = validate_pos(@_, 1, 1, 1);
+
     if (exists $self->_load($accessor)->{$name}) {
         my $pkg = $self->_load($accessor)->{$name};
-        return $pkg->create(%{$params});
+        return $pkg;
     } else {
         confess sprintf("No $accessor with name ($name) available $accessor are:\n    %s\n",
             join("\n    ", $self->names($accessor)));
