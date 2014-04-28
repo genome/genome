@@ -76,6 +76,10 @@ sub set_what_interpreter_x_requires {
         "interpreter_y";
     }
 
+    sub available_fields {
+        return qw(chrom pos);
+    }
+
     sub process_entry {
         my $self = shift;
         my $entry = shift;

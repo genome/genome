@@ -70,8 +70,8 @@ sub available_fields_dict {
     for my $interpreter (@interpreters) {
         for my $field ($interpreter->available_fields()) {
             if (defined $available_fields{$field}) {
-                die $self->error_message("Fields are not unique among all interpreters in the report.  Conflict field: %s Interpreters %s and %s",
-                        $field, $interpreter->name, $available_fields{$field}->interpreter);
+                die $self->error_message("Fields are not unique. Field: %s, Interpreters: %s and %s",
+                    $field, $interpreter->name, $available_fields{$field}->{interpreter});
             }
             $available_fields{$field} = {
                 interpreter => $interpreter->name,
