@@ -177,10 +177,6 @@ sub remove_backend {
     @backends = grep { $_ ne $backend } @backends;
 }
 
-########################################################################
-# Private
-########################################################################
-
 my $_cleanup_handler_installed;
 sub _cleanup_handler_check {
     my $class = shift;
