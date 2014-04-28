@@ -40,6 +40,10 @@ sub set_what_interpreter_x_requires {
         return qw(expert_one);
     }
 
+    sub available_fields {
+        return qw(exp1);
+    }
+
     sub process_entry {
         my $self = shift;
         my $entry = shift;
@@ -120,9 +124,8 @@ sub set_what_interpreter_x_requires {
         return qw(interpreter_x);
     }
 
-    sub print_headers {
-        my $self = shift;
-        $self->_output_fh->print("EXP1\n");
+    sub headers {
+        return qw(exp1);
     }
 
     sub report {
@@ -170,9 +173,8 @@ sub set_what_interpreter_x_requires {
         return qw(interpreter_x interpreter_y);
     }
 
-    sub print_headers {
-        my $self = shift;
-        $self->_output_fh->print("CHROM POS EXP1\n");
+    sub headers {
+        return qw(chrom pos exp1);
     }
 
     sub report {

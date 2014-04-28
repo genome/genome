@@ -11,7 +11,11 @@ class Genome::Annotation::ReporterWithHeaderBase {
         null_character => {
             is => 'Text',
             default => '-'
-        }
+        },
+        delimiter => {
+            is => 'Text',
+            default => "\t",
+        },
     }
 };
 
@@ -53,7 +57,7 @@ sub print_headers {
     my $self = shift;
 
     my @headers = $self->headers();
-    $self->_output_fh->print(join("\t", @headers) . "\n");
+    $self->_output_fh->print(join($self->delimiter, @headers) . "\n");
 }
 
 # Default dictionary that maps headers to interpreter fields
