@@ -37,3 +37,4 @@ reporters:
             file_name: reporter_gamma
             rc_p1: something
             rc_p2: something else
+            delimiter: " "

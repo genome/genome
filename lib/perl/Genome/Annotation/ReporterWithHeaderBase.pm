@@ -11,9 +11,35 @@ class Genome::Annotation::ReporterWithHeaderBase {
         null_character => {
             is => 'Text',
             default => '-'
-        }
+        },
+        delimiter => {
+            is => 'Text',
+            default => "\t",
+        },
     }
 };
+
+sub validate {
+    my $self = shift;
+
+    my %available_fields = $self->available_fields_dict;
+    for my $header ($self->headers) {
+        unless(defined($available_fields{$header})) {
+                die $self->error_message("Interpreter field for $header is not defined. Do you need to overwrite available_fields_dict to provide the correct mapping?");
+        }
+    }
+
+    return $self->SUPER::validate(@_);
+}
+
+sub requires_interpreters_classes {
+    my $self = shift;
+    my @interpreters;
+    for my $interpreter_name ($self->requires_interpreters) {
+        push @interpreters, Genome::Annotation::Factory->_load('interpreters')->{$interpreter_name};
+    }
+    return @interpreters;
+}
 
 sub initialize {
     my $self = shift;
@@ -31,7 +57,7 @@ sub print_headers {
     my $self = shift;
 
     my @headers = $self->headers();
-    $self->_output_fh->print(join("\t", @headers) . "\n");
+    $self->_output_fh->print(join($self->delimiter, @headers) . "\n");
 }
 
 # Default dictionary that maps headers to interpreter fields
@@ -43,15 +69,14 @@ sub print_headers {
 sub available_fields_dict {
     my $self = shift;
 
-    my @interpreters;
-    for my $interpreter_name ($self->requires_interpreters) {
-        push @interpreters, Genome::Annotation::Factory->_load('interpreters')->{$interpreter_name};
-    }
-
+    my @interpreters = $self->requires_interpreters_classes;
     my %available_fields;
     for my $interpreter (@interpreters) {
-        # use "$interpreter";
         for my $field ($interpreter->available_fields()) {
+            if (defined $available_fields{$field}) {
+                die $self->error_message("Fields are not unique. Field: %s, Interpreters: %s and %s",
+                    $field, $interpreter->name, $available_fields{$field}->{interpreter});
+            }
             $available_fields{$field} = {
                 interpreter => $interpreter->name,
                 field => $field,
@@ -71,9 +96,6 @@ sub report {
     my %fields = $self->available_fields_dict();
     for my $allele (keys %{$interpretations->{($self->requires_interpreters)[0]}}) {
         for my $header ($self->headers()) {
-            unless (defined($fields{$header})) {
-                die $self->error_message("Interpreter field for $header is not defined. Do you need to overwrite available_fields_dict to provide the correct mapping?");
-            }
             my $interpreter = $fields{$header}->{interpreter};
             my $field = $fields{$header}->{field};
             $self->_output_fh->print($self->_format($interpretations->{$interpreter}->{$allele}->{$field}) . "\t");
