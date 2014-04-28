@@ -424,4 +424,12 @@ sub set_what_interpreter_x_requires {
 
     1;
 }
+
+# These allow the above classes to be used to create DAGs
+# that are used to generate xml for testing DAG generation.
+$INC{'Genome/Annotation/ExpertOneAdaptor.pm'} = '1',
+$INC{'Genome/Annotation/ExpertTwoAdaptor.pm'} = '1',
+$INC{'Genome/Annotation/ExpertOneRun.pm'} = '1',
+$INC{'Genome/Annotation/ExpertTwoRun.pm'} = '1',
+
 1;
