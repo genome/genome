@@ -157,29 +157,6 @@ sub with_default_lock_resource_args {
 }
 
 my @backends = ('Genome::Sys::FileLock');
-if ($ENV{GENOME_NESSY_SERVER}) {
-    require Genome::Sys::Lock::NessyBackend;
-    my $nessylock = Genome::Sys::Lock::NessyBackend->new(
-        url => 'http://nessy.gsc.wustl.edu/',
-        is_mandatory => 0,
-    );
-    push @backends, $nessylock;
-
-    UR::Context->process->add_observer(
-        aspect => 'sync_databases',
-        callback => sub {
-            my ($ctx, $aspect, $sync_db_result) = @_;
-            if ($sync_db_result) {
-                use vars '@CARP_NOT';
-                local @CARP_NOT = (@CARP_NOT, 'UR::Context');
-                foreach my $claim ($nessylock->claims) {
-                    $claim->validate
-                        || Carp::croak(sprintf('Claim %s failed to verify during commit', $claim->resource_name));
-                }
-            }
-        }
-    );
-}
 
 sub is_mandatory {
     my $backend = shift;
