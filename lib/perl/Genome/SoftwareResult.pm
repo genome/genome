@@ -233,6 +233,7 @@ sub get_with_lock {
         $class->_release_lock_or_die($lock, "Failed to unlock after not finding software result.");
     }
 
+    $result->_auto_unarchive;
     return $result;
 }
 
@@ -260,10 +261,14 @@ sub get_or_create {
     }
 
     if (@objects > 1) {
-        return @objects if wantarray;
+        if(wantarray) {
+            map $_->_auto_unarchive, @objects;
+            return @objects;
+        }
         my @ids = map { $_->id } @objects;
         die "Multiple matches for $class but get or create was called in scalar context!  Found ids: @ids";
     } else {
+        $objects[0]->_auto_unarchive;
         return $objects[0];
     }
 }
@@ -635,6 +640,27 @@ sub _prepare_output_directory {
     
     $self->output_dir($output_dir);
     return $output_dir;
+}
+
+sub _auto_unarchive {
+    my $self = shift;
+
+    my (@allocations) = grep { $_->is_archived } $self->disk_allocations;
+    return unless @allocations;
+
+    $self->status_message('Result %s is archived... unarchiving now.', $self->id);
+
+    my $user = Genome::Sys->current_user;
+    my $reason = sprintf('Automatically unarchiving due to get_with_lock() or get_or_create() request for software result %s run by %s', $self->id, $user);
+
+    my $build = $ENV{GENOME_BUILD_ID};
+    $reason .= sprintf(' for build %s', $build) if $build;
+
+    for my $allocation (@allocations) {
+        $allocation->unarchive(reason => $reason);
+    }
+
+    return 1;
 }
 
 sub _expand_param_and_input_properties {
