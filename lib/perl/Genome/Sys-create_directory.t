@@ -7,8 +7,9 @@ use Genome::Utility::Test qw(abort run_ok);
 use List::Util qw(first);
 use POSIX qw(getgroups);
 use Test::Fatal qw(exception);
+use File::Path qw(make_path);
 
-use Test::More tests => 11;
+use Test::More tests => 12;
 
 do {
     my $umask = umask;
@@ -61,6 +62,33 @@ subtest 'create_directory with intermediate read-only directory' => sub {
     my $exception = exception { Genome::Sys->create_directory($final_dir) };
     ok(!$exception, 'no exception was thrown') or diag $exception;
     ok(-d $final_dir, 'final directory exists');
+};
+
+# We had tests fail due to an intermediate directory not being writable:
+#   drwxr-sr-x 3 tabbott info 64K 2014-04-28 14:21 /gscmnt/ams1121/info/model_data/ref_build_aligner_index_data
+# This test passes without changes though.
+subtest 'intermediate directory is group writable' => sub {
+    plan tests => 2;
+
+    my $umask = umask 0022;
+
+    do {
+        my @dir = (File::Temp->newdir(), qw(intermediate final));
+        my $intermediate_dir = File::Spec->join(@dir[0..1]);
+        my $final_dir        = File::Spec->join(@dir);
+        Genome::Sys->create_directory($final_dir);
+        ok(is_group_writable($intermediate_dir), 'create_directory, ignoring umask, should be group writable');
+    };
+
+    do {
+        my @dir = (File::Temp->newdir(), qw(intermediate final));
+        my $intermediate_dir = File::Spec->join(@dir[0..1]);
+        my $final_dir        = File::Spec->join(@dir);
+        make_path($final_dir);
+        ok(!is_group_writable($intermediate_dir), 'make_path, respecting umask, should not be group writable');
+    };
+
+    umask $umask;
 };
 
 sub is_group_writable {
