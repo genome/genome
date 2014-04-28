@@ -233,7 +233,7 @@ sub get_with_lock {
         $class->_release_lock_or_die($lock, "Failed to unlock after not finding software result.");
     }
 
-    $result->_auto_unarchive;
+    $result->_auto_unarchive if $result;
     return $result;
 }
 
@@ -268,7 +268,7 @@ sub get_or_create {
         my @ids = map { $_->id } @objects;
         die "Multiple matches for $class but get or create was called in scalar context!  Found ids: @ids";
     } else {
-        $objects[0]->_auto_unarchive;
+        $objects[0]->_auto_unarchive if $objects[0];
         return $objects[0];
     }
 }
