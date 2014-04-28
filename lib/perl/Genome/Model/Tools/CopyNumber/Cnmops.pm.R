@@ -31,26 +31,26 @@ plot_segments <- function()
 {
   segment_file=paste(out_dir, "/cnmops.segplot_WG.pdf", sep = "")
   pdf(segment_file, width = 14, height = 14)
-  segplot(ref_analysis_norm)
+  segplot(ref_analysis_norm, segStat = "median")
   dev.off()
-  for (i in 1:22) { 
+  for (i in 1:22) {
     if(i %in% as.vector(seqnames(localAssessments(ref_analysis_norm)))) {
-      file = paste(out_dir, "/cnmops.segplot_chr", i, ".pdf", sep = ""); 
-      pdf(file, width = 10, height = 10); 
-      segplot(ref_analysis_norm, seqnames=i); 
+      file = paste(out_dir, "/cnmops.segplot_chr", i, ".pdf", sep = "");
+      pdf(file, width = 10, height = 10);
+      segplot(ref_analysis_norm, seqnames=i, segStat = "median");
       title(ylab = "log2 RD(tumor/normal)")
       abline(h=log2(1/2), col = "green")
       abline(h=log2(3/2), col = "blue")
       abline(h=log2(4/2), col = "yellow")
       legend("bottomright", inset=.05, title="Copy Number difference (tumor - normal)", c("1","2", "CNV segment", "-1"), horiz=TRUE, col = c("blue", "yellow", "red", "green"), lty=1)
-      dev.off() 
+      dev.off()
     }
   }
 }
 
 write_cnvr<-function()
 {
-  cnv_r<-cnvr(ref_analysis_norm)
+  cnv_r<-cnvs(ref_analysis_norm)
   df <- data.frame(seqnames=as.vector(seqnames(cnv_r)), starts=start(cnv_r)-1, ends=end(cnv_r))
   colnames(df) <- c("chr", "start", "end")
   df2 <- data.frame(seqnames=as.vector(seqnames(cnv_r)), starts=start(cnv_r)-1, ends=end(cnv_r), medians=values(cnv_r)$median, means=values(cnv_r)$mean, CN=values(cnv_r)$CN)
