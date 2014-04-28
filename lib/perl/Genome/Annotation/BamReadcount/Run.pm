@@ -44,6 +44,10 @@ class Genome::Annotation::BamReadcount::Run {
     ],
 };
 
+sub name {
+    'bam-readcount';
+}
+
 sub execute {
     my $self = shift;
     die "You must supply a version greater than or equal to 0.5" unless $self->version >= 0.5;

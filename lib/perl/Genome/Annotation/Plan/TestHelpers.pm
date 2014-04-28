@@ -250,6 +250,24 @@ sub set_what_interpreter_x_requires {
 }
 
 {
+    package Genome::Annotation::ExpertOneRun;
+
+    use strict;
+    use warnings FATAL => 'all';
+    use Genome;
+
+    class Genome::Annotation::ExpertOneRun {
+        is => 'Genome::Annotation::CommandBase',
+    };
+
+    sub name {
+        "expert_one";
+    }
+
+    1;
+}
+
+{
     package Genome::Annotation::AnotherTestExpert;
 
     use strict;
@@ -284,6 +302,24 @@ sub set_what_interpreter_x_requires {
             e1_p1 => {},
             e1_p2 => {},
         ],
+    };
+
+    sub name {
+        "expert_two";
+    }
+
+    1;
+}
+
+{
+    package Genome::Annotation::ExpertTwoRun;
+
+    use strict;
+    use warnings FATAL => 'all';
+    use Genome;
+
+    class Genome::Annotation::ExpertTwoRun {
+        is => 'Genome::Annotation::CommandBase',
     };
 
     sub name {

@@ -39,6 +39,10 @@ class Genome::Annotation::Vep::Run {
     ],
 };
 
+sub name {
+    'vep'
+}
+
 sub execute {
     my $self = shift;
 

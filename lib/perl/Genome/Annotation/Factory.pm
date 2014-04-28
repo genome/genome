@@ -38,6 +38,13 @@ use Module::Pluggable
 use Module::Pluggable
     require => 1,
     search_path => search_path(),
+    only => qr(Run$),
+    sub_name => 'runners';
+
+
+use Module::Pluggable
+    require => 1,
+    search_path => search_path(),
     only => qr(Filter$),
     sub_name => 'filters';
 

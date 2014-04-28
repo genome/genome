@@ -20,6 +20,10 @@ class Genome::Annotation::Joinx::Run {
     ],
 };
 
+sub name {
+    'joinx';
+}
+
 sub execute {
     my $self = shift;
 
