@@ -34,8 +34,8 @@ sub create {
     eval sprintf("require %s", $self->command);
     my $error = $@;
     if ($error) {
-        Carp::confess(sprintf("Failed to load command class (%s)",
-                $self->command));
+        Carp::confess(sprintf("Failed to load command class (%s): %s\n",
+                $self->command, $error));
     }
     return $self;
 }
