@@ -49,11 +49,6 @@ sub shortcut {
     #TODO
 }
 
-sub build {
-    my $self = shift;
-    return Genome::Model::Build->get($self->build_id);
-}
-
 sub execute {
     my $self = shift;
     $self->resolve_bam_results;
@@ -75,6 +70,18 @@ sub resolve_bam_results {
         die "This adaptor can only work on SomaticValidation or SomaticVariation type builds";
     }
     $self->bam_results($results);
+}
+
+sub build {
+    my $self = shift;
+
+    my $build = Genome::Model::Build->get($self->build_id);
+    if ($build) {
+        return $build;
+    } else {
+        die $self->error_message("Couldn't find a build for id (%s)",
+            $self->build_id);
+    }
 }
 
 sub _resolve_bam_results_variation {
