@@ -281,7 +281,7 @@ sub set_what_interpreter_x_requires {
     };
 
     sub name {
-        "expert_one";
+        "expert_two";
     }
 
     1;
