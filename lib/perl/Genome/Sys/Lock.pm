@@ -5,7 +5,6 @@ use warnings;
 
 use Carp qw(carp croak);
 use Genome::Sys::FileLock;
-use Genome::Sys::Lock::NessyBackend;
 use List::MoreUtils qw(all);
 
 =item lock_resource()
@@ -159,6 +158,7 @@ sub with_default_lock_resource_args {
 
 my @backends = ('Genome::Sys::FileLock');
 if ($ENV{GENOME_NESSY_SERVER}) {
+    require Genome::Sys::Lock::NessyBackend;
     my $nessylock = Genome::Sys::Lock::NessyBackend->new(
         url => 'http://nessy.gsc.wustl.edu/',
         is_mandatory => 0,
