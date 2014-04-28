@@ -26,6 +26,7 @@ our @EXPORT_OK = qw(
     test_cmd_and_result_are_in_sync
     get_test_somatic_variation_build
     get_test_somatic_variation_build_from_files
+    get_test_dir
     test_dag_xml
     test_dag_execute
 );
@@ -43,12 +44,7 @@ sub test_cmd_and_result_are_in_sync {
 sub get_test_somatic_variation_build {
     my ($version, $plan_file) = validate_pos(@_, 1, 1);
 
-    my $test_dir = Genome::Utility::Test->data_dir('Genome::Annotation::ExpertBase', "v$version");
-    if (-d $test_dir) {
-        note "Found test directory for build files ($test_dir)";
-    } else {
-        die "Failed to find test directory for build files ($test_dir)";
-    }
+    my $test_dir = get_test_dir('Genome::Annotation::ExpertBase', $version);
 
     return get_test_somatic_variation_build_from_files(
         bam1 => File::Spec->join($test_dir, 'bam1.bam'),
@@ -205,7 +201,18 @@ sub test_dag_execute {
     my ($dag, $expected_vcf, $variant_type, $build) = @_;
     my $output = $dag->execute(build_id => $build->id, variant_type => $variant_type);
     my $vcf_path = $output->{output_result}->output_file_path;
-    if ($variant_type eq "indels") { `cp $vcf_path $expected_vcf` }
     my $differ = Genome::File::Vcf::Differ->new($vcf_path, $expected_vcf);
     is($differ->diff, undef, "Found No differences between $vcf_path and (expected) $expected_vcf");
+}
+
+sub get_test_dir {
+    my ($pkg, $VERSION) = validate_pos(@_, 1, 1);
+
+    my $test_dir = Genome::Utility::Test->data_dir($pkg, "v$VERSION");
+    if (-d $test_dir) {
+        note "Found test directory ($test_dir)";
+    } else {
+        die "Failed to find test directory ($test_dir)";
+    }
+    return $test_dir;
 }
