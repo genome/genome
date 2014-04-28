@@ -17,6 +17,21 @@ BEGIN {
 my $pkg = 'Genome::Annotation::Plan';
 use_ok($pkg) || die;
 
+test_bad_plan('missing_expert', qr(expert_missing) );
+test_bad_plan('missing_filter', qr(filter_missing) );
+test_bad_plan('missing_interpreter', qr(interpreter_missing) );
+test_bad_plan('missing_reporter', qr(reporter_missing) );
+
+test_bad_plan('misspelled_parameter', qr(bad_parameter_name) );
+
+test_bad_plan('invalid_reporter', qr(interpreters do not match) );
+test_bad_plan('invalid_experts', qr(do not match experts required) );
+
+test_bad_yaml('invalid_yaml');
+
+done_testing();
+
+
 sub test_bad_plan {
     my $name = shift;
     my $error_regex = shift;
@@ -46,15 +61,3 @@ sub plan_file {
 }
 
 
-test_bad_plan('missing_expert', qr(expert_missing) );
-test_bad_plan('missing_filter', qr(filter_missing) );
-test_bad_plan('missing_interpreter', qr(interpreter_missing) );
-test_bad_plan('missing_reporter', qr(reporter_missing) );
-
-test_bad_plan('misspelled_parameter', qr(bad_parameter_name) );
-
-test_bad_plan('invalid_reporter', qr(interpreters do not match) );
-test_bad_plan('invalid_experts', qr(do not match experts required) );
-
-test_bad_yaml('invalid_yaml');
-done_testing();
