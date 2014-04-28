@@ -12,15 +12,8 @@ class Genome::Annotation::ExpertBase {
 
 sub adaptor_class {
     my $self = shift;
-    my @parts = split(/::/, $self->class);
-    pop @parts;
-    my $result = join('::', @parts, 'Adaptor');
-    if ($result->isa('Genome::Annotation::AdaptorBase')) {
-        return $result;
-    } else {
-        die $self->error_message("Couldn't find an adaptor for expert (%s) at (%s)",
-            $self->class, $result);
-    }
+    my $factory = Genome::Annotation::Factory->create();
+    return $factory->get_class('adaptors', $self->name);
 }
 
 sub build_adaptor_operation {

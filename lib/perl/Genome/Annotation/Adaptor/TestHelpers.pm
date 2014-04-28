@@ -26,6 +26,10 @@ our @EXPORT_OK = qw(
         is => 'Genome::Annotation::AdaptorBase',
     };
 
+    sub name {
+        'test';
+    }
+
     sub resolve_plan_attributes {
         return;
     }

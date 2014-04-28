@@ -194,21 +194,6 @@ sub set_what_interpreter_x_requires {
 
     1;
 }
-{
-    package Genome::Annotation::TestAdaptor;
-
-    use strict;
-    use warnings FATAL => 'all';
-    use Genome;
-
-    class Genome::Annotation::TestAdaptor {
-        is => 'Genome::Annotation::AdaptorBase',
-        has_planned_output => [
-            e1_p1 => {},
-            e1_p2 => {},
-        ],
-    };
-}
 
 {
     package Genome::Annotation::TestExpert;
@@ -232,6 +217,30 @@ sub set_what_interpreter_x_requires {
     sub adaptor_class {
         'Genome::Annotation::TestAdaptor',
     }
+
+    1;
+}
+
+{
+    package Genome::Annotation::ExpertOneAdaptor;
+
+    use strict;
+    use warnings FATAL => 'all';
+    use Genome;
+
+    class Genome::Annotation::ExpertOneAdaptor {
+        is => 'Genome::Annotation::AdaptorBase',
+        has_planned_output => [
+            e1_p1 => {},
+            e1_p2 => {},
+        ],
+    };
+
+    sub name {
+        "expert_one";
+    }
+
+    1;
 }
 
 {
@@ -253,12 +262,31 @@ sub set_what_interpreter_x_requires {
         "expert_two";
     }
 
-    sub adaptor_class {
-        'Genome::Annotation::TestAdaptor',
+    1;
+}
+
+{
+    package Genome::Annotation::ExpertTwoAdaptor;
+
+    use strict;
+    use warnings FATAL => 'all';
+    use Genome;
+
+    class Genome::Annotation::ExpertTwoAdaptor {
+        is => 'Genome::Annotation::AdaptorBase',
+        has_planned_output => [
+            e1_p1 => {},
+            e1_p2 => {},
+        ],
+    };
+
+    sub name {
+        "expert_one";
     }
 
     1;
 }
+
 
 {
     package Genome::Annotation::TestFilter;
@@ -293,6 +321,8 @@ sub set_what_interpreter_x_requires {
         }
         return %returns;
     }
+
+    1;
 }
 
 {
@@ -323,5 +353,7 @@ sub set_what_interpreter_x_requires {
         my $entry = shift;
         return map{$_ => 1} @{$entry->{alternate_alleles}};
     }
+
+    1;
 }
 1;

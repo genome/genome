@@ -32,6 +32,12 @@ use Module::Pluggable
 use Module::Pluggable
     require => 1,
     search_path => search_path(),
+    only => qr(Adaptor$),
+    sub_name => 'adaptors';
+
+use Module::Pluggable
+    require => 1,
+    search_path => search_path(),
     only => qr(Filter$),
     sub_name => 'filters';
 
@@ -78,6 +84,7 @@ sub _load {
 
     my %plugins;
     for my $plugin ($self->$accessor) {
+        next unless $plugin->can('name');
         my $name = $plugin->name;
         if (!exists($plugins{$name})) {
             $plugins{$name} = $plugin;
