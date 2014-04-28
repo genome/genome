@@ -53,8 +53,12 @@ write_cnvr<-function()
   cnv_r<-cnvr(ref_analysis_norm)
   df <- data.frame(seqnames=as.vector(seqnames(cnv_r)), starts=start(cnv_r)-1, ends=end(cnv_r))
   colnames(df) <- c("chr", "start", "end")
+  df2 <- data.frame(seqnames=as.vector(seqnames(cnv_r)), starts=start(cnv_r)-1, ends=end(cnv_r), medians=values(cnv_r)$median, means=values(cnv_r)$mean, CN=values(cnv_r)$CN)
+  colnames(df2) <- c("chr", "start", "end", "median", "mean", "CN")
   op_cnv_bed = paste(out_dir, "/cnmops.cnv.bed", sep = "")
   write.table(df, file=op_cnv_bed, quote=F, sep="\t", row.names=F, col.names=T)
+  op_cnv_txt = paste(out_dir, "/cnmops.cnvs.txt", sep = "")
+  write.table(df2, file=op_cnv_txt, quote=F, sep="\t", row.names=F, col.names=T)
 }
 
 args <- commandArgs(trailingOnly = TRUE)
@@ -80,10 +84,11 @@ set.seed(42)#use a deterministic seed, this enables testing and doesn't really a
 gr<-get_capture_regions()
 RD<-get_read_counts()
 
-ref_analysis_norm <- referencecn.mops(RD[,1], RD[,2], segAlgorithm="DNAcopy")
+ref_analysis_norm <- referencecn.mops(RD[,1], RD[,2], returnPosterior = TRUE, segAlgorithm = "DNAcopy", norm = 0)
+ref_analysis_norm <- calcIntegerCopyNumbers(ref_analysis_norm)
 ref_analysis_norm_file = paste(out_dir, "/cnmops.ref_analysis_norm.Robject", sep = "")
 if(length(cnvr(ref_analysis_norm)) != 0) {
-  ref_analysis_norm <- cn.mops:::.replaceNames(ref_analysis_norm, colnames(ref_analysis_norm@normalizedData),"CnMops_TumorVsNormal")
+  ref_analysis_norm <- cn.mops:::.replaceNames(ref_analysis_norm, colnames(ref_analysis_norm@normalizedData),"Tumor_Normal_Log2Ratio")
 }
 save(ref_analysis_norm, file=ref_analysis_norm_file)
 plot_segments()
