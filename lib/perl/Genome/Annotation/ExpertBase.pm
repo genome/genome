@@ -10,10 +10,37 @@ class Genome::Annotation::ExpertBase {
     is_abstract => 1,
 };
 
+sub run_class {
+    my $self = shift;
+    my $factory = Genome::Annotation::Factory->create();
+    return $factory->get_class('runners', $self->name);
+}
+
 sub adaptor_class {
     my $self = shift;
     my $factory = Genome::Annotation::Factory->create();
     return $factory->get_class('adaptors', $self->name);
+}
+
+sub run_operation {
+    my $self = shift;
+    return Genome::WorkflowBuilder::Command->create(
+        name => sprintf('Run %s', $self->name),
+        command => $self->run_class,
+    );
+}
+
+sub connected_run_operation {
+    my ($self, $dag) = validate_pos(@_, 1, 1);
+
+    my $run_operation = $self->run_operation;
+    $dag->add_operation($run_operation);
+    $dag->connect_output(
+        output_property => 'output_result',
+        source => $run_operation,
+        source_property => 'output_result',
+    );
+    return $run_operation;
 }
 
 sub build_adaptor_operation {
@@ -27,19 +54,19 @@ sub build_adaptor_operation {
 sub connected_build_adaptor_operation {
     my ($self, $dag) = validate_pos(@_, 1, 1);
 
-    my $build_adaptor_op = $self->build_adaptor_operation;
-    $dag->add_operation($build_adaptor_op);
+    my $build_adaptor_operation = $self->build_adaptor_operation;
+    $dag->add_operation($build_adaptor_operation);
     $dag->connect_input(
         input_property => 'build_id',
-        destination => $build_adaptor_op,
+        destination => $build_adaptor_operation,
         destination_property => 'build_id',
     );
     $dag->connect_input(
         input_property => 'variant_type',
-        destination => $build_adaptor_op,
+        destination => $build_adaptor_operation,
         destination_property => 'variant_type',
     );
-    return $build_adaptor_op;
+    return $build_adaptor_operation;
 }
 
 sub dag {
@@ -58,7 +85,26 @@ sub dag {
     #                  file)
     # DAG OUTPUTS:
     #   software_result (Same requirements as <input_result>)
-    die "Abstract";
+    my $self = shift;
+    return $self->_simple_dag;
+}
+
+sub _simple_dag {
+    my $self = shift;
+
+    my $dag = Genome::WorkflowBuilder::DAG->create(
+        name => $self->name,
+    );
+    my $build_adaptor_operation = $self->connected_build_adaptor_operation($dag);
+
+    my $run_operation = $self->connected_run_operation($dag);
+    $self->_link(dag => $dag,
+          adaptor => $build_adaptor_operation,
+          previous => $build_adaptor_operation,
+          target => $run_operation,
+    );
+
+    return $dag;
 }
 
 sub _link {

@@ -27,7 +27,7 @@ BEGIN {
 my $pkg = 'Genome::Annotation::Joinx::Expert';
 use_ok($pkg) || die;
 
-my $VERSION = 1; # Bump these each time test data changes
+my $VERSION = 2; # Bump these each time test data changes
 my $BUILD_VERSION = 1;
 my $test_dir = get_test_dir($pkg, $VERSION);
 
