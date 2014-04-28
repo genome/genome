@@ -136,6 +136,9 @@ BEGIN {
     }
 };
 
+use Genome::Sys::Lock;
+use Genome::Site::TGI::Extension::Sys::Lock;
+
 # the old Genome::Config is all deprecated
 # the core stuff about looking up your host config is now in Genome::Site
 use Genome::Site::TGI::LegacyConfig;

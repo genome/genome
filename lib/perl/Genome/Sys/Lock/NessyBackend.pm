@@ -7,7 +7,6 @@ use Carp qw(carp croak);
 use Sys::Hostname qw(hostname);
 
 use Genome::Logger;
-use Genome::Sys;
 
 use Mouse;
 with qw(Genome::Sys::Lock::Backend);
@@ -40,7 +39,7 @@ sub lock {
         host => hostname,
         pid => $$,
         lsf_id => ($ENV{LSB_JOBID} || 'NONE'),
-        user => Genome::Sys->username,
+        user => getpwuid($<),
         genome_build_id => ($ENV{GENOME_BUILD_ID} || 'NONE'),
         lsf_project => ($ENV{WF_LSF_PROJECT} || 'NONE'),
     );
