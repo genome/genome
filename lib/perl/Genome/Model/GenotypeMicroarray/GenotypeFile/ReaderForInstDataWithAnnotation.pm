@@ -6,6 +6,7 @@ use warnings;
 use parent 'Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderForInstData';
 
 use Genome::File::Vcf::Reader;
+use Regexp::Common;
 
 sub header {
     my ($self, $header) = @_;
@@ -94,8 +95,16 @@ sub _load_genotype {
     my $genotype = $self->SUPER::read;
     return if not $genotype;
 
+    # Rm chr
     delete $genotype->{'chr'};
+    # Set alleles
     $genotype->{alleles} = $genotype->{allele1}.$genotype->{allele2};
+    # Clean up values that should only be numbers
+    for my $attr (qw/ gc_score log_r_ratio cnv_value cnv_confidence /) {
+        next if not defined $genotype->{$attr} or $genotype->{$attr} eq '';
+        next if $genotype->{$attr} !~ /($RE{num}{real})/;
+        $genotype->{$attr} = $1;
+    }
 
     $self->{_genotypes}->{ $genotype->{id} } = $genotype;
 
