@@ -154,6 +154,25 @@ sub annotate_cnvs {
   }
 }
 
+sub intersect_bed {
+  my $self = shift;
+  my $bed_a = shift;
+  my $bed_b = shift;
+  my $bed_intersect = shift;
+  Genome::Sys->shellcmd(cmd => "bedtools intersect -a $bed_a -b $bed_b > $bed_intersect");
+}
+
+sub get_ROI {
+  my $self = shift;
+  my $tumor_refalign = shift;
+  my $normal_refalign = shift;
+  my $tumor_ROI_bed = $self->get_ROI_bed($tumor_refalign);
+  my $normal_ROI_bed = $self->get_ROI_bed($normal_refalign);
+  my $intersected_bed = $self->outdir . "/tumor.normal.ROI.intersect.bed";
+  $self->intersect_bed($tumor_ROI_bed, $normal_ROI_bed, $intersected_bed);
+  return $intersected_bed;
+}
+
 sub execute {
   my $self = shift;
   my $normal_refalign;
@@ -161,7 +180,7 @@ sub execute {
   ($tumor_refalign, $normal_refalign) = $self->get_tumor_normal_refalign_models();
   my $tumor_bam = $self->get_refalign_bam($tumor_refalign);
   my $normal_bam = $self->get_refalign_bam($normal_refalign);
-  my $ROI_bed = $self->get_ROI_bed($tumor_refalign);
+  my $ROI_bed = $self->get_ROI($tumor_refalign, $normal_refalign);
   $self->call_cnmops($tumor_bam, $normal_bam, $ROI_bed);
   $self->status_message("\nCnmops tumor, normal bams are $tumor_bam , $normal_bam");
   $self->status_message("\nROI bed is $ROI_bed");
