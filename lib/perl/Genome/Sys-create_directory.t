@@ -63,7 +63,7 @@ subtest 'create_directory with intermediate read-only directory' => sub {
     ok(-d $final_dir, 'final directory exists');
 };
 
-sub group_write {
+sub is_group_writable {
     my $path = shift;
     my $mode = (stat($path))[2];
     my $perms = S_IMODE($mode);
