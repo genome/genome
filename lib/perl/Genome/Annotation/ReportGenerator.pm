@@ -27,16 +27,20 @@ class Genome::Annotation::ReportGenerator {
 
 sub execute {
     my $self = shift;
+
+    my @entry_processors;
     for my $reporter_plan ($self->plan->reporter_plans) {
         $reporter_plan->object->initialize($self->output_directory);
+        push @entry_processors, Genome::Annotation::EntryProcessor->create(reporter_plan => $reporter_plan);
     }
 
     my $vcf_reader = Genome::File::Vcf::Reader->new($self->vcf_file);
     while (my $entry = $vcf_reader->next) {
-        for my $reporter_plan ($self->plan->reporter_plans) {
-            $reporter_plan->process_entry($entry);
+        for my $processor (@entry_processors) {
+            $processor->process_entry($entry);
         }
     }
+
     for my $reporter_plan ($self->plan->reporter_plans) {
         $reporter_plan->object->finalize();
     }

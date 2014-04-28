@@ -1,0 +1,82 @@
+package Genome::Annotation::EntryProcessor;
+
+use strict;
+use warnings;
+use Genome;
+
+class Genome::Annotation::EntryProcessor {
+    has => [
+        reporter_plan => {
+            is => 'Genome::Annotation::Plan::ReporterPlan',
+        },
+    ],
+};
+
+sub process_entry {
+    my $self = shift;
+    my $entry = shift;
+    my $reporter_plan = shift;
+
+    my $interpretations = $self->interpretations($entry);
+    $self->report->report($interpretations);
+}
+
+sub report {
+    my $self = shift;
+    return $self->reporter_plan->object;
+}
+
+sub interpretations {
+    my $self = shift;
+    my $entry = shift;
+
+    my %interpretations;
+    for my $interpreter ($self->interpreters) {
+        $interpretations{$interpreter->name} = {$interpreter->process_entry($entry, [$self->passed_alleles($entry)])};
+    }
+
+    return \%interpretations;
+}
+
+sub interpreters {
+    my $self = shift;
+    return map {$_->object} $self->reporter_plan->interpreter_plans;
+}
+
+sub passed_alleles {
+    my $self = shift;
+    my $entry = shift;
+
+    my $filter_results = initialize_filters($entry);
+    for my $filter ($self->filters) {
+        combine($filter_results, {$filter->process_entry($entry)});
+    }
+
+    return grep {$filter_results->{$_} == 1} keys %$filter_results;
+}
+
+sub filters {
+    my $self = shift;
+    return map{$_->object} $self->reporter_plan->filter_plans;
+}
+
+sub initialize_filters {
+    my $entry = shift;
+    my %filter_values;
+    for my $allele (@{$entry->{alternate_alleles}}) {
+        $filter_values{$allele} = 1;
+    }
+    return \%filter_values;
+}
+
+sub combine {
+    my $accumulator = shift;
+    my $new_result = shift;
+    for my $allele (keys %$accumulator) {
+        $accumulator->{$allele} = $accumulator->{$allele} & $new_result->{$allele};
+    }
+    return $accumulator;
+}
+
+1;
+
