@@ -4,9 +4,9 @@ use strict;
 use warnings;
 
 use Carp qw(carp croak);
-
 use Genome::Sys::FileLock;
 use Genome::Sys::Lock::NessyBackend;
+use List::MoreUtils qw(all);
 
 =item lock_resource()
 
@@ -90,11 +90,10 @@ sub lock_resource {
         }
     }
 
-    my ($nessylock) = grep { $_->can('blessed') && $_->blessed eq 'Genome::Sys::Lock::NessyBackend' } backends();
-    if ($nessylock) {
-        my $nessy_claim = $nessylock->has_lock($args{resource_lock});
-        my $rv = Genome::Sys::FileLock->has_lock($args{resource_lock});
-        $class->_lock_resource_report_inconsistent_locks($args{resource_lock}, $rv, $nessy_claim);
+    if (all { $_->has_lock($args{resource_lock}) } backends()) {
+        Genome::Utility::Instrumentation::increment('genome.sys.lock.lock_resource.consistent');
+    } else {
+        Genome::Utility::Instrumentation::increment('genome.sys.lock.lock_resource.inconsistent');
     }
 
     $class->_cleanup_handler_check();
@@ -204,29 +203,6 @@ sub remove_backend {
 ########################################################################
 # Private
 ########################################################################
-
-sub _lock_resource_report_inconsistent_locks {
-    my($class, $resource_lock, $file_lock, $nessy_claim) = @_;
-
-    my $t = "%s-lock acquired but %s-based did not: $resource_lock";
-
-    if ($nessy_claim and !$file_lock) {
-        Genome::Utility::Instrumentation::increment('sys.lock.locked_nessy_only');
-        Genome::Logger->debugf($t, 'Nessy', 'File');
-        return;
-    }
-
-    if ($file_lock and !$nessy_claim) {
-        Genome::Utility::Instrumentation::increment('sys.lock.locked_file_only');
-        Genome::Logger->debugf($t, 'File', 'Nessy');
-        return;
-    }
-
-    if ($file_lock and $nessy_claim) {
-        Genome::Utility::Instrumentation::increment('sys.lock.locked_both');
-        return;
-    }
-}
 
 my $_cleanup_handler_installed;
 sub _cleanup_handler_check {
