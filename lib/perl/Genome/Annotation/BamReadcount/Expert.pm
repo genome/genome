@@ -20,18 +20,7 @@ sub dag {
     my $dag = Genome::WorkflowBuilder::DAG->create(
         name => 'BamReadcount',
     );
-    my $build_adaptor_op = $self->build_adaptor_operation;
-    $dag->add_operation($build_adaptor_op);
-    $dag->connect_input(
-        input_property => 'build_id',
-        destination => $build_adaptor_op,
-        destination_property => 'build_id',
-    );
-    $dag->connect_input(
-        input_property => 'variant_type',
-        destination => $build_adaptor_op,
-        destination_property => 'variant_type',
-    );
+    my $build_adaptor_op = $self->connected_build_adaptor_operation($dag);
 
     my $run_op = $self->run_op;
     $dag->add_operation($run_op);

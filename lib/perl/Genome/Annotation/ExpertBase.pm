@@ -3,7 +3,7 @@ package Genome::Annotation::ExpertBase;
 use strict;
 use warnings FATAL => 'all';
 use Genome;
-use Params::Validate qw(validate :types);
+use Params::Validate qw(validate_pos validate :types);
 
 class Genome::Annotation::ExpertBase {
     is => 'Genome::Annotation::ComponentBase',
@@ -29,6 +29,24 @@ sub build_adaptor_operation {
         name => 'Get inputs from build',
         command => $self->adaptor_class,
     );
+}
+
+sub connected_build_adaptor_operation {
+    my ($self, $dag) = validate_pos(@_, 1, 1);
+
+    my $build_adaptor_op = $self->build_adaptor_operation;
+    $dag->add_operation($build_adaptor_op);
+    $dag->connect_input(
+        input_property => 'build_id',
+        destination => $build_adaptor_op,
+        destination_property => 'build_id',
+    );
+    $dag->connect_input(
+        input_property => 'variant_type',
+        destination => $build_adaptor_op,
+        destination_property => 'variant_type',
+    );
+    return $build_adaptor_op;
 }
 
 sub dag {
