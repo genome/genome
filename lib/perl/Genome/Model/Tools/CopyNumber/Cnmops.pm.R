@@ -4,14 +4,13 @@ usage <- function()
 {
   writeLines("Usage:\n\tRscript Cnmops.pm.R tumor.bam normal.bam capture.bed outdir --test[or --notest]")
 }
- 
+
 get_capture_regions <- function()
 {
+  segments <- read.table(capture_bed,sep="\t",as.is=TRUE)
+  gr <- GRanges(segments[,1],IRanges(segments[,2],segments[,3]))
   if(test) {
-    gr <- GRanges(c("1"), IRanges(start = seq(20000000, 25000000, 500), end = seq(20000500, 25000500, 500)))
-  } else { 
-    segments <- read.table(capture_bed,sep="\t",as.is=TRUE)
-    gr <- GRanges(segments[,1],IRanges(segments[,2],segments[,3]))
+    gr <- gr[1:5000]
   }
   return(gr)
 }
@@ -63,9 +62,9 @@ if(length(args) != 5) {
   usage()
   quit()
 }
- 
+
 library(cn.mops)
- 
+
 tumor_bam = args[1]
 normal_bam = args[2]
 capture_bed = args[3]
