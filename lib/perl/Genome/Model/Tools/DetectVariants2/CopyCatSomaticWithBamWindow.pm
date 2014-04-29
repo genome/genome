@@ -76,6 +76,16 @@ sub _detect_variants {
         $annotation_version = $1;
     }
 
+    my $samtools_strategy;
+    if($params =~ m/--samtools-strategy/) {
+        $params =~ m/--samtools-strategy\s*\{([^\}]+)\}/;
+        $samtools_strategy = $1;
+    }
+
+    unless($samtools_strategy) {
+        die $self->error_message("No --samtools-strategy found in params");
+    }
+
     my %input;
 
     # Define a workflow from the static XML at the bottom of this module
@@ -102,8 +112,18 @@ sub _detect_variants {
     #for copycat
     $input{per_read_length} = $per_read_length;
     $input{per_library} = $per_library;
-    $input{tumor_samtools_file} = $self->get_samtools_results($self->aligned_reads_input);
-    $input{normal_samtools_file} = $self->get_samtools_results($self->control_aligned_reads_input);
+    $input{tumor_samtools_file} = $self->get_samtools_results(
+        $self->aligned_reads_input,
+        $self->aligned_reads_sample,
+        $samtools_strategy,
+        $self->output_directory . '/tumor-samtools-result',
+    );
+    $input{normal_samtools_file} = $self->get_samtools_results(
+        $self->control_aligned_reads_input,
+        $self->control_aligned_reads_sample,
+        $samtools_strategy,
+        $self->output_directory . '/normal-samtools-result',
+    );
     $input{copycat_output_directory} = $self->_temp_staging_directory;
     $input{annotation_version} = $annotation_version;
     $input{reference_build_id} = $self->reference_build_id;
@@ -144,17 +164,33 @@ sub _sort_detector_output {
 sub get_samtools_results{
     my $self = shift;
     my $bam_path = shift;
-    my $return_snp_file;
-    my @results = Genome::Model::Tools::DetectVariants2::Result::DetectionBase->get(
-        detector_name => "Genome::Model::Tools::DetectVariants2::Samtools",
-        aligned_reads =>$bam_path );
-    if(@results) {
-        return $results[0]->path("snvs.hq");
-    } else {
-        $self->debug_message("Could not find any DV2::Samtools result object for $bam_path");
-        #alternative lookup - maybe later?
+    my $sample_name = shift;
+    my $samtools_strategy = shift;
+    my $output_directory = shift;
+
+    Genome::Sys->create_directory($output_directory) unless -d $output_directory;
+
+    my $dispatcher = Genome::Model::Tools::DetectVariants2::Dispatcher->create(
+        snv_detection_strategy => $samtools_strategy,
+        aligned_reads_input => $bam_path,
+        aligned_reads_sample => $sample_name,
+        reference_build_id => $self->reference_build->id,
+        output_directory => $output_directory,
+    );
+    $dispatcher->execute or die $self->error_message('Failed to run dispatcher to get samtools result');
+
+    my $result = $dispatcher->snv_result;
+    unless($result) {
+        die $self->error_message('Failed to find result after running dispatcher');
     }
-    return "";
+
+    my $snv_hq = $result->path('snvs.hq');
+    unless($snv_hq) {
+        die $self->error_message('no snv file found on result');
+    }
+
+    $result->add_user(user => $self, label => 'uses_for_running_copycat');
+    return $snv_hq;
 }
 
 sub _promote_staged_data {

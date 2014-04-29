@@ -10,7 +10,7 @@ BEGIN {
 }
 
 use above 'Genome';
-use Test::More tests => 16;
+use Test::More tests => 18;
 use File::Spec;
 use Genome::Utility::Test;
 use File::Compare;
@@ -23,7 +23,7 @@ my $test_dir = File::Spec->join(Genome::Utility::Test->data_dir($class), "v$test
 ok(-e $test_dir, "Test directory $test_dir exists");
 
 my $annotation_version = 0;
-my $params = "[--bamwindow-version 0.4 --bamwindow-params {-w 10000 -r -l -s -q 1} --copycat-params {--per-read-length --per-library} --annotation-version $annotation_version ]";
+my $params = "[--bamwindow-version 0.4 --bamwindow-params {-w 10000 -r -l -s -q 1} --copycat-params {--per-read-length --per-library} --samtools-strategy {samtools r599} --annotation-version $annotation_version ]";
 my $refbuild_id = 106942997;
 my $output_directory = Genome::Sys->create_temp_directory();
 
@@ -39,27 +39,48 @@ ok(-s $tumor_samtools_file, 'tumor samtools file exists');
 my $normal_samtools_file = File::Spec->join($test_dir, 'normal_samtools', 'snvs.hq');
 ok(-s $normal_samtools_file, 'normal samtools file exists');
 
+my $tumor_sample = 'TUMOR-SAMPLE';
+my $normal_sample = 'NORMAL-SAMPLE';
+
 my $tumor_detector_result = Genome::Model::Tools::DetectVariants2::Result->__define__(
     output_dir => File::Spec->join($test_dir, 'tumor_samtools'),
     detector_name => 'Genome::Model::Tools::DetectVariants2::Samtools',
     detector_params => '',
-    detector_version => 'awesome',
+    detector_version => 'r599',
     aligned_reads => $tumor_bam_file,
     reference_build_id => $refbuild_id,
 );
 $tumor_detector_result->lookup_hash($tumor_detector_result->calculate_lookup_hash());
 ok($tumor_detector_result, 'tumor samtools results exists');
 
+my $tumor_vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Detector->__define__(
+    output_dir => '',
+    input_id => $tumor_detector_result->id,
+    vcf_version => Genome::Model::Tools::Vcf->get_vcf_version(),
+    aligned_reads_sample => $tumor_sample,
+);
+$tumor_vcf_result->lookup_hash($tumor_vcf_result->calculate_lookup_hash());
+ok($tumor_vcf_result, 'tumor vcf result exists');
+
 my $normal_detector_result = Genome::Model::Tools::DetectVariants2::Result->__define__(
     output_dir => File::Spec->join($test_dir, 'normal_samtools'),
     detector_name => 'Genome::Model::Tools::DetectVariants2::Samtools',
     detector_params => '',
-    detector_version => 'awesome',
+    detector_version => 'r599',
     aligned_reads => $normal_bam_file,
     reference_build_id => $refbuild_id,
 );
 $normal_detector_result->lookup_hash($normal_detector_result->calculate_lookup_hash());
 ok($normal_detector_result, 'normal samtools results exists');
+
+my $normal_vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Detector->__define__(
+    output_dir => '',
+    input_id => $normal_detector_result->id,
+    vcf_version => Genome::Model::Tools::Vcf->get_vcf_version(),
+    aligned_reads_sample => $normal_sample,
+);
+$normal_vcf_result->lookup_hash($normal_vcf_result->calculate_lookup_hash());
+ok($normal_vcf_result, 'normal vcf result exists');
 
 my $version = _create_test_annotation_data($refbuild_id, File::Spec->join($test_dir, 'annotation_data'));
 
@@ -71,6 +92,8 @@ my $cmd = Genome::Model::Tools::DetectVariants2::CopyCatSomaticWithBamWindow->cr
     output_directory => $output_directory,
     bamwindow_filter_to_chromosomes => ['14'],
     annotation_version => $version,
+    aligned_reads_sample => $tumor_sample,
+    control_aligned_reads_sample => $normal_sample,
 );
 
 ok($cmd, 'created CopyCatSomaticWithBamWindow object');
