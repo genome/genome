@@ -194,7 +194,7 @@ sub test_dag_xml {
     my ($dag, $expected_xml) = @_;
     my $xml_path = Genome::Sys->create_temp_file_path;
     write_file($xml_path, $dag->get_xml);
-    compare_ok($xml_path, $expected_xml, "Xml looks as expected");
+    compare_ok($expected_xml, $xml_path, "Xml looks as expected");
 }
 
 sub test_dag_execute {
