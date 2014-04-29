@@ -12,28 +12,25 @@ use above "Genome";
 use Test::More;
 use Genome::Test::Factory::Model::SomaticVariation;
 use Sub::Install qw(reinstall_sub);
-use Genome::Annotation::Adaptor::TestHelpers qw(test_accessors_with_vcf_results test_accessors_without_vcf_results setup_results);
+use Genome::Annotation::Adaptor::TestHelpers qw(test_accessor setup_results);
 
 use_ok("Genome::Annotation::AdaptorBase");
 
-subtest "With and without vcf results" => sub {
-    my $build = Genome::Test::Factory::Model::SomaticVariation->setup_somatic_variation_build;
-    my ($bam_result1, $bam_result2, $snv_vcf_result, $indel_vcf_result) = setup_results();
+my $build = Genome::Test::Factory::Model::SomaticVariation->setup_somatic_variation_build;
+my ($bam_result1, $bam_result2, $snv_vcf_result, $indel_vcf_result) = setup_results();
 
-    my %build_to_result = (
-        $build->tumor_build->id => $bam_result1,
-        $build->normal_build->id => $bam_result2,
-    );
-    reinstall_sub( {
-        into => 'Genome::Model::Build::ReferenceAlignment',
-        as => 'merged_alignment_result',
-        code => sub {my $self = shift;
-            return $build_to_result{$self->id};
-        },
-    });
+my %build_to_result = (
+    $build->tumor_build->id => $bam_result1,
+    $build->normal_build->id => $bam_result2,
+);
+reinstall_sub( {
+    into => 'Genome::Model::Build::ReferenceAlignment',
+    as => 'merged_alignment_result',
+    code => sub {my $self = shift;
+        return $build_to_result{$self->id};
+    },
+});
 
-    test_accessors_without_vcf_results($build, $bam_result1, $bam_result2, $snv_vcf_result, $indel_vcf_result);
-    test_accessors_with_vcf_results($build, $bam_result1, $bam_result2, $snv_vcf_result, $indel_vcf_result);
-};
+test_accessor($build, $bam_result1, $bam_result2);
 
 done_testing();

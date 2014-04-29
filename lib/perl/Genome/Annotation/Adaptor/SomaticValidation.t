@@ -11,31 +11,28 @@ use warnings;
 use above "Genome";
 use Test::More;
 use Sub::Install qw(reinstall_sub);
-use Genome::Annotation::Adaptor::TestHelpers qw(test_accessors_with_vcf_results test_accessors_without_vcf_results setup_results);
+use Genome::Annotation::Adaptor::TestHelpers qw(test_accessor setup_results);
 
 use_ok("Genome::Annotation::AdaptorBase");
 
-subtest "With and without vcf results" => sub {
-    my $build = Genome::Model::Build::SomaticValidation->__define__();
-    my ($bam_result1, $bam_result2, $snv_vcf_result, $indel_vcf_result) = setup_results();
+my $build = Genome::Model::Build::SomaticValidation->__define__();
+my ($bam_result1, $bam_result2, $snv_vcf_result, $indel_vcf_result) = setup_results();
 
-    reinstall_sub( {
-        into => $build->class,
-        as => 'control_merged_alignment_result',
-        code => sub {my $self = shift;
-            return $bam_result1;
-        },
-    });
-    reinstall_sub( {
-        into => $build->class,
-        as => 'merged_alignment_result',
-        code => sub {my $self = shift;
-            return $bam_result2;
-        },
-    });
+reinstall_sub( {
+    into => $build->class,
+    as => 'control_merged_alignment_result',
+    code => sub {my $self = shift;
+        return $bam_result1;
+    },
+});
+reinstall_sub( {
+    into => $build->class,
+    as => 'merged_alignment_result',
+    code => sub {my $self = shift;
+        return $bam_result2;
+    },
+});
 
-    test_accessors_without_vcf_results($build, $bam_result1, $bam_result2, $snv_vcf_result, $indel_vcf_result);
-    test_accessors_with_vcf_results($build, $bam_result1, $bam_result2, $snv_vcf_result, $indel_vcf_result);
-};
+test_accessor($build, $bam_result1, $bam_result2);
 
 done_testing();

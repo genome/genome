@@ -29,9 +29,6 @@ class Genome::Annotation::AdaptorBase {
             is_many => 1,
             is => 'Genome::InstrumentData::AlignedBamResult',
         },
-        output_result => {
-            is => 'Genome::Model::Tools::DetectVariants2::Result::Vcf',
-        },
     ],
 };
 
@@ -52,7 +49,6 @@ sub shortcut {
 sub execute {
     my $self = shift;
     $self->resolve_bam_results;
-    $self->resolve_output_result;
     $self->resolve_plan_attributes;
     $self->resolve_expert_specific_attributes_from_build;
     return 1;
@@ -96,19 +92,6 @@ sub _resolve_bam_results_variation {
 sub _resolve_bam_results_validation {
     my $self = shift;
     return [$self->build->control_merged_alignment_result, $self->build->merged_alignment_result];
-}
-
-sub resolve_output_result {
-    my $self = shift;
-
-    my $accessor = sprintf('get_detailed_%s_vcf_result', $self->variant_type);
-    my $result = eval {$self->build->$accessor};
-    my $error = $@;
-    if ($error) {
-        $self->debug_message("No %s result found on build %s:\n%s",
-            $self->variant_type, $self->build->id, $error);
-    }
-    $self->output_result($result);
 }
 
 sub resolve_plan_attributes {
