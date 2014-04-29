@@ -25,6 +25,11 @@ sub dag {
     my $run_op = $self->run_op;
     $dag->add_operation($run_op);
     $run_op->parallel_by('aligned_bam_result');
+    $dag->connect_input(
+        input_property => 'input_result',
+        destination => $run_op,
+        destination_property => 'input_result',
+    );
     $dag->create_link(
         source => $build_adaptor_op,
         source_property => 'bam_results',
@@ -33,12 +38,17 @@ sub dag {
     );
     $self->_link(dag => $dag,
           adaptor => $build_adaptor_op,
-          previous => $build_adaptor_op,
+          previous => undef,
           target => $run_op,
     );
 
     my $annotate_op = $self->annotate_op;
     $dag->add_operation($annotate_op);
+    $dag->connect_input(
+        input_property => 'input_result',
+        destination => $annotate_op,
+        destination_property => 'input_result',
+    );
     $dag->create_link(
         source => $run_op,
         source_property => 'output_result',
@@ -47,7 +57,7 @@ sub dag {
     );
     $self->_link(dag => $dag,
           adaptor => $build_adaptor_op,
-          previous => $build_adaptor_op,
+          previous => undef,
           target => $annotate_op,
     );
 

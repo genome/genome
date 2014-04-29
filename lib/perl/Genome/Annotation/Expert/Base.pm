@@ -46,6 +46,11 @@ sub connected_run_operation {
 
     my $run_operation = $self->run_operation;
     $dag->add_operation($run_operation);
+    $dag->connect_input(
+        input_property => 'input_result',
+        destination => $run_operation,
+        destination_property => 'input_result',
+    );
     $dag->connect_output(
         output_property => 'output_result',
         source => $run_operation,
@@ -111,7 +116,7 @@ sub _simple_dag {
     my $run_operation = $self->connected_run_operation($dag);
     $self->_link(dag => $dag,
           adaptor => $build_adaptor_operation,
-          previous => $build_adaptor_operation,
+          previous => undef,
           target => $run_operation,
     );
 

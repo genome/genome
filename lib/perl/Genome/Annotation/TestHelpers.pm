@@ -199,7 +199,8 @@ sub test_dag_xml {
 
 sub test_dag_execute {
     my ($dag, $expected_vcf, $variant_type, $build) = @_;
-    my $output = $dag->execute(build_id => $build->id, variant_type => $variant_type);
+    my $accessor = sprintf("get_detailed_%s_vcf_result", $variant_type);
+    my $output = $dag->execute(input_result => $build->$accessor, build_id => $build->id, variant_type => $variant_type);
     my $vcf_path = $output->{output_result}->output_file_path;
     my $differ = Genome::File::Vcf::Differ->new($vcf_path, $expected_vcf);
     is($differ->diff, undef, "Found No differences between $vcf_path and (expected) $expected_vcf");
