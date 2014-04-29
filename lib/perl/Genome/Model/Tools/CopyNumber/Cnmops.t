@@ -43,11 +43,13 @@ subtest "execute" => sub {
     diag("differences are:");
     diag(@diff);
     my $diff_line_count = scalar(@diff);
-    print "\n\nFound $diff_line_count differing lines\n\n";
+    print "\n\nFound $diff_line_count differing lines. Use --dump_results if you'd like to keep the results.\n\n";
   };
-  Genome::Sys->shellcmd(cmd => "rm -fr /tmp/last-run-gmt-copynumber-cnmops/");
-  Genome::Sys->shellcmd(cmd => "mv $temp_dir /tmp/last-run-gmt-copynumber-cnmops/");
-  Genome::Sys->status_message("stored last results in /tmp/last-run-gmt-copynumber-cnmops/");
+  if($ARGV[0] eq "--dump_results") {
+    Genome::Sys->shellcmd(cmd => "rm -fr /tmp/last-run-gmt-copynumber-cnmops/");
+    Genome::Sys->shellcmd(cmd => "mv $temp_dir /tmp/last-run-gmt-copynumber-cnmops/");
+    Genome::Sys->status_message("stored last results in /tmp/last-run-gmt-copynumber-cnmops/");
+  }
 };
 
 done_testing();
