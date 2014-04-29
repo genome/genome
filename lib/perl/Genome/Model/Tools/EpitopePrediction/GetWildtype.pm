@@ -70,9 +70,3 @@ sub validate_input_tsv_file {
 }
 
 1;
-
-__END__
-gmt annotate variant-protein 
---input-tsv-file=Shared-Somatic-Tier1-Missense-d42m1.fullAnnotation_withHeader.tsv 
---output-tsv-file=Shared-Somatic-Tier1-Missense-d42m1.fullAnnotation_withHeader_WT.tsv 
---anno-db=NCBI-mouse.combined-annotation --anno-db-version=58_37k_v2
