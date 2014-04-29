@@ -10,6 +10,17 @@ class Genome::Annotation::Expert::Base {
     is_abstract => 1,
 };
 
+sub name {
+    die "Abstract";
+}
+
+sub priority {
+    # Higher priority experts are run earlier.
+    # Ties are broken by expert name (alphabetically early names are
+    # run earlier).
+    return 0;
+}
+
 sub run_class {
     my $self = shift;
     my $factory = Genome::Annotation::Factory->create();
