@@ -97,11 +97,18 @@ sub _resolve_bam_results_validation {
 sub resolve_plan_attributes {
     my $self = shift;
 
-    my $annotation_plan = $self->build->annotation_plan;
+    my $annotation_plan = $self->plan;
     my $specific_plan = $annotation_plan->get_plan('expert', $self->name);
     for my $name (keys %{$specific_plan->params}) {
         $self->$name($specific_plan->params->{$name});
     }
+}
+
+sub plan {
+    my $self = shift;
+
+    my $accessor = join("_", $self->variant_type, "annotation_plan");
+    return $self->build->$accessor;
 }
 
 sub planned_output_names {
