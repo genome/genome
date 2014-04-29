@@ -1,4 +1,4 @@
-package Genome::Annotation::BamReadcount::Expert;
+package Genome::Annotation::Expert::BamReadcount::Expert;
 
 use strict;
 use warnings FATAL => 'all';
@@ -6,8 +6,8 @@ use Genome;
 use Genome::WorkflowBuilder::DAG;
 use Genome::WorkflowBuilder::Command;
 
-class Genome::Annotation::BamReadcount::Expert {
-    is => 'Genome::Annotation::ExpertBase',
+class Genome::Annotation::Expert::BamReadcount::Expert {
+    is => 'Genome::Annotation::Expert::Base',
 };
 
 sub name {
@@ -63,14 +63,14 @@ sub dag {
 sub run_op {
     return Genome::WorkflowBuilder::Command->create(
         name => 'Run bam-readcount',
-        command => 'Genome::Annotation::BamReadcount::Run',
+        command => 'Genome::Annotation::Expert::BamReadcount::Run',
     );
 }
 
 sub annotate_op {
     return Genome::WorkflowBuilder::Command->create(
         name => 'Annotate vcf with readcounts',
-        command => 'Genome::Annotation::BamReadcount::Annotate',
+        command => 'Genome::Annotation::Expert::BamReadcount::Annotate',
     );
 }
 

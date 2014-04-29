@@ -18,10 +18,10 @@ use Genome::Annotation::TestHelpers qw(test_cmd_and_result_are_in_sync);
 
 use Test::More;
 
-my $cmd_class = 'Genome::Annotation::BamReadcount::Run';
+my $cmd_class = 'Genome::Annotation::Expert::BamReadcount::Run';
 use_ok($cmd_class) or die;
 
-my $result_class = 'Genome::Annotation::BamReadcount::RunResult';
+my $result_class = 'Genome::Annotation::Expert::BamReadcount::RunResult';
 use_ok($result_class) or die;
 
 my $cmd = generate_test_cmd();

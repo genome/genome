@@ -1,4 +1,4 @@
-package Genome::Annotation::BamReadcount::RunResult;
+package Genome::Annotation::Expert::BamReadcount::RunResult;
 
 use strict;
 use warnings FATAL => 'all';
@@ -6,8 +6,8 @@ use Genome;
 use Sys::Hostname;
 use IPC::Run qw(run);
 
-class Genome::Annotation::BamReadcount::RunResult {
-    is => 'Genome::Annotation::ResultBase',
+class Genome::Annotation::Expert::BamReadcount::RunResult {
+    is => 'Genome::Annotation::Expert::ResultBase',
     has_input => [
         aligned_bam_result => {
             is => 'Genome::InstrumentData::AlignedBamResult',

@@ -1,10 +1,10 @@
-package Genome::Annotation::CommandBase;
+package Genome::Annotation::Expert::CommandBase;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::Annotation::CommandBase {
+class Genome::Annotation::Expert::CommandBase {
     is_abstract => 1,
     is => 'Command::V2',
     has_input => [
@@ -20,7 +20,7 @@ class Genome::Annotation::CommandBase {
     ],
     has_optional_output => [
         output_result => {
-            is => 'Genome::Annotation::ResultBase',
+            is => 'Genome::Annotation::Expert::ResultBase',
             doc => 'The software result created during command execution',
         },
     ],

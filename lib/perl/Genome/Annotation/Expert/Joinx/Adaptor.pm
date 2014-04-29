@@ -1,10 +1,10 @@
-package Genome::Annotation::Joinx::Adaptor;
+package Genome::Annotation::Expert::Joinx::Adaptor;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::Annotation::Joinx::Adaptor {
+class Genome::Annotation::Expert::Joinx::Adaptor {
     is => 'Genome::Annotation::AdaptorBase',
 
     has_planned_output => [

@@ -1,11 +1,11 @@
-package Genome::Annotation::BamReadcount::MinVafFilter;
+package Genome::Annotation::Expert::BamReadcount::MinVafFilter;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::Annotation::BamReadcount::MinVafFilter {
-    is => 'Genome::Annotation::BamReadcount::FilterBase',
+class Genome::Annotation::Expert::BamReadcount::MinVafFilter {
+    is => 'Genome::Annotation::Expert::BamReadcount::FilterBase',
     has => [
         min_vaf => {
             is => 'Number',

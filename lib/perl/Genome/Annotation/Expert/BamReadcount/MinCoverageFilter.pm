@@ -1,12 +1,12 @@
-package Genome::Annotation::BamReadcount::MinCoverageFilter;
+package Genome::Annotation::Expert::BamReadcount::MinCoverageFilter;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 use List::Util qw/first/;
 
-class Genome::Annotation::BamReadcount::MinCoverageFilter {
-    is => 'Genome::Annotation::BamReadcount::FilterBase',
+class Genome::Annotation::Expert::BamReadcount::MinCoverageFilter {
+    is => 'Genome::Annotation::Expert::BamReadcount::FilterBase',
     has => {
         min_coverage => {
             is => 'Number',

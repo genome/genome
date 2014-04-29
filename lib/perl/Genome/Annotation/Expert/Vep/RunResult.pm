@@ -1,12 +1,12 @@
-package Genome::Annotation::Vep::RunResult;
+package Genome::Annotation::Expert::Vep::RunResult;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 use Sys::Hostname;
 
-class Genome::Annotation::Vep::RunResult {
-    is => 'Genome::Annotation::ResultBase',
+class Genome::Annotation::Expert::Vep::RunResult {
+    is => 'Genome::Annotation::Expert::ResultBase',
     has_input => [
         ensembl_version => {
             is => 'String',

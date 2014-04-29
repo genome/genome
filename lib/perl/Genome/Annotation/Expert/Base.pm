@@ -1,11 +1,11 @@
-package Genome::Annotation::ExpertBase;
+package Genome::Annotation::Expert::Base;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 use Params::Validate qw(validate_pos validate :types);
 
-class Genome::Annotation::ExpertBase {
+class Genome::Annotation::Expert::Base {
     is => 'Genome::Annotation::ComponentBase',
     is_abstract => 1,
 };

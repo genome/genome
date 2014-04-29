@@ -11,9 +11,9 @@ BEGIN {
 use above 'Genome';
 use Test::Exception;
 use Test::More;
-use Genome::Annotation::BamReadcount::TestHelper qw(bam_readcount_line create_entry);
+use Genome::Annotation::Expert::BamReadcount::TestHelper qw(bam_readcount_line create_entry);
 
-my $pkg = 'Genome::Annotation::BamReadcount::MinCoverageFilter';
+my $pkg = 'Genome::Annotation::Expert::BamReadcount::MinCoverageFilter';
 use_ok($pkg);
 
 my %pass = (

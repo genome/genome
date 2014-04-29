@@ -1,11 +1,11 @@
-package Genome::Annotation::BamReadcount::Run;
+package Genome::Annotation::Expert::BamReadcount::Run;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::Annotation::BamReadcount::Run {
-    is => 'Genome::Annotation::CommandBase',
+class Genome::Annotation::Expert::BamReadcount::Run {
+    is => 'Genome::Annotation::Expert::CommandBase',
     has_input => [
         aligned_bam_result => {
             is => 'Genome::InstrumentData::AlignedBamResult',
@@ -52,6 +52,6 @@ sub execute {
     my $self = shift;
     die "You must supply a version greater than or equal to 0.5" unless $self->version >= 0.5;
 
-    $self->output_result(Genome::Annotation::BamReadcount::RunResult->get_or_create($self->input_hash));
+    $self->output_result(Genome::Annotation::Expert::BamReadcount::RunResult->get_or_create($self->input_hash));
     return 1;
 }

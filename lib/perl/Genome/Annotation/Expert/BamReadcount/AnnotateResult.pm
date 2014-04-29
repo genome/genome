@@ -1,14 +1,14 @@
-package Genome::Annotation::BamReadcount::AnnotateResult;
+package Genome::Annotation::Expert::BamReadcount::AnnotateResult;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::Annotation::BamReadcount::AnnotateResult {
-    is => 'Genome::Annotation::ResultBase',
+class Genome::Annotation::Expert::BamReadcount::AnnotateResult {
+    is => 'Genome::Annotation::Expert::ResultBase',
     has_input => [
         readcount_results => {
-            is => 'Genome::Annotation::BamReadcount::RunResult',
+            is => 'Genome::Annotation::Expert::BamReadcount::RunResult',
             is_many => 1,
         },
     ],

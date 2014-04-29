@@ -10,23 +10,24 @@ BEGIN {
 
 use above "Genome";
 use Sub::Install;
-use Genome::Test::Factory::Model::ReferenceSequence;
+use Genome::Test::Factory::Model::ImportedVariationList;
 use Genome::Test::Factory::Build;
 use Genome::Model::Tools::DetectVariants2::Result::Vcf;
+use Genome::Model::Tools::Sam::Readcount;
 use Genome::Model::Tools::Bed::Convert::VcfToBed;
 use Genome::Annotation::TestHelpers qw(test_cmd_and_result_are_in_sync);
 
 use Test::More;
 
-my $cmd_class = 'Genome::Annotation::Vep::Run';
+my $cmd_class = 'Genome::Annotation::Expert::Joinx::Run';
 use_ok($cmd_class) or die;
 
-my $result_class = 'Genome::Annotation::Vep::RunResult';
+my $result_class = 'Genome::Annotation::Expert::Joinx::RunResult';
 use_ok($result_class) or die;
-use_ok('Genome::Db::Ensembl::Command::Run::Vep') or die;
+
+use_ok('Genome::Model::Tools::Joinx::VcfAnnotate') or die;
 
 my $cmd = generate_test_cmd();
-ok($cmd->isa($cmd_class), "Command created correctly");
 ok($cmd->execute(), 'Command executed');
 is(ref($cmd->output_result), $result_class, 'Found software result after execution');
 
@@ -36,43 +37,33 @@ done_testing();
 
 sub generate_test_cmd {
     Sub::Install::reinstall_sub({
-        into => 'Genome::Db::Ensembl::Command::Run::Vep',
+        into => 'Genome::Model::Tools::Joinx::VcfAnnotate',
         as => 'execute',
         code => sub {my $self = shift; my $file = $self->output_file; `touch $file`; return 1;},
     });
 
     my $input_result = $result_class->__define__();
     Sub::Install::reinstall_sub({
-        into => 'Genome::Annotation::ResultBase',
+        into => 'Genome::Annotation::Expert::ResultBase',
         as => 'output_file_path',
         code => sub {return 'some_file.vcf.gz';},
     });
 
-    my $roi = Genome::FeatureList->__define__();
-    my $segdup = Genome::FeatureList->__define__();
+    my $model = Genome::Test::Factory::Model::ImportedVariationList->setup_object();
+    my $known_variants = Genome::Test::Factory::Build->setup_object(model_id => $model->id);
     Sub::Install::reinstall_sub({
-        into => "Genome::FeatureList",
-        as => 'get_tabix_and_gzipped_bed_file',
-        code => sub { return 'somepath'},
+        into => 'Genome::Model::Build::ImportedVariationList',
+        as => 'snvs_vcf',
+        code => sub {return 1},
     });
-
-    my $model = Genome::Test::Factory::Model::ReferenceSequence->setup_object;
-    my $reference_sequence_build = Genome::Test::Factory::Build->setup_object(model_id => $model->id);
-
     my %params = (
         input_result => $input_result,
-        ensembl_version => "1",
-        feature_list_ids_and_tags => [join(":", $roi->id, "ROI"),join(":", $segdup->id, "SEGDUP")],
-        variant_type => 'snvs',
-        polyphen => 'b',
-        sift => 'b',
-        condel => 'b',
-        plugins_version => 0,
-        species => "alien",
-        terms => "ensembl",
-        hgvs => 1,
-        reference_build => $reference_sequence_build,
+        known_variants  => [$known_variants],
+        variant_type     => 'snvs',
+        info_string      => 'test',
+        version          => '1.8',
     );
+
     my $cmd = $cmd_class->create(%params);
     return $cmd
 }

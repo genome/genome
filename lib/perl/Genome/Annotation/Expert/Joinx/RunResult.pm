@@ -1,12 +1,12 @@
-package Genome::Annotation::Joinx::RunResult;
+package Genome::Annotation::Expert::Joinx::RunResult;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 use File::Spec;
 
-class Genome::Annotation::Joinx::RunResult {
-    is => 'Genome::Annotation::ResultBase',
+class Genome::Annotation::Expert::Joinx::RunResult {
+    is => 'Genome::Annotation::Expert::ResultBase',
     has_input => [
         known_variants => {
             is => 'Genome::Model::Build::ImportedVariationList',

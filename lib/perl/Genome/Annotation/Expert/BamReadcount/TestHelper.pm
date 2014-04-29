@@ -1,4 +1,4 @@
-package Genome::Annotation::BamReadcount::TestHelper;
+package Genome::Annotation::Expert::BamReadcount::TestHelper;
 use Exporter 'import';
 @EXPORT_OK = qw(bam_readcount_line create_entry);
 

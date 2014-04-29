@@ -1,10 +1,10 @@
-package Genome::Annotation::BamReadcount::FilterBase;
+package Genome::Annotation::Expert::BamReadcount::FilterBase;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::Annotation::BamReadcount::FilterBase {
+class Genome::Annotation::Expert::BamReadcount::FilterBase {
     is => 'Genome::Annotation::Filter::Base',
     has => [
         sample_index => {

@@ -1,10 +1,10 @@
-package Genome::Annotation::BamReadcount::Adaptor;
+package Genome::Annotation::Expert::BamReadcount::Adaptor;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::Annotation::BamReadcount::Adaptor {
+class Genome::Annotation::Expert::BamReadcount::Adaptor {
     is => 'Genome::Annotation::AdaptorBase',
 
     has_planned_output => [

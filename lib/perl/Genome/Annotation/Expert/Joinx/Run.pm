@@ -1,11 +1,11 @@
-package Genome::Annotation::Joinx::Run;
+package Genome::Annotation::Expert::Joinx::Run;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::Annotation::Joinx::Run {
-    is => 'Genome::Annotation::CommandBase',
+class Genome::Annotation::Expert::Joinx::Run {
+    is => 'Genome::Annotation::Expert::CommandBase',
     has_input => [
         known_variants => {
             is => 'Genome::Model::Build::ImportedVariationList',
@@ -27,6 +27,6 @@ sub name {
 sub execute {
     my $self = shift;
 
-    $self->output_result(Genome::Annotation::Joinx::RunResult->get_or_create($self->input_hash));
+    $self->output_result(Genome::Annotation::Expert::Joinx::RunResult->get_or_create($self->input_hash));
     return 1;
 }

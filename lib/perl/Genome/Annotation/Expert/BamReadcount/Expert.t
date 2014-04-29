@@ -23,7 +23,7 @@ BEGIN {
     $ENV{NO_LSF} = 1;
 };
 
-my $pkg = 'Genome::Annotation::BamReadcount::Expert';
+my $pkg = 'Genome::Annotation::Expert::BamReadcount::Expert';
 use_ok($pkg) || die;
 
 my $VERSION = 4; # Bump these each time test data changes

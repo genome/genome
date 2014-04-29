@@ -44,7 +44,7 @@ sub test_cmd_and_result_are_in_sync {
 sub get_test_somatic_variation_build {
     my ($version, $plan_file) = validate_pos(@_, 1, 1);
 
-    my $test_dir = get_test_dir('Genome::Annotation::ExpertBase', $version);
+    my $test_dir = get_test_dir('Genome::Annotation::Expert::Base', $version);
 
     return get_test_somatic_variation_build_from_files(
         bam1 => File::Spec->join($test_dir, 'bam1.bam'),

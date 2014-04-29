@@ -1,11 +1,11 @@
-package Genome::Annotation::Vep::Run;
+package Genome::Annotation::Expert::Vep::Run;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::Annotation::Vep::Run {
-    is => 'Genome::Annotation::CommandBase',
+class Genome::Annotation::Expert::Vep::Run {
+    is => 'Genome::Annotation::Expert::CommandBase',
     has_input => [
         ensembl_version => {
             is => 'String',
@@ -46,6 +46,6 @@ sub name {
 sub execute {
     my $self = shift;
 
-    $self->output_result(Genome::Annotation::Vep::RunResult->get_or_create($self->input_hash));
+    $self->output_result(Genome::Annotation::Expert::Vep::RunResult->get_or_create($self->input_hash));
     return 1;
 }

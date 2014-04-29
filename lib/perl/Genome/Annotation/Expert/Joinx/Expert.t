@@ -24,7 +24,7 @@ BEGIN {
     $ENV{NO_LSF} = 1;
 };
 
-my $pkg = 'Genome::Annotation::Joinx::Expert';
+my $pkg = 'Genome::Annotation::Expert::Joinx::Expert';
 use_ok($pkg) || die;
 
 my $VERSION = 2; # Bump these each time test data changes
