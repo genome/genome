@@ -133,6 +133,7 @@ sub _link {
     });
 
     if (defined $p{previous}) {
+        die 'blah';
         $p{dag}->create_link(
             source => $p{previous},
             source_property => 'output_result',
