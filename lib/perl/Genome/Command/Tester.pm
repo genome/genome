@@ -3,16 +3,29 @@ use strict;
 use warnings;
 use Test::More;
 use Cwd;
+use File::Basename qw(basename);
 require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT = qw(run_and_diff);
+
+sub _should_rebuild {
+    scalar grep {$_ eq "REBUILD"} @ARGV;
+}
+
+sub _keep_results_dir {
+    my @arg = grep {/^KEEP_FAILED_RESULTS_IN=/} @ARGV;
+    if (@arg) {
+        my ($dir) = $arg[0] =~ /^KEEP_FAILED_RESULTS_IN=(.*)/;
+        return $dir;
+    }
+}
 
 sub run_and_diff {
     my %params = @_;
     my $command = delete $params{command};
     my $results_version = delete $params{results_version};
 
-    
+
     my $class;
     if (not defined $command or $command =~ /^[\w\_\:]+$/) {
         if (not defined $command) {
@@ -36,7 +49,7 @@ sub run_and_diff {
     elsif ($command =~ /^\S+\.pl\s/) {
         $class = delete $params{eventual_class};
         if (not $class) {
-            fail 'when not using genome/gmt, expected "eventual_class" to be supplied so we can find the expected output directory', 
+            fail 'when not using genome/gmt, expected "eventual_class" to be supplied so we can find the expected output directory',
         }
     }
     else {
@@ -44,7 +57,7 @@ sub run_and_diff {
         my $params;
         my $errors;
         my $entry_class;
-        
+
         my $cmd = shift @argv;
         if ($cmd eq 'genome') {
             $entry_class = 'Genome::Command';
@@ -65,11 +78,11 @@ sub run_and_diff {
     my $class_as_dirname = $class;
     $class_as_dirname =~ s/::/-/g;
 
-    my $input_dir = $ENV{GENOME_TEST_INPUTS} . "/$class_as_dirname/$results_version/inputs"; 
+    my $input_dir = $ENV{GENOME_TEST_INPUTS} . "/$class_as_dirname/$results_version/inputs";
     my $expected_output_dir = $ENV{GENOME_TEST_INPUTS} . "/$class_as_dirname/$results_version/expected-output";
 
     my $output_dir;
-    if (@ARGV and $ARGV[0] eq 'REBUILD') {
+    if (_should_rebuild()) {
         # the REBUILD flag on the command-line will generate new comparison data instead of using it
         # when this set the test will always pass because the output_dir and expected_output_dir are the same
         if (-d $expected_output_dir) {
@@ -81,9 +94,9 @@ sub run_and_diff {
     else {
         $output_dir = Genome::Sys->create_temp_directory();
     }
-    
-    ok($expected_output_dir, "resolved expected output dir: $expected_output_dir") or die "quitting..."; 
-    
+
+    ok($expected_output_dir, "resolved expected output dir: $expected_output_dir") or die "quitting...";
+
     unless(-e $expected_output_dir) {
         die "*\n* >>> cannot find expected output directory: run with REBUILD to generate it\n*\n";
     };
@@ -95,7 +108,7 @@ sub run_and_diff {
     # Remove these after converting the last scripts and files into regular modules and file-based-databases.
     my $script_dir = Cwd::abs_path(File::Basename::dirname(__FILE__)) . '/../Model/ClinSeq/OriginalScripts/';
     my $annotation_dir = '/gscmnt/sata132/techd/mgriffit/reference_annotations/';
-    
+
     # If the synopsis contains a /tmp/output_dir, swap it for the one we have dynamically created
     $command =~ s|/tmp/output_dir|$output_dir|g;
     $command =~ s|/tmp/input_dir|$input_dir|g;
@@ -113,12 +126,22 @@ sub run_and_diff {
     my @diff = `diff -r --brief $expected_output_dir $output_dir`;
     is(scalar(@diff),0, "no differences between expected and actual")
         or do {
-            my $tmp = $ENV{TMP} || $ENV{TMPDIR} || '/tmp';
-            my $dir = $tmp . '/last-failed-' . lc($class_as_dirname);
-            my $cmd = "mv $output_dir $dir";
-            note($cmd);
-            system $cmd;
-            note("diff $expected_output_dir $dir");
+            my $dir = _keep_results_dir();
+            if ($dir) {
+                my $name = 'test-failed-' . lc($class_as_dirname);
+                $dir = "$dir/$name";
+                Genome::Sys->create_directory($dir);
+                my $cmd = "mv $output_dir $dir";
+                note($cmd);
+                system $cmd;
+                my $leaf = basename($output_dir);
+                note("diff -r $expected_output_dir $dir/$leaf");
+            }
+            else {
+                note("To save the failed test results, rerun this test passing " .
+                    "KEEP_FAILED_RESULTS_IN=/tmp/xyz where /tmp/xyz is the path you " .
+                    "would like to save the results to.");
+            }
         };
 }
 
