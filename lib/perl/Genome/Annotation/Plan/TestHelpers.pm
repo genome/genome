@@ -364,7 +364,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::Annotation::TestFilter {
-        is => 'Genome::Annotation::FilterBase',
+        is => 'Genome::Annotation::Filter::Base',
         has => [
             f1_p1 => {},
             f1_p2 => {},
@@ -401,7 +401,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::Annotation::AnotherTestFilter {
-        is => 'Genome::Annotation::FilterBase',
+        is => 'Genome::Annotation::Filter::Base',
         has => [
             f2_p1 => {},
             f2_p2 => {},

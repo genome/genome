@@ -1,12 +1,12 @@
-package Genome::Annotation::FTKeepFilter;
+package Genome::Annotation::Filter::FTKeepFilter;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 use List::Util qw/first/;
 
-class Genome::Annotation::FTKeepFilter {
-    is => 'Genome::Annotation::FilterBase',
+class Genome::Annotation::Filter::FTKeepFilter {
+    is => 'Genome::Annotation::Filter::Base',
     has => {
         keep_filter_values => {
             is => 'Text',

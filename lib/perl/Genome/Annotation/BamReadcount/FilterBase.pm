@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::Annotation::BamReadcount::FilterBase {
-    is => 'Genome::Annotation::FilterBase',
+    is => 'Genome::Annotation::Filter::Base',
     has => [
         sample_index => {
             is => 'Integer',

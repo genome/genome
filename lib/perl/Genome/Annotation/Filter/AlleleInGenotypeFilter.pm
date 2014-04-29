@@ -1,11 +1,11 @@
-package Genome::Annotation::AlleleInGenotypeFilter;
+package Genome::Annotation::Filter::AlleleInGenotypeFilter;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::Annotation::AlleleInGenotypeFilter {
-    is => 'Genome::Annotation::FilterBase',
+class Genome::Annotation::Filter::AlleleInGenotypeFilter {
+    is => 'Genome::Annotation::Filter::Base',
     has => [
         sample_index => {
             is => 'Integer',

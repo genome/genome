@@ -1,10 +1,10 @@
-package Genome::Annotation::FilterBase;
+package Genome::Annotation::Filter::Base;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::Annotation::FilterBase {
+class Genome::Annotation::Filter::Base {
     is => 'Genome::Annotation::ComponentBase',
     is_abstract => 1,
 };

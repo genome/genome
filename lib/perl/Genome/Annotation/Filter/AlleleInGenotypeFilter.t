@@ -13,7 +13,7 @@ use Genome::File::Vcf::Entry;
 use Test::More;
 use Test::Exception;
 
-my $pkg = 'Genome::Annotation::AlleleInGenotypeFilter';
+my $pkg = 'Genome::Annotation::Filter::AlleleInGenotypeFilter';
 use_ok($pkg);
 
 subtest "sample 1" => sub {

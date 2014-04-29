@@ -13,7 +13,7 @@ use Genome::File::Vcf::Entry;
 use Test::More;
 use Test::Exception;
 
-my $pkg = 'Genome::Annotation::FTKeepFilter';
+my $pkg = 'Genome::Annotation::Filter::FTKeepFilter';
 use_ok($pkg);
 
 my %pass_return_values = (
