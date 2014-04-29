@@ -59,6 +59,7 @@ sub execute {
 
     return 1;
 }
+
 sub validate_input_tsv_file {
     my $self = shift;
 
