@@ -280,3 +280,6 @@
 [submodule "vendor/bamUtil"]
 	path = vendor/bamUtil
 	url = https://github.com/genome-vendor/bamUtil.git
+[submodule "vendor/star"]
+	path = vendor/star
+	url = git@github.com:genome-vendor/star.git
