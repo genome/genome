@@ -25,7 +25,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::Annotation::TestInterpreter {
-        is => 'Genome::Annotation::InterpreterBase',
+        is => 'Genome::Annotation::Interpreter::Base',
         has => [
             ix_p1 => {},
             ix_p2 => {},
@@ -69,7 +69,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::Annotation::AnotherTestInterpreter {
-        is => 'Genome::Annotation::InterpreterBase',
+        is => 'Genome::Annotation::Interpreter::Base',
         has => [
             iy_p1 => {},
             iy_p2 => {},
@@ -113,7 +113,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::Annotation::TestReporter {
-        is => 'Genome::Annotation::ReporterWithHeaderBase',
+        is => 'Genome::Annotation::Reporter::WithHeaderBase',
         has => [
             ra_p1 => {},
             ra_p2 => {},
@@ -161,7 +161,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::Annotation::AnotherTestReporter {
-        is => 'Genome::Annotation::ReporterBase',
+        is => 'Genome::Annotation::Reporter::Base',
         has => [
             rb_p1 => {},
             rb_p2 => {},
@@ -187,7 +187,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::Annotation::YetAnotherTestReporter {
-        is => 'Genome::Annotation::ReporterWithHeaderBase',
+        is => 'Genome::Annotation::Reporter::WithHeaderBase',
         has => [
             rc_p1 => {},
             rc_p2 => {},
@@ -239,7 +239,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::Annotation::TestExpert {
-        is => 'Genome::Annotation::ExpertBase',
+        is => 'Genome::Annotation::Expert::Base',
         has => [
             e1_p1 => {},
             e1_p2 => {},
@@ -283,7 +283,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::Annotation::ExpertOneRun {
-        is => 'Genome::Annotation::CommandBase',
+        is => 'Genome::Annotation::Expert::CommandBase',
     };
 
     sub name {
@@ -301,7 +301,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::Annotation::AnotherTestExpert {
-        is => 'Genome::Annotation::ExpertBase',
+        is => 'Genome::Annotation::Expert::Base',
         has => [
             e2_p1 => {},
             e2_p2 => {},
@@ -345,7 +345,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::Annotation::ExpertTwoRun {
-        is => 'Genome::Annotation::CommandBase',
+        is => 'Genome::Annotation::Expert::CommandBase',
     };
 
     sub name {
@@ -364,7 +364,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::Annotation::TestFilter {
-        is => 'Genome::Annotation::FilterBase',
+        is => 'Genome::Annotation::Filter::Base',
         has => [
             f1_p1 => {},
             f1_p2 => {},
@@ -401,7 +401,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::Annotation::AnotherTestFilter {
-        is => 'Genome::Annotation::FilterBase',
+        is => 'Genome::Annotation::Filter::Base',
         has => [
             f2_p1 => {},
             f2_p2 => {},
