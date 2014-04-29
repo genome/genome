@@ -116,7 +116,6 @@ sub _simple_dag {
     my $run_operation = $self->connected_run_operation($dag);
     $self->_link(dag => $dag,
           adaptor => $build_adaptor_operation,
-          previous => undef,
           target => $run_operation,
     );
 
@@ -128,19 +127,8 @@ sub _link {
     my %p = validate(@_, {
         dag => {isa => 'Genome::WorkflowBuilder::DAG'},
         adaptor => {isa => 'Genome::WorkflowBuilder::Command'},
-        previous => {type => OBJECT | UNDEF},
         target => {isa => 'Genome::WorkflowBuilder::Command'},
     });
-
-    if (defined $p{previous}) {
-        die 'blah';
-        $p{dag}->create_link(
-            source => $p{previous},
-            source_property => 'output_result',
-            destination => $p{target},
-            destination_property => 'input_result',
-        );
-    }
 
     for my $name ($p{target}->command->input_names) {
         next if $name eq 'input_result';

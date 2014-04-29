@@ -38,7 +38,6 @@ sub dag {
     );
     $self->_link(dag => $dag,
           adaptor => $build_adaptor_op,
-          previous => undef,
           target => $run_op,
     );
 
@@ -57,7 +56,6 @@ sub dag {
     );
     $self->_link(dag => $dag,
           adaptor => $build_adaptor_op,
-          previous => undef,
           target => $annotate_op,
     );
 
