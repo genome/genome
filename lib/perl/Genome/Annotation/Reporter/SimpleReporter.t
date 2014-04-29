@@ -12,12 +12,12 @@ use above "Genome";
 use Test::More;
 use Genome::Utility::Test qw(compare_ok);
 
-my $pkg = 'Genome::Annotation::SimpleReporter';
+my $pkg = 'Genome::Annotation::Reporter::SimpleReporter';
 use_ok($pkg);
 
 my $data_dir = __FILE__.".d";
 
-my $reporter = Genome::Annotation::SimpleReporter->create(file_name => 'simple');
+my $reporter = Genome::Annotation::Reporter::SimpleReporter->create(file_name => 'simple');
 ok($reporter, "Reporter created successfully");
 
 my $output_dir = Genome::Sys->create_temp_directory();

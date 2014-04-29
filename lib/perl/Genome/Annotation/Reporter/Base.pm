@@ -1,10 +1,10 @@
-package Genome::Annotation::ReporterBase;
+package Genome::Annotation::Reporter::Base;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::Annotation::ReporterBase {
+class Genome::Annotation::Reporter::Base {
     is => 'Genome::Annotation::ComponentBase',
     is_abstract => 1,
     has => [

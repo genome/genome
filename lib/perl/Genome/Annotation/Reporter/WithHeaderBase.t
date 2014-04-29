@@ -13,14 +13,14 @@ use Test::Exception;
 use Test::More;
 use Genome::Annotation::Plan::TestHelpers;
 
-my $pkg = "Genome::Annotation::ReporterWithHeaderBase";
+my $pkg = "Genome::Annotation::Reporter::WithHeaderBase";
 use_ok($pkg);
 
 {
     package Test::BadReporter;
 
     class Test::BadReporter {
-        is => 'Genome::Annotation::ReporterWithHeaderBase',
+        is => 'Genome::Annotation::Reporter::WithHeaderBase',
     };
 
     sub name {
@@ -55,7 +55,7 @@ use_ok($pkg);
     package Test::BadReporter2;
 
     class Test::BadReporter2 {
-        is => 'Genome::Annotation::ReporterWithHeaderBase',
+        is => 'Genome::Annotation::Reporter::WithHeaderBase',
     };
 
     sub name {

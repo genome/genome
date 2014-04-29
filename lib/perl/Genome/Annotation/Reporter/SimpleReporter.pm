@@ -1,11 +1,11 @@
-package Genome::Annotation::SimpleReporter;
+package Genome::Annotation::Reporter::SimpleReporter;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::Annotation::SimpleReporter {
-    is => 'Genome::Annotation::ReporterWithHeaderBase',
+class Genome::Annotation::Reporter::SimpleReporter {
+    is => 'Genome::Annotation::Reporter::WithHeaderBase',
     has => [
     ],
 };

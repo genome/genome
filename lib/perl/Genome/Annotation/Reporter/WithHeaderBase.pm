@@ -1,11 +1,11 @@
-package Genome::Annotation::ReporterWithHeaderBase;
+package Genome::Annotation::Reporter::WithHeaderBase;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::Annotation::ReporterWithHeaderBase {
-    is => 'Genome::Annotation::ReporterBase',
+class Genome::Annotation::Reporter::WithHeaderBase {
+    is => 'Genome::Annotation::Reporter::Base',
     is_abstract => 1,
     has => {
         null_character => {

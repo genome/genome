@@ -113,7 +113,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::Annotation::TestReporter {
-        is => 'Genome::Annotation::ReporterWithHeaderBase',
+        is => 'Genome::Annotation::Reporter::WithHeaderBase',
         has => [
             ra_p1 => {},
             ra_p2 => {},
@@ -161,7 +161,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::Annotation::AnotherTestReporter {
-        is => 'Genome::Annotation::ReporterBase',
+        is => 'Genome::Annotation::Reporter::Base',
         has => [
             rb_p1 => {},
             rb_p2 => {},
@@ -187,7 +187,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::Annotation::YetAnotherTestReporter {
-        is => 'Genome::Annotation::ReporterWithHeaderBase',
+        is => 'Genome::Annotation::Reporter::WithHeaderBase',
         has => [
             rc_p1 => {},
             rc_p2 => {},
