@@ -13,7 +13,7 @@ use Test::Exception;
 use Test::More;
 use Genome::File::Vcf::Entry;
 
-my $pkg = "Genome::Annotation::PositionInterpreter";
+my $pkg = "Genome::Annotation::Interpreter::PositionInterpreter";
 use_ok($pkg);
 
 subtest "one alt allele" => sub {

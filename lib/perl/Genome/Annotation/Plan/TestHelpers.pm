@@ -25,7 +25,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::Annotation::TestInterpreter {
-        is => 'Genome::Annotation::InterpreterBase',
+        is => 'Genome::Annotation::Interpreter::Base',
         has => [
             ix_p1 => {},
             ix_p2 => {},
@@ -69,7 +69,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::Annotation::AnotherTestInterpreter {
-        is => 'Genome::Annotation::InterpreterBase',
+        is => 'Genome::Annotation::Interpreter::Base',
         has => [
             iy_p1 => {},
             iy_p2 => {},

@@ -41,7 +41,7 @@ use_ok($pkg);
     package Genome::Annotation::DuplicateInterpreter;
 
     class Genome::Annotation::DuplicateInterpreter {
-        is => 'Genome::Annotation::InterpreterBase',
+        is => 'Genome::Annotation::Interpreter::Base',
     };
     sub name {
         'duplicate';

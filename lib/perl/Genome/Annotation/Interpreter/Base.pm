@@ -1,10 +1,10 @@
-package Genome::Annotation::InterpreterBase;
+package Genome::Annotation::Interpreter::Base;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::Annotation::InterpreterBase {
+class Genome::Annotation::Interpreter::Base {
     is => 'Genome::Annotation::ComponentBase',
     is_abstract => 1,
 };

@@ -1,12 +1,12 @@
-package Genome::Annotation::VepInterpreter;
+package Genome::Annotation::Interpreter::VepInterpreter;
 
 use strict;
 use warnings;
 use Genome;
 use Genome::File::Vcf::VepConsequenceParser;
 
-class Genome::Annotation::VepInterpreter {
-    is => 'Genome::Annotation::InterpreterBase',
+class Genome::Annotation::Interpreter::VepInterpreter {
+    is => 'Genome::Annotation::Interpreter::Base',
 };
 
 sub name {

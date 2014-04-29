@@ -1,11 +1,11 @@
-package Genome::Annotation::PositionInterpreter;
+package Genome::Annotation::Interpreter::PositionInterpreter;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::Annotation::PositionInterpreter {
-    is => 'Genome::Annotation::InterpreterBase',
+class Genome::Annotation::Interpreter::PositionInterpreter {
+    is => 'Genome::Annotation::Interpreter::Base',
 };
 
 sub name {
