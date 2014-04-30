@@ -22,7 +22,7 @@ sub _limit_results_for_builds {
         die "Could not get username from getpwuid.";
     }
 
-    print STDERR "Screening builds that you are not able to modify... ";
+    print STDERR "Screening builds that you are not able to modify... \n";
 
     my @apipe_builder_builds;
     my @run_by_builds;
@@ -51,7 +51,7 @@ sub _limit_results_for_builds {
         print STDERR "\n* Allowing " . @apipe_builder_builds . " since you are apipe-builder.\n* ";
     }
 
-    print STDERR "Found " . @run_by_builds . " builds out of " . @builds . " possible.\n";
+    print STDERR "Found " . @run_by_builds . " builds out of " . @builds . " that can be modified by you.\n";
 
     return (@run_by_builds, @apipe_builder_builds);
 }
