@@ -77,6 +77,11 @@ sub validate_self {
     $self->validate_children;
 }
 
+sub get_class {
+    my $self = shift;
+    return $self->factory->get_class($self->category, $self->name);
+}
+
 sub object {
     my $self = shift;
     unless ($self->cached_object) {
