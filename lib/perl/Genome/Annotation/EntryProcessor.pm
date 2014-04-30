@@ -9,6 +9,9 @@ class Genome::Annotation::EntryProcessor {
         reporter_plan => {
             is => 'Genome::Annotation::Plan::ReporterPlan',
         },
+        translations => {
+            is => 'HASH'
+        },
     ],
 };
 
@@ -57,7 +60,15 @@ sub passed_alleles {
 
 sub filters {
     my $self = shift;
-    return map{$_->object} $self->reporter_plan->filter_plans;
+    my @filters;
+    for my $plan ($self->reporter_plan->filter_plans) {
+        my %params;
+        for my $input_name ($plan->get_class->translated_inputs) {
+            $params{$input_name} = $self->translations->{$plan->$input_name};
+        }
+        push @filters, $plan->object(%params);
+    }
+    return @filters;
 }
 
 sub initialize_filters {

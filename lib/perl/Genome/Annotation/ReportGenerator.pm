@@ -22,6 +22,9 @@ class Genome::Annotation::ReportGenerator {
             is => 'Text',
             valid_values => ['snv', 'indel'],
         },
+        translations => {
+            is => 'HASH',
+        },
     ],
 };
 
@@ -31,7 +34,10 @@ sub execute {
     my @entry_processors;
     for my $reporter_plan ($self->plan->reporter_plans) {
         $reporter_plan->object->initialize($self->output_directory);
-        push @entry_processors, Genome::Annotation::EntryProcessor->create(reporter_plan => $reporter_plan);
+        push @entry_processors, Genome::Annotation::EntryProcessor->create(
+            reporter_plan => $reporter_plan,
+            translations => $self->translations,
+        );
     }
 
     my $vcf_reader = Genome::File::Vcf::Reader->new($self->vcf_file);
