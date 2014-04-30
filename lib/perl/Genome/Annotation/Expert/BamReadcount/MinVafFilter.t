@@ -18,7 +18,7 @@ use_ok($pkg);
 
 subtest "pass" => sub {
     my $min_vaf = 90;
-    my $filter = $pkg->create(min_vaf => $min_vaf, sample_index => 0);
+    my $filter = $pkg->create(min_vaf => $min_vaf, sample_name => "S1");
     lives_ok(sub {$filter->validate}, "Filter validates");
 
     my %expected_return_values = (
@@ -31,7 +31,7 @@ subtest "pass" => sub {
 
 subtest "fail" => sub {
     my $min_vaf = 100;
-    my $filter = $pkg->create(min_vaf => $min_vaf, sample_index => 0);
+    my $filter = $pkg->create(min_vaf => $min_vaf, sample_name => "S1");
     lives_ok(sub {$filter->validate}, "Filter validates");
 
     my %expected_return_values = (
@@ -44,7 +44,7 @@ subtest "fail" => sub {
 
 subtest "fail heterozygous non-reference sample" => sub {
     my $min_vaf = 90;
-    my $filter = $pkg->create(min_vaf => $min_vaf, sample_index => 1);
+    my $filter = $pkg->create(min_vaf => $min_vaf, sample_name => "S2");
     lives_ok(sub {$filter->validate}, "Filter validates");
 
     my %expected_return_values = (
@@ -59,7 +59,7 @@ subtest "fail heterozygous non-reference sample" => sub {
 
 subtest "pass heterozygous non-reference sample" => sub {
     my $min_vaf = 0.02;
-    my $filter = $pkg->create(min_vaf => $min_vaf, sample_index => 1);
+    my $filter = $pkg->create(min_vaf => $min_vaf, sample_name => "S2");
     lives_ok(sub {$filter->validate}, "Filter validates");
 
     my %expected_return_values = (

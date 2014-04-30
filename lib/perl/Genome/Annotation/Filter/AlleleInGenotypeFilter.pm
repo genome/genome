@@ -5,11 +5,8 @@ use warnings;
 use Genome;
 
 class Genome::Annotation::Filter::AlleleInGenotypeFilter {
-    is => 'Genome::Annotation::Filter::Base',
+    is => ['Genome::Annotation::Filter::WithSampleName'],
     has => [
-        sample_index => {
-            is => 'Integer',
-        },
     ],
 };
 
@@ -30,7 +27,7 @@ sub process_entry {
         $return_values{$alt_allele} = 0;
     }
 
-    my @sample_alt_alleles = sort $entry->alt_bases_for_sample($self->sample_index);
+    my @sample_alt_alleles = sort $entry->alt_bases_for_sample($self->sample_index($entry->{header}));
     for my $sample_alt_allele (@sample_alt_alleles) {
         $return_values{$sample_alt_allele} = 1;
     }

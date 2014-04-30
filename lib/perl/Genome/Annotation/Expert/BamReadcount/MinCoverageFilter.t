@@ -28,7 +28,7 @@ my %fail = (
 
 subtest "pass" => sub {
     my $min_coverage = 300;
-    my $filter = $pkg->create(min_coverage => $min_coverage, sample_index => 0);
+    my $filter = $pkg->create(min_coverage => $min_coverage, sample_name => "S1");
     lives_ok(sub {$filter->validate}, "Filter validates");
     my $entry = create_entry(bam_readcount_line);
     is_deeply({$filter->process_entry($entry)}, \%pass, "Entry passes filter with min_coverage $min_coverage");
@@ -36,7 +36,7 @@ subtest "pass" => sub {
 
 subtest "fail" => sub {
     my $min_coverage = 400;
-    my $filter = $pkg->create(min_coverage => $min_coverage, sample_index => 0);
+    my $filter = $pkg->create(min_coverage => $min_coverage, sample_name => "S1");
     lives_ok(sub {$filter->validate}, "Filter validates");
 
     my $entry = create_entry(bam_readcount_line);

@@ -18,7 +18,7 @@ use_ok($pkg);
 
 subtest "sample 1" => sub {
     my $filter = $pkg->create(
-        sample_index => 0,
+        sample_name => "S1",
     );
     lives_ok(sub {$filter->validate}, "Filter validates ok");
 
@@ -33,7 +33,7 @@ subtest "sample 1" => sub {
 
 subtest "sample 2" => sub {
     my $filter = $pkg->create(
-        sample_index => 1,
+        sample_name => "S2",
     );
     lives_ok(sub {$filter->validate}, "Filter validates ok");
 
@@ -48,7 +48,7 @@ subtest "sample 2" => sub {
 
 subtest "sample 3" => sub {
     my $filter = $pkg->create(
-        sample_index => 2,
+        sample_name => "S3",
     );
     lives_ok(sub {$filter->validate}, "Filter validates ok");
 
@@ -63,7 +63,7 @@ subtest "sample 3" => sub {
 
 subtest "sample 4" => sub {
     my $filter = $pkg->create(
-        sample_index => 3,
+        sample_name => "S4",
     );
     lives_ok(sub {$filter->validate}, "Filter validates ok");
 
