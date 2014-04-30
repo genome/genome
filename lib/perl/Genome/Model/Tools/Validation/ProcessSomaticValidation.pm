@@ -553,41 +553,13 @@ sub execute {
 
   $DB::single = 1;
   my $self = shift;
-  my $output_dir = $self->output_dir;
-  $output_dir =~ s/(\/)+$//; # Remove trailing forward-slashes if any
-
-  #make the outputdir if it doesn't exist
-  if(!-d $output_dir){
-      make_path($output_dir);
-  }
-
-  unless(defined($self->somatic_validation_build_id) || defined($self->somatic_validation_model_id)){
-      die("must specify either somatic-validation-build-id or somatic-validation-model-id");
-  }
-
-  # Check on the input data before starting work
   my $model;
   my $build;
-  if(defined($self->somatic_validation_model_id)){
-      $model = Genome::Model->get( $self->somatic_validation_model_id );
-      print STDERR "ERROR: Could not find a model with ID: " . $self->somatic_validation_model_id . "\n" unless( defined $model );
-      print STDERR "ERROR: Output directory not found: $output_dir\n" unless( -d $output_dir );
-      return undef unless( defined $model && -d $output_dir );
-      $build = $model->last_succeeded_build;
-  } elsif(defined($self->somatic_validation_build_id)){
-      $build = Genome::Model::Build->get( $self->somatic_validation_build_id );
-      $model = $build->model;
-      print STDERR "ERROR: Could not find a model with ID: " . $self->somatic_validation_model_id . "\n" unless( defined $model );
-      print STDERR "ERROR: Output directory not found: $output_dir\n" unless( -d $output_dir );
-      return undef unless( defined $model && -d $output_dir );      
-  }
 
-  unless( defined($build) ){
-      print STDERR "WARNING: Model ", $model->id, "has no succeeded builds\n";
-      return undef;
-  }
 
-  #validate that the statuses are valid
+  #validate that the inputs are valid
+
+  #check statuses
   my @statuses = split(",",$self->statuses_to_review);
   foreach my $i (@statuses){
       unless($i =~ /^newcall$|^validated$|^nonvalidated$/){
@@ -595,6 +567,56 @@ sub execute {
           die();
       }
   }
+
+  #check that a build or model was specified
+  unless(defined($self->somatic_validation_build_id) || defined($self->somatic_validation_model_id)){
+      die("must specify either somatic-validation-build-id or somatic-validation-model-id");
+  }
+  
+  # Check on the input model and params
+  if(defined($self->somatic_validation_model_id)){
+      $model = Genome::Model->get( $self->somatic_validation_model_id );
+      unless( defined $model ){
+          print STDERR "ERROR: Could not find a model with ID: " . $self->somatic_validation_model_id . "\n";
+          return undef;
+      }
+      
+      $build = $model->last_succeeded_build;
+      unless( defined($build) ){
+          print STDERR "WARNING: Model ", $model->id, "has no succeeded builds\n";
+          return undef;
+      }
+
+  } elsif(defined($self->somatic_validation_build_id)){
+      $build = Genome::Model::Build->get( $self->somatic_validation_build_id );
+      unless( defined $build ){
+          print STDERR "ERROR: Could not find a build with ID: " . $self->somatic_validation_build_id . "\n";
+          return undef;
+      }
+      $model = $build->model;      
+  }
+
+
+  #valid target-regions
+  if($self->restrict_to_target_regions){
+      unless($model->target_region_set || $self->target_regions){        
+          die("ERROR: No target regions provided and no target_region_set defined on model. Can't use the --restrict-to-target-regions option on this model.\n");
+      }
+  }
+
+
+  #make the output dir if it doesn't exist
+  my $output_dir = $self->output_dir;
+  $output_dir =~ s/(\/)+$//; # Remove trailing forward-slashes if any  
+
+  if(!-d $output_dir){
+      make_path($output_dir);
+  }
+  unless( -d $output_dir ){
+      print STDERR "ERROR: Output directory not found: $output_dir\n";
+      return undef;
+  }
+
 
   #make sure specified tiers are valid and that if anything other than
   # all (tiers 1,2,3,4) is specified, that add-tiers is on
@@ -686,9 +708,15 @@ sub execute {
          if(-s "$build_dir/validation/snvs/snvs.newcalls.on_target"){
              $newcalls = "$build_dir/validation/snvs/snvs.newcalls.on_target";
              push(@snv_files,$newcalls);
+         } else {
+             print STDERR "WARNING: No target regions defined on build, can't restrict newcalls to target regions\n";
+             push(@snv_files,$newcalls);
          }
      }
+  } else {
+      push(@snv_files,$newcalls);
   }
+
 
   for my $file (@snv_files){
       unless( -e $file ){
