@@ -66,11 +66,9 @@ sub generate_test_cmd {
         variant_type => 'snvs',
         polyphen => 'b',
         sift => 'b',
-        condel => 'b',
         plugins_version => 0,
         species => "alien",
         terms => "ensembl",
-        hgvs => 1,
         reference_build => $reference_sequence_build,
     );
     my $cmd = $cmd_class->create(%params);

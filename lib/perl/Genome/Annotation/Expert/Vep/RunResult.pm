@@ -25,19 +25,12 @@ class Genome::Annotation::Expert::Vep::RunResult {
     has_param => [
         polyphen => { is => 'String', },
         sift => { is => 'String', },
-        condel => { is => 'String', },
         terms => {is => 'String', },
         regulatory => {is => 'Boolean',},
-        gene => {is => 'Boolean',},
-        most_severe => {is => 'Boolean',},
-        per_gene => {is => 'Boolean',},
-        hgnc => {is => 'Boolean',},
-        coding_only => {is => 'Boolean',},
         canonical => {is => 'Boolean',},
         plugins => {is => 'String',
                     is_many => 1},
         plugins_version => {is => 'String',},
-        hgvs => {is => 'Boolean',},
     ],
 };
 
@@ -70,19 +63,20 @@ sub _run {
     delete $params{variant_type};
     delete $params{test_name};
 
-    if ($self->hgvs) {
-        $params{fasta} = $self->reference_build->fasta_file;
-    }
+    $params{pick} = 1;
     my $vep_output_file = File::Spec->join($self->temp_staging_directory, $self->output_filename_base);
     my $final_output_file = File::Spec->join($self->temp_staging_directory, $self->output_filename);
     my $vep_command = Genome::Db::Ensembl::Command::Run::Vep->create(
         input_file => $self->input_result_file_path,
+        fasta => $self->reference_build->fasta_file,
         output_file => $vep_output_file,
         ensembl_version => $self->ensembl_version,
         custom => \@custom_annotation_inputs,
         format => "vcf",
         vcf => 1,
         quiet => 0,
+        hgvs => 1,
+        pick => 1,
         %params,
     );
 

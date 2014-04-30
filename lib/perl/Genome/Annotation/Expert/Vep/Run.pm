@@ -17,30 +17,24 @@ class Genome::Annotation::Expert::Vep::Run {
                     INFO field, along with the tag to be used
                     e.g. 12345:SEGDUP,58676:ROI
                     The id and tag should be separated by a colon',
+            is_optional => 1,
         },
         reference_build => {is => 'Genome::Model::Build::ReferenceSequence'},
         species => { is => 'Text', },
         polyphen => { is => 'String', },
         sift => { is => 'String', },
-        condel => { is => 'String', },
         terms => {is => 'String',},
         regulatory => {is => 'Boolean',},
-        gene => {is => 'Boolean',},
-        most_severe => {is => 'Boolean',},
-        per_gene => {is => 'Boolean',},
-        hgnc => {is => 'Boolean',},
-        coding_only => {is => 'Boolean',},
         canonical => {is => 'Boolean',},
         plugins => {is => 'String',
                     is_many => 1,
                     is_optional => 1},
         plugins_version => {is => 'String',},
-        hgvs => {is => 'Boolean', },
     ],
 };
 
 sub name {
-    'vep'
+    'vep';
 }
 
 sub execute {
