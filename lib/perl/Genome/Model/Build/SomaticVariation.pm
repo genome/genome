@@ -7,7 +7,10 @@ use Genome;
 use File::Basename;
 
 class Genome::Model::Build::SomaticVariation {
-    is => ['Genome::Model::Build', 'Genome::Model::Build::RunsDV2'],
+    is => [
+        'Genome::Model::Build',
+        'Genome::Model::Build::RunsDV2',
+        'Genome::Model::Build::HasFeatureLists'],
     has => [
         snv_detection_strategy => {
             is => 'Text',
@@ -413,6 +416,23 @@ sub path_to_individual_output {
         }
     }
     return $answer;
+}
+
+sub get_target_region_file_list {
+    my $self = shift;
+
+    if (defined($self->tumor_build->target_region_set_name)) {
+        return Genome::FeatureList->get(
+            name => $self->tumor_build->target_region_set_name);
+    } else {
+        return;
+    }
+}
+
+sub get_segmental_dupications_file_list {
+    my $self = shift;
+    # TODO
+    return;
 }
 
 1;

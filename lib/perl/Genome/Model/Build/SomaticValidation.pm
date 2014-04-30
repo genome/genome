@@ -6,7 +6,10 @@ use warnings;
 use Genome;
 
 class Genome::Model::Build::SomaticValidation {
-    is => ['Genome::Model::Build', 'Genome::Model::Build::RunsDV2'],
+    is => [
+        'Genome::Model::Build',
+        'Genome::Model::Build::RunsDV2',
+        'Genome::Model::Build::HasFeatureLists'],
     has_optional => [
         reference_sequence_build => {
             is => 'Genome::Model::Build::ReferenceSequence', via => 'inputs', to => 'value', where => [name => 'reference_sequence_build'],
@@ -292,6 +295,17 @@ sub reference_being_replaced_for_input {
 sub whole_rmdup_bam_file {
     my $self = shift;
     return $self->tumor_bam;
+}
+
+sub get_target_region_file_list {
+    my $self = shift;
+
+    if (defined($self->target_region_set_name)) {
+        return Genome::FeatureList->get(
+            name => $self->target_region_set_name);
+    } else {
+        return;
+    }
 }
 
 1;
