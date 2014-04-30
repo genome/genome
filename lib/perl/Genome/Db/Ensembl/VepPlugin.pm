@@ -36,8 +36,10 @@ sub copy_to_staging_directory {
     my $self = shift;
 
     Genome::Sys->create_symlink($self->source_file, $self->dest_file);
-    Genome::Sys->rsync_directory(source_directory => $self->source_dir,
-        target_directory => $self->dest_dir);
+    if (-d $self->source_dir) {
+        Genome::Sys->rsync_directory(source_directory => $self->source_dir,
+            target_directory => $self->dest_dir);
+    }
 }
 
 sub replace_configuration_paths {
