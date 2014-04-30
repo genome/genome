@@ -94,9 +94,17 @@ sub get_test_somatic_variation_build_from_files {
         $params{indels_plan} = $indels_plan;
     }
 
-    return setup_build(
+    my $build = setup_build(
         %params
     );
+
+    reinstall_sub( {
+        into => $build->reference_sequence_build->class,
+        as => 'fasta_file',
+        code => sub { return $p{reference_fasta}; },
+    });
+
+    return $build;
 }
 
 sub setup_build {
@@ -225,7 +233,9 @@ sub test_dag_execute {
     my $output = $dag->execute(input_result => $build->$accessor, build_id => $build->id, variant_type => $variant_type);
     my $vcf_path = $output->{output_result}->output_file_path;
     my $differ = Genome::File::Vcf::Differ->new($vcf_path, $expected_vcf);
-    is($differ->diff, undef, "Found No differences between $vcf_path and (expected) $expected_vcf");
+    my $diff = [$differ->diff];
+    is_deeply($diff, [], "Found No differences between $vcf_path and (expected) $expected_vcf") or
+        diag Data::Dumper::Dumper($diff);
 }
 
 sub get_test_dir {
