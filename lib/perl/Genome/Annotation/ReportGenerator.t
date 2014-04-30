@@ -23,10 +23,13 @@ my $vcf_file = File::Spec->join($data_dir, "test.vcf");
 my $plan = Genome::Annotation::Plan->create_from_file(File::Spec->join($data_dir, "test.yaml"));
 
 my $output_dir = Genome::Sys->create_temp_directory;
+
+my $translations = {};
 my $generator = $pkg->create(vcf_file => $vcf_file,
                              plan => $plan,
                              variant_type => "snv",
-                             output_directory => $output_dir);
+                             output_directory => $output_dir,
+                             translations => $translations);
 ok($generator->isa($pkg), "Generator created ok");
 ok($generator->execute, "Generator executed ok");
 

@@ -3,6 +3,7 @@ package Genome::Annotation::Plan::Base;
 use strict;
 use warnings FATAL => 'all';
 use Genome;
+use Memoize qw(memoize);
 
 class Genome::Annotation::Plan::Base {
     is => 'Genome::Annotation::ComponentBase',
@@ -12,11 +13,6 @@ class Genome::Annotation::Plan::Base {
         },
         params => {
             is => 'HASH',
-        },
-    ],
-    has_optional_transient => [
-        cached_object => {
-            is => 'Genome::Annotation::ComponentBase',
         },
     ],
 };
@@ -77,14 +73,19 @@ sub validate_self {
     $self->validate_children;
 }
 
+sub get_class {
+    my $self = shift;
+    return $self->factory->get_class($self->category, $self->name);
+}
+
 sub object {
     my $self = shift;
-    unless ($self->cached_object) {
-        $self->cached_object($self->factory->get_object($self->category,
-            $self->name, $self->params));
-    }
-    return $self->cached_object;
+    my %overrides = @_;
+    return $self->factory->get_object($self->category,
+            $self->name, $self->params, \%overrides);
 }
+
+Memoize::memoize("object");
 
 sub factory {
     my $self = shift;

@@ -28,8 +28,9 @@ my %fail_return_values = (
 
 subtest "pass" => sub {
     my $filter = $pkg->create(
-        sample_index => 0,
+        sample_name => "S1",
     );
+
     lives_ok(sub {$filter->validate}, "Filter validates ok");
 
     my $ft_value = "PASS";
@@ -52,7 +53,7 @@ subtest "pass" => sub {
 subtest "pass more than one filter" => sub {
     my @keep_filter_values = ('PASS', 'FalsePositive');
     my $filter = $pkg->create(
-        sample_index => 0,
+        sample_name => "S1",
         keep_filter_values => \@keep_filter_values
     );
     lives_ok(sub {$filter->validate}, "Filter validates ok");

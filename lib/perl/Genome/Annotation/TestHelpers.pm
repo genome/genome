@@ -42,9 +42,13 @@ sub test_cmd_and_result_are_in_sync {
 }
 
 sub get_test_somatic_variation_build {
-    my ($version, $plan_file) = validate_pos(@_, 1, 1);
+    my %p = validate(@_, {
+        version => {type => SCALAR},
+        snvs_plan_file => {type => SCALAR, optional => 1},
+        indels_plan_file => {type => SCALAR, optional => 1},
+    });
 
-    my $test_dir = get_test_dir('Genome::Annotation::Expert::Base', $version);
+    my $test_dir = get_test_dir('Genome::Annotation::Expert::Base', $p{version});
 
     return get_test_somatic_variation_build_from_files(
         bam1 => File::Spec->join($test_dir, 'bam1.bam'),
@@ -52,7 +56,8 @@ sub get_test_somatic_variation_build {
         reference_fasta => File::Spec->join($test_dir, 'reference.fasta'),
         snvs_vcf => File::Spec->join($test_dir, 'snvs.vcf.gz'),
         indels_vcf => File::Spec->join($test_dir, 'indels.vcf.gz'),
-        plan_file => $plan_file,
+        snvs_plan_file => $p{snvs_plan_file},
+        indels_plan_file => $p{indels_plan_file},
     );
 }
 
@@ -63,22 +68,34 @@ sub get_test_somatic_variation_build_from_files {
         reference_fasta => {type => SCALAR},
         snvs_vcf => {type => SCALAR},
         indels_vcf => {type => SCALAR},
-        plan_file => {type => SCALAR},
+        snvs_plan_file => {type => SCALAR | UNDEF},
+        indels_plan_file => {type => SCALAR | UNDEF},
     });
 
     my ($bam_result1, $bam_result2) = setup_bam_results($p{bam1}, $p{bam2},
         $p{reference_fasta});
     my ($snvs_result, $indels_result) = setup_vcf_results($p{snvs_vcf},
         $p{indels_vcf});
-    my $plan = Genome::Annotation::Plan->create_from_file($p{plan_file});
-    $plan->validate();
-
-    return setup_build(
+    my %params = (
         bam_result1 => $bam_result1,
         bam_result2 => $bam_result2,
         snvs_vcf_result => $snvs_result,
         indels_vcf_result => $indels_result,
-        plan => $plan,
+    );
+    if (defined $p{snvs_plan_file}) {
+        my $snvs_plan = Genome::Annotation::Plan->create_from_file($p{snvs_plan_file});
+        $snvs_plan->validate();
+        $params{snvs_plan} = $snvs_plan;
+    }
+
+    if (defined $p{indels_plan_file}) {
+        my $indels_plan = Genome::Annotation::Plan->create_from_file($p{indels_plan_file});
+        $indels_plan->validate();
+        $params{indels_plan} = $indels_plan;
+    }
+
+    return setup_build(
+        %params
     );
 }
 
@@ -88,7 +105,8 @@ sub setup_build {
         bam_result2 => {type => OBJECT},
         snvs_vcf_result => {type => OBJECT},
         indels_vcf_result => {type => OBJECT},
-        plan => {type => OBJECT},
+        snvs_plan => {type => OBJECT, optional => 1},
+        indels_plan => {type => OBJECT, optional => 1},
     });
     my $build = Genome::Test::Factory::Model::SomaticVariation->setup_somatic_variation_build;
 
@@ -105,10 +123,14 @@ sub setup_build {
     });
     reinstall_sub( {
         into => $build->class,
-        as => 'annotation_plan',
-        code => sub {return $p{plan};},
+        as => 'snvs_annotation_plan',
+        code => sub {return $p{snvs_plan};},
     });
-
+    reinstall_sub( {
+        into => $build->class,
+        as => 'indels_annotation_plan',
+        code => sub {return $p{indels_plan};},
+    });
     reinstall_sub({
         into => "Genome::Model::Build::RunsDV2",
         as => "get_detailed_snvs_vcf_result",

@@ -5,11 +5,8 @@ use warnings;
 use Genome;
 
 class Genome::Annotation::Expert::BamReadcount::FilterBase {
-    is => 'Genome::Annotation::Filter::Base',
+    is => 'Genome::Annotation::Filter::WithSampleName',
     has => [
-        sample_index => {
-            is => 'Integer',
-        },
     ],
 };
 
@@ -17,7 +14,7 @@ sub get_readcount_entry {
     my $self = shift;
     my $entry = shift;
 
-    my $bam_readcount_string = $entry->sample_field($self->sample_index, 'BRCT');
+    my $bam_readcount_string = $entry->sample_field($self->sample_index($entry->{header}), 'BRCT');
     return unless $bam_readcount_string;
     return Genome::File::BamReadcount::Entry->new(
         Genome::File::BamReadcount::Entry::decode($bam_readcount_string));

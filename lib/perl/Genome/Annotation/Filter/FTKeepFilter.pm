@@ -6,15 +6,12 @@ use Genome;
 use List::Util qw/first/;
 
 class Genome::Annotation::Filter::FTKeepFilter {
-    is => 'Genome::Annotation::Filter::Base',
+    is => ['Genome::Annotation::Filter::WithSampleName'],
     has => {
         keep_filter_values => {
             is => 'Text',
             is_many => 1,
             default_value => ['PASS'],
-        },
-        sample_index => {
-            is => 'Integer',
         },
     },
 };
@@ -26,7 +23,7 @@ sub name {
 sub process_entry {
     my ($self, $entry) = @_;
 
-    my $ft_string = $entry->sample_field($self->sample_index, 'FT');
+    my $ft_string = $entry->sample_field($self->sample_index($entry->{header}), 'FT');
     return $self->return_values($entry, 0) unless defined($ft_string);
 
     my @ft_values = split(';', $ft_string);

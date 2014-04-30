@@ -38,7 +38,8 @@ test_dag_xml($dag, $expected_xml);
 set_what_interpreter_x_requires('bam-readcount');
 my $variant_type = 'snvs';
 my $expected_vcf = File::Spec->join($test_dir, "expected_$variant_type.vcf.gz");
-my $build = get_test_somatic_variation_build($BUILD_VERSION, File::Spec->join($test_dir, 'plan.yaml'));
+my $build = get_test_somatic_variation_build(version => $BUILD_VERSION, 
+                                            snvs_plan_file => File::Spec->join($test_dir, 'plan.yaml'));
 test_dag_execute($dag, $expected_vcf, $variant_type, $build);
 
 done_testing();

@@ -30,7 +30,7 @@ sub process_entry {
         $return_values{$alt_allele} = 0;
     }
 
-    my @sample_alt_alleles = sort $entry->alt_bases_for_sample($self->sample_index);
+    my @sample_alt_alleles = sort $entry->alt_bases_for_sample($self->sample_index($entry->{header}));
     for my $sample_alt_allele (@sample_alt_alleles) {
         my $vaf = $self->calculate_vaf($entry, $sample_alt_allele);
         if ($vaf >= $self->min_vaf) {

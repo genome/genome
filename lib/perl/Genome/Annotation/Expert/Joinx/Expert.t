@@ -48,7 +48,8 @@ done_testing();
 sub get_build {
     my ($BUILD_VERSION, $test_dir) = @_;
 
-    my $build = get_test_somatic_variation_build($BUILD_VERSION, File::Spec->join($test_dir, 'plan.yaml'));
+    my $build = get_test_somatic_variation_build(version => $BUILD_VERSION,
+        snvs_plan_file => File::Spec->join($test_dir, 'plan.yaml'));
 
     my $dbsnp_build = Genome::Model::Build::ImportedVariationList->__define__;
     reinstall_sub({
