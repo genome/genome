@@ -34,6 +34,7 @@ sub execute {
         plan => $self->plan,
         output_directory => $self->output_directory,
         variant_type => $self->variant_type,
+        translations => $self->translations,
     );
     return 1;
 }
@@ -42,6 +43,19 @@ sub plan {
     my $self = shift;
 
     return $self->build->annotation_plan($self->variant_type);
+}
+
+sub translations {
+    my $self = shift;
+    my $result = {};
+
+    if ($self->build->isa('Genome::Model::Build::SomaticValidation')) {
+        $result->{'tumor'} = $self->build->tumor_sample->name;
+    }
+    if ($self->build->isa('Genome::Model::Build::SomaticVariation')) {
+        $result->{'tumor'} = $self->build->tumor_build->subject->name;
+    }
+    return $result;
 }
 
 sub build {
