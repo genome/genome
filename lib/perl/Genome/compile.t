@@ -67,11 +67,11 @@ sub resolve_start_point {
 sub is_blacklisted {
     my $file = shift;
     my @blacklist = (
-        qr(Genome/Db/Ensembl/Command/Vep.d/),
-        qr(Genome/Db/Ensembl/Command/Run/Vep.d/),
-        qr(Genome/Site/CLIA.pm$),
-        qr(Genome/Site/CLIA.t$),
-        qr(Genome/Site/TGI/Extension/),
+        qr(lib/perl/Genome/Db/Ensembl/Command/Vep\.d/),
+        qr(lib/perl/Genome/Db/Ensembl/Command/Run/Vep\.d/),
+        qr(lib/perl/Genome/Site/CLIA\.pm$),
+        qr(lib/perl/Genome/Site/CLIA\.t$),
+        qr(lib/perl/Genome/Site/TGI/Extension/),
     );
     return grep { $file =~ /$_/ } @blacklist;
 }
