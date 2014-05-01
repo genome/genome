@@ -129,16 +129,18 @@ sub setup_build {
             return $build_to_result{$self->id};
         },
     });
+
+    my %type_to_plan = (
+        'snvs' => $p{snvs_plan},
+        'indels' => $p{indels_plan},
+    );
     reinstall_sub( {
         into => $build->class,
-        as => 'snvs_annotation_plan',
-        code => sub {return $p{snvs_plan};},
+        as => 'annotation_plan',
+        code => sub {my ($self, $type) = @_;
+            return $type_to_plan{$type};},
     });
-    reinstall_sub( {
-        into => $build->class,
-        as => 'indels_annotation_plan',
-        code => sub {return $p{indels_plan};},
-    });
+
     reinstall_sub({
         into => "Genome::Model::Build::RunsDV2",
         as => "get_detailed_snvs_vcf_result",

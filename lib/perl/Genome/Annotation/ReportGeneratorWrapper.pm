@@ -31,11 +31,17 @@ sub execute {
 
     Genome::Annotation::ReportGenerator->execute(
         vcf_file => $self->input_result->output_file_path,
-        plan => $self->build->annotation_plan,
+        plan => $self->plan,
         output_directory => $self->output_directory,
         variant_type => $self->variant_type,
     );
     return 1;
+}
+
+sub plan {
+    my $self = shift;
+
+    return $self->build->annotation_plan($self->variant_type);
 }
 
 sub build {

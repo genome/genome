@@ -112,7 +112,7 @@ sub build {
 sub plan {
     my $self = shift;
 
-    return $self->build->annotation_plan;
+    return $self->build->annotation_plan($self->variant_type);
 }
 
 sub experts {

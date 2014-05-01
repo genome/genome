@@ -107,8 +107,7 @@ sub resolve_plan_attributes {
 sub plan {
     my $self = shift;
 
-    my $accessor = join("_", $self->variant_type, "annotation_plan");
-    return $self->build->$accessor;
+    return $self->build->annotation_plan($self->variant_type);
 }
 
 sub planned_output_names {
