@@ -25,21 +25,37 @@ my $output_tsv = $tmpdir.'/genotypes';
 
 # no source
 my $extract = Genome::Model::GenotypeMicroarray::Command::ExtractToVcf->create();
-ok(!$extract->execute, 'failed to create command w/o source');
+ok(!$extract->execute, 'failed to execute command w/o source');
 is($extract->error_message, 'No source given! Can be build, model, instrument data or sample.', 'correct error');
 
 # instdata w/o variation list build
 $extract = Genome::Model::GenotypeMicroarray::Command::ExtractToVcf->create(
     instrument_data => $instrument_data,
 );
-ok(!$extract->execute, 'failed to create command from instdata w/o variation list build');
+ok(!$extract->execute, 'failed to execute command from instdata w/o variation list build');
 is($extract->error_message, 'Variation list build is required to get genotypes for an instrument data!', 'correct error');
 
 # sample w/o variation list build
 $extract = Genome::Model::GenotypeMicroarray::Command::ExtractToVcf->create(
     sample => $instrument_data->sample,
 );
-ok(!$extract->execute, 'failed to create command from instdata w/o variation list build');
+ok(!$extract->execute, 'failed toexecute command from instdata w/o variation list build');
 is($extract->error_message, 'Variation list build is required to get genotypes for a sample!', 'correct error');
+
+# request external inst data from sample w/o any
+$extract = Genome::Model::GenotypeMicroarray::Command::ExtractToVcf->create(
+    sample => $instrument_data->sample,
+    sample_type_priority => [qw/ external /],
+    variation_list_build => $variation_list_build,
+);
+ok(!$extract->_resolve_source_for_sample, 'failed to resolve from sample requesting external inst data, but there is none');
+is($extract->error_message, 'No instrument data found matches the indicated priorities (external) for sample (__TEST_SAMPLE__ (2879594813))!', 'correct error');
+
+# request default inst data from sample w/o any
+$instrument_data->import_source_name('NOT INTERNAL');
+$instrument_data->sample->default_genotype_data_id(undef);
+$extract->sample_type_priority([qw/ default /]);
+ok(!$extract->_resolve_source_for_sample, 'failed to resolve for sample requesting default inst data, but there is none');
+is($extract->error_message, 'No instrument data found matches the indicated priorities (default) for sample (__TEST_SAMPLE__ (2879594813))!', 'correct error');
 
 done_testing();
