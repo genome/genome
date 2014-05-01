@@ -79,6 +79,7 @@ my $expected_hashref = {
 
 is_deeply($plan->as_hashref, $expected_hashref, "Got expected hashref from 'as_hashref'.");
 is_deeply($pkg->create_from_hashref($plan->as_hashref->{root})->as_hashref, $plan->as_hashref, "Roundtrip test successful.");
+is_deeply($pkg->create_from_json($plan->as_json)->as_hashref, $expected_hashref, "Roundtrip JSON test successful.");
 
 my $expert_one_plan = $plan->get_plan('expert', 'expert_one');
 is($expert_one_plan->name, 'expert_one', "Got correct plan ('expert_one') from get_plan");

@@ -7,6 +7,9 @@ use YAML;
 use Params::Validate qw(validate_pos);
 use Set::Scalar;
 use Data::Compare qw(Compare);
+use JSON;
+
+my $_JSON_CODEC = new JSON->allow_nonref;
 
 class Genome::Annotation::Plan {
     is => 'Genome::Annotation::Plan::Base',
@@ -87,6 +90,20 @@ sub create_from_hashref {
     $self->reporter_plans(\@reporter_plans);
 
     return $self;
+}
+
+sub as_json {
+    my $self = shift;
+
+    return $_JSON_CODEC->canonical->encode($self->as_hashref);
+}
+
+sub create_from_json {
+    my $class = shift;
+    my $json = shift;
+
+    my $hashref = $_JSON_CODEC->decode($json);
+    return $class->create_from_hashref($hashref->{'root'});
 }
 
 sub validate_self {
