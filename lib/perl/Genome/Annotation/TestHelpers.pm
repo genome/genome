@@ -118,6 +118,8 @@ sub setup_build {
     });
     my $build = Genome::Test::Factory::Model::SomaticVariation->setup_somatic_variation_build;
 
+    $build->tumor_build->subject->name('TEST-patient1-somval_tumor1');
+
     my %build_to_result = (
         $build->tumor_build->id => $p{bam_result1},
         $build->normal_build->id => $p{bam_result2},
