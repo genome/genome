@@ -177,7 +177,7 @@ sub _resolve_source_for_sample {
     my $library_name = $sample->name.'-microarraylib';
     my $library = Genome::Library->get(name => $library_name, sample => $sample);
     unless (defined $library) {
-        die $self->error_message("Failed to get a library with name (%s) and sample (%s)", $library_name, $sample);
+        die $self->error_message("Failed to get a library with name (%s) and sample id (%s)", $library_name, $sample->id);
     }
 
         #'import_source_name in' => ( $self->use_external ) ? [qw/ BGI bgi Broad broad CSHL cshl external /] : [qw/ wugsc wugc wutgi tgi /],
