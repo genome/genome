@@ -64,7 +64,13 @@ sub filters {
     for my $plan ($self->reporter_plan->filter_plans) {
         my %params;
         for my $input_name ($plan->get_class->translated_inputs) {
-            $params{$input_name} = $self->translations->{$plan->$input_name};
+            my $translated_value = $self->translations->{$plan->params->{$input_name}};
+            if (defined($translated_value)) {
+                $params{$input_name} = $translated_value;
+            } else {
+                die $self->error_message("Cannot translate input (%s) for filter (%s)",
+                    $input_name, $plan->name);
+            }
         }
         push @filters, $plan->object(%params);
     }
