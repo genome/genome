@@ -202,7 +202,7 @@ sub _resolve_source_for_sample {
     }
 
     if ( not $filtered_instrument_data ) {
-        $self->error_message('No instrument data found matches the indicated priorities!');
+        $self->error_message('No instrument data found matches the indicated priorities (%s) for sample (%s)!', join(' ', $self->sample_type_priority), $sample->__display_name__);
         return;
     }
 
@@ -262,10 +262,10 @@ sub _is_instrument_data_external {
     my ($self, $instrument_data) = @_;
 
     for my $internal_source_name ( @internal_source_names ) {
-        return 1 if $instrument_data->import_source_name !~ /^$internal_source_name$/i;
+        return if $instrument_data->import_source_name =~ /^$internal_source_name$/i;
     }
 
-    return;
+    return 1;
 }
 
 sub _last_succeeded_build_from_model_for_instrument_data {
