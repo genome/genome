@@ -172,55 +172,46 @@ sub _resolve_source_for_sample {
         return;
     }
 
-    my @instrument_data = $self->_resolve_instrument_data;
+    # Get microarray libs for sample [used to be only one, maybe do this on the source level?]
+    my $sample = $self->sample;
+    my @microarray_libs = grep { $_->name =~ /microarraylib$/ } $sample->libraries;
+    if ( not @microarray_libs ) {
+        $self->error_message("Failed to find microarray libraries for sample (%s)", $sample->__display_name__);
+        return;
+    }
+
+    # Get instrument data for the microarray libs
+    my @instrument_data = map { $_->instrument_data } @microarray_libs;
+    my $default_genotype_data = $sample->default_genotype_data;
+    push @instrument_data, $default_genotype_data if $default_genotype_data; # multiple copies of this inst data is ok
+    @instrument_data = sort { $b->import_date cmp $a->import_date } @instrument_data;
     if ( not @instrument_data ) {
         $self->error_message('No microarray instrument data for sample (%s)!', $self->sample->__display_name__);
         return;
     }
 
     # Restrict by priority
-    my @filtered_instrument_data;
-    for my $priority ( $self->sample_type_priority ) {
+    my $filtered_instrument_data;
+    PRIORITY: for my $priority ( $self->sample_type_priority ) {
         for my $instrument_data ( @instrument_data ) {
             my $verification_method = '_is_instrument_data_'.$priority;
-            push @filtered_instrument_data, $instrument_data if $self->$verification_method($instrument_data);
+            next unless $self->$verification_method($instrument_data);
+            $filtered_instrument_data = $instrument_data;
+            last PRIORITY;
         }
     }
 
-    if ( not @filtered_instrument_data ) {
+    if ( not $filtered_instrument_data ) {
         $self->error_message('No instrument data found matches the indicated priorities!');
         return;
     }
 
-    $self->source($filtered_instrument_data[$#filtered_instrument_data]);
+    # Take the newest
+    $self->source($filtered_instrument_data);
     $self->source_type('instrument_data');
-    $self->sample( $filtered_instrument_data[$#filtered_instrument_data]->sample );
+    $self->sample( $filtered_instrument_data->sample );
 
     return 1;
-}
-
-# Try to get instrument data from the samples default_genotype_data, fall back to an expected library name and its data
-sub _resolve_instrument_data {
-    my $self = shift;
-
-    my $sample = $self->sample;
-    my @instrument_data = $sample->default_genotype_data;
-
-    if (@instrument_data) {
-        $self->debug_message("Found instrument data from default_genotype_data.");
-    } else {
-        my $library_name = $sample->name.'-microarraylib';
-        $self->debug_message("Found no instrument data from default_genotype_data, falling back to finding it from a library named ($library_name)");
-
-        my $library = Genome::Library->get(name => $library_name, sample => $sample);
-        unless (defined $library) {
-            die $self->error_message("Failed to get a library with name (%s) and sample id (%s)", $library_name, $sample->id);
-        }
-
-        @instrument_data = Genome::InstrumentData->get(library => $library);
-    }
-
-    return @instrument_data;
 }
 
 sub _resolve_source_for_instrument_data {
