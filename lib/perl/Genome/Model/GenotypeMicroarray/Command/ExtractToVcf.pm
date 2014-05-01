@@ -172,18 +172,9 @@ sub _resolve_source_for_sample {
         return;
     }
 
-    # Get InstData
-    my $sample = $self->sample;
-    my $library_name = $sample->name.'-microarraylib';
-    my $library = Genome::Library->get(name => $library_name, sample => $sample);
-    unless (defined $library) {
-        die $self->error_message("Failed to get a library with name (%s) and sample id (%s)", $library_name, $sample->id);
-    }
-
-        #'import_source_name in' => ( $self->use_external ) ? [qw/ BGI bgi Broad broad CSHL cshl external /] : [qw/ wugsc wugc wutgi tgi /],
-    my @instrument_data = Genome::InstrumentData->get(library => $library);
+    my @instrument_data = $self->_resolve_instrument_data;
     if ( not @instrument_data ) {
-        $self->error_message('No microarray instrument data for sample!' .$sample->__display_name__);
+        $self->error_message('No microarray instrument data for sample (%s)!', $self->sample->__display_name__);
         return;
     }
 
@@ -206,6 +197,30 @@ sub _resolve_source_for_sample {
     $self->sample( $filtered_instrument_data[$#filtered_instrument_data]->sample );
 
     return 1;
+}
+
+# Try to get instrument data from the samples default_genotype_data, fall back to an expected library name and its data
+sub _resolve_instrument_data {
+    my $self = shift;
+
+    my $sample = $self->sample;
+    my @instrument_data = $sample->default_genotype_data;
+
+    if (@instrument_data) {
+        $self->debug_message("Found instrument data from default_genotype_data.");
+    } else {
+        my $library_name = $sample->name.'-microarraylib';
+        $self->debug_message("Found no instrument data from default_genotype_data, falling back to finding it from a library named ($library_name)");
+
+        my $library = Genome::Library->get(name => $library_name, sample => $sample);
+        unless (defined $library) {
+            die $self->error_message("Failed to get a library with name (%s) and sample id (%s)", $library_name, $sample->id);
+        }
+
+        @instrument_data = Genome::InstrumentData->get(library => $library);
+    }
+
+    return @instrument_data;
 }
 
 sub _resolve_source_for_instrument_data {
@@ -305,6 +320,7 @@ sub _create_filters {
     for my $filter_string ( $self->filters ) {
         $self->debug_message('Filter: '.$filter_string);
         my ($name, $config) = split(':', $filter_string, 2);
+        $self->error_message("For filter string (%s) name is (%s) config is (%s)", $filter_string, $name, $config);
         my %params;
         %params = map { split('=') } split(':', $config) if $config;
         my $filter_class = 'Genome::Model::GenotypeMicroarray::Filter::By'.Genome::Utility::Text::string_to_camel_case($name);
