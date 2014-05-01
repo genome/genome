@@ -18,27 +18,11 @@ class Genome::DataSource::GMSchema {
     ],
 };
 
-#BEGIN {
-#    my($name, $path, $suffix) = File::Basename::fileparse($0, '.pm','.t','.pl');
-#    $path .= '.testdb';
-#    my $testdb_dirname = File::Spec->catdir($path, $name) . '/';
-#    my $testdb_dirname = $0 . '.testdb/';
-    
-    if ($ENV{GENOME_TEST_FILLDB}) {
-#        $ENV{UR_TEST_FILLDB} = "dbi:SQLite:dbname=$testdb_dirname";
-#        $ENV{UR_TEST_FILLDB} = "dbi:Pg:dbname=genometest;host=10.0.108.127;user=genome;password=genome";
-#        Genome::DataSource::GMSchema->alternate_db_dsn( "dbi:Pg:dbname=genometest;host=10.0.108.127;user=genome;password=genome");
-        Genome::DataSource::GMSchema->alternate_db_dsn( "dbi:Pg:dbname=genometest;host=linus146;port=5434;user=genome;password=genome");
-    }
-    if ($ENV{GENOME_TEST_USEDB}) {
-        $ENV{GENOME_DS_GMSCHEMA_TYPE} = 'UR::DataSource::Pg';
-        $ENV{GENOME_DS_GMSCHEMA_SERVER} = 'dbname=genometest;host=10.0.108.127';
-        $ENV{GENOME_DS_GMSCHEMA_LOGIN} = 'genome';
-        $ENV{GENOME_DS_GMSCHEMA_AUTH} = 'genome';
-#        $ENV{GENOME_DS_GMSCHEMA_TYPE} = 'UR::DataSource::SQLite';
-#        $ENV{GENOME_DS_GMSCHEMA_SERVER} = $testdb_dirname;
-    }
-#}
+if ($ENV{GENOME_TEST_FILLDB}) {
+    # GENOME_TEST_FILLDB should be a complete DBI connect string, with user and password, like:
+    # dbi:Pg:dbname=testdb;host=computername;port=5434;user=testuser;password=testpasswd
+    Genome::DataSource::GMSchema->alternate_db_dsn( $ENV{GENOME_TEST_FILLDB} );
+}
 
 
 {
