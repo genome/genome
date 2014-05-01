@@ -27,7 +27,7 @@ my $output_dir = Genome::Sys->create_temp_directory;
 my $translations = {};
 my $generator = $pkg->create(vcf_file => $vcf_file,
                              plan => $plan,
-                             variant_type => "snv",
+                             variant_type => "snvs",
                              output_directory => $output_dir,
                              translations => $translations);
 ok($generator->isa($pkg), "Generator created ok");

@@ -20,7 +20,7 @@ class Genome::Annotation::ReportGenerator {
         },
         variant_type => {
             is => 'Text',
-            valid_values => ['snv', 'indel'],
+            valid_values => ['snvs', 'indels'],
         },
         translations => {
             is => 'HASH',
