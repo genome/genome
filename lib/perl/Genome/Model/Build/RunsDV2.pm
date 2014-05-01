@@ -3,6 +3,7 @@ package Genome::Model::Build::RunsDV2;
 use strict;
 use warnings FATAL => 'all';
 use Cwd qw(abs_path);
+use Params::Validate qw(validate validate_pos :types);
 
 class Genome::Model::Build::RunsDV2 {
     is_abstract => 1,
@@ -48,6 +49,12 @@ sub variants_directory {
         }
     }
     return $expected_directory;
+}
+
+sub get_detailed_vcf_result {
+    my ($self, $type) = validate_pos(@_, 1, 1);
+    my $accessor = sprintf('get_detailed_%s_vcf_result', $type);
+    return $self->$accessor;
 }
 
 sub get_detailed_indels_vcf_result {
