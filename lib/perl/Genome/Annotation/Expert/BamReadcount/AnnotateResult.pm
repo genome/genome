@@ -3,6 +3,7 @@ package Genome::Annotation::Expert::BamReadcount::AnnotateResult;
 use strict;
 use warnings FATAL => 'all';
 use Genome;
+use Genome::File::Vcf::Reader;
 
 class Genome::Annotation::Expert::BamReadcount::AnnotateResult {
     is => 'Genome::Annotation::Expert::ResultBase',
