@@ -11,6 +11,7 @@ BEGIN {
 
 use above 'Genome';
 
+require Genome::Utility::Test;
 require File::Temp;
 use Test::More;
 
@@ -28,6 +29,6 @@ my $extract = Genome::Model::GenotypeMicroarray::Command::ExtractToVcf->create(
 );
 ok($extract, 'create extract command');
 ok($extract->execute, 'execute extract command');
-my $expected_vcf = Genome::Model::GenotypeMicroarray::Test::testdir().'/extract/expected-from-build.vcf';
+Genome::Utility::Test::compare_ok($output_vcf, $build->original_genotype_vcf_file_path, 'vcf matches');
 
 done_testing();

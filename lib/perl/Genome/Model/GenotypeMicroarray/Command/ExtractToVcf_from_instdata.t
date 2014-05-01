@@ -11,6 +11,7 @@ BEGIN {
 
 use above 'Genome';
 
+require Genome::Utility::Test;
 require File::Temp;
 require File::Compare;
 use Test::More;
@@ -20,6 +21,7 @@ use_ok('Genome::Model::GenotypeMicroarray::Test') or die;
 
 my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
 my $instrument_data = Genome::Model::GenotypeMicroarray::Test::instrument_data();
+my $build = Genome::Model::GenotypeMicroarray::Test::example_build();
 my $variation_list_build = Genome::Model::GenotypeMicroarray::Test::variation_list_build();
 
 my $output_vcf = $tmpdir.'/genotypes.vcf';
@@ -36,5 +38,6 @@ is_deeply($extract->alleles, { 'TC' => 1, 'AA' => 1, 'CC' => 2, 'AG' => 3, 'TT' 
 is($extract->genotypes_input, 9, 'genotypes input');
 is($extract->genotypes_output, 9, 'genotypes output');
 is($extract->genotypes_filtered, 0, 'genotypes filtered');
+Genome::Utility::Test::compare_ok($output_vcf, $build->original_genotype_vcf_file_path, 'vcf matches');
 
 done_testing();

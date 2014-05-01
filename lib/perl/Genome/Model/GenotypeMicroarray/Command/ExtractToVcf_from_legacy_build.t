@@ -11,6 +11,7 @@ BEGIN {
 
 use above 'Genome';
 
+require Genome::Utility::Test;
 require File::Temp;
 require File::Compare;
 use Test::More;
@@ -28,11 +29,11 @@ my $extract = Genome::Model::GenotypeMicroarray::Command::ExtractToVcf->create(
 );
 ok($extract, 'create extract command');
 ok($extract->execute, 'execute extract command');
-my $expected_vcf = Genome::Model::GenotypeMicroarray::Test::testdir().'/extract/expected-from-legacy-build.vcf';
-is(File::Compare::compare($output_vcf, $expected_vcf), 0, 'genotype vcf matches');
 is_deeply($extract->alleles, { 'TC' => 1, 'AA' => 1, 'CC' => 2, 'AG' => 3, 'TT' => 1, 'GG' => 1 }, 'alleles match');
 is($extract->genotypes_input, 9, 'genotypes input');
 is($extract->genotypes_output, 9, 'genotypes output');
 is($extract->genotypes_filtered, 0, 'genotypes filtered');
+my $expected_vcf = Genome::Model::GenotypeMicroarray::Test::testdir().'/extract/expected-from-legacy-build.vcf';
+Genome::Utility::Test::compare_ok($output_vcf, $expected_vcf, 'vcf matches');
 
 done_testing();
