@@ -99,6 +99,7 @@ sub instrument_data {
         import_format => 'genotype file',
         sequencing_platform => 'infinium',
         import_source_name => 'WUGC',
+        import_date => '2014-01-01 00:00:00',
     );
     die 'Failed to define instrument data' if not $cache{instrument_data};
     $cache{instrument_data}->add_attribute(attribute_label => 'genotype_file', attribute_value => testdir().'/instdata/snpreport/genotypes.tsv');
