@@ -48,6 +48,13 @@ sub children {
     return ('experts' => [$self->expert_plans], 'reporters' => [$self->reporter_plans]);
 }
 
+sub write_to_file {
+    my $self = shift;
+    my $filename = shift;
+
+    YAML::DumpFile($filename, $self->as_hashref);
+}
+
 sub create_from_file {
     my $class = shift;
     my $file = shift;
@@ -56,14 +63,23 @@ sub create_from_file {
 
     my $self = $class->create_from_hashref($hashref);
 
-    my $understood_hashref = $self->as_hashref->{root};
-    delete $understood_hashref->{params}; # Root level params are not currently used
+    my $understood_hashref = $self->as_hashref;
     unless(Compare($understood_hashref, $hashref)) {
         die $self->error_message("Problems encountered when loading the YAML. File contains invalid information for the plan. Parsed file contents: (%s) Understood file contents: (%s)",
             Data::Dumper::Dumper($hashref), Data::Dumper::Dumper($understood_hashref) );
     }
 
     return $self;
+}
+
+sub as_hashref {
+    my $self = shift;
+
+    my $hashref = $self->SUPER::as_hashref;
+    my $result = $hashref->{root};
+    delete $result->{params};
+
+    return $result;
 }
 
 sub create_from_hashref {
@@ -103,7 +119,7 @@ sub create_from_json {
     my $json = shift;
 
     my $hashref = $_JSON_CODEC->decode($json);
-    return $class->create_from_hashref($hashref->{'root'});
+    return $class->create_from_hashref($hashref);
 }
 
 sub validate_self {

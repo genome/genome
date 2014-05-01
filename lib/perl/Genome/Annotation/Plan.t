@@ -23,63 +23,64 @@ my $plan = $pkg->create_from_file($plan_file);
 ok($plan, "Made a plan from file ($plan_file).");
 
 my $expected_hashref = {
-    root => {
-        experts   => {
-            expert_one => {
-                e1_p1 => 'something',
-                e1_p2 => 'something else'
+    experts   => {
+        expert_one => {
+            e1_p1 => 'something',
+            e1_p2 => 'something else'
+        },
+        expert_two => {
+            e2_p1 => 'something',
+            e2_p2 => 'something else'
+        }
+    },
+    reporters => {
+        reporter_alpha => {
+            filters      => {
+                filter_a => {
+                    fa_p1 => 'something',
+                    fa_p2 => 'something else'
+                },
+                filter_b => {
+                    fb_p1 => 'something',
+                    fb_p2 => 'something else'
+                }
             },
-            expert_two => {
-                e2_p1 => 'something',
-                e2_p2 => 'something else'
+            interpreters => {
+                interpreter_x => {
+                    ix_p1 => 'something',
+                    ix_p2 => 'something else'
+                },
+                interpreter_y => {
+                    iy_p1 => 'something',
+                    iy_p2 => 'something else'
+                }
+            },
+            params       => {
+                ra_p1 => 'something',
+                ra_p2 => 'something else'
             }
         },
-        params    => {},
-        reporters => {
-            reporter_alpha => {
-                filters      => {
-                    filter_a => {
-                        fa_p1 => 'something',
-                        fa_p2 => 'something else'
-                    },
-                    filter_b => {
-                        fb_p1 => 'something',
-                        fb_p2 => 'something else'
-                    }
-                },
-                interpreters => {
-                    interpreter_x => {
-                        ix_p1 => 'something',
-                        ix_p2 => 'something else'
-                    },
-                    interpreter_y => {
-                        iy_p1 => 'something',
-                        iy_p2 => 'something else'
-                    }
-                },
-                params       => {
-                    ra_p1 => 'something',
-                    ra_p2 => 'something else'
-                }
-            },
-            reporter_beta  => {
-                filters => {},
-                interpreters => { interpreter_x => {
-                        ix_p1 => 'something',
-                        ix_p2 => 'something else'
-                    } },
-                params       => {
-                    rb_p1 => 'something',
-                    rb_p2 => 'something else'
-                }
+        reporter_beta  => {
+            filters => {},
+            interpreters => { interpreter_x => {
+                    ix_p1 => 'something',
+                    ix_p2 => 'something else'
+                } },
+            params       => {
+                rb_p1 => 'something',
+                rb_p2 => 'something else'
             }
         }
     }
 };
 
 is_deeply($plan->as_hashref, $expected_hashref, "Got expected hashref from 'as_hashref'.");
-is_deeply($pkg->create_from_hashref($plan->as_hashref->{root})->as_hashref, $plan->as_hashref, "Roundtrip test successful.");
+is_deeply($pkg->create_from_hashref($plan->as_hashref)->as_hashref, $plan->as_hashref, "Roundtrip hashref test successful.");
 is_deeply($pkg->create_from_json($plan->as_json)->as_hashref, $expected_hashref, "Roundtrip JSON test successful.");
+
+my $path = Genome::Sys->create_temp_file_path;
+$plan->write_to_file($path);
+is_deeply($pkg->create_from_file($path)->as_hashref, $expected_hashref, "Roundtrip yaml file test successful.");
 
 my $expert_one_plan = $plan->get_plan('expert', 'expert_one');
 is($expert_one_plan->name, 'expert_one', "Got correct plan ('expert_one') from get_plan");
