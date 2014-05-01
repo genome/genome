@@ -22,7 +22,10 @@ class Genome::Annotation::AdaptorBase {
             is => 'Text',
             is_output => 1,
             valid_values => ['snvs', 'indels'],
-        }
+        },
+        plan_json => {
+            is => 'Text',
+        },
     ],
     has_output => [
         bam_results => {
@@ -107,7 +110,7 @@ sub resolve_plan_attributes {
 sub plan {
     my $self = shift;
 
-    return $self->build->annotation_plan($self->variant_type);
+    return Genome::Annotation::Plan->create_from_json($self->plan_json);
 }
 
 sub planned_output_names {

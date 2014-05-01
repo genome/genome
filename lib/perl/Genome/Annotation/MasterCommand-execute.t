@@ -24,12 +24,15 @@ my $version = 1;
 my $build_version = 1;
 my $test_dir = get_test_dir($pkg, $version);
 
-my $build = get_test_somatic_variation_build(version => $build_version,
-    snvs_plan_file => File::Spec->join($test_dir, 'snvs_plan.yaml'));
+my $build = get_test_somatic_variation_build(version => $build_version);
+my $plan = Genome::Annotation::Plan->create_from_file(
+    File::Spec->join($test_dir, 'snvs_plan.yaml'),
+);
+$plan->validate();
 
 my $output_dir = Genome::Sys->create_temp_directory;
-my $cmd = $pkg->execute(build_id => $build->id, variant_type => 'snvs',
-    output_directory => $output_dir);
+my $cmd = $pkg->execute(build => $build, variant_type => 'snvs',
+    output_directory => $output_dir, plan => $plan);
 
 my $expected_dir = File::Spec->join($test_dir, 'expected');
 compare_dir_ok($output_dir, $expected_dir, 'All reports are as expected');

@@ -8,8 +8,8 @@ use Params::Validate qw(validate validate_pos :types);
 class Genome::Annotation::MasterCommand {
     is => 'Command::V2',
     has_input => [
-        build_id => {
-            is => 'Text',
+        build => {
+            is => 'Genome::Model::Build',
         },
         variant_type => {
             is => 'Text',
@@ -20,6 +20,9 @@ class Genome::Annotation::MasterCommand {
             is => 'Path',
             is_output => 1,
         },
+        plan => {
+            is => 'Genome::Annotation::Plan',
+        },
     ],
 };
 
@@ -27,10 +30,11 @@ sub execute {
     my $self = shift;
 
     $self->dag->execute(
-        build_id => $self->build_id,
+        build_id => $self->build->id,
         variant_type => $self->variant_type,
         output_directory => $self->output_directory,
         initial_vcf_result => $self->initial_vcf_result,
+        plan_json => $self->plan->as_json,
     );
     return 1;
 }
@@ -65,9 +69,30 @@ sub connect_experts {
             previous => $last_expert_op,
             target => $expert_op,
         );
+        $self->connect_to_dag(
+            dag => $dag,
+            target => $expert_op,
+        );
         $last_expert_op = $expert_op;
     }
     return $last_expert_op;
+}
+
+sub connect_to_dag {
+    my $self = shift;
+    my %p = validate(@_, {
+        dag => {isa => 'Genome::WorkflowBuilder::DAG'},
+        target => {type => OBJECT},
+    });
+
+    $p{dag}->add_operation($p{target});
+    for my $name qw(build_id variant_type plan_json) {
+        $p{dag}->connect_input(
+            input_property => $name,
+            destination => $p{target},
+            destination_property => $name,
+        );
+    }
 }
 
 sub connect_to_previous {
@@ -78,7 +103,6 @@ sub connect_to_previous {
         target => {type => OBJECT},
     });
 
-    $p{dag}->add_operation($p{target});
 
     if (defined $p{previous}) {
         $p{dag}->create_link(
@@ -94,32 +118,6 @@ sub connect_to_previous {
             destination_property => 'input_result',
         );
     }
-
-    for my $name qw(build_id variant_type) {
-        $p{dag}->connect_input(
-            input_property => $name,
-            destination => $p{target},
-            destination_property => $name,
-        );
-    }
-}
-
-sub build {
-    my $self = shift;
-
-    my $build = Genome::Model::Build->get($self->build_id);
-    if ($build) {
-        return $build;
-    } else {
-        die $self->error_message("Couldn't find a build for id (%s)",
-            $self->build_id);
-    }
-}
-
-sub plan {
-    my $self = shift;
-
-    return $self->build->annotation_plan($self->variant_type);
 }
 
 sub experts {
@@ -144,6 +142,10 @@ sub connect_report_generator {
     $self->connect_to_previous(
         dag => $dag,
         previous => $last_expert_op,
+        target => $report_generator_op,
+    );
+    $self->connect_to_dag(
+        dag => $dag,
         target => $report_generator_op,
     );
 

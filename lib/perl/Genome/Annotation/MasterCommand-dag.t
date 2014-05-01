@@ -19,25 +19,12 @@ BEGIN {
 my $pkg = 'Genome::Annotation::MasterCommand';
 use_ok($pkg) || die;
 
-my $build = get_build();
+my $build = Genome::Model::Build::SomaticVariation->__define__;
+my $plan = Genome::Annotation::Plan->create_from_file(plan_file());
 
-my $cmd = $pkg->create(build_id => $build->id);
+my $cmd = $pkg->create(build => $build, plan => $plan);
 test_dag_xml($cmd->dag, expected_xml());
-
 done_testing();
-
-sub get_build {
-    my $build = Genome::Model::Build::SomaticVariation->__define__;
-
-    my $plan = Genome::Annotation::Plan->create_from_file(plan_file());
-    $plan->validate();
-    reinstall_sub({
-        into => $build->class,
-        as => 'annotation_plan',
-        code => sub {return $plan; },
-    });
-    return $build;
-}
 
 sub expected_xml {
     return File::Spec->join(test_dir(), 'expected.xml');

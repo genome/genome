@@ -72,16 +72,13 @@ sub connected_build_adaptor_operation {
 
     my $build_adaptor_operation = $self->build_adaptor_operation;
     $dag->add_operation($build_adaptor_operation);
-    $dag->connect_input(
-        input_property => 'build_id',
-        destination => $build_adaptor_operation,
-        destination_property => 'build_id',
-    );
-    $dag->connect_input(
-        input_property => 'variant_type',
-        destination => $build_adaptor_operation,
-        destination_property => 'variant_type',
-    );
+    for my $name qw(build_id variant_type plan_json) {
+        $dag->connect_input(
+            input_property => $name,
+            destination => $build_adaptor_operation,
+            destination_property => $name,
+        );
+    }
     return $build_adaptor_operation;
 }
 

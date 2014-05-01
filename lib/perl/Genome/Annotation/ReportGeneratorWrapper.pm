@@ -23,6 +23,9 @@ class Genome::Annotation::ReportGeneratorWrapper {
             is => 'Path',
             is_output => 1,
         },
+        plan_json => {
+            is => 'Text',
+        }
     ],
 };
 
@@ -42,7 +45,7 @@ sub execute {
 sub plan {
     my $self = shift;
 
-    return $self->build->annotation_plan($self->variant_type);
+    return Genome::Annotation::Plan->create_from_json($self->plan_json);
 }
 
 sub translations {

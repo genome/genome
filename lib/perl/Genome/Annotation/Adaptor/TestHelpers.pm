@@ -39,7 +39,11 @@ our @EXPORT_OK = qw(
 sub test_accessor {
     my ($build, $bam_result1, $bam_result2) = @_;
 
-    my $cmd = Genome::Annotation::TestAdaptor->create(build_id => $build->id, variant_type => 'snvs');
+    my $cmd = Genome::Annotation::TestAdaptor->create(
+        build_id => $build->id,
+        variant_type => 'snvs',
+        plan_json => 'unused',
+    );
     ok($cmd, "Command created correctly");
     ok($cmd->execute, "Command executed successfully");
     cmp_bag([$cmd->bam_results], [$bam_result1, $bam_result2], "Bam results set as expected");

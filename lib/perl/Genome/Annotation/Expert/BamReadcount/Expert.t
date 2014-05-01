@@ -26,7 +26,7 @@ BEGIN {
 my $pkg = 'Genome::Annotation::Expert::BamReadcount::Expert';
 use_ok($pkg) || die;
 
-my $VERSION = 5; # Bump these each time test data changes
+my $VERSION = 6; # Bump these each time test data changes
 my $BUILD_VERSION = 1;
 my $test_dir = get_test_dir($pkg, $VERSION);
 
@@ -38,8 +38,11 @@ test_dag_xml($dag, $expected_xml);
 set_what_interpreter_x_requires('bam-readcount');
 my $variant_type = 'snvs';
 my $expected_vcf = File::Spec->join($test_dir, "expected_$variant_type.vcf.gz");
-my $build = get_test_somatic_variation_build(version => $BUILD_VERSION, 
-                                            snvs_plan_file => File::Spec->join($test_dir, 'plan.yaml'));
-test_dag_execute($dag, $expected_vcf, $variant_type, $build);
+my $build = get_test_somatic_variation_build(version => $BUILD_VERSION);
+my $plan = Genome::Annotation::Plan->create_from_file(
+    File::Spec->join($test_dir, 'plan.yaml'),
+);
+$plan->validate();
+test_dag_execute($dag, $expected_vcf, $variant_type, $build, $plan);
 
 done_testing();

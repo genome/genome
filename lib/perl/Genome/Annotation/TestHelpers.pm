@@ -44,8 +44,6 @@ sub test_cmd_and_result_are_in_sync {
 sub get_test_somatic_variation_build {
     my %p = validate(@_, {
         version => {type => SCALAR},
-        snvs_plan_file => {type => SCALAR, optional => 1},
-        indels_plan_file => {type => SCALAR, optional => 1},
     });
 
     my $test_dir = get_test_dir('Genome::Annotation::Expert::Base', $p{version});
@@ -56,8 +54,6 @@ sub get_test_somatic_variation_build {
         reference_fasta => File::Spec->join($test_dir, 'reference.fasta'),
         snvs_vcf => File::Spec->join($test_dir, 'snvs.vcf.gz'),
         indels_vcf => File::Spec->join($test_dir, 'indels.vcf.gz'),
-        snvs_plan_file => $p{snvs_plan_file},
-        indels_plan_file => $p{indels_plan_file},
     );
 }
 
@@ -68,8 +64,6 @@ sub get_test_somatic_variation_build_from_files {
         reference_fasta => {type => SCALAR},
         snvs_vcf => {type => SCALAR},
         indels_vcf => {type => SCALAR},
-        snvs_plan_file => {type => SCALAR | UNDEF},
-        indels_plan_file => {type => SCALAR | UNDEF},
     });
 
     my ($bam_result1, $bam_result2) = setup_bam_results($p{bam1}, $p{bam2},
@@ -82,21 +76,8 @@ sub get_test_somatic_variation_build_from_files {
         snvs_vcf_result => $snvs_result,
         indels_vcf_result => $indels_result,
     );
-    if (defined $p{snvs_plan_file}) {
-        my $snvs_plan = Genome::Annotation::Plan->create_from_file($p{snvs_plan_file});
-        $snvs_plan->validate();
-        $params{snvs_plan} = $snvs_plan;
-    }
 
-    if (defined $p{indels_plan_file}) {
-        my $indels_plan = Genome::Annotation::Plan->create_from_file($p{indels_plan_file});
-        $indels_plan->validate();
-        $params{indels_plan} = $indels_plan;
-    }
-
-    my $build = setup_build(
-        %params
-    );
+    my $build = setup_build(%params);
 
     reinstall_sub( {
         into => $build->reference_sequence_build->class,
@@ -113,8 +94,6 @@ sub setup_build {
         bam_result2 => {type => OBJECT},
         snvs_vcf_result => {type => OBJECT},
         indels_vcf_result => {type => OBJECT},
-        snvs_plan => {type => OBJECT, optional => 1},
-        indels_plan => {type => OBJECT, optional => 1},
     });
     my $build = Genome::Test::Factory::Model::SomaticVariation->setup_somatic_variation_build;
 
@@ -130,17 +109,6 @@ sub setup_build {
         code => sub {my $self = shift;
             return $build_to_result{$self->id};
         },
-    });
-
-    my %type_to_plan = (
-        'snvs' => $p{snvs_plan},
-        'indels' => $p{indels_plan},
-    );
-    reinstall_sub( {
-        into => $build->class,
-        as => 'annotation_plan',
-        code => sub {my ($self, $type) = @_;
-            return $type_to_plan{$type};},
     });
 
     reinstall_sub({
@@ -232,9 +200,14 @@ sub test_dag_xml {
 }
 
 sub test_dag_execute {
-    my ($dag, $expected_vcf, $variant_type, $build) = @_;
+    my ($dag, $expected_vcf, $variant_type, $build, $plan) = @_;
     my $accessor = sprintf("get_detailed_%s_vcf_result", $variant_type);
-    my $output = $dag->execute(input_result => $build->$accessor, build_id => $build->id, variant_type => $variant_type);
+    my $output = $dag->execute(
+        input_result => $build->$accessor,
+        build_id => $build->id,
+        variant_type => $variant_type,
+        plan_json => $plan->as_json,
+    );
     my $vcf_path = $output->{output_result}->output_file_path;
     my $differ = Genome::File::Vcf::Differ->new($vcf_path, $expected_vcf);
     my $diff = [$differ->diff];
