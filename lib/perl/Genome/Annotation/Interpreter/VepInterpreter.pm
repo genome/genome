@@ -10,11 +10,11 @@ class Genome::Annotation::Interpreter::VepInterpreter {
 };
 
 sub name {
-    return 'single-vep';
+    return 'vep';
 }
 
 sub requires_experts {
-    return ('single-vep');
+    return ('vep');
 }
 
 sub available_fields {

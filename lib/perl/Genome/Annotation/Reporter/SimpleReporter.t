@@ -40,7 +40,7 @@ my %interpretations = (
             variant => 'G',
         },
     },
-    'single-vep' => {
+    'vep' => {
         T => {
             transcript_name   => 'ENST00000452176',
             trv_type          => 'DOWNSTREAM',

@@ -15,7 +15,7 @@ sub name {
 }
 
 sub requires_interpreters {
-    return qw(position single-vep);
+    return qw(position vep);
 }
 
 sub headers {
