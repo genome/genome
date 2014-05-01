@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::Annotation::Reporter::SimpleReporter {
-    is => 'Genome::Annotation::Reporter::WithHeaderBase',
+    is => 'Genome::Annotation::Reporter::WithHeader',
     has => [
     ],
 };
