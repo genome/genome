@@ -21,7 +21,7 @@ class Genome::Model::Tools::Sciclone {
 
         copy_number_files => {
             is => 'Text',
-            doc => 'comma separated list - files of segmented copy number calls. If not specified, assumes all variants are CN 2. Expects 5-col format - Chr, St, Sp, NumProbes, SegMean. If you have CNVHMM calls, use "gmt copy-number convert-cnvhmm-output-to-sane-format" to fix them',
+            doc => 'comma separated list - files of segmented copy number calls. If not specified, assumes all variants are CN 2. Expects 5-col format - Chr, St, Sp, NumProbes, SegMean. The NumProbes column is not actually used, so you could use NAs if not available. If you have CNVHMM calls, use "gmt copy-number convert-cnvhmm-output-to-sane-format" to fix them',
             is_optional => 1,
             is_input => 1
         },
