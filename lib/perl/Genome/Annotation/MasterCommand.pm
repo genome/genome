@@ -29,8 +29,15 @@ sub execute {
     $self->dag->execute(
         build_id => $self->build_id,
         variant_type => $self->variant_type,
+        output_directory => $self->output_directory,
+        initial_vcf_result => $self->initial_vcf_result,
     );
     return 1;
+}
+
+sub initial_vcf_result {
+    my $self = shift;
+    return $self->build->get_detailed_vcf_result($self->variant_type);
 }
 
 sub dag {
