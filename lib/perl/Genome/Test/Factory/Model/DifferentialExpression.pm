@@ -12,7 +12,7 @@ use Genome::Test::Factory::Model::ImportedAnnotation;
 use Genome::Test::Factory::Model::ImportedReferenceSequence;
 use Genome::Test::Factory::Model::RnaSeq;
 
-our @required_params = qw(condition_labels_string condition_model_ids_string reference_sequence_build annotation_build);
+our @required_params = qw(condition_pairs reference_sequence_build annotation_build);
 
 sub generate_obj {
     my $self = shift;
@@ -57,12 +57,11 @@ sub setup_differential_expression_model {
         $normal_model_id = $normal_model->id;
         $tumor_model_id = $tumor_model->id;
     }
-    my $condition_labels_string = "normal,tumor";
-    my $condition_model_ids_string = $normal_model_id." ".$tumor_model_id;
+
+    my @condition_pairs = ("normal $normal_model_id", "tumor $tumor_model_id");
 
     my $de_model = Genome::Test::Factory::Model::DifferentialExpression->setup_object(
-        condition_labels_string => $condition_labels_string,
-        condition_model_ids_string => $condition_model_ids_string,
+        condition_pairs => \@condition_pairs,
         reference_sequence_build => $normal_model->reference_sequence_build,
         annotation_build => $normal_model->annotation_build,
         %params,

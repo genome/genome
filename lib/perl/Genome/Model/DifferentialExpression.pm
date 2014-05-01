@@ -10,11 +10,19 @@ class Genome::Model::DifferentialExpression {
     has_input => [
         condition_labels_string => {
             is => 'Text',
+            is_optional => 1,
             doc => 'A comma-delimmited list of labels used to represent each group or condition. ex: "A,B,C,D"',
         },
         condition_model_ids_string => {
             is => 'Text',
+            is_optional => 1,
             doc => 'Each group is a comma-delimited list of model ids corresponding to a defined label(order matters).  Each group (A, B, C & D) is separated by white space. ex: "1,2 3,4 5,6 7,8"',
+        },
+        condition_pairs => {
+            is => 'Text',
+            is_optional => 1,
+            is_many => 1,
+            doc => 'Each condition-pair is a space-delimited pair consisting of the label and a model-id. Labels should not contain spaces. Example: "A 1","A 2","B 3" will associate label A with models 1 and 2, and label B with model 3',
         },
         reference_sequence_build => {
             is => 'Genome::Model::Build::ImportedReferenceSequence',
@@ -74,6 +82,54 @@ class Genome::Model::DifferentialExpression {
 };
 
 #TODO: Check the processing_profile, reference_sequence, and eventually annotation to see if they match across models.(Possibly in create?).
+
+# Creates a sorted mapping of labels to model ids
+sub condition_pairs_sorted_mapping {
+    my ($self) = @_;
+
+    my %hash = $self->condition_pairs_unsorted_hash();
+
+    my @mapping; # sort order should be consistent
+    my @sorted_labels = sort keys %hash;
+    for my $label (@sorted_labels) {
+        my @sorted_ids = sort @{$hash{$label}};
+        push @mapping, {
+            label     => $label,
+            model_ids => [@sorted_ids],
+        };
+    }
+
+    return @mapping;
+}
+
+sub condition_pairs_unsorted_hash {
+    my ($self) = @_;
+
+    my %hash;
+    my @pairs = $self->condition_pairs();
+    for my $pair (@pairs) {
+        my $regex = qr/^
+          \s*             # strip leading whitespace
+          (\S+            # match at least one word as the label
+            (?:\s+\S+)*   # (optionally several more words)
+          )
+          \s+             # match whitespace
+          ([0-9a-fA-F]+)  # match an ID
+          \s*             # strip trailing whitespace
+        $/x;
+        unless ($pair =~ $regex) {
+            die $self->error_message(
+                "Could not extract a model-id and label from " .
+                "'$pair' (expected format: 'label model-id')"
+            );
+        }
+        my ($label, $model_id) = ($1, $2);
+
+        push @{$hash{$label}}, $model_id;
+    }
+
+    return %hash;
+}
 
 sub create {
     my $class = shift;
@@ -202,13 +258,9 @@ sub _infer_candidate_subjects_from_input_models {
 
 sub input_models {
     my $self = shift;
-    
-    my @condition_model_id_groups = split(/\s+/,$self->condition_model_ids_string);
-    my @all_model_ids;
-    for my $condition_model_id_group (@condition_model_id_groups) {
-        my @condition_model_ids = split(/,/,$condition_model_id_group);
-        push @all_model_ids, @condition_model_ids;
-    }
+
+    my @pairs_mapping = $self->condition_pairs_sorted_mapping;
+    my @all_model_ids = map { @{$_->{model_ids}} } @pairs_mapping;
     my @input_models;
     for my $model_id (@all_model_ids) {
         my $model = Genome::Model->get($model_id);
