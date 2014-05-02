@@ -52,8 +52,13 @@ sub shortcut {
 
 sub execute {
     my $self = shift;
+    $self->debug_message("Resolving bam results");
     $self->resolve_bam_results;
+
+    $self->debug_message("Resolving plan attributes");
     $self->resolve_plan_attributes;
+
+    $self->debug_message("Resolving any expert-specific attributes from the build");
     $self->resolve_expert_specific_attributes_from_build;
     return 1;
 }

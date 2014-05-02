@@ -20,6 +20,9 @@ class Genome::Annotation::MasterCommand {
             is => 'Path',
             is_output => 1,
         },
+        log_directory => {
+            is => 'Path',
+        },
         plan => {
             is => 'Genome::Annotation::Plan',
         },
@@ -29,7 +32,14 @@ class Genome::Annotation::MasterCommand {
 sub execute {
     my $self = shift;
 
-    $self->dag->execute(
+    $self->status_message("Constructing workflow from plan.");
+    my $dag = $self->dag;
+
+    Genome::Sys->create_directory($self->log_directory);
+    $dag->log_dir($self->log_directory);
+
+    $self->status_message("Executing workflow.");
+    $dag->execute(
         build_id => $self->build->id,
         variant_type => $self->variant_type,
         output_directory => $self->output_directory,

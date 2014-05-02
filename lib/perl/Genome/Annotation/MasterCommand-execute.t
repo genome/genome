@@ -31,8 +31,14 @@ my $plan = Genome::Annotation::Plan->create_from_file(
 $plan->validate();
 
 my $output_dir = Genome::Sys->create_temp_directory;
-my $cmd = $pkg->execute(build => $build, variant_type => 'snvs',
-    output_directory => $output_dir, plan => $plan);
+my $log_dir = Genome::Sys->create_temp_directory;
+my $cmd = $pkg->execute(
+    build => $build,
+    variant_type => 'snvs',
+    output_directory => $output_dir,
+    log_directory => $log_dir,
+    plan => $plan
+);
 
 my $expected_dir = File::Spec->join($test_dir, 'expected');
 compare_dir_ok($output_dir, $expected_dir, 'All reports are as expected');
