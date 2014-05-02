@@ -46,7 +46,8 @@ sub resolve_expert_specific_attributes_from_build {
 }
 
 sub shortcut {
-    #TODO
+    my $self = shift;
+    return $self->execute();
 }
 
 sub execute {
