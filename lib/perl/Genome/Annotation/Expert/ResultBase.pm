@@ -50,6 +50,11 @@ sub create {
     $self->_promote_data;
     $self->_reallocate_disk_allocation;
 
+    $self->input_result->add_user(
+        user => $self,
+        label => 'uses',
+    );
+
     return $self;
 }
 
