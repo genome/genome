@@ -27,6 +27,7 @@ class Genome::Annotation::Expert::Vep::Adaptor {
         feature_list_ids_and_tags => {
             is => 'string',
             is_many => 1,
+            is_optional => 1,
         },
         reference_build => {
             is => 'Genome::Model::Build::ReferenceSequence',
