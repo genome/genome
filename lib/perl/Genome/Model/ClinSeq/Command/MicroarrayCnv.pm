@@ -160,6 +160,41 @@ sub get_copynumber_files {
     return ($copynumber_tumor, $copynumber_normal);
 }
 
+sub intersect_files {
+  my $self = shift;
+  my $f1 = shift;
+  my $f2 = shift;
+  my $f1_o = $f1 . ".intersected";
+  my $f2_o = $f2 . ".intersected";
+
+  open(my $f1_fh, "<". $f1);
+  open(my $f1_ofh, ">". $f1_o);
+  open(my $f2_fh, "<". $f2);
+  open(my $f2_ofh, ">". $f2_o);
+
+  my %f1;
+  my %chr_pos1;
+
+  while(<$f1_fh>) {
+    my $line = $_;
+    my @fields = split("\t", $line);
+    my $key = $fields[0] . ":" . $fields[1];
+    $chr_pos1{$key} = 1;
+    $f1{$key} = $line;
+  }
+
+  while(<$f2_fh>) {
+    my $line = $_;
+    my @fields = split("\t", $line);
+    my $key = $fields[0] . ":" . $fields[1];
+    if($chr_pos1{$key}) {
+      print $f2_ofh $line;
+      print $f1_ofh $f1{$key};
+    }
+  }
+  return ($f1_o, $f2_o);
+}
+
 sub create_cnv_diff_hq_file {
   my $self = shift;
   my $tumor_cn_f = shift;
@@ -196,7 +231,11 @@ sub create_cnv_diff_hq_file {
   while (my $data_t = $reader_t->next and my $data_n = $reader_n->next) {
     if($data_n->{chromosome} ne $data_t->{chromosome} or 
       $data_n->{position} ne $data_t->{position}) {
-        die $self->error_message('Mismatch in chr:pos between '. $tumor_cn_f . ' and ' . $normal_cn_f);
+        $self->warning_message('Mismatch in chr:pos between '. $tumor_cn_f . ' and ' . $normal_cn_f . '. Taking intersection.');
+        ($tumor_cn_f, $normal_cn_f) = $self->intersect_files($tumor_cn_f, $normal_cn_f);
+        Genome::Sys->shellcmd(cmd => "rm -f $diff_f $cnvhq_f");
+        $self->create_cnv_diff_hq_file($tumor_cn_f, $normal_cn_f, $diff_f, $cnvhq_f);
+        return;
     }
     if($data_n->{chromosome} eq "chr" or $data_n->{log_r_ratio} eq "NaN" or $data_t->{log_r_ratio} eq "NaN") {
         next;
