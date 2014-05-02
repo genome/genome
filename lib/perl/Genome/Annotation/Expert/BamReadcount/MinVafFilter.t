@@ -26,7 +26,7 @@ subtest "pass" => sub {
         C => 0,
     );
     my $entry = create_entry(bam_readcount_line);
-    is_deeply({$filter->process_entry($entry)}, \%expected_return_values, "Entry passes filter with min_vaf $min_vaf");
+    is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry passes filter with min_vaf $min_vaf");
 };
 
 subtest "fail" => sub {
@@ -39,7 +39,7 @@ subtest "fail" => sub {
         C => 0,
     );
     my $entry = create_entry(bam_readcount_line);
-    is_deeply({$filter->process_entry($entry)}, \%expected_return_values, "Entry fails filter with min_vaf $min_vaf");
+    is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry fails filter with min_vaf $min_vaf");
 };
 
 subtest "fail heterozygous non-reference sample" => sub {
@@ -52,7 +52,7 @@ subtest "fail heterozygous non-reference sample" => sub {
         C => 0,
     );
     my $entry = create_entry(bam_readcount_line);
-    is_deeply({$filter->process_entry($entry)}, \%expected_return_values, "Entry fails filter with min_vaf $min_vaf");
+    is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry fails filter with min_vaf $min_vaf");
     cmp_ok($filter->calculate_vaf($entry, 'C'), '<', 0.3, "VAF is very low");
     cmp_ok($filter->calculate_vaf($entry, 'G'), '>', 90, "VAF is high");
 };
@@ -67,7 +67,7 @@ subtest "pass heterozygous non-reference sample" => sub {
         C => 1,
     );
     my $entry = create_entry(bam_readcount_line);
-    is_deeply({$filter->process_entry($entry)}, \%expected_return_values, "Entry passes filter with min_vaf $min_vaf");
+    is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry passes filter with min_vaf $min_vaf");
 };
 
 done_testing;

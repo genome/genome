@@ -35,7 +35,7 @@ sub interpretations {
 
     my %interpretations;
     for my $interpreter ($self->interpreters) {
-        $interpretations{$interpreter->name} = {$interpreter->process_entry($entry, [$self->passed_alleles($entry)])};
+        $interpretations{$interpreter->name} = {$interpreter->interpret_entry($entry, [$self->passed_alleles($entry)])};
     }
 
     return \%interpretations;
@@ -52,7 +52,7 @@ sub passed_alleles {
 
     my $filter_results = initialize_filters($entry);
     for my $filter ($self->filters) {
-        combine($filter_results, {$filter->process_entry($entry)});
+        combine($filter_results, {$filter->filter_entry($entry)});
     }
 
     return grep {$filter_results->{$_} == 1} keys %$filter_results;

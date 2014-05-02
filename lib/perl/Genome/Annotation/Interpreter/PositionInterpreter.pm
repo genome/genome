@@ -12,6 +12,10 @@ sub name {
     return 'position';
 }
 
+sub requires_experts {
+    ();
+}
+
 sub available_fields {
     return qw/
         chromosome_name
@@ -22,7 +26,7 @@ sub available_fields {
     /;
 }
 
-sub process_entry {
+sub interpret_entry {
     my $self = shift;
     my $entry = shift;
     my $passed_alt_alleles = shift;

@@ -20,7 +20,11 @@ sub name {
     return 'ft-keep';
 }
 
-sub process_entry {
+sub requires_experts {
+    ();
+}
+
+sub filter_entry {
     my ($self, $entry) = @_;
 
     my $ft_string = $entry->sample_field($self->sample_index($entry->{header}), 'FT');

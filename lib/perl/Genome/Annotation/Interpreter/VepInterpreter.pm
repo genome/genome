@@ -27,7 +27,7 @@ sub available_fields {
     /;
 }
 
-sub process_entry {
+sub interpret_entry {
     my $self = shift;
     my $entry = shift;
     my $passed_alt_alleles = shift;

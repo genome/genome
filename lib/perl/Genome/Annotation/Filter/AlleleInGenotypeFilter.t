@@ -28,7 +28,7 @@ subtest "sample 1" => sub {
         C => 1,
         G => 0,
     );
-    is_deeply({$filter->process_entry($entry)}, \%expected_return_values, "Sample 1 return values as expected");
+    is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Sample 1 return values as expected");
 };
 
 subtest "sample 2" => sub {
@@ -43,7 +43,7 @@ subtest "sample 2" => sub {
         C => 0,
         G => 0,
     );
-    is_deeply({$filter->process_entry($entry)}, \%expected_return_values, "Sample 1 return values as expected");
+    is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Sample 1 return values as expected");
 };
 
 subtest "sample 3" => sub {
@@ -58,7 +58,7 @@ subtest "sample 3" => sub {
         C => 1,
         G => 0,
     );
-    is_deeply({$filter->process_entry($entry)}, \%expected_return_values, "Sample 1 return values as expected");
+    is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Sample 1 return values as expected");
 };
 
 subtest "sample 4" => sub {
@@ -73,7 +73,7 @@ subtest "sample 4" => sub {
         C => 1,
         G => 1,
     );
-    is_deeply({$filter->process_entry($entry)}, \%expected_return_values, "Sample 1 return values as expected");
+    is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Sample 1 return values as expected");
 };
 
 subtest "underspecified filter" => sub {

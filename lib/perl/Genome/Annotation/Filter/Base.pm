@@ -5,23 +5,29 @@ use warnings FATAL => 'all';
 use Genome;
 
 class Genome::Annotation::Filter::Base {
-    is => 'Genome::Annotation::ComponentBase',
+    is => 'Genome::Annotation::Interpreter::Base',
     is_abstract => 1,
-    attributes_have => [
-        is_translated => {is => 'Boolean', default => 0},
-    ],
 };
 
-sub requires_experts {
-    return ();
+sub filter_entry {
+    my $self = shift;
+    my $class = $self->class;
+    die "Abstract method 'filter_entry' must be defined in class '$class'";
 }
 
-sub translated_inputs {
-    my $self = shift;
-    my $meta = $self->__meta__;
-    return map {$_->property_name} $meta->properties(
-        is_translated => 1,
-    );
+sub interpret_entry {
+    my ($self, $entry, $passed_alt_alleles) = shift;
+
+    my %filter_output = $self->filter_entry($entry);
+
+    my %return_values;
+    for my $variant_allele (@$passed_alt_alleles) {
+        $return_values{$variant_allele} =  {
+            'filter_status' => $filter_output{$variant_allele},
+        };
+    }
+    return %return_values;
 }
+
 
 1;

@@ -42,7 +42,7 @@ use Module::Pluggable
 use Module::Pluggable
     require => 1,
     search_path => search_path(),
-    only => qr(Interpreter$),
+    only => qr(Interpreter$|Filter$),
     sub_name => 'interpreters';
 
 use Module::Pluggable

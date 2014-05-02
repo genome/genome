@@ -30,7 +30,7 @@ subtest "one alt allele" => sub {
         }
     );
     my $entry = create_entry();
-    is_deeply({$interpreter->process_entry($entry, ['C'])}, \%expected_return_values, "Entry gets interpreted correctly");
+    is_deeply({$interpreter->interpret_entry($entry, ['C'])}, \%expected_return_values, "Entry gets interpreted correctly");
 };
 
 
@@ -55,7 +55,7 @@ subtest "two alt allele" => sub {
         },
     );
     my $entry = create_entry();
-    is_deeply({$interpreter->process_entry($entry, ['C', 'G'])}, \%expected_return_values, "Entry gets interpreted correctly");
+    is_deeply({$interpreter->interpret_entry($entry, ['C', 'G'])}, \%expected_return_values, "Entry gets interpreted correctly");
 };
 
 sub create_vcf_header {

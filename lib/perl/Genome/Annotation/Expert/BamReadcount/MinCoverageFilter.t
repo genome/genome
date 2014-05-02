@@ -31,7 +31,7 @@ subtest "pass" => sub {
     my $filter = $pkg->create(min_coverage => $min_coverage, sample_name => "S1");
     lives_ok(sub {$filter->validate}, "Filter validates");
     my $entry = create_entry(bam_readcount_line);
-    is_deeply({$filter->process_entry($entry)}, \%pass, "Entry passes filter with min_coverage $min_coverage");
+    is_deeply({$filter->filter_entry($entry)}, \%pass, "Entry passes filter with min_coverage $min_coverage");
 };
 
 subtest "fail" => sub {
@@ -40,10 +40,10 @@ subtest "fail" => sub {
     lives_ok(sub {$filter->validate}, "Filter validates");
 
     my $entry = create_entry(bam_readcount_line);
-    is_deeply({$filter->process_entry($entry)}, \%fail, "Entry does not pass filter with min_coverage $min_coverage");
+    is_deeply({$filter->filter_entry($entry)}, \%fail, "Entry does not pass filter with min_coverage $min_coverage");
 
     $entry = create_entry("");
-    is_deeply({$filter->process_entry($entry)}, \%fail, "Entry without coverage does not pass filter with min_coverage $min_coverage");
+    is_deeply({$filter->filter_entry($entry)}, \%fail, "Entry without coverage does not pass filter with min_coverage $min_coverage");
 };
 
 subtest "under-specified parameters" => sub {

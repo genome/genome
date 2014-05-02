@@ -21,7 +21,7 @@ sub requires_experts {
     return ('bam-readcount');
 }
 
-sub process_entry {
+sub filter_entry {
     my $self = shift;
     my $entry = shift;
 

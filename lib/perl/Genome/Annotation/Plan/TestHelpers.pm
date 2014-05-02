@@ -44,7 +44,7 @@ sub set_what_interpreter_x_requires {
         return qw(exp1);
     }
 
-    sub process_entry {
+    sub interpret_entry {
         my $self = shift;
         my $entry = shift;
         my $passed_alleles = shift;
@@ -88,7 +88,7 @@ sub set_what_interpreter_x_requires {
         return qw(chrom pos);
     }
 
-    sub process_entry {
+    sub interpret_entry {
         my $self = shift;
         my $entry = shift;
         my $passed_alleles = shift;
@@ -375,7 +375,7 @@ sub set_what_interpreter_x_requires {
         'filter_one';
     }
 
-    sub process_entry {
+    sub filter_entry {
         my $self = shift;
         my $entry = shift;
         my %returns;
@@ -416,7 +416,7 @@ sub set_what_interpreter_x_requires {
         'filter_two';
     }
 
-    sub process_entry {
+    sub filter_entry {
         my $self = shift;
         my $entry = shift;
         return map{$_ => 1} @{$entry->{alternate_alleles}};
