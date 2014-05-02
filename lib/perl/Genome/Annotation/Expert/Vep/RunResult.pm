@@ -85,10 +85,6 @@ sub _run {
     }
 
     Genome::Sys->gzip_file($vep_output_file, $final_output_file);
-    Genome::Model::Tools::Tabix::Index->execute(
-        input_file => $final_output_file,
-        preset => 'vcf',
-    );
 
     return;
 }
