@@ -15429,6 +15429,23 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>compare-cnv-calls',
+      [
+        'tp-bed=s',
+        'files',
+        'eval-bed=s',
+        'files',
+        'fai-file=s',
+        'files',
+        'outdir=s',
+        'files',
+        'window-size=s',
+        undef,
+        'test!',
+        undef,
+        'help!',
+        undef
+      ],
       '>concordance',
       [
         'snp-file=s',
@@ -37779,6 +37796,29 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      'help!',
+      undef
+    ],
+    'help!',
+    undef
+  ],
+  '>annotation',
+  [
+    '>annotate-build',
+    [
+      'build=s',
+      undef,
+      'variant-type=s',
+      [
+        'snvs',
+        'indels'
+      ],
+      'output-directory=s',
+      undef,
+      'plan-file=s',
+      undef,
+      'log-directory=s',
+      undef,
       'help!',
       undef
     ],
