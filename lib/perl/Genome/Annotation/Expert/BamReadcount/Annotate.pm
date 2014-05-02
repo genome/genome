@@ -13,10 +13,8 @@ class Genome::Annotation::Expert::BamReadcount::Annotate {
     ],
 };
 
-sub execute {
-    my $self = shift;
-
-    $self->output_result(Genome::Annotation::Expert::BamReadcount::AnnotateResult->get_or_create($self->input_hash));
-    return 1;
+sub result_class {
+    'Genome::Annotation::Expert::BamReadcount::AnnotateResult';
 }
 
+1;

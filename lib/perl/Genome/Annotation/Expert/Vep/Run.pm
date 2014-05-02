@@ -37,9 +37,6 @@ sub name {
     'vep';
 }
 
-sub execute {
-    my $self = shift;
-
-    $self->output_result(Genome::Annotation::Expert::Vep::RunResult->get_or_create($self->input_hash));
-    return 1;
+sub result_class {
+    'Genome::Annotation::Expert::Vep::RunResult';
 }

@@ -3,6 +3,7 @@ package Genome::Annotation::Expert::CommandBase;
 use strict;
 use warnings FATAL => 'all';
 use Genome;
+use Data::Dump qw(pp);
 
 class Genome::Annotation::Expert::CommandBase {
     is_abstract => 1,
@@ -25,6 +26,44 @@ class Genome::Annotation::Expert::CommandBase {
         },
     ],
 };
+
+sub result_class {
+    my $self = shift;
+    my $class = $self->class;
+    die "Abstract method 'result_class' must be defined in class $class";
+}
+
+sub validate_inputs {
+    my $self = shift;
+    # this may be redefined in subclasses.
+    return;
+}
+
+sub shortcut {
+    my $self = shift;
+
+    $self->debug_message("Attempting to get a %s with arugments %s",
+        $self->result_class, pp($self->input_hash));
+    my $result = $self->result_class->get_with_lock($self->input_hash);
+    if ($result) {
+        $self->output_result($result);
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+sub execute {
+    my $self = shift;
+
+    $self->debug_message("Validating inputs");
+    $self->validate_inputs();
+
+    $self->debug_message("Attempting to get or create a %s with arugments %s",
+        $self->result_class, pp($self->input_hash));
+    $self->output_result($self->result_class->get_or_create($self->input_hash));
+    return 1;
+}
 
 sub input_names {
     my $self = shift;

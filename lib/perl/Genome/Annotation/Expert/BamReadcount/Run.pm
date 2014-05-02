@@ -48,10 +48,14 @@ sub name {
     'bam-readcount';
 }
 
-sub execute {
+sub result_class {
+    'Genome::Annotation::Expert::BamReadcount::RunResult';
+}
+
+sub validate_inputs {
     my $self = shift;
     die "You must supply a version greater than or equal to 0.5" unless $self->version >= 0.5;
-
-    $self->output_result(Genome::Annotation::Expert::BamReadcount::RunResult->get_or_create($self->input_hash));
-    return 1;
+    return;
 }
+
+1;
