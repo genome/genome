@@ -3,6 +3,7 @@ package Genome::Annotation::Expert::BamReadcount::FilterBase;
 use strict;
 use warnings;
 use Genome;
+use Genome::File::BamReadcount::Entry;
 
 class Genome::Annotation::Expert::BamReadcount::FilterBase {
     is => 'Genome::Annotation::Filter::WithSampleName',
