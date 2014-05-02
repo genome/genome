@@ -1303,6 +1303,7 @@ sub files_ignored_by_build_diff {
         .*.png$
         .*.svg$
         .*.xls$
+        .*.bam$
         .*/summary/rc_summary.stderr$
         .*._COSMIC.svg$
         .*.clustered.data.tsv$
