@@ -118,7 +118,7 @@ sub calculate_stats {
   my $fn_windows = $self->outdir . "fn.windows.bed";
   my $fp_windows = $self->outdir . "fp.windows.bed";
   $self->joinx_intersect($window_file, $tp_bed_sorted, $p_windows, $n_windows);
-  $self->joinx_intersect($p_windows, $eval_bed_sorted, $tp_windows, $fp_windows);
+  $self->joinx_intersect($p_windows, $eval_bed_sorted, $tp_windows, $fn_windows);
   $self->joinx_intersect($n_windows, $eval_bed_sorted, $fp_windows, $tn_windows);
 }
 
@@ -142,7 +142,6 @@ sub create_window_file {
     push(@chrs, "Y");
   }
   foreach my $chr (@chrs) {
-    print $chr;
     if($chr !~ /GL/ and $chr !~ /MT/) {
       my $size = $chr_size{$chr};
       my $awk_cmd = "awk 'BEGIN { pos = 1; while(pos < $size) " . 
