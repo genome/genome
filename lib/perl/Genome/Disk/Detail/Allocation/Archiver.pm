@@ -44,7 +44,7 @@ sub archive {
                 $allocation_object->id);
         }
         if (!$allocation_object->archivable) {
-            confess sprintf("Allocation %s is not falgged as archivable!",
+            confess sprintf("Allocation %s is not flagged as archivable!",
                 $allocation_object->id);
         }
         unless (-e $current_allocation_path) {
