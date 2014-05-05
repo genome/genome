@@ -3,6 +3,7 @@ package Genome::Model::Tools::Analysis::CompareCnvCalls;
 use strict;
 use warnings;
 use Genome;
+use File::Basename;
 
 class Genome::Model::Tools::Analysis::CompareCnvCalls {
   is => 'Command::V2',
@@ -29,6 +30,12 @@ class Genome::Model::Tools::Analysis::CompareCnvCalls {
     outdir => {
       is => 'FilesystemPath',
       doc => 'Directory to write results',
+    },
+    ROI_file => {
+      is => 'FilesystemPath',
+      doc => 'If the CNV calls were made on a specific region provide the bed file of this region.' . 
+        ' The evaluations will be done on this region alone.',
+      is_optional => 1,
     },
     test => {
       is => 'Boolean',
@@ -83,10 +90,8 @@ sub get_chr_sizes {
 sub copy_sort_bed {
   my $self = shift;
   my $bed = shift;
-  my $out_bed = basename($bed);
-  my $out_bed_sorted = basename($bed) . ".sorted";
-  Genome::Sys->shellcmd(cmd => "cp $bed $out_bed");
-  Genome::Sys->shellcmd(cmd => "joinx sort $out_bed -o $out_bed_sorted");
+  my $out_bed_sorted = $self->outdir . "/" . basename($bed) . ".sorted";
+  Genome::Sys->shellcmd(cmd => "joinx sort $bed -o $out_bed_sorted");
   return $out_bed_sorted;
 }
 
@@ -106,24 +111,15 @@ sub calculate_stats {
   my $window_file = shift;
   my $tp_bed_sorted = $self->copy_sort_bed($self->tp_bed);
   my $eval_bed_sorted = $self->copy_sort_bed($self->eval_bed);
-  my $window_file_sorted = $self->copy_sort_bed($self->window_file);
   my $p_windows = $self->outdir . "p.windows.bed";
   my $tp_windows = $self->outdir . "tp.windows.bed";
   my $n_windows = $self->outdir . "n.windows.bed";
   my $tn_windows = $self->outdir . "tn.windows.bed";
   my $fn_windows = $self->outdir . "fn.windows.bed";
   my $fp_windows = $self->outdir . "fp.windows.bed";
-  $self->joinx_intersect($window_file_sorted, $tp_bed_sorted, $p_windows, $n_windows);
+  $self->joinx_intersect($window_file, $tp_bed_sorted, $p_windows, $n_windows);
   $self->joinx_intersect($p_windows, $eval_bed_sorted, $tp_windows, $fp_windows);
   $self->joinx_intersect($n_windows, $eval_bed_sorted, $fp_windows, $tn_windows);
-}
-
-sub calculate_true_negative {
-  my $self = shift;
-}
-
-sub calculate_false_negative {
-  my $self = shift;
 }
 
 sub create_window_file {
@@ -136,9 +132,15 @@ sub create_window_file {
   Genome::Sys->shellcmd(cmd => "rm -f $window_file");
   my %chr_size;
   $self->get_chr_sizes(\%chr_size);
-  my @chrs = (1..22);
-  push(@chrs, "X");
-  push(@chrs, "Y");
+  my @chrs;
+  if($self->test) {
+      @chrs = (1);
+  }
+  else {
+    @chrs = (1..22);
+    push(@chrs, "X");
+    push(@chrs, "Y");
+  }
   foreach my $chr (@chrs) {
     print $chr;
     if($chr !~ /GL/ and $chr !~ /MT/) {
@@ -149,6 +151,13 @@ sub create_window_file {
       Genome::Sys->shellcmd(cmd=>$awk_cmd);
     }
   }
+  if($self->ROI_file) {
+    my $sorted_ROI = $self->copy_sort_bed($self->ROI_file);
+    my $intersected_file = $window_file . ".intersectedwithROI";
+    my ($miss_file_fh, $miss_file) = Genome::Sys->create_temp_file();
+    $self->joinx_intersect($window_file, $sorted_ROI, $intersected_file, $miss_file);
+    $window_file = $intersected_file;
+  }
   return $window_file;
 }
 
@@ -156,7 +165,6 @@ sub execute {
   my $self = shift;
   my $window_file = $self->create_window_file();
   $self->calculate_stats($window_file);
-  print "window file is $window_file";
   return 1;
 }
 
