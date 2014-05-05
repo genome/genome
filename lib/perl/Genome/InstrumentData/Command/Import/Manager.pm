@@ -52,12 +52,15 @@ The import commands will be printed to the screen [on STDERR] if:
  launch config does not have a '%{job_name}' in it
  list config is not given
 
- The temp space required can also be filled in be using '%{tmp}' placeholder.
+The temp space required can also be filled in be using the tmp family of placeholders. 
+ %{gtmp}  gigabytes
+ %{mtmp}  megabytes
+ %{kbtmp} kilobytes
 
 Example for LSF
  Launch the job into group /me/mygroup and logging to /users/me/logs/%{job_name}
 
- bsub -J %{job_name} -g /me/mygroup -oo /users/me/logs/%{job_name} -M 16000000 -R 'select [mem>16000 & tmp>%{tmp}] rsuage[mem=16000,tmp=%{tmp}]'
+ bsub -J %{job_name} -g /me/mygroup -oo /users/me/logs/%{job_name} -M 16000000 -R 'select [mem>16000 & gtmp>%{gtmp}] rsuage[mem=16000,gtmp=%{gtmp}]'
 
 DOC
         },
@@ -87,7 +90,7 @@ DOC
         _launch_command_has_job_name => { is => 'Boolean', default_value => 0, },
         _launch_command_substitutions => { 
             is => 'Hash', 
-            default_value => { map { $_ => qr/%{$_}/ } (qw/ job_name library_name tmp /), },
+            default_value => { map { $_ => qr/%{$_}/ } (qw/ job_name library_name gtmp mtmp kbtmp /), },
         },
     ],
 };
@@ -277,10 +280,12 @@ sub _check_source_files_and_set_kb_required_for_processing {
     my %library_names_seen;
     for my $import ( @$imports ) {
         # get disk space required [checks if source files exist]
-        my $disk_space_required = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->kilobytes_required_for_processing_of_source_files( split(',', $import->{source_files}) );
+        my $disk_space_required_in_kb = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->kilobytes_required_for_processing_of_source_files( split(',', $import->{source_files}) );
         return if Genome::InstrumentData::Command::Import::WorkFlow::Helpers->error_message;
-        $disk_space_required = 1024 if $disk_space_required < 1023;
-        $import->{tmp} = sprintf('%i', $disk_space_required / 1024);
+        $disk_space_required_in_kb = 1048576 if $disk_space_required_in_kb < 1048576; # 1 Gb 
+        $import->{gtmp} = sprintf('%.0f', $disk_space_required_in_kb / 1048576);
+        $import->{mtmp} = sprintf('%.0f', $disk_space_required_in_kb / 1024);
+        $import->{kbtmp} = $disk_space_required_in_kb;
      }
     $self->_imports($imports);
 
