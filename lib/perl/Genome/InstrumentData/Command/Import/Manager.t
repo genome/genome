@@ -146,9 +146,9 @@ ok(!grep({ $_->{job_status} } @$imports_aryref), 'imports aryref does not have j
 is_deeply(
     [ map { $manager->_resolve_launch_command_for_import($_) } @$imports_aryref ],
     [
-    "echo TeSt-0000-00-extlibs.1 LAUNCH! GTMP=1 MTMP=1024 KBTMP=1048576 genome instrument-data import basic --library name=TeSt-0000-00-extlibs --source-files bam1.bam --import-source-name TeSt --instrument-data-properties lane='8' --analysis-project id=".$analysis_project->id,
-    "echo TeSt-0000-00-extlibs.2 LAUNCH! GTMP=1 MTMP=1024 KBTMP=1048576 genome instrument-data import basic --library name=TeSt-0000-00-extlibs --source-files bam2.bam --import-source-name TeSt --instrument-data-properties lane='8' --analysis-project id=".$analysis_project->id,
-    "echo TeSt-0000-01-extlibs.1 LAUNCH! GTMP=1 MTMP=1024 KBTMP=1048576 genome instrument-data import basic --library name=TeSt-0000-01-extlibs --source-files bam3.bam --import-source-name TeSt --instrument-data-properties lane='7' --analysis-project id=".$analysis_project->id,
+    "echo TeSt-0000-00-extlibs.1 LAUNCH! GTMP=1 MTMP=1024 KBTMP=1048576 genome instrument-data import basic --library name=TeSt-0000-00-extlibs --source-files bam1.bam --import-source-name 'TeSt' --instrument-data-properties lane='8' --analysis-project id=".$analysis_project->id,
+    "echo TeSt-0000-00-extlibs.2 LAUNCH! GTMP=1 MTMP=1024 KBTMP=1048576 genome instrument-data import basic --library name=TeSt-0000-00-extlibs --source-files bam2.bam --import-source-name 'TeSt' --instrument-data-properties lane='8' --analysis-project id=".$analysis_project->id,
+    "echo TeSt-0000-01-extlibs.1 LAUNCH! GTMP=1 MTMP=1024 KBTMP=1048576 genome instrument-data import basic --library name=TeSt-0000-01-extlibs --source-files bam3.bam --import-source-name 'TeSt' --instrument-data-properties lane='7' --analysis-project id=".$analysis_project->id,
     ],
     'launch commands',
 );

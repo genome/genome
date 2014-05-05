@@ -246,7 +246,7 @@ sub _resolve_launch_command {
         $cmd_format .= ' ';
     }
 
-    $cmd_format .= 'genome instrument-data import basic --library name=%{library_name} --source-files %s --import-source-name %s%s%s',
+    $cmd_format .= "genome instrument-data import basic --library name=%{library_name} --source-files %s --import-source-name '%s'%s%s",
     $self->_launch_command_format($cmd_format);
 
     return;
