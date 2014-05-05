@@ -120,7 +120,7 @@ sub execute {
 
             print OUTFILE $line . "\tFilterCall\tProb\tLLR\n";
             if(defined($self->lq_output_file)){
-                print LQFILE $line . "FilterCall\tProb\tLLR\n";
+                print LQFILE $line . "\tFilterCall\tProb\tLLR\n";
             }
             next;
         }
