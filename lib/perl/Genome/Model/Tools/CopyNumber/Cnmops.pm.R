@@ -10,7 +10,7 @@ get_capture_regions <- function()
   segments <- read.table(capture_bed,sep="\t",as.is=TRUE)
   gr <- GRanges(segments[,1],IRanges(segments[,2],segments[,3]))
   if(test) {
-    gr <- gr[1:5000]
+    gr <- gr[1:10000]
   }
   return(gr)
 }
@@ -84,7 +84,7 @@ set.seed(42)#use a deterministic seed, this enables testing and doesn't really a
 gr<-get_capture_regions()
 RD<-get_read_counts()
 
-ref_analysis_norm <- referencecn.mops(RD[,1], RD[,2], returnPosterior = TRUE, segAlgorithm = "DNAcopy", norm = 0)
+ref_analysis_norm <- referencecn.mops(RD[,1], RD[,2], returnPosterior = TRUE, segAlgorithm = "DNAcopy", norm = 0, minReadCount = 5, priorImpact=10)
 ref_analysis_norm <- calcIntegerCopyNumbers(ref_analysis_norm)
 ref_analysis_norm_file = paste(out_dir, "/cnmops.ref_analysis_norm.Robject", sep = "")
 if(length(cnvr(ref_analysis_norm)) != 0) {
