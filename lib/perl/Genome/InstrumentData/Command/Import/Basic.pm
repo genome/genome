@@ -429,6 +429,12 @@ sub _build_workflow_to_import_sra {
             right_property => $right_property,
         );
     }
+    $workflow->add_link(
+        left_operation => $workflow->get_input_connector,
+        left_property => 'library',
+        right_operation => $sra_to_bam_op,
+        right_property => 'library',
+    );
 
     my $sanitize_bam_op = $self->_add_operation_to_workflow('sanitize bam');
     $workflow->add_link(
