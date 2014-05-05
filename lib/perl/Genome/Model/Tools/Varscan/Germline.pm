@@ -209,7 +209,7 @@ sub parse_variants_file
     my $snps = Genome::Sys->open_file_for_writing($output_snp);
     my $indels = Genome::Sys->open_file_for_writing($output_indel);
 
-    my $input = Genome::Sys->open_file_for_reading($variants_file);	
+    my $input = Genome::Sys->open_file_for_reading($variants_file);
     my $lineCounter = 0;
 
     while (<$input>) {
