@@ -1226,6 +1226,7 @@ sub check_rnaseq_models{
     next unless ($model->reference_sequence_build->id eq $self->reference_sequence_build->id);
     next unless ($model->annotation_build->id eq $self->annotation_build->id);
     next unless ($model->can("cancer_annotation_db"));
+    next unless (defined($model->cancer_annotation_db));
     next unless ($model->cancer_annotation_db eq $self->cancer_annotation_db->id);
     push (@final_models, $model);
     #$self->status_message("\t\tName: " . $model->name . " (" . $model->id . ")");
