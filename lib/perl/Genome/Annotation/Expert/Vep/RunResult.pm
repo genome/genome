@@ -85,6 +85,7 @@ sub _run {
     }
 
     Genome::Sys->gzip_file($vep_output_file, $final_output_file);
+    unlink $vep_output_file;
 
     return;
 }
