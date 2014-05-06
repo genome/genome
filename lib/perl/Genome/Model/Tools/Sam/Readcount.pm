@@ -135,6 +135,9 @@ sub execute {
     if($self->insertion_centric) {
         $command .= " -i";
     }
+    if($version >= "0.5") {
+        $command .= " -w 1";    # suppress error messages to a single report
+    }
 
     Genome::Sys->shellcmd(
         cmd => "$command > $output_file",
