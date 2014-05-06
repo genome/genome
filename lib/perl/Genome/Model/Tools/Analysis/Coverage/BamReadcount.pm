@@ -287,7 +287,7 @@ sub execute {
         #is it an indel?
         if (($fields[3] =~ /\-/) || ($fields[4] =~ /\-/) ||
             (length($fields[3]) > 1) || (length($fields[4]) > 1)){
-
+            
             #is it longer than the max length?
             if((length($fields[3]) > $indel_size_limit) || (length($fields[4]) > $indel_size_limit)){
                 $tooLongIndels{join("\t",($fields[0],$fields[1],$fields[3],$fields[4]))} = 0;
@@ -588,7 +588,7 @@ sub execute {
         }
     }
     close($OUTFILE);
-
+    
     return(1);
 }
 
@@ -597,7 +597,8 @@ sub indelCounts {
     my $ref_count = 0;
     my $var_count = 0;
     for my $allele ($lib->alleles) {
-        if($allele ne $testvarallele) {
+        my $ucallele = uc($allele); #bam-readcount can return lowercase alleles, we always hash them uc
+        if($ucallele ne $testvarallele) {
             $ref_count += $lib->metrics_for($allele)->count;
         }
         else {
@@ -615,14 +616,15 @@ sub snvCounts {
     for my $allele ($lib->alleles) {
         # assume that the ref call is ACTG, not iub
         # (assumption looks valid in my files)
-        if ($allele eq $knownRef){
+        my $ucallele = uc($allele) #bam-readcount can return lowercase alleles, we always hash them uc
+        if ($ucallele eq $knownRef){
             $ref_count += $lib->metrics_for($allele)->count;
             next;
         }
 
         # if we're counting all non-reference reads, not just the specified allele
         if($self->count_non_reference_reads){
-            unless($allele eq $knownRef){
+            unless($ucallele eq $knownRef){
                 $var_count += $lib->metrics_for($allele)->count;
             }
             next;
