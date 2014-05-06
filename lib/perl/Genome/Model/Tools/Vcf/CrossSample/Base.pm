@@ -3,6 +3,7 @@ package Genome::Model::Tools::Vcf::CrossSample::Base;
 use strict;
 use warnings;
 
+use UR;
 use Genome;
 use Genome::Model::Tools::Sam;
 
@@ -175,7 +176,12 @@ sub _validate_inputs {
 
 sub _roi_bed_file {
     my $self = shift;
-    return $self->roi_list->resolve_bed_for_reference($self->_reference_sequence_build);
+    my $rv = $self->roi_list->resolve_bed_for_reference($self->_reference_sequence_build);
+    # This may have created a new software-result, so we
+    # commit that now instead of waiting for this command to
+    # successfully execute.
+    UR::Context->commit();
+    return $rv;
 }
 
 sub _roi_name {
