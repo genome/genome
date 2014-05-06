@@ -3,6 +3,7 @@ package Genome::Annotation::Reporter::WithHeader;
 use strict;
 use warnings FATAL => 'all';
 use Genome;
+use Memoize qw();
 
 class Genome::Annotation::Reporter::WithHeader {
     is => 'Genome::Annotation::Reporter::Base',
@@ -85,6 +86,7 @@ sub available_fields_dict {
     }
     return %available_fields;
 }
+Memoize::memoize('available_fields_dict');
 
 # Default report method
 # Prints the fields in order of the headers.
