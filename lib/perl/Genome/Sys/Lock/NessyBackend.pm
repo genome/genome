@@ -35,6 +35,13 @@ sub lock {
 
     return unless $self->client;
 
+    if ($self->_is_holding_nessy_lock($resource)) {
+        Genome::Logger->fatal("Tried to lock resource more than once: $resource");
+    }
+
+    my $claim_warning = '';
+    my $initial_time = time();
+
     my %user_data = (
         host => hostname,
         pid => $$,
@@ -43,14 +50,8 @@ sub lock {
         genome_build_id => ($ENV{GENOME_BUILD_ID} || 'NONE'),
         lsf_project => ($ENV{WF_LSF_PROJECT} || 'NONE'),
     );
-
-    if ($self->_is_holding_nessy_lock($resource)) {
-        Genome::Logger->fatal("Tried to lock resource more than once: $resource");
-    }
-
     my $info_content = join("\n", map { $_ . ': ' . $user_data{$_} } keys %user_data);
-    my $claim_warning = '';
-    my $initial_time = time();
+
     my $wait_announce_timer = AnyEvent->timer(
         after => $wait_announce_interval,
         interval => $wait_announce_interval,
