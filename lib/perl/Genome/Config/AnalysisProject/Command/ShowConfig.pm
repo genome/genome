@@ -47,7 +47,8 @@ sub _header_line {
 
     return sprintf($self->_line_template(),
         'File Path', 'Concrete',
-        'Menu Item', 'Menu Item Name');
+        'Menu Item', 'Menu Item Name',
+        'Status');
 }
 
 sub _format_profile_item {
@@ -58,7 +59,8 @@ sub _format_profile_item {
         $item->file_path,
         $self->_format_boolean($item->is_concrete),
         $self->_format_boolean($item->analysis_menu_item),
-        $item->analysis_menu_item ? $item->analysis_menu_item->name : '');
+        $item->analysis_menu_item ? $item->analysis_menu_item->name : '',
+        defined($item->status) ? $item->status : 'active');
 
 }
 
@@ -72,7 +74,7 @@ sub _line_template {
     my $self = shift;
     my $padding = shift || 0;
 
-    return "%-${padding}s\t%s\t%s\t%s\n";
+    return "%-${padding}s\t%s\t%s\t%s\t%s\n";
 }
 
 1;
