@@ -660,7 +660,6 @@ sub compatible_instrument_data {
     my $self = shift;
     my %params;
 
-    $params{sequencing_platform} = $self->sequencing_platform if $self->sequencing_platform;
     if (my @samples = $self->get_all_possible_samples)  {
         my @sample_ids = map($_->id, @samples);
         %params = (
@@ -671,6 +670,7 @@ sub compatible_instrument_data {
                    $self->subject_type => $self->subject_name,
                );
     }
+    $params{sequencing_platform} = $self->sequencing_platform if $self->sequencing_platform;
     my @compatible_instrument_data = Genome::InstrumentData->get(%params);
 
     if($params{sequencing_platform} and $params{sequencing_platform} eq 'solexa') {
