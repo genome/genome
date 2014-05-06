@@ -11,13 +11,15 @@ require List::MoreUtils;
 
 class Genome::Site::TGI::Synchronize::Classes::SangerRun {
     is => 'Genome::Site::TGI::Synchronize::Classes::LimsBase',
-    table_name => 'select run_name from gsc_run',
+    table_name => '( select run_name from gsc_run@oltp ) sanger_run',
     id_by => {
         run_name => { is => 'Text', },
     },
     has_transient => {
+        library_id => { is => 'Text', },
         library_ids => { is => 'Array', },
     },
+    data_source => 'Genome::DataSource::Dwrac',
 };
 
 sub genome_class_for_create { 'Genome::InstrumentData::Sanger'; }
@@ -25,23 +27,23 @@ sub genome_class_for_create { 'Genome::InstrumentData::Sanger'; }
 sub create_in_genome {
     my $self = shift;
 
-    my %params = $self->params_for_create_in_genome;
-    return if not %params;
-
     my $genome_class = $self->genome_class_for_create;
-    my $genome_object = eval { $genome_class->create(%params); };
+    my $genome_object = $genome_class->get(id => $self->id);
     if ( not $genome_object ) {
-        Carp::confess("$@\nFailed to create $genome_class with parmas: ".Data::Dumper::Dumper(\%params));
+        $genome_object = eval { $genome_class->create(id => $self->id); };
+        if ( not $genome_object ) {
+            Carp::confess("$@\nFailed to create $genome_class for ".$self->id);
+        }
     }
 
-    my $dump_to_file_system = $genome_object->dump_to_file_system;
+    my $dump_to_file_system = $self->dump_to_file_system($genome_object);
     if ( not $dump_to_file_system ) {
         $self->error_message('Failed to dump lims sanger reads to file system!');
         $genome_object->delete;
         return;
     }
 
-    $genome_object->library_id( $self->get_library_id );
+    $genome_object->library_id( $self->library_id );
 
     return $genome_object;
 }
@@ -77,9 +79,9 @@ sub dump_to_file_system {
     unless ( $disk_allocation ) {
         $disk_allocation = Genome::Disk::Allocation->allocate(
             disk_group_name => $ENV{GENOME_DISK_GROUP_ALIGNMENTS},
-            allocation_path => '/instrument_data/sanger'.$self->id,
+            allocation_path => '/instrument_data/sanger-'.$self->id,
             kilobytes_requested => 10240, # 10 Mb
-            owner_class_name => $self->class,
+            owner_class_name => 'Genome::InstrumentData::Sanger',
             owner_id => $self->id
         );
         unless ($disk_allocation) {
@@ -123,7 +125,8 @@ sub dump_to_file_system {
         return;
     }
 
-    $self->library_ids([ values %reads ]);
+    my @library_ids =  List::MoreUtils::uniq( values %reads );
+    $self->library_ids(\@library_ids);
 
     # Remove any other files from the directory
     my $dh = eval{ Genome::Sys->open_directory($data_dir); };
@@ -135,7 +138,8 @@ sub dump_to_file_system {
     while ( my $file = $dh->read ) {
         my $read_name = $file;
         $read_name =~ s/\.gz$//;
-        unlink $data_dir.'/'.$file if not exists $reads{$read_name};
+        next if exists $reads{$read_name};
+        unlink $data_dir.'/'.$file;
     }
 
     $self->debug_message("Read count: ".scalar(keys %reads) );
@@ -156,7 +160,8 @@ sub library_id {
             $library_ids{ $read->library_id }++;
         }
 
-        $self->library_ids([ grep { $_ =~ /^$RE{num}{int}$/ } List::MoreUtils::uniq( values %library_ids ) ]);
+        my @library_ids = grep { $_ =~ /^$RE{num}{int}$/ } List::MoreUtils::uniq( values %library_ids );
+        $self->library_ids(\@library_ids);
     }
 
     my @library_ids = @{$self->library_ids};

@@ -161,7 +161,7 @@ my @lims_whitelist = (
         ['Genome/Site/TGI/use-gscapp-in-modules-fails.t', 17],
     ],
     'App::DB::TableRow::Iterator' => [
-        ['Genome/Site/TGI/Synchronize/Classes/SangerRun.pm', 56],
+        ['Genome/Site/TGI/Synchronize/Classes/SangerRun.pm', 58],
     ],
     'GSC::Setup::CaptureSet' => [
         ['Genome/Site/TGI/CaptureSet.pm', 110],

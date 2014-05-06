@@ -669,6 +669,7 @@ sub classify_amplicons {
         my $cmd = "gmt metagenomic-classifier $classifier --input-file $fasta_file --output-file $classification_file $classifier_params --metrics"; 
         my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
         if ( not $rv ) {
+            $self->error_message($@) if $@;
             $self->error_message('Failed to execute classifier command');
             return;
         }

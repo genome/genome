@@ -24,12 +24,14 @@ ok(-s $source_sra, 'source sra exists') or die;
 
 my $analysis_project = Genome::Config::AnalysisProject->create(name => '__TEST_AP__');
 ok($analysis_project, 'create analysis project');
-my $sample = Genome::Sample->create(name => '__TEST_SAMPLE__');
-ok($sample, 'Create sample');
+my $library = Genome::Library->create(
+    name => '__TEST_SAMPLE__-extlibs', sample => Genome::Sample->create(name => '__TEST_SAMPLE__')
+);
+ok($library, 'Create library');
 
 my $cmd = Genome::InstrumentData::Command::Import::Basic->create(
     analysis_project => $analysis_project,
-    sample => $sample,
+    library => $library,
     source_files => [$source_sra],
     import_source_name => 'sra',
     instrument_data_properties => [qw/ lane=2 flow_cell_id=XXXXXX /],

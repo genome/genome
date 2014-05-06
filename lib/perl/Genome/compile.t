@@ -34,7 +34,7 @@ for my $file (@files_to_compile) {
 
 sub compile_file {
     my $file = shift;
-    my @output = qx(perl -c "$file" 2>&1);
+    my @output = qx(genome-perl -c "$file" 2>&1);
     my $exit = $? >> 8;
     if ($exit != 0) {
         diag @output;

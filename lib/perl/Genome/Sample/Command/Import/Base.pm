@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Sample::Command::Import::Base {
-    is => 'Command',
+    is => 'Command::V2',
     is_abstract => 1,
     doc => 'Import samples from known sources',
     has => [

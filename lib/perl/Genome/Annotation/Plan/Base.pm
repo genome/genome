@@ -84,13 +84,13 @@ sub object {
     return $self->factory->get_object($self->category,
             $self->name, $self->params, \%overrides);
 }
-
 Memoize::memoize("object");
 
 sub factory {
     my $self = shift;
     return Genome::Annotation::Factory->create();
 }
+Memoize::memoize("factory");
 
 sub validate_children {
     my $self = shift;

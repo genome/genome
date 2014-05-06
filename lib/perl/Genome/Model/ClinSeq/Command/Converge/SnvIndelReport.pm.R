@@ -67,11 +67,15 @@ plot_vafs = function(file, x_label, main_label_vafs, main_label_covs, gene_i){
   #Adjust point sizes and gene labels if there are too many genes
   point_cex=1
   names_cex=1
-  if (gene_count >= 25){
-    fraction = gene_count/35
-    point_cex = point_cex/(gene_count/35)
-    names_cex = point_cex/(gene_count/45)
+  if (gene_count >= 35){
+    fraction1 = gene_count/35
+    point_cex = point_cex/fraction1
   }
+  if (gene_count >= 45){
+    fraction2 = gene_count/45
+    names_cex = point_cex/fraction2
+  }
+
   if (point_cex < 0.1){
     point_cex = 0.1
   }
@@ -214,7 +218,6 @@ plot_boxplots = function(outfile, gene_i, main_label_vafs){
   if (length(sample2_vaf_cols) > 0) {
     vaf_dist = list(data[gene_i,combined_vaf_cols[1]], data[gene_i,combined_vaf_cols[2]])
     bp_names = c(bp_names, paste(sample_names[2], "\n", "(", round(median(data[gene_i,combined_vaf_cols[2]]),digits=2), "%)", sep=""))
-    
   }
   if (length(sample3_vaf_cols) > 0) { 
     vaf_dist = list(data[gene_i,combined_vaf_cols[1]], data[gene_i,combined_vaf_cols[2]], data[gene_i,combined_vaf_cols[3]]) 
@@ -272,10 +275,13 @@ plot_boxplots = function(outfile, gene_i, main_label_vafs){
     segments(x0=xpoints3, x1=xpoints4, y0=ypoints3, y1=ypoints4, lty=3, lwd=0.75, col="black")
     if (length(ii) > 0){ text(x=xpoints4[ii], y=ypoints4[ii], labels=data[gene_i[ii], "default_gene_name"], cex=point_cex, col=text_col, font=4) }
   }
-
   dev.off()
-
 }
+
+
+
+
+
 
 
 #################################################################################################

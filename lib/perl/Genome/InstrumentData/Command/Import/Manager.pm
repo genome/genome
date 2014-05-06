@@ -14,10 +14,10 @@ class Genome::InstrumentData::Command::Import::Manager {
         source_files_tsv => {
             is => 'Text',
             doc => <<DOC
-TAB separated file containing sample names, source files and instrument data attributes to import.
+TAB separated file containing library names, source files and instrument data attributes to import.
  
 Required Columns
- sample_name     Name of the sample. The sample and extlibs library must exist.
+ library_name    Name of the library. The library must exist.
  source_files    Source files [bam, fastq, sra, etc] to import. Separate files by comma (,). 
 
 Additional Columns
@@ -25,12 +25,13 @@ Additional Columns
 
 Example
 
-This will look to run/check imports for 2 samples. Sample 1 has 2 source files [bams] to import. The second sample, Sample-02, has 2 fastqs to import. They will be downloaded, unzipped and converted to bam. In addition, the flow_cell_id, lane and index_sequence will be added to the respective instrument data as attributes.
+This will look to run/check imports for 2 libraires. Library 1 has 2 source files [bams] to import. The second library, Sample-02-extlibs, has 2 fastqs to import. They will be downloaded, unzipped and converted to bam. In addition, the flow_cell_id, lane and index_sequence will be added to the respective instrument data as attributes.
 
-sample_name source_files    flow_cell_id    lane    index_sequence
-Sample-01   sample-1.1.bam  XAXAXA 1   AATTGG
-Sample-01   sample-1.2.bam  XAXAXA 1   TTAACC
-Sample-02   http://fastqs.org/sample-2.fwd.fastq.gz,http://fastqs.org/sample-2.rev.fastq.gz  XYYYYX  2   GAACTT
+library_name        source_files    flow_cell_id    lane    index_sequence
+Sample-01-extlibs   sample-1.1.bam  XAXAXA          1       AATTGG
+Sample-01-extlibs   sample-1.2.bam  XAXAXA          1       TTAACC
+Sample-02-extlibs   http://fastqs.org/sample-2.fwd.fastq.gz,http://fastqs.org/sample-2.rev.fastq.gz  XYYYYX  2   GAACTT
+
 DOC
 
         },
@@ -44,17 +45,22 @@ DOC
         launch_config => {
             is => 'Text',
             doc => <<DOC
-Launch imports [if needed] using this command. Insert '%{job_name}' into the command so the manager can monitor status.
+Launch imports [if needed] using this command. Insert '%{job_name}' place holder into the command so the manager can monitor status.
  
 The import commands will be printed to the screen [on STDERR] if:
  launch config is not given
  launch config does not have a '%{job_name}' in it
  list config is not given
 
+The temp space required can also be filled in be using the tmp family of placeholders. 
+ %{gtmp}  gigabytes
+ %{mtmp}  megabytes
+ %{kbtmp} kilobytes
+
 Example for LSF
  Launch the job into group /me/mygroup and logging to /users/me/logs/%{job_name}
 
- bsub -J %{job_name} -g /me/mygroup -oo /users/me/logs/%{job_name}
+ bsub -J %{job_name} -g /me/mygroup -oo /users/me/logs/%{job_name} -M 16000000 -R 'select [mem>16000 & gtmp>%{gtmp}] rsuage[mem=16000,gtmp=%{gtmp}]'
 
 DOC
         },
@@ -84,7 +90,7 @@ DOC
         _launch_command_has_job_name => { is => 'Boolean', default_value => 0, },
         _launch_command_substitutions => { 
             is => 'Hash', 
-            default_value => { map { $_ => qr/%{$_}/ } (qw/ job_name sample_name /), },
+            default_value => { map { $_ => qr/%{$_}/ } (qw/ job_name library_name gtmp mtmp kbtmp /), },
         },
     ],
 };
@@ -95,25 +101,25 @@ Outputs
 There are 3 potential outputs:
 
  WHAT            SENT TO  DESCRIPTION    
- Status          STDOUT   One for each sample/source files set.
+ Status          STDOUT   One for each library/source files set.
  Import command  STDERR   Command to import the source files. Printed if the --show-import-commands option is indicated.
  Stats           STDERR   Summary stats for statuses.
 
 Status Output
- The status output is formatted so that the columns are lined up. A line is output for each sample name and source file set.
+ The status output is formatted so that the columns are lined up. A line is output for each library name and source file set.
 
  Example:
 
- sample_name # status  inst_data
- Sample-01   1 success 6c43929f065943a09f8ccc769e42c41d
- Sample-01   2 run     NA
- Sample-02   1 needed  NA
+ library_name      # status  inst_data
+ Sample-01-extlibs 1 success 6c43929f065943a09f8ccc769e42c41d
+ Sample-01-extlibs 2 run     NA
+ Sample-02-extlibs 1 needed  NA
 
  Column definitions:
 
- sample_name  Name of the sample.
- #            Since the sample name may be used more than once, this is the iteration as it appears in the source files tsv.
- status       Import status - no_sample, no_library, needed, pend, run, success.
+ library_name Name of the library.
+ #            Since the library name may be used more than once, this is the iteration as it appears in the source files tsv.
+ status       Import status - no_library, needed, pend, run, success.
  inst_data    Instrument data id.
 
 HELP
@@ -180,16 +186,16 @@ sub _load_source_files_tsv {
         separator => "\t",
     );
     if ( not $info_reader ) {
-        return 'Failed to open sample info file! '.$source_files_tsv;
+        return 'Failed to open source files tsv! '.$source_files_tsv;
     }
 
-    my %headers_not_found = ( sample_name => 1, source_files => 1, );
+    my %headers_not_found = ( library_name => 1, source_files => 1, );
     for my $header ( @{$info_reader->headers} ) {
         delete $headers_not_found{$header};
     }
 
     if ( %headers_not_found ) {
-        return 'No '.join(' ', map { '"'.$_.'"' } keys %headers_not_found).' column in sample info file! '.$self->source_files_tsv;
+        return 'No '.join(' ', map { '"'.$_.'"' } keys %headers_not_found).' column in source files tsv! '.$self->source_files_tsv;
     }
 
     my @imports;
@@ -201,13 +207,13 @@ sub _load_source_files_tsv {
             return;
         }
         $seen_source_files{$source_files}++;
-        my $sample_name = delete $hash->{sample_name};
-        if ( not $sample_name ) {
-            $self->error_message('No sample name in info file on line '.$info_reader->line_number.'!');
+        my $library_name = delete $hash->{library_name};
+        if ( not $library_name ) {
+            $self->error_message('No library name in source files tsv on line '.$info_reader->line_number.'!');
             return;
         }
         my $import = {
-            sample_name => $sample_name,
+            library_name => $library_name,
             source_files => $source_files,
             instrument_data_attributes => [],
         };
@@ -218,7 +224,10 @@ sub _load_source_files_tsv {
             push @{$import->{instrument_data_attributes}}, $attr."='".$value."'";
         }
     }
+
     $self->_imports(\@imports);
+
+    return $info_reader->error_message;
 
     return;
 }
@@ -237,7 +246,7 @@ sub _resolve_launch_command {
         $cmd_format .= ' ';
     }
 
-    $cmd_format .= 'genome instrument-data import basic --sample name=%{sample_name} --source-files %s --import-source-name %s%s%s',
+    $cmd_format .= "genome instrument-data import basic --library name=%{library_name} --source-files %s --import-source-name '%s'%s%s",
     $self->_launch_command_format($cmd_format);
 
     return;
@@ -246,14 +255,17 @@ sub _resolve_launch_command {
 sub execute {
     my $self = shift;
 
-    my $load_samples = $self->_load_samples;
-    return if not $load_samples;
+    my $source_files_ok = $self->_check_source_files_and_set_kb_required_for_processing;
+    return if not $source_files_ok;
+ 
+    my $load_libraries = $self->_load_libraries;
+    return if not $load_libraries;
 
     my $load_instrument_data = $self->_load_instrument_data;
     return if not $load_instrument_data;
 
-    my $load_sample_statuses = $self->_load_sample_statuses;
-    return if not $load_sample_statuses;
+    my $load_statuses = $self->_load_statuses;
+    return if not $load_statuses;
 
     my $launch_imports = $self->_launch_imports;
     return if not $launch_imports;
@@ -261,31 +273,44 @@ sub execute {
     return $self->_output_status;
 }
 
-sub _load_samples {
+sub _check_source_files_and_set_kb_required_for_processing {
     my $self = shift;
 
     my $imports = $self->_imports;
-    my %sample_names_seen;
+    my %library_names_seen;
     for my $import ( @$imports ) {
-        # sample name, number and job name
-        my $sample_name = $import->{sample_name};
-        $import->{sample_number} = ++$sample_names_seen{$sample_name};
-        $import->{job_name} = $import->{sample_name}.'.'.$import->{sample_number};
-        # genome sample
-        $import->{sample} = Genome::Sample->get(name => $sample_name);
-        next if not $import->{sample};
-        # nomenclature
-        $import->{sample}->{nomenclature} = $import->{sample}->nomenclature // 'WUGC'; #FIXME
-        # library
-        my @libraries = Genome::Library->get( # TODO base on library
-            name => $sample_name.'-extlibs',
-            sample => $import->{sample},
-        );
-        $import->{libraries} = \@libraries if @libraries; 
-    }
-
+        # get disk space required [checks if source files exist]
+        my $disk_space_required_in_kb = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->kilobytes_required_for_processing_of_source_files( split(',', $import->{source_files}) );
+        return if Genome::InstrumentData::Command::Import::WorkFlow::Helpers->error_message;
+        $disk_space_required_in_kb = 1048576 if $disk_space_required_in_kb < 1048576; # 1 Gb 
+        $import->{gtmp} = sprintf('%.0f', $disk_space_required_in_kb / 1048576);
+        $import->{mtmp} = sprintf('%.0f', $disk_space_required_in_kb / 1024);
+        $import->{kbtmp} = $disk_space_required_in_kb;
+     }
     $self->_imports($imports);
 
+    return if $self->error_message;
+    return 1;
+}
+
+sub _load_libraries {
+    my $self = shift;
+
+    my $imports = $self->_imports;
+    my %library_names_seen;
+    for my $import ( @$imports ) {
+        # library name, number and job name
+        my $library_name = $import->{library_name};
+        $import->{library_number} = ++$library_names_seen{$library_name};
+        $import->{job_name} = $import->{library_name}.'.'.$import->{library_number};
+        # genome library - get as array in case there are many with the same name
+        my @libraries = Genome::Library->get(name => $library_name);
+        $import->{library} = \@libraries if @libraries;
+        next if not $import->{library}; # error will be displayed later
+    }
+    $self->_imports($imports);
+
+    return if $self->error_message;
     return 1;
 }
 
@@ -316,17 +341,16 @@ sub _load_instrument_data {
     return 1;
 }
 
-sub _load_sample_statuses {
+sub _load_statuses {
     my $self = shift;
 
-    my $sample_job_statuses = $self->_load_sample_job_statuses;
-    return if not $sample_job_statuses;
+    my $job_statuses = $self->_load_job_statuses;
+    return if not $job_statuses;
 
     my $get_status_for_import = sub{
         my $import = shift;
-        return 'no_sample' if not $import->{sample};
-        return 'no_library' if not $import->{libraries};
-        return 'too_many_libraries' if @{$import->{libraries}} > 1;
+        return 'no_library' if not $import->{library};
+        return 'too_many_libraries' if @{$import->{library}} > 1;
         return $import->{job_status} if $import->{job_status};
         return 'needed' if not $import->{instrument_data};
         return 'needed' if not defined $import->{instrument_data_file} or not -s $import->{instrument_data_file};
@@ -335,7 +359,7 @@ sub _load_sample_statuses {
 
     my $imports = $self->_imports;
     for my $import ( @$imports ) {
-        $import->{job_status} = $sample_job_statuses->{ $import->{job_name} } if $import->{job_name};
+        $import->{job_status} = $job_statuses->{ $import->{job_name} } if $import->{job_name};
         $import->{status} = $get_status_for_import->($import);
     }
 
@@ -344,7 +368,7 @@ sub _load_sample_statuses {
     return 1;
 }
 
-sub _load_sample_job_statuses {
+sub _load_job_statuses {
     my $self = shift;
 
     my $job_list_cmd = $self->_list_command;
@@ -357,14 +381,14 @@ sub _load_sample_job_statuses {
     
     my $name_column = $self->_list_job_name_column;
     my $status_column = $self->_list_status_column;
-    my %sample_job_statuses;
+    my %job_statuses;
     while ( my $line = $fh->getline ) {
         chomp $line;
         my @tokens = split(/\s+/, $line);
-        $sample_job_statuses{ $tokens[$name_column] } = lc $tokens[$status_column];
+        $job_statuses{ $tokens[$name_column] } = lc $tokens[$status_column];
     }
 
-    return \%sample_job_statuses;
+    return \%job_statuses;
 }
 
 sub _launch_imports {
@@ -430,7 +454,7 @@ sub _resolve_launch_command_for_import {
     my $cmd .= sprintf(
         $cmd_format,
         $import->{source_files},
-        $import->{sample}->{nomenclature},
+        ( $import->{library}->[0]->sample->nomenclature // 'WUGC' ), #FIXME nomenclature
         ( 
             @{$import->{instrument_data_attributes}}
             ? ' --instrument-data-properties '.join(',', @{$import->{instrument_data_attributes}})
@@ -445,14 +469,14 @@ sub _resolve_launch_command_for_import {
 sub _output_status {
     my $self = shift;
 
-    my @status = ( ['sample_name'], ['#'], ['status'], ['inst_data'], );
+    my @status = ( ['library_name'], ['#'], ['status'], ['inst_data'], );
     my ($i, @row, %totals);
-    for my $import ( sort { $a->{sample_name} cmp $b->{sample_name} } @{$self->_imports} ) {
+    for my $import ( sort { $a->{library_name} cmp $b->{library_name} } @{$self->_imports} ) {
         $totals{total}++;
         $totals{ $import->{status} }++;
         @row = (
-            $import->{sample_name},
-            $import->{sample_number}, 
+            $import->{library_name},
+            $import->{library_number}, 
             $import->{status}, 
             ( $import->{instrument_data} ? $import->{instrument_data}->id : 'NA' ),
         );

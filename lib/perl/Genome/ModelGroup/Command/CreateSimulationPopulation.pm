@@ -135,11 +135,11 @@ sub execute {
         my ($bam_name, $path, $bam_suffix) = fileparse($bam, ".bam");
         my $sample_name = "TEST-$mg_name-$bam_name";
         my $sample = Genome::Sample->get_or_create(name=>"$sample_name"); 
-        my $import_cmd = Genome::InstrumentData::Command::Import::Bam->create(
-            target_region=> 'none',
-            original_data_path=> $bam,
-            sample => $sample_name,
-            create_library=>1,
+        my $import_cmd = Genome::InstrumentData::Command::Import::Basic->create(
+            source_files => [$bam],
+            library => Genome::Library->create(name => $sample->name.'-extlibs', sample => $sample),
+            import_source_name => 'TGI',
+            instrument_data_properties => ['target_region=none'],
         );
         eval {
             $import_cmd->execute();

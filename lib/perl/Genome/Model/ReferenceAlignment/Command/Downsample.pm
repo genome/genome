@@ -275,17 +275,15 @@ sub _import_bam {
     my $library = $self->get_or_create_library($sample);
 
     my %params = (
-        original_data_path => $filename,
-        sample => $sample->id,
-        create_library => 1,
+        source_files => [$filename],
+        library => $library,
         import_source_name => 'TGI',
         description => "Downsampled bam, ratio=".$downsample_ratio,
-        reference_sequence_build_id => $model->reference_sequence_build_id,
-        library => $library->id,
+        instrument_data_properties => ['reference_sequence_build_id='.$model->reference_sequence_build_id],
     );
     $params{target_region} = $model->target_region_set_name || "none";
 
-    my $import_cmd = Genome::InstrumentData::Command::Import::Bam->execute(
+    my $import_cmd = Genome::InstrumentData::Command::Import::Basic->execute(
         %params,
     );
     unless($import_cmd){

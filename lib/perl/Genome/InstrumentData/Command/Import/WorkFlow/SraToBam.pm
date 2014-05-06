@@ -19,6 +19,10 @@ class Genome::InstrumentData::Command::Import::WorkFlow::SraToBam {
             is => 'Text',
             doc => 'Path of the SRA.',
         },
+        library => {
+            is => 'Genome::Library',
+            doc => 'The library name to use and then derive the read group name.',
+        },
     ],
     has_output => [
         bam_path => {
@@ -108,7 +112,8 @@ sub _dump_bam_from_sra {
         if ( -s $unaligned_fastq ) {
             $self->debug_message('Convert unaligned fastq to bam...');
             my $unaligned_bam = $unaligned_fastq.'.bam';
-            my $cmd = "gmt picard fastq-to-sam --fastq $unaligned_fastq --output $unaligned_bam --quality-format Standard --sample-name ".$self->sample->name;
+            my $sample_name = $self->library->sample->name;
+            my $cmd = "gmt picard fastq-to-sam --fastq $unaligned_fastq --output $unaligned_bam --quality-format Standard --sample-name $sample_name";
             my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
             if ( not $rv or not -s $unaligned_bam ) {
                 $self->error_message($@) if $@;

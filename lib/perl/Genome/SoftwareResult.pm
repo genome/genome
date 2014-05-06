@@ -651,7 +651,8 @@ sub _auto_unarchive {
     $self->status_message('Result %s is archived... unarchiving now.', $self->id);
 
     my $user = Genome::Sys->current_user;
-    my $reason = sprintf('Automatically unarchiving due to get_with_lock() or get_or_create() request for software result %s run by %s', $self->id, $user);
+    my ($package, undef, $line) = caller;
+    my $reason = sprintf('Automatically unarchiving due to request from %s line %s for software result %s run by %s', $package, $line, $self->id, $user);
 
     my $build = $ENV{GENOME_BUILD_ID};
     $reason .= sprintf(' for build %s', $build) if $build;

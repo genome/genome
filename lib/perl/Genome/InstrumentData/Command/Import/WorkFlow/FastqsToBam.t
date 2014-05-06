@@ -24,13 +24,15 @@ for my $source_fastq_base_name ( @source_fastq_base_names ) {
     Genome::Sys->create_symlink($test_dir.'/'.$source_fastq_base_name.'.md5-orig', $source_fastq_path.'.md5-orig');
 }
 
-my $sample = Genome::Sample->__define__(id => -1, name => '__TEST_SAMPLE__');
-ok($sample, 'define sample');
+my $library = Genome::Library->__define__(
+    id => -1, name => '__TEST_SAMPLE__-extlibs', sample => Genome::Sample->__define__(name => '__TEST_SAMPLE__')
+);
+ok($library, 'define library');
 
 my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::FastqsToBam->execute(
     working_directory => $tmp_dir,
     fastq_paths => \@source_fastq_paths,
-    sample => $sample,
+    library => $library,
 );
 ok($cmd->result, 'execute');
 my $bam_path = $cmd->bam_path;

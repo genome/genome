@@ -3,6 +3,7 @@ package Genome::Annotation::EntryProcessor;
 use strict;
 use warnings;
 use Genome;
+use Memoize qw();
 
 class Genome::Annotation::EntryProcessor {
     has => [
@@ -34,8 +35,9 @@ sub interpretations {
     my $entry = shift;
 
     my %interpretations;
+    my $passed_alleles = $self->passed_alleles($entry);
     for my $interpreter ($self->interpreters) {
-        $interpretations{$interpreter->name} = {$interpreter->interpret_entry($entry, [$self->passed_alleles($entry)])};
+        $interpretations{$interpreter->name} = {$interpreter->interpret_entry($entry, $passed_alleles)};
     }
 
     return \%interpretations;
@@ -45,6 +47,7 @@ sub interpreters {
     my $self = shift;
     return map {$_->object} $self->reporter_plan->interpreter_plans;
 }
+Memoize::memoize('interpreters');
 
 sub passed_alleles {
     my $self = shift;
@@ -53,9 +56,10 @@ sub passed_alleles {
     my $filter_results = initialize_filters($entry);
     for my $filter ($self->filters) {
         combine($filter_results, {$filter->filter_entry($entry)});
+        last if(all_zeros($filter_results));
     }
 
-    return grep {$filter_results->{$_} == 1} keys %$filter_results;
+    return [grep {$filter_results->{$_} == 1} keys %$filter_results];
 }
 
 sub filters {
@@ -76,6 +80,7 @@ sub filters {
     }
     return @filters;
 }
+Memoize::memoize('filters');
 
 sub initialize_filters {
     my $entry = shift;
@@ -93,6 +98,16 @@ sub combine {
         $accumulator->{$allele} = $accumulator->{$allele} & $new_result->{$allele};
     }
     return $accumulator;
+}
+
+sub all_zeros {
+    my $filter_results = shift;
+
+    for my $key (keys %$filter_results) {
+        return 0 if $filter_results->{$key};
+    }
+
+    return 1;
 }
 
 1;

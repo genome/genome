@@ -72,7 +72,7 @@ class Genome::Model::ClinSeq::Command::Converge::SnvIndelReport {
         },
         min_reads_per_lib => {
               is => 'Number',
-              default => 0,
+              default => 1,
               doc => 'In per library read counting, the minimum variant supporting reads for a library to be said to support a variant',
         },
         min_tumor_var_supporting_libs => {
@@ -1026,6 +1026,7 @@ sub print_final_files{
 
   #Write out final tsv files (filtered and unfiltered), a clean version with useless columns removed, and an Excel spreadsheet version of the final file
   my $final_unfiltered_tsv = $self->outdir . "$case_name" . "_final_unfiltered.tsv"; #OUT1
+  my $final_unfiltered_clean_tsv = $self->outdir . "$case_name" . "_final_unfiltered_clean.tsv"; #OUT1b
   my $final_filtered_tsv = $self->outdir . "$case_name" . "_final_filtered.tsv"; #OUT2
   my $final_filtered_clean_tsv = $self->outdir . "$case_name" . "_final_filtered_clean.tsv"; #OUT3
   my $final_filtered_coding_clean_tsv = $self->outdir . "$case_name" . "_final_filtered_coding_clean.tsv"; #OUT4
@@ -1034,6 +1035,7 @@ sub print_final_files{
 
   open(ANNO, $grand_anno_count_file) || die $self->error_message("could not open grand anno read counts file: $grand_anno_count_file");
   open(OUT1, ">$final_unfiltered_tsv") || die $self->error_message("could not open output file: $final_unfiltered_tsv");
+  open(OUT1b, ">$final_unfiltered_clean_tsv") || die $self->error_message("could not open output file: $final_unfiltered_clean_tsv");
   open(OUT2, ">$final_filtered_tsv") || die $self->error_message("could not open output file: $final_filtered_tsv");
   open(OUT3, ">$final_filtered_clean_tsv") || die $self->error_message("could not open output file: $final_filtered_clean_tsv");
   open(OUT4, ">$final_filtered_coding_clean_tsv") || die $self->error_message("could not open output file: $final_filtered_coding_clean_tsv");
@@ -1041,6 +1043,7 @@ sub print_final_files{
   #Store the result files paths and pass out to be used in the visualization step
   my %result_files;
   $result_files{final_unfiltered_tsv}{path} = $final_unfiltered_tsv;
+  $result_files{final_unfiltered_clean_tsv}{path} = $final_unfiltered_clean_tsv;
   $result_files{final_filtered_tsv}{path} = $final_filtered_tsv;
   $result_files{final_filtered_clean_tsv}{path} = $final_filtered_clean_tsv;
   $result_files{final_filtered_coding_clean_tsv}{path} = $final_filtered_coding_clean_tsv;
@@ -1059,6 +1062,10 @@ sub print_final_files{
   my %columns;
   while(<ANNO>){
     chomp($_);
+
+    #Remove ugly GMAF=$val from annotation lines to tidy up output
+    $_ =~ s/GMAF\=//g;
+
     my @line = split("\t", $_);
 
     #BAM readcount can give empty cells for sites not counted (e.g. indels that are larger than the max size allowed).  Replace empty cells with 'NA'
@@ -1093,6 +1100,7 @@ sub print_final_files{
       my $include_values_string = join("\t", @include_values);
       my $short_header = "$include_values_string"."\t$header_extension";
       $short_header .= "\t$per_lib_header" if $per_lib_header;
+      print OUT1b "$short_header\n";
       print OUT3 "$short_header\n";
       print OUT4 "$short_header\n";
       next;
@@ -1120,6 +1128,7 @@ sub print_final_files{
     my $short_line = "$include_values_string"."\t$line_extension";
     $short_line .= "\t$per_lib_count_line" if defined($per_lib_count_line);
 
+    print OUT1b "$short_line\n";
     unless ($variants->{$v}->{filtered}){
       print OUT3 "$short_line\n";
     }
@@ -1135,6 +1144,7 @@ sub print_final_files{
   }
   close(ANNO);
   close(OUT1);
+  close(OUT1b);
   close(OUT2);
   close(OUT3);
   close(OUT4);

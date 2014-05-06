@@ -21,8 +21,10 @@ use_ok('Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentDataA
 my $analysis_project = Genome::Config::AnalysisProject->create(name => '__TEST_AP__');
 ok($analysis_project, 'create analysis project');
 
-my $sample = Genome::Sample->create(name => '__TEST_SAMPLE__');
-ok($sample, 'Create sample');
+my $library = Genome::Library->create(
+    name => '__TEST_SAMPLE__-extlibs', sample => Genome::Sample->create(name => '__TEST_SAMPLE__')
+);
+ok($library, 'Create library');
 
 my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'bam-rg-multi/v1');
 my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
@@ -41,7 +43,7 @@ ok($md5, 'load source md5');
 
 # failures
 my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentDataAndCopyBam->create(
-    sample => $sample,
+    library => $library,
     analysis_project => $analysis_project,
     bam_paths => \@bam_paths,
     instrument_data_properties => { },
@@ -103,7 +105,7 @@ for my $instrument_data ( @instrument_data ) {
 
 # recreate
 $cmd = Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentDataAndCopyBam->create(
-    sample => $sample,
+    library => $library,
     analysis_project => $analysis_project,
     bam_paths => \@bam_paths,
     instrument_data_properties => {
