@@ -616,7 +616,7 @@ sub snvCounts {
     for my $allele ($lib->alleles) {
         # assume that the ref call is ACTG, not iub
         # (assumption looks valid in my files)
-        my $ucallele = uc($allele) #bam-readcount can return lowercase alleles, we always hash them uc
+        my $ucallele = uc($allele); #bam-readcount can return lowercase alleles, we always hash them uc
         if ($ucallele eq $knownRef){
             $ref_count += $lib->metrics_for($allele)->count;
             next;
