@@ -179,7 +179,7 @@ sub _generate_aligner_index_creation_operations {
     my $workflow_operations = {};
     while(my ($aligner, $versions) = each %aligners) {
         my $alignment_result_class = 'Genome::InstrumentData::AlignmentResult::' . Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name($aligner);
-        next unless $alignment_result_class && $alignment_result_class->can('prepare_reference_sequence_index');
+        next unless $alignment_result_class and ($alignment_result_class->can('prepare_reference_sequence_index') or $alignment_result_class->can('prepare_annotation_index'));
 
         while(my ($version, $references) = each %$versions) {
             while(my ($reference, $annotations) = each %$references) {
@@ -220,6 +220,11 @@ sub _generate_aligner_index_creation_step {
             command_class_name => 'Genome::Model::ReferenceSequence::Command::CreateAlignerIndex',
         ),
     );
+
+    #overwrite lsf_resource for star alinger
+    if ($aligner eq 'star') {
+        $operation->operation_type->lsf_resource("-R \'select[ncpus>=12 && mem>=48000] span[hosts=1] rusage[mem=48000]\' -M 48000000 -n 12");
+    }
 
     return {
         operation => $operation,

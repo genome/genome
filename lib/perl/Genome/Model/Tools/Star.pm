@@ -23,7 +23,7 @@ class Genome::Model::Tools::Star {
 
 
 my %STAR_VERSIONS = (
-    '2.3.1z1' => '/gscmnt/sata820/info/apipe/fdu/star/STAR_2.3.1z1/STAR',
+    '2.3.1z1' => '/usr/bin/star2.3.1z1/STAR',
 );
 
 sub help_brief {

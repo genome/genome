@@ -19,6 +19,7 @@ class Genome::InstrumentData::AlignmentResult::Star {
 
 sub required_arch_os { 'x86_64' }
 
+
 sub required_rusage {
     my $mem_mb = 32000;
     my $mem_kb = $mem_mb*1024;
@@ -47,7 +48,7 @@ sub _run_aligner {
     my $scratch_directory = $self->temp_scratch_directory;
     my $staging_directory = $self->temp_staging_directory;
 
-    my %aligner_params = $self->decomposed_aligner_params;
+    my %aligner_params = decomposed_aligner_params($aligner_params);
     my $index_params   = $aligner_params{index_params};
     my $align_params   = $aligner_params{align_params};
 
@@ -57,13 +58,17 @@ sub _run_aligner {
     }
 
     #prepare reference sequence genome index file under directory
-    my $annotate_index = Genome::Model::Build::ReferenceSequence::AnnotationIndex->get_or_create(
+    my $annotate_index = Genome::Model::Build::ReferenceSequence::AnnotationIndex->get(
         aligner_name     => $self->aligner_name,
         aligner_version  => $aligner_version,
-        aligner_params   => $index_params,
+        aligner_params   => $aligner_params,
         reference_build  => $reference_build,
         annotation_build => $annotation_build,
     );
+
+    unless ($annotate_index) {
+        die $self->error_message('Failed to get annotation index for star run');
+    }
 
     my $index_dir = $annotate_index->output_dir;
     my $star_path = Genome::Model::Tools::Star->path_for_star_version($self->aligner_version);
@@ -73,7 +78,7 @@ sub _run_aligner {
         $align_params .= '--runThreadN '. $CPUS;
     }
 
-    my $cmd = "$star_path --genomeDir $index_dir --readFilesIn $input_fastq_files --outFileNamePrefix $scratch_directory $align_params";
+    my $cmd = "$star_path --genomeDir $index_dir --readFilesIn $input_fastq_files --outFileNamePrefix $scratch_directory/ --outSAMunmapped Within $align_params";
     my $out_sam_file = "$scratch_directory/Aligned.out.sam";
 
     Genome::Sys->shellcmd(
@@ -97,8 +102,8 @@ sub _run_aligner {
       die $self->error_message;
     }
 
-    #promote other misc tophat result files - converted sam will be handled downstream
-    map{Genome::Sys->move_file("$scratch_directory/$_", "$staging_directory/$_")}qw(align.err SJ.out.tab Log.progress.out Log.out Log.final.out align.out);
+    #promote other misc result files - converted sam will be handled downstream
+    map{Genome::Sys->move_file("$scratch_directory/$_", "$staging_directory/$_")}qw(SJ.out.tab Log.progress.out Log.out Log.final.out);
 
     return 1;
 }
@@ -110,7 +115,9 @@ sub prepare_annotation_index {
     my $ref_build   = $annot_index->reference_build;
     my $annot_build = $annot_index->annotation_build;
     my $out_dir     = $annot_index->temp_staging_directory;
-    my $params      = $annot_index->aligner_params;
+
+    my %aliger_params = __PACKAGE__->decomposed_aligner_params($annot_index->aligner_params);
+    my $params = $aliger_params{index_params};
 
     my $ref_seq_fasta = $ref_build->full_consensus_path('fa');
     my $gtf_file      = $annot_build->annotation_file('gtf', $ref_build->id);
@@ -142,9 +149,28 @@ sub prepare_annotation_index {
     return 1;
 }
 
+sub _check_read_count {
+    my $self = shift;
+    
+    my $fq_rd_ct = $self->_fastq_read_count;
+    my $sam_path = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
+
+    my $cmd = "$sam_path view -F 256 -c " . $self->temp_staging_directory . "/all_sequences.bam";
+    my $bam_read_count = `$cmd`;
+    my $check = "Read count from bam: $bam_read_count and fastq: $fq_rd_ct";
+
+    unless ($fq_rd_ct == $bam_read_count) {
+        $self->error_message("$check does not match.");
+        return;
+    }
+    $self->debug_message("$check matches.");
+    return 1;
+}
+
+
 sub decomposed_aligner_params {
-    my $self   = shift;
-    my $params = $self->aligner_params || '::';
+    my $params = pop;
+    $params ||= '::';
 
     my @params = split /\:/, $params;
 
