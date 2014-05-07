@@ -1,7 +1,0 @@
-#!/usr/bin/make -f
-
-%:
-	PATH="/bin:/usr/bin:/sbin:/usr/sbin"; \
-	dh $@
-
-override_dh_auto_test:

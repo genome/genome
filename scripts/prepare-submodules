@@ -1,6 +1,0 @@
-#!/bin/bash
-set -o errexit
-for submodule in $@; do
-    git submodule update --init $submodule
-    cd $submodule && git reset --hard HEAD && git clean -xdf && cd -
-done

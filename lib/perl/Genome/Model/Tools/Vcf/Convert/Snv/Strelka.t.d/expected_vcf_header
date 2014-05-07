@@ -1,8 +1,0 @@
-##reference=TEST_PUBLIC_REFERENCE
-##phasing=none
-##Original Strelka header follows:
-##INFO=<ID=SOMATIC,Number=0,Type=Flag,Description="Somatic mutation">
-##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Total Read Depth">
-##FILTER=<ID=QSS_ref,Description="Normal sample is not homozygous ref or ssnv Q-score < 15, ie calls with NT!=ref or QSS_NT < 15">
-##maxDepth_1=99.5459319379273
-#TEST_COLUMN_HEADING_1	TEST_COLUMN_HEADING_2	TEST_COLUMN_HEADING_3

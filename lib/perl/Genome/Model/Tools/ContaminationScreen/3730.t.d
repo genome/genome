@@ -1,1 +1,0 @@
-../../../../../../test-data-relocate-me/lib--perl--Genome--Model--Tools--ContaminationScreen--3730.t.d
