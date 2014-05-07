@@ -768,7 +768,7 @@ sub _generate_refinement_operations {
         }
     }
 
-    if (defined (@refiners)) {
+    if (scalar(@refiners) > 0) {
         $self->refiners(\@refiners);
         $self->first_refiner($refiners[0]);
         $self->last_refiner($refiners[$#refiners]);
