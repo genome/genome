@@ -15,7 +15,7 @@ my $pkg = 'Genome::Model::Tools::CopyNumber::Cnmops';
 use_ok($pkg);
 
 #Define the test where expected results are stored
-my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "Genome-Model-Tools-CopyNumber-Cnmops/2014-05-04/";
+my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "Genome-Model-Tools-CopyNumber-Cnmops/2014-05-06/";
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 my $temp_dir = Genome::Sys->create_temp_directory();
@@ -45,10 +45,12 @@ subtest "execute" => sub {
     my $diff_line_count = scalar(@diff);
     print "\n\nFound $diff_line_count differing lines. Use --dump_results if you'd like to keep the results.\n\n";
   };
-  if($ARGV[0] eq "--dump_results") {
-    Genome::Sys->shellcmd(cmd => "rm -fr /tmp/last-run-gmt-copynumber-cnmops/");
-    Genome::Sys->shellcmd(cmd => "mv $temp_dir /tmp/last-run-gmt-copynumber-cnmops/");
-    Genome::Sys->status_message("stored last results in /tmp/last-run-gmt-copynumber-cnmops/");
+  if(defined $ARGV[0]) {
+    if($ARGV[0] eq "--dump-results") {
+      Genome::Sys->shellcmd(cmd => "rm -fr /tmp/last-run-gmt-copynumber-cnmops/");
+      Genome::Sys->shellcmd(cmd => "mv $temp_dir /tmp/last-run-gmt-copynumber-cnmops/");
+      Genome::Sys->status_message("stored last results in /tmp/last-run-gmt-copynumber-cnmops/");
+    }
   }
 };
 
