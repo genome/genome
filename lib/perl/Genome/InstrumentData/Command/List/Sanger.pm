@@ -1,14 +1,9 @@
 package Genome::InstrumentData::Command::List::Sanger;
 
-#REVIEW fdu 11/20/2009
-#OK
-
 use strict;
 use warnings;
 
 use Genome;
-use Command; 
-use Data::Dumper;
 
 class Genome::InstrumentData::Command::List::Sanger {
     is => 'Genome::Object::Command::List',
@@ -29,10 +24,10 @@ sub create {
     my $self = $class->SUPER::create(@_);
 
     unless (defined($self->filter())) {
-        $self->error_message("You must provide a --filter option when listing sanger instrument data");  
+        $self->error_message("You must provide a --filter option when listing sanger instrument data");
         return;
     }
-   
+
     return $self;
 
 }
@@ -43,5 +38,3 @@ sub _base_filter {
 
 1;
 
-#$HeadURL: /gscpan/perl_modules/trunk/Genome/InstrumentData/Command/List.pm $
-#$Id: /gscpan/perl_modules/trunk/Genome/InstrumentData/Command/List.pm 41086 2008-11-17T19:51:31.012449Z ebelter  $

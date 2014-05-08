@@ -19,15 +19,15 @@ subtest 'setup test builds' => sub {
     ok($example_build, 'example build') or die;
     ok($example_build->get_or_create_data_directory, 'resolved data dir');
 
-    is(        $build->the_master_event->event_status('Succeeded'), 'Succeeded', 'build is succeeded');
-    is($example_build->the_master_event->event_status('Succeeded'), 'Succeeded', 'example_build is succeeded');
+    is(        $build->status('Succeeded'), 'Succeeded', 'build is succeeded');
+    is($example_build->status('Succeeded'), 'Succeeded', 'example_build is succeeded');
 
     my $time = time();
     my $date_template = UR::Context->date_template;
     my $older_date    = Date::Format::time2str($date_template, $time - 60);
     my $newer_date    = Date::Format::time2str($date_template, $time + 60);
-    ok(        $build->the_master_event->date_completed($older_date), 'set build date_completed');
-    ok($example_build->the_master_event->date_completed($newer_date), 'set example_build date_completed');
+    ok(        $build->date_completed($older_date), 'set build date_completed');
+    ok($example_build->date_completed($newer_date), 'set example_build date_completed');
 };
 
 my $model = $example_build->model;

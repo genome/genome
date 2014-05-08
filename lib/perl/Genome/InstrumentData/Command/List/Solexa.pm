@@ -1,17 +1,9 @@
 package Genome::InstrumentData::Command::List::Solexa;
 
-#REVIEW fdu 11/20/2009
-#Filter property should be forced to use like that in
-#G::I::C::L::Sanger to avoid long endless useless stdout list,
-#especially with growing amount of solexa data stored. User should
-#never be allowed to run this command without --filter option
-
 use strict;
 use warnings;
 
 use Genome;
-use Command; 
-use Data::Dumper;
 
 class Genome::InstrumentData::Command::List::Solexa {
     is => 'Genome::Object::Command::List',

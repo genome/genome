@@ -114,8 +114,8 @@ sub _create_test_build {
         get_indels_vcf => $indel_vcf,
         reference_sequence_build => $reference_sequence_build,
     );
-    $build->the_master_event->event_status('Succeeded');
-    $build->the_master_event->date_completed("2013-07-11 20:47:51");
+    $build->status('Succeeded');
+    $build->date_completed("2013-07-11 20:47:51");
     return $build;
 }
 

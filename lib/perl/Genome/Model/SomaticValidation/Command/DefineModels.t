@@ -204,12 +204,7 @@ sub setup_somatic_variation_models {
             data_directory => $temp_build_data_dir,
             tumor_build => $test_build_two,
             normal_build => $test_build,
-        );
-        my $e = Genome::Model::Event::Build->__define__(
-            build_id => $somvar_build->id,
-            event_type => 'genome model build',
-            event_status => 'Succeeded',
-            model_id => $somvar_model->id,
+            status => 'Succeeded',
             date_completed => '1999-01-01 15:19:01',
         );
 

@@ -51,7 +51,6 @@ sub execute {
     my @builds = Genome::Model::Build->get(
         model_id => [map($_->id, @models)],
         %failed_build_params,
-        -hint => ['the_master_event'],
     );
 
     my $synchronous = ($self->auto and $self->auto_batch_size);  # whether we should start builds as we go or wait until the end

@@ -139,7 +139,7 @@ sub create_builds {
             my $build = Genome::Model::Build::Test->create(
                 model => $model,
             );
-            $build->the_master_event->event_status('Succeeded');
+            $build->status('Succeeded');
             push @builds, $build;
             ok($build, "created test build $i for model " . $model->id) or die;
         }

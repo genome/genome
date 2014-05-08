@@ -207,14 +207,14 @@ is_equal_set(\@model_builds, \@builds, 'model builds');
 # Fix the date_scheduled on the builds because completed_builds sorts by it
 my $time = time();
 my @timestamps = map { Date::Format::time2str(UR::Context->date_template, $time + $_) } (3, 5, 7, 9);
-$builds[0]->the_master_event->date_scheduled($timestamps[0]);
-$builds[1]->the_master_event->date_scheduled($timestamps[1]);
+$builds[0]->date_scheduled($timestamps[0]);
+$builds[1]->date_scheduled($timestamps[1]);
 
 # one succeeded, one running
-$builds[0]->the_master_event->event_status('Succeeded');
-$builds[0]->the_master_event->date_completed($timestamps[2]);
+$builds[0]->status('Succeeded');
+$builds[0]->date_completed($timestamps[2]);
 is($builds[0]->status, 'Succeeded', 'build 0 is succeeded');
-$builds[1]->the_master_event->event_status('Running');
+$builds[1]->status('Running');
 is($builds[1]->status, 'Running', 'build 1 is running');
 
 my @completed_builds = $model->completed_builds;
@@ -231,8 +231,8 @@ my @running_builds = $model->running_builds;
 is_deeply(\@running_builds, [$builds[1]], 'running builds');
 
 # both succeeded
-$builds[1]->the_master_event->event_status('Succeeded');
-$builds[1]->the_master_event->date_completed($timestamps[3]);
+$builds[1]->status('Succeeded');
+$builds[1]->date_completed($timestamps[3]);
 is($builds[1]->status, 'Succeeded', 'build 1 is now succeeded');
 
 @completed_builds = $model->completed_builds;

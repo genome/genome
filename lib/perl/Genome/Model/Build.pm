@@ -22,7 +22,7 @@ use Genome::Sys::LSF::bsub qw();
 use Genome::Utility::Email;
 
 class Genome::Model::Build {
-    is => ['Genome::Notable','Genome::Searchable'],
+    is => ['Genome::Notable','Genome::Searchable', 'Genome::Utility::ObjectWithTimestamps', 'Genome::Utility::ObjectWithCreatedBy'],
     type_name => 'genome model build',
     table_name => 'model.build',
     is_abstract => 1,
@@ -65,10 +65,10 @@ class Genome::Model::Build {
         type_name               => { via => 'model', is => 'Text' },
         subject                 => { via => 'model', is => 'Genome::Subject' },
         processing_profile      => { via => 'model', is => 'Genome::ProcessingProfile' },
-        run_by                  => { via => 'creation_event', to => 'user_name' },
-        status                  => { via => 'creation_event', to => 'event_status', is_mutable => 1 },
-        date_scheduled          => { via => 'creation_event', to => 'date_scheduled', },
-        date_completed          => { via => 'creation_event', to => 'date_completed' },
+        run_by                  => { is => 'Text', doc => "the user whose build is run" },
+        status                  => { is => 'Text', doc => "the current status of the build" },
+        date_scheduled          => { is => 'Timestamp', is_optional => 1, doc => "when the build was originally scheduled" },
+        date_completed          => { is => 'Timestamp', is_optional => 1, doc => "when the build has finally completed" },
 
         # this is the one event type we tentatively intended to keep for builds
         # even fully workflowified, it is possibly still a candidate for retention, logging things like input changes, etc.
@@ -364,6 +364,8 @@ sub create {
         }
 
         # Create master event, which stores status/user/date created, etc
+        $self->status('New');
+        $self->run_by(Genome::Sys->username);
         unless ($self->_create_master_event) {
             Carp::confess "Could not create master event for new build of model " . $self->model->__display_name__;
         }
@@ -1002,7 +1004,7 @@ sub start {
         }
 
         # Record that the event has been scheduled.
-        $self->the_master_event->schedule;
+        $self->schedule;
 
         # Creates a workflow for the build
         # TODO Initialize workflow shouldn't take arguments
@@ -1026,12 +1028,24 @@ sub start {
             header_text => 'Unstartable',
             body_text => "Could not start build, reason: $error",
         );
-        $self->the_master_event->event_status('Unstartable');
+        $self->status('Unstartable');
         $self->error_message("Could not start build " . $self->__display_name__ . ", reason: $error");
         return;
     }
 
     return 1;
+}
+
+sub schedule {
+    my $self = shift;
+
+    $self->status("Scheduled");
+    $self->date_scheduled( UR::Context->current->now );
+    $self->date_completed(undef);
+
+    if($self->the_master_event) {
+        $self->the_master_event->schedule;
+    }
 }
 
 sub post_allocation_initialization {
@@ -1576,6 +1590,7 @@ sub fail {
     for my $e ($self->the_events(event_status => 'Running')) {
         $e->event_status('Failed');
     }
+    $self->status('Failed');
 
     $self->generate_send_and_save_report(
         'Genome::Model::Report::BuildFailed', {
@@ -1640,7 +1655,7 @@ sub success {
 
     my $commit_callback;
     $commit_callback = sub {
-        $self->the_master_event->cancel_change_subscription('commit', $commit_callback); #only fire once
+        $self->cancel_change_subscription('commit', $commit_callback); #only fire once
         $self->debug_message('Firing build success commit callback.');
         my $result = eval {
             Genome::Search->queue_for_update($self->model);
@@ -1660,7 +1675,7 @@ sub success {
 
     #The build itself has no __changes__ and UR::Context->commit() will not trigger the subscription if on that object, so
     #use the master build event which has just been updated to 'Succeeded' with the current time.
-    $self->the_master_event->create_subscription(
+    $self->create_subscription(
         method => 'commit',
         callback => $commit_callback,
     );
@@ -1683,28 +1698,26 @@ sub perform_post_success_actions {
 sub _verify_build_is_not_abandoned_and_set_status_to {
     my ($self, $status, $set_date_completed) = @_;
 
-    my $build_event = $self->build_event;
-    # Do we have a master event?
-    unless ( $build_event ) {
-        $self->error_message(
-            'Cannot set build ('.$self->id.") status to '$status' because it does not have a master event."
-        );
-        return;
-    }
-
     # Is it abandoned?
-    if ( $build_event->event_status eq 'Abandoned' ) {
+    if($self->status eq 'Abandoned') {
         $self->error_message(
-            'Cannot set build ('.$self->id.") status to '$status' because the master event has been abandoned."
+            'Cannot set build ('.$self->id.") status to '$status' because it has been abandoned."
         );
         return;
     }
 
-    # Set status and date completed
-    $build_event->event_status($status);
-    $build_event->date_completed( UR::Context->current->now ) if $set_date_completed;
+    my $build_event = $self->build_event;
+    my $completion_date = UR::Context->current->now;
+    if($build_event) {
+        # Set status and date completed
+        $build_event->event_status($status);
+        $build_event->date_completed( $completion_date ) if $set_date_completed;
+    }
 
-    return $build_event;
+    $self->status($status);
+    $self->date_completed( $completion_date ) if $set_date_completed;
+
+    return $self;
 }
 
 
@@ -1721,6 +1734,8 @@ sub abandon {
     if ($status && ($status eq 'Running' || $status eq 'Scheduled')) {
         $self->stop;
     }
+
+    $self->status('Abandoned');
 
     # Abandon events
     $self->_abandon_events
