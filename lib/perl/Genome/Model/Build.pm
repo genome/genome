@@ -373,7 +373,8 @@ sub create {
     };
 
     if ($@) {
-        $self->error_message("Could not create new build of model " . $self->__display_name__ . ", reason: $@");
+        my $error = $@;
+        $self->error_message("Could not create new build of model " . $self->__display_name__ . ", reason: $error");
         $self->delete;
         return;
     }
