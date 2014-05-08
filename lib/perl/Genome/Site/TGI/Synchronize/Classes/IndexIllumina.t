@@ -22,7 +22,7 @@ is($lims_class->genome_class_for_comparison, $expected_genome_class, 'genome cla
 is($lims_class->genome_class_for_create, $expected_genome_class, 'genome class for create');
 
 my %properties = (# real example
-    id          => 2893678323,
+    id          => Genome::InstrumentData->__meta__->autogenerate_new_object_id(),
     library_id  => 2893602880,
     run_name    => '131015_HWI-ST489_143184634_AC2LPUACXX',
     adaptor_path    => '/gscmnt/sata114/info/medseq/adaptor_sequences/solexa_adaptor_pcr_primer',
