@@ -1,5 +1,4 @@
 package Genome::Env::GENOME_SITE;
-our $default_value = undef;  
 
 =pod
 

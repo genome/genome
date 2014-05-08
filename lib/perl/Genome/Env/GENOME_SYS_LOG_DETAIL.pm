@@ -1,5 +1,4 @@
 package Genome::Env::GENOME_SYS_LOG_DETAIL;
-our $default_value = undef;
 
 =pod
 
