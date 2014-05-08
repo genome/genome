@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Carp qw(croak);
-use List::MoreUtils qw(any);
+use List::MoreUtils qw(any uniq);
 
 sub validate {
     my $class = shift;
@@ -30,7 +30,12 @@ sub is_genome_disk_group {
 }
 
 sub genome_disk_group_names {
-    return (
+    return uniq (
+        # hard-coded for now because config is in a mess
+        'cle_alignments',
+        'cle_genome_models',
+        'info_genome_models',
+        'info_alignments',
         $ENV{GENOME_DISK_GROUP_DEV},
         $ENV{GENOME_DISK_GROUP_REFERENCES},
         $ENV{GENOME_DISK_GROUP_ALIGNMENTS},
