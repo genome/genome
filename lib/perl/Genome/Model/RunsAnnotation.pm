@@ -3,6 +3,7 @@ package Genome::Model::RunsAnnotation;
 use strict;
 use warnings FATAL => 'all';
 use Genome;
+use Genome::Annotation::Dag qw(generate_dag);
 use File::Basename qw(dirname);
 use File::Slurp qw(write_file);
 
@@ -67,11 +68,8 @@ sub _connect_annotation_workflow {
     my ($self, $dag, $variant_type) = @_;
 
     if ($self->annotation_plan_name($variant_type)) {
-        my $cmd = Genome::Annotation::MasterCommand->create(
-            plan => $self->annotation_plan($variant_type),
-            variant_type => $variant_type,
-        );
-        my $annotation_dag = $cmd->dag();
+        my $annotation_dag = generate_dag($self->annotation_plan($variant_type),
+            $variant_type);
 
         $dag->add_operation($annotation_dag);
 
