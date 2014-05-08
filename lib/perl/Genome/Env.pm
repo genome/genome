@@ -40,8 +40,10 @@ sub check_genome_variables {
 sub set_default_values {
     my @valid = allowed_modules();
     for my $module (@valid) {
-        if ($module->can('default_value')) {
-            my $name = NAME($module);
+        my $name = NAME($module);
+        if ($module->can('default_value')
+            && !defined($ENV{$name})
+        ) {
             $ENV{$name} = $module->default_value;
         }
     }

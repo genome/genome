@@ -10,29 +10,53 @@ require Genome::Env;
 subtest 'set_default_values' => sub {
     plan tests => 4;
 
-    no warnings 'once', 'redefine';
-
-    local $ENV{GENOME_WITH_DEFAULT};
-    local $ENV{GENOME_WITHOUT_DEFAULT};
-
-    local *Genome::Env::allowed_modules = sub {
-        return (
-            'Genome::Env::GENOME_WITH_DEFAULT',
-            'Genome::Env::GENOME_WITHOUT_DEFAULT',
-        );
+    subtest 'set env without default' => sub {
+        plan tests => 2;
+        no warnings 'once', 'redefine';
+        my $var = 'GENOME_WITHOUT_DEFAULT';
+        local $ENV{$var} = '42';
+        local *Genome::Env::allowed_modules = sub { 'Genome::Env::' . $var };
+        is($ENV{$var}, 42, 'env var is set before calling set_default_values');
+        Genome::Env::set_default_values();
+        is($ENV{$var}, 42, 'env var is still set after calling set_default_values');
     };
 
-    local *Genome::Env::GENOME_WITH_DEFAULT::default_value = sub {
-        return 42;
+    subtest 'set env with default' => sub {
+        plan tests => 2;
+        no warnings 'once', 'redefine';
+        my $var = 'GENOME_WITH_DEFAULT';
+        local $ENV{$var} = 42;
+        local *Genome::Env::allowed_modules = sub { 'Genome::Env::' . $var };
+        no strict 'refs';
+        local *{"Genome::Env::${var}::default_value"} = sub { 2 * $ENV{$var} };
+        is($ENV{$var}, 42, 'env var is set before calling set_default_values');
+        Genome::Env::set_default_values();
+        is($ENV{$var}, 42, 'env var is still set after calling set_default_values');
     };
 
-    ok(!defined $ENV{GENOME_WITHOUT_DEFAULT}, 'GENOME_WITHOUT_DEFAULT is not set');
-    ok(!defined $ENV{GENOME_WITH_DEFAULT}, 'GENOME_WITH_DEFAULT is not set');
+    subtest 'unset env without default' => sub {
+        plan tests => 2;
+        no warnings 'once', 'redefine';
+        my $var = 'GENOME_WITHOUT_DEFAULT';
+        local $ENV{$var};
+        local *Genome::Env::allowed_modules = sub { 'Genome::Env::' . $var };
+        ok(!defined($ENV{$var}), 'env var is not set before calling set_default_values');
+        Genome::Env::set_default_values();
+        ok(!defined($ENV{$var}), 'env var is not set after calling set_default_values');
+    };
 
-    Genome::Env::set_default_values();
-
-    is($ENV{GENOME_WITH_DEFAULT}, 42, 'GENOME_WITH_DEFAULT got set');
-    ok(!defined $ENV{GENOME_WITHOUT_DEFAULT}, 'GENOME_WITHOUT_DEFAULT is not set');
+    subtest 'unset env with default' => sub {
+        plan tests => 2;
+        no warnings 'once', 'redefine';
+        my $var = 'GENOME_WITH_DEFAULT';
+        local $ENV{$var};
+        local *Genome::Env::allowed_modules = sub { 'Genome::Env::' . $var };
+        no strict 'refs';
+        local *{"Genome::Env::${var}::default_value"} = sub { 42 };
+        ok(!defined($ENV{$var}), 'env var is not set before calling set_default_values');
+        Genome::Env::set_default_values();
+        is($ENV{$var}, 42, 'env var is set after calling set_default_values');
+    };
 };
 
 subtest 'check_genome_variables' => sub {
