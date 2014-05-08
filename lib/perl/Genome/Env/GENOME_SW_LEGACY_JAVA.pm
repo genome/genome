@@ -1,5 +1,5 @@
 package Genome::Env::GENOME_SW_LEGACY_JAVA;
-our $default_value = '/var/lib/genome/legacy-java';
+sub default_value { '/var/lib/genome/legacy-java' }
 
 =pod
 

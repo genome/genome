@@ -1,5 +1,4 @@
 package Genome::Env::GENOME_NESSY_SERVER;
-our $default_value = undef; 
 
 =pod
 
