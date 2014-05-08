@@ -14,9 +14,6 @@ class Genome::Annotation::GetInitialVcfResult {
             is => 'Text',
             valid_values => ['snvs', 'indels'],
         },
-        plan_json => {
-            is => 'Text',
-        },
     ],
     has_output => [
         output_result => {

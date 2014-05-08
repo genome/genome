@@ -4,6 +4,7 @@ use strict;
 use warnings FATAL => 'all';
 use Genome;
 use Genome::WorkflowBuilder::DAG;
+use Genome::Utility::List qw(in);
 use Genome::WorkflowBuilder::Command;
 use Params::Validate qw(validate validate_pos :types);
 
@@ -112,11 +113,13 @@ sub connect_to_dag {
 
     $p{dag}->add_operation($p{target});
     for my $name qw(build_id variant_type plan_json) {
-        $p{dag}->connect_input(
-            input_property => $name,
-            destination => $p{target},
-            destination_property => $name,
-        );
+        if (in($name, $p{target}->input_properties)) {
+            $p{dag}->connect_input(
+                input_property => $name,
+                destination => $p{target},
+                destination_property => $name,
+            );
+        }
     }
 }
 

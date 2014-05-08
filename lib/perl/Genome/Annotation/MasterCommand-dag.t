@@ -22,7 +22,7 @@ use_ok($pkg) || die;
 my $build = Genome::Model::Build::SomaticVariation->__define__;
 my $plan = Genome::Annotation::Plan->create_from_file(plan_file());
 
-my $cmd = $pkg->create(build => $build, plan => $plan);
+my $cmd = $pkg->create(variant_type => 'snvs', plan => $plan);
 test_dag_xml($cmd->dag, expected_xml());
 done_testing();
 

@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<operation name="Annotation">
+<operation name="Annotation (snvs)">
   <operationtype typeClass="Workflow::OperationType::Model">
     <inputproperty>build_id</inputproperty>
     <inputproperty>output_directory</inputproperty>
@@ -22,7 +22,6 @@
   <operation name="Get Initial Vcf Result from Build">
     <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::Annotation::GetInitialVcfResult">
       <inputproperty>build_id</inputproperty>
-      <inputproperty>plan_json</inputproperty>
       <inputproperty>variant_type</inputproperty>
       <outputproperty>output_result</outputproperty>
       <outputproperty>result</outputproperty>
@@ -107,7 +106,6 @@
   <link fromOperation="input connector" fromProperty="plan_json" toOperation="Generate Reports" toProperty="plan_json"/>
   <link fromOperation="input connector" fromProperty="variant_type" toOperation="Generate Reports" toProperty="variant_type"/>
   <link fromOperation="input connector" fromProperty="build_id" toOperation="Get Initial Vcf Result from Build" toProperty="build_id"/>
-  <link fromOperation="input connector" fromProperty="plan_json" toOperation="Get Initial Vcf Result from Build" toProperty="plan_json"/>
   <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get Initial Vcf Result from Build" toProperty="variant_type"/>
   <link fromOperation="input connector" fromProperty="build_id" toOperation="expert_one" toProperty="build_id"/>
   <link fromOperation="input connector" fromProperty="plan_json" toOperation="expert_one" toProperty="plan_json"/>
