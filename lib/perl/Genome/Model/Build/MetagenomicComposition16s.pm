@@ -888,7 +888,7 @@ sub calculate_estimated_kb_usage {
     for my $instrument_data ( @instrument_data ) {
         my $sequencing_platform = $instrument_data->sequencing_platform;
         switch ($sequencing_platform) {
-               case '454'    { $est_kb_usage += $instrument_data->read_count * 5 * 1024 }
+               case '454'    { $est_kb_usage += $instrument_data->read_count * 100 }
                case 'sanger' { $est_kb_usage += 30_000 }
                case 'solexa' { $est_kb_usage += 500_000 } # FIXME update once implemented
                else          { Carp::confess('Unknown sequencing platform! '.$sequencing_platform) }
