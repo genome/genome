@@ -3,6 +3,8 @@ package Genome::Annotation::MasterCommand;
 use strict;
 use warnings FATAL => 'all';
 use Genome;
+use Genome::WorkflowBuilder::DAG;
+use Genome::WorkflowBuilder::Command;
 use Params::Validate qw(validate validate_pos :types);
 
 class Genome::Annotation::MasterCommand {

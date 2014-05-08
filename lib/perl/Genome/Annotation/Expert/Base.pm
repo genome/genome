@@ -4,6 +4,8 @@ use strict;
 use warnings FATAL => 'all';
 use Genome;
 use Params::Validate qw(validate_pos validate :types);
+use Genome::WorkflowBuilder::DAG;
+use Genome::WorkflowBuilder::Command;
 
 class Genome::Annotation::Expert::Base {
     is => 'Genome::Annotation::ComponentBase',
