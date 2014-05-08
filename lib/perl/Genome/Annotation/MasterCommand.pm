@@ -45,15 +45,9 @@ sub execute {
         build_id => $self->build->id,
         variant_type => $self->variant_type,
         output_directory => $self->output_directory,
-        initial_vcf_result => $self->initial_vcf_result,
         plan_json => $self->plan->as_json,
     );
     return 1;
-}
-
-sub initial_vcf_result {
-    my $self = shift;
-    return $self->build->get_detailed_vcf_result($self->variant_type);
 }
 
 sub dag {
@@ -69,25 +63,41 @@ sub dag {
     return $dag;
 }
 
+sub connected_initial_operation {
+    my ($self, $dag) = @_;
+
+    my $op = Genome::WorkflowBuilder::Command->create(
+        name => 'Get Initial Vcf Result from Build',
+        command => 'Genome::Annotation::GetInitialVcfResult',
+    );
+    $self->connect_to_dag(
+        dag => $dag,
+        target => $op,
+    );
+    return $op;
+
+}
+
 sub connect_experts {
     my $self = shift;
     my $dag = shift;
 
-    my $last_expert_op;
+    my $last_op = $self->connected_initial_operation($dag);
+
     for my $expert ($self->experts) {
         my $expert_op = $expert->dag;
         $self->connect_to_previous(
             dag => $dag,
-            previous => $last_expert_op,
+            previous => $last_op,
             target => $expert_op,
         );
         $self->connect_to_dag(
             dag => $dag,
             target => $expert_op,
         );
-        $last_expert_op = $expert_op;
+        $last_op = $expert_op;
     }
-    return $last_expert_op;
+    return $last_op;
 }
 
 sub connect_to_dag {
@@ -115,21 +125,12 @@ sub connect_to_previous {
         target => {type => OBJECT},
     });
 
-
-    if (defined $p{previous}) {
-        $p{dag}->create_link(
-            source => $p{previous},
-            source_property => 'output_result',
-            destination => $p{target},
-            destination_property => 'input_result',
-        );
-    } else {
-        $p{dag}->connect_input(
-            input_property => 'initial_vcf_result',
-            destination => $p{target},
-            destination_property => 'input_result',
-        );
-    }
+    $p{dag}->create_link(
+        source => $p{previous},
+        source_property => 'output_result',
+        destination => $p{target},
+        destination_property => 'input_result',
+    );
 }
 
 sub experts {

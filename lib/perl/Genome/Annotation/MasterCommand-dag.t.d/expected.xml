@@ -2,7 +2,6 @@
 <operation name="Annotation">
   <operationtype typeClass="Workflow::OperationType::Model">
     <inputproperty>build_id</inputproperty>
-    <inputproperty>initial_vcf_result</inputproperty>
     <inputproperty>output_directory</inputproperty>
     <inputproperty>plan_json</inputproperty>
     <inputproperty>variant_type</inputproperty>
@@ -18,6 +17,15 @@
       <outputproperty>output_directory</outputproperty>
       <outputproperty>result</outputproperty>
       <outputproperty>variant_type</outputproperty>
+    </operationtype>
+  </operation>
+  <operation name="Get Initial Vcf Result from Build">
+    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::Annotation::GetInitialVcfResult">
+      <inputproperty>build_id</inputproperty>
+      <inputproperty>plan_json</inputproperty>
+      <inputproperty>variant_type</inputproperty>
+      <outputproperty>output_result</outputproperty>
+      <outputproperty>result</outputproperty>
     </operationtype>
   </operation>
   <operation name="expert_one">
@@ -91,14 +99,17 @@
     <link fromOperation="input connector" fromProperty="input_result" toOperation="Run expert_two" toProperty="input_result"/>
   </operation>
   <link fromOperation="Generate Reports" fromProperty="output_directory" toOperation="output connector" toProperty="output_directory"/>
+  <link fromOperation="Get Initial Vcf Result from Build" fromProperty="output_result" toOperation="expert_one" toProperty="input_result"/>
   <link fromOperation="expert_one" fromProperty="output_result" toOperation="expert_two" toProperty="input_result"/>
   <link fromOperation="expert_two" fromProperty="output_result" toOperation="Generate Reports" toProperty="input_result"/>
   <link fromOperation="input connector" fromProperty="build_id" toOperation="Generate Reports" toProperty="build_id"/>
   <link fromOperation="input connector" fromProperty="output_directory" toOperation="Generate Reports" toProperty="output_directory"/>
   <link fromOperation="input connector" fromProperty="plan_json" toOperation="Generate Reports" toProperty="plan_json"/>
   <link fromOperation="input connector" fromProperty="variant_type" toOperation="Generate Reports" toProperty="variant_type"/>
+  <link fromOperation="input connector" fromProperty="build_id" toOperation="Get Initial Vcf Result from Build" toProperty="build_id"/>
+  <link fromOperation="input connector" fromProperty="plan_json" toOperation="Get Initial Vcf Result from Build" toProperty="plan_json"/>
+  <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get Initial Vcf Result from Build" toProperty="variant_type"/>
   <link fromOperation="input connector" fromProperty="build_id" toOperation="expert_one" toProperty="build_id"/>
-  <link fromOperation="input connector" fromProperty="initial_vcf_result" toOperation="expert_one" toProperty="input_result"/>
   <link fromOperation="input connector" fromProperty="plan_json" toOperation="expert_one" toProperty="plan_json"/>
   <link fromOperation="input connector" fromProperty="variant_type" toOperation="expert_one" toProperty="variant_type"/>
   <link fromOperation="input connector" fromProperty="build_id" toOperation="expert_two" toProperty="build_id"/>
