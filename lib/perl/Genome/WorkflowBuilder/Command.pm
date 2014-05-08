@@ -65,8 +65,6 @@ sub input_properties {
     my $self = shift;
     my @result = map {$_->property_name} $self->command->__meta__->properties(
         is_input => 1, is_optional => 0);
-    push @result, grep {!exists $_EXPECTED_ATTRIBUTES{$_}} map {$_->property_name} $self->command->__meta__->properties(
-        is_param => 1, is_optional => 0);
     return sort @result;
 }
 
