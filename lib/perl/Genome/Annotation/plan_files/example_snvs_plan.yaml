@@ -1,0 +1,36 @@
+experts:
+    'bam-readcount':
+        version: 0.5
+        minimum_mapping_quality: 0
+        minimum_base_quality: 0
+        max_count: 10000000
+        per_library: 1
+        insertion_centric: 0
+    vep:
+        ensembl_version: 75
+        feature_list_names_and_tags: {}
+        species: 'homo-sapiens'
+        polyphen: b
+        sift: b
+        terms: ensembl
+        regulatory: 1
+        canonical: 1
+        plugins: []
+        plugins_version: 1
+reporters:
+    simple:
+        filters:
+            'allele-in-genotype':
+                sample_name: tumor
+            'ft-keep':
+                keep_filter_values:
+                    - SnpFilter
+                sample_name: tumor
+            'min-coverage':
+                min_coverage: 10
+                sample_name: tumor
+        interpreters:
+            position: {}
+            vep: {}
+        params:
+            file_name: 'report.1'

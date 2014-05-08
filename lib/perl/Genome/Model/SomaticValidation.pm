@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::SomaticValidation {
-    is  => 'Genome::ModelDeprecated',
+    is  => 'Genome::Model::RunsAnnotation',
     has_param_optional => [
         alignment_strategy => {
             is => 'Text',
@@ -301,7 +301,8 @@ sub _resolve_workflow_for_build {
     my $self = shift;
     my $build = shift;
 
-    my $operation = Workflow::Operation->create_from_xml(__FILE__ . '.xml');
+    my $workflow_xml = $self->workflow_xml_file(__FILE__ . '.xml');
+    my $operation = Workflow::Operation->create_from_xml($workflow_xml);
 
     my $log_directory = $build->log_directory;
     $operation->log_dir($log_directory);
@@ -360,6 +361,7 @@ sub map_workflow_inputs {
         output_plot => (defined $self->output_plot ? $self->output_plot : 1),
         ;
 
+    push @inputs, $self->annotation_related_workflow_inputs($build);
 
     return @inputs;
 }

@@ -12,6 +12,7 @@ class Genome::Annotation::MasterCommand {
     has_input => [
         build => {
             is => 'Genome::Model::Build',
+            is_optional => 1,
         },
         variant_type => {
             is => 'Text',
@@ -20,10 +21,12 @@ class Genome::Annotation::MasterCommand {
         },
         output_directory => {
             is => 'Path',
+            is_optional => 1,
             is_output => 1,
         },
         log_directory => {
             is => 'Path',
+            is_optional => 1,
         },
         plan => {
             is => 'Genome::Annotation::Plan',
@@ -54,7 +57,7 @@ sub dag {
     my $self = shift;
 
     my $dag = Genome::WorkflowBuilder::DAG->create(
-        name => 'Annotation',
+        name => sprintf('Annotation (%s)', $self->variant_type),
     );
 
     my $last_expert_op = $self->connect_experts($dag);
