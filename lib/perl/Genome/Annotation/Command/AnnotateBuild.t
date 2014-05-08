@@ -16,8 +16,9 @@ use File::Basename qw(basename);
 use File::Spec;
 use Genome::Annotation::TestHelpers qw(get_test_somatic_variation_build get_test_dir);
 use Genome::Utility::Test qw(compare_ok);
+use Sub::Install qw(reinstall_sub);
 
-my $pkg = 'Genome::Annotation::MasterCommand';
+my $pkg = 'Genome::Annotation::Command::AnnotateBuild';
 use_ok($pkg);
 
 my $version = 1;
@@ -25,19 +26,29 @@ my $build_version = 1;
 my $test_dir = get_test_dir($pkg, $version);
 
 my $build = get_test_somatic_variation_build(version => $build_version);
-my $plan = Genome::Annotation::Plan->create_from_file(
-    File::Spec->join($test_dir, 'snvs_plan.yaml'),
-);
-$plan->validate();
+my $plan_file = File::Spec->join($test_dir, 'snvs_plan.yaml');
 
 my $output_dir = Genome::Sys->create_temp_directory;
 my $log_dir = Genome::Sys->create_temp_directory;
+
+reinstall_sub( {
+    into => $pkg,
+    as => 'setup_environment',
+    code => sub {
+        local $ENV{UR_DUMP_DEBUG_MESSAGES} = 1;
+        local $ENV{UR_COMMAND_DUMP_DEBUG_MESSAGES} = 1;
+        local $ENV{UR_DUMP_STATUS_MESSAGES} = 1;
+        local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
+        # no WF_USE_FLOW
+    },
+});
+
 my $cmd = $pkg->execute(
     build => $build,
     variant_type => 'snvs',
     output_directory => $output_dir,
     log_directory => $log_dir,
-    plan => $plan
+    plan_file => $plan_file
 );
 
 my $expected_dir = File::Spec->join($test_dir, 'expected');
@@ -51,7 +62,7 @@ sub compare_dir_ok {
     my @got_files = map {basename($_)} glob(File::Spec->join($got_dir, '*'));
     my @expected_files = map {basename($_)} glob(File::Spec->join($expected_dir, '*'));
 
-    cmp_bag(\@got_files, \@expected_files, 'Got all expected files');
+    cmp_bag(\@got_files, \@expected_files, 'Got all expected files') or die;
 
     for my $filename (@got_files) {
         my $got = File::Spec->join($got_dir, $filename);

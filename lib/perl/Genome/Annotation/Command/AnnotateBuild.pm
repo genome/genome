@@ -4,6 +4,7 @@ use strict;
 use warnings FATAL => 'all';
 use Genome;
 use Genome::Annotation::Plan;
+use Genome::Annotation::Dag qw(generate_dag);
 
 class Genome::Annotation::Command::AnnotateBuild {
     is => 'Command::V2',
@@ -44,18 +45,20 @@ sub execute {
     $plan->validate();
     $self->status_message("Plan is valid.");
 
-    local $ENV{UR_DUMP_DEBUG_MESSAGES} = 1;
-    local $ENV{UR_COMMAND_DUMP_DEBUG_MESSAGES} = 1;
-    local $ENV{UR_DUMP_STATUS_MESSAGES} = 1;
-    local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
-    local $ENV{WF_USE_FLOW} = 1;
+    $self->setup_environment;
 
-    Genome::Annotation::MasterCommand->execute(
-        build => $self->build,
+    $self->status_message("Constructing workflow from plan.");
+    my $dag = generate_dag($plan, $self->variant_type);
+
+    Genome::Sys->create_directory($self->log_directory);
+    $dag->log_dir($self->log_directory);
+
+    $self->status_message("Executing workflow.");
+    $dag->execute(
+        build_id => $self->build->id,
         variant_type => $self->variant_type,
         output_directory => $self->output_directory,
-        log_directory => $self->log_directory,
-        plan => $plan,
+        plan_json => $plan->as_json,
     );
 
     $self->status_message("Writing plan file to output_directory (%s)",
@@ -64,6 +67,14 @@ sub execute {
 
     $self->status_message("Annotation complete, reports are located at (%s).",
         $self->output_directory);
+}
+
+sub setup_environment {
+    local $ENV{UR_DUMP_DEBUG_MESSAGES} = 1;
+    local $ENV{UR_COMMAND_DUMP_DEBUG_MESSAGES} = 1;
+    local $ENV{UR_DUMP_STATUS_MESSAGES} = 1;
+    local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
+    local $ENV{WF_USE_FLOW} = 1;
 }
 
 
