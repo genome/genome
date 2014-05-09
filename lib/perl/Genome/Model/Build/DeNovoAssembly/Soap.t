@@ -151,7 +151,7 @@ for my $file_name ( $sx_result->read_processor_output_files ) {
     ok(-l $build->data_directory.'/'.$file_name, 'processed file exists: '.$file);
     my $example_file = $example_build->data_directory.'/'.$file_name;
     is(File::Compare::compare($file, $example_file), 0, 'processed file matches');
-    print Data::Dumper::Dumper($file, $example_file);$DB::single;
+    print Data::Dumper::Dumper($file, $example_file);
 }
 
 # ASSEMBLE - IMPORT RUSAGE/PARAMS
