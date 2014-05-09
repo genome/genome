@@ -10,8 +10,6 @@ use Test::More tests => 1;
 subtest 'create_directory overrides umask' => sub {
     plan tests => 7;
 
-    my $umask = umask;
-
     # setup
     my $td_path = File::Temp->newdir();
     ok(-d $td_path, 'made a temp directory to work in') or abort;
