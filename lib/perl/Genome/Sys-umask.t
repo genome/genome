@@ -20,19 +20,19 @@ eval {
     my $cd_path = File::Spec->join($td_path, 'cd');
     Genome::Sys->create_directory($cd_path);
     ok(-d $cd_path, 'made a subdirectory');
-    ok(group_write($cd_path), 'subdirectory made with Genome::Sys->create_directory has group write permissions');
+    ok(has_group_write($cd_path), 'subdirectory made with Genome::Sys->create_directory has group write permissions');
 
     # verify mkdir, without overrides create_directory has, does not
     my $mkdir_path = File::Spec->join($td_path, 'mkdir');
     mkdir $mkdir_path;
     ok(-d $mkdir_path, 'made a subdirectory');
-    ok(!group_write($mkdir_path), 'subdirectory made with mkdir does not have group write permissions');
+    ok(!has_group_write($mkdir_path), 'subdirectory made with mkdir does not have group write permissions');
 };
 
-sub group_write {
+sub has_group_write {
     my $path = shift;
     my $mode = (stat($path))[2];
     my $perms = S_IMODE($mode);
-    my $group_write = ($perms & S_IWGRP) >> 3;
-    return $group_write;
+    my $has_group_write = ($perms & S_IWGRP) >> 3;
+    return $has_group_write;
 }
