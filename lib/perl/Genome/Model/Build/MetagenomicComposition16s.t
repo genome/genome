@@ -29,5 +29,3 @@ is(@amplicon_sets, 1, 'Amplicon sets');
 is(@amplicon_sets, 1, 'Amplicon sets for processing');
 
 done_testing();
-exit;
-
