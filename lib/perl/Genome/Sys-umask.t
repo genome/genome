@@ -3,6 +3,7 @@ use warnings;
 
 use above "Genome";
 use Fcntl ':mode';
+use File::Spec qw();
 use Genome::Utility::Test qw(abort run_ok);
 
 use Test::More tests => 1;
