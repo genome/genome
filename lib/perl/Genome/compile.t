@@ -72,6 +72,7 @@ sub is_blacklisted {
         qr(lib/perl/Genome/Site/CLIA\.pm$),
         qr(lib/perl/Genome/Site/CLIA\.t$),
         qr(lib/perl/Genome/Site/TGI/Extension/),
+        qr(bin/genome-re.pl), # start re.pl on compile
     );
     return grep { $file =~ /$_/ } @blacklist;
 }
