@@ -63,7 +63,19 @@ sub wgs_cnvhmm_file {
   if(-e $wgs_cnvhmm_file) {
     return $wgs_cnvhmm_file;
   } else {
-    die $self->error_message("unable to find $wgs_cnvhmm_file");
+    $self->warning_message("unable to find $wgs_cnvhmm_file");
+    return 0;
+  }
+}
+
+sub wgs_cnv_wg_plot {
+  my $self = shift;
+  my $wgs_cnv_wg_plot = $self->wgs_cnv_dir . "/Both_AllChrs.jpeg";
+  if(-e $wgs_cnv_wg_plot) {
+    return $wgs_cnv_wg_plot;
+  } else {
+    $self->warning_message("unable to find $wgs_cnv_wg_plot");
+    return 0;
   }
 }
 
@@ -73,7 +85,19 @@ sub exome_cnvs_file{
   if(-e $exome_cnvs_file) {
     return $exome_cnvs_file;
   } else {
-    die $self->error_message("unable to find $exome_cnvs_file");
+    $self->warning_message("unable to find $exome_cnvs_file");
+    return 0;
+  }
+}
+
+sub exome_cnv_wg_plot{
+  my $self = shift;
+  my $exome_cnv_wg_plot = $self->exome_cnv_dir . "/cnmops.segplot_WG.pdf";
+  if(-e $exome_cnv_wg_plot) {
+    return $exome_cnv_wg_plot;
+  } else {
+    $self->warning_message("unable to find $exome_cnv_wg_plot");
+    return 0;
   }
 }
 
@@ -83,7 +107,19 @@ sub microarray_cnvhmm_file {
   if(-e $microarray_cnvhmm_file) {
     return $microarray_cnvhmm_file
   } else {
-    die $self->error_message("unable to find $microarray_cnvhmm_file");
+    $self->warning_message("unable to find $microarray_cnvhmm_file");
+    return 0;
+  }
+}
+
+sub microarray_cnv_wg_plot {
+  my $self = shift;
+  my $microarray_cnv_wg_plot = $self->microarray_cnv_dir . "/CNView_All/Gains_AllChrs.jpeg";
+  if(-e $microarray_cnv_wg_plot) {
+    return $microarray_cnv_wg_plot
+  } else {
+    $self->warning_message("unable to find $microarray_cnv_wg_plot");
+    return 0;
   }
 }
 
