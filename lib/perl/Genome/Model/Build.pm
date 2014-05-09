@@ -12,6 +12,7 @@ use File::Path;
 use File::Find 'find';
 use File::Next;
 use File::Basename qw/ dirname fileparse /;
+use List::MoreUtils qw(uniq);
 use Regexp::Common;
 use Workflow;
 use YAML;
@@ -783,22 +784,11 @@ sub event_allocations {
 
 sub all_results {
     my $self = shift;
-
-    my @users = $self->result_users;
-    my %seen;
-    my @results;
-    while(@users) {
-        my $u = shift @users;
-        my $result = $u->software_result;
-        next if $seen{$result->id}; #already processed
-
-        push @results, $result;
-        push @users, Genome::SoftwareResult::User->get(user_class_name => $result->class, user_id => $result->id);
-        $seen{$result->id}++;
-    }
-
-    return @results;
+    my @results = $self->results;
+    my @ancestors = map { $_->ancestors } @results;
+    return uniq @results, @ancestors;
 }
+
 
 sub symlinked_allocations {
     my $self = shift;
