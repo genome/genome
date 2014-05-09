@@ -28,7 +28,7 @@ class Genome::Model::Detail::RunsAnnotation {
 sub _get_annotation_plan {
     my ($self, $name) = @_;
 
-    my $genome_base_dir = dirname(dirname(__FILE__));
+    my $genome_base_dir = dirname(dirname(dirname(__FILE__)));
     my $search_dir = File::Spec->join($genome_base_dir, 'Annotation', 'plan_files');
     my $plan_file = File::Spec->join($search_dir, $name . '.yaml');
     unless (-f $plan_file) {
