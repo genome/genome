@@ -5,9 +5,11 @@ use above "Genome";
 use Fcntl ':mode';
 use Genome::Utility::Test qw(abort run_ok);
 
-use Test::More tests => 7;
+use Test::More tests => 1;
 
-eval {
+subtest 'create_directory overrides umask' => sub {
+    plan tests => 7;
+
     my $umask = umask;
 
     # setup
