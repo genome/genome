@@ -30,10 +30,15 @@ subtest 'create_directory overrides umask' => sub {
     ok(!has_group_write($mkdir_path), 'subdirectory made with mkdir does not have group write permissions');
 };
 
+sub mode {
+    my $path = shift;
+    my $mode = (stat($path))[2];
+    return S_IMODE($mode);
+}
+
 sub has_bit {
     my ($path, $bit) = @_;
-    my $mode = (stat($path))[2];
-    my $perms = S_IMODE($mode);
+    my $perms = mode($path);
     my $has_bit = ($perms & $bit) >> 3;
     return $has_bit;
 }
