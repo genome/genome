@@ -5,6 +5,7 @@ use warnings FATAL => 'all';
 use Genome;
 use Genome::Annotation::Plan;
 use Genome::Annotation::Dag qw(generate_dag);
+use Memoize qw();
 
 class Genome::Annotation::Command::AnnotateBuild {
     is => 'Command::V2',
@@ -39,34 +40,24 @@ class Genome::Annotation::Command::AnnotateBuild {
 sub execute {
     my $self = shift;
 
-    $self->status_message("Constructing plan from file (%s)", $self->plan_file);
-    my $plan = Genome::Annotation::Plan->create_from_file($self->plan_file);
-    $self->status_message("Validating plan...");
-    $plan->validate();
-    $self->status_message("Plan is valid.");
-
     $self->setup_environment;
 
-    $self->status_message("Constructing workflow from plan.");
-    my $dag = generate_dag($plan, $self->variant_type);
-
-    Genome::Sys->create_directory($self->log_directory);
-    $dag->log_dir($self->log_directory);
-
     $self->status_message("Executing workflow.");
-    $dag->execute(
+    $self->dag->execute(
         build_id => $self->build->id,
         variant_type => $self->variant_type,
         output_directory => $self->output_directory,
-        plan_json => $plan->as_json,
+        plan_json => $self->plan->as_json,
     );
 
     $self->status_message("Writing plan file to output_directory (%s)",
         $self->output_directory);
-    $plan->write_to_file(File::Spec->join($self->output_directory, 'plan.yaml'));
+    $self->plan->write_to_file(File::Spec->join($self->output_directory, 'plan.yaml'));
 
     $self->status_message("Annotation complete, reports are located at (%s).",
         $self->output_directory);
+
+    return 1;
 }
 
 sub setup_environment {
@@ -76,6 +67,32 @@ sub setup_environment {
     local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
     local $ENV{WF_USE_FLOW} = 1;
 }
+
+sub plan {
+    my $self = shift;
+
+    $self->status_message("Constructing plan from file (%s)", $self->plan_file);
+    my $plan = Genome::Annotation::Plan->create_from_file($self->plan_file);
+    $self->status_message("Validating plan...");
+    $plan->validate();
+    $self->status_message("Plan is valid.");
+    return $plan;
+}
+Memoize::memoize('plan');
+
+sub dag {
+    my $self = shift;
+
+    $self->status_message("Constructing workflow from plan.");
+    my $dag = generate_dag($self->plan, $self->variant_type);
+
+    $self->status_message("Setting log-directory to (%s)", $self->log_directory);
+    Genome::Sys->create_directory($self->log_directory);
+    $dag->log_dir($self->log_directory);
+
+    return $dag;
+}
+Memoize::memoize('dag');
 
 
 1;
