@@ -29,10 +29,14 @@ eval {
     ok(!has_group_write($mkdir_path), 'subdirectory made with mkdir does not have group write permissions');
 };
 
-sub has_group_write {
-    my $path = shift;
+sub has_bit {
+    my ($path, $bit) = @_;
     my $mode = (stat($path))[2];
     my $perms = S_IMODE($mode);
-    my $has_group_write = ($perms & S_IWGRP) >> 3;
-    return $has_group_write;
+    my $has_bit = ($perms & $bit) >> 3;
+    return $has_bit;
+}
+
+sub has_group_write {
+    return has_bit(shift, S_IWGRP);
 }
