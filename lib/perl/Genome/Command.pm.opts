@@ -15409,6 +15409,15 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>clin-seq',
+      [
+        'debug!',
+        undef,
+        'version=s',
+        undef,
+        'help!',
+        undef
+      ],
       '>compare-cnv-calls',
       [
         'tp-bed=s',
@@ -15421,6 +15430,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'window-size=s',
         undef,
+        'ROI-file=s',
+        'files',
         'test!',
         undef,
         'help!',
