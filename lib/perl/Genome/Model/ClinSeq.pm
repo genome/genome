@@ -362,11 +362,18 @@ sub map_workflow_inputs {
       push @inputs, clonality_dir => $clonality_dir;
     }
 
-    #RunCnView
-    if ($wgs_build){
+    #Make base-dir for CNV's
+    if ($wgs_build or $exome_build or $self->has_microarray_build()){
       my $cnv_dir = $patient_dir . "/cnv/";
       push @dirs, $cnv_dir;
       push @inputs, cnv_dir => $cnv_dir;
+    }
+
+    #Make base-dir for WGS CNV's
+    if ($wgs_build){
+      my $wgs_cnv_dir = $patient_dir . "/cnv/wgs_cnv";
+      push @dirs, $wgs_cnv_dir;
+      push @inputs, wgs_cnv_dir => $wgs_cnv_dir;
     }
 
     #RunMicroArrayCnView
@@ -898,7 +905,7 @@ sub _resolve_workflow_for_build {
     my $msg = "Use gmt copy-number cn-view to produce copy number tables and images";
     $run_cn_view_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::RunCnView");
     $add_link->($input_connector, 'wgs_build', $run_cn_view_op, 'build');
-    $add_link->($input_connector, 'cnv_dir', $run_cn_view_op, 'outdir');
+    $add_link->($input_connector, 'wgs_cnv_dir', $run_cn_view_op, 'outdir');
     $add_link->($clonality_op, 'cnv_hmm_file', $run_cn_view_op);
     $add_link->($run_cn_view_op, 'result', $output_connector, 'run_cn_view_result');
   }
@@ -944,7 +951,7 @@ sub _resolve_workflow_for_build {
   if ($build->wgs_build){
       my $msg = "Summarize CNV results from WGS somatic variation";
       $summarize_cnvs_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeCnvs");
-      $add_link->($input_connector, 'cnv_dir', $summarize_cnvs_op, 'outdir');
+      $add_link->($input_connector, 'wgs_cnv_dir', $summarize_cnvs_op, 'outdir');
       $add_link->($input_connector, 'wgs_build', $summarize_cnvs_op, 'build');
       $add_link->($clonality_op, 'cnv_hmm_file', $summarize_cnvs_op);
       $add_link->($run_cn_view_op, 'gene_amp_file', $summarize_cnvs_op);

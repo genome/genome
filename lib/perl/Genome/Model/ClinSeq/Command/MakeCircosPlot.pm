@@ -111,7 +111,7 @@ sub execute {
 	    Genome::Sys->copy_file($self->cnv_hmm_file , "$output_directory/raw/cnaseq.cnvhmm");
 	}
 	###Deletions and focal amplifications gene files
-	Genome::Sys->copy_file("$dataDir/cnv/cnview/cnv.All_genes.ampdel.tsv" , "$output_directory/raw/cnv.All_genes.ampdel.tsv");
+	Genome::Sys->copy_file("$dataDir/cnv/wgs_cnv/cnview/cnv.All_genes.ampdel.tsv" , "$output_directory/raw/cnv.All_genes.ampdel.tsv");
 	if($self->gene_ampdel_file){
 	    system("rm -f $output_directory/raw/cnv.All_genes.ampdel.tsv");
 	    Genome::Sys->copy_file($self->gene_ampdel_file , "$output_directory/raw/cnv.All_genes.ampdel.tsv");
