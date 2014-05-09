@@ -28,6 +28,7 @@ sub requires_interpreters {
 sub initialize {
     my $self = shift;
     my $output_dir = shift;
+    Genome::Sys->create_directory($output_dir);
     my $fh = Genome::Sys->open_file_for_writing(File::Spec->join($output_dir, $self->file_name));
     $self->_output_fh($fh);
 }
