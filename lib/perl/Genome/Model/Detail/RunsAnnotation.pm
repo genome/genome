@@ -1,4 +1,4 @@
-package Genome::Model::RunsAnnotation;
+package Genome::Model::Detail::RunsAnnotation;
 
 use strict;
 use warnings FATAL => 'all';
@@ -7,7 +7,7 @@ use Genome::Annotation::Dag qw(generate_dag);
 use File::Basename qw(dirname);
 use File::Slurp qw(write_file);
 
-class Genome::Model::RunsAnnotation {
+class Genome::Model::Detail::RunsAnnotation {
     is => 'Genome::ModelDeprecated',
     is_abstract => 1,
 

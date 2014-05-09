@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::SomaticValidation {
-    is  => 'Genome::Model::RunsAnnotation',
+    is  => 'Genome::Model::Detail::RunsAnnotation',
     has_param_optional => [
         alignment_strategy => {
             is => 'Text',

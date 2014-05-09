@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::SomaticVariation {
-    is  => 'Genome::Model::RunsAnnotation',
+    is  => 'Genome::Model::Detail::RunsAnnotation',
     has_param => [
         snv_detection_strategy => {
             is => "Text",
