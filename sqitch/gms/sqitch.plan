@@ -305,3 +305,5 @@ model.build_status_update_trigger 2014-05-07T17:36:50Z Thomas B. Mooney <tmooney
 @1399492800 2014-05-07T20:00:01Z Thomas B. Mooney <tmooney@genome.wustl.edu># Start migration to new build status columns.
 timeline_allocation_event_type_values [timeline_allocation_event_type] 2014-05-07T20:18:48Z Anthony Brummett <abrummet@genome.wustl.edu># Validation values for timeline_allocation.name
 timeline_analysis_project_event_type_values [analysis_project_event_logging] 2014-05-07T21:30:35Z Anthony Brummett <abrummet@genome.wustl.edu># Validation values for timeline.analysis_project_event_type
+remove_unused_apconfig_tables [config_set] 2014-05-09T15:20:47Z Adam Coffman <acoffman@genome.wustl.edu> # remove config set column and table
+@1399651838 2014-05-09T16:10:39Z Adam Coffman <acoffman@genome.wustl.edu># removed unused apconfig tables
