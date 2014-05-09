@@ -13,7 +13,7 @@ use_ok('Genome::Model::Build::MetagenomicComposition16s') or die;
 diag('454');
 my ($build, $example_build) = Genome::Model::Build::MetagenomicComposition16s::TestBuildFactory->build_with_example_build_for_454;
 ok($build, 'Got mc16s 454 build');
-is($build->calculate_estimated_kb_usage, 102_400, 'Estimated kb usage');
+is($build->calculate_estimated_kb_usage, 2000, 'Estimated kb usage');
 my @amplicon_sets = $build->amplicon_sets;
 is(@amplicon_sets, 3, 'Amplicon sets');
 @amplicon_sets = $build->amplicon_sets_for_processing;
