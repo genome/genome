@@ -25,25 +25,6 @@ if ($ENV{GENOME_TEST_FILLDB}) {
 }
 
 
-{
-    my %table_name_to_class_name_map = (
-        'config.analysis_menu_item' => 'Genome::Config::AnalysisMenu::Item',
-    );
-
-    sub _lookup_class_for_table_name {
-        my($self, $table_name) = @_;
-
-        my $class_name = $table_name_to_class_name_map{$table_name};
-        
-        if ($class_name) {
-            $class_name->class;
-        } else {
-            $class_name = $self->SUPER::_lookup_class_for_table_name($table_name);
-        }
-        return $class_name;
-    }
-}
-
 sub table_and_column_names_are_upper_case { 0 }
 
 sub _dbi_connect_args {
