@@ -79,14 +79,6 @@ class Genome::Config::AnalysisProject {
             is_many => 1,
             reverse_as => 'analysis_project',
         },
-        analysis_menu_item => {
-            is => 'Genome::Config::AnalysisMenu::Item',
-            id_by => 'analysis_menu_item_id',
-        },
-        configuration_set => {
-            is => 'Genome::Config::Set',
-            id_by => 'configuration_set_id',
-        },
     ],
     has_transient_optional => [
         configuration_profile => {
