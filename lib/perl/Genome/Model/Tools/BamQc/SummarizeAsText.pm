@@ -87,7 +87,7 @@ sub _load_alignment_summary_metrics {
     my $label_dir = shift;
 
     my ($as_file) = glob($label_dir->directory .'/*alignment_summary_metrics');
-    unless ($as_file) {
+    unless (-e $as_file) {
         die ('Failed to find Picard alignment_summary_metrics in directory: '. $label_dir->directory);
     }
     my $as_metrics = Genome::Model::Tools::Picard::CollectAlignmentSummaryMetrics->parse_file_into_metrics_hashref($as_file);
@@ -99,6 +99,9 @@ sub _load_mark_duplicates_metrics {
     my $label_dir = shift;
 
     my ($mrkdup_file) = glob($label_dir->directory .'/*.metrics');
+    unless(-e $mrkdup_file) {
+      die "unable to find *.metrics in " . $label_dir->directory;
+    }
     my $mrkdup_metrics;
     my $lib;
     if ($mrkdup_file) {
@@ -117,6 +120,9 @@ sub _load_error_rate_metrics {
     my($self, $label_dir, $error_rate_by_position) = @_;
 
     my ($error_rate_file) = glob($label_dir->directory .'/*-ErrorRate.tsv');
+    unless(-e $error_rate_file) {
+      die "unable to find *-ErrorRate.tsv in " . $label_dir->directory;
+    }
     my %error_rate_sum;
     if ($error_rate_file) {
         my $error_rate_reader = Genome::Utility::IO::SeparatedValueReader->create(
@@ -152,8 +158,10 @@ sub _load_insert_size_metrics {
 
     # Load Insert Size Metrics
     my ($is_file) = glob($label_dir->directory .'/*.insert_size_metrics');
-    my $is_metrics = Genome::Model::Tools::Picard::CollectInsertSizeMetrics->parse_file_into_metrics_hashref($is_file);
-
+    unless(-e $is_file) {
+      die "unable to find *insert_size_metrics in " . $label_dir->directory;
+    }
+    my $is_metrics= Genome::Model::Tools::Picard::CollectInsertSizeMetrics->parse_file_into_metrics_hashref($is_file);
     # Load Insert Size Histogram
     my $is_histo = Genome::Model::Tools::Picard::CollectInsertSizeMetrics->parse_metrics_file_into_histogram_hashref($is_file);
 
@@ -171,9 +179,16 @@ sub _load_gc_bias_metrics {
     my($self, $label_dir, $gc_data, $gc_windows) = @_;
 
     my ($gc_summary) = glob($label_dir->directory .'/*-PicardGC_summary.txt');
+    unless(-e $gc_summary) {
+      die "unable to find *-PicardGC_summary.txt in " . $label_dir->directory;
+    }
+
     my $gc_metrics = Genome::Model::Tools::Picard::CollectGcBiasMetrics->parse_file_into_metrics_hashref($gc_summary);
 
     my ($gc_file) = glob($label_dir->directory .'/*-PicardGC_metrics.txt');
+    unless(-e $gc_file) {
+      die "unable to find *-PicardGC_metrics.txt in " . $label_dir->directory;
+    }
     my $gc_data_this_file = Genome::Model::Tools::Picard::CollectGcBiasMetrics->parse_file_into_metrics_hashref($gc_file);
     for my $gc_key (keys %{$gc_data_this_file}) {
         my $gc_bin = $gc_data_this_file->{$gc_key}{GC};
@@ -194,6 +209,9 @@ sub _load_quality_distribution {
     my($self, $label_dir, $qd_data) = @_;
 
     my ($qd_file) = glob($label_dir->directory .'/*.quality_distribution_metrics');
+    unless(-e $qd_file) {
+      die "unable to find *.quality_distribution_metrics.txt in " . $label_dir->directory;
+    }
     my $qd_histo = Genome::Model::Tools::Picard->parse_metrics_file_into_histogram_hashref($qd_file);
     for my $quality_key (keys %{$qd_histo}) {
         my $quality = $qd_histo->{$quality_key}{QUALITY};
@@ -205,6 +223,9 @@ sub _load_quality_by_cycle {
     my($self, $label_dir, $qc_data) = @_;
 
     my ($qc_file) = glob($label_dir->directory .'/*.quality_by_cycle_metrics');
+    unless(-e $qc_file) {
+      die "unable to find *.quality_by_cycle_metrics in " . $label_dir->directory;
+    }
     my $qc_histo = Genome::Model::Tools::Picard->parse_metrics_file_into_histogram_hashref($qc_file);
     for my $cycle_key (keys %{$qc_histo}) {
         my $cycle = $qc_histo->{$cycle_key}{CYCLE};
@@ -359,7 +380,6 @@ sub execute {
     my %qc_data;
 
     foreach my $label_dir ( $self->_listify_labels_and_directories()) {
-
         my $as_metrics = $self->_load_alignment_summary_metrics($label_dir);
         
         my($mrkdup_metrics, $lib) = $self->_load_mark_duplicates_metrics($label_dir);
