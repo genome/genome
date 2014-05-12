@@ -48,11 +48,9 @@ sub output_filename {
 sub _run {
     my $self = shift;
 
-    my $vep_output_file = File::Spec->join($self->temp_staging_directory, $self->output_filename_base);
-    my $final_output_file = File::Spec->join($self->temp_staging_directory, $self->output_filename);
 
     my $vep_command = Genome::Db::Ensembl::Command::Run::Vep->create(
-        output_file => $vep_output_file,
+        output_file => $self->vep_output_file,
         $self->vep_params,
     );
 
@@ -60,10 +58,20 @@ sub _run {
         die $self->error_message("Failed to execute vep");
     }
 
-    Genome::Sys->gzip_file($vep_output_file, $final_output_file);
-    unlink $vep_output_file;
+    Genome::Sys->gzip_file($self->vep_output_file, $self->final_output_file);
+    unlink $self->vep_output_file;
 
     return;
+}
+
+sub vep_output_file {
+    my $self = shift;
+    return File::Spec->join($self->temp_staging_directory, $self->output_filename_base);
+}
+
+sub final_output_file {
+    my $self = shift;
+    return File::Spec->join($self->temp_staging_directory, $self->output_filename);
 }
 
 sub custom_annotation_inputs {
