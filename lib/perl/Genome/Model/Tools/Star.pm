@@ -57,7 +57,7 @@ sub path_for_star_version {
     die 'No path for star version '. $version;
 }
 
-sub default_bamutil_version {
+sub default_star_version {
     die "default star version: $DEFAULT_VERSION is not valid" unless $STAR_VERSIONS{$DEFAULT_VERSION};
     return $DEFAULT_VERSION;
 }

@@ -286,20 +286,21 @@ sub _resolve_workflow_for_build {
         }
         if ($ensembl_version >= 67) {
             $run_splice_junction_summary = 1;
-        } else {
+        } 
+        else {
             $self->debug_message('Skipping SpliceJunctionSummary for annotation build: '. $self->annotation_build);
         }
     }
     my $output_properties = ['coverage_result','expression_result','metrics_result'];
-    push(@$output_properties, 'fusion_result') if $self->fusion_detector;
-    push(@$output_properties, 'annotated_bedpe_file') if $self->fusion_detector and $self->cancer_annotation_db;
-    push(@$output_properties, 'digital_expression_detection_result') if $self->digital_expression_detection_strategy;
+
+    push @$output_properties, 'fusion_result'                       if $self->fusion_detector;
+    push @$output_properties, 'annotated_bedpe_file'                if $self->fusion_detector and $self->cancer_annotation_db;
+    push @$output_properties, 'digital_expression_detection_result' if $self->digital_expression_detection_strategy;
+
     if ($version_number >= 2) {
-        push(@$output_properties, 'bam_qc_result');
-        push(@$output_properties, 'alignment_stats_result');
-        if ($run_splice_junction_summary) {
-            push(@$output_properties, 'splice_junction_result');
-        }
+        push @$output_properties, 'bam_qc_result';
+        push @$output_properties, 'alignment_stats_result' if $aligner_name eq 'tophat';
+        push @$output_properties, 'splice_junction_result' if $run_splice_junction_summary;
     }
 
     my %inputs = $self->map_workflow_inputs($build);
@@ -705,7 +706,7 @@ sub params_for_alignment {
         trimmer_version => $self->read_trimmer_version || undef,
         trimmer_params => $self->read_trimmer_params || undef,
         picard_version => $self->picard_version || undef,
-        samtools_version => undef, #unused
+        samtools_version => $self->samtools_version || undef,
         filter_name => undef, #unused
         test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
         bowtie_version => $self->bowtie_version

@@ -87,8 +87,48 @@ sub _run_aligner {
         output_files => [$out_sam_file],
     );
 
+    ##Below fillmd and addreadgrouptag should be handled by AlignmentResult base class
     my $sam_path = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
-    my $sam_fh   = Genome::Sys->open_file_for_reading($out_sam_file) or die "failed to open sam file: $out_sam_file for reading\n";
+    my $ref_seq  = $reference_build->full_consensus_path('fa');
+
+    ##To make fillmd run faster sorted bam file is needed, running fillmd with -S sam file is VERY VERY SLOW
+    my $tmp_bam = "$scratch_directory/Aligned.out.bam";
+    $cmd = "$sam_path view -b -S -o $tmp_bam $out_sam_file";
+    
+    my $rv = Genome::Sys->shellcmd(
+        cmd                          => $cmd,
+        input_files                  => [$out_sam_file],
+        output_files                 => [$tmp_bam],
+        skip_if_output_is_present    => 0,
+    );
+    die $self->error_message("Fail to run: $cmd") unless $rv == 1;
+
+    my $sort_bam_prefix = "$scratch_directory/Aligned.out.sort";
+    my $sort_bam = $sort_bam_prefix . '.bam';
+    $cmd = "$sam_path sort -m 402653184 $tmp_bam $sort_bam_prefix";
+
+    $rv = Genome::Sys->shellcmd(
+        cmd                          => $cmd,
+        input_files                  => [$tmp_bam],
+        output_files                 => [$sort_bam],
+        skip_if_output_is_present    => 0,
+    );
+    die $self->error_message("Fail to run: $cmd") unless $rv == 1;
+
+    my $fillmd_sam_file = "$scratch_directory/Aligned.out.fillmd.sam";
+    $cmd = "$sam_path fillmd $sort_bam $ref_seq 1> $fillmd_sam_file 2>/dev/null";
+
+    $rv  = Genome::Sys->shellcmd(
+        cmd                          => $cmd,
+        input_files                  => [$sort_bam, $ref_seq],
+        output_files                 => [$fillmd_sam_file],
+        skip_if_output_is_present    => 0,
+    );
+    die $self->error_message("Fail to run: $cmd") unless $rv == 1;
+
+    $self->debug_message('FillMD completed');
+
+    my $sam_fh = Genome::Sys->open_file_for_reading($fillmd_sam_file) or die "failed to open sam file: $fillmd_sam_file for reading\n";
 
     my $add_rg_cmd = Genome::Model::Tools::Sam::AddReadGroupTag->create(
         input_filehandle  => $sam_fh,
@@ -98,9 +138,11 @@ sub _run_aligner {
     );
 
     unless($add_rg_cmd->execute){
-      $self->error_message("Adding read group to sam file failed!");
-      die $self->error_message;
+        $self->error_message("Adding read group to sam file failed!");
+        die $self->error_message;
     }
+
+    $self->debug_message('Read group add completed');
 
     #promote other misc result files - converted sam will be handled downstream
     map{Genome::Sys->move_file("$scratch_directory/$_", "$staging_directory/$_")}qw(SJ.out.tab Log.progress.out Log.out Log.final.out);
@@ -196,7 +238,7 @@ sub aligner_params_required_for_index {
 }
 
 sub fillmd_for_sam {
-    return 0;
+    return 1;
 }
 
 sub requires_read_group_addition {

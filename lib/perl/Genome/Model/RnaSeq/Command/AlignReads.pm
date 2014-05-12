@@ -49,12 +49,13 @@ sub execute {
 
     my @instrument_data = $build->instrument_data;
     my %composite_inputs = (
-            instrument_data => \@instrument_data,
+            instrument_data  => \@instrument_data,
             reference_sequence_build => $build->reference_sequence_build,
-            picard_version => $build->processing_profile->picard_version,
-            trimmer_name => $build->processing_profile->read_trimmer_name,
-            trimmer_version => $build->processing_profile->read_trimmer_version,
-            trimmer_params => $build->processing_profile->read_trimmer_params,
+            picard_version   => $build->processing_profile->picard_version,
+            samtools_version => $build->processing_profile->samtools_version,
+            trimmer_name     => $build->processing_profile->read_trimmer_name,
+            trimmer_version  => $build->processing_profile->read_trimmer_version,
+            trimmer_params   => $build->processing_profile->read_trimmer_params,
     );
     if (defined($build->annotation_build)) {
         $composite_inputs{annotation_build} = $build->annotation_build;
