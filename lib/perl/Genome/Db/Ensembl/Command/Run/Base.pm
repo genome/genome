@@ -38,6 +38,13 @@ class Genome::Db::Ensembl::Command::Run::Base {
             is_input => 1,
             is_vep_param => 1,
         },
+        buffer_size => {
+            is => 'String',
+            doc => 'The number of variant lines read in and annotated at a time',
+            default_value => '5000',
+            is_input => 1,
+            is_vep_param => 1,
+        },
         output_file => {
             is => 'String',
             doc => 'File of annotated variants.  Write to STDOUT by specifying -o STDOUT',

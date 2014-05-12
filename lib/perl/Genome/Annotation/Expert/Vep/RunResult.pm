@@ -34,6 +34,8 @@ class Genome::Annotation::Expert::Vep::RunResult {
     ],
 };
 
+my $BUFFER_SIZE = '5000';
+
 sub output_filename_base {
     return 'vep.vcf';
 }
@@ -76,6 +78,7 @@ sub _run {
         quiet => 0,
         hgvs => 1,
         pick => 1,
+        buffer_size => $BUFFER_SIZE,
         %params,
     );
 
