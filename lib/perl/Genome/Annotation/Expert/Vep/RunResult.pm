@@ -48,15 +48,10 @@ sub output_filename {
 sub _run {
     my $self = shift;
 
-
-    my $vep_command = Genome::Db::Ensembl::Command::Run::Vep->create(
+    Genome::Db::Ensembl::Command::Run::Vep->execute(
         output_file => $self->vep_output_file,
         $self->vep_params,
     );
-
-    unless ($vep_command->execute) {
-        die $self->error_message("Failed to execute vep");
-    }
 
     Genome::Sys->gzip_file($self->vep_output_file, $self->final_output_file);
     unlink $self->vep_output_file;
