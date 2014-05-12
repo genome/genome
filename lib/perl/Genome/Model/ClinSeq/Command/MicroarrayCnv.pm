@@ -251,13 +251,13 @@ sub create_cnv_diff_hq_file {
     $cn_normal = sprintf("%.5f", $cn_normal);
     my $cn_tumor = $data_t->{cnv_value};
     $cn_tumor = sprintf("%.5f", $cn_tumor);
-    my $cnv_diff = $cn_tumor - $cn_normal;
     if( $cn_tumor == 0) {
       $cn_tumor = 0.0001;
     }
     if( $cn_normal == 0) {
       $cn_normal = 0.0001;
     }
+    my $cnv_diff = $cn_tumor - $cn_normal;
     my $cnv_ratio = log($cn_tumor/$cn_normal)/log(2);
     $cnv_diff = sprintf("%.6f", $cnv_diff);
     $cnvhq_data->{TUMOR} = 2.0**($data_t->{log_r_ratio} + 1.0);
