@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use above "Genome"; # only use "above" in test cases, never in modules
 use Genome::Model::ClinSeq::TestData;
-use Test::More tests => 5;
+use Test::More tests => 6;
 
 # this gets a canonical test build, and is set up to not really hit the db
 # we temporarily have it overridden to test against Obi's example
