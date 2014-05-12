@@ -5,6 +5,7 @@ use above "Genome";
 use Fcntl ':mode';
 use File::Spec qw();
 use Genome::Utility::Test qw(abort run_ok);
+use Genome::Utility::Test::Stat qw(has_bit hasnt_bit);
 
 use Test::More tests => 1;
 
@@ -14,35 +15,21 @@ subtest 'create_directory overrides umask' => sub {
     # setup
     my $td_path = File::Temp->newdir();
     ok(-d $td_path, 'made a temp directory to work in') or abort;
-    run_ok(['chmod', 2775, $td_path], 'chmod that directory to have guid sticky') or abort;
-    ok(umask 0077, 'set umask so that no group permissions are allowed') or abort;
+    run_ok(['chmod', 2775, $td_path], 'chmod that directory to have gid sticky') or abort;
+    ok(umask oct(77), 'set umask so that no group permissions are allowed') or abort;
 
     # make sure create_directory overrides umask
     my $cd_path = File::Spec->join($td_path, 'cd');
     Genome::Sys->create_directory($cd_path);
     ok(-d $cd_path, 'made a subdirectory');
-    ok(has_group_write($cd_path), 'subdirectory made with Genome::Sys->create_directory has group write permissions');
+    my $cd_mode = [stat($cd_path)]->[2];
+    has_bit($cd_mode, S_IWGRP, 'subdirectory made with Genome::Sys->create_directory has group write permissions');
 
     # verify mkdir, without overrides create_directory has, does not
     my $mkdir_path = File::Spec->join($td_path, 'mkdir');
     mkdir $mkdir_path;
     ok(-d $mkdir_path, 'made a subdirectory');
-    ok(!has_group_write($mkdir_path), 'subdirectory made with mkdir does not have group write permissions');
+    my $mkdir_mode = [stat($mkdir_path)]->[2];
+    hasnt_bit($mkdir_mode, S_IWGRP, 'subdirectory made with mkdir does not have group write permissions');
 };
 
-sub mode {
-    my $path = shift;
-    my $mode = (stat($path))[2];
-    return S_IMODE($mode);
-}
-
-sub has_bit {
-    my ($path, $bit) = @_;
-    my $perms = mode($path);
-    my $has_bit = ($perms & $bit) >> 3;
-    return $has_bit;
-}
-
-sub has_group_write {
-    return has_bit(shift, S_IWGRP);
-}
