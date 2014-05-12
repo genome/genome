@@ -1,10 +1,10 @@
-package Genome::Model::Tools::Analysis::ClinSeq::PlotCnvs;
+package Genome::Model::ClinSeq::Command::Converge::PlotCnvs;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::Model::Tools::Analysis::ClinSeq::PlotCnvs {
+class Genome::Model::ClinSeq::Command::Converge::PlotCnvs {
   is => 'Command::V2',
   has_input => [
   clinseq_mg => {

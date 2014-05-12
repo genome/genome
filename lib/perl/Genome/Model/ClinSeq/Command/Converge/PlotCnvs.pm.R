@@ -42,34 +42,37 @@ addLegend <- function(){
 ##---------------------------------------------------------
 ## create the Female entrypoints table
 ##
-createMaleEntrypoints <- function(){
-  p = data.frame(colClasses=c("character","numeric","numeric"));
-  cbind(data.frame(0, 250000000, 2), p)
-  cbind(data.frame(1, 249250621, 2), p)
-  cbind(data.frame(2, 243199373, 2), p)
-  cbind(data.frame(3, 198022430, 2), p)
-  cbind(data.frame(4, 191154276, 2), p)
-  cbind(data.frame(5, 180915260, 2), p)
-  cbind(data.frame(6, 171115067, 2), p)
-  cbind(data.frame(7, 159138663, 2), p)
-  cbind(data.frame("X", 155270560, 2), p)
-  cbind(data.frame(8, 146364022, 2), p)
-  cbind(data.frame(9, 141213431, 2), p)
-  cbind(data.frame(10, 135534747, 2), p)
-  cbind(data.frame(11, 135006516, 2), p)
-  cbind(data.frame(12, 133851895, 2), p)
-  cbind(data.frame(13, 115169878, 2), p)
-  cbind(data.frame(14, 107349540, 2), p)
-  cbind(data.frame(15, 102531392, 2), p)
-  cbind(data.frame(16, 90354753, 2), p)
-  cbind(data.frame(17, 81195210, 2), p)
-  cbind(data.frame(18, 78077248, 2), p)
-  cbind(data.frame(20, 63025520, 2), p)
-  cbind(data.frame(19, 59128983, 2), p)
-  cbind(data.frame(22, 51304566, 2), p)
-  cbind(data.frame(21, 48129895, 2), p)
-  index <- mixedsort(p$V1)
-  p <- p[match(index, p$V1),]
+createFemaleEntrypoints <- function(){
+  p = data.frame(0, 250000000, 2)
+  colnames(p) = c("chr", "length", "ploidy")
+  p = rbind(c(1, 249250621, 2), p)
+  p = rbind(c(2, 243199373, 2), p)
+  p = rbind(c(3, 198022430, 2), p)
+  p = rbind(c(4, 191154276, 2), p)
+  p = rbind(c(5, 180915260, 2), p)
+  p = rbind(c(6, 171115067, 2), p)
+  p = rbind(c(7, 159138663, 2), p)
+  p = rbind(c(8, 146364022, 2), p)
+  p = rbind(c(9, 141213431, 2), p)
+  p = rbind(c(10, 135534747, 2), p)
+  p = rbind(c(11, 135006516, 2), p)
+  p = rbind(c(12, 133851895, 2), p)
+  p = rbind(c(13, 115169878, 2), p)
+  p = rbind(c(14, 107349540, 2), p)
+  p = rbind(c(15, 102531392, 2), p)
+  p = rbind(c(16, 90354753, 2), p)
+  p = rbind(c(17, 81195210, 2), p)
+  p = rbind(c(18, 78077248, 2), p)
+  p = rbind(c(20, 63025520, 2), p)
+  p = rbind(c(19, 59128983, 2), p)
+  p = rbind(c(21, 48129895, 2), p)
+  p = rbind(c(22, 51304566, 2), p)
+  p = rbind(c("X", 155270560, 2), p)
+  colnames(p) = c("chr", "length", "ploidy")
+  p$ploidy<-as.numeric(p$ploidy)
+  p$length<-as.numeric(p$length)
+  index <- mixedsort(p$chr)
+  p <- p[match(index, p$chr),]
   return(p)
 }
 
@@ -77,34 +80,36 @@ createMaleEntrypoints <- function(){
 ## create the Male entrypoints table
 ##
 createMaleEntrypoints <- function(){
-  p = data.frame(colClasses=c("character","numeric","numeric"));
-  cbind(data.frame(0, 250000000, 2), p)
-  cbind(data.frame(1, 249250621, 2), p)
-  cbind(data.frame(2, 243199373, 2), p)
-  cbind(data.frame(3, 198022430, 2), p)
-  cbind(data.frame(4, 191154276, 2), p)
-  cbind(data.frame(5, 180915260, 2), p)
-  cbind(data.frame(6, 171115067, 2), p)
-  cbind(data.frame(7, 159138663, 2), p)
-  cbind(data.frame("X", 155270560, 1), p)
-  cbind(data.frame(8, 146364022, 2), p)
-  cbind(data.frame(9, 141213431, 2), p)
-  cbind(data.frame(10, 135534747, 2), p)
-  cbind(data.frame(11, 135006516, 2), p)
-  cbind(data.frame(12, 133851895, 2), p)
-  cbind(data.frame(13, 115169878, 2), p)
-  cbind(data.frame(14, 107349540, 2), p)
-  cbind(data.frame(15, 102531392, 2), p)
-  cbind(data.frame(16, 90354753, 2), p)
-  cbind(data.frame(17, 81195210, 2), p)
-  cbind(data.frame(18, 78077248, 2), p)
-  cbind(data.frame(20, 63025520, 2), p)
-  cbind(data.frame("Y", 59373566, 1), p)
-  cbind(data.frame(19, 59128983, 2), p)
-  cbind(data.frame(22, 51304566, 2), p)
-  cbind(data.frame(21, 48129895, 2), p)
-  index <- mixedsort(p$V1)
-  p <- p[match(index, p$V1),]
+  p = data.frame(0, 250000000, 2)
+  p = rbind(c(1, 249250621, 2), p)
+  p = rbind(c(2, 243199373, 2), p)
+  p = rbind(c(3, 198022430, 2), p)
+  p = rbind(c(4, 191154276, 2), p)
+  p = rbind(c(5, 180915260, 2), p)
+  p = rbind(c(6, 171115067, 2), p)
+  p = rbind(c(7, 159138663, 2), p)
+  p = rbind(c(8, 146364022, 2), p)
+  p = rbind(c(9, 141213431, 2), p)
+  p = rbind(c(10, 135534747, 2), p)
+  p = rbind(c(11, 135006516, 2), p)
+  p = rbind(c(12, 133851895, 2), p)
+  p = rbind(c(13, 115169878, 2), p)
+  p = rbind(c(14, 107349540, 2), p)
+  p = rbind(c(15, 102531392, 2), p)
+  p = rbind(c(16, 90354753, 2), p)
+  p = rbind(c(17, 81195210, 2), p)
+  p = rbind(c(18, 78077248, 2), p)
+  p = rbind(c(19, 59128983, 2), p)
+  p = rbind(c(20, 63025520, 2), p)
+  p = rbind(c(21, 48129895, 2), p)
+  p = rbind(c(22, 51304566, 2), p)
+  p = rbind(c("X", 155270560, 1), p)
+  p = rbind(c("Y", 59373566, 1), p)
+  colnames(p) = c("chr", "length", "ploidy")
+  p$ploidy<-as.numeric(p$ploidy)
+  p$length<-as.numeric(p$length)
+  index <- mixedsort(p$chr)
+  p <- p[match(index, p$chr),]
   return(p)
 }
 
@@ -174,7 +179,8 @@ plotSegments <- function(chr="ALL", filename, ymax=0, ymin=1,
   }
 
   ## read in the entrypoints
-  entrypoints=addOffsets(createMaleEntrypoints)
+  entrypoints = addOffsets(createMaleEntrypoints())
+  entrypoints = addOffsets(entrypoints)
   names(entrypoints) = c("chr","length","ploidy","offset")
 
   ## if we have regions to highlight, read them in too
@@ -281,9 +287,6 @@ plotSegments <- function(chr="ALL", filename, ymax=0, ymin=1,
           annos[i,5] = 0
         }
       }
-      ##print(annos)
-      ##print(annos[i,5])
-      #print(paste(mid2,(ypos+annos[i,5]),annos[i,4],sep=","))
       text(mid2,(ypos+annos[i,5]),annos[i,4],cex=0.5,font=3)
       lines(c(mid,mid2),c(ptop,(ypos+annos[i,5])*.90))
     }
