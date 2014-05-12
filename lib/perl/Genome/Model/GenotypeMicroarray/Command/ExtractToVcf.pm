@@ -311,7 +311,7 @@ sub _create_filters {
     for my $filter_string ( $self->filters ) {
         $self->debug_message('Filter: '.$filter_string);
         my ($name, $config) = split(':', $filter_string, 2);
-        $self->error_message("For filter string (%s) name is (%s) config is (%s)", $filter_string, $name, $config);
+        $self->debug_message("For filter string (%s) name is (%s) config is (%s)", $filter_string, $name, $config);
         my %params;
         %params = map { split('=') } split(':', $config) if $config;
         my $filter_class = 'Genome::Model::GenotypeMicroarray::Filter::By'.Genome::Utility::Text::string_to_camel_case($name);
