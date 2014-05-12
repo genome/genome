@@ -8,21 +8,21 @@ use Test::More;
 
 use Genome::Utility::Test::Stat qw(has_bit hasnt_bit);
 
-my %bits = (
-#    S_IRWXO, 'o=rwx',
-#    S_IRWXG, 'g=rwx',
-#    S_IRWXU, 'u=rwx',
-    S_IROTH, 'o=r',
-    S_IWOTH, 'o=w',
-    S_IXOTH, 'o=x',
-    S_ISUID, 'setuid',
-    S_ISGID, 'setgid',
-    S_IRGRP, 'g=r',
-    S_IWGRP, 'g=w',
-    S_IXGRP, 'g=x',
-    S_IRUSR, 'u=r',
-    S_IWUSR, 'u=w',
-    S_IXUSR, 'u=x',
+my @bits = (
+#    S_IRWXO,
+#    S_IRWXG,
+#    S_IRWXU,
+    S_IROTH,
+    S_IWOTH,
+    S_IXOTH,
+    S_ISUID,
+    S_ISGID,
+    S_IRGRP,
+    S_IWGRP,
+    S_IXGRP,
+    S_IRUSR,
+    S_IWUSR,
+    S_IXUSR,
 );
 
 my %modes = (
@@ -39,7 +39,6 @@ my $filename = $file->filename;
 for my $name (sort keys %modes) {
     my $expected = $modes{$name};
     subtest "mode=$name" => sub {
-        my @bits = sort keys %bits;
         plan tests => scalar(@bits);
 
         chmod $expected, $filename;
@@ -47,9 +46,9 @@ for my $name (sort keys %modes) {
         my $got = [stat($filename)]->[2];
         for (@bits) {
             if ($expected == $_) {
-                has_bit($got, $_, q(has ) . $bits{$_});
+                has_bit($got, $_);
             } else {
-                hasnt_bit($got, $_, q(doesn't have ) . $bits{$_});
+                hasnt_bit($got, $_);
             }
         }
     };
