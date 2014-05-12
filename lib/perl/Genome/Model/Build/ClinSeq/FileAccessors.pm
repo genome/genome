@@ -49,7 +49,7 @@ sub wgs_snv_dir {
 
 sub wgs_cnv_dir {
   my $self = shift;
-  my $wgs_cnv_dir = $self->cnv_dir . "/cnview/CNView_All";
+  my $wgs_cnv_dir = $self->cnv_dir . "/wgs_cnv/cnview/CNView_All";
 }
 
 sub wgs_exome_snv_dir {
