@@ -231,6 +231,7 @@ sub _process_alignments {
 
     $self->_link_alignment_to_inputs($alignment);
     $self->result_id($alignment->id);
+    $self->debug_message("Using alignment %s", $alignment->id);
 
     $self->debug_message("Complete!");
     return 1;
