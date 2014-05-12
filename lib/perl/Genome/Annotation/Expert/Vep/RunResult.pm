@@ -63,7 +63,6 @@ sub _run {
     delete $params{variant_type};
     delete $params{test_name};
 
-    $params{pick} = 1;
     my $vep_output_file = File::Spec->join($self->temp_staging_directory, $self->output_filename_base);
     my $final_output_file = File::Spec->join($self->temp_staging_directory, $self->output_filename);
     my $vep_command = Genome::Db::Ensembl::Command::Run::Vep->create(
