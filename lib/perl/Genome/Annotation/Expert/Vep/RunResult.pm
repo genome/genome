@@ -48,18 +48,6 @@ sub output_filename {
 sub _run {
     my $self = shift;
 
-    my @custom_annotation_inputs;
-    for my $feature_list_and_tag ($self->feature_list_ids_and_tags) {
-        my ($id, $tag) = split(":", $feature_list_and_tag);
-        my $feature_list = Genome::FeatureList->get($id);
-        push @custom_annotation_inputs, join("@",
-            $feature_list->get_tabix_and_gzipped_bed_file,
-            $tag,
-            "bed",
-            "overlap",
-            "0",
-        );
-    }
 
     my %params = $self->param_hash;
     delete $params{variant_type};
@@ -72,7 +60,7 @@ sub _run {
         fasta => $self->reference_build->fasta_file,
         output_file => $vep_output_file,
         ensembl_version => $self->ensembl_version,
-        custom => \@custom_annotation_inputs,
+        custom => $self->custom_annotation_inputs,
         format => "vcf",
         vcf => 1,
         quiet => 0,
@@ -90,4 +78,22 @@ sub _run {
     unlink $vep_output_file;
 
     return;
+}
+
+sub custom_annotation_inputs {
+    my $self = shift;
+
+    my $result = [];
+    for my $feature_list_and_tag ($self->feature_list_ids_and_tags) {
+        my ($id, $tag) = split(":", $feature_list_and_tag);
+        my $feature_list = Genome::FeatureList->get($id);
+        push @$result, join("@",
+            $feature_list->get_tabix_and_gzipped_bed_file,
+            $tag,
+            "bed",
+            "overlap",
+            "0",
+        );
+    }
+    return $result;
 }
