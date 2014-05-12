@@ -12,6 +12,9 @@ use Test::More tests => 2;
 subtest 'create_directory overrides umask' => sub {
     plan tests => 7;
 
+    # use a string because we get a string from shell, not an octal
+    local $ENV{GENOME_SYS_UMASK} = '0002';
+
     # setup
     my $td_path = File::Temp->newdir();
     ok(-d $td_path, 'made a temp directory to work in') or abort;
