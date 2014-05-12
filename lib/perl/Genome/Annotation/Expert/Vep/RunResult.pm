@@ -48,26 +48,12 @@ sub output_filename {
 sub _run {
     my $self = shift;
 
-
-    my %params = $self->param_hash;
-    delete $params{variant_type};
-    delete $params{test_name};
-
     my $vep_output_file = File::Spec->join($self->temp_staging_directory, $self->output_filename_base);
     my $final_output_file = File::Spec->join($self->temp_staging_directory, $self->output_filename);
+
     my $vep_command = Genome::Db::Ensembl::Command::Run::Vep->create(
-        input_file => $self->input_result_file_path,
-        fasta => $self->reference_build->fasta_file,
         output_file => $vep_output_file,
-        ensembl_version => $self->ensembl_version,
-        custom => $self->custom_annotation_inputs,
-        format => "vcf",
-        vcf => 1,
-        quiet => 0,
-        hgvs => 1,
-        pick => 1,
-        buffer_size => $BUFFER_SIZE,
-        %params,
+        $self->vep_params,
     );
 
     unless ($vep_command->execute) {
@@ -96,4 +82,26 @@ sub custom_annotation_inputs {
         );
     }
     return $result;
+}
+
+sub vep_params {
+    my $self = shift;
+
+    my %params = (
+        $self->param_hash,
+        input_file => $self->input_result_file_path,
+        fasta => $self->reference_build->fasta_file,
+        ensembl_version => $self->ensembl_version,
+        custom => $self->custom_annotation_inputs,
+        format => "vcf",
+        vcf => 1,
+        quiet => 0,
+        hgvs => 1,
+        pick => 1,
+        buffer_size => $BUFFER_SIZE,
+    );
+    delete $params{variant_type};
+    delete $params{test_name};
+
+    return %params;
 }
