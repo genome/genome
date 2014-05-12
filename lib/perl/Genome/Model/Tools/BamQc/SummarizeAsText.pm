@@ -99,12 +99,11 @@ sub _load_mark_duplicates_metrics {
     my $label_dir = shift;
 
     my ($mrkdup_file) = glob($label_dir->directory .'/*.metrics');
-    unless(-e $mrkdup_file) {
-      die "unable to find *.metrics in " . $label_dir->directory;
-    }
+    $self->warning_message("Unable to find mrkdup file *.metrics");
+
     my $mrkdup_metrics;
     my $lib;
-    if ($mrkdup_file) {
+    if (-e $mrkdup_file) {
         $mrkdup_metrics = Genome::Model::Tools::Picard::MarkDuplicates->parse_file_into_metrics_hashref($mrkdup_file);
         my @libs = sort keys %{$mrkdup_metrics};
         if (scalar(@libs) > 1) {
