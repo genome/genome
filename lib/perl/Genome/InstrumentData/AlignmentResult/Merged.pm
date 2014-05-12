@@ -266,7 +266,10 @@ sub collect_individual_alignments {
     my $segments = {};
 
     for my $segment_string (@segments) {
-        my ($id, $segment_id, $segment_type) = split(':', $segment_string);
+        my @parts = split(':', $segment_string);
+        my $id = shift @parts;
+        my $segment_type = pop @parts;
+        my $segment_id = join(":", @parts);
         $segments->{$id}{$segment_type} ||= [];
         push @{$segments->{$id}{$segment_type} }, $segment_id;
     }
