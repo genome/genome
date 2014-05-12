@@ -14,9 +14,10 @@ ok(-e $expected_output_dir, "expected output dir exists: $expected_output_dir");
 #my $test_ids = Genome::Model::ClinSeq::TestData::load(base_dir => "$base_dir/input_dir");
 #my $test_build_id = $test_ids->{CLINSEQ_BUILD};
 
-my $test_build_id = "2c3b80e180724fc9be38cdb9403c772a";
-my $test_build = Genome::Model::Build->get($test_build_id);
-ok($test_build, "got test build $test_build_id");
+my $test_model = Genome::Model->get(name => 'H_NJ-HCC1395.clin_seq-4');
+ok($test_model, "got test model " . $test_model->name);
+my $test_build = $test_model->last_succeeded_build;
+ok($test_build, "got test build " . $test_build->id);
 
 # this directory lives under /gsc/var/cache/testsuite/data at TGI
 #/gscmnt/gc13003/info/test_suite_data//Genome-Model-ClinSeq-Command-MakeCircosPlot/2013-10-01/expected-output
