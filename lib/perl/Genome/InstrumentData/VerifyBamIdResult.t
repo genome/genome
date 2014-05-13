@@ -20,9 +20,13 @@ my $package = "Genome::InstrumentData::VerifyBamIdResult";
 
 use_ok($package);
 
-my $test_dir = Genome::Utility::Test->data_dir_ok($package, "v1");
+my $test_dir = Genome::Utility::Test->data_dir_ok($package, "v2");
 
 my ($instrument_data_1, $sample, $dbsnp_build, $on_target_feature_list) = setup_objects($test_dir);
+
+subtest test_convert_caf_to_af => sub {
+    is("0.9284", Genome::InstrumentData::VerifyBamIdResult::_convert_caf_to_af("[0.07163,0.9284]"));
+};
 
 subtest test_on_target => sub{
     my $sr = Genome::InstrumentData::VerifyBamIdResult->create(
@@ -34,6 +38,7 @@ subtest test_on_target => sub{
         max_depth => 20,
         precise => 0,
         version => "20120620",
+        result_version => 2,
     );
     ok($sr, "Software result was created ok");
     test_metrics($sr);
@@ -48,6 +53,7 @@ subtest test_no_intersect => sub{
         max_depth => 20,
         precise => 0,
         version => "20120620",
+        result_version => 2,
     );
     ok($sr, "Software result was created ok");
     test_metrics($sr);

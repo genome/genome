@@ -4,6 +4,10 @@ use strict;
 use warnings;
 use Genome;
 use Sys::Hostname;
+use Genome::File::Vcf::Reader;
+use Genome::File::Vcf::Writer;
+
+use constant AF_HEADER => '<ID=AF,Number=A,Type=Float,Description="Allele frequence for non-reference alleles">';
 
 class Genome::InstrumentData::VerifyBamIdResult {
     is => 'Genome::SoftwareResult::Stageable',
@@ -35,6 +39,9 @@ class Genome::InstrumentData::VerifyBamIdResult {
         },
         version => {
             is => "Text",
+        },
+        result_version => {
+            is => "Integer",
         },
     ],
     has_metric => [
@@ -151,8 +158,37 @@ sub _clean_vcf {
         $vcf_path = $on_target_path;
     }
 
-    $self->debug_message("Using cleaned vcf at $vcf_path");
-    return $vcf_path;
+    my $fixed_frequency_path = $self->_fix_allele_frequencies($vcf_path);
+
+    $self->debug_message("Using cleaned vcf at $fixed_frequency_path");
+    return $fixed_frequency_path;
+}
+
+sub _fix_allele_frequencies {
+    my $self = shift;
+    my $vcf_path = shift;
+
+    my $new_vcf_path = Genome::Sys->create_temp_file_path;
+    my $reader = Genome::File::Vcf::Reader->new($vcf_path);
+    my $header = $reader->header;
+    $header->add_info_str(AF_HEADER);
+    my $writer = Genome::File::Vcf::Writer->new($new_vcf_path, $header);
+
+    while (my $entry = $reader->next) {
+        if (!defined $entry->info->{AF} and defined $entry->info->{CAF}) {
+            $entry->info->{AF} = _convert_caf_to_af($entry->info->{CAF});
+        }
+        $writer->write($entry);
+    }
+    $writer->close;
+    return $new_vcf_path;
+}
+
+sub _convert_caf_to_af {
+    my $caf = shift;
+    my ($caf_string) = $caf =~ /\[(.*)\]/;
+    my @fields = split ",", $caf_string;
+    return join(",", @fields[1 .. $#fields]);
 }
 
 sub resolve_allocation_subdirectory {
