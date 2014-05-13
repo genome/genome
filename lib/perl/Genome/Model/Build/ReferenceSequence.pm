@@ -40,9 +40,10 @@ class Genome::Model::Build::ReferenceSequence {
         _sequence_filehandles => {
             is => 'Hash',
             is_optional => 1,
+            is_transient => 1,
             doc => 'file handle per chromosome for reading sequences so that it does not need to be constantly closed/opened',
         },
-        _local_cache_dir_is_verified => { is => 'Boolean', default_value => 0, is_optional => 1, },
+        _local_cache_dir_is_verified => { is => 'Boolean', default_value => 0, is_optional => 1, is_transient => 1,},
 
     ],
 
