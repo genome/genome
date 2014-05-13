@@ -7,6 +7,7 @@
     --processing-profile=? --reference-sequence-build=? [--add-to-projects=?[,?]]
     [--annotation-reference-build=?] [--genotype-microarray=?] [--instrument-data=?[,?]]
     [--subject=?] [--groups=?[,?]] [--model-name=?] [--dbsnp-model=?] [--dbsnp-build=?]
+    [--run-as=?]
 
 [4mSYNOPSIS[0m
   genome model define reference-alignment \
@@ -46,6 +47,8 @@
     ID or name of the dbSNP model to compare against (the latest build will be selected) 
   [1mdbsnp-build[0m
     ID or name of the dbSNP build to compare against 
+  [1mrun-as[0m
+    Specify who the model should run_as if run in production 
 
 [4mOPTIONAL PARAMS[0m
   [1mauto-assign-inst-data[0m

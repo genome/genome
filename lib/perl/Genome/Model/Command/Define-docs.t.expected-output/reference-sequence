@@ -3,8 +3,8 @@
  [1mgenome model define reference-sequence[0m [--auto-assign-inst-data] [--auto-build-alignments]
     --processing-profile=? [--add-to-projects=?[,?]] [--fasta-file=?] [--instrument-data=?[,?]]
     [--subject=?] [--groups=?[,?]] [--model-name=?] [--sequence-uri=?] [--build-name=?]
-    [--prefix=?] [--desc=?] [--version=?] [--assembly-name=?] [--generate-sequence-uri]
-    [--skip-bases-files] [--is-rederivable]
+    [--prefix=?] [--run-as=?] [--desc=?] [--version=?] [--assembly-name=?]
+    [--generate-sequence-uri] [--skip-bases-files] [--is-rederivable]
 
 [4mSYNOPSIS[0m
   genome model define reference-sequence \
@@ -36,6 +36,8 @@
     human meaningful name of this build 
   [1mprefix[0m
     The prefix/source of the sequence (such as GRC).  May not contain spaces. 
+  [1mrun-as[0m
+    Specify who the model should run_as if run in production 
   [1mdesc[0m
     Optional additional qualifier, i.e. "lite" for the GRC-human-lite refseq model. 
   [1mversion[0m

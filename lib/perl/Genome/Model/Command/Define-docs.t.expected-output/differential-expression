@@ -4,7 +4,7 @@
     [--auto-build-alignments] --condition-labels-string=? --processing-profile=?
     --condition-model-ids-string=? [--add-to-projects=?[,?]] [--instrument-data=?[,?]]
     [--subject=?] [--groups=?[,?]] [--model-name=?] [--reference-sequence-build=?]
-    [--annotation-build=?]
+    [--annotation-build=?] [--run-as=?]
 
 [4mSYNOPSIS[0m
   genome model define differential-expression \
@@ -37,6 +37,8 @@
     (undocumented) 
   [1mannotation-build[0m
     (undocumented) 
+  [1mrun-as[0m
+    Specify who the model should run_as if run in production 
 
 [4mOPTIONAL PARAMS[0m
   [1mauto-assign-inst-data[0m
