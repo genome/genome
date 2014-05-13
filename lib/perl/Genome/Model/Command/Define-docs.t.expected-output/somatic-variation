@@ -4,7 +4,7 @@
     [--auto-assign-inst-data] [--auto-build-alignments] --processing-profile=? --tumor-model=?
     --normal-model=? --annotation-build=? [--add-to-projects=?[,?]] [--force]
     [--instrument-data=?[,?]] [--subject=?] [--groups=?[,?]] [--model-name=?]
-    [--previously-discovered-variations-build=?] [--regulatory-annotations=?[,?]]
+    [--previously-discovered-variations-build=?] [--run-as=?] [--regulatory-annotations=?[,?]]
     [--subject-name=?]
 
 [4mSYNOPSIS[0m
@@ -44,6 +44,8 @@ genome model define somatic-variation --tumor-model aml3-tumor1-v2 --normal-mode
     User meaningful name for this model, a default is used if none is provided 
   [1mpreviously-discovered-variations-build[0m
     Id of imported variants build to screen somatic variants against 
+  [1mrun-as[0m
+    Specify who the model should run_as if run in production 
   [1mregulatory-annotations[0m
     (undocumented) 
   [1msubject-name[0m

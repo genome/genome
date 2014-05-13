@@ -6,9 +6,9 @@
     [--model-name=?] [--categorical-clinical-data-file=?] [--numeric-clinical-data-file=?]
     [--glm-clinical-data-file=?] [--glm-model-file=?] [--omimaa-dir=?] [--cosmic-dir=?]
     [--bmr-modifier-file=?] [--extra-rois=?[,?]] [--regulome-bed=?] [--review-file-dir=?]
-    [--regions-of-interest=?[,?]] [--gene-black-lists=?[,?]] [--variant-black-lists=?[,?]]
-    [--additional-snv-lists=?[,?]] [--additional-indel-lists=?[,?]] [--additional-sv-lists=?[,?]]
-    [--pathway-file=?]
+    [--regions-of-interest=?[,?]] [--run-as=?] [--gene-black-lists=?[,?]]
+    [--variant-black-lists=?[,?]] [--additional-snv-lists=?[,?]] [--additional-indel-lists=?[,?]]
+    [--additional-sv-lists=?[,?]] [--pathway-file=?]
 
 [4mSYNOPSIS[0m
 First, determine what group of ClinSeq models you want to work on.  This might be all models in a model group, for example.
@@ -62,6 +62,8 @@ genome model define mutational-significance --model-name "Example Mutational Sig
     or V will be  ignored. 
   [1mregions-of-interest[0m
     FeatureLists of regions to include in validation 
+  [1mrun-as[0m
+    Specify who the model should run_as if run in production 
   [1mgene-black-lists[0m
     Lists of genes to exclude from the validation.  One gene symbol per line.  Gene symbols must
     match symbols in annotation files 
