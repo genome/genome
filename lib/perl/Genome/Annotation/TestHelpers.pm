@@ -16,6 +16,7 @@ use Params::Validate qw(validate validate_pos :types);
 use Genome::Test::Factory::Model::SomaticVariation;
 use Genome::Test::Factory::InstrumentData::Solexa;
 use Genome::Test::Factory::InstrumentData::MergedAlignmentResult;
+use Genome::File::Vcf::Differ;
 use Genome::Utility::Test;
 use File::Slurp qw(write_file);
 use Genome::Utility::Test qw(compare_ok);

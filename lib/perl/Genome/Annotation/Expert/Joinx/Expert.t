@@ -5,7 +5,6 @@ use warnings FATAL => 'all';
 
 use Test::More;
 use above 'Genome';
-use Genome::File::Vcf::Differ;
 use Genome::Utility::Test qw(compare_ok);
 use Genome::Annotation::TestHelpers qw(
     get_test_somatic_variation_build
