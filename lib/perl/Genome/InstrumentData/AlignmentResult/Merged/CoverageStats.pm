@@ -564,6 +564,9 @@ sub _generate_target_total_bp_metric {
 
     my $target_total_bp = 0;
     my ($bed_file) = glob($self->output_dir . '/*.bed');
+    unless($bed_file) {
+        $bed_file = $self->region_of_interest_set->file_path;
+    }
 
     my $bed_fh = Genome::Sys->open_file_for_reading($bed_file)
         or die $self->error_message('Could not open BED file at', $bed_file);
