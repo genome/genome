@@ -617,6 +617,8 @@ $Genome::Command::OPTS_SPEC = [
             '2_5',
             '2_7'
           ],
+          'gtf-cache!',
+          undef,
           'gtf-file=s',
           'files',
           'regulatory!',
@@ -655,8 +657,6 @@ $Genome::Command::OPTS_SPEC = [
             'SO',
             'NCBI'
           ],
-          'gtf-cache!',
-          undef,
           'input-file=s',
           'files',
           'format=s',
@@ -668,6 +668,8 @@ $Genome::Command::OPTS_SPEC = [
             'id',
             'bed'
           ],
+          'buffer-size=s',
+          'files',
           'output-file=s',
           'files',
           'hgnc!',
@@ -707,6 +709,8 @@ $Genome::Command::OPTS_SPEC = [
             '2_5',
             '2_7'
           ],
+          'gtf-cache!',
+          undef,
           'gtf-file=s',
           'files',
           'regulatory!',
@@ -745,8 +749,6 @@ $Genome::Command::OPTS_SPEC = [
             'SO',
             'NCBI'
           ],
-          'gtf-cache!',
-          undef,
           'input-file=s',
           'files',
           'format=s',
@@ -758,6 +760,8 @@ $Genome::Command::OPTS_SPEC = [
             'id',
             'bed'
           ],
+          'buffer-size=s',
+          'files',
           'output-file=s',
           'files',
           'hgnc!',
@@ -800,6 +804,8 @@ $Genome::Command::OPTS_SPEC = [
           '2_5',
           '2_7'
         ],
+        'gtf-cache!',
+        undef,
         'gtf-file=s',
         'files',
         'regulatory!',
@@ -838,8 +844,6 @@ $Genome::Command::OPTS_SPEC = [
           'SO',
           'NCBI'
         ],
-        'gtf-cache!',
-        undef,
         'input-file=s',
         'files',
         'format=s',
@@ -851,6 +855,8 @@ $Genome::Command::OPTS_SPEC = [
           'id',
           'bed'
         ],
+        'buffer-size=s',
+        'files',
         'output-file=s',
         'files',
         'hgnc!',
@@ -6138,6 +6144,15 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>converge',
       [
+        '>plot-cnvs',
+        [
+          'clinseq-mg=s',
+          undef,
+          'outdir=s',
+          'files',
+          'help!',
+          undef
+        ],
         '>snv-indel-report',
         [
           'builds=s@',
