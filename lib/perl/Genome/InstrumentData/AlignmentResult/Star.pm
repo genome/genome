@@ -41,10 +41,6 @@ sub _run_aligner {
     my $reference_build   = $self->reference_build;
     my $annotation_build  = $self->annotation_build;
 
-    unless ($annotation_build) {
-        die $self->error_message("annotation_build is not valid");
-    }
-
     my $scratch_directory = $self->temp_scratch_directory;
     my $staging_directory = $self->temp_staging_directory;
 
@@ -52,25 +48,35 @@ sub _run_aligner {
     my $index_params   = $aligner_params{index_params};
     my $align_params   = $aligner_params{align_params};
 
+    my $aligner_index;
+
+    if ($annotation_build) {
+        $aligner_index = Genome::Model::Build::ReferenceSequence::AnnotationIndex->get_with_lock(
+            aligner_name     => $self->aligner_name,
+            aligner_version  => $aligner_version,
+            aligner_params   => $aligner_params,
+            reference_build  => $reference_build,
+            annotation_build => $annotation_build,
+        );
+
+        unless ($aligner_index) {
+            die $self->error_message('Failed to get annotation index for star run');
+        }
+    }
+    elsif ($reference_build) {
+        $aligner_index = $self->get_reference_sequence_index;
+    }
+    else {
+        die $self->error_message('Failed to get any star aligner index');
+    }
+
+
     if (Genome::DataSource::GMSchema->has_default_handle) {
         $self->debug_message("Disconnecting GMSchema default handle.");
         Genome::DataSource::GMSchema->disconnect_default_dbh();
     }
 
-    #prepare reference sequence genome index file under directory
-    my $annotate_index = Genome::Model::Build::ReferenceSequence::AnnotationIndex->get(
-        aligner_name     => $self->aligner_name,
-        aligner_version  => $aligner_version,
-        aligner_params   => $aligner_params,
-        reference_build  => $reference_build,
-        annotation_build => $annotation_build,
-    );
-
-    unless ($annotate_index) {
-        die $self->error_message('Failed to get annotation index for star run');
-    }
-
-    my $index_dir = $annotate_index->output_dir;
+    my $index_dir = $aligner_index->output_dir;
     my $star_path = Genome::Model::Tools::Star->path_for_star_version($self->aligner_version);
     my $input_fastq_files = join ' ', @input_pathnames;
     
@@ -96,10 +102,10 @@ sub _run_aligner {
     $cmd = "$sam_path view -b -S -o $tmp_bam $out_sam_file";
     
     my $rv = Genome::Sys->shellcmd(
-        cmd                          => $cmd,
-        input_files                  => [$out_sam_file],
-        output_files                 => [$tmp_bam],
-        skip_if_output_is_present    => 0,
+        cmd                       => $cmd,
+        input_files               => [$out_sam_file],
+        output_files              => [$tmp_bam],
+        skip_if_output_is_present => 0,
     );
     die $self->error_message("Fail to run: $cmd") unless $rv == 1;
 
@@ -108,10 +114,10 @@ sub _run_aligner {
     $cmd = "$sam_path sort -m 402653184 $tmp_bam $sort_bam_prefix";
 
     $rv = Genome::Sys->shellcmd(
-        cmd                          => $cmd,
-        input_files                  => [$tmp_bam],
-        output_files                 => [$sort_bam],
-        skip_if_output_is_present    => 0,
+        cmd                       => $cmd,
+        input_files               => [$tmp_bam],
+        output_files              => [$sort_bam],
+        skip_if_output_is_present => 0,
     );
     die $self->error_message("Fail to run: $cmd") unless $rv == 1;
 
@@ -119,10 +125,10 @@ sub _run_aligner {
     $cmd = "$sam_path fillmd $sort_bam $ref_seq 1> $fillmd_sam_file 2>/dev/null";
 
     $rv  = Genome::Sys->shellcmd(
-        cmd                          => $cmd,
-        input_files                  => [$sort_bam, $ref_seq],
-        output_files                 => [$fillmd_sam_file],
-        skip_if_output_is_present    => 0,
+        cmd                       => $cmd,
+        input_files               => [$sort_bam, $ref_seq],
+        output_files              => [$fillmd_sam_file],
+        skip_if_output_is_present => 0,
     );
     die $self->error_message("Fail to run: $cmd") unless $rv == 1;
 
@@ -146,6 +152,33 @@ sub _run_aligner {
 
     #promote other misc result files - converted sam will be handled downstream
     map{Genome::Sys->move_file("$scratch_directory/$_", "$staging_directory/$_")}qw(SJ.out.tab Log.progress.out Log.out Log.final.out);
+
+    return 1;
+}
+
+
+sub prepare_reference_sequence_index {
+    my ($self, $ref_index) = @_;
+
+    my $ref_build = $ref_index->reference_build;
+    my $out_dir   = $ref_index->temp_staging_directory;
+    
+    my $ref_seq_fasta = $ref_build->full_consensus_path('fa');
+    my $star_path = Genome::Model::Tools::Star->path_for_star_version($ref_index->aligner_version);
+
+    my $cmd = "$star_path --runMode genomeGenerate --genomeDir $out_dir --genomeFastaFiles $ref_seq_fasta --runThreadN 8";
+    my @output_files = map{$out_dir.'/'.$_}qw(SA SAindex);
+
+    my $rv = Genome::Sys->shellcmd(
+        cmd          => $cmd,
+        input_files  => [$ref_seq_fasta],
+        output_files => [@output_files]
+    );
+
+    unless ($rv) {
+        $self->error_message('star reference indexing failed');
+        return;
+    }
 
     return 1;
 }
@@ -184,7 +217,7 @@ sub prepare_annotation_index {
     );
 
     unless ($rv) {
-        $self->error_message('star indexing failed');
+        $self->error_message('star annotation indexing failed');
         return;
     }
 
