@@ -235,6 +235,7 @@ sub _generate_metrics {
     $self->_generate_alignment_summary_metrics('');;
     $self->_generate_alignment_summary_metrics('-v2');
     $self->_generate_coverage_stats_summary_metrics;
+    $self->_generate_total_bp_metrics;
 
     return 1;
 }
@@ -525,6 +526,59 @@ sub coverage_stats_summary_hash_ref {
         $self->{_coverage_stats_summary_hash_ref} = \%stats_summary;
     }
     return $self->{_coverage_stats_summary_hash_ref};
+}
+
+sub _generate_total_bp_metrics {
+    my $self = shift;
+
+    return ($self->_generate_genome_total_bp_metric, $self->_generate_target_total_bp_metric);
+}
+
+sub _generate_genome_total_bp_metric {
+    my $self = shift;
+
+    my $genome_total_bp = 0;
+    my $refseq_build = $self->alignment_result->reference_build;
+
+    my $seqdict = $refseq_build->data_directory . "/seqdict/seqdict.sam";
+
+    my $seqdict_fh = Genome::Sys->open_file_for_reading($seqdict)
+        or die $self->error_message('Could not open seqdict at %s', $seqdict);
+
+    while (<$seqdict_fh>) {
+        chomp;
+        unless($_ =~ /$@HD/) { # skip the header row
+            my @f = split(/\t/, $_);
+            my $ln = $f[2];
+            $ln =~ s/LN://;
+            $genome_total_bp += $ln;
+        }
+    }
+    $seqdict_fh->close;
+
+    return $self->add_metric(metric_name => 'genome_total_bp', metric_value => $genome_total_bp);
+}
+
+sub _generate_target_total_bp_metric {
+    my $self = shift;
+
+    my $target_total_bp = 0;
+    my ($bed_file) = glob($self->output_dir . '/*.bed');
+
+    my $bed_fh = Genome::Sys->open_file_for_reading($bed_file)
+        or die $self->error_message('Could not open BED file at', $bed_file);
+
+    while (<$bed_fh>) {
+        chomp;
+        my @f      = split (/\t/, $_);
+        my $start  = $f[1];
+        my $stop   = $f[2];
+        my $length = ($stop - $start);
+        $target_total_bp += $length;
+    }
+    $bed_fh->close;
+
+    return $self->add_metric(metric_name => 'target_total_bp', metric_value => $target_total_bp);
 }
 
 
