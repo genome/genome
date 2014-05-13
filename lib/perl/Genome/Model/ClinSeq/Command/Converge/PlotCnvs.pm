@@ -5,12 +5,8 @@ use warnings;
 use Genome;
 
 class Genome::Model::ClinSeq::Command::Converge::PlotCnvs {
-  is => 'Command::V2',
+  is => 'Genome::Model::ClinSeq::Command::Converge::Base',
   has_input => [
-  clinseq_mg => {
-    is => 'Genome::ModelGroup',
-    doc => 'Clinseq model-group',
-  },
   outdir => {
     is => 'FilesystemPath',
     doc => 'Directory to write results',
@@ -21,7 +17,13 @@ class Genome::Model::ClinSeq::Command::Converge::PlotCnvs {
 
 sub help_synopsis {
   return <<EOS
-    gmt analysis clin-seq plot-cnvs --clinseq-mg modelgroup1 --outdir temp_dir
+genome model clin-seq converge plot-cnvs --builds='id in ["4b7539bb10cc4b9c97577cf11f4c79a2","cdca0edf526c4fe193d3054627a5871b"]' --outdir=/tmp/snv_indel_report/
+
+genome model clin-seq converge plot-cnvs --builds='model.id=9d0fcdca2b5d4f4385b83d2f75addac4,is_last_complete=1' --outdir=/tmp/snv_indel_report/
+
+genome model clin-seq converge plot-cnvs --builds='model_groups.id=9d0fcdca2b5d4f4385b83d2f75addac4,is_last_complete=1' --outdir=/tmp/snv_indel_report/
+
+genome model clin-seq converge plot-cnvs --builds='model.id in ["279f50e35d2b479ea3c32486eafd4ad4","7143119a93984056ae3f32c88c9ac2a1"],is_last_complete=1' --outdir=/tmp/snv_indel_report/
 EOS
 }
 
@@ -52,7 +54,6 @@ sub get_models() {
   return @models;
 }
 
-#WARNING - removes outputfile if already exists.
 sub copy_to_outdir {
   my $self = shift;
   my $file = shift;
@@ -147,16 +148,12 @@ sub create_combined_plot {
 
 sub plot_wgs_exome_microarray_cnvs() {
   my $self = shift;
-  my @models = $self->get_models();
-  foreach my $model (@models) {
-    if($model->latest_build) {
-    #if($model->last_succeeded_build) {
-      #my $build = $model->last_succeeded_build;
-      my $build = $model->latest_build;
+  my @builds = $self->builds;
+  foreach my $build (@builds) {
       my $microarray_cnv_file;
       my $wgs_cnv_file;
       my $exome_cnv_file;
-      my $common_name = $model->subject->common_name;
+      my $common_name = $build->common_name;
       ($microarray_cnv_file, $wgs_cnv_file, $exome_cnv_file) = $self->copy_cnv_files($build, $common_name);
       if ($microarray_cnv_file eq "NA" or $wgs_cnv_file eq "NA" or $exome_cnv_file eq "NA") {
         $self->status_message("Skipping $common_name, this sample does not have all three CNV files.");
@@ -164,10 +161,6 @@ sub plot_wgs_exome_microarray_cnvs() {
       }
       ($microarray_cnv_file, $wgs_cnv_file, $exome_cnv_file) = $self->format_cnv_files($microarray_cnv_file, $wgs_cnv_file, $exome_cnv_file);
       $self->create_combined_plot($microarray_cnv_file, $wgs_cnv_file, $exome_cnv_file, $common_name);
-    }
-    else {
-      print "no succeeded build for model " . $model->name . "\n";
-    }
   }
 }
 
