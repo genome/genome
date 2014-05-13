@@ -21,7 +21,7 @@ use Sub::Install qw(reinstall_sub);
 my $pkg = 'Genome::Annotation::Command::AnnotateBuild';
 use_ok($pkg);
 
-my $version = 1;
+my $version = 2;
 my $build_version = 1;
 my $test_dir = get_test_dir($pkg, $version);
 

@@ -4,6 +4,8 @@ use strict;
 use warnings FATAL => 'all';
 use Genome;
 use Sys::Hostname;
+use IPC::Run qw(run);
+use File::Basename qw(dirname);
 
 class Genome::Annotation::Expert::Vep::RunResult {
     is => 'Genome::Annotation::Expert::ResultBase',
@@ -31,6 +33,7 @@ class Genome::Annotation::Expert::Vep::RunResult {
         plugins => {is => 'String',
                     is_many => 1},
         plugins_version => {is => 'String',},
+        joinx_version => {is => 'String',},
     ],
 };
 
@@ -48,25 +51,68 @@ sub output_filename {
 sub _run {
     my $self = shift;
 
-    Genome::Db::Ensembl::Command::Run::Vep->execute(
-        output_file => $self->vep_output_file,
-        $self->vep_params,
-    );
-
-    Genome::Sys->gzip_file($self->vep_output_file, $self->final_output_file);
-    unlink $self->vep_output_file;
+    $self->_sort_input_vcf;
+    $self->_strip_input_vcf;
+    $self->_split_alternate_alleles;
+    $self->_annotate;
+    $self->_sort_annotated_vcf;
+    $self->_merge_annotations;
+    $self->_zip;
 
     return;
 }
 
-sub vep_output_file {
+sub _sort_input_vcf {
     my $self = shift;
-    return File::Spec->join($self->temp_staging_directory, $self->output_filename_base);
+
+    Genome::Model::Tools::Joinx::Sort->execute(
+        input_files => [$self->input_result_file_path],
+        use_version => $self->joinx_version,
+        output_file => $self->sorted_input_vcf,
+    );
 }
 
-sub final_output_file {
+sub sorted_input_vcf {
     my $self = shift;
-    return File::Spec->join($self->temp_staging_directory, $self->output_filename);
+    return File::Spec->join($self->temp_staging_directory, 'sorted_input.vcf');
+}
+
+sub _strip_input_vcf {
+    my $self = shift;
+
+    run(['cat', $self->sorted_input_vcf], '|',
+        ['cut', '-f', '-8'], '>', $self->stripped_input_vcf);
+}
+
+sub stripped_input_vcf {
+    my $self = shift;
+    return File::Spec->join($self->temp_staging_directory, 'stripped_input.vcf');
+}
+
+sub _split_alternate_alleles {
+    my $self = shift;
+
+    Genome::Annotation::Expert::Vep::SplitAlternateAlleles->execute(
+        input_file => $self->stripped_input_vcf,
+        output_file => $self->split_vcf,
+    );
+    unlink($self->stripped_input_vcf);
+}
+
+sub split_vcf {
+    my $self = shift;
+    return File::Spec->join($self->temp_staging_directory, 'split.vcf');
+}
+
+sub _annotate {
+    my $self = shift;
+
+    Genome::Db::Ensembl::Command::Run::Vep->execute(
+        input_file => $self->split_vcf,
+        output_file => $self->vep_output_file,
+        $self->vep_params,
+    );
+    unlink $self->split_vcf;
 }
 
 sub custom_annotation_inputs {
@@ -92,7 +138,6 @@ sub vep_params {
 
     my %params = (
         $self->param_hash,
-        input_file => $self->input_result_file_path,
         fasta => $self->reference_build->fasta_file,
         ensembl_version => $self->ensembl_version,
         custom => $self->custom_annotation_inputs,
@@ -105,6 +150,62 @@ sub vep_params {
     );
     delete $params{variant_type};
     delete $params{test_name};
+    delete $params{joinx_version};
 
     return %params;
+}
+
+sub vep_output_file {
+    my $self = shift;
+    return File::Spec->join($self->temp_staging_directory, 'vep.vcf');
+}
+
+sub _sort_annotated_vcf {
+    my $self = shift;
+
+    Genome::Model::Tools::Joinx::Sort->execute(
+        input_files => [$self->vep_output_file],
+        use_version => $self->joinx_version,
+        output_file => $self->sorted_vep_output,
+    );
+    unlink $self->vep_output_file;
+}
+
+sub sorted_vep_output {
+    my $self = shift;
+    return File::Spec->join($self->temp_staging_directory, 'vep_sorted.vcf');
+}
+
+sub _merge_annotations {
+    my $self = shift;
+
+    Genome::Model::Tools::Joinx::VcfMerge->execute(
+        input_files => [$self->sorted_input_vcf, $self->sorted_vep_output],
+        output_file => $self->final_vcf_file,
+        merge_strategy_file => $self->joinx_merge_strategy_file,
+    );
+    unlink($self->sorted_input_vcf);
+    unlink($self->sorted_vep_output);
+}
+
+sub joinx_merge_strategy_file {
+    my $self = shift;
+    return File::Spec->join(dirname(__FILE__), 'joinx_merge.strategy');
+}
+
+sub final_vcf_file {
+    my $self = shift;
+    return File::Spec->join($self->temp_staging_directory, $self->output_filename_base);
+}
+
+sub _zip {
+    my $self = shift;
+
+    # deletes $self->final_vcf_file and creates $self->final_output_file
+    run(['bgzip', $self->final_vcf_file]);
+}
+
+sub final_output_file {
+    my $self = shift;
+    return File::Spec->join($self->temp_staging_directory, $self->output_filename);
 }

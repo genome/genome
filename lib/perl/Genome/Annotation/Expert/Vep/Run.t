@@ -36,9 +36,9 @@ done_testing();
 
 sub generate_test_cmd {
     Sub::Install::reinstall_sub({
-        into => 'Genome::Db::Ensembl::Command::Run::Vep',
-        as => 'execute',
-        code => sub {my $self = shift; my $file = $self->output_file; `touch $file`; return 1;},
+        into => $result_class,
+        as => '_run',
+        code => sub {my $self = shift; my $file = $self->final_output_file; `touch $file`; return 1;},
     });
 
     my $input_result = $result_class->__define__();
@@ -68,6 +68,7 @@ sub generate_test_cmd {
         sift => 'b',
         plugins_version => 0,
         species => "alien",
+        joinx_version => '1.8',
         terms => "ensembl",
         reference_build => $reference_sequence_build,
     );

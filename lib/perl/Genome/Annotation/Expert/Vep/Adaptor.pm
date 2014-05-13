@@ -21,6 +21,7 @@ class Genome::Annotation::Expert::Vep::Adaptor {
                     is_many => 1,
                     is_optional => 1},
         feature_list_names_and_tags => {is => 'HASH',},
+        joinx_version => { is => 'String', },
         plugins_version => { is => 'String', },
     ],
     has_output => [

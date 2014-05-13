@@ -29,6 +29,7 @@ class Genome::Annotation::Expert::Vep::Run {
         plugins => {is => 'String',
                     is_many => 1,
                     is_optional => 1},
+        joinx_version => { is => 'String',},
         plugins_version => {is => 'String',},
     ],
 };
