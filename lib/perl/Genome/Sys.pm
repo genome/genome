@@ -857,7 +857,11 @@ sub make_path {
         my $rv = mkdir $subpath;
         my $mkdir_errno = $!;
         if ($rv) {
-            chown -1, $gid, $subpath;
+            # chown removes the setgid bit even if this is a "no-op" on root_squashed NFS volumes.
+            # If setgid is on this is probably a no-op so we can check if gid matches.
+            if ([stat($subpath)]->[5] != $gid) {
+                chown -1, $gid, $subpath;
+            }
         } else {
             if ($mkdir_errno == EEXIST) {
                 next;
