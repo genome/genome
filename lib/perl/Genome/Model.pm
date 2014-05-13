@@ -88,15 +88,17 @@ class Genome::Model {
         user_name => {
             is => 'Text',
             is_deprecated => 1,
-            doc => 'use created_by (or maybe run_as), accessor overridden for transition to created_by',
+            via => '__self__',
+            to => 'created_by',
+            doc => 'use created_by (or maybe run_as)',
         },
         created_by => {
             is => 'Text',
-            doc => 'entity that created the model, accessor overridden for transition to created_by',
+            doc => 'entity that created the model',
         },
         run_as => {
             is => 'Text',
-            doc => 'username to run builds as, accessor overridden for transition to created_by',
+            doc => 'username to run builds as',
         },
         creation_date => {
             # TODO: switch from timestamp to Date when we go Oracle to PostgreSQL
@@ -1088,36 +1090,5 @@ sub files_ignored_by_build_diff { () }
 #Does this model type require mapping of subjects to work?
 #Used by Analysis Project configuration to "pair" somatic samples or otherwise aggregate them for analysis
 sub requires_subject_mapping { return 0; }
-
-# For transition to created_by
-sub user_name { created_by(@_) }
-sub created_by {
-    my $self = shift;
-    if (@_) {
-        return $self->__created_by(@_);
-    } else {
-        # Perl 5.8 does not support //
-        if (defined $self->__created_by) {
-            return $self->__created_by;
-        } else {
-            $self->__user_name;
-        }
-    }
-}
-
-# For transition to created_by
-sub run_as {
-    my $self = shift;
-    if (@_) {
-        return $self->__run_as(@_);
-    } else {
-        # Perl 5.8 does not support //
-        if (defined $self->__run_as) {
-            return $self->__run_as;
-        } else {
-            $self->__user_name;
-        }
-    }
-}
 
 1;
