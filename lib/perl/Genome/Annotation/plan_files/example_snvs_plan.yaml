@@ -16,6 +16,7 @@ experts:
         regulatory: 1
         canonical: 1
         plugins: []
+        joinx_version: 1.8
         plugins_version: 1
 reporters:
     simple:

@@ -26,7 +26,7 @@ sub adaptor_object {
 
 sub validate_object {
     my $self = shift;
-    $self->adaptor_object->validate_with_plan_params($self->params);
+    $self->object->adaptor_class->validate_with_plan_params($self->params);
 }
 
 1;

@@ -44,6 +44,13 @@ sub annotation_plan {
     return $self->_get_annotation_plan($self->annotation_plan_name($variant_type));
 }
 
+sub validated_annotation_plan {
+    my ($self, $variant_type) = @_;
+    my $plan = $self->annotation_plan($variant_type);
+    $plan->validate();
+    return $plan;
+}
+
 sub annotation_plan_name {
     my ($self, $variant_type) = @_;
     my $name_accessor = sprintf('%s_annotation_plan_name', $variant_type);
@@ -68,7 +75,8 @@ sub _connect_annotation_workflow {
     my ($self, $dag, $variant_type) = @_;
 
     if ($self->annotation_plan_name($variant_type)) {
-        my $annotation_dag = generate_dag($self->annotation_plan($variant_type),
+        my $annotation_dag = generate_dag(
+            $self->validated_annotation_plan($variant_type),
             $variant_type);
 
         $dag->add_operation($annotation_dag);
@@ -104,7 +112,6 @@ sub annotation_related_workflow_inputs {
     for my $variant_type qw(snvs indels) {
         if ($self->annotation_plan_name($variant_type)) {
             my $plan = $self->annotation_plan($variant_type);
-            $plan->validate();
 
             $inputs{sprintf('%s_variant_type', $variant_type)} = $variant_type;
             $inputs{sprintf('%s_output_directory', $variant_type)} =
