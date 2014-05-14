@@ -10,9 +10,9 @@ class Genome::Model::Build::ClinSeq::FileAccessors {
 
 sub case_dir {
   my $self = shift;
-  my $case_dir = $self->data_directory . 
+  my $case_dir = $self->data_directory .
     "/" . $self ->common_name;
-  return $case_dir; 
+  return $case_dir;
 }
 
 sub snv_dir {
@@ -119,6 +119,45 @@ sub microarray_cnv_wg_plot {
     return $microarray_cnv_wg_plot
   } else {
     $self->warning_message("unable to find $microarray_cnv_wg_plot");
+    return 0;
+  }
+}
+
+sub wgs_exome_snv_tier1_annotated_compact_file {
+  my $self = shift;
+  my $wgs_exome_snv_tier1_annotated_compact_file =
+      $self->wgs_exome_snv_dir . "/snvs.hq.tier1.v1.annotated.compact.tsv";
+  if(-e $wgs_exome_snv_tier1_annotated_compact_file ){
+    return $wgs_exome_snv_tier1_annotated_compact_file;
+  } else {
+    $self->warning_message("unable to find " .
+        $wgs_exome_snv_tier1_annotated_compact_file);
+    return 0;
+  }
+}
+
+sub wgs_exome_snv_tier1_annotated_compact_catanno_file {
+  my $self = shift;
+  my $wgs_exome_snv_tier1_annotated_compact_catanno_file =
+      $self->wgs_exome_snv_dir . "/snvs.hq.tier1.v1.annotated.compact.catanno.tsv";
+  if(-e $wgs_exome_snv_tier1_annotated_compact_catanno_file ){
+    return $wgs_exome_snv_tier1_annotated_compact_catanno_file;
+  } else {
+    $self->warning_message("unable to find " .
+        $wgs_exome_snv_tier1_annotated_compact_catanno_file);
+    return 0;
+  }
+}
+
+sub wgs_exome_snv_tier1_annotated_compact_readcounts_file {
+  my $self = shift;
+  my $wgs_exome_snv_tier1_annotated_compact_readcounts_file =
+      $self->wgs_exome_snv_dir . "/snvs.hq.tier1.v1.annotated.compact.readcounts.tsv";
+  if(-e $wgs_exome_snv_tier1_annotated_compact_readcounts_file ){
+    return $wgs_exome_snv_tier1_annotated_compact_readcounts_file;
+  } else {
+    $self->warning_message("unable to find " .
+        $wgs_exome_snv_tier1_annotated_compact_readcounts_file);
     return 0;
   }
 }
