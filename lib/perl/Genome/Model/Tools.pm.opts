@@ -17543,6 +17543,15 @@ $Genome::Model::Tools::OPTS_SPEC = [
     'help!',
     undef
   ],
+  '>star',
+  [
+    'use-version=s',
+    undef,
+    'debug!',
+    undef,
+    'help!',
+    undef
+  ],
   '>methyl-array',
   [
     '>probe-distribution',
@@ -21916,6 +21925,7 @@ $Genome::Model::Tools::OPTS_SPEC = [
         ],
         'version=s',
         [
+          '2.4',
           '229',
           '230'
         ],
