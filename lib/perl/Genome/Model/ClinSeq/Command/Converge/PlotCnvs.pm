@@ -47,13 +47,6 @@ sub __errors__ {
   return @errors;
 }
 
-sub get_models() {
-  my $self = shift;
-  my $clinseq_mg = $self->clinseq_mg;  
-  my @models = $clinseq_mg->models;
-  return @models;
-}
-
 sub copy_to_outdir {
   my $self = shift;
   my $file = shift;
