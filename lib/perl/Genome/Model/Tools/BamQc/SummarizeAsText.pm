@@ -396,26 +396,26 @@ sub execute {
         # TODO: We need summary metrics per category and/or read direction
         # The below summary metrics only apply to paired-end libraries
         my %summary_data = (
-            LABEL => $label_dir->label,
-            READS => $as_metrics->{'CATEGORY-PAIR'}{PF_READS},
-            READS_ALIGNED => $as_metrics->{'CATEGORY-PAIR'}{PF_READS_ALIGNED},
-            PCT_READS_ALIGNED => $as_metrics->{'CATEGORY-PAIR'}{PCT_PF_READS_ALIGNED},
-            ALIGNED_BASES => $as_metrics->{'CATEGORY-PAIR'}{PF_ALIGNED_BASES},
-            PCT_CHIMERAS => $as_metrics->{'CATEGORY-PAIR'}{PCT_CHIMERAS},
-            ERROR_RATE_READ_1 => $error_rate_sum->{1}->{error_rate},
-            ERROR_RATE_READ_2 => $error_rate_sum->{2}->{error_rate},
-            MEDIAN_INSERT_SIZE => $is_metrics->{'PAIR_ORIENTATION-FR'}{MEDIAN_INSERT_SIZE},
-            MEAN_INSERT_SIZE => $is_metrics->{'PAIR_ORIENTATION-FR'}{MEAN_INSERT_SIZE},
-            STANDARD_DEVIATION => $is_metrics->{'PAIR_ORIENTATION-FR'}{STANDARD_DEVIATION},
-            AT_DROPOUT => $gc_metrics->{'WINDOW_SIZE-100'}{AT_DROPOUT},
-            GC_DROPOUT => $gc_metrics->{'WINDOW_SIZE-100'}{GC_DROPOUT},
+            LABEL => $label_dir->label || "na",
+            READS => $as_metrics->{'CATEGORY-PAIR'}{PF_READS} || "na",
+            READS_ALIGNED => $as_metrics->{'CATEGORY-PAIR'}{PF_READS_ALIGNED} || "na",
+            PCT_READS_ALIGNED => $as_metrics->{'CATEGORY-PAIR'}{PCT_PF_READS_ALIGNED} || "na",
+            ALIGNED_BASES => $as_metrics->{'CATEGORY-PAIR'}{PF_ALIGNED_BASES} || "na",
+            PCT_CHIMERAS => $as_metrics->{'CATEGORY-PAIR'}{PCT_CHIMERAS} || "na",
+            ERROR_RATE_READ_1 => $error_rate_sum->{1}->{error_rate} || "na",
+            ERROR_RATE_READ_2 => $error_rate_sum->{2}->{error_rate} || "na",
+            MEDIAN_INSERT_SIZE => $is_metrics->{'PAIR_ORIENTATION-FR'}{MEDIAN_INSERT_SIZE} || "na",
+            MEAN_INSERT_SIZE => $is_metrics->{'PAIR_ORIENTATION-FR'}{MEAN_INSERT_SIZE} || "na",
+            STANDARD_DEVIATION => $is_metrics->{'PAIR_ORIENTATION-FR'}{STANDARD_DEVIATION} || "na",
+            AT_DROPOUT => $gc_metrics->{'WINDOW_SIZE-100'}{AT_DROPOUT} || "na",
+            GC_DROPOUT => $gc_metrics->{'WINDOW_SIZE-100'}{GC_DROPOUT} || "na",
             LIBRARY_NAME => $lib || 'na',
             PCT_DUPLICATION => 'na',
             ESTIMATED_LIBRARY_SIZE => 'na',
         );
         if ($mrkdup_metrics && $lib) {
-            $summary_data{PCT_DUPLICATION} = $mrkdup_metrics->{PERCENT_DUPLICATION};
-            $summary_data{ESTIMATED_LIBRARY_SIZE} = $mrkdup_metrics->{ESTIMATED_LIBRARY_SIZE};
+            $summary_data{PCT_DUPLICATION} = $mrkdup_metrics->{PERCENT_DUPLICATION} || "na";
+            $summary_data{ESTIMATED_LIBRARY_SIZE} = $mrkdup_metrics->{ESTIMATED_LIBRARY_SIZE} || "na";
         }
         if(!defined($lib) and $self->labels_are_instrument_data_ids) {
             $self->status_message("Looking up the library name");
@@ -426,7 +426,7 @@ sub execute {
             else {
                 my $library_name = $instrument_data->library_name;
                 if(defined $library_name) {
-                    $summary_data{LIBRARY_NAME} = $library_name;
+                    $summary_data{LIBRARY_NAME} = $library_name || "na";
                 }
             }
         }
