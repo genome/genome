@@ -12,7 +12,7 @@ class Genome::Model::ClinSeq::Command::Converge::PlotCnvs {
     doc => 'Directory to write results',
   },
   ],
-  doc => 'Plot CNVs from multiple clin-seq models.',
+  doc => 'Plot CNV calls integrated from WGS, Exome and Microarrays.',
 };
 
 sub help_synopsis {
@@ -29,7 +29,7 @@ EOS
 
 sub help_detail {
   return <<EOS
-Plot CNVs from different callers or from different technologies(microarray, exome etc), helps contrast and evaluate the calls.
+Plot CNVs from different technologies(microarray, exome etc), helps contrast and evaluate the calls.
 EOS
 }
 
