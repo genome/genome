@@ -7962,6 +7962,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'prefix=s',
         'files',
+        'run-as=s',
+        'files',
         'desc=s',
         'files',
         'version=s',
@@ -8013,6 +8015,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'model-name=s',
         'files',
+        'run-as=s',
+        'files',
         'help!',
         undef
       ],
@@ -8061,6 +8065,8 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'model-name=s',
         'files',
+        'run-as=s',
+        'files',
         'help!',
         undef
       ],
@@ -8090,6 +8096,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'cancer-annotation-db=s',
         'files',
+        'run-as=s',
+        'files',
         'help!',
         undef
       ],
@@ -8113,6 +8121,8 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'model-name=s',
         'files',
+        'run-as=s',
+        'files',
         'help!',
         undef
       ],
@@ -8133,6 +8143,8 @@ $Genome::Command::OPTS_SPEC = [
         'groups=s@',
         undef,
         'model-name=s',
+        'files',
+        'run-as=s',
         'files',
         'help!',
         undef
@@ -8174,6 +8186,8 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'model-name=s',
         'files',
+        'run-as=s',
+        'files',
         'help!',
         undef
       ],
@@ -8203,6 +8217,8 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'annotation-build=s',
         undef,
+        'run-as=s',
+        'files',
         'help!',
         undef
       ],
@@ -8224,6 +8240,8 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'model-name=s',
         'files',
+        'run-as=s',
+        'files',
         'help!',
         undef
       ],
@@ -8244,6 +8262,8 @@ $Genome::Command::OPTS_SPEC = [
         'groups=s@',
         undef,
         'model-name=s',
+        'files',
+        'run-as=s',
         'files',
         'help!',
         undef
@@ -8299,6 +8319,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'ref-model-coverage=s',
         undef,
+        'run-as=s',
+        'files',
         'help!',
         undef
       ],
@@ -8325,6 +8347,8 @@ $Genome::Command::OPTS_SPEC = [
         'groups=s@',
         undef,
         'model-name=s',
+        'files',
+        'run-as=s',
         'files',
         'help!',
         undef
@@ -8361,6 +8385,8 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'previous-variant-detection-results=s',
         undef,
+        'run-as=s',
+        'files',
         'nomenclature=s',
         undef,
         'roi-list=s',
@@ -8423,6 +8449,8 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'dbsnp-build=s',
         undef,
+        'run-as=s',
+        'files',
         'help!',
         undef
       ],
@@ -8465,6 +8493,8 @@ $Genome::Command::OPTS_SPEC = [
           'groups=s@',
           undef,
           'model-name=s',
+          'files',
+          'run-as=s',
           'files',
           'assembly-contigs-file=s',
           'files',
@@ -8519,6 +8549,8 @@ $Genome::Command::OPTS_SPEC = [
           'files',
           'locus-suffix=s',
           'files',
+          'run-as=s',
+          'files',
           'assembly-contigs-file=s',
           'files',
           'help!',
@@ -8544,6 +8576,8 @@ $Genome::Command::OPTS_SPEC = [
         'groups=s@',
         undef,
         'model-name=s',
+        'files',
+        'run-as=s',
         'files',
         'help!',
         undef
@@ -8572,6 +8606,8 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'groups=s@',
         undef,
+        'run-as=s',
+        'files',
         'help!',
         undef
       ],
@@ -8602,6 +8638,8 @@ $Genome::Command::OPTS_SPEC = [
         'groups=s@',
         undef,
         'model-name=s',
+        'files',
+        'run-as=s',
         'files',
         'gtf-file=s',
         undef,
@@ -8656,6 +8694,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'sequence-uri=s',
         'files',
+        'run-as=s',
+        'files',
         'use-default-sequence-uri!',
         undef,
         'assembly-name=s',
@@ -8694,6 +8734,8 @@ $Genome::Command::OPTS_SPEC = [
         'groups=s@',
         undef,
         'model-name=s',
+        'files',
+        'run-as=s',
         'files',
         'help!',
         undef
@@ -8742,6 +8784,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'regions-of-interest=s@',
         undef,
+        'run-as=s',
+        'files',
         'gene-black-lists=s@',
         'files',
         'variant-black-lists=s@',
@@ -8774,6 +8818,8 @@ $Genome::Command::OPTS_SPEC = [
         'groups=s@',
         undef,
         'model-name=s',
+        'files',
+        'run-as=s',
         'files',
         'help!',
         undef
@@ -8856,6 +8902,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'previously-discovered-variations-build=s',
         undef,
+        'run-as=s',
+        'files',
         'regulatory-annotations=s@',
         undef,
         'subject-name=s',
@@ -8880,6 +8928,8 @@ $Genome::Command::OPTS_SPEC = [
         'groups=s@',
         undef,
         'model-name=s',
+        'files',
+        'run-as=s',
         'files',
         'help!',
         undef
@@ -28608,6 +28658,15 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>star',
+    [
+      'use-version=s',
+      undef,
+      'debug!',
+      undef,
+      'help!',
+      undef
+    ],
     '>methyl-array',
     [
       '>probe-distribution',
@@ -32981,6 +33040,7 @@ $Genome::Command::OPTS_SPEC = [
           ],
           'version=s',
           [
+            '2.4',
             '229',
             '230'
           ],
