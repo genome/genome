@@ -38,7 +38,22 @@ done_testing;
 sub setup_objects {
     my $sample = Genome::Test::Factory::Sample->setup_object();
     my $lib = Genome::Test::Factory::Library->setup_object(sample_id => $sample->id, name => $sample->name."-microarraylib");
-    my $id = Genome::Test::Factory::InstrumentData::Imported->setup_object(genotype_file => File::Spec->join($test_dir, "1.genotype"), library_id => $lib->id, import_source_name => "tgi");
+    my $id = Genome::Test::Factory::InstrumentData::Imported->setup_object(
+        library_id => $lib->id,
+        import_source_name => "tgi",
+    );
+    my $alloc = Genome::Disk::Allocation->__define__(
+        owner => $id,
+        mount_path => Genome::Disk::Volume->__define__(mount_path => $test_dir, disk_status => 'active')->mount_path,
+        group_subdirectory => '',
+        allocation_path => '',
+    );
+    die "Failed to define allocation for genotype file!" if not $alloc;
+    $id->add_attribute(
+        attribute_label => 'genotype_file_name', 
+        attribute_value =>  "1.genotype",
+    );
+    ok(-s $id->genotype_file, 'genotype file set');
     $sample->default_genotype_data_id($id->id);
 
     my $tmp_dir = Genome::Sys->create_temp_directory;

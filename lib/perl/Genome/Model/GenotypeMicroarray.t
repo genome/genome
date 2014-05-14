@@ -7,11 +7,11 @@ BEGIN {
 use strict;
 use warnings;
 
+use above 'Genome';
+
 require File::Compare;
 use Workflow::Simple;
 use Test::More;
-
-use above 'Genome';
 
 ok(init(), 'succesfully completed init');
 ok(test_dependent_cron_ref_align(), 'successfully completed test_dependent_cron_ref_align');

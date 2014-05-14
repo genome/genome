@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 
+require File::Basename;
 require File::Path;
 
 class Genome::InstrumentData::Microarray {
@@ -61,28 +62,27 @@ sub update_genotype_file {
     die $self->error_message("No genotype file was given to update_genotype_file.") if not $genotype_file;
 
     my $new_genotype_file = $self->_copy_genotype_file($instrument_data, $genotype_file);
-    $self->_update_instrument_data_genotype_file_attribute($instrument_data, $new_genotype_file);
+    $self->_update_instrument_data_genotype_file_name_attribute($instrument_data, $new_genotype_file);
     return $new_genotype_file;
 }
 
-sub _update_instrument_data_genotype_file_attribute {
+sub _update_instrument_data_genotype_file_name_attribute {
     my($self, $instrument_data, $new_genotype_file) = @_;
 
-    # Remove any genotype_file attributes that already exist on this instrument_data.
-    my @genotype_file_attributes = $instrument_data->attributes(attribute_label => 'genotype_file');
-    for my $to_be_removed (@genotype_file_attributes) {
-        $to_be_removed->delete(); 
-    }
+    # Remove any genotype_file and genotype_file_name attributes that already exist
+    my @old_attributes = $instrument_data->attributes('attribute_label in' => [ 'genotype_file', 'genotype_file_name']);
+    for ( @old_attributes ) { $_->delete(); }
 
-    # Create new genotype_file attribute and attach it.
+    # Create new genotype_file_name attribute
     my $new_attribute = Genome::InstrumentDataAttribute->create(
         instrument_data_id => $instrument_data->id,
-        attribute_label => 'genotype_file',
-        attribute_value => $new_genotype_file, 
+        attribute_label => 'genotype_file_name',
+        attribute_value => File::Basename::basename($new_genotype_file), 
     );
     if (not $new_attribute){
         die $self->error_message("Failed to create new genotype_file attribute for file: ".$new_genotype_file);
     }
+
     return 1;
 }
 

@@ -102,7 +102,16 @@ sub instrument_data {
         import_date => '2014-01-01 00:00:00',
     );
     die 'Failed to define instrument data' if not $cache{instrument_data};
-    $cache{instrument_data}->add_attribute(attribute_label => 'genotype_file', attribute_value => testdir().'/instdata/snpreport/genotypes.tsv');
+    my $alloc = Genome::Disk::Allocation->__define__(
+        owner => $cache{instrument_data},
+        mount_path => Genome::Disk::Volume->__define__(mount_path => testdir(), disk_status => 'active')->mount_path,
+        group_subdirectory => 'instdata',
+        allocation_path => 'snpreport',
+    );
+    die "Failed to define allocation for genotype file!" if not $alloc;
+    $cache{instrument_data}->add_attribute(
+        attribute_label => 'genotype_file_name', 
+        attribute_value => 'genotypes.tsv');
     die 'Failed to set genotype file on instdata!' if not -s $cache{instrument_data}->genotype_file;
 
     $cache{sample}->default_genotype_data_id($cache{instrument_data}->id);

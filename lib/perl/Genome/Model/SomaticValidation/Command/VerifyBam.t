@@ -54,9 +54,35 @@ sub setup_objects {
     my $lib1 = Genome::Test::Factory::Library->setup_object(sample_id => $sample1->id, name => $sample1->name."-microarraylib");
     my $lib2 = Genome::Test::Factory::Library->setup_object(sample_id => $sample2->id, name => $sample2->name."-microarraylib");
 
-    my $id1 = Genome::Test::Factory::InstrumentData::Imported->setup_object(genotype_file => File::Spec->join($test_dir, "1.genotype"), library_id => $lib1->id, import_source_name => "tgi");
-    my $id2 = Genome::Test::Factory::InstrumentData::Imported->setup_object(genotype_file => File::Spec->join($test_dir, "1.genotype"), library_id => $lib2->id, import_source_name => "tgi");
+    my $id1 = Genome::Test::Factory::InstrumentData::Imported->setup_object(library_id => $lib1->id, import_source_name => "tgi");
+    my $volume = Genome::Disk::Volume->__define__(mount_path => $test_dir, disk_status => 'active');
+    my $alloc = Genome::Disk::Allocation->__define__(
+        owner => $id1,
+        mount_path => $volume->mount_path,
+        group_subdirectory => '',
+        allocation_path => '',
+    );
+    die "Failed to define allocation for genotype file!" if not $alloc;
+    $id1->add_attribute(
+        attribute_label => 'genotype_file_name', 
+        attribute_value =>  "1.genotype",
+    );
+    ok(-s $id1->genotype_file, 'genotype file set');
     $sample1->default_genotype_data_id($id1->id);
+
+    my $id2 = Genome::Test::Factory::InstrumentData::Imported->setup_object(library_id => $lib2->id, import_source_name => "tgi");
+    $alloc = Genome::Disk::Allocation->__define__(
+        owner => $id2,
+        mount_path => $volume->mount_path,
+        group_subdirectory => '',
+        allocation_path => '',
+    );
+    die "Failed to define allocation for genotype file!" if not $alloc;
+    $id2->add_attribute(
+        attribute_label => 'genotype_file_name', 
+        attribute_value =>  "1.genotype",
+    );
+    ok(-s $id2->genotype_file, 'genotype file set');
     $sample2->default_genotype_data_id($id2->id);
 
     my $tmp_dir = Genome::Sys->create_temp_directory;

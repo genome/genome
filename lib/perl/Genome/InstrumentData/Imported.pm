@@ -4,6 +4,8 @@ use strict;
 use warnings;
 
 use Genome;
+
+require File::Basename;
 use File::stat;
 use File::Path;
 use Set::Scalar;
@@ -136,14 +138,6 @@ class Genome::InstrumentData::Imported {
         reference_sequence_build => {
             is => 'Genome::Model::Build::ImportedReferenceSequence',
             id_by => 'reference_sequence_build_id',
-        },
-        genotype_file => {
-            is => 'Text',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_optional => 1,
-            is_mutable => 1,
-            where => [ attribute_label => 'genotype_file' ],
         },
         blacklisted_segments => {
             is_many => 1,
@@ -504,6 +498,43 @@ sub bam_path {
     return if not -e $bam_file;
 
     return $bam_file;
+}
+
+sub genotype_file {
+    my ($self, $genotype_file) = @_;
+
+    # Error if given a file to update
+    if ( $genotype_file ) {
+        $self->error_message("To update the genotype file, please use the 'update_genotype_file' method.");
+        return;
+    }
+
+    # Check allocation exists and is not archived
+    my ($allocation) = $self->allocations;
+    if ( not $allocation ) {
+        return;
+    }
+    if ( $allocation->is_archived ) {
+        $self->error_message("Genotype file is archived! Returning path to archived location.");
+    }
+
+    # Get genotype file name via 
+    #  genotype_file_name attr 
+    #   or basename of genotype_file attr
+    my $genotype_file_name;
+    if ( my $genotype_file_name_attr = $self->attributes(attribute_label => 'genotype_file_name') ) {
+        $genotype_file_name = $genotype_file_name_attr->attribute_value;
+    }
+    elsif ( my $genotype_file_attr = $self->attributes(attribute_label => 'genotype_file') ) {
+        $genotype_file_name = File::Basename::basename($genotype_file_attr->attribute_value);
+    }
+    else {
+        return;
+    }
+    return if not $genotype_file_name;
+
+    # return abs path + genotype file name
+    return join('/', $allocation->absolute_path, $genotype_file_name);
 }
 
 sub get_read_groups_set {
