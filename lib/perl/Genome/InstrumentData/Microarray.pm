@@ -7,9 +7,26 @@ use Genome;
 
 require File::Basename;
 require File::Path;
+require Sub::Install;
 
 class Genome::InstrumentData::Microarray {
 };
+
+BEGIN: {
+    use Genome::InstrumentData::Imported;
+    #Genome::InstrumentData::Imported->class;
+    for my $method (qw/ 
+            genotype_file update_genotype_file
+            _update_instrument_data_genotype_file_name_attribute
+            _copy_genotype_file
+        /) {
+        Sub::Install::install_sub({
+           code => $method,
+           into => 'Genome::InstrumentData::Imported',
+           as   => $method
+         });
+    }
+}
 
 sub get_snpid_hash_for_variant_list {
     my $self = shift;
@@ -54,59 +71,97 @@ sub get_snpid_hash_for_variant_list {
     return \%old_to_new_snpid_map;
 }
 
-#   Copy a genotype_file to a new disk allocation and update the instrument_data's attribute that
-# points to that file.
-sub update_genotype_file {
-    my ($self, $instrument_data, $genotype_file) = @_;
-    die $self->error_message("No instrument data was given to update_genotype_file.") if not $instrument_data;
-    die $self->error_message("No genotype file was given to update_genotype_file.") if not $genotype_file;
+#< Genotype File >#
+#
+# These methods are installed into Genome::Instrument::Imported. The first parameter is $gm_inst_data,
+#  and is the microarry inst data.
+#
+sub genotype_file {
+    my ($gm_inst_data, $genotype_file) = @_;
 
-    my $new_genotype_file = $self->_copy_genotype_file($instrument_data, $genotype_file);
-    $self->_update_instrument_data_genotype_file_name_attribute($instrument_data, $new_genotype_file);
+    # Error if given a file to update
+    if ( $genotype_file ) {
+        $gm_inst_data->error_message("To update the genotype file, please use the 'update_genotype_file' method.");
+        return;
+    }
+
+    # Check allocation exists and is not archived
+    my ($allocation) = $gm_inst_data->allocations;
+    if ( not $allocation ) {
+        return;
+    }
+    if ( $allocation->is_archived ) {
+        $gm_inst_data->error_message("Genotype file is archived! Returning path to archived location.");
+    }
+
+    # Get genotype file name via 
+    #  genotype_file_name attr 
+    #   or basename of genotype_file attr
+    my $genotype_file_name;
+    if ( my $genotype_file_name_attr = $gm_inst_data->attributes(attribute_label => 'genotype_file_name') ) {
+        $genotype_file_name = $genotype_file_name_attr->attribute_value;
+    }
+    elsif ( my $genotype_file_attr = $gm_inst_data->attributes(attribute_label => 'genotype_file') ) {
+        $genotype_file_name = File::Basename::basename($genotype_file_attr->attribute_value);
+    }
+    else {
+        return;
+    }
+    return if not $genotype_file_name;
+
+    # return abs path + genotype file name
+    return join('/', $allocation->absolute_path, $genotype_file_name);
+}
+
+sub update_genotype_file {
+    my ($gm_inst_data, $genotype_file) = @_;
+    die $gm_inst_data->error_message("No genotype file was given to update_genotype_file.") if not $genotype_file;
+
+    my $new_genotype_file = $gm_inst_data->_copy_genotype_file($genotype_file);
+    $gm_inst_data->_update_instrument_data_genotype_file_name_attribute($new_genotype_file);
     return $new_genotype_file;
 }
 
 sub _update_instrument_data_genotype_file_name_attribute {
-    my($self, $instrument_data, $new_genotype_file) = @_;
+    my($gm_inst_data, $new_genotype_file) = @_;
 
     # Remove any genotype_file and genotype_file_name attributes that already exist
-    my @old_attributes = $instrument_data->attributes('attribute_label in' => [ 'genotype_file', 'genotype_file_name']);
+    my @old_attributes = $gm_inst_data->attributes('attribute_label in' => [ 'genotype_file', 'genotype_file_name']);
     for ( @old_attributes ) { $_->delete(); }
 
     # Create new genotype_file_name attribute
     my $new_attribute = Genome::InstrumentDataAttribute->create(
-        instrument_data_id => $instrument_data->id,
+        instrument_data_id => $gm_inst_data->id,
         attribute_label => 'genotype_file_name',
         attribute_value => File::Basename::basename($new_genotype_file), 
     );
     if (not $new_attribute){
-        die $self->error_message("Failed to create new genotype_file attribute for file: ".$new_genotype_file);
+        die $gm_inst_data->error_message("Failed to create new genotype_file attribute for file: ".$new_genotype_file);
     }
 
     return 1;
 }
 
-# Copy the genotype_file to a new disk allocation (if one doesn't already exist)
 sub _copy_genotype_file {
-    my ($self, $instrument_data, $genotype_file) = @_;
+    my ($gm_inst_data, $genotype_file) = @_;
 
     my $size = -s $genotype_file;
     if (not $size) {
-        die $self->error_message("The genotype file has no size: $genotype_file");
+        die $gm_inst_data->error_message("The genotype file has no size: $genotype_file");
     }
 
-    my ($disk_allocation) = $instrument_data->allocations;
+    my ($disk_allocation) = $gm_inst_data->allocations;
     my $kilobytes_requested = int( $size / 1024 ) + 20; # extra for directory etc
     if (not $disk_allocation) {
         $disk_allocation = Genome::Disk::Allocation->allocate (
             disk_group_name => $ENV{GENOME_DISK_GROUP_ALIGNMENTS},
-            allocation_path => 'instrument_data/imported/'.$instrument_data->id,
+            allocation_path => 'instrument_data/imported/'.$gm_inst_data->id,
             kilobytes_requested => $kilobytes_requested,
-            owner_class_name => $instrument_data->class,
-            owner_id => $instrument_data->id,
+            owner_class_name => $gm_inst_data->class,
+            owner_id => $gm_inst_data->id,
         );
         if (not $disk_allocation) {
-            die $self->error_message("Failed to create disk allocation for instrument data: ".$instrument_data->id);
+            die $gm_inst_data->error_message("Failed to create disk allocation for instrument data: ".$gm_inst_data->id);
         }
     }
     else {
@@ -116,24 +171,28 @@ sub _copy_genotype_file {
 
     # check that the dest dir exists
     if ( not -d $disk_allocation->absolute_path ) {
-        Carp::confess('Microarray ('.$self->id.') disk allocation ('.$disk_allocation->id.') absolute path does not exist! '.$disk_allocation->absolute_path);
+        Carp::confess('Microarray ('.$gm_inst_data->id.') disk allocation ('.$disk_allocation->id.') absolute path does not exist! '.$disk_allocation->absolute_path);
     }
 
     # remove existing genotype_file (if exists)
-    my $new_genotype_file = $disk_allocation->absolute_path.'/'.$instrument_data->sample->id.'.genotype';
+    my $new_genotype_file = $disk_allocation->absolute_path.'/'.$gm_inst_data->sample->id.'.genotype';
     unlink $new_genotype_file if -e $new_genotype_file;
 
     # copy *this* genotype_file into the allocation
     my $copy = File::Copy::copy($genotype_file, $new_genotype_file);
     if (not $copy) {
-        die $self->error_message("Failed to copy genotype file from $genotype_file to $new_genotype_file => $!");
+        die $gm_inst_data->error_message("Failed to copy genotype file from $genotype_file to $new_genotype_file => $!");
     }
 
     # resize the allocation based on what is stored there.
     my $realloc = eval{ $disk_allocation->reallocate(allow_reallocate_with_move => 1); };
     if (not $realloc) {
-        $self->status_message('Failed to reallocate instrument data ('.$disk_allocation->owner_id.'), continuing...');
+        $gm_inst_data->status_message('Failed to reallocate instrument data ('.$disk_allocation->owner_id.'), continuing...');
     }
 
     return $new_genotype_file;
 }
+#<>#
+
+1;
+
