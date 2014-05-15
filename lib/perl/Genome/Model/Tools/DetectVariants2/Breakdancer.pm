@@ -395,11 +395,25 @@ sub _check_fastqs_present {
     my $self = shift;
 
     # Get the fastqs [only for ctx]
-    my @fastqs = grep { -s } glob($self->_sv_staging_output . "*.fastq");
-    if ( not @fastqs ) {
-        $self->error_message('Expected fastqs in sv staging output! '.$self->_sv_staging_output);
+    my @fastqs = grep { -e } glob($self->_sv_staging_output . "*.fastq");
+    my @fastqs_with_size = grep { -s } @fastqs;
+
+    my @instrument_data = map $_->instrument_data, ($self->alignment_results, $self->control_alignment_results);
+    my @libraries;
+    if(@instrument_data) {
+        @libraries = Genome::Library->get([map $_->library_id, @instrument_data]);
+    }
+
+    unless(@fastqs_with_size) {
+        $self->warning_message('Expected fastqs in sv staging output! '.$self->_sv_staging_output);
         return;
     }
+
+    if(@libraries and @libraries != 2*@fastqs) {
+        die $self->error_message('Expected two fastqs per library in sv staging output! '.$self->_sv_staging_output);
+    }
+
+    return 1;
 }
 
 
