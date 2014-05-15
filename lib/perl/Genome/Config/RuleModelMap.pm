@@ -55,7 +55,7 @@ sub _evaluate_method_chain {
         my $meth = shift;
         return _evaluate_method_chain($obj->$meth, @_);
     } else {
-       return shift;
+       return shift // '';
     }
 }
 

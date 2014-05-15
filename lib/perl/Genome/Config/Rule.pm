@@ -29,7 +29,7 @@ sub create_from_hash {
     my @rule_objects;
     while (my ($key, $val) = each %$rules_hash) {
         my $method_chain = $class->_parse_method_chain($key);
-        my $expected_value = $val;
+        my $expected_value = $val // '';
         push @rule_objects, $class->create(
             method_chain => $method_chain,
             expected_value => $expected_value
