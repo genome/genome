@@ -47,7 +47,7 @@ sub new {
         $mutation_top = $first_mutation_location + ($self->{_max_frequency} + 1) * 13 + $gutter_till_label;
 
         #add in the allele count to the label
-        $self->{_text} = "(" . $self->{_frequency} . ") " . $self->{_text};
+        $self->{_text} = $self->{_text} . " (" . $self->{_frequency} . ")";
     }
     
     my @line_path_y =
