@@ -839,9 +839,11 @@ sub default_model_name {
         $self->error_message("Failed to get addtional default name parts: $@");
         return;
     }
-    $name .= '.'.join('.', @parts) if @parts;
 
-    return $self->_get_incremented_name($name);
+    my $suffix = '';
+    $suffix .= '.'.join('.', @parts) if @parts;
+
+    return $self->_get_incremented_name($name, $suffix);
 }
 
 sub _check_for_existing_model_name {
@@ -853,16 +855,22 @@ sub _check_for_existing_model_name {
 sub _get_incremented_name {
     my $self = shift;
     my $model_name = shift;
+    my $suffix = shift;
     my $counter = 1;
 
+    my $plain_model_name = $model_name . $suffix;
+    unless($self->_check_for_existing_model_name($plain_model_name)) {
+        return $plain_model_name;
+    }
+
     my $format_name = sub {
-        return sprintf("%s-%s", shift, shift);
+        return sprintf("%s-%s%s", shift, shift, shift);
     };
-    while ($self->_check_for_existing_model_name($format_name->($model_name, $counter))) {
+    while ($self->_check_for_existing_model_name($format_name->($model_name, $counter, $suffix))) {
             $counter++;
     }
 
-    return $format_name->($model_name, $counter);
+    return $format_name->($model_name, $counter, $suffix);
 }
 
 
