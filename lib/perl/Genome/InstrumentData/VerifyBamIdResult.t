@@ -66,6 +66,8 @@ sub test_metrics {
     ok(defined $result->freemix, "Freemix is defined");
     ok($result->freemix ne "NA", "Freemix is not NA");
     ok(defined $result->chipmix, "Chipmix is defined");
+    ok(defined $result->af_count, "af_count is defined");
+    ok($result->af_count > 0, "af_count is > 0");
 }
 
 sub setup_objects {

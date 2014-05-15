@@ -51,6 +51,9 @@ class Genome::InstrumentData::VerifyBamIdResult {
         chipmix => {
             is => "UR::Value::Number",
         },
+        af_count => {
+            is => "UR::Value::Number",
+        },
     ],
 };
 
@@ -168,6 +171,7 @@ sub _fix_allele_frequencies {
     my $self = shift;
     my $vcf_path = shift;
 
+    my $af_count = 0;
     my $new_vcf_path = Genome::Sys->create_temp_file_path;
     my $reader = Genome::File::Vcf::Reader->new($vcf_path);
     my $header = $reader->header;
@@ -175,11 +179,16 @@ sub _fix_allele_frequencies {
     my $writer = Genome::File::Vcf::Writer->new($new_vcf_path, $header);
 
     while (my $entry = $reader->next) {
-        if (!defined $entry->info->{AF} and defined $entry->info->{CAF}) {
+        if (defined $entry->info->{AF} or (defined $entry->info->{AC} and defined $entry->info->{AN})) {
+            $af_count++;
+        }
+        elsif (defined $entry->info->{CAF}) {
             $entry->info->{AF} = _convert_caf_to_af($entry->info->{CAF});
+            $af_count++;
         }
         $writer->write($entry);
     }
+    $self->af_count($af_count);
     $writer->close;
     return $new_vcf_path;
 }
