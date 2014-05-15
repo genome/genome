@@ -35,7 +35,11 @@ sub result_class {
 
 sub validate_inputs {
     my $self = shift;
-    # this may be redefined in subclasses.
+    my @errors = $self->__errors__;
+    if (@errors) {
+        $self->print_errors(@errors);
+        die $self->error_message("Failed to validate inputs");
+    }
     return;
 }
 

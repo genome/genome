@@ -52,16 +52,6 @@ sub result_class {
     'Genome::Annotation::Expert::BamReadcount::RunResult';
 }
 
-sub validate_inputs {
-    my $self = shift;
-    my @errors = $self->__errors__;
-    if (@errors) {
-        $self->print_errors(@errors);
-        die $self->error_message("Failed to validate inputs");
-    }
-    return;
-}
-
 sub __errors__ {
     my $self = shift;
     my @errors = $self->SUPER::__errors__(@_);
