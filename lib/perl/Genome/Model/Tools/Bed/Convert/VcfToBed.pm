@@ -33,6 +33,9 @@ sub process_source {
     my $sample_index = _sample_index_for_name($vcf_reader, $self->sample_name);
 
     while(my $entry = $vcf_reader->next) {
+        # Skip this entry if there is no data for the sample
+        next if (scalar @{$entry->sample_data->[$sample_index]} == 0);
+
         if ($self->remove_filtered_calls) {
             next if $entry->is_filtered;
             my $ft = $entry->sample_field($sample_index,"FT");
