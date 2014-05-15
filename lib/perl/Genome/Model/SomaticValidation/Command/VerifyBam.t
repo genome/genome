@@ -39,11 +39,12 @@ done_testing;
 sub test_metrics {
     my $build = shift;
     my $mode = shift;
-    for my $metric(qw(freemix chipmix)) {
+    for my $metric(qw(freemix chipmix af_count)) {
         my $metric_name = "$metric-$mode";
         my $value = $build->get_metric($metric_name);
         ok(defined $value, "Metric $metric_name is defined: $value");
         ok($value ne "NA", "Metric $metric_name is not NA");
+        ok($value > 0, "Metric $metric_name > 0")
     }
 }
 
