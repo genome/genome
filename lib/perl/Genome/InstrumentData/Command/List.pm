@@ -38,18 +38,24 @@ sub subject_class_name {
     return $CLASS_LOOKUP{$self->subtype};
 }
 
-sub show {
+sub _resolve_field_list {
     my $self = shift;
-    $self->_set_show_default_value();
 
-    return $self->SUPER::show;
+    my $default_show = $self->_default_show;
+    $self->_set_show_default_value($default_show);
+
+    unless(defined $self->show) {
+        $self->show($default_show);
+    }
+
+    return $self->SUPER::_resolve_field_list(@_);
 }
-
 
 sub _set_show_default_value {
     my $self = shift;
+    my $show_value = shift;
 
-    $self->__meta__->property('show')->default_value($self->_default_show);
+    $self->__meta__->property('show')->default_value($show_value);
 }
 
 

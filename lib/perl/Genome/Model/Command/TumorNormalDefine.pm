@@ -55,6 +55,14 @@ class Genome::Model::Command::TumorNormalDefine {
             default => 1,
             doc => 'Interactively prompt the user.',
         },
+        model_name_suffix => {
+            is => 'Text',
+            doc => "A suffix that is appended to the standard model name ".
+                    "of the new models, separated by a '.' from the standard ".
+                    "model name. E.g., the model_name_suffix 'test' would create ".
+                    "a model name like 'H_ND_196Y (TD196Y vs ND196Y).test' ".
+                    "instead of 'H_ND_196Y (TD196Y vs ND196Y)'",
+        },
     ],
     doc => 'Define new somatic-variation model(s) from a set of '.
         'reference-alignment models.'
@@ -205,6 +213,9 @@ sub define_params {
                     $tumor_model->subject->extraction_label,
                     $normal_model->subject->extraction_label,
                 );
+                if (defined($self->model_name_suffix)) {
+                    $model_name .= "." . $self->model_name_suffix;
+                }
                 push @result, {
                     'tumor_model' => $tumor_model,
                     'normal_model' => $normal_model,
