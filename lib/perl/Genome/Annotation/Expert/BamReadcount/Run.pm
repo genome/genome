@@ -54,8 +54,26 @@ sub result_class {
 
 sub validate_inputs {
     my $self = shift;
-    die "You must supply a version greater than or equal to 0.5" unless $self->version >= 0.5;
+    my @errors = $self->__errors__;
+    if (@errors) {
+        $self->print_errors(@errors);
+        die $self->error_message("Failed to validate inputs");
+    }
     return;
+}
+
+sub __errors__ {
+    my $self = shift;
+    my @errors = $self->SUPER::__errors__(@_);
+
+    unless ($self->version >= 0.5) {
+        push @errors, UR::Object::Tag->create(
+            type => 'error',
+            properties => ['version'],
+            desc => sprintf("Version provided (%s) must be greater than or equal to 0.5", $self->version),
+        );
+    }
+    return @errors;
 }
 
 1;
