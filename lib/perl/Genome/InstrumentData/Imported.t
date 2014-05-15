@@ -121,10 +121,6 @@ my $alloc = Genome::Disk::Allocation->__define__(
 );
 ok($alloc, 'created disk alloc');
 is_deeply($i4->allocations, $alloc, 'got disk alloc');
-my $build36_file = $i4->genotype_microarray_file_for_human_version_36;
-is($build36_file, $alloc->absolute_path.'/'.$l->sample_name.'.human-36.genotype', 'human 36 genotype microarray file');
-my $build37_file = $i4->genotype_microarray_file_for_human_version_37;
-is($build37_file, $alloc->absolute_path.'/'.$l->sample_name.'.human-37.genotype', 'human 37 genotype microarray file');
 
 my $ok;
 eval { $ok = UR::Context->_sync_databases(); };

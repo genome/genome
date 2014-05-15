@@ -24,7 +24,6 @@ my $instrument_data = Genome::InstrumentData::Imported->create(
 ok($instrument_data, 'created dummy instrument data');
 
 ok(!$instrument_data->genotype_file, 'no genotype file, yet');
-is($instrument_data->error_message, 'Unable to find genotype file for test genotype file -11 ([unknown]) because no disk allocation exists.', 'correct error');
 
 test_update_genotype_file($ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Microarray/test_genotype_file1');
 # works also if there is already an existing gentoype_file associated with the instrument_data...
@@ -38,7 +37,7 @@ sub test_update_genotype_file {
     my ($new_genotype_file) = @_;
 
     # update
-    my $update_ok = $instrument_data->genotype_file($new_genotype_file);
+    my $update_ok = $instrument_data->update_genotype_file($new_genotype_file);
     ok($update_ok, 'update genotype file');
 
     # no genotype file attr created 
