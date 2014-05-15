@@ -96,7 +96,7 @@ sub default_processing_profile_id {
 sub __profile_errors__ {
     my ($self, $pp) = @_;
 
-    my @errors;
+    my @errors = $self->SUPER::__profile_errors__(@_);
     for my $param_name (qw/ amplicon_processor chimera_detector /) {
         my $value = $pp->$param_name;
         my $params_method = $param_name.'_params';

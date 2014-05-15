@@ -256,8 +256,7 @@ sub __profile_errors__ {
     my $class = shift;      # a class method on this model subclass
     my $profile = shift;    # which takes one profile which goes with this sub-type of model and validates it
 
-    my @errors;
-
+    my @errors = $class->SUPER::__profile_errors__(@_);
     # ensure that each of the variant detection strategies specified will function:
     for my $strategy ('snv','indel','sv','cnv') {
         my $method_name = $strategy . '_detection_strategy';
