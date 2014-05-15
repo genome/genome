@@ -23,6 +23,11 @@ class Genome::Config::AnalysisProject::Command::AddConfigFile {
             doc => 'If set, the config file will only be stored (it will not be used for processing).  Defaults to 0',
             default_value => 0,
         },
+        reprocess_existing => {
+            is => 'Boolean',
+            default_value => 0,
+            doc => 'Reprocess any existing instrument data with the new config',
+        },
     ],
 };
 
@@ -44,11 +49,26 @@ sub execute {
     my $self = shift;
     my $status = $self->store_only ? 'disabled' : 'active';
 
-    return Genome::Config::Profile::Item->create_from_file_path(
+    my $result = Genome::Config::Profile::Item->create_from_file_path(
         file_path => $self->config_file,
         analysis_project => $self->analysis_project,
         status => $status,
     );
+
+    if($self->reprocess_existing){
+        $self->_mark_instrument_data_bridges;
+    }
+
+    return $result;
+}
+
+sub _mark_instrument_data_bridges {
+    my $self = shift;
+    my $analysis_project = $self->analysis_project;
+    for my $bridge ($analysis_project->analysis_project_bridges){
+        $bridge->status('new');
+    }
+    return 1;
 }
 
 1;
