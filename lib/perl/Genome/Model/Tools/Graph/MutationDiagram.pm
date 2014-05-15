@@ -73,6 +73,11 @@ class Genome::Model::Tools::Graph::MutationDiagram {
             default_value => "circle",
             doc => 'shape of the lolli part of each lollipop',
         },
+        allow_floating_labels => {
+            type => 'Boolean',
+            doc => "If on, then each label's height is determined independently instead of all aligning to the same position",
+            default => 0,
+        },
     ],
 };
 
@@ -106,6 +111,7 @@ sub execute {
             suffix => $self->file_suffix,
             max_display_freq => $self->max_display_frequency,
             lolli_shape => $self->lolli_shape,
+            floating_labels => $self->allow_floating_labels,
         );
 
         my $anno_obj = new Genome::Model::Tools::Graph::MutationDiagram::MutationDiagram(

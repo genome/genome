@@ -41,7 +41,7 @@ sub new {
         $mutation_top += ($self->{_frequency} - 3) * 13; 
     }
 
-    if($self->{_max_frequency}) {
+    if($self->{_max_frequency} && $self->{_frequency} > $self->{_max_frequency}) {
         my $gutter_till_label = 14;
         my $first_mutation_location = 30;
         $mutation_top = $first_mutation_location + ($self->{_max_frequency} + 1) * 13 + $gutter_till_label;
@@ -49,8 +49,6 @@ sub new {
         #add in the allele count to the label
         $self->{_text} = "(" . $self->{_frequency} . ") " . $self->{_text};
     }
-
-    
     
     my @line_path_y =
     ($backbone->dimensions->{y} - $mutation_top,$backbone->dimensions->{y}-20,$backbone->dimensions->{y}-10,$backbone->dimensions()->{y},$backbone->dimensions()->{y}+$backbone->dimensions()->{height});
