@@ -41,17 +41,7 @@ sub setup_objects {
     my $id = Genome::Test::Factory::InstrumentData::Imported->setup_object(
         library_id => $lib->id,
         import_source_name => "tgi",
-    );
-    my $alloc = Genome::Disk::Allocation->__define__(
-        owner => $id,
-        mount_path => Genome::Disk::Volume->__define__(mount_path => $test_dir, disk_status => 'active')->mount_path,
-        group_subdirectory => '',
-        allocation_path => '',
-    );
-    die "Failed to define allocation for genotype file!" if not $alloc;
-    $id->add_attribute(
-        attribute_label => 'genotype_file_name', 
-        attribute_value =>  "1.genotype",
+        genotype_file => $test_dir.'/1.genotype',
     );
     ok(-s $id->genotype_file, 'genotype file set');
     $sample->default_genotype_data_id($id->id);
