@@ -820,8 +820,8 @@ sub default_model_name {
     my $auto_increment = delete $params{auto_increment};
     $auto_increment = 1 unless defined $auto_increment;
 
-    my $name_template = ($self->subject->name).'.';
-    $name_template .= 'prod-' if (($self->run_as && $self->run_as eq 'apipe-builder') || $params{prod});
+    my $name = ($self->subject->name).'.';
+    $name .= 'prod-' if (($self->run_as && $self->run_as eq 'apipe-builder') || $params{prod});
 
     my $type_name = $self->processing_profile->type_name;
     my %short_names = (
@@ -830,27 +830,41 @@ sub default_model_name {
         'de novo assembly' => 'denovo',
         'metagenomic composition 16s' => 'mc16s',
     );
-    $name_template .= ( exists $short_names{$type_name} )
+    $name .= ( exists $short_names{$type_name} )
     ? $short_names{$type_name}
     : join('_', split(/\s+/, $type_name));
-
-    $name_template .= '%s%s';
 
     my @parts = eval{ $self->_additional_parts_for_default_name(%params); };
     if ( $@ ) {
         $self->error_message("Failed to get addtional default name parts: $@");
         return;
     }
-    $name_template .= '.'.join('.', @parts) if @parts;
+    $name .= '.'.join('.', @parts) if @parts;
 
-    my $name = sprintf($name_template, '', '');
-    my $cnt = 0;
-    while ( $auto_increment && scalar @{[Genome::Model->get(name => $name)]} ) {
-        $name = sprintf($name_template, '-', ++$cnt);
+    return $self->_get_incremented_name($name);
+}
+
+sub _check_for_existing_model_name {
+    my $self = shift;
+    my $model_name = shift;
+    return scalar @{[Genome::Model->get(name => $model_name)]};
+}
+
+sub _get_incremented_name {
+    my $self = shift;
+    my $model_name = shift;
+    my $counter = 1;
+
+    my $format_name = sub {
+        return sprintf("%s-%s", shift, shift);
+    };
+    while ($self->_check_for_existing_model_name($format_name->($model_name, $counter))) {
+            $counter++;
     }
 
-    return $name;
+    return $format_name->($model_name, $counter);
 }
+
 
 # Ensures there are no other models of the same class that have the same name. If any are found, information
 # about them is printed to the screen the create fails.
