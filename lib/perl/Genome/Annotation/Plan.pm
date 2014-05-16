@@ -126,32 +126,62 @@ sub validate_self {
     my $self = shift;
     $self->SUPER::validate_self(@_);
 
+    my @errors = $self->__errors__;
+    if (@errors) {
+        $self->print_errors(@errors);
+        die $self->error_message("Failed to validate_self");
+    }
+    return;
+}
+
+sub __errors__ {
+    my $self = shift;
+    my @errors = $self->SUPER::__errors__;
+
     my $have = Set::Scalar->new(map {$_->name} $self->expert_plans);
     my $total_needed = Set::Scalar->new();
-    my $failed = 0;
     for my $reporter_plan ($self->reporter_plans) {
         my $needed = Set::Scalar->new();
         for my $plan ($reporter_plan->interpreter_plans, $reporter_plan->filter_plans) {
-            $needed->insert($plan->object->requires_experts);
+            # This may die because the module may not exist
+            my $object;
+            eval {
+                $object = $plan->object;
+            };
+
+            if ($@) {
+                push @errors, UR::Object::Tag->create(
+                    type => 'error',
+                    properties => [],
+                    desc => $@,
+                );
+            } else {
+                $needed->insert($object->requires_experts);
+            }
+
         }
         $total_needed += $needed;
 
         if (my $still_needed = $needed - $have) {
-            $failed = 1;
-            $self->error_message("Experts required by reporter (%s) but not provided: (%s)",
-                $reporter_plan->name, join(",", $still_needed->members));
+            push @errors, UR::Object::Tag->create(
+                type => 'error',
+                properties => [$still_needed->members],
+                desc => sprintf("Experts required by reporter (%s) but not provided: (%s)",
+                    $reporter_plan->name, join(",", $still_needed->members)),
+            );
         }
     }
 
     if (my $not_needed = $have - $total_needed) {
-            $failed = 1;
-        $self->error_message("Experts provided by plan but not required by any reporters: (%s)",
-            join(",", $not_needed->members));
+        push @errors, UR::Object::Tag->create(
+            type => 'error',
+            properties => [$not_needed->members],
+            desc => sprintf("Experts provided by plan but not required by any reporters: (%s)",
+                join(",", $not_needed->members)),
+        );
     }
 
-    if ($failed) {
-        die $self->error_message("Experts provided by plan do not match experts required");
-    }
+    return @errors;
 }
 
 1;
