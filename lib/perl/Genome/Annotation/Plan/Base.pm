@@ -69,8 +69,14 @@ sub validate_object {
 
 sub validate_self {
     my $self = shift;
-    $self->validate_params;
-    $self->validate_children;
+
+    my @errors = $self->__errors__;
+    if (@errors) {
+        $self->print_errors(@errors);
+        die $self->error_message("Failed to validate_self");
+    }
+    return;
+
 }
 
 sub get_class {
@@ -92,14 +98,18 @@ sub factory {
 }
 Memoize::memoize("factory");
 
-sub validate_children {
+sub __errors__ {
     my $self = shift;
+    my @errors = $self->SUPER::__errors__;
+
     my %child_hash = $self->children;
     for my $children_of_category (values %child_hash) {
         for my $child (@{$children_of_category}) {
-            $child->validate;
+            push @errors, $child->__errors__;
         }
     }
+
+    return @errors;
 }
 
 1;

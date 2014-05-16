@@ -124,7 +124,6 @@ sub create_from_json {
 
 sub validate_self {
     my $self = shift;
-    $self->SUPER::validate_self(@_);
 
     my @errors = $self->__errors__;
     if (@errors) {
