@@ -47,20 +47,6 @@ sub test_bad_plan {
 #    stderr_like(sub {$plan->print_errors(@errors);}, $error_regex, "Errors look as expected for invalid plan ($name)");
 }
 
-sub test_bad_plan_old {
-    my $name = shift;
-    my $error_regex = shift;
-
-    my $filename = $name . '.yaml';
-
-    my $plan_file = plan_file($filename);
-    my $plan = $pkg->create_from_file($plan_file);
-    ok($plan, sprintf("Made a plan from file ($plan_file)."));
-
-    throws_ok sub {$plan->validate();}, $error_regex,
-        "Validation fails for invalid plan ($name).";
-}
-
 sub test_bad_yaml {
     my $name = shift;
     my $filename = $name . '.yaml';
