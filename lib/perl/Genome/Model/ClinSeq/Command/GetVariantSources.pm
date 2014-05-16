@@ -264,40 +264,10 @@ sub execute {
     $self->determineCaller("snv","strelka", $snv_results_file, $snv_strelka_results_file, $snv_strelka_outfile);
     $self->determineCaller("snv","sniper", $snv_results_file, $snv_sniper_results_file, $snv_sniper_outfile);
     $self->determineCaller("snv","varscan", $snv_results_file, $snv_varscan_results_file, $snv_varscan_outfile);
-    $self->determineCaller("snv","samtools", $snv_results_file, $snv_samtools_results_file, $snv_varscan_outfile);
+    $self->determineCaller("snv","samtools", $snv_results_file, $snv_samtools_results_file, $snv_samtools_outfile);
 
-    #Print out a new file containing the extra source columns
-    open (INDEL_OUT, ">$indel_outfile") || die "\n\nCould not open $indel_outfile\n\n";
-    print INDEL_OUT "coord\tchr\tstart\tend\tvariant\tscore1\tscore2\tcallers\tstrelka\tgatk\tpindel\tvarscan\ttier\n";
-
-    foreach my $indel (sort {$indels{$a}->{coord_string} cmp $indels{$b}->{coord_string}} keys %indels){
-      my @callers = sort keys %{$indel_caller{$indels{$indel}{variant_string}}};
-      my $strelka=0; my $gatk=0; my $pindel=0; my $varscan=0;
-      foreach my $caller (@callers){
-        if ($caller eq 'strelka'){$strelka=1;}
-        if ($caller eq 'gatk'){$gatk=1;}
-        if ($caller eq 'pindel'){$pindel=1;}
-        if ($caller eq 'varscan'){$varscan=1;}
-      }
-      print INDEL_OUT "$indels{$indel}{coord_string}\t$indels{$indel}{line}\t",join(",",@callers),"\t$strelka\t$gatk\t$pindel\t$varscan\t$indels{$indel}{tier}\n";
-    }
-    close(INDEL_OUT);
-
-    open (SNV_OUT, ">$snv_outfile") || die "\n\nCould not open $snv_outfile\n\n";
-    print SNV_OUT "coord\tchr\tstart\tend\tvariant\tscore1\tscore2\tcallers\tstrelka\tsniper\tvarscan\tsamtools\ttier\n";
-    foreach my $snv (sort {$snvs{$a}->{coord_string} cmp $snvs{$b}->{coord_string}} keys %snvs){
-      my @callers = sort keys %{$snv_caller{$snvs{$snv}{variant_string}}};
-      my $strelka=0; my $sniper=0; my $varscan=0;my $samtools = 0;
-      foreach my $caller (@callers){
-        if ($caller eq 'strelka'){$strelka=1;}
-        if ($caller eq 'sniper'){$sniper=1;}
-        if ($caller eq 'varscan'){$varscan=1;}
-        if ($caller eq 'samtools'){$samtools=1;}
-      }
-      print SNV_OUT "$snvs{$snv}{coord_string}\t$snvs{$snv}{line}\t",join(",",@callers),"\t$strelka\t$sniper\t$varscan\t$samtools\t$snvs{$snv}{tier}\n";
-    }
-    close(INDEL_OUT);
-
+    $self->createIndelOutfile(\%indels, $indel_outfile);
+    $self->createSnvOutfile(\%snvs, $snv_outfile);
     #Cleanup temp files
     unlink $indel_results_file;
     unlink $snv_results_file;
@@ -354,6 +324,49 @@ sub checkResultFile{
     return undef;
   }
   return($result_file);
+}
+
+sub createIndelOutfile {
+    my $self = shift;
+    my $indels_ref = shift;
+    my $indel_outfile = shift;
+    my %indels = %$indels_ref;
+    #Print out a new file containing the extra source columns
+    open (INDEL_OUT, ">$indel_outfile") || die "\n\nCould not open $indel_outfile\n\n";
+    print INDEL_OUT "coord\tchr\tstart\tend\tvariant\tscore1\tscore2\tcallers\tstrelka\tgatk\tpindel\tvarscan\ttier\n";
+    foreach my $indel (sort {$indels{$a}->{coord_string} cmp $indels{$b}->{coord_string}} keys %indels){
+      my @callers = sort keys %{$indel_caller{$indels{$indel}{variant_string}}};
+      my $strelka=0; my $gatk=0; my $pindel=0; my $varscan=0;
+      foreach my $caller (@callers){
+        if ($caller eq 'strelka'){$strelka=1;}
+        if ($caller eq 'gatk'){$gatk=1;}
+        if ($caller eq 'pindel'){$pindel=1;}
+        if ($caller eq 'varscan'){$varscan=1;}
+      }
+      print INDEL_OUT "$indels{$indel}{coord_string}\t$indels{$indel}{line}\t",join(",",@callers),"\t$strelka\t$gatk\t$pindel\t$varscan\t$indels{$indel}{tier}\n";
+    }
+    close(INDEL_OUT);
+}
+
+sub createSnvOutfile {
+    my $self = shift;
+    my $snvs_ref = shift;
+    my $snv_outfile = shift;
+    my %snvs = %$snvs_ref;
+    open (SNV_OUT, ">$snv_outfile") || die "\n\nCould not open $snv_outfile\n\n";
+    print SNV_OUT "coord\tchr\tstart\tend\tvariant\tscore1\tscore2\tcallers\tstrelka\tsniper\tvarscan\tsamtools\ttier\n";
+    foreach my $snv (sort {$snvs{$a}->{coord_string} cmp $snvs{$b}->{coord_string}} keys %snvs){
+      my @callers = sort keys %{$snv_caller{$snvs{$snv}{variant_string}}};
+      my $strelka=0; my $sniper=0; my $varscan=0;my $samtools = 0;
+      foreach my $caller (@callers){
+        if ($caller eq 'strelka'){$strelka=1;}
+        if ($caller eq 'sniper'){$sniper=1;}
+        if ($caller eq 'varscan'){$varscan=1;}
+        if ($caller eq 'samtools'){$samtools=1;}
+      }
+      print SNV_OUT "$snvs{$snv}{coord_string}\t$snvs{$snv}{line}\t",join(",",@callers),"\t$strelka\t$sniper\t$varscan\t$samtools\t$snvs{$snv}{tier}\n";
+    }
+    close(SNV_OUT);
 }
 
 sub determineCaller {
