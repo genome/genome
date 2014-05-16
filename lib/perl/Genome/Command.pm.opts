@@ -3197,6 +3197,8 @@ $Genome::Command::OPTS_SPEC = [
       ],
       'interactive!',
       undef,
+      'model-name-suffix=s',
+      'files',
       'previously-discovered-variations-build=s',
       undef,
       'regex=s',
@@ -22622,6 +22624,8 @@ $Genome::Command::OPTS_SPEC = [
         [
           'one-based!',
           undef,
+          'clean-output!',
+          undef,
           'debug!',
           undef,
           'detector-style-input=s',
@@ -22662,6 +22666,8 @@ $Genome::Command::OPTS_SPEC = [
           [
             'one-based!',
             undef,
+            'clean-output!',
+            undef,
             'debug!',
             undef,
             'detector-style-input=s',
@@ -22678,6 +22684,8 @@ $Genome::Command::OPTS_SPEC = [
           '>gatk-germline-indel-to-bed',
           [
             'one-based!',
+            undef,
+            'clean-output!',
             undef,
             'debug!',
             undef,
@@ -22696,6 +22704,8 @@ $Genome::Command::OPTS_SPEC = [
           [
             'one-based!',
             undef,
+            'clean-output!',
+            undef,
             'debug!',
             undef,
             'detector-style-input=s',
@@ -22713,6 +22723,8 @@ $Genome::Command::OPTS_SPEC = [
           [
             'one-based!',
             undef,
+            'clean-output!',
+            undef,
             'debug!',
             undef,
             'detector-style-input=s',
@@ -22729,6 +22741,8 @@ $Genome::Command::OPTS_SPEC = [
           '>maq-to-bed',
           [
             'one-based!',
+            undef,
+            'clean-output!',
             undef,
             'debug!',
             undef,
@@ -22750,6 +22764,8 @@ $Genome::Command::OPTS_SPEC = [
             'lsf-resource=s',
             'files',
             'one-based!',
+            undef,
+            'clean-output!',
             undef,
             'debug!',
             undef,
@@ -22778,6 +22794,8 @@ $Genome::Command::OPTS_SPEC = [
             'files',
             'one-based!',
             undef,
+            'clean-output!',
+            undef,
             'debug!',
             undef,
             'detector-style-input=s',
@@ -22801,6 +22819,8 @@ $Genome::Command::OPTS_SPEC = [
           [
             'one-based!',
             undef,
+            'clean-output!',
+            undef,
             'debug!',
             undef,
             'detector-style-input=s',
@@ -22818,6 +22838,8 @@ $Genome::Command::OPTS_SPEC = [
           [
             'one-based!',
             undef,
+            'clean-output!',
+            undef,
             'debug!',
             undef,
             'detector-style-input=s',
@@ -22834,6 +22856,8 @@ $Genome::Command::OPTS_SPEC = [
           '>strelka-to-bed',
           [
             'one-based!',
+            undef,
+            'clean-output!',
             undef,
             'debug!',
             undef,
@@ -22857,6 +22881,8 @@ $Genome::Command::OPTS_SPEC = [
           [
             'one-based!',
             undef,
+            'clean-output!',
+            undef,
             'debug!',
             undef,
             'detector-style-input=s',
@@ -22874,6 +22900,8 @@ $Genome::Command::OPTS_SPEC = [
           [
             'one-based!',
             undef,
+            'clean-output!',
+            undef,
             'debug!',
             undef,
             'detector-style-input=s',
@@ -22890,6 +22918,8 @@ $Genome::Command::OPTS_SPEC = [
           '>varscan-to-bed',
           [
             'one-based!',
+            undef,
+            'clean-output!',
             undef,
             'debug!',
             undef,
@@ -22913,6 +22943,8 @@ $Genome::Command::OPTS_SPEC = [
           [
             'one-based!',
             undef,
+            'clean-output!',
+            undef,
             'debug!',
             undef,
             'detector-style-input=s',
@@ -22929,6 +22961,8 @@ $Genome::Command::OPTS_SPEC = [
           '>gatk-germline-snv-to-bed',
           [
             'one-based!',
+            undef,
+            'clean-output!',
             undef,
             'debug!',
             undef,
@@ -22947,6 +22981,8 @@ $Genome::Command::OPTS_SPEC = [
           [
             'one-based!',
             undef,
+            'clean-output!',
+            undef,
             'debug!',
             undef,
             'detector-style-input=s',
@@ -22964,6 +23000,8 @@ $Genome::Command::OPTS_SPEC = [
           [
             'one-based!',
             undef,
+            'clean-output!',
+            undef,
             'debug!',
             undef,
             'detector-style-input=s',
@@ -22980,6 +23018,8 @@ $Genome::Command::OPTS_SPEC = [
           '>mutect-to-bed',
           [
             'one-based!',
+            undef,
+            'clean-output!',
             undef,
             'debug!',
             undef,
@@ -23003,6 +23043,8 @@ $Genome::Command::OPTS_SPEC = [
           [
             'one-based!',
             undef,
+            'clean-output!',
+            undef,
             'debug!',
             undef,
             'detector-style-input=s',
@@ -23019,6 +23061,8 @@ $Genome::Command::OPTS_SPEC = [
           '>samtools-to-bed',
           [
             'one-based!',
+            undef,
+            'clean-output!',
             undef,
             'debug!',
             undef,
@@ -23037,6 +23081,8 @@ $Genome::Command::OPTS_SPEC = [
           [
             'one-based!',
             undef,
+            'clean-output!',
+            undef,
             'debug!',
             undef,
             'detector-style-input=s',
@@ -23053,6 +23099,8 @@ $Genome::Command::OPTS_SPEC = [
           '>strelka-to-bed',
           [
             'one-based!',
+            undef,
+            'clean-output!',
             undef,
             'debug!',
             undef,
@@ -23076,6 +23124,8 @@ $Genome::Command::OPTS_SPEC = [
           [
             'one-based!',
             undef,
+            'clean-output!',
+            undef,
             'debug!',
             undef,
             'detector-style-input=s',
@@ -23093,6 +23143,8 @@ $Genome::Command::OPTS_SPEC = [
           [
             'one-based!',
             undef,
+            'clean-output!',
+            undef,
             'debug!',
             undef,
             'detector-style-input=s',
@@ -23109,6 +23161,8 @@ $Genome::Command::OPTS_SPEC = [
           '>varscan-to-bed',
           [
             'one-based!',
+            undef,
+            'clean-output!',
             undef,
             'debug!',
             undef,
@@ -23131,6 +23185,8 @@ $Genome::Command::OPTS_SPEC = [
           'one-based!',
           undef,
           'remove-filtered-calls!',
+          undef,
+          'clean-output!',
           undef,
           'debug!',
           undef,
