@@ -115,6 +115,18 @@ sub delete {
         if ($self->model_group) {
             $self->model_group->delete();
         }
+        for ($self->config_items) {
+            $_->delete();
+        }
+        for ($self->model_bridges) {
+            $_->delete();
+        }
+        for ($self->analysis_project_bridges) {
+            $_->delete();
+        }
+        for ($self->subject_mappings) {
+            $_->delete();
+        }
     };
     if(my $error = $@) {
         die($error);
