@@ -56,7 +56,8 @@ sub as_hashref {
 
 sub validate {
     my $self = shift;
-    $self->validate_self;
+
+    $self->SUPER::validate;
     $self->validate_object;
 }
 
@@ -65,18 +66,6 @@ sub validate_object {
     if (my $object = $self->object) {
         $object->validate();
     }
-}
-
-sub validate_self {
-    my $self = shift;
-
-    my @errors = $self->__errors__;
-    if (@errors) {
-        $self->print_errors(@errors);
-        die $self->error_message("Failed to validate_self");
-    }
-    return;
-
 }
 
 sub get_class {
