@@ -177,14 +177,12 @@ sub execute {
 
     #Sort the BED files using joinx
     my $indel_results_file_sorted = $indel_results_file . ".sort";
-    my $joinx_indel_sort_cmd = Genome::Model::Tools::Joinx::Sort->create(output_file=>$indel_results_file_sorted, input_files=>[$indel_results_file]);
-    $joinx_indel_sort_cmd->execute();
+    $self->joinxSortFile($indel_results_file, $indel_results_file_sorted);
     unlink $indel_results_file;
     Genome::Sys->move_file($indel_results_file_sorted, $indel_results_file);
     
     my $snv_results_file_sorted = $snv_results_file . ".sort";
-    my $joinx_snv_sort_cmd = Genome::Model::Tools::Joinx::Sort->create(output_file=>$snv_results_file_sorted, input_files=>[$snv_results_file]);
-    $joinx_snv_sort_cmd->execute();
+    $self->joinxSortFile($snv_results_file, $snv_results_file_sorted);
     unlink $snv_results_file;
     Genome::Sys->move_file($snv_results_file_sorted, $snv_results_file);
 
