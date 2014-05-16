@@ -23,9 +23,8 @@ test_bad_plan('missing_interpreter', qr(interpreter_missing) );
 test_bad_plan('missing_reporter', qr(reporter_missing) );
 
 test_bad_plan('misspelled_parameter', qr(bad_parameter_name) );
-
-test_bad_plan('invalid_reporter', qr(interpreters do not match) );
-test_bad_plan('invalid_experts', qr(do not match experts required) );
+test_bad_plan('invalid_reporter', qr(Interpreters required), qr(Interpreters provided) );
+test_bad_plan('invalid_experts', qr(Experts required), qr(Experts provided) );
 
 test_bad_yaml('invalid_yaml');
 
@@ -34,7 +33,7 @@ done_testing();
 
 sub test_bad_plan {
     my $name = shift;
-    my $error_regex = shift;
+    my @error_regex = @_;
 
     my $filename = $name . '.yaml';
 
@@ -43,8 +42,10 @@ sub test_bad_plan {
     ok($plan, sprintf("Made a plan from file ($plan_file)."));
 
     dies_ok sub {$plan->validate();}, "Validation fails for invalid plan ($name).";
-#    ok(my @errors = $plan->__errors__, 'Got some errors as expected');
-#    stderr_like(sub {$plan->print_errors(@errors);}, $error_regex, "Errors look as expected for invalid plan ($name)");
+    ok(my @errors = $plan->__errors__, 'Got some errors as expected');
+    for my $error_regex (@error_regex) {
+        stderr_like(sub {$plan->print_errors(@errors);}, $error_regex, "Errors look as expected for invalid plan ($name)");
+    }
 }
 
 sub test_bad_yaml {
