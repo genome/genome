@@ -7,7 +7,7 @@ use Data::Dump qw(pp);
 
 class Genome::Annotation::Expert::CommandBase {
     is_abstract => 1,
-    is => 'Command::V2',
+    is => ['Command::V2', 'Genome::Annotation::ComponentBase'],
     has_input => [
         input_result => {
             is => 'Genome::SoftwareResult',
@@ -33,16 +33,6 @@ sub result_class {
     die "Abstract method 'result_class' must be defined in class $class";
 }
 
-sub validate_inputs {
-    my $self = shift;
-    my @errors = $self->__errors__;
-    if (@errors) {
-        $self->print_errors(@errors);
-        die $self->error_message("Failed to validate inputs");
-    }
-    return;
-}
-
 sub shortcut {
     my $self = shift;
 
@@ -61,7 +51,7 @@ sub execute {
     my $self = shift;
 
     $self->debug_message("Validating inputs");
-    $self->validate_inputs();
+    $self->validate();
 
     $self->debug_message("Attempting to get or create a %s with arugments %s",
         $self->result_class, pp($self->input_hash));
