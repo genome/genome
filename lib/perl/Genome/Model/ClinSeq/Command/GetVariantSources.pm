@@ -125,55 +125,11 @@ sub execute {
     #Locate the final indel/snv results files and load into memory
     #For indels, use ~/effects/indels.hq.novel.tier1.v2.bed ?  (Or the annotated file?)
     #For SNVs, use ~/effects/snvs.hq.novel.tier1.v2.bed
+    my (%indels, %snvs);
     my $indel_results_file = $build_outdir . "indels.hq.novel.tier1-3.v2.bed";
-    open (INDELS_OUT, ">$indel_results_file") || die $self->error_message("Could not open output file: $indel_results_file");
-    my %indels;
-    my $l=0;
-    foreach my $c (sort {$a <=> $b} keys %indel_files){
-      my $file = $indel_files{$c}{file};
-      my $tier = $indel_files{$c}{tier};
-      open (INDELS, $file) or die "can't open $file\n";
-      while(<INDELS>){
-        $l++;
-        chomp;
-        my $line=$_;
-        my @data=split("\t",$_);
-        my $variant_string="$data[0]".":"."$data[1]"."-"."$data[2]"." ($data[3])";
-        my $coord_string="$data[0]".":"."$data[1]"."-"."$data[2]";
-        $indels{$l}{line}=$line;
-        $indels{$l}{variant_string}=$variant_string;
-        $indels{$l}{coord_string}=$coord_string;
-        $indels{$l}{tier} = $tier;
-        print INDELS_OUT "$line\n";
-      }
-      close(INDELS);
-    }
-    close (INDELS_OUT);
-
     my $snv_results_file = $build_outdir . "snvs.hq.novel.tier1-3.v2.bed";     
-    open (SNVS_OUT, ">$snv_results_file") || die $self->error_message("Could not open output file: $snv_results_file");
-    my %snvs;
-    $l=0;
-    foreach my $c (sort {$a <=> $b} keys %snv_files){
-      my $file = $snv_files{$c}{file};
-      my $tier = $snv_files{$c}{tier};
-      open (SNVS, $file) or die "can't open $file\n";
-      while(<SNVS>){
-        $l++;
-        chomp;
-        my $line=$_;
-        my @data=split("\t",$_);
-        my $variant_string="$data[0]".":"."$data[1]"."-"."$data[2]"." ($data[3])";
-        my $coord_string="$data[0]".":"."$data[1]"."-"."$data[2]";
-        $snvs{$l}{line}=$line;
-        $snvs{$l}{variant_string}=$variant_string;
-        $snvs{$l}{coord_string}=$coord_string;
-        $snvs{$l}{tier} = $tier;
-        print SNVS_OUT "$line\n";
-      }
-      close(SNVS);
-    }
-    close (SNVS_OUT);
+    $self->create_snv_indel_hash(\%indel_files, \%indels, $indel_results_file);
+    $self->create_snv_indel_hash(\%snv_files, \%snvs, $snv_results_file);
 
     #Sort the BED files using joinx
     my $indel_results_file_sorted = $indel_results_file . ".sort";
@@ -326,16 +282,44 @@ sub checkResultFile{
   return($result_file);
 }
 
+sub create_snv_indel_hash {
+    my $self = shift;
+    my $files = shift;
+    my $variants = shift;
+    my $results_file = shift;
+    open (OUT, ">$results_file") || die $self->error_message("Could not open output file: $results_file");
+    my $l=0;
+    foreach my $c (sort {$a <=> $b} keys %$files){
+      my $file = $files->{$c}{file};
+      my $tier = $files->{$c}{tier};
+      open (VARIANTS, $file) or die "can't open $file\n";
+      while(<VARIANTS>){
+        $l++;
+        chomp;
+        my $line=$_;
+        my @data=split("\t",$_);
+        my $variant_string="$data[0]".":"."$data[1]"."-"."$data[2]"." ($data[3])";
+        my $coord_string="$data[0]".":"."$data[1]"."-"."$data[2]";
+        $variants->{$l}{line}=$line;
+        $variants->{$l}{variant_string}=$variant_string;
+        $variants->{$l}{coord_string}=$coord_string;
+        $variants->{$l}{tier} = $tier;
+        print OUT "$line\n";
+      }
+      close(VARIANTS);
+    }
+    close (OUT);
+}
+
 sub createIndelOutfile {
     my $self = shift;
-    my $indels_ref = shift;
+    my $indels = shift;
     my $indel_outfile = shift;
-    my %indels = %$indels_ref;
     #Print out a new file containing the extra source columns
     open (INDEL_OUT, ">$indel_outfile") || die "\n\nCould not open $indel_outfile\n\n";
     print INDEL_OUT "coord\tchr\tstart\tend\tvariant\tscore1\tscore2\tcallers\tstrelka\tgatk\tpindel\tvarscan\ttier\n";
-    foreach my $indel (sort {$indels{$a}->{coord_string} cmp $indels{$b}->{coord_string}} keys %indels){
-      my @callers = sort keys %{$indel_caller{$indels{$indel}{variant_string}}};
+    foreach my $indel (sort {$indels->{$a}->{coord_string} cmp $indels->{$b}->{coord_string}} keys %$indels){
+      my @callers = sort keys %{$indel_caller{$indels->{$indel}{variant_string}}};
       my $strelka=0; my $gatk=0; my $pindel=0; my $varscan=0;
       foreach my $caller (@callers){
         if ($caller eq 'strelka'){$strelka=1;}
@@ -343,20 +327,19 @@ sub createIndelOutfile {
         if ($caller eq 'pindel'){$pindel=1;}
         if ($caller eq 'varscan'){$varscan=1;}
       }
-      print INDEL_OUT "$indels{$indel}{coord_string}\t$indels{$indel}{line}\t",join(",",@callers),"\t$strelka\t$gatk\t$pindel\t$varscan\t$indels{$indel}{tier}\n";
+      print INDEL_OUT "$indels->{$indel}{coord_string}\t$indels->{$indel}{line}\t",join(",",@callers),"\t$strelka\t$gatk\t$pindel\t$varscan\t$indels->{$indel}{tier}\n";
     }
     close(INDEL_OUT);
 }
 
 sub createSnvOutfile {
     my $self = shift;
-    my $snvs_ref = shift;
+    my $snvs = shift;
     my $snv_outfile = shift;
-    my %snvs = %$snvs_ref;
     open (SNV_OUT, ">$snv_outfile") || die "\n\nCould not open $snv_outfile\n\n";
     print SNV_OUT "coord\tchr\tstart\tend\tvariant\tscore1\tscore2\tcallers\tstrelka\tsniper\tvarscan\tsamtools\ttier\n";
-    foreach my $snv (sort {$snvs{$a}->{coord_string} cmp $snvs{$b}->{coord_string}} keys %snvs){
-      my @callers = sort keys %{$snv_caller{$snvs{$snv}{variant_string}}};
+    foreach my $snv (sort {$snvs->{$a}->{coord_string} cmp $snvs->{$b}->{coord_string}} keys %$snvs){
+      my @callers = sort keys %{$snv_caller{$snvs->{$snv}{variant_string}}};
       my $strelka=0; my $sniper=0; my $varscan=0;my $samtools = 0;
       foreach my $caller (@callers){
         if ($caller eq 'strelka'){$strelka=1;}
@@ -364,7 +347,7 @@ sub createSnvOutfile {
         if ($caller eq 'varscan'){$varscan=1;}
         if ($caller eq 'samtools'){$samtools=1;}
       }
-      print SNV_OUT "$snvs{$snv}{coord_string}\t$snvs{$snv}{line}\t",join(",",@callers),"\t$strelka\t$sniper\t$varscan\t$samtools\t$snvs{$snv}{tier}\n";
+      print SNV_OUT "$snvs->{$snv}{coord_string}\t$snvs->{$snv}{line}\t",join(",",@callers),"\t$strelka\t$sniper\t$varscan\t$samtools\t$snvs->{$snv}{tier}\n";
     }
     close(SNV_OUT);
 }
