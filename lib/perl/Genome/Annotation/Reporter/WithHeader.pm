@@ -23,14 +23,23 @@ class Genome::Annotation::Reporter::WithHeader {
 sub validate {
     my $self = shift;
 
+    my @errors = $self->__errors__;
+    if (@errors) {
+        $self->print_errors(@errors);
+        die $self->error_message("Failed to validate");
+    }
+    return;
+}
+
+sub __errors__ {
+    my $self = shift;
+    my @errors = $self->SUPER::__errors__;
     my %available_fields = $self->available_fields_dict;
     for my $header ($self->headers) {
         unless(defined($available_fields{$header})) {
                 die $self->error_message("Interpreter field for $header is not defined. Do you need to overwrite available_fields_dict to provide the correct mapping?");
         }
     }
-
-    return $self->SUPER::validate(@_);
 }
 
 sub requires_interpreters_classes {
