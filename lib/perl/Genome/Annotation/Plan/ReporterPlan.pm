@@ -61,17 +61,6 @@ sub create_from_hashref {
     return $self;
 }
 
-sub validate_self {
-    my $self = shift;
-
-    my @errors = $self->__errors__;
-    if (@errors) {
-        $self->print_errors(@errors);
-        die $self->error_message("Failed to validate_self");
-    }
-    return;
-}
-
 sub __errors__ {
     my $self = shift;
     my @errors = $self->SUPER::__errors__;
