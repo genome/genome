@@ -65,19 +65,39 @@ sub validate_self {
     my $self = shift;
     $self->SUPER::validate_self(@_);
 
+    my @errors = $self->__errors__;
+    if (@errors) {
+        $self->print_errors(@errors);
+        die $self->error_message("Failed to validate_self");
+    }
+    return;
+
+}
+
+sub __errors__ {
+    my $self = shift;
+    my @errors = $self->SUPER::__errors__;
+
     my $needed = Set::Scalar->new($self->object->requires_interpreters);
     my $have = Set::Scalar->new(map {$_->name} $self->interpreter_plans);
     unless($needed->is_equal($have)) {
         if (my $still_needed = $needed - $have) {
-            $self->error_message("Interpreters required by reporter (%s) but not provided: (%s)",
-                $self->name, join(",", $still_needed->members));
+            push @errors, UR::Object::Tag->create(
+                type => 'error',
+                properties => [$still_needed->members],
+                desc => sprintf("Interpreters required by reporter (%s) but not provided: (%s)", $self->name, join(",", $still_needed->members)),
+            );
         }
         if (my $not_needed = $have - $needed) {
-            $self->error_message("Interpreters provided by plan but not required by reporter (%s): (%s)",
-                $self->name, join(",", $not_needed->members));
+            push @errors, UR::Object::Tag->create(
+                type => 'error',
+                properties => [$not_needed->members],
+                desc => sprintf("Interpreters provided by plan but not required by reporter (%s): (%s)", $self->name, join(",", $not_needed->members)),
+            );
         }
-        die $self->error_message("Provided interpreters and required interpreters do not match");
     }
+
+    return @errors;
 }
 
 1;
