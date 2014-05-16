@@ -54,6 +54,7 @@ sub as_hashref {
     return \%result;
 }
 
+# We overide ComponentBase validate because only plans have objects to validate
 sub validate {
     my $self = shift;
 
