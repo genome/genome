@@ -20,17 +20,6 @@ class Genome::Annotation::Reporter::WithHeader {
     }
 };
 
-sub validate {
-    my $self = shift;
-
-    my @errors = $self->__errors__;
-    if (@errors) {
-        $self->print_errors(@errors);
-        die $self->error_message("Failed to validate");
-    }
-    return;
-}
-
 sub __errors__ {
     my $self = shift;
     my @errors = $self->SUPER::__errors__;
