@@ -1385,7 +1385,7 @@ sub get_default_alignment_metrics_hash {
 sub is_capture {
     my $self = shift;
 
-    return defined $self->target_region_set_name;
+    return defined($self->target_region_set_name) ? 1 : 0;
 }
 
 
