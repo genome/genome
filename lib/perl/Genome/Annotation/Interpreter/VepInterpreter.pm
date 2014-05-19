@@ -24,6 +24,11 @@ sub available_fields {
         amino_acid_change
         default_gene_name
         ensembl_gene_id
+        strand
+        transcript_status
+        c_position
+        gene_name_source
+        canonical
     /;
 }
 
@@ -43,7 +48,18 @@ sub interpret_entry {
             amino_acid_change => $transcript->{'hgvsp'},
             default_gene_name => $transcript->{'symbol'} ,
             ensembl_gene_id   => $transcript->{'gene'},
+            gene_name_source => $transcript->{'symbol_source'},
+            c_position => $transcript->{'hgvsc'},
+            sift => $transcript->{'sift'},
+            polyphen => $transcript->{'polyphen'},
+            condel => $transcript->{'condel'},
         };
+        if ($transcript->{'canonical'} eq "YES") {
+            $return_values{$variant_allele}->{'canonical'} = 1,
+        }
+        else {
+            $return_values{$variant_allele}->{'canonical'} = 0,
+        }
     }
 
     return %return_values;

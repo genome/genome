@@ -27,6 +27,12 @@ subtest "one alt allele" => sub {
             amino_acid_change => '',
             default_gene_name => 'RP5-857K21.5',
             ensembl_gene_id   => 'ENSG00000223659',
+            gene_name_source => 'Clone_based_vega_gene',
+            c_position => '',
+            sift => '',
+            polyphen => '',
+            condel => '',
+            canonical => 1,
         }
     );
     my $entry = create_entry();
@@ -45,6 +51,12 @@ subtest "two alt allele" => sub {
             amino_acid_change => '',
             default_gene_name => 'RP5-857K21.5',
             ensembl_gene_id   => 'ENSG00000223659',
+            gene_name_source => 'Clone_based_vega_gene',
+            c_position => '',
+            sift => '',
+            polyphen => '',
+            condel => '',
+            canonical => 1,
         },
         G => {
             transcript_name   => 'ENST00000452176',
@@ -52,6 +64,12 @@ subtest "two alt allele" => sub {
             amino_acid_change => '',
             default_gene_name => 'RP5-857K22.5',
             ensembl_gene_id   => 'ENSG00000223695',
+            gene_name_source => 'Clone_based_vega_gene',
+            c_position => 'example_hgvsc',
+            sift => 'example_sift',
+            polyphen => 'example_polyphen',
+            condel => 'example_condel',
+            canonical => 1,
         },
     );
     my $entry = create_entry();
@@ -83,7 +101,7 @@ sub create_entry {
         'C,G',            # ALT
         '10.3',         # QUAL
         'PASS',         # FILTER
-        'CSQ=C|ENSG00000223659|ENST00000452176|Transcript|DOWNSTREAM|||||||4680|YES|RP5-857K21.5|Clone_based_vega_gene|||||,G|ENSG00000223695|ENST00000452176|Transcript|DOWNSTREAM|||||||4680|YES|RP5-857K22.5|Clone_based_vega_gene|||||',  # INFO
+        'CSQ=C|ENSG00000223659|ENST00000452176|Transcript|DOWNSTREAM|||||||4680|YES|RP5-857K21.5|Clone_based_vega_gene|||||,G|ENSG00000223695|ENST00000452176|Transcript|DOWNSTREAM|||||||4680|YES|RP5-857K22.5|Clone_based_vega_gene|example_sift|example_polyphen|example_hgvsc||example_condel',  # INFO
         'GT:DP',     # FORMAT
         "0/1:12",   # FIRST_SAMPLE
     );
