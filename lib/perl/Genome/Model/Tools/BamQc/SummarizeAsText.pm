@@ -103,7 +103,7 @@ sub _load_mark_duplicates_metrics {
 
     my $mrkdup_metrics;
     my $lib;
-    if (-e $mrkdup_file) {
+    if ($mrkdup_file && -e $mrkdup_file) {
         $mrkdup_metrics = Genome::Model::Tools::Picard::MarkDuplicates->parse_file_into_metrics_hashref($mrkdup_file);
         my @libs = sort keys %{$mrkdup_metrics};
         if (scalar(@libs) > 1) {
@@ -119,7 +119,7 @@ sub _load_error_rate_metrics {
     my($self, $label_dir, $error_rate_by_position) = @_;
 
     my ($error_rate_file) = glob($label_dir->directory .'/*-ErrorRate.tsv');
-    unless(-e $error_rate_file) {
+    unless($error_rate_file && -e $error_rate_file) {
       die "unable to find *-ErrorRate.tsv in " . $label_dir->directory;
     }
     my %error_rate_sum;
