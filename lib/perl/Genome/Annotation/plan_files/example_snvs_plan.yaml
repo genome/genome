@@ -10,11 +10,7 @@ experts:
         ensembl_version: 75
         feature_list_names_and_tags: {}
         species: 'homo-sapiens'
-        polyphen: b
-        sift: b
         terms: ensembl
-        regulatory: 1
-        canonical: 1
         plugins: []
         joinx_version: 1.8
         plugins_version: 1
