@@ -133,14 +133,11 @@ sub prepend_api_path_and_execute {
     if (@api_path){
         $lib = join(" ", $^X, '-S', map(join(" ", '-I', '"' . $_ . '"'), @api_path));
     }else{
-        $self->error_message("No API path found for annotation build: " . $self->id);
-        return;
+        die $self->error_message("No API path found for annotation build: " . $self->id);
     }
 
     $shellcmd_params{'cmd'} = join(" ", $lib, $shellcmd_params{'cmd'});
-    my $rv = Genome::Sys->shellcmd(%shellcmd_params);
-
-    return $rv;
+    return Genome::Sys->shellcmd(%shellcmd_params);
 }
 
 sub vep_script {
