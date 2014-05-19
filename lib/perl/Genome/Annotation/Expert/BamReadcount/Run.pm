@@ -54,7 +54,7 @@ sub result_class {
 
 sub __errors__ {
     my $self = shift;
-    my @errors = $self->SUPER::__errors__(@_);
+    my @errors = $self->SUPER::__errors__;
 
     unless ($self->version >= 0.5) {
         push @errors, UR::Object::Tag->create(
