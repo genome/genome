@@ -4,6 +4,7 @@ use strict;
 use warnings FATAL => 'all';
 use Genome;
 use Sys::Hostname;
+use IPC::Run qw(run);
 use File::Basename qw(dirname);
 
 class Genome::Annotation::Expert::Vep::RunResult {
