@@ -25,6 +25,7 @@ class Genome::Model::ClinSeq::Command::AnnotateGenesByCategory {
             is => 'Text',
             doc => 'name of list of gene groups to use',
             default => "Default",
+            is_optional => 1,
         },
     ],
     has_optional_output => [
