@@ -333,7 +333,7 @@ sub _expunge_assignments{
     );
     my @builds = map($_->build, @build_inputs);
     for my $build (@builds) {
-        $build->abandon();
+        $build->abandon(undef, 'Expunging instrument data ' . $instrument_data_id);
         push @models, $build->model;
     }
 
