@@ -127,24 +127,44 @@ sub planned_output_names {
     return map {$_->property_name} @properties;
 }
 
+# TODO this is not covered by tests
 sub validate_with_plan_params {
     my ($self, $params) = validate_pos(@_, 1, 1);
 
+    my @errors = $self->plan_params_errors($params);
+    if (@errors) {
+        $self->print_errors(@errors);
+        die $self->error_message("Failed to validate_with_plan_params with params:\n" . Data::Dumper::Dumper $params);
+    }
+    return;
+}
+
+# TODO this is not covered by tests
+sub plan_params_errors {
+    my ($self, $params) = validate_pos(@_, 1, 1);
+    my @errors;
     my $needed = Set::Scalar->new($self->planned_output_names);
     my $have = Set::Scalar->new(keys %{$params});
-
     unless($needed->is_equal($have)) {
         if (my $still_needed = $needed - $have) {
-            $self->error_message("Parameters required by adaptor (%s) but not provided: (%s)",
-                $self->class, join(",", $still_needed->members));
+            push @errors, UR::Object::Tag->create(
+                type => 'error',
+                properties => [$still_needed->members],
+                desc => sprintf("Parameters required by adaptor (%s) but not provided: (%s)", 
+                    $self->class, join(",", $still_needed->members)),
+            );
         }
         if (my $not_needed = $have - $needed) {
-            $self->error_message("Parameters provided by plan but not required by adaptor (%s): (%s)",
-                $self->class, join(",", $not_needed->members));
+            push @errors, UR::Object::Tag->create(
+                type => 'error',
+                properties => [$not_needed->members],
+                desc => sprintf("Parameters provided by plan but not required by adaptor (%s): (%s)",
+                    $self->class, join(",", $not_needed->members)),
+            );
         }
-        die $self->error_message("Provided parameters and required parameters do not match");
     }
 
+    return @errors;
 }
 
 1;
