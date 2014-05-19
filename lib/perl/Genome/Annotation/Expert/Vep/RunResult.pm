@@ -25,11 +25,7 @@ class Genome::Annotation::Expert::Vep::RunResult {
         },
     ],
     has_param => [
-        polyphen => { is => 'String', },
-        sift => { is => 'String', },
         terms => {is => 'String', },
-        regulatory => {is => 'Boolean',},
-        canonical => {is => 'Boolean',},
         plugins => {is => 'String',
                     is_many => 1},
         plugins_version => {is => 'String',},
@@ -143,8 +139,10 @@ sub custom_annotation_inputs {
 sub vep_params {
     my $self = shift;
 
+    my %param_hash = $self->_add_condel_to_plugins($self->param_hash);
+
     my %params = (
-        $self->param_hash,
+        %param_hash,
         fasta => $self->reference_build->fasta_file,
         ensembl_version => $self->ensembl_version,
         custom => $self->custom_annotation_inputs,
@@ -153,6 +151,10 @@ sub vep_params {
         quiet => 0,
         hgvs => 1,
         pick => 1,
+        polyphen => 'b',
+        sift => 'b',
+        regulatory => 1,
+        canonical => 1,
         buffer_size => $BUFFER_SIZE,
     );
     delete $params{variant_type};
@@ -215,4 +217,22 @@ sub _zip {
 sub final_output_file {
     my $self = shift;
     return File::Spec->join($self->temp_staging_directory, $self->output_filename);
+}
+
+sub _add_condel_to_plugins {
+    my $self = shift;
+    my %params = @_;
+
+    my $condel = 'Condel@PLUGIN_DIR@b@2';
+    my $condel_is_set = 0;
+    for my $plugin (@{$params{plugins}}) {
+        if ($plugin eq $condel) {
+            $condel_is_set = 1;
+            last;
+        }
+    }
+    unless ($condel_is_set) {
+        push @{$params{plugins}}, $condel;
+    }
+    return %params;
 }

@@ -64,8 +64,6 @@ sub generate_test_cmd {
         ensembl_version => "1",
         feature_list_ids_and_tags => [join(":", $roi->id, "ROI"),join(":", $segdup->id, "SEGDUP")],
         variant_type => 'snvs',
-        polyphen => 'b',
-        sift => 'b',
         plugins_version => 0,
         species => "alien",
         joinx_version => '1.8',

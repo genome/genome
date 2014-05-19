@@ -25,7 +25,7 @@ BEGIN {
 my $pkg = 'Genome::Annotation::Expert::Vep::Expert';
 use_ok($pkg) || die;
 
-my $VERSION = 3; # Bump these each time test data changes
+my $VERSION = 4; # Bump these each time test data changes
 my $BUILD_VERSION = 2;
 my $test_dir = get_test_dir($pkg, $VERSION);
 
