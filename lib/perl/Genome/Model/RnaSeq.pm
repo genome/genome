@@ -278,7 +278,8 @@ sub _resolve_workflow_for_build {
 
     my $run_splice_junction_summary;
 
-    if ($self->bedtools_version && $self->annotation_build) {
+    #SpliceJunctionSummary need junctions.bed produced by tophat aligner
+    if ($aligner_name eq 'tophat' && $self->bedtools_version && $self->annotation_build) {
         my $annotation_build = $self->annotation_build;
         my ($ensembl_version) = split(/_/,$annotation_build->version);
         unless ($ensembl_version) {
