@@ -103,7 +103,6 @@ sub __errors__ {
 
 sub execute {
   my $self = shift;
-  my @builds = $self->builds;
 
   #Add trailing '/' to outdir if needed
   unless ($self->outdir =~ /\/$/){
