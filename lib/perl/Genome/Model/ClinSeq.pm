@@ -796,10 +796,10 @@ sub _resolve_workflow_for_build {
     my $mutation_diagram_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::CreateMutationDiagrams");
     if ($build->wgs_build and $build->exome_build) {
         $add_link->($input_connector, ['wgs_build','exome_build'], $mutation_diagram_op, 'builds');
-    }elsif ($build->wgs_build) {
-        $add_link->($input_connector, 'wgs_build', $mutation_diagram_op, 'builds');
-    }elsif ($build->exome_build) {
-        $add_link->($input_connector, 'exome_build', $mutation_diagram_op, 'builds');
+    } elsif ($build->wgs_build) {
+        $add_link->($input_connector, 'wgs_build_as_array', $mutation_diagram_op, 'builds');
+    } elsif ($build->exome_build) {
+        $add_link->($input_connector, 'exome_build_as_array', $mutation_diagram_op, 'builds');
     }
     $add_link->($mutation_diagram_op,'result',$output_connector,'mutation_diagram_result');
 
@@ -939,7 +939,7 @@ sub _resolve_workflow_for_build {
     my $msg = "Produce a report using DOCM";
     $docm_report_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::Converge::DocmReport");
     $add_link->($input_connector, 'docm_report_dir', $docm_report_op, 'outdir');
-    $add_link->($input_connector, 'build', $docm_report_op, 'builds');
+    $add_link->($input_connector, 'build_as_array', $docm_report_op, 'builds');
     $add_link->($input_connector, 'docm_variants_file', $docm_report_op, 'docm_variants_file');
     $add_link->($docm_report_op, 'result', $output_connector, 'docm_report_result');
   }
@@ -1165,7 +1165,7 @@ sub _resolve_workflow_for_build {
   if ($build->wgs_build || $build->exome_build){
     $msg = "Generate SnvIndel Report";
     $converge_snv_indel_report_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::Converge::SnvIndelReport");
-    $add_link->($input_connector, 'build', $converge_snv_indel_report_op, 'builds');
+    $add_link->($input_connector, 'build_as_array', $converge_snv_indel_report_op, 'builds');
     $add_link->($input_connector, 'snv_indel_report_dir', $converge_snv_indel_report_op, 'outdir');
     $add_link->($input_connector, 'snv_indel_report_clean', $converge_snv_indel_report_op, 'clean');
     $add_link->($input_connector, 'snv_indel_report_tmp_space', $converge_snv_indel_report_op, 'tmp_space');
