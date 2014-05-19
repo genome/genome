@@ -4,7 +4,6 @@ use strict;
 use warnings FATAL => 'all';
 use Genome;
 use Sys::Hostname;
-use IPC::Run qw(run);
 use File::Basename qw(dirname);
 
 class Genome::Annotation::Expert::Vep::RunResult {
@@ -80,8 +79,15 @@ sub sorted_input_vcf {
 sub _strip_input_vcf {
     my $self = shift;
 
-    run(['cat', $self->sorted_input_vcf], '|',
-        ['cut', '-f', '-8'], '>', $self->stripped_input_vcf);
+    Genome::Sys->shellcmd(
+        cmd => sprintf('cat %s | cut -f -8 > %s',
+            $self->sorted_input_vcf, $self->stripped_input_vcf
+        ),
+        input_files => [$self->sorted_input_vcf],
+        output_files => [$self->stripped_input_vcf],
+        set_pipefail => 0, # cut can close the pipe early
+        keep_dbh_connection_open => 1, # this should run fast
+    );
 }
 
 sub stripped_input_vcf {
