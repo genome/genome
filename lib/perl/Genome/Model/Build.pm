@@ -2290,12 +2290,17 @@ sub compare_output {
 sub _compare_output_files {
     my($self, $other_build) = @_;
 
-    my $build_id = $self->build_id;
-    my $other_build_id = $other_build->build_id;
+    return $self->_compare_output_directories(
+                        $self->data_directory,
+                        $other_build->data_directory,
 
-    my $blessed_build_dir = $self->data_directory;
-    my $other_build_dir = $other_build->data_directory;
-    my $class = $self->class;
+                        $self->build_id,
+                        $other_build->build_id,
+                    );
+}
+
+sub _compare_output_directories {
+    my($class, $blessed_data_dir, $other_data_dir, $build_id, $other_build_id) = @_;
 
     # Create hashes for each build, keys are paths relative to build directory and
     # values are full file paths
