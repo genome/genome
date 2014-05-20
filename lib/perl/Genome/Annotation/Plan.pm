@@ -129,11 +129,7 @@ sub __plan_errors__ {
     my $have = Set::Scalar->new(map {$_->name} $self->expert_plans);
     my $total_needed = Set::Scalar->new();
     for my $reporter_plan ($self->reporter_plans) {
-        my $needed = Set::Scalar->new();
-        for my $plan ($reporter_plan->interpreter_plans, $reporter_plan->filter_plans) {
-            $needed->insert($plan->get_class->requires_experts);
-        }
-        $total_needed += $needed;
+        my $needed = Set::Scalar->new($reporter_plan->requires_experts);
 
         if (my $still_needed = $needed - $have) {
             push @errors, UR::Object::Tag->create(
@@ -143,6 +139,8 @@ sub __plan_errors__ {
                     $reporter_plan->name, join(",", $still_needed->members)),
             );
         }
+
+        $total_needed += $needed;
     }
 
     if (my $not_needed = $have - $total_needed) {

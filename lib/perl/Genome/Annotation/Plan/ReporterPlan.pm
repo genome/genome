@@ -88,4 +88,13 @@ sub __plan_errors__ {
     return @errors;
 }
 
+sub requires_experts {
+    my $self = shift;
+    my $needed = Set::Scalar->new();
+    for my $plan ($self->interpreter_plans, $self->filter_plans) {
+        $needed->insert($plan->get_class->requires_experts);
+    }
+    return $needed->members;
+}
+
 1;
