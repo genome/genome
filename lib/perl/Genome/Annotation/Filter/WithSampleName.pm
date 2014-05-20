@@ -24,5 +24,11 @@ sub sample_index {
 
 Memoize::memoize("sample_index");
 
+sub sample_name_with_suffix {
+    my $self = shift;
+    my $suffix = shift;
+    return sprintf("%s-[%s]", $self->sample_name, $suffix);
+}
+
 1;
 
