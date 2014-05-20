@@ -18,14 +18,14 @@ use Genome::Test::Factory::Model::ImportedVariationList;
 use Genome::Test::Factory::Model::ImportedReferenceSequence;
 use Genome::Test::Factory::Build;
 
-my $TEST_DATA_VERSION = 1;
+my $TEST_DATA_VERSION = 2;
 
 my $pkg = 'Genome::InstrumentData::Composite::Workflow';
 use_ok($pkg) or die('test cannot continue');
 
 my $data_dir = Genome::Utility::Test->data_dir_ok($pkg, $TEST_DATA_VERSION);
 my $tmp_dir = Genome::Sys->create_temp_directory();
-for my $file (qw/all_sequences.fa all_sequences.dict 9999.bam 9999.bam.bai indels.hq.vcf/) {
+for my $file (qw/indels.hq.vcf/) {
     Genome::Sys->create_symlink(File::Spec->join($data_dir,$file), File::Spec->join($tmp_dir, $file));
 }
 
