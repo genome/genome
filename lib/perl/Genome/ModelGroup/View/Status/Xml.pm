@@ -18,9 +18,79 @@ class Genome::ModelGroup::View::Status::Xml {
                 'model_count',
                 {
                     name => 'models',
-                    perspective => 'status',
-                    toolkit => 'xml',
                     subject_class_name => 'Genome::Model',
+                    aspects => [
+                        'name',
+                        'run_as',
+                        'created_by',
+                        'creation_date',
+                        {
+                            name => 'subject',
+                            aspect => [
+                                'id', 'name', 'subclass_name'
+                            ],
+                            perspective => 'default',
+                            toolkit => 'xml',
+                            subject_class_name => 'Genome::Subject'
+                        },
+                        {
+                            name => 'processing_profile',
+                            aspects => [
+                                'id', 'name', 'type_name', 'subclass_name',
+                            ],
+                            perspective => 'default',
+                            toolkit => 'xml',
+                            subject_class_name => 'Genome::ProcessingProfile',
+                        },
+                        {
+                            name => 'inputs',
+                            aspects => [
+                                'value_id',
+                                'name',
+                                'value',
+                                'value_class_name',
+                            ],
+                            perspective => 'default',
+                            toolkit => 'xml',
+                        },
+                        {
+                            name => 'builds',
+                            aspects => [
+                                'id',
+                                'data_directory',
+                                'status',
+                                'date_scheduled',
+                                'date_completed',
+                                {
+                                    name => 'notes',
+                                    aspects => [
+                                        'editor_id',
+                                    ],
+                                    perspective => 'default',
+                                    toolkit => 'xml',
+                                },
+                                {
+                                    name => 'delta_model_input_differences_from_model',
+                                    aspects => ['value_id', 'name', 'value', 'value_class_name'],
+                                    perspective => 'default',
+                                    toolkit => 'xml',
+                                    subject_class_name => 'Genome::Model::Input',
+                                },
+                                {
+                                    name => 'build_input_differences_from_model',
+                                    aspects => ['value_id', 'name', 'value', 'value_class_name'],
+                                    perspective => 'default',
+                                    toolkit => 'xml',
+                                    subject_class_name => 'Genome::Model::Build::Input',
+                                },
+                            ],
+                            perspective => 'default',
+                            toolkit => 'xml',
+                            subject_class_name => 'Genome::Model::Build',
+                        },
+                    ],
+                    perspective => 'default',
+                    toolkit => 'xml',
                 },
                 {
                     name => 'convergence_model',
