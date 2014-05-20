@@ -2293,17 +2293,20 @@ sub _compare_output_files {
     my $build_id = $self->build_id;
     my $other_build_id = $other_build->build_id;
 
+    my $blessed_build_dir = $self->data_directory;
+    my $other_build_dir = $other_build->data_directory;
+
     # Create hashes for each build, keys are paths relative to build directory and
     # values are full file paths
     my (%file_paths, %other_file_paths);
     require Cwd;
-    for my $file (@{$self->files_in_data_directory}) {
+    for my $file (@{_files_in_directory($blessed_data_dir)}) {
         my $abs_path = Cwd::abs_path($file);
         next unless $abs_path; # abs_path returns undef if a subdirectory of file does not exist
-        $file_paths{$self->full_path_to_relative($file)} = $abs_path;
+        $file_paths{_canon_path_to_relative($blessed_data_dir, $file)} = $abs_path;
     }
-    for my $other_file (@{$other_build->files_in_data_directory}) {
-        $other_file_paths{$other_build->full_path_to_relative($other_file)} = Cwd::abs_path($other_file);
+    for my $other_file (@{_files_in_directory($other_data_dir)}) {
+        $other_file_paths{_canon_path_to_relative($other_data_dir, $other_file)} = Cwd::abs_path($other_file);
     }
 
     # Now cycle through files in this build's data directory and compare with
@@ -2312,7 +2315,7 @@ sub _compare_output_files {
     FILE: for my $rel_path (sort keys %file_paths) {
         my $abs_path = delete $file_paths{$rel_path};
         warn "abs_path ($abs_path) does not exist\n" unless (-e $abs_path);
-        my $dir = $self->full_path_to_relative(dirname($abs_path));
+        my $dir = _canon_path_to_relative($blessed_data_dir, dirname($abs_path));
 
         next FILE if -d $abs_path;
         next FILE if $rel_path =~ /server_location.txt/;
@@ -2393,9 +2396,7 @@ sub _compare_output_files {
         }
 
         unless ($diff_result) {
-            my $build_dir = $self->data_directory;
-            my $other_build_dir = $other_build->data_directory;
-            $diffs{$rel_path} = "files are not the same (diff -u {$build_dir,$other_build_dir}/$rel_path)";
+            $diffs{$rel_path} = "files are not the same (diff -u {$blessed_data_dir,$other_data_dir}/$rel_path)";
         }
     }
 
@@ -2403,7 +2404,7 @@ sub _compare_output_files {
     for my $rel_path (sort keys %other_file_paths) {
         my $abs_path = delete $other_file_paths{$rel_path};
         warn "abs_path ($abs_path) does not exist\n" unless (-e $abs_path);
-        my $dir = $self->full_path_to_relative(dirname($abs_path));
+        my $dir = _canon_path_to_relative($blessed_data_dir, dirname($abs_path));
         next if -d $abs_path;
         next if grep { $dir =~ /$_/ } $self->dirs_ignored_by_diff;
         next if grep { $rel_path =~ /$_/ } $self->files_ignored_by_diff;
