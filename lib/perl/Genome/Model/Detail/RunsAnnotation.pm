@@ -28,15 +28,19 @@ class Genome::Model::Detail::RunsAnnotation {
 sub _get_annotation_plan {
     my ($self, $name) = @_;
 
-    my $genome_base_dir = dirname(dirname(dirname(__FILE__)));
-    my $search_dir = File::Spec->join($genome_base_dir, 'Annotation', 'plan_files');
-    my $plan_file = File::Spec->join($search_dir, $name . '.yaml');
+    my $plan_file = File::Spec->join($self->_annotation_plan_search_dir, $name . '.yaml');
     unless (-f $plan_file) {
-        die $self->error_message("Could not find annotation plan named ($name) in search directory ($search_dir)");
+        die $self->error_message("Could not find annotation plan named ($name) in search directory (%s)", $self->_annotation_plan_search_dir);
     }
     my $plan = Genome::Annotation::Plan->create_from_file($plan_file);
 
     return $plan;
+}
+
+sub _annotation_plan_search_dir {
+    my $self = shift;
+    my $genome_base_dir = dirname(dirname(dirname(__FILE__)));
+    return File::Spec->join($genome_base_dir, 'Annotation', 'plan_files');
 }
 
 sub annotation_plan {
@@ -122,5 +126,29 @@ sub annotation_related_workflow_inputs {
     return %inputs;
 }
 
+sub __profile_errors__ {
+    my ($self, $pp) = @_;
+
+    my @errors = $self->SUPER::__profile_errors__(@_);
+    for my $annotation_plan_name_accessor qw(snvs_annotation_plan_name indels_annotation_plan_name) {
+        if (my $plan_name = $pp->$annotation_plan_name_accessor) {
+            my $annotation_plan;
+            eval {
+                $annotation_plan = $self->_get_annotation_plan($plan_name);
+            };
+            if (my $error = $@) {
+                push @errors, UR::Object::Tag->create(
+                    type => 'error',
+                    properties => [],
+                    desc => $error,
+                );
+            } else {
+                push @errors, $annotation_plan->__errors__;
+            }
+        }
+    }
+
+    return @errors;
+}
 
 1;
