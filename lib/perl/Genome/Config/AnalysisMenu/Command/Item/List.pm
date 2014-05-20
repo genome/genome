@@ -1,10 +1,10 @@
-package Genome::Config::AnalysisMenu::Item::Command::List;
+package Genome::Config::AnalysisMenu::Command::Item::List;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::Config::AnalysisMenu::Item::Command::List {
+class Genome::Config::AnalysisMenu::Command::Item::List {
     is => 'Genome::Object::Command::List',
     has => [
         subject_class_name => {
