@@ -9,5 +9,6 @@ reporters:
                 ix_p1: something
                 ix_p2: something else
         params:
+            file_name: alpha
             ra_p1: something
             ra_p2: something else
