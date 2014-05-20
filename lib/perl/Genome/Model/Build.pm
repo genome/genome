@@ -2295,6 +2295,7 @@ sub _compare_output_files {
 
     my $blessed_build_dir = $self->data_directory;
     my $other_build_dir = $other_build->data_directory;
+    my $class = $self->class;
 
     # Create hashes for each build, keys are paths relative to build directory and
     # values are full file paths
@@ -2319,14 +2320,14 @@ sub _compare_output_files {
 
         next FILE if -d $abs_path;
         next FILE if $rel_path =~ /server_location.txt/;
-        next FILE if grep { $dir =~ /$_/ } $self->dirs_ignored_by_diff;
-        next FILE if grep { $rel_path =~ /$_/ } $self->files_ignored_by_diff;
+        next FILE if grep { $dir =~ /$_/ } $class->dirs_ignored_by_diff;
+        next FILE if grep { $rel_path =~ /$_/ } $class->files_ignored_by_diff;
 
         # Gotta check if this file matches any of the supplied regex patterns.
         # If so, find the one (and only one) file from the other build that
         # matches the same pattern
         my ($other_rel_path, $other_abs_path);
-        REGEX: for my $regex ($self->regex_files_for_diff) {
+        REGEX: for my $regex ($class->regex_files_for_diff) {
             next REGEX unless $rel_path =~ /$regex/;
 
             #check for captures to narrow the search for the matching file
@@ -2369,7 +2370,7 @@ sub _compare_output_files {
         # Check if the files end with a suffix that requires special handling. If not,
         # just do an md5sum on the files and compare
         my $diff_result = 0;
-        my %matching_regex_for_custom_diff = $self->matching_regex_for_custom_diff($abs_path);
+        my %matching_regex_for_custom_diff = $class->matching_regex_for_custom_diff($abs_path);
         if (keys %matching_regex_for_custom_diff > 1) {
             die "Path ($abs_path) matched multiple regex_for_custom_diff ('" . join("', '", keys %matching_regex_for_custom_diff) . "')!\n";
         }
@@ -2377,16 +2378,16 @@ sub _compare_output_files {
             my ($key) = keys %matching_regex_for_custom_diff;
             my $method = "diff_$key";
             # Check build class first
-            if ($self->can($method)) {
-                $diff_result = $self->$method($abs_path, $other_abs_path);
+            if ($class->can($method)) {
+                $diff_result = $class->$method($abs_path, $other_abs_path);
             }
             # then model class
-            elsif ($self->model_class->can($method)) {
-                $diff_result = $self->model_class->$method($abs_path, $other_abs_path);
+            elsif ($class->model_class->can($method)) {
+                $diff_result = $class->model_class->$method($abs_path, $other_abs_path);
             }
             # cannot find it..die
             else {
-                die "Custom diff method ($method) not implemented in " . $self->class . " or ".$self->model_class."!\n";
+                die "Custom diff method ($method) not implemented in " . $class->class . " or ".$class->model_class."!\n";
             }
         }
         else {
@@ -2406,8 +2407,8 @@ sub _compare_output_files {
         warn "abs_path ($abs_path) does not exist\n" unless (-e $abs_path);
         my $dir = _canon_path_to_relative($blessed_data_dir, dirname($abs_path));
         next if -d $abs_path;
-        next if grep { $dir =~ /$_/ } $self->dirs_ignored_by_diff;
-        next if grep { $rel_path =~ /$_/ } $self->files_ignored_by_diff;
+        next if grep { $dir =~ /$_/ } $class->dirs_ignored_by_diff;
+        next if grep { $rel_path =~ /$_/ } $class->files_ignored_by_diff;
         $diffs{$rel_path} = "no file in build $build_id";
     }
 
