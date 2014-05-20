@@ -2138,9 +2138,9 @@ sub _files_in_directory {
 sub full_path_to_relative {
     my ($self, $path) = @_;
     my $rel_path = $path;
-    my $dir = $self->data_directory;
-    $dir .= '/' unless substr($dir, -1, 1) eq '/';
-    $rel_path =~ s/$dir//;
+    my $base_dir = $self->data_directory;
+    $base_dir .= '/' unless substr($base_dir, -1, 1) eq '/';
+    $rel_path =~ s/$base_dir//;
     $rel_path .= '/' if -d $path and substr($rel_path, -1, 1) ne '/';
     return $rel_path;
 }
