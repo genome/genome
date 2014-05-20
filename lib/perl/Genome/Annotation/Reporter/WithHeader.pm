@@ -26,9 +26,15 @@ sub __errors__ {
     my %available_fields = $self->available_fields_dict;
     for my $header ($self->headers) {
         unless(defined($available_fields{$header})) {
-                die $self->error_message("Interpreter field for $header is not defined. Do you need to overwrite available_fields_dict to provide the correct mapping?");
+            push @errors, UR::Object::Tag->create(
+                type => 'error',
+                properties => [],
+                desc => "Interpreter field for $header is not defined. Do you need to overwrite available_fields_dict to provide the correct mapping?",
+            );
         }
     }
+
+    return @errors;
 }
 
 sub requires_interpreters_classes {
