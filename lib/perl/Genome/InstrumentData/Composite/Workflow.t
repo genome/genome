@@ -155,11 +155,6 @@ subtest "simple alignments of different samples with merge and gatk refine" => s
     my $aligner_index = construct_aligner_index($ref_refine);
 
     my @alignment_results = @{construct_alignment_results(\@three_instrument_data, $ref_refine)};
-    Sub::Install::reinstall_sub({
-        into => 'Genome::SoftwareResult',
-        as => '_faster_get',
-        code => sub { my $class = shift; $class->get(@_) },
-    });
 
     my $variation_list_build = construct_variation_list($tmp_dir);
     ok($variation_list_build, "created ImportedVariationList build");
@@ -186,12 +181,14 @@ subtest "simple alignments of different samples with merge and gatk refine" => s
     );
 
     ok($ad->execute, 'executed dispatcher for simple alignments of different samples with merge and gatk refine');
-    my @ad_result_ids = $ad->_result_ids;
-    my @ad_results = Genome::SoftwareResult->get(\@ad_result_ids);
+
     my @gatk_results = Genome::InstrumentData::Gatk::BaseRecalibratorBamResult->get(
         reference_fasta => $ref_refine->fasta_file,
         known_sites => [$variation_list_build],
     );
+
+    my @ad_result_ids = $ad->_result_ids;
+    my @ad_results = Genome::SoftwareResult->get(\@ad_result_ids);
     is_deeply(
         [sort @alignment_results, @gatk_results],
         [sort @ad_results],
@@ -240,11 +237,13 @@ subtest "simple alignments of different samples with merge and clip overlap" => 
     );
 
     ok($ad->execute, 'executed dispatcher for simple alignments of different samples with merge and clip_overlap refine');
-    my @ad_result_ids = $ad->_result_ids;
-    my @ad_results = Genome::SoftwareResult->get(\@ad_result_ids);
+
     my @clip_overlap_results = Genome::InstrumentData::BamUtil::ClipOverlapResult->get(
         bam_source => [$merge_result_refine_one_inst_data, $merge_result_refine_two_inst_data]
     );
+
+    my @ad_result_ids = $ad->_result_ids;
+    my @ad_results = Genome::SoftwareResult->get(\@ad_result_ids);
     is_deeply(
         [sort @alignment_results, @clip_overlap_results],
         [sort @ad_results],
@@ -294,15 +293,18 @@ subtest "simple alignments of different samples with merge, gatk and clip overla
     );
 
     ok($ad->execute, 'executed dispatcher for simple alignments of different samples with merge and clip_overlap refine');
-    my @ad_result_ids = $ad->_result_ids;
-    my @ad_results = Genome::SoftwareResult->get(\@ad_result_ids);
+
     my @gatk_results = Genome::InstrumentData::Gatk::BaseRecalibratorBamResult->get(
         reference_fasta => $ref_refine->fasta_file,
         known_sites => [$variation_list_build],
     );
+
     my @clip_overlap_results = Genome::InstrumentData::BamUtil::ClipOverlapResult->get(
         bam_source => \@gatk_results,
     );
+
+    my @ad_result_ids = $ad->_result_ids;
+    my @ad_results = Genome::SoftwareResult->get(\@ad_result_ids);
     is_deeply(
         [sort @alignment_results, @clip_overlap_results],
         [sort @ad_results],
@@ -352,12 +354,14 @@ subtest "simple alignments of different samples with merge, clip overlap and gat
     );
 
     ok($ad->execute, 'executed dispatcher for simple alignments of different samples with merge and clip_overlap refine');
-    my @ad_result_ids = $ad->_result_ids;
-    my @ad_results = Genome::SoftwareResult->get(\@ad_result_ids);
+
     my @gatk_results = Genome::InstrumentData::Gatk::BaseRecalibratorBamResult->get(
         reference_fasta => $ref_refine->fasta_file,
         known_sites => [$variation_list_build],
     );
+
+    my @ad_result_ids = $ad->_result_ids;
+    my @ad_results = Genome::SoftwareResult->get(\@ad_result_ids);
     is_deeply(
         [sort @alignment_results, @gatk_results],
         [sort @ad_results],

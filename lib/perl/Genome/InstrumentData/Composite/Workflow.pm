@@ -63,7 +63,6 @@ sub execute {
     die unless $tree;
 
     my ($workflow, $inputs) = $self->_generate_workflow($tree);
-    $DB::single=1;
     $self->_workflow($workflow);
 
     if($self->log_directory) {
