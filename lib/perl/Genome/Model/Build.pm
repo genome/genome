@@ -2137,8 +2137,13 @@ sub _files_in_directory {
 # Given a full path to a file, return a path relative to the build directory
 sub full_path_to_relative {
     my ($self, $path) = @_;
+    return _canon_path_to_relative($self->data_directory, $path);
+}
+
+sub _canon_path_to_relative {
+    my($base_dir, $path) = @_;
+
     my $rel_path = $path;
-    my $base_dir = $self->data_directory;
     $base_dir .= '/' unless substr($base_dir, -1, 1) eq '/';
     $rel_path =~ s/$base_dir//;
     $rel_path .= '/' if -d $path and substr($rel_path, -1, 1) ne '/';
