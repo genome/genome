@@ -241,8 +241,6 @@ sub set_what_interpreter_x_requires {
     class Genome::Annotation::TestExpert {
         is => 'Genome::Annotation::Expert::Base',
         has => [
-            e1_p1 => {},
-            e1_p2 => {},
         ],
     };
 
@@ -303,8 +301,6 @@ sub set_what_interpreter_x_requires {
     class Genome::Annotation::AnotherTestExpert {
         is => 'Genome::Annotation::Expert::Base',
         has => [
-            e2_p1 => {},
-            e2_p2 => {},
         ],
     };
 
