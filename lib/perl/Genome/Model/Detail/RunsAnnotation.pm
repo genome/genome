@@ -127,7 +127,8 @@ sub annotation_related_workflow_inputs {
 }
 
 sub __profile_errors__ {
-    my ($self, $pp) = @_;
+    my $self = shift;
+    my ($pp) = @_;
 
     my @errors = $self->SUPER::__profile_errors__(@_);
     for my $annotation_plan_name_accessor qw(snvs_annotation_plan_name indels_annotation_plan_name) {

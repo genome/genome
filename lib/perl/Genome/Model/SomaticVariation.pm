@@ -505,7 +505,8 @@ sub map_workflow_inputs {
 }
 
 sub __profile_errors__ {
-    my ($self, $pp) = @_;
+    my $self = shift;
+    my ($pp) = @_;
 
     my @errors = $self->SUPER::__profile_errors__(@_);
     if ($pp->snv_detection_strategy) {
