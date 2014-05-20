@@ -61,27 +61,13 @@ sub create_from_hashref {
     return $self;
 }
 
-sub __errors__ {
+sub __plan_errors__ {
     my $self = shift;
-    my @errors = $self->SUPER::__errors__;
+    my @errors = $self->SUPER::__plan_errors__;
 
-    # This may die because the module may not exist
-    my $object;
-    my $needed = Set::Scalar->new();
-    eval {
-        $object = $self->object;
-    };
-    if ($@) {
-        push @errors, UR::Object::Tag->create(
-            type => 'error',
-            properties => [],
-            desc => $@,
-        );
-    } else {
-        $needed->insert($object->requires_interpreters);
-    }
-
+    my $needed = Set::Scalar->new($self->get_class->requires_interpreters);
     my $have = Set::Scalar->new(map {$_->name} $self->interpreter_plans);
+
     unless($needed->is_equal($have)) {
         if (my $still_needed = $needed - $have) {
             push @errors, UR::Object::Tag->create(

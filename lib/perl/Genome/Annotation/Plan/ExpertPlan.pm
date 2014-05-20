@@ -24,9 +24,33 @@ sub adaptor_object {
     return $adaptor_class->create();
 }
 
-sub validate_object {
+sub __class_errors__ {
     my $self = shift;
-    $self->object->adaptor_class->validate_with_plan_params($self->params);
+    my @errors = $self->SUPER::__class_errors__;
+    return @errors if @errors; # Can't know anything else in this case
+
+    for my $accessor ('run_class', 'adaptor_class') {
+        eval {
+            $self->get_class->$accessor;
+        };
+
+        if ($@) {
+            push @errors, UR::Object::Tag->create(
+                type => 'error',
+                properties => [],
+                desc => $@,
+            );
+        }
+    }
+
+    return @errors;
+}
+
+sub __object_errors__ {
+    my $self = shift;
+    my @errors = $self->SUPER::__object_errors__;
+    push @errors, $self->object->adaptor_class->__planned_output_errors__($self->params);
+    return @errors;
 }
 
 1;

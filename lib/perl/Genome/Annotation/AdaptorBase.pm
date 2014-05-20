@@ -131,7 +131,7 @@ sub planned_output_names {
 sub validate_with_plan_params {
     my ($self, $params) = validate_pos(@_, 1, 1);
 
-    my @errors = $self->plan_params_errors($params);
+    my @errors = $self->__planned_output_errors__($params);
     if (@errors) {
         $self->print_errors(@errors);
         die $self->error_message("Failed to validate_with_plan_params with params:\n" . Data::Dumper::Dumper $params);
@@ -140,7 +140,7 @@ sub validate_with_plan_params {
 }
 
 # TODO this is not covered by tests
-sub plan_params_errors {
+sub __planned_output_errors__ {
     my ($self, $params) = validate_pos(@_, 1, 1);
     my @errors;
     my $needed = Set::Scalar->new($self->planned_output_names);

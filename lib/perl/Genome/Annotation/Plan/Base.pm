@@ -90,13 +90,77 @@ Memoize::memoize("factory");
 
 sub __errors__ {
     my $self = shift;
+
     my @errors = $self->SUPER::__errors__;
 
+    my @child_errors = $self->__child_errors__;
+    push @errors, @child_errors;
+
+    my @class_errors = $self->__class_errors__;
+    push @errors, @class_errors;
+
+    # We can't check plan or object errors if there are class problems
+    # i.e. the class does not exist
+    if (@child_errors or @class_errors) {
+        return @errors;
+    } else {
+        push @errors, $self->__object_errors__, $self->__plan_errors__;
+    }
+
+    return @errors;
+}
+
+sub __child_errors__ {
+    my $self = shift;
+
+    my @errors;
     my %child_hash = $self->children;
     for my $children_of_category (values %child_hash) {
         for my $child (@{$children_of_category}) {
             push @errors, $child->__errors__;
         }
+    }
+
+    return @errors;
+}
+
+sub __plan_errors__ {
+    return;
+}
+
+sub __object_errors__ {
+    my $self = shift;
+
+    $DB::single=1 if $self->isa('Genome::Annotation::Plan::InterpreterPlan');
+    my $object;
+    eval {
+        $object = $self->object;
+    };
+
+    if ($@) {
+        return UR::Object::Tag->create(
+            type => 'error',
+            properties => [],
+            desc => $@
+        );
+    } else {
+        return $object->__errors__;
+    }
+}
+
+sub __class_errors__ {
+    my $self = shift;
+    my @errors;
+    eval {
+        my $class = $self->get_class;
+    };
+
+    if ($@) {
+        push @errors, UR::Object::Tag->create(
+            type => 'error',
+            properties => [],
+            desc => $@
+        );
     }
 
     return @errors;

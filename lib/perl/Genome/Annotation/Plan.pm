@@ -122,31 +122,16 @@ sub create_from_json {
     return $class->create_from_hashref($hashref);
 }
 
-sub __errors__ {
+sub __plan_errors__ {
     my $self = shift;
-    my @errors = $self->SUPER::__errors__;
 
+    my @errors = $self->SUPER::__plan_errors__;
     my $have = Set::Scalar->new(map {$_->name} $self->expert_plans);
     my $total_needed = Set::Scalar->new();
     for my $reporter_plan ($self->reporter_plans) {
         my $needed = Set::Scalar->new();
         for my $plan ($reporter_plan->interpreter_plans, $reporter_plan->filter_plans) {
-            # This may die because the module may not exist
-            my $object;
-            eval {
-                $object = $plan->object;
-            };
-
-            if ($@) {
-                push @errors, UR::Object::Tag->create(
-                    type => 'error',
-                    properties => [],
-                    desc => $@,
-                );
-            } else {
-                $needed->insert($object->requires_experts);
-            }
-
+            $needed->insert($plan->get_class->requires_experts);
         }
         $total_needed += $needed;
 
@@ -170,6 +155,14 @@ sub __errors__ {
     }
 
     return @errors;
+}
+
+sub __class_errors__ {
+    return;
+}
+
+sub __object_errors__ {
+    return;
 }
 
 1;
