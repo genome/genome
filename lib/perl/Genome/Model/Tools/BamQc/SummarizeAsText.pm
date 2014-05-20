@@ -381,19 +381,19 @@ sub execute {
 
     foreach my $label_dir ( $self->_listify_labels_and_directories()) {
         my $as_metrics = $self->_load_alignment_summary_metrics($label_dir);
-        
+
         my($mrkdup_metrics, $lib) = $self->_load_mark_duplicates_metrics($label_dir);
-        
+
         my $error_rate_sum = $self->_load_error_rate_metrics($label_dir, \%error_rate_by_position);
-        
+
         my $is_metrics = $self->_load_insert_size_metrics($label_dir, \%is_data, \%is_directions);
-        
+
         my $gc_metrics = $self->_load_gc_bias_metrics($label_dir, \%gc_data, \%gc_windows);
 
         $self->_load_quality_distribution($label_dir, \%qd_data);
 
         $self->_load_quality_by_cycle($label_dir, \%qc_data);
-        
+
         # TODO: We need summary metrics per category and/or read direction
         # The below summary metrics only apply to paired-end libraries
         my %summary_data = (
@@ -433,7 +433,7 @@ sub execute {
         }
         $summary_writer->write_one(\%summary_data);
     }
-    
+
     $self->_write_error_tsv_file(\%error_rate_by_position);
 
     $self->_write_consolidate_histogram_of_normalized_coverage_per_gc_window(\%gc_windows, \%gc_data);
