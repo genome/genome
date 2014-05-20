@@ -2278,6 +2278,21 @@ sub compare_output {
         confess "Builds $build_id and $other_build_id are not the same type!";
     }
 
+    my %diffs = $self->_compare_output_files($other_build);
+
+    # Now compare metrics of both builds
+    my %metric_diffs = $self->diff_metrics($other_build);
+    @diffs{ keys %metric_diffs } = values %metric_diffs if %metric_diffs;
+
+    return %diffs;
+}
+
+sub _compare_output_files {
+    my($self, $other_build) = @_;
+
+    my $build_id = $self->build_id;
+    my $other_build_id = $other_build->build_id;
+
     # Create hashes for each build, keys are paths relative to build directory and
     # values are full file paths
     my (%file_paths, %other_file_paths);
@@ -2394,10 +2409,6 @@ sub compare_output {
         next if grep { $rel_path =~ /$_/ } $self->files_ignored_by_diff;
         $diffs{$rel_path} = "no file in build $build_id";
     }
-
-    # Now compare metrics of both builds
-    my %metric_diffs = $self->diff_metrics($other_build);
-    @diffs{ keys %metric_diffs } = values %metric_diffs if %metric_diffs;
 
     return %diffs;
 }
