@@ -40,7 +40,7 @@ VCF file.
 
     printf "CHROM:   %s\n", $entry->{chrom};
     printf "POS:     %s\n", $entry->{position};
-    printf "IDENT:   %s\n", join(",", $entry->{identifiers});
+    printf "IDENT:   %s\n", join(",", @{$entry->{identifiers}});
     printf "REF:     %s\n", $entry->{reference_allele};
     printf "ALT:     %s\n", join(",", $entry->{alternate_alleles});
     printf "QUAL:    %s\n", $entry->{quality};
