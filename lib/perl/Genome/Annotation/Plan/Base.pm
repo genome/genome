@@ -131,17 +131,16 @@ sub __plan_errors__ {
 sub __object_errors__ {
     my $self = shift;
 
-    $DB::single=1 if $self->isa('Genome::Annotation::Plan::InterpreterPlan');
     my $object;
     eval {
         $object = $self->object;
     };
 
-    if ($@) {
+    if (my $error = $@) {
         return UR::Object::Tag->create(
             type => 'error',
             properties => [],
-            desc => $@
+            desc => $error,
         );
     } else {
         return $object->__errors__;
@@ -155,11 +154,11 @@ sub __class_errors__ {
         my $class = $self->get_class;
     };
 
-    if ($@) {
+    if (my $error = $@) {
         push @errors, UR::Object::Tag->create(
             type => 'error',
             properties => [],
-            desc => $@
+            desc => $error,
         );
     }
 

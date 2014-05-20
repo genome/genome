@@ -34,11 +34,11 @@ sub __class_errors__ {
             $self->get_class->$accessor;
         };
 
-        if ($@) {
+        if (my $error = $@) {
             push @errors, UR::Object::Tag->create(
                 type => 'error',
                 properties => [],
-                desc => $@,
+                desc => $error,
             );
         }
     }
