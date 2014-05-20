@@ -18,7 +18,7 @@ use Genome::Test::Factory::Model::ImportedVariationList;
 use Genome::Test::Factory::Model::ImportedReferenceSequence;
 use Genome::Test::Factory::Build;
 
-my $TEST_DATA_VERSION = 1;
+# my $TEST_DATA_VERSION = 1;
 
 my $pkg = 'Genome::InstrumentData::Composite::Workflow';
 use_ok($pkg) or die('test cannot continue');
@@ -146,11 +146,6 @@ subtest "simple alignments of different samples with merge and gatk refine" => s
 
     my $merge_result_refine_one_inst_data = construct_merge_result(\@one_instrument_data, $ref_refine);
     my $merge_result_refine_two_inst_data = construct_merge_result(\@two_instrument_data, $ref_refine);
-    Sub::Install::reinstall_sub({
-        into => 'Genome::InstrumentData::AlignmentResult::Merged',
-        as => 'bam_path',
-        code => sub { File::Spec->join($tmp_dir, '9999.bam') },
-    });
 
     my $aligner_index = construct_aligner_index($ref_refine);
 
@@ -213,11 +208,6 @@ subtest "simple alignments of different samples with merge and clip overlap" => 
 
     my $merge_result_refine_one_inst_data = construct_merge_result(\@one_instrument_data, $ref_refine);
     my $merge_result_refine_two_inst_data = construct_merge_result(\@two_instrument_data, $ref_refine);
-    Sub::Install::reinstall_sub({
-        into => 'Genome::InstrumentData::AlignmentResult::Merged',
-        as => 'bam_path',
-        code => sub { File::Spec->join($tmp_dir, '9999.bam') },
-    });
 
     my $aligner_index = construct_aligner_index($ref_refine);
 
@@ -280,11 +270,6 @@ subtest "simple alignments of different samples with merge, gatk and clip overla
 
     my $merge_result_refine_one_inst_data = construct_merge_result(\@one_instrument_data, $ref_refine);
     my $merge_result_refine_two_inst_data = construct_merge_result(\@two_instrument_data, $ref_refine);
-    Sub::Install::reinstall_sub({
-        into => 'Genome::InstrumentData::AlignmentResult::Merged',
-        as => 'bam_path',
-        code => sub { File::Spec->join($tmp_dir, '9999.bam') },
-    });
 
     my $aligner_index = construct_aligner_index($ref_refine);
 
@@ -364,11 +349,6 @@ subtest "simple alignments of different samples with merge, clip overlap and gat
 
     my $merge_result_refine_one_inst_data = construct_merge_result(\@one_instrument_data, $ref_refine);
     my $merge_result_refine_two_inst_data = construct_merge_result(\@two_instrument_data, $ref_refine);
-    Sub::Install::reinstall_sub({
-        into => 'Genome::InstrumentData::AlignmentResult::Merged',
-        as => 'bam_path',
-        code => sub { File::Spec->join($tmp_dir, '9999.bam') },
-    });
 
     my $aligner_index = construct_aligner_index($ref_refine);
 
