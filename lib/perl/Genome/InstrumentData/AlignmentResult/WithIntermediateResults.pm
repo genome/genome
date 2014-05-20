@@ -66,8 +66,12 @@ sub remove_intemediate_results {
     my @iar_users = Genome::SoftwareResult::User->get(user => $self, label => intermediate_result_user_label);
     for my $iar_user ( @iar_users ) {
         my $iar = $iar_user->software_result;
-        $iar_user->delete;
-        $iar->delete;
+        $iar_user->active(0);
+        eval { $iar->delete; };
+        if($@) {
+            my $error = $@;
+            $self->warning_message('Failed to remove intermediate result %s. Error: %s', $iar->id, $error);
+        }
     }
 
     return 1;
