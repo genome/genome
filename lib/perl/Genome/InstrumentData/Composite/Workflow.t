@@ -159,6 +159,13 @@ subtest "simple alignments of different samples with merge and gatk refine" => s
     my $variation_list_build = construct_variation_list($tmp_dir);
     ok($variation_list_build, "created ImportedVariationList build");
 
+    my ($realigner_result_one_inst_data, $recalibrator_result_one_inst_data) = construct_gatk_results(
+        $ref_refine, $variation_list_build, $merge_result_refine_one_inst_data
+    );
+    my ($realigner_result_two_inst_data, $recalibrator_result_two_inst_data) = construct_gatk_results(
+        $ref_refine, $variation_list_build, $merge_result_refine_two_inst_data
+    );
+
     my $ad = Genome::InstrumentData::Composite::Workflow->create(
         inputs => {
             inst => \@three_instrument_data,
@@ -183,8 +190,12 @@ subtest "simple alignments of different samples with merge and gatk refine" => s
     ok($ad->execute, 'executed dispatcher for simple alignments of different samples with merge and gatk refine');
 
     my @gatk_results = Genome::InstrumentData::Gatk::BaseRecalibratorBamResult->get(
-        reference_fasta => $ref_refine->fasta_file,
-        known_sites => [$variation_list_build],
+        bam_source => [$realigner_result_one_inst_data, $realigner_result_two_inst_data],
+    );
+    is_deeply(
+        [sort $recalibrator_result_one_inst_data, $recalibrator_result_two_inst_data],
+        [sort @gatk_results],
+        'gatk results as expected'
     );
 
     my @ad_result_ids = $ad->_result_ids;
@@ -270,6 +281,13 @@ subtest "simple alignments of different samples with merge, gatk and clip overla
     my $variation_list_build = construct_variation_list($tmp_dir);
     ok($variation_list_build, "created ImportedVariationList build");
 
+    my ($realigner_result_one_inst_data, $recalibrator_result_one_inst_data) = construct_gatk_results(
+        $ref_refine, $variation_list_build, $merge_result_refine_one_inst_data
+    );
+    my ($realigner_result_two_inst_data, $recalibrator_result_two_inst_data) = construct_gatk_results(
+        $ref_refine, $variation_list_build, $merge_result_refine_two_inst_data
+    );
+
     my $ad = Genome::InstrumentData::Composite::Workflow->create(
         inputs => {
             inst => \@three_instrument_data,
@@ -295,8 +313,12 @@ subtest "simple alignments of different samples with merge, gatk and clip overla
     ok($ad->execute, 'executed dispatcher for simple alignments of different samples with merge and clip_overlap refine');
 
     my @gatk_results = Genome::InstrumentData::Gatk::BaseRecalibratorBamResult->get(
-        reference_fasta => $ref_refine->fasta_file,
-        known_sites => [$variation_list_build],
+        bam_source => [$realigner_result_one_inst_data, $realigner_result_two_inst_data],
+    );
+    is_deeply(
+        [sort $recalibrator_result_one_inst_data, $recalibrator_result_two_inst_data],
+        [sort @gatk_results],
+        'gatk results as expected'
     );
 
     my @clip_overlap_results = Genome::InstrumentData::BamUtil::ClipOverlapResult->get(
@@ -481,6 +503,36 @@ sub construct_merge_result {
     $merge_result->lookup_hash($merge_result->calculate_lookup_hash());
 
     return $merge_result;
+}
+
+sub construct_gatk_results {
+    my $reference = shift;
+    my $variation_list_build = shift;
+    my $previous_result = shift;
+
+    my $realigner_result = Genome::InstrumentData::Gatk::IndelRealignerResult->__define__(
+        reference_build => $reference,
+        bam_source => $previous_result,
+        version => 2.4,
+    );
+    $realigner_result->add_input(
+        name => 'known_sites-1',
+        value_obj => $variation_list_build,
+    );
+    $realigner_result->lookup_hash($realigner_result->calculate_lookup_hash());
+
+    my $recalibrator_result = Genome::InstrumentData::Gatk::BaseRecalibratorBamResult->__define__(
+        reference_build => $reference,
+        bam_source => $realigner_result,
+        version => 2.4,
+    );
+    $recalibrator_result->add_input(
+        name => 'known_sites-1',
+        value_obj => $variation_list_build,
+    );
+    $recalibrator_result->lookup_hash($recalibrator_result->calculate_lookup_hash());
+
+    return ($realigner_result, $recalibrator_result);
 }
 
 sub check_result_bam {
