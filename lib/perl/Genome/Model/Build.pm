@@ -2121,8 +2121,13 @@ sub get_metric {
 # Returns a list of files contained in the build's data directory
 sub files_in_data_directory {
     my $self = shift;
+    return _files_in_directory($self->data_directory);
+}
+
+sub _files_in_directory {
+    my $directory = shift;
     my @files;
-    my $iter = File::Next::files($self->data_directory);
+    my $iter = File::Next::files($directory);
     while(defined (my $file = $iter->())) {
         push @files, $file;
     }
