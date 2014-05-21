@@ -210,7 +210,8 @@ list can be used to convert GT sample indexes to actual allele values.
 
 sub alleles {
     my $self = shift;
-    return ($self->{reference_allele}, @{$self->{alternate_alleles}});
+    my @allele_array = ($self->{reference_allele}, @{$self->{alternate_alleles}});
+    return @allele_array;
 }
 
 =item C<has_indel>
