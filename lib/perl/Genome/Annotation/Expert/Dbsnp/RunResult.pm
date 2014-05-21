@@ -1,11 +1,11 @@
-package Genome::Annotation::Expert::Joinx::RunResult;
+package Genome::Annotation::Expert::Dbsnp::RunResult;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 use File::Spec;
 
-class Genome::Annotation::Expert::Joinx::RunResult {
+class Genome::Annotation::Expert::Dbsnp::RunResult {
     is => 'Genome::Annotation::Expert::ResultBase',
     has_input => [
         known_variants => {
@@ -17,7 +17,7 @@ class Genome::Annotation::Expert::Joinx::RunResult {
         info_string => {
             is => 'Text',
         },
-        version => {
+        joinx_version => {
             is => 'Text',
         },
     ],
@@ -47,7 +47,7 @@ sub _run {
         use_bgzip       => 1,
         info_fields     => $info_string,
         info            => $info,
-        use_version     => $self->version,
+        use_version     => $self->joinx_version,
     );
 
     unless ($vcf_annotator->execute) {

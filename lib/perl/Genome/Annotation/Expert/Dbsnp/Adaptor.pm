@@ -1,14 +1,14 @@
-package Genome::Annotation::Expert::Joinx::Adaptor;
+package Genome::Annotation::Expert::Dbsnp::Adaptor;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::Annotation::Expert::Joinx::Adaptor {
+class Genome::Annotation::Expert::Dbsnp::Adaptor {
     is => 'Genome::Annotation::AdaptorBase',
 
     has_planned_output => [
-        version => { is  => 'Version', },
+        joinx_version => { is  => 'Version', },
         info_string => { is => 'Text', },
     ],
     has_output => [
@@ -20,7 +20,7 @@ class Genome::Annotation::Expert::Joinx::Adaptor {
 };
 
 sub name {
-    "joinx";
+    "dbsnp";
 }
 
 sub resolve_expert_specific_attributes_from_build {

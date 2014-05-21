@@ -19,10 +19,10 @@ use Genome::Annotation::TestHelpers qw(test_cmd_and_result_are_in_sync);
 
 use Test::More;
 
-my $cmd_class = 'Genome::Annotation::Expert::Joinx::Run';
+my $cmd_class = 'Genome::Annotation::Expert::Dbsnp::Run';
 use_ok($cmd_class) or die;
 
-my $result_class = 'Genome::Annotation::Expert::Joinx::RunResult';
+my $result_class = 'Genome::Annotation::Expert::Dbsnp::RunResult';
 use_ok($result_class) or die;
 
 use_ok('Genome::Model::Tools::Joinx::VcfAnnotate') or die;
@@ -61,7 +61,7 @@ sub generate_test_cmd {
         known_variants  => [$known_variants],
         variant_type     => 'snvs',
         info_string      => 'test',
-        version          => '1.8',
+        joinx_version          => '1.8',
     );
 
     my $cmd = $cmd_class->create(%params);
