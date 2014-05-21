@@ -322,7 +322,7 @@ sub _expunge {
         next unless $class =~ m/Genome::InstrumentData/; #only remove instrument data for now
         next if $class eq 'Genome::InstrumentData::Imported'; #imported instrument data doesn't come from LIMS, so skip it
 
-        my @ids = @{$report->{$class}->{missing}} if $report->{$class}->{missing};
+        my @ids = @{$report->{$entity_name}->{missing}} if $report->{$entity_name}->{missing};
         next if not @ids;
 
         my $transaction = UR::Context::Transaction->begin();
