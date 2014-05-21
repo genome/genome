@@ -161,7 +161,7 @@ sub execute {
 
   #If the user defined --max-positions, thin the list of target positions to this max
   if ($self->max_positions){
-    $self->warning_message("Limiting counting to " . $self->max_positions . " positions as specified by --max_positions");
+    $self->warning_message("Limiting counting to " . $self->max_positions . " positions as specified by --max-positions");
     my $c = 0;
     foreach my $p (sort keys %{$pos}){
       $c++;
