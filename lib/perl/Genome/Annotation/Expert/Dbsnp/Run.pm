@@ -1,32 +1,31 @@
-package Genome::Annotation::Expert::Joinx::Run;
+package Genome::Annotation::Expert::Dbsnp::Run;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::Annotation::Expert::Joinx::Run {
+class Genome::Annotation::Expert::Dbsnp::Run {
     is => 'Genome::Annotation::Expert::CommandBase',
     has_input => [
         known_variants => {
             is => 'Genome::Model::Build::ImportedVariationList',
-            is_many => 1,
         },
         info_string => {
             is => 'Text',
         },
-        version => {
+        joinx_version => {
             is => 'Text',
         },
     ],
 };
 
 sub name {
-    'joinx';
+    'dbsnp';
 }
 
 sub execute {
     my $self = shift;
 
-    $self->output_result(Genome::Annotation::Expert::Joinx::RunResult->get_or_create($self->input_hash));
+    $self->output_result(Genome::Annotation::Expert::Dbsnp::RunResult->get_or_create($self->input_hash));
     return 1;
 }

@@ -1,15 +1,15 @@
-package Genome::Annotation::Expert::Joinx::Expert;
+package Genome::Annotation::Expert::Dbsnp::Expert;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::Annotation::Expert::Joinx::Expert {
+class Genome::Annotation::Expert::Dbsnp::Expert {
     is => 'Genome::Annotation::Expert::Base',
 };
 
 sub name {
-    'joinx';
+    'dbsnp';
 }
 
 

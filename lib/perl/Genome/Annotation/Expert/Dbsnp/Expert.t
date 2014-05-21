@@ -23,10 +23,10 @@ BEGIN {
     $ENV{NO_LSF} = 1;
 };
 
-my $pkg = 'Genome::Annotation::Expert::Joinx::Expert';
+my $pkg = 'Genome::Annotation::Expert::Dbsnp::Expert';
 use_ok($pkg) || die;
 
-my $VERSION = 4; # Bump these each time test data changes
+my $VERSION = 1; # Bump these each time test data changes
 my $BUILD_VERSION = 1;
 my $test_dir = get_test_dir($pkg, $VERSION);
 
@@ -35,7 +35,7 @@ my $dag = $expert->dag();
 my $expected_xml = File::Spec->join($test_dir, 'expected.xml');
 test_dag_xml($dag, $expected_xml);
 
-set_what_interpreter_x_requires('joinx');
+set_what_interpreter_x_requires('dbsnp');
 my $build = get_build($BUILD_VERSION, $test_dir);
 my $plan = Genome::Annotation::Plan->create_from_file(
     File::Spec->join($test_dir, 'plan.yaml'),

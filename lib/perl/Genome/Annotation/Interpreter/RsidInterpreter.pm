@@ -6,8 +6,6 @@ use Genome;
 
 class Genome::Annotation::Interpreter::RsidInterpreter {
     is => 'Genome::Annotation::Interpreter::Base',
-    has => [
-    ],
 };
 
 sub name {
