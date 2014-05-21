@@ -1262,7 +1262,10 @@ sub _run_workflow {
     my $result = Workflow::Simple::run_workflow_lsf( $workflow, @$inputs);
 
     unless($result){
-        $self->error_message( join("\n", map($_->name . ': ' . $_->error, @Workflow::Simple::ERROR)) );
+        $self->error_message(join("\n", map {
+            ($_->can('name') ? $_->name .': ' : ''). $_->error
+        } @Workflow::Simple::ERROR));
+
         die $self->error_message("Workflow did not return correctly.");
     }
 
