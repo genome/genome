@@ -32,6 +32,8 @@ sub is_genome_disk_group {
 sub genome_disk_group_names {
     return uniq (
         # hard-coded for now because config is in a mess
+        'cle_research_alignments',
+        'cle_research_genome_models',
         'cle_alignments',
         'cle_genome_models',
         'info_genome_models',
