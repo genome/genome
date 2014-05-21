@@ -568,11 +568,11 @@ sub get_ref_align_builds{
       if (-e $bam_file){
         $builds{$build_id}{bam_file} = $bam_file;
       }else{
-        $self->error_message("Found BAM file path but BAM file is missing for build: $build");
+        $self->error_message("Found BAM file path but BAM file is missing for build: %s", $build->__display_name__);
         exit(1);
       }
     }else{
-      $self->error_message("Could not find BAM file for build: $build");
+      $self->error_message("Could not find BAM file for build: %s", $build->__display_name__);
       exit(1);
     }
   }
