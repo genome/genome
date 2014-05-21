@@ -6,6 +6,7 @@ use Genome;
 use Sys::Hostname;
 use Genome::File::Vcf::Reader;
 use Genome::File::Vcf::Writer;
+use Genome::File::Vcf::DbsnpAFParser;
 
 use constant AF_HEADER => '<ID=AF,Number=A,Type=Float,Description="Allele frequence for non-reference alleles">';
 
@@ -183,7 +184,7 @@ sub _fix_allele_frequencies {
             $af_count++;
         }
         elsif (defined $entry->info->{CAF}) {
-            $entry->info->{AF} = _convert_caf_to_af($entry->info->{CAF});
+            $entry->info->{AF} = _convert_caf_to_af($entry);
             $af_count++;
         }
         $writer->write($entry);
@@ -193,11 +194,25 @@ sub _fix_allele_frequencies {
     return $new_vcf_path;
 }
 
+sub _caf_parser {
+    my $header = shift;
+    return Genome::File::Vcf::DbsnpAFParser->new($header);
+}
+
+Memoize::memoize('_caf_parser');
+
 sub _convert_caf_to_af {
-    my $caf = shift;
-    my ($caf_string) = $caf =~ /\[(.*)\]/;
-    my @fields = split ",", $caf_string;
-    return join(",", @fields[1 .. $#fields]);
+    my $entry = shift;
+    my @fields;
+    my $parser = _caf_parser($entry->{header});
+    my $caf = $parser->process_entry($entry);
+    unless ($caf) {
+        return "";
+    }
+    for my $alt (@{$entry->{alternate_alleles}}) {
+        push @fields, $caf->{$alt};
+    }
+    return join(",", @fields);
 }
 
 sub resolve_allocation_subdirectory {
