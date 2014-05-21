@@ -10,7 +10,6 @@ class Genome::Annotation::Expert::Dbsnp::RunResult {
     has_input => [
         known_variants => {
             is => 'Genome::Model::Build::ImportedVariationList',
-            is_many => 1,
         },
     ],
     has_param => [
@@ -29,11 +28,6 @@ sub output_filename {
 
 sub _run {
     my $self = shift;
-    my @known_variants = $self->known_variants;
-    if (scalar @known_variants != 1) {
-        die "We don't currently support more than one annotation vcf";
-    }
-    my $known_variants = $known_variants[0];
 
     my $input_file  = $self->input_result_file_path;
     my $output_file = File::Spec->join($self->temp_staging_directory, $self->output_filename);
@@ -42,7 +36,7 @@ sub _run {
 
     my $vcf_annotator = Genome::Model::Tools::Joinx::VcfAnnotate->create(
         input_file      => $input_file,
-        annotation_file => $known_variants->snvs_vcf,
+        annotation_file => $self->known_variants->snvs_vcf,
         output_file     => $output_file,
         use_bgzip       => 1,
         info_fields     => $info_string,

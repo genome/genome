@@ -58,7 +58,7 @@ sub generate_test_cmd {
     });
     my %params = (
         input_result => $input_result,
-        known_variants  => [$known_variants],
+        known_variants  => $known_variants,
         variant_type     => 'snvs',
         info_string      => 'test',
         joinx_version          => '1.8',

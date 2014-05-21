@@ -14,7 +14,6 @@ class Genome::Annotation::Expert::Dbsnp::Adaptor {
     has_output => [
         known_variants => {
             is => 'Genome::Model::Build::ImportedVariationList',
-            is_many => 1,
         },
     ],
 };
@@ -26,7 +25,7 @@ sub name {
 sub resolve_expert_specific_attributes_from_build {
     my $self = shift;
 
-    $self->known_variants([$self->build->previously_discovered_variations_build,]);
+    $self->known_variants($self->build->previously_discovered_variations_build);
     return;
 }
 

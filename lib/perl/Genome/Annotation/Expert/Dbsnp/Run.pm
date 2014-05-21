@@ -9,7 +9,6 @@ class Genome::Annotation::Expert::Dbsnp::Run {
     has_input => [
         known_variants => {
             is => 'Genome::Model::Build::ImportedVariationList',
-            is_many => 1,
         },
         info_string => {
             is => 'Text',
