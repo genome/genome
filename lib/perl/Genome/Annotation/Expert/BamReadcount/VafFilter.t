@@ -16,6 +16,13 @@ use Genome::Annotation::Expert::BamReadcount::TestHelper qw(bam_readcount_line c
 my $pkg = "Genome::Annotation::Expert::BamReadcount::VafFilter";
 use_ok($pkg);
 
+subtest "__errors__" => sub {
+    my $filter = $pkg->create(sample_name => "S1");
+    my @errors = $filter->__errors__;
+    is(scalar(@errors), 1, "One error found");
+    like($errors[0]->desc, qr/Must define at least one of min_vaf or max_vaf/, "Error message as expected");
+};
+
 subtest "pass" => sub {
     my $min_vaf = 90;
     my $filter = $pkg->create(min_vaf => $min_vaf, sample_name => "S1");

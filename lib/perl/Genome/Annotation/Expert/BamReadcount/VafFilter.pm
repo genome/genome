@@ -27,10 +27,10 @@ sub requires_experts {
     return ('bam-readcount');
 }
 
-sub __object_errors__ {
+sub __errors__ {
     my $self = shift;
 
-    my @errors = $self->SUPER::__object_errors__;
+    my @errors = $self->SUPER::__errors__;
 
     unless (defined($self->min_vaf) || defined($self->max_vaf)) {
         push @errors, UR::Object::Tag->create(
