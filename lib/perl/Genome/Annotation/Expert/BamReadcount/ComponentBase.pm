@@ -1,12 +1,12 @@
-package Genome::Annotation::Expert::BamReadcount::FilterBase;
+package Genome::Annotation::Expert::BamReadcount::ComponentBase;
 
 use strict;
 use warnings;
 use Genome;
 use Genome::File::BamReadcount::Entry;
 
-class Genome::Annotation::Expert::BamReadcount::FilterBase {
-    is => ['Genome::Annotation::Filter::Base', 'Genome::Annotation::Filter::WithSampleName'],
+class Genome::Annotation::Expert::BamReadcount::ComponentBase {
+    is => ['Genome::Annotation::Filter::WithSampleName'],
     has => [
     ],
 };

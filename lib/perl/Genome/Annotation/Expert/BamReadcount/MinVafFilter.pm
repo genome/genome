@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::Annotation::Expert::BamReadcount::MinVafFilter {
-    is => 'Genome::Annotation::Expert::BamReadcount::FilterBase',
+    is => ['Genome::Annotation::Filter::Base', 'Genome::Annotation::Expert::BamReadcount::ComponentBase'],
     has => [
         min_vaf => {
             is => 'Number',
