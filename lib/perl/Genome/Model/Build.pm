@@ -2412,14 +2412,21 @@ sub _remove_metrics_ignored_by_diff {
 sub diff_metrics {
     my ($build1, $build2) = @_;
 
+    my $metrics = $build1->_extract_metrics();
+    my $other_metrics = $build2->_extract_metrics();
+
+    $build1->_remove_metrics_ignored_by_diff($metrics);
+
+    return _diff_metrics_hashrefs($metrics, $other_metrics, $build1->id, $build2->id);
+}
+
+sub _extract_metrics {
+    my($self) = @_;
+
     my %metrics = map { $_->name => $_->value }
-                  $build1->metrics;
-    my %other_metrics = map { $_->name => $_->value }
-                        $build2->metrics;
+                  $self->metrics;
 
-    $build1->_remove_metrics_ignored_by_diff(\%metrics);
-
-    return _diff_metrics_hashrefs(\%metrics, \%other_metrics, $build1->id, $build2->id);
+    return \%metrics;
 }
 
 sub _diff_metrics_hashrefs {
