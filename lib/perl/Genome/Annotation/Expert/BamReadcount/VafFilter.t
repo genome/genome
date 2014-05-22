@@ -13,7 +13,7 @@ use Test::Exception;
 use Test::More;
 use Genome::Annotation::Expert::BamReadcount::TestHelper qw(bam_readcount_line create_entry);
 
-my $pkg = "Genome::Annotation::Expert::BamReadcount::MinVafFilter";
+my $pkg = "Genome::Annotation::Expert::BamReadcount::VafFilter";
 use_ok($pkg);
 
 subtest "pass" => sub {
