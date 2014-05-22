@@ -2402,6 +2402,13 @@ sub _compare_output_directories {
     return %diffs;
 }
 
+sub _remove_metrics_ignored_by_diff {
+    my($self, $metrics) = @_;
+
+    my @metrics_ignored_by_diff = $self->metrics_ignored_by_diff;
+    delete @$metrics{@metrics_ignored_by_diff};
+}
+
 sub diff_metrics {
     my ($build1, $build2) = @_;
 
@@ -2411,13 +2418,10 @@ sub diff_metrics {
     my %other_metrics = map { $_->name => $_ }
                         $build2->metrics;
 
+    $build1->_remove_metrics_ignored_by_diff(\%metrics);
+
     METRIC: for my $metric_name (sort keys %metrics) {
         my $metric = $metrics{$metric_name};
-
-        if ( grep { $metric_name =~ /$_/ } $build1->metrics_ignored_by_diff ) {
-            delete $other_metrics{$metric_name} if exists $other_metrics{$metric_name};
-            next METRIC;
-        }
 
         my $other_metric = delete $other_metrics{$metric_name};
         unless ($other_metric) {
