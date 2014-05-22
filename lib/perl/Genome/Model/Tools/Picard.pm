@@ -169,8 +169,26 @@ sub installed_picard_versions {
         }
     }
 
-    #all versions should be #.## for now (this'll break on 1.100!)
-    return sort { $b <=> $a } @versions;
+    my $sortsub = sub {
+        my ($astr, $bstr) = @_;
+
+        my @aa = split /\./, $astr;
+        my @bb = split /\./, $bstr;
+
+        while (@aa and @bb) {
+            my $acmp = shift @aa;
+            my $bcmp = shift @bb;
+
+            return  1 if $acmp > $bcmp;
+            return -1 if $acmp < $bcmp;
+        }
+
+        return  1 if @aa; # Assumes 1.85.1 is newer than 1.85
+        return -1 if @bb;
+        return 0;
+    };
+
+    return sort { $sortsub->($b, $a) } @versions;
 }
 
 sub default_picard_version {
