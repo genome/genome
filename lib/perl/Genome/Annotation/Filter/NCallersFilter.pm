@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::Annotation::Filter::NCallersFilter {
-    is => 'Genome::Annotation::Filter::WithSampleName',
+    is => ['Genome::Annotation::Filter::Base', 'Genome::Annotation::Filter::WithSampleName'],
     has => [
         min_callers => {
             is => 'Integer',

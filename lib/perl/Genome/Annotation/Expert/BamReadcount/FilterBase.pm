@@ -6,7 +6,7 @@ use Genome;
 use Genome::File::BamReadcount::Entry;
 
 class Genome::Annotation::Expert::BamReadcount::FilterBase {
-    is => 'Genome::Annotation::Filter::WithSampleName',
+    is => ['Genome::Annotation::Filter::Base', 'Genome::Annotation::Filter::WithSampleName'],
     has => [
     ],
 };

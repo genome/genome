@@ -6,7 +6,7 @@ use Genome;
 use Memoize qw(memoize);
 
 class Genome::Annotation::Filter::WithSampleName {
-    is => 'Genome::Annotation::Filter::Base',
+    is => ['Genome::Annotation::WithTranslatedInputs'],
     has => [
         sample_name => {
             is => 'Text',
