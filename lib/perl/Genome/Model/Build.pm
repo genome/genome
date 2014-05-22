@@ -2412,7 +2412,6 @@ sub _remove_metrics_ignored_by_diff {
 sub diff_metrics {
     my ($build1, $build2) = @_;
 
-    my %diffs;
     my %metrics = map { $_->name => $_ }
                   $build1->metrics;
     my %other_metrics = map { $_->name => $_ }
@@ -2420,27 +2419,34 @@ sub diff_metrics {
 
     $build1->_remove_metrics_ignored_by_diff(\%metrics);
 
-    METRIC: for my $metric_name (sort keys %metrics) {
-        my $metric = $metrics{$metric_name};
+    return _diff_metrics_hashrefs(\%metrics, \%other_metrics, $build1->id, $build2->id);
+}
 
-        my $other_metric = delete $other_metrics{$metric_name};
+sub _diff_metrics_hashrefs {
+    my($metrics, $other_metrics, $metrics_build_id, $other_metrics_build_id) = @_;
+
+    my %diffs;
+    METRIC: for my $metric_name (sort keys %$metrics) {
+        my $metric = $metrics->{$metric_name};
+
+        my $other_metric = delete $other_metrics->{$metric_name};
         unless ($other_metric) {
-            $diffs{$metric_name} = "no build metric with name $metric_name found for build ".$build2->id;
+            $diffs{$metric_name} = "no build metric with name $metric_name found for build ".$other_metrics_build_id;
             next METRIC;
         }
 
         my $metric_value = $metric->value;
         my $other_metric_value = $other_metric->value;
         unless ($metric_value eq $other_metric_value) {
-            $diffs{$metric_name} = "metric $metric_name has value $metric_value for build ".$build1->id." and value " .
-            "$other_metric_value for build ".$build2->id;
+            $diffs{$metric_name} = "metric $metric_name has value $metric_value for build ".$metrics_build_id." and value " .
+                                    "$other_metric_value for build ".$other_metrics_build_id;
             next METRIC;
         }
     }
 
     # Catch any extra metrics that the other build has
-    for my $other_metric_name (sort keys %other_metrics) {
-        $diffs{$other_metric_name} = "no build metric with name $other_metric_name found for build ".$build1->id;
+    for my $other_metric_name (sort keys %$other_metrics) {
+        $diffs{$other_metric_name} = "no build metric with name $other_metric_name found for build ".$metrics_build_id;
     }
 
     return %diffs;
