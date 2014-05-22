@@ -81,14 +81,14 @@ sub _run_aligner {
     my $input_fastq_files = join ' ', @input_pathnames;
     
     unless ($align_params and $align_params =~ /runThreadN/) {
-        $align_params .= '--runThreadN '. $CPUS;
+        $align_params .= ' --runThreadN '. $CPUS;
     }
 
     my $strand = $self->instrument_data->library->transcript_strand;
     if ($strand and $strand eq 'unstranded') {
         #For Cufflinks/Cuffdiff on STAR alignments. This generates the XS strand attribute for all 
         #alignments that contain splice junctions.
-        $align_params .= '--outSAMstrandField intronMotif' unless $align_params =~ /outSAMstrandField/;
+        $align_params .= ' --outSAMstrandField intronMotif' unless $align_params =~ /outSAMstrandField/;
     }
 
     my $cmd = "$star_path --genomeDir $index_dir --readFilesIn $input_fastq_files --outFileNamePrefix $scratch_directory/ --outSAMunmapped Within $align_params";
