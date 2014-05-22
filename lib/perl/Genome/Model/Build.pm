@@ -1128,7 +1128,7 @@ sub validate_instrument_data{
 sub validate_run_as {
     my $self = shift;
 
-    return unless $self->_should_run_as && $self->_can_run_as;
+    return unless $self->model->should_run_as;
 
     my $user = Genome::Sys::User->get(username => $self->model->run_as);
     return if $user;
@@ -1368,13 +1368,13 @@ sub _launch {
         my $bsub_bin = 'bsub';
         my $genome_bin = $Command::entry_point_bin || 'genome';
 
-        if ($self->_should_run_as && $self->_can_run_as) {
+        if ($self->model->should_run_as) {
             # -i simulates login which help prevent this from being abused to
             # execute arbitrary commands.
             my $run_as = $self->model->run_as;
             $_->user_name($run_as) for $self->events;
             $bsub_bin = [qw(sudo -n -i -u), $self->model->run_as, '--',
-                _sudo_wrapper()];
+                Genome::Model->sudo_wrapper()];
         }
 
         my @bsub_args = (
@@ -1396,7 +1396,7 @@ sub _launch {
         );
 
         my @genome_args;
-        # args have to be --key=value for _sudo_wrapper()
+        # args have to be --key=value for Genome::Model->sudo_wrapper()
         push @genome_args, '--model-id=' . $model->id;
         push @genome_args, '--build-id=' . $self->id;
         if ($job_dispatch eq 'inline') {
@@ -1415,24 +1415,6 @@ sub _launch {
         return 1;
     }
 }
-
-sub _should_run_as {
-    my $self = shift;
-    return (Genome::Sys->username ne $self->model->run_as);
-}
-
-sub _can_run_as {
-    my $self = shift;
-
-    my $sudo_wrapper = _sudo_wrapper();
-    unless ( -x $sudo_wrapper ) {
-        return;
-    }
-
-    return 1;
-}
-
-sub _sudo_wrapper { '/usr/local/bin/bsub-genome-build' }
 
 sub _job_dispatch {
     my $model = shift;

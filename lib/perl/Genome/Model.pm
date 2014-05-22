@@ -1113,4 +1113,23 @@ sub files_ignored_by_build_diff { () }
 #Used by Analysis Project configuration to "pair" somatic samples or otherwise aggregate them for analysis
 sub requires_subject_mapping { return 0; }
 
+sub sudo_wrapper { '/usr/local/bin/bsub-genome-build' }
+
+sub should_run_as {
+    my $self = shift;
+    return unless $self->_can_run_as();
+    return (Genome::Sys->username ne $self->model->run_as);
+}
+
+sub _can_run_as {
+    my $self = shift;
+
+    my $sudo_wrapper = sudo_wrapper();
+    unless ( -x $sudo_wrapper ) {
+        return;
+    }
+
+    return 1;
+}
+
 1;

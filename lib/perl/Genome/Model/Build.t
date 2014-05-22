@@ -23,9 +23,8 @@ subtest 'validate_run_as' => sub {
     my $model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object();
     my $build = Genome::Test::Factory::Build->setup_object(model_id => $model->id);
 
-    no warnings 'redefine';
-    local *Genome::Model::Build::_should_run_as = sub { 1 };
-    local *Genome::Model::Build::_can_run_as = sub { 1 };
+    no warnings qw(once redefine);
+    local *Genome::Model::should_run_as = sub { 1 };
 
     $model->run_as(Genome::Sys->username);
     is($build->validate_run_as(), undef, 'validate_run_as should return empty for current user');
