@@ -40,6 +40,17 @@ sub __errors__ {
         );
     }
 
+    if (defined($self->min_vaf) && defined($self->max_vaf)
+        && $self->min_vaf > $self->max_vaf
+    ) {
+        push @errors, UR::Object::Tag->create(
+            type => 'error',
+            properties => [$self->min_vaf, $self->max_vaf],
+            desc => "Max_vaf must be larger or equal to min_vaf",
+        );
+
+    }
+
     return @errors;
 }
 
