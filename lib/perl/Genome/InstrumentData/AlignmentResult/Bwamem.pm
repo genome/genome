@@ -495,6 +495,13 @@ sub requires_read_group_addition {
     return 0;
 }
 
+# Bwamem already correctly generates pairs, but fixmate is incompatible with
+# the supplementary alignment flag (0x800) and will ruin the pairing. So, we
+# turn it off.
+sub requires_fixmate {
+    return 0;
+}
+
 sub supports_streaming_to_bam {
     return 0;
 }

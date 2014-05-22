@@ -174,6 +174,11 @@ sub requires_read_group_addition {
     return 1;
 }
 
+# fixmate ruins bitflags with rtg alignment
+sub requires_fixmate {
+    return 0;
+}
+
 # if you are streaming to bam, set this to 1.  Beware of read groups.
 sub supports_streaming_to_bam {
     return 0;

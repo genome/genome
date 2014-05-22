@@ -869,33 +869,44 @@ sub close_out_streamed_bam_file {
     $self->_sam_output_fh->close;
     $self->_sam_output_fh(undef);
 
-    $self->debug_message("Sorting by name to do fixmate...");
-    my $bam_file = $self->temp_scratch_directory . "/raw_all_sequences.bam";
-    my $final_bam_file = $self->temp_staging_directory . "/all_sequences.bam";
-    my $samtools = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
+    if ($self->requires_fixmate) {
+        $self->debug_message("Sorting by name to do fixmate...");
+        my $bam_file = $self->temp_scratch_directory . "/raw_all_sequences.bam";
+        my $final_bam_file = $self->temp_staging_directory . "/all_sequences.bam";
+        my $samtools = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
 
-    my $tmp_file = $bam_file.'.sort';
-    my $rv = system "$samtools sort -n $bam_file $tmp_file";
-    $self->error_message("Sort by name failed") and return if $rv or !-s $tmp_file.'.bam';
-    $self->debug_message("unlinking original bam file $bam_file.");
-    unlink $bam_file;
+        my $tmp_file = $bam_file.'.sort';
+        my $rv = system "$samtools sort -n $bam_file $tmp_file";
+        $self->error_message("Sort by name failed") and return if $rv or !-s $tmp_file.'.bam';
+        $self->debug_message("unlinking original bam file $bam_file.");
+        unlink $bam_file;
 
-    # TODO: run htseq here
-    # We need a way to have down-stream steps run before their predecessor cleans-up.
+        # TODO: run htseq here
+        # We need a way to have down-stream steps run before their predecessor cleans-up.
 
-    $self->debug_message("Now running fixmate");
-    $rv = system "$samtools fixmate $tmp_file.bam $tmp_file.fixmate";
-    $self->error_message("fixmate failed") and return if $rv or !-s $tmp_file.'.fixmate';
-    unlink "$tmp_file.bam";
+        $self->debug_message("Now running fixmate");
+        $rv = system "$samtools fixmate $tmp_file.bam $tmp_file.fixmate";
+        $self->error_message("fixmate failed") and return if $rv or !-s $tmp_file.'.fixmate';
+        unlink "$tmp_file.bam";
 
-    $self->debug_message("Now putting things back in chr/pos order");
-    $rv = system "$samtools sort $tmp_file.fixmate $tmp_file.fix";
-    $self->error_message("Sort by position failed") and return if $rv or !-s $tmp_file.'.fix.bam';
+        $self->debug_message("Now putting things back in chr/pos order");
+        $rv = system "$samtools sort $tmp_file.fixmate $tmp_file.fix";
+        $self->error_message("Sort by position failed") and return if $rv or !-s $tmp_file.'.fix.bam';
 
-    unlink "$tmp_file.fixmate";
-    unlink $bam_file;
+        unlink "$tmp_file.fixmate";
+        unlink $bam_file;
 
-    move "$tmp_file.fix.bam", $final_bam_file;
+        move "$tmp_file.fix.bam", $final_bam_file;
+    } else {
+        $self->debug_message("Skipping fixmate...");
+        my $bam_file = $self->temp_scratch_directory . "/raw_all_sequences.bam";
+
+        # TODO: run htseq here
+        # We need a way to have down-stream steps run before their predecessor cleans-up.
+
+        my $final_bam_file = $self->temp_staging_directory . "/all_sequences.bam";
+        move $bam_file, $final_bam_file;
+    }
     return 1;
 }
 
@@ -1249,16 +1260,11 @@ sub _process_sam_files {
         bam_file => $per_lane_bam_file,
         sam_file => $final_sam_file,
         keep_sam => 0,
-        fix_mate => 1,
+        fix_mate => $self->requires_fixmate,
         index_bam => 1,
         ref_list => $ref_list,
         use_version => $self->samtools_version,
     );
-    
-    if ($self->aligner_name =~ /rtg/){
-        #adukes - fix_mate screws up bitflags with rtg alignment, this is probably not the ideal spot for this...
-        $params{fix_mate} = 0;
-    }
 
     my $to_bam = Genome::Model::Tools::Sam::SamToBam->create(
         %params,
@@ -1571,6 +1577,10 @@ sub requires_read_group_addition {
 
 sub supports_streaming_to_bam {
     0;
+}
+
+sub requires_fixmate {
+    1;
 }
 
 sub accepts_bam_input {

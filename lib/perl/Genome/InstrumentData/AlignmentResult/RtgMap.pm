@@ -222,6 +222,11 @@ sub fillmd_for_sam {
     return 1;
 }
 
+# fixmate ruins bitflags with rtg alignment
+sub requires_fixmate {
+    return 0;
+}
+
 sub _check_read_count {
     return 1;
 }
