@@ -70,7 +70,7 @@ subtest "pass min and max vaf" => sub {
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry passes filter with min_vaf $min_vaf and max_vaf $max_vaf");
 };
 
-subtest "fail" => sub {
+subtest "fail min vaf" => sub {
     my $min_vaf = 100;
     my $filter = $pkg->create(min_vaf => $min_vaf, sample_name => "S1");
     lives_ok(sub {$filter->validate}, "Filter validates");
@@ -81,6 +81,19 @@ subtest "fail" => sub {
     );
     my $entry = create_entry(bam_readcount_line);
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry fails filter with min_vaf $min_vaf");
+};
+
+subtest "fail max vaf" => sub {
+    my $max_vaf = 90;
+    my $filter = $pkg->create(max_vaf => $max_vaf, sample_name => "S1");
+    lives_ok(sub {$filter->validate}, "Filter validates");
+
+    my %expected_return_values = (
+        G => 0,
+        C => 0,
+    );
+    my $entry = create_entry(bam_readcount_line);
+    is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry fails filter with max_vaf $max_vaf");
 };
 
 subtest "fail heterozygous non-reference sample" => sub {
