@@ -6,7 +6,7 @@ use Genome;
 use List::Util qw/first/;
 
 class Genome::Annotation::Filter::FTKeepFilter {
-    is => ['Genome::Annotation::Filter::WithSampleName'],
+    is => ['Genome::Annotation::Filter::Base', 'Genome::Annotation::Filter::WithSampleName'],
     has => {
         keep_filter_values => {
             is => 'Text',
