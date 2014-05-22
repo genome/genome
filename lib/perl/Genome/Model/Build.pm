@@ -2406,10 +2406,10 @@ sub diff_metrics {
     my ($build1, $build2) = @_;
 
     my %diffs;
-    my %metrics;
-    map { $metrics{$_->name} = $_ } $build1->metrics;
-    my %other_metrics;
-    map { $other_metrics{$_->name} = $_ } $build2->metrics;
+    my %metrics = map { $_->name => $_ }
+                  $build1->metrics;
+    my %other_metrics = map { $_->name => $_ }
+                        $build2->metrics;
 
     METRIC: for my $metric_name (sort keys %metrics) {
         my $metric = $metrics{$metric_name};
