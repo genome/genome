@@ -2412,9 +2412,9 @@ sub _remove_metrics_ignored_by_diff {
 sub diff_metrics {
     my ($build1, $build2) = @_;
 
-    my %metrics = map { $_->name => $_ }
+    my %metrics = map { $_->name => $_->value }
                   $build1->metrics;
-    my %other_metrics = map { $_->name => $_ }
+    my %other_metrics = map { $_->name => $_->value }
                         $build2->metrics;
 
     $build1->_remove_metrics_ignored_by_diff(\%metrics);
@@ -2427,16 +2427,13 @@ sub _diff_metrics_hashrefs {
 
     my %diffs;
     METRIC: for my $metric_name (sort keys %$metrics) {
-        my $metric = $metrics->{$metric_name};
-
-        my $other_metric = delete $other_metrics->{$metric_name};
-        unless ($other_metric) {
+        unless (exists $other_metrics->{$metric_name}) {
             $diffs{$metric_name} = "no build metric with name $metric_name found for build ".$other_metrics_build_id;
             next METRIC;
         }
 
-        my $metric_value = $metric->value;
-        my $other_metric_value = $other_metric->value;
+        my $metric_value = $metrics->{$metric_name};
+        my $other_metric_value = delete $other_metrics->{$metric_name};
         unless ($metric_value eq $other_metric_value) {
             $diffs{$metric_name} = "metric $metric_name has value $metric_value for build ".$metrics_build_id." and value " .
                                     "$other_metric_value for build ".$other_metrics_build_id;
