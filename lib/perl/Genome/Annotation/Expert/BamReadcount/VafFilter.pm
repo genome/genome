@@ -20,7 +20,7 @@ class Genome::Annotation::Expert::BamReadcount::VafFilter {
 };
 
 sub name {
-    return 'vaf';
+    return 'vaf-cutoff';
 }
 
 sub requires_experts {
