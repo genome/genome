@@ -6,32 +6,32 @@ use warnings;
 use Genome;
 use Statistics::Descriptive;
 
-my %sort_order = (
-    targets => 1,
-    minimum_depth => 2,
-    touched => 3,
-    pc_touched => 4,
-    target_base_pair => 5,
-    covered_base_pair => 6,
-    pc_target_space_covered => 7,
-    mean_breadth => 8,
-    stdev_breadth => 9,
-    median_breadth => 10,
-    targets_eighty_pc_breadth => 11,
-    target_base_pair_eighty_pc_breadth => 12,
-    covered_base_pair_eighty_pc_breadth => 13,
-    pc_targets_eighty_pc_breadth => 14,
-    pc_target_space_covered_eighty_pc_breadth => 15,
-    mean_depth => 16,
-    stdev_depth => 17,
-    depth_quartile_3 => 18,
-    median_depth => 19,
-    depth_quartile_1 => 20,
-    gaps => 21,
-    mean_gap_length => 22,
-    stdev_gap_length => 23,
-    median_gap_length => 24,
-);
+my @DEFAULT_HEADERS = qw/
+                            targets
+                            minimum_depth
+                            touched
+                            pc_touched
+                            target_base_pair
+                            covered_base_pair
+                            pc_target_space_covered
+                            mean_breadth
+                            stdev_breadth
+                            median_breadth
+                            targets_eighty_pc_breadth
+                            target_base_pair_eighty_pc_breadth
+                            covered_base_pair_eighty_pc_breadth
+                            pc_targets_eighty_pc_breadth
+                            pc_target_space_covered_eighty_pc_breadth
+                            mean_depth
+                            stdev_depth
+                            depth_quartile_3
+                            median_depth
+                            depth_quartile_1
+                            gaps
+                            mean_gap_length
+                            stdev_gap_length
+                            median_gap_length
+                        /;
 
 class Genome::Model::Tools::BioSamtools::StatsSummary {
     is => ['Command'],
@@ -81,7 +81,7 @@ sub execute {
 
     my $min_depth;
     my %depth_stats;
-    my @headers;
+    #my @headers;
     while (my $line = $stats_fh->getline) {
         chomp($line);
         if ($line =~ /^##/) { next; }
@@ -158,18 +158,18 @@ sub execute {
         $depth_stats{$min_depth}{mean_gap_length} = sprintf("%.03f",$gaps_stat->mean);
         $depth_stats{$min_depth}{stdev_gap_length} = sprintf("%.10f",$gaps_stat->standard_deviation);
         $depth_stats{$min_depth}{median_gap_length} = sprintf("%.03f",$gaps_stat->median);
-        unless (@headers) {
-            @headers = sort hash_sort_order (keys %{$depth_stats{$min_depth}});
-        }
+        #unless (@headers) {
+        #    @headers = sort header_sort_order (keys %{$depth_stats{$min_depth}});
+        #}
     }
     my $writer = Genome::Utility::IO::SeparatedValueWriter->create(
         separator => "\t",
-        headers => \@headers,
+        headers => $self->default_headers,
         output => $self->output_file,
     );
     unless ($writer) {
         my $error_message = Genome::Utility::IO::SeparatedValueWriter->error_message;
-        $error_message .= 'Failed to open writer handle for output file '. $self->output_file ." with headers:\n\t". join("\n\t",@headers);
+        $error_message .= 'Failed to open writer handle for output file '. $self->output_file;
         $self->error_message($error_message);
         die($self->error_message);
     }
@@ -188,14 +188,10 @@ sub execute {
     return 1;
 }
 
-sub hash_sort_order {
-    unless ($sort_order{$a}) {
-        die('sort order not defined for '. $a);
-    }
-    unless ($sort_order{$b}) {
-        die('sort order not defined for '. $b);
-    }
-    $sort_order{$a} <=> $sort_order{$b};
+sub default_headers {
+    return \@DEFAULT_HEADERS;
 }
+
+
 
 1;
