@@ -9,18 +9,21 @@ class Genome::Model::Command::Services::ListBuildQueue {
     is => 'Command',
     doc => 'List queued models for processing by cron.',
     has => [
+        delimiter => {
+            doc => 'delimiter used to separate model IDs per line',
+            is => 'Text',
+            default => "\0",
+        },
         count => {
             doc => 'number of builds to schedule per commit',
             is => 'Integer',
             default => 5,
-            is_constant => 1,
             is_optional => 1,
         },
         max => {
             doc => 'maximum number of scheduled builds per user',
             is => 'Integer',
             default => 50,
-            is_constant => 1,
             is_optional => 1,
         },
     ],
@@ -28,7 +31,7 @@ class Genome::Model::Command::Services::ListBuildQueue {
 
 sub help_synopsis {
     return <<EOS;
-genome model services list-build-queue | xargs -L 1 -P 5 /usr/local/bin/build-start
+genome model services list-build-queue | xargs -0 -L 1 -P 5 /usr/local/bin/build-start
 EOS
 }
 
@@ -61,28 +64,37 @@ sub execute {
         while (my $model = $models->next) {
             my $username = $model->should_run_as() ? $model->run_as : Genome::Sys->username;
 
-            my $effective_scheduled_builds = scheduled_builds_for($username) + @{$models{$username}};
+            my $effective_scheduled_builds = scheduled_builds_for($username);
+            if (exists $models{$username}) {
+                $effective_scheduled_builds += @{$models{$username}};
+            }
             if ($effective_scheduled_builds >= $self->max) {
                 next;
             }
 
-            if (@{$models{$username}} < $self->count) {
+            if (!exists($models{$username}) || @{$models{$username}} < $self->count) {
                 push @{$models{$username}}, $model->id;
             }
 
             if (@{$models{$username}} == $self->count) {
-                print join(' ', @{$models{$username}}, $model->id), "\n";
+                $self->print_model_ids(@{$models{$username}});
                 delete $models{$username};
             }
         }
     }
 
     for my $username (keys %models) {
-        print join(' ', @{$models{$username}}), "\n";
+        $self->print_model_ids(@{$models{$username}});
         delete $models{$username};
     }
 
     return 1;
+}
+
+sub print_model_ids {
+    my $self = shift;
+    my @ids = @_;
+    print join($self->delimiter, @ids), "\n";
 }
 
 sub should_run_as { (rand() > 0.5) }
