@@ -23,7 +23,7 @@ subtest "__errors__" => sub {
     like($errors[0]->desc, qr/Must define at least one of min_vaf or max_vaf/, "Error message as expected");
 };
 
-subtest "pass" => sub {
+subtest "pass min vaf" => sub {
     my $min_vaf = 90;
     my $filter = $pkg->create(min_vaf => $min_vaf, sample_name => "S1");
     lives_ok(sub {$filter->validate}, "Filter validates");
@@ -34,6 +34,33 @@ subtest "pass" => sub {
     );
     my $entry = create_entry(bam_readcount_line);
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry passes filter with min_vaf $min_vaf");
+};
+
+subtest "pass max vaf" => sub {
+    my $max_vaf = 100;
+    my $filter = $pkg->create(max_vaf => $max_vaf, sample_name => "S1");
+    lives_ok(sub {$filter->validate}, "Filter validates");
+
+    my %expected_return_values = (
+        G => 1,
+        C => 0,
+    );
+    my $entry = create_entry(bam_readcount_line);
+    is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry passes filter with max_vaf $max_vaf");
+};
+
+subtest "pass min and max vaf" => sub {
+    my $min_vaf = 90;
+    my $max_vaf = 100;
+    my $filter = $pkg->create(min_vaf => $min_vaf, max_vaf => $max_vaf, sample_name => "S1");
+    lives_ok(sub {$filter->validate}, "Filter validates");
+
+    my %expected_return_values = (
+        G => 1,
+        C => 0,
+    );
+    my $entry = create_entry(bam_readcount_line);
+    is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry passes filter with min_vaf $min_vaf and max_vaf $max_vaf");
 };
 
 subtest "fail" => sub {
