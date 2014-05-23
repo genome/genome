@@ -2119,10 +2119,13 @@ sub _files_in_directory {
 # Given a full path to a file, return a path relative to the build directory
 sub full_path_to_relative {
     my ($self, $path) = @_;
-    return _canon_path_to_relative($self->data_directory, $path);
+    return _canon_path_prefix_from_relative($self->data_directory, $path);
 }
 
-sub _canon_path_to_relative {
+# Given a canonical pathname and a relative pathname, return the
+# canonical portion that, when prepended to the relative path, is
+# the original canonical path
+sub _canon_path_prefix_from_relative {
     my($base_dir, $path) = @_;
 
     my $rel_path = $path;
@@ -2291,10 +2294,10 @@ sub _compare_output_directories {
     for my $file (@{_files_in_directory($blessed_data_dir)}) {
         my $abs_path = Cwd::abs_path($file);
         next unless $abs_path; # abs_path returns undef if a subdirectory of file does not exist
-        $file_paths{_canon_path_to_relative($blessed_data_dir, $file)} = $abs_path;
+        $file_paths{_canon_path_prefix_from_relative($blessed_data_dir, $file)} = $abs_path;
     }
     for my $other_file (@{_files_in_directory($other_data_dir)}) {
-        $other_file_paths{_canon_path_to_relative($other_data_dir, $other_file)} = Cwd::abs_path($other_file);
+        $other_file_paths{_canon_path_prefix_from_relative($other_data_dir, $other_file)} = Cwd::abs_path($other_file);
     }
 
     # Now cycle through files in this build's data directory and compare with
@@ -2303,7 +2306,7 @@ sub _compare_output_directories {
     FILE: for my $rel_path (sort keys %file_paths) {
         my $abs_path = delete $file_paths{$rel_path};
         warn "abs_path ($abs_path) does not exist\n" unless (-e $abs_path);
-        my $dir = _canon_path_to_relative($blessed_data_dir, dirname($abs_path));
+        my $dir = _canon_path_prefix_from_relative($blessed_data_dir, dirname($abs_path));
 
         next FILE if -d $abs_path;
         next FILE if $rel_path =~ /server_location.txt/;
@@ -2392,7 +2395,7 @@ sub _compare_output_directories {
     for my $rel_path (sort keys %other_file_paths) {
         my $abs_path = delete $other_file_paths{$rel_path};
         warn "abs_path ($abs_path) does not exist\n" unless (-e $abs_path);
-        my $dir = _canon_path_to_relative($blessed_data_dir, dirname($abs_path));
+        my $dir = _canon_path_prefix_from_relative($blessed_data_dir, dirname($abs_path));
         next if -d $abs_path;
         next if grep { $dir =~ /$_/ } $class->dirs_ignored_by_diff;
         next if grep { $rel_path =~ /$_/ } $class->files_ignored_by_diff;
