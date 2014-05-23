@@ -11,16 +11,16 @@ use Genome::Model::ClinSeq::Util qw(:all);
 class Genome::Model::ClinSeq::Command::GenerateClonalityPlots {
     is => 'Command::V2',
     has_input => [
-        somatic_var_build   => { is => 'Genome::Model::Build::SomaticVariation', id_by => 'somatic_var_build_id', 
+        somatic_var_build   => { is => 'Genome::Model::Build::SomaticVariation', id_by => 'somatic_var_build_id',
                                 doc => 'Build ID for a somatic variation model' },
 
-        misc_annotation_db  => { is => 'Genome::Db::Tgi::MiscAnnotation', 
+        misc_annotation_db  => { is => 'Genome::Db::Tgi::MiscAnnotation',
                                 doc => 'misc annotation for the reference sequence, supplying centromere ideogram and gaps' },
 
-        common_name         => { is => 'Text', 
+        common_name         => { is => 'Text',
                                 doc => 'Human readable name for the patient / sample comparison' },
-        
-        output_dir          => { is => 'Text', 
+
+        output_dir          => { is => 'Text',
                                 doc => 'Directory to place temp files and results' },
     ],
     has_param => [
@@ -29,10 +29,10 @@ class Genome::Model::ClinSeq::Command::GenerateClonalityPlots {
 
         verbose             => { is => 'Boolean', is_optional => 1, default_value => 0,
                                 doc => 'To display more output, set this flag' },
-        
+
         limit               => { is => 'Number', is_optional => 1,
                                 doc => 'Limit the number of SNVs to the first N (mostly for testing).' },
-        
+
         chromosome          => { is => 'Text', is_optional => 1,
                                  doc => 'Limit analysis to variants on a specified chromosome' },
 
@@ -65,7 +65,7 @@ sub execute {
     my $self = shift;
 
     #This script running a series of commands obtained from Nate Dees that results in the creation of a clonality plot (.pdf)
-    my $somatic_var_build = $self->somatic_var_build; 
+    my $somatic_var_build = $self->somatic_var_build;
     my $output_dir = $self->output_dir;
     my $common_name = $self->common_name;
     my $verbose = $self->verbose;
@@ -125,10 +125,10 @@ sub execute {
     #Step 2 - put them together in one file:
     my $snv_file = $output_dir . "allsnvs.hq.novel.tier123.v2.bed";
     my $cat_cmd = "cat $output_dir"."snvs* > $snv_file";
-    
+
     if ($verbose){$self->debug_message("$cat_cmd");}
     Genome::Sys->shellcmd(cmd => $cat_cmd);
-    
+
     #Apply the chromosome filter if specified
     if (defined $chromosome){
       $self->warning_message("limiting SNVs to only those on chromosome: $chromosome");
@@ -176,7 +176,7 @@ sub execute {
     if ($verbose){$self->debug_message("$awk_cmd");}
     Genome::Sys->shellcmd(cmd => $awk_cmd);
 
-    #Define the BAM files.  
+    #Define the BAM files.
     #The 'old' method supplied both Tumor & Normal coverage and both would be used to assess a minimum coverage cutoff for plotting
     #The 'new' method uses only the Tumor coverage
     my $tumor_bam = $data_paths{tumor_bam};
@@ -256,7 +256,7 @@ sub execute {
     #gmt validation clonality-plot     --cnvhmm-file     /gscuser/ndees/103/wgs/SV_somatic/CNV/aml103.cnvhmm     --output-image     aml103.clonality.pdf     --r-script-output-file     clonality.R     --varscan-file     allsnvs.hq.novel.tier123.v2.bed.adapted.readcounts.varscan     --analysis-type     wgs     --sample-id     'AML103'     --positions-highlight     IL2RA_NF1_positions
 
     #gmt validation clonality-plot  --cnvhmm-file='/gscmnt/sata132/techd/mgriffit/hg1/clonality/hg1.cnvhmm'  --output-image hg1.clonality.pdf  --r-script-output-file clonality.R  --varscan-file allsnvs.hq.novel.tier123.v2.bed.adapted.readcounts.varscan  --analysis-type wgs  --sample-id 'HG1'
-    
+
     #Step 7-A. Without clusters
     my $output_image_file1a = "$output_dir"."$common_name".".clonality.pdf";
     my $r_script_file = "$output_dir"."clonality.R";
