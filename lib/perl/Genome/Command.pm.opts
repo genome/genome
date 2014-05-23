@@ -7803,6 +7803,19 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>list-build-queue',
+      [
+        'delimiter=s',
+        'files',
+        'count=s',
+        undef,
+        'debug!',
+        undef,
+        'max=s',
+        undef,
+        'help!',
+        undef
+      ],
       '>web-app',
       [
         'browser=s',
