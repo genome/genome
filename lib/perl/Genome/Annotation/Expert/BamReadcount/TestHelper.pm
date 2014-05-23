@@ -32,13 +32,14 @@ sub create_entry {
         10,             # POS
         '.',            # ID
         'A',            # REF
-        'G,C',            # ALT
+        'G,C',          # ALT
         '10.3',         # QUAL
         'PASS',         # FILTER
         'A=B;C=8,9;E',  # INFO
         'GT:DP:BRCT',     # FORMAT
-        "0/1:12:$brct_string",   # FIRST_SAMPLE
-        "1/2:12:$brct_string",   # SECOND_SAMPLE
+        "0/1:12:$brct_string",   # S1
+        "1/2:12:$brct_string",   # S2
+        "1/1:12:$brct_string",   # S3
     );
 
     my $entry_txt = join("\t", @fields);
