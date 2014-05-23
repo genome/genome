@@ -833,6 +833,9 @@ sub writeBed{
   my $f_count = 0;
   foreach my $fid (sort keys %{$features}){
     my $chr = $features->{$fid}->{chr};
+    if($chr =~ m/chr/i) {
+      next;
+    }
     my $chr_start = $features->{$fid}->{start};
     my $chr_end = $features->{$fid}->{end};
     print BED "$chr\t$chr_start\t$chr_end\n";
