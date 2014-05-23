@@ -1345,21 +1345,21 @@ sub diff_circos_conf {
 # Ideally they would be tied to creation of these file paths, but they currently
 # throw an exception if the files don't exist. Consider another approach...
 sub patient_dir {
-  my ($class, $build) = @_;
+  my ($self, $build) = @_;
   unless($build->common_name) {
-    die $class->error_message("Common name is not defined.");
+    die $self->error_message("Common name is not defined.");
   }
   my $patient_dir = $build->data_directory . "/" . $build->common_name;
   unless(-d $patient_dir) {
-    die $class->error_message("ClinSeq patient directory not found. Expected: $patient_dir");
+    die $self->error_message("ClinSeq patient directory not found. Expected: $patient_dir");
   }
   return $patient_dir;
 }
 
 sub snv_variant_source_file {
-  my ($class, $build, $data_type,) = @_;
+  my ($self, $build, $data_type,) = @_;
 
-  my $patient_dir = $class->patient_dir($build);
+  my $patient_dir = $self->patient_dir($build);
   my $source = $patient_dir . "/variant_source_callers";
   my $exception;
   if(-d $source) {
@@ -1370,28 +1370,28 @@ sub snv_variant_source_file {
              return $file;
          }
          else {
-             $exception = $class->error_message("Expected $file inside $dir and it did not exist.");
+             $exception = $self->error_message("Expected $file inside $dir and it did not exist.");
          }
      }
      else {
-         $exception = $class->error_message("$data_type sub-directory not found in $source.");
+         $exception = $self->error_message("$data_type sub-directory not found in $source.");
      }
   }
   else {
-      $exception = $class->error_message("$source directory not found");
+      $exception = $self->error_message("$source directory not found");
   }
   die $exception;
 }
 
 sub copy_fusion_files {
-  my ($class, $build) = @_;
+  my ($self, $build) = @_;
   my $rnaseq_build_dir = $build->tumor_rnaseq_build->data_directory;
   my $tumor_unfiltered_fusion_file =  $rnaseq_build_dir . '/fusions/Genome_Model_RnaSeq_DetectFusionsResult_Chimerascan_VariableReadLength_Result/chimeras.bedpe';
   my $tumor_filtered_fusion_file =  $rnaseq_build_dir . '/fusions/filtered_chimeras.bedpe';
   my $tumor_filtered_annotated_fusion_file =  $rnaseq_build_dir . '/fusions/filtered_chimeras.catanno.bedpe';
-  my $clinseq_tumor_unfiltered_fusion_file = $class->patient_dir($build) . '/rnaseq/tumor/fusions/chimeras.bedpe';
-  my $clinseq_tumor_filtered_fusion_file = $class->patient_dir($build) . '/rnaseq/tumor/fusions/filtered_chimeras.bedpe';
-  my $clinseq_tumor_filtered_annotated_fusion_file = $class->patient_dir($build) . '/rnaseq/tumor/fusions/filtered_chimeras.catanno.bedpe';
+  my $clinseq_tumor_unfiltered_fusion_file = $self->patient_dir($build) . '/rnaseq/tumor/fusions/chimeras.bedpe';
+  my $clinseq_tumor_filtered_fusion_file = $self->patient_dir($build) . '/rnaseq/tumor/fusions/filtered_chimeras.bedpe';
+  my $clinseq_tumor_filtered_annotated_fusion_file = $self->patient_dir($build) . '/rnaseq/tumor/fusions/filtered_chimeras.catanno.bedpe';
   if(-e $tumor_unfiltered_fusion_file) {
       unless(Genome::Sys->copy_file($tumor_unfiltered_fusion_file, $clinseq_tumor_unfiltered_fusion_file)) {
          die "unable to copy $tumor_unfiltered_fusion_file";
@@ -1410,33 +1410,33 @@ sub copy_fusion_files {
 }
 
 sub clonality_dir {
-  my ($class, $build) = @_;
+  my ($self, $build) = @_;
 
-  my $patient_dir = $class->patient_dir($build);
+  my $patient_dir = $self->patient_dir($build);
   my $clonality_dir = $patient_dir . "/clonality";
 
   unless(-d $clonality_dir) {
-      die $class->error_message("Clonality directory does not exist. Expected: $clonality_dir");
+      die $self->error_message("Clonality directory does not exist. Expected: $clonality_dir");
   }
   return $clonality_dir;
 }
 
 sub varscan_formatted_readcount_file {
-  my ($class, $build) = @_;
-  my $clonality_dir = $class->clonality_dir($build);
+  my ($self, $build) = @_;
+  my $clonality_dir = $self->clonality_dir($build);
   my $readcount_file = $clonality_dir ."/allsnvs.hq.novel.tier123.v2.bed.adapted.readcounts.varscan";
   unless(-e $readcount_file) {
-      die $class->error_message("Unable to find varscan formatted readcount file. Expected: $readcount_file");
+      die $self->error_message("Unable to find varscan formatted readcount file. Expected: $readcount_file");
   }
   return $readcount_file;
 }
 
 sub cnaseq_hmm_file {
-  my ($class, $build) = @_;
-  my $clonality_dir = $class->clonality_dir($build);
+  my ($self, $build) = @_;
+  my $clonality_dir = $self->clonality_dir($build);
   my $hmm_file = $clonality_dir . "/cnaseq.cnvhmm";
   unless(-e $hmm_file) {
-      die $class->error_message("Unable to find cnaseq hmm file. Expected: $hmm_file");
+      die $self->error_message("Unable to find cnaseq hmm file. Expected: $hmm_file");
   }
   return $hmm_file;
 }
