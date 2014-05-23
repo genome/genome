@@ -98,16 +98,8 @@ sub execute {
 
     #Get somatic variation effects dir, tumor bam and normal bam from a somatic variation model ID
     my %data_paths;
-    #... /genome/lib/perl/Genome/Model/Build/SomaticVariation.pm
-    $data_paths{root_dir} = $somatic_var_build->data_directory ."/";
-    $data_paths{effects_dir} = "$data_paths{root_dir}"."effects/";
-    $data_paths{cnvs_hq} = "$data_paths{root_dir}"."variants/cnvs.hq";
-    $data_paths{normal_bam} = $somatic_var_build->normal_bam;
-    $data_paths{tumor_bam} = $somatic_var_build->tumor_bam;
-    my $reference_build = $somatic_var_build->reference_sequence_build;
-    $data_paths{reference_fasta} = $reference_build->full_consensus_path('fa');
-    $data_paths{display_name} = $reference_build->__display_name__;
-
+    my $is_copycat = $self->_is_copycat_somvar($somatic_var_build);
+    $self->get_data_paths(\%data_paths, $somatic_var_build, $is_copycat);
     my $somatic_effects_dir = $data_paths{effects_dir};
 
     #Make sure the specified parameters are correct
@@ -307,13 +299,87 @@ sub execute {
       $self->warning_message("Empty filtered snv file: $filtered_file");
     }
 
-    #Keep the files that were needed to run the cna-seg and clonality plot steps so that someone can rerun with different parameters 
+    #Keep the files that were needed to run the cna-seg and clonality plot steps so that someone can rerun with different parameters
 
     #Define the output parameter for the cnvhmm so that it can be fed into downstream steps in a workflow
-    $self->cnv_hmm_file($cnvhmm_file);
+    if(not $is_copycat) {
+        $self->cnv_hmm_file($cnvhmm_file);
+    } else {
+        my $copycat_cnvhmm_file = $output_dir . "cnaseq.cnvhmm";
+        $copycat_cnvhmm_file = $self->create_copycat_cnv_hmm_file($somatic_var_build, $copycat_cnvhmm_file);
+        $self->cnv_hmm_file($copycat_cnvhmm_file);
+    }
 
     return 1;
 };
+
+sub create_copycat_cnv_hmm_file {
+    my $self = shift;
+    my $somatic_var_build = shift;
+    my $copycat_cnvhmm_file = shift;
+    my @copycat_dirs = glob($somatic_var_build->data_directory ."/variants/cnv/copy-cat*");
+    my $alt_paired;
+    for my $copycat_dir (@copycat_dirs) {
+        if(-e $copycat_dir . "/alts.paired.dat") {
+            $alt_paired =  $copycat_dir . "/alts.paired.dat";
+            last;
+        }
+    }
+    my $awk_command = "awk \'BEGIN { print \"CHR\\tSTART\\tEND\\tSIZE\\tnMarkers\\tCN1\\tAdjusted_CN1\\tCN2\\tAdjusted_CN2\\tLLR_Somatic\\tStatus\" }\'" .
+        "\'{ if(\$5>2) { status = \'Gain\'; } else { status = \'Loss\'; } print \$1\"\\t\"\$2\"\\t\"\$3\"\\t\"\$3-\$2\"\\t\"\$4\"\\t\"\$5\"\\t\"\$5\"\\t2\\t2\\tNA\\t\"status }\'" .
+        "$alt_paired > $copycat_cnvhmm_file"
+    Genome::Sys->status_message("$awk_command");
+    Genome::Sys->shellcmd(cmd => $awk_command);
+    return $copycat_cnvhmm_file;
+}
+
+sub _is_copycat_somvar {
+    my $self = shift;
+    my $somatic_var_build = shift;
+    if(not -s $somatic_var_build->data_directory . "/variants/cnvs.hq" and
+        glob( $somatic_var_build->data_directory . "/variants/cnv/copy-cat*") {
+          return 1;
+    } else {
+      return 0;
+    }
+}
+
+sub _get_copycat_cnvhq {
+    my $self = shift;
+    my $somatic_var_build = shift;
+    my $output_dir = shift;
+    my $copycat_dir = glob($somatic_var_build->data_directory . "/variants/cnv/copy-cat*");
+    if(-e $copycat_dir . "/rd.bins.dat")
+        $rd_bins = $copycat_dir . "/rd.bins.dat";
+    } else {
+        die $self->error_message("Unable to find rd.bins.dat in " . $copycat_dir;
+    }
+    my $copycat_cnvhmm = $output_dir . "/copycat.cnvs.hq";
+    my $awk_cmd = "awk BEGIN '{ print \"CHR\\tPOS\\tTUM\\tNORMAL\\tDIFF\" }\'" .
+        "\'{  print \$1\"\\t\"\$2\"\\tNA\\tNA\"\$3 }\'" .
+        "$rd_bins > $copycat_cnv_hmm";
+    return $copycat_cnvhmm;
+}
+
+sub get_data_paths {
+    my $self = shift;
+    my $data_paths = shift;
+    my $somatic_var_build = shift;
+    my $is_copycat = shift;
+    my $output_dir = shift;
+    $data_paths->{root_dir} = $somatic_var_build->data_directory ."/";
+    $data_paths->{effects_dir} = $data_paths->{root_dir} . "effects/";
+    if(not $is_copycat) {
+        $data_paths->{cnvs_hq} = $data_paths->{root_dir} . "variants/cnvs.hq";
+    } else {
+        $data_paths->{cnvs_hq} = $self->_get_copycat_cnvhq($somatic_var_build, $output_dir);
+    }
+    $data_paths->{normal_bam} = $somatic_var_build->normal_bam;
+    $data_paths->{tumor_bam} = $somatic_var_build->tumor_bam;
+    my $reference_build = $somatic_var_build->reference_sequence_build;
+    $data_paths->{reference_fasta} = $reference_build->full_consensus_path('fa');
+    $data_paths->{display_name} = $reference_build->__display_name__;
+}
 
 1;
 
