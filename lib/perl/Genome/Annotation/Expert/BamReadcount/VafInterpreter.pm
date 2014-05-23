@@ -20,6 +20,8 @@ sub requires_experts {
 sub available_fields {
     return qw/
         vaf
+        ref_count
+        var_count
     /;
 }
 
@@ -32,6 +34,9 @@ sub interpret_entry {
     my @sample_alt_alleles = sort $entry->alt_bases_for_sample($self->sample_index($entry->{header}));
     my %vafs = Genome::Annotation::Expert::BamReadcount::VafCalculator::calculate_vaf_for_multiple_alleles(
         $self->get_readcount_entry($entry), \@sample_alt_alleles);
+
+    my $ref_count = Genome::Annotation::Expert::BamReadcount::VafCalculator::calculate_coverage_for_allele($self->get_readcount_entry($entry), $entry->{reference_allele});
+
     for my $allele (@$passed_alt_alleles) {
         my $vaf;
         if (defined $vafs{$allele}) {
@@ -42,6 +47,8 @@ sub interpret_entry {
         }
         $return_values{$allele} = {
             vaf => $vaf,
+            var_count => Genome::Annotation::Expert::BamReadcount::VafCalculator::calculate_coverage_for_allele($self->get_readcount_entry($entry), $allele),
+            ref_count => $ref_count,
         }
     }
 
