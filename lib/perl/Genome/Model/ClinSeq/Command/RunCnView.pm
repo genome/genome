@@ -26,6 +26,12 @@ class Genome::Model::ClinSeq::Command::RunCnView {
             is => 'FilesystemPath',
             doc => 'CNVhmm results file from clonality analysis (or elsewhere)'
         },
+        cnv_hq_file => {
+            is => 'FilesystemPath',
+            is_optional => 1,
+            doc => 'cnv_hq file from clonality analysis.' .
+                'if not provided file from wgs_somvar build is used'
+        },
         test => {
             is => 'Boolean',
             is_optional => 1,
@@ -91,7 +97,7 @@ $DB::single = 1;
   my $annotation_build_id = $build->annotation_build->id;
  
   my $variants_dir = $build->data_directory . "/variants/";
-  my $cnv_data_file = $variants_dir . "cnvs.hq";
+  my $cnv_data_file = $self->cnv_hq_file || $variants_dir . "cnvs.hq";
   die $self->error_message("could not find cnvs.hq file somatic build here: $variants_dir") unless (-e $cnv_data_file);
 
   #Create main CNV dir: 'cnv'
