@@ -20,6 +20,12 @@ class Genome::Model::ClinSeq::Command::SummarizeCnvs {
             is => 'FilesystemPath',
             doc => 'cnv hmm file from clin-seq generate-clonality-plots',
         },
+        cnv_hq_file => {
+            is => 'FilesystemPath',
+            doc => 'cnvhq file from clin-seq generate-clonality-plots,' .
+                'if not provided file from WGS somvar is used',
+            is_optional => 1,
+        },
         gene_amp_file => {
             is => 'FilesystemPath',
             doc => 'gene amplification file from clin-seq run-cn-view',
@@ -124,7 +130,7 @@ sub execute {
 
   #Overall strategy
   #Get a copy of the cnvs.hq (10-kb copy number window values) and cna-seq (cnv-hmm files) and summarize
-  my $cnv_hq = $wgs_som_build_dir . "/variants/cnvs.hq";
+  my $cnv_hq = $self->cnv_hq_file ||  $wgs_som_build_dir . "/variants/cnvs.hq";
   my $cnv_hq_new = $outdir . "cnvs.hq";
   if (-e $cnv_hq and not -e $cnv_hq_new){
     Genome::Sys->copy_file($cnv_hq, $cnv_hq_new);
