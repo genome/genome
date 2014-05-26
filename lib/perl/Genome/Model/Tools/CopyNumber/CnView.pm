@@ -600,7 +600,7 @@ sub loadSegmentData{
   print SEGMENTS_CLEAN "CHR\tSTART\tEND\tSIZE\tnMarkers\tCN1\tAdjusted_CN1\tCN2\tAdjusted_CN2\tLLR_Somatic\tStatus\n";
   while(<SEGMENTS>){
     chomp($_);
-    if ($_=~/^\#CHR/ || $_=~/^---/ || $_=~/^Iter\=/ || $_=~/^purity/ || $_=~/CNA predicted/){
+    if ($_=~/CHR/ || $_=~/^---/ || $_=~/^Iter\=/ || $_=~/^purity/ || $_=~/CNA predicted/){
       next(); #skip all header lines
     }
     print SEGMENTS_CLEAN "$_\n"; #Create new segments file for use with R script
