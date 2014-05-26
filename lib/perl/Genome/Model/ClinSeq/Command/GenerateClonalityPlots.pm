@@ -219,7 +219,7 @@ sub execute {
     my $cnvs_output_path = "${output_dir}cnvs.hq";
     Genome::Sys->copy_file($data_paths{cnvs_hq}, $cnvs_output_path);
     chmod 0664, $cnvs_output_path;
-    
+
     my $misc_annotation_db = $self->misc_annotation_db;
     my $centromere_file = $misc_annotation_db->data_set_path("centromere.csv");
     my $gap_file = $misc_annotation_db->data_set_path("gaps.csv");
