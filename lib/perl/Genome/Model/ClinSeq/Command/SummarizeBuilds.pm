@@ -1432,7 +1432,7 @@ sub get_perlane_bamqc_results {
             my $perlane_bamqc_op_dir = $qc_dir . "/lane" . $lane . "/";
             $perlane_bamqc_op_dir =~ s/ /_/g;
             Genome::Sys->shellcmd(cmd => "mkdir -p $perlane_bamqc_op_dir");
-            Genome::Sys->shellcmd(cmd => "cp -rf $perlane_bamqc_results_dir/* $perlane_bamqc_op_dir");
+            Genome::Sys->shellcmd(cmd => "rsync -lrv --exclude=*.bam*  $perlane_bamqc_results_dir/* $perlane_bamqc_op_dir");
         }
     }
 }
