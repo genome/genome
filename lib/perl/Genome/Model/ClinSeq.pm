@@ -406,6 +406,13 @@ sub map_workflow_inputs {
       push @inputs, sv_dir => $sv_dir;
     }
 
+    #Make base-dir for WGS CNV's
+    if ($wgs_build){
+      my $wgs_cnv_summary_dir = $patient_dir . "/cnv/wgs_cnv/summary/";
+      push @dirs, $wgs_cnv_summary_dir;
+      push @inputs, wgs_cnv_summary_dir => $wgs_cnv_summary_dir;
+    }
+
     #CreateMutationSpectrum
     if ($wgs_build) {
       push @inputs, 'wgs_mutation_spectrum_outdir' => $patient_dir . '/mutation-spectrum';
@@ -907,6 +914,7 @@ sub _resolve_workflow_for_build {
     $add_link->($input_connector, 'wgs_build', $run_cn_view_op, 'build');
     $add_link->($input_connector, 'wgs_cnv_dir', $run_cn_view_op, 'outdir');
     $add_link->($clonality_op, 'cnv_hmm_file', $run_cn_view_op);
+    $add_link->($clonality_op, 'cnv_hq_file', $run_cn_view_op);
     $add_link->($run_cn_view_op, 'result', $output_connector, 'run_cn_view_result');
   }
 
@@ -951,9 +959,10 @@ sub _resolve_workflow_for_build {
   if ($build->wgs_build){
       my $msg = "Summarize CNV results from WGS somatic variation";
       $summarize_cnvs_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeCnvs");
-      $add_link->($input_connector, 'wgs_cnv_dir', $summarize_cnvs_op, 'outdir');
+      $add_link->($input_connector, 'wgs_cnv_summary_dir', $summarize_cnvs_op, 'outdir');
       $add_link->($input_connector, 'wgs_build', $summarize_cnvs_op, 'build');
       $add_link->($clonality_op, 'cnv_hmm_file', $summarize_cnvs_op);
+      $add_link->($clonality_op, 'cnv_hq_file', $summarize_cnvs_op);
       $add_link->($run_cn_view_op, 'gene_amp_file', $summarize_cnvs_op);
       $add_link->($run_cn_view_op, 'gene_del_file', $summarize_cnvs_op);
       $add_link->($summarize_cnvs_op, 'result', $output_connector, 'summarize_cnvs_result');
