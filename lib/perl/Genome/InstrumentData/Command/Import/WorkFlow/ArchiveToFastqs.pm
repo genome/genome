@@ -63,6 +63,9 @@ sub execute {
     return 1;
 }
 
+# add 'tar.gz' because Archive::Extract treats that as a synonym of 'tgz'
+sub types { ('tar.gz', Archive::Extract->types) }
+
 sub _archive_to_fastqs {
     my $self = shift;
     $self->debug_message('Extract...');

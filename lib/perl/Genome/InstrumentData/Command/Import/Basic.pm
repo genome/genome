@@ -281,12 +281,16 @@ sub _build_workflow_to_import_fastq {
     );
     my @source_files = $self->source_files;
 
-    my $is_archived = ( 
+    # .tar.gz + Archive::Extract->types
+    my $archive_command_name = 'archive to fastqs';
+    my $archive_command_class_name = $self->_operation_class_from_name($archive_command_name);
+    my @archive_types = $archive_command_class_name->types;
+    my $is_archived = (
         @source_files == 1
-            and grep { $source_files[0] =~ /$_$/ } (qw/ tar tar\.gz tgz zip bz2 tbz /)
+        && grep { $source_files[0] =~ /\Q.$_\E$/ } @archive_types
     );
     if ( $is_archived ) {
-        my $archive_to_fastqs_op = $self->_add_operation_to_workflow('archive to fastqs');
+        my $archive_to_fastqs_op = $self->_add_operation_to_workflow($archive_command_name);
         $workflow->add_link(
             left_operation => $workflow->get_input_connector,
             left_property => 'working_directory',
