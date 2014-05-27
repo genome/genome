@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 3;
+use Test::More tests => 4;
 
 use Genome;
 
@@ -56,4 +56,13 @@ do {
         max => 1,
     );
     is($line_count, 1);
+};
+
+do {
+    my $output;
+    open my $h, '>', \$output;
+    my $f = \&Genome::Model::Command::Services::ListBuildQueue::print_model_ids;
+    $f->($h, "\0", '123');
+    chomp $output;
+    is($output, "123\0", "must be null terminated arguments even for one argument");
 };
