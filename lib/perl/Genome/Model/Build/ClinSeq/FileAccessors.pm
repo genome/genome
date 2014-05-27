@@ -136,9 +136,9 @@ sub wgs_cnv_cnview_dir {
   my $wgs_cnv_cnview_dir = $self->wgs_cnv_dir . "/cnview/CNView_All";
 }
 
-sub wgs_cnv_summary_dir {#CHANGEME
+sub wgs_cnv_summary_dir {
   my $self = shift;
-  my $wgs_cnv_summary_dir = $self->cnv_dir . "/wgs_cnv";
+  my $wgs_cnv_summary_dir = $self->wgs_cnv_dir . "/summary";
 }
 
 sub wgs_snv_summary_dir {

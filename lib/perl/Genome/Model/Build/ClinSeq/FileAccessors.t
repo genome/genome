@@ -41,7 +41,7 @@ is($b->exome_snv_dir, $case_dir . "/snv/exome", "found exome_snv_dir");
 is($b->exome_cnv_dir, $case_dir . "/cnv/exome_cnv", "found exome_cnv_dir");
 is($b->wgs_snv_dir, $case_dir . "/snv/wgs", "found wgs_snv_dir");
 is($b->wgs_cnv_dir, $case_dir . "/cnv/wgs_cnv", "found wgs_cnv_dir");
-is($b->wgs_cnv_summary_dir, $case_dir . "/cnv/wgs_cnv", "found wgs_cnv_summary_dir");
+is($b->wgs_cnv_summary_dir, $case_dir . "/cnv/wgs_cnv/summary", "found wgs_cnv_summary_dir");
 is($b->wgs_cnv_cnview_dir, $case_dir . "/cnv/wgs_cnv/cnview/CNView_All", "found wgs_cnv_cnview_dir");
 is($b->wgs_exome_snv_dir, $case_dir . "/snv/wgs_exome", "found wgs_exome_snv_dir");
 is($b->wgs_cnvhmm_file, $case_dir . "/cnv/wgs_cnv/cnview/CNView_All/cnaseq.cnvhmm.tsv", "found wgs_cnvhmm_file");
@@ -60,7 +60,7 @@ is($b->exome_snv_summary_stats_file, $case_dir . "/snv/exome/summary/Stats.tsv",
 is($b->wgs_snv_summary_stats_file, $case_dir . "/snv/wgs/summary/Stats.tsv", "found wgs_snv_summary_stats_file");
 is($b->wgs_exome_snv_summary_stats_file, $case_dir . "/snv/wgs_exome/summary/Stats.tsv", "found wgs_exome_snv_summary_stats_file");
 is($b->input_summary_stats_file, $case_dir . "/input/summary/Stats.tsv", "found input_summary_stats_file");
-is($b->wgs_cnv_summary_stats_file, $case_dir . "/cnv/wgs_cnv/Stats.tsv", "found wgs_cnv_summary_stats_file");
+is($b->wgs_cnv_summary_stats_file, $case_dir . "/cnv/wgs_cnv/summary/Stats.tsv", "found wgs_cnv_summary_stats_file");
 is($b->rnaseq_tumor_cufflinks_genes_stats_file, $case_dir .
       "/rnaseq/tumor/cufflinks_expression_absolute/genes/summary/Stats.tsv", "found rnaseq_cufflinks_genes_summary_stats_file");
 is($b->rnaseq_tumor_cufflinks_isoforms_stats_file, $case_dir .
