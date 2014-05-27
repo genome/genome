@@ -185,10 +185,12 @@ is_deeply(
 );
 
 # ASSIGN INST DATA
+my @instdata_inputs;
 for my $instrument_data ( @instrument_data ) {
-    $model->add_instrument_data($instrument_data);
+    push @instdata_inputs, $model->add_input(name => 'instrument_data', value => $instrument_data);
 }
-my @model_instrument_data = $model->instrument_data; # check vai ida
+$instdata_inputs[0]->filter_desc('forward-only');
+my @model_instrument_data = $model->instrument_data; # check via ida
 is_deeply(\@model_instrument_data, \@instrument_data, 'model instrument data via ida');
 
 # BUILDS
@@ -248,7 +250,7 @@ is($model->last_succeeded_build_id, $builds[1]->id, 'last succeeded build id');
 # COPY
 my $model2 = $model->copy(auto_build_alignments => 1);
 ok($model2, 'copy override auto_build_alignments');
-is_deeply([map { $_->value_id } $model2->inputs], [map { $_->value_id } $model->inputs], 'inputs match');
+ok(_are_model_inputs_the_same($model, $model2), 'inputs match');
 ok(!$model2->auto_assign_inst_data, 'auto_assign_inst_data');
 ok($model2->auto_build_alignments, 'auto_build_alignments');
 
@@ -297,3 +299,17 @@ subtest 'should_run_as' => sub {
 };
 
 done_testing();
+
+sub _are_model_inputs_the_same {
+    my ($m1, $m2, $skip) = @_;
+    my @i1 = $m1->inputs;
+    my @i2 = $m2->inputs;
+    for (my $i = 0; $i <= $#i1; $i++) {
+        for my $p (qw/ name value_class_name value_id filter_desc /) {
+            next if not defined $i1[$i]->$p and not defined $i2[$i]->$p; # ok
+            return if not defined $i1[$i]->$p or not defined $i2[$i]->$p or $i1[$i]->$p ne $i2[$i]->$p;
+        }
+    }
+    return 1;
+}
+

@@ -678,7 +678,9 @@ sub status {
     return $status;
 }
 
-# TODO Clean this up
+# Copy model to a new model, overridding some properties
+# TODO allow for the filter desc for an input to be passed in
+# TODO allow for additions to be passed in
 sub copy {
     my ($self, %overrides) = @_;
 
@@ -699,7 +701,8 @@ sub copy {
     }
 
     # input properties
-    for my $property ( $self->real_input_properties ) {
+    my @input_properties = $self->real_input_properties;
+    for my $property ( @input_properties ) {
         my $name = $property->{name};
         if ( defined $overrides{$name} ) { # override
             my $ref = ref $overrides{$name};
@@ -734,6 +737,23 @@ sub copy {
     if ( not $copy ) {
         $self->error_message('Failed to copy model: '.$@);
         return;
+    }
+
+    # copy the inputs filter desc
+    for my $property ( @input_properties ) {
+        my $name = $property->{name};
+        my @inputs = $self->inputs(name => $name);
+        next if not @inputs;
+        for my $input ( @inputs ) {
+            next if not $input->filter_desc;
+            my $copy_input = $copy->inputs(
+                name => $name,
+                value_class_name => $input->value_class_name, 
+                value_id => $input->value_id,
+            );
+            next if not $copy_input;
+            $copy_input->filter_desc( $input->filter_desc );
+        }
     }
 
     return $copy;
