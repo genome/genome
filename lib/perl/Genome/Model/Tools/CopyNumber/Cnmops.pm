@@ -28,7 +28,7 @@ class Genome::Model::Tools::CopyNumber::Cnmops {
   },
   roi_bed => {
     is => 'FilesystemPath',
-    doc => 'BED file specifying regions to call CNVs on',
+    doc => 'Optional BED file specifying regions to call CNVs on. The intersection of the tumor and normal ROI beds are considered by default if an roi file is not specified.',
     is_optional => 1,
   },
   test => {
@@ -57,7 +57,7 @@ EOS
 
 sub help_detail {
   return <<EOS
-Call CNVs on exome data using CnMops. CnMops has been shown to perform well on WEx data but can be used on WGS data as well. A bed file with the capture regions. A clinseq model with underlying refalign models for normal, tumor  or two refalign models for the normal, tumor have to be provided as input for this tool. A BED file with the regions of interest can be supplied as an optional input, if this is not passed as an input then the ROI file from the refalign build will be used.
+Call CNVs on exome data using CnMops. CnMops has been shown to perform well on WEx data but can be used on WGS data as well. A clinseq model with underlying refalign models for normal, tumor  [OR] separate refalign models for the normal, tumor have to be provided as input for this tool. A BED file with the regions of interest can be supplied as an optional input, if this is not passed as an input then the intersection of the ROI files from the normal and tumor refalign builds will be used.
 EOS
 }
 
