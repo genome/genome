@@ -963,7 +963,7 @@ sub execute {
       $cmd = "rm -f '" . $output_dir . "/" . $sample_name . "/snvs.indels.annotated.tier$tierstring.tmp'";
       `$cmd`;
 
-      annoFileToSlashedBedFile("$output_dir/$sample_name /snvs.indels.annotated.tier$tierstring","$output_dir/review/$sample_name.bed");
+      annoFileToSlashedBedFile("$output_dir/$sample_name/snvs.indels.annotated.tier$tierstring","$output_dir/review/$sample_name.bed");
 
       my $bam_files;
       my $labels;
