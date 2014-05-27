@@ -93,7 +93,7 @@ sub execute {
 
 sub print_model_ids {
     my ($h, $d, @ids) = @_;
-    print $h join($d, @ids), "\n";
+    print $h join($d, @ids, "\n");
 }
 
 sub should_run_as { (rand() > 0.5) }
