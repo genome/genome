@@ -77,14 +77,14 @@ sub execute {
             }
 
             if (@{$models{$username}} == $self->count) {
-                $self->print_model_ids(@{$models{$username}});
+                print_model_ids(\*STDOUT, $self->delimiter, @{$models{$username}});
                 delete $models{$username};
             }
         }
     }
 
     for my $username (keys %models) {
-        $self->print_model_ids(@{$models{$username}});
+        print_model_ids(\*STDOUT, $self->delimiter, @{$models{$username}});
         delete $models{$username};
     }
 
@@ -92,9 +92,8 @@ sub execute {
 }
 
 sub print_model_ids {
-    my $self = shift;
-    my @ids = @_;
-    print join($self->delimiter, @ids), "\n";
+    my ($h, $d, @ids) = @_;
+    print $h join($d, @ids), "\n";
 }
 
 sub should_run_as { (rand() > 0.5) }
