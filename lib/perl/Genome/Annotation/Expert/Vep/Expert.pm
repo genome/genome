@@ -12,5 +12,9 @@ sub name {
     'vep';
 }
 
+sub priority {
+    return 1;
+}
+
 
 1;
