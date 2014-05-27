@@ -10,6 +10,7 @@ use warnings;
 
 use above "Genome";
 use Genome::Utility::Test qw(is_equal_set);
+use Genome::Test::Factory::Model::ReferenceAlignment;
 
 require File::Temp;
 use Test::More;
@@ -280,5 +281,19 @@ is_deeply([$model5->baz], [qw/ pdq /], 'override baz');
 
 ok(!$model->copy(foo => [qw/ BAR baz /]), 'failed to copy model overriding single input w/ multiple values');
 ok(!$model->copy(unknown => [qw/ BAR baz /]), 'failed to copy model w/ unknown override');
+
+subtest 'should_run_as' => sub {
+    plan tests => 2;
+
+    my $model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object();
+
+    no warnings qw(once redefine);
+    local *Genome::Model::_can_run_as = sub { 1 };
+
+    ok(!$model->should_run_as, 'run_as defaults to current user so should_run_as should be false');
+
+    $model->run_as('Elvis');
+    ok($model->should_run_as, 'should_run_as should be true if current user is not Elvis');
+};
 
 done_testing();
