@@ -1118,7 +1118,7 @@ sub sudo_wrapper { '/usr/local/bin/bsub-genome-build' }
 sub should_run_as {
     my $self = shift;
     return unless $self->_can_run_as();
-    return (Genome::Sys->username ne $self->model->run_as);
+    return (Genome::Sys->username ne $self->run_as);
 }
 
 sub _can_run_as {
