@@ -127,7 +127,7 @@ for my $file (@files) {
             "^WARNING: Ignoring ineffective commit because AutoCommit is on\n",
         ],
         name => "compared $file",
-    );# or system('cp', $temp_file, $expected_file);;
+    );
 }
 
 
