@@ -18,6 +18,10 @@ sub name {
     return 'contains-tag';
 }
 
+sub requires_experts {
+    return ();
+}
+
 sub filter_entry {
     my $self = shift;
     my $entry = shift;
