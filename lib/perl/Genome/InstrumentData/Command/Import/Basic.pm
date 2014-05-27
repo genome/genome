@@ -233,10 +233,16 @@ sub _create_workflow {
     return $workflow;
 }
 
+sub _operation_class_from_name {
+    my ($self, $name) = @_;
+    return 'Genome::InstrumentData::Command::Import::WorkFlow::'
+        . join('', map { ucfirst } split(' ', $name));
+}
+
 sub _add_operation_to_workflow {
     my ($self, $name) = @_;
 
-    my $command_class_name = 'Genome::InstrumentData::Command::Import::WorkFlow::'.join('', map { ucfirst } split(' ', $name));
+    my $command_class_name = $self->_operation_class_from_name($name);
     my $operation_type = Workflow::OperationType::Command->create(command_class_name => $command_class_name);
     if ( not $operation_type ) {
         $self->error_message("Failed to create work flow operation for $name");
