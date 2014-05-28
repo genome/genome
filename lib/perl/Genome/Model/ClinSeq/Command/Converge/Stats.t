@@ -10,7 +10,7 @@ ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 my $op_dir = Genome::Sys->create_temp_directory();
 ok($op_dir, "Created test dir");
 
-my $op_file = "converge_stats.out"; 
+my $op_file = "converge_stats.out";
 my $bid1="3d1574969a194532946e52ee046ab6ad";
 my $clinseq_build1 = Genome::Model::Build->get($bid1);
 ok($clinseq_build1, "Found test build1");
