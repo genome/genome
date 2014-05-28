@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Config::AnalysisProject {
-    is => ['Genome::Utility::ObjectWithTimestamps', 'Genome::Utility::ObjectWithCreatedBy'],
+    is => ['Genome::Utility::ObjectWithTimestamps', 'Genome::Utility::ObjectWithCreatedBy', 'Genome::Searchable'],
     id_generator => '-uuid',
     data_source => 'Genome::DataSource::GMSchema',
     table_name => 'config.analysis_project',
