@@ -1,10 +1,10 @@
-package Genome::Annotation::Filter::IndelSize;
+package Genome::Annotation::Filter::MaxIndelSize;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::Annotation::Filter::IndelSize {
+class Genome::Annotation::Filter::MaxIndelSize {
     is => 'Genome::Annotation::Filter::Base',
     has => [
         size => {

@@ -13,7 +13,7 @@ use Genome::File::Vcf::Entry;
 use Test::More;
 use Test::Exception;
 
-my $pkg = "Genome::Annotation::Filter::IndelSize";
+my $pkg = "Genome::Annotation::Filter::MaxIndelSize";
 
 subtest "test insertion" => sub {
 
