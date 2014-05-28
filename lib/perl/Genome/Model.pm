@@ -181,7 +181,7 @@ class Genome::Model {
             is => 'Genome::Model::Build',
             reverse_as => 'model',
             doc => 'Versions of a model over time, with varying quantities of evidence',
-            where => [ -order_by => '-date_scheduled', ],
+            where => [ -order_by => '-created_at', ],
         },
         downstream_model_associations => {
             is => 'Genome::Model::Input',
@@ -576,7 +576,7 @@ sub from_models {
 # Returns a list of builds (all statuses) sorted from oldest to newest
 # TODO: see why this is needed as builds are already sorted by default with get()
 sub sorted_builds {
-    return shift->builds(-order_by => 'date_scheduled');
+    return shift->builds(-order_by => 'created_at');
 }
 
 # Returns a list of succeeded builds sorted from oldest to newest
@@ -589,7 +589,7 @@ sub completed_builds {
 # Returns the latest build of the model, regardless of status
 sub latest_build {
     my $self = shift;
-    my $build_iterator = Genome::Model::Build->create_iterator(model_id => $self->id, -order_by => '-date_scheduled');
+    my $build_iterator = Genome::Model::Build->create_iterator(model_id => $self->id, -order_by => '-created_at');
     my $build = $build_iterator->next;
     return unless $build;
     return $build
@@ -638,7 +638,7 @@ sub current_build {
     my $self = shift;
     my $build_iterator = $self->build_iterator(
         'status not like' => 'Abandoned',
-        '-order_by' => '-date_scheduled',
+        '-order_by' => '-created_at',
     );
     while (my $build = $build_iterator->next) {
         return $build if $build->is_current;
