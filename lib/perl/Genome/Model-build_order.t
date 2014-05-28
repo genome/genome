@@ -23,9 +23,9 @@ use_ok($pkg);
 my $model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object();
 my @builds = map { Genome::Test::Factory::Build->setup_object(model_id => $_) } ($model->id) x 3;
 
-$builds[0]->date_scheduled("2013-08-26 00:00:00");
-$builds[1]->date_scheduled("2013-08-26 00:00:01");
-$builds[2]->date_scheduled("2013-08-26 00:00:02");
+$builds[0]->created_at("2013-08-26 00:00:00");
+$builds[1]->created_at("2013-08-26 00:00:01");
+$builds[2]->created_at("2013-08-26 00:00:02");
 
 my @reported_builds = $model->builds;
 
@@ -33,9 +33,9 @@ is_deeply(\@reported_builds, [reverse @builds], "Builds appear in expected order
 
 
 # Change the ordering
-$builds[0]->date_scheduled("2013-08-26 00:00:02");
-$builds[1]->date_scheduled("2013-08-26 00:00:01");
-$builds[2]->date_scheduled("2013-08-26 00:00:00");
+$builds[0]->created_at("2013-08-26 00:00:02");
+$builds[1]->created_at("2013-08-26 00:00:01");
+$builds[2]->created_at("2013-08-26 00:00:00");
 
 @reported_builds = $model->builds;
 
