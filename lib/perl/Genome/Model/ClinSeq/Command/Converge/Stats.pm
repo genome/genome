@@ -67,14 +67,15 @@ sub resolve_which_stats_tsv {
   my @stats_files;
   my $stats_file_type  = $self->stats_file_type;
   if($stats_file_type =~ m/all/i) {
+    push @stats_files, $b->input_summary_stats_file;
     push @stats_files, $b->wgs_snv_summary_stats_file;
     push @stats_files, $b->exome_snv_summary_stats_file;
-    push @stats_files, $b->rnaseq_tumor_cufflinks_isoforms_stats_file;
+    push @stats_files, $b->wgs_exome_snv_summary_stats_file;
     push @stats_files, $b->rnaseq_tumor_cufflinks_isoforms_stats_file;
     push @stats_files, $b->rnaseq_tumor_cufflinks_isoforms_merged_stats_file;
     push @stats_files, $b->rnaseq_tumor_cufflinks_genes_stats_file;
+    push @stats_files, $b->rnaseq_tumor_tophat_junctions_absolute_stats_file;
     push @stats_files, $b->wgs_cnv_summary_stats_file;
-    push @stats_files, $b->input_summary_stats_file;
   }
   if($stats_file_type =~ m/wgs_snv_summary/i) {
     push @stats_files, $b->wgs_snv_summary_stats_file;
@@ -93,6 +94,9 @@ sub resolve_which_stats_tsv {
   }
   if($stats_file_type =~ m/rnaseq_tumor_cufflinks_genes/i) {
     push @stats_files, $b->rnaseq_tumor_cufflinks_genes_stats_file;
+  }
+  if($stats_file_type =~ m/rnaseq_tumor_tophat_junctions_absolute/i) {
+    push @stats_files, $b->rnaseq_tumor_tophat_junctions_absolute_stats_file;
   }
   if($stats_file_type =~ m/wgs_cnv_summary/i) {
     push @stats_files, $b->wgs_cnv_summary_stats_file;
@@ -126,13 +130,6 @@ sub find_stats_tsv {
     if ($subject_common_name){$final_name = $subject_common_name;}
     $self->status_message("\n\t$final_name\t$build_id\t$data_directory");
 
-    #Find all 'Stats.tsv' files in the build dir
-    #my $find_cmd = "find $data_directory -name Stats.tsv";
-    #if ($verbose) {
-      #$self->status_message("\n\t\t$find_cmd");
-      #}
-    #my @tmp = `$find_cmd`;
-    #chomp(@tmp);
     my %file_info;
     my @stats_files = $self->resolve_which_stats_tsv($b);
     foreach my $stats_file (@stats_files) {
@@ -358,10 +355,8 @@ sub execute {
     push @build_ids, $build->id;
   }
 
-  $self->status_message(@build_ids); 
   my $models_builds = $self->getModelsBuilds('-builds'=>\@build_ids, '-verbose'=>$verbose);
 
-  my $target_file_name = "Stats.tsv";
   my %files = %{$self->aggregate_stats('-models_builds'=>$models_builds, '-verbose'=>$verbose)};
 
   #Build a hash of possible stats values.  Key it on:

@@ -4,17 +4,17 @@ use warnings;
 use above "Genome";
 use Test::More;
 
-my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "Genome-Model-ClinSeq-Command-Converge-Stats/2014-05-21/";
+my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "Genome-Model-ClinSeq-Command-Converge-Stats/2014-05-27/";
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 my $op_dir = Genome::Sys->create_temp_directory();
 ok($op_dir, "Created test dir");
 
 my $op_file = "converge_stats.out";
-my $bid1="3d1574969a194532946e52ee046ab6ad";
+my $bid1="d0f2169786074f6e9609a9f6de3754c7";
 my $clinseq_build1 = Genome::Model::Build->get($bid1);
 ok($clinseq_build1, "Found test build1");
-my $bid2="82bf9596dac449de8ba6f8dd09f613da";
+my $bid2="638b5e3c3e7548df94351907d6d8c714";
 my $clinseq_build2 = Genome::Model::Build->get($bid2);
 ok($clinseq_build2, "Found test build 2");
 my @builds = ($clinseq_build1, $clinseq_build2);
