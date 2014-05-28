@@ -12,12 +12,7 @@ class Genome::Model::Command::Services::ListBuildQueue {
         delimiter => {
             doc => 'delimiter used to separate model IDs per line',
             is => 'Text',
-            default => "\0",
-        },
-        count => {
-            doc => 'number of builds to schedule per commit',
-            is => 'Integer',
-            default => 5,
+            default => "\n",
             is_optional => 1,
         },
         max => {
@@ -31,7 +26,7 @@ class Genome::Model::Command::Services::ListBuildQueue {
 
 sub help_synopsis {
     return <<EOS;
-genome model services list-build-queue | xargs -0 -L 1 -P 5 /usr/local/bin/build-start
+genome model services list-build-queue | xargs -n 1 -P 5 /usr/local/bin/build-start
 EOS
 }
 
@@ -58,45 +53,27 @@ sub execute {
         {build_requested => '1', -order_by => 'subject_id'},
     );
 
-    my %models;
+    my %count;
     while (my $iterator_params = shift @iterator_params) {
         my $models = Genome::Model->create_iterator(%{$iterator_params});
         while (my $model = $models->next) {
             my $username = $model->should_run_as() ? $model->run_as : Genome::Sys->username;
 
-            my $effective_scheduled_builds = scheduled_builds_for($username);
-            if (exists $models{$username}) {
-                $effective_scheduled_builds += @{$models{$username}};
+            unless (exists $count{$username}) {
+                $count{$username} = scheduled_builds_for($username);
             }
-            if ($effective_scheduled_builds >= $self->max) {
+
+            if ($count{$username} >= $self->max) {
                 next;
             }
 
-            if (!exists($models{$username}) || @{$models{$username}} < $self->count) {
-                push @{$models{$username}}, $model->id;
-            }
-
-            if (@{$models{$username}} == $self->count) {
-                print_model_ids(\*STDOUT, $self->delimiter, @{$models{$username}});
-                delete $models{$username};
-            }
+            $count{$username}++;
+            $self->print($model->id);
         }
-    }
-
-    for my $username (keys %models) {
-        print_model_ids(\*STDOUT, $self->delimiter, @{$models{$username}});
-        delete $models{$username};
     }
 
     return 1;
 }
-
-sub print_model_ids {
-    my ($h, $d, @ids) = @_;
-    print $h join($d, @ids, "\n");
-}
-
-sub should_run_as { (rand() > 0.5) }
 
 sub scheduled_builds_for {
     my $username = shift;
@@ -115,6 +92,16 @@ sub scheduled_builds_for {
     $sth->execute($username);
     my $row = $sth->fetchrow_arrayref();
     return $row->[0];
+}
+
+sub sprint {
+    my $self = shift;
+    return join($self->delimiter, @_, '');
+}
+
+sub print {
+    my $self = shift;
+    print $self->sprint(@_);
 }
 
 1;
