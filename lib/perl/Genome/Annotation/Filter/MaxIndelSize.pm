@@ -43,7 +43,7 @@ sub filter_entry {
     my %return_values;
     for my $alt_allele ( @{$entry->{alternate_alleles}} ) {
         my $indel_legnth = abs( length($entry->{reference_allele}) - length($alt_allele) );
-        $return_values{$alt_allele} = ( $indel_legnth >= $self->size ) ? 1 : 0;
+        $return_values{$alt_allele} = ( $indel_legnth >= $self->size ) ? 0 : 1;
     }
 
     return %return_values;

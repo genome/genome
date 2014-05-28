@@ -26,8 +26,8 @@ subtest "test insertion" => sub {
     ok($entry, 'create entry');
 
     my %expected_return_values = (
-        AAAAA => 0,
-        AAAAAA => 1,
+        AAAAA => 1,
+        AAAAAA => 0,
     );
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "return values");
 
@@ -44,8 +44,8 @@ subtest "test deletion" => sub {
     ok($entry, 'create entry');
 
     my %expected_return_values = (
-        A => 0,
-        AAAAAAAAAAA => 1,
+        A => 1,
+        AAAAAAAAAAA => 0,
     );
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "return values");
 
