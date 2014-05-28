@@ -8,10 +8,7 @@ use Test::More;
 
 use_ok('Genome::Model::Build::ClinSeq::FileAccessors');
 
-my $m = Genome::Model->get(name => 'apipe-test-clinseq-wer');
-ok($m, 'got apipe-test-clinseq-wer');
-
-my $b = $m->last_succeeded_build;
+my $b = Genome::Model::Build->get("c5396ee15798476da4549795c5d1d328");
 ok($b, 'got a succesful build for apipe-test-clinseq-wer');
 
 my $case_dir = $b->data_directory . "/" . $b->common_name;
@@ -24,6 +21,10 @@ is($b->rnaseq_tumor_cufflinks_dir, $case_dir .
       "/rnaseq/tumor/cufflinks_expression_absolute", "found rnaseq_cufflinks_dir");
 is($b->rnaseq_tumor_cufflinks_genes_dir, $case_dir .
       "/rnaseq/tumor/cufflinks_expression_absolute/genes", "found rnaseq_cufflinks_genes_dir");
+is($b->rnaseq_tumor_tophat_junctions_absolute_dir, $case_dir .
+      "/rnaseq/tumor/tophat_junctions_absolute", "found rnaseq_tumor_tophat_junctions_absolute_dir");
+is($b->rnaseq_tumor_tophat_junctions_absolute_summary_dir, $case_dir .
+      "/rnaseq/tumor/tophat_junctions_absolute/summary", "found rnaseq_tumor_tophat_junctions_absolute_summary_dir");
 is($b->rnaseq_tumor_cufflinks_isoforms_dir, $case_dir .
       "/rnaseq/tumor/cufflinks_expression_absolute/isoforms", "found rnaseq_cufflinks_isoforms_dir");
 is($b->rnaseq_tumor_cufflinks_isoforms_merged_dir, $case_dir .
@@ -67,5 +68,7 @@ is($b->rnaseq_tumor_cufflinks_isoforms_stats_file, $case_dir .
       "/rnaseq/tumor/cufflinks_expression_absolute/isoforms/summary/Stats.tsv", "found rnaseq_cufflinks_isoforms_summary_stats_file");
 is($b->rnaseq_tumor_cufflinks_isoforms_merged_stats_file, $case_dir .
       "/rnaseq/tumor/cufflinks_expression_absolute/isoforms_merged/summary/Stats.tsv", "found rnaseq_cufflinks_isoforms-merged_summary_stats_file");
+is($b->rnaseq_tumor_tophat_junctions_absolute_stats_file, $case_dir .
+      "/rnaseq/tumor/tophat_junctions_absolute/summary/Stats.tsv", "found rnaseq_tophat_junctions_absolute_summary_stats_file");
 
 done_testing()

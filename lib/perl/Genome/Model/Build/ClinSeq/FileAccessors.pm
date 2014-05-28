@@ -69,6 +69,12 @@ sub rnaseq_tumor_cufflinks_isoforms_merged_dir {
   return $rnaseq_tumor_cufflinks_isoforms_merged_dir;
 }
 
+sub rnaseq_tumor_tophat_junctions_absolute_dir {
+  my $self = shift;
+  my $rnaseq_tumor_tophat_junctions_absolute_dir = $self->rnaseq_tumor_dir . "/tophat_junctions_absolute";
+  return $rnaseq_tumor_tophat_junctions_absolute_dir;
+}
+
 sub rnaseq_tumor_cufflinks_genes_summary_dir {
   my $self = shift;
   my $rnaseq_tumor_cufflinks_genes_summary_dir = $self->rnaseq_tumor_cufflinks_genes_dir . "/summary";
@@ -85,6 +91,12 @@ sub rnaseq_tumor_cufflinks_isoforms_merged_summary_dir {
   my $self = shift;
   my $rnaseq_tumor_cufflinks_isoforms_merged_summary_dir = $self->rnaseq_tumor_cufflinks_isoforms_merged_dir . "/summary";
   return $rnaseq_tumor_cufflinks_isoforms_merged_summary_dir;
+}
+
+sub rnaseq_tumor_tophat_junctions_absolute_summary_dir {
+  my $self = shift;
+  my $rnaseq_tumor_tophat_junctions_absolute_summary_dir = $self->rnaseq_tumor_tophat_junctions_absolute_dir . "/summary";
+  return $rnaseq_tumor_tophat_junctions_absolute_summary_dir;
 }
 
 sub input_summary_dir {
@@ -378,6 +390,19 @@ sub rnaseq_tumor_cufflinks_isoforms_merged_stats_file {
   } else {
     $self->warning_message("unable to find " .
         $rnaseq_tumor_cufflinks_isoforms_merged_stats_file);
+    return 0;
+  }
+}
+
+sub rnaseq_tumor_tophat_junctions_absolute_stats_file {
+  my $self = shift;
+  my $rnaseq_tumor_tophat_junctions_absolute_stats_file = $self->rnaseq_tumor_tophat_junctions_absolute_summary_dir .
+      "/Stats.tsv";
+  if(-e $rnaseq_tumor_tophat_junctions_absolute_stats_file){
+    return $rnaseq_tumor_tophat_junctions_absolute_stats_file;
+  } else {
+    $self->warning_message("unable to find " .
+        $rnaseq_tumor_tophat_junctions_absolute_stats_file);
     return 0;
   }
 }
