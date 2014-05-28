@@ -92,7 +92,7 @@ sub execute {
     for my $model (@models) {
         my $build_iterator = $model->build_iterator(
             'status not like' => 'Abandoned',
-            '-order_by' => '-date_scheduled',
+            '-order_by' => '-created_at',
         );
         my $latest_build        = $build_iterator->next;
         my $latest_build_status = ($latest_build ? $latest_build->status : '-');
