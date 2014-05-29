@@ -1058,7 +1058,6 @@ sub validate_for_start_methods {
     # Be very wary of removing any of these as many subclasses use SUPER::validate_for_start_methods.
     # Each method should return tags.
     my @methods = (
-        'validate_run_as',
         # 'validate_inputs_have_values' should be checked first.
         'validate_inputs_have_values',
         'inputs_have_compatible_reference',
@@ -1123,21 +1122,6 @@ sub validate_instrument_data{
         }
     }
     return @tags;
-}
-
-sub validate_run_as {
-    my $self = shift;
-
-    return unless $self->model->should_run_as;
-
-    my $user = Genome::Sys::User->get(username => $self->model->run_as);
-    return if $user;
-
-    return UR::Object::Tag->create(
-        type => 'error',
-        properties => ['run_as'],
-        desc => "run_as user not found: " . $self->model->run_as,
-    );
 }
 
 sub validate_inputs_have_values {
@@ -1365,17 +1349,7 @@ sub _launch {
         my $lsf_project = "build" . $self->id;
         $ENV{'WF_LSF_PROJECT'} = $lsf_project;
 
-        my $bsub_bin = 'bsub';
         my $genome_bin = $Command::entry_point_bin || 'genome';
-
-        if ($self->model->should_run_as) {
-            # -i simulates login which help prevent this from being abused to
-            # execute arbitrary commands.
-            my $run_as = $self->model->run_as;
-            $_->user_name($run_as) for $self->events;
-            $bsub_bin = [qw(sudo -n -i -u), $self->model->run_as, '--',
-                Genome::Model->sudo_wrapper()];
-        }
 
         my @bsub_args = (
             email    => Genome::Utility::Email::construct_address(),
@@ -1404,7 +1378,7 @@ sub _launch {
         }
 
         my $job_id = $self->_execute_bsub_command(
-            $bsub_bin,
+            'bsub',
             @bsub_args,
             cmd => [ @genome_cmd, @genome_args ],
         );
