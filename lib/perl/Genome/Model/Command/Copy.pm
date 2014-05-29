@@ -16,6 +16,11 @@ class Genome::Model::Command::Copy {
             shell_args_position => 1,
             doc => 'The source model to copy.'
         },
+        model_group => {
+            is => 'Genome::ModelGroup',
+            doc => 'ModelGroup to assign new model to',
+            is_optional => 1,
+        },
         overrides => {
             is_many => 1,
             is_optional => 1,
@@ -207,6 +212,10 @@ sub execute {
     my $new_model = $model->copy(%overrides);
     return if not $new_model;
     $self->_new_model($new_model);
+
+    if ($self->model_group) {
+        $new_model->add_model_group($self->model_group);
+    }
 
     $self->status_message("NEW MODEL: ".$new_model->__display_name__);
 
