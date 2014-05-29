@@ -53,7 +53,7 @@ class Genome::Model::ReferenceAlignment::Command::Downsample {
 };
 
 sub help_detail {
-    return <<EOS 
+    return <<EOS
     Downsample the merged bam for given model(s) into a new instrument data and a new model (or a model group).
 EOS
 }
@@ -90,7 +90,7 @@ sub _create_downsampled_model_group {
         unless ($self->_create_downsampled_model($model) ) {
             die $self->error_message("Could not create a downsampled model for input model " . $model->id);
         }
-        
+
         my $new_model = $self->_new_model;
         unless ($new_model) {
             die $self->error_message("Failed to get new model for input model " . $model->id);
@@ -112,7 +112,7 @@ sub _create_downsampled_model_group {
     return 1;
 }
 
-# Given a single model: 
+# Given a single model:
 # 1) downsample the merged bam from the last succeded build
 # 2) import the downsampled bam into a new instrument data
 # 3) create a new model with that instrument data assigned
@@ -149,7 +149,7 @@ sub _create_downsampled_model {
             my $total_bases = $read_length * $total_readcount;
             $self->status_message("Total Bases: ".$total_bases);
 
-            #Calculate downsample ratio by taking the ratio of desired coverage to the current total bases, 
+            #Calculate downsample ratio by taking the ratio of desired coverage to the current total bases,
             # round to 5 decimal places
             $downsample_ratio = sprintf("%.5f", $new_coverage / $total_bases );
             unless($downsample_ratio < 1.0){
@@ -176,7 +176,7 @@ sub _create_downsampled_model {
     );
     unless($ds_cmd->execute){
         die $self->error_message("Could not complete picard downsample command.");
-    } 
+    }
     $self->status_message("Downsampled bam has been created at: ".$temp);
 
     #create an imported instrument-data record
@@ -219,7 +219,7 @@ sub _define_new_model {
     my $self = shift;
     my $model = shift;
     my $instrument_data = shift;
-    
+
     my $copy_command = Genome::Model::Command::Copy->create(
         model => $model,
         overrides => [map 'instrument_data=' . $_->id, @$instrument_data],
@@ -241,7 +241,7 @@ sub _import_bam {
 
     my $dir = dirname($bam);
     my $filename = $dir."/all_sequences.bam";
-    rename $bam, $filename; 
+    rename $bam, $filename;
 
     my $sample_id = $model->subject->id;
     my $sample = Genome::Sample->get($sample_id);
