@@ -37,6 +37,7 @@ sub new {
         _max_display_freq => $arg{max_display_freq},
         _lolli_shape => $arg{lolli_shape},
         _allow_floating_labels => $arg{floating_labels},
+        _only_label_above_max_freq => $arg{only_label_max},
     };
 
     my @custom_domains =();
@@ -276,6 +277,7 @@ sub Draw {
             style => {stroke => 'black', fill => 'none'},
             max_freq => $self->{_max_display_freq},
             shape => $self->{_lolli_shape},
+            only_label_above_max_freq => $self->{_only_label_above_max_freq},
         );
 
 
