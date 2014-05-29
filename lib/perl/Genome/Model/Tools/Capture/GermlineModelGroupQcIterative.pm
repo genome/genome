@@ -176,7 +176,7 @@ sub execute {                               # replace with real execution logic.
                     my $cmd = $bsub." \'"."gmt analysis lane-qc compare-snps --genotype-file $genofile --bam-file $bam_file --output-file $qcfile --sample-name Geno_$subject_name1.Bam_$subject_name2 --min-depth-het 20 --min-depth-hom 20 --flip-alleles 1 --verbose 1 --reference-build $build_number"."\'";
 
                     #clean up empty qc files
-                    if ($skip_if_output_present && $empty_file_cleanup && -s $qcfile &&1&&1) { #&&1&&1 to make gedit show colors correctly after a -s check
+                    if ($skip_if_output_present && $empty_file_cleanup && -s $qcfile) {
                         my $qc_input = new FileHandle ($qcfile);
                         my $qc_header = <$qc_input>;
                         my $qc_line = <$qc_input>;
@@ -201,7 +201,7 @@ sub execute {                               # replace with real execution logic.
                             }
                         }
                     }
-                    if ($skip_if_output_present && -s $qcfile &&1&&1) { #&&1&&1 to make gedit show colors correctly after a -s check
+                    if ($skip_if_output_present && -s $qcfile) {
                     }
                     elsif ($self->summary_file) {
                         warn "You specified summary file but the script thinks there are unfinished qc files, please run this script to finish making qc files first\nReason: file $qcfile does not exist as a non-zero file\n";
