@@ -197,7 +197,6 @@ sub _create_downsampled_model {
 sub get_or_create_library {
     my $self = shift;
     my $sample = shift;
-    my $library;
     my $new_library_name = $sample->name . "-extlibs";
 
     my $library = Genome::Library->get(name => $new_library_name);
