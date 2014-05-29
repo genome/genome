@@ -16,7 +16,7 @@ class Genome::Model::Command::Services::ListBuildQueue {
             is_optional => 1,
         },
         max => {
-            doc => 'maximum number of scheduled builds per user',
+            doc => 'maximum number of scheduled builds per user (assumes run_as will be used)',
             is => 'Integer',
             default => 50,
             is_optional => 1,
@@ -49,30 +49,52 @@ sub execute {
     my @iterator_params = (
         # prioritize genotype microarray over other builds because their
         # runtime is so short and are frequently prerequisite for other builds
-        {build_requested => '1', type_name => 'genotype microarray', -order_by => 'subject_id'},
-        {build_requested => '1', -order_by => 'subject_id'},
+        {build_requested => '1',  type_name     => 'genotype microarray', -order_by => 'subject_id'},
+        {build_requested => '1', 'type_name !=' => 'genotype microarray', -order_by => 'subject_id'},
     );
 
-    my %count;
-    while (my $iterator_params = shift @iterator_params) {
-        my $models = Genome::Model->create_iterator(%{$iterator_params});
-        while (my $model = $models->next) {
-            my $username = $model->should_run_as() ? $model->run_as : Genome::Sys->username;
+    my @run_as = run_as_list();
+    RUN_AS: while (my $run_as = shift @run_as) {
+        my $count = scheduled_builds_for($run_as);
 
-            unless (exists $count{$username}) {
-                $count{$username} = scheduled_builds_for($username);
+        # avoid extra DB queries below if we are just going to skip anyway
+        if ($count >= $self->max) {
+            Genome::Logger->infof(q(%s's scheduled count exceeds %d), $run_as, $count);
+            next RUN_AS;
+        }
+
+        ITER: for my $iterator_params (@iterator_params) {
+            my $models = Genome::Model->create_iterator(%{$iterator_params}, run_as => $run_as);
+
+            MODEL: while (my $model = $models->next) {
+                if ($count >= $self->max) {
+                    Genome::Logger->infof(q(%s's scheduled count exceeds %d), $run_as, $count);
+                    next RUN_AS;
+                }
+                $count++;
+                $self->print($model->id);
             }
-
-            if ($count{$username} >= $self->max) {
-                next;
-            }
-
-            $count{$username}++;
-            $self->print($model->id);
         }
     }
 
     return 1;
+}
+
+sub run_as_list {
+    my $type = Genome::Model->__meta__;
+
+    my $table_name    = $type->table_name;
+    my $run_as_column = $type->properties(property_name => 'run_as')->column_name;
+    my $build_requested_column = $type->properties(property_name => 'build_requested')->column_name;
+
+    my $sql_t = q/SELECT distinct(%s) FROM %s WHERE %s IS TRUE/;
+    my $sql = sprintf($sql_t, $run_as_column, $table_name, $build_requested_column);
+
+    my $dbh = $type->data_source->get_default_handle;
+    my $sth = $dbh->prepare($sql);
+    $sth->execute();
+    my $rows = $sth->fetchall_arrayref();
+    return map { $_->[0] } @{$rows};
 }
 
 sub scheduled_builds_for {
