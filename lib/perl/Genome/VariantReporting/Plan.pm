@@ -86,6 +86,8 @@ sub create_from_hashref {
     my $class = shift;
     my $hashref = shift;
 
+    # TODO make a copy of the hashref so we don't change the original via perl autovivify when we access filters (or anything else that is optional)
+    # we will need to specifically initialize these optional things to empty refs
     my $self = $class->SUPER::create(name => 'root',
         params => {});
     my @expert_plans;
