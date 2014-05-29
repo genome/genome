@@ -53,6 +53,7 @@ sub new {
         }
         elsif($self->{_only_label_max}) {
             $self->{_text} = q{};
+            $mutation_top -= 8; #trim the lolli stick that protrudes above the last shape
         }
     }
     
