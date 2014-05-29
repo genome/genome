@@ -189,7 +189,7 @@ sub _create_downsampled_model {
     unless($instrument_data){
         die $self->error_message("Could not import bam");
     }
-    $self->status_message("Your new instrument-data id is: ".$instrument_data->id);
+    $self->status_message("Your new instrument-data id is: ".join(',', map $_->id, @{$instrument_data}));
 
     my $new_model = $self->_define_new_model($model,$instrument_data);
     $self->status_message("Your new model id is: ".$new_model->id);
@@ -245,7 +245,7 @@ sub _define_new_model {
     
     my $copy_command = Genome::Model::Command::Copy->create(
         model => $model,
-        overrides => ["instrument_data=".$instrument_data->id],
+        overrides => [map 'instrument_data=' . $_->id, @$instrument_data],
     );
     unless ($copy_command->execute) {
         die $self->error_message("Failed to copy model " . $model->id);
@@ -281,7 +281,9 @@ sub _import_bam {
         description => "Downsampled bam, ratio=".$downsample_ratio,
         instrument_data_properties => ['reference_sequence_build_id='.$model->reference_sequence_build_id],
     );
-    $params{target_region} = $model->target_region_set_name || "none";
+    if($model->target_region_set_name) {
+        push @{$params{instrument_data_properties}}, 'target_region_set_name=' . $model->target_region_set_name;
+    }
 
     my $import_cmd = Genome::InstrumentData::Command::Import::Basic->execute(
         %params,
@@ -290,11 +292,11 @@ sub _import_bam {
         die $self->error_message("Could not execute bam import command!");
     }
 
-    my $id = Genome::InstrumentData::Imported->get(id => $import_cmd->result);
-    unless($id){
+    my @id = $import_cmd->_new_instrument_data;
+    unless(@id){
         die $self->error_message("Could not retrieve newly created instrument-data");
     }
-    return $id
+    return \@id;
 }
 
 sub _get_or_create_flagstat {

@@ -49,6 +49,7 @@ class Genome::InstrumentData::Command::Import::Basic {
         _verify_md5_op => {},
         _working_directory => { is => 'Text', },
         _instrument_data_properties => { is => 'Hash', },
+        _new_instrument_data => { is => 'Genome::InstrumentData', is_many => 1 },
     ],
 };
 
@@ -102,6 +103,9 @@ sub execute {
 
     my $success = Workflow::Simple::run_workflow($wf, %$inputs);
     die 'Run wf failed!' if not $success;
+
+    $self->_new_instrument_data($success->{instrument_data});
+    $DB::single = 1;
 
     $self->status_message('Import instrument data...done');
     return 1;
