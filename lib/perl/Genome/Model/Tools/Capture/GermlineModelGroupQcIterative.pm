@@ -241,14 +241,4 @@ sub execute {                               # replace with real execution logic.
     return 1;
 }
 
-sub byChrPos
-{
-    my ($chr_a, $pos_a) = split(/\t/, $a);
-    my ($chr_b, $pos_b) = split(/\t/, $b);
-
-    $chr_a cmp $chr_b
-        or
-    $pos_a <=> $pos_b;
-}
-
 1;
