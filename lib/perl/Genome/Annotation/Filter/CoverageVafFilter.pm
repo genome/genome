@@ -4,14 +4,16 @@ use strict;
 use warnings;
 
 use Genome;
+
 use Genome::Annotation::Expert::BamReadcount::VafCalculator;
+require Memoize;
 
 class Genome::Annotation::Filter::CoverageVafFilter {
     is => ['Genome::Annotation::Filter::Base', 'Genome::Annotation::Expert::BamReadcount::ComponentBase'],
     has => {
         coverages_and_vafs => {
-            is => 'Text',
-            is_many => 1,
+            is => 'HASH',
+            doc => 'A mapping of coverages and the minimum vafs.'
         },
     },
 };
@@ -22,9 +24,7 @@ sub __errors__ {
     my @errors = $self->SUPER::__errors__;
     return @errors if @errors;
 
-    my %coverages_and_vafs;
-    for my $coverage_and_vaf ( $self->coverages_and_vafs ) {
-        my ($coverage, $vaf) = split(/:/, $coverage_and_vaf);
+    for my $coverage ( keys %{$self->coverages_and_vafs} ) {
         my $error = $self->_validate_is_int(
             name => 'coverages_and_vafs',
             display_name => 'coverage',
@@ -34,30 +34,11 @@ sub __errors__ {
         $error = $self->_validate_is_int(
             name => 'coverages_and_vafs',
             display_name => 'vaf',
-            value => $vaf,
+            value => $self->coverages_and_vafs->{$coverage},
             max => 100,
         );
-        push @errors, $error and next if $error;
-        if ( exists $coverages_and_vafs{$coverage} ) {
-            push @errors, UR::Object::Tag->create(
-                type => 'error',
-                properties => [qw/ coverages_and_vafs /],
-                desc => "Vaf for coverage ($coverage) already set!",
-            );
-        }
-        $coverages_and_vafs{$coverage} = $vaf;
+        push @errors, $error if $error;
     }
-    $self->{_coverages_and_vafs} = \%coverages_and_vafs;
-
-    my @coverages = sort { $b <=> $a } keys %coverages_and_vafs;
-    if ( $coverages[$#coverages] != 1 ) { #FIXME needed?? default?
-        push @errors, UR::Object::Tag->create(
-            type => 'error',
-            properties => [qw/ coverages_and_vafs /],
-            desc => "There is no VAF for coverage of 1!",
-        );
-    }
-    $self->{_coverages} = \@coverages;
 
     return @errors;
 }
@@ -103,6 +84,11 @@ sub requires_experts {
     return (qw/ bam-readcount /);
 }
 
+sub coverages {
+    return sort { $b <=> $a } keys %{$_[0]->coverages_and_vafs};
+}
+Memoize::memoize('coverages');
+
 sub filter_entry {
     my ($self, $entry) = @_;
 
@@ -115,15 +101,12 @@ sub filter_entry {
         \@sample_alt_alleles,
     );
 
-    my $coverage = $readcount_entry->depth;
-    my $vaf_for_coverage = $self->_vaf_for_coverage($coverage);
+    my $vaf_for_coverage = $self->_vaf_for_coverage( $readcount_entry->depth );
 
     my %return_values = map { $_ => 0 } @{$entry->{alternate_alleles}};
-    return %return_values if not $vaf_for_coverage;
+    return %return_values if not defined $vaf_for_coverage;
 
     for my $alt_allele ( @sample_alt_alleles ) {
-        #if    (cov > 20) { if (vaf < 5 ) {fail} else {pass}
-        #elsif (cov > 10) { if (vaf < 10) {fail} else {pass}
         if ( $vafs{$alt_allele} >= $vaf_for_coverage ) {
             $return_values{$alt_allele} = 1;
         }
@@ -135,11 +118,11 @@ sub filter_entry {
 sub _vaf_for_coverage {
     my ($self, $coverage) = @_;
 
-    for my $coverage_for_vaf ( @{$self->{_coverages}} ) {
-        return $self->{_coverages_and_vafs}->{$coverage_for_vaf} if $coverage >= $coverage_for_vaf;
+    for my $coverage_for_vaf ( $self->coverages ) {
+        return $self->coverages_and_vafs->{$coverage_for_vaf} if $coverage >= $coverage_for_vaf;
     }
 
-    return 0; # FIXME 
+    return;
 }
 
 1;
