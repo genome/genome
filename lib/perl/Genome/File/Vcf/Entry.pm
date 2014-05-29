@@ -757,7 +757,10 @@ Returns a string representation of the entry in VCF format.
 sub to_string {
     my ($self) = @_;
 
-    my %info = %{$self->info};
+    my %info;
+    if ($self->info) {
+        %info = %{$self->info};
+    }
     my %info_keys = map {$_ => undef} keys %info;
 
     my @info_order;
