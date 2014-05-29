@@ -89,7 +89,6 @@ sub execute {                               # replace with real execution logic.
     # Correct the reference build name to what the database recognizes
     my $reference;
     my $build_number;
-    my $db_snp_build;
 
     my $ref = $models[0]->reference_sequence_build;
     my $build36 = Genome::Model::Build::ReferenceSequence->get(name => "NCBI-human-build36");
@@ -97,11 +96,9 @@ sub execute {                               # replace with real execution logic.
     if($ref->is_compatible_with($build36)) {
         $reference = 'reference';
         $build_number = 36;
-        $db_snp_build = 130;
     } elsif($ref->is_compatible_with($build37)) {
         $reference = 'GRCh37';
         $build_number = 37;
-        $db_snp_build = 132;
     } else {
         die $ref->name." isn't compatible with NCBI-human-build36 or GRCh37-lite-build37\n";
     }
@@ -136,7 +133,7 @@ sub execute {                               # replace with real execution logic.
             if($self->output_dir) {
                 my $qc_dir = $self->output_dir . "/$subject_name/";
                 mkdir($qc_dir);
-                my $genofile = "$qc_dir/$subject_name.dbsnp$db_snp_build.genotype";
+                my $genofile = "$qc_dir/$subject_name.genotype";
                 if ($self->summary_file && ! -s $genofile) {
                     warn "You specified summary file but the script thinks there are unfinished genotype files, please run this script to finish making qc files first\nReason: file $genofile does not exist as a non-zero file\n";
                     next;
@@ -172,10 +169,10 @@ sub execute {                               # replace with real execution logic.
 #                    print "Genosample:$subject_name1\t$genofile\nBamsample:$subject_name2\t$bam_file\n";
                     my $qc_dir = $self->output_dir . "/qc_iteration_files/";
                     mkdir($qc_dir);
-                    my $qcfile = "$qc_dir/Geno_$subject_name1.Bam_$subject_name2.dbsnp$db_snp_build.qc";
-                    my $output_bsub = "$qc_dir/Geno_$subject_name1.Bam_$subject_name2.dbsnp$db_snp_build.out";
-                    my $error_bsub = "$qc_dir/Geno_$subject_name1.Bam_$subject_name2.dbsnp$db_snp_build.err";
-                    my $bsub = "bsub -N -M 4000000 -J Geno_$subject_name1.Bam_$subject_name2.dbsnp$db_snp_build.qc -o $output_bsub -e $error_bsub -R \"select[type==LINUX64 && mem>4000 && tmp>1000] rusage[mem=4000, tmp=1000]\"";
+                    my $qcfile = "$qc_dir/Geno_$subject_name1.Bam_$subject_name2.qc";
+                    my $output_bsub = "$qc_dir/Geno_$subject_name1.Bam_$subject_name2.out";
+                    my $error_bsub = "$qc_dir/Geno_$subject_name1.Bam_$subject_name2.err";
+                    my $bsub = "bsub -N -M 4000000 -J Geno_$subject_name1.Bam_$subject_name2.qc -o $output_bsub -e $error_bsub -R \"select[type==LINUX64 && mem>4000 && tmp>1000] rusage[mem=4000, tmp=1000]\"";
                     my $cmd = $bsub." \'"."gmt analysis lane-qc compare-snps --genotype-file $genofile --bam-file $bam_file --output-file $qcfile --sample-name Geno_$subject_name1.Bam_$subject_name2 --min-depth-het 20 --min-depth-hom 20 --flip-alleles 1 --verbose 1 --reference-build $build_number"."\'";
 
                     #clean up empty qc files
@@ -228,12 +225,12 @@ sub execute {                               # replace with real execution logic.
                 foreach my $subject_name2 (sort keys %qc_iteration_hash_bam_file) {
                     foreach my $bam_file (sort keys %{$qc_iteration_hash_bam_file{$subject_name2}}) {
                         my $qc_dir = $self->output_dir . "/qc_iteration_files/";
-                        my $qcfile = "$qc_dir/Geno_$subject_name1.Bam_$subject_name2.dbsnp$db_snp_build.qc";
+                        my $qcfile = "$qc_dir/Geno_$subject_name1.Bam_$subject_name2.qc";
                         my $qc_input = new FileHandle ($qcfile);
                         my $qc_header = <$qc_input>;
                         my $qc_line = <$qc_input>;
                         chomp($qc_line);
-                        print ALL_MODELS "$db_snp_build\t$qc_line\n";
+                        print ALL_MODELS "$qc_line\n";
                     }
                 }
             }
