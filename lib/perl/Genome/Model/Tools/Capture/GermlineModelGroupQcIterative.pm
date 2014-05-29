@@ -31,7 +31,6 @@ class Genome::Model::Tools::Capture::GermlineModelGroupQcIterative {
         whitelist_snps_file     => { is => 'Text', doc => "File of snps to limit qc to, for example the 55 ASMS snps in ROI -- 1 rs_id per line" },
         skip_if_output_present  => { is => 'Boolean', doc => "Skip Creating new qc Files if they exist" , default => ""},
         cleanup_empty_files     => { is => 'Boolean', doc => "Delete files that pileup likely failed on so they'll re-run" , default => ""},
-        use_external            => { is => 'Boolean', doc => 'Use external data source rather than internal/iscan', default_value => 0 },
     ],
 };
 
@@ -144,43 +143,17 @@ sub execute {                               # replace with real execution logic.
                 }
 
                 if(!$self->summary_file && ( (! -e $genofile) || !$skip_if_output_present) ) {
-                    my %extract_params = (
-                        output => $genofile.':separator=TAB:headers=chromosome,position,alleles,id:print_headers=0',
-                        ($self->whitelist_snps_file?(filters => ['whitelist:whitelist_snps_file='.$self->whitelist_snps_file]):()),
-                    );
 
-                    if ($build->can('dbsnp_build') && $build->dbsnp_build) {
-                        $extract_params{variation_list_build} = $build->dbsnp_build;
+                    if ($build->can('genotype_microarray_build') && $build->genotype_microarray_build) {
+                        my $geno_build = $build->genotype_microarray_build;
+                        Genome::Sys->create_symlink($geno_build->genotype_file_path, $genofile);
                     } else {
-                        $extract_params{variation_list_build} = Genome::Model::ImportedVariationList->dbsnp_build_for_reference($build->reference_sequence_build),
-                    }
-
-                    if ($self->use_external) {
-                        $extract_params{sample} = $model->subject;
-                        $extract_params{sample_type_priority} = [qw/ external /];
-                    } elsif ($build->can('genotype_microarray_build') && $build->genotype_microarray_build) {
-                        $extract_params{instrument_data} = $build->genotype_microarray_build->instrument_data;
-                    } elsif ($build->subject->can('default_genotype_data_id') && $build->subject->default_genotype_data_id) {
-                        $extract_params{instrument_data} = Genome::InstrumentData::Imported->get($build->subject->default_genotype_data_id);
-                    }
-
-                    my $extract = Genome::Model::GenotypeMicroarray::Command::Extract->create(%extract_params);
-                    unless ($extract) {
-                        $self->error_message("Failed to create Extract Microarray for sample " . $model->subject_name);
-                        return;
-                    }
-
-                    $extract->dump_status_messages(1);
-                    unless ($extract->_resolve_instrument_data){
-                        $self->debug_message('Skipping due to no instrument data for sample ' . $model->subject->id);
+                        $self->warning_message("Skipping build %s because no genotype build was found.", $build->id);
                         next;
                     }
-                    unless ($extract->execute()) {
-                        $self->error_message("Failed to execute Extract Microarray for sample " . $model->subject_name);
-                        return;
-                    }
+
                     unless (-s $genofile) {
-                        $self->error_message("Executed Extract Microarray but geno file doesn't exist for sample " . $model->subject_name);
+                        $self->error_message("Missing genotype file for for sample " . $model->subject_name);
                         return;
                     }
                 }
