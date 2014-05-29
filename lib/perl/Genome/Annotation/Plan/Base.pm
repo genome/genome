@@ -44,8 +44,11 @@ sub as_hashref {
             }
         }
     } else {
-        for my $param_name (keys %{$self->params}) {
-            $body{$param_name} = $self->params->{$param_name};
+        # If we don't have any params, keys will crash
+        if (defined $self->params) {
+            for my $param_name (keys %{$self->params}) {
+                $body{$param_name} = $self->params->{$param_name};
+            }
         }
     }
 
