@@ -26,6 +26,7 @@ use Exporter 'import';
 our @EXPORT_OK = qw(
     test_cmd_and_result_are_in_sync
     get_test_somatic_variation_build
+    get_test_somatic_variation_build_with_vep_annotations
     get_test_somatic_variation_build_from_files
     get_test_dir
     test_dag_xml
@@ -55,6 +56,23 @@ sub get_test_somatic_variation_build {
         reference_fasta => File::Spec->join($test_dir, 'reference.fasta'),
         snvs_vcf => File::Spec->join($test_dir, 'snvs.vcf.gz'),
         indels_vcf => File::Spec->join($test_dir, 'indels.vcf.gz'),
+    );
+}
+
+# This can be used for experts that require vep annotations present
+sub get_test_somatic_variation_build_with_vep_annotations {
+    my %p = validate(@_, {
+        version => {type => SCALAR},
+    });
+
+    my $test_dir = get_test_dir('Genome::Annotation::Expert::Base', $p{version});
+
+    return get_test_somatic_variation_build_from_files(
+        bam1 => File::Spec->join($test_dir, 'bam1.bam'),
+        bam2 => File::Spec->join($test_dir, 'bam2.bam'),
+        reference_fasta => File::Spec->join($test_dir, 'reference.fasta'),
+        snvs_vcf => File::Spec->join($test_dir, 'snvs_with_vep.vcf.gz'),
+        indels_vcf => File::Spec->join($test_dir, 'indels_with_vep.vcf.gz'),
     );
 }
 
