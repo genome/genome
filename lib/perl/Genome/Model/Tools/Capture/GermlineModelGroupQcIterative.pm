@@ -139,7 +139,7 @@ sub execute {                               # replace with real execution logic.
                     next;
                 }
 
-                if(!$self->summary_file && ( (! -e $genofile) || !$skip_if_output_present) ) {
+                if(!$self->summary_file && (! -e $genofile) ) {
 
                     if ($build->can('genotype_microarray_build') && $build->genotype_microarray_build) {
                         my $geno_build = $build->genotype_microarray_build;
