@@ -89,7 +89,8 @@ sub map_genes_to_fpkm {
 
         if (defined $genes_to_fpkm{$gene_id}) {
             unless ($genes_to_fpkm{$gene_id} eq $fpkm) {
-                die $self->error_message("Multiple fpkm values found in file (%s) on gene (%s) old fpkm (%s) new fpkm (%s) ", $self->fpkm_file, $gene_id, $genes_to_fpkm{$gene_id}, $fpkm);
+                # TODO FIXME don't die for now until we hear back from jasreet and cmiller #########################
+                #die $self->error_message("Multiple fpkm values found in file (%s) on gene (%s) old fpkm (%s) new fpkm (%s) ", $self->fpkm_file, $gene_id, $genes_to_fpkm{$gene_id}, $fpkm);
             }
         }
         $genes_to_fpkm{$gene_id} = $fpkm;
