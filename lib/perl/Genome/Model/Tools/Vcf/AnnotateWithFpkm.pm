@@ -62,12 +62,19 @@ sub get_fpkm_for_entry {
             die $self->error_message("Vep returned multiple transcripts, we want only one. Returned: %s", join(",", ( map{$_->{'feature'}} ($transcript, @extra) ) ) );
         }
         my $gene = $transcript->{'gene'};
-        unless (defined $gene) {
-            die $self->error_message("Could not find a gene for transcript:\n%s", Data::Dumper::Dumper $transcript);
+        unless ($gene) {
+            if ($transcript->{consequence} eq 'INTERGENIC') {
+                $self->status_message("Could not find a gene for intergenic transcript:\n%s", Data::Dumper::Dumper $transcript);
+                $self->add_fpkm_to_entry($entry, '.');
+                next;
+            }
+            else {
+                die $self->error_message("Could not find a gene for transcript:\n%s", Data::Dumper::Dumper $transcript);
+            }
         }
         my $fpkm = $gene_to_fpkm_map->{$gene};
         unless (defined $fpkm) {
-            die $self->error_message("Could not find a fpkm value for transcript (%s) from fpkm file (%s) which was loaded into hash:\n%s", $transcript, $self->fpkm_file, Data::Dumper::Dumper($gene_to_fpkm_map)); 
+            die $self->error_message("Could not find a fpkm value for gene (%s) from fpkm file (%s).", $gene, $self->fpkm_file);
         }
         $self->add_fpkm_to_entry($entry, $fpkm);
     }
