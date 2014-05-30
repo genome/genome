@@ -70,7 +70,6 @@ sub get_fpkm_for_entry {
             die $self->error_message("Could not find a fpkm value for transcript (%s) from fpkm file (%s) which was loaded into hash:\n%s", $transcript, $self->fpkm_file, Data::Dumper::Dumper($gene_to_fpkm_map)); 
         }
         $self->add_fpkm_to_entry($entry, $fpkm);
-
     }
 }
 
@@ -127,12 +126,14 @@ sub validate_header {
 sub add_fpkm_to_entry {
     my ($self, $entry, $fpkm) = @_;
 
-    my $info_fields = $entry->info;
-    if (defined $info_fields->{FPKM}) {
+#Make this into a method on vcf entry
+    $entry->info;
+    my $info_fields = $entry->{info_fields};
+    if (defined $info_fields->{hash}->{FPKM}) {
         die $self->error_message("FPKM info field is already set on vcf entry at chrom/pos (%s %s), old value (%s) new value (%s)", $entry->{chrom}, $entry->{position}, $info_fields->{FPKM}, $fpkm);
     }
-    $info_fields->{FPKM} = $fpkm;
-    $entry->{info_fields} = $info_fields;
+    $info_fields->{hash}->{FPKM} = $fpkm;
+    push @{$info_fields->{order}}, 'FPKM';
 }
 
 1;
