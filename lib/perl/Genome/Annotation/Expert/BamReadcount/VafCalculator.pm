@@ -18,12 +18,18 @@ sub calculate_vaf_for_multiple_alleles {
 sub calculate_vaf {
     my ($bam_readcount_entry, $alt_allele) = @_;
 
-    my $var_count = 0;
+    return calculate_coverage_for_allele($bam_readcount_entry, $alt_allele) / $bam_readcount_entry->depth * 100;
+}
+
+sub calculate_coverage_for_allele {
+    my ($bam_readcount_entry, $allele) = @_;
+
+    my $count = 0;
     for my $lib ($bam_readcount_entry->libraries) {
-        $var_count += $lib->metrics_for($alt_allele)->count;
+        $count += $lib->metrics_for($allele)->count;
     }
 
-    return $var_count / $bam_readcount_entry->depth * 100;
+    return $count;
 }
 
 1;

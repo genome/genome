@@ -23,6 +23,10 @@ sub name {
     'dbsnp';
 }
 
+sub result_class {
+    'Genome::Annotation::Expert::Dbsnp::RunResult';
+}
+
 sub execute {
     my $self = shift;
 

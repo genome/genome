@@ -103,8 +103,9 @@ class Genome::FeatureList {
     has_optional_transient => [
         #TODO These could be pre-computed and stored in the allocation rather than re-generated every time
         _processed_bed_file_path => {
-            is => 'Text',
-            doc => 'The path to the temporary dumped copy of the post-processed BED file',
+            is => 'HASH',
+            default => {},
+            doc => 'The paths to the temporary dumped copy of the post-processed BED file',
         },
         _merged_bed_file_path => {
             is => 'Text',
@@ -364,14 +365,25 @@ sub processed_bed_file {
         die $self->error_message;
     }
 
-    unless($self->_processed_bed_file_path) {
+    unless($self->_processed_bed_file_path and
+        $self->_processed_bed_file_path->{$self->processed_bed_file_name(%args)}) {
         my $content = $self->processed_bed_file_content(%args);
-        my $temp_file = Genome::Sys->create_temp_file_path( $self->id . '.processed.bed' );
+        my $temp_file = Genome::Sys->create_temp_file_path($self->processed_bed_file_name(%args));
         Genome::Sys->write_file($temp_file, $content);
-        $self->_processed_bed_file_path($temp_file);
+        $self->_processed_bed_file_path->{$self->processed_bed_file_name(%args)} = $temp_file;
     }
 
-    return $self->_processed_bed_file_path;
+    return $self->_processed_bed_file_path->{$self->processed_bed_file_name(%args)};
+}
+
+sub processed_bed_file_name {
+    my $self = shift;
+    my %args = @_;
+    my @args_strings;
+    for my $key (sort keys %args) {
+        push @args_strings, "$key-".$args{$key};
+    }
+    return $self->id . join("_", @args_strings).'.processed.bed';
 }
 
 sub generate_merged_bed_file {
@@ -517,7 +529,13 @@ sub get_tabix_and_gzipped_bed_file {
         die $self->error_message("Cannot convert format of BED file with unknown format");
     }
 
-    return $self->gzip_and_tabix_bed($self->file_path);
+    my $processed_bed = $self->processed_bed_file(short_name => 0);
+    my $sorted_processed_bed = Genome::Sys->create_temp_file_path;
+    Genome::Model::Tools::Joinx::Sort->execute(
+        input_files => [$processed_bed],
+        output_file => $sorted_processed_bed,
+    );
+    return $self->gzip_and_tabix_bed($sorted_processed_bed);
 }
 
 sub gzip_and_tabix_bed {

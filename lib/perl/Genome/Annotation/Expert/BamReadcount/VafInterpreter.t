@@ -21,15 +21,19 @@ subtest "one alt allele" => sub {
     my $interpreter = $pkg->create(sample_name => "S1");
     lives_ok(sub {$interpreter->validate}, "Interpreter validates");
 
-    my %expected_return_values = (
+    my %expected = (
         G => {
             vaf => 1,
+            ref_count => 3,
+            var_count => 341,
         }
     );
 
     my $entry = create_entry(bam_readcount_line);
     cmp_ok({$interpreter->interpret_entry($entry, ['G'])}->{G}->{vaf}, ">", 99);
     cmp_ok({$interpreter->interpret_entry($entry, ['G'])}->{G}->{vaf},  "<", 100);
+    is({$interpreter->interpret_entry($entry, ['G'])}->{G}->{ref_count}, $expected{G}->{ref_count});
+    is({$interpreter->interpret_entry($entry, ['G'])}->{G}->{var_count}, $expected{G}->{var_count});
 };
 
 subtest "Passed allele doesn't have bam-readcount" => sub {
@@ -39,6 +43,8 @@ subtest "Passed allele doesn't have bam-readcount" => sub {
     my %expected_return_values = (
         C => {
             vaf => undef,
+            ref_count => 3,
+            var_count => 1,
         }
     );
 

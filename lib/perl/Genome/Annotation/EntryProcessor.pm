@@ -45,7 +45,11 @@ sub interpretations {
 
 sub interpreters {
     my $self = shift;
-    return map {$_->object} $self->reporter_plan->interpreter_plans;
+    my @interpreters;
+    for my $plan ($self->reporter_plan->interpreter_plans) {
+        push @interpreters, $plan->object($self->_translated_params($plan));
+    }
+    return @interpreters;
 }
 Memoize::memoize('interpreters');
 
@@ -66,21 +70,26 @@ sub filters {
     my $self = shift;
     my @filters;
     for my $plan ($self->reporter_plan->filter_plans) {
-        my %params;
-        for my $input_name ($plan->get_class->translated_inputs) {
-            my $translated_value = $self->translations->{$plan->params->{$input_name}};
-            if (defined($translated_value)) {
-                $params{$input_name} = $translated_value;
-            } else {
-                die $self->error_message("Cannot translate input (%s) for filter (%s)",
-                    $input_name, $plan->name);
-            }
-        }
-        push @filters, $plan->object(%params);
+        push @filters, $plan->object($self->_translated_params($plan));
     }
     return @filters;
 }
 Memoize::memoize('filters');
+
+sub _translated_params {
+    my ($self, $plan) = @_;
+    my %params;
+    for my $input_name ($plan->get_class->translated_inputs) {
+        my $translated_value = $self->translations->{$plan->params->{$input_name}};
+        if (defined($translated_value)) {
+            $params{$input_name} = $translated_value;
+        } else {
+            die $self->error_message("Cannot translate input (%s) for filter (%s)",
+                $input_name, $plan->name);
+        }
+    }
+    return %params;
+}
 
 sub initialize_filters {
     my $entry = shift;

@@ -24,8 +24,6 @@ sub available_fields {
         amino_acid_change
         default_gene_name
         ensembl_gene_id
-        strand
-        transcript_status
         c_position
         gene_name_source
         canonical
