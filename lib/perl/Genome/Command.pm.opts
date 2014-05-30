@@ -3745,6 +3745,8 @@ $Genome::Command::OPTS_SPEC = [
       undef,
       'start!',
       undef,
+      'model-group=s',
+      undef,
       'model=s',
       undef,
       'overrides=s@',
@@ -4433,8 +4435,6 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>downsample',
       [
-        'backoff-wait=s',
-        'files',
         'random-seed=s',
         'files',
         'model-group=s',
@@ -7804,23 +7804,6 @@ $Genome::Command::OPTS_SPEC = [
           'help!',
           undef
         ],
-        'help!',
-        undef
-      ],
-      '>build-queued-models',
-      [
-        'builds=s@',
-        undef,
-        'channel=s',
-        undef,
-        'channels=s',
-        undef,
-        'color!',
-        undef,
-        'debug!',
-        undef,
-        'max-scheduled-builds=s',
-        undef,
         'help!',
         undef
       ],
