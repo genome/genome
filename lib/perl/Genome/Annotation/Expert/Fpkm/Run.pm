@@ -8,6 +8,7 @@ class Genome::Annotation::Expert::Fpkm::Run {
     is => 'Genome::Annotation::Expert::CommandBase',
     has_input => [
         fpkm_file => {is => 'Path'},
+        tumor_sample_name => {is => 'Text'},
     ],
 };
 

@@ -14,6 +14,9 @@ class Genome::Annotation::Expert::Fpkm::Adaptor {
         fpkm_file => {
             is => 'Path',
         },
+        tumor_sample_name => {
+            is => 'Path',
+        },
     ],
 };
 
@@ -24,12 +27,18 @@ sub name {
 sub resolve_expert_specific_attributes_from_build {
     my $self = shift;
     $self->fpkm_file($self->resolve_fpkm_file);
+    $self->tumor_sample_name($self->resolve_tumor_sample_name);
     return;
 }
 
 sub resolve_fpkm_file {
     my $self = shift;
     return $self->fpkm_file_for_build($self->build_containing_fpkm);
+}
+
+sub resolve_tumor_sample_name {
+    my $self = shift;
+    return $self->build_containing_fpkm->subject->name;
 }
 
 sub build_containing_fpkm {

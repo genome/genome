@@ -9,7 +9,10 @@ class Genome::Annotation::Expert::Fpkm::RunResult {
     has_input => [
         fpkm_file => {
             is => 'String',
-        }
+        },
+        tumor_sample_name => {
+            is => 'String',
+        },
     ],
     has_param => [
     ],
@@ -31,6 +34,7 @@ sub _run {
         vcf_file => $self->input_result_file_path,
         output_file => File::Spec->join($self->temp_staging_directory, $self->output_filename),
         fpkm_file => $self->fpkm_file,
+        sample_name => $self->tumor_sample_name,
     );
 
     return;

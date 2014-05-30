@@ -23,6 +23,10 @@ class Genome::Model::Tools::Vcf::AnnotateWithFpkm {
             is => 'File',
             doc => 'The file containing genes and fpkm values',
         },
+        sample_name => {
+            is => 'Text',
+            doc => 'The sample name of the build containing the fpkm file',
+        },
         output_file => {
             is_output => 1,
             doc => 'The output file, should end in ".vcf" or ".vcf.gz".  If ".vcf.gz" the output will be zipped using bgzip.',
@@ -39,18 +43,19 @@ sub execute {
 
     my $header = $vcf_reader->{header};
     my $vep_parser = new Genome::File::Vcf::VepConsequenceParser($header);
-    $header->add_info_str($FPKM_HEADER);
+    $header->add_format_str($FPKM_HEADER);
     my $vcf_writer = Genome::File::Vcf::Writer->new($self->output_file, $header);
+    my $sample_index = $header->index_for_sample_name($self->sample_name);
 
     while (my $entry = $vcf_reader->next) {
-        $self->get_fpkm_for_entry($vep_parser, $entry);
+        $self->get_fpkm_for_entry($vep_parser, $entry, $sample_index);
         $vcf_writer->write($entry);
     }
     return 1;
 }
 
 sub get_fpkm_for_entry {
-    my ($self, $vep_parser, $entry) = @_;
+    my ($self, $vep_parser, $entry, $sample_index) = @_;
 
     my $gene_to_fpkm_map = $self->map_genes_to_fpkm;
     for my $alt_allele (@{$entry->{alternate_alleles}}) {
@@ -65,7 +70,7 @@ sub get_fpkm_for_entry {
         unless ($gene) {
             if ($transcript->{consequence} eq 'INTERGENIC') {
                 $self->status_message("Could not find a gene for intergenic transcript:\n%s", Data::Dumper::Dumper $transcript);
-                $self->add_fpkm_to_entry($entry, '.');
+                $self->add_fpkm_to_entry($entry, '.', $sample_index);
                 next;
             }
             else {
@@ -76,7 +81,7 @@ sub get_fpkm_for_entry {
         unless (defined $fpkm) {
             die $self->error_message("Could not find a fpkm value for gene (%s) from fpkm file (%s).", $gene, $self->fpkm_file);
         }
-        $self->add_fpkm_to_entry($entry, $fpkm);
+        $self->add_fpkm_to_entry($entry, $fpkm, $sample_index);
     }
 }
 
@@ -140,16 +145,14 @@ sub validate_header {
 }
 
 sub add_fpkm_to_entry {
-    my ($self, $entry, $fpkm) = @_;
+    my ($self, $entry, $fpkm, $sample_index) = @_;
 
-#Make this into a method on vcf entry
-    $entry->info;
-    my $info_fields = $entry->{info_fields};
-    if (defined $info_fields->{hash}->{FPKM}) {
-        die $self->error_message("FPKM info field is already set on vcf entry at chrom/pos (%s %s), old value (%s) new value (%s)", $entry->{chrom}, $entry->{position}, $info_fields->{FPKM}, $fpkm);
+    $entry->add_format_field("FPKM");
+    my $existing_fpkm = $entry->sample_field($sample_index, "FPKM");
+    if (defined($existing_fpkm)) {
+        die $self->error_message("FPKM info field is already set on vcf entry at chrom/pos (%s %s), old value (%s) new value (%s)", $entry->{chrom}, $entry->{position}, $existing_fpkm, $fpkm);
     }
-    $info_fields->{hash}->{FPKM} = $fpkm;
-    push @{$info_fields->{order}}, 'FPKM';
+    $entry->set_sample_field($sample_index, "FPKM", $fpkm);
 }
 
 1;
