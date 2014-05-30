@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::SomaticVariation {
-    is  => 'Genome::Model::Detail::RunsAnnotation',
+    is  => 'Genome::Model::Detail::RunsVariantReporting',
     has_param => [
         snv_detection_strategy => {
             is => "Text",
@@ -499,7 +499,7 @@ sub map_workflow_inputs {
     push @inputs, restrict_to_target_regions => $self->restrict_to_target_regions;
     push @inputs, target_regions => $self->target_regions;
 
-    push @inputs, $self->annotation_related_workflow_inputs($build);
+    push @inputs, $self->variant_reporting_related_workflow_inputs($build);
 
     return @inputs;
 }

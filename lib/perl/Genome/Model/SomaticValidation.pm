@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::SomaticValidation {
-    is  => 'Genome::Model::Detail::RunsAnnotation',
+    is  => 'Genome::Model::Detail::RunsVariantReporting',
     has_param_optional => [
         alignment_strategy => {
             is => 'Text',
@@ -361,7 +361,7 @@ sub map_workflow_inputs {
         output_plot => (defined $self->output_plot ? $self->output_plot : 1),
         ;
 
-    push @inputs, $self->annotation_related_workflow_inputs($build);
+    push @inputs, $self->variant_reporting_related_workflow_inputs($build);
 
     return @inputs;
 }
