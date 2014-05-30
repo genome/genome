@@ -15,6 +15,12 @@ class Genome::Model::Build::Command::Unarchive {
             doc => 'Build(s) to use. Resolved from command line via text string.',
             require_user_verify => 0,
         },
+        queue => {
+            is => 'Boolean',
+            doc => 'If enabled, will queue the model after successful unarchive.',
+            is_optional => 1,
+            default => 0,
+        },
     ],
 };
 
@@ -127,6 +133,9 @@ sub _execute {
         }
         else {
             $msg .= ", all $num_allocations unarchives finished successfully.";
+            if ($self->queue) {
+                $build->model->build_requested(1, 'queue requested after unarchive');
+            }
         }
         $self->status_message($msg);
     }
