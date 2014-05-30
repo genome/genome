@@ -89,15 +89,19 @@ sub map_genes_to_fpkm {
 
     my %genes_to_fpkm;
     while (my $line = $fh->getline) {
+        chomp $line;
         my @contents = split "\t", $line;
         my $gene_id = $contents[$self->gene_id_header_index];
         my $fpkm = $contents[$self->fpkm_header_index];
+        my $fpkm_status = $contents[$self->fpkm_status_header_index];
+
+        unless ($fpkm_status eq 'OK') {
+            $genes_to_fpkm{$gene_id} = '.';
+        }
 
         if (defined $genes_to_fpkm{$gene_id}) {
-            unless ($genes_to_fpkm{$gene_id} eq $fpkm) {
-                # TODO FIXME don't die for now until we hear back from jasreet and cmiller #########################
-                #die $self->error_message("Multiple fpkm values found in file (%s) on gene (%s) old fpkm (%s) new fpkm (%s) ", $self->fpkm_file, $gene_id, $genes_to_fpkm{$gene_id}, $fpkm);
-            }
+            next if $genes_to_fpkm{$gene_id} eq '.';
+            $genes_to_fpkm{$gene_id} += $fpkm;
         }
         $genes_to_fpkm{$gene_id} = $fpkm;
     }
@@ -118,6 +122,11 @@ sub gene_id_header_index {
 sub fpkm_header_index {
     my $self = shift;
     return firstidx{ $_ eq 'FPKM' } $self->expected_fpkm_header;
+}
+
+sub fpkm_status_header_index {
+    my $self = shift;
+    return firstidx{ $_ eq 'FPKM_status' } $self->expected_fpkm_header;
 }
 
 sub validate_header {
