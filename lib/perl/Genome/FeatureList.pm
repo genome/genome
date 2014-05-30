@@ -104,6 +104,7 @@ class Genome::FeatureList {
         #TODO These could be pre-computed and stored in the allocation rather than re-generated every time
         _processed_bed_file_path => {
             is => 'HASH',
+            default => {},
             doc => 'The paths to the temporary dumped copy of the post-processed BED file',
         },
         _merged_bed_file_path => {
@@ -369,10 +370,6 @@ sub processed_bed_file {
         my $content = $self->processed_bed_file_content(%args);
         my $temp_file = Genome::Sys->create_temp_file_path($self->processed_bed_file_name(%args));
         Genome::Sys->write_file($temp_file, $content);
-        unless ($self->_processed_bed_file_path) {
-            my $empty = {};
-            $self->_processed_bed_file_path($empty);
-        }
         $self->_processed_bed_file_path->{$self->processed_bed_file_name(%args)} = $temp_file;
     }
 
