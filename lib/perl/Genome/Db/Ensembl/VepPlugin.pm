@@ -45,9 +45,11 @@ sub copy_to_staging_directory {
 sub replace_configuration_paths {
     my $self = shift;
 
-    my $config_dir = File::Spec->join($self->dest_dir, 'config');
+    my $config_dir = File::Spec->join($self->staging_directory, 'config');
     my $pattern = "s|path/to/config|$config_dir|";
-    for my $file (glob File::Spec->join($config_dir, '*.conf')) {
+
+    my $glob_dir = File::Spec->join($self->dest_dir, 'config', '*.conf');
+    for my $file (glob $glob_dir) {
         my @sed_cmd = (
             'sed', '-i', $pattern, $file,
         );
