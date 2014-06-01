@@ -1,11 +1,11 @@
-package Genome::Annotation::Reporter::TumorOnlyReporter;
+package Genome::VariantReporting::Reporter::TumorOnlyReporter;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::Annotation::Reporter::TumorOnlyReporter {
-    is => 'Genome::Annotation::Reporter::WithHeader',
+class Genome::VariantReporting::Reporter::TumorOnlyReporter {
+    is => 'Genome::VariantReporting::Reporter::WithHeader',
 };
 
 sub name {

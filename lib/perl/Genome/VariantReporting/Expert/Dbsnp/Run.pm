@@ -24,7 +24,7 @@ sub name {
 }
 
 sub result_class {
-    'Genome::Annotation::Expert::Dbsnp::RunResult';
+    'Genome::VariantReporting::Expert::Dbsnp::RunResult';
 }
 
 sub execute {

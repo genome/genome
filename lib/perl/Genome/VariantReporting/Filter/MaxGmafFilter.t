@@ -13,7 +13,7 @@ use Test::More;
 use Test::Exception;
 use Genome::File::Vcf::Entry;
 
-my $pkg = "Genome::Annotation::Filter::MaxGmafFilter";
+my $pkg = "Genome::VariantReporting::Filter::MaxGmafFilter";
 use_ok($pkg);
 
 subtest "Filter fails" => sub {

@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<operation name="Annotation (snvs)">
+<operation name="Variant Reporting (snvs)">
   <operationtype typeClass="Workflow::OperationType::Model">
     <inputproperty>build_id</inputproperty>
     <inputproperty>output_directory</inputproperty>

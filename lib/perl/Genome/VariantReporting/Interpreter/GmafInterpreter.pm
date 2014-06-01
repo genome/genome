@@ -1,11 +1,11 @@
-package Genome::Annotation::Interpreter::GmafInterpreter;
+package Genome::VariantReporting::Interpreter::GmafInterpreter;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::Annotation::Interpreter::GmafInterpreter {
-    is => 'Genome::Annotation::Interpreter::Base',
+class Genome::VariantReporting::Interpreter::GmafInterpreter {
+    is => 'Genome::VariantReporting::Interpreter::Base',
     has => [
         dummy => {
             is_optional => 1,

@@ -12,7 +12,7 @@ use above "Genome";
 use Test::More;
 use Genome::Utility::Test qw(compare_ok);
 
-my $pkg = 'Genome::Annotation::Reporter::TumorOnlyReporter';
+my $pkg = 'Genome::VariantReporting::Reporter::TumorOnlyReporter';
 use_ok($pkg);
 
 my $data_dir = __FILE__.".d";

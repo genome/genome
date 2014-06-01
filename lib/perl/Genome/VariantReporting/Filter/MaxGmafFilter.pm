@@ -1,11 +1,11 @@
-package Genome::Annotation::Filter::MaxGmafFilter;
+package Genome::VariantReporting::Filter::MaxGmafFilter;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::Annotation::Filter::MaxGmafFilter {
-    is => 'Genome::Annotation::Filter::Base',
+class Genome::VariantReporting::Filter::MaxGmafFilter {
+    is => 'Genome::VariantReporting::Filter::Base',
     has => [
         max_gmaf => {
             is => 'Number',
