@@ -46,7 +46,7 @@ my $bad_plan_name_pp = Genome::ProcessingProfile::TestRunsVariantReporting->crea
     snvs_variant_reporting_plan_name => 'not_an_existing_plan'
 );
 ok($bad_plan_name_pp, 'Processing profile created with a nonexistant plan');
-ok(check_errors(qr(Could not find annotation plan), $bad_plan_name_pp->__errors__), 'Found the errors we expected');
+ok(check_errors(qr(Could not find variant reporting plan), $bad_plan_name_pp->__errors__), 'Found the errors we expected');
 
 # Test a processing profile with a bad plan
 my $bad_plan_pp = Genome::ProcessingProfile::TestRunsVariantReporting->create(
@@ -69,5 +69,6 @@ sub check_errors{
         }
     }
 
+    printf "Found errors: %s, but expected one like %s", join("\n", map {$_->desc} @errors), $regex;
     return 0;
 }
