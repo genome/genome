@@ -67,12 +67,17 @@ sub get_line {
 sub get_header {
     my $header = shift;
 
-    my @lines = grep {defined} (
-        #@unparsed,
-        $header->_metainfo_lines,
+    my @unparsed = map {"##$_"} @{$header->_unparsed_lines};
+
+    my @lines;
+    push @lines, sprintf("##fileformat=%s", $header->fileformat) if defined $header->fileformat;
+    push @lines, grep {defined} (
+        @unparsed,
+        #$header->_metainfo_lines,
         #$header->_info_lines,
         $header->_format_lines,
         $header->_filter_lines,
+        #$header->_header_line
         "#" . join("\t", @COLUMN_HEADERS),
         );
     return join("\n", @lines) . "\n";
