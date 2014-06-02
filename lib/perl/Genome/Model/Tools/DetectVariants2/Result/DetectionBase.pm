@@ -352,10 +352,9 @@ sub _resolve_subclass_name {
 
 sub _set_result_file_permissions {
     my $self = shift;
+
     my $output_dir = $self->output_dir;
-    if($output_dir =~ m/\/$/){
-        $output_dir =~ s/\/$//;
-    }
+    $output_dir =~ s/\/$//;
 
     chmod 02775, $output_dir;
     for my $subdir (grep { -d $_  } glob("$output_dir/*")) {
