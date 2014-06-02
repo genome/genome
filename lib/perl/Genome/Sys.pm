@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Genome::Utility::File::Mode qw(mode);
 
 use autodie qw(chown);
 use Carp;
@@ -860,11 +861,10 @@ sub make_path {
         my $rv = mkdir $subpath;
         my $mkdir_errno = $!;
         if ($rv) {
-            # chown removes the setgid bit even if this is a "no-op" on root_squashed NFS volumes.
-            # If setgid is on this is probably a no-op so we can check if gid matches.
             my $stat = stat($subpath);
+
             if ($stat->gid != $gid) {
-                chown -1, $gid, $subpath;
+                set_gid($gid, $subpath);
             }
         } else {
             if ($mkdir_errno == EEXIST) {
@@ -880,6 +880,19 @@ sub make_path {
         die "directory does not exist: $path";
     }
 
+}
+
+sub set_gid {
+    my $gid = shift;
+    my $path = shift;
+
+    # chown removes the setgid bit on root_squashed NFS volumes so preserve manually
+    my $mode = mode($path);
+    my $had_setgid = $mode->is_setgid;
+    chown -1, $gid, $path;
+    if ($had_setgid) {
+        $mode->add_setgid();
+    }
 }
 
 sub gidgrnam {
