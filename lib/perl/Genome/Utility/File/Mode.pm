@@ -76,6 +76,7 @@ my %names = (
     S_IWUSR, 'user_writable',
     S_IXUSR, 'user_executable',
 );
+sub names { %names }
 for my $bit (keys %names) {
     my $name = $names{$bit};
 
@@ -84,6 +85,32 @@ for my $bit (keys %names) {
         code => $is,
         into => __PACKAGE__,
         as   => 'is_' . $name
+    });
+
+    my $add = sub {
+        my $self = shift;
+        my $mode = $self->{mode} | $bit;
+        chmod $mode, $self->{path} or croak "cannot chmod: $!";
+        $self->restat();
+        return $self;
+    };
+    install_sub({
+        code => $add,
+        into => __PACKAGE__,
+        as   => 'add_' . $name
+    });
+
+    my $rm = sub {
+        my $self = shift;
+        my $mode = $self->{mode} & ~$bit;
+        chmod $mode, $self->{path} or croak "cannot chmod: $!";
+        $self->restat();
+        return $self;
+    };
+    install_sub({
+        code => $rm,
+        into => __PACKAGE__,
+        as   => 'rm_' . $name
     });
 }
 
