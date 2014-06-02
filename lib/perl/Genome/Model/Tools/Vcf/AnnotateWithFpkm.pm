@@ -8,6 +8,7 @@ use Genome::File::Vcf::Writer;
 use Data::Dumper qw(Dumper);
 use List::MoreUtils qw(firstidx);
 use Memoize qw(memoize);
+use Genome::File::Vcf::VepConsequenceParser;
 
 my $FPKM_TAG = 'FPKM';
 my $FPKM_HEADER = sprintf('<ID=%s,Number=A,Type=Float,Description="Framents Per Kilobase of exon per Million fragments">',$FPKM_TAG);
