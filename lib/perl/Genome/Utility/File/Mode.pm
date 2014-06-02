@@ -90,9 +90,7 @@ for my $bit (keys %names) {
     my $add = sub {
         my $self = shift;
         my $mode = $self->{mode} | $bit;
-        chmod $mode, $self->{path} or croak "cannot chmod: $!";
-        $self->restat();
-        return $self;
+        return $self->set_mode($mode);
     };
     install_sub({
         code => $add,
@@ -103,15 +101,21 @@ for my $bit (keys %names) {
     my $rm = sub {
         my $self = shift;
         my $mode = $self->{mode} & ~$bit;
-        chmod $mode, $self->{path} or croak "cannot chmod: $!";
-        $self->restat();
-        return $self;
+        return $self->set_mode($mode);
     };
     install_sub({
         code => $rm,
         into => __PACKAGE__,
         as   => 'rm_' . $name
     });
+}
+
+sub set_mode {
+    my $self = shift;
+    my $mode = shift;
+    chmod $mode, $self->{path} or croak "cannot chmod: $!";
+    $self->restat();
+    return $self;
 }
 
 1;
