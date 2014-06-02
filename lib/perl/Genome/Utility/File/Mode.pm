@@ -12,8 +12,14 @@ use Sub::Install qw(install_sub);
 
 our @EXPORT_OK = qw(mode);
 
+# as a function it creates an object and as instance method it returns mode
 sub mode {
     my $path = shift;
+
+    if (ref $path) {
+        return $path->{mode};
+    }
+
     __PACKAGE__->new($path);
 }
 
@@ -48,6 +54,9 @@ sub new {
     return $self;
 }
 
+sub path { shift->{path} }
+sub perm { shift->mode & 07777 }
+
 sub restat {
     my $self = shift;
     my $stat = stat($self->{path}) or croak "cannot stat: $!";
@@ -60,32 +69,66 @@ sub has_bit {
     return _has_bit($self->{mode}, $bit);
 }
 
-my %names = (
-    S_ISUID, 'is_setuid',
-    S_ISGID, 'is_setgid',
-    S_IRWXO, 'is_other_rwx',
-    S_IROTH, 'is_other_readable',
-    S_IWOTH, 'is_other_writable',
-    S_IXOTH, 'is_other_executable',
-    S_IRWXG, 'is_group_rwx',
-    S_IRGRP, 'is_group_readable',
-    S_IWGRP, 'is_group_writable',
-    S_IXGRP, 'is_group_executable',
-    S_IRWXU, 'is_user_rwx',
-    S_IRUSR, 'is_user_readable',
-    S_IWUSR, 'is_user_writable',
-    S_IXUSR, 'is_user_executable',
+my %bit = (
+    setuid           => S_ISUID,
+    setgid           => S_ISGID,
+    other_rwx        => S_IRWXO,
+    other_readable   => S_IROTH,
+    other_writable   => S_IWOTH,
+    other_executable => S_IXOTH,
+    group_rwx        => S_IRWXG,
+    group_readable   => S_IRGRP,
+    group_writable   => S_IWGRP,
+    group_executable => S_IXGRP,
+    user_rwx         => S_IRWXU,
+    user_readable    => S_IRUSR,
+    user_writable    => S_IWUSR,
+    user_executable  => S_IXUSR,
+    all_rwx          => S_IRWXU | S_IRWXG | S_IRWXO,
+    all_readable     => S_IRUSR | S_IRGRP | S_IROTH,
+    all_writable     => S_IWUSR | S_IWGRP | S_IWOTH,
+    all_executable   => S_IXUSR | S_IXGRP | S_IXOTH,
 );
-for my $bit (keys %names) {
-    my $name = $names{$bit};
-    my $sub = sub {
-        return shift->has_bit($bit);
+sub bit { %bit }
+for my $name (keys %bit) {
+    my $bit = $bit{$name};
+
+    my $is = sub { shift->has_bit($bit) };
+    install_sub({
+        code => $is,
+        into => __PACKAGE__,
+        as   => 'is_' . $name
+    });
+
+    my $add = sub {
+        my $self = shift;
+        my $mode = $self->{mode} | $bit;
+        return $self->set_mode($mode);
     };
     install_sub({
-        code => $sub,
+        code => $add,
         into => __PACKAGE__,
-        as   => $name
+        as   => 'add_' . $name
     });
+
+    my $rm = sub {
+        my $self = shift;
+        my $mode = $self->{mode} & ~$bit;
+        return $self->set_mode($mode);
+    };
+    install_sub({
+        code => $rm,
+        into => __PACKAGE__,
+        as   => 'rm_' . $name
+    });
+}
+
+sub set_mode {
+    my $self = shift;
+    my $mode = shift;
+    chmod $mode, $self->{path} or croak "cannot chmod: $!";
+    $self->restat();
+    return $self;
 }
 
 1;
