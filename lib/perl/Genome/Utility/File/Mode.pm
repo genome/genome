@@ -12,8 +12,14 @@ use Sub::Install qw(install_sub);
 
 our @EXPORT_OK = qw(mode);
 
+# as a function it creates an object and as instance method it returns mode
 sub mode {
     my $path = shift;
+
+    if (ref $path) {
+        return $path->{mode};
+    }
+
     __PACKAGE__->new($path);
 }
 
@@ -47,6 +53,9 @@ sub new {
     $self->restat();
     return $self;
 }
+
+sub path { shift->{path} }
+sub perm { shift->mode & 07777 }
 
 sub restat {
     my $self = shift;
