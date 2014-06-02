@@ -2,22 +2,24 @@ package Genome::Sys;
 
 use strict;
 use warnings;
-use autodie qw(chown);
+
 use Genome;
+
+use autodie qw(chown);
+use Carp;
 use Cwd;
-use File::Path;
-use File::Spec;
+use Digest::MD5;
 use File::Basename;
 use File::Copy;
-use Carp;
+use File::Path;
+use File::Spec;
 use IO::File;
-use LWP::Simple qw(getstore RC_OK);
-use List::MoreUtils "each_array";
-use Set::Scalar;
-use Digest::MD5;
 use JSON;
+use List::MoreUtils "each_array";
+use LWP::Simple qw(getstore RC_OK);
 use Params::Validate qw(:types validate_pos);
 use POSIX qw(EEXIST);
+use Set::Scalar;
 
 # these are optional but should load immediately when present
 # until we can make the Genome::Utility::Instrumentation optional (Net::Statsd deps)
