@@ -61,10 +61,12 @@ do {
     for my $name (keys %bit) {
         my $bit = $bit{$name};
         subtest "add/rm $name" => sub {
-            plan tests => 2;
+            plan tests => 4;
 
-            chmod 0, $path;
+            my $initial_mode = 0;
             my $mode = mode($path);
+            $mode->set_mode($initial_mode);
+            is($mode->perm, $initial_mode, 'set initial permissions');
 
             my $add = 'add_' . $name;
             $mode->$add;
@@ -73,6 +75,8 @@ do {
             my $rm = 'rm_' . $name;
             $mode->$rm;
             ok(!$mode->has_bit($bit), $rm);
+
+            is($mode->perm, $initial_mode, 'back to initial permissions');
         };
     };
 };
