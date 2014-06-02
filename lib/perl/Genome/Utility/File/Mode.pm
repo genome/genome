@@ -60,25 +60,25 @@ sub has_bit {
     return _has_bit($self->{mode}, $bit);
 }
 
-my %names = (
-    S_ISUID, 'setuid',
-    S_ISGID, 'setgid',
-    S_IRWXO, 'other_rwx',
-    S_IROTH, 'other_readable',
-    S_IWOTH, 'other_writable',
-    S_IXOTH, 'other_executable',
-    S_IRWXG, 'group_rwx',
-    S_IRGRP, 'group_readable',
-    S_IWGRP, 'group_writable',
-    S_IXGRP, 'group_executable',
-    S_IRWXU, 'user_rwx',
-    S_IRUSR, 'user_readable',
-    S_IWUSR, 'user_writable',
-    S_IXUSR, 'user_executable',
+my %bit = (
+    setuid           => S_ISUID,
+    setgid           => S_ISGID,
+    other_rwx        => S_IRWXO,
+    other_readable   => S_IROTH,
+    other_writable   => S_IWOTH,
+    other_executable => S_IXOTH,
+    group_rwx        => S_IRWXG,
+    group_readable   => S_IRGRP,
+    group_writable   => S_IWGRP,
+    group_executable => S_IXGRP,
+    user_rwx         => S_IRWXU,
+    user_readable    => S_IRUSR,
+    user_writable    => S_IWUSR,
+    user_executable  => S_IXUSR,
 );
-sub names { %names }
-for my $bit (keys %names) {
-    my $name = $names{$bit};
+sub bit { %bit }
+for my $name (keys %bit) {
+    my $bit = $bit{$name};
 
     my $is = sub { shift->has_bit($bit) };
     install_sub({

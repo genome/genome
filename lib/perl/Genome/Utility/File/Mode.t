@@ -22,14 +22,14 @@ my @bits = (
     S_IXUSR,
 );
 
-my %names = Genome::Utility::File::Mode::names();
+my %bit = Genome::Utility::File::Mode::bit();
 my %modes = (
     '00000' => 00000, '02000' => 02000, '04000' => 04000,
     '00100' => 00100, '00200' => 00200, '00400' => 00400,
     '00010' => 00010, '00020' => 00020, '00040' => 00040,
     '00001' => 00001, '00002' => 00002, '00004' => 00004,
 );
-plan tests => scalar(keys %modes) + scalar(keys %names);
+plan tests => scalar(keys %modes) + scalar(keys %bit);
 
 do {
     my $file = File::Temp->new();
@@ -58,8 +58,8 @@ do {
     my $file = File::Temp->new();
     my $path = $file->filename;
 
-    for my $bit (keys %names) {
-        my $name = $names{$bit};
+    for my $name (keys %bit) {
+        my $bit = $bit{$name};
         subtest "add/rm $name" => sub {
             plan tests => 2;
 
