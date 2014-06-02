@@ -84,6 +84,10 @@ my %bit = (
     user_readable    => S_IRUSR,
     user_writable    => S_IWUSR,
     user_executable  => S_IXUSR,
+    all_rwx          => S_IRWXU | S_IRWXG | S_IRWXO,
+    all_readable     => S_IRUSR | S_IRGRP | S_IROTH,
+    all_writable     => S_IWUSR | S_IWGRP | S_IWOTH,
+    all_executable   => S_IXUSR | S_IXGRP | S_IXOTH,
 );
 sub bit { %bit }
 for my $name (keys %bit) {
