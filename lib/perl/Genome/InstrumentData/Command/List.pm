@@ -5,7 +5,6 @@ use warnings;
 
 use Genome;
 
-
 class Genome::InstrumentData::Command::List {
     is => 'Genome::Object::Command::List',
     has => [
@@ -24,6 +23,7 @@ class Genome::InstrumentData::Command::List {
             doc => 'Filter results based on the parameters.  See below for details.',
         },
     ],
+    doc => 'find instrument data',
 };
 
 my %CLASS_LOOKUP = (
