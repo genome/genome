@@ -22,7 +22,7 @@ my %names = (
     S_IWOTH, 'other %s write',
     S_IXOTH, 'other %s execute',
     S_ISUID, '%s setuid',
-    S_ISGID, '%s setuid',
+    S_ISGID, '%s setgid',
     S_IRWXG, 'group %s read, write, execute',
     S_IRGRP, 'group %s read',
     S_IWGRP, 'group %s write',
