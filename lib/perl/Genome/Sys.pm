@@ -13,6 +13,7 @@ use File::Basename;
 use File::Copy;
 use File::Path;
 use File::Spec;
+use File::stat qw(stat);
 use IO::File;
 use JSON;
 use List::MoreUtils "each_array";
@@ -861,7 +862,8 @@ sub make_path {
         if ($rv) {
             # chown removes the setgid bit even if this is a "no-op" on root_squashed NFS volumes.
             # If setgid is on this is probably a no-op so we can check if gid matches.
-            if ([stat($subpath)]->[5] != $gid) {
+            my $stat = stat($subpath);
+            if ($stat->gid != $gid) {
                 chown -1, $gid, $subpath;
             }
         } else {
