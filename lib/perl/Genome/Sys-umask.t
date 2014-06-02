@@ -2,10 +2,13 @@ use strict;
 use warnings;
 
 use above "Genome";
+
 use Fcntl ':mode';
 use File::Spec qw();
+
 use Genome::Utility::Test qw(abort run_ok);
-use Genome::Utility::Test::Stat qw(has_bit hasnt_bit);
+
+use Genome::Utility::File::Mode qw(mode);
 
 use Test::More tests => 2;
 
@@ -25,15 +28,15 @@ subtest 'create_directory overrides umask' => sub {
     my $cd_path = File::Spec->join($td_path, 'cd');
     Genome::Sys->create_directory($cd_path);
     ok(-d $cd_path, 'made a subdirectory');
-    my $cd_mode = [stat($cd_path)]->[2];
-    has_bit($cd_mode, S_IWGRP, 'subdirectory made with Genome::Sys->create_directory has group write permissions');
+    my $cd_mode = mode($cd_path);
+    ok($cd_mode->is_group_writable, 'subdirectory made with Genome::Sys->create_directory has group write permissions');
 
     # verify mkdir, without overrides create_directory has, does not
     my $mkdir_path = File::Spec->join($td_path, 'mkdir');
     mkdir $mkdir_path;
     ok(-d $mkdir_path, 'made a subdirectory');
-    my $mkdir_mode = [stat($mkdir_path)]->[2];
-    hasnt_bit($mkdir_mode, S_IWGRP, 'subdirectory made with mkdir does not have group write permissions');
+    my $mkdir_mode = mode($mkdir_path);
+    ok(!$mkdir_mode->is_group_writable, 'subdirectory made with mkdir does not have group write permissions');
 };
 
 subtest "GENOME_SYS_UMASK='0027'" => sub {
@@ -62,18 +65,18 @@ subtest "GENOME_SYS_UMASK='0027'" => sub {
         plan tests => 11;
         # default dir perms = 0777
         # with setgid and GENOME_SYS_UMASK = 2750
-        my $cd_mode = [stat($cd_path)]->[2];
-        hasnt_bit($cd_mode, S_ISUID);
-        has_bit  ($cd_mode, S_ISGID);
-        has_bit  ($cd_mode, S_IRUSR);
-        has_bit  ($cd_mode, S_IWUSR);
-        has_bit  ($cd_mode, S_IXUSR);
-        has_bit  ($cd_mode, S_IRGRP);
-        hasnt_bit($cd_mode, S_IWGRP);
-        has_bit  ($cd_mode, S_IXGRP);
-        hasnt_bit($cd_mode, S_IROTH);
-        hasnt_bit($cd_mode, S_IWOTH);
-        hasnt_bit($cd_mode, S_IXOTH);
+        my $cd_mode = mode($cd_path);
+        ok(!$cd_mode->is_setuid);
+        ok( $cd_mode->is_setgid);
+        ok( $cd_mode->is_user_readable);
+        ok( $cd_mode->is_user_writable);
+        ok( $cd_mode->is_user_executable);
+        ok( $cd_mode->is_group_readable);
+        ok(!$cd_mode->is_group_writable);
+        ok( $cd_mode->is_group_executable);
+        ok(!$cd_mode->is_other_readable);
+        ok(!$cd_mode->is_other_writable);
+        ok(!$cd_mode->is_other_executable);
     };
 
     # verify mkdir, without overrides create_directory has, does not
@@ -85,17 +88,17 @@ subtest "GENOME_SYS_UMASK='0027'" => sub {
         plan tests => 11;
         # default dir perms = 0777
         # with setgid and umask = 2700
-        my $mkdir_mode = [stat($mkdir_path)]->[2];
-        hasnt_bit($mkdir_mode, S_ISUID);
-        has_bit  ($mkdir_mode, S_ISGID);
-        has_bit  ($mkdir_mode, S_IRUSR);
-        has_bit  ($mkdir_mode, S_IWUSR);
-        has_bit  ($mkdir_mode, S_IXUSR);
-        hasnt_bit($mkdir_mode, S_IRGRP);
-        hasnt_bit($mkdir_mode, S_IWGRP);
-        hasnt_bit($mkdir_mode, S_IXGRP);
-        hasnt_bit($mkdir_mode, S_IROTH);
-        hasnt_bit($mkdir_mode, S_IWOTH);
-        hasnt_bit($mkdir_mode, S_IXOTH);
+        my $mkdir_mode = mode($mkdir_path);
+        ok(!$mkdir_mode->is_setuid);
+        ok( $mkdir_mode->is_setgid);
+        ok( $mkdir_mode->is_user_readable);
+        ok( $mkdir_mode->is_user_writable);
+        ok( $mkdir_mode->is_user_executable);
+        ok(!$mkdir_mode->is_group_readable);
+        ok(!$mkdir_mode->is_group_writable);
+        ok(!$mkdir_mode->is_group_executable);
+        ok(!$mkdir_mode->is_other_readable);
+        ok(!$mkdir_mode->is_other_writable);
+        ok(!$mkdir_mode->is_other_executable);
     };
 };

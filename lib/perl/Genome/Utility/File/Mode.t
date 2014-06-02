@@ -6,12 +6,9 @@ use Fcntl ':mode';
 use File::Temp qw();
 use Test::More;
 
-use Genome::Utility::Test::Stat qw(has_bit hasnt_bit);
+use Genome::Utility::File::Mode qw(mode);
 
 my @bits = (
-#    S_IRWXO,
-#    S_IRWXG,
-#    S_IRWXU,
     S_IROTH,
     S_IWOTH,
     S_IXOTH,
@@ -43,12 +40,12 @@ for my $name (sort keys %modes) {
 
         chmod $expected, $filename;
 
-        my $got = [stat($filename)]->[2];
+        my $got = mode($filename);
         for (@bits) {
             if ($expected == $_) {
-                has_bit($got, $_);
+                ok($got->has_bit($_));
             } else {
-                hasnt_bit($got, $_);
+                ok(!$got->has_bit($_));
             }
         }
     };
