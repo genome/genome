@@ -25,7 +25,7 @@ subtest "output vcf" => sub {
     my $expected_out = File::Spec->join($data_dir, "expected_snvs.vcf.gz");
     my $differ = Genome::File::Vcf::Differ->new($out, $expected_out);
     my $diff = [$differ->diff];
-    is_deeply($diff, [], "Found No differences between $out and (expected) $expected_out") or
+    is_deeply($diff, [], "Found no differences between $out and (expected) $expected_out") or
         diag Data::Dumper::Dumper($diff);
 
 };
@@ -43,4 +43,5 @@ sub run {
     );
     ok($cmd->isa($pkg), "Command created ok");
     ok($cmd->execute, "Command executed ok");
+    like($cmd->status_message, qr/Could not find a gene for intergenic transcript/, "Status message for one intergenic transcript as expected");
 }
