@@ -2,7 +2,10 @@ package Genome::SoftwareResult::Stageable;
 
 use warnings;
 use strict;
+
 use Genome;
+use Genome::Utility::File::Mode qw(mode);
+
 use Sys::Hostname;
 use File::Path;
 
@@ -119,9 +122,8 @@ sub _promote_data {
         chmod 02775, $subdir;
     }
 
-    # Make everything in here read-only 
     for my $file (grep { -f $_  } glob("$output_dir/*")) {
-        chmod 0444, $file;
+        mode($file)->rm_all_writable;
     }
 
     $self->debug_message("Files in $output_dir: \n" . join "\n", glob($output_dir . "/*"));
