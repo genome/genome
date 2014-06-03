@@ -26,7 +26,7 @@ get_tumor_normal_logrr <- function(ref_analysis_norm)
   R  <- cn.mops:::.makeLogRatios(ref_analysis_norm, "CN2")
   regions <- data.frame(seqnames=as.vector(seqnames(R)),
       starts=start(R)-1, ends=end(R))
-  lrr <- attr(ref_analysis_norm, "individualCall")
+  lrr <- as.data.frame(values(R))
   bed_logrr <- cbind(regions, lrr)
   colnames(bed_logrr) <- c("chr", "start", "end", "tumor_normal_log2r");
   bed_logrr<-convert_start_end_character(bed_logrr)
