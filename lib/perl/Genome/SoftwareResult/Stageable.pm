@@ -7,6 +7,7 @@ use Genome;
 use Genome::Utility::File::Mode qw(mode);
 
 use Sys::Hostname;
+use File::Find::Rule qw();
 use File::Path;
 
 class Genome::SoftwareResult::Stageable {
@@ -122,7 +123,8 @@ sub _promote_data {
         chmod 02775, $subdir;
     }
 
-    for my $file (grep { -f $_  } glob("$output_dir/*")) {
+    my @files = File::Find::Rule->file->not(File::Find::Rule->symlink)->in($output_dir);
+    for my $file (@files) {
         mode($file)->rm_all_writable;
     }
 

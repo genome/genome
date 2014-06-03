@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Sys::Hostname;
+use File::Find::Rule qw();
 use File::stat;
 use File::Path 'rmtree';
 use List::MoreUtils qw{ uniq };
@@ -440,7 +441,8 @@ sub _promote_validated_data {
         chmod 02775, $subdir;
     }
 
-    for my $file (grep { -f $_  } glob("$output_dir/*")) {
+    my @files = File::Find::Rule->file->not(File::Find::Rule->symlink)->in($output_dir);
+    for my $file (@files) {
         mode($file)->rm_all_writable;
     }
 

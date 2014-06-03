@@ -16,6 +16,7 @@ use Genome::Utility::File::Mode qw(mode);
 
 use File::Basename;
 use File::Copy;
+use File::Find::Rule qw();
 use IO::File;
 use File::stat;
 use Data::Dumper;
@@ -204,7 +205,8 @@ sub execute {
 
     $self->create_bam_md5;
 
-    for my $file (grep {-f $_} glob($build->accumulated_alignments_directory . "/*")) {
+    my @files = File::Find::Rule->file->not(File::Find::Rule->symlink)->in($build->accumulated_alignments_directory);
+    for my $file (@files) {
         $self->debug_message("Setting $file to read-only");
         mode($file)->rm_all_writable;
     }
