@@ -9237,6 +9237,8 @@ $Genome::Command::OPTS_SPEC = [
           'Warren',
           'Weinstock'
         ],
+        'queue!',
+        undef,
         'requestor=s',
         undef,
         'builds=s@',
