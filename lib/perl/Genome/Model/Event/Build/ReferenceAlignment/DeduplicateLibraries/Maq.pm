@@ -8,6 +8,8 @@ use strict;
 use warnings;
 
 use Genome;
+use Genome::Utility::File::Mode qw(mode);
+
 use File::Basename;
 use File::Copy;
 use IO::File;
@@ -273,7 +275,7 @@ sub execute {
 
     for my $file (grep {-f $_} glob($build->accumulated_alignments_directory . "/*")) {
         $self->debug_message("Setting $file to read-only");
-        chmod 0444, $file;
+        mode($file)->rm_all_writable;
     }
 
     $now = UR::Context->current->now;
