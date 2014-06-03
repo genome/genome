@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 use Genome::Utility::Instrumentation;
+use Genome::Utility::File::Mode qw(mode);
 
 use Carp qw(croak confess);
 use Digest::MD5 qw(md5_hex);
@@ -188,7 +189,7 @@ sub set_permissions_read_only {
     $self->set_file_permissions(0444);
     $self->set_directory_permissions(0555);
 
-    chmod 0555, $self->absolute_path;
+    mode($self->absolute_path)->rm_all_writable();
 }
 
 sub set_file_permissions {
