@@ -165,10 +165,8 @@ sub check_tcga_vcf {
             else {
                 my $sample = Genome::Sample->get(name => $sample_name);
                 if ($sample) {
-                    my $sample_tcga_name = $sample->extraction_label;
-                    if ($sample_tcga_name and $sample_tcga_name =~ /^TCGA\-/) {
-                        $self->debug_message("Found TCGA name: $sample_tcga_name for sample: $sample_name");
-                        $self->$sample_type($sample_tcga_name);
+                    $self->$sample_type($sample->name_in_vcf);
+                    if ($sample->name_in_vcf =~ /^TCGA\-/) {
                         $flag++;
                     }
                 }
