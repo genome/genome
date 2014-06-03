@@ -727,13 +727,7 @@ sub _mark_read_only_closure {
 
         require File::Find;
         sub mark_read_only {
-            my $file = $File::Find::name;
-            if (-d $file) {
-                chmod 0555, $file;
-            }
-            else {
-                chmod 0444, $file
-            }
+            mode($File::Find::name)->rm_all_writable();
         };
 
         $class->debug_message("Marking directory at $path read-only");
