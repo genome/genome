@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::VariantReporting::Filter::AlleleInGenotypeFilter {
-    is => ['Genome::VariantReporting::Filter::Base', 'Genome::VariantReporting::Filter::WithSampleName'],
+    is => ['Genome::VariantReporting::Filter::Base', 'Genome::VariantReporting::WithSampleName'],
     has => [
     ],
 };
