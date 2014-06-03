@@ -121,12 +121,16 @@ sub _load_error_rate_metrics {
     return unless $error_rate_file;
 
     my %error_rate_sum;
-    if ($error_rate_file) {
+    if (-s $error_rate_file) {
         my $error_rate_reader = Genome::Utility::IO::SeparatedValueReader->create(
             input => $error_rate_file,
             separator => "\t",
             ignore_lines_starting_with => '#',
         );
+        unless ($error_rate_reader) {
+            $self->error_message("Could not get reader for " . $error_rate_file);
+            die;
+        }
         while (my $error_rate_data = $error_rate_reader->next) {
             if ($error_rate_data->{position} eq 'SUM') {
                 $error_rate_sum{$error_rate_data->{read_end}} = $error_rate_data;
