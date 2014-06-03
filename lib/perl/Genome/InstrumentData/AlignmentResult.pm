@@ -11,6 +11,7 @@ use File::Copy;
 use Carp qw(confess);
 
 use Genome::Utility::Instrumentation;
+use Genome::Utility::File::Mode qw(mode);
 
 use warnings;
 use strict;
@@ -1161,9 +1162,8 @@ sub _promote_validated_data {
         chmod 02775, $subdir;
     }
 
-    # Make everything in here read-only
     for my $file (grep { -f $_  } glob("$output_dir/*")) {
-        chmod 0444, $file;
+        mode($file)->rm_all_writable;
     }
 
     $self->debug_message("Files in $output_dir: \n" . join "\n", glob($output_dir . "/*"));
