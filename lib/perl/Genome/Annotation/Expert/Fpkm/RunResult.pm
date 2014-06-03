@@ -18,24 +18,25 @@ class Genome::Annotation::Expert::Fpkm::RunResult {
     ],
 };
 
-sub output_filename_base {
-    return 'fpkm.vcf';
+sub output_filename {
+    return 'fpkm.vcf.gz';
 }
 
-sub output_filename {
+sub fpkm_output_file {
     my $self = shift;
-    return $self->output_filename_base.'.gz';
+    return File::Spec->join($self->temp_staging_directory, $self->output_filename);
 }
 
 sub _run {
     my $self = shift;
 
-    Genome::Model::Tools::Vcf::AnnotateWithFpkm->execute(
+    my $command = Genome::Model::Tools::Vcf::AnnotateWithFpkm->create(
         vcf_file => $self->input_result_file_path,
-        output_file => File::Spec->join($self->temp_staging_directory, $self->output_filename),
+        output_file => $self->fpkm_output_file,
         fpkm_file => $self->fpkm_file,
         sample_name => $self->tumor_sample_name,
     );
+    $command->execute;
 
     return;
 }
