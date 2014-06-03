@@ -1042,14 +1042,25 @@ sub _create_bed_from_vcf {
     eval {
         Genome::Model::Tools::Bed::Convert::VcfToBed->execute(source => $vcf,
             output => "$vcf.bed",
-            sample_name => $self->aligned_reads_sample,
+            sample_name => $self->_aligned_reads_sample_name_in_vcf,
         );
     };
     if ($@) {
         $self->error_message("VcfToBed conversion failed: $@");
-        #die $self->error_message();
+        die $self->error_message();
     }
     return;
+}
+
+sub _aligned_reads_sample_name_in_vcf {
+    my $self = shift;
+    my $sample = Genome::Sample->get(name => $self->aligned_reads_sample);
+    if ($sample) {
+        return $sample->name_in_vcf;
+    }
+    else {
+        return $self->aligned_reads_sample;
+    }
 }
 
 # for each strategy input we look in the workflow result for output_directories which we then turn into relative paths, and then into final full paths
