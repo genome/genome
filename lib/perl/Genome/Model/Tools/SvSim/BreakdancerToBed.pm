@@ -90,9 +90,13 @@ sub execute {
         CTX => $self->ctx_output_bedpe,
         );
 
-    my %fhs = map {
-        $_ => Genome::Sys->open_file_for_writing($paths{$_}) if defined $paths{$_}
-        } keys %paths;
+    my %fhs;
+    for my $p (keys %paths) {
+        my $fn = $paths{$p};
+        if (defined $fn) {
+            $fhs{$p} = Genome::Sys->open_file_for_writing($fn);
+        }
+    }
 
     die "No output files specified" unless scalar(keys(%fhs)) > 0;
 
@@ -110,11 +114,10 @@ sub execute {
         }
     }
 
-    print Data::Dumper::Dumper(\%paths);
-    print Data::Dumper::Dumper(\%fhs);
+
     map {$_->close()} values %fhs;
 
-    for my $p (grep {-s $_} values(%paths)) {
+    for my $p (grep {(defined $_) && -s $_} values(%paths)) {
         print "Sorting $p\n";
         my $tmp = Genome::Sys->create_temp_file_path;
         my $cmd = Genome::Model::Tools::Joinx::Sort->create(
