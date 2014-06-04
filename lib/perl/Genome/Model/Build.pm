@@ -83,14 +83,8 @@ class Genome::Model::Build {
         },
         disk_allocation   => { 
             is => 'Genome::Disk::Allocation', 
-            calculate_from => [ 'class', 'id' ],
-            calculate => q(
-                my $disk_allocation = Genome::Disk::Allocation->get(
-                                        owner_class_name => $class,
-                                        owner_id => $id,
-                                    );
-                return $disk_allocation;
-            ) 
+            is_many => 1,
+            reverse_as => 'owner'
         },
         software_revision => { 
             is => 'Text', 
