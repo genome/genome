@@ -260,6 +260,16 @@ class Genome::Sample {
     doc => 'A single specimen of DNA or RNA extracted from some tissue sample',
 };
 
+sub sample_name_to_name_in_vcf {
+    my $class = shift;
+    my $sample_name = shift;
+    my $sample = Genome::Sample->get(name => $sample_name);
+    if ($sample) {
+        return $sample->name_in_vcf;
+    }
+    return $sample_name;
+}
+
 sub name_in_vcf {
     my $self = shift;
     my $sample_tcga_name = $self->extraction_label;
