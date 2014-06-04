@@ -171,6 +171,17 @@ sub validate_model_and_build_inputs {
         );
     }
 
+    my $tumor_ref_seq_build_id  = $self->tumor_model->reference_sequence_build_id;
+    my $normal_ref_seq_build_id = $self->normal_model->reference_sequence_build_id;
+
+    unless ($tumor_ref_seq_build_id eq $normal_ref_seq_build_id) {
+        push @tags, UR::Object::Tag->create(
+            type => 'error',
+            properties => ['reference_sequence_build'],
+            desc => "Normal and tumor model get different ref seq build!"
+        );
+    }
+
     return @tags;
 }
 
