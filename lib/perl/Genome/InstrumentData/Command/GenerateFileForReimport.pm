@@ -5,7 +5,7 @@ use warnings;
 
 use Genome;
 
-use Genome::InstrumentData::Imported::Reimport;
+use Genome::InstrumentData::Reimport;
 
 class Genome::InstrumentData::Command::GenerateFileForReimport { 
     is => 'Command::V2',
@@ -56,24 +56,24 @@ sub execute {
         for my $optional_property_name (qw/ run_name subset_name /) {
             next if not $instrument_data->$optional_property_name;
             $reimport{$optional_property_name} = $instrument_data->$optional_property_name;
-            $inst_data_attrs{$optional_property_name}++;
+            $headers{$optional_property_name}++;
         }
         push @reimports, \%reimport;
 
         for my $attribute ( $instrument_data->attributes ) {
             my $attribute_value = 
             $reimport{ $attribute->attribute_label } = $attribute->attribute_value;
-            $inst_data_attrs{ $attribute->attribute_label }++;
+            $headers{ $attribute->attribute_label }++;
         }
     }
     $self->status_message('Found '.@reimports.' instrument data...');
 
     # Determine the headers
     for my $ignored_attr_label ( Genome::InstrumentData::Reimport->attribute_labels_to_ignore_when_reimporting ) {
-        delete $inst_data_attrs{$ignored_attr_label};
+        delete $headers{$ignored_attr_label};
     }
 
-    my @headers = sort keys %inst_data_attrs;
+    my @headers = sort keys %headers;
     unshift @headers, (qw/ library_name source_files /);
 
     # Write the file
