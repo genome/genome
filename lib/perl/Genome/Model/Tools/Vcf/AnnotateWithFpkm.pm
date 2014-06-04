@@ -49,21 +49,28 @@ sub execute {
     my $sample_index = $header->index_for_sample_name($self->sample_name);
 
     while (my $entry = $vcf_reader->next) {
-        $self->get_fpkm_for_entry($vep_parser, $entry, $sample_index);
+        $self->write_fpkm_for_sample($vep_parser, $entry, $sample_index);
         $vcf_writer->write($entry);
     }
     return 1;
 }
 
-sub get_fpkm_for_entry {
+sub write_fpkm_for_sample {
     my ($self, $vep_parser, $entry, $sample_index) = @_;
 
     my $gene_to_fpkm_map = $self->map_genes_to_fpkm;
-    for my $alt_allele (@{$entry->{alternate_alleles}}) {
-        my ($transcript, @extra) = $vep_parser->transcripts($entry, $alt_allele);
+    my @fpkms;
+    for my $genotype_allele_index ($entry->genotype_for_sample($sample_index)->get_alleles) {
+        # Handle the reference allele which doesn't have an FPKM value
+        if ($genotype_allele_index == 0) {
+            push @fpkms, '.';
+            next;
+        }
+        my $genotype_allele = ($entry->alleles)[$genotype_allele_index];
+        my ($transcript, @extra) = $vep_parser->transcripts($entry, $genotype_allele);
 
         if (not defined $transcript) {
-            die $self->error_message("Vep returned no transcripts for alt allele (%s) and vcf entry (%s)", $alt_allele, $entry->to_string);
+            die $self->error_message("Vep returned no transcripts for genotype allele (%s) and vcf entry (%s)", $genotype_allele, $entry->to_string);
         } elsif (@extra) {
             die $self->error_message("Vep returned multiple transcripts, we want only one. Returned: %s", join(",", ( map{$_->{'feature'}} ($transcript, @extra) ) ) );
         }
@@ -71,7 +78,7 @@ sub get_fpkm_for_entry {
         unless ($gene) {
             if ($transcript->{consequence} eq 'INTERGENIC') {
                 $self->status_message("Could not find a gene for intergenic transcript:\n%s", Data::Dumper::Dumper $transcript);
-                $self->add_fpkm_to_entry($entry, '.', $sample_index);
+                push @fpkms, '.';
                 next;
             }
             else {
@@ -82,8 +89,9 @@ sub get_fpkm_for_entry {
         unless (defined $fpkm) {
             die $self->error_message("Could not find a fpkm value for gene (%s) from fpkm file (%s).", $gene, $self->fpkm_file);
         }
-        $self->add_fpkm_to_entry($entry, $fpkm, $sample_index);
+        push @fpkms, $fpkm;
     }
+    $self->add_fpkm_to_entry($entry, join(',', @fpkms), $sample_index);
 }
 
 # Return a hash mapping transcript names to fpkm values

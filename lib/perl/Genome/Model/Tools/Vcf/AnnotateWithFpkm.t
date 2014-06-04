@@ -16,7 +16,7 @@ use Genome::File::Vcf::Differ;
 my $pkg = 'Genome::Model::Tools::Vcf::AnnotateWithFpkm';
 use_ok($pkg);
 
-my $TEST_DATA_VERSION = 'v1'; #Bump this when test data changes
+my $TEST_DATA_VERSION = 'v2'; #Bump this when test data changes
 my $data_dir = Genome::Utility::Test->data_dir_ok($pkg, $TEST_DATA_VERSION);
 
 subtest "output vcf" => sub {
