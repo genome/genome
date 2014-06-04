@@ -28,6 +28,23 @@ subtest "with fpkm" => sub {
     is_deeply({$interpreter->interpret_entry($entry, ['C'])}, \%expected_return_values, "Entry gets interpreted correctly");
 };
 
+subtest "with fpkm heterozygous, non-reference genotype" => sub {
+    my $interpreter = $pkg->create(sample_name => 'S1');
+    lives_ok(sub {$interpreter->validate}, "Interpreter validates");
+
+    my %expected_return_values = (
+        C => {
+            fpkm => "2.45",
+        },
+        G => {
+            fpkm => "1.25",
+        }
+    );
+    my $entry = create_entry_with_fpkm_het_no_ref();
+    is_deeply({$interpreter->interpret_entry($entry, ['C', 'G'])}, \%expected_return_values, "Entry gets interpreted correctly");
+};
+
+
 subtest "without fpkm" => sub {
     my $interpreter = $pkg->create(sample_name => 'S1');
     lives_ok(sub {$interpreter->validate}, "Interpreter validates");
@@ -58,6 +75,10 @@ EOS
     my @lines = split("\n", $header_txt);
     my $header = Genome::File::Vcf::Header->create(lines => \@lines);
     return $header
+}
+
+sub create_entry_with_fpkm_het_no_ref {
+    return create_entry("GT:DP:FPKM","1/2:12:2.45,1.25");
 }
 
 sub create_entry_with_fpkm {
