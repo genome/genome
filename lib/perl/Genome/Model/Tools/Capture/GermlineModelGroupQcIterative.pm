@@ -31,7 +31,6 @@ class Genome::Model::Tools::Capture::GermlineModelGroupQcIterative {
         whitelist_snps_file     => { is => 'Text', doc => "File of snps to limit qc to, for example the 55 ASMS snps in ROI -- 1 rs_id per line" },
         skip_if_output_present  => { is => 'Boolean', doc => "Skip Creating new qc Files if they exist" , default => ""},
         cleanup_empty_files     => { is => 'Boolean', doc => "Delete files that pileup likely failed on so they'll re-run" , default => ""},
-        use_external            => { is => 'Boolean', doc => 'Use external data source rather than internal/iscan', default_value => 0 },
     ],
 };
 
@@ -90,7 +89,6 @@ sub execute {                               # replace with real execution logic.
     # Correct the reference build name to what the database recognizes
     my $reference;
     my $build_number;
-    my $db_snp_build;
 
     my $ref = $models[0]->reference_sequence_build;
     my $build36 = Genome::Model::Build::ReferenceSequence->get(name => "NCBI-human-build36");
@@ -98,11 +96,9 @@ sub execute {                               # replace with real execution logic.
     if($ref->is_compatible_with($build36)) {
         $reference = 'reference';
         $build_number = 36;
-        $db_snp_build = 130;
     } elsif($ref->is_compatible_with($build37)) {
         $reference = 'GRCh37';
         $build_number = 37;
-        $db_snp_build = 132;
     } else {
         die $ref->name." isn't compatible with NCBI-human-build36 or GRCh37-lite-build37\n";
     }
@@ -137,50 +133,24 @@ sub execute {                               # replace with real execution logic.
             if($self->output_dir) {
                 my $qc_dir = $self->output_dir . "/$subject_name/";
                 mkdir($qc_dir);
-                my $genofile = "$qc_dir/$subject_name.dbsnp$db_snp_build.genotype";
+                my $genofile = "$qc_dir/$subject_name.genotype";
                 if ($self->summary_file && ! -s $genofile) {
                     warn "You specified summary file but the script thinks there are unfinished genotype files, please run this script to finish making qc files first\nReason: file $genofile does not exist as a non-zero file\n";
                     next;
                 }
 
-                if(!$self->summary_file && ( (! -e $genofile) || !$skip_if_output_present) ) {
-                    my %extract_params = (
-                        output => $genofile.':separator=TAB:headers=chromosome,position,alleles,id:print_headers=0',
-                        ($self->whitelist_snps_file?(filters => ['whitelist:whitelist_snps_file='.$self->whitelist_snps_file]):()),
-                    );
+                if(!$self->summary_file && (! -e $genofile) ) {
 
-                    if ($build->can('dbsnp_build') && $build->dbsnp_build) {
-                        $extract_params{variation_list_build} = $build->dbsnp_build;
+                    if ($build->can('genotype_microarray_build') && $build->genotype_microarray_build) {
+                        my $geno_build = $build->genotype_microarray_build;
+                        Genome::Sys->create_symlink($geno_build->genotype_file_path, $genofile);
                     } else {
-                        $extract_params{variation_list_build} = Genome::Model::ImportedVariationList->dbsnp_build_for_reference($build->reference_sequence_build),
-                    }
-
-                    if ($self->use_external) {
-                        $extract_params{sample} = $model->subject;
-                        $extract_params{sample_type_priority} = [qw/ external /];
-                    } elsif ($build->can('genotype_microarray_build') && $build->genotype_microarray_build) {
-                        $extract_params{instrument_data} = $build->genotype_microarray_build->instrument_data;
-                    } elsif ($build->subject->can('default_genotype_data_id') && $build->subject->default_genotype_data_id) {
-                        $extract_params{instrument_data} = Genome::InstrumentData::Imported->get($build->subject->default_genotype_data_id);
-                    }
-
-                    my $extract = Genome::Model::GenotypeMicroarray::Command::Extract->create(%extract_params);
-                    unless ($extract) {
-                        $self->error_message("Failed to create Extract Microarray for sample " . $model->subject_name);
-                        return;
-                    }
-
-                    $extract->dump_status_messages(1);
-                    unless ($extract->_resolve_instrument_data){
-                        $self->debug_message('Skipping due to no instrument data for sample ' . $model->subject->id);
+                        $self->warning_message("Skipping build %s because no genotype build was found.", $build->id);
                         next;
                     }
-                    unless ($extract->execute()) {
-                        $self->error_message("Failed to execute Extract Microarray for sample " . $model->subject_name);
-                        return;
-                    }
+
                     unless (-s $genofile) {
-                        $self->error_message("Executed Extract Microarray but geno file doesn't exist for sample " . $model->subject_name);
+                        $self->error_message("Missing genotype file for for sample " . $model->subject_name);
                         return;
                     }
                 }
@@ -199,14 +169,14 @@ sub execute {                               # replace with real execution logic.
 #                    print "Genosample:$subject_name1\t$genofile\nBamsample:$subject_name2\t$bam_file\n";
                     my $qc_dir = $self->output_dir . "/qc_iteration_files/";
                     mkdir($qc_dir);
-                    my $qcfile = "$qc_dir/Geno_$subject_name1.Bam_$subject_name2.dbsnp$db_snp_build.qc";
-                    my $output_bsub = "$qc_dir/Geno_$subject_name1.Bam_$subject_name2.dbsnp$db_snp_build.out";
-                    my $error_bsub = "$qc_dir/Geno_$subject_name1.Bam_$subject_name2.dbsnp$db_snp_build.err";
-                    my $bsub = "bsub -N -M 4000000 -J Geno_$subject_name1.Bam_$subject_name2.dbsnp$db_snp_build.qc -o $output_bsub -e $error_bsub -R \"select[type==LINUX64 && mem>4000 && tmp>1000] rusage[mem=4000, tmp=1000]\"";
+                    my $qcfile = "$qc_dir/Geno_$subject_name1.Bam_$subject_name2.qc";
+                    my $output_bsub = "$qc_dir/Geno_$subject_name1.Bam_$subject_name2.out";
+                    my $error_bsub = "$qc_dir/Geno_$subject_name1.Bam_$subject_name2.err";
+                    my $bsub = "bsub -N -M 4000000 -J Geno_$subject_name1.Bam_$subject_name2.qc -o $output_bsub -e $error_bsub -R \"select[type==LINUX64 && mem>4000 && tmp>1000] rusage[mem=4000, tmp=1000]\"";
                     my $cmd = $bsub." \'"."gmt analysis lane-qc compare-snps --genotype-file $genofile --bam-file $bam_file --output-file $qcfile --sample-name Geno_$subject_name1.Bam_$subject_name2 --min-depth-het 20 --min-depth-hom 20 --flip-alleles 1 --verbose 1 --reference-build $build_number"."\'";
 
                     #clean up empty qc files
-                    if ($skip_if_output_present && $empty_file_cleanup && -s $qcfile &&1&&1) { #&&1&&1 to make gedit show colors correctly after a -s check
+                    if ($skip_if_output_present && $empty_file_cleanup && -s $qcfile) {
                         my $qc_input = new FileHandle ($qcfile);
                         my $qc_header = <$qc_input>;
                         my $qc_line = <$qc_input>;
@@ -231,7 +201,7 @@ sub execute {                               # replace with real execution logic.
                             }
                         }
                     }
-                    if ($skip_if_output_present && -s $qcfile &&1&&1) { #&&1&&1 to make gedit show colors correctly after a -s check
+                    if ($skip_if_output_present && -s $qcfile) {
                     }
                     elsif ($self->summary_file) {
                         warn "You specified summary file but the script thinks there are unfinished qc files, please run this script to finish making qc files first\nReason: file $qcfile does not exist as a non-zero file\n";
@@ -255,12 +225,12 @@ sub execute {                               # replace with real execution logic.
                 foreach my $subject_name2 (sort keys %qc_iteration_hash_bam_file) {
                     foreach my $bam_file (sort keys %{$qc_iteration_hash_bam_file{$subject_name2}}) {
                         my $qc_dir = $self->output_dir . "/qc_iteration_files/";
-                        my $qcfile = "$qc_dir/Geno_$subject_name1.Bam_$subject_name2.dbsnp$db_snp_build.qc";
+                        my $qcfile = "$qc_dir/Geno_$subject_name1.Bam_$subject_name2.qc";
                         my $qc_input = new FileHandle ($qcfile);
                         my $qc_header = <$qc_input>;
                         my $qc_line = <$qc_input>;
                         chomp($qc_line);
-                        print ALL_MODELS "$db_snp_build\t$qc_line\n";
+                        print ALL_MODELS "$qc_line\n";
                     }
                 }
             }
@@ -269,16 +239,6 @@ sub execute {                               # replace with real execution logic.
     }
 
     return 1;
-}
-
-sub byChrPos
-{
-    my ($chr_a, $pos_a) = split(/\t/, $a);
-    my ($chr_b, $pos_b) = split(/\t/, $b);
-
-    $chr_a cmp $chr_b
-        or
-    $pos_a <=> $pos_b;
 }
 
 1;
