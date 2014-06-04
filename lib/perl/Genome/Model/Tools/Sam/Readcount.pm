@@ -139,6 +139,11 @@ sub execute {
         $command .= " -w 1";    # suppress error messages to a single report
     }
 
+    if ($output_file =~ /[\(\)]/) {
+        $output_file =~ s{\(}{\\(}g;
+        $output_file =~ s{\)}{\\)}g;
+    }
+
     Genome::Sys->shellcmd(
         cmd => "$command > $output_file",
         input_files => [$bam, $reference, $region_file],
