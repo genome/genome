@@ -14,9 +14,10 @@ use Genome::Utility::Test qw(compare_ok);
 use Genome::File::Vcf::Differ;
 
 my $pkg = 'Genome::Model::Tools::Vcf::AnnotateWithFpkm';
-
 use_ok($pkg);
-my $data_dir = Genome::Utility::Test->data_dir_ok($pkg, "v1");
+
+my $TEST_DATA_VERSION = 'v1'; #Bump this when test data changes
+my $data_dir = Genome::Utility::Test->data_dir_ok($pkg, $TEST_DATA_VERSION);
 
 subtest "output vcf" => sub {
     my $out = Genome::Sys->create_temp_file_path;
