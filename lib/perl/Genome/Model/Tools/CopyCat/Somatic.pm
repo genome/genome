@@ -237,6 +237,27 @@ sub execute {
 
     close($RFILE);
 
+#print all of this to STDERR for debugging:
+    print STDERR "Calling copy cat with params:\n";
+    print STDERR "runPairedSampleAnalysis(annotationDirectory=\"$annotation_directory\",\n";
+    print STDERR "                        outputDirectory=\"$output_directory\",\n";
+    print STDERR "                        normal=\"$normal_window_file\",\n";
+    print STDERR "                        tumor=\"$tumor_window_file\",\n";
+    print STDERR "                        inputType=\"bins\",\n";
+    print STDERR "                        maxCores=$processors,\n";
+    print STDERR "                        binSize=0,\n";
+    print STDERR "                        perLibrary=$per_lib,\n";
+    print STDERR "                        perReadLength=$per_read_length,\n";
+    print STDERR "                        verbose=TRUE,\n";
+    print STDERR "                        minWidth=$min_width,\n";
+    print STDERR "                        minMapability=$min_mapability,\n";
+    print STDERR "                        dumpBins=$dump_bins,\n";
+    print STDERR "                        doGcCorrection=$gcCorr,\n";
+    print STDERR "                        samtoolsFileFormat=\"" . $self->samtools_file_format ."\",\n";
+    print STDERR "                        purity=" . $tumor_purity .",\n";
+    print STDERR "                        normalSamtoolsFile=$normal_samtools_file,\n";
+    print STDERR "                        tumorSamtoolsFile=$tumor_samtools_file)\n";
+
     #drop into the output directory to make running the R script easier
     my $cmd = "Rscript $output_directory/run.R";
     my $return = Genome::Sys->shellcmd(
