@@ -11946,6 +11946,8 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'annotation-build-id=s',
         undef,
+        'cancer-annotation-db=s',
+        undef,
         'help!',
         undef
       ],
@@ -30421,6 +30423,11 @@ $Genome::Command::OPTS_SPEC = [
         undef
       ],
       '>mutation-diagram',
+      [
+        'help!',
+        undef
+      ],
+      '>onco-plot',
       [
         'help!',
         undef
