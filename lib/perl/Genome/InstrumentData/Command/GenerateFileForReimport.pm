@@ -1,24 +1,24 @@
-package Genome::InstrumentData::Command::Import::GenerateSourceFilesTsvForReimport;
+package Genome::InstrumentData::Command::GenerateFileForReimport;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::InstrumentData::Command::Import::GenerateSourceFilesTsvForReimport { 
+class Genome::InstrumentData::Command::GenerateFileForReimport { 
     is => 'Command::V2',
     has_input => {
         instrument_data => {
             is => 'Genome::InstrumentData',
             is_many => 1,
-            doc => 'Instrument data to use to create source files TSV to reimport.',
+            doc => 'Instrument data to use to create file to reimport.',
         },
         #skip_errors => {},
     },
     has_output => {
-        source_files_tsv => {
+        file => {
             is => 'File',
-            doc => 'Source files tsv to generate.',
+            doc => 'File name [source files tsv] to generate. Use this in the import manager.',
         },
     },
     has_optional_transient => {
@@ -32,7 +32,7 @@ HELP
 
 sub execute {
     my $self = shift;
-    $self->status_message('Generate source files tsv to reimport instrument data...');
+    $self->status_message('Generate file to reimport instrument data...');
 
     # Gather the params for each inst data
     my @reimports;
@@ -75,22 +75,22 @@ sub execute {
     unshift @headers, (qw/ library_name source_files /);
 
 
-    # Write the source files tsv
-    my $source_files_tsv = $self->source_files_tsv;
-    my $source_files_tsv_fh = eval{ Genome::Sys->open_file_for_writing($source_files_tsv); };
-    if ( not $source_files_tsv_fh ) {
+    # Write the file
+    my $file = $self->file;
+    my $fh = eval{ Genome::Sys->open_file_for_writing($file); };
+    if ( not $fh ) {
         $self->error_message($@) if $@;
-        $self->error_message('Failed to open source files tsv! '.$source_files_tsv);
+        $self->error_message('Failed to open file! '.$file);
         return 1;
     }
 
-    $source_files_tsv_fh->print( join("\t", @headers)."\n" );
+    $fh->print( join("\t", @headers)."\n" );
     for my $reimport ( @reimports ) {
-        $source_files_tsv_fh->print( join("\t", map { $reimport->{$_} // '' } @headers)."\n" );
+        $fh->print( join("\t", map { $reimport->{$_} // '' } @headers)."\n" );
     }
-    $source_files_tsv_fh->close;
+    $fh->close;
 
-    $self->status_message('Wrote source files tsv: '.$source_files_tsv);
+    $self->status_message('Wrote file: '.$file);
     $self->status_message('Success!');
     return 1;
 }

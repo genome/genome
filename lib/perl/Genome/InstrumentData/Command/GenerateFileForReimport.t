@@ -14,10 +14,10 @@ use above "Genome";
 use Genome::Utility::Test 'compare_ok';
 use Test::More;
 
-use_ok('Genome::InstrumentData::Command::Import::GenerateSourceFilesTsvForReimport') or die;
+use_ok('Genome::InstrumentData::Command::GenerateFileForReimport') or die;
 
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import::GenerateSourceFilesTsvForReimport', 'v1');
-#my $source_files_tsv = $test_dir.'/source-files.tsv';
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::GenerateFileForReimport', 'v1');
+#my $file = $test_dir.'/source-files.tsv';
 
 my $library = Genome::Library->__define__(name => '__TEST_LIBRARY__');
 my @instrument_data;
@@ -53,15 +53,15 @@ for my $format (qw/ bam fastq /) {
 }
 
 my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
-my $source_files_tsv = $tmpdir.'/source_files.tsv';
+my $file = $tmpdir.'/source_files.tsv';
 
-my $generate = Genome::InstrumentData::Command::Import::GenerateSourceFilesTsvForReimport->create(
+my $generate = Genome::InstrumentData::Command::GenerateFileForReimport->create(
     instrument_data => \@instrument_data,
-    source_files_tsv => $source_files_tsv,
+    file => $file,
 );
-ok($generate, 'create source files tsv generator');
+ok($generate, 'create generate file for reimport');
 ok($generate->execute, 'execute');
-compare_ok($source_files_tsv, $test_dir.'/source_files.tsv', 'source files tsv matches');
-#print "$source_files_tsv\n"; <STDIN>;
+compare_ok($file, $test_dir.'/source_files.tsv', 'file matches');
+#print "$file\n"; <STDIN>;
 
 done_testing();
