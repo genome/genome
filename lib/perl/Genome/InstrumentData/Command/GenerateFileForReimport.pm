@@ -5,6 +5,8 @@ use warnings;
 
 use Genome;
 
+use Genome::InstrumentData::Imported::Reimport;
+
 class Genome::InstrumentData::Command::GenerateFileForReimport { 
     is => 'Command::V2',
     has_input => {
@@ -36,7 +38,8 @@ sub execute {
 
     # Gather the params for each inst data
     my @reimports;
-    my %inst_data_attrs = ( derived_from => 1, ); # 1 is placeholder value
+    my $reimported_attribute_label = Genome::InstrumentData::Reimport->attribute_label_for_reimported_from;
+    my %headers = ( $reimported_attribute_label => 1 );
     for my $instrument_data ( $self->instrument_data ) {
 
         my $source_file = $instrument_data->archive_path;
@@ -46,7 +49,7 @@ sub execute {
         }
 
         my %reimport = ( 
-            derived_from => $instrument_data->id,
+            $reimported_attribute_label => $instrument_data->id,
             library_name => $instrument_data->library->name,
             source_files => $source_file,
         );
@@ -66,14 +69,12 @@ sub execute {
     $self->status_message('Found '.@reimports.' instrument data...');
 
     # Determine the headers
-    # TODO move ignored attribute labels to a common class
-    for my $ignored_attr_label (qw/ bam_path genotype_file genotype_file_name ignored import_date import_format user_name /) {
+    for my $ignored_attr_label ( Genome::InstrumentData::Reimport->attribute_labels_to_ignore_when_reimporting ) {
         delete $inst_data_attrs{$ignored_attr_label};
     }
 
     my @headers = sort keys %inst_data_attrs;
     unshift @headers, (qw/ library_name source_files /);
-
 
     # Write the file
     my $file = $self->file;
