@@ -143,7 +143,7 @@ sub _wrapper_has {
 
         my $name = $property->property_name;
 
-        next if $base->can($name);
+        next if $base->__meta__->properties(property_name => $name);
 
         if ($property->is_param) {
             $desc{is_param} = 1;
