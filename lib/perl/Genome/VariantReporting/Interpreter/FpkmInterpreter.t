@@ -13,7 +13,7 @@ use Test::More;
 use Test::Exception;
 use Genome::File::Vcf::Entry;
 
-my $pkg = 'Genome::Annotation::Interpreter::FpkmInterpreter';
+my $pkg = 'Genome::VariantReporting::Interpreter::FpkmInterpreter';
 use_ok($pkg);
 subtest "with fpkm" => sub {
     my $interpreter = $pkg->create(sample_name => 'S1');

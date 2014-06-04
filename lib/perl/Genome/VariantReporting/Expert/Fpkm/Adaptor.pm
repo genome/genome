@@ -1,12 +1,12 @@
-package Genome::Annotation::Expert::Fpkm::Adaptor;
+package Genome::VariantReporting::Expert::Fpkm::Adaptor;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 use File::Spec;
 
-class Genome::Annotation::Expert::Fpkm::Adaptor {
-    is => "Genome::Annotation::AdaptorBase",
+class Genome::VariantReporting::Expert::Fpkm::Adaptor {
+    is => "Genome::VariantReporting::AdaptorBase",
 
     has_planned_output => [
     ],

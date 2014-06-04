@@ -1,11 +1,11 @@
-package Genome::Annotation::Interpreter::FpkmInterpreter;
+package Genome::VariantReporting::Interpreter::FpkmInterpreter;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::Annotation::Interpreter::FpkmInterpreter {
-    is => ['Genome::Annotation::Interpreter::Base', 'Genome::Annotation::WithSampleName'],
+class Genome::VariantReporting::Interpreter::FpkmInterpreter {
+    is => ['Genome::VariantReporting::Interpreter::Base', 'Genome::VariantReporting::WithSampleName'],
 };
 
 sub name {

@@ -6,13 +6,13 @@ use warnings FATAL => 'all';
 use Test::More;
 use above 'Genome';
 use Genome::Utility::Test qw(compare_ok);
-use Genome::Annotation::TestHelpers qw(
+use Genome::VariantReporting::TestHelpers qw(
     get_test_somatic_variation_build_with_vep_annotations
     test_dag_xml
     test_dag_execute
     get_test_dir
 );
-use Genome::Annotation::Plan::TestHelpers qw(
+use Genome::VariantReporting::Plan::TestHelpers qw(
     set_what_interpreter_x_requires
 );
 use Sub::Install qw(reinstall_sub);
@@ -23,7 +23,7 @@ BEGIN {
     $ENV{NO_LSF} = 1;
 };
 
-my $pkg = 'Genome::Annotation::Expert::Fpkm::Expert';
+my $pkg = 'Genome::VariantReporting::Expert::Fpkm::Expert';
 use_ok($pkg) || die;
 
 my $VERSION = 1; # Bump these each time test data changes
@@ -45,7 +45,7 @@ reinstall_sub( {
         code => sub { return File::Spec->join($test_dir, 'test.fpkm'); },
 });
 
-my $plan = Genome::Annotation::Plan->create_from_file(
+my $plan = Genome::VariantReporting::Plan->create_from_file(
     File::Spec->join($test_dir, 'plan.yaml'),
 );
 $plan->validate();

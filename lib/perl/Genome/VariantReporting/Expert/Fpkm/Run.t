@@ -14,14 +14,14 @@ use Genome::Test::Factory::Model::ReferenceSequence;
 use Genome::Test::Factory::Build;
 use Genome::Model::Tools::DetectVariants2::Result::Vcf;
 use Genome::Model::Tools::Bed::Convert::VcfToBed;
-use Genome::Annotation::TestHelpers qw(test_cmd_and_result_are_in_sync);
+use Genome::VariantReporting::TestHelpers qw(test_cmd_and_result_are_in_sync);
 
 use Test::More;
 
-my $cmd_class = 'Genome::Annotation::Expert::Fpkm::Run';
+my $cmd_class = 'Genome::VariantReporting::Expert::Fpkm::Run';
 use_ok($cmd_class) or die;
 
-my $result_class = 'Genome::Annotation::Expert::Fpkm::RunResult';
+my $result_class = 'Genome::VariantReporting::Expert::Fpkm::RunResult';
 use_ok($result_class) or die;
 use_ok('Genome::Model::Tools::Vcf::AnnotateWithFpkm') or die;
 

@@ -1,11 +1,11 @@
-package Genome::Annotation::Expert::Fpkm::RunResult;
+package Genome::VariantReporting::Expert::Fpkm::RunResult;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::Annotation::Expert::Fpkm::RunResult {
-    is => 'Genome::Annotation::Expert::ResultBase',
+class Genome::VariantReporting::Expert::Fpkm::RunResult {
+    is => 'Genome::VariantReporting::Expert::ResultBase',
     has_input => [
         fpkm_file => {
             is => 'String',
