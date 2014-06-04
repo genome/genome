@@ -159,18 +159,11 @@ sub check_tcga_vcf {
     for my $sample_type qw(aligned_reads_sample control_aligned_reads_sample) {
         my $sample_name = $self->$sample_type;
         if ($sample_name) {
-            if ($sample_name =~ /^TCGA\-/) {
+            my $name_in_vcf = Genome::Sample->sample_name_to_name_in_vcf($sample_name);
+            if ($name_in_vcf =~ /^TCGA\-/) {
                 $flag++;
             }
-            else {
-                my $sample = Genome::Sample->get(name => $sample_name);
-                if ($sample) {
-                    $self->$sample_type($sample->name_in_vcf);
-                    if ($sample->name_in_vcf =~ /^TCGA\-/) {
-                        $flag++;
-                    }
-                }
-            }
+            $self->$sample_type($name_in_vcf);
         }
     }
     $self->_tcga_vcf(1) if $flag;
