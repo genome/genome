@@ -34,7 +34,7 @@ subtest "without fpkm" => sub {
 
     my %expected_return_values = (
         C => {
-            fpkm => undef,
+            fpkm => '.',
         }
     );
     my $entry = create_entry_without_fpkm();
@@ -61,15 +61,15 @@ EOS
 }
 
 sub create_entry_with_fpkm {
-    return create_entry(1);
+    return create_entry("GT:DP:FPKM","0/1:12:.,1.25");
 }
 
 sub create_entry_without_fpkm {
-    return create_entry(0);
+    return create_entry("GT:DP","0/1:12");
 }
 
 sub create_entry {
-    my $include_fpkm = shift;
+    my @sample_fields = @_;
 
     my @fields = (
         '1',            # CHROM
@@ -80,13 +80,8 @@ sub create_entry {
         '10.3',         # QUAL
         'PASS',         # FILTER
         'A=B;C=8,9;E',  # INFO
+        @sample_fields
     );
-
-    if ($include_fpkm) {
-        push @fields, "GT:DP:FPKM", "0/1:12:1.25";
-    } else {
-        push @fields, "GT:DP", "0/1:12";
-    }
 
     my $entry_txt = join("\t", @fields);
     my $entry = Genome::File::Vcf::Entry->new(create_vcf_header(), $entry_txt);

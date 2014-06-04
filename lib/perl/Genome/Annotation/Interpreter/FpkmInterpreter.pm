@@ -25,17 +25,43 @@ sub available_fields {
 sub interpret_entry {
     my $self = shift;
     my $entry = shift;
-
     my $passed_alt_alleles = shift;
 
     my %return_values;
+    my %fpkm_for_genotype_allele = $self->fpkm_for_genotype_allele($entry);
     for my $variant_allele (@$passed_alt_alleles) {
         $return_values{$variant_allele} = {
-            # FIXME FPKM will have more than one entry depending on the ALT / I wish File::Vcf::Entry supported sample_field_for_alt like it does info fields with info_for_allele -- perhaps add this?
-            fpkm => $entry->sample_field($self->sample_index($entry->{header}), "FPKM"),
+            fpkm => $fpkm_for_genotype_allele{$variant_allele},
         };
     }
     return %return_values;
+}
+
+sub fpkm_for_genotype_allele {
+    my ($self, $entry) = @_;
+
+    my $sample_index = $self->sample_index($entry->{header});
+    my @genotype_alleles = $entry->bases_for_sample($sample_index);
+
+    my $fpkm = $entry->sample_field($self->sample_index($entry->{header}), "FPKM");
+    my @fpkms;
+    if ($fpkm) {
+        @fpkms = split(',', $fpkm);
+    }
+    else {
+        @fpkms = ('.') x @genotype_alleles;
+    }
+
+    if (scalar(@fpkms) ne scalar(@genotype_alleles)) {
+        die $self->error_message("There should be the same number of FPKM values (%s) as there are genotype alleles (%s).", join(',', @fpkms), join(',', @genotype_alleles));
+    }
+
+    my %fpkm_for_genotype_allele;
+    for my $i (0..$#fpkms) {
+        $fpkm_for_genotype_allele{$genotype_alleles[$i]} = $fpkms[$i];
+    }
+
+    return %fpkm_for_genotype_allele;
 }
 
 1;

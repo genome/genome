@@ -745,6 +745,26 @@ sub alt_bases_for_sample {
     return @alt_allele_nucleotides;
 }
 
+=item C<bases_for_sample>
+
+Returns an array of nuclotides for the genotype alleles for a given sample, including reference
+
+params:
+    $sample_index - sample index
+
+=back
+
+=cut
+
+sub bases_for_sample {
+    my ($self, $sample_index) = @_;
+
+    my $genotype = $self->genotype_for_sample($sample_index);
+    my @entry_allele_nucleotides = $self->alleles;
+    my @genotype_allele_nucleotides = map {$entry_allele_nucleotides[$_]} $genotype->get_alleles;
+    return @genotype_allele_nucleotides;
+}
+
 =item C<to_string>
 
 Returns a string representation of the entry in VCF format.
