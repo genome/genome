@@ -30,7 +30,6 @@ class Genome::Model::Tools::Capture::GermlineModelGroupQcIterative {
         output_dir              => { is => 'Text', doc => "Outputs qc into directory for each sample", default => cwd() },
         whitelist_snps_file     => { is => 'Text', doc => "File of snps to limit qc to, for example the 55 ASMS snps in ROI -- 1 rs_id per line" },
         skip_if_output_present  => { is => 'Boolean', doc => "Skip Creating new qc Files if they exist" , default => ""},
-        cleanup_empty_files     => { is => 'Boolean', doc => "Delete files that pileup likely failed on so they'll re-run" , default => ""},
     ],
 };
 
@@ -57,7 +56,6 @@ sub execute {                               # replace with real execution logic.
     my $self = shift;
     my @models = Genome::ModelGroup->get($self->group_id)->models;
     my $skip_if_output_present = $self->skip_if_output_present;
-    my $empty_file_cleanup = $self->skip_if_output_present;
     my $summary_file;
     if ($self->summary_file) {
         $summary_file = $self->summary_file;
@@ -175,32 +173,6 @@ sub execute {                               # replace with real execution logic.
                     my $bsub = "bsub -N -M 4000000 -J Geno_$subject_name1.Bam_$subject_name2.qc -o $output_bsub -e $error_bsub -R \"select[type==LINUX64 && mem>4000 && tmp>1000] rusage[mem=4000, tmp=1000]\"";
                     my $cmd = $bsub." \'"."gmt analysis lane-qc compare-snps --genotype-file $genofile --bam-file $bam_file --output-file $qcfile --sample-name Geno_$subject_name1.Bam_$subject_name2 --min-depth-het 20 --min-depth-hom 20 --flip-alleles 1 --verbose 1 --reference-build $build_number"."\'";
 
-                    #clean up empty qc files
-                    if ($skip_if_output_present && $empty_file_cleanup && -s $qcfile) {
-                        my $qc_input = new FileHandle ($qcfile);
-                        my $qc_header = <$qc_input>;
-                        my $qc_line = <$qc_input>;
-                        chomp($qc_line);
-                        my ($sample, $sequence_snps, $geno_snps, $covered_snps, @everything_else) = split(/\t/, $qc_line);
-                        if ($geno_snps == 0) {
-                            print "$qc_line\n";exit;
-                            if (unlink($qcfile) == 0) {
-                                print "File deleted successfully.";
-                            } else {
-                                print "File was not deleted.";
-                            }
-                            if (unlink($output_bsub) == 0) {
-                                print "File deleted successfully.";
-                            } else {
-                                print "File was not deleted.";
-                            }
-                            if (unlink($error_bsub) == 0) {
-                                print "File deleted successfully.";
-                            } else {
-                                print "File was not deleted.";
-                            }
-                        }
-                    }
                     if ($skip_if_output_present && -s $qcfile) {
                     }
                     elsif ($self->summary_file) {
