@@ -735,28 +735,6 @@ sub _mark_read_only_closure {
     };
 }
 
-# Changes an allocation directory to default permissions
-sub _set_default_permissions_closure {
-    my ($class, $path) = @_;
-    return sub {
-        return unless -d $path and not $ENV{UR_DBI_NO_COMMIT};
-
-        require File::Find;
-        sub set_default_perms {
-            my $file = $File::Find::name;
-            if (-d $file) {
-                chmod 0775, $file;
-            }
-            else {
-                chmod 0664, $file
-            }
-        };
-
-        $class->debug_message("Setting permissions to defaults for $path");
-        File::Find::find(\&set_default_perms, $path);
-    };
-}
-
 # Class method for determining if the given path has a parent allocation
 sub _verify_no_parent_allocation {
     my ($class, $path) = @_;
