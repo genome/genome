@@ -35,8 +35,10 @@ sub help_detail {
 
 sub execute {
 	my $self=shift;
+	my $dirName = dirname(__FILE__); 
 	
-	my $command = 'OncoPlot/OncoPrint.R';
+	my $command = File::Spec->catfile( $dirName, 'OncoPlot', 'OncoPrint.R' );
+	#my $command = 'OncoPlot/OncoPrint.R';
 
 	$command .= ' --genes=';
 	$command .= $self->genes;
@@ -58,7 +60,7 @@ sub execute {
 	$command .= $self->outFile;
 	
 	# Figure out where the accessory files are for R
-	my $dirName = dirname(__FILE__); 
+	
 	my $javaLib = File::Spec->catfile( $dirName, 'OncoPlot', 'Sink.jar' );
 	my $rHelpLib = File::Spec->catfile($dirName, 'OncoPlot', 'oncoPrintHelper.R');
 	
@@ -68,7 +70,7 @@ sub execute {
 	$command .= ' --java-lib-file=';
 	$command .= $javaLib;
 	
-#	print($command);
+	# print($command);
 	system($command);
 	1;
  }
