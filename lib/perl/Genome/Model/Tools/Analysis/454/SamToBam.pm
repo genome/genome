@@ -145,7 +145,7 @@ sub execute {                               # replace with real execution logic.
 			close(SCRIPT);
 			
 			## Change permissions ##
-			system("chmod 755 $script_filename");
+			system("chmod 750 $script_filename");
 			
 			## Run bsub ##
 #			system("$script_filename");			

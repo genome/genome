@@ -48,7 +48,7 @@ sub _execute {
         DIR => "/gsc/var/tmp/build_unarchive", 
         CLEANUP => 0
     );
-    chmod 0755, $dir;
+    chmod 0750, $dir;
 
     $self->status_message("Unarchiving data for $total_builds builds, logs being written to $dir");
 

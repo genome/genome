@@ -473,7 +473,7 @@ sub execute
 
     $parse_script_fh->close();
 
-    my $mode = 0775;
+    my $mode = 0770;
     chmod $mode, $parse_script_full;
     my $aceparce_stdout
         = $acedb_data_path . "/STDOUT_" . $locus_tag . "_ace_parse.txt";

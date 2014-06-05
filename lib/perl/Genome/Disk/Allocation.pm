@@ -660,7 +660,7 @@ sub _create_directory_closure {
         # This method currently returns the path if it already exists instead of failing
         my $dir = eval{ Genome::Sys->create_directory($path) };
         if (defined $dir and -d $dir) {
-            chmod(02775, $dir);
+            chmod(02770, $dir);
         }
         else {
             $class->error_message("Could not create allocation directory at $path!\n$@");

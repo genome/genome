@@ -424,7 +424,7 @@ sub execute
 
     close(PARSEFILE);
 
-    my $mode = 0775;
+    my $mode = 0770;
     chmod $mode, $parsefile_name;
 
     # read ace files into ACEDB

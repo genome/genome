@@ -949,7 +949,7 @@ sub _create_directories {
             }
 
             $self->debug_message("Created directory: $output_directory");
-            chmod 02775, $output_directory;
+            chmod 02770, $output_directory;
         }
     }
 

@@ -58,7 +58,7 @@ sub lock {
     }
 
     # make this readable for everyone
-    chmod(0777, $tempdir) or Carp::croak("Can't chmod 0777 path ($tempdir): $!");
+    chmod(0770, $tempdir) or Carp::croak("Can't chmod 0770 path ($tempdir): $!");
 
     # drop an info file into here for compatibility's sake with old stuff.
     # put a "NOKILL" here on LSF_JOB_ID so an old process doesn't try to snap off the job ID and kill me.

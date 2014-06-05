@@ -126,7 +126,7 @@ sub _set_chunk_dir_permissions {
     my $self = shift;
 
     my $umask = umask();
-    my $mode = 0777 & ( ~ $umask);
+    my $mode = 0770 & ( ~ $umask);
     chmod $mode, $self->chunk_dir();
 }
 

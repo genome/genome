@@ -64,7 +64,7 @@ sub get_temp_file_in_directory {
     );
     my $file = $fh->filename;
     $fh->close;
-    chmod(0666, $file);
+    chmod(0660, $file);
     return $file;
 }
 

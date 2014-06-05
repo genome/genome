@@ -175,7 +175,7 @@ sub _execute_build {
         DIR     => $build_directory,
         CLEANUP => 1,
     );
-    chmod(0775, $output_directory); #so can be manually cleaned up by others if need be
+    chmod(0770, $output_directory); #so can be manually cleaned up by others if need be
 
     unless ($self->_copy_fasta_file($build, $output_directory)) {
         $self->error_message("fasta copy failed.");

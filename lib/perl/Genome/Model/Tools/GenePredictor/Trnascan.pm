@@ -65,7 +65,7 @@ sub execute {
     );
     my $raw_output_file = $raw_output_fh->filename;
     $raw_output_fh->close;
-    chmod(0666, $raw_output_file);
+    chmod(0660, $raw_output_file);
     $self->debug_message("Raw output being written to $raw_output_file");
 
     # Construct command and parameters/switches

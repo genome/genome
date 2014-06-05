@@ -134,7 +134,7 @@ sub execute {
             $self->error_message("Failed to create directory: $analysis_base_path");
             die;
         }
-        chmod 02775, $analysis_base_path;
+        chmod 02770, $analysis_base_path;
     }
 
     # Generate files not provided from data directory
