@@ -185,23 +185,10 @@ sub du {
 
 sub set_permissions_read_only {
     my $self = shift;
-
-    $self->set_file_permissions(0444);
-    $self->set_directory_permissions(0555);
-
-    mode($self->absolute_path)->rm_all_writable();
-}
-
-sub set_file_permissions {
-    my ($self, $mode) = @_;
-    my @files = File::Find::Rule->file->in($self->absolute_path);
-    chmod $mode, @files;
-}
-
-sub set_directory_permissions {
-    my ($self, $mode) = @_;
-    my @subdirs = File::Find::Rule->directory->in($self->absolute_path);
-    chmod $mode, @subdirs;
+    my @paths = File::Find::Rule->not(File::Find::Rule->symlink)->in($self->absolute_path);
+    for my $path (@paths) {
+        mode($path)->rm_all_writable();
+    }
 }
 
 
