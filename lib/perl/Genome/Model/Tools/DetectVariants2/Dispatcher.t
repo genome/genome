@@ -14,6 +14,7 @@ use Data::Dumper;
 use Test::More;
 use above 'Genome';
 use Genome::SoftwareResult;
+use Genome::Test::Factory::Sample;
 
 if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
@@ -94,14 +95,16 @@ my $normal_bam = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2
 my @multiple_bam = ($tumor_bam,"thing");
 # Test dispatcher for running a complex case -- the intersect is nonsensical, but tests intersections while still keeping the test short
 my $test_working_dir = File::Temp::tempdir('DetectVariants2-Dispatcher-combineXXXXX', CLEANUP => 1, TMPDIR => 1);
+my $test_name = "TEST";
 my $combine_test = $dispatcher_class->create(
     snv_detection_strategy => 'samtools r599 filtered by snp-filter v1 union samtools r599',
     output_directory => $test_working_dir,
     reference_build_id => $refbuild_id,
     aligned_reads_input => $tumor_bam,
     control_aligned_reads_input => $normal_bam,
-    aligned_reads_sample => 'TEST',
+    aligned_reads_sample => $test_name,
 );
+Genome::Test::Factory::Sample->setup_object(name => $test_name);
 $combine_test->dump_status_messages(1);
 ok($combine_test, "Object to test a combine case created");
 ok($combine_test->execute, "Test executed successfully");

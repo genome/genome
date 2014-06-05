@@ -53,10 +53,10 @@ sub translations {
     my $result = {};
 
     if ($self->build->isa('Genome::Model::Build::SomaticValidation')) {
-        $result->{'tumor'} = $self->build->tumor_sample->name;
+        $result->{'tumor'} = $self->build->tumor_sample->name_in_vcf;
     }
     if ($self->build->isa('Genome::Model::Build::SomaticVariation')) {
-        $result->{'tumor'} = $self->build->tumor_build->subject->name;
+        $result->{'tumor'} = $self->build->tumor_build->subject->name_in_vcf;
     }
     return $result;
 }
