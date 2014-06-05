@@ -151,12 +151,6 @@ sub _wrapper_has {
         elsif ($property->is_input) {
             $desc{is_input} = 1;
         }
-        #elsif ($property->can("is_metric") and $property->is_metric) {
-        #    $desc{is_metric} = 1;
-        #}
-        #elsif ($property->can("is_output") and $property->is_output) {
-        #    $desc{is_output} = 1;
-        #}
         else {
             next;
         }
