@@ -247,7 +247,7 @@ sub map_workflow_inputs {
   my $input_summary_dir = $patient_dir . "/input";
   push @dirs, $input_summary_dir;
   push @inputs, summarize_builds_outdir => $input_summary_dir;
-  push @inputs, summarize_builds_log_file => $input_summary_dir . "/SummarizeBuilds.log.tsv";
+  push @inputs, summarize_builds_log_file => $input_summary_dir . "/QC_Report.tsv";
 
   if ($build->id) {
     push @inputs, summarize_builds_skip_lims_reports => 0;
