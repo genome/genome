@@ -19,6 +19,7 @@ use Carp;
 use File::Path;
 use Genome::Utility::Email;
 use File::Path 'make_path';
+use File::Spec;
 
 class Genome::Model::GenePrediction::Command::Bacterial::Finish {
     is  => 'Command',
@@ -149,13 +150,12 @@ sub execute
     }
 
     # FIXME This is so sloppy there are no words to adequately describe it. Holy shit would be a good start.
-    # FIXME For now, there is an ace installation directory (for HGMI, at /gscmnt/278/analysis/HGMI) that has
+    # FIXME For now, there is an ace installation directory (for HGMI, at /gscmnt/gc2514/mitrevalab/HGMI) that has
     # these wspec and databases directories that are required for ace upload to work. I'd like to look into
     # getting rid of those in the near future...
     if ($self->project_type =~ /HGMI/) {
-        $acedb_installation_path = "/gscmnt/278/analysis/HGMI/Acedb/";
         my $acedb_version_long = $self->version_lookup($self->acedb_version);
-        $acedb_installation_path .= $acedb_version_long;
+        $acedb_installation_path = File::Spec->join(Genome::Model::Tools::Hgmi->installation_path, 'Acedb', $acedb_version_long);
 
         $acedb_path         = $hgmi_path . "/Acedb/" . $acedb_version_long;
         $acedb_scripts_path = $hgmi_path . "/Acedb/Scripts";

@@ -35,7 +35,7 @@ UR::Object::Type->define(
         'rrna_database' => {
             is          => 'String',
             doc         => "rrna database",
-            example_values => ['/gscmnt/278/analysis/HGMI/rRNA_testing/16s_23srnadb'],
+            example_values => ['/gscmnt/gc2514/mitrevalab/HGMI/rRNA_testing/16s_23srnadb'],
         },
         'script_location' => {
             is          => 'String',
@@ -86,7 +86,7 @@ sub run_screen
     my $dev             = $self->dev;
 
     # changed to default.
-    #my $rrnadb = '/gscmnt/278/analysis/HGMI/rRNA_testing/16s_23srnadb';
+    #my $rrnadb = '/gscmnt/gc2514/mitrevalab/HGMI/rRNA_testing/16s_23srnadb';
     my $rrnadb = $self->rrna_database;
 
     if ($dev)

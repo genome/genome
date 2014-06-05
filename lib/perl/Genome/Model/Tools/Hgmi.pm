@@ -22,6 +22,9 @@ need to fill out the hgmi help detail
 EOS
 }
 
+sub installation_path {
+    return '/gscmnt/gc2514/mitrevalab/HGMI';
+}
+
 
 1;
-

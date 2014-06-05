@@ -7,6 +7,7 @@ use Genome;
 use Carp 'confess';
 use File::Temp; 
 use Sort::Naturally qw/ ncmp nsort /;
+use File::Spec;
 
 use Bio::SeqIO;
 
@@ -250,7 +251,8 @@ sub execute {
                 $method = 'Rfam';
                 $remark = "\"Predicted by Rfam ($accession), score $gene_score\"";
                 $locus = $gene->description;
-                $rfam_prod_line = `grep $locus /gscmnt/278/analysis/HGMI/RFAM/RFAM_v8.1.tbl | head -1`;
+                my $tbl_file = File::Spec->join(Genome::Model::Tools::Hgmi->installation_path, 'RFAM', 'RFAM_v8.1.tbl');
+                $rfam_prod_line = `grep $locus $tbl_file | head -1`;
                        chomp $rfam_prod_line;
                        @rfam_line = split(/\t+/, $rfam_prod_line);
                     
