@@ -37,4 +37,4 @@ while ( my $line = <$variantMatcherOut> ) {
 }
 close $variantMatcherOut;
 
-ok( ( $line_count == 11 && $word_count == 374 ), "Output looks good!" );
+ok( ( $line_count == 11 && $word_count == 374 ), "Output looks great!" );
