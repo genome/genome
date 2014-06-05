@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Genome::Utility::File::Mode qw(mode);
 
 class Genome::FeatureList {
     table_name => 'model.feature_list',
@@ -155,9 +156,9 @@ sub create {
         $self->delete;
         return;
     }
-    #set the newly copied file to read only
+
     my $result = eval{
-        chmod 0444, $self->file_path;
+        mode($self->file_path)->rm_all_writable;
     };
     if($@ or !$result){
         $self->error_message("Could not modify file permissions for: ".$self->file_path);

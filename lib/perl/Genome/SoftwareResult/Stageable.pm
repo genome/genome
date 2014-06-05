@@ -2,8 +2,12 @@ package Genome::SoftwareResult::Stageable;
 
 use warnings;
 use strict;
+
 use Genome;
+use Genome::Utility::File::Mode qw(mode);
+
 use Sys::Hostname;
+use File::Find::Rule qw();
 use File::Path;
 
 class Genome::SoftwareResult::Stageable {
@@ -119,9 +123,9 @@ sub _promote_data {
         chmod 02775, $subdir;
     }
 
-    # Make everything in here read-only 
-    for my $file (grep { -f $_  } glob("$output_dir/*")) {
-        chmod 0444, $file;
+    my @files = File::Find::Rule->file->not(File::Find::Rule->symlink)->in($output_dir);
+    for my $file (@files) {
+        mode($file)->rm_all_writable;
     }
 
     $self->debug_message("Files in $output_dir: \n" . join "\n", glob($output_dir . "/*"));

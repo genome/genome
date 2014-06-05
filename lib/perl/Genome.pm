@@ -143,7 +143,7 @@ sub _wrapper_has {
 
         my $name = $property->property_name;
 
-        next if $base->can($name);
+        next if $base->__meta__->properties(property_name => $name);
 
         if ($property->is_param) {
             $desc{is_param} = 1;
@@ -151,12 +151,6 @@ sub _wrapper_has {
         elsif ($property->is_input) {
             $desc{is_input} = 1;
         }
-        #elsif ($property->can("is_metric") and $property->is_metric) {
-        #    $desc{is_metric} = 1;
-        #}
-        #elsif ($property->can("is_output") and $property->is_output) {
-        #    $desc{is_output} = 1;
-        #}
         else {
             next;
         }

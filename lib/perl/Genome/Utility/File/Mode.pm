@@ -126,7 +126,7 @@ for my $name (keys %bit) {
 sub set_mode {
     my $self = shift;
     my $mode = shift;
-    chmod $mode, $self->{path} or croak "cannot chmod: $!";
+    chmod $mode, $self->{path} or croak sprintf('cannot chmod: %s: %s', $self->{path}, $!);
     $self->restat();
     return $self;
 }
