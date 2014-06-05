@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use Test::More tests => 3;
-use ProcessManualReview;
+#use ProcessManualReview;
 use File::Spec;
 use above 'Genome';
 my $variantMatcherOut = new File::Temp( UNLINK => 0 );
