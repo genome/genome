@@ -22,6 +22,11 @@ class Genome::Model::ClinSeq::Command::Converge::Stats {
               'rnaseq_tumor_cufflinks_genes',
       default => 'all',
     },
+    plot => {
+      is => 'Boolean',
+      doc => 'Set for plotting stats.',
+      default => 0,
+    },
     verbose => {
       is => 'Boolean',
       doc => 'Set for verbose status outputs.',
@@ -183,9 +188,9 @@ sub get_column_names {
     $files->{$bid}{id4} = $id4;
   }
 
-  if ($file_count == keys %finalnames_subjectnames){
+  if ($file_count == keys %finalnames){
     $id_choice = "id1";
-  }elsif($file_count == keys %finalnames){
+  }elsif($file_count == keys %finalnames_subjectnames){
     $id_choice = "id2";
   }elsif($file_count == keys %modelnames){
     $id_choice = "id3";
@@ -344,6 +349,16 @@ sub write_output {
   $self->status_message("Wrote output to $outfile");
 }
 
+sub plot_stats {
+  my $self = shift;
+  my $outfile = shift;
+  my $plot_file = "stats.converged.pdf";
+  my $plot_script = __FILE__.".R";
+  my $plot_cmd = $plot_script . " " . $outfile . " " . $plot_file;
+  Genome::Sys->shellcmd(cmd => $plot_cmd);
+  return;
+}
+
 sub execute {
   my $self = shift;
   my $outfile = $self->outdir . "/" . basename($self->outfile);
@@ -373,6 +388,9 @@ sub execute {
   }
   my $column_names_s = join("\t", @column_names);
   $self->write_output($metric_list, $metrics, \%files, $column_names_s, $outfile);
+  if($self->plot) {
+    $self->plot_stats($outfile);
+  }
   return 1;
 }
 
