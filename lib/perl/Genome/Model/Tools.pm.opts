@@ -16219,8 +16219,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
     [
       'group-id=s',
       'files',
-      'cleanup-empty-files!',
-      undef,
       'debug!',
       undef,
       'output-dir=s',
@@ -16229,8 +16227,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
       undef,
       'summary-file=s',
       'files',
-      'use-external!',
-      undef,
       'whitelist-snps-file=s',
       'files',
       'help!',
@@ -19613,6 +19609,19 @@ $Genome::Model::Tools::OPTS_SPEC = [
   ],
   '>vcf',
   [
+    '>annotate-with-fpkm',
+    [
+      'vcf-file=s',
+      'files',
+      'fpkm-file=s',
+      'files',
+      'sample-name=s',
+      'files',
+      'output-file=s',
+      'files',
+      'help!',
+      undef
+    ],
     '>annotate-with-readcounts',
     [
       'vcf-file=s',
