@@ -37,6 +37,7 @@ is($import->_sample->name, $name, 'sample name');
 is($import->_sample->nomenclature, 'EMBL-EBI', 'sample nomenclature');
 is($import->_sample->extraction_label, $name, 'sample extraction label');
 is($import->_sample->extraction_type, 'rna', 'sample extraction type');
+is($import->_sample->tissue_label, 'heart', 'sample tissue');
 is($import->_sample->tissue_desc, 'heart', 'sample tissue');
 is($import->_sample->age, 25, 'sample age');
 is_deeply($import->_sample->source, $import->_individual, 'sample source');
