@@ -39,16 +39,23 @@ sub filter_entry {
 
 sub tier1_consequence_types {
     my @types = qw(
-        synonymous_variant
-        missense_variant
-        inframe_insertion
-        inframe_deletion
+        transcript_ablation
+        splice_donor_variant
+        splice_acceptor_variant
         stop_gained
         frameshift_variant
-        coding_sequence_variant
         stop_lost
-        stop_retained_variant
+        initiator_codon_variant
+        inframe_insertion
+        inframe_deletion
+        missense_variant
+        transcript_amplification
+        splice_region_variant
         incomplete_terminal_codon_variant
+        synonymous_variant
+        stop_retained_variant
+        coding_sequence_variant
+        mature_miRNA_variant
     );
 
     my %consequences;
