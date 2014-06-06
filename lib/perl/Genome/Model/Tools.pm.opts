@@ -15482,6 +15482,21 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>process-manual-review',
+    [
+      'reviewed-file=s',
+      'files',
+      'variant-file=s',
+      'files',
+      'debug!',
+      undef,
+      'output-file=s',
+      'files',
+      'statuses=s',
+      'files',
+      'help!',
+      undef
+    ],
     '>process-somatic-variation',
     [
       'output-dir=s',
