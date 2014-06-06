@@ -2,10 +2,10 @@
 
 use strict;
 use warnings;
-use Test::More tests => 3;
-#use ProcessManualReview;
+use above "Genome";
+use Test::More tests => 4;
 use File::Spec;
-use above 'Genome';
+
 my $variantMatcherOut = new File::Temp( UNLINK => 0 );
 
 my $variantFile = File::Spec->catfile(
@@ -16,12 +16,25 @@ my $reviewedFile = File::Spec->catfile(
 	$ENV{GENOME_TEST_INPUTS}, "Genome-Model",
 	"ProcessManualReview",    "Reviewed.bed"
 );
+use_ok('Genome::Model::Tools::Somatic::ProcessManualReview');
+#my $analysis = Genome::Model::Tools::Somatic::ProcessManualReview->create();
+
 my $analysis = Genome::Model::Tools::Somatic::ProcessManualReview->create(
 	statuses      => "O,S",
 	reviewed_file => $reviewedFile,
 	variant_file  => $variantFile,
-	output_file   => "$variantMatcherOut",
+	output_file   => "$variantMatcherOut"
 );
+
+#my $plot = Genome::Model::Tools::Graph::OncoPlot->create(
+#                                                         genes => $genes,
+#                                                         input => "$inputFile",
+#                                                         geneModel => "$geneModelFile",
+#                                                         outFile => "$outFile",
+#                                                         variantIndex => 2,
+#                                                         geneNameIndex => 1
+#                                                        );
+ 
 
 ok( $analysis->execute, "Execution successful" );
 ok( ( -e "$variantMatcherOut" ), "Ouput file created" );

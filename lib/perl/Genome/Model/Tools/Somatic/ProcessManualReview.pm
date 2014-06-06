@@ -7,8 +7,8 @@ use strict;
 use warnings;
 use File::Basename;
 use File::Spec;
-use Genome
-  ; # using the namespace authorizes Class::Autouse to lazy-load modules under it
+use Genome;
+# using the namespace authorizes Class::Autouse to lazy-load modules under it
 
 class Genome::Model::Tools::Somatic::ProcessManualReview {
 	is  => 'Command',
