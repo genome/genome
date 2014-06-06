@@ -1323,7 +1323,7 @@ sub files_ignored_by_build_diff {
         .*/summary/rc_summary.stderr$
         .*._COSMIC.svg$
         .*.clustered.data.tsv$
-        .*.SummarizeBuilds.log.tsv$
+        .*QC_Report.tsv$
         .*.DumpIgvXml.log.txt$
         .*/mutation_diagrams/cosmic.mutation-diagram.stderr$
         .*/mutation_diagrams/somatic.mutation-diagram.stderr$
