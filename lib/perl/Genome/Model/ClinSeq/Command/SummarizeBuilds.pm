@@ -350,7 +350,6 @@ sub summarize_clinseq_build {
     }
 
     $self->generate_APIPE_reports(\@builds, $build_outdir, $stats_fh);
-    $self->generate_LIMS_reports(\@builds, $build_outdir);
 
     #Get BAMQC results for all ref-align builds
     for my $build (@builds) {
