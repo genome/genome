@@ -1157,11 +1157,6 @@ sub _promote_validated_data {
         }
     }
 
-    chmod 02770, $output_dir;
-    for my $subdir (grep { -d $_  } glob("$output_dir/*")) {
-        chmod 02770, $subdir;
-    }
-
     for my $file (grep { -f $_  } glob("$output_dir/*")) {
         mode($file)->rm_all_writable;
     }

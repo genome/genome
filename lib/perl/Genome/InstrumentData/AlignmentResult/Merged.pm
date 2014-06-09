@@ -436,11 +436,6 @@ sub _promote_validated_data {
         rename($staged_file, $destination);
     }
 
-    chmod 02770, $output_dir;
-    for my $subdir (grep { -d $_  } glob("$output_dir/*")) {
-        chmod 02770, $subdir;
-    }
-
     my @files = File::Find::Rule->file->not(File::Find::Rule->symlink)->in($output_dir);
     for my $file (@files) {
         mode($file)->rm_all_writable;

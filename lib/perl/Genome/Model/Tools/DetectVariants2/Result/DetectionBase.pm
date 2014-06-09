@@ -356,11 +356,6 @@ sub _set_result_file_permissions {
     my $output_dir = $self->output_dir;
     $output_dir =~ s/\/$//;
 
-    chmod 02770, $output_dir;
-    for my $subdir (grep { -d $_  } glob("$output_dir/*")) {
-        chmod 02770, $subdir;
-    }
-
     for my $file (grep { -f $_  } glob("$output_dir/*")) {
         mode($file)->rm_all_writable();
     }
