@@ -83,7 +83,7 @@ sub _load_import_configs {
         },
         {
             nomenclature => 'EMBL-EBI',
-            name_regexp => '(EMBL\-[\w\d]+)\-[\w\d]+',
+            name_regexp => '(EMBL\-[\w\d_]+)\-.+',
             taxon_name => 'human',
             sample_attributes => {
                 age => {},
