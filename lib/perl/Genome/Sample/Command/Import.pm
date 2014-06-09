@@ -32,19 +32,6 @@ sub importer_class_name_for_namespace {
     return $config->{importer_class_name};
 }
 
-sub importer_property_names_for_namespace {
-    my ($self, $namespace) = @_;
-
-    Carp::confess('No namespace to get property names for importer!') if not $namespace;
-
-    my $config = $import_namespaces{$namespace};
-    if ( not $config ) {
-        Carp::confess('No config found for namespace to get property names for importer!');
-    }
-
-    return @{$config->{importer_property_names}};
-}
-
 sub _create_import_commands {
     my @configs = _load_import_configs();
     for my $config ( @configs ) { 
@@ -248,7 +235,6 @@ sub _create_import_command_for_config {
     my $name_regexp =  qr|^$name_regexp_string$|; 
 
     my %properties;
-    $config->{importer_property_names} = [];
     for my $type (qw/ sample individual /) {
         my $key_name = $type.'_attributes';
         next if not $config->{$key_name};
@@ -260,7 +246,6 @@ sub _create_import_command_for_config {
             %attributes = %{$config->{$key_name}};
         }
         my %type_properties = _get_properties_for_import_command_from_entity($type, %attributes);
-        push @{$config->{importer_property_names}}, grep { not $type_properties{$_}->{calculate} } keys %type_properties;
         %properties = ( %properties, %type_properties );
         $properties{'_'.$type.'_attribute_names'} = { is => 'ARRAY', is_constant => 1, value => [ sort keys %attributes ], };
     }
