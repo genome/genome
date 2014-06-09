@@ -296,6 +296,7 @@ sub _add_property_meta_from_entity_to_importer_properties {
             $property->{is} = 'Text' if not defined $property->{is};
             $property->{doc} = "The value of '".join(' ', split('_', $name))."' for the $entity." if not defined $property->{doc};
         }
+        $property->{is_optional} = 1 if $property->{calculate};
     }
 
     return 1;
