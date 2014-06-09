@@ -7,6 +7,12 @@ use Genome;
 class Genome::Model::ClinSeq::Command::Converge::PlotCnvs {
   is => 'Genome::Model::ClinSeq::Command::Converge::Base',
   has_input => [
+  calculate_metrics => {
+    is => 'Boolean',
+    doc => 'Flag to calculate ROC metrics.',
+    is_optional => 1,
+    default => 0,
+  },
   outdir => {
     is => 'FilesystemPath',
     doc => 'Directory to write results',
@@ -62,17 +68,17 @@ sub copy_wg_plots {
   my $self = shift;
   my $clinseq_build = shift;
   my $common_name = shift;
-  my $microarray_cnv_wg_plot = $clinseq_build->microarray_cnv_wg_plot();
-  if($microarray_cnv_wg_plot) {
-    $microarray_cnv_wg_plot = $self->copy_to_outdir($microarray_cnv_wg_plot, $common_name . ".microarrays.cnvs.jpg");
+  my $microarray_wg_plot = $clinseq_build->microarray_cnv_wg_plot();
+  if($microarray_wg_plot) {
+    $microarray_wg_plot = $self->copy_to_outdir($microarray_wg_plot, $common_name . ".microarrays.cnvs.jpg");
   }
-  my $wgs_cnv_wg_plot = $clinseq_build->wgs_cnv_wg_plot();
-  if($wgs_cnv_wg_plot) {
-    $wgs_cnv_wg_plot = $self->copy_to_outdir($wgs_cnv_wg_plot, $common_name . ".wgs.cnvs.jpg");
+  my $wgs_wg_plot = $clinseq_build->wgs_cnv_wg_plot();
+  if($wgs_wg_plot) {
+    $wgs_wg_plot = $self->copy_to_outdir($wgs_wg_plot, $common_name . ".wgs.cnvs.jpg");
   }
-  my $exome_cnv_wg_plot = $clinseq_build->exome_cnv_wg_plot();
-  if($exome_cnv_wg_plot) {
-    $exome_cnv_wg_plot = $self->copy_to_outdir($exome_cnv_wg_plot, $common_name . ".exome.cnvs.pdf");
+  my $exome_wg_plot = $clinseq_build->exome_cnv_wg_plot();
+  if($exome_wg_plot) {
+    $exome_wg_plot = $self->copy_to_outdir($exome_wg_plot, $common_name . ".exome.cnvs.pdf");
   }
 }
 
@@ -101,7 +107,7 @@ sub copy_wg_bed {
   return ($microarray_cnvhmm_file, $wgs_cnvhmm_file, $exome_cnvs_file); 
 }
 
-sub copy_cnv_files {
+sub copy_files {
   my $self = shift;
   my $build = shift;
   my $common_name = shift;
@@ -110,51 +116,105 @@ sub copy_cnv_files {
   return $self->copy_wg_bed($clinseq_build, $common_name);
 }
 
-sub format_cnv_files {
+sub get_cn {
   my $self = shift;
-  my $microarray_cnv_file = shift;
-  my $wgs_cnv_file = shift;
-  my $exome_cnv_file = shift;
-  my $microarray_cnv_file_f = $microarray_cnv_file . ".f";
-  my $wgs_cnv_file_f = $wgs_cnv_file . ".f";
-  my $exome_cnv_file_f = $exome_cnv_file . ".f";
-  my $ma_format_cmd = "awk '!/chr|CHR|GL/ { print \$1\"\\t\"\$2\"\\t\"\$3\"\\tNA\\t\"\$7-\$9+2 }' $microarray_cnv_file > $microarray_cnv_file_f";
-  my $wgs_format_cmd = "awk '!/chr|CHR/ { print \$1\"\\t\"\$2\"\\t\"\$3\"\\tNA\\t\"\$7-\$9+2 }' $wgs_cnv_file > $wgs_cnv_file_f";
-  my $exome_format_cmd = "awk '!/chr|CHR/ { print \$1\"\\t\"\$2\"\\t\"\$3\"\\tNA\\t\"2^\$5*2 }' $exome_cnv_file > $exome_cnv_file_f";
-  Genome::Sys->shellcmd(cmd => $ma_format_cmd);
-  Genome::Sys->shellcmd(cmd => $wgs_format_cmd);
-  Genome::Sys->shellcmd(cmd => $exome_format_cmd);
-  return ($microarray_cnv_file_f, $wgs_cnv_file_f, $exome_cnv_file_f);
+  my $ip_f = shift;
+  my $op_f = shift;
+  my $format = "awk '!/chr|CHR|GL/ { print \$1\"\\t\"\$2\"\\t\"\$3\"\\tNA\\t\"\$7-\$9+2 }' $ip_f > $op_f";
+  Genome::Sys->shellcmd(cmd => $format);
+  return;
+}
+
+sub get_bed {
+  my $self = shift;
+  my $ip_f = shift;
+  my $op_f = shift;
+  my $format = "awk '!/chr|CHR/ { print \$1\"\\t\"\$2\"\\t\"\$3 }' $ip_f > $op_f";
+  Genome::Sys->shellcmd(cmd => $format);
+  return;
+}
+
+sub format_files {
+  my $self = shift;
+  my $microarray_file = shift;
+  my $wgs_file = shift;
+  my $exome_file = shift;
+  my $microarray_cn = $$microarray_file . ".cn";
+  my $microarray_bed = $$microarray_file . ".bed";
+  my $wgs_cn = $$wgs_file . ".cn";
+  my $wgs_bed = $$wgs_file . ".bed";
+  my $exome_cn = $$exome_file . ".cn";
+  my $exome_bed = $$exome_file . ".bed";
+  $self->get_cn($$microarray_file, $microarray_cn);
+  $self->get_cn($$wgs_file, $wgs_cn);
+  $self->get_cn($$exome_file, $exome_cn);
+  $self->get_bed($$microarray_file, $microarray_bed);
+  $self->get_bed($$wgs_file, $wgs_bed);
+  $self->get_bed($$exome_file, $exome_bed);
+  $$microarray_file = $microarray_cn;
+  $$exome_file = $exome_cn;
+  $$wgs_file = $wgs_cn;
+  return ($microarray_bed, $wgs_bed, $exome_bed);
 }
 
 sub create_combined_plot {
   my $self = shift;
-  my $microarray_cnv_file = shift;
-  my $wgs_cnv_file = shift;
-  my $exome_cnv_file = shift;
+  my $microarray_file = shift;
+  my $wgs_file = shift;
+  my $exome_file = shift;
   my $common_name = shift;
   my $plot = $self->outdir . $common_name . ".combinedCNV.pdf";
   my $Rscript = "Rscript " . __FILE__ . ".R";
-  my $plot_cmd = $Rscript . " $microarray_cnv_file $wgs_cnv_file $exome_cnv_file $plot $common_name";
+  my $plot_cmd = $Rscript . " $microarray_file $wgs_file $exome_file $plot $common_name";
   Genome::Sys->shellcmd(cmd => $plot_cmd);
 }
+
+sub calculate_ROC_metrics {
+  my $self = shift;
+  my $tp_bed = shift;
+  my $eval_bed = shift;
+  my $common_name = shift;
+  my $outdir = $self->outdir;
+  my $c1 = Genome::Model::Tools::Analysis::CompareCnvCalls->create(tp_bed => $tp_bed, eval_bed => $eval_bed, outdir => $outdir, sample => $common_name);
+  $c1->execute();
+}
+
 
 sub plot_wgs_exome_microarray_cnvs() {
   my $self = shift;
   my @builds = $self->builds;
+  my (%cumulative_metrics1, %cumulative_metrics2, %cumulative_metrics3);
   foreach my $build (@builds) {
-      my $microarray_cnv_file;
-      my $wgs_cnv_file;
-      my $exome_cnv_file;
+      my $microarray_file;
+      my $wgs_file;
+      my $exome_file;
       my $common_name = $build->common_name;
-      ($microarray_cnv_file, $wgs_cnv_file, $exome_cnv_file) = $self->copy_cnv_files($build, $common_name);
-      if ($microarray_cnv_file eq "NA" or $wgs_cnv_file eq "NA" or $exome_cnv_file eq "NA") {
+      ($microarray_file, $wgs_file, $exome_file) = $self->copy_files($build, $common_name);
+      if ($microarray_file eq "NA" or $wgs_file eq "NA" or $exome_file eq "NA") {
         $self->status_message("Skipping $common_name, this sample does not have all three CNV files.");
         next;
       }
-      ($microarray_cnv_file, $wgs_cnv_file, $exome_cnv_file) = $self->format_cnv_files($microarray_cnv_file, $wgs_cnv_file, $exome_cnv_file);
-      $self->create_combined_plot($microarray_cnv_file, $wgs_cnv_file, $exome_cnv_file, $common_name);
+      my ($microarray_bed, $wgs_bed, $exome_bed) = $self->format_files(\$microarray_file, \$wgs_file, \$exome_file);
+      if($self->calculate_metrics) {
+        my $name1 = $common_name . ".wgs_exome";
+        my $name2 = $common_name . ".wgs_ma";
+        my $name3 = $common_name . ".exome_ma";
+        $self->calculate_ROC_metrics($wgs_bed, $exome_bed, $name1);
+        $self->calculate_ROC_metrics($wgs_bed, $microarray_bed, $name2);
+        $self->calculate_ROC_metrics($exome_bed, $microarray_bed, $name3);
+        Genome::Model::Tools::Analysis::CompareCnvCalls->accumulate_ROC_metrics($name1, \%cumulative_metrics1, $self->outdir);
+        Genome::Model::Tools::Analysis::CompareCnvCalls->accumulate_ROC_metrics($name2, \%cumulative_metrics2, $self->outdir);
+        Genome::Model::Tools::Analysis::CompareCnvCalls->accumulate_ROC_metrics($name3, \%cumulative_metrics3, $self->outdir);
+        my $metrics_f1 = $self->outdir . "/". $common_name . ".wgs_exome.ROC.metrics.txt";
+        Genome::Model::Tools::Analysis::CompareCnvCalls->write_ROC_metrics($metrics_f1, \%cumulative_metrics1, $self->outdir);
+        my $metrics_f2 = $self->outdir . "/" . $common_name . ".wgs_ma.ROC.metrics.txt";
+        Genome::Model::Tools::Analysis::CompareCnvCalls->write_ROC_metrics($metrics_f2, \%cumulative_metrics2, $self->outdir);
+        my $metrics_f3 = $self->outdir . "/" . $common_name . ".exome_ma.ROC.metrics.txt";
+        Genome::Model::Tools::Analysis::CompareCnvCalls->write_ROC_metrics($metrics_f3, \%cumulative_metrics3, $self->outdir);
+      }
+      $self->create_combined_plot($microarray_file, $wgs_file, $exome_file, $common_name);
   }
+
 }
 
 sub execute {
