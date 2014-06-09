@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 use Spreadsheet::WriteExcel;
+use Data::Dumper;
 
 class Genome::Model::ReferenceAlignment::Command::AdspExomeQcSummary {
     is => 'Command::V2',
@@ -77,6 +78,10 @@ sub build_stats {
     my @metrics;
     my %build_metrics = map { $_->name => $_->value} $build->metrics;
     my $result = $build->merged_alignment_result;
+    unless(defined $result) {
+        warn "Unable to find a merged alignment result for " . $build->id ." (" . $build->model->name ."). Skipping this model and build. You should investigate further.\n";
+        next;
+    }
     my $flagstat_path = $result->bam_flagstat_path;
     my $flagstat = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flagstat_path);
     my @instrument_data = $build->instrument_data;
@@ -84,18 +89,11 @@ sub build_stats {
     my ($total_bases, $total_mapped_bases, $total_unique_mapped_bases) = (0,0,0);
     my $mismatches = 0;
     my @inserts;
-    my %readlengths;
 
     for my $lane (@per_lane_alignments) {
         $mismatches += $lane->total_base_count * $lane->instrument_data->filt_error_rate_avg / 100;
         push @inserts, $lane->instrument_data->library->original_insert_size;
-        $readlengths{$lane->instrument_data->read_length} = 1;
     }
-
-    if( scalar(keys %readlengths) > 1 ) {
-        die "Multiple read lengths generated. NUMBERS WILL BE WRONG. I AM DYING TO LET YOU FIGURE IT OUT.\n";
-    }
-
 
     my @target_stats;
     my $coverage_stats_summary_hash_ref = $build->coverage_stats_summary_hash_ref();
