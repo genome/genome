@@ -244,7 +244,7 @@ sub _create_import_command_for_config {
         }
         my $properties = $config->{$key_name};
         _add_property_meta_from_entity_to_importer_properties($entity, $properties);
-        $properties->{'_'.$entity.'_attribute_names'} = { is => 'ARRAY', is_constant => 1, value => [ keys %$properties ], };
+        $properties->{'_'.$entity.'_attribute_names'} = { is => 'ARRAY', is_constant => 1, value => [ sort keys %$properties ], };
         push @command_properties, $properties;
     }
 
