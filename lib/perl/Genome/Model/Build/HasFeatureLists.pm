@@ -10,8 +10,8 @@ class Genome::Model::Build::HasFeatureLists {
 
 sub feature_list_lookups {
     return {
-        'target_region' => 'get_target_region_file_list',
-        'segmental_duplications' => 'get_segmental_dupications_file_list',
+        'target_region' => 'get_target_region_feature_list',
+        'segmental_duplications' => 'get_segmental_dupications_feature_list',
     };
 }
 

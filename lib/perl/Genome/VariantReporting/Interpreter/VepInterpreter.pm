@@ -27,6 +27,9 @@ sub available_fields {
         c_position
         gene_name_source
         canonical
+        sift
+        polyphen
+        condel
     /;
 }
 

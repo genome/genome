@@ -297,7 +297,7 @@ sub whole_rmdup_bam_file {
     return $self->tumor_bam;
 }
 
-sub get_target_region_file_list {
+sub get_target_region_feature_list {
     my $self = shift;
 
     if (defined($self->target_region_set_name)) {

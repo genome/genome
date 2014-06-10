@@ -28,7 +28,7 @@ class Genome::Model::Build::TestHasFeatureLists {
         'Genome::Model::Build::HasFeatureLists',
     ],
     has => [
-        get_target_region_file_list => {
+        get_target_region_feature_list => {
         },
     ],
 };
@@ -42,7 +42,7 @@ throws_ok( sub {$target->get_feature_list('segmental_duplications')} , qr(is not
 throws_ok( sub {$target->get_feature_list('target_region')} , qr(Couldn't get feature_list));
 
 my $feature_list = Genome::FeatureList->__define__();
-$target->get_target_region_file_list($feature_list);
+$target->get_target_region_feature_list($feature_list);
 is($target->get_feature_list('target_region'), $feature_list, 'Got expected feature list');
 
 done_testing();
