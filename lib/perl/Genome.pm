@@ -4,7 +4,6 @@ use warnings;
 use strict;
 
 our $VERSION = '0.080100';
-$DB::deep = 10000;
 
 use UR;
 use File::Temp;
