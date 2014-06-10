@@ -6165,6 +6165,8 @@ $Genome::Command::OPTS_SPEC = [
           undef,
           'outdir=s',
           'files',
+          'calculate-metrics!',
+          undef,
           'help!',
           undef
         ],
@@ -6278,6 +6280,8 @@ $Genome::Command::OPTS_SPEC = [
           'files',
           'stats-file-type=s',
           'files',
+          'plot!',
+          undef,
           'verbose!',
           undef,
           'help!',
@@ -10504,8 +10508,6 @@ $Genome::Command::OPTS_SPEC = [
       [
         'name=s',
         'files',
-        'tissue=s',
-        'files',
         'extraction-type=s',
         [
           'cdna',
@@ -10515,6 +10517,8 @@ $Genome::Command::OPTS_SPEC = [
           'total rna'
         ],
         'race=s',
+        'files',
+        'tissue=s',
         'files',
         'gender=s',
         'files',
@@ -10531,8 +10535,6 @@ $Genome::Command::OPTS_SPEC = [
       [
         'name=s',
         'files',
-        'ethnicity=s',
-        'files',
         'extraction-type=s',
         [
           'cdna',
@@ -10541,6 +10543,8 @@ $Genome::Command::OPTS_SPEC = [
           'rna',
           'total rna'
         ],
+        'ethnicity=s',
+        'files',
         'age=s',
         'files',
         'tissue-label=s',
@@ -10574,15 +10578,15 @@ $Genome::Command::OPTS_SPEC = [
           'rna',
           'total rna'
         ],
-        'ethnicity=s',
-        'files',
-        'age=s',
-        'files',
         'gender=s',
         [
           'male',
           'female'
         ],
+        'ethnicity=s',
+        'files',
+        'age=s',
+        'files',
         'individual-attributes=s@',
         'files',
         'sample-attributes=s@',
@@ -10611,9 +10615,9 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>Dream',
       [
-        'name=s',
-        'files',
         'common-name=s',
+        'files',
+        'name=s',
         'files',
         'extraction-type=s',
         'files',
@@ -10645,8 +10649,6 @@ $Genome::Command::OPTS_SPEC = [
       [
         'name=s',
         'files',
-        'age=s',
-        'files',
         'extraction-type=s',
         [
           'cdna',
@@ -10655,6 +10657,8 @@ $Genome::Command::OPTS_SPEC = [
           'rna',
           'total rna'
         ],
+        'age=s',
+        'files',
         'tissue-label=s',
         'files',
         'body-mass-index=s',
@@ -15534,6 +15538,8 @@ $Genome::Command::OPTS_SPEC = [
         'window-size=s',
         undef,
         'ROI-file=s',
+        'files',
+        'sample=s',
         'files',
         'test!',
         undef,
