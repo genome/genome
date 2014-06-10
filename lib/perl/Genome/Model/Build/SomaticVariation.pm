@@ -429,7 +429,7 @@ sub path_to_individual_output {
     return $answer;
 }
 
-sub get_target_region_file_list {
+sub get_target_region_feature_list {
     my $self = shift;
 
     if (defined($self->tumor_build->target_region_set_name)) {
@@ -440,7 +440,7 @@ sub get_target_region_file_list {
     }
 }
 
-sub get_segmental_dupications_file_list {
+sub get_segmental_dupications_feature_list {
     my $self = shift;
     # TODO
     return;
