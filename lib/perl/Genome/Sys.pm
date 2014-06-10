@@ -1650,6 +1650,10 @@ sub touch {
 
     my $file = IO::File->new($path, 'a') or die $!;
     $file->close() or die $!;
+
+    # using the undef pair uses system's current time (better for NFS)
+    utime undef, undef, $path or die $!;
+
     return 1;
 }
 
