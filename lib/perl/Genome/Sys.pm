@@ -1621,6 +1621,14 @@ sub retry {
     return $rv;
 }
 
+sub touch {
+    my ($path) = @_;
+
+    my $file = IO::File->new($path, 'a') or die $!;
+    $file->close() or die $!;
+    return 1;
+}
+
 1;
 
 __END__
