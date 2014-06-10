@@ -1621,6 +1621,30 @@ sub retry {
     return $rv;
 }
 
+# rename that doesn't preserve permissions, uid, or gid
+sub rename {
+    my ($oldname, $newname) = @_;
+
+    if (-f $oldname) {
+        touch($newname) or die $!;
+    } else {
+        mkdir($newname) or die $!;
+    }
+    my $mode = stat($newname)->mode;
+    my $gid  = stat($newname)->gid;
+    my $uid  = stat($newname)->uid;
+    if (-f $oldname) {
+        unlink($newname) or die $!;
+    } else {
+        rmdir($newname) or die $!;
+    }
+
+    CORE::rename $oldname, $newname or die $!;
+
+    chown $uid, $gid, $newname or die $!;
+    mode($newname)->set_mode($mode);
+}
+
 sub touch {
     my ($path) = @_;
 
