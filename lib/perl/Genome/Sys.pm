@@ -1623,10 +1623,10 @@ sub retry {
 
 # rename that doesn't preserve permissions, uid, or gid
 sub rename {
-    my ($oldname, $newname) = @_;
+    my ($class, $oldname, $newname) = @_;
 
     if (-f $oldname) {
-        touch($newname) or die $!;
+        $class->touch($newname) or die $!;
     } else {
         mkdir($newname) or die $!;
     }
@@ -1646,7 +1646,7 @@ sub rename {
 }
 
 sub touch {
-    my ($path) = @_;
+    my ($class, $path) = @_;
 
     my $file = IO::File->new($path, 'a') or die $!;
     $file->close() or die $!;

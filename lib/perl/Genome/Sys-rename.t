@@ -24,7 +24,7 @@ unless ($alt_gid) {
 # the Genome::Sys::rename case.
 my @cases = (
     ['CORE::rename'       , sub { CORE::rename($_[0], $_[1]) }, $gid    , 0],
-    ['Genome::Sys::rename', \&Genome::Sys::rename             , $alt_gid, 1],
+    ['Genome::Sys::rename', sub { Genome::Sys->rename(@_)    }, $alt_gid, 1],
 );
 plan tests => scalar(@cases);
 for my $case (@cases) {
@@ -53,7 +53,7 @@ for my $case (@cases) {
             my $tmp_filename = File::Spec->join($tmp_dir->dirname, 'somefile');
             ok(! -e $tmp_filename, 'tmp_filename does not already exist');
 
-            Genome::Sys::touch($tmp_filename);
+            Genome::Sys->touch($tmp_filename);
             ok(-f $tmp_filename, 'tmp_filename created');
 
             my $setgid_filename = File::Spec->join($setgid_dir->dirname, 'somefile');
