@@ -10,6 +10,7 @@ BEGIN {
 
 use above 'Genome';
 use Test::More;
+use Test::Exception;
 use Test::MockObject::Extends;
 use Genome::Test::Factory::Model::ImportedReferenceSequence;
 use Genome::Test::Factory::Build;
@@ -18,7 +19,7 @@ Genome::Report::Email->silent();
 if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
 }else {
-    plan tests => 9;
+    plan tests => 10;
 }
 
 use_ok("Genome::Model::Build::ReferenceSequence");
@@ -66,17 +67,50 @@ is(Genome::Model::Build::ReferenceSequence->get_by_name($build_name), $build,
 # XXX Depends on database, but was used to prevent regression in refactor
 ok(Genome::Model::Build::ImportedReferenceSequence->get_by_name('NCBI-human-build36'));
 
-subtest 'is_superset_of' => sub {
-    my $base_ref = Genome::Test::Factory::Model::ImportedReferenceSequence->setup_object();
-    my $superset_ref = Genome::Test::Factory::Model::ImportedReferenceSequence->setup_object();
-    my $base_build = Genome::Test::Factory::Build->setup_object(model_id => $base_ref->id);
-    my $superset_build = Genome::Test::Factory::Build->setup_object(model_id => $superset_ref->id);
+# TODO test to see if get_feature_list works in multiple recursive situations
 
-    my $mock_base_ref = Test::MockObject::Extends->new($base_build);
-    my $mock_superset_ref = Test::MockObject::Extends->new($superset_build);
+subtest 'is_superset_of' => sub {
+    my $mock_base_ref = get_mock_ref_build();
+    my $mock_superset_ref = get_mock_ref_build();
 
     $mock_base_ref->mock('chromosome_array_ref', sub {return [qw(1 2 3)]});
     $mock_superset_ref->mock('chromosome_array_ref', sub {return [qw(1 2 3 4)]});
     ok($mock_superset_ref->is_superset_of($mock_base_ref), 'is_superset_of returns true when expected');
     ok(!$mock_base_ref->is_superset_of($mock_superset_ref), 'is_superset_of returns false when expected');
 };
+
+subtest 'get_feature_list' => sub {
+    my $base_ref = get_mock_ref_build();
+    my $middle_ref = get_mock_ref_build();
+    my $leaf_ref = get_mock_ref_build();
+
+    $middle_ref->mock('derived_from', sub {return $base_ref});
+    $leaf_ref->mock('derived_from', sub {return $middle_ref});
+
+    $base_ref->mock('chromosome_array_ref', sub {return [qw(1 2 3)]});
+    $middle_ref->mock('chromosome_array_ref', sub {return [qw(1 2 3)]});
+    $leaf_ref->mock('chromosome_array_ref', sub {return [qw(1 2 3)]});
+
+    dies_ok(sub{$base_ref->get_feature_list('segmental_duplications')}, "get_feature_list dies when no feature list is set on this and this has no ancestors");
+    dies_ok(sub{$middle_ref->get_feature_list('segmental_duplications')}, "get_feature_list dies when no feature list is set on this or its ancestors");
+
+    my $feature_list_1 = Genome::FeatureList->__define__(reference => $base_ref);
+    $base_ref->mock('segmental_duplications', sub {return $feature_list_1});
+
+    is($leaf_ref->get_feature_list('segmental_duplications'), $feature_list_1, "Ref builds can get feature lists from their ancestors");
+
+    my $feature_list_2 = Genome::FeatureList->__define__(reference => $leaf_ref);
+    $leaf_ref->mock('segmental_duplications', sub {return $feature_list_2});
+
+    is($leaf_ref->get_feature_list('segmental_duplications'), $feature_list_2, "Ref builds can get feature lists from themselves");
+
+    $base_ref->mock('chromosome_array_ref', sub {return [qw(1 2 3 4)]});
+    dies_ok(sub{$middle_ref->get_feature_list('segmental_duplications')}, "get_feature_list dies when the feature lists's reference is a superset of our reference");
+};
+
+sub get_mock_ref_build {
+    my $model = Genome::Test::Factory::Model::ImportedReferenceSequence->setup_object();
+    my $build = Genome::Test::Factory::Build->setup_object(model_id => $model->id);
+    my $mock_build = Test::MockObject::Extends->new($build);
+    return $mock_build;
+}
