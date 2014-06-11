@@ -8,6 +8,7 @@ use File::Copy;
 require Carp;
 use Regexp::Common;
 use POSIX;
+use Set::Scalar;
 
 class Genome::Model::Build::ReferenceSequence {
     is => 'Genome::Model::Build',
@@ -835,6 +836,20 @@ sub get_or_create_genome_file {
         $genome_fh->close;
     }
     return $genome_file;
+}
+
+sub is_superset_of {
+    my ($self, $other_refbuild) = @_;
+
+    my $my_chromosomes = Set::Scalar->new(@{$self->chromosome_array_ref});
+    my $other_chromosomes = Set::Scalar->new(@{$other_refbuild->chromosome_array_ref});
+
+    # If this refbuild has more chromosomes, it's a superset of the other... if returns false
+    if ($other_chromosomes - $my_chromosomes) {
+        return 0;
+    } else {
+        return 1;
+    }
 }
 
 1;

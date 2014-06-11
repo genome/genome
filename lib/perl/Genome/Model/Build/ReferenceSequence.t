@@ -10,13 +10,15 @@ BEGIN {
 
 use above 'Genome';
 use Test::More;
-
+use Test::MockObject::Extends;
+use Genome::Test::Factory::Model::ImportedReferenceSequence;
+use Genome::Test::Factory::Build;
 Genome::Report::Email->silent();
 
 if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
 }else {
-    plan tests => 8;
+    plan tests => 9;
 }
 
 use_ok("Genome::Model::Build::ReferenceSequence");
@@ -63,3 +65,18 @@ is(Genome::Model::Build::ReferenceSequence->get_by_name($build_name), $build,
 
 # XXX Depends on database, but was used to prevent regression in refactor
 ok(Genome::Model::Build::ImportedReferenceSequence->get_by_name('NCBI-human-build36'));
+
+subtest 'is_superset_of' => sub {
+    my $base_ref = Genome::Test::Factory::Model::ImportedReferenceSequence->setup_object();
+    my $superset_ref = Genome::Test::Factory::Model::ImportedReferenceSequence->setup_object();
+    my $base_build = Genome::Test::Factory::Build->setup_object(model_id => $base_ref->id);
+    my $superset_build = Genome::Test::Factory::Build->setup_object(model_id => $superset_ref->id);
+
+    my $mock_base_ref = Test::MockObject::Extends->new($base_build);
+    my $mock_superset_ref = Test::MockObject::Extends->new($superset_build);
+
+    $mock_base_ref->mock('chromosome_array_ref', sub {return [qw(1 2 3)]});
+    $mock_superset_ref->mock('chromosome_array_ref', sub {return [qw(1 2 3 4)]});
+    ok($mock_superset_ref->is_superset_of($mock_base_ref), 'is_superset_of returns true when expected');
+    ok(!$mock_base_ref->is_superset_of($mock_superset_ref), 'is_superset_of returns false when expected');
+};
