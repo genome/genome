@@ -105,6 +105,7 @@ class Genome::Disk::Allocation {
             is_many => 1,
             is => 'Genome::Timeline::Event::Allocation',
             reverse_as => 'object',
+            where => ['-order_by' => ['created_at']],
         },
     ],
     has_optional => [
