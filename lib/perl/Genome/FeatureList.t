@@ -122,4 +122,6 @@ ok(!$processed_bed_file, 'attempt to process bed file did not return a bed file'
 
 lives_ok {$feature_list_3->_check_bed_list_is_on_correct_reference}, "_check_bed_list_is_on_correct_reference worked";
 
+is_deeply([$feature_list_2->chromosome_list],[qw(1 2 X)], "list_chromosomes returns the expected list");
+
 done_testing();

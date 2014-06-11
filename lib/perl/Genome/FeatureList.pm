@@ -552,4 +552,19 @@ sub gzip_and_tabix_bed {
     return $gzipped_file;
 }
 
+sub chromosome_list {
+    my $self = shift;
+    my $indexed_bed = $self->get_tabix_and_gzipped_bed_file;
+    my $list_command = Genome::Model::Tools::Tabix::ListChromosomes->execute(
+        input_file => $indexed_bed,
+    );
+
+    my @chromosomes = $list_command->chromosomes;
+    unless ($list_command and @chromosomes) {
+        die $self->error_message("Failed to tabix list-chromosomes on indexed bed (%s) of bed (%s)", $indexed_bed, $self->processed_bed_file(short_name => 0));
+    }
+
+    return @chromosomes;
+}
+
 1;
