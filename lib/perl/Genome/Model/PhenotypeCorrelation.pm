@@ -344,6 +344,13 @@ sub _execute_build {
         unless($result) {
             die $self->error_message("Failed to copy previous variant detection results to the build directory");
         }
+        my $index_file = $self->previous_variant_detection_results . '.tbi';
+        if (-s $index_file) {
+            my $copied_index_filename = $copied_filename . '.tbi';
+            $self->debug_message("Copying index: $index_file");
+            my $rv = Genome::Sys->copy_file($index_file, $copied_index_filename);
+            die $self->error_message("Failed to copy index file to the build directory") unless $rv;
+        }
         $self->multisample_vcf($copied_filename);
     }
     else {
