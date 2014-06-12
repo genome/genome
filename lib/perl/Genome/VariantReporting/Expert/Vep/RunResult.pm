@@ -53,6 +53,7 @@ sub _run {
     $self->_annotate;
     $self->_sort_annotated_vcf;
     $self->_merge_annotations;
+    $self->_fix_feature_list_descriptions;
     $self->_zip;
 
     return;
@@ -118,15 +119,21 @@ sub _annotate {
     unlink $self->split_vcf;
 }
 
+sub _get_file_path_for_feature_list {
+    my ($self, $id) = @_;
+    my $feature_list = Genome::FeatureList->get($id);
+    return $feature_list->get_tabix_and_gzipped_bed_file,
+}
+Memoize::memoize("_get_file_path_for_feature_list");
+
 sub custom_annotation_inputs {
     my $self = shift;
 
     my $result = [];
     for my $feature_list_and_tag ($self->feature_list_ids_and_tags) {
         my ($id, $tag) = split(":", $feature_list_and_tag);
-        my $feature_list = Genome::FeatureList->get($id);
         push @$result, join("@",
-            $feature_list->get_tabix_and_gzipped_bed_file,
+            $self->_get_file_path_for_feature_list($id),
             $tag,
             "bed",
             "overlap",
@@ -205,6 +212,18 @@ sub joinx_merge_strategy_file {
 sub final_vcf_file {
     my $self = shift;
     return File::Spec->join($self->temp_staging_directory, $self->output_filename_base);
+}
+
+sub _fix_feature_list_descriptions {
+    my $self = shift;
+    my @substitutions;
+    for my $feature_list_and_tag ($self->feature_list_ids_and_tags) {
+        my ($id, $tag) = split(":", $feature_list_and_tag);
+        my $feature_list = Genome::FeatureList->get($id);
+        push @substitutions, "-e ".join("|", "s", $self->_get_file_path_for_feature_list($id),
+            $feature_list->name)."|";
+    }
+    run("sed", "-i", @substitutions, $self->final_vcf_file)
 }
 
 sub _zip {
