@@ -855,13 +855,7 @@ sub is_superset_of {
 
     my $my_chromosomes = Set::Scalar->new(@{$self->chromosome_array_ref});
     my $other_chromosomes = Set::Scalar->new(@{$other_refbuild->chromosome_array_ref});
-
-    # If this refbuild has more chromosomes, it's a superset of the other... if returns false
-    if ($other_chromosomes - $my_chromosomes) {
-        return 0;
-    } else {
-        return 1;
-    }
+    return $my_chromosomes >= $other_chromosomes;
 }
 
 # Given a feature list accessor, try to get it from myself or my ancestors
