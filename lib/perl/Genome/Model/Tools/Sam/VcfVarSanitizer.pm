@@ -83,7 +83,7 @@ sub execute {
 
     unless ($self->out_file) {
         unlink $var_file;
-        rename $out_file, $var_file;
+        Genome::Sys->rename($out_file, $var_file);
     }
 
     return 1;

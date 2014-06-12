@@ -564,8 +564,8 @@ sub update_clinical_data_and_get_phenotype_name {
             );
         my $orig_cdata_file = "$cdata_file.orig";
         my $orig_cdata_md5_file = "$cdata_md5_file.orig";
-        rename($cdata_file, $orig_cdata_file);
-        rename($cdata_md5_file, $orig_cdata_md5_file) if -e $cdata_md5_file;
+        Genome::Sys->rename($cdata_file, $orig_cdata_file);
+        Genome::Sys->rename($cdata_md5_file, $orig_cdata_md5_file) if -e $cdata_md5_file;
         my $md5 = $cdata->to_file($cdata_file);
         my $md5_fh = Genome::Sys->open_file_for_writing($cdata_md5_file);
         $md5_fh->write("$md5\n");

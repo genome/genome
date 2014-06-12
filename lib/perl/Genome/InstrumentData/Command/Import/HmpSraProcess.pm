@@ -257,13 +257,13 @@ sub execute {
         ($rev_read) = glob($working_dir . "/" . $self->srs_sample_id . "/*.trimmed.2.fastq");
         ($singleton_read) = glob($working_dir . "/" . $self->srs_sample_id . "/*.trimmed.singleton.fastq");
 
-        rename($fwd_read, $working_dir . "/s_1_1_sequence.txt");
+        Genome::Sys->rename($fwd_read, $working_dir . "/s_1_1_sequence.txt");
         $fwd_read = $working_dir . "/s_1_1_sequence.txt";
         
-        rename($rev_read, $working_dir . "/s_1_2_sequence.txt");
+        Genome::Sys->rename($rev_read, $working_dir . "/s_1_2_sequence.txt");
         $rev_read = $working_dir . "/s_1_2_sequence.txt";
         
-        rename($singleton_read, $working_dir . "/s_1_sequence.txt");
+        Genome::Sys->rename($singleton_read, $working_dir . "/s_1_sequence.txt");
         $singleton_read = $working_dir . "/s_1_sequence.txt";
 
         $DB::single = 1;

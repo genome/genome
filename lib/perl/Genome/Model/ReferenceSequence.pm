@@ -186,7 +186,7 @@ sub _execute_build {
     for my $staged_file (glob($output_directory . '/*')) {
         my ($vol, $dir, $file_base) = File::Spec->splitpath($staged_file);
         my $final_file = join('/', $build_directory, $file_base);
-        rename($staged_file, $final_file);
+        Genome::Sys->rename($staged_file, $final_file);
     }
 
     $self->debug_message('Creating sequence dictionaries');

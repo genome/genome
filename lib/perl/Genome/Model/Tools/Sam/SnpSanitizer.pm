@@ -87,7 +87,7 @@ sub execute {
 
     unless ($self->out_file) {
         unlink $snp_file;
-        rename $out_file, $snp_file;
+        Genome::Sys->rename($out_file, $snp_file);
     }
 
 

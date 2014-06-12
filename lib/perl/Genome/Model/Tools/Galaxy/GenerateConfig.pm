@@ -153,7 +153,7 @@ XML
 
         if (-e $config_path) {
             $self->debug_message("Moving the old $config_path to .bak...");
-            rename($config_path, "$config_path.bak") or die "Failed to rename $config_path to $config_path.bak! $!";
+            Genome::Sys->rename($config_path, "$config_path.bak");
         }
 
         $self->debug_message("writing $config_path");

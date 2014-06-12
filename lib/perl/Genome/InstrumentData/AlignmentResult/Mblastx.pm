@@ -125,7 +125,7 @@ sub _run_aligner {
                 output_files              => [ $output_file ],
                 skip_if_output_is_present => 0,
         );
-        rename($output_file,$self->temp_staging_directory."/".basename($output_file));
+        Genome::Sys->rename($output_file, $self->temp_staging_directory."/".basename($output_file));
     }
 
     return 1;

@@ -190,8 +190,8 @@ sub repair_dt {
     unless ($in_bam_md5 eq $out_bam_md5 && length $in_bam_md5 > 33) {
         die "\tERROR: BAM contents do not match between $in_bam and $out_bam.\n";
     }
-    rename($in_bam, "$in_bam.orig") || die;
-    rename($out_bam, $in_bam) || die;
+    Genome::Sys->rename($in_bam, "$in_bam.orig");
+    Genome::Sys->rename($out_bam, $in_bam);
 
     if (-e "$in_bam.md5") {
         unlink("$in_bam.md5") || die;

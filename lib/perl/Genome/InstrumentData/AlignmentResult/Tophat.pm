@@ -496,7 +496,7 @@ sub _promote_validated_data {
     for my $staged_file (glob("$staging_dir/*")) {
         my $destination = $staged_file;
         $destination =~ s/$staging_dir/$output_dir/;
-        rename($staged_file, $destination);
+        Genome::Sys->rename($staged_file, $destination);
     }
 
     my @files = File::Find::Rule->file->not(File::Find::Rule->symlink)->in($output_dir);

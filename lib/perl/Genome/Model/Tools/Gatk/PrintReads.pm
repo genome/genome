@@ -106,7 +106,7 @@ sub execute {
     # Rename the bam index. It gets named without a .bam in the name
     my ($bam_basename, $bam_dirname) = File::Basename::fileparse($self->output_bam);
     $bam_basename =~ s/\.bam$//;
-    rename($bam_dirname.'/'.$bam_basename.'.bai', $bam_dirname.'/'.$bam_basename.'.bam.bai');
+    Genome::Sys->rename($bam_dirname.'/'.$bam_basename.'.bai', $bam_dirname.'/'.$bam_basename.'.bam.bai');
 
     return 1;
 }

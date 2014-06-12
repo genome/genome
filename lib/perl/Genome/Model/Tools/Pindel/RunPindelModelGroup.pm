@@ -308,7 +308,7 @@ sub _detect_variants {
                 die;
             }
 
-            rename($chunk_file,$target_file) or die $!;
+            Genome::Sys->rename($chunk_file, $target_file);
         }
 
         # Put the insertions and deletions where the rest of the pipe expects them 

@@ -165,7 +165,7 @@ sub execute {
                     while ($n < 10 and -e $subdir . '.' . $n) {
                         $n++;
                     }
-                    rename $subdir, "$subdir.$n";
+                    Genome::Sys->rename($subdir, "$subdir.$n");
                     if (-e $subdir) {
                         die "failed to move old report dir $subdir to $subdir.$n!: $!";
                     }

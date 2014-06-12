@@ -197,8 +197,7 @@ sub execute
     # recent versions of BER try to be helpful and append '.dat' to dat files
     # then we get .dat.dat on the ends of the files.
     if(-f $sqlitedatafile.".dat") {
-        # rename file.
-        rename($sqlitedatafile.".dat",$sqlitedatafile);
+        Genome::Sys->rename($sqlitedatafile.".dat",$sqlitedatafile);
     }
     
     ## get the latest filename
