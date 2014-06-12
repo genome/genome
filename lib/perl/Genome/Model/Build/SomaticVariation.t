@@ -11,6 +11,10 @@ use warnings;
 use above "Genome";
 use Test::More;
 use Genome::Model::Build::SomaticVariationTestGenerator;
+use Genome::Test::Factory::Model::SomaticValidation;
+use Genome::Test::Factory::Model::ImportedReferenceSequence;
+use Genome::Test::Factory::Build;
+use Test::MockObject::Extends;
 
 use_ok("Genome::Model::Build::SomaticVariation");
 
@@ -20,6 +24,7 @@ ok($b, "Created SomaticVariation build");
 
 test_build_inputs_dont_reference_model();
 test_annotation_build_accessor();
+test_get_feature_list_from_reference();
 done_testing();
 
 # these tests may seem obvious, but the build USED to reference model inputs directly.
@@ -43,4 +48,16 @@ sub test_build_inputs_dont_reference_model {
 
 sub test_annotation_build_accessor {
     is($b->annotation_build, $m->annotation_build, "Annotation build is the same as the model build")
+}
+
+sub test_get_feature_list_from_reference {
+    my $tumor_build = $b->tumor_build;
+
+    my $mock_ref_build = Test::MockObject::Extends->new($tumor_build->reference_sequence_build);
+
+    my $test_feature = Genome::FeatureList->__define__;
+    $mock_ref_build->mock('test', sub {return $test_feature;});
+
+    is($b->get_feature_list_from_reference('test'), $test_feature, "got a feature list from the reference");
+
 }

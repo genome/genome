@@ -440,10 +440,9 @@ sub get_target_region_feature_list {
     }
 }
 
-sub get_segmental_dupications_feature_list {
-    my $self = shift;
-    # TODO
-    return;
+sub get_feature_list_from_reference {
+    my ($self, $feature_list_accessor) = @_;
+    return $self->tumor_build->reference_sequence_build->$feature_list_accessor;
 }
 
 1;
