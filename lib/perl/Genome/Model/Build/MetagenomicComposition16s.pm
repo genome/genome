@@ -917,7 +917,7 @@ sub regex_for_custom_diff {
     return (
         gz => '\.gz$',
         rdp => '\.rdp1-[12]$',
-        metrics => 'metrics\.processed\.(in|out)\.txt',
+        metrics_files => 'metrics\.processed\.(in|out)\.txt',
     );
 }
 
@@ -964,7 +964,7 @@ sub diff_rdp {
     return 1;
 }
 
-sub diff_metrics {
+sub diff_metrics_files {
     my ($self, $file1, $file2) = @_;
 
     my $metrics_from_file1 = Genome::Model::Tools::Sx::Metrics->from_file($file1);
