@@ -307,3 +307,7 @@ timeline_allocation_event_type_values [timeline_allocation_event_type] 2014-05-0
 timeline_analysis_project_event_type_values [analysis_project_event_logging] 2014-05-07T21:30:35Z Anthony Brummett <abrummet@genome.wustl.edu># Validation values for timeline.analysis_project_event_type
 remove_unused_apconfig_tables [config_set] 2014-05-09T15:20:47Z Adam Coffman <acoffman@genome.wustl.edu> # remove config set column and table
 @1399651838 2014-05-09T16:10:39Z Adam Coffman <acoffman@genome.wustl.edu># removed unused apconfig tables
+
+timeline.allocation.pkey_id [timeline_allocation] 2014-06-11T22:34:20Z Thomas B. Mooney <tmooney@genome.wustl.edu> # add a primary key to the timeline.allocation table
+timeline.analysis_project.pkey_id [analysis_project_event_logging] 2014-06-12T14:20:29Z Thomas B. Mooney <tmooney@genome.wustl.edu> # add primary key to analysis project timeline table
+@1402586722 2014-06-12T15:25:23Z Thomas B. Mooney <tmooney@genome.wustl.edu># Added primary keys to child timeline tables.
