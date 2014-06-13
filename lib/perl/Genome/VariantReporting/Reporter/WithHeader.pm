@@ -104,7 +104,18 @@ sub report {
         for my $header ($self->headers()) {
             my $interpreter = $fields{$header}->{interpreter};
             my $field = $fields{$header}->{field};
-            $self->_output_fh->print($self->_format($interpretations->{$interpreter}->{$allele}->{$field}) . "\t");
+
+            # If we don't have an interpreter that provides this field, handle it cleanly if the field is known unavailable
+            if ($interpreter) {
+                $self->_output_fh->print($self->_format($interpretations->{$interpreter}->{$allele}->{$field}) . "\t");
+            } else {
+                if ($self->header_is_unavailable($header)) {
+                    $self->_output_fh->print( $self->_format() . "\t");
+                } else {
+                    # We use $header here because $field will be undefined due to it not being in an interpreter
+                    die $self->error_message("Field (%s) is not available from any of the interpreters provided", $header);
+                }
+            }
         }
         $self->_output_fh->print("\n");
     }
@@ -120,6 +131,21 @@ sub _format {
     else {
         return $self->null_character;
     }
+}
+
+sub header_is_unavailable {
+    my ($self, $header) = @_;
+
+    if (grep {$header eq $_} $self->unavailable_headers) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+# Override this method if some fields are not available from interpreters but should be in the report as null values
+sub unavailable_headers {
+    return;
 }
 
 1;
