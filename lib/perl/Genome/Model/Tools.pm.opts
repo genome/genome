@@ -5565,6 +5565,23 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>remove-contaminating-variants',
+    [
+      'input-file=s',
+      'files',
+      'output-file=s',
+      'files',
+      'debug!',
+      undef,
+      'fdr-cutoff=s',
+      'files',
+      'reference-read-col=s',
+      'files',
+      'variant-read-col=s',
+      'files',
+      'help!',
+      undef
+    ],
     '>report-coverage',
     [
       'alignment-model-group=s',
