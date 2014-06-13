@@ -866,7 +866,7 @@ sub get_feature_list {
     my $feature_list = $self->$feature_list_accessor;
     if (not defined $feature_list) {
         if ($self->derived_from) {
-            $self->status_message("Could not get_feature_list with accessor (%s) on reference sequence build (%s)... looking at the next ancestor...", $feature_list_accessor, $self->name);
+            $self->debug_message("Could not get_feature_list with accessor (%s) on reference sequence build (%s)... looking at the next ancestor...", $feature_list_accessor, $self->name);
             $feature_list = $self->derived_from->get_feature_list($feature_list_accessor, @ancestry_stack);
         } else {
             $self->error_message("Reference sequence (%s) does not have any parent reference sequence", $self->name);
