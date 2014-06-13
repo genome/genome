@@ -6581,6 +6581,19 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>create-feature-list-input',
+      [
+        'bed-file=s',
+        undef,
+        'feature-list-name=s',
+        'files',
+        'build=s',
+        undef,
+        'input-name=s',
+        'files',
+        'help!',
+        undef
+      ],
       '>generate-bitmask',
       [
         'color!',
@@ -16708,6 +16721,23 @@ $Genome::Command::OPTS_SPEC = [
         'plot-type=s',
         'files',
         'temp-file=s',
+        'files',
+        'help!',
+        undef
+      ],
+      '>remove-contaminating-variants',
+      [
+        'input-file=s',
+        'files',
+        'output-file=s',
+        'files',
+        'debug!',
+        undef,
+        'fdr-cutoff=s',
+        'files',
+        'reference-read-col=s',
+        'files',
+        'variant-read-col=s',
         'files',
         'help!',
         undef
