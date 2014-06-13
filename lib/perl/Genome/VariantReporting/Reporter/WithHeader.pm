@@ -25,11 +25,17 @@ sub __errors__ {
     my @errors = $self->SUPER::__errors__;
     my %available_fields = $self->available_fields_dict;
     for my $header ($self->headers) {
-        unless(defined($available_fields{$header})) {
+        my $error_desc;
+        if( defined($available_fields{$header}) and $self->header_is_unavailable($header) ) {
+            $error_desc = "Header ($header) is provided from an interpreter but marked as unavailable - remove it from unavailable_headers()";
+        } elsif ( !defined($available_fields{$header}) and !$self->header_is_unavailable($header) ) {
+            $error_desc = "Interpreter field for header ($header) is not defined. Do you need to overwrite available_fields_dict to provide the correct mapping or add it to unavailable_headers()?";
+        }
+        if (defined $error_desc) {
             push @errors, UR::Object::Tag->create(
                 type => 'error',
                 properties => [],
-                desc => "Interpreter field for $header is not defined. Do you need to overwrite available_fields_dict to provide the correct mapping?",
+                desc => $error_desc,
             );
         }
     }
@@ -106,15 +112,13 @@ sub report {
             my $field = $fields{$header}->{field};
 
             # If we don't have an interpreter that provides this field, handle it cleanly if the field is known unavailable
-            if ($interpreter) {
+            if ($self->header_is_unavailable($header)) {
+                $self->_output_fh->print( $self->_format() . "\t");
+            } elsif ($interpreter) {
                 $self->_output_fh->print($self->_format($interpretations->{$interpreter}->{$allele}->{$field}) . "\t");
             } else {
-                if ($self->header_is_unavailable($header)) {
-                    $self->_output_fh->print( $self->_format() . "\t");
-                } else {
-                    # We use $header here because $field will be undefined due to it not being in an interpreter
-                    die $self->error_message("Field (%s) is not available from any of the interpreters provided", $header);
-                }
+                # We use $header here because $field will be undefined due to it not being in an interpreter
+                die $self->error_message("Field (%s) is not available from any of the interpreters provided", $header);
             }
         }
         $self->_output_fh->print("\n");
