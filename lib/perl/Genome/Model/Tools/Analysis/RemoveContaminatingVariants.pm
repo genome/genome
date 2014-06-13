@@ -24,7 +24,7 @@ class Genome::Model::Tools::Analysis::RemoveContaminatingVariants {
             is_optional => 1,
         },
         fdr_cutoff => {
-            doc => 'Sites with corrected p-values above this range will be removed',
+            doc => 'Sites with corrected p-values below this range will be removed. (The test is for significant difference from het or homozygous, so low pvalues are what we want to discard)',
             is_optional => 1,
             default => 0.05,
         }
@@ -107,7 +107,7 @@ sub execute {
         chomp($line);
         my @F = split("\t",$line);
         #last column is FDR value
-        unless ($F[$#F] > $self->fdr_cutoff){
+        if ($F[$#F] > $self->fdr_cutoff){
             print $outfile $line . "\n";
         }
     }
