@@ -60,5 +60,4 @@ my $plan = Genome::VariantReporting::Plan->create_from_file(
 );
 $plan->validate();
 test_dag_execute($dag, $expected_vcf, $variant_type, $build, $plan);
-$DB::single=1;
 done_testing();
