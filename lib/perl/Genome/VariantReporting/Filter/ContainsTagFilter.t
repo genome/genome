@@ -27,6 +27,7 @@ subtest "has tag with value" => sub {
         C => 1,
         G => 1,
     );
+    is_deeply({$filter->filter_entry($entry)}, \%expected_return_values);
 };
 
 subtest "has flag tag" => sub {
@@ -41,6 +42,7 @@ subtest "has flag tag" => sub {
         C => 1,
         G => 1,
     );
+    is_deeply({$filter->filter_entry($entry)}, \%expected_return_values);
 };
 
 subtest "no has tag" => sub {
@@ -55,6 +57,18 @@ subtest "no has tag" => sub {
         C => 0,
         G => 0,
     );
+    is_deeply({$filter->filter_entry($entry)}, \%expected_return_values);
+};
+
+subtest "tag not in info header" => sub {
+    my $filter = $pkg->create(
+        info_tag => "BAD_TAG",
+    );
+    lives_ok(sub {$filter->validate}, "Filter validates ok");
+
+    my $entry = create_entry();
+
+    dies_ok(sub {$filter->filter_entry($entry)}, "Filter with a tag not in the header file should die");
 };
 done_testing;
 
@@ -66,6 +80,7 @@ sub create_vcf_header {
 ##INFO=<ID=A,Number=1,Type=String,Description="Info field A">
 ##INFO=<ID=C,Number=A,Type=String,Description="Info field C (per-alt)">
 ##INFO=<ID=E,Number=0,Type=Flag,Description="Info field E">
+##INFO=<ID=TEST_NO,Number=0,Type=Flag,Description="Doesn't exist in entry">
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
 ##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Depth">
 ##FORMAT=<ID=FT,Number=.,Type=String,Description="Filter">
