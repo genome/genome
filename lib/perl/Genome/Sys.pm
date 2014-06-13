@@ -1648,11 +1648,14 @@ sub rename {
 sub touch {
     my ($class, $path) = @_;
 
-    my $file = IO::File->new($path, 'a') or die $!;
-    $file->close() or die $!;
+    my $file = IO::File->new($path, 'a')
+        or return;
+    $file->close()
+        or croak $!;
 
     # using the undef pair uses system's current time (better for NFS)
-    utime undef, undef, $path or die $!;
+    utime undef, undef, $path
+        or return;;
 
     return 1;
 }
