@@ -174,7 +174,7 @@ sub per_lane_qc {
                 my $name = (split('/', $file))[-1];
                 $name =~ s/\.txt$//;
                 my $output_filename = $temp_dir . '/' . $name . '_imported_trimmed';
-                Genome::Sys->rename($file, $output_filename);
+                die "failed to rename $file to $output_filename" unless Genome::Sys->rename($file, $output_filename);
                 push @imported_fastq, $output_filename;
                 push @{$fastq_files{$hcs_data_id}{imported}}, $output_filename; 
             }
@@ -182,7 +182,7 @@ sub per_lane_qc {
                 my $name = (split('/', $file))[-1];
                 $name =~ s/\.txt$//;
                 my $output_filename = $temp_dir . '/' . $hcs_data_id . '_' . $name . '_original';
-                Genome::Sys->rename($file, $output_filename);
+                die "failed to rename $file to $output_filename" unless Genome::Sys->rename($file, $output_filename);
                 push @original_fastq, $output_filename;
                 push @{$fastq_files{$hcs_data_id}{original}}, $output_filename;
             }
