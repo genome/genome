@@ -118,8 +118,8 @@ sub _display_build {
 EOS
 
     print $handle sprintf($format_str,
+        $self->_color_heading('Build'),
         map {$self->_pad_right($_, $self->COLUMN_WIDTH)} (
-            $self->_color_heading('Build'),
             $self->_color_pair('Build ID', $build->id),
             $self->_color_pair('Build Status',
                 $self->_status_color($build->status)),
