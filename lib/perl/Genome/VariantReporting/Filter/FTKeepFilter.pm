@@ -28,7 +28,7 @@ sub filter_entry {
     my ($self, $entry) = @_;
 
     my $ft_string = $entry->sample_field($self->sample_index($entry->{header}), 'FT');
-    return $self->return_values($entry, 0) unless defined($ft_string);
+    return $self->return_values($entry, 1) unless defined($ft_string);
 
     my @ft_values = split(';', $ft_string);
     for my $ft_value (@ft_values) {
