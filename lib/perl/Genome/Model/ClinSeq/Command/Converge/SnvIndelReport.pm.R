@@ -8,12 +8,18 @@ sample_names_string = args[3]
 combined_vaf_cols_string = args[4]
 target_name = args[5]
 outdir = args[6]
-sample1_vaf_cols_string = args[7]
-sample2_vaf_cols_string = args[8]
-sample3_vaf_cols_string = args[9]
-sample4_vaf_cols_string = args[10]
+sample_types_string = args[7]
+timepoint_names_string = args[8]
+timepoint_positions_string = args[9]
+sample1_vaf_cols_string = args[10]
+sample2_vaf_cols_string = args[11]
+sample3_vaf_cols_string = args[12]
+sample4_vaf_cols_string = args[13]
 
 sample_names = strsplit(sample_names_string, " ")[[1]]
+sample_types = strsplit(sample_types_string, " ")[[1]]
+timepoint_names = strsplit(timepoint_names_string, " ")[[1]]
+timepoint_positions = as.numeric(strsplit(timepoint_positions_string, " ")[[1]])
 combined_vaf_cols = as.numeric(strsplit(combined_vaf_cols_string, " ")[[1]])
 
 sample1_vaf_cols = NULL
@@ -279,9 +285,101 @@ plot_boxplots = function(outfile, gene_i, main_label_vafs){
 }
 
 
+#Create a plot where points are plotted as a time series
+# - one block for each $timepoint_names, one color category for each $sample_types, order blocks according to $timepoint_positions
+#                      [day0, day0, day30]                          [normal, tumor, tumor]                  [1,1,2]
+plot_timeline = function(outfile, gene_i, main_label_vafs){
 
+  pdf(outfile)
+  par(font.lab=2)
+  par(font.axis=2)
+  par(mgp=c(3,1.5,0)) #axis title, axis labels and axis line.
+  vaf_dist = list(data[gene_i,combined_vaf_cols[1]])
+  
+  if (length(sample2_vaf_cols) > 0) {
+    vaf_dist = list(data[gene_i,combined_vaf_cols[1]], data[gene_i,combined_vaf_cols[2]])
+  }
+  if (length(sample3_vaf_cols) > 0) { 
+    vaf_dist = list(data[gene_i,combined_vaf_cols[1]], data[gene_i,combined_vaf_cols[2]], data[gene_i,combined_vaf_cols[3]]) 
+  }
+  if (length(sample4_vaf_cols) > 0) { 
+    vaf_dist = list(data[gene_i,combined_vaf_cols[1]], data[gene_i,combined_vaf_cols[2]], data[gene_i,combined_vaf_cols[3]], data[gene_i,combined_vaf_cols[4]]) 
+  }
+  max_y = max(unlist(vaf_dist))
+  n = length(gene_i)
+  ii = which(data[gene_i,target_name] == 1)
+  y_label = paste("Variant allele frequency (VAF) [n = ", n, " variants]", sep="")
+  point_cex = 1
+  text_col = "black"
 
+  #Starting box plot
+  test_data = list(c(0,25,50), c(0,25,50))
+  if (length(unique(timepoint_names)) == 3){
+    test_data = list(c(0,25,50), c(0,25,50), c(0,25,50))
+  }
+  if (length(unique(timepoint_names)) == 4){
+    test_data = list(c(0,25,50), c(0,25,50), c(0,25,50), c(0,25,50))
+  }
 
+  boxplot(test_data, col=NA, border=NA, names=unique(timepoint_names), ylab=y_label, main=main_label_vafs, pch=NA, ylim=c(0,max_y+5))
+
+  #Individual points and horizontal lines at median of each distribution
+  xpoints1 = NULL; ypoints1=NULL; xpoints2 = NULL; ypoints2=NULL; xpoints3 = NULL; ypoints3=NULL; xpoints4 = NULL; ypoints4=NULL; 
+  flank = 0.150
+  
+  #Sample 1
+  if (length(sample1_vaf_cols) > 0) {
+    tp_name = timepoint_names[1]
+    xp = timepoint_positions[1]
+    xpoints1 = runif(n=length(gene_i), min=(xp-flank), max=(xp+flank))
+    ypoints1 = data[gene_i,combined_vaf_cols[1]]
+    points(x=xpoints1, y=ypoints1, col=sample_colors[1], pch=16, cex=1)
+    if (length(ii) > 0 & sample_types[1] != "normal"){ text(x=xpoints1[ii], y=ypoints1[ii], labels=data[gene_i[ii], "default_gene_name"], cex=point_cex, col=text_col, font=4) }
+  }
+
+  #Sample 2
+  if (length(sample2_vaf_cols) > 0) { 
+    tp_name = timepoint_names[2]
+    xp = timepoint_positions[2]    
+    xpoints2 = runif(n=length(gene_i), min=(xp-flank), max=(xp+flank))
+    ypoints2 = data[gene_i,combined_vaf_cols[2]]
+    points(x=xpoints2, y=ypoints2, col=sample_colors[2], pch=16, cex=1)
+    if (sample_types[1] != "normal" & sample_types[2] != "normal"){
+      segments(x0=xpoints1, x1=xpoints2, y0=ypoints1, y1=ypoints2, lty=3, lwd=0.75, col="black")
+    }
+    if (length(ii) > 0 & sample_types[2] != "normal"){ text(x=xpoints2[ii], y=ypoints2[ii], labels=data[gene_i[ii], "default_gene_name"], cex=point_cex, col=text_col, font=4) }
+  }
+
+  #Sample 3
+  if (length(sample3_vaf_cols) > 0) { 
+    tp_name = timepoint_names[3]
+    xp = timepoint_positions[3]
+    xpoints3 = runif(n=length(gene_i), min=(xp-flank), max=(xp+flank))
+    ypoints3 = data[gene_i,combined_vaf_cols[3]]
+    points(x=xpoints3, y=ypoints3, col=sample_colors[3], pch=16, cex=1)
+    if (sample_types[2] != "normal" & sample_types[3] != "normal"){
+      segments(x0=xpoints2, x1=xpoints3, y0=ypoints2, y1=ypoints3, lty=3, lwd=0.75, col="black")
+    }
+    if (length(ii) > 0 & sample_types[3] != "normal"){ text(x=xpoints3[ii], y=ypoints3[ii], labels=data[gene_i[ii], "default_gene_name"], cex=point_cex, col=text_col, font=4) }
+  }
+
+  #Sample 4
+  if (length(sample4_vaf_cols) > 0) { 
+    tp_name = timepoint_names[4]
+    xp = timepoint_positions[4]
+    xpoints4 = runif(n=length(gene_i), min=(xp-flank), max=(xp+flank))
+    ypoints4 = data[gene_i,combined_vaf_cols[4]]
+    points(x=xpoints4, y=ypoints4, col=sample_colors[4], pch=16, cex=1)
+    if (sample_types[3] != "normal" & sample_types[4] != "normal"){
+      segments(x0=xpoints3, x1=xpoints4, y0=ypoints3, y1=ypoints4, lty=3, lwd=0.75, col="black")
+    }
+    if (length(ii) > 0 & sample_types[4] != "normal"){ text(x=xpoints4[ii], y=ypoints4[ii], labels=data[gene_i[ii], "default_gene_name"], cex=point_cex, col=text_col, font=4) }
+  }
+
+  #Legend
+  legend("topright", sample_names, col=sample_colors[1:length(sample_names)], pch=16, cex=1)
+  dev.off()
+}
 
 
 #################################################################################################
@@ -293,12 +391,15 @@ target_gene_i = which(data[,target_name] == 1)
 if (length(target_gene_i) > 0){
   outfile1 = paste(outdir, case_name, "_target_gene_vafs.pdf", sep="")
   outfile2 = paste(outdir, case_name, "_target_gene_vafs_boxplots.pdf", sep="")
+  outfile3 = paste(outdir, case_name, "_target_gene_vafs_timeline.pdf", sep="")
+
   x_label = paste(target_name, " Gene Mutations", sep="")
   main_label = paste("Aggregate VAFs for target genes: ", target_name, " (", case_name, ")", sep="")
   main_label_vafs = paste("Replicate VAFs for target genes: ", target_name, sep="")
   main_label_covs = paste("Replicate coverages for target genes: ", target_name, " (", case_name, ")",  sep="")
   plot_vafs(outfile1, x_label, main_label_vafs, main_label_covs, target_gene_i)
   plot_boxplots(outfile2, target_gene_i, main_label)
+  plot_timeline(outfile3, target_gene_i, main_label)
 }
 
 #Plot the top 10 variants (ranked by max tumor vaf observed)
@@ -311,12 +412,14 @@ if (length(o) >= 10){
 if (length(target_gene_i) > 0){
   outfile1 = paste(outdir, case_name, "_top_gene_vafs.pdf", sep="")
   outfile2 = paste(outdir, case_name, "_top_gene_vafs_boxplots.pdf", sep="")
+  outfile3 = paste(outdir, case_name, "_top_gene_vafs_timeline.pdf", sep="")
   x_label = "Gene Mutations"
   main_label = paste("Aggregate VAFs for highest VAF mutations", " (", case_name, ")", sep="")
   main_label_vafs = "Replicate VAFs for highest VAF mutations"
   main_label_covs = paste("Replicate coverages for highest VAF mutations", " (", case_name, ")", sep="")
   plot_vafs(outfile1, x_label, main_label_vafs, main_label_covs, target_gene_i)
   plot_boxplots(outfile2, target_gene_i, main_label)
+  plot_timeline(outfile3, target_gene_i, main_label)
 }
 
 #Plot all variants called by at least 2 callers
@@ -324,12 +427,14 @@ target_gene_i = which(data[,"variant_source_caller_count"] > 1)
 if (length(target_gene_i) > 0){
   outfile1 = paste(outdir, case_name, "_multicaller_vafs.pdf", sep="")
   outfile2 = paste(outdir, case_name, "_multicaller_vafs_boxplots.pdf", sep="")
+  outfile3 = paste(outdir, case_name, "_multicaller_vafs_timeline.pdf", sep="")
   x_label = "Gene Mutations"
   main_label = paste("Aggregate VAFs for variants called by >= 2 callers", " (", case_name, ")", sep="")
   main_label_vafs = "Replicate VAFs for variants called by >= 2 callers"
   main_label_covs = paste("Replicate coverages for variants called by >= 2 callers", " (", case_name, ")", sep="")
   plot_vafs(outfile1, x_label, main_label_vafs, main_label_covs, target_gene_i)
   plot_boxplots(outfile2, target_gene_i, main_label)
+  plot_timeline(outfile3, target_gene_i, main_label)
 }
 
 #Plot all variants
@@ -338,6 +443,7 @@ target_gene_i = o
 if (length(target_gene_i) > 0){
   outfile1 = paste(outdir, case_name, "_all_gene_vafs.pdf", sep="")
   outfile2 = paste(outdir, case_name, "_all_gene_vafs_boxplots.pdf", sep="")
+  outfile3 = paste(outdir, case_name, "_all_gene_vafs_timeline.pdf", sep="")
   x_label = "Gene Mutations"
   main_label = paste("Aggregate VAFs for all mutations", " (", case_name, ")", sep="")
   main_label_vafs = "Replicate VAFs for all mutations"
@@ -348,6 +454,7 @@ if (length(target_gene_i) > 0){
   }
   plot_vafs(outfile1, x_label, main_label_vafs, main_label_covs, target_gene_i)
   plot_boxplots(outfile2, target_gene_i, main_label)
+  plot_timeline(outfile3, target_gene_i, main_label)
 }
 
 

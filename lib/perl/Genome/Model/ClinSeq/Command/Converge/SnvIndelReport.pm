@@ -1211,21 +1211,30 @@ sub create_plots{
     $columns{$col}{p} = $p;
     $p++;
   }
-  
+
   #Set the R script that will process output from this perl script
   #TODO: Right now, this script will only work for a very particular situation (normal, dayX_tumor, dayY_tumor) - Make it more flexible ...
   my $build_count = keys %{$align_builds};
   my @prefixes;
   my @combined_vaf_cols;
   my %rep_vaf_cols;
+  my @timepoint_names;
+  my @timepoint_positions;
+  my @sample_types;
   #Resolve the names of the samples, and columns containing per_library read counts
-  foreach my $name (sort {$align_builds->{$a}->{order} <=> $align_builds->{$b}->{order}} keys  %{$align_builds}){
+  foreach my $name (sort {$align_builds->{$a}->{order} <=> $align_builds->{$b}->{order}} keys %{$align_builds}){
     my $prefix = $align_builds->{$name}->{prefix};
     push(@prefixes, $prefix);
+    my $day = $align_builds->{$name}->{day};
+    push(@timepoint_names, $day);
+    my $timepoint_position = $align_builds->{$name}->{timepoint_position};
+    push(@timepoint_positions, $timepoint_position);
+    my $sample_type = $align_builds->{$name}->{sample_common_name};
+    push(@sample_types, $sample_type);
     my $combined_vaf_col_name = $prefix . "_VAF";
     push(@combined_vaf_cols, $columns{$combined_vaf_col_name}{p} + 1);
-    my $libs = $align_builds->{$name}->{libs};
 
+    my $libs = $align_builds->{$name}->{libs};
     if ($self->per_library){
       #If replicate library analysis is being run define the replicate VAF columns
       foreach my $lib (sort {$libs->{$a}->{rep} <=> $libs->{$b}->{rep}} keys %{$libs}){
@@ -1261,6 +1270,9 @@ sub create_plots{
     push (@vaf_cols, "\"$vaf_cols_sample_string\"");
   }
   my $vaf_cols_string = join(" ", @vaf_cols);
+  my $sample_types_string = join(" ", @sample_types);
+  my $timepoint_names_string = join(" ", @timepoint_names);
+  my $timepoint_positions_string = join(" ", @timepoint_positions);
   my $target_gene_list_name = $self->target_gene_list_name;
 
   if ($self->per_library){
@@ -1269,12 +1281,12 @@ sub create_plots{
 
     my $outdir1 = $self->outdir . "filtered_pdfs/";
     mkdir($outdir1);
-    my $r_cmd1 = "$r_script $case_name $final_filtered_clean_tsv \"$prefix_string\" \"$combined_vaf_col_string\" \"$target_gene_list_name\" $outdir1 $vaf_cols_string";
+    my $r_cmd1 = "$r_script $case_name $final_filtered_clean_tsv \"$prefix_string\" \"$combined_vaf_col_string\" \"$target_gene_list_name\" $outdir1 \"$sample_types_string\" \"$timepoint_names_string\" \"$timepoint_positions_string\" $vaf_cols_string";
     Genome::Sys->shellcmd(cmd => $r_cmd1);
 
     my $outdir2 = $self->outdir . "filtered_coding_pdfs/";
     mkdir($outdir2);
-    my $r_cmd2 = "$r_script $case_name $final_filtered_coding_clean_tsv \"$prefix_string\" \"$combined_vaf_col_string\" \"$target_gene_list_name\" $outdir2 $vaf_cols_string";
+    my $r_cmd2 = "$r_script $case_name $final_filtered_coding_clean_tsv \"$prefix_string\" \"$combined_vaf_col_string\" \"$target_gene_list_name\" $outdir2 \"$sample_types_string\" \"$timepoint_names_string\" \"$timepoint_positions_string\" $vaf_cols_string";
     Genome::Sys->shellcmd(cmd => $r_cmd2);
   }
 

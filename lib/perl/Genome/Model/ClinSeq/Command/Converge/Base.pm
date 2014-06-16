@@ -682,12 +682,14 @@ sub get_ref_align_builds{
     $ref_builds{$normal_refalign_name}{sample_common_name} = $normal_subject_common_name;
     $ref_builds{$normal_refalign_name}{bam_path} = $normal_bam_path;
     $ref_builds{$normal_refalign_name}{time_point} = $normal_subject_common_name . "_" . $normal_time_point;
+    $ref_builds{$normal_refalign_name}{day} = $normal_time_point;
 
     $ref_builds{$tumor_refalign_name}{type} = $build_type;
     $ref_builds{$tumor_refalign_name}{sample_name} = $tumor_subject_name;
     $ref_builds{$tumor_refalign_name}{sample_common_name} = $tumor_subject_common_name;
     $ref_builds{$tumor_refalign_name}{bam_path} = $tumor_bam_path;
     $ref_builds{$tumor_refalign_name}{time_point} = $tumor_subject_common_name . "_" . $tumor_time_point;
+    $ref_builds{$tumor_refalign_name}{day} = $tumor_time_point;
   }
 
   #Set an order on refalign builds (use time points if available, otherwise name)
@@ -702,6 +704,30 @@ sub get_ref_align_builds{
       $o++;
       $ref_builds{$name}{order} = $o;
     }
+  }
+
+  #Determine the time point position
+  my %timepoint_positions;
+  foreach my $name (sort {$ref_builds{$a}->{time_point} cmp $ref_builds{$b}->{time_point}} keys %ref_builds){
+    my $day = $ref_builds{$name}{day};
+    if ($day =~ /day(\d+)/){
+      my $day_number = $1;
+      $timepoint_positions{$day_number}{position} = 0;
+      $ref_builds{$name}{day_number} = $day_number;
+    }else{
+      die $self->error_message("could not parse day value from sample attribute (caTissue timepoint): $day");
+    }
+  }
+  my $time_point_counter = 0;
+  foreach my $day_number (sort {$a <=> $b} keys %timepoint_positions){
+    $time_point_counter++;
+    $timepoint_positions{$day_number}{position} = $time_point_counter;
+  }
+
+  foreach my $name (sort {$ref_builds{$a}->{time_point} cmp $ref_builds{$b}->{time_point}} keys %ref_builds){
+    my $day_number = $ref_builds{$name}{day_number};
+    my $position = $timepoint_positions{$day_number}{position};
+    $ref_builds{$name}{timepoint_position} = $position;
   }
 
   return(\%ref_builds);
