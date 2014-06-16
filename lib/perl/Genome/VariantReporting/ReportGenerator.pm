@@ -39,7 +39,7 @@ sub execute {
             translations => $self->translations,
         );
     }
-
+    $self->debug_message("Reading from: ".$self->vcf_file."\n");
     my $vcf_reader = Genome::File::Vcf::Reader->new($self->vcf_file);
     while (my $entry = $vcf_reader->next) {
         for my $processor (@entry_processors) {
