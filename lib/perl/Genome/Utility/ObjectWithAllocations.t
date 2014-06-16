@@ -9,8 +9,9 @@ use warnings;
 
 use above "Genome";
 
-use File::Temp;
-use List::Util;
+require File::Temp;
+require List::Util;
+require Sub::Install;
 use Test::More;
 
 use_ok('Genome::Utility::ObjectWithAllocations') or die;
@@ -28,7 +29,7 @@ is($obj->disk_allocation, undef, 'no disk_allocations, yet');
 is($obj->disk_allocations, undef, 'no disk_allocations, yet');
 
 my $tempdir = File::Temp::tempdir(CLEANUP => 1);
-my @volumes = ( 
+my @volumes = (
     Genome::Disk::Volume->__define__(
         mount_path => $tempdir,
         disk_status => 'active',
@@ -92,17 +93,22 @@ is_deeply([ map { $_->archivable } @expected_allocations ], [qw/ 1 1 /], 'expect
 is($obj->archivable, 1, 'archivable');
 $expected_allocations[1]->archivable(0);
 is_deeply([ map { $_->archivable } @expected_allocations ], [qw/ 1 0 /], 'expected allocation 2 is not archivable');
-is($obj->archivable, 0,'not archivable');
+is($obj->archivable, '','not archivable');
 $expected_allocations[1]->archivable(1);
 
 # is_archived
-is($obj->is_archived, 0, 'not archived');
+is($obj->is_archived, '', 'not archived');
 $expected_allocations[1]->mount_path( $volumes[1]->mount_path );
 is($obj->is_archived, 1,'archived');
-#$expected_allocations[1]->mount_path( $volumes[0]->mount_path );
-# unarchive FIXME unarchive fails b/c there needs to be more done to spoof it - should we test this?
+
+# unarchive
+Sub::Install::reinstall_sub({
+        code => sub{ $_[0]->mount_path( $volumes[0]->mount_path ); return 1; },
+        into => 'Genome::Disk::Allocation',
+        as   => 'unarchive',
+    });
 ok($obj->unarchive, 'unarchive');
-is($obj->is_archived, 0, 'not archived');
+is($obj->is_archived, '', 'not archived');
 
 # deallocate
 ok($obj->deallocate, 'deallocate');

@@ -44,13 +44,10 @@ sub _create_deallocate_observer {
 }
 
 sub reallocate {
-    # FIXME
-    #  what to do 'with_move'?
-    #  do we care if reallocate fails?
-    my ($self, $with_move) = @_; 
+    my ($self, %params) = @_;
 
     for my $disk_allocation ( $self->disk_allocations ) {
-        my $reallocate_ok = eval { $disk_allocation->reallocate };
+        my $reallocate_ok = eval { $disk_allocation->reallocate(%params) };
         next if $reallocate_ok;
         $self->warning_message($@) if $@;
         $self->warning_message('Continuing, but failed to reallocate disk allocation: '.$disk_allocation->__display_name__);
@@ -59,13 +56,10 @@ sub reallocate {
     return 1;
 }
 
-sub deallocate { 
-    # FIXME
-    #  do we care if deallocate fails?
+sub deallocate {
     my $self = shift;
 
     for my $disk_allocation ( $self->disk_allocations ) {
-        print "$disk_allocation\n";
         next if $disk_allocation->isa('UR::DeletedRef');
         my $deallocate_ok = eval{ $disk_allocation->deallocate; };
         next if $deallocate_ok;
@@ -80,47 +74,38 @@ sub archivable {
     my $self = shift;
 
     my @disk_allocations = $self->disk_allocations;
-    return 0 if not @disk_allocations;
+    return 0 unless @disk_allocations;
 
-    for my $disk_allocation ( @disk_allocations ) {
-        return 0 if not $disk_allocation->archivable;
-    }
+    return List::MoreUtils::all { $_->archivable } @disk_allocations;
 
-    return 1;
 }
 
 sub is_archived {
     my $self = shift;
-
-    my @disk_allocations = $self->disk_allocations;
-    return 0 if not @disk_allocations;
-
-    for my $disk_allocation ( @disk_allocations ) {
-        return 1 if $disk_allocation->is_archived;
-    }
-
-    return 0;
+    return List::MoreUtils::any { $_->is_archived } $self->disk_allocations;
 }
 
 sub associated_disk_allocations {
     my $self = shift;
 
-    my @associated_disk_allocations = $self->disk_allocations;
-    my @addtional_associated_disk_allocations = $self->_additional_associated_disk_allocations;
-    push @associated_disk_allocations, @addtional_associated_disk_allocations if @addtional_associated_disk_allocations;
-
-    return List::MoreUtils::uniq(@associated_disk_allocations);
+    return List::MoreUtils::uniq(
+        $self->disk_allocations,
+        $self->_additional_associated_disk_allocations,
+    );
 }
-sub _additional_associated_disk_allocations {}
+sub _additional_associated_disk_allocations { return (); }
 
 sub unarchive {
-    my $self = shift;
-    
-    my $unarchive_by_command_class = $self->_unarchive_by_command_class;
-    return if $unarchive_by_command_class;
+    my ($self, %params) = @_;
+    return $self->_unarchive(%params);
+}
 
-    for my $disk_allocation ( $self->disk_allocations ) {
-        my $unarchive_ok = eval{ $disk_allocation->unarchive; };
+sub _unarchive { # default is to iterrate over allocation and unarchive them
+    my ($self, %params) = @_;
+
+    for my $disk_allocation ( $self->associated_disk_allocations ) {
+        next if not $disk_allocation->is_archived;
+        my $unarchive_ok = eval{ $disk_allocation->unarchive(%params); };
         next if $unarchive_ok;
         $self->error_message($@) if $@;
         $self->error_message('Failed to unarchive disk allocation! '.$disk_allocation->__display_name__);
@@ -128,20 +113,6 @@ sub unarchive {
     }
 
     return 1;
-}
-
-sub _unarchive_by_command_class {
-    my $self = shift;
-
-    # FIXME there has to be a beeter way to get the unarchive command class
-    my %classes_and_unarchive_command_classes = (
-        'Genome::Model::Build' => 'Genome::Model::Build::Command::Unarchive',
-    );
-    for my $class ( keys %classes_and_unarchive_command_classes ){
-        return $classes_and_unarchive_command_classes{$class} if $self->isa($class);
-    }
-
-    return;
 }
 
 1;
