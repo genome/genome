@@ -77,7 +77,7 @@ sub params_for_merged_alignment {
             push @$filters, join(':', $result->instrument_data_id, $result->filter_name);
         }
 
-        if($result->instrument_data_segment_id) {
+        if(defined $result->instrument_data_segment_id) {
             push @$segments, join(':', $result->instrument_data_id, $result->instrument_data_segment_id, $result->instrument_data_segment_type);
         }
     }

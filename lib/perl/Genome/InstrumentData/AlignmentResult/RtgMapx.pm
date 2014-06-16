@@ -232,6 +232,11 @@ sub postprocess_bam_file {
     return 1;
 }
 
+# fixmate ruins bitflags with rtg alignment
+sub requires_fixmate {
+    return 0;
+}
+
 sub _prepare_reference_sequences {
     my $self = shift;
     my $reference_build = $self->reference_build;

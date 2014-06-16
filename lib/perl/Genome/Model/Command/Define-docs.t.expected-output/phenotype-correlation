@@ -5,8 +5,8 @@
     [--add-to-projects=?[,?]] [--dbsnp-build=?] [--instrument-data=?[,?]] [--subject=?]
     [--ensembl-annotation-build=?] [--groups=?[,?]] [--model-name=?] [--thousand-genomes-build=?]
     [--glm-config-file=?] [--nhlbi-esp-build=?] [--previous-variant-detection-results=?]
-    [--nomenclature=?] [--roi-list=?] [--pedigree-file-path=?] [--clinical-data-file-path=?]
-    [--identify-cases-by=?] [--identify-controls-by=?]
+    [--run-as=?] [--nomenclature=?] [--roi-list=?] [--pedigree-file-path=?]
+    [--clinical-data-file-path=?] [--identify-cases-by=?] [--identify-controls-by=?]
 
 [4mSYNOPSIS[0m
   genome model define phenotype-correlation \
@@ -44,6 +44,8 @@
     the nhlbi esp build by which to annotate allele frequencies 
   [1mprevious-variant-detection-results[0m
     path to a VCF of previous: skip variant detection and use this 
+  [1mrun-as[0m
+    Specify who the model should run_as if run in production 
   [1mnomenclature[0m
     nomenclature used to access clinical data 
   [1mroi-list[0m

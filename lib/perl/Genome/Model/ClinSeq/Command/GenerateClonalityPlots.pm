@@ -11,16 +11,16 @@ use Genome::Model::ClinSeq::Util qw(:all);
 class Genome::Model::ClinSeq::Command::GenerateClonalityPlots {
     is => 'Command::V2',
     has_input => [
-        somatic_var_build   => { is => 'Genome::Model::Build::SomaticVariation', id_by => 'somatic_var_build_id', 
+        somatic_var_build   => { is => 'Genome::Model::Build::SomaticVariation', id_by => 'somatic_var_build_id',
                                 doc => 'Build ID for a somatic variation model' },
 
-        misc_annotation_db  => { is => 'Genome::Db::Tgi::MiscAnnotation', 
+        misc_annotation_db  => { is => 'Genome::Db::Tgi::MiscAnnotation',
                                 doc => 'misc annotation for the reference sequence, supplying centromere ideogram and gaps' },
 
-        common_name         => { is => 'Text', 
+        common_name         => { is => 'Text',
                                 doc => 'Human readable name for the patient / sample comparison' },
-        
-        output_dir          => { is => 'Text', 
+
+        output_dir          => { is => 'Text',
                                 doc => 'Directory to place temp files and results' },
     ],
     has_param => [
@@ -29,10 +29,10 @@ class Genome::Model::ClinSeq::Command::GenerateClonalityPlots {
 
         verbose             => { is => 'Boolean', is_optional => 1, default_value => 0,
                                 doc => 'To display more output, set this flag' },
-        
+
         limit               => { is => 'Number', is_optional => 1,
                                 doc => 'Limit the number of SNVs to the first N (mostly for testing).' },
-        
+
         chromosome          => { is => 'Text', is_optional => 1,
                                  doc => 'Limit analysis to variants on a specified chromosome' },
 
@@ -51,6 +51,10 @@ class Genome::Model::ClinSeq::Command::GenerateClonalityPlots {
             is => 'FilesystemPath',
             is_optional => 1,
         },
+        cnv_hq_file => {
+            is => 'FilesystemPath',
+            is_optional => 1,
+        },
     ],
     doc => "This script attempts to automate the process of creating a 'clonality' plot"
 };
@@ -65,7 +69,7 @@ sub execute {
     my $self = shift;
 
     #This script running a series of commands obtained from Nate Dees that results in the creation of a clonality plot (.pdf)
-    my $somatic_var_build = $self->somatic_var_build; 
+    my $somatic_var_build = $self->somatic_var_build;
     my $output_dir = $self->output_dir;
     my $common_name = $self->common_name;
     my $verbose = $self->verbose;
@@ -98,16 +102,8 @@ sub execute {
 
     #Get somatic variation effects dir, tumor bam and normal bam from a somatic variation model ID
     my %data_paths;
-    #... /genome/lib/perl/Genome/Model/Build/SomaticVariation.pm
-    $data_paths{root_dir} = $somatic_var_build->data_directory ."/";
-    $data_paths{effects_dir} = "$data_paths{root_dir}"."effects/";
-    $data_paths{cnvs_hq} = "$data_paths{root_dir}"."variants/cnvs.hq";
-    $data_paths{normal_bam} = $somatic_var_build->normal_bam;
-    $data_paths{tumor_bam} = $somatic_var_build->tumor_bam;
-    my $reference_build = $somatic_var_build->reference_sequence_build;
-    $data_paths{reference_fasta} = $reference_build->full_consensus_path('fa');
-    $data_paths{display_name} = $reference_build->__display_name__;
-
+    my $is_copycat = $self->_is_copycat_somvar($somatic_var_build);
+    $self->get_data_paths(\%data_paths, $somatic_var_build, $is_copycat, $output_dir);
     my $somatic_effects_dir = $data_paths{effects_dir};
 
     #Make sure the specified parameters are correct
@@ -125,10 +121,10 @@ sub execute {
     #Step 2 - put them together in one file:
     my $snv_file = $output_dir . "allsnvs.hq.novel.tier123.v2.bed";
     my $cat_cmd = "cat $output_dir"."snvs* > $snv_file";
-    
+
     if ($verbose){$self->debug_message("$cat_cmd");}
     Genome::Sys->shellcmd(cmd => $cat_cmd);
-    
+
     #Apply the chromosome filter if specified
     if (defined $chromosome){
       $self->warning_message("limiting SNVs to only those on chromosome: $chromosome");
@@ -176,7 +172,7 @@ sub execute {
     if ($verbose){$self->debug_message("$awk_cmd");}
     Genome::Sys->shellcmd(cmd => $awk_cmd);
 
-    #Define the BAM files.  
+    #Define the BAM files.
     #The 'old' method supplied both Tumor & Normal coverage and both would be used to assess a minimum coverage cutoff for plotting
     #The 'new' method uses only the Tumor coverage
     my $tumor_bam = $data_paths{tumor_bam};
@@ -222,7 +218,7 @@ sub execute {
     #Make a copy of the cnvs.hq file
     my $cnvs_output_path = "${output_dir}cnvs.hq";
     Genome::Sys->copy_file($data_paths{cnvs_hq}, $cnvs_output_path);
-    chmod 0664, $cnvs_output_path;
+    chmod 0660, $cnvs_output_path;
 
     my $misc_annotation_db = $self->misc_annotation_db;
     my $centromere_file = $misc_annotation_db->data_set_path("centromere.csv");
@@ -256,7 +252,7 @@ sub execute {
     #gmt validation clonality-plot     --cnvhmm-file     /gscuser/ndees/103/wgs/SV_somatic/CNV/aml103.cnvhmm     --output-image     aml103.clonality.pdf     --r-script-output-file     clonality.R     --varscan-file     allsnvs.hq.novel.tier123.v2.bed.adapted.readcounts.varscan     --analysis-type     wgs     --sample-id     'AML103'     --positions-highlight     IL2RA_NF1_positions
 
     #gmt validation clonality-plot  --cnvhmm-file='/gscmnt/sata132/techd/mgriffit/hg1/clonality/hg1.cnvhmm'  --output-image hg1.clonality.pdf  --r-script-output-file clonality.R  --varscan-file allsnvs.hq.novel.tier123.v2.bed.adapted.readcounts.varscan  --analysis-type wgs  --sample-id 'HG1'
-    
+
     #Step 7-A. Without clusters
     my $output_image_file1a = "$output_dir"."$common_name".".clonality.pdf";
     my $r_script_file = "$output_dir"."clonality.R";
@@ -307,13 +303,90 @@ sub execute {
       $self->warning_message("Empty filtered snv file: $filtered_file");
     }
 
-    #Keep the files that were needed to run the cna-seg and clonality plot steps so that someone can rerun with different parameters 
+    #Keep the files that were needed to run the cna-seg and clonality plot steps so that someone can rerun with different parameters
 
     #Define the output parameter for the cnvhmm so that it can be fed into downstream steps in a workflow
-    $self->cnv_hmm_file($cnvhmm_file);
+    if(not $is_copycat) {
+        $self->cnv_hmm_file($cnvhmm_file);
+    } else {
+        my $copycat_cnvhmm_file = $output_dir . "cnaseq.cnvhmm";
+        $copycat_cnvhmm_file = $self->create_copycat_cnv_hmm_file($somatic_var_build, $copycat_cnvhmm_file);
+        $self->cnv_hmm_file($copycat_cnvhmm_file);
+    }
+    $self->cnv_hq_file($cnvs_output_path);
 
     return 1;
 };
+
+sub create_copycat_cnv_hmm_file {
+    my $self = shift;
+    my $somatic_var_build = shift;
+    my $copycat_cnvhmm_file = shift;
+    my @copycat_dirs = glob($somatic_var_build->data_directory ."/variants/cnv/copy-cat*");
+    my $alt_paired;
+    for my $copycat_dir (@copycat_dirs) {
+        if(-e $copycat_dir . "/alts.paired.dat") {
+            $alt_paired =  $copycat_dir . "/alts.paired.dat";
+            last;
+        }
+    }
+    my $awk_command = "awk \'BEGIN { print \"CHR\\tSTART\\tEND\\tSIZE\\tnMarkers\\tCN1\\tAdjusted_CN1\\tCN2\\tAdjusted_CN2\\tLLR_Somatic\\tStatus\" }\'" .
+        "\'{ if(\$5>2) { status = \"Gain\"; } else { status = \"Loss\"; } print \$1\"\\t\"\$2\"\\t\"\$3\"\\t\"\$3-\$2\"\\t\"\$4\"\\t\"\$5\"\\t\"\$5\"\\t2\\t2\\tNA\\t\"status }\' " .
+        "$alt_paired > $copycat_cnvhmm_file";
+    Genome::Sys->status_message("$awk_command");
+    Genome::Sys->shellcmd(cmd => $awk_command);
+    return $copycat_cnvhmm_file;
+}
+
+sub _is_copycat_somvar {
+    my $self = shift;
+    my $somatic_var_build = shift;
+    if(not -s $somatic_var_build->data_directory . "/variants/cnvs.hq" and
+        glob( $somatic_var_build->data_directory . "/variants/cnv/copy-cat*")) {
+          return 1;
+    } else {
+      return 0;
+    }
+}
+
+sub _get_copycat_cnvhq {
+    my $self = shift;
+    my $somatic_var_build = shift;
+    my $output_dir = shift;
+    my $copycat_dir = glob($somatic_var_build->data_directory . "/variants/cnv/copy-cat*");
+    my $rd_bins;
+    if(-e $copycat_dir . "/rd.bins.dat") {
+        $rd_bins = $copycat_dir . "/rd.bins.dat";
+    } else {
+        die $self->error_message("Unable to find rd.bins.dat in " . $copycat_dir);
+    }
+    my $copycat_cnvhmm = $output_dir . "/copycat.cnvs.hq";
+    my $awk_cmd = "awk 'BEGIN { print \"CHR\\tPOS\\tTUM\\tNORMAL\\tDIFF\" }" .
+        "!/NA|Inf/ {  print \$1\"\\t\"\$2\"\\t\"\$3\"\\t2\\t\"\$3-2}\' " .
+        "$rd_bins > $copycat_cnvhmm";
+    Genome::Sys->shellcmd(cmd => $awk_cmd);
+    return $copycat_cnvhmm;
+}
+
+sub get_data_paths {
+    my $self = shift;
+    my $data_paths = shift;
+    my $somatic_var_build = shift;
+    my $is_copycat = shift;
+    my $output_dir = shift;
+    $data_paths->{root_dir} = $somatic_var_build->data_directory ."/";
+    $data_paths->{effects_dir} = $data_paths->{root_dir} . "effects/";
+    if(not $is_copycat) {
+        $data_paths->{cnvs_hq} = $data_paths->{root_dir} . "variants/cnvs.hq";
+    } else {
+        $data_paths->{cnvs_hq} = $self->_get_copycat_cnvhq($somatic_var_build, $output_dir);
+    }
+    $data_paths->{normal_bam} = $somatic_var_build->normal_bam;
+    $data_paths->{tumor_bam} = $somatic_var_build->tumor_bam;
+    my $reference_build = $somatic_var_build->reference_sequence_build;
+    $data_paths->{reference_fasta} = $reference_build->full_consensus_path('fa');
+    $data_paths->{display_name} = $reference_build->__display_name__;
+}
 
 1;
 

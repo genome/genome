@@ -1,5 +1,5 @@
 package Genome::Env::GENOME_NOMENCLATURE_DEFAULT;
-our $default_value = 'local';
+sub default_value { 'local' }
 
 =pod
 

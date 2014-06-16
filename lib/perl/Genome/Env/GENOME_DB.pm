@@ -1,5 +1,5 @@
 package Genome::Env::GENOME_DB;
-our $default_value = '/var/lib/genome/db';
+sub default_value { '/var/lib/genome/db' }
 
 =pod
 

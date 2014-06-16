@@ -254,14 +254,11 @@ sub execute {
 
     my $new_ref_build_id = $new_ref_cmd->result_build_id;
     my $new_ref_build = Genome::Model::Build->get($new_ref_build_id);
-    my $new_ref_event = $new_ref_build->the_master_event;
-    my $new_ref_event_id = $new_ref_event->id;
-    my $new_ref_event_class = $new_ref_event->class;
-    while ($new_ref_event->event_status eq 'Running' || $new_ref_event->event_status eq 'Scheduled') {
+    while ($new_ref_build->status eq 'Running' || $new_ref_build->status eq 'Scheduled') {
         sleep 120;
-        $new_ref_event = $new_ref_event_class->load($new_ref_event_id);
+        $new_ref_build = Genome::Model::Build->load($new_ref_build_id);
     }
-    unless ($new_ref_event->event_status eq 'Succeeded') {
+    unless ($new_ref_build->status eq 'Succeeded') {
         $self->error_message('New reference build not successful.');
         return;
     }

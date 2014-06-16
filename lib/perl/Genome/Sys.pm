@@ -2,22 +2,26 @@ package Genome::Sys;
 
 use strict;
 use warnings;
-use autodie qw(chown);
+
 use Genome;
+use Genome::Utility::File::Mode qw(mode);
+
+use autodie qw(chown);
+use Carp;
 use Cwd;
-use File::Path;
-use File::Spec;
+use Digest::MD5;
 use File::Basename;
 use File::Copy;
-use Carp;
+use File::Path;
+use File::Spec;
+use File::stat qw(stat);
 use IO::File;
-use LWP::Simple qw(getstore RC_OK);
-use List::MoreUtils "each_array";
-use Set::Scalar;
-use Digest::MD5;
 use JSON;
+use List::MoreUtils "each_array";
+use LWP::Simple qw(getstore RC_OK);
 use Params::Validate qw(:types validate_pos);
 use POSIX qw(EEXIST);
+use Set::Scalar;
 
 # these are optional but should load immediately when present
 # until we can make the Genome::Utility::Instrumentation optional (Net::Statsd deps)
@@ -836,7 +840,7 @@ sub create_directory {
 
     # have to set umask, make_path's mode/umask option is not sufficient
     my $umask = umask;
-    umask $ENV{GENOME_SYS_UMASK};
+    umask oct($ENV{GENOME_SYS_UMASK});
     make_path($directory); # not from File::Path
     umask $umask;
 
@@ -857,7 +861,11 @@ sub make_path {
         my $rv = mkdir $subpath;
         my $mkdir_errno = $!;
         if ($rv) {
-            chown -1, $gid, $subpath;
+            my $stat = stat($subpath);
+
+            if ($stat->gid != $gid) {
+                set_gid($gid, $subpath);
+            }
         } else {
             if ($mkdir_errno == EEXIST) {
                 next;
@@ -872,6 +880,19 @@ sub make_path {
         die "directory does not exist: $path";
     }
 
+}
+
+sub set_gid {
+    my $gid = shift;
+    my $path = shift;
+
+    # chown removes the setgid bit on root_squashed NFS volumes so preserve manually
+    my $mode = mode($path);
+    my $had_setgid = $mode->is_setgid;
+    chown -1, $gid, $path;
+    if ($had_setgid) {
+        $mode->add_setgid();
+    }
 }
 
 sub gidgrnam {
@@ -1598,6 +1619,42 @@ sub retry {
     }
 
     return $rv;
+}
+
+# rename that doesn't preserve permissions, uid, or gid
+sub rename {
+    my ($class, $oldname, $newname) = @_;
+
+    if (-f $oldname) {
+        $class->touch($newname) or die $!;
+    } else {
+        mkdir($newname) or die $!;
+    }
+    my $mode = stat($newname)->mode;
+    my $gid  = stat($newname)->gid;
+    my $uid  = stat($newname)->uid;
+    if (-f $oldname) {
+        unlink($newname) or die $!;
+    } else {
+        rmdir($newname) or die $!;
+    }
+
+    CORE::rename $oldname, $newname or die $!;
+
+    chown $uid, $gid, $newname or die $!;
+    mode($newname)->set_mode($mode);
+}
+
+sub touch {
+    my ($class, $path) = @_;
+
+    my $file = IO::File->new($path, 'a') or die $!;
+    $file->close() or die $!;
+
+    # using the undef pair uses system's current time (better for NFS)
+    utime undef, undef, $path or die $!;
+
+    return 1;
 }
 
 1;

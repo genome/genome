@@ -272,12 +272,14 @@ sub _resolve_workflow_for_build {
     }
 
     my ($version_number) = $self->read_aligner_version =~ /^([\d+])/;
+    my $aligner_name = $self->read_aligner_name;
 
     my $processing_profile = $self->processing_profile;
 
     my $run_splice_junction_summary;
 
-    if ($self->bedtools_version && $self->annotation_build) {
+    #SpliceJunctionSummary need junctions.bed produced by tophat aligner
+    if ($aligner_name eq 'tophat' && $self->bedtools_version && $self->annotation_build) {
         my $annotation_build = $self->annotation_build;
         my ($ensembl_version) = split(/_/,$annotation_build->version);
         unless ($ensembl_version) {
@@ -285,20 +287,21 @@ sub _resolve_workflow_for_build {
         }
         if ($ensembl_version >= 67) {
             $run_splice_junction_summary = 1;
-        } else {
+        } 
+        else {
             $self->debug_message('Skipping SpliceJunctionSummary for annotation build: '. $self->annotation_build);
         }
     }
     my $output_properties = ['coverage_result','expression_result','metrics_result'];
-    push(@$output_properties, 'fusion_result') if $self->fusion_detector;
-    push(@$output_properties, 'annotated_bedpe_file') if $self->fusion_detector and $self->cancer_annotation_db;
-    push(@$output_properties, 'digital_expression_detection_result') if $self->digital_expression_detection_strategy;
+
+    push @$output_properties, 'fusion_result'                       if $self->fusion_detector;
+    push @$output_properties, 'annotated_bedpe_file'                if $self->fusion_detector and $self->cancer_annotation_db;
+    push @$output_properties, 'digital_expression_detection_result' if $self->digital_expression_detection_strategy;
+
     if ($version_number >= 2) {
-        push(@$output_properties, 'bam_qc_result');
-        push(@$output_properties, 'alignment_stats_result');
-        if ($run_splice_junction_summary) {
-            push(@$output_properties, 'splice_junction_result');
-        }
+        push @$output_properties, 'bam_qc_result';
+        push @$output_properties, 'alignment_stats_result' if $aligner_name eq 'tophat';
+        push @$output_properties, 'splice_junction_result' if $run_splice_junction_summary;
     }
 
     my %inputs = $self->map_workflow_inputs($build);
@@ -325,7 +328,8 @@ sub _resolve_workflow_for_build {
                 command_class_name => 'Genome::Model::RnaSeq::Command::AlignReads::Tophat',
             )
         );
-    }else{
+    }
+    else{
         $alignment_operation = $workflow->add_operation(
             name => 'RnaSeq Alignment',
             operation_type => Workflow::OperationType::Command->create(
@@ -386,27 +390,29 @@ sub _resolve_workflow_for_build {
 
     # TopHat2 Specific Pipeline Steps
     if ($version_number >= 2) {
-        my $alignment_metrics_operation = $workflow->add_operation(
-            name => 'RnaSeq Alignment Metrics',
-            operation_type => Workflow::OperationType::Command->create(
-                command_class_name => 'Genome::Model::RnaSeq::Command::Tophat2AlignmentStats',
-            )
-        );
-        $alignment_metrics_operation->operation_type->lsf_queue($lsf_queue);
-        $alignment_metrics_operation->operation_type->lsf_project($lsf_project);
+        if ($aligner_name eq 'tophat') {
+            my $alignment_metrics_operation = $workflow->add_operation(
+                name => 'RnaSeq Alignment Metrics',
+                operation_type => Workflow::OperationType::Command->create(
+                    command_class_name => 'Genome::Model::RnaSeq::Command::Tophat2AlignmentStats',
+                )
+            );
+            $alignment_metrics_operation->operation_type->lsf_queue($lsf_queue);
+            $alignment_metrics_operation->operation_type->lsf_project($lsf_project);
 
-        $workflow->add_link(
-            left_operation => $alignment_operation,
-            left_property => 'build_id',
-            right_operation => $alignment_metrics_operation,
-            right_property => 'build_id'
-        );
-        $workflow->add_link(
-            left_operation => $alignment_metrics_operation,
-            left_property => 'result',
-            right_operation => $output_connector,
-            right_property => 'alignment_stats_result'
-        );
+            $workflow->add_link(
+                left_operation => $alignment_operation,
+                left_property => 'build_id',
+                right_operation => $alignment_metrics_operation,
+                right_property => 'build_id'
+            );
+            $workflow->add_link(
+                left_operation => $alignment_metrics_operation,
+                left_property => 'result',
+                right_operation => $output_connector,
+                right_property => 'alignment_stats_result'
+            );
+        }
 
         my $bam_qc_operation = $workflow->add_operation(
             name => 'RnaSeq BamQc',
@@ -414,6 +420,7 @@ sub _resolve_workflow_for_build {
                 command_class_name => 'Genome::Model::RnaSeq::Command::BamQc',
             )
         );
+
         $bam_qc_operation->operation_type->lsf_queue($lsf_queue);
         $bam_qc_operation->operation_type->lsf_project($lsf_project);
         
@@ -691,7 +698,7 @@ sub params_for_alignment {
 
     my %params = (
         instrument_data_id => [map($_->value_id, @inputs)],
-        aligner_name => 'tophat',
+        aligner_name => $self->read_aligner_name,
         reference_build_id => $reference_build_id || undef,
         aligner_version => $self->read_aligner_version || undef,
         aligner_params => $read_aligner_params,
@@ -700,7 +707,7 @@ sub params_for_alignment {
         trimmer_version => $self->read_trimmer_version || undef,
         trimmer_params => $self->read_trimmer_params || undef,
         picard_version => $self->picard_version || undef,
-        samtools_version => undef, #unused
+        samtools_version => $self->samtools_version || undef,
         filter_name => undef, #unused
         test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
         bowtie_version => $self->bowtie_version
@@ -714,10 +721,11 @@ sub publication_description {
     my $self = shift;
 
     # TODO: use these, to dereive the values in the following two sections
-    my $pp = $self->processing_profile;
+    my $pp     = $self->processing_profile;
     my $refseq = $self->reference_sequence_build;
-    my $annot = $self->annotation_build;
-    my @i = $self->instrument_data;
+    my $annot  = $self->annotation_build;
+    my @i      = $self->instrument_data;
+    my $aligner_name = $self->read_aligner_name;
 
     # ensure we really only use one lane of data per library like we say we do
     my %libraries;
@@ -738,7 +746,7 @@ sub publication_description {
 
     # TODO: we must look this up from LIMS
     my $instrument = 'CHECKME HiSeq';
-    my $chemistry = 'CHECKME v3';
+    my $chemistry  = 'CHECKME v3';
     my $lims_samtools_version = 'CHECKME 0.1.18';
     my $picard_version = 'CHECKME 1.4.6';
 
@@ -754,8 +762,8 @@ sub publication_description {
 
     # ensure everything else we have hard-coded in the description still applies...
     my %expect = (
-        read_aligner_name => 'tophat',
-        expression_name => 'cufflinks',
+        read_aligner_name => $aligner_name,
+        expression_name   => 'cufflinks',
     );
     for my $name (sort keys %expect) {
         my $expected_value = $expect{$name};
@@ -765,13 +773,13 @@ sub publication_description {
         }
     }
 
-    my $tophat_version = $self->read_aligner_version;
+    my $aligner_version   = $self->read_aligner_version;
     my $cufflinks_version = $self->expression_version;
 
     # TODO: update these to come from the model inputs and processing profile
     my $annotation_source = 'CHECKME the human Ensembl database (version 58) (REF)';
-    my $bam_index_tool = 'CHECKME samtools (v. 0.1.18)';
-    my $bam_sort_tool = 'CHECKME Picard (v.1.46)';
+    my $bam_index_tool    = 'CHECKME samtools (v. 0.1.18)';
+    my $bam_sort_tool     = 'CHECKME Picard (v.1.46)';
 
     my $file = __FILE__;
     my $line = __LINE__;
@@ -788,20 +796,20 @@ was performed.  Mapping statistics for the BAM file were generated
 using Samtools flagstat (v. $lims_samtools_version) (REF). 
 The BAM file was converted to FastQ using Picard (v.$picard_version) (REF)
 and all reads were re-aligned to the $alignment_ref
-using Tophat (v $tophat_version) (REF).  Tophat was run in default mode with
+using $aligner_name (v $aligner_version) (REF).  $aligner_name was run in default mode with
 the following exceptions.  The --mate-inner-dist and --mate-std-dev
 were estimated prior to run time using the Eland alignments described
 above (elaborate) and specified at run time.  The '-G' option was used
-to specify a GTF file for Tophat to generate an exon-exon junction
+to specify a GTF file for $aligner_name to generate an exon-exon junction
 database to assist in the mapping of known junctions.  The transcripts
 for this GTF were obtained from $annotation_source.  The 
-resulting tophat BAM file was indexed by $bam_index_tool
+resulting $aligner_name BAM file was indexed by $bam_index_tool
 and sorted by chromosome mapping position using $bam_sort_tool. 
 Transcript expression values were estimated by Cufflinks (v$cufflinks_version)
 (REF) using default parameters with the following exceptions.  The Cufflinks 
 parameter '-G' was specified to force cufflinks to estimate expression
 for known transcripts provided by the same GTF file that was supplied
-to TopHat described above.  A second GTF containing only the
+to $aligner_name described above.  A second GTF containing only the
 mitochondrial and ribosomal sequences was created and Cufflinks was
 directed to ignore these regions using the '-M' mask option, to improve
 overall robustness of transcript abundance estimates.  The variant

@@ -13,7 +13,7 @@ class Genome::Site::TGI::Synchronize::ReconcileMiscUpdate {
     has => [
         start_from => { 
             is => 'Text', 
-            doc => 'Date to start from to get updates to reconcile. Format is YYYY-MM-DD HH:MM::SS.',
+            doc => 'Date to start from to get updates to reconcile. Format is YYYY-MM-DD HH:MM:SS.',
         },
     ],
     has_optional_transient => [

@@ -17,32 +17,33 @@ my $pkg = 'Genome::Model::Build::HasFeatureLists';
 use_ok($pkg) || die;
 
 {
-package Genome::Model::Build::TestHasFeatureLists;
+    package Genome::Model::Build::TestHasFeatureLists;
 
-use strict;
-use warnings FATAL => 'all';
-use Genome;
+    use strict;
+    use warnings FATAL => 'all';
+    use Genome;
 
-class Genome::Model::Build::TestHasFeatureLists {
-    is => [
+    class Genome::Model::Build::TestHasFeatureLists {
+        is => [
         'Genome::Model::Build::HasFeatureLists',
-    ],
-    has => [
-        get_target_region_file_list => {
+        ],
+        has => [
+        get_target_region_feature_list => {
         },
-    ],
-};
-
-1;
+        ],
+    };
+    1;
 }
 
 my $target = Genome::Model::Build::TestHasFeatureLists->__define__();
 throws_ok( sub {$target->get_feature_list('bad_name')} , qr(No accessor for name));
 throws_ok( sub {$target->get_feature_list('segmental_duplications')} , qr(is not defined));
 throws_ok( sub {$target->get_feature_list('target_region')} , qr(Couldn't get feature_list));
+throws_ok( sub {$target->get_segmental_duplications_feature_list} , qr(abstract));
+throws_ok( sub {$target->get_self_chain_feature_list} , qr(abstract));
 
 my $feature_list = Genome::FeatureList->__define__();
-$target->get_target_region_file_list($feature_list);
+$target->get_target_region_feature_list($feature_list);
 is($target->get_feature_list('target_region'), $feature_list, 'Got expected feature list');
 
 done_testing();

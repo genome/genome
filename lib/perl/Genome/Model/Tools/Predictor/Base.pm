@@ -124,7 +124,7 @@ sub prepare_output_directory {
             DIR => $self->output_directory,
             CLEANUP => 0,
         );
-        chmod 0775, $output_directory;
+        chmod 0770, $output_directory;
         $self->output_directory($output_directory);
     }
 

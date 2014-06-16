@@ -8,6 +8,7 @@ use File::Path 'rmtree';
 
 use Genome;
 use Genome::Utility::Instrumentation qw();
+use Genome::Utility::File::Mode qw(mode);
 
 class Genome::Model::Tools::DetectVariants2::Result::DetectionBase {
     is => ['Genome::Model::Tools::DetectVariants2::Result::Base'],
@@ -351,19 +352,17 @@ sub _resolve_subclass_name {
 
 sub _set_result_file_permissions {
     my $self = shift;
+
     my $output_dir = $self->output_dir;
-    if($output_dir =~ m/\/$/){
-        $output_dir =~ s/\/$//;
-    }
+    $output_dir =~ s/\/$//;
 
-    chmod 02775, $output_dir;
+    chmod 02770, $output_dir;
     for my $subdir (grep { -d $_  } glob("$output_dir/*")) {
-        chmod 02775, $subdir;
+        chmod 02770, $subdir;
     }
 
-    # Make everything in here read-only
     for my $file (grep { -f $_  } glob("$output_dir/*")) {
-        chmod 0444, $file;
+        mode($file)->rm_all_writable();
     }
 }
 

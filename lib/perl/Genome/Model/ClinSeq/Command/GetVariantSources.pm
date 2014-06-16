@@ -9,16 +9,16 @@ use Genome;
 class Genome::Model::ClinSeq::Command::GetVariantSources {
     is => 'Command::V2',
     has_input => [
-        builds => { 
+        builds => {
               is => 'Genome::Model::Build::SomaticVariation',
               is_many => 1,
               shell_args_position => 1,
               require_user_verify => 0,
               doc => 'somatic variation build(s) to get variant sources from',
         },
-        outdir => { 
+        outdir => {
               is => 'FilesystemPath',
-              doc => 'Directory where output files will be written', 
+              doc => 'Directory where output files will be written',
         },
     ],
     has_output => [
@@ -52,7 +52,7 @@ EOS
 
 sub help_detail {
     return <<EOS
-Summarize source of variants (i.e., snv/indel caller) for one or more somatic variation builds 
+Summarize source of variants (i.e., snv/indel caller) for one or more somatic variation builds
 
 (put more content here)
 EOS
@@ -95,7 +95,7 @@ sub execute {
     }else{
       $build_outdir = $outdir;
     }
-    my $build_dir = $somatic_build->data_directory;
+    my $somatic_build_dir = $somatic_build->data_directory;
 
     #Set files for output
     my $indel_outfile = $build_outdir . "indel_sources.tsv";
@@ -103,88 +103,28 @@ sub execute {
 
     #Set a list of variant files to consider
     my %indel_files;
-    $indel_files{1}{file} = $build_dir . "/effects/indels.hq.novel.tier1.v2.bed";
-    $indel_files{1}{tier} = "tier1";
-    $indel_files{2}{file} = $build_dir . "/effects/indels.hq.novel.tier2.v2.bed";
-    $indel_files{2}{tier} = "tier2";
-    $indel_files{3}{file} = $build_dir . "/effects/indels.hq.novel.tier3.v2.bed";
-    $indel_files{3}{tier} = "tier3";
-    $indel_files{4}{file} = $build_dir . "/effects/indels.hq.novel.tier4.v2.bed";
-    $indel_files{4}{tier} = "tier4";
+    $self->get_indel_files_names(\%indel_files, $somatic_build_dir);
 
     my %snv_files;
-    $snv_files{1}{file} = $build_dir . "/effects/snvs.hq.novel.tier1.v2.bed";
-    $snv_files{1}{tier} = "tier1";
-    $snv_files{2}{file} = $build_dir . "/effects/snvs.hq.novel.tier2.v2.bed";
-    $snv_files{2}{tier} = "tier2";
-    $snv_files{3}{file} = $build_dir . "/effects/snvs.hq.novel.tier3.v2.bed";
-    $snv_files{3}{tier} = "tier3";
-    $snv_files{4}{file} = $build_dir . "/effects/snvs.hq.novel.tier4.v2.bed";
-    $snv_files{4}{tier} = "tier4";
+    $self->get_snv_files_names(\%snv_files, $somatic_build_dir);
 
     #Locate the final indel/snv results files and load into memory
     #For indels, use ~/effects/indels.hq.novel.tier1.v2.bed ?  (Or the annotated file?)
     #For SNVs, use ~/effects/snvs.hq.novel.tier1.v2.bed
+    my (%indels, %snvs);
     my $indel_results_file = $build_outdir . "indels.hq.novel.tier1-3.v2.bed";
-    open (INDELS_OUT, ">$indel_results_file") || die $self->error_message("Could not open output file: $indel_results_file");
-    my %indels;
-    my $l=0;
-    foreach my $c (sort {$a <=> $b} keys %indel_files){
-      my $file = $indel_files{$c}{file};
-      my $tier = $indel_files{$c}{tier};
-      open (INDELS, $file) or die "can't open $file\n";
-      while(<INDELS>){
-        $l++;
-        chomp;
-        my $line=$_;
-        my @data=split("\t",$_);
-        my $variant_string="$data[0]".":"."$data[1]"."-"."$data[2]"." ($data[3])";
-        my $coord_string="$data[0]".":"."$data[1]"."-"."$data[2]";
-        $indels{$l}{line}=$line;
-        $indels{$l}{variant_string}=$variant_string;
-        $indels{$l}{coord_string}=$coord_string;
-        $indels{$l}{tier} = $tier;
-        print INDELS_OUT "$line\n";
-      }
-      close(INDELS);
-    }
-    close (INDELS_OUT);
-
-    my $snv_results_file = $build_outdir . "snvs.hq.novel.tier1-3.v2.bed";     
-    open (SNVS_OUT, ">$snv_results_file") || die $self->error_message("Could not open output file: $snv_results_file");
-    my %snvs;
-    $l=0;
-    foreach my $c (sort {$a <=> $b} keys %snv_files){
-      my $file = $snv_files{$c}{file};
-      my $tier = $snv_files{$c}{tier};
-      open (SNVS, $file) or die "can't open $file\n";
-      while(<SNVS>){
-        $l++;
-        chomp;
-        my $line=$_;
-        my @data=split("\t",$_);
-        my $variant_string="$data[0]".":"."$data[1]"."-"."$data[2]"." ($data[3])";
-        my $coord_string="$data[0]".":"."$data[1]"."-"."$data[2]";
-        $snvs{$l}{line}=$line;
-        $snvs{$l}{variant_string}=$variant_string;
-        $snvs{$l}{coord_string}=$coord_string;
-        $snvs{$l}{tier} = $tier;
-        print SNVS_OUT "$line\n";
-      }
-      close(SNVS);
-    }
-    close (SNVS_OUT);
+    my $snv_results_file = $build_outdir . "snvs.hq.novel.tier1-3.v2.bed";
+    $self->create_snv_indel_hash(\%indel_files, \%indels, $indel_results_file);
+    $self->create_snv_indel_hash(\%snv_files, \%snvs, $snv_results_file);
 
     #Sort the BED files using joinx
     my $indel_results_file_sorted = $indel_results_file . ".sort";
-    my $joinx_indel_sort_cmd = Genome::Model::Tools::Joinx::Sort->create(output_file=>$indel_results_file_sorted, input_files=>[$indel_results_file]);
-    $joinx_indel_sort_cmd->execute();
+    $self->joinxSortFile($indel_results_file, $indel_results_file_sorted);
     unlink $indel_results_file;
     Genome::Sys->move_file($indel_results_file_sorted, $indel_results_file);
-    
+
     my $snv_results_file_sorted = $snv_results_file . ".sort";
-    my $joinx_snv_sort_cmd = Genome::Model::Tools::Joinx::Sort->create(output_file=>$snv_results_file_sorted, input_files=>[$snv_results_file]);
-    $joinx_snv_sort_cmd->execute();
+    $self->joinxSortFile($snv_results_file, $snv_results_file_sorted);
     unlink $snv_results_file;
     Genome::Sys->move_file($snv_results_file_sorted, $snv_results_file);
 
@@ -196,110 +136,19 @@ sub execute {
     #Locate the individual indel/snv files for each caller to use in joinx intersect
     #This should be replaced by a method which somehow determines the appropriate files automatically
     #Depending on whether the somatic variation build is for exome or wgs data, the paths will differ - this should also be determined automatically
+    $self->get_variant_caller_results("indel", "strelka", $indel_results_file, $somatic_build_dir, $build_outdir);
+    $self->get_variant_caller_results("indel", "gatk", $indel_results_file, $somatic_build_dir, $build_outdir);
+    $self->get_variant_caller_results("indel", "pindel", $indel_results_file, $somatic_build_dir, $build_outdir);
+    $self->get_variant_caller_results("indel", "varscan", $indel_results_file, $somatic_build_dir, $build_outdir);
 
-    my ($indel_strelka_original_results_file, $indel_gatk_original_results_file, $indel_pindel_original_results_file, $indel_varscan_original_results_file);
+    $self->get_variant_caller_results("snv", "strelka", $snv_results_file, $somatic_build_dir, $build_outdir);
+    $self->get_variant_caller_results("snv", "sniper", $snv_results_file, $somatic_build_dir, $build_outdir);
+    $self->get_variant_caller_results("snv", "varscan", $snv_results_file, $somatic_build_dir, $build_outdir);
+    $self->get_variant_caller_results("snv", "samtools", $snv_results_file, $somatic_build_dir, $build_outdir);
+    $self->get_variant_caller_results("snv", "mutect", $snv_results_file, $somatic_build_dir, $build_outdir);
 
-    #Create a list of possible indels file paths
-    my @strelka_indel_paths = glob("${build_dir}/variants/indel/strelka-*/indels.hq.bed");
-    $indel_strelka_original_results_file = $self->checkResultFile('-paths'=>\@strelka_indel_paths, '-caller'=>"strelka");
-
-    my @gatk_indel_paths = glob("${build_dir}/variants/indel/gatk-*/indels.hq.bed");
-    $indel_gatk_original_results_file = $self->checkResultFile('-paths'=>\@gatk_indel_paths, '-caller'=>"gatk");
-    
-    my @pindel_indel_paths = glob("${build_dir}/variants/indel/pindel-*/indels.hq.bed");
-    $indel_pindel_original_results_file = $self->checkResultFile('-paths'=>\@pindel_indel_paths, '-caller'=>"pindel");
-
-    my @varscan_indel_paths = glob("${build_dir}/variants/indel/varscan-*/indels.hq.bed");
-    $indel_varscan_original_results_file = $self->checkResultFile('-paths'=>\@varscan_indel_paths, '-caller'=>"varscan");
-
-    my ($snv_strelka_original_results_file, $snv_sniper_original_results_file, 
-          $snv_varscan_original_results_file,  $snv_samtools_original_results_file);
-
-    #Create a list of possible snv file paths
-    my @strelka_snv_paths = glob("${build_dir}/variants/snv/strelka-*/snvs.hq.bed");
-    $snv_strelka_original_results_file = $self->checkResultFile('-paths'=>\@strelka_snv_paths, '-caller'=>"strelka");
-
-    my @sniper_snv_paths = glob("${build_dir}/variants/snv/sniper-*/snvs.hq.bed");
-    $snv_sniper_original_results_file = $self->checkResultFile('-paths'=>\@sniper_snv_paths, '-caller'=>"sniper");
-
-    my @varscan_snv_paths = glob("${build_dir}/variants/snv/varscan-*/snvs.hq.bed");
-    $snv_varscan_original_results_file = $self->checkResultFile('-paths'=>\@varscan_snv_paths, '-caller'=>"varscan");
-
-    my @samtools_snv_paths = glob("${build_dir}/variants/snv/samtools-*/snvs.hq.bed");
-    $snv_samtools_original_results_file = $self->checkResultFile('-paths'=>\@samtools_snv_paths, '-caller'=>"varscan");
-
-    #Sort the caller result BED files using joinx and store in a temporary file and use that to run joinx intersect
-    my $indel_strelka_results_file =  Genome::Sys->create_temp_file_path("indel_strelka_sorted");
-    $self->joinxSortFile($indel_strelka_original_results_file, $indel_strelka_results_file);
-    my $indel_gatk_results_file =  Genome::Sys->create_temp_file_path("indel_gatk_sorted");
-    $self->joinxSortFile($indel_gatk_original_results_file, $indel_gatk_results_file);
-    my $indel_pindel_results_file =  Genome::Sys->create_temp_file_path("indel_pindel_sorted");
-    $self->joinxSortFile($indel_pindel_original_results_file, $indel_pindel_results_file);
-    my $indel_varscan_results_file =  Genome::Sys->create_temp_file_path("indel_varscan_sorted");
-    $self->joinxSortFile($indel_varscan_original_results_file, $indel_varscan_results_file);
-    my $snv_strelka_results_file =  Genome::Sys->create_temp_file_path("snv_strelka_sorted");
-    $self->joinxSortFile($snv_strelka_original_results_file, $snv_strelka_results_file);
-    my $snv_sniper_results_file =  Genome::Sys->create_temp_file_path("snv_sniper_sorted");
-    $self->joinxSortFile($snv_sniper_original_results_file, $snv_sniper_results_file);
-    my $snv_varscan_results_file =  Genome::Sys->create_temp_file_path("snv_varscan_sorted");
-    $self->joinxSortFile($snv_varscan_original_results_file, $snv_varscan_results_file);
-    my $snv_samtools_results_file =  Genome::Sys->create_temp_file_path("snv_samtools_sorted");
-    $self->joinxSortFile($snv_samtools_original_results_file, $snv_samtools_results_file);
-
-    #Use 'joinx intersect' to determine which indels in the merged/union file are found in each individual caller's results file
-    #gmt joinx intersect a.bed b.bed [--output-file=n.bed] --exact-pos --exact-allele
-    my $params_string = "--exact-pos --exact-allele";
-    my $indel_strelka_outfile = $build_outdir . "indel_strelka.bed";
-    my $indel_gatk_outfile = $build_outdir . "indel_gatk.bed";
-    my $indel_pindel_outfile = $build_outdir . "indel_pindel.bed";
-    my $indel_varscan_outfile = $build_outdir . "indel_varscan.bed";
-    my $snv_strelka_outfile = $build_outdir . "snv_strelka.bed";
-    my $snv_sniper_outfile = $build_outdir . "snv_sniper.bed";
-    my $snv_varscan_outfile = $build_outdir . "snv_varscan.bed";
-    my $snv_samtools_outfile = $build_outdir . "snv_samtools.bed";
-
-    $self->determineCaller("indel","strelka", $indel_results_file, $indel_strelka_results_file, $indel_strelka_outfile);
-    $self->determineCaller("indel","gatk", $indel_results_file, $indel_gatk_results_file, $indel_gatk_outfile);
-    $self->determineCaller("indel","pindel", $indel_results_file, $indel_pindel_results_file, $indel_pindel_outfile);
-    $self->determineCaller("indel","varscan", $indel_results_file, $indel_varscan_results_file, $indel_varscan_outfile);
-
-    $self->determineCaller("snv","strelka", $snv_results_file, $snv_strelka_results_file, $snv_strelka_outfile);
-    $self->determineCaller("snv","sniper", $snv_results_file, $snv_sniper_results_file, $snv_sniper_outfile);
-    $self->determineCaller("snv","varscan", $snv_results_file, $snv_varscan_results_file, $snv_varscan_outfile);
-    $self->determineCaller("snv","samtools", $snv_results_file, $snv_samtools_results_file, $snv_varscan_outfile);
-
-    #Print out a new file containing the extra source columns
-    open (INDEL_OUT, ">$indel_outfile") || die "\n\nCould not open $indel_outfile\n\n";
-    print INDEL_OUT "coord\tchr\tstart\tend\tvariant\tscore1\tscore2\tcallers\tstrelka\tgatk\tpindel\tvarscan\ttier\n";
-
-    foreach my $indel (sort {$indels{$a}->{coord_string} cmp $indels{$b}->{coord_string}} keys %indels){
-      my @callers = sort keys %{$indel_caller{$indels{$indel}{variant_string}}};
-      my $strelka=0; my $gatk=0; my $pindel=0; my $varscan=0;
-      foreach my $caller (@callers){
-        if ($caller eq 'strelka'){$strelka=1;}
-        if ($caller eq 'gatk'){$gatk=1;}
-        if ($caller eq 'pindel'){$pindel=1;}
-        if ($caller eq 'varscan'){$varscan=1;}
-      }
-      print INDEL_OUT "$indels{$indel}{coord_string}\t$indels{$indel}{line}\t",join(",",@callers),"\t$strelka\t$gatk\t$pindel\t$varscan\t$indels{$indel}{tier}\n";
-    }
-    close(INDEL_OUT);
-
-    open (SNV_OUT, ">$snv_outfile") || die "\n\nCould not open $snv_outfile\n\n";
-    print SNV_OUT "coord\tchr\tstart\tend\tvariant\tscore1\tscore2\tcallers\tstrelka\tsniper\tvarscan\tsamtools\ttier\n";
-    foreach my $snv (sort {$snvs{$a}->{coord_string} cmp $snvs{$b}->{coord_string}} keys %snvs){
-      my @callers = sort keys %{$snv_caller{$snvs{$snv}{variant_string}}};
-      my $strelka=0; my $sniper=0; my $varscan=0;my $samtools = 0;
-      foreach my $caller (@callers){
-        if ($caller eq 'strelka'){$strelka=1;}
-        if ($caller eq 'sniper'){$sniper=1;}
-        if ($caller eq 'varscan'){$varscan=1;}
-        if ($caller eq 'samtools'){$samtools=1;}
-      }
-      print SNV_OUT "$snvs{$snv}{coord_string}\t$snvs{$snv}{line}\t",join(",",@callers),"\t$strelka\t$sniper\t$varscan\t$samtools\t$snvs{$snv}{tier}\n";
-    }
-    close(INDEL_OUT);
-
+    $self->createIndelOutfile(\%indels, $indel_outfile);
+    $self->createSnvOutfile(\%snvs, $snv_outfile);
     #Cleanup temp files
     unlink $indel_results_file;
     unlink $snv_results_file;
@@ -358,6 +207,135 @@ sub checkResultFile{
   return($result_file);
 }
 
+sub create_snv_indel_hash {
+    my $self = shift;
+    my $files = shift;
+    my $variants = shift;
+    my $results_file = shift;
+    open (OUT, ">$results_file") || die $self->error_message("Could not open output file: $results_file");
+    my $l=0;
+    foreach my $c (sort {$a <=> $b} keys %$files){
+      my $file = $files->{$c}{file};
+      my $tier = $files->{$c}{tier};
+      open (VARIANTS, $file) or die "can't open $file\n";
+      while(<VARIANTS>){
+        $l++;
+        chomp;
+        my $line=$_;
+        my @data=split("\t",$_);
+        my $variant_string="$data[0]".":"."$data[1]"."-"."$data[2]"." ($data[3])";
+        my $coord_string="$data[0]".":"."$data[1]"."-"."$data[2]";
+        $variants->{$l}{line}=$line;
+        $variants->{$l}{variant_string}=$variant_string;
+        $variants->{$l}{coord_string}=$coord_string;
+        $variants->{$l}{tier} = $tier;
+        print OUT "$line\n";
+      }
+      close(VARIANTS);
+    }
+    close (OUT);
+}
+
+sub createIndelOutfile {
+    my $self = shift;
+    my $indels = shift;
+    my $indel_outfile = shift;
+    #Print out a new file containing the extra source columns
+    open (INDEL_OUT, ">$indel_outfile") || die "\n\nCould not open $indel_outfile\n\n";
+    print INDEL_OUT "coord\tchr\tstart\tend\tvariant\tscore1\tscore2\tcallers\tstrelka\tgatk\tpindel\tvarscan\ttier\n";
+    foreach my $indel (sort {$indels->{$a}->{coord_string} cmp $indels->{$b}->{coord_string}} keys %$indels){
+      my @callers = sort keys %{$indel_caller{$indels->{$indel}{variant_string}}};
+      my $strelka=0; my $gatk=0; my $pindel=0; my $varscan=0;
+      foreach my $caller (@callers){
+        if ($caller eq 'strelka'){$strelka=1;}
+        if ($caller eq 'gatk'){$gatk=1;}
+        if ($caller eq 'pindel'){$pindel=1;}
+        if ($caller eq 'varscan'){$varscan=1;}
+      }
+      print INDEL_OUT "$indels->{$indel}{coord_string}\t$indels->{$indel}{line}\t",join(",",@callers),"\t$strelka\t$gatk\t$pindel\t$varscan\t$indels->{$indel}{tier}\n";
+    }
+    close(INDEL_OUT);
+}
+
+sub createSnvOutfile {
+    my $self = shift;
+    my $snvs = shift;
+    my $snv_outfile = shift;
+    open (SNV_OUT, ">$snv_outfile") || die "\n\nCould not open $snv_outfile\n\n";
+    print SNV_OUT "coord\tchr\tstart\tend\tvariant\tscore1\tscore2\tcallers\tstrelka\tsniper\tvarscan\tsamtools\tmutect\ttier\n";
+    foreach my $snv (sort {$snvs->{$a}->{coord_string} cmp $snvs->{$b}->{coord_string}} keys %$snvs){
+      my @callers = sort keys %{$snv_caller{$snvs->{$snv}{variant_string}}};
+      my $strelka=0; my $sniper=0;
+      my $varscan=0;my $samtools = 0; my $mutect=0;
+      foreach my $caller (@callers){
+        if ($caller eq 'strelka'){$strelka=1;}
+        if ($caller eq 'sniper'){$sniper=1;}
+        if ($caller eq 'varscan'){$varscan=1;}
+        if ($caller eq 'samtools'){$samtools=1;}
+        if ($caller eq 'mutect'){$mutect=1;}
+      }
+      print SNV_OUT "$snvs->{$snv}{coord_string}\t$snvs->{$snv}{line}\t",join(",",@callers),"\t$strelka\t$sniper\t" .
+          "$varscan\t$samtools\t$mutect\t$snvs->{$snv}{tier}\n";
+    }
+    close(SNV_OUT);
+}
+
+sub get_indel_files_names {
+    my $self = shift;
+    my $indel_files = shift;
+    my $build_dir = shift;
+    $indel_files->{1}{file} = $build_dir . "/effects/indels.hq.novel.tier1.v2.bed";
+    $indel_files->{1}{tier} = "tier1";
+    $indel_files->{2}{file} = $build_dir . "/effects/indels.hq.novel.tier2.v2.bed";
+    $indel_files->{2}{tier} = "tier2";
+    $indel_files->{3}{file} = $build_dir . "/effects/indels.hq.novel.tier3.v2.bed";
+    $indel_files->{3}{tier} = "tier3";
+    $indel_files->{4}{file} = $build_dir . "/effects/indels.hq.novel.tier4.v2.bed";
+    $indel_files->{4}{tier} = "tier4";
+}
+
+sub get_snv_files_names {
+    my $self = shift;
+    my $snv_files = shift;
+    my $build_dir = shift;
+    $snv_files->{1}{file} = $build_dir . "/effects/snvs.hq.novel.tier1.v2.bed";
+    $snv_files->{1}{tier} = "tier1";
+    $snv_files->{2}{file} = $build_dir . "/effects/snvs.hq.novel.tier2.v2.bed";
+    $snv_files->{2}{tier} = "tier2";
+    $snv_files->{3}{file} = $build_dir . "/effects/snvs.hq.novel.tier3.v2.bed";
+    $snv_files->{3}{tier} = "tier3";
+    $snv_files->{4}{file} = $build_dir . "/effects/snvs.hq.novel.tier4.v2.bed";
+    $snv_files->{4}{tier} = "tier4";
+}
+
+sub get_variant_caller_results() {
+    my $self = shift;
+    my $variant_type = shift; #"snv" or "indel"
+    my $caller = shift;
+    my $variant_results_file = shift;
+    my $build_dir = shift;
+    my $build_outdir = shift;
+    my $variant_caller_file;
+
+    #Create a list of possible indels file paths
+    my @variant_caller_paths = glob("${build_dir}/variants/" . $variant_type . "/" .
+          $caller . "-*/" . $variant_type . "s.hq.bed");
+    if(@variant_caller_paths) {
+        $variant_caller_file = $self->checkResultFile('-paths'=>\@variant_caller_paths, '-caller'=>$caller);
+
+        #Sort the caller result BED files using joinx and store in a temporary file and use that to run joinx intersect
+        my $variant_caller_file_s =  Genome::Sys->create_temp_file_path($variant_type . "_" . $caller . ".sorted");
+        $self->joinxSortFile($variant_caller_file, $variant_caller_file_s);
+
+        #Use 'joinx intersect' to determine which indels in the merged/union file are found in each individual caller's results file
+        #gmt joinx intersect a.bed b.bed [--output-file=n.bed] --exact-pos --exact-allele
+        my $params_string = "--exact-pos --exact-allele";
+        my $variant_caller_outfile = $build_outdir . $variant_type . "_" . $caller . ".bed";
+
+        $self->determineCaller($variant_type, $caller, $variant_results_file, $variant_caller_file_s, $variant_caller_outfile);
+    }
+}
+
 sub determineCaller {
     my ($self, $variant_type, $caller_name, $results_file, $caller_file, $outfile) = @_;
 
@@ -366,7 +344,7 @@ sub determineCaller {
 
         my $cmd = Genome::Model::Tools::Joinx::Intersect->create(exact_pos=>1, exact_allele=>1, output_file=>$outfile, input_file_a=>$results_file, input_file_b=>$caller_file);
         $cmd->execute();
-        
+
         #Go through original indels and note all files from different callers where that indel was called
         $self->noteCaller($outfile, $caller_name, $variant_type);
     }

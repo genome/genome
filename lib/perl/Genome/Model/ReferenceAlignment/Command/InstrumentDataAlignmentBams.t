@@ -15,14 +15,14 @@ use Test::More;
 use_ok('Genome::Model::ReferenceAlignment::Command::InstrumentDataAlignmentBams') or die;
 
 #Define the test where expected results are stored
-my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "Genome-Model-ReferenceAlignment-Command-InstrumentDataAlignmentBams/2014-04-14/";
+my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "Genome-Model-ReferenceAlignment-Command-InstrumentDataAlignmentBams/2014-05-27/";
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 my $temp_dir = Genome::Sys->create_temp_directory();
 ok($temp_dir, "created temp directory: $temp_dir") or die;
 
 #Run InstrumentDataAlignmentBams
-my $refalign_build = Genome::Model::Build->get(id => '135660698');
+my $refalign_build = Genome::Model::Build->get(id => 'debc3adc9b134ffe8b9e5ad2738918eb');
 ok($refalign_build, "Found refalign build") or die;
 my $refalign_instrumentdataalignmentbams = Genome::Model::ReferenceAlignment::Command::InstrumentDataAlignmentBams->create(outdir=>$temp_dir, build_id=>$refalign_build->id);
 ok($refalign_instrumentdataalignmentbams->execute(), "ran instrumentdatalignmentbams") or die;

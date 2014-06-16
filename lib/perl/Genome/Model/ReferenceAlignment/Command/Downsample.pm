@@ -39,11 +39,6 @@ class Genome::Model::ReferenceAlignment::Command::Downsample {
             doc => 'Set this equal to the reported random seed to reproduce previous results',
             is_optional => 1,
         },
-        backoff_wait => {
-            is => 'Text',
-            doc => 'The number of seconds to sleep (randomly selected between 1 and $self->backoff_wait) before retrying library get/create',
-            default => "20",
-        },
         _new_model => {
             is => 'Genome::Model::ReferenceAlignment',
             doc => 'The new model created with the downsampled instrument data assigned',
@@ -58,7 +53,7 @@ class Genome::Model::ReferenceAlignment::Command::Downsample {
 };
 
 sub help_detail {
-    return <<EOS 
+    return <<EOS
     Downsample the merged bam for given model(s) into a new instrument data and a new model (or a model group).
 EOS
 }
@@ -95,7 +90,7 @@ sub _create_downsampled_model_group {
         unless ($self->_create_downsampled_model($model) ) {
             die $self->error_message("Could not create a downsampled model for input model " . $model->id);
         }
-        
+
         my $new_model = $self->_new_model;
         unless ($new_model) {
             die $self->error_message("Failed to get new model for input model " . $model->id);
@@ -117,7 +112,7 @@ sub _create_downsampled_model_group {
     return 1;
 }
 
-# Given a single model: 
+# Given a single model:
 # 1) downsample the merged bam from the last succeded build
 # 2) import the downsampled bam into a new instrument data
 # 3) create a new model with that instrument data assigned
@@ -154,7 +149,7 @@ sub _create_downsampled_model {
             my $total_bases = $read_length * $total_readcount;
             $self->status_message("Total Bases: ".$total_bases);
 
-            #Calculate downsample ratio by taking the ratio of desired coverage to the current total bases, 
+            #Calculate downsample ratio by taking the ratio of desired coverage to the current total bases,
             # round to 5 decimal places
             $downsample_ratio = sprintf("%.5f", $new_coverage / $total_bases );
             unless($downsample_ratio < 1.0){
@@ -181,7 +176,7 @@ sub _create_downsampled_model {
     );
     unless($ds_cmd->execute){
         die $self->error_message("Could not complete picard downsample command.");
-    } 
+    }
     $self->status_message("Downsampled bam has been created at: ".$temp);
 
     #create an imported instrument-data record
@@ -189,7 +184,7 @@ sub _create_downsampled_model {
     unless($instrument_data){
         die $self->error_message("Could not import bam");
     }
-    $self->status_message("Your new instrument-data id is: ".$instrument_data->id);
+    $self->status_message("Your new instrument-data id is: ".join(',', map $_->id, @{$instrument_data}));
 
     my $new_model = $self->_define_new_model($model,$instrument_data);
     $self->status_message("Your new model id is: ".$new_model->id);
@@ -202,32 +197,13 @@ sub _create_downsampled_model {
 sub get_or_create_library {
     my $self = shift;
     my $sample = shift;
-    my $library;
     my $new_library_name = $sample->name . "-extlibs";
-    my $try_count = 0;
 
-    my $backoff_wait = $self->backoff_wait;
-
-    #try creating or getting the library until it succeeds or max tries reached
-    while(!$library && ($try_count < 5)){
-        $try_count++;
-        my $time = int(rand($backoff_wait));
-        $self->status_message( "Waiting $time seconds before trying to get or create a library.\n" );
-        sleep $time;
-        UR::Context->reload("Genome::Library", name => $new_library_name);
-        $library = Genome::Library->get(name => $new_library_name);
-
-        if($library){
-            next;
-        } else {
-            my $cmd = "genome library create --name ".$new_library_name." --sample ".$sample->id;
-            my $result  = Genome::Sys->shellcmd( cmd => $cmd );
-            unless($result){
-                die $self->error_message("Could not create new library.");
-            }
-        }
-        UR::Context->reload("Genome::Library",name => $new_library_name);
-        $library = Genome::Library->get(name => $new_library_name);
+    my $library = Genome::Library->get(name => $new_library_name);
+    if($library){
+        next;
+    } else {
+        $library = Genome::Library->create(name => $new_library_name, sample => $sample);
     }
 
     unless($library){
@@ -242,10 +218,10 @@ sub _define_new_model {
     my $self = shift;
     my $model = shift;
     my $instrument_data = shift;
-    
+
     my $copy_command = Genome::Model::Command::Copy->create(
         model => $model,
-        overrides => ["instrument_data=".$instrument_data->id],
+        overrides => [map 'instrument_data=' . $_->id, @$instrument_data],
     );
     unless ($copy_command->execute) {
         die $self->error_message("Failed to copy model " . $model->id);
@@ -264,7 +240,7 @@ sub _import_bam {
 
     my $dir = dirname($bam);
     my $filename = $dir."/all_sequences.bam";
-    rename $bam, $filename; 
+    rename $bam, $filename;
 
     my $sample_id = $model->subject->id;
     my $sample = Genome::Sample->get($sample_id);
@@ -281,7 +257,9 @@ sub _import_bam {
         description => "Downsampled bam, ratio=".$downsample_ratio,
         instrument_data_properties => ['reference_sequence_build_id='.$model->reference_sequence_build_id],
     );
-    $params{target_region} = $model->target_region_set_name || "none";
+    if($model->target_region_set_name) {
+        push @{$params{instrument_data_properties}}, 'target_region_set_name=' . $model->target_region_set_name;
+    }
 
     my $import_cmd = Genome::InstrumentData::Command::Import::Basic->execute(
         %params,
@@ -290,11 +268,11 @@ sub _import_bam {
         die $self->error_message("Could not execute bam import command!");
     }
 
-    my $id = Genome::InstrumentData::Imported->get(id => $import_cmd->result);
-    unless($id){
+    my @id = $import_cmd->_new_instrument_data;
+    unless(@id){
         die $self->error_message("Could not retrieve newly created instrument-data");
     }
-    return $id
+    return \@id;
 }
 
 sub _get_or_create_flagstat {

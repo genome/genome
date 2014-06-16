@@ -82,13 +82,15 @@ sub execute {
     }
 
     my $merged_pdf = $output_basename .'.pdf';
-    my $cmd = 'pdftk '. join(' ',@pdf_files) .' cat output '. $merged_pdf;
-    unless (Genome::Sys->shellcmd(
-        cmd => $cmd,
-        input_files => \@pdf_files,
-        output_files => [$merged_pdf],
-    )) {
-        die('Failed to merge PDF files!');
+    if(scalar(@pdf_files) >= 1) {
+        my $cmd = 'pdftk '. join(' ',@pdf_files) .' cat output '. $merged_pdf;
+        unless (Genome::Sys->shellcmd(
+            cmd => $cmd,
+            input_files => \@pdf_files,
+            output_files => [$merged_pdf],
+        )) {
+            die('Failed to merge PDF files!');
+        }
     }
     
     # TODO: Make a summary html file that provides web links to all instrument data SAMStat and FastQc output.

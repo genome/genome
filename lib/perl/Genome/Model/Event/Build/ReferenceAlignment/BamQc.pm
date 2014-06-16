@@ -84,7 +84,7 @@ sub params_for_result {
     #read length takes long time to run and seems not useful for illumina/solexa data
     my $read_length = $instr_data->sequencing_platform =~ /^solexa$/i ? 0 : 1;
 
-    my $error_rate = 1;
+    my $error_rate_version = Genome::Model::Tools::BioSamtools::ErrorRate->default_errorrate_version;
 
     if ($pp->can('read_aligner_name')
         and $pp->can('read_aligner_version')
@@ -93,7 +93,7 @@ sub params_for_result {
         and ($pp->read_aligner_name eq 'bwamem')
         and ($pp->read_aligner_version =~ /^0\.7\.(5a|7)$/)
     ) {
-        $error_rate = 0;
+        $error_rate_version = '1.0a2';
     }
 
     return (
@@ -102,8 +102,8 @@ sub params_for_result {
         samtools_version    => $pp->samtools_version,
         fastqc_version      => Genome::Model::Tools::Fastqc->default_fastqc_version,
         samstat_version     => Genome::Model::Tools::SamStat::Base->default_samstat_version,
-        error_rate_version  => Genome::Model::Tools::BioSamtools::ErrorRate->default_errorrate_version,
-        error_rate          => $error_rate,
+        error_rate_version  => $error_rate_version,
+        error_rate          => 1,
         read_length         => $read_length,
         test_name           => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
     );

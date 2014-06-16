@@ -3,6 +3,7 @@ package Genome::Model::GenotypeMicroarray::Test;
 use strict;
 use warnings;
 
+require Genome::Test::Factory::InstrumentData::Imported;
 require File::Temp;
 
 sub testdir {
@@ -94,16 +95,27 @@ sub instrument_data {
         sample => $cache{sample},
     );
 
-    $cache{instrument_data} = Genome::InstrumentData::Imported->__define__(
+    #$cache{instrument_data} = Genome::InstrumentData::Imported->__define__(
+    $cache{instrument_data} = Genome::Test::Factory::InstrumentData::Imported->setup_object(
         library => $library,
         import_format => 'genotype file',
         sequencing_platform => 'infinium',
         import_source_name => 'WUGC',
         import_date => '2014-01-01 00:00:00',
+        genotype_file => testdir().'/instdata/snpreport/genotypes.tsv',
     );
     die 'Failed to define instrument data' if not $cache{instrument_data};
-    $cache{instrument_data}->add_attribute(attribute_label => 'genotype_file', attribute_value => testdir().'/instdata/snpreport/genotypes.tsv');
-    die 'Failed to set genotype file on instdata!' if not -s $cache{instrument_data}->genotype_file;
+    #my $alloc = Genome::Disk::Allocation->__define__(
+    #    owner => $cache{instrument_data},
+    #    mount_path => Genome::Disk::Volume->__define__(mount_path => testdir(), disk_status => 'active')->mount_path,
+    #    group_subdirectory => 'instdata',
+    #    allocation_path => 'snpreport',
+    #);
+    #die "Failed to define allocation for genotype file!" if not $alloc;
+    #$cache{instrument_data}->add_attribute(
+    #    attribute_label => 'genotype_file_name', 
+    #    attribute_value => 'genotypes.tsv');
+    #die 'Failed to set genotype file on instdata!' if not -s $cache{instrument_data}->genotype_file;
 
     $cache{sample}->default_genotype_data_id($cache{instrument_data}->id);
     die 'Failed to set default genotype data id on sample!' if $cache{sample}->default_genotype_data_id ne $cache{instrument_data}->id;

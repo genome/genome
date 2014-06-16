@@ -63,7 +63,6 @@ sub execute {
     die unless $tree;
 
     my ($workflow, $inputs) = $self->_generate_workflow($tree);
-    $DB::single=1;
     $self->_workflow($workflow);
 
     if($self->log_directory) {
@@ -144,6 +143,10 @@ my %VERSIONS = (
         picard_version => '1.85',
         samtools_version => 'r982',
     },
+    'v5' => {
+        picard_version => '1.113',
+        samtools_version => 'r982',
+    },
 );
 
 sub inputs_for_api_version {
@@ -179,7 +182,7 @@ sub _generate_aligner_index_creation_operations {
     my $workflow_operations = {};
     while(my ($aligner, $versions) = each %aligners) {
         my $alignment_result_class = 'Genome::InstrumentData::AlignmentResult::' . Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name($aligner);
-        next unless $alignment_result_class && $alignment_result_class->can('prepare_reference_sequence_index');
+        next unless $alignment_result_class and ($alignment_result_class->can('prepare_reference_sequence_index') or $alignment_result_class->can('prepare_annotation_index'));
 
         while(my ($version, $references) = each %$versions) {
             while(my ($reference, $annotations) = each %$references) {
@@ -220,6 +223,11 @@ sub _generate_aligner_index_creation_step {
             command_class_name => 'Genome::Model::ReferenceSequence::Command::CreateAlignerIndex',
         ),
     );
+
+    #overwrite lsf_resource for star alinger
+    if ($aligner eq 'star') {
+        $operation->operation_type->lsf_resource("-R \'select[ncpus>=12 && mem>=48000] span[hosts=1] rusage[mem=48000]\' -M 48000000 -n 12");
+    }
 
     return {
         operation => $operation,
@@ -612,8 +620,11 @@ sub _generate_operation {
 
     # TODO WF now has better support for customizing this, so this hack could be replaced
     # Use PerLaneTophat class to override default lsf_resource
-    if ($action->{name} eq 'per-lane-tophat') {
-        $action_class_bases->{align} = 'Genome::InstrumentData::Command::AlignReads::PerLaneTophat';
+    my $aligner_name = $action->{name};
+
+    if ($aligner_name eq 'per-lane-tophat' or $aligner_name eq 'star') {
+        my $subclass_name = 'Genome::InstrumentData::AlignmentResult'->_resolve_subclass_name_for_aligner_name($aligner_name);
+        $action_class_bases->{align} = 'Genome::InstrumentData::Command::AlignReads::'.$subclass_name;
     }
 
     my $class_name = $action_class_bases->{$action->{type}};
@@ -768,7 +779,7 @@ sub _generate_refinement_operations {
         }
     }
 
-    if (defined (@refiners)) {
+    if (scalar(@refiners) > 0) {
         $self->refiners(\@refiners);
         $self->first_refiner($refiners[0]);
         $self->last_refiner($refiners[$#refiners]);
@@ -1255,7 +1266,10 @@ sub _run_workflow {
     my $result = Workflow::Simple::run_workflow_lsf( $workflow, @$inputs);
 
     unless($result){
-        $self->error_message( join("\n", map($_->name . ': ' . $_->error, @Workflow::Simple::ERROR)) );
+        $self->error_message(join("\n", map {
+            ($_->can('name') ? $_->name .': ' : ''). $_->error
+        } @Workflow::Simple::ERROR));
+
         die $self->error_message("Workflow did not return correctly.");
     }
 

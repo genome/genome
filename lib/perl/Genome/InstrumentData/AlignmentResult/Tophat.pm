@@ -7,8 +7,10 @@ use File::Basename;
 use Sys::Hostname;
 use File::stat;
 use File::Path 'rmtree';
+use File::Find::Rule qw();
 
 use Genome;
+use Genome::Utility::File::Mode qw(mode);
 
 class Genome::InstrumentData::AlignmentResult::Tophat {
     is => 'Genome::SoftwareResult',
@@ -246,8 +248,8 @@ sub _prepare_working_directories {
     );
 
     # fix permissions on this temp dir so others can clean it up later if need be
-    chmod(0775,$staging_tempdir);
-    chmod(0775,$scratch_tempdir);
+    chmod(0770,$staging_tempdir);
+    chmod(0770,$scratch_tempdir);
 
     $self->temp_staging_directory($staging_tempdir->dirname);
     $self->temp_scratch_directory($scratch_tempdir->dirname);
@@ -497,14 +499,14 @@ sub _promote_validated_data {
         rename($staged_file, $destination);
     }
 
-    chmod 02775, $output_dir;
+    chmod 02770, $output_dir;
     for my $subdir (grep { -d $_  } glob("$output_dir/*")) {
-        chmod 02775, $subdir;
+        chmod 02770, $subdir;
     }
 
-    # Make everything in here read-only
-    for my $file (grep { -f $_  } glob("$output_dir/*")) {
-        chmod 0444, $file;
+    my @files = File::Find::Rule->file->not(File::Find::Rule->symlink)->in($output_dir);
+    for my $file (@files) {
+        mode($file)->rm_all_writable;
     }
 
     $self->debug_message("Files in $output_dir: \n" . join "\n", glob($output_dir . "/*"));

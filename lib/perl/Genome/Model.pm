@@ -88,15 +88,17 @@ class Genome::Model {
         user_name => {
             is => 'Text',
             is_deprecated => 1,
-            doc => 'use created_by (or maybe run_as), accessor overridden for transition to created_by',
+            via => '__self__',
+            to => 'created_by',
+            doc => 'use created_by (or maybe run_as)',
         },
         created_by => {
             is => 'Text',
-            doc => 'entity that created the model, accessor overridden for transition to created_by',
+            doc => 'entity that created the model',
         },
         run_as => {
             is => 'Text',
-            doc => 'username to run builds as, accessor overridden for transition to created_by',
+            doc => 'username to run builds as',
         },
         creation_date => {
             # TODO: switch from timestamp to Date when we go Oracle to PostgreSQL
@@ -179,7 +181,7 @@ class Genome::Model {
             is => 'Genome::Model::Build',
             reverse_as => 'model',
             doc => 'Versions of a model over time, with varying quantities of evidence',
-            where => [ -order_by => '-date_scheduled', ],
+            where => [ -order_by => '-created_at', ],
         },
         downstream_model_associations => {
             is => 'Genome::Model::Input',
@@ -574,7 +576,7 @@ sub from_models {
 # Returns a list of builds (all statuses) sorted from oldest to newest
 # TODO: see why this is needed as builds are already sorted by default with get()
 sub sorted_builds {
-    return shift->builds(-order_by => 'date_scheduled');
+    return shift->builds(-order_by => 'created_at');
 }
 
 # Returns a list of succeeded builds sorted from oldest to newest
@@ -587,10 +589,10 @@ sub completed_builds {
 # Returns the latest build of the model, regardless of status
 sub latest_build {
     my $self = shift;
-    my $build_event_iterator = Genome::Model::Event->create_iterator(model_id => $self->id, event_type => 'genome model build', -order_by => '-date_scheduled');
-    my $event = $build_event_iterator->next;
-    return unless $event;
-    return $event->build
+    my $build_iterator = Genome::Model::Build->create_iterator(model_id => $self->id, -order_by => '-created_at');
+    my $build = $build_iterator->next;
+    return unless $build;
+    return $build
 }
 
 # Returns the latest build of the model that successfully completed
@@ -598,10 +600,10 @@ sub last_succeeded_build { return $_[0]->resolve_last_complete_build; }
 sub last_complete_build { return $_[0]->resolve_last_complete_build; }
 sub resolve_last_complete_build {
     my $self = shift;
-    my $build_event_iterator = Genome::Model::Event->create_iterator(model_id => $self->id, event_type => 'genome model build', event_status => 'Succeeded', -order_by => '-date_completed');
-    my $event = $build_event_iterator->next;
-    return unless $event;
-    return $event->build
+    my $build_iterator = Genome::Model::Build->create_iterator(model_id => $self->id, status => 'Succeeded', -order_by => '-date_completed');
+    my $build = $build_iterator->next;
+    return unless $build;
+    return $build
 }
 
 # Returns a list of builds with the specified status sorted from oldest to newest
@@ -636,7 +638,7 @@ sub current_build {
     my $self = shift;
     my $build_iterator = $self->build_iterator(
         'status not like' => 'Abandoned',
-        '-order_by' => '-date_scheduled',
+        '-order_by' => '-created_at',
     );
     while (my $build = $build_iterator->next) {
         return $build if $build->is_current;
@@ -676,7 +678,9 @@ sub status {
     return $status;
 }
 
-# TODO Clean this up
+# Copy model to a new model, overridding some properties
+# TODO allow for the filter desc for an input to be passed in
+# TODO allow for additions to be passed in
 sub copy {
     my ($self, %overrides) = @_;
 
@@ -697,7 +701,8 @@ sub copy {
     }
 
     # input properties
-    for my $property ( $self->real_input_properties ) {
+    my @input_properties = $self->real_input_properties;
+    for my $property ( @input_properties ) {
         my $name = $property->{name};
         if ( defined $overrides{$name} ) { # override
             my $ref = ref $overrides{$name};
@@ -732,6 +737,23 @@ sub copy {
     if ( not $copy ) {
         $self->error_message('Failed to copy model: '.$@);
         return;
+    }
+
+    # copy the inputs filter desc
+    for my $property ( @input_properties ) {
+        my $name = $property->{name};
+        my @inputs = $self->inputs(name => $name);
+        next if not @inputs;
+        for my $input ( @inputs ) {
+            next if not $input->filter_desc;
+            my $copy_input = $copy->inputs(
+                name => $name,
+                value_class_name => $input->value_class_name, 
+                value_id => $input->value_id,
+            );
+            next if not $copy_input;
+            $copy_input->filter_desc( $input->filter_desc );
+        }
     }
 
     return $copy;
@@ -818,8 +840,8 @@ sub default_model_name {
     my $auto_increment = delete $params{auto_increment};
     $auto_increment = 1 unless defined $auto_increment;
 
-    my $name_template = ($self->subject->name).'.';
-    $name_template .= 'prod-' if (($self->run_as && $self->run_as eq 'apipe-builder') || $params{prod});
+    my $name = ($self->subject->name).'.';
+    $name .= 'prod-' if (($self->run_as && $self->run_as eq 'apipe-builder') || $params{prod});
 
     my $type_name = $self->processing_profile->type_name;
     my %short_names = (
@@ -828,27 +850,49 @@ sub default_model_name {
         'de novo assembly' => 'denovo',
         'metagenomic composition 16s' => 'mc16s',
     );
-    $name_template .= ( exists $short_names{$type_name} )
+    $name .= ( exists $short_names{$type_name} )
     ? $short_names{$type_name}
     : join('_', split(/\s+/, $type_name));
-
-    $name_template .= '%s%s';
 
     my @parts = eval{ $self->_additional_parts_for_default_name(%params); };
     if ( $@ ) {
         $self->error_message("Failed to get addtional default name parts: $@");
         return;
     }
-    $name_template .= '.'.join('.', @parts) if @parts;
 
-    my $name = sprintf($name_template, '', '');
-    my $cnt = 0;
-    while ( $auto_increment && scalar @{[Genome::Model->get(name => $name)]} ) {
-        $name = sprintf($name_template, '-', ++$cnt);
+    my $suffix = '';
+    $suffix .= '.'.join('.', @parts) if @parts;
+
+    return $self->_get_incremented_name($name, $suffix);
+}
+
+sub _check_for_existing_model_name {
+    my $self = shift;
+    my $model_name = shift;
+    return scalar @{[Genome::Model->get(name => $model_name)]};
+}
+
+sub _get_incremented_name {
+    my $self = shift;
+    my $model_name = shift;
+    my $suffix = shift;
+    my $counter = 1;
+
+    my $plain_model_name = $model_name . $suffix;
+    unless($self->_check_for_existing_model_name($plain_model_name)) {
+        return $plain_model_name;
     }
 
-    return $name;
+    my $format_name = sub {
+        return sprintf("%s-%s%s", shift, shift, shift);
+    };
+    while ($self->_check_for_existing_model_name($format_name->($model_name, $counter, $suffix))) {
+            $counter++;
+    }
+
+    return $format_name->($model_name, $counter, $suffix);
 }
+
 
 # Ensures there are no other models of the same class that have the same name. If any are found, information
 # about them is printed to the screen the create fails.
@@ -1089,35 +1133,23 @@ sub files_ignored_by_build_diff { () }
 #Used by Analysis Project configuration to "pair" somatic samples or otherwise aggregate them for analysis
 sub requires_subject_mapping { return 0; }
 
-# For transition to created_by
-sub user_name { created_by(@_) }
-sub created_by {
+sub sudo_wrapper { '/usr/local/bin/bsub-genome-build' }
+
+sub should_run_as {
     my $self = shift;
-    if (@_) {
-        return $self->__created_by(@_);
-    } else {
-        # Perl 5.8 does not support //
-        if (defined $self->__created_by) {
-            return $self->__created_by;
-        } else {
-            $self->__user_name;
-        }
-    }
+    return unless $self->_can_run_as();
+    return (Genome::Sys->username ne $self->run_as);
 }
 
-# For transition to created_by
-sub run_as {
+sub _can_run_as {
     my $self = shift;
-    if (@_) {
-        return $self->__run_as(@_);
-    } else {
-        # Perl 5.8 does not support //
-        if (defined $self->__run_as) {
-            return $self->__run_as;
-        } else {
-            $self->__user_name;
-        }
+
+    my $sudo_wrapper = sudo_wrapper();
+    unless ( -x $sudo_wrapper ) {
+        return;
     }
+
+    return 1;
 }
 
 1;

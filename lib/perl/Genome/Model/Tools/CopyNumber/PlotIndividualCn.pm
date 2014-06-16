@@ -111,6 +111,24 @@ sub execute {
         }
     }
 
+    #check for more than one header line, which causes strange things to happen 
+    #in R (because of numeric vs character classes)
+    my $inFh = IO::File->new( $self->corrected_window_file ) || die "can't open file\n";
+    my $count = 0;
+    my $hlines = 0;
+    while( $count < 2 )
+    {
+        my $line = $inFh->getline;
+        chomp($line);
+        $hlines++ if $line =~ /Chr/;       
+        $count++;
+    }
+    close($inFh);
+    if($hlines > 1){
+        die("corrected window file appears to contain more than one header line. Fix this and try again.")
+    }
+
+
     my $dir_name = dirname(__FILE__);
     print $rfile 'source("' . $dir_name . "/PlotIndividualCn.R" . '")' . "\n";
 
@@ -122,7 +140,7 @@ sub execute {
 
     print $rfile 'db = sqldf() #open temp db' . "\n";
 
-    my $count = 0;
+    $count = 0;
     my $skipped = 0;
 
     #if plot full chrs, create a new segment file for each chromosome.
@@ -148,7 +166,7 @@ sub execute {
 
 
 
-    my $inFh = IO::File->new( $segment_file ) || die "can't open segment file\n";
+    $inFh = IO::File->new( $segment_file ) || die "can't open segment file\n";
     while( my $line = $inFh->getline )
     {
         chomp($line);

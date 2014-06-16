@@ -16,6 +16,10 @@ has 'url' => (is => 'ro', isa => 'Str');
 has 'client' => (is => 'ro', isa => 'Nessy::Client', lazy_build => 1);
 has 'claims' => (is => 'rw', isa => 'ArrayRef', auto_deref => 1);
 
+# TTL is specified in seconds.
+my $DEFAULT_TTL = 2 * 60 * 60;
+
+
 sub lock {
     my ($self, %args) = @_;
 
@@ -62,7 +66,8 @@ sub lock {
             Genome::Logger->notice("waiting (total_elapsed_time = $total_elapsed_time seconds) on lock for resource '$resource': $claim_warning. lock_info is:\n$info_content");
         },
     );
-    my $claim = $self->client->claim($resource, timeout => $timeout, user_data => \%user_data);
+    my $claim = $self->client->claim($resource, timeout => $timeout,
+        ttl => $DEFAULT_TTL, user_data => \%user_data);
     undef $wait_announce_timer;
     if ($claim) {
         $self->add_claim($resource => $claim);

@@ -453,6 +453,7 @@ sub get_clinseq_file{
 
 
 sub getModelsBuilds{
+  my $self = shift;
   my %args = @_;
   my $builds_ref = $args{'-builds'};
   my $models_ref = $args{'-models'};

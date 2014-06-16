@@ -42,6 +42,11 @@ my $build = Genome::Model::Build->create_mock(
                                               build_id => $bogus_id,
                                               model_id => $model->id,
                                               data_directory => $test_data_directory .'/build'. $bogus_id,
+                                              created_at => '2010-01-01 12:00:00',
+                                              updated_at => '2010-01-01 12:00:01',
+                                              created_by => 'apipe-tester',
+                                              run_by => 'apipe-tester',
+                                              status => 'Succeeded',
                                           );
 my $build_event = Genome::Model::Event->create_mock(
                                                          id => --$bogus_id,
@@ -58,6 +63,11 @@ my $new_build = Genome::Model::Build->create_mock(
                                                   build_id => $bogus_id,
                                                   model_id => $model->id,
                                                   data_directory => $test_data_directory .'/build'. $bogus_id,
+                                                  created_at => '2010-01-01 12:00:02',
+                                                  updated_at => '2010-01-01 12:00:03',
+                                                  created_by => 'apipe-tester',
+                                                  run_by => 'apipe-tester',
+                                                  status => 'New',
                                               );
 
 my %params = (

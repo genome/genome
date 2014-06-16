@@ -13,7 +13,7 @@ use Test::More tests => 22;
 use_ok('Genome::Model::ClinSeq::Command::SummarizeTier1SnvSupport');
 
 #Define the location of expected test results and check that it is valid
-my $expected_out = $ENV{GENOME_TEST_INPUTS} . 'Genome-Model-ClinSeq-Command-SummarizeTier1SnvSupport/2013-11-30/';
+my $expected_out = $ENV{GENOME_TEST_INPUTS} . 'Genome-Model-ClinSeq-Command-SummarizeTier1SnvSupport/2014-05-27/';
 ok(-d $expected_out, "Directory of expected output exists: $expected_out") or die;
 
 #Get an exome somatic variation build

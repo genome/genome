@@ -20,6 +20,12 @@ class Genome::Model::ClinSeq::Command::SummarizeCnvs {
             is => 'FilesystemPath',
             doc => 'cnv hmm file from clin-seq generate-clonality-plots',
         },
+        cnv_hq_file => {
+            is => 'FilesystemPath',
+            doc => 'cnvhq file from clin-seq generate-clonality-plots,' .
+                'if not provided file from WGS somvar is used',
+            is_optional => 1,
+        },
         gene_amp_file => {
             is => 'FilesystemPath',
             doc => 'gene amplification file from clin-seq run-cn-view',
@@ -124,7 +130,7 @@ sub execute {
 
   #Overall strategy
   #Get a copy of the cnvs.hq (10-kb copy number window values) and cna-seq (cnv-hmm files) and summarize
-  my $cnv_hq = $wgs_som_build_dir . "/variants/cnvs.hq";
+  my $cnv_hq = $self->cnv_hq_file ||  $wgs_som_build_dir . "/variants/cnvs.hq";
   my $cnv_hq_new = $outdir . "cnvs.hq";
   if (-e $cnv_hq and not -e $cnv_hq_new){
     Genome::Sys->copy_file($cnv_hq, $cnv_hq_new);
@@ -292,13 +298,8 @@ sub execute {
       Genome::Sys->copy_file($pdf_path, $output_pdf_path);
     }
   }else{
-    #The .pdf file was not found.  Presumably this is an older somatic variation build that did not include this step. Generate it now
-    my $cn_stdout = "$single_bam_cnv_dir"."CNV_SingleBAMs_TumorAndNormal.stdout";
-    my $cn_stderr = "$single_bam_cnv_dir"."CNV_SingleBAMs_TumorAndNormal.stderr";
-    my $normal_bam = $build->normal_bam;
-    my $tumor_bam = $build->tumor_bam;
-    my $single_bam_cnv_plot_cmd = Genome::Model::Tools::CopyNumber::PlotSegmentsFromBamsWorkflow->create(normal_bam=>$normal_bam, tumor_bam=>$tumor_bam, output_directory=>$single_bam_cnv_dir, genome_build=>$reference_build_ncbi_n, output_pdf=>$output_pdf_name);
-    $single_bam_cnv_plot_cmd->execute();
+    #The .pdf file was not found.  Presumably this is an older SV build or a SV build that uses copycat that did not include this step.
+    $self->status_message("Single BAM CNV results not found. Ignoring.");
   }
 
   $self->status_message("\n\n");

@@ -29,7 +29,7 @@ class Genome::Model::ClinSeq::Command::MicroarrayCnv {
         min_cnv_diff => {
             is => 'Float',
             doc => 'Cutoff for the minimum cnv difference between tumor and normal [the absolute value]',
-            default_value => 0.5,
+            default_value => 0.2,
             is_optional => 1,
         },
         test => {
@@ -247,16 +247,23 @@ sub create_cnv_diff_hq_file {
     $diff_data->{pos} = $data_n->{position};
     $cnvhq_data->{POS} = $data_n->{position};
     #copynumber ~ 2^(log_r_ratio + 1)
-    my $cn_normal = 2.0**($data_n->{log_r_ratio} + 1.0);
+    my $cn_normal = $data_n->{cnv_value};
     $cn_normal = sprintf("%.5f", $cn_normal);
-    my $cn_tumor = 2.0**($data_t->{log_r_ratio} + 1.0);
+    my $cn_tumor = $data_t->{cnv_value};
     $cn_tumor = sprintf("%.5f", $cn_tumor);
+    if( $cn_tumor == 0) {
+      $cn_tumor = 0.0001;
+    }
+    if( $cn_normal == 0) {
+      $cn_normal = 0.0001;
+    }
     my $cnv_diff = $cn_tumor - $cn_normal;
+    my $cnv_ratio = log($cn_tumor/$cn_normal)/log(2);
     $cnv_diff = sprintf("%.6f", $cnv_diff);
-    $cnvhq_data->{TUMOR} = $cn_tumor;
-    $cnvhq_data->{NORMAL} = $cn_normal;
-    $diff_data->{cnv_diff} = $cnv_diff;
-    $cnvhq_data->{DIFF} = $cnv_diff;
+    $cnvhq_data->{TUMOR} = 2.0**($data_t->{log_r_ratio} + 1.0);
+    $cnvhq_data->{NORMAL} = 2.0**($data_n->{log_r_ratio} + 1.0);;
+    $diff_data->{cnv_diff} = $cnv_ratio; #segment the ratio of LRR
+    $cnvhq_data->{DIFF} = $cnvhq_data->{TUMOR} - $cnvhq_data->{NORMAL};
     if(not $self->test) {
       $writer_diff->write_one($diff_data);
       $writer_cnvhq->write_one($cnvhq_data);
@@ -293,7 +300,7 @@ sub run_cnview {
     #Create cnvhmm file
     my $cnv_hmm_file = $cbs_op . ".cnvhmm";
     #print only cnv segments with atleast five snp markers.
-    my $make_hmmfile_cmd = 'awk \'{ size = $3-$2; nmarkers=size; event = "NA"; if($5>0) { event = "Gain" } else if($5<0) { event = "Loss" } cn1 = $5 +2; cn2 = 2; if((event == "Gain" || event == "Loss") && ($5 > ' . $min_cnv_diff . ' || $5 < -1 * ' . $min_cnv_diff . ' ) && $4 >=5) print $1"\t"$2"\t"$3"\t"size"\t"nmarkers"\t"cn1"\t"cn1"\t"cn2"\t"cn2"\tNA\t"event; } \' ' . $cbs_op . ' > ' .  $cnv_hmm_file;
+    my $make_hmmfile_cmd = 'awk \'{ size = $3-$2; nmarkers=size; cn_diff = 2^$5*2-2; event = "NA"; if(cn_diff>0) { event = "Gain" } else if(cn_diff<0) { event = "Loss" } cn1 = cn_diff +2; cn2 = 2; if((event == "Gain" || event == "Loss") && (cn_diff > ' . $min_cnv_diff . ' || cn_diff < -1 * ' . $min_cnv_diff . ' ) && $4 >=5) print $1"\t"$2"\t"$3"\t"size"\t"nmarkers"\t"cn1"\t"cn1"\t"cn2"\t"cn2"\tNA\t"event; } \' ' . $cbs_op . ' > ' .  $cnv_hmm_file;
     Genome::Sys->shellcmd(cmd => $make_hmmfile_cmd);
    
     #For each list of gene symbols, run the CNView analysis

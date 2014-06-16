@@ -78,7 +78,7 @@ class Genome::Model::SuperModel { is => 'Genome::Model', };
 my $model = Genome::Model::SuperModel->__define__(
     id => -111,
     name => 'Cathy Ireland',
-    user_name => 'apipe-builder',
+    created_by => 'apipe-builder',
 );
 $model->add_instrument_data($inst_data);
 

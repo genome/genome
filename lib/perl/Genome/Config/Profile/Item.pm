@@ -42,6 +42,19 @@ class Genome::Config::Profile::Item {
 
 __PACKAGE__->add_observer(aspect => 'create', callback => \&_is_created);
 
+sub delete {
+    my $self = shift;
+    eval {
+        if ($self->allocation) {
+            $self->allocation->delete();
+        }
+    };
+    if(my $error = $@) {
+        die($error);
+    }
+    return $self->SUPER::delete();
+}
+
 sub file_path {
     my $self = shift;
 

@@ -661,6 +661,8 @@ sub _auto_unarchive {
         $allocation->unarchive(reason => $reason);
     }
 
+    UR::Context->reload($self);
+
     return 1;
 }
 

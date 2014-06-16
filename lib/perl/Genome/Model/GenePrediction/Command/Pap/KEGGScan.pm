@@ -133,7 +133,7 @@ sub execute {
             CLEANUP => 0,
         )
     );
-    chmod(0777, $self->_working_directory);
+    chmod(0770, $self->_working_directory);
     my $fasta_file = $self->fasta_file();
 
     ## We're about to screw with the current working directory.

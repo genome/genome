@@ -10,6 +10,7 @@ use warnings;
 
 use above "Genome";
 use Genome::Utility::Test qw(is_equal_set);
+use Genome::Test::Factory::Model::ReferenceAlignment;
 
 require File::Temp;
 use Test::More;
@@ -184,10 +185,12 @@ is_deeply(
 );
 
 # ASSIGN INST DATA
+my @instdata_inputs;
 for my $instrument_data ( @instrument_data ) {
-    $model->add_instrument_data($instrument_data);
+    push @instdata_inputs, $model->add_input(name => 'instrument_data', value => $instrument_data);
 }
-my @model_instrument_data = $model->instrument_data; # check vai ida
+$instdata_inputs[0]->filter_desc('forward-only');
+my @model_instrument_data = $model->instrument_data; # check via ida
 is_deeply(\@model_instrument_data, \@instrument_data, 'model instrument data via ida');
 
 # BUILDS
@@ -207,14 +210,14 @@ is_equal_set(\@model_builds, \@builds, 'model builds');
 # Fix the date_scheduled on the builds because completed_builds sorts by it
 my $time = time();
 my @timestamps = map { Date::Format::time2str(UR::Context->date_template, $time + $_) } (3, 5, 7, 9);
-$builds[0]->the_master_event->date_scheduled($timestamps[0]);
-$builds[1]->the_master_event->date_scheduled($timestamps[1]);
+$builds[0]->date_scheduled($timestamps[0]);
+$builds[1]->date_scheduled($timestamps[1]);
 
 # one succeeded, one running
-$builds[0]->the_master_event->event_status('Succeeded');
-$builds[0]->the_master_event->date_completed($timestamps[2]);
+$builds[0]->status('Succeeded');
+$builds[0]->date_completed($timestamps[2]);
 is($builds[0]->status, 'Succeeded', 'build 0 is succeeded');
-$builds[1]->the_master_event->event_status('Running');
+$builds[1]->status('Running');
 is($builds[1]->status, 'Running', 'build 1 is running');
 
 my @completed_builds = $model->completed_builds;
@@ -231,8 +234,8 @@ my @running_builds = $model->running_builds;
 is_deeply(\@running_builds, [$builds[1]], 'running builds');
 
 # both succeeded
-$builds[1]->the_master_event->event_status('Succeeded');
-$builds[1]->the_master_event->date_completed($timestamps[3]);
+$builds[1]->status('Succeeded');
+$builds[1]->date_completed($timestamps[3]);
 is($builds[1]->status, 'Succeeded', 'build 1 is now succeeded');
 
 @completed_builds = $model->completed_builds;
@@ -247,7 +250,7 @@ is($model->last_succeeded_build_id, $builds[1]->id, 'last succeeded build id');
 # COPY
 my $model2 = $model->copy(auto_build_alignments => 1);
 ok($model2, 'copy override auto_build_alignments');
-is_deeply([map { $_->value_id } $model2->inputs], [map { $_->value_id } $model->inputs], 'inputs match');
+ok(_are_model_inputs_the_same($model, $model2), 'inputs match');
 ok(!$model2->auto_assign_inst_data, 'auto_assign_inst_data');
 ok($model2->auto_build_alignments, 'auto_build_alignments');
 
@@ -281,4 +284,32 @@ is_deeply([$model5->baz], [qw/ pdq /], 'override baz');
 ok(!$model->copy(foo => [qw/ BAR baz /]), 'failed to copy model overriding single input w/ multiple values');
 ok(!$model->copy(unknown => [qw/ BAR baz /]), 'failed to copy model w/ unknown override');
 
+subtest 'should_run_as' => sub {
+    plan tests => 2;
+
+    my $model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object();
+
+    no warnings qw(once redefine);
+    local *Genome::Model::_can_run_as = sub { 1 };
+
+    ok(!$model->should_run_as, 'run_as defaults to current user so should_run_as should be false');
+
+    $model->run_as('Elvis');
+    ok($model->should_run_as, 'should_run_as should be true if current user is not Elvis');
+};
+
 done_testing();
+
+sub _are_model_inputs_the_same {
+    my ($m1, $m2, $skip) = @_;
+    my @i1 = $m1->inputs;
+    my @i2 = $m2->inputs;
+    for (my $i = 0; $i <= $#i1; $i++) {
+        for my $p (qw/ name value_class_name value_id filter_desc /) {
+            next if not defined $i1[$i]->$p and not defined $i2[$i]->$p; # ok
+            return if not defined $i1[$i]->$p or not defined $i2[$i]->$p or $i1[$i]->$p ne $i2[$i]->$p;
+        }
+    }
+    return 1;
+}
+

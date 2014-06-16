@@ -40,7 +40,7 @@ sub cmd_display_name {
 sub _cmd_versions {
     return (
         '229' => '/usr/bin/flexbar229',
-	'230' => '/gsc/bin/flexbar',
+        '230' => '/gsc/bin/flexbar',
     );
 }
 

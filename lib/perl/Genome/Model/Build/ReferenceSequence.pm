@@ -8,6 +8,7 @@ use File::Copy;
 require Carp;
 use Regexp::Common;
 use POSIX;
+use Set::Scalar;
 
 class Genome::Model::Build::ReferenceSequence {
     is => 'Genome::Model::Build',
@@ -40,13 +41,26 @@ class Genome::Model::Build::ReferenceSequence {
         _sequence_filehandles => {
             is => 'Hash',
             is_optional => 1,
+            is_transient => 1,
             doc => 'file handle per chromosome for reading sequences so that it does not need to be constantly closed/opened',
         },
-        _local_cache_dir_is_verified => { is => 'Boolean', default_value => 0, is_optional => 1, },
+        _local_cache_dir_is_verified => { is => 'Boolean', default_value => 0, is_optional => 1, is_transient => 1,},
 
     ],
 
     has_optional_input => [
+        # In order to set this property use Genome::Model::ReferenceSequence::Command::CreateFeatureListInput.
+        # In order to obtain the bed file used in feature list creation for segmental duplications go to the UCSC table browser and download the segmental duplications track for the appropriate reference sequence
+        # current URL: http://genome.ucsc.edu/cgi-bin/hgTables - track: Segmental Dups - table: genomicSuperDups - output format: BED
+        segmental_duplications => {
+            is => 'Genome::FeatureList',
+        },
+        # In order to set this property use Genome::Model::ReferenceSequence::Command::CreateFeatureListInput.
+        # In order to obtain the bed file used in feature list creation for segmental duplications go to the UCSC table browser and download the self chain track for the appropriate reference sequence
+        # current URL: http://genome.ucsc.edu/cgi-bin/hgTables - track: Self Chain - table: chainSelf - output format: BED
+        self_chain => {
+            is => 'Genome::FeatureList',
+        },
         build_name => {
             is => 'Text',
         },
@@ -834,6 +848,43 @@ sub get_or_create_genome_file {
         $genome_fh->close;
     }
     return $genome_file;
+}
+
+sub is_superset_of {
+    my ($self, $other_refbuild) = @_;
+
+    my $my_chromosomes = Set::Scalar->new(@{$self->chromosome_array_ref});
+    my $other_chromosomes = Set::Scalar->new(@{$other_refbuild->chromosome_array_ref});
+    return $my_chromosomes >= $other_chromosomes;
+}
+
+# Given a feature list accessor, try to get it from myself or my ancestors
+sub get_feature_list {
+    my ($self, $feature_list_accessor, @ancestry_stack) = @_;
+    push @ancestry_stack, $self;
+
+    my $feature_list = $self->$feature_list_accessor;
+    if (not defined $feature_list) {
+        if ($self->derived_from) {
+            $self->debug_message("Could not get_feature_list with accessor (%s) on reference sequence build (%s)... looking at the next ancestor...", $feature_list_accessor, $self->name);
+            $feature_list = $self->derived_from->get_feature_list($feature_list_accessor, @ancestry_stack);
+        } else {
+            $self->error_message("Reference sequence (%s) does not have any parent reference sequence", $self->name);
+        }
+    }
+
+    # When we have finished our recursion, make sure that the feature list's reference is compatible with this reference
+    if (scalar(@ancestry_stack) == 1 and $ancestry_stack[0]->id eq $self->id and $feature_list) {
+        unless ($self->is_superset_of($feature_list->reference)) {
+            # This case presents a problem because if the feature list is a superset of our coordinates, it will be nonsense if applied to us.
+            die $self->error_message("Reference sequence (%s) is not a superset of the reference sequence on the feature list (%s)", $self->name, $feature_list->name);
+        }
+        return $feature_list;
+    } elsif (scalar(@ancestry_stack) == 1 and $ancestry_stack[0]->id eq $self->id and not $feature_list) {
+        die $self->error_message("Could not get_feature_list with accessor (%s) on reference sequence build (%s) or any of its ancestors", $feature_list_accessor, $self->name);
+    } else {
+        return $feature_list
+    }
 }
 
 1;

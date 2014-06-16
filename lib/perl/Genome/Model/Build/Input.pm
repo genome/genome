@@ -9,19 +9,19 @@ class Genome::Model::Build::Input {
     type_name => 'genome model build input',
     id_by => [
         build_id => {
-            is => 'VARCHAR2',
+            is => 'Text',
             len => 64,
         },
         value_class_name => {
-            is => 'VARCHAR2',
+            is => 'Text',
             len => 255,
         },
         value_id => {
-            is => 'VARCHAR2',
+            is => 'Text',
             len => 1000,
         },
         name => {
-            is => 'VARCHAR2',
+            is => 'Text',
             len => 255,
         },
     ],

@@ -20,9 +20,13 @@ my $package = "Genome::InstrumentData::VerifyBamIdResult";
 
 use_ok($package);
 
-my $test_dir = Genome::Utility::Test->data_dir_ok($package, "v1");
+my $test_dir = Genome::Utility::Test->data_dir_ok($package, "v2");
 
 my ($instrument_data_1, $sample, $dbsnp_build, $on_target_feature_list) = setup_objects($test_dir);
+
+subtest test_convert_caf_to_af => sub {
+    is(Genome::InstrumentData::VerifyBamIdResult::_convert_caf_to_af(create_entry("[0.07163,0.9284]")), "0.9284");
+};
 
 subtest test_on_target => sub{
     my $sr = Genome::InstrumentData::VerifyBamIdResult->create(
@@ -34,6 +38,7 @@ subtest test_on_target => sub{
         max_depth => 20,
         precise => 0,
         version => "20120620",
+        result_version => 2,
     );
     ok($sr, "Software result was created ok");
     test_metrics($sr);
@@ -48,6 +53,7 @@ subtest test_no_intersect => sub{
         max_depth => 20,
         precise => 0,
         version => "20120620",
+        result_version => 2,
     );
     ok($sr, "Software result was created ok");
     test_metrics($sr);
@@ -60,6 +66,8 @@ sub test_metrics {
     ok(defined $result->freemix, "Freemix is defined");
     ok($result->freemix ne "NA", "Freemix is not NA");
     ok(defined $result->chipmix, "Chipmix is defined");
+    ok(defined $result->af_count, "af_count is defined");
+    ok($result->af_count > 0, "af_count is > 0");
 }
 
 sub setup_objects {
@@ -102,4 +110,36 @@ sub setup_objects {
         file_content_hash => Genome::Sys->md5sum($on_target_bed),
     );
     return ($bam_result_1, $genotype_data->sample, $build->dbsnp_build, $on_target_feature_list);
+}
+
+sub create_vcf_header {
+    my $header_txt = <<EOS;
+##fileformat=VCFv4.1
+##INFO=<ID=CAF,Number=.,Type=Float,Description="Info field A">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+EOS
+    my @lines = split("\n", $header_txt);
+    my $header = Genome::File::Vcf::Header->create(lines => \@lines);
+    return $header
+}
+
+sub create_entry {
+    my $caf = shift;
+    my @fields = (
+        '1',            # CHROM
+        10,             # POS
+        '.',            # ID
+        'A',            # REF
+        'C',            # ALT
+        '10.3',         # QUAL
+        '.',         # FILTER
+    );
+
+    if ($caf) {
+        push @fields, "CAF=$caf";
+    }
+
+    my $entry_txt = join("\t", @fields);
+    my $entry = Genome::File::Vcf::Entry->new(create_vcf_header(), $entry_txt);
+    return $entry;
 }

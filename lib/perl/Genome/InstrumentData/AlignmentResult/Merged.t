@@ -74,6 +74,7 @@ my @params = (
      duplication_handler_version => $picard_version,
      instrument_data_id => [map($_->id, @instrument_data)],
      test_name => 'merged_unit_test',
+     instrument_data_segment => [map {$_->id . ':A:2:read_group'} @instrument_data],
 );
 
 my $merged_alignment_result = Genome::InstrumentData::AlignmentResult::Merged->create(@params);
@@ -157,6 +158,8 @@ sub generate_individual_alignment_results {
         samtools_version => $samtools_version,
         picard_version   => $picard_version,
         reference_build  => $reference_build,
+        instrument_data_segment_type => "read_group",
+        instrument_data_segment_id => "A:2",
     );
 
     for my $i (0,1) {

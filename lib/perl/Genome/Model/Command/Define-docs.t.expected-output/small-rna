@@ -2,7 +2,7 @@
 [4mUSAGE[0m
  [1mgenome model define small-rna[0m [--auto-assign-inst-data] [--auto-build-alignments]
     --processing-profile=? --ref-model=? [--add-to-projects=?[,?]] [--instrument-data=?[,?]]
-    [--subject=?] [--groups=?[,?]] [--model-name=?] [--ref-model-coverage=?]
+    [--subject=?] [--groups=?[,?]] [--model-name=?] [--ref-model-coverage=?] [--run-as=?]
 
 [4mSYNOPSIS[0m
   genome model define small-rna \
@@ -30,6 +30,8 @@
     User meaningful name for this model, a default is used if none is provided 
   [1mref-model-coverage[0m
     Ref model with coverage against second ROI list   
+  [1mrun-as[0m
+    Specify who the model should run_as if run in production 
 
 [4mOPTIONAL PARAMS[0m
   [1mauto-assign-inst-data[0m

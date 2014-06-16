@@ -40,7 +40,7 @@ VCF file.
 
     printf "CHROM:   %s\n", $entry->{chrom};
     printf "POS:     %s\n", $entry->{position};
-    printf "IDENT:   %s\n", join(",", $entry->{identifiers});
+    printf "IDENT:   %s\n", join(",", @{$entry->{identifiers}});
     printf "REF:     %s\n", $entry->{reference_allele};
     printf "ALT:     %s\n", join(",", $entry->{alternate_alleles});
     printf "QUAL:    %s\n", $entry->{quality};
@@ -210,7 +210,8 @@ list can be used to convert GT sample indexes to actual allele values.
 
 sub alleles {
     my $self = shift;
-    return ($self->{reference_allele}, @{$self->{alternate_alleles}});
+    my @allele_array = ($self->{reference_allele}, @{$self->{alternate_alleles}});
+    return @allele_array;
 }
 
 =item C<has_indel>
@@ -744,6 +745,26 @@ sub alt_bases_for_sample {
     return @alt_allele_nucleotides;
 }
 
+=item C<bases_for_sample>
+
+Returns an array of nuclotides for the genotype alleles for a given sample, including reference
+
+params:
+    $sample_index - sample index
+
+=back
+
+=cut
+
+sub bases_for_sample {
+    my ($self, $sample_index) = @_;
+
+    my $genotype = $self->genotype_for_sample($sample_index);
+    my @entry_allele_nucleotides = $self->alleles;
+    my @genotype_allele_nucleotides = map {$entry_allele_nucleotides[$_]} $genotype->get_alleles;
+    return @genotype_allele_nucleotides;
+}
+
 =item C<to_string>
 
 Returns a string representation of the entry in VCF format.
@@ -756,7 +777,10 @@ Returns a string representation of the entry in VCF format.
 sub to_string {
     my ($self) = @_;
 
-    my %info = %{$self->info};
+    my %info;
+    if ($self->info) {
+        %info = %{$self->info};
+    }
     my %info_keys = map {$_ => undef} keys %info;
 
     my @info_order;

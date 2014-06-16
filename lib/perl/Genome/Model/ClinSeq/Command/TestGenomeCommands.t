@@ -33,7 +33,7 @@ my $temp_dir = Genome::Sys->create_temp_directory();
 ok($temp_dir, "created temp directory: $temp_dir");
 
 #Define the test where expected results are stored
-my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "Genome-Model-ClinSeq-Command-TestGenomeCommands/2014-04-23/";
+my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "Genome-Model-ClinSeq-Command-TestGenomeCommands/2014-05-27/";
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 #CLIN-SEQ UPDATE-ANALYSIS
@@ -101,8 +101,12 @@ run_ok($cmd, "tested genome model-group member list1") or diag $cmd;
 #GENOME MODEL SOMATIC-VALIDATION LIST
 #genome model somatic-validation list --filter model_groups.id=72096 --show tumor_sample.patient_common_name,tumor_sample.name,last_complete_build.tumor_bam
 $cmd = "genome model somatic-validation list --filter model_groups.id=72096 --show tumor_sample.patient_common_name,tumor_sample.name,last_complete_build.tumor_bam";
-$cmd .= " 1>$temp_dir/genome-model-somatic-validation-list1.out 2>$temp_dir/genome-model-somatic-validation-list1.err";
-run_ok($cmd, "tested genome somatic-validation list1") or diag $cmd;
+my $err_output = "$temp_dir/genome-model-somatic-validation-list1.err";
+$cmd .= " 1>$temp_dir/genome-model-somatic-validation-list1.out 2>$err_output";
+run_ok($cmd, "tested genome somatic-validation list1") or do {
+    diag $cmd;
+    diag "stderr: ".`cat $err_output`;
+};
 
 
 my @expected_files = map { (/^$expected_output_dir\/?(.*)/)[0] } capture_ok(qq(find $expected_output_dir -type f ! -name '*.err'));

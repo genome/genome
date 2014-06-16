@@ -73,7 +73,7 @@ sub build_command {
 
     my $meta = $self->__meta__;
     my @cmd_property_names = $self->cmd_property_names;
-    for my $key ( @cmd_property_names ) {
+    for my $key ( sort { $a cmp $b } @cmd_property_names ) {
         my $property = $meta->property_meta_for_name($key);
         my $value = $self->$key;
         next if not defined $value;

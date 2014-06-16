@@ -1297,7 +1297,7 @@ sub wait_for_build {
     my $time = 0;
     my $inc = 30;
     while (1) {
-        UR::Context->current->reload($build->the_master_event);
+        UR::Context->current->reload($build);
         my $status = $build->status;
         if ($status and !($status eq 'Running' or $status eq 'Scheduled')){
             return 1;

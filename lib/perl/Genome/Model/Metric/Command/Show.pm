@@ -70,7 +70,7 @@ sub execute {
     my @build_attributes = $self->build_attributes;
 
     my @metrics;
-    for my $build ( map { $builds{$_} } sort { $a <=> $b } keys %builds ) {
+    for my $build ( map { $builds{$_} } sort { $a cmp $b } keys %builds ) {
         my @build_metrics = $build->metrics;
         push @metrics, { 
             map({ $_, $build->$_ } @build_attributes),

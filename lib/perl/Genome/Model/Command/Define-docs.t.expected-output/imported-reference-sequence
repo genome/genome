@@ -5,9 +5,9 @@
     --processing-profile-id=? --species-name=? --allosome-names=? [--add-to-projects=?[,?]]
     [--append-to=?] [--instrument-data=?[,?]] [--subject=?] [--combine=?[,?]] [--groups=?[,?]]
     [--skip-bases-files] [--on-warning=?] [--job-dispatch=?] [--server-dispatch=?]
-    [--is-rederivable] [--build-name=?] [--sequence-uri=?] [--use-default-sequence-uri]
-    [--assembly-name=?] [--desc=?] [--derived-from=?] [--prefix=?] [--generate-sequence-uri]
-    [--version=?] [--model-name=?] [--subject-name=?]
+    [--is-rederivable] [--build-name=?] [--sequence-uri=?] [--run-as=?]
+    [--use-default-sequence-uri] [--assembly-name=?] [--desc=?] [--derived-from=?] [--prefix=?]
+    [--generate-sequence-uri] [--version=?] [--model-name=?] [--subject-name=?]
 
 [4mSYNOPSIS[0m
 genome model define imported-reference-sequence --species-name=human --prefix=NCBI --fasta-file=/path/to/fastafile.fasta
@@ -75,6 +75,8 @@ genome model define imported-reference-sequence --species-name=human --prefix=NC
     human meaningful name of this build 
   [1msequence-uri[0m
     URI to the sequence gzip file to write into BAM headers for alignments against this reference. 
+  [1mrun-as[0m
+    Specify who the model should run_as if run in production 
   [1muse-default-sequence-uri[0m
     Use a default generated URI for the BAM header. 
     Default value 'false' (--nouse-default-sequence-uri) if not specified

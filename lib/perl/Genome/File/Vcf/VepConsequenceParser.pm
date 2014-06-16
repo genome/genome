@@ -117,7 +117,11 @@ sub transcripts {
 
     my $processed_entry = $self->process_entry($entry);
     my $transcripts = $processed_entry->{$allele};
-    return @{$transcripts};
+    if (defined $transcripts) {
+        return @{$transcripts};
+    } else {
+        return;
+    }
 }
 
 sub canonical_transcripts {

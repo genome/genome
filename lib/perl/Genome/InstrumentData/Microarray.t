@@ -15,33 +15,46 @@ use Test::More;
 
 use_ok('Genome::InstrumentData::Microarray') or die;
 
-my $l = Genome::Library->get(sample_id=>2850539269,name=>'TEST-patient1-sample1-lib1');
-ok($l, 'got library');
-
-my $instrument_data = Genome::InstrumentData::Imported->create(library_id => $l->id); 
+my $instrument_data = Genome::InstrumentData::Imported->create(
+    id => -11,
+    library => Genome::Library->get(sample_id=>2850539269, name=>'TEST-patient1-sample1-lib1'),
+    import_format => 'genotype file',
+    sequencing_platform => 'test',
+); 
 ok($instrument_data, 'created dummy instrument data');
 
-my $test_file1 = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Microarray/test_genotype_file1';
-test_with_file($instrument_data, $test_file1);
+ok(!$instrument_data->genotype_file, 'no genotype file, yet');
+
+test_update_genotype_file($ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Microarray/test_genotype_file1');
 # works also if there is already an existing gentoype_file associated with the instrument_data...
-my $test_file2 = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Microarray/test_genotype_file2';
-test_with_file($instrument_data, $test_file2);
+
+
+test_update_genotype_file($ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Microarray/test_genotype_file2');
 
 done_testing();
 
+sub test_update_genotype_file {
+    my ($new_genotype_file) = @_;
 
-#   This instrument_data has no genotype_file attribute
-# should copy new one fine and make new genotype_file attribute
-sub test_with_file {
-    my ($instrument_data, $test_file) = @_;
-    my $new_genotype_file = Genome::InstrumentData::Microarray->update_genotype_file($instrument_data, $test_file);
-    ok($new_genotype_file, 'new_genotype_file was created');
+    # update
+    my $update_ok = $instrument_data->update_genotype_file($new_genotype_file);
+    ok($update_ok, 'update genotype file');
 
-    # get genotype_file attribute from instrument_data object.
-    my @genotype_file_attributes = $instrument_data->attributes(attribute_label => 'genotype_file');
-    is(scalar (@genotype_file_attributes), 1, 'found exactly one genotype_file_attribute');
+    # no genotype file attr created 
+    my $attr = $instrument_data->attributes(attribute_label => 'genotype_file');
+    ok(!$attr, 'no genotype file attr');
 
-    my $genotype_file_attribute = $genotype_file_attributes[0];
-    is($genotype_file_attribute->attribute_value, $new_genotype_file, 'attribute points to new genotype_file'); 
-    isnt($genotype_file_attribute->attribute_value, $test_file, 'attribute does not point to old genotype_file');
+    # genotype file name attr created
+    $attr = $instrument_data->attributes(attribute_label => 'genotype_file_name');
+    ok($attr, 'genotype file name attr');
+    my $genotype_file_name = $attr->attribute_value;
+    is($genotype_file_name, $instrument_data->sample->id.'.genotype', 'genotype file name is correct');
+
+    # genotype file method works
+    my $genotype_file = $instrument_data->genotype_file;
+    is($genotype_file, join('/', $instrument_data->allocations->absolute_path, $genotype_file_name), 'genotype file matches');
+    ok(-s $genotype_file, 'genotype file copied');
+
+    return 1;
 }
+

@@ -245,10 +245,6 @@ sub _filter_variants {
     if (@librmdupbams) {
         my $cmd;
         if (@librmdupbams == 1) {
-            if ($self->control_aligned_reads_input and $skip_count ne 1) {
-                $self->error_message('It is impossible for somatic case to have only 1 per lib rmdup bam');
-                die;
-            }
             $self->warning_message('There is only 1 per library rmdup bam. Probably for germline purpose');
             `mv $librmdupbams[0] $merge_bam`;  #rg header already made during novo2sam step
         }

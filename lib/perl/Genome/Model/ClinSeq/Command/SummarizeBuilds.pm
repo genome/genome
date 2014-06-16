@@ -39,12 +39,14 @@ class Genome::Model::ClinSeq::Command::SummarizeBuilds {
               #TODO: Is there a better way to determine which samples are 'normal'?
               is => 'Text',
               default => 'normal',
+              is_optional => 1,
               doc => 'The possible sample common names used in the database to specify a Normal sample',
         },
         tumor_sample_common_names => {
               #TODO: Is there a better way to determine which samples are 'tumor'?
               is => 'Text',
               default => 'tumor|met|post treatment|recurrence met|pre-treatment met|pin lesion|relapse',
+              is_optional => 1,
               doc => 'The possible sample common names used in the database to specify a Tumor sample',
         },
     ],
@@ -348,7 +350,6 @@ sub summarize_clinseq_build {
     }
 
     $self->generate_APIPE_reports(\@builds, $build_outdir, $stats_fh);
-    $self->generate_LIMS_reports(\@builds, $build_outdir);
 
     #Get BAMQC results for all ref-align builds
     for my $build (@builds) {
@@ -1269,6 +1270,7 @@ sub copy_from_rnaseq_build {
     push (@rnaseq_files_to_copy, "$build_dir/bam-qc/*.pdf");
     push (@rnaseq_files_to_copy, "$build_dir/bam-qc/*.html");
     my $rnaseq_metrics_dir =  $build_outdir . "/rnaseq/$common_name/";
+    $rnaseq_metrics_dir =~ s/ /_/g;
     Genome::Sys->shellcmd(cmd => "mkdir -p $rnaseq_metrics_dir");
 
     #Make copies of read locations .png and end bias plots for convenience
@@ -1296,6 +1298,7 @@ sub generate_LIMS_reports {
         unless ($samples_processed{$subject_name}){
             $samples_processed{$subject_name} = 1;
             my $lims_sample_outdir = $build_outdir . "/LIMS_reports/$common_name/";
+            $lims_sample_outdir =~ s/ /_/g;
             Genome::Sys->shellcmd(cmd=> "mkdir -p $lims_sample_outdir");
             $self->summarize_library_quality_reports_for_build($build, $lims_sample_outdir);
         }
@@ -1321,6 +1324,7 @@ sub generate_APIPE_reports {
         unless ($samples_processed{$subject_name}){
             $samples_processed{$subject_name} = 1;
             my $apipe_sample_outdir = $build_outdir . "/APIPE_reports/$common_name/";
+            $apipe_sample_outdir =~ s/ /_/g;
             Genome::Sys->shellcmd(cmd=> "mkdir -p $apipe_sample_outdir");
             $self->summarize_apipe_instrument_data_reports($build, $apipe_sample_outdir, $stats_fh);
         }
@@ -1415,6 +1419,7 @@ sub get_perlane_bamqc_results {
     my $subject = $build->subject;
     my $common_name = $self->_get_subject_common_name($subject);
     my $qc_dir = $outdir . "/$build_type/per_lane_bam_qc/$common_name";
+    $qc_dir =~ s/ /_/g;
     Genome::Sys->shellcmd(cmd => "mkdir -p $qc_dir");
     my $bam_qc_metrics = Genome::Model::ReferenceAlignment::Command::InstrumentDataAlignmentBams->create(
             build_id => $build->id, outdir => $qc_dir);
@@ -1424,8 +1429,9 @@ sub get_perlane_bamqc_results {
         if($lane_bamqc_path{$lane} ne "-") {
             my $perlane_bamqc_results_dir = $lane_bamqc_path{$lane};
             my $perlane_bamqc_op_dir = $qc_dir . "/lane" . $lane . "/";
+            $perlane_bamqc_op_dir =~ s/ /_/g;
             Genome::Sys->shellcmd(cmd => "mkdir -p $perlane_bamqc_op_dir");
-            Genome::Sys->shellcmd(cmd => "cp -rf $perlane_bamqc_results_dir/* $perlane_bamqc_op_dir");
+            Genome::Sys->shellcmd(cmd => "rsync -lrv --exclude=*.bam*  $perlane_bamqc_results_dir/* $perlane_bamqc_op_dir");
         }
     }
 }
@@ -1441,6 +1447,7 @@ sub get_bamqc_results {
     my $subject = $build->subject;
     my $common_name = $self->_get_subject_common_name($subject);
     my $qc_dir = $outdir . "/$build_type/summary_bam_qc/$common_name";
+    $qc_dir =~ s/ /_/g;
     Genome::Sys->shellcmd(cmd => "mkdir -p $qc_dir");
     my $bam_qc_metrics = Genome::Model::ReferenceAlignment::Command::BamQcMetrics->create(
             build_id => $build->id, output_directory => $qc_dir);
@@ -1518,7 +1525,8 @@ sub _run_solexa_lister {
     my $output_file = shift;
 
     my $output_fh = Genome::Sys->open_file_for_writing($output_file);
-    my $id_list_cmd1 = Genome::InstrumentData::Command::List::Solexa->create(
+    my $id_list_cmd1 = Genome::InstrumentData::Command::List->create(
+        subtype => 'solexa',
         filter => "sample_name='$sample_name'",
         show => 'id,flow_cell_id,lane,sample_name,library_name,read_length,is_paired_end,clusters,median_insert_size,sd_above_insert_size,target_region_set_name,fwd_filt_error_rate_avg,rev_filt_error_rate_avg',
         style => $style,

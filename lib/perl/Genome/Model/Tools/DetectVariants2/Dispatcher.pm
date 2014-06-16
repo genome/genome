@@ -949,7 +949,7 @@ sub _create_directories {
             }
 
             $self->debug_message("Created directory: $output_directory");
-            chmod 02775, $output_directory;
+            chmod 02770, $output_directory;
         }
     }
 
@@ -1042,12 +1042,12 @@ sub _create_bed_from_vcf {
     eval {
         Genome::Model::Tools::Bed::Convert::VcfToBed->execute(source => $vcf,
             output => "$vcf.bed",
-            sample_name => $self->aligned_reads_sample,
+            sample_name => Genome::Sample->sample_name_to_name_in_vcf($self->aligned_reads_sample),
         );
     };
     if ($@) {
         $self->error_message("VcfToBed conversion failed: $@");
-        #die $self->error_message();
+        die $self->error_message();
     }
     return;
 }

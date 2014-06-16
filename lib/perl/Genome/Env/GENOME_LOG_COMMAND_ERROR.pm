@@ -1,5 +1,5 @@
 package Genome::Env::GENOME_LOG_COMMAND_ERROR;
-our $default_value = 'default';
+sub default_value { 'default' }
 
 =pod
 

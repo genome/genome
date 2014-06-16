@@ -43,6 +43,11 @@ class Genome::Model::Tools::Bed::Convert {
             is => 'String',
             doc => 'Original file output by detector to provide lines for the output',
         },
+        clean_output => {
+            is => "Boolean",
+            default => 0,
+            doc => "Don't create versioned symlink noise, just output the bed file",
+        }
     ],
     has_transient_optional => [
         _input_fh => {
@@ -101,25 +106,27 @@ sub execute {
 
     return unless $retval;
 
-    my $final_output = versioned_path($self->output, $CURRENT_VERSION);
-    if ($self->_need_chrom_sort) {
-        my $sort_cmd = Genome::Model::Tools::Bed::ChromSort->create(
-            input => $self->output,
-            output => $final_output,
-        );
-
-        if ($sort_cmd->execute()) {
-            unlink($self->output);
+    unless($self->clean_output){
+        my $final_output = versioned_path($self->output, $CURRENT_VERSION);
+        if ($self->_need_chrom_sort) {
+            my $sort_cmd = Genome::Model::Tools::Bed::ChromSort->create(
+                input => $self->output,
+                output => $final_output,
+                );
+            
+            if ($sort_cmd->execute()) {
+                unlink($self->output);
+            } else {
+                $self->error_message("Failed to sort bed file " . $self->output);
+                return;
+            }
         } else {
-            $self->error_message("Failed to sort bed file " . $self->output);
-            return;
+            rename($self->output, $final_output);
         }
-    } else {
-        rename($self->output, $final_output);
-    }
-    symlink(basename($final_output), $self->output);
-    for my $v (@COMPATIBLE_PREVIOUS_VERSIONS) {
-        symlink(basename($final_output), versioned_path($self->output, $v));
+        symlink(basename($final_output), $self->output);
+        for my $v (@COMPATIBLE_PREVIOUS_VERSIONS) {
+            symlink(basename($final_output), versioned_path($self->output, $v));
+        }
     }
 
     return 1;

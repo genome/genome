@@ -4,7 +4,7 @@
     [--auto-build-alignments] --processing-profile=? --species-name=? --version=?
     --reference-sequence-build=? --build-name=? --annotation-import-version=?
     [--add-to-projects=?[,?]] [--instrument-data=?[,?]] [--subject=?] [--groups=?[,?]]
-    [--model-name=?] [--gtf-file=?]
+    [--model-name=?] [--run-as=?] [--gtf-file=?]
 
 [4mSYNOPSIS[0m
 genome model define imported-annotation --species-name=human --version=58_37c --reference-sequence-build=GRCh37-lite-build37 --build_name=NCBI-human.ensembl/58_37c --processing-profile=imported-annotation.ensembl --model_name=NCBI-human.ensembl
@@ -35,6 +35,8 @@ genome model define imported-annotation --species-name=human --version=58_37c --
     Model groups to put the newly created model into 
   [1mmodel-name[0m
     User meaningful name for this model, a default is used if none is provided 
+  [1mrun-as[0m
+    Specify who the model should run_as if run in production 
   [1mgtf-file[0m
     gtf file for rnaSeq annotation.  ONLY use for models that are rna_seq_only 
 

@@ -4,12 +4,13 @@ use strict;
 use warnings;
 
 use Sys::Hostname;
+use File::Find::Rule qw();
 use File::stat;
 use File::Path 'rmtree';
 use List::MoreUtils qw{ uniq };
 
 use Genome;
-
+use Genome::Utility::File::Mode qw(mode);
 use Genome::Utility::Text; #quiet warning about deprecated use of autoload
 
 class Genome::InstrumentData::AlignmentResult::Merged {
@@ -266,7 +267,10 @@ sub collect_individual_alignments {
     my $segments = {};
 
     for my $segment_string (@segments) {
-        my ($id, $segment_id, $segment_type) = split(':', $segment_string);
+        my @parts = split(':', $segment_string);
+        my $id = shift @parts;
+        my $segment_type = pop @parts;
+        my $segment_id = join(":", @parts);
         $segments->{$id}{$segment_type} ||= [];
         push @{$segments->{$id}{$segment_type} }, $segment_id;
     }
@@ -293,7 +297,7 @@ sub collect_individual_alignments {
         }
 
         for my $segment_param (@segment_params) {
-            my $alignment = Genome::InstrumentData::AlignmentResult->get_with_lock(
+            my %all_params = (
                 %params,
                 reference_build_id => $self->reference_build_id,
                 annotation_build_id => ($self->annotation_build_id || undef),
@@ -302,7 +306,12 @@ sub collect_individual_alignments {
                 test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
                 %$segment_param,
             );
+            $self->debug_message("Looking for alignment result with params: %s",
+                Data::Dumper::Dumper(\%all_params));
 
+            my $alignment = Genome::InstrumentData::AlignmentResult->get_with_lock(
+                %all_params
+            );
             if($alignment) {
                 push @alignments, $alignment;
             } else {
@@ -404,8 +413,8 @@ sub _prepare_working_directories {
     );
 
     # fix permissions on this temp dir so others can clean it up later if need be
-    chmod(0775,$staging_tempdir);
-    chmod(0775,$scratch_tempdir);
+    chmod(0770,$staging_tempdir);
+    chmod(0770,$scratch_tempdir);
 
     $self->temp_staging_directory($staging_tempdir->dirname);
     $self->temp_scratch_directory($scratch_tempdir->dirname);
@@ -427,14 +436,14 @@ sub _promote_validated_data {
         rename($staged_file, $destination);
     }
 
-    chmod 02775, $output_dir;
+    chmod 02770, $output_dir;
     for my $subdir (grep { -d $_  } glob("$output_dir/*")) {
-        chmod 02775, $subdir;
+        chmod 02770, $subdir;
     }
 
-    # Make everything in here read-only
-    for my $file (grep { -f $_  } glob("$output_dir/*")) {
-        chmod 0444, $file;
+    my @files = File::Find::Rule->file->not(File::Find::Rule->symlink)->in($output_dir);
+    for my $file (@files) {
+        mode($file)->rm_all_writable;
     }
 
     $self->debug_message("Files in $output_dir: \n" . join "\n", glob($output_dir . "/*"));

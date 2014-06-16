@@ -86,10 +86,9 @@ sub _load_alignment_summary_metrics {
     my $self = shift;
     my $label_dir = shift;
 
-    my ($as_file) = glob($label_dir->directory .'/*alignment_summary_metrics');
-    unless ($as_file) {
-        die ('Failed to find Picard alignment_summary_metrics in directory: '. $label_dir->directory);
-    }
+    my ($as_file) = $self->_warn_glob($label_dir->directory, '*alignment_summary_metrics');
+    return unless $as_file;
+
     my $as_metrics = Genome::Model::Tools::Picard::CollectAlignmentSummaryMetrics->parse_file_into_metrics_hashref($as_file);
     return $as_metrics;
 }
@@ -98,10 +97,12 @@ sub _load_mark_duplicates_metrics {
     my $self = shift;
     my $label_dir = shift;
 
-    my ($mrkdup_file) = glob($label_dir->directory .'/*.metrics');
+    my ($mrkdup_file) = $self->_warn_glob($label_dir->directory, '*.metrics');
+    return unless $mrkdup_file;
+
     my $mrkdup_metrics;
     my $lib;
-    if ($mrkdup_file) {
+    if ($mrkdup_file && -e $mrkdup_file) {
         $mrkdup_metrics = Genome::Model::Tools::Picard::MarkDuplicates->parse_file_into_metrics_hashref($mrkdup_file);
         my @libs = sort keys %{$mrkdup_metrics};
         if (scalar(@libs) > 1) {
@@ -116,14 +117,20 @@ sub _load_mark_duplicates_metrics {
 sub _load_error_rate_metrics {
     my($self, $label_dir, $error_rate_by_position) = @_;
 
-    my ($error_rate_file) = glob($label_dir->directory .'/*-ErrorRate.tsv');
+    my ($error_rate_file) = $self->_warn_glob($label_dir->directory, '*-ErrorRate.tsv');
+    return unless $error_rate_file;
+
     my %error_rate_sum;
-    if ($error_rate_file) {
+    if (-s $error_rate_file) {
         my $error_rate_reader = Genome::Utility::IO::SeparatedValueReader->create(
             input => $error_rate_file,
             separator => "\t",
             ignore_lines_starting_with => '#',
         );
+        unless ($error_rate_reader) {
+            $self->error_message("Could not get reader for " . $error_rate_file);
+            die;
+        }
         while (my $error_rate_data = $error_rate_reader->next) {
             if ($error_rate_data->{position} eq 'SUM') {
                 $error_rate_sum{$error_rate_data->{read_end}} = $error_rate_data;
@@ -150,10 +157,11 @@ sub _listify_labels_and_directories {
 sub _load_insert_size_metrics {
     my($self, $label_dir, $insert_size_data, $insert_size_directions) = @_;
 
-    # Load Insert Size Metrics
-    my ($is_file) = glob($label_dir->directory .'/*.insert_size_metrics');
-    my $is_metrics = Genome::Model::Tools::Picard::CollectInsertSizeMetrics->parse_file_into_metrics_hashref($is_file);
+    my ($is_file) = $self->_warn_glob($label_dir->directory, '*.insert_size_metrics');
+    return unless $is_file;
 
+    # Load Insert Size Metrics
+    my $is_metrics= Genome::Model::Tools::Picard::CollectInsertSizeMetrics->parse_file_into_metrics_hashref($is_file);
     # Load Insert Size Histogram
     my $is_histo = Genome::Model::Tools::Picard::CollectInsertSizeMetrics->parse_metrics_file_into_histogram_hashref($is_file);
 
@@ -170,11 +178,15 @@ sub _load_insert_size_metrics {
 sub _load_gc_bias_metrics {
     my($self, $label_dir, $gc_data, $gc_windows) = @_;
 
-    my ($gc_summary) = glob($label_dir->directory .'/*-PicardGC_summary.txt');
-    my $gc_metrics = Genome::Model::Tools::Picard::CollectGcBiasMetrics->parse_file_into_metrics_hashref($gc_summary);
+    my ($gc_summary) = $self->_warn_glob($label_dir->directory, '*-PicardGC_summary.txt');
+    return unless $gc_summary;
 
-    my ($gc_file) = glob($label_dir->directory .'/*-PicardGC_metrics.txt');
+    my ($gc_file) = $self->_warn_glob($label_dir->directory, '*-PicardGC_metrics.txt');
+    return unless $gc_file;
+
+    my $gc_metrics = Genome::Model::Tools::Picard::CollectGcBiasMetrics->parse_file_into_metrics_hashref($gc_summary);
     my $gc_data_this_file = Genome::Model::Tools::Picard::CollectGcBiasMetrics->parse_file_into_metrics_hashref($gc_file);
+
     for my $gc_key (keys %{$gc_data_this_file}) {
         my $gc_bin = $gc_data_this_file->{$gc_key}{GC};
         $gc_data->{$gc_bin}{$label_dir->label}{NORMALIZED_COVERAGE} = $gc_data_this_file->{$gc_key}{NORMALIZED_COVERAGE};
@@ -193,7 +205,9 @@ sub _load_gc_bias_metrics {
 sub _load_quality_distribution {
     my($self, $label_dir, $qd_data) = @_;
 
-    my ($qd_file) = glob($label_dir->directory .'/*.quality_distribution_metrics');
+    my ($qd_file) = $self->_warn_glob($label_dir->directory, '*.quality_distribution_metrics');
+    return unless $qd_file;
+
     my $qd_histo = Genome::Model::Tools::Picard->parse_metrics_file_into_histogram_hashref($qd_file);
     for my $quality_key (keys %{$qd_histo}) {
         my $quality = $qd_histo->{$quality_key}{QUALITY};
@@ -204,7 +218,9 @@ sub _load_quality_distribution {
 sub _load_quality_by_cycle {
     my($self, $label_dir, $qc_data) = @_;
 
-    my ($qc_file) = glob($label_dir->directory .'/*.quality_by_cycle_metrics');
+    my ($qc_file) = $self->_warn_glob($label_dir->directory, '*.quality_by_cycle_metrics');
+    return unless $qc_file;
+
     my $qc_histo = Genome::Model::Tools::Picard->parse_metrics_file_into_histogram_hashref($qc_file);
     for my $cycle_key (keys %{$qc_histo}) {
         my $cycle = $qc_histo->{$cycle_key}{CYCLE};
@@ -339,6 +355,15 @@ sub _write_consolidate_histogram_of_insert_sizes_by_read_orientation_direction {
     }
 }
 
+sub _warn_glob {
+    my ($self, $directory, $pattern) = @_;
+    my @files  = glob($directory . '/' . $pattern);
+    unless(@files) {
+        $self->warning_message('unable to find %s in directory: %s', $pattern, $directory);
+    }
+    return @files;
+}
+
 sub execute {
     my $self = shift;
 
@@ -359,44 +384,43 @@ sub execute {
     my %qc_data;
 
     foreach my $label_dir ( $self->_listify_labels_and_directories()) {
-
         my $as_metrics = $self->_load_alignment_summary_metrics($label_dir);
-        
+
         my($mrkdup_metrics, $lib) = $self->_load_mark_duplicates_metrics($label_dir);
-        
+
         my $error_rate_sum = $self->_load_error_rate_metrics($label_dir, \%error_rate_by_position);
-        
+
         my $is_metrics = $self->_load_insert_size_metrics($label_dir, \%is_data, \%is_directions);
-        
+
         my $gc_metrics = $self->_load_gc_bias_metrics($label_dir, \%gc_data, \%gc_windows);
 
         $self->_load_quality_distribution($label_dir, \%qd_data);
 
         $self->_load_quality_by_cycle($label_dir, \%qc_data);
-        
+
         # TODO: We need summary metrics per category and/or read direction
         # The below summary metrics only apply to paired-end libraries
         my %summary_data = (
-            LABEL => $label_dir->label,
-            READS => $as_metrics->{'CATEGORY-PAIR'}{PF_READS},
-            READS_ALIGNED => $as_metrics->{'CATEGORY-PAIR'}{PF_READS_ALIGNED},
-            PCT_READS_ALIGNED => $as_metrics->{'CATEGORY-PAIR'}{PCT_PF_READS_ALIGNED},
-            ALIGNED_BASES => $as_metrics->{'CATEGORY-PAIR'}{PF_ALIGNED_BASES},
-            PCT_CHIMERAS => $as_metrics->{'CATEGORY-PAIR'}{PCT_CHIMERAS},
-            ERROR_RATE_READ_1 => $error_rate_sum->{1}->{error_rate},
-            ERROR_RATE_READ_2 => $error_rate_sum->{2}->{error_rate},
-            MEDIAN_INSERT_SIZE => $is_metrics->{'PAIR_ORIENTATION-FR'}{MEDIAN_INSERT_SIZE},
-            MEAN_INSERT_SIZE => $is_metrics->{'PAIR_ORIENTATION-FR'}{MEAN_INSERT_SIZE},
-            STANDARD_DEVIATION => $is_metrics->{'PAIR_ORIENTATION-FR'}{STANDARD_DEVIATION},
-            AT_DROPOUT => $gc_metrics->{'WINDOW_SIZE-100'}{AT_DROPOUT},
-            GC_DROPOUT => $gc_metrics->{'WINDOW_SIZE-100'}{GC_DROPOUT},
+            LABEL => $label_dir->label || "na",
+            READS => $as_metrics->{'CATEGORY-PAIR'}{PF_READS} || "na",
+            READS_ALIGNED => $as_metrics->{'CATEGORY-PAIR'}{PF_READS_ALIGNED} || "na",
+            PCT_READS_ALIGNED => $as_metrics->{'CATEGORY-PAIR'}{PCT_PF_READS_ALIGNED} || "na",
+            ALIGNED_BASES => $as_metrics->{'CATEGORY-PAIR'}{PF_ALIGNED_BASES} || "na",
+            PCT_CHIMERAS => $as_metrics->{'CATEGORY-PAIR'}{PCT_CHIMERAS} || "na",
+            ERROR_RATE_READ_1 => $error_rate_sum->{1}->{error_rate} || "na",
+            ERROR_RATE_READ_2 => $error_rate_sum->{2}->{error_rate} || "na",
+            MEDIAN_INSERT_SIZE => $is_metrics->{'PAIR_ORIENTATION-FR'}{MEDIAN_INSERT_SIZE} || "na",
+            MEAN_INSERT_SIZE => $is_metrics->{'PAIR_ORIENTATION-FR'}{MEAN_INSERT_SIZE} || "na",
+            STANDARD_DEVIATION => $is_metrics->{'PAIR_ORIENTATION-FR'}{STANDARD_DEVIATION} || "na",
+            AT_DROPOUT => $gc_metrics->{'WINDOW_SIZE-100'}{AT_DROPOUT} || "na",
+            GC_DROPOUT => $gc_metrics->{'WINDOW_SIZE-100'}{GC_DROPOUT} || "na",
             LIBRARY_NAME => $lib || 'na',
             PCT_DUPLICATION => 'na',
             ESTIMATED_LIBRARY_SIZE => 'na',
         );
         if ($mrkdup_metrics && $lib) {
-            $summary_data{PCT_DUPLICATION} = $mrkdup_metrics->{PERCENT_DUPLICATION};
-            $summary_data{ESTIMATED_LIBRARY_SIZE} = $mrkdup_metrics->{ESTIMATED_LIBRARY_SIZE};
+            $summary_data{PCT_DUPLICATION} = $mrkdup_metrics->{PERCENT_DUPLICATION} || "na";
+            $summary_data{ESTIMATED_LIBRARY_SIZE} = $mrkdup_metrics->{ESTIMATED_LIBRARY_SIZE} || "na";
         }
         if(!defined($lib) and $self->labels_are_instrument_data_ids) {
             $self->status_message("Looking up the library name");
@@ -407,13 +431,13 @@ sub execute {
             else {
                 my $library_name = $instrument_data->library_name;
                 if(defined $library_name) {
-                    $summary_data{LIBRARY_NAME} = $library_name;
+                    $summary_data{LIBRARY_NAME} = $library_name || "na";
                 }
             }
         }
         $summary_writer->write_one(\%summary_data);
     }
-    
+
     $self->_write_error_tsv_file(\%error_rate_by_position);
 
     $self->_write_consolidate_histogram_of_normalized_coverage_per_gc_window(\%gc_windows, \%gc_data);

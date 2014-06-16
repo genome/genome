@@ -29,6 +29,7 @@ sub new {
 							_id => $arg{id},
                             _max_frequency => $arg{max_freq},
                             _shape => $arg{shape},
+                            _only_label_max => $arg{only_label_above_max_freq},
 						 };
     $self->{_feature_length} = 1;
 
@@ -36,21 +37,25 @@ sub new {
     my $backbone = $self->{_backbone};
     #add to subgroup if passed in
 
-    my $mutation_top = 70;
-    if($self->{_frequency} > 3) {
-        $mutation_top += ($self->{_frequency} - 3) * 13; 
+    my $mutation_top = 43;
+    if($self->{_frequency} > 1) {
+        $mutation_top += ($self->{_frequency} - 1) * 13; 
     }
 
     if($self->{_max_frequency}) {
-        my $gutter_till_label = 14;
-        my $first_mutation_location = 30;
-        $mutation_top = $first_mutation_location + ($self->{_max_frequency} + 1) * 13 + $gutter_till_label;
+        if($self->{_frequency} > $self->{_max_frequency}) {
+            my $gutter_till_label = 14;
+            my $first_mutation_location = 30;
+            $mutation_top = $first_mutation_location + ($self->{_max_frequency} + 1) * 13 + $gutter_till_label;
 
-        #add in the allele count to the label
-        $self->{_text} = "(" . $self->{_frequency} . ") " . $self->{_text};
+            #add in the allele count to the label
+            $self->{_text} = $self->{_text} . " (" . $self->{_frequency} . ")";
+        }
+        elsif($self->{_only_label_max}) {
+            $self->{_text} = q{};
+            $mutation_top -= 8; #trim the lolli stick that protrudes above the last shape
+        }
     }
-
-    
     
     my @line_path_y =
     ($backbone->dimensions->{y} - $mutation_top,$backbone->dimensions->{y}-20,$backbone->dimensions->{y}-10,$backbone->dimensions()->{y},$backbone->dimensions()->{y}+$backbone->dimensions()->{height});

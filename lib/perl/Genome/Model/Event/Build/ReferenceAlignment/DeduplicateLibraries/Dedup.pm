@@ -143,7 +143,7 @@ sub execute {
     );
 
     # fix permissions on this temp dir so others can clean it up later if need be    
-    chmod(0775,$working_directory);
+    chmod(0770,$working_directory);
 
     print $log_fh "Input library list length: ".scalar(@list)."\n";
     for my $list_item ( @list ) {

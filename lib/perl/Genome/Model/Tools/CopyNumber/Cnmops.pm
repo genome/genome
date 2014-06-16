@@ -28,7 +28,7 @@ class Genome::Model::Tools::CopyNumber::Cnmops {
   },
   roi_bed => {
     is => 'FilesystemPath',
-    doc => 'BED file specifying regions to call CNVs on',
+    doc => 'Optional BED file specifying regions to call CNVs on. The intersection of the tumor and normal ROI beds are considered by default if an roi file is not specified.',
     is_optional => 1,
   },
   test => {
@@ -41,6 +41,13 @@ class Genome::Model::Tools::CopyNumber::Cnmops {
     is => 'Genome::Model::Build::ImportedAnnotation',
     doc => 'Supply an annotation build id (e.g., 124434505 for NCBI-human.ensembl/67_37l_v2)',
     default_value => '124434505',
+    is_optional => 1,
+  },
+  cancer_annotation_db => {
+    is => 'Genome::Db::Tgi::CancerAnnotation',
+    doc => 'cancer annotation db to be used.(not required if using a clinseq model as input)',
+    example_values  => ['tgi/cancer-annotation/human/build37-20130401.1'],
+    default => 'tgi/cancer-annotation/human/build37-20130401.1',
     is_optional => 1,
   },
   ],
@@ -57,7 +64,7 @@ EOS
 
 sub help_detail {
   return <<EOS
-Call CNVs on exome data using CnMops. CnMops has been shown to perform well on WEx data but can be used on WGS data as well. A bed file with the capture regions. A clinseq model with underlying refalign models for normal, tumor  or two refalign models for the normal, tumor have to be provided as input for this tool. A BED file with the regions of interest can be supplied as an optional input, if this is not passed as an input then the ROI file from the refalign build will be used.
+Call CNVs on exome data using CnMops. CnMops has been shown to perform well on WEx data but can be used on WGS data as well. A clinseq model with underlying refalign models for normal, tumor  [OR] separate refalign models for the normal, tumor have to be provided as input for this tool. A BED file with the regions of interest can be supplied as an optional input, if this is not passed as an input then the intersection of the ROI files from the normal and tumor refalign builds will be used.
 EOS
 }
 
@@ -140,13 +147,46 @@ sub call_cnmops {
   Genome::Sys->shellcmd(cmd => $cnmops_rcmd);
 }
 
+sub plot_cnvs {
+  my $self = shift;
+  my $cnmops_hq = $self->outdir . "/cnmops.cnvs.hq";
+  my $cnmops_hmm = $self->outdir . "/cnmops.cnvhmm";
+  my $cnmops_cnvs = $self->outdir . "/cnmops.cnvs.txt";
+  my $cnmops_bed_logrr = $self->outdir . "/cnmops.bed_logrr.txt";
+  my $cnmops_hq_cmd = 'awk \' BEGIN { print "CHR\tPOS\tTUMOR\tNORMAL\tDIFF" } !/chr/ { print $1"\t"$2"\t"2^($4+1)"\t2\t"2^($4+1)-2} \' ' . $cnmops_bed_logrr . " > " .
+  $cnmops_hq;
+  my $cnmops_hmm_cmd = 'awk \' !/chr/ { status = "Loss"; if($5>0) { status = "Gain"; } print $1"\t"$2"\t"$3"\t"$3-$2"\t"$3-$2"\t"2^($5+1)"\t"2^($5+1)"\t2\t2\tNA\t"status } \' ' . $cnmops_cnvs . " > " .
+  $cnmops_hmm;
+  Genome::Sys->shellcmd(cmd => $cnmops_hq_cmd);
+  Genome::Sys->shellcmd(cmd => $cnmops_hmm_cmd);
+  my $cancer_annotation_db = $self->cancer_annotation_db;
+  my @cnv_symbols;
+  if($self->test) {
+    @cnv_symbols = qw(Kinase_dGene);
+  } else {
+    @cnv_symbols = qw (Kinase_dGene CancerGeneCensusPlus_Sanger AntineoplasticTargets_DrugBank All);
+  }
+  my $gene_symbol_dir = $cancer_annotation_db->data_directory . "/GeneSymbolLists/";
+  foreach my $symbol(@cnv_symbols){
+    my $symbol_outdir =  $self->outdir;
+    my $cnview_cmd;
+    if ($symbol eq "All") {
+      $cnview_cmd = Genome::Model::Tools::CopyNumber::CnView->create(annotation_build => $self->annotation_build_id, cnv_file => $cnmops_hq, segments_file => $cnmops_hmm, output_dir => $symbol_outdir, name => $symbol, cancer_annotation_db => $cancer_annotation_db, window_size => 0, verbose => 1);
+    } else {
+      my $gene_targets_file = "$gene_symbol_dir/$symbol" . ".txt";
+      $cnview_cmd = Genome::Model::Tools::CopyNumber::CnView->create(annotation_build =>  $self->annotation_build_id, cnv_file => $cnmops_hq, segments_file => $cnmops_hmm, output_dir => $symbol_outdir, gene_targets_file => $gene_targets_file, name => $symbol, cancer_annotation_db => $cancer_annotation_db, window_size => 0, verbose => 1);
+    }
+    $cnview_cmd->execute();
+  }
+}
+
 sub annotate_cnvs {
   my $self = shift;
   my $cnmops_bed = $self->outdir . "/cnmops.cnv.bed";
   if(-e $cnmops_bed) {
     my $cnmops_bedpe = $self->outdir . "/cnmops.cnv.bedpe";
     my $cnmops_annotated = $self->outdir . "/cnmops.cnv.bedpe.annotated";
-    my $create_bedpe_cmd = "awk \'!/chr/ { print \"cnv\t\"\$1\"\t\"\$2\"\t\"\$2\"\t\"\$1\"\t\"\$3\"\t\"\$3\"\tNA\tNA\t+\" }\' $cnmops_bed > $cnmops_bedpe";
+    my $create_bedpe_cmd = "awk \'!/chr/ { print \"cnv\\t\"\$1\"\\t\"\$2\"\\t\"\$2\"\\t\"\$1\"\\t\"\$3\"\\t\"\$3\"\\tNA\\tNA\\t+\" }\' $cnmops_bed > $cnmops_bedpe";
     Genome::Sys->shellcmd(cmd=>$create_bedpe_cmd);
     my $annotate = Genome::Model::Tools::Annotate::Sv::Transcripts->create(input_file => $cnmops_bedpe,
           output_file => $cnmops_annotated, print_flanking_genes => 1, annotation_build=>$self->annotation_build_id);
@@ -184,6 +224,7 @@ sub execute {
   $self->call_cnmops($tumor_bam, $normal_bam, $ROI_bed);
   $self->status_message("\nCnmops tumor, normal bams are $tumor_bam , $normal_bam");
   $self->status_message("\nROI bed is $ROI_bed");
+  $self->plot_cnvs();
   $self->annotate_cnvs();
   return 1;
 }

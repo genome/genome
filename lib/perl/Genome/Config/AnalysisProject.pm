@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Config::AnalysisProject {
-    is => ['Genome::Utility::ObjectWithTimestamps', 'Genome::Utility::ObjectWithCreatedBy'],
+    is => ['Genome::Utility::ObjectWithTimestamps', 'Genome::Utility::ObjectWithCreatedBy', 'Genome::Searchable'],
     id_generator => '-uuid',
     data_source => 'Genome::DataSource::GMSchema',
     table_name => 'config.analysis_project',
@@ -114,6 +114,18 @@ sub delete {
     eval {
         if ($self->model_group) {
             $self->model_group->delete();
+        }
+        for ($self->config_items) {
+            $_->delete();
+        }
+        for ($self->model_bridges) {
+            $_->delete();
+        }
+        for ($self->analysis_project_bridges) {
+            $_->delete();
+        }
+        for ($self->subject_mappings) {
+            $_->delete();
         }
     };
     if(my $error = $@) {

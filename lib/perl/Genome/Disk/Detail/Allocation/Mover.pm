@@ -109,9 +109,6 @@ sub move {
         $allocation_object,
     );
 
-    Genome::Disk::Allocation::_symlink_new_path_from_old(
-        $allocation_object->absolute_path, $original_absolute_path);
-
     Genome::Disk::Allocation::_commit_unless_testing();
 
     Genome::Sys->unlock_resource(resource_lock => $allocation_lock);
@@ -123,6 +120,8 @@ sub move {
             $original_absolute_path),
         Genome::Disk::Allocation->_remove_directory_closure(
             $original_absolute_path),
+        sub { Genome::Disk::Allocation::_symlink_new_path_from_old(
+                $allocation_object->absolute_path, $original_absolute_path) },
     );
 }
 

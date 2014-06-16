@@ -39,11 +39,12 @@ done_testing;
 sub test_metrics {
     my $build = shift;
     my $mode = shift;
-    for my $metric(qw(freemix chipmix)) {
+    for my $metric(qw(freemix chipmix af_count)) {
         my $metric_name = "$metric-$mode";
         my $value = $build->get_metric($metric_name);
         ok(defined $value, "Metric $metric_name is defined: $value");
         ok($value ne "NA", "Metric $metric_name is not NA");
+        ok($value > 0, "Metric $metric_name > 0")
     }
 }
 
@@ -53,9 +54,20 @@ sub setup_objects {
     my $lib1 = Genome::Test::Factory::Library->setup_object(sample_id => $sample1->id, name => $sample1->name."-microarraylib");
     my $lib2 = Genome::Test::Factory::Library->setup_object(sample_id => $sample2->id, name => $sample2->name."-microarraylib");
 
-    my $id1 = Genome::Test::Factory::InstrumentData::Imported->setup_object(genotype_file => File::Spec->join($test_dir, "1.genotype"), library_id => $lib1->id, import_source_name => "tgi");
-    my $id2 = Genome::Test::Factory::InstrumentData::Imported->setup_object(genotype_file => File::Spec->join($test_dir, "1.genotype"), library_id => $lib2->id, import_source_name => "tgi");
+    my $id1 = Genome::Test::Factory::InstrumentData::Imported->setup_object(
+        library_id => $lib1->id,
+        import_source_name => "tgi",
+        genotype_file => $test_dir.'/1.genotype',
+    );
+    ok(-s $id1->genotype_file, 'genotype file set');
     $sample1->default_genotype_data_id($id1->id);
+
+    my $id2 = Genome::Test::Factory::InstrumentData::Imported->setup_object(
+        library_id => $lib2->id,
+        import_source_name => "tgi",
+        genotype_file => $test_dir.'/1.genotype',
+    );
+    ok(-s $id2->genotype_file, 'genotype file set');
     $sample2->default_genotype_data_id($id2->id);
 
     my $tmp_dir = Genome::Sys->create_temp_directory;

@@ -28,7 +28,7 @@ my $sample = Genome::Sample->__define__(
 
 my @properties_to_copy = $lims_class->properties_to_copy;
 my %properties = (
-    'id' => '2893660983',
+    'id' => Genome::InstrumentData->__meta__->autogenerate_new_object_id(),
     'chip_name' => 'HumanOmniExpress',
     'import_source_name' => 'wugc',
     'sequencing_platform' => 'infinium',

@@ -161,7 +161,7 @@ sub execute {
 
   #If the user defined --max-positions, thin the list of target positions to this max
   if ($self->max_positions){
-    $self->warning_message("Limiting counting to " . $self->max_positions . " positions as specified by --max_positions");
+    $self->warning_message("Limiting counting to " . $self->max_positions . " positions as specified by --max-positions");
     my $c = 0;
     foreach my $p (sort keys %{$pos}){
       $c++;
@@ -568,11 +568,11 @@ sub get_ref_align_builds{
       if (-e $bam_file){
         $builds{$build_id}{bam_file} = $bam_file;
       }else{
-        $self->error_message("Found BAM file path but BAM file is missing for build: $build");
+        $self->error_message("Found BAM file path but BAM file is missing for build: %s", $build->__display_name__);
         exit(1);
       }
     }else{
-      $self->error_message("Could not find BAM file for build: $build");
+      $self->error_message("Could not find BAM file for build: %s", $build->__display_name__);
       exit(1);
     }
   }

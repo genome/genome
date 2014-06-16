@@ -5,6 +5,15 @@ use warnings;
 # do this first so we get usage metrics even if something crashes below
 use Genome::Site::TGI::UsageLog;
 
+use File::Spec qw();
+my $plugins_dir;
+BEGIN {
+    my $file = __FILE__;
+    my $tgi_dir = ($file =~ /(.*)\.pm$/)[0];
+    $plugins_dir = File::Spec->join($tgi_dir, 'SiteLib');
+};
+use lib $plugins_dir;
+
 BEGIN {
     my @shell_vars = qw(
         GENOME_DB

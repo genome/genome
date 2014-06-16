@@ -160,6 +160,13 @@ sub delete {
     for my $attribute (@attributes) {
         Carp::confess "Could not delete attribute " . $attribute->attribute_label . " for subject " . $self->id unless $attribute->delete;
     }
+
+    my @mapping_subjects = Genome::Config::AnalysisProject::SubjectMapping::Subject->get(subject => $self);
+    my @mappings = Genome::Config::AnalysisProject::SubjectMapping->get([map $_->subject_mapping_id, @mapping_subjects]);
+    for my $mapping (@mappings) {
+        Carp::confess "Could not delete mapping " . $mapping->id . " for AnalysisProject " . $mapping->analysis_project->name unless $mapping->delete;
+    }
+
     return $self->SUPER::delete;
 }
 

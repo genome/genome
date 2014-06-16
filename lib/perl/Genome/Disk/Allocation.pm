@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 use Genome::Utility::Instrumentation;
+use Genome::Utility::File::Mode qw(mode);
 
 use Carp qw(croak confess);
 use Digest::MD5 qw(md5_hex);
@@ -104,6 +105,7 @@ class Genome::Disk::Allocation {
             is_many => 1,
             is => 'Genome::Timeline::Event::Allocation',
             reverse_as => 'object',
+            where => ['-order_by' => ['created_at']],
         },
     ],
     has_optional => [
@@ -153,17 +155,6 @@ class Genome::Disk::Allocation {
     id_generator => '-uuid',
 };
 
-sub creation_time {
-    my $self = shift;
-    if ($self->__creation_time) {
-        return $self->__creation_time;
-    }
-    # we should probably just backfill creation_time but to avoid uninitialized
-    # value warnings we can set the default here to epoch
-    my $epoch = Date::Format::time2str(UR::Context::date_template(), 0);
-    return $epoch;
-}
-
 our $CREATE_DUMMY_VOLUMES_FOR_TESTING = 1;
 our @PATHS_TO_REMOVE; # Keeps track of paths created when no commit is on
 
@@ -195,23 +186,10 @@ sub du {
 
 sub set_permissions_read_only {
     my $self = shift;
-
-    $self->set_file_permissions(0444);
-    $self->set_directory_permissions(0555);
-
-    chmod 0555, $self->absolute_path;
-}
-
-sub set_file_permissions {
-    my ($self, $mode) = @_;
-    my @files = File::Find::Rule->file->in($self->absolute_path);
-    chmod $mode, @files;
-}
-
-sub set_directory_permissions {
-    my ($self, $mode) = @_;
-    my @subdirs = File::Find::Rule->directory->in($self->absolute_path);
-    chmod $mode, @subdirs;
+    my @paths = File::Find::Rule->not(File::Find::Rule->symlink)->in($self->absolute_path);
+    for my $path (@paths) {
+        mode($path)->rm_all_writable();
+    }
 }
 
 
@@ -683,7 +661,7 @@ sub _create_directory_closure {
         # This method currently returns the path if it already exists instead of failing
         my $dir = eval{ Genome::Sys->create_directory($path) };
         if (defined $dir and -d $dir) {
-            chmod(02775, $dir);
+            chmod(02770, $dir);
         }
         else {
             $class->error_message("Could not create allocation directory at $path!\n$@");
@@ -737,39 +715,11 @@ sub _mark_read_only_closure {
 
         require File::Find;
         sub mark_read_only {
-            my $file = $File::Find::name;
-            if (-d $file) {
-                chmod 0555, $file;
-            }
-            else {
-                chmod 0444, $file
-            }
+            mode($File::Find::name)->rm_all_writable();
         };
 
         $class->debug_message("Marking directory at $path read-only");
         File::Find::find(\&mark_read_only, $path);
-    };
-}
-
-# Changes an allocation directory to default permissions
-sub _set_default_permissions_closure {
-    my ($class, $path) = @_;
-    return sub {
-        return unless -d $path and not $ENV{UR_DBI_NO_COMMIT};
-
-        require File::Find;
-        sub set_default_perms {
-            my $file = $File::Find::name;
-            if (-d $file) {
-                chmod 0775, $file;
-            }
-            else {
-                chmod 0664, $file
-            }
-        };
-
-        $class->debug_message("Setting permissions to defaults for $path");
-        File::Find::find(\&set_default_perms, $path);
     };
 }
 

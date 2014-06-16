@@ -7,13 +7,13 @@ use Genome;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::SanitizeBam { 
     is => 'Command::V2',
-    has_input => [
+    has_input => {
         dirty_bam_path => {
             is => 'Text',
             doc => 'The path of the dirty bam to clean.',
         }
-    ],
-    has_output => [ 
+    },
+    has_output => {
         clean_bam_path => {
             is => 'Text',
             calculate_from => [qw/ dirty_bam_path /],
@@ -23,15 +23,18 @@ class Genome::InstrumentData::Command::Import::WorkFlow::SanitizeBam {
             },
             doc => 'The path of the clean bam.',
         },
-    ],
+    },
+    has_transient => {
+        _sanitize_metrics => { is => 'Hash', },
+    },
 };
 
 sub execute {
     my $self = shift;
     $self->debug_message('Sanitize bam...');
 
-    my $sort_ok = $self->_sort_bam;
-    return if not $sort_ok;
+    my $sanitize_ok = $self->_sanitize_bam;
+    return if not $sanitize_ok;
 
     my $verify_read_count_ok = $self->_verify_read_count;
     return if not $verify_read_count_ok;
@@ -43,7 +46,7 @@ sub execute {
     return 1;
 }
 
-sub _sort_bam {
+sub _sanitize_bam {
     my $self = shift;
 
     my $dirty_bam_path = $self->dirty_bam_path;
@@ -52,13 +55,41 @@ sub _sort_bam {
     my $clean_bam_path = $self->clean_bam_path;
     $self->debug_message("Clean bam path: $clean_bam_path");
 
-    my $cmd = "/usr/bin/seq-grind sanitize --input $dirty_bam_path --output $clean_bam_path";
+    my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
+    my $sanitize_err = $tmp_dir.'/sanitize.err';
+    my $cmd = "/usr/bin/seq-grind sanitize --input $dirty_bam_path --output $clean_bam_path 2> $sanitize_err";
     my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
     if ( not $rv or not -s $clean_bam_path ) {
         $self->error_message($@) if $@;
-        $self->error_message('Failed to run samtools sort!');
+        $self->error_message('Failed to run samtools sanitize!');
         return;
     }
+
+    my $load_metrics = $self->_load_sanitize_metrics($sanitize_err);
+    return if not $load_metrics;
+
+    return 1;
+}
+
+sub _load_sanitize_metrics {
+    my ($self, $sanitize_err) = @_;
+
+    my $fh = eval{ Genome::Sys->open_file_for_reading($sanitize_err); };
+    if ( not $fh ) {
+        $self->error_message('Failed to open sanitize error file to retrieve metrics.');
+        return;
+    }
+
+    my %metrics;
+    while ( my $line = $fh->getline ) {
+        chomp $line;
+        my ($name, $value) = $line =~ /^seq-grind sanitize sequences (\w+): (\d+)$/;
+        next if not $name;
+        $metrics{$name} = $value;
+    }
+
+    $fh->close;
+    $self->_sanitize_metrics(\%metrics);
 
     return 1;
 }
@@ -76,9 +107,22 @@ sub _verify_read_count {
 
     $self->debug_message('Clean bam read count: '.$clean_flagstat->{total_reads});
     $self->debug_message('Dirty bam read count: '.$dirty_flagstat->{total_reads});
+    my $sanitize_metrics = $self->_sanitize_metrics;
+    $self->debug_message('Sanitize filtered:   '.$sanitize_metrics->{filtered});
 
-    if ( $clean_flagstat->{total_reads} != $dirty_flagstat->{total_reads} ) {
-        $self->error_message('Clean and dirty bam read counts do not match!');
+    if ( $sanitize_metrics->{input} != $dirty_flagstat->{total_reads} ) {
+        $self->error_message('Reads input into sanitize does not match reads in dirty bam: %s vs. %s', $sanitize_metrics->{input}, $dirty_flagstat->{total_reads});
+        return;
+    }
+
+    if ( $self->_sanitize_metrics->{output} != $clean_flagstat->{total_reads} ) {
+        $self->error_message('Reads output by sanitize does not match reads in clean bam: %s vs. %s', $sanitize_metrics->{output}, $clean_flagstat->{total_reads});
+        return;
+    }
+
+    my $filtered = $dirty_flagstat->{total_reads} - $clean_flagstat->{total_reads};
+    if ( $self->_sanitize_metrics->{filtered} != $filtered ) {
+        $self->error_message('Reads filtered by sanitize does not match the difference of dirty - clean reads: %s vs. %s', $sanitize_metrics->{filtered}, $filtered);
         return;
     }
 

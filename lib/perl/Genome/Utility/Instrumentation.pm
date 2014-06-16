@@ -1,5 +1,5 @@
 package Genome::Utility::Instrumentation;
-
+use parent 'Exporter';
 
 # --- WARNING ---
 # This is a prototype interface to the statsd server.
@@ -9,6 +9,16 @@ package Genome::Utility::Instrumentation;
 
 use strict;
 use warnings;
+
+our @EXPORT_OK = qw(
+    dec
+    decrement
+    inc
+    increment
+    gauge
+    timer
+    timing
+);
 
 use Net::Statsd;
 use Time::HiRes;

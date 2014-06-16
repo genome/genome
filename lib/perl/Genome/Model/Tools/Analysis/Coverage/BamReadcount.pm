@@ -242,7 +242,7 @@ sub execute {
 
     #split out the chromosome we're working on, if necessary
     if (defined($chrom) && ($chrom ne "all")){
-        my $cmd = "grep \"^" . $chrom . "[[:space:]]\" $variant_file>$tempdir/varfile";
+        my $cmd = "grep \"^" . $chrom . "[[:space:]]\" '" . $variant_file . "' >'" . $tempdir . "/varfile'";
         my $return = Genome::Sys->shellcmd(
             cmd => "$cmd",
         );

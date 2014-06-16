@@ -91,7 +91,7 @@ sub execute {
                 'TEMPLATE' => 'PAP_XXXXXXXX',
                 'UNLINK'   => 0,
             );
-            chmod 0666, $chunk_fh->filename();
+            chmod 0660, $chunk_fh->filename();
             $seq_out = Bio::SeqIO->new(-fh => $chunk_fh, -format => 'Fasta');
             push @output_files, $chunk_fh->filename();
         }

@@ -263,4 +263,24 @@ subtest 'SNV One-based test' => sub {
     compare_ok($expected_bed, $test_output, name => 'output matched expected results');
 };
 
+subtest 'No sample data' => sub {
+    my $snv_vcf_input = $base_test_dir . "test_no_sample_data.vcf";
+    my $expected_bed = $base_test_dir . "expected_no_sample_data.bed";
+    my $test_output = $temp_base_dir . "test_no_sample_data.bed";
+
+    my $converter = Genome::Model::Tools::Bed::Convert::VcfToBed->create(
+       source => $snv_vcf_input,
+       output => $test_output,
+       one_based => 1,
+    );
+
+    ok($converter, 'converter created');
+    my $rv = $converter->execute;
+    is($rv, 1, 'Testing for succesful execution. Expecting 1. Got : ' . $rv);
+
+    ok(-s $test_output, "output file created");
+
+    compare_ok($expected_bed, $test_output, name => 'output matched expected results');
+};
+
 done_testing();

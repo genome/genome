@@ -302,8 +302,24 @@ sub _mpileup_or_pileup {
 }
 
 sub is_mpileup_compatible {
-    my ($ver_num) = shift->version =~ /r(\d+)/;
-    return $ver_num >= 599;   #samtools r599 is the first version to have mpileup
+    # TODO This capability/version checking should be centralized in GMT::Sam
+    my $self = shift;
+    my $version_string = $self->version;
+    if ($version_string =~ /r(\d+)/) {
+        my $version_number = $1;
+        return $version_number >= 599;
+    } elsif ($version_string =~ /(\d+)\.(\d+)\.(\d+)/) {
+        # Try comparing version string against 0.1.8 (version '0.1.7ar599' is
+        # also compatible, but it should be covered by the above check)
+        my @version_min = ('0', '1', '8');
+        my @version_cur = ($1, $2, $3);
+        for (0..2) {
+            return 0 if $version_min[$_] > $version_cur[$_];
+            return 1 if $version_min[$_] < $version_cur[$_];
+        }
+        return 1; # Versions are equal
+    }
+    return 0;
 }
 
 

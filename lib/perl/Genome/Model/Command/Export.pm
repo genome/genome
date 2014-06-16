@@ -38,7 +38,7 @@ sub resolve_reports_directory {
             $self->error_message("Directory $reports_dir doesn't exist, can't create");
             return;
         }
-        chmod 02775, $reports_dir;
+        chmod 02770, $reports_dir;
     }
 
     return $reports_dir;

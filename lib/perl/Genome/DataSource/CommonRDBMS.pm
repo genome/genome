@@ -114,7 +114,7 @@ sub log_commit_time {
         print STDERR "Couldn't open $path for appending: $!\n";
         return;
     }
-    chmod(0666,$path);
+    chmod(0660,$path);
     my $lock_status = File::lockf::lock($fh);
     # lock gives us a zero return value on success
     unless ($lock_status != 0) {
@@ -170,7 +170,7 @@ sub _determine_base_log_pathname {
     my $dir = join('/', $base_dir, $dt->year);
     unless (-d $dir) {
         mkdir $dir;
-        chmod(0777, $dir);
+        chmod(0770, $dir);
     }
 
     my $file = join('-', $dt->month, $dt->day);
@@ -185,7 +185,7 @@ sub open_error_log {
         print STDERR "Couldn't open $path for appending: $!\n";
         return;
     }
-    chmod(0666,$path);
+    chmod(0660,$path);
     return $fh;
 }
 

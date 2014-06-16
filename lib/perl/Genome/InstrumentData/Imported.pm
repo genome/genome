@@ -4,8 +4,11 @@ use strict;
 use warnings;
 
 use Genome;
+
+require File::Basename;
 use File::stat;
 use File::Path;
+use Genome::InstrumentData::Microarray;
 use Set::Scalar;
 
 class Genome::InstrumentData::Imported {
@@ -136,14 +139,6 @@ class Genome::InstrumentData::Imported {
         reference_sequence_build => {
             is => 'Genome::Model::Build::ImportedReferenceSequence',
             id_by => 'reference_sequence_build_id',
-        },
-        genotype_file => {
-            is => 'Text',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_optional => 1,
-            is_mutable => 1,
-            where => [ attribute_label => 'genotype_file' ],
         },
         blacklisted_segments => {
             is_many => 1,
@@ -547,79 +542,6 @@ sub get_segments {
     }
 
     return map {{segment_type=>'read_group', segment_id=>$_}} $read_groups->elements;
-}
-
-# Microarray stuff eventually need to subclass
-sub genotype_microarray_raw_file {
-    my $self = shift;
-
-    my $disk_allocation = $self->allocations;
-    return if not $disk_allocation;
-
-    my $absolute_path = $disk_allocation->absolute_path;
-    Carp::confess('No absolute path for instrument data ('.$self->id.') disk allocation: '.$disk_allocation->id) if not $absolute_path;
-    my $sample_name = $self->sample_name;
-    Carp::confess('No sample name for instrument data: '.$self->id) if not $sample_name;
-
-    # sanitize these
-    $sample_name =~ s/[^\w\-\.]/_/g;
-    return $absolute_path.'/'.$sample_name.'.raw.genotype';
-}
-
-sub genotype_microarray_file_for_subject_and_version {
-    my ($self, $subject_name, $version) = @_;
-
-    Carp::confess('No reference name given to get genotype microarray file') if not $subject_name;
-    Carp::confess('No version given to get genotype microarray file') if not defined $version;
-
-    my $disk_allocation = $self->allocations;
-    if (not $disk_allocation) {
-        $self->status_message('Missing disk allocation for genotype microarray file.');
-        return;
-    }
-
-    my $absolute_path = $disk_allocation->absolute_path;
-    Carp::confess('No absolute path for instrument data ('.$self->id.') disk allocation: '.$disk_allocation->id) if not $absolute_path;
-    my $sample_name = $self->sample_name;
-
-    # sanitize these
-    $sample_name =~ s/[^\w\-\.]/_/g;
-    $subject_name =~ s/[^\w\-\.]/_/g;
-    Carp::confess('No sample name for instrument data: '.$self->id) if not $sample_name;
-
-    my $file_glob = "$absolute_path/*.$subject_name-$version.genotype";
-    $self->status_message("Looking for genotype file like '$file_glob'.");
-    my @files = glob $file_glob;
-    if (@files > 1) {
-        $self->status_message("Found multiple matching genotype files.");
-        die $self->status_message;
-    }
-    elsif (@files == 0) {
-        # previous behavior was to return this path always but now we give preference to
-        # existing files
-        return "$absolute_path/$sample_name.$subject_name-$version.genotype";
-    }
-    else {
-        return $files[0];
-    }
-}
-
-sub genotype_microarray_file_for_human_version_37 {
-    my $self = shift;
-    return $self->genotype_microarray_file_for_subject_and_version('human', '37');
-}
-
-sub genotype_microarray_file_for_human_version_36 {
-    my $self = shift;
-    return $self->genotype_microarray_file_for_subject_and_version('human', '36');
-}
-
-sub genotype_microarray_file_for_reference_sequence_build {
-    my ($self, $build) = @_;
-
-    Carp::confess('No refernce sequence build given to get genotype microarray file') if not $build;
-
-    return $self->genotype_microarray_file_for_subject_and_version($build->subject_name, $build->version);
 }
 
 1;

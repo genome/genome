@@ -162,8 +162,8 @@ sub params_for_alignment {
 
     my %params = (
         instrument_data_id => $self->instrument_data_id || undef,
-        instrument_data_segment_type => $self->instrument_data_segment_type || undef,
-        instrument_data_segment_id => $self->instrument_data_segment_id || undef,
+        instrument_data_segment_type => $self->instrument_data_segment_type // undef,
+        instrument_data_segment_id => $self->instrument_data_segment_id // undef,
 
         aligner_name => $self->name || undef,
         aligner_version => $self->version || undef,
@@ -231,6 +231,7 @@ sub _process_alignments {
 
     $self->_link_alignment_to_inputs($alignment);
     $self->result_id($alignment->id);
+    $self->debug_message("Using alignment %s", $alignment->id);
 
     $self->debug_message("Complete!");
     return 1;

@@ -451,7 +451,7 @@ sub _set_temp_working_directory {
         CLEANUP => 0,
         UNLINK => 0,
     );
-    chmod(0775, $temp_dir);
+    chmod(0770, $temp_dir);
     $self->temp_working_directory($temp_dir);
     $self->debug_message("Not given temp working directory, using $temp_dir");
     return 1;

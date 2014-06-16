@@ -29,9 +29,7 @@ sub create {
     return if not $self;
 
     if ( $self->variation_list_build ) {
-        $self->{snp_id_mapping} = Genome::InstrumentData::Microarray->get_snpid_hash_for_variant_list(
-            $self->instrument_data, $self->variation_list_build
-        );
+        $self->{snp_id_mapping} = $self->instrument_data->get_snpid_hash_for_variant_list($self->variation_list_build);
     }
     $self->{snp_id_mapping} ||= {};
 

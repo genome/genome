@@ -15,6 +15,12 @@ class Genome::Model::Build::Command::Unarchive {
             doc => 'Build(s) to use. Resolved from command line via text string.',
             require_user_verify => 0,
         },
+        queue => {
+            is => 'Boolean',
+            doc => 'If enabled, will queue the model after successful unarchive.',
+            is_optional => 1,
+            default => 0,
+        },
     ],
 };
 
@@ -42,7 +48,7 @@ sub _execute {
         DIR => "/gsc/var/tmp/build_unarchive", 
         CLEANUP => 0
     );
-    chmod 0755, $dir;
+    chmod 0750, $dir;
 
     $self->status_message("Unarchiving data for $total_builds builds, logs being written to $dir");
 
@@ -127,6 +133,9 @@ sub _execute {
         }
         else {
             $msg .= ", all $num_allocations unarchives finished successfully.";
+            if ($self->queue) {
+                $build->model->build_requested(1, 'queue requested after unarchive');
+            }
         }
         $self->status_message($msg);
     }

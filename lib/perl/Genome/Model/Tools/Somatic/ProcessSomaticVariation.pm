@@ -250,7 +250,6 @@ sub annoFileToSlashedBedFile{
 
 sub bedToAnno{
     my ($chr,$start,$stop,$ref,$var) = split("\t",$_[0]);
-    #print STDERR join("|",($chr,$start,$stop,$ref,$var)) . "\n";
     if ($ref =~ /^[-0*]/){ #indel INS
         $stop = $stop+1;
     } else { #indel DEL or SNV
@@ -337,8 +336,11 @@ sub cleanFile{
     }
     close(OUTFILE);
     close($inFh);
-    `joinx sort -i $newfile >$newfile.tmp`;
-    `mv -f $newfile.tmp $newfile`;
+
+    my $cmd = "joinx sort -i '" . $newfile . "' >'" . $newfile . ".tmp'";
+    `$cmd`;
+    $cmd = "mv -f '" . $newfile . ".tmp' '" . $newfile . "'";
+    `$cmd`;
     return($newfile)
 }
 
@@ -385,7 +387,7 @@ sub removeFilterSites{
     my $newfile = addName($file,"filtered");
     #handle zero size files
     if( -z $file ){
-        `touch $newfile`;
+        my $cmd = "touch '" . $newfile . "'";
         return($newfile);
     }
 
@@ -455,7 +457,6 @@ sub removeUnsupportedSites{
     
     #hash all of the sites
     my $sites = getFilterSites($snv_file);
-    print "here\n";
     for my $k (keys(%{$sites})){
         $sites->{$k} = 0;
     }
@@ -518,7 +519,8 @@ sub doAnnotation{
 
     #handle zero size files
     if( -z $file ){
-        `touch $file.anno`;
+        my $cmd = "touch '" . $file . ".anno'";
+        `$cmd`;
         return($file . ".anno");
     }
 
@@ -542,7 +544,8 @@ sub addTiering{
 
     #handle zero size files
     if( -z $file ){
-        `touch $newfile`;
+        my $cmd = "touch '" . $newfile . "'";
+        `$cmd`;
         return($newfile);
     }
 
@@ -580,7 +583,8 @@ sub getReadcounts{
             die "Failed to obtain readcounts for file $file.\n";
         }
     } else {
-        `touch $file.rcnt`;
+        my $cmd = "touch '" . $file . ".rcnt'";
+        `$cmd`;
     }
     return("$file.rcnt");
 }
@@ -596,8 +600,7 @@ sub execute {
   if(!(-e $output_dir)){
       mkdir($output_dir);
   }
-
-  # Check on the input data before starting work
+    # Check on the input data before starting work
   my $model = Genome::Model->get( $somatic_variation_model_id );
   print STDERR "ERROR: Could not find a model with ID: $somatic_variation_model_id\n" unless( defined $model );
   print STDERR "ERROR: Output directory not found: $output_dir\n" unless( -e $output_dir );
@@ -643,7 +646,6 @@ sub execute {
       }
   }
 
-
   # create subdirectories, get files in place
 
   # if multiple models with the same name, add a suffix
@@ -656,15 +658,15 @@ sub execute {
       }
       $sample_name = $newname;
   }
-  #make the directory structure
+    #make the directory structure
   mkdir "$output_dir/$sample_name";
   mkdir "$output_dir/$sample_name/snvs" unless( -e "$output_dir/$sample_name/snvs" );
   mkdir "$output_dir/$sample_name/indels" unless( -e "$output_dir/$sample_name/indels" );
   mkdir "$output_dir/review" unless( -e "$output_dir/review" || !($self->create_review_files));
-  `ln -s $build_dir $output_dir/$sample_name/build_directory`;
+  my $cmd = "ln -s '" . $build_dir . "' '" . $output_dir . "/" . $sample_name . "/build_directory'";;
+  `$cmd`;
 
-
-
+  
   # Check if the necessary files exist in this build
   my $snv_file = "$build_dir/effects/snvs.hq.novel.tier1.v2.bed";
   unless( -e $snv_file ){
@@ -685,16 +687,24 @@ sub execute {
       }
   }
 
+    #cat all the filtered snvs together (same for indels) 
+  my @sfiles = glob("$build_dir/effects/snvs.hq.novel.tier*.v2.bed");
+  @sfiles = (@sfiles, glob("$build_dir/effects/snvs.hq.previously_detected.tier*.v2.bed"));
+  #enclose names in single quotes to handle special characters in bash
+  $cmd = "cat '" . join("' '", @sfiles) . "' | joinx sort >'" . $output_dir . "/" . $sample_name . "/snvs/snvs.hq.bed'";
+  `$cmd`;
 
-  #cat all the filtered snvs together (same for indels)
-  `cat $build_dir/effects/snvs.hq.novel.tier*.v2.bed $build_dir/effects/snvs.hq.previously_detected.tier*.v2.bed | joinx sort >$output_dir/$sample_name/snvs/snvs.hq.bed`;
-  `cat $build_dir/effects/indels.hq.novel.tier*.v2.bed $build_dir/effects/indels.hq.previously_detected.tier*.v2.bed | joinx sort >$output_dir/$sample_name/indels/indels.hq.bed`;
+  @sfiles = glob("$build_dir/effects/indels.hq.novel.tier*.v2.bed");
+  @sfiles = (@sfiles, glob("$build_dir/effects/indels.hq.previously_detected.tier*.v2.bed"));
+  $cmd = "cat '" . join("' '", @sfiles) . "' | joinx sort >'" . $output_dir . "/" . $sample_name . "/indels/indels.hq.bed'";
+  `$cmd`;
 
-#  `ln -s $snv_file $output_dir/$sample_name/snvs/` unless( -e "$output_dir/$sample_name/snvs/$snv_file");
-#  `ln -s $indel_file $output_dir/$sample_name/indels/` unless( -e "$output_dir/$sample_name/indels/$indel_file");
   if($process_svs){
-      `mkdir $output_dir/$sample_name/svs`;
-      `ln -s $sv_file $output_dir/$sample_name/svs/svs.hq` unless( -e "$output_dir/$sample_name/svs/$sv_file");
+      mkdir("$output_dir/$sample_name/svs");
+      unless( -e "$output_dir/$sample_name/svs/$sv_file"){
+          $cmd = "ln -s '" . $sv_file . "' '" . $output_dir . "/" . $sample_name . "/svs/svs.hq'";
+          `$cmd`;
+      }
 
 #       #annotate the svs
 #       my $anno_cmd = Genome::Model::Tools::Annotate::Sv::Combine->create(
@@ -726,16 +736,12 @@ sub execute {
   $snv_file = "$output_dir/$sample_name/snvs/snvs.hq.bed";
   $indel_file = "$output_dir/$sample_name/indels/indels.hq.bed";
 
-
-
   my %dups;
-
-
-  #munge through SNV file to remove duplicates and fix IUB codes
+  
   #--------------------------------------------------------------
+  #munge through SNV file to remove duplicates and fix IUB codes
   $snv_file = cleanFile($snv_file);
   $indel_file = cleanFile($indel_file);
-
 
 
   #-------------------------------------------------
@@ -768,11 +774,15 @@ sub execute {
           my $new_snv_file = addName($snv_file,"ontarget");
           my $new_indel_file = addName($indel_file,"ontarget");
           
-          `joinx sort $output_dir/$sample_name/featurelist.tmp >$output_dir/$sample_name/featurelist`;
-          `rm -f $output_dir/$sample_name/featurelist.tmp`;
-          `joinx intersect -a $snv_file -b $output_dir/$sample_name/featurelist >$new_snv_file`;
+          $cmd = "joinx sort '" . $output_dir . "/" . $sample_name . "/featurelist.tmp'" . " >'" . $output_dir . "/" . $sample_name . "/featurelist'";
+          `$cmd`;
+          $cmd = "rm -f '" . $output_dir . "/" . $sample_name . "/featurelist.tmp'";
+          `$cmd`;
+          $cmd = "joinx intersect -a '" . $snv_file . "' -b '" . $output_dir . "/" . $sample_name . "/featurelist' >'" . $new_snv_file . "'";
+          `$cmd`;
           $snv_file = "$new_snv_file";
-          `joinx intersect -a $indel_file -b $output_dir/$sample_name/featurelist >$new_indel_file`;
+          $cmd = "joinx intersect -a '" . $indel_file . "' -b '" . $output_dir . "/" . $sample_name . "/featurelist' >'" . $new_indel_file . "'";
+          `$cmd`;
           $indel_file = "$new_indel_file";      
       } else {
           $self->warning_message("feature list not found or target regions not specified; No target region filtering being done even though --restrict-to-target-regions set.");
@@ -908,11 +918,16 @@ sub execute {
 
   #------------------------------------------------------
   # combine the files into one master table
-  `head -n 1 $snv_file >$output_dir/$sample_name/snvs.indels.annotated`;
-  `tail -n +2 $indel_file >>$output_dir/$sample_name/snvs.indels.annotated.tmp`;
-  `tail -n +2 $snv_file >>$output_dir/$sample_name/snvs.indels.annotated.tmp`;
-  `joinx sort -i $output_dir/$sample_name/snvs.indels.annotated.tmp >>$output_dir/$sample_name/snvs.indels.annotated`;
-  `rm -f $output_dir/$sample_name/snvs.indels.annotated.tmp`;
+  $cmd = "head -n 1 '" . $snv_file . "' >'" . $output_dir . "/" . $sample_name . "/snvs.indels.annotated'";
+  `$cmd`;
+  $cmd = "tail -n +2 '" . $indel_file . "' >>'" . $output_dir . "/" . $sample_name . "/snvs.indels.annotated.tmp'";
+  `$cmd`;  
+  $cmd = "tail -n +2 '" . $snv_file . "' >>'" . $output_dir . "/" . $sample_name . "/snvs.indels.annotated.tmp'";
+  `$cmd`;
+  $cmd = "joinx sort -i '" . $output_dir . "/" . $sample_name . "/snvs.indels.annotated.tmp' >>'" . $output_dir . "/" . $sample_name . "/snvs.indels.annotated'";
+  `$cmd`;
+  $cmd = "rm -f '" . $output_dir . "/" . $sample_name . "/snvs.indels.annotated.tmp'";
+  `$cmd`;
 
   # convert master table to excel
   my $workbook  = Spreadsheet::WriteExcel->new("$output_dir/$sample_name/snvs.indels.annotated.xls");
@@ -940,10 +955,14 @@ sub execute {
       my @tiers = split(",",$self->tiers_to_review);
       my $tierstring = join("",@tiers);
       for my $i (@tiers){
-          `grep -w tier$i $output_dir/$sample_name/snvs.indels.annotated >>$output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp`;
+          $cmd = "grep -w tier$i '" . $output_dir . "/" . $sample_name . "/snvs.indels.annotated' >>'" . $output_dir . "/" . $sample_name . "/snvs.indels.annotated.tier" . $tierstring . ".tmp'";
+          `$cmd`;
       }
-      `joinx sort -i $output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp >$output_dir/$sample_name/snvs.indels.annotated.tier$tierstring`;
-      `rm -f $output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp`;
+      $cmd = "joinx sort -i '" . $output_dir . "/" . $sample_name . "/snvs.indels.annotated.tier" . $tierstring . ".tmp' >'" . $output_dir . "/" . $sample_name . "/snvs.indels.annotated.tier" . $tierstring . "'";
+      `$cmd`;
+      $cmd = "rm -f '" . $output_dir . "/" . $sample_name . "/snvs.indels.annotated.tier$tierstring.tmp'";
+      `$cmd`;
+
       annoFileToSlashedBedFile("$output_dir/$sample_name/snvs.indels.annotated.tier$tierstring","$output_dir/review/$sample_name.bed");
 
       my $bam_files;
@@ -988,33 +1007,40 @@ sub execute {
       #VCF files
       if($self->include_vcfs_in_archive){
           if(-e "$build_dir/variants/indels.detailed.vcf.gz"){
-              `ln -s $build_dir/variants/indels.detailed.vcf.gz $sample_name/indels.vcf.gz`;
+              $cmd = "ln -s '" . $build_dir . "/variants/indels.detailed.vcf.gz' '" . $sample_name . "/indels.vcf.gz'";
+              `$cmd`;
           } elsif(-e "$build_dir/variants/indels.vcf.gz") {
-              `ln -s $build_dir/variants/indels.vcf.gz $sample_name/indels.vcf.gz`;
+              $cmd = "ln -s '" . $build_dir . "/variants/indels.vcf.gz' '" . $sample_name . "/indels.vcf.gz'";
+              `$cmd`;
           } else {
               print STDERR "WARNING: no indel VCF file available. If this is an older model, a rebuild may fix this\n";
           }
           if(-e "$build_dir/variants/snvs.annotated.vcf.gz"){
-              `ln -s $build_dir/variants/snvs.annotated.vcf.gz  $sample_name/snvs.vcf.gz`;
+              $cmd = "ln -s '" . $build_dir . "/variants/snvs.annotated.vcf.gz' '" . $sample_name . "/snvs.vcf.gz'";
+              `$cmd`;
           } elsif (-e "$build_dir/variants/snvs.vcf.gz"){
-              `ln -s $build_dir/variants/snvs.vcf.gz  $sample_name/snvs.vcf.gz`;
+              $cmd = "ln -s '" . $build_dir . "/variants/snvs.vcf.gz' '" . $sample_name . "/snvs.vcf.gz'";
+              `$cmd`;
           } else {
               print STDERR "WARNING: no snv VCF file available. If this is an older model, a rebuild may fix this\n";
           }
       }
       #annotated snvs and indels
-      `ln -s ../snvs.indels.annotated $sample_name/snvsAndIndels.annotated`;
+      $cmd = "ln -s ../snvs.indels.annotated '" . $sample_name . "/snvsAndIndels.annotated'";
+      `$cmd`;
       #same in excel format
-      `ln -s ../snvs.indels.annotated.xls $sample_name/snvsAndIndels.annotated.xls`;
+      $cmd = "ln -s ../snvs.indels.annotated.xls '" . $sample_name . "/snvsAndIndels.annotated.xls'";
+      `$cmd`;
       #sv calls
       if($process_svs){
-          `ln -s $sv_file $output_dir/$sample_name/$sample_name/svs`;
-          #`ln -s $sv_file $output_dir/$sample_name/$sample_name/svs.annotated`;
+          $cmd = "ln -s '" . $sv_file . "' '" . $output_dir . "/" . $sample_name . "/svs'";
+          `$cmd`;
       }
       #cnv calls - todo
 
       #tar it up
-      `tar -chzvf $sample_name.tar.gz $sample_name`;
+      $cmd = "tar -chzvf '" . $sample_name . ".tar.gz' '" . $sample_name ."'";
+      `$cmd`;
   }
 
   return 1;

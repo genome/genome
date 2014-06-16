@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Genome::Utility::File::Mode qw(mode);
 
 class Genome::FeatureList {
     table_name => 'model.feature_list',
@@ -101,11 +102,6 @@ class Genome::FeatureList {
         },
     ],
     has_optional_transient => [
-        #TODO These could be pre-computed and stored in the allocation rather than re-generated every time
-        _processed_bed_file_path => {
-            is => 'Text',
-            doc => 'The path to the temporary dumped copy of the post-processed BED file',
-        },
         _merged_bed_file_path => {
             is => 'Text',
             doc => 'The path to the temporary dumped copy of the merged post-processed BED file',
@@ -160,9 +156,9 @@ sub create {
         $self->delete;
         return;
     }
-    #set the newly copied file to read only
+
     my $result = eval{
-        chmod 0444, $self->file_path;
+        mode($self->file_path)->rm_all_writable;
     };
     if($@ or !$result){
         $self->error_message("Could not modify file permissions for: ".$self->file_path);
@@ -364,14 +360,21 @@ sub processed_bed_file {
         die $self->error_message;
     }
 
-    unless($self->_processed_bed_file_path) {
-        my $content = $self->processed_bed_file_content(%args);
-        my $temp_file = Genome::Sys->create_temp_file_path( $self->id . '.processed.bed' );
-        Genome::Sys->write_file($temp_file, $content);
-        $self->_processed_bed_file_path($temp_file);
-    }
+    my $content = $self->processed_bed_file_content(%args);
+    my $temp_file = Genome::Sys->create_temp_file_path($self->processed_bed_file_name(%args));
+    Genome::Sys->write_file($temp_file, $content);
+    return $temp_file;
+}
+Memoize::memoize('processed_bed_file');
 
-    return $self->_processed_bed_file_path;
+sub processed_bed_file_name {
+    my $self = shift;
+    my %args = @_;
+    my @args_strings;
+    for my $key (sort keys %args) {
+        push @args_strings, "$key-".$args{$key};
+    }
+    return $self->id . join("_", @args_strings).'.processed.bed';
 }
 
 sub generate_merged_bed_file {
@@ -517,7 +520,13 @@ sub get_tabix_and_gzipped_bed_file {
         die $self->error_message("Cannot convert format of BED file with unknown format");
     }
 
-    return $self->gzip_and_tabix_bed($self->file_path);
+    my $processed_bed = $self->processed_bed_file(short_name => 0);
+    my $sorted_processed_bed = Genome::Sys->create_temp_file_path;
+    Genome::Model::Tools::Joinx::Sort->execute(
+        input_files => [$processed_bed],
+        output_file => $sorted_processed_bed,
+    );
+    return $self->gzip_and_tabix_bed($sorted_processed_bed);
 }
 
 sub gzip_and_tabix_bed {
@@ -541,6 +550,21 @@ sub gzip_and_tabix_bed {
     }
 
     return $gzipped_file;
+}
+
+sub chromosome_list {
+    my $self = shift;
+    my $indexed_bed = $self->get_tabix_and_gzipped_bed_file;
+    my $list_command = Genome::Model::Tools::Tabix::ListChromosomes->execute(
+        input_file => $indexed_bed,
+    );
+
+    my @chromosomes = $list_command->chromosomes;
+    unless ($list_command and @chromosomes) {
+        die $self->error_message("Failed to tabix list-chromosomes on indexed bed (%s) of bed (%s)", $indexed_bed, $self->processed_bed_file(short_name => 0));
+    }
+
+    return @chromosomes;
 }
 
 1;

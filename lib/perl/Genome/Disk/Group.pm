@@ -6,6 +6,9 @@ use warnings;
 use Genome;
 use Carp qw(confess);
 use Memoize qw(memoize);;
+use Module::Find qw(findsubmod usesub);
+
+usesub Genome::Disk::Group::Validate;
 
 class Genome::Disk::Group {
     table_name => 'DISK_GROUP',
@@ -15,7 +18,7 @@ class Genome::Disk::Group {
     has => [
         disk_group_name => { is => 'Text' },
         permissions => { is => 'Number' },
-        setgid => { is => 'Number', is_transient => 1 }, #transient during transition from "sticky" column
+        setgid => { is => 'Number', is_transient => 1, is_optional => 1 }, #transient during transition from "sticky" column
         subdirectory => { is => 'Text' },
         unix_uid => { is => 'Number' },
         unix_gid => { is => 'Number' },
@@ -96,23 +99,11 @@ sub _get_single {
     return $self;
 }
 
-# TODO This needs to be removed, site-specific
-my %VALID_NAMES = (
-    $ENV{GENOME_DISK_GROUP_DEV} => 1,
-    $ENV{GENOME_DISK_GROUP_REFERENCES} => 1,
-    $ENV{GENOME_DISK_GROUP_ALIGNMENTS} => 1,
-    $ENV{GENOME_DISK_GROUP_MODELS} => 1,
-    $ENV{GENOME_DISK_GROUP_TRASH} => 1,
-    $ENV{GENOME_DISK_GROUP_RESEARCH} => 1,
-);
 sub validate {
     my $self = shift;
-
-    unless ($ENV{UR_DBI_NO_COMMIT}) {
-        unless ($VALID_NAMES{$self->disk_group_name}) {
-            confess sprintf("Disk group name (%s) not allowed.",
-                $self->disk_group_name);
-        }
+    my @validators = findsubmod Genome::Disk::Group::Validate;
+    for (@validators) {
+        $_->validate($self);
     }
 }
 

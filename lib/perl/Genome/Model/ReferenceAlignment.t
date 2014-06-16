@@ -26,9 +26,8 @@ my $build_id = 97848505;
 my @completed = $m->completed_builds;
 for my $b (@completed) {
     next if $b->id == $build_id;
-    my $e = $b->build_event;
-    $e->event_status('Running');
-    $e->date_completed(undef);
+    $b->status('Running');
+    $b->date_completed(undef);
 }
 
 my $last_complete_build = $m->last_complete_build;

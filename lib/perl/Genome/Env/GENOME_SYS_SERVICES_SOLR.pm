@@ -1,5 +1,5 @@
 package Genome::Env::GENOME_SYS_SERVICES_SOLR;
-our $default_value = 'http://localhost:8080/genome_solr';
+sub default_value { 'http://localhost:8080/genome_solr' }
 
 =pod
 

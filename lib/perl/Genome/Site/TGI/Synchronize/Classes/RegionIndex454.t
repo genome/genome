@@ -22,7 +22,7 @@ is($lims_class->genome_class_for_comparison, $expected_genome_class, 'genome cla
 is($lims_class->genome_class_for_create, $expected_genome_class, 'genome class for create');
 
 my %properties = (# real example
-    id          => 2893608436,
+    id          => Genome::InstrumentData->__meta__->autogenerate_new_object_id(),
     library_id  => 2892972865,
     run_name    => 'R_2013_09_27_11_18_20_FLX12070281_Administrator_143098577',
     subset_name => '2-TTGAACTC',

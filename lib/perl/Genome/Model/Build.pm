@@ -12,6 +12,7 @@ use File::Path;
 use File::Find 'find';
 use File::Next;
 use File::Basename qw/ dirname fileparse /;
+use List::MoreUtils qw(uniq);
 use Regexp::Common;
 use Workflow;
 use YAML;
@@ -21,7 +22,7 @@ use Genome::Sys::LSF::bsub qw();
 use Genome::Utility::Email;
 
 class Genome::Model::Build {
-    is => ['Genome::Notable','Genome::Searchable'],
+    is => ['Genome::Notable','Genome::Searchable', 'Genome::Utility::ObjectWithTimestamps', 'Genome::Utility::ObjectWithCreatedBy'],
     type_name => 'genome model build',
     table_name => 'model.build',
     is_abstract => 1,
@@ -64,10 +65,10 @@ class Genome::Model::Build {
         type_name               => { via => 'model', is => 'Text' },
         subject                 => { via => 'model', is => 'Genome::Subject' },
         processing_profile      => { via => 'model', is => 'Genome::ProcessingProfile' },
-        run_by                  => { via => 'creation_event', to => 'user_name' },
-        status                  => { via => 'creation_event', to => 'event_status', is_mutable => 1 },
-        date_scheduled          => { via => 'creation_event', to => 'date_scheduled', },
-        date_completed          => { via => 'creation_event', to => 'date_completed' },
+        run_by                  => { is => 'Text', doc => "the user whose build is run" },
+        status                  => { is => 'Text', doc => "the current status of the build" },
+        date_scheduled          => { is => 'Timestamp', is_optional => 1, doc => "when the build was originally scheduled" },
+        date_completed          => { is => 'Timestamp', is_optional => 1, doc => "when the build has finally completed" },
 
         # this is the one event type we tentatively intended to keep for builds
         # even fully workflowified, it is possibly still a candidate for retention, logging things like input changes, etc.
@@ -82,14 +83,8 @@ class Genome::Model::Build {
         },
         disk_allocation   => { 
             is => 'Genome::Disk::Allocation', 
-            calculate_from => [ 'class', 'id' ],
-            calculate => q(
-                my $disk_allocation = Genome::Disk::Allocation->get(
-                                        owner_class_name => $class,
-                                        owner_id => $id,
-                                    );
-                return $disk_allocation;
-            ) 
+            is_many => 1,
+            reverse_as => 'owner'
         },
         software_revision => { 
             is => 'Text', 
@@ -363,6 +358,8 @@ sub create {
         }
 
         # Create master event, which stores status/user/date created, etc
+        $self->status('New');
+        $self->run_by(Genome::Sys->username);
         unless ($self->_create_master_event) {
             Carp::confess "Could not create master event for new build of model " . $self->model->__display_name__;
         }
@@ -373,7 +370,8 @@ sub create {
     };
 
     if ($@) {
-        $self->error_message("Could not create new build of model " . $self->__display_name__ . ", reason: $@");
+        my $error = $@;
+        $self->error_message("Could not create new build of model " . $self->__display_name__ . ", reason: $error");
         $self->delete;
         return;
     }
@@ -782,22 +780,11 @@ sub event_allocations {
 
 sub all_results {
     my $self = shift;
-
-    my @users = $self->result_users;
-    my %seen;
-    my @results;
-    while(@users) {
-        my $u = shift @users;
-        my $result = $u->software_result;
-        next if $seen{$result->id}; #already processed
-
-        push @results, $result;
-        push @users, Genome::SoftwareResult::User->get(user_class_name => $result->class, user_id => $result->id);
-        $seen{$result->id}++;
-    }
-
-    return @results;
+    my @results = $self->results;
+    my @ancestors = map { $_->ancestors } @results;
+    return uniq @results, @ancestors;
 }
+
 
 sub symlinked_allocations {
     my $self = shift;
@@ -1011,7 +998,7 @@ sub start {
         }
 
         # Record that the event has been scheduled.
-        $self->the_master_event->schedule;
+        $self->schedule;
 
         # Creates a workflow for the build
         # TODO Initialize workflow shouldn't take arguments
@@ -1035,12 +1022,24 @@ sub start {
             header_text => 'Unstartable',
             body_text => "Could not start build, reason: $error",
         );
-        $self->the_master_event->event_status('Unstartable');
+        $self->status('Unstartable');
         $self->error_message("Could not start build " . $self->__display_name__ . ", reason: $error");
         return;
     }
 
     return 1;
+}
+
+sub schedule {
+    my $self = shift;
+
+    $self->status("Scheduled");
+    $self->date_scheduled( UR::Context->current->now );
+    $self->date_completed(undef);
+
+    if($self->the_master_event) {
+        $self->the_master_event->schedule;
+    }
 }
 
 sub post_allocation_initialization {
@@ -1053,7 +1052,6 @@ sub validate_for_start_methods {
     # Be very wary of removing any of these as many subclasses use SUPER::validate_for_start_methods.
     # Each method should return tags.
     my @methods = (
-        'validate_run_as',
         # 'validate_inputs_have_values' should be checked first.
         'validate_inputs_have_values',
         'inputs_have_compatible_reference',
@@ -1118,21 +1116,6 @@ sub validate_instrument_data{
         }
     }
     return @tags;
-}
-
-sub validate_run_as {
-    my $self = shift;
-
-    return unless $self->_should_run_as && $self->_can_run_as;
-
-    my $user = Genome::Sys::User->get(username => $self->model->run_as);
-    return if $user;
-
-    return UR::Object::Tag->create(
-        type => 'error',
-        properties => ['run_as'],
-        desc => "run_as user not found: " . $self->model->run_as,
-    );
 }
 
 sub validate_inputs_have_values {
@@ -1360,17 +1343,7 @@ sub _launch {
         my $lsf_project = "build" . $self->id;
         $ENV{'WF_LSF_PROJECT'} = $lsf_project;
 
-        my $bsub_bin = 'bsub';
         my $genome_bin = $Command::entry_point_bin || 'genome';
-
-        if ($self->_should_run_as && $self->_can_run_as) {
-            # -i simulates login which help prevent this from being abused to
-            # execute arbitrary commands.
-            my $run_as = $self->model->run_as;
-            $_->user_name($run_as) for $self->events;
-            $bsub_bin = [qw(sudo -n -i -u), $self->model->run_as, '--',
-                _sudo_wrapper()];
-        }
 
         my @bsub_args = (
             email    => Genome::Utility::Email::construct_address(),
@@ -1391,7 +1364,7 @@ sub _launch {
         );
 
         my @genome_args;
-        # args have to be --key=value for _sudo_wrapper()
+        # args have to be --key=value for Genome::Model->sudo_wrapper()
         push @genome_args, '--model-id=' . $model->id;
         push @genome_args, '--build-id=' . $self->id;
         if ($job_dispatch eq 'inline') {
@@ -1399,7 +1372,7 @@ sub _launch {
         }
 
         my $job_id = $self->_execute_bsub_command(
-            $bsub_bin,
+            'bsub',
             @bsub_args,
             cmd => [ @genome_cmd, @genome_args ],
         );
@@ -1410,24 +1383,6 @@ sub _launch {
         return 1;
     }
 }
-
-sub _should_run_as {
-    my $self = shift;
-    return (Genome::Sys->username ne $self->model->run_as);
-}
-
-sub _can_run_as {
-    my $self = shift;
-
-    my $sudo_wrapper = _sudo_wrapper();
-    unless ( -x $sudo_wrapper ) {
-        return;
-    }
-
-    return 1;
-}
-
-sub _sudo_wrapper { '/usr/local/bin/bsub-genome-build' }
 
 sub _job_dispatch {
     my $model = shift;
@@ -1585,6 +1540,7 @@ sub fail {
     for my $e ($self->the_events(event_status => 'Running')) {
         $e->event_status('Failed');
     }
+    $self->status('Failed');
 
     $self->generate_send_and_save_report(
         'Genome::Model::Report::BuildFailed', {
@@ -1649,7 +1605,7 @@ sub success {
 
     my $commit_callback;
     $commit_callback = sub {
-        $self->the_master_event->cancel_change_subscription('commit', $commit_callback); #only fire once
+        $self->cancel_change_subscription('commit', $commit_callback); #only fire once
         $self->debug_message('Firing build success commit callback.');
         my $result = eval {
             Genome::Search->queue_for_update($self->model);
@@ -1669,7 +1625,7 @@ sub success {
 
     #The build itself has no __changes__ and UR::Context->commit() will not trigger the subscription if on that object, so
     #use the master build event which has just been updated to 'Succeeded' with the current time.
-    $self->the_master_event->create_subscription(
+    $self->create_subscription(
         method => 'commit',
         callback => $commit_callback,
     );
@@ -1692,28 +1648,26 @@ sub perform_post_success_actions {
 sub _verify_build_is_not_abandoned_and_set_status_to {
     my ($self, $status, $set_date_completed) = @_;
 
-    my $build_event = $self->build_event;
-    # Do we have a master event?
-    unless ( $build_event ) {
-        $self->error_message(
-            'Cannot set build ('.$self->id.") status to '$status' because it does not have a master event."
-        );
-        return;
-    }
-
     # Is it abandoned?
-    if ( $build_event->event_status eq 'Abandoned' ) {
+    if($self->status eq 'Abandoned') {
         $self->error_message(
-            'Cannot set build ('.$self->id.") status to '$status' because the master event has been abandoned."
+            'Cannot set build ('.$self->id.") status to '$status' because it has been abandoned."
         );
         return;
     }
 
-    # Set status and date completed
-    $build_event->event_status($status);
-    $build_event->date_completed( UR::Context->current->now ) if $set_date_completed;
+    my $build_event = $self->build_event;
+    my $completion_date = UR::Context->current->now;
+    if($build_event) {
+        # Set status and date completed
+        $build_event->event_status($status);
+        $build_event->date_completed( $completion_date ) if $set_date_completed;
+    }
 
-    return $build_event;
+    $self->status($status);
+    $self->date_completed( $completion_date ) if $set_date_completed;
+
+    return $self;
 }
 
 
@@ -1730,6 +1684,8 @@ sub abandon {
     if ($status && ($status eq 'Running' || $status eq 'Scheduled')) {
         $self->stop;
     }
+
+    $self->status('Abandoned');
 
     # Abandon events
     $self->_abandon_events
@@ -2115,8 +2071,13 @@ sub get_metric {
 # Returns a list of files contained in the build's data directory
 sub files_in_data_directory {
     my $self = shift;
+    return _files_in_directory($self->data_directory);
+}
+
+sub _files_in_directory {
+    my $directory = shift;
     my @files;
-    my $iter = File::Next::files($self->data_directory);
+    my $iter = File::Next::files($directory);
     while(defined (my $file = $iter->())) {
         push @files, $file;
     }
@@ -2126,10 +2087,18 @@ sub files_in_data_directory {
 # Given a full path to a file, return a path relative to the build directory
 sub full_path_to_relative {
     my ($self, $path) = @_;
+    return _canon_path_prefix_from_relative($self->data_directory, $path);
+}
+
+# Given a canonical pathname and a relative pathname, return the
+# canonical portion that, when prepended to the relative path, is
+# the original canonical path
+sub _canon_path_prefix_from_relative {
+    my($base_dir, $path) = @_;
+
     my $rel_path = $path;
-    my $dir = $self->data_directory;
-    $dir .= '/' unless substr($dir, -1, 1) eq '/';
-    $rel_path =~ s/$dir//;
+    $base_dir .= '/' unless substr($base_dir, -1, 1) eq '/';
+    $rel_path =~ s/$base_dir//;
     $rel_path .= '/' if -d $path and substr($rel_path, -1, 1) ne '/';
     return $rel_path;
 }
@@ -2262,17 +2231,41 @@ sub compare_output {
         confess "Builds $build_id and $other_build_id are not the same type!";
     }
 
+    my %diffs = $self->_compare_output_files($other_build);
+
+    # Now compare metrics of both builds
+    my %metric_diffs = $self->diff_metrics($other_build);
+    @diffs{ keys %metric_diffs } = values %metric_diffs if %metric_diffs;
+
+    return %diffs;
+}
+
+sub _compare_output_files {
+    my($self, $other_build) = @_;
+
+    return $self->_compare_output_directories(
+                        $self->data_directory,
+                        $other_build->data_directory,
+
+                        $self->build_id,
+                        $other_build->build_id,
+                    );
+}
+
+sub _compare_output_directories {
+    my($class, $blessed_data_dir, $other_data_dir, $build_id, $other_build_id) = @_;
+
     # Create hashes for each build, keys are paths relative to build directory and
     # values are full file paths
     my (%file_paths, %other_file_paths);
     require Cwd;
-    for my $file (@{$self->files_in_data_directory}) {
+    for my $file (@{_files_in_directory($blessed_data_dir)}) {
         my $abs_path = Cwd::abs_path($file);
         next unless $abs_path; # abs_path returns undef if a subdirectory of file does not exist
-        $file_paths{$self->full_path_to_relative($file)} = $abs_path;
+        $file_paths{_canon_path_prefix_from_relative($blessed_data_dir, $file)} = $abs_path;
     }
-    for my $other_file (@{$other_build->files_in_data_directory}) {
-        $other_file_paths{$other_build->full_path_to_relative($other_file)} = Cwd::abs_path($other_file);
+    for my $other_file (@{_files_in_directory($other_data_dir)}) {
+        $other_file_paths{_canon_path_prefix_from_relative($other_data_dir, $other_file)} = Cwd::abs_path($other_file);
     }
 
     # Now cycle through files in this build's data directory and compare with
@@ -2281,18 +2274,18 @@ sub compare_output {
     FILE: for my $rel_path (sort keys %file_paths) {
         my $abs_path = delete $file_paths{$rel_path};
         warn "abs_path ($abs_path) does not exist\n" unless (-e $abs_path);
-        my $dir = $self->full_path_to_relative(dirname($abs_path));
+        my $dir = _canon_path_prefix_from_relative($blessed_data_dir, dirname($abs_path));
 
         next FILE if -d $abs_path;
         next FILE if $rel_path =~ /server_location.txt/;
-        next FILE if grep { $dir =~ /$_/ } $self->dirs_ignored_by_diff;
-        next FILE if grep { $rel_path =~ /$_/ } $self->files_ignored_by_diff;
+        next FILE if grep { $dir =~ /$_/ } $class->dirs_ignored_by_diff;
+        next FILE if grep { $rel_path =~ /$_/ } $class->files_ignored_by_diff;
 
         # Gotta check if this file matches any of the supplied regex patterns.
         # If so, find the one (and only one) file from the other build that
         # matches the same pattern
         my ($other_rel_path, $other_abs_path);
-        REGEX: for my $regex ($self->regex_files_for_diff) {
+        REGEX: for my $regex ($class->regex_files_for_diff) {
             next REGEX unless $rel_path =~ /$regex/;
 
             #check for captures to narrow the search for the matching file
@@ -2335,7 +2328,7 @@ sub compare_output {
         # Check if the files end with a suffix that requires special handling. If not,
         # just do an md5sum on the files and compare
         my $diff_result = 0;
-        my %matching_regex_for_custom_diff = $self->matching_regex_for_custom_diff($abs_path);
+        my %matching_regex_for_custom_diff = $class->matching_regex_for_custom_diff($abs_path);
         if (keys %matching_regex_for_custom_diff > 1) {
             die "Path ($abs_path) matched multiple regex_for_custom_diff ('" . join("', '", keys %matching_regex_for_custom_diff) . "')!\n";
         }
@@ -2343,16 +2336,16 @@ sub compare_output {
             my ($key) = keys %matching_regex_for_custom_diff;
             my $method = "diff_$key";
             # Check build class first
-            if ($self->can($method)) {
-                $diff_result = $self->$method($abs_path, $other_abs_path);
+            if ($class->can($method)) {
+                $diff_result = $class->$method($abs_path, $other_abs_path);
             }
             # then model class
-            elsif ($self->model_class->can($method)) {
-                $diff_result = $self->model_class->$method($abs_path, $other_abs_path);
+            elsif ($class->model_class->can($method)) {
+                $diff_result = $class->model_class->$method($abs_path, $other_abs_path);
             }
             # cannot find it..die
             else {
-                die "Custom diff method ($method) not implemented in " . $self->class . " or ".$self->model_class."!\n";
+                die "Custom diff method ($method) not implemented in " . $class->class . " or ".$class->model_class."!\n";
             }
         }
         else {
@@ -2362,9 +2355,7 @@ sub compare_output {
         }
 
         unless ($diff_result) {
-            my $build_dir = $self->data_directory;
-            my $other_build_dir = $other_build->data_directory;
-            $diffs{$rel_path} = "files are not the same (diff -u {$build_dir,$other_build_dir}/$rel_path)";
+            $diffs{$rel_path} = "files are not the same (diff -u {$blessed_data_dir,$other_data_dir}/$rel_path)";
         }
     }
 
@@ -2372,55 +2363,65 @@ sub compare_output {
     for my $rel_path (sort keys %other_file_paths) {
         my $abs_path = delete $other_file_paths{$rel_path};
         warn "abs_path ($abs_path) does not exist\n" unless (-e $abs_path);
-        my $dir = $self->full_path_to_relative(dirname($abs_path));
+        my $dir = _canon_path_prefix_from_relative($blessed_data_dir, dirname($abs_path));
         next if -d $abs_path;
-        next if grep { $dir =~ /$_/ } $self->dirs_ignored_by_diff;
-        next if grep { $rel_path =~ /$_/ } $self->files_ignored_by_diff;
+        next if grep { $dir =~ /$_/ } $class->dirs_ignored_by_diff;
+        next if grep { $rel_path =~ /$_/ } $class->files_ignored_by_diff;
         $diffs{$rel_path} = "no file in build $build_id";
     }
 
-    # Now compare metrics of both builds
-    my %metric_diffs = $self->diff_metrics($other_build);
-    @diffs{ keys %metric_diffs } = values %metric_diffs if %metric_diffs;
-
     return %diffs;
+}
+
+sub _remove_metrics_ignored_by_diff {
+    my($self, $metrics) = @_;
+
+    my @metrics_ignored_by_diff = $self->metrics_ignored_by_diff;
+    delete @$metrics{@metrics_ignored_by_diff};
 }
 
 sub diff_metrics {
     my ($build1, $build2) = @_;
 
+    my $metrics = $build1->_extract_metrics_for_diff();
+    my $other_metrics = $build2->_extract_metrics_for_diff();
+
+    return _diff_metrics_hashrefs($metrics, $other_metrics, $build1->id, $build2->id);
+}
+
+sub _extract_metrics_for_diff {
+    my($self) = @_;
+
+    my %metrics = map { $_->name => $_->value } $self->metrics;
+
+    my @metrics_ignored_by_diff = $self->metrics_ignored_by_diff;
+    delete @metrics{@metrics_ignored_by_diff};
+
+    return \%metrics;
+}
+
+sub _diff_metrics_hashrefs {
+    my($metrics, $other_metrics, $metrics_build_id, $other_metrics_build_id) = @_;
+
     my %diffs;
-    my %metrics;
-    map { $metrics{$_->name} = $_ } $build1->metrics;
-    my %other_metrics;
-    map { $other_metrics{$_->name} = $_ } $build2->metrics;
-
-    METRIC: for my $metric_name (sort keys %metrics) {
-        my $metric = $metrics{$metric_name};
-
-        if ( grep { $metric_name =~ /$_/ } $build1->metrics_ignored_by_diff ) {
-            delete $other_metrics{$metric_name} if exists $other_metrics{$metric_name};
+    METRIC: for my $metric_name (sort keys %$metrics) {
+        unless (exists $other_metrics->{$metric_name}) {
+            $diffs{$metric_name} = "no build metric with name $metric_name found for build ".$other_metrics_build_id;
             next METRIC;
         }
 
-        my $other_metric = delete $other_metrics{$metric_name};
-        unless ($other_metric) {
-            $diffs{$metric_name} = "no build metric with name $metric_name found for build ".$build2->id;
-            next METRIC;
-        }
-
-        my $metric_value = $metric->value;
-        my $other_metric_value = $other_metric->value;
+        my $metric_value = $metrics->{$metric_name};
+        my $other_metric_value = delete $other_metrics->{$metric_name};
         unless ($metric_value eq $other_metric_value) {
-            $diffs{$metric_name} = "metric $metric_name has value $metric_value for build ".$build1->id." and value " .
-            "$other_metric_value for build ".$build2->id;
+            $diffs{$metric_name} = "metric $metric_name has value $metric_value for build ".$metrics_build_id." and value " .
+                                    "$other_metric_value for build ".$other_metrics_build_id;
             next METRIC;
         }
     }
 
     # Catch any extra metrics that the other build has
-    for my $other_metric_name (sort keys %other_metrics) {
-        $diffs{$other_metric_name} = "no build metric with name $other_metric_name found for build ".$build1->id;
+    for my $other_metric_name (sort keys %$other_metrics) {
+        $diffs{$other_metric_name} = "no build metric with name $other_metric_name found for build ".$metrics_build_id;
     }
 
     return %diffs;

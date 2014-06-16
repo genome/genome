@@ -36,6 +36,8 @@ sub new {
         _output_directory => $arg{output_directory} || '.',
         _max_display_freq => $arg{max_display_freq},
         _lolli_shape => $arg{lolli_shape},
+        _allow_floating_labels => $arg{floating_labels},
+        _only_label_above_max_freq => $arg{only_label_max},
     };
 
     my @custom_domains =();
@@ -275,6 +277,7 @@ sub Draw {
             style => {stroke => 'black', fill => 'none'},
             max_freq => $self->{_max_display_freq},
             shape => $self->{_lolli_shape},
+            only_label_above_max_freq => $self->{_only_label_above_max_freq},
         );
 
 
@@ -285,7 +288,7 @@ sub Draw {
             $max_freq_mut = $mutation_element;
         }
     }
-    map {$_->vertically_align_to($max_freq_mut)} @mutation_objects;
+    map {$_->vertically_align_to($max_freq_mut)} @mutation_objects unless($self->{_allow_floating_labels});
     my $mutation_legend =
     Genome::Model::Tools::Graph::MutationDiagram::MutationDiagram::Legend->new(backbone => $backbone,
         id => 'mutation_legend',

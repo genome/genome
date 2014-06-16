@@ -254,10 +254,9 @@ EOS
 #sub _initialize_profile {
 sub __profile_errors__ {
     my $class = shift;      # a class method on this model subclass
-    my $profile = shift;    # which takes one profile which goes with this sub-type of model and validates it
+    my ($profile) = @_;    # which takes one profile which goes with this sub-type of model and validates it
 
-    my @errors;
-
+    my @errors = $class->SUPER::__profile_errors__(@_);
     # ensure that each of the variant detection strategies specified will function:
     for my $strategy ('snv','indel','sv','cnv') {
         my $method_name = $strategy . '_detection_strategy';
@@ -344,6 +343,13 @@ sub _execute_build {
         my $result = Genome::Sys->copy_file($self->previous_variant_detection_results, $copied_filename);
         unless($result) {
             die $self->error_message("Failed to copy previous variant detection results to the build directory");
+        }
+        my $index_file = $self->previous_variant_detection_results . '.tbi';
+        if (-s $index_file) {
+            my $copied_index_filename = $copied_filename . '.tbi';
+            $self->debug_message("Copying index: $index_file");
+            my $rv = Genome::Sys->copy_file($index_file, $copied_index_filename);
+            die $self->error_message("Failed to copy index file to the build directory") unless $rv;
         }
         $self->multisample_vcf($copied_filename);
     }

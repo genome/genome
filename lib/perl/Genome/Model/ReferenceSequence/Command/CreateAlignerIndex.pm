@@ -74,12 +74,15 @@ sub _process {
     my $mode = shift;
 
     my @errors;
+    my $aligner_name = $self->aligner_name;
+    my $ar_class     = 'Genome::InstrumentData::AlignmentResult';
+    my $ar_subclass  = $ar_class.'::'.$ar_class->_resolve_subclass_name_for_aligner_name($aligner_name);
 
     my %params_for_reference = (
-        aligner_name=>$self->aligner_name,
-        aligner_params=>$self->aligner_params,
-        aligner_version=>$self->aligner_version,
-        reference_build=>$self->reference_sequence_build,
+        aligner_name    => $aligner_name,
+        aligner_params  => $self->aligner_params,
+        aligner_version => $self->aligner_version,
+        reference_build => $self->reference_sequence_build,
     );
 
     $self->debug_message(sprintf("Finding or generating reference build index for aligner %s version %s params %s refbuild %s ",
@@ -89,41 +92,54 @@ sub _process {
     my $reference_sequence_index;
     my $annotation_index;
     if ($mode eq 'get_or_create') {
-        $reference_sequence_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_or_create(%params_for_reference);
-        unless ($reference_sequence_index) {
-            $self->error_message("Error getting or creating reference sequence index!");
-            push @errors, $self->error_message;
+        if ($ar_subclass->can('prepare_reference_sequence_index')) {  # star doesnt need ref seq index for now
+            $reference_sequence_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_or_create(%params_for_reference);
+            unless ($reference_sequence_index) {
+                $self->error_message("Error getting or creating reference sequence index!");
+                push @errors, $self->error_message;
+            }
         }
 
-        if($self->annotation_build_id) {
-            $annotation_index = Genome::Model::Build::ReferenceSequence::AnnotationIndex->get_or_create(%params_for_reference, annotation_build => $self->annotation_build);
+        if ($ar_subclass->can('prepare_annotation_index')) {
+            $annotation_index = Genome::Model::Build::ReferenceSequence::AnnotationIndex->get_or_create(
+                %params_for_reference, 
+                annotation_build => $self->annotation_build,
+            );
             unless($annotation_index) {
                 $self->error_message('Error getting or creating annotation index!');
                 push @errors, $self->error_message;
             }
         }
-    } elsif ($mode eq 'get_with_lock') {
-        $reference_sequence_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_with_lock(%params_for_reference);
-        unless ($reference_sequence_index) {
-            return undef;
+    } 
+    elsif ($mode eq 'get_with_lock') {
+        if ($ar_subclass->can('prepare_reference_sequence_index')) {
+            $reference_sequence_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_with_lock(%params_for_reference);
+            unless ($reference_sequence_index) {
+                return undef;
+            }
         }
 
-        if($self->annotation_build_id) {
-            $annotation_index = Genome::Model::Build::ReferenceSequence::AnnotationIndex->get_with_lock(%params_for_reference, annotation_build => $self->annotation_build);
+        if ($ar_subclass->can('prepare_annotation_index')) {
+            $annotation_index = Genome::Model::Build::ReferenceSequence::AnnotationIndex->get_with_lock(
+                %params_for_reference, 
+                annotation_build => $self->annotation_build,
+            );
             unless($annotation_index) {
                 return undef;
             }
         }
-    } else {
+    } 
+    else {
         $self->error_message("generate alignment reference index mode unknown: $mode");
         die $self->error_message;
     }
 
     if (@errors) {
         $self->error_message(join("\n",@errors));
-        if($mode eq 'get') {
+        if ($mode eq 'get') {
             return 0;
-        } else {
+        } 
+        else {
             die $self->error_message;
         }
     }

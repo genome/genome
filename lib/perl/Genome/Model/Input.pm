@@ -63,6 +63,36 @@ sub __display_name__ {
     return (($model ? $model->__display_name__ : "") . " " . $self->name . ": " . ($value ? $value->__display_name__ : ""));
 }
 
+sub copy {
+    my ($self, %overrides) = @_;
+
+    if ( not %overrides ) {
+        $self->error_message('No overrides to copy model input!');
+        return;
+    }
+
+    my %params;
+    PROPERTY: for my $property ( $self->__meta__->properties ) {
+        next if not defined $property->{column_name};
+        my $property_name = $property->property_name;
+        if ( exists $overrides{$property_name} ) {
+            my $new_value = delete $overrides{$property_name};
+            next PROPERTY if not defined $new_value;
+            $params{$property_name} = $new_value;
+        }
+        else {
+            $params{$property_name} = $self->$property_name;
+        }
+    }
+
+    if ( %overrides ) {
+        $self->error_message('Unknown overrides given to copy model input! '.Data::Dumper::Dumper(\%overrides));
+        return;
+    }
+
+    return __PACKAGE__->create(%params);
+}
+
 sub delete {
     my $self = shift;
     my $input_name = $self->__display_name__;

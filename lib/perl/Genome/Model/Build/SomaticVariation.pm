@@ -171,6 +171,17 @@ sub validate_model_and_build_inputs {
         );
     }
 
+    my $tumor_ref_seq_build_id  = $self->tumor_model->reference_sequence_build_id;
+    my $normal_ref_seq_build_id = $self->normal_model->reference_sequence_build_id;
+
+    unless ($tumor_ref_seq_build_id eq $normal_ref_seq_build_id) {
+        push @tags, UR::Object::Tag->create(
+            type => 'error',
+            properties => ['reference_sequence_build'],
+            desc => "Normal and tumor model get different ref seq build!"
+        );
+    }
+
     return @tags;
 }
 
@@ -418,7 +429,7 @@ sub path_to_individual_output {
     return $answer;
 }
 
-sub get_target_region_file_list {
+sub get_target_region_feature_list {
     my $self = shift;
 
     if (defined($self->tumor_build->target_region_set_name)) {
@@ -429,10 +440,9 @@ sub get_target_region_file_list {
     }
 }
 
-sub get_segmental_dupications_file_list {
-    my $self = shift;
-    # TODO
-    return;
+sub get_feature_list_from_reference {
+    my ($self, $feature_list_accessor) = @_;
+    return $self->tumor_build->reference_sequence_build->$feature_list_accessor;
 }
 
 1;

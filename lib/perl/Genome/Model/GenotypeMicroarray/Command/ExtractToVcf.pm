@@ -175,18 +175,18 @@ sub _resolve_source_for_sample {
     # Get microarray libs for sample [used to be only one, maybe do this on the source level?]
     my $sample = $self->sample;
     my @microarray_libs = grep { $_->name =~ /microarraylib$/ } $sample->libraries;
-    if ( not @microarray_libs ) {
-        $self->error_message("Failed to find microarray libraries for sample (%s)", $sample->__display_name__);
-        return;
-    }
-
     # Get instrument data for the microarray libs
     my @instrument_data = map { $_->instrument_data } @microarray_libs;
+
     my $default_genotype_data = $sample->default_genotype_data;
     push @instrument_data, $default_genotype_data if $default_genotype_data; # multiple copies of this inst data is ok
     @instrument_data = sort { $b->import_date cmp $a->import_date } @instrument_data;
     if ( not @instrument_data ) {
-        $self->error_message('No microarray instrument data for sample (%s)!', $self->sample->__display_name__);
+        if ( not @microarray_libs ) {
+            $self->error_message("Failed to find microarray libraries for sample (%s)", $sample->__display_name__);
+        } else {
+            $self->error_message('No microarray instrument data for sample (%s)!', $self->sample->__display_name__);
+        }
         return;
     }
 
@@ -311,7 +311,7 @@ sub _create_filters {
     for my $filter_string ( $self->filters ) {
         $self->debug_message('Filter: '.$filter_string);
         my ($name, $config) = split(':', $filter_string, 2);
-        $self->error_message("For filter string (%s) name is (%s) config is (%s)", $filter_string, $name, $config);
+        $self->debug_message("For filter string (%s) name is (%s) config is (%s)", $filter_string, $name, $config);
         my %params;
         %params = map { split('=') } split(':', $config) if $config;
         my $filter_class = 'Genome::Model::GenotypeMicroarray::Filter::By'.Genome::Utility::Text::string_to_camel_case($name);

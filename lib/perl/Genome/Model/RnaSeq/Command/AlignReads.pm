@@ -49,12 +49,13 @@ sub execute {
 
     my @instrument_data = $build->instrument_data;
     my %composite_inputs = (
-            instrument_data => \@instrument_data,
+            instrument_data  => \@instrument_data,
             reference_sequence_build => $build->reference_sequence_build,
-            picard_version => $build->processing_profile->picard_version,
-            trimmer_name => $build->processing_profile->read_trimmer_name,
-            trimmer_version => $build->processing_profile->read_trimmer_version,
-            trimmer_params => $build->processing_profile->read_trimmer_params,
+            picard_version   => $build->processing_profile->picard_version,
+            samtools_version => $build->processing_profile->samtools_version,
+            trimmer_name     => $build->processing_profile->read_trimmer_name,
+            trimmer_version  => $build->processing_profile->read_trimmer_version,
+            trimmer_params   => $build->processing_profile->read_trimmer_params,
     );
     if (defined($build->annotation_build)) {
         $composite_inputs{annotation_build} = $build->annotation_build;
@@ -97,18 +98,22 @@ sub _generate_alignment_strategy {
     my $self = shift;
     my $pp = $self->build->processing_profile;
     my $picard_version = $pp->picard_version;
-    my $aligner = 'per-lane-tophat';
+    my $aligner = $pp->read_aligner_name;
+    $aligner = 'per-lane-tophat' if $aligner =~ /^tophat$/i;
     my $aligner_version = $pp->read_aligner_version;
     my $aligner_params = $pp->read_aligner_params;
     my $strategy = 'instrument_data aligned to reference_sequence_build';
+
     if (defined($self->build->annotation_build)) {
         $strategy .= ' and annotation_build';
     }
     $strategy .= " using $aligner $aligner_version [$aligner_params] then merged using picard $picard_version";
+
     if (defined($pp->deduplication_handler)) {
         if ($pp->deduplication_handler eq 'picard') {
             $strategy .= ' then deduplicated using '. $pp->deduplication_handler .' '. $picard_version;
-        } else {
+        } 
+        else {
             die('Failed to recognize the deduplication_handler '. $pp->deduplication_handler);
         }
     }

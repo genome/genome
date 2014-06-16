@@ -288,7 +288,8 @@ sub execute {
     }
 
     my $last = $prefix - 1;
-    `cp $tempdir/$last.output $output_file`;
+    my $cmd = "cp $tempdir/$last.output '" . $output_file . "'";
+    `$cmd`;
 
     return 1;
 }

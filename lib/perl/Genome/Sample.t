@@ -33,6 +33,7 @@ my $sample = Genome::Sample->create(
     body_mass_index => 22.4,
 );
 isa_ok($sample, 'Genome::Sample');
+is($sample->name_in_vcf, "TCGA-1234-232-12");
 is($sample->subject_type, 'sample_name', 'subject type is organism sample');
 is_deeply($sample->taxon, $source->taxon, 'taxon');
 is($sample->age, 99, 'age');

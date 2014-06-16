@@ -463,7 +463,7 @@ sub get_frequencies {
     my $RsDir = $self->frequency_path;
 
     my $rsdb = Bio::DB::Fasta->new($RsDir);
-    chmod(0666, $RsDir . "/directory.index"); #change the index permissions so the next guy can rebuild it
+    chmod(0660, $RsDir . "/directory.index"); #change the index permissions so the next guy can rebuild it
     my $freq = $rsdb->seq($rs_id, 1 => 6000);
 
     return unless $freq;

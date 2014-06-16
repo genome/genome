@@ -472,7 +472,7 @@ sub _setup_report_fh {
             UNLINK => 1,
             CLEANUP => 1,
         );
-        chmod(0664, $temp_output_file);
+        chmod(0660, $temp_output_file);
     }
     $self->_transcript_report_fh($output_fh);
     $self->_temp_output_file($temp_output_file);

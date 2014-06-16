@@ -2,12 +2,13 @@ use strict;
 use warnings;
 
 use above "Genome";
-use Fcntl ':mode';
 use Genome::Utility::Test qw(abort run_ok);
+
+use Fcntl ':mode';
+use File::Path qw(make_path);
 use List::Util qw(first);
 use POSIX qw(getgroups);
 use Test::Fatal qw(exception);
-use File::Path qw(make_path);
 
 use Test::More tests => 12;
 

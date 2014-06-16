@@ -1,0 +1,116 @@
+<?xml version="1.0"?>
+<operation name="Variant Reporting (snvs)">
+  <operationtype typeClass="Workflow::OperationType::Model">
+    <inputproperty>build_id</inputproperty>
+    <inputproperty>output_directory</inputproperty>
+    <inputproperty>plan_json</inputproperty>
+    <inputproperty>variant_type</inputproperty>
+    <outputproperty>output_directory</outputproperty>
+  </operationtype>
+  <operation name="Generate Reports">
+    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::ReportGeneratorWrapper">
+      <inputproperty>build_id</inputproperty>
+      <inputproperty>input_result</inputproperty>
+      <inputproperty>output_directory</inputproperty>
+      <inputproperty>plan_json</inputproperty>
+      <inputproperty>variant_type</inputproperty>
+      <outputproperty>output_directory</outputproperty>
+      <outputproperty>result</outputproperty>
+      <outputproperty>variant_type</outputproperty>
+    </operationtype>
+  </operation>
+  <operation name="Get Initial Vcf Result from Build">
+    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::GetInitialVcfResult">
+      <inputproperty>build_id</inputproperty>
+      <inputproperty>variant_type</inputproperty>
+      <outputproperty>output_result</outputproperty>
+      <outputproperty>result</outputproperty>
+    </operationtype>
+  </operation>
+  <operation name="expert_one">
+    <operationtype typeClass="Workflow::OperationType::Model">
+      <inputproperty>build_id</inputproperty>
+      <inputproperty>input_result</inputproperty>
+      <inputproperty>plan_json</inputproperty>
+      <inputproperty>variant_type</inputproperty>
+      <outputproperty>output_result</outputproperty>
+    </operationtype>
+    <operation name="Get inputs from build">
+      <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::ExpertOneAdaptor">
+        <inputproperty>build_id</inputproperty>
+        <inputproperty>plan_json</inputproperty>
+        <inputproperty>variant_type</inputproperty>
+        <outputproperty>bam_results</outputproperty>
+        <outputproperty>e1_p1</outputproperty>
+        <outputproperty>e1_p2</outputproperty>
+        <outputproperty>result</outputproperty>
+        <outputproperty>variant_type</outputproperty>
+      </operationtype>
+    </operation>
+    <operation name="Run expert_one">
+      <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::ExpertOneRun">
+        <inputproperty>input_result</inputproperty>
+        <inputproperty>variant_type</inputproperty>
+        <outputproperty>output_result</outputproperty>
+        <outputproperty>result</outputproperty>
+      </operationtype>
+    </operation>
+    <link fromOperation="Get inputs from build" fromProperty="variant_type" toOperation="Run expert_one" toProperty="variant_type"/>
+    <link fromOperation="Run expert_one" fromProperty="output_result" toOperation="output connector" toProperty="output_result"/>
+    <link fromOperation="input connector" fromProperty="build_id" toOperation="Get inputs from build" toProperty="build_id"/>
+    <link fromOperation="input connector" fromProperty="plan_json" toOperation="Get inputs from build" toProperty="plan_json"/>
+    <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from build" toProperty="variant_type"/>
+    <link fromOperation="input connector" fromProperty="input_result" toOperation="Run expert_one" toProperty="input_result"/>
+  </operation>
+  <operation name="expert_two">
+    <operationtype typeClass="Workflow::OperationType::Model">
+      <inputproperty>build_id</inputproperty>
+      <inputproperty>input_result</inputproperty>
+      <inputproperty>plan_json</inputproperty>
+      <inputproperty>variant_type</inputproperty>
+      <outputproperty>output_result</outputproperty>
+    </operationtype>
+    <operation name="Get inputs from build">
+      <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::ExpertTwoAdaptor">
+        <inputproperty>build_id</inputproperty>
+        <inputproperty>plan_json</inputproperty>
+        <inputproperty>variant_type</inputproperty>
+        <outputproperty>bam_results</outputproperty>
+        <outputproperty>e2_p1</outputproperty>
+        <outputproperty>e2_p2</outputproperty>
+        <outputproperty>result</outputproperty>
+        <outputproperty>variant_type</outputproperty>
+      </operationtype>
+    </operation>
+    <operation name="Run expert_two">
+      <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::ExpertTwoRun">
+        <inputproperty>input_result</inputproperty>
+        <inputproperty>variant_type</inputproperty>
+        <outputproperty>output_result</outputproperty>
+        <outputproperty>result</outputproperty>
+      </operationtype>
+    </operation>
+    <link fromOperation="Get inputs from build" fromProperty="variant_type" toOperation="Run expert_two" toProperty="variant_type"/>
+    <link fromOperation="Run expert_two" fromProperty="output_result" toOperation="output connector" toProperty="output_result"/>
+    <link fromOperation="input connector" fromProperty="build_id" toOperation="Get inputs from build" toProperty="build_id"/>
+    <link fromOperation="input connector" fromProperty="plan_json" toOperation="Get inputs from build" toProperty="plan_json"/>
+    <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from build" toProperty="variant_type"/>
+    <link fromOperation="input connector" fromProperty="input_result" toOperation="Run expert_two" toProperty="input_result"/>
+  </operation>
+  <link fromOperation="Generate Reports" fromProperty="output_directory" toOperation="output connector" toProperty="output_directory"/>
+  <link fromOperation="Get Initial Vcf Result from Build" fromProperty="output_result" toOperation="expert_one" toProperty="input_result"/>
+  <link fromOperation="expert_one" fromProperty="output_result" toOperation="expert_two" toProperty="input_result"/>
+  <link fromOperation="expert_two" fromProperty="output_result" toOperation="Generate Reports" toProperty="input_result"/>
+  <link fromOperation="input connector" fromProperty="build_id" toOperation="Generate Reports" toProperty="build_id"/>
+  <link fromOperation="input connector" fromProperty="output_directory" toOperation="Generate Reports" toProperty="output_directory"/>
+  <link fromOperation="input connector" fromProperty="plan_json" toOperation="Generate Reports" toProperty="plan_json"/>
+  <link fromOperation="input connector" fromProperty="variant_type" toOperation="Generate Reports" toProperty="variant_type"/>
+  <link fromOperation="input connector" fromProperty="build_id" toOperation="Get Initial Vcf Result from Build" toProperty="build_id"/>
+  <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get Initial Vcf Result from Build" toProperty="variant_type"/>
+  <link fromOperation="input connector" fromProperty="build_id" toOperation="expert_one" toProperty="build_id"/>
+  <link fromOperation="input connector" fromProperty="plan_json" toOperation="expert_one" toProperty="plan_json"/>
+  <link fromOperation="input connector" fromProperty="variant_type" toOperation="expert_one" toProperty="variant_type"/>
+  <link fromOperation="input connector" fromProperty="build_id" toOperation="expert_two" toProperty="build_id"/>
+  <link fromOperation="input connector" fromProperty="plan_json" toOperation="expert_two" toProperty="plan_json"/>
+  <link fromOperation="input connector" fromProperty="variant_type" toOperation="expert_two" toProperty="variant_type"/>
+</operation>
