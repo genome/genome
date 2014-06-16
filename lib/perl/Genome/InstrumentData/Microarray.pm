@@ -104,7 +104,10 @@ sub genotype_file {
         $genotype_file_name = $genotype_file_name_attr->attribute_value;
     }
     elsif ( my $genotype_file_attr = $self->attributes(attribute_label => 'genotype_file') ) {
-        $genotype_file_name = File::Basename::basename($genotype_file_attr->attribute_value);
+        my $allocation_path = $allocation->allocation_path;
+        my $attr_value = $genotype_file_attr->attribute_value;
+        $attr_value =~ m!\Q$allocation_path\E/(.+)!;
+        $genotype_file_name = $1;
     }
     else {
         return;
