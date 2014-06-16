@@ -224,7 +224,6 @@ sub _create_directories {
         }
 
         $self->debug_message("Created directory: $output_directory");
-        chmod 02770, $output_directory;
     }
 
     #$self->_temp_staging_directory(Genome::Sys->create_temp_directory);
@@ -309,7 +308,7 @@ sub _detect_variants {
                 die;
             }
 
-            rename($chunk_file,$target_file) or die $!;
+            Genome::Sys->rename($chunk_file, $target_file) or die $!;
         }
 
         # Put the insertions and deletions where the rest of the pipe expects them 

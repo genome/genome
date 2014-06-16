@@ -433,12 +433,7 @@ sub _promote_validated_data {
     for my $staged_file (glob("$staging_dir/*")) {
         my $destination = $staged_file;
         $destination =~ s/$staging_dir/$output_dir/;
-        rename($staged_file, $destination);
-    }
-
-    chmod 02770, $output_dir;
-    for my $subdir (grep { -d $_  } glob("$output_dir/*")) {
-        chmod 02770, $subdir;
+        Genome::Sys->rename($staged_file, $destination);
     }
 
     my @files = File::Find::Rule->file->not(File::Find::Rule->symlink)->in($output_dir);

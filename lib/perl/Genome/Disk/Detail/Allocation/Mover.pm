@@ -82,7 +82,7 @@ sub move {
 
 
     Genome::Sys->create_directory($new_volume_final_path);
-    unless (rename $shadow_allocation->absolute_path, $new_volume_final_path) {
+    unless (Genome::Sys->rename($shadow_allocation->absolute_path, $new_volume_final_path)) {
         Genome::Sys->unlock_resource(resource_lock => $allocation_lock);
         my $shadow_allocation_abs_path = $shadow_allocation->absolute_path;
         $shadow_allocation->delete;

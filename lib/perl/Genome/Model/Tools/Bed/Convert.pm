@@ -121,7 +121,7 @@ sub execute {
                 return;
             }
         } else {
-            rename($self->output, $final_output);
+            Genome::Sys->rename($self->output, $final_output);
         }
         symlink(basename($final_output), $self->output);
         for my $v (@COMPATIBLE_PREVIOUS_VERSIONS) {

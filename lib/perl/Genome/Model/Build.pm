@@ -919,7 +919,7 @@ sub add_report {
             if ($n == $max) {
                 die "Too many re-runs of this report!  Contact Informatics..."
             }
-            rename $subdir, "$subdir.$n";
+            Genome::Sys->rename($subdir, "$subdir.$n");
             if (-e $subdir) {
                 die "failed to move old report dir $subdir to $subdir.$n!: $!";
             }

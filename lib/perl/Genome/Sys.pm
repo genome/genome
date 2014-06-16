@@ -10,6 +10,7 @@ use autodie qw(chown);
 use Carp;
 use Cwd;
 use Digest::MD5;
+use Errno qw();
 use File::Basename;
 use File::Copy;
 use File::Path;
@@ -1625,34 +1626,74 @@ sub retry {
 sub rename {
     my ($class, $oldname, $newname) = @_;
 
-    if (-f $oldname) {
-        $class->touch($newname) or die $!;
-    } else {
-        mkdir($newname) or die $!;
+    # mimic (anticipated) CORE::rename errors
+    if ( ! -e $oldname ) {
+        $! = &Errno::ENOENT;
+        return;
     }
-    my $mode = stat($newname)->mode;
-    my $gid  = stat($newname)->gid;
-    my $uid  = stat($newname)->uid;
-    if (-f $oldname) {
-        unlink($newname) or die $!;
-    } else {
-        rmdir($newname) or die $!;
+    if ( -f $oldname && -d $newname ) {
+        $! = &Errno::EISDIR;
+        return;
+    }
+    if ( -d $oldname && -f $newname ) {
+        $! = &Errno::ENOTDIR;
+        return;
+    }
+    if ( -d $oldname && -d $newname ) {
+        opendir(my $dh, $newname)
+            or return;
+        while ( my $entry = readdir $dh ) {
+            if ( $entry ne '.' && $entry ne '..' ) {
+                $! = &Errno::ENOTEMPTY;
+                return;
+            }
+        }
+        closedir($dh) or die($!);
     }
 
-    CORE::rename $oldname, $newname or die $!;
+    # If target doesn't exist then create it so we can copy it's mode, gid, and
+    # uid.  I am not sure if it's appropriate to preserve an existing target's
+    # mode, gid, and uid (as opposed to destroying it and creating fresh).
+    if ( -f $oldname && ! -e $newname ) {
+        $class->touch($newname)
+            or return;
+    }
+    if ( -d $oldname && ! -e $newname ) {
+        mkdir($newname)
+            or return;
+    }
 
-    chown $uid, $gid, $newname or die $!;
-    mode($newname)->set_mode($mode);
+    # preserve mode, gid, and uid
+    my $stat = stat($newname)
+        or return;
+    my $mode = $stat->mode;
+    my $gid  = $stat->gid;
+    my $uid  = $stat->uid;
+
+    unless ( CORE::rename $oldname, $newname ) {
+        die q(CORE::rename should never fail or we didn't do a good enough job mimicking it);
+    }
+
+    # restore mode, gid, and uid
+    chown($uid, $gid, $newname)
+        or return;
+    eval { mode($newname)->set_mode($mode) }
+        or return;
+
+    return 1;
 }
 
 sub touch {
     my ($class, $path) = @_;
 
-    my $file = IO::File->new($path, 'a') or die $!;
-    $file->close() or die $!;
+    my $file = IO::File->new($path, 'a')
+        or return;
+    $file->close()
+        or croak $!;
 
     # using the undef pair uses system's current time (better for NFS)
-    utime undef, undef, $path or die $!;
+    utime undef, undef, $path
+        or return;;
 
     return 1;
 }

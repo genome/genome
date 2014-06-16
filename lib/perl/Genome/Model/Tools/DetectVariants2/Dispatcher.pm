@@ -949,7 +949,6 @@ sub _create_directories {
             }
 
             $self->debug_message("Created directory: $output_directory");
-            chmod 02770, $output_directory;
         }
     }
 
@@ -1172,7 +1171,7 @@ sub _rotate_old_files {
         die $self->error_message('Too many old files encountered! (Is there a systematic issue, or do old files just need cleaning up?)');
     }
 
-    unless(rename($file, "$file.$i")) {
+    unless(Genome::Sys->rename($file, "$file.$i")) {
         die $self->error_message('Failed to move old file out of the way ' . $!);
     }
 

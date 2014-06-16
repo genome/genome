@@ -26,6 +26,13 @@ require Genome::Site;
 # and assigns default values to any variables that have one set.
 require Genome::Env;
 
+if ($ENV{GENOME_SYS_UMASK}) {
+    my $old_umask = umask $ENV{GENOME_SYS_UMASK};
+    if (!defined($old_umask)) {
+        die 'failed to set umask';
+    }
+}
+
 # If the search engine is installed, configure its hooks
 eval {
     local $SIG{__WARN__};

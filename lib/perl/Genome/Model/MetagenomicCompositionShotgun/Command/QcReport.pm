@@ -174,7 +174,7 @@ sub per_lane_qc {
                 my $name = (split('/', $file))[-1];
                 $name =~ s/\.txt$//;
                 my $output_filename = $temp_dir . '/' . $name . '_imported_trimmed';
-                die "failed to rename $file to $output_filename" unless rename($file, $output_filename);
+                die "failed to rename $file to $output_filename" unless Genome::Sys->rename($file, $output_filename);
                 push @imported_fastq, $output_filename;
                 push @{$fastq_files{$hcs_data_id}{imported}}, $output_filename; 
             }
@@ -182,7 +182,7 @@ sub per_lane_qc {
                 my $name = (split('/', $file))[-1];
                 $name =~ s/\.txt$//;
                 my $output_filename = $temp_dir . '/' . $hcs_data_id . '_' . $name . '_original';
-                die "failed to rename $file to $output_filename" unless rename($file, $output_filename);
+                die "failed to rename $file to $output_filename" unless Genome::Sys->rename($file, $output_filename);
                 push @original_fastq, $output_filename;
                 push @{$fastq_files{$hcs_data_id}{original}}, $output_filename;
             }
@@ -269,9 +269,9 @@ sub per_lane_qc {
         my $humanfree_fwd_line = $humanfree_fwd_file->getline;
         if ($humanfree_fwd_line =~ /\/2$/) {
             $self->debug_message("\t\t" . (split("/", $humanfree_fwd_path))[-1] . " looks like a reverse file. Swapping...");
-            rename($humanfree_fwd_path, $humanfree_fwd_path . '.tmp');
-            rename($humanfree_rev_path, $humanfree_fwd_path);
-            rename($humanfree_fwd_path . '.tmp', $humanfree_rev_path);
+            Genome::Sys->rename($humanfree_fwd_path, $humanfree_fwd_path . '.tmp');
+            Genome::Sys->rename($humanfree_rev_path, $humanfree_fwd_path);
+            Genome::Sys->rename($humanfree_fwd_path . '.tmp', $humanfree_rev_path);
         }
 
         $self->debug_message("\t" . (split("/", $humanfree_bam_path))[-1]. "...");

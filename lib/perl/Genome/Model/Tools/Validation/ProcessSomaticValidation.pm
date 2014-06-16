@@ -1055,7 +1055,7 @@ sub execute {
                   }
               }
 	      if($indel_file =~ /\.rcnt$/) { #if a file name already ends in rcnt change the new file name to avoid *.rcnt.rcnt
-		  rename("$indel_file.rcnt", $indel_file);		  
+		  Genome::Sys->rename("$indel_file.rcnt", $indel_file);
 	      }else {
 		  $indel_file = addName($indel_file,"rcnt"); #if a file name does not end in rcnt, append rcnt suffix
 	      }

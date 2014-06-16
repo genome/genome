@@ -72,8 +72,8 @@ sub _run_aligner {
         output_files => [ "$staging_directory/accepted_hits.bam", "$staging_directory/unmapped.bam" ]
     );
 
-    rename("$staging_directory/accepted_hits.bam", "$scratch_directory/accepted_hits.bam");
-    rename("$staging_directory/unmapped.bam", "$scratch_directory/unmapped.bam");
+    Genome::Sys->rename("$staging_directory/accepted_hits.bam", "$scratch_directory/accepted_hits.bam");
+    Genome::Sys->rename("$staging_directory/unmapped.bam", "$scratch_directory/unmapped.bam");
 
     my $bam_with_unaligned_reads_cmd = Genome::Model::Tools::Picard::MergeSamFiles->create(
         input_files => ["$scratch_directory/unmapped.bam", "$scratch_directory/accepted_hits.bam",],
@@ -100,10 +100,10 @@ sub _run_aligner {
     }
 
     #promote other misc tophat result files - converted sam will be handled downstream
-    rename("$scratch_directory/junctions.bed", "$staging_directory/junctions.bed");
-    rename("$scratch_directory/insertions.bed", "$staging_directory/insertions.bed");
-    rename("$scratch_directory/deletions.bed", "$staging_directory/deletions.bed");
-    rename("$scratch_directory/logs", "$staging_directory/logs");
+    Genome::Sys->rename("$scratch_directory/junctions.bed", "$staging_directory/junctions.bed");
+    Genome::Sys->rename("$scratch_directory/insertions.bed", "$staging_directory/insertions.bed");
+    Genome::Sys->rename("$scratch_directory/deletions.bed", "$staging_directory/deletions.bed");
+    Genome::Sys->rename("$scratch_directory/logs", "$staging_directory/logs");
     return 1;
 }
 

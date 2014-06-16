@@ -100,7 +100,7 @@ sub make_real_rmdupped_map_file {
             return;
         }
         
-        rename($working_file, $final_file);
+        Genome::Sys->rename($working_file, $final_file);
     }	
     return $final_file;
 }
@@ -178,7 +178,7 @@ sub execute {
             print $log_fh "Library $library has $cnt map files"."\n";
             $maplist_fh->close;
 
-            rename($working_library_maplist, $final_library_maplist);
+            Genome::Sys->rename($working_library_maplist, $final_library_maplist);
 
             # db disconnect prior to map merge
             if (Genome::DataSource::GMSchema->has_default_handle) {

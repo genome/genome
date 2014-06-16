@@ -237,7 +237,6 @@ sub _create_directories {
         }
 
         $self->debug_message("Created directory: $output_directory");
-        chmod 02770, $output_directory;
     }
 
     $self->_create_temp_directories;
@@ -358,11 +357,6 @@ sub _promote_staged_data {
         $self->error_message("Did not get a valid return from rsync, rv was $rv for call $call.  Cleaning up and bailing out");
         rmtree($output_dir);
         die $self->error_message;
-    }
-
-    chmod 02770, $output_dir;
-    for my $subdir (grep { -d $_  } glob("$output_dir/*")) {
-        chmod 02770, $subdir;
     }
 
     $self->debug_message("Files in $output_dir: \n" . join "\n", glob($output_dir . "/*"));

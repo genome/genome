@@ -133,7 +133,7 @@ sub _destage_result {
         my $source = join('/', $staging_directory, $name);
         my $destination = join('/', $allocation_path, $name);
         if(not -e $destination) {
-            rename($source, $destination);
+            Genome::Sys->rename($source, $destination);
         } else {
             $self->error_message("Couldn't move $source to $destination since desination already exists.");
         }

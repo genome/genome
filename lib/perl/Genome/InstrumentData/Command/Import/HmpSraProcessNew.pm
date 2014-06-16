@@ -208,13 +208,13 @@ sub execute {
 ####DEBUG
     
 #________Reinstated to deal with name conformity issues 120113 ... jmartin
-    rename($fwd_read, $working_dir . "/s_1_1_sequence.txt");
+    Genome::Sys->rename($fwd_read, $working_dir . "/s_1_1_sequence.txt");
     $fwd_read = $working_dir . "/s_1_1_sequence.txt";
     
-    rename($rev_read, $working_dir . "/s_1_2_sequence.txt");
+    Genome::Sys->rename($rev_read, $working_dir . "/s_1_2_sequence.txt");
     $rev_read = $working_dir . "/s_1_2_sequence.txt";
     
-    rename($singleton_read, $working_dir . "/s_1_sequence.txt");
+    Genome::Sys->rename($singleton_read, $working_dir . "/s_1_sequence.txt");
     $singleton_read = $working_dir . "/s_1_sequence.txt";
 
 ####DEBUG

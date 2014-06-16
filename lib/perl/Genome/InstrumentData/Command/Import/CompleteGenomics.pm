@@ -355,7 +355,7 @@ sub _promote_data {
     my $id = $self->_instrument_data;
     my $final_destination = join('/', $id->allocations->absolute_path, 'all_sequences.bam');
     
-    unless(rename($result_bam_file, $final_destination)) {
+    unless(Genome::Sys->rename($result_bam_file, $final_destination)) {
         die $self->error_message('Failed to promote file to final location.');
     }
 

@@ -34,11 +34,11 @@ sub resolve_reports_directory {
 
     my $reports_dir = $last_build->resolve_reports_directory;
     unless (-d $reports_dir) {
-        unless (mkdir $reports_dir) {
+        eval { Genome::Sys->create_directory($reports_dir) };
+        unless (-d $reports_dir) {
             $self->error_message("Directory $reports_dir doesn't exist, can't create");
             return;
         }
-        chmod 02770, $reports_dir;
     }
 
     return $reports_dir;

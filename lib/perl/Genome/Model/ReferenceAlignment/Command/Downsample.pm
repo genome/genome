@@ -240,7 +240,7 @@ sub _import_bam {
 
     my $dir = dirname($bam);
     my $filename = $dir."/all_sequences.bam";
-    rename $bam, $filename;
+    Genome::Sys->rename($bam, $filename);
 
     my $sample_id = $model->subject->id;
     my $sample = Genome::Sample->get($sample_id);

@@ -232,7 +232,7 @@ sub _filter_variants {
             push @bams2remove, "$prefix.$conv_lib.bam";
         }
         else {
-            `mv $bams[0] $prefix.$conv_lib.bam`;  #rename behaves strange to interpolate/escape, use mv for now.
+            Genome::Sys->rename($bams[0], "$prefix.$conv_lib.bam");
         }
 
         $cmd = $samtools_path." rmdup $prefix.$conv_lib.bam $prefix.$conv_lib.rmdup.bam"; #using $conv_lib here will properly parse ()
