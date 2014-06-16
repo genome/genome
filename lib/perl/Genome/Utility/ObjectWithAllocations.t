@@ -83,35 +83,35 @@ is_deeply($sorter->(@disk_allocations), $sorter->(@expected_allocations), 'disk_
 my @associated_disk_allocations = $obj->associated_disk_allocations;
 is_deeply($sorter->(@associated_disk_allocations), $sorter->(@expected_allocations), 'associated_disk_allocations');
 
-# reallocate
+# reallocate_disk_allocations
 is(List::Util::sum(map { $_->kilobytes_requested } @expected_allocations), 4000, 'kilobytes_requested');
-ok($obj->reallocate, 'reallocate');
-isnt(List::Util::sum(map { $_->kilobytes_requested } @expected_allocations), 4000, 'kilobytes_requested after reallocate');
+ok($obj->reallocate_disk_allocations, 'reallocate_disk_allocations');
+isnt(List::Util::sum(map { $_->kilobytes_requested } @expected_allocations), 4000, 'kilobytes_requested after reallocate_disk_allocations');
 
-# archivable
+# are_disk_allocations_archivable
 is_deeply([ map { $_->archivable } @expected_allocations ], [qw/ 1 1 /], 'expected allocation are archivable');
-is($obj->archivable, 1, 'archivable');
+is($obj->are_disk_allocations_archivable, 1, 'disk_allocations are archivable');
 $expected_allocations[1]->archivable(0);
 is_deeply([ map { $_->archivable } @expected_allocations ], [qw/ 1 0 /], 'expected allocation 2 is not archivable');
-is($obj->archivable, '','not archivable');
+is($obj->are_disk_allocations_archivable, '','disk_allocations are not archivable');
 $expected_allocations[1]->archivable(1);
 
-# is_archived
-is($obj->is_archived, '', 'not archived');
+# are_disk_allocations_archived
+is($obj->are_disk_allocations_archived, '', 'disk_allocations are not archived');
 $expected_allocations[1]->mount_path( $volumes[1]->mount_path );
-is($obj->is_archived, 1,'archived');
+is($obj->are_disk_allocations_archived, 1, 'disk_allocations are archived');
 
 # unarchive
 Sub::Install::reinstall_sub({
-        code => sub{ $_[0]->mount_path( $volumes[0]->mount_path ); return 1; },
+        code => sub{ $_[0]->mount_path( $volumes[1]->mount_path ); return 1; },
         into => 'Genome::Disk::Allocation',
         as   => 'unarchive',
     });
-ok($obj->unarchive, 'unarchive');
-is($obj->is_archived, '', 'not archived');
+ok($obj->unarchive_disk_allocations, 'unarchive_disk_allocations');
+is($obj->are_disk_allocations_archived, 1, 'disk allocations are archived');
 
-# deallocate
-ok($obj->deallocate, 'deallocate');
+# deallocate_disk_allocations
+ok($obj->deallocate_disk_allocations, 'deallocate_disk_allocation');
 isa_ok($expected_allocations[0], 'UR::DeletedRef');
 isa_ok($expected_allocations[1], 'UR::DeletedRef');
 

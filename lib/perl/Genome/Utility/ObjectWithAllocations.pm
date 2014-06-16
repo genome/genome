@@ -21,11 +21,11 @@ class Genome::Utility::ObjectWithAllocations {
 
 sub delete {
     my $self = shift;
-    $self->_create_deallocate_observer;
+    $self->_create_deallocate_disk_allocations_observer;
     return $self->SUPER::delete;
 }
 
-sub _create_deallocate_observer {
+sub _create_deallocate_disk_allocations_observer {
     my $self = shift;
 
     my $deallocator;
@@ -43,7 +43,7 @@ sub _create_deallocate_observer {
     return 1;
 }
 
-sub reallocate {
+sub reallocate_disk_allocations {
     my ($self, %params) = @_;
 
     for my $disk_allocation ( $self->disk_allocations ) {
@@ -56,7 +56,7 @@ sub reallocate {
     return 1;
 }
 
-sub deallocate {
+sub deallocate_disk_allocations {
     my $self = shift;
 
     for my $disk_allocation ( $self->disk_allocations ) {
@@ -70,19 +70,18 @@ sub deallocate {
     return 1;
 }
 
-sub archivable {
+sub are_disk_allocations_archivable {
     my $self = shift;
 
     my @disk_allocations = $self->disk_allocations;
     return 0 unless @disk_allocations;
 
     return List::MoreUtils::all { $_->archivable } @disk_allocations;
-
 }
 
-sub is_archived {
+sub are_disk_allocations_archived {
     my $self = shift;
-    return List::MoreUtils::any { $_->is_archived } $self->disk_allocations;
+    return List::MoreUtils::any { $_->is_archived } $self->associated_disk_allocations;
 }
 
 sub associated_disk_allocations {
@@ -95,15 +94,15 @@ sub associated_disk_allocations {
 }
 sub _additional_associated_disk_allocations { return (); }
 
-sub unarchive {
+sub unarchive_disk_allocations {
     my ($self, %params) = @_;
-    return $self->_unarchive(%params);
+    return $self->_unarchive_disk_allocations(%params);
 }
 
-sub _unarchive { # default is to iterrate over allocation and unarchive them
+sub _unarchive_disk_allocations { # default is to iterrate over allocation and unarchive them
     my ($self, %params) = @_;
 
-    for my $disk_allocation ( $self->associated_disk_allocations ) {
+    for my $disk_allocation ( $self->disk_allocations ) {
         next if not $disk_allocation->is_archived;
         my $unarchive_ok = eval{ $disk_allocation->unarchive(%params); };
         next if $unarchive_ok;
