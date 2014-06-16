@@ -73,6 +73,7 @@ sub write_report {
 
     my $build = $self->build;
     $self->_display_build($handle, $build);
+    $self->_display_analysis_projects($handle, $build);
 
     if ($self->full) {
         $self->inputs(1);
@@ -136,6 +137,22 @@ EOS
         $self->_color_pair('Software Revision', $build->software_revision),
         $self->_software_result_test_name,
         $self->_color_pair('Data Directory', $build->data_directory));
+}
+
+sub _display_analysis_projects {
+    my ($self, $handle, $build) = @_;
+
+    my $model = $build->model;
+
+    if ($model->analysis_projects) {
+        print $handle $self->_color_pair('Analysis Projects'), "\n";
+        for my $ap ($model->analysis_projects) {
+            print $handle $self->_pad_right(sprintf("    %s", $ap->id),
+                $self->COLUMN_WIDTH);
+            printf $handle " %s\n", $ap->name;
+        }
+        print "\n";
+    }
 }
 
 sub _software_result_test_name {
