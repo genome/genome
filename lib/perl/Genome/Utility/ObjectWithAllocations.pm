@@ -28,9 +28,12 @@ sub delete {
 sub _create_deallocate_disk_allocations_observer {
     my $self = shift;
 
+    my @disk_allocations = $self->disk_allocations;
+    return 1 if not @disk_allocations;
+
     my $deallocator;
     $deallocator = sub {
-        $self->deallocate;
+        _deallocate_disk_allocations(@disk_allocations);
         UR::Context->cancel_change_subscription(
             'commit', $deallocator
         );
@@ -57,14 +60,17 @@ sub reallocate_disk_allocations {
 }
 
 sub deallocate_disk_allocations {
-    my $self = shift;
+    return _deallocate_disk_allocations( $_[0]->disk_allocations );
+}
 
-    for my $disk_allocation ( $self->disk_allocations ) {
-        next if $disk_allocation->isa('UR::DeletedRef');
+sub _deallocate_disk_allocations {
+
+    for my $disk_allocation ( @_ ) {
+        next if $disk_allocation->isa('UR::DeletedRef'); # skip if deleted
         my $deallocate_ok = eval{ $disk_allocation->deallocate; };
         next if $deallocate_ok;
-        $self->warning_message($@) if $@;
-        $self->warning_message('Continuing, but failed to deallocate disk allocation: '.$disk_allocation->__display_name__);
+        __PACKAGE__->warning_message($@) if $@;
+        __PACKAGE__->warning_message('Continuing, but failed to deallocate disk allocation: '.$disk_allocation->__display_name__);
     }
 
     return 1;
