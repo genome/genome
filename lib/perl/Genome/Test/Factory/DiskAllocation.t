@@ -24,4 +24,9 @@ my $disk_allocation = $class->generate_obj(owner => $owner);
 ok($disk_allocation, 'create test disk allocation');
 ok(-d $disk_allocation->absolute_path, 'disk_allocation absolute_path exists');
 
+ok($disk_allocation->archive, 'archive');
+ok($disk_allocation->is_archived, 'is_archived');
+ok($disk_allocation->unarchive, 'unarchive');
+ok(!$disk_allocation->is_archived, 'not is_archived');
+
 done_testing();

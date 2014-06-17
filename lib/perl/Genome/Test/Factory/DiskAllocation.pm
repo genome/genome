@@ -25,7 +25,7 @@ sub tmp_volume {
 my $archived_volume;
 sub archived_volume {
     return $archived_volume if $archived_volume;
-    Genome::Disk::Volume->__define__(
+    $archived_volume = Genome::Disk::Volume->__define__(
         mount_path => Genome::Disk::Volume->archive_volume_prefix,
         disk_status => 'active',
         can_allocate => 1,
@@ -34,8 +34,27 @@ sub archived_volume {
     return $archived_volume;
 }
 
+my $overloaded_archiving_methods;
+sub overload_archiving_methods {
+    return 1 if $overloaded_archiving_methods;
+    Sub::Install::reinstall_sub({
+            code => sub{ $_[0]->mount_path( archived_volume()->mount_path ); return 1; },
+            into => 'Genome::Disk::Allocation',
+            as   => 'archive',
+        });
+
+    Sub::Install::reinstall_sub({
+            code => sub{ $_[0]->mount_path( tmp_volume()->mount_path ); return 1; },
+            into => 'Genome::Disk::Allocation',
+            as   => 'unarchive',
+        });
+    $overloaded_archiving_methods = 1;
+    return 1;
+}
+
 sub generate_obj {
     my ($self, %params) = @_;
+
 
     my $owner = delete $params{owner};
     Carp::confess('No owner given!') if not $owner;
@@ -51,17 +70,7 @@ sub generate_obj {
     my $disk_allocation = Genome::Disk::Allocation->__define__(%params);
     File::Path::mkpath($disk_allocation->absolute_path);
 
-    Sub::Install::reinstall_sub({
-            code => sub{ $_[0]->mount_path( $self->archived_volume->mount_path ); return 1; },
-            into => $disk_allocation, #'Genome::Disk::Allocation',
-            as   => 'archive',
-        });
-
-    Sub::Install::reinstall_sub({
-            code => sub{ $_[0]->mount_path( $self->tmp_volume()->mount_path ); return 1; },
-            into => $disk_allocation, #'Genome::Disk::Allocation',
-            as   => 'unarchive',
-        });
+    overload_archiving_methods();
 
     return $disk_allocation;
 }
