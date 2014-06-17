@@ -10,9 +10,13 @@ use warnings;
 
 use above "Genome";
 use Test::More;
+use Test::Exception;
 use Genome::File::Vcf::Entry;
 
 my $pkg = "Genome::VariantReporting::Filter::DamagingFilter";
+use_ok($pkg) or die;
+my $factory = Genome::VariantReporting::Factory->create();
+lives_ok( sub { $factory->get_class('filters', $pkg->name) }, "get_class works on $pkg" );
 
 my $passes = {
     C => 1,

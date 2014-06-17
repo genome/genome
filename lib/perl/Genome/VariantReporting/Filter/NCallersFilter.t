@@ -14,8 +14,9 @@ use Test::More;
 use Genome::File::Vcf::Entry;
 
 my $pkg = "Genome::VariantReporting::Filter::NCallersFilter";
-
 use_ok($pkg);
+my $factory = Genome::VariantReporting::Factory->create();
+lives_ok( sub { $factory->get_class('filters', $pkg->name) }, "get_class works on $pkg" );
 
 subtest "sample 1" => sub {
     my $filter = $pkg->create(

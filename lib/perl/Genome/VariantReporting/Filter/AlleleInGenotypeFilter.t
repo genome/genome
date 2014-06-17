@@ -15,6 +15,8 @@ use Test::Exception;
 
 my $pkg = 'Genome::VariantReporting::Filter::AlleleInGenotypeFilter';
 use_ok($pkg);
+my $factory = Genome::VariantReporting::Factory->create();
+lives_ok( sub { $factory->get_class('filters', $pkg->name) }, "get_class works on $pkg" );
 
 subtest "sample 1" => sub {
     my $filter = $pkg->create(

@@ -15,6 +15,8 @@ use Test::Exception;
 
 my $pkg = 'Genome::VariantReporting::Filter::FTKeepFilter';
 use_ok($pkg);
+my $factory = Genome::VariantReporting::Factory->create();
+lives_ok( sub { $factory->get_class('filters', $pkg->name) }, "get_class works on $pkg" );
 
 my %pass_return_values = (
     C => 1,

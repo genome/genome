@@ -14,6 +14,8 @@ use Test::More;
 use Test::Exception;
 
 my $pkg = "Genome::VariantReporting::Filter::ContainsTagFilter";
+my $factory = Genome::VariantReporting::Factory->create();
+lives_ok( sub { $factory->get_class('filters', $pkg->name) }, "get_class works on $pkg" );
 
 subtest "has tag with value" => sub {
     my $filter = $pkg->create(
