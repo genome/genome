@@ -21,7 +21,7 @@ use JSON;
 use List::MoreUtils "each_array";
 use LWP::Simple qw(getstore RC_OK);
 use Params::Validate qw(:types validate_pos);
-use POSIX qw(EEXIST);
+use POSIX qw(EEXIST lchown);
 use Set::Scalar;
 
 # these are optional but should load immediately when present
@@ -1675,7 +1675,7 @@ sub rename {
     }
 
     # restore mode, gid, and uid
-    chown($uid, $gid, $newname)
+    lchown($uid, $gid, $newname)
         or return;
     eval { mode($newname)->set_mode($mode) }
         or return;
