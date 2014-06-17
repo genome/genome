@@ -16,7 +16,7 @@ use Genome::File::Vcf::Entry;
 my $pkg = 'Genome::VariantReporting::Filter::MinFpkmFilter';
 use_ok($pkg);
 my $factory = Genome::VariantReporting::Factory->create();
-lives_ok( sub { $factory->get_class('filters', $pkg->name) }, "get_class works on $pkg" );
+isa_ok($factory->get_class('filters', $pkg->name), $pkg);
 
 subtest "with fpkm" => sub {
     my $interpreter = $pkg->create(sample_name => 'S1', min_fpkm => 2);

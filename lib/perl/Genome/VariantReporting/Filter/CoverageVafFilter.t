@@ -17,7 +17,7 @@ use Test::Exception;
 my $pkg = 'Genome::VariantReporting::Filter::CoverageVafFilter';
 use_ok($pkg) or die;
 my $factory = Genome::VariantReporting::Factory->create();
-lives_ok( sub { $factory->get_class('filters', $pkg->name) }, "get_class works on $pkg" );
+isa_ok($factory->get_class('filters', $pkg->name), $pkg);
 
 my $entry = Genome::VariantReporting::Expert::BamReadcount::TestHelper::create_entry(
     Genome::VariantReporting::Expert::BamReadcount::TestHelper::bam_readcount_line(),
