@@ -25,6 +25,8 @@ BEGIN {
 
 my $pkg = 'Genome::VariantReporting::Expert::Fpkm::Expert';
 use_ok($pkg) || die;
+my $factory = Genome::VariantReporting::Factory->create();
+isa_ok($factory->get_class('experts', $pkg->name), $pkg);
 
 my $VERSION = 1; # Bump these each time test data changes
 my $BUILD_VERSION = 2;
