@@ -22,6 +22,9 @@ use Test::More;
 my $cmd_class = 'Genome::VariantReporting::Expert::Dbsnp::Run';
 use_ok($cmd_class) or die;
 
+my $factory = Genome::VariantReporting::Factory->create();
+isa_ok($factory->get_class('runners', $cmd_class->name), $cmd_class);
+
 my $result_class = 'Genome::VariantReporting::Expert::Dbsnp::RunResult';
 use_ok($result_class) or die;
 
