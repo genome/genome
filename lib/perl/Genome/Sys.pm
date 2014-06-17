@@ -21,7 +21,7 @@ use JSON;
 use List::MoreUtils "each_array";
 use LWP::Simple qw(getstore RC_OK);
 use Params::Validate qw(:types validate_pos);
-use POSIX qw(EEXIST lchown);
+use POSIX qw(EEXIST);
 use Set::Scalar;
 
 # these are optional but should load immediately when present
@@ -1626,6 +1626,10 @@ sub retry {
 sub rename {
     my ($class, $oldname, $newname) = @_;
 
+    if ( -l $oldname) {
+        return CORE::rename($oldname, $newname);
+    }
+
     # mimic (anticipated) CORE::rename errors
     if ( ! -e $oldname ) {
         $! = &Errno::ENOENT;
@@ -1675,7 +1679,7 @@ sub rename {
     }
 
     # restore mode, gid, and uid
-    lchown($uid, $gid, $newname)
+    chown($uid, $gid, $newname)
         or return;
     eval { mode($newname)->set_mode($mode) }
         or return;
