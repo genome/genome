@@ -496,7 +496,7 @@ sub get_sequence_dictionary {
         }
     }
 
-    $self->reallocate;
+    $self->reallocate_disk_allocations;
 
     return $path;
 }
