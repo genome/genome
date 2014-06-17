@@ -1,4 +1,4 @@
-package Genome::VariantReporting::Filter::Tier1;
+package Genome::VariantReporting::Filter::Tier1Filter;
 
 use strict;
 use warnings;
@@ -6,7 +6,7 @@ use Genome;
 use Scalar::Util qw(looks_like_number);
 use Genome::File::Vcf::VepConsequenceParser;
 
-class Genome::VariantReporting::Filter::Tier1 {
+class Genome::VariantReporting::Filter::Tier1Filter {
     is => ['Genome::VariantReporting::Filter::Base'],
     has => [
     ],

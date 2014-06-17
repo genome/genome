@@ -1,10 +1,10 @@
-package Genome::VariantReporting::Filter::MaxIndelSize;
+package Genome::VariantReporting::Filter::MaxIndelSizeFilter;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::VariantReporting::Filter::MaxIndelSize {
+class Genome::VariantReporting::Filter::MaxIndelSizeFilter {
     is => 'Genome::VariantReporting::Filter::Base',
     has => [
         size => {

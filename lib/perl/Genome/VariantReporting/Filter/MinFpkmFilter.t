@@ -13,48 +13,47 @@ use Test::More;
 use Test::Exception;
 use Genome::File::Vcf::Entry;
 
-my $pkg = 'Genome::VariantReporting::Filter::Tier1';
+my $pkg = 'Genome::VariantReporting::Filter::MinFpkmFilter';
 use_ok($pkg);
 my $factory = Genome::VariantReporting::Factory->create();
 lives_ok( sub { $factory->get_class('filters', $pkg->name) }, "get_class works on $pkg" );
 
-subtest "with no vep information" => sub {
-    my $interpreter = $pkg->create();
+subtest "with fpkm" => sub {
+    my $interpreter = $pkg->create(sample_name => 'S1', min_fpkm => 2);
     lives_ok(sub {$interpreter->validate}, "Filter validates");
 
     my %expected_return_values = (
-        C => 0,
-        G => 0,
+        C => 0,# fpkm => "1.25"
+        G => 0,# fpkm => undef
     );
-    my $entry = create_entry_with_vep('');
-    is_deeply({$interpreter->filter_entry($entry)}, \%expected_return_values, "Entry gets filtered correctly");
+    my $entry = create_entry_with_fpkm();
+    is_deeply({$interpreter->filter_entry($entry)}, \%expected_return_values, "Entry gets interpreted correctly");
 };
 
-subtest "with failing vep information" => sub {
-    my $interpreter = $pkg->create();
+subtest "with fpkm heterozygous, non-reference genotype" => sub {
+    my $interpreter = $pkg->create(sample_name => 'S1', min_fpkm => 2);
     lives_ok(sub {$interpreter->validate}, "Filter validates");
 
     my %expected_return_values = (
-        C => 0,
-        G => 0,
+        C => 1,# fpkm => "2.45"
+        G => 0,# fpkm => "1.25"
     );
-    my $entry = create_entry_with_vep('CSQ=C|ENSG00000035115|ENST00000356150|Transcript|INTRON_VARIANT||||||||-1|SH3YL1|HGNC');
-    is_deeply({$interpreter->filter_entry($entry)}, \%expected_return_values, "Entry gets filtered correctly");
+    my $entry = create_entry_with_fpkm_het_no_ref();
+    is_deeply({$interpreter->filter_entry($entry)}, \%expected_return_values, "Entry gets interpreted correctly");
 };
 
-subtest "with passing vep information" => sub {
-    my $interpreter = $pkg->create();
+
+subtest "without fpkm" => sub {
+    my $interpreter = $pkg->create(sample_name => 'S1', min_fpkm => 2);
     lives_ok(sub {$interpreter->validate}, "Filter validates");
 
     my %expected_return_values = (
-        C => 1,
-        G => 0,
+        C => 0,# fpkm => '.'
+        G => 0,# fpkm => undef
     );
-    my $entry = create_entry_with_vep('CSQ=C|ENSG00000035115|ENST00000356150|Transcript|MISSENSE_VARIANT||||||||-1|SH3YL1|HGNC');
-    is_deeply({$interpreter->filter_entry($entry)}, \%expected_return_values, "Entry gets filtered correctly");
+    my $entry = create_entry_without_fpkm();
+    is_deeply({$interpreter->filter_entry($entry)}, \%expected_return_values, "Entry gets interpreted correctly");
 };
-
-
 done_testing;
 
 sub create_vcf_header {
@@ -65,7 +64,6 @@ sub create_vcf_header {
 ##INFO=<ID=A,Number=1,Type=String,Description="Info field A">
 ##INFO=<ID=C,Number=A,Type=String,Description="Info field C (per-alt)">
 ##INFO=<ID=E,Number=0,Type=Flag,Description="Info field E">
-##INFO=<ID=CSQ,Number=.,Type=String,Description="Consequence type as predicted by VEP. Format: Allele|Gene|Feature|Feature_type|Consequence|cDNA_position|CDS_position|Protein_position|Amino_acids|Codons|Existing_variation|DISTANCE|STRAND|SYMBOL|SYMBOL_SOURCE">
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
 ##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Depth">
 ##FORMAT=<ID=FT,Number=.,Type=String,Description="Filter">
@@ -76,9 +74,20 @@ EOS
     return $header
 }
 
-sub create_entry_with_vep {
-    my $vep_string = shift;
-    my $info = join(';', 'A=B', 'C=8,9', 'E', $vep_string);
+sub create_entry_with_fpkm_het_no_ref {
+    return create_entry("GT:DP:FPKM","1/2:12:2.45,1.25");
+}
+
+sub create_entry_with_fpkm {
+    return create_entry("GT:DP:FPKM","0/1:12:.,1.25");
+}
+
+sub create_entry_without_fpkm {
+    return create_entry("GT:DP","0/1:12");
+}
+
+sub create_entry {
+    my @sample_fields = @_;
 
     my @fields = (
         '1',            # CHROM
@@ -88,9 +97,8 @@ sub create_entry_with_vep {
         'C,G',            # ALT
         '10.3',         # QUAL
         'PASS',         # FILTER
-        $info,          # INFO
-        "GT:DP",        # FORMAT
-        "0/1:12"        # S1
+        'A=B;C=8,9;E',  # INFO
+        @sample_fields
     );
 
     my $entry_txt = join("\t", @fields);
