@@ -22,7 +22,12 @@ use Genome::Sys::LSF::bsub qw();
 use Genome::Utility::Email;
 
 class Genome::Model::Build {
-    is => ['Genome::Notable','Genome::Searchable', 'Genome::Utility::ObjectWithTimestamps', 'Genome::Utility::ObjectWithCreatedBy'],
+    is => [qw/
+        Genome::Notable Genome::Searchable
+        Genome::Utility::ObjectWithAllocations
+        Genome::Utility::ObjectWithCreatedBy
+        Genome::Utility::ObjectWithTimestamps
+    /],
     type_name => 'genome model build',
     table_name => 'model.build',
     is_abstract => 1,
@@ -80,11 +85,6 @@ class Genome::Model::Build {
             is => 'Workflow::Operation::Instance',
             is_calculated => 1,
             calculate => q{ return $self->newest_workflow_instance(); }
-        },
-        disk_allocation   => { 
-            is => 'Genome::Disk::Allocation', 
-            is_many => 1,
-            reverse_as => 'owner'
         },
         software_revision => { 
             is => 'Text', 
@@ -670,38 +670,16 @@ sub get_or_create_data_directory {
     return $self->data_directory;
 }
 
-sub reallocate {
-    my $self = shift;
-
-    my $status = $self->status;
-    my $disk_allocation = $self->disk_allocation;
-
-    if ($disk_allocation) {
-        my $reallocated = eval { $disk_allocation->reallocate };
-        $self->warning_message("Failed to reallocate disk space!") unless $reallocated;
-    }
-    else {
-        $self->warning_message("Reallocate called for build (" . $self->__display_name__ . ") but it does not have a disk allocation.");
-    }
-
-    # Always returns 1 due to legacy behavior.
-    return 1;
-}
-
-sub all_allocations {
+sub _additional_associated_disk_allocations {
     my $self = shift;
 
     my @allocations;
-    push @allocations, $self->disk_allocation if $self->disk_allocation;
-
     push @allocations, $self->user_allocations;
     push @allocations, $self->symlinked_allocations;
-
     push @allocations, $self->input_allocations;
     push @allocations, $self->event_allocations;
 
-    my %allocations = map { $_->id => $_ } @allocations;
-    return values %allocations;
+    return @allocations;
 }
 
 sub disk_usage_allocations {
@@ -940,29 +918,6 @@ sub add_report {
         $self->error_message("Error saving report!: " . $report->error_message());
         return;
     }
-}
-
-sub archivable {
-    my $self = shift;
-    my $allocation = $self->disk_allocation;
-    unless ($allocation) {
-        $self->warning_message("Could not get allocation for build " . $self->__display_name__);
-        return 0;
-    }
-    return $allocation->archivable();
-}
-
-sub is_archived {
-    my $self = shift;
-    my $is_archived = 0;
-    my @allocations = $self->all_allocations;
-    for my $allocation (@allocations) {
-        if ($allocation->is_archived()) {
-            $is_archived = 1;
-            last;
-        }
-    }
-    return $is_archived;
 }
 
 sub start {
@@ -1532,9 +1487,7 @@ sub fail {
     $self->_verify_build_is_not_abandoned_and_set_status_to('Failed', 1)
         or return;
 
-    if ($self->disk_allocation) {
-        $self->reallocate;
-    }
+    $self->reallocate_disk_allocations;
 
     # set event status
     for my $e ($self->the_events(event_status => 'Running')) {
@@ -1630,8 +1583,7 @@ sub success {
         callback => $commit_callback,
     );
 
-    # reallocate - always returns true (legacy behavior)
-    $self->reallocate;
+    $self->reallocate_disk_allocations;
 
     # TODO Reconsider this method name
     $self->perform_post_success_actions;
@@ -1691,11 +1643,7 @@ sub abandon {
     $self->_abandon_events
         or return;
 
-    # Reallocate - always returns true (legacy behavior)
-    if ($self->disk_allocation) {
-        $self->reallocate;
-    }
-
+    $self->reallocate_disk_allocations;
     $self->_deactivate_software_results;
 
     my %add_note_args = (header_text => $header_text);
@@ -2027,15 +1975,6 @@ sub delete {
     # Remove the build as a Software Result User
     $self->status_message("Unregistering software results associated with build");
     $self->_unregister_software_results;
-
-    # Deallocate build directory, which will also remove it (unless no commit is on)
-    my $disk_allocation = $self->disk_allocation;
-    if ($disk_allocation) {
-        $self->status_message("Deallocating build directory");
-        unless ($disk_allocation->deallocate) {
-            $self->warning_message('Failed to deallocate disk space.');
-        }
-    }
 
     return $self->SUPER::delete;
 }
