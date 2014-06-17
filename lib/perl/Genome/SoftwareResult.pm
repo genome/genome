@@ -650,7 +650,7 @@ sub _auto_unarchive {
 
     $self->status_message('Result %s is archived... unarchiving now.', $self->id);
 
-    my $user = Genome::Sys->current_user;
+    my $user = Genome::Sys->username;
     my ($package, undef, $line) = caller;
     my $reason = sprintf('Automatically unarchiving due to request from %s line %s for software result %s run by %s', $package, $line, $self->id, $user);
 
