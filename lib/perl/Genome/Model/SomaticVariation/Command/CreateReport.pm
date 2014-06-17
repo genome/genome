@@ -550,13 +550,13 @@ sub reference_sequence_build {
 sub tumor_bam {
     my $self = shift;
 
-    return $self->somatic_variation_build->tumor_build->merged_alignment_result->bam_path;
+    return $self->somatic_variation_build->tumor_build->whole_rmdup_bam_file;
 }
 
 sub normal_bam {
     my $self = shift;
 
-    return $self->somatic_variation_build->normal_build->merged_alignment_result->bam_path;
+    return $self->somatic_variation_build->normal_build->whole_rmdup_bam_file;
 }
 
 sub ref_seq_fasta {

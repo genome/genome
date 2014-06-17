@@ -8,7 +8,7 @@ use Test::More;
 use Genome::Test::Factory::Model::SomaticVariation;
 use Genome::Test::Factory::Model::ImportedAnnotation;
 use Genome::Test::Factory::Model::ReferenceSequence;
-use Genome::Test::Factory::InstrumentData::Solexa;
+use Genome::Test::Factory::InstrumentData::MergedAlignmentResult;
 use Genome::Test::Factory::Build;
 use File::Spec;
 use Genome::Utility::Test qw/compare_ok/;
@@ -28,8 +28,9 @@ sub create_test_objects {
     my $annotation_build_data_dir = File::Spec->join($main_dir, "annotation_build_data");
     my $instrument_data_dir = File::Spec->join($main_dir, "instrument_data");
 
-    my $normal_instrument_data = Genome::Test::Factory::InstrumentData::Solexa->setup_object(
-        bam_path => File::Spec->join($instrument_data_dir, "138572668_normal.bam"),
+    my $normal_merged_alignment_result = Genome::Test::Factory::InstrumentData::MergedAlignmentResult->setup_object(
+        output_dir => $instrument_data_dir,
+        id => '138572668_normal'
     );
 
     my $normal_model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object();
@@ -52,8 +53,8 @@ sub create_test_objects {
             return $self->{__merged_alignment_result};
         },
     });
-    $normal_build->merged_alignment_result($normal_instrument_data);
-    ok(-s $normal_build->merged_alignment_result->bam_path, "Normal bam path correct");
+    $normal_build->merged_alignment_result($normal_merged_alignment_result);
+    ok(-s $normal_build->whole_rmdup_bam_file, "Normal bam path correct");
     ok($normal_build->isa("Genome::Model::Build::ReferenceAlignment"), "Generated a normal build");
 
     my $tumor_reference_model = Genome::Test::Factory::Model::ReferenceSequence->setup_object();
@@ -63,8 +64,9 @@ sub create_test_objects {
     );
     $tumor_reference_build->name('GRCh37-lite-build37');
 
-    my $tumor_instrument_data = Genome::Test::Factory::InstrumentData::Solexa->setup_object(
-        bam_path => File::Spec->join($instrument_data_dir, "139691307_tumor.bam"),
+    my $tumor_merged_alignment_result = Genome::Test::Factory::InstrumentData::MergedAlignmentResult->setup_object(
+        output_dir => $instrument_data_dir,
+        id => '139691307_tumor'
     );
     my $tumor_model  = Genome::Test::Factory::Model::ReferenceAlignment->setup_object(
         subject_id            => $normal_model->subject_id,
@@ -76,8 +78,8 @@ sub create_test_objects {
         model_id         => $tumor_model->id,
         status           => "Succeeded",
     );
-    $tumor_build->merged_alignment_result($tumor_instrument_data);
-    ok(-s $tumor_build->merged_alignment_result->bam_path, "Tumor bam path correct");
+    $tumor_build->merged_alignment_result($tumor_merged_alignment_result);
+    ok(-s $tumor_build->whole_rmdup_bam_file, "Tumor bam path correct");
     ok($tumor_build->isa("Genome::Model::Build::ReferenceAlignment"), "Generated a turmor build");
 
     my $annotation_model = Genome::Test::Factory::Model::ImportedAnnotation->setup_object();
