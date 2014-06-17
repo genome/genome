@@ -15,6 +15,9 @@ use Genome::Utility::Test qw(compare_ok);
 my $pkg = 'Genome::VariantReporting::Reporter::TumorOnlyReporter';
 use_ok($pkg);
 
+my $factory = Genome::VariantReporting::Factory->create();
+isa_ok($factory->get_class('reporters', $pkg->name), $pkg);
+
 my $data_dir = __FILE__.".d";
 
 my $reporter = $pkg->create(file_name => 'tumor-only');
