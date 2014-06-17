@@ -9,7 +9,7 @@ use warnings;
 
 use above "Genome";
 
-require File::Temp;
+require Genome::Test::Factory::DiskAllocation;
 require List::Util;
 require Sub::Install;
 use Test::More;
@@ -25,53 +25,18 @@ ok($meta, 'defined has allocations test class');
 
 my $obj = GenomeTest::HasAllocations->create();
 ok($obj, 'create');
-is($obj->disk_allocation, undef, 'no disk_allocations, yet');
+is($obj->disk_allocation, undef, 'no disk_allocation, yet');
 is($obj->disk_allocations, undef, 'no disk_allocations, yet');
 
-my $tempdir = File::Temp::tempdir(CLEANUP => 1);
-my @volumes = (
-    Genome::Disk::Volume->__define__(
-        mount_path => $tempdir,
-        disk_status => 'active',
-        can_allocate => 1,
-        total_kb => 10000,
-    ),
-    Genome::Disk::Volume->__define__(
-        mount_path => Genome::Disk::Volume->archive_volume_prefix,
-        disk_status => 'active',
-        can_allocate => 1,
-        total_kb => 10000,
-    ),
-);
-ok(!$volumes[0]->is_archive, 'volume 1 is not archived');
-ok($volumes[1]->is_archive, 'volume 2 is archived');
-
-my @expected_allocations = Genome::Disk::Allocation->__define__(
-    owner_id => $obj->id,
-    owner_class_name => $obj->class,
-    mount_path => $volumes[0]->mount_path,
-    disk_group_name => 'info_apipe',
-    group_subdirectory => '',
-    allocation_path => '1',
-    kilobytes_requested => '2000',
-);
+my @expected_allocations = Genome::Test::Factory::DiskAllocation->generate_obj(owner => $obj);
 ok(@expected_allocations, 'create allocation 1');
-mkdir $expected_allocations[0]->absolute_path;
 
 my $disk_allocation = $obj->disk_allocations;
 is_deeply($disk_allocation, $expected_allocations[0], 'disk_allocation');
 my @disk_allocations = $obj->disk_allocations;
 is_deeply(\@disk_allocations, \@expected_allocations, 'disk_allocations');
 
-push @expected_allocations, Genome::Disk::Allocation->__define__(
-    owner_id => $obj->id,
-    owner_class_name => $obj->class,
-    mount_path => $volumes[0]->mount_path,
-    disk_group_name => 'info_apipe',
-    group_subdirectory => '',
-    allocation_path => '1',
-    kilobytes_requested => '2000',
-);
+push @expected_allocations, Genome::Test::Factory::DiskAllocation->generate_obj(owner => $obj);
 is(@expected_allocations, 2, 'create allocation 2');
 mkdir $expected_allocations[1]->absolute_path;
 
@@ -98,17 +63,12 @@ $expected_allocations[1]->archivable(1);
 
 # are_disk_allocations_archived
 is($obj->are_disk_allocations_archived, '', 'disk_allocations are not archived');
-$expected_allocations[1]->mount_path( $volumes[1]->mount_path );
+$expected_allocations[1]->archive;
 is($obj->are_disk_allocations_archived, 1, 'disk_allocations are archived');
 
 # unarchive
-Sub::Install::reinstall_sub({
-        code => sub{ $_[0]->mount_path( $volumes[1]->mount_path ); return 1; },
-        into => 'Genome::Disk::Allocation',
-        as   => 'unarchive',
-    });
 ok($obj->unarchive_disk_allocations, 'unarchive_disk_allocations');
-is($obj->are_disk_allocations_archived, 1, 'disk allocations are archived');
+is($obj->are_disk_allocations_archived, '', 'disk allocations are not archived');
 
 # deallocate_disk_allocations
 ok($obj->deallocate_disk_allocations, 'deallocate_disk_allocation');
@@ -116,7 +76,12 @@ isa_ok($expected_allocations[0], 'UR::DeletedRef');
 isa_ok($expected_allocations[1], 'UR::DeletedRef');
 
 # delete
+push @expected_allocations, Genome::Test::Factory::DiskAllocation->generate_obj(owner => $obj);
+is(@expected_allocations, 3, 'create new allocation to test delete');
 ok($obj->delete, 'delete');
+ok(UR::Context->commit, 'commit');
+isa_ok($obj, 'UR::DeletedRef');
+isa_ok($expected_allocations[2], 'UR::DeletedRef');
 
 #print join("\n", map { $_->absolute_path } @expected_allocations); print Data::Dumper::Dumper(\@expected_allocations); <STDIN>;
 done_testing();
