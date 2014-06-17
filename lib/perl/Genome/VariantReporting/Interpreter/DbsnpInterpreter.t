@@ -15,6 +15,8 @@ use Genome::File::Vcf::Entry;
 
 my $pkg = 'Genome::VariantReporting::Interpreter::DbsnpInterpreter';
 use_ok($pkg);
+my $factory = Genome::VariantReporting::Factory->create();
+isa_ok($factory->get_class('interpreters', $pkg->name), $pkg);
 
 subtest "entry with caf" => sub {
     my $interpreter = $pkg->create();

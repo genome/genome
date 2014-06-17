@@ -16,6 +16,8 @@ use Genome::VariantReporting::Expert::BamReadcount::TestHelper qw(bam_readcount_
 
 my $pkg = 'Genome::VariantReporting::Expert::BamReadcount::VafInterpreter';
 use_ok($pkg);
+my $factory = Genome::VariantReporting::Factory->create();
+isa_ok($factory->get_class('interpreters', $pkg->name), $pkg);
 
 subtest "one alt allele" => sub {
     my $interpreter = $pkg->create(sample_name => "S1");

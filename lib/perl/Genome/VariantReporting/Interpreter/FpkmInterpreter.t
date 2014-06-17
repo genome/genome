@@ -15,6 +15,9 @@ use Genome::File::Vcf::Entry;
 
 my $pkg = 'Genome::VariantReporting::Interpreter::FpkmInterpreter';
 use_ok($pkg);
+my $factory = Genome::VariantReporting::Factory->create();
+isa_ok($factory->get_class('interpreters', $pkg->name), $pkg);
+
 subtest "with fpkm" => sub {
     my $interpreter = $pkg->create(sample_name => 'S1');
     lives_ok(sub {$interpreter->validate}, "Interpreter validates");

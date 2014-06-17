@@ -15,6 +15,9 @@ use Genome::File::Vcf::Entry;
 
 my $pkg = 'Genome::VariantReporting::Interpreter::RsidInterpreter';
 use_ok($pkg);
+my $factory = Genome::VariantReporting::Factory->create();
+isa_ok($factory->get_class('interpreters', $pkg->name), $pkg);
+
 subtest "with rsid" => sub {
     my $interpreter = $pkg->create();
     lives_ok(sub {$interpreter->validate}, "Interpreter validates");
