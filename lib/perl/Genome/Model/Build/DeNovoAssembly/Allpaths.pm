@@ -145,7 +145,7 @@ sub before_assemble {
             $genomic_end = 50;
         }
 
-        $in_group = $in_group."\n".$self->data_directory."/".$sx_result->resolve_base_name_from_instrument_data($sx_result->instrument_data).".*.".$sx_result->output_file_suffix.",\t".$lib_name.",\t".$sx_result->id;
+        $in_group = $in_group."\n".$self->data_directory."/".$sx_result->resolve_base_name_from_instrument_data($sx_result->instrument_data)."*.".$sx_result->output_file_suffix.",\t".$lib_name.",\t".$sx_result->id;
         
         if (! $libs_seen{$lib_id}) {
             my $orientation;
