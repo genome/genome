@@ -172,21 +172,12 @@ sub run_name {
 sub data_directory {
     my $self = shift;
 
-    my $alloc = $self->get_disk_allocation;
-
-    if (defined($alloc)) {
-        return $alloc->absolute_path;
-    } else {
-        $self->error_message("Could not find an associated disk_allocations record.");
-        die $self->error_message;
+    my $disk_allocation = $self->disk_allocation;
+    if ( not $disk_allocation ) {
+        die $self->error_message("Could not find disk allocation for ".$self->__display_name__);
     }
 
-}
-
-# TODO: remove me and use the actual object accessor
-sub get_disk_allocation {
-    my $self = shift;
-    return $self->allocations;
+    return $disk_allocation->absolute_path;
 }
 
 sub calculate_alignment_estimated_kb_usage {
@@ -194,7 +185,7 @@ sub calculate_alignment_estimated_kb_usage {
     my $answer;
 
     # Check for an existing allocation for this instrument data, which would've been created by the importer
-    my $allocation = Genome::Disk::Allocation->get(owner_class_name => $self->class, owner_id => $self->id);
+    my $allocation = $self->disk_allocation;
     if ($allocation) {
         return int(($allocation->kilobytes_requested/1000) + 100);
     }
@@ -411,7 +402,7 @@ sub _archive_file_name { # private for now...can be public
         return 'all_sequences.sff';
     }
     elsif ( $format eq 'raw sra download' ) {
-        my $alloc = $self->allocations;
+        my $alloc = $self->disk_allocation;
         die $self->error_message("Couldn't get allocations")
             if not $alloc;
         my $base_dir = $alloc->absolute_path;
@@ -478,7 +469,7 @@ sub _archive_file_name { # private for now...can be public
 sub archive_path {
     my $self = shift;
 
-    my $alloc = $self->allocations;
+    my $alloc = $self->disk_allocation;
     return if not $alloc;
 
     my $file_name = $self->_archive_file_name;
@@ -488,7 +479,7 @@ sub archive_path {
 sub bam_path {
     my ($self) = @_;
 
-    my ($allocation) = $self->allocations;
+    my ($allocation) = $self->disk_allocation;
     unless ($allocation) {
         $self->error_message("Found no disk allocation for imported instrument data " . $self->id, ", so cannot find bam!");
         die $self->error_message;

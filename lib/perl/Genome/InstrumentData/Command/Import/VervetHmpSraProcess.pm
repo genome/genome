@@ -68,7 +68,7 @@ sub execute {
 	    my ($subset_name) = $description =~ /\S+\s+\(subset_name\:(\d+)\s+\S+/;
 	    next unless ($subset_name eq $srr); #This should ensure that I only do the allocation once per 'subset_name'
 
-	    my ($alloc) = $single_inst_data->allocations; 
+	    my ($alloc) = $single_inst_data->disk_allocation; 
 	    unless(symlink($alloc->absolute_path . "/" . $srr, $working_dir . "/" . $srr)) {
 		$self->error_message("Failed to set up symlink from SRA data dir: " . $alloc->absolute_path . " to " . $working_dir . "/" . $srr); #NOTE: In this case, for Vervet, the $srr is a 'subset_name' (since thats what was entered as 'srr_accessions)
 		return;
@@ -370,7 +370,7 @@ sub execute {
 	$self->error_message("did not get instrument data id for paired end fastq ... did this really import?");
 	return;
     }
-    my $pe_path = $pe_inst_data->allocations->absolute_path;
+    my $pe_path = $pe_inst_data->disk_allocation->absolute_path;
 
     unless ($self->copy_metrics($pe_path)) {
 	$self->error_message("could not copy paired end metrics into paired end allocation absolute_path");
@@ -383,7 +383,7 @@ sub execute {
 	$self->error_message("did not get instrument data id for singleton fastq ... did this really import?");
 	return;
     }
-    my $sing_path = $sing_inst_data->allocations->absolute_path;
+    my $sing_path = $sing_inst_data->disk_allocation->absolute_path;
     unless ($self->copy_metrics($sing_path)) {
 	$self->error_message("could not copy singleton metrics into singleton allocation absolute_path");
 	return;
@@ -439,7 +439,7 @@ sub execute {
 #        }
 #
 #
-#        my $path = $iid->allocations->absolute_path;
+#        my $path = $iid->disk_allocation->absolute_path;
 #    
 #
 #        unless ($self->copy_metrics($path)) {

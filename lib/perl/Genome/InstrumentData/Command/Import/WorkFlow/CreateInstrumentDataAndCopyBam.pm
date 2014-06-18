@@ -132,7 +132,7 @@ sub execute {
 
         # Reallocate
         $self->debug_message('Reallocate...');
-        $instrument_data->allocations->reallocate;# with move??
+        $instrument_data->reallocate_disk_allocations;
         $self->debug_message('Reallocate...done');
 
         push @instrument_data, $instrument_data;

@@ -353,7 +353,7 @@ sub _promote_data {
 
     my $result_bam_file = join('/', $self->_working_directory, 'all_sequences.bam');
     my $id = $self->_instrument_data;
-    my $final_destination = join('/', $id->allocations->absolute_path, 'all_sequences.bam');
+    my $final_destination = join('/', $id->disk_allocation->absolute_path, 'all_sequences.bam');
     
     unless(Genome::Sys->rename($result_bam_file, $final_destination)) {
         die $self->error_message('Failed to promote file to final location.');

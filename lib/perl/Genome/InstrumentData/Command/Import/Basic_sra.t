@@ -56,7 +56,7 @@ is($instrument_data->read_length, 232, 'read_length correctly set');
 is(eval{$instrument_data->attributes(attribute_label => 'original_data_path_md5')->attribute_value;}, 'dcd04a5bcb2d18f29c21c25b0f2387e3', 'original_data_path_md5 correctly set');
 is($instrument_data->analysis_projects, $analysis_project, 'set analysis project');
 
-my $allocation = $instrument_data->allocations;
+my $allocation = $instrument_data->disk_allocation;
 ok($allocation, 'got allocation');
 ok($allocation->kilobytes_requested > 0, 'allocation kb was set');
 

@@ -65,7 +65,7 @@ is(eval{$instrument_data->attributes(attribute_label => 'bam_path')->attribute_v
 is(File::Compare::compare($bam_path, $test_dir.'/test.clean.sorted.bam'), 0, 'bam matches');
 is(File::Compare::compare($bam_path.'.flagstat', $test_dir.'/test.clean.sorted.bam.flagstat'), 0, 'flagstat matches');
 
-my $allocation = $instrument_data->allocations;
+my $allocation = $instrument_data->disk_allocation;
 ok($allocation, 'got allocation');
 ok($allocation->kilobytes_requested > 0, 'allocation kb was set');
 

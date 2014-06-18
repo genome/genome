@@ -52,7 +52,7 @@ sub test_update_genotype_file {
 
     # genotype file method works
     my $genotype_file = $instrument_data->genotype_file;
-    is($genotype_file, join('/', $instrument_data->allocations->absolute_path, $genotype_file_name), 'genotype file matches');
+    is($genotype_file, join('/', $instrument_data->disk_allocation->absolute_path, $genotype_file_name), 'genotype file matches');
     ok(-s $genotype_file, 'genotype file copied');
 
     return 1;

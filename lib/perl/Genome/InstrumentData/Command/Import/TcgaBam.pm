@@ -122,7 +122,7 @@ class Genome::InstrumentData::Command::Import::TcgaBam {
         _model => { is_optional => 1, },
         _inst_data => { is_optional => 1, },
         import_instrument_data_id => { via => '_inst_data', to => 'id', is_optional => 1, },
-        _allocation => { via => '_inst_data', to => 'allocations', is_optional => 1, },
+        _allocation => { via => '_inst_data', to => 'disk_allocation', is_optional => 1, },
         _original_alloc => { is_optional => 1, },
         _absolute_path => { via => '_allocation', to => 'absolute_path', is_optional => 1, },
         _new_bam => {

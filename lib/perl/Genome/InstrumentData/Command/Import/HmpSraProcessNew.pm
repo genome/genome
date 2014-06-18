@@ -74,7 +74,7 @@ sub execute {
 
 #_______This section here deals with the fact that I am NOT able to nicely grab an instrument-data id by an SRR id, since I don't have SRR ids...I only have subset_names in the 'description' field
 	foreach my $single_inst_data (@instrument_data) {
-	    my ($alloc) = $single_inst_data->allocations; 
+	    my ($alloc) = $single_inst_data->disk_allocation; 
 	    unless(symlink($alloc->absolute_path . "/" . $srr, $working_dir . "/" . $srr)) {
 		$self->error_message("Failed to set up symlink from SRA data dir: " . $alloc->absolute_path . " to " . $working_dir . "/" . $srr);
 		return;
@@ -387,7 +387,7 @@ sub execute {
 	$self->error_message("did not get instrument data id for paired end fastq ... did this really import?");
 	return;
     }
-    my $pe_path = $pe_inst_data->allocations->absolute_path;
+    my $pe_path = $pe_inst_data->disk_allocation->absolute_path;
 
     unless ($self->copy_metrics($pe_path)) {
 	$self->error_message("could not copy paired end metrics into paired end allocation absolute_path");
@@ -400,7 +400,7 @@ sub execute {
 	$self->error_message("did not get instrument data id for singleton fastq ... did this really import?");
 	return;
     }
-    my $sing_path = $sing_inst_data->allocations->absolute_path;
+    my $sing_path = $sing_inst_data->disk_allocation->absolute_path;
     unless ($self->copy_metrics($sing_path)) {
 	$self->error_message("could not copy singleton metrics into singleton allocation absolute_path");
 	return;

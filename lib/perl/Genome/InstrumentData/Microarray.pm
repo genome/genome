@@ -88,11 +88,11 @@ sub genotype_file {
     }
 
     # Check allocation exists and is not archived
-    my ($allocation) = $self->allocations;
-    if ( not $allocation ) {
+    my $disk_allocation = $self->disk_allocation;
+    if ( not $disk_allocation ) {
         return;
     }
-    if ( $allocation->is_archived ) {
+    if ( $disk_allocation->is_archived ) {
         $self->error_message("Genotype file is archived! Returning path to archived location.");
     }
 
@@ -104,7 +104,7 @@ sub genotype_file {
         $genotype_file_name = $genotype_file_name_attr->attribute_value;
     }
     elsif ( my $genotype_file_attr = $self->attributes(attribute_label => 'genotype_file') ) {
-        my $allocation_path = $allocation->allocation_path;
+        my $allocation_path = $disk_allocation->allocation_path;
         my $attr_value = $genotype_file_attr->attribute_value;
         $attr_value =~ m!\Q$allocation_path\E/(.+)!;
         $genotype_file_name = $1;
@@ -115,7 +115,7 @@ sub genotype_file {
     return if not $genotype_file_name;
 
     # return abs path + genotype file name
-    return join('/', $allocation->absolute_path, $genotype_file_name);
+    return join('/', $disk_allocation->absolute_path, $genotype_file_name);
 }
 
 sub update_genotype_file {
@@ -154,7 +154,7 @@ sub _copy_genotype_file {
         die $self->error_message("The genotype file has no size: $genotype_file");
     }
 
-    my ($disk_allocation) = $self->allocations;
+    my $disk_allocation = $self->disk_allocation;
     my $kilobytes_requested = int( $size / 1024 ) + 20; # extra for directory etc
     if (not $disk_allocation) {
         $disk_allocation = Genome::Disk::Allocation->allocate (

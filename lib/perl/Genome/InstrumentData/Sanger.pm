@@ -19,11 +19,6 @@ class Genome::InstrumentData::Sanger {
             is_mutable => 1,
             default_value => 'unknown',
         },
-        disk_allocation => {
-            is => 'Genome::Disk::Allocation',
-            calculate_from => [ 'subclass_name', 'id' ],
-            calculate => q{ return Genome::Disk::Allocation->get(owner_id => $id, owner_class_name => $subclass_name); },
-        },
     ],
 };
 

@@ -802,7 +802,7 @@ sub _finish {
     $self->debug_message('Remove tmp dir...done');
 
     $self->debug_message('Reallocate...');
-    $self->instrument_data->allocations->reallocate;# with move??
+    $self->instrument_data->reallocate_disk_allocations;
     $self->debug_message('Reallocate...done');
 
     return 1;

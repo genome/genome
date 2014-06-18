@@ -135,7 +135,7 @@ sub execute {
     for my $srr (@srrs) {
         my $instrument_data = Genome::InstrumentData::Imported->get(import_format=>'raw sra download', sra_accession=>$srr);
         
-        my ($alloc) = $instrument_data->allocations; 
+        my ($alloc) = $instrument_data->disk_allocation; 
         unless(symlink($alloc->absolute_path . "/" . $srr, $working_dir . "/" . $srr)) {
 	    $self->error_message("Failed to set up symlink from SRA data dir: " . $alloc->absolute_path . " to " . $working_dir . "/" . $srr);
 	   return;
@@ -306,7 +306,7 @@ sub execute {
             return;
         }
 
-        my $path = $iid->allocations->absolute_path;
+        my $path = $iid->disk_allocation->absolute_path;
     
         unless ($self->copy_metrics($path)) {
             $self->error_message("could not copy metrics into the destination path!");

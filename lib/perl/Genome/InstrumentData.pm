@@ -8,7 +8,7 @@ use Genome;
 use List::MoreUtils qw(uniq);
 
 class Genome::InstrumentData {
-    is => 'Genome::Notable',
+    is => [qw/ Genome::Utility::ObjectWithAllocations Genome::Notable /],
     table_name => 'instrument.data',
     is_abstract => 1,
     subclass_description_preprocessor => __PACKAGE__ . '::_preprocess_subclass_description',
@@ -216,10 +216,6 @@ class Genome::InstrumentData {
             is => 'Genome::Model::Event',
             reverse_as => 'instrument_data',
         },
-        allocations => {
-            is => 'Genome::Disk::Allocation',
-            reverse_as => 'owner',
-        },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
@@ -288,8 +284,6 @@ sub delete {
 
     my ($expunge_status) = $self->_expunge_assignments;
     return unless $expunge_status;
-
-    $self->_create_deallocate_observer;
 
     for my $attribute ($self->attributes) {
         $attribute->delete;
@@ -360,26 +354,6 @@ sub _expunge_assignments{
     }
 
     return 1, %affected_users;
-}
-
-sub _create_deallocate_observer {
-    my $self = shift;
-    my @allocations = $self->allocations;
-    return 1 unless @allocations;
-    my $deallocator;
-    $deallocator = sub {
-        for my $allocation (@allocations) {
-            $allocation->delete;
-        }
-        UR::Context->cancel_change_subscription(
-            'commit', $deallocator
-        );
-    };
-    UR::Context->create_subscription(
-        method => 'commit',
-        callback => $deallocator
-    );
-    return 1;
 }
 
 sub calculate_alignment_estimated_kb_usage {
