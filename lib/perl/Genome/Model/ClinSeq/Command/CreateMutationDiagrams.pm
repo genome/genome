@@ -146,6 +146,7 @@ sub execute {
 
   #Import Tier1 variants from the somatic-variation builds - key on transcript IDs
   my $somatic_variants = $self->import_somatic_variants('-complete_variants_file'=>$complete_somatic_variants_file, '-filtered_variants_file'=>$filtered_somatic_variants_file);
+  return 1 if $somatic_variants eq '1';
 
   #Import Cosmic SNVs from the Cosmic annotation file but only for those transcripts with imported Tier1 SNVs
   my $cosmic_variants = $self->import_cosmic_variants('-somatic_variants'=>$somatic_variants, '-cosmic_annotation_file'=>$cosmic_annotation_file, '-filtered_variants_file'=>$filtered_cosmic_variants_file);
