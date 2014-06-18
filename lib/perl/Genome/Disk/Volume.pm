@@ -170,6 +170,31 @@ sub allocated_kb {
     return $allocated_kb;
 }
 
+sub soft_unallocated_kb {
+    my $self = shift;
+    return $self->soft_limit_kb - $self->allocated_kb;
+}
+
+sub hard_unallocated_kb {
+    my $self = shift;
+    return $self->hard_limit_kb - $self->allocated_kb;
+}
+
+sub unused_kb {
+    my $self = shift;
+    return $self->total_kb - $self->used_kb;
+}
+
+sub soft_unused_kb {
+    my $self = shift;
+    return $self->soft_limit_kb - $self->used_kb;
+}
+
+sub hard_unused_kb {
+    my $self = shift;
+    return $self->hard_limit_kb - $self->used_kb;
+}
+
 sub get_lock {
     my ($class, $mount_path, $tries) = @_;
     $tries ||= 120;
