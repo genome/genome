@@ -85,13 +85,23 @@ sub readcount_filenames {
 sub entries_match {
     my ($readcount_entry, $vcf_entry) = @_;
 
-    if (defined $readcount_entry and
-        $readcount_entry->chromosome eq $vcf_entry->{chrom} and
-        $readcount_entry->position == $vcf_entry->{position}) {
-        return 1;
-    } else {
-        return 0;
-    }
+    if (defined $readcount_entry) {
+        my $rc_chrom  = $readcount_entry->chromosome;
+        my $rc_pos    = $readcount_entry->position;
+        my $vcf_chrom = $vcf_entry->{chrom};
+        my $vcf_pos   = $vcf_entry->{position};
+
+        if ($rc_chrom eq $vcf_chrom) {
+            if ($rc_pos == $vcf_pos) {
+                return 1;
+            }
+            elsif ($vcf_entry->has_del) {
+                $rc_pos--;
+                return 1 if $rc_pos == $vcf_pos;
+            }
+        }
+    } 
+    return 0;
 }
 
 sub add_readcount_to_vcf_entry {

@@ -230,6 +230,17 @@ sub has_indel {
     return 0;
 }
 
+
+sub has_del {
+    my $self = shift;
+    for my $alt (@{$self->{alternate_alleles}}) {
+        if (length($alt) < length($self->{reference_allele})) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 =item C<allele_index>
 
 Returns the index of the given allele, or undef if not found.

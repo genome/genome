@@ -102,6 +102,7 @@ subtest "basic parsing/accessors" => sub {
     is($entry->{reference_allele}, 'A', 'Parsed reference allele');
     is_deeply($entry->{alternate_alleles}, ['C', 'G'], 'Parsed alternate alleles');
     ok(!$entry->has_indel, "has_indel reports correct value (false)");
+    ok(!$entry->has_del, "has_del reports correct value (false)");
     my @alleles = $entry->alleles;
     is_deeply(\@alleles, ['A', 'C', 'G'], 'All alleles accessor');
     is($entry->allele_index('A'), 0, 'allele index');
@@ -188,6 +189,7 @@ subtest "has_indel function (with deletion)" => sub {
     my $entry = $pkg->new($header, $entry_txt);
     ok($entry, "parsed entry");
     ok($entry->has_indel, "has_indel detected deletion");
+    ok($entry->has_del, "has_del detected deletion");
 };
 
 subtest "has_indel function (with insertion)" => sub {
@@ -211,6 +213,7 @@ subtest "has_indel function (with insertion)" => sub {
     my $entry = $pkg->new($header, $entry_txt);
     ok($entry, "parsed entry");
     ok($entry->has_indel, "has_indel detected insertion");
+    ok(!$entry->has_del, "has_del returns correct value: fasle");
 };
 
 subtest "to_string" => sub {

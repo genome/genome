@@ -16,7 +16,7 @@ use Genome::File::Vcf::Differ;
 my $pkg = 'Genome::Model::Tools::Vcf::AnnotateWithReadcounts';
 
 use_ok($pkg);
-my $data_dir = Genome::Utility::Test->data_dir_ok($pkg, "v1");
+my $data_dir = Genome::Utility::Test->data_dir_ok($pkg, "v2");
 
 subtest "output vcf" => sub {
     my $out = Genome::Sys->create_temp_file_path;
@@ -34,7 +34,31 @@ subtest "output gzipped vcf" => sub {
     is($differ->diff, undef, "Found No differences between $out and (expected) $expected_out");
 };
 
+subtest "output indel vcf" => sub {
+    my $out = Genome::Sys->create_temp_file_path . '_indel.gz';
+    run_indel($out);
+
+    my $expected_out = File::Spec->join($data_dir, "expected_indel.vcf.gz");
+    my $differ = Genome::File::Vcf::Differ->new($out, $expected_out);
+    is($differ->diff, undef, "Found No differences between $out and (expected) $expected_out");
+};
+
+
 done_testing;
+
+sub run_indel {
+    my $out = shift;
+
+    my $cmd = $pkg->create(
+        vcf_file => File::Spec->join($data_dir, "2.vcf.gz"),
+        readcount_file_and_sample_idx => [
+            sprintf("%s:0", File::Spec->join($data_dir, 'test3.rc.tsv')),
+        ],
+        output_file => $out,
+    );
+    ok($cmd->isa($pkg), "Command created ok");
+    ok($cmd->execute, "Command executed ok");
+}
 
 sub run {
     my $out = shift;
@@ -49,6 +73,5 @@ sub run {
     );
     ok($cmd->isa($pkg), "Command created ok");
     ok($cmd->execute, "Command executed ok");
-
 }
 
