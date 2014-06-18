@@ -13,7 +13,7 @@ class Genome::Disk::Command::Assignment::List {
             value => 'Genome::Disk::Assignment',
         },
         show => { 
-            default_value => 'disk_group_name,absolute_path,total_kb,unallocated_kb,percent_allocated' 
+            default_value => 'disk_group_name,absolute_path,total_kb,cached_unallocated_kb,percent_allocated' 
         },
     ],
 };
