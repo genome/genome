@@ -35,6 +35,11 @@ class Genome::Config::AnalysisProject::Command::View {
             default_value => 'terse',
             doc => 'How to configuration items',
         },
+        disabled_configs => {
+            is => 'Boolean',
+            default_value => 0,
+            doc => 'Whether to display disabled config items',
+        },
         instrument_data => {
             is => 'Boolean',
             default_value => 1,
@@ -371,12 +376,23 @@ sub _write_terse_config_items {
 
     $self->_write_section_heading($handle, 'Configuration Items');
 
-    for my $config_item ($self->analysis_project->config_items(
-            'status in' => ['active', undef], '-order_by' => 'created_at')) {
+    for my $config_item ($self->_config_items) {
         $self->_write_config_item_heading($handle, $config_item);
     }
 }
 
+
+sub _config_items {
+    my $self = shift;
+
+    if ($self->disabled_configs) {
+        return $self->analysis_project->config_items(
+            '-order_by' => 'created_at');
+    } else {
+        return $self->analysis_project->config_items(
+            'status in' => ['active', undef], '-order_by' => 'created_at');
+    }
+}
 
 sub _write_config_item_heading {
     my ($self, $handle, $config_item) = @_;
@@ -456,8 +472,7 @@ sub _write_verbose_config_items {
 
     $self->_write_section_heading($handle, 'Configuration Items');
 
-    for my $config_item ($self->analysis_project->config_items(
-            '-order_by' => 'created_at')) {
+    for my $config_item ($self->_config_items) {
         $self->_write_config_item_heading($handle, $config_item);
         $self->_write_config_item_body($handle, $config_item);
     }
