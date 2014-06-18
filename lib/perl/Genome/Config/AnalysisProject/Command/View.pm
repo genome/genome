@@ -434,7 +434,7 @@ sub _get_config_item_lines {
 sub _get_config_status {
     my ($self, $config_item) = @_;
 
-    return $config_item->status || 'disabled';
+    return $config_item->status || 'active';
 }
 
 
