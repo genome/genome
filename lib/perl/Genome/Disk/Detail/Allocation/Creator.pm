@@ -185,15 +185,22 @@ sub _get_allocation_without_lock_impl {
     my @randomized_candidate_volumes = (@$candidate_volumes,
         shuffle(@$candidate_volumes));
 
+    my $attempts = 0;
     my $chosen_allocation;
     for my $candidate_volume (@randomized_candidate_volumes) {
         if ($candidate_volume->has_space(
                 $self->parameters->kilobytes_requested)) {
             $self->_verify_allocation_path_unused($candidate_volume);
 
+            $attempts++;
             $chosen_allocation = $self->_attempt_allocation_creation(
                 $candidate_volume);
             if ($chosen_allocation) {
+                # we can pretend $attempts is a unit of time to get the metrics we want
+                Genome::Utility::Instrumentation::timing(
+                    'disk.allocation.create.get_allocation_without_lock.attempts',
+                    $attempts * 1000,
+                );
                 last;
             }
         }
