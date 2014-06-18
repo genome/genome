@@ -371,7 +371,8 @@ sub _write_terse_config_items {
 
     $self->_write_section_heading($handle, 'Configuration Items');
 
-    for my $config_item ($self->analysis_project->config_items) {
+    for my $config_item ($self->analysis_project->config_items(
+            '-order_by' => 'created_at')) {
         $self->_write_config_item_heading($handle, $config_item);
     }
 }
@@ -455,7 +456,8 @@ sub _write_verbose_config_items {
 
     $self->_write_section_heading($handle, 'Configuration Items');
 
-    for my $config_item ($self->analysis_project->config_items) {
+    for my $config_item ($self->analysis_project->config_items(
+            '-order_by' => 'created_at')) {
         $self->_write_config_item_heading($handle, $config_item);
         $self->_write_config_item_body($handle, $config_item);
     }
