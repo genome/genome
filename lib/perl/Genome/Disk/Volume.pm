@@ -397,7 +397,8 @@ sub get_active_volume {
 sub has_space {
     my ($self, $kilobytes_requested) = @_;
 
-    return ($self->allocated_kb + $kilobytes_requested <= $self->soft_limit_kb);
+    my $kb = max($self->used_kb, $self->allocated_kb);
+    return ($kb + $kilobytes_requested <= $self->soft_limit_kb);
 }
 
 1;
