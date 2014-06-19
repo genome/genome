@@ -759,6 +759,23 @@ sub transcript_report_headers {
     return ($self->variant_attributes, $self->variant_output_attributes, $self->get_extra_columns, $self->transcript_attributes);
 }
 
+sub file_has_header {
+    my $class = shift;
+    my $file = shift;
+
+    my $input_fh = Genome::Sys->open_file_for_reading($file);
+    my $first_line = $input_fh->getline();
+
+    my @expected_column_headers = $class->variant_attributes();
+    my $expected_header = join("\t", @expected_column_headers);
+    if ($first_line =~ m/^$expected_header/) {
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
+
 1;
 
 =pod
