@@ -46,11 +46,6 @@ done_testing();
 
 sub generate_test_cmd {
     Sub::Install::reinstall_sub({
-        into => 'Genome::Model::Tools::Bed::Convert::VcfToBed',
-        as => '_execute_body',
-        code => sub {return 1;},
-    });
-    Sub::Install::reinstall_sub({
         into => 'Genome::Model::Tools::Sam::Readcount',
         as => '_execute_body',
         code => sub {my $self = shift; my $file = $self->output_file; `touch $file`;},
