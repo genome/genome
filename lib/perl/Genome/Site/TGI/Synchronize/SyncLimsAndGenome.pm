@@ -5,6 +5,8 @@ use warnings;
 
 use Genome;
 
+use constant MAX_GENOTYPE_DATA_TO_PROCESS => 500;
+
 class Genome::Site::TGI::Synchronize::SyncLimsAndGenome {
     is => 'Command::V2',
     has_optional => [
@@ -265,12 +267,16 @@ sub _create_object {
     return $original_object->create_in_genome;
 }
 
+my $genotype_count = 0;
 sub _create_genotyping {
     my ($self, $original_object, $new_object_class) = @_;
 
     # Successful PIDFA required! The value is the genotype file. It must exist, too!
     my $genotype_file = $self->instrument_data_with_successful_pidfas->{$original_object->id};
     return 0 unless $genotype_file and -s $genotype_file;
+
+    $genotype_count++;
+    return 0 if $genotype_count > MAX_GENOTYPE_DATA_TO_PROCESS;
 
     $original_object->genotype_file($genotype_file);
 
