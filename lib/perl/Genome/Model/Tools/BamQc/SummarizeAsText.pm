@@ -54,6 +54,7 @@ sub _create_metrics_summary_writer {
 
     my @summary_headers = qw/
                                 LABEL
+                                IS_PAIRED
                                 READS
                                 READS_ALIGNED
                                 PCT_READS_ALIGNED
@@ -385,12 +386,26 @@ sub execute {
 
     foreach my $label_dir ( $self->_listify_labels_and_directories()) {
         my $as_metrics = $self->_load_alignment_summary_metrics($label_dir);
+        my $is_paired_end;
+        my $as_category;
+        if ($as_metrics->{'CATEGORY-PAIR'}) {
+            $is_paired_end = 1;
+            $as_category = 'CATEGORY-PAIR';
+        } elsif ($as_metrics->{'CATEGORY-UNPAIRED'}) {
+            $is_paired_end = 0;
+            $as_category = 'CATEGORY-UNPAIRED';
+        } else {
+            die('Failed to identify the read type!');
+        }
 
         my($mrkdup_metrics, $lib) = $self->_load_mark_duplicates_metrics($label_dir);
 
         my $error_rate_sum = $self->_load_error_rate_metrics($label_dir, \%error_rate_by_position);
 
-        my $is_metrics = $self->_load_insert_size_metrics($label_dir, \%is_data, \%is_directions);
+        my $is_metrics;
+        if ($is_paired_end) {
+            $is_metrics = $self->_load_insert_size_metrics($label_dir, \%is_data, \%is_directions);
+        }
 
         my $gc_metrics = $self->_load_gc_bias_metrics($label_dir, \%gc_data, \%gc_windows);
 
@@ -402,11 +417,12 @@ sub execute {
         # The below summary metrics only apply to paired-end libraries
         my %summary_data = (
             LABEL => $label_dir->label || "na",
-            READS => $as_metrics->{'CATEGORY-PAIR'}{PF_READS} || "na",
-            READS_ALIGNED => $as_metrics->{'CATEGORY-PAIR'}{PF_READS_ALIGNED} || "na",
-            PCT_READS_ALIGNED => $as_metrics->{'CATEGORY-PAIR'}{PCT_PF_READS_ALIGNED} || "na",
-            ALIGNED_BASES => $as_metrics->{'CATEGORY-PAIR'}{PF_ALIGNED_BASES} || "na",
-            PCT_CHIMERAS => $as_metrics->{'CATEGORY-PAIR'}{PCT_CHIMERAS} || "na",
+            IS_PAIRED => $is_paired_end,
+            READS => $as_metrics->{$as_category}{PF_READS} || "na",
+            READS_ALIGNED => $as_metrics->{$as_category}{PF_READS_ALIGNED} || "na",
+            PCT_READS_ALIGNED => $as_metrics->{$as_category}{PCT_PF_READS_ALIGNED} || "na",
+            ALIGNED_BASES => $as_metrics->{$as_category}{PF_ALIGNED_BASES} || "na",
+            PCT_CHIMERAS => $as_metrics->{$as_category}{PCT_CHIMERAS} || "na",
             ERROR_RATE_READ_1 => $error_rate_sum->{1}->{error_rate} || "na",
             ERROR_RATE_READ_2 => $error_rate_sum->{2}->{error_rate} || "na",
             MEDIAN_INSERT_SIZE => $is_metrics->{'PAIR_ORIENTATION-FR'}{MEDIAN_INSERT_SIZE} || "na",
