@@ -120,7 +120,6 @@ sub run_starman {
     my $runner = Genome::Model::Command::Services::WebApp::Runner->new(
         server => 'Genome::Model::Command::Services::WebApp::Starman',
         loader => 'Genome::Model::Command::Services::WebApp::Loader',
-        env    => 'development'
     );
 
     my $psgi_path = $self->psgi_path . '/Main.psgi';
