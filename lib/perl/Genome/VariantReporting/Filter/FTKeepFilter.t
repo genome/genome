@@ -41,15 +41,15 @@ subtest "pass" => sub {
 
     $ft_value = "fail";
     $entry = create_entry($ft_value);
-    is_deeply({$filter->filter_entry($entry)}, \%fail_return_values, "Entry $ft_value doesn't pass filter PASS");
+    is_deeply({$filter->filter_entry($entry)}, \%fail_return_values, "Entry $ft_value doesn't pass filter fail");
 
     $ft_value = ".";
     $entry = create_entry($ft_value);
-    is_deeply({$filter->filter_entry($entry)}, \%fail_return_values, "Entry $ft_value doesn't pass filter PASS");
+    is_deeply({$filter->filter_entry($entry)}, \%fail_return_values, "Entry $ft_value doesn't pass filter .");
 
-    $ft_value = "";
+    $ft_value = undef;
     $entry = create_entry($ft_value);
-    is_deeply({$filter->filter_entry($entry)}, \%fail_return_values, "Entry $ft_value doesn't pass filter PASS");
+    is_deeply({$filter->filter_entry($entry)}, \%pass_return_values, "Entry $ft_value passes filter with no filter set");
 };
 
 subtest "pass more than one filter" => sub {
@@ -121,8 +121,10 @@ sub create_entry {
         'PASS',         # FILTER
         'A=B;C=8,9;E',  # INFO
         'GT:DP:FT',     # FORMAT
-        "0/1:12:$ft_value",   # FIRST_SAMPLE
     );
+    if (defined $ft_value) {
+        push @fields, "0/1:12:$ft_value";
+    }
 
     my $entry_txt = join("\t", @fields);
     my $entry = Genome::File::Vcf::Entry->new(create_vcf_header(), $entry_txt);
