@@ -492,6 +492,20 @@ sub bam_qc_regexes {
     return @regexes;
 }
 
+sub alignment_results {
+    my $self = shift;
+    my $merged_alignment_result = $self->merged_alignment_result;
+    my @alignment_results = $merged_alignment_result->collect_individual_alignments;
+    return @alignment_results;
+}
+
+sub alignment_results_for_instrument_data {
+    my $self = shift;
+    my $instrument_data = shift;
+    my @alignment_results = $self->alignment_results;
+    my @instrument_data_alignment_results = grep { $_->instrument_data_id eq $instrument_data->id } @alignment_results;
+    return @instrument_data_alignment_results;
+}
 
 1;
 
