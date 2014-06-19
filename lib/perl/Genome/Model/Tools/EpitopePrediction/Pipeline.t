@@ -55,9 +55,20 @@ subtest "with somatic variation build" => sub {
     );
     ok($tumor_model->isa("Genome::Model::ReferenceAlignment"), "Generated a reference alignment model for tumor");
 
+    my $annotation_model = Genome::Model::ImportedAnnotation->get(name => 'NCBI-human.ensembl');
+    ok($annotation_model->isa("Genome::Model::ImportedAnnotation"), "Generated an imported annotation model");
+
+    my $annotation_build = Genome::Model::Build::ImportedAnnotation->get(
+        model_id => $annotation_model->id,
+        version  => '67_37l_v2',
+        status   => 'Succeeded',
+    );
+    ok($annotation_build->isa("Genome::Model::Build::ImportedAnnotation"), "Generated an imported annotation build");
+
     my $somatic_variation_model = Genome::Test::Factory::Model::SomaticVariation->setup_object(
         normal_model     => $normal_model,
         tumor_model      => $tumor_model,
+        annotation_build => $annotation_build,
     );
     ok($somatic_variation_model->isa("Genome::Model::SomaticVariation"), "Generated a somatic variation model");
     $somatic_variation_model->subject->name("H_NS-POET0092-4");
@@ -75,8 +86,6 @@ subtest "with somatic variation build" => sub {
         allele =>'HLA-A02:01',
         epitope_length => 9,
         output_filter => 'all',
-        anno_db => 'NCBI-human.ensembl',
-        anno_db_version => '67_37l_v2',
     );
 
     ok($cmd, "Created a command");
@@ -84,6 +93,8 @@ subtest "with somatic variation build" => sub {
     ok($cmd->execute, "Command executed");
 
     is($cmd->sample_name, 'H_NS-POET0092-4', "Sample name set correctly");
+    is($cmd->anno_db, 'NCBI-human.ensembl', "Annotation database name set correctly");
+    is($cmd->anno_db_version, '67_37l_v2', "Annotation database version set correctly");
 
     compare_ok($cmd->final_output_file, $expected_output, "Output file is as expected");
 };

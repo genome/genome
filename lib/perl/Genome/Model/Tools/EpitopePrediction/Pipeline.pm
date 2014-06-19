@@ -337,6 +337,18 @@ sub _validate_inputs {
             $self->input_tsv_file($tsv_file);
         }
 
+        if (defined($self->anno_db) || defined($self->anno_db_version)) {
+            die $self->error_message("Custom anno db name and version cannot be used in combination with somatic variation build");
+        }
+        else {
+            my $annotation_build = $self->somatic_variation_build->annotation_build;
+            my $annotation_db_name = $annotation_build->model->name;
+            my $annotation_db_version = $annotation_build->version;
+            $self->status_message("Somatic variation build given. Setting anno_db to $annotation_db_name. Setting anno_db_version to $annotation_db_version");
+            $self->anno_db($annotation_db_name);
+            $self->anno_db_version($annotation_db_version);
+        }
+
         if (defined($self->sample_name)) {
             $self->status_message("Custom sample name provided. Using custom sample name %s instead of somatic variation build sample name", $self->sample_name);
         }
@@ -347,8 +359,8 @@ sub _validate_inputs {
         }
     }
     else {
-        unless (defined($self->sample_name) && defined($self->input_tsv_file)) {
-            die $self->error_message("Sample name and input tsv file must both be defined if no somatic variation build is given")
+        unless (defined($self->sample_name) && defined($self->input_tsv_file) && defined($self->anno_db) && defined($self->anno_db_version)) {
+            die $self->error_message("Sample name, input tsv file, anno db, and anno db version must be defined if no somatic variation build is given")
         }
     }
 
