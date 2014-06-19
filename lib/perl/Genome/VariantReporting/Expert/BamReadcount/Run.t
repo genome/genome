@@ -15,8 +15,10 @@ use Genome::Model::Tools::DetectVariants2::Result::Vcf;
 use Genome::Model::Tools::Sam::Readcount;
 use Genome::Model::Tools::Bed::Convert::VcfToBed;
 use Genome::VariantReporting::TestHelpers qw(test_cmd_and_result_are_in_sync);
+use Genome::Utility::Test qw(compare_ok);
 
 use Test::More;
+
 
 my $cmd_class = 'Genome::VariantReporting::Expert::BamReadcount::Run';
 use_ok($cmd_class) or die;
@@ -28,6 +30,13 @@ my $result_class = 'Genome::VariantReporting::Expert::BamReadcount::RunResult';
 use_ok($result_class) or die;
 
 my $cmd = generate_test_cmd();
+my $test_data_dir = Genome::Utility::Test->data_dir_ok($cmd_class, 'v1');
+my $input_vcf = $test_data_dir . '/input.vcf';
+my $expected_output_vcf  = $test_data_dir . '/expected.vcf';
+my $expected_region_list = $test_data_dir . '/expected.region_list';
+
+my $test_region_list = $result_class->make_region_file($input_vcf);
+compare_ok($test_region_list, $expected_region_list, 'bam region_list created ok');
 
 ok($cmd->execute(), 'Command executed');
 is(ref($cmd->output_result), $result_class, 'Found software result after execution');
@@ -54,9 +63,9 @@ sub generate_test_cmd {
     );
     my $input_result = $result_class->__define__();
     Sub::Install::reinstall_sub({
-        into => 'Genome::VariantReporting::Detail::Result',
-        as => 'output_file_path',
-        code => sub {return 1;},
+        into => $result_class,
+        as => 'input_result_file_path',
+        code => sub {return $input_vcf;},
     });
 
     my %params = (

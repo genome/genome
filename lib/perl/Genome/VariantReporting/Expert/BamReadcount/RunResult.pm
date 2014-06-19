@@ -3,6 +3,7 @@ package Genome::VariantReporting::Expert::BamReadcount::RunResult;
 use strict;
 use warnings FATAL => 'all';
 use Genome;
+use Genome::File::Vcf::Reader;
 use Sys::Hostname;
 use IPC::Run qw(run);
 
@@ -51,18 +52,39 @@ sub _run {
 
 sub sample_name {
     my $self = shift;
-
     return $self->aligned_bam_result->sample_name;
 }
 
 sub make_region_file {
     my ($self, $vcf_file) = @_;
-    my $region_list = Genome::Sys->create_temp_file_path();
 
-    run(['zgrep', '-v', '^#', $vcf_file], '|',
-        ['awk', 'BEGIN{OFS="\t";} {print $1,$2,$2}'], '>',
-        $region_list);
+    my ($out_fh, $region_list) = Genome::Sys->create_temp_file();
+    my $reader = Genome::File::Vcf::Reader->new($vcf_file);
 
+    while (my $entry = $reader->next) {
+        my %hash = sort_hash($entry);
+        
+        for my $p (sort{$a <=> $b} keys %hash) {
+            $out_fh->print(join "\t", $entry->{chrom}, $p, $p."\n");
+        }
+    }
+
+    $out_fh->close;
     return $region_list;
 }
+
+sub sort_hash {
+    my $entry = shift;
+    my %hash;
+    my $pos = $entry->{position};
+
+    if ($entry->has_insertion or $entry->has_substitution) {
+        $hash{$pos}++;
+    }
+    if ($entry->has_deletion) {
+        $hash{$pos+1}++;
+    }
+    return %hash;
+}
+
 

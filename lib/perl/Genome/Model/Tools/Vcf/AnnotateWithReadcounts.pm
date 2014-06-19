@@ -95,7 +95,7 @@ sub entries_match {
             if ($rc_pos == $vcf_pos) {
                 return 1;
             }
-            elsif ($vcf_entry->has_del) {
+            elsif ($vcf_entry->has_deletion) {
                 $rc_pos--;
                 return 1 if $rc_pos == $vcf_pos;
             }

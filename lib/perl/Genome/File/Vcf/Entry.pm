@@ -222,19 +222,35 @@ Returns true if the given entry has an insertion or deletion, false otherwise.
 
 sub has_indel {
     my $self = shift;
+    return 1 if $self->has_insertion or $self->has_deletion;
+    return 0;
+}
+
+
+sub has_deletion {
+    my $self = shift;
     for my $alt (@{$self->{alternate_alleles}}) {
-        if (length($alt) != length($self->{reference_allele})) {
+        if (length($alt) < length($self->{reference_allele})) {
             return 1;
         }
     }
     return 0;
 }
 
-
-sub has_del {
+sub has_insertion {
     my $self = shift;
     for my $alt (@{$self->{alternate_alleles}}) {
-        if (length($alt) < length($self->{reference_allele})) {
+        if (length($alt) > length($self->{reference_allele})) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+sub has_substitution {
+    my $self = shift;
+    for my $alt (@{$self->{alternate_alleles}}) {
+        if (length($alt) == length($self->{reference_allele})) {
             return 1;
         }
     }
