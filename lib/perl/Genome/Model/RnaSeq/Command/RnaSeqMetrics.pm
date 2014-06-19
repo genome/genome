@@ -25,6 +25,10 @@ class Genome::Model::RnaSeq::Command::RnaSeqMetrics {
             doc => '',
             default_value => 'NormalizedTranscriptCoverage.tsv',
         },
+        model_identifier => {
+            default_value => 'name',
+            valid_values => ['name','id','subject_name','individual_common_name'],
+        },
     ],
 
 };
@@ -58,9 +62,11 @@ sub execute {
     my %model_metrics;
     my @metric_headers = qw/LABEL TOTAL_READS TOTAL_READS_MAPPED UNIQUELY_MAPPED_READS MULTI_MAPPED_READS TOTAL_READS_UNMAPPED PCT_READS_MAPPED/;
     my @model_metric_keys;
+    my $model_identifier_method = $self->model_identifier;
     for my $model (@models) {
-        if ( defined($model_metrics{$model->name}) ) {
-            die('Multiple models with name: '. $model->name);
+        my $label = $model->$model_identifier_method;
+        if ( defined($model_metrics{$label}) ) {
+            die('Multiple models with '. $model_identifier_method .' value: '. $label);
         }
         my @model_builds = reverse($model->sorted_builds);
         my $build;
@@ -111,12 +117,12 @@ sub execute {
         } else {
             #TODO: Check that all metrics files have the same headers...
         }
-        $model_metrics{$model->name}{metrics} = $metrics;
+        $model_metrics{$label}{metrics} = $metrics;
         my $histo = Genome::Model::Tools::Picard::CollectRnaSeqMetrics->parse_metrics_file_into_histogram_hashref($metrics_file);
         $DB::single=1;
         # This is only available in picard v1.52 or greater
         if ($histo) {
-            $model_metrics{$model->name}{histogram} = $histo;
+            $model_metrics{$label}{histogram} = $histo;
         }
     }
 
@@ -128,8 +134,8 @@ sub execute {
 
     my %transcript_coverage;
     for my $build (@builds) {
-        my $name = $build->model->name;
-        my $metrics = $model_metrics{$name}{'metrics'};
+        my $label = $build->model->$model_identifier_method;
+        my $metrics = $model_metrics{$label}{'metrics'};
 
         my $tophat_stats =  $build->alignment_stats_file;
         unless (-s $tophat_stats) {
@@ -152,7 +158,7 @@ sub execute {
             $pct_reads_mapped = 0;
         }
         my %summary = (
-            LABEL => $name,
+            LABEL => $label,
             TOTAL_READS => $total_reads,
             TOTAL_READS_MAPPED => $total_reads_mapped,
             UNIQUELY_MAPPED_READS => $tophat_metrics->{'UNIQUE_ALIGNMENTS'},
@@ -167,8 +173,8 @@ sub execute {
             }
         }
         $metrics_writer->write_one(\%summary);
-        if (defined($model_metrics{$name}{'histogram'}) ) {
-            my $histo = $model_metrics{$name}{'histogram'};
+        if (defined($model_metrics{$label}{'histogram'}) ) {
+            my $histo = $model_metrics{$label}{'histogram'};
             my @position_keys = keys %{$histo};
             my @histo_keys = keys %{$histo->{$position_keys[0]}};
             my @normalized_coverage_keys = grep { $_ =~ /normalized_coverage/ } @histo_keys;
@@ -176,7 +182,7 @@ sub execute {
                 die('There is no key or multiple normalized_coverage keys in the picard metrics histogram!');
             }
             for my $position_key (@position_keys) {
-                $transcript_coverage{$histo->{$position_key}{normalized_position}}{$name} = $histo->{$position_key}{$normalized_coverage_keys[0]};
+                $transcript_coverage{$histo->{$position_key}{normalized_position}}{$label} = $histo->{$position_key}{$normalized_coverage_keys[0]};
             }
         }
     }

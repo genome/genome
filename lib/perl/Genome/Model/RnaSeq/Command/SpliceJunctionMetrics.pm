@@ -19,6 +19,11 @@ class Genome::Model::RnaSeq::Command::SpliceJunctionMetrics {
             doc => '',
             default_value => 'SpliceJunctionMetrics.tsv',
         },
+        model_identifier => {
+            is_optional => 1,
+            default_value => 'name',
+            valid_values => ['name','id','subject_name','individual_common_name'],
+        },
     ],
 
 };
@@ -52,9 +57,12 @@ sub execute {
     my %model_metrics;
     my @junction_headers = qw/LABEL TOTAL_READS TOTAL_READS_MAPPED UNIQUELY_MAPPED MULTI_MAPPED TOTAL_READS_UNMAPPED PCT_READS_MAPPED/;
     my @model_junction_keys;
+
+    my $model_identifier_method = $self->model_identifier;
     for my $model (@models) {
-        if ( defined($model_metrics{$model->name}) ) {
-            die('Multiple models with name: '. $model->name);
+        my $label = $model->$model_identifier_method;
+        if ( defined($model_metrics{$label}) ) {
+            die('Multiple models with '. $model_identifier_method .' value: '. $label);
         }
         my @model_builds = reverse($model->sorted_builds);
         my $build;
@@ -111,7 +119,7 @@ sub execute {
             @model_junction_keys = sort keys %{$junction_metrics};
             push @junction_headers, @model_junction_keys;
         }
-        $model_metrics{$model->name}{splice_junctions} = $junction_metrics;
+        $model_metrics{$label}{splice_junctions} = $junction_metrics;
     }
 
     my $splice_junction_metrics_writer = Genome::Utility::IO::SeparatedValueWriter->create(
@@ -121,8 +129,8 @@ sub execute {
     );
 
     for my $build (@builds) {
-        my $name = $build->model->name;
-        my $splice_junctions = $model_metrics{$name}{'splice_junctions'};
+        my $label = $build->model->$model_identifier_method;
+        my $splice_junctions = $model_metrics{$label}{'splice_junctions'};
 
         my $tophat_stats =  $build->alignment_stats_file;
         my $tophat_fh = Genome::Sys->open_file_for_reading($tophat_stats);
@@ -139,7 +147,7 @@ sub execute {
             die('Metrics not parsed correctly: '. Data::Dumper::Dumper(%tophat_metrics));
         }
         my %summary = (
-            LABEL => $name,
+            LABEL => $label,
             TOTAL_READS => $tophat_metrics{'TOTAL_READS'},
             TOTAL_READS_MAPPED => $tophat_metrics{'TOTAL_READS_MAPPED'},
             UNIQUELY_MAPPED => $tophat_metrics{'UNIQUE_ALIGNMENTS'},

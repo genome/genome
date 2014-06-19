@@ -35,6 +35,10 @@ class Genome::Model::RnaSeq::Command::RawcountMatrix
             doc => 'An optional Boolean, if true (i.e. 1) performs a simple differential expression analysis',
             is_optional => 1,
         },
+        model_identifier => {
+            default_value => 'name',
+            valid_values => ['name','id','subject_name','individual_common_name'],
+        },
     ],
 };
 
@@ -79,7 +83,10 @@ sub execute
     my $reference_build;
     
     # loop through the models in the group and perform various quality checks
-
+    my $model_identifier_method = $self->model_identifier;
+    if ($self->edgeR){
+        warn('Overriding the model_identifier '. $model_identifier_method .' for subject attributes expected by edgeR!');
+    }
     foreach my $model (@models)
     {
 
@@ -177,20 +184,19 @@ sub execute
     # then if the ensemble_id exist in the annotation hash created above append the raw_counts
     # to the value of the hash, else kill the program as annotation file does not match data file
 
-    my @subject;
-    my $subject;
-    my $subject_a;
-    my $subject_b;
-
+    my @labels;
     foreach my $build (@builds)
     {
 
-        # set up @subject array to hold subjects for each build ID to use as header later
-
-         $subject_a = $build->subject->common_name;
-         $subject_b = $build->subject->name;
-         $subject = $subject_a . $subject_b;
-         push(@subject, $subject);
+        # set up @labels array to hold subjects for each model to use as header later
+        
+        my $label = $build->model->$model_identifier_method;
+        if ($self->edgeR) {
+            my $subject_a = $build->subject->common_name;
+            my $subject_b = $build->subject->name;
+            $label = $subject_a . $subject_b;
+        }
+        push(@labels, $label);
 
          my $gene_count_tracking = $build->data_directory .'/results/digital_expression_result/gene-counts.tsv';
 
@@ -238,7 +244,7 @@ sub execute
 
     print OUTPUT "Ensemble_id\tGene_name";
 
-    foreach(@subject)
+    foreach(@labels)
     {
         print OUTPUT "\t$_";
     }
