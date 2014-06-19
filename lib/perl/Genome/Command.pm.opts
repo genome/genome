@@ -1239,6 +1239,31 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>view',
+    [
+      'color!',
+      undef,
+      'COLUMN-WIDTH=s',
+      undef,
+      'config=s',
+      [
+        'verbose',
+        'terse',
+        'quiet'
+      ],
+      'disabled-configs!',
+      undef,
+      'instrument-data!',
+      undef,
+      'models!',
+      undef,
+      'timeline!',
+      undef,
+      'analysis-project=s',
+      undef,
+      'help!',
+      undef
+    ],
     'disableconfigfile',
     undef,
     '>delete',
@@ -37923,6 +37948,31 @@ $Genome::Command::OPTS_SPEC = [
       '>hold',
       [
         'analysis-projects=s@',
+        undef,
+        'help!',
+        undef
+      ],
+      '>view',
+      [
+        'color!',
+        undef,
+        'COLUMN-WIDTH=s',
+        undef,
+        'config=s',
+        [
+          'verbose',
+          'terse',
+          'quiet'
+        ],
+        'disabled-configs!',
+        undef,
+        'instrument-data!',
+        undef,
+        'models!',
+        undef,
+        'timeline!',
+        undef,
+        'analysis-project=s',
         undef,
         'help!',
         undef
