@@ -179,7 +179,7 @@ END_CONTENT
         sleep $block_sleep;
         $lock_attempts += 1;
        }
-    $SYMLINKS_TO_REMOVE{$resource_lock} = 1;
+    $SYMLINKS_TO_REMOVE{$resource_lock} = $$;
 
     my $total_lock_stop_time = Time::HiRes::time();
     my $lock_time_miliseconds = 1000 * ($total_lock_stop_time - $total_lock_start_time);
@@ -302,11 +302,29 @@ sub is_my_lock_target {
 
 sub release_all {
     my $class = shift;
+
+    my %errors;
     for my $sym_to_remove (keys %SYMLINKS_TO_REMOVE) {
-        if (-l $sym_to_remove) {
-            warn("Removing remaining resource lock: '$sym_to_remove'") unless $ENV{'HARNESS_ACTIVE'};
-            unlink($sym_to_remove) or warn "Can't unlink $sym_to_remove: $!";
+        if ($SYMLINKS_TO_REMOVE{$sym_to_remove} == $$) {
+            if (-l $sym_to_remove) {
+                warn("Removing remaining resource lock: '$sym_to_remove'") unless $ENV{'HARNESS_ACTIVE'};
+                eval {$class->unlock(resource_lock => $sym_to_remove)};
+                $errors{$sym_to_remove} = $@ if $@;
+            }
+        } else {
+            $class->warning_message("Not cleaning up lock named (%s) because ".
+                "the pid that created it (%s) is not my pid (%s).",
+                $sym_to_remove,
+                $SYMLINKS_TO_REMOVE{$sym_to_remove},
+                $$,
+            );
         }
+    }
+    if (keys %errors) {
+        $class->error_message("Cleaning up the following locks failed: %s",
+            join(", ", keys %errors),
+        );
+        Carp::croak(join("\n", values %errors));
     }
 }
 
