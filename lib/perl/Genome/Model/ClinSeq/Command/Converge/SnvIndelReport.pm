@@ -112,6 +112,11 @@ class Genome::Model::ClinSeq::Command::Converge::SnvIndelReport {
         _exome_indel_variant_sources_file => {
               is => 'FilesystemPath',
         },
+    ],
+    has_param => [
+        lsf_resource => {
+            value => q{-R 'select[mem>12000] rusage[mem=12000]' -M 12000000},
+        },
     ],   
     doc => 'converge SNV and InDels from multiple clin-seq builds, annotate, bam-readcount, etc. and summarize into a single spreadsheet',
 };
