@@ -155,11 +155,11 @@ sub allocated_kb {
 
     # We only want to time the sum aggregate, not including any time to connect to the DB
     Genome::Disk::Allocation->__meta__->data_source->get_default_handle();
-    my $allocated_kb;
-    Genome::Utility::Instrumentation::timer(
-        'disk.volume.allocated_kb',
-        sub { $allocated_kb = ($set->sum($field) or 0); }
-    );
+    my ($allocated_kb, $allocation_count);
+    Genome::Utility::Instrumentation::timer('disk.volume.allocated_kb', sub {
+        $allocated_kb = ($set->sum($field) or 0);
+        $allocation_count = $set->count();
+    });
 
     # Now we'll check that it is cached so we test that the underlying
     # structure hasn't changed.
@@ -167,7 +167,11 @@ sub allocated_kb {
         die $self->error_message("$f value not found in set's hash. Did underlying object structure change?");
     }
 
-    return $allocated_kb;
+    if (wantarray) {
+        return $allocated_kb, $allocation_count;
+    } else {
+        return $allocated_kb;
+    }
 }
 
 sub soft_unallocated_kb {
