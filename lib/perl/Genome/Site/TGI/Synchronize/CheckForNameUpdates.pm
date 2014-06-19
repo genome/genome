@@ -5,7 +5,7 @@ use warnings;
 
 use Genome;
 
-use constant TABLES_TO_PROCESS => [qw(gsc.organism_sample gsc.library_summary')];
+use constant TABLES_TO_PROCESS => [qw(gsc.organism_sample gsc.library_summary)];
 
 class Genome::Site::TGI::Synchronize::CheckForNameUpdates {
     is => 'Command::V2',
