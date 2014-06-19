@@ -16,6 +16,7 @@ use strict;
 
 use File::Basename;
 use Plack::Util;
+use Plack::Builder;
 
 our $always_memcache = $ENV{'GENOME_VIEW_CACHE'};
 
@@ -28,15 +29,27 @@ unless (defined $psgi_path) {
     $psgi_path = File::Basename::dirname(__FILE__);
 }
 
-our %app = map { $_ => load_app($_) } qw/
-  Rest.psgi
-  Redirect.psgi
-  404Handler.psgi
-  Dump.psgi 
-  Cache.psgi
-  Info.psgi
-  File.psgi
-  /;
+my @psgi = qw(
+    Rest.psgi
+    Redirect.psgi
+    404Handler.psgi
+    Dump.psgi
+    Cache.psgi
+    Info.psgi
+    File.psgi
+);
+
+our %app;
+for my $psgi (@psgi) {
+    my $app = load_app($psgi);
+
+    my $builder = Plack::Builder->new;
+    $builder->add_middleware('GenomeAccessLog', format => 'combined');
+    $builder->add_middleware('GenomePreAccessLog', format => 'combined');
+    $app = $builder->to_app($app);
+
+    $app{$psgi} = $app;
+}
 
 ## Utility functions
 sub load_app {
