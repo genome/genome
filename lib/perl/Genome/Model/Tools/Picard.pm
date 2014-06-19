@@ -211,7 +211,7 @@ sub run_java_vm {
     
     my $jvm_options = $self->additional_jvm_options || '';
     
-    my $java_vm_cmd = 'java -Xmx'. $self->maximum_memory .'g -XX:MaxPermSize=' . $self->maximum_permgen_memory . 'm ' . $jvm_options . ' -cp /usr/share/java/ant.jar:'. $cmd;
+    my $java_vm_cmd = 'java -Xmx'. int(1024*$self->maximum_memory) .'m -XX:MaxPermSize=' . $self->maximum_permgen_memory . 'm ' . $jvm_options . ' -cp /usr/share/java/ant.jar:'. $cmd;
     $java_vm_cmd .= ' VALIDATION_STRINGENCY='. $self->validation_stringency;
     $java_vm_cmd .= ' TMP_DIR='. $self->temp_directory;
     if ($self->create_md5_file) {

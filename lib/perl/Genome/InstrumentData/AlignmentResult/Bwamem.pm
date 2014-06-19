@@ -21,6 +21,10 @@ class Genome::InstrumentData::AlignmentResult::Bwamem {
 
 sub required_arch_os { 'x86_64' }
 
+sub required_memory_gb {
+    return 16;
+}
+
 sub required_rusage {
     my $class = shift;
     my %p = @_;
@@ -28,7 +32,7 @@ sub required_rusage {
     my $aligner_params  = delete $p{aligner_params};
 
     my $tmp_mb = $class->tmp_megabytes_estimated($instrument_data);
-    my $mem_mb = 1024 * 16; 
+    my $mem_mb = 1024 * $class->required_memory_gb;
     my $cpus = 4;
 
     if ($aligner_params and $aligner_params =~ /-t\s*([0-9]+)/) {
@@ -286,12 +290,14 @@ sub _sort_sam {
             "Cannot proceed with sorting.");
     }
 
+    # Memory is set to 80% of our LSF request; GMT::Picard should handle
+    # non-integer memory requests correctly
     my $picard_sort_cmd = Genome::Model::Tools::Picard::SortSam->create(
         sort_order             => 'coordinate',
         input_file             => $unsorted_sam,
         output_file            => $given_sam,
         max_records_in_ram     => 2000000,
-        maximum_memory         => 8,
+        maximum_memory         => ($self->required_memory_gb*0.8),
         maximum_permgen_memory => 256,
         temp_directory         => $self->temp_scratch_directory,
         use_version            => $self->picard_version,
