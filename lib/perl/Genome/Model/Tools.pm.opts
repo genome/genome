@@ -6862,14 +6862,22 @@ $Genome::Model::Tools::OPTS_SPEC = [
   ],
   '>epitope-prediction',
   [
-    '>generate-variant-seq21mer',
+    '>generate-variant-sequences',
     [
       'input-file=s',
       'files',
-      'output-file=s',
+      'output-directory=s',
       'files',
+      'peptide-sequence-length=s',
+      [
+        17,
+        21,
+        31
+      ],
       'trv-type=s',
-      'files',
+      [
+        'missense'
+      ],
       'help!',
       undef
     ],
@@ -6877,76 +6885,33 @@ $Genome::Model::Tools::OPTS_SPEC = [
     [
       'input-file=s',
       'files',
-      'output-file=s',
+      'output-directory=s',
       'files',
       'help!',
       undef
     ],
-    '>parse-netmhc-mutant',
+    '>parse-netmhc-output',
     [
       'netmhc-file=s',
       'files',
-      'parsed-file=s',
+      'output-directory=s',
       'files',
-      'output-type=s',
-      [
-        'top',
-        'all'
-      ],
-      'help!',
-      undef
-    ],
-    '>generate-variant-seq17mer',
-    [
-      'input-file=s',
-      'files',
-      'output-file=s',
-      'files',
-      'trv-type=s',
-      'files',
-      'help!',
-      undef
-    ],
-    '>parse-netmhc-mutant-stdout',
-    [
-      'netmhc-file=s',
-      'files',
-      'parsed-file=s',
-      'files',
-      'output-type=s',
-      [
-        'top',
-        'all'
-      ],
-      'help!',
-      undef
-    ],
-    '>fasta-key',
-    [
-      'input-file=s',
-      'files',
-      'output-file=s',
-      'files',
-      'help!',
-      undef
-    ],
-    '>parse-netmhcpan-key',
-    [
-      'netmhc-file=s',
-      'files',
-      'parsed-file=s',
-      'files',
-      'output-type=s',
+      'output-filter=s',
       [
         'top',
         'all'
       ],
       'key-file=s',
       'files',
+      'netmhc-version=s',
+      [
+        '3.0',
+        '3.4'
+      ],
       'help!',
       undef
     ],
-    '>parse-netmhc-mutant-key',
+    '>parse-netmhcpan-key',
     [
       'netmhc-file=s',
       'files',
@@ -6975,29 +6940,44 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>generate-variant-seq31mer',
+    '>run-netmhc',
     [
-      'input-file=s',
+      'allele=s',
       'files',
-      'output-file=s',
+      'fasta-file=s',
       'files',
-      'trv-type=s',
+      'output-directory=s',
+      'files',
+      'epitope-length=s',
+      'files',
+      'sample-name=s',
+      'files',
+      'netmhc-version=s',
+      [
+        '3.0',
+        '3.4'
+      ],
+      'help!',
+      undef
+    ],
+    '>frame-shift',
+    [
+      'bed-file=s',
+      'files',
+      'vcf-file=s',
+      'files',
+      'database-directory=s',
+      'files',
+      'output-directory=s',
       'files',
       'help!',
       undef
     ],
-    '>parse-netmhcpan-key-mutant',
+    '>generate-fasta-key',
     [
-      'netmhc-file=s',
+      'input-file=s',
       'files',
-      'parsed-file=s',
-      'files',
-      'output-type=s',
-      [
-        'top',
-        'all'
-      ],
-      'key-file=s',
+      'output-directory=s',
       'files',
       'help!',
       undef
@@ -7019,34 +6999,16 @@ $Genome::Model::Tools::OPTS_SPEC = [
     [
       'input-tsv-file=s',
       'files',
-      'output-tsv-file=s',
+      'output-directory=s',
       'files',
       'anno-db=s',
       'files',
-      'version=s',
+      'anno-db-version=s',
       'files',
       'help!',
       undef
     ],
-    '>run-netmhc-new',
-    [
-      'allele=s',
-      'files',
-      'fasta-file=s',
-      'files',
-      'output-file=s',
-      'files',
-      'epitope-length=s',
-      'files',
-      'version=s',
-      [
-        '3.0',
-        '3.4'
-      ],
-      'help!',
-      undef
-    ],
-    '>parse-netmhc',
+    '>parse-netmhcpan-key-mutant',
     [
       'netmhc-file=s',
       'files',
@@ -7057,6 +7019,45 @@ $Genome::Model::Tools::OPTS_SPEC = [
         'top',
         'all'
       ],
+      'key-file=s',
+      'files',
+      'help!',
+      undef
+    ],
+    '>pipeline',
+    [
+      'output-directory=s',
+      'files',
+      'peptide-sequence-length=s',
+      [
+        17,
+        21,
+        31
+      ],
+      'allele=s',
+      'files',
+      'epitope-length=s',
+      'files',
+      'netmhc-version=s',
+      [
+        '3.0',
+        '3.4'
+      ],
+      'output-filter=s',
+      [
+        'top',
+        'all'
+      ],
+      'somatic-variation-build=s',
+      undef,
+      'sample-name=s',
+      'files',
+      'input-tsv-file=s',
+      'files',
+      'anno-db=s',
+      'files',
+      'anno-db-version=s',
+      'files',
       'help!',
       undef
     ],
