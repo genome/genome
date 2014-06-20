@@ -86,7 +86,8 @@ sub execute {
         $self->write_output(decode_json($resp->content));
     } 
     else {
-        die $self->error_message("Something went wrong! Did you specify any genes?\n");
+        $self->error_message('Error querying DGIdb. Did you specify any genes?');
+        die $self->error_message('Error details: %s', $resp->status_line);
     }
 
     return 1;
