@@ -27,7 +27,7 @@ require Genome::Site;
 require Genome::Env;
 
 if ($ENV{GENOME_SYS_UMASK}) {
-    my $old_umask = umask $ENV{GENOME_SYS_UMASK};
+    my $old_umask = umask oct($ENV{GENOME_SYS_UMASK});
     if (!defined($old_umask)) {
         die 'failed to set umask';
     }
