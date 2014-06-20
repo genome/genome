@@ -49,6 +49,10 @@ sub output_fields {
         absolute_path
         allocation_owner_class
         allocation_owner_id
+	run_by
+        build_id
+        patient_common_name
+        created_by
     /;
 }
         
@@ -85,10 +89,23 @@ sub execute {
                 $model_fields{model_id} = $model->id;
                 $model_fields{model_name} = $model->name;
                 $model_fields{model_subject} = $model->subject->name;
-
+               
                 my $build = $model->last_complete_build;
                 if ($build) {
                     $model_fields{last_complete_build_timestamp} = $build->date_completed;
+                    $model_fields{run_by} = $build->run_by;
+                    $model_fields{build_id} = $build->id;
+                    $model_fields{created_by} = $build->model->created_by;
+
+                    if ($build->subject->subclass_name ne "Genome::Individual"
+                     && $build->subject->subclass_name ne "Genome::PopulationGroup"
+                     && $build->subject->subclass_name ne "Genome::Taxon") {
+
+                        $model_fields{patient_common_name} = $build->subject->patient_common_name;
+                    }
+                    elsif ($build->model) {
+                        $model_fields{patient_common_name} = "none";
+                    }
                 }
 
                 my @groups = $model->model_groups;
@@ -118,9 +135,9 @@ sub execute {
 sub _resolve_allocations {
     my $self = shift;
     my $bx = UR::BoolExpr->resolve_for_string('Genome::Disk::Allocation', $self->allocation_filter);
-    if ($bx->specifies_value_for('creation_time') and $bx->value_for('creation_time') eq 'UNDEF') {
-        $bx = $bx->remove_filter('creation_time');
-        $bx = $bx->add_filter('creation_time' => undef);
+    if ($bx->specifies_value_for('archive_after_time') and $bx->value_for('archive_after_time') eq 'UNDEF') {
+        $bx = $bx->remove_filter('archive_after_time');
+        $bx = $bx->add_filter('archive_after_time' => undef);
     }
     return Genome::Disk::Allocation->get($bx);
 }
