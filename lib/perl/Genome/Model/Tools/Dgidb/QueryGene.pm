@@ -8,6 +8,8 @@ use Genome;
 
 my $API_PATH = '/api/v1/interactions.json';
 
+use constant MAX_GENES_PER_QUERY => 1000;
+
 my %OPTIONAL_PROPERTIES = (
     interaction_sources => {
         is  => 'Text',
@@ -80,22 +82,33 @@ EOS
 sub execute {
     my $self = shift;
 
-    my $resp = $self->get_response();
+    my $genes = $self->genes;
+    my @genes = split(',', $genes);
 
-    if ($resp->is_success) {
-        $self->write_output(decode_json($resp->content));
-    } 
-    else {
-        $self->error_message('Error querying DGIdb. Did you specify any genes?');
-        die $self->error_message('Error details: %s', $resp->status_line);
+    my $decoded_json = {};
+    while(@genes) {
+        my @next_genes = splice(@genes, 0, MAX_GENES_PER_QUERY);
+
+        my $resp = $self->get_response(join(',', @next_genes));
+
+        if ($resp->is_success) {
+            %$decoded_json = (%$decoded_json, %{decode_json($resp->content)});
+        }
+        else {
+            $self->error_message('Error querying DGIdb. Did you specify any genes?');
+            die $self->error_message('Error details: %s', $resp->status_line);
+        }
     }
+
+    $self->write_output($decoded_json);
 
     return 1;
 }
 
 sub get_response {
     my $self = shift;
-    my %params = (genes => $self->genes);
+    my $genes = shift;
+    my %params = (genes => $genes);
     $params{drug_types} = 'antineoplastic' if $self->antineoplastic_only;
 
     for my $property (keys %OPTIONAL_PROPERTIES) {
