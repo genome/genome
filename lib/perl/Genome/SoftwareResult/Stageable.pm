@@ -118,10 +118,7 @@ sub _promote_data {
         }
     }
 
-    my @files = File::Find::Rule->file->not(File::Find::Rule->symlink)->in($output_dir);
-    for my $file (@files) {
-        mode($file)->rm_all_writable;
-    }
+    $self->disk_allocations->set_files_read_only;
 
     $self->debug_message("Files in $output_dir: \n" . join "\n", glob($output_dir . "/*"));
 

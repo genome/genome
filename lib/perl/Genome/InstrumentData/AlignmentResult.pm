@@ -1157,9 +1157,7 @@ sub _promote_validated_data {
         }
     }
 
-    for my $file (grep { -f $_  } glob("$output_dir/*")) {
-        mode($file)->rm_all_writable;
-    }
+    $self->_disk_allocation->set_files_read_only;
 
     $self->debug_message("Files in $output_dir: \n" . join "\n", glob($output_dir . "/*"));
 
