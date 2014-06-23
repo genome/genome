@@ -183,7 +183,7 @@ sub du {
     return $kb_used;
 }
 
-
+sub set_read_only { shift->set_permissions_read_only(@_) }
 sub set_permissions_read_only {
     my $self = shift;
     my @paths = File::Find::Rule->not(File::Find::Rule->symlink)->in($self->absolute_path);
