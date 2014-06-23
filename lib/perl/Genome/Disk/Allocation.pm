@@ -192,6 +192,13 @@ sub set_permissions_read_only {
     }
 }
 
+sub set_files_read_only {
+    my $self = shift;
+    my @paths = File::Find::Rule->not(File::Find::Rule->symlink)->file->in($self->absolute_path);
+    for my $path (@paths) {
+        mode($path)->rm_all_writable();
+    }
+}
 
 sub allocate { return shift->create(@_); }
 sub create {
