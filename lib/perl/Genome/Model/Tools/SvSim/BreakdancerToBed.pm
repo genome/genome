@@ -24,6 +24,12 @@ class Genome::Model::Tools::SvSim::BreakdancerToBed {
             is_optional => 1,
         },
 
+        itx_output_bed => {
+            is => "Text",
+            doc => "Output bed file of inversions",
+            is_optional => 1,
+        },
+
         inversion_output_bed => {
             is => "Text",
             doc => "Output bed file of inversions",
@@ -86,6 +92,7 @@ sub execute {
     my %paths = (
         INS => $self->insertion_output_bed,
         INV => $self->inversion_output_bed,
+        ITX => $self->itx_output_bed,
         DEL => $self->deletion_output_bed,
         CTX => $self->ctx_output_bedpe,
         );
