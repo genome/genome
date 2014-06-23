@@ -85,14 +85,19 @@ sub execute {
     my $genes = $self->genes;
     my @genes = split(',', $genes);
 
-    my $decoded_json = {};
+    my @response_keys = qw(matchedTerms unmatchedTerms);
+    my $decoded_json = +{ map {; $_ => [] } @response_keys };
     while(@genes) {
         my @next_genes = splice(@genes, 0, MAX_GENES_PER_QUERY);
 
         my $resp = $self->get_response(join(',', @next_genes));
 
         if ($resp->is_success) {
-            %$decoded_json = (%$decoded_json, %{decode_json($resp->content)});
+            my $content = decode_json($resp->content);
+
+            for my $key (@response_keys) {
+                push @{$decoded_json->{$key}}, @{$content->{$key}};
+            }
         }
         else {
             $self->error_message('Error querying DGIdb. Did you specify any genes?');
