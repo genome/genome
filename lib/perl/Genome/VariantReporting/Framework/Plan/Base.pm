@@ -139,10 +139,17 @@ sub __object_errors__ {
         return UR::Object::Tag->create(
             type => 'error',
             properties => [],
-            desc => $error,
+            desc => sprintf("Problems with the plan for name (%s) of category (%s)", $self->name, $self->category) . "\n$error",
         );
     } else {
-        return $object->__errors__;
+        my @errors = $object->__errors__;
+        if (@errors) {
+            push @errors, UR::Object::Tag->create(
+                type => 'error',
+                desc => sprintf("Problems with the plan for name (%s) of category (%s)", $self->name, $self->category),
+            );
+        }
+        return @errors;
     }
 }
 
