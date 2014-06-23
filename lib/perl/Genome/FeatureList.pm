@@ -567,4 +567,32 @@ sub chromosome_list {
     return @chromosomes;
 }
 
+sub get_target_track_only {
+    my ($self, $target_track) = @_;
+
+    unless ($self->is_multitracked) {
+        die $self->error_message("get_target_track_only can only be called on multitracked feature lists");
+    }
+
+    my ($ofh, $output_path)  = Genome::Sys->create_temp_file;
+    my $ifh = Genome::Sys->open_file_for_reading($self->file_path);
+
+    my $correct_track = 0;
+    while (my $line = $ifh->getline) {
+        if ( my ($name) = $line =~ m/^track name=(\w+) description=/) {
+            if ($name eq $target_track) {
+                $correct_track = 1;
+            } else {
+                $correct_track = 0;
+            }
+        } else {
+            if ($correct_track) {
+                $ofh->print($line);
+            }
+        }
+    }
+
+    return $output_path;
+}
+
 1;

@@ -104,6 +104,11 @@ my $one_based_file2 = $feature_list->get_one_based_file;
 ok(-s $one_based_file2, "one_based_file exists");
 compare_ok($one_based_file2, $one_based_file_output, name => "true-BED was correctly converted to 1-based file");
 
+# Test converting multi-tracked to single-tracked
+my $single_track_bed = $feature_list_2->get_target_track_only('target_region');
+my $expected_single_track_bed = File::Spec->join($test_dir, "single_track_of_multi_track.bed");
+compare_ok($single_track_bed, $expected_single_track_bed, name => "get_target_track_only returned the expected file");
+
 my $feature_list_3 = Genome::FeatureList->create(
     name => 'GFL test unknown format feature-list',
     format              => 'unknown',
