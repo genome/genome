@@ -670,6 +670,28 @@ sub get_or_create_data_directory {
     return $self->data_directory;
 }
 
+sub _unarchive_disk_allocations {
+    my ($self, %params) = @_;
+
+    my $unarchive_cmd = Genome::Model::Build::Command::Unarchive->create(
+        builds => [ $self ],
+        lab => 'Informatics',
+    );
+    if ( not $unarchive_cmd ) {
+        $self->error_message();
+        return;
+    }
+
+    my $unarchive_ok = $unarchive_cmd->execute(
+    );
+    if ( not $unarchive_ok ) {
+        $self->error_message();
+        return;
+    }
+
+    return 1;
+}
+
 sub _additional_associated_disk_allocations {
     my $self = shift;
 
@@ -719,7 +741,7 @@ sub input_allocations {
     for my $input ($self->inputs) {
         my $value = $input->value;
         if ($value and $value->isa('Genome::Model::Build')) {
-            push @allocations, $input->value->all_allocations();
+            push @allocations, $input->value->associated_disk_allocations();
         }
         else {
             push @allocations, Genome::Disk::Allocation->get(
@@ -770,7 +792,7 @@ sub symlinked_allocations {
     my $data_directory = $self->data_directory;
     return if not $data_directory or not -d $data_directory;
 
-    # In some circumstances, this can get called (though all_allocations())
+    # In some circumstances, this can get called (though associated_disk_allocations())
     # many times.  NFS slowness would compound the problem and make this
     # method way too slow.  We'll get the result the first time and cache
     # the answer
