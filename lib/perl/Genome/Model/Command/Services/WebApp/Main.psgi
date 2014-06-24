@@ -157,7 +157,7 @@ sub dispatch_request {
       ) : (
       ## this exists so the embedded web server can run without caching
       sub (/view/...) {
-        redispatch_psgi ($app{'Rest.psgi'}, $_[1], 2);
+        redispatch_psgi ($app{'Rest.psgi'}, $_[1]);
       },
       )),
 
