@@ -21,11 +21,13 @@ isa_ok($factory->get_class('filters', $pkg->name), $pkg);
 my %pass = (
     G => 1,
     C => 1,
+    AA => 1,
 );
 
 my %fail = (
     G => 0,
     C => 0,
+    AA => 0,
 );
 
 subtest "pass" => sub {

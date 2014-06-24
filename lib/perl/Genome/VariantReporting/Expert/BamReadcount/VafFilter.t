@@ -40,6 +40,21 @@ subtest "pass min vaf" => sub {
     my %expected_return_values = (
         G => 1,
         C => 0,
+        AA => 0,
+    );
+    my $entry = create_entry(bam_readcount_line);
+    is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry passes filter with min_vaf $min_vaf");
+};
+
+subtest "min vaf for insertion" => sub {
+    my $min_vaf = 5;
+    my $filter = $pkg->create(min_vaf => $min_vaf, sample_name => "S4");
+    lives_ok(sub {$filter->validate}, "Filter validates");
+
+    my %expected_return_values = (
+        G => 1,
+        C => 0,
+        AA => 1,
     );
     my $entry = create_entry(bam_readcount_line);
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry passes filter with min_vaf $min_vaf");
@@ -52,7 +67,8 @@ subtest "pass max vaf" => sub {
 
     my %expected_return_values = (
         G => 1,
-        C => 0,
+        C => 1,
+        AA => 1,
     );
     my $entry = create_entry(bam_readcount_line);
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry passes filter with max_vaf $max_vaf");
@@ -67,6 +83,7 @@ subtest "pass min and max vaf" => sub {
     my %expected_return_values = (
         G => 1,
         C => 0,
+        AA => 0,
     );
     my $entry = create_entry(bam_readcount_line);
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry passes filter with min_vaf $min_vaf and max_vaf $max_vaf");
@@ -80,6 +97,7 @@ subtest "fail min vaf" => sub {
     my %expected_return_values = (
         G => 0,
         C => 0,
+        AA => 0,
     );
     my $entry = create_entry(bam_readcount_line);
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry fails filter with min_vaf $min_vaf");
@@ -92,7 +110,8 @@ subtest "fail max vaf" => sub {
 
     my %expected_return_values = (
         G => 0,
-        C => 0,
+        C => 1,
+        AA => 1,
     );
     my $entry = create_entry(bam_readcount_line);
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry fails filter with max_vaf $max_vaf");
@@ -106,6 +125,7 @@ subtest "fail heterozygous non-reference sample" => sub {
     my %expected_return_values = (
         G => 1,
         C => 0,
+        AA => 0,
     );
     my $entry = create_entry(bam_readcount_line);
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry fails filter with min_vaf $min_vaf");
@@ -123,6 +143,7 @@ subtest "pass heterozygous non-reference sample" => sub {
     my %expected_return_values = (
         G => 1,
         C => 1,
+        AA => 1,
     );
     my $entry = create_entry(bam_readcount_line);
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry passes filter with min_vaf $min_vaf");

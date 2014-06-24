@@ -36,6 +36,7 @@ subtest "test het gt fail" => sub {
     my %expected_return_values = (
         C => 0,
         G => 0,
+        AA => 0,
     );
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "return values");
 };
@@ -53,6 +54,7 @@ subtest "test het gt pass (G)" => sub {
     my %expected_return_values = (
         C => 0,
         G => 1,
+        AA => 0,
     );
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "return values");
 };
@@ -70,6 +72,7 @@ subtest "test hom gt fail" => sub {
     my %expected_return_values = (
         C => 0,
         G => 0,
+        AA => 0,
     );
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "return values");
 };
@@ -87,6 +90,7 @@ subtest "test hom gt pass (G)" => sub {
     my %expected_return_values = (
         C => 0,
         G => 1,
+        AA => 0,
     );
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Sample 1 return values as expected");
 };

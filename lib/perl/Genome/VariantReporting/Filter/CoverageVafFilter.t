@@ -47,6 +47,7 @@ subtest "test pass" => sub { #FIXME
     my %expected_return_values = (
         C => 0,
         G => 1,
+        AA => 0,
     );
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Sample 1 return values as expected");
 
@@ -67,6 +68,7 @@ subtest "test filter fail" => sub { #FIXME
     my %expected_return_values = (
         C => 0,
         G => 0,
+        AA => 0,
     );
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Sample 1 return values as expected");
 
@@ -85,6 +87,7 @@ subtest "test filter fail" => sub { #FIXME
     my %expected_return_values = (
         C => 0,
         G => 0,
+        AA => 0,
     );
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Sample 1 return values as expected");
 
