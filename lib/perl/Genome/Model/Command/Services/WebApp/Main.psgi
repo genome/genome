@@ -129,12 +129,14 @@ sub dispatch_request {
       #  because we want generate the view synchronously to the request
       #  and fill in memcached after its generated
       sub (/cachefill/...) {
-        redispatch_psgi($app{'Cache.psgi'}, $_[1], 2);
+        $_[1]->{AJAX_REFRESH} = 2;
+        redispatch_psgi($app{'Cache.psgi'}, $_[1]);
       },
 
       ## This is triggered as an ajax request from the cache-miss page
       sub (/cachetrigger/...) {
-        redispatch_psgi($app{'Cache.psgi'}, $_[1], 1);
+        $_[1]->{AJAX_REFRESH} = 1;
+        redispatch_psgi($app{'Cache.psgi'}, $_[1]);
       },
 
       ## In apache /view maps to /cache which will show the cache-miss
