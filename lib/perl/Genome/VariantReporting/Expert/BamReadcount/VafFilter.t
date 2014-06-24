@@ -11,7 +11,8 @@ use warnings;
 use above "Genome";
 use Test::Exception;
 use Test::More;
-use Genome::VariantReporting::Expert::BamReadcount::TestHelper qw(bam_readcount_line create_entry);
+use Genome::VariantReporting::Expert::BamReadcount::TestHelper qw(bam_readcount_line
+    create_entry create_deletion_entry bam_readcount_line_deletion);
 
 my $pkg = "Genome::VariantReporting::Expert::BamReadcount::VafFilter";
 use_ok($pkg);
@@ -57,6 +58,18 @@ subtest "min vaf for insertion" => sub {
         AA => 1,
     );
     my $entry = create_entry(bam_readcount_line);
+    is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry passes filter with min_vaf $min_vaf");
+};
+
+subtest "min vaf for deletion" => sub {
+    my $min_vaf = 5;
+    my $filter = $pkg->create(min_vaf => $min_vaf, sample_name => "S1");
+    lives_ok(sub {$filter->validate}, "Filter validates");
+
+    my %expected_return_values = (
+        A => 1,
+    );
+    my $entry = create_deletion_entry(bam_readcount_line_deletion);
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry passes filter with min_vaf $min_vaf");
 };
 
@@ -130,9 +143,9 @@ subtest "fail heterozygous non-reference sample" => sub {
     my $entry = create_entry(bam_readcount_line);
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry fails filter with min_vaf $min_vaf");
     cmp_ok(Genome::VariantReporting::Expert::BamReadcount::VafCalculator::calculate_vaf(
-        $filter->get_readcount_entry($entry), 'C'), '<', 0.3, "VAF is very low");
+        $filter->get_readcount_entry($entry), 'C', 'A'), '<', 0.3, "VAF is very low");
     cmp_ok(Genome::VariantReporting::Expert::BamReadcount::VafCalculator::calculate_vaf(
-        $filter->get_readcount_entry($entry), 'G'), '>', 90, "VAF is high");
+        $filter->get_readcount_entry($entry), 'G', 'A'), '>', 90, "VAF is high");
 };
 
 subtest "pass heterozygous non-reference sample" => sub {

@@ -9,22 +9,12 @@ sub calculate_vaf_for_all_alts {
     my $alt_alleles = $entry->{alternate_alleles};
     my $ref = $entry->{reference_allele};
     my @alleles;
+    my %return_values;
     for my $allele (@$alt_alleles) {
-        if (is_insertion($ref, $allele)) {
-            push @alleles, "+".substr($allele, length($ref));
-        }
-        else {
-            push @alleles, $allele;
-        }
+        my $vaf = calculate_vaf($readcount_entry, $allele, $ref);
+        $return_values{$allele} = $vaf;
     }
-    my %alleles = calculate_vaf_for_multiple_alleles($readcount_entry, \@alleles);
-    my %translated_alleles;
-    for my $allele (keys %alleles) {
-        my $new_allele = $allele;
-        $new_allele =~ s/^[+-]/$ref/;
-        $translated_alleles{$new_allele} = $alleles{$allele};
-    }
-    return %translated_alleles;
+    return %return_values;
 }
 
 sub is_insertion {
@@ -35,31 +25,43 @@ sub is_insertion {
     return 0;
 }
 
-sub calculate_vaf_for_multiple_alleles {
-    my $bam_readcount_entry = shift;
-    my $alt_alleles = shift;
-    my %return_values;
-    for my $sample_alt_allele (@$alt_alleles) {
-        $return_values{$sample_alt_allele} = calculate_vaf(
-            $bam_readcount_entry, $sample_alt_allele);
+sub is_deletion {
+    my ($ref, $allele) = @_;
+    if (length($ref) > length($allele)) {
+        return 1;
     }
-    return %return_values;
+    return 0;
 }
 
 sub calculate_vaf {
-    my ($bam_readcount_entry, $alt_allele) = @_;
+    my ($bam_readcount_entry, $alt_allele, $ref) = @_;
 
-    return calculate_coverage_for_allele($bam_readcount_entry, $alt_allele) / $bam_readcount_entry->depth * 100;
+    return calculate_coverage_for_allele($bam_readcount_entry, $alt_allele, $ref) / $bam_readcount_entry->depth * 100;
+}
+
+sub translated_allele {
+    my ($allele, $ref) = @_;
+    my $translated_allele;
+    if (is_insertion($ref, $allele)) {
+        $translated_allele = "+".substr($allele, length($ref));
+    }
+    elsif (is_deletion($ref, $allele)) {
+        $translated_allele = "-".substr($ref, length($allele));
+    }
+    else {
+        $translated_allele = $allele;
+    }
+    return $translated_allele;
 }
 
 sub calculate_coverage_for_allele {
-    my ($bam_readcount_entry, $allele) = @_;
+    my ($bam_readcount_entry, $allele, $ref) = @_;
 
     my $count = 0;
     for my $lib ($bam_readcount_entry->libraries) {
         my $metrics;
         eval {
-            $metrics = $lib->metrics_for($allele);
+            $metrics = $lib->metrics_for(translated_allele($allele, $ref));
         };
         if (defined $metrics) {
             $count += $metrics->count;

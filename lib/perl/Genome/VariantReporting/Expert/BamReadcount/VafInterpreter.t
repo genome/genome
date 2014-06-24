@@ -12,7 +12,8 @@ use above "Genome";
 use Test::More;
 use Test::Exception;
 use Genome::File::Vcf::Entry;
-use Genome::VariantReporting::Expert::BamReadcount::TestHelper qw(bam_readcount_line create_entry);
+use Genome::VariantReporting::Expert::BamReadcount::TestHelper qw(
+    bam_readcount_line create_entry bam_readcount_line_deletion create_deletion_entry);
 
 my $pkg = 'Genome::VariantReporting::Expert::BamReadcount::VafInterpreter';
 use_ok($pkg);
@@ -38,20 +39,42 @@ subtest "one alt allele" => sub {
     is({$interpreter->interpret_entry($entry, ['G'])}->{G}->{var_count}, $expected{G}->{var_count});
 };
 
-subtest "Passed allele doesn't have bam-readcount" => sub {
-    my $interpreter = $pkg->create(sample_name => "S1");
+subtest "insertion" => sub {
+    my $interpreter = $pkg->create(sample_name => "S4");
     lives_ok(sub {$interpreter->validate}, "Interpreter validates");
 
-    my %expected_return_values = (
-        C => {
-            vaf => undef,
+    my %expected = (
+        AA => {
+            vaf => 1,
             ref_count => 3,
-            var_count => 1,
+            var_count => 20,
         }
     );
 
     my $entry = create_entry(bam_readcount_line);
-    is_deeply({$interpreter->interpret_entry($entry, ['C'])}, \%expected_return_values);
+    cmp_ok({$interpreter->interpret_entry($entry, ['AA'])}->{AA}->{vaf}, ">", 5);
+    cmp_ok({$interpreter->interpret_entry($entry, ['AA'])}->{AA}->{vaf},  "<", 6);
+    is({$interpreter->interpret_entry($entry, ['AA'])}->{AA}->{ref_count}, $expected{AA}->{ref_count});
+    is({$interpreter->interpret_entry($entry, ['AA'])}->{AA}->{var_count}, $expected{AA}->{var_count});
+};
+
+subtest "deletion" => sub {
+    my $interpreter = $pkg->create(sample_name => "S1");
+    lives_ok(sub {$interpreter->validate}, "Interpreter validates");
+
+    my %expected = (
+        A => {
+            vaf => 1,
+            ref_count => 0,
+            var_count => 20,
+        }
+    );
+
+    my $entry = create_deletion_entry(bam_readcount_line_deletion);
+    cmp_ok({$interpreter->interpret_entry($entry, ['A'])}->{A}->{vaf}, ">", 5);
+    cmp_ok({$interpreter->interpret_entry($entry, ['A'])}->{A}->{vaf},  "<", 6);
+    is({$interpreter->interpret_entry($entry, ['A'])}->{A}->{ref_count}, $expected{A}->{ref_count});
+    is({$interpreter->interpret_entry($entry, ['A'])}->{A}->{var_count}, $expected{A}->{var_count});
 };
 done_testing;
 
