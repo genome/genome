@@ -5,9 +5,10 @@ use strict;
 use warnings;
 
 use Genome;
-use Genome::Test::Factory::Library;
 
 require File::Basename;
+use Genome::Test::Factory::DiskAllocation;
+use Genome::Test::Factory::Library;
 
 our @required_params = qw(library_id sequencing_platform);
 
@@ -29,7 +30,7 @@ sub generate_obj {
         $volume = Genome::Disk::Volume->__define__(mount_path => $mount_path, disk_status => 'active');
     }
 
-    my $alloc = Genome::Disk::Allocation->__define__(
+    my $alloc = Genome::Test::Factory::DiskAllocation->generate_obj(
         owner => $instrument_data,
         mount_path => $volume->mount_path,
         group_subdirectory => '',
