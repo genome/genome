@@ -361,21 +361,11 @@ sub processed_bed_file {
     }
 
     my $content = $self->processed_bed_file_content(%args);
-    my $temp_file = Genome::Sys->create_temp_file_path($self->processed_bed_file_name(%args));
+    my $temp_file = Genome::Sys->create_temp_file_path();
     Genome::Sys->write_file($temp_file, $content);
     return $temp_file;
 }
 Memoize::memoize('processed_bed_file');
-
-sub processed_bed_file_name {
-    my $self = shift;
-    my %args = @_;
-    my @args_strings;
-    for my $key (sort keys %args) {
-        push @args_strings, "$key-".$args{$key};
-    }
-    return $self->id . join("_", @args_strings).'.processed.bed';
-}
 
 sub generate_merged_bed_file {
     my $self = shift;
