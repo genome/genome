@@ -72,7 +72,8 @@ sub redispatch_psgi {
 
 sub redirect_to {
     my ($path, $request) = @_;
-    redispatch_psgi( $app{'Redirect.psgi'}, $request, $path);
+    $request->{REDIRECT_URI} = $path;
+    redispatch_psgi( $app{'Redirect.psgi'}, $request);
 }
 
 ## Web::Simple dispatcher for all apps

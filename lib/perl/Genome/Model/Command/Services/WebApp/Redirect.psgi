@@ -4,8 +4,10 @@ use warnings;
 use Data::Dumper;
 
 sub {
-    my ( $env, $relative, $code ) = @_;
-    $code ||= 302;
+    my ($env) = @_;
+
+    my $relative = $env->{REDIRECT_URI};
+    my $code = 302;
 
     my $static;
     if ( $relative =~ /^https?:/ ) {
