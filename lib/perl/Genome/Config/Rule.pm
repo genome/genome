@@ -48,4 +48,10 @@ sub _parse_method_chain {
     return [split('->', $method_string)];
 }
 
+sub __display_name__ {
+    my $self = shift;
+
+    return join('->', @{ $self->method_chain }) . ': ' . $self->expected_value;
+}
+
 1;
