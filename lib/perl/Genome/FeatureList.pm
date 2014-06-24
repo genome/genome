@@ -578,6 +578,7 @@ sub get_target_track_only {
     my $ifh = Genome::Sys->open_file_for_reading($self->file_path);
 
     my $correct_track = 0;
+    my $target_track_is_empty = 1;
     while (my $line = $ifh->getline) {
         if ( my ($name) = $line =~ m/^track name=(\w+) description=/) {
             if ($name eq $target_track) {
@@ -588,8 +589,13 @@ sub get_target_track_only {
         } else {
             if ($correct_track) {
                 $ofh->print($line);
+                $target_track_is_empty = 0;
             }
         }
+    }
+
+    if ($target_track_is_empty) {
+        die $self->error_message("No data found for target track ($target_track)! Does it exist in the file?");
     }
 
     return $output_path;

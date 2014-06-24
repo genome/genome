@@ -109,6 +109,8 @@ my $single_track_bed = $feature_list_2->get_target_track_only('target_region');
 my $expected_single_track_bed = File::Spec->join($test_dir, "single_track_of_multi_track.bed");
 compare_ok($single_track_bed, $expected_single_track_bed, name => "get_target_track_only returned the expected file");
 
+dies_ok {$feature_list_2->get_target_track_only('does not exist')}, "get_target_track_only dies when provided with a bad track name";
+
 my $feature_list_3 = Genome::FeatureList->create(
     name => 'GFL test unknown format feature-list',
     format              => 'unknown',
