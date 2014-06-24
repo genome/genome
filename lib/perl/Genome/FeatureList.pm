@@ -435,9 +435,14 @@ sub generate_converted_bed_file {
     } else {
         $original_file_path = $self->processed_bed_file(%args);
     }
+    my $original_md5 = Genome::Sys->md5sum($original_file_path);
 
     my $sr = Genome::Model::Build::ReferenceSequence::ConvertedBedResult->get_or_create(
-        source_bed => $original_file_path, source_reference => $self->reference, target_reference => $reference);
+        source_reference => $self->reference,
+        target_reference => $reference,
+        source_bed => $original_file_path,
+        source_md5 => $original_md5,
+    );
 
     my $converted_file_path = delete($args{file_path});
     if (defined $converted_file_path) {
