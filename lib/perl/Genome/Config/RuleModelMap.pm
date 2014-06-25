@@ -51,7 +51,7 @@ sub evaluate_rule {
 }
 
 sub _evaluate_method_chain {
-    return unless defined($_[0]);
+    return '' unless defined($_[0]);
 
     if (@_ >= 2) {
         my $obj = shift;
