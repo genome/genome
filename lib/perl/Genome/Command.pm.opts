@@ -1200,45 +1200,12 @@ $Genome::Command::OPTS_SPEC = [
   ],
   '>analysis-project',
   [
-    'copyconfig',
-    undef,
-    '>create',
-    [
-      'is-cle!',
-      undef,
-      'no-config!',
-      undef,
-      'analysis-menu-items=s@',
-      undef,
-      'name=s',
-      'files',
-      'help!',
-      undef
-    ],
     'updateconfigtocurrent',
     undef,
-    '>release',
-    [
-      'analysis-projects=s@',
-      undef,
-      'help!',
-      undef
-    ],
     'addinstrumentdatatoanalysisproject',
-    undef,
-    'addconfigfile',
-    undef,
-    'showconfig',
     undef,
     'genome::config::analysisproject::subjectmapping::command',
     undef,
-    '>hold',
-    [
-      'analysis-projects=s@',
-      undef,
-      'help!',
-      undef
-    ],
     '>view',
     [
       'color!',
@@ -1264,22 +1231,8 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    'disableconfigfile',
-    undef,
-    '>delete',
-    [
-      'analysis-projects=s@',
-      undef,
-      'help!',
-      undef
-    ],
     'addmenuitem',
     undef,
-    '>update',
-    [
-      'help!',
-      undef
-    ],
     '>list',
     [
       'show=s',
@@ -1302,6 +1255,55 @@ $Genome::Command::OPTS_SPEC = [
       'files',
       'filter=s',
       'files',
+      'help!',
+      undef
+    ],
+    '>create',
+    [
+      'is-cle!',
+      undef,
+      'no-config!',
+      undef,
+      'analysis-menu-items=s@',
+      undef,
+      'name=s',
+      'files',
+      'help!',
+      undef
+    ],
+    'copyconfig',
+    undef,
+    'configforinstrumentdata',
+    undef,
+    '>release',
+    [
+      'analysis-projects=s@',
+      undef,
+      'help!',
+      undef
+    ],
+    'showconfig',
+    undef,
+    'addconfigfile',
+    undef,
+    '>hold',
+    [
+      'analysis-projects=s@',
+      undef,
+      'help!',
+      undef
+    ],
+    '>delete',
+    [
+      'analysis-projects=s@',
+      undef,
+      'help!',
+      undef
+    ],
+    'disableconfigfile',
+    undef,
+    '>update',
+    [
       'help!',
       undef
     ],
@@ -37309,6 +37311,8 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    'generatefileforreimport',
+    undef,
     '>ignore',
     [
       'ignore=s',
@@ -37444,33 +37448,6 @@ $Genome::Command::OPTS_SPEC = [
         'description=s',
         'files',
         'target-region-set-name=s',
-        'files',
-        'help!',
-        undef
-      ],
-      '>hmp-sra',
-      [
-        'help!',
-        undef
-      ],
-      '>hmp-sra-process',
-      [
-        'help!',
-        undef
-      ],
-      '>hmp-sra-process-new',
-      [
-        'ascp-user=s',
-        'files',
-        'ascp-pw=s',
-        'files',
-        'srs-sample-id=s',
-        'files',
-        'srr-accessions=s',
-        'files',
-        'species-name=s',
-        'files',
-        'picard-dir=s',
         'files',
         'help!',
         undef
@@ -37980,45 +37957,12 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>analysis-project',
     [
-      'copyconfig',
-      undef,
-      '>create',
-      [
-        'is-cle!',
-        undef,
-        'no-config!',
-        undef,
-        'analysis-menu-items=s@',
-        undef,
-        'name=s',
-        'files',
-        'help!',
-        undef
-      ],
       'updateconfigtocurrent',
       undef,
-      '>release',
-      [
-        'analysis-projects=s@',
-        undef,
-        'help!',
-        undef
-      ],
       'addinstrumentdatatoanalysisproject',
-      undef,
-      'addconfigfile',
-      undef,
-      'showconfig',
       undef,
       'genome::config::analysisproject::subjectmapping::command',
       undef,
-      '>hold',
-      [
-        'analysis-projects=s@',
-        undef,
-        'help!',
-        undef
-      ],
       '>view',
       [
         'color!',
@@ -38044,22 +37988,8 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      'disableconfigfile',
-      undef,
-      '>delete',
-      [
-        'analysis-projects=s@',
-        undef,
-        'help!',
-        undef
-      ],
       'addmenuitem',
       undef,
-      '>update',
-      [
-        'help!',
-        undef
-      ],
       '>list',
       [
         'show=s',
@@ -38082,6 +38012,55 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'filter=s',
         'files',
+        'help!',
+        undef
+      ],
+      '>create',
+      [
+        'is-cle!',
+        undef,
+        'no-config!',
+        undef,
+        'analysis-menu-items=s@',
+        undef,
+        'name=s',
+        'files',
+        'help!',
+        undef
+      ],
+      'copyconfig',
+      undef,
+      'configforinstrumentdata',
+      undef,
+      '>release',
+      [
+        'analysis-projects=s@',
+        undef,
+        'help!',
+        undef
+      ],
+      'showconfig',
+      undef,
+      'addconfigfile',
+      undef,
+      '>hold',
+      [
+        'analysis-projects=s@',
+        undef,
+        'help!',
+        undef
+      ],
+      '>delete',
+      [
+        'analysis-projects=s@',
+        undef,
+        'help!',
+        undef
+      ],
+      'disableconfigfile',
+      undef,
+      '>update',
+      [
         'help!',
         undef
       ],
