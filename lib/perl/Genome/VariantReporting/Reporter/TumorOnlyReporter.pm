@@ -36,6 +36,9 @@ sub headers {
         ensembl_gene_id
         c_position
         canonical
+        sift
+        polyphen
+        condel
         gmaf
         vaf
         ref_count

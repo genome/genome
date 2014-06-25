@@ -11,7 +11,8 @@ BEGIN {
 use above 'Genome';
 use Test::Exception;
 use Test::More;
-use Genome::VariantReporting::Expert::BamReadcount::TestHelper qw(bam_readcount_line create_entry);
+use Genome::VariantReporting::Expert::BamReadcount::TestHelper qw(bam_readcount_line create_entry
+    bam_readcount_line_deletion create_deletion_entry);
 
 my $pkg = 'Genome::VariantReporting::Expert::BamReadcount::MinCoverageFilter';
 use_ok($pkg);
@@ -21,11 +22,13 @@ isa_ok($factory->get_class('filters', $pkg->name), $pkg);
 my %pass = (
     G => 1,
     C => 1,
+    AA => 1,
 );
 
 my %fail = (
     G => 0,
     C => 0,
+    AA => 0,
 );
 
 subtest "pass" => sub {
@@ -46,6 +49,25 @@ subtest "fail" => sub {
 
     $entry = create_entry("");
     is_deeply({$filter->filter_entry($entry)}, \%fail, "Entry without coverage does not pass filter with min_coverage $min_coverage");
+};
+
+subtest "insertion" => sub {
+    my $min_coverage = 300;
+    my $filter = $pkg->create(min_coverage => $min_coverage, sample_name => "S4");
+    lives_ok(sub {$filter->validate}, "Filter validates");
+    my $entry = create_entry(bam_readcount_line);
+    is_deeply({$filter->filter_entry($entry)}, \%pass, "Entry passes filter with min_coverage $min_coverage");
+};
+
+subtest "deletion" => sub {
+    my $min_coverage = 300;
+    my $pass = {
+        A => 1,
+    };
+    my $filter = $pkg->create(min_coverage => $min_coverage, sample_name => "S1");
+    lives_ok(sub {$filter->validate}, "Filter validates");
+    my $entry = create_deletion_entry(bam_readcount_line_deletion);
+    is_deeply({$filter->filter_entry($entry)}, $pass, "Entry passes filter with min_coverage $min_coverage");
 };
 
 subtest "under-specified parameters" => sub {

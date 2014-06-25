@@ -53,6 +53,7 @@ my %interpretations = (
             gene_name_source  => 'HGNC',
             c_position        => 'c.456',
             canonical         => 1,
+            sift              => 'deleterious(5.4)',
         },
         G => {
             transcript_name   => 'ENST00000452176',

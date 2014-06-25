@@ -9,7 +9,7 @@ BEGIN {
 }
 
 use above 'Genome';
-use Genome::VariantReporting::Expert::BamReadcount::TestHelper;
+use Genome::VariantReporting::Expert::BamReadcount::TestHelper qw(bam_readcount_line_deletion create_deletion_entry);
 use Genome::File::Vcf::Entry;
 use Test::More;
 use Test::Exception;
@@ -47,6 +47,7 @@ subtest "test pass" => sub { #FIXME
     my %expected_return_values = (
         C => 0,
         G => 1,
+        AA => 0,
     );
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Sample 1 return values as expected");
 
@@ -67,8 +68,50 @@ subtest "test filter fail" => sub { #FIXME
     my %expected_return_values = (
         C => 0,
         G => 0,
+        AA => 0,
     );
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Sample 1 return values as expected");
+
+};
+
+subtest "insertion" => sub {
+
+    my $filter = $pkg->create(
+        sample_name => 'S4',
+        coverages_and_vafs => {
+            400 => 99,
+            300 => 5,
+            200 => 99,
+        }
+    );
+    lives_ok(sub {$filter->validate}, "Filter validates ok");
+
+    my %expected_return_values = (
+        C => 0,
+        G => 0,
+        AA => 1,
+    );
+    is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Sample 4 return values as expected");
+
+};
+
+subtest "deletion" => sub {
+
+    my $deletion_entry = create_deletion_entry(bam_readcount_line_deletion);
+    my $filter = $pkg->create(
+        sample_name => 'S1',
+        coverages_and_vafs => {
+            400 => 99,
+            300 => 5,
+            200 => 99,
+        }
+    );
+    lives_ok(sub {$filter->validate}, "Filter validates ok");
+
+    my %expected_return_values = (
+        A => 1,
+    );
+    is_deeply({$filter->filter_entry($deletion_entry)}, \%expected_return_values, "Sample 1 deletion return values as expected");
 
 };
 
@@ -85,6 +128,7 @@ subtest "test filter fail" => sub { #FIXME
     my %expected_return_values = (
         C => 0,
         G => 0,
+        AA => 0,
     );
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Sample 1 return values as expected");
 

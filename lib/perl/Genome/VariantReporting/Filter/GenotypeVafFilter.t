@@ -9,7 +9,7 @@ BEGIN {
 }
 
 use above 'Genome';
-use Genome::VariantReporting::Expert::BamReadcount::TestHelper;
+use Genome::VariantReporting::Expert::BamReadcount::TestHelper qw(create_deletion_entry bam_readcount_line_deletion);
 use Genome::File::Vcf::Entry;
 use Test::More;
 use Test::Exception;
@@ -36,6 +36,7 @@ subtest "test het gt fail" => sub {
     my %expected_return_values = (
         C => 0,
         G => 0,
+        AA => 0,
     );
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "return values");
 };
@@ -53,6 +54,7 @@ subtest "test het gt pass (G)" => sub {
     my %expected_return_values = (
         C => 0,
         G => 1,
+        AA => 0,
     );
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "return values");
 };
@@ -70,8 +72,44 @@ subtest "test hom gt fail" => sub {
     my %expected_return_values = (
         C => 0,
         G => 0,
+        AA => 0,
     );
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "return values");
+};
+
+subtest "insertion" => sub {
+    my $filter = $pkg->create(
+        sample_name => "S4",
+        min_het_vaf => 10,
+        max_het_vaf => 20,
+        min_hom_vaf => 1,
+        max_hom_vaf => 10,
+    );
+    lives_ok(sub {$filter->validate}, "Filter validates ok");
+
+    my %expected_return_values = (
+        C => 0,
+        G => 0,
+        AA => 1,
+    );
+    is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "return values");
+};
+
+subtest "deletion" => sub {
+    my $deletion_entry = create_deletion_entry(bam_readcount_line_deletion);
+    my $filter = $pkg->create(
+        sample_name => "S1",
+        min_het_vaf => 1,
+        max_het_vaf => 10,
+        min_hom_vaf => 10,
+        max_hom_vaf => 20,
+    );
+    lives_ok(sub {$filter->validate}, "Filter validates ok");
+
+    my %expected_return_values = (
+        A => 1,
+    );
+    is_deeply({$filter->filter_entry($deletion_entry)}, \%expected_return_values, "return values");
 };
 
 subtest "test hom gt pass (G)" => sub {
@@ -87,6 +125,7 @@ subtest "test hom gt pass (G)" => sub {
     my %expected_return_values = (
         C => 0,
         G => 1,
+        AA => 0,
     );
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Sample 1 return values as expected");
 };

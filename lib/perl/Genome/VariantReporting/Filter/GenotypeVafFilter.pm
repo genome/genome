@@ -64,9 +64,9 @@ sub filter_entry {
     my $entry = shift;
 
     my @sample_alt_alleles = sort $entry->alt_bases_for_sample($self->sample_index($entry->{header}));
-    my %vafs = Genome::VariantReporting::Expert::BamReadcount::VafCalculator::calculate_vaf_for_multiple_alleles(
+    my %vafs = Genome::VariantReporting::Expert::BamReadcount::VafCalculator::calculate_vaf_for_all_alts(
+        $entry,
         $self->get_readcount_entry($entry),
-        \@sample_alt_alleles,
     );
     my $gt = $entry->genotype_for_sample($self->sample_index($entry->{header}));
     my %return_values = map { $_ => 0 } @{$entry->{alternate_alleles}};

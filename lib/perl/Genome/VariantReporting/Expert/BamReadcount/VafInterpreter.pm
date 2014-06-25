@@ -32,12 +32,19 @@ sub interpret_entry {
 
     my %return_values;
     my @sample_alt_alleles = sort $entry->alt_bases_for_sample($self->sample_index($entry->{header}));
-    my %vafs = Genome::VariantReporting::Expert::BamReadcount::VafCalculator::calculate_vaf_for_multiple_alleles(
-        $self->get_readcount_entry($entry), \@sample_alt_alleles);
+    my %vafs = Genome::VariantReporting::Expert::BamReadcount::VafCalculator::calculate_vaf_for_all_alts(
+        $entry, $self->get_readcount_entry($entry));
 
-    my $ref_count = Genome::VariantReporting::Expert::BamReadcount::VafCalculator::calculate_coverage_for_allele($self->get_readcount_entry($entry), $entry->{reference_allele});
 
     for my $allele (@$passed_alt_alleles) {
+        my $ref_allele;
+        if (Genome::VariantReporting::Expert::BamReadcount::VafCalculator::is_deletion($entry->{reference_allele}, $allele)) {
+            $ref_allele = substr($entry->{reference_allele}, 1, 1);
+        }
+        else {
+            $ref_allele = substr($entry->{reference_allele}, 0, 1);
+        }
+        my $ref_count = Genome::VariantReporting::Expert::BamReadcount::VafCalculator::calculate_coverage_for_allele($self->get_readcount_entry($entry), $ref_allele, 'A');
         my $vaf;
         if (defined $vafs{$allele}) {
             $vaf = $vafs{$allele};
@@ -47,7 +54,7 @@ sub interpret_entry {
         }
         $return_values{$allele} = {
             vaf => $vaf,
-            var_count => Genome::VariantReporting::Expert::BamReadcount::VafCalculator::calculate_coverage_for_allele($self->get_readcount_entry($entry), $allele),
+            var_count => Genome::VariantReporting::Expert::BamReadcount::VafCalculator::calculate_coverage_for_allele($self->get_readcount_entry($entry), $allele, $entry->{reference_allele}),
             ref_count => $ref_count,
         }
     }
