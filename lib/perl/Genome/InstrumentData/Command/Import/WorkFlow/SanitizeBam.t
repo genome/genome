@@ -30,7 +30,7 @@ ok(-s $clean_bam_path, 'clean bam path exists');
 is(File::Compare::compare($clean_bam_path, $test_dir.'/input.clean.bam'), 0, 'clean bam matches');
 ok(-s $clean_bam_path.'.flagstat', 'flagstat path exists');
 is(File::Compare::compare($clean_bam_path.'.flagstat', $test_dir.'/input.clean.bam.flagstat'), 0, 'flagstat matches');
-ok(!-e $dirty_bam_path, 'removed dirty bam path and auxillary files after sanitizing');
+ok(!glob($dirty_bam_path.'*'), 'removed dirty bam path and auxillary files after sanitizing');
 
 #print "$tmp_dir\n"; <STDIN>;
 done_testing();

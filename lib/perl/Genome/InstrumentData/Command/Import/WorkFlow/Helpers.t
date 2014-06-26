@@ -150,10 +150,8 @@ is($helpers->error_message, 'Failed to parse with instrument data property label
 # rm source files
 ok(!eval{$helpers->remove_path_and_auxiliary_files();}, 'failed to remove source paths and md5s w/o source paths');
 Genome::Sys->create_symlink($test_dir.'/bam/v1/'.$bam_basename.'.md5-orig', $bam_path.'.md5-orig');
+Genome::Sys->create_symlink($test_dir.'/bam/v1/'.$bam_basename.'.md5-orig', $bam_path.'.random');
 ok($helpers->remove_paths_and_auxiliary_files($bam_path), 'remove source paths and md5s w/o source paths');
-ok(!-e $bam_path, 'removed path');
-ok(!-e $bam_path.'.md5', 'removed md5 path');
-ok(!-e $bam_path.'.md5-orig', 'removed md5 orig path');
-ok(!-e $bam_path.'.flagstat', 'removed flagstat path');
+ok(!glob($bam_path.'*'), 'removed path adn auxillary files');
 
 done_testing();

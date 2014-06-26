@@ -42,9 +42,7 @@ for (my $i = 0; $i < @fastq_paths; $i++) {
     is(File::Compare::compare($fastq_paths[$i], $test_dir.'/input.'.($i + 1).'.fastq'), 0, 'fastq '.($i + 1).' matches');
 }
 
-ok(!-e $archive_path, 'removed archived source path after extracting');
-ok(!-e $helpers->md5_path_for($archive_path), 'removed archived source md5 path after extracting');
-ok(!-e $helpers->original_md5_path_for($archive_path), 'removed archived source orig md5 path after extracting');
+ok(!glob($archive_path.'*'), 'removed archived source path after extracting');
 ok(!-e $cmd->extract_directory, 'removed extract diectory after extracting');
 
 # FAIL - no fastqs in archive

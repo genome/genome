@@ -546,7 +546,6 @@ sub were_original_path_md5s_previously_imported {
 
     return;
 }
-
 #<>#
 
 sub remove_paths_and_auxiliary_files {
@@ -555,9 +554,8 @@ sub remove_paths_and_auxiliary_files {
     Carp::confess('No source paths to remove!') if not @paths;
 
     for my $path ( @paths ) {
-        for my $ext ( '', '.md5', '.md5-orig', '.flagstat' ) {
-            my $path = $path.$ext;
-            unlink $path if -e $path;
+        for my $path_to_rm ( glob($path.'*') ) {
+            unlink $path_to_rm;
         }
     }
 
