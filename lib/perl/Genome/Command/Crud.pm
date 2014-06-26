@@ -8,6 +8,7 @@ use Genome;
 require Carp;
 use Data::Dumper 'Dumper';
 require Lingua::EN::Inflect;
+use Genome::Utility::Text;
 
 class Genome::Command::Crud {
     doc => 'Class for dynamically building CRUD commands',
@@ -19,10 +20,7 @@ sub camel_case_to_string {
         Carp::confess "No camel case string to convert to string"
     }
 
-    # Split on capital letters
-    my @words = split( /(?=(?<![A-Z])[A-Z])|(?=(?<!\d)\d)/, $string);
-    my $join = ( @_ ) ? $_[0] : ' '; 
-    return join($join, map { lc } @words);
+    return Genome::Utility::Text::camel_case_to_string($string, @_);
 }
 
 sub display_name_for_value {
