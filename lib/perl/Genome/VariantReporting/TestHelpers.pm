@@ -53,7 +53,7 @@ sub get_test_somatic_variation_build {
     return get_test_somatic_variation_build_from_files(
         bam1 => File::Spec->join($test_dir, 'bam1.bam'),
         bam2 => File::Spec->join($test_dir, 'bam2.bam'),
-        reference_fasta => File::Spec->join($test_dir, 'reference.fasta'),
+        reference_fasta => readlink(File::Spec->join($test_dir, 'reference.fasta')),
         snvs_vcf => File::Spec->join($test_dir, 'snvs.vcf.gz'),
         indels_vcf => File::Spec->join($test_dir, 'indels.vcf.gz'),
     );

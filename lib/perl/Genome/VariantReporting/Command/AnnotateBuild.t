@@ -21,38 +21,59 @@ use Sub::Install qw(reinstall_sub);
 my $pkg = 'Genome::VariantReporting::Command::AnnotateBuild';
 use_ok($pkg);
 
-my $version = 4;
-my $build_version = 1;
+my $version = 5;
+my $build_version = 3;
 my $test_dir = get_test_dir($pkg, $version);
+my $dbsnp_file = File::Spec->join($test_dir, "dbsnp.vcf");
 
 my $build = get_test_somatic_variation_build(version => $build_version);
-my $plan_file = File::Spec->join($test_dir, 'snvs_plan.yaml');
+my $dbsnp_build = Genome::Model::Build::ImportedVariationList->__define__;
 
-my $output_dir = Genome::Sys->create_temp_directory;
-my $log_dir = Genome::Sys->create_temp_directory;
-
-reinstall_sub( {
-    into => $pkg,
-    as => 'setup_environment',
-    code => sub {
-        local $ENV{UR_DUMP_DEBUG_MESSAGES} = 1;
-        local $ENV{UR_COMMAND_DUMP_DEBUG_MESSAGES} = 1;
-        local $ENV{UR_DUMP_STATUS_MESSAGES} = 1;
-        local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
-        # no WF_USE_FLOW
-    },
+Sub::Install::reinstall_sub({
+    into => 'Genome::Model::Build::SomaticVariation',
+    as => 'previously_discovered_variations_build',
+    code => sub {return $dbsnp_build;},
 });
 
-my $cmd = $pkg->execute(
-    build => $build,
-    variant_type => 'snvs',
-    output_directory => $output_dir,
-    log_directory => $log_dir,
-    plan_file => $plan_file
-);
+Sub::Install::reinstall_sub({
+    into => 'Genome::Model::Build::ImportedVariationList',
+    as => 'snvs_vcf',
+    code => sub {return $dbsnp_file;},
+});
 
-my $expected_dir = File::Spec->join($test_dir, 'expected');
-compare_dir_ok($output_dir, $expected_dir, 'All reports are as expected');
+my $plan_file = File::Spec->join($test_dir, 'snvs_plan.yaml');
+
+my $indel_plan_file = File::Spec->join($test_dir, 'indels_plan.yaml');
+
+for my $type qw(snvs indels) {
+    note "Test $type";
+    my $plan_file =  File::Spec->join($test_dir, $type.'_plan.yaml');
+    my $output_dir = Genome::Sys->create_temp_directory;
+    my $log_dir = Genome::Sys->create_temp_directory;
+
+    reinstall_sub( {
+        into => $pkg,
+        as => 'setup_environment',
+        code => sub {
+            local $ENV{UR_DUMP_DEBUG_MESSAGES} = 1;
+            local $ENV{UR_COMMAND_DUMP_DEBUG_MESSAGES} = 1;
+            local $ENV{UR_DUMP_STATUS_MESSAGES} = 1;
+            local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
+            # no WF_USE_FLOW
+        },
+    });
+
+    my $cmd = $pkg->execute(
+        build => $build,
+        variant_type => $type,
+        output_directory => $output_dir,
+        log_directory => $log_dir,
+        plan_file => $plan_file
+    );
+
+    my $expected_dir = File::Spec->join($test_dir, "expected_$type");
+    compare_dir_ok($output_dir, $expected_dir, 'All reports are as expected');
+}
 
 done_testing;
 
