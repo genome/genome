@@ -299,7 +299,7 @@ SELECT model_class, model_status, count(*) FROM (
             ELSE build.status
         END AS model_status
     FROM model.model model LEFT JOIN (
-        SELECT ROW_NUMBER() OVER (PARTITION BY model_id ORDER BY date_scheduled DESC) AS r, model_id, status
+        SELECT ROW_NUMBER() OVER (PARTITION BY model_id ORDER BY created_at DESC) AS r, model_id, status
         FROM model.build
         WHERE status != 'Abandoned'
         AND build.model_id IN (%s)
