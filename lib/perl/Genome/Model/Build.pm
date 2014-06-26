@@ -1091,6 +1091,15 @@ sub validate_instrument_data{
                 desc => 'no reads for instrument data (' . $instrument_data->id . ') assigned to build',
             );
         }
+        if ($instrument_data->bam_path) {
+            if (! -s $instrument_data->bam_path) {
+                push @tags, UR::Object::Tag->create(
+                    type => 'error',
+                    properties => ['instrument_data'],
+                    desc => 'instrument data (' . $instrument_data->id . ') has bam_path but no size',
+                );
+            }
+        }
     }
     return @tags;
 }
