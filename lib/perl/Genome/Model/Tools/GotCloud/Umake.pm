@@ -4,9 +4,10 @@ use strict;
 use warnings;
 
 use Genome;
+use Memoize;
 
 class Genome::Model::Tools::GotCloud::Umake {
-    is => 'Genome::Command::Base',
+    is => ['Genome::Command::Base', 'Genome::Model::Tools::GotCloud'],
     has => [
         model_group => {
             is => 'Genome::ModelGroup',
@@ -47,10 +48,13 @@ class Genome::Model::Tools::GotCloud::Umake {
 sub execute {
     my $self = shift;
     $self->validate;
-    my $config_file = $self->generate_config_file;
+    my $thunder_config_file = $self->generate_config_file($self->build_thunder_config_hash, File::Spec->join($self->output_directory,"thunder.conf"));
+    my $beagle_config_file = $self->generate_config_file($self->build_beagle_config_hash, File::Spec->join($self->output_directory,"beagle.conf"));
+    my $vcf_extract_config_file = $self->generate_config_file($self->build_vcf_extract_config_hash, File::Spec->join($self->output_directory,"vcf_extract.conf"));
     my $gotcloud_path = $self->gotcloud_path;
-    Genome::Sys->shellcmd(cmd =>"$gotcloud_path snpcall --conf $config_file");
-    Genome::Sys->shellcmd(cmd =>"$gotcloud_path ldrefine --conf $config_file");
+    Genome::Sys->shellcmd(cmd =>"$gotcloud_path vc --conf $vcf_extract_config_file --numjobs 1");
+    Genome::Sys->shellcmd(cmd =>"$gotcloud_path vc --conf $beagle_config_file --numjobs 1");
+    Genome::Sys->shellcmd(cmd =>"$gotcloud_path vc --conf $thunder_config_file --numjobs 1");
     return 1;
 }
 
@@ -77,40 +81,68 @@ sub validate {
     return 1;
 }
 
+sub build_thunder_config_hash {
+    my $self= shift;
+    my $config;
+    $config->{"RUN_THUNDER"}="TRUE";
+    return $self->build_config_hash($config);
+}
+
+sub build_beagle_config_hash {
+    my $self = shift;
+    my $config;
+    $config->{"RUN_BEAGLE"}="TRUE";
+    $config->{"RUN_SUBSET"}="TRUE";
+    return $self->build_config_hash($config);
+}
+
+sub build_vcf_extract_config_hash {
+    my $self = shift;
+    my $config;
+    $config->{"RUN_PILEUP"}="TRUE";
+    $config->{"RUN_SPLIT"}="TRUE";
+    $config->{"RUN_EXTRACT"}="TRUE";
+    $config->{"VCF_EXTRACT"}=$self->vcf_file;
+    return $self->build_config_hash($config);
+}
+
+sub single_track_roi {
+    my $self = shift;
+    my $uniform_target_bed = $self->output_directory."/roi.bed";
+    Genome::Sys->copy_file($self->roi_list->get_target_track_only($self->target_track),$uniform_target_bed);
+    return $uniform_target_bed;
+}
+
+Memoize::memoize('single_track_roi');
+
 sub build_config_hash {
     my $self = shift;
-    my %config;
-    $config{"AS"}=$self->reference_build->name;
-    $config{"REF_DIR"}=$self->reference_build->data_directory;
-    $config{"REF"}=$self->reference_build->full_consensus_path("fa");
-    $config{"DBSNP_VCF"}="/gscuser/kmeltzst/gscmnt/reference_files/dbsnp_135.b37.vcf.gz";
-    $config{"HM3_VCF"}="/gscuser/kmeltzst/gscmnt/reference_files/hapmap_3.3.b37.sites.vcf.gz";
-    $config{"OMNI_VCF"}="/gscuser/kmeltzst/gscmnt/reference_files/1000G_omni2.5.b37.sites.PASS.vcf.gz";
-    $config{"INDEL_PREFIX"}="/gscuser/kmeltzst/gscmnt/reference_files/1kg.pilot_release.merged.indels.sites.hg19";
+    my $config = shift;
+    $config->{"AS"}=$self->reference_build->name;
+    $config->{"REF_DIR"}=$self->reference_build->data_directory;
+    $config->{"REF"}=$self->reference_build->full_consensus_path("fa");
+    $config->{"DBSNP_VCF"}="/gscuser/kmeltzst/gscmnt/reference_files/gotcloud.ref/dbsnp_135.b37.vcf.gz";
+    $config->{"HM3_VCF"}="/gscuser/kmeltzst/gscmnt/reference_files/gotcloud.ref/hapmap_3.3.b37.sites.vcf.gz";
+    $config->{"OMNI_VCF"}="/gscuser/kmeltzst/gscmnt/reference_files/gotcloud.ref/1000G_omni2.5.b37.sites.PASS.vcf.gz";
+    $config->{"INDEL_PREFIX"}="/gscuser/kmeltzst/gscmnt/reference_files/gotcloud.ref/1kg.pilot_release.merged.indels.sites.hg19";
     #FIXME:don't make me hardcoded
-    $config{"OUT_DIR"}=$self->output_directory;
-    $config{"BAM_INDEX"}=$self->generate_bam_index;
-    $config{"PED_INDEX"}=$self->pedigree_file;
-    $config{"RUN_INDEX"}="TRUE";
-    $config{"RUN_PILEUP"}="TRUE";
-    $config{"RUN_SPLIT"}="TRUE";
-    $config{"RUN_BEAGLE"}="TRUE";
-    $config{"RUN_SUBSET"}="TRUE";
-    $config{"RUN_THUNDER"}="TRUE";
-    $config{"RUN_EXTRACT"}="TRUE";
-    $config{"VCF_EXTRACT"}=$self->vcf_file;
-    $config{"WRITE_TARGET_LOCI"}="TRUE";
-    $config{"UNIFORM_TARGET_BED"}=$self->roi_list->get_target_track_only($self->target_track);
-    #FIXME: add subroutine get_target_track_only to Genome::FeatureList and make sure it dies if target track doesn't exist
-    $config{"OFFSET_OFF_TARGET"}=$self->wingspan;
-    $config{"TARGET_DIR"}="target";
-
-    return %config;
+    $config->{"OUT_DIR"}=$self->output_directory;
+    #$config->{"BAM_INDEX"}=$self->generate_bam_index;
+    $config->{"BAM_INDEX"}="/gscmnt/gc3036/info/kmeltzst/testing/AT-449/umake_in/umake.index";
+    $config->{"PED_INDEX"}=$self->pedigree_file;
+    $config->{"WRITE_TARGET_LOCI"}="TRUE";
+    $config->{"UNIFORM_TARGET_BED"}=$self->single_track_roi;
+    $config->{"OFFSET_OFF_TARGET"}=$self->wingspan;
+    $config->{"TARGET_DIR"}="target";
+    $config->{"CHRS"}=join " ",$self->chromosomes;
+    return $config;
 }
 
 sub generate_bam_index{
     my $self = shift;
-    my($outfile_fh,$outfile_path) = Genome::Sys->create_temp_file;
+    my $outdir = $self->output_directory;
+    my $outfile = $outdir."/bam_index.txt";
+    my $outfile_fh = Genome::Sys->open_file_for_writing($outfile);
     my @models = $self->model_group->models;
     for my $model (@models){
         my $model_name = $model->name;
@@ -129,16 +161,18 @@ sub generate_bam_index{
             $outfile_fh->print("$sample_name\t$pop\t$file\n");
         }
     }
-    return $outfile_path;
+    return $outfile;
 }
 
 sub generate_config_file{
     my $self = shift;
-    my %config = $self->build_config_hash;
-    my($config_fh,$config_path) = Genome::Sys->create_temp_file;
-    for my $key (keys %config){
-        $config_fh->print("$key=".$config{$key}."\n");
+    my $config = shift;
+    my $config_file = shift;
+    my $outdir = $self->output_directory;
+    my $config_fh = Genome::Sys->open_file_for_writing($config_file);
+    for my $key (keys %$config){
+        $config_fh->print("$key=".$config->{$key}."\n");
     }
 
-    return $config_path;
+    return $config_file;
 }
