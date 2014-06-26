@@ -1078,13 +1078,13 @@ sub validate_instrument_data{
     my @tags;
     my @instrument_data = $self->instrument_data;
     for my $instrument_data (@instrument_data){
-        if (not defined $instrument_data->read_count){
+        if (not defined $instrument_data->read_count) {
             push @tags, UR::Object::Tag->create(
                 type => 'error',
                 properties => ['instrument_data'],
                 desc => 'read count for instrument data (' . $instrument_data->id . ') has not been calculated, use `genome instrument-data calculate-read-count` to correct this.',
             );
-        } elsif (not $instrument_data->read_count){
+        } elsif (not $instrument_data->read_count) {
             push @tags, UR::Object::Tag->create(
                 type => 'error',
                 properties => ['instrument_data'],
