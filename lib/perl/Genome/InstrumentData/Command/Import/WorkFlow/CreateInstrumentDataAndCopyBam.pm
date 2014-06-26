@@ -81,8 +81,8 @@ sub execute {
     my $self = shift;
     $self->debug_message('Create instrument data and copy bam...');
 
-    my $was_not_imported = $self->helpers->ensure_original_data_path_md5s_were_not_previously_imported($self->source_md5s);
-    return if not $was_not_imported;
+    my $previously_imported = $self->helpers->were_original_path_md5s_previously_imported($self->source_md5s);
+    return if $previously_imported;
 
     my $library = defined($self->library)
         ? $self->library

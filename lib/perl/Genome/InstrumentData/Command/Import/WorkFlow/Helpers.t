@@ -114,9 +114,9 @@ ok($run_md5, 'run md5');
 my $load_md5 = $helpers->load_or_run_md5($bam_path); # loads
 is_deeply($load_md5, $run_md5, 'load md5');
 
-# ensure not imported
+# previously imported
 my @md5s = map { $_ x 32 } (qw/ a b c /);
-ok($helpers->ensure_original_data_path_md5s_were_not_previously_imported(@md5s), 'as expected, no inst data found for md5s');
+ok(!$helpers->were_original_path_md5s_previously_imported(@md5s), 'as expected, no inst data found for md5s');
 my @mdr_attrs = map { 
     Genome::InstrumentDataAttribute->create(
     instrument_data_id => $_ - 11,
@@ -124,9 +124,9 @@ my @mdr_attrs = map {
     attribute_value => $md5s[$_],
     nomenclature => 'WUGC',
 ) } ( 0..1); # none for c
-ok(!$helpers->ensure_original_data_path_md5s_were_not_previously_imported(@md5s), 'inst data found for md5s "a" & "b"');
+ok($helpers->were_original_path_md5s_previously_imported(@md5s), 'inst data found for md5s "a" & "b"');
 is($helpers->error_message, 'Instrument data was previously imported! Found existing instrument data with MD5s: -10 => bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, -11 => aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'correct error message');
-ok($helpers->ensure_original_data_path_md5s_were_not_previously_imported($md5s[2]), 'as expected, no inst data found for "c" md5');
+ok(!$helpers->were_original_path_md5s_previously_imported($md5s[2]), 'as expected, no inst data found for "c" md5');
 
 # properties
 my $properties = $helpers->key_value_pairs_to_hash(qw/ sequencing_platform=solexa lane=2 flow_cell_id=XXXXXX /);
