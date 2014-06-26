@@ -23,8 +23,6 @@ my $unsorted_bam_base_name = 'input.clean.bam';
 my $unsorted_bam_path = $tmp_dir.'/'.$unsorted_bam_base_name;
 Genome::Sys->create_symlink($test_dir.'/'.$unsorted_bam_base_name, $unsorted_bam_path);
 ok(-s $unsorted_bam_path, 'linked unsorted bam path');
-#Genome::Sys->create_symlink($test_dir.'/'.$unsorted_bam_base_name.'.md5', $unsorted_bam_path.'.md5');
-#ok(-s $unsorted_bam_path.'.md5', 'linked unsorted bam md5 path');
 Genome::Sys->create_symlink($test_dir.'/'.$unsorted_bam_base_name.'.flagstat', $unsorted_bam_path.'.flagstat');
 ok(-s $unsorted_bam_path.'.flagstat', 'linked unsorted bam flagstat path');
 
@@ -39,11 +37,7 @@ ok(-s $sorted_bam_path, 'sorted bam path exists');
 is(File::Compare::compare($sorted_bam_path, $test_dir.'/'.$sorted_bam_base_name), 0, 'sorted bam matches');
 ok(-s $sorted_bam_path.'.flagstat', 'flagstat path exists');
 is(File::Compare::compare($sorted_bam_path.'.flagstat', $test_dir.'/'.$sorted_bam_base_name.'.flagstat'), 0, 'flagstat matches');
-
-ok(!-e $unsorted_bam_path, 'removed unsorted bam path after sorting');
-ok(!-e $unsorted_bam_path.'.md5', 'removed unsorted md5 path after sorting');
-ok(!-e $unsorted_bam_path.'.md5-orig', 'removed unsorted md5 orig path after sorting');
-ok(!-e $unsorted_bam_path.'.flagstat', 'removed unsorted flagstat path after sorting');
+ok(!glob($unsorted_bam_path.'*'), 'removed bam path and auxillary files after sorting');
 
 #print "$tmp_dir\n"; <STDIN>;
 done_testing();

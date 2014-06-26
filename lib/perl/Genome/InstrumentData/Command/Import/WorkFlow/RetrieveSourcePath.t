@@ -22,7 +22,8 @@ ok($cmd, 'execute');
 my $destination_path = $cmd->destination_path;
 is($destination_path, $tmp_dir.'/input.bam', 'destination path named correctly');
 ok(-s $destination_path, 'destination path exists');
-ok(-s $destination_path.'.md5-orig', 'destination md5 exists');
+my $original_md5_path = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->original_md5_path_for($destination_path);
+ok(-s $original_md5_path, 'destination md5 exists');
 
 #print "$tmp_dir\n"; <STDIN>;
 done_testing();

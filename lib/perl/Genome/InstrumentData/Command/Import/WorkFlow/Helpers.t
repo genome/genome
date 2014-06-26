@@ -11,6 +11,7 @@ use above 'Genome';
 
 require File::Temp;
 require Genome::Utility::Test;
+use Test::Exception;
 use Test::More;
 
 my $class = 'Genome::InstrumentData::Command::Import::WorkFlow::Helpers';
@@ -109,6 +110,11 @@ is_deeply($load_flagstat, $run_flagstat, 'load flagstat');
 ok($helpers->validate_bam($bam_path), 'validate bam');
 
 # md5
+throws_ok { $helpers->md5_path_for } qr/^No path given to get md5 path!/, 'failed md5_path_for undef';
+is($helpers->md5_path_for($bam_path), $bam_path.'.md5', 'md5_path_for');
+throws_ok { $helpers->original_md5_path_for } qr/^No path given to get original md5 path!/, 'failed original_data_path_md5 undef';
+is($helpers->original_md5_path_for($bam_path), $bam_path.'.md5-orig', 'original_md5_path_for');
+
 my $run_md5 = $helpers->load_or_run_md5($bam_path); # runs
 ok($run_md5, 'run md5');
 my $load_md5 = $helpers->load_or_run_md5($bam_path); # loads

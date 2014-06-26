@@ -26,19 +26,16 @@ class Genome::InstrumentData::Command::Import::WorkFlow::VerifyMd5 {
         }, 
     ],
     has_optional_calculated => [
-        source_path_base_name => {
-            calculate_from => [qw/ source_path /],
-            calculate => q( return File::Basename::basename($source_path); ),
-        },
         source_md5_path => {
-            calculate_from => [qw/ working_directory source_path_base_name /],
-            calculate => q( return $working_directory.'/'.$source_path_base_name.'.md5'; ),
+            calculate_from => [qw/ source_path /],
+            calculate => q{ return $self->helpers->md5_path_for($source_path); },
             doc => 'Source MD5 path.',
         }, 
         original_md5_path => {
-            calculate_from => [qw/ working_directory source_path_base_name /],
-            calculate => q( return $working_directory.'/'.$source_path_base_name.'.orig-md5'; ),
-        },
+            calculate_from => [qw/ source_path /],
+            calculate => q{ return $self->helpers->original_md5_path_for($source_path); },
+            doc => 'Original source MD5 path.',
+        }, 
     ],
     has_transient_optional => [
         original_md5 => { is => 'Text', },
@@ -86,7 +83,7 @@ sub _load_original_md5 {
     my $self = shift;
     $self->debug_message('Load original MD5...');
 
-    my $original_md5_path = $self->original_md5_path;
+    my $original_md5_path = $self->helpers->original_md5_path_for($self->source_path);
     my $original_md5_path_size = $self->helpers->file_size($original_md5_path);
     if ( not $original_md5_path_size ) {
         $self->debug_message('No original MD5...skip');

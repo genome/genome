@@ -93,6 +93,13 @@ sub execute {
     my @instrument_data;
     my @bam_paths = $self->bam_paths;
     for my $bam_path ( @bam_paths ) {
+        #$inst_data->read_count($data->{'total_reads'});
+        #$inst_data->fragment_count($data->{'total_reads'}*2);
+        #$inst_data->read_length($self->_read_length);
+        #$inst_data->base_count(int($inst_data->read_length) * int($inst_data->fragment_count));
+        #$inst_data->is_paired_end(1);
+
+
         # Read length FIXME get from metrics or something else while processing!
         my $read_length = $self->_determine_read_length_in_bam($bam_path);
         return if not $read_length;

@@ -439,6 +439,16 @@ sub key_value_pairs_to_hash {
 #<>#
 
 #<MD5>#
+sub md5_path_for {
+    Carp::confess('No path given to get md5 path!') if not $_[1];
+    return $_[1].'.md5';
+}
+
+sub original_md5_path_for {
+    Carp::confess('No path given to get original md5 path!') if not $_[1];
+    return $_[1].'.md5-orig';
+}
+
 sub load_or_run_md5 {
     my ($self, $path, $md5_path) = @_;
     $self->debug_message('Load or run MD5...');
@@ -446,7 +456,7 @@ sub load_or_run_md5 {
     Carp::confess('No path given to run MD5!') if not $path;
     Carp::confess('Path given to run MD5 on does not exist!') if not -s $path;
 
-    $md5_path ||= $path.'.md5';
+    $md5_path ||= $self->md5_path_for($path);
     my $md5;
     if ( -s $md5_path ) {
         $md5 = $self->load_md5($md5_path);
@@ -465,7 +475,7 @@ sub run_md5 {
     Carp::confess('No path given to run md5!') if not $path;
     Carp::confess('Path given to run md5 does not exist!') if not -s $path;
 
-    $md5_path ||= $path.'.md5';
+    $md5_path ||= $self->md5_path_for($path);
     $self->debug_message("Path: $path");
     $self->debug_message("MD5 path: $md5_path");
     my $cmd = "md5sum $path > $md5_path";
