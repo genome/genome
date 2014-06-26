@@ -53,42 +53,32 @@ class Genome::InstrumentData::Command::Import::WorkFlow::VerifyMd5 {
 sub execute {
     my $self = shift;
 
+    # Load original md5, if exists
     my $load_original_md5 = $self->_load_original_md5;
     return if not $load_original_md5;
 
+    # Verify original md5 [if exists] not previouly imported
     my $original_md5 = $self->original_md5;
-    my $md5;
-    if ( $original_md5 ) {
+    if ( $original_md5 ) { # check if previously imported
         my $previously_imported = $self->helpers->were_original_path_md5s_previously_imported($original_md5);
         return if $previously_imported;
-
-        my @instrument_data_attr = Genome::InstrumentDataAttribute->get(
-            attribute_label => 'original_data_path_md5',
-            attribute_value => $original_md5,
-        );
-        if ( @instrument_data_attr ) {
-            $self->error_message(
-                "Instrument data was previously imported! Found existing instrument data with MD5 ($original_md5): ".
-                join(' ', map { $_->instrument_data_id } @instrument_data_attr)
-            );
-            return;
-        }
-
-        $md5 = $self->helpers->load_or_run_md5($self->source_path, $self->source_md5_path);
-        return if not $md5;
-
-        if ( $md5 ne $original_md5 ) {
-            $self->error_message("Original and generated MD5s do not match! $original_md5 vs. $md5");
-            return;
-        }
     }
-    else {
-        $md5 = $self->helpers->load_or_run_md5($self->source_path, $self->source_md5_path);
-        return if not $md5;
+
+    # Run md5 on source file
+    my $md5 = $self->helpers->load_or_run_md5($self->source_path, $self->source_md5_path);
+    return if not $md5;
+
+    # Verify original md5 [if exists] matches
+    if ( $original_md5 and $md5 ne $original_md5 ) {
+        $self->error_message("Original and generated MD5s do not match! $original_md5 vs. $md5");
+        return;
     }
+
+    # Verify md5 not previouly imported
+    my $previously_imported = $self->helpers->were_original_path_md5s_previously_imported($md5);
+    return if $previously_imported;
 
     $self->source_md5($md5);
-
     return 1;
 }
 
