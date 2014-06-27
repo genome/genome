@@ -1116,8 +1116,28 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    'delayarchiving',
-    undef,
+    '>delay-archiving',
+    [
+      'duration=s',
+      [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      'projects=s@',
+      undef,
+      'help!',
+      undef
+    ],
     '>update',
     [
       '>models',
@@ -1200,12 +1220,29 @@ $Genome::Command::OPTS_SPEC = [
   ],
   '>analysis-project',
   [
-    'updateconfigtocurrent',
-    undef,
-    'addinstrumentdatatoanalysisproject',
-    undef,
-    'genome::config::analysisproject::subjectmapping::command',
-    undef,
+    '>disable-config-file',
+    [
+      'profile-item=s',
+      undef,
+      'help!',
+      undef
+    ],
+    '>copy-config',
+    [
+      'from-project=s',
+      undef,
+      'to-project=s',
+      undef,
+      'help!',
+      undef
+    ],
+    '>show-config',
+    [
+      'analysis-project=s',
+      undef,
+      'help!',
+      undef
+    ],
     '>view',
     [
       'color!',
@@ -1231,8 +1268,34 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    'addmenuitem',
-    undef,
+    '>add-instrument-data-to-analysis-project',
+    [
+      'analysis-project=s',
+      undef,
+      'instrument-data=s@',
+      undef,
+      'help!',
+      undef
+    ],
+    '>subject-mapping',
+    [
+      '>import',
+      [
+        '>somatic-validation',
+        [
+          'analysis-project=s',
+          undef,
+          'file-path=s',
+          'files',
+          'help!',
+          undef
+        ],
+        'help!',
+        undef
+      ],
+      'help!',
+      undef
+    ],
     '>list',
     [
       'show=s',
@@ -1258,6 +1321,13 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>update-config-to-current',
+    [
+      'profile-item=s',
+      undef,
+      'help!',
+      undef
+    ],
     '>create',
     [
       'is-cle!',
@@ -1271,10 +1341,17 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    'copyconfig',
-    undef,
-    'configforinstrumentdata',
-    undef,
+    '>add-menu-item',
+    [
+      'reprocess-existing!',
+      undef,
+      'analysis-menu-items=s@',
+      undef,
+      'analysis-project=s',
+      undef,
+      'help!',
+      undef
+    ],
     '>release',
     [
       'analysis-projects=s@',
@@ -1282,10 +1359,15 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    'showconfig',
-    undef,
-    'addconfigfile',
-    undef,
+    '>config-for-instrument-data',
+    [
+      'color!',
+      undef,
+      'instrument-data=s@',
+      undef,
+      'help!',
+      undef
+    ],
     '>hold',
     [
       'analysis-projects=s@',
@@ -1300,8 +1382,19 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    'disableconfigfile',
-    undef,
+    '>add-config-file',
+    [
+      'store-only!',
+      undef,
+      'reprocess-existing!',
+      undef,
+      'analysis-project=s',
+      undef,
+      'config-file=s',
+      undef,
+      'help!',
+      undef
+    ],
     '>update',
     [
       'help!',
@@ -10068,8 +10161,6 @@ $Genome::Command::OPTS_SPEC = [
   ],
   '>library',
   [
-    'mergeduplicates',
-    undef,
     '>create',
     [
       'name=s',
@@ -10090,6 +10181,17 @@ $Genome::Command::OPTS_SPEC = [
         'firststrand',
         'secondstrand'
       ],
+      'help!',
+      undef
+    ],
+    '>merge-duplicates',
+    [
+      'color!',
+      undef,
+      'debug!',
+      undef,
+      'libraries=s@',
+      undef,
       'help!',
       undef
     ],
@@ -10157,8 +10259,6 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    'cpudisksummary',
-    undef,
     '>view',
     [
       'color!',
@@ -10168,6 +10268,24 @@ $Genome::Command::OPTS_SPEC = [
       'processing-profiles=s@',
       undef,
       'individual=s',
+      undef,
+      'help!',
+      undef
+    ],
+    '>cpu-disk-summary',
+    [
+      'format=s',
+      [
+        'table',
+        'raw'
+      ],
+      'output-file=s',
+      'files',
+      'builds=s@',
+      undef,
+      'after=s',
+      undef,
+      'patients=s@',
       undef,
       'help!',
       undef
@@ -11208,9 +11326,16 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      'updatestatus',
-      undef,
       '>stop',
+      [
+        'output-basedir=s',
+        'files',
+        'service=s',
+        undef,
+        'help!',
+        undef
+      ],
+      '>update-status',
       [
         'output-basedir=s',
         'files',
@@ -37289,8 +37414,6 @@ $Genome::Command::OPTS_SPEC = [
   ],
   '>instrument-data',
   [
-    'findassociatedbuilds',
-    undef,
     '>remove',
     [
       'color!',
@@ -37311,8 +37434,30 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    'generatefileforreimport',
-    undef,
+    '>move-alignment-directory',
+    [
+      'debug!',
+      undef,
+      'from=s',
+      'files',
+      'to=s',
+      'files',
+      'help!',
+      undef
+    ],
+    '>guess-fastq-quality-encoding',
+    [
+      'records=s',
+      undef,
+      'quiet!',
+      undef,
+      'encoding=s',
+      undef,
+      'input-file=s',
+      'files',
+      'help!',
+      undef
+    ],
     '>ignore',
     [
       'ignore=s',
@@ -37326,12 +37471,31 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    'refinereads',
-    undef,
-    'guessfastqqualityencoding',
-    undef,
-    'estimatelibrarycomplexity',
-    undef,
+    '>merge-alignments',
+    [
+      'lsf-resource=s',
+      'files',
+      'alignment-result-ids=s',
+      undef,
+      'merger-name=s',
+      'files',
+      'samtools-version=s',
+      'files',
+      'result-id=s',
+      'files',
+      'merger-params=s',
+      'files',
+      'merger-version=s',
+      'files',
+      'duplication-handler-name=s',
+      'files',
+      'duplication-handler-params=s',
+      'files',
+      'duplication-handler-version=s',
+      'files',
+      'help!',
+      undef
+    ],
     '>export',
     [
       '>samplesheet',
@@ -37357,6 +37521,25 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      'help!',
+      undef
+    ],
+    '>refine-reads',
+    [
+      'lsf-resource=s',
+      'files',
+      'refiner-name=s',
+      'files',
+      'refiner-version=s',
+      'files',
+      'refiner-params=s',
+      'files',
+      'result-id=s',
+      'files',
+      'input-result=s',
+      undef,
+      'refiner-known-sites-ids=s@',
+      'files',
       'help!',
       undef
     ],
@@ -37395,17 +37578,158 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    'movealignmentdirectory',
-    undef,
+    '>alignment-result',
+    [
+      '>list',
+      [
+        'filter=s',
+        'files',
+        'show=s',
+        'files',
+        'style=s',
+        [
+          'text',
+          'csv',
+          'tsv',
+          'pretty',
+          'html',
+          'xml',
+          'newtext'
+        ],
+        'csv-delimiter=s',
+        'files',
+        'noheaders!',
+        undef,
+        'order-by=s',
+        'files',
+        'help!',
+        undef
+      ],
+      '>merged',
+      [
+        '>duplication-handler',
+        [
+          '>picard',
+          [
+            'input-bam=s',
+            'files',
+            'log-file=s',
+            'files',
+            'metrics-file=s',
+            'files',
+            'output-path=s',
+            'files',
+            'version=s',
+            'files',
+            'debug!',
+            undef,
+            'include-comment=s',
+            'files',
+            'parameters=s',
+            'files',
+            'scratch-directory=s',
+            'files',
+            'help!',
+            undef
+          ],
+          'help!',
+          undef
+        ],
+        '>merger',
+        [
+          '>picard',
+          [
+            'input-bams=s@',
+            'files',
+            'output-path=s',
+            'files',
+            'samtools-version=s',
+            'files',
+            'version=s',
+            'files',
+            'debug!',
+            undef,
+            'include-comment=s',
+            'files',
+            'parameters=s',
+            'files',
+            'scratch-directory=s',
+            'files',
+            'help!',
+            undef
+          ],
+          '>samtools',
+          [
+            'input-bams=s@',
+            'files',
+            'output-path=s',
+            'files',
+            'samtools-version=s',
+            'files',
+            'version=s',
+            'files',
+            'debug!',
+            undef,
+            'include-comment=s',
+            'files',
+            'parameters=s',
+            'files',
+            'scratch-directory=s',
+            'files',
+            'help!',
+            undef
+          ],
+          'help!',
+          undef
+        ],
+        'help!',
+        undef
+      ],
+      '>remove',
+      [
+        'color!',
+        undef,
+        'debug!',
+        undef,
+        'alignment-results=s@',
+        undef,
+        'help!',
+        undef
+      ],
+      '>verify-dt',
+      [
+        'repair!',
+        undef,
+        'color!',
+        undef,
+        'debug!',
+        undef,
+        'max=s',
+        undef,
+        'instrument-data=s@',
+        undef,
+        'help!',
+        undef
+      ],
+      '>verify-headers',
+      [
+        'color!',
+        undef,
+        'debug!',
+        undef,
+        'alignment-spec=s',
+        'files',
+        'help!',
+        undef
+      ],
+      'help!',
+      undef
+    ],
     '>hmp',
     [
       'help!',
       undef
     ],
-    'alignmentresult',
-    undef,
-    'mergealignments',
-    undef,
     '>import',
     [
       '>basic',
@@ -37518,10 +37842,104 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    'alignreads',
-    undef,
-    'calculatereadcount',
-    undef,
+    '>find-associated-builds',
+    [
+      'instrument-data=s',
+      undef,
+      'help!',
+      undef
+    ],
+    '>align-reads',
+    [
+      'name=s',
+      'files',
+      'version=s',
+      'files',
+      'params=s',
+      'files',
+      'picard-version=s',
+      'files',
+      'samtools-version=s',
+      'files',
+      'annotation-build-id=s',
+      undef,
+      'result-id=s',
+      'files',
+      'instrument-data-segment-id=s',
+      'files',
+      'instrument-data-segment-type=s',
+      'files',
+      'instrument-data-filter=s',
+      [
+        'forward-only',
+        'reverse-only',
+        undef
+      ],
+      'force-fragment!',
+      undef,
+      'trimmer-name=s',
+      'files',
+      'trimmer-params=s',
+      'files',
+      'trimmer-version=s',
+      'files',
+      'help!',
+      undef
+    ],
+    '>estimate-library-complexity',
+    [
+      'remove',
+      undef,
+      'dump',
+      undef,
+      'move-alignment-directory',
+      undef,
+      'guess-fastq-quality-encoding',
+      undef,
+      'ignore',
+      undef,
+      'merge-alignments',
+      undef,
+      'export',
+      undef,
+      'imported',
+      undef,
+      'refine-reads',
+      undef,
+      'list',
+      undef,
+      'alignment-result',
+      undef,
+      'hmp',
+      undef,
+      'import',
+      undef,
+      'find-associated-builds',
+      undef,
+      'align-reads',
+      undef,
+      'estimate-library-complexity',
+      undef,
+      'generate-file-for-reimport',
+      undef,
+      'update',
+      undef,
+      'microarray',
+      undef,
+      'calculate-read-count',
+      undef,
+      'help!',
+      undef
+    ],
+    '>generate-file-for-reimport',
+    [
+      'file=s',
+      'files',
+      'instrument-data=s@',
+      undef,
+      'help!',
+      undef
+    ],
     '>update',
     [
       'help!',
@@ -37529,6 +37947,13 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>microarray',
     [
+      'help!',
+      undef
+    ],
+    '>calculate-read-count',
+    [
+      'instrument-data=s',
+      undef,
       'help!',
       undef
     ],
@@ -37957,12 +38382,29 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>analysis-project',
     [
-      'updateconfigtocurrent',
-      undef,
-      'addinstrumentdatatoanalysisproject',
-      undef,
-      'genome::config::analysisproject::subjectmapping::command',
-      undef,
+      '>disable-config-file',
+      [
+        'profile-item=s',
+        undef,
+        'help!',
+        undef
+      ],
+      '>copy-config',
+      [
+        'from-project=s',
+        undef,
+        'to-project=s',
+        undef,
+        'help!',
+        undef
+      ],
+      '>show-config',
+      [
+        'analysis-project=s',
+        undef,
+        'help!',
+        undef
+      ],
       '>view',
       [
         'color!',
@@ -37988,8 +38430,34 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      'addmenuitem',
-      undef,
+      '>add-instrument-data-to-analysis-project',
+      [
+        'analysis-project=s',
+        undef,
+        'instrument-data=s@',
+        undef,
+        'help!',
+        undef
+      ],
+      '>subject-mapping',
+      [
+        '>import',
+        [
+          '>somatic-validation',
+          [
+            'analysis-project=s',
+            undef,
+            'file-path=s',
+            'files',
+            'help!',
+            undef
+          ],
+          'help!',
+          undef
+        ],
+        'help!',
+        undef
+      ],
       '>list',
       [
         'show=s',
@@ -38015,6 +38483,13 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>update-config-to-current',
+      [
+        'profile-item=s',
+        undef,
+        'help!',
+        undef
+      ],
       '>create',
       [
         'is-cle!',
@@ -38028,10 +38503,17 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      'copyconfig',
-      undef,
-      'configforinstrumentdata',
-      undef,
+      '>add-menu-item',
+      [
+        'reprocess-existing!',
+        undef,
+        'analysis-menu-items=s@',
+        undef,
+        'analysis-project=s',
+        undef,
+        'help!',
+        undef
+      ],
       '>release',
       [
         'analysis-projects=s@',
@@ -38039,10 +38521,15 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      'showconfig',
-      undef,
-      'addconfigfile',
-      undef,
+      '>config-for-instrument-data',
+      [
+        'color!',
+        undef,
+        'instrument-data=s@',
+        undef,
+        'help!',
+        undef
+      ],
       '>hold',
       [
         'analysis-projects=s@',
@@ -38057,8 +38544,19 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      'disableconfigfile',
-      undef,
+      '>add-config-file',
+      [
+        'store-only!',
+        undef,
+        'reprocess-existing!',
+        undef,
+        'analysis-project=s',
+        undef,
+        'config-file=s',
+        undef,
+        'help!',
+        undef
+      ],
       '>update',
       [
         'help!',
