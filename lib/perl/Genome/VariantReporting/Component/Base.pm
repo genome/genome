@@ -1,10 +1,10 @@
-package Genome::VariantReporting::ComponentBase;
+package Genome::VariantReporting::Component::Base;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::VariantReporting::ComponentBase {
+class Genome::VariantReporting::Component::Base {
     is_abstract => 1,
 };
 

@@ -8,7 +8,7 @@ use Genome::WorkflowBuilder::DAG;
 use Genome::WorkflowBuilder::Command;
 
 class Genome::VariantReporting::Expert::Base {
-    is => 'Genome::VariantReporting::ComponentBase',
+    is => 'Genome::VariantReporting::Component::Base',
     is_abstract => 1,
 };
 

@@ -7,7 +7,7 @@ use Data::Dump qw(pp);
 
 class Genome::VariantReporting::Expert::CommandBase {
     is_abstract => 1,
-    is => ['Command::V2', 'Genome::VariantReporting::ComponentBase'],
+    is => ['Command::V2', 'Genome::VariantReporting::Component::Base'],
     has_input => [
         input_result => {
             is => 'Genome::SoftwareResult',

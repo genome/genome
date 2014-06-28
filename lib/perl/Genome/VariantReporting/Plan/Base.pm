@@ -6,7 +6,7 @@ use Genome;
 use Memoize qw(memoize);
 
 class Genome::VariantReporting::Plan::Base {
-    is => 'Genome::VariantReporting::ComponentBase',
+    is => 'Genome::VariantReporting::Component::Base',
     has => [
         name => {
             is => 'Text',

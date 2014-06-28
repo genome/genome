@@ -5,7 +5,7 @@ use warnings FATAL => 'all';
 use Genome;
 
 class Genome::VariantReporting::Interpreter::Base {
-    is => ['Genome::VariantReporting::ComponentBase', 'Genome::VariantReporting::WithTranslatedInputs'],
+    is => ['Genome::VariantReporting::Component::Base', 'Genome::VariantReporting::WithTranslatedInputs'],
     is_abstract => 1,
 };
 

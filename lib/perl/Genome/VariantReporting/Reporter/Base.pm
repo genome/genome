@@ -5,7 +5,7 @@ use warnings FATAL => 'all';
 use Genome;
 
 class Genome::VariantReporting::Reporter::Base {
-    is => 'Genome::VariantReporting::ComponentBase',
+    is => 'Genome::VariantReporting::Component::Base',
     is_abstract => 1,
     has => [
         file_name => {
