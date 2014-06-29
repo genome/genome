@@ -1,10 +1,10 @@
-package Genome::VariantReporting::WithTranslatedInputs;
+package Genome::VariantReporting::Component::WithTranslatedInputs;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::VariantReporting::WithTranslatedInputs {
+class Genome::VariantReporting::Component::WithTranslatedInputs {
     attributes_have => [
         is_translated => {is => 'Boolean', default => 0},
     ],

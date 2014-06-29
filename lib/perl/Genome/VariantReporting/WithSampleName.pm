@@ -6,7 +6,7 @@ use Genome;
 use Memoize qw(memoize);
 
 class Genome::VariantReporting::WithSampleName {
-    is => ['Genome::VariantReporting::WithTranslatedInputs'],
+    is => ['Genome::VariantReporting::Component::WithTranslatedInputs'],
     has => [
         sample_name => {
             is => 'Text',
