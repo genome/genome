@@ -1,11 +1,11 @@
-package Genome::VariantReporting::WithSampleName;
+package Genome::VariantReporting::Component::WithSampleName;
 
 use strict;
 use warnings;
 use Genome;
 use Memoize qw(memoize);
 
-class Genome::VariantReporting::WithSampleName {
+class Genome::VariantReporting::Component::WithSampleName {
     is => ['Genome::VariantReporting::Component::WithTranslatedInputs'],
     has => [
         sample_name => {

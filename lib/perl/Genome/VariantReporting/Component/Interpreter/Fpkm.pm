@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::VariantReporting::Component::Interpreter::Fpkm {
-    is => ['Genome::VariantReporting::WithSampleName'],
+    is => ['Genome::VariantReporting::Component::WithSampleName'],
 };
 
 sub fpkm_for_genotype_allele {

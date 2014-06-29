@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::VariantReporting::Filter::NCallersFilter {
-    is => ['Genome::VariantReporting::Component::Filter', 'Genome::VariantReporting::WithSampleName'],
+    is => ['Genome::VariantReporting::Component::Filter', 'Genome::VariantReporting::Component::WithSampleName'],
     has => [
         min_callers => {
             is => 'Integer',

@@ -6,7 +6,7 @@ use Genome;
 use List::Util qw/first/;
 
 class Genome::VariantReporting::Filter::FTKeepFilter {
-    is => ['Genome::VariantReporting::Component::Filter', 'Genome::VariantReporting::WithSampleName'],
+    is => ['Genome::VariantReporting::Component::Filter', 'Genome::VariantReporting::Component::WithSampleName'],
     has => {
         keep_filter_values => {
             is => 'Text',
