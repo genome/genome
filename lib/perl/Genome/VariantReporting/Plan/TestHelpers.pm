@@ -25,7 +25,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::VariantReporting::TestInterpreter {
-        is => 'Genome::VariantReporting::Interpreter::Base',
+        is => 'Genome::VariantReporting::Component::Interpreter',
         has => [
             ix_p1 => {},
             ix_p2 => {},
@@ -69,7 +69,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::VariantReporting::AnotherTestInterpreter {
-        is => 'Genome::VariantReporting::Interpreter::Base',
+        is => 'Genome::VariantReporting::Component::Interpreter',
         has => [
             iy_p1 => {},
             iy_p2 => {},

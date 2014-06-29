@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::VariantReporting::Interpreter::RsidInterpreter {
-    is => 'Genome::VariantReporting::Interpreter::Base',
+    is => 'Genome::VariantReporting::Component::Interpreter',
 };
 
 sub name {

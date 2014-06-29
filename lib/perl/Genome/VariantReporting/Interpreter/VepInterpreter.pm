@@ -6,7 +6,7 @@ use Genome;
 use Genome::File::Vcf::VepConsequenceParser;
 
 class Genome::VariantReporting::Interpreter::VepInterpreter {
-    is => 'Genome::VariantReporting::Interpreter::Base',
+    is => 'Genome::VariantReporting::Component::Interpreter',
 };
 
 sub name {

@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::VariantReporting::Interpreter::GmafInterpreter {
-    is => 'Genome::VariantReporting::Interpreter::Base',
+    is => 'Genome::VariantReporting::Component::Interpreter',
     has => [
         dummy => {
             is_optional => 1,

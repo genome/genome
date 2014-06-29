@@ -46,6 +46,10 @@ use Module::Pluggable
     require => 1,
     search_path => search_path(),
     only => qr(Interpreter$|Filter$),
+    except => [
+        'Genome::VariantReporting::Component::Filter',
+        'Genome::VariantReporting::Component::Interpreter',
+    ],
     sub_name => 'interpreters';
 
 use Module::Pluggable
