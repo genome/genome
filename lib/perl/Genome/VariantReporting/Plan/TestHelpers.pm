@@ -281,7 +281,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::VariantReporting::ExpertOneRun {
-        is => 'Genome::VariantReporting::Expert::CommandBase',
+        is => 'Genome::VariantReporting::Component::Expert::Command',
     };
 
     sub name {
@@ -341,7 +341,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::VariantReporting::ExpertTwoRun {
-        is => 'Genome::VariantReporting::Expert::CommandBase',
+        is => 'Genome::VariantReporting::Component::Expert::Command',
     };
 
     sub name {

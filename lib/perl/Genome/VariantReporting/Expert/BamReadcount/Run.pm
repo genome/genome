@@ -5,7 +5,7 @@ use warnings FATAL => 'all';
 use Genome;
 
 class Genome::VariantReporting::Expert::BamReadcount::Run {
-    is => 'Genome::VariantReporting::Expert::CommandBase',
+    is => 'Genome::VariantReporting::Component::Expert::Command',
     has_input => [
         aligned_bam_result => {
             is => 'Genome::InstrumentData::AlignedBamResult',

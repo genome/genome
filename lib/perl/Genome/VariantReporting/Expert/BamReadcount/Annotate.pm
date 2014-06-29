@@ -4,7 +4,7 @@ use strict;
 use warnings FATAL => 'all';
 
 class Genome::VariantReporting::Expert::BamReadcount::Annotate {
-    is => 'Genome::VariantReporting::Expert::CommandBase',
+    is => 'Genome::VariantReporting::Component::Expert::Command',
     has_input => [
         readcount_results => {
             is => 'Genome::VariantReporting::Expert::BamReadcount::RunResult',

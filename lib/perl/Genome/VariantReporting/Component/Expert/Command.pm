@@ -1,11 +1,11 @@
-package Genome::VariantReporting::Expert::CommandBase;
+package Genome::VariantReporting::Component::Expert::Command;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 use Data::Dump qw(pp);
 
-class Genome::VariantReporting::Expert::CommandBase {
+class Genome::VariantReporting::Component::Expert::Command {
     is_abstract => 1,
     is => ['Command::V2', 'Genome::VariantReporting::Component::Base'],
     has_input => [
