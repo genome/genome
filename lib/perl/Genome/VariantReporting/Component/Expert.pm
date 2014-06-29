@@ -1,4 +1,4 @@
-package Genome::VariantReporting::Expert::Base;
+package Genome::VariantReporting::Component::Expert;
 
 use strict;
 use warnings FATAL => 'all';
@@ -7,7 +7,7 @@ use Params::Validate qw(validate_pos validate :types);
 use Genome::WorkflowBuilder::DAG;
 use Genome::WorkflowBuilder::Command;
 
-class Genome::VariantReporting::Expert::Base {
+class Genome::VariantReporting::Component::Expert {
     is => 'Genome::VariantReporting::Component::Base',
     is_abstract => 1,
 };

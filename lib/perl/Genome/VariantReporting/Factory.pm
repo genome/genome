@@ -18,6 +18,7 @@ use Module::Pluggable
     require => 1,
     search_path => search_path(),
     only => qr(Expert$),
+    except => ['Genome::VariantReporting::Component::Expert'],
     sub_name => 'experts';
 
 use Module::Pluggable

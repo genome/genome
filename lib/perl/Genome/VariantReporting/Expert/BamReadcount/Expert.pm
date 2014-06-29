@@ -7,7 +7,7 @@ use Genome::WorkflowBuilder::DAG;
 use Genome::WorkflowBuilder::Command;
 
 class Genome::VariantReporting::Expert::BamReadcount::Expert {
-    is => 'Genome::VariantReporting::Expert::Base',
+    is => 'Genome::VariantReporting::Component::Expert',
 };
 
 sub name {

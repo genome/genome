@@ -239,7 +239,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::VariantReporting::TestExpert {
-        is => 'Genome::VariantReporting::Expert::Base',
+        is => 'Genome::VariantReporting::Component::Expert',
         has => [
         ],
     };
@@ -299,7 +299,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::VariantReporting::AnotherTestExpert {
-        is => 'Genome::VariantReporting::Expert::Base',
+        is => 'Genome::VariantReporting::Component::Expert',
         has => [
         ],
     };
