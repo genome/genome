@@ -360,7 +360,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::VariantReporting::TestFilter {
-        is => 'Genome::VariantReporting::Filter::Base',
+        is => 'Genome::VariantReporting::Component::Filter',
         has => [
             f1_p1 => {},
             f1_p2 => {},
@@ -397,7 +397,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::VariantReporting::AnotherTestFilter {
-        is => 'Genome::VariantReporting::Filter::Base',
+        is => 'Genome::VariantReporting::Component::Filter',
         has => [
             f2_p1 => {},
             f2_p2 => {},

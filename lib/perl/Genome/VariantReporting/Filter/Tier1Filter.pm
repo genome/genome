@@ -7,7 +7,7 @@ use Scalar::Util qw(looks_like_number);
 use Genome::File::Vcf::VepConsequenceParser;
 
 class Genome::VariantReporting::Filter::Tier1Filter {
-    is => ['Genome::VariantReporting::Filter::Base'],
+    is => ['Genome::VariantReporting::Component::Filter'],
     has => [
     ],
 };

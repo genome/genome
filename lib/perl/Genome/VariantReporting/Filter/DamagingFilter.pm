@@ -6,7 +6,7 @@ use Genome;
 use Genome::File::Vcf::VepConsequenceParser;
 
 class Genome::VariantReporting::Filter::DamagingFilter {
-    is => 'Genome::VariantReporting::Filter::Base',
+    is => 'Genome::VariantReporting::Component::Filter',
 };
 
 sub name {

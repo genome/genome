@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::VariantReporting::Filter::MaxGmafFilter {
-    is => 'Genome::VariantReporting::Filter::Base',
+    is => 'Genome::VariantReporting::Component::Filter',
     has => [
         max_gmaf => {
             is => 'Number',

@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::VariantReporting::Filter::ContainsTagFilter {
-    is => 'Genome::VariantReporting::Filter::Base',
+    is => 'Genome::VariantReporting::Component::Filter',
     has => [
         info_tag => {
             is => "String",

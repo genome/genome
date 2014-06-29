@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::VariantReporting::Filter::MaxIndelSizeFilter {
-    is => 'Genome::VariantReporting::Filter::Base',
+    is => 'Genome::VariantReporting::Component::Filter',
     has => [
         size => {
             is => "Number",
