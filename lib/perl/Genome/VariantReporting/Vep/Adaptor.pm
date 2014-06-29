@@ -1,10 +1,10 @@
-package Genome::VariantReporting::Expert::Vep::Adaptor;
+package Genome::VariantReporting::Vep::Adaptor;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::VariantReporting::Expert::Vep::Adaptor {
+class Genome::VariantReporting::Vep::Adaptor {
     is => "Genome::VariantReporting::Component::Adaptor",
 
     has_planned_output => [

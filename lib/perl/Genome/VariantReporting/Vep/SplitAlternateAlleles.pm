@@ -1,11 +1,11 @@
-package Genome::VariantReporting::Expert::Vep::SplitAlternateAlleles;
+package Genome::VariantReporting::Vep::SplitAlternateAlleles;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 use Genome::File::Vcf::Reader;
 
-class Genome::VariantReporting::Expert::Vep::SplitAlternateAlleles {
+class Genome::VariantReporting::Vep::SplitAlternateAlleles {
     is => 'Command::V2',
     has_input => [
         input_file => {

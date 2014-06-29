@@ -1,4 +1,4 @@
-package Genome::VariantReporting::Expert::Vep::RunResult;
+package Genome::VariantReporting::Vep::RunResult;
 
 use strict;
 use warnings FATAL => 'all';
@@ -7,7 +7,7 @@ use Sys::Hostname;
 use IPC::Run qw(run);
 use File::Basename qw(dirname);
 
-class Genome::VariantReporting::Expert::Vep::RunResult {
+class Genome::VariantReporting::Vep::RunResult {
     is => 'Genome::VariantReporting::Component::Expert::Result',
     has_input => [
         ensembl_version => {
@@ -96,7 +96,7 @@ sub stripped_input_vcf {
 sub _split_alternate_alleles {
     my $self = shift;
 
-    Genome::VariantReporting::Expert::Vep::SplitAlternateAlleles->execute(
+    Genome::VariantReporting::Vep::SplitAlternateAlleles->execute(
         input_file => $self->stripped_input_vcf,
         output_file => $self->split_vcf,
     );

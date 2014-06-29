@@ -1,10 +1,10 @@
-package Genome::VariantReporting::Expert::Vep::Run;
+package Genome::VariantReporting::Vep::Run;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::VariantReporting::Expert::Vep::Run {
+class Genome::VariantReporting::Vep::Run {
     is => 'Genome::VariantReporting::Component::Expert::Command',
     has_input => [
         ensembl_version => {
@@ -35,5 +35,5 @@ sub name {
 }
 
 sub result_class {
-    'Genome::VariantReporting::Expert::Vep::RunResult';
+    'Genome::VariantReporting::Vep::RunResult';
 }

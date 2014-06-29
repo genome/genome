@@ -1,10 +1,10 @@
-package Genome::VariantReporting::Expert::Vep::Expert;
+package Genome::VariantReporting::Vep::Expert;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::VariantReporting::Expert::Vep::Expert {
+class Genome::VariantReporting::Vep::Expert {
     is => 'Genome::VariantReporting::Component::Expert',
 };
 
