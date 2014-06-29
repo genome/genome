@@ -1,4 +1,4 @@
-package Genome::VariantReporting::Adaptor::TestHelpers;
+package Genome::VariantReporting::Component::Adaptor::TestHelpers;
 
 use strict;
 use warnings;
@@ -22,7 +22,7 @@ our @EXPORT_OK = qw(
     use Genome;
 
     class Genome::VariantReporting::TestAdaptor {
-        is => 'Genome::VariantReporting::AdaptorBase',
+        is => 'Genome::VariantReporting::Component::Adaptor',
     };
 
     sub name {

@@ -5,7 +5,7 @@ use warnings FATAL => 'all';
 use Genome;
 
 class Genome::VariantReporting::Expert::Vep::Adaptor {
-    is => "Genome::VariantReporting::AdaptorBase",
+    is => "Genome::VariantReporting::Component::Adaptor",
 
     has_planned_output => [
         ensembl_version => {

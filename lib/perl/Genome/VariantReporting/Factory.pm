@@ -24,6 +24,7 @@ use Module::Pluggable
     require => 1,
     search_path => search_path(),
     only => qr(Adaptor$),
+    except => ['Genome::VariantReporting::Component::Adaptor'],
     sub_name => 'adaptors';
 
 use Module::Pluggable

@@ -259,7 +259,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::VariantReporting::ExpertOneAdaptor {
-        is => 'Genome::VariantReporting::AdaptorBase',
+        is => 'Genome::VariantReporting::Component::Adaptor',
         has_planned_output => [
             e1_p1 => {},
             e1_p2 => {},
@@ -319,7 +319,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::VariantReporting::ExpertTwoAdaptor {
-        is => 'Genome::VariantReporting::AdaptorBase',
+        is => 'Genome::VariantReporting::Component::Adaptor',
         has_planned_output => [
             e2_p1 => {},
             e2_p2 => {},
