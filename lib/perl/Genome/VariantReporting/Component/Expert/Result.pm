@@ -1,10 +1,10 @@
-package Genome::VariantReporting::Expert::ResultBase;
+package Genome::VariantReporting::Component::Expert::Result;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::VariantReporting::Expert::ResultBase {
+class Genome::VariantReporting::Component::Expert::Result {
     is_abstract => 1,
     is => 'Genome::SoftwareResult::Stageable',
     has_input => [

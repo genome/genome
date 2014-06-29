@@ -53,7 +53,7 @@ sub generate_test_cmd {
 
     my $input_result = $result_class->__define__();
     Sub::Install::reinstall_sub({
-        into => 'Genome::VariantReporting::Expert::ResultBase',
+        into => 'Genome::VariantReporting::Component::Expert::Result',
         as => 'output_file_path',
         code => sub {return 'test_vcf';},
     });

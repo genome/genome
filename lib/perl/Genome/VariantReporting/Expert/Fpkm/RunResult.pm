@@ -5,7 +5,7 @@ use warnings FATAL => 'all';
 use Genome;
 
 class Genome::VariantReporting::Expert::Fpkm::RunResult {
-    is => 'Genome::VariantReporting::Expert::ResultBase',
+    is => 'Genome::VariantReporting::Component::Expert::Result',
     has_input => [
         fpkm_file => {
             is => 'String',

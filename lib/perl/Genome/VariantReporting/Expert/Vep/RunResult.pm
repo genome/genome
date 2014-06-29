@@ -8,7 +8,7 @@ use IPC::Run qw(run);
 use File::Basename qw(dirname);
 
 class Genome::VariantReporting::Expert::Vep::RunResult {
-    is => 'Genome::VariantReporting::Expert::ResultBase',
+    is => 'Genome::VariantReporting::Component::Expert::Result',
     has_input => [
         ensembl_version => {
             is => 'String',

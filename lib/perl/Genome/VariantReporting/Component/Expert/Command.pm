@@ -21,7 +21,7 @@ class Genome::VariantReporting::Component::Expert::Command {
     ],
     has_optional_output => [
         output_result => {
-            is => 'Genome::VariantReporting::Expert::ResultBase',
+            is => 'Genome::VariantReporting::Component::Expert::Result',
             doc => 'The software result created during command execution',
         },
     ],
