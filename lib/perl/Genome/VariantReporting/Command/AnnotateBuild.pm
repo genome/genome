@@ -4,7 +4,7 @@ use strict;
 use warnings FATAL => 'all';
 use Genome;
 use Genome::VariantReporting::Plan;
-use Genome::VariantReporting::Dag qw(generate_dag);
+use Genome::VariantReporting::Common::Dag qw(generate_dag);
 use Memoize qw();
 
 class Genome::VariantReporting::Command::AnnotateBuild {

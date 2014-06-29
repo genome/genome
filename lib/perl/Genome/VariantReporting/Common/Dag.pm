@@ -1,4 +1,4 @@
-package Genome::VariantReporting::Dag;
+package Genome::VariantReporting::Common::Dag;
 
 use strict;
 use warnings FATAL => 'all';

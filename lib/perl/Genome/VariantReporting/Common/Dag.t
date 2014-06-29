@@ -5,7 +5,7 @@ use warnings FATAL => 'all';
 
 use Test::More;
 use above 'Genome';
-use Genome::VariantReporting::Dag qw(generate_dag);
+use Genome::VariantReporting::Common::Dag qw(generate_dag);
 use Genome::VariantReporting::TestHelpers qw(test_dag_xml);
 use Genome::VariantReporting::Plan::TestHelpers; # defines classes
 
