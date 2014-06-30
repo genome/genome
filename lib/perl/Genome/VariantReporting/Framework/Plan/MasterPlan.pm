@@ -1,4 +1,4 @@
-package Genome::VariantReporting::Plan;
+package Genome::VariantReporting::Framework::Plan::MasterPlan;
 
 use strict;
 use warnings;
@@ -11,7 +11,7 @@ use JSON;
 
 my $_JSON_CODEC = new JSON->allow_nonref;
 
-class Genome::VariantReporting::Plan {
+class Genome::VariantReporting::Framework::Plan::MasterPlan {
     is => 'Genome::VariantReporting::Framework::Plan::Base',
     has => [
         expert_plans => {

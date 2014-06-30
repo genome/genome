@@ -20,7 +20,7 @@ use_ok($pkg);
 
 my $data_dir = __FILE__.".d";
 my $vcf_file = File::Spec->join($data_dir, "test.vcf");
-my $plan = Genome::VariantReporting::Plan->create_from_file(File::Spec->join($data_dir, "test.yaml"));
+my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_file(File::Spec->join($data_dir, "test.yaml"));
 
 my $output_dir = Genome::Sys->create_temp_directory;
 

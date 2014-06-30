@@ -57,7 +57,7 @@ reinstall_sub({
     code => sub {return $feature_list},
 });
 
-my $plan = Genome::VariantReporting::Plan->create_from_file(
+my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_file(
     File::Spec->join($test_dir, 'plan.yaml'),
 );
 $plan->validate();

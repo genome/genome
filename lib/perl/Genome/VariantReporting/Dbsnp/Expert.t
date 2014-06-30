@@ -39,7 +39,7 @@ test_dag_xml($dag, $expected_xml);
 
 set_what_interpreter_x_requires('dbsnp');
 my $build = get_build($BUILD_VERSION, $test_dir);
-my $plan = Genome::VariantReporting::Plan->create_from_file(
+my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_file(
     File::Spec->join($test_dir, 'plan.yaml'),
 );
 $plan->validate();

@@ -32,7 +32,7 @@ sub _get_variant_reporting_plan {
     unless (-f $plan_file) {
         die $self->error_message("Could not find variant reporting plan named ($name) in search directory (%s)", $self->_variant_reporting_plan_search_dir);
     }
-    my $plan = Genome::VariantReporting::Plan->create_from_file($plan_file);
+    my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_file($plan_file);
 
     return $plan;
 }

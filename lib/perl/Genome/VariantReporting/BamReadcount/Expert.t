@@ -40,7 +40,7 @@ set_what_interpreter_x_requires('bam-readcount');
 my $variant_type = 'snvs';
 my $expected_vcf = File::Spec->join($test_dir, "expected_$variant_type.vcf.gz");
 my $build = get_test_somatic_variation_build(version => $BUILD_VERSION);
-my $plan = Genome::VariantReporting::Plan->create_from_file(
+my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_file(
     File::Spec->join($test_dir, 'plan.yaml'),
 );
 $plan->validate();

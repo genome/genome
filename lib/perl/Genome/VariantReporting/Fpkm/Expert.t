@@ -47,7 +47,7 @@ reinstall_sub( {
         code => sub { return File::Spec->join($test_dir, 'test.fpkm'); },
 });
 
-my $plan = Genome::VariantReporting::Plan->create_from_file(
+my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_file(
     File::Spec->join($test_dir, 'plan.yaml'),
 );
 $plan->validate();

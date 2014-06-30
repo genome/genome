@@ -116,7 +116,7 @@ sub resolve_plan_attributes {
 sub plan {
     my $self = shift;
 
-    return Genome::VariantReporting::Plan->create_from_json($self->plan_json);
+    return Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_json($self->plan_json);
 }
 
 sub planned_output_names {

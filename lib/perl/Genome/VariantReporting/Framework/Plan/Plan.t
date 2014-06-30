@@ -14,7 +14,7 @@ use Test::Deep;
 use Test::Exception;
 use File::Spec;
 
-my $pkg = "Genome::VariantReporting::Plan";
+my $pkg = "Genome::VariantReporting::Framework::Plan::MasterPlan";
 use_ok($pkg) || die;
 
 my $plan_file = File::Spec->join(__FILE__ . ".d", "test.yaml");
