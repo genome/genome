@@ -1,11 +1,11 @@
-package Genome::VariantReporting::ReportGenerator;
+package Genome::VariantReporting::Framework::ReportGenerator;
 
 use strict;
 use warnings;
 use Genome;
 use Genome::File::Vcf::Reader;
 
-class Genome::VariantReporting::ReportGenerator {
+class Genome::VariantReporting::Framework::ReportGenerator {
     is => 'Command::V2',
     has_input => [
         vcf_file => {
@@ -34,7 +34,7 @@ sub execute {
     my @entry_processors;
     for my $reporter_plan ($self->plan->reporter_plans) {
         $reporter_plan->object->initialize($self->output_directory);
-        push @entry_processors, Genome::VariantReporting::EntryProcessor->create(
+        push @entry_processors, Genome::VariantReporting::Framework::EntryProcessor->create(
             reporter_plan => $reporter_plan,
             translations => $self->translations,
         );

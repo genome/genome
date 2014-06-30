@@ -1,10 +1,10 @@
-package Genome::VariantReporting::ReportGeneratorWrapper;
+package Genome::VariantReporting::Framework::ReportGeneratorWrapper;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::VariantReporting::ReportGeneratorWrapper {
+class Genome::VariantReporting::Framework::ReportGeneratorWrapper {
     is => 'Command::V2',
 
     has_input => [
@@ -32,7 +32,7 @@ class Genome::VariantReporting::ReportGeneratorWrapper {
 sub execute {
     my $self = shift;
 
-    Genome::VariantReporting::ReportGenerator->execute(
+    Genome::VariantReporting::Framework::ReportGenerator->execute(
         vcf_file => $self->input_result->output_file_path,
         plan => $self->plan,
         output_directory => $self->output_directory,

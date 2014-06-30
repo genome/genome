@@ -113,7 +113,7 @@ sub connect_report_generator {
 
     my $report_generator_op = Genome::WorkflowBuilder::Command->create(
         name => 'Generate Reports',
-        command => 'Genome::VariantReporting::ReportGeneratorWrapper',
+        command => 'Genome::VariantReporting::Framework::ReportGeneratorWrapper',
     );
     connect_to_previous(
         dag => $dag,

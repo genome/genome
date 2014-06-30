@@ -1,11 +1,11 @@
-package Genome::VariantReporting::EntryProcessor;
+package Genome::VariantReporting::Framework::EntryProcessor;
 
 use strict;
 use warnings;
 use Genome;
 use Memoize qw();
 
-class Genome::VariantReporting::EntryProcessor {
+class Genome::VariantReporting::Framework::EntryProcessor {
     has => [
         reporter_plan => {
             is => 'Genome::VariantReporting::Plan::ReporterPlan',

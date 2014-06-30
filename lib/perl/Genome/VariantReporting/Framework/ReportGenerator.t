@@ -14,7 +14,7 @@ use File::Basename qw(basename);
 use Genome::Utility::Test qw(compare_ok);
 use Genome::VariantReporting::Plan::TestHelpers;
 
-my $pkg = "Genome::VariantReporting::ReportGenerator";
+my $pkg = "Genome::VariantReporting::Framework::ReportGenerator";
 
 use_ok($pkg);
 
