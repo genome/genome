@@ -9,11 +9,11 @@ class Genome::VariantReporting::Plan::ReporterPlan {
     is => 'Genome::VariantReporting::Plan::Base',
     has => [
         interpreter_plans => {
-            is => 'Genome::VariantReporting::InterpreterPlan',
+            is => 'Genome::VariantReporting::Plan::InterpreterPlan',
             is_many => 1,
         },
         filter_plans => {
-            is => 'Genome::VariantReporting::FilterPlan',
+            is => 'Genome::VariantReporting::Plan::FilterPlan',
             is_many => 1,
             is_optional => 1,
         },
