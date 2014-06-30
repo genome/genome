@@ -1,10 +1,10 @@
-package Genome::VariantReporting::GetInitialVcfResult;
+package Genome::VariantReporting::Framework::GetInitialVcfResult;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::VariantReporting::GetInitialVcfResult {
+class Genome::VariantReporting::Framework::GetInitialVcfResult {
     is => 'Command::V2',
     has_input => [
         build_id => {

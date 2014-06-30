@@ -32,7 +32,7 @@ sub connected_initial_operation {
 
     my $op = Genome::WorkflowBuilder::Command->create(
         name => 'Get Initial Vcf Result from Build',
-        command => 'Genome::VariantReporting::GetInitialVcfResult',
+        command => 'Genome::VariantReporting::Framework::GetInitialVcfResult',
     );
     connect_to_dag(
         dag => $dag,
