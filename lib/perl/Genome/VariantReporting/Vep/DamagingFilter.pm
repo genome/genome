@@ -1,11 +1,11 @@
-package Genome::VariantReporting::Filter::DamagingFilter;
+package Genome::VariantReporting::Vep::DamagingFilter;
 
 use strict;
 use warnings;
 use Genome;
 use Genome::File::Vcf::VepConsequenceParser;
 
-class Genome::VariantReporting::Filter::DamagingFilter {
+class Genome::VariantReporting::Vep::DamagingFilter {
     is => 'Genome::VariantReporting::Component::Filter',
 };
 

@@ -13,7 +13,7 @@ use Test::More;
 use Test::Exception;
 use Genome::File::Vcf::Entry;
 
-my $pkg = "Genome::VariantReporting::Filter::DamagingFilter";
+my $pkg = "Genome::VariantReporting::Vep::DamagingFilter";
 use_ok($pkg) or die;
 my $factory = Genome::VariantReporting::Factory->create();
 isa_ok($factory->get_class('filters', $pkg->name), $pkg);
