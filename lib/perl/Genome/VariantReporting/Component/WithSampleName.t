@@ -13,7 +13,7 @@ use Test::Exception;
 use Test::More;
 use Genome::File::Vcf::Entry;
 
-my $pkg = "Genome::VariantReporting::WithSampleName";
+my $pkg = "Genome::VariantReporting::Component::WithSampleName";
 use_ok($pkg);
 
 subtest "sample 1" => sub {
