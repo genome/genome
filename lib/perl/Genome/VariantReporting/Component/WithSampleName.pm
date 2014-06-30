@@ -30,5 +30,20 @@ sub sample_name_with_suffix {
     return sprintf("%s-[%s]", $self->sample_name, $suffix);
 }
 
+sub get_callers {
+    my $self = shift;
+    my $header = shift;
+
+    my $sample_name = $self->sample_name;
+    my @vcf_sample_names = @{$header->{sample_names}};
+    my @callers;
+    for my $vcf_sample_name (@vcf_sample_names) {
+        if ($vcf_sample_name =~ /$sample_name-\[(.+)\]/) {
+            push(@callers, $1);
+        }
+    }
+    return @callers;
+}
+
 1;
 
