@@ -1,10 +1,10 @@
-package Genome::VariantReporting::Interpreter::RsidInterpreter;
+package Genome::VariantReporting::Generic::RsidInterpreter;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::VariantReporting::Interpreter::RsidInterpreter {
+class Genome::VariantReporting::Generic::RsidInterpreter {
     is => 'Genome::VariantReporting::Component::Interpreter',
 };
 

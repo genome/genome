@@ -1,11 +1,11 @@
-package Genome::VariantReporting::Interpreter::VariantCallersInterpreter;
+package Genome::VariantReporting::Generic::VariantCallersInterpreter;
 
 use strict;
 use warnings;
 use Genome;
 use List::MoreUtils qw/uniq/;
 
-class Genome::VariantReporting::Interpreter::VariantCallersInterpreter {
+class Genome::VariantReporting::Generic::VariantCallersInterpreter {
     is => ['Genome::VariantReporting::Component::Interpreter', 'Genome::VariantReporting::Component::WithSampleName'],
 };
 

@@ -1,10 +1,10 @@
-package Genome::VariantReporting::Interpreter::PositionInterpreter;
+package Genome::VariantReporting::Generic::PositionInterpreter;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::VariantReporting::Interpreter::PositionInterpreter {
+class Genome::VariantReporting::Generic::PositionInterpreter {
     is => 'Genome::VariantReporting::Component::Interpreter',
 };
 

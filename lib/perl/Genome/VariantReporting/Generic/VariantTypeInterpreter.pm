@@ -1,10 +1,10 @@
-package Genome::VariantReporting::Interpreter::VariantTypeInterpreter;
+package Genome::VariantReporting::Generic::VariantTypeInterpreter;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::VariantReporting::Interpreter::VariantTypeInterpreter {
+class Genome::VariantReporting::Generic::VariantTypeInterpreter {
     is => 'Genome::VariantReporting::Component::Interpreter',
 };
 

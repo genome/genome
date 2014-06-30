@@ -14,7 +14,7 @@ use Test::Deep qw/cmp_bag/;
 use Test::More;
 use Genome::File::Vcf::Entry;
 
-my $pkg = "Genome::VariantReporting::Interpreter::VariantCallersInterpreter";
+my $pkg = "Genome::VariantReporting::Generic::VariantCallersInterpreter";
 use_ok($pkg);
 my $factory = Genome::VariantReporting::Factory->create();
 isa_ok($factory->get_class('interpreters', $pkg->name), $pkg);
