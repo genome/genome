@@ -73,7 +73,7 @@ sub parse_line {
 
     my ($chr, $pos, $ref, $genotype, $gq, $vaq, $mq, $dp, $read_bases, $base_quality) = @columns;
     #replace ambiguous/IUPAC bases with N in ref
-    $ref =~ s/[^ACGTN\-]/N/g;
+    $ref =~ s/[^ACGTNactgn\-]/N/g;
 
     my @alt_alleles = Genome::Info::IUB->variant_alleles_for_iub($ref, $genotype);
     my @alleles     = Genome::Info::IUB->iub_to_alleles($genotype);
