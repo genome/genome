@@ -1,11 +1,11 @@
-package Genome::VariantReporting::Filter::Tier1Filter;
+package Genome::VariantReporting::Vep::Tier1Filter;
 
 use strict;
 use warnings;
 use Genome;
 use Genome::File::Vcf::VepConsequenceParser;
 
-class Genome::VariantReporting::Filter::Tier1Filter {
+class Genome::VariantReporting::Vep::Tier1Filter {
     is => ['Genome::VariantReporting::Component::Filter'],
     has => [
     ],
@@ -13,6 +13,10 @@ class Genome::VariantReporting::Filter::Tier1Filter {
 
 sub name {
     return 'tier1';
+}
+
+sub requires_experts {
+    return ('vep');
 }
 
 sub filter_entry {
