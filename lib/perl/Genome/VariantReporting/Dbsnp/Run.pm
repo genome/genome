@@ -5,7 +5,7 @@ use warnings FATAL => 'all';
 use Genome;
 
 class Genome::VariantReporting::Dbsnp::Run {
-    is => 'Genome::VariantReporting::Component::Expert::Command',
+    is => 'Genome::VariantReporting::Framework::Component::Expert::Command',
     has_input => [
         known_variants => {
             is => 'Genome::Model::Build::ImportedVariationList',

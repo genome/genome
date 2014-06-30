@@ -6,7 +6,7 @@ use Genome;
 use File::Spec;
 
 class Genome::VariantReporting::Fpkm::Adaptor {
-    is => "Genome::VariantReporting::Component::Adaptor",
+    is => "Genome::VariantReporting::Framework::Component::Adaptor",
 
     has_planned_output => [
     ],

@@ -6,7 +6,7 @@ use Genome;
 use File::Spec;
 
 class Genome::VariantReporting::Dbsnp::RunResult {
-    is => 'Genome::VariantReporting::Component::Expert::Result',
+    is => 'Genome::VariantReporting::Framework::Component::Expert::Result',
     has_input => [
         known_variants => {
             is => 'Genome::Model::Build::ImportedVariationList',

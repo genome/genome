@@ -1,11 +1,11 @@
-package Genome::VariantReporting::Component::Interpreter::Fpkm;
+package Genome::VariantReporting::Framework::Component::Interpreter::Fpkm;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::VariantReporting::Component::Interpreter::Fpkm {
-    is => ['Genome::VariantReporting::Component::WithSampleName'],
+class Genome::VariantReporting::Framework::Component::Interpreter::Fpkm {
+    is => ['Genome::VariantReporting::Framework::Component::WithSampleName'],
 };
 
 sub fpkm_for_genotype_allele {

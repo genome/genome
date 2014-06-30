@@ -6,7 +6,7 @@ use Genome;
 use Genome::File::Vcf::DbsnpAFParser;
 
 class Genome::VariantReporting::Dbsnp::DbsnpInterpreter {
-    is => 'Genome::VariantReporting::Component::Interpreter',
+    is => 'Genome::VariantReporting::Framework::Component::Interpreter',
 };
 
 sub name {

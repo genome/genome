@@ -6,7 +6,7 @@ use Genome;
 use Scalar::Util qw(looks_like_number);
 
 class Genome::VariantReporting::Fpkm::MinFpkmFilter {
-    is => ['Genome::VariantReporting::Component::Filter', 'Genome::VariantReporting::Component::Interpreter::Fpkm'],
+    is => ['Genome::VariantReporting::Framework::Component::Filter', 'Genome::VariantReporting::Framework::Component::Interpreter::Fpkm'],
     has => [
         min_fpkm => {
             is => "Number",

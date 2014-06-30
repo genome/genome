@@ -48,7 +48,7 @@ sub get_test_somatic_variation_build {
         version => {type => SCALAR},
     });
 
-    my $test_dir = get_test_dir('Genome::VariantReporting::Component::Expert', $p{version});
+    my $test_dir = get_test_dir('Genome::VariantReporting::Framework::Component::Expert', $p{version});
 
     return get_test_somatic_variation_build_from_files(
         bam1 => File::Spec->join($test_dir, 'bam1.bam'),
@@ -65,7 +65,7 @@ sub get_test_somatic_variation_build_with_vep_annotations {
         version => {type => SCALAR},
     });
 
-    my $test_dir = get_test_dir('Genome::VariantReporting::Component::Expert', $p{version});
+    my $test_dir = get_test_dir('Genome::VariantReporting::Framework::Component::Expert', $p{version});
 
     return get_test_somatic_variation_build_from_files(
         bam1 => File::Spec->join($test_dir, 'bam1.bam'),

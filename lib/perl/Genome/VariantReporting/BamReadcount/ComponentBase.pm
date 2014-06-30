@@ -6,7 +6,7 @@ use Genome;
 use Genome::File::BamReadcount::Entry;
 
 class Genome::VariantReporting::BamReadcount::ComponentBase {
-    is => ['Genome::VariantReporting::Component::WithSampleName'],
+    is => ['Genome::VariantReporting::Framework::Component::WithSampleName'],
     has => [
     ],
 };

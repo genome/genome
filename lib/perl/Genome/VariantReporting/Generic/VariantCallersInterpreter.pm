@@ -6,7 +6,7 @@ use Genome;
 use List::MoreUtils qw/uniq/;
 
 class Genome::VariantReporting::Generic::VariantCallersInterpreter {
-    is => ['Genome::VariantReporting::Component::Interpreter', 'Genome::VariantReporting::Component::WithSampleName'],
+    is => ['Genome::VariantReporting::Framework::Component::Interpreter', 'Genome::VariantReporting::Framework::Component::WithSampleName'],
 };
 
 sub name {

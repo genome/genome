@@ -25,7 +25,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::VariantReporting::TestInterpreter {
-        is => 'Genome::VariantReporting::Component::Interpreter',
+        is => 'Genome::VariantReporting::Framework::Component::Interpreter',
         has => [
             ix_p1 => {},
             ix_p2 => {},
@@ -69,7 +69,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::VariantReporting::AnotherTestInterpreter {
-        is => 'Genome::VariantReporting::Component::Interpreter',
+        is => 'Genome::VariantReporting::Framework::Component::Interpreter',
         has => [
             iy_p1 => {},
             iy_p2 => {},
@@ -239,7 +239,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::VariantReporting::TestExpert {
-        is => 'Genome::VariantReporting::Component::Expert',
+        is => 'Genome::VariantReporting::Framework::Component::Expert',
         has => [
         ],
     };
@@ -259,7 +259,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::VariantReporting::ExpertOneAdaptor {
-        is => 'Genome::VariantReporting::Component::Adaptor',
+        is => 'Genome::VariantReporting::Framework::Component::Adaptor',
         has_planned_output => [
             e1_p1 => {},
             e1_p2 => {},
@@ -281,7 +281,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::VariantReporting::ExpertOneRun {
-        is => 'Genome::VariantReporting::Component::Expert::Command',
+        is => 'Genome::VariantReporting::Framework::Component::Expert::Command',
     };
 
     sub name {
@@ -299,7 +299,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::VariantReporting::AnotherTestExpert {
-        is => 'Genome::VariantReporting::Component::Expert',
+        is => 'Genome::VariantReporting::Framework::Component::Expert',
         has => [
         ],
     };
@@ -319,7 +319,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::VariantReporting::ExpertTwoAdaptor {
-        is => 'Genome::VariantReporting::Component::Adaptor',
+        is => 'Genome::VariantReporting::Framework::Component::Adaptor',
         has_planned_output => [
             e2_p1 => {},
             e2_p2 => {},
@@ -341,7 +341,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::VariantReporting::ExpertTwoRun {
-        is => 'Genome::VariantReporting::Component::Expert::Command',
+        is => 'Genome::VariantReporting::Framework::Component::Expert::Command',
     };
 
     sub name {
@@ -360,7 +360,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::VariantReporting::TestFilter {
-        is => 'Genome::VariantReporting::Component::Filter',
+        is => 'Genome::VariantReporting::Framework::Component::Filter',
         has => [
             f1_p1 => {},
             f1_p2 => {},
@@ -397,7 +397,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::VariantReporting::AnotherTestFilter {
-        is => 'Genome::VariantReporting::Component::Filter',
+        is => 'Genome::VariantReporting::Framework::Component::Filter',
         has => [
             f2_p1 => {},
             f2_p2 => {},

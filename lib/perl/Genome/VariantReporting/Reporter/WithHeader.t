@@ -41,7 +41,7 @@ use_ok($pkg);
     package Genome::VariantReporting::DuplicateInterpreter;
 
     class Genome::VariantReporting::DuplicateInterpreter {
-        is => 'Genome::VariantReporting::Component::Interpreter',
+        is => 'Genome::VariantReporting::Framework::Component::Interpreter',
     };
     sub name {
         'duplicate';

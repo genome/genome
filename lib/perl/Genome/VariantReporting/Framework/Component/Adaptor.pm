@@ -1,12 +1,12 @@
-package Genome::VariantReporting::Component::Adaptor;
+package Genome::VariantReporting::Framework::Component::Adaptor;
 
 use strict;
 use warnings;
 use Genome;
 use Params::Validate qw(validate validate_pos :types);
 
-class Genome::VariantReporting::Component::Adaptor {
-    is => ['Command::V2', 'Genome::VariantReporting::Component::Base'],
+class Genome::VariantReporting::Framework::Component::Adaptor {
+    is => ['Command::V2', 'Genome::VariantReporting::Framework::Component::Base'],
     is_abstract => 1,
     attributes_have => {
         is_planned => {

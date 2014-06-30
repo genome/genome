@@ -6,7 +6,7 @@ use Genome;
 use List::Util qw/first/;
 
 class Genome::VariantReporting::BamReadcount::MinCoverageFilter {
-    is => ['Genome::VariantReporting::Component::Filter', 'Genome::VariantReporting::BamReadcount::ComponentBase'],
+    is => ['Genome::VariantReporting::Framework::Component::Filter', 'Genome::VariantReporting::BamReadcount::ComponentBase'],
     has => {
         min_coverage => {
             is => 'Number',

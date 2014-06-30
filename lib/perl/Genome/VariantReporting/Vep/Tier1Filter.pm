@@ -6,7 +6,7 @@ use Genome;
 use Genome::File::Vcf::VepConsequenceParser;
 
 class Genome::VariantReporting::Vep::Tier1Filter {
-    is => ['Genome::VariantReporting::Component::Filter'],
+    is => ['Genome::VariantReporting::Framework::Component::Filter'],
     has => [
     ],
 };

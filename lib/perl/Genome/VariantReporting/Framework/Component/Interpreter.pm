@@ -1,11 +1,11 @@
-package Genome::VariantReporting::Component::Interpreter;
+package Genome::VariantReporting::Framework::Component::Interpreter;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::VariantReporting::Component::Interpreter {
-    is => ['Genome::VariantReporting::Component::Base', 'Genome::VariantReporting::Component::WithTranslatedInputs'],
+class Genome::VariantReporting::Framework::Component::Interpreter {
+    is => ['Genome::VariantReporting::Framework::Component::Base', 'Genome::VariantReporting::Framework::Component::WithTranslatedInputs'],
     is_abstract => 1,
 };
 

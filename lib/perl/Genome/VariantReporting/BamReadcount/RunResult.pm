@@ -8,7 +8,7 @@ use Sys::Hostname;
 use IPC::Run qw(run);
 
 class Genome::VariantReporting::BamReadcount::RunResult {
-    is => 'Genome::VariantReporting::Component::Expert::Result',
+    is => 'Genome::VariantReporting::Framework::Component::Expert::Result',
     has_input => [
         aligned_bam_result => {
             is => 'Genome::InstrumentData::AlignedBamResult',

@@ -5,7 +5,7 @@ use warnings FATAL => 'all';
 use Genome;
 
 class Genome::VariantReporting::BamReadcount::Adaptor {
-    is => 'Genome::VariantReporting::Component::Adaptor',
+    is => 'Genome::VariantReporting::Framework::Component::Adaptor',
 
     has_planned_output => [
         version => { is  => 'Version', },

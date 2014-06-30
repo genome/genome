@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::VariantReporting::Generic::VariantTypeInterpreter {
-    is => 'Genome::VariantReporting::Component::Interpreter',
+    is => 'Genome::VariantReporting::Framework::Component::Interpreter',
 };
 
 sub name {

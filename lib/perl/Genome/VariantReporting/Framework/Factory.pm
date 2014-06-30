@@ -18,14 +18,14 @@ use Module::Pluggable
     require => 1,
     search_path => search_path(),
     only => qr(Expert$),
-    except => ['Genome::VariantReporting::Component::Expert'],
+    except => ['Genome::VariantReporting::Framework::Component::Expert'],
     sub_name => 'experts';
 
 use Module::Pluggable
     require => 1,
     search_path => search_path(),
     only => qr(Adaptor$),
-    except => ['Genome::VariantReporting::Component::Adaptor'],
+    except => ['Genome::VariantReporting::Framework::Component::Adaptor'],
     sub_name => 'adaptors';
 
 use Module::Pluggable
@@ -39,7 +39,7 @@ use Module::Pluggable
     require => 1,
     search_path => search_path(),
     only => qr(Filter$),
-    except => ['Genome::VariantReporting::Component::Filter'],
+    except => ['Genome::VariantReporting::Framework::Component::Filter'],
     sub_name => 'filters';
 
 use Module::Pluggable
@@ -47,8 +47,8 @@ use Module::Pluggable
     search_path => search_path(),
     only => qr(Interpreter$|Filter$),
     except => [
-        'Genome::VariantReporting::Component::Filter',
-        'Genome::VariantReporting::Component::Interpreter',
+        'Genome::VariantReporting::Framework::Component::Filter',
+        'Genome::VariantReporting::Framework::Component::Interpreter',
     ],
     sub_name => 'interpreters';
 

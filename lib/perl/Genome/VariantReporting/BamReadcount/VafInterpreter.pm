@@ -6,7 +6,7 @@ use Genome;
 use Genome::VariantReporting::BamReadcount::VafCalculator;
 
 class Genome::VariantReporting::BamReadcount::VafInterpreter {
-    is => ['Genome::VariantReporting::Component::Interpreter', 'Genome::VariantReporting::BamReadcount::ComponentBase'],
+    is => ['Genome::VariantReporting::Framework::Component::Interpreter', 'Genome::VariantReporting::BamReadcount::ComponentBase'],
 };
 
 sub name {

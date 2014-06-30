@@ -9,7 +9,7 @@ use Genome::VariantReporting::BamReadcount::VafCalculator;
 require Memoize;
 
 class Genome::VariantReporting::BamReadcount::CoverageVafFilter {
-    is => ['Genome::VariantReporting::Component::Filter', 'Genome::VariantReporting::BamReadcount::ComponentBase'],
+    is => ['Genome::VariantReporting::Framework::Component::Filter', 'Genome::VariantReporting::BamReadcount::ComponentBase'],
     has => {
         coverages_and_vafs => {
             is => 'HASH',

@@ -6,7 +6,7 @@ use Genome;
 use Genome::VariantReporting::BamReadcount::VafCalculator;
 
 class Genome::VariantReporting::BamReadcount::VafFilter {
-    is => ['Genome::VariantReporting::Component::Filter', 'Genome::VariantReporting::BamReadcount::ComponentBase'],
+    is => ['Genome::VariantReporting::Framework::Component::Filter', 'Genome::VariantReporting::BamReadcount::ComponentBase'],
     has_optional => [
         min_vaf => {
             is => 'Number',

@@ -5,7 +5,7 @@ use warnings FATAL => 'all';
 use Genome;
 
 class Genome::VariantReporting::Fpkm::Expert {
-    is => 'Genome::VariantReporting::Component::Expert',
+    is => 'Genome::VariantReporting::Framework::Component::Expert',
 };
 
 sub name {

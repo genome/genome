@@ -7,7 +7,7 @@ use Genome;
 use Genome::VariantReporting::BamReadcount::VafCalculator;
 
 class Genome::VariantReporting::BamReadcount::GenotypeVafFilter {
-    is => ['Genome::VariantReporting::Component::Filter', 'Genome::VariantReporting::BamReadcount::ComponentBase'],
+    is => ['Genome::VariantReporting::Framework::Component::Filter', 'Genome::VariantReporting::BamReadcount::ComponentBase'],
     has => {
         min_het_vaf => { is => 'Number', doc => 'Minimum VAF value if the genotype if heterozygous. Expressed as a whole percentage.', },
         max_het_vaf => { is => 'Number', doc => 'Maximum VAF value if the genotype if heterozygous. Expressed as a whole percentage.', },

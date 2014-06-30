@@ -5,7 +5,7 @@ use warnings FATAL => 'all';
 use Genome;
 
 class Genome::VariantReporting::Vep::Run {
-    is => 'Genome::VariantReporting::Component::Expert::Command',
+    is => 'Genome::VariantReporting::Framework::Component::Expert::Command',
     has_input => [
         ensembl_version => {
             is => 'String',

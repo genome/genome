@@ -1,11 +1,11 @@
-package Genome::VariantReporting::Component::Filter;
+package Genome::VariantReporting::Framework::Component::Filter;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::VariantReporting::Component::Filter {
-    is => 'Genome::VariantReporting::Component::Interpreter',
+class Genome::VariantReporting::Framework::Component::Filter {
+    is => 'Genome::VariantReporting::Framework::Component::Interpreter',
     is_abstract => 1,
 };
 

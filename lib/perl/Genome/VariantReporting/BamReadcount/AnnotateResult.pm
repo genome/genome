@@ -6,7 +6,7 @@ use Genome;
 use Genome::File::Vcf::Reader;
 
 class Genome::VariantReporting::BamReadcount::AnnotateResult {
-    is => 'Genome::VariantReporting::Component::Expert::Result',
+    is => 'Genome::VariantReporting::Framework::Component::Expert::Result',
     has_input => [
         readcount_results => {
             is => 'Genome::VariantReporting::BamReadcount::RunResult',

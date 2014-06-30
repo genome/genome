@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::VariantReporting::Dbsnp::GmafInterpreter {
-    is => 'Genome::VariantReporting::Component::Interpreter',
+    is => 'Genome::VariantReporting::Framework::Component::Interpreter',
     has => [
         dummy => {
             is_optional => 1,

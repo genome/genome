@@ -12,9 +12,9 @@ use above "Genome";
 use Test::More;
 use Genome::Test::Factory::Model::SomaticVariation;
 use Sub::Install qw(reinstall_sub);
-use Genome::VariantReporting::Component::Adaptor::TestHelpers qw(test_accessor setup_results);
+use Genome::VariantReporting::Framework::Component::Adaptor::TestHelpers qw(test_accessor setup_results);
 
-use_ok("Genome::VariantReporting::Component::Adaptor");
+use_ok("Genome::VariantReporting::Framework::Component::Adaptor");
 
 my $build = Genome::Test::Factory::Model::SomaticVariation->setup_somatic_variation_build;
 my ($bam_result1, $bam_result2, $snv_vcf_result, $indel_vcf_result) = setup_results();

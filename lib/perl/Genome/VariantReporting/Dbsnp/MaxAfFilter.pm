@@ -6,7 +6,7 @@ use Genome;
 use Genome::File::Vcf::DbsnpAFParser;
 
 class Genome::VariantReporting::Dbsnp::MaxAfFilter {
-    is => 'Genome::VariantReporting::Component::Filter',
+    is => 'Genome::VariantReporting::Framework::Component::Filter',
     has => [
         max_af => {
             is => 'Number',

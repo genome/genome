@@ -1,13 +1,13 @@
-package Genome::VariantReporting::Component::Expert::Command;
+package Genome::VariantReporting::Framework::Component::Expert::Command;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 use Data::Dump qw(pp);
 
-class Genome::VariantReporting::Component::Expert::Command {
+class Genome::VariantReporting::Framework::Component::Expert::Command {
     is_abstract => 1,
-    is => ['Command::V2', 'Genome::VariantReporting::Component::Base'],
+    is => ['Command::V2', 'Genome::VariantReporting::Framework::Component::Base'],
     has_input => [
         input_result => {
             is => 'Genome::SoftwareResult',
@@ -21,7 +21,7 @@ class Genome::VariantReporting::Component::Expert::Command {
     ],
     has_optional_output => [
         output_result => {
-            is => 'Genome::VariantReporting::Component::Expert::Result',
+            is => 'Genome::VariantReporting::Framework::Component::Expert::Result',
             doc => 'The software result created during command execution',
         },
     ],
