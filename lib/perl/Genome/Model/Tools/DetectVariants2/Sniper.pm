@@ -31,6 +31,7 @@ my %SNIPER_VERSIONS = (
     '1.0.0' => '/usr/bin/' . $SNIPER_COMMAND,
     '1.0.1' => '/usr/bin/bam-somaticsniper1.0.1',
     '1.0.2' => '/usr/bin/bam-somaticsniper1.0.2',
+    '1.0.4' => '/usr/bin/bam-somaticsniper1.0.4',
 );
 
 sub help_synopsis {
