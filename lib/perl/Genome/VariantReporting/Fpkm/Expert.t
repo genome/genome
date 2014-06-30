@@ -23,7 +23,7 @@ BEGIN {
     $ENV{NO_LSF} = 1;
 };
 
-my $pkg = 'Genome::VariantReporting::Expert::Fpkm::Expert';
+my $pkg = 'Genome::VariantReporting::Fpkm::Expert';
 use_ok($pkg) || die;
 my $factory = Genome::VariantReporting::Factory->create();
 isa_ok($factory->get_class('experts', $pkg->name), $pkg);

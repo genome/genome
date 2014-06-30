@@ -1,10 +1,10 @@
-package Genome::VariantReporting::Expert::Fpkm::RunResult;
+package Genome::VariantReporting::Fpkm::RunResult;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::VariantReporting::Expert::Fpkm::RunResult {
+class Genome::VariantReporting::Fpkm::RunResult {
     is => 'Genome::VariantReporting::Component::Expert::Result',
     has_input => [
         fpkm_file => {

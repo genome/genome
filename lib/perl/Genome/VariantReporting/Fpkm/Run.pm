@@ -1,10 +1,10 @@
-package Genome::VariantReporting::Expert::Fpkm::Run;
+package Genome::VariantReporting::Fpkm::Run;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::VariantReporting::Expert::Fpkm::Run {
+class Genome::VariantReporting::Fpkm::Run {
     is => 'Genome::VariantReporting::Component::Expert::Command',
     has_input => [
         fpkm_file => {is => 'Path'},
@@ -17,5 +17,5 @@ sub name {
 }
 
 sub result_class {
-    'Genome::VariantReporting::Expert::Fpkm::RunResult';
+    'Genome::VariantReporting::Fpkm::RunResult';
 }
