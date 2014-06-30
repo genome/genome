@@ -13,7 +13,7 @@ use Test::More;
 use Test::Exception;
 use Genome::File::Vcf::Entry;
 
-my $pkg = 'Genome::VariantReporting::Interpreter::FpkmInterpreter';
+my $pkg = 'Genome::VariantReporting::Fpkm::FpkmInterpreter';
 use_ok($pkg);
 my $factory = Genome::VariantReporting::Factory->create();
 isa_ok($factory->get_class('interpreters', $pkg->name), $pkg);

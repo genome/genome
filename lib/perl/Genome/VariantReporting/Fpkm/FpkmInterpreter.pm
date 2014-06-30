@@ -1,10 +1,10 @@
-package Genome::VariantReporting::Interpreter::FpkmInterpreter;
+package Genome::VariantReporting::Fpkm::FpkmInterpreter;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::VariantReporting::Interpreter::FpkmInterpreter {
+class Genome::VariantReporting::Fpkm::FpkmInterpreter {
     is => ['Genome::VariantReporting::Component::Interpreter', 'Genome::VariantReporting::Component::Interpreter::Fpkm'],
 };
 
