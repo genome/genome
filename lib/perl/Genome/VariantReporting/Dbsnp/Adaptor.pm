@@ -1,10 +1,10 @@
-package Genome::VariantReporting::Expert::Dbsnp::Adaptor;
+package Genome::VariantReporting::Dbsnp::Adaptor;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::VariantReporting::Expert::Dbsnp::Adaptor {
+class Genome::VariantReporting::Dbsnp::Adaptor {
     is => 'Genome::VariantReporting::Component::Adaptor',
 
     has_planned_output => [

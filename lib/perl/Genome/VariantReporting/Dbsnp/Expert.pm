@@ -1,10 +1,10 @@
-package Genome::VariantReporting::Expert::Dbsnp::Expert;
+package Genome::VariantReporting::Dbsnp::Expert;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::VariantReporting::Expert::Dbsnp::Expert {
+class Genome::VariantReporting::Dbsnp::Expert {
     is => 'Genome::VariantReporting::Component::Expert',
 };
 

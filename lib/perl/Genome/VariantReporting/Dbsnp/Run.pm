@@ -1,10 +1,10 @@
-package Genome::VariantReporting::Expert::Dbsnp::Run;
+package Genome::VariantReporting::Dbsnp::Run;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::VariantReporting::Expert::Dbsnp::Run {
+class Genome::VariantReporting::Dbsnp::Run {
     is => 'Genome::VariantReporting::Component::Expert::Command',
     has_input => [
         known_variants => {
@@ -24,12 +24,12 @@ sub name {
 }
 
 sub result_class {
-    'Genome::VariantReporting::Expert::Dbsnp::RunResult';
+    'Genome::VariantReporting::Dbsnp::RunResult';
 }
 
 sub execute {
     my $self = shift;
 
-    $self->output_result(Genome::VariantReporting::Expert::Dbsnp::RunResult->get_or_create($self->input_hash));
+    $self->output_result(Genome::VariantReporting::Dbsnp::RunResult->get_or_create($self->input_hash));
     return 1;
 }

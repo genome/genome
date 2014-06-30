@@ -1,11 +1,11 @@
-package Genome::VariantReporting::Expert::Dbsnp::RunResult;
+package Genome::VariantReporting::Dbsnp::RunResult;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 use File::Spec;
 
-class Genome::VariantReporting::Expert::Dbsnp::RunResult {
+class Genome::VariantReporting::Dbsnp::RunResult {
     is => 'Genome::VariantReporting::Component::Expert::Result',
     has_input => [
         known_variants => {
