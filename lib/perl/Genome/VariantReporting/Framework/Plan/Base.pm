@@ -1,11 +1,11 @@
-package Genome::VariantReporting::Plan::Base;
+package Genome::VariantReporting::Framework::Plan::Base;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 use Memoize qw(memoize);
 
-class Genome::VariantReporting::Plan::Base {
+class Genome::VariantReporting::Framework::Plan::Base {
     is => 'Genome::VariantReporting::Framework::Component::Base',
     has => [
         name => {

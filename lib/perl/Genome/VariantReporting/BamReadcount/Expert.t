@@ -12,7 +12,7 @@ use Genome::VariantReporting::Framework::TestHelpers qw(
     test_dag_execute
     get_test_dir
 );
-use Genome::VariantReporting::Plan::TestHelpers qw(
+use Genome::VariantReporting::Framework::Plan::TestHelpers qw(
     set_what_interpreter_x_requires
 );
 

@@ -12,14 +12,14 @@ use JSON;
 my $_JSON_CODEC = new JSON->allow_nonref;
 
 class Genome::VariantReporting::Plan {
-    is => 'Genome::VariantReporting::Plan::Base',
+    is => 'Genome::VariantReporting::Framework::Plan::Base',
     has => [
         expert_plans => {
-            is => 'Genome::VariantReporting::Plan::ExpertPlan',
+            is => 'Genome::VariantReporting::Framework::Plan::ExpertPlan',
             is_many => 1,
         },
         reporter_plans => {
-            is => 'Genome::VariantReporting::Plan::ReporterPlan',
+            is => 'Genome::VariantReporting::Framework::Plan::ReporterPlan',
             is_many => 1,
         },
     ],
@@ -92,7 +92,7 @@ sub create_from_hashref {
         params => {});
     my @expert_plans;
     for my $expert_name (keys %{$hashref->{experts}}) {
-        push @expert_plans, Genome::VariantReporting::Plan::ExpertPlan->create(
+        push @expert_plans, Genome::VariantReporting::Framework::Plan::ExpertPlan->create(
             name => $expert_name,
             params => $hashref->{experts}->{$expert_name},
         );
@@ -101,7 +101,7 @@ sub create_from_hashref {
 
     my @reporter_plans;
     for my $reporter_name (keys %{$hashref->{reporters}}) {
-        push @reporter_plans, Genome::VariantReporting::Plan::ReporterPlan->create_from_hashref(
+        push @reporter_plans, Genome::VariantReporting::Framework::Plan::ReporterPlan->create_from_hashref(
             $reporter_name, $hashref->{reporters}->{$reporter_name},
         );
     }

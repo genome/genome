@@ -1,19 +1,19 @@
-package Genome::VariantReporting::Plan::ReporterPlan;
+package Genome::VariantReporting::Framework::Plan::ReporterPlan;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 use Set::Scalar;
 
-class Genome::VariantReporting::Plan::ReporterPlan {
-    is => 'Genome::VariantReporting::Plan::Base',
+class Genome::VariantReporting::Framework::Plan::ReporterPlan {
+    is => 'Genome::VariantReporting::Framework::Plan::Base',
     has => [
         interpreter_plans => {
-            is => 'Genome::VariantReporting::Plan::InterpreterPlan',
+            is => 'Genome::VariantReporting::Framework::Plan::InterpreterPlan',
             is_many => 1,
         },
         filter_plans => {
-            is => 'Genome::VariantReporting::Plan::FilterPlan',
+            is => 'Genome::VariantReporting::Framework::Plan::FilterPlan',
             is_many => 1,
             is_optional => 1,
         },
@@ -42,7 +42,7 @@ sub create_from_hashref {
 
     my @filter_plans;
     for my $filter_name (keys %{$hashref->{filters}}) {
-        push @filter_plans, Genome::VariantReporting::Plan::FilterPlan->create(
+        push @filter_plans, Genome::VariantReporting::Framework::Plan::FilterPlan->create(
             name => $filter_name,
             params => $hashref->{filters}->{$filter_name},
         );
@@ -51,7 +51,7 @@ sub create_from_hashref {
 
     my @interpreter_plans;
     for my $interpreter_name (keys %{$hashref->{interpreters}}) {
-        push @interpreter_plans, Genome::VariantReporting::Plan::InterpreterPlan->create(
+        push @interpreter_plans, Genome::VariantReporting::Framework::Plan::InterpreterPlan->create(
             name => $interpreter_name,
             params => $hashref->{interpreters}->{$interpreter_name},
         );

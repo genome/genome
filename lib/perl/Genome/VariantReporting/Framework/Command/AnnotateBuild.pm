@@ -71,7 +71,7 @@ sub plan {
     my $self = shift;
 
     $self->status_message("Constructing plan from file (%s)", $self->plan_file);
-    my $plan = Genome::VariantReporting::Plan->create_from_file($self->plan_file);
+    my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_file($self->plan_file);
     $self->status_message("Validating plan...");
     $plan->validate();
     $self->status_message("Plan is valid.");

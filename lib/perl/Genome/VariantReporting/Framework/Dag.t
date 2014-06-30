@@ -7,7 +7,7 @@ use Test::More;
 use above 'Genome';
 use Genome::VariantReporting::Framework::Dag qw(generate_dag);
 use Genome::VariantReporting::Framework::TestHelpers qw(test_dag_xml);
-use Genome::VariantReporting::Plan::TestHelpers; # defines classes
+use Genome::VariantReporting::Framework::Plan::TestHelpers; # defines classes
 
 BEGIN {
     $ENV{UR_DBI_NO_COMMIT} = 1;

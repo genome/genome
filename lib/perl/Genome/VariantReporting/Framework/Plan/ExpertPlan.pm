@@ -1,11 +1,11 @@
-package Genome::VariantReporting::Plan::ExpertPlan;
+package Genome::VariantReporting::Framework::Plan::ExpertPlan;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::VariantReporting::Plan::ExpertPlan {
-    is => 'Genome::VariantReporting::Plan::Base',
+class Genome::VariantReporting::Framework::Plan::ExpertPlan {
+    is => 'Genome::VariantReporting::Framework::Plan::Base',
 };
 
 sub category {

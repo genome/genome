@@ -8,7 +8,7 @@ use Memoize qw();
 class Genome::VariantReporting::Framework::EntryProcessor {
     has => [
         reporter_plan => {
-            is => 'Genome::VariantReporting::Plan::ReporterPlan',
+            is => 'Genome::VariantReporting::Framework::Plan::ReporterPlan',
         },
         translations => {
             is => 'HASH'

@@ -8,7 +8,7 @@ use above 'Genome';
 use Genome::Utility::Test qw(compare_ok);
 use Test::Exception;
 use Test::Output;
-use Genome::VariantReporting::Plan::TestHelpers; # defines classes
+use Genome::VariantReporting::Framework::Plan::TestHelpers; # defines classes
 
 BEGIN {
     $ENV{UR_DBI_NO_COMMIT} = 1;

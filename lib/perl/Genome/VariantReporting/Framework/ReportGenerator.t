@@ -12,7 +12,7 @@ use above "Genome";
 use Test::More;
 use File::Basename qw(basename);
 use Genome::Utility::Test qw(compare_ok);
-use Genome::VariantReporting::Plan::TestHelpers;
+use Genome::VariantReporting::Framework::Plan::TestHelpers;
 
 my $pkg = "Genome::VariantReporting::Framework::ReportGenerator";
 

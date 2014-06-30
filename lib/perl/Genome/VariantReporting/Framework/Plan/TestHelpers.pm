@@ -1,5 +1,5 @@
 # This package just defines some classes so you can create plan yaml files that are valid.
-package Genome::VariantReporting::Plan::TestHelpers;
+package Genome::VariantReporting::Framework::Plan::TestHelpers;
 
 use Sub::Install qw(reinstall_sub);
 use Exporter 'import';
