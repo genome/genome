@@ -1,11 +1,11 @@
-package Genome::VariantReporting::Filter::MinFpkmFilter;
+package Genome::VariantReporting::Fpkm::MinFpkmFilter;
 
 use strict;
 use warnings;
 use Genome;
 use Scalar::Util qw(looks_like_number);
 
-class Genome::VariantReporting::Filter::MinFpkmFilter {
+class Genome::VariantReporting::Fpkm::MinFpkmFilter {
     is => ['Genome::VariantReporting::Component::Filter', 'Genome::VariantReporting::Component::Interpreter::Fpkm'],
     has => [
         min_fpkm => {
@@ -17,6 +17,10 @@ class Genome::VariantReporting::Filter::MinFpkmFilter {
 
 sub name {
     return 'min-fpkm';
+}
+
+sub requires_experts {
+    return ('fpkm');
 }
 
 sub __errors__ {

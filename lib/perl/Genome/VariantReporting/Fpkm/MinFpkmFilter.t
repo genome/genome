@@ -13,7 +13,7 @@ use Test::More;
 use Test::Exception;
 use Genome::File::Vcf::Entry;
 
-my $pkg = 'Genome::VariantReporting::Filter::MinFpkmFilter';
+my $pkg = 'Genome::VariantReporting::Fpkm::MinFpkmFilter';
 use_ok($pkg);
 my $factory = Genome::VariantReporting::Factory->create();
 isa_ok($factory->get_class('filters', $pkg->name), $pkg);
