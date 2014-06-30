@@ -1,10 +1,10 @@
-package Genome::VariantReporting::Filter::MaxGmafFilter;
+package Genome::VariantReporting::Dbsnp::MaxGmafFilter;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::VariantReporting::Filter::MaxGmafFilter {
+class Genome::VariantReporting::Dbsnp::MaxGmafFilter {
     is => 'Genome::VariantReporting::Component::Filter',
     has => [
         max_gmaf => {
