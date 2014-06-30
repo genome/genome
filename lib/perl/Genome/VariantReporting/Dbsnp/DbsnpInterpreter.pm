@@ -1,11 +1,11 @@
-package Genome::VariantReporting::Interpreter::DbsnpInterpreter;
+package Genome::VariantReporting::Dbsnp::DbsnpInterpreter;
 
 use strict;
 use warnings;
 use Genome;
 use Genome::File::Vcf::DbsnpAFParser;
 
-class Genome::VariantReporting::Interpreter::DbsnpInterpreter {
+class Genome::VariantReporting::Dbsnp::DbsnpInterpreter {
     is => 'Genome::VariantReporting::Component::Interpreter',
 };
 
