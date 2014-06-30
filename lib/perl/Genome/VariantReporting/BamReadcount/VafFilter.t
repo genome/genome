@@ -16,7 +16,7 @@ use Genome::VariantReporting::BamReadcount::TestHelper qw(bam_readcount_line
 
 my $pkg = "Genome::VariantReporting::BamReadcount::VafFilter";
 use_ok($pkg);
-my $factory = Genome::VariantReporting::Factory->create();
+my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('filters', $pkg->name), $pkg);
 
 subtest "__errors__ missing parameters" => sub {

@@ -1,4 +1,4 @@
-package Genome::VariantReporting::Factory;
+package Genome::VariantReporting::Framework::Factory;
 
 use strict;
 use warnings FATAL => 'all';
@@ -58,7 +58,7 @@ use Module::Pluggable
     only => qr(Reporter$),
     sub_name => 'reporters';
 
-class Genome::VariantReporting::Factory {};
+class Genome::VariantReporting::Framework::Factory {};
 
 sub names {
     my ($self, $accessor) = @_;

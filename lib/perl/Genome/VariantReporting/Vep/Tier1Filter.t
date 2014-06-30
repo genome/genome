@@ -15,7 +15,7 @@ use Genome::File::Vcf::Entry;
 
 my $pkg = 'Genome::VariantReporting::Vep::Tier1Filter';
 use_ok($pkg);
-my $factory = Genome::VariantReporting::Factory->create();
+my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('filters', $pkg->name), $pkg);
 
 subtest "with no vep information" => sub {

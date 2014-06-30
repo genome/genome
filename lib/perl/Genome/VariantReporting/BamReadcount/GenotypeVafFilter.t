@@ -16,7 +16,7 @@ use Test::Exception;
 
 my $pkg = 'Genome::VariantReporting::BamReadcount::GenotypeVafFilter';
 use_ok($pkg) or die;
-my $factory = Genome::VariantReporting::Factory->create();
+my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('filters', $pkg->name), $pkg);
 
 my $entry = Genome::VariantReporting::BamReadcount::TestHelper::create_entry(

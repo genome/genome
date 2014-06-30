@@ -15,7 +15,7 @@ use Test::Exception;
 
 my $pkg = 'Genome::VariantReporting::Generic::FTKeepFilter';
 use_ok($pkg);
-my $factory = Genome::VariantReporting::Factory->create();
+my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('filters', $pkg->name), $pkg);
 
 my %pass_return_values = (

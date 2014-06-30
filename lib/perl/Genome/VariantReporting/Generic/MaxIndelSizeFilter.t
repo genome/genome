@@ -15,7 +15,7 @@ use Test::Exception;
 
 my $pkg = "Genome::VariantReporting::Generic::MaxIndelSizeFilter";
 use_ok($pkg) or die;
-my $factory = Genome::VariantReporting::Factory->create();
+my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('filters', $pkg->name), $pkg);
 
 subtest "test insertion" => sub {

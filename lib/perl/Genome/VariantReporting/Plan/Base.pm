@@ -87,7 +87,7 @@ Memoize::memoize("object");
 
 sub factory {
     my $self = shift;
-    return Genome::VariantReporting::Factory->create();
+    return Genome::VariantReporting::Framework::Factory->create();
 }
 Memoize::memoize("factory");
 

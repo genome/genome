@@ -16,7 +16,7 @@ use Genome::File::Vcf::Entry;
 
 my $pkg = "Genome::VariantReporting::Generic::VariantCallersInterpreter";
 use_ok($pkg);
-my $factory = Genome::VariantReporting::Factory->create();
+my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('interpreters', $pkg->name), $pkg);
 
 subtest "sample 1" => sub {
