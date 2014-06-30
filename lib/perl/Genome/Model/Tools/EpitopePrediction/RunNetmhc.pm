@@ -47,7 +47,7 @@ class Genome::Model::Tools::EpitopePrediction::RunNetmhc {
             calculate => q| return File::Spec->join($output_directory, "$sample_name.$allele.$epitope_length.netmhc.xls"); |,
         },
     ],
-    has => [
+    has_optional => [
         stdout_file => {
             is => 'Text',
             doc => 'Stdout file from Netmhc epitope prediction',
