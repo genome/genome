@@ -1,10 +1,10 @@
-package Genome::VariantReporting::Filter::ContainsTagFilter;
+package Genome::VariantReporting::Generic::ContainsTagFilter;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::VariantReporting::Filter::ContainsTagFilter {
+class Genome::VariantReporting::Generic::ContainsTagFilter {
     is => 'Genome::VariantReporting::Component::Filter',
     has => [
         info_tag => {

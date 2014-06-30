@@ -1,10 +1,10 @@
-package Genome::VariantReporting::Filter::AlleleInGenotypeFilter;
+package Genome::VariantReporting::Generic::AlleleInGenotypeFilter;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::VariantReporting::Filter::AlleleInGenotypeFilter {
+class Genome::VariantReporting::Generic::AlleleInGenotypeFilter {
     is => ['Genome::VariantReporting::Component::Filter', 'Genome::VariantReporting::Component::WithSampleName'],
     has => [
     ],

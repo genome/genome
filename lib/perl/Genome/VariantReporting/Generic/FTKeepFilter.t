@@ -13,7 +13,7 @@ use Genome::File::Vcf::Entry;
 use Test::More;
 use Test::Exception;
 
-my $pkg = 'Genome::VariantReporting::Filter::FTKeepFilter';
+my $pkg = 'Genome::VariantReporting::Generic::FTKeepFilter';
 use_ok($pkg);
 my $factory = Genome::VariantReporting::Factory->create();
 isa_ok($factory->get_class('filters', $pkg->name), $pkg);

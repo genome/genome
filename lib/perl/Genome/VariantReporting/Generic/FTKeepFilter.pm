@@ -1,11 +1,11 @@
-package Genome::VariantReporting::Filter::FTKeepFilter;
+package Genome::VariantReporting::Generic::FTKeepFilter;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 use List::Util qw/first/;
 
-class Genome::VariantReporting::Filter::FTKeepFilter {
+class Genome::VariantReporting::Generic::FTKeepFilter {
     is => ['Genome::VariantReporting::Component::Filter', 'Genome::VariantReporting::Component::WithSampleName'],
     has => {
         keep_filter_values => {

@@ -1,10 +1,10 @@
-package Genome::VariantReporting::Filter::NCallersFilter;
+package Genome::VariantReporting::Generic::NCallersFilter;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::VariantReporting::Filter::NCallersFilter {
+class Genome::VariantReporting::Generic::NCallersFilter {
     is => ['Genome::VariantReporting::Component::Filter', 'Genome::VariantReporting::Component::WithSampleName'],
     has => [
         min_callers => {
