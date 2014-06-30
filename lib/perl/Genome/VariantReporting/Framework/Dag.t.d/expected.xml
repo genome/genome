@@ -8,7 +8,7 @@
     <outputproperty>output_directory</outputproperty>
   </operationtype>
   <operation name="Generate Reports">
-    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::ReportGeneratorWrapper">
+    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Framework::ReportGeneratorWrapper">
       <inputproperty>build_id</inputproperty>
       <inputproperty>input_result</inputproperty>
       <inputproperty>output_directory</inputproperty>
@@ -20,7 +20,7 @@
     </operationtype>
   </operation>
   <operation name="Get Initial Vcf Result from Build">
-    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::GetInitialVcfResult">
+    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Framework::GetInitialVcfResult">
       <inputproperty>build_id</inputproperty>
       <inputproperty>variant_type</inputproperty>
       <outputproperty>output_result</outputproperty>

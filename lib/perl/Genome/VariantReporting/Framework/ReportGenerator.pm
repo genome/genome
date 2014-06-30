@@ -12,7 +12,7 @@ class Genome::VariantReporting::Framework::ReportGenerator {
             is => 'File',
         },
         plan => {
-            is => 'Genome::VariantReporting::Plan',
+            is => 'Genome::VariantReporting::Framework::Plan::MasterPlan',
         },
         output_directory => {
             is => 'Path',

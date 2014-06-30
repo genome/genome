@@ -3,7 +3,7 @@ package Genome::Model::Detail::RunsVariantReporting;
 use strict;
 use warnings FATAL => 'all';
 use Genome;
-use Genome::VariantReporting::Common::Dag qw(generate_dag);
+use Genome::VariantReporting::Framework::Dag qw(generate_dag);
 use File::Basename qw(dirname);
 use File::Slurp qw(write_file);
 
