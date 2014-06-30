@@ -1,4 +1,4 @@
-package Genome::VariantReporting::Filter::GenotypeVafFilter;
+package Genome::VariantReporting::BamReadcount::GenotypeVafFilter;
 
 use strict;
 use warnings;
@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 use Genome::VariantReporting::BamReadcount::VafCalculator;
 
-class Genome::VariantReporting::Filter::GenotypeVafFilter {
+class Genome::VariantReporting::BamReadcount::GenotypeVafFilter {
     is => ['Genome::VariantReporting::Component::Filter', 'Genome::VariantReporting::BamReadcount::ComponentBase'],
     has => {
         min_het_vaf => { is => 'Number', doc => 'Minimum VAF value if the genotype if heterozygous. Expressed as a whole percentage.', },
