@@ -13,7 +13,7 @@ use Test::More;
 use Test::Exception;
 use Genome::File::Vcf::Entry;
 
-my $pkg = "Genome::VariantReporting::Filter::MaxAfFilter";
+my $pkg = "Genome::VariantReporting::Dbsnp::MaxAfFilter";
 use_ok($pkg);
 my $factory = Genome::VariantReporting::Factory->create();
 isa_ok($factory->get_class('filters', $pkg->name), $pkg);
