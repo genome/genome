@@ -1,11 +1,11 @@
-package Genome::VariantReporting::Interpreter::VepInterpreter;
+package Genome::VariantReporting::Vep::VepInterpreter;
 
 use strict;
 use warnings;
 use Genome;
 use Genome::File::Vcf::VepConsequenceParser;
 
-class Genome::VariantReporting::Interpreter::VepInterpreter {
+class Genome::VariantReporting::Vep::VepInterpreter {
     is => 'Genome::VariantReporting::Component::Interpreter',
 };
 
