@@ -14,7 +14,7 @@ use Genome::File::Vcf::Entry;
 use Test::More;
 use Test::Exception;
 
-my $pkg = 'Genome::VariantReporting::Filter::CoverageVafFilter';
+my $pkg = 'Genome::VariantReporting::BamReadcount::CoverageVafFilter';
 use_ok($pkg) or die;
 my $factory = Genome::VariantReporting::Factory->create();
 isa_ok($factory->get_class('filters', $pkg->name), $pkg);

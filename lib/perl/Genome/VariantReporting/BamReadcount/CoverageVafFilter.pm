@@ -1,4 +1,4 @@
-package Genome::VariantReporting::Filter::CoverageVafFilter;
+package Genome::VariantReporting::BamReadcount::CoverageVafFilter;
 
 use strict;
 use warnings;
@@ -8,7 +8,7 @@ use Genome;
 use Genome::VariantReporting::BamReadcount::VafCalculator;
 require Memoize;
 
-class Genome::VariantReporting::Filter::CoverageVafFilter {
+class Genome::VariantReporting::BamReadcount::CoverageVafFilter {
     is => ['Genome::VariantReporting::Component::Filter', 'Genome::VariantReporting::BamReadcount::ComponentBase'],
     has => {
         coverages_and_vafs => {
