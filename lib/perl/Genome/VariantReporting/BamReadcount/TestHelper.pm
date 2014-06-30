@@ -1,4 +1,4 @@
-package Genome::VariantReporting::Expert::BamReadcount::TestHelper;
+package Genome::VariantReporting::BamReadcount::TestHelper;
 use Exporter 'import';
 @EXPORT_OK = qw(bam_readcount_line create_entry create_deletion_entry bam_readcount_line_deletion);
 

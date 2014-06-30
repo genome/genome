@@ -17,10 +17,10 @@ use Genome::VariantReporting::TestHelpers qw(test_cmd_and_result_are_in_sync);
 
 use Test::More;
 
-my $cmd_class = 'Genome::VariantReporting::Expert::BamReadcount::Annotate';
+my $cmd_class = 'Genome::VariantReporting::BamReadcount::Annotate';
 use_ok($cmd_class) or die;
 
-my $result_class = 'Genome::VariantReporting::Expert::BamReadcount::AnnotateResult';
+my $result_class = 'Genome::VariantReporting::BamReadcount::AnnotateResult';
 use_ok($result_class) or die;
 
 my ($cmd, $tool_args) = generate_test_cmd();
@@ -58,11 +58,11 @@ sub generate_test_cmd {
         code => sub {return 'test_vcf';},
     });
 
-    my $rc_result1 = Genome::VariantReporting::Expert::BamReadcount::RunResult->__define__();
-    my $rc_result2 = Genome::VariantReporting::Expert::BamReadcount::RunResult->__define__();
+    my $rc_result1 = Genome::VariantReporting::BamReadcount::RunResult->__define__();
+    my $rc_result2 = Genome::VariantReporting::BamReadcount::RunResult->__define__();
 
     Sub::Install::reinstall_sub({
-        into => 'Genome::VariantReporting::Expert::BamReadcount::AnnotateResult',
+        into => 'Genome::VariantReporting::BamReadcount::AnnotateResult',
         as => 'readcount_file_and_sample_idxs',
         code => sub {my $self = shift; return ['rc_file1:1', 'rc_file2:2'];},
     });

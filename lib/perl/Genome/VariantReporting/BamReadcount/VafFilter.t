@@ -11,10 +11,10 @@ use warnings;
 use above "Genome";
 use Test::Exception;
 use Test::More;
-use Genome::VariantReporting::Expert::BamReadcount::TestHelper qw(bam_readcount_line
+use Genome::VariantReporting::BamReadcount::TestHelper qw(bam_readcount_line
     create_entry create_deletion_entry bam_readcount_line_deletion);
 
-my $pkg = "Genome::VariantReporting::Expert::BamReadcount::VafFilter";
+my $pkg = "Genome::VariantReporting::BamReadcount::VafFilter";
 use_ok($pkg);
 my $factory = Genome::VariantReporting::Factory->create();
 isa_ok($factory->get_class('filters', $pkg->name), $pkg);
@@ -142,9 +142,9 @@ subtest "fail heterozygous non-reference sample" => sub {
     );
     my $entry = create_entry(bam_readcount_line);
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry fails filter with min_vaf $min_vaf");
-    cmp_ok(Genome::VariantReporting::Expert::BamReadcount::VafCalculator::calculate_vaf(
+    cmp_ok(Genome::VariantReporting::BamReadcount::VafCalculator::calculate_vaf(
         $filter->get_readcount_entry($entry), 'C', 'A'), '<', 0.3, "VAF is very low");
-    cmp_ok(Genome::VariantReporting::Expert::BamReadcount::VafCalculator::calculate_vaf(
+    cmp_ok(Genome::VariantReporting::BamReadcount::VafCalculator::calculate_vaf(
         $filter->get_readcount_entry($entry), 'G', 'A'), '>', 90, "VAF is high");
 };
 

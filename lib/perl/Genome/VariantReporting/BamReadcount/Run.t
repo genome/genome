@@ -20,13 +20,13 @@ use Genome::Utility::Test qw(compare_ok);
 use Test::More;
 
 
-my $cmd_class = 'Genome::VariantReporting::Expert::BamReadcount::Run';
+my $cmd_class = 'Genome::VariantReporting::BamReadcount::Run';
 use_ok($cmd_class) or die;
 
 my $factory = Genome::VariantReporting::Factory->create();
 isa_ok($factory->get_class('runners', $cmd_class->name), $cmd_class);
 
-my $result_class = 'Genome::VariantReporting::Expert::BamReadcount::RunResult';
+my $result_class = 'Genome::VariantReporting::BamReadcount::RunResult';
 use_ok($result_class) or die;
 
 my $cmd = generate_test_cmd();

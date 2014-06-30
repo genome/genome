@@ -1,12 +1,12 @@
-package Genome::VariantReporting::Expert::BamReadcount::VafFilter;
+package Genome::VariantReporting::BamReadcount::VafFilter;
 
 use strict;
 use warnings;
 use Genome;
-use Genome::VariantReporting::Expert::BamReadcount::VafCalculator;
+use Genome::VariantReporting::BamReadcount::VafCalculator;
 
-class Genome::VariantReporting::Expert::BamReadcount::VafFilter {
-    is => ['Genome::VariantReporting::Component::Filter', 'Genome::VariantReporting::Expert::BamReadcount::ComponentBase'],
+class Genome::VariantReporting::BamReadcount::VafFilter {
+    is => ['Genome::VariantReporting::Component::Filter', 'Genome::VariantReporting::BamReadcount::ComponentBase'],
     has_optional => [
         min_vaf => {
             is => 'Number',
@@ -61,7 +61,7 @@ sub filter_entry {
     for my $alt_allele (@{$entry->{alternate_alleles}}) {
         $return_values{$alt_allele} = 0;
     }
-    my %vafs = Genome::VariantReporting::Expert::BamReadcount::VafCalculator::calculate_vaf_for_all_alts(
+    my %vafs = Genome::VariantReporting::BamReadcount::VafCalculator::calculate_vaf_for_all_alts(
         $entry,
         $self->get_readcount_entry($entry));
     for my $allele (keys %vafs) {

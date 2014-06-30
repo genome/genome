@@ -9,7 +9,7 @@ BEGIN {
 }
 
 use above 'Genome';
-use Genome::VariantReporting::Expert::BamReadcount::TestHelper qw(bam_readcount_line_deletion create_deletion_entry);
+use Genome::VariantReporting::BamReadcount::TestHelper qw(bam_readcount_line_deletion create_deletion_entry);
 use Genome::File::Vcf::Entry;
 use Test::More;
 use Test::Exception;
@@ -19,8 +19,8 @@ use_ok($pkg) or die;
 my $factory = Genome::VariantReporting::Factory->create();
 isa_ok($factory->get_class('filters', $pkg->name), $pkg);
 
-my $entry = Genome::VariantReporting::Expert::BamReadcount::TestHelper::create_entry(
-    Genome::VariantReporting::Expert::BamReadcount::TestHelper::bam_readcount_line(),
+my $entry = Genome::VariantReporting::BamReadcount::TestHelper::create_entry(
+    Genome::VariantReporting::BamReadcount::TestHelper::bam_readcount_line(),
 );
 
 subtest "test pass" => sub { #FIXME

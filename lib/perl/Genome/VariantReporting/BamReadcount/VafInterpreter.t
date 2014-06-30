@@ -12,10 +12,10 @@ use above "Genome";
 use Test::More;
 use Test::Exception;
 use Genome::File::Vcf::Entry;
-use Genome::VariantReporting::Expert::BamReadcount::TestHelper qw(
+use Genome::VariantReporting::BamReadcount::TestHelper qw(
     bam_readcount_line create_entry bam_readcount_line_deletion create_deletion_entry);
 
-my $pkg = 'Genome::VariantReporting::Expert::BamReadcount::VafInterpreter';
+my $pkg = 'Genome::VariantReporting::BamReadcount::VafInterpreter';
 use_ok($pkg);
 my $factory = Genome::VariantReporting::Factory->create();
 isa_ok($factory->get_class('interpreters', $pkg->name), $pkg);

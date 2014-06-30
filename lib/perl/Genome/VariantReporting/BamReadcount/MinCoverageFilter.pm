@@ -1,12 +1,12 @@
-package Genome::VariantReporting::Expert::BamReadcount::MinCoverageFilter;
+package Genome::VariantReporting::BamReadcount::MinCoverageFilter;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 use List::Util qw/first/;
 
-class Genome::VariantReporting::Expert::BamReadcount::MinCoverageFilter {
-    is => ['Genome::VariantReporting::Component::Filter', 'Genome::VariantReporting::Expert::BamReadcount::ComponentBase'],
+class Genome::VariantReporting::BamReadcount::MinCoverageFilter {
+    is => ['Genome::VariantReporting::Component::Filter', 'Genome::VariantReporting::BamReadcount::ComponentBase'],
     has => {
         min_coverage => {
             is => 'Number',

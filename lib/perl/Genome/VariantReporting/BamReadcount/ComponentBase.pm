@@ -1,11 +1,11 @@
-package Genome::VariantReporting::Expert::BamReadcount::ComponentBase;
+package Genome::VariantReporting::BamReadcount::ComponentBase;
 
 use strict;
 use warnings;
 use Genome;
 use Genome::File::BamReadcount::Entry;
 
-class Genome::VariantReporting::Expert::BamReadcount::ComponentBase {
+class Genome::VariantReporting::BamReadcount::ComponentBase {
     is => ['Genome::VariantReporting::Component::WithSampleName'],
     has => [
     ],

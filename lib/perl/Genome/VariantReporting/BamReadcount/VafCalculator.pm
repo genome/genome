@@ -1,4 +1,4 @@
-package Genome::VariantReporting::Expert::BamReadcount::VafCalculator;
+package Genome::VariantReporting::BamReadcount::VafCalculator;
 
 use strict;
 use warnings;

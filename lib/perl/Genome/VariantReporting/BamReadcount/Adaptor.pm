@@ -1,10 +1,10 @@
-package Genome::VariantReporting::Expert::BamReadcount::Adaptor;
+package Genome::VariantReporting::BamReadcount::Adaptor;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::VariantReporting::Expert::BamReadcount::Adaptor {
+class Genome::VariantReporting::BamReadcount::Adaptor {
     is => 'Genome::VariantReporting::Component::Adaptor',
 
     has_planned_output => [

@@ -1,10 +1,10 @@
-package Genome::VariantReporting::Expert::BamReadcount::Run;
+package Genome::VariantReporting::BamReadcount::Run;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::VariantReporting::Expert::BamReadcount::Run {
+class Genome::VariantReporting::BamReadcount::Run {
     is => 'Genome::VariantReporting::Component::Expert::Command',
     has_input => [
         aligned_bam_result => {
@@ -49,7 +49,7 @@ sub name {
 }
 
 sub result_class {
-    'Genome::VariantReporting::Expert::BamReadcount::RunResult';
+    'Genome::VariantReporting::BamReadcount::RunResult';
 }
 
 sub __errors__ {

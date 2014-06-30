@@ -1,15 +1,15 @@
-package Genome::VariantReporting::Expert::BamReadcount::AnnotateResult;
+package Genome::VariantReporting::BamReadcount::AnnotateResult;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 use Genome::File::Vcf::Reader;
 
-class Genome::VariantReporting::Expert::BamReadcount::AnnotateResult {
+class Genome::VariantReporting::BamReadcount::AnnotateResult {
     is => 'Genome::VariantReporting::Component::Expert::Result',
     has_input => [
         readcount_results => {
-            is => 'Genome::VariantReporting::Expert::BamReadcount::RunResult',
+            is => 'Genome::VariantReporting::BamReadcount::RunResult',
             is_many => 1,
         },
     ],

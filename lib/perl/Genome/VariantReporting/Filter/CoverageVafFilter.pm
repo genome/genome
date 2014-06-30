@@ -5,11 +5,11 @@ use warnings;
 
 use Genome;
 
-use Genome::VariantReporting::Expert::BamReadcount::VafCalculator;
+use Genome::VariantReporting::BamReadcount::VafCalculator;
 require Memoize;
 
 class Genome::VariantReporting::Filter::CoverageVafFilter {
-    is => ['Genome::VariantReporting::Component::Filter', 'Genome::VariantReporting::Expert::BamReadcount::ComponentBase'],
+    is => ['Genome::VariantReporting::Component::Filter', 'Genome::VariantReporting::BamReadcount::ComponentBase'],
     has => {
         coverages_and_vafs => {
             is => 'HASH',
@@ -96,7 +96,7 @@ sub filter_entry {
     return map { $_ => 0 } @{$entry->{alternate_alleles}} if not $readcount_entry;
 
     my @sample_alt_alleles = sort $entry->alt_bases_for_sample($self->sample_index($entry->{header}));
-    my %vafs = Genome::VariantReporting::Expert::BamReadcount::VafCalculator::calculate_vaf_for_all_alts(
+    my %vafs = Genome::VariantReporting::BamReadcount::VafCalculator::calculate_vaf_for_all_alts(
         $entry,
         $self->get_readcount_entry($entry),
     );

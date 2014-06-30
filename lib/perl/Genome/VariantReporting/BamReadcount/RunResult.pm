@@ -1,4 +1,4 @@
-package Genome::VariantReporting::Expert::BamReadcount::RunResult;
+package Genome::VariantReporting::BamReadcount::RunResult;
 
 use strict;
 use warnings FATAL => 'all';
@@ -7,7 +7,7 @@ use Genome::File::Vcf::Reader;
 use Sys::Hostname;
 use IPC::Run qw(run);
 
-class Genome::VariantReporting::Expert::BamReadcount::RunResult {
+class Genome::VariantReporting::BamReadcount::RunResult {
     is => 'Genome::VariantReporting::Component::Expert::Result',
     has_input => [
         aligned_bam_result => {

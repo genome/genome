@@ -4,10 +4,10 @@ use strict;
 use warnings;
 
 use Genome;
-use Genome::VariantReporting::Expert::BamReadcount::VafCalculator;
+use Genome::VariantReporting::BamReadcount::VafCalculator;
 
 class Genome::VariantReporting::Filter::GenotypeVafFilter {
-    is => ['Genome::VariantReporting::Component::Filter', 'Genome::VariantReporting::Expert::BamReadcount::ComponentBase'],
+    is => ['Genome::VariantReporting::Component::Filter', 'Genome::VariantReporting::BamReadcount::ComponentBase'],
     has => {
         min_het_vaf => { is => 'Number', doc => 'Minimum VAF value if the genotype if heterozygous. Expressed as a whole percentage.', },
         max_het_vaf => { is => 'Number', doc => 'Maximum VAF value if the genotype if heterozygous. Expressed as a whole percentage.', },
@@ -64,7 +64,7 @@ sub filter_entry {
     my $entry = shift;
 
     my @sample_alt_alleles = sort $entry->alt_bases_for_sample($self->sample_index($entry->{header}));
-    my %vafs = Genome::VariantReporting::Expert::BamReadcount::VafCalculator::calculate_vaf_for_all_alts(
+    my %vafs = Genome::VariantReporting::BamReadcount::VafCalculator::calculate_vaf_for_all_alts(
         $entry,
         $self->get_readcount_entry($entry),
     );
