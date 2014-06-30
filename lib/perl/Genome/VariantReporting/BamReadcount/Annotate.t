@@ -13,7 +13,7 @@ use Sub::Install;
 use Set::Scalar;
 use Genome::Model::Tools::DetectVariants2::Result::Vcf;
 use Genome::Model::Tools::Vcf::AnnotateWithReadcounts;
-use Genome::VariantReporting::TestHelpers qw(test_cmd_and_result_are_in_sync);
+use Genome::VariantReporting::Framework::TestHelpers qw(test_cmd_and_result_are_in_sync);
 
 use Test::More;
 

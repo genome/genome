@@ -7,7 +7,7 @@ use Test::More;
 use Sub::Install qw(reinstall_sub);
 use above 'Genome';
 use Genome::Utility::Test qw(compare_ok);
-use Genome::VariantReporting::TestHelpers qw(
+use Genome::VariantReporting::Framework::TestHelpers qw(
     get_test_somatic_variation_build
     test_dag_xml
     test_dag_execute

@@ -1,4 +1,4 @@
-package Genome::VariantReporting::TestHelpers;
+package Genome::VariantReporting::Framework::TestHelpers;
 
 BEGIN {
     $ENV{UR_DBI_NO_COMMIT} = 1;

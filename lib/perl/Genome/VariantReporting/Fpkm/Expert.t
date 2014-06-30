@@ -6,7 +6,7 @@ use warnings FATAL => 'all';
 use Test::More;
 use above 'Genome';
 use Genome::Utility::Test qw(compare_ok);
-use Genome::VariantReporting::TestHelpers qw(
+use Genome::VariantReporting::Framework::TestHelpers qw(
     get_test_somatic_variation_build_with_vep_annotations
     test_dag_xml
     test_dag_execute

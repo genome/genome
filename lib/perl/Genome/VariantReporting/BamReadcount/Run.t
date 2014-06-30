@@ -14,7 +14,7 @@ use Genome::Test::Factory::InstrumentData::MergedAlignmentResult;
 use Genome::Model::Tools::DetectVariants2::Result::Vcf;
 use Genome::Model::Tools::Sam::Readcount;
 use Genome::Model::Tools::Bed::Convert::VcfToBed;
-use Genome::VariantReporting::TestHelpers qw(test_cmd_and_result_are_in_sync);
+use Genome::VariantReporting::Framework::TestHelpers qw(test_cmd_and_result_are_in_sync);
 use Genome::Utility::Test qw(compare_ok);
 
 use Test::More;

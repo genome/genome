@@ -14,7 +14,7 @@ use Test::More;
 use Test::Deep;
 use File::Basename qw(basename);
 use File::Spec;
-use Genome::VariantReporting::TestHelpers qw(get_test_somatic_variation_build get_test_dir);
+use Genome::VariantReporting::Framework::TestHelpers qw(get_test_somatic_variation_build get_test_dir);
 use Genome::Utility::Test qw(compare_ok);
 use Sub::Install qw(reinstall_sub);
 

@@ -14,7 +14,7 @@ use Genome::Test::Factory::Model::ReferenceSequence;
 use Genome::Test::Factory::Build;
 use Genome::Model::Tools::DetectVariants2::Result::Vcf;
 use Genome::Model::Tools::Bed::Convert::VcfToBed;
-use Genome::VariantReporting::TestHelpers qw(test_cmd_and_result_are_in_sync);
+use Genome::VariantReporting::Framework::TestHelpers qw(test_cmd_and_result_are_in_sync);
 
 use Test::More;
 
