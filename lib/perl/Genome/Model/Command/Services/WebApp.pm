@@ -122,8 +122,13 @@ sub run_starman {
         loader => 'Genome::Model::Command::Services::WebApp::Loader',
     );
 
+    my @middleware = (
+        'enable q(GenomeAccessLog), format => q(combined)',
+        'enable q(GenomePreAccessLog), format => q(combined)',
+    );
     my $psgi_path = $self->psgi_path . '/Main.psgi';
     $runner->parse_options(
+        '-e' => join('; ', @middleware),
         '--app' => $psgi_path,
         '--port' => $self->port,
         '--workers' => 4,
