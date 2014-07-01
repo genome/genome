@@ -61,7 +61,8 @@ sub pm_wait {
         });
     }
 
-    my $restart_command = '/gsc/scripts/sbin/gsc-cron-user /gsc/scripts/sbin/genome_view';
+    # this is assuming imp-apipe
+    my $restart_command = '/usr/local/sbin/genome_view';
 
     ### wait for HUP then start the command and a listener.
 
