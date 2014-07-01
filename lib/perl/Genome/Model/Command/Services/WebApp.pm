@@ -123,8 +123,13 @@ sub run_starman {
     );
 
     my $psgi_path = $self->psgi_path . '/Main.psgi';
-    $runner->parse_options( '--app', $psgi_path, '--port', $self->port,
-        '--workers', 4, '--single_request', 1, '-R', Genome->base_dir);
+    $runner->parse_options(
+        '--app' => $psgi_path,
+        '--port' => $self->port,
+        '--workers' => 4,
+        '--Reload' => Genome->base_dir,
+        '--single_request' => 1,
+    );
 
     $runner->run;
 }
