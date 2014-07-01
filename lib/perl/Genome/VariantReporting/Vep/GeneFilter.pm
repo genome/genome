@@ -1,12 +1,12 @@
-package Genome::VariantReporting::Filter::GeneFilter;
+package Genome::VariantReporting::Vep::GeneFilter;
 
 use strict;
 use warnings;
 use Genome;
 use Genome::File::Vcf::VepConsequenceParser;
 
-class Genome::VariantReporting::Filter::GeneFilter {
-    is => ['Genome::VariantReporting::Component::Filter'],
+class Genome::VariantReporting::Vep::GeneFilter {
+    is => ['Genome::VariantReporting::Framework::Component::Filter'],
     has => [
         gene_list => {
             is => 'String',
