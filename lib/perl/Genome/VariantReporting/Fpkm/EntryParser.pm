@@ -1,10 +1,10 @@
-package Genome::VariantReporting::Framework::Component::Interpreter::Fpkm;
+package Genome::VariantReporting::Fpkm::EntryParser;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::VariantReporting::Framework::Component::Interpreter::Fpkm {
+class Genome::VariantReporting::Fpkm::EntryParser {
     is => ['Genome::VariantReporting::Framework::Component::WithSampleName'],
 };
 

@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::VariantReporting::Fpkm::FpkmInterpreter {
-    is => ['Genome::VariantReporting::Framework::Component::Interpreter', 'Genome::VariantReporting::Framework::Component::Interpreter::Fpkm'],
+    is => ['Genome::VariantReporting::Framework::Component::Interpreter', 'Genome::VariantReporting::Fpkm::EntryParser'],
 };
 
 sub name {
