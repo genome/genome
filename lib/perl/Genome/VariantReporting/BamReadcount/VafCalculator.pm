@@ -65,6 +65,17 @@ sub calculate_coverage_for_allele {
     return $count;
 }
 
+sub calculate_per_library_coverage_for_allele {
+    my ($bam_readcount_entry, $allele, $ref) = @_;
+
+    my $counts;
+    for my $lib ($bam_readcount_entry->libraries) {
+        $counts->{$lib->name} = calculate_coverage_for_allele_and_library($allele, $ref, $lib);
+    }
+
+    return $counts;
+}
+
 sub calculate_coverage_for_allele_and_library {
     my ($allele, $ref, $library) = @_;
 

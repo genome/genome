@@ -29,6 +29,7 @@ subtest "one alt allele" => sub {
             vaf => 1,
             ref_count => 3,
             var_count => 341,
+            per_library_var_count => 'Solexa-135852:155,Solexa-135853:186',
         }
     );
 
@@ -37,6 +38,7 @@ subtest "one alt allele" => sub {
     cmp_ok({$interpreter->interpret_entry($entry, ['G'])}->{G}->{vaf},  "<", 100);
     is({$interpreter->interpret_entry($entry, ['G'])}->{G}->{ref_count}, $expected{G}->{ref_count});
     is({$interpreter->interpret_entry($entry, ['G'])}->{G}->{var_count}, $expected{G}->{var_count});
+    is({$interpreter->interpret_entry($entry, ['G'])}->{G}->{per_library_var_count}, $expected{G}->{per_library_var_count});
 };
 
 subtest "insertion" => sub {

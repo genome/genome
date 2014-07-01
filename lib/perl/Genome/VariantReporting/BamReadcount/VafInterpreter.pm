@@ -22,6 +22,7 @@ sub available_fields {
         vaf
         ref_count
         var_count
+        per_library_var_count
     /;
 }
 
@@ -45,14 +46,22 @@ sub interpret_entry {
         else {
             $vaf = undef;
         }
+
         $return_values{$allele} = {
             vaf => $vaf,
             var_count => Genome::VariantReporting::BamReadcount::VafCalculator::calculate_coverage_for_allele($self->get_readcount_entry($entry), $allele, $entry->{reference_allele}),
             ref_count => $ref_count,
+            per_library_var_count => $self->per_library_coverage($entry, $allele),
         }
     }
 
     return %return_values;
+}
+
+sub per_library_coverage {
+    my ($self, $entry, $allele) = @_;
+    my $counts = Genome::VariantReporting::BamReadcount::VafCalculator::calculate_per_library_coverage_for_allele($self->get_readcount_entry($entry), $allele, $entry->{reference_allele});
+    return join(',', map {"$_:" . $counts->{$_} } keys %$counts);
 }
 
 sub translate_ref_allele {
