@@ -19,7 +19,7 @@ my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('filters', $pkg->name), $pkg);
 
 subtest "with no vep information" => sub {
-    my $interpreter = $pkg->create(gene_list =>'acmg');
+    my $interpreter = $pkg->create(gene_set =>'acmg');
     lives_ok(sub {$interpreter->validate}, "Filter validates");
 
     my %expected_return_values = (
@@ -31,7 +31,7 @@ subtest "with no vep information" => sub {
 };
 
 subtest "with failing vep information" => sub {
-    my $interpreter = $pkg->create(gene_list =>'acmg');
+    my $interpreter = $pkg->create(gene_set =>'acmg');
     lives_ok(sub {$interpreter->validate}, "Filter validates");
 
     my %expected_return_values = (
@@ -43,7 +43,7 @@ subtest "with failing vep information" => sub {
 };
 
 subtest "with passing vep information" => sub {
-    my $interpreter = $pkg->create(gene_list =>'acmg');
+    my $interpreter = $pkg->create(gene_set =>'acmg');
     lives_ok(sub {$interpreter->validate}, "Filter validates");
 
     my %expected_return_values = (
