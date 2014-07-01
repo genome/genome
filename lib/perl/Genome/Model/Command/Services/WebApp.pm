@@ -122,7 +122,11 @@ sub run_starman {
         loader => 'Genome::Model::Command::Services::WebApp::Loader',
     );
 
+    # `--env development` enables Lint, StackTrace, and AccessLog but we want a
+    # custom AccessLog so we are loading manually.
     my @middleware = (
+        'enable q(Lint)',
+        'enable q(StackTrace)',
         'enable q(GenomeAccessLog), format => q(combined)',
         'enable q(GenomePreAccessLog), format => q(combined)',
     );
