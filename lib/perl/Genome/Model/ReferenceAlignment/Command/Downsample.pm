@@ -16,7 +16,7 @@ class Genome::Model::ReferenceAlignment::Command::Downsample {
             is_input => 1,
         },
         model => {
-            is => 'Genome::Model::ReferenceAlignment',
+            is => 'Genome::Model',
             shell_args_position => 1,
             doc => 'Model to operate on... provide this OR model-group',
             is_optional => 1,
@@ -40,7 +40,7 @@ class Genome::Model::ReferenceAlignment::Command::Downsample {
             is_optional => 1,
         },
         _new_model => {
-            is => 'Genome::Model::ReferenceAlignment',
+            is => 'Genome::Model',
             doc => 'The new model created with the downsampled instrument data assigned',
             is_optional => 1,
         },
@@ -130,32 +130,34 @@ sub _create_downsampled_model {
 
     $self->status_message("Using Build: ".$build->id);
 
-    my $bam = $build->whole_rmdup_bam_file;
+    my $bam_result = $build->merged_alignment_result;
+    my $bam = $bam_result->bam_file;
+
     unless(-e $bam){
         die $self->error_message("Could not locate bam at: ". $bam);
     }
 
     my $downsample_ratio;
     if ($self->coverage_in_gb) {
-            my $new_coverage = $self->coverage_in_gb * 1000000000;  #convert gigabases to bases
+        my $new_coverage = $self->coverage_in_gb * 1000000000;  #convert gigabases to bases
 
-            my $total_readcount = $self->_get_readcount($bam);
-            $self->status_message("Total read-count in the original bam: ".$total_readcount);
+        my $total_readcount = $self->_get_readcount($bam);
+        $self->status_message("Total read-count in the original bam: ".$total_readcount);
 
-            #TODO this currently assumes homogenous read-length instrument-data
-            my $read_length = $self->_get_readlength($model);
-            $self->status_message("Read Length: ".$read_length);
+        #TODO this currently assumes homogenous read-length instrument-data
+        my $read_length = $self->_get_readlength($model);
+        $self->status_message("Read Length: ".$read_length);
 
-            my $total_bases = $read_length * $total_readcount;
-            $self->status_message("Total Bases: ".$total_bases);
+        my $total_bases = $read_length * $total_readcount;
+        $self->status_message("Total Bases: ".$total_bases);
 
-            #Calculate downsample ratio by taking the ratio of desired coverage to the current total bases,
-            # round to 5 decimal places
-            $downsample_ratio = sprintf("%.5f", $new_coverage / $total_bases );
-            unless($downsample_ratio < 1.0){
-                die $self->error_message("The downsample ratio ended up being >= 1. You must specify a coverage_in_gb that is lower than the existing bam.");
-            }
-            $self->status_message("Downsample ratio = ".$downsample_ratio);
+        #Calculate downsample ratio by taking the ratio of desired coverage to the current total bases,
+        # round to 5 decimal places
+        $downsample_ratio = sprintf("%.5f", $new_coverage / $total_bases );
+        unless($downsample_ratio < 1.0){
+            die $self->error_message("The downsample ratio ended up being >= 1. You must specify a coverage_in_gb that is lower than the existing bam.");
+        }
+        $self->status_message("Downsample ratio = ".$downsample_ratio);
     }
     elsif ($self->coverage_in_ratio) {
             $downsample_ratio = $self->coverage_in_ratio;
@@ -173,6 +175,7 @@ sub _create_downsampled_model {
         output_file => $temp,
         downsample_ratio => $downsample_ratio,
         random_seed => $seed,
+        maximum_memory => 16,
     );
     unless($ds_cmd->execute){
         die $self->error_message("Could not complete picard downsample command.");
@@ -180,13 +183,13 @@ sub _create_downsampled_model {
     $self->status_message("Downsampled bam has been created at: ".$temp);
 
     #create an imported instrument-data record
-    my $instrument_data = $self->_import_bam($temp,$model,$downsample_ratio);
+    my $instrument_data = $self->_import_bam($temp, $model, $downsample_ratio);
     unless($instrument_data){
         die $self->error_message("Could not import bam");
     }
     $self->status_message("Your new instrument-data id is: ".join(',', map $_->id, @{$instrument_data}));
 
-    my $new_model = $self->_define_new_model($model,$instrument_data);
+    my $new_model = $self->_define_new_model($model, $instrument_data, $downsample_ratio);
     $self->status_message("Your new model id is: ".$new_model->id);
 
     $self->_new_model($new_model);
@@ -195,14 +198,11 @@ sub _create_downsampled_model {
 }
 
 sub get_or_create_library {
-    my $self = shift;
-    my $sample = shift;
-    my $new_library_name = $sample->name . "-extlibs";
+    my ($self, $sample, $lib_name) = @_;
+    my $new_library_name = $lib_name . '-extlibs';
 
     my $library = Genome::Library->get(name => $new_library_name);
-    if($library){
-        next;
-    } else {
+    unless ($library) {
         $library = Genome::Library->create(name => $new_library_name, sample => $sample);
     }
 
@@ -215,13 +215,12 @@ sub get_or_create_library {
 
 # Given a model and instrument data, copy the model to a new one with only that instrument data assigned
 sub _define_new_model {
-    my $self = shift;
-    my $model = shift;
-    my $instrument_data = shift;
+    my ($self, $model, $instrument_data, $downsample_ratio) = @_;
+    my $new_name = $model->name.'_downsample_'.$downsample_ratio;
 
     my $copy_command = Genome::Model::Command::Copy->create(
         model => $model,
-        overrides => [map 'instrument_data=' . $_->id, @$instrument_data],
+        overrides => ["name=$new_name", map{'instrument_data=' . $_->id}@$instrument_data],
     );
     unless ($copy_command->execute) {
         die $self->error_message("Failed to copy model " . $model->id);
@@ -231,6 +230,7 @@ sub _define_new_model {
 
     return $new_model;
 }
+
 
 sub _import_bam {
     my $self = shift;
@@ -248,7 +248,10 @@ sub _import_bam {
         die $self->error_message("Cannot locate a sample to use for importing downsampled bam!");
     }
 
-    my $library = $self->get_or_create_library($sample);
+    my @i_ds = $model->instrument_data;
+    my $lib_name = $i_ds[0]->library->name;
+
+    my $library = $self->get_or_create_library($sample, $lib_name);
 
     my %params = (
         source_files => [$filename],
