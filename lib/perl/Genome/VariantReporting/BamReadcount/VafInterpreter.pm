@@ -35,15 +35,8 @@ sub interpret_entry {
     my %vafs = Genome::VariantReporting::BamReadcount::VafCalculator::calculate_vaf_for_all_alts(
         $entry, $self->get_readcount_entry($entry));
 
-
     for my $allele (@$passed_alt_alleles) {
-        my $ref_allele;
-        if (Genome::VariantReporting::BamReadcount::VafCalculator::is_deletion($entry->{reference_allele}, $allele)) {
-            $ref_allele = substr($entry->{reference_allele}, 1, 1);
-        }
-        else {
-            $ref_allele = substr($entry->{reference_allele}, 0, 1);
-        }
+        my $ref_allele = $self->translate_ref_allele($entry->{reference_allele}, $allele);
         my $ref_count = Genome::VariantReporting::BamReadcount::VafCalculator::calculate_coverage_for_allele($self->get_readcount_entry($entry), $ref_allele, 'A');
         my $vaf;
         if (defined $vafs{$allele}) {
@@ -60,6 +53,16 @@ sub interpret_entry {
     }
 
     return %return_values;
+}
+
+sub translate_ref_allele {
+    my ($self, $ref, $alt) = @_;
+    if (Genome::VariantReporting::BamReadcount::VafCalculator::is_deletion($ref, $alt)) {
+        return substr($ref, 1, 1);
+    }
+    else {
+        return substr($ref, 0, 1);
+    }
 }
 
 1;
