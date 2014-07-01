@@ -50,6 +50,7 @@ subtest "insertion" => sub {
             vaf => 1,
             ref_count => 3,
             var_count => 20,
+            per_library_var_count => 'Solexa-135852:20,Solexa-135853:0',
         }
     );
 
@@ -58,6 +59,7 @@ subtest "insertion" => sub {
     cmp_ok({$interpreter->interpret_entry($entry, ['AA'])}->{AA}->{vaf},  "<", 6);
     is({$interpreter->interpret_entry($entry, ['AA'])}->{AA}->{ref_count}, $expected{AA}->{ref_count});
     is({$interpreter->interpret_entry($entry, ['AA'])}->{AA}->{var_count}, $expected{AA}->{var_count});
+    is({$interpreter->interpret_entry($entry, ['AA'])}->{AA}->{per_library_var_count}, $expected{AA}->{per_library_var_count});
 };
 
 subtest "deletion" => sub {
@@ -69,6 +71,7 @@ subtest "deletion" => sub {
             vaf => 1,
             ref_count => 0,
             var_count => 20,
+            per_library_var_count => 'Solexa-135852:20,Solexa-135853:0',
         }
     );
 
@@ -77,6 +80,7 @@ subtest "deletion" => sub {
     cmp_ok({$interpreter->interpret_entry($entry, ['A'])}->{A}->{vaf},  "<", 6);
     is({$interpreter->interpret_entry($entry, ['A'])}->{A}->{ref_count}, $expected{A}->{ref_count});
     is({$interpreter->interpret_entry($entry, ['A'])}->{A}->{var_count}, $expected{A}->{var_count});
+    is({$interpreter->interpret_entry($entry, ['A'])}->{A}->{per_library_var_count}, $expected{A}->{per_library_var_count});
 };
 done_testing;
 
