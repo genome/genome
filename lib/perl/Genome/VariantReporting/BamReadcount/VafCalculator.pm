@@ -59,16 +59,24 @@ sub calculate_coverage_for_allele {
 
     my $count = 0;
     for my $lib ($bam_readcount_entry->libraries) {
-        my $metrics;
-        eval {
-            $metrics = $lib->metrics_for(translated_allele($allele, $ref));
-        };
-        if (defined $metrics) {
-            $count += $metrics->count;
-        }
+        $count+=calculate_coverage_for_allele_and_library($allele, $ref, $lib);
     }
 
     return $count;
+}
+
+sub calculate_coverage_for_allele_and_library {
+    my ($allele, $ref, $library) = @_;
+
+    my $metrics;
+    eval {
+        $metrics = $library->metrics_for(translated_allele($allele, $ref));
+    };
+    if (defined $metrics) {
+        return $metrics->count;
+    } else {
+        return 0;
+    }
 }
 
 1;
