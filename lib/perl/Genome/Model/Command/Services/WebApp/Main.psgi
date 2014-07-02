@@ -38,18 +38,7 @@ my @psgi = qw(
     Info.psgi
     File.psgi
 );
-
-our %app;
-for my $psgi (@psgi) {
-    my $app = load_app($psgi);
-
-    my $builder = Plack::Builder->new;
-    $builder->add_middleware('GenomeAccessLog', format => 'combined');
-    $builder->add_middleware('GenomePreAccessLog', format => 'combined');
-    $app = $builder->to_app($app);
-
-    $app{$psgi} = $app;
-}
+our %app = map { $_ => load_app($_) } @psgi;
 
 ## Utility functions
 sub load_app {

@@ -122,9 +122,24 @@ sub run_starman {
         loader => 'Genome::Model::Command::Services::WebApp::Loader',
     );
 
+    # `--env development` enables Lint, StackTrace, and AccessLog but we want a
+    # custom AccessLog so we are loading manually.
+    my @middleware = (
+        'enable q(Lint)',
+        'enable q(StackTrace)',
+        'enable q(GenomeAccessLog), format => q(combined)',
+        'enable q(GenomePreAccessLog), format => q(combined)',
+    );
     my $psgi_path = $self->psgi_path . '/Main.psgi';
-    $runner->parse_options( '--app', $psgi_path, '--port', $self->port,
-        '--workers', 4, '--single_request', 1, '-R', Genome->base_dir);
+    $runner->parse_options(
+        '--env' => 'devbutnotdevelopment', # not development!
+        '-e' => join('; ', @middleware) . ';',
+        '--app' => $psgi_path,
+        '--port' => $self->port,
+        '--workers' => 4,
+        '--Reload' => Genome->base_dir,
+        '--single_request' => 1,
+    );
 
     $runner->run;
 }
