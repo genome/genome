@@ -10,7 +10,7 @@ use Genome::Model::ClinSeq::Util qw(:all);
 class Genome::Model::ClinSeq::Command::SummarizeSvs {
     is => 'Command::V2',
     has_input => [
-        builds => { 
+        builds => {
             is => 'Genome::Model::Build::SomaticVariation',
             is_many => 1,
             shell_args_position => 1,
@@ -22,9 +22,9 @@ class Genome::Model::ClinSeq::Command::SummarizeSvs {
             example_values => [$Genome::Model::ClinSeq::DEFAULT_CANCER_ANNOTATION_DB_ID],
             doc => 'cancer annotation data',
         },
-        outdir => { 
+        outdir => {
             is => 'FilesystemPath',
-            doc => 'Directory where output files will be written', 
+            doc => 'Directory where output files will be written',
         },
     ],
     has_output => [
@@ -54,7 +54,7 @@ EOS
 
 sub help_detail {
     return <<EOS
-Summarize structural variants for one or more somatic variation builds 
+Summarize structural variants for one or more somatic variation builds
 
 (put more content here)
 EOS
@@ -87,7 +87,7 @@ sub execute {
   #TODO: Create official versions of these data on allocated disk
   #Directory of gene lists for various purposes
   my $cancer_annotation_db = $self->cancer_annotation_db;
-  my $clinseq_annotations_dir = $cancer_annotation_db->data_directory; 
+  my $clinseq_annotations_dir = $cancer_annotation_db->data_directory;
   my $gene_symbol_lists_dir = $clinseq_annotations_dir . "/GeneSymbolLists/";
   my $entrez_ensembl_data = $self->loadEntrezEnsemblData(-cancer_db => $cancer_annotation_db);
   my $symbol_list_names = $self->importSymbolListNames('-gene_symbol_lists_dir'=>$gene_symbol_lists_dir, '-verbose'=>0);
@@ -119,9 +119,9 @@ sub execute {
     my $fusion_candidate_outfile = $build_outdir . "CandidateSvCodingFusions.tsv";
     my $sv_annot_search1 = $build_dir . "/variants/sv/union-union*/svs.hq.merge.annot.somatic";
     my $sv_annot_search2 = $build_dir . "/variants/sv/union-sv*/svs.hq.merge.annot.somatic";
-     
+
     my $sv_annot_file = 'NULL';
-    
+
     my $sv_annot_file1 = `ls $sv_annot_search1 2>/dev/null` || "NULL";
     chomp($sv_annot_file1);
 
@@ -226,12 +226,12 @@ sub execute {
 
 
     #TODO: Create a Stats.tsv file summarizing basic statistics of the sv annotations file
-    
+
     #TODO: Identify the deletion regions.  Create a display for each deletion showing coverage across that region in tumor and normal
 
-    #TODO: How reliable are our SVs.  Is there a way to identify a 'high confidence' set? 
+    #TODO: How reliable are our SVs.  Is there a way to identify a 'high confidence' set?
 
-    #TODO: Apply additional annotation strategies to the somatic SVs identified. 
+    #TODO: Apply additional annotation strategies to the somatic SVs identified.
     #- What are the genes/transcripts affected by the breakpoints of deletions, inversions, translocations?
 
 
@@ -244,7 +244,7 @@ sub execute {
 
 sub create_pairoscope_plots {
     #TODO: Use the coordinates of each fusion to produce pairoscope plots showing the support for each rearrangement
-    
+
     my $self = shift;
     my $data = shift;
     my $tumor_bam = shift;
@@ -263,7 +263,7 @@ sub create_pairoscope_plots {
     my $flank = 10000;
     my $offset = 1000; #To make it easier to see the arcs...
     my $params_string = "-P -q $min_mapping_quality -m $min_event_size -b $flank";
-    foreach my $l (keys %$data){    
+    foreach my $l (keys %$data){
       my $gene1 = $data->{$l}{gene1};
       my $gene2 = $data->{$l}{gene2};
       my $coords1 = $data->{$l}{coords1};
