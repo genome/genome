@@ -132,7 +132,8 @@ sub run_starman {
     );
     my $psgi_path = $self->psgi_path . '/Main.psgi';
     $runner->parse_options(
-        '-e' => join('; ', @middleware),
+        '--env' => 'devbutnotdevelopment', # not development!
+        '-e' => join('; ', @middleware) . ';',
         '--app' => $psgi_path,
         '--port' => $self->port,
         '--workers' => 4,
