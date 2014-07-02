@@ -120,6 +120,9 @@ class Genome::Model::Build::SomaticValidation {
         loh_version => {
             via => 'model',
         },
+        loh_snv_detection_strategy => {
+            via => 'model',
+        },
         tiering_version => {
             via => 'model',
         },
