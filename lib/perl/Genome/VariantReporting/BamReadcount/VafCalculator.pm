@@ -35,24 +35,15 @@ sub is_deletion {
 }
 
 sub calculate_vaf {
-    my ($bam_readcount_entry, $alt_allele, $ref) = @_;
-
-    return calculate_coverage_for_allele($bam_readcount_entry, $alt_allele, $ref) / $bam_readcount_entry->depth * 100;
+    my $vafs = calculate_per_library_vaf(@_);
+    return sum(values %$vafs);
 }
 
-sub translated_allele {
-    my ($allele, $ref) = @_;
-    my $translated_allele;
-    if (is_insertion($ref, $allele)) {
-        $translated_allele = "+".substr($allele, length($ref));
-    }
-    elsif (is_deletion($ref, $allele)) {
-        $translated_allele = "-".substr($ref, length($allele));
-    }
-    else {
-        $translated_allele = $allele;
-    }
-    return $translated_allele;
+sub calculate_per_library_vaf {
+    my ($bam_readcount_entry, $alt_allele, $ref) = @_;
+    my $coverage = calculate_per_library_coverage_for_allele(@_);
+    map{ $coverage->{$_} = $coverage->{$_} / $bam_readcount_entry->depth * 100 } keys %$coverage;
+    return $coverage;
 }
 
 sub calculate_coverage_for_allele {
@@ -85,5 +76,19 @@ sub calculate_coverage_for_allele_and_library {
     }
 }
 
-1;
+sub translated_allele {
+    my ($allele, $ref) = @_;
+    my $translated_allele;
+    if (is_insertion($ref, $allele)) {
+        $translated_allele = "+".substr($allele, length($ref));
+    }
+    elsif (is_deletion($ref, $allele)) {
+        $translated_allele = "-".substr($ref, length($allele));
+    }
+    else {
+        $translated_allele = $allele;
+    }
+    return $translated_allele;
+}
 
+1;
