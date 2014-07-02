@@ -23,6 +23,7 @@ sub available_fields {
         ref_count
         var_count
         per_library_var_count
+        per_library_ref_count
     /;
 }
 
@@ -38,7 +39,6 @@ sub interpret_entry {
 
     for my $allele (@$passed_alt_alleles) {
         my $translated_reference_allele = $self->translate_ref_allele($entry->{reference_allele}, $allele);
-        my $ref_count = Genome::VariantReporting::BamReadcount::VafCalculator::calculate_coverage_for_allele($self->get_readcount_entry($entry), $translated_reference_allele, 'A');
         my $vaf;
         if (defined $vafs{$allele}) {
             $vaf = $vafs{$allele};
@@ -51,15 +51,18 @@ sub interpret_entry {
         $return_values{$allele} = {
             vaf => $vaf,
             var_count => Genome::VariantReporting::BamReadcount::VafCalculator::calculate_coverage_for_allele($readcount_entry, $allele, $entry->{reference_allele}),
-            ref_count => $ref_count,
             per_library_var_count => $self->per_library_coverage($readcount_entry, $allele, $entry->{reference_allele}),
+            ref_count => Genome::VariantReporting::BamReadcount::VafCalculator::calculate_coverage_for_allele($self->get_readcount_entry($entry), $translated_reference_allele, 'A'),
+            per_library_ref_count => $self->per_library_coverage($readcount_entry, $translated_reference_allele, 'A'),
         }
     }
 
     return %return_values;
 }
 
-# The $reference_allele must be untranslated. When we are interested in counts for reference, $allele should be the translated ref allele.
+# When checking for variant coverage: The $reference_allele must be untranslated
+# When checking for reference coverage: The $reference_allele and $allele must both be the TRANSLATED reference
+## This is because otherwise we will misinterpret the query as asking for insertion or deletion support inside the VafCalculator
 sub per_library_coverage {
     my ($self, $readcount_entry, $allele, $reference_allele) = @_;
     my $counts = Genome::VariantReporting::BamReadcount::VafCalculator::calculate_per_library_coverage_for_allele($readcount_entry, $allele, $reference_allele);

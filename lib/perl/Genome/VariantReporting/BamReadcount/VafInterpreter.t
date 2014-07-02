@@ -30,6 +30,7 @@ subtest "one alt allele" => sub {
             ref_count => 3,
             var_count => 341,
             per_library_var_count => 'Solexa-135852:155,Solexa-135853:186',
+            per_library_ref_count => 'Solexa-135852:2,Solexa-135853:1',
         }
     );
 
@@ -39,6 +40,7 @@ subtest "one alt allele" => sub {
     is({$interpreter->interpret_entry($entry, ['G'])}->{G}->{ref_count}, $expected{G}->{ref_count});
     is({$interpreter->interpret_entry($entry, ['G'])}->{G}->{var_count}, $expected{G}->{var_count});
     is({$interpreter->interpret_entry($entry, ['G'])}->{G}->{per_library_var_count}, $expected{G}->{per_library_var_count});
+    is({$interpreter->interpret_entry($entry, ['G'])}->{G}->{per_library_ref_count}, $expected{G}->{per_library_ref_count});
 };
 
 subtest "insertion" => sub {
@@ -51,6 +53,7 @@ subtest "insertion" => sub {
             ref_count => 3,
             var_count => 20,
             per_library_var_count => 'Solexa-135852:20,Solexa-135853:0',
+            per_library_ref_count => 'Solexa-135852:2,Solexa-135853:1',
         }
     );
 
@@ -60,6 +63,7 @@ subtest "insertion" => sub {
     is({$interpreter->interpret_entry($entry, ['AA'])}->{AA}->{ref_count}, $expected{AA}->{ref_count});
     is({$interpreter->interpret_entry($entry, ['AA'])}->{AA}->{var_count}, $expected{AA}->{var_count});
     is({$interpreter->interpret_entry($entry, ['AA'])}->{AA}->{per_library_var_count}, $expected{AA}->{per_library_var_count});
+    is({$interpreter->interpret_entry($entry, ['AA'])}->{AA}->{per_library_ref_count}, $expected{AA}->{per_library_ref_count});
 };
 
 subtest "deletion" => sub {
@@ -69,9 +73,10 @@ subtest "deletion" => sub {
     my %expected = (
         A => {
             vaf => 1,
-            ref_count => 0,
+            ref_count => 5,
             var_count => 20,
             per_library_var_count => 'Solexa-135852:20,Solexa-135853:0',
+            per_library_ref_count => 'Solexa-135852:3,Solexa-135853:2',
         }
     );
 
@@ -81,6 +86,7 @@ subtest "deletion" => sub {
     is({$interpreter->interpret_entry($entry, ['A'])}->{A}->{ref_count}, $expected{A}->{ref_count});
     is({$interpreter->interpret_entry($entry, ['A'])}->{A}->{var_count}, $expected{A}->{var_count});
     is({$interpreter->interpret_entry($entry, ['A'])}->{A}->{per_library_var_count}, $expected{A}->{per_library_var_count});
+    is({$interpreter->interpret_entry($entry, ['A'])}->{A}->{per_library_ref_count}, $expected{A}->{per_library_ref_count});
 };
 done_testing;
 
