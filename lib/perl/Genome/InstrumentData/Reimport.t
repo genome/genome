@@ -15,7 +15,7 @@ my $attribute_label_for_reimported_from = $class->attribute_label_for_reimported
 ok($attribute_label_for_reimported_from, 'attribute_label_for_reimported_from');
 ok($class->attribute_labels_to_ignore_when_reimporting, 'attribute_labels_to_ignore_when_reimporting');
 
-throws_ok { $class->attributes_for_reimport; } qr/^No instrument data given!/;
+throws_ok { $class->attributes_for_reimport_from_instrument_data; } qr/^No instrument data given!/;
 my $instdata = Genome::InstrumentData::Imported->__define__(
     run_name => 'RUN',
     subset_name => 'SUBSET_NAME',
@@ -33,11 +33,11 @@ $expected_attrs{library_name} = $instdata->library->name;
 $expected_attrs{run_name} = $instdata->run_name;
 $expected_attrs{subset_name} = $instdata->subset_name;
 $expected_attrs{ $class->attribute_label_for_reimported_from } = $instdata->id;
-my $reimport = $class->attributes_for_reimport($instdata);
+my $reimport = $class->attributes_for_reimport_from_instrument_data($instdata);
 is_deeply($reimport, \%expected_attrs, 'attributes_for_reimport');
 
 is_deeply(
-    [ $class->headers_for_attributes_for_reimports($reimport) ],
+    [ $class->headers_for_reimport_attributes($reimport) ],
     [qw/ library_name source_files index_sequence lane /, $attribute_label_for_reimported_from, qw/ run_name subset_name /],
     'headers_for_attributes_for_reimport',
 );

@@ -16,11 +16,21 @@ class Genome::InstrumentData::Command::GenerateFileForReimport {
             doc => 'Instrument data to use to create file to reimport.',
         },
     },
+    has_optional_input => {
+        instrument_data_and_new_source_files => {
+            is => 'Text',
+            is_many => 1,
+            doc => 'Mapping of instrument data ids and new source files. ',
+        },
+    },
     has_output => {
         file => {
             is => 'File',
             doc => 'File name [source files tsv] to generate. Use this in the import manager.',
         },
+    },
+    has_transient => {
+        _instrument_data_and_new_source_files => { is => 'Hash', },
     },
 };
 
@@ -29,17 +39,64 @@ sub help_detail {
 HELP
 }
 
+sub __errors__ { 
+    my $self = shift;
+
+    my @errors = $self->SUPER::__errors__;
+    return @errors if @errors;
+
+    my %instrument_data_and_new_source_files;
+    my ($instdata_id, $source_file, $previous_insdata_id);
+    for my $instrument_data_and_new_source_file ( $self->instrument_data_and_new_source_files ) {
+        if ( $instrument_data_and_new_source_file =~ /=/ ) {
+            ($previous_insdata_id, $source_file) = split(/=/, $instrument_data_and_new_source_file);
+        }
+        elsif ( defined $previous_insdata_id ) {
+            $source_file = $instrument_data_and_new_source_file;
+        }
+        else {
+            return (
+                UR::Object::Tag->create(
+                    type => 'invalid',
+                    properties => [qw/ instrument_data_and_new_source_files /],
+                    desc => 'Mal-formed instrument data and new source files! '.$instrument_data_and_new_source_file,
+                )
+            );
+        }
+
+        if ( not -s $source_file ) {
+            return (
+                UR::Object::Tag->create(
+                    type => 'invalid',
+                    properties => [qw/ instrument_data_and_new_source_files /],
+                    desc => 'Source file does not exist! '.$source_file,
+                )
+            );
+
+        }
+
+        push @{$instrument_data_and_new_source_files{$previous_insdata_id}}, $source_file;
+    }
+    $self->_instrument_data_and_new_source_files(\%instrument_data_and_new_source_files);
+
+    return @errors;
+}
+
 sub execute {
     my $self = shift;
     $self->status_message('Generate file to reimport instrument data...');
 
+    my $instrument_data_and_new_source_files = $self->_instrument_data_and_new_source_files;
     my @reimports;
     for my $instrument_data ( $self->instrument_data ) {
-        my $reimport = Genome::InstrumentData::Reimport->attributes_for_reimport($instrument_data);
+        my $reimport = Genome::InstrumentData::Reimport->attributes_for_reimport_from_instrument_data($instrument_data);
         return if not $reimport;
 
-        if ( not $reimport->{source_files} or not -s $reimport->{source_files} ) {
-            $self->error_message("No source file for instrument data! %s", $instrument_data->id);
+        if ( $instrument_data_and_new_source_files->{ $instrument_data->id } ) {
+            $reimport->{source_files} = join(',', @{$instrument_data_and_new_source_files->{ $instrument_data->id }});
+        }
+        elsif ( not $reimport->{source_files} or not -s $reimport->{source_files} ) {
+            $self->error_message("No existing source file for instrument data! %s", $instrument_data->id);
             return;
         }
 
@@ -47,7 +104,7 @@ sub execute {
     }
     $self->status_message('Found '.@reimports.' instrument data...');
 
-    my @headers = Genome::InstrumentData::Reimport->headers_for_attributes_for_reimports(@reimports);
+    my @headers = Genome::InstrumentData::Reimport->headers_for_reimport_attributes(@reimports);
     return if not @headers;
 
     my $file = $self->file;

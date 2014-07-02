@@ -12,7 +12,7 @@ sub attribute_labels_to_ignore_when_reimporting {
     (qw/ bam_path genotype_file genotype_file_name ignored import_date import_format user_name /);
 }
 
-sub attributes_for_reimport {
+sub attributes_for_reimport_from_instrument_data {
     my ($self, $instrument_data) = @_;
 
     die 'No instrument data given!' if not $instrument_data;
@@ -47,7 +47,7 @@ sub attributes_for_reimport {
     return \%reimport;
 }
 
-sub headers_for_attributes_for_reimports {
+sub headers_for_reimport_attributes {
     my ($self, @reimports) = @_;
 
     Carp::confess('No reimports to get headers!') if not @reimports;
