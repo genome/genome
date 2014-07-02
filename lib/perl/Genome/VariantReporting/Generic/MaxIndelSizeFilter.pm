@@ -9,7 +9,7 @@ class Genome::VariantReporting::Generic::MaxIndelSizeFilter {
     has => [
         size => {
             is => "Number",
-            doc => "The mazimum size of an INDEL to pass",
+            doc => "The maximum size of an INDEL to pass",
         },
     ],
 };
@@ -33,7 +33,11 @@ sub __errors__ {
 }
 
 sub name {
-    return 'indel-size';
+    return 'max-indel-size';
+}
+
+sub requires_experts {
+    return qw/ /;
 }
 
 sub filter_entry {
@@ -42,8 +46,8 @@ sub filter_entry {
 
     my %return_values;
     for my $alt_allele ( @{$entry->{alternate_alleles}} ) {
-        my $indel_legnth = abs( length($entry->{reference_allele}) - length($alt_allele) );
-        $return_values{$alt_allele} = ( $indel_legnth >= $self->size ) ? 0 : 1;
+        my $indel_length = abs( length($entry->{reference_allele}) - length($alt_allele) );
+        $return_values{$alt_allele} = ( $indel_length >= $self->size ) ? 0 : 1;
     }
 
     return %return_values;
