@@ -7,8 +7,8 @@ use Genome;
 class Genome::VariantReporting::Dbsnp::Run {
     is => 'Genome::VariantReporting::Framework::Component::Expert::Command',
     has_input => [
-        known_variants => {
-            is => 'Genome::Model::Build::ImportedVariationList',
+        dbsnp_build_id => {
+            is => 'Text',
         },
         info_string => {
             is => 'Text',
@@ -25,11 +25,4 @@ sub name {
 
 sub result_class {
     'Genome::VariantReporting::Dbsnp::RunResult';
-}
-
-sub execute {
-    my $self = shift;
-
-    $self->output_result(Genome::VariantReporting::Dbsnp::RunResult->get_or_create($self->input_hash));
-    return 1;
 }

@@ -8,7 +8,7 @@ use Sub::Install qw(reinstall_sub);
 use above 'Genome';
 use Genome::Utility::Test qw(compare_ok);
 use Genome::VariantReporting::Framework::TestHelpers qw(
-    get_test_somatic_variation_build
+    get_resource_provider
     test_dag_xml
     test_dag_execute
     get_test_dir
@@ -28,38 +28,42 @@ use_ok($pkg) || die;
 my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('experts', $pkg->name), $pkg);
 
-my $VERSION = 5; # Bump these each time test data changes
-my $BUILD_VERSION = 2;
+my $VERSION = 6; # Bump these each time test data changes
+my $RESOURCE_VERSION = 2;
 my $test_dir = get_test_dir($pkg, $VERSION);
 
 my $expert = $pkg->create();
 my $dag = $expert->dag();
 my $expected_xml = File::Spec->join($test_dir, 'expected.xml');
 test_dag_xml($dag, $expected_xml);
+print "========== Execution Paused (press ENTER to continue) ===========\n";
+<STDIN>;
 
 set_what_interpreter_x_requires('vep');
 my $variant_type = 'snvs';
 my $expected_vcf = File::Spec->join($test_dir, "expected_$variant_type.vcf.gz");
-my $build = get_test_somatic_variation_build(version => $BUILD_VERSION);
+my $provider = get_resource_provider(version => $RESOURCE_VERSION);
+my $reference_sequence_build => Genome::Model::ReferenceSequence->get(
+    $provider->get_attribute('reference_sequence_build_id'),
+);
 
 my $feature_list_cmd = Genome::FeatureList::Command::Create->create(
-    reference => $build->reference_sequence_build,
+    reference => $reference_sequence_build,
     file_path => File::Spec->join($test_dir, "feature_list.bed"),
     format => "true-BED",
     content_type => "roi",
     name => "test",
 );
 my $feature_list = $feature_list_cmd->execute;
+$provider->set_attribute(feature_list_ids => {TEST => $feature_list->id});
 
-reinstall_sub({
-    into => "Genome::Model::Build::ReferenceSequence",
-    as => "self_chain",
-    code => sub {return $feature_list},
-});
 
 my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_file(
     File::Spec->join($test_dir, 'plan.yaml'),
 );
 $plan->validate();
-test_dag_execute($dag, $expected_vcf, $variant_type, $build, $plan);
+
+my $input_vcf = File::Spec->join($test_dir, "$variant_type.vcf.gz");
+test_dag_execute($dag, $expected_vcf, $input_vcf, $provider, $variant_type, $plan);
+
 done_testing();

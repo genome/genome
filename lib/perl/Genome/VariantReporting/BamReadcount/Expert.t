@@ -7,7 +7,7 @@ use Test::More;
 use above 'Genome';
 use Genome::Utility::Test qw(compare_ok);
 use Genome::VariantReporting::Framework::TestHelpers qw(
-    get_test_somatic_variation_build
+    get_resource_provider
     test_dag_xml
     test_dag_execute
     get_test_dir
@@ -27,8 +27,8 @@ use_ok($pkg) || die;
 my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('experts', $pkg->name), $pkg);
 
-my $VERSION = 6; # Bump these each time test data changes
-my $BUILD_VERSION = 1;
+my $VERSION = 7; # Bump these each time test data changes
+my $RESOURCE_VERSION = 1;
 my $test_dir = get_test_dir($pkg, $VERSION);
 
 my $expert = $pkg->create();
@@ -39,11 +39,14 @@ test_dag_xml($dag, $expected_xml);
 set_what_interpreter_x_requires('bam-readcount');
 my $variant_type = 'snvs';
 my $expected_vcf = File::Spec->join($test_dir, "expected_$variant_type.vcf.gz");
-my $build = get_test_somatic_variation_build(version => $BUILD_VERSION);
+my $provider = get_resource_provider(version => $RESOURCE_VERSION);
+
 my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_file(
     File::Spec->join($test_dir, 'plan.yaml'),
 );
 $plan->validate();
-test_dag_execute($dag, $expected_vcf, $variant_type, $build, $plan);
+
+my $input_vcf = File::Spec->join($test_dir, "$variant_type.vcf.gz");
+test_dag_execute($dag, $expected_vcf, $input_vcf, $provider, $variant_type, $plan);
 
 done_testing();

@@ -25,10 +25,9 @@ use Exporter 'import';
 
 our @EXPORT_OK = qw(
     test_cmd_and_result_are_in_sync
-    get_test_somatic_variation_build
-    get_test_somatic_variation_build_with_vep_annotations
-    get_test_somatic_variation_build_from_files
     get_test_dir
+    get_resource_provider
+    get_resource_provider_with_vep
     test_dag_xml
     test_dag_execute
 );
@@ -43,128 +42,28 @@ sub test_cmd_and_result_are_in_sync {
         'All command inputs are persisted SoftwareResult properties');
 }
 
-sub get_test_somatic_variation_build {
+sub get_resource_provider {
     my %p = validate(@_, {
         version => {type => SCALAR},
     });
 
-    my $test_dir = get_test_dir('Genome::VariantReporting::Framework::Component::Expert', $p{version});
-
-    return get_test_somatic_variation_build_from_files(
-        bam1 => File::Spec->join($test_dir, 'bam1.bam'),
-        bam2 => File::Spec->join($test_dir, 'bam2.bam'),
-        reference_fasta => readlink(File::Spec->join($test_dir, 'reference.fasta')),
-        snvs_vcf => File::Spec->join($test_dir, 'snvs.vcf.gz'),
-        indels_vcf => File::Spec->join($test_dir, 'indels.vcf.gz'),
+    my $test_dir = get_test_dir('Genome::VariantReporting::Framework::Component::ResourceProvider', $p{version});
+    my $fasta_file = readlink(File::Spec->join($test_dir, 'reference.fasta'));
+    my @bam_results = setup_bam_results(
+        File::Spec->join($test_dir, 'bam1.bam'),
+        File::Spec->join($test_dir, 'bam2.bam'),
+        $fasta_file,
     );
-}
-
-# This can be used for experts that require vep annotations present
-sub get_test_somatic_variation_build_with_vep_annotations {
-    my %p = validate(@_, {
-        version => {type => SCALAR},
-    });
-
-    my $test_dir = get_test_dir('Genome::VariantReporting::Framework::Component::Expert', $p{version});
-
-    return get_test_somatic_variation_build_from_files(
-        bam1 => File::Spec->join($test_dir, 'bam1.bam'),
-        bam2 => File::Spec->join($test_dir, 'bam2.bam'),
-        reference_fasta => File::Spec->join($test_dir, 'reference.fasta'),
-        snvs_vcf => File::Spec->join($test_dir, 'snvs_with_vep.vcf.gz'),
-        indels_vcf => File::Spec->join($test_dir, 'indels_with_vep.vcf.gz'),
-    );
-}
-
-sub get_test_somatic_variation_build_from_files {
-    my %p = validate(@_, {
-        bam1 => {type => SCALAR},
-        bam2 => {type => SCALAR},
-        reference_fasta => {type => SCALAR},
-        snvs_vcf => {type => SCALAR},
-        indels_vcf => {type => SCALAR},
-    });
-
-    my ($bam_result1, $bam_result2) = setup_bam_results($p{bam1}, $p{bam2},
-        $p{reference_fasta});
-    my ($snvs_result, $indels_result) = setup_vcf_results($p{snvs_vcf},
-        $p{indels_vcf});
-    my %params = (
-        bam_result1 => $bam_result1,
-        bam_result2 => $bam_result2,
-        snvs_vcf_result => $snvs_result,
-        indels_vcf_result => $indels_result,
-    );
-
-    my $build = setup_build(%params);
-
-    reinstall_sub( {
-        into => $build->reference_sequence_build->class,
-        as => 'fasta_file',
-        code => sub { return $p{reference_fasta}; },
-    });
-
-    return $build;
-}
-
-sub setup_build {
-    my %p = validate(@_, {
-        bam_result1 => {type => OBJECT},
-        bam_result2 => {type => OBJECT},
-        snvs_vcf_result => {type => OBJECT},
-        indels_vcf_result => {type => OBJECT},
-    });
-    my $build = Genome::Test::Factory::Model::SomaticVariation->setup_somatic_variation_build;
-
-    $build->tumor_build->subject->name('TEST-patient1-somval_tumor1');
-
-    my %build_to_result = (
-        $build->tumor_build->id => $p{bam_result1},
-        $build->normal_build->id => $p{bam_result2},
-    );
-    reinstall_sub( {
-        into => $build->normal_build->class,
-        as => 'merged_alignment_result',
-        code => sub {my $self = shift;
-            return $build_to_result{$self->id};
+    my $reference_sequence_build = Genome::Test::Factory::Model::ReferenceSequence->setup_reference_sequence_build($fasta_file);
+    return Genome::VariantReporting::Framework::Component::ResourceProvider->create(
+        attributes => {
+            reference_sequence_build_id => $reference_sequence_build->id,
+            reference_fasta => $fasta_file,
+            aligned_bam_result_id => [map {$_->id} @bam_results],
+            snvs_vcf => File::Spec->join($test_dir, 'snvs.vcf.gz'),
+            indels_vcf => File::Spec->join($test_dir, 'indels.vcf.gz'),
         },
-    });
-
-    reinstall_sub({
-        into => "Genome::Model::Build::RunsDV2",
-        as => "get_detailed_snvs_vcf_result",
-        code => sub { my $self = shift;
-                      return $p{snvs_vcf_result};
-        },
-    });
-    reinstall_sub({
-        into => "Genome::Model::Build::RunsDV2",
-        as => "get_detailed_indels_vcf_result",
-        code => sub { my $self = shift;
-                      return $p{indels_vcf_result};
-        },
-    });
-    return $build;
-}
-
-sub setup_vcf_results {
-    my ($snvs_vcf, $indels_vcf) = validate_pos(@_, 1, 1);
-    my $snv_vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine->__define__;
-    my $indel_vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine->__define__;
-
-    my %result_to_vcf_file = (
-        $snv_vcf_result->id => $snvs_vcf,
-        $indel_vcf_result->id => $indels_vcf,
     );
-    reinstall_sub( {
-        into => 'Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine',
-        as => 'get_vcf',
-        code => sub {my $self = shift;
-            return $result_to_vcf_file{$self->id};
-        },
-    });
-
-    return ($snv_vcf_result, $indel_vcf_result);
 }
 
 sub setup_bam_results {
@@ -219,15 +118,14 @@ sub test_dag_xml {
 }
 
 sub test_dag_execute {
-    my ($dag, $expected_vcf, $variant_type, $build, $plan) = @_;
-    my $accessor = sprintf("get_detailed_%s_vcf_result", $variant_type);
+    my ($dag, $expected_vcf, $input_vcf, $provider, $variant_type, $plan) = @_;
     my $output = $dag->execute(
-        input_result => $build->$accessor,
-        build_id => $build->id,
+        input_vcf => $input_vcf,
+        provider_json => $provider->as_json,
         variant_type => $variant_type,
         plan_json => $plan->as_json,
     );
-    my $vcf_path = $output->{output_result}->output_file_path;
+    my $vcf_path = $output->{output_vcf};
     my $differ = Genome::File::Vcf::Differ->new($vcf_path, $expected_vcf);
     my $diff = [$differ->diff];
     is_deeply($diff, [], "Found No differences between $vcf_path and (expected) $expected_vcf") or

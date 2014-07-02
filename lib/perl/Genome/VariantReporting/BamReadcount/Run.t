@@ -29,11 +29,11 @@ isa_ok($factory->get_class('runners', $cmd_class->name), $cmd_class);
 my $result_class = 'Genome::VariantReporting::BamReadcount::RunResult';
 use_ok($result_class) or die;
 
-my $cmd = generate_test_cmd();
 my $test_data_dir = Genome::Utility::Test->data_dir_ok($cmd_class, 'v1');
 my $input_vcf = $test_data_dir . '/input.vcf';
 my $expected_output_vcf  = $test_data_dir . '/expected.vcf';
 my $expected_region_list = $test_data_dir . '/expected.region_list';
+my $cmd = generate_test_cmd($input_vcf);
 
 my $test_region_list = $result_class->make_region_file($input_vcf);
 compare_ok($test_region_list, $expected_region_list, 'bam region_list created ok');
@@ -45,6 +45,8 @@ test_cmd_and_result_are_in_sync($cmd);
 done_testing();
 
 sub generate_test_cmd {
+    my $input_vcf = shift;
+
     Sub::Install::reinstall_sub({
         into => 'Genome::Model::Tools::Sam::Readcount',
         as => '_execute_body',
@@ -56,16 +58,10 @@ sub generate_test_cmd {
         bam_file => 1,
         reference_fasta => 1,
     );
-    my $input_result = $result_class->__define__();
-    Sub::Install::reinstall_sub({
-        into => $result_class,
-        as => 'input_result_file_path',
-        code => sub {return $input_vcf;},
-    });
 
     my %params = (
-        aligned_bam_result => $aligned_bam_result,
-        input_result => $input_result,
+        aligned_bam_result_id => $aligned_bam_result->id,
+        input_vcf => $input_vcf,
         variant_type => 'snvs',
         version => 0.5,
         per_library => 1,

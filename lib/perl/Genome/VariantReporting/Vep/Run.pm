@@ -10,16 +10,16 @@ class Genome::VariantReporting::Vep::Run {
         ensembl_version => {
             is => 'String',
         },
-        feature_list_ids_and_tags => {
+        custom_annotation_tags => {
             is => 'String',
             is_many => 1,
-            doc => 'List of feature lists to be annotated in the 
-                    INFO field, along with the tag to be used
-                    e.g. 12345:SEGDUP,58676:ROI
-                    The id and tag should be separated by a colon',
             is_optional => 1,
         },
-        reference_build => {is => 'Genome::Model::Build::ReferenceSequence'},
+        feature_list_ids => {
+            is => 'HASH',
+            doc => 'A hash keyed on INFO TAG with values of FeatureList IDs',
+        },
+        reference_fasta => {is => 'Path'},
         species => { is => 'Text', },
         terms => {is => 'String',},
         plugins => {is => 'String',

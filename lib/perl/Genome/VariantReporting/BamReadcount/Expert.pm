@@ -20,33 +20,27 @@ sub dag {
     my $dag = Genome::WorkflowBuilder::DAG->create(
         name => 'BamReadcount',
     );
-    my $build_adaptor_op = $self->connected_build_adaptor_operation($dag);
+    my $adaptor_op = $self->connected_adaptor_operation($dag);
 
     my $run_op = $self->run_op;
     $dag->add_operation($run_op);
-    $run_op->parallel_by('aligned_bam_result');
+    $run_op->parallel_by('aligned_bam_result_id');
     $dag->connect_input(
-        input_property => 'input_result',
+        input_property => 'input_vcf',
         destination => $run_op,
-        destination_property => 'input_result',
-    );
-    $dag->create_link(
-        source => $build_adaptor_op,
-        source_property => 'bam_results',
-        destination => $run_op,
-        destination_property => 'aligned_bam_result',
+        destination_property => 'input_vcf',
     );
     $self->_link(dag => $dag,
-          adaptor => $build_adaptor_op,
+          adaptor => $adaptor_op,
           target => $run_op,
     );
 
     my $annotate_op = $self->annotate_op;
     $dag->add_operation($annotate_op);
     $dag->connect_input(
-        input_property => 'input_result',
+        input_property => 'input_vcf',
         destination => $annotate_op,
-        destination_property => 'input_result',
+        destination_property => 'input_vcf',
     );
     $dag->create_link(
         source => $run_op,
@@ -55,14 +49,14 @@ sub dag {
         destination_property => 'readcount_results',
     );
     $self->_link(dag => $dag,
-          adaptor => $build_adaptor_op,
+          adaptor => $adaptor_op,
           target => $annotate_op,
     );
 
     $dag->connect_output(
-        output_property => 'output_result',
+        output_property => 'output_vcf',
         source => $annotate_op,
-        source_property => 'output_result',
+        source_property => 'output_vcf',
     );
 
     return $dag;

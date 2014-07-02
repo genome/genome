@@ -8,8 +8,8 @@ use File::Spec;
 class Genome::VariantReporting::Dbsnp::RunResult {
     is => 'Genome::VariantReporting::Framework::Component::Expert::Result',
     has_input => [
-        known_variants => {
-            is => 'Genome::Model::Build::ImportedVariationList',
+        dbsnp_build_id => {
+            is => 'Text',
         },
     ],
     has_param => [
@@ -22,21 +22,32 @@ class Genome::VariantReporting::Dbsnp::RunResult {
     ],
 };
 
+
 sub output_filename {
     return 'joinx_vcf_annotate.vcf.gz';
+}
+
+sub annotation_file {
+    my $self = shift;
+
+    my $dbsnp_build = Genome::Model::Build::ImportedVariationList->get($self->dbsnp_build_id);
+    if ($dbsnp_build) {
+        return $dbsnp_build->snvs_vcf;
+    } else {
+        die sprintf("No dbsnp build with id (%s)", $self->dbsnp_build_id);
+    }
 }
 
 sub _run {
     my $self = shift;
 
-    my $input_file  = $self->input_result_file_path;
     my $output_file = File::Spec->join($self->temp_staging_directory, $self->output_filename);
     my $info_string = $self->info_string;
     my $info        = $info_string ? 1 : 0;
 
     my $vcf_annotator = Genome::Model::Tools::Joinx::VcfAnnotate->create(
-        input_file      => $input_file,
-        annotation_file => $self->known_variants->snvs_vcf,
+        input_file      => $self->input_vcf,
+        annotation_file => $self->annotation_file,
         output_file     => $output_file,
         use_bgzip       => 1,
         info_fields     => $info_string,
