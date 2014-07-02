@@ -142,9 +142,15 @@ sub validate_with_plan_params {
 # TODO this is not covered by tests
 sub __planned_output_errors__ {
     my ($self, $params) = validate_pos(@_, 1, 1);
-    my @errors;
     my $needed = Set::Scalar->new($self->planned_output_names);
+    return $self->_get_missing_errors($params, $needed),
+        $self->_get_extra_errors($params, $needed);
+}
+sub _get_missing_errors {
+    my ($self, $params, $needed) = validate_pos(@_, 1, 1, 1);
+
     my $have = Set::Scalar->new(keys %{$params});
+    my @errors;
     unless($needed->is_equal($have)) {
         if (my $still_needed = $needed - $have) {
             push @errors, UR::Object::Tag->create(
@@ -154,11 +160,22 @@ sub __planned_output_errors__ {
                     $self->class, join(",", $still_needed->members)),
             );
         }
+    }
+
+    return @errors;
+}
+
+sub _get_extra_errors {
+    my ($self, $params, $needed) = validate_pos(@_, 1, 1, 1);
+
+    my $have = Set::Scalar->new(keys %{$params});
+    my @errors;
+    unless($needed->is_equal($have)) {
         if (my $not_needed = $have - $needed) {
             push @errors, UR::Object::Tag->create(
                 type => 'error',
                 properties => [$not_needed->members],
-                desc => sprintf("Parameters provided by plan but not required by adaptor (%s): (%s)",
+                desc => sprintf("Parameters provided but not required by adaptor (%s): (%s)",
                     $self->class, join(",", $not_needed->members)),
             );
         }
