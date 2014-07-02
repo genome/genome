@@ -18,10 +18,10 @@ use_ok($pkg);
 my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('interpreters', $pkg->name), $pkg);
 
-my $filter = $pkg->create(
+my $interpreter = $pkg->create(
     sample_name => "S1",
 );
-lives_ok(sub {$filter->validate}, "Filter validates ok");
+lives_ok(sub {$interpreter->validate}, "Filter validates ok");
 
 my $ft_value = "PASS";
 my $entry = create_entry($ft_value);
@@ -29,7 +29,7 @@ my %expected_return_values = (
     C => { ft_string => $ft_value },
     G => { ft_string => $ft_value },
 );
-is_deeply({$filter->interpret_entry($entry)}, \%expected_return_values, "Entry gets interpreted correctly");
+is_deeply({$interpreter->interpret_entry($entry)}, \%expected_return_values, "Entry gets interpreted correctly");
 
 
 sub create_vcf_header {
