@@ -26,10 +26,11 @@ class Genome::InstrumentData::Command::GenerateFileForReimport {
     has_output => {
         file => {
             is => 'File',
-            doc => 'File name [source files tsv] to generate. Use this in the import manager.',
+            default_value => '-',
+            doc => 'File name [source files tsv] to generate. Use this in the import manager. Defaults to STDOUT.',
         },
     },
-    has_transient => {
+    has_optional_transient => {
         _instrument_data_and_new_source_files => { is => 'Hash', },
     },
 };
