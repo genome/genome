@@ -205,105 +205,7 @@ sub execute {
       }
     }
 
-    #TODO: Use the coordinates of each fusion to produce pairoscope plots showing the support for each rearrangement
-    #Relevant pairoscope option:
-    #Usage:   pairoscope [options] <align.bam> <chr> <start> <end> <align2.bam> <chr2> <start2> <end2> 
-    # -q INT    minimum mapping quality [0]
-    # -p FLAG   output in pdf instead of png
-    # -b INT    size of buffer around region to include [100]
-    # -n FLAG   print the normal pairs too
-    # -o STRING filename of the output png
-    # -W INT    Width of the document [1024]
-    # -H INT    Height of the document [768]
-    # -g STRING bam file of exons for gene models
-    # -u INT    upper bound of the insert size for a normal read [2147483647]
-    # -l INT    lower bound of the insert size for a normal read[-1]
-    # -m INT    minimum size of an event to display. Translocations are always displayed[0]
-    # -P FLAG   Only display reads with both mates mapped in the graph
-    # -t STRING list of transcripts to display
-
-    #pairoscope -P -m 100000 -b 10000 /gscmnt/gc4074/info/model_data/2875512598/build111201309/alignments/111286100.bam 6 28884413 28884413 /gscmnt/gc4074/info/model_data/2875512598/build111201309/alignments/111286100.bam 17 28298036 28298036 -o HG1_TRIM27-EFCAB5_DNA.png
-    
-    #Set up the outdir and a temp file that will be used to gather read support counts dumped by pairoscope
-    my $pairoscope_outdir = $build_outdir . "pairoscope/";
-    mkdir($pairoscope_outdir);
-    my $pairoscope_tmp_tumor_file = $pairoscope_outdir . "pairoscope_tumor.tmp";
-    my $pairoscope_tmp_normal_file = $pairoscope_outdir . "pairoscope_normal.tmp";
-
-    #Pairoscope run parameters
-    my $min_mapping_quality = 1;
-    my $min_event_size = 100000;
-    my $flank = 10000;
-    my $offset = 1000; #To make it easier to see the arcs...
-    my $params_string = "-P -q $min_mapping_quality -m $min_event_size -b $flank";
-    foreach my $l (keys %data){    
-      my $gene1 = $data{$l}{gene1};
-      my $gene2 = $data{$l}{gene2};
-      my $coords1 = $data{$l}{coords1};
-      my $coords2 = $data{$l}{coords2};
-      my $transcript1 = $data{$l}{transcript1};
-      my $transcript2 = $data{$l}{transcript2};
-
-      #TODO: Figure out with Dave L. how this transcript option works.  Need to specify an Exons BAM with -g option?
-      #TODO: Where do the annotations in the sv.annot file in somatic variation results come from
-      my $transcript_string = '';
-      if ($transcript1 && $transcript2){
-        $transcript_string = "-t $transcript1,$transcript2";
-      }
-
-      my ($chr1, $start1, $end1, $chr2, $start2, $end2);
-      if ($coords1 =~ /chr(\w+)\:(\d+)\-(\d+)/){
-        $chr1 = $1;
-        $start1 = ($2-$flank)-$offset;
-        $end1 = ($3+$flank)-$offset;
-      }
-
-      if ($coords2 =~ /chr(\w+)\:(\d+)\-(\d+)/){
-        $chr2 = $1;
-        $start2 = ($2-$flank)+$offset;
-        $end2 = ($3+$flank)+$offset;
-      }
-
-      #Pairoscope plot for Tumor BAM
-      my $tumor_outfile = $pairoscope_outdir . "$gene1-$gene2"."_tumor_$l".".png";
-      my $pairoscope_tumor_cmd = "pairoscope $params_string $transcript_string -o $tumor_outfile $tumor_bam $chr1 $start1 $end1 $tumor_bam $chr2 $start2 $end2 2>$pairoscope_tmp_tumor_file";
-      Genome::Sys->shellcmd(cmd => $pairoscope_tumor_cmd);
-      my $pairoscope_tumor_reads = 0;
-      if (-e $pairoscope_tmp_tumor_file){
-        open (TMP1, "$pairoscope_tmp_tumor_file") || die "\n\nCould not open tmp file: $pairoscope_tmp_tumor_file\n\n";
-        while(<TMP1>){
-          chomp($_);
-          my @line = split("\t", $_);
-          next unless (scalar(@line) == 4);
-          $pairoscope_tumor_reads++;
-        }
-        close (TMP1);
-      }
-      $data{$l}{pairoscope_tumor_reads} = $pairoscope_tumor_reads;
-      #print "\n\nTUMOR: $gene1 $coords2 $transcript1\t\t$gene2 $coords2 $transcript2\ttumor count = $pairoscope_tumor_reads\n$pairoscope_tumor_cmd";
-
-      #Pairoscope plot for Normal BAM
-      my $normal_outfile = $pairoscope_outdir . "$gene1-$gene2"."_normal_$l".".png";
-      my $pairoscope_normal_cmd = "pairoscope $params_string $transcript_string -o $normal_outfile $normal_bam $chr1 $start1 $end1 $normal_bam $chr2 $start2 $end2 2>$pairoscope_tmp_normal_file";
-      Genome::Sys->shellcmd(cmd => $pairoscope_normal_cmd);
-      my $pairoscope_normal_reads = 0;
-      if (-e $pairoscope_tmp_normal_file){
-        open (TMP2, "$pairoscope_tmp_normal_file") || die "\n\nCould not open tmp file: $pairoscope_tmp_normal_file\n\n";
-        while(<TMP2>){
-          chomp($_);
-          my @line = split("\t", $_);
-          next unless (scalar(@line) == 4);
-          $pairoscope_normal_reads++;
-        }
-        close (TMP2);
-      }
-      $data{$l}{pairoscope_normal_reads} = $pairoscope_normal_reads;
-      #print "\n\nNORMAL: $gene1 $coords2 $transcript1\t\t$gene2 $coords2 $transcript2\tnormal count = $pairoscope_normal_reads\n$pairoscope_normal_cmd";
-
-      #Clean-up the pairoscope temp files
-      unlink $pairoscope_tmp_tumor_file;
-      unlink $pairoscope_tmp_normal_file;
-    }
+    $self->create_pairoscope_plots(\%data, $tumor_bam, $normal_bam, $build_outdir);
 
     #Print out a new file containing the extra annotation columns
     open (FUSION_OUT, ">$fusion_candidate_outfile") || die "\n\nCould not open fusion outfile\n\n";
@@ -340,6 +242,95 @@ sub execute {
   return 1;
 }
 
+sub create_pairoscope_plots {
+    #TODO: Use the coordinates of each fusion to produce pairoscope plots showing the support for each rearrangement
+    
+    my $self = shift;
+    my $data = shift;
+    my $tumor_bam = shift;
+    my $normal_bam = shift;
+    my $build_outdir = shift;
+
+    #Set up the outdir and a temp file that will be used to gather read support counts dumped by pairoscope
+    my $pairoscope_outdir = $build_outdir . "pairoscope/";
+    mkdir($pairoscope_outdir);
+    my $pairoscope_tmp_tumor_file = $pairoscope_outdir . "pairoscope_tumor.tmp";
+    my $pairoscope_tmp_normal_file = $pairoscope_outdir . "pairoscope_normal.tmp";
+
+    #Pairoscope run parameters
+    my $min_mapping_quality = 1;
+    my $min_event_size = 100000;
+    my $flank = 10000;
+    my $offset = 1000; #To make it easier to see the arcs...
+    my $params_string = "-P -q $min_mapping_quality -m $min_event_size -b $flank";
+    foreach my $l (keys %$data){    
+      my $gene1 = $data->{$l}{gene1};
+      my $gene2 = $data->{$l}{gene2};
+      my $coords1 = $data->{$l}{coords1};
+      my $coords2 = $data->{$l}{coords2};
+      my $transcript1 = $data->{$l}{transcript1};
+      my $transcript2 = $data->{$l}{transcript2};
+
+      #TODO: Figure out with Dave L. how this transcript option works.  Need to specify an Exons BAM with -g option?
+      #TODO: Where do the annotations in the sv.annot file in somatic variation results come from
+      my $transcript_string = '';
+      if ($transcript1 && $transcript2){
+        $transcript_string = "-t $transcript1,$transcript2";
+      }
+
+      my ($chr1, $start1, $end1, $chr2, $start2, $end2);
+      if ($coords1 =~ /chr(\w+)\:(\d+)\-(\d+)/){
+        $chr1 = $1;
+        $start1 = ($2-$flank)-$offset;
+        $end1 = ($3+$flank)-$offset;
+      }
+
+      if ($coords2 =~ /chr(\w+)\:(\d+)\-(\d+)/){
+        $chr2 = $1;
+        $start2 = ($2-$flank)+$offset;
+        $end2 = ($3+$flank)+$offset;
+      }
+
+      #Pairoscope plot for Tumor BAM
+      my $tumor_outfile = $pairoscope_outdir . "$gene1-$gene2"."_tumor_$l".".png";
+      my $pairoscope_tumor_cmd = "pairoscope $params_string $transcript_string -o $tumor_outfile $tumor_bam $chr1 $start1 $end1 $tumor_bam $chr2 $start2 $end2 2>$pairoscope_tmp_tumor_file";
+      Genome::Sys->shellcmd(cmd => $pairoscope_tumor_cmd);
+      my $pairoscope_tumor_reads = 0;
+      if (-e $pairoscope_tmp_tumor_file){
+        open (TMP1, "$pairoscope_tmp_tumor_file") || die "\n\nCould not open tmp file: $pairoscope_tmp_tumor_file\n\n";
+        while(<TMP1>){
+          chomp($_);
+          my @line = split("\t", $_);
+          next unless (scalar(@line) == 4);
+          $pairoscope_tumor_reads++;
+        }
+        close (TMP1);
+      }
+      $data->{$l}{pairoscope_tumor_reads} = $pairoscope_tumor_reads;
+      #print "\n\nTUMOR: $gene1 $coords2 $transcript1\t\t$gene2 $coords2 $transcript2\ttumor count = $pairoscope_tumor_reads\n$pairoscope_tumor_cmd";
+
+      #Pairoscope plot for Normal BAM
+      my $normal_outfile = $pairoscope_outdir . "$gene1-$gene2"."_normal_$l".".png";
+      my $pairoscope_normal_cmd = "pairoscope $params_string $transcript_string -o $normal_outfile $normal_bam $chr1 $start1 $end1 $normal_bam $chr2 $start2 $end2 2>$pairoscope_tmp_normal_file";
+      Genome::Sys->shellcmd(cmd => $pairoscope_normal_cmd);
+      my $pairoscope_normal_reads = 0;
+      if (-e $pairoscope_tmp_normal_file){
+        open (TMP2, "$pairoscope_tmp_normal_file") || die "\n\nCould not open tmp file: $pairoscope_tmp_normal_file\n\n";
+        while(<TMP2>){
+          chomp($_);
+          my @line = split("\t", $_);
+          next unless (scalar(@line) == 4);
+          $pairoscope_normal_reads++;
+        }
+        close (TMP2);
+      }
+      $data->{$l}{pairoscope_normal_reads} = $pairoscope_normal_reads;
+      #print "\n\nNORMAL: $gene1 $coords2 $transcript1\t\t$gene2 $coords2 $transcript2\tnormal count = $pairoscope_normal_reads\n$pairoscope_normal_cmd";
+
+      #Clean-up the pairoscope temp files
+      unlink $pairoscope_tmp_tumor_file;
+      unlink $pairoscope_tmp_normal_file;
+    }
+}
+
 1;
-
-
