@@ -16,7 +16,7 @@ sub filter_entry {
 }
 
 sub interpret_entry {
-    my ($self, $entry, $passed_alt_alleles) = shift;
+    my ($self, $entry, $passed_alt_alleles) = @_;
 
     my %filter_output = $self->filter_entry($entry);
 
