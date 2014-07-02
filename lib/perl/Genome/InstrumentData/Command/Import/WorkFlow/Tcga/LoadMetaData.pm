@@ -20,7 +20,7 @@ class Genome::InstrumentData::Command::Import::WorkFlow::Tcga::LoadMetaData {
         instrument_data_attributes => {
             is => 'Hash',
             default_value => {},
-            doc => 'Instrumetn data attributes retrieved from the meta data XML.',
+            doc => 'Instrument data attributes retrieved from the meta data XML.',
         },
     },
 };

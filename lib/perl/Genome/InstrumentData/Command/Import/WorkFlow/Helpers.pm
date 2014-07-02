@@ -30,7 +30,7 @@ sub move_path {
     }
     my $to_sz = -s $to;
     if ( not $to_sz or $to_sz != $from_sz ) {
-        $self->error_message("Move succeeded, but destination size is diffeerent from original! $to_sz vs $from_sz");
+        $self->error_message("Move succeeded, but destination size is different from original! $to_sz vs $from_sz");
         return;
     }
 
