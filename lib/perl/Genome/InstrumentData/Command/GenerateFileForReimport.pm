@@ -15,15 +15,12 @@ class Genome::InstrumentData::Command::GenerateFileForReimport {
             is_many => 1,
             doc => 'Instrument data to use to create file to reimport.',
         },
-        #skip_errors => {},
     },
     has_output => {
         file => {
             is => 'File',
             doc => 'File name [source files tsv] to generate. Use this in the import manager.',
         },
-    },
-    has_optional_transient => {
     },
 };
 
@@ -36,47 +33,23 @@ sub execute {
     my $self = shift;
     $self->status_message('Generate file to reimport instrument data...');
 
-    # Gather the params for each inst data
     my @reimports;
-    my $reimported_attribute_label = Genome::InstrumentData::Reimport->attribute_label_for_reimported_from;
-    my %headers = ( $reimported_attribute_label => 1 );
     for my $instrument_data ( $self->instrument_data ) {
+        my $reimport = Genome::InstrumentData::Reimport->attributes_for_reimport($instrument_data);
+        return if not $reimport;
 
-        my $source_file = $instrument_data->archive_path;
-        if ( not $source_file or not -s $source_file ) {
+        if ( not $reimport->{source_files} or not -s $reimport->{source_files} ) {
             $self->error_message("No source file for instrument data! %s", $instrument_data->id);
             return;
         }
 
-        my %reimport = ( 
-            $reimported_attribute_label => $instrument_data->id,
-            library_name => $instrument_data->library->name,
-            source_files => $source_file,
-        );
-        for my $optional_property_name (qw/ run_name subset_name /) {
-            next if not $instrument_data->$optional_property_name;
-            $reimport{$optional_property_name} = $instrument_data->$optional_property_name;
-            $headers{$optional_property_name}++;
-        }
-        push @reimports, \%reimport;
-
-        for my $attribute ( $instrument_data->attributes ) {
-            my $attribute_value = 
-            $reimport{ $attribute->attribute_label } = $attribute->attribute_value;
-            $headers{ $attribute->attribute_label }++;
-        }
+        push @reimports, $reimport;
     }
     $self->status_message('Found '.@reimports.' instrument data...');
 
-    # Determine the headers
-    for my $ignored_attr_label ( Genome::InstrumentData::Reimport->attribute_labels_to_ignore_when_reimporting ) {
-        delete $headers{$ignored_attr_label};
-    }
+    my @headers = Genome::InstrumentData::Reimport->headers_for_attributes_for_reimports(@reimports);
+    return if not @headers;
 
-    my @headers = sort keys %headers;
-    unshift @headers, (qw/ library_name source_files /);
-
-    # Write the file
     my $file = $self->file;
     my $fh = eval{ Genome::Sys->open_file_for_writing($file); };
     if ( not $fh ) {
