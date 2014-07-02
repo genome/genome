@@ -37,8 +37,8 @@ sub interpret_entry {
         $entry, $self->get_readcount_entry($entry));
 
     for my $allele (@$passed_alt_alleles) {
-        my $ref_allele = $self->translate_ref_allele($entry->{reference_allele}, $allele);
-        my $ref_count = Genome::VariantReporting::BamReadcount::VafCalculator::calculate_coverage_for_allele($self->get_readcount_entry($entry), $ref_allele, 'A');
+        my $translated_reference_allele = $self->translate_ref_allele($entry->{reference_allele}, $allele);
+        my $ref_count = Genome::VariantReporting::BamReadcount::VafCalculator::calculate_coverage_for_allele($self->get_readcount_entry($entry), $translated_reference_allele, 'A');
         my $vaf;
         if (defined $vafs{$allele}) {
             $vaf = $vafs{$allele};
@@ -46,21 +46,23 @@ sub interpret_entry {
         else {
             $vaf = undef;
         }
+        my $readcount_entry = $self->get_readcount_entry($entry);
 
         $return_values{$allele} = {
             vaf => $vaf,
-            var_count => Genome::VariantReporting::BamReadcount::VafCalculator::calculate_coverage_for_allele($self->get_readcount_entry($entry), $allele, $entry->{reference_allele}),
+            var_count => Genome::VariantReporting::BamReadcount::VafCalculator::calculate_coverage_for_allele($readcount_entry, $allele, $entry->{reference_allele}),
             ref_count => $ref_count,
-            per_library_var_count => $self->per_library_coverage($entry, $allele),
+            per_library_var_count => $self->per_library_coverage($readcount_entry, $allele, $entry->{reference_allele}),
         }
     }
 
     return %return_values;
 }
 
+# The $reference_allele must be untranslated. When we are interested in counts for reference, $allele should be the translated ref allele.
 sub per_library_coverage {
-    my ($self, $entry, $allele) = @_;
-    my $counts = Genome::VariantReporting::BamReadcount::VafCalculator::calculate_per_library_coverage_for_allele($self->get_readcount_entry($entry), $allele, $entry->{reference_allele});
+    my ($self, $readcount_entry, $allele, $reference_allele) = @_;
+    my $counts = Genome::VariantReporting::BamReadcount::VafCalculator::calculate_per_library_coverage_for_allele($readcount_entry, $allele, $reference_allele);
     return join(',', map {"$_:" . $counts->{$_} } keys %$counts);
 }
 
