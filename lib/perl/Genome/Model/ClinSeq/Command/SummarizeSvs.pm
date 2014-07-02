@@ -118,7 +118,7 @@ sub execute {
     my $sv_annot_file = $self->copy_sv_annot($build_outdir, $build_dir);
     my $fusion_candidate_outfile = $build_outdir . "CandidateSvCodingFusions.tsv";
     my %data;
-    $self->read_sv_annot_into_hash($sv_annot_file, \%data, $entrez_ensembl_data);
+    $self->read_sv_annot_into_hash($sv_annot_file, \%data, $entrez_ensembl_data, $build_outdir);
     $self->annotate_genes(\%data, $gene_symbol_lists);
     $self->create_pairoscope_plots(\%data, $tumor_bam, $normal_bam, $build_outdir);
     $self->create_fusion_file($fusion_candidate_outfile, $gene_symbol_lists, \%data);
@@ -175,13 +175,23 @@ sub read_sv_annot_into_hash {
     my $sv_annot_file = shift;
     my $data = shift;
     my $entrez_ensembl_data = shift;
+    my $outdir = shift;
 
-    if (-e $sv_annot_file){
+    if (-e $sv_annot_file) {
       open (SV_ANNO, "$sv_annot_file") || die "\n\nCould not open SV annotation file: $sv_annot_file\n\n";
       my $l = 0;
+      my %sv_types;
       while(<SV_ANNO>){
         chomp($_);
         my @line = split("\t", $_);
+        my $sv_type = $line[6];
+        if($sv_type ne "TYPE") {
+          if (defined $sv_types{$sv_type}) {
+            $sv_types{$sv_type} += 1;
+          } else {
+            $sv_types{$sv_type} = 1;
+          }
+        }
         #Grab the somatic 'CTX' events, that are candidate 'Fusion' and 'AffectCoding'
         if ($_ =~ /\s+CTX\s+/ && $_ =~ /Fusion/ && $_ =~ /AffectCoding/){
           my $annot_string = $line[15];
@@ -216,7 +226,35 @@ sub read_sv_annot_into_hash {
           $data->{$l}{transcript2} = $transcript2;
         }
       }
+      $self->write_stats($outdir, \%sv_types);
     }
+}
+
+sub write_stats {
+    my $self = shift;
+    my $outdir = shift;
+    my $sv_types = shift;
+    my $stats_file = $outdir . "Stats.tsv";
+    open (my $STATS, ">$stats_file") || die "\n\nCould not open stats file: $stats_file\n\n";
+    print $STATS "Question\tAnswer\tData_Type\tAnalysis_Type\tStatistic_Type\tExtra_Description\n";
+    $self->write_sv_type_stats($sv_types, $STATS);
+    close($STATS);
+}
+
+sub write_sv_type_stats {
+    my $self = shift;
+    my $sv_types = shift;
+    my $STATS = shift;
+    my $CTX_counts = $sv_types->{"CTX"} || 0;
+    my $ITX_counts = $sv_types->{"ITX"} || 0;
+    my $DEL_counts = $sv_types->{"DEL"} || 0;
+    my $INS_counts = $sv_types->{"INS"} || 0;
+    my $INV_counts = $sv_types->{"INV"} || 0;
+    print $STATS "Number of CTX SV's\t$CTX_counts\tWGS\tClinseq Build Summary\tCount\tNumber of inter-chromosomal translocations\n";
+    print $STATS "Number of ITX SV's\t$ITX_counts\tWGS\tClinseq Build Summary\tCount\tNumber of intra-chromosomal translocations\n";
+    print $STATS "Number of DEL SV's\t$DEL_counts\tWGS\tClinseq Build Summary\tCount\tNumber of deletion SVs\n";
+    print $STATS "Number of INS SV's\t$INS_counts\tWGS\tClinseq Build Summary\tCount\tNumber of insertion SVs\n";
+    print $STATS "Number of INV SV's\t$INV_counts\tWGS\tClinseq Build Summary\tCount\tNumber of Inversion SVs\n";
 }
 
 sub annotate_genes {
