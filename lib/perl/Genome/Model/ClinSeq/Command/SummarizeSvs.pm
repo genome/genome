@@ -115,78 +115,10 @@ sub execute {
     #e.g. /gscmnt/gc8002/info/model_data/2882679738/build119517041/variants/sv/union-union-sv_breakdancer_1.2__5-sv_breakdancer_1.2__6-sv_squaredancer_0.1__4/
     #squaredancer.svs.merge.file.annot
 
-    #Make a copy of the annotated somatic SVs file and place in the outdir
+    my $sv_annot_file = $self->copy_sv_annot($build_outdir, $build_dir);
     my $fusion_candidate_outfile = $build_outdir . "CandidateSvCodingFusions.tsv";
-    my $sv_annot_search1 = $build_dir . "/variants/sv/union-union*/svs.hq.merge.annot.somatic";
-    my $sv_annot_search2 = $build_dir . "/variants/sv/union-sv*/svs.hq.merge.annot.somatic";
-
-    my $sv_annot_file = 'NULL';
-
-    my $sv_annot_file1 = `ls $sv_annot_search1 2>/dev/null` || "NULL";
-    chomp($sv_annot_file1);
-
-    my $sv_annot_file2 = `ls $sv_annot_search2 2>/dev/null` || "NULL";
-    chomp($sv_annot_file2);
-
-    if (-e $sv_annot_file1){
-      $sv_annot_file = $sv_annot_file1;
-    }elsif (-e $sv_annot_file2){
-      $sv_annot_file = $sv_annot_file2;
-    }
-
-    #Produce a simplified list of SVs gene fusion pairs (e.g. BCR-ABL1) - where type is fusion, and ORF affecting
     my %data;
-    if (-e $sv_annot_file){
-
-      #Copy the SV annot file to the clinseq working dir
-      my $new_sv_annot_file = $build_outdir . "svs.hq.merge.annot.somatic";
-      unless (-e $new_sv_annot_file){
-        Genome::Sys->copy_file($sv_annot_file, $new_sv_annot_file);
-      }
-
-      open (SV_ANNO, "$sv_annot_file") || die "\n\nCould not open SV annotation file: $sv_annot_file\n\n";
-      my $l = 0;
-      while(<SV_ANNO>){
-        chomp($_);
-        my @line = split("\t", $_);
-        #Grab the somatic 'CTX' events, that are candidate 'Fusion' and 'AffectCoding'
-        if ($_ =~ /\s+CTX\s+/ && $_ =~ /Fusion/ && $_ =~ /AffectCoding/){
-          my $annot_string = $line[15];
-          my $coord_string = $line[18];
-          my $gene_pair = '';
-          my $gene1 = '';
-          my $gene2 = '';
-          if ($annot_string =~ /^Gene\:(\S+?)\|(\S+?)\,/){
-            $gene_pair = "$1-$2";
-            $gene1 = $1;
-            $gene2 = $2;
-          }
-          my $transcript1 = '';
-          my $transcript2 = '';
-          if ($annot_string =~ /\,(\w{2}\_\d+)\|.*\-(\w{2}\_\d+)\|/){
-            $transcript1 = $1;
-            $transcript2 = $2;
-          }
-          $l++;
-          my @coords = split(",", $coord_string);
-          my $mapped_gene_name1 = $self->fixGeneName('-gene'=>$gene1, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
-          my $mapped_gene_name2 = $self->fixGeneName('-gene'=>$gene2, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
-          my $record = "$gene_pair\t$gene1\t$gene2\t$coords[0]\t$coords[1]\t$mapped_gene_name1\t$mapped_gene_name2";
-          $data{$l}{record} = $record;
-          $data{$l}{coords1} = $coords[0];
-          $data{$l}{coords2} = $coords[1];
-          $data{$l}{gene1} = $gene1;
-          $data{$l}{gene2} = $gene2;
-          $data{$l}{mapped_gene1} = $mapped_gene_name1;
-          $data{$l}{mapped_gene2} = $mapped_gene_name2;
-          $data{$l}{transcript1} = $transcript1;
-          $data{$l}{transcript2} = $transcript2;
-
-        }
-      }
-    }else{
-      $self->status_message("Could not find: SV annotation file by:\n$sv_annot_search1\n$sv_annot_search2");
-    }
+    $self->read_sv_annot_into_hash($sv_annot_file, \%data, $entrez_ensembl_data);
 
     #Annotate the genes of this file to help identify genes of interest (e.g. kinases, etc.)...
     foreach my $l (keys %data){
@@ -224,22 +156,101 @@ sub execute {
     close(FUSION_OUT);
     $self->fusion_output_file($fusion_candidate_outfile);
 
-
     #TODO: Create a Stats.tsv file summarizing basic statistics of the sv annotations file
-
     #TODO: Identify the deletion regions.  Create a display for each deletion showing coverage across that region in tumor and normal
-
     #TODO: How reliable are our SVs.  Is there a way to identify a 'high confidence' set?
-
     #TODO: Apply additional annotation strategies to the somatic SVs identified.
     #- What are the genes/transcripts affected by the breakpoints of deletions, inversions, translocations?
 
-
-
   }
   $self->status_message("\n\n");
-
   return 1;
+}
+
+sub copy_sv_annot {
+    my $self = shift;
+    my $build_outdir = shift;
+    my $build_dir = shift;
+
+    #Make a copy of the annotated somatic SVs file and place in the outdir
+    my $sv_annot_search1 = $build_dir . "/variants/sv/union-union*/svs.hq.merge.annot.somatic";
+    my $sv_annot_search2 = $build_dir . "/variants/sv/union-sv*/svs.hq.merge.annot.somatic";
+
+    my $sv_annot_file = 'NULL';
+
+    my $sv_annot_file1 = `ls $sv_annot_search1 2>/dev/null` || "NULL";
+    chomp($sv_annot_file1);
+
+    my $sv_annot_file2 = `ls $sv_annot_search2 2>/dev/null` || "NULL";
+    chomp($sv_annot_file2);
+
+    if (-e $sv_annot_file1){
+      $sv_annot_file = $sv_annot_file1;
+    }elsif (-e $sv_annot_file2){
+      $sv_annot_file = $sv_annot_file2;
+    } else {
+      $self->status_message("Could not find: SV annotation file by:\n$sv_annot_search1\n$sv_annot_search2");
+    }
+
+    #Produce a simplified list of SVs gene fusion pairs (e.g. BCR-ABL1) - where type is fusion, and ORF affecting
+    if (-e $sv_annot_file){
+      #Copy the SV annot file to the clinseq working dir
+      my $new_sv_annot_file = $build_outdir . "svs.hq.merge.annot.somatic";
+      unless (-e $new_sv_annot_file){
+        Genome::Sys->copy_file($sv_annot_file, $new_sv_annot_file);
+      }
+    }
+    return $sv_annot_file;
+}
+
+sub read_sv_annot_into_hash {
+    my $self = shift;
+    my $sv_annot_file = shift;
+    my $data = shift;
+    my $entrez_ensembl_data = shift;
+
+    if (-e $sv_annot_file){
+      open (SV_ANNO, "$sv_annot_file") || die "\n\nCould not open SV annotation file: $sv_annot_file\n\n";
+      my $l = 0;
+      while(<SV_ANNO>){
+        chomp($_);
+        my @line = split("\t", $_);
+        #Grab the somatic 'CTX' events, that are candidate 'Fusion' and 'AffectCoding'
+        if ($_ =~ /\s+CTX\s+/ && $_ =~ /Fusion/ && $_ =~ /AffectCoding/){
+          my $annot_string = $line[15];
+          my $coord_string = $line[18];
+          my $gene_pair = '';
+          my $gene1 = '';
+          my $gene2 = '';
+          if ($annot_string =~ /^Gene\:(\S+?)\|(\S+?)\,/){
+            $gene_pair = "$1-$2";
+            $gene1 = $1;
+            $gene2 = $2;
+          }
+          my $transcript1 = '';
+          my $transcript2 = '';
+          if ($annot_string =~ /\,(\w{2}\_\d+)\|.*\-(\w{2}\_\d+)\|/){
+            $transcript1 = $1;
+            $transcript2 = $2;
+          }
+          $l++;
+          my @coords = split(",", $coord_string);
+          my $mapped_gene_name1 = $self->fixGeneName('-gene'=>$gene1, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
+          my $mapped_gene_name2 = $self->fixGeneName('-gene'=>$gene2, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
+          my $record = "$gene_pair\t$gene1\t$gene2\t$coords[0]\t$coords[1]\t$mapped_gene_name1\t$mapped_gene_name2";
+          $data->{$l}{record} = $record;
+          $data->{$l}{coords1} = $coords[0];
+          $data->{$l}{coords2} = $coords[1];
+          $data->{$l}{gene1} = $gene1;
+          $data->{$l}{gene2} = $gene2;
+          $data->{$l}{mapped_gene1} = $mapped_gene_name1;
+          $data->{$l}{mapped_gene2} = $mapped_gene_name2;
+          $data->{$l}{transcript1} = $transcript1;
+          $data->{$l}{transcript2} = $transcript2;
+
+        }
+      }
+    }
 }
 
 sub create_pairoscope_plots {
