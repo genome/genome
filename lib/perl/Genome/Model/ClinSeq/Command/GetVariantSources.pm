@@ -147,8 +147,10 @@ sub execute {
     $self->get_variant_caller_results("snv", "samtools", $snv_results_file, $somatic_build_dir, $build_outdir);
     $self->get_variant_caller_results("snv", "mutect", $snv_results_file, $somatic_build_dir, $build_outdir);
 
-    $self->createIndelOutfile(\%indels, $indel_outfile);
-    $self->createSnvOutfile(\%snvs, $snv_outfile);
+    my (%indel_caller_stats, %snv_caller_stats);
+    $self->createIndelOutfile(\%indels, $indel_outfile, \%indel_caller_stats);
+    $self->createSnvOutfile(\%snvs, $snv_outfile, \%snv_caller_stats);
+    $self->writeStats($build_outdir, \%snv_caller_stats, \%indel_caller_stats);
     #Cleanup temp files
     unlink $indel_results_file;
     unlink $snv_results_file;
@@ -240,7 +242,10 @@ sub createIndelOutfile {
     my $self = shift;
     my $indels = shift;
     my $indel_outfile = shift;
-    #Print out a new file containing the extra source columns
+    my $indel_caller_stats = shift;
+    foreach my $caller ("strelka", "gatk", "pindel", "varscan") {
+      $indel_caller_stats->{$caller} = 0;
+    }
     open (INDEL_OUT, ">$indel_outfile") || die "\n\nCould not open $indel_outfile\n\n";
     print INDEL_OUT "coord\tchr\tstart\tend\tvariant\tscore1\tscore2\tcallers\tstrelka\tgatk\tpindel\tvarscan\ttier\n";
     foreach my $indel (sort {$indels->{$a}->{coord_string} cmp $indels->{$b}->{coord_string}} keys %$indels){
@@ -251,6 +256,7 @@ sub createIndelOutfile {
         if ($caller eq 'gatk'){$gatk=1;}
         if ($caller eq 'pindel'){$pindel=1;}
         if ($caller eq 'varscan'){$varscan=1;}
+        $indel_caller_stats->{$caller} += 1;
       }
       print INDEL_OUT "$indels->{$indel}{coord_string}\t$indels->{$indel}{line}\t",join(",",@callers),"\t$strelka\t$gatk\t$pindel\t$varscan\t$indels->{$indel}{tier}\n";
     }
@@ -261,6 +267,10 @@ sub createSnvOutfile {
     my $self = shift;
     my $snvs = shift;
     my $snv_outfile = shift;
+    my $snv_caller_stats = shift;
+    foreach my $caller ("strelka", "sniper", "varscan", "samtools", "mutect") {
+      $snv_caller_stats->{$caller} = 0;
+    }
     open (SNV_OUT, ">$snv_outfile") || die "\n\nCould not open $snv_outfile\n\n";
     print SNV_OUT "coord\tchr\tstart\tend\tvariant\tscore1\tscore2\tcallers\tstrelka\tsniper\tvarscan\tsamtools\tmutect\ttier\n";
     foreach my $snv (sort {$snvs->{$a}->{coord_string} cmp $snvs->{$b}->{coord_string}} keys %$snvs){
@@ -273,6 +283,7 @@ sub createSnvOutfile {
         if ($caller eq 'varscan'){$varscan=1;}
         if ($caller eq 'samtools'){$samtools=1;}
         if ($caller eq 'mutect'){$mutect=1;}
+        $snv_caller_stats->{$caller} += 1;
       }
       print SNV_OUT "$snvs->{$snv}{coord_string}\t$snvs->{$snv}{line}\t",join(",",@callers),"\t$strelka\t$sniper\t" .
           "$varscan\t$samtools\t$mutect\t$snvs->{$snv}{tier}\n";
@@ -356,6 +367,46 @@ sub joinxSortFile {
     $joinx_sort_cmd->execute();
 }
 
+sub writeStats {
+    my $self = shift;
+    my $outdir = shift;
+    my $snv_caller_stats = shift;
+    my $indel_caller_stats = shift;
+    my $stats_file = $outdir . "/Stats.tsv";
+    open my $STATS, ">$stats_file";
+    $self->write_snv_stats($snv_caller_stats, $STATS);
+    $self->write_indel_stats($indel_caller_stats, $STATS);
+    close $STATS;
+}
+
+sub write_snv_stats {
+    my $self = shift;
+    my $snv_caller_stats = shift;
+    my $STATS = shift;
+    print $STATS "Number of Strelka SNV calls\t" . $snv_caller_stats->{"strelka"}.
+        "\tWGS/Exome\tClinseq Build Summary\tCount\tNumber of SNVs called by Strelka\n";
+    print $STATS "Number of Sniper SNV calls\t" . $snv_caller_stats->{"sniper"}.
+        "\tWGS/Exome\tClinseq Build Summary\tCount\tNumber of SNVs called by Sniper\n";
+    print $STATS "Number of VarScan SNV calls\t" . $snv_caller_stats->{"varscan"}.
+        "\tWGS/Exome\tClinseq Build Summary\tCount\tNumber of SNVs called by VarScan\n";
+    print $STATS "Number of SamTools SNV calls\t" . $snv_caller_stats->{"samtools"}.
+        "\tWGS/Exome\tClinseq Build Summary\tCount\tNumber of SNVs called by SamTools\n";
+    print $STATS "Number of Mutect SNV calls\t" . $snv_caller_stats->{"mutect"}.
+        "\tWGS/Exome\tClinseq Build Summary\tCount\tNumber of SNVs called by Mutect\n";
+}
+
+sub write_indel_stats {
+    my $self = shift;
+    my $indel_caller_stats = shift;
+    my $STATS = shift;
+    print $STATS "Number of Strelka Indel calls\t" . $indel_caller_stats->{"strelka"}.
+        "\tWGS/Exome\tClinseq Build Summary\tCount\tNumber of Indels called by Strelka\n";
+    print $STATS "Number of GATK Indel calls\t" . $indel_caller_stats->{"gatk"}.
+        "\tWGS/Exome\tClinseq Build Summary\tCount\tNumber of Indels called by GATK\n";
+    print $STATS "Number of Pindel Indel calls\t" . $indel_caller_stats->{"pindel"}.
+        "\tWGS/Exome\tClinseq Build Summary\tCount\tNumber of Indels called by Pindel\n";
+    print $STATS "Number of VarScan Indel calls\t" . $indel_caller_stats->{"varscan"}.
+        "\tWGS/Exome\tClinseq Build Summary\tCount\tNumber of Indels called by Varscan\n";
+}
+
 1;
-
-
