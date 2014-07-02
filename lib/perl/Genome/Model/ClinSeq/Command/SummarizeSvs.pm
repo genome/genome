@@ -119,42 +119,9 @@ sub execute {
     my $fusion_candidate_outfile = $build_outdir . "CandidateSvCodingFusions.tsv";
     my %data;
     $self->read_sv_annot_into_hash($sv_annot_file, \%data, $entrez_ensembl_data);
-
-    #Annotate the genes of this file to help identify genes of interest (e.g. kinases, etc.)...
-    foreach my $l (keys %data){
-      my $gene1_name = $data{$l}{gene1};
-      my $gene2_name = $data{$l}{gene2};
-
-      foreach my $gene_symbol_type (keys %{$gene_symbol_lists}){
-        my $gene_symbols = $gene_symbol_lists->{$gene_symbol_type}->{symbols};
-        $data{$l}{$gene_symbol_type} = 0;
-        if ($gene_symbols->{$gene1_name}){
-          $data{$l}{$gene_symbol_type}++;
-        }
-        if ($gene_symbols->{$gene2_name}){
-          $data{$l}{$gene_symbol_type}++;
-        }
-      }
-    }
-
+    $self->annotate_genes(\%data, $gene_symbol_lists);
     $self->create_pairoscope_plots(\%data, $tumor_bam, $normal_bam, $build_outdir);
-
-    #Print out a new file containing the extra annotation columns
-    open (FUSION_OUT, ">$fusion_candidate_outfile") || die "\n\nCould not open fusion outfile\n\n";
-    my @gene_symbol_list_names = sort {$gene_symbol_lists->{$a}->{order} <=> $gene_symbol_lists->{$b}->{order}} keys %{$gene_symbol_lists};
-    my $gene_symbol_list_name_string = join("\t", @gene_symbol_list_names);
-    my $header_line = "gene_pair\tgene1\tgene2\tcoord1\tcoord2\tmapped_gene_name1\tmapped_gene_name2\tpairoscope_tumor_reads\tpairoscope_normal_reads";
-    print FUSION_OUT "$header_line\t$gene_symbol_list_name_string\n";
-    foreach my $l (sort {$a <=> $b} keys %data){
-      my @tmp;
-      foreach my $gene_symbol_list_name (@gene_symbol_list_names){
-        push (@tmp, $data{$l}{$gene_symbol_list_name});
-      }
-      my $new_cols_string = join("\t", @tmp);
-      print FUSION_OUT "$data{$l}{record}\t$data{$l}{pairoscope_tumor_reads}\t$data{$l}{pairoscope_normal_reads}\t$new_cols_string\n";
-    }
-    close(FUSION_OUT);
-    $self->fusion_output_file($fusion_candidate_outfile);
+    $self->create_fusion_file($fusion_candidate_outfile, $gene_symbol_lists, \%data);
 
     #TODO: Create a Stats.tsv file summarizing basic statistics of the sv annotations file
     #TODO: Identify the deletion regions.  Create a display for each deletion showing coverage across that region in tumor and normal
@@ -247,10 +214,56 @@ sub read_sv_annot_into_hash {
           $data->{$l}{mapped_gene2} = $mapped_gene_name2;
           $data->{$l}{transcript1} = $transcript1;
           $data->{$l}{transcript2} = $transcript2;
-
         }
       }
     }
+}
+
+sub annotate_genes {
+    my $self = shift;
+    my $data = shift;
+    my $gene_symbol_lists = shift;
+
+    #Annotate the genes of this file to help identify genes of interest (e.g. kinases, etc.)...
+    foreach my $l (keys %$data){
+      my $gene1_name = $data->{$l}{gene1};
+      my $gene2_name = $data->{$l}{gene2};
+
+      foreach my $gene_symbol_type (keys %{$gene_symbol_lists}){
+        my $gene_symbols = $gene_symbol_lists->{$gene_symbol_type}->{symbols};
+        $data->{$l}{$gene_symbol_type} = 0;
+        if ($gene_symbols->{$gene1_name}){
+          $data->{$l}{$gene_symbol_type}++;
+        }
+        if ($gene_symbols->{$gene2_name}){
+          $data->{$l}{$gene_symbol_type}++;
+        }
+      }
+    }
+}
+
+sub create_fusion_file {
+    my $self = shift;
+    my $fusion_candidate_outfile = shift;
+    my $gene_symbol_lists = shift;
+    my $data = shift;
+
+    #Print out a new file containing the extra annotation columns
+    open (FUSION_OUT, ">$fusion_candidate_outfile") || die "\n\nCould not open fusion outfile\n\n";
+    my @gene_symbol_list_names = sort {$gene_symbol_lists->{$a}->{order} <=> $gene_symbol_lists->{$b}->{order}} keys %{$gene_symbol_lists};
+    my $gene_symbol_list_name_string = join("\t", @gene_symbol_list_names);
+    my $header_line = "gene_pair\tgene1\tgene2\tcoord1\tcoord2\tmapped_gene_name1\tmapped_gene_name2\tpairoscope_tumor_reads\tpairoscope_normal_reads";
+    print FUSION_OUT "$header_line\t$gene_symbol_list_name_string\n";
+    foreach my $l (sort {$a <=> $b} keys %$data){
+      my @tmp;
+      foreach my $gene_symbol_list_name (@gene_symbol_list_names){
+        push (@tmp, $data->{$l}{$gene_symbol_list_name});
+      }
+      my $new_cols_string = join("\t", @tmp);
+      print FUSION_OUT "$data->{$l}{record}\t$data->{$l}{pairoscope_tumor_reads}\t$data->{$l}{pairoscope_normal_reads}\t$new_cols_string\n";
+    }
+    close(FUSION_OUT);
+    $self->fusion_output_file($fusion_candidate_outfile);
 }
 
 sub create_pairoscope_plots {
