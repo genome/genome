@@ -10,6 +10,7 @@ use warnings;
 use above "Genome";
 use Test::More;
 use Test::Exception;
+use Data::Dump qw(pp);
 
 my $pkg = 'Genome::Model::Detail::RunsVariantReporting';
 use_ok($pkg) or die;
@@ -38,7 +39,7 @@ my $working_pp = Genome::ProcessingProfile::TestRunsVariantReporting->create(
     snvs_variant_reporting_plan_name => 'working',
 );
 ok($working_pp, 'created a working processing profile with a valid plan');
-is($working_pp->__errors__, 0, 'no profile errors found');
+is($working_pp->__errors__, 0, 'no profile errors found') || pp($working_pp->__errors__);
 
 # Test a processing profile with a bad plan name
 my $bad_plan_name_pp = Genome::ProcessingProfile::TestRunsVariantReporting->create(

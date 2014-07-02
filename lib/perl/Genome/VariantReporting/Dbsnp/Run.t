@@ -45,23 +45,16 @@ sub generate_test_cmd {
         code => sub {my $self = shift; my $file = $self->output_file; `touch $file`; return 1;},
     });
 
-    my $input_result = $result_class->__define__();
-    Sub::Install::reinstall_sub({
-        into => 'Genome::VariantReporting::Framework::Component::Expert::Result',
-        as => 'output_file_path',
-        code => sub {return 'some_file.vcf.gz';},
-    });
-
     my $model = Genome::Test::Factory::Model::ImportedVariationList->setup_object();
-    my $known_variants = Genome::Test::Factory::Build->setup_object(model_id => $model->id);
+    my $dbsnp_build = Genome::Test::Factory::Build->setup_object(model_id => $model->id);
     Sub::Install::reinstall_sub({
         into => 'Genome::Model::Build::ImportedVariationList',
         as => 'snvs_vcf',
         code => sub {return 1},
     });
     my %params = (
-        input_result => $input_result,
-        known_variants  => $known_variants,
+        input_vcf => 'some_file.vcf.gz',
+        dbsnp_build_id => $dbsnp_build->id,
         variant_type     => 'snvs',
         info_string      => 'test',
         joinx_version          => '1.8',

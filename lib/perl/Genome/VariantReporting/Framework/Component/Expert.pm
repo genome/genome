@@ -49,57 +49,57 @@ sub connected_run_operation {
     my $run_operation = $self->run_operation;
     $dag->add_operation($run_operation);
     $dag->connect_input(
-        input_property => 'input_result',
+        input_property => 'input_vcf',
         destination => $run_operation,
-        destination_property => 'input_result',
+        destination_property => 'input_vcf',
     );
-    $dag->connect_output(
-        output_property => 'output_result',
-        source => $run_operation,
-        source_property => 'output_result',
-    );
+    for my $name qw(output_result output_vcf) {
+        $dag->connect_output(
+            output_property => $name,
+            source => $run_operation,
+            source_property => $name,
+        );
+    }
     return $run_operation;
 }
 
-sub build_adaptor_operation {
+sub adaptor_operation {
     my $self = shift;
     return Genome::WorkflowBuilder::Command->create(
-        name => 'Get inputs from build',
+        name => 'Get inputs from provider and plan',
         command => $self->adaptor_class,
     );
 }
 
-sub connected_build_adaptor_operation {
+sub connected_adaptor_operation {
     my ($self, $dag) = validate_pos(@_, 1, 1);
 
-    my $build_adaptor_operation = $self->build_adaptor_operation;
-    $dag->add_operation($build_adaptor_operation);
-    for my $name qw(build_id variant_type plan_json) {
+    my $adaptor_operation = $self->adaptor_operation;
+    $dag->add_operation($adaptor_operation);
+    for my $name qw(provider_json variant_type plan_json) {
         $dag->connect_input(
             input_property => $name,
-            destination => $build_adaptor_operation,
+            destination => $adaptor_operation,
             destination_property => $name,
         );
     }
-    return $build_adaptor_operation;
+    return $adaptor_operation;
 }
 
 sub dag {
     #   Must return a Genome::WorkflowBuilder::DAG
-    # these usually just consist of a build_adaptor
+    # these usually just consist of an adaptor
     # followed by a single command, but could be
     # more complex.
 
     # DAG INPUTS:
-    #   build_id
-    #   input_result  (Genome::SoftwareResult that has a
-    #                  'output_file_path' accessor that refers
-    #                  to a .vcf or .vcf.gz file. or a 'get_vcf'
-    #                  accessor which takes a 'variant_type'
-    #                  argument to refer to a .vcf or .vcf.gz
-    #                  file)
+    #   input_vcf
+    #   provider_json
+    #   variant_type
+    #   plan_json
+    #
     # DAG OUTPUTS:
-    #   software_result (Same requirements as <input_result>)
+    #   output_vcf
     my $self = shift;
     return $self->_simple_dag;
 }
@@ -110,11 +110,11 @@ sub _simple_dag {
     my $dag = Genome::WorkflowBuilder::DAG->create(
         name => $self->name,
     );
-    my $build_adaptor_operation = $self->connected_build_adaptor_operation($dag);
+    my $adaptor_operation = $self->connected_adaptor_operation($dag);
 
     my $run_operation = $self->connected_run_operation($dag);
     $self->_link(dag => $dag,
-          adaptor => $build_adaptor_operation,
+          adaptor => $adaptor_operation,
           target => $run_operation,
     );
 
@@ -130,7 +130,7 @@ sub _link {
     });
 
     for my $name ($p{target}->command->input_names) {
-        next if $name eq 'input_result';
+        next if $name eq 'input_vcf';
         next unless $p{adaptor}->command->can($name);
         $p{dag}->create_link(
             source => $p{adaptor},

@@ -10,8 +10,9 @@ use IPC::Run qw(run);
 class Genome::VariantReporting::BamReadcount::RunResult {
     is => 'Genome::VariantReporting::Framework::Component::Expert::Result',
     has_input => [
-        aligned_bam_result => {
-            is => 'Genome::InstrumentData::AlignedBamResult',
+        aligned_bam_result_id => {
+            is => 'Text',
+            doc => 'The bam result used to calculate read counts',
         },
     ],
     has_param => [
@@ -28,10 +29,15 @@ sub output_filename {
     return 'bam-readcount-output.tsv';
 }
 
+sub aligned_bam_result {
+    my $self = shift;
+    return Genome::InstrumentData::AlignedBamResult->get($self->aligned_bam_result_id);
+}
+
 sub _run {
     my $self = shift;
 
-    my $region_list = $self->make_region_file($self->input_result_file_path);
+    my $region_list = $self->make_region_file($self->input_vcf);
 
     # Sam::Readcount doesn't accept variant_type or test_name
     my %params = $self->param_hash;

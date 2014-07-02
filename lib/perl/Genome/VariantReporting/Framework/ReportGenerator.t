@@ -25,8 +25,8 @@ my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_fi
 my $output_dir = Genome::Sys->create_temp_directory;
 
 my $translations = {};
-my $generator = $pkg->create(vcf_file => $vcf_file,
-                             plan => $plan,
+my $generator = $pkg->create(input_vcf => $vcf_file,
+                             plan_json => $plan->as_json,
                              variant_type => "snvs",
                              output_directory => $output_dir,
                              translations => $translations);

@@ -31,7 +31,7 @@ sub _run {
     my $self = shift;
 
     my $command = Genome::Model::Tools::Vcf::AnnotateWithFpkm->create(
-        vcf_file => $self->input_result_file_path,
+        vcf_file => $self->input_vcf,
         output_file => $self->fpkm_output_file,
         fpkm_file => $self->fpkm_file,
         sample_name => $self->tumor_sample_name,

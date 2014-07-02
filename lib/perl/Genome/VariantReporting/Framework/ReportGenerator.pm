@@ -4,14 +4,15 @@ use strict;
 use warnings;
 use Genome;
 use Genome::File::Vcf::Reader;
+use Memoize;
 
 class Genome::VariantReporting::Framework::ReportGenerator {
     is => 'Command::V2',
     has_input => [
-        vcf_file => {
+        input_vcf => {
             is => 'File',
         },
-        plan => {
+        plan_json => {
             is => 'Genome::VariantReporting::Framework::Plan::MasterPlan',
         },
         output_directory => {
@@ -28,6 +29,13 @@ class Genome::VariantReporting::Framework::ReportGenerator {
     ],
 };
 
+sub plan {
+    my $self = shift;
+
+    return Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_json($self->plan_json);
+}
+Memoize::memoize('plan');
+
 sub execute {
     my $self = shift;
 
@@ -39,8 +47,8 @@ sub execute {
             translations => $self->translations,
         );
     }
-    $self->debug_message("Reading from: ".$self->vcf_file."\n");
-    my $vcf_reader = Genome::File::Vcf::Reader->new($self->vcf_file);
+    $self->debug_message("Reading from: ".$self->input_vcf."\n");
+    my $vcf_reader = Genome::File::Vcf::Reader->new($self->input_vcf);
     while (my $entry = $vcf_reader->next) {
         for my $processor (@entry_processors) {
             $processor->process_entry($entry);

@@ -11,8 +11,8 @@ class Genome::VariantReporting::Dbsnp::Adaptor {
         joinx_version => { is  => 'Version', },
         info_string => { is => 'Text', },
     ],
-    has_output => [
-        known_variants => {
+    has_provided_output => [
+        dbsnp_build_id => {
             is => 'Genome::Model::Build::ImportedVariationList',
         },
     ],
@@ -20,13 +20,6 @@ class Genome::VariantReporting::Dbsnp::Adaptor {
 
 sub name {
     "dbsnp";
-}
-
-sub resolve_expert_specific_attributes_from_build {
-    my $self = shift;
-
-    $self->known_variants($self->build->previously_discovered_variations_build);
-    return;
 }
 
 1;

@@ -44,13 +44,6 @@ sub generate_test_cmd {
         code => sub {my $self = shift; my $file = $self->final_output_file; `touch $file`; return 1;},
     });
 
-    my $input_result = $result_class->__define__();
-    Sub::Install::reinstall_sub({
-        into => 'Genome::VariantReporting::Framework::Component::Expert::Result',
-        as => 'output_file_path',
-        code => sub {return 'some_file.vcf.gz';},
-    });
-
     my $roi = Genome::FeatureList->__define__();
     my $segdup = Genome::FeatureList->__define__();
     Sub::Install::reinstall_sub({
@@ -59,19 +52,20 @@ sub generate_test_cmd {
         code => sub { return 'somepath'},
     });
 
-    my $model = Genome::Test::Factory::Model::ReferenceSequence->setup_object;
-    my $reference_sequence_build = Genome::Test::Factory::Build->setup_object(model_id => $model->id);
-
     my %params = (
-        input_result => $input_result,
+        input_vcf => 'some_vcf_file',
         ensembl_version => "1",
-        feature_list_ids_and_tags => [join(":", $roi->id, "ROI"),join(":", $segdup->id, "SEGDUP")],
+        custom_annotation_tags => [qw(ROI SEGDUP)],
+        feature_list_ids => {
+            ROI => $roi->id,
+            SEGDUP => $segdup->id,
+        },
         variant_type => 'snvs',
         plugins_version => 0,
         species => "alien",
         joinx_version => '1.8',
         terms => "ensembl",
-        reference_build => $reference_sequence_build,
+        reference_fasta => 'some_fasta_file',
     );
     my $cmd = $cmd_class->create(%params);
     return $cmd
