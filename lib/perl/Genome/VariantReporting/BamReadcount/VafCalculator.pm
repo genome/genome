@@ -3,6 +3,7 @@ package Genome::VariantReporting::BamReadcount::VafCalculator;
 use strict;
 use warnings;
 use Genome;
+use List::Util 'sum';
 
 sub calculate_vaf_for_all_alts {
     my ($entry, $readcount_entry) = @_;
@@ -55,14 +56,8 @@ sub translated_allele {
 }
 
 sub calculate_coverage_for_allele {
-    my ($bam_readcount_entry, $allele, $ref) = @_;
-
-    my $count = 0;
-    for my $lib ($bam_readcount_entry->libraries) {
-        $count+=calculate_coverage_for_allele_and_library($allele, $ref, $lib);
-    }
-
-    return $count;
+    my $counts = calculate_per_library_coverage_for_allele(@_);
+    return sum(values %$counts);
 }
 
 sub calculate_per_library_coverage_for_allele {
