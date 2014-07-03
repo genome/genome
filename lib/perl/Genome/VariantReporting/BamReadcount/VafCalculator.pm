@@ -6,16 +6,26 @@ use Genome;
 use List::Util 'sum';
 
 sub calculate_vaf_for_all_alts {
+    my $per_lib_vafs = calculate_per_library_vaf_for_all_alts(@_);
+
+    my $vafs;
+    for my $allele (keys %$per_lib_vafs) {
+        $vafs->{$allele} = sum(values %{$per_lib_vafs->{$allele}});
+    }
+    return %$vafs;
+}
+
+sub calculate_per_library_vaf_for_all_alts {
     my ($entry, $readcount_entry) = @_;
     my $alt_alleles = $entry->{alternate_alleles};
     my $ref = $entry->{reference_allele};
-    my @alleles;
-    my %return_values;
+
+    my $vafs;
     for my $allele (@$alt_alleles) {
-        my $vaf = calculate_vaf($readcount_entry, $allele, $ref);
-        $return_values{$allele} = $vaf;
+        my $vaf = calculate_per_library_vaf($readcount_entry, $allele, $entry->{reference_allele});
+        $vafs->{$allele} = $vaf;
     }
-    return %return_values;
+    return $vafs;
 }
 
 sub is_insertion {
@@ -42,8 +52,11 @@ sub calculate_vaf {
 sub calculate_per_library_vaf {
     my ($bam_readcount_entry, $alt_allele, $ref) = @_;
     my $coverage = calculate_per_library_coverage_for_allele(@_);
-    map{ $coverage->{$_} = $coverage->{$_} / $bam_readcount_entry->depth * 100 } keys %$coverage;
-    return $coverage;
+    my $vaf;
+    while ( my ($library, $readcount) = each %$coverage ) {
+        $vaf->{$library} = $readcount / $bam_readcount_entry->depth * 100;
+    }
+    return $vaf;
 }
 
 sub calculate_coverage_for_allele {
