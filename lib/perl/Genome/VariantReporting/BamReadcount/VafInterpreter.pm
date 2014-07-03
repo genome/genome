@@ -24,6 +24,7 @@ sub available_fields {
         var_count
         per_library_var_count
         per_library_ref_count
+        per_library_vaf
     /;
 }
 
@@ -54,11 +55,21 @@ sub interpret_entry {
             per_library_var_count => $self->per_library_coverage($readcount_entry, $allele, $entry->{reference_allele}),
             ref_count => Genome::VariantReporting::BamReadcount::VafCalculator::calculate_coverage_for_allele($self->get_readcount_entry($entry), $translated_reference_allele, 'A'),
             per_library_ref_count => $self->per_library_coverage($readcount_entry, $translated_reference_allele, 'A'),
+            per_library_vaf => $self->per_library_vaf($entry, $readcount_entry, $allele),
         }
     }
 
     return %return_values;
 }
+
+sub per_library_vaf {
+    my ($self, $entry, $readcount_entry, $allele) = @_;
+
+    my $per_library_vafs = Genome::VariantReporting::BamReadcount::VafCalculator::calculate_per_library_vaf_for_all_alts($entry, $readcount_entry);
+
+    return join(',', map {"$_:" . $per_library_vafs->{$allele}{$_} } keys %{$per_library_vafs->{$allele}});
+}
+
 
 # When checking for variant coverage: The $reference_allele must be untranslated
 # When checking for reference coverage: The $reference_allele and $allele must both be the TRANSLATED reference

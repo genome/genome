@@ -31,6 +31,7 @@ subtest "one alt allele" => sub {
             var_count => 341,
             per_library_var_count => 'Solexa-135852:155,Solexa-135853:186',
             per_library_ref_count => 'Solexa-135852:2,Solexa-135853:1',
+            per_library_vaf => 'Solexa-135852:45.0581395348837,Solexa-135853:54.0697674418605',
         }
     );
 
@@ -41,6 +42,7 @@ subtest "one alt allele" => sub {
     is({$interpreter->interpret_entry($entry, ['G'])}->{G}->{var_count}, $expected{G}->{var_count}, 'var count is correct');
     is({$interpreter->interpret_entry($entry, ['G'])}->{G}->{per_library_var_count}, $expected{G}->{per_library_var_count}, 'per lib var count is correct');
     is({$interpreter->interpret_entry($entry, ['G'])}->{G}->{per_library_ref_count}, $expected{G}->{per_library_ref_count}, 'per lib ref count is correct');
+    is({$interpreter->interpret_entry($entry, ['G'])}->{G}->{per_library_vaf}, $expected{G}->{per_library_vaf}, 'per lib vaf is correct');
 };
 
 subtest "insertion" => sub {
@@ -54,6 +56,7 @@ subtest "insertion" => sub {
             var_count => 20,
             per_library_var_count => 'Solexa-135852:20,Solexa-135853:0',
             per_library_ref_count => 'Solexa-135852:2,Solexa-135853:1',
+            per_library_vaf => 'Solexa-135852:5.81395348837209,Solexa-135853:0',
         }
     );
 
@@ -64,6 +67,7 @@ subtest "insertion" => sub {
     is({$interpreter->interpret_entry($entry, ['AA'])}->{AA}->{var_count}, $expected{AA}->{var_count}, 'var count is correct');
     is({$interpreter->interpret_entry($entry, ['AA'])}->{AA}->{per_library_var_count}, $expected{AA}->{per_library_var_count}, 'per lib var count is correct');
     is({$interpreter->interpret_entry($entry, ['AA'])}->{AA}->{per_library_ref_count}, $expected{AA}->{per_library_ref_count}, 'per lib ref count is correct');
+    is({$interpreter->interpret_entry($entry, ['AA'])}->{AA}->{per_library_vaf}, $expected{AA}->{per_library_vaf}, 'per lib vaf is correct');
 };
 
 subtest "deletion" => sub {
@@ -77,6 +81,7 @@ subtest "deletion" => sub {
             var_count => 20,
             per_library_var_count => 'Solexa-135852:20,Solexa-135853:0',
             per_library_ref_count => 'Solexa-135852:3,Solexa-135853:2',
+            per_library_vaf => 'Solexa-135852:5.81395348837209,Solexa-135853:0',
         }
     );
 
@@ -87,6 +92,7 @@ subtest "deletion" => sub {
     is({$interpreter->interpret_entry($entry, ['A'])}->{A}->{var_count}, $expected{A}->{var_count}, 'var count is correct');
     is({$interpreter->interpret_entry($entry, ['A'])}->{A}->{per_library_var_count}, $expected{A}->{per_library_var_count}, 'per lib var count is correct');
     is({$interpreter->interpret_entry($entry, ['A'])}->{A}->{per_library_ref_count}, $expected{A}->{per_library_ref_count}, 'per lib ref count is correct');
+    is({$interpreter->interpret_entry($entry, ['A'])}->{A}->{per_library_vaf}, $expected{A}->{per_library_vaf}, 'per lib vaf is correct');
 };
 done_testing;
 
