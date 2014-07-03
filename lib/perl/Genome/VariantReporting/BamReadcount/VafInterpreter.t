@@ -35,12 +35,12 @@ subtest "one alt allele" => sub {
     );
 
     my $entry = create_entry(bam_readcount_line);
-    cmp_ok({$interpreter->interpret_entry($entry, ['G'])}->{G}->{vaf}, ">", 99);
-    cmp_ok({$interpreter->interpret_entry($entry, ['G'])}->{G}->{vaf},  "<", 100);
-    is({$interpreter->interpret_entry($entry, ['G'])}->{G}->{ref_count}, $expected{G}->{ref_count});
-    is({$interpreter->interpret_entry($entry, ['G'])}->{G}->{var_count}, $expected{G}->{var_count});
-    is({$interpreter->interpret_entry($entry, ['G'])}->{G}->{per_library_var_count}, $expected{G}->{per_library_var_count});
-    is({$interpreter->interpret_entry($entry, ['G'])}->{G}->{per_library_ref_count}, $expected{G}->{per_library_ref_count});
+    cmp_ok({$interpreter->interpret_entry($entry, ['G'])}->{G}->{vaf}, ">", 99, 'vaf is in the desired range');
+    cmp_ok({$interpreter->interpret_entry($entry, ['G'])}->{G}->{vaf},  "<", 100, 'vaf is in the desired range');
+    is({$interpreter->interpret_entry($entry, ['G'])}->{G}->{ref_count}, $expected{G}->{ref_count}, 'ref count is correct');
+    is({$interpreter->interpret_entry($entry, ['G'])}->{G}->{var_count}, $expected{G}->{var_count}, 'var count is correct');
+    is({$interpreter->interpret_entry($entry, ['G'])}->{G}->{per_library_var_count}, $expected{G}->{per_library_var_count}, 'per lib var count is correct');
+    is({$interpreter->interpret_entry($entry, ['G'])}->{G}->{per_library_ref_count}, $expected{G}->{per_library_ref_count}, 'per lib ref count is correct');
 };
 
 subtest "insertion" => sub {
@@ -58,12 +58,12 @@ subtest "insertion" => sub {
     );
 
     my $entry = create_entry(bam_readcount_line);
-    cmp_ok({$interpreter->interpret_entry($entry, ['AA'])}->{AA}->{vaf}, ">", 5);
-    cmp_ok({$interpreter->interpret_entry($entry, ['AA'])}->{AA}->{vaf},  "<", 6);
-    is({$interpreter->interpret_entry($entry, ['AA'])}->{AA}->{ref_count}, $expected{AA}->{ref_count});
-    is({$interpreter->interpret_entry($entry, ['AA'])}->{AA}->{var_count}, $expected{AA}->{var_count});
-    is({$interpreter->interpret_entry($entry, ['AA'])}->{AA}->{per_library_var_count}, $expected{AA}->{per_library_var_count});
-    is({$interpreter->interpret_entry($entry, ['AA'])}->{AA}->{per_library_ref_count}, $expected{AA}->{per_library_ref_count});
+    cmp_ok({$interpreter->interpret_entry($entry, ['AA'])}->{AA}->{vaf}, ">", 5, 'vaf is in the desired range');
+    cmp_ok({$interpreter->interpret_entry($entry, ['AA'])}->{AA}->{vaf},  "<", 6, 'vaf is in the desired range');
+    is({$interpreter->interpret_entry($entry, ['AA'])}->{AA}->{ref_count}, $expected{AA}->{ref_count}, 'ref count is correct');
+    is({$interpreter->interpret_entry($entry, ['AA'])}->{AA}->{var_count}, $expected{AA}->{var_count}, 'var count is correct');
+    is({$interpreter->interpret_entry($entry, ['AA'])}->{AA}->{per_library_var_count}, $expected{AA}->{per_library_var_count}, 'per lib var count is correct');
+    is({$interpreter->interpret_entry($entry, ['AA'])}->{AA}->{per_library_ref_count}, $expected{AA}->{per_library_ref_count}, 'per lib ref count is correct');
 };
 
 subtest "deletion" => sub {
@@ -81,12 +81,12 @@ subtest "deletion" => sub {
     );
 
     my $entry = create_deletion_entry(bam_readcount_line_deletion);
-    cmp_ok({$interpreter->interpret_entry($entry, ['A'])}->{A}->{vaf}, ">", 5);
-    cmp_ok({$interpreter->interpret_entry($entry, ['A'])}->{A}->{vaf},  "<", 6);
-    is({$interpreter->interpret_entry($entry, ['A'])}->{A}->{ref_count}, $expected{A}->{ref_count});
-    is({$interpreter->interpret_entry($entry, ['A'])}->{A}->{var_count}, $expected{A}->{var_count});
-    is({$interpreter->interpret_entry($entry, ['A'])}->{A}->{per_library_var_count}, $expected{A}->{per_library_var_count});
-    is({$interpreter->interpret_entry($entry, ['A'])}->{A}->{per_library_ref_count}, $expected{A}->{per_library_ref_count});
+    cmp_ok({$interpreter->interpret_entry($entry, ['A'])}->{A}->{vaf}, ">", 5, 'vaf is in the desired range');
+    cmp_ok({$interpreter->interpret_entry($entry, ['A'])}->{A}->{vaf},  "<", 6, 'vaf is in the desired range');
+    is({$interpreter->interpret_entry($entry, ['A'])}->{A}->{ref_count}, $expected{A}->{ref_count}, 'ref count is correct');
+    is({$interpreter->interpret_entry($entry, ['A'])}->{A}->{var_count}, $expected{A}->{var_count}, 'var count is correct');
+    is({$interpreter->interpret_entry($entry, ['A'])}->{A}->{per_library_var_count}, $expected{A}->{per_library_var_count}, 'per lib var count is correct');
+    is({$interpreter->interpret_entry($entry, ['A'])}->{A}->{per_library_ref_count}, $expected{A}->{per_library_ref_count}, 'per lib ref count is correct');
 };
 done_testing;
 
