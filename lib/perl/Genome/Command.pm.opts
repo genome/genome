@@ -37755,27 +37755,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>complete-genomics',
-      [
-        'input-directory=s',
-        'files',
-        'reference-build=s',
-        undef,
-        'sample=s',
-        undef,
-        'verify-integrity!',
-        undef,
-        'log-directory=s',
-        'files',
-        'library=s',
-        undef,
-        'description=s',
-        'files',
-        'target-region-set-name=s',
-        'files',
-        'help!',
-        undef
-      ],
       '>manager',
       [
         'source-files-tsv=s',
@@ -37937,6 +37916,8 @@ $Genome::Command::OPTS_SPEC = [
       'files',
       'instrument-data=s@',
       undef,
+      'instrument-data-and-new-source-files=s@',
+      'files',
       'help!',
       undef
     ],
