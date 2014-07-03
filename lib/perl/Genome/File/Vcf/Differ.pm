@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 use Genome::File::Vcf::Reader;
+use Memoize;
 use Carp qw/confess/;
 use Set::Scalar;
 
@@ -33,17 +34,11 @@ sub new {
     my $a_reader = Genome::File::Vcf::Reader->new($a);
     my $b_reader = Genome::File::Vcf::Reader->new($b);
 
-    my @base_columns = qw(CHROM POS ID REF ALT QUAL FILTER INFO FORMAT);
-    my @a_columns = (@base_columns, $a_reader->header->sample_names);
-    my @b_columns = (@base_columns, $b_reader->header->sample_names);
-
     my $self = {
         _a => $a,
         _b => $b,
         _a_reader => $a_reader,
         _b_reader => $b_reader,
-        _a_columns => \@a_columns,
-        _b_columns => \@b_columns,
     };
 
     bless $self, $class;
@@ -66,9 +61,9 @@ sub next {
         my @columns;
 
         if (!defined($a)) { # a has FEWER lines than b
-            @columns = @{$self->{_b_columns}};
+            @columns = $self->columns_for_header($b->{header});
         } elsif (!defined($b)) { # a has MORE lines than b
-            @columns = @{$self->{_a_columns}};
+            @columns = $self->columns_for_header($a->{header});
         } else {
             @columns = $self->entries_diff($a, $b);
         }
@@ -80,21 +75,34 @@ sub next {
     return;
 }
 
+sub columns_for_header {
+    my ($self, $header) = @_;
+
+    my @base_columns = qw(CHROM POS ID REF ALT QUAL FILTER INFO FORMAT);
+    my @columns = (@base_columns, $header->sample_names);
+    return @columns;
+}
+Memoize::memoize('columns_for_header');
+
+sub hash_repr {
+    my ($self, $entry) = @_;
+
+    my @keys = $self->columns_for_header($entry->{header});
+    my @values = split(/\t/, $entry->to_string);
+
+    my %hash;
+    @hash{@keys} = @values;
+    return %hash;
+}
+
 sub entries_diff {
     my ($self, $a, $b) = @_;
 
-    my @a_keys = @{$self->{_a_columns}};
-    my @a_values = split(/\t/, $a->to_string);
-    my %a_hash;
-    @a_hash{@a_keys} = @a_values;
-
-    my @b_keys = @{$self->{_b_columns}};
-    my @b_values = split(/\t/, $b->to_string);
-    my %b_hash;
-    @b_hash{@b_keys} = @b_values;
+    my %a_hash = $self->hash_repr($a);
+    my %b_hash = $self->hash_repr($b);
 
     my @columns;
-    for my $key (@a_keys) {
+    for my $key (keys %a_hash) {
         if ($a_hash{$key} ne $b_hash{$key}) {
             push @columns, $key;
         }
