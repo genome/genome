@@ -53,7 +53,7 @@ sub generate_test_cmd {
         code => sub {return 1},
     });
     my %params = (
-        input_vcf => 'some_file.vcf.gz',
+        input_vcf => __FILE__,
         dbsnp_build_id => $dbsnp_build->id,
         variant_type     => 'snvs',
         info_string      => 'test',
