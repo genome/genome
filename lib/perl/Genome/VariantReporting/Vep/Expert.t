@@ -36,8 +36,6 @@ my $expert = $pkg->create();
 my $dag = $expert->dag();
 my $expected_xml = File::Spec->join($test_dir, 'expected.xml');
 test_dag_xml($dag, $expected_xml);
-print "========== Execution Paused (press ENTER to continue) ===========\n";
-<STDIN>;
 
 set_what_interpreter_x_requires('vep');
 my $variant_type = 'snvs';
