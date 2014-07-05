@@ -47,11 +47,11 @@ sub generate_test_cmd {
     my $input_result = $result_class->__define__();
 
     my %params = (
-        input_vcf => 'some_vcf_file',
-        fpkm_file => 'some_fpkm_file',
+        input_vcf => __FILE__,
+        fpkm_file => __FILE__,
         tumor_sample_name => 'TEST-patient1-somval_tumor1',
         variant_type      => 'snvs',
-        fpkm_file         => 'some_fpkm_file',
+        fpkm_file         => __FILE__,
     );
     my $cmd = $cmd_class->create(%params);
     return $cmd;
