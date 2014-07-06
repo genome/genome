@@ -12,6 +12,12 @@ sub category {
     'experts';
 }
 
+sub resources_required {
+    my $self = shift;
+
+    return $self->get_class->resources_required;
+}
+
 sub object {
     my $self = shift;
     return $self->factory->get_object($self->category,

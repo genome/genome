@@ -25,6 +25,16 @@ class Genome::VariantReporting::Framework::Plan::MasterPlan {
     ],
 };
 
+sub resources_required {
+    my $self = shift;
+
+    my $resource_names = Set::Scalar->new();
+    for my $expert_plan ($self->expert_plans) {
+        $resource_names->insert($expert_plan->resources_required)
+    }
+    return $resource_names->members();
+}
+
 sub get_plan {
     my ($self, $category, $name) = validate_pos(@_, 1, 1, 1);
 

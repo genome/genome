@@ -35,6 +35,11 @@ sub adaptor_class {
     return $factory->get_class('adaptors', $self->name);
 }
 
+sub resources_required {
+    my $self = shift;
+    return $self->adaptor_class->provided_output_names;
+}
+
 sub run_operation {
     my $self = shift;
     return Genome::WorkflowBuilder::Command->create(
