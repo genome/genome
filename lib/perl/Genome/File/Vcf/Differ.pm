@@ -141,7 +141,7 @@ sub header {
         my @a_diffs = sort($a_diff->members());
         my @b_diffs = sort($b_diff->members());
 
-        return (
+        return Genome::File::Vcf::HeaderDiff->new(
             $self->{_a} => \@a_diffs,
             $self->{_b} => \@b_diffs,
         );

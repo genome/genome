@@ -3,6 +3,8 @@
 use above 'Genome';
 use Test::More;
 use File::Spec;
+use Data::Dump qw(pp);
+use Genome::File::Vcf::HeaderDiff;
 
 use strict;
 use warnings;
@@ -28,31 +30,33 @@ done_testing();
 sub test_same {
     my $differ = new_differ('blessed.vcf', 'same.vcf');
 
-    my %header_differences = $differ->header;
-    my ($blessed_entry, $other_entry, @columns) = $differ->next();
+    my $diff = $differ->diff;
 
     subtest 'NO DIFFERENCES' => sub {
-        is_deeply(\%header_differences, {}, 'Found no header differences');
-        is_deeply(\@columns, [], 'Found no body differences');
+        ok(!defined($diff), 'undef returned when no diff was found');
     };
 }
 
 sub test_header {
     my $differ = new_differ('blessed.vcf', 'header.vcf');
-    my %header_differences = $differ->header;
-    my ($blessed_entry, $other_entry, @columns) = $differ->next();
+    my $diff = $differ->diff;
 
     subtest 'HEADER' => sub {
-        is_deeply(\%header_differences, {
-                test_file('blessed.vcf') => [
-                    '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
-                ],
-                test_file('header.vcf') => [
-                    '##FORMAT=<ID=GT,Number=1,Type=Integer,Description="Genotype">',
-                ],
-            }, 'Found header differences');
+        is(ref $diff, 'Genome::File::Vcf::HeaderDiff',
+            'found HeaderDiff object when headers diff');
 
-        is_deeply(\@columns, [], 'Found no body differences');
+        my $expected = test_file('blessed.vcf');
+        is($diff->{_a}, $expected, "Found _a was ($expected)");
+
+        $expected = ['##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">'],
+        is_deeply($diff->{_diffs_a}, $expected, "Found _diffs_a was " . pp($expected));
+
+
+        $expected = test_file('header.vcf');
+        is($diff->{_b}, $expected, "Found _b was ($expected)");
+
+        $expected = ['##FORMAT=<ID=GT,Number=1,Type=Integer,Description="Genotype">'],
+        is_deeply($diff->{_diffs_b}, $expected, "Found _diffs_b was " . pp($expected));
     };
 }
 
