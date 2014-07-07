@@ -81,6 +81,9 @@ sub resolve_which_stats_tsv {
     push @stats_files, $b->rnaseq_tumor_cufflinks_genes_stats_file;
     push @stats_files, $b->rnaseq_tumor_tophat_junctions_absolute_stats_file;
     push @stats_files, $b->wgs_cnv_summary_stats_file;
+    push @stats_files, $b->sv_stats_file;
+    push @stats_files, $b->variant_sc_wgs_stats_file;
+    push @stats_files, $b->variant_sc_exome_stats_file;
   }
   if($stats_file_type =~ m/wgs_snv_summary/i) {
     push @stats_files, $b->wgs_snv_summary_stats_file;
@@ -108,6 +111,13 @@ sub resolve_which_stats_tsv {
   }
   if($stats_file_type =~ m/input_summary/i) {
     push @stats_files, $b->input_summary_stats_file;
+  }
+  if($stats_file_type =~ m/sv_summary/i) {
+    push @stats_files, $b->sv_stats_file;
+  }
+  if($stats_file_type =~ m/variant_sc_summary/i) {
+    push @stats_files, $b->variant_sc_exome_stats_file;
+    push @stats_files, $b->variant_sc_wgs_stats_file;
   }
   return @stats_files;
 }
