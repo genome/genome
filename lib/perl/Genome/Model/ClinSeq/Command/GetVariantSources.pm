@@ -335,7 +335,7 @@ sub get_variant_caller_results() {
         $variant_caller_file = $self->checkResultFile('-paths'=>\@variant_caller_paths, '-caller'=>$caller);
 
         #Sort the caller result BED files using joinx and store in a temporary file and use that to run joinx intersect
-        my $variant_caller_file_s =  Genome::Sys->create_temp_file_path($variant_type . "_" . $caller . ".sorted");
+        my $variant_caller_file_s =  $build_outdir . $variant_type . "_" . $caller . ".sorted.bed";
         $self->joinxSortFile($variant_caller_file, $variant_caller_file_s);
 
         #Use 'joinx intersect' to determine which indels in the merged/union file are found in each individual caller's results file
@@ -344,6 +344,7 @@ sub get_variant_caller_results() {
         my $variant_caller_outfile = $build_outdir . $variant_type . "_" . $caller . ".bed";
 
         $self->determineCaller($variant_type, $caller, $variant_results_file, $variant_caller_file_s, $variant_caller_outfile);
+        unlink $variant_caller_file_s;
     }
 }
 
