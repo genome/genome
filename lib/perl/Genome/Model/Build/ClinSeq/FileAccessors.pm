@@ -39,6 +39,30 @@ sub rnaseq_dir {
   return $rnaseq_dir;
 }
 
+sub sv_dir {
+  my $self = shift;
+  my $sv_dir = $self->case_dir . "/sv";
+  return $sv_dir;
+}
+
+sub variant_sc_dir {
+  my $self = shift;
+  my $variant_sc_dir = $self->case_dir . "/variant_source_callers";
+  return $variant_sc_dir;
+}
+
+sub variant_sc_wgs_dir {
+  my $self = shift;
+  my $variant_sc_wgs_dir = $self->variant_sc_dir . "/wgs";
+  return $variant_sc_wgs_dir;
+}
+
+sub variant_sc_exome_dir {
+  my $self = shift;
+  my $variant_sc_exome_dir = $self->variant_sc_dir . "/exome";
+  return $variant_sc_exome_dir;
+}
+
 sub rnaseq_tumor_dir {
   my $self = shift;
   my $rnaseq_tumor_dir = $self->rnaseq_dir . "/tumor";
@@ -403,6 +427,45 @@ sub rnaseq_tumor_tophat_junctions_absolute_stats_file {
   } else {
     $self->warning_message("unable to find " .
         $rnaseq_tumor_tophat_junctions_absolute_stats_file);
+    return 0;
+  }
+}
+
+sub variant_sc_wgs_stats_file {
+  my $self = shift;
+  my $variant_sc_wgs_stats_file = $self->variant_sc_wgs_dir.
+      "/Stats.tsv";
+  if(-e $variant_sc_wgs_stats_file){
+    return $variant_sc_wgs_stats_file;
+  } else {
+    $self->warning_message("unable to find " .
+        $variant_sc_wgs_stats_file);
+    return 0;
+  }
+}
+
+sub variant_sc_exome_stats_file {
+  my $self = shift;
+  my $variant_sc_exome_stats_file = $self->variant_sc_exome_dir.
+      "/Stats.tsv";
+  if(-e $variant_sc_exome_stats_file){
+    return $variant_sc_exome_stats_file;
+  } else {
+    $self->warning_message("unable to find " .
+        $variant_sc_exome_stats_file);
+    return 0;
+  }
+}
+
+sub sv_stats_file {
+  my $self = shift;
+  my $sv_stats_file = $self->sv_dir.
+      "/Stats.tsv";
+  if(-e $sv_stats_file){
+    return $sv_stats_file;
+  } else {
+    $self->warning_message("unable to find " .
+        $sv_stats_file);
     return 0;
   }
 }
