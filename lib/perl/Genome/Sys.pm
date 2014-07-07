@@ -12,7 +12,7 @@ use Cwd;
 use Digest::MD5;
 use Errno qw();
 use File::Basename;
-use File::Copy;
+use File::Copy qw();
 use File::Path;
 use File::Spec;
 use File::stat qw(stat);
@@ -1622,12 +1622,11 @@ sub retry {
     return $rv;
 }
 
-# rename that doesn't preserve permissions, uid, or gid
-sub rename {
-    my ($class, $oldname, $newname) = @_;
+sub _unpreserved_permissions {
+    my ($class, $oldname, $newname, $func) = @_;
 
     if ( -l $oldname) {
-        return CORE::rename($oldname, $newname);
+        return $func->();
     }
 
     # mimic (anticipated) CORE::rename errors
@@ -1674,9 +1673,7 @@ sub rename {
     my $gid  = $stat->gid;
     my $uid  = $stat->uid;
 
-    unless ( CORE::rename $oldname, $newname ) {
-        Carp::croak("CORE::rename should never fail or we didn't do a good enough job mimicking it.  Error was: $!");
-    }
+    $func->();
 
     # restore mode, gid, and uid
     chown($uid, $gid, $newname)
@@ -1685,6 +1682,24 @@ sub rename {
         or return;
 
     return 1;
+}
+
+sub rename {
+    my ($class, $oldname, $newname) = @_;
+    _unpreserved_permissions($class, $oldname, $newname, sub {
+        unless ( CORE::rename $oldname, $newname ) {
+            die qq(CORE::rename should never fail or we didn't do a good enough job mimicking it.  Error was: $!);
+        }
+    });
+}
+
+sub move {
+    my ($class, $oldname, $newname) = @_;
+    _unpreserved_permissions($class, $oldname, $newname, sub {
+        unless ( File::Copy::move $oldname, $newname ) {
+            die qq(File::Copy::move should never fail or we didn't do a good enough job mimicking it.  Error was: $!);
+        }
+    });
 }
 
 sub touch {
