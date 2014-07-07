@@ -684,7 +684,7 @@ sub move_file {
     # Note: since the file is validate_file_for_reading, and the dest is validate_file_for_writing,
     #  the files can never be exactly the same.
 
-    unless ( File::Copy::move($file, $dest) ) {
+    unless ( $self->move($file, $dest) ) {
         Carp::croak("Can't move $file to $dest: $!");
     }
 
