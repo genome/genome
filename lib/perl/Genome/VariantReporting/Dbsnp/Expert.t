@@ -28,7 +28,7 @@ use_ok($pkg) || die;
 my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('experts', $pkg->name), $pkg);
 
-my $VERSION = 2; # Bump these each time test data changes
+my $VERSION = 3; # Bump these each time test data changes
 my $RESOURCE_VERSION = 1;
 my $test_dir = get_test_dir($pkg, $VERSION);
 
@@ -46,22 +46,9 @@ $plan->validate();
 my $variant_type = 'snvs';
 my $expected_vcf = File::Spec->join($test_dir, "expected_$variant_type.vcf.gz");
 my $provider = get_resource_provider(version => $RESOURCE_VERSION);
-$provider->set_attribute(dbsnp_build_id => get_dbsnp_build($test_dir)->id);
+$provider->set_attribute(annotation_vcf => File::Spec->join($test_dir, 'dbsnp.vcf'));
 
 my $input_vcf = File::Spec->join($test_dir, "$variant_type.vcf.gz");
 test_dag_execute($dag, $expected_vcf, $input_vcf, $provider, $variant_type, $plan);
 
 done_testing();
-
-sub get_dbsnp_build {
-    my ($test_dir) = @_;
-
-    my $dbsnp_build = Genome::Model::Build::ImportedVariationList->__define__;
-    reinstall_sub({
-        into => "Genome::Model::Build::ImportedVariationList",
-        as => "snvs_vcf",
-        code => sub { return File::Spec->join($test_dir, 'dbsnp.vcf'); },
-    });
-
-    return $dbsnp_build;
-}

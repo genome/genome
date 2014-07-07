@@ -8,8 +8,8 @@ use File::Spec;
 class Genome::VariantReporting::Dbsnp::RunResult {
     is => 'Genome::VariantReporting::Framework::Component::Expert::Result',
     has_input => [
-        dbsnp_build_id => {
-            is => 'Text',
+        annotation_vcf_lookup_md5 => {
+            is => 'text',
         },
     ],
     has_param => [
@@ -20,22 +20,16 @@ class Genome::VariantReporting::Dbsnp::RunResult {
             is => 'Text',
         },
     ],
+    has_transient_optional => [
+        annotation_vcf => {
+            is => 'Path',
+        },
+    ],
 };
 
 
 sub output_filename {
     return 'joinx_vcf_annotate.vcf.gz';
-}
-
-sub annotation_file {
-    my $self = shift;
-
-    my $dbsnp_build = Genome::Model::Build::ImportedVariationList->get($self->dbsnp_build_id);
-    if ($dbsnp_build) {
-        return $dbsnp_build->snvs_vcf;
-    } else {
-        die sprintf("No dbsnp build with id (%s)", $self->dbsnp_build_id);
-    }
 }
 
 sub _run {
@@ -47,7 +41,7 @@ sub _run {
 
     my $vcf_annotator = Genome::Model::Tools::Joinx::VcfAnnotate->create(
         input_file      => $self->input_vcf,
-        annotation_file => $self->annotation_file,
+        annotation_file => $self->annotation_vcf,
         output_file     => $output_file,
         use_bgzip       => 1,
         info_fields     => $info_string,

@@ -12,9 +12,9 @@ class Genome::VariantReporting::Dbsnp::Adaptor {
         info_string => { is => 'Text', },
     ],
     has_provided_output => [
-        dbsnp_build_id => {
-            is => 'Genome::Model::Build::ImportedVariationList',
-        },
+        annotation_vcf => {
+            is => 'Path',
+        }
     ],
 };
 

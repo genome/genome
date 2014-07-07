@@ -45,16 +45,9 @@ sub generate_test_cmd {
         code => sub {my $self = shift; my $file = $self->output_file; `touch $file`; return 1;},
     });
 
-    my $model = Genome::Test::Factory::Model::ImportedVariationList->setup_object();
-    my $dbsnp_build = Genome::Test::Factory::Build->setup_object(model_id => $model->id);
-    Sub::Install::reinstall_sub({
-        into => 'Genome::Model::Build::ImportedVariationList',
-        as => 'snvs_vcf',
-        code => sub {return 1},
-    });
     my %params = (
         input_vcf => __FILE__,
-        dbsnp_build_id => $dbsnp_build->id,
+        annotation_vcf => __FILE__,
         variant_type     => 'snvs',
         info_string      => 'test',
         joinx_version          => '1.8',
