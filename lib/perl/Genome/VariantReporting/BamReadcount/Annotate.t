@@ -29,7 +29,7 @@ ok($cmd->execute(), 'Command executed');
 is(ref($cmd->output_result), $result_class, 'Found software result after execution');
 
 my $expected_tool_args = {
-    vcf_file => __FILE__,
+    vcf_file => 'some_vcf_file',
     readcount_file_and_sample_idx => ['rc_file1:1', 'rc_file2:2'],
 };
 is_deeply($tool_args, $expected_tool_args, 'Called Genome::Model::Tools::Vcf::AnnotateWithReadcounts with expected args');
@@ -62,7 +62,7 @@ sub generate_test_cmd {
 
     my %params = (
         readcount_results => [$rc_result1, $rc_result2],
-        input_vcf => __FILE__,
+        input_vcf => 'some_vcf_file',
         variant_type => 'snvs',
     );
     my $cmd = $cmd_class->create(%params);

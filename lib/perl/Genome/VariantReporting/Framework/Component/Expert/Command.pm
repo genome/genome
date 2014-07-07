@@ -4,15 +4,6 @@ use strict;
 use warnings FATAL => 'all';
 use Genome;
 use Data::Dump qw(pp);
-use Set::Scalar;
-
-my $PATH_TYPES = Set::Scalar->new(
-    'Path',
-    'File',
-    'FileSystemPath',
-    'FilePath',
-    'DirectoryPath',
-);
 
 class Genome::VariantReporting::Framework::Component::Expert::Command {
     is_abstract => 1,
@@ -101,28 +92,15 @@ sub is_not_many_input_names {
     return map {$_->property_name} @properties;
 }
 
-sub is_path {
-    my ($self, $property_name) = @_;
-
-    my $property_meta = $self->__meta__->property_meta_for_name($property_name);
-    return $PATH_TYPES->contains($property_meta->data_type);
-}
-
 sub input_hash {
     my $self = shift;
 
     my %hash;
     for my $input_name ($self->is_many_input_names) {
         $hash{$input_name} = [$self->$input_name];
-        if ($self->is_path($input_name)) {
-            $hash{$input_name . '_lookup_md5'} = [map {Genome::Sys->md5sum($_)} $self->$input_name];
-        }
     }
     for my $input_name ($self->is_not_many_input_names) {
         $hash{$input_name} = $self->$input_name;
-        if ($self->is_path($input_name)) {
-            $hash{$input_name . '_lookup_md5'} = Genome::Sys->md5sum($self->$input_name);
-        }
     }
     return %hash;
 }

@@ -8,19 +8,14 @@ class Genome::VariantReporting::Framework::Component::Expert::Result {
     is_abstract => 1,
     is => 'Genome::SoftwareResult::Stageable',
     has_input => [
-        input_vcf_lookup_md5 => {
-            is => 'Text',
+        input_vcf => {
+            is => 'Path',
         },
     ],
     has_param => [
         variant_type => {
             is => 'Text',
             valid_values => ['snvs', 'indels'],
-        },
-    ],
-    has_transient_optional => [
-        input_vcf => {
-            is => 'Path',
         },
     ],
 };
@@ -55,12 +50,6 @@ sub resolve_allocation_subdirectory {
 
 sub resolve_allocation_disk_group_name {
     $ENV{GENOME_DISK_GROUP_MODELS};
-}
-
-sub transient_names {
-    my $self = shift;
-
-    return map {$_->property_name} $self->__meta__->properties(is_transient => 1);
 }
 
 sub param_names {

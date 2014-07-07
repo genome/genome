@@ -53,7 +53,7 @@ sub generate_test_cmd {
     });
 
     my %params = (
-        input_vcf => __FILE__,
+        input_vcf => 'some_vcf_file',
         ensembl_version => "1",
         custom_annotation_tags => [qw(ROI SEGDUP)],
         feature_list_ids => {
@@ -65,7 +65,7 @@ sub generate_test_cmd {
         species => "alien",
         joinx_version => '1.8',
         terms => "ensembl",
-        reference_fasta => __FILE__,
+        reference_fasta => 'some_fasta_file',
     );
     my $cmd = $cmd_class->create(%params);
     return $cmd

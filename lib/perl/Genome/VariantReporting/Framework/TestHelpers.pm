@@ -35,14 +35,9 @@ our @EXPORT_OK = qw(
 sub test_cmd_and_result_are_in_sync {
     my $cmd = shift;
 
-    my %input_hash = $cmd->input_hash;
-    my $cmd_set = Set::Scalar->new(keys %input_hash);
-    my $sr_set = Set::Scalar->new(
-        $cmd->output_result->param_names,
-        $cmd->output_result->metric_names,
-        $cmd->output_result->input_names,
-        $cmd->output_result->transient_names,
-    );
+    my $cmd_set = Set::Scalar->new($cmd->input_names);
+    my $sr_set = Set::Scalar->new($cmd->output_result->param_names,
+        $cmd->output_result->metric_names, $cmd->output_result->input_names);
     is_deeply($cmd_set - $sr_set, Set::Scalar->new(),
         'All command inputs are persisted SoftwareResult properties');
 }
