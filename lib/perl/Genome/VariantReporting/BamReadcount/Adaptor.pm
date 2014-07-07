@@ -7,13 +7,6 @@ use Genome;
 class Genome::VariantReporting::BamReadcount::Adaptor {
     is => 'Genome::VariantReporting::Framework::Component::Adaptor',
 
-    has_provided_output => [
-        aligned_bam_result_id => {
-            is_many => 1,
-            is => 'Text',
-        },
-    ],
-
     has_planned_output => [
         version => { is  => 'Version', },
         minimum_mapping_quality => { is => 'Integer', },

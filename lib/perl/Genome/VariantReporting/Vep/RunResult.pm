@@ -13,19 +13,16 @@ class Genome::VariantReporting::Vep::RunResult {
         ensembl_version => {
             is => 'String',
         },
-        custom_annotation_tags => {
+        feature_list_ids_and_tags => {
             is => 'String',
             is_many => 1,
-            is_optional => 1,
-        },
-        feature_list_ids => {
-            is => 'HASH',
-            doc => 'A hash keyed on INFO TAG with values of FeatureList IDs',
         },
         species => {
             is => 'String',
         },
-        reference_fasta => {is => 'Path'},
+        reference_build => {
+            is => 'Genome::Model::Build::ReferenceSequence',
+        },
     ],
     has_param => [
         terms => {is => 'String', },
@@ -66,7 +63,7 @@ sub _sort_input_vcf {
     my $self = shift;
 
     Genome::Model::Tools::Joinx::Sort->execute(
-        input_files => [$self->input_vcf],
+        input_files => [$self->input_result_file_path],
         use_version => $self->joinx_version,
         output_file => $self->sorted_input_vcf,
     );
@@ -133,8 +130,8 @@ sub custom_annotation_inputs {
     my $self = shift;
 
     my $result = [];
-    for my $tag ($self->custom_annotation_tags) {
-        my $id = $self->feature_list_ids->{$tag};
+    for my $feature_list_and_tag ($self->feature_list_ids_and_tags) {
+        my ($id, $tag) = split(":", $feature_list_and_tag);
         push @$result, join("@",
             $self->_get_file_path_for_feature_list($id),
             $tag,
@@ -153,7 +150,7 @@ sub vep_params {
 
     my %params = (
         %param_hash,
-        fasta => $self->reference_fasta,
+        fasta => $self->reference_build->fasta_file,
         ensembl_version => $self->ensembl_version,
         custom => $self->custom_annotation_inputs,
         format => "vcf",
@@ -220,8 +217,8 @@ sub final_vcf_file {
 sub _fix_feature_list_descriptions {
     my $self = shift;
     my @substitutions;
-    for my $tag ($self->custom_annotation_tags) {
-        my $id = $self->feature_list_ids->{$tag};
+    for my $feature_list_and_tag ($self->feature_list_ids_and_tags) {
+        my ($id, $tag) = split(":", $feature_list_and_tag);
         my $feature_list = Genome::FeatureList->get($id);
         push @substitutions, "-e ".join("|", "s", $self->_get_file_path_for_feature_list($id),
             $feature_list->name)."|";

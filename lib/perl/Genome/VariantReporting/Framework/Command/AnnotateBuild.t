@@ -10,7 +10,7 @@ use strict;
 use warnings;
 
 use above "Genome";
-use Test::More skip_all => 'Command does not work right now';
+use Test::More;
 use Test::Deep;
 use File::Basename qw(basename);
 use File::Spec;

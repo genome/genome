@@ -38,7 +38,6 @@ class Genome::VariantReporting::Framework::Command::AnnotateBuild {
 
 sub execute {
     my $self = shift;
-    die "This command is not working right now!";
 
     $self->setup_environment;
 

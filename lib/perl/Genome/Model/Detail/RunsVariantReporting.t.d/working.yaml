@@ -8,7 +8,7 @@ experts:
         insertion_centric: 0
     vep:
         ensembl_version: 75
-        custom_annotation_tags: []
+        feature_list_names_and_tags: {}
         species: 'homo-sapiens'
         terms: ensembl
         plugins: []

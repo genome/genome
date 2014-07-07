@@ -9,8 +9,9 @@ class Genome::VariantReporting::Framework::Component::Expert::Command {
     is_abstract => 1,
     is => ['Command::V2', 'Genome::VariantReporting::Framework::Component::Base'],
     has_input => [
-        input_vcf => {
-            is => 'Path',
+        input_result => {
+            is => 'Genome::SoftwareResult',
+            doc => "The software result created by the previously run command",
         },
         variant_type => {
             is => 'Text',
@@ -19,11 +20,9 @@ class Genome::VariantReporting::Framework::Component::Expert::Command {
         },
     ],
     has_optional_output => [
-        output_vcf => {
-            is => 'Path',
-        },
         output_result => {
-            is => 'Genome::SoftwareResult',
+            is => 'Genome::VariantReporting::Framework::Component::Expert::Result',
+            doc => 'The software result created during command execution',
         },
     ],
 };
@@ -41,13 +40,9 @@ sub shortcut {
         $self->result_class, pp($self->input_hash));
     my $result = $self->result_class->get_with_lock($self->input_hash);
     if ($result) {
-        $self->debug_message("Found existing result (%s) with output_file_path (%s)",
-            $result->id, $result->output_file_path);
         $self->output_result($result);
-        $self->output_vcf($result->output_file_path);
         return 1;
     } else {
-        $self->debug_message("Found no existing result.");
         return 0;
     }
 }
@@ -59,15 +54,8 @@ sub execute {
     $self->validate();
 
     $self->debug_message("Attempting to get or create a %s with arugments %s",
-        $self->result_class, pp({$self->input_hash}));
-    my $result = $self->result_class->get_or_create($self->input_hash);
-    $self->debug_message("Got or created result (%s) with output file path (%s)",
-        $result->id, $result->output_file_path);
-    use Data::Dump qw(pp);
-    print pp({$result->calculate_query()}) . "\n";
-    $self->output_result($result);
-    $self->output_vcf($result->output_file_path);
-    print "output file path: " . pp($result->output_file_path) . "\n";
+        $self->result_class, pp($self->input_hash));
+    $self->output_result($self->result_class->get_or_create($self->input_hash));
     return 1;
 }
 

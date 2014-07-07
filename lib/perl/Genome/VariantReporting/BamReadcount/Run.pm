@@ -7,8 +7,8 @@ use Genome;
 class Genome::VariantReporting::BamReadcount::Run {
     is => 'Genome::VariantReporting::Framework::Component::Expert::Command',
     has_input => [
-        aligned_bam_result_id => {
-            is => 'Text',
+        aligned_bam_result => {
+            is => 'Genome::InstrumentData::AlignedBamResult',
             doc => 'The bam result used to calculate read counts',
         },
         version => {

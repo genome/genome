@@ -27,26 +27,33 @@ sub generate_dag {
     return $dag;
 }
 
+sub connected_initial_operation {
+    my $dag = shift;
+
+    my $op = Genome::WorkflowBuilder::Command->create(
+        name => 'Get Initial Vcf Result from Build',
+        command => 'Genome::VariantReporting::Framework::GetInitialVcfResult',
+    );
+    connect_to_dag(
+        dag => $dag,
+        target => $op,
+    );
+    return $op;
+}
+
 sub connect_experts {
     my $dag = shift;
     my $plan = shift;
 
-    my $last_op;
+    my $last_op = connected_initial_operation($dag);
+
     for my $expert (experts($plan)) {
         my $expert_op = $expert->dag;
-        if ($last_op) {
-            connect_to_previous(
-                dag => $dag,
-                previous => $last_op,
-                target => $expert_op,
-            );
-        } else {
-            $dag->connect_input(
-                input_property => 'input_vcf',
-                destination => $expert_op,
-                destination_property => 'input_vcf',
-            );
-        }
+        connect_to_previous(
+            dag => $dag,
+            previous => $last_op,
+            target => $expert_op,
+        );
         connect_to_dag(
             dag => $dag,
             target => $expert_op,
@@ -63,7 +70,7 @@ sub connect_to_dag {
     });
 
     $p{dag}->add_operation($p{target});
-    for my $name qw(provider_json variant_type plan_json) {
+    for my $name qw(build_id variant_type plan_json) {
         if (in($name, $p{target}->input_properties)) {
             $p{dag}->connect_input(
                 input_property => $name,
@@ -83,9 +90,9 @@ sub connect_to_previous {
 
     $p{dag}->create_link(
         source => $p{previous},
-        source_property => 'output_vcf',
+        source_property => 'output_result',
         destination => $p{target},
-        destination_property => 'input_vcf',
+        destination_property => 'input_result',
     );
 }
 
@@ -106,7 +113,7 @@ sub connect_report_generator {
 
     my $report_generator_op = Genome::WorkflowBuilder::Command->create(
         name => 'Generate Reports',
-        command => 'Genome::VariantReporting::Framework::ReportGenerator',
+        command => 'Genome::VariantReporting::Framework::ReportGeneratorWrapper',
     );
     connect_to_previous(
         dag => $dag,
@@ -118,11 +125,6 @@ sub connect_report_generator {
         target => $report_generator_op,
     );
 
-    $dag->connect_input(
-        input_property => 'translations',
-        destination => $report_generator_op,
-        destination_property => 'translations',
-    );
     $dag->connect_input(
         input_property => 'output_directory',
         destination => $report_generator_op,

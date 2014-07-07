@@ -13,13 +13,9 @@ class Genome::VariantReporting::Framework::Component::Adaptor {
             is => "Boolean",
             default => 0,
         },
-        is_provided => {
-            is => "Boolean",
-            default => 0,
-        },
     },
     has_input => [
-        provider_json => {
+        build_id => {
             is => 'Text',
         },
         variant_type => {
@@ -31,10 +27,22 @@ class Genome::VariantReporting::Framework::Component::Adaptor {
             is => 'Text',
         },
     ],
+    has_output => [
+        bam_results => {
+            is_many => 1,
+            is => 'Genome::InstrumentData::AlignedBamResult',
+        },
+    ],
 };
 
 sub name {
     die "Abstract";
+}
+
+sub resolve_expert_specific_attributes_from_build {
+    my $self = shift;
+    # This may be defined in subclasses
+    return;
 }
 
 sub shortcut {
@@ -44,12 +52,55 @@ sub shortcut {
 
 sub execute {
     my $self = shift;
+    $self->debug_message("Resolving bam results");
+    $self->resolve_bam_results;
+
     $self->debug_message("Resolving plan attributes");
     $self->resolve_plan_attributes;
 
-    $self->debug_message("Resolving attributes from the resource-provider");
-    $self->resolve_provided_attributes;
+    $self->debug_message("Resolving any expert-specific attributes from the build");
+    $self->resolve_expert_specific_attributes_from_build;
     return 1;
+}
+
+sub resolve_bam_results {
+    my $self = shift;
+
+    my $results;
+    if ($self->build->isa('Genome::Model::Build::SomaticVariation')) {
+        $results = $self->_resolve_bam_results_variation;
+    } elsif ($self->build->isa('Genome::Model::Build::SomaticValidation')) {
+        $results = $self->_resolve_bam_results_validation;
+    } else {
+        die "This adaptor can only work on SomaticValidation or SomaticVariation type builds";
+    }
+    $self->bam_results($results);
+}
+
+sub build {
+    my $self = shift;
+
+    my $build = Genome::Model::Build->get($self->build_id);
+    if ($build) {
+        return $build;
+    } else {
+        die $self->error_message("Couldn't find a build for id (%s)",
+            $self->build_id);
+    }
+}
+
+sub _resolve_bam_results_variation {
+    my $self = shift;
+    my @bam_results;
+    for my $type qw(normal_build tumor_build) {
+        push @bam_results, $self->build->$type->merged_alignment_result;
+    }
+    return \@bam_results;
+}
+
+sub _resolve_bam_results_validation {
+    my $self = shift;
+    return [$self->build->control_merged_alignment_result, $self->build->merged_alignment_result];
 }
 
 sub resolve_plan_attributes {
@@ -76,28 +127,6 @@ sub planned_output_names {
     return map {$_->property_name} @properties;
 }
 
-sub provider {
-    my $self = shift;
-
-    return Genome::VariantReporting::Framework::Component::ResourceProvider->create_from_json($self->provider_json);
-}
-
-sub provided_output_names {
-    my $self = shift;
-
-    my @properties = $self->__meta__->properties(
-        is_output => 1, is_provided => 1);
-    return map {$_->property_name} @properties;
-}
-
-sub resolve_provided_attributes {
-    my $self = shift;
-
-    for my $name ($self->provided_output_names) {
-        $self->$name($self->provider->get_attribute($name));
-    }
-}
-
 # TODO this is not covered by tests
 sub validate_with_plan_params {
     my ($self, $params) = validate_pos(@_, 1, 1);
@@ -110,19 +139,13 @@ sub validate_with_plan_params {
     return;
 }
 
+# TODO this is not covered by tests
 sub __planned_output_errors__ {
     my ($self, $params) = validate_pos(@_, 1, 1);
     my $needed = Set::Scalar->new($self->planned_output_names);
     return $self->_get_missing_errors($params, $needed),
         $self->_get_extra_errors($params, $needed);
 }
-
-sub __provided_output_errors__ {
-    my ($self, $params) = validate_pos(@_, 1, 1);
-    my $needed = Set::Scalar->new($self->provided_output_names);
-    return $self->_get_missing_errors($params, $needed);
-}
-
 sub _get_missing_errors {
     my ($self, $params, $needed) = validate_pos(@_, 1, 1, 1);
 

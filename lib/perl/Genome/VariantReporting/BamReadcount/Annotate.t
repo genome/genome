@@ -29,7 +29,7 @@ ok($cmd->execute(), 'Command executed');
 is(ref($cmd->output_result), $result_class, 'Found software result after execution');
 
 my $expected_tool_args = {
-    vcf_file => 'some_vcf_file',
+    vcf_file => 'test_vcf',
     readcount_file_and_sample_idx => ['rc_file1:1', 'rc_file2:2'],
 };
 is_deeply($tool_args, $expected_tool_args, 'Called Genome::Model::Tools::Vcf::AnnotateWithReadcounts with expected args');
@@ -51,6 +51,13 @@ sub generate_test_cmd {
             $tool_args->{readcount_file_and_sample_idx} = [$self->readcount_file_and_sample_idx];
     }});
 
+    my $input_result = $result_class->__define__();
+    Sub::Install::reinstall_sub({
+        into => 'Genome::VariantReporting::Framework::Component::Expert::Result',
+        as => 'output_file_path',
+        code => sub {return 'test_vcf';},
+    });
+
     my $rc_result1 = Genome::VariantReporting::BamReadcount::RunResult->__define__();
     my $rc_result2 = Genome::VariantReporting::BamReadcount::RunResult->__define__();
 
@@ -62,7 +69,7 @@ sub generate_test_cmd {
 
     my %params = (
         readcount_results => [$rc_result1, $rc_result2],
-        input_vcf => 'some_vcf_file',
+        input_result => $input_result,
         variant_type => 'snvs',
     );
     my $cmd = $cmd_class->create(%params);
