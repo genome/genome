@@ -41,7 +41,7 @@ sub new {
         _a_reader => $a_reader,
         _b_reader => $b_reader,
     };
-
+    
     bless $self, $class;
     return $self;
 }
