@@ -59,4 +59,12 @@ sub __object_errors__ {
     return @errors;
 }
 
+sub __provider_errors__ {
+    my $self = shift;
+    my $provider = shift;
+
+    return $self->object->adaptor_class->__provided_output_errors__(
+        $provider->attributes);
+}
+
 1;
