@@ -3,6 +3,7 @@ package Genome::VariantReporting::Framework::Component::ResourceProvider;
 use strict;
 use warnings FATAL => 'all';
 use UR;
+use YAML;
 use JSON;
 use Data::Dump qw(pp);
 use Params::Validate qw(validate validate_pos :types);
@@ -47,5 +48,22 @@ sub create_from_json {
     my $hashref = $_JSON_CODEC->decode($json);
     return $class->create(attributes => $hashref);
 }
+
+sub write_to_file {
+    my $self = shift;
+    my $filename = shift;
+
+    YAML::DumpFile($filename, $self->attributes);
+}
+
+sub create_from_file {
+    my $class = shift;
+    my $file = shift;
+
+    my ($hashref, undef, undef) = YAML::LoadFile($file);
+
+    return $class->create(attributes => $hashref);
+}
+
 
 1;
