@@ -374,40 +374,48 @@ sub writeStats {
     my $snv_caller_stats = shift;
     my $indel_caller_stats = shift;
     my $stats_file = $outdir . "/Stats.tsv";
+    my $data_source = "WGS/Exome";
+    if($stats_file =~ /variant_source_callers\/exome/) {
+        $data_source = "Exome";
+    } elsif($stats_file =~ /variant_source_callers\/wgs/) {
+        $data_source = "WGS";
+    }
     open my $STATS, ">$stats_file";
-    $self->write_snv_stats($snv_caller_stats, $STATS);
-    $self->write_indel_stats($indel_caller_stats, $STATS);
+    $self->write_snv_stats($snv_caller_stats, $data_source, $STATS);
+    $self->write_indel_stats($indel_caller_stats, $data_source, $STATS);
     close $STATS;
 }
 
 sub write_snv_stats {
     my $self = shift;
     my $snv_caller_stats = shift;
+    my $data_source = shift;
     my $STATS = shift;
     print $STATS "Number of Strelka SNV calls\t" . $snv_caller_stats->{"strelka"}.
-        "\tWGS/Exome\tClinseq Build Summary\tCount\tNumber of SNVs called by Strelka\n";
+        "\t" . $data_source . "\tClinseq Build Summary\tCount\tNumber of SNVs called by Strelka\n";
     print $STATS "Number of Sniper SNV calls\t" . $snv_caller_stats->{"sniper"}.
-        "\tWGS/Exome\tClinseq Build Summary\tCount\tNumber of SNVs called by Sniper\n";
+        "\t" . $data_source . "\tClinseq Build Summary\tCount\tNumber of SNVs called by Sniper\n";
     print $STATS "Number of VarScan SNV calls\t" . $snv_caller_stats->{"varscan"}.
-        "\tWGS/Exome\tClinseq Build Summary\tCount\tNumber of SNVs called by VarScan\n";
+        "\t" . $data_source . "\tClinseq Build Summary\tCount\tNumber of SNVs called by VarScan\n";
     print $STATS "Number of SamTools SNV calls\t" . $snv_caller_stats->{"samtools"}.
-        "\tWGS/Exome\tClinseq Build Summary\tCount\tNumber of SNVs called by SamTools\n";
+        "\t" . $data_source . "\tClinseq Build Summary\tCount\tNumber of SNVs called by SamTools\n";
     print $STATS "Number of Mutect SNV calls\t" . $snv_caller_stats->{"mutect"}.
-        "\tWGS/Exome\tClinseq Build Summary\tCount\tNumber of SNVs called by Mutect\n";
+        "\t" . $data_source . "\tClinseq Build Summary\tCount\tNumber of SNVs called by Mutect\n";
 }
 
 sub write_indel_stats {
     my $self = shift;
     my $indel_caller_stats = shift;
+    my $data_source = shift;
     my $STATS = shift;
     print $STATS "Number of Strelka Indel calls\t" . $indel_caller_stats->{"strelka"}.
-        "\tWGS/Exome\tClinseq Build Summary\tCount\tNumber of Indels called by Strelka\n";
+        "\t" . $data_source . "\tClinseq Build Summary\tCount\tNumber of Indels called by Strelka\n";
     print $STATS "Number of GATK Indel calls\t" . $indel_caller_stats->{"gatk"}.
-        "\tWGS/Exome\tClinseq Build Summary\tCount\tNumber of Indels called by GATK\n";
+        "\t" . $data_source . "\tClinseq Build Summary\tCount\tNumber of Indels called by GATK\n";
     print $STATS "Number of Pindel Indel calls\t" . $indel_caller_stats->{"pindel"}.
-        "\tWGS/Exome\tClinseq Build Summary\tCount\tNumber of Indels called by Pindel\n";
+        "\t" . $data_source . "\tClinseq Build Summary\tCount\tNumber of Indels called by Pindel\n";
     print $STATS "Number of VarScan Indel calls\t" . $indel_caller_stats->{"varscan"}.
-        "\tWGS/Exome\tClinseq Build Summary\tCount\tNumber of Indels called by Varscan\n";
+        "\t" . $data_source . "\tClinseq Build Summary\tCount\tNumber of Indels called by Varscan\n";
 }
 
 1;
