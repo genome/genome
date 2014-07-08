@@ -7,7 +7,7 @@ use Genome;
 class Genome::VariantReporting::Dbsnp::Run {
     is => 'Genome::VariantReporting::Framework::Component::Expert::Command',
     has_input => [
-        annotation_vcf => {
+        dbsnp_vcf => {
             is => 'Path',
         },
         info_string => {

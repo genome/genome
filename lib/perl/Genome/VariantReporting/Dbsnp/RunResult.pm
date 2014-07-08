@@ -21,7 +21,7 @@ class Genome::VariantReporting::Dbsnp::RunResult {
         },
     ],
     has_transient_optional => [
-        annotation_vcf => {
+        dbsnp_vcf => {
             is => 'Path',
         },
     ],
@@ -41,7 +41,7 @@ sub _run {
 
     my $vcf_annotator = Genome::Model::Tools::Joinx::VcfAnnotate->create(
         input_file      => $self->input_vcf,
-        annotation_file => $self->annotation_vcf,
+        annotation_file => $self->dbsnp_vcf,
         output_file     => $output_file,
         use_bgzip       => 1,
         info_fields     => $info_string,

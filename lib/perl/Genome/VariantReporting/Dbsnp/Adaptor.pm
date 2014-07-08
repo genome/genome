@@ -12,7 +12,7 @@ class Genome::VariantReporting::Dbsnp::Adaptor {
         info_string => { is => 'Text', },
     ],
     has_provided_output => [
-        annotation_vcf => {
+        dbsnp_vcf => {
             is => 'Path',
         }
     ],
