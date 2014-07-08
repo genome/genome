@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Set::Scalar;
 
 class Genome::Config::AnalysisProject::Command::AddInstrumentDataToAnalysisProject {
     is => 'Command::V2',
@@ -18,7 +19,7 @@ class Genome::Config::AnalysisProject::Command::AddInstrumentDataToAnalysisProje
             doc                 => 'imported instrument data to add to this analysis project',
             is_many             => 1,
             shell_args_position => 2,
-        }
+        },
     ],
 };
 
@@ -40,10 +41,17 @@ EOS
 sub execute {
     my $self = shift;
 
-    my @instrument_data = $self->instrument_data;
     my $analysis_project = $self->analysis_project;
+    my $already_assigned = Set::Scalar->new($analysis_project->instrument_data);
+    my $desired_assigned = Set::Scalar->new($self->instrument_data);
 
-    for my $instrument_data (@instrument_data) {
+    my $should_assign = $desired_assigned - $already_assigned;
+    my $previously_assigned = $already_assigned->intersection($desired_assigned);
+
+    $self->status_message('Asked to asssign (%s) of which (%s) were already assigned. Proceeding to assign (%s)',
+        $desired_assigned->size, $previously_assigned->size, $should_assign->size);
+
+    for my $instrument_data ($should_assign->members) {
         Genome::Config::AnalysisProject::InstrumentDataBridge->create(
             analysis_project => $analysis_project,
             instrument_data => $instrument_data,
