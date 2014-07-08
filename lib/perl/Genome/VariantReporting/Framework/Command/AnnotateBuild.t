@@ -21,8 +21,8 @@ use Sub::Install qw(reinstall_sub);
 my $pkg = 'Genome::VariantReporting::Framework::Command::AnnotateBuild';
 use_ok($pkg);
 
-my $version = 5;
-my $build_version = 3;
+my $version = 6;
+my $build_version = 4;
 my $test_dir = get_test_dir($pkg, $version);
 my $dbsnp_file = File::Spec->join($test_dir, "dbsnp.vcf");
 
