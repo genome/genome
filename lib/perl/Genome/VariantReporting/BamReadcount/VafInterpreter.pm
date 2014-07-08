@@ -35,8 +35,12 @@ sub interpret_entry {
 
     my %return_values;
     my @sample_alt_alleles = sort $entry->alt_bases_for_sample($self->sample_index($entry->{header}));
+
+    my $readcount_entry = $self->get_readcount_entry($entry);
+    return $self->unknown_readcount_return_values($passed_alt_alleles) unless defined($readcount_entry);
+
     my %vafs = Genome::VariantReporting::BamReadcount::VafCalculator::calculate_vaf_for_all_alts(
-        $entry, $self->get_readcount_entry($entry));
+        $entry, $readcount_entry);
 
     for my $allele (@$passed_alt_alleles) {
         my $translated_reference_allele = $self->translate_ref_allele($entry->{reference_allele}, $allele);
@@ -59,6 +63,24 @@ sub interpret_entry {
         }
     }
 
+    return %return_values;
+}
+
+sub unknown_readcount_return_values {
+    my $self = shift;
+    my $passed_alt_alleles = shift;
+
+    my %return_values;
+    for my $allele (@$passed_alt_alleles) {
+        $return_values{$allele} = {
+            vaf => '.',
+            var_count => '.',
+            per_library_var_count => '.',
+            ref_count => '.',
+            per_library_ref_count => '.',
+            per_library_vaf => '.',
+        }
+    }
     return %return_values;
 }
 
