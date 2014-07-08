@@ -27,6 +27,17 @@ reporters:
                 min_coverage: 10
                 sample_name: tumor
         interpreters:
+            vaf:
+                sample_name: tumor
+            coverage:
+                sample_name: tumor
+            genotype:
+                sample_name: tumor
+            ft:
+                sample_name: tumor
+            contains-tag:
+                info_tag: ON_TARGET
+            indel-size: {}
             position: {}
             vep: {}
         params:
