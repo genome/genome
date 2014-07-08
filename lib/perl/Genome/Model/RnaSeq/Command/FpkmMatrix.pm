@@ -209,9 +209,21 @@ sub execute {
                             $fpkm_data->{FPKM} = 'na';
                         }
                         if ( defined($gene_transcripts{$gene_id}{$type_id}{$tracking_id}{$model_identifier}) ) {
-                            # If duplicate entries exist then keep the highest FPKM value
-                            if ($gene_transcripts{$gene_id}{$type_id}{$tracking_id}{$model_identifier}->{FPKM} < $fpkm_data->{FPKM}) {
+                            $self->debug_message('Duplicate entries found for gene \''. $gene_id .'\' and type \''. $type_id .'\' and model '. $method .' \''. $model_identifier);
+                            # If duplicate entries exist then keep the highest FPKM value that is not 'na'
+                            # The correct thing might be to sum the value: http://seqanswers.com/forums/showthread.php?t=5224
+                            if ($gene_transcripts{$gene_id}{$type_id}{$tracking_id}{$model_identifier}->{FPKM} eq 'na' &&
+                                    $fpkm_data->{FPKM} eq 'na') {
+                                # Both values are 'na' Do nothing
+                            } elsif ($gene_transcripts{$gene_id}{$type_id}{$tracking_id}{$model_identifier}->{FPKM} eq 'na') {
+                                # New FPKM data has value
                                 $gene_transcripts{$gene_id}{$type_id}{$tracking_id}{$model_identifier} = $fpkm_data;
+                            } elsif ($fpkm_data->{FPKM} eq 'na') {
+                                # New FPKM is 'na', keep old value
+                            } else {
+                                if ($gene_transcripts{$gene_id}{$type_id}{$tracking_id}{$model_identifier}->{FPKM} < $fpkm_data->{FPKM}) {
+                                    $gene_transcripts{$gene_id}{$type_id}{$tracking_id}{$model_identifier} = $fpkm_data;
+                                }
                             }
                         } else {
                             $gene_transcripts{$gene_id}{$type_id}{$tracking_id}{$model_identifier} = $fpkm_data;
