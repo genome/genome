@@ -28,6 +28,11 @@ class Genome::VariantReporting::Vep::Run {
         joinx_version => { is => 'String',},
         plugins_version => {is => 'String',},
     ],
+    has_param => [
+        lsf_resource => {
+            value => q{-R 'select[mem>16000] rusage[mem=16000]' -M 16000000},
+        },
+    ],
 };
 
 sub name {
