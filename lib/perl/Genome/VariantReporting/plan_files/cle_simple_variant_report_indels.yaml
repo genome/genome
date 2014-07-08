@@ -1,0 +1,59 @@
+experts:
+    'bam-readcount':
+        version: 0.5
+        minimum_mapping_quality: 0
+        minimum_base_quality: 0
+        max_count: 10000000
+        per_library: 1
+        insertion_centric: 0
+    vep:
+        ensembl_version: 75
+        feature_list_names_and_tags:
+            target_region: ON_TARGET
+        species: 'homo-sapiens'
+        terms: ensembl
+        plugins:
+            - Condel@PLUGIN_DIR@b@2
+        plugins_version: 1
+        joinx_version: 1.8
+reporters:
+    'simple':
+        filters:
+            'allele-in-genotype':
+                sample_name: tumor
+            'ft-keep':
+                keep_filter_values:
+                    - PASS
+                    - .
+                sample_name: tumor
+            'contains-tag':
+                info_tag: ON_TARGET
+            'coverage-vaf':
+                coverages_and_vafs:
+                    1000: 5
+                    200: 10
+                sample_name: tumor
+            'genotype-vaf':
+                min_het_vaf: 40
+                max_het_vaf: 60
+                min_hom_vaf: 85
+                max_hom_vaf: 100
+                sample_name: tumor
+            'max-indel-size':
+                size: 4
+        interpreters:
+            position: {}
+            vep: {}
+            ft:
+                sample_name: tumor
+            'contains-tag':
+                info_tag: ON_TARGET
+            coverage:
+                sample_name: tumor
+            vaf:
+                sample_name: tumor
+            genotype:
+                sample_name: tumor
+            'indel-size': {}
+        params:
+            file_name: 'simple_report_with_ft_tag_coverage-vaf_genotype-vaf_indel-size_filtered_bde1d6db353a4ae2badde3de54b9f2e6_indels'

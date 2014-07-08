@@ -65,6 +65,5 @@ $reporter->report(\%interpretations);
 $reporter->finalize();
 
 compare_ok(File::Spec->join($output_dir, 'simple'), File::Spec->join($data_dir, "expected.out"), "Output as expected");
-$DB::single=1;
 
 done_testing;
