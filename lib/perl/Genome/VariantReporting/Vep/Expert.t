@@ -28,7 +28,7 @@ use_ok($pkg) || die;
 my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('experts', $pkg->name), $pkg);
 
-my $VERSION = 5; # Bump these each time test data changes
+my $VERSION = 7; # Bump these each time test data changes
 my $BUILD_VERSION = 2;
 my $test_dir = get_test_dir($pkg, $VERSION);
 
