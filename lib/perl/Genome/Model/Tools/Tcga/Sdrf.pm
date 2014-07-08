@@ -250,6 +250,9 @@ sub resolve_capture_reagent {
             number => "06465692001",
         },
     );
+    unless ($build->model->target_region_set_name) {
+        return (undef, undef, undef);
+    }
 
     my $reagent_info = $CAPTURE_REAGENTS{$build->model->target_region_set_name};
     unless (defined $reagent_info) {
