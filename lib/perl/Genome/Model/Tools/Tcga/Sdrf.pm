@@ -178,7 +178,10 @@ sub fill_in_common_fields {
     $row{"Library Protocol REF"} = $self->idf->resolve_library_protocol();
     ($row{"Library Parameter Value [Vendor]"},
     $row{"Library Parameter Value [Catalog Name]"},
-    $row{"Library Parameter Value [Catalog Number]"}) = $self->resolve_capture_reagent($build);
+    $row{"Library Parameter Value [Catalog Number]"},
+    $row{"Library Parameter Value [Target File URL]"},
+    $row{"Library Parameter Value [Target File Format]"},
+    $row{"Library Parameter Value [Target File Format Version]"}) = $self->resolve_capture_reagent($build);
     $row{"Sequencing Protocol REF"} = $self->idf->resolve_sequencing_protocol();
     $row{"Mapping Protocol REF"} = $self->idf->resolve_mapping_protocol($somatic_build->processing_profile);
     $row{"Mapping Comment [Derived Data File REF]"} =  $sample->{"File"}->{content};
@@ -238,24 +241,30 @@ sub resolve_capture_reagent {
             vendor => "Nimblegen",
             name => "Nimblegen SeqCap EZ Human Exome Library v2.0",
             number => "05860504001",
+            url => "Proprietary",
         },
         "11111001 capture chip set" => {
             vendor => "Nimblegen",
             name => "Nimblegen EZ Exome v3.0",
             number => "06465692001",
+            url => "Proprietary",
         },
         "SeqCap EZ Human Exome v3.0" => {
             vendor => "Nimblegen",
             name => "Nimblegen SeqCap EZ Human Exome Library v3.0",
             number => "06465692001",
+            url => "Proprietary",
         },
     );
+    unless ($build->model->target_region_set_name) {#WGS
+        return (undef, undef, undef, "NA", "NA", "NA");
+    }
 
     my $reagent_info = $CAPTURE_REAGENTS{$build->model->target_region_set_name};
     unless (defined $reagent_info) {
         die "No reagent info for capture set name: ".$build->target_region_set_name;
     }
-    return ($reagent_info->{vendor}, $reagent_info->{name}, $reagent_info->{number});
+    return ($reagent_info->{vendor}, $reagent_info->{name}, $reagent_info->{number}, $reagent_info->{url}, "BED", "http://genome.ucsc.edu/FAQ/FAQformat.html#format1");
 }
 
 sub create_maf_row {

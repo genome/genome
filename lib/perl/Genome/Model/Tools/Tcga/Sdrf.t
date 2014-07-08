@@ -70,6 +70,31 @@ subtest "testPrintSdrf" => sub {
     ok($sdrf->print_sdrf($output_sdrf, ($row1, $row2, $row3, $row4)), "sdrf printed");
 };
 
+subtest "testPrintSdrfWgs" => sub {
+    my $idf = Genome::Model::Tools::Tcga::Idf->create;
+
+    my $test_somatic_build = setup_test_build();
+    $test_somatic_build->normal_build->model->target_region_set_name(undef);
+    $test_somatic_build->tumor_build->model->target_region_set_name(undef);
+    $idf->add_pp_protocols($test_somatic_build->processing_profile);
+    my $cghub_ids = setup_cghubids_file();
+
+    my $sdrf = $class->create(idf => $idf, cghub_id_file => $cghub_ids, archive_name => "test_archive");
+    my $sample_1 = {
+        ID => {content => "TCGA_1"},
+        SampleUUID => {content => "3958t6"},
+        SampleTCGABarcode => {content => "TCGA_1"},
+    };
+
+    my $row1 = $sdrf->create_vcf_row($test_somatic_build->normal_build, $test_somatic_build, "snvs.vcf", $sample_1);
+    my $row2 = $sdrf->create_vcf_row($test_somatic_build->normal_build, $test_somatic_build, "indels.vcf", $sample_1);
+    my $row3 = $sdrf->create_maf_row($test_somatic_build->normal_build, $test_somatic_build, "/test/maf/path", $sample_1);
+    my $row4 = $sdrf->create_maf_row($test_somatic_build->tumor_build, $test_somatic_build, "/test/maf/path", $sample_1);
+
+    my $output_sdrf = Genome::Sys->create_temp_file_path;
+    ok($sdrf->print_sdrf($output_sdrf, ($row1, $row2, $row3, $row4)), "sdrf printed");
+};
+
 subtest load_cghub_id => sub {
     my $cghub_ids = setup_cghubids_file();
     my $sdrf = $class->create(cghub_id_file => $cghub_ids);
@@ -85,7 +110,7 @@ subtest "resolve cghub id" => sub {
 
 subtest "resolve capture reagent" => sub {
     my $test_somatic_build = setup_test_build();
-    is_deeply([$class->resolve_capture_reagent($test_somatic_build->normal_build)], ["Nimblegen", "Nimblegen EZ Exome v3.0", "06465692001"], "Capture reagent resolved correctly");
+    is_deeply([$class->resolve_capture_reagent($test_somatic_build->normal_build)], ["Nimblegen", "Nimblegen EZ Exome v3.0", "06465692001", "Proprietary", "BED", "http://genome.ucsc.edu/FAQ/FAQformat.html#format1"], "Capture reagent resolved correctly");
 };
 
 sub setup_cghubids_file {
