@@ -7,7 +7,7 @@ use Genome;
 class Genome::VariantReporting::Fpkm::RunResult {
     is => 'Genome::VariantReporting::Framework::Component::Expert::Result',
     has_input => [
-        fpkm_file_lookup_md5 => {
+        fpkm_file_lookup => {
             is => 'Text',
         },
         tumor_sample_name => {

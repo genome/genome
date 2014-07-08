@@ -8,7 +8,7 @@ use File::Spec;
 class Genome::VariantReporting::Dbsnp::RunResult {
     is => 'Genome::VariantReporting::Framework::Component::Expert::Result',
     has_input => [
-        annotation_vcf_lookup_md5 => {
+        dbsnp_vcf_lookup => {
             is => 'text',
         },
     ],

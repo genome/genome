@@ -8,7 +8,7 @@ class Genome::VariantReporting::Framework::Component::Expert::Result {
     is_abstract => 1,
     is => 'Genome::SoftwareResult::Stageable',
     has_input => [
-        input_vcf_lookup_md5 => {
+        input_vcf_lookup => {
             is => 'Text',
         },
     ],

@@ -28,9 +28,9 @@ my $obj = Genome::VariantReporting::Framework::Component::Expert::TestCommand->c
 
 my %input_hash = $obj->input_hash;
 is($input_hash{'input_vcf'}, __FILE__, 'input_vcf entry is as expected');
-ok(exists($input_hash{'input_vcf_lookup_md5'}) && ($input_hash{'input_vcf_lookup_md5'} ne $input_hash{'input_vcf'}),
-    'input_vcf_lookup_md5 entry exists and is not the same as input_vcf');
+ok(exists($input_hash{'input_vcf_lookup'}) && ($input_hash{'input_vcf_lookup'} ne $input_hash{'input_vcf'}),
+    'input_vcf_lookup entry exists and is not the same as input_vcf');
 is($input_hash{'variant_type'}, 'snvs', 'variant_type entry is as expected');
-ok(!exists $input_hash{'variant_type_lookup_md5'}, 'variant_type_lookup_md5 entry absent as expected');
+ok(!exists $input_hash{'variant_type_lookup'}, 'variant_type_lookup entry absent as expected');
 
 done_testing();

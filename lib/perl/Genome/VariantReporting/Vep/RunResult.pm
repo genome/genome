@@ -25,7 +25,7 @@ class Genome::VariantReporting::Vep::RunResult {
         species => {
             is => 'String',
         },
-        reference_fasta_lookup_md5 => {is => 'Path'},
+        reference_fasta_lookup => {is => 'Path'},
     ],
     has_param => [
         terms => {is => 'String', },
