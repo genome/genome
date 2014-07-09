@@ -50,6 +50,24 @@ subtest "sample 2" => sub {
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Sample 1 return values as expected");
 };
 
+subtest "Nonexistent Caller" => sub {
+    my $filter = $pkg->create(
+        sample_name => "S1",
+        min_callers => 2,
+        valid_callers => ['NonexistentCaller'],
+    );
+    lives_ok(sub {$filter->validate}, "Filter validates ok");
+
+    my $entry = create_entry();
+
+    my %expected_return_values = (
+        C => 0,
+        G => 0,
+    );
+    $DB::single=1;
+    is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Sample 1 return values as expected");
+};
+
 done_testing;
 
 sub create_vcf_header {

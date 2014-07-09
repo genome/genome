@@ -39,8 +39,12 @@ sub filter_entry {
     }
 
     for my $caller_name ($self->valid_callers) {
-        my $sample_index = $entry->{header}->index_for_sample_name(
-                                      $self->sample_name_with_suffix($caller_name));
+        my $sample_name = $self->sample_name_with_suffix($caller_name);
+        my $sample_index = eval{ $entry->{header}->index_for_sample_name($sample_name) };
+        my $error = $@;
+        if ($error =~ /^\QSample name $sample_name not found in header\E/) {
+            next;
+        }
         my @sample_alt_alleles = eval{ $entry->alt_bases_for_sample($sample_index)};
         for my $sample_alt_allele (@sample_alt_alleles) {
             $caller_counts{$sample_alt_allele}++;
