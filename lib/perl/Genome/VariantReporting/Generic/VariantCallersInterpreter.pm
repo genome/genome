@@ -31,7 +31,7 @@ sub interpret_entry {
     my %return_values;
     my %callers;
     for my $alt_allele (@$passed_alt_alleles) {
-        $return_values{$alt_allele} = { variant_callers => "" };
+        $return_values{$alt_allele} = { variant_callers => [] };
         $callers{$alt_allele} = [];
     }
 

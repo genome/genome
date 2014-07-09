@@ -53,6 +53,15 @@ subtest "sample 2" => sub {
     run_test($sample_name, %expected_return_values);
 };
 
+subtest "sample 3" => sub {
+    my $sample_name = "S3";
+    my %expected_return_values = (
+        C => [],
+        G => [],
+    );
+    run_test($sample_name, %expected_return_values);
+};
+
 done_testing;
 
 sub run_test {
@@ -83,7 +92,8 @@ sub create_vcf_header {
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
 ##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Depth">
 ##FORMAT=<ID=FT,Number=.,Type=String,Description="Filter">
-#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	S1	S1-[VarscanSomatic]	S1-[Sniper]	S1-[Strelka]	S2	S2-[VarscanSomatic]	S2-[Sniper]	S2-[Strelka]
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	S1	S1-[VarscanSomatic]	S1-[Sniper]	S1-[Strelka]	S2	S2-[VarscanSomatic]	S2-[Sniper]	S2-[Strelka]	S3	S3-[VarscanSomatic]	S3-[Sniper]	S3-[Strelka]
+
 EOS
     my @lines = split("\n", $header_txt);
     my $header = Genome::File::Vcf::Header->create(lines => \@lines);
@@ -109,6 +119,10 @@ sub create_entry {
         ".",   # SECOND_SAMPLE_Varscan
         ".",   # SECOND_SAMPLE_Sniper
         "1/2:12",   # Second_SAMPLE_Strelka
+        ".",   # THIRD_SAMPLE
+        ".",   # THIRD_SAMPLE_Varscan
+        ".",   # THIRD_SAMPLE_Sniper
+        ".",   # THIRD_SAMPLE_Strelka
     );
 
     my $entry_txt = join("\t", @fields);

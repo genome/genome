@@ -25,19 +25,10 @@ sub interpret_entry {
     my $entry = shift;
     my $passed_alt_alleles = shift;
 
-    my $info_types = $entry->{header}->info_types;
-
-    my @matching_info_types;
-    for my $info_type (keys %$info_types) {
-        if (defined($entry->info($info_type))) {
-            push @matching_info_types, $info_type;
-        }
-    }
-
     my %return_values;
     for my $alt_allele (@$passed_alt_alleles) {
         $return_values{$alt_allele} = {
-            info_tags => join(",", @matching_info_types),
+            info_tags => join(",", keys %{$entry->info_for_allele($alt_allele)}),
         }
     }
 

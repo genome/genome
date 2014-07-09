@@ -3,7 +3,7 @@ package Genome::VariantReporting::Generic::FTInterpreter;
 use strict;
 use warnings FATAL => 'all';
 use Genome;
-use List::AllUtils qw/any/;
+use Set::Scalar;
 
 class Genome::VariantReporting::Generic::FTInterpreter {
     is => ['Genome::VariantReporting::Framework::Component::Interpreter', 'Genome::VariantReporting::Framework::Component::WithSampleName'],
@@ -29,17 +29,15 @@ sub interpret_entry {
     my $ft_string = $entry->sample_field($self->sample_index($entry->{header}), 'FT');
 
     my %return_values;
-    for my $alt_allele (@$passed_alt_alleles) {
-        $return_values{$alt_allele} = { ft_string => "" };
-    }
 
-    my @sample_alt_alleles = $entry->alt_bases_for_sample($self->sample_index($entry->{header}));
-    for my $alt_allele (keys %return_values) {
-        if (any { $_ eq $alt_allele } @sample_alt_alleles) {
-            $return_values{$alt_allele} =  {
-                ft_string => $ft_string
-            };
+    my $sample_alt_alleles = Set::Scalar->new($entry->alt_bases_for_sample($self->sample_index($entry->{header})));
+    for my $alt_allele (@$passed_alt_alleles) {
+        unless ($sample_alt_alleles->contains($alt_allele)) {
+            $ft_string = "";
         }
+        $return_values{$alt_allele} =  {
+            ft_string => $ft_string
+        };
     }
     return %return_values;
 }
