@@ -34,7 +34,6 @@ sub interpret_entry {
     my $passed_alt_alleles = shift;
 
     my %return_values;
-    my @sample_alt_alleles = sort $entry->alt_bases_for_sample($self->sample_index($entry->{header}));
 
     my $readcount_entry = $self->get_readcount_entry($entry);
     return $self->unknown_readcount_return_values($passed_alt_alleles) unless defined($readcount_entry);
@@ -72,14 +71,7 @@ sub unknown_readcount_return_values {
 
     my %return_values;
     for my $allele (@$passed_alt_alleles) {
-        $return_values{$allele} = {
-            vaf => '.',
-            var_count => '.',
-            per_library_var_count => '.',
-            ref_count => '.',
-            per_library_ref_count => '.',
-            per_library_vaf => '.',
-        }
+        $return_values{$allele} = map { $_ => '.' } $self->available_fields;
     }
     return %return_values;
 }

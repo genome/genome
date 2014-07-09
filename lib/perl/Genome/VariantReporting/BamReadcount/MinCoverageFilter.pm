@@ -25,24 +25,15 @@ sub requires_experts {
 sub filter_entry {
     my ($self, $entry) = @_;
 
+    my @alt_alleles = @{$entry->{alternate_alleles}};
+
     my $readcount_entry = $self->get_readcount_entry($entry);
-    return return_hash($entry, 0) unless $readcount_entry;
+    return map { $_ => 0 } @alt_alleles unless $readcount_entry;
 
     if ($readcount_entry->depth >= $self->min_coverage) {
-        return return_hash($entry, 1);
+        return map { $_ => 1 } @alt_alleles;
     }
-    return return_hash($entry, 0);
-}
-
-sub return_hash {
-    my $entry = shift;
-    my $pass = shift;
-
-    my %return_hash;
-    for my $alt (@{$entry->{alternate_alleles}}) {
-        $return_hash{$alt} = $pass;
-    }
-    return %return_hash;
+    return map { $_ => 0 } @alt_alleles;
 }
 
 1;
