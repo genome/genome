@@ -9,7 +9,7 @@ BEGIN {
 }
 
 use above 'Genome';
-use Genome::VariantReporting::BamReadcount::TestHelper qw(bam_readcount_line_deletion create_deletion_entry);
+use Genome::VariantReporting::BamReadcount::TestHelper qw(create_entry bam_readcount_line_deletion create_deletion_entry);
 use Genome::File::Vcf::Entry;
 use Test::More;
 use Test::Exception;
@@ -132,6 +132,23 @@ subtest "test filter fail" => sub { #FIXME
     );
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Sample 1 return values as expected");
 
+};
+
+subtest "no bam readcount entry" => sub {
+    my $no_readcount_entry = create_entry();
+    my $filter = $pkg->create(
+        sample_name => 'S1',
+        coverages_and_vafs => {
+            300 => 100,
+        }
+    );
+    lives_ok(sub {$filter->validate}, "Filter validates ok");
+    my %expected_return_values = (
+        C => 0,
+        G => 1,
+        AA => 0,
+    );
+    is_deeply({$filter->filter_entry($no_readcount_entry)}, \%expected_return_values, "Sample 1 return values as expected");
 };
 
 subtest 'validate fails' => sub {
