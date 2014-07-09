@@ -32,7 +32,27 @@ subtest "sample 1" => sub {
         G => { genotype => 'heterozygous' },
         AA => { genotype => 'not called' },
     );
-    is_deeply({$interpreter->interpret_entry($entry)}, \%expected_return_values, "return values as expected");
+    is_deeply({$interpreter->interpret_entry($entry, ['G', 'C', 'AA'])}, \%expected_return_values, "return values as expected");
+};
+
+subtest "sample 1 with sample alt allele only" => sub {
+    my $interpreter = $pkg->create( sample_name => 'S1' );
+    lives_ok(sub {$interpreter->validate}, "Interpreter validates ok");
+
+    my %expected_return_values = (
+        G => { genotype => 'heterozygous' },
+    );
+    is_deeply({$interpreter->interpret_entry($entry, ['G'])}, \%expected_return_values, "return values as expected");
+};
+
+subtest "sample 1 with other alt allele only" => sub {
+    my $interpreter = $pkg->create( sample_name => 'S1' );
+    lives_ok(sub {$interpreter->validate}, "Interpreter validates ok");
+
+    my %expected_return_values = (
+        C => { genotype => 'not called' },
+    );
+    is_deeply({$interpreter->interpret_entry($entry, ['C'])}, \%expected_return_values, "return values as expected");
 };
 
 subtest "sample 2" => sub {
@@ -44,7 +64,7 @@ subtest "sample 2" => sub {
         G => { genotype => 'heterozygous' },
         AA => { genotype => 'not called' },
     );
-    is_deeply({$interpreter->interpret_entry($entry)}, \%expected_return_values, "return values as expected");
+    is_deeply({$interpreter->interpret_entry($entry, ['G', 'C', 'AA'])}, \%expected_return_values, "return values as expected");
 };
 
 subtest "sample 3" => sub {
@@ -56,7 +76,7 @@ subtest "sample 3" => sub {
         G => { genotype => 'homozygous' },
         AA => { genotype => 'not called' },
     );
-    is_deeply({$interpreter->interpret_entry($entry)}, \%expected_return_values, "return values as expected");
+    is_deeply({$interpreter->interpret_entry($entry, ['G', 'C', 'AA'])}, \%expected_return_values, "return values as expected");
 };
 
 subtest "sample 4" => sub {
@@ -68,8 +88,7 @@ subtest "sample 4" => sub {
         G => { genotype => 'not called' },
         AA => { genotype => 'homozygous' },
     );
-    is_deeply({$interpreter->interpret_entry($entry)}, \%expected_return_values, "return values as expected");
+    is_deeply({$interpreter->interpret_entry($entry, ['G', 'C', 'AA'])}, \%expected_return_values, "return values as expected");
 };
-$DB::single=1;
 
 done_testing();

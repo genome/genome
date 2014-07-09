@@ -24,17 +24,17 @@ sub available_fields {
 }
 
 sub interpret_entry {
-    my ($self, $entry) = @_;
+    my ($self, $entry, $passed_alt_alleles) = @_;
 
     my $ft_string = $entry->sample_field($self->sample_index($entry->{header}), 'FT');
 
     my %return_values;
-    for my $alt_allele (@{$entry->{alternate_alleles}}) {
+    for my $alt_allele (@$passed_alt_alleles) {
         $return_values{$alt_allele} = { ft_string => "" };
     }
 
     my @sample_alt_alleles = $entry->alt_bases_for_sample($self->sample_index($entry->{header}));
-    for my $alt_allele (@{$entry->{alternate_alleles}}) {
+    for my $alt_allele (keys %return_values) {
         if (any { $_ eq $alt_allele } @sample_alt_alleles) {
             $return_values{$alt_allele} =  {
                 ft_string => $ft_string

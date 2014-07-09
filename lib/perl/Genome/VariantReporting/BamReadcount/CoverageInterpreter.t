@@ -19,15 +19,34 @@ use_ok($pkg);
 my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('interpreters', $pkg->name), $pkg);
 
-my %expected_return_values = (
-    G => { coverage => 344 },
-    C => { coverage => 344 },
-    AA => { coverage => 344 },
-);
-
 my $interpreter = $pkg->create(sample_name => "S1");
 lives_ok(sub {$interpreter->validate}, "Filter validates");
 my $entry = create_entry(bam_readcount_line);
-is_deeply({$interpreter->interpret_entry($entry)}, \%expected_return_values, "Entry gets interpreted correctly");
+
+subtest 'all alt alleles' => sub {
+    my %expected_return_values = (
+        G => { coverage => 344 },
+        C => { coverage => 344 },
+        AA => { coverage => 344 },
+    );
+
+    is_deeply({$interpreter->interpret_entry($entry, ['G', 'C', 'AA'] )}, \%expected_return_values, "Entry gets interpreted correctly");
+};
+
+subtest 'sample alt allele only' => sub {
+    my %expected_return_values = (
+        G => { coverage => 344 },
+    );
+
+    is_deeply({$interpreter->interpret_entry($entry, ['G'] )}, \%expected_return_values, "Entry gets interpreted correctly");
+};
+
+subtest 'other alt allele only' => sub {
+    my %expected_return_values = (
+        C => { coverage => 344 },
+    );
+
+    is_deeply({$interpreter->interpret_entry($entry, ['C'] )}, \%expected_return_values, "Entry gets interpreted correctly");
+};
 
 done_testing();

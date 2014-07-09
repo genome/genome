@@ -23,6 +23,7 @@ sub available_fields {
 sub interpret_entry {
     my $self = shift;
     my $entry = shift;
+    my $passed_alt_alleles = shift;
 
     my $info_types = $entry->{header}->info_types;
 
@@ -34,7 +35,7 @@ sub interpret_entry {
     }
 
     my %return_values;
-    for my $alt_allele (@{$entry->{alternate_alleles}}) {
+    for my $alt_allele (@$passed_alt_alleles) {
         $return_values{$alt_allele} = {
             info_tags => join(",", @matching_info_types),
         }

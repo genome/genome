@@ -28,6 +28,22 @@ subtest "sample 1" => sub {
     run_test($sample_name, %expected_return_values);
 };
 
+subtest "sample 1 with sample alt alleles only" => sub {
+    my $sample_name = "S1";
+    my %expected_return_values = (
+        C => [qw/Sniper Strelka/],
+    );
+    run_test($sample_name, %expected_return_values);
+};
+
+subtest "sample 1 with other alt allele only" => sub {
+    my $sample_name = "S1";
+    my %expected_return_values = (
+        G => [qw/Strelka/],
+    );
+    run_test($sample_name, %expected_return_values);
+};
+
 subtest "sample 2" => sub {
     my $sample_name = "S2";
     my %expected_return_values = (
@@ -50,7 +66,7 @@ sub run_test {
 
     my $entry = create_entry();
 
-    my %result = $interpreter->interpret_entry($entry);
+    my %result = $interpreter->interpret_entry($entry, [keys %expected_return_values]);
     while( my ($alt_allele, $callers) = each %expected_return_values ) {
         cmp_bag($result{$alt_allele}->{variant_callers}, $callers, "Sample ($sample_name) return values for alternate allele $alt_allele as expected");
     }

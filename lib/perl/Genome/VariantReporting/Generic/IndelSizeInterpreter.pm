@@ -25,9 +25,10 @@ sub available_fields {
 sub interpret_entry {
     my $self = shift;
     my $entry = shift;
+    my $passed_alt_alleles = shift;
 
     my %return_values;
-    for my $alt_allele ( @{$entry->{alternate_alleles}} ) {
+    for my $alt_allele ( @$passed_alt_alleles ) {
         my $indel_size = abs( length($entry->{reference_allele}) - length($alt_allele) );
         $return_values{$alt_allele} = {
             indel_size => $indel_size

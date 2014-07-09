@@ -22,11 +22,21 @@ lives_ok(sub {$interpreter->validate}, "Interpreter validates ok");
 
 my $entry = create_entry();
 
-my %expected_return_values = (
-    C => { info_tags => "A,C,E" },
-    G => { info_tags => "A,C,E" },
-);
-is_deeply({$interpreter->interpret_entry($entry)}, \%expected_return_values, "Return values as expected");
+subtest 'all alt alleles' => sub {
+    my %expected_return_values = (
+        C => { info_tags => "A,C,E" },
+        G => { info_tags => "A,C,E" },
+    );
+    is_deeply({$interpreter->interpret_entry($entry, ['C', 'G'])}, \%expected_return_values, "Return values as expected");
+};
+
+subtest 'single all alt allele only' => sub {
+    my %expected_return_values = (
+        C => { info_tags => "A,C,E" },
+    );
+    is_deeply({$interpreter->interpret_entry($entry, ['C'])}, \%expected_return_values, "Return values as expected");
+};
+
 done_testing;
 
 sub create_vcf_header {

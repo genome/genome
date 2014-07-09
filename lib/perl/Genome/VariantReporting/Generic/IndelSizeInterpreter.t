@@ -25,12 +25,20 @@ lives_ok(sub {$interpreter->validate}, "Filter validates ok");
 my $entry = create_entry('A', 'AAAAA,AAAAAA');
 ok($entry, 'create entry');
 
-my %expected_return_values = (
-    AAAAA => { indel_size => 4 },
-    AAAAAA => { indel_size => 5 },
-);
-is_deeply({$interpreter->interpret_entry($entry)}, \%expected_return_values, "return values");
+subtest 'all alt alleles' => sub {
+    my %expected_return_values = (
+        AAAAA => { indel_size => 4 },
+        AAAAAA => { indel_size => 5 },
+    );
+    is_deeply({$interpreter->interpret_entry($entry, ['AAAAA', 'AAAAAA'])}, \%expected_return_values, "return values");
+};
 
+subtest 'single alt alleles only' => sub {
+    my %expected_return_values = (
+        AAAAA => { indel_size => 4 },
+    );
+    is_deeply({$interpreter->interpret_entry($entry, ['AAAAA'])}, \%expected_return_values, "return values");
+};
 
 done_testing;
 

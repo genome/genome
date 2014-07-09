@@ -26,10 +26,11 @@ sub available_fields {
 sub interpret_entry {
     my $self = shift;
     my $entry = shift;
+    my $passed_alt_alleles = shift;
 
     my %return_values;
     my %callers;
-    for my $alt_allele (@{$entry->{alternate_alleles}}) {
+    for my $alt_allele (@$passed_alt_alleles) {
         $return_values{$alt_allele} = { variant_callers => "" };
         $callers{$alt_allele} = [];
     }
@@ -37,10 +38,6 @@ sub interpret_entry {
     for my $caller_name ($self->get_callers($entry->{header})) {
         my $sample_name = $self->sample_name_with_suffix($caller_name);
         my $sample_index = eval{ $entry->{header}->index_for_sample_name($sample_name) };
-        my $error = $@;
-        if ($error =~ /^Sample name $sample_name not found in header/) {
-            next;
-        }
         my @sample_alt_alleles = eval{ $entry->alt_bases_for_sample($sample_index)};
         for my $sample_alt_allele (uniq @sample_alt_alleles) {
             push(@{$callers{$sample_alt_allele}}, $caller_name);
