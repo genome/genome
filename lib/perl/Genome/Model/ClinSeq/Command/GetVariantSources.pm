@@ -381,6 +381,7 @@ sub writeStats {
         $data_source = "WGS";
     }
     open my $STATS, ">$stats_file";
+    print $STATS "Question\tAnswer\tData_Type\tAnalysis_Type\tStatistic_Type\tExtra_Description\n";
     $self->write_snv_stats($snv_caller_stats, $data_source, $STATS);
     $self->write_indel_stats($indel_caller_stats, $data_source, $STATS);
     close $STATS;
