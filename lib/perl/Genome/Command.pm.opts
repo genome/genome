@@ -7075,6 +7075,15 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>coverage-stats-summary',
+      [
+        'output-tsv-file=s',
+        'files',
+        'models=s@',
+        undef,
+        'help!',
+        undef
+      ],
       '>define-models',
       [
         'models=s@',
