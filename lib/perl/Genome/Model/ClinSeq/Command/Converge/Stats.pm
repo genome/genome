@@ -131,7 +131,8 @@ sub find_stats_tsv {
     my $m = $mb->{$c}->{model};
     my $model_name = $m->name;
     my $data_directory = $b->data_directory;
-    my $subject_name = $b->subject->name;
+    my $subject_name = $m->exome_model->tumor_model->subject->common_name;
+    $subject_name =~ s/[\s,-]/_/g;
     my $subject_common_name = $b->subject->common_name;
     my $build_id = $b->id;
 
@@ -184,7 +185,7 @@ sub get_column_names {
     my $model_name = $files->{$bid}{model_name};
     my $id1 = $final_name;
     my $id2 = "$final_name"."_"."$subject_name";
-    my $id3 = $model_name;
+    my $id3 = $final_name . "_" . $model_name;
     my $id4 = "$final_name"."_"."$subject_name"."_"."$bid";
 
     $finalnames{$id1}=1;
