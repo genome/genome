@@ -161,7 +161,7 @@ sub set_what_interpreter_x_requires {
     use Genome;
 
     class Genome::VariantReporting::AnotherTestReporter {
-        is => 'Genome::VariantReporting::Reporter::Base',
+        is => 'Genome::VariantReporting::Framework::Component::Reporter::SingleFile',
         has => [
             rb_p1 => {},
             rb_p2 => {},

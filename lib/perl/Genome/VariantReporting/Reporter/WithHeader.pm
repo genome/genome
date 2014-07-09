@@ -6,7 +6,7 @@ use Genome;
 use Memoize qw();
 
 class Genome::VariantReporting::Reporter::WithHeader {
-    is => 'Genome::VariantReporting::Reporter::Base',
+    is => 'Genome::VariantReporting::Framework::Component::Reporter::SingleFile',
     is_abstract => 1,
     has => {
         null_character => {
