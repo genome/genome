@@ -20,7 +20,7 @@ isa_ok($factory->get_class('filters', $pkg->name), $pkg);
 
 my %pass_return_values = (
     C => 1,
-    G => 1,
+    G => 0,
 );
 
 my %fail_return_values = (
@@ -49,6 +49,7 @@ subtest "pass" => sub {
 
     $ft_value = undef;
     $entry = create_entry($ft_value);
+    $DB::single=1;
     is_deeply({$filter->filter_entry($entry)}, \%pass_return_values, "Entry $ft_value passes filter with no filter set");
 };
 
@@ -122,9 +123,11 @@ sub create_entry {
         'A=B;C=8,9;E',  # INFO
         'GT:DP:FT',     # FORMAT
     );
+    my $sample_info =  "0/1:12";
     if (defined $ft_value) {
-        push @fields, "0/1:12:$ft_value";
+        $sample_info .= ":$ft_value";
     }
+    push @fields, $sample_info;
 
     my $entry_txt = join("\t", @fields);
     my $entry = Genome::File::Vcf::Entry->new(create_vcf_header(), $entry_txt);
