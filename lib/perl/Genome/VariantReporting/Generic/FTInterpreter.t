@@ -27,9 +27,9 @@ my $ft_value = "PASS";
 my $entry = create_entry($ft_value);
 my %expected_return_values = (
     C => { ft_string => $ft_value },
-    G => { ft_string => $ft_value },
+    G => { ft_string => '' },
 );
-is_deeply({$interpreter->interpret_entry($entry)}, \%expected_return_values, "Entry gets interpreted correctly");
+is_deeply({$interpreter->interpret_entry($entry, ['C','G']),}, \%expected_return_values, "Entry gets interpreted correctly");
 
 
 sub create_vcf_header {
