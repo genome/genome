@@ -30,7 +30,19 @@ our @EXPORT_OK = qw(
     get_resource_provider_with_vep
     test_dag_xml
     test_dag_execute
+    test_expert_is_registered
 );
+
+sub test_expert_is_registered {
+    my $name = shift;
+
+    my $factory = Genome::VariantReporting::Framework::Factory->create();
+    my $class = $factory->get_class('experts', $name);
+    isa_ok($class,
+        'Genome::VariantReporting::Framework::Component::Expert',
+        $class->name,
+    );
+}
 
 sub test_cmd_and_result_are_in_sync {
     my $cmd = shift;
