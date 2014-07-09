@@ -54,7 +54,7 @@ sub calculate_per_library_vaf {
     my $coverage = calculate_per_library_coverage_for_allele(@_);
     my $vaf;
     while ( my ($library, $readcount) = each %$coverage ) {
-        if ($readcount == 0 && $bam_readcount_entry->depth == 0) {
+        if ($bam_readcount_entry->depth == 0) {
             $vaf->{$library} = 0;
         }
         else {
