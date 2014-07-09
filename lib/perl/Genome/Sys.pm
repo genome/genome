@@ -1702,6 +1702,20 @@ sub move {
     });
 }
 
+sub renamex {
+    my $class = shift;
+    unless ($class->rename(@_)) {
+        croak "rename failed: $!";
+    }
+}
+
+sub movex {
+    my $class = shift;
+    unless ($class->move(@_)) {
+        croak "move failed: $!";
+    }
+}
+
 sub touch {
     my ($class, $path) = @_;
 
