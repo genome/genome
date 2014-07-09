@@ -83,6 +83,12 @@ sub filter_entry {
 
     for my $alt_allele ( @sample_alt_alleles ) {
         my $vaf = $vafs{$alt_allele};
+        #Keep positions with readcount and coverage of 0
+        if ($vaf == 0) {
+            $return_values{$alt_allele} = 1;
+            next;
+        }
+
         if ( $gt->is_missing ) {
             # fail
             $return_values{$alt_allele} = 0;
