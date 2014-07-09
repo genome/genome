@@ -8,6 +8,7 @@ use Genome::File::Vcf::Reader;
 use Memoize;
 use Carp qw/confess/;
 use Set::Scalar;
+use Genome::File::Vcf::HeaderDiff;
 
 =head1 NAME
 
