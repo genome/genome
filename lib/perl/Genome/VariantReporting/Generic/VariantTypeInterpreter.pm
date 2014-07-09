@@ -12,7 +12,7 @@ sub name {
     return 'variant-type';
 }
 
-sub requires_experts {
+sub requires_annotations {
     ();
 }
 

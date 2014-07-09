@@ -17,7 +17,7 @@ sub name {
     return 'gmaf'
 }
 
-sub requires_experts {
+sub requires_annotations {
     return qw/
         dbsnp
     /;

@@ -13,7 +13,7 @@ sub name {
     return 'ft';
 }
 
-sub requires_experts {
+sub requires_annotations {
     ();
 }
 

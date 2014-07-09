@@ -12,7 +12,7 @@ sub name {
     return 'fpkm';
 }
 
-sub requires_experts {
+sub requires_annotations {
     ('fpkm');
 }
 

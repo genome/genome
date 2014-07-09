@@ -13,7 +13,7 @@ sub name {
     return 'coverage';
 }
 
-sub requires_experts {
+sub requires_annotations {
     return ('bam-readcount');
 }
 

@@ -13,7 +13,7 @@ sub name {
     return 'dbsnp'
 }
 
-sub requires_experts {
+sub requires_annotations {
     return qw/
         dbsnp
     /;

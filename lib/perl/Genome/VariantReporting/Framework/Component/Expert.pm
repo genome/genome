@@ -6,6 +6,7 @@ use Genome;
 use Params::Validate qw(validate_pos validate :types);
 use Genome::WorkflowBuilder::DAG;
 use Genome::WorkflowBuilder::Command;
+use Carp qw(confess);
 
 class Genome::VariantReporting::Framework::Component::Expert {
     is => 'Genome::VariantReporting::Framework::Component::Base',
@@ -13,7 +14,14 @@ class Genome::VariantReporting::Framework::Component::Expert {
 };
 
 sub name {
-    die "Abstract";
+    my $self = shift;
+    my $class = $self->class;
+    confess "Abstract method 'name' must be defined in class '$class'";
+}
+
+sub provides_annotations {
+    my $class = shift;
+    return ('variant_calls', $class->name);
 }
 
 sub priority {

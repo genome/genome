@@ -1,10 +1,10 @@
-package Genome::Framework::Component::Reporter::SingleFile;
+package Genome::VariantReporting::Framework::Component::Reporter::SingleFile;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::Framework::Component::Reporter::SingleFile {
+class Genome::VariantReporting::Framework::Component::Reporter::SingleFile {
     is => 'Genome::VariantReporting::Framework::Component::Reporter',
     has => [
         file_name => {},

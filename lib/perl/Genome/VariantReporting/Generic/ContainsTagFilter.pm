@@ -18,7 +18,7 @@ sub name {
     return 'contains-tag';
 }
 
-sub requires_experts {
+sub requires_annotations {
     return ();
 }
 

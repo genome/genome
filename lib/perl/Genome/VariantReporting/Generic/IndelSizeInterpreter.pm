@@ -12,7 +12,7 @@ sub name {
     return 'indel-size';
 }
 
-sub requires_experts {
+sub requires_annotations {
     return qw/ /;
 }
 

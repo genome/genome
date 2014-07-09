@@ -14,7 +14,7 @@ sub name {
     return 'allele-in-genotype';
 }
 
-sub requires_experts {
+sub requires_annotations {
     return ();
 }
 

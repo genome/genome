@@ -15,7 +15,7 @@ sub name {
     return 'tier1';
 }
 
-sub requires_experts {
+sub requires_annotations {
     return ('vep');
 }
 

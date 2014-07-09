@@ -13,7 +13,7 @@ sub name {
     return '__test__';
 }
 
-sub requires_experts {
+sub requires_annotations {
     return qw(__test__);
 }
 

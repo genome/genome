@@ -19,7 +19,7 @@ sub name {
     return 'max-af'
 }
 
-sub requires_experts {
+sub requires_annotations {
     return ('dbsnp');
 }
 

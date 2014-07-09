@@ -13,7 +13,7 @@ sub name {
     return 'variant-callers';
 }
 
-sub requires_experts {
+sub requires_annotations {
     return ();
 }
 

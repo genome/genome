@@ -80,7 +80,7 @@ sub name {
     return 'coverage-vaf';
 }
 
-sub requires_experts {
+sub requires_annotations {
     return (qw/ bam-readcount /);
 }
 

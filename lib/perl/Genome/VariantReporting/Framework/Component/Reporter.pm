@@ -3,6 +3,7 @@ package Genome::VariantReporting::Framework::Component::Reporter;
 use strict;
 use warnings FATAL => 'all';
 use Genome;
+use Carp qw(confess);
 
 class Genome::VariantReporting::Framework::Component::Reporter {
     is => 'Genome::VariantReporting::Framework::Component::Base',
@@ -10,11 +11,15 @@ class Genome::VariantReporting::Framework::Component::Reporter {
 };
 
 sub name {
-    die "abstract";
+    my $self = shift;
+    my $class = $self->class;
+    confess "Abstract method 'name' must be defined in class '$class'";
 }
 
 sub requires_interpreters {
-    die "abstract - must return a list of one or more interpreter names";
+    my $self = shift;
+    my $class = $self->class;
+    confess "Abstract method 'requires_interpreters' must be defined in class '$class'";
 }
 
 sub initialize {

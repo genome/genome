@@ -3,6 +3,7 @@ package Genome::VariantReporting::Framework::Component::Filter;
 use strict;
 use warnings FATAL => 'all';
 use Genome;
+use Carp qw(confess);
 
 class Genome::VariantReporting::Framework::Component::Filter {
     is => 'Genome::VariantReporting::Framework::Component::Interpreter',
@@ -12,7 +13,7 @@ class Genome::VariantReporting::Framework::Component::Filter {
 sub filter_entry {
     my $self = shift;
     my $class = $self->class;
-    die "Abstract method 'filter_entry' must be defined in class '$class'";
+    confess "Abstract method 'filter_entry' must be defined in class '$class'";
 }
 
 sub interpret_entry {

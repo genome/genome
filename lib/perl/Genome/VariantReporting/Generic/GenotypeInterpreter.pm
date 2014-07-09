@@ -14,7 +14,7 @@ sub name {
     return 'genotype';
 }
 
-sub requires_experts {
+sub requires_annotations {
     return qw/ /;
 }
 

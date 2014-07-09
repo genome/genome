@@ -12,7 +12,7 @@ sub set_what_interpreter_x_requires {
     my @what = @_;
     reinstall_sub( {
         into => 'Genome::VariantReporting::TestInterpreter',
-        as => 'requires_experts',
+        as => 'requires_annotations',
         code => sub {return @what;},
     });
 }
@@ -36,7 +36,7 @@ sub set_what_interpreter_x_requires {
         "interpreter_x";
     }
 
-    sub requires_experts {
+    sub requires_annotations {
         return qw(expert_one);
     }
 
@@ -76,7 +76,7 @@ sub set_what_interpreter_x_requires {
         ],
     };
 
-    sub requires_experts {
+    sub requires_annotations {
         return qw(expert_one expert_two);
     }
 
@@ -412,7 +412,7 @@ sub set_what_interpreter_x_requires {
         ],
     };
 
-    sub requires_experts {
+    sub requires_annotations {
         return qw(expert_two);
     }
 

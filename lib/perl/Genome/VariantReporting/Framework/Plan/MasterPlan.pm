@@ -163,29 +163,17 @@ sub __plan_errors__ {
 
     my @errors = $self->SUPER::__plan_errors__;
     my $have = Set::Scalar->new(map {$_->name} $self->expert_plans);
-    my $total_needed = Set::Scalar->new();
     for my $reporter_plan ($self->reporter_plans) {
-        my $needed = Set::Scalar->new($reporter_plan->requires_experts);
+        my $needed = Set::Scalar->new($reporter_plan->requires_annotations);
 
         if (my $still_needed = $needed - $have) {
             push @errors, UR::Object::Tag->create(
                 type => 'error',
                 properties => [$still_needed->members],
-                desc => sprintf("Experts required by reporter (%s) but not provided: (%s)",
+                desc => sprintf("Annotations required by reporter (%s) but not provided by any experts: (%s)",
                     $reporter_plan->name, join(",", $still_needed->members)),
             );
         }
-
-        $total_needed += $needed;
-    }
-
-    if (my $not_needed = $have - $total_needed) {
-        push @errors, UR::Object::Tag->create(
-            type => 'error',
-            properties => [$not_needed->members],
-            desc => sprintf("Experts provided by plan but not required by any reporters: (%s)",
-                join(",", $not_needed->members)),
-        );
     }
 
     return @errors;

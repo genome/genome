@@ -21,7 +21,7 @@ sub name {
     return 'gene';
 }
 
-sub requires_experts {
+sub requires_annotations {
     return ('vep');
 }
 

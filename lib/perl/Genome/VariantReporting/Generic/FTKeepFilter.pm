@@ -20,7 +20,7 @@ sub name {
     return 'ft-keep';
 }
 
-sub requires_experts {
+sub requires_annotations {
     ();
 }
 

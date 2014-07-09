@@ -23,7 +23,7 @@ sub name {
     return 'n-callers';
 }
 
-sub requires_experts {
+sub requires_annotations {
     return ();
 }
 

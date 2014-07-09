@@ -19,7 +19,7 @@ sub name {
     return 'min-fpkm';
 }
 
-sub requires_experts {
+sub requires_annotations {
     return ('fpkm');
 }
 

@@ -55,7 +55,7 @@ sub name {
     return 'genotype-vaf';
 }
 
-sub requires_experts {
+sub requires_annotations {
     return (qw/ bam-readcount /);
 }
 

@@ -13,7 +13,7 @@ sub name {
     return 'damaging';
 }
 
-sub requires_experts {
+sub requires_annotations {
     return ('vep');
 }
 

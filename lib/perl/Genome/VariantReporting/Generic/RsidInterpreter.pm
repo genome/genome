@@ -12,7 +12,7 @@ sub name {
     return 'rsid';
 }
 
-sub requires_experts {
+sub requires_annotations {
     ();
 }
 
