@@ -67,9 +67,6 @@ sub combine_files {
 }
 
 # Sort the file if required. Regardless, put the header in place.
-# TODO sort non-numeric chromosomes to the bottom. Could use sed to do this for just X and Y but other chromosomes require something else.
-# TODO This is especially problematic since the sortable columns no not necessarily nclude chromosome.
-# TODO This could be fixed by making sort_columns less flexible - could change to chrom_column and pos_column and be very specific and implement our own sort.
 sub sort_file {
     my ($self, $combined_file) = @_;
 
@@ -118,7 +115,7 @@ sub validate {
 
 sub get_sort_params {
     my $self = shift;
-    return '-n ' . join " ", map { "-k$_" } $self->get_sort_column_numbers;
+    return '-V ' . join " ", map { "-k$_" } $self->get_sort_column_numbers;
 }
 
 # Return the one-based indices of the columns by which we are sorting.

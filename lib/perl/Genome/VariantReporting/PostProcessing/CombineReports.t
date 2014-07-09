@@ -34,7 +34,7 @@ subtest "test with headers" => sub {
     is_deeply([$cmd->get_master_header], \@expected_header, 'Master header looks as expected');
 
     is_deeply([$cmd->get_sort_column_numbers], [1,2], 'get_sort_column_numbers works');
-    is($cmd->get_sort_params, '-n -k1 -k2', 'get_sort_params works');
+    is($cmd->get_sort_params, '-V -k1 -k2', 'get_sort_params works');
 
     ok($cmd->execute, 'Executed the test command');
     compare_ok($output_file, $expected, 'Output file looks as expected');
@@ -54,7 +54,7 @@ subtest "test without headers" => sub {
     is_deeply([$cmd->get_master_header], \@expected_header, 'Master header looks as expected');
 
     is_deeply([$cmd->get_sort_column_numbers], [1,2], 'get_sort_column_numbers works');
-    is($cmd->get_sort_params, '-n -k1 -k2', 'get_sort_params works');
+    is($cmd->get_sort_params, '-V -k1 -k2', 'get_sort_params works');
 
     ok($cmd->execute, 'Executed the test command');
     compare_ok($output_file, $expected, 'Output file looks as expected');
