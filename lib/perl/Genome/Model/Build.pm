@@ -1091,8 +1091,15 @@ sub validate_instrument_data{
                 desc => 'no reads for instrument data (' . $instrument_data->id . ') assigned to build',
             );
         }
-        if ($instrument_data->bam_path) {
-            if (! -s $instrument_data->bam_path) {
+        if (my $bam_path = $instrument_data->bam_path) {
+            if (! -f $bam_path) {
+                push @tags, UR::Object::Tag->create(
+                    type => 'error',
+                    properties => ['instrument_data'],
+                    desc => 'instrument data (' . $instrument_data->id . ') has bam_path but the file fies not exist',
+                );
+
+            } elsif (! -s $bam_path) {
                 push @tags, UR::Object::Tag->create(
                     type => 'error',
                     properties => ['instrument_data'],
