@@ -1675,7 +1675,7 @@ sub rename {
     my $uid  = $stat->uid;
 
     unless ( CORE::rename $oldname, $newname ) {
-        die q(CORE::rename should never fail or we didn't do a good enough job mimicking it);
+        die qq(CORE::rename should never fail or we didn't do a good enough job mimicking it.  Error was: $!);
     }
 
     # restore mode, gid, and uid
