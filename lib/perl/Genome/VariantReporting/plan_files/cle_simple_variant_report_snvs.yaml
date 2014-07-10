@@ -8,8 +8,8 @@ experts:
         insertion_centric: 0
     vep:
         ensembl_version: 75
-        feature_list_names_and_tags:
-            target_region: ON_TARGET
+        custom_annotation_tags:
+            - ON_TARGET
         species: 'homo-sapiens'
         terms: ensembl
         plugins:
@@ -54,4 +54,4 @@ reporters:
                 sample_name: tumor
             'indel-size': {}
         params:
-            file_name: 'simple_report_with_ft_tag_coverage-vaf_genotype-vaf_filtered_bde1d6db353a4ae2badde3de54b9f2e6_snvs'
+            file_name: 'cle_simple_snv_report'
