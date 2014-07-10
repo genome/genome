@@ -125,7 +125,7 @@ sub split_vcf {
 sub _annotate {
     my $self = shift;
 
-    Genome::Db::Ensembl::Command::Run::Vep->execute(
+    die "Failed to run VEP" unless Genome::Db::Ensembl::Command::Run::Vep->execute(
         input_file => $self->split_vcf,
         output_file => $self->vep_output_file,
         $self->vep_params,
