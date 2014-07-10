@@ -5,6 +5,10 @@ use warnings FATAL => 'all';
 use Genome;
 use Data::Dump qw(pp);
 use Set::Scalar;
+use JSON;
+
+my $_JSON_CODEC = new JSON->allow_nonref;
+
 use Genome::VariantReporting::Framework::FileLookup qw(
     is_file
     calculate_lookup
@@ -110,10 +114,31 @@ sub input_hash {
     }
     for my $input_name ($self->is_not_many_input_names) {
         my $value = $self->$input_name;
-        $hash{$input_name} = $value;
+        if (is_hashref($value)) {
+            $hash{$input_name} = json_encode($value);
+        } else {
+            $hash{$input_name} = $value;
+        }
+
         if (is_file($value)) {
             $hash{$input_name . '_lookup'} = calculate_lookup($self->$input_name);
         }
     }
     return %hash;
+}
+
+sub is_hashref {
+    my $value = shift;
+
+    if (ref $value eq 'HASH') {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+sub json_encode {
+    my $value = shift;
+
+    return $_JSON_CODEC->canonical->encode($value);
 }

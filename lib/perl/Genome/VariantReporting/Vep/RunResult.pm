@@ -6,6 +6,9 @@ use Genome;
 use Sys::Hostname;
 use IPC::Run qw(run);
 use File::Basename qw(dirname);
+use JSON;
+
+my $_JSON_CODEC = new JSON->allow_nonref;
 
 class Genome::VariantReporting::Vep::RunResult {
     is => 'Genome::VariantReporting::Framework::Component::Expert::Result',
@@ -19,8 +22,8 @@ class Genome::VariantReporting::Vep::RunResult {
             is_optional => 1,
         },
         feature_list_ids => {
-            is => 'HASH',
-            doc => 'A hash keyed on INFO TAG with values of FeatureList IDs',
+            is => 'Text',
+            doc => 'A json-encoded hash keyed on INFO TAG with values of FeatureList IDs',
         },
         species => {
             is => 'String',
@@ -38,6 +41,12 @@ class Genome::VariantReporting::Vep::RunResult {
         reference_fasta => {is => 'Path'},
     ],
 };
+
+sub decoded_feature_list_ids {
+    my $self = shift;
+
+    return $_JSON_CODEC->decode($self->feature_list_ids);
+}
 
 my $BUFFER_SIZE = '5000';
 
@@ -137,7 +146,7 @@ sub custom_annotation_inputs {
 
     my $result = [];
     for my $tag ($self->custom_annotation_tags) {
-        my $id = $self->feature_list_ids->{$tag};
+        my $id = $self->decoded_feature_list_ids->{$tag};
         push @$result, join("@",
             $self->_get_file_path_for_feature_list($id),
             $tag,
@@ -224,7 +233,7 @@ sub _fix_feature_list_descriptions {
     my $self = shift;
     my @substitutions;
     for my $tag ($self->custom_annotation_tags) {
-        my $id = $self->feature_list_ids->{$tag};
+        my $id = $self->decoded_feature_list_ids->{$tag};
         my $feature_list = Genome::FeatureList->get($id);
         push @substitutions, "-e ".join("|", "s", $self->_get_file_path_for_feature_list($id),
             $feature_list->name)."|";
