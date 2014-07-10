@@ -19,7 +19,7 @@ use FileHandle;
 use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
 
 class Genome::Model::Tools::Gatk::GermlineSnv {
-	is => 'Genome::Model::Tools::Gatk',                       
+	is => 'Genome::Model::Tools::Gatk::Base',
 	
 	has => [                                # specify the command's single-value properties (parameters) <--- 
 		bam_file	=> { is => 'Text', doc => "BAM File for Sample", is_optional => 0, is_input => 1 },

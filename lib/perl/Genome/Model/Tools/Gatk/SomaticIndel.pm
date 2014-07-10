@@ -8,7 +8,7 @@ use File::Basename qw/dirname/;
 use File::Spec::Functions;
 
 class Genome::Model::Tools::Gatk::SomaticIndel {
-    is => 'Genome::Model::Tools::Gatk',
+    is => 'Genome::Model::Tools::Gatk::Base',
     has => [
         normal_bam => {
             is => 'Text',

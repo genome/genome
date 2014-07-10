@@ -1,4 +1,4 @@
-package Genome::Model::Tools::Gatk;
+package Genome::Model::Tools::Gatk::Base;
 
 use strict;
 use warnings;
@@ -12,7 +12,7 @@ my $DEFAULT_VERSION = '5336';
 my $GATK_BASE = 'GenomeAnalysisTK';
 my $GATK_COMMAND = "$GATK_BASE.jar";
 
-class Genome::Model::Tools::Gatk {
+class Genome::Model::Tools::Gatk::Base {
     is => ['Command'],
     has_input => [
         version => {

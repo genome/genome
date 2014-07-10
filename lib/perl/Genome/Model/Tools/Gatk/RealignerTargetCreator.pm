@@ -6,7 +6,7 @@ use Genome;
 
 class Genome::Model::Tools::Gatk::RealignerTargetCreator {
     doc => "Run GATK with the 'RealignerTargetCreator' tool",
-    is => 'Genome::Model::Tools::Gatk',
+    is => 'Genome::Model::Tools::Gatk::Base',
     has_input => [
         known => {
             is => 'Text',

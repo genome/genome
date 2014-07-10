@@ -9,7 +9,7 @@ require File::Basename;
 
 class Genome::Model::Tools::Gatk::PrintReads {
     doc => "Run GATK with the 'PrintReads' tool",
-    is => 'Genome::Model::Tools::Gatk',
+    is => 'Genome::Model::Tools::Gatk::Base',
     has => [
         input_bams => {
             is_input => 1,

@@ -19,7 +19,7 @@ use FileHandle;
 use Genome;
 
 class Genome::Model::Tools::Gatk::GermlineIndelUnifiedGenotyper {
-    is => 'Genome::Model::Tools::Gatk',                       
+    is => 'Genome::Model::Tools::Gatk::Base',
     has => [
         bam_file => { 
             is => 'Text', 

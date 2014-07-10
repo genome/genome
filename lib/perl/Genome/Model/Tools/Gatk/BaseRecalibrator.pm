@@ -6,7 +6,7 @@ use Genome;
 
 class Genome::Model::Tools::Gatk::BaseRecalibrator {
     doc => "Run GATK with the 'BaseRecalibrator' tool",
-    is => 'Genome::Model::Tools::Gatk',
+    is => 'Genome::Model::Tools::Gatk::Base',
     has => [
         input_bam => {
             is_input => 1,
