@@ -1,44 +1,9 @@
 experts:
-    'bam-readcount':
-        version: 0.5
-        minimum_mapping_quality: 0
-        minimum_base_quality: 0
-        max_count: 10000000
-        per_library: 1
-        insertion_centric: 0
-    vep:
-        ensembl_version: 75
-        custom_annotation_tags: []
-        species: 'homo-sapiens'
-        terms: ensembl
-        plugins: []
-        joinx_version: 1.8
-        plugins_version: 1
+    __test__:
+        __planned__: foo
 reporters:
-    simple:
-        filters:
-            'allele-in-genotype':
-                sample_name: tumor
-            'ft-keep':
-                keep_filter_values:
-                    - SnpFilter
-                sample_name: tumor
-            'min-coverage':
-                min_coverage: 10
-                sample_name: tumor
+    __test__:
         interpreters:
-            vaf:
-                sample_name: tumor
-            coverage:
-                sample_name: tumor
-            genotype:
-                sample_name: tumor
-            ft:
-                sample_name: tumor
-            contains-tag:
-                info_tag: ON_TARGET
-            indel-size: {}
-            position: {}
-            vep: {}
+            __test__: {}
         params:
             file_name: 'report.1'
