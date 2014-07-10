@@ -48,7 +48,6 @@ sub execute {
             join(', ', $self->plan->resources_required, 'translations'));
     }
 
-    $self->setup_environment;
 
     $self->status_message("Executing workflow.");
     $self->dag->execute(
@@ -69,14 +68,6 @@ sub execute {
         $self->output_directory);
 
     return 1;
-}
-
-sub setup_environment {
-    local $ENV{UR_DUMP_DEBUG_MESSAGES} = 1;
-    local $ENV{UR_COMMAND_DUMP_DEBUG_MESSAGES} = 1;
-    local $ENV{UR_DUMP_STATUS_MESSAGES} = 1;
-    local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
-    local $ENV{WF_USE_FLOW} = 1;
 }
 
 sub plan {
