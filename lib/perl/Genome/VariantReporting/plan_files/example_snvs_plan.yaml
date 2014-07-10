@@ -10,7 +10,6 @@ experts:
         ensembl_version: 75
         feature_list_names_and_tags: {}
         species: 'homo-sapiens'
-        terms: ensembl
         plugins: []
         joinx_version: 1.8
         plugins_version: 1

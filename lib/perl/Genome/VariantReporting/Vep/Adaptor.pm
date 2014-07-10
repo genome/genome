@@ -12,7 +12,6 @@ class Genome::VariantReporting::Vep::Adaptor {
             is => 'String',
         },
         species => { is => 'Text', },
-        terms => {is => 'String',},
         plugins => {is => 'String',
                     is_many => 1,
                     is_optional => 1},

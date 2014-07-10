@@ -21,7 +21,6 @@ class Genome::VariantReporting::Vep::Run {
         },
         reference_fasta => {is => 'Path'},
         species => { is => 'Text', },
-        terms => {is => 'String',},
         plugins => {is => 'String',
                     is_many => 1,
                     is_optional => 1},
