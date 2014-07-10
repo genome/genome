@@ -21,7 +21,9 @@ my $pkg = 'Genome::VariantReporting::Framework::Test::Expert';
 use_ok($pkg) || die; 
 test_expert_is_registered($pkg->name);
 
-my $test_dir = __FILE__ . '.d';
+my $code_test_dir = __FILE__ . '.d';
+my $test_dir = Genome::Sys->create_temp_directory;
+Genome::Sys->rsync_directory($code_test_dir, $test_dir);
 
 my $expert = $pkg->create();
 my $dag = $expert->dag();
