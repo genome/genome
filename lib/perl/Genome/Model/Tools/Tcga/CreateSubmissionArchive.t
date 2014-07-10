@@ -18,7 +18,7 @@ use Genome::Test::Factory::Build;
 my $class = "Genome::Model::Tools::Tcga::CreateSubmissionArchive";
 use_ok($class);
 
-my $base_dir = Genome::Utility::Test->data_dir_ok($class, "v6");
+my $base_dir = Genome::Utility::Test->data_dir_ok($class, "v7");
 
 
 my $test_somatic_build = Genome::Test::Factory::Model::SomaticVariation->setup_somatic_variation_build();
