@@ -23,7 +23,10 @@ test_expert_is_registered($pkg->name);
 
 my $code_test_dir = __FILE__ . '.d';
 my $test_dir = Genome::Sys->create_temp_directory;
-Genome::Sys->rsync_directory($code_test_dir, $test_dir);
+Genome::Sys->rsync_directory(
+    source_directory => $code_test_dir,
+    target_directory => $test_dir
+);
 
 my $expert = $pkg->create();
 my $dag = $expert->dag();
