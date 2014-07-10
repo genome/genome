@@ -112,7 +112,11 @@ sub filter_entry {
     return %return_values if not defined $vaf_for_coverage;
 
     for my $alt_allele ( @sample_alt_alleles ) {
-        if ( $vafs{$alt_allele} >= $vaf_for_coverage ) {
+        #Keep positions with readcount and coverage of 0
+        if ($vafs{$alt_allele} == 0) {
+            $return_values{$alt_allele} = 1;
+        }
+        elsif ( $vafs{$alt_allele} >= $vaf_for_coverage ) {
             $return_values{$alt_allele} = 1;
         }
     }
