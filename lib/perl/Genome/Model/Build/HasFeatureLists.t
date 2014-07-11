@@ -37,7 +37,8 @@ use_ok($pkg) || die;
 
 my $target = Genome::Model::Build::TestHasFeatureLists->__define__();
 throws_ok( sub {$target->get_feature_list('bad_name')} , qr(No accessor for name));
-throws_ok( sub {$target->get_feature_list('segmental_duplications')} , qr(is not defined));
+throws_ok( sub {$target->get_feature_list('segmental_duplications')} , qr(abstract));
+throws_ok( sub {$target->get_feature_list('self_chain')} , qr(abstract));
 throws_ok( sub {$target->get_feature_list('target_region')} , qr(Couldn't get feature_list));
 throws_ok( sub {$target->get_segmental_duplications_feature_list} , qr(abstract));
 throws_ok( sub {$target->get_self_chain_feature_list} , qr(abstract));
