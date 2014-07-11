@@ -38070,6 +38070,26 @@ $Genome::Command::OPTS_SPEC = [
   ],
   '>variant-reporting',
   [
+    '>create-report',
+    [
+      'input-vcf=s',
+      undef,
+      'variant-type=s',
+      [
+        'snvs',
+        'indels'
+      ],
+      'output-directory=s',
+      undef,
+      'plan-file=s',
+      undef,
+      'log-directory=s',
+      undef,
+      'resource-file=s',
+      undef,
+      'help!',
+      undef
+    ],
     '>annotate-build',
     [
       'build=s',
