@@ -71,7 +71,7 @@ sub unknown_readcount_return_values {
 
     my %return_values;
     for my $allele (@$passed_alt_alleles) {
-        $return_values{$allele} = map { $_ => '.' } $self->available_fields;
+        $return_values{$allele} = { map { $_ => '.' } $self->available_fields };
     }
     return %return_values;
 }
