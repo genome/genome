@@ -26,7 +26,6 @@ sub requires_annotations {
 
 sub filter_entry {
     my ($self, $entry) = @_;
-    $DB::single=1;
 
     my $ft_string = $entry->sample_field($self->sample_index($entry->{header}), 'FT');
     return $self->pass_return_values($entry) unless defined($ft_string);
