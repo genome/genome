@@ -11,7 +11,7 @@ class Genome::Model::Build::HasFeatureLists {
 sub feature_list_lookups {
     return {
         target_region => 'get_target_region_feature_list',
-        segmental_duplications => 'get_segmental_dupications_feature_list',
+        segmental_duplications => 'get_segmental_duplications_feature_list',
         self_chain => 'get_self_chain_feature_list',
     };
 }
