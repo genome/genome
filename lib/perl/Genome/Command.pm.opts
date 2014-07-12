@@ -7033,6 +7033,19 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>somatic-validation',
     [
+      '>alignment-stats-summary',
+      [
+        'output-tsv-file=s',
+        'files',
+        'haploid-coverage!',
+        undef,
+        'targeted-insert-length!',
+        undef,
+        'models=s@',
+        undef,
+        'help!',
+        undef
+      ],
       '>align-reads',
       [
         'build=s',
