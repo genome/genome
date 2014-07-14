@@ -122,7 +122,7 @@ sub daemon {
             local $SIG{TERM} = sub { $signaled_to_quit = 1 };
 
             if ($signaled_to_quit) {
-                $self->inf("CHILD($$): signaled to quit");
+                $self->info("CHILD($$): signaled to quit");
                 exit;
             }
 
