@@ -1,6 +1,7 @@
 package Genome::Sys::Command::Search::Index;
 
 use Genome;
+use Genome::Utility::Instrumentation qw(timer);
 
 class Genome::Sys::Command::Search::Index {
     is => ['Genome::Role::Logger', 'Command'],
@@ -213,7 +214,12 @@ sub index_queued {
                 }
             }
             last if $signaled_to_quit;
-            if ($self->modify_index($action, $subject_class, $subject_id)) {
+
+            my $modified_index;
+            timer('genome.sys.search.index.index_queue.modify_index', sub {
+                $modified_index = $self->modify_index($action, $subject_class, $subject_id)
+            });
+            if ($modified_index) {
                 $subject_seen->{$subject_class}->{$subject_id}++;
                 $index_queue_item->delete();
                 $modified_count++;
