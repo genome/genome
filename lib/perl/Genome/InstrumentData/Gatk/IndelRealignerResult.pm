@@ -77,6 +77,7 @@ sub _create_targets {
         input_bam => $self->input_bam_path,
         reference_fasta => $self->reference_fasta,
         output_intervals => $intervals_file,
+        number_of_threads => 24,
     );
     $target_creator_params{known} = $self->known_sites_indel_vcfs if @{$self->known_sites_indel_vcfs};
     $self->debug_message('Params: '.Data::Dumper::Dumper(\%target_creator_params));

@@ -55,6 +55,7 @@ sub _run_base_recalibrator {
         input_bam => $self->input_bam_path,
         reference_fasta => $self->reference_fasta,
         output_recalibration_table => $recalibration_table_file,
+        number_of_cpu_threads => 8,
     );
     $base_recalibrator_params{known_sites} = $self->known_sites_vcfs if @{$self->known_sites_vcfs};
     $self->status_message('Params: '.Data::Dumper::Dumper(\%base_recalibrator_params));

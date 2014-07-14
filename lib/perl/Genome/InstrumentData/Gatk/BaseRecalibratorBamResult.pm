@@ -145,6 +145,7 @@ sub _print_reads {
         output_bam => $bam_path,
         bqsr => $self->base_recalibrator_result->recalibration_table_file,
         tmp_dir => $tmp_dir,
+        number_of_cpu_threads => 8,
     );
     if ( not $print_reads ) {
         $self->error_message('Failed to create print reads!');
