@@ -230,6 +230,10 @@ sub index_queued {
 sub modify_index {
     my ($self, $action, $subject_class, $subject_id) = @_;
 
+    # set the (forked) process name so we can know what's being worked on and
+    # so it is acknowledged that the fork is a fork and not a duplicate daemon
+    $0 = join(' ', $action, $subject_class, $subject_id);
+
     my $display_name = "(Class: $subject_class, ID: $subject_id)";
 
     my ($rv, $error);
