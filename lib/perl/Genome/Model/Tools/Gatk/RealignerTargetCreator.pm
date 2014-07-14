@@ -6,7 +6,7 @@ use Genome;
 
 class Genome::Model::Tools::Gatk::RealignerTargetCreator {
     doc => "Run GATK with the 'RealignerTargetCreator' tool",
-    is => 'Genome::Model::Tools::Gatk::Base',
+    is => [qw/ Genome::Model::Tools::Gatk::Base Genome::Model::Tools::Gatk::WithNumberOfThreads /],
     has_input => [
         known => {
             is => 'Text',
@@ -65,6 +65,7 @@ sub realigner_creator_command {
     $gatk_command .= " -I " . $self->input_bam;
     $gatk_command .= " -R " . $self->reference_fasta;
     $gatk_command .= " -o ". $self->output_intervals;
+    $gatk_command .= $self->number_of_threads_param_for_java_command;
     return $gatk_command;
 }
 

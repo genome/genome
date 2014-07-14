@@ -6,7 +6,7 @@ use Genome;
 
 class Genome::Model::Tools::Gatk::BaseRecalibrator {
     doc => "Run GATK with the 'BaseRecalibrator' tool",
-    is => 'Genome::Model::Tools::Gatk::Base',
+    is => [qw/ Genome::Model::Tools::Gatk::Base Genome::Model::Tools::Gatk::WithNumberOfCpuThreads /],
     has => [
         input_bam => {
             is_input => 1,
@@ -60,12 +60,15 @@ sub execute {
 
 sub base_recalibrator_command {
     my $self = shift;
+
     my $gatk_command = $self->base_java_command;
     $gatk_command .= " -T BaseRecalibrator";
     $gatk_command .= " -I " . $self->input_bam;
     $gatk_command .= " -R " . $self->reference_fasta;
     $gatk_command .= " -knownSites $_" for $self->known_sites;
     $gatk_command .= " -o " . $self->output_recalibration_table;
+    $gatk_command .= $self->number_of_cpu_threads_param_for_java_command;
+
     return $gatk_command;
 }
 

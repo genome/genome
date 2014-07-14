@@ -3,14 +3,16 @@ package Genome::Model::Tools::Gatk::PrintReads;
 use strict;
 use warnings;
 
-use Genome;
+use above 'Genome';
 
 require File::Basename;
 
+use Genome::Model::Tools::Gatk::WithNumberOfCpuThreads;
+
 class Genome::Model::Tools::Gatk::PrintReads {
     doc => "Run GATK with the 'PrintReads' tool",
-    is => 'Genome::Model::Tools::Gatk::Base',
-    has => [
+    is => [qw/ Genome::Model::Tools::Gatk::Base Genome::Model::Tools::Gatk::WithNumberOfCpuThreads /],
+    has => {
         input_bams => {
             is_input => 1,
             is_many => 1,
@@ -78,7 +80,7 @@ class Genome::Model::Tools::Gatk::PrintReads {
             is => 'Boolean',
             doc => 'Simplify all reads. Erase all extra attributes in the read but keep the read group information.',
         },
-    ],
+    },
 };
 
 sub help_brief {
@@ -128,6 +130,7 @@ sub print_reads_command {
     $gatk_command .= " --sample_file " . $self->sample_file if $self->sample_file;
     $gatk_command .= " --sample_name " . $self->sample_name if $self->sample_name;
     $gatk_command .= " --simplify " . $self->simplify if $self->simplify;
+    $gatk_command .= $self->number_of_cpu_threads_param_for_java_command;
 
     return $gatk_command;
 }

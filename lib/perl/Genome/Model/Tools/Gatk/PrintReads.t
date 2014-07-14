@@ -13,7 +13,7 @@ if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
 }
 else {
-    plan tests => 5;
+    plan tests => 6;
 }
 
 use_ok('Genome::Model::Tools::Gatk::PrintReads');
@@ -34,6 +34,7 @@ my $expected_bam = "$test_data_dir/expected.bam";
 my $gatk_cmd = Genome::Model::Tools::Gatk::PrintReads->create(
         max_memory      => "2",
         version         => 2.4,
+        number_of_cpu_threads => 1,
         input_bams      => [@input_bams],
         reference_fasta => $input_ref_mt,
         bqsr            => $input_grp,
@@ -41,7 +42,14 @@ my $gatk_cmd = Genome::Model::Tools::Gatk::PrintReads->create(
 );
 
 isa_ok($gatk_cmd, 'Genome::Model::Tools::Gatk::PrintReads', "Made the command");
-# ok(!$gatk_cmd->execute, "Failed to execute the command");
+diag($gatk_cmd->print_reads_command); 
+is(
+    $gatk_cmd->print_reads_command, 
+    $gatk_cmd->base_java_command.' -R /gscmnt/gc13003/info/test_suite_data//Genome-Model-Tools-Gatk-PrintReads/v1/all_sequences.MT.fa -T PrintReads -o '.$output_bam.' -I /gscmnt/gc13003/info/test_suite_data//Genome-Model-Tools-Gatk-PrintReads/v1/input1.bam  -I /gscmnt/gc13003/info/test_suite_data//Genome-Model-Tools-Gatk-PrintReads/v1/input2.bam  --BQSR /gscmnt/gc13003/info/test_suite_data//Genome-Model-Tools-Gatk-PrintReads/v1/input.grp -nct 1',
+    'print reads command',
+);
 ok($gatk_cmd->execute, "Executed the command");
 ok(system("diff $output_bam $expected_bam") == 0, "Output and expected are not different.");
 ok(-s $output_bam.'.bai', 'bam index exists');
+
+done_testing();
