@@ -56,7 +56,7 @@ sub test_get_feature_list_from_reference {
     my $mock_ref_build = Test::MockObject::Extends->new($tumor_build->reference_sequence_build);
 
     my $test_feature = Genome::FeatureList->__define__;
-    $mock_ref_build->mock('test', sub {return $test_feature;});
+    $mock_ref_build->mock('get_feature_list', sub {return $test_feature;});
 
     is($b->get_feature_list_from_reference('test'), $test_feature, "got a feature list from the reference");
 
