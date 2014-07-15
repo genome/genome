@@ -22,8 +22,8 @@ isa_ok($factory->get_class('interpreters', $pkg->name), $pkg);
 subtest "sample 1" => sub {
     my $sample_name = "S1";
     my %expected_return_values = (
-        C => [qw/Sniper Strelka/],
-        G => [qw/Strelka/],
+        C => { variant_callers => [qw/Sniper Strelka/] },
+        G => { variant_callers => [qw/Strelka/] },
     );
     run_test($sample_name, %expected_return_values);
 };
@@ -31,7 +31,7 @@ subtest "sample 1" => sub {
 subtest "sample 1 with sample alt alleles only" => sub {
     my $sample_name = "S1";
     my %expected_return_values = (
-        C => [qw/Sniper Strelka/],
+        C => { variant_callers => [qw/Sniper Strelka/] },
     );
     run_test($sample_name, %expected_return_values);
 };
@@ -39,7 +39,7 @@ subtest "sample 1 with sample alt alleles only" => sub {
 subtest "sample 1 with other alt allele only" => sub {
     my $sample_name = "S1";
     my %expected_return_values = (
-        G => [qw/Strelka/],
+        G => { variant_callers => [qw/Strelka/] },
     );
     run_test($sample_name, %expected_return_values);
 };
@@ -47,8 +47,8 @@ subtest "sample 1 with other alt allele only" => sub {
 subtest "sample 2" => sub {
     my $sample_name = "S2";
     my %expected_return_values = (
-        C => [qw/Strelka/],
-        G => [qw/Strelka/],
+        C => { variant_callers => [qw/Strelka/] },
+        G => { variant_callers => [qw/Strelka/] },
     );
     run_test($sample_name, %expected_return_values);
 };
@@ -56,8 +56,8 @@ subtest "sample 2" => sub {
 subtest "sample 3" => sub {
     my $sample_name = "S3";
     my %expected_return_values = (
-        C => [],
-        G => [],
+        C => { variant_callers => [] },
+        G => { variant_callers => [] },
     );
     run_test($sample_name, %expected_return_values);
 };
@@ -76,9 +76,7 @@ sub run_test {
     my $entry = create_entry();
 
     my %result = $interpreter->interpret_entry($entry, [keys %expected_return_values]);
-    while( my ($alt_allele, $callers) = each %expected_return_values ) {
-        cmp_bag($result{$alt_allele}->{variant_callers}, $callers, "Sample ($sample_name) return values for alternate allele $alt_allele as expected");
-    }
+    is_deeply(\%result, \%expected_return_values, "Sample ($sample_name) return values as expected");
 }
 
 sub create_vcf_header {
