@@ -41,7 +41,8 @@ ok($base_recalibrator, 'created gatk indel realigner');
 # Outputs
 is($base_recalibrator->recalibration_table_file, $base_recalibrator->output_dir.'/'.$bam_source->id.'.bam.grp', 'recalibration table file named correctly');
 ok(-s $base_recalibrator->recalibration_table_file, 'recalibration table file exists');
-Genome::Utility::Test::compare_ok($base_recalibrator->recalibration_table_file, $result_data_dir.'/expected.bam.grp', 'recalibration table file matches');
+#Cannot compare file with threading
+#Genome::Utility::Test::compare_ok($base_recalibrator->recalibration_table_file, $result_data_dir.'/expected.bam.grp', 'recalibration table file matches');
 
 # Users
 my @bam_source_users = $bam_source->users;
@@ -67,6 +68,5 @@ like(
     'resolve_allocation_subdirectory',
 );
 
-#print $base_recalibrator->_tmpdir."\n";
-#print $base_recalibrator->output_dir."\n"; <STDIN>;
+#print join("\n", $base_recalibrator->_tmpdir, $base_recalibrator->output_dir)."\n"; <STDIN>;
 done_testing();
