@@ -58,7 +58,7 @@ sub _execute {
         $self->status_message("\nWorking on build " . $build->id . 
             " ($current_build_num of $total_builds)");
 
-        my @allocations = grep { $_->is_archived } $build->all_allocations;
+        my @allocations = grep { $_->is_archived } $build->associated_disk_allocations;
         my $num_allocations = @allocations;
         my (%job_statuses, %job_to_allocation_mapping);
         if ( @allocations ) {

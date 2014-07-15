@@ -10,7 +10,7 @@ use Genome::Model::ClinSeq::Util qw(:all);
 class Genome::Model::ClinSeq::Command::SummarizeSvs {
     is => 'Command::V2',
     has_input => [
-        builds => { 
+        builds => {
             is => 'Genome::Model::Build::SomaticVariation',
             is_many => 1,
             shell_args_position => 1,
@@ -22,9 +22,9 @@ class Genome::Model::ClinSeq::Command::SummarizeSvs {
             example_values => [$Genome::Model::ClinSeq::DEFAULT_CANCER_ANNOTATION_DB_ID],
             doc => 'cancer annotation data',
         },
-        outdir => { 
+        outdir => {
             is => 'FilesystemPath',
-            doc => 'Directory where output files will be written', 
+            doc => 'Directory where output files will be written',
         },
     ],
     has_output => [
@@ -54,7 +54,7 @@ EOS
 
 sub help_detail {
     return <<EOS
-Summarize structural variants for one or more somatic variation builds 
+Summarize structural variants for one or more somatic variation builds
 
 (put more content here)
 EOS
@@ -87,7 +87,7 @@ sub execute {
   #TODO: Create official versions of these data on allocated disk
   #Directory of gene lists for various purposes
   my $cancer_annotation_db = $self->cancer_annotation_db;
-  my $clinseq_annotations_dir = $cancer_annotation_db->data_directory; 
+  my $clinseq_annotations_dir = $cancer_annotation_db->data_directory;
   my $gene_symbol_lists_dir = $clinseq_annotations_dir . "/GeneSymbolLists/";
   my $entrez_ensembl_data = $self->loadEntrezEnsemblData(-cancer_db => $cancer_annotation_db);
   my $symbol_list_names = $self->importSymbolListNames('-gene_symbol_lists_dir'=>$gene_symbol_lists_dir, '-verbose'=>0);
@@ -115,13 +115,36 @@ sub execute {
     #e.g. /gscmnt/gc8002/info/model_data/2882679738/build119517041/variants/sv/union-union-sv_breakdancer_1.2__5-sv_breakdancer_1.2__6-sv_squaredancer_0.1__4/
     #squaredancer.svs.merge.file.annot
 
-    #Make a copy of the annotated somatic SVs file and place in the outdir
+    my $sv_annot_file = $self->copy_sv_annot($build_outdir, $build_dir);
     my $fusion_candidate_outfile = $build_outdir . "CandidateSvCodingFusions.tsv";
+    my %data;
+    $self->read_sv_annot_into_hash($sv_annot_file, \%data, $entrez_ensembl_data, $build_outdir);
+    $self->annotate_genes(\%data, $gene_symbol_lists);
+    $self->create_pairoscope_plots(\%data, $tumor_bam, $normal_bam, $build_outdir);
+    $self->create_fusion_file($fusion_candidate_outfile, $gene_symbol_lists, \%data);
+
+    #TODO: Create a Stats.tsv file summarizing basic statistics of the sv annotations file
+    #TODO: Identify the deletion regions.  Create a display for each deletion showing coverage across that region in tumor and normal
+    #TODO: How reliable are our SVs.  Is there a way to identify a 'high confidence' set?
+    #TODO: Apply additional annotation strategies to the somatic SVs identified.
+    #- What are the genes/transcripts affected by the breakpoints of deletions, inversions, translocations?
+
+  }
+  $self->status_message("\n\n");
+  return 1;
+}
+
+sub copy_sv_annot {
+    my $self = shift;
+    my $build_outdir = shift;
+    my $build_dir = shift;
+
+    #Make a copy of the annotated somatic SVs file and place in the outdir
     my $sv_annot_search1 = $build_dir . "/variants/sv/union-union*/svs.hq.merge.annot.somatic";
     my $sv_annot_search2 = $build_dir . "/variants/sv/union-sv*/svs.hq.merge.annot.somatic";
-     
+
     my $sv_annot_file = 'NULL';
-    
+
     my $sv_annot_file1 = `ls $sv_annot_search1 2>/dev/null` || "NULL";
     chomp($sv_annot_file1);
 
@@ -132,23 +155,43 @@ sub execute {
       $sv_annot_file = $sv_annot_file1;
     }elsif (-e $sv_annot_file2){
       $sv_annot_file = $sv_annot_file2;
+    } else {
+      $self->status_message("Could not find: SV annotation file by:\n$sv_annot_search1\n$sv_annot_search2");
     }
 
     #Produce a simplified list of SVs gene fusion pairs (e.g. BCR-ABL1) - where type is fusion, and ORF affecting
-    my %data;
     if (-e $sv_annot_file){
-
       #Copy the SV annot file to the clinseq working dir
       my $new_sv_annot_file = $build_outdir . "svs.hq.merge.annot.somatic";
       unless (-e $new_sv_annot_file){
         Genome::Sys->copy_file($sv_annot_file, $new_sv_annot_file);
       }
+    }
+    return $sv_annot_file;
+}
 
+sub read_sv_annot_into_hash {
+    my $self = shift;
+    my $sv_annot_file = shift;
+    my $data = shift;
+    my $entrez_ensembl_data = shift;
+    my $outdir = shift;
+
+    if (-e $sv_annot_file) {
       open (SV_ANNO, "$sv_annot_file") || die "\n\nCould not open SV annotation file: $sv_annot_file\n\n";
       my $l = 0;
+      my %sv_types;
       while(<SV_ANNO>){
         chomp($_);
         my @line = split("\t", $_);
+        my $sv_type = $line[6];
+        if($sv_type ne "TYPE") {
+          if (defined $sv_types{$sv_type}) {
+            $sv_types{$sv_type} += 1;
+          } else {
+            $sv_types{$sv_type} = 1;
+          }
+        }
         #Grab the somatic 'CTX' events, that are candidate 'Fusion' and 'AffectCoding'
         if ($_ =~ /\s+CTX\s+/ && $_ =~ /Fusion/ && $_ =~ /AffectCoding/){
           my $annot_string = $line[15];
@@ -172,58 +215,104 @@ sub execute {
           my $mapped_gene_name1 = $self->fixGeneName('-gene'=>$gene1, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
           my $mapped_gene_name2 = $self->fixGeneName('-gene'=>$gene2, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
           my $record = "$gene_pair\t$gene1\t$gene2\t$coords[0]\t$coords[1]\t$mapped_gene_name1\t$mapped_gene_name2";
-          $data{$l}{record} = $record;
-          $data{$l}{coords1} = $coords[0];
-          $data{$l}{coords2} = $coords[1];
-          $data{$l}{gene1} = $gene1;
-          $data{$l}{gene2} = $gene2;
-          $data{$l}{mapped_gene1} = $mapped_gene_name1;
-          $data{$l}{mapped_gene2} = $mapped_gene_name2;
-          $data{$l}{transcript1} = $transcript1;
-          $data{$l}{transcript2} = $transcript2;
-
+          $data->{$l}{record} = $record;
+          $data->{$l}{coords1} = $coords[0];
+          $data->{$l}{coords2} = $coords[1];
+          $data->{$l}{gene1} = $gene1;
+          $data->{$l}{gene2} = $gene2;
+          $data->{$l}{mapped_gene1} = $mapped_gene_name1;
+          $data->{$l}{mapped_gene2} = $mapped_gene_name2;
+          $data->{$l}{transcript1} = $transcript1;
+          $data->{$l}{transcript2} = $transcript2;
         }
       }
-    }else{
-      $self->status_message("Could not find: SV annotation file by:\n$sv_annot_search1\n$sv_annot_search2");
+      $self->write_stats($outdir, \%sv_types);
     }
+}
+
+sub write_stats {
+    my $self = shift;
+    my $outdir = shift;
+    my $sv_types = shift;
+    my $stats_file = $outdir . "Stats.tsv";
+    open (my $STATS, ">$stats_file") || die "\n\nCould not open stats file: $stats_file\n\n";
+    print $STATS "Question\tAnswer\tData_Type\tAnalysis_Type\tStatistic_Type\tExtra_Description\n";
+    $self->write_sv_type_stats($sv_types, $STATS);
+    close($STATS);
+}
+
+sub write_sv_type_stats {
+    my $self = shift;
+    my $sv_types = shift;
+    my $STATS = shift;
+    my $CTX_counts = $sv_types->{"CTX"} || 0;
+    my $ITX_counts = $sv_types->{"ITX"} || 0;
+    my $DEL_counts = $sv_types->{"DEL"} || 0;
+    my $INS_counts = $sv_types->{"INS"} || 0;
+    my $INV_counts = $sv_types->{"INV"} || 0;
+    print $STATS "Number of CTX SV's\t$CTX_counts\tWGS\tClinseq Build Summary\tCount\tNumber of inter-chromosomal translocations\n";
+    print $STATS "Number of ITX SV's\t$ITX_counts\tWGS\tClinseq Build Summary\tCount\tNumber of intra-chromosomal translocations\n";
+    print $STATS "Number of DEL SV's\t$DEL_counts\tWGS\tClinseq Build Summary\tCount\tNumber of deletion SVs\n";
+    print $STATS "Number of INS SV's\t$INS_counts\tWGS\tClinseq Build Summary\tCount\tNumber of insertion SVs\n";
+    print $STATS "Number of INV SV's\t$INV_counts\tWGS\tClinseq Build Summary\tCount\tNumber of Inversion SVs\n";
+}
+
+sub annotate_genes {
+    my $self = shift;
+    my $data = shift;
+    my $gene_symbol_lists = shift;
 
     #Annotate the genes of this file to help identify genes of interest (e.g. kinases, etc.)...
-    foreach my $l (keys %data){
-      my $gene1_name = $data{$l}{gene1};
-      my $gene2_name = $data{$l}{gene2};
+    foreach my $l (keys %$data){
+      my $gene1_name = $data->{$l}{gene1};
+      my $gene2_name = $data->{$l}{gene2};
 
       foreach my $gene_symbol_type (keys %{$gene_symbol_lists}){
         my $gene_symbols = $gene_symbol_lists->{$gene_symbol_type}->{symbols};
-        $data{$l}{$gene_symbol_type} = 0;
+        $data->{$l}{$gene_symbol_type} = 0;
         if ($gene_symbols->{$gene1_name}){
-          $data{$l}{$gene_symbol_type}++;
+          $data->{$l}{$gene_symbol_type}++;
         }
         if ($gene_symbols->{$gene2_name}){
-          $data{$l}{$gene_symbol_type}++;
+          $data->{$l}{$gene_symbol_type}++;
         }
       }
     }
+}
 
+sub create_fusion_file {
+    my $self = shift;
+    my $fusion_candidate_outfile = shift;
+    my $gene_symbol_lists = shift;
+    my $data = shift;
+
+    #Print out a new file containing the extra annotation columns
+    open (FUSION_OUT, ">$fusion_candidate_outfile") || die "\n\nCould not open fusion outfile\n\n";
+    my @gene_symbol_list_names = sort {$gene_symbol_lists->{$a}->{order} <=> $gene_symbol_lists->{$b}->{order}} keys %{$gene_symbol_lists};
+    my $gene_symbol_list_name_string = join("\t", @gene_symbol_list_names);
+    my $header_line = "gene_pair\tgene1\tgene2\tcoord1\tcoord2\tmapped_gene_name1\tmapped_gene_name2\tpairoscope_tumor_reads\tpairoscope_normal_reads";
+    print FUSION_OUT "$header_line\t$gene_symbol_list_name_string\n";
+    foreach my $l (sort {$a <=> $b} keys %$data){
+      my @tmp;
+      foreach my $gene_symbol_list_name (@gene_symbol_list_names){
+        push (@tmp, $data->{$l}{$gene_symbol_list_name});
+      }
+      my $new_cols_string = join("\t", @tmp);
+      print FUSION_OUT "$data->{$l}{record}\t$data->{$l}{pairoscope_tumor_reads}\t$data->{$l}{pairoscope_normal_reads}\t$new_cols_string\n";
+    }
+    close(FUSION_OUT);
+    $self->fusion_output_file($fusion_candidate_outfile);
+}
+
+sub create_pairoscope_plots {
     #TODO: Use the coordinates of each fusion to produce pairoscope plots showing the support for each rearrangement
-    #Relevant pairoscope option:
-    #Usage:   pairoscope [options] <align.bam> <chr> <start> <end> <align2.bam> <chr2> <start2> <end2> 
-    # -q INT    minimum mapping quality [0]
-    # -p FLAG   output in pdf instead of png
-    # -b INT    size of buffer around region to include [100]
-    # -n FLAG   print the normal pairs too
-    # -o STRING filename of the output png
-    # -W INT    Width of the document [1024]
-    # -H INT    Height of the document [768]
-    # -g STRING bam file of exons for gene models
-    # -u INT    upper bound of the insert size for a normal read [2147483647]
-    # -l INT    lower bound of the insert size for a normal read[-1]
-    # -m INT    minimum size of an event to display. Translocations are always displayed[0]
-    # -P FLAG   Only display reads with both mates mapped in the graph
-    # -t STRING list of transcripts to display
 
-    #pairoscope -P -m 100000 -b 10000 /gscmnt/gc4074/info/model_data/2875512598/build111201309/alignments/111286100.bam 6 28884413 28884413 /gscmnt/gc4074/info/model_data/2875512598/build111201309/alignments/111286100.bam 17 28298036 28298036 -o HG1_TRIM27-EFCAB5_DNA.png
-    
+    my $self = shift;
+    my $data = shift;
+    my $tumor_bam = shift;
+    my $normal_bam = shift;
+    my $build_outdir = shift;
+
     #Set up the outdir and a temp file that will be used to gather read support counts dumped by pairoscope
     my $pairoscope_outdir = $build_outdir . "pairoscope/";
     mkdir($pairoscope_outdir);
@@ -236,13 +325,13 @@ sub execute {
     my $flank = 10000;
     my $offset = 1000; #To make it easier to see the arcs...
     my $params_string = "-P -q $min_mapping_quality -m $min_event_size -b $flank";
-    foreach my $l (keys %data){    
-      my $gene1 = $data{$l}{gene1};
-      my $gene2 = $data{$l}{gene2};
-      my $coords1 = $data{$l}{coords1};
-      my $coords2 = $data{$l}{coords2};
-      my $transcript1 = $data{$l}{transcript1};
-      my $transcript2 = $data{$l}{transcript2};
+    foreach my $l (keys %$data){
+      my $gene1 = $data->{$l}{gene1};
+      my $gene2 = $data->{$l}{gene2};
+      my $coords1 = $data->{$l}{coords1};
+      my $coords2 = $data->{$l}{coords2};
+      my $transcript1 = $data->{$l}{transcript1};
+      my $transcript2 = $data->{$l}{transcript2};
 
       #TODO: Figure out with Dave L. how this transcript option works.  Need to specify an Exons BAM with -g option?
       #TODO: Where do the annotations in the sv.annot file in somatic variation results come from
@@ -279,7 +368,7 @@ sub execute {
         }
         close (TMP1);
       }
-      $data{$l}{pairoscope_tumor_reads} = $pairoscope_tumor_reads;
+      $data->{$l}{pairoscope_tumor_reads} = $pairoscope_tumor_reads;
       #print "\n\nTUMOR: $gene1 $coords2 $transcript1\t\t$gene2 $coords2 $transcript2\ttumor count = $pairoscope_tumor_reads\n$pairoscope_tumor_cmd";
 
       #Pairoscope plot for Normal BAM
@@ -297,49 +386,13 @@ sub execute {
         }
         close (TMP2);
       }
-      $data{$l}{pairoscope_normal_reads} = $pairoscope_normal_reads;
+      $data->{$l}{pairoscope_normal_reads} = $pairoscope_normal_reads;
       #print "\n\nNORMAL: $gene1 $coords2 $transcript1\t\t$gene2 $coords2 $transcript2\tnormal count = $pairoscope_normal_reads\n$pairoscope_normal_cmd";
 
       #Clean-up the pairoscope temp files
       unlink $pairoscope_tmp_tumor_file;
       unlink $pairoscope_tmp_normal_file;
     }
-
-    #Print out a new file containing the extra annotation columns
-    open (FUSION_OUT, ">$fusion_candidate_outfile") || die "\n\nCould not open fusion outfile\n\n";
-    my @gene_symbol_list_names = sort {$gene_symbol_lists->{$a}->{order} <=> $gene_symbol_lists->{$b}->{order}} keys %{$gene_symbol_lists};
-    my $gene_symbol_list_name_string = join("\t", @gene_symbol_list_names);
-    my $header_line = "gene_pair\tgene1\tgene2\tcoord1\tcoord2\tmapped_gene_name1\tmapped_gene_name2\tpairoscope_tumor_reads\tpairoscope_normal_reads";
-    print FUSION_OUT "$header_line\t$gene_symbol_list_name_string\n";
-    foreach my $l (sort {$a <=> $b} keys %data){
-      my @tmp;
-      foreach my $gene_symbol_list_name (@gene_symbol_list_names){
-        push (@tmp, $data{$l}{$gene_symbol_list_name});
-      }
-      my $new_cols_string = join("\t", @tmp);
-      print FUSION_OUT "$data{$l}{record}\t$data{$l}{pairoscope_tumor_reads}\t$data{$l}{pairoscope_normal_reads}\t$new_cols_string\n";
-    }
-    close(FUSION_OUT);
-    $self->fusion_output_file($fusion_candidate_outfile);
-
-
-    #TODO: Create a Stats.tsv file summarizing basic statistics of the sv annotations file
-    
-    #TODO: Identify the deletion regions.  Create a display for each deletion showing coverage across that region in tumor and normal
-
-    #TODO: How reliable are our SVs.  Is there a way to identify a 'high confidence' set? 
-
-    #TODO: Apply additional annotation strategies to the somatic SVs identified. 
-    #- What are the genes/transcripts affected by the breakpoints of deletions, inversions, translocations?
-
-
-
-  }
-  $self->status_message("\n\n");
-
-  return 1;
 }
 
 1;
-
-

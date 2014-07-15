@@ -11,7 +11,7 @@ use warnings;
 use above "Genome";
 use Test::Exception;
 use Test::More;
-use Genome::VariantReporting::Plan::TestHelpers;
+use Genome::VariantReporting::Framework::Plan::TestHelpers;
 
 my $pkg = "Genome::VariantReporting::Reporter::WithHeader";
 use_ok($pkg);
@@ -41,7 +41,7 @@ use_ok($pkg);
     package Genome::VariantReporting::DuplicateInterpreter;
 
     class Genome::VariantReporting::DuplicateInterpreter {
-        is => 'Genome::VariantReporting::Interpreter::Base',
+        is => 'Genome::VariantReporting::Framework::Component::Interpreter',
     };
     sub name {
         'duplicate';

@@ -15,7 +15,7 @@ use Genome::Utility::Test qw(compare_ok);
 my $pkg = 'Genome::VariantReporting::Reporter::SimpleReporter';
 use_ok($pkg);
 
-my $factory = Genome::VariantReporting::Factory->create();
+my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('reporters', $pkg->name), $pkg);
 
 my $data_dir = __FILE__.".d";
@@ -65,6 +65,5 @@ $reporter->report(\%interpretations);
 $reporter->finalize();
 
 compare_ok(File::Spec->join($output_dir, 'simple'), File::Spec->join($data_dir, "expected.out"), "Output as expected");
-$DB::single=1;
 
 done_testing;

@@ -1,6 +1,7 @@
 package Genome::Sys::Command::Search::Index;
 
 use Genome;
+use Genome::Utility::Instrumentation qw(increment timer);
 
 class Genome::Sys::Command::Search::Index {
     is => ['Genome::Role::Logger', 'Command'],
@@ -121,14 +122,22 @@ sub daemon {
             local $SIG{TERM} = sub { $signaled_to_quit = 1 };
 
             if ($signaled_to_quit) {
-                $self->inf("CHILD($$): signaled to quit");
+                $self->info("CHILD($$): signaled to quit");
                 exit;
             }
 
             my $max = $self->max_changes_per_commit;
+
+            $self->info("CHILD($$): Deduplicating queue");
+            $self->dedup_queue();
+
+            if ($signaled_to_quit) {
+                $self->info("CHILD($$): signaled to quit");
+                exit;
+            }
+
             $self->info("CHILD($$): Processing index queue max=$max)");
-            eval { $self->index_queued(max_changes_count => $max); };
-            if ($@) { $self->info("CHILD($$): ahh shit: $@"); }
+            $self->index_queued(max_changes_count => $max);
 
             if ($signaled_to_quit) {
                 $self->info("CHILD($$): signaled to quit");
@@ -174,6 +183,18 @@ sub list {
     return 1;
 }
 
+sub dedup_queue {
+    my $class = shift;
+
+    my %seen;
+    my $index_queue_iterator = Genome::Search::Queue->queue_iterator();
+    while (my $q = $index_queue_iterator->next) {
+        if ($seen{$q->subject_class}{$q->subject_id}++) {
+            $q->delete;
+        }
+    }
+}
+
 sub index_queued {
     my $self = shift;
     my %params = @_;
@@ -213,12 +234,19 @@ sub index_queued {
                 }
             }
             last if $signaled_to_quit;
-            if ($self->modify_index($action, $subject_class, $subject_id)) {
+
+            my $modified_index;
+            timer('genome.sys.search.index.index_queue.modify_index', sub {
+                $modified_index = $self->modify_index($action, $subject_class, $subject_id)
+            });
+            if ($modified_index) {
+                increment('genome.sys.search.index.index_queue.modify_index.success');
                 $subject_seen->{$subject_class}->{$subject_id}++;
                 $index_queue_item->delete();
                 $modified_count++;
             } else {
                 # Move it to the back of the line.
+                increment('genome.sys.search.index.index_queue.modify_index.failure');
                 $index_queue_item->timestamp(UR::Context->now);
             }
         }
@@ -229,6 +257,10 @@ sub index_queued {
 
 sub modify_index {
     my ($self, $action, $subject_class, $subject_id) = @_;
+
+    # set the (forked) process name so we can know what's being worked on and
+    # so it is acknowledged that the fork is a fork and not a duplicate daemon
+    $0 = join(' ', $action, $subject_class, $subject_id);
 
     my $display_name = "(Class: $subject_class, ID: $subject_id)";
 

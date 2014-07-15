@@ -436,10 +436,7 @@ sub _promote_validated_data {
         Genome::Sys->rename($staged_file, $destination);
     }
 
-    my @files = File::Find::Rule->file->not(File::Find::Rule->symlink)->in($output_dir);
-    for my $file (@files) {
-        mode($file)->rm_all_writable;
-    }
+    $self->_disk_allocation->set_files_read_only;
 
     $self->debug_message("Files in $output_dir: \n" . join "\n", glob($output_dir . "/*"));
 

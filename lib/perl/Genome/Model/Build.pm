@@ -670,6 +670,28 @@ sub get_or_create_data_directory {
     return $self->data_directory;
 }
 
+sub _unarchive_disk_allocations {
+    my ($self, %params) = @_;
+
+    my $unarchive_cmd = Genome::Model::Build::Command::Unarchive->create(
+        builds => [ $self ],
+        lab => 'Informatics',
+    );
+    if ( not $unarchive_cmd ) {
+        $self->error_message();
+        return;
+    }
+
+    my $unarchive_ok = $unarchive_cmd->execute(
+    );
+    if ( not $unarchive_ok ) {
+        $self->error_message();
+        return;
+    }
+
+    return 1;
+}
+
 sub _additional_associated_disk_allocations {
     my $self = shift;
 
@@ -719,7 +741,7 @@ sub input_allocations {
     for my $input ($self->inputs) {
         my $value = $input->value;
         if ($value and $value->isa('Genome::Model::Build')) {
-            push @allocations, $input->value->all_allocations();
+            push @allocations, $input->value->associated_disk_allocations();
         }
         else {
             push @allocations, Genome::Disk::Allocation->get(
@@ -770,7 +792,7 @@ sub symlinked_allocations {
     my $data_directory = $self->data_directory;
     return if not $data_directory or not -d $data_directory;
 
-    # In some circumstances, this can get called (though all_allocations())
+    # In some circumstances, this can get called (though associated_disk_allocations())
     # many times.  NFS slowness would compound the problem and make this
     # method way too slow.  We'll get the result the first time and cache
     # the answer
@@ -1056,18 +1078,34 @@ sub validate_instrument_data{
     my @tags;
     my @instrument_data = $self->instrument_data;
     for my $instrument_data (@instrument_data){
-        if (not defined $instrument_data->read_count){
+        if (not defined $instrument_data->read_count) {
             push @tags, UR::Object::Tag->create(
                 type => 'error',
                 properties => ['instrument_data'],
                 desc => 'read count for instrument data (' . $instrument_data->id . ') has not been calculated, use `genome instrument-data calculate-read-count` to correct this.',
             );
-        } elsif (not $instrument_data->read_count){
+        } elsif (not $instrument_data->read_count) {
             push @tags, UR::Object::Tag->create(
                 type => 'error',
                 properties => ['instrument_data'],
                 desc => 'no reads for instrument data (' . $instrument_data->id . ') assigned to build',
             );
+        }
+        if (my $bam_path = $instrument_data->bam_path) {
+            if (! -f $bam_path) {
+                push @tags, UR::Object::Tag->create(
+                    type => 'error',
+                    properties => ['instrument_data'],
+                    desc => 'instrument data (' . $instrument_data->id . ') has bam_path but the file fies not exist',
+                );
+
+            } elsif (! -s $bam_path) {
+                push @tags, UR::Object::Tag->create(
+                    type => 'error',
+                    properties => ['instrument_data'],
+                    desc => 'instrument data (' . $instrument_data->id . ') has bam_path but no size',
+                );
+            }
         }
     }
     return @tags;

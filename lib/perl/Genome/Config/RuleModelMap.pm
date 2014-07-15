@@ -30,7 +30,7 @@ sub match {
         unless $instrument_data;
 
     for my $rule ($self->rules) {
-        my $result = $self->_evaluate_rule($rule, $instrument_data);
+        my $result = $self->evaluate_rule($rule, $instrument_data);
         return unless $result;
     }
 
@@ -38,17 +38,20 @@ sub match {
     return 1;
 }
 
-sub _evaluate_rule {
+sub evaluate_rule {
     my $self = shift;
     my $rule = shift;
     my $instrument_data = shift;
 
     my $actual_value = _evaluate_method_chain($instrument_data, @{$rule->method_chain});
-    return $actual_value eq $rule->expected_value;
+    my $matches = $actual_value eq $rule->expected_value;
+
+    return ($matches, $actual_value) if wantarray;
+    return $matches;
 }
 
 sub _evaluate_method_chain {
-    return unless defined($_[0]);
+    return '' unless defined($_[0]);
 
     if (@_ >= 2) {
         my $obj = shift;

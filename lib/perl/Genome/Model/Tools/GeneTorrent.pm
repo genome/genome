@@ -22,7 +22,7 @@ class Genome::Model::Tools::GeneTorrent {
 #            default_value => '-W 72:00 -q lims-datatransfer -R "rusage[internet_download_mbps=80]"',
             # -W bsub option silently ignored
             # mbps -> megabits per second (see --rate-limit below)
-            default_value => '-q seqmgr-long -R "rusage[internet_download_mbps=80]"',
+            default_value => '-q lims-i2-datatransfer -R "rusage[internet_download_mbps=80]"',
         },
     ]
 };

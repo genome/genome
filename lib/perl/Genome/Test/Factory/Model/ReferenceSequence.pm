@@ -25,4 +25,19 @@ sub create_subject {
     return Genome::Sample->create(name => Genome::Test::Factory::Util::generate_name("test_subject"));
 }
 
+sub setup_reference_sequence_build {
+    my $self = shift;
+    my $fasta_file = shift;
+
+    my $test_model = Genome::Test::Factory::Model::ReferenceSequence->setup_object(
+        fasta_file => $fasta_file,
+    );
+
+    my $test_build = Genome::Test::Factory::Build->setup_object(
+        model_id => $test_model->id,
+        status => 'Succeeded',
+    );
+    return $test_build;
+}
+
 1;

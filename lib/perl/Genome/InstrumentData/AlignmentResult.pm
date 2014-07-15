@@ -674,9 +674,30 @@ sub collect_inputs {
         }
     }
 
-    # Some old imported bam does not have is_paired_end set, patch for now
     $self->debug_message("Checking if this read group is paired end...");
     my $paired = $instr_data->is_paired_end;
+
+    #One extra check to see whether the instrument data is really not
+    #paired_end or just set wrong in production
+    unless ($paired) {
+        my $output_file = $bam_file . '.flagstat';
+        unless (-s $output_file) {
+            $output_file = $self->temp_scratch_directory . '/import_bam.flagstat';
+            die unless $self->_create_bam_flagstat($bam_file, $output_file);
+        }
+        my $stats = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($output_file);
+        die $self->error_message('Failed to get flagstat data on input bam: '. $bam_file) unless $stats;
+
+        my $percent_paired = $stats->{reads_paired_in_sequencing} / $stats->{total_reads};
+
+        # Boundaries were arbitrarily chosen, feel free to adjust as a matter
+        # of policy.
+        
+        if ($percent_paired >= 0.9) {
+            die $self->error_message('flagstat on input bam: '. $bam_file.' infers paired_end on instrument_data: '.$instr_data->id);
+        }
+    }
+
 
     return ("$bam_file:1", "$bam_file:2") if $paired;
     return ("$bam_file:0");
@@ -1157,9 +1178,7 @@ sub _promote_validated_data {
         }
     }
 
-    for my $file (grep { -f $_  } glob("$output_dir/*")) {
-        mode($file)->rm_all_writable;
-    }
+    $self->_disk_allocation->set_files_read_only;
 
     $self->debug_message("Files in $output_dir: \n" . join "\n", glob($output_dir . "/*"));
 

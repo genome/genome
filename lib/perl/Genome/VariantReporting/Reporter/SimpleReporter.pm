@@ -15,7 +15,7 @@ sub name {
 }
 
 sub requires_interpreters {
-    return qw(position vep);
+    return qw(position vep ft contains-tag coverage vaf indel-size genotype);
 }
 
 sub headers {
@@ -30,6 +30,12 @@ sub headers {
         amino_acid_change
         default_gene_name
         ensembl_gene_id
+        ft_string
+        contains_tag
+        coverage
+        vaf
+        genotype
+        indel_size
     /;
 }
 

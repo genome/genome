@@ -15,7 +15,7 @@ use Genome::Utility::Test qw(compare_ok);
 my $pkg = 'Genome::VariantReporting::Reporter::TumorOnlyReporter';
 use_ok($pkg);
 
-my $factory = Genome::VariantReporting::Factory->create();
+my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('reporters', $pkg->name), $pkg);
 
 my $data_dir = __FILE__.".d";
@@ -53,6 +53,7 @@ my %interpretations = (
             gene_name_source  => 'HGNC',
             c_position        => 'c.456',
             canonical         => 1,
+            sift              => 'deleterious(5.4)',
         },
         G => {
             transcript_name   => 'ENST00000452176',

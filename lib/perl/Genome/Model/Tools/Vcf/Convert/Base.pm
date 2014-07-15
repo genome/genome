@@ -502,17 +502,21 @@ sub write_line {
 # alt alleles is an arrayref of  the alleles from the "ALT" column, all calls for this position that don't match the reference.
 # genotype alleles is an arrayref of the alleles called at this position for this sample, including those that match the reference
 sub generate_gt {
-    my ($self, $reference, $alt_alleles, $genotype_alleles) = @_;
+    my ($self, $reference, $alt_alleles_orig, $genotype_alleles_orig) = @_;
+
+    my @alt_alleles = map { uc } @$alt_alleles_orig;
+    my @genotype_alleles = map { uc } @$genotype_alleles_orig;
+    $reference = uc($reference);
 
     my @gt_string;
-    for my $genotype_allele (@$genotype_alleles) {
+    for my $genotype_allele (@genotype_alleles) {
         my $allele_number;
         if ($genotype_allele eq $reference) {
             $allele_number = 0;
         } else {
             # Find the index of the alt allele that matches this genotype allele, add 1 to offset 0 based index
-            for (my $i = 0; $i < scalar @$alt_alleles; $i++) {
-                if ($genotype_allele eq @$alt_alleles[$i]) {
+            for (my $i = 0; $i < scalar @alt_alleles; $i++) {
+                if ($genotype_allele eq $alt_alleles[$i]) {
                     $allele_number = $i + 1; # Genotype index starts at 1
                 }
             }

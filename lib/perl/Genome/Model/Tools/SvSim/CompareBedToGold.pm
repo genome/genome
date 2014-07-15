@@ -22,21 +22,6 @@ class Genome::Model::Tools::SvSim::CompareBedToGold {
         }
     ],
     has_output => [
-        true_positives_bed => {
-            is => "Text",
-            doc => "Bed file containing true positives",
-            is_optional => 1,
-        },
-        false_positives_bed => {
-            is => "Text",
-            doc => "Bed file containing false positives",
-            is_optional => 1,
-        },
-        false_negatives_bed => {
-            is => "Text",
-            doc => "Bed file containing false negatives",
-            is_optional => 1,
-        },
         stats_file => {
             is => "Text",
             doc => "Write stats (TPR, PPV, etc) to file",

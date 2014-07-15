@@ -146,7 +146,7 @@ sub params_for_result {
     my $build = $self->build;
 
     my $label;
-    if($variant_type eq 'snv' and $build->loh_version and $build->normal_sample) {
+    if($variant_type eq 'snv' and $build->loh_version and $build->loh_snv_detection_strategy and $build->normal_sample) {
         $label = 'loh';
     } else {
         $label = $variant_type . '_result';

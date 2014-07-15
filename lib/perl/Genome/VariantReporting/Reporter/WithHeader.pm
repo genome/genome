@@ -6,7 +6,7 @@ use Genome;
 use Memoize qw();
 
 class Genome::VariantReporting::Reporter::WithHeader {
-    is => 'Genome::VariantReporting::Reporter::Base',
+    is => 'Genome::VariantReporting::Framework::Component::Reporter::SingleFile',
     is_abstract => 1,
     has => {
         null_character => {
@@ -47,7 +47,7 @@ sub requires_interpreters_classes {
     my $self = shift;
     my @interpreters;
     for my $interpreter_name ($self->requires_interpreters) {
-        push @interpreters, Genome::VariantReporting::Factory->_load('interpreters')->{$interpreter_name};
+        push @interpreters, Genome::VariantReporting::Framework::Factory->_load('interpreters')->{$interpreter_name};
     }
     return @interpreters;
 }

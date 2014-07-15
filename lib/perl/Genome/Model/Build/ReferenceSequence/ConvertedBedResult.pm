@@ -13,11 +13,15 @@ class Genome::Model::Build::ReferenceSequence::ConvertedBedResult {
         target_reference => {
             is => 'Genome::Model::Build::ReferenceSequence',
         },
-        source_bed => {
-            is => 'Path',
+        source_md5 => {
+            is => 'Text',
         },
     ],
     has_transient => [
+        source_bed => {
+            is => 'Path',
+            is_optional => 1,
+        },
         _target_bed => {
             is_calculated => 1,
             calculate => q| return 'converted.bed' |,

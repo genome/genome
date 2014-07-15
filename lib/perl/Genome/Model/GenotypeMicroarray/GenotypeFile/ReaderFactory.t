@@ -40,4 +40,14 @@ $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->build_
 ok($reader, 'create reader');
 isa_ok($reader, 'Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderForInstDataWithAnnotation');
 
+# Reader for archived build [use inst data tsv]
+$instrument_data->disk_allocation->archive;
+ok($instrument_data->are_disk_allocations_archived, 'archived instrument data');
+$reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->build_reader(
+    source => Genome::Model::GenotypeMicroarray::Test->example_build,
+);
+ok($reader, 'create reader');
+isa_ok($reader, 'Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderForInstDataWithAnnotation');
+ok(!$instrument_data->are_disk_allocations_archived, 'unarchived instrument data');
+
 done_testing();

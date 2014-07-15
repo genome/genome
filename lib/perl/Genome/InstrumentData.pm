@@ -336,24 +336,39 @@ sub _expunge_assignments{
             instrument_data_id => $self->id);
 
         for my $alignment_result (@alignment_results) {
-            for my $bamqc_result (Genome::InstrumentData::AlignmentResult::Merged::BamQc->get(alignment_result_id => $alignment_result->id)) {
-                unless ($bamqc_result->delete) {
-                    die $self->error_message(sprintf(
-                            "Failed to remove BamQc result (%s) for alignment result (%s)",
-                            $alignment_result->id, $bamqc_result->id));
-                }
+            my @descendent_results = grep { $_->isa('Genome::SoftwareResult') } $alignment_result->descendents;
+            for my $descendent (@descendent_results) {
+                $self->_expunge_software_result($descendent);
             }
 
-            unless ($alignment_result->delete) {
-                die $self->error_message("Could not remove instrument data " . $self->__display_name__ .
-                    " because alignment result " . $alignment_result->__display_name__ .
-                    " that uses this instrument data could not be deleted!");
-            }
+            $self->_expunge_software_result($alignment_result);
         }
 
     }
 
     return 1, %affected_users;
+}
+
+sub _expunge_software_result {
+    my $self = shift;
+    my $software_result = shift;
+
+    my $message = 'Expunging instrument data ' . $self->id;
+    return 1 if $software_result->test_name && $software_result->test_name eq $message;
+
+    if($software_result->disk_allocation) {
+        eval {
+            $software_result->disk_allocation->purge($message);
+        };
+        if($@) {
+            warn $@;
+            $software_result->set_test_name($message);
+        }
+    } else {
+        $software_result->set_test_name($message);
+    }
+
+    return 1;
 }
 
 sub calculate_alignment_estimated_kb_usage {

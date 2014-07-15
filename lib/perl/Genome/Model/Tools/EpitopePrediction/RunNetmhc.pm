@@ -47,7 +47,7 @@ class Genome::Model::Tools::EpitopePrediction::RunNetmhc {
             calculate => q| return File::Spec->join($output_directory, "$sample_name.$allele.$epitope_length.netmhc.xls"); |,
         },
     ],
-    has => [
+    has_optional => [
         stdout_file => {
             is => 'Text',
             doc => 'Stdout file from Netmhc epitope prediction',
@@ -94,7 +94,7 @@ sub netmhc_path_for_version {
 
     my %netmhc_path_of_version = (
         '3.0' => '/gsc/bin/netMHC',
-        '3.4' => '/gscmnt/sata141/techd/jhundal/netMHC/NetMHC3.4/ATTEMPT4/NetMHC/netMHC',
+        '3.4' => '/gsc/bin/netMHC3.4',
     );
 
     return $netmhc_path_of_version{$netmhc_version};

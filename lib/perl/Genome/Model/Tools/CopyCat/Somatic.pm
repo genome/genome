@@ -214,6 +214,7 @@ sub execute {
 
     #open the r file
     open(my $RFILE, ">$output_directory/run.R") || die "Can't open R file for writing.\n";
+    print $RFILE "options(error=traceback)\n";
     print $RFILE "library(copyCat)\n";
 
     print $RFILE "runPairedSampleAnalysis(annotationDirectory=\"$annotation_directory\",\n";

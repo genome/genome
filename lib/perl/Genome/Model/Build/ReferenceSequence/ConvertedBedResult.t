@@ -29,9 +29,12 @@ my $bed_path = Genome::Sys->create_temp_file_path;
 write_file($bed_path, "Some content!\n");
 note("Wrote some content to bed at ($bed_path)");
 
-my $result = $class->get_or_create(source_reference => $reference_build,
+my $result = $class->get_or_create(
+    source_reference => $reference_build,
     target_reference => $reference_build,
-    source_bed => $bed_path);
+    source_bed => $bed_path,
+    source_md5 => Genome::Sys->md5sum($bed_path),
+);
 
 ok($result, "Got a software result");
 

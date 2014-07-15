@@ -44,6 +44,14 @@ sub build_reader {
 sub _build_reader_for_instrument_data {
     my ($class, $instrument_data, $variation_list_build) = @_;
 
+    if ( $instrument_data->are_disk_allocations_archived ) {
+        my $unarchive_ok = $instrument_data->unarchive_disk_allocations;
+        if ( not $unarchive_ok ) {
+            $class->error_message('Failed to unarchive instrument data! '.$instrument_data->__display_name__);
+            return;
+        }
+    }
+
     my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderForInstDataWithAnnotation->create(
         instrument_data => $instrument_data,
         variation_list_build => $variation_list_build,

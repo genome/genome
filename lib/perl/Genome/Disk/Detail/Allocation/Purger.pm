@@ -57,6 +57,8 @@ sub purge {
     die sprintf("No allocation found for id: %s",
         $self->allocation_id) unless $allocation_object;
 
+    return 1 if $allocation_object->status eq 'purged';
+
     $allocation_object->_create_file_summaries();
     my $trash_folder = $allocation_object->_get_trash_folder();
 

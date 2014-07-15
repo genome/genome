@@ -60,14 +60,15 @@ sub _retrieve_source_md5 {
     my $self = shift;
     $self->debug_message('Retrieve source MD5 path...');
 
-    my $md5_path = $self->source_path.'.md5';
+    my $md5_path = $self->helpers->md5_path_for($self->source_path);
     my $md5_size = $self->helpers->file_size($md5_path);
     if ( not $md5_size ) {
         $self->debug_message('Source MD5 path does not exist...skip');
         return 1;
     }
 
-    my $retrieve_ok = $self->retrieve_path($md5_path, $self->destination_path.'.md5-orig');
+    my $original_md5_path = $self->helpers->original_md5_path_for($self->destination_path);
+    my $retrieve_ok = $self->retrieve_path($md5_path, $original_md5_path);
     return if not $retrieve_ok;
 
     $self->debug_message('Retrieve source MD5 path...done');

@@ -31,7 +31,7 @@ sub execute {
     my $self = shift;
     my @allocations;
     for my $build ($self->builds) {
-        push @allocations, $build->all_allocations;
+        push @allocations, $build->associated_disk_allocations;
     }
 
     Genome::Disk::Command::Allocation::DelayArchiving->execute(

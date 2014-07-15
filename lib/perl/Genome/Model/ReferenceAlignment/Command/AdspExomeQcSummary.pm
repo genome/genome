@@ -91,8 +91,9 @@ sub build_stats {
     my @inserts;
 
     for my $lane (@per_lane_alignments) {
-        $mismatches += $lane->total_base_count * $lane->instrument_data->filt_error_rate_avg / 100;
-        push @inserts, $lane->instrument_data->library->original_insert_size;
+        my $avg_mismatch_rate = ($lane->metric(metric_name => 'read_1_pct_mismatch')->metric_value + $lane->metric(metric_name => 'read_2_pct_mismatch')->metric_value)/200;
+        $mismatches += $lane->total_base_count * $avg_mismatch_rate;
+        push @inserts, $lane->metric(metric_name => 'median_insert_size')->metric_value;
     }
 
     my @target_stats;

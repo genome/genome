@@ -13,6 +13,7 @@ BEGIN {
 use above "Genome";
 use Genome::Model;
 use Genome::Model::Build;
+use Genome::Test::Factory::DiskAllocation;
 
 Genome::Report::Email->silent();
 
@@ -35,6 +36,8 @@ my $i = Genome::InstrumentData::Imported->create(
     read_count => 1,
 );
 ok($i, "made instrument data for the sample");
+
+my $allocation = Genome::Test::Factory::DiskAllocation->setup_object(owner => $i);
 
 # define a processing profile subclass for this pipeline
 class Genome::ProcessingProfile::Foo {

@@ -351,14 +351,7 @@ sub _resolve_subclass_name {
 }
 
 sub _set_result_file_permissions {
-    my $self = shift;
-
-    my $output_dir = $self->output_dir;
-    $output_dir =~ s/\/$//;
-
-    for my $file (grep { -f $_  } glob("$output_dir/*")) {
-        mode($file)->rm_all_writable();
-    }
+    shift->_disk_allocation->set_files_read_only;
 }
 
 

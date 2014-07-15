@@ -113,10 +113,10 @@ sub execute {
         
         #get fields to query from header
         if($line =~ /chromosome_name/){
-            $normal_ref_col = List::MoreUtils::first_index {$_ eq "Normal_ref_count" } @F;
-            $normal_var_col = List::MoreUtils::first_index {$_ eq "Normal_var_count" } @F;
-            $tumor_ref_col = List::MoreUtils::first_index {$_ eq "Tumor_ref_count" } @F;
-            $tumor_var_col = List::MoreUtils::first_index {$_ eq "Tumor_var_count" } @F;
+            $normal_ref_col = List::MoreUtils::first_index {$_ =~ /Normal_ref_count/ } @F;
+            $normal_var_col = List::MoreUtils::first_index {$_ =~ /Normal_var_count/ } @F;
+            $tumor_ref_col = List::MoreUtils::first_index {$_ =~ /Tumor_ref_count/ } @F;
+            $tumor_var_col = List::MoreUtils::first_index {$_ =~ /Tumor_var_count/ } @F;
 
             print OUTFILE $line . "\tFilterCall\tProb\tLLR\n";
             if(defined($self->lq_output_file)){
