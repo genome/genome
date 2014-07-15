@@ -10,3 +10,4 @@ translations:
     d0_tumor: H_KA-220882-1309235
     d30_normal: H_KA-220882-1222132
     d30_tumor: H_KA-220882-1309236
+dbsnp_vcf: '/gscmnt/sata903/info/build_merged_alignments/detect-variants--blade10-2-15.gsc.wustl.edu-aregier-15734-141765550/snvs.hq.vcf'
