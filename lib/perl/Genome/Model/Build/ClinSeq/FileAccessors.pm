@@ -51,6 +51,12 @@ sub variant_sc_dir {
   return $variant_sc_dir;
 }
 
+sub mutation_spectrum_dir {
+  my $self = shift;
+  my $mutation_spectrum_dir = $self->case_dir . "/mutation-spectrum";
+  return $mutation_spectrum_dir;
+}
+
 sub variant_sc_wgs_dir {
   my $self = shift;
   my $variant_sc_wgs_dir = $self->variant_sc_dir . "/wgs";
@@ -466,6 +472,32 @@ sub sv_stats_file {
   } else {
     $self->warning_message("unable to find " .
         $sv_stats_file);
+    return 0;
+  }
+}
+
+sub mutation_spectrum_wgs_summary_file {
+  my $self = shift;
+  my $mutation_spectrum_wgs_summary_file = $self->mutation_spectrum_dir.
+      "/wgs/summarize_mutation_spectrum/mutation_spectrum.tsv";
+  if(-e $mutation_spectrum_wgs_summary_file ){
+    return $mutation_spectrum_wgs_summary_file ;
+  } else {
+    $self->warning_message("unable to find " .
+        $mutation_spectrum_wgs_summary_file);
+    return 0;
+  }
+}
+
+sub mutation_spectrum_exome_summary_file {
+  my $self = shift;
+  my $mutation_spectrum_exome_summary_file = $self->mutation_spectrum_dir.
+      "/exome/summarize_mutation_spectrum/mutation_spectrum.tsv";
+  if(-e $mutation_spectrum_exome_summary_file ){
+    return $mutation_spectrum_exome_summary_file ;
+  } else {
+    $self->warning_message("unable to find " .
+        $mutation_spectrum_exome_summary_file);
     return 0;
   }
 }
