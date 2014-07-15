@@ -20,6 +20,7 @@ sub requires_annotations {
 sub available_fields {
     return qw /
         variant_callers
+        variant_caller_count
     /
 }
 
@@ -46,7 +47,8 @@ sub interpret_entry {
 
     for my $alt_allele (keys %return_values) {
         $return_values{$alt_allele} = {
-            variant_callers => $callers{$alt_allele}
+            variant_callers => $callers{$alt_allele},
+            variant_caller_count => scalar(@{$callers{$alt_allele}}),
         };
     }
 

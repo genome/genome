@@ -22,8 +22,14 @@ isa_ok($factory->get_class('interpreters', $pkg->name), $pkg);
 subtest "sample 1" => sub {
     my $sample_name = "S1";
     my %expected_return_values = (
-        C => { variant_callers => [qw/Sniper Strelka/] },
-        G => { variant_callers => [qw/Strelka/] },
+        C => {
+            variant_callers => [qw/Sniper Strelka/],
+            variant_caller_count => 2,
+        },
+        G => {
+            variant_callers => [qw/Strelka/],
+            variant_caller_count => 1,
+        },
     );
     run_test($sample_name, %expected_return_values);
 };
@@ -31,7 +37,10 @@ subtest "sample 1" => sub {
 subtest "sample 1 with sample alt alleles only" => sub {
     my $sample_name = "S1";
     my %expected_return_values = (
-        C => { variant_callers => [qw/Sniper Strelka/] },
+        C => {
+            variant_callers => [qw/Sniper Strelka/],
+            variant_caller_count => 2,
+        },
     );
     run_test($sample_name, %expected_return_values);
 };
@@ -39,7 +48,10 @@ subtest "sample 1 with sample alt alleles only" => sub {
 subtest "sample 1 with other alt allele only" => sub {
     my $sample_name = "S1";
     my %expected_return_values = (
-        G => { variant_callers => [qw/Strelka/] },
+        G => {
+            variant_callers => [qw/Strelka/],
+            variant_caller_count => 1,
+        },
     );
     run_test($sample_name, %expected_return_values);
 };
@@ -47,8 +59,14 @@ subtest "sample 1 with other alt allele only" => sub {
 subtest "sample 2" => sub {
     my $sample_name = "S2";
     my %expected_return_values = (
-        C => { variant_callers => [qw/Strelka/] },
-        G => { variant_callers => [qw/Strelka/] },
+        C => {
+            variant_callers => [qw/Strelka/],
+            variant_caller_count => 1,
+        },
+        G => {
+            variant_callers => [qw/Strelka/],
+            variant_caller_count => 1,
+        },
     );
     run_test($sample_name, %expected_return_values);
 };
@@ -56,8 +74,14 @@ subtest "sample 2" => sub {
 subtest "sample 3" => sub {
     my $sample_name = "S3";
     my %expected_return_values = (
-        C => { variant_callers => [] },
-        G => { variant_callers => [] },
+        C => {
+            variant_callers => [],
+            variant_caller_count => 0,
+        },
+        G => {
+            variant_callers => [],
+            variant_caller_count => 0,
+        },
     );
     run_test($sample_name, %expected_return_values);
 };
