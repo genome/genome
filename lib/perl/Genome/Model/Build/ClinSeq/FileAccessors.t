@@ -87,5 +87,4 @@ is($b->mutation_spectrum_wgs_summary_file, $case_dir . "/mutation-spectrum/wgs/s
     "found wgs mut-spec summary file");
 is($b->mutation_spectrum_exome_summary_file, $case_dir . "/mutation-spectrum/exome/summarize_mutation_spectrum/mutation_spectrum.tsv",
     "found exome mut-spec summary file");
-
 done_testing()
