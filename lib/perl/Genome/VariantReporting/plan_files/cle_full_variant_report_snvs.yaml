@@ -1,0 +1,71 @@
+experts:
+    'bam-readcount':
+        version: 0.5
+        minimum_mapping_quality: 0
+        minimum_base_quality: 0
+        max_count: 10000000
+        per_library: 1
+        insertion_centric: 0
+    vep:
+        ensembl_version: 75
+        custom_annotation_tags:
+            - ON_TARGET
+            - SEG_DUP
+        species: 'homo-sapiens'
+        terms: ensembl
+        plugins:
+            - Condel@PLUGIN_DIR@b@2
+        plugins_version: 1
+        joinx_version: 1.8
+    dbsnp:
+        joinx_version: 1.8
+        info_string: 'CAF:dbSNPBuildID=dbSNPBuildID,per-alt:MUT'
+reporters:
+    'full':
+        filters:
+            'allele-in-genotype':
+                sample_name: d0_tumor
+            'ft-keep':
+                keep_filter_values:
+                    - PASS
+                    - .
+                sample_name: d0_tumor
+            'contains-tag':
+                info_tag: ON_TARGET
+            'min-coverage':
+                min_coverage: 10
+                sample_name: d0_tumor
+            'vaf-cutoff':
+                min_vaf: 5
+                sample_name: d0_tumor
+        interpreters:
+            position: {}
+            'variant-type': {}
+            vep: {}
+            'info-tags': {}
+            rsid: {}
+            caf: {}
+            'min-coverage-observed':
+                sample_names:
+                    - d0_tumor
+                    - d30_tumor
+                    - d30_normal
+            'max-vaf-observed':
+                tumor_sample_names:
+                    - d0_tumor
+                    - d30_tumor
+                normal_sample_names:
+                    - d30_normal
+            'variant-callers':
+                sample_name: d0_tumor
+            'many-samples-vaf':
+                sample_names:
+                    - d0_tumor
+                    - d30_tumor
+                    - d30_normal
+        params:
+            file_name: 'full_report_short_sorted_vaf_headers'
+            sample_names:
+                - d0_tumor
+                - d30_tumor
+                - d30_normal

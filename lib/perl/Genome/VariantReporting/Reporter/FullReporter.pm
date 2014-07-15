@@ -1,0 +1,199 @@
+package Genome::VariantReporting::Reporter::FullReporter;
+
+use strict;
+use warnings;
+use Genome;
+use List::Util qw( min );
+
+class Genome::VariantReporting::Reporter::FullReporter {
+    is => [ 'Genome::VariantReporting::Reporter::WithHeader', 'Genome::VariantReporting::Framework::Component::WithManySampleNames'],
+    has => [
+    ],
+};
+
+sub name {
+    return 'full';
+}
+
+sub requires_interpreters {
+    return qw(position vep info-tags variant-type min-coverage-observed max-vaf-observed variant-callers many-samples-vaf rsid caf);
+}
+
+sub headers {
+    my $self = shift;
+    my @headers = qw/
+        chromosome_name
+        start
+        stop
+        reference
+        variant
+        variant_type
+        transcript_name
+        trv_type
+        amino_acid_change
+        default_gene_name
+        ensembl_gene_id
+        inSegDup
+        rsid
+        caf
+        onTarget
+    /;
+
+    my %single_vaf_headers = $self->_single_vaf_headers();
+    push @headers, sort keys %single_vaf_headers;
+
+    push @headers, qw/
+        min_coverage_observed
+        max_normal_vaf_observed
+        max_tumor_vaf_observed
+        variant_callers
+        variant_caller_count
+    /;
+
+    my %per_library_vaf_headers = $self->_per_library_vaf_headers();
+    push @headers, sort keys %per_library_vaf_headers;
+
+    return @headers;
+}
+
+sub _single_vaf_headers {
+    my $self = shift;
+
+    my @sample_names = $self->sample_names;
+    my %vaf_headers;
+    for my $sample_name (@sample_names) {
+        for my $vaf_field (_single_vaf_fields()) {
+            my $vaf_header = join("_", $sample_name, $vaf_field);
+            $vaf_headers{$vaf_header} = {
+                vaf_field => $vaf_field,
+                sample_name => $sample_name,
+            };
+        }
+    }
+    return %vaf_headers;
+}
+
+sub _per_library_vaf_headers {
+    my $self = shift;
+
+    my @sample_names = $self->sample_names;
+    my %vaf_headers;
+    for my $sample_name (@sample_names) {
+        for my $vaf_field (_per_library_vaf_fields()) {
+            my $vaf_header = join("_", $sample_name, $vaf_field);
+            $vaf_headers{$vaf_header} = {
+                vaf_field => $vaf_field,
+                sample_name => $sample_name,
+            };
+        }
+    }
+    return %vaf_headers;
+}
+
+sub _single_vaf_fields {
+    return qw/
+        vaf
+        ref_count
+        var_count
+    /;
+}
+
+sub _per_library_vaf_fields {
+    return qw/
+        per_library_var_count
+        per_library_ref_count
+        per_library_vaf
+    /;
+}
+
+sub _header_to_info_tag_conversion {
+    return {
+        inSegDup => 'SEG_DUP',
+        onTarget => 'ON_TARGET',
+    }
+}
+
+sub report {
+    my $self = shift;
+    my $interpretations = shift;
+
+    my %fields = $self->available_fields_dict();
+    for my $allele (keys %{$interpretations->{($self->requires_interpreters)[0]}}) {
+        for my $header ($self->headers()) {
+            my $interpreter = $fields{$header}->{interpreter};
+            my $field = $fields{$header}->{field};
+
+            if ($header eq 'inSegDup' || $header eq 'onTarget') {
+                my $info_tags = $interpretations->{$interpreter}->{$allele}->{$field};
+                $self->_print_info_tag(_header_to_info_tag_conversion()->{$header}, $info_tags);
+                next;
+            }
+
+            if ($interpreter eq 'many-samples-vaf') {
+                my $sample = $fields{$header}->{sample_name};
+                $self->_output_fh->print($self->_format($interpretations->{$interpreter}->{$allele}->{$sample}->{$field}) . "\t");
+                next;
+            }
+            
+            if ($header eq 'variant_callers') {
+                my @variant_callers = @{$interpretations->{$interpreter}->{$allele}->{$field}};
+                $self->_output_fh->print($self->_format(join(", ", @variant_callers)) . "\t");
+                next;
+            }
+
+            # If we don't have an interpreter that provides this field, handle it cleanly if the field is known unavailable
+            if ($self->header_is_unavailable($header)) {
+                $self->_output_fh->print( $self->_format() . "\t");
+            } elsif ($interpreter) {
+                $self->_output_fh->print($self->_format($interpretations->{$interpreter}->{$allele}->{$field}) . "\t");
+            } else {
+                # We use $header here because $field will be undefined due to it not being in an interpreter
+                die $self->error_message("Field (%s) is not available from any of the interpreters provided", $header);
+            }
+        }
+        $self->_output_fh->print("\n");
+    }
+}
+sub available_fields_dict {
+    my $self = shift;
+
+    my %available_fields = $self->SUPER::available_fields_dict();
+    for my $info_tag_field (qw/inSegDup onTarget/) {
+        $available_fields{$info_tag_field} = {
+            interpreter => 'info-tags',
+            field => 'info_tags',
+        };
+    }
+
+    my %single_vaf_headers = $self->_single_vaf_headers();
+    for my $header (keys %single_vaf_headers) {
+        $available_fields{$header} = {
+            interpreter => 'many-samples-vaf',
+            field => $single_vaf_headers{$header}->{vaf_field},
+            sample_name => $single_vaf_headers{$header}->{sample_name},
+        };
+    }
+
+    my %per_library_vaf_headers = $self->_per_library_vaf_headers();
+    for my $header (keys %per_library_vaf_headers) {
+        $available_fields{$header} = {
+            interpreter => 'many-samples-vaf',
+            field => $per_library_vaf_headers{$header}->{vaf_field},
+            sample_name => $per_library_vaf_headers{$header}->{sample_name},
+        };
+    }
+
+    return %available_fields;
+}
+
+sub _print_info_tag {
+    my ($self, $info_tag, $info_tags_string) = @_;
+
+    if ($info_tags_string =~ /$info_tag/) {
+        $self->_output_fh->print($self->_format(1) . "\t");
+    }
+    else {
+        $self->_output_fh->print($self->_format(0) . "\t");
+    }
+}
+1;
