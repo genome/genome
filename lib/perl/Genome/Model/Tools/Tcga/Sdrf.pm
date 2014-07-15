@@ -259,13 +259,13 @@ sub resolve_capture_reagent {
             vendor => "IDT,IDT,Nimblegen",
             name => "HBV_IDT_probes pooled probes,HPV IDT all pooled probes,Nimblegen SeqCap EZ Human Exome Library v3.0",
             number => "NA,NA,06465692001",
-            url => "ftp://genome.wustl.edu/pub/custom_capture/HBV_IDT_probes pooled probes/40774c8461274a81b4d223161dc84936.bed,ftp://genome.wustl.edu/pub/custom_capture/HPV IDT all pooled probes/37b1fc41fd114b64b94336ff9b4d97ae.bed,Proprietary",
+            url => "ftp://genome.wustl.edu/pub/custom_capture/HBV_IDT_probes_pooled_probes/40774c8461274a81b4d223161dc84936.bed,ftp://genome.wustl.edu/pub/custom_capture/HPV_IDT_all_pooled_probes/37b1fc41fd114b64b94336ff9b4d97ae.bed,Proprietary",
         },
         "Nimblegen_V3_Exome_HPV_Probes_HG19 capture oligo tube" => {
             vendor => "IDT,Nimblegen",
             name => "HPV_IDT_probes capture chip set,Nimblegen SeqCap EZ Human Exome Library v3.0",
             number => "NA,06465692001",
-            url => "ftp://genome.wustl.edu/pub/custom_capture/HPV_IDT_probes capture chip set/AC6217418DAB11E1BD99FC55D6BB89D5.bed,Proprietary",
+            url => "ftp://genome.wustl.edu/pub/custom_capture/HPV_IDT_probes_capture_chip_set/AC6217418DAB11E1BD99FC55D6BB89D5.bed,Proprietary",
         },
     );
     unless ($build->model->target_region_set_name) {#WGS
