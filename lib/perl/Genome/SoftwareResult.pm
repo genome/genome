@@ -299,9 +299,6 @@ sub create {
         die "Failed to get a lock for " . Dumper(@_);
     }
 
-    # TODO; if an exception occurs before this is assigned to the object, we'll have a stray lock
-    # We need to ensure that we get cleanup on die.
-
     # we might have had to wait on the lock, in which case someone else was probably creating that entity
     # do a "reload" here to force another trip back to the database to see if a software result was created
     # while we were waiting on the lock.
