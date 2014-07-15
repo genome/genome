@@ -294,7 +294,6 @@ sub create {
     }
 
     my $lock;
-
     my $lookup_hash = $class->calculate_lookup_hash_from_arguments(@_);
     unless ($lock = $class->_lock($lookup_hash)) {
         die "Failed to get a lock for " . Dumper(@_);
