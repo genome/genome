@@ -146,6 +146,7 @@ sub _print_reads {
         bqsr => $self->base_recalibrator_result->recalibration_table_file,
         tmp_dir => $tmp_dir,
         number_of_cpu_threads => 8,
+        max_memory => $self->max_memory_for_gmt_gatk,
     );
     if ( not $print_reads ) {
         $self->error_message('Failed to create print reads!');

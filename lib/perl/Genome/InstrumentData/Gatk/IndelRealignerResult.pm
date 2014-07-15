@@ -78,6 +78,7 @@ sub _create_targets {
         reference_fasta => $self->reference_fasta,
         output_intervals => $intervals_file,
         number_of_threads => 24,
+        max_memory => $self->max_memory_for_gmt_gatk,
     );
     $target_creator_params{known} = $self->known_sites_indel_vcfs if @{$self->known_sites_indel_vcfs};
     $self->debug_message('Params: '.Data::Dumper::Dumper(\%target_creator_params));
@@ -116,6 +117,7 @@ sub _realign_indels {
         output_realigned_bam => $bam_path,
         index_bam => 1,
         target_intervals_are_sorted => 1,
+        max_memory => $self->max_memory_for_gmt_gatk,
     );
     $realigner_params{known} = $self->known_sites_indel_vcfs if @{$self->known_sites_indel_vcfs};
     $self->debug_message('Params: '.Data::Dumper::Dumper(\%realigner_params));

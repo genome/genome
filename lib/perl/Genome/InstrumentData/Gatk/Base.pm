@@ -91,5 +91,14 @@ sub create {
     return $self;
 }
 
+sub max_memory_for_gmt_gatk {
+    my $self = shift;
+
+    my $mem_limit_kb = Genome::Sys->mem_limit_kb;
+    return 4 if not $mem_limit_kb;
+    
+    return $mem_limit_kb * 1024;
+}
+
 1;
 

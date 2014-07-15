@@ -56,6 +56,7 @@ sub _run_base_recalibrator {
         reference_fasta => $self->reference_fasta,
         output_recalibration_table => $recalibration_table_file,
         number_of_cpu_threads => 8,
+        max_memory => $self->max_memory_for_gmt_gatk,
     );
     $base_recalibrator_params{known_sites} = $self->known_sites_vcfs if @{$self->known_sites_vcfs};
     $self->status_message('Params: '.Data::Dumper::Dumper(\%base_recalibrator_params));
