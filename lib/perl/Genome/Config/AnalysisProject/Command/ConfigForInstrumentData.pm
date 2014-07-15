@@ -41,11 +41,26 @@ sub execute {
     return 1;
 }
 
+
+sub _bridge_status_colors {
+    return (
+        # InstrumentDataBridge statuses
+        failed    => "red",
+        new       => "white",
+        processed => "green",
+        skipped   => "magenta",
+    );
+}
+
 sub _display_matches {
     my $self = shift;
     my $instrument_data = shift;
     my $analysis_project = shift;
 
+    my $bridge = Genome::Config::AnalysisProject::InstrumentDataBridge->get(
+        instrument_data => $instrument_data,
+        analysis_project => $analysis_project,
+    );
     my $config = $analysis_project->get_configuration_profile();
     my @maps = $config->config_rule_maps();
 
@@ -53,6 +68,10 @@ sub _display_matches {
         $self->_color($instrument_data->id,'cyan'),
         $self->_color($analysis_project->name,'magenta')
     );
+
+    my $cqid_status = $self->_colorize_text_by_map($bridge->status, $bridge->status, _bridge_status_colors());
+    printf("  CQID Status: %s\n", $cqid_status);
+
     for my $map (@maps) {
         my @rules = $map->rules;
 
