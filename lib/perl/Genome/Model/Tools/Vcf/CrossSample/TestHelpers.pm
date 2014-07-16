@@ -233,6 +233,12 @@ sub test_indel_cmd {
         },
     });
 
+    Sub::Install::reinstall_sub({
+        into => 'Genome::Model::Tools::Park::Base',
+        as => '_link_process',
+        code => sub {return;},
+    });
+
     my $expected_inputs;
     my $expected_source;
     if ($region_limiting){
