@@ -267,6 +267,12 @@ sub resolve_capture_reagent {
             number => "NA,06465692001",
             url => "ftp://genome.wustl.edu/pub/custom_capture/HPV_IDT_probes_capture_chip_set/AC6217418DAB11E1BD99FC55D6BB89D5.bed,Proprietary",
         },
+        "HPV IDT all pooled probes + SeqCap EZ Human Exome v3.0" => {
+            vendor => "IDT,Nimblegen",
+            name => "HPV IDT all pooled probes,SeqCap EZ Human Exome v3.0",
+            number => "NA,06465692001",
+            url => "ftp://genome.wustl.edu/pub/custom_capture/HPV_IDT_all_pooled_probes/37b1fc41fd114b64b94336ff9b4d97ae.bed,Proprietary",
+        },
     );
     unless ($build->model->target_region_set_name) {#WGS
         return (undef, undef, undef, "NA", "NA", "NA");
