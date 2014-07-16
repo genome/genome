@@ -28,7 +28,7 @@ sub translated_input_names {
     my $self = shift;
     return map {$_->property_name} $self->__meta__->properties(
         is_translated => 1,
-        is_many => 1,
+        is_many => 0,
     );
 }
 
