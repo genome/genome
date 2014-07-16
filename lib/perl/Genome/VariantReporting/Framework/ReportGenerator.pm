@@ -39,18 +39,10 @@ Memoize::memoize('plan');
 sub execute {
     my $self = shift;
 
-    my @entry_processors;
-    for my $reporter_plan ($self->plan->reporter_plans) {
-        $reporter_plan->object->initialize($self->output_directory);
-        push @entry_processors, Genome::VariantReporting::Framework::EntryProcessor->create(
-            reporter_plan => $reporter_plan,
-            translations => $self->translations,
-        );
-    }
     $self->debug_message("Reading from: ".$self->input_vcf."\n");
     my $vcf_reader = Genome::File::Vcf::Reader->new($self->input_vcf);
     while (my $entry = $vcf_reader->next) {
-        for my $processor (@entry_processors) {
+        for my $processor ($self->entry_processors) {
             $processor->process_entry($entry);
         }
     }
@@ -60,5 +52,35 @@ sub execute {
     }
     return 1;
 }
+
+sub entry_processors {
+    my $self = shift;
+
+    my @entry_processors;
+    for my $reporter_plan ($self->plan->reporter_plans) {
+        my $reporter = $self->object_with_translations($reporter_plan);
+        $reporter->initialize($self->output_directory);
+
+        my @filters = map {$self->object_with_translations($_)} $reporter_plan->filter_plans;
+        my @interpreters = map {$self->object_with_translations($_)} $reporter_plan->interpreter_plans;
+
+        push @entry_processors, Genome::VariantReporting::Framework::EntryProcessor->create(
+            reporter => $reporter,
+            filters => \@filters,
+            interpreters => \@interpreters,
+        );
+    }
+    return @entry_processors;
+}
+Memoize::memoize('entry_processors');
+
+sub object_with_translations {
+    my ($self, $plan) = @_;
+
+    my $object = $plan->object;
+    $object->translate_inputs($self->translations);
+    return $object;
+}
+
 
 1;
