@@ -131,7 +131,7 @@ sub create_test_builds {
             File::Spec->join($dir, 'snvs_file.vcf.gz'),
             File::Spec->join($dir, 'indels_file.vcf.gz'),
             $rsb,
-            $i,
+            sprintf("2013-07-11 20:47:5%s", $i),
         );
         _ensure_object($build);
 
@@ -186,6 +186,7 @@ sub get_roi_list {
     _ensure_object($roi_list);
     return $roi_list;
 }
+Memoize::memoize('get_roi_list');
 
 sub test_indel_cmd {
     my ($version, $use_mg, $region_limiting) = @_;
