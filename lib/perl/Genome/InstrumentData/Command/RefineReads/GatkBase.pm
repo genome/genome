@@ -20,26 +20,20 @@ class Genome::InstrumentData::Command::RefineReads::GatkBase {
     has_optional => {
         params => { is => 'Text', }, # FIXME not used
     },
-    has_optional_transient => {
-        final_result => { is => 'Genome::InstrumentData::AlignedBamResult', },
-        results => { is => 'Hash', default_value => {}, },
+    has_many_optional_transient => {
+        results => { is => 'Genome::InstrumentData::AlignedBamResult', },
+    },
+    has_optional_calculated => {
+        final_result => { 
+            is => 'Genome::InstrumentData::AlignedBamResult',
+            calculate_from => [qw/ results /],
+            calculate => q( my @results = $self->results; return $results[$#results]; ),
+        },
     },
 };
 
 sub result_names {
     die 'Provide result names in sub-classes!';
-}
-
-sub result_method_for_name {
-    my ($self, $result_name) = @_;
-
-    die 'No result name given to get method!' if not $result_name;
-
-    my $result_method = $result_name;
-    $result_method =~ s/\s/_/g;
-    $result_method .= '_result';
-
-    return $result_method;
 }
 
 sub shortcut {
@@ -79,6 +73,7 @@ sub _load_results {
 
     # [Get or] Create each result, setting the previous result as the bam source
     my $bam_source = $self->bam_source;
+    my @results;
     for my $result_name ( $self->result_names ) {
         my $result = $self->_load_result(
             bam_source => $bam_source, 
@@ -86,9 +81,10 @@ sub _load_results {
             retrieval_method => $retrieval_method,
         );
         return if not $result;
-        $self->final_result($result);
+        push @results, $result;
         $bam_source = $result;
     }
+    $self->results(\@results);
 
     return 1;
 }
@@ -104,10 +100,6 @@ sub _load_result {
     die 'No result name given to load result!' if not $result_name;
     my $retrieval_method = delete $params{retrieval_method};
     die 'No retrieval method given to load result!' if not $retrieval_method;
-
-    # Check accessor
-    my $result_method = $self->result_method_for_name($result_name);
-    return $self->$result_method if $self->$result_method;
 
     # Class name
     $self->debug_message("Looking for $result_name result...");
@@ -129,7 +121,6 @@ sub _load_result {
     # Retrieve
     my $result = $result_class->$retrieval_method(%result_params);
     return if not $result;
-    $self->results->{$result_method} = $result;
 
     $self->debug_message(ucfirst($result_name).': '.$result->__display_name__);
     $self->debug_message(ucfirst($result_name).' output directory: '.$result->output_dir);

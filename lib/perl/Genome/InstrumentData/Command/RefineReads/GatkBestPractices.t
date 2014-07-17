@@ -35,10 +35,11 @@ ok(!$gatk_best_practices->shortcut, 'shortcut failed as expected');
 
 # Execute
 ok($gatk_best_practices->execute, 'execute');
-my $indel_realigner_result = $gatk_best_practices->indel_realigner_result;
-ok($indel_realigner_result, 'indel_realigner_result set');
-my $base_recalibrator_bam_result = $gatk_best_practices->base_recalibrator_bam_result;
-ok($base_recalibrator_bam_result, 'base_recalibrator_bam_result set');
+my @results = $gatk_best_practices->results;
+my $indel_realigner_result = $results[0];
+isa_ok($indel_realigner_result, 'Genome::InstrumentData::Gatk::IndelRealignerResult');
+my $base_recalibrator_bam_result = $results[1];
+isa_ok($base_recalibrator_bam_result, 'Genome::InstrumentData::Gatk::BaseRecalibratorBamResult');
 my $base_recalibrator_result = $base_recalibrator_bam_result->base_recalibrator_result;
 ok($base_recalibrator_result, 'get base_recalibrator_result');
 
@@ -46,7 +47,7 @@ ok($base_recalibrator_result, 'get base_recalibrator_result');
 my @sr_users = $bam_source->users;
 is(@sr_users, 1, 'add user to bam source');
 is_deeply([map { $_->label } @sr_users], ['bam source'], 'bam source users haver correct label');
-is_deeply([map { $_->user } @sr_users], [$gatk_best_practices->indel_realigner_result], 'bam source is used by indel realigner result');
+is_deeply([map { $_->user } @sr_users], [$indel_realigner_result], 'bam source is used by indel realigner result');
 
 @sr_users = $indel_realigner_result->users;
 is(@sr_users, 2, 'add users to indel realigner');
@@ -67,9 +68,9 @@ ok(!@sr_users, 'no users for base recal bam result');
 my $gatk_best_practices_shortcut = Genome::InstrumentData::Command::RefineReads::GatkBestPractices->create(%params);
 ok($gatk_best_practices_shortcut, 'create');
 ok($gatk_best_practices_shortcut->shortcut, 'shortcut');
-is($gatk_best_practices_shortcut->indel_realigner_result, $gatk_best_practices->indel_realigner_result, 'indel_realigner_result matches');
-is($gatk_best_practices_shortcut->base_recalibrator_bam_result, $gatk_best_practices->base_recalibrator_bam_result, 'base_recalibrator_bam_result matches');
+my @shortcut_results = $gatk_best_practices_shortcut->results;
+is_deeply(\@shortcut_results, \@results, 'shortcut and execute results match');
 
-#print $gatk_best_practices->indel_realigner_result->output_dir."\n"; <STDIN>;
-#print $gatk_best_practices->base_recalibrator->output_dir."\n"; <STDIN>;
+#print $indel_realigner_result->output_dir."\n"; <STDIN>;
+#print $base_recalibrator->output_dir."\n"; <STDIN>;
 done_testing();
