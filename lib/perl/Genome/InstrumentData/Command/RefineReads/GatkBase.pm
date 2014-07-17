@@ -30,6 +30,18 @@ sub result_names {
     die 'Provide result names in sub-classes!';
 }
 
+sub result_method_for_name {
+    my ($self, $result_name) = @_;
+
+    die 'No result name given to get method!' if not $result_name;
+
+    my $result_method = $result_name;
+    $result_method =~ s/\s/_/g;
+    $result_method .= '_result';
+
+    return $result_method;
+}
+
 sub shortcut {
     my $self = shift;
     $self->debug_message('Attempting to shortcut...');
@@ -94,9 +106,7 @@ sub _load_result {
     die 'No retrieval method given to load result!' if not $retrieval_method;
 
     # Check accessor
-    my $result_method = $result_name;
-    $result_method =~ s/\s/_/g;
-    $result_method .= '_result';
+    my $result_method = $self->result_method_for_name($result_name);
     return $self->$result_method if $self->$result_method;
 
     # Class name
