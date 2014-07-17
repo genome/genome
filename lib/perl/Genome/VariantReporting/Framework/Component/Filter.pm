@@ -34,5 +34,9 @@ sub interpret_entry {
     return %return_values;
 }
 
+sub available_fields {
+    return qw(filter_status);
+}
+
 
 1;
