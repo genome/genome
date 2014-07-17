@@ -42,16 +42,5 @@ reporters:
         interpreters:
             position: {}
             vep: {}
-            ft:
-                sample_name: tumor
-            'contains-tag':
-                info_tag: ON_TARGET
-            coverage:
-                sample_name: tumor
-            vaf:
-                sample_name: tumor
-            genotype:
-                sample_name: tumor
-            'indel-size': {}
         params:
             file_name: 'cle_simple_snv_report'
