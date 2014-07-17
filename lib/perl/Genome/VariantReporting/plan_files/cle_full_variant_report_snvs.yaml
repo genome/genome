@@ -12,7 +12,6 @@ experts:
             - ON_TARGET
             - SEG_DUP
         species: 'homo-sapiens'
-        terms: ensembl
         plugins:
             - Condel@PLUGIN_DIR@b@2
         plugins_version: 1
