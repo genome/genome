@@ -148,6 +148,8 @@ class Genome::InstrumentData::AlignmentResult::Merged {
 sub create {
     my $class = shift;
 
+    my $tx = UR::Context::Transaction->begin();
+
     #This will do some locking and the like for us.
     my $self = $class->SUPER::create(@_);
     return unless ($self);
@@ -221,13 +223,15 @@ sub create {
 
         return 1;
     };
-    if(my $error = $@) {
-        $self->_cleanup;
+    if (my $error = $@) {
+        $tx->rollback();
         die $error;
     } elsif ($rv ne 1) {
+        $tx->rollback();
         $self->error_message('Unexpected return value: ' . $rv);
-        $self->_cleanup;
         die $self->error_message;
+    } else {
+        $tx->commit();
     }
 
     $self->debug_message("Resizing the disk allocation...");
@@ -236,8 +240,6 @@ sub create {
             $self->warning_message("Failed to reallocate disk allocation: " . $self->_disk_allocation->id);
         }
     }
-
-    
 
     $self->debug_message('All processes completed.');
 
@@ -675,23 +677,6 @@ sub create_bam_md5 {
     ); 
 
     return 1;
-}
-
-sub _cleanup {
-    my $self = shift;
-
-    return unless $self->_disk_allocation;
-
-    $self->debug_message('Now deleting allocation with owner_id = ' . $self->id);
-    my $allocation = $self->_disk_allocation;
-    if ($allocation) {
-        my $path = $allocation->absolute_path;
-        unless (rmtree($path)) {
-            $self->error_message("could not rmtree $path");
-            return;
-       }
-       $allocation->deallocate; 
-    }
 }
 
 sub bowtie_version { return shift->scalar_property_from_underlying_alignment_results('bowtie_version'); }
