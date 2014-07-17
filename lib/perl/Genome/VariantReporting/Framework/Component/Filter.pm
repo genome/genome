@@ -16,6 +16,10 @@ sub filter_entry {
     confess "Abstract method 'filter_entry' must be defined in class '$class'";
 }
 
+sub available_fields {
+    return qw/filter_status/;
+}
+
 sub interpret_entry {
     my ($self, $entry, $passed_alt_alleles) = @_;
 
