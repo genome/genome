@@ -16,7 +16,7 @@ sub name {
 }
 
 sub requires_interpreters {
-    return qw(position vep info-tags variant-type min-coverage-observed max-vaf-observed variant-callers many-samples-vaf rsid caf);
+    return qw(position vep info-tags variant-type min-coverage min-coverage-observed max-vaf-observed variant-callers many-samples-vaf rsid caf);
 }
 
 sub headers {
@@ -37,6 +37,7 @@ sub headers {
         rsid
         caf
         onTarget
+        MeetsMinDepthCutoff
     /;
 
     my %single_vaf_headers = $self->_single_vaf_headers();
@@ -164,6 +165,11 @@ sub available_fields_dict {
             field => 'info_tags',
         };
     }
+
+    $available_fields{MeetsMinDepthCutoff} = {
+        interpreter => 'min-coverage',
+        field => 'filter_status',
+    };
 
     my %single_vaf_headers = $self->_single_vaf_headers();
     for my $header (keys %single_vaf_headers) {

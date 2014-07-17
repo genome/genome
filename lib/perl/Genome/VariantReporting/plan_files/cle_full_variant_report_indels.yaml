@@ -43,6 +43,8 @@ reporters:
                 min_hom_vaf: 85
                 max_hom_vaf: 100
                 sample_name: d0_tumor
+            'max-indel-size':
+                size: 4
         interpreters:
             position: {}
             'variant-type': {}
@@ -72,7 +74,7 @@ reporters:
                     - d30_tumor
                     - d30_normal
         params:
-            file_name: 'cle_full_report_snvs'
+            file_name: 'cle_full_report_indels'
             sample_names:
                 - d0_tumor
                 - d30_tumor
