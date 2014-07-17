@@ -1275,15 +1275,25 @@ sub check_de_models{
   foreach my $model (@models){
     next unless ($model->class eq "Genome::Model::DifferentialExpression");
     next unless ($model->processing_profile_id eq $self->differential_expression_pp->id);
-    my $condition_model_ids_string = $model->condition_model_ids_string;
-    my @groups = split(" ", $condition_model_ids_string);
-    next unless (scalar(@groups) == 2);
-    my @group1_members = split(",", $groups[0]);
-    my @group2_members = split(",", $groups[1]);
-    next unless (scalar(@group1_members == 1) && scalar(@group2_members));
+    my %condition_pairs_hash = $model->condition_pairs_unsorted_hash;
+    my @groups = values(%condition_pairs_hash);
+    next unless @groups == 2;
 
-    next unless ($group1_members[0] eq $normal_rnaseq_model->id);
-    next unless ($group2_members[0] eq $tumor_rnaseq_model->id);
+    my $check_order_1 = $self->check_de_model_members(
+      '-normal_rnaseq_model' => $normal_rnaseq_model,
+      '-tumor_rnaseq_model'  => $tumor_rnaseq_model,
+      '-normal_members'      => $groups[0],
+      '-tumor_members'       => $groups[1],
+    );
+
+    my $check_order_2 = $self->check_de_model_members(
+      '-normal_rnaseq_model' => $normal_rnaseq_model,
+      '-tumor_rnaseq_model'  => $tumor_rnaseq_model,
+      '-normal_members'      => $groups[1],
+      '-tumor_members'       => $groups[0],
+    );
+
+    next unless $check_order_1 or $check_order_2;
 
     #$self->status_message("\t\tName: " . $model->name . " (" . $model->id . ")");
     push (@final_models, $model);
@@ -1311,6 +1321,18 @@ sub check_de_models{
   }
 }
 
+sub check_de_model_members{
+  my $self = shift;
+  my %args = @_;
+  my $normal_rnaseq_model = $args{'-normal_rnaseq_model'};
+  my $tumor_rnaseq_model  = $args{'-tumor_rnaseq_model'};
+  my @normal_members      = @{$args{'-normal_members'}};
+  my @tumor_members       = @{$args{'-tumor_members'}};
+
+  return (@normal_members == 1) and (@tumor_members != 0) and
+         ($normal_members[0] eq $normal_rnaseq_model->id) and
+         ($tumor_members[0] eq $tumor_rnaseq_model->id);
+}
 
 #Check for existence of a somatic variation model meeting desired criteria and create one if it does not exist
 sub check_somatic_variation_models{
@@ -1609,9 +1631,9 @@ sub create_de_model{
 
   my @commands;
 
-  #genome model define differential-expression --processing-profile=? --condition-model-ids-string=? --condition-labels-string=? 
+  #genome model define differential-expression --processing-profile=? --condition-pairs=? 
   push(@commands, "\n#Create a differential-expression model as follows:");
-  push(@commands, "genome model define differential-expression --processing-profile='$differential_expression_pp_id' --condition-model-ids-string='$normal_rnaseq_model_id $tumor_rnaseq_model_id' --condition-labels-string='$final_normal_name,$final_tumor_name' --subject='$individual_name'");
+  push(@commands, "genome model define differential-expression --processing-profile='$differential_expression_pp_id' --condition-pairs='$final_normal_name $normal_rnaseq_model_id','$final_tumor_name $tumor_rnaseq_model_id' --subject='$individual_name'");
   push(@commands, "genome model build start ''");
 
   foreach my $line (@commands){
