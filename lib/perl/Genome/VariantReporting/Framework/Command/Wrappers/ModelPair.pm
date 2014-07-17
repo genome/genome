@@ -17,7 +17,9 @@ class Genome::VariantReporting::Framework::Command::Wrappers::ModelPair {
     has_calculated => {
         output_dir => {
             calculate_from => [qw/ base_output_dir roi /],
-            calculate => q| return File::Spec->join($base_output_dir, $roi); |,
+            calculate => q| my $roi_nospace  = $roi;
+                $roi_nospace =~ s/ /_/g;
+                return File::Spec->join($base_output_dir, $roi_nospace); |,
         },
         resource_file => {
             calculate_from => [qw/ output_dir /],
@@ -32,6 +34,18 @@ class Genome::VariantReporting::Framework::Command::Wrappers::ModelPair {
             calculate => q( File::Spec->join($output_dir, "logs"); ),
         },
     },
+};
+
+sub create {
+    my $class = shift;
+    my $self = $class->SUPER::create(@_);
+    Genome::Sys->create_directory($self->output_dir);
+    Genome::Sys->create_directory($self->reports_directory);
+    Genome::Sys->create_directory($self->logs_directory);
+    $self->generate_resource_file;
+    $self->create_input_vcf("snvs");
+    $self->create_input_vcf("indels");
+    return $self;
 };
 
 sub is_valid {
@@ -85,5 +99,20 @@ sub generate_resource_file {
     return 1;
 }
 
+sub input_vcf {
+    my ($self, $variant_type) = @_;
+    return File::Spec->join($self->output_dir, "$variant_type.vcf.gz");
+}
+
+sub create_input_vcf {
+    my ($self, $variant_type) = @_;
+    my $vcf = $self->discovery->get_detailed_vcf_result($variant_type)->get_vcf($variant_type);
+    my $sed_cmd = sprintf("zcat %s | %s | gzip > %s", $vcf, 'sed s/^#CHROM.*/\&\	'.$self->validation->tumor_sample->name."/", $self->input_vcf($variant_type));
+    my $rv = Genome::Sys->shellcmd(
+        cmd => $sed_cmd,
+        output_files => [$self->input_vcf($variant_type)],
+        input_files => [$vcf],
+    );
+}
 1;
 

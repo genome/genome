@@ -21,13 +21,13 @@ class Genome::VariantReporting::Framework::Command::Wrappers::Trio {
             is => 'Path',
             is_output => 1,
         },
-        d0_sample => {
+        tumor_sample => {
             is => 'Genome::Sample',
-            doc => 'Discovery sample',
+            doc => 'Main tumor sample used for discovery',
         },
-        d30_sample => {
+        additional_sample => {
             is => 'Genome::Sample',
-            doc => 'Validation sample',
+            doc => 'Additional sample to report readcounts on at discovery variant positions',
         },
     ],
 };
@@ -36,10 +36,6 @@ sub execute {
     my $self = shift;
     my @model_pairs = $self->get_model_pairs;
     for my $model_pair (@model_pairs) {
-        Genome::Sys->create_directory($model_pair->output_dir);
-        Genome::Sys->create_directory($model_pair->reports_directory);
-        Genome::Sys->create_directory($model_pair->logs_directory);
-        my $resource_file = $model_pair->generate_resource_file;
         $self->run_reports($model_pair);
     }
     return 1;
@@ -49,8 +45,8 @@ sub get_model_pairs {
     my $self = shift;
     my $factory = Genome::VariantReporting::Framework::Command::Wrappers::ModelPairFactory->create(
         models => [$self->models],
-        d0_sample => $self->d0_sample,
-        d30_sample => $self->d30_sample,
+        d0_sample => $self->tumor_sample,
+        d30_sample => $self->additional_sample,
         output_dir => $self->output_directory,
     );
     return $factory->get_model_pairs;
@@ -62,7 +58,7 @@ sub run_reports {
     for my $variant_type(qw(snvs indels)) {
         my $plan_accessor = join('_', $variant_type, "plan_file");
         my %params = (
-            input_vcf => resolve_input_vcf($model_pair, $variant_type),
+            input_vcf => $model_pair->input_vcf($variant_type),
             variant_type => $variant_type,
             output_directory => $model_pair->reports_directory,
             plan_file => $self->$plan_accessor,
@@ -71,11 +67,6 @@ sub run_reports {
         );
         Genome::VariantReporting::Framework::Command::CreateReport->execute(%params);
     }
-}
-
-sub resolve_input_vcf {
-    my ($model_pair, $variant_type) = @_;
-    $model_pair->{discovery}->get_detailed_vcf_result($variant_type)->get_vcf($variant_type);
 }
 
 1;
