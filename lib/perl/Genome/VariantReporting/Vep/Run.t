@@ -64,7 +64,6 @@ sub generate_test_cmd {
         plugins_version => 0,
         species => "alien",
         joinx_version => '1.8',
-        terms => "ensembl",
         reference_fasta => __FILE__,
     );
     my $cmd = $cmd_class->create(%params);

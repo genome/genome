@@ -31,7 +31,6 @@ class Genome::VariantReporting::Vep::RunResult {
         reference_fasta_lookup => {is => 'Path'},
     ],
     has_param => [
-        terms => {is => 'String', },
         plugins => {is => 'String',
                     is_many => 1},
         plugins_version => {is => 'String',},
@@ -126,7 +125,7 @@ sub split_vcf {
 sub _annotate {
     my $self = shift;
 
-    Genome::Db::Ensembl::Command::Run::Vep->execute(
+    die "Failed to run VEP" unless Genome::Db::Ensembl::Command::Run::Vep->execute(
         input_file => $self->split_vcf,
         output_file => $self->vep_output_file,
         $self->vep_params,
@@ -177,6 +176,7 @@ sub vep_params {
         sift => 'b',
         regulatory => 1,
         canonical => 1,
+        terms => "SO",
         buffer_size => $BUFFER_SIZE,
     );
     delete $params{variant_type};
