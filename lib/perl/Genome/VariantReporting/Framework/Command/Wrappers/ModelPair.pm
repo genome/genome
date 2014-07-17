@@ -75,7 +75,7 @@ sub generate_resource_file {
     push @aligned_bams, $self->discovery->merged_alignment_result->id;
     push @aligned_bams, $self->discovery->control_merged_alignment_result->id;
     push @aligned_bams, $self->validation->control_merged_alignment_result->id;
-    $resource->{aligned_bams} = \@aligned_bams;
+    $resource->{aligned_bam_result_id} = \@aligned_bams;
 
     my %feature_list_ids;
     my $on_target_feature_list = Genome::FeatureList->get(name => $self->roi);
