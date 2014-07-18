@@ -1,0 +1,49 @@
+experts:
+    'bam-readcount':
+        version: 0.5
+        minimum_mapping_quality: 0
+        minimum_base_quality: 0
+        max_count: 10000000
+        per_library: 1
+        insertion_centric: 0
+    vep:
+        ensembl_version: 75
+        custom_annotation_tags:
+            - ON_TARGET
+        species: 'homo-sapiens'
+        plugins:
+            - Condel@PLUGIN_DIR@b@2
+        plugins_version: 1
+        joinx_version: 1.8
+    dbsnp:
+        joinx_version: 1.8
+        info_string: 'CAF:dbSNPBuildID=dbSNPBuildID,per-alt:MUT'
+reporters:
+    'tumor-only':
+        filters:
+            'allele-in-genotype':
+                sample_name: tumor
+            'ft-keep':
+                keep_filter_values:
+                    - PASS
+                    - .
+                sample_name: tumor
+            'vaf-cutoff':
+                min_vaf: 10
+                sample_name: tumor
+            'min-coverage':
+                min_coverage: 10
+                sample_name: tumor
+            'max-af':
+                max_af: 0.001
+            'contains-tag':
+                info_tag: ON_TARGET
+        interpreters:
+            position: {}
+            vep: {}
+            rsid: {}
+            caf: {}
+            vaf:
+                sample_name: tumor
+        params:
+            file_name: 'report.1'
