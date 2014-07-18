@@ -25,23 +25,27 @@ class Genome::VariantReporting::Framework::Command::Wrappers::ModelPair {
             calculate_from => [qw/ output_dir /],
             calculate => q( File::Spec->join($output_dir, "resource.yaml") ),
         },
-        reports_directory => {
-            calculate_from => [qw/ output_dir /],
-            calculate => q( File::Spec->join($output_dir, "reports"); ),
-        },
-        logs_directory => {
-            calculate_from => [qw/ output_dir /],
-            calculate => q( File::Spec->join($output_dir, "logs"); ),
-        },
     },
+};
+
+sub reports_directory {
+    my ($self, $variant_type) = @_;
+    return File::Spec->join($self->output_dir, "reports_$variant_type");
+};
+
+sub logs_directory {
+    my ($self, $variant_type) = @_;
+    return  File::Spec->join($self->output_dir, "logs_$variant_type");
 };
 
 sub create {
     my $class = shift;
     my $self = $class->SUPER::create(@_);
     Genome::Sys->create_directory($self->output_dir);
-    Genome::Sys->create_directory($self->reports_directory);
-    Genome::Sys->create_directory($self->logs_directory);
+    Genome::Sys->create_directory($self->reports_directory("snvs"));
+    Genome::Sys->create_directory($self->reports_directory("indels"));
+    Genome::Sys->create_directory($self->logs_directory("snvs"));
+    Genome::Sys->create_directory($self->logs_directory("indels"));
     $self->generate_resource_file;
     $self->create_input_vcf("snvs");
     $self->create_input_vcf("indels");

@@ -60,10 +60,10 @@ sub run_reports {
         my %params = (
             input_vcf => $model_pair->input_vcf($variant_type),
             variant_type => $variant_type,
-            output_directory => $model_pair->reports_directory,
+            output_directory => $model_pair->reports_directory($variant_type),
             plan_file => $self->$plan_accessor,
             resource_file => $model_pair->resource_file,
-            log_directory => $model_pair->logs_directory,
+            log_directory => $model_pair->logs_directory($variant_type),
         );
         Genome::VariantReporting::Framework::Command::CreateReport->execute(%params);
     }
