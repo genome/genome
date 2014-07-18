@@ -49,8 +49,11 @@ sub variant_type {
             return 'other';
         }
     }
+    elsif (length($entry->{reference_allele}) > length($variant_allele)) {
+        return 'del';
+    }
     else {
-        return 'indel';
+        return 'ins';
     }
 }
 

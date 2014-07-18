@@ -37,7 +37,7 @@ subtest "Insertion" => sub {
 
     my %expected_return_values = (
         AT => {
-            variant_type => "indel",
+            variant_type => "ins",
         }
     );
     my $entry = create_entry('A');
@@ -50,7 +50,7 @@ subtest "Deletion" => sub {
 
     my %expected_return_values = (
         A => {
-            variant_type => "indel",
+            variant_type => "del",
         }
     );
     my $entry = create_entry('AT');
