@@ -38,6 +38,7 @@ sub execute {
     for my $model_pair (@model_pairs) {
         $self->run_reports($model_pair);
     }
+    $self->run_summary_stats;
     return 1;
 }
 
@@ -67,6 +68,18 @@ sub run_reports {
         );
         Genome::VariantReporting::Framework::Command::CreateReport->execute(%params);
     }
+}
+
+sub run_summary_stats {
+    my $self = shift;
+    Genome::Model::SomaticValidation::Command::AlignmentStatsSummary->execute(
+        output_tsv_file => File::Spec->join($self->output_dir, "alignment_summary.tsv"),
+        models => [$self->models],
+    );
+    Genome::Model::SomaticValidation::Command::CoverageStatsSummary->execute(
+        output_tsv_file => File::Spec->join($self->output_dir, "coverage_summary.tsv"),
+        models => [$self->models],
+    );
 }
 
 1;
