@@ -74,12 +74,12 @@ my %interpretations = (
             rsid => "rs1",
         },
     },
-    'gmaf' => {
+    'caf' => {
         T => {
-            gmaf => ".1",
+            caf => ".1",
         },
         G => {
-            gmaf => ".1",
+            caf => ".1",
         },
     },
     'vaf' => {

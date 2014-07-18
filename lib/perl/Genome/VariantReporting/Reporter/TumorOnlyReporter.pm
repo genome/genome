@@ -15,7 +15,7 @@ sub name {
 sub requires_interpreters {
     return qw(position
     rsid
-    gmaf
+    caf
     vaf
     vep);
 }
@@ -39,7 +39,7 @@ sub headers {
         sift
         polyphen
         condel
-        gmaf
+        caf
         vaf
         ref_count
         var_count
