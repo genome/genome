@@ -208,7 +208,7 @@ sub index_queued {
     my $modified_count = 0;
     while (
         !$signaled_to_quit
-        && (!defined($max_changes_count) || $modified_count < $max_changes_count)
+        && (!defined($max_changes_count) || $modified_count++ < $max_changes_count)
         && (my $index_queue_item = $index_queue_iterator->next)
     ) {
         my $subject_class = $index_queue_item->subject_class;
@@ -243,7 +243,6 @@ sub index_queued {
                 increment('genome.sys.search.index.index_queue.modify_index.success');
                 $subject_seen->{$subject_class}->{$subject_id}++;
                 $index_queue_item->delete();
-                $modified_count++;
             } else {
                 # Move it to the back of the line.
                 increment('genome.sys.search.index.index_queue.modify_index.failure');
