@@ -6,8 +6,19 @@
         <operationtype commandClass="Genome::Model::Tools::Vcf::CreateCrossSampleVcf::FilterNonCalls" typeClass="Workflow::OperationType::Command" />
     </operation>
 
+    <!-- Gather up inputs for initial Vcf Merge, which will become the segregating sites -->
+    <link fromOperation="input connector" fromProperty="forced_variations_vcf" toOperation="GatherVcfs" toProperty="forced sites vcf" />
+    <link fromOperation="FilterNonCalls" fromProperty="filtered_vcf" toOperation="GatherVcfs" toProperty="vcfs" />
+    <operation name="GatherVcfs">
+        <operationtype typeClass="Workflow::OperationType::Converge">
+            <inputproperty>vcfs</inputproperty>
+            <inputproperty>forced sites vcf</inputproperty>
+            <outputproperty>all vcfs</outputproperty>
+        </operationtype>
+    </operation>
+
     <!-- InitialVcfMerge -->
-    <link fromOperation="FilterNonCalls" fromProperty="filtered_vcf" toOperation="InitialVcfMerge" toProperty="input_files" />
+    <link fromOperation="GatherVcfs" fromProperty="all vcfs" toOperation="InitialVcfMerge" toProperty="input_files" />
     <link fromOperation="input connector" fromProperty="use_bgzip" toOperation="InitialVcfMerge" toProperty="use_bgzip" />
     <link fromOperation="input connector" fromProperty="joinx_version" toOperation="InitialVcfMerge" toProperty="use_version" />
     <link fromOperation="input connector" fromProperty="segregating_sites_vcf_file" toOperation="InitialVcfMerge" toProperty="output_file" />
@@ -78,6 +89,7 @@
 
     <operationtype typeClass="Workflow::OperationType::Model">
         <!-- InitialVcfMerge -->
+        <inputproperty>forced_variations_vcf</inputproperty>
         <inputproperty>use_bgzip</inputproperty>
         <inputproperty>joinx_version</inputproperty>
         <inputproperty>segregating_sites_vcf_file</inputproperty>

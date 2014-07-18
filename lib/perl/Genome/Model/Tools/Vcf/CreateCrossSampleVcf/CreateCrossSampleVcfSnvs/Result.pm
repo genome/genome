@@ -14,6 +14,7 @@ sub _generate_result {
     my @builds = $self->builds;
     # FIXME pass command in, as non-input and non-param but required.
     my $cmd = Genome::Model::Tools::Vcf::CreateCrossSampleVcf::CreateCrossSampleVcfSnvs->create(
+            forced_variations_build_id => $self->forced_variations_build_id,
             builds => \@builds,
             output_directory => $staging_directory,
             max_files_per_merge => $self->max_files_per_merge,

@@ -16,6 +16,12 @@ class Genome::Model::Tools::Vcf::CreateCrossSampleVcf::CreateCrossSampleVcfSnvs 
             is => 'Text',
             default => '-A -B',
         },
+        forced_variations_build_id => {
+            is => 'Text',
+            is_optional => 1,
+            doc => 'The ID of a Genome::Model::Build::ImportedVariationList containing a vcf of sites to force-genotype regardless of whether the model-group called it. ' .
+                    'See - genome model imported-variation-list import-variants --help',
+        },
     ],
     has => [
         variant_type => {
@@ -32,6 +38,7 @@ sub execute {
     $self->debug_message("Resolving Builds...");
     my $builds = $self->_resolve_builds();
     my %params = (
+        forced_variations_build_id => $self->forced_variations_build_id,
         builds => $builds,
         max_files_per_merge => $self->max_files_per_merge,
         roi_list => $self->roi_list,
@@ -71,6 +78,7 @@ sub _get_variant_type_specific_inputs {
 
     $self->_resolve_samtools_version();
     my %inputs = (
+        forced_variations_vcf => $self->_resolve_forced_variations_vcf,
         samtools_version => $self->samtools_version,
         samtools_params => $self->samtools_pileup_params,
     );
@@ -83,6 +91,28 @@ sub _resolve_samtools_version {
         $self->samtools_version(Genome::Model::Tools::Sam->default_samtools_version);
     }
     return $self->samtools_version;
+}
+
+# Make sure the file exists if provided. If not we need to fill in something so the workflow can proceed.
+sub _resolve_forced_variations_vcf {
+    my $self = shift;
+
+    if ($self->forced_variations_build_id and $self->forced_variations_build_id ne $self->_undefined_forced_variations_build_id_value) {
+        my $build = Genome::Model::Build::ImportedVariationList->get($self->forced_variations_build_id);
+        unless ($build) {
+            die $self->error_message("forced_variations_build_id provided (%s) fails to resolve a valid build", $self->forced_variations_build_id);
+        }
+
+        my $forced_variations_vcf = $build->snvs_vcf;
+        Genome::Sys->validate_file_for_reading($forced_variations_vcf);
+        return $forced_variations_vcf;
+    } else {
+        return $self->_undefined_forced_variations_build_id_value;
+    }
+}
+
+sub _undefined_forced_variations_build_id_value {
+        return 'NO_FORCED_VARIATIONS_BUILD';
 }
 
 1;

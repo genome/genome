@@ -18,6 +18,7 @@ class Genome::Model::Tools::Vcf::CreateCrossSampleVcf::CreateCrossSampleVcfBase:
     has_param => [
         max_files_per_merge => { is => 'Text' },
         roi_list => { is => 'Genome::FeatureList', is_optional => 1 },
+        forced_variations_build_id => { is => 'Text', is_optional => 1 },
         wingspan => { is => 'Text', is_optional => 1 },
         allow_multiple_processing_profiles => { is => 'Boolean' },
         joinx_version => { is => 'Text' },
@@ -30,6 +31,7 @@ sub _generate_result {
     my @builds = $self->builds;
     # FIXME pass command in, as non-input and non-param but required.
     my $cmd = Genome::Model::Tools::Vcf::CreateCrossSampleVcf->create(
+            forced_variations_build_id => $self->forced_variations_build_id,
             builds => \@builds,
             output_directory => $staging_directory,
             max_files_per_merge => $self->max_files_per_merge,

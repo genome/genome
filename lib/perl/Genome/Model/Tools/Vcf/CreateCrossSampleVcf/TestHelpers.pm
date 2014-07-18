@@ -9,6 +9,8 @@ use File::Spec;
 use Genome::Utility::Test 'compare_ok';
 use Genome::File::Vcf::Reader;
 use Genome::File::Vcf::Differ;
+use Genome::Test::Factory::Build;
+use Genome::Test::Factory::Model::ImportedVariationList;
 
 use Exporter 'import';
 
@@ -167,13 +169,13 @@ sub get_roi_list {
 }
 
 sub test_cmd {
-    my ($variant_type, $version, $use_mg, $no_region_limiting) = @_;
+    my ($variant_type, $version, $use_mg, $no_region_limiting, $use_forced_variations_build_id) = @_;
 
     my $class = 'Genome::Model::Tools::Vcf::CreateCrossSampleVcf::CreateCrossSampleVcf' . ucfirst($variant_type);
 
     my $sr_class = $class . "::Result";
-    use_ok($class);
-    use_ok($sr_class);
+    use_ok($class) or die;
+    use_ok($sr_class) or die;
 
     my $test_dir = get_test_dir($class, $version);
 
@@ -192,6 +194,12 @@ sub test_cmd {
             varscan_version => $varscan_version,
             builds => \@input_builds,
     );
+
+    if ($use_forced_variations_build_id) {
+        my $vcf = File::Spec->join($test_dir, 'forced_sites.vcf.gz'); #FIXME will this have to be gzipped?
+        my $build = _setup_sites_build('forced_sites', 1, $vcf);
+        $params{forced_variations_build_id} = $build->id;
+    }
 
     if ($no_region_limiting){
        delete $params{'roi_list'};
@@ -240,6 +248,29 @@ sub get_expected_result {
     my $expected_result = File::Spec->join($result_dir, "$variant_type.merged.vcf.gz");
     ok(-s $expected_result, "expected result exists: $expected_result");
     return $expected_result;
+}
+
+sub _setup_sites_build {
+    my ($source_name, $version, $file) = @_;
+    my $annotation_model = Genome::Test::Factory::Model::ImportedVariationList->setup_object(
+        name => "omg-fake-annotation-$source_name",
+    );
+    $annotation_model->source_name($source_name);
+
+    my $output_dir = Genome::Sys->create_temp_directory;
+    symlink($file, "$output_dir/snvs.hq.vcf");
+
+    my $swr = Genome::Model::Tools::DetectVariants2::Result::Manual->__define__(
+        output_dir => $output_dir,
+        variant_type => "snv"
+    );
+
+    return Genome::Test::Factory::Build->setup_object(
+        model_id => $annotation_model->id,
+        status => "Succeeded",
+        version => $version,
+        snv_result => $swr,
+    );
 }
 
 
