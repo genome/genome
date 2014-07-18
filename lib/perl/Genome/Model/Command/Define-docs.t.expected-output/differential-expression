@@ -1,10 +1,9 @@
 
 [4mUSAGE[0m
  [1mgenome model define differential-expression[0m [--auto-assign-inst-data]
-    [--auto-build-alignments] --condition-labels-string=? --processing-profile=?
-    --condition-model-ids-string=? [--add-to-projects=?[,?]] [--instrument-data=?[,?]]
-    [--subject=?] [--groups=?[,?]] [--model-name=?] [--reference-sequence-build=?]
-    [--annotation-build=?] [--run-as=?]
+    [--auto-build-alignments] --condition-pairs=?[,?] --processing-profile=?
+    [--add-to-projects=?[,?]] [--instrument-data=?[,?]] [--subject=?] [--groups=?[,?]]
+    [--model-name=?] [--reference-sequence-build=?] [--annotation-build=?] [--run-as=?]
 
 [4mSYNOPSIS[0m
   genome model define differential-expression \
@@ -13,13 +12,12 @@
     --processing-profile name='my processing profile'
 
 [4mREQUIRED INPUTS[0m
-  [1mcondition-labels-string[0m
-    A comma-delimmited list of labels used to represent each group or condition. ex: "A,B,C,D" 
+  [1mcondition-pairs[0m
+    Each condition-pair is a space-delimited pair consisting of the label and a model-id. Labels
+    should not contain spaces. Example: "A 1","A 2","B 3" will associate label A with models 1 and
+    2, and label B with model 3 
   [1mprocessing-profile[0m
     Processing profile to be used by model, can provide either a name or an ID 
-  [1mcondition-model-ids-string[0m
-    Each group is a comma-delimited list of model ids corresponding to a defined label(order
-    matters).  Each group (A, B, C & D) is separated by white space. ex: "1,2 3,4 5,6 7,8" 
 
 [4mOPTIONAL INPUTS[0m
   [1madd-to-projects[0m
