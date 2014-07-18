@@ -52,7 +52,7 @@ is($b->wgs_cnv_cnview_dir, $case_dir . "/cnv/wgs_cnv/cnview/CNView_All", "found 
 is($b->wgs_exome_snv_dir, $case_dir . "/snv/wgs_exome", "found wgs_exome_snv_dir");
 is($b->wgs_cnvhmm_file, $case_dir . "/cnv/wgs_cnv/cnview/CNView_All/cnaseq.cnvhmm.tsv", "found wgs_cnvhmm_file");
 is($b->wgs_cnv_wg_plot, $case_dir . "/cnv/wgs_cnv/cnview/CNView_All/Both_AllChrs.jpeg", "found wgs_cnv_wg_plot");
-is($b->exome_cnvs_file, $case_dir . "/cnv/exome_cnv/cnmops.cnvs.txt", "found exome_cnvs_file");
+is($b->exome_cnvs_file, $case_dir . "/cnv/exome_cnv/cnmops.cnvhmm", "found exome_cnvs_file");
 is($b->exome_cnv_wg_plot, $case_dir . "/cnv/exome_cnv/cnmops.segplot_WG.pdf", "found exome_cnvs_wg_plot");
 is($b->microarray_cnvhmm_file, $case_dir . "/cnv/microarray_cnv/cnvs.diff.cbs.cnvhmm", "found microarray_cnvhmm_file");
 is($b->microarray_cnv_wg_plot, $case_dir . "/cnv/microarray_cnv/CNView_All/Gains_AllChrs.jpeg", "found microarray_cnv_wg_plot");

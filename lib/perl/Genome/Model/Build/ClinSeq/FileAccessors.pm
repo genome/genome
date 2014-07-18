@@ -238,7 +238,7 @@ sub wgs_cnv_wg_plot {
 
 sub exome_cnvs_file{
   my $self = shift;
-  my $exome_cnvs_file = $self->exome_cnv_dir . "/cnmops.cnvs.txt";
+  my $exome_cnvs_file = $self->exome_cnv_dir . "/cnmops.cnvhmm";
   if(-e $exome_cnvs_file) {
     return $exome_cnvs_file;
   } else {
