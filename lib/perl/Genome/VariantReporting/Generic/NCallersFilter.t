@@ -64,7 +64,6 @@ subtest "Nonexistent Caller" => sub {
         C => 0,
         G => 0,
     );
-    $DB::single=1;
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Sample 1 return values as expected");
 };
 

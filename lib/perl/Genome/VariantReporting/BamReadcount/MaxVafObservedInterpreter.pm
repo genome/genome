@@ -57,7 +57,6 @@ sub interpret_entry {
             }
         }
     }
-            $DB::single=1;
 
     my %return_values;
     for my $alt_allele (@$passed_alt_alleles) {

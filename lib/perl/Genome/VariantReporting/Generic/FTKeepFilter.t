@@ -49,7 +49,6 @@ subtest "pass" => sub {
 
     $ft_value = undef;
     $entry = create_entry($ft_value);
-    $DB::single=1;
     is_deeply({$filter->filter_entry($entry)}, \%pass_return_values, "Entry $ft_value passes filter with no filter set");
 };
 
