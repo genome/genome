@@ -8,19 +8,8 @@ use Genome;
 class Genome::Model::DifferentialExpression {
     is => 'Genome::Model',
     has_input => [
-        condition_labels_string => {
-            is => 'Text',
-            is_optional => 1,
-            doc => 'A comma-delimmited list of labels used to represent each group or condition. ex: "A,B,C,D"',
-        },
-        condition_model_ids_string => {
-            is => 'Text',
-            is_optional => 1,
-            doc => 'Each group is a comma-delimited list of model ids corresponding to a defined label(order matters).  Each group (A, B, C & D) is separated by white space. ex: "1,2 3,4 5,6 7,8"',
-        },
         condition_pairs => {
             is => 'Text',
-            is_optional => 1,
             is_many => 1,
             doc => 'Each condition-pair is a space-delimited pair consisting of the label and a model-id. Labels should not contain spaces. Example: "A 1","A 2","B 3" will associate label A with models 1 and 2, and label B with model 3',
         },
