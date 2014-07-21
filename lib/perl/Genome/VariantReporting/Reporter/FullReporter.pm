@@ -6,7 +6,7 @@ use Genome;
 use List::Util qw( min );
 
 class Genome::VariantReporting::Reporter::FullReporter {
-    is => [ 'Genome::VariantReporting::Reporter::WithHeader', 'Genome::VariantReporting::Framework::Component::WithManySampleNames'],
+    is => [ 'Genome::VariantReporting::Reporter::WithHeaderAndSampleNames'],
     has => [
     ],
 };
@@ -40,8 +40,7 @@ sub headers {
         MeetsMinDepthCutoff
     /;
 
-    my %single_vaf_headers = $self->_single_vaf_headers();
-    push @headers, sort keys %single_vaf_headers;
+    push @headers, $self->_single_vaf_headers;
 
     push @headers, qw/
         min_coverage_observed
@@ -51,44 +50,19 @@ sub headers {
         variant_caller_count
     /;
 
-    my %per_library_vaf_headers = $self->_per_library_vaf_headers();
-    push @headers, sort keys %per_library_vaf_headers;
+    push @headers, $self->_per_library_vaf_headers;
 
     return @headers;
 }
 
 sub _single_vaf_headers {
     my $self = shift;
-
-    my @sample_names = $self->sample_names;
-    my %vaf_headers;
-    for my $sample_name (@sample_names) {
-        for my $vaf_field (_single_vaf_fields()) {
-            my $vaf_header = join("_", $sample_name, $vaf_field);
-            $vaf_headers{$vaf_header} = {
-                vaf_field => $vaf_field,
-                sample_name => $sample_name,
-            };
-        }
-    }
-    return %vaf_headers;
+    return $self->create_sample_specific_field_names([_single_vaf_fields()], [$self->sample_names]);
 }
 
 sub _per_library_vaf_headers {
     my $self = shift;
-
-    my @sample_names = $self->sample_names;
-    my %vaf_headers;
-    for my $sample_name (@sample_names) {
-        for my $vaf_field (_per_library_vaf_fields()) {
-            my $vaf_header = join("_", $sample_name, $vaf_field);
-            $vaf_headers{$vaf_header} = {
-                vaf_field => $vaf_field,
-                sample_name => $sample_name,
-            };
-        }
-    }
-    return %vaf_headers;
+    return $self->create_sample_specific_field_names([_per_library_vaf_fields()], [$self->sample_names]);
 }
 
 sub _single_vaf_fields {
@@ -127,27 +101,19 @@ sub report {
             if ($header eq 'inSegDup' || $header eq 'onTarget') {
                 my $info_tags = $interpretations->{$interpreter}->{$allele}->{$field};
                 $self->_print_info_tag(_header_to_info_tag_conversion()->{$header}, $info_tags);
-                next;
             }
-
-            if ($interpreter eq 'many-samples-vaf') {
-                my $sample = $fields{$header}->{sample_name};
-                $self->_output_fh->print($self->_format($interpretations->{$interpreter}->{$allele}->{$sample}->{$field}) . "\t");
-                next;
-            }
-            
-            if ($header eq 'variant_callers') {
+            elsif ($header eq 'variant_callers') {
                 my @variant_callers = @{$interpretations->{$interpreter}->{$allele}->{$field}};
                 $self->_output_fh->print($self->_format(join(", ", @variant_callers)) . "\t");
-                next;
             }
-
             # If we don't have an interpreter that provides this field, handle it cleanly if the field is known unavailable
-            if ($self->header_is_unavailable($header)) {
+            elsif ($self->header_is_unavailable($header)) {
                 $self->_output_fh->print( $self->_format() . "\t");
-            } elsif ($interpreter) {
+            }
+            elsif ($interpreter) {
                 $self->_output_fh->print($self->_format($interpretations->{$interpreter}->{$allele}->{$field}) . "\t");
-            } else {
+            }
+            else {
                 # We use $header here because $field will be undefined due to it not being in an interpreter
                 die $self->error_message("Field (%s) is not available from any of the interpreters provided", $header);
             }
@@ -170,24 +136,6 @@ sub available_fields_dict {
         interpreter => 'min-coverage',
         field => 'filter_status',
     };
-
-    my %single_vaf_headers = $self->_single_vaf_headers();
-    for my $header (keys %single_vaf_headers) {
-        $available_fields{$header} = {
-            interpreter => 'many-samples-vaf',
-            field => $single_vaf_headers{$header}->{vaf_field},
-            sample_name => $single_vaf_headers{$header}->{sample_name},
-        };
-    }
-
-    my %per_library_vaf_headers = $self->_per_library_vaf_headers();
-    for my $header (keys %per_library_vaf_headers) {
-        $available_fields{$header} = {
-            interpreter => 'many-samples-vaf',
-            field => $per_library_vaf_headers{$header}->{vaf_field},
-            sample_name => $per_library_vaf_headers{$header}->{sample_name},
-        };
-    }
 
     return %available_fields;
 }

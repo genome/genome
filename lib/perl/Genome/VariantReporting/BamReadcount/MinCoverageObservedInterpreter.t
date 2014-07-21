@@ -35,7 +35,6 @@ subtest 'all alt alleles' => sub {
             min_coverage_observed =>  3,
         },
     );
-    $DB::single=1;
 
     is_deeply({$interpreter->interpret_entry($entry, ['G', 'C', 'AA'] )}, \%expected_return_values, "Entry gets interpreted correctly");
 };

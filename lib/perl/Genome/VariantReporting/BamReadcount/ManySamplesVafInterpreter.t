@@ -28,44 +28,33 @@ subtest "one alt allele" => sub {
 
     my %expected = (
         G => {
-            S1 => {
-                vaf => 1,
-                ref_count => 3,
-                var_count => 341,
-                per_library_var_count => 'Solexa-135852:155,Solexa-135853:186',
-                per_library_ref_count => 'Solexa-135852:2,Solexa-135853:1',
-                per_library_vaf => 'Solexa-135852:45.0581395348837,Solexa-135853:54.0697674418605',
-            },
-            S2 => {
-                vaf => 1,
-                ref_count => 3,
-                var_count => 341,
-                per_library_var_count => 'Solexa-135852:155,Solexa-135853:186',
-                per_library_ref_count => 'Solexa-135852:2,Solexa-135853:1',
-                per_library_vaf => 'Solexa-135852:45.0581395348837,Solexa-135853:54.0697674418605',
-            },
-            S3 => {
-                vaf => 1,
-                ref_count => 3,
-                var_count => 341,
-                per_library_var_count => 'Solexa-135852:155,Solexa-135853:186',
-                per_library_ref_count => 'Solexa-135852:2,Solexa-135853:1',
-                per_library_vaf => 'Solexa-135852:45.0581395348837,Solexa-135853:54.0697674418605',
-            }
+            S1_vaf => 99.1279069767442,
+            S1_ref_count => 3,
+            S1_var_count => 341,
+            S1_per_library_var_count => 'Solexa-135852:155,Solexa-135853:186',
+            S1_per_library_ref_count => 'Solexa-135852:2,Solexa-135853:1',
+            S1_per_library_vaf => 'Solexa-135852:45.0581395348837,Solexa-135853:54.0697674418605',
+            S2_vaf => 99.1279069767442,
+            S2_ref_count => 3,
+            S2_var_count => 341,
+            S2_per_library_var_count => 'Solexa-135852:155,Solexa-135853:186',
+            S2_per_library_ref_count => 'Solexa-135852:2,Solexa-135853:1',
+            S2_per_library_vaf => 'Solexa-135852:45.0581395348837,Solexa-135853:54.0697674418605',
+            S3_vaf => 99.1279069767442,
+            S3_ref_count => 3,
+            S3_var_count => 341,
+            S3_per_library_var_count => 'Solexa-135852:155,Solexa-135853:186',
+            S3_per_library_ref_count => 'Solexa-135852:2,Solexa-135853:1',
+            S3_per_library_vaf => 'Solexa-135852:45.0581395348837,Solexa-135853:54.0697674418605',
         }
     );
 
     my $entry = create_entry(bam_readcount_line);
     my %result = $interpreter->interpret_entry($entry, ['G']);
     is(keys %result, keys %expected, "First level keys as expected");
-    is(keys %{$result{G}}, keys %{$expected{G}}, "Second level keys as expected");
-    cmp_ok($result{G}->{S1}->{vaf}, ">", 99, 'vaf is in the desired range');
-    cmp_ok($result{G}->{S1}->{vaf},  "<", 100, 'vaf is in the desired range');
-    is($result{G}->{S1}->{ref_count}, $expected{G}->{S1}->{ref_count}, 'ref count is correct');
-    is($result{G}->{S1}->{var_count}, $expected{G}->{S1}->{var_count}, 'var count is correct');
-    is($result{G}->{S1}->{per_library_var_count}, $expected{G}->{S1}->{per_library_var_count}, 'per lib var count is correct');
-    is($result{G}->{S1}->{per_library_ref_count}, $expected{G}->{S1}->{per_library_ref_count}, 'per lib ref count is correct');
-    is($result{G}->{S1}->{per_library_vaf}, $expected{G}->{S1}->{per_library_vaf}, 'per lib vaf is correct');
+    is_deeply(\%result, \%expected, "Values are as expected");
+    cmp_ok($result{G}->{S1_vaf}, ">", 99, 'vaf is in the desired range');
+    cmp_ok($result{G}->{S1_vaf},  "<", 100, 'vaf is in the desired range');
 };
 
 done_testing;

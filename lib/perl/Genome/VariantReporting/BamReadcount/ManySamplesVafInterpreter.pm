@@ -3,6 +3,7 @@ package Genome::VariantReporting::BamReadcount::ManySamplesVafInterpreter;
 use strict;
 use warnings;
 use Genome;
+use Genome::VariantReporting::BamReadcount::VafInterpreter;
 
 class Genome::VariantReporting::BamReadcount::ManySamplesVafInterpreter {
     is => ['Genome::VariantReporting::Framework::Component::Interpreter', 'Genome::VariantReporting::Framework::Component::WithManySampleNames'],
@@ -18,14 +19,14 @@ sub requires_annotations {
 }
 
 sub available_fields {
-    return qw/
-        vaf
-        ref_count
-        var_count
-        per_library_var_count
-        per_library_ref_count
-        per_library_vaf
-    /;
+    my $self = shift;
+    my @sample_names = @_;
+
+    return $self->create_sample_specific_field_names([$self->vaf_fields()], \@sample_names);
+}
+
+sub vaf_fields {
+    return Genome::VariantReporting::BamReadcount::VafInterpreter::available_fields();
 }
 
 sub interpret_entry {
@@ -38,7 +39,10 @@ sub interpret_entry {
         my $interpreter = Genome::VariantReporting::BamReadcount::VafInterpreter->create(sample_name => $sample_name);
         my %result = $interpreter->interpret_entry($entry, $passed_alt_alleles);
         for my $alt_allele (@$passed_alt_alleles) {
-            $return_values{$alt_allele}->{$sample_name} = $result{$alt_allele};
+            for my $vaf_field (vaf_fields()) {
+                my $sample_specific_field_name = $self->create_sample_specific_field_name($vaf_field, $sample_name);
+                $return_values{$alt_allele}->{$sample_specific_field_name} = $result{$alt_allele}->{$vaf_field};
+            }
         }
     }
     return %return_values;
