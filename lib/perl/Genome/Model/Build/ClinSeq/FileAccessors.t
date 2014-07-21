@@ -57,7 +57,12 @@ is($b->exome_cnv_wg_plot, $case_dir . "/cnv/exome_cnv/cnmops.segplot_WG.pdf", "f
 is($b->microarray_cnvhmm_file, $case_dir . "/cnv/microarray_cnv/cnvs.diff.cbs.cnvhmm", "found microarray_cnvhmm_file");
 is($b->microarray_cnv_wg_plot, $case_dir . "/cnv/microarray_cnv/CNView_All/Gains_AllChrs.jpeg", "found microarray_cnv_wg_plot");
 is($b->wgs_exome_snv_tier1_annotated_compact_file, $case_dir . "/snv/wgs_exome/snvs.hq.tier1.v1.annotated.compact.tsv", "found wgs_exome_snv_tier1_annotated_compact_file");
+is($b->wgs_snv_tier1_annotated_compact_catanno_file, $case_dir . "/snv/wgs/snvs.hq.tier1.v1.annotated.compact.catanno.tsv", "found wgs_snv_tier1_annotated_compact_catanno_file");
+is($b->exome_snv_tier1_annotated_compact_catanno_file, $case_dir . "/snv/exome/snvs.hq.tier1.v1.annotated.compact.catanno.tsv", "found exome_snv_tier1_annotated_compact_catanno_file");
 is($b->wgs_exome_snv_tier1_annotated_compact_catanno_file, $case_dir . "/snv/wgs_exome/snvs.hq.tier1.v1.annotated.compact.catanno.tsv", "found wgs_exome_snv_tier1_annotated_compact_catanno_file");
+is($b->wgs_indel_tier1_annotated_compact_catanno_file, $case_dir . "/indel/wgs/indels.hq.tier1.v1.annotated.compact.catanno.tsv", "found wgs_indel_tier1_annotated_compact_catanno_file");
+is($b->exome_indel_tier1_annotated_compact_catanno_file, $case_dir . "/indel/exome/indels.hq.tier1.v1.annotated.compact.catanno.tsv", "found exome_indel_tier1_annotated_compact_catanno_file");
+is($b->wgs_exome_indel_tier1_annotated_compact_catanno_file, $case_dir . "/indel/wgs_exome/indels.hq.tier1.v1.annotated.compact.catanno.tsv", "found wgs_exome_indel_tier1_annotated_compact_catanno_file");
 is($b->wgs_exome_snv_tier1_annotated_compact_readcounts_file, $case_dir . "/snv/wgs_exome/snvs.hq.tier1.v1.annotated.compact.readcounts.tsv", "found wgs_exome_snv_tier1_annotated_compact_readcounts_file");
 is($b->exome_snv_summary_dir, $case_dir . "/snv/exome/summary", "found exome_snv_summary_dir");
 is($b->wgs_snv_summary_dir, $case_dir . "/snv/wgs/summary", "found wgs_snv_summary_dir");

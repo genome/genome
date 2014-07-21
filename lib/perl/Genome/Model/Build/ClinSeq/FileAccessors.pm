@@ -21,6 +21,12 @@ sub snv_dir {
   return $snv_dir;
 }
 
+sub indel_dir {
+  my $self = shift;
+  my $indel_dir = $self->case_dir . "/indel";
+  return $indel_dir;
+}
+
 sub cnv_dir {
   my $self = shift;
   my $cnv_dir = $self->case_dir . "/cnv";
@@ -138,16 +144,25 @@ sub input_summary_dir {
 sub microarray_cnv_dir {
   my $self = shift;
   my $microarray_cnv_dir = $self->cnv_dir . "/microarray_cnv";
+  return $microarray_cnv_dir;
 }
 
 sub exome_snv_dir {
   my $self = shift;
   my $exome_snv_dir = $self->snv_dir . "/exome";
+  return $exome_snv_dir;
+}
+
+sub exome_indel_dir {
+  my $self = shift;
+  my $exome_indel_dir = $self->indel_dir . "/exome";
+  return $exome_indel_dir;
 }
 
 sub exome_cnv_dir {
   my $self = shift;
   my $exome_cnv_dir = $self->cnv_dir . "/exome_cnv";
+  return $exome_cnv_dir;
 }
 
 sub exome_snv_summary_dir {
@@ -165,22 +180,32 @@ sub exome_snv_summary_dir {
 
 sub wgs_snv_dir {
   my $self = shift;
-  my $exome_snv_dir = $self->snv_dir . "/wgs";
+  my $wgs_snv_dir = $self->snv_dir . "/wgs";
+  return $wgs_snv_dir;
+}
+
+sub wgs_indel_dir {
+  my $self = shift;
+  my $wgs_indel_dir = $self->indel_dir . "/wgs";
+  return $wgs_indel_dir;
 }
 
 sub wgs_cnv_dir {
   my $self = shift;
   my $wgs_cnv_dir = $self->cnv_dir . "/wgs_cnv";
+  return $wgs_cnv_dir;
 }
 
 sub wgs_cnv_cnview_dir {
   my $self = shift;
   my $wgs_cnv_cnview_dir = $self->wgs_cnv_dir . "/cnview/CNView_All";
+  return $wgs_cnv_cnview_dir;
 }
 
 sub wgs_cnv_summary_dir {
   my $self = shift;
   my $wgs_cnv_summary_dir = $self->wgs_cnv_dir . "/summary";
+  return $wgs_cnv_summary_dir;
 }
 
 sub wgs_snv_summary_dir {
@@ -196,9 +221,16 @@ sub wgs_snv_summary_dir {
   }
 }
 
+sub wgs_exome_indel_dir {
+  my $self = shift;
+  my $wgs_exome_indel_dir = $self->indel_dir . "/wgs_exome";
+  return $wgs_exome_indel_dir;
+}
+
 sub wgs_exome_snv_dir {
   my $self = shift;
-  my $exome_snv_dir = $self->snv_dir . "/wgs_exome";
+  my $wgs_exome_snv_dir = $self->snv_dir . "/wgs_exome";
+  return $wgs_exome_snv_dir;
 }
 
 sub wgs_exome_snv_summary_dir {
@@ -293,6 +325,33 @@ sub wgs_exome_snv_tier1_annotated_compact_file {
   }
 }
 
+sub wgs_snv_tier1_annotated_compact_catanno_file {
+  my $self = shift;
+  my $wgs_snv_tier1_annotated_compact_catanno_file =
+      $self->wgs_snv_dir . "/snvs.hq.tier1.v1.annotated.compact.catanno.tsv";
+  if(-e $wgs_snv_tier1_annotated_compact_catanno_file ){
+    return $wgs_snv_tier1_annotated_compact_catanno_file;
+  } else {
+    $self->warning_message("unable to find " .
+        $wgs_snv_tier1_annotated_compact_catanno_file);
+    return 0;
+  }
+}
+
+sub exome_snv_tier1_annotated_compact_catanno_file {
+  my $self = shift;
+  my $exome_snv_tier1_annotated_compact_catanno_file =
+      $self->exome_snv_dir .
+        "/snvs.hq.tier1.v1.annotated.compact.catanno.tsv";
+  if(-e $exome_snv_tier1_annotated_compact_catanno_file ){
+    return $exome_snv_tier1_annotated_compact_catanno_file;
+  } else {
+    $self->warning_message("unable to find " .
+        $exome_snv_tier1_annotated_compact_catanno_file);
+    return 0;
+  }
+}
+
 sub wgs_exome_snv_tier1_annotated_compact_catanno_file {
   my $self = shift;
   my $wgs_exome_snv_tier1_annotated_compact_catanno_file =
@@ -302,6 +361,46 @@ sub wgs_exome_snv_tier1_annotated_compact_catanno_file {
   } else {
     $self->warning_message("unable to find " .
         $wgs_exome_snv_tier1_annotated_compact_catanno_file);
+    return 0;
+  }
+}
+
+sub wgs_indel_tier1_annotated_compact_catanno_file {
+  my $self = shift;
+  my $wgs_indel_tier1_annotated_compact_catanno_file =
+      $self->wgs_indel_dir . "/indels.hq.tier1.v1.annotated.compact.catanno.tsv";
+  if(-e $wgs_indel_tier1_annotated_compact_catanno_file ){
+    return $wgs_indel_tier1_annotated_compact_catanno_file;
+  } else {
+    $self->warning_message("unable to find " .
+        $wgs_indel_tier1_annotated_compact_catanno_file);
+    return 0;
+  }
+}
+
+sub exome_indel_tier1_annotated_compact_catanno_file {
+  my $self = shift;
+  my $exome_indel_tier1_annotated_compact_catanno_file =
+      $self->exome_indel_dir .
+        "/indels.hq.tier1.v1.annotated.compact.catanno.tsv";
+  if(-e $exome_indel_tier1_annotated_compact_catanno_file ){
+    return $exome_indel_tier1_annotated_compact_catanno_file;
+  } else {
+    $self->warning_message("unable to find " .
+        $exome_indel_tier1_annotated_compact_catanno_file);
+    return 0;
+  }
+}
+
+sub wgs_exome_indel_tier1_annotated_compact_catanno_file {
+  my $self = shift;
+  my $wgs_exome_indel_tier1_annotated_compact_catanno_file =
+      $self->wgs_exome_indel_dir . "/indels.hq.tier1.v1.annotated.compact.catanno.tsv";
+  if(-e $wgs_exome_indel_tier1_annotated_compact_catanno_file ){
+    return $wgs_exome_indel_tier1_annotated_compact_catanno_file;
+  } else {
+    $self->warning_message("unable to find " .
+        $wgs_exome_indel_tier1_annotated_compact_catanno_file);
     return 0;
   }
 }
