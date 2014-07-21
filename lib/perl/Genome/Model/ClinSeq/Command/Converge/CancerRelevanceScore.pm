@@ -196,7 +196,7 @@ sub parse_metrics{
         }
         if($line[$ncol - 1] >= $gene_category_sum_cutoff) {
           $mutation_count += 1;
-          push @genes, $line[2];
+          push @genes, $line[2] . "(" . $line[4] . ")";
         }
       }
       $results->{$build_id}{$file}{mutation_count} = $mutation_count;
