@@ -26,6 +26,13 @@ lives_ok(sub {$interpreter->validate}, "Filter validates ok");
 my $ft_value = "PASS";
 my $entry = create_entry($ft_value);
 
+subtest 'test wrong input alleles' => sub {
+    for my $allele qw(WRONG T) { 
+        my $rv = eval {$interpreter->interpret_entry($entry, [$allele])};
+        ok(!$rv, 'Failed as expected: '.$@);
+    }
+};
+
 subtest 'all alt alleles' => sub {
     my %expected_return_values = (
         C => { ft_string => $ft_value },

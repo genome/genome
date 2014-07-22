@@ -23,7 +23,7 @@ sub available_fields {
     return qw/min_coverage_observed/;
 }
 
-sub interpret_entry {
+sub process_interpret_entry {
     my $self = shift;
     my $entry = shift;
     my $passed_alt_alleles = shift;

@@ -88,8 +88,8 @@ sub create_entry {
         '1',            # CHROM
         10,             # POS
         '.',            # ID
-        $ref,            # REF
-        '.',            # ALT
+        $ref,           # REF
+        'C,A,AT,CG',     # ALT
         '.',            # QUAL
     );
 

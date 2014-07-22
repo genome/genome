@@ -23,9 +23,27 @@ sub requires_annotations {
 }
 
 sub interpret_entry {
-    my $self = shift;
-    my $class = $self->class;
-    confess "Abstract method 'interpret_entry' must be defined in class '$class'";
+    my ($self, $entry, $alt_alleles) = @_;
+
+    my @allele_list   = sort @{$entry->{alternate_alleles}};
+    my @input_alleles = sort @$alt_alleles;
+    my $input_alleles = join ',', @input_alleles;
+
+    for my $input_allele (@input_alleles) {
+        unless (grep{$_ eq $input_allele}@allele_list) {
+            confess "The input allele $input_allele is not in vcf alt_alleles column";
+        }
+    }
+
+    my %interpret_entry = $self->process_interpret_entry($entry, $alt_alleles);
+    my @output_alleles = sort keys %interpret_entry; 
+    my $output_alleles = join ',', @output_alleles;
+
+    unless (@input_alleles ~~ @output_alleles) {
+        confess "The output allele list: $output_alleles is not the same as the input: $input_alleles";
+    }
+    
+    return %interpret_entry;
 }
 
 1;

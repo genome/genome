@@ -21,7 +21,7 @@ sub available_fields {
     return qw/coverage/;
 }
 
-sub interpret_entry {
+sub process_interpret_entry {
     my ($self, $entry, $passed_alt_alleles) = @_;
 
     my $readcount_entry = $self->get_readcount_entry($entry);
