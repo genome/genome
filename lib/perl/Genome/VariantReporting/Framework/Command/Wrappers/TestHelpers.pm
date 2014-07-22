@@ -12,14 +12,13 @@ our @EXPORT_OK = qw(get_build);
 
 my $pp = Genome::Test::Factory::ProcessingProfile::SomaticValidation->setup_object();
 
-my $start_id = "-b8bc947b2fbf464592508cc021fa63ef";
-my $fl_counter;
+my $fl_counter = -1;
 sub _get_or_create_feature_list {
     my $name = shift;
     my $feature_list = Genome::FeatureList->get(name => $name);
     unless ($feature_list) {
-        my $roi = Genome::FeatureList->__define__(name => $name, id => $start_id.$fl_counter);
-        $fl_counter++;
+        my $roi = Genome::FeatureList->__define__(name => $name, id => $fl_counter);
+        $fl_counter--;
     }
     return $feature_list;
 }
