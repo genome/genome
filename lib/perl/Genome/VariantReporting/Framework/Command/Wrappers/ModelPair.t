@@ -10,6 +10,7 @@ use warnings;
 
 use above "Genome";
 use Test::More;
+use File::Basename qw(dirname basename);
 use File::DirCompare;
 use Sub::Install qw(reinstall_sub);
 use Genome::Test::Factory::Model::SomaticValidation;
