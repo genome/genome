@@ -11,13 +11,12 @@ class Genome::VariantReporting::Framework::Command::Wrappers::ModelPair {
     has => {
         discovery => { is => 'Genome::Model::Build', },
         validation => { is => 'Genome::Model::Build', },
-        roi => { is => 'Text', },
         base_output_dir => { is => 'Text', },
     },
     has_calculated => {
         output_dir => {
-            calculate_from => [qw/ base_output_dir roi /],
-            calculate => q| my $roi_nospace  = $roi;
+            calculate_from => [qw/ base_output_dir discovery /],
+            calculate => q| my $roi_nospace  = $discovery->region_of_interest_set_name;
                 $roi_nospace =~ s/ /_/g;
                 return File::Spec->join($base_output_dir, $roi_nospace); |,
         },
@@ -82,7 +81,7 @@ sub generate_resource_file {
     $resource->{aligned_bam_result_id} = \@aligned_bams;
 
     my %feature_list_ids;
-    my $on_target_feature_list = Genome::FeatureList->get(name => $self->roi);
+    my $on_target_feature_list = Genome::FeatureList->get(name => $self->discovery->region_of_interest_set_name);
     $feature_list_ids{ON_TARGET} = $on_target_feature_list->id;
     my $segdup_feature_list = $self->discovery->get_feature_list("segmental_duplications");
     $feature_list_ids{SEG_DUP} = $segdup_feature_list->id;

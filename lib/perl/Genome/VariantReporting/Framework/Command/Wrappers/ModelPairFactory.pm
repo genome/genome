@@ -80,7 +80,6 @@ sub get_model_pairs {
         push @model_pairs, Genome::VariantReporting::Framework::Command::Wrappers::ModelPair->create(
             discovery => $discovery_build,
             validation => $validation_build,
-            roi => $roi,
             base_output_dir => $self->output_dir,
         );
     }
