@@ -800,6 +800,16 @@ Returns a string representation of the entry in VCF format.
 
 =cut
 
+sub to_hashref {
+    my $self = shift;
+
+    my @keys = $self->{header}->all_columns;
+    my @values = split(/\t/, $self->to_string);
+
+    my %hash;
+    @hash{@keys} = @values;
+    return \%hash;
+}
 
 sub to_string {
     my ($self) = @_;
