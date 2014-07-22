@@ -67,6 +67,20 @@ sub __display_name__ {
     return join(' ' ,$self->name, '('. scalar(@models), 'models)');
 }
 
+sub unload {
+    if (not ref $_[0]) {
+        my $class = shift;
+        return $class->SUPER::unload();
+    }
+    my $self = shift;
+
+    for my $b ($self->model_bridges) {
+        $b->unload();
+    }
+
+    $self->SUPER::unload();
+}
+
 sub create {
     my $class = shift;
 
