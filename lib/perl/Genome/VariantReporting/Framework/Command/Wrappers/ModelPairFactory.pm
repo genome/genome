@@ -55,19 +55,20 @@ sub get_model_pairs {
         unless (@models == 2) {
             $self->warning_message("Skipping models for ROI %s because there are not exactly two models: %s",
                 $roi, join(", ", map {$_->__display_name__} @models));
+            next;
         }
 
         my @discovery_models = grep { $self->is_model_discovery($_) } @models;
         my @validation_models = grep { $self->is_model_validation($_) } @models;
 
         if ( @discovery_models != 1 or @validation_models != 1 ) {
-            $self->warning_message("Incorrect discovery/validation paring for models for ROI (%s). One of each is required!\nDiscovery:\nValidation\\n");
-            return;
+            $self->warning_message("Incorrect discovery/validation pairing for models for ROI (%s). One of each is required!\nDiscovery:%s\nValidation:%s\n", $roi, join(", ", map {$_->__display_name__} @discovery_models),
+            join(", ", map {$_->__display_name__} @validation_models));
         }
 
         my $discovery_build = $discovery_models[0]->last_succeeded_build;
         if ( not $discovery_build ) {
-            $self->warning_message('No last succeeded build for disovery model (%s). Skipping ROI %s.', $discovery_models[0]->__display_name__, $roi);
+            $self->warning_message('No last succeeded build for discovery model (%s). Skipping ROI %s.', $discovery_models[0]->__display_name__, $roi);
             next;
         }
 
