@@ -2,6 +2,7 @@
 
 use above 'Genome';
 use Test::More;
+use Test::Output;
 use File::Spec;
 use Data::Dump qw(pp);
 use Genome::File::Vcf::HeaderDiff;
@@ -57,6 +58,15 @@ sub test_header {
 
         $expected = ['##FORMAT=<ID=GT,Number=1,Type=Integer,Description="Genotype">'],
         is_deeply($diff->{_diffs_b}, $expected, "Found _diffs_b was " . pp($expected));
+    };
+
+    subtest 'PRINT' => sub {
+        my $indent = '    ';
+        my $expecting =  "Lines unique to Differ.t.d/blessed.vcf are:\n"
+                         . "$indent" . "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n"
+                         . "Lines unique to Differ.t.d/header.vcf are:\n"
+                         . "$indent" . "##FORMAT=<ID=GT,Number=1,Type=Integer,Description=\"Genotype\">\n";
+        stdout_like(sub { $diff->print },  qr/\Q$expecting/, 'Tests the HeaderDiff print method');
     };
 }
 

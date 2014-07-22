@@ -25,7 +25,16 @@ sub new {
 
 sub print {
     my $self = shift;
-    die "Not Implemented Yet";
+    _print($self->{_a}, @{$self->{_diffs_a}});   
+    _print($self->{_b}, @{$self->{_diffs_b}});   
 }
 
+
+sub _print {
+    my $file_name = shift;
+    my @lines = @_;
+
+    my $indent = '    ';
+    printf "Lines unique to %s are:\n%s%s\n", $file_name, $indent, join("\n$indent", @lines);
+}
 1;

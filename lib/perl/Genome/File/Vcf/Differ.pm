@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 use Genome::File::Vcf::Reader;
+use Genome::File::Vcf::HeaderDiff;
 use Memoize;
 use Carp qw/confess/;
 use Set::Scalar;
@@ -70,7 +71,10 @@ sub next {
         }
 
         if (@columns) {
-            return ($a, $b, @columns);
+            return Genome::File::Vcf::EntryDiff->new(
+                $self->{_a} => $a,
+                $self->{_b} => $b,
+                \@columns);
         }
     }
     return;
