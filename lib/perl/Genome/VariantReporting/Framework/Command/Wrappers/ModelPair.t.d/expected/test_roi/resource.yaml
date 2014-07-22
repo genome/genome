@@ -5,7 +5,7 @@ aligned_bam_result_id:
   - -b52e1b52f81e4541af7f71ce14ca96f6
 dbsnp_vcf: test.vcf
 feature_list_ids:
-  ON_TARGET: -b8bc947b2fbf464592508cc021fa63ef
+  ON_TARGET: -1
   SEG_DUP: -424d29730a204e20acb521eaa8c4a2b6
 reference_fasta: ~
 translations:
