@@ -313,7 +313,7 @@ sub get_target_region_feature_list {
 
 sub get_feature_list_from_reference {
     my ($self, $feature_list_accessor) = @_;
-    return $self->reference_sequence_build->$feature_list_accessor;
+    return $self->reference_sequence_build->get_feature_list($feature_list_accessor);
 }
 
 1;

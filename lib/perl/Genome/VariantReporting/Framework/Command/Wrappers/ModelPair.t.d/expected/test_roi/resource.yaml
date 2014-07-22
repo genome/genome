@@ -1,0 +1,14 @@
+---
+aligned_bam_result_id:
+  - -533e0bb1a99f4fbe9e31cf6e19907133
+  - -b52e1b52f81e4541af7f71ce14ca96f6
+  - -b52e1b52f81e4541af7f71ce14ca96f6
+dbsnp_vcf: test.vcf
+feature_list_ids:
+  ON_TARGET: -b8bc947b2fbf464592508cc021fa63ef
+  SEG_DUP: -424d29730a204e20acb521eaa8c4a2b6
+reference_fasta: ~
+translations:
+  d0_tumor: sample_name_1
+  d30_normal: sample_name_2
+  d30_tumor: sample_name_1

@@ -76,3 +76,117 @@ reporters:
                 - d0_tumor
                 - d30_tumor
                 - d30_normal
+    'full':
+        filters:
+            'allele-in-genotype':
+                sample_name: d0_tumor
+            'ft-keep':
+                keep_filter_values:
+                    - PASS
+                    - .
+                sample_name: d0_tumor
+            'contains-tag':
+                info_tag: ON_TARGET
+            'coverage-vaf':
+                coverages_and_vafs:
+                    1000: 5
+                    200: 10
+                sample_name: d0_tumor
+            'genotype-vaf':
+                min_het_vaf: 40
+                max_het_vaf: 60
+                min_hom_vaf: 85
+                max_hom_vaf: 100
+                sample_name: d0_tumor
+            gene:
+                gene_set: acmg
+        interpreters:
+            position: {}
+            'variant-type': {}
+            vep: {}
+            'info-tags': {}
+            rsid: {}
+            caf: {}
+            'min-coverage':
+                min_coverage: 10
+                sample_name: d0_tumor
+            'min-coverage-observed':
+                sample_names:
+                    - d0_tumor
+                    - d30_tumor
+                    - d30_normal
+            'max-vaf-observed':
+                tumor_sample_names:
+                    - d0_tumor
+                    - d30_tumor
+                normal_sample_names:
+                    - d30_normal
+            'variant-callers':
+                sample_name: d0_tumor
+            'many-samples-vaf':
+                sample_names:
+                    - d0_tumor
+                    - d30_tumor
+                    - d30_normal
+        params:
+            file_name: 'cle_acmg_full_report_snvs'
+            sample_names:
+                - d0_tumor
+                - d30_tumor
+                - d30_normal
+    'simple':
+        filters:
+            'allele-in-genotype':
+                sample_name: d0_tumor
+            'ft-keep':
+                keep_filter_values:
+                    - PASS
+                    - .
+                sample_name: d0_tumor
+            'contains-tag':
+                info_tag: ON_TARGET
+            'coverage-vaf':
+                coverages_and_vafs:
+                    1000: 5
+                    200: 10
+                sample_name: d0_tumor
+            'genotype-vaf':
+                min_het_vaf: 40
+                max_het_vaf: 60
+                min_hom_vaf: 85
+                max_hom_vaf: 100
+                sample_name: d0_tumor
+        interpreters:
+            position: {}
+            vep: {}
+        params:
+            file_name: 'cle_simple_snv_report'
+    'simple':
+        filters:
+            'allele-in-genotype':
+                sample_name: d0_tumor
+            'ft-keep':
+                keep_filter_values:
+                    - PASS
+                    - .
+                sample_name: d0_tumor
+            'contains-tag':
+                info_tag: ON_TARGET
+            'coverage-vaf':
+                coverages_and_vafs:
+                    1000: 5
+                    200: 10
+                sample_name: d0_tumor
+            'genotype-vaf':
+                min_het_vaf: 40
+                max_het_vaf: 60
+                min_hom_vaf: 85
+                max_hom_vaf: 100
+                sample_name: d0_tumor
+            gene:
+                gene_set: acmg
+        interpreters:
+            position: {}
+            vep: {}
+        params:
+            file_name: 'cle_acmg_simple_snv_report'
