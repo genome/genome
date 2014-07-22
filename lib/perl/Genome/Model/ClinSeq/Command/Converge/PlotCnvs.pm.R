@@ -468,14 +468,15 @@ sample_name = args[5]
 
 #plotting params
 pdf(plot_file, height=10, width=12);
-oma = c(2,2,3,2)
 
 ##plot all samples, changed to sort by chromosome and by filename
 files = c(microarray_cnv, wgs_cnv, exome_cnv) 
 files = mixedsort(files)
 files = c("header", files)
-
-par(mfrow=c(length(files)+1,1),oma=oma,mar=c(0,1,0,1))
+mat <- matrix(c(1, 2, 3, 4, 5), 5)
+layout(mat, widths = c(1, 1, 1, 1), heights = c(0.5, 0.5, 0.5, 0.5))
+oma = c(4,2,3,2)
+par(oma=oma, mar=c(0, 1, 0, 1))
 plotEm(files, sample_name)
 addLegend()
 
