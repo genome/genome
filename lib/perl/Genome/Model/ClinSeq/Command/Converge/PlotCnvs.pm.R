@@ -16,10 +16,13 @@ plotEm <- function(files, sample_name){
     if(!(file=="header")){
       infile=file
       print(file)
-      cnvfile_suffix = ".cnvs.txt.f"
+      cnvfile_suffix = ".cnvs.txt.cn"
       name_prefix = paste(sample_name, ".", sep = "")
       id = gsub(cnvfile_suffix, "", basename(file))
       id = gsub(name_prefix, "", id)
+      id = gsub("wgs", "WGS", id)
+      id = gsub("exome", "Exome", id)
+      id = gsub("microarrays", "Microarray", id)
     }
     plotSegments(filename=infile, 
                  showNorm=TRUE, multiplePlot=TRUE, drawLabel=chrNames, title=chrNames, sampleName=id)
@@ -432,6 +435,8 @@ plotSegments <- function(chr="ALL", filename, ymax=0, ymin=1,
   if(title==FALSE){
     rect(0,0,offsets[2],1,col="grey50")
     text(0,0.5,sampleName,pos=4,col="white",cex=1.2)
+  } else {
+    text(0,0.5, "Chromosome",pos=4,col="white",cex=1.)
   }
   
   
@@ -476,6 +481,5 @@ addLegend()
 
 #adds title, labels to X and Y axis
 mtext(sample_name, side = 1, outer = TRUE)
-mtext("Chromosome", side=3, outer=TRUE)
-mtext("Source", side=2, outer=TRUE)
+#mtext("Chromosome", side=3, outer=TRUE)
 dev.off()
